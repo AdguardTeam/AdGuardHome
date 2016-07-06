@@ -1,0 +1,15 @@
+!
+! Title: Default Filter Rule
+! Homepage: https://github.com/AdguardTeam/AdguardDNS
+! Licence: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
+! Last modified: %timestamp%
+! Decsription: Include domain names used by advertising networks
+!  
+:! EasyList
+include https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_adservers.txt
+!
+! Adguard Filter
+include https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/RussianFilter/sections/adservers.txt
+include https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/EnglishFilter/sections/adservers.txt
+include https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/MobileFilter/sections/adservers.txt
+
