@@ -19,7 +19,7 @@ url https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/MobileFi
 url https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/SpywareFilter/sections/tracking_servers.txt
 !
 ! Black List
-file exceptions.txt
+file rules.txt
 !
 ! White List
-file rules.txt
+file exceptions.txt

@@ -2,7 +2,7 @@
 ! Title: Stealth Filter Rule
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-07-07 10:32:06
+! Last modified: 2016-07-07 10:33:56
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
