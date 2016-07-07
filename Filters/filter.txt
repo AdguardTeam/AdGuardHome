@@ -1,8 +1,8 @@
 !
 ! Title: Stealth Filter Rule
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
-! Licence: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-07-07 10:13:20
+! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
+! Last modified: 2016-07-07 10:32:06
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -11229,6 +11229,6 @@ http://r.i.ua/s?
 ||zroitracker.com
 
 !
-! Balck List
+! Black List
 !
 ! White List
