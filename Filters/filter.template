@@ -1,0 +1,25 @@
+!
+! Title: Stealth Filter Rule
+! Homepage: https://github.com/AdguardTeam/AdguardDNS
+! Licence: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
+! Last modified: %timestamp%
+! Decsription: Filtering rules used by Adguard DNS.
+!
+! Adservice
+!
+! EasyList
+url https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_adservers.txt
+!
+! Adguard Filter
+url https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/RussianFilter/sections/adservers.txt
+url https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/EnglishFilter/sections/adservers.txt
+url https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/MobileFilter/sections/adservers.txt
+!
+! Tracking service
+url https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/SpywareFilter/sections/tracking_servers.txt
+!
+! Balck List
+file exceptions.txt
+!
+! White List
+file rules.txt
