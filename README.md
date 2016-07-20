@@ -23,10 +23,15 @@ Adguard DNS works in two modes:
 'Default' mode includes blocking ads, various trackers and malware & phishing websites. 
 'Family protection' does the same, but also blocks websites with adult content.
 
+
+This repository contains filters used by Adguard DNS server.
+
 ### How to use Adguard DNS?
 
 The detailed guide can be found on [our website](https://test.adguard.com/en/adguard-dns/instruction.html#instruction).
 
+If you come across any problems or have a suggestion, feel free to create an issue in this repository. 
+
 ### What's next?
 
-We plan to make Adguard DNS opensource in the near future.
+We plan to make Adguard DNS open source in the near future.
