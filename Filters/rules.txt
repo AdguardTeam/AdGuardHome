@@ -1,2 +1,3 @@
 ||ad.adriver.ru^
 ||content.adriver.ru^
+||ad.3dnews.ru^
