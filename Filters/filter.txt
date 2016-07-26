@@ -11227,10 +11227,10 @@ http://r.i.ua/s?
 ||zowary.com
 ||zqtk.net
 ||zroitracker.com
-
 !
 ! Black List
 !
 ||ad.adriver.ru^
 ||content.adriver.ru^
+||ad.3dnews.ru^
 ! White List
