@@ -11231,4 +11231,6 @@ http://r.i.ua/s?
 !
 ! Black List
 !
+||ad.adriver.ru^
+||content.adriver.ru^
 ! White List
