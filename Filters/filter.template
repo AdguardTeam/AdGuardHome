@@ -1,5 +1,5 @@
 !
-! Title: Stealth Filter Rule
+! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
 ! Last modified: %timestamp%
@@ -18,8 +18,8 @@ url https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/MobileFi
 ! Tracking service
 url https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/SpywareFilter/sections/tracking_servers.txt
 !
-! Black List
+! Adguard DNS rules
 file rules.txt
 !
-! White List
+! Adguard DNS exceptions
 file exceptions.txt
