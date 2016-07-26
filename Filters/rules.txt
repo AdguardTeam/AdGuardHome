@@ -1,1 +1,2 @@
-ad.adriver.ru
+||ad.adriver.ru^
+||content.adriver.ru^
