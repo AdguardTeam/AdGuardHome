@@ -11233,4 +11233,5 @@ http://r.i.ua/s?
 ||ad.adriver.ru^
 ||content.adriver.ru^
 ||ad.3dnews.ru^
+||an.yandex.ru^
 ! White List
