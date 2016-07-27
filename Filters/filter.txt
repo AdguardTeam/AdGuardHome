@@ -1,8 +1,8 @@
 !
-! Title: Stealth Filter Rule
+! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-07-07 10:33:56
+! Last modified: 2016-07-27 12:41:50
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -10,6 +10,7 @@
 ! EasyList
 ||007-gateway.com
 ||0icep80f.com
+||0xwxmj21r75kka.com
 ||101m3.com
 ||103092804.com
 ||10fbb07a4b0.se
@@ -83,6 +84,7 @@
 ||4wnet.com
 ||50.7.243.123
 ||5362367e.info
+||56fh8x.xyz
 ||5advertise.com
 ||5clickcashsoftware.com
 ||5gl1x9qc.com
@@ -132,6 +134,7 @@
 ||access-mc.com
 ||accmgr.com
 ||accounts.pkr.com
+||accumulatork.com
 ||accuserveadsystem.com
 ||acf-webmaster.net
 ||acronym.com
@@ -217,6 +220,7 @@
 ||adclick.pk
 ||adclickafrica.com
 ||adclickmedia.com
+||adclickservice.com
 ||adcloud.net
 ||adcmps.com
 ||adcolo.com
@@ -367,6 +371,7 @@
 ||adnetworkperformance.com
 ||adnext.fr
 ||adngin.com
+||adnigma.com
 ||adnimation.com
 ||adnium.com
 ||adnmore.co.kr
@@ -429,6 +434,7 @@
 ||ads-4u.com
 ||ads-elsevier.net
 ||ads-stats.com
+||ads-twitter.com
 ||ads.cc
 ||ads.intergi.com
 ||ads01.com
@@ -478,9 +484,11 @@
 ||adshost2.com
 ||adshot.de
 ||adshuffle.com
+||adsiduous.com
 ||adsignals.com
 ||adsimilis.com
 ||adsinimages.com
+||adsjudo.com
 ||adskeeper.co.uk
 ||adslidango.com
 ||adslingers.com
@@ -763,6 +771,7 @@
 ||as5000.com
 ||asafesite.com
 ||aseadnet.com
+||asermtawlfs.xyz
 ||asklots.com
 ||asooda.com
 ||asrety.com
@@ -822,6 +831,7 @@
 ||backbeatmedia.com
 ||backlinks.com
 ||badjocks.com
+||bakkels.com
 ||baldiro.de
 ||bambergerkennanchitinous.com
 ||bamboocast.com
@@ -852,6 +862,7 @@
 ||bannertracker-script.com
 ||bannerweb.com
 ||banniere.reussissonsensemble.fr
+||bargainpricedude.com
 ||baronsoffers.com
 ||basebanner.com
 ||bbelements.com
@@ -863,11 +874,13 @@
 ||bedorm.com
 ||beead.co.uk
 ||beead.net
+||beerforthepipl.com
 ||befade.com
 ||beforescence.com
 ||begun.ru
 ||belointeractive.com
 ||belvertising.be
+||benchmarkingstuff.com
 ||benisoncanorous.org
 ||bentdownload.com
 ||bepolite.eu
@@ -947,6 +960,7 @@
 ||bop-bop-bam.com
 ||bormoni.ru
 ||bororas.com
+||bostonparadise.com
 ||boydadvertising.co.uk
 ||boylesportsreklame.com
 ||bptracking.com
@@ -983,6 +997,7 @@
 ||budurl.com
 ||buildtrafficx.com
 ||buletproofserving.com
+||bulgarine.com
 ||bulletproofserving.com
 ||bunchofads.com
 ||bunny-net.com
@@ -1195,6 +1210,8 @@
 ||cor-natty.com
 ||coretarget.co.uk
 ||cornflip.com
+||corruptcy.com
+||corwrite.com
 ||cosmjs.com
 ||coull.com
 ||coupon2buy.com
@@ -1239,6 +1256,7 @@
 ||crowdgravity.com
 ||cruftexcision.xyz
 ||cruiseworldinc.com
+||csklde.space
 ||ctasnet.com
 ||ctenetwork.com
 ||ctm-media.com
@@ -1247,6 +1265,7 @@
 ||cuelinks.com
 ||curancience.com
 ||currentlyobsessed.me
+||curtaecompartilha.com
 ||curtisfrierson.com
 ||cwtrackit.com
 ||cybmas.com
@@ -1259,16 +1278,19 @@
 ||d1110e4.se
 ||d2.ligatus.com
 ||d2ship.com
+||d5zob5vm0r8li6khce5he5.com
 ||da-ads.com
 ||dadegid.ru
 ||danitabedtick.net
 ||dapper.net
 ||darwarvid.com
 ||das5ku9q.com
+||dascasdw.xyz
 ||dashad.io
 ||dashbida.com
 ||dashboardad.net
 ||data.adroll.com
+||datacratic-px.com
 ||datawrkz.com
 ||dating-banners.com
 ||datinggold.com
@@ -1295,6 +1317,7 @@
 ||delnapb.com
 ||deplayer.net
 ||deployads.com
+||depresis.com
 ||deriversal.com
 ||derlatas.com
 ||descapita.com
@@ -1305,6 +1328,7 @@
 ||developermedia.com
 ||deximedia.com
 ||dexplatform.com
+||dfskgmrepts.com
 ||dgmatix.com
 ||dgmaustralia.com
 ||dgmaxinteractive.com
@@ -1332,6 +1356,7 @@
 ||districtm.ca
 ||dj-updates.com
 ||dl-rms.com
+||dltags.com
 ||dmu20vut.com
 ||dnbizcdn.com
 ||dntrck.com
@@ -1777,6 +1802,7 @@
 ||gold-file.com
 ||goodadvert.ru
 ||goodadvertising.info
+||goodluckblockingthis.com
 ||googleadservicepixel.com
 ||googlesyndicatiion.com
 ||googletagservices.com/tag/js/gpt_
@@ -1817,6 +1843,7 @@
 ||h-images.net
 ||h12-media.com
 ||halfpriceozarks.com
+||hallucius.com
 ||halogennetwork.com
 ||halpeperglagedokkei.info
 ||hanaprop.com
@@ -1824,6 +1851,7 @@
 ||harrenmedianetwork.com
 ||havamedia.net
 ||havetohave.com
+||havinates.com
 ||havingo.xyz
 ||hb-247.com
 ||hd-plugin.com
@@ -1837,6 +1865,7 @@
 ||hebiichigo.com
 ||helloreverb.com
 ||helotero.com
+||heravda.com
 ||herocpm.com
 ||hexagram.com
 ||hgdat.com
@@ -1873,6 +1902,7 @@
 ||hotwords.com.br
 ||hotwords.com.mx
 ||hotwords.com
+||houstion.com
 ||hover.in
 ||hoverr.co
 ||hoverr.media
@@ -1883,6 +1913,7 @@
 ||htmlhubing.xyz
 ||httpool.com
 ||httpsecurity.org
+||hulahooprect.com
 ||huzonico.com
 ||hype-ads.com
 ||hypeads.org
@@ -1943,6 +1974,7 @@
 ||incomeliberation.com
 ||increas.eu
 ||increase-marketing.com
+||indeterman.com
 ||indexww.com
 ||indiabanner.com
 ||indiads.com
@@ -2022,8 +2054,10 @@
 ||iv.doubleclick.net
 ||iwantmoar.net
 ||ixnp.com
+||iz319xlstbsqs34623cb.com
 ||izeads.com
 ||j2ef76da3.website
+||jacquarter.com
 ||jadcenter.com
 ||jango.com
 ||jangonetwork.com
@@ -2080,6 +2114,7 @@
 ||keywordlink.co.kr
 ||keywordpop.com
 ||keywordsconnect.com
+||kgidpryrz8u2v0rz37.com
 ||kikuzip.com
 ||kinley.com
 ||kintokup.com
@@ -2091,6 +2126,7 @@
 ||klikvip.com
 ||klipmart.com
 ||klixfeed.com
+||klnrew.site
 ||kloapers.com
 ||klonedaset.org
 ||knorex.asia
@@ -2187,6 +2223,7 @@
 ||looksmart.com
 ||looneyads.com
 ||looneynetwork.com
+||loopmaze.com
 ||lose-ads.de
 ||loseads.eu
 ||losomy.com
@@ -2286,6 +2323,7 @@
 ||mediaonenetwork.net
 ||mediaonpro.com
 ||mediapeo.com
+||mediaraily.com
 ||mediatarget.com
 ||mediative.ca
 ||mediatraffic.com
@@ -2324,6 +2362,7 @@
 ||mgcashgate.com
 ||mgid.com
 ||mgplatform.com
+||mi-mi-fa.com
 ||mibebu.com
 ||microad.jp
 ||microadinc.com
@@ -2470,6 +2509,7 @@
 ||newsnet.in.ua
 ||newstogram.com
 ||newtention.net
+||newyorkwhil.com
 ||nexac.com
 ||nexage.com
 ||nextmobilecash.com
@@ -2477,6 +2517,7 @@
 ||nicheadgenerator.com
 ||nicheads.com
 ||nighter.club
+||njkiho.info
 ||nkredir.com
 ||nmcdn.us
 ||nmwrdr.net
@@ -2487,6 +2528,7 @@
 ||noretia.com
 ||normkela.com
 ||northmay.com
+||nothering.com
 ||novarevenue.com
 ||nowlooking.net
 ||nowspots.com
@@ -2502,8 +2544,10 @@
 ||nster.net
 ||ntent.com
 ||ntv.io
+||nullenabler.com
 ||numberium.com
 ||numbers.md
+||numberthreebear.com
 ||nuseek.com
 ||nvadn.com
 ||nvero.net
@@ -2584,6 +2628,7 @@
 ||oratosaeron.com
 ||orbengine.com
 ||ordingly.com
+||oriel.io
 ||oskale.ru
 ||ospreymedialp.com
 ||othersonline.com
@@ -2591,6 +2636,7 @@
 ||ov8pc.tv
 ||oveld.com
 ||overhaps.com
+||oversailor.com
 ||overture.com
 ||overturs.com
 ||ovtopli.ru
@@ -2604,6 +2650,7 @@
 ||p-comme-performance.com
 ||p-digital-server.com
 ||p2ads.com
+||p7hwvdb4p.com
 ||paads.dk
 ||padsdelivery.com
 ||padstm.com
@@ -2732,6 +2779,7 @@
 ||popupvia.com
 ||popwin.net
 ||pornv.org
+||porojo.net
 ||portkingric.net
 ||posternel.com
 ||postrelease.com
@@ -2792,7 +2840,6 @@
 ||ptp24.com
 ||pub-fit.com
 ||pubdirecte.com
-||pubexchange.com
 ||pubgears.com
 ||publicidad.net
 ||publicityclerks.com
@@ -2840,6 +2887,7 @@
 ||quinstreet.com
 ||qwobl.net
 ||qwzmje9w.com
+||qyh7u6wo0c8vz0szdhnvbn.com
 ||rabilitan.com
 ||radeant.com
 ||radicalwealthformula.com
@@ -2866,6 +2914,7 @@
 ||realmedia.com
 ||realsecuredredir.com
 ||realsecuredredirect.com
+||realssp.co.kr
 ||realvu.net
 ||reate.info
 ||recentres.com
@@ -2889,6 +2938,7 @@
 ||remintrex.com
 ||remiroyal.ro
 ||repaynik.com
+||replacescript.in
 ||resideral.com
 ||respecific.net
 ||respond-adserver.cloudapp.net
@@ -2897,6 +2947,7 @@
 ||resultsz.com
 ||retargeter.com
 ||retono42.us
+||retrayan.com
 ||rev2pub.com
 ||revcontent.com
 ||revenue.com
@@ -2927,6 +2978,7 @@
 ||ripplead.com
 ||riverbanksand.com
 ||rixaka.com
+||rkgnmwre.site
 ||rmxads.com
 ||rnmd.net
 ||robocat.me
@@ -2965,6 +3017,7 @@
 ||salvador24.com
 ||samvaulter.com
 ||samvinva.info
+||sape.ru
 ||saple.net
 ||satgreera.com
 ||saveads.net
@@ -2974,6 +3027,7 @@
 ||sba.about.co.kr
 ||sbaffiliates.com
 ||sbcpower.com
+||sc-f6eade8.js
 ||scanmedios.com
 ||scanscout.com
 ||sceno.ru
@@ -3127,6 +3181,7 @@
 ||spotxcdn.com
 ||spotxchange.com
 ||spoutable.com
+||sprawley.com
 ||sprintrade.com
 ||sproose.com
 ||sq2trk2.com
@@ -3238,6 +3293,7 @@
 ||terraclicks.com
 ||testfilter.com
 ||testnet.nl
+||texasboston.com
 ||text-link-ads.com
 ||textonlyads.com
 ||textsrv.com
@@ -3250,6 +3306,7 @@
 ||thebannerexchange.com
 ||thebflix.info
 ||theequalground.info
+||thefoxes.ru
 ||thelistassassin.com
 ||theloungenet.com
 ||themidnightmatulas.com
@@ -3456,6 +3513,7 @@
 ||vastopped.com
 ||vcmedia.com
 ||vcommission.com
+||vcxzv.website
 ||vdopia.com
 ||vectorstock.com
 ||vellde.com
@@ -3646,6 +3704,7 @@
 ||yadomedia.com
 ||yambotan.ru
 ||yashi.com
+||yathmoth.com
 ||yawnedgtuis.org
 ||yb0t.com
 ||ycasmd.info
@@ -3679,6 +3738,7 @@
 ||your-tornado-file.org
 ||youradexchange.com
 ||yourfastpaydayloans.com
+||yourlegacy.club
 ||yourquickads.com
 ||ytsa.net
 ||yuarth.com
@@ -3719,6 +3779,7 @@
 ||zonealta.com
 ||zonplug.com
 ||zoomdirect.com.au
+||zorwrite.com
 ||zugo.com
 ||zwaar.org
 ||zxxds.net
@@ -4016,6 +4077,38 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||jvvqm.us
+||onelead.ru
+||s4block.com
+||zamiko.ru
+||fast2load.ru
+||aa-ds.ru
+||afterview.ru
+||rtl*.org/init.js?
+||actionrtb.com
+||hakiloporet.com
+||awesomeredirector.com
+||rewdinghes.com
+||teasersystem.com
+||err.cloudbit.rocks
+||soccer.ru/sites/all/modules/baner/baner.js
+||emu.ilovemp3.top
+||sawayn.link
+||get-ads.ru
+||avacd.us
+||rutorads.com
+||videopotok.pro
+||perfecttds.net
+||bodaybo.net
+||v2mlemerald.com
+||webqs.ru
+||delo-teh.ru
+||rot.spotsniper.ru
+||cmoneba.ru
+||jcnqc.us
+||avmul.space
+||am17.ru
+||n130adserv.com
 .adonweb.ru
 .adv-modulation.info
 .adv-multithreading.info
@@ -5760,9 +5853,6 @@ thr.ru##.top_branding
 ||madnet.ru
 ||magicanfy.com
 ||magicintim.ru
-||magicplayer-api.torrentstream.org
-||magicplayer-s.acestream.net
-||magicplayer-s.torrentstream.org
 ||magna.ru
 ||mail.banklife.ru/
 ||mail.ru/r/adid/
@@ -7559,6 +7649,10 @@ http://v.*.com/x?
 !
 ! Section contains list of advertising networks
 !
+||magicplayer-api.torrentstream.org
+||magicplayer-s.acestream.net
+||magicplayer-s.torrentstream.org
+||srv.tagila.com/adsrvmedia/
 .bbelements.com
 .doublepimp.com
 .lockscalecompare.com
@@ -7925,6 +8019,15 @@ http://v.*.com/x?
 ||afreeca-tag.ad-mapps.com
 ||mtag.mman.kr
 !
+||owap.su
+||sdk.native123.com
+||update.sdk.batmobi.net
+||api.tinyhoneybee.com/api/getADConfig
+||api.tinyhoneybee.com/api/getADResource
+||stat.kika-backend.com
+||tracking.acekoala.com
+||smart.tinyhoneybee.com/log/
+||ma-code.ru
 ://o0e.ru
 ||1mp.mobi
 ||247realmedia.com
@@ -8513,6 +8616,40 @@ http://v.*.com/x?
 !
 ! Tracking service
 !
+||stat.youku.com
+||atm.youku.com
+||youku.com/compvlog?
+||stats.tudou.com
+||p-log.ykimg.com
+||irs01.com/irt?_iwt_id=
+||58.205.218.4/pos?act=
+||richrelevance.com
+||analytics.shareaholic.com
+||ng.virgul.com
+||movad.de/c.ount?
+||dable.io
+||partner.shareaholic.com
+||track.audtd.com
+||smartpixel.auditorius.ru
+||api.branch.io/*/event
+||mstat.acestream.net
+||icounter.net/getcode.php?site=
+||mail.ebay.com/img/*.gif
+||ebay.com/op/t.do?event
+||rover.ebay.com.au
+||stats.ebay.com
+||ebayrtm.com/rtm?RtmIt&ite=
+||ebayrtm.com/rtm?RtmCmd&a=img&
+||downloads.redbull.com/webtrekk/
+||live.ec2.cxo.name
+||wpdigital.net/metrics/
+||targeting.wpdigital.net
+||cloudtracer101.com
+||marketingautomation.services
+||40nuggets.com
+|x.ligatus.com
+||spoods.rce.veeseo.com
+||tracking.rce.veeseo.com
 //t100.ru
 ://tru.am
 http://r.i.ua/s?
@@ -10923,7 +11060,7 @@ http://r.i.ua/s?
 ||trendcounter.com
 ||trendcounter.de
 ||trendemon.com
-||tribdss.com
+||tribdss.com/meter/
 ||triggeredmessaging.com
 ||triggertag.gorillanation.com
 ||triggit.com
@@ -11227,11 +11364,16 @@ http://r.i.ua/s?
 ||zowary.com
 ||zqtk.net
 ||zroitracker.com
+
 !
-! Black List
-!
+! Adguard DNS rules
 ||ad.adriver.ru^
+
 ||content.adriver.ru^
+
 ||ad.3dnews.ru^
+
 ||an.yandex.ru^
-! White List
+
+!
+! Adguard DNS exceptions
