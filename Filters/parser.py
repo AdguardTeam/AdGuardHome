@@ -30,7 +30,7 @@ def save_file_rule(line, f):
     file_name = line.replace('file', '').strip()
     with open(file_name, 'r') as rf:
         for rule in rf:
-            f.writelines(rule + '\n')
+            f.writelines(rule)
 
 with open('filter.template', 'r') as tmpl:    
     with open('filter.txt', 'w') as f:
