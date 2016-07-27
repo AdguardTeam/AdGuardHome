@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-07-27 13:12:41
+! Last modified: 2016-07-27 13:23:20
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -11368,12 +11368,8 @@ http://r.i.ua/s?
 !
 ! Adguard DNS rules
 ||ad.adriver.ru^
-
 ||content.adriver.ru^
-
 ||ad.3dnews.ru^
-
 ||an.yandex.ru^
-
 !
 ! Adguard DNS exceptions
