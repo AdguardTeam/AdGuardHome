@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-07-27 13:23:20
+! Last modified: 2016-07-28 12:22:39
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -4077,38 +4077,6 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
-||jvvqm.us
-||onelead.ru
-||s4block.com
-||zamiko.ru
-||fast2load.ru
-||aa-ds.ru
-||afterview.ru
-||rtl*.org/init.js?
-||actionrtb.com
-||hakiloporet.com
-||awesomeredirector.com
-||rewdinghes.com
-||teasersystem.com
-||err.cloudbit.rocks
-||soccer.ru/sites/all/modules/baner/baner.js
-||emu.ilovemp3.top
-||sawayn.link
-||get-ads.ru
-||avacd.us
-||rutorads.com
-||videopotok.pro
-||perfecttds.net
-||bodaybo.net
-||v2mlemerald.com
-||webqs.ru
-||delo-teh.ru
-||rot.spotsniper.ru
-||cmoneba.ru
-||jcnqc.us
-||avmul.space
-||am17.ru
-||n130adserv.com
 .adonweb.ru
 .adv-modulation.info
 .adv-multithreading.info
@@ -4281,6 +4249,7 @@ thr.ru##.top_branding
 ||a.mayakinfo.ru
 ||a.mediapapa.org
 ||a.sdska.ru
+||aa-ds.ru
 ||aaakino.ru/search
 ||abcfilm.org
 ||abckino.com/?aid=
@@ -4473,6 +4442,7 @@ thr.ru##.top_branding
 ||affiliates.mozilla.org/link/banner/
 ||affiliates.supergreenhosting.com
 ||afili.ru
+||afterview.ru
 ||afuiw.com
 ||agent.privatbank.ua/branches
 ||agent.privatbank.ua/gadget
@@ -4515,6 +4485,7 @@ thr.ru##.top_branding
 ||am-investor.ru
 ||am11.ru
 ||am12.ru
+||am17.ru
 ||amazingcl.ru
 ||amazonaws.com/js.tradeleads.su
 ||analytics.*.*/*.php
@@ -4576,13 +4547,16 @@ thr.ru##.top_branding
 ||autoreg.ru/images/
 ||autoteaser.ru
 ||autoua.com
+||avacd.us
 ||avazone.ru
 ||avcyr.com
 ||avdego.net
 ||avia.ru/*.shtml
 ||avifilm.ru/new/
+||avmul.space
 ||avxcore.com
 ||awempire.com/ban/
+||awesomeredirector.com
 ||awmengine.net
 ||azartaffiliates.com
 ||azartcash.com
@@ -4718,6 +4692,7 @@ thr.ru##.top_branding
 ||bn.ohah.ru
 ||bn.orthodoxy.ru
 ||bobrilla.com
+||bodaybo.net
 ||bodrer.kinoromb.ru
 ||bodyclick.net
 ||bogopo.biz
@@ -4858,6 +4833,7 @@ thr.ru##.top_branding
 ||cloudkillers.com/?
 ||clvw.net
 ||cmix.org
+||cmoneba.ru
 ||cms-skin.com
 ||cnyharo.ru
 ||co.cc/img/affiliates/
@@ -4967,6 +4943,7 @@ thr.ru##.top_branding
 ||defiques.com
 ||deguiste.com
 ||delightcash.com
+||delo-teh.ru
 ||delphisources.ru/pages/scripts/recl_
 ||delta.mediafort.ru
 ||demonel.porn-eros.com
@@ -5079,6 +5056,7 @@ thr.ru##.top_branding
 ||elnpe.com
 ||elparmo.ru
 ||elvidro.ru
+||emu.ilovemp3.top
 ||enbadar.ru
 ||endata.cx
 ||enfreine.com
@@ -5102,6 +5080,7 @@ thr.ru##.top_branding
 ||erotizzer.info
 ||erotraf.com
 ||eroxdating.com
+||err.cloudbit.rocks
 ||esc-team.com
 ||eseek.ru/button.php?
 ||eserver.ru/img/b/*.gif
@@ -5143,6 +5122,7 @@ thr.ru##.top_branding
 ||fantasy.d2.ru/showban*.php?
 ||farle.ru/?bn=
 ||fas.catholicgreatestinterpret.xyz
+||fast2load.ru
 ||fastnewsis.net
 ||fastsex.ru
 ||fasttrening.ru
@@ -5260,6 +5240,7 @@ thr.ru##.top_branding
 ||gdeslon.ru
 ||gdp.game-rust.ru
 ||geracbv.leohd59.ru
+||get-ads.ru
 ||get-click.net
 ||get-click.ru
 ||get-hit.ru
@@ -5376,6 +5357,7 @@ thr.ru##.top_branding
 ||h.lastras.ru/v/
 ||h12.ru/images/
 ||hahemla.com
+||hakiloporet.com
 ||haln.info
 ||hamphlete.com
 ||hannist.com
@@ -5563,6 +5545,7 @@ thr.ru##.top_branding
 ||jaymedianetwork.com
 ||jazg97clb.ru
 ||jbugk.com
+||jcnqc.us
 ||jcomusic.com
 ||je.revolvermaps.com/
 ||jekson44.ru
@@ -5592,6 +5575,7 @@ thr.ru##.top_branding
 ||justmi4.co.in
 ||jutulep.com
 ||jvs.price.ru
+||jvvqm.us
 ||kaa.gorodkirov.ru/kaFile
 ||kadam.net
 ||kadavara.com
@@ -6085,6 +6069,7 @@ thr.ru##.top_branding
 ||mytraf.ru
 ||n.adonweb.ru/
 ||n.vestey.ru
+||n130adserv.com
 ||n161adserv.com
 ||nachat-s-nula.net
 ||nadavi.net
@@ -6204,6 +6189,7 @@ thr.ru##.top_branding
 ||onadvert.ru
 ||one.lg.ua
 ||one.ru/cgi-bin
+||onelead.ru
 ||onenima.com
 ||oneund.com
 ||oneund.ru
@@ -6304,6 +6290,7 @@ thr.ru##.top_branding
 ||people.1gb.ru
 ||peoplemobile.ru
 ||perezzz.ru
+||perfecttds.net
 ||perinstallcash.com
 ||personalki.net
 ||personki.net/in.htm
@@ -6568,6 +6555,7 @@ thr.ru##.top_branding
 ||reterafu.torplanet.ru
 ||rettik.ru
 ||returso.com
+||rewdinghes.com
 ||rg-be.ru
 ||rgitc.xyz
 ||richbanner.ru
@@ -6595,6 +6583,7 @@ thr.ru##.top_branding
 ||rorer.ru
 ||rosinvest.com/informs/
 ||rot.rusoul.ru
+||rot.spotsniper.ru
 ||rotaban.
 ||rotabanner.
 ||rotation-context.ru
@@ -6620,6 +6609,7 @@ thr.ru##.top_branding
 ||rtbtraf.com
 ||rtbweb.com
 ||rteneme.ru
+||rtl*.org/init.js?
 ||rtl1.biz
 ||rtl1.net
 ||ru-top.net/img/
@@ -6649,6 +6639,7 @@ thr.ru##.top_branding
 ||rutarget.ru
 ||rutizer.org
 ||rutorads.com
+||rutorads.com
 ||rutraff.cc
 ||rutube.com
 ||rutubexx.com
@@ -6676,6 +6667,7 @@ thr.ru##.top_branding
 ||s.tx2.ru
 ||s1.intimshop.ru
 ||s1block.com/rotator
+||s4block.com
 ||sadreno.com
 ||saferedd.com
 ||saferedirrect.com
@@ -6692,6 +6684,7 @@ thr.ru##.top_branding
 ||satcore.info/design/satcore_knopka*.gif
 ||saturn-plus.ru/downloads/*.swf
 ||savclick.ru
+||sawayn.link
 ||sb-money.ru
 ||sb.google.com/safebrowsing/update
 ||scafer.ru
@@ -6821,6 +6814,7 @@ thr.ru##.top_branding
 ||smstik.com/ban
 ||sn00.net
 ||socadvnet.com
+||soccer.ru/sites/all/modules/baner/baner.js
 ||sochetat.net
 ||soft-teleport.ru/uploads/ad/
 ||softbn.ru
@@ -6957,6 +6951,7 @@ thr.ru##.top_branding
 ||teasers.pro
 ||teasers.ru
 ||teasers.ucoz.ru
+||teasersystem.com
 ||teasertop.net
 ||teasertraf.net
 ||teazeramo.net
@@ -7249,6 +7244,7 @@ thr.ru##.top_branding
 ||v.ksdnf.com
 ||v.mir-18.ru
 ||v.movad.de
+||v2mlemerald.com
 ||v2mljs.org
 ||v777.com/
 ||valakas.org/export/
@@ -7298,6 +7294,7 @@ thr.ru##.top_branding
 ||videoklass.ru
 ||videoleks.com
 ||videoplaza.com/creatives/
+||videopotok.pro
 ||videoroll.net
 ||videostrip.com
 ||videostrip.com
@@ -7433,6 +7430,7 @@ thr.ru##.top_branding
 ||webpamella90.uk.to
 ||webplus.info/getres.php?
 ||webproficlub.ru
+||webqs.ru
 ||websex24.ru
 ||websharks.ru
 ||websurf.ru/?
@@ -7593,6 +7591,7 @@ thr.ru##.top_branding
 ||zaebaladblock.ru
 ||zahodi-ka.ru/wbmaster/index/schet.cgi?
 ||zakladka.org.ua
+||zamiko.ru
 ||zamok911.com
 ||zamolxismd.org/*/b/
 ||zapbox.ru
@@ -7649,10 +7648,6 @@ http://v.*.com/x?
 !
 ! Section contains list of advertising networks
 !
-||magicplayer-api.torrentstream.org
-||magicplayer-s.acestream.net
-||magicplayer-s.torrentstream.org
-||srv.tagila.com/adsrvmedia/
 .bbelements.com
 .doublepimp.com
 .lockscalecompare.com
@@ -7729,6 +7724,7 @@ http://v.*.com/x?
 ||applicationgrabb.net
 ||arecio.work
 ||asto-exo.com
+||asv.whatismyip.win
 ||atwola.com
 ||avjp.net/?aid=
 ||axecash.com
@@ -7874,6 +7870,9 @@ http://v.*.com/x?
 ||lockerdome.com
 ||lookfornews.net
 ||madyna.ru
+||magicplayer-api.torrentstream.org
+||magicplayer-s.acestream.net
+||magicplayer-s.torrentstream.org
 ||magifirst.com
 ||mainclc.com
 ||maneta.info
@@ -7955,6 +7954,7 @@ http://v.*.com/x?
 ||slikslik.com
 ||soadvr.com
 ||softexcellence.com
+||srv.tagila.com/adsrvmedia/
 ||srvpub.com
 ||stateresolver.link
 ||static.adtidy.net
@@ -8019,15 +8019,6 @@ http://v.*.com/x?
 ||afreeca-tag.ad-mapps.com
 ||mtag.mman.kr
 !
-||owap.su
-||sdk.native123.com
-||update.sdk.batmobi.net
-||api.tinyhoneybee.com/api/getADConfig
-||api.tinyhoneybee.com/api/getADResource
-||stat.kika-backend.com
-||tracking.acekoala.com
-||smart.tinyhoneybee.com/log/
-||ma-code.ru
 ://o0e.ru
 ||1mp.mobi
 ||247realmedia.com
@@ -8168,6 +8159,8 @@ http://v.*.com/x?
 ||api.appodeal.com/stats
 ||api.fusepowered.com
 ||api.taboola.com/*/recommendations.get
+||api.tinyhoneybee.com/api/getADConfig
+||api.tinyhoneybee.com/api/getADResource
 ||app-measurement.com
 ||app-trackings.com
 ||appads.com
@@ -8355,6 +8348,7 @@ http://v.*.com/x?
 ||luxadv.com
 ||luxup.ru
 ||m.tubemate.net/c.jsp
+||ma-code.ru
 ||mad.mobisky.pl
 ||madadsmedia.com
 ||madnet.ru
@@ -8443,6 +8437,7 @@ http://v.*.com/x?
 ||onclickads.net
 ||optimatic.com
 ||os.scmpacdn.com
+||owap.su
 ||pagefair.net
 ||partner.googleadservices.com
 ||partnerearning.com
@@ -8493,6 +8488,7 @@ http://v.*.com/x?
 ||s.innovid.com
 ||saymedia.com
 ||scorecardresearch.com
+||sdk.native123.com
 ||sekindo.com
 ||serve-sys.com
 ||servebom.com
@@ -8506,6 +8502,7 @@ http://v.*.com/x?
 ||sitescout.com
 ||smaato.net
 ||smaclick.com
+||smart.tinyhoneybee.com/log/
 ||smartadserver.com
 ||smarttds.ru
 ||sociomantic.com
@@ -8520,6 +8517,7 @@ http://v.*.com/x?
 ||startappexchange.com
 ||startappservice.com/*/gethtmlad
 ||startappservice.com/InApp/
+||stat.kika-backend.com
 ||static.doubleclick.net
 ||stickyadstv.com
 ||supersonicads-a.akamaihd.net
@@ -8552,6 +8550,7 @@ http://v.*.com/x?
 ||tpc.googlesyndication.com
 ||track.cpatool.net
 ||trackimpression.com
+||tracking.acekoala.com
 ||tradeadexchange.com
 ||traff10wap.com
 ||trafficjunky.net
@@ -8567,6 +8566,7 @@ http://v.*.com/x?
 ||umbel.com
 ||underclick.ru
 ||unicume.com
+||update.sdk.batmobi.net
 ||upsight.com
 ||utarget.ru
 ||velti.com
@@ -8616,44 +8616,11 @@ http://v.*.com/x?
 !
 ! Tracking service
 !
-||stat.youku.com
-||atm.youku.com
-||youku.com/compvlog?
-||stats.tudou.com
-||p-log.ykimg.com
-||irs01.com/irt?_iwt_id=
-||58.205.218.4/pos?act=
-||richrelevance.com
-||analytics.shareaholic.com
-||ng.virgul.com
-||movad.de/c.ount?
-||dable.io
-||partner.shareaholic.com
-||track.audtd.com
-||smartpixel.auditorius.ru
-||api.branch.io/*/event
-||mstat.acestream.net
-||icounter.net/getcode.php?site=
-||mail.ebay.com/img/*.gif
-||ebay.com/op/t.do?event
-||rover.ebay.com.au
-||stats.ebay.com
-||ebayrtm.com/rtm?RtmIt&ite=
-||ebayrtm.com/rtm?RtmCmd&a=img&
-||downloads.redbull.com/webtrekk/
-||live.ec2.cxo.name
-||wpdigital.net/metrics/
-||targeting.wpdigital.net
-||cloudtracer101.com
-||marketingautomation.services
-||40nuggets.com
-|x.ligatus.com
-||spoods.rce.veeseo.com
-||tracking.rce.veeseo.com
 //t100.ru
 ://tru.am
 http://r.i.ua/s?
 |http://r.i.ua
+|x.ligatus.com
 ||0stats.com
 ||0tracker.com
 ||1-cl0ud.com
@@ -8693,10 +8660,12 @@ http://r.i.ua/s?
 ||3dn.ru/stat/
 ||3dstats.com
 ||3gl.net/
+||40nuggets.com
 ||4stats.de
 ||50bang.org
 ||51yes.com
 ||55labs.com
+||58.205.218.4/pos?act=
 ||62.160.52.73
 ||66.228.52.30
 ||67.228.151.70
@@ -8826,6 +8795,7 @@ http://r.i.ua/s?
 ||analytics.newsinc.com
 ||analytics.query.yahoo.com
 ||analytics.rechtslupe.org
+||analytics.shareaholic.com
 ||analytics.twitter.com
 ||analytics.yahoo.com
 ||analyticswizard.com
@@ -8844,6 +8814,7 @@ http://r.i.ua/s?
 ||apextwo.com
 ||api.aio.media/stat?
 ||api.apisolutions.work/track/
+||api.branch.io/*/event
 ||apicit.net
 ||apkonline.ru
 ||apollofind.com
@@ -8860,6 +8831,7 @@ http://r.i.ua/s?
 ||atdmt.com
 ||athenainstitute.biz
 ||ati-host.net/hit.xiti?s=
+||atm.youku.com
 ||atraxio.com
 ||atsfi.de
 ||attracta.com
@@ -9100,6 +9072,7 @@ http://r.i.ua/s?
 ||clixcount.com
 ||clixpy.com
 ||cloud-exploration.com
+||cloudtracer101.com
 ||clubcollector.com
 ||clustrmaps.com
 ||cmcore.com
@@ -9312,6 +9285,7 @@ http://r.i.ua/s?
 ||d81mfvml8p5ml.cloudfront.net
 ||d8rk54i4mohrb.cloudfront.net
 ||d9lq0o81skkdj.cloudfront.net
+||dable.io
 ||dacounter.com
 ||dailycaller-alerts.com
 ||dailymail.co.uk/tracking/
@@ -9390,6 +9364,7 @@ http://r.i.ua/s?
 ||doubleclick.net/json?
 ||doubleclick.net/pixel?
 ||doubleclick.net
+||downloads.redbull.com/webtrekk/
 ||downture.in
 ||dreamcounter.de
 ||ds-aksb-a.akamaihd.net
@@ -9421,6 +9396,9 @@ http://r.i.ua/s?
 ||easyresearch.se
 ||easytarget.ru
 ||easytracking.de
+||ebay.com/op/t.do?event
+||ebayrtm.com/rtm?RtmCmd&a=img&
+||ebayrtm.com/rtm?RtmIt&ite=
 ||ec-track.com
 ||eclampsialemontree.net
 ||ecn5.com
@@ -9704,6 +9682,7 @@ http://r.i.ua/s?
 ||gscounters.*.gigya.com
 ||gscounters.gigya.com
 ||gsimedia.net
+||gssprt.jp
 ||gstats.cn
 ||gtop.ro
 ||gtopstats.com
@@ -9791,6 +9770,7 @@ http://r.i.ua/s?
 ||ibpxl.net
 ||ic-live.com
 ||iclive.com
+||icounter.net/getcode.php?site=
 ||ics0.com
 ||icstats.nl
 ||ideoclick.com
@@ -9892,6 +9872,7 @@ http://r.i.ua/s?
 ||ipv6monitoring.eu
 ||iraiser.eu
 ||irelandmetrix.ie
+||irs01.com/irt?_iwt_id=
 ||irs09.com
 ||iryazan.ru
 ||is.sabah.com.tr
@@ -9913,6 +9894,7 @@ http://r.i.ua/s?
 ||jiankongbao.com
 ||jimdo-stats.com
 ||jirafe.com
+||js.medi-8.net
 ||jscounter.com
 ||jsid.info
 ||json.inf.mtml.ru/?*&count=
@@ -9989,6 +9971,7 @@ http://r.i.ua/s?
 ||linkxchanger.com
 ||listrakbi.com
 ||listtop.ru
+||live.ec2.cxo.name
 ||livecount.fr
 ||livecounter.dk
 ||livehit.net
@@ -10048,6 +10031,7 @@ http://r.i.ua/s?
 ||magiq.com
 ||magnetmail1.net
 ||magnify360.com
+||mail.ebay.com/img/*.gif
 ||mail.ru/grstat
 ||mail.ru/gstat
 ||mailstat.us
@@ -10057,6 +10041,7 @@ http://r.i.ua/s?
 ||market015.com
 ||market2lead.com
 ||marketing-page.de
+||marketingautomation.services
 ||marketo.com
 ||marketo.net
 ||marktest.pt
@@ -10152,6 +10137,7 @@ http://r.i.ua/s?
 ||mouseflow.com
 ||mousestats.com
 ||mousetrace.com
+||movad.de/c.ount?
 ||mplxtms.com
 ||mpstat.us
 ||mpwe.net
@@ -10159,6 +10145,7 @@ http://r.i.ua/s?
 ||msg.71.am
 ||msgapp.com
 ||msgtag.com
+||mstat.acestream.net
 ||mstop.ru/
 ||mstracker.net
 ||mtp.spaces.ru
@@ -10237,6 +10224,7 @@ http://r.i.ua/s?
 ||newstatscounter.info
 ||newtrackmedia.com
 ||nextstat.com
+||ng.virgul.com
 ||ngacm.com
 ||ngastatic.com
 ||ngmco.net
@@ -10332,10 +10320,12 @@ http://r.i.ua/s?
 ||owldata.com
 ||owneriq.net
 ||oxidy.com
+||p-log.ykimg.com
 ||p-td.com
 ||p.l1v.ly
 ||p.raasnet.com
 ||p.typekit.net
+||p.yotpo.com
 ||p0.raasnet.com
 ||p2trc.emv2.com
 ||pa-oa.com
@@ -10358,6 +10348,7 @@ http://r.i.ua/s?
 ||parameter.dk
 ||pardot.com
 ||parklogic.com
+||partner.shareaholic.com
 ||pathful.com
 ||pautina.net/images/
 ||pc-agency24.de
@@ -10581,6 +10572,7 @@ http://r.i.ua/s?
 ||riastats.com
 ||richard-group.com
 ||richmetrics.com
+||richrelevance.com
 ||rightstats.com
 ||ritecounter.com
 ||rkdms.com
@@ -10597,6 +10589,7 @@ http://r.i.ua/s?
 ||roitracking.net
 ||roivista.com
 ||rollingcounters.com
+||rover.ebay.com.au
 ||royalcount.de
 ||rrimpl.com
 ||rs0.co.uk
@@ -10662,6 +10655,7 @@ http://r.i.ua/s?
 ||sensor.org.ua
 ||sentry01.zerg.rambler.ru
 ||seo-master.net
+||seogift.ru
 ||seomonitor.ro
 ||seomoz.org
 ||seoparts.net
@@ -10717,6 +10711,7 @@ http://r.i.ua/s?
 ||smallseotools.com
 ||smart-ip.net
 ||smarterremarketer.net
+||smartpixel.auditorius.ru
 ||smartracker.net
 ||smfsvc.com
 ||smileyhost.net
@@ -10747,6 +10742,7 @@ http://r.i.ua/s?
 ||splittag.com
 ||splurgi.com
 ||sponsorcounter.de
+||spoods.rce.veeseo.com
 ||spotmx.com
 ||spring-tns.net
 ||spring.de
@@ -10775,6 +10771,7 @@ http://r.i.ua/s?
 ||stat.rare.ru
 ||stat.sputnik.ru
 ||stat.www.fi
+||stat.youku.com
 ||stat08.com
 ||stat24.com
 ||stat24.meta.ua
@@ -10808,12 +10805,15 @@ http://r.i.ua/s?
 ||stats.cnevids.com
 ||stats.cz
 ||stats.de
+||stats.ebay.com
 ||stats.fr
 ||stats.ft.com
 ||stats.g.doubleclick.net
 ||stats.kaltura.com
 ||stats.lt
 ||stats.rutracker.ga
+||stats.shopify.com
+||stats.tudou.com
 ||stats.wired.com
 ||stats.wordpress.com
 ||stats.wp.com
@@ -10905,6 +10905,7 @@ http://r.i.ua/s?
 ||tapstream.com
 ||target.ukr.net
 ||targetfuel.com
+||targeting.wpdigital.net
 ||tatap.org/img_
 ||tcactivity.net
 ||tcimg.com
@@ -11000,6 +11001,7 @@ http://r.i.ua/s?
 ||tracer.jp
 ||tracetracking.net
 ||traceworks.com
+||track.audtd.com
 ||track.effiliation.com
 ||track.ft.com
 ||track.recreativ.ru
@@ -11022,6 +11024,7 @@ http://r.i.ua/s?
 ||tracking.olx-st.com
 ||tracking.performgroup.com
 ||tracking.pixelfederation.com
+||tracking.rce.veeseo.com
 ||tracking.sim-technik.de
 ||tracking.tomshardware.co.uk
 ||tracking100.com
@@ -11125,6 +11128,7 @@ http://r.i.ua/s?
 ||userzoom.com
 ||usuarios-online.com
 ||uzrating.com
+||v.shopify.com
 ||valuedopinions.co.uk
 ||vantage-media.net
 ||vbanalytics.com
@@ -11291,6 +11295,7 @@ http://r.i.ua/s?
 ||worldlogger.com
 ||wowanalytics.co.uk
 ||wp-stats.com
+||wpdigital.net/metrics/
 ||wpdstat.com
 ||wrating.com
 ||wredint.com
@@ -11346,6 +11351,7 @@ http://r.i.ua/s?
 ||youcanoptout.com
 ||youcanoptout.net
 ||youcanoptout.org
+||youku.com/compvlog?
 ||your-counter.be
 ||youramigo.com
 ||zaehler.tv
@@ -11371,5 +11377,15 @@ http://r.i.ua/s?
 ||content.adriver.ru^
 ||ad.3dnews.ru^
 ||an.yandex.ru^
+||rutrk.org^
+||t.insigit.com^
+||traffichunt.com^
+||sportbets.su^
+||ad.onliner.by^
+||nighter.club^
+||trafmag.com^
+||marketgid.com^
+||directadvert.ru^
+||betweendigital.com^
 !
 ! Adguard DNS exceptions
