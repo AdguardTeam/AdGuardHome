@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-07-28 12:22:39
+! Last modified: 2016-07-29 13:31:52
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -1075,6 +1075,7 @@
 ||chango.com
 ||chanished.net
 ||chanitet.ru
+||chargeplatform.com
 ||charltonmedia.com
 ||checkm8.com
 ||checkmystats.com.au
@@ -2412,6 +2413,7 @@
 ||mogointeractive.com
 ||mojoaffiliates.com
 ||mokonocdn.com
+||monetizer101.com
 ||money-cpm.fr
 ||money4ads.com
 ||moneycosmos.com
@@ -5617,7 +5619,6 @@ thr.ru##.top_branding
 ||kinopromobase.ru
 ||kinorama.tv/
 ||kinotraff.ru
-||kinozal.tv
 ||kioskas.lt/rex/pop.php?
 ||kisakuku.org
 ||kissmyads.biz
@@ -5736,7 +5737,7 @@ thr.ru##.top_branding
 ||liex.ru/
 ||lifejoornal.ml/tizshow.php
 ||lifemeet.biz
-||likemagazine.ru/*/tsr_system/
+||likemagazine.ru
 ||likondok.com
 ||lim50.ru
 ||limo20.ru
@@ -7648,6 +7649,7 @@ http://v.*.com/x?
 !
 ! Section contains list of advertising networks
 !
+||openclose.click
 .bbelements.com
 .doublepimp.com
 .lockscalecompare.com
@@ -11387,5 +11389,7 @@ http://r.i.ua/s?
 ||marketgid.com^
 ||directadvert.ru^
 ||betweendigital.com^
+||letysheeps.ru^
+||tools.runetki.co^
 !
 ! Adguard DNS exceptions
