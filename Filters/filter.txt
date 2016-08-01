@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-07-29 13:31:52
+! Last modified: 2016-08-01 12:03:20
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -1017,6 +1017,7 @@
 ||buyt.in
 ||buzzcity.net
 ||buzzparadise.com
+||bw94.xyz
 ||bwinpartypartners.com
 ||byspot.com
 ||byzoo.org
@@ -1207,6 +1208,7 @@
 ||conyak.com
 ||coolerads.com
 ||coolmirage.com
+||coolyeti.info
 ||copacet.com
 ||cor-natty.com
 ||coretarget.co.uk
@@ -1768,6 +1770,7 @@
 ||geopromos.com
 ||geovisite.com
 ||gestionpub.com
+||getfuneta.info
 ||getgamers.eu
 ||getgscfree.com
 ||gets-web.space
@@ -2173,6 +2176,7 @@
 ||leetmedia.com
 ||legisland.net
 ||leohd59.ru
+||lepinsar.com
 ||letilyadothejob.com
 ||letsadvertisetogether.com
 ||letsgoshopping.tk
@@ -8021,6 +8025,8 @@ http://v.*.com/x?
 ||afreeca-tag.ad-mapps.com
 ||mtag.mman.kr
 !
+||dispatcher.mng-ads.com
+||mobile.mng-ads.com
 ://o0e.ru
 ||1mp.mobi
 ||247realmedia.com
@@ -8618,6 +8624,11 @@ http://v.*.com/x?
 !
 ! Tracking service
 !
+||analytics.fairfax.com.au
+||lynn.zgsemi.cn
+||inaudium.com
+||sumologic.com
+||sharp.ondu.ru
 //t100.ru
 ://tru.am
 http://r.i.ua/s?
@@ -9287,7 +9298,6 @@ http://r.i.ua/s?
 ||d81mfvml8p5ml.cloudfront.net
 ||d8rk54i4mohrb.cloudfront.net
 ||d9lq0o81skkdj.cloudfront.net
-||dable.io
 ||dacounter.com
 ||dailycaller-alerts.com
 ||dailymail.co.uk/tracking/
