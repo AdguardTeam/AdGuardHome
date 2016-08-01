@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-08-01 12:03:20
+! Last modified: 2016-08-01 19:56:30
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -4083,6 +4083,9 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||ofenop.ru
+||vqfqo.us
+||abrolog.ru
 .adonweb.ru
 .adv-modulation.info
 .adv-multithreading.info
@@ -7651,6 +7654,12 @@ http://v.*.com/vv?
 http://v.*.com/x?
 
 !
+! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
+!
+||statistic.imgpay.ru
+||stats.imgpay.ru
+||action.evrikak.ru
+!
 ! Section contains list of advertising networks
 !
 ||openclose.click
@@ -8017,6 +8026,9 @@ http://v.*.com/x?
 ||zemanta.com
 ||zeti.com
 
+!
+! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
+!
 !
 ! Section contains list of advertising networks
 !
@@ -8624,6 +8636,7 @@ http://v.*.com/x?
 !
 ! Tracking service
 !
+||actonsoftware.com
 ||analytics.fairfax.com.au
 ||lynn.zgsemi.cn
 ||inaudium.com
@@ -11403,3 +11416,5 @@ http://r.i.ua/s?
 ||tools.runetki.co^
 !
 ! Adguard DNS exceptions
+@@||googletagservices.com
+@@||googletagmanager.com
