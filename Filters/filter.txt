@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-08-02 01:03:28
+! Last modified: 2016-08-02 12:10:39
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -65,6 +65,7 @@
 ||360yield.com
 ||365sbaffiliates.com
 ||3cnce854.com
+||3jsbf5.xyz
 ||3lift.com
 ||3lr67y45.com
 ||3omb.com
@@ -577,6 +578,7 @@
 ||advanseads.com
 ||advantageglobalmarketing.com
 ||advard.com
+||advarkads.com
 ||advatar.to
 ||adventori.com
 ||adverigo.com
@@ -1545,6 +1547,7 @@
 ||ebuzzing.com
 ||ebz.io
 ||ecpmrocks.com
+||ecto-ecto-uno.com
 ||edgeads.org
 ||edgevertise.com
 ||edomz.net
@@ -1590,6 +1593,7 @@
 ||especifican.com
 ||essayads.com
 ||essaycoupons.com
+||et-code.ru
 ||etargetnet.com
 ||etgdta.com
 ||etmanly.ru
@@ -2016,6 +2020,7 @@
 ||instantdollarz.com
 ||instinctiveads.com
 ||instivate.com
+||instreamvideo.ru
 ||integral-marketing.com
 ||intellibanners.com
 ||intellitxt.com
@@ -2148,6 +2153,7 @@
 ||kumpulblogger.com
 ||l3op.info
 ||ladbrokesaffiliates.com.au
+||laim.tv
 ||lakequincy.com
 ||lakidar.net
 ||landelcut.com
@@ -2180,6 +2186,7 @@
 ||letilyadothejob.com
 ||letsadvertisetogether.com
 ||letsgoshopping.tk
+||letysheeps.ru
 ||lfstmedia.com
 ||lgse.com
 ||liftdna.com
@@ -2470,6 +2477,8 @@
 ||myvads.com
 ||mywidget.mobi
 ||mz28ismn.com
+||n130adserv.com
+||n161adserv.com
 ||n388hkxg.com
 ||n4403ad.doubleclick.net
 ||nabbr.com
@@ -3362,6 +3371,7 @@
 ||toroadvertisingmedia.com
 ||torrida.net
 ||torrpedoads.net
+||torvind.com
 ||total-media.net
 ||totalprofitplan.com
 ||totemcash.com
@@ -3769,7 +3779,6 @@
 ||zeads.com
 ||zedo.com
 ||zeesiti.com
-||zemanta.com
 ||zenoviaexchange.com
 ||zenoviagroup.com
 ||zercstas.com
@@ -8636,6 +8645,7 @@ http://v.*.com/x?
 !
 ! Tracking service
 !
+||a3.ogt.jp
 ||cc.zeit.de
 ||a.hstrck.com
 ||cquotient.com
