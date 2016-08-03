@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-08-03 12:03:28
+! Last modified: 2016-08-04 00:37:59
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -1610,7 +1610,6 @@
 ||excellenceads.com
 ||exchange4media.com
 ||exitexplosion.com
-||exitintel.com
 ||exitjunction.com
 ||exoclick.com
 ||exoneratedresignation.info
@@ -8050,6 +8049,7 @@ http://v.*.com/x?
 ||afreeca-tag.ad-mapps.com
 ||mtag.mman.kr
 !
+||cell.zhybzp.cn
 ||dispatcher.mng-ads.com
 ||mobile.mng-ads.com
 ://o0e.ru
@@ -11442,3 +11442,6 @@ http://r.i.ua/s?
 @@||googletagmanager.com^
 @@||omniture.walmart.com^
 @@||omtrdc.net^
+! linkedin.com
+@@||cedexis.net^
+@@||licdn.com^
