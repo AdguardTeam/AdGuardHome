@@ -2,3 +2,6 @@
 @@||googletagmanager.com^
 @@||omniture.walmart.com^
 @@||omtrdc.net^
+! linkedin.com
+@@||cedexis.net^
+@@||licdn.com^
