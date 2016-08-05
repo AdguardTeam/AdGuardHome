@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-08-04 12:02:53
+! Last modified: 2016-08-05 12:02:57
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -4091,6 +4091,15 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||linkmyc.com
+||toftforcal.com
+||nenrk.us
+||uaadi.com
+||xxuhter.ru
+||ahial.top
+||ywadk.top
+||hakiloporet.com
+||gocdn.ru
 ||nhqqv.space
 ||actionads.ru
 ||useorthe.com
@@ -7668,6 +7677,7 @@ http://v.*.com/x?
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d899.webazilla.com
 ||statistic.imgpay.ru
 ||stats.imgpay.ru
 ||action.evrikak.ru
@@ -8649,6 +8659,13 @@ http://v.*.com/x?
 !
 ! Tracking service
 !
+||veeseo.com
+||rmtag.com
+||sf14g.com
+||tl813.com
+||d3c3cq33003psk.cloudfront.net
+||dtxtngytz5im1.cloudfront.net
+||grmtech.net
 ||in.treasuredata.com
 ||aamsitecertifier.com
 ||tracker.neon-images.com
@@ -8666,9 +8683,6 @@ http://v.*.com/x?
 ||sharp.ondu.ru
 //t100.ru
 ://tru.am
-http://r.i.ua/s?
-|http://r.i.ua
-|x.ligatus.com
 ||0stats.com
 ||0tracker.com
 ||1-cl0ud.com
