@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-08-05 12:02:57
+! Last modified: 2016-08-07 19:23:55
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -702,6 +702,7 @@
 ||aim4media.com
 ||aimatch.com
 ||ajansreklam.net
+||ajgffcat.com
 ||ajillionmax.com
 ||akamhd.com
 ||albopa.work
@@ -727,6 +728,7 @@
 ||amazon-adsystem.com
 ||amazon-cornerstone.com
 ||amazonily.com
+||ambaab.com
 ||amd2016.com
 ||amertazy.com
 ||amgdgt.com
@@ -955,6 +957,7 @@
 ||boo-box.com
 ||bookelement.biz
 ||booklandonline.info
+||boom-boom-vroom.com
 ||boostable.com
 ||boostads.net
 ||boostclic.com
@@ -1184,6 +1187,7 @@
 ||completecarrd.com
 ||complive.link
 ||comscore.com
+||comwgi.com
 ||conduit-banners.com
 ||conduit-services.com
 ||connatix.com
@@ -1756,6 +1760,7 @@
 ||gate-ru.com
 ||gatikus.com
 ||gayadnetwork.com
+||gbiwxmjw.com
 ||gdmdigital.com
 ||geede.info
 ||geek2us.net
@@ -2621,6 +2626,7 @@
 ||oos4l.com
 ||opap.co.kr
 ||openbook.net
+||openclose.click
 ||openetray.com
 ||opensourceadvertisementnetwork.info
 ||openx.net
@@ -3599,6 +3605,7 @@
 ||vuiads.de
 ||vuiads.info
 ||vuiads.net
+||vxuhavco.com
 ||w00tads.com
 ||w00tmedia.net
 ||w3exit.com
@@ -3755,6 +3762,7 @@
 ||yourfastpaydayloans.com
 ||yourlegacy.club
 ||yourquickads.com
+||ypyarwgh.com
 ||ytsa.net
 ||yuarth.com
 ||yucce.com
@@ -4091,6 +4099,10 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||dskrt.net
+||teamrtb.net
+||ropsinde.com
+||yourfoxes.ru
 ||linkmyc.com
 ||toftforcal.com
 ||nenrk.us
@@ -7677,6 +7689,7 @@ http://v.*.com/x?
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||mega.megatorrents.org.ua
 ||d899.webazilla.com
 ||statistic.imgpay.ru
 ||stats.imgpay.ru
@@ -7684,6 +7697,7 @@ http://v.*.com/x?
 !
 ! Section contains list of advertising networks
 !
+||dr3k6qonw2kee.cloudfront.net
 ||openclose.click
 .bbelements.com
 .doublepimp.com
@@ -10407,7 +10421,6 @@ http://v.*.com/x?
 ||pagesense.com
 ||paidstats.com
 ||parameter.dk
-||pardot.com
 ||parklogic.com
 ||partner.shareaholic.com
 ||pathful.com
@@ -11459,3 +11472,6 @@ http://v.*.com/x?
 ! linkedin.com
 @@||cedexis.net^
 @@||licdn.com^
+! bild.de
+@@||ec-ns.sascdn.com^
+@@||cdn1.smartadserver.com^
