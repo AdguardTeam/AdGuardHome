@@ -1,3 +1,4 @@
+@@||viglink.com^
 @@||googletagservices.com^
 @@||googletagmanager.com^
 @@||omniture.walmart.com^
