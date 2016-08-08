@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-08-09 02:17:57
+! Last modified: 2016-08-09 02:19:52
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -11468,6 +11468,7 @@ http://v.*.com/x?
 ||tools.runetki.co^
 !
 ! Adguard DNS exceptions
+@@||imasdk.googleapis.com^
 @@||viglink.com^
 @@||googletagservices.com^
 @@||googletagmanager.com^
