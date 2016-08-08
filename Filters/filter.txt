@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-08-08 12:02:58
+! Last modified: 2016-08-09 02:17:57
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -13,6 +13,7 @@
 ||0xwxmj21r75kka.com
 ||101m3.com
 ||103092804.com
+||104.154.237.93
 ||10fbb07a4b0.se
 ||10pipsaffiliates.com
 ||1100i.com
@@ -4099,6 +4100,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||adssyscom.com
 ||dskrt.net
 ||teamrtb.net
 ||ropsinde.com
@@ -8673,6 +8675,7 @@ http://v.*.com/x?
 !
 ! Tracking service
 !
+||visitor-analytics.net
 ||veeseo.com
 ||rmtag.com
 ||sf14g.com
@@ -11465,6 +11468,7 @@ http://v.*.com/x?
 ||tools.runetki.co^
 !
 ! Adguard DNS exceptions
+@@||viglink.com^
 @@||googletagservices.com^
 @@||googletagmanager.com^
 @@||omniture.walmart.com^
