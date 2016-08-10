@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-08-10 12:02:53
+! Last modified: 2016-08-10 19:02:46
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -4104,6 +4104,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||altpubli.com
 ||wlbann.com
 ||rofhathe.com
 ||nrzcj.top
@@ -7711,6 +7712,8 @@ http://v.*.com/x?
 !
 ! Section contains list of advertising networks
 !
+||dr3k6qonw2kee.cloudfront.net
+||d17rlarvg2khuc.cloudfront.net
 ||spidtest.org
 ||dr3k6qonw2kee.cloudfront.net
 ||openclose.click
@@ -7981,7 +7984,6 @@ http://v.*.com/x?
 ||polimadv.com
 ||pomtiy.com
 ||pop-road47.info
-||popads.net
 ||popped.biz
 ||poprush.net
 ||popup-traffic.com
@@ -11492,4 +11494,4 @@ http://v.*.com/x?
 @@||licdn.com^
 ! bild.de
 @@||ec-ns.sascdn.com^
-@@||smartadserver.com^
+@@||smartadserver.com
