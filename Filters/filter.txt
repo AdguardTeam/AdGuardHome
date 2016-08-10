@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-08-09 12:02:58
+! Last modified: 2016-08-10 12:02:53
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -2565,6 +2565,7 @@
 ||nster.net
 ||ntent.com
 ||ntv.io
+||nui.media
 ||nullenabler.com
 ||numberium.com
 ||numbers.md
@@ -2662,6 +2663,7 @@
 ||overture.com
 ||overturs.com
 ||ovtopli.ru
+||owlads.io
 ||oxado.com
 ||oxsng.com
 ||oxtracking.com
@@ -3321,6 +3323,7 @@
 ||textsrv.com
 ||tfag.de
 ||tgtmedia.com
+||thaez4sh.com
 ||thangasoline.com
 ||thankyouforadvertising.com
 ||theadgateway.com
@@ -4101,6 +4104,14 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||wlbann.com
+||rofhathe.com
+||nrzcj.top
+||wecai.us
+||uwuyn.us
+||slejv.space
+||svotu.top
+||oupox.club
 ||adssyscom.com
 ||dskrt.net
 ||teamrtb.net
@@ -7700,6 +7711,7 @@ http://v.*.com/x?
 !
 ! Section contains list of advertising networks
 !
+||spidtest.org
 ||dr3k6qonw2kee.cloudfront.net
 ||openclose.click
 .bbelements.com
@@ -11480,4 +11492,4 @@ http://v.*.com/x?
 @@||licdn.com^
 ! bild.de
 @@||ec-ns.sascdn.com^
-@@||cdn1.smartadserver.com^
+@@||smartadserver.com^
