@@ -9,4 +9,4 @@
 @@||licdn.com^
 ! bild.de
 @@||ec-ns.sascdn.com^
-@@||smartadserver.com^
+@@||smartadserver.com
