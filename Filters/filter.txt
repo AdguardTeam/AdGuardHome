@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-08-10 19:02:46
+! Last modified: 2016-08-11 12:02:40
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -439,6 +439,7 @@
 ||ads-twitter.com
 ||ads.cc
 ||ads.intergi.com
+||ads.rd.linksynergy.com
 ||ads01.com
 ||ads2ads.net
 ||ads2srv.com
@@ -733,6 +734,7 @@
 ||amd2016.com
 ||amertazy.com
 ||amgdgt.com
+||amp.rd.linksynergy.com
 ||ampxchange.com
 ||anastasiasaffiliate.com
 ||andbeyond.media
@@ -947,6 +949,7 @@
 ||bluetoad.com
 ||blumi.to
 ||bmanpn.com
+||bmqnguru.com
 ||bnetworx.com
 ||bnhtml.com
 ||bnmla.com
@@ -1894,6 +1897,7 @@
 ||hit-now.com
 ||hits.sys.lv
 ||hitwastedgarden.com
+||hkoxlirf.com
 ||hlads.com
 ||hmongcash.com
 ||hokaybo.com
@@ -4104,6 +4108,10 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||abs-cdn.org
+||qwe.qrrgv.space
+||t.4623.ru
+||newsvidnews.info
 ||altpubli.com
 ||wlbann.com
 ||rofhathe.com
