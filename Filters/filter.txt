@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-08-12 12:02:53
+! Last modified: 2016-08-12 20:23:40
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -4108,6 +4108,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||tedobe.com
+||m3gadeth.ru
 .adonweb.ru
 .adv-modulation.info
 .adv-multithreading.info
@@ -7721,6 +7723,8 @@ http://v.*.com/x?
 !
 ! Section contains list of advertising networks
 !
+||047855sphr.com
+openclose.click
 .bbelements.com
 .doublepimp.com
 .lockscalecompare.com
@@ -11505,3 +11509,5 @@ http://v.*.com/x?
 ! bild.de
 @@||ec-ns.sascdn.com^
 @@||smartadserver.com
+! kinovo.me
+@@||mxtads.com^
