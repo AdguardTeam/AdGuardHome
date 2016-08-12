@@ -10,3 +10,5 @@
 ! bild.de
 @@||ec-ns.sascdn.com^
 @@||smartadserver.com
+! kinovo.me
+@@||mxtads.com^
