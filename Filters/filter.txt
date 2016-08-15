@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-08-12 20:23:40
+! Last modified: 2016-08-15 12:03:10
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -94,6 +94,7 @@
 ||62.27.51.163
 ||63.225.61.4
 ||64.20.60.123
+||67s6gxv28kin.com
 ||74.117.182.77
 ||777seo.com
 ||778669.com
@@ -507,6 +508,7 @@
 ||adsnetworkserver.com
 ||adsnext.net
 ||adsniper.ru
+||adsomi.com
 ||adsonar.com
 ||adsoptimal.com
 ||adsopx.com
@@ -715,6 +717,7 @@
 ||allabc.com
 ||alleliteads.com
 ||allmt.com
+||allopenclose.click
 ||alloydigital.com
 ||allyes.com
 ||alphabird.com
@@ -970,6 +973,7 @@
 ||bormoni.ru
 ||bororas.com
 ||bostonparadise.com
+||bostonwall.com
 ||boydadvertising.co.uk
 ||boylesportsreklame.com
 ||bptracking.com
@@ -1739,6 +1743,7 @@
 ||futureus.com
 ||fwmrm.net
 ||fxdepo.com
+||fxjyultd.com
 ||fxyc0dwa.com
 ||g-cash.biz
 ||g4whisperermedia.com
@@ -1807,6 +1812,7 @@
 ||globaltakeoff.net
 ||glowdot.com
 ||gmads.net
+||gmpdixdh.com
 ||go2jump.org
 ||go2media.org
 ||go2speed.org
@@ -2078,6 +2084,7 @@
 ||j2ef76da3.website
 ||jacquarter.com
 ||jadcenter.com
+||jahsrhlp.com
 ||jango.com
 ||jangonetwork.com
 ||jarvinzo.com
@@ -2096,6 +2103,7 @@
 ||jobsyndicate.com
 ||jobtarget.com
 ||joytocash.com
+||jqqrcwwd.com
 ||jque.net
 ||js.cdn.ac
 ||jscloud.org
@@ -2231,6 +2239,7 @@
 ||liverail.com
 ||liveuniversenetwork.com
 ||lkqd.net
+||lkrcapch.com
 ||lndjj.com
 ||loading-resource.com
 ||localadbuy.com
@@ -2336,6 +2345,7 @@
 ||mediaffiliation.com
 ||mediafilesdownload.com
 ||mediaflire.com
+||mediaforce.com
 ||mediaforge.com
 ||mediag4.com
 ||mediagridwork.com
@@ -2468,6 +2478,7 @@
 ||music-desktop.com
 ||musicnote.info
 ||mutary.com
+||mxf.dfp.host
 ||mxtads.com
 ||my-layer.net
 ||myaffiliates.com
@@ -2537,6 +2548,7 @@
 ||newyorkwhil.com
 ||nexac.com
 ||nexage.com
+||nextlandingads.com
 ||nextmobilecash.com
 ||ngecity.com
 ||nicheadgenerator.com
@@ -2616,6 +2628,7 @@
 ||onedmp.com
 ||onenetworkdirect.com
 ||onenetworkdirect.net
+||oneopenclose.click
 ||onespot.com
 ||online-adnetwork.com
 ||online-media24.de
@@ -2767,6 +2780,7 @@
 ||pllddc.com
 ||plocap.com
 ||plugerr.com
+||plugs.co
 ||plusfind.net
 ||plushlikegarnier.com
 ||plxserve.com
@@ -2862,6 +2876,7 @@
 ||psclicks.com
 ||pseqcs05.com
 ||psma02.com
+||ptmopenclose.click
 ||ptmzr.com
 ||ptp.lolco.net
 ||ptp22.com
@@ -2978,6 +2993,7 @@
 ||retrayan.com
 ||rev2pub.com
 ||revcontent.com
+||revdepo.com
 ||revenue.com
 ||revenuegiants.com
 ||revenuehits.com
@@ -3015,6 +3031,7 @@
 ||roicharger.com
 ||roirocket.com
 ||romance-net.com
+||rometroit.com
 ||rotaban.ru
 ||rotatingad.com
 ||rotorads.com
@@ -3362,6 +3379,7 @@
 ||tldadserv.com
 ||tlvmedia.com
 ||tmdn2015x9.com
+||tmpopenclose.click
 ||tnyzin.ru
 ||toboads.com
 ||todich.ru
@@ -3697,6 +3715,7 @@
 ||worldwidemailer.com
 ||worthathousandwords.com
 ||worthyadvertising.com
+||wrmcfyzl.com
 ||ws-gateway.com
 ||wsp.mgid.com
 ||wulium.com
@@ -3710,6 +3729,7 @@
 ||xad.com
 ||xadcentral.com
 ||xaxoro.com
+||xbynkkqi.com
 ||xcelltech.com
 ||xcelsiusadserver.com
 ||xchangebanners.com
@@ -3810,6 +3830,7 @@
 ||zonealta.com
 ||zonplug.com
 ||zoomdirect.com.au
+||zoowknbw.com
 ||zorwrite.com
 ||zugo.com
 ||zwaar.org
@@ -4108,6 +4129,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||riverlead.ru
 ||tedobe.com
 ||m3gadeth.ru
 .adonweb.ru
@@ -11495,6 +11517,8 @@ openclose.click
 ||betweendigital.com^
 ||letysheeps.ru^
 ||tools.runetki.co^
+||torvind.com^
+||a4.overclockers.ua^
 !
 ! Adguard DNS exceptions
 @@||imasdk.googleapis.com^
