@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-08-16 12:03:05
+! Last modified: 2016-08-17 12:02:53
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -4129,6 +4129,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||toraccept.ru
 ||riverlead.ru
 ||tedobe.com
 ||m3gadeth.ru
@@ -7745,6 +7746,7 @@ http://v.*.com/x?
 !
 ! Section contains list of advertising networks
 !
+||yuiop.trade
 ||047855sphr.com
 openclose.click
 .bbelements.com
