@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-08-17 12:02:53
+! Last modified: 2016-08-18 12:02:52
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -1823,6 +1823,7 @@
 ||gogvo.com
 ||gojoingscnow.com
 ||gold-file.com
+||gold-good4u.com
 ||goodadvert.ru
 ||goodadvertising.info
 ||goodluckblockingthis.com
@@ -2550,6 +2551,7 @@
 ||nexage.com
 ||nextlandingads.com
 ||nextmobilecash.com
+||nfniziqm.com
 ||ngecity.com
 ||nicheadgenerator.com
 ||nicheads.com
@@ -2722,6 +2724,7 @@
 ||paydotcom.com
 ||payperpost.com
 ||pc-ads.com
+||pdn-2.com
 ||pe2k2dty.com
 ||peakclick.com
 ||pebblemedia.be
@@ -3049,6 +3052,7 @@
 ||rvtlife.com
 ||rvttrack.com
 ||rwpads.com
+||rxlex.faith
 ||ryminos.com
 ||s.adroll.com
 ||s2d6.com
@@ -3260,6 +3264,7 @@
 ||struq.com
 ||sturdynotwithstandingpersuasive.info
 ||style-eyes.eu
+||sualzmze.com
 ||subemania.com
 ||sublimemedia.net
 ||submitexpress.co.uk
