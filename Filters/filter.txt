@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-08-19 12:02:44
+! Last modified: 2016-08-22 12:02:49
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -36,6 +36,7 @@
 ||1empiredirect.com
 ||1nimo.com
 ||1phads.com
+||1rx.io
 ||1sadx.net
 ||1web.me
 ||1yk851od.com
@@ -58,6 +59,7 @@
 ||2xbpub.com
 ||32b4oilo.com
 ||3393.com
+||33across.com
 ||350media.com
 ||360ads.com
 ||360adstrack.com
@@ -430,6 +432,7 @@
 ||adresellers.com
 ||adrevolver.com
 ||adrich.cash
+||adrife.net
 ||adrise.de
 ||adrocket.com
 ||adrsp.net
@@ -1107,6 +1110,7 @@
 ||cityadspix.com
 ||citysite.net
 ||cjt1.net
+||ckwpsghi.com
 ||clarityray.com
 ||clash-media.com
 ||claxonmedia.com
@@ -1187,6 +1191,7 @@
 ||combotag.com
 ||comclick.com
 ||comeadvertisewithus.com
+||comgnnyx.com
 ||commission-junction.com
 ||commission.bz
 ||commissionfactory.com.au
@@ -1374,6 +1379,7 @@
 ||dj-updates.com
 ||dl-rms.com
 ||dltags.com
+||dmdcpvgu.com
 ||dmu20vut.com
 ||dnbizcdn.com
 ||dntrck.com
@@ -2202,6 +2208,7 @@
 ||legisland.net
 ||leohd59.ru
 ||lepinsar.com
+||lepintor.com
 ||letilyadothejob.com
 ||letsadvertisetogether.com
 ||letsgoshopping.tk
@@ -2515,6 +2522,7 @@
 ||nbstatic.com
 ||ncrjsserver.com
 ||neblotech.com
+||nefxtwxk.com
 ||negolist.com
 ||neo-neo-xeo.com
 ||neobux.com
@@ -2618,7 +2626,9 @@
 ||ogercron.com
 ||oggifinogi.com
 ||ohmcasting.com
+||ohmwrite.com
 ||oileddaintiessunset.info
+||okmuxdbq.com
 ||oldtiger.net
 ||omclick.com
 ||omg2.com
@@ -2808,6 +2818,8 @@
 ||popmyad.com
 ||popmyads.com
 ||poponclick.com
+||poppysol.com
+||poprev.net
 ||poprevenue.net
 ||popsads.com
 ||popshow.info
@@ -3011,7 +3023,6 @@
 ||revsci.net
 ||rewardisement.com
 ||rewardsaffiliates.com
-||rewardstyle.com
 ||rfgsi.com
 ||rfihub.net
 ||rhown.com
@@ -3231,6 +3242,7 @@
 ||spotxchange.com
 ||spoutable.com
 ||sprawley.com
+||springserve.com
 ||sprintrade.com
 ||sproose.com
 ||sq2trk2.com
@@ -3508,6 +3520,7 @@
 ||tyroo.com
 ||u-ad.info
 ||u1hw38x0.com
+||ubercpm.com
 ||ubudigital.com
 ||ucaluco.com
 ||ucoxa.work
@@ -3751,6 +3764,7 @@
 ||xtcie.com
 ||xtendadvert.com
 ||xtendmedia.com
+||xttrofww.com
 ||xubob.com
 ||xvika.com
 ||xx00.info
@@ -3767,6 +3781,7 @@
 ||yceml.net
 ||yeabble.com
 ||yellads.com
+||yellowmango.eu
 ||yepoints.net
 ||yes-messenger.com
 ||yesadsrv.com
@@ -4134,6 +4149,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||selosin.com
 ||morenews4.net
 ||bodyclick.net
 ||rebevengwas.com
@@ -7754,6 +7770,7 @@ http://v.*.com/x?
 !
 ! Section contains list of advertising networks
 !
+||ci3ixee8.com
 ||yuiop.trade
 ||047855sphr.com
 openclose.click
@@ -7884,10 +7901,6 @@ openclose.click
 ||cpmterra.com
 ||ctmconnect.com
 ||cy.hsslx.com
-||d17rlarvg2khuc.cloudfront.net
-||d2ue9k1rhsumed.cloudfront.net
-||d2xsy1lxezptdm.cloudfront.net
-||d3ax6xygyb5hn9.cloudfront.net
 ||das5ku9q.com
 ||dasistnews.net
 ||data.permittingnorthlandseamen.info
@@ -7900,7 +7913,6 @@ openclose.click
 ||dotomi.com
 ||downloastar.com
 ||dpjtch.vestabalin.com
-||dr3k6qonw2kee.cloudfront.net
 ||dubshub.com
 ||e-n-t-e-r-n-e-x.com
 ||e.lndjj.com
@@ -8128,7 +8140,13 @@ openclose.click
 
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
-
+!
+||d17rlarvg2khuc.cloudfront.net
+||d2ue9k1rhsumed.cloudfront.net
+||d2xsy1lxezptdm.cloudfront.net
+||d3ax6xygyb5hn9.cloudfront.net
+||dr3k6qonw2kee.cloudfront.net
+||d1gp9nlx229wzz.cloudfront.net
 !
 ! Section contains list of advertising networks
 !
@@ -8737,6 +8755,9 @@ openclose.click
 !
 ! Tracking service
 !
+||105app.com
+||wywy.com
+||pp-serve.newsinc.com
 ||track.atom-data.io
 //t100.ru
 ://tru.am
