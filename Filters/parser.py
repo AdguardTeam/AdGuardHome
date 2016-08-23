@@ -17,10 +17,11 @@ def save_comment(comment, f):
 def save_url_rule(url, f):
     url = line.replace('url', '').strip() 
     for rule in get_content(url):        
-        if rule.find('^') != -1:
-            idx = rule.find('^')         
-            f.writelines(rule[:idx] + '\n')
-        elif rule.find('$') != -1:
+#        if rule.find('^') != -1:
+#            idx = rule.find('^')         
+#            f.writelines(rule[:idx] + '\n')
+#        elif
+	if rule.find('$') != -1:
             idx = rule.find('$');
             f.writelines(rule[:idx] + '\n')        
         else: 
