@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-08-23 12:41:40
+! Last modified: 2016-08-24 12:03:01
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -7772,6 +7772,12 @@ http://v.*.com/x?
 !
 ! Section contains list of advertising networks
 !
+||poptm.com^
+||zptncsir.com^
+||awsatstb.com^
+||igupodzh.com^
+||scr.flashcast.org.uk^
+||dsp-eu.exe.bid^
 ||ci3ixee8.com^
 ||yuiop.trade^
 ||047855sphr.com^
@@ -8143,6 +8149,8 @@ openclose.click^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d3m79ugzs2d8im.cloudfront.net^
+||d9rj2sdxjer5v.cloudfront.net^
 ||d17rlarvg2khuc.cloudfront.net^
 ||d2ue9k1rhsumed.cloudfront.net^
 ||d2xsy1lxezptdm.cloudfront.net^
@@ -8757,6 +8765,7 @@ openclose.click^
 !
 ! Tracking service
 !
+||aidata.io^
 ||105app.com^
 ||wywy.com^
 ||pp-serve.newsinc.com^
