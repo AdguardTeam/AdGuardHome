@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-08-25 12:02:54
+! Last modified: 2016-08-26 12:03:08
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -303,6 +303,7 @@
 ||adinfinity.com.au^
 ||adintend.com^
 ||adinterax.com^
+||adinvigorate.com^
 ||adip.ly^
 ||adiqglobal.com^
 ||adireland.com^
@@ -2337,6 +2338,7 @@
 ||mdn2015x2.com^
 ||mdn2015x3.com^
 ||mdn2015x4.com^
+||mdn2015x5.com^
 ||meadigital.com^
 ||media-general.com^
 ||media-ks.net^
@@ -4149,6 +4151,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||lbbanners.com^
+||errtmotmw.pw^
 ||kit5hgver.com^
 ||meendocash.com^
 ||blafo.ru^
@@ -10097,7 +10101,6 @@ openclose.click^
 ||kr.phorm.com^
 ||krxd.net^
 ||kupona.de^
-||l.player.ooyala.com^
 ||landingpg.com^
 ||laserstat.com^
 ||lb.secureweb24.net^
