@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-08-26 12:03:08
+! Last modified: 2016-08-29 12:03:05
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -152,6 +152,7 @@
 ||ad-delivery.net^
 ||ad-flow.com^
 ||ad-gbn.com^
+||ad-goi.com^
 ||ad-indicator.com^
 ||ad-m.asia^
 ||ad-maven.com^
@@ -460,6 +461,7 @@
 ||adscendmedia.com^
 ||adsclickingnetwork.com^
 ||adscope.co.kr^
+||adscpm.net^
 ||adsdk.com^
 ||adsdot.ph^
 ||adsearcher.ru^
@@ -1390,6 +1392,7 @@
 ||domainadvertising.com^
 ||domainbuyingservices.com^
 ||domainsponsor.com^
+||dombeya.info^
 ||domdex.com^
 ||dominoad.com^
 ||dooc.info^
@@ -1659,6 +1662,7 @@
 ||fb-plus.com^
 ||fbgdc.com^
 ||fbsvu.com^
+||fearfulflag.com^
 ||featence.com^
 ||featuredusers.com^
 ||featurelink.com^
@@ -1777,6 +1781,8 @@
 ||gatikus.com^
 ||gayadnetwork.com^
 ||gbiwxmjw.com^
+||gbkfkofgks.com^
+||gbkfkofgmks.com^
 ||gdmdigital.com^
 ||geede.info^
 ||geek2us.net^
@@ -1973,6 +1979,7 @@
 ||igameunion.com^
 ||igloohq.com^
 ||ignitioninstaller.com^
+||igupodzh.com^
 ||ikzikistheking.com^
 ||imageadnet.com^
 ||imasdk.googleapis.com^
@@ -2106,6 +2113,7 @@
 ||jivox.com^
 ||jiwire.com^
 ||jizzontoy.com^
+||jlflzjdt.com^
 ||jmp9.com^
 ||jo7cofh3.com^
 ||jobsyndicate.com^
@@ -2508,6 +2516,7 @@
 ||myvads.com^
 ||mywidget.mobi^
 ||mz28ismn.com^
+||mzbcdn.net^
 ||n130adserv.com^
 ||n161adserv.com^
 ||n388hkxg.com^
@@ -2624,6 +2633,7 @@
 ||offerpalads.com^
 ||offerserve.com^
 ||offersquared.com^
+||officerrecordscale.info^
 ||ofino.ru^
 ||ogercron.com^
 ||oggifinogi.com^
@@ -2683,6 +2693,7 @@
 ||orbengine.com^
 ||ordingly.com^
 ||oriel.io^
+||osiaffiliate.com^
 ||oskale.ru^
 ||ospreymedialp.com^
 ||othersonline.com^
@@ -3769,6 +3780,7 @@
 ||xttrofww.com^
 ||xubob.com^
 ||xvika.com^
+||xwwmhfbikx.net^
 ||xx00.info^
 ||xxlink.net^
 ||ya88s1yk.com^
@@ -4151,6 +4163,11 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||oconner.biz^
+||pleasemeright.com^
+||lichyela.ru^
+||medicinetizer.ru^
+||litthegre.com^
 ||lbbanners.com^
 ||errtmotmw.pw^
 ||kit5hgver.com^
@@ -7769,6 +7786,7 @@ http://v.*.com/x?
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||js.pornolab.eu^
 ||action.evrikak.ru^
 ||d899.webazilla.com^
 ||ff.astv.ru^
@@ -7779,6 +7797,8 @@ http://v.*.com/x?
 !
 ! Section contains list of advertising networks
 !
+||fungetbag.info^
+||jlflzjdt.com^
 ||poptm.com^
 ||zptncsir.com^
 ||awsatstb.com^
@@ -8772,6 +8792,7 @@ openclose.click^
 !
 ! Tracking service
 !
+||afsanalytics.com^
 ||aidata.io^
 ||105app.com^
 ||wywy.com^
