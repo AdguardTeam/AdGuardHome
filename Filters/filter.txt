@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-08-29 12:03:05
+! Last modified: 2016-08-30 12:03:09
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -790,6 +790,7 @@
 ||asermtawlfs.xyz^
 ||asklots.com^
 ||asooda.com^
+||asqamasz.com^
 ||asrety.com^
 ||assetize.com^
 ||assoc-amazon.ca^
@@ -2247,6 +2248,7 @@
 ||linkworth.com^
 ||linkybank.com^
 ||linkz.net^
+||linoleictanzaniatitanic.com^
 ||lionsads.com^
 ||liqwid.net^
 ||listingcafe.com^
@@ -3318,6 +3320,7 @@
 ||surveywidget.biz^
 ||suthome.com^
 ||svlu.net^
+||svrsqqtj.com^
 ||swadvertising.org^
 ||swbdds.com^
 ||swelen.com^
@@ -7786,6 +7789,8 @@ http://v.*.com/x?
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+wss://free-torrents.org/
+wss://free-torrent.org/
 ||js.pornolab.eu^
 ||action.evrikak.ru^
 ||d899.webazilla.com^
@@ -7797,6 +7802,7 @@ http://v.*.com/x?
 !
 ! Section contains list of advertising networks
 !
+||js.srcsmrtgs.com^
 ||fungetbag.info^
 ||jlflzjdt.com^
 ||poptm.com^
@@ -8792,6 +8798,7 @@ openclose.click^
 !
 ! Tracking service
 !
+||myonlineanalytics.com^
 ||afsanalytics.com^
 ||aidata.io^
 ||105app.com^
