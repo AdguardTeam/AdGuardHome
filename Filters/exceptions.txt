@@ -12,3 +12,7 @@
 @@||smartadserver.com
 ! kinovo.me
 @@||mxtads.com^
+@@||c.msn.com^
+@@||scorecardresearch.com^
+@@||atwola.com^
+@@||b.grvcdn.com^
