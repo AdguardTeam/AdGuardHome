@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-08-30 12:03:09
+! Last modified: 2016-08-31 12:03:17
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -711,6 +711,7 @@
 ||agvzvwof.com^
 ||aim4media.com^
 ||aimatch.com^
+||aiypulgy.com^
 ||ajansreklam.net^
 ||ajgffcat.com^
 ||ajillionmax.com^
@@ -850,6 +851,7 @@
 ||badjocks.com^
 ||bakkels.com^
 ||baldiro.de^
+||bam-bam-slam.com^
 ||bambergerkennanchitinous.com^
 ||bamboocast.com^
 ||bananaflippy.com^
@@ -1350,6 +1352,7 @@
 ||descz.ovh^
 ||destinationurl.com^
 ||detailtoothteam.com^
+||dethao.com^
 ||detroposal.com^
 ||developermedia.com^
 ||deximedia.com^
@@ -2698,6 +2701,7 @@
 ||osiaffiliate.com^
 ||oskale.ru^
 ||ospreymedialp.com^
+||ossdqciz.com^
 ||othersonline.com^
 ||ourunlimitedleads.com^
 ||ov8pc.tv^
@@ -3048,6 +3052,7 @@
 ||richwebmedia.com^
 ||ringtonematcher.com^
 ||ringtonepartner.com^
+||riowrite.com^
 ||ripplead.com^
 ||riverbanksand.com^
 ||rixaka.com^
@@ -3075,6 +3080,7 @@
 ||rummyaffiliates.com^
 ||runadtag.com^
 ||runreproducerow.com^
+||ruovcruc.com^
 ||rvtlife.com^
 ||rvttrack.com^
 ||rwpads.com^
@@ -4118,6 +4124,7 @@
 ||th4wwe.net^
 ||thiscdn.com^
 ||thrilamd.net^
+||thrutime.net^
 ||tolosgrey.net^
 ||topdi.net^
 ||trllxv.co^
@@ -4166,6 +4173,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||kmndj.top^
 ||oconner.biz^
 ||pleasemeright.com^
 ||lichyela.ru^
