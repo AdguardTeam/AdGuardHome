@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-08-31 12:03:17
+! Last modified: 2016-09-01 12:03:35
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -573,6 +573,7 @@
 ||adtrace.org^
 ||adtransfer.net^
 ||adtrgt.com^
+||adtrieval.com^
 ||adtrix.com^
 ||adtrovert.com^
 ||adtruism.com^
@@ -4173,6 +4174,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||ledinika.ru^
 ||kmndj.top^
 ||oconner.biz^
 ||pleasemeright.com^
@@ -7797,6 +7799,7 @@ http://v.*.com/x?
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||ts2.hockey-talks.com^
 wss://free-torrents.org/
 wss://free-torrent.org/
 ||js.pornolab.eu^
@@ -8806,6 +8809,7 @@ openclose.click^
 !
 ! Tracking service
 !
+||met.vgwort.de^
 ||myonlineanalytics.com^
 ||afsanalytics.com^
 ||aidata.io^
@@ -11621,3 +11625,7 @@ openclose.click^
 @@||smartadserver.com
 ! kinovo.me
 @@||mxtads.com^
+@@||c.msn.com^
+@@||scorecardresearch.com^
+@@||atwola.com^
+@@||b.grvcdn.com^
