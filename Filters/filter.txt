@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-09-01 12:03:35
+! Last modified: 2016-09-02 12:10:33
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -2908,6 +2908,7 @@
 ||provider-direct.com^
 ||proximic.com^
 ||prre.ru^
+||prxio.site^
 ||psclicks.com^
 ||pseqcs05.com^
 ||psma02.com^
@@ -3930,6 +3931,61 @@
 ||albaldah.xyz^
 ||albali.xyz^
 ||albireo.xyz^
+! popads.net
+||aiypulgy.com^
+||ajgffcat.com^
+||asqamasz.com^
+||awsatstb.com^
+||azeozrjk.com^
+||bircgizd.com^
+||bmqnguru.com^
+||ccdkyvyw.com^
+||cdicyazp.com^
+||ckwpsghi.com^
+||cmpsuzvr.com^
+||comgnnyx.com^
+||comwgi.com^
+||dmdcpvgu.com^
+||fluohbiy.com^
+||fqpteozo.com^
+||fxjyultd.com^
+||gbiwxmjw.com^
+||gggemaop.com^
+||gmpdixdh.com^
+||hffmzplu.com^
+||hkoxlirf.com^
+||hxbvbmxv.com^
+||igupodzh.com^
+||izwsvyqv.com^
+||jahsrhlp.com^
+||jdlnquri.com^
+||jlflzjdt.com^
+||jqqrcwwd.com^
+||kgkjlivo.com^
+||lkrcapch.com^
+||mnusvlgl.com^
+||nefxtwxk.com^
+||negdrvgo.com^
+||nfniziqm.com^
+||obthqxbm.com^
+||okmuxdbq.com^
+||ossdqciz.com^
+||ovgzbnjj.com^
+||rpczohkv.com^
+||ruovcruc.com^
+||sriaqmzx.com^
+||sualzmze.com^
+||svrsqqtj.com^
+||vrqajyuu.com^
+||vxuhavco.com^
+||wgefjuno.com^
+||wrmcfyzl.com^
+||xbynkkqi.com^
+||xttrofww.com^
+||ygrtbssc.com^
+||ypyarwgh.com^
+||zoowknbw.com^
+||zptncsir.com^
 ! Yavli.com
 ||247view.net^
 ||absilf.com^
@@ -3997,6 +4053,7 @@
 ||dutolats.net^
 ||ectensian.net^
 ||edabl.net^
+||edgualf.com^
 ||elepheny.com^
 ||entru.co^
 ||ergers.net^
@@ -7635,7 +7692,6 @@ thr.ru##.top_branding
 ||wordgetboo.com^
 ||work-easy.info^
 ||work-saite.ru
-||work-zilla.com^
 ||workon.ru^
 ||workzilla.ru?ref^
 ||workzilla.ru^?ref
@@ -7813,6 +7869,7 @@ wss://free-torrent.org/
 !
 ! Section contains list of advertising networks
 !
+||iu1xoe7o.com^
 ||js.srcsmrtgs.com^
 ||fungetbag.info^
 ||jlflzjdt.com^
