@@ -16,3 +16,5 @@
 @@||scorecardresearch.com^
 @@||atwola.com^
 @@||b.grvcdn.com^
+! VarageSale app (iOS)
+cdn.optimizely.com
