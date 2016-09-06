@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-09-05 12:03:00
+! Last modified: 2016-09-06 12:03:09
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -3949,10 +3949,12 @@
 ||cmpsuzvr.com^
 ||comgnnyx.com^
 ||comwgi.com^
+||crkgtnad.com^
 ||dcneohtx.com^
 ||dmdcpvgu.com^
 ||dyunhvev.com^
 ||ervpgpxr.com^
+||fjfxpykp.com^
 ||fluohbiy.com^
 ||fokisduu.com^
 ||fqpteozo.com^
@@ -3960,14 +3962,21 @@
 ||gbiwxmjw.com^
 ||gggemaop.com^
 ||gmpdixdh.com^
+||gwaatiev.com^
+||haqlmmii.com^
 ||hffmzplu.com^
+||hfjuehls.com^
 ||hkoxlirf.com^
+||hlotiwnz.com^
 ||hxbvbmxv.com^
 ||idpukwmp.com^
 ||igupodzh.com^
+||imyqdbxq.com^
+||irxpndjg.com^
 ||izwsvyqv.com^
 ||jahsrhlp.com^
 ||jdlnquri.com^
+||jjipgxjf.com^
 ||jlflzjdt.com^
 ||jqqrcwwd.com^
 ||kgkjlivo.com^
@@ -3976,24 +3985,32 @@
 ||lkrcapch.com^
 ||lpwvdgfo.com^
 ||lzmovatu.com^
+||mnjgoxmx.com^
 ||mnusvlgl.com^
 ||mvqinxgp.com^
 ||nefxtwxk.com^
 ||negdrvgo.com^
 ||nfniziqm.com^
+||oawleebf.com^
 ||obthqxbm.com^
 ||okmuxdbq.com^
+||oslzqjnh.com^
 ||ossdqciz.com^
 ||ovgzbnjj.com^
 ||pbnnsras.com^
+||pnunijdm.com^
+||qljczwei.com^
 ||qnpolbme.com^
+||qrozsnmc.com^
 ||rjnkpqax.com^
 ||rpczohkv.com^
 ||ruovcruc.com^
+||snjhhcnr.com^
 ||sriaqmzx.com^
 ||sualzmze.com^
 ||svrsqqtj.com^
 ||uckxjsiy.com^
+||uqgloylf.com^
 ||vrqajyuu.com^
 ||vxuhavco.com^
 ||vxvxsgut.com^
@@ -4003,6 +4020,7 @@
 ||wrmcfyzl.com^
 ||wtvyenir.com^
 ||wwgjtcge.com^
+||wzueqhwf.com^
 ||xbynkkqi.com^
 ||xpnttdct.com^
 ||xttrofww.com^
@@ -4013,6 +4031,7 @@
 ||zoowknbw.com^
 ||zpmbsivi.com^
 ||zptncsir.com^
+||zycvyudt.com^
 ! Yavli.com
 ||247view.net^
 ||absilf.com^
@@ -4257,6 +4276,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||0664ic555p.com^
 ||zycvyudt.com^
 ||jjipgxjf.com^
 ||lemfama.ru^
@@ -4537,7 +4557,6 @@ thr.ru##.top_branding
 ||ads.people-group.net^
 ||ads.viptrophy.com^
 ||adselector.ru^
-||adsell.me/b/
 ||adsellers.net^
 ||adserv01.ru^
 ||adserver-live.yoc.mobi^
@@ -4627,7 +4646,6 @@ thr.ru##.top_branding
 ||affiliates.bravenet.com^
 ||affiliates.generatorsoftware.com^
 ||affiliates.hotelclub.com^
-||affiliates.jlist.com^
 ||affiliates.mozilla.org/link/banner/
 ||affiliates.supergreenhosting.com^
 ||afili.ru^
@@ -4806,7 +4824,6 @@ thr.ru##.top_branding
 ||basetts.com^
 ||bashnya.ru^
 ||basketfan.my1.ru^
-||basttabillie65.uk.to^
 ||bb.stream24.ru^
 ||bb.tidopro.biz^
 ||bbn.by/t.bbn?
@@ -4862,7 +4879,6 @@ thr.ru##.top_branding
 ||bistr3.ru^
 ||bistr4.ru^
 ||bistroduy.ru^
-||bitclx.ru^
 ||bitshare.com/?referral=
 ||bizcom.com.ru^
 ||bizua.com^
@@ -4899,11 +4915,9 @@ thr.ru##.top_branding
 ||booking.com/deal.html^
 ||boolff.com^
 ||boom.1ccbt.com^
-||boostduplicate.info^
 ||borncash.com/?ref=
 ||boroto.ru^
 ||bossmoney.ru^
-||box.net.pl/strony/topsites/img.php?
 ||bposterss.net^
 ||brandarium.net^
 ||brandarium.ru^
@@ -4929,7 +4943,6 @@ thr.ru##.top_branding
 ||bvf.ru/upchk/
 ||bvyvk.space/vv/
 ||bw95vpjda.ru^
-||bx.metka.ru^
 ||bx.neolabs.kz^
 ||byrgin.ru^
 ||bytde.com^
@@ -5004,7 +5017,6 @@ thr.ru##.top_branding
 ||clickbux.ru^
 ||clickcashmoney.com^
 ||clickcoin.com^
-||clickforclick.net^
 ||clickhere.ru^
 ||clickhereforfun.org^
 ||clickov.com^
@@ -5058,7 +5070,6 @@ thr.ru##.top_branding
 ||contlist.com^
 ||conusmedia.com^
 ||convergator.net^
-||cooleefbaldw.uk.to^
 ||coolsor.ru^
 ||copylon.space^
 ||corkery.biz^
@@ -5067,7 +5078,6 @@ thr.ru##.top_branding
 ||cosmo.ru/cosmo_informers/
 ||costaction.com/refers/
 ||counter.megaindex.ru^
-||counter.yadre.eu^
 ||countlog.com/rp/mc
 ||cpaevent.ru^
 ||cpam.pro^
@@ -5224,7 +5234,6 @@ thr.ru##.top_branding
 ||ebuvpopku.ru^
 ||echo.12cpm.com^
 ||echo.andumb.com^
-||echo.ruerotic.ru^
 ||echo.scund.com^
 ||echo.teasernet.com/
 ||econrus.ru^
@@ -5412,7 +5421,6 @@ thr.ru##.top_branding
 ||galaxymeet.ru^
 ||galia.s-maligin.ru^
 ||gaman.anime-free.net^
-||gamb.xeop.ru^
 ||gamblingtraffic.ru^
 ||game-tester.ru^
 ||game-top.su/images/game-top
@@ -5447,7 +5455,6 @@ thr.ru##.top_branding
 ||gethit.ru^
 ||getraf.info^
 ||gettopup.com^
-||gettraff.com^
 ||getuplinks.ru^
 ||getvisits.ru^
 ||gfstrck.com^
@@ -5603,7 +5610,6 @@ thr.ru##.top_branding
 ||http.showsteps.ru^
 ||hulkeileen556.uk.to^
 ||hyndir.com^
-||hypernews.ru^
 ||hypersell.ru^
 ||i-adv.biz^
 ||i-business.biz/aff/
@@ -5662,7 +5668,6 @@ thr.ru##.top_branding
 ||img1458.r.worldssl.net^
 ||imgg.dt00.net
 ||imho.ru^
-||imparfum.com^
 ||imperia-casino.com^
 ||imrk.net^
 ||imzhv.xyz^
@@ -5690,7 +5695,6 @@ thr.ru##.top_branding
 ||intency.com^
 ||intencysrv.com^
 ||interesno-nazhimy.ru/informer/
-||interieu.com^
 ||internetportal.ru/*.gif
 ||intimcity.org^
 ||intimmag.ru^
@@ -5705,8 +5709,6 @@ thr.ru##.top_branding
 ||iphone-caviar.ru*entranceId
 ||iphonetopsite.ru^
 ||ipicture.ru/public/images/temp/
-||ipru.ru/i/
-||ipru.ru/j/
 ||iptraff.com^
 ||ipurl.ru^
 ||iqok.ru^
@@ -5721,7 +5723,6 @@ thr.ru##.top_branding
 ||itageli.ru^
 ||itcgin.net^
 ||itrajy.ru^
-||ivancept.com^
 ||ivanie.com^
 ||ivetki.ru^
 ||ivi.ru/player/?videoid=&enableseries=1&autostart=1
@@ -5736,7 +5737,6 @@ thr.ru##.top_branding
 ||j.tg2016.net^
 ||jadedi.com^
 ||japan.leit.ru/button.php?
-||javas.entercash.ru^
 ||jaymedianetwork.com^
 ||jazg97clb.ru^
 ||jbugk.com^
@@ -5756,14 +5756,11 @@ thr.ru##.top_branding
 ||joycasino.com^
 ||joylandcasino.com/promoredirect?
 ||js.einfo.by/?
-||js.entercash.ru^
 ||js.gdsln.ru^
 ||js.goods.redtram.com
 ||js.novatizer.com
 ||js.textshift.net^
-||js.xytur.ru/c/
 ||jsc.sexy-torrents.com^
-||jsdowner.ru^
 ||jsn.24smi.org/
 ||juppser.ru^
 ||justclicks.biz^
@@ -5820,7 +5817,6 @@ thr.ru##.top_branding
 ||kitchenfilm.ru^
 ||kitopr.com^
 ||kkpur.xyz^
-||klanwin.ru^
 ||kleo.ru/cgi-bin/
 ||klikaem.ru/
 ||kliklink.ru
@@ -5835,9 +5831,6 @@ thr.ru##.top_branding
 ||koiper.com^
 ||kolendrin.ru^
 ||kolezeynews.ru^
-||kolitat.com^
-||kolition.com^
-||kolitter.com^
 ||kolobok.us/button/
 ||komisite.ru/images/ban*.gif
 ||komok.com^
@@ -5877,7 +5870,6 @@ thr.ru##.top_branding
 ||l2got.ru^
 ||labadon.com^
 ||lacemme.com^
-||lacest.com^third-party
 ||ladiesnadosuge.com^
 ||ladyads.ru^
 ||ladycash.ru^
@@ -5965,7 +5957,6 @@ thr.ru##.top_branding
 ||linon.ru/links*.php?
 ||linono.ru^
 ||list.ru/img/buttons/
-||listof.mobi^
 ||litenicholraamos.uk.to^
 ||litiumo.com^
 ||littel.net^
@@ -5983,7 +5974,6 @@ thr.ru##.top_branding
 ||loader.adrelayer.com^
 ||loadest.com/*url=
 ||loadmoney.ru^
-||locoday.com^
 ||log.krs-ix.ru/krs.php?
 ||logan.jino.ru^
 ||login.tracking101.com^
@@ -6032,7 +6022,6 @@ thr.ru##.top_branding
 ||m3gadeth.ru^
 ||ma-static.ru^
 ||mabila.ua^
-||mabirol.com^
 ||macamba.ru^
 ||madbanner.ru^
 ||madcash.biz^
@@ -6119,7 +6108,6 @@ thr.ru##.top_branding
 ||megatizer.ru^
 ||megaweb.su/softblok^
 ||megogo.1ru.tv^
-||mekabi.ru^
 ||mekadr.com^
 ||menflirt.ru/?
 ||menu.narodbit.net^
@@ -6146,7 +6134,6 @@ thr.ru##.top_branding
 ||mipagerank.com^
 ||mirilow-tds.ru^
 ||mirorgazma.ru/?partner=
-||mirskidok.net^
 ||mirvoinov.biz^
 ||misqb.xyz^
 ||missledi.ru/rnb.php^
@@ -6170,28 +6157,19 @@ thr.ru##.top_branding
 ||mn4.ru/cgi-bin/
 ||mnetads.net^
 ||mnogo.ru^
-||mob2web.com^
 ||mobalives.com^
 ||mobapeople.com^
 ||mobatori.com
 ||mobatory.com^
-||mobbober.com^
-||mobbobr.com^
 ||mobi-mobi.info^
 ||mobiads.ru^
 ||mobidump.com^
-||mobifobi.com^
-||mobikont.com^
 ||mobile-click.biz^
 ||mobiledirectors.com^
 ||mobiloba.com/
 ||mobioffers.ru^
-||mobirollru.com^
 ||mobitema.ru
 ||mobn.net^
-||mobnumbers.com^
-||mobraner.com^
-||mobyrol.com^
 ||modastro.ee^
 ||modelatos.com^
 ||moe.video^
@@ -6350,10 +6328,8 @@ thr.ru##.top_branding
 ||nsoft-s.com^
 ||num-link.ru^
 ||numberia.com^
-||numberium.com^
 ||numbers.md^
 ||numen.ru/button/?
-||numking.com^
 ||nummobile.com^
 ||nutkaekwcm.ru^
 ||nvjqm.com^
@@ -6409,7 +6385,6 @@ thr.ru##.top_branding
 ||online.koko-ko.com^
 ||online.mik123.com^
 ||onlineacutions.com^
-||onlineresume.ru/banner*?
 ||onlinim.ru^
 ||only4men.ru^
 ||onlysexygirls.com^
@@ -6421,7 +6396,6 @@ thr.ru##.top_branding
 ||open.by/bnrs/
 ||openad.ru^
 ||openads.ab-daily.by
-||opencandy.com^
 ||openlinks.ru^
 ||openunder.net^
 ||openurls.co.cc^
@@ -6499,7 +6473,6 @@ thr.ru##.top_branding
 ||pentoch.com/sys/
 ||penza-online.ru/cgi-bin/userstats.pl?
 ||people-group.su^
-||people.1gb.ru^
 ||peoplemobile.ru^
 ||perezzz.ru^
 ||perfecttds.net^
@@ -6534,8 +6507,6 @@ thr.ru##.top_branding
 ||planetapozitiva.ru^
 ||platinumcode.net
 ||platnic.ru^
-||play-boom.com^
-||play.game-torrent.org^
 ||play.zzima.com/*?ref=
 ||play2.biz^
 ||playreplay.net/apv/index.php
@@ -6673,7 +6644,6 @@ thr.ru##.top_branding
 ||pyksf.com^
 ||qanmw.space^
 ||qb.ru/buttons/
-||qfil.in/js
 ||qhiip.com^
 ||qle.ru/cgi-bin/
 ||qload.ru^
@@ -6681,7 +6651,6 @@ thr.ru##.top_branding
 ||qtymi.com^
 ||quatrix.ru/scripts
 ||quber.ru^
-||quelliclub.ru^
 ||quisma.com^
 ||qvi0.ru/
 ||qwe.qrrgv.space^
@@ -6702,7 +6671,6 @@ thr.ru##.top_branding
 ||radver.ru/widget/
 ||rajniko.ru^
 ||rambler.ru/i.ban?
-||ramis.xeop.ru^
 ||ramosetlex.ru^
 ||rap4me.com^
 ||raptop.ru/images/img*.gif
@@ -6785,7 +6753,6 @@ thr.ru##.top_branding
 ||rmonline.ru/pid
 ||rnd.yxo.ru^
 ||roadshortway.ru^
-||robimobi.com^
 ||robofish.com/cgi-bin/banner.cgi?
 ||robotext.info^
 ||rocli.ru^
@@ -6806,8 +6773,6 @@ thr.ru##.top_branding
 ||rotabanner.
 ||rotation-context.ru^
 ||rotation-media.net^
-||rotation-web.net^
-||rotationmessage.net^
 ||rotator.
 ||roukel.com^
 ||rpod.ru/i/b/
@@ -6894,7 +6859,6 @@ thr.ru##.top_branding
 ||samaduramen.info/in.cgi
 ||samaya.ru/konkurs/
 ||samiana.com^
-||samsara.filmsmusic.ru^
 ||sape.ru/bn/
 ||sape.ru/partner-b/
 ||sasisa.ru^
@@ -7014,7 +6978,6 @@ thr.ru##.top_branding
 ||skylog.kz/img.php?
 ||skyvideo1.ru/code.php
 ||slava.soloway.su^
-||sleepac.com^
 ||slejv.space^
 ||slickjump.net^
 ||slimgipnoz.ru^
@@ -7030,7 +6993,6 @@ thr.ru##.top_branding
 ||smigid.ru^
 ||smilered.com^
 ||smimarket.com^
-||smotri.webmaster63.ru^
 ||smstik.com/ban^
 ||sn00.net
 ||socadvnet.com^
@@ -7045,9 +7007,7 @@ thr.ru##.top_branding
 ||sontere.com/
 ||sopital.com^
 ||sorcerers.net/includes/butler/butler.php?
-||sosonik.leohd59.ru^
 ||sotmarket.ru/partner
-||sourdi.com^
 ||sovietit.com^
 ||spacewalk.info^
 ||spalitemu.ru^
@@ -7082,7 +7042,6 @@ thr.ru##.top_branding
 ||staticdn.nl/banners/
 ||statistik.duplanet.tk^
 ||statscreen.info^
-||stayeda.com^
 ||stb.msn.com/i
 ||steamac.com^
 ||steamonline.ru/banner
@@ -7217,7 +7176,6 @@ thr.ru##.top_branding
 ||tibrashadow.ru^
 ||tibu.ru/p
 ||tic-pr.info/*/button*.
-||ticount.ru^
 ||timedirect.ru
 ||timeweb.ru/img/b/
 ||tinydeal.com*?sk=
@@ -7329,10 +7287,8 @@ thr.ru##.top_branding
 ||tostega.ru^
 ||totrena.ru^
 ||toutiles.com^
-||tozikoto.com^
 ||tptrk.ru^
 ||tr.samoresim.ru^
-||tracking.opencandy.com.s3.amazonaws.com^
 ||trade7.ru^
 ||tradedoubler.com^
 ||tradeleads.su^
@@ -7753,7 +7709,6 @@ thr.ru##.top_branding
 ||x-nomer.com^
 ||x-tds-all.com^
 ||x-tds-wiz.com^
-||x4u.ru/cgi-bin/
 ||x4x4x.org^
 ||xanax.cbn.ru^
 ||xaogi.com^
@@ -7788,8 +7743,6 @@ thr.ru##.top_branding
 ||xxuhter.ru^
 ||xxx-babes.org^
 ||xxx-tracker.com/pics/
-||yaisara.ru^
-||yandas.ru/img.php?
 ||yandepit.com^
 ||yandexo.ru/rek/
 ||yangot.com^
@@ -7810,7 +7763,6 @@ thr.ru##.top_branding
 ||yopik.club^
 ||yotaplay.ru*promo=true
 ||yottos.com
-||youhave.mobi^
 ||yourclick.pw^
 ||yourfoxes.ru^
 ||yourlustmedia.com^
@@ -7824,13 +7776,11 @@ thr.ru##.top_branding
 ||ywadk.top^
 ||yyuin.com^
 ||zabedi.ru^
-||zaclick.ru/links*.php?
 ||zaebaladblock.ru^
 ||zahodi-ka.ru/wbmaster/index/schet.cgi?
 ||zakladka.org.ua^
 ||zamiko.ru^
 ||zamok911.com^
-||zamolxismd.org/*/b/
 ||zapbox.ru^
 ||zarabotay.1gif.ru^
 ||zarabotki.ru^
@@ -7899,6 +7849,7 @@ wss://free-torrents.org/
 !
 ! Section contains list of advertising networks
 !
+||sourcengo.com^
 .bbelements.com^
 .doublepimp.com^
 .lockscalecompare.com^
@@ -9686,8 +9637,6 @@ openclose.click^
 ||easytarget.ru^
 ||easytracking.de^
 ||ebay.com/op/t.do?event
-||ebayrtm.com/rtm?RtmCmd&a=img&
-||ebayrtm.com/rtm?RtmIt&ite=
 ||ec-track.com^
 ||eclampsialemontree.net^
 ||ecn5.com^
