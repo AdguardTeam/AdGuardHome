@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-09-06 12:03:09
+! Last modified: 2016-09-07 12:03:12
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -3297,6 +3297,7 @@
 ||sunrisewebjo.link^
 ||suparewards.com^
 ||super-links.net^
+||superadexchange.com^
 ||superinterstitial.com^
 ||superloofy.com^
 ||supersitetime.com^
@@ -4276,6 +4277,10 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||azmdy.com^
+||daopz.top^
+||gerpkshe.com^
+||exdynsrv.com^
 ||0664ic555p.com^
 ||zycvyudt.com^
 ||jjipgxjf.com^
@@ -7835,8 +7840,7 @@ http://v.*.com/x?
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
-wss://free-torrent.org/
-wss://free-torrents.org/
+.forpicfree.ru^
 ||action.evrikak.ru^
 ||d899.webazilla.com^
 ||ff.astv.ru^
@@ -11666,3 +11670,5 @@ openclose.click^
 @@||scorecardresearch.com^
 @@||atwola.com^
 @@||b.grvcdn.com^
+! VarageSale app (iOS)
+cdn.optimizely.com
