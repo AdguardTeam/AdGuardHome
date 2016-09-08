@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-09-08 12:02:54
+! Last modified: 2016-09-08 12:52:24
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -11684,3 +11684,6 @@ openclose.click^
 @@||b.grvcdn.com^
 ! VarageSale app (iOS)
 cdn.optimizely.com
+! https://github.com/AdguardTeam/AdguardDNS/issues/41
+! Adverigo captcha
+@@||adverigo.com^
