@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-09-07 12:03:12
+! Last modified: 2016-09-08 12:02:54
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -2892,6 +2892,8 @@
 ||provider-direct.com^
 ||proximic.com^
 ||prre.ru^
+||prxio.github.io^
+||prxio.pw^
 ||prxio.site^
 ||psclicks.com^
 ||pseqcs05.com^
@@ -3938,12 +3940,15 @@
 ! popads.net
 ||aiypulgy.com^
 ||ajgffcat.com^
+||ambqphwf.com^
 ||asqamasz.com^
 ||awsatstb.com^
+||awvrvqxq.com^
 ||azeozrjk.com^
 ||bgitczbd.com^
 ||bircgizd.com^
 ||bmqnguru.com^
+||bujntrmh.com^
 ||ccdkyvyw.com^
 ||cdicyazp.com^
 ||ckwpsghi.com^
@@ -3961,6 +3966,7 @@
 ||fqpteozo.com^
 ||fxjyultd.com^
 ||gbiwxmjw.com^
+||gerpkshe.com^
 ||gggemaop.com^
 ||gmpdixdh.com^
 ||gwaatiev.com^
@@ -3972,6 +3978,7 @@
 ||hxbvbmxv.com^
 ||idpukwmp.com^
 ||igupodzh.com^
+||imrwxmau.com^
 ||imyqdbxq.com^
 ||irxpndjg.com^
 ||izwsvyqv.com^
@@ -3992,6 +3999,7 @@
 ||nefxtwxk.com^
 ||negdrvgo.com^
 ||nfniziqm.com^
+||nrgpugas.com^
 ||oawleebf.com^
 ||obthqxbm.com^
 ||okmuxdbq.com^
@@ -4010,13 +4018,19 @@
 ||sriaqmzx.com^
 ||sualzmze.com^
 ||svrsqqtj.com^
+||tjbgiyek.com^
 ||uckxjsiy.com^
+||umqsrvdg.com^
 ||uqgloylf.com^
+||uqpotqld.com^
+||uxyofgcf.com^
 ||vrqajyuu.com^
 ||vxuhavco.com^
 ||vxvxsgut.com^
+||vzhbfwpo.com^
 ||wgefjuno.com^
 ||wkexsfmw.com^
+||wkhychiklhdglppaeynvntkublzecyyymosjkiofraxechigon.com^
 ||wklyhvfc.com^
 ||wrmcfyzl.com^
 ||wtvyenir.com^
@@ -4864,7 +4878,6 @@ thr.ru##.top_branding
 ||beta.mediafort.ru^
 ||betimogolef.com^
 ||betrayed.ru/Content/Advertising/
-||bgloj3s.l2top.ru^
 ||bgrndi.com^
 ||biathlon.com/logo.php?Query=
 ||biathlon.ru/images/sp????/
@@ -8114,7 +8127,6 @@ openclose.click^
 ||nrged.com^
 ||nsdfsfi1q8asdasdzz.com^
 ||o.aolcdn.com/ads/
-||oclaserver.com^
 ||octobird.com^
 ||offpageads.com^
 ||onlinesupaads.com^
