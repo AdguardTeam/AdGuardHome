@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-09-09 12:03:02
+! Last modified: 2016-09-10 01:12:19
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -2078,6 +2078,7 @@
 ||ipowercdn.com^
 ||ipredictive.com^
 ||ipromote.com^
+||ipsowrite.com^
 ||isapi.solutions^
 ||isohits.com^
 ||isparkmedia.com^
@@ -4407,7 +4408,6 @@ thr.ru##.top_branding
 ||24open.ru/*?from=
 ||24s.ru/get.php?b=
 ||29info.ru^
-||2baksa.net^
 ||2da2.ru/
 ||2firefox.ru^
 ||2lycosu.com^
@@ -8270,6 +8270,8 @@ openclose.click^
 ||afreeca-tag.ad-mapps.com^
 ||mtag.mman.kr^
 !
+||sscefsol.com^
+||sas816.ujikdd041o.cn^
 ://o0e.ru^
 ||1mp.mobi^
 ||247realmedia.com^
@@ -11670,6 +11672,15 @@ openclose.click^
 ||novunu.football-plyus.net^
 !
 ! Adguard DNS exceptions
+! https://github.com/AdguardTeam/AdguardDNS/issues/43
+@@||alipromo.com^
+! zaycev-tut.ru
+||hghit.com^
+||hgbnr.com^
+||hgbn1.com^
+||hg-bn.com^
+||banner-media.ru^
+!
 @@||imasdk.googleapis.com^
 @@||viglink.com^
 @@||googletagservices.com^
