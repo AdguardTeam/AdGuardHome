@@ -1,3 +1,12 @@
+! https://github.com/AdguardTeam/AdguardDNS/issues/43
+@@||alipromo.com^
+! zaycev-tut.ru
+||hghit.com^
+||hgbnr.com^
+||hgbn1.com^
+||hg-bn.com^
+||banner-media.ru^
+!
 @@||imasdk.googleapis.com^
 @@||viglink.com^
 @@||googletagservices.com^
