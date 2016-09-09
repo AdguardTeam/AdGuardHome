@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-09-08 12:52:24
+! Last modified: 2016-09-09 12:03:02
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -3957,7 +3957,9 @@
 ||comwgi.com^
 ||crkgtnad.com^
 ||dcneohtx.com^
+||dgwrxyucxpizivncznkpmdhtrdzyyylpoeitiannqfxmdzpmwx.com^
 ||dmdcpvgu.com^
+||dwentymgplvrizqhieugzkozmqjxrxcyxeqdjvcbjmrhnkguwk.com^
 ||dyunhvev.com^
 ||ervpgpxr.com^
 ||fjfxpykp.com^
@@ -4019,11 +4021,13 @@
 ||sualzmze.com^
 ||svrsqqtj.com^
 ||tjbgiyek.com^
+||tmdcfkxcckvqbqbixszbdyfjgusfzyguvtvvisojtswwvoduhi.com^
 ||uckxjsiy.com^
 ||umqsrvdg.com^
 ||uqgloylf.com^
 ||uqpotqld.com^
 ||uxyofgcf.com^
+||vlnveqkifcpxdosizybusvjqkfmowoawoshlmcbittpoywblpe.com^
 ||vrqajyuu.com^
 ||vxuhavco.com^
 ||vxvxsgut.com^
@@ -4042,6 +4046,7 @@
 ||ygrtbssc.com^
 ||ynlrfiwj.com^
 ||ypyarwgh.com^
+||yzsiwyvmgftjuqfoejhypwkmdawtwlpvawzewtrrrdfykqhccq.com^
 ||zmytwgfd.com^
 ||zoowknbw.com^
 ||zpmbsivi.com^
@@ -7866,6 +7871,7 @@ http://v.*.com/x?
 !
 ! Section contains list of advertising networks
 !
+||ws-gateway.com^
 ||sourcengo.com^
 .bbelements.com^
 .doublepimp.com^
