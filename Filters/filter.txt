@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-09-10 01:12:19
+! Last modified: 2016-09-12 12:05:43
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -313,6 +313,7 @@
 ||adisn.com^
 ||adit-media.com^
 ||adition.com^
+||aditize.com^
 ||adjal.com^
 ||adjector.com^
 ||adjourne.com^
@@ -814,6 +815,7 @@
 ||audienceprofiler.com^
 ||auditoire.ph^
 ||auditude.com^
+||audu0yi.bid^
 ||augmentad.net^
 ||august15download.com^
 ||aunmdhxrco.com^
@@ -982,6 +984,7 @@
 ||bostonwall.com^
 ||boydadvertising.co.uk^
 ||boylesportsreklame.com^
+||bpasyspro.com^
 ||bptracking.com^
 ||br.rk.com^
 ||brainient.com^
@@ -2082,6 +2085,7 @@
 ||isapi.solutions^
 ||isohits.com^
 ||isparkmedia.com^
+||istripper.com^
 ||isubdom.com^
 ||isubdomains.com^
 ||itrengia.com^
@@ -2446,6 +2450,7 @@
 ||mobitracker.info^
 ||mobiyield.com^
 ||moborobot.com^
+||mobsterbird.info^
 ||mobstitialtag.com^
 ||mobstrks.com^
 ||mobtrks.com^
@@ -2522,6 +2527,7 @@
 ||nativead.tech^
 ||nativeads.com^
 ||nativeadsfeed.com^
+||nativeleads.net^
 ||nbjmp.com^
 ||nbstatic.com^
 ||ncrjsserver.com^
@@ -2812,6 +2818,7 @@
 ||polmontventures.com^
 ||polyad.net^
 ||polydarth.com^
+||poolnoodle.tech^
 ||popads.net^
 ||popadscdn.net^
 ||popcash.net^
@@ -3946,12 +3953,15 @@
 ||awsatstb.com^
 ||awvrvqxq.com^
 ||azeozrjk.com^
+||bbjlsdqhpbuqaspgjyxaobmpmzunjnvqmahejnwwvaqbzzqodu.com^
 ||bgitczbd.com^
 ||bircgizd.com^
+||bmjccqfxlabturkmpzzokhsahleqqrysudwpuzqjbxbqeakgnf.com^
 ||bmqnguru.com^
 ||bujntrmh.com^
 ||ccdkyvyw.com^
 ||cdicyazp.com^
+||cdqmeyhqrwinofutpcepbahedusocxqyfokvehqlqpusttfwve.com^
 ||ckwpsghi.com^
 ||cmpsuzvr.com^
 ||comgnnyx.com^
@@ -3959,10 +3969,13 @@
 ||crkgtnad.com^
 ||dcneohtx.com^
 ||dgwrxyucxpizivncznkpmdhtrdzyyylpoeitiannqfxmdzpmwx.com^
+||djzmpsingsrtfsnbnkphyagxdemeagsiabguuqbiqvpupamgej.com^
+||dkrhsftochvzqryurlptloayhlpftkogvzptcmjlwjgymcfrmv.com^
 ||dmdcpvgu.com^
 ||dwentymgplvrizqhieugzkozmqjxrxcyxeqdjvcbjmrhnkguwk.com^
 ||dyunhvev.com^
 ||ervpgpxr.com^
+||farkkbndawtxczozilrrrunxflspkyowishacdueiqzeddsnuu.com^
 ||fjfxpykp.com^
 ||fluohbiy.com^
 ||fokisduu.com^
@@ -3971,14 +3984,22 @@
 ||gbiwxmjw.com^
 ||gerpkshe.com^
 ||gggemaop.com^
+||gkgdqahkcbmykurmngzrrolrecfqvsjgqdyujvgdrgoezkcobq.com^
+||glnqvqbedbmvtcdzcokrfczopbddhopygrvrnlgmalgvhnsfsc.com^
 ||gmpdixdh.com^
+||gpbznagpormpyusuxbvlpbuejqzwvspcyqjcxbqtbdtlixcgzp.com^
+||grceweaxhbpvclyxhwuozrbtvqzjgbnzklvxdezzficwjnmfil.com^
 ||gwaatiev.com^
 ||haqlmmii.com^
 ||hffmzplu.com^
 ||hfjuehls.com^
 ||hkoxlirf.com^
 ||hlotiwnz.com^
+||htllanmhrnjrbestmyabzhyweaccazvuslvadtvutfiqnjyavg.com^
+||hvukouhckryjudrawwylpboxdsonxhacpodmxvbonqipalsprb.com^
 ||hxbvbmxv.com^
+||hyvsquazvafrmmmcfpqkabocwpjuabojycniphsmwyhizxgebu.com^
+||icafyriewzzrwxlxhtoeakmwroueywnwhmqmaxsqdntasgfvhc.com^
 ||idpukwmp.com^
 ||igupodzh.com^
 ||imrwxmau.com^
@@ -3987,10 +4008,12 @@
 ||izwsvyqv.com^
 ||jahsrhlp.com^
 ||jdlnquri.com^
+||jhupypvmcsqfqpbxbvumiaatlilzjrzbembarnhyoochsedzvi.com^
 ||jjipgxjf.com^
 ||jlflzjdt.com^
 ||jqqrcwwd.com^
 ||kgkjlivo.com^
+||ktcltsgjcbjdcyrcdaspmwqwscxgbqhscmkpsxarejfsfpohkk.com^
 ||kyowarob.com^
 ||lckpubqq.com^
 ||lkrcapch.com^
@@ -3998,10 +4021,12 @@
 ||lzmovatu.com^
 ||mnjgoxmx.com^
 ||mnusvlgl.com^
+||mopvkjodhcwscyudzfqtjuwvpzpgzuwndtofzftbtpdfszeido.com^
 ||mvqinxgp.com^
 ||nefxtwxk.com^
 ||negdrvgo.com^
 ||nfniziqm.com^
+||npeanaixbjptsemxrcivetuusaagofdeahtrxofqpxoshduhri.com^
 ||nrgpugas.com^
 ||oawleebf.com^
 ||obthqxbm.com^
@@ -4011,23 +4036,32 @@
 ||ovgzbnjj.com^
 ||pbnnsras.com^
 ||pnunijdm.com^
+||pxarwmerpavfmomfyjwuuinxaipktnanwlkvbmuldgimposwzm.com^
 ||qljczwei.com^
 ||qnpolbme.com^
 ||qrozsnmc.com^
+||rdzxpvbveezdkcyustcomuhczsbvteccejkdkfepouuhxpxtmy.com^
+||rhfvzboqkjfmabakkxggqdmulrsxmisvuzqijzvysbcgyycwfk.com^
 ||rjnkpqax.com^
 ||rpczohkv.com^
 ||ruovcruc.com^
+||sjpexaylsfjnopulpgkbqtkzieizcdtslnofpkafsqweztufpa.com^
 ||snjhhcnr.com^
 ||sriaqmzx.com^
 ||sualzmze.com^
 ||svrsqqtj.com^
+||tawgiuioeaovaozwassucoydtrsellartytpikvcjpuwpagwfv.com^
 ||tjbgiyek.com^
 ||tmdcfkxcckvqbqbixszbdyfjgusfzyguvtvvisojtswwvoduhi.com^
 ||uckxjsiy.com^
+||ugxyemavfvlolypdqcksmqzorlphjycckszifyknwlfcvxxihx.com^
 ||umqsrvdg.com^
 ||uqgloylf.com^
 ||uqpotqld.com^
+||uupqrsjbxrstncicwcdlzrcgoycrgurvfbuiraklyimzzyimrq.com^
 ||uxyofgcf.com^
+||uyqzlnmdtfpnqskyyvidmllmzauitvaijcgqjldwcwvewjgwfj.com^
+||vfnvsvxlgxbvndhgqqohfgdcfprvxqisiqhclfhdpnjzloctny.com^
 ||vlnveqkifcpxdosizybusvjqkfmowoawoshlmcbittpoywblpe.com^
 ||vrqajyuu.com^
 ||vxuhavco.com^
@@ -4042,12 +4076,16 @@
 ||wwgjtcge.com^
 ||wzueqhwf.com^
 ||xbynkkqi.com^
+||xhojlvfznietogsusdiflwvxpkfhixbgdxcnsdshxwdlnhtlih.com^
+||xhqilhfrfkoecllmthusrpycaogrfivehyymyqkpmxbtomexwl.com^
 ||xpnttdct.com^
+||xswutjmmznesinsltpkefkjifvchyqiinnorwikatwbqzjelnp.com^
 ||xttrofww.com^
 ||ygrtbssc.com^
 ||ynlrfiwj.com^
 ||ypyarwgh.com^
 ||yzsiwyvmgftjuqfoejhypwkmdawtwlpvawzewtrrrdfykqhccq.com^
+||zlbdtqoayesloeazgxkueqhfzadqjqqduwrufqemhpbrjvwaar.com^
 ||zmytwgfd.com^
 ||zoowknbw.com^
 ||zpmbsivi.com^
@@ -4297,6 +4335,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||smonstr.ru^
 ||azmdy.com^
 ||daopz.top^
 ||gerpkshe.com^
