@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-09-12 12:05:43
+! Last modified: 2016-09-13 12:03:16
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -3972,6 +3972,7 @@
 ||djzmpsingsrtfsnbnkphyagxdemeagsiabguuqbiqvpupamgej.com^
 ||dkrhsftochvzqryurlptloayhlpftkogvzptcmjlwjgymcfrmv.com^
 ||dmdcpvgu.com^
+||dobgfkflsnmpaeetycphmcloiijxbvxeyfxgjdlczcuuaxmdzz.com^
 ||dwentymgplvrizqhieugzkozmqjxrxcyxeqdjvcbjmrhnkguwk.com^
 ||dyunhvev.com^
 ||ervpgpxr.com^
@@ -3995,6 +3996,7 @@
 ||hfjuehls.com^
 ||hkoxlirf.com^
 ||hlotiwnz.com^
+||hndesrzcgjmprqbbropdulvkfroonnrlbpqxhvprsavhwrfxtv.com^
 ||htllanmhrnjrbestmyabzhyweaccazvuslvadtvutfiqnjyavg.com^
 ||hvukouhckryjudrawwylpboxdsonxhacpodmxvbonqipalsprb.com^
 ||hxbvbmxv.com^
@@ -4018,6 +4020,7 @@
 ||lckpubqq.com^
 ||lkrcapch.com^
 ||lpwvdgfo.com^
+||lytpdzqyiygthvxlmgblonknzrctcwsjycmlcczifxbkquknsr.com^
 ||lzmovatu.com^
 ||mnjgoxmx.com^
 ||mnusvlgl.com^
@@ -4026,6 +4029,7 @@
 ||nefxtwxk.com^
 ||negdrvgo.com^
 ||nfniziqm.com^
+||ngmckvucrjbnyybvgesxozxcwpgnaljhpedttelavqmpgvfsxg.com^
 ||npeanaixbjptsemxrcivetuusaagofdeahtrxofqpxoshduhri.com^
 ||nrgpugas.com^
 ||oawleebf.com^
@@ -4037,6 +4041,7 @@
 ||pbnnsras.com^
 ||pnunijdm.com^
 ||pxarwmerpavfmomfyjwuuinxaipktnanwlkvbmuldgimposwzm.com^
+||pzgchrjikhfyueumavkqiccvsdqhdjpljgwhbcobsnjrjfidpq.com^
 ||qljczwei.com^
 ||qnpolbme.com^
 ||qrozsnmc.com^
@@ -4047,6 +4052,7 @@
 ||ruovcruc.com^
 ||sjpexaylsfjnopulpgkbqtkzieizcdtslnofpkafsqweztufpa.com^
 ||snjhhcnr.com^
+||snpevihwaepwxapnevcpiqxrsewuuonzuslrzrcxqwltupzbwu.com^
 ||sriaqmzx.com^
 ||sualzmze.com^
 ||svrsqqtj.com^
@@ -5787,7 +5793,6 @@ thr.ru##.top_branding
 ||itrajy.ru^
 ||ivanie.com^
 ||ivetki.ru^
-||ivi.ru/player/?videoid=&enableseries=1&autostart=1
 ||ivoxua.socratos.net^
 ||ivsiveg.ru^
 ||ixtyted.ru
@@ -7897,6 +7902,8 @@ http://v.*.com/x?
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||ivi.ru/player/?videoid=&enableseries=1&autostart=1
+ws*://video.docfilms.info^
 .forpicfree.ru^
 ||action.evrikak.ru^
 ||d899.webazilla.com^
