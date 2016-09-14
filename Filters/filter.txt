@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-09-13 12:03:16
+! Last modified: 2016-09-14 12:03:20
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -1972,6 +1972,7 @@
 ||identads.com^
 ||idownloadgalore.com^
 ||idreammedia.com^
+||ieh1ook.bid^
 ||ifmnwi.club^
 ||iframe.mediaplazza.com^
 ||igameunion.com^
@@ -2873,6 +2874,7 @@
 ||primaryads.com^
 ||pritesol.com^
 ||prizel.com^
+||prm-native.com^
 ||pro-advert.de^
 ||pro-advertising.com^
 ||pro-market.net^
@@ -3265,6 +3267,7 @@
 ||srtk.net^
 ||srx.com.sg^
 ||sslboost.com^
+||sslcheckerapi.com^
 ||sta-ads.com^
 ||stabilityappointdaily.xyz^
 ||stabletrappeddevote.info^
@@ -3435,6 +3438,7 @@
 ||torerolumiere.net^
 ||toroadvertising.com^
 ||toroadvertisingmedia.com^
+||torpsol.com^^
 ||torrida.net^
 ||torrpedoads.net^
 ||torvind.com^
@@ -3474,6 +3478,7 @@
 ||trafficbroker.com^
 ||trafficfactory.biz^
 ||trafficforce.com^
+||trafficformoney.com^
 ||traffichaus.com^
 ||trafficjunky.net^
 ||trafficmasterz.net^
@@ -4010,6 +4015,7 @@
 ||izwsvyqv.com^
 ||jahsrhlp.com^
 ||jdlnquri.com^
+||jeyoxmhhnofdhaalzlfbrsfmezfxqxgwqjkxthzptjdizuyojh.com^
 ||jhupypvmcsqfqpbxbvumiaatlilzjrzbembarnhyoochsedzvi.com^
 ||jjipgxjf.com^
 ||jlflzjdt.com^
@@ -4039,6 +4045,7 @@
 ||ossdqciz.com^
 ||ovgzbnjj.com^
 ||pbnnsras.com^
+||pkqbgjuinhgpizxifssrtqsyxnzjxwozacnxsrxnvkrokysnhb.com^
 ||pnunijdm.com^
 ||pxarwmerpavfmomfyjwuuinxaipktnanwlkvbmuldgimposwzm.com^
 ||pzgchrjikhfyueumavkqiccvsdqhdjpljgwhbcobsnjrjfidpq.com^
@@ -4050,6 +4057,7 @@
 ||rjnkpqax.com^
 ||rpczohkv.com^
 ||ruovcruc.com^
+||sjgklyyyraghhrgimsepycygdqvezppyfjkqddhlzbimoabjae.com^
 ||sjpexaylsfjnopulpgkbqtkzieizcdtslnofpkafsqweztufpa.com^
 ||snjhhcnr.com^
 ||snpevihwaepwxapnevcpiqxrsewuuonzuslrzrcxqwltupzbwu.com^
@@ -4341,6 +4349,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||pelicanprogram.com^
 ||smonstr.ru^
 ||azmdy.com^
 ||daopz.top^
@@ -7917,6 +7926,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||ylx-4.com^
+||prxii.tk^
 ||ws-gateway.com^
 ||sourcengo.com^
 .bbelements.com^
@@ -8918,6 +8929,7 @@ openclose.click^
 !
 ! Tracking service
 !
+||bnc.lt^
 //t100.ru^
 ://tru.am^
 ||0stats.com^
