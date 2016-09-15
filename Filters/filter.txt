@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-09-14 12:03:20
+! Last modified: 2016-09-15 12:03:14
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -3526,6 +3526,7 @@
 ||tubemogul.com^
 ||tubereplay.com^
 ||tumri.net^
+||turboadv.com^
 ||turbotraff.net^
 ||turn.com^
 ||tusno.com^
@@ -4349,6 +4350,10 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||universalsrc.com^
+||gogo4girlz.com^
+||rxtbb.top^
+||gvahh.top^
 ||pelicanprogram.com^
 ||smonstr.ru^
 ||azmdy.com^
@@ -8929,6 +8934,8 @@ openclose.click^
 !
 ! Tracking service
 !
+||toplog.az^
+||ilk10.az^
 ||bnc.lt^
 //t100.ru^
 ://tru.am^
