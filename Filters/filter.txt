@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-09-15 12:03:14
+! Last modified: 2016-09-16 12:02:57
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -1094,7 +1094,6 @@
 ||centralnervous.net^
 ||cerotop.com^
 ||cgecwm.org^
-||chameleon.ad^
 ||chango.com^
 ||chanished.net^
 ||chanitet.ru^
@@ -3962,12 +3961,14 @@
 ||bbjlsdqhpbuqaspgjyxaobmpmzunjnvqmahejnwwvaqbzzqodu.com^
 ||bgitczbd.com^
 ||bircgizd.com^
+||bjzcyqezwksznxxhscsfcogugkyiupgjhikadadgoiruasxpxo.com^
 ||bmjccqfxlabturkmpzzokhsahleqqrysudwpuzqjbxbqeakgnf.com^
 ||bmqnguru.com^
 ||bujntrmh.com^
 ||ccdkyvyw.com^
 ||cdicyazp.com^
 ||cdqmeyhqrwinofutpcepbahedusocxqyfokvehqlqpusttfwve.com^
+||cdrjblrhsuxljwesjholugzxwukkerpobmonocjygnautvzjjm.com^
 ||ckwpsghi.com^
 ||cmpsuzvr.com^
 ||comgnnyx.com^
@@ -3997,6 +3998,7 @@
 ||gpbznagpormpyusuxbvlpbuejqzwvspcyqjcxbqtbdtlixcgzp.com^
 ||grceweaxhbpvclyxhwuozrbtvqzjgbnzklvxdezzficwjnmfil.com^
 ||gwaatiev.com^
+||gypxbcrmxsmikqbmnlwtezmjotrrdxpqtafumympsdtsfvkkza.com^
 ||haqlmmii.com^
 ||hffmzplu.com^
 ||hfjuehls.com^
@@ -4004,6 +4006,7 @@
 ||hlotiwnz.com^
 ||hndesrzcgjmprqbbropdulvkfroonnrlbpqxhvprsavhwrfxtv.com^
 ||htllanmhrnjrbestmyabzhyweaccazvuslvadtvutfiqnjyavg.com^
+||huzmweoxlwanzvstlgygbrnfrmodaodqaczzibeplcezmyjnlv.com^
 ||hvukouhckryjudrawwylpboxdsonxhacpodmxvbonqipalsprb.com^
 ||hxbvbmxv.com^
 ||hyvsquazvafrmmmcfpqkabocwpjuabojycniphsmwyhizxgebu.com^
@@ -4048,6 +4051,8 @@
 ||pbnnsras.com^
 ||pkqbgjuinhgpizxifssrtqsyxnzjxwozacnxsrxnvkrokysnhb.com^
 ||pnunijdm.com^
+||pserhnmbbwexmbjderezswultfqlamugbqzsmyxwumgqwxuerl.com^
+||ptiqsfrnkmmtvtpucwzsaqonmvaprjafeerwlyhabobuvuazun.com^
 ||pxarwmerpavfmomfyjwuuinxaipktnanwlkvbmuldgimposwzm.com^
 ||pzgchrjikhfyueumavkqiccvsdqhdjpljgwhbcobsnjrjfidpq.com^
 ||qljczwei.com^
@@ -4065,9 +4070,11 @@
 ||sriaqmzx.com^
 ||sualzmze.com^
 ||svrsqqtj.com^
+||tapihmxemcksuvleuzpodsdfubceomxfqayamnsoswxzkijjmw.com^
 ||tawgiuioeaovaozwassucoydtrsellartytpikvcjpuwpagwfv.com^
 ||tjbgiyek.com^
 ||tmdcfkxcckvqbqbixszbdyfjgusfzyguvtvvisojtswwvoduhi.com^
+||ubhzahnzujqlvecihiyukradtnbmjyjsktsoeagcrbbsfzzrfi.com^
 ||uckxjsiy.com^
 ||ugxyemavfvlolypdqcksmqzorlphjycckszifyknwlfcvxxihx.com^
 ||umqsrvdg.com^
@@ -4082,6 +4089,7 @@
 ||vxuhavco.com^
 ||vxvxsgut.com^
 ||vzhbfwpo.com^
+||wfiejyjdlbsrkklvxxwkferadhbcwtxrotehopgqppsqwluboc.com^
 ||wgefjuno.com^
 ||wkexsfmw.com^
 ||wkhychiklhdglppaeynvntkublzecyyymosjkiofraxechigon.com^
@@ -4100,6 +4108,8 @@
 ||ynlrfiwj.com^
 ||ypyarwgh.com^
 ||yzsiwyvmgftjuqfoejhypwkmdawtwlpvawzewtrrrdfykqhccq.com^
+||zbfncjtaiwngdsrxvykupflpibvbrewhemghxlwsdoluaztwyi.com^
+||zfrzdepuaqebzlenihciadhdjzujnexvnksksqtazbaywgmzwl.com^
 ||zlbdtqoayesloeazgxkueqhfzadqjqqduwrufqemhpbrjvwaar.com^
 ||zmytwgfd.com^
 ||zoowknbw.com^
@@ -4350,6 +4360,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||rontar.com^
+||ladyzxxyz.com^
 ||universalsrc.com^
 ||gogo4girlz.com^
 ||rxtbb.top^
@@ -5104,7 +5116,6 @@ thr.ru##.top_branding
 ||clickov.com^
 ||clickprofi.com^
 ||clicks.moy.su^
-||clicks.runews.radeant.com
 ||clickscapture.com^
 ||clicktizer.ru^
 ||clicktrafic.ru
@@ -7916,6 +7927,8 @@ http://v.*.com/x?
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||server.zombie-tv.org^
+||ad.gameagregator.com^
 ||ivi.ru/player/?videoid=&enableseries=1&autostart=1
 ws*://video.docfilms.info^
 .forpicfree.ru^
@@ -8934,6 +8947,8 @@ openclose.click^
 !
 ! Tracking service
 !
+||bid.run^
+||mytop.az^
 ||toplog.az^
 ||ilk10.az^
 ||bnc.lt^
