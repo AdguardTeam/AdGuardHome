@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-09-16 12:02:57
+! Last modified: 2016-09-19 12:03:11
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -37,6 +37,7 @@
 ||1nimo.com^
 ||1phads.com^
 ||1rx.io^
+||1rxntv.io^
 ||1sadx.net^
 ||1web.me^
 ||1yk851od.com^
@@ -251,6 +252,8 @@
 ||ademails.com^
 ||adengage.com^
 ||adespresso.com^
+||adexc.net^
+||adexchange.io^
 ||adexcite.com^
 ||adexprt.com^
 ||adexprts.com^
@@ -355,6 +358,7 @@
 ||admaya.in^
 ||admedia.com^
 ||admedias.net^
+||admedit.net^
 ||admedo.com^
 ||admeld.com^
 ||admeta.com^
@@ -1756,6 +1760,7 @@
 ||fxdepo.com^
 ||fxyc0dwa.com^
 ||g-cash.biz^
+||g17media.com^
 ||g4whisperermedia.com^
 ||gagacon.com^
 ||gagenez.com^
@@ -2113,6 +2118,7 @@
 ||jiwire.com^
 ||jizzontoy.com^
 ||jmp9.com^
+||jmvnolvmspponhnyd6b.com^
 ||jo7cofh3.com^
 ||jobsyndicate.com^
 ||jobtarget.com^
@@ -2307,6 +2313,7 @@
 ||makemoneymakemoney.net^
 ||mallsponsor.com^
 ||mangoforex.com^
+||mansiontheologysoon.xyz^
 ||marbil24.co.za^
 ||marfeel.com^
 ||marginalwoodfernrounddance.com^
@@ -2505,6 +2512,7 @@
 ||myemailbox.info^
 ||myinfotopia.com^
 ||mylinkbox.com^
+||mynativeads.com^
 ||mynewcarquote.us^
 ||myplayerhd.net^
 ||mysafeurl.com^
@@ -2638,6 +2646,7 @@
 ||ohmcasting.com^
 ||ohmwrite.com^
 ||oileddaintiessunset.info^
+||oldership.com^
 ||oldtiger.net^
 ||omclick.com^
 ||omg2.com^
@@ -2872,6 +2881,7 @@
 ||prickac.com^
 ||primaryads.com^
 ||pritesol.com^
+||privilegebedroomlate.xyz^
 ||prizel.com^
 ||prm-native.com^
 ||pro-advert.de^
@@ -3042,6 +3052,7 @@
 ||rfgsi.com^
 ||rfihub.net^
 ||rhown.com^
+||rhythmcontent.com^
 ||rhythmxchange.com^
 ||ric-ric-rum.com^
 ||ricead.com^
@@ -3074,6 +3085,7 @@
 ||rtbpops.com^
 ||rtk.io^
 ||rubiconproject.com^
+||ruckusschroederraspberry.com^
 ||rummyaffiliates.com^
 ||runadtag.com^
 ||runreproducerow.com^
@@ -3255,6 +3267,7 @@
 ||spotrails.com^
 ||spotscenered.info^
 ||spottt.com^
+||spottysense.com^
 ||spotxcdn.com^
 ||spotxchange.com^
 ||spoutable.com^
@@ -3600,6 +3613,7 @@
 ||vapedia.com^
 ||vashoot.com^
 ||vastopped.com^
+||vaultwrite.com^
 ||vcmedia.com^
 ||vcommission.com^
 ||vcxzv.website^
@@ -4360,6 +4374,12 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||dvanaro.ru^
+||iqtewa.ru^
+||rybnyati.ru^
+||video1132.com^
+||029qz3xam2qq.xyz^
+||aliexpress-internet.ru^
 ||rontar.com^
 ||ladyzxxyz.com^
 ||universalsrc.com^
@@ -6712,7 +6732,7 @@ thr.ru##.top_branding
 ||protrafv2.com^
 ||proxy.insorg.org^
 ||ps.infiplay.ru^
-||psma01com^
+||psma01.com
 ||psma02.com^
 ||psma03.com^
 ||psmardr.com^
@@ -8477,10 +8497,12 @@ openclose.click^
 ||altitude-arena.com^
 ||am15.net^
 ||amazon-adsystem.com^
+||adpublisher.s3.amazonaws.com^
 ||amazonaws.com/appodeal
 ||amazonaws.com/appodeal-campaign-images/
 ||amoad.com^
 ||amobee.com^
+||adups.com^
 ||andomedia.com^
 ||api.appfireworks.com^
 ||api.appodeal.com/show
@@ -8947,6 +8969,7 @@ openclose.click^
 !
 ! Tracking service
 !
+||eum-appdynamics.com^
 ||bid.run^
 ||mytop.az^
 ||toplog.az^
@@ -9658,7 +9681,7 @@ openclose.click^
 ||demdex.net^
 ||deqwas.net^
 ||desert.ru^
-||device-metrics-us.amazon.com^
+||device-metrics-us*.amazon.com^
 ||dgmsearchlab.com^
 ||dhmtracking.co.za^
 ||did-it.com^
