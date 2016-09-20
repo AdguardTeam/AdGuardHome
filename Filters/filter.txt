@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-09-19 12:03:11
+! Last modified: 2016-09-20 12:07:09
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -4374,6 +4374,10 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||keqrd.top^
+||ebmzp.top^
+||venturead.com^
+||privetadblock.ru^
 ||dvanaro.ru^
 ||iqtewa.ru^
 ||rybnyati.ru^
@@ -7964,6 +7968,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||offergo.net^
+||detour.click^
 ||ylx-4.com^
 ||prxii.tk^
 ||ws-gateway.com^
