@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-09-20 12:07:09
+! Last modified: 2016-09-21 12:03:10
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -2317,6 +2317,7 @@
 ||marbil24.co.za^
 ||marfeel.com^
 ||marginalwoodfernrounddance.com^
+||marimedia.com^
 ||marketbanker.com^
 ||marketfly.net^
 ||marketgid.com^
@@ -4103,12 +4104,14 @@
 ||vxuhavco.com^
 ||vxvxsgut.com^
 ||vzhbfwpo.com^
+||wdcxuezpxivqgmecukeirnsyhjpjoqdqfdtchquwyqatlwxtgq.com^
 ||wfiejyjdlbsrkklvxxwkferadhbcwtxrotehopgqppsqwluboc.com^
 ||wgefjuno.com^
 ||wkexsfmw.com^
 ||wkhychiklhdglppaeynvntkublzecyyymosjkiofraxechigon.com^
 ||wklyhvfc.com^
 ||wrmcfyzl.com^
+||wsfqmxdljrknkalwskqmefnonnyoqjmeapkmzqwghehedukmuj.com^
 ||wtvyenir.com^
 ||wwgjtcge.com^
 ||wzueqhwf.com^
@@ -8353,6 +8356,7 @@ openclose.click^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||js.bulkhentai.com^
 ||d17rlarvg2khuc.cloudfront.net^
 ||d1gp9nlx229wzz.cloudfront.net^
 ||d1k29rhvz38kg5.cloudfront.net^
@@ -8371,6 +8375,7 @@ openclose.click^
 ||afreeca-tag.ad-mapps.com^
 ||mtag.mman.kr^
 !
+||ctl.buyt.in^
 ||sscefsol.com^
 ||sas816.ujikdd041o.cn^
 ://o0e.ru^
