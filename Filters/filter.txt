@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-09-22 12:03:04
+! Last modified: 2016-09-23 12:20:13
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -1798,6 +1798,7 @@
 ||geniad.net^
 ||genieessp.com^
 ||genovesetacet.com^
+||genusaceracousticophobia.com^
 ||geo-idm.fr^
 ||geoipads.com^
 ||geopromos.com^
@@ -4377,6 +4378,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||tx2.ru^
 ||keqrd.top^
 ||ebmzp.top^
 ||venturead.com^
