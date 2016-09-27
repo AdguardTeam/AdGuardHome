@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-09-26 12:03:21
+! Last modified: 2016-09-27 12:05:31
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -3985,9 +3985,11 @@
 ||bgitczbd.com^
 ||bircgizd.com^
 ||bjzcyqezwksznxxhscsfcogugkyiupgjhikadadgoiruasxpxo.com^
+||bkmmlcbertdbselmdxpzcuyuilaolxqfhtyukmjkklxphbwsae.com^
 ||bmjccqfxlabturkmpzzokhsahleqqrysudwpuzqjbxbqeakgnf.com^
 ||bmqnguru.com^
 ||bujntrmh.com^
+||bzjtjfjteazqzmukjwhyzsaqdtouiopcmtmgdiytfdzboxdann.com^
 ||ccdkyvyw.com^
 ||cdicyazp.com^
 ||cdqmeyhqrwinofutpcepbahedusocxqyfokvehqlqpusttfwve.com^
@@ -4007,6 +4009,7 @@
 ||dobgfkflsnmpaeetycphmcloiijxbvxeyfxgjdlczcuuaxmdzz.com^
 ||dwentymgplvrizqhieugzkozmqjxrxcyxeqdjvcbjmrhnkguwk.com^
 ||dyunhvev.com^
+||ecmeqhxevxgmtoxubrjstrrlyfgrrtqhvafyagettmwnwkwltn.com^
 ||eeqabqioietkquydwxfgvtvpxpzkuilfcpzkplhcckoghwgacb.com^
 ||ervpgpxr.com^
 ||farkkbndawtxczozilrrrunxflspkyowishacdueiqzeddsnuu.com^
@@ -4024,6 +4027,7 @@
 ||gpbznagpormpyusuxbvlpbuejqzwvspcyqjcxbqtbdtlixcgzp.com^
 ||grceweaxhbpvclyxhwuozrbtvqzjgbnzklvxdezzficwjnmfil.com^
 ||gwaatiev.com^
+||gxgnvickedxpuiavkgpisnlsphrcyyvkgtordatszlrspkgppe.com^
 ||gypxbcrmxsmikqbmnlwtezmjotrrdxpqtafumympsdtsfvkkza.com^
 ||haqlmmii.com^
 ||hffmzplu.com^
@@ -4100,6 +4104,7 @@
 ||rjnkpqax.com^
 ||rkrpvzgzdwqaynyzxkuviotbvibnpqaktcioaaukckhbvkognu.com^
 ||rmetgarrpiouttmwqtuajcnzgesgozrihrzwmjlpxvcnmdqath.com^
+||rnrbvhaoqzcksxbhgqtrucinodprlsmuvwmaxqhxngkqlsiwwp.com^
 ||rpczohkv.com^
 ||ruovcruc.com^
 ||sjgklyyyraghhrgimsepycygdqvezppyfjkqddhlzbimoabjae.com^
@@ -4111,6 +4116,7 @@
 ||sualzmze.com^
 ||svrsqqtj.com^
 ||swckuwtoyrklhtccjuuvcstyesxpbmycjogrqkivmmcqqdezld.com^
+||syorlvhuzgmdqbuxgiulsrusnkgkpvbwmxeqqcboeamyqmyexv.com^
 ||tabeduhsdhlkalelecelxbcwvsfyspwictbszchbbratpojhlb.com^
 ||tapihmxemcksuvleuzpodsdfubceomxfqayamnsoswxzkijjmw.com^
 ||tawgiuioeaovaozwassucoydtrsellartytpikvcjpuwpagwfv.com^
@@ -4135,6 +4141,7 @@
 ||vxvxsgut.com^
 ||vzhbfwpo.com^
 ||wdcxuezpxivqgmecukeirnsyhjpjoqdqfdtchquwyqatlwxtgq.com^
+||wephuklsjobdxqllpeklcrvquyyifgkictuepzxxhzpjbclmcq.com^
 ||wfiejyjdlbsrkklvxxwkferadhbcwtxrotehopgqppsqwluboc.com^
 ||wgefjuno.com^
 ||wkexsfmw.com^
@@ -4149,6 +4156,7 @@
 ||xbynkkqi.com^
 ||xhojlvfznietogsusdiflwvxpkfhixbgdxcnsdshxwdlnhtlih.com^
 ||xhqilhfrfkoecllmthusrpycaogrfivehyymyqkpmxbtomexwl.com^
+||xhwtilplkmvbxumaxwmpaqexnwxypcyndhjokwqkxcwbbsclqh.com^
 ||xpnttdct.com^
 ||xswutjmmznesinsltpkefkjifvchyqiinnorwikatwbqzjelnp.com^
 ||xttrofww.com^
@@ -4410,6 +4418,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||mobalert.net^
 ||md5s.ru^
 ||www0.xyz^
 ||xzwdo.top^
@@ -8020,6 +8029,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||ps.fscache.com^
 ||78.140.130.91^
 ||scriptall.tk^
 ||waframedia16.com^
@@ -8421,11 +8431,9 @@ openclose.click^
 !
 ! Section contains list of advertising networks
 !
-! https://forum.adguard.com/index.php?threads/10142/
-||ad.daum.net/imp
-||afreeca-tag.ad-mapps.com^
-||mtag.mman.kr^
-!
+||go.pushnative.com^
+||go.mobtrks.com^
+||cntcash.ru^
 ||ctl.buyt.in^
 ||sscefsol.com^
 ||sas816.ujikdd041o.cn^
@@ -9031,6 +9039,8 @@ openclose.click^
 !
 ! Tracking service
 !
+||b2c.com^
+||count-cnt.ru^
 ||hitstatus.com^
 ||eum-appdynamics.com^
 ||bid.run^
