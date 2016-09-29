@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-09-28 12:03:12
+! Last modified: 2016-09-29 12:07:22
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -2972,6 +2972,7 @@
 ||questionmarket.com^
 ||questus.com^
 ||quickcash500.com^
+||quideo.men^
 ||quinstreet.com^
 ||qwobl.net^
 ||qwzmje9w.com^
@@ -4194,6 +4195,7 @@
 ||blaundorz.com^
 ||blazwuatr.com^
 ||bliankerd.net^
+||blindury.com^
 ||blipi.net^
 ||blowwor.com^
 ||bluazard.net^
@@ -4417,6 +4419,28 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||visummer.com^
+||ohnooo.ru^
+||adpartner.pro^
+||advideo.ru^
+||axlpf.xyz^
+||chabg.top^
+||ecgawdakfa.biz^
+||fzwoa.com^
+||hochu-deneg.ru^
+||kladoffka.dyndns.biz^
+||loginbox.ru^
+||megabestnews.net^
+||roagz.us^
+||ruttwind.com^
+||ofapes.com^
+||sdziy.us^
+||85.25.243.206^
+||aastob.com^
+||trafmaster.com^
+||trunex.info^
+||vijune.com^
+||zoomclick.info^
 ||vimvio.ru^
 ||videsjs.com^
 ||mobalert.net^
@@ -8011,6 +8035,17 @@ http://v.*.com/x?
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||r6.galya.ru^
+||real.attico-design.ru^
+||987654321.kiev.ua^
+||add.alltorrents.net^
+||ads.211.ru^
+||ads.dfiles.ru^
+||adshow.sc2tv.ru^
+||af.1gdz.ru^
+||rs.mail.ru^
+||showbiz.mail.ru^
+||sib.sibiryak-soft.org^
 ||promo.adult-torrent.com^
 ||rv.mastercity.ru^
 ||server.zombie-tv.org^
@@ -9039,6 +9074,7 @@ openclose.click^
 !
 ! Tracking service
 !
+||ichnaea.netflix.com^
 ||b2c.com^
 ||count-cnt.ru^
 ||hitstatus.com^
