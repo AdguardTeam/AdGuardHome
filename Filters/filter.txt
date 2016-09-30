@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-09-29 12:07:22
+! Last modified: 2016-09-30 12:03:14
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -1095,6 +1095,7 @@
 ||cdnads.com^
 ||cdnapi.net^
 ||cdnload.top^
+||cdnmedia.xyz^
 ||cdnrl.com^
 ||cdnservr.com^
 ||cdntrip.com^
@@ -4419,6 +4420,12 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||xxslu.space^
+||ijrah.top^
+||gratifymecorrect.com^
+||uitrens.ru^
+||0816bvh.ru^
+||teaserrotator.com^
 ||visummer.com^
 ||ohnooo.ru^
 ||adpartner.pro^
@@ -7026,7 +7033,7 @@ thr.ru##.top_branding
 ||rutraff.cc^
 ||rutube.com^
 ||rutubexx.com
-||rutvind.com/js/
+||rutvind.com^
 ||ruvideo.net/obzor/
 ||rwhxz.space^
 ||rwqckakqfq.ru^
