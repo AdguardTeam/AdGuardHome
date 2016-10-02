@@ -17,3 +17,8 @@
 ||torvind.com^
 ||a4.overclockers.ua^
 ||novunu.football-plyus.net^
+! https://github.com/AdguardTeam/AdguardDNS/issues/52
+||crashlytics.com^
+||adserver.snapads.com^
+||mobileanalytics.*.amazonaws.com^
+||adserver.snapads.com^
