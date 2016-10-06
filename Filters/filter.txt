@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-09-30 12:03:14
+! Last modified: 2016-10-06 16:28:28
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -10,6 +10,7 @@
 ! EasyList
 ||007-gateway.com^
 ||0icep80f.com^
+||0pixl.com^
 ||0xwxmj21r75kka.com^
 ||101m3.com^
 ||103092804.com^
@@ -166,6 +167,10 @@
 ||ad-srv.net^
 ||ad-stir.com^
 ||ad-vice.biz^
+||ad.admitad.com/banner/
+||ad.admitad.com/f/
+||ad.admitad.com/fbanner/
+||ad.admitad.com/j/
 ||ad.atdmt.com/i/a.html
 ||ad.atdmt.com/i/a.js
 ||ad.doubleclick.net^
@@ -364,7 +369,6 @@
 ||admeld.com^
 ||admeta.com^
 ||admission.net^
-||admitad.com^
 ||admixer.net^
 ||admngronline.com^
 ||admpads.com^
@@ -718,6 +722,7 @@
 ||agvzvwof.com^
 ||aim4media.com^
 ||aimatch.com^
+||aio.media^
 ||ajansreklam.net^
 ||ajillionmax.com^
 ||akamhd.com^
@@ -808,6 +813,7 @@
 ||asterpix.com^
 ||astree.be^
 ||atadserver.com^
+||atas.io^
 ||atemda.com^
 ||atmalinks.com^
 ||ato.mx^
@@ -1628,6 +1634,7 @@
 ||etgdta.com^
 ||etmanly.ru^
 ||etology.com^
+||etrevro.com^
 ||eurew.com^
 ||euroclick.com^
 ||europacash.com^
@@ -1639,6 +1646,7 @@
 ||exactdrive.com^
 ||excellenceads.com^
 ||exchange4media.com^
+||exdynsrv.com^
 ||exitexplosion.com^
 ||exitjunction.com^
 ||exoclick.com^
@@ -1852,6 +1860,7 @@
 ||googletagservices.com/tag/static/
 ||gorgonkil.com^
 ||gortags.com^
+||gotagy.com^
 ||gotjs.xyz^
 ||gourmetads.com^
 ||governmenttrainingexchange.com^
@@ -2053,6 +2062,7 @@
 ||inskinmedia.com^
 ||inspiringsweater.xyz^
 ||insta-cash.net^
+||instancetour.info^
 ||instantbannercreator.com^
 ||instantclk.com^
 ||instantdollarz.com^
@@ -2225,6 +2235,7 @@
 ||leohd59.ru^
 ||lepinsar.com^
 ||lepintor.com^
+||letadnew.com^
 ||letilyadothejob.com^
 ||letsadvertisetogether.com^
 ||letsgoshopping.tk^
@@ -2322,6 +2333,7 @@
 ||marfeel.com^
 ||marginalwoodfernrounddance.com^
 ||marimedia.com^
+||markergot.com^
 ||marketbanker.com^
 ||marketfly.net^
 ||marketgid.com^
@@ -2493,6 +2505,7 @@
 ||mpnrs.com^
 ||mpression.net^
 ||mprezchc.com^
+||mrperfect.in^
 ||msads.net^
 ||msypr.com^
 ||mtagmonetizationa.com^
@@ -2535,6 +2548,7 @@
 ||nabbr.com^
 ||nagrande.com^
 ||nanigans.com^
+||nasdak.in^
 ||native-adserver.com^
 ||nativead.co^
 ||nativead.tech^
@@ -2659,6 +2673,7 @@
 ||omnitagjs.com^
 ||onad.eu^
 ||onads.com^
+||onclasrv.com^
 ||onclickads.net^
 ||onedmp.com^
 ||onenetworkdirect.com^
@@ -2885,6 +2900,7 @@
 ||prf.hn^
 ||prickac.com^
 ||primaryads.com^
+||primetag.net^
 ||pritesol.com^
 ||privilegebedroomlate.xyz^
 ||prizel.com^
@@ -2922,6 +2938,7 @@
 ||psclicks.com^
 ||pseqcs05.com^
 ||psma02.com^
+||psnmail.su^
 ||ptmopenclose.click^
 ||ptmzr.com^
 ||ptp.lolco.net^
@@ -3255,6 +3272,7 @@
 ||spectato.com^
 ||speeb.com^
 ||speednetwork14.com^
+||speedserver.top^
 ||speedshiftmedia.com^
 ||speedsuccess.net^
 ||spider.ad^
@@ -3340,6 +3358,7 @@
 ||supremeadsonline.com^
 ||surf-bar-traffic.com^
 ||surfboarddigital.com.au^
+||surgeprice.com^
 ||survey-poll.com^
 ||surveyvalue.mobi^
 ||surveyvalue.net^
@@ -3464,6 +3483,7 @@
 ||torrida.net^
 ||torrpedoads.net^
 ||torvind.com^
+||tostickad.com^
 ||total-media.net^
 ||totalprofitplan.com^
 ||totemcash.com^
@@ -3748,6 +3768,7 @@
 ||wgreatdream.com^
 ||wh5kb0u4.com^
 ||where.com^
+||whiteboardnez.com^
 ||whoads.net^
 ||whtsrv9.com^
 ||why-outsource.net^
@@ -3975,62 +3996,91 @@
 ||viuboin4.com^
 ||yie4zooseif.info^
 ! popads.net
+||aatmytrykqhi.com^
 ||aiypulgy.com^
 ||ajgffcat.com^
 ||ambqphwf.com^
+||aominpzhzhwj.com^
+||apgjczhgjrka.com^
 ||asqamasz.com^
+||avrdpbiwvwyt.com^
 ||awsatstb.com^
 ||awvrvqxq.com^
 ||azeozrjk.com^
 ||bbjlsdqhpbuqaspgjyxaobmpmzunjnvqmahejnwwvaqbzzqodu.com^
+||bbopkapcgonb.com^
 ||bgitczbd.com^
 ||bircgizd.com^
 ||bjzcyqezwksznxxhscsfcogugkyiupgjhikadadgoiruasxpxo.com^
 ||bkmmlcbertdbselmdxpzcuyuilaolxqfhtyukmjkklxphbwsae.com^
 ||bmjccqfxlabturkmpzzokhsahleqqrysudwpuzqjbxbqeakgnf.com^
 ||bmqnguru.com^
+||bmubqabepbcb.com^
+||bnkgacehxxmx.com^
 ||bujntrmh.com^
+||bvobtmbziccr.com^
 ||bzjtjfjteazqzmukjwhyzsaqdtouiopcmtmgdiytfdzboxdann.com^
 ||ccdkyvyw.com^
 ||cdicyazp.com^
 ||cdqmeyhqrwinofutpcepbahedusocxqyfokvehqlqpusttfwve.com^
 ||cdrjblrhsuxljwesjholugzxwukkerpobmonocjygnautvzjjm.com^
+||cixjmaxkemzknxxuyvkbzlhvvgeqmzgopppvefpfkqdraonoez.com^
+||cjxkzkzmdomd.com^
 ||ckwpsghi.com^
 ||cmpsuzvr.com^
 ||comgnnyx.com^
 ||comwgi.com^
 ||cphxwpicozlatvnsospudjhswfxwmykgbihjzvckxvtxzfsgtx.com^
 ||crkgtnad.com^
+||csbsyukodmga.com^
+||cuguwxkasghy.com^
 ||cxoxruotepqgcvgqxdlwwucgyazmbkhdojqzihljdwwfeylovh.com^
+||cxrmgoybhyrk.com^
+||cymuxbcnhinm.com^
 ||dcneohtx.com^
+||ddprxzxnhzbq.com^
 ||dgwrxyucxpizivncznkpmdhtrdzyyylpoeitiannqfxmdzpmwx.com^
 ||djzmpsingsrtfsnbnkphyagxdemeagsiabguuqbiqvpupamgej.com^
 ||dkrhsftochvzqryurlptloayhlpftkogvzptcmjlwjgymcfrmv.com^
 ||dmdcpvgu.com^
 ||dobgfkflsnmpaeetycphmcloiijxbvxeyfxgjdlczcuuaxmdzz.com^
+||dobjgpqzygow.com^
 ||dwentymgplvrizqhieugzkozmqjxrxcyxeqdjvcbjmrhnkguwk.com^
+||dxigubtmyllj.com^
 ||dyunhvev.com^
 ||ecmeqhxevxgmtoxubrjstrrlyfgrrtqhvafyagettmwnwkwltn.com^
 ||eeqabqioietkquydwxfgvtvpxpzkuilfcpzkplhcckoghwgacb.com^
+||elbeobjhnsvh.com^
+||emdbszgmxggo.com^
+||eovkzcueutgf.com^
 ||ervpgpxr.com^
 ||farkkbndawtxczozilrrrunxflspkyowishacdueiqzeddsnuu.com^
 ||fjfxpykp.com^
 ||fluohbiy.com^
+||fneheruhxqtv.com^
 ||fokisduu.com^
 ||fqpteozo.com^
+||fvbeyduylvgy.com^
 ||fxjyultd.com^
+||fxvxgwqcddvm.com^
 ||gbiwxmjw.com^
 ||gerpkshe.com^
 ||gggemaop.com^
+||ghtroafchzrt.com^
 ||gkgdqahkcbmykurmngzrrolrecfqvsjgqdyujvgdrgoezkcobq.com^
 ||glnqvqbedbmvtcdzcokrfczopbddhopygrvrnlgmalgvhnsfsc.com^
 ||gmpdixdh.com^
 ||gpbznagpormpyusuxbvlpbuejqzwvspcyqjcxbqtbdtlixcgzp.com^
+||gpgsxlmjnfid.com^
+||gqthfroeirol.com^
 ||grceweaxhbpvclyxhwuozrbtvqzjgbnzklvxdezzficwjnmfil.com^
 ||gwaatiev.com^
+||gwcujaprdsen.com^
 ||gxgnvickedxpuiavkgpisnlsphrcyyvkgtordatszlrspkgppe.com^
 ||gypxbcrmxsmikqbmnlwtezmjotrrdxpqtafumympsdtsfvkkza.com^
 ||haqlmmii.com^
+||hbbwlhxfnbpq.com^
+||hbrbtmjyvdsy.com^
 ||hffmzplu.com^
 ||hfjuehls.com^
 ||hgbmwkklwittcdkjapnpeikxojivfhgszbxmrjfrvajzhzhuks.com^
@@ -4044,24 +4094,37 @@
 ||hxbvbmxv.com^
 ||hyvsquazvafrmmmcfpqkabocwpjuabojycniphsmwyhizxgebu.com^
 ||icafyriewzzrwxlxhtoeakmwroueywnwhmqmaxsqdntasgfvhc.com^
+||iczhhiiowapd.com^
 ||idpukwmp.com^
+||iectshrhpgsl.com^
+||ifvetqzfiawg.com^
+||iglwibwbjxuoflrczfvpibhihwuqneyvmhzeqbmdmujmirdkae.com^
 ||igupodzh.com^
+||iibcejrrfhxh.com^
+||imbbjywwahev.com^
 ||imrwxmau.com^
 ||imyqdbxq.com^
+||iohaqrkjddeq.com^
 ||irjaeupzarkvwmxonaeslgicvjvgdruvdywmdvuaoyfsjgdzhk.com^
 ||irxpndjg.com^
 ||izwsvyqv.com^
 ||jahsrhlp.com^
 ||jdlnquri.com^
 ||jeyoxmhhnofdhaalzlfbrsfmezfxqxgwqjkxthzptjdizuyojh.com^
+||jgqkrvjtuapt.com^
 ||jhupypvmcsqfqpbxbvumiaatlilzjrzbembarnhyoochsedzvi.com^
 ||jjipgxjf.com^
 ||jlflzjdt.com^
 ||jqqrcwwd.com^
 ||kgkjlivo.com^
+||kihhgldtpuho.com^
+||kjjlucebvxtu.com^
+||ksbklucaxgbf.com^
 ||ktcltsgjcbjdcyrcdaspmwqwscxgbqhscmkpsxarejfsfpohkk.com^
 ||kyowarob.com^
 ||lckpubqq.com^
+||lcyxmuhxroyo.com^
+||ljngencgbdbn.com^
 ||lkjmcevfgoxfbyhhmzambtzydolhmeelgkotdllwtfshrkhrev.com^
 ||lkrcapch.com^
 ||lmuxaeyapbqxszavtsljaqvmlsuuvifznvttuuqfcxcbgqdnn.com^
@@ -4074,31 +4137,51 @@
 ||mnusvlgl.com^
 ||mopvkjodhcwscyudzfqtjuwvpzpgzuwndtofzftbtpdfszeido.com^
 ||mvqinxgp.com^
+||nbbljlzbbpck.com^
+||nbrwtboukesx.com^
 ||nefxtwxk.com^
 ||negdrvgo.com^
 ||nfniziqm.com^
 ||ngmckvucrjbnyybvgesxozxcwpgnaljhpedttelavqmpgvfsxg.com^
 ||nnigsvoorscmgnyobwuhrgnbcgtiicyflrtpwxsekldubasizg.com^
+||nnvjigagpwsh.com^
 ||npeanaixbjptsemxrcivetuusaagofdeahtrxofqpxoshduhri.com^
 ||nrgpugas.com^
+||nsazelqlavtc.com^
+||nybpurpgexoe.com^
 ||oawleebf.com^
 ||obthqxbm.com^
 ||okmuxdbq.com^
+||olctpejrnnfh.com^
 ||ooyhetoodapmrjvffzpmjdqubnpevefsofghrfsvixxcbwtmrj.com^
+||ophpbseelohv.com^
+||orszajhynaqr.com^
 ||oslzqjnh.com^
 ||ossdqciz.com^
 ||ovgzbnjj.com^
+||ozhwenyohtpb.com^
 ||pbnnsras.com^
+||pkmzxzfazpst.com^
 ||pkqbgjuinhgpizxifssrtqsyxnzjxwozacnxsrxnvkrokysnhb.com^
 ||plmuxaeyapbqxszavtsljaqvmlsuuvifznvttuuqfcxcbgqdnn.com^
 ||pnunijdm.com^
+||prggimadscvm.com^
 ||pserhnmbbwexmbjderezswultfqlamugbqzsmyxwumgqwxuerl.com^
 ||ptiqsfrnkmmtvtpucwzsaqonmvaprjafeerwlyhabobuvuazun.com^
 ||pxarwmerpavfmomfyjwuuinxaipktnanwlkvbmuldgimposwzm.com^
+||pxktkwmrribg.com^
 ||pzgchrjikhfyueumavkqiccvsdqhdjpljgwhbcobsnjrjfidpq.com^
+||qarqyhfwient.com^
+||qbfvwovkuewm.com^
+||qdlhprdtwhvgxuzklovisrdbkhptpfarrbcmtrxbzlvhygqisv.com^
+||qixlpaaeaspr.com^
 ||qljczwei.com^
 ||qnpolbme.com^
+||qpiyjprptazz.com^
 ||qrozsnmc.com^
+||qtsmzrnccnwz.com^
+||qxxyzmukttyp.com^
+||rbyjirwjbibz.com^
 ||rdzxpvbveezdkcyustcomuhczsbvteccejkdkfepouuhxpxtmy.com^
 ||rffqzbqqmuhaomjpwatukocrykmesssfdhpjuoptovsthbsswd.com^
 ||rhfvzboqkjfmabakkxggqdmulrsxmisvuzqijzvysbcgyycwfk.com^
@@ -4107,7 +4190,12 @@
 ||rmetgarrpiouttmwqtuajcnzgesgozrihrzwmjlpxvcnmdqath.com^
 ||rnrbvhaoqzcksxbhgqtrucinodprlsmuvwmaxqhxngkqlsiwwp.com^
 ||rpczohkv.com^
+||rscgfvsximqdpowcmruwitolouncrmnribnfobxzfhrpdmahqe.com^
 ||ruovcruc.com^
+||rzcmcqljwxyy.com^
+||saipuciruuja.com^
+||sbhnftwdlpbo.com^
+||shnmhrlcredd.com^
 ||sjgklyyyraghhrgimsepycygdqvezppyfjkqddhlzbimoabjae.com^
 ||sjpexaylsfjnopulpgkbqtkzieizcdtslnofpkafsqweztufpa.com^
 ||sncpizczabhhafkzeifklgonzzkpqgogmnhyeggikzloelmfmd.com^
@@ -4121,11 +4209,14 @@
 ||tabeduhsdhlkalelecelxbcwvsfyspwictbszchbbratpojhlb.com^
 ||tapihmxemcksuvleuzpodsdfubceomxfqayamnsoswxzkijjmw.com^
 ||tawgiuioeaovaozwassucoydtrsellartytpikvcjpuwpagwfv.com^
+||tedlrouwixqq.com^
+||tgrmzphjmvem.com^
 ||tjbgiyek.com^
 ||tlzhxxfeteeimoonsegagetpulbygiqyfvulvemqnfqnoazccg.com^
 ||tmdcfkxcckvqbqbixszbdyfjgusfzyguvtvvisojtswwvoduhi.com^
 ||ubhzahnzujqlvecihiyukradtnbmjyjsktsoeagcrbbsfzzrfi.com^
 ||uckxjsiy.com^
+||uecjpplzfjur.com^
 ||ugxyemavfvlolypdqcksmqzorlphjycckszifyknwlfcvxxihx.com^
 ||umqsrvdg.com^
 ||uqgloylf.com^
@@ -4142,37 +4233,52 @@
 ||vxvxsgut.com^
 ||vzhbfwpo.com^
 ||wdcxuezpxivqgmecukeirnsyhjpjoqdqfdtchquwyqatlwxtgq.com^
+||wddtrsuqmqhw.com^
 ||wephuklsjobdxqllpeklcrvquyyifgkictuepzxxhzpjbclmcq.com^
+||wepmmzpypfwq.com^
 ||wfiejyjdlbsrkklvxxwkferadhbcwtxrotehopgqppsqwluboc.com^
 ||wgefjuno.com^
+||wggnmbmedlmo.com^
+||wijczxvihjyu.com^
 ||wkexsfmw.com^
 ||wkhychiklhdglppaeynvntkublzecyyymosjkiofraxechigon.com^
 ||wklyhvfc.com^
+||wmwkwubufart.com^
 ||wrmcfyzl.com^
+||wrmwikcnynbk.com^
 ||wsfqmxdljrknkalwskqmefnonnyoqjmeapkmzqwghehedukmuj.com^
 ||wtvyenir.com^
 ||wwgdpbvbrublvjfbeunqvkrnvggoeubcfxzdjrgcgbnvgcolbf.com^
 ||wwgjtcge.com^
 ||wzueqhwf.com^
 ||xbynkkqi.com^
+||xdwqixeyhvqd.com^
+||xhdzcofomosh.com^
 ||xhojlvfznietogsusdiflwvxpkfhixbgdxcnsdshxwdlnhtlih.com^
 ||xhqilhfrfkoecllmthusrpycaogrfivehyymyqkpmxbtomexwl.com^
 ||xhwtilplkmvbxumaxwmpaqexnwxypcyndhjokwqkxcwbbsclqh.com^
+||xmmnwyxkfcavuqhsoxfrjplodnhzaafbpsojnqjeoofyqallmf.com^
 ||xpnttdct.com^
 ||xswutjmmznesinsltpkefkjifvchyqiinnorwikatwbqzjelnp.com^
 ||xttrofww.com^
+||xwwkuacmqblu.com^
 ||ygrtbssc.com^
+||ylksuifuyryt.com^
 ||ynlrfiwj.com^
 ||ynrbxyxmvihoydoduefogolpzgdlpnejalxldwjlnsolmismqd.com^
 ||ypyarwgh.com^
+||yyuztnlcpiym.com^
 ||yzsiwyvmgftjuqfoejhypwkmdawtwlpvawzewtrrrdfykqhccq.com^
 ||zbfncjtaiwngdsrxvykupflpibvbrewhemghxlwsdoluaztwyi.com^
+||zbrkywjutuxu.com^
 ||zfrzdepuaqebzlenihciadhdjzujnexvnksksqtazbaywgmzwl.com^
 ||zlbdtqoayesloeazgxkueqhfzadqjqqduwrufqemhpbrjvwaar.com^
+||zlvbqseyjdna.com^
 ||zmytwgfd.com^
 ||zoowknbw.com^
 ||zpmbsivi.com^
 ||zptncsir.com^
+||zrxgdnxneslb.com^
 ||zycvyudt.com^
 ! Yavli.com
 ||247view.net^
@@ -4240,6 +4346,7 @@
 ||duading.link^
 ||duaing.net^
 ||duamews.com^
+||duavindr.com^
 ||dutolats.net^
 ||ectensian.net^
 ||edabl.net^
@@ -4420,6 +4527,22 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||sapmedia.ru^
+||widget.admitad.com^
+||ad.oyy.ru^
+||nbolame.ru^
+||n.vn-chk777.com^
+||hedvid.com^
+||seafox26.com^
+||skyadvert.su^
+||skyad1.ru^
+||skyad5.ru^
+||skyadvideo.ru^
+||izdatra.ru^
+||adriverm.narod2.ru^
+||kinott.com^
+||kinott.ru^
+||uniontraff.com^
 ||xxslu.space^
 ||ijrah.top^
 ||gratifymecorrect.com^
@@ -4600,7 +4723,6 @@ thr.ru##.top_branding
 ||2lycosu.com^
 ||2manygirlzhere.org^
 ||2mdn.net^
-||2pay.ru/gif/terminal.swf?link=
 ||2under.ru^
 ||2vulkan.com^
 ||34bogatirya.ru^
@@ -4609,7 +4731,6 @@ thr.ru##.top_branding
 ||37.220.26.137^
 ||37.220.36.15/banners/
 ||3file.info^
-||3gp-18.ru/eng/tdsme.php
 ||3lucosy.com^
 ||3rs.ru/extraffic
 ||3under.ru^
@@ -4690,7 +4811,6 @@ thr.ru##.top_branding
 ||ad-tizer.net^
 ||ad-tool.com^
 ||ad-words.ru/contextad/
-||ad.admitad.com
 ||ad.doubleclick.*;sz=
 ||ad.dumedia.ru^
 ||ad.hutor.ru^
@@ -4758,7 +4878,6 @@ thr.ru##.top_branding
 ||adprofy.com^
 ||adregain.ru^
 ||adrichmedia.info^
-||adrock.com.ua^
 ||adrock.ru^
 ||adrock.ua^
 ||adroll.com^
@@ -4915,7 +5034,6 @@ thr.ru##.top_branding
 ||anevod.ru^
 ||anews.cc^
 ||angestr.ru^
-||animelist.ru/*?
 ||animesector.ru/picz/
 ||animeyes.ru^
 ||aniruyt.ru^
@@ -4948,7 +5066,6 @@ thr.ru##.top_branding
 ||askmarket.net^
 ||asopla.com/sys/js/
 ||asrety.com^
-||assessoria.hotbox.ru^
 ||assets.myflashfetish.com/swf/
 ||associazio.com^
 ||associeta.com^
@@ -4959,7 +5076,6 @@ thr.ru##.top_branding
 ||atlanhe.ru^
 ||atlassolutions.com^
 ||attivertura.com^
-||auction.ua/informer.php?
 ||aukro.ua/ap/ap_show.php
 ||autodealer.ru/includes/button.php?
 ||autodengi.com^
@@ -4983,8 +5099,6 @@ thr.ru##.top_branding
 ||azartdaddy.com^
 ||azartplay.com^
 ||azbns.com^
-||azerbaijanian.com/img.php?
-||azerimake.km.ru^
 ||azvozac.ru^
 ||b-one.com.ua^
 ||b.candy.vl.ru^
@@ -5086,7 +5200,6 @@ thr.ru##.top_branding
 ||binteaser.su^
 ||binweb.ru^
 ||birgatrafa.ru^
-||bistr3.ru^
 ||bistr4.ru^
 ||bistroduy.ru^
 ||bitshare.com/?referral=
@@ -5214,7 +5327,6 @@ thr.ru##.top_branding
 ||cityadspix.com^
 ||cityteaser.ru^
 ||ckqby.com^
-||cl.ekzo.org^
 ||clarm.ru^
 ||clclcl.ru^
 ||clearac.com^
@@ -5276,7 +5388,6 @@ thr.ru##.top_branding
 ||context.meta.ua^
 ||contextbar.ru^
 ||contextrtb.com^
-||contlist.com^
 ||conusmedia.com^
 ||convergator.net^
 ||coolsor.ru^
@@ -5302,7 +5413,6 @@ thr.ru##.top_branding
 ||cppgf.com^
 ||cqc.ru/cgi-bin/
 ||crackac.com^
-||cracklab.ru/images/r_
 ||crackzplanet.com/*.gif
 ||crackzplanet.com/img/
 ||crateac.com^
@@ -5357,7 +5467,6 @@ thr.ru##.top_branding
 ||delo-teh.ru^
 ||delphisources.ru/pages/scripts/recl_
 ||delta.mediafort.ru^
-||demonel.porn-eros.com^
 ||denezhnyie-rucheyki.ru^
 ||deobp.com^
 ||depositphotos.com/js_c/widget-ext.js
@@ -5425,7 +5534,6 @@ thr.ru##.top_branding
 ||dt00.net^
 ||dt07.net^
 ||dunta.ru^
-||duuw.nm.ru^
 ||dverizamki.org/bshow/
 ||dverser.ru^
 ||dyndns-blog.com^
@@ -5477,7 +5585,6 @@ thr.ru##.top_branding
 ||enot.k-yroky.ru^
 ||entimee.com^
 ||enzezin.ru^
-||eogli.com/1/
 ||epartner.ru^
 ||eradek.ru^
 ||erahost.ru/partner/
@@ -5485,7 +5592,6 @@ thr.ru##.top_branding
 ||ero-spinula.ru^
 ||ero-tizzer.info
 ||ero2you.com^
-||eronsk.ru/b/
 ||eropays2.com^
 ||erotikdeal.com^
 ||erotizzer.info
@@ -5562,7 +5668,6 @@ thr.ru##.top_branding
 ||flipflapflo.biz
 ||float-l.ru^
 ||flocktory.com^
-||fly.cdn.ac/
 ||flygo.ru^
 ||flysat.com/resim
 ||fmates.ru^
@@ -5592,7 +5697,6 @@ thr.ru##.top_branding
 ||foundtr.com^
 ||fpmef.com^
 ||freddyman.com^
-||free-lance.ru/*/contacts/
 ||freeavalanche.ru^
 ||freeexchange.ru^
 ||freehd.com.ua^
@@ -5640,7 +5744,6 @@ thr.ru##.top_branding
 ||gamepitstop.ru^*pid=
 ||gameteaser.ru^
 ||gamingpartners.org^
-||gate-00.com^
 ||gateway-02.com^
 ||gateway-03.com^
 ||gatewey.net^
@@ -5688,17 +5791,13 @@ thr.ru##.top_branding
 ||globalteaser.com^
 ||globalteaser.ru
 ||globaltizer.ru^
-||globalwebmap.com/button/*.gif
 ||glojune.biz^
 ||glordd.com^
 ||glouposek.ru^
-||glows.ru/shape.php
 ||gmbox.ru/sites/default/files/sportbox_export.js
 ||gnezdo.ru^
-||go.gettraf.org^
 ||go.jetswap.com^
 ||go.media-x.ru^
-||go.seopic.net^
 ||go.wsockd.com^
 ||go2vulcan.com^
 ||go7me.ru^
@@ -5720,7 +5819,6 @@ thr.ru##.top_branding
 ||gonews*.net^
 ||good-traf.ru^
 ||good-traff.ru^
-||good.sibiryak-soft.org^
 ||goodadvert.
 ||goodkind.ru^
 ||goodlooknews.net^
@@ -5871,7 +5969,6 @@ thr.ru##.top_branding
 ||img.carnage.ru/i/main/
 ||img.fitbut.ru^
 ||img.labirint.ru/design/partner/banners_for_inst/
-||img.mobilezzz.com^
 ||img.ruclicks.com/ruclicks
 ||img1458.r.worldssl.net^
 ||imgg.dt00.net
@@ -5923,7 +6020,6 @@ thr.ru##.top_branding
 ||iqsoh.ru^
 ||irdanen.ru^
 ||iredirr.com^
-||is-very-good.org^
 ||islamclick.ru^
 ||iso100.ru^
 ||isonlynews.net^
@@ -5987,7 +6083,6 @@ thr.ru##.top_branding
 ||kan3.info^
 ||kanobu.me/promo/
 ||karabalikelektronik.com/images/reklam
-||karambas.ru/flash
 ||karaokepesni.ru^
 ||kartinka.com.ua/
 ||kartinuly.ru^
@@ -6010,7 +6105,6 @@ thr.ru##.top_branding
 ||kino.kox.su^
 ||kino.planetkino.ru^
 ||kinoclub.org^
-||kinofilms.com.ua/images/
 ||kinolib.com/img/rand_logo.php?
 ||kinomir.kz/rtr
 ||kinopromobase.ru^
@@ -6096,7 +6190,6 @@ thr.ru##.top_branding
 ||lbn.ru/cgi-bin/
 ||lcads.ru^
 ||ldnxy.xyz^
-||leadada.com^
 ||leadgid.go2cloud.org^
 ||leads.su^
 ||leadsleader.ru^
@@ -6126,7 +6219,6 @@ thr.ru##.top_branding
 ||letssex.
 ||levelpay.ru^
 ||levitatsia.ru^
-||levrico.com^
 ||li2p.com^
 ||libo.ru/rat/img/
 ||lichyela.ru^
@@ -6182,7 +6274,6 @@ thr.ru##.top_branding
 ||loadest.com/*url=
 ||loadmoney.ru^
 ||log.krs-ix.ru/krs.php?
-||logan.jino.ru^
 ||login.tracking101.com^
 ||logsoc.ru^
 ||lokomusic.com^
@@ -6215,7 +6306,6 @@ thr.ru##.top_branding
 ||luisardo.com^
 ||luke-forelegs0.asia^
 ||lux-bn.com.ua^
-||lux-static.ru^
 ||luxcash.ru^
 ||luxup.ru^
 ||luxurycash.net^
@@ -6269,7 +6359,6 @@ thr.ru##.top_branding
 ||mecash.ru^
 ||medads.ru^
 ||media-active.ru^
-||media-rotator.net^
 ||media-vip.com^
 ||media.fairlink.ru
 ||media.goldline.pro^
@@ -6326,7 +6415,6 @@ thr.ru##.top_branding
 ||metaliners.ru^
 ||metallicheckiy-portal.ru/imgrek/
 ||metaprofit.net^
-||metod-online.com^*/promo/
 ||metroclick.ru^
 ||mezima.com^
 ||mfatallp.com^
@@ -6361,10 +6449,8 @@ thr.ru##.top_branding
 ||mn1.ru/cgi-bin/
 ||mn2.ru/cgi-bin/
 ||mn3.ru/cgi-bin/
-||mn4.ru/cgi-bin/
 ||mnetads.net^
 ||mnogo.ru^
-||mobalives.com^
 ||mobapeople.com^
 ||mobatori.com
 ||mobatory.com^
@@ -6372,7 +6458,6 @@ thr.ru##.top_branding
 ||mobiads.ru^
 ||mobidump.com^
 ||mobile-click.biz^
-||mobiledirectors.com^
 ||mobiloba.com/
 ||mobioffers.ru^
 ||mobitema.ru
@@ -6478,7 +6563,6 @@ thr.ru##.top_branding
 ||nepalon.com^
 ||neqky.com^
 ||neroom.ru^
-||netload.in^*?refer_id=
 ||network-t.net^
 ||nevidanno.ru^
 ||new-lead.ru^
@@ -6537,7 +6621,6 @@ thr.ru##.top_branding
 ||numberia.com^
 ||numbers.md^
 ||numen.ru/button/?
-||nummobile.com^
 ||nutkaekwcm.ru^
 ||nvjqm.com^
 ||nwmum.com^
@@ -6555,9 +6638,7 @@ thr.ru##.top_branding
 ||obman-casino.com
 ||obmen.starstudio.org.ua^
 ||obmennik.ws/img/promo/
-||obmenniki.com/img/ban
 ||obmnt.com^
-||oboi.kards.ru/?
 ||obsudam.ru^
 ||obuvnogo.net^
 ||ochze.com^
@@ -6745,8 +6826,6 @@ thr.ru##.top_branding
 ||polnut.com/sys/js/
 ||pomogi.org/urgent/1/
 ||pomolation.ru^
-||ponsshop.ru
-||ponsshop.ru/?p=
 ||ponyvod.ru^
 ||pop-parad.
 ||pop-under.
@@ -6775,7 +6854,6 @@ thr.ru##.top_branding
 ||pp.pornoveka.ru
 ||ppvlj.com^
 ||pr28.com^
-||pravoslavie.info/xcount.php?
 ||prbn.ru/
 ||prcy-info.ru/informer.php?
 ||prcy.myws.ru/img/
@@ -6883,7 +6961,6 @@ thr.ru##.top_branding
 ||raptop.ru/images/img*.gif
 ||rarenok.biz^
 ||rasskaju.ru^
-||rate.7surf.ru/img.php?
 ||rating.km.ua/*?
 ||ratioboom.ru^
 ||ratke.biz^
@@ -6982,7 +7059,6 @@ thr.ru##.top_branding
 ||rotation-media.net^
 ||rotator.
 ||roukel.com^
-||rpod.ru/i/b/
 ||rs-context.ru^
 ||rss20.ru^
 ||rssnewser.ru/add
@@ -7002,7 +7078,6 @@ thr.ru##.top_branding
 ||rtl*.org/init.js?
 ||rtl1.biz^
 ||rtl1.net^
-||ru-top.net/img/
 ||ru.gg/werbemittel/
 ||ru4.com/
 ||ruad.net^
@@ -7082,7 +7157,6 @@ thr.ru##.top_branding
 ||scrool.ru^
 ||sdelaimebel.ru/partners/
 ||sdoper.com/sys/js/
-||searchgid.ru/informer.
 ||searchlinker.ru^
 ||searchmeta.webhost.ru^
 ||searchtds.ru^
@@ -7098,7 +7172,6 @@ thr.ru##.top_branding
 ||seevenbilcoo.uk.to^
 ||seexycams*.da.ru^
 ||seilope.com/sys/js/
-||sektor-sga.com/sga*.
 ||sektorial.com^
 ||selectornews.com^
 ||selhost.ru^
@@ -7113,8 +7186,6 @@ thr.ru##.top_branding
 ||seorate.ru^
 ||seosape.com^
 ||seosprint.net^
-||seotechnology.ru/imgseo.php?
-||seotechnology.ru/imgygpag.php?
 ||seowebtools.ru/inform/infb.php?
 ||serank.ru/prinf/view.php?
 ||serenky.ru^
@@ -7136,7 +7207,6 @@ thr.ru##.top_branding
 ||server2034.ru^
 ||serverbest.xyz^
 ||service.rorer.ru^
-||servidormensseger.hotbox.ru^
 ||sex-finger.com^
 ||sex-mamba.biz
 ||sex-news.ru/_connect/dating
@@ -7170,7 +7240,6 @@ thr.ru##.top_branding
 ||site-rank.com^
 ||sj1.ru/cgi-bin/
 ||sj10.ru/cgi-bin/
-||sj11.ru/cgi-bin/
 ||sj2.ru/cgi-bin/
 ||sj3.ru/cgi-bin/
 ||sj4.ru/cgi-bin/
@@ -7193,7 +7262,6 @@ thr.ru##.top_branding
 ||slot-888.ru^
 ||slowpoker.ru^
 ||smart.allocine.fr
-||smartb.2gsg.com^
 ||smartclip.net/delivery/tag?
 ||smartinfomarketing.ru^
 ||smeshen.ru^
@@ -7293,7 +7361,7 @@ thr.ru##.top_branding
 ||sweetest.ru^
 ||swxhp.pw^
 ||sxtut.org^
-||sync.audtd.com^
+||audtd.com^
 ||sypleni.ru^
 ||sysdiag.ru^
 ||syznate.ru^
@@ -7304,7 +7372,6 @@ thr.ru##.top_branding
 ||tankionline.com#friend=
 ||targetan.com^
 ||targetix.net^
-||taril2.ru^
 ||tastishi.ru^
 ||tbe.tom.ru/?
 ||tch10.com^
@@ -7397,7 +7464,6 @@ thr.ru##.top_branding
 ||tiutietur.com^
 ||tiz-et.ru^
 ||tiz.neosmi.ru
-||tiz.tutitam.ml^
 ||tiz.ukrr.ru^
 ||tizba.ru/data/js/*.js?bid=
 ||tizer-bazar.com^
@@ -7413,9 +7479,6 @@ thr.ru##.top_branding
 ||tizer8.net^
 ||tizerads.ru^
 ||tizerbank.com^
-||tizerbest.net
-||tizerbest.net/crossdomain.xml
-||tizerbest.net/xml_feed.php
 ||tizerbox.ru^
 ||tizerclik.com^
 ||tizerda.net^
@@ -7423,7 +7486,6 @@ thr.ru##.top_branding
 ||tizerfly.net^
 ||tizerget.net^
 ||tizergid.com^
-||tizergo.net^
 ||tizergun.net^
 ||tizerka.info^
 ||tizerka.net^
@@ -7459,7 +7521,6 @@ thr.ru##.top_branding
 ||todaymix.ru^
 ||toftforcal.com^
 ||toftori.ru^
-||tofun.ru/traff/*.php
 ||tojinr.com^
 ||tolicando.com^
 ||tomingo.biz^
@@ -7530,7 +7591,6 @@ thr.ru##.top_branding
 ||trafstore.com^
 ||trafvip.com
 ||trafvip.in
-||trailsendfarms.com^
 ||transfto.com^
 ||transiz.ru^
 ||translate.pronpic.org^
@@ -7622,7 +7682,6 @@ thr.ru##.top_branding
 ||urwb.ru/
 ||us.a1.yimg.com^
 ||us.i1.yimg.com^
-||usde.ru/
 ||useorthe.com^
 ||userator.ru/img/ban/
 ||userclick.su^
@@ -7754,7 +7813,6 @@ thr.ru##.top_branding
 ||vogotita.com^
 ||vogozae.ru^
 ||vogozaq.ru^
-||voland-rocker.fatal.ru^
 ||vongomedia.ru^
 ||voob.ru/
 ||voploti.com
@@ -7900,7 +7958,6 @@ thr.ru##.top_branding
 ||wssdoo.com^
 ||wtools.biz/sample2.php?
 ||wtoredir.com^
-||wu.adonweb.com^
 ||wvzhj.com^
 ||ww.showsteps.ru^
 ||www.m.ua/p-
@@ -7937,7 +7994,6 @@ thr.ru##.top_branding
 ||xn----8sbcooencx8c3bm.xn--p1ai^
 ||xn----etbhjdhwegjlz.xn--p1ai^
 ||xn--80affy2c3b.xn--p1ai^
-||xn--80apfevho6e.su/img/
 ||xn--u1aaw.xn--p1ai^
 ||xnet.am/widget
 ||xoliter.com^
@@ -7951,7 +8007,6 @@ thr.ru##.top_branding
 ||xxx-babes.org^
 ||xxx-tracker.com/pics/
 ||yandepit.com^
-||yandexo.ru/rek/
 ||yangot.com^
 ||yanudy.com/sys/js/
 ||yateaser.ru^
@@ -7991,7 +8046,6 @@ thr.ru##.top_branding
 ||zapbox.ru^
 ||zarabotay.1gif.ru^
 ||zarabotki.ru^
-||zasunka.ru/tds/
 ||zatexta.com^
 ||zboac.com^
 ||zdenochary.com^
@@ -8025,7 +8079,7 @@ thr.ru##.top_branding
 ||zzima.com/?ref=
 ||книги2000.com/ws/
 ! VisitWeb ads
-! Example: http://svetmonet.ru/2098.html http://pic4cash.ru/8le.html
+! Example: http://svetmonet.ru/2098.html
 .space/xx?*&bid=
 http://*.*.pw/v/
 http://*.*.space/v/
@@ -8042,6 +8096,7 @@ http://v.*.com/x?
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||fastpicc.ru^
 ||r6.galya.ru^
 ||real.attico-design.ru^
 ||987654321.kiev.ua^
@@ -8052,7 +8107,6 @@ http://v.*.com/x?
 ||af.1gdz.ru^
 ||rs.mail.ru^
 ||showbiz.mail.ru^
-||sib.sibiryak-soft.org^
 ||promo.adult-torrent.com^
 ||rv.mastercity.ru^
 ||server.zombie-tv.org^
@@ -8072,6 +8126,11 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||3al.pw^
+||javacript.cf^
+||india-zed.com^
+||game.gamingnonstop.net^
+||adversolutions.com^
 ||78.140.130.91^
 ||scriptall.tk^
 ||waframedia16.com^
@@ -8473,6 +8532,7 @@ openclose.click^
 !
 ! Section contains list of advertising networks
 !
+||yuhuads.com^
 ||go.pushnative.com^
 ||go.mobtrks.com^
 ||cntcash.ru^
@@ -9081,6 +9141,8 @@ openclose.click^
 !
 ! Tracking service
 !
+||admitad.com^
+||stat.clickfrog.ru^
 ||ichnaea.netflix.com^
 ||b2c.com^
 ||count-cnt.ru^
@@ -10273,7 +10335,7 @@ openclose.click^
 ||imrtrack.com^
 ||imrworldwide.com^
 ||imtop.ru/*/count
-||in.treasuredata.com^
+||treasuredata.com^
 ||inaudium.com^
 ||inboxtag.com^
 ||incentivesnetwork.net^
@@ -11889,6 +11951,8 @@ openclose.click^
 ||torvind.com^
 ||a4.overclockers.ua^
 ||novunu.football-plyus.net^
+! https://github.com/AdguardTeam/AdguardDNS/issues/52
+||mobileanalytics.*.amazonaws.com^
 !
 ! Adguard DNS exceptions
 ! https://github.com/AdguardTeam/AdguardDNS/issues/43
