@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-10-06 16:37:59
+! Last modified: 2016-10-07 12:03:03
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -4527,95 +4527,6 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
-||sapmedia.ru^
-||widget.admitad.com^
-||ad.oyy.ru^
-||nbolame.ru^
-||n.vn-chk777.com^
-||hedvid.com^
-||seafox26.com^
-||skyadvert.su^
-||skyad1.ru^
-||skyad5.ru^
-||skyadvideo.ru^
-||izdatra.ru^
-||adriverm.narod2.ru^
-||kinott.com^
-||kinott.ru^
-||uniontraff.com^
-||xxslu.space^
-||ijrah.top^
-||gratifymecorrect.com^
-||uitrens.ru^
-||0816bvh.ru^
-||teaserrotator.com^
-||visummer.com^
-||ohnooo.ru^
-||adpartner.pro^
-||advideo.ru^
-||axlpf.xyz^
-||chabg.top^
-||ecgawdakfa.biz^
-||fzwoa.com^
-||hochu-deneg.ru^
-||kladoffka.dyndns.biz^
-||loginbox.ru^
-||megabestnews.net^
-||roagz.us^
-||ruttwind.com^
-||ofapes.com^
-||sdziy.us^
-||85.25.243.206^
-||aastob.com^
-||trafmaster.com^
-||trunex.info^
-||vijune.com^
-||zoomclick.info^
-||vimvio.ru^
-||videsjs.com^
-||mobalert.net^
-||md5s.ru^
-||www0.xyz^
-||xzwdo.top^
-||kkkiski4u.com^
-||khoteris.ru^
-||banner-media.ru^
-||langosh.biz^
-||marketnews.pw^
-||tpxur.top^
-||tivisla.ru^
-||ortetse.ru^
-||vids63.com^
-||videorot.com^
-||privetadb4.ru^
-||tx2.ru^
-||keqrd.top^
-||ebmzp.top^
-||venturead.com^
-||privetadblock.ru^
-||dvanaro.ru^
-||iqtewa.ru^
-||rybnyati.ru^
-||video1132.com^
-||029qz3xam2qq.xyz^
-||aliexpress-internet.ru^
-||rontar.com^
-||ladyzxxyz.com^
-||universalsrc.com^
-||gogo4girlz.com^
-||rxtbb.top^
-||gvahh.top^
-||pelicanprogram.com^
-||smonstr.ru^
-||azmdy.com^
-||daopz.top^
-||gerpkshe.com^
-||exdynsrv.com^
-||0664ic555p.com^
-||zycvyudt.com^
-||jjipgxjf.com^
-||lemfama.ru^
-||vedety.ru^
 .adonweb.ru^
 .adv-modulation.info^
 .adv-multithreading.info^
@@ -4672,12 +4583,14 @@ http://uno.*/?t=vkm&pid=
 http://uno.*?t=b&blockids=
 http://w7.ru/
 http://wq3.ru/
-mail.ru##.branding-header
 polezno-2012.info^
 thr.ru##.top_branding
 ||00bloggers.ru^
 ||012345.ru/upload/
+||029qz3xam2qq.xyz^
 ||0427d7.se^
+||0664ic555p.com^
+||0816bvh.ru^
 ||1000zakazov.ru^
 ||1001noch.net^
 ||100proc.com^
@@ -4763,6 +4676,7 @@ thr.ru##.top_branding
 ||7rtv.com^
 ||84.16.230.172^
 ||85.17.254.150^
+||85.25.243.206^
 ||87.242.75.165^
 ||87.242.91.*/adfox/
 ||87.242.91.*/prepareCode?
@@ -4787,6 +4701,7 @@ thr.ru##.top_branding
 ||a.sdska.ru^
 ||aa-ds.ru^
 ||aaakino.ru/search
+||aastob.com^
 ||abcfilm.org^
 ||abckino.com/?aid=
 ||abdmi.ru^
@@ -4815,6 +4730,7 @@ thr.ru##.top_branding
 ||ad.dumedia.ru^
 ||ad.hutor.ru^
 ||ad.istokiku.ru^
+||ad.oyy.ru^
 ||ad.tbn.ru^
 ||ad.yadro.ru^
 ||ad1game.ru^
@@ -4871,6 +4787,7 @@ thr.ru##.top_branding
 ||adoneast.ru^
 ||adonweb.com/
 ||adonweb.ru/
+||adpartner.pro^
 ||adpod.in^
 ||adpos.ru^
 ||adpremium.ru^
@@ -4878,6 +4795,7 @@ thr.ru##.top_branding
 ||adprofy.com^
 ||adregain.ru^
 ||adrichmedia.info^
+||adriverm.narod2.ru^
 ||adrock.ru^
 ||adrock.ua^
 ||adroll.com^
@@ -4954,6 +4872,7 @@ thr.ru##.top_branding
 ||adverttraf.com^
 ||adverweb.ru^
 ||advgame.org^
+||advideo.ru^
 ||advjump.com/jpromo/
 ||advkino.ru^
 ||advmaker.net^
@@ -5000,6 +4919,7 @@ thr.ru##.top_branding
 ||alfatarget.ru^
 ||alferac.ru^
 ||alienradar.ru
+||aliexpress-internet.ru^
 ||alimama.cn^
 ||all-news.net.ua/informers/
 ||allbest.ru/union/d/a/?n=
@@ -5076,6 +4996,7 @@ thr.ru##.top_branding
 ||atlanhe.ru^
 ||atlassolutions.com^
 ||attivertura.com^
+||audtd.com^
 ||aukro.ua/ap/ap_show.php
 ||autodealer.ru/includes/button.php?
 ||autodengi.com^
@@ -5094,11 +5015,13 @@ thr.ru##.top_branding
 ||awempire.com/ban/
 ||awesomeredirector.com^
 ||awmengine.net
+||axlpf.xyz^
 ||azartaffiliates.com^
 ||azartcash.com^
 ||azartdaddy.com^
 ||azartplay.com^
 ||azbns.com^
+||azmdy.com^
 ||azvozac.ru^
 ||b-one.com.ua^
 ||b.candy.vl.ru^
@@ -5120,6 +5043,7 @@ thr.ru##.top_branding
 ||banerator.silvercdn.com^
 ||banki.ru/_export/informers/
 ||banner-in.net
+||banner-media.ru^
 ||banner-mix.ru^
 ||banner.kiev.ua
 ||banner.lbs.km.ru^
@@ -5308,6 +5232,7 @@ thr.ru##.top_branding
 ||cettente.com^
 ||cettenu.com^
 ||cf-track.info^
+||chabg.top^
 ||chbn.ru^
 ||cheaptop.ru^
 ||chevlaga.ru^
@@ -5445,6 +5370,7 @@ thr.ru##.top_branding
 ||dafferes.com^
 ||dafficha.com^
 ||danilidi.ru^
+||daopz.top^
 ||dariku.ru^
 ||darkweb.su/peklama/
 ||dartimyl.com^
@@ -5534,6 +5460,7 @@ thr.ru##.top_branding
 ||dt00.net^
 ||dt07.net^
 ||dunta.ru^
+||dvanaro.ru^
 ||dverizamki.org/bshow/
 ||dverser.ru^
 ||dyndns-blog.com^
@@ -5548,7 +5475,9 @@ thr.ru##.top_branding
 ||eaqci.com^
 ||earnshill.com/images/
 ||ebaytoday.ru/?
+||ebmzp.top^
 ||ebuvpopku.ru^
+||ecgawdakfa.biz^
 ||echo.12cpm.com^
 ||echo.andumb.com^
 ||echo.scund.com^
@@ -5616,6 +5545,7 @@ thr.ru##.top_branding
 ||exchange.newsnet.in.ua/show.ad
 ||exchangenews.ru^
 ||excluzive.net^
+||exdynsrv.com^
 ||exitlinks.ru/tizer/
 ||exo.kiev.ua^
 ||expert.ruab.ru^
@@ -5754,6 +5684,7 @@ thr.ru##.top_branding
 ||gdeslon.ru^
 ||gdp.game-rust.ru^
 ||geracbv.leohd59.ru^
+||gerpkshe.com^
 ||get-ads.ru^
 ||get-click.net^
 ||get-click.ru^
@@ -5809,6 +5740,7 @@ thr.ru##.top_branding
 ||gocdn.ru^
 ||gogetlinks.net^
 ||gogo.ru/img/p/
+||gogo4girlz.com^
 ||gogousenet.com^
 ||gold-music.ru/informer
 ||gold-wm.ru^
@@ -5844,6 +5776,7 @@ thr.ru##.top_branding
 ||gramer.freehostia.com/statistics/
 ||grand-casino.com/?
 ||grand-masters.ru^
+||gratifymecorrect.com^
 ||grattis.ru/promo/
 ||grebibablo.com^
 ||gredinatib.org^
@@ -5860,6 +5793,7 @@ thr.ru##.top_branding
 ||gsmonitor.ru^
 ||gueur.com^
 ||guktuti.ru^
+||gvahh.top^
 ||gvapp.ru^
 ||gws.ru/gwscnt/?
 ||h.lastras.ru/v/
@@ -5873,6 +5807,7 @@ thr.ru##.top_branding
 ||hd3pi8cv.com^
 ||hdat.xyz^
 ||hdtracker.ru^
+||hedvid.com^
 ||hello.satclubbing.info
 ||hellywood.ru^
 ||helpls.ru^
@@ -5892,6 +5827,7 @@ thr.ru##.top_branding
 ||hitter.ru^
 ||hjiss.com^
 ||hnixr.com^
+||hochu-deneg.ru^
 ||holder.com.ua^
 ||holm.ru^
 ||holysts.com^
@@ -5954,6 +5890,7 @@ thr.ru##.top_branding
 ||ihsibe.ru^
 ||iiutq.xyz^
 ||ijdenha.ru^
+||ijrah.top^
 ||ijtefix.ru^
 ||ikiif.com^
 ||ikritis.ru^
@@ -6018,6 +5955,7 @@ thr.ru##.top_branding
 ||ipurl.ru^
 ||iqok.ru^
 ||iqsoh.ru^
+||iqtewa.ru^
 ||irdanen.ru^
 ||iredirr.com^
 ||islamclick.ru^
@@ -6034,6 +5972,7 @@ thr.ru##.top_branding
 ||ixtyted.ru
 ||iygke.com^
 ||izcity.com/js/norton_izcity.js
+||izdatra.ru^
 ||izderevni.com.ua/promo/
 ||izitizi.ru^
 ||izvozic.ru^
@@ -6052,6 +5991,7 @@ thr.ru##.top_branding
 ||jhrwekjrowegm.com^
 ||jiayuofficial.com
 ||jimdo.com/s/img/aff/
+||jjipgxjf.com^
 ||jlist.com/feed.php?affid=
 ||job-info2015.ru^
 ||job.ws/_bann/
@@ -6090,9 +6030,11 @@ thr.ru##.top_branding
 ||kavkazweb.net/tc.cgi?
 ||kazmedia.su^
 ||kbllskkwvp.pw^
+||keqrd.top^
 ||key4test.in^
 ||khermesi.ru^
 ||khesino.ru^
+||khoteris.ru^
 ||khotokra.ru^
 ||kilkiva.ru^
 ||kilonefast.net^
@@ -6110,6 +6052,8 @@ thr.ru##.top_branding
 ||kinopromobase.ru^
 ||kinorama.tv/
 ||kinotraff.ru^
+||kinott.com^
+||kinott.ru^
 ||kioskas.lt/rex/pop.php?
 ||kisakuku.org^
 ||kissmyads.biz^
@@ -6117,7 +6061,9 @@ thr.ru##.top_branding
 ||kit5hgver.com^
 ||kitchenfilm.ru^
 ||kitopr.com^
+||kkkiski4u.com^
 ||kkpur.xyz^
+||kladoffka.dyndns.biz^
 ||kleo.ru/cgi-bin/
 ||klikaem.ru/
 ||kliklink.ru
@@ -6178,8 +6124,10 @@ thr.ru##.top_branding
 ||ladypay.ru^
 ||ladyshopping.ru^
 ||ladytizer.org^
+||ladyzxxyz.com^
 ||lalabla.biz^
 ||lamma.24ex.net^
+||langosh.biz^
 ||lantocha.ru^
 ||lapeduzis.org^
 ||lapumo.com^
@@ -6204,6 +6152,7 @@ thr.ru##.top_branding
 ||leforma.com^
 ||legandruk.com^
 ||leleorix.ru^
+||lemfama.ru^
 ||lendemo.com/sys/js/
 ||lenta-novostei.com^
 ||lenty.ru^
@@ -6275,6 +6224,7 @@ thr.ru##.top_branding
 ||loadmoney.ru^
 ||log.krs-ix.ru/krs.php?
 ||login.tracking101.com^
+||loginbox.ru^
 ||logsoc.ru^
 ||lokomusic.com^
 ||lol.bash.org.ru^
@@ -6336,6 +6286,7 @@ thr.ru##.top_branding
 ||marketgid.com^
 ||marketgid.info^
 ||marketingsolutions.yahoo.com^
+||marketnews.pw^
 ||master-hour.ru/site.php?id=
 ||mastertarget.ru^
 ||masudel.com^
@@ -6354,6 +6305,7 @@ thr.ru##.top_branding
 ||mazuma.ru^
 ||mchost.ru/?referer=
 ||mcljm.top^
+||md5s.ru^
 ||mdeih.com^
 ||mdesign.planet.ee^
 ||mecash.ru^
@@ -6395,6 +6347,7 @@ thr.ru##.top_branding
 ||meendo.ru^
 ||meendocash.com^
 ||megaban.com.ua^
+||megabestnews.net^
 ||megafingroup.com^
 ||megaline.kz/images/
 ||meganewss.ru^
@@ -6451,6 +6404,7 @@ thr.ru##.top_branding
 ||mn3.ru/cgi-bin/
 ||mnetads.net^
 ||mnogo.ru^
+||mobalert.net^
 ||mobapeople.com^
 ||mobatori.com
 ||mobatory.com^
@@ -6544,6 +6498,7 @@ thr.ru##.top_branding
 ||mytraf.ru^
 ||n.adonweb.ru/
 ||n.vestey.ru^
+||n.vn-chk777.com^
 ||n130adserv.com^
 ||n161adserv.com^
 ||nachat-s-nula.net^
@@ -6555,6 +6510,7 @@ thr.ru##.top_branding
 ||narod-vrach.ru^
 ||nasimke.ru^
 ||naxerposlan.com^
+||nbolame.ru^
 ||ndkes.com^
 ||nebanmenia.kinozov.ru^
 ||neme.electric-pdatu.ru
@@ -6644,9 +6600,11 @@ thr.ru##.top_branding
 ||ochze.com^
 ||oconner.biz^
 ||odinkod.ru^
+||ofapes.com^
 ||ofenop.ru^
 ||office.ad1.ru^
 ||office.profi66.ru^
+||ohnooo.ru^
 ||oilefy.com^
 ||oindaa.com/sys/js/
 ||oiokewfkjnvq.com^
@@ -6698,6 +6656,7 @@ thr.ru##.top_branding
 ||order-seo.net^
 ||orentraff.cn/in.cgi?
 ||oreshki-news.net^
+||ortetse.ru^
 ||osqbk.com^
 ||otclick-adv.ru^
 ||otmolod.ru^
@@ -6758,6 +6717,7 @@ thr.ru##.top_branding
 ||pcads.ru^
 ||pcmag.ru/upload/
 ||pcweek.ru/upload/*/160x100
+||pelicanprogram.com^
 ||pentoch.com/sys/
 ||penza-online.ru/cgi-bin/userstats.pl?
 ||people-group.su^
@@ -6862,6 +6822,8 @@ thr.ru##.top_branding
 ||price.ua/informers/
 ||printdirect.ru/*?partner_id=
 ||privatteaser.ru^
+||privetadb4.ru^
+||privetadblock.ru^
 ||produman.ru^
 ||profi-link.org^
 ||profit-casino.com^
@@ -6912,7 +6874,6 @@ thr.ru##.top_branding
 ||psnets.com^
 ||ptrck.ru^
 ||pu.zipsites.ru^
-||publicagent.ru/file.js
 ||publicitysmart.com^
 ||puls.lv/
 ||purecash.ru^
@@ -7037,6 +6998,7 @@ thr.ru##.top_branding
 ||rmonline.ru/pid
 ||rnd.yxo.ru^
 ||roadshortway.ru^
+||roagz.us^
 ||robofish.com/cgi-bin/banner.cgi?
 ||robotext.info^
 ||rocli.ru^
@@ -7046,6 +7008,7 @@ thr.ru##.top_branding
 ||rollad.ru^
 ||romilit.com^
 ||roninex.ru^
+||rontar.com^
 ||rooton.in^
 ||ropedri.com^
 ||ropsinde.com^
@@ -7106,6 +7069,7 @@ thr.ru##.top_branding
 ||rutorads.com^
 ||rutorads.com^
 ||rutraff.cc^
+||ruttwind.com^
 ||rutube.com^
 ||rutubexx.com
 ||rutvind.com^
@@ -7114,7 +7078,9 @@ thr.ru##.top_branding
 ||rwqckakqfq.ru^
 ||rx-name.ua/?refer=
 ||rx-name.ua/images/promotion/
+||rxtbb.top^
 ||rybkono.ru^
+||rybnyati.ru^
 ||ryuosy.com^
 ||ryushare.com^
 ||rzhujam.com^
@@ -7143,6 +7109,7 @@ thr.ru##.top_branding
 ||samiana.com^
 ||sape.ru/bn/
 ||sape.ru/partner-b/
+||sapmedia.ru^
 ||sasisa.ru^
 ||sat-digest.com/agc/*.gif
 ||satcore.info/design/satcore_knopka*.gif
@@ -7157,6 +7124,8 @@ thr.ru##.top_branding
 ||scrool.ru^
 ||sdelaimebel.ru/partners/
 ||sdoper.com/sys/js/
+||sdziy.us^
+||seafox26.com^
 ||searchlinker.ru^
 ||searchmeta.webhost.ru^
 ||searchtds.ru^
@@ -7250,6 +7219,9 @@ thr.ru##.top_branding
 ||sj9.ru/cgi-bin/
 ||skazkipro.com/?code=
 ||skimresources.com^
+||skyad5.ru^
+||skyadvert.su^
+||skyadvideo.ru^
 ||skycdnhost.com^
 ||skylog.kz/img.php?
 ||skyvideo1.ru/code.php
@@ -7268,6 +7240,7 @@ thr.ru##.top_branding
 ||smigid.ru^
 ||smilered.com^
 ||smimarket.com^
+||smonstr.ru^
 ||smstik.com/ban^
 ||sn00.net
 ||socadvnet.com^
@@ -7361,7 +7334,6 @@ thr.ru##.top_branding
 ||sweetest.ru^
 ||swxhp.pw^
 ||sxtut.org^
-||audtd.com^
 ||sypleni.ru^
 ||sysdiag.ru^
 ||syznate.ru^
@@ -7404,6 +7376,7 @@ thr.ru##.top_branding
 ||teasermedia.net^
 ||teasernet.
 ||teaserplay.ru^
+||teaserrotator.com^
 ||teasers.pro^
 ||teasers.ru^
 ||teasers.ucoz.ru^
@@ -7462,6 +7435,7 @@ thr.ru##.top_branding
 ||tisref.com^
 ||titanpoker.com^
 ||tiutietur.com^
+||tivisla.ru^
 ||tiz-et.ru^
 ||tiz.neosmi.ru
 ||tiz.ukrr.ru^
@@ -7556,6 +7530,7 @@ thr.ru##.top_branding
 ||totrena.ru^
 ||toutiles.com^
 ||tptrk.ru^
+||tpxur.top^
 ||tr.samoresim.ru^
 ||trade7.ru^
 ||tradedoubler.com^
@@ -7582,6 +7557,7 @@ thr.ru##.top_branding
 ||trafka.ru^
 ||trafmag.com^
 ||trafmake.ru^
+||trafmaster.com^
 ||traforet.biz^
 ||traforet.ru^
 ||trafovod.com^
@@ -7635,6 +7611,7 @@ thr.ru##.top_branding
 ||twilightparadox.com^
 ||twinplan.com^
 ||twinzo.ru^
+||tx2.ru^
 ||txtrek.net^
 ||txtrk.com^
 ||typiol.com^
@@ -7651,6 +7628,7 @@ thr.ru##.top_branding
 ||ugaga.net/banner/
 ||ugnetush.ru^
 ||uhi_click.cgi?
+||uitrens.ru^
 ||ujav.net^
 ||ujokee.com/sys/js/
 ||ukrbanner.net^
@@ -7669,8 +7647,10 @@ thr.ru##.top_branding
 ||underclick.
 ||underdone.ru^
 ||undere.com^
+||uniontraff.com^
 ||uniq-ip.com/via/np?
 ||unitedtraders.com^
+||universalsrc.com^
 ||unscrewing.ru^
 ||untily.com^
 ||uocux.com^
@@ -7710,11 +7690,13 @@ thr.ru##.top_branding
 ||vbmer.com^
 ||vclicks.net^
 ||vcslotoplay.com^
+||vedety.ru^
 ||velegi.ru^
 ||veleto.ru/registration
 ||velopoc.ru^
 ||venetsbezbrachiya.narod.ru
 ||ventite.com^
+||venturead.com^
 ||veroui.com^
 ||vertelka.ru^
 ||vertom.ru^
@@ -7736,6 +7718,7 @@ thr.ru##.top_branding
 ||video.videonow.ru^
 ||video001.com^
 ||video103.ru^
+||video1132.com^
 ||videoburner2015.com^
 ||videochart.net/apv/index.php
 ||videoclick.
@@ -7748,15 +7731,18 @@ thr.ru##.top_branding
 ||videoplaza.com/creatives/
 ||videopotok.pro^
 ||videoroll.net^
+||videorot.com^
 ||videosmor.com^
 ||videostrip.com^
 ||videostrip.com^*/admatcherclient.
 ||videotraff.ru/img
 ||videovikt.com^
 ||videovint.com^
+||videsjs.com^
 ||vidigital.ru^
 ||vidkoz.com^
 ||vidozex.ru^
+||vids63.com^
 ||vidseed.ru^
 ||vidustal.com^
 ||vietalle.com^
@@ -7764,9 +7750,11 @@ thr.ru##.top_branding
 ||viewrtb.com^
 ||viglink.com^
 ||vihub.ru/video?plid=
+||vijune.com^
 ||vim100.ru/videoadcode/
 ||vimart16.com^
 ||vimgs.ru^
+||vimvio.ru^
 ||vinov24.com^
 ||vinregle.com^
 ||viokan.xvhod.ru^
@@ -7787,6 +7775,7 @@ thr.ru##.top_branding
 ||virtl.xyz^
 ||viruntek.ru^
 ||visitweb.com/v/
+||visummer.com^
 ||vitrine.sup.com^
 ||vitsum.com/sys/js/
 ||viturek.com/sys/js/
@@ -7903,6 +7892,7 @@ thr.ru##.top_branding
 ||widefox.ru^
 ||widetunel.ru^
 ||widgeo.net/compteur.php?
+||widget.admitad.com^
 ||widget.socialmart.ru^
 ||widget.utinet.ru^
 ||widgets.planeta.ru^
@@ -7961,6 +7951,7 @@ thr.ru##.top_branding
 ||wvzhj.com^
 ||ww.showsteps.ru^
 ||www.m.ua/p-
+||www0.xyz^
 ||www2.bubblesmedia.ru^
 ||www2.domah.ru^
 ||wwwomen.ru^
@@ -8003,9 +7994,11 @@ thr.ru##.top_branding
 ||xtvoh.com^
 ||xuculit.ru^
 ||xwell.ru/
+||xxslu.space^
 ||xxuhter.ru^
 ||xxx-babes.org^
 ||xxx-tracker.com/pics/
+||xzwdo.top^
 ||yandepit.com^
 ||yangot.com^
 ||yanudy.com/sys/js/
@@ -8063,6 +8056,7 @@ thr.ru##.top_branding
 ||zoda.ru/
 ||zoo-porno.biz^
 ||zoom.cnews.ru/inc/partners/rotator.php
+||zoomclick.info^
 ||zoomumba.bigpoint.com/?aid=
 ||zorkabiz.ru^
 ||zowlu.xyz^
@@ -8076,6 +8070,7 @@ thr.ru##.top_branding
 ||zurage.ru^
 ||zvukoff.ru/24open/*.jpg
 ||zxrtn.com^
+||zycvyudt.com^
 ||zzima.com/?ref=
 ||книги2000.com/ws/
 ! VisitWeb ads
@@ -8096,29 +8091,29 @@ http://v.*.com/x?
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
-||fastpicc.ru^
-||r6.galya.ru^
-||real.attico-design.ru^
+.forpicfree.ru^
+ws*://video.docfilms.info^
 ||987654321.kiev.ua^
+||action.evrikak.ru^
+||ad.gameagregator.com^
 ||add.alltorrents.net^
 ||ads.211.ru^
 ||ads.dfiles.ru^
 ||adshow.sc2tv.ru^
 ||af.1gdz.ru^
-||rs.mail.ru^
-||showbiz.mail.ru^
-||promo.adult-torrent.com^
-||rv.mastercity.ru^
-||server.zombie-tv.org^
-||ad.gameagregator.com^
-||ivi.ru/player/?videoid=&enableseries=1&autostart=1
-ws*://video.docfilms.info^
-.forpicfree.ru^
-||action.evrikak.ru^
 ||d899.webazilla.com^
+||fastpicc.ru^
 ||ff.astv.ru^
+||ivi.ru/player/?videoid=&enableseries=1&autostart=1
 ||js.pornolab.eu^
 ||mega.megatorrents.org.ua^
+||promo.adult-torrent.com^
+||r6.galya.ru^
+||real.attico-design.ru^
+||rs.mail.ru^
+||rv.mastercity.ru^
+||server.zombie-tv.org^
+||showbiz.mail.ru^
 ||statistic.imgpay.ru^
 ||stats.imgpay.ru^
 ||ts2.hockey-talks.com^
@@ -8126,20 +8121,6 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
-||3al.pw^
-||javacript.cf^
-||india-zed.com^
-||game.gamingnonstop.net^
-||adversolutions.com^
-||78.140.130.91^
-||scriptall.tk^
-||waframedia16.com^
-||offergo.net^
-||detour.click^
-||ylx-4.com^
-||prxii.tk^
-||ws-gateway.com^
-||sourcengo.com^
 .bbelements.com^
 .doublepimp.com^
 .lockscalecompare.com^
@@ -8152,9 +8133,11 @@ openclose.click^
 ||1app.blob.core.windows.net^
 ||360popunder.com^
 ||360switch.net/b.js
+||3al.pw^
 ||4dsply.com^
 ||5b15a826.xyz^
 ||60ads.com^
+||78.140.130.91^
 ||863c4c0c521.se^
 ||a2pub.com^
 ||aastob.com^
@@ -8198,6 +8181,7 @@ openclose.click^
 ||adtraffic.pl^
 ||adultadspy.com^
 ||adv.mediaharbor.co.kr^
+||adversolutions.com^
 ||advertclickme.com^
 ||adviator.com^
 ||adworkmedia.com
@@ -8278,6 +8262,7 @@ openclose.click^
 ||dc121677.com^
 ||ddomb.com^
 ||delnapb.com^
+||detour.click^
 ||diamond88bet.com^
 ||directrev.com^
 ||dotomi.com^
@@ -8317,6 +8302,7 @@ openclose.click^
 ||fungoiddempseyimpasse.info^
 ||fwmrm.net^
 ||fxhoog.com^
+||game.gamingnonstop.net^
 ||girlzgirlzgirlz4u.com^
 ||go.onclasrv.com^
 ||go.pub2srv.com/apu.php?zoneid=
@@ -8338,9 +8324,11 @@ openclose.click^
 ||ifmnwi.club^
 ||igupodzh.com^
 ||imaginaxs.com^
+||india-zed.com^
 ||inter1ads.com^
 ||iu1xoe7o.com^
 ||j.77power.com^
+||javacript.cf^
 ||jfduv7.com^
 ||ji.ihualun.com^
 ||jkolp.com^
@@ -8401,6 +8389,7 @@ openclose.click^
 ||nsdfsfi1q8asdasdzz.com^
 ||o.aolcdn.com/ads/
 ||octobird.com^
+||offergo.net^
 ||offpageads.com^
 ||onlinesupaads.com^
 ||onlinewebfind.com^
@@ -8428,6 +8417,7 @@ openclose.click^
 ||profitsdeluxe.com^
 ||proteaser.net^
 ||protectaffiliates.org^
+||prxii.tk^
 ||purgrobi.com^
 ||qaadv.com^
 ||qadabra.com^
@@ -8447,6 +8437,7 @@ openclose.click^
 ||s1.adguard.com^
 ||sc.rvtlife.com^
 ||scr.flashcast.org.uk^
+||scriptall.tk^
 ||secure-uk.imrworldwide.com^
 ||serve.williamhill.com^
 ||shorlakmedia.com^
@@ -8454,6 +8445,7 @@ openclose.click^
 ||slikslik.com^
 ||soadvr.com^
 ||softexcellence.com^
+||sourcengo.com^
 ||spidtest.org^
 ||srv.tagila.com/adsrvmedia/
 ||srvpub.com^
@@ -8495,18 +8487,21 @@ openclose.click^
 ||videogenetic.com^
 ||vipcpms.com^
 ||vkpass.com/palavro/*.js
+||waframedia16.com^
 ||watrz.com^
 ||weberotic.net^
 ||windowscentral.com/sites/all/modules/mbn_offers/
 ||winneradsmedia.com^
 ||wishuluck.pw/XnewadsX/
 ||wrmcfyzl.com^
+||ws-gateway.com^
 ||www.fuze-hill*.xyz^
 ||www.fuze-sea*.xyz^
 ||wwwpromoter.com^
 ||xaxoro.com^
 ||xpostx.com^
 ||yesadvertising.com^
+||ylx-4.com^
 ||yuiop.trade^
 ||zanox.com^
 ||zaperplop.info^
@@ -8518,7 +8513,6 @@ openclose.click^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
-||js.bulkhentai.com^
 ||d17rlarvg2khuc.cloudfront.net^
 ||d1gp9nlx229wzz.cloudfront.net^
 ||d1k29rhvz38kg5.cloudfront.net^
@@ -8528,17 +8522,11 @@ openclose.click^
 ||d3m79ugzs2d8im.cloudfront.net^
 ||d9rj2sdxjer5v.cloudfront.net^
 ||dr3k6qonw2kee.cloudfront.net^
+||js.bulkhentai.com^
 
 !
 ! Section contains list of advertising networks
 !
-||yuhuads.com^
-||go.pushnative.com^
-||go.mobtrks.com^
-||cntcash.ru^
-||ctl.buyt.in^
-||sscefsol.com^
-||sas816.ujikdd041o.cn^
 ://o0e.ru^
 ||1mp.mobi^
 ||247realmedia.com^
@@ -8610,6 +8598,7 @@ openclose.click^
 ||adotube.com^
 ||adplay.vm5apis.com^
 ||adprotected.com^
+||adpublisher.s3.amazonaws.com^
 ||adquota.com^
 ||ads.admoda.com^
 ||ads.aitype.net/server/getAdServlet
@@ -8648,6 +8637,7 @@ openclose.click^
 ||adtech.de^
 ||adtrack.king.com^
 ||adultadworld.com^
+||adups.com^
 ||adversal.com^
 ||adverticum.net^
 ||advertise.com^
@@ -8669,12 +8659,10 @@ openclose.click^
 ||altitude-arena.com^
 ||am15.net^
 ||amazon-adsystem.com^
-||adpublisher.s3.amazonaws.com^
 ||amazonaws.com/appodeal
 ||amazonaws.com/appodeal-campaign-images/
 ||amoad.com^
 ||amobee.com^
-||adups.com^
 ||andomedia.com^
 ||api.appfireworks.com^
 ||api.appodeal.com/show
@@ -8752,6 +8740,7 @@ openclose.click^
 ||cloudads-a.akamaihd.net^
 ||cm.ksmobile.com/api/GetCloudMsgAdv^
 ||cnt.my^
+||cntcash.ru^
 ||comscore.com^
 ||content.ad^
 ||contextweb.com^
@@ -8762,6 +8751,7 @@ openclose.click^
 ||crossboardmobile.com^
 ||crossrider.com^
 ||csi.gstatic.com^
+||ctl.buyt.in^
 ||d60y8cj1tje2a.cloudfront.net^
 ||d830x8j3o1b2k.cloudfront.net^
 ||da-ads.com^
@@ -8808,6 +8798,8 @@ openclose.click^
 ||gluservices.s3.amazonaws.com/PushNotifications
 ||go.mobstitial.com^
 ||go.mobstitialtag.com^
+||go.mobtrks.com^
+||go.pushnative.com^
 ||goodadvert.ru^
 ||google.com/ads/search/app?*&caps=*sdkAdmobApiForAds
 ||greystripe.com^
@@ -9011,6 +9003,7 @@ openclose.click^
 ||runnergamesch.com/*/BasCount/adAll
 ||s.*.com/pp.php?uid=
 ||s.innovid.com^
+||sas816.ujikdd041o.cn^
 ||saymedia.com^
 ||scorecardresearch.com^
 ||sdk.native123.com^
@@ -9036,6 +9029,7 @@ openclose.click^
 ||splash.appsgeyser.com^
 ||sponsorpay.com^
 ||spotxchange.com^
+||sscefsol.com^
 ||startappexchange.com/*/getadsmetadata
 ||startappexchange.com/*/gethtmlad
 ||startappexchange.com/tracking/adClick?d=
@@ -9127,6 +9121,7 @@ openclose.click^
 ||youmi.net^
 ||youradexchange.com^
 ||youtube.com/api/stats/ads
+||yuhuads.com^
 ||zedo.com^
 ||ziffdavis.com^
 ||zoglafi.info^
@@ -9141,18 +9136,6 @@ openclose.click^
 !
 ! Tracking service
 !
-||admitad.com^
-||stat.clickfrog.ru^
-||ichnaea.netflix.com^
-||b2c.com^
-||count-cnt.ru^
-||hitstatus.com^
-||eum-appdynamics.com^
-||bid.run^
-||mytop.az^
-||toplog.az^
-||ilk10.az^
-||bnc.lt^
 //t100.ru^
 ://tru.am^
 ||0stats.com^
@@ -9269,6 +9252,7 @@ openclose.click^
 ||adku.com^
 ||admdspc.com^
 ||admeo.ru^
+||admitad.com^
 ||adobetag.com^
 ||adoftheyear.com^
 ||adprotraffic.com^
@@ -9395,6 +9379,7 @@ openclose.click^
 ||b.aol.com^
 ||b.grvcdn.com^
 ||b.oix.net^
+||b2c.com^
 ||backlink-test.de^
 ||backlink-umsonst.de^
 ||backlinkdino.de^
@@ -9447,6 +9432,7 @@ openclose.click^
 ||betarget.net^
 ||bfoleyinteractive.com^
 ||bhs4.com^
+||bid.run^
 ||bidswitch.net^
 ||bigmir.net^
 ||bigsauron.ru^
@@ -9489,6 +9475,7 @@ openclose.click^
 ||bm324.com^
 ||bmlmedia.com^
 ||bmmetrix.com^
+||bnc.lt^
 ||bonitrust.de^
 ||bonuscounter.de^
 ||boomerang.com.au^
@@ -9673,6 +9660,7 @@ openclose.click^
 ||coremotives.com^
 ||cormce.com^
 ||cosmi.io^
+||count-cnt.ru^
 ||count.fr^
 ||count.rbc.ru^
 ||count24.de^
@@ -10279,6 +10267,7 @@ openclose.click^
 ||hitslog.com^
 ||hitsniffer.com^
 ||hitsprocessor.com^
+||hitstatus.com^
 ||hittail.com^
 ||hittracker.com^
 ||hitwake.com^
@@ -10312,6 +10301,7 @@ openclose.click^
 ||ibpxl.com^
 ||ibpxl.net^
 ||ic-live.com^
+||ichnaea.netflix.com^
 ||iclive.com^
 ||icounter.net/getcode.php?site=
 ||ics0.com^
@@ -10326,6 +10316,7 @@ openclose.click^
 ||igaming.biz^
 ||iivt.com^
 ||iljmp.com^
+||ilk10.az^
 ||illumenix.com^
 ||ilogbox.com^
 ||imcht.net^
@@ -10335,7 +10326,6 @@ openclose.click^
 ||imrtrack.com^
 ||imrworldwide.com^
 ||imtop.ru/*/count
-||treasuredata.com^
 ||inaudium.com^
 ||inboxtag.com^
 ||incentivesnetwork.net^
@@ -10728,6 +10718,7 @@ openclose.click^
 ||mystats.nl^
 ||mysumo.de^
 ||mytictac.com^
+||mytop.az^
 ||myusersonline.com^
 ||mywebstats.com.au^
 ||mywebstats.org^
@@ -11315,6 +11306,7 @@ openclose.click^
 ||start.ru^
 ||stat.4u.pl^
 ||stat.alibaba.com^
+||stat.clickfrog.ru^
 ||stat.eagleplatform.com^
 ||stat.php-d.com^
 ||stat.pl/
@@ -11538,6 +11530,7 @@ openclose.click^
 ||toplist.eu^
 ||toplist.raidrush.ws^
 ||toplist.sk^
+||toplog.az^
 ||topmalaysia.com^
 ||topofblogs.com^
 ||topsite.lv^
@@ -11613,6 +11606,7 @@ openclose.click^
 ||trakken.de^
 ||traktr.news.com.au^
 ||trakzor.com^
+||treasuredata.com^
 ||treehousei.com^
 ||trekmedia.net^
 ||trendcounter.com^
