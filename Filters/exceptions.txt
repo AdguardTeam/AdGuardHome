@@ -30,3 +30,5 @@ cdn.optimizely.com
 ! https://github.com/AdguardTeam/AdguardDNS/issues/41
 ! Adverigo captcha
 @@||adverigo.com^
+! https://github.com/AdguardTeam/AdguardDNS/issues/59
+@@||dw.cbsi.com^
