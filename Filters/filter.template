@@ -19,6 +19,8 @@ url https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/MobileFi
 !
 ! Tracking service
 url https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/SpywareFilter/sections/tracking_servers.txt
+url https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/SpywareFilter/sections/tracking_servers_firstparty.txt
+url https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/MobileFilter/sections/spyware.txt
 !
 ! Adguard DNS rules
 file rules.txt
