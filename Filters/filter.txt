@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-10-07 12:03:03
+! Last modified: 2016-10-10 12:02:54
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -129,6 +129,7 @@
 ||a3pub.com^
 ||a433.com^
 ||a4dtrk.com^
+||a4to4.pw^
 ||a5pub.com^
 ||aa.voice2page.com^
 ||aaa.at4.info^
@@ -1656,6 +1657,7 @@
 ||expogrim.com^
 ||exponential.com^
 ||expresswebtraffic.com^
+||extend.tv^
 ||extra33.com^
 ||eyere.com^
 ||eyereturn.com^
@@ -1883,6 +1885,7 @@
 ||groupcommerce.com^
 ||grt02.com^
 ||grt03.com^
+||grumpyadzen.com^
 ||gscontxt.net^
 ||gscsystemwithdarren.com^
 ||guardiandigitalcomparison.co.uk^
@@ -1943,6 +1946,7 @@
 ||hopfeed.com^
 ||horse-racing-affiliate-program.co.uk^
 ||horsered.com^
+||hortestoz.com^
 ||horyzon-media.com^
 ||hostgit.net^
 ||hosticanaffiliate.com^
@@ -3597,6 +3601,7 @@
 ||uiadserver.com^
 ||uiqatnpooq.com^
 ||ukbanners.com^
+||ukulelead.com^
 ||ultimategracelessness.info^
 ||unanimis.co.uk^
 ||underclick.ru^
@@ -3997,6 +4002,7 @@
 ||yie4zooseif.info^
 ! popads.net
 ||aatmytrykqhi.com^
+||agpnzrmptmos.com^
 ||aiypulgy.com^
 ||ajgffcat.com^
 ||ambqphwf.com^
@@ -4006,6 +4012,7 @@
 ||avrdpbiwvwyt.com^
 ||awsatstb.com^
 ||awvrvqxq.com^
+||azbdbtsmdocl.com^
 ||azeozrjk.com^
 ||bbjlsdqhpbuqaspgjyxaobmpmzunjnvqmahejnwwvaqbzzqodu.com^
 ||bbopkapcgonb.com^
@@ -4019,17 +4026,20 @@
 ||bnkgacehxxmx.com^
 ||bujntrmh.com^
 ||bvobtmbziccr.com^
+||bwyckpmsolzk.com^
 ||bzjtjfjteazqzmukjwhyzsaqdtouiopcmtmgdiytfdzboxdann.com^
 ||ccdkyvyw.com^
 ||cdicyazp.com^
 ||cdqmeyhqrwinofutpcepbahedusocxqyfokvehqlqpusttfwve.com^
 ||cdrjblrhsuxljwesjholugzxwukkerpobmonocjygnautvzjjm.com^
+||cihnrhqwbcsq.com^
 ||cixjmaxkemzknxxuyvkbzlhvvgeqmzgopppvefpfkqdraonoez.com^
 ||cjxkzkzmdomd.com^
 ||ckwpsghi.com^
 ||cmpsuzvr.com^
 ||comgnnyx.com^
 ||comwgi.com^
+||cpamnizzierk.com^
 ||cphxwpicozlatvnsospudjhswfxwmykgbihjzvckxvtxzfsgtx.com^
 ||crkgtnad.com^
 ||csbsyukodmga.com^
@@ -4037,12 +4047,16 @@
 ||cxoxruotepqgcvgqxdlwwucgyazmbkhdojqzihljdwwfeylovh.com^
 ||cxrmgoybhyrk.com^
 ||cymuxbcnhinm.com^
+||czoivochvduv.com^
 ||dcneohtx.com^
 ||ddprxzxnhzbq.com^
 ||dgwrxyucxpizivncznkpmdhtrdzyyylpoeitiannqfxmdzpmwx.com^
+||djntmaplqzbi.com^
 ||djzmpsingsrtfsnbnkphyagxdemeagsiabguuqbiqvpupamgej.com^
 ||dkrhsftochvzqryurlptloayhlpftkogvzptcmjlwjgymcfrmv.com^
 ||dmdcpvgu.com^
+||dmwubqhtuvls.com^
+||dnxpseduuehm.com^
 ||dobgfkflsnmpaeetycphmcloiijxbvxeyfxgjdlczcuuaxmdzz.com^
 ||dobjgpqzygow.com^
 ||dwentymgplvrizqhieugzkozmqjxrxcyxeqdjvcbjmrhnkguwk.com^
@@ -4050,15 +4064,23 @@
 ||dyunhvev.com^
 ||ecmeqhxevxgmtoxubrjstrrlyfgrrtqhvafyagettmwnwkwltn.com^
 ||eeqabqioietkquydwxfgvtvpxpzkuilfcpzkplhcckoghwgacb.com^
+||eidzaqzygtvq.com^
+||ejjrckrhigez.com^
 ||elbeobjhnsvh.com^
+||elkpxsfzrubq.com^
 ||emdbszgmxggo.com^
 ||eovkzcueutgf.com^
 ||ervpgpxr.com^
 ||farkkbndawtxczozilrrrunxflspkyowishacdueiqzeddsnuu.com^
+||fcjnqpkrdglw.com^
+||fdepobamndfn.com^
+||ffanszicnoqs.com^
 ||fjfxpykp.com^
+||fkjyzxnoxusg.com^
 ||fluohbiy.com^
 ||fneheruhxqtv.com^
 ||fokisduu.com^
+||fppupmqbydpk.com^
 ||fqpteozo.com^
 ||fvbeyduylvgy.com^
 ||fxjyultd.com^
@@ -4068,8 +4090,10 @@
 ||gggemaop.com^
 ||ghtroafchzrt.com^
 ||gkgdqahkcbmykurmngzrrolrecfqvsjgqdyujvgdrgoezkcobq.com^
+||gkiryieltcbg.com^
 ||glnqvqbedbmvtcdzcokrfczopbddhopygrvrnlgmalgvhnsfsc.com^
 ||gmpdixdh.com^
+||gojwyansqmcl.com^
 ||gpbznagpormpyusuxbvlpbuejqzwvspcyqjcxbqtbdtlixcgzp.com^
 ||gpgsxlmjnfid.com^
 ||gqthfroeirol.com^
@@ -4080,6 +4104,7 @@
 ||gypxbcrmxsmikqbmnlwtezmjotrrdxpqtafumympsdtsfvkkza.com^
 ||haqlmmii.com^
 ||hbbwlhxfnbpq.com^
+||hbedvoyluzmq.com^
 ||hbrbtmjyvdsy.com^
 ||hffmzplu.com^
 ||hfjuehls.com^
@@ -4093,6 +4118,7 @@
 ||hvukouhckryjudrawwylpboxdsonxhacpodmxvbonqipalsprb.com^
 ||hxbvbmxv.com^
 ||hyvsquazvafrmmmcfpqkabocwpjuabojycniphsmwyhizxgebu.com^
+||hztkbjdkaiwt.com^
 ||icafyriewzzrwxlxhtoeakmwroueywnwhmqmaxsqdntasgfvhc.com^
 ||iczhhiiowapd.com^
 ||idpukwmp.com^
@@ -4105,8 +4131,10 @@
 ||imrwxmau.com^
 ||imyqdbxq.com^
 ||iohaqrkjddeq.com^
+||iqrqmhrfkyuu.com^
 ||irjaeupzarkvwmxonaeslgicvjvgdruvdywmdvuaoyfsjgdzhk.com^
 ||irxpndjg.com^
+||iydghotpzofn.com^
 ||izwsvyqv.com^
 ||jahsrhlp.com^
 ||jdlnquri.com^
@@ -4115,20 +4143,26 @@
 ||jhupypvmcsqfqpbxbvumiaatlilzjrzbembarnhyoochsedzvi.com^
 ||jjipgxjf.com^
 ||jlflzjdt.com^
+||jmzaqwcmcbui.com^
 ||jqqrcwwd.com^
+||karcvrpwayal.com^
 ||kgkjlivo.com^
 ||kihhgldtpuho.com^
 ||kjjlucebvxtu.com^
+||kmtubsbmwdep.com^
 ||ksbklucaxgbf.com^
 ||ktcltsgjcbjdcyrcdaspmwqwscxgbqhscmkpsxarejfsfpohkk.com^
+||kthdreplfmil.com^
 ||kyowarob.com^
 ||lckpubqq.com^
 ||lcyxmuhxroyo.com^
+||lhuqalcxjmtq.com^
 ||ljngencgbdbn.com^
 ||lkjmcevfgoxfbyhhmzambtzydolhmeelgkotdllwtfshrkhrev.com^
 ||lkrcapch.com^
 ||lmuxaeyapbqxszavtsljaqvmlsuuvifznvttuuqfcxcbgqdnn.com^
 ||lpwvdgfo.com^
+||lwenrqtarmdx.com^
 ||lytpdzqyiygthvxlmgblonknzrctcwsjycmlcczifxbkquknsr.com^
 ||lzmovatu.com^
 ||mfmikwfdopmiusbveskwmouxvafvzurvklwyfamxlddexgrtci.com^
@@ -4137,6 +4171,8 @@
 ||mnusvlgl.com^
 ||mopvkjodhcwscyudzfqtjuwvpzpgzuwndtofzftbtpdfszeido.com^
 ||mvqinxgp.com^
+||mzbetmhucxih.com^
+||mzguykhxnuap.com^
 ||nbbljlzbbpck.com^
 ||nbrwtboukesx.com^
 ||nefxtwxk.com^
@@ -4145,6 +4181,7 @@
 ||ngmckvucrjbnyybvgesxozxcwpgnaljhpedttelavqmpgvfsxg.com^
 ||nnigsvoorscmgnyobwuhrgnbcgtiicyflrtpwxsekldubasizg.com^
 ||nnvjigagpwsh.com^
+||noolablkcuyu.com^
 ||npeanaixbjptsemxrcivetuusaagofdeahtrxofqpxoshduhri.com^
 ||nrgpugas.com^
 ||nsazelqlavtc.com^
@@ -4158,9 +4195,12 @@
 ||orszajhynaqr.com^
 ||oslzqjnh.com^
 ||ossdqciz.com^
+||otpyldlrygga.com^
+||otrfmbluvrde.com^
 ||ovgzbnjj.com^
 ||ozhwenyohtpb.com^
 ||pbnnsras.com^
+||peewuvgdcian.com^
 ||pkmzxzfazpst.com^
 ||pkqbgjuinhgpizxifssrtqsyxnzjxwozacnxsrxnvkrokysnhb.com^
 ||plmuxaeyapbqxszavtsljaqvmlsuuvifznvttuuqfcxcbgqdnn.com^
@@ -4177,10 +4217,12 @@
 ||qixlpaaeaspr.com^
 ||qljczwei.com^
 ||qnpolbme.com^
+||qotwtnckqrke.com^
 ||qpiyjprptazz.com^
 ||qrozsnmc.com^
 ||qtsmzrnccnwz.com^
 ||qxxyzmukttyp.com^
+||rbppnzuxoatx.com^
 ||rbyjirwjbibz.com^
 ||rdzxpvbveezdkcyustcomuhczsbvteccejkdkfepouuhxpxtmy.com^
 ||rffqzbqqmuhaomjpwatukocrykmesssfdhpjuoptovsthbsswd.com^
@@ -4192,6 +4234,7 @@
 ||rpczohkv.com^
 ||rscgfvsximqdpowcmruwitolouncrmnribnfobxzfhrpdmahqe.com^
 ||ruovcruc.com^
+||rxicrihobtkf.com^
 ||rzcmcqljwxyy.com^
 ||saipuciruuja.com^
 ||sbhnftwdlpbo.com^
@@ -4217,6 +4260,7 @@
 ||ubhzahnzujqlvecihiyukradtnbmjyjsktsoeagcrbbsfzzrfi.com^
 ||uckxjsiy.com^
 ||uecjpplzfjur.com^
+||ufmnicckqyru.com^
 ||ugxyemavfvlolypdqcksmqzorlphjycckszifyknwlfcvxxihx.com^
 ||umqsrvdg.com^
 ||uqgloylf.com^
@@ -4224,10 +4268,12 @@
 ||uupqrsjbxrstncicwcdlzrcgoycrgurvfbuiraklyimzzyimrq.com^
 ||uxyofgcf.com^
 ||uyqzlnmdtfpnqskyyvidmllmzauitvaijcgqjldwcwvewjgwfj.com^
+||vbupfouyymse.com^
 ||vfnvsvxlgxbvndhgqqohfgdcfprvxqisiqhclfhdpnjzloctny.com^
 ||vgmrqurgxlimcawbweuzbvbzxabsfuuxseldfapjmxoboaplmg.com^
 ||vlnveqkifcpxdosizybusvjqkfmowoawoshlmcbittpoywblpe.com^
 ||vpsotshujdguwijdiyzyacgwuxgnlucgsrhhhglezlkrpmdfiy.com^
+||vpwwtzprrkcn.com^
 ||vrqajyuu.com^
 ||vxuhavco.com^
 ||vxvxsgut.com^
@@ -4263,12 +4309,16 @@
 ||xttrofww.com^
 ||xwwkuacmqblu.com^
 ||ygrtbssc.com^
+||yjjglyoytiew.com^
 ||ylksuifuyryt.com^
 ||ynlrfiwj.com^
 ||ynrbxyxmvihoydoduefogolpzgdlpnejalxldwjlnsolmismqd.com^
 ||ypyarwgh.com^
+||ytwtqabrkfmu.com^
 ||yyuztnlcpiym.com^
 ||yzsiwyvmgftjuqfoejhypwkmdawtwlpvawzewtrrrdfykqhccq.com^
+||yzygkqjhedpw.com^
+||zamjzpwgekeo.com^
 ||zbfncjtaiwngdsrxvykupflpibvbrewhemghxlwsdoluaztwyi.com^
 ||zbrkywjutuxu.com^
 ||zfrzdepuaqebzlenihciadhdjzujnexvnksksqtazbaywgmzwl.com^
@@ -4278,6 +4328,7 @@
 ||zoowknbw.com^
 ||zpmbsivi.com^
 ||zptncsir.com^
+||zpxbdukjmcft.com^
 ||zrxgdnxneslb.com^
 ||zycvyudt.com^
 ! Yavli.com
@@ -4499,6 +4550,7 @@
 ||wensdteuy.com^
 ||wolopiar.com^
 ||wopdi.com^
+||wqqqpe.com^
 ||wuakula.net^
 ||wuarnurf.net^
 ||wuatriser.net^
@@ -4942,9 +4994,7 @@ thr.ru##.top_branding
 ||alslz.top^
 ||altpubli.com^
 ||am-investor.ru^
-||am11.ru^
 ||am12.ru^
-||am17.ru^
 ||amazingcl.ru^
 ||amazonaws.com/js.tradeleads.su^
 ||analytics.*.*/*.php
@@ -4989,7 +5039,6 @@ thr.ru##.top_branding
 ||assets.myflashfetish.com/swf/
 ||associazio.com^
 ||associeta.com^
-||astalavista.com/backend/img/
 ||astob.com^
 ||asuler.ru^
 ||atamjanebyl.biz^
@@ -4997,7 +5046,6 @@ thr.ru##.top_branding
 ||atlassolutions.com^
 ||attivertura.com^
 ||audtd.com^
-||aukro.ua/ap/ap_show.php
 ||autodealer.ru/includes/button.php?
 ||autodengi.com^
 ||autonet.ru/extra/autoclub_informer.aspx
@@ -5024,7 +5072,6 @@ thr.ru##.top_branding
 ||azmdy.com^
 ||azvozac.ru^
 ||b-one.com.ua^
-||b.candy.vl.ru^
 ||b.ddestiny.ru^
 ||b.sweet-hd.com^
 ||b2bcontext.ru^
@@ -5290,7 +5337,6 @@ thr.ru##.top_branding
 ||code-click.info^
 ||code.barrior.ru^
 ||code.curs.net.ua^
-||code.skyadvideo.ru^
 ||code.xidx.org^
 ||codeenter.ru^
 ||coinsup.com^
@@ -5657,7 +5703,6 @@ thr.ru##.top_branding
 ||g2s.com/landing/
 ||gadanieporuke.ru^
 ||gagacon.com^
-||gagacon.com^
 ||gagnifie.com^
 ||gain-click.info^
 ||gainclick.biz^
@@ -5886,7 +5931,6 @@ thr.ru##.top_branding
 ||igrun.com/?
 ||igrushek.net/ad/
 ||ihqht.com^
-||ihqht.com^
 ||ihsibe.ru^
 ||iiutq.xyz^
 ||ijdenha.ru^
@@ -5976,7 +6020,6 @@ thr.ru##.top_branding
 ||izderevni.com.ua/promo/
 ||izitizi.ru^
 ||izvozic.ru^
-||j.tg2016.net^
 ||jadedi.com^
 ||japan.leit.ru/button.php?
 ||jaymedianetwork.com^
@@ -6270,7 +6313,6 @@ thr.ru##.top_branding
 ||ma-static.ru^
 ||mabila.ua^
 ||macamba.ru^
-||madbanner.ru^
 ||madcash.biz^
 ||madnet.ru^
 ||magicanfy.com^
@@ -6399,20 +6441,15 @@ thr.ru##.top_branding
 ||mmcispartners.com^
 ||mmm--2012.com
 ||mmm-investor.ru^
-||mn1.ru/cgi-bin/
-||mn2.ru/cgi-bin/
-||mn3.ru/cgi-bin/
 ||mnetads.net^
 ||mnogo.ru^
 ||mobalert.net^
-||mobapeople.com^
 ||mobatori.com
 ||mobatory.com^
 ||mobi-mobi.info^
 ||mobiads.ru^
 ||mobidump.com^
 ||mobile-click.biz^
-||mobiloba.com/
 ||mobioffers.ru^
 ||mobitema.ru
 ||mobn.net^
@@ -6437,7 +6474,6 @@ thr.ru##.top_branding
 ||morenews1.net^
 ||morenews2.net^
 ||morenews3.net^
-||morenews4.net^
 ||morenews4.net^
 ||morkovo4ki.org^
 ||mostinfo.net/img/top/
@@ -6574,7 +6610,6 @@ thr.ru##.top_branding
 ||nrzcj.top^
 ||nsoft-s.com^
 ||num-link.ru^
-||numberia.com^
 ||numbers.md^
 ||numen.ru/button/?
 ||nutkaekwcm.ru^
@@ -6961,7 +6996,6 @@ thr.ru##.top_branding
 ||referers.net^
 ||referral.game-insight.com^
 ||reforum.ru/j/widgets.js
-||reg.cdcwn.xyz^
 ||reg.ru/i/affiliate/
 ||region59.net/Buttons/
 ||regpole.com^
@@ -7095,7 +7129,6 @@ thr.ru##.top_branding
 ||s.ladoshki.com/pics/shirts/
 ||s.recs.ru/b/
 ||s.sdx.ru^
-||s.tx2.ru^
 ||s1.intimshop.ru^
 ||s1block.com/rotator
 ||s4block.com^
@@ -7190,7 +7223,6 @@ thr.ru##.top_branding
 ||sexprice.ru^
 ||sextizer.net^
 ||sexvrusko.org^
-||sexyfans.net.ru^
 ||sexyfriend.ru^
 ||sfac.ctaxc.ru^
 ||sg.freeimg.ru^
@@ -7287,7 +7319,6 @@ thr.ru##.top_branding
 ||static.appx2.com/banner/
 ||static.prototypes.ru^
 ||static.terrhq.ru^
-||staticdn.nl/banners/
 ||statistik.duplanet.tk^
 ||statscreen.info^
 ||stb.msn.com/i
@@ -7673,7 +7704,6 @@ thr.ru##.top_branding
 ||uwuyn.us^
 ||v.ckpvz.space^
 ||v.cuioj.com^
-||v.ksdnf.com^
 ||v.mir-18.ru^
 ||v.movad.de^*/ad.xml
 ||v2mlemerald.com^
@@ -7843,7 +7873,6 @@ thr.ru##.top_branding
 ||vzarabotke.ru/
 ||vzyat-kredit.info^
 ||w*statistics.info^
-||wad.ojooo.com^
 ||wafum.ml^
 ||waogi.com^
 ||wapbanner.net^
@@ -8124,8 +8153,6 @@ ws*://video.docfilms.info^
 .bbelements.com^
 .doublepimp.com^
 .lockscalecompare.com^
-openclose.click^
-||047855sphr.com^
 ||0aac4e6a54c170b0.se^
 ||1100ad.com^
 ||146.148.85.61/rtb
@@ -8254,7 +8281,6 @@ openclose.click^
 ||cpmstar.com^
 ||cpmterra.com^
 ||ctmconnect.com^
-||cy.hsslx.com^
 ||das5ku9q.com^
 ||dasistnews.net^
 ||data.permittingnorthlandseamen.info^
@@ -8266,7 +8292,6 @@ openclose.click^
 ||diamond88bet.com^
 ||directrev.com^
 ||dotomi.com^
-||downloastar.com^
 ||dpjtch.vestabalin.com^
 ||dsp-eu.exe.bid^
 ||dubshub.com^
@@ -8296,7 +8321,6 @@ openclose.click^
 ||firstfirst.net^
 ||flashteaser.com^
 ||fls.doubleclick.net^
-||freerewardscentral.com^
 ||fsoft4down.com^
 ||fungetbag.info^
 ||fungoiddempseyimpasse.info^
@@ -8308,14 +8332,12 @@ openclose.click^
 ||go.pub2srv.com/apu.php?zoneid=
 ||go.trafficshop.com^
 ||gomakemerich1.com^
-||google.com--vir.us^
 ||grandslammedia.com^
 ||growtaller4adults.com^
 ||growtaller4men.com^
 ||growtaller4women.com^
 ||growth-flexvprosystem.com^
 ||hanaprop.com^
-||hc.iaftjs.info^
 ||heightboost.com^
 ||herezera.com^
 ||hgads.com^
@@ -8333,7 +8355,6 @@ openclose.click^
 ||ji.ihualun.com^
 ||jkolp.com^
 ||jlflzjdt.com^
-||jobsetter.info^
 ||join.xlgirls.com^
 ||js.mengheng.net^
 ||js.srcsmrtgs.com^
@@ -8368,7 +8389,6 @@ openclose.click^
 ||media.adtrack1.pl^
 ||mediastinct.com^
 ||megapopads.com^
-||metanetworkslider.com^
 ||metodikadeneg.info^
 ||mf*.advantage.as^
 ||mgid.com^
@@ -8393,7 +8413,6 @@ openclose.click^
 ||offpageads.com^
 ||onlinesupaads.com^
 ||onlinewebfind.com^
-||openclose.click^
 ||opt.ximad.com^
 ||ovgzbnjj.com^
 ||paradoxtraffic.com^
@@ -8449,7 +8468,6 @@ openclose.click^
 ||spidtest.org^
 ||srv.tagila.com/adsrvmedia/
 ||srvpub.com^
-||stateresolver.link^
 ||static.adtidy.net^
 ||static.hoptopboy.com^
 ||static.mjg.in/widget/widget.js
@@ -8482,7 +8500,6 @@ openclose.click^
 ||travian.dk/?uc=
 ||trklnks.com^
 ||u034024.778669.com^
-||uk.doubleclick.net^
 ||vartoken.com^
 ||videogenetic.com^
 ||vipcpms.com^
@@ -8595,6 +8612,7 @@ openclose.click^
 ||adnxs.com^
 ||adocean.pl^
 ||adonly.com^
+||adotsolution.com^
 ||adotube.com^
 ||adplay.vm5apis.com^
 ||adprotected.com^
@@ -9395,7 +9413,6 @@ openclose.click^
 ||baynote.net^
 ||beacon.guim.co.uk^
 ||beacon.kmi-us.com^
-||beacon.krxd.net^
 ||beanscattering.jp^
 ||beanstock.com^
 ||bebj.com^
@@ -11088,7 +11105,6 @@ openclose.click^
 ||remarketstats.com^
 ||repaynik.com^
 ||repdata.usatoday.com^
-||report.downloastar.com/?json
 ||res-x.com^
 ||research-artisan.com^
 ||research-int.se^
@@ -11441,7 +11457,6 @@ openclose.click^
 ||tags.news.com.au^
 ||tags.tiqcdn.com/utag/*/utag.js
 ||tags.tiqcdn.com/utag/*/utag.v.js
-||tagx.nytimes.com^
 ||tailtarget.com^
 ||tamedia.ch^
 ||tanx.com^
@@ -11493,7 +11508,6 @@ openclose.click^
 ||tns-gallup.dk^
 ||tnsinternet.be^
 ||top-bloggers.com^
-||top-fwz1.mail.ru^
 ||top-ro.ro^
 ||top-staging.mail.ru^
 ||top.azur.ru/?id=
@@ -11656,6 +11670,7 @@ openclose.click^
 ||umbel.com^
 ||unicaondemand.com^
 ||universaltrackingcontainer.com^
+||unknowntray.com^
 ||up-rank.com^
 ||upalytics.com^
 ||upstats.ru^
@@ -11685,7 +11700,6 @@ openclose.click^
 ||vdoing.com^
 ||veduy.com^
 ||veeseo.com/tracking/
-||veeseo.com^
 ||veinteractive.com^
 ||velaro.com^
 ||ventivmedia.com^
