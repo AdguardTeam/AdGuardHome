@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-10-10 12:02:54
+! Last modified: 2016-10-11 12:03:03
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -4579,6 +4579,9 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||purige.ru^
+||rootmedia.ws^
+||peptido.ru^
 .adonweb.ru^
 .adv-modulation.info^
 .adv-multithreading.info^
@@ -8120,6 +8123,7 @@ http://v.*.com/x?
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||r.topdent.ru^
 .forpicfree.ru^
 ws*://video.docfilms.info^
 ||987654321.kiev.ua^
@@ -8150,6 +8154,10 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||mediaver.com^
+||redstick.online^
+||checkapi.xyz^
+||alxsite.com^
 .bbelements.com^
 .doublepimp.com^
 .lockscalecompare.com^
@@ -8544,6 +8552,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||ad.jorte.com^
 ://o0e.ru^
 ||1mp.mobi^
 ||247realmedia.com^
@@ -11939,6 +11948,159 @@ ws*://video.docfilms.info^
 ||zroitracker.com^
 
 !
+! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
+!
+|http://r.i.ua^
+||analyticapi.piri.net^
+||analytics-static.ugc.bazaarvoice.com^
+||analytics.go.com^
+||analytics.tout.com^
+||analytics.twitter.com^
+||analytics.vesti-ukr.com^
+||b-aws.aol.com^
+||b-aws.huffingtonpost.com^
+||beacon.livefyre.com^
+||bi-pipeline-collector.stylight.net^
+||collector.apester.com^
+||collector.githubapp.com^
+||ct.pinterest.com^
+||d1xfq2052q7thw.cloudfront.net^
+||d3r7h55ola878c.cloudfront.net^
+||events-endpoint-*.amazonaws.com^
+||events.apester.com^
+||geobeacon.ign.com^
+||hi.hellobar.com^
+||hrumpoc.hotels.com^
+||images.dmca.com^
+||l.ooyala.com^
+||l.player.ooyala.com^
+||l.sharethis.com^
+||logdev.openload.co^
+||logs.thebloggernetwork.com^
+||metrics.toysrus.com^
+||pi.pardot.com^
+||ping.hellobar.com^
+||qnajplxtvz-a.akamaihd.net^
+||recs.atgsvcs.com^
+||smetrics.uhc.com^
+||stats-newyork1.bloxcms.com^
+||stats.openload.co^
+||tagx.nytimes.com^
+||top-fwz1.mail.ru^
+||track.dictionary.com^
+||track.tooplay.com^
+||tracking.tchibo.de^
+||wtsdc.uhc.com^
+||x.ligatus.com^
+
+!
+! Section contains rules for mobile analytics and spyware
+!
+||2o7.net^
+||abtest.mistat.xiaomi.com^
+||acompli.helpshift.com^
+||ad-analytics-bootstrap.metaps.com^
+||adash.m.taobao.com/rest/sur?ak=
+||adinfo.ra1.xlmc.sec.miui.com^
+||adserver.snapads.com^
+||adv.sec.miui.com^
+||analytics.ad.daum.net^
+||analytics.liftoff.io^
+||analytics.mobile.yandex.net^
+||analytics.mopub.com^
+||analytics.query.yahoo.com^
+||api-analytics-bootstrap.metaps.com^
+||api-analytics.metaps.com^
+||api.amplitude.com^
+||api.analytics.omgpop.com^
+||api.apptentive.com^
+||api.branch.io^
+||api.crittercism.com^
+||api.sec.miui.com^
+||api.segment.io^
+||api.taplytics.com^
+||api.vigo.ru^
+||app.adjust.com^
+||appmetrica.yandex.com^
+||bmbs.baidu.com/reportinfo.php
+||brahe.apptimize.com^
+||c.bigmir.net^
+||cedexis-radar.net^
+||cedexis.com^
+||counter.kingsoft.com^
+||crashlytics.com^
+||crittercism.com/api/
+||crwdcntrl.net^
+||data.mistat.xiaomi.com^
+||data.sec.miui.com^
+||dc.services.visualstudio.com/v2/track
+||demdex.net^
+||ep.xone.com^
+||etl.xlmc.sandai.net^
+||facebook.com/rtb_impression/?tr=
+||fcanr.tracking.miui.com^
+||gate.hockeyapp.net^
+||google-analytics.com^
+||googleadapis.l.google.com^
+||graph.instagram.com/logging_client_events
+||inst.platform.bing.com/api/log
+||installtracker.com^
+||krxd.net^
+||logupdate.avlyun.sec.miui.com^
+||m.vk.com/counters.php
+||m.xiangce.baidu.com/mobileapp/motu-*?guid=
+||metrics.sdkbox.com^
+||mixpanel.com/track
+||mobile-global.baidu.com/mbrowser/stat/
+||mobileanalytics.*.amazonaws.com^
+||ms.cmcm.com^
+||newrelic.com^
+||nrc.tapas.net^
+||online-metrix.net^
+||openstat.net^
+||ping.taplytics.com^
+||ping.xlmc.sandai.net^
+||pingma.qq.com/mstat/
+||pipe.aria.microsoft.com/Collector/
+||play.googleapis.com/log
+||quantcount.com^
+||r.browser.miui.com^
+||rc.dxsvr.com^
+||sc-analytics.appspot.com^
+||sdk-api.yozio.com/?os
+||sdk.appbrain.com/api/
+||sdkconfig.ad.xiaomi.com^
+||ssl-google-analytics.l.google.com^
+||sstats.economist.com/b/ss/econdarwinproduction/
+||stat.duokanbox.com^
+||statistics.videofarm.daum.net^
+||stats.unity3d.com^
+||tapjoy.com^
+||taurus.iad.appboy.com^
+||tns.simba.taobao.com^
+||tracker-api.my.com^
+||tracking.miui.com^
+||tu.dxcnd.cn^
+||tumblr.com/services/cslog
+||umeng.com/app_logs
+||upalytics.com^
+||ws.ksmobile.net/api/GetCloudMsgAdv?
+||www-google-analytics.l.google.com^
+||xiti.com^
+||yadro.ru^
+||yikyakapi.net/api/logEvent?
+||zdbb.net^
+! UC Browser
+||alog.umeng.co/app_logs^
+||localytics.com^
+||upoll.umengcloud.com^
+||utop.umengcloud.com^
+! KingRoot
+||analy.qq.com^
+||appsupport.qq.com/cgi-bin/appstage/mstats_batch_report
+||monitor.uu.qq.com/analytics/
+
+!
 ! Adguard DNS rules
 ||ad.adriver.ru^
 ||content.adriver.ru^
@@ -11995,3 +12157,5 @@ cdn.optimizely.com
 ! https://github.com/AdguardTeam/AdguardDNS/issues/41
 ! Adverigo captcha
 @@||adverigo.com^
+! https://github.com/AdguardTeam/AdguardDNS/issues/59
+@@||dw.cbsi.com^
