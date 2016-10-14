@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-10-13 12:03:11
+! Last modified: 2016-10-14 12:02:54
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -4617,6 +4617,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||rootmedia.ws^
+||tizernet.biz^
 ||gynax.com^
 ||nativeroll.tv^
 ||mastervesti.ru^
@@ -8195,6 +8197,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||prxii.cf^
 ||mediaver.com^
 ||redstick.online^
 ||checkapi.xyz^
@@ -8594,6 +8597,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||vidout.net^
 ||ad.jorte.com^
 ://o0e.ru^
 ||1mp.mobi^
@@ -9205,6 +9209,7 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||analytic.piri.net^
 //t100.ru^
 ://tru.am^
 ||0emm.com^
@@ -9249,7 +9254,6 @@ ws*://video.docfilms.info^
 ||360tag.com^
 ||360tag.net^
 ||3dlivestats.com^
-||3dn.ru/stat/
 ||3dstats.com^
 ||3gl.net/
 ||3gl.net^
