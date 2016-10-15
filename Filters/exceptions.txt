@@ -1,5 +1,6 @@
 ! https://github.com/AdguardTeam/AdguardDNS/issues/63
 @@||googleadapis.l.google.com^
+@@||imasdk.googleapis.com^
 ! https://github.com/AdguardTeam/AdguardFilters/issues/3180
 @@||2mdn.net^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/61
@@ -7,7 +8,6 @@
 ! https://github.com/AdguardTeam/AdguardDNS/issues/43
 @@||alipromo.com^
 !
-@@||imasdk.googleapis.com^
 @@||viglink.com^
 @@||googletagservices.com^
 @@||googletagmanager.com^
