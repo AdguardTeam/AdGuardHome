@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-10-14 12:02:54
+! Last modified: 2016-10-15 19:34:03
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -936,6 +936,7 @@
 ||bh3.net^
 ||bidgewatr.com^
 ||bidsystem.com^
+||bidverdrd.com^
 ||bidvertiser.com^
 ||biemedia.com^
 ||bigadpoint.net^
@@ -2832,6 +2833,7 @@
 ||play24.us^
 ||playertraffic.com^
 ||playukinternet.com^
+||pleasesavemyimages.com^
 ||pleeko.com^
 ||plenomedia.com^
 ||plexop.net^
@@ -4012,6 +4014,7 @@
 ||apgjczhgjrka.com^
 ||asqamasz.com^
 ||avrdpbiwvwyt.com^
+||avzkjvbaxgqk.com^
 ||awsatstb.com^
 ||awvrvqxq.com^
 ||azbdbtsmdocl.com^
@@ -4019,6 +4022,7 @@
 ||bbjlsdqhpbuqaspgjyxaobmpmzunjnvqmahejnwwvaqbzzqodu.com^
 ||bbopkapcgonb.com^
 ||bgitczbd.com^
+||bguaeoakgmrw.com^
 ||bircgizd.com^
 ||bjzcyqezwksznxxhscsfcogugkyiupgjhikadadgoiruasxpxo.com^
 ||bkmmlcbertdbselmdxpzcuyuilaolxqfhtyukmjkklxphbwsae.com^
@@ -4050,6 +4054,7 @@
 ||csbsyukodmga.com^
 ||csmqorveetie.com^
 ||cuguwxkasghy.com^
+||cxnxognwkuxm.com^
 ||cxoxruotepqgcvgqxdlwwucgyazmbkhdojqzihljdwwfeylovh.com^
 ||cxrmgoybhyrk.com^
 ||cymuxbcnhinm.com^
@@ -4076,6 +4081,7 @@
 ||elkpxsfzrubq.com^
 ||emdbszgmxggo.com^
 ||eovkzcueutgf.com^
+||erszwzaidmlc.com^
 ||ervpgpxr.com^
 ||farkkbndawtxczozilrrrunxflspkyowishacdueiqzeddsnuu.com^
 ||fcjnqpkrdglw.com^
@@ -4095,6 +4101,8 @@
 ||fxjyultd.com^
 ||fxvxgwqcddvm.com^
 ||gbiwxmjw.com^
+||gbltotkythfh.com^
+||gdpuknsngvps.com^
 ||gerpkshe.com^
 ||gggemaop.com^
 ||ghtroafchzrt.com^
@@ -4125,6 +4133,7 @@
 ||hpxxzfzdocinivvulcujuhypyrniicjfauortalmjerubjgaja.com^
 ||htllanmhrnjrbestmyabzhyweaccazvuslvadtvutfiqnjyavg.com^
 ||huzmweoxlwanzvstlgygbrnfrmodaodqaczzibeplcezmyjnlv.com^
+||hvfzacisynoq.com^
 ||hvukouhckryjudrawwylpboxdsonxhacpodmxvbonqipalsprb.com^
 ||hxbvbmxv.com^
 ||hyubowucvkch.com^
@@ -4159,6 +4168,7 @@
 ||jlflzjdt.com^
 ||jmzaqwcmcbui.com^
 ||jqqrcwwd.com^
+||jzqharwtwqei.com^
 ||karcvrpwayal.com^
 ||kgkjlivo.com^
 ||kihhgldtpuho.com^
@@ -4180,16 +4190,21 @@
 ||lkjmcevfgoxfbyhhmzambtzydolhmeelgkotdllwtfshrkhrev.com^
 ||lkrcapch.com^
 ||lmuxaeyapbqxszavtsljaqvmlsuuvifznvttuuqfcxcbgqdnn.com^
+||lnzcmgguxlac.com^
 ||lpwvdgfo.com^
 ||lwenrqtarmdx.com^
 ||lytpdzqyiygthvxlmgblonknzrctcwsjycmlcczifxbkquknsr.com^
 ||lzmovatu.com^
+||maxgirlgames.com^
 ||medyagundem.com^
 ||mfmikwfdopmiusbveskwmouxvafvzurvklwyfamxlddexgrtci.com^
 ||mizmhwicqhprznhflygfnymqbmvwokewzlmymmvjodqlizwlrf.com^
+||mkmxovjaijti.com^
+||mkzynqxqlcxk.com^
 ||mnjgoxmx.com^
 ||mnusvlgl.com^
 ||mopvkjodhcwscyudzfqtjuwvpzpgzuwndtofzftbtpdfszeido.com^
+||mvjuhdjuwqtk.com^
 ||mvqinxgp.com^
 ||mzbetmhucxih.com^
 ||mzguykhxnuap.com^
@@ -4199,6 +4214,7 @@
 ||negdrvgo.com^
 ||nfniziqm.com^
 ||ngmckvucrjbnyybvgesxozxcwpgnaljhpedttelavqmpgvfsxg.com^
+||nkyngrtleloc.com^
 ||nnigsvoorscmgnyobwuhrgnbcgtiicyflrtpwxsekldubasizg.com^
 ||nnvjigagpwsh.com^
 ||nokswnfvghee.com^
@@ -4207,9 +4223,11 @@
 ||nqlkwyyzzgtn.com^
 ||nrgpugas.com^
 ||nsazelqlavtc.com^
+||nunsbvlzuhyi.com^
 ||nybpurpgexoe.com^
 ||oawleebf.com^
 ||obthqxbm.com^
+||obuuyneuhfwf.com^
 ||obxwnnheaixf.com^
 ||okmuxdbq.com^
 ||olctpejrnnfh.com^
@@ -4239,6 +4257,7 @@
 ||qarqyhfwient.com^
 ||qbfvwovkuewm.com^
 ||qdlhprdtwhvgxuzklovisrdbkhptpfarrbcmtrxbzlvhygqisv.com^
+||qfrpehkvqtyj.com^
 ||qixlpaaeaspr.com^
 ||qljczwei.com^
 ||qnpolbme.com^
@@ -4263,6 +4282,7 @@
 ||rxicrihobtkf.com^
 ||rzcmcqljwxyy.com^
 ||saipuciruuja.com^
+||sbftffngpzwt.com^
 ||sbhnftwdlpbo.com^
 ||shnmhrlcredd.com^
 ||sjgklyyyraghhrgimsepycygdqvezppyfjkqddhlzbimoabjae.com^
@@ -4284,11 +4304,14 @@
 ||tkarkbzkirlw.com^
 ||tlzhxxfeteeimoonsegagetpulbygiqyfvulvemqnfqnoazccg.com^
 ||tmdcfkxcckvqbqbixszbdyfjgusfzyguvtvvisojtswwvoduhi.com^
+||tswhwnkcjvxf.com^
 ||tujbidamlfrn.com^
+||txbvzcyfyyoy.com^
 ||ubhzahnzujqlvecihiyukradtnbmjyjsktsoeagcrbbsfzzrfi.com^
 ||uckxjsiy.com^
 ||udvbtgkxwnap.com^
 ||uecjpplzfjur.com^
+||uerladwdpkge.com^
 ||ufmnicckqyru.com^
 ||ugxyemavfvlolypdqcksmqzorlphjycckszifyknwlfcvxxihx.com^
 ||umqsrvdg.com^
@@ -4617,6 +4640,13 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||gottimuch.com^
+||to330.com^
+||vogozapa.ru^
+||yourfoxes2.ru^
+||yourfoxes3.ru^
+||yourfoxes4.ru^
+||yourfoxes5.ru^
 ||rootmedia.ws^
 ||tizernet.biz^
 ||gynax.com^
@@ -9209,6 +9239,9 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||cmt.setrowid.com^
+||hit.dogannet.tv^
+||fitanalytics.com^
 ||analytic.piri.net^
 //t100.ru^
 ://tru.am^
@@ -12455,6 +12488,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||counter.tovarro.com^
 ||dcs.maxthon.com^
 ||log.olark.com^
 ||metrics.plex.tv^
@@ -12638,6 +12672,9 @@ ws*://video.docfilms.info^
 ||mobileanalytics.*.amazonaws.com^
 !
 ! Adguard DNS exceptions
+! https://github.com/AdguardTeam/AdguardDNS/issues/63
+@@||googleadapis.l.google.com^
+@@||imasdk.googleapis.com^
 ! https://github.com/AdguardTeam/AdguardFilters/issues/3180
 @@||2mdn.net^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/61
@@ -12645,7 +12682,6 @@ ws*://video.docfilms.info^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/43
 @@||alipromo.com^
 !
-@@||imasdk.googleapis.com^
 @@||viglink.com^
 @@||googletagservices.com^
 @@||googletagmanager.com^
