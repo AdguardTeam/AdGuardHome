@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-10-17 12:02:56
+! Last modified: 2016-10-17 15:58:30
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -3920,6 +3920,7 @@
 ||zferral.com^
 ||zidae.com^
 ||ziffdavis.com^
+||zim-zim-zam.com^
 ||zipropyl.com^
 ||znaptag.com^
 ||zoglafi.info^
@@ -4543,6 +4544,7 @@
 ||muatrasec.com^
 ||muriarw.com^
 ||nrfort.com^
+||nuafguy.com^
 ||nuaknamg.net^
 ||nualoghy.com^
 ||oplo.org^
@@ -4645,6 +4647,17 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||uldmare.com^
+||sandsoftors.com^
+||teasermoney.com^
+||bin40.com^
+||protovid.com^
+||orionsp.xyz^
+||3lx.ru^
+||add.ladycleo.ru^
+||teasermoney.ru^
+||teaserwin.ru^
+||ulosmuynstes.ml^
 ||tizergo.net^
 ||gottimuch.com^
 ||to330.com^
@@ -4653,7 +4666,6 @@
 ||yourfoxes3.ru^
 ||yourfoxes4.ru^
 ||yourfoxes5.ru^
-||rootmedia.ws^
 ||tizernet.biz^
 ||gynax.com^
 ||nativeroll.tv^
@@ -8202,6 +8214,9 @@ http://v.*.com/x?
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||mixtraff.silvercdn.com^
+||partners.parimatch.net^
+||c.grimuar.ru^
 ||r.topdent.ru^
 .forpicfree.ru^
 ws*://video.docfilms.info^
