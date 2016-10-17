@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-10-17 15:58:30
+! Last modified: 2016-10-17 18:10:22
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -4647,6 +4647,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||0916video.ru^
 ||uldmare.com^
 ||sandsoftors.com^
 ||teasermoney.com^
@@ -6536,7 +6537,6 @@ thr.ru##.top_branding
 ||mmm--2012.com
 ||mmm-investor.ru^
 ||mnetads.net^
-||mnogo.ru^
 ||mobalert.net^
 ||mobatori.com
 ||mobatory.com^
@@ -8648,6 +8648,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||admarvel.s3.amazonaws.com^
+||leanplum.com^
 ||vidout.net^
 ||ad.jorte.com^
 ://o0e.ru^
