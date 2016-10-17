@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-10-15 19:34:03
+! Last modified: 2016-10-17 12:02:56
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -1115,6 +1115,7 @@
 ||chanitet.ru^
 ||chargeplatform.com^
 ||charltonmedia.com^
+||checkapi.xyz^
 ||checkm8.com^
 ||checkmystats.com.au^
 ||checkoutfree.com^
@@ -1204,6 +1205,7 @@
 ||coguan.com^
 ||coinad.com^
 ||coinadvert.net^
+||coinsicmp.com^
 ||cointraffic.in^
 ||cointraffic.io^
 ||collection-day.com^
@@ -1969,6 +1971,7 @@
 ||hplose.de^
 ||hsslx.com^
 ||hstpnetwork.com^
+||htl.bid^
 ||htmlhubing.xyz^
 ||httpool.com^
 ||httpsecurity.org^
@@ -3038,6 +3041,7 @@
 ||redirectpopads.com^
 ||rediskina.com^
 ||redpeepers.com^
+||redstick.online^
 ||reduxmediagroup.com^
 ||reelcentric.com^
 ||refban.com^
@@ -3334,6 +3338,7 @@
 ||stealthlockers.com^
 ||steepto.com^
 ||step-step-go.com^
+||stickcoinad.com^
 ||stickyadstv.com^
 ||stocker.bonnint.net^
 ||streamate.com^
@@ -4640,6 +4645,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||tizergo.net^
 ||gottimuch.com^
 ||to330.com^
 ||vogozapa.ru^
