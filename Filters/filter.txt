@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-10-17 18:10:22
+! Last modified: 2016-10-18 12:03:03
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -4647,6 +4647,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||cobrand.ria.com^
+||yourfoxes1.ru^
 ||0916video.ru^
 ||uldmare.com^
 ||sandsoftors.com^
@@ -8250,8 +8252,6 @@ ws*://video.docfilms.info^
 !
 ||prxii.cf^
 ||mediaver.com^
-||redstick.online^
-||checkapi.xyz^
 ||alxsite.com^
 .bbelements.com^
 .doublepimp.com^
@@ -9262,6 +9262,10 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||hit.8digits.com^
+||trck.spoteffects.net^
+||visilabs.com^
+||visilabs.net^
 ||cmt.setrowid.com^
 ||hit.dogannet.tv^
 ||fitanalytics.com^
