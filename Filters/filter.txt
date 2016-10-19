@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-10-18 12:03:03
+! Last modified: 2016-10-19 12:03:08
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -4014,10 +4014,12 @@
 ||agpnzrmptmos.com^
 ||aiypulgy.com^
 ||ajgffcat.com^
+||ajxftwwmlinv.com^
 ||ambqphwf.com^
 ||amqtbshegbqg.com^
 ||aominpzhzhwj.com^
 ||apgjczhgjrka.com^
+||aryufuxbmwnb.com^
 ||asqamasz.com^
 ||avrdpbiwvwyt.com^
 ||avzkjvbaxgqk.com^
@@ -4040,6 +4042,7 @@
 ||bvobtmbziccr.com^
 ||bwyckpmsolzk.com^
 ||bzjtjfjteazqzmukjwhyzsaqdtouiopcmtmgdiytfdzboxdann.com^
+||ccbaobjyprxh.com^
 ||ccdkyvyw.com^
 ||cdicyazp.com^
 ||cdqmeyhqrwinofutpcepbahedusocxqyfokvehqlqpusttfwve.com^
@@ -4047,6 +4050,7 @@
 ||cdveeechegws.com^
 ||ceseyitsikzs.com^
 ||cewdbisyrzdv.com^
+||chxfeymgmwbo.com^
 ||cihnrhqwbcsq.com^
 ||cixjmaxkemzknxxuyvkbzlhvvgeqmzgopppvefpfkqdraonoez.com^
 ||cjxkzkzmdomd.com^
@@ -4060,6 +4064,7 @@
 ||csbsyukodmga.com^
 ||csmqorveetie.com^
 ||cuguwxkasghy.com^
+||cwtekghutpaq.com^
 ||cxnxognwkuxm.com^
 ||cxoxruotepqgcvgqxdlwwucgyazmbkhdojqzihljdwwfeylovh.com^
 ||cxrmgoybhyrk.com^
@@ -4068,6 +4073,7 @@
 ||dcneohtx.com^
 ||ddprxzxnhzbq.com^
 ||dgwrxyucxpizivncznkpmdhtrdzyyylpoeitiannqfxmdzpmwx.com^
+||disbkzufvqhk.com^
 ||djntmaplqzbi.com^
 ||djzmpsingsrtfsnbnkphyagxdemeagsiabguuqbiqvpupamgej.com^
 ||dkrhsftochvzqryurlptloayhlpftkogvzptcmjlwjgymcfrmv.com^
@@ -4076,6 +4082,8 @@
 ||dnxpseduuehm.com^
 ||dobgfkflsnmpaeetycphmcloiijxbvxeyfxgjdlczcuuaxmdzz.com^
 ||dobjgpqzygow.com^
+||dppcevxbshdl.com^
+||dulpsxaznlwr.com^
 ||dwentymgplvrizqhieugzkozmqjxrxcyxeqdjvcbjmrhnkguwk.com^
 ||dxigubtmyllj.com^
 ||dyunhvev.com^
@@ -4083,8 +4091,10 @@
 ||eeqabqioietkquydwxfgvtvpxpzkuilfcpzkplhcckoghwgacb.com^
 ||eidzaqzygtvq.com^
 ||ejjrckrhigez.com^
+||ejwmxjttljbe.com^
 ||elbeobjhnsvh.com^
 ||elkpxsfzrubq.com^
+||elxxkpaeudxu.com^
 ||emdbszgmxggo.com^
 ||eovkzcueutgf.com^
 ||erszwzaidmlc.com^
@@ -4103,12 +4113,14 @@
 ||fppupmqbydpk.com^
 ||fqkcdhptlqma.com^
 ||fqpteozo.com^
+||frdhsmerubfg.com^
 ||fvbeyduylvgy.com^
 ||fxjyultd.com^
 ||fxvxgwqcddvm.com^
 ||gbiwxmjw.com^
 ||gbltotkythfh.com^
 ||gdpuknsngvps.com^
+||geqcqduubhll.com^
 ||gerpkshe.com^
 ||gggemaop.com^
 ||ghtroafchzrt.com^
@@ -4117,11 +4129,13 @@
 ||gkiryieltcbg.com^
 ||glnqvqbedbmvtcdzcokrfczopbddhopygrvrnlgmalgvhnsfsc.com^
 ||gmpdixdh.com^
+||gmpmuqniggyz.com^
 ||gojwyansqmcl.com^
 ||gpbznagpormpyusuxbvlpbuejqzwvspcyqjcxbqtbdtlixcgzp.com^
 ||gpgsxlmjnfid.com^
 ||gqthfroeirol.com^
 ||grceweaxhbpvclyxhwuozrbtvqzjgbnzklvxdezzficwjnmfil.com^
+||gtqfsxrrerzu.com^
 ||gwaatiev.com^
 ||gwcujaprdsen.com^
 ||gxgnvickedxpuiavkgpisnlsphrcyyvkgtordatszlrspkgppe.com^
@@ -4130,9 +4144,13 @@
 ||hbbwlhxfnbpq.com^
 ||hbedvoyluzmq.com^
 ||hbrbtmjyvdsy.com^
+||hevdxhsfbwud.com^
+||hffmxndinqyo.com^
 ||hffmzplu.com^
 ||hfjuehls.com^
 ||hgbmwkklwittcdkjapnpeikxojivfhgszbxmrjfrvajzhzhuks.com^
+||hkacgxlpfurb.com^
+||hkdjrnkjwtqo.com^
 ||hkoxlirf.com^
 ||hlotiwnz.com^
 ||hndesrzcgjmprqbbropdulvkfroonnrlbpqxhvprsavhwrfxtv.com^
@@ -4149,10 +4167,13 @@
 ||iczhhiiowapd.com^
 ||idpukwmp.com^
 ||iectshrhpgsl.com^
+||ifaklabnhplb.com^
 ||ifvetqzfiawg.com^
+||igdfzixkdzxe.com^
 ||iglwibwbjxuoflrczfvpibhihwuqneyvmhzeqbmdmujmirdkae.com^
 ||igupodzh.com^
 ||iibcejrrfhxh.com^
+||ilsivrexvpyv.com^
 ||imbbjywwahev.com^
 ||imgoatxhxior.com^
 ||imrwxmau.com^
@@ -4162,6 +4183,7 @@
 ||irjaeupzarkvwmxonaeslgicvjvgdruvdywmdvuaoyfsjgdzhk.com^
 ||irxpndjg.com^
 ||isqgobsgtqsh.com^
+||iwrjczthkkla.com^
 ||iydghotpzofn.com^
 ||izwsvyqv.com^
 ||jahsrhlp.com^
@@ -4172,21 +4194,29 @@
 ||jjipgxjf.com^
 ||jkkernvkrwdr.com^
 ||jlflzjdt.com^
+||jlymmwnkxhph.com^
 ||jmzaqwcmcbui.com^
 ||jqqrcwwd.com^
+||jrmyhchnfawh.com^
+||jzekquhmaxrk.com^
 ||jzqharwtwqei.com^
 ||karcvrpwayal.com^
 ||kgkjlivo.com^
 ||kihhgldtpuho.com^
 ||kjjlucebvxtu.com^
+||kjplmlvtdoaf.com^
+||kldwitfrqwal.com^
 ||kmtubsbmwdep.com^
+||kmvupiadkzdn.com^
 ||kpnuqvpevotn.com^
 ||kqcflzvunhew.com^
 ||ksbklucaxgbf.com^
 ||ktcltsgjcbjdcyrcdaspmwqwscxgbqhscmkpsxarejfsfpohkk.com^
 ||kthdreplfmil.com^
+||kwgpddeduvje.com^
 ||kyowarob.com^
 ||lckpubqq.com^
+||lcxrhcqouqtw.com^
 ||lcyxmuhxroyo.com^
 ||lgthvsytzwtc.com^
 ||lhuqalcxjmtq.com^
@@ -4194,6 +4224,7 @@
 ||ljngencgbdbn.com^
 ||lkbvfdgqvvpk.com^
 ||lkjmcevfgoxfbyhhmzambtzydolhmeelgkotdllwtfshrkhrev.com^
+||lkktkgcpqzwd.com^
 ||lkrcapch.com^
 ||lmuxaeyapbqxszavtsljaqvmlsuuvifznvttuuqfcxcbgqdnn.com^
 ||lnzcmgguxlac.com^
@@ -4209,13 +4240,16 @@
 ||mkzynqxqlcxk.com^
 ||mnjgoxmx.com^
 ||mnusvlgl.com^
+||mnzimonbovqs.com^
 ||mopvkjodhcwscyudzfqtjuwvpzpgzuwndtofzftbtpdfszeido.com^
 ||mvjuhdjuwqtk.com^
 ||mvqinxgp.com^
 ||mzbetmhucxih.com^
 ||mzguykhxnuap.com^
 ||nbbljlzbbpck.com^
+||nbkwnsonadrb.com^
 ||nbrwtboukesx.com^
+||nefczemmdcqi.com^
 ||nefxtwxk.com^
 ||negdrvgo.com^
 ||nfniziqm.com^
@@ -4229,12 +4263,15 @@
 ||nqlkwyyzzgtn.com^
 ||nrgpugas.com^
 ||nsazelqlavtc.com^
+||nuayfpthqlkq.com^
 ||nunsbvlzuhyi.com^
 ||nybpurpgexoe.com^
+||nyqogyaflmln.com^
 ||oawleebf.com^
 ||obthqxbm.com^
 ||obuuyneuhfwf.com^
 ||obxwnnheaixf.com^
+||okgfvcourjeb.com^
 ||okmuxdbq.com^
 ||olctpejrnnfh.com^
 ||ooyhetoodapmrjvffzpmjdqubnpevefsofghrfsvixxcbwtmrj.com^
@@ -4245,9 +4282,11 @@
 ||otpyldlrygga.com^
 ||otrfmbluvrde.com^
 ||ovgzbnjj.com^
+||owihjchxgydd.com^
 ||ozhwenyohtpb.com^
 ||pbnnsras.com^
 ||pdbaewqjyvux.com^
+||pdzqwzrxlltz.com^
 ||peewuvgdcian.com^
 ||pkmzxzfazpst.com^
 ||pkqbgjuinhgpizxifssrtqsyxnzjxwozacnxsrxnvkrokysnhb.com^
@@ -4255,9 +4294,12 @@
 ||pmlcuxqbngrl.com^
 ||pnunijdm.com^
 ||prggimadscvm.com^
+||prqivgpcjxpp.com^
 ||pserhnmbbwexmbjderezswultfqlamugbqzsmyxwumgqwxuerl.com^
 ||ptiqsfrnkmmtvtpucwzsaqonmvaprjafeerwlyhabobuvuazun.com^
+||pvtcntdlcdsb.com^
 ||pxarwmerpavfmomfyjwuuinxaipktnanwlkvbmuldgimposwzm.com^
+||pxgkuwybzuqz.com^
 ||pxktkwmrribg.com^
 ||pzgchrjikhfyueumavkqiccvsdqhdjpljgwhbcobsnjrjfidpq.com^
 ||qarqyhfwient.com^
@@ -4265,11 +4307,15 @@
 ||qdlhprdtwhvgxuzklovisrdbkhptpfarrbcmtrxbzlvhygqisv.com^
 ||qfrpehkvqtyj.com^
 ||qixlpaaeaspr.com^
+||qkuprxbmkeqp.com^
 ||qljczwei.com^
 ||qnpolbme.com^
+||qnqrmqwehcpa.com^
+||qolnnepubuyz.com^
 ||qotwtnckqrke.com^
 ||qpiyjprptazz.com^
 ||qrozsnmc.com^
+||qtjafpcpmcri.com^
 ||qtsmzrnccnwz.com^
 ||qxxyzmukttyp.com^
 ||qzxtbsnaebfw.com^
@@ -4279,6 +4325,8 @@
 ||rffqzbqqmuhaomjpwatukocrykmesssfdhpjuoptovsthbsswd.com^
 ||rhfvzboqkjfmabakkxggqdmulrsxmisvuzqijzvysbcgyycwfk.com^
 ||rjnkpqax.com^
+||rjyihkorkewq.com^
+||rkelvtnnhofl.com^
 ||rkrpvzgzdwqaynyzxkuviotbvibnpqaktcioaaukckhbvkognu.com^
 ||rmetgarrpiouttmwqtuajcnzgesgozrihrzwmjlpxvcnmdqath.com^
 ||rnrbvhaoqzcksxbhgqtrucinodprlsmuvwmaxqhxngkqlsiwwp.com^
@@ -4290,16 +4338,20 @@
 ||saipuciruuja.com^
 ||sbftffngpzwt.com^
 ||sbhnftwdlpbo.com^
+||sceuexzmiwrf.com^
+||sgfcsnwegazn.com^
 ||shnmhrlcredd.com^
 ||sjgklyyyraghhrgimsepycygdqvezppyfjkqddhlzbimoabjae.com^
 ||sjpexaylsfjnopulpgkbqtkzieizcdtslnofpkafsqweztufpa.com^
 ||sncpizczabhhafkzeifklgonzzkpqgogmnhyeggikzloelmfmd.com^
 ||snjhhcnr.com^
 ||snpevihwaepwxapnevcpiqxrsewuuonzuslrzrcxqwltupzbwu.com^
+||sqtsuzrfefwy.com^
 ||sriaqmzx.com^
 ||sualzmze.com^
 ||svrsqqtj.com^
 ||swckuwtoyrklhtccjuuvcstyesxpbmycjogrqkivmmcqqdezld.com^
+||sydnkqqscbxc.com^
 ||syorlvhuzgmdqbuxgiulsrusnkgkpvbwmxeqqcboeamyqmyexv.com^
 ||tabeduhsdhlkalelecelxbcwvsfyspwictbszchbbratpojhlb.com^
 ||tapihmxemcksuvleuzpodsdfubceomxfqayamnsoswxzkijjmw.com^
@@ -4327,13 +4379,16 @@
 ||uwrzafoopcyr.com^
 ||uxyofgcf.com^
 ||uyqzlnmdtfpnqskyyvidmllmzauitvaijcgqjldwcwvewjgwfj.com^
+||uzreuvnlizlz.com^
 ||vbupfouyymse.com^
 ||vfnvsvxlgxbvndhgqqohfgdcfprvxqisiqhclfhdpnjzloctny.com^
 ||vgmrqurgxlimcawbweuzbvbzxabsfuuxseldfapjmxoboaplmg.com^
 ||vlnveqkifcpxdosizybusvjqkfmowoawoshlmcbittpoywblpe.com^
+||vpfiiojohjch.com^
 ||vpsotshujdguwijdiyzyacgwuxgnlucgsrhhhglezlkrpmdfiy.com^
 ||vpwwtzprrkcn.com^
 ||vrqajyuu.com^
+||vtoygnkflehv.com^
 ||vxuhavco.com^
 ||vxvxsgut.com^
 ||vzhbfwpo.com^
@@ -4343,6 +4398,7 @@
 ||wddtrsuqmqhw.com^
 ||wephuklsjobdxqllpeklcrvquyyifgkictuepzxxhzpjbclmcq.com^
 ||wepmmzpypfwq.com^
+||wepzfylndtwu.com^
 ||wfiejyjdlbsrkklvxxwkferadhbcwtxrotehopgqppsqwluboc.com^
 ||wgefjuno.com^
 ||wggnmbmedlmo.com^
@@ -4350,14 +4406,18 @@
 ||wkexsfmw.com^
 ||wkhychiklhdglppaeynvntkublzecyyymosjkiofraxechigon.com^
 ||wklyhvfc.com^
+||wmjdnluokizo.com^
 ||wmwkwubufart.com^
+||wqbvqmremvgp.com^
 ||wrmcfyzl.com^
 ||wrmwikcnynbk.com^
 ||wrqjwrrpsnnm.com^
+||wscvmnvhanbr.com^
 ||wsfqmxdljrknkalwskqmefnonnyoqjmeapkmzqwghehedukmuj.com^
 ||wtvyenir.com^
 ||wwgdpbvbrublvjfbeunqvkrnvggoeubcfxzdjrgcgbnvgcolbf.com^
 ||wwgjtcge.com^
+||wzjbvbxldfrn.com^
 ||wzueqhwf.com^
 ||xbynkkqi.com^
 ||xdwqixeyhvqd.com^
@@ -4365,12 +4425,15 @@
 ||xhojlvfznietogsusdiflwvxpkfhixbgdxcnsdshxwdlnhtlih.com^
 ||xhqilhfrfkoecllmthusrpycaogrfivehyymyqkpmxbtomexwl.com^
 ||xhwtilplkmvbxumaxwmpaqexnwxypcyndhjokwqkxcwbbsclqh.com^
+||xirtesuryeqk.com^
 ||xmmnwyxkfcavuqhsoxfrjplodnhzaafbpsojnqjeoofyqallmf.com^
 ||xpnttdct.com^
 ||xswutjmmznesinsltpkefkjifvchyqiinnorwikatwbqzjelnp.com^
 ||xttrofww.com^
 ||xuwptpzdwyaw.com^
 ||xwwkuacmqblu.com^
+||ycojhxdobkrd.com^
+||yfkwqoswbghk.com^
 ||ygrtbssc.com^
 ||yjjglyoytiew.com^
 ||ykbcogkoiqdw.com^
@@ -4395,6 +4458,7 @@
 ||zptncsir.com^
 ||zpxbdukjmcft.com^
 ||zrxgdnxneslb.com^
+||zsancthhfvqm.com^
 ||ztfrlktqtcnl.com^
 ||zycvyudt.com^
 ! Yavli.com
@@ -9262,6 +9326,7 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||fc.webmasterpro.de^
 ||hit.8digits.com^
 ||trck.spoteffects.net^
 ||visilabs.com^
