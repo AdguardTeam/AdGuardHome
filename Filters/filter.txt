@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-10-20 12:02:59
+! Last modified: 2016-10-20 16:50:26
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -8325,6 +8325,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||reeviveglobal.com^
+||r7mediar.com^
 ||prxii.cf^
 ||mediaver.com^
 ||alxsite.com^
@@ -8723,6 +8725,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||iadsdk.apple.com^
 ||manage.com^
 ||intowow.com^
 ||adtilt.com^
