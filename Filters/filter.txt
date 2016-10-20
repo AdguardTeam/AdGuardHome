@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-10-19 12:03:08
+! Last modified: 2016-10-20 12:02:59
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -1325,6 +1325,7 @@
 ||da-ads.com^
 ||dadegid.ru^
 ||danitabedtick.net^
+||danmeneldur.com^
 ||dapper.net^
 ||darwarvid.com^
 ||das5ku9q.com^
@@ -1540,6 +1541,7 @@
 ||dreamaquarium.com^
 ||dreamsearch.or.kr^
 ||drnxs.com^
+||dropzenad.com^
 ||drowle.com^
 ||dsero.net^
 ||dsnextgen.com^
@@ -2046,6 +2048,7 @@
 ||indianlinkexchange.com^
 ||indicate.to^
 ||indieclick.com^
+||indisancal.com^
 ||indofad.com^
 ||industrybrains.com^
 ||inentasky.com^
@@ -4097,6 +4100,7 @@
 ||elxxkpaeudxu.com^
 ||emdbszgmxggo.com^
 ||eovkzcueutgf.com^
+||erkwkjfompvt.com^
 ||erszwzaidmlc.com^
 ||ervpgpxr.com^
 ||farkkbndawtxczozilrrrunxflspkyowishacdueiqzeddsnuu.com^
@@ -4183,6 +4187,7 @@
 ||irjaeupzarkvwmxonaeslgicvjvgdruvdywmdvuaoyfsjgdzhk.com^
 ||irxpndjg.com^
 ||isqgobsgtqsh.com^
+||itevcsjvtcmb.com^
 ||iwrjczthkkla.com^
 ||iydghotpzofn.com^
 ||izwsvyqv.com^
@@ -4214,6 +4219,7 @@
 ||ktcltsgjcbjdcyrcdaspmwqwscxgbqhscmkpsxarejfsfpohkk.com^
 ||kthdreplfmil.com^
 ||kwgpddeduvje.com^
+||kxtepdregiuo.com^
 ||kyowarob.com^
 ||lckpubqq.com^
 ||lcxrhcqouqtw.com^
@@ -4221,6 +4227,7 @@
 ||lgthvsytzwtc.com^
 ||lhuqalcxjmtq.com^
 ||liosawitskzd.com^
+||lixzmpxjilqp.com^
 ||ljngencgbdbn.com^
 ||lkbvfdgqvvpk.com^
 ||lkjmcevfgoxfbyhhmzambtzydolhmeelgkotdllwtfshrkhrev.com^
@@ -4230,6 +4237,7 @@
 ||lnzcmgguxlac.com^
 ||lpwvdgfo.com^
 ||lwenrqtarmdx.com^
+||lyifwfhdizcc.com^
 ||lytpdzqyiygthvxlmgblonknzrctcwsjycmlcczifxbkquknsr.com^
 ||lzmovatu.com^
 ||maxgirlgames.com^
@@ -4297,6 +4305,7 @@
 ||prqivgpcjxpp.com^
 ||pserhnmbbwexmbjderezswultfqlamugbqzsmyxwumgqwxuerl.com^
 ||ptiqsfrnkmmtvtpucwzsaqonmvaprjafeerwlyhabobuvuazun.com^
+||pugklldkhrfg.com^
 ||pvtcntdlcdsb.com^
 ||pxarwmerpavfmomfyjwuuinxaipktnanwlkvbmuldgimposwzm.com^
 ||pxgkuwybzuqz.com^
@@ -4432,6 +4441,7 @@
 ||xttrofww.com^
 ||xuwptpzdwyaw.com^
 ||xwwkuacmqblu.com^
+||yaxdboxgsbgh.com^
 ||ycojhxdobkrd.com^
 ||yfkwqoswbghk.com^
 ||ygrtbssc.com^
@@ -4454,6 +4464,7 @@
 ||zlvbqseyjdna.com^
 ||zmytwgfd.com^
 ||zoowknbw.com^
+||zpkobplsfnxf.com^
 ||zpmbsivi.com^
 ||zptncsir.com^
 ||zpxbdukjmcft.com^
@@ -8712,6 +8723,15 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||manage.com^
+||intowow.com^
+||adtilt.com^
+||ads.glispa.com^
+||trk.glispa.com^
+||ad.apsalar.com^
+||syndication.trafficreps.com^
+||reporo.net^
+||apxadtracking.net^
 ||admarvel.s3.amazonaws.com^
 ||leanplum.com^
 ||vidout.net^
@@ -9326,6 +9346,20 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||collect-elb-*.amazonaws.com^
+||stats.jpush.cn^
+||log.iyunmai.com^
+||instabug.com^
+||datametrical.com^
+||apptimize.com^
+||apptentive.com^
+||c00.adobe.com^
+||device-analytics.rollout.io^
+||data.mob.com^
+||stats.pandora.com^
+||log.musical.ly^
+||stats.paypal.com^
+||metrics.mzstatic.com^
 ||fc.webmasterpro.de^
 ||hit.8digits.com^
 ||trck.spoteffects.net^
