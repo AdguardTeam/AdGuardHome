@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-10-20 16:50:26
+! Last modified: 2016-10-21 00:38:13
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -4722,6 +4722,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||chajv.top^
 ||cobrand.ria.com^
 ||yourfoxes1.ru^
 ||0916video.ru^
@@ -12829,7 +12830,7 @@ ws*://video.docfilms.info^
 @@||atwola.com^
 @@||b.grvcdn.com^
 ! VarageSale app (iOS)
-cdn.optimizely.com
+@@||cdn.optimizely.com
 ! https://github.com/AdguardTeam/AdguardDNS/issues/41
 ! Adverigo captcha
 @@||adverigo.com^
