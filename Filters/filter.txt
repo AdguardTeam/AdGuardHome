@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-10-21 00:38:13
+! Last modified: 2016-10-21 12:24:05
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -4020,6 +4020,7 @@
 ||ajxftwwmlinv.com^
 ||ambqphwf.com^
 ||amqtbshegbqg.com^
+||antrtrtyzkhw.com^
 ||aominpzhzhwj.com^
 ||apgjczhgjrka.com^
 ||aryufuxbmwnb.com^
@@ -4031,6 +4032,7 @@
 ||azbdbtsmdocl.com^
 ||azeozrjk.com^
 ||bbjlsdqhpbuqaspgjyxaobmpmzunjnvqmahejnwwvaqbzzqodu.com^
+||bboemhlddgju.com^
 ||bbopkapcgonb.com^
 ||bgitczbd.com^
 ||bguaeoakgmrw.com^
@@ -4160,6 +4162,7 @@
 ||hndesrzcgjmprqbbropdulvkfroonnrlbpqxhvprsavhwrfxtv.com^
 ||hpxxzfzdocinivvulcujuhypyrniicjfauortalmjerubjgaja.com^
 ||htllanmhrnjrbestmyabzhyweaccazvuslvadtvutfiqnjyavg.com^
+||huejizictcgd.com^
 ||huzmweoxlwanzvstlgygbrnfrmodaodqaczzibeplcezmyjnlv.com^
 ||hvfzacisynoq.com^
 ||hvukouhckryjudrawwylpboxdsonxhacpodmxvbonqipalsprb.com^
@@ -4196,6 +4199,7 @@
 ||jeyoxmhhnofdhaalzlfbrsfmezfxqxgwqjkxthzptjdizuyojh.com^
 ||jgqkrvjtuapt.com^
 ||jhupypvmcsqfqpbxbvumiaatlilzjrzbembarnhyoochsedzvi.com^
+||jjdrwkistgfh.com^
 ||jjipgxjf.com^
 ||jkkernvkrwdr.com^
 ||jlflzjdt.com^
@@ -4211,6 +4215,7 @@
 ||kjjlucebvxtu.com^
 ||kjplmlvtdoaf.com^
 ||kldwitfrqwal.com^
+||klrdsagmuepg.com^
 ||kmtubsbmwdep.com^
 ||kmvupiadkzdn.com^
 ||kpnuqvpevotn.com^
@@ -4221,9 +4226,11 @@
 ||kwgpddeduvje.com^
 ||kxtepdregiuo.com^
 ||kyowarob.com^
+||lazkslkkmtpy.com^
 ||lckpubqq.com^
 ||lcxrhcqouqtw.com^
 ||lcyxmuhxroyo.com^
+||ldaiuhkayqtu.com^
 ||lgthvsytzwtc.com^
 ||lhuqalcxjmtq.com^
 ||liosawitskzd.com^
@@ -4332,11 +4339,13 @@
 ||rbyjirwjbibz.com^
 ||rdzxpvbveezdkcyustcomuhczsbvteccejkdkfepouuhxpxtmy.com^
 ||rffqzbqqmuhaomjpwatukocrykmesssfdhpjuoptovsthbsswd.com^
+||rhfntvnbxfxu.com^
 ||rhfvzboqkjfmabakkxggqdmulrsxmisvuzqijzvysbcgyycwfk.com^
 ||rjnkpqax.com^
 ||rjyihkorkewq.com^
 ||rkelvtnnhofl.com^
 ||rkrpvzgzdwqaynyzxkuviotbvibnpqaktcioaaukckhbvkognu.com^
+||rkvpcjiuumbk.com^
 ||rmetgarrpiouttmwqtuajcnzgesgozrihrzwmjlpxvcnmdqath.com^
 ||rnrbvhaoqzcksxbhgqtrucinodprlsmuvwmaxqhxngkqlsiwwp.com^
 ||rpczohkv.com^
@@ -4357,11 +4366,13 @@
 ||snpevihwaepwxapnevcpiqxrsewuuonzuslrzrcxqwltupzbwu.com^
 ||sqtsuzrfefwy.com^
 ||sriaqmzx.com^
+||stnvgvtwzzrh.com^
 ||sualzmze.com^
 ||svrsqqtj.com^
 ||swckuwtoyrklhtccjuuvcstyesxpbmycjogrqkivmmcqqdezld.com^
 ||sydnkqqscbxc.com^
 ||syorlvhuzgmdqbuxgiulsrusnkgkpvbwmxeqqcboeamyqmyexv.com^
+||szyejlnlvnmy.com^
 ||tabeduhsdhlkalelecelxbcwvsfyspwictbszchbbratpojhlb.com^
 ||tapihmxemcksuvleuzpodsdfubceomxfqayamnsoswxzkijjmw.com^
 ||tawgiuioeaovaozwassucoydtrsellartytpikvcjpuwpagwfv.com^
@@ -4424,8 +4435,10 @@
 ||wscvmnvhanbr.com^
 ||wsfqmxdljrknkalwskqmefnonnyoqjmeapkmzqwghehedukmuj.com^
 ||wtvyenir.com^
+||wvljugmqpfyd.com^
 ||wwgdpbvbrublvjfbeunqvkrnvggoeubcfxzdjrgcgbnvgcolbf.com^
 ||wwgjtcge.com^
+||wxxfcyoaymug.com^
 ||wzjbvbxldfrn.com^
 ||wzueqhwf.com^
 ||xbynkkqi.com^
@@ -4450,6 +4463,7 @@
 ||ylksuifuyryt.com^
 ||ynlrfiwj.com^
 ||ynrbxyxmvihoydoduefogolpzgdlpnejalxldwjlnsolmismqd.com^
+||ynxrrzgfkuih.com^
 ||ypbfrhlgquaj.com^
 ||ypyarwgh.com^
 ||ytwtqabrkfmu.com^
