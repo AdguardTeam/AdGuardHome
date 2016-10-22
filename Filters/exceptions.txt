@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardDNS/issues/70
+@@||bnc.lt^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/63
 @@||googleadapis.l.google.com^
 @@||imasdk.googleapis.com^
