@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-10-24 12:03:02
+! Last modified: 2016-10-25 12:03:10
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -2826,7 +2826,6 @@
 ||pioneeringad.com^
 ||pip-pip-pop.com^
 ||pipeaota.com^
-||pippio.com^
 ||piticlik.com^
 ||pivotalmedialabs.com^
 ||pivotrunner.com^
@@ -4037,9 +4036,11 @@
 ||bbjlsdqhpbuqaspgjyxaobmpmzunjnvqmahejnwwvaqbzzqodu.com^
 ||bboemhlddgju.com^
 ||bbopkapcgonb.com^
+||bfhavmgufvhn.com^
 ||bgitczbd.com^
 ||bguaeoakgmrw.com^
 ||bircgizd.com^
+||bjpktmjdxqpl.com^
 ||bjzcyqezwksznxxhscsfcogugkyiupgjhikadadgoiruasxpxo.com^
 ||bkmmlcbertdbselmdxpzcuyuilaolxqfhtyukmjkklxphbwsae.com^
 ||bmjccqfxlabturkmpzzokhsahleqqrysudwpuzqjbxbqeakgnf.com^
@@ -4077,11 +4078,13 @@
 ||cxoxruotepqgcvgqxdlwwucgyazmbkhdojqzihljdwwfeylovh.com^
 ||cxrmgoybhyrk.com^
 ||cymuxbcnhinm.com^
+||cywegkfcrhup.com^
 ||czoivochvduv.com^
 ||dcneohtx.com^
 ||ddprxzxnhzbq.com^
 ||dgwrxyucxpizivncznkpmdhtrdzyyylpoeitiannqfxmdzpmwx.com^
 ||disbkzufvqhk.com^
+||diysqcbfyuru.com^
 ||djntmaplqzbi.com^
 ||djzmpsingsrtfsnbnkphyagxdemeagsiabguuqbiqvpupamgej.com^
 ||dkrhsftochvzqryurlptloayhlpftkogvzptcmjlwjgymcfrmv.com^
@@ -4175,6 +4178,7 @@
 ||hxbvbmxv.com^
 ||hyubowucvkch.com^
 ||hyvsquazvafrmmmcfpqkabocwpjuabojycniphsmwyhizxgebu.com^
+||hzskbnafzwsu.com^
 ||hztkbjdkaiwt.com^
 ||icafyriewzzrwxlxhtoeakmwroueywnwhmqmaxsqdntasgfvhc.com^
 ||iczhhiiowapd.com^
@@ -4203,6 +4207,7 @@
 ||izwsvyqv.com^
 ||jahsrhlp.com^
 ||jbvisobwrlcv.com^
+||jcctggmdccmt.com^
 ||jdlnquri.com^
 ||jeyoxmhhnofdhaalzlfbrsfmezfxqxgwqjkxthzptjdizuyojh.com^
 ||jgqkrvjtuapt.com^
@@ -4263,6 +4268,7 @@
 ||mizmhwicqhprznhflygfnymqbmvwokewzlmymmvjodqlizwlrf.com^
 ||mkmxovjaijti.com^
 ||mkzynqxqlcxk.com^
+||mmeddgjhplqy.com^
 ||mnjgoxmx.com^
 ||mnusvlgl.com^
 ||mnzimonbovqs.com^
@@ -4282,6 +4288,7 @@
 ||nfniziqm.com^
 ||ngmckvucrjbnyybvgesxozxcwpgnaljhpedttelavqmpgvfsxg.com^
 ||nkyngrtleloc.com^
+||nlljrfvbnisi.com^
 ||nnigsvoorscmgnyobwuhrgnbcgtiicyflrtpwxsekldubasizg.com^
 ||nnvjigagpwsh.com^
 ||nokswnfvghee.com^
@@ -4453,6 +4460,7 @@
 ||wrmcfyzl.com^
 ||wrmwikcnynbk.com^
 ||wrqjwrrpsnnm.com^
+||wscrsmuagezg.com^
 ||wscvmnvhanbr.com^
 ||wsfqmxdljrknkalwskqmefnonnyoqjmeapkmzqwghehedukmuj.com^
 ||wtvyenir.com^
@@ -4464,6 +4472,7 @@
 ||wzueqhwf.com^
 ||xbynkkqi.com^
 ||xdwqixeyhvqd.com^
+||xfgqvqoyzeiu.com^
 ||xhdzcofomosh.com^
 ||xhojlvfznietogsusdiflwvxpkfhixbgdxcnsdshxwdlnhtlih.com^
 ||xhqilhfrfkoecllmthusrpycaogrfivehyymyqkpmxbtomexwl.com^
@@ -4503,6 +4512,7 @@
 ||zpmbsivi.com^
 ||zptncsir.com^
 ||zpxbdukjmcft.com^
+||zqaxaqqqutrx.com^
 ||zrxgdnxneslb.com^
 ||zsancthhfvqm.com^
 ||ztfrlktqtcnl.com^
@@ -7114,8 +7124,8 @@ thr.ru##.top_branding
 ||proxy.insorg.org^
 ||ps.infiplay.ru^
 ||psma01.com
-||psma02.com^
-||psma03.com^
+||psma02.com
+||psma03.com
 ||psmardr.com^
 ||psnets.com^
 ||ptrck.ru^
@@ -8365,9 +8375,14 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||popads.net/pop.js^
+||vrvm.com^
+||onshowit.com^
+||ads.tremorhub.com^
+||bee7.com^
 ||advertiserurl.com^
 ||apugod.work^
-.tubecontext.com^
+||tubecontext.com^
 ||reeviveglobal.com^
 ||r7mediar.com^
 ||prxii.cf^
@@ -8768,6 +8783,11 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||adserver.pandora.com^
+||tap-nexus.appspot.com^
+||ads.tremorhub.com^
+||dev.appboy.com^
+||shared.iad.appboy.com^
 ||iadsdk.apple.com^
 ||manage.com^
 ||intowow.com^
@@ -9392,6 +9412,7 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||fullstory.com^
 ||te.supportfreecontent.com^
 ||slingshot.io^
 ||ftrack.ru^
@@ -12664,6 +12685,11 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||analytics-rollout-*.amazonaws.com^
+||ce-global-track-*.amazonaws.com^
+||metric.timewarnercable.com^
+||data-collector.wefi.com^
+||mevents.trusteer.com^
 ||counter.mediastealer.com^
 ||counter.tovarro.com^
 ||dcs.maxthon.com^
@@ -12715,6 +12741,19 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||amp-error-reporting.appspot.com^
+||stats.popcap.com^
+||alog.umeng.com^
+||oc.umeng.com^
+||ar.umeng.com^
+||crasheye.cn^
+||beacon.shazam.com^
+||etl.tindersparks.com^
+||trk.pinterest.com^
+||log.umsns.com^
+||pingma.qq.com^
+||mobilelog.upqzfile.com^
+||beacon.qq.com^
 ||adsunflower.com^
 ||adfuture.cn^
 ||advmob.cn^
@@ -12723,7 +12762,8 @@ ws*://video.docfilms.info^
 ||acompli.helpshift.com^
 ||ad-analytics-bootstrap.metaps.com^
 ||adash.m.taobao.com/rest/sur?ak=
-||adinfo.ra1.xlmc.sec.miui.com^
+||xlmc.sec.miui.com^
+||beha.ksmobile.com^
 ||adserver.snapads.com^
 ||adv.sec.miui.com^
 ||analytics.ad.daum.net^
@@ -12852,6 +12892,8 @@ ws*://video.docfilms.info^
 ||mobileanalytics.*.amazonaws.com^
 !
 ! Adguard DNS exceptions
+! https://github.com/AdguardTeam/AdguardForiOS/issues/197
+@@||v3cdn.net^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/70
 @@||bnc.lt^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/63
