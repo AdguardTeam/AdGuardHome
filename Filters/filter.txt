@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-10-25 12:03:10
+! Last modified: 2016-10-26 12:02:48
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -418,6 +418,7 @@
 ||adpath.mobi^
 ||adpay.com^
 ||adpays.net^
+||adpdx.com^
 ||adperfect.com^
 ||adperium.com^
 ||adphreak.com^
@@ -604,6 +605,7 @@
 ||advatar.to^
 ||adventori.com^
 ||adverigo.com^
+||adverpub.com^
 ||adversal.com^
 ||adversaldisplay.com^
 ||adversalservers.com^
@@ -646,6 +648,7 @@
 ||advombat.ru^
 ||advpoints.com^
 ||advrtice.com^
+||advserver.xyz^
 ||advsnx.net^
 ||adwires.com^
 ||adwordsservicapi.com^
@@ -1180,6 +1183,7 @@
 ||clickwinks.com^
 ||clickxchange.com^
 ||clickzxc.com^
+||clipurl.club^
 ||clixgalore.com^
 ||clixsense.com^
 ||clixtrac.com^
@@ -2724,6 +2728,7 @@
 ||optimalroi.info^
 ||optimatic.com^
 ||optimizeadvert.biz^
+||optimizesocial.com^
 ||optinemailpro.com^
 ||optinmonster.com^
 ||orangeads.fr^
@@ -2968,6 +2973,7 @@
 ||pubmatic.com^
 ||pubmine.com^
 ||pubnation.com^
+||pubrain.com^
 ||pubserve.net^
 ||pubted.com^
 ||puhtml.com^
@@ -3303,6 +3309,7 @@
 ||sponsorpalace.com^
 ||sponsorpay.com^
 ||sponsorselect.com^
+||sportslovin.com^
 ||sportsyndicator.com^
 ||spotrails.com^
 ||spotscenered.info^
@@ -3494,7 +3501,7 @@
 ||torerolumiere.net^
 ||toroadvertising.com^
 ||toroadvertisingmedia.com^
-||torpsol.com^^
+||torpsol.com^
 ||torrida.net^
 ||torrpedoads.net^
 ||torvind.com^
@@ -4016,6 +4023,7 @@
 ! popads.net
 ||aatmytrykqhi.com^
 ||agpnzrmptmos.com^
+||ahkpdnrtjwat.com^
 ||aiypulgy.com^
 ||ajgffcat.com^
 ||ajxftwwmlinv.com^
@@ -4120,6 +4128,7 @@
 ||fgkvpyrmkbap.com^
 ||fgmucsiirrsq.com^
 ||fjfxpykp.com^
+||fkdqrjnoxhch.com^
 ||fkjyzxnoxusg.com^
 ||fluohbiy.com^
 ||fneheruhxqtv.com^
@@ -4378,9 +4387,11 @@
 ||rxicrihobtkf.com^
 ||rzcmcqljwxyy.com^
 ||saipuciruuja.com^
+||sajhiqlcsugy.com^
 ||sbftffngpzwt.com^
 ||sbhnftwdlpbo.com^
 ||sceuexzmiwrf.com^
+||scmffjmashzc.com^
 ||sgfcsnwegazn.com^
 ||shnmhrlcredd.com^
 ||sjgklyyyraghhrgimsepycygdqvezppyfjkqddhlzbimoabjae.com^
@@ -4484,6 +4495,7 @@
 ||xttrofww.com^
 ||xuwptpzdwyaw.com^
 ||xwwkuacmqblu.com^
+||xxzkqbdibdgq.com^
 ||yaxdboxgsbgh.com^
 ||ycojhxdobkrd.com^
 ||yfkwqoswbghk.com^
@@ -4507,6 +4519,7 @@
 ||zlbdtqoayesloeazgxkueqhfzadqjqqduwrufqemhpbrjvwaar.com^
 ||zlvbqseyjdna.com^
 ||zmytwgfd.com^
+||zoileyozfexv.com^
 ||zoowknbw.com^
 ||zpkobplsfnxf.com^
 ||zpmbsivi.com^
@@ -4617,6 +4630,7 @@
 ||genegd.com^
 ||gghfncd.net^
 ||gruadhc.com^
+||gualdoniye.com^
 ||guaperty.net^
 ||gusufrs.me^
 ||hapnr.net^
@@ -4698,6 +4712,7 @@
 ||rterdf.me^
 ||ruamupr.com^
 ||ruandr.com^
+||ruap-oldr.net^
 ||rugistoto.net^
 ||rugistratuan.com^
 ||selectr.net^
@@ -4768,6 +4783,11 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||istcs.top^
+||eioxy.top^
+||hzfcx.top^
+||retagapp.com^
+||codeonclick.com^
 ||advcache.ru^
 ||my-img.ru^
 ||giraff.io^
