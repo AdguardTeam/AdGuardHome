@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-10-26 12:02:48
+! Last modified: 2016-10-27 12:02:52
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -4783,6 +4783,13 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||puklisi.ru^
+||navaxudoru.com^
+||robaduvulo.com^
+||vogozara.ru^
+||mobiile-service.ru^
+||uytichas.ru^
+||01n2e3pac2.com^
 ||istcs.top^
 ||eioxy.top^
 ||hzfcx.top^
@@ -8395,6 +8402,10 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||ssdphmfduwcl.com^
+||bgcsojmtgdrv.com^
+||lamiflor.xyz^
+||puserving.com^
 ||popads.net/pop.js^
 ||vrvm.com^
 ||onshowit.com^
@@ -8612,7 +8623,6 @@ ws*://video.docfilms.info^
 ||jfduv7.com^
 ||ji.ihualun.com^
 ||jkolp.com^
-||jlflzjdt.com^
 ||join.xlgirls.com^
 ||js.mengheng.net^
 ||js.srcsmrtgs.com^
@@ -9432,6 +9442,15 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||decenthat.com^
+||analytics.nextopia.net^
+||sv.ltzvs.ru^
+||count.channeladvisor.com^
+||metrics.pacsun.com^
+||tracking2.channeladvisor.com^
+||track.custora.com^
+||track.securedvisit.com^
+||t.custora.com^
 ||fullstory.com^
 ||te.supportfreecontent.com^
 ||slingshot.io^
@@ -10904,7 +10923,10 @@ ws*://video.docfilms.info^
 ||invoc.us^
 ||invoca.net^
 ||invoca.solutions^
+||ioam.de/?
+||ioam.de/aid.io?
 ||ioam.de/tx.io?
+||mqs.ioam.de^
 ||iol.io^
 ||ip-adress.com^
 ||ip-api.com^
@@ -11831,7 +11853,6 @@ ws*://video.docfilms.info^
 ||scoutanalytics.net^
 ||scrippscontroller.com^
 ||script.ag^
-||script.ioam.de/iam.js
 ||script.opentracker.net
 ||scriptil.com^
 ||scripts21.com^
@@ -12761,6 +12782,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||lepodownload.mediatek.com^
 ||amp-error-reporting.appspot.com^
 ||stats.popcap.com^
 ||alog.umeng.com^
