@@ -21,8 +21,13 @@
 @@||cedexis.net^
 @@||licdn.com^
 ! bild.de
+! @@||smartadserver.com
 @@||ec-ns.sascdn.com^
-@@||smartadserver.com
+@@||cdn1.smartadserver.com
+@@||eqx.smartadserver.com
+@@||itx4.smartadserver.com
+@@||tmk.smartadserver.com
+@@||ww251.smartadserver.com
 ! kinovo.me
 @@||mxtads.com^
 @@||c.msn.com^
