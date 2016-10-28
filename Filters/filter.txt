@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-10-27 12:02:52
+! Last modified: 2016-10-28 12:03:04
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -4045,6 +4045,7 @@
 ||bboemhlddgju.com^
 ||bbopkapcgonb.com^
 ||bfhavmgufvhn.com^
+||bgcsojmtgdrv.com^
 ||bgitczbd.com^
 ||bguaeoakgmrw.com^
 ||bircgizd.com^
@@ -4055,6 +4056,7 @@
 ||bmqnguru.com^
 ||bmubqabepbcb.com^
 ||bnkgacehxxmx.com^
+||bsaixnxcpaai.com^
 ||bujntrmh.com^
 ||bvobtmbziccr.com^
 ||bwyckpmsolzk.com^
@@ -4093,6 +4095,7 @@
 ||dgwrxyucxpizivncznkpmdhtrdzyyylpoeitiannqfxmdzpmwx.com^
 ||disbkzufvqhk.com^
 ||diysqcbfyuru.com^
+||djbnmqdawodm.com^
 ||djntmaplqzbi.com^
 ||djzmpsingsrtfsnbnkphyagxdemeagsiabguuqbiqvpupamgej.com^
 ||dkrhsftochvzqryurlptloayhlpftkogvzptcmjlwjgymcfrmv.com^
@@ -4108,6 +4111,7 @@
 ||dyunhvev.com^
 ||ecmeqhxevxgmtoxubrjstrrlyfgrrtqhvafyagettmwnwkwltn.com^
 ||eeqabqioietkquydwxfgvtvpxpzkuilfcpzkplhcckoghwgacb.com^
+||ehnjtmqchrub.com^
 ||eidzaqzygtvq.com^
 ||ejjrckrhigez.com^
 ||ejwmxjttljbe.com^
@@ -4205,6 +4209,7 @@
 ||imrwxmau.com^
 ||imyqdbxq.com^
 ||iohaqrkjddeq.com^
+||ionbpysfukdh.com^
 ||iqrqmhrfkyuu.com^
 ||irjaeupzarkvwmxonaeslgicvjvgdruvdywmdvuaoyfsjgdzhk.com^
 ||irxpndjg.com^
@@ -4314,6 +4319,7 @@
 ||oawleebf.com^
 ||obthqxbm.com^
 ||obuuyneuhfwf.com^
+||obvbubmzdvom.com^
 ||obxwnnheaixf.com^
 ||oewscpwrvoca.com^
 ||okgfvcourjeb.com^
@@ -4338,6 +4344,7 @@
 ||plmuxaeyapbqxszavtsljaqvmlsuuvifznvttuuqfcxcbgqdnn.com^
 ||plwvwvhudkuv.com^
 ||pmlcuxqbngrl.com^
+||pnmkuqkonlzj.com^
 ||pnunijdm.com^
 ||prggimadscvm.com^
 ||prqivgpcjxpp.com^
@@ -4372,6 +4379,7 @@
 ||rbyjirwjbibz.com^
 ||rdzxpvbveezdkcyustcomuhczsbvteccejkdkfepouuhxpxtmy.com^
 ||rffqzbqqmuhaomjpwatukocrykmesssfdhpjuoptovsthbsswd.com^
+||rgztepyoefvm.com^
 ||rhfntvnbxfxu.com^
 ||rhfvzboqkjfmabakkxggqdmulrsxmisvuzqijzvysbcgyycwfk.com^
 ||rjnkpqax.com^
@@ -4402,6 +4410,7 @@
 ||snpevihwaepwxapnevcpiqxrsewuuonzuslrzrcxqwltupzbwu.com^
 ||sqtsuzrfefwy.com^
 ||sriaqmzx.com^
+||ssdphmfduwcl.com^
 ||stnvgvtwzzrh.com^
 ||sualzmze.com^
 ||svrsqqtj.com^
@@ -4413,7 +4422,9 @@
 ||tabeduhsdhlkalelecelxbcwvsfyspwictbszchbbratpojhlb.com^
 ||tapihmxemcksuvleuzpodsdfubceomxfqayamnsoswxzkijjmw.com^
 ||tawgiuioeaovaozwassucoydtrsellartytpikvcjpuwpagwfv.com^
+||tazvowjqekha.com^
 ||tedlrouwixqq.com^
+||tevrhhgzzutw.com^
 ||tgrmzphjmvem.com^
 ||tjbgiyek.com^
 ||tkarkbzkirlw.com^
@@ -4429,6 +4440,7 @@
 ||uerladwdpkge.com^
 ||ufmnicckqyru.com^
 ||ugxyemavfvlolypdqcksmqzorlphjycckszifyknwlfcvxxihx.com^
+||ujocmihdknwj.com^
 ||umqsrvdg.com^
 ||uqgloylf.com^
 ||uqpotqld.com^
@@ -4461,6 +4473,7 @@
 ||wfiejyjdlbsrkklvxxwkferadhbcwtxrotehopgqppsqwluboc.com^
 ||wgefjuno.com^
 ||wggnmbmedlmo.com^
+||whsjufifuwkw.com^
 ||wijczxvihjyu.com^
 ||wkexsfmw.com^
 ||wkhychiklhdglppaeynvntkublzecyyymosjkiofraxechigon.com^
@@ -4783,6 +4796,9 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||traffictoadv.com^
+||littel.biz^
+||telvanil.ru^
 ||puklisi.ru^
 ||navaxudoru.com^
 ||robaduvulo.com^
