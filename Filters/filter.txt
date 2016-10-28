@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-10-28 12:03:04
+! Last modified: 2016-10-28 18:19:52
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -8829,6 +8829,10 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||ads.admarvel.com^
+||base-cdn.admarvel.com^
+||usekahuna.com^
+||api.usebutton.com^
 ||adserver.pandora.com^
 ||tap-nexus.appspot.com^
 ||ads.tremorhub.com^
@@ -9458,6 +9462,9 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||projeanaliz.com^
+||tracking.vitringez.com^
+||t.channeladvisor.com^
 ||decenthat.com^
 ||analytics.nextopia.net^
 ||sv.ltzvs.ru^
@@ -9490,7 +9497,6 @@ ws*://video.docfilms.info^
 ||hit.8digits.com^
 ||trck.spoteffects.net^
 ||visilabs.com^
-||visilabs.net^
 ||cmt.setrowid.com^
 ||hit.dogannet.tv^
 ||fitanalytics.com^
@@ -12742,6 +12748,17 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||adanalytics.openload.co^
+||tracking.adactioninteractive.com^
+||r.remarketingpixel.com^
+||onclickpredictiv.com^
+||pixelhere.com^
+||analytics.ma.tune.com^
+||www.podtrac.com^
+||log-live.direct.ly^
+||lively-collect-elb-*.amazonaws.com^
+||lgr.visilabs.net^
+||rt.visilabs.net^
 ||analytics-rollout-*.amazonaws.com^
 ||ce-global-track-*.amazonaws.com^
 ||metric.timewarnercable.com^
@@ -12798,12 +12815,16 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||clientmetrics.kik.com^
+||clientmetrics-augmentum.kik.com^
+||api.gameanalytics.com^
 ||lepodownload.mediatek.com^
 ||amp-error-reporting.appspot.com^
 ||stats.popcap.com^
 ||alog.umeng.com^
 ||oc.umeng.com^
 ||ar.umeng.com^
+||alog.umengcloud.com^
 ||crasheye.cn^
 ||beacon.shazam.com^
 ||etl.tindersparks.com^
@@ -12973,8 +12994,13 @@ ws*://video.docfilms.info^
 @@||cedexis.net^
 @@||licdn.com^
 ! bild.de
+! @@||smartadserver.com
 @@||ec-ns.sascdn.com^
-@@||smartadserver.com
+@@||cdn1.smartadserver.com
+@@||eqx.smartadserver.com
+@@||itx4.smartadserver.com
+@@||tmk.smartadserver.com
+@@||ww251.smartadserver.com
 ! kinovo.me
 @@||mxtads.com^
 @@||c.msn.com^
