@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-10-31 12:03:00
+! Last modified: 2016-11-01 12:03:01
 ! Decsription: Filtering rules used by Adguard DNS.
 !
 ! Adservice
@@ -4830,6 +4830,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||textun.ru^
+||klivz.com^
 ||advertop.ru^
 ||jxxgg.top^
 ||traffictoadv.com^
@@ -8453,6 +8455,10 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||ongkidcasarv.com^
+||dashgreen.online^
+||adzos.com^
+||mxtads.com:8040
 ||glaswall.online^
 ||go.cartstick.com^
 ||ficusoid.xyz^
@@ -8853,6 +8859,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d2ymkpxi1rgldj.cloudfront.net^
 ||beap1.cb.g01.yahoodns.net^
 ||script.hqpass.com^
 ||d17rlarvg2khuc.cloudfront.net^
@@ -8869,6 +8876,19 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||clkfeed.com^
+||campaigns.apps-connects.com^
+||d2nrdy2pg3k168.cloudfront.net^
+||ongkidcasarv.com^
+||puhtml.com^
+||buzzonclick.com^
+||poptm.com^
+||javacript.gq^
+||r7mediar.com^
+||hormebets.info^
+||campaigns.apps-connects.com^
+||ongkidcasarv.com^
+||googleadservices.com^
 ||admarketing.yahoo.net^
 ||adback.tango.me^
 ||adinfo.tango.me^
@@ -9505,6 +9525,7 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||ingest.crittercism.com^
 ||projeanaliz.com^
 ||tracking.vitringez.com^
 ||t.channeladvisor.com^
