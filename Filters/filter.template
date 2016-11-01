@@ -3,7 +3,7 @@
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
 ! Last modified: %timestamp%
-! Decsription: Filtering rules used by Adguard DNS.
+! Decsription: Filter used by Adguard DNS. Basically, it combines several filters (English filter, Social filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) transformed for better DNS filtering.
 !
 ! Adservice
 !
