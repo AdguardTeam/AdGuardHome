@@ -2,8 +2,8 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-11-01 12:03:01
-! Decsription: Filtering rules used by Adguard DNS.
+! Last modified: 2016-11-02 12:03:11
+! Decsription: Filter used by Adguard DNS. Basically, it combines several filters (English filter, Social filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) transformed for better DNS filtering.
 !
 ! Adservice
 !
@@ -4758,6 +4758,7 @@
 ||rlex.org^
 ||rterdf.me^
 ||ruamupr.com^
+||ruandorg.com^
 ||ruandr.com^
 ||ruap-oldr.net^
 ||rugistoto.net^
@@ -4830,6 +4831,14 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||vidyp.com^
+||code.vh45130.eurodir.ru^
+||trenews.ru^
+||golayazv.com^
+||seobloger.ru^
+||veretiggoo.com^
+||vhiaxerjzbqi.com^
+||refpa.top^
 ||textun.ru^
 ||klivz.com^
 ||advertop.ru^
@@ -5978,7 +5987,6 @@ thr.ru##.top_branding
 ||freeavalanche.ru^
 ||freeexchange.ru^
 ||freehd.com.ua^
-||freelancer.com^
 ||freewm.ru/js/bonus_code.php?
 ||fresh-video.com^
 ||freshnews.su^
@@ -8455,6 +8463,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||xxyafiswqcqz.com^
+||eerdckbwujcx.com^
 ||ongkidcasarv.com^
 ||dashgreen.online^
 ||adzos.com^
@@ -8876,6 +8886,18 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||houseads-prod.elasticbeanstalk.com^
+||ads.aerserv.com^
+||production-adserver-*.amazonaws.com^
+||ads.pinger.com^
+||cf-ads.pinger.com^
+||tracking.applift.com^
+||ads.yahoo.com^
+||west.bidtellect.com^
+||appshelf.ttpsdk.info^
+||houseads.ttpsdk.info^
+||ultraadserver.com^
+||abtest.swrve.com^
 ||clkfeed.com^
 ||campaigns.apps-connects.com^
 ||d2nrdy2pg3k168.cloudfront.net^
@@ -9525,6 +9547,7 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||tracking.bdi-services.de^
 ||ingest.crittercism.com^
 ||projeanaliz.com^
 ||tracking.vitringez.com^
@@ -12812,6 +12835,10 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||clientlogger-prod.elasticbeanstalk.com^
+||analytics.vadio.com^
+||ls.srvcs.tumblr.com^
+||saber.srvcs.tumblr.com^
 ||clc.stackoverflow.com^
 ||counter.1gb.ru^
 ||tr.datanyze.com^
