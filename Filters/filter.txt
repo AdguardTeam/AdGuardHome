@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-11-03 12:03:15
+! Last modified: 2016-11-04 12:03:09
 ! Decsription: Filter used by Adguard DNS. Basically, it combines several filters (English filter, Social filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) transformed for better DNS filtering.
 !
 ! Adservice
@@ -2092,6 +2092,7 @@
 ||instantdollarz.com^
 ||instinctiveads.com^
 ||instivate.com^
+||instraffic.com^
 ||instreamvideo.ru^
 ||integral-marketing.com^
 ||intellibanners.com^
@@ -3175,6 +3176,7 @@
 ||scanscout.com^
 ||sceno.ru^
 ||scootloor.com^
+||scrap.me^
 ||scratchaffs.com^
 ||search123.uk.com^
 ||seccoads.com^
@@ -3228,6 +3230,7 @@
 ||simply.com^
 ||simplyhired.com^
 ||simvinvo.com^
+||sirfad.com^
 ||sitebrand.com^
 ||siteencore.com^
 ||sitescout.com^
@@ -4859,6 +4862,9 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||idaschop.ru^
+||itempana.site^
+||huminfakt.ru^
 ||vidyp.com^
 ||lagrobe.ru^
 ||vidgain.com^
@@ -8495,6 +8501,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||code.poptm.com^
 ||yxbtyzqcczra.com^
 ||nuclersoncanthinger.info^
 ||xxyafiswqcqz.com^
@@ -9059,6 +9066,7 @@ ws*://video.docfilms.info^
 ||ads.mobilityware.com^
 ||ads.mobvertising.net^
 ||ads.mopub.com^
+||mpx.mopub.com^
 ||ads.n-ws.org^
 ||ads.ookla.com^
 ||ads.reward.rakuten.jp^
@@ -9585,6 +9593,8 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||imrworldwide.net^
+||imrworldwide.com^
 ||pippio.com^
 ||pageview.goroost.com^
 ||tracking.bdi-services.de^
@@ -11504,7 +11514,8 @@ ws*://video.docfilms.info^
 ||netzaehler.de^
 ||netzstat.ch^
 ||newpoints.info^
-||newrelic.com^
+||js-agent.newrelic.com^
+||beacon-1.newrelic.com^
 ||news.com.au/track/
 ||news.com.au/tracking/
 ||newsanalytics.com.au^
@@ -12875,6 +12886,9 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||timeslog.indiatimes.com^
+||ibeat.indiatimes.com^
+||ucounter.ucoz.net^
 ||clientlogger-prod.elasticbeanstalk.com^
 ||analytics.vadio.com^
 ||ls.srvcs.tumblr.com^
@@ -12954,6 +12968,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||nativesdks.mparticle.com^
+||config2.mparticle.com^
 ||iam-agof-app.irquest.com^
 iapp-cp.nuggad.net^
 ||lp4.io^
@@ -13039,7 +13055,6 @@ iapp-cp.nuggad.net^
 ||mobile-global.baidu.com/mbrowser/stat/
 ||mobileanalytics.*.amazonaws.com^
 ||ms.cmcm.com^
-||newrelic.com^
 ||nrc.tapas.net^
 ||online-metrix.net^
 ||openstat.net^
