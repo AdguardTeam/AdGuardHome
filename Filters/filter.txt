@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-11-07 12:03:08
+! Last modified: 2016-11-08 12:03:40
 ! Decsription: Filter used by Adguard DNS. Basically, it combines several filters (English filter, Social filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) transformed for better DNS filtering.
 !
 ! Adservice
@@ -1179,6 +1179,7 @@
 ||clicknano.com^
 ||clickosmedia.com^
 ||clicks2count.com^
+||clicks4ads.com^
 ||clicksor.com^
 ||clicksor.net^
 ||clicksurvey.mobi^
@@ -2992,6 +2993,7 @@
 ||pulse360.com^
 ||pulsemgr.com^
 ||purpleflag.net^
+||puserving.com^
 ||push2check.com^
 ||pwrads.net^
 ||pxl2015x1.com^
@@ -9002,6 +9004,10 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||api.kiip.me^
+||config.tremorhub.com^
+||l0-secure.videohub.tv^
+||perf-events.cloud.unity3d.com^
 ||e.apsalar.com^
 ||ha-api.pushwoosh.com^
 ||cp.pushwoosh.com^
@@ -12961,6 +12967,9 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||app.adjust.io^
+||exacttarget.api.mashery.com^
+||lt*.tritondigital.com^
 ||stats2.arstechnica.com^
 ||timeslog.indiatimes.com^
 ||ibeat.indiatimes.com^
@@ -13044,6 +13053,9 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||api.gimbal.com^
+||onelink.me^
+||tunein.adswizz.com^
 ||nativesdks.mparticle.com^
 ||config2.mparticle.com^
 ||iam-agof-app.irquest.com^
@@ -13206,6 +13218,8 @@ iapp-cp.nuggad.net^
 ||mobileanalytics.*.amazonaws.com^
 !
 ! Adguard DNS exceptions
+! https://github.com/AdguardTeam/AdguardForiOS/issues/228
+@@||jumia.com.ng^
 ! https://github.com/AdguardTeam/AdguardForiOS/issues/197
 @@||v3cdn.net^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/70
