@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-11-08 12:03:40
+! Last modified: 2016-11-09 12:03:14
 ! Decsription: Filter used by Adguard DNS. Basically, it combines several filters (English filter, Social filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) transformed for better DNS filtering.
 !
 ! Adservice
@@ -4915,6 +4915,13 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||bedowntoft.com^
+||lerester.com^
+||scelnow.xyz^&third-party
+||ettalhap.com^&third-party
+||aoodw.top^&third-party
+||itdzv.top^&third-party
+||pidorg.ru^
 ||irleti.com^
 ||belosne6zhka.ru^
 ||airlead.ru^
@@ -8576,6 +8583,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||ppndr.xyz^
 ||ujieva.com^
 ||code.poptm.com^
 ||yxbtyzqcczra.com^
@@ -12967,6 +12975,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||stags.bluekai.com^
+||vzw.sp1.convertro.com^
 ||app.adjust.io^
 ||exacttarget.api.mashery.com^
 ||lt*.tritondigital.com^
