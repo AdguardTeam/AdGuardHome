@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-11-09 12:03:14
+! Last modified: 2016-11-10 12:03:08
 ! Decsription: Filter used by Adguard DNS. Basically, it combines several filters (English filter, Social filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) transformed for better DNS filtering.
 !
 ! Adservice
@@ -4915,6 +4915,10 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||ajpxs.xyz^
+||admachina.com^
+||admachina.com^
+||s1venus.biz^
 ||bedowntoft.com^
 ||lerester.com^
 ||scelnow.xyz^&third-party
@@ -9675,7 +9679,9 @@ ws*://video.docfilms.info^
 ||graph.facebook.com/network_ads
 ! ||graph.facebook.com/network_ads_common/
 !----- For HTTPS websites when HTTPS filtering is disabled ------
-!
+||smilered.com^
+||jfduv7.com^
+||retarget.ssl-services.com^
 !----------------------------------------------------------------
 
 !
