@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-11-10 12:03:08
+! Last modified: 2016-11-11 12:00:08
 ! Decsription: Filter used by Adguard DNS. Basically, it combines several filters (English filter, Social filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) transformed for better DNS filtering.
 !
 ! Adservice
@@ -4915,6 +4915,9 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||fytboti.ru^
+||tramate.ru^
+||ewtofu.ru^
 ||ajpxs.xyz^
 ||admachina.com^
 ||admachina.com^
@@ -9016,6 +9019,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||api.adflake.com/custom^
+||adflake.com/banner/
 ||api.kiip.me^
 ||config.tremorhub.com^
 ||l0-secure.videohub.tv^
@@ -9687,6 +9692,7 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||kinesis.us-east-1.amazonaws.com^
 ||pippio.com^
 ||imrworldwide.net^
 ||imrworldwide.com^
@@ -12981,6 +12987,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||w88.espn.com^
 ||stags.bluekai.com^
 ||vzw.sp1.convertro.com^
 ||app.adjust.io^
@@ -13069,6 +13076,11 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||api.appsee.com^
+||metrics.adflake.com^
+||nlog.droid4x.cn^
+||mtlog.droid4x.cn^
+||log.droid4x.cn^
 ||api.gimbal.com^
 ||onelink.me^
 ||tunein.adswizz.com^
