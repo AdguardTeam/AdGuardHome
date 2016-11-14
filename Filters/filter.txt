@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-11-11 12:00:08
+! Last modified: 2016-11-14 12:03:13
 ! Decsription: Filter used by Adguard DNS. Basically, it combines several filters (English filter, Social filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) transformed for better DNS filtering.
 !
 ! Adservice
@@ -1353,6 +1353,7 @@
 ||dazhantai.com^
 ||dbbsrv.com^
 ||dbclix.com^
+||dbtaclpoahri.com^
 ||dc121677.com^
 ||dealcurrent.com^
 ||decisionmark.com^
@@ -1788,6 +1789,7 @@
 ||fusionads.net^
 ||futureresiduals.com^
 ||futureus.com^
+||fuurqgbfhvqx.com^
 ||fwmrm.net^
 ||fxdepo.com^
 ||fxyc0dwa.com^
@@ -4915,6 +4917,38 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||whatcl.ru^
+||tedverspar.com^
+||cmsmodnews.com^
+||mp-https.info^
+||bodykaa.ru^
+||eudcqm.uihdlx.xyz^
+||fovs.qkvipgloy.xyz^
+||aztu.ynfolstw.xyz^
+||gddrio.com^
+||wofri.uihdlx.xyz^
+||neyrvru.wmbgc.xyz^
+||tpjz.tmuurnthtf.xyz^
+||dmoid.top^
+||nnoxzo.rfskbylbsf.xyz^
+||tcoxndk.hfgjdcbrv.xyz^
+||izfbxg.joyreactor.cc^
+||eatp.evztib.xyz^
+||kinak.top^
+||dyrxq.rfskbylbsf.xyz^
+||pelckw.qjudpxkisv.xyz^
+||ual.ocmcbyxm.xyz^
+||nxstx.top^
+||mqmh.uihdlx.xyz^
+||ogbwqq.gkwtk.xyz^
+||vv.tmska.com^
+||parhadat.com^
+||best-cargo.ru^
+||moevideo.biz^
+||delivery.adrecover.com^
+||wheretogo.bid^
+||fxbpro.com^
+||wwgate.ru^
 ||fytboti.ru^
 ||tramate.ru^
 ||ewtofu.ru^
@@ -5592,7 +5626,7 @@ thr.ru##.top_branding
 ||beta.mediafort.ru^
 ||betimogolef.com^
 ||betrayed.ru/Content/Advertising/
-||bgrndi.com^
+||bgrndi.com
 ||biathlon.com/logo.php?Query=
 ||biathlon.ru/images/sp????/
 ||bidtraffic.ru^
@@ -8554,6 +8588,10 @@ http://v.*.com/x?
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||tizer.rupornophoto.com^
+||t.sexycontent.net^
+||n.cashheaven.ru^
+||da.rosrabota.ru^
 ||moya.furma.ru^
 ||ad.cbonds.info^
 ||mixtraff.silvercdn.com^
@@ -9692,6 +9730,9 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||crm.zenguard.biz^
+||yieldmo-builds.s3.amazonaws.com^
+||apm.crittercism.com^
 ||kinesis.us-east-1.amazonaws.com^
 ||pippio.com^
 ||imrworldwide.net^
@@ -12987,6 +13028,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||counter.yadro.ru^
 ||w88.espn.com^
 ||stags.bluekai.com^
 ||vzw.sp1.convertro.com^
@@ -13076,6 +13118,11 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||ups.ksmobile.net^
+||andmlb.kshwtj.com^
+||cb.ksmobile.com^
+||mlb.did.ijinshan.com^
+||mobile-collector.newrelic.com^
 ||api.appsee.com^
 ||metrics.adflake.com^
 ||nlog.droid4x.cn^
@@ -13200,7 +13247,7 @@ iapp-cp.nuggad.net^
 ||tumblr.com/services/cslog
 ||umeng.com/app_logs
 ||upalytics.com^
-||ws.ksmobile.net/api/GetCloudMsgAdv?
+||ws.ksmobile.net^
 ||www-google-analytics.l.google.com^
 ||xiti.com^
 ||yadro.ru^
