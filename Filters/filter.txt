@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-11-15 12:02:55
+! Last modified: 2016-11-16 01:25:23
 ! Decsription: Filter used by Adguard DNS. Basically, it combines several filters (English filter, Social filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) transformed for better DNS filtering.
 !
 ! Adservice
@@ -4917,6 +4917,9 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||ledhatbet.com^
+||cohedttoft.com^
+||glumifo.ru^
 ||whatcl.ru^
 ||tedverspar.com^
 ||cmsmodnews.com^
@@ -13302,6 +13305,8 @@ iapp-cp.nuggad.net^
 ||mobileanalytics.*.amazonaws.com^
 !
 ! Adguard DNS exceptions
+! https://github.com/AdguardTeam/AdguardForiOS/issues/243
+@@||sa.bbc.co.uk^
 ! https://github.com/AdguardTeam/AdguardForiOS/issues/228
 @@||jumia.com.ng^
 ! https://github.com/AdguardTeam/AdguardForiOS/issues/197
