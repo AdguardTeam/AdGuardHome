@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-11-14 12:03:13
+! Last modified: 2016-11-15 12:02:55
 ! Decsription: Filter used by Adguard DNS. Basically, it combines several filters (English filter, Social filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) transformed for better DNS filtering.
 !
 ! Adservice
@@ -8628,6 +8628,9 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||syndication.globaltraffico.com^
+||adrecreate.com^
+||asdorka.com^
 ||ppndr.xyz^
 ||ujieva.com^
 ||code.poptm.com^
@@ -9039,6 +9042,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d3noqwmgo39at7.cloudfront.net^
 ||d2l8bbn629wykr.cloudfront.net^
 ||d2ymkpxi1rgldj.cloudfront.net^
 ||beap1.cb.g01.yahoodns.net^
@@ -9057,6 +9061,9 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||bannerwall.herewetest.com^
+||bannerwall.s3.appcnt.com^
+||bttn.io^
 ||api.adflake.com/custom^
 ||adflake.com/banner/
 ||api.kiip.me^
@@ -9730,6 +9737,7 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||geoip.herewetest.com^
 ||crm.zenguard.biz^
 ||yieldmo-builds.s3.amazonaws.com^
 ||apm.crittercism.com^
@@ -12087,7 +12095,6 @@ ws*://video.docfilms.info^
 ||riastats.com^
 ||richard-group.com^
 ||richmetrics.com^
-||richrelevance.com^
 ||rightstats.com^
 ||ritecounter.com^
 ||rkdms.com^
@@ -13028,6 +13035,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||analytics.sgnapps.com^
+||bi-eventtracker-*.amazonaws.com^
 ||counter.yadro.ru^
 ||w88.espn.com^
 ||stags.bluekai.com^
