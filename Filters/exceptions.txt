@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardForiOS/issues/243
+@@||sa.bbc.co.uk^
 ! https://github.com/AdguardTeam/AdguardForiOS/issues/228
 @@||jumia.com.ng^
 ! https://github.com/AdguardTeam/AdguardForiOS/issues/197
