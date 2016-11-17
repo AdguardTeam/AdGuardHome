@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-11-16 12:03:09
+! Last modified: 2016-11-17 12:03:03
 ! Decsription: Filter used by Adguard DNS. Basically, it combines several filters (English filter, Social filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) transformed for better DNS filtering.
 !
 ! Adservice
@@ -9045,6 +9045,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d2nn3xyicdpsrf.cloudfront.net^
+||dviixeyykyqjv.cloudfront.net^
 ||d3noqwmgo39at7.cloudfront.net^
 ||d2l8bbn629wykr.cloudfront.net^
 ||d2ymkpxi1rgldj.cloudfront.net^
@@ -9064,6 +9066,10 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||mediate-ios-*.hyprmx.com^
+||marketplace-ios-*.hyprmx.com^
+||live.hyprmx.com^
+||cdn.ads.fotoable.net^
 ||bannerwall.herewetest.com^
 ||bannerwall.s3.appcnt.com^
 ||bttn.io^
@@ -13130,6 +13136,12 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||rlog.9gag.com^
+||rlog-api.under9.co^
+||track.pingstart.com^
+||abcd.mdc.akamaized.net/materials/index/?country=
+||geoip.fotoable.net^
+||regist.fotoable.net/regist/
 ||ups.ksmobile.net^
 ||andmlb.kshwtj.com^
 ||cb.ksmobile.com^
