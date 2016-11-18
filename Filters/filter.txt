@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-11-17 12:03:03
+! Last modified: 2016-11-18 12:03:01
 ! Decsription: Filter used by Adguard DNS. Basically, it combines several filters (English filter, Social filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) transformed for better DNS filtering.
 !
 ! Adservice
@@ -987,6 +987,7 @@
 ||bnmla.com^
 ||bnr.sys.lv^
 ||bnrs.it^
+||bnserving.com^
 ||bogads.com^
 ||bokroet.com^
 ||bonusfapturbo.com^
@@ -2094,6 +2095,7 @@
 ||instantbannercreator.com^
 ||instantclk.com^
 ||instantdollarz.com^
+||insticator.com^
 ||instinctiveads.com^
 ||instivate.com^
 ||instraffic.com^
@@ -4911,12 +4913,15 @@
 ||ziccardia.com^
 ||zomri.net^
 ||zrfrornn.net^
+! temporary workaround for Adblock Plus for Chrome bug #4599 (https://issues.adblockplus.org/ticket/4599)
+||voodoo.com^
 
 !
 ! Adguard Filter
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||pajigkcel.work^
 ||ledhatbet.com^
 ||cohedttoft.com^
 ||glumifo.ru^
@@ -5051,7 +5056,7 @@
 ||nativeroll.tv^
 ||mastervesti.ru^
 ||purige.ru^
-||rootmedia.ws^
+||rootmedia.ws
 ||peptido.ru^
 .adonweb.ru^
 .adv-modulation.info^
@@ -13044,6 +13049,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||statistics.mailerlite.com^
 ||analytics.sgnapps.com^
 ||bi-eventtracker-*.amazonaws.com^
 ||counter.yadro.ru^
