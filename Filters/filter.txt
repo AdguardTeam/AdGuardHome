@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-11-21 12:00:14
+! Last modified: 2016-11-21 15:22:24
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -13331,6 +13331,8 @@ iapp-cp.nuggad.net^
 ||mobileanalytics.*.amazonaws.com^
 !
 ! Adguard DNS exceptions
+! https://github.com/AdguardTeam/AdguardFilters/issues/3492
+@@||marfeel.com^
 ! https://github.com/AdguardTeam/AdguardForiOS/issues/243
 @@||sa.bbc.co.uk^
 ! https://github.com/AdguardTeam/AdguardForiOS/issues/228
