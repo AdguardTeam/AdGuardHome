@@ -1,9 +1,9 @@
 !
-! Title: Adguard DNS Filter
+! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-11-18 12:03:01
-! Decsription: Filter used by Adguard DNS. Basically, it combines several filters (English filter, Social filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) transformed for better DNS filtering.
+! Last modified: 2016-11-21 12:00:14
+! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
 !
@@ -448,6 +448,7 @@
 ||adready.com^
 ||adreadytractions.com^
 ||adresellers.com^
+||adrevivify.com^
 ||adrevolver.com^
 ||adrich.cash^
 ||adrife.net^
@@ -4874,6 +4875,7 @@
 ||topdi.net^
 ||trllxv.co^
 ||trndi.net^
+||trualaid.com^
 ||tualipoly.net^
 ||turanasi.com^
 ||uanbalible.com^
@@ -4921,6 +4923,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||skidl.ru^
 ||pajigkcel.work^
 ||ledhatbet.com^
 ||cohedttoft.com^
@@ -8636,6 +8639,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||dai0eej.bid^
+||afftrack001.com^
 ||syndication.globaltraffico.com^
 ||adrecreate.com^
 ||asdorka.com^
@@ -9751,6 +9756,9 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||tracking.musixmatch.com^ 
+||beacon.errorception.com^
+||vmweb.net^
 ||geoip.herewetest.com^
 ||crm.zenguard.biz^
 ||yieldmo-builds.s3.amazonaws.com^
