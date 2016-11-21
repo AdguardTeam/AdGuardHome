@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardFilters/issues/3492
+@@||marfeel.com^
 ! https://github.com/AdguardTeam/AdguardForiOS/issues/243
 @@||sa.bbc.co.uk^
 ! https://github.com/AdguardTeam/AdguardForiOS/issues/228
