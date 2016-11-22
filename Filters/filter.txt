@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-11-21 15:22:24
+! Last modified: 2016-11-22 12:03:11
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4923,6 +4923,9 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||purchaseklik.ru^
+||tizka.ru^
+||tedpasit.com^
 ||skidl.ru^
 ||pajigkcel.work^
 ||ledhatbet.com^
@@ -8599,6 +8602,7 @@ http://v.*.com/x?
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||cloud.seedoff.tv^
 ||tizer.rupornophoto.com^
 ||t.sexycontent.net^
 ||n.cashheaven.ru^
@@ -8639,6 +8643,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||go.oclasrv.com/apu.php?id=
+||go.verymuchad.com^
 ||dai0eej.bid^
 ||afftrack001.com^
 ||syndication.globaltraffico.com^
@@ -9055,6 +9061,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||dohs95d6tfj19.cloudfront.net^
 ||d2nn3xyicdpsrf.cloudfront.net^
 ||dviixeyykyqjv.cloudfront.net^
 ||d3noqwmgo39at7.cloudfront.net^
