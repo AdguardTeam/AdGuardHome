@@ -1,47 +1,4 @@
-! https://github.com/AdguardTeam/AdguardForiOS/issues/243
-@@||sa.bbc.co.uk^
-! https://github.com/AdguardTeam/AdguardForiOS/issues/228
-@@||jumia.com.ng^
-! https://github.com/AdguardTeam/AdguardForiOS/issues/197
-@@||v3cdn.net^
-! https://github.com/AdguardTeam/AdguardDNS/issues/70
-@@||bnc.lt^
-! https://github.com/AdguardTeam/AdguardDNS/issues/63
-@@||googleadapis.l.google.com^
-@@||imasdk.googleapis.com^
-! https://github.com/AdguardTeam/AdguardFilters/issues/3180
-@@||2mdn.net^
-! https://github.com/AdguardTeam/AdguardDNS/issues/61
-@@||g17media.com^
-! https://github.com/AdguardTeam/AdguardDNS/issues/43
-@@||alipromo.com^
-!
-@@||viglink.com^
-@@||googletagservices.com^
-@@||googletagmanager.com^
-@@||omniture.walmart.com^
-@@||omtrdc.net^
 ! linkedin.com
-@@||cedexis.net^
-@@||licdn.com^
 ! bild.de
 ! @@||smartadserver.com
-@@||ec-ns.sascdn.com^
-@@||cdn1.smartadserver.com
-@@||eqx.smartadserver.com
-@@||itx4.smartadserver.com
-@@||tmk.smartadserver.com
-@@||ww251.smartadserver.com
 ! kinovo.me
-@@||mxtads.com^
-@@||c.msn.com^
-@@||scorecardresearch.com^
-@@||atwola.com^
-@@||b.grvcdn.com^
-! VarageSale app (iOS)
-@@||cdn.optimizely.com
-! https://github.com/AdguardTeam/AdguardDNS/issues/41
-! Adverigo captcha
-@@||adverigo.com^
-! https://github.com/AdguardTeam/AdguardDNS/issues/59
-@@||dw.cbsi.com^
