@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-11-22 12:03:11
+! Last modified: 2016-11-23 12:00:09
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1346,6 +1346,7 @@
 ||dashad.io^
 ||dashbida.com^
 ||dashboardad.net^
+||dashgreen.online^
 ||data.adroll.com^
 ||datacratic-px.com^
 ||datawrkz.com^
@@ -1413,6 +1414,7 @@
 ||disqusads.com^
 ||distilled.ie^
 ||districtm.ca^
+||dit-dit-dot.com^
 ||ditwrite.com^
 ||dj-updates.com^
 ||dl-rms.com^
@@ -2140,6 +2142,7 @@
 ||isubdom.com^
 ||isubdomains.com^
 ||it4oop7.bid^
+||itempana.site^
 ||itrengia.com^
 ||iu16wmye.com^
 ||iu1xoe7o.com^
@@ -3369,6 +3372,7 @@
 ||step-step-go.com^
 ||stickcoinad.com^
 ||stickyadstv.com^
+||stirshakead.com^
 ||stocker.bonnint.net^
 ||streamate.com^
 ||streamdownloadonline.com^
@@ -3701,6 +3705,7 @@
 ||verata.xyz^
 ||versahq.com^
 ||versetime.com^
+||verymuchad.com^
 ||vhmnetwork.com^
 ||vianadserver.com^
 ||vibrant.co^
@@ -8602,6 +8607,7 @@ http://v.*.com/x?
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||m.kinolot.com^
 ||cloud.seedoff.tv^
 ||tizer.rupornophoto.com^
 ||t.sexycontent.net^
@@ -8643,6 +8649,9 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||beglorena.com^
+||awesome-revenue.com^
+||track.bcvc.mobi^
 ||go.oclasrv.com/apu.php?id=
 ||go.verymuchad.com^
 ||dai0eej.bid^
@@ -8763,7 +8772,6 @@ ws*://video.docfilms.info^
 ||arecio.work^
 ||asto-exo.com^
 ||asv.whatismyip.win^
-||atwola.com^
 ||avjp.net/?aid=
 ||awsatstb.com^
 ||axecash.com^
