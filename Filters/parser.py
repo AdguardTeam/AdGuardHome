@@ -2,8 +2,10 @@ import urllib2, datetime, mmap, re
 
 ## GLOBAL VAR ##
 processed_rules = set()
-exclusions = open('exclusions.txt', 'r').read().split('\n')
-
+exclusions_file = open('exclusions.txt', 'r').read().split('\n')
+# Remove comments
+exclusions = filter(lambda line : not line.startswith('!'), exclusions_file)
+  
 ## FUNCTION ##
 def is_domain_rule(rule):
     point_idx = rule.find('.')
@@ -40,7 +42,7 @@ def is_not_duplication(rule):
     return rule not in processed_rules
   
 def write_rule(rule, f):
-    if is_domain_rule(rule) and is_not_duplication(rule):
+    if (is_domain_rule(rule) and is_not_duplication(rule)) or rule.startswith('!'):
         f.writelines(rule + '\n')
         processed_rules.add(rule)
 

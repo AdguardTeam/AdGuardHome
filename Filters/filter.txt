@@ -2,7 +2,7 @@
 ! Title: Adguard DNS Filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-11-22 17:38:24
+! Last modified: 2016-11-23 10:23:20
 ! Decsription: Filter used by Adguard DNS. Basically, it combines several filters (English filter, Social filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) transformed for better DNS filtering.
 !
 ! Adservice
@@ -810,6 +810,7 @@
 ||ato.mx^
 ||atomex.net^
 ||atrinsic.com^
+||atwola.com^
 ||au2m8.com^
 ||auctionnudge.com^
 ||audience2media.com^
@@ -1329,6 +1330,7 @@
 ||dashad.io^
 ||dashbida.com^
 ||dashboardad.net^
+||dashgreen.online^
 ||data.adroll.com^
 ||datacratic-px.com^
 ||datawrkz.com^
@@ -2020,6 +2022,7 @@
 ||isubdom.com^
 ||isubdomains.com^
 ||it4oop7.bid^
+||itempana.site^
 ||itrengia.com^
 ||iu16wmye.com^
 ||iu1xoe7o.com^
@@ -2425,6 +2428,7 @@
 ||musicnote.info^
 ||mutary.com^
 ||mxf.dfp.host^
+||mxtads.com^
 ||my-layer.net^
 ||myaffiliates.com^
 ||mycasinoaccounts.com^
@@ -3240,6 +3244,7 @@
 ||step-step-go.com^
 ||stickcoinad.com^
 ||stickyadstv.com^
+||stirshakead.com^
 ||stocker.bonnint.net^
 ||streamate.com^
 ||streamdownloadonline.com^
@@ -3570,6 +3575,7 @@
 ||verata.xyz^
 ||versahq.com^
 ||versetime.com^
+||verymuchad.com^
 ||vhmnetwork.com^
 ||vianadserver.com^
 ||vibrant.co^
@@ -3825,6 +3831,7 @@
 ||zxxds.net^
 ||zyiis.net^
 ||zypenetwork.com^
+! Mobile
 ||adbuddiz.com^
 ||adcolony.com^
 ||adiquity.com^
@@ -3858,6 +3865,7 @@
 ||wapdollar.in^
 ||waptrick.com^
 ||yieldmo.com^
+! Non-English (instead of whitelisting ads)
 ||adhood.com^
 ||atresadvertising.com^
 ! youwatch.org adservers
@@ -4773,10 +4781,13 @@
 ||ziccardia.com^
 ||zomri.net^
 ||zrfrornn.net^
+! temporary workaround for Adblock Plus for Chrome bug #4599 (https://issues.adblockplus.org/ticket/4599)
 ||voodoo.com^
 !
 ! Adguard Filter
+!
 ! Содержит доменные имена, использующиеся рекламными сетями.
+!
 ||purchaseklik.ru^
 ||tizka.ru^
 ||tedpasit.com^
@@ -4850,7 +4861,6 @@
 ||owkkdsfg.com^
 ||adveasy.ru^
 ||idaschop.ru^
-||itempana.site^
 ||huminfakt.ru^
 ||vidyp.com^
 ||lagrobe.ru^
@@ -7785,6 +7795,12 @@ thr.ru##.top_branding
 ||zto.h16.ru^
 ||zurage.ru^
 ||zxrtn.com^
+! VisitWeb ads
+! Example: http://svetmonet.ru/2098.html
+!
+! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
+!
+||m.kinolot.com^
 ||cloud.seedoff.tv^
 ||tizer.rupornophoto.com^
 ||t.sexycontent.net^
@@ -7821,6 +7837,10 @@ ws*://video.docfilms.info^
 ||statistic.imgpay.ru^
 ||stats.imgpay.ru^
 ||ts2.hockey-talks.com^
+!
+! Section contains list of advertising networks
+!
+||beglorena.com^
 ||awesome-revenue.com^
 ||track.bcvc.mobi^
 ||go.verymuchad.com^
@@ -7833,8 +7853,8 @@ ws*://video.docfilms.info^
 ||ujieva.com^
 ||code.poptm.com^
 ||nuclersoncanthinger.info^
-||dashgreen.online^
 ||adzos.com^
+||mxtads.com:8040
 ||go.cartstick.com^
 ||gernewt.info^
 ||vrvm.com^
@@ -8135,6 +8155,9 @@ ws*://video.docfilms.info^
 ||zaperplop.info^
 ||zemanta.com^
 ||zeti.com^
+!
+! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
+!
 ||dohs95d6tfj19.cloudfront.net^
 ||d2nn3xyicdpsrf.cloudfront.net^
 ||dviixeyykyqjv.cloudfront.net^
@@ -8153,6 +8176,9 @@ ws*://video.docfilms.info^
 ||d9rj2sdxjer5v.cloudfront.net^
 ||dr3k6qonw2kee.cloudfront.net^
 ||js.bulkhentai.com^
+!
+! Section contains list of advertising networks
+!
 ||mediate-ios-*.hyprmx.com^
 ||marketplace-ios-*.hyprmx.com^
 ||live.hyprmx.com^
@@ -8452,8 +8478,14 @@ ws*://video.docfilms.info^
 ||yemonisoni.com^
 ||youmi.net^
 ||yuhuads.com^
+! HTTPS
+! Facebook Ad Choices
+! ||graph.facebook.com/network_ads_common/
+!----- For HTTPS websites when HTTPS filtering is disabled ------
+!----------------------------------------------------------------
 !
 ! Tracking service
+!
 ||tracking.musixmatch.com^ 
 ||beacon.errorception.com^
 ||vmweb.net^
@@ -8782,6 +8814,7 @@ ws*://video.docfilms.info^
 ||azalead.com^
 ||azera-s014.com^
 ||b.aol.com^
+||b.grvcdn.com^
 ||b.oix.net^
 ||b1img.com^
 ||b2c.com^
@@ -8920,6 +8953,7 @@ ws*://video.docfilms.info^
 ||c.bigmir.net
 ||c.hit.ua^
 ||c.imrk.net^
+||c.msn.com^
 ||c.newsinc.com^
 ||c.opinion.com.ua^
 ||c.tbex.ru^
@@ -8954,6 +8988,7 @@ ws*://video.docfilms.info^
 ||cccpmo.com^
 ||cdnstats-a.akamaihd.net^
 ||cedexis.com^
+||cedexis.net^
 ||celebros-analytics.com^
 ||centraltag.com^
 ||certifica.com^
@@ -10328,7 +10363,6 @@ ws*://video.docfilms.info^
 ||optimierung-der-website.de^
 ||optimix.asia^
 ||optimize-stats.voxmedia.com^
-||optimizely.com^
 ||optimost.com^
 ||optin-machine.com^
 ||optorb.com^
@@ -11205,6 +11239,7 @@ ws*://video.docfilms.info^
 ||uarating.com^
 ||ubertags.com^
 ||ubertracking.info^
+||udc.msn.com^
 ||ugdturner.com^
 ||ui.oix.net^
 ||ukrre-tea.info^
@@ -11500,6 +11535,9 @@ ws*://video.docfilms.info^
 ||zowary.com^
 ||zqtk.net^
 ||zroitracker.com^
+!
+! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
+!
 ||statistics.mailerlite.com^
 ||analytics.sgnapps.com^
 ||bi-eventtracker-*.amazonaws.com^
@@ -11587,6 +11625,9 @@ ws*://video.docfilms.info^
 ||track.tooplay.com^
 ||tracking.tchibo.de^
 ||wtsdc.uhc.com^
+!
+! Section contains rules for mobile analytics and spyware
+!
 ||rlog.9gag.com^
 ||rlog-api.under9.co^
 ||track.pingstart.com^
@@ -11667,6 +11708,7 @@ iapp-cp.nuggad.net^
 ||fcanr.tracking.miui.com^
 ||gate.hockeyapp.net^
 ||google-analytics.com^
+||googleadapis.l.google.com^
 ||installtracker.com^
 ||logupdate.avlyun.sec.miui.com^
 ||metrics.sdkbox.com^
@@ -11692,8 +11734,10 @@ iapp-cp.nuggad.net^
 ||tu.dxcnd.cn^
 ||ws.ksmobile.net^
 ||www-google-analytics.l.google.com^
+! UC Browser
 ||upoll.umengcloud.com^
 ||utop.umengcloud.com^
+! KingRoot
 ||analy.qq.com^
 !
 ! Adguard DNS rules
@@ -11715,9 +11759,55 @@ iapp-cp.nuggad.net^
 ||tools.runetki.co^
 ||a4.overclockers.ua^
 ||novunu.football-plyus.net^
+! https://github.com/AdguardTeam/AdguardDNS/issues/52
 !
 ! Adguard DNS exceptions
+! https://github.com/AdguardTeam/AdguardFilters/issues/3492
+@@||marfeel.com^
+! https://github.com/AdguardTeam/AdguardForiOS/issues/243
+@@||sa.bbc.co.uk^
+! https://github.com/AdguardTeam/AdguardForiOS/issues/228
+@@||jumia.com.ng^
+! https://github.com/AdguardTeam/AdguardForiOS/issues/197
+@@||v3cdn.net^
+! https://github.com/AdguardTeam/AdguardDNS/issues/70
+@@||bnc.lt^
+! https://github.com/AdguardTeam/AdguardDNS/issues/63
+@@||googleadapis.l.google.com^
+@@||imasdk.googleapis.com^
+! https://github.com/AdguardTeam/AdguardFilters/issues/3180
+@@||2mdn.net^
+! https://github.com/AdguardTeam/AdguardDNS/issues/61
+@@||g17media.com^
+! https://github.com/AdguardTeam/AdguardDNS/issues/43
+@@||alipromo.com^
+!
+@@||viglink.com^
+@@||googletagservices.com^
+@@||googletagmanager.com^
+@@||omniture.walmart.com^
+@@||omtrdc.net^
 ! linkedin.com
+@@||cedexis.net^
+@@||licdn.com^
 ! bild.de
 ! @@||smartadserver.com
+@@||ec-ns.sascdn.com^
+@@||cdn1.smartadserver.com
+@@||eqx.smartadserver.com
+@@||itx4.smartadserver.com
+@@||tmk.smartadserver.com
+@@||ww251.smartadserver.com
 ! kinovo.me
+@@||mxtads.com^
+@@||c.msn.com^
+@@||scorecardresearch.com^
+@@||atwola.com^
+@@||b.grvcdn.com^
+! VarageSale app (iOS)
+@@||cdn.optimizely.com
+! https://github.com/AdguardTeam/AdguardDNS/issues/41
+! Adverigo captcha
+@@||adverigo.com^
+! https://github.com/AdguardTeam/AdguardDNS/issues/59
+@@||dw.cbsi.com^

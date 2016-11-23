@@ -1,31 +1,31 @@
+! https://github.com/AdguardTeam/AdguardFilters/issues/3492
 marfeel.com
+! https://github.com/AdguardTeam/AdguardForiOS/issues/243
 sa.bbc.co.uk
+! https://github.com/AdguardTeam/AdguardForiOS/issues/228
 jumia.com.ng
+! https://github.com/AdguardTeam/AdguardForiOS/issues/197
 v3cdn.net
+! https://github.com/AdguardTeam/AdguardDNS/issues/70
 bnc.lt
-googleadapis.l.google.com
+! https://github.com/AdguardTeam/AdguardDNS/issues/63
 imasdk.googleapis.com
+! https://github.com/AdguardTeam/AdguardFilters/issues/3180
 2mdn.net
+! https://github.com/AdguardTeam/AdguardDNS/issues/61
 g17media.com
+! https://github.com/AdguardTeam/AdguardDNS/issues/43
 alipromo.com
+! ! https://github.com/AdguardTeam/AdguardDNS/issues/41
+! Adverigo captcha
+adverigo.com
+! VarageSale app (iOS)
+optimizely.com
+! https://github.com/AdguardTeam/AdguardDNS/issues/59
+dw.cbsi.com
+! Fixing few generic issues
 viglink.com
 googletagservices.com
 googletagmanager.com
-omniture.walmart.com
 omtrdc.net
-cedexis.net
-licdn.com
-ec-ns.sascdn.com
-cdn1.smartadserver.com
-eqx.smartadserver.com
-itx4.smartadserver.com
-tmk.smartadserver.com
-ww251.smartadserver.com
-mxtads.com
-c.msn.com
 scorecardresearch.com
-atwola.com
-b.grvcdn.com
-cdn.optimizely.com
-adverigo.com
-dw.cbsi.com
