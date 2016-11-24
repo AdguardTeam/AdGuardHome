@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-11-23 12:00:09
+! Last modified: 2016-11-24 12:03:00
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4928,6 +4928,9 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||adreaction.ru^
+||keitush.ru^
+||61861486484.ru^
 ||purchaseklik.ru^
 ||tizka.ru^
 ||tedpasit.com^
@@ -8649,10 +8652,18 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||go.oclasrv.com/apu.php?
+||ep7kpqn8.online^
+||euym8eel.club^
+||c03jij5q.website^
+||gctwh9xc.site^
+||thnqemehtyfe.com^
+||wsp.steepto.com^
+||wsp.mgid.com^
 ||beglorena.com^
 ||awesome-revenue.com^
 ||track.bcvc.mobi^
-||go.oclasrv.com/apu.php?id=
+||go.onclasrv.com/apu.php?
 ||go.verymuchad.com^
 ||dai0eej.bid^
 ||afftrack001.com^
@@ -8679,7 +8690,6 @@ ws*://video.docfilms.info^
 ||lamiflor.xyz^
 ||puserving.com^
 ||popads.net/pop.js^
-||vrvm.com^
 ||onshowit.com^
 ||ads.tremorhub.com^
 ||bee7.com^
@@ -9771,6 +9781,7 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||app.crossengage.io^
 ||tracking.musixmatch.com^ 
 ||beacon.errorception.com^
 ||vmweb.net^
