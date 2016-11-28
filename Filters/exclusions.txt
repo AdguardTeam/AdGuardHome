@@ -30,6 +30,4 @@ googletagmanager.com
 omtrdc.net
 scorecardresearch.com
 ! https://github.com/AdguardTeam/AdguardDNS/issues/89
-! caused by ||fwmrm.net^ - blocked adm.fwmrm.net
-! we should replace it by `fwmrm.net` in exclusions.txt 
 fwmrm.net
