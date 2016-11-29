@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardForiOS/issues/278
+podtrac.com
 ! https://github.com/AdguardTeam/AdguardFilters/issues/3492
 marfeel.com
 ! https://github.com/AdguardTeam/AdguardForiOS/issues/243
