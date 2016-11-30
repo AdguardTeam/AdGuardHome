@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-11-30 12:03:12
+! Last modified: 2016-11-30 21:33:44
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4965,6 +4965,9 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||utarget.pro^
+||witgatons.com^
+||winvideo.xyz^
 ||qutreinr.pw^
 ||adsmmgp.com^
 ||kinomagnitamana.ru^
@@ -8697,10 +8700,12 @@ ws*://video.docfilms.info^
 ! Facebook Ad Choices
 ! ||graph.facebook.com/network_ads_common/
 !----- For HTTPS websites when HTTPS filtering is disabled ------
+||rg.yottos.com^
 !----------------------------------------------------------------
 !
 ! Tracking service
 !
+||geoservice.curse.com^
 ||in.cuebiq.com^
 ||target.smi2.net^
 ||d.impactradius-event.com^
@@ -10932,7 +10937,6 @@ ws*://video.docfilms.info^
 ||s3s-main.net^
 ||s6w.de^
 ||sa.aol.com^
-||sa.bbc.com^
 ||sageanalyst.net^
 ||sail-horizon.com^
 ||sajari.com^
