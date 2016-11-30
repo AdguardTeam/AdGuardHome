@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-11-29 12:03:10
+! Last modified: 2016-11-30 12:03:12
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1860,7 +1860,6 @@
 ||hosticanaffiliate.com^
 ||hot-hits.us^
 ||hotelscombined.com.au^
-||hotelscombined.com^
 ||hotfeed.net^
 ||hotkeys.com^
 ||hotptp.com^
@@ -8047,6 +8046,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||phox2ey.bid^
+||555fff555f.net^
 ||ep7kpqn8.online^
 ||euym8eel.club^
 ||c03jij5q.website^
@@ -8700,6 +8701,10 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||in.cuebiq.com^
+||target.smi2.net^
+||d.impactradius-event.com^
+||wa.ui-portal.de^
 ||whos.amung.us^
 ||app.crossengage.io^
 ||tracking.musixmatch.com^ 
@@ -11754,6 +11759,9 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||d2q7mvwub8tmwf.cloudfront.net^
+||event.scimo.io^
+||vstats.digitaltrends.com^
 ||statistics.mailerlite.com^
 ||analytics.sgnapps.com^
 ||bi-eventtracker-*.amazonaws.com^
@@ -11786,7 +11794,6 @@ ws*://video.docfilms.info^
 ||onclickpredictiv.com^
 ||pixelhere.com^
 ||analytics.ma.tune.com^
-||www.podtrac.com^
 ||log-live.direct.ly^
 ||lively-collect-elb-*.amazonaws.com^
 ||lgr.visilabs.net^
@@ -11844,6 +11851,9 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||metrics.macys.net^
+||sypi.gpshopper.com^
+||collector.brandify.com^
 ||lhzbdvm.com^
 ||prugskh.net^
 ||prugskh.com^
@@ -11945,7 +11955,9 @@ iapp-cp.nuggad.net^
 ||stat.duokanbox.com^
 ||statistics.videofarm.daum.net^
 ||stats.unity3d.com^
+||tapjoy.net^
 ||tapjoy.com^
+||4seeresults.com^
 ||taurus.iad.appboy.com^
 ||tns.simba.taobao.com^
 ||tracker-api.my.com^
