@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-12-01 12:02:56
+! Last modified: 2016-12-01 23:06:22
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -3856,7 +3856,6 @@
 ||mocean.mobi^
 ||mojiva.com^
 ||mysearch-online.com^
-||sascdn.com^
 ||smaato.net^
 ||startappexchange.com^
 ||stepkeydo.com^
@@ -4965,6 +4964,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||tlr1.biz^
+||apytrc.com^
 ||xxuhter.ru:8040
 ||xxuhter.ru^
 ||utarget.pro^
@@ -8050,6 +8051,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||ov2ochu.bid^
 ||phox2ey.bid^
 ||555fff555f.net^
 ||ep7kpqn8.online^
@@ -8139,7 +8141,6 @@ ws*://video.docfilms.info^
 ||allbestnews.net^
 ||appintop.com^
 ||applicationgrabb.net^
-||apytrc.com^
 ||asto-exo.com^
 ||asv.whatismyip.win^
 ||axecash.com^
@@ -8397,6 +8398,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||dante2007.com^
 ||iad.appboy.com^
 ||banners.etermax.com^
 ||mob.huimee.net^
@@ -8708,6 +8710,10 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||apps.poln.co^
+||hindsight.significanceapps.com^
+||track.spots.im^
+||pixelg.adswizz.com^
 ||geoservice.curse.com^
 ||in.cuebiq.com^
 ||target.smi2.net^
@@ -10601,7 +10607,6 @@ ws*://video.docfilms.info^
 ||org-dot-com.com^
 ||os-data.com^
 ||ositracker.com^
-||ospserver.net^
 ||osxau.de^
 ||otoshiana.com^
 ||otracking.com^
@@ -11766,6 +11771,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||bzclk.baidu.com^
 ||d2q7mvwub8tmwf.cloudfront.net^
 ||event.scimo.io^
 ||vstats.digitaltrends.com^
