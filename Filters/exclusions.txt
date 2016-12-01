@@ -1,3 +1,6 @@
+! https://github.com/AdguardTeam/AdguardFilters/issues/3601
+! Fixing Samsung Service Server
+ospserver.net
 ! https://github.com/AdguardTeam/AdguardForiOS/issues/278
 podtrac.com
 ! https://github.com/AdguardTeam/AdguardFilters/issues/3492
