@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-11-30 21:33:44
+! Last modified: 2016-12-01 12:02:56
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4965,6 +4965,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||xxuhter.ru:8040
+||xxuhter.ru^
 ||utarget.pro^
 ||witgatons.com^
 ||winvideo.xyz^
@@ -7940,7 +7942,6 @@ thr.ru##.top_branding
 ||xuculit.ru^
 ||xwell.ru/
 ||xxslu.space^
-||xxuhter.ru^
 ||xxx-babes.org^
 ||xzwdo.top^
 ||yandepit.com^
@@ -8396,6 +8397,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||iad.appboy.com^
+||banners.etermax.com^
 ||mob.huimee.net^
 ||mediate-ios-*.hyprmx.com^
 ||marketplace-ios-*.hyprmx.com^
@@ -11855,6 +11858,10 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||metrics.bestbuy.com^
+||analytics-server.gimbal.com^
+||beacon.carfax.com^
+||invenio_tracking_*.sgnapps.com^
 ||metrics.macys.net^
 ||sypi.gpshopper.com^
 ||collector.brandify.com^
