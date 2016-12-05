@@ -7,9 +7,11 @@ ospserver.net
 podtrac.com
 ! https://github.com/AdguardTeam/AdguardFilters/issues/3492
 marfeel.com
-! BBC Sport app https://github.com/AdguardTeam/AdguardDNS/issues/92
+! Start: BBC Sport app https://github.com/AdguardTeam/AdguardDNS/issues/92
+gate.hockeyapp.net
 sa.bbc.com
 sa.bbc.co.uk
+! End: BBC Sport app
 ! https://github.com/AdguardTeam/AdguardForiOS/issues/228
 jumia.com.ng
 ! https://github.com/AdguardTeam/AdguardForiOS/issues/197
