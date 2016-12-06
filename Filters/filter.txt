@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-12-05 12:03:08
+! Last modified: 2016-12-06 12:03:07
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -5098,6 +5098,9 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||azsin.ru^
+||ibishic.ru^
+||media.kahoxa.ru^
 ||clhko.top^
 ||justonsrep.com^
 ||tlr1.biz^
@@ -8536,6 +8539,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||ctl.buyt.in^
+||adv.mxmcdn.net^
 ||api.adflake.com^
 ||dante2007.com^
 ||iad.appboy.com^
@@ -8699,7 +8704,6 @@ ws*://video.docfilms.info^
 ||crispadvertising.com^
 ||crossboardmobile.com^
 ||csi.gstatic.com^
-||ctl.buyt.in^
 ||d60y8cj1tje2a.cloudfront.net^
 ||d830x8j3o1b2k.cloudfront.net^
 ||debojuagug1sf.cloudfront.net^
@@ -12094,7 +12098,6 @@ iapp-cp.nuggad.net^
 ||ep.xone.com^
 ||etl.xlmc.sandai.net^
 ||fcanr.tracking.miui.com^
-||gate.hockeyapp.net^
 ||google-analytics.com^
 ||googleadapis.l.google.com^
 ||installtracker.com^
