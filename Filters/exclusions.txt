@@ -8,6 +8,7 @@ podtrac.com
 ! https://github.com/AdguardTeam/AdguardFilters/issues/3492
 marfeel.com
 ! Start: BBC Sport app https://github.com/AdguardTeam/AdguardDNS/issues/92
+edigitalsurvey.com
 gate.hockeyapp.net
 sa.bbc.com
 sa.bbc.co.uk
