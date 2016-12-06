@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-12-06 12:03:07
+! Last modified: 2016-12-06 22:29:37
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -2225,6 +2225,7 @@
 ||luxup.ru^
 ||lx2rv.com^
 ||lzjl.com^
+||m10s8.com^
 ||m2pub.com^
 ||m4pub.com^
 ||m57ku6sm.com^
@@ -3050,6 +3051,7 @@
 ||salvador24.com^
 ||samvaulter.com^
 ||samvinva.info^
+||saoboo.com^
 ||sape.ru^
 ||saple.net^
 ||satgreera.com^
@@ -3950,8 +3952,10 @@
 ||asqamasz.com^
 ||avrdpbiwvwyt.com^
 ||avzkjvbaxgqk.com^
+||awfjqdhcuftd.com^
 ||awsatstb.com^
 ||awvrvqxq.com^
+||axfkfstrbacx.com^
 ||azbdbtsmdocl.com^
 ||azeozrjk.com^
 ||azgyzdjexcxg.com^
@@ -4088,6 +4092,7 @@
 ||emdbszgmxggo.com^
 ||emirdzzvhviv.com^
 ||emrumkgmdmdq.com^
+||enfhddbnariw.com^
 ||eovkzcueutgf.com^
 ||epesogtigole.com^
 ||epgooipixbbo.com^
@@ -4097,6 +4102,7 @@
 ||eslydbnukkme.com^
 ||esnirgskobfj.com^
 ||evhvoeqfrlsb.com^
+||ezuosstmbcle.com^
 ||farkkbndawtxczozilrrrunxflspkyowishacdueiqzeddsnuu.com^
 ||fbbjlubvwmwd.com^
 ||fcjnqpkrdglw.com^
@@ -4126,6 +4132,7 @@
 ||frlvfzybstsa.com^
 ||fvbeyduylvgy.com^
 ||fxjyultd.com^
+||fxrgikipxnlq.com^
 ||fxtgrttlarkl.com^
 ||fxvxgwqcddvm.com^
 ||fzzudxglrnrr.com^
@@ -4241,6 +4248,7 @@
 ||irzdishtggyo.com^
 ||isbzjaedbdjr.com^
 ||isdlyvhegxxz.com^
+||isggimkjabpa.com^
 ||isqgobsgtqsh.com^
 ||itevcsjvtcmb.com^
 ||iwrjczthkkla.com^
@@ -4268,6 +4276,7 @@
 ||jlymmwnkxhph.com^
 ||jmzaqwcmcbui.com^
 ||jncjzdohkgic.com^
+||jnxqlltlnezn.com^
 ||jnylpjlnjfsp.com^
 ||jorndvyzchaq.com^
 ||jpwvdpvsmhow.com^
@@ -4289,6 +4298,7 @@
 ||kecldktirqzk.com^
 ||keqnebfovnhl.com^
 ||kgkjlivo.com^
+||kgvgtudoridc.com^
 ||kihhgldtpuho.com^
 ||kjjlucebvxtu.com^
 ||kjplmlvtdoaf.com^
@@ -4312,6 +4322,7 @@
 ||kwipnlppnybc.com^
 ||kxdprqrrfhhn.com^
 ||kxtepdregiuo.com^
+||kyhkyreweusn.com^
 ||kylqpeevrkgh.com^
 ||kyowarob.com^
 ||kzwddxlpcqww.com^
@@ -4333,6 +4344,7 @@
 ||lkjmcevfgoxfbyhhmzambtzydolhmeelgkotdllwtfshrkhrev.com^
 ||lkktkgcpqzwd.com^
 ||lkrcapch.com^
+||lmejuamdbtwc.com^
 ||lmuxaeyapbqxszavtsljaqvmlsuuvifznvttuuqfcxcbgqdnn.com^
 ||lnzcmgguxlac.com^
 ||lplqyocxmify.com^
@@ -4387,6 +4399,7 @@
 ||munpprwlhric.com^
 ||mvjuhdjuwqtk.com^
 ||mvqinxgp.com^
+||mwqkpxsrlrus.com^
 ||mzbetmhucxih.com^
 ||mzguykhxnuap.com^
 ||nbbljlzbbpck.com^
@@ -4400,8 +4413,10 @@
 ||nfxusyviqsnh.com^
 ||ngmckvucrjbnyybvgesxozxcwpgnaljhpedttelavqmpgvfsxg.com^
 ||nguooqblyjrz.com^
+||nheanvabodkw.com^
 ||nifyalnngdhb.com^
 ||nkyngrtleloc.com^
+||nlfqbfwbfovt.com^
 ||nlljrfvbnisi.com^
 ||nmaafswoiecv.com^
 ||nmhhnyqmxgku.com^
@@ -4473,6 +4488,7 @@
 ||ppqfteducvts.com^
 ||ppuuwencqopa.com^
 ||ppxrlfhsouac.com^
+||pqwaaocbzrob.com^
 ||prggimadscvm.com^
 ||prqivgpcjxpp.com^
 ||pserhnmbbwexmbjderezswultfqlamugbqzsmyxwumgqwxuerl.com^
@@ -4490,6 +4506,7 @@
 ||pzgchrjikhfyueumavkqiccvsdqhdjpljgwhbcobsnjrjfidpq.com^
 ||pzkpyzgqvofi.com^
 ||qarqyhfwient.com^
+||qazzzxwynmot.com^
 ||qbfvwovkuewm.com^
 ||qclxheddcepf.com^
 ||qdlhprdtwhvgxuzklovisrdbkhptpfarrbcmtrxbzlvhygqisv.com^
@@ -4512,11 +4529,13 @@
 ||qrozsnmc.com^
 ||qtjafpcpmcri.com^
 ||qtsmzrnccnwz.com^
+||qudpdpkxffzt.com^
 ||qvsbroqoaggw.com^
 ||qwbnzilogwdc.com^
 ||qxnniyuuaxhv.com^
 ||qxxyzmukttyp.com^
 ||qzxtbsnaebfw.com^
+||rbdmtydtobai.com^
 ||rbfxurlfctsz.com^
 ||rbppnzuxoatx.com^
 ||rbrbvedkazkr.com^
@@ -4545,6 +4564,7 @@
 ||ruovcruc.com^
 ||rvzudtgpvwxz.com^
 ||rxicrihobtkf.com^
+||rxsazdeoypma.com^
 ||rxuqpktyqixa.com^
 ||rzcmcqljwxyy.com^
 ||sagulzuyvybu.com^
@@ -4579,6 +4599,7 @@
 ||srppykbedhqp.com^
 ||ssdphmfduwcl.com^
 ||ssjhkvwjoovf.com^
+||ssvolkkihcyp.com^
 ||stnvgvtwzzrh.com^
 ||sualzmze.com^
 ||suwadesdshrg.com^
@@ -4622,6 +4643,7 @@
 ||tswhwnkcjvxf.com^
 ||tujbidamlfrn.com^
 ||tumfvfvyxusz.com^
+||turyvfzreolc.com^
 ||txbvzcyfyyoy.com^
 ||tyzfzrjaxxcg.com^
 ||uavqdzorwish.com^
@@ -4650,6 +4672,7 @@
 ||usoqghurirvz.com^
 ||uupqrsjbxrstncicwcdlzrcgoycrgurvfbuiraklyimzzyimrq.com^
 ||uvakjjlbjrmx.com^
+||uvmsfffedzzw.com^
 ||uwrzafoopcyr.com^
 ||uxyofgcf.com^
 ||uyfsqkwhpihm.com^
@@ -4673,6 +4696,7 @@
 ||vgmrqurgxlimcawbweuzbvbzxabsfuuxseldfapjmxoboaplmg.com^
 ||vhiaxerjzbqi.com^
 ||vhwuphctrfil.com^
+||vivcdctagoij.com^
 ||vkarvfrrlhmv.com^
 ||vkdbvgcawubn.com^
 ||vlnveqkifcpxdosizybusvjqkfmowoawoshlmcbittpoywblpe.com^
@@ -4683,15 +4707,18 @@
 ||vpsotshujdguwijdiyzyacgwuxgnlucgsrhhhglezlkrpmdfiy.com^
 ||vpwwtzprrkcn.com^
 ||vqaprwkiwset.com^
+||vqfksrwnxodc.com^
 ||vrqajyuu.com^
 ||vtcquvxsaosz.com^
 ||vtoygnkflehv.com^
+||vucanmoywief.com^
 ||vulexmouotod.com^
 ||vunwzlxfsogj.com^
 ||vxlpefsjnmws.com^
 ||vxuhavco.com^
 ||vxvxsgut.com^
 ||vydlqaxchmij.com^
+||vyozgtrtyoms.com^
 ||vywycfxgxqlv.com^
 ||vzhbfwpo.com^
 ||watxeoifxbjo.com^
@@ -4707,7 +4734,9 @@
 ||wggnmbmedlmo.com^
 ||whsjufifuwkw.com^
 ||whzbmdeypkrb.com^
+||wicxfvlozsqz.com^
 ||wijczxvihjyu.com^
+||wjdjovjrxsqx.com^
 ||wkexsfmw.com^
 ||wkggjmkrkvot.com^
 ||wkhychiklhdglppaeynvntkublzecyyymosjkiofraxechigon.com^
@@ -4718,9 +4747,11 @@
 ||wmwkwubufart.com^
 ||wpktjtwsidcz.com^
 ||wqbvqmremvgp.com^
+||wqzaloayckal.com^
 ||wrmcfyzl.com^
 ||wrmwikcnynbk.com^
 ||wrqjwrrpsnnm.com^
+||wrtnetixxrmg.com^
 ||wscrsmuagezg.com^
 ||wscvmnvhanbr.com^
 ||wsfqmxdljrknkalwskqmefnonnyoqjmeapkmzqwghehedukmuj.com^
@@ -4769,6 +4800,7 @@
 ||yaxdboxgsbgh.com^
 ||ycmejutxukkz.com^
 ||ycojhxdobkrd.com^
+||yepiafsrxffl.com^
 ||yfkwqoswbghk.com^
 ||yflpucjkuwvh.com^
 ||ygrtbssc.com^
@@ -4778,6 +4810,7 @@
 ||ykbcogkoiqdw.com^
 ||ylhjsrwqtqqb.com^
 ||ylksuifuyryt.com^
+||ylqezcnlzfsj.com^
 ||ynlrfiwj.com^
 ||ynrbxyxmvihoydoduefogolpzgdlpnejalxldwjlnsolmismqd.com^
 ||ynxrrzgfkuih.com^
@@ -4814,6 +4847,7 @@
 ||zoowknbw.com^
 ||zpkobplsfnxf.com^
 ||zpmbsivi.com^
+||zpnbzxbiqann.com^
 ||zptncsir.com^
 ||zpxbdukjmcft.com^
 ||zqaxaqqqutrx.com^
@@ -8539,6 +8573,11 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||adserver.unityads.unity3d.com^
+||cdn.unityads.unity3d.com^
+||show.niqiu99.org^
+||pl.263gmail.org^
+||slb.gedawang.com^
 ||ctl.buyt.in^
 ||adv.mxmcdn.net^
 ||api.adflake.com^
@@ -9767,7 +9806,6 @@ ws*://video.docfilms.info^
 ||ecustomeropinions.com^
 ||edge.quantserve.com^
 ||edgeadx.net^
-||edigitalsurvey.com^
 ||edococounter.de^
 ||edt02.net^
 ||edtp.de^
