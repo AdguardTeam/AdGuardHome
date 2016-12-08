@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-12-07 12:03:13
+! Last modified: 2016-12-08 12:03:12
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4876,6 +4876,7 @@
 ||accmndtion.org^
 ||addo-mnton.com^
 ||advuatianf.com^
+||aistilierf.com^
 ||allianrd.net^
 ||anomiely.com^
 ||antuandi.net^
@@ -5132,6 +5133,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||ts-ads.info^
 ||azsin.ru^
 ||ibishic.ru^
 ||media.kahoxa.ru^
@@ -8550,6 +8552,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d1ewpr7kbabyrj.cloudfront.net^
 ||d240937yockcdo.cloudfront.net^
 ||d3id4jppiyyek8.cloudfront.net^
 ||dohs95d6tfj19.cloudfront.net^
@@ -8892,6 +8895,7 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||analytics.archive.org^
 ||apps.poln.co^
 ||hindsight.significanceapps.com^
 ||track.spots.im^
@@ -11952,6 +11956,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||stat.novostimira.com^
 ||log.rutube.ru^
 ||analytics.mobile.walmart.com^
 ||xtag.autotrader.com^
