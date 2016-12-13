@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-12-12 12:03:08
+! Last modified: 2016-12-13 12:03:16
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -5172,6 +5172,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||dreti.ru^
+||exoticads.com^
 ||dlski.space^
 ||rutrk.org^
 ||ts-ads.info^
@@ -8420,7 +8422,6 @@ ws*://video.docfilms.info^
 ||evolutionmedia.bbelements.com
 ||exitintel.com^
 ||exogripper.com^
-||exoticads.com^
 ||ext.movixhub.com^
 ||f.asdfzxcv1312.com^
 ||f.iaftjs.info^
