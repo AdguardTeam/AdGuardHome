@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-12-13 12:03:16
+! Last modified: 2016-12-14 12:03:25
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -3581,7 +3581,6 @@
 ||vcommission.com^
 ||vcxzv.website^
 ||vdopia.com^
-||vectorstock.com^
 ||vellde.com^
 ||velmedia.net^
 ||velti.com^
@@ -5172,6 +5171,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||adsbc.pp.ua^
 ||dreti.ru^
 ||exoticads.com^
 ||dlski.space^
@@ -6275,7 +6275,6 @@ thr.ru##.top_branding
 ||gainclick.biz^
 ||galaxymeet.ru^
 ||galia.s-maligin.ru^
-||gaman.anime-free.net^
 ||gamblingtraffic.ru^
 ||game-tester.ru^
 ||game.gwsk.ru^
@@ -8936,6 +8935,9 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||m.addthisedge.com^
+||ct.buzzfeed.com^
+||collector.schibsted.io^
 ||analytics.archive.org^
 ||apps.poln.co^
 ||hindsight.significanceapps.com^
@@ -11997,6 +11999,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||bat.bing.com^
+||stats.videoseyredin.net^
 ||geoip.newsdev.nytimes.com^
 ||comet.sputniknews.com^
 ||stat.novostimira.com^
