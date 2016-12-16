@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-12-15 12:03:17
+! Last modified: 2016-12-16 12:03:02
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -5171,6 +5171,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||stablemoney.ru^
 ||adsbc.pp.ua^
 ||dreti.ru^
 ||exoticads.com^
@@ -8268,6 +8269,13 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||dk7rftbivnkgr.cloudfront.net^
+||voluumtrk2.com^
+||bundasnovinhas.com^
+||newviralmobistore.com^
+||block.s*block.com^
+||adsrvmedia.adk2.co^
+||onclicktop.com^
 ||cah9ooy.bid^
 ||wsp.adskeeper.co.uk^
 ||ov2ochu.bid^
@@ -8592,6 +8600,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d32r49xyei4vz6.cloudfront.net^
 ||d1ewpr7kbabyrj.cloudfront.net^
 ||d240937yockcdo.cloudfront.net^
 ||d3id4jppiyyek8.cloudfront.net^
@@ -8616,6 +8625,11 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||pixel.admobclick.com^
+||bayctrk.com^
+||clk.taptica.com^
+||api.leadbolt.net^
+||exp.glispa.com^
 ||adserver.unityads.unity3d.com^
 ||cdn.unityads.unity3d.com^
 ||show.niqiu99.org^
@@ -8935,6 +8949,7 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||ctl.mobitrack.co.kr^
 ||m.addthisedge.com^
 ||ct.buzzfeed.com^
 ||collector.schibsted.io^
