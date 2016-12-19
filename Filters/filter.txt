@@ -2,13 +2,14 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-12-16 12:03:02
+! Last modified: 2016-12-19 12:03:01
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
 !
 ! EasyList
 ||007-gateway.com^
+||0fmm.com^
 ||0icep80f.com^
 ||0pixl.com^
 ||0xwxmj21r75kka.com^
@@ -3949,12 +3950,14 @@
 ||antrtrtyzkhw.com^
 ||anyuwksovtwv.com^
 ||aominpzhzhwj.com^
+||aomvdhxvblfp.com^
 ||aoqviogrwckf.com^
 ||apgjczhgjrka.com^
 ||aqlvpnfxrkyf.com^
 ||aragvjeosjdx.com^
 ||aryufuxbmwnb.com^
 ||asqamasz.com^
+||atcyboopajyp.com^
 ||avrdpbiwvwyt.com^
 ||avzkjvbaxgqk.com^
 ||awfjqdhcuftd.com^
@@ -4000,6 +4003,7 @@
 ||bxoixzbtllwx.com^
 ||bzjtjfjteazqzmukjwhyzsaqdtouiopcmtmgdiytfdzboxdann.com^
 ||cbwrwcjdctrj.com^
+||cbxqceuuwnaz.com^
 ||cbxtnudkklwh.com^
 ||ccbaobjyprxh.com^
 ||ccdkyvyw.com^
@@ -4012,6 +4016,7 @@
 ||cewdbisyrzdv.com^
 ||cfsdtzggpcmr.com^
 ||cgmkpdqjnedb.com^
+||chvjfriqlvnt.com^
 ||chxfeymgmwbo.com^
 ||cihnrhqwbcsq.com^
 ||cixjmaxkemzknxxuyvkbzlhvvgeqmzgopppvefpfkqdraonoez.com^
@@ -4059,13 +4064,16 @@
 ||djntmaplqzbi.com^
 ||djzmpsingsrtfsnbnkphyagxdemeagsiabguuqbiqvpupamgej.com^
 ||dkrhsftochvzqryurlptloayhlpftkogvzptcmjlwjgymcfrmv.com^
+||dmbjbgiifpfo.com^
 ||dmdcpvgu.com^
+||dmojscqlwewu.com^
 ||dmwubqhtuvls.com^
 ||dmyypseympjf.com^
 ||dnxpseduuehm.com^
 ||dobgfkflsnmpaeetycphmcloiijxbvxeyfxgjdlczcuuaxmdzz.com^
 ||dobjgpqzygow.com^
 ||dohhehsgnxfl.com^
+||dovltuzibsfs.com^
 ||dpallyihgtgu.com^
 ||dppcevxbshdl.com^
 ||drtqfejznjnl.com^
@@ -4109,6 +4117,7 @@
 ||eslydbnukkme.com^
 ||esnirgskobfj.com^
 ||evhvoeqfrlsb.com^
+||ezbtpdjeimlv.com^
 ||ezuosstmbcle.com^
 ||farkkbndawtxczozilrrrunxflspkyowishacdueiqzeddsnuu.com^
 ||fbbjlubvwmwd.com^
@@ -4140,6 +4149,7 @@
 ||frdhsmerubfg.com^
 ||frlvfzybstsa.com^
 ||fvbeyduylvgy.com^
+||fxjgprpozntk.com^
 ||fxjyultd.com^
 ||fxrgikipxnlq.com^
 ||fxtgrttlarkl.com^
@@ -4171,7 +4181,9 @@
 ||gqthfroeirol.com^
 ||gqulrzprheth.com^
 ||grceweaxhbpvclyxhwuozrbtvqzjgbnzklvxdezzficwjnmfil.com^
+||grfqrhqlzvjl.com^
 ||gtaouarrwypu.com^
+||gtevyaeeiged.com^
 ||gtmonytxxglu.com^
 ||gtqfsxrrerzu.com^
 ||gubdadtxwqow.com^
@@ -4183,6 +4195,7 @@
 ||gxvbogvbcivs.com^
 ||gyinmxpztbgf.com^
 ||gypxbcrmxsmikqbmnlwtezmjotrrdxpqtafumympsdtsfvkkza.com^
+||gzkoehgbpozz.com^
 ||gzmofmqddajr.com^
 ||hafbezbemwwd.com^
 ||haqlmmii.com^
@@ -4247,12 +4260,15 @@
 ||ilsivrexvpyv.com^
 ||imbbjywwahev.com^
 ||imgoatxhxior.com^
+||imqkdsdgfygm.com^
 ||imrwxmau.com^
 ||imyqdbxq.com^
+||insbrvwfrcgb.com^
 ||ioatyggwaypq.com^
 ||iohaqrkjddeq.com^
 ||ioighavxylne.com^
 ||ionbpysfukdh.com^
+||iqmjedevvojm.com^
 ||iqrqmhrfkyuu.com^
 ||irjaeupzarkvwmxonaeslgicvjvgdruvdywmdvuaoyfsjgdzhk.com^
 ||irxpndjg.com^
@@ -4330,6 +4346,7 @@
 ||kthdreplfmil.com^
 ||ktjqfqadgmxh.com^
 ||kurtgcwrdakv.com^
+||kvpofpkxmlpb.com^
 ||kwgpddeduvje.com^
 ||kwipnlppnybc.com^
 ||kxdprqrrfhhn.com^
@@ -4384,6 +4401,7 @@
 ||mepchnbjsrik.com^
 ||mflkgrgxadij.com^
 ||mfmikwfdopmiusbveskwmouxvafvzurvklwyfamxlddexgrtci.com^
+||mftbfgcusnzl.com^
 ||mgrxsztbcfeg.com^
 ||mhrfhwlqsnzf.com^
 ||miadbbnreara.com^
@@ -4446,6 +4464,7 @@
 ||nrgpugas.com^
 ||nryvxfosuiju.com^
 ||nsazelqlavtc.com^
+||ntnlawgchgds.com^
 ||nuayfpthqlkq.com^
 ||nubtjnopbjup.com^
 ||nunsbvlzuhyi.com^
@@ -4472,6 +4491,7 @@
 ||ophpbseelohv.com^
 ||opyisszzoyhc.com^
 ||oqmjxcqgdghq.com^
+||ormnduxoewtl.com^
 ||orszajhynaqr.com^
 ||osbblnlmwzcr.com^
 ||oslzqjnh.com^
@@ -4551,6 +4571,7 @@
 ||qotwtnckqrke.com^
 ||qpiyjprptazz.com^
 ||qqapezviufsh.com^
+||qqylzyrqnewl.com^
 ||qrozsnmc.com^
 ||qtjafpcpmcri.com^
 ||qtsmzrnccnwz.com^
@@ -4567,8 +4588,10 @@
 ||rbppnzuxoatx.com^
 ||rbrbvedkazkr.com^
 ||rbsfglbipyfs.com^
+||rbvfibdsouqz.com^
 ||rbyjirwjbibz.com^
 ||rcjthosmxldl.com^
+||rdikvendxamg.com^
 ||rdzxpvbveezdkcyustcomuhczsbvteccejkdkfepouuhxpxtmy.com^
 ||reebinbxhlva.com^
 ||rffqzbqqmuhaomjpwatukocrykmesssfdhpjuoptovsthbsswd.com^
@@ -4643,6 +4666,7 @@
 ||tabeduhsdhlkalelecelxbcwvsfyspwictbszchbbratpojhlb.com^
 ||tailpdulprkp.com^
 ||tamqqjgbvbps.com^
+||taodggarfrmd.com^
 ||tapihmxemcksuvleuzpodsdfubceomxfqayamnsoswxzkijjmw.com^
 ||tawgiuioeaovaozwassucoydtrsellartytpikvcjpuwpagwfv.com^
 ||tazvowjqekha.com^
@@ -4668,6 +4692,7 @@
 ||toyhxqjgqcjo.com^
 ||tpvprtdclnym.com^
 ||trqbzsxnzxmf.com^
+||tskctmvpwjdb.com^
 ||tsuitufixxlf.com^
 ||tswhwnkcjvxf.com^
 ||tujbidamlfrn.com^
@@ -4690,6 +4715,7 @@
 ||uerladwdpkge.com^
 ||ufmnicckqyru.com^
 ||ugxyemavfvlolypdqcksmqzorlphjycckszifyknwlfcvxxihx.com^
+||uhfqrxwlnszw.com^
 ||uilknldyynwm.com^
 ||ujdctbsbbimb.com^
 ||ujocmihdknwj.com^
@@ -4713,6 +4739,7 @@
 ||uzesptwcwwmt.com^
 ||uzqtaxiorsev.com^
 ||uzreuvnlizlz.com^
+||vamuglchdpte.com^
 ||vaoajrwmjzxp.com^
 ||vbupfouyymse.com^
 ||vbuqjdyrsrvi.com^
@@ -4748,6 +4775,7 @@
 ||vulexmouotod.com^
 ||vunwzlxfsogj.com^
 ||vwugfpktabed.com^
+||vxbtrsqjnjpq.com^
 ||vxlpefsjnmws.com^
 ||vxuhavco.com^
 ||vxvxsgut.com^
@@ -4819,6 +4847,7 @@
 ||xhqilhfrfkoecllmthusrpycaogrfivehyymyqkpmxbtomexwl.com^
 ||xhwtilplkmvbxumaxwmpaqexnwxypcyndhjokwqkxcwbbsclqh.com^
 ||xirtesuryeqk.com^
+||xjompsubsozc.com^
 ||xjsqhlfscjxo.com^
 ||xmmnwyxkfcavuqhsoxfrjplodnhzaafbpsojnqjeoofyqallmf.com^
 ||xpkhmrdqhiux.com^
@@ -5122,6 +5151,7 @@
 ||thrutime.net^
 ||tolosgrey.net^
 ||topdi.net^
+||trinusuras.net^
 ||trllxv.co^
 ||trndi.net^
 ||trualaid.com^
@@ -5171,6 +5201,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||sjsmartcontent.org^
 ||stablemoney.ru^
 ||adsbc.pp.ua^
 ||dreti.ru^
@@ -8269,6 +8300,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||networkmanag.com^
 ||dk7rftbivnkgr.cloudfront.net^
 ||voluumtrk2.com^
 ||bundasnovinhas.com^
@@ -8949,6 +8981,7 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||p.d.rpts.org^
 ||ctl.mobitrack.co.kr^
 ||m.addthisedge.com^
 ||ct.buzzfeed.com^
@@ -12014,6 +12047,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||track.tiara.daum.net^
+||put.qostore.daumkakao.io^
 ||bat.bing.com^
 ||stats.videoseyredin.net^
 ||geoip.newsdev.nytimes.com^
