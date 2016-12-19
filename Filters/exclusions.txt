@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardFilters/issues/3780
+georiot.com
 ! https://github.com/AdguardTeam/AdguardFilters/issues/3725
 vectorstock.com
 ! https://github.com/AdguardTeam/AdguardFilters/issues/2604
