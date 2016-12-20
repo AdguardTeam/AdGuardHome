@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-12-19 12:03:01
+! Last modified: 2016-12-20 12:03:20
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -927,6 +927,7 @@
 ||betoga.com^
 ||betrad.com^
 ||bettingpartners.com^
+||bf-ad.net^
 ||bfast.com^
 ||bh3.net^
 ||bidgewatr.com^
@@ -8259,6 +8260,7 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||r.dimkriju.bget.ru^
 ||adl.kinogo.by^
 ||m.kinolot.com^
 ||cloud.seedoff.tv^
@@ -8300,6 +8302,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||thankswrite.com^
 ||networkmanag.com^
 ||dk7rftbivnkgr.cloudfront.net^
 ||voluumtrk2.com^
@@ -8632,6 +8635,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||beap-bc.yahoo.com^
 ||d32r49xyei4vz6.cloudfront.net^
 ||d1ewpr7kbabyrj.cloudfront.net^
 ||d240937yockcdo.cloudfront.net^
@@ -8981,6 +8985,7 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||mastertag.kpcustomer.de^
 ||p.d.rpts.org^
 ||ctl.mobitrack.co.kr^
 ||m.addthisedge.com^
@@ -10133,7 +10138,6 @@ ws*://video.docfilms.info^
 ||geocontatore.com^
 ||geolocation.performgroup.com^
 ||geoplugin.net^
-||georiot.com^
 ||getbackstory.com^
 ||getclicky.com^
 ||getconversion.net^
@@ -12047,6 +12051,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||d31bfnnwekbny6.cloudfront.net^
+||epiv.cardlytics.com^
 ||track.tiara.daum.net^
 ||put.qostore.daumkakao.io^
 ||bat.bing.com^
@@ -12166,7 +12172,6 @@ ws*://video.docfilms.info^
 ||rlog-api.under9.co^
 ||track.pingstart.com^
 ||geoip.fotoable.net^
-||ups.ksmobile.net^
 ||andmlb.kshwtj.com^
 ||cb.ksmobile.com^
 ||mlb.did.ijinshan.com^
