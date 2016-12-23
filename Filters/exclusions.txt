@@ -1,5 +1,3 @@
-! https://github.com/AdguardTeam/AdguardFilters/issues/3863
-metrics.plex.tv
 ! https://github.com/AdguardTeam/AdguardFilters/issues/3717
 ups.ksmobile.net
 ! https://github.com/AdguardTeam/AdguardFilters/issues/3780
