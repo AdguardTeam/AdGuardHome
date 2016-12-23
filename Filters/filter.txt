@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-12-22 12:03:20
+! Last modified: 2016-12-23 12:03:06
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -2318,6 +2318,7 @@
 ||mediative.ca^
 ||mediatraffic.com^
 ||mediatraks.com^
+||mediaver.com^
 ||medleyads.com^
 ||medrx.sensis.com.au^
 ||medyanet.net^
@@ -5201,6 +5202,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||luxupadva.com^
 ||sjsmartcontent.org^
 ||stablemoney.ru^
 ||adsbc.pp.ua^
@@ -8344,7 +8346,6 @@ ws*://video.docfilms.info^
 ||reeviveglobal.com^
 ||r7mediar.com^
 ||prxii.cf^
-||mediaver.com^
 ||alxsite.com^
 .bbelements.com^
 .doublepimp.com^
@@ -8634,6 +8635,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d1vwpe7grtcv9d.cloudfront.net^
 ||beap-bc.yahoo.com^
 ||d32r49xyei4vz6.cloudfront.net^
 ||d1ewpr7kbabyrj.cloudfront.net^
@@ -8660,6 +8662,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||mobon.com^
 ||pixel.admobclick.com^
 ||bayctrk.com^
 ||clk.taptica.com^
@@ -12051,6 +12054,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||s.frida.vse42.ru^
 ||metric.gstatic.com^
 ||startrekk.flaconi.de^
 ||tracking.rtl.de^
