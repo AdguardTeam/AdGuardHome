@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-12-26 12:03:11
+! Last modified: 2016-12-27 12:03:21
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -5232,6 +5232,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||fperefo.ru^
 ||ksdifdd.com^
 ||luxupadva.com^
 ||sjsmartcontent.org^
@@ -8701,6 +8702,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||ad.kixer.com^
 ||mobon.com^
 ||pixel.admobclick.com^
 ||bayctrk.com^
@@ -9026,6 +9028,7 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||tap.idg.de^
 ||trackingapi.cloudapp.net^
 ||mastertag.kpcustomer.de^
 ||p.d.rpts.org^
@@ -12093,6 +12096,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||xtag.kbb.com^
 ||analytics.thevideo.me^
 ||s.frida.vse42.ru^
 ||metric.gstatic.com^
