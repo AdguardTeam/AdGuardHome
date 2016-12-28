@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardFilters/issues/3898
+fls-na.amazon.com
 ! https://github.com/AdguardTeam/AdguardFilters/issues/3717
 ups.ksmobile.net
 ! https://github.com/AdguardTeam/AdguardFilters/issues/3780
