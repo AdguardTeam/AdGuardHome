@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-12-27 12:03:21
+! Last modified: 2016-12-28 12:03:13
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -5062,6 +5062,7 @@
 ||fowar.net^
 ||frevi.net^
 ||frhgxd.com^
+||frizergt.net^
 ||frlssw.me^
 ||fruamens.com^
 ||frxle.com^
@@ -5232,6 +5233,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||hottod.info^
+||pecaning.com^
 ||fperefo.ru^
 ||ksdifdd.com^
 ||luxupadva.com^
@@ -8293,6 +8296,7 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||theblackdeath.ru^
 ://*.picstraff.ru^
 ://*.anime-free.net^
 ://*.img-picas.ru^
@@ -8702,6 +8706,10 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||yhdichan.com^
+||spclient.wg.spotify.com^
+||partnerad.l.doubleclick.net^
+||pagead46.l.doubleclick.net^
 ||ad.kixer.com^
 ||mobon.com^
 ||pixel.admobclick.com^
@@ -9028,6 +9036,7 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||lciapi.ninthdecimal.com^
 ||tap.idg.de^
 ||trackingapi.cloudapp.net^
 ||mastertag.kpcustomer.de^
@@ -12096,6 +12105,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||eclick.baidu.com^
 ||xtag.kbb.com^
 ||analytics.thevideo.me^
 ||s.frida.vse42.ru^
