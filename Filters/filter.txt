@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2016-12-29 12:03:27
+! Last modified: 2016-12-30 12:03:07
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -3354,6 +3354,7 @@
 ||teracent.net^
 ||teracreative.com^
 ||terraclicks.com^
+||teschenite.com^
 ||testfilter.com^
 ||testnet.nl^
 ||texasboston.com^
@@ -3759,6 +3760,7 @@
 ||xgraph.net^
 ||xjfjx8hw.com^
 ||xmasdom.com^
+||xmaswrite.com^
 ||xmlconfig.ltassrv.com^
 ||xs.mochiads.com^
 ||xtcie.com^
@@ -4848,6 +4850,7 @@
 ||vyozgtrtyoms.com^
 ||vywycfxgxqlv.com^
 ||vzhbfwpo.com^
+||vzmnvqiqgxqk.com^
 ||watxeoifxbjo.com^
 ||wbtgtphzivet.com^
 ||wdbddckjoguz.com^
@@ -5001,6 +5004,7 @@
 ||zupeaoohmntp.com^
 ||zuuwfrphdgxk.com^
 ||zvqjjurhikku.com^
+||zvuespzsdgdq.com^
 ||zwqfnizwcvbx.com^
 ||zxbjgrxbcgrp.com^
 ||zyaorkkdvcbl.com^
@@ -5277,6 +5281,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||amigo-biz.ru^
 ||dnovaku.ru^
 ||izdagda.ru^
 ||rypamigbr.ru^
@@ -8727,6 +8732,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||da5w2k479hyx2.cloudfront.net^
 ||d1vwpe7grtcv9d.cloudfront.net^
 ||beap-bc.yahoo.com^
 ||d32r49xyei4vz6.cloudfront.net^
@@ -9083,6 +9089,8 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||cointent.com^
+||tag.aticdn.net^
 ||lciapi.ninthdecimal.com^
 ||tap.idg.de^
 ||trackingapi.cloudapp.net^
@@ -12151,6 +12159,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||stats.mirror.co.uk^
 ||eclick.baidu.com^
 ||xtag.kbb.com^
 ||analytics.thevideo.me^
@@ -12264,6 +12273,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||analyzer.omniata.com^
 ||metrics.bestbuy.com^
 ||analytics-server.gimbal.com^
 ||beacon.carfax.com^
