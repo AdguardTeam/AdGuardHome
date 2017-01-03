@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-01-02 12:03:19
+! Last modified: 2017-01-03 12:03:06
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -3020,6 +3020,7 @@
 ||remiroyal.ro^
 ||repaynik.com^
 ||replacescript.in^
+||replase.cf^
 ||requiredcollectfilm.info^
 ||resideral.com^
 ||respecific.net^
@@ -4275,6 +4276,7 @@
 ||gtmonytxxglu.com^
 ||gtqfsxrrerzu.com^
 ||gubdadtxwqow.com^
+||gvrqquiotcyr.com^
 ||gvxobjcxcbkb.com^
 ||gwaatiev.com^
 ||gwcujaprdsen.com^
@@ -4298,6 +4300,7 @@
 ||hffmzplu.com^
 ||hfgevdzcoocs.com^
 ||hfjuehls.com^
+||hfmtqgiqscvg.com^
 ||hgbmwkklwittcdkjapnpeikxojivfhgszbxmrjfrvajzhzhuks.com^
 ||hgztvnjbsrki.com^
 ||hhwqfmqyqoks.com^
@@ -4559,6 +4562,7 @@
 ||nguooqblyjrz.com^
 ||nheanvabodkw.com^
 ||nifyalnngdhb.com^
+||nkkreqvurtoh.com^
 ||nkyngrtleloc.com^
 ||nlfqbfwbfovt.com^
 ||nlljrfvbnisi.com^
@@ -4812,6 +4816,7 @@
 ||tigzuaivmtgo.com^
 ||tijosnqojfmv.com^
 ||tikwglketskr.com^
+||tiouqzubepuy.com^
 ||tivlvdeuokwy.com^
 ||tjbgiyek.com^
 ||tkarkbzkirlw.com^
@@ -4904,6 +4909,7 @@
 ||vlvowhlxxibn.com^
 ||vmcpydzlqfcg.com^
 ||vmvhmwppcsvd.com^
+||vnadjbcsxfyt.com^
 ||volleqgoafcb.com^
 ||vpfiiojohjch.com^
 ||vpsotshujdguwijdiyzyacgwuxgnlucgsrhhhglezlkrpmdfiy.com^
@@ -5008,6 +5014,7 @@
 ||xwwsojvluzsb.com^
 ||xxyafiswqcqz.com^
 ||xxzkqbdibdgq.com^
+||yasltdlichfd.com^
 ||yaxdboxgsbgh.com^
 ||ybhaoglgbgdk.com^
 ||ycmejutxukkz.com^
@@ -5020,6 +5027,7 @@
 ||yhzobwqqecaa.com^
 ||yiyycuqozjwc.com^
 ||yjjglyoytiew.com^
+||yjjtxuhfglxa.com^
 ||ykbcogkoiqdw.com^
 ||yktkodofnikf.com^
 ||ylhjsrwqtqqb.com^
@@ -8479,6 +8487,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||tracking.cirrusinsight.com^
 ||130.211.230.53^
 ||thankswrite.com^
 ||networkmanag.com^
@@ -8831,6 +8840,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||adsmoloco.com^
 ||yhdichan.com^
 ||partnerad.l.doubleclick.net^
 ||pagead46.l.doubleclick.net^
