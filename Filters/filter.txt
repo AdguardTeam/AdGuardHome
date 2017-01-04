@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-01-03 12:03:06
+! Last modified: 2017-01-04 12:03:14
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -557,6 +557,7 @@
 ||adsvert.com^
 ||adsvids.com^
 ||adsxgm.com^
+||adszom.com^
 ||adtaily.com^
 ||adtaily.eu^
 ||adtaily.pl^
@@ -2071,6 +2072,7 @@
 ||izeads.com^
 ||izoyshe6.review^
 ||j2ef76da3.website^
+||j4y01i3o.win^
 ||jacquarter.com^
 ||jadcenter.com^
 ||jango.com^
@@ -2084,6 +2086,7 @@
 ||jdproject.net^
 ||jeetyetmedia.com^
 ||jemmgroup.com^
+||jf2mn2ms.club^
 ||jfx61qca.site^
 ||jiawen88.com^
 ||jivox.com^
@@ -2940,6 +2943,7 @@
 ||q1media.com^
 ||q1mediahydraplatform.com^
 ||q1xyxm89.com^
+||q45nsj9d.accountant^
 ||qadserve.com^
 ||qadservice.com^
 ||qdmil.com^
@@ -3790,6 +3794,7 @@
 ||worldwidemailer.com^
 ||worthathousandwords.com^
 ||worthyadvertising.com^
+||wpzka4t6.site^
 ||ws-gateway.com^
 ||wsp.mgid.com^
 ||wulium.com^
@@ -4021,6 +4026,7 @@
 ||aomvdhxvblfp.com^
 ||aoqviogrwckf.com^
 ||apgjczhgjrka.com^
+||aqdrzqsuxxvd.com^
 ||aqlvpnfxrkyf.com^
 ||aqornnfwxmua.com^
 ||aragvjeosjdx.com^
@@ -4038,6 +4044,7 @@
 ||azeozrjk.com^
 ||azgyzdjexcxg.com^
 ||azzvkcavtgwp.com^
+||bajofdblygev.com^
 ||bayvlsmaahou.com^
 ||bbheuxcancwj.com^
 ||bbjlsdqhpbuqaspgjyxaobmpmzunjnvqmahejnwwvaqbzzqodu.com^
@@ -4113,6 +4120,7 @@
 ||csmqorveetie.com^
 ||ctimfrfrmqip.com^
 ||cuguwxkasghy.com^
+||cwliihvsjckn.com^
 ||cwtekghutpaq.com^
 ||cxgwwsapihlo.com^
 ||cxnxognwkuxm.com^
@@ -4140,6 +4148,7 @@
 ||djntmaplqzbi.com^
 ||djzmpsingsrtfsnbnkphyagxdemeagsiabguuqbiqvpupamgej.com^
 ||dkrhsftochvzqryurlptloayhlpftkogvzptcmjlwjgymcfrmv.com^
+||dmatquyckwtu.com^
 ||dmbjbgiifpfo.com^
 ||dmdcpvgu.com^
 ||dmojscqlwewu.com^
@@ -4210,6 +4219,7 @@
 ||fgmucsiirrsq.com^
 ||fgwsjwiaqtjc.com^
 ||fhawywadfjlo.com^
+||fhylnqzxwsbo.com^
 ||firugsivsqot.com^
 ||fjfxpykp.com^
 ||fjvolzrojowa.com^
@@ -4606,6 +4616,7 @@
 ||okmuxdbq.com^
 ||oknmanswftcd.com^
 ||olctpejrnnfh.com^
+||ompzowzfwwfc.com^
 ||ongkidcasarv.com^
 ||onkcjpgmshqx.com^
 ||oosdjdhqayjm.com^
@@ -4673,6 +4684,7 @@
 ||pxktkwmrribg.com^
 ||pzgchrjikhfyueumavkqiccvsdqhdjpljgwhbcobsnjrjfidpq.com^
 ||pzkpyzgqvofi.com^
+||qajaohrcbpkd.com^
 ||qarqyhfwient.com^
 ||qazzzxwynmot.com^
 ||qbfvwovkuewm.com^
@@ -4756,6 +4768,7 @@
 ||sbftffngpzwt.com^
 ||sbhnftwdlpbo.com^
 ||scbnvzfscfmn.com^
+||scbywuiojqvh.com^
 ||sceuexzmiwrf.com^
 ||scmffjmashzc.com^
 ||scuwbelujeeu.com^
@@ -4776,6 +4789,7 @@
 ||snpevihwaepwxapnevcpiqxrsewuuonzuslrzrcxqwltupzbwu.com^
 ||sokanffuyinr.com^
 ||spfrlpjmvkmq.com^
+||sqnezuqjdbhe.com^
 ||sqtsuzrfefwy.com^
 ||sriaqmzx.com^
 ||srizwhcdjruf.com^
@@ -4820,6 +4834,7 @@
 ||tivlvdeuokwy.com^
 ||tjbgiyek.com^
 ||tkarkbzkirlw.com^
+||tkeeebdseixv.com^
 ||tkfsmiyiozuo.com^
 ||tkoatkkdwyky.com^
 ||tksljtdqkqxh.com^
@@ -4889,6 +4904,7 @@
 ||vaoajrwmjzxp.com^
 ||vbupfouyymse.com^
 ||vbuqjdyrsrvi.com^
+||vdpyueivvsuc.com^
 ||vdqarbfqauec.com^
 ||vdvylfkwjpvw.com^
 ||vdyqcdxqvebl.com^
