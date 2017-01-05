@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-01-04 12:03:14
+! Last modified: 2017-01-05 12:03:11
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -400,6 +400,7 @@
 ||adonweb.ru^
 ||adoperator.com^
 ||adoptim.com^
+||adoric.com^
 ||adorika.com^
 ||adorika.net^
 ||adotic.com^
@@ -2559,6 +2560,7 @@
 ||nextlandingads.com^
 ||nextmobilecash.com^
 ||ngecity.com^
+||nglmedia.com^
 ||nicheadgenerator.com^
 ||nicheads.com^
 ||nighter.club^
@@ -3587,6 +3589,7 @@
 ||ucoxa.work^
 ||udmserve.net^
 ||ueuerea.com^
+||ufraton.com^
 ||ufyvdps3.webcam^
 ||ugaral.com^
 ||ughus.com^
@@ -4088,6 +4091,7 @@
 ||ccbaobjyprxh.com^
 ||ccdkyvyw.com^
 ||ccwinenmbnso.com^
+||cdbkxcnfmehf.com^
 ||cdicyazp.com^
 ||cdqmeyhqrwinofutpcepbahedusocxqyfokvehqlqpusttfwve.com^
 ||cdrjblrhsuxljwesjholugzxwukkerpobmonocjygnautvzjjm.com^
@@ -4383,10 +4387,12 @@
 ||isggimkjabpa.com^
 ||isqgobsgtqsh.com^
 ||itevcsjvtcmb.com^
+||iuymaolvzery.com^
 ||iwrjczthkkla.com^
 ||iydghotpzofn.com^
 ||izhvnderudte.com^
 ||iziwhlafxitn.com^
+||iztsbnkxphnj.com^
 ||izwsvyqv.com^
 ||jahsrhlp.com^
 ||jakzxxzrymhz.com^
@@ -4394,6 +4400,7 @@
 ||jauftivogtho.com^
 ||jbgehhqvfppf.com^
 ||jbvisobwrlcv.com^
+||jbyksmjmbmku.com^
 ||jcctggmdccmt.com^
 ||jcnoeyqsdfrc.com^
 ||jdlnquri.com^
@@ -4664,6 +4671,7 @@
 ||ppuuwencqopa.com^
 ||ppxrlfhsouac.com^
 ||pqwaaocbzrob.com^
+||prenvifxzjuo.com^
 ||prggimadscvm.com^
 ||prqivgpcjxpp.com^
 ||prwlzpyschwi.com^
@@ -4696,6 +4704,7 @@
 ||qfmbgvgvauvt.com^
 ||qfrpehkvqtyj.com^
 ||qijffgqsbkii.com^
+||qiktwikahncl.com^
 ||qinsmmxvacuh.com^
 ||qiremmtynkae.com^
 ||qixlpaaeaspr.com^
@@ -4781,6 +4790,7 @@
 ||siwtuvvgraum.com^
 ||sjgklyyyraghhrgimsepycygdqvezppyfjkqddhlzbimoabjae.com^
 ||sjpexaylsfjnopulpgkbqtkzieizcdtslnofpkafsqweztufpa.com^
+||skknyxzaixws.com^
 ||skzhfyqozkic.com^
 ||smrqvdpgkbvz.com^
 ||sncpizczabhhafkzeifklgonzzkpqgogmnhyeggikzloelmfmd.com^
@@ -4915,6 +4925,7 @@
 ||vfnvsvxlgxbvndhgqqohfgdcfprvxqisiqhclfhdpnjzloctny.com^
 ||vgfeahkrzixa.com^
 ||vgmrqurgxlimcawbweuzbvbzxabsfuuxseldfapjmxoboaplmg.com^
+||vhctcywajcwv.com^
 ||vhiaxerjzbqi.com^
 ||vhwuphctrfil.com^
 ||vivcdctagoij.com^
@@ -5012,6 +5023,7 @@
 ||xhojlvfznietogsusdiflwvxpkfhixbgdxcnsdshxwdlnhtlih.com^
 ||xhqilhfrfkoecllmthusrpycaogrfivehyymyqkpmxbtomexwl.com^
 ||xhwtilplkmvbxumaxwmpaqexnwxypcyndhjokwqkxcwbbsclqh.com^
+||ximeldnjuusl.com^
 ||xirtesuryeqk.com^
 ||xjompsubsozc.com^
 ||xjsqhlfscjxo.com^
@@ -5019,6 +5031,7 @@
 ||xoqwirroygxv.com^
 ||xpkhmrdqhiux.com^
 ||xpnttdct.com^
+||xrivpngzagpy.com^
 ||xseczkcysdvc.com^
 ||xswnrjbzmdof.com^
 ||xswutjmmznesinsltpkefkjifvchyqiinnorwikatwbqzjelnp.com^
@@ -5384,6 +5397,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||irtula.ru^
+||cajkov.ru^
 ||mt-data.ru
 ||amigo-biz.ru^
 ||dnovaku.ru^
@@ -8503,6 +8518,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||cloudsdns.net^
 ||tracking.cirrusinsight.com^
 ||130.211.230.53^
 ||thankswrite.com^
@@ -9255,7 +9271,6 @@ ws*://video.docfilms.info^
 ||stats.paypal.com^
 ||metrics.mzstatic.com^
 ||fc.webmasterpro.de^
-||hit.8digits.com^
 ||trck.spoteffects.net^
 ||visilabs.com^
 ||cmt.setrowid.com^
@@ -10039,7 +10054,6 @@ ws*://video.docfilms.info^
 ||digidip.net^
 ||digitaloptout.com^
 ||digitaltarget.ru^
-||digits.com^
 ||dignow.org^
 ||dimestore.com^
 ||dimml.io^
