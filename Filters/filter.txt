@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-01-06 12:03:11
+! Last modified: 2017-01-09 12:03:09
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1216,6 +1216,7 @@
 ||cnt.my^
 ||cntdy.mobi^
 ||coadvertise.com^
+||codeonclick.com^
 ||codezap.com^
 ||codigobarras.net^
 ||coedmediagroup.com^
@@ -2330,6 +2331,7 @@
 ||mdn2015x4.com^
 ||mdn2015x5.com^
 ||meadigital.com^
+||measurelyapp.com^
 ||media-general.com^
 ||media-ks.net^
 ||media-networks.ru^
@@ -2358,6 +2360,7 @@
 ||mediaraily.com^
 ||mediatarget.com^
 ||mediative.ca^
+||mediative.com^
 ||mediatraffic.com^
 ||mediatraks.com^
 ||mediaver.com^
@@ -3172,9 +3175,11 @@
 ||shakamech.com^
 ||shallowschool.com^
 ||share-server.com^
+||sharecash.org^
 ||sharegods.com^
 ||shareresults.com^
 ||sharethrough.com^
+||shokala.com^
 ||shoogloonetwork.com^
 ||shopalyst.com^
 ||shoppingads.com^
@@ -3599,6 +3604,7 @@
 ||ukbanners.com^
 ||ukulelead.com^
 ||ultimategracelessness.info^
+||umamdmo.com^
 ||unanimis.co.uk^
 ||underclick.ru^
 ||undertone.com^
@@ -3821,6 +3827,7 @@
 ||xfs5yhr1.com^
 ||xgraph.net^
 ||xjfjx8hw.com^
+||xmas-xmas-wow.com^
 ||xmasdom.com^
 ||xmaswrite.com^
 ||xmlconfig.ltassrv.com^
@@ -4076,6 +4083,7 @@
 ||bqqjowpigdnx.com^
 ||bsaixnxcpaai.com^
 ||bspjagxietut.com^
+||bsupflnjmuzn.com^
 ||btbapoifsphl.com^
 ||btcwkbqojiyg.com^
 ||bujntrmh.com^
@@ -4173,6 +4181,7 @@
 ||duchmcmpmqqu.com^
 ||dulcetcgvcxr.com^
 ||dulpsxaznlwr.com^
+||duvyjbofwfqh.com^
 ||duxyrxhfwilv.com^
 ||dwentymgplvrizqhieugzkozmqjxrxcyxeqdjvcbjmrhnkguwk.com^
 ||dxcqavshmvst.com^
@@ -4180,6 +4189,7 @@
 ||dxigubtmyllj.com^
 ||dyazeqpeoykf.com^
 ||dyunhvev.com^
+||easnviytengk.com^
 ||ebfjbrlcvjlv.com^
 ||ecmeqhxevxgmtoxubrjstrrlyfgrrtqhvafyagettmwnwkwltn.com^
 ||ectbduztanog.com^
@@ -4217,6 +4227,7 @@
 ||fbbjlubvwmwd.com^
 ||fcjnqpkrdglw.com^
 ||fdepobamndfn.com^
+||fdogfuqpgeub.com^
 ||fegyacmbobil.com^
 ||ffanszicnoqs.com^
 ||ffwbpadvkcyi.com^
@@ -4291,6 +4302,7 @@
 ||gtmonytxxglu.com^
 ||gtqfsxrrerzu.com^
 ||gubdadtxwqow.com^
+||gvgakxvukmrm.com^
 ||gvrqquiotcyr.com^
 ||gvxobjcxcbkb.com^
 ||gwaatiev.com^
@@ -4320,6 +4332,7 @@
 ||hgztvnjbsrki.com^
 ||hhwqfmqyqoks.com^
 ||higygtvnzxad.com^
+||hilkfxdqxzac.com^
 ||hjukmfdbryln.com^
 ||hkacgxlpfurb.com^
 ||hkdjrnkjwtqo.com^
@@ -4568,6 +4581,7 @@
 ||nbbljlzbbpck.com^
 ||nbkwnsonadrb.com^
 ||nbrwtboukesx.com^
+||ndemlviibdyc.com^
 ||ndkvzncsuxgx.com^
 ||ndxidnvvyvwx.com^
 ||nefczemmdcqi.com^
@@ -4616,9 +4630,11 @@
 ||obvbubmzdvom.com^
 ||obxwnnheaixf.com^
 ||ocyhpouojiss.com^
+||oehjxqhiasrk.com^
 ||oewscpwrvoca.com^
 ||ofgapiydisrw.com^
 ||ofghrodsrqkg.com^
+||oiffrtkdgoef.com^
 ||okasfshomqmg.com^
 ||okgfvcourjeb.com^
 ||okmuxdbq.com^
@@ -4657,6 +4673,7 @@
 ||piwwplvxvqqi.com^
 ||pixjqfvlsqvu.com^
 ||pjffrqroudcp.com^
+||pjnrwznmzguc.com^
 ||pkmzxzfazpst.com^
 ||pkougirndckw.com^
 ||pkqbgjuinhgpizxifssrtqsyxnzjxwozacnxsrxnvkrokysnhb.com^
@@ -4749,6 +4766,7 @@
 ||rhfntvnbxfxu.com^
 ||rhfvzboqkjfmabakkxggqdmulrsxmisvuzqijzvysbcgyycwfk.com^
 ||riaetcuycxjz.com^
+||rihzsedipaqq.com^
 ||rjnkpqax.com^
 ||rjyihkorkewq.com^
 ||rkelvtnnhofl.com^
@@ -4833,6 +4851,7 @@
 ||tedlrouwixqq.com^
 ||tevrhhgzzutw.com^
 ||teyuzyrjmrdi.com^
+||tfbzzigqzbax.com^
 ||tftsbqbeuthh.com^
 ||tgrmzphjmvem.com^
 ||thnqemehtyfe.com^
@@ -4964,6 +4983,7 @@
 ||vzmnvqiqgxqk.com^
 ||watxeoifxbjo.com^
 ||wbtgtphzivet.com^
+||wcoloqvrhhcf.com^
 ||wdbddckjoguz.com^
 ||wdcxuezpxivqgmecukeirnsyhjpjoqdqfdtchquwyqatlwxtgq.com^
 ||wddtrsuqmqhw.com^
@@ -5030,20 +5050,24 @@
 ||xirtesuryeqk.com^
 ||xjompsubsozc.com^
 ||xjsqhlfscjxo.com^
+||xkygmtrrjalx.com^
 ||xmmnwyxkfcavuqhsoxfrjplodnhzaafbpsojnqjeoofyqallmf.com^
 ||xoqwirroygxv.com^
 ||xpkhmrdqhiux.com^
 ||xpnttdct.com^
+||xqopbyfjdqfs.com^
 ||xrivpngzagpy.com^
 ||xseczkcysdvc.com^
 ||xswnrjbzmdof.com^
 ||xswutjmmznesinsltpkefkjifvchyqiinnorwikatwbqzjelnp.com^
 ||xteabvgwersq.com^
+||xtqfguvsmroo.com^
 ||xttrofww.com^
 ||xuwptpzdwyaw.com^
 ||xwmbaxufcdxb.com^
 ||xwwkuacmqblu.com^
 ||xwwsojvluzsb.com^
+||xxwpminhccoq.com^
 ||xxyafiswqcqz.com^
 ||xxzkqbdibdgq.com^
 ||yasltdlichfd.com^
@@ -5099,6 +5123,7 @@
 ||zlbdtqoayesloeazgxkueqhfzadqjqqduwrufqemhpbrjvwaar.com^
 ||zlvbqseyjdna.com^
 ||zmbrweqglexv.com^
+||zmnqoymznwng.com^
 ||zmxcefuntbgf.com^
 ||zmytwgfd.com^
 ||znmrgzozlohe.com^
@@ -5400,6 +5425,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||parabit.ru^
+||api.ztgm17.ru^
 ||irtula.ru^
 ||cajkov.ru^
 ||mt-data.ru
@@ -5562,7 +5589,6 @@
 ||eioxy.top^
 ||hzfcx.top^
 ||retagapp.com^
-||codeonclick.com^
 ||advcache.ru^
 ||my-img.ru^
 ||giraff.io^
@@ -8521,6 +8547,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||parserwords.info^
+||bravo-lea.com^
 ||cloudsdns.net^
 ||tracking.cirrusinsight.com^
 ||130.211.230.53^
@@ -9204,6 +9232,10 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||tags.bluekai.com^
+||p.smartertravel.com^
+||ta.queit.in^
+||ninja.onap.io^
 ||ape-tagit.timeinc.net^
 ||cointent.com^
 ||tag.aticdn.net^
