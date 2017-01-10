@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-01-09 12:03:09
+! Last modified: 2017-01-10 12:00:12
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4091,6 +4091,7 @@
 ||bvobtmbziccr.com^
 ||bwyckpmsolzk.com^
 ||bxoixzbtllwx.com^
+||byqmzodcdhhu.com^
 ||bzjtjfjteazqzmukjwhyzsaqdtouiopcmtmgdiytfdzboxdann.com^
 ||bzyrhqbdldds.com^
 ||cbwrwcjdctrj.com^
@@ -4124,6 +4125,7 @@
 ||cogxsnvqesph.com^
 ||comgnnyx.com^
 ||comwgi.com^
+||cortxphssdvc.com^
 ||cpamnizzierk.com^
 ||cphxwpicozlatvnsospudjhswfxwmykgbihjzvckxvtxzfsgtx.com^
 ||crkgtnad.com^
@@ -4267,6 +4269,7 @@
 ||fxrgikipxnlq.com^
 ||fxtgrttlarkl.com^
 ||fxvxgwqcddvm.com^
+||fzsiwzxnqadb.com^
 ||fzzudxglrnrr.com^
 ||gbiwxmjw.com^
 ||gbltotkythfh.com^
@@ -4565,6 +4568,7 @@
 ||moadlbgojatn.com^
 ||molqvpnnlmnb.com^
 ||mopvkjodhcwscyudzfqtjuwvpzpgzuwndtofzftbtpdfszeido.com^
+||mosdqxsgjhes.com^
 ||mpoboqvqhjqv.com^
 ||mpytdykvcdsg.com^
 ||mpzuzvqyuvbh.com^
@@ -4655,6 +4659,7 @@
 ||ossdqciz.com^
 ||otpyldlrygga.com^
 ||otrfmbluvrde.com^
+||ougfkbyllars.com^
 ||ovgzbnjj.com^
 ||ovoczhahelca.com^
 ||owihjchxgydd.com^
@@ -4721,6 +4726,7 @@
 ||qfhjthejwvgm.com^
 ||qfmbgvgvauvt.com^
 ||qfrpehkvqtyj.com^
+||qgraprebabxo.com^
 ||qijffgqsbkii.com^
 ||qiktwikahncl.com^
 ||qinsmmxvacuh.com^
@@ -4770,6 +4776,7 @@
 ||rjnkpqax.com^
 ||rjyihkorkewq.com^
 ||rkelvtnnhofl.com^
+||rklluqchluxg.com^
 ||rkrpvzgzdwqaynyzxkuviotbvibnpqaktcioaaukckhbvkognu.com^
 ||rkvpcjiuumbk.com^
 ||rlypbeouoxxw.com^
@@ -4951,6 +4958,7 @@
 ||vhiaxerjzbqi.com^
 ||vhwuphctrfil.com^
 ||vivcdctagoij.com^
+||vizsvhgfkcli.com^
 ||vjzttumdetao.com^
 ||vkarvfrrlhmv.com^
 ||vkdbvgcawubn.com^
@@ -4968,6 +4976,7 @@
 ||vrqajyuu.com^
 ||vtcquvxsaosz.com^
 ||vtoygnkflehv.com^
+||vtqdavdjsymt.com^
 ||vucanmoywief.com^
 ||vulexmouotod.com^
 ||vunwzlxfsogj.com^
@@ -4981,6 +4990,7 @@
 ||vywycfxgxqlv.com^
 ||vzhbfwpo.com^
 ||vzmnvqiqgxqk.com^
+||waentchjzuwq.com^
 ||watxeoifxbjo.com^
 ||wbtgtphzivet.com^
 ||wcoloqvrhhcf.com^
@@ -5425,6 +5435,9 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||tizinfo.ru^
+||bingp.ru^
+||octoclick.net^
 ||parabit.ru^
 ||api.ztgm17.ru^
 ||irtula.ru^
@@ -8496,6 +8509,9 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+://*.pix-images.ru^
+||adf.kino-go.co^
+||bn.kino-go.co^
 ||theblackdeath.ru^
 ://*.picstraff.ru^
 ://*.anime-free.net^
@@ -8547,6 +8563,9 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||sextadate.net^
+||adsrvgateway.com^
+||api.reon.club^
 ||parserwords.info^
 ||bravo-lea.com^
 ||cloudsdns.net^
@@ -9232,6 +9251,8 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||track.tenjin.io^
+||extremetracking.com^
 ||tags.bluekai.com^
 ||p.smartertravel.com^
 ||ta.queit.in^
