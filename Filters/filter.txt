@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-01-10 12:00:12
+! Last modified: 2017-01-11 12:03:11
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4271,6 +4271,7 @@
 ||fxvxgwqcddvm.com^
 ||fzsiwzxnqadb.com^
 ||fzzudxglrnrr.com^
+||gazogsjsoxty.com^
 ||gbiwxmjw.com^
 ||gbltotkythfh.com^
 ||gdixpvfqbhun.com^
@@ -4634,6 +4635,7 @@
 ||obvbubmzdvom.com^
 ||obxwnnheaixf.com^
 ||ocyhpouojiss.com^
+||odsljzffiixm.com^
 ||oehjxqhiasrk.com^
 ||oewscpwrvoca.com^
 ||ofgapiydisrw.com^
@@ -4785,6 +4787,7 @@
 ||rnrbvhaoqzcksxbhgqtrucinodprlsmuvwmaxqhxngkqlsiwwp.com^
 ||rpczohkv.com^
 ||rpspeqqiddjm.com^
+||rpulxcwmnuxi.com^
 ||rqtdnrhjktzr.com^
 ||rscgfvsximqdpowcmruwitolouncrmnribnfobxzfhrpdmahqe.com^
 ||ruovcruc.com^
@@ -4810,6 +4813,7 @@
 ||scxxbyqjslyp.com^
 ||sdemctwaiazt.com^
 ||sdqspuyipbof.com^
+||seiqobwpbofg.com^
 ||sgfcsnwegazn.com^
 ||sgzsviqlvcxc.com^
 ||shnmhrlcredd.com^
@@ -4967,6 +4971,7 @@
 ||vmcpydzlqfcg.com^
 ||vmvhmwppcsvd.com^
 ||vnadjbcsxfyt.com^
+||vnyginzinvmq.com^
 ||volleqgoafcb.com^
 ||vpfiiojohjch.com^
 ||vpsotshujdguwijdiyzyacgwuxgnlucgsrhhhglezlkrpmdfiy.com^
@@ -5065,6 +5070,7 @@
 ||xoqwirroygxv.com^
 ||xpkhmrdqhiux.com^
 ||xpnttdct.com^
+||xqhgisklvxrh.com^
 ||xqopbyfjdqfs.com^
 ||xrivpngzagpy.com^
 ||xseczkcysdvc.com^
@@ -5435,6 +5441,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||mpay1.info^
 ||tizinfo.ru^
 ||bingp.ru^
 ||octoclick.net^
@@ -8894,6 +8901,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d1v6js7bjzmhoa.cloudfront.net^
 ||da5w2k479hyx2.cloudfront.net^
 ||d1vwpe7grtcv9d.cloudfront.net^
 ||beap-bc.yahoo.com^
