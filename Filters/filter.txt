@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-01-11 12:03:11
+! Last modified: 2017-01-12 12:03:26
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -205,6 +205,7 @@
 ||adbit.co^
 ||adbma.com^
 ||adboost.com^
+||adbooth.com^
 ||adbooth.net^
 ||adbrau.com^
 ||adbrite.com^
@@ -4081,6 +4082,7 @@
 ||bocksnabswdq.com^
 ||bqptlqmtroto.com^
 ||bqqjowpigdnx.com^
+||brqrtgjklary.com^
 ||bsaixnxcpaai.com^
 ||bspjagxietut.com^
 ||bsupflnjmuzn.com^
@@ -4249,6 +4251,7 @@
 ||flzelfqolfnf.com^
 ||fmzxzkgmpmrx.com^
 ||fneheruhxqtv.com^
+||fnjcriccyuna.com^
 ||fokisduu.com^
 ||fpbmjwoebzby.com^
 ||fppupmqbydpk.com^
@@ -4492,6 +4495,7 @@
 ||kvsyksorguja.com^
 ||kwgpddeduvje.com^
 ||kwipnlppnybc.com^
+||kwystoaqjvml.com^
 ||kxdprqrrfhhn.com^
 ||kxtepdregiuo.com^
 ||kyhkyreweusn.com^
@@ -4559,6 +4563,7 @@
 ||mmdcibihoimt.com^
 ||mmdifgneivng.com^
 ||mmeddgjhplqy.com^
+||mmesheltljyi.com^
 ||mmnridsrreyh.com^
 ||mmojdtejhgeg.com^
 ||mmvcmovwegkz.com^
@@ -4707,6 +4712,7 @@
 ||ptiqsfrnkmmtvtpucwzsaqonmvaprjafeerwlyhabobuvuazun.com^
 ||ptoflpqqqkdk.com^
 ||pugklldkhrfg.com^
+||punlkhusprgw.com^
 ||puogotzrsvtg.com^
 ||pusbamejpkxq.com^
 ||pvoplkodbxra.com^
@@ -4998,6 +5004,7 @@
 ||waentchjzuwq.com^
 ||watxeoifxbjo.com^
 ||wbtgtphzivet.com^
+||wcgquaaknuha.com^
 ||wcoloqvrhhcf.com^
 ||wdbddckjoguz.com^
 ||wdcxuezpxivqgmecukeirnsyhjpjoqdqfdtchquwyqatlwxtgq.com^
@@ -5441,6 +5448,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||refbanners.website^
+||themoneyes.ru^
 ||mpay1.info^
 ||tizinfo.ru^
 ||bingp.ru^
@@ -9259,6 +9268,7 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||bia.brightinfo.com^
 ||track.tenjin.io^
 ||extremetracking.com^
 ||tags.bluekai.com^
@@ -10870,7 +10880,6 @@ ws*://video.docfilms.info^
 ||marketing-page.de^
 ||marketingautomation.services^
 ||marketizator.com^
-||marketo.com^
 ||marketo.net^
 ||marktest.pt^
 ||martianstats.com^
@@ -12334,6 +12343,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||perr.h-cdn.com^
+||analytics.similarweb.com^
 ||stats.mirror.co.uk^
 ||eclick.baidu.com^
 ||xtag.kbb.com^
