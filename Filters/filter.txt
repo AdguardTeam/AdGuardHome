@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-01-13 12:03:16
+! Last modified: 2017-01-16 12:03:28
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -211,6 +211,7 @@
 ||adbrite.com^
 ||adbroo.com^
 ||adbrook.com^
+||adbuff.com^
 ||adbull.com^
 ||adbureau.net^
 ||adbutler.com^
@@ -1007,6 +1008,7 @@
 ||bororas.com^
 ||bostonparadise.com^
 ||bostonwall.com^
+||bounce.bar^
 ||boydadvertising.co.uk^
 ||boylesportsreklame.com^
 ||bpasyspro.com^
@@ -2788,6 +2790,7 @@
 ||pioneeringad.com^
 ||pip-pip-pop.com^
 ||pipeaota.com^
+||pipsol.net^
 ||piticlik.com^
 ||pivotalmedialabs.com^
 ||pivotrunner.com^
@@ -3089,6 +3092,7 @@
 ||rotorads.com^
 ||rovion.com^
 ||roxyaffiliates.com^
+||rpts.org^
 ||rtbidder.net^
 ||rtbmedia.org^
 ||rtbpop.com^
@@ -3180,6 +3184,7 @@
 ||sharegods.com^
 ||shareresults.com^
 ||sharethrough.com^
+||shipthankrecognizing.info^
 ||shokala.com^
 ||shoogloonetwork.com^
 ||shopalyst.com^
@@ -3548,6 +3553,7 @@
 ||travelscream.com^
 ||travidia.com^
 ||tredirect.com^
+||treksol.net^
 ||trenpyle.com^
 ||triadmedianetwork.com^
 ||tribalfusion.com^
@@ -4023,6 +4029,7 @@
 ||ajgffcat.com^
 ||ajmggjgrardn.com^
 ||ajxftwwmlinv.com^
+||akrzgxzjynpi.com^
 ||alasdzdnfvtj.com^
 ||alvivigqrogq.com^
 ||ambqphwf.com^
@@ -4249,6 +4256,7 @@
 ||fkrrvhoierty.com^
 ||fluohbiy.com^
 ||flzelfqolfnf.com^
+||fmuxugcqucuu.com^
 ||fmzxzkgmpmrx.com^
 ||fneheruhxqtv.com^
 ||fnjcriccyuna.com^
@@ -4299,6 +4307,7 @@
 ||gojwyansqmcl.com^
 ||gpbznagpormpyusuxbvlpbuejqzwvspcyqjcxbqtbdtlixcgzp.com^
 ||gpgsxlmjnfid.com^
+||gphfgyrkpumn.com^
 ||gpnduywxhgme.com^
 ||gqthfroeirol.com^
 ||gqulrzprheth.com^
@@ -4310,6 +4319,7 @@
 ||gtqfsxrrerzu.com^
 ||gubdadtxwqow.com^
 ||gvgakxvukmrm.com^
+||gvoszbzfzmtl.com^
 ||gvrqquiotcyr.com^
 ||gvxobjcxcbkb.com^
 ||gwaatiev.com^
@@ -4420,6 +4430,7 @@
 ||jamkkydyiyhx.com^
 ||jauftivogtho.com^
 ||jbgehhqvfppf.com^
+||jboovenoenkh.com^
 ||jbvisobwrlcv.com^
 ||jbyksmjmbmku.com^
 ||jcctggmdccmt.com^
@@ -4473,6 +4484,7 @@
 ||kjjlucebvxtu.com^
 ||kjplmlvtdoaf.com^
 ||kjqyvgvvazii.com^
+||klakcdiqmgxq.com^
 ||kldwitfrqwal.com^
 ||klmvharqoxdq.com^
 ||klrdsagmuepg.com^
@@ -4553,6 +4565,7 @@
 ||mftbfgcusnzl.com^
 ||mgrxsztbcfeg.com^
 ||mhrfhwlqsnzf.com^
+||mhwxckevqdkx.com^
 ||miadbbnreara.com^
 ||mizmhwicqhprznhflygfnymqbmvwokewzlmymmvjodqlizwlrf.com^
 ||mjujcjfrgslf.com^
@@ -4572,6 +4585,7 @@
 ||mnyavixcddgx.com^
 ||mnzimonbovqs.com^
 ||moadlbgojatn.com^
+||mohcafpwpldi.com^
 ||molqvpnnlmnb.com^
 ||mopvkjodhcwscyudzfqtjuwvpzpgzuwndtofzftbtpdfszeido.com^
 ||mosdqxsgjhes.com^
@@ -4669,6 +4683,7 @@
 ||ougfkbyllars.com^
 ||ovgzbnjj.com^
 ||ovoczhahelca.com^
+||ovzmelkxgtgf.com^
 ||owihjchxgydd.com^
 ||owlmjcogunzx.com^
 ||owodfrquhqui.com^
@@ -4776,6 +4791,7 @@
 ||rdzxpvbveezdkcyustcomuhczsbvteccejkdkfepouuhxpxtmy.com^
 ||reebinbxhlva.com^
 ||rffqzbqqmuhaomjpwatukocrykmesssfdhpjuoptovsthbsswd.com^
+||rfvicvayyfsp.com^
 ||rgztepyoefvm.com^
 ||rhfntvnbxfxu.com^
 ||rhfvzboqkjfmabakkxggqdmulrsxmisvuzqijzvysbcgyycwfk.com^
@@ -4889,6 +4905,7 @@
 ||tmdcfkxcckvqbqbixszbdyfjgusfzyguvtvvisojtswwvoduhi.com^
 ||tmexywfvjoei.com^
 ||tmkbpnkruped.com^
+||tmwhazsjnhip.com^
 ||tnpbbdrvwwip.com^
 ||toyhxqjgqcjo.com^
 ||tpvprtdclnym.com^
@@ -5098,6 +5115,7 @@
 ||ybhaoglgbgdk.com^
 ||ycmejutxukkz.com^
 ||ycojhxdobkrd.com^
+||yctquwjbbkfa.com^
 ||yepiafsrxffl.com^
 ||yesucplcylxg.com^
 ||yfkwqoswbghk.com^
@@ -5121,6 +5139,7 @@
 ||yqtzhigbiame.com^
 ||ytapgckhhvou.com^
 ||ytaujxmxxxmm.com^
+||ytiyuqfxjbke.com^
 ||ytwtqabrkfmu.com^
 ||ywbfhuofnvuk.com^
 ||yxbtyzqcczra.com^
@@ -5150,6 +5169,7 @@
 ||zmxcefuntbgf.com^
 ||zmytwgfd.com^
 ||znmrgzozlohe.com^
+||znvctmolksaj.com^
 ||zoileyozfexv.com^
 ||zoowknbw.com^
 ||zpkobplsfnxf.com^
@@ -5448,6 +5468,11 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||vengovision.ru^
+||unolis.ru^
+||shpultiki.ru^
+||vpath.net^
+||mybce.top^
 ||refbanners.website^
 ||themoneyes.ru^
 ||mpay1.info^
@@ -8371,7 +8396,6 @@ thr.ru##.top_branding
 ||whisla.com^
 ||widefox.ru^
 ||widetunel.ru^
-||widget.admitad.com^
 ||widget.socialmart.ru^
 ||widget.utinet.ru^
 ||widgets.planeta.ru^
@@ -8912,6 +8936,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d3laygk9zni6hc.cloudfront.net^
 ||d1v6js7bjzmhoa.cloudfront.net^
 ||da5w2k479hyx2.cloudfront.net^
 ||d1vwpe7grtcv9d.cloudfront.net^
@@ -8941,6 +8966,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||redirector.gvt1.com^
 ||adsmoloco.com^
 ||yhdichan.com^
 ||partnerad.l.doubleclick.net^
@@ -9049,7 +9075,6 @@ ws*://video.docfilms.info^
 ||admicro1.vcmedia.vn^
 ||admicro2.vcmedia.vn^
 ||admin.appnext.com^
-||admitad.com^
 ||admixer.co.kr^
 ||adotsolution.com^
 ||adplay.vm5apis.com^
@@ -12462,6 +12487,11 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||clktrk.display.io^
+||events.lbesecapi.com^
+||imp.apprevolve.com^
+||tracking.lenzmx.com^
+||tknet.rayjump.com^
 ||analyzer.omniata.com^
 ||metrics.bestbuy.com^
 ||analytics-server.gimbal.com^
