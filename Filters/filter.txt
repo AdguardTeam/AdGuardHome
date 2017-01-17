@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-01-16 12:03:28
+! Last modified: 2017-01-17 12:03:16
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -3890,6 +3890,7 @@
 ||youradexchange.com^
 ||yourfastpaydayloans.com^
 ||yourlegacy.club^
+||youroffers.win^
 ||yourquickads.com^
 ||youwatchtools.com^
 ||ytsa.net^
@@ -4184,6 +4185,7 @@
 ||dovltuzibsfs.com^
 ||dpallyihgtgu.com^
 ||dppcevxbshdl.com^
+||drbwugautcgh.com^
 ||drtqfejznjnl.com^
 ||dsevjzklcjjb.com^
 ||dsmysdzjhxot.com^
@@ -4210,6 +4212,7 @@
 ||eerdckbwujcx.com^
 ||ehnjtmqchrub.com^
 ||eidzaqzygtvq.com^
+||eifbewnmtgpi.com^
 ||ejgxyfzciwyi.com^
 ||ejjrckrhigez.com^
 ||ejwmxjttljbe.com^
@@ -4482,6 +4485,7 @@
 ||kgvgtudoridc.com^
 ||kihhgldtpuho.com^
 ||kjjlucebvxtu.com^
+||kjmddlhlejeh.com^
 ||kjplmlvtdoaf.com^
 ||kjqyvgvvazii.com^
 ||klakcdiqmgxq.com^
@@ -4602,6 +4606,7 @@
 ||mwqkpxsrlrus.com^
 ||mzbetmhucxih.com^
 ||mzguykhxnuap.com^
+||mzkhhjueazkn.com^
 ||nbbljlzbbpck.com^
 ||nbkwnsonadrb.com^
 ||nbrwtboukesx.com^
@@ -4940,6 +4945,7 @@
 ||ujdctbsbbimb.com^
 ||ujocmihdknwj.com^
 ||ujqbxbcqtbqt.com^
+||ujtyosgemtnx.com^
 ||ujyyciaedxqr.com^
 ||ukjzdydnveuc.com^
 ||ulpxnhiugynh.com^
@@ -5127,6 +5133,7 @@
 ||yjjtxuhfglxa.com^
 ||ykbcogkoiqdw.com^
 ||yktkodofnikf.com^
+||ykwdfjergthe.com^
 ||ylhjsrwqtqqb.com^
 ||ylksuifuyryt.com^
 ||ylqezcnlzfsj.com^
@@ -5141,6 +5148,7 @@
 ||ytaujxmxxxmm.com^
 ||ytiyuqfxjbke.com^
 ||ytwtqabrkfmu.com^
+||yupwqyocvvnw.com^
 ||ywbfhuofnvuk.com^
 ||yxbtyzqcczra.com^
 ||yyajvvjrcigf.com^
@@ -5161,6 +5169,7 @@
 ||zhkziiaajuad.com^
 ||ziuxkdcgsjhq.com^
 ||zizmvnytmdto.com^
+||zjgygpdfudfu.com^
 ||zkennongwozs.com^
 ||zlbdtqoayesloeazgxkueqhfzadqjqqduwrufqemhpbrjvwaar.com^
 ||zlvbqseyjdna.com^
@@ -5468,6 +5477,43 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||yplan.ru^
+||technogies.ru^
+||keyti.ru^
+||news2you.ru
+||adafazerub.com^
+||adforce.team^
+||adkeeper.ru^
+||adsentiz.ru^
+||bc05.ru^
+||bestadlinks.ru^
+||brtmout.pro^
+||cdn1now.com^
+||ettalhap.com^
+||getfon.ru^
+||inhadhen.com^
+||iqkbi.top^
+||iqsns.top^
+||livedecnow.com^
+||luxads.net^
+||magic-traff.com^
+||mediavenus.com^
+||nest.ru.net^
+||oblivki.biz^
+||octobird.com^
+||oftatsit.com^
+||otinekocin.com^
+||rushkolnik.ru^
+||s1venus.com^
+||seavideo22.com^
+||teaserpro.ru^
+||tizerlady.ru^
+||tizgo.ru^
+||tn05.ru^
+||tqqjk.top^
+||video1002.com^
+||wycji.top^
+||zoomclick.ru^
 ||vengovision.ru^
 ||unolis.ru^
 ||shpultiki.ru^
@@ -8604,6 +8650,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||filadmir.site^
+||syndication.exosrv.com^
 ||borotango.com^
 ||sextadate.net^
 ||adsrvgateway.com^
@@ -8845,7 +8893,6 @@ ws*://video.docfilms.info^
 ||njmaq.com^
 ||nrged.com^
 ||nsdfsfi1q8asdasdzz.com^
-||octobird.com^
 ||offergo.net^
 ||offpageads.com^
 ||onlinesupaads.com^
@@ -8966,6 +9013,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||mobads4app.com^
 ||redirector.gvt1.com^
 ||adsmoloco.com^
 ||yhdichan.com^
@@ -10279,8 +10327,6 @@ ws*://video.docfilms.info^
 ||estrack.net^
 ||etahub.com^
 ||etherealhakai.com^
-||ethn.io/
-||ethn.io^
 ||ethnio.com^
 ||etracker.com^
 ||etracker.de^
@@ -12370,6 +12416,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||stats.mako.co.il^
 ||analytics.xyscdn.com^
 ||perr.h-cdn.com^
 ||analytics.similarweb.com^
@@ -12487,6 +12534,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||bidder.mdspinc.com^
+||report.appmetrica.yandex.net^
 ||clktrk.display.io^
 ||events.lbesecapi.com^
 ||imp.apprevolve.com^
