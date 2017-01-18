@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-01-17 12:03:16
+! Last modified: 2017-01-18 12:03:50
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -2411,6 +2411,7 @@
 ||milabra.com^
 ||mindlytix.com^
 ||minimumpay.info^
+||minodazi.com^
 ||mintake.com^
 ||mirago.com^
 ||mirrorpersonalinjury.co.uk^
@@ -2927,6 +2928,7 @@
 ||publicidad.net^
 ||publicityclerks.com^
 ||publicsunrise.link^
+||publir.com^
 ||publisher.to^
 ||publisheradnetwork.com^
 ||pubmatic.com^
@@ -3170,7 +3172,6 @@
 ||servedbyopenx.com^
 ||servemeads.com^
 ||servicegetbook.net^
-||serving-sys.com^
 ||serving-system.com^
 ||sethads.info^
 ||sev4ifmxa.com^
@@ -4124,6 +4125,7 @@
 ||chxfeymgmwbo.com^
 ||cihnrhqwbcsq.com^
 ||cixjmaxkemzknxxuyvkbzlhvvgeqmzgopppvefpfkqdraonoez.com^
+||cjnoeafncyzb.com^
 ||cjvgnswapbqo.com^
 ||cjxkzkzmdomd.com^
 ||ckwpsghi.com^
@@ -4467,6 +4469,7 @@
 ||jshjrozmwmyj.com^
 ||jtzlsdmbmfms.com^
 ||juqmlmoclnhe.com^
+||jusrlkubhjnr.com^
 ||jvodizomnxtg.com^
 ||jwfdyujffrzt.com^
 ||jyauuwrrigim.com^
@@ -4720,6 +4723,7 @@
 ||ppqfteducvts.com^
 ||ppuuwencqopa.com^
 ||ppxrlfhsouac.com^
+||ppzfvypsurty.com^
 ||pqwaaocbzrob.com^
 ||prenvifxzjuo.com^
 ||prggimadscvm.com^
@@ -4761,6 +4765,7 @@
 ||qiremmtynkae.com^
 ||qixlpaaeaspr.com^
 ||qjskosdsxanp.com^
+||qkpwdakgxynv.com^
 ||qkuprxbmkeqp.com^
 ||qljczwei.com^
 ||qndqwtrwguhv.com^
@@ -4992,6 +4997,7 @@
 ||vhwuphctrfil.com^
 ||vivcdctagoij.com^
 ||vizsvhgfkcli.com^
+||vjrpdagpjwyt.com^
 ||vjzttumdetao.com^
 ||vkarvfrrlhmv.com^
 ||vkdbvgcawubn.com^
@@ -5051,6 +5057,7 @@
 ||wmhksxycucxb.com^
 ||wmjdnluokizo.com^
 ||wmwkwubufart.com^
+||wnzxwgatxjuf.com^
 ||wpktjtwsidcz.com^
 ||wqbvqmremvgp.com^
 ||wqnxcthitqpf.com^
@@ -5408,6 +5415,7 @@
 ||sfesd.net^
 ||sightr.net^
 ||simusangr.com^
+||spamualfr.com^
 ||speandorf.net^
 ||spereminf.com^
 ||splazards.com^
@@ -5477,6 +5485,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||promoengine.biz^
 ||yplan.ru^
 ||technogies.ru^
 ||keyti.ru^
@@ -8595,6 +8604,7 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||pr.rusmed.ru^
 ://*.imgpics.ru^
 ://*.pix-images.ru^
 ||adf.kino-go.co^
@@ -8983,6 +8993,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d2i54aseqwhx68.cloudfront.net^
 ||d3laygk9zni6hc.cloudfront.net^
 ||d1v6js7bjzmhoa.cloudfront.net^
 ||da5w2k479hyx2.cloudfront.net^
@@ -9289,6 +9300,7 @@ ws*://video.docfilms.info^
 ||s.innovid.com^
 ||sas816.ujikdd041o.cn^
 ||sdk.native123.com^
+||serving-sys.com^
 ||sessionm.com^
 ||shareasale.com^
 ||silvermob.com^
@@ -12416,6 +12428,10 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||o.addthis.com^
+||su.addthis.com^
+||beacon.riskified.com^
+||d1m6l9dfulcyw7.cloudfront.net^
 ||stats.mako.co.il^
 ||analytics.xyscdn.com^
 ||perr.h-cdn.com^
@@ -12428,6 +12444,11 @@ ws*://video.docfilms.info^
 ||metric.gstatic.com^
 ||startrekk.flaconi.de^
 ||tracking.rtl.de^
+||log.adap.tv^
+||qlog.adap.tv^
+||segments.adap.tv^
+||sync.adap.tv^
+||hitweb2.chosun.com^
 ||d31bfnnwekbny6.cloudfront.net^
 ||epiv.cardlytics.com^
 ||track.tiara.daum.net^
