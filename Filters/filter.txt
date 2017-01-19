@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-01-18 12:03:50
+! Last modified: 2017-01-19 12:03:09
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -8604,6 +8604,8 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+://*.freerutor.com^
+://*.imgspic.ru^
 ||pr.rusmed.ru^
 ://*.imgpics.ru^
 ://*.pix-images.ru^
@@ -8660,6 +8662,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||v1n7c.com^
+||referrer.website^
 ||filadmir.site^
 ||syndication.exosrv.com^
 ||borotango.com^
