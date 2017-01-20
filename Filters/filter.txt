@@ -2,13 +2,15 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-01-19 12:03:09
+! Last modified: 2017-01-20 12:00:11
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
 !
 ! EasyList
 ||007-gateway.com^
+||04dn8g4f.space^
+||0emn.com^
 ||0fmm.com^
 ||0icep80f.com^
 ||0pixl.com^
@@ -402,7 +404,6 @@
 ||adonweb.ru^
 ||adoperator.com^
 ||adoptim.com^
-||adoric.com^
 ||adorika.com^
 ||adorika.net^
 ||adotic.com^
@@ -4209,12 +4210,14 @@
 ||ecmeqhxevxgmtoxubrjstrrlyfgrrtqhvafyagettmwnwkwltn.com^
 ||ectbduztanog.com^
 ||edvbyybaviln.com^
+||edwywpsufuda.com^
 ||eejcqlenlsko.com^
 ||eeqabqioietkquydwxfgvtvpxpzkuilfcpzkplhcckoghwgacb.com^
 ||eerdckbwujcx.com^
 ||ehnjtmqchrub.com^
 ||eidzaqzygtvq.com^
 ||eifbewnmtgpi.com^
+||eiibdnjlautz.com^
 ||ejgxyfzciwyi.com^
 ||ejjrckrhigez.com^
 ||ejwmxjttljbe.com^
@@ -4481,6 +4484,7 @@
 ||kayfdraimewk.com^
 ||kayophjgzqdq.com^
 ||kbrnfzgglehh.com^
+||kceikbfhsnet.com^
 ||kdvcvkwwtbwn.com^
 ||kecldktirqzk.com^
 ||keqnebfovnhl.com^
@@ -4522,6 +4526,7 @@
 ||kyowarob.com^
 ||kzwddxlpcqww.com^
 ||lazkslkkmtpy.com^
+||lbfryfttoihl.com^
 ||lbpndcvhuqlm.com^
 ||lbypppwfvagq.com^
 ||lckpubqq.com^
@@ -4895,6 +4900,7 @@
 ||tevrhhgzzutw.com^
 ||teyuzyrjmrdi.com^
 ||tfbzzigqzbax.com^
+||tfqzkesrzttj.com^
 ||tftsbqbeuthh.com^
 ||tgrmzphjmvem.com^
 ||thnqemehtyfe.com^
@@ -5033,6 +5039,7 @@
 ||waentchjzuwq.com^
 ||watxeoifxbjo.com^
 ||wbtgtphzivet.com^
+||wbvsgqtwyvjb.com^
 ||wcgquaaknuha.com^
 ||wcoloqvrhhcf.com^
 ||wdbddckjoguz.com^
@@ -5485,6 +5492,14 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||hlu9tseh.men^
+||et-code.ru:8443
+||littel.biz
+||level1cdn.com^
+||0483bm4mlow8.xyz^
+||vifog.com^
+||videoframe.blue^
+||uglactons.com^
 ||promoengine.biz^
 ||yplan.ru^
 ||technogies.ru^
@@ -9028,6 +9043,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||sdk.starbolt.io^
 ||mobads4app.com^
 ||redirector.gvt1.com^
 ||adsmoloco.com^
@@ -12432,6 +12448,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||ut.o2.pl^
 ||o.addthis.com^
 ||su.addthis.com^
 ||beacon.riskified.com^
