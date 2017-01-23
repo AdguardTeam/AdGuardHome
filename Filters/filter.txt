@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-01-20 12:00:11
+! Last modified: 2017-01-23 12:03:15
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -259,6 +259,7 @@
 ||adespresso.com^
 ||adexc.net^
 ||adexchange.io^
+||adexchangeprediction.com^
 ||adexcite.com^
 ||adexprt.com^
 ||adexprts.com^
@@ -864,6 +865,7 @@
 ||azorbe.com^
 ||b117f8da23446a91387efea0e428392a.pl^
 ||b2s1uqa6.download^
+||b4banner.in^
 ||b6508157d.website^
 ||babbnrs.com^
 ||backbeatmedia.com^
@@ -939,6 +941,7 @@
 ||bet365affiliates.com^
 ||betaffs.com^
 ||betoga.com^
+||betpartners.it^
 ||betrad.com^
 ||bettingpartners.com^
 ||bf-ad.net^
@@ -1029,7 +1032,6 @@
 ||bravenetmedianetwork.com^
 ||breadpro.com^
 ||brealtime.com^
-||breezybath.com^
 ||brethrengenotypeteledyne.com^
 ||bridgetrack.com^
 ||brighteroption.com^
@@ -1075,6 +1077,7 @@
 ||bwknu1lo.top^
 ||byspot.com^
 ||byzoo.org^
+||bznclicks.com^
 ||c-on-text.com^
 ||c-planet.net^
 ||c03jij5q.website^
@@ -1229,6 +1232,7 @@
 ||coguan.com^
 ||coinad.com^
 ||coinadvert.net^
+||coinmedia.co^
 ||coinsicmp.com^
 ||cointraffic.in^
 ||cointraffic.io^
@@ -1609,6 +1613,7 @@
 ||ezadserver.net^
 ||ezmob.com^
 ||ezoic.net^
+||facebooker.top^
 ||faggrim.com^
 ||fairadsnetwork.com^
 ||falkag.net^
@@ -1888,6 +1893,7 @@
 ||hits.sys.lv^
 ||hitwastedgarden.com^
 ||hlads.com^
+||hlu9tseh.men^
 ||hmongcash.com^
 ||hokaybo.com^
 ||hola-shopping.com^
@@ -1929,6 +1935,7 @@
 ||hypemakers.net^
 ||hyperbanner.net^
 ||hyperlinksecure.com^
+||hyperpromote.com^
 ||hypertrackeraff.com^
 ||hypervre.com^
 ||hyperwebads.com^
@@ -2056,6 +2063,7 @@
 ||invernetter.info^
 ||investingchannel.com^
 ||inviziads.com^
+||iocawy99.science^
 ||ip-adress.com^
 ||ipowercdn.com^
 ||ipredictive.com^
@@ -2277,6 +2285,7 @@
 ||lx2rv.com^
 ||lzjl.com^
 ||m10s8.com^
+||m2.ai^
 ||m2pub.com^
 ||m4pub.com^
 ||m57ku6sm.com^
@@ -2390,7 +2399,6 @@
 ||metaffiliation.com^
 ||metaffiliation.com^*^maff=
 ||metaffiliation.com^*^taff=
-||metapelite.com^
 ||metavertising.com^
 ||metavertizer.com^
 ||metogo.work^
@@ -2554,6 +2562,7 @@
 ||networld.hk^
 ||networldmedia.net^
 ||neudesicmediagroup.com^
+||new-new-years.com^
 ||newdosug.eu^
 ||newgentraffic.com^
 ||newideasdaily.com^
@@ -2734,6 +2743,7 @@
 ||pantherads.com^
 ||paperg.com^
 ||paradocs.ru^
+||parkingcrew.net^
 ||partner-ads.com^
 ||partner.googleadservices.com^
 ||partner.video.syndication.msn.com^
@@ -2875,6 +2885,7 @@
 ||prebid.org^
 ||precisionclick.com^
 ||predictad.com^
+||predictivadnetwork.com^
 ||prestadsng.com^
 ||prexista.com^
 ||prf.hn^
@@ -2970,6 +2981,7 @@
 ||quantumads.com^
 ||queenmult.link^
 ||quensillo.com^
+||queryly.com^
 ||questionmarket.com^
 ||questus.com^
 ||quickcash500.com^
@@ -3082,7 +3094,6 @@
 ||rkgnmwre.site^
 ||rmxads.com^
 ||rnmd.net^
-||roastedvoice.com^
 ||robocat.me^
 ||rocketier.net^
 ||rogueaffiliatesystem.com^
@@ -3115,6 +3126,7 @@
 ||s.adroll.com^
 ||s2d6.com^
 ||sa.entireweb.com^
+||sa2eoqu.bid^
 ||safeadnetworkdata.net^
 ||safecllc.com^
 ||safelistextreme.com^
@@ -3423,6 +3435,7 @@
 ||teosredic.com^
 ||teracent.net^
 ||teracreative.com^
+||teraxhif.com^third-party
 ||terraclicks.com^
 ||teschenite.com^
 ||testfilter.com^
@@ -3523,6 +3536,7 @@
 ||tradeexpert.net^
 ||tradepopups.com^
 ||traff-advertazer.com^
+||traffads.su^
 ||traffboost.net^
 ||traffic-supremacy.com^
 ||trafficbarads.com^
@@ -3823,9 +3837,11 @@
 ||wwwpromoter.com^
 ||x.mochiads.com^
 ||x4300tiz.com^
+||x8bhr.com^
 ||xad.com^
 ||xadcentral.com^
 ||xaxoro.com^
+||xbfk51p7.review^
 ||xcelltech.com^
 ||xcelsiusadserver.com^
 ||xchangebanners.com^
@@ -3972,6 +3988,12 @@
 ||wapdollar.in^
 ||waptrick.com^
 ||yieldmo.com^
+! Admiral
+||brassrule.com^
+||breezybath.com^
+||fanaticalfly.com^
+||metapelite.com^
+||roastedvoice.com^
 ! Non-English (instead of whitelisting ads)
 ||adhood.com^
 ||atresadvertising.com^
@@ -4026,6 +4048,7 @@
 ||afqwfxkjmgwv.com^
 ||agpnzrmptmos.com^
 ||ahkpdnrtjwat.com^
+||ahzybvwdwrhi.com^
 ||aiiaqehoqgrj.com^
 ||aiypulgy.com^
 ||ajaeihzlcwvn.com^
@@ -4168,6 +4191,7 @@
 ||ddprxzxnhzbq.com^
 ||dgmlubjidcxc.com^
 ||dgwrxyucxpizivncznkpmdhtrdzyyylpoeitiannqfxmdzpmwx.com^
+||dhlnlwxspczc.com^
 ||disbkzufvqhk.com^
 ||ditouyldfqgt.com^
 ||diysqcbfyuru.com^
@@ -4233,13 +4257,16 @@
 ||eovkzcueutgf.com^
 ||epesogtigole.com^
 ||epgooipixbbo.com^
+||erbsqnmglmnv.com^
 ||erkwkjfompvt.com^
 ||erszwzaidmlc.com^
 ||ervpgpxr.com^
 ||eslgydoqbedo.com^
 ||eslydbnukkme.com^
 ||esnirgskobfj.com^
+||etggiddfdaqd.com^
 ||evhvoeqfrlsb.com^
+||exnyzdboihvi.com^
 ||ezbtpdjeimlv.com^
 ||ezuosstmbcle.com^
 ||farkkbndawtxczozilrrrunxflspkyowishacdueiqzeddsnuu.com^
@@ -4290,6 +4317,7 @@
 ||fxvxgwqcddvm.com^
 ||fzsiwzxnqadb.com^
 ||fzzudxglrnrr.com^
+||gaxmdcfkxygs.com^
 ||gazogsjsoxty.com^
 ||gbiwxmjw.com^
 ||gbltotkythfh.com^
@@ -4310,6 +4338,7 @@
 ||glslciwwvtxn.com^
 ||gmpdixdh.com^
 ||gmpmuqniggyz.com^
+||gnadhzstittd.com^
 ||gnipadiiodpa.com^
 ||gofgfsvnfnfw.com^
 ||gojwyansqmcl.com^
@@ -4366,6 +4395,7 @@
 ||hlotiwnz.com^
 ||hndesrzcgjmprqbbropdulvkfroonnrlbpqxhvprsavhwrfxtv.com^
 ||hnoajsaivjsg.com^
+||hntpbpeiuajc.com^
 ||hpdmnmehzcor.com^
 ||hplgpoicsnea.com^
 ||hpmgdwvvqulp.com^
@@ -4481,6 +4511,7 @@
 ||jzqharwtwqei.com^
 ||kadjwdpzxdxd.com^
 ||karcvrpwayal.com^
+||karownxatpbd.com^
 ||kayfdraimewk.com^
 ||kayophjgzqdq.com^
 ||kbrnfzgglehh.com^
@@ -4503,6 +4534,7 @@
 ||kmveerigfvyy.com^
 ||kmvupiadkzdn.com^
 ||knslxwqgatnd.com^
+||kplzvizvsqrh.com^
 ||kpnuqvpevotn.com^
 ||kqcflzvunhew.com^
 ||kqmjmrzjhmdn.com^
@@ -4631,6 +4663,7 @@
 ||nguooqblyjrz.com^
 ||nheanvabodkw.com^
 ||nifyalnngdhb.com^
+||njjybqyiuotl.com^
 ||nkkreqvurtoh.com^
 ||nkyngrtleloc.com^
 ||nlfqbfwbfovt.com^
@@ -4672,6 +4705,8 @@
 ||oewscpwrvoca.com^
 ||ofgapiydisrw.com^
 ||ofghrodsrqkg.com^
+||ofjampfenbwv.com^
+||oguorftbvegb.com^
 ||oiffrtkdgoef.com^
 ||okasfshomqmg.com^
 ||okgfvcourjeb.com^
@@ -4700,6 +4735,7 @@
 ||owihjchxgydd.com^
 ||owlmjcogunzx.com^
 ||owodfrquhqui.com^
+||owqobhxvaack.com^
 ||owwewfaxvpch.com^
 ||oytrrdlrovcn.com^
 ||ozhwenyohtpb.com^
@@ -4845,6 +4881,7 @@
 ||scbnvzfscfmn.com^
 ||scbywuiojqvh.com^
 ||sceuexzmiwrf.com^
+||scgyndrujhzf.com^
 ||scmffjmashzc.com^
 ||scuwbelujeeu.com^
 ||scxxbyqjslyp.com^
@@ -5074,6 +5111,7 @@
 ||wrmwikcnynbk.com^
 ||wrqjwrrpsnnm.com^
 ||wrtnetixxrmg.com^
+||wsaijhlcnsqu.com^
 ||wscrsmuagezg.com^
 ||wscvmnvhanbr.com^
 ||wsfqmxdljrknkalwskqmefnonnyoqjmeapkmzqwghehedukmuj.com^
@@ -5130,6 +5168,7 @@
 ||xxwpminhccoq.com^
 ||xxyafiswqcqz.com^
 ||xxzkqbdibdgq.com^
+||yaqysxlohdyg.com^
 ||yasltdlichfd.com^
 ||yaxdboxgsbgh.com^
 ||ybhaoglgbgdk.com^
@@ -5492,7 +5531,11 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
-||hlu9tseh.men^
+||dgulden.ru^
+||lvodomi.info^
+||appsflybeta.biz^
+||statredpic.ru^
+||scelebnow.xyz^
 ||et-code.ru:8443
 ||littel.biz
 ||level1cdn.com^
@@ -8619,6 +8662,8 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+://*.pika-img.ru^
+://*.imagespics.ru^
 ://*.freerutor.com^
 ://*.imgspic.ru^
 ||pr.rusmed.ru^
@@ -9012,6 +9057,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d1dli2tyorled9.cloudfront.net^
 ||d2i54aseqwhx68.cloudfront.net^
 ||d3laygk9zni6hc.cloudfront.net^
 ||d1v6js7bjzmhoa.cloudfront.net^
@@ -9375,6 +9421,7 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+||statlife.ru^
 ||bia.brightinfo.com^
 ||track.tenjin.io^
 ||extremetracking.com^
@@ -12448,6 +12495,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||analytics.livestream.com^
 ||ut.o2.pl^
 ||o.addthis.com^
 ||su.addthis.com^
