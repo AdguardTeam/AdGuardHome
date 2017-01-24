@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-01-23 12:03:15
+! Last modified: 2017-01-24 12:03:12
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1381,6 +1381,7 @@
 ||decknetwork.net^
 ||dedicatedmedia.com^
 ||dedicatednetworks.com^
+||deepintent.com^
 ||deepmetrix.com^
 ||defaultimg.com^
 ||deguiste.com^
@@ -5531,6 +5532,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||ughwashis.ru^
 ||dgulden.ru^
 ||lvodomi.info^
 ||appsflybeta.biz^
@@ -8722,6 +8724,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||tubeadvertising.eu^
+||brand.ad^
 ||v1n7c.com^
 ||referrer.website^
 ||filadmir.site^
@@ -9089,6 +9093,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||appwall.tv2phone.cn^
+||ads.pdbarea.com^
 ||sdk.starbolt.io^
 ||mobads4app.com^
 ||redirector.gvt1.com^
@@ -12495,6 +12501,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||ascstats.iobit.com^
 ||analytics.livestream.com^
 ||ut.o2.pl^
 ||o.addthis.com^
