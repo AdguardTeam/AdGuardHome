@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-01-24 12:03:12
+! Last modified: 2017-01-25 12:03:30
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -944,6 +944,7 @@
 ||betpartners.it^
 ||betrad.com^
 ||bettingpartners.com^
+||bezoya.work^
 ||bf-ad.net^
 ||bfast.com^
 ||bh3.net^
@@ -954,6 +955,7 @@
 ||biemedia.com^
 ||bigadpoint.net^
 ||bigfineads.com^
+||bigpulpit.com^
 ||bijscode.com^
 ||billypub.com^
 ||bimlocal.com^
@@ -3052,6 +3054,7 @@
 ||replase.cf^
 ||requiredcollectfilm.info^
 ||resideral.com^
+||resonance.pk^
 ||respecific.net^
 ||respond-adserver.cloudapp.net^
 ||respondhq.com^
@@ -3100,6 +3103,7 @@
 ||rogueaffiliatesystem.com^
 ||roicharger.com^
 ||roirocket.com^
+||rolinda.work^
 ||romance-net.com^
 ||rometroit.com^
 ||rotaban.ru^
@@ -3939,6 +3943,7 @@
 ||zercstas.com^
 ||zerezas.com^
 ||zeropark.com^
+||zerozo.work^
 ||zferral.com^
 ||zidae.com^
 ||ziffdavis.com^
@@ -8724,6 +8729,9 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||2performant.com^
+||simudotheh.com^
+||giu9aab.bid^
 ||tubeadvertising.eu^
 ||brand.ad^
 ||v1n7c.com^
@@ -9061,6 +9069,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d19182vyfoustz.cloudfront.net^
 ||d1dli2tyorled9.cloudfront.net^
 ||d2i54aseqwhx68.cloudfront.net^
 ||d3laygk9zni6hc.cloudfront.net^
@@ -12501,6 +12510,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||cnt.alawar.com^
 ||ascstats.iobit.com^
 ||analytics.livestream.com^
 ||ut.o2.pl^
