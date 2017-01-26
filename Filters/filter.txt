@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-01-25 12:03:30
+! Last modified: 2017-01-26 12:03:20
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4316,6 +4316,7 @@
 ||ftjrekbpjkwe.com^
 ||ftytssqazcqx.com^
 ||fvbeyduylvgy.com^
+||fwcrhzvfxoyi.com^
 ||fxjgprpozntk.com^
 ||fxjyultd.com^
 ||fxrgikipxnlq.com^
@@ -4329,6 +4330,7 @@
 ||gbltotkythfh.com^
 ||gdixpvfqbhun.com^
 ||gdpuknsngvps.com^
+||geazikjazoid.com^
 ||gefaqjwdgzbo.com^
 ||geqcqduubhll.com^
 ||gerpkshe.com^
@@ -4484,6 +4486,7 @@
 ||jffwwuyychxw.com^
 ||jgqkrvjtuapt.com^
 ||jhupypvmcsqfqpbxbvumiaatlilzjrzbembarnhyoochsedzvi.com^
+||jiyairvjgfqk.com^
 ||jjdrwkistgfh.com^
 ||jjipgxjf.com^
 ||jjpoxurorlsb.com^
@@ -5081,6 +5084,7 @@
 ||vzmnvqiqgxqk.com^
 ||waentchjzuwq.com^
 ||watxeoifxbjo.com^
+||wbqliddtojkf.com^
 ||wbtgtphzivet.com^
 ||wbvsgqtwyvjb.com^
 ||wcgquaaknuha.com^
@@ -5196,6 +5200,7 @@
 ||ylhjsrwqtqqb.com^
 ||ylksuifuyryt.com^
 ||ylqezcnlzfsj.com^
+||ymlbuooxppzt.com^
 ||ynlrfiwj.com^
 ||ynrbxyxmvihoydoduefogolpzgdlpnejalxldwjlnsolmismqd.com^
 ||ynxrrzgfkuih.com^
@@ -5537,6 +5542,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||mykinotochka.ru^
+||xxuhter.ru:8040
 ||ughwashis.ru^
 ||dgulden.ru^
 ||lvodomi.info^
@@ -5628,7 +5635,6 @@
 ||justonsrep.com^
 ||tlr1.biz^
 ||apytrc.com^
-||xxuhter.ru:8040
 ||xxuhter.ru^
 ||utarget.pro^
 ||witgatons.com^
