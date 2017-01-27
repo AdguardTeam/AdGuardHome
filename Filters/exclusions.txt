@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardFilters/issues/4208
+epn.bz
 ! https://github.com/AdguardTeam/AdguardDNS/issues/106
 ethn.io
 ! https://github.com/AdguardTeam/AdguardDNS/issues/109
