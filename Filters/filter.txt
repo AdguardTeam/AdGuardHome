@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-01-27 12:00:10
+! Last modified: 2017-01-30 12:03:31
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1238,6 +1238,7 @@
 ||coinsicmp.com^
 ||cointraffic.in^
 ||cointraffic.io^
+||cold-cold-freezing.com^
 ||collection-day.com^
 ||collective-media.net^
 ||colliersads.com^
@@ -2866,6 +2867,7 @@
 ||popunder.ru^
 ||popundertotal.com^
 ||popunderz.com^
+||popunderzone.com^
 ||popuptraffic.com^
 ||popupvia.com^
 ||popwin.net^
@@ -2984,7 +2986,6 @@
 ||quantumads.com^
 ||queenmult.link^
 ||quensillo.com^
-||queryly.com^
 ||questionmarket.com^
 ||questus.com^
 ||quickcash500.com^
@@ -3440,7 +3441,7 @@
 ||teosredic.com^
 ||teracent.net^
 ||teracreative.com^
-||teraxhif.com^third-party
+||teraxhif.com^
 ||terraclicks.com^
 ||teschenite.com^
 ||testfilter.com^
@@ -3839,6 +3840,7 @@
 ||wwbn.com^
 ||wwv4ez0n.com^
 ||wwwadcntr.com^
+||wwwp.link^
 ||wwwpromoter.com^
 ||x.mochiads.com^
 ||x4300tiz.com^
@@ -4195,6 +4197,7 @@
 ||dcgbswcvywyl.com^
 ||dcneohtx.com^
 ||ddprxzxnhzbq.com^
+||dfujqyjifvoe.com^
 ||dgmlubjidcxc.com^
 ||dgwrxyucxpizivncznkpmdhtrdzyyylpoeitiannqfxmdzpmwx.com^
 ||dhlnlwxspczc.com^
@@ -4244,6 +4247,7 @@
 ||eejcqlenlsko.com^
 ||eeqabqioietkquydwxfgvtvpxpzkuilfcpzkplhcckoghwgacb.com^
 ||eerdckbwujcx.com^
+||efcnevmojvfs.com^
 ||ehnjtmqchrub.com^
 ||eidzaqzygtvq.com^
 ||eifbewnmtgpi.com^
@@ -4549,6 +4553,7 @@
 ||kqmjmrzjhmdn.com^
 ||kqsipdhvcejx.com^
 ||krovrhmqgupd.com^
+||krxexwfnghfu.com^
 ||krziyrrnvjai.com^
 ||ksbklucaxgbf.com^
 ||ktcltsgjcbjdcyrcdaspmwqwscxgbqhscmkpsxarejfsfpohkk.com^
@@ -4647,7 +4652,9 @@
 ||mpzuzvqyuvbh.com^
 ||mqphkzwlartq.com^
 ||mrfveznetjtp.com^
+||msrwoxdkffcl.com^
 ||mszfmpseoqbu.com^
+||mttyfwtvyumc.com^
 ||mueqzsdabscd.com^
 ||munpprwlhric.com^
 ||mvjuhdjuwqtk.com^
@@ -4948,6 +4955,7 @@
 ||tfbzzigqzbax.com^
 ||tfqzkesrzttj.com^
 ||tftsbqbeuthh.com^
+||tgjdebebaama.com^
 ||tgrmzphjmvem.com^
 ||thnqemehtyfe.com^
 ||thvdzghlvfoh.com^
@@ -5009,6 +5017,7 @@
 ||umboffikfkoc.com^
 ||umqsrvdg.com^
 ||umxzhxfrrkmt.com^
+||uncumlzowtkn.com^
 ||uqgloylf.com^
 ||uqpotqld.com^
 ||usoqghurirvz.com^
@@ -5072,6 +5081,7 @@
 ||vucanmoywief.com^
 ||vulexmouotod.com^
 ||vunwzlxfsogj.com^
+||vuysooqimdbt.com^
 ||vwugfpktabed.com^
 ||vxbtrsqjnjpq.com^
 ||vxlpefsjnmws.com^
@@ -5542,6 +5552,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||novbrom.com^
+||1rtl.info^
 ||mykinotochka.ru^
 ||xxuhter.ru:8040
 ||ughwashis.ru^
@@ -5832,7 +5844,6 @@
 /js/loader.js|
 /rotator/jqld_cu.php
 /vk_code.php
-://epn.bz^
 ://jhf.ru^
 ://kma.biz^
 http://7ads.ru^
@@ -8675,6 +8686,7 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||tiz.miladynews.ru^
 ://*.pika-img.ru^
 ://*.imagespics.ru^
 ://*.freerutor.com^
@@ -8735,6 +8747,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||1yqbp.com^
+||gameads.net^
 ||2performant.com^
 ||simudotheh.com^
 ||giu9aab.bid^
@@ -9442,6 +9456,12 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
+! Google domains
+||p.d.rpts.org^
+||p.d.0emn.com^
+||p.d.0mme.com^
+||p.d.0fmm.com^
+!
 ||statlife.ru^
 ||bia.brightinfo.com^
 ||track.tenjin.io^
@@ -9457,7 +9477,6 @@ ws*://video.docfilms.info^
 ||tap.idg.de^
 ||trackingapi.cloudapp.net^
 ||mastertag.kpcustomer.de^
-||p.d.rpts.org^
 ||ctl.mobitrack.co.kr^
 ||m.addthisedge.com^
 ||ct.buzzfeed.com^
@@ -12516,6 +12535,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||ssp.rambler.ru^
 ||cnt.alawar.com^
 ||ascstats.iobit.com^
 ||analytics.livestream.com^
@@ -12798,6 +12818,8 @@ iapp-cp.nuggad.net^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/52
 !
 ! Adguard DNS exceptions
+! https://github.com/AdguardTeam/AdguardFilters/issues/4230
+@@||tegna.sc.omtrdc.net^
 ! https://github.com/AdguardTeam/AdguardForiOS/issues/242
 @@||t.appsflyer.com^
 @@||stats.appsflyer.com^
