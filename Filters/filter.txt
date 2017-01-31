@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-01-30 12:03:31
+! Last modified: 2017-01-31 12:03:33
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -312,6 +312,7 @@
 ||adincon.com^
 ||adindigo.com^
 ||adinfinity.com.au^
+||adingo.jp^
 ||adintend.com^
 ||adinterax.com^
 ||adinvigorate.com^
@@ -715,6 +716,7 @@
 ||affplanet.com^
 ||afftrack.com^
 ||aflrm.com^
+||afovelsa.com^
 ||africawin.com^
 ||afterdownload.com^
 ||afterdownloads.com^
@@ -920,6 +922,7 @@
 ||befade.com^
 ||beforescence.com^
 ||begun.ru^
+||bekoted.work^
 ||belointeractive.com^
 ||belvertising.be^
 ||benchmarkingstuff.com^
@@ -940,6 +943,7 @@
 ||bet3000partners.com^
 ||bet365affiliates.com^
 ||betaffs.com^
+||betigo.work^
 ||betoga.com^
 ||betpartners.it^
 ||betrad.com^
@@ -950,6 +954,7 @@
 ||bh3.net^
 ||bidgewatr.com^
 ||bidsystem.com^
+||bidtheatre.com^
 ||bidverdrd.com^
 ||bidvertiser.com^
 ||biemedia.com^
@@ -1014,6 +1019,7 @@
 ||bororas.com^
 ||bostonparadise.com^
 ||bostonwall.com^
+||boteko.work^
 ||bounce.bar^
 ||boydadvertising.co.uk^
 ||boylesportsreklame.com^
@@ -1638,6 +1644,7 @@
 ||feed-ads.com^
 ||feljack.com^
 ||fenixm.com^
+||feybu.work^
 ||fiberpairjo.link^
 ||ficusoid.xyz^
 ||fidel.to^
@@ -1678,6 +1685,7 @@
 ||fluidads.co^
 ||flurryconakrychamfer.info^
 ||fluxads.com^
+||fluxybe.work^
 ||flyertown.ca^
 ||flymyads.com^
 ||flytomars.online^
@@ -2173,9 +2181,11 @@
 ||knorex.asia^
 ||knowd.com^
 ||kolition.com^
+||komego.work^
 ||komoona.com^
 ||kontextua.com^
 ||koocash.com^
+||korexo.com^
 ||korrelate.net^
 ||kovla.com^
 ||kr3vinsx.com^
@@ -2193,6 +2203,7 @@
 ||larentisol.com^
 ||large-format.net^
 ||largestable.com^
+||larkbe.com^
 ||laserhairremovalstore.com^
 ||launchbit.com^
 ||layer-ad.org^
@@ -2726,8 +2737,10 @@
 ||oxsng.com^
 ||oxtracking.com^
 ||oxybe.com^
+||oxyes.work^
 ||ozertesa.com^
 ||ozonemedia.com^
+||ozora.work^
 ||p-advg.com^
 ||p-comme-performance.com^
 ||p-digital-server.com^
@@ -2764,6 +2777,7 @@
 ||pay-click.ru^
 ||paydotcom.com^
 ||payperpost.com^
+||pbyet.com^
 ||pc-ads.com^
 ||pdn-2.com^
 ||pe2k2dty.com^
@@ -2799,6 +2813,7 @@
 ||pianobuyerdeals.com^
 ||picadmedia.com^
 ||picbucks.com^
+||pickoga.work^
 ||picsti.com^
 ||pictela.net^
 ||piercial.com^
@@ -2948,6 +2963,9 @@
 ||publir.com^
 ||publisher.to^
 ||publisheradnetwork.com^
+||publited.com^
+||publited.net^
+||publited.org^
 ||pubmatic.com^
 ||pubmine.com^
 ||pubnation.com^
@@ -3174,6 +3192,7 @@
 ||sedoparking.com^
 ||seductionprofits.com^
 ||seekads.net^
+||seiya.work^
 ||sekindo.com^
 ||selectablemedia.com^
 ||sellhealth.com^
@@ -3677,6 +3696,7 @@
 ||valueclickmedia.com^
 ||valuecommerce.com^
 ||valuecontent.net^
+||vamartin.work^
 ||vapedia.com^
 ||vashoot.com^
 ||vastopped.com^
@@ -3889,6 +3909,7 @@
 ||yes-messenger.com^
 ||yesadsrv.com^
 ||yesnexus.com^
+||yesobe.work^
 ||yieldads.com^
 ||yieldadvert.com^
 ||yieldbuild.com^
@@ -3921,6 +3942,7 @@
 ||ytsa.net^
 ||yuarth.com^
 ||yucce.com^
+||yuhuads.com^
 ||yumenetworks.com^
 ||yunshipei.com^
 ||yupfiles.club^
@@ -3936,6 +3958,7 @@
 ||zaparena.com^
 ||zappy.co.za^
 ||zapunited.com^
+||zavu.work^
 ||zde-engage.com^
 ||zeads.com^
 ||zedo.com^
@@ -5552,6 +5575,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||viille2.com^
 ||novbrom.com^
 ||1rtl.info^
 ||mykinotochka.ru^
@@ -8686,6 +8710,8 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||ad.kinogo-kinopoisk.net^
+://*.imgbum.ru^
 ||tiz.miladynews.ru^
 ://*.pika-img.ru^
 ://*.imagespics.ru^
@@ -8747,6 +8773,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||sexpennyauctions.com^
+||restoring.club^
 ||1yqbp.com^
 ||gameads.net^
 ||2performant.com^
@@ -9089,6 +9117,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d39hdzmeufnl50.cloudfront.net^
 ||d19182vyfoustz.cloudfront.net^
 ||d1dli2tyorled9.cloudfront.net^
 ||d2i54aseqwhx68.cloudfront.net^
@@ -9446,7 +9475,6 @@ ws*://video.docfilms.info^
 ||yc-ads.s3.amazonaws.com^
 ||yemonisoni.com^
 ||youmi.net^
-||yuhuads.com^
 ! HTTPS
 ! Facebook Ad Choices
 ! ||graph.facebook.com/network_ads_common/
@@ -12667,6 +12695,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||logger.ntracecloud.com^
+||ymtracking.com^
 ||bidder.mdspinc.com^
 ||report.appmetrica.yandex.net^
 ||clktrk.display.io^
