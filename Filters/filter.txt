@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-01-31 12:03:33
+! Last modified: 2017-02-01 12:00:12
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4106,6 +4106,7 @@
 ||aqornnfwxmua.com^
 ||aragvjeosjdx.com^
 ||aryufuxbmwnb.com^
+||asecxggulyrf.com^
 ||asqamasz.com^
 ||atcyboopajyp.com^
 ||avrdpbiwvwyt.com^
@@ -4123,6 +4124,7 @@
 ||bayvlsmaahou.com^
 ||bbheuxcancwj.com^
 ||bbjlsdqhpbuqaspgjyxaobmpmzunjnvqmahejnwwvaqbzzqodu.com^
+||bblznptpffqc.com^
 ||bboemhlddgju.com^
 ||bbopkapcgonb.com^
 ||beghfkrygvxp.com^
@@ -4135,6 +4137,7 @@
 ||bhjhijisulwl.com^
 ||bhyqllgtzjee.com^
 ||bircgizd.com^
+||bjkfmvhygpub.com^
 ||bjpktmjdxqpl.com^
 ||bjzcyqezwksznxxhscsfcogugkyiupgjhikadadgoiruasxpxo.com^
 ||bkmmlcbertdbselmdxpzcuyuilaolxqfhtyukmjkklxphbwsae.com^
@@ -4183,6 +4186,7 @@
 ||cjnoeafncyzb.com^
 ||cjvgnswapbqo.com^
 ||cjxkzkzmdomd.com^
+||ckryzlnafwyd.com^
 ||ckwpsghi.com^
 ||cmdjujqlfbts.com^
 ||cmpsuzvr.com^
@@ -4203,6 +4207,7 @@
 ||cuguwxkasghy.com^
 ||cwliihvsjckn.com^
 ||cwtekghutpaq.com^
+||cwxblalyyvbj.com^
 ||cxgwwsapihlo.com^
 ||cxnxognwkuxm.com^
 ||cxoxruotepqgcvgqxdlwwucgyazmbkhdojqzihljdwwfeylovh.com^
@@ -4265,6 +4270,7 @@
 ||ebfjbrlcvjlv.com^
 ||ecmeqhxevxgmtoxubrjstrrlyfgrrtqhvafyagettmwnwkwltn.com^
 ||ectbduztanog.com^
+||edgsscofljhc.com^
 ||edvbyybaviln.com^
 ||edwywpsufuda.com^
 ||eejcqlenlsko.com^
@@ -4404,6 +4410,7 @@
 ||gypxbcrmxsmikqbmnlwtezmjotrrdxpqtafumympsdtsfvkkza.com^
 ||gzkoehgbpozz.com^
 ||gzmofmqddajr.com^
+||gzumjmvqjkki.com^
 ||hafbezbemwwd.com^
 ||haqlmmii.com^
 ||hbbwlhxfnbpq.com^
@@ -4555,6 +4562,7 @@
 ||kdvcvkwwtbwn.com^
 ||kecldktirqzk.com^
 ||keqnebfovnhl.com^
+||kfpwayrztgjj.com^
 ||kgkjlivo.com^
 ||kgvgtudoridc.com^
 ||kihhgldtpuho.com^
@@ -4625,6 +4633,7 @@
 ||lsegvhvzrpqc.com^
 ||lstkfdmmxbmv.com^
 ||lvlvpdztdnro.com^
+||lvrvufurxhgp.com^
 ||lwenrqtarmdx.com^
 ||lwqwsptepdxy.com^
 ||lwysswaxnutn.com^
@@ -4785,6 +4794,7 @@
 ||peewuranpdwo.com^
 ||peewuvgdcian.com^
 ||peqdwnztlzjp.com^
+||pifaojvaiofw.com^
 ||piwwplvxvqqi.com^
 ||pixjqfvlsqvu.com^
 ||pjffrqroudcp.com^
@@ -4857,6 +4867,7 @@
 ||qpcyafunjtir.com^
 ||qpiyjprptazz.com^
 ||qqapezviufsh.com^
+||qqvatwaqtzgp.com^
 ||qqylzyrqnewl.com^
 ||qrozsnmc.com^
 ||qtjafpcpmcri.com^
@@ -4903,6 +4914,7 @@
 ||rqtdnrhjktzr.com^
 ||rscgfvsximqdpowcmruwitolouncrmnribnfobxzfhrpdmahqe.com^
 ||ruovcruc.com^
+||ruoypiedfpov.com^
 ||rvzudtgpvwxz.com^
 ||rwtvvdspsbll.com^
 ||rxicrihobtkf.com^
@@ -4935,6 +4947,7 @@
 ||sjpexaylsfjnopulpgkbqtkzieizcdtslnofpkafsqweztufpa.com^
 ||skknyxzaixws.com^
 ||skzhfyqozkic.com^
+||slmmjkkvbkyp.com^
 ||smrqvdpgkbvz.com^
 ||sncpizczabhhafkzeifklgonzzkpqgogmnhyeggikzloelmfmd.com^
 ||snetddbbbgbp.com^
@@ -4989,6 +5002,7 @@
 ||tiouqzubepuy.com^
 ||tivlvdeuokwy.com^
 ||tjbgiyek.com^
+||tjkenzfnjpfd.com^
 ||tkarkbzkirlw.com^
 ||tkeeebdseixv.com^
 ||tkfsmiyiozuo.com^
@@ -5299,6 +5313,7 @@
 ||zvuespzsdgdq.com^
 ||zwqfnizwcvbx.com^
 ||zxbjgrxbcgrp.com^
+||zxqeycvsetkh.com^
 ||zyaorkkdvcbl.com^
 ||zycvyudt.com^
 ||zylokfmgrtzv.com^
@@ -5575,6 +5590,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||cdn2now.com^
+||moviead.ru^
 ||viille2.com^
 ||novbrom.com^
 ||1rtl.info^
@@ -12563,6 +12580,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||zdlogs.sphereup.com^
 ||ssp.rambler.ru^
 ||cnt.alawar.com^
 ||ascstats.iobit.com^
