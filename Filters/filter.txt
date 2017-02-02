@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-02-01 12:00:12
+! Last modified: 2017-02-02 12:03:33
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -116,6 +116,7 @@
 ||888media.net^
 ||888medianetwork.com^
 ||888promos.com^
+||8s8.eu^
 ||8yxupue8.com^
 ||97d73lsi.com^
 ||9d63c80da.pw^
@@ -554,6 +555,7 @@
 ||adstargeting.com^
 ||adstatic.com^
 ||adsterra.com^
+||adstuna.com^
 ||adsummos.net^
 ||adsupermarket.com^
 ||adsupply.com^
@@ -788,6 +790,8 @@
 ||apptap.com^
 ||appwebview.com^
 ||april29-disp-download.com^
+||aprtn.com^
+||aprtx.com^
 ||apsmediaagency.com^
 ||apugod.work^
 ||apxlv.com^
@@ -930,6 +934,7 @@
 ||bentdownload.com^
 ||bepolite.eu^
 ||beringmedia.com^
+||best5ex.com^
 ||bestarmour4u.work^
 ||bestcasinopartner.com^
 ||bestdeals.ws^
@@ -1586,6 +1591,7 @@
 ||essayads.com^
 ||essaycoupons.com^
 ||et-code.ru^
+||etah6wu.top^
 ||etargetnet.com^
 ||etgdta.com^
 ||etmanly.ru^
@@ -1729,6 +1735,7 @@
 ||fungoiddempseyimpasse.info^
 ||fungus.online^
 ||funklicks.com^
+||funnel-me.com^
 ||furginator.pw^
 ||fusionads.net^
 ||futureresiduals.com^
@@ -1807,6 +1814,7 @@
 ||globalinteractive.com^
 ||globalsuccessclub.com^
 ||globaltakeoff.net^
+||globaltraffico.com^
 ||glowdot.com^
 ||gmads.net^
 ||go2jump.org^
@@ -1862,6 +1870,7 @@
 ||gururevenue.com^
 ||gwallet.com^
 ||gx101.com^
+||gynax.com^
 ||h-images.net^
 ||h12-media.com^
 ||halfpriceozarks.com^
@@ -1985,6 +1994,7 @@
 ||imgwebfeed.com^
 ||imho.ru^
 ||imiclk.com^
+||imitrk.com^
 ||imonomy.com^
 ||imp*.tradedoubler.com^
 ||impact-ad.jp^
@@ -2066,6 +2076,7 @@
 ||intextscript.com^
 ||intextual.net^
 ||intgr.net^
+||intimlife.net^
 ||intopicmedia.com^
 ||inttrax.com^
 ||intuneads.com^
@@ -2113,6 +2124,7 @@
 ||jeetyetmedia.com^
 ||jemmgroup.com^
 ||jf2mn2ms.club^
+||jfduv7.com^
 ||jfx61qca.site^
 ||jiawen88.com^
 ||jivox.com^
@@ -2170,6 +2182,7 @@
 ||kiosked.com^
 ||kitnmedia.com^
 ||kjgh5o.com^
+||kjmddlhlejeh.com^
 ||klikadvertising.com^
 ||kliksaya.com^
 ||klikvip.com^
@@ -2199,6 +2212,7 @@
 ||lakidar.net^
 ||lamiflor.xyz^
 ||landelcut.com^
+||langosh.biz^
 ||lanistaconcepts.com^
 ||larentisol.com^
 ||large-format.net^
@@ -2269,6 +2283,7 @@
 ||lkqd.net^
 ||lndjj.com^
 ||loading-resource.com^
+||local-chicks-here3.top^
 ||localadbuy.com^
 ||localedgemedia.com^
 ||localsearch24.co.uk^
@@ -2323,6 +2338,7 @@
 ||marbil24.co.za^
 ||marginalwoodfernrounddance.com^
 ||marimedia.com^
+||markboil.online^
 ||markergot.com^
 ||marketbanker.com^
 ||marketfly.net^
@@ -2550,6 +2566,7 @@
 ||nativeads.com^
 ||nativeadsfeed.com^
 ||nativeleads.net^
+||navaxudoru.com^
 ||nbjmp.com^
 ||nbstatic.com^
 ||ncrjsserver.com^
@@ -2733,6 +2750,7 @@
 ||overturs.com^
 ||ovtopli.ru^
 ||owlads.io^
+||owtezan.ru^
 ||oxado.com^
 ||oxsng.com^
 ||oxtracking.com^
@@ -3273,10 +3291,12 @@
 ||smarttargetting.net^
 ||smarttds.ru^
 ||smartyads.com^
+||smilered.com^
 ||smileycentral.com^
 ||smilyes4u.com^
 ||smowtion.com^
 ||smpgfx.com^
+||smrt-view.com^
 ||sms-mmm.com^
 ||sn00.net^
 ||snap.com^
@@ -3347,6 +3367,7 @@
 ||srtk.net^
 ||srv.yavli.com^
 ||srx.com.sg^
+||ssl-services.com^
 ||sslboost.com^
 ||sslcheckerapi.com^
 ||sta-ads.com^
@@ -3411,6 +3432,7 @@
 ||surveywidget.biz^
 ||suthome.com^
 ||svlu.net^
+||sw1block.com^
 ||swadvertising.org^
 ||swan-swan-goose.com^
 ||swbdds.com^
@@ -3742,6 +3764,7 @@
 ||viewclc.com^
 ||viewex.co.uk^
 ||viewivo.com^
+||vihub.ru^
 ||vindicosuite.com^
 ||vipquesting.com^
 ||viralmediatech.com^
@@ -3752,6 +3775,7 @@
 ||visitweb.com^
 ||visualsteel.net^
 ||vitalads.net^
+||vivadgo.ru^
 ||vivamob.net^
 ||vixnixxer.com^
 ||vkoad.com^
@@ -3841,6 +3865,7 @@
 ||wingads.com^
 ||winsspeeder.info^
 ||wlmarketing.com^
+||wmeter.ru^
 ||wmmediacorp.com^
 ||wonclick.com^
 ||wootmedia.net^
@@ -3849,6 +3874,7 @@
 ||wordgetboo.com^
 ||worlddatinghere.com^
 ||worldsearchpro.com^
+||worldssl.net^
 ||worldwidemailer.com^
 ||worthathousandwords.com^
 ||worthyadvertising.com^
@@ -4567,7 +4593,6 @@
 ||kgvgtudoridc.com^
 ||kihhgldtpuho.com^
 ||kjjlucebvxtu.com^
-||kjmddlhlejeh.com^
 ||kjplmlvtdoaf.com^
 ||kjqyvgvvazii.com^
 ||klakcdiqmgxq.com^
@@ -5590,6 +5615,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||nest.net.ru^
+||kinobol.ru^
 ||cdn2now.com^
 ||moviead.ru^
 ||viille2.com^
@@ -5812,7 +5839,6 @@
 ||littel.biz^
 ||telvanil.ru^
 ||puklisi.ru^
-||navaxudoru.com^
 ||robaduvulo.com^
 ||vogozara.ru^
 ||mobiile-service.ru^
@@ -5849,7 +5875,6 @@
 ||yourfoxes4.ru^
 ||yourfoxes5.ru^
 ||tizernet.biz^
-||gynax.com^
 ||nativeroll.tv^
 ||mastervesti.ru^
 ||purige.ru^
@@ -7150,7 +7175,6 @@ thr.ru##.top_branding
 ||ladyzxxyz.com^
 ||lalabla.biz^
 ||lamma.24ex.net^
-||langosh.biz^
 ||lantocha.ru^
 ||lapeduzis.org^
 ||lapumo.com^
@@ -8033,7 +8057,6 @@ thr.ru##.top_branding
 ||smartinfomarketing.ru^
 ||smeshen.ru^
 ||smigid.ru^
-||smilered.com^
 ||smimarket.com^
 ||smonstr.ru^
 ||sn00.net
@@ -8997,7 +9020,6 @@ ws*://video.docfilms.info^
 ||india-zed.com^
 ||inter1ads.com^
 ||j.77power.com^
-||jfduv7.com^
 ||ji.ihualun.com^
 ||jkolp.com^
 ||join.xlgirls.com^
@@ -9507,6 +9529,8 @@ ws*://video.docfilms.info^
 ||p.d.0mme.com^
 ||p.d.0fmm.com^
 !
+||improvely.com^
+||vdc.zoomph.com^
 ||statlife.ru^
 ||bia.brightinfo.com^
 ||track.tenjin.io^
@@ -9817,7 +9841,6 @@ ws*://video.docfilms.info^
 ||apkonline.ru^
 ||apollofind.com^
 ||appboycdn.com^
-||aprtx.com^
 ||aqtracker.com^
 ||arcadeweb.com^
 ||arch-nicto.com^
@@ -12580,6 +12603,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||b.huffingtonpost.com^
 ||zdlogs.sphereup.com^
 ||ssp.rambler.ru^
 ||cnt.alawar.com^
@@ -12846,6 +12870,41 @@ iapp-cp.nuggad.net^
 ||analy.qq.com^
 !
 ! Adguard DNS rules
+||eclick.vn^
+||admicro.vn^
+||admicro*.vcmedia.vn^
+||adi.vcmedia.vn^
+||vcplayer.vcmedia.vn^
+||video-thumbs.vcmedia.vn^
+||static.hosting.vcmedia.vn^
+||adnetwork.vn^
+||ad360.vn^
+||anthill.vn^
+||ants.vn^
+||polyad.net
+||epi.vn^
+||ambient-platform.com^
+||st.f1.vnecdn.net^
+||f37.img.vnecdn.net^
+||f38.img.vnecdn.net^
+||raovat.vnecdn.net^
+||shop.vnecdn.net^
+||raovat.vnexpress.net^
+||shop.vnexpress.net^
+||imgshop.vnexpress.net^
+||s.tuoitre.vn^
+||quangcao.thanhnien.vn^
+||thongke.24h.com.vn^
+||24hstatic.com^
+||log.news.zing.vn^
+||fptad.com^
+||sparkling.vn^
+||stc.nas.nixcdn.com^
+||a1515150.com^
+||novanet.vn^
+||vimobi.com^
+||channelvn.net^
+||ad.org.vn^
 ||hghit.com^
 ||hgbnr.com^
 ||hgbn1.com^
