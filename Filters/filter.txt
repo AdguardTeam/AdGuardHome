@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-02-02 12:03:33
+! Last modified: 2017-02-03 12:03:21
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1347,6 +1347,7 @@
 ||ctenetwork.com^
 ||ctm-media.com^
 ||ctrhub.com^
+||ctrmanager.com^
 ||cubics.com^
 ||cuelinks.com^
 ||curancience.com^
@@ -1998,6 +1999,7 @@
 ||imonomy.com^
 ||imp*.tradedoubler.com^
 ||impact-ad.jp^
+||impactradius-go.com^
 ||impactradius.com^
 ||implix.com^
 ||impore.com^
@@ -3492,6 +3494,7 @@
 ||textonlyads.com^
 ||textsrv.com^
 ||tfag.de^
+||tgmnstr.com^
 ||tgtmedia.com^
 ||thaez4sh.com^
 ||thangasoline.com^
@@ -3834,6 +3837,7 @@
 ||webmedia.co.il^
 ||webonlinnew.com^
 ||weborama.fr^
+||weborama.io^
 ||webseeds.com^
 ||webtraffic.ttinet.com^
 ||webusersurvey.com^
@@ -3874,7 +3878,6 @@
 ||wordgetboo.com^
 ||worlddatinghere.com^
 ||worldsearchpro.com^
-||worldssl.net^
 ||worldwidemailer.com^
 ||worthathousandwords.com^
 ||worthyadvertising.com^
@@ -5615,6 +5618,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||one-klick.ru^
 ||nest.net.ru^
 ||kinobol.ru^
 ||cdn2now.com^
@@ -8813,6 +8817,9 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||safari-lock.com^
+||butterideareligious.xyz^
+||sftapi.com^
 ||sexpennyauctions.com^
 ||restoring.club^
 ||1yqbp.com^
@@ -9156,6 +9163,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||dqqulesm3pfse.cloudfront.net^
 ||d39hdzmeufnl50.cloudfront.net^
 ||d19182vyfoustz.cloudfront.net^
 ||d1dli2tyorled9.cloudfront.net^
@@ -9190,6 +9198,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||ads.ad2iction.com^
 ||appwall.tv2phone.cn^
 ||ads.pdbarea.com^
 ||sdk.starbolt.io^
@@ -9529,6 +9538,7 @@ ws*://video.docfilms.info^
 ||p.d.0mme.com^
 ||p.d.0fmm.com^
 !
+||trackjs.com^
 ||improvely.com^
 ||vdc.zoomph.com^
 ||statlife.ru^
