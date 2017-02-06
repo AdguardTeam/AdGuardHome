@@ -5,7 +5,5 @@
 @@||stats.appsflyer.com^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/63
 @@||googleadapis.l.google.com^
-! linkedin.com
-@@||licdn.com^
 ! Fixing Walmart
 @@||omniture.walmart.com^
