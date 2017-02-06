@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-02-03 12:03:21
+! Last modified: 2017-02-06 12:11:14
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1388,7 +1388,6 @@
 ||dazhantai.com^
 ||dbbsrv.com^
 ||dbclix.com^
-||dbtaclpoahri.com^
 ||dc121677.com^
 ||dealcurrent.com^
 ||decisionmark.com^
@@ -1728,6 +1727,7 @@
 ||freesoftwarelive.com^
 ||fresh8.co^
 ||friendlyduck.com^
+||friesmeasureretain.info^
 ||fromfriendswithlove.com^
 ||fruitkings.com^
 ||ftjcfx.com^
@@ -1741,7 +1741,6 @@
 ||fusionads.net^
 ||futureresiduals.com^
 ||futureus.com^
-||fuurqgbfhvqx.com^
 ||fxdepo.com^
 ||fxyc0dwa.com^
 ||g-cash.biz^
@@ -1805,6 +1804,7 @@
 ||gitcdn.pw^
 ||gitcdn.site^
 ||gitload.site^
+||giu9aab.bid^
 ||gk25qeyc.xyz^
 ||gklmedia.com^
 ||glaswall.online^
@@ -1898,7 +1898,6 @@
 ||hebiichigo.com^
 ||helloreverb.com^
 ||helotero.com^
-||heracgjcuqmk.com^
 ||heravda.com^
 ||herocpm.com^
 ||hexagram.com^
@@ -2184,7 +2183,6 @@
 ||kiosked.com^
 ||kitnmedia.com^
 ||kjgh5o.com^
-||kjmddlhlejeh.com^
 ||klikadvertising.com^
 ||kliksaya.com^
 ||klikvip.com^
@@ -2597,6 +2595,7 @@
 ||networldmedia.net^
 ||neudesicmediagroup.com^
 ||new-new-years.com^
+||new17write.com^
 ||newdosug.eu^
 ||newgentraffic.com^
 ||newideasdaily.com^
@@ -3407,7 +3406,6 @@
 ||sublimemedia.net^
 ||submitexpress.co.uk^
 ||suffusefacultytsunami.info^
-||sufzmohljbgw.com^
 ||sugarlistsuggest.info^
 ||suggesttool.com^
 ||suite6ixty6ix.com^
@@ -3459,7 +3457,6 @@
 ||talaropa.com^
 ||tangozebra.com^
 ||tapad.com^
-||taqyljgaqsaz.com^
 ||tardangro.com^
 ||targetadverts.com^
 ||targetnet.com^
@@ -3674,6 +3671,7 @@
 ||uglyst.com^
 ||uiadserver.com^
 ||uiqatnpooq.com^
+||ujieva.com^
 ||ukbanners.com^
 ||ukulelead.com^
 ||ultimategracelessness.info^
@@ -3794,7 +3792,6 @@
 ||vuiads.de^
 ||vuiads.info^
 ||vuiads.net^
-||vxqhchlyijwu.com^
 ||w00tads.com^
 ||w00tmedia.net^
 ||w3exit.com^
@@ -4249,6 +4246,7 @@
 ||dacqmkmsjajm.com^
 ||daxzupqivdoj.com^
 ||dbjcbnlwchgu.com^
+||dbtaclpoahri.com^
 ||dbwawnzkjniz.com^
 ||dcdalkgtbmip.com^
 ||dcgbswcvywyl.com^
@@ -4377,6 +4375,7 @@
 ||fsddidfmmzvw.com^
 ||ftjrekbpjkwe.com^
 ||ftytssqazcqx.com^
+||fuurqgbfhvqx.com^
 ||fvbeyduylvgy.com^
 ||fwcrhzvfxoyi.com^
 ||fxjgprpozntk.com^
@@ -4401,6 +4400,7 @@
 ||ggzuksudqktn.com^
 ||ghtroafchzrt.com^
 ||giojhiimnvwr.com^
+||giyjhogjmfmc.com^
 ||gjxdibyzvczd.com^
 ||gkgdqahkcbmykurmngzrrolrecfqvsjgqdyujvgdrgoezkcobq.com^
 ||gkiryieltcbg.com^
@@ -4424,6 +4424,7 @@
 ||gtevyaeeiged.com^
 ||gtmonytxxglu.com^
 ||gtqfsxrrerzu.com^
+||gtxfafvoohbc.com^
 ||gubdadtxwqow.com^
 ||gvgakxvukmrm.com^
 ||gvoszbzfzmtl.com^
@@ -4447,6 +4448,7 @@
 ||hbrbtmjyvdsy.com^
 ||hcyxksgsxnzb.com^
 ||heefwozhlxgz.com^
+||heracgjcuqmk.com^
 ||hevdxhsfbwud.com^
 ||hffmxndinqyo.com^
 ||hffmzplu.com^
@@ -4502,6 +4504,7 @@
 ||igdfzixkdzxe.com^
 ||iglwibwbjxuoflrczfvpibhihwuqneyvmhzeqbmdmujmirdkae.com^
 ||igupodzh.com^
+||ihqxhokndcfq.com^
 ||iibcejrrfhxh.com^
 ||iknctklddhoh.com^
 ||ilsivrexvpyv.com^
@@ -4596,6 +4599,7 @@
 ||kgvgtudoridc.com^
 ||kihhgldtpuho.com^
 ||kjjlucebvxtu.com^
+||kjmddlhlejeh.com^
 ||kjplmlvtdoaf.com^
 ||kjqyvgvvazii.com^
 ||klakcdiqmgxq.com^
@@ -4741,6 +4745,7 @@
 ||nifyalnngdhb.com^
 ||njjybqyiuotl.com^
 ||nkkreqvurtoh.com^
+||nklivofyjkbt.com^
 ||nkyngrtleloc.com^
 ||nlfqbfwbfovt.com^
 ||nlljrfvbnisi.com^
@@ -4994,6 +4999,7 @@
 ||ssvolkkihcyp.com^
 ||stnvgvtwzzrh.com^
 ||sualzmze.com^
+||sufzmohljbgw.com^
 ||suwadesdshrg.com^
 ||svjloaomrher.com^
 ||svrsqqtj.com^
@@ -5010,6 +5016,7 @@
 ||tamqqjgbvbps.com^
 ||taodggarfrmd.com^
 ||tapihmxemcksuvleuzpodsdfubceomxfqayamnsoswxzkijjmw.com^
+||taqyljgaqsaz.com^
 ||tawgiuioeaovaozwassucoydtrsellartytpikvcjpuwpagwfv.com^
 ||tazvowjqekha.com^
 ||tcgojxmwkkgm.com^
@@ -5150,6 +5157,7 @@
 ||vwugfpktabed.com^
 ||vxbtrsqjnjpq.com^
 ||vxlpefsjnmws.com^
+||vxqhchlyijwu.com^
 ||vxuhavco.com^
 ||vxvxsgut.com^
 ||vydlqaxchmij.com^
@@ -5179,6 +5187,7 @@
 ||wijczxvihjyu.com^
 ||wjdjovjrxsqx.com^
 ||wkexsfmw.com^
+||wkgaqvvwvqjg.com^
 ||wkggjmkrkvot.com^
 ||wkhychiklhdglppaeynvntkublzecyyymosjkiofraxechigon.com^
 ||wklyhvfc.com^
@@ -5253,6 +5262,7 @@
 ||xxwpminhccoq.com^
 ||xxyafiswqcqz.com^
 ||xxzkqbdibdgq.com^
+||yaifxxudxyns.com^
 ||yaqysxlohdyg.com^
 ||yasltdlichfd.com^
 ||yaxdboxgsbgh.com^
@@ -5299,6 +5309,7 @@
 ||zbfncjtaiwngdsrxvykupflpibvbrewhemghxlwsdoluaztwyi.com^
 ||zbrkywjutuxu.com^
 ||zbtqpkimkjcr.com^
+||zbxzcrldzzgv.com^
 ||zfkkmayphqrw.com^
 ||zfqpjxuycxdl.com^
 ||zfrzdepuaqebzlenihciadhdjzujnexvnksksqtazbaywgmzwl.com^
@@ -5516,6 +5527,7 @@
 ||osrto.com^
 ||p7vortex.com^
 ||pianoldor.com^
+||picstunoar.com^
 ||pikkr.net^
 ||poaurtor.com^
 ||polawrg.com^
@@ -5618,6 +5630,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||zqmwf.xyz^
 ||one-klick.ru^
 ||nest.net.ru^
 ||kinobol.ru^
@@ -8826,7 +8839,6 @@ ws*://video.docfilms.info^
 ||gameads.net^
 ||2performant.com^
 ||simudotheh.com^
-||giu9aab.bid^
 ||tubeadvertising.eu^
 ||brand.ad^
 ||v1n7c.com^
@@ -8866,7 +8878,6 @@ ws*://video.docfilms.info^
 ||adrecreate.com^
 ||asdorka.com^
 ||ppndr.xyz^
-||ujieva.com^
 ||code.poptm.com^
 ||adzos.com^
 ||mxtads.com:8040
@@ -10072,7 +10083,6 @@ ws*://video.docfilms.info^
 ||cccpmo.com^
 ||cdnstats-a.akamaihd.net^
 ||cedexis.com^
-||cedexis.net^
 ||celebros-analytics.com^
 ||centraltag.com^
 ||certifica.com^
@@ -12942,8 +12952,5 @@ iapp-cp.nuggad.net^
 @@||stats.appsflyer.com^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/63
 @@||googleadapis.l.google.com^
-! linkedin.com
-@@||cedexis.net^
-@@||licdn.com^
 ! Fixing Walmart
 @@||omniture.walmart.com^
