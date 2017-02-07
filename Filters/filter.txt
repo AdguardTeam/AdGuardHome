@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-02-06 12:11:14
+! Last modified: 2017-02-07 12:23:14
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -8830,6 +8830,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||tagdelivery.com^
 ||safari-lock.com^
 ||butterideareligious.xyz^
 ||sftapi.com^
@@ -9209,6 +9210,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||hostgrater.com^
 ||ads.ad2iction.com^
 ||appwall.tv2phone.cn^
 ||ads.pdbarea.com^
@@ -9538,6 +9540,8 @@ ws*://video.docfilms.info^
 ! Facebook Ad Choices
 ! ||graph.facebook.com/network_ads_common/
 !----- For HTTPS websites when HTTPS filtering is disabled ------
+||n152adserv.com^
+||weboohost.com^
 ||rg.yottos.com^
 !----------------------------------------------------------------
 !
@@ -9549,6 +9553,7 @@ ws*://video.docfilms.info^
 ||p.d.0mme.com^
 ||p.d.0fmm.com^
 !
+||kerebro.com^
 ||trackjs.com^
 ||improvely.com^
 ||vdc.zoomph.com^
