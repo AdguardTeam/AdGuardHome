@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-02-07 12:23:14
+! Last modified: 2017-02-08 12:06:12
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1288,6 +1288,7 @@
 ||contextads.net^
 ||contextuads.com^
 ||contextweb.com^
+||contribusourcesyndication.com^
 ||conyak.com^
 ||coolerads.com^
 ||coolmirage.com^
@@ -5630,6 +5631,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||kintohis.com^
+||tds.vrcteam.ru^
 ||zqmwf.xyz^
 ||one-klick.ru^
 ||nest.net.ru^
@@ -8767,6 +8770,7 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+://*.imgbun.ru^
 ||ad.kinogo-kinopoisk.net^
 ://*.imgbum.ru^
 ||tiz.miladynews.ru^
@@ -9175,6 +9179,10 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||dk2mvwe4uw0z3.cloudfront.net^
+||d258hxk86e2ixw.cloudfront.net^
+||d6swopgiplmy0.cloudfront.net^
+||d2z0gqc8sv0l7p.cloudfront.net^
 ||dqqulesm3pfse.cloudfront.net^
 ||d39hdzmeufnl50.cloudfront.net^
 ||d19182vyfoustz.cloudfront.net^
