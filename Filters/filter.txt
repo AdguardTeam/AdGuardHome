@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-02-08 12:06:12
+! Last modified: 2017-02-09 12:03:16
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -3250,6 +3250,7 @@
 ||shoppingads.com^
 ||shopzyapp.com^
 ||showyoursite.com^
+||shqads.com^
 ||siamzone.com^
 ||silence-ads.com^
 ||silstavo.com^
@@ -4206,8 +4207,10 @@
 ||cfdmkifknsjt.com^
 ||cfsdtzggpcmr.com^
 ||cgmkpdqjnedb.com^
+||chqulqxfghdz.com^
 ||chvjfriqlvnt.com^
 ||chxfeymgmwbo.com^
+||chytrrvwvabg.com^
 ||cihnrhqwbcsq.com^
 ||cixjmaxkemzknxxuyvkbzlhvvgeqmzgopppvefpfkqdraonoez.com^
 ||cjnoeafncyzb.com^
@@ -4292,6 +4295,7 @@
 ||dxcqavshmvst.com^
 ||dxfsbkmaydtt.com^
 ||dxigubtmyllj.com^
+||dxurtngzawwe.com^
 ||dyazeqpeoykf.com^
 ||dyunhvev.com^
 ||easnviytengk.com^
@@ -4365,6 +4369,7 @@
 ||fokisduu.com^
 ||fpbmjwoebzby.com^
 ||fppupmqbydpk.com^
+||fpvfeyjrwlio.com^
 ||fqkcdhptlqma.com^
 ||fqmxwckinopg.com^
 ||fqovfxpsytxf.com^
@@ -4491,6 +4496,7 @@
 ||hyzncftkveum.com^
 ||hzskbnafzwsu.com^
 ||hztkbjdkaiwt.com^
+||iagvkdeienla.com^
 ||ibqmccuuhjqc.com^
 ||icafyriewzzrwxlxhtoeakmwroueywnwhmqmaxsqdntasgfvhc.com^
 ||icjeqbqdzhyx.com^
@@ -4505,6 +4511,7 @@
 ||igdfzixkdzxe.com^
 ||iglwibwbjxuoflrczfvpibhihwuqneyvmhzeqbmdmujmirdkae.com^
 ||igupodzh.com^
+||igyzmhqbihoi.com^
 ||ihqxhokndcfq.com^
 ||iibcejrrfhxh.com^
 ||iknctklddhoh.com^
@@ -4613,6 +4620,7 @@
 ||knslxwqgatnd.com^
 ||kplzvizvsqrh.com^
 ||kpnuqvpevotn.com^
+||kpsdnlprwclz.com^
 ||kqcflzvunhew.com^
 ||kqmjmrzjhmdn.com^
 ||kqsipdhvcejx.com^
@@ -4679,6 +4687,7 @@
 ||maboflgkaxqn.com^
 ||maxgirlgames.com^
 ||mbfvfdkawpoi.com^
+||mbgvhfotcqsj.com^
 ||mbvmecdlwlts.com^
 ||mdeaoowvqxma.com^
 ||medyagundem.com^
@@ -4693,6 +4702,7 @@
 ||mizmhwicqhprznhflygfnymqbmvwokewzlmymmvjodqlizwlrf.com^
 ||mjujcjfrgslf.com^
 ||mkmxovjaijti.com^
+||mkyzqyfschwd.com^
 ||mkzynqxqlcxk.com^
 ||mlbzafthbtsl.com^
 ||mlgrrqymdsyk.com^
@@ -4853,6 +4863,7 @@
 ||prggimadscvm.com^
 ||prqivgpcjxpp.com^
 ||prwlzpyschwi.com^
+||psdnlprwclz.com^
 ||pserhnmbbwexmbjderezswultfqlamugbqzsmyxwumgqwxuerl.com^
 ||pshcqtizgdlm.com^
 ||psmlgjalddqu.com^
@@ -4886,6 +4897,7 @@
 ||qijffgqsbkii.com^
 ||qiktwikahncl.com^
 ||qinsmmxvacuh.com^
+||qiqrguvdhcux.com^
 ||qiremmtynkae.com^
 ||qixlpaaeaspr.com^
 ||qjskosdsxanp.com^
@@ -5062,6 +5074,7 @@
 ||turyvfzreolc.com^
 ||twnrkedqefhv.com^
 ||txbvzcyfyyoy.com^
+||txyxoktogdcy.com^
 ||tyzfzrjaxxcg.com^
 ||tzjngascinro.com^
 ||uavqdzorwish.com^
@@ -5086,6 +5099,7 @@
 ||ujtyosgemtnx.com^
 ||ujyyciaedxqr.com^
 ||ukjzdydnveuc.com^
+||ulffbcunqnpv.com^
 ||ulpxnhiugynh.com^
 ||umboffikfkoc.com^
 ||umqsrvdg.com^
@@ -5307,6 +5321,7 @@
 ||yzygkqjhedpw.com^
 ||zacbwfgqvxan.com^
 ||zamjzpwgekeo.com^
+||zansceeifcmm.com^
 ||zbfncjtaiwngdsrxvykupflpibvbrewhemghxlwsdoluaztwyi.com^
 ||zbrkywjutuxu.com^
 ||zbtqpkimkjcr.com^
@@ -5559,6 +5574,7 @@
 ||rugistratuan.com^
 ||selectr.net^
 ||sfesd.net^
+||shoapinh.com^
 ||sightr.net^
 ||simusangr.com^
 ||spamualfr.com^
@@ -12770,6 +12786,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+buffed.de##.shopLinkButtonsWrapper
 ||logger.ntracecloud.com^
 ||ymtracking.com^
 ||bidder.mdspinc.com^
@@ -12903,6 +12920,26 @@ iapp-cp.nuggad.net^
 ||analy.qq.com^
 !
 ! Adguard DNS rules
+||s*.adduplex.com^
+||hghit.com^
+||hgbnr.com^
+||hgbn1.com^
+||hg-bn.com^
+||ad.adriver.ru^
+||content.adriver.ru^
+||ad.3dnews.ru^
+||an.yandex.ru^
+||t.insigit.com^
+||traffichunt.com^
+||sportbets.su^
+||ad.onliner.by^
+||directadvert.ru^
+||betweendigital.com^
+||tools.runetki.co^
+||a4.overclockers.ua^
+||novunu.football-plyus.net^
+! https://github.com/AdguardTeam/AdguardDNS/issues/52
+!-----Vietnamese-----
 ||eclick.vn^
 ||admicro.vn^
 ||admicro*.vcmedia.vn^
@@ -12938,24 +12975,7 @@ iapp-cp.nuggad.net^
 ||vimobi.com^
 ||channelvn.net^
 ||ad.org.vn^
-||hghit.com^
-||hgbnr.com^
-||hgbn1.com^
-||hg-bn.com^
-||ad.adriver.ru^
-||content.adriver.ru^
-||ad.3dnews.ru^
-||an.yandex.ru^
-||t.insigit.com^
-||traffichunt.com^
-||sportbets.su^
-||ad.onliner.by^
-||directadvert.ru^
-||betweendigital.com^
-||tools.runetki.co^
-||a4.overclockers.ua^
-||novunu.football-plyus.net^
-! https://github.com/AdguardTeam/AdguardDNS/issues/52
+!--------------------
 !
 ! Adguard DNS exceptions
 ! https://github.com/AdguardTeam/AdguardFilters/issues/4230
