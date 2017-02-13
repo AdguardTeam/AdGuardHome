@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-02-10 12:03:09
+! Last modified: 2017-02-13 12:00:12
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -2125,6 +2125,7 @@
 ||jdproject.net^
 ||jeetyetmedia.com^
 ||jemmgroup.com^
+||jewishcontentnetwork.com^
 ||jf2mn2ms.club^
 ||jfduv7.com^
 ||jfx61qca.site^
@@ -2184,6 +2185,7 @@
 ||kiosked.com^
 ||kitnmedia.com^
 ||kjgh5o.com^
+||kkddlt2f.site^
 ||klikadvertising.com^
 ||kliksaya.com^
 ||klikvip.com^
@@ -2508,6 +2510,7 @@
 ||moregamers.com^
 ||moreplayerz.com^
 ||morgdm.ru^
+||moritava.com^
 ||mosaicolor.website^
 ||moselats.com^
 ||mottnow.com^
@@ -5577,6 +5580,7 @@
 ||shoapinh.com^
 ||sightr.net^
 ||simusangr.com^
+||smethgiar.com^
 ||spamualfr.com^
 ||speandorf.net^
 ||spereminf.com^
@@ -5647,6 +5651,9 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||zikhk3lvmwsovl6qfhslmfsd1.scriptserver.ru^
+||cpgweb.net^
+||bing0.ru^
 ||tizer24.ru^
 ||kintohis.com^
 ||tds.vrcteam.ru^
@@ -8851,6 +8858,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||onderlea.info
 ||tagdelivery.com^
 ||safari-lock.com^
 ||butterideareligious.xyz^
