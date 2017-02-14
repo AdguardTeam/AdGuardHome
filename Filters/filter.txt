@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-02-13 12:00:12
+! Last modified: 2017-02-14 12:03:16
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -2267,6 +2267,7 @@
 ||linkoffers.net^
 ||linkreferral.com^
 ||links.io^
+||links2revenue.com^
 ||linkshowoff.com^
 ||linksmart.com^
 ||linkstorm.net^
@@ -5617,6 +5618,7 @@
 ||virsualr.com^
 ||vopdi.com^
 ||vuadiolgy.net^
+||vualawilk.com^
 ||waddr.com^
 ||wensdteuy.com^
 ||wolopiar.com^
@@ -5651,6 +5653,13 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||byzgoso.ru^
+||ijrah.top^
+||vpdsd.top^
+||aahvz.top^
+||linkword.biz^
+||osnn.work^
+||aliexpresskupit.ru^
 ||zikhk3lvmwsovl6qfhslmfsd1.scriptserver.ru^
 ||cpgweb.net^
 ||bing0.ru^
@@ -7033,7 +7042,6 @@ thr.ru##.top_branding
 ||ihsibe.ru^
 ||iiutq.xyz^
 ||ijdenha.ru^
-||ijrah.top^
 ||ijtefix.ru^
 ||ikiif.com^
 ||ikritis.ru^
@@ -8858,6 +8866,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||pweaatek.com^
 ||onderlea.info
 ||tagdelivery.com^
 ||safari-lock.com^
@@ -9204,6 +9213,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||dm8ojo46iwxm2.cloudfront.net^
+||d36sxvmjoflc2i.cloudfront.net^
 ||dk2mvwe4uw0z3.cloudfront.net^
 ||d258hxk86e2ixw.cloudfront.net^
 ||d6swopgiplmy0.cloudfront.net^
