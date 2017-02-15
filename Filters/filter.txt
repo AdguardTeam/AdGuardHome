@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-02-14 12:03:16
+! Last modified: 2017-02-15 12:03:06
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -5653,6 +5653,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||ad.vo-media.ru^
 ||byzgoso.ru^
 ||ijrah.top^
 ||vpdsd.top^
@@ -8857,7 +8858,6 @@ ws*://video.docfilms.info^
 ||r6.galya.ru^
 ||real.attico-design.ru^
 ||rs.mail.ru^
-||rv.mastercity.ru^
 ||server.zombie-tv.org^
 ||showbiz.mail.ru^
 ||statistic.imgpay.ru^
