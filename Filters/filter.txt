@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-02-16 12:03:38
+! Last modified: 2017-02-17 12:03:11
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -593,6 +593,7 @@
 ||adtrieval.com^
 ||adtrix.com^
 ||adtrovert.com^
+||adtrue.com^
 ||adtruism.com^
 ||adtwirl.com^
 ||aduacni.com^
@@ -957,6 +958,7 @@
 ||bf-ad.net^
 ||bfast.com^
 ||bh3.net^
+||bidadx.com^
 ||bidgewatr.com^
 ||bidsystem.com^
 ||bidtheatre.com^
@@ -1713,6 +1715,7 @@
 ||forex-affiliate.net^
 ||forexyard.com^
 ||forifiha.com^
+||forkizata.com^
 ||forpyke.com^
 ||forrestersurveys.com^
 ||fphnwvkp.info^
@@ -5655,6 +5658,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||magnomita.com^
 .adonweb.ru^
 .adv-modulation.info^
 .adv-multithreading.info^
@@ -8873,6 +8877,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||checkhit.com^
 .bbelements.com^
 .doublepimp.com^
 .lockscalecompare.com^
