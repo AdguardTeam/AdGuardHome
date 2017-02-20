@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardFilters/issues/4405
+@@||h-sdk.online-metrix.net^
 ! https://github.com/AdguardTeam/AdguardFilters/issues/4230
 @@||tegna.sc.omtrdc.net^
 ! https://github.com/AdguardTeam/AdguardForiOS/issues/242
