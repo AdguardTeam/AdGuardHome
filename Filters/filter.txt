@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-02-17 12:03:11
+! Last modified: 2017-02-20 12:00:12
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -256,6 +256,7 @@
 ||adedy.com^
 ||adelement.com^
 ||ademails.com^
+||adenc.co.kr^
 ||adengage.com^
 ||adespresso.com^
 ||adexc.net^
@@ -309,6 +310,8 @@
 ||adimpact.com^
 ||adimperia.com^
 ||adimpression.net^
+||adinc.co.kr^
+||adinc.kr^
 ||adinch.com^
 ||adincon.com^
 ||adindigo.com^
@@ -851,6 +854,7 @@
 ||automatedtraffic.com^
 ||automateyourlist.com^
 ||avads.co.uk^
+||avajo.men^
 ||avalanchers.com^
 ||avalopaly.com^
 ||avazu.net^
@@ -1028,6 +1032,7 @@
 ||bostonwall.com^
 ||boteko.work^
 ||bounce.bar^
+||bounceexchange.com^
 ||boydadvertising.co.uk^
 ||boylesportsreklame.com^
 ||bpasyspro.com^
@@ -1547,6 +1552,7 @@
 ||ecto-ecto-uno.com^
 ||edgeads.org^
 ||edgevertise.com^
+||ednplus.com^
 ||edomz.net^
 ||eedr.org^
 ||effectivemeasure.net^
@@ -1885,6 +1891,7 @@
 ||hanaprop.com^
 ||happilyswitching.net^
 ||harrenmedianetwork.com^
+||hatagashira.com^
 ||havamedia.net^
 ||havetohave.com^
 ||havinates.com^
@@ -2466,6 +2473,7 @@
 ||mixmarket.biz^
 ||mixpo.com^
 ||mktseek.com^
+||ml314.com^
 ||mlnadvertising.com^
 ||mmadsgadget.com^
 ||mmgads.com^
@@ -2521,6 +2529,7 @@
 ||movad.net^
 ||mozcloud.net^
 ||mp3toavi.xyz^
+||mpk01.com^
 ||mpnrs.com^
 ||mpression.net^
 ||mprezchc.com^
@@ -2551,6 +2560,7 @@
 ||mylinkbox.com^
 ||mynativeads.com^
 ||mynewcarquote.us^
+||mynyx.men^
 ||myplayerhd.net^
 ||mysafeurl.com^
 ||mystaticfiles.com^
@@ -2561,6 +2571,7 @@
 ||mz28ismn.com^
 ||n130adserv.com^
 ||n161adserv.com^
+||n2s.co.kr^
 ||n388hkxg.com^
 ||n4403ad.doubleclick.net^
 ||nabbr.com^
@@ -2590,6 +2601,7 @@
 ||netaffiliation.com^
 ||netavenir.com^
 ||netflixalternative.net^
+||netinsight.co.kr^
 ||netliker.com^
 ||netloader.cc^
 ||netpondads.com^
@@ -2622,6 +2634,7 @@
 ||nicheadgenerator.com^
 ||nicheads.com^
 ||nighter.club^
+||nitmus.com^
 ||njkiho.info^
 ||nkredir.com^
 ||nm7xq628.click^
@@ -3095,9 +3108,11 @@
 ||relytec.com^
 ||remintrex.com^
 ||remiroyal.ro^
+||reople.co.kr^
 ||repaynik.com^
 ||replacescript.in^
 ||replase.cf^
+||replase.ga^
 ||requiredcollectfilm.info^
 ||resideral.com^
 ||resonance.pk^
@@ -3250,6 +3265,7 @@
 ||sharegods.com^
 ||shareresults.com^
 ||sharethrough.com^
+||shinobi.jp^
 ||shipthankrecognizing.info^
 ||shokala.com^
 ||shoogloonetwork.com^
@@ -3310,6 +3326,7 @@
 ||sms-mmm.com^
 ||sn00.net^
 ||snap.com^
+||snapvine.club^
 ||sndkorea.co.kr^
 ||so-excited.com^
 ||sochr.com^
@@ -3537,6 +3554,7 @@
 ||tmdn2015x9.com^
 ||tmpopenclose.click^
 ||tnyzin.ru^
+||toast.com^
 ||toboads.com^
 ||todich.ru^
 ||tokenads.com^
@@ -3629,6 +3647,7 @@
 ||trenpyle.com^
 ||triadmedianetwork.com^
 ||tribalfusion.com^
+||trido.club^
 ||trigami.com^
 ||trimpur.com^
 ||trk4.com^
@@ -4009,6 +4028,7 @@
 ||ziffdavis.com^
 ||zim-zim-zam.com^
 ||zipropyl.com^
+||zjk24.com^
 ||znaptag.com^
 ||zoglafi.info^
 ||zompmedia.com^
@@ -4154,7 +4174,9 @@
 ||azditojzcdkc.com^
 ||azeozrjk.com^
 ||azgyzdjexcxg.com^
+||azroydhgqcfv.com^
 ||azzvkcavtgwp.com^
+||bagoojzsqygg.com^
 ||bajofdblygev.com^
 ||bayvlsmaahou.com^
 ||bbheuxcancwj.com^
@@ -4162,6 +4184,7 @@
 ||bblznptpffqc.com^
 ||bboemhlddgju.com^
 ||bbopkapcgonb.com^
+||bdozkocgkljj.com^
 ||beghfkrygvxp.com^
 ||bfhavmgufvhn.com^
 ||bgarilrzlgez.com^
@@ -4182,6 +4205,7 @@
 ||bmubqabepbcb.com^
 ||bnkgacehxxmx.com^
 ||bocksnabswdq.com^
+||bolgooltxygp.com^
 ||bqptlqmtroto.com^
 ||bqqjowpigdnx.com^
 ||brqrtgjklary.com^
@@ -4198,6 +4222,7 @@
 ||byqmzodcdhhu.com^
 ||bzjtjfjteazqzmukjwhyzsaqdtouiopcmtmgdiytfdzboxdann.com^
 ||bzyrhqbdldds.com^
+||carsxardivaf.com^
 ||cbwrwcjdctrj.com^
 ||cbxqceuuwnaz.com^
 ||cbxtnudkklwh.com^
@@ -4226,6 +4251,7 @@
 ||ckryzlnafwyd.com^
 ||ckwpsghi.com^
 ||cmdjujqlfbts.com^
+||cmdotgwjhpqf.com^
 ||cmpsuzvr.com^
 ||cmqyhtqkhduy.com^
 ||cnfiukuediuy.com^
@@ -4287,6 +4313,7 @@
 ||dovltuzibsfs.com^
 ||dpallyihgtgu.com^
 ||dppcevxbshdl.com^
+||dqpamcouthqv.com^
 ||drbwugautcgh.com^
 ||drtqfejznjnl.com^
 ||dsevjzklcjjb.com^
@@ -4313,6 +4340,7 @@
 ||edvbyybaviln.com^
 ||edwywpsufuda.com^
 ||eejcqlenlsko.com^
+||eepuawuevovi.com^
 ||eeqabqioietkquydwxfgvtvpxpzkuilfcpzkplhcckoghwgacb.com^
 ||eerdckbwujcx.com^
 ||efcnevmojvfs.com^
@@ -4320,6 +4348,7 @@
 ||eidzaqzygtvq.com^
 ||eifbewnmtgpi.com^
 ||eiibdnjlautz.com^
+||eiwcqowbowqo.com^
 ||ejgxyfzciwyi.com^
 ||ejjrckrhigez.com^
 ||ejwmxjttljbe.com^
@@ -4417,6 +4446,7 @@
 ||gjxdibyzvczd.com^
 ||gkgdqahkcbmykurmngzrrolrecfqvsjgqdyujvgdrgoezkcobq.com^
 ||gkiryieltcbg.com^
+||gllkdkxygckb.com^
 ||glnqvqbedbmvtcdzcokrfczopbddhopygrvrnlgmalgvhnsfsc.com^
 ||glslciwwvtxn.com^
 ||gmpdixdh.com^
@@ -4564,6 +4594,7 @@
 ||jcnoeyqsdfrc.com^
 ||jdlnquri.com^
 ||jeyoxmhhnofdhaalzlfbrsfmezfxqxgwqjkxthzptjdizuyojh.com^
+||jfaqiomgvajb.com^
 ||jffwwuyychxw.com^
 ||jgqkrvjtuapt.com^
 ||jhupypvmcsqfqpbxbvumiaatlilzjrzbembarnhyoochsedzvi.com^
@@ -4597,6 +4628,7 @@
 ||jwfdyujffrzt.com^
 ||jyauuwrrigim.com^
 ||jydbctzvbqrh.com^
+||jzbarlrhbicg.com^
 ||jzekquhmaxrk.com^
 ||jzqharwtwqei.com^
 ||kadjwdpzxdxd.com^
@@ -4605,6 +4637,7 @@
 ||kayfdraimewk.com^
 ||kayophjgzqdq.com^
 ||kbrnfzgglehh.com^
+||kbsceyleonkq.com^
 ||kceikbfhsnet.com^
 ||kdvcvkwwtbwn.com^
 ||kecldktirqzk.com^
@@ -4649,6 +4682,7 @@
 ||kyhkyreweusn.com^
 ||kylqpeevrkgh.com^
 ||kyowarob.com^
+||kyzhecmvpiaw.com^
 ||kzwddxlpcqww.com^
 ||lazkslkkmtpy.com^
 ||lbfryfttoihl.com^
@@ -4675,11 +4709,13 @@
 ||lmejuamdbtwc.com^
 ||lmuxaeyapbqxszavtsljaqvmlsuuvifznvttuuqfcxcbgqdnn.com^
 ||lnzcmgguxlac.com^
+||lpiqwtsuduhh.com^
 ||lplqyocxmify.com^
 ||lppoblhorbrf.com^
 ||lpwvdgfo.com^
 ||lroywnhohfrj.com^
 ||lsegvhvzrpqc.com^
+||lsslotuojpud.com^
 ||lstkfdmmxbmv.com^
 ||lvlvpdztdnro.com^
 ||lvrvufurxhgp.com^
@@ -4704,6 +4740,7 @@
 ||mfmikwfdopmiusbveskwmouxvafvzurvklwyfamxlddexgrtci.com^
 ||mftbfgcusnzl.com^
 ||mgrxsztbcfeg.com^
+||mhghzpotwnoh.com^
 ||mhrfhwlqsnzf.com^
 ||mhwxckevqdkx.com^
 ||miadbbnreara.com^
@@ -4714,6 +4751,7 @@
 ||mkzynqxqlcxk.com^
 ||mlbzafthbtsl.com^
 ||mlgrrqymdsyk.com^
+||mlmjxddzdazr.com^
 ||mmdcibihoimt.com^
 ||mmdifgneivng.com^
 ||mmeddgjhplqy.com^
@@ -4751,6 +4789,7 @@
 ||nbkwnsonadrb.com^
 ||nbrwtboukesx.com^
 ||ndemlviibdyc.com^
+||ndgmwuxzxppa.com^
 ||ndkvzncsuxgx.com^
 ||ndxidnvvyvwx.com^
 ||nefczemmdcqi.com^
@@ -4758,6 +4797,7 @@
 ||negdrvgo.com^
 ||nfdntqlqrgwc.com^
 ||nfniziqm.com^
+||nfsqrijauncb.com^
 ||nfxusyviqsnh.com^
 ||ngmckvucrjbnyybvgesxozxcwpgnaljhpedttelavqmpgvfsxg.com^
 ||nguooqblyjrz.com^
@@ -4793,6 +4833,7 @@
 ||nwfdrxktftep.com^
 ||nybpurpgexoe.com^
 ||nyqogyaflmln.com^
+||nzcpdaboaayv.com^
 ||oalicqudnfhf.com^
 ||oawleebf.com^
 ||oazojnwqtsaj.com^
@@ -4807,8 +4848,10 @@
 ||ofgapiydisrw.com^
 ||ofghrodsrqkg.com^
 ||ofjampfenbwv.com^
+||ofmuojegzbxo.com^
 ||oguorftbvegb.com^
 ||oiffrtkdgoef.com^
+||ojngisbfwwyp.com^
 ||okasfshomqmg.com^
 ||okgfvcourjeb.com^
 ||okmuxdbq.com^
@@ -4839,6 +4882,7 @@
 ||owqobhxvaack.com^
 ||owwewfaxvpch.com^
 ||oytrrdlrovcn.com^
+||oyzsverimywg.com^
 ||ozhwenyohtpb.com^
 ||pbnnsras.com^
 ||pcebrrqydcox.com^
@@ -4913,6 +4957,7 @@
 ||qkpwdakgxynv.com^
 ||qkuprxbmkeqp.com^
 ||qljczwei.com^
+||qmamdjtoykgl.com^
 ||qndqwtrwguhv.com^
 ||qnpolbme.com^
 ||qnqrmqwehcpa.com^
@@ -4948,6 +4993,8 @@
 ||reebinbxhlva.com^
 ||rffqzbqqmuhaomjpwatukocrykmesssfdhpjuoptovsthbsswd.com^
 ||rfvicvayyfsp.com^
+||rfyphhvcczyq.com^
+||rgmgocplioed.com^
 ||rgztepyoefvm.com^
 ||rhfntvnbxfxu.com^
 ||rhfvzboqkjfmabakkxggqdmulrsxmisvuzqijzvysbcgyycwfk.com^
@@ -4960,8 +5007,10 @@
 ||rkrpvzgzdwqaynyzxkuviotbvibnpqaktcioaaukckhbvkognu.com^
 ||rkvpcjiuumbk.com^
 ||rlypbeouoxxw.com^
+||rmbilhzcytee.com^
 ||rmetgarrpiouttmwqtuajcnzgesgozrihrzwmjlpxvcnmdqath.com^
 ||rmjxcosbfgyl.com^
+||rmlzgvnuqxlp.com^
 ||rnrbvhaoqzcksxbhgqtrucinodprlsmuvwmaxqhxngkqlsiwwp.com^
 ||rpczohkv.com^
 ||rpspeqqiddjm.com^
@@ -5009,9 +5058,11 @@
 ||snjhhcnr.com^
 ||snpevihwaepwxapnevcpiqxrsewuuonzuslrzrcxqwltupzbwu.com^
 ||sokanffuyinr.com^
+||spbflxvnheih.com^
 ||spfrlpjmvkmq.com^
 ||sqnezuqjdbhe.com^
 ||sqtsuzrfefwy.com^
+||srfizvugkheq.com^
 ||sriaqmzx.com^
 ||srizwhcdjruf.com^
 ||srksyzqzcetq.com^
@@ -5053,6 +5104,7 @@
 ||thnqemehtyfe.com^
 ||thvdzghlvfoh.com^
 ||thxdbyracswy.com^
+||tienribwjswv.com^
 ||tigzuaivmtgo.com^
 ||tijosnqojfmv.com^
 ||tikwglketskr.com^
@@ -5095,6 +5147,7 @@
 ||udbwpgvnalth.com^
 ||udvbtgkxwnap.com^
 ||uebcqdgigsid.com^
+||uebyotcdyshk.com^
 ||uecjpplzfjur.com^
 ||uerhhgezdrdi.com^
 ||uerladwdpkge.com^
@@ -5108,6 +5161,7 @@
 ||ujtyosgemtnx.com^
 ||ujyyciaedxqr.com^
 ||ukjzdydnveuc.com^
+||ukxeudykhgdi.com^
 ||ulffbcunqnpv.com^
 ||ulpxnhiugynh.com^
 ||umboffikfkoc.com^
@@ -5133,6 +5187,7 @@
 ||uzesptwcwwmt.com^
 ||uzqtaxiorsev.com^
 ||uzreuvnlizlz.com^
+||vaghwpbslvbu.com^
 ||vamuglchdpte.com^
 ||vaoajrwmjzxp.com^
 ||vbupfouyymse.com^
@@ -5171,6 +5226,8 @@
 ||vqaprwkiwset.com^
 ||vqfksrwnxodc.com^
 ||vrqajyuu.com^
+||vsgherxdcfon.com^
+||vshsjxfjehju.com^
 ||vtcquvxsaosz.com^
 ||vtoygnkflehv.com^
 ||vtqdavdjsymt.com^
@@ -5202,6 +5259,7 @@
 ||wephuklsjobdxqllpeklcrvquyyifgkictuepzxxhzpjbclmcq.com^
 ||wepmmzpypfwq.com^
 ||wepzfylndtwu.com^
+||wfbqjdwwunle.com^
 ||wfiejyjdlbsrkklvxxwkferadhbcwtxrotehopgqppsqwluboc.com^
 ||wgefjuno.com^
 ||wggnmbmedlmo.com^
@@ -5224,6 +5282,7 @@
 ||wqbvqmremvgp.com^
 ||wqnxcthitqpf.com^
 ||wqpcxujvkvhr.com^
+||wqrwopgkkohk.com^
 ||wqzaloayckal.com^
 ||wrmcfyzl.com^
 ||wrmwikcnynbk.com^
@@ -5257,6 +5316,7 @@
 ||xdwqixeyhvqd.com^
 ||xegavyzkxowj.com^
 ||xfgqvqoyzeiu.com^
+||xgzybmbwfmjd.com^
 ||xhdzcofomosh.com^
 ||xhojlvfznietogsusdiflwvxpkfhixbgdxcnsdshxwdlnhtlih.com^
 ||xhqilhfrfkoecllmthusrpycaogrfivehyymyqkpmxbtomexwl.com^
@@ -5280,12 +5340,14 @@
 ||xtqfguvsmroo.com^
 ||xttrofww.com^
 ||xuwptpzdwyaw.com^
+||xwavjdqttkum.com^
 ||xwmbaxufcdxb.com^
 ||xwwkuacmqblu.com^
 ||xwwsojvluzsb.com^
 ||xxwpminhccoq.com^
 ||xxyafiswqcqz.com^
 ||xxzkqbdibdgq.com^
+||xycbrnotvcat.com^
 ||yaifxxudxyns.com^
 ||yaqysxlohdyg.com^
 ||yasltdlichfd.com^
@@ -5299,6 +5361,7 @@
 ||yfkwqoswbghk.com^
 ||yflpucjkuwvh.com^
 ||ygrtbssc.com^
+||yhsxsjzyqfoq.com^
 ||yhzobwqqecaa.com^
 ||yiyycuqozjwc.com^
 ||yjjglyoytiew.com^
@@ -5322,6 +5385,7 @@
 ||ytiyuqfxjbke.com^
 ||ytwtqabrkfmu.com^
 ||yupwqyocvvnw.com^
+||yvvafcqddpmd.com^
 ||ywbfhuofnvuk.com^
 ||yxbtyzqcczra.com^
 ||yyajvvjrcigf.com^
@@ -5336,6 +5400,7 @@
 ||zbtqpkimkjcr.com^
 ||zbxzcrldzzgv.com^
 ||zfkkmayphqrw.com^
+||zfmqywrpazlx.com^
 ||zfqpjxuycxdl.com^
 ||zfrzdepuaqebzlenihciadhdjzujnexvnksksqtazbaywgmzwl.com^
 ||zgalejbegahc.com^
@@ -5422,6 +5487,7 @@
 ||buamingh.com^
 ||buandirs.net^
 ||buangkoj.com^
+||buarier.net^
 ||buatongz.net^
 ||buhafr.net^
 ||buoalait.com^
@@ -5658,6 +5724,10 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||oconner.link^
+||video-play.ru^
+||geotraff.com^
+||sad2tizer.ru^
 ||magnomita.com^
 .adonweb.ru^
 .adv-modulation.info^
@@ -8014,7 +8084,6 @@ thr.ru##.top_branding
 ||sherlockseries.ru^
 ||shigopo.ru^
 ||shinkado.ru^
-||shinobi.jp^
 ||shotyfy.com^
 ||shoveac.com^
 ||show.everytell.com^
@@ -8811,6 +8880,10 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||kinogo.r.worldssl.net^
+||pipki.r.worldssl.net^
+||json.smotri.com^
+://*.freeimges.ru^
 .forpicfree.ru^
 ://*.anime-free.net^
 ://*.freerutor.com^
@@ -9266,13 +9339,24 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+! General URL
+!
+||cloudads-a.akamaihd.net^
+! Facebook Ad Choices
+!
+! Ad servers
+!
+||rtb.platform.glispa.com^
+||ads.yemonisoni.com^
+||adflake.com^
+||ads.aitype.net^
+||ad-creatives-public.commondatastorage.googleapis.com^
 ://o0e.ru^
 ||1mp.mobi^
 ||31.14.252.148^
 ||abtest.swrve.com^
 ||ad*.nexage.com^
 ||ad-brix.com^
-||ad-creatives-public.commondatastorage.googleapis.com^
 ||ad-x.co.uk^
 ||ad.apps.fm^
 ||ad.apsalar.com^
@@ -9398,7 +9482,6 @@ ws*://video.docfilms.info^
 ||chartboost.com^
 ||clk.taptica.com^
 ||clkfeed.com^
-||cloudads-a.akamaihd.net^
 ||cntcash.ru^
 ||config.tremorhub.com^
 ||content.ad^
@@ -9592,9 +9675,6 @@ ws*://video.docfilms.info^
 ||yemonisoni.com^
 ||yhdichan.com^
 ||youmi.net^
-! HTTPS
-! Facebook Ad Choices
-! ||graph.facebook.com/network_ads_common/
 !----- For HTTPS websites when HTTPS filtering is disabled ------
 ||n152adserv.com^
 ||rg.yottos.com^
@@ -9609,6 +9689,8 @@ ws*://video.docfilms.info^
 ||p.d.0mme.com^
 ||p.d.rpts.org^
 !
+||conf.international.baidu.com^
+||pasta.esfile.duapps.com^
 //t100.ru^
 ://tru.am^
 ||0emm.com^
@@ -10001,7 +10083,6 @@ ws*://video.docfilms.info^
 ||boomtrain.com^
 ||botscanner.com^
 ||botsvisit.com^
-||bounceexchange.com^
 ||bouncex.com^
 ||br.phorm.com^
 ||brat-online.ro^
@@ -11248,7 +11329,6 @@ ws*://video.docfilms.info^
 ||mkt51.net^
 ||mkt941.com^
 ||mktoresp.com^
-||ml314.com^
 ||mlclick.com^
 ||mletracker.com^
 ||mlno6.com^
