@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-02-20 12:00:12
+! Last modified: 2017-02-21 12:03:22
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -5450,6 +5450,7 @@
 ! Yavli.com
 ||247view.net^
 ||absilf.com^
+||absilf.link^
 ||absquint.com^
 ||acceletor.net^
 ||accltr.com^
@@ -5470,12 +5471,14 @@
 ||baungarnr.com^
 ||biankord.net^
 ||biastoful.net^
+||billaruze.net^
 ||blaundorz.com^
 ||blazwuatr.com^
 ||bliankerd.net^
 ||blindury.com^
 ||blipi.net^
 ||blowwor.com^
+||blowwor.link^
 ||bluandi.com^
 ||bluazard.net^
 ||bluposr.com^
@@ -5486,6 +5489,7 @@
 ||bualtwif.com^
 ||buamingh.com^
 ||buandirs.net^
+||buandorw.com^
 ||buangkoj.com^
 ||buarier.net^
 ||buatongz.net^
@@ -5556,8 +5560,11 @@
 ||frzdrn.info^
 ||fuandarst.com^
 ||genegd.com^
+||gerengd.link^
 ||gghfncd.net^
 ||gruadhc.com^
+||gruanchd.link^
+||gruandors.net^
 ||gualdoniye.com^
 ||guaperty.net^
 ||gusufrs.me^
@@ -5582,7 +5589,9 @@
 ||jellr.net^
 ||jerwing.net^
 ||jianscoat.com^
+||juapinesr.net^
 ||juarinet.com^
+||juosanf.com^
 ||juruasikr.net^
 ||jusukrs.com^
 ||kidasfid.com^
@@ -5590,6 +5599,8 @@
 ||kioshow.com^
 ||knoandr.com^
 ||kowodan.net^
+||kriaspuy.net^
+||kuamanan.com^
 ||kuangard.net^
 ||leanoisgo.com^
 ||lesuard.com^
@@ -5612,6 +5623,8 @@
 ||nuaknamg.net^
 ||nualoghy.com^
 ||nuzilung.net^
+||oaulpos.net^
+||ootloakr.com^
 ||oplo.org^
 ||opner.co^
 ||opter.co^
@@ -5620,6 +5633,7 @@
 ||pianoldor.com^
 ||picstunoar.com^
 ||pikkr.net^
+||plex2.com^
 ||poaurtor.com^
 ||polawrg.com^
 ||polephen.com^
@@ -5627,7 +5641,9 @@
 ||prndi.net^
 ||puoplord.net^
 ||q3sift.com^
+||qaulinf.com^
 ||qewa33a.com^
+||quandrer.link^
 ||qulifiad.com^
 ||qzsccm.com^
 ||r3seek.com^
@@ -5644,6 +5660,7 @@
 ||ruamupr.com^
 ||ruandorg.com^
 ||ruandr.com^
+||ruandr.link^
 ||ruap-oldr.net^
 ||rugistoto.net^
 ||rugistratuan.com^
@@ -5652,6 +5669,7 @@
 ||shoapinh.com^
 ||sightr.net^
 ||simusangr.com^
+||slacaxy.com^
 ||smethgiar.com^
 ||spamualfr.com^
 ||speandorf.net^
@@ -5666,6 +5684,7 @@
 ||sxrrxa.net^
 ||t3sort.com^
 ||t7row.com^
+||tersur.link^
 ||tersur.net^
 ||th4wwe.net^
 ||thiscdn.com^
@@ -5688,6 +5707,7 @@
 ||viewscout.com^
 ||virsualr.com^
 ||vopdi.com^
+||vpuoplord.link^
 ||vuadiolgy.net^
 ||vualawilk.com^
 ||waddr.com^
@@ -8880,6 +8900,7 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||b13.penzainform.ru^
 ||kinogo.r.worldssl.net^
 ||pipki.r.worldssl.net^
 ||json.smotri.com^
@@ -9298,6 +9319,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d2pppxxtaciku9.cloudfront.net^
 ||beap-bc.yahoo.com^
 ||beap1.cb.g01.yahoodns.net^
 ||d17rlarvg2khuc.cloudfront.net^
@@ -13090,6 +13112,8 @@ iapp-cp.nuggad.net^
 !--------------------
 !
 ! Adguard DNS exceptions
+! https://github.com/AdguardTeam/AdguardFilters/issues/4405
+@@||h-sdk.online-metrix.net^
 ! https://github.com/AdguardTeam/AdguardFilters/issues/4230
 @@||tegna.sc.omtrdc.net^
 ! https://github.com/AdguardTeam/AdguardForiOS/issues/242
