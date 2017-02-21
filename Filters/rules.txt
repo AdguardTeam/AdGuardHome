@@ -30,9 +30,6 @@
 ||admicro.vn^
 ||admicro*.vcmedia.vn^
 ||adi.vcmedia.vn^
-||vcplayer.vcmedia.vn^
-||video-thumbs.vcmedia.vn^
-||static.hosting.vcmedia.vn^
 ||adnetwork.vn^
 ||adtimaserver.vn^
 ||ad360.vn^
