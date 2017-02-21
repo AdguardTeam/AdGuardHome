@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-02-21 12:03:22
+! Last modified: 2017-02-21 16:13:06
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -13078,9 +13078,6 @@ iapp-cp.nuggad.net^
 ||admicro.vn^
 ||admicro*.vcmedia.vn^
 ||adi.vcmedia.vn^
-||vcplayer.vcmedia.vn^
-||video-thumbs.vcmedia.vn^
-||static.hosting.vcmedia.vn^
 ||adnetwork.vn^
 ||ad360.vn^
 ||anthill.vn^
