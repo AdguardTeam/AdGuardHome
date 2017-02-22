@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-02-21 16:13:06
+! Last modified: 2017-02-22 12:03:07
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -5744,6 +5744,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||com495.ru^
 ||oconner.link^
 ||video-play.ru^
 ||geotraff.com^
@@ -8900,6 +8901,7 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+.freepicsel.ru^
 ||b13.penzainform.ru^
 ||kinogo.r.worldssl.net^
 ||pipki.r.worldssl.net^
@@ -12786,6 +12788,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||bonfire.spklw.com^
 |http://r.i.ua^
 ||adanalytics.openload.co^
 ||analyticapi.piri.net^
