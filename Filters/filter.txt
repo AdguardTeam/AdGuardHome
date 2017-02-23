@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-02-22 12:03:07
+! Last modified: 2017-02-23 12:00:13
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1032,7 +1032,6 @@
 ||bostonwall.com^
 ||boteko.work^
 ||bounce.bar^
-||bounceexchange.com^
 ||boydadvertising.co.uk^
 ||boylesportsreklame.com^
 ||bpasyspro.com^
@@ -3554,7 +3553,6 @@
 ||tmdn2015x9.com^
 ||tmpopenclose.click^
 ||tnyzin.ru^
-||toast.com^
 ||toboads.com^
 ||todich.ru^
 ||tokenads.com^
@@ -5623,7 +5621,6 @@
 ||nuaknamg.net^
 ||nualoghy.com^
 ||nuzilung.net^
-||oaulpos.net^
 ||ootloakr.com^
 ||oplo.org^
 ||opner.co^
@@ -5634,17 +5631,20 @@
 ||picstunoar.com^
 ||pikkr.net^
 ||plex2.com^
+||poaulpos.net^
 ||poaurtor.com^
 ||polawrg.com^
 ||polephen.com^
 ||prfffc.info^
 ||prndi.net^
+||puoplord.link^
 ||puoplord.net^
 ||q3sift.com^
 ||qaulinf.com^
 ||qewa33a.com^
 ||quandrer.link^
 ||qulifiad.com^
+||qwewas.info^
 ||qzsccm.com^
 ||r3seek.com^
 ||rdige.com^
@@ -5723,6 +5723,7 @@
 ||xplrer.co^
 ||xylopologyn.com^
 ||yardr.net^
+||yavli.link^
 ||yerstrd.net^
 ||yobr.net^
 ||yodr.net^
@@ -10107,6 +10108,7 @@ ws*://video.docfilms.info^
 ||boomtrain.com^
 ||botscanner.com^
 ||botsvisit.com^
+||bounceexchange.com^
 ||bouncex.com^
 ||br.phorm.com^
 ||brat-online.ro^
@@ -12788,6 +12790,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||intent.cbsi.com^
 ||bonfire.spklw.com^
 |http://r.i.ua^
 ||adanalytics.openload.co^
