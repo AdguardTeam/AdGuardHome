@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-02-23 12:00:13
+! Last modified: 2017-02-24 12:03:08
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -770,6 +770,7 @@
 ||amertazy.com^
 ||amgdgt.com^
 ||amp.rd.linksynergy.com^
+||amp.services^
 ||ampxchange.com^
 ||anastasiasaffiliate.com^
 ||andbeyond.media^
@@ -889,7 +890,6 @@
 ||bamboocast.com^
 ||bamj630h.tech^
 ||bananaflippy.com^
-||bandelcot.com^
 ||banner-clix.com^
 ||banner-rotation.com^
 ||bannerbank.ru^
@@ -1255,7 +1255,6 @@
 ||coinsicmp.com^
 ||cointraffic.in^
 ||cointraffic.io^
-||cold-cold-freezing.com^
 ||collection-day.com^
 ||collective-media.net^
 ||colliersads.com^
@@ -1454,8 +1453,6 @@
 ||disqusads.com^
 ||distilled.ie^
 ||districtm.ca^
-||dit-dit-dot.com^
-||ditwrite.com^
 ||dj-updates.com^
 ||dl-rms.com^
 ||dltags.com^
@@ -2604,7 +2601,6 @@
 ||netliker.com^
 ||netloader.cc^
 ||netpondads.com^
-||netrosol.net^
 ||netseer.com^
 ||netshelter.net^
 ||netsolads.com^
@@ -2613,8 +2609,6 @@
 ||networld.hk^
 ||networldmedia.net^
 ||neudesicmediagroup.com^
-||new-new-years.com^
-||new17write.com^
 ||newdosug.eu^
 ||newgentraffic.com^
 ||newideasdaily.com^
@@ -2808,7 +2802,6 @@
 ||partycasino.com^
 ||partypartners.com^
 ||partypoker.com^
-||parwrite.com^
 ||pas-rahav.com^
 ||passionfruitads.com^
 ||passive-earner.com^
@@ -3499,7 +3492,6 @@
 ||tec-tec-boom.com^
 ||techclicks.net^
 ||technoratimedia.com^
-||tek-tek-trek.com^
 ||telemetryverification.net^
 ||telwrite.com^
 ||tennerlist.com^
@@ -3537,13 +3529,10 @@
 ||thoseads.com^
 ||thoughtleadr.com^
 ||thoughtsondance.info^
-||tic-tic-bam.com^
-||tic-tic-toc.com^
 ||ticrite.com^
 ||tidaltv.com^
 ||tightexact.net^
 ||tiller.co^
-||tin-tin-win.com^
 ||tinbuadserv.com^
 ||tisadama.com^
 ||tiser.com^
@@ -3574,7 +3563,6 @@
 ||torerolumiere.net^
 ||toroadvertising.com^
 ||toroadvertisingmedia.com^
-||torpsol.com^
 ||torrida.net^
 ||torrpedoads.net^
 ||torvind.com^
@@ -3666,7 +3654,6 @@
 ||tubemogul.com^
 ||tubereplay.com^
 ||tumri.net^
-||tur-tur-key.com^
 ||turboadv.com^
 ||turbotraff.net^
 ||turn.com^
@@ -3735,7 +3722,6 @@
 ||v2cigs.com^
 ||v2mlblack.biz^
 ||v3g4s.com^
-||vacwrite.com^
 ||vadpay.com^
 ||validclick.com^
 ||valuead.com^
@@ -3931,7 +3917,6 @@
 ||xfs5yhr1.com^
 ||xgraph.net^
 ||xjfjx8hw.com^
-||xmas-xmas-wow.com^
 ||xmasdom.com^
 ||xmaswrite.com^
 ||xmlconfig.ltassrv.com^
@@ -4024,7 +4009,6 @@
 ||zferral.com^
 ||zidae.com^
 ||ziffdavis.com^
-||zim-zim-zam.com^
 ||zipropyl.com^
 ||zjk24.com^
 ||znaptag.com^
@@ -4039,6 +4023,30 @@
 ||zxxds.net^
 ||zyiis.net^
 ||zypenetwork.com^
+! /Tag adservers
+||badtopwitch.work^
+||bandelcot.com^
+||belwrite.com^
+||cold-cold-freezing.com^
+||del-del-ete.com^
+||dit-dit-dot.com^
+||ditdotsol.com^
+||ditwrite.com^
+||erniphiq.com^
+||netrosol.net^
+||new-new-years.com^
+||new17write.com^
+||newsadst.com^
+||parwrite.com^
+||tek-tek-trek.com^
+||tic-tic-bam.com^
+||tic-tic-toc.com^
+||tin-tin-win.com^
+||tlootas.org^
+||tur-tur-key.com^
+||vacwrite.com^
+||xmas-xmas-wow.com^
+||zim-zim-zam.com^
 ! Mobile
 ||adbuddiz.com^
 ||adcolony.com^
@@ -4771,6 +4779,7 @@
 ||mpzuzvqyuvbh.com^
 ||mqphkzwlartq.com^
 ||mrfveznetjtp.com^
+||mrnbzzwjkusv.com^
 ||mrqsuedzvrrt.com^
 ||msrwoxdkffcl.com^
 ||mszfmpseoqbu.com^
@@ -5206,6 +5215,7 @@
 ||vhiaxerjzbqi.com^
 ||vhwuphctrfil.com^
 ||vivcdctagoij.com^
+||vivetivcuggz.com^
 ||vizsvhgfkcli.com^
 ||vjrpdagpjwyt.com^
 ||vjzttumdetao.com^
@@ -6266,7 +6276,6 @@ thr.ru##.top_branding
 ||berryfico.com^
 ||best-cargo.ru^
 ||best-solution-for-you.ru^
-||best.imgbum.net^
 ||bestadlinks.ru^
 ||bestbestgirlz.in.net^
 ||bestdevchenki.pw^
@@ -7243,7 +7252,6 @@ thr.ru##.top_branding
 ||litenicholraamos.uk.to^
 ||litiumo.com^
 ||littel.biz
-||littel.biz^
 ||littel.net^
 ||litthegre.com^
 ||liveclix.net^
@@ -9050,7 +9058,6 @@ ws*://video.docfilms.info^
 ||axecash.com^
 ||az708531.vo.msecnd.net^
 ||b.rmgserving.com^
-||badtopwitch.work^
 ||banner.dabi.ir^
 ||bannery.hledejceny.cz^
 ||bbcdn.go.evolutionmedia.bbelements.co
