@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-02-24 12:03:08
+! Last modified: 2017-02-27 12:00:09
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -227,6 +227,7 @@
 ||adcdnx.com^
 ||adcentriconline.com^
 ||adcfrthyo.tk^
+||adchannels.in^
 ||adchap.com^
 ||adchemical.com^
 ||adchoice.co.za^
@@ -678,6 +679,7 @@
 ||adzerk.net^
 ||adzhub.com^
 ||adziff.com^
+||adzintext.com^
 ||adzmedia.com^
 ||adzonk.com^
 ||adzouk.com^
@@ -1233,6 +1235,7 @@
 ||clkrev.com^
 ||clmbtech.com^
 ||clnk.me^
+||cloudiiv.com^
 ||cloudioo.net^
 ||cloudset.xyz^
 ||cltomedia.info^
@@ -2327,6 +2330,7 @@
 ||m10s8.com^
 ||m2.ai^
 ||m2pub.com^
+||m30w.net^
 ||m4pub.com^
 ||m57ku6sm.com^
 ||m5prod.net^
@@ -2861,6 +2865,7 @@
 ||pixeltrack66.com^
 ||pixfuture.net^
 ||pixiv.org^
+||pixtrack.in^
 ||pixxur.com^
 ||plannto.com^
 ||platinumadvertisement.com^
@@ -2888,6 +2893,7 @@
 ||polmontventures.com^
 ||polyad.net^
 ||polydarth.com^
+||pontypriddcrick.com^
 ||poolnoodle.tech^
 ||popads.net^
 ||popadscdn.net^
@@ -3428,6 +3434,7 @@
 ||suggesttool.com^
 ||suite6ixty6ix.com^
 ||suitesmart.com^
+||sulidshyly.com^
 ||sulvo.co^
 ||sumarketing.co.uk^
 ||sunmedia.net^
@@ -3806,6 +3813,7 @@
 ||vuiads.net^
 ||w00tads.com^
 ||w00tmedia.net^
+||w3bnr.in^
 ||w3exit.com^
 ||w4.com^
 ||w5statistics.info^
@@ -4083,8 +4091,10 @@
 ! Admiral
 ||brassrule.com^
 ||breezybath.com^
+||concernrain.com^
 ||fanaticalfly.com^
 ||metapelite.com^
+||ritzysponge.com^
 ||roastedvoice.com^
 ! Non-English (instead of whitelisting ads)
 ||adhood.com^
@@ -4134,6 +4144,7 @@
 ||aatmytrykqhi.com^
 ||acjmkenepeyn.com^
 ||acnsavlosahs.com^
+||acxujxzdluum.com^
 ||adtbomthnsyz.com^
 ||adudzlhdjgof.com^
 ||afedispdljgb.com^
@@ -4315,6 +4326,7 @@
 ||dnxpseduuehm.com^
 ||dobgfkflsnmpaeetycphmcloiijxbvxeyfxgjdlczcuuaxmdzz.com^
 ||dobjgpqzygow.com^
+||dodwnkpzaned.com^
 ||dohhehsgnxfl.com^
 ||dovltuzibsfs.com^
 ||dpallyihgtgu.com^
@@ -4325,6 +4337,7 @@
 ||dsevjzklcjjb.com^
 ||dsmysdzjhxot.com^
 ||dswwghrlwwcm.com^
+||dtmwwpykiqng.com^
 ||dubzmzpdkddi.com^
 ||duchmcmpmqqu.com^
 ||dulcetcgvcxr.com^
@@ -4522,6 +4535,7 @@
 ||hplgpoicsnea.com^
 ||hpmgdwvvqulp.com^
 ||hpxxzfzdocinivvulcujuhypyrniicjfauortalmjerubjgaja.com^
+||hqaajpaedpux.com^
 ||hqnyahlpmehp.com^
 ||hsvqfvjidloc.com^
 ||htllanmhrnjrbestmyabzhyweaccazvuslvadtvutfiqnjyavg.com^
@@ -4721,6 +4735,7 @@
 ||lpwvdgfo.com^
 ||lroywnhohfrj.com^
 ||lsegvhvzrpqc.com^
+||lshwezesshks.com^
 ||lsslotuojpud.com^
 ||lstkfdmmxbmv.com^
 ||lvlvpdztdnro.com^
@@ -4732,6 +4747,7 @@
 ||lyifwfhdizcc.com^
 ||lytpdzqyiygthvxlmgblonknzrctcwsjycmlcczifxbkquknsr.com^
 ||lyzskjigkxwy.com^
+||lzbzwpmozwfy.com^
 ||lzmovatu.com^
 ||lzvnaaozpqyb.com^
 ||maboflgkaxqn.com^
@@ -4779,6 +4795,7 @@
 ||mpzuzvqyuvbh.com^
 ||mqphkzwlartq.com^
 ||mrfveznetjtp.com^
+||mrkzgpbaapif.com^
 ||mrnbzzwjkusv.com^
 ||mrqsuedzvrrt.com^
 ||msrwoxdkffcl.com^
@@ -4819,6 +4836,7 @@
 ||nmaafswoiecv.com^
 ||nmayxdwzhaus.com^
 ||nmhhnyqmxgku.com^
+||nnbestmblotl.com^
 ||nnigsvoorscmgnyobwuhrgnbcgtiicyflrtpwxsekldubasizg.com^
 ||nnjiluslnwli.com^
 ||nnvjigagpwsh.com^
@@ -4891,6 +4909,7 @@
 ||oytrrdlrovcn.com^
 ||oyzsverimywg.com^
 ||ozhwenyohtpb.com^
+||ozwtmmcdglos.com^
 ||pbnnsras.com^
 ||pcebrrqydcox.com^
 ||pdbaewqjyvux.com^
@@ -5013,6 +5032,7 @@
 ||rklluqchluxg.com^
 ||rkrpvzgzdwqaynyzxkuviotbvibnpqaktcioaaukckhbvkognu.com^
 ||rkvpcjiuumbk.com^
+||rllvjujeyeuy.com^
 ||rlypbeouoxxw.com^
 ||rmbilhzcytee.com^
 ||rmetgarrpiouttmwqtuajcnzgesgozrihrzwmjlpxvcnmdqath.com^
@@ -5093,6 +5113,7 @@
 ||szyejlnlvnmy.com^
 ||tabeduhsdhlkalelecelxbcwvsfyspwictbszchbbratpojhlb.com^
 ||tailpdulprkp.com^
+||tammfmhtfhut.com^
 ||tamqqjgbvbps.com^
 ||taodggarfrmd.com^
 ||tapihmxemcksuvleuzpodsdfubceomxfqayamnsoswxzkijjmw.com^
@@ -5254,6 +5275,7 @@
 ||vywycfxgxqlv.com^
 ||vzhbfwpo.com^
 ||vzmnvqiqgxqk.com^
+||wabxsybclllz.com^
 ||waentchjzuwq.com^
 ||watxeoifxbjo.com^
 ||wbqliddtojkf.com^
@@ -5323,6 +5345,7 @@
 ||xdqlnidntqmz.com^
 ||xdwqixeyhvqd.com^
 ||xegavyzkxowj.com^
+||xewzazxkmzpc.com^
 ||xfgqvqoyzeiu.com^
 ||xgzybmbwfmjd.com^
 ||xhdzcofomosh.com^
@@ -5361,6 +5384,8 @@
 ||yasltdlichfd.com^
 ||yaxdboxgsbgh.com^
 ||ybhaoglgbgdk.com^
+||ybzfsppttoaz.com^
+||ycjwgpkudmve.com^
 ||ycmejutxukkz.com^
 ||ycojhxdobkrd.com^
 ||yctquwjbbkfa.com^
@@ -5384,6 +5409,7 @@
 ||ynlrfiwj.com^
 ||ynrbxyxmvihoydoduefogolpzgdlpnejalxldwjlnsolmismqd.com^
 ||ynxrrzgfkuih.com^
+||yojxoefvnyrc.com^
 ||yoywgmzjgtfl.com^
 ||ypbfrhlgquaj.com^
 ||ypyarwgh.com^
@@ -5700,6 +5726,7 @@
 ||thiscdn.com^
 ||thrilamd.net^
 ||thrutime.net^
+||tiawander.net^
 ||tolosgrey.net^
 ||topdi.net^
 ||trinusuras.net^
@@ -5713,6 +5740,7 @@
 ||uppo.co^
 ||username1.link^
 ||v8bridge.link^
+||vferwqf.com^
 ||vieway.co^
 ||viewscout.com^
 ||virsualr.com^
@@ -6106,13 +6134,11 @@ thr.ru##.top_branding
 ||affiliates.a2hosting.com^
 ||affiliates.bravenet.com^
 ||affiliates.generatorsoftware.com^
-||affiliates.hotelclub.com^
 ||affiliates.supergreenhosting.com^
 ||afili.ru^
 ||afterview.ru^
 ||afuiw.com^
 ||agitazio.com^
-||agitmedia.com^
 ||agranis.ru^
 ||agro.net.ru^
 ||ahial.top^
@@ -6147,7 +6173,6 @@ thr.ru##.top_branding
 ||alslz.top^
 ||altpubli.com^
 ||am-investor.ru^
-||am12.ru^
 ||amazingcl.ru^
 ||amigo-biz.ru^
 ||analyticsncc.net^
@@ -6227,10 +6252,8 @@ thr.ru##.top_branding
 ||banerator.silvercdn.com^
 ||banner-in.net
 ||banner-media.ru^
-||banner-mix.ru^
 ||banner.kiev.ua
 ||banner.lbs.km.ru^
-||banner.tomline.ru^
 ||banner.ua
 ||banner7.ru
 ||bannerbook.ru^
@@ -6256,7 +6279,6 @@ thr.ru##.top_branding
 ||basetts.com^
 ||bashnya.ru^
 ||basketfan.my1.ru^
-||bb.stream24.ru^
 ||bb.tidopro.biz^
 ||bc05.ru^
 ||bcclear.ru^
@@ -6310,7 +6332,6 @@ thr.ru##.top_branding
 ||blackads.ru^
 ||blafo.ru^
 ||blessdi.com^
-||blinkogold.ru^
 ||block.s2block.com^
 ||blogan.ru^
 ||blogun.ru^
@@ -6363,7 +6384,6 @@ thr.ru##.top_branding
 ||c.cpa6.ru^
 ||c.cpl1.ru^
 ||c.cpl2.ru^
-||c.ile.ru^
 ||cacheserve.eurogrand.com^
 ||cajkov.ru^
 ||camadmin.ru^
@@ -6394,7 +6414,6 @@ thr.ru##.top_branding
 ||ceregete.com^
 ||cettente.com^
 ||cettenu.com^
-||cf-track.info^
 ||chabg.top^
 ||chajv.top^
 ||chbn.ru^
@@ -6465,7 +6484,6 @@ thr.ru##.top_branding
 ||contact-under.ru^
 ||contactreserve.com^
 ||contactsin.com^
-||contactsin.ru^
 ||contema.ru^
 ||content.printdirect.ru^
 ||context.hotline.ua^
@@ -6532,7 +6550,6 @@ thr.ru##.top_branding
 ||dddevki4u.com^
 ||ddkdr.ru^
 ||dedenye.ru^
-||deenomo.com^
 ||defiques.com^
 ||delightcash.com^
 ||delivery.adrecover.com^
@@ -6543,7 +6560,6 @@ thr.ru##.top_branding
 ||derploime.com^
 ||deskmony.info^
 ||dev4enki.com^
-||devahi.devki.xyz^
 ||devaxi.org^
 ||devkiforyou.org^
 ||dewis.h1.ru^
@@ -6567,7 +6583,6 @@ thr.ru##.top_branding
 ||disredi.ru^
 ||dizzyac.com^
 ||dl.qcash.ws
-||dlski.space^
 ||dmoid.top^
 ||dndd.ru^
 ||dnovaku.ru^
@@ -7003,7 +7018,6 @@ thr.ru##.top_branding
 ||intelliworker.kupivip.ru^
 ||intency.com^
 ||intencysrv.com^
-||intimcity.org^
 ||intimmag.ru^
 ||intimsexmagazin.ru^
 ||intimshop.ru*&partner=
@@ -7110,7 +7124,6 @@ thr.ru##.top_branding
 ||kinomagnitamana.ru^
 ||kinopromobase.ru^
 ||kinorama.tv/
-||kinotochkaz.com^
 ||kinotraff.ru^
 ||kinott.com^
 ||kinott.ru^
@@ -7425,7 +7438,6 @@ thr.ru##.top_branding
 ||mobatori.com
 ||mobi-mobi.info^
 ||mobiads.ru^
-||mobidump.com^
 ||mobiile-service.ru^
 ||mobile-click.biz^
 ||mobioffers.ru^
@@ -7445,10 +7457,6 @@ thr.ru##.top_branding
 ||monstra.smallmovies.ru
 ||moogle.ru^
 ||morar.biz^
-||morenews1.net^
-||morenews2.net^
-||morenews3.net^
-||morenews4.net^
 ||morkovo4ki.org^
 ||mostopana.ru^
 ||motoadvert.ru^
@@ -7606,7 +7614,6 @@ thr.ru##.top_branding
 ||oftatsit.com^
 ||ogbwqq.gkwtk.xyz^
 ||ohnooo.ru^
-||oilefy.com^
 ||oiokewfkjnvq.com^
 ||oirplane.com^
 ||oiya.ru^
@@ -7708,7 +7715,6 @@ thr.ru##.top_branding
 ||pelckw.qjudpxkisv.xyz^
 ||pelicanprogram.com^
 ||people-group.su^
-||peoplemobile.ru^
 ||peptido.ru^
 ||perezzz.ru^
 ||perfecttds.net^
@@ -7834,9 +7840,7 @@ thr.ru##.top_branding
 ||psma02.com
 ||psma03.com
 ||psmardr.com^
-||psnets.com^
 ||ptrck.ru^
-||pu.zipsites.ru^
 ||publicitysmart.com^
 ||puklisi.ru^
 ||puls.lv/
@@ -7881,8 +7885,6 @@ thr.ru##.top_branding
 ||rb.ondu.ru^
 ||rb.rfn.ru^
 ||rb.sport-express.ru^
-||rb.tv-best.net^
-||rbc.magna.ru^
 ||rbcdn.com^
 ||rdiul.com^
 ||readme.ru^
@@ -7941,7 +7943,6 @@ thr.ru##.top_branding
 ||risle.ru^
 ||riverlead.ru^
 ||rmbn.ru/
-||rnd.yxo.ru^
 ||roadshortway.ru^
 ||roagz.us^
 ||robaduvulo.com^
@@ -7956,7 +7957,6 @@ thr.ru##.top_branding
 ||rontar.com^
 ||rootmedia.ws
 ||rooton.in^
-||ropedri.com^
 ||ropsinde.com^
 ||rorer.ru^
 ||rot.rusoul.ru^
@@ -7964,7 +7964,6 @@ thr.ru##.top_branding
 ||rotaban.
 ||rotabanner.
 ||rotation-context.ru^
-||rotation-media.net^
 ||rotator.
 ||roukel.com^
 ||rs-context.ru^
@@ -8149,7 +8148,6 @@ thr.ru##.top_branding
 ||soknm.com^
 ||solanog.com^
 ||solipen.pw^
-||solopon.com^
 ||sontere.com/
 ||sopital.com^
 ||sovietit.com^
@@ -8158,7 +8156,6 @@ thr.ru##.top_branding
 ||sparelli.com^
 ||sparical.com^
 ||spechee.com^
-||speedmen.ru^
 ||spinyla.ru^
 ||spitter.pauk.ru^
 ||spoki-noki.net^
@@ -8174,7 +8171,6 @@ thr.ru##.top_branding
 ||standadv.com^
 ||start.fotostrana.ru/
 ||startscript.ru^
-||static.addflow.ru/
 ||static.adshow^
 ||static.prototypes.ru^
 ||static.terrhq.ru^
@@ -8187,7 +8183,6 @@ thr.ru##.top_branding
 ||steptocash.ru^
 ||stf779.ru^
 ||still-innocent.info^
-||stimulmodules.com^
 ||stisl.vse-rukami.ru
 ||stopto.da.ru^
 ||storm01.ru^
@@ -8430,7 +8425,6 @@ thr.ru##.top_branding
 ||traefllab.ru^
 ||traf-3rs.com^
 ||traf-zona.ru^
-||traf.spb.ru^
 ||trafex.net^
 ||traff.ru^
 ||traffic-delivery.com^
@@ -8716,7 +8710,6 @@ thr.ru##.top_branding
 ||web-rotation.net
 ||web-under.net^
 ||web-visor.
-||web.imgbum.net^
 ||web.xlap.ru^
 ||webangel.ru^
 ||webgringo.ru^
@@ -8910,6 +8903,7 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||tan.pridnestrovie.com^
 .freepicsel.ru^
 ||b13.penzainform.ru^
 ||kinogo.r.worldssl.net^
@@ -8951,16 +8945,13 @@ ws*://video.docfilms.info^
 ||bn.kino-go.co^
 ||brend.hdkinoshka.net^
 ||c.grimuar.ru^
-||cloud.seedoff.tv^
 ||d899.webazilla.com^
 ||da.rosrabota.ru^
 ||fastpicc.ru^
 ||ff.astv.ru^
 ||js.pornolab.eu^
 ||m.kinolot.com^
-||mega.megatorrents.org.ua^
 ||mixtraff.silvercdn.com^
-||moya.furma.ru^
 ||n.cashheaven.ru^
 ||partners.parimatch.net^
 ||pr.rusmed.ru^
@@ -12027,7 +12018,6 @@ ws*://video.docfilms.info^
 ||sim-technik.de^*&uniqueTrackId=
 ||simplehitcounter.com^
 ||simplereach.com^
-||simpletop.net^
 ||simpli.fi^
 ||simplycast.us^
 ||simplymeasured.com^
@@ -12132,7 +12122,6 @@ ws*://video.docfilms.info^
 ||stat.eagleplatform.com^
 ||stat.php-d.com^
 ||stat.pl/
-||stat.radar.imgsmail.ru^
 ||stat.rare.ru^
 ||stat.sputnik.ru^
 ||stat.www.fi^
