@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-02-27 12:00:09
+! Last modified: 2017-02-28 12:00:13
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -2266,6 +2266,7 @@
 ||lightad.co.kr^
 ||lightningcast.net^
 ||linicom.co.il^
+||linicom.co.uk^
 ||linkbuddies.com^
 ||linkclicks.com^
 ||linkelevator.com^
@@ -2784,6 +2785,7 @@
 ||p2ads.com^
 ||p7hwvdb4p.com^
 ||paads.dk^
+||pacific-yield.com^
 ||padsdelivery.com^
 ||padstm.com^
 ||pagefair.net^
@@ -5601,6 +5603,7 @@
 ||gruandors.net^
 ||gualdoniye.com^
 ||guaperty.net^
+||guiandr.com^
 ||gusufrs.me^
 ||hapnr.net^
 ||havnr.com^
@@ -5783,6 +5786,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||adrecreate.com^
+||moviead55.ru^
 ||com495.ru^
 ||oconner.link^
 ||video-play.ru^
@@ -8903,6 +8908,8 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||ad.topwar.ru^
+://*.imgshance.ru^
 ||tan.pridnestrovie.com^
 .freepicsel.ru^
 ||b13.penzainform.ru^
@@ -8973,6 +8980,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||clevernt.com^
+||undergiveto54.com^
 ||checkhit.com^
 .bbelements.com^
 .doublepimp.com^
@@ -9004,7 +9013,6 @@ ws*://video.docfilms.info^
 ||adpeepshosted.com^
 ||adplus.co.id^
 ||adproxy2.com^
-||adrecreate.com^
 ||adrewards.com^
 ||adrotate.se^
 ||adrotator.se^
@@ -9320,6 +9328,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d15cjcet1djbmv.cloudfront.net^
 ||d2pppxxtaciku9.cloudfront.net^
 ||beap-bc.yahoo.com^
 ||beap1.cb.g01.yahoodns.net^
@@ -12270,7 +12279,6 @@ ws*://video.docfilms.info^
 ||taps.io/
 ||taps.io^
 ||tapstream.com^
-||target.smi2.net^
 ||target.ukr.net^
 ||targetfuel.com^
 ||targeting.wpdigital.net^
@@ -12786,6 +12794,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||track.ultimate-guitar.com^
 ||intent.cbsi.com^
 ||bonfire.spklw.com^
 |http://r.i.ua^
