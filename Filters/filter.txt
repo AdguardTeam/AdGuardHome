@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-03-01 12:03:20
+! Last modified: 2017-03-02 12:03:14
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4054,6 +4054,7 @@
 ||tlootas.org^
 ||tur-tur-key.com^
 ||vacwrite.com^
+||vip-vip-vup.com^
 ||xmas-xmas-wow.com^
 ||zim-zim-zam.com^
 ! Mobile
@@ -5785,6 +5786,11 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||letsjanuary.com^
+||febwinter.com^
+||fifwin.com^
+||ytimgg.com^
+||ijtozat.ru^
 ||news-super.com^
 ||refpa.top^
 ||news.govorjat.ru^
@@ -8981,6 +8987,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||siphic5.top^
+||lamalama.top^
 ||clevernt.com^
 ||undergiveto54.com^
 ||checkhit.com^
@@ -9329,6 +9337,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d2lxztepvo7ma1.cloudfront.net^
 ||d15cjcet1djbmv.cloudfront.net^
 ||d2pppxxtaciku9.cloudfront.net^
 ||beap-bc.yahoo.com^
