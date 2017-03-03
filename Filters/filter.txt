@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-03-02 12:03:14
+! Last modified: 2017-03-03 12:03:23
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -5573,6 +5573,7 @@
 ||entru.co^
 ||ergers.net^
 ||ershgrst.com^
+||erwgerwt.com^
 ||esults.net^
 ||exactly0r.com^
 ||exciliburn.com^
@@ -8915,6 +8916,7 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+://*.freepixs.ru^
 ||ad.topwar.ru^
 ://*.imgshance.ru^
 ||tan.pridnestrovie.com^
@@ -8987,6 +8989,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||adtear.com^
 ||siphic5.top^
 ||lamalama.top^
 ||clevernt.com^
@@ -9381,13 +9384,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
-! General URL
-!
-||cloudads-a.akamaihd.net^
-! Facebook Ad Choices
-!
-! Ad servers
-!
+||ad.cauly.co.kr^
+||config.appjolt.com
 ||rtb.platform.glispa.com^
 ||ads.yemonisoni.com^
 ||adflake.com^
@@ -12941,8 +12939,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
-buffed.de##.shopLinkButtonsWrapper
-iapp-cp.nuggad.net^
+||iapp-cp.nuggad.net^
 ||4seeresults.com^
 ||abtest.mistat.xiaomi.com^
 ||acompli.helpshift.com^
