@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-03-03 12:03:23
+! Last modified: 2017-03-06 12:03:09
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -783,6 +783,7 @@
 ||angege.com^
 ||anonymousads.com^
 ||anwufkjjja.com^
+||anyclip-media.com^
 ||anymedia.lv^
 ||anyxp.com^
 ||aoqneyvmaz.com^
@@ -1545,6 +1546,7 @@
 ||ebayobjects.com^
 ||ebdr3.com^
 ||eblastengine.com^
+||eboundservices.com^
 ||ebuzzing.com^
 ||ebz.io^
 ||ecpmrocks.com^
@@ -2885,6 +2887,7 @@
 ||plusfind.net^
 ||plushlikegarnier.com^
 ||plxserve.com^
+||pmpubs.com^
 ||pmsrvr.com^
 ||pnoss.com^
 ||pointclicktrack.com^
@@ -2966,6 +2969,7 @@
 ||profitpeelers.com^
 ||programresolver.net^
 ||projectwonderful.com^
+||proludimpup.com^
 ||promenadd.ru^
 ||promo-reklama.ru^
 ||promobenef.com^
@@ -3680,6 +3684,7 @@
 ||tyroo.com^
 ||u-ad.info^
 ||u1hw38x0.com^
+||u223o.com^
 ||ubercpm.com^
 ||ubudigital.com^
 ||ucaluco.com^
@@ -3759,6 +3764,7 @@
 ||verata.xyz^
 ||versahq.com^
 ||versetime.com^
+||vertamedia.com^
 ||verymuchad.com^
 ||vhmnetwork.com^
 ||vianadserver.com^
@@ -4094,10 +4100,13 @@
 ||brassrule.com^
 ||breezybath.com^
 ||concernrain.com^
+||copyrightaccesscontrols.com^
 ||fanaticalfly.com^
 ||metapelite.com^
+||peacepowder.com^
 ||ritzysponge.com^
 ||roastedvoice.com^
+||spillvacation.com^
 ! Non-English (instead of whitelisting ads)
 ||adhood.com^
 ||atresadvertising.com^
@@ -4205,6 +4214,7 @@
 ||bbopkapcgonb.com^
 ||bdozkocgkljj.com^
 ||beghfkrygvxp.com^
+||bewovdhiubnk.com^
 ||bfhavmgufvhn.com^
 ||bgarilrzlgez.com^
 ||bgcsojmtgdrv.com^
@@ -4233,6 +4243,7 @@
 ||bsupflnjmuzn.com^
 ||btbapoifsphl.com^
 ||btcwkbqojiyg.com^
+||buitxcrnucyi.com^
 ||bujntrmh.com^
 ||bvezznurwekr.com^
 ||bvobtmbziccr.com^
@@ -4247,6 +4258,7 @@
 ||cbxtnudkklwh.com^
 ||ccbaobjyprxh.com^
 ||ccdkyvyw.com^
+||ccefzhxgobjm.com^
 ||ccwinenmbnso.com^
 ||cdbkxcnfmehf.com^
 ||cdicyazp.com^
@@ -4322,6 +4334,7 @@
 ||dmatquyckwtu.com^
 ||dmbjbgiifpfo.com^
 ||dmdcpvgu.com^
+||dmjcabavsraf.com^
 ||dmojscqlwewu.com^
 ||dmwubqhtuvls.com^
 ||dmyypseympjf.com^
@@ -4365,6 +4378,7 @@
 ||eeqabqioietkquydwxfgvtvpxpzkuilfcpzkplhcckoghwgacb.com^
 ||eerdckbwujcx.com^
 ||efcnevmojvfs.com^
+||efukznkfmrck.com^
 ||ehnjtmqchrub.com^
 ||eidzaqzygtvq.com^
 ||eifbewnmtgpi.com^
@@ -4464,6 +4478,7 @@
 ||ghtroafchzrt.com^
 ||giojhiimnvwr.com^
 ||giyjhogjmfmc.com^
+||giyupoeynkfx.com^
 ||gjxdibyzvczd.com^
 ||gkgdqahkcbmykurmngzrrolrecfqvsjgqdyujvgdrgoezkcobq.com^
 ||gkiryieltcbg.com^
@@ -4504,6 +4519,7 @@
 ||gypxbcrmxsmikqbmnlwtezmjotrrdxpqtafumympsdtsfvkkza.com^
 ||gzkoehgbpozz.com^
 ||gzmofmqddajr.com^
+||gzpqlbqyerpb.com^
 ||gzumjmvqjkki.com^
 ||hafbezbemwwd.com^
 ||haqlmmii.com^
@@ -4571,6 +4587,7 @@
 ||iglwibwbjxuoflrczfvpibhihwuqneyvmhzeqbmdmujmirdkae.com^
 ||igupodzh.com^
 ||igyzmhqbihoi.com^
+||ihflwxrsptqz.com^
 ||ihqxhokndcfq.com^
 ||iibcejrrfhxh.com^
 ||iknctklddhoh.com^
@@ -4608,6 +4625,7 @@
 ||jakzxxzrymhz.com^
 ||jamkkydyiyhx.com^
 ||jauftivogtho.com^
+||jbbgczjipjvb.com^
 ||jbgehhqvfppf.com^
 ||jboovenoenkh.com^
 ||jbvisobwrlcv.com^
@@ -4629,6 +4647,7 @@
 ||jlarmqbypyku.com^
 ||jlflzjdt.com^
 ||jlymmwnkxhph.com^
+||jmvjmgofvxnu.com^
 ||jmzaqwcmcbui.com^
 ||jncjzdohkgic.com^
 ||jnercechoqjb.com^
@@ -4704,6 +4723,7 @@
 ||kyhkyreweusn.com^
 ||kylqpeevrkgh.com^
 ||kyowarob.com^
+||kyveduvdkbro.com^
 ||kyzhecmvpiaw.com^
 ||kzwddxlpcqww.com^
 ||lazkslkkmtpy.com^
@@ -4731,6 +4751,7 @@
 ||lmejuamdbtwc.com^
 ||lmuxaeyapbqxszavtsljaqvmlsuuvifznvttuuqfcxcbgqdnn.com^
 ||lnzcmgguxlac.com^
+||loxmetwdjrmh.com^
 ||lpiqwtsuduhh.com^
 ||lplqyocxmify.com^
 ||lppoblhorbrf.com^
@@ -4775,6 +4796,7 @@
 ||mkzynqxqlcxk.com^
 ||mlbzafthbtsl.com^
 ||mlgrrqymdsyk.com^
+||mlkqusrmsfib.com^
 ||mlmjxddzdazr.com^
 ||mmdcibihoimt.com^
 ||mmdifgneivng.com^
@@ -4808,6 +4830,7 @@
 ||mvjuhdjuwqtk.com^
 ||mvqinxgp.com^
 ||mwqkpxsrlrus.com^
+||mxtcafifuufp.com^
 ||mzbetmhucxih.com^
 ||mzguykhxnuap.com^
 ||mzkhhjueazkn.com^
@@ -4868,6 +4891,7 @@
 ||obuuyneuhfwf.com^
 ||obvbubmzdvom.com^
 ||obxwnnheaixf.com^
+||ocydwjnqasrn.com^
 ||ocyhpouojiss.com^
 ||odsljzffiixm.com^
 ||oehjxqhiasrk.com^
@@ -4912,6 +4936,7 @@
 ||oyzsverimywg.com^
 ||ozhwenyohtpb.com^
 ||ozwtmmcdglos.com^
+||ozymwqsycimr.com^
 ||pbnnsras.com^
 ||pcebrrqydcox.com^
 ||pdbaewqjyvux.com^
@@ -4931,6 +4956,7 @@
 ||plgdhrvzsvxp.com^
 ||plmuxaeyapbqxszavtsljaqvmlsuuvifznvttuuqfcxcbgqdnn.com^
 ||plwvwvhudkuv.com^
+||pmgmbpuiblak.com^
 ||pmlcuxqbngrl.com^
 ||pnmkuqkonlzj.com^
 ||pnunijdm.com^
@@ -5098,6 +5124,7 @@
 ||srppykbedhqp.com^
 ||ssdphmfduwcl.com^
 ||ssjhkvwjoovf.com^
+||ssloemwiszaz.com^
 ||ssvolkkihcyp.com^
 ||stnvgvtwzzrh.com^
 ||sualzmze.com^
@@ -5199,6 +5226,7 @@
 ||umxzhxfrrkmt.com^
 ||uncumlzowtkn.com^
 ||uqgloylf.com^
+||uqhtuahgfmcx.com^
 ||uqpotqld.com^
 ||usoqghurirvz.com^
 ||usymycvrilyt.com^
@@ -5252,6 +5280,7 @@
 ||vnyginzinvmq.com^
 ||volleqgoafcb.com^
 ||vpfiiojohjch.com^
+||vpklpmvzbogn.com^
 ||vpsotshujdguwijdiyzyacgwuxgnlucgsrhhhglezlkrpmdfiy.com^
 ||vpwwtzprrkcn.com^
 ||vqaprwkiwset.com^
@@ -5369,6 +5398,7 @@
 ||xseczkcysdvc.com^
 ||xswnrjbzmdof.com^
 ||xswutjmmznesinsltpkefkjifvchyqiinnorwikatwbqzjelnp.com^
+||xsztfrlkphqy.com^
 ||xteabvgwersq.com^
 ||xtqfguvsmroo.com^
 ||xttrofww.com^
@@ -5439,6 +5469,7 @@
 ||zfmqywrpazlx.com^
 ||zfqpjxuycxdl.com^
 ||zfrzdepuaqebzlenihciadhdjzujnexvnksksqtazbaywgmzwl.com^
+||zftgljkhrdze.com^
 ||zgalejbegahc.com^
 ||zgdejlhmzjrd.com^
 ||zhdmplptugiu.com^
@@ -5787,6 +5818,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||babyboomboomads.com^
 ||letsjanuary.com^
 ||febwinter.com^
 ||fifwin.com^
@@ -9384,6 +9416,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||mtdata*.ru
+||95.213.231.34^
 ||ad.cauly.co.kr^
 ||config.appjolt.com
 ||rtb.platform.glispa.com^
