@@ -1,4 +1,7 @@
-https://www.wilderssecurity.com/threads/adguard-ad-blocker.342850/page-85#post-2656320
+! https://github.com/AdguardTeam/AdguardFilters/issues/4525 [ozon.ru app for iOS]
+t.appsflyer.com
+stats.appsflyer.com
+! https://www.wilderssecurity.com/threads/adguard-ad-blocker.342850/page-85#post-2656320
 videoplaza.tv
 ! https://github.com/AdguardTeam/AdguardDNS/issues/124
 cedexis.net
