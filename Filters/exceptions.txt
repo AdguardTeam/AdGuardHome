@@ -4,9 +4,6 @@
 @@||h-sdk.online-metrix.net^
 ! https://github.com/AdguardTeam/AdguardFilters/issues/4230
 @@||tegna.sc.omtrdc.net^
-! https://github.com/AdguardTeam/AdguardForiOS/issues/242
-@@||t.appsflyer.com^
-@@||stats.appsflyer.com^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/63
 @@||googleadapis.l.google.com^
 ! Fixing Walmart
