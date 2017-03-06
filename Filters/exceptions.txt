@@ -1,3 +1,5 @@
+! bild.de - ad block detection
+@@||cdn1.smartadserver.com^
 ! https://github.com/AdguardTeam/AdguardFilters/issues/4405
 @@||h-sdk.online-metrix.net^
 ! https://github.com/AdguardTeam/AdguardFilters/issues/4230
