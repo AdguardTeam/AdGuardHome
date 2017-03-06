@@ -1,3 +1,5 @@
+! Watson News App for iOS https://github.com/AdguardTeam/AdguardFilters/issues/4524
+@@||5471782.fls.doubleclick.net^
 ! bild.de - ad block detection
 @@||cdn1.smartadserver.com^
 ! https://github.com/AdguardTeam/AdguardFilters/issues/4405
