@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-03-06 12:03:09
+! Last modified: 2017-03-07 12:03:33
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -5785,6 +5785,7 @@
 ||vualawilk.com^
 ||waddr.com^
 ||wensdteuy.com^
+||wgt4wetwe.net^
 ||wolopiar.com^
 ||wopdi.com^
 ||wqqqpe.com^
@@ -8948,6 +8949,7 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+://*.freerutor.org^
 ://*.freepixs.ru^
 ||ad.topwar.ru^
 ://*.imgshance.ru^
@@ -9525,7 +9527,6 @@ ws*://video.docfilms.info^
 ||appsdt.com^
 ||appserver-ap.com^
 ||appserver-cp.com^
-||appsflyer.com^
 ||appshelf.ttpsdk.info^
 ||appwall.tv2phone.cn^
 ||apxadtracking.net^
@@ -12836,6 +12837,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||thj.astrakhan.ru^
 ||track.ultimate-guitar.com^
 ||intent.cbsi.com^
 ||bonfire.spklw.com^
@@ -12973,6 +12975,9 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||api.appsflyer.com^
+||events.appsflyer.com^
+||track.appsflyer.com^
 ||iapp-cp.nuggad.net^
 ||4seeresults.com^
 ||abtest.mistat.xiaomi.com^
@@ -13161,13 +13166,14 @@ ws*://video.docfilms.info^
 !--------------------
 !
 ! Adguard DNS exceptions
+! Watson News App for iOS https://github.com/AdguardTeam/AdguardFilters/issues/4524
+@@||5471782.fls.doubleclick.net^
+! bild.de - ad block detection
+@@||cdn1.smartadserver.com^
 ! https://github.com/AdguardTeam/AdguardFilters/issues/4405
 @@||h-sdk.online-metrix.net^
 ! https://github.com/AdguardTeam/AdguardFilters/issues/4230
 @@||tegna.sc.omtrdc.net^
-! https://github.com/AdguardTeam/AdguardForiOS/issues/242
-@@||t.appsflyer.com^
-@@||stats.appsflyer.com^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/63
 @@||googleadapis.l.google.com^
 ! Fixing Walmart
