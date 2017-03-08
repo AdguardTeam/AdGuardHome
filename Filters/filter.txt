@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-03-07 12:03:33
+! Last modified: 2017-03-08 12:03:09
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4048,6 +4048,7 @@
 ||ditdotsol.com^
 ||ditwrite.com^
 ||erniphiq.com^
+||la-la-sf.com^
 ||netrosol.net^
 ||new-new-years.com^
 ||new17write.com^
@@ -9418,6 +9419,9 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||setting.rayjump.com^
+||ad.myinstashot.com^
+||net.rayjump.com^
 ||mtdata*.ru
 ||95.213.231.34^
 ||ad.cauly.co.kr^
@@ -12975,6 +12979,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||analytics.rayjump.com^
 ||api.appsflyer.com^
 ||events.appsflyer.com^
 ||track.appsflyer.com^
