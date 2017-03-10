@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-03-09 12:03:09
+! Last modified: 2017-03-10 12:12:21
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -3069,7 +3069,6 @@
 ||raiggy.com^
 ||rainbowtgx.com^
 ||rainwealth.com^
-||rampanel.com^
 ||rapt.com^
 ||rateaccept.net^
 ||rawasy.com^
@@ -3701,6 +3700,7 @@
 ||ujieva.com^
 ||ukbanners.com^
 ||ukulelead.com^
+||ulife17yeter.com^
 ||ultimategracelessness.info^
 ||umamdmo.com^
 ||unanimis.co.uk^
@@ -4100,14 +4100,19 @@
 ! Admiral
 ||brassrule.com^
 ||breezybath.com^
+||chiefcurrent.com^
+||commandwalk.com^
+||commoncannon.com^
 ||concernrain.com^
 ||copyrightaccesscontrols.com^
+||crownclam.com^
 ||fanaticalfly.com^
 ||metapelite.com^
 ||peacepowder.com^
 ||ritzysponge.com^
 ||roastedvoice.com^
 ||spillvacation.com^
+||stormyshock.com^
 ! Non-English (instead of whitelisting ads)
 ||adhood.com^
 ||atresadvertising.com^
@@ -5725,6 +5730,7 @@
 ||reitb.com^
 ||rfgre.info^
 ||rheneyer.net^
+||rherser.com^
 ||rhgersf.com^
 ||rigistrar.net^
 ||rlex.org^
@@ -5820,6 +5826,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||videoseed.by^
+||onedrive.su^
 ||babyboomboomads.com^
 ||letsjanuary.com^
 ||febwinter.com^
@@ -9024,6 +9032,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||xiniuz.com^
 ||adtear.com^
 ||siphic5.top^
 ||lamalama.top^
