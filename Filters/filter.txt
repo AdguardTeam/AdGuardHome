@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-03-10 12:12:21
+! Last modified: 2017-03-13 12:06:36
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -34,6 +34,7 @@
 ||18clicks.com^
 ||194.71.107.25^
 ||199.102.225.178^
+||1bx4t5c.com^
 ||1ccbt.com^
 ||1clickdownloads.com^
 ||1e0y.xyz^
@@ -291,6 +292,7 @@
 ||adgitize.com^
 ||adglamour.net^
 ||adglare.net^
+||adglare.org^
 ||adgoi.com^
 ||adgoi.mobi^
 ||adgorithms.com^
@@ -868,6 +870,7 @@
 ||awaps.net^
 ||awempire.com^
 ||awltovhc.com^
+||aws-ajax.com^
 ||awsmer.com^
 ||awstaticdn.net^
 ||awsurveys.com^
@@ -1187,6 +1190,7 @@
 ||cleafs.com^
 ||clear-request.com^
 ||clente.com^
+||clevernt.com^
 ||clevv.com^
 ||click.scour.com^
 ||click2jump.com^
@@ -1655,6 +1659,7 @@
 ||fbsvu.com^
 ||fearfulflag.com^
 ||featence.com^
+||feature.fm^
 ||featuredusers.com^
 ||featurelink.com^
 ||feed-ads.com^
@@ -2053,6 +2058,7 @@
 ||innity.com^
 ||innity.net^
 ||innovid.com^
+||inplaybricks.com^
 ||insightexpress.com^
 ||insightexpressai.com^
 ||insitepromotion.com^
@@ -2964,6 +2970,7 @@
 ||pro-pro-go.com^
 ||proadsdirect.com^
 ||probannerswap.com^
+||probtn.com^
 ||prod.untd.com^
 ||proffigurufast.com^
 ||profitpeelers.com^
@@ -3426,6 +3433,7 @@
 ||stirshakead.com^
 ||stocker.bonnint.net^
 ||streamate.com^
+||streamdefence.com^
 ||streamdownloadonline.com^
 ||strikead.com^
 ||struq.com^
@@ -4048,6 +4056,7 @@
 ||ditdotsol.com^
 ||ditwrite.com^
 ||erniphiq.com^
+||givingsol.com^
 ||la-la-sf.com^
 ||netrosol.net^
 ||new-new-years.com^
@@ -4372,6 +4381,7 @@
 ||dxurtngzawwe.com^
 ||dyazeqpeoykf.com^
 ||dyunhvev.com^
+||dyzstwcqbgjk.com^
 ||easnviytengk.com^
 ||ebfjbrlcvjlv.com^
 ||ecmeqhxevxgmtoxubrjstrrlyfgrrtqhvafyagettmwnwkwltn.com^
@@ -4415,6 +4425,7 @@
 ||etggiddfdaqd.com^
 ||evhvoeqfrlsb.com^
 ||exnyzdboihvi.com^
+||eylyitpslpqu.com^
 ||ezbtpdjeimlv.com^
 ||ezuosstmbcle.com^
 ||farkkbndawtxczozilrrrunxflspkyowishacdueiqzeddsnuu.com^
@@ -4561,6 +4572,7 @@
 ||hpxxzfzdocinivvulcujuhypyrniicjfauortalmjerubjgaja.com^
 ||hqaajpaedpux.com^
 ||hqnyahlpmehp.com^
+||hrvxpinmdyjx.com^
 ||hsvqfvjidloc.com^
 ||htllanmhrnjrbestmyabzhyweaccazvuslvadtvutfiqnjyavg.com^
 ||hueenmivecmx.com^
@@ -4667,6 +4679,7 @@
 ||jqmcbepfjgks.com^
 ||jqqrcwwd.com^
 ||jrmyhchnfawh.com^
+||jseewggtkfrs.com^
 ||jshjrozmwmyj.com^
 ||jtzlsdmbmfms.com^
 ||juqmlmoclnhe.com^
@@ -4840,6 +4853,7 @@
 ||mzbetmhucxih.com^
 ||mzguykhxnuap.com^
 ||mzkhhjueazkn.com^
+||nahvyfyfpffm.com^
 ||nbbljlzbbpck.com^
 ||nbkwnsonadrb.com^
 ||nbrwtboukesx.com^
@@ -4957,6 +4971,7 @@
 ||pjnrwznmzguc.com^
 ||pkmzxzfazpst.com^
 ||pkougirndckw.com^
+||pkoyiqjjxhsy.com^
 ||pkqbgjuinhgpizxifssrtqsyxnzjxwozacnxsrxnvkrokysnhb.com^
 ||plcsedkinoul.com^
 ||plgdhrvzsvxp.com^
@@ -5826,6 +5841,9 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||twodrive.su^
+||afterview.ru^
+||jwvwak1a.com^
 ||videoseed.by^
 ||onedrive.su^
 ||babyboomboomads.com^
@@ -6192,7 +6210,6 @@ thr.ru##.top_branding
 ||affiliates.generatorsoftware.com^
 ||affiliates.supergreenhosting.com^
 ||afili.ru^
-||afterview.ru^
 ||afuiw.com^
 ||agitazio.com^
 ||agranis.ru^
@@ -8958,6 +8975,7 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||b.povarenok.ru^
 ://*.freerutor.org^
 ://*.freepixs.ru^
 ||ad.topwar.ru^
@@ -9032,11 +9050,11 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||globaladmedia.net
 ||xiniuz.com^
 ||adtear.com^
 ||siphic5.top^
 ||lamalama.top^
-||clevernt.com^
 ||undergiveto54.com^
 ||checkhit.com^
 .bbelements.com^
@@ -9061,7 +9079,6 @@ ws*://video.docfilms.info^
 ||ad2goal.com^
 ||adamoads.com^
 ||adbetnet.advertserve.com^
-||adglare.org^
 ||adk2.net^
 ||admax.quisma.com^
 ||admost.com^
@@ -9384,6 +9401,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d37s9vd5t6mov7.cloudfront.net^
 ||d2lxztepvo7ma1.cloudfront.net^
 ||d15cjcet1djbmv.cloudfront.net^
 ||d2pppxxtaciku9.cloudfront.net^
@@ -9428,6 +9446,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||apptornado.com^
+||api.pingstart.com^
 ||setting.rayjump.com^
 ||ad.myinstashot.com^
 ||net.rayjump.com^
@@ -9528,7 +9548,6 @@ ws*://video.docfilms.info^
 ||api.kiip.me^
 ||api.leadbolt.net^
 ||api.usebutton.com^
-||app-measurement.com^
 ||app-trackings.com^
 ||appclick.co^
 ||appclick.net^
@@ -9775,8 +9794,10 @@ ws*://video.docfilms.info^
 ||p.d.0emn.com^
 ||p.d.0fmm.com^
 ||p.d.0mme.com^
+||p.d.1enm.com^
 ||p.d.rpts.org^
 !
+||app-measurement.com^
 ||conf.international.baidu.com^
 ||pasta.esfile.duapps.com^
 //t100.ru^
