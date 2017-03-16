@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-03-15 12:00:12
+! Last modified: 2017-03-16 12:03:39
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -5881,6 +5881,11 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||getrotag.ru^
+||cdn-my3.ru^
+||wildotds1.click^
+||tsuluto.ru^
+||dingdarop.pro^
 ||news.trendovo.com.ua^
 ||egocefabus.com^
 ||ecapolefud.com^
@@ -9096,6 +9101,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||uqie4nzy.com^
 ||globaladmedia.net
 ||xiniuz.com^
 ||adtear.com^
@@ -9850,6 +9856,7 @@ ws*://video.docfilms.info^
 ||p.d.1enm.com^
 ||p.d.rpts.org^
 !
+||counter.24log.es^
 ||analyticsnew.overwolf.com^
 ||newlog.overwolf.com^
 ||app-measurement.com^
