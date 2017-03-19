@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-03-17 12:03:14
+! Last modified: 2017-03-19 14:21:56
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1245,6 +1245,7 @@
 ||cloudset.xyz^
 ||cltomedia.info^
 ||clz3.net^
+||cmbestsrv.com^
 ||cmfads.com^
 ||cmllk1.info^
 ||cnt.my^
@@ -3365,6 +3366,7 @@
 ||sophiasearch.com^
 ||sotuktraffic.com^
 ||sparkstudios.com^
+||speakol.com^
 ||specificclick.net^
 ||specificmedia.com^
 ||spectato.com^
@@ -5776,6 +5778,7 @@
 ||qewa33a.com^
 ||quandrer.link^
 ||qulifiad.com^
+||qwemfst.com^
 ||qwewas.info^
 ||qzsccm.com^
 ||r3seek.com^
@@ -9101,6 +9104,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||dskfv.de^
+||t.mtagmonetizationb.com^
 ||uqie4nzy.com^
 ||globaladmedia.net
 ||xiniuz.com^
@@ -9510,7 +9515,6 @@ ws*://video.docfilms.info^
 ||setting.rayjump.com^
 ||ad.myinstashot.com^
 ||net.rayjump.com^
-||mtdata*.ru
 ||95.213.231.34^
 ||ad.cauly.co.kr^
 ||config.appjolt.com
@@ -10557,68 +10561,12 @@ ws*://video.docfilms.info^
 ||cypr.com/
 ||cytoclause.com^
 ||d.impactradius-event.com^
-||d169bbxks24g2u.cloudfront.net^
-||d1cdnlzf6usiff.cloudfront.net^
-||d1cerpgff739r9.cloudfront.net^
-||d1clfvuu2240eh.cloudfront.net^
-||d1clufhfw8sswh.cloudfront.net^
-||d1fc8wv8zag5ca.cloudfront.net^
-||d1gp8joe0evc8s.cloudfront.net^
-||d1l6p2sc9645hc.cloudfront.net^
-||d1lm7kd3bd3yo9.cloudfront.net^
-||d1nh2vjpqpfnin.cloudfront.net^
-||d1qpxk1wfeh8v1.cloudfront.net^
-||d1r27qvpjiaqj3.cloudfront.net^
-||d1rgnfh960lz2b.cloudfront.net^
-||d1ros97qkrwjf5.cloudfront.net^
-||d1wscoizcbxzhp.cloudfront.net^
-||d1yu5hbtu8mng9.cloudfront.net^
-||d1z2jf7jlzjs58.cloudfront.net^
-||d21o24qxwf7uku.cloudfront.net^
-||d23p9gffjvre9v.cloudfront.net^
-||d28g9g3vb08y70.cloudfront.net^
-||d2gfdmu30u15x7.cloudfront.net^
-||d2gfi8ctn6kki7.cloudfront.net^
-||d2kmrmwhq7wkvs.cloudfront.net^
-||d2lv4zbk7v5f93.cloudfront.net^
-||d2nxi61n77zqpl.cloudfront.net^
-||d2oh4tlt9mrke9.cloudfront.net^
-||d2pxb4n3f9klsc.cloudfront.net^
-||d2ry9vue95px0b.cloudfront.net^
-||d2so4705rl485y.cloudfront.net^
-||d2tgfbvjf3q6hn.cloudfront.net^
-||d2xgf76oeu9pbh.cloudfront.net^
 ||d303e3cdddb4ded4b6ff495a7b496ed5.s3.amazonaws.com^
-||d3135glefggiep.cloudfront.net^
-||d31qbv1cthcecs.cloudfront.net^
-||d33im0067v833a.cloudfront.net^
-||d34ko97cxuv4p7.cloudfront.net^
-||d36lvucg9kzous.cloudfront.net^
-||d36wtdrdo22bqa.cloudfront.net^
-||d396ihyrqc81w.cloudfront.net^
-||d3a2okcloueqyx.cloudfront.net^
-||d3avqv6zaxegeu.cloudfront.net^
-||d3c3cq33003psk.cloudfront.net^
-||d3cxv97fi8q177.cloudfront.net^
-||d3ezl4ajpp2zy8.cloudfront.net^
-||d3h1v5cflrhzi4.cloudfront.net^
-||d3hr5gm0wlxm5h.cloudfront.net^
-||d3l3lkinz3f56t.cloudfront.net^
-||d3ojzyhbolvoi5.cloudfront.net^
-||d3qxwzhswv93jk.cloudfront.net^
-||d3s7ggfq1s6jlj.cloudfront.net^
-||d4ax0r5detcsu.cloudfront.net^
-||d5i9o0tpq9sa1.cloudfront.net^
-||d6jkenny8w8yo.cloudfront.net^
-||d81mfvml8p5ml.cloudfront.net^
-||d8rk54i4mohrb.cloudfront.net^
-||d9lq0o81skkdj.cloudfront.net^
 ||dacounter.com^
 ||dadi.technology^
 ||dailycaller-alerts.com^
 ||dailymotion-ams.gravityrd-services.com^
 ||dapxl.com^
-||daq0d0aotgq0f.cloudfront.net^
 ||dashboard.io^
 ||data-analytics.jp^
 ||data.mob.com^
@@ -12932,6 +12880,63 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||d169bbxks24g2u.cloudfront.net^
+||d1cdnlzf6usiff.cloudfront.net^
+||d1cerpgff739r9.cloudfront.net^
+||d1clfvuu2240eh.cloudfront.net^
+||d1clufhfw8sswh.cloudfront.net^
+||d1fc8wv8zag5ca.cloudfront.net^
+||d1gp8joe0evc8s.cloudfront.net^
+||d1l6p2sc9645hc.cloudfront.net^
+||d1lm7kd3bd3yo9.cloudfront.net^
+||d1nh2vjpqpfnin.cloudfront.net^
+||d1qpxk1wfeh8v1.cloudfront.net^
+||d1r27qvpjiaqj3.cloudfront.net^
+||d1rgnfh960lz2b.cloudfront.net^
+||d1ros97qkrwjf5.cloudfront.net^
+||d1wscoizcbxzhp.cloudfront.net^
+||d1yu5hbtu8mng9.cloudfront.net^
+||d1z2jf7jlzjs58.cloudfront.net^
+||d21o24qxwf7uku.cloudfront.net^
+||d23p9gffjvre9v.cloudfront.net^
+||d28g9g3vb08y70.cloudfront.net^
+||d2gfdmu30u15x7.cloudfront.net^
+||d2gfi8ctn6kki7.cloudfront.net^
+||d2kmrmwhq7wkvs.cloudfront.net^
+||d2lv4zbk7v5f93.cloudfront.net^
+||d2nxi61n77zqpl.cloudfront.net^
+||d2oh4tlt9mrke9.cloudfront.net^
+||d2pxb4n3f9klsc.cloudfront.net^
+||d2ry9vue95px0b.cloudfront.net^
+||d2so4705rl485y.cloudfront.net^
+||d2tgfbvjf3q6hn.cloudfront.net^
+||d2xgf76oeu9pbh.cloudfront.net^
+||d3135glefggiep.cloudfront.net^
+||d31qbv1cthcecs.cloudfront.net^
+||d33im0067v833a.cloudfront.net^
+||d34ko97cxuv4p7.cloudfront.net^
+||d36lvucg9kzous.cloudfront.net^
+||d36wtdrdo22bqa.cloudfront.net^
+||d396ihyrqc81w.cloudfront.net^
+||d3a2okcloueqyx.cloudfront.net^
+||d3avqv6zaxegeu.cloudfront.net^
+||d3c3cq33003psk.cloudfront.net^
+||d3cxv97fi8q177.cloudfront.net^
+||d3ezl4ajpp2zy8.cloudfront.net^
+||d3h1v5cflrhzi4.cloudfront.net^
+||d3hr5gm0wlxm5h.cloudfront.net^
+||d3l3lkinz3f56t.cloudfront.net^
+||d3ojzyhbolvoi5.cloudfront.net^
+||d3qxwzhswv93jk.cloudfront.net^
+||d3s7ggfq1s6jlj.cloudfront.net^
+||d4ax0r5detcsu.cloudfront.net^
+||d5i9o0tpq9sa1.cloudfront.net^
+||d6jkenny8w8yo.cloudfront.net^
+||d81mfvml8p5ml.cloudfront.net^
+||d8rk54i4mohrb.cloudfront.net^
+||d9lq0o81skkdj.cloudfront.net^
+||daq0d0aotgq0f.cloudfront.net^
+||d3alqb8vzo7fun.cloudfront.net^
 ||collector.puhutv.com^
 ||thj.astrakhan.ru^
 ||track.ultimate-guitar.com^
@@ -13264,6 +13269,10 @@ ws*://video.docfilms.info^
 !--------------------
 !
 ! Adguard DNS exceptions
+! https://github.com/AdguardTeam/AdguardDNS/issues/64
+! Fixing Google Search ads
+@@://googleadservices.com
+@@://www.googleadservices.com
 ! Watson News App for iOS https://github.com/AdguardTeam/AdguardFilters/issues/4524
 @@||5471782.fls.doubleclick.net^
 ! bild.de - ad block detection
