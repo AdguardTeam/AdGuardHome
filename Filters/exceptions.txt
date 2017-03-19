@@ -1,3 +1,7 @@
+! https://github.com/AdguardTeam/AdguardDNS/issues/64
+! Fixing Google Search ads
+@@://googleadservices.com
+@@://www.googleadservices.com
 ! Watson News App for iOS https://github.com/AdguardTeam/AdguardFilters/issues/4524
 @@||5471782.fls.doubleclick.net^
 ! bild.de - ad block detection
