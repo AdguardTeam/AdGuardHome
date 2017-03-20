@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-03-19 14:21:56
+! Last modified: 2017-03-20 12:00:04
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -5785,6 +5785,7 @@
 ||rdige.com^
 ||reaspans.com^
 ||regersd.net^
+||rehyery.com^
 ||reitb.com^
 ||rfgre.info^
 ||rheneyer.net^
@@ -5873,6 +5874,7 @@
 ||yrrrbn.me^
 ||yualongf.net^
 ||yuasaghn.com^
+||yvsystem.com^
 ||z4pick.com^
 ||ziccardia.com^
 ||zomri.net^
