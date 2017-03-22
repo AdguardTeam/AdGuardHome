@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-03-21 12:00:24
+! Last modified: 2017-03-22 12:00:12
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -2141,6 +2141,7 @@
 ||javacript.gq^
 ||javacript.ml^
 ||jbrlsr.com^
+||jcnqc.us^
 ||jdproject.net^
 ||jeetyetmedia.com^
 ||jemmgroup.com^
@@ -2544,6 +2545,7 @@
 ||mpnrs.com^
 ||mpression.net^
 ||mprezchc.com^
+||mpuls.ru^
 ||mrperfect.in^
 ||msads.net^
 ||msypr.com^
@@ -2596,12 +2598,14 @@
 ||nativeads.com^
 ||nativeadsfeed.com^
 ||nativeleads.net^
+||nativeroll.tv^
 ||navaxudoru.com^
 ||nbjmp.com^
 ||nbstatic.com^
 ||ncrjsserver.com^
 ||neblotech.com^
 ||negolist.com^
+||nenrk.us^
 ||neo-neo-xeo.com^
 ||neobux.com^
 ||neodatagroup.com^
@@ -3084,6 +3088,7 @@
 ||rawasy.com^
 ||rbnt.org^
 ||rcads.net^
+||rclmc.top^
 ||rcurn.com^
 ||rddywd.com^
 ||reachjunction.com^
@@ -3255,6 +3260,7 @@
 ||semanticrep.com^
 ||sendptp.com^
 ||senzapudore.net^
+||sepyw.top^
 ||serialbay.com^
 ||seriousfiles.com^
 ||servali.net^
@@ -3565,6 +3571,7 @@
 ||tlvmedia.com^
 ||tmdn2015x9.com^
 ||tmpopenclose.click^
+||tmqhw.us^
 ||tnyzin.ru^
 ||toboads.com^
 ||todich.ru^
@@ -5920,6 +5927,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||news.pustgovorjat.ru^
 ||mtdata1.ru
 ||mtdata10.ru
 ||getrotag.ru^
@@ -7226,7 +7234,6 @@ thr.ru##.top_branding
 ||jaymedianetwork.com^
 ||jazg97clb.ru^
 ||jbugk.com^
-||jcnqc.us^
 ||jcomusic.com^
 ||je.revolvermaps.com/
 ||jekson44.ru^
@@ -7679,13 +7686,11 @@ thr.ru##.top_branding
 ||naplela.ru^
 ||narod-vrach.ru^
 ||nasimke.ru^
-||nativeroll.tv^
 ||naxerposlan.com^
 ||nbolame.ru^
 ||ndkes.com^
 ||nebanmenia.kinozov.ru^
 ||neme.electric-pdatu.ru
-||nenrk.us^
 ||neosap.ru^
 ||nepalon.com^
 ||neqky.com^
@@ -9897,6 +9902,7 @@ ws*://video.docfilms.info^
 ||p.d.1enm.com^
 ||p.d.rpts.org^
 !
+||tanidigital.com^
 ||counter.24log.es^
 ||analyticsnew.overwolf.com^
 ||newlog.overwolf.com^
@@ -12916,6 +12922,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||kraken.rambler.ru^
 ||d169bbxks24g2u.cloudfront.net^
 ||d1cdnlzf6usiff.cloudfront.net^
 ||d1cerpgff739r9.cloudfront.net^
