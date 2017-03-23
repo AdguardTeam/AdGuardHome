@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-03-22 12:00:12
+! Last modified: 2017-03-23 12:03:32
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -12922,6 +12922,9 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||trk.vidible.tv^
+||track.zappos.com^
+||track.price.ru^
 ||kraken.rambler.ru^
 ||d169bbxks24g2u.cloudfront.net^
 ||d1cdnlzf6usiff.cloudfront.net^
