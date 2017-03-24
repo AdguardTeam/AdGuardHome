@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-03-23 12:03:32
+! Last modified: 2017-03-24 12:03:23
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -2726,6 +2726,7 @@
 ||onads.com^
 ||onclasrv.com^
 ||onclickads.net^
+||onclkds.com^
 ||onedmp.com^
 ||onenetworkdirect.com^
 ||onenetworkdirect.net^
@@ -5741,6 +5742,7 @@
 ||guaperty.net^
 ||guiandr.com^
 ||gusufrs.me^
+||h456u54f.net^
 ||hapnr.net^
 ||havnr.com^
 ||heizuanubr.net^
@@ -9500,6 +9502,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||dk45agakx3yfl.cloudfront.net^
 ||d37s9vd5t6mov7.cloudfront.net^
 ||d2lxztepvo7ma1.cloudfront.net^
 ||d15cjcet1djbmv.cloudfront.net^
@@ -9902,6 +9905,8 @@ ws*://video.docfilms.info^
 ||p.d.1enm.com^
 ||p.d.rpts.org^
 !
+||retarala.ru^
+||dmpcloud.net^
 ||tanidigital.com^
 ||counter.24log.es^
 ||analyticsnew.overwolf.com^
@@ -12922,6 +12927,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||tracker.softcube.com^
+||rtb.softcube.com^
 ||trk.vidible.tv^
 ||track.zappos.com^
 ||track.price.ru^
