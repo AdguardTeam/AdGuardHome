@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-03-24 12:03:23
+! Last modified: 2017-03-24 12:39:26
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -13326,6 +13326,9 @@ ws*://video.docfilms.info^
 !--------------------
 !
 ! Adguard DNS exceptions
+! https://github.com/AdguardTeam/AdguardFilters/issues/4609
+! Blocked by parental control
+@@||eboundservices.com^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/64
 ! Fixing Google Search ads
 @@://googleadservices.com
