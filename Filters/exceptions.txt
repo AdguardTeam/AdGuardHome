@@ -1,6 +1,3 @@
-! https://github.com/AdguardTeam/AdguardFilters/issues/4609
-! Blocked by parental control
-@@||eboundservices.com^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/64
 ! Fixing Google Search ads
 @@://googleadservices.com
