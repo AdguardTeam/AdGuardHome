@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-03-24 12:39:26
+! Last modified: 2017-03-27 12:00:20
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -359,6 +359,7 @@
 ||adlpartner.com^
 ||adlure.biz^
 ||adlux.com^
+||adm-vids.info^
 ||admagnet.net^
 ||admailtiser.com^
 ||admamba.com^
@@ -792,6 +793,7 @@
 ||aoqneyvmaz.com^
 ||aorms.com^
 ||aorpum.com^
+||ap76rmx3.accountant^
 ||apex-ad.com^
 ||apmebf.com^
 ||appendad.com^
@@ -1107,6 +1109,7 @@
 ||c-on-text.com^
 ||c-planet.net^
 ||c03jij5q.website^
+||c13b2beea116e.com^
 ||c8.net.ua^
 ||c9snorwj.website^
 ||callmd5map.com^
@@ -2140,6 +2143,7 @@
 ||javacript.ga^
 ||javacript.gq^
 ||javacript.ml^
+||javacript.tk^
 ||jbrlsr.com^
 ||jcnqc.us^
 ||jdproject.net^
@@ -2447,6 +2451,7 @@
 ||megbase.com^
 ||meinlist.com^
 ||mellowads.com^
+||melqdjqiekcv.com^
 ||mengheng.net^
 ||mentad.com^
 ||mentalks.ru^
@@ -3928,6 +3933,7 @@
 ||worthathousandwords.com^
 ||worthyadvertising.com^
 ||wpzka4t6.site^
+||wqocynupmbad.com^
 ||ws-gateway.com^
 ||wsp.mgid.com^
 ||wulium.com^
@@ -4071,6 +4077,7 @@
 ||ditwrite.com^
 ||erniphiq.com^
 ||givingsol.com^
+||glo-glo-oom.com^
 ||la-la-moon.com^
 ||la-la-sf.com^
 ||netrosol.net^
@@ -4122,6 +4129,7 @@
 ||waptrick.com^
 ||yieldmo.com^
 ! Admiral
+||beamkite.com^
 ||brassrule.com^
 ||breezybath.com^
 ||chiefcurrent.com^
@@ -4130,14 +4138,23 @@
 ||concernrain.com^
 ||copyrightaccesscontrols.com^
 ||crownclam.com^
+||delightdriving.com^
 ||fanaticalfly.com^
+||flavordecision.com^
+||foamybox.com^
+||inatye.com^
+||karisimbi.net^
 ||matchcows.com^
 ||metapelite.com^
+||ovalpigs.com^
 ||peacepowder.com^
 ||ritzysponge.com^
 ||roastedvoice.com^
+||sinceresofa.com^
 ||spillvacation.com^
 ||stormyshock.com^
+||terribleturkey.com^
+||tidytrail.com^
 ! Non-English (instead of whitelisting ads)
 ||adhood.com^
 ||atresadvertising.com^
@@ -12927,6 +12944,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||statistics.crowdynews.com^
 ||tracker.softcube.com^
 ||rtb.softcube.com^
 ||trk.vidible.tv^
@@ -13129,6 +13147,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||geoip.ifunny.co^
 ||alogs.umeng.com^
 ||alogs.umengcloud.com^
 ||stats.umsns.com^
@@ -13326,9 +13345,6 @@ ws*://video.docfilms.info^
 !--------------------
 !
 ! Adguard DNS exceptions
-! https://github.com/AdguardTeam/AdguardFilters/issues/4609
-! Blocked by parental control
-@@||eboundservices.com^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/64
 ! Fixing Google Search ads
 @@://googleadservices.com
