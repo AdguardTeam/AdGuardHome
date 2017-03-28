@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-03-27 12:00:20
+! Last modified: 2017-03-28 12:03:40
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1064,6 +1064,7 @@
 ||bridgetrack.com^
 ||brighteroption.com^
 ||brightshare.com^
+||britiesee.info^
 ||broadstreetads.com^
 ||brokeloy.com^
 ||browsersfeedback.com^
@@ -3096,7 +3097,6 @@
 ||rcads.net^
 ||rclmc.top^
 ||rcurn.com^
-||rddywd.com^
 ||reachjunction.com^
 ||reachlocal.com^
 ||reachmode.com^
@@ -3122,6 +3122,7 @@
 ||reelcentric.com^
 ||refban.com^
 ||referback.com^
+||referralargumentationnetwork.info^
 ||regdfh.info^
 ||registry.cw.cm^
 ||regurgical.com^
@@ -3736,7 +3737,6 @@
 ||unitethecows.com^
 ||universityofinternetscience.com^
 ||unlockr.com^
-||unoblotto.net^
 ||unrulymedia.com^
 ||unterary.com^
 ||uonj2o6i.loan^
@@ -4091,6 +4091,7 @@
 ||tin-tin-win.com^
 ||tlootas.org^
 ||tur-tur-key.com^
+||unoblotto.net^
 ||vacwrite.com^
 ||vip-vip-vup.com^
 ||xmas-xmas-wow.com^
@@ -4129,6 +4130,7 @@
 ||waptrick.com^
 ||yieldmo.com^
 ! Admiral
+||actuallysheep.com^
 ||beamkite.com^
 ||brassrule.com^
 ||breezybath.com^
@@ -5751,6 +5753,7 @@
 ||fuandarst.com^
 ||genegd.com^
 ||gerengd.link^
+||gertgh.com^
 ||gghfncd.net^
 ||gruadhc.com^
 ||gruanchd.link^
@@ -5842,6 +5845,7 @@
 ||qwewas.info^
 ||qzsccm.com^
 ||r3seek.com^
+||rddywd.com^
 ||rdige.com^
 ||reaspans.com^
 ||regersd.net^
@@ -5946,6 +5950,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||goyetteconnelly.bid^
 ||news.pustgovorjat.ru^
 ||mtdata1.ru
 ||mtdata10.ru
@@ -9166,6 +9171,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||bidgear.com^
+||xxlargepop.com^
 ||dskfv.de^
 ||t.mtagmonetizationb.com^
 ||uqie4nzy.com^
@@ -9514,11 +9521,11 @@ ws*://video.docfilms.info^
 ||yuiop.trade^
 ||zanox.com^
 ||zaperplop.info^
-||zemanta.com^
 ||zeti.com^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||df0pmigc8xs70.cloudfront.net^
 ||dk45agakx3yfl.cloudfront.net^
 ||d37s9vd5t6mov7.cloudfront.net^
 ||d2lxztepvo7ma1.cloudfront.net^
@@ -12944,6 +12951,12 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||tracker.giftd.ru^
+||collector.retailcrm.pro^
+||tr1.admeira.ch^
+||counter.snackly.co^
+||logger.snackly.co^
+||tracking.thehut.net^
 ||statistics.crowdynews.com^
 ||tracker.softcube.com^
 ||rtb.softcube.com^
@@ -13355,8 +13368,6 @@ ws*://video.docfilms.info^
 @@||cdn1.smartadserver.com^
 ! https://github.com/AdguardTeam/AdguardFilters/issues/4405
 @@||h-sdk.online-metrix.net^
-! https://github.com/AdguardTeam/AdguardFilters/issues/4230
-@@||tegna.sc.omtrdc.net^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/63
 @@||googleadapis.l.google.com^
 ! Fixing Walmart
