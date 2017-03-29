@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-03-28 12:03:40
+! Last modified: 2017-03-29 12:03:44
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -335,6 +335,7 @@
 ||adjal.com^
 ||adjector.com^
 ||adjourne.com^
+||adjs.net^
 ||adjug.com^
 ||adjuggler.com^
 ||adjuggler.net^
@@ -747,6 +748,7 @@
 ||ajansreklam.net^
 ||ajillionmax.com^
 ||akamhd.com^
+||akavita.com^
 ||albopa.work^
 ||alchemysocial.com^
 ||alfynetwork.com^
@@ -1556,9 +1558,9 @@
 ||ebayobjects.com^
 ||ebdr3.com^
 ||eblastengine.com^
-||eboundservices.com^
 ||ebuzzing.com^
 ||ebz.io^
+||eclick.vn^
 ||ecpmrocks.com^
 ||ecto-ecto-uno.com^
 ||edgeads.org^
@@ -2232,6 +2234,7 @@
 ||kr3vinsx.com^
 ||kromeleta.ru^
 ||kumpulblogger.com^
+||kutlvuitevgw.com^
 ||kzkjewg7.stream^
 ||l3op.info^
 ||ladbrokesaffiliates.com.au^
@@ -3072,6 +3075,7 @@
 ||questionmarket.com^
 ||questus.com^
 ||quickcash500.com^
+||quicktask.xyz^
 ||quideo.men^
 ||quinstreet.com^
 ||qwobl.net^
@@ -4564,6 +4568,7 @@
 ||grceweaxhbpvclyxhwuozrbtvqzjgbnzklvxdezzficwjnmfil.com^
 ||grfqrhqlzvjl.com^
 ||gtaouarrwypu.com^
+||gtbfhyprjhqz.com^
 ||gtevyaeeiged.com^
 ||gtmonytxxglu.com^
 ||gtqfsxrrerzu.com^
@@ -4867,6 +4872,7 @@
 ||mflkgrgxadij.com^
 ||mfmikwfdopmiusbveskwmouxvafvzurvklwyfamxlddexgrtci.com^
 ||mftbfgcusnzl.com^
+||mfuebmooizdr.com^
 ||mgrxsztbcfeg.com^
 ||mhghzpotwnoh.com^
 ||mhrfhwlqsnzf.com^
@@ -5116,6 +5122,7 @@
 ||qqapezviufsh.com^
 ||qqvatwaqtzgp.com^
 ||qqylzyrqnewl.com^
+||qregqtqtuisj.com^
 ||qrozsnmc.com^
 ||qtjafpcpmcri.com^
 ||qtsmzrnccnwz.com^
@@ -5498,6 +5505,7 @@
 ||xhdzcofomosh.com^
 ||xhojlvfznietogsusdiflwvxpkfhixbgdxcnsdshxwdlnhtlih.com^
 ||xhqilhfrfkoecllmthusrpycaogrfivehyymyqkpmxbtomexwl.com^
+||xhvhisywkvha.com^
 ||xhwtilplkmvbxumaxwmpaqexnwxypcyndhjokwqkxcwbbsclqh.com^
 ||ximeldnjuusl.com^
 ||xirtesuryeqk.com^
@@ -5950,6 +5958,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||emboba.info^
+||ledsitling.pro^
 ||goyetteconnelly.bid^
 ||news.pustgovorjat.ru^
 ||mtdata1.ru
@@ -9171,6 +9181,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||b2.ijquery11.com^
+||admother.com^
 ||bidgear.com^
 ||xxlargepop.com^
 ||dskfv.de^
@@ -9929,6 +9941,8 @@ ws*://video.docfilms.info^
 ||p.d.1enm.com^
 ||p.d.rpts.org^
 !
+||toolcount.ru^
+||ya.domain-vip.net^
 ||retarala.ru^
 ||dmpcloud.net^
 ||tanidigital.com^
@@ -10103,7 +10117,6 @@ ws*://video.docfilms.info^
 ||airbrake.io^
 ||airpr.com^
 ||akanoo.com^
-||akavita.com^
 ||akstat.com^
 ||alcvid.com^
 ||alenty.com^
@@ -12951,6 +12964,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||analytics.vooxe.com^
+||udc.yahoo.com^
 ||tracker.giftd.ru^
 ||collector.retailcrm.pro^
 ||tr1.admeira.ch^
@@ -13323,7 +13338,6 @@ ws*://video.docfilms.info^
 ||novunu.football-plyus.net^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/52
 !-----Vietnamese-----
-||eclick.vn^
 ||admicro.vn^
 ||admicro*.vcmedia.vn^
 ||adi.vcmedia.vn^
