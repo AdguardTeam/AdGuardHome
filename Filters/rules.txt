@@ -1,3 +1,4 @@
+||adeventtracker.spotify.com^
 ||ads.bluelithium.com^
 ||s*.adduplex.com^
 ||hghit.com^
