@@ -39,7 +39,6 @@
 ||polyad.net
 ||epi.vn^
 ||ambient-platform.com^
-||st.f1.vnecdn.net^
 ||f37.img.vnecdn.net^
 ||f38.img.vnecdn.net^
 ||raovat.vnecdn.net^
