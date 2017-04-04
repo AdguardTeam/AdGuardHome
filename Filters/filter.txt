@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-04-03 12:04:00
+! Last modified: 2017-04-04 12:03:50
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1686,6 +1686,7 @@
 ||fiberpairjo.link^
 ||ficusoid.xyz^
 ||fidel.to^
+||filadmir.site^
 ||filetarget.com^
 ||filtermomosearch.com^
 ||fimserve.com^
@@ -2464,7 +2465,6 @@
 ||megbase.com^
 ||meinlist.com^
 ||mellowads.com^
-||melqdjqiekcv.com^
 ||mengheng.net^
 ||mentad.com^
 ||mentalks.ru^
@@ -2733,6 +2733,7 @@
 ||oggifinogi.com^
 ||ohmcasting.com^
 ||ohmwrite.com^
+||oilchange.website^
 ||oileddaintiessunset.info^
 ||oldership.com^
 ||oldtiger.net^
@@ -3351,6 +3352,7 @@
 ||smartadtags.com^
 ||smartdevicemedia.com^
 ||smarterdownloads.net^
+||smartertravel.com^
 ||smartredirect.de^
 ||smarttargetting.co.uk^
 ||smarttargetting.com^
@@ -3948,7 +3950,6 @@
 ||worthathousandwords.com^
 ||worthyadvertising.com^
 ||wpzka4t6.site^
-||wqocynupmbad.com^
 ||ws-gateway.com^
 ||wsp.mgid.com^
 ||wulium.com^
@@ -4910,6 +4911,7 @@
 ||mdrkqbsirbry.com^
 ||meagjivconqt.com^
 ||medyagundem.com^
+||melqdjqiekcv.com^
 ||mepchnbjsrik.com^
 ||mflkgrgxadij.com^
 ||mfmikwfdopmiusbveskwmouxvafvzurvklwyfamxlddexgrtci.com^
@@ -5530,6 +5532,7 @@
 ||wpktjtwsidcz.com^
 ||wqbvqmremvgp.com^
 ||wqnxcthitqpf.com^
+||wqocynupmbad.com^
 ||wqpcxujvkvhr.com^
 ||wqrwopgkkohk.com^
 ||wqzaloayckal.com^
@@ -6035,6 +6038,9 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||xn--80abnuns.xn--p1acf^
+||cdn5now.com^
+||lc2ads.ru^
 ||azrimet.info^
 ||mayert.link^
 ||rekltag123tizblock.ru^
@@ -9264,6 +9270,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||histock.info^
 ||b2.ijquery11.com^
 ||admother.com^
 ||xxlargepop.com^
@@ -9422,7 +9429,6 @@ ws*://video.docfilms.info^
 ||f.iaftjs.info^
 ||fabolele.com^
 ||fdgeen.com^
-||filadmir.site^
 ||filetarget.net^
 ||firstfirst.net^
 ||flashteaser.com^
@@ -9666,6 +9672,15 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||js4386.fujianryt.com^
+||m.12306media.com^
+||zzhengre.com^
+||wmhlch.com^
+||fjrkn.com^
+||tongqing2015.com^
+||m.jsqinvest.com^
+||sube.puwangkj.com^
+||pw.lpsxssm.com^
 ||go.admost.com^
 ||med-api.admost.com^
 ||cdn-api.admost.com^
@@ -10034,6 +10049,7 @@ ws*://video.docfilms.info^
 ||p.d.1enm.com^
 ||p.d.rpts.org^
 !
+||ad.gt^
 ||toolcount.ru^
 ||ya.domain-vip.net^
 ||retarala.ru^
@@ -13055,6 +13071,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||wstat.ozon.ru^
 ||analytics.vooxe.com^
 ||udc.yahoo.com^
 ||tracker.giftd.ru^
@@ -13266,11 +13283,11 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||api.uca.cloud.unity3d.com^
 ||resolver.msg.xiaomi.net^
 ||resolver.gslb.mi-idc.com^
 ||o2o.api.xiaomi.com^
 ||auth.be.sec.miui.com^
-||thm.market.xiaomi.com^
 ||behacdn.ksmobile.net^
 ||geoip.ifunny.co^
 ||alogs.umeng.com^
