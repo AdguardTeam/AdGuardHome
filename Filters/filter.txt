@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-04-04 12:03:50
+! Last modified: 2017-04-05 12:03:41
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4232,6 +4232,7 @@
 ||afqwfxkjmgwv.com^
 ||agpnzrmptmos.com^
 ||ahkpdnrtjwat.com^
+||ahwjxktemuyz.com^
 ||ahzybvwdwrhi.com^
 ||aiiaqehoqgrj.com^
 ||aiypulgy.com^
@@ -4341,6 +4342,7 @@
 ||ccefzhxgobjm.com^
 ||ccwinenmbnso.com^
 ||cdbkxcnfmehf.com^
+||cdbxuzzlgfhh.com^
 ||cdicyazp.com^
 ||cdqmeyhqrwinofutpcepbahedusocxqyfokvehqlqpusttfwve.com^
 ||cdrjblrhsuxljwesjholugzxwukkerpobmonocjygnautvzjjm.com^
@@ -4465,6 +4467,7 @@
 ||eerdckbwujcx.com^
 ||efcnevmojvfs.com^
 ||efukznkfmrck.com^
+||egkkeahdzjqy.com^
 ||ehnjtmqchrub.com^
 ||eidzaqzygtvq.com^
 ||eifbewnmtgpi.com^
@@ -5140,6 +5143,7 @@
 ||pxarwmerpavfmomfyjwuuinxaipktnanwlkvbmuldgimposwzm.com^
 ||pxgkuwybzuqz.com^
 ||pxktkwmrribg.com^
+||pydpcqjenhjx.com^
 ||pzgchrjikhfyueumavkqiccvsdqhdjpljgwhbcobsnjrjfidpq.com^
 ||pzkpyzgqvofi.com^
 ||qajaohrcbpkd.com^
@@ -5188,6 +5192,7 @@
 ||qwhkndqqxxbq.com^
 ||qxnniyuuaxhv.com^
 ||qxxyzmukttyp.com^
+||qzcpotzdkfyn.com^
 ||qzxtbsnaebfw.com^
 ||rbdmtydtobai.com^
 ||rbfxurlfctsz.com^
@@ -5355,6 +5360,7 @@
 ||tnpbbdrvwwip.com^
 ||toyhxqjgqcjo.com^
 ||tpvprtdclnym.com^
+||tqdarrhactqc.com^
 ||trcbxjusetvc.com^
 ||trqbzsxnzxmf.com^
 ||tskctmvpwjdb.com^
@@ -5511,6 +5517,7 @@
 ||wfiejyjdlbsrkklvxxwkferadhbcwtxrotehopgqppsqwluboc.com^
 ||wgefjuno.com^
 ||wggnmbmedlmo.com^
+||wglbionuopeh.com^
 ||whsjufifuwkw.com^
 ||whzbmdeypkrb.com^
 ||wicxfvlozsqz.com^
@@ -5582,6 +5589,7 @@
 ||xirtesuryeqk.com^
 ||xjompsubsozc.com^
 ||xjsqhlfscjxo.com^
+||xkwnadxakuqc.com^
 ||xkygmtrrjalx.com^
 ||xmmnwyxkfcavuqhsoxfrjplodnhzaafbpsojnqjeoofyqallmf.com^
 ||xoqwirroygxv.com^
@@ -5657,6 +5665,7 @@
 ||ywbfhuofnvuk.com^
 ||yxbtyzqcczra.com^
 ||yxhyxfyibqhd.com^
+||yxlibrsxbycm.com^
 ||yxngmwzubbaa.com^
 ||yyajvvjrcigf.com^
 ||yyuztnlcpiym.com^
@@ -6038,6 +6047,10 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||newsportal2.ru^
+||ozjga.top^
+||lpwre.top^
+||ergs4.com^
 ||xn--80abnuns.xn--p1acf^
 ||cdn5now.com^
 ||lc2ads.ru^
@@ -9672,6 +9685,13 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||api.cloudmobi.net
+||polymorphicads.jp^
+||cdns.lodeo.io^
+||ingamesads.gameloft.com^
+||i2ad.jp^
+||mxvp-ad-config-prod-1.zenmxapps.com^
+||mxvp-feature-toggle-prod-1.zenmxapps.com^
 ||js4386.fujianryt.com^
 ||m.12306media.com^
 ||zzhengre.com^
@@ -13071,6 +13091,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||t.sgc.io^
 ||wstat.ozon.ru^
 ||analytics.vooxe.com^
 ||udc.yahoo.com^
@@ -13283,6 +13304,14 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||vortex.data.microsoft.com^
+||onedrive-collection.device.mobileengagement.windows.net^
+||metrics.timewarnercable.com^
+||flurry.agentportal-*.yahoodns.net^
+||amptrack-dailymail-co-uk.cdn.ampproject.org^
+||metrics-cbslocal-com.cdn.ampproject.org^
+||counter.hdvb.info^
+||tracking-server-prod-1.zenmxapps.com^
 ||api.uca.cloud.unity3d.com^
 ||resolver.msg.xiaomi.net^
 ||resolver.gslb.mi-idc.com^
