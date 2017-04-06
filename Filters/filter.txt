@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-04-05 12:03:41
+! Last modified: 2017-04-06 12:03:48
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -3862,6 +3862,7 @@
 ||vuiads.de^
 ||vuiads.info^
 ||vuiads.net^
+||vupulse.com^
 ||w00tads.com^
 ||w00tmedia.net^
 ||w3bnr.in^
@@ -4095,6 +4096,7 @@
 ||erniphiq.com^
 ||givingsol.com^
 ||glo-glo-oom.com^
+||hash-hash-tag.com^
 ||la-la-moon.com^
 ||la-la-sf.com^
 ||netrosol.net^
@@ -6047,6 +6049,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||xxf65z4o6a.club^
 ||newsportal2.ru^
 ||ozjga.top^
 ||lpwre.top^
@@ -9283,6 +9286,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||adsb4trk.com^
+||adsonflags.com^
 ||histock.info^
 ||b2.ijquery11.com^
 ||admother.com^
@@ -9986,7 +9991,6 @@ ws*://video.docfilms.info^
 ||production-adserver-*.amazonaws.com^
 ||pub1.co^
 ||pubnative.net^
-||redirector.gvt1.com^
 ||rek.mobi^
 ||relap.io^
 ||reporo.net^
@@ -13304,6 +13308,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||tracking.directservices.it^
 ||vortex.data.microsoft.com^
 ||onedrive-collection.device.mobileengagement.windows.net^
 ||metrics.timewarnercable.com^
