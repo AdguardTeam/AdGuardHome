@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-04-06 12:03:48
+! Last modified: 2017-04-06 23:40:59
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -5989,6 +5989,7 @@
 ||thiscdn.com^
 ||thrilamd.net^
 ||thrutime.net^
+||thsdfrgr.com^
 ||tiawander.net^
 ||tolosgrey.net^
 ||topdi.net^
@@ -6049,6 +6050,11 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||zz2017.ru^
+||uredy.top^
+||kpqnj.top^
+||bxjch.top^
+||clyilp.com^
 ||xxf65z4o6a.club^
 ||newsportal2.ru^
 ||ozjga.top^
@@ -6305,7 +6311,6 @@ thr.ru##.top_branding
 ||adeclc.com^
 ||adforce.ru^
 ||adforce.team^
-||adfox.ru^
 ||adfun.ru^
 ||adgamble.net^
 ||adgrowmedia.com^
@@ -10073,6 +10078,7 @@ ws*://video.docfilms.info^
 ||p.d.1enm.com^
 ||p.d.rpts.org^
 !
+||interakt.ru^
 ||ad.gt^
 ||toolcount.ru^
 ||ya.domain-vip.net^
@@ -13466,6 +13472,7 @@ ws*://video.docfilms.info^
 ||analy.qq.com^
 !
 ! Adguard DNS rules
+||ads.yenimedya.com.tr^
 ||adeventtracker.spotify.com^
 ||ads.bluelithium.com^
 ||s*.adduplex.com^
