@@ -1,3 +1,5 @@
+! Too wide rule
+adfox.ru
 ! https://github.com/AdguardTeam/AdguardFilters/issues/4713
 visualwebsiteoptimizer.com
 ! https://github.com/AdguardTeam/AdguardFilters/issues/4609
