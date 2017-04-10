@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-04-07 12:03:47
+! Last modified: 2017-04-10 12:00:12
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4097,6 +4097,7 @@
 ||givingsol.com^
 ||glo-glo-oom.com^
 ||hash-hash-tag.com^
+||havenwrite.com^
 ||la-la-moon.com^
 ||la-la-sf.com^
 ||netrosol.net^
@@ -5457,6 +5458,7 @@
 ||vhatpbmitwcn.com^
 ||vhctcywajcwv.com^
 ||vhiaxerjzbqi.com^
+||vhpqxkhvjgwx.com^
 ||vhwuphctrfil.com^
 ||vivcdctagoij.com^
 ||vivetivcuggz.com^
@@ -5689,6 +5691,7 @@
 ||zftgljkhrdze.com^
 ||zgalejbegahc.com^
 ||zgdejlhmzjrd.com^
+||zhabyesrdnvn.com^
 ||zhdmplptugiu.com^
 ||zhkziiaajuad.com^
 ||ziuxkdcgsjhq.com^
@@ -6050,6 +6053,9 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||pereval.net^
+||yampopa.ru^
+||fastpopunder.com^
 ||zz2017.ru^
 ||uredy.top^
 ||kpqnj.top^
@@ -10078,6 +10084,7 @@ ws*://video.docfilms.info^
 ||p.d.1enm.com^
 ||p.d.rpts.org^
 !
+||adheart.de^
 ||interakt.ru^
 ||ad.gt^
 ||toolcount.ru^
@@ -13314,6 +13321,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||a.bitmango.com^
 ||tracking.directservices.it^
 ||vortex.data.microsoft.com^
 ||onedrive-collection.device.mobileengagement.windows.net^
