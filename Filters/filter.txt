@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-04-11 12:00:08
+! Last modified: 2017-04-12 12:00:11
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -811,6 +811,7 @@
 ||aprtx.com^
 ||apsmediaagency.com^
 ||apugod.work^
+||apvdr.com^
 ||apxlv.com^
 ||arab4eg.com^
 ||arabweb.biz^
@@ -1499,6 +1500,7 @@
 ||dorenga.com^
 ||dotandad.com^
 ||dotandads.com^
+||dotnxdomain.net^
 ||double.net^
 ||doubleclick.com^
 ||doubleclick.net^
@@ -1709,6 +1711,7 @@
 ||fisari.com^
 ||fixionmedia.com^
 ||fl-ads.com^
+||flac2flac.xyz^
 ||flagads.net^
 ||flappybadger.net^
 ||flappyhamster.net^
@@ -1945,6 +1948,7 @@
 ||hipersushiads.com^
 ||hiplair.com^
 ||histians.com^
+||histock.info^
 ||hit-now.com^
 ||hits.sys.lv^
 ||hitwastedgarden.com^
@@ -3426,6 +3430,7 @@
 ||spotscenered.info^
 ||spottt.com^
 ||spottysense.com^
+||spotx.tv^
 ||spotxcdn.com^
 ||spotxchange.com^
 ||spoutable.com^
@@ -4153,6 +4158,7 @@
 ||acrididae.com^
 ||actuallysheep.com^
 ||beamkite.com^
+||bedsbreath.com^
 ||brassrule.com^
 ||breezybath.com^
 ||chiefcurrent.com^
@@ -4165,16 +4171,22 @@
 ||fanaticalfly.com^
 ||flavordecision.com^
 ||foamybox.com^
+||ga87z2o.com^
 ||illustriousoatmeal.com^
 ||inatye.com^
+||incrediblesugar.com^
 ||karisimbi.net^
+||loudloss.com^
 ||matchcows.com^
 ||metapelite.com^
+||mythimna.com^
 ||ovalpigs.com^
 ||peacepowder.com^
 ||ritzysponge.com^
 ||roastedvoice.com^
+||similarsabine.com^
 ||sinceresofa.com^
+||sneakystamp.com^
 ||spillvacation.com^
 ||stormyshock.com^
 ||terribleturkey.com^
@@ -6055,6 +6067,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||monbonsai.info^
 ||jpkwk.top^
 ||pereval.net^
 ||yampopa.ru^
@@ -9302,7 +9315,6 @@ ws*://video.docfilms.info^
 !
 ||adsb4trk.com^
 ||adsonflags.com^
-||histock.info^
 ||b2.ijquery11.com^
 ||admother.com^
 ||xxlargepop.com^
@@ -10088,6 +10100,8 @@ ws*://video.docfilms.info^
 ||p.d.1enm.com^
 ||p.d.rpts.org^
 !
+||tt.ttarget.ru^
+||adplus.io^
 ||dewsburg.info^
 ||adheart.de^
 ||interakt.ru^
@@ -13113,6 +13127,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||analytics.cervellio.com^
+||stats.qmerce.com^
 ||counter*-yadro*-ru.unblocked.lol^
 ||t.sgc.io^
 ||wstat.ozon.ru^
