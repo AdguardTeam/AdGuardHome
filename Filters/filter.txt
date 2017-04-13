@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-04-12 12:00:11
+! Last modified: 2017-04-13 12:04:48
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -5958,6 +5958,7 @@
 ||qulifiad.com^
 ||qwemfst.com^
 ||qwewas.info^
+||qwrfpgf.com^
 ||qzsccm.com^
 ||r3seek.com^
 ||rddywd.com^
@@ -6067,6 +6068,11 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||xalisi.co^
+||videotrailer.top^
+||greenfelder.link^
+||iwhha.top^
+||gorgasal.co^
 ||monbonsai.info^
 ||jpkwk.top^
 ||pereval.net^
@@ -6076,7 +6082,6 @@
 ||uredy.top^
 ||kpqnj.top^
 ||bxjch.top^
-||clyilp.com^
 ||xxf65z4o6a.club^
 ||newsportal2.ru^
 ||ozjga.top^
@@ -9148,7 +9153,6 @@ thr.ru##.top_branding
 ||xn--80affy2c3b.xn--p1ai^
 ||xn--u1aaw.xn--p1ai^
 ||xoliter.com^
-||xpicw.top^
 ||xptvk.com^
 ||xsell.6waves.com^
 ||xts-pay.ru^
@@ -9313,6 +9317,9 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||luxupcdnb.com^
+||clyilp.com^
+||xpicw.top^
 ||adsb4trk.com^
 ||adsonflags.com^
 ||b2.ijquery11.com^
@@ -13127,6 +13134,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||1l-hit.mail.ru^
 ||analytics.cervellio.com^
 ||stats.qmerce.com^
 ||counter*-yadro*-ru.unblocked.lol^
