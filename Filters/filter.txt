@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-04-13 12:04:48
+! Last modified: 2017-04-14 12:03:53
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -3696,6 +3696,7 @@
 ||tribalfusion.com^
 ||trido.club^
 ||trigami.com^
+||trigr.co^
 ||trimpur.com^
 ||trk4.com^
 ||trkalot.com^
@@ -3819,6 +3820,7 @@
 ||vianadserver.com^
 ||vibrant.co^
 ||vibrantmedia.com^
+||vidcoin.com^
 ||video-loader.com^
 ||video1404.info^
 ||videoadex.com^
@@ -4168,6 +4170,7 @@
 ||copyrightaccesscontrols.com^
 ||crownclam.com^
 ||delightdriving.com^
+||differentdesk.com^
 ||fanaticalfly.com^
 ||flavordecision.com^
 ||foamybox.com^
@@ -4189,6 +4192,7 @@
 ||sneakystamp.com^
 ||spillvacation.com^
 ||stormyshock.com^
+||structuresofa.com^
 ||terribleturkey.com^
 ||tidytrail.com^
 ||truthfulhead.com^
@@ -9722,6 +9726,147 @@ ws*://video.docfilms.info^
 ||js.bulkhentai.com^
 ||script.hqpass.com^
 !
+||ad.setrowid.com^
+||savoybettingcustomer.com^
+||adserver.tutkusunucu.com^
+||ad.eglenced.com^
+||cdn.klasseo.com^
+||ad.reyazilim.com^
+||advancenative.com^
+||b6roqgi.com^
+||partners.betbooaffiliates.com^
+||partner.superbahisaffiliates248.com^
+||ad.bilgin.pro^
+||noxaffiliates.com^
+||betzeplinreklam.com^
+||piaads.com^
+||usa-media.net^
+||paykasasitesi.com^
+://r.reklam*.com^
+://say.ac^
+||0638.info^
+||aadserving.com^
+||ad*.tmgrup.com.tr^
+||ad.arklm.com^
+||ad.bestsportstream.com^
+||ad.donanimhaber.com^
+||ad.emlakeki.com^
+||ad.reklam.xyz^
+||adasist.com^
+||adbuzz.com.tr^
+||adcater.com^
+||add.f5haber.com^
+||admatic.com.tr^
+||adnexio.com^
+||adnimo.com^
+||adpozitif.com^
+||adrazzi.com^
+||adrttt.com^
+||adsbetkoy.com^
+||advoly.com^
+||adwods.com^
+||affiliateserver.hangikredi.com^
+||afyonturkreklam.com^
+||albet400.com^
+||api.adintext.net^
+||artemisaffiliates.com^
+||axbet20.com^
+||axbetb.com^
+||axbetb2.com^
+||bambar.net^
+||bcvc.mobi^
+||betburdaaffiliates.com^
+||betendads.com^
+||bo.facesbet.com^
+||buzzreklam.com^
+||cdn.marjmedya.com^
+||cdn.smartclick.io^
+||citireklam.com^
+||clickmerkez.com^
+||cmsbetconstruct.com^
+||cntadvertising.com^
+||content.acc-hd.de^
+||cpatrendreklam.com^
+||derya.com^
+||downads.com^
+||engageya.com^
+||fvbaffiliate.com^
+||gorselcdn.com^
+||gorselpanel.com^
+||hizlipop.com^
+||htpanel.com^
+||hyprshr.com^
+||ifddigital.com^
+||imwarwi.ru^
+||indirads.org^
+||indirads.work^
+||indirdirek.org^
+||inrool.com^
+||installads.net^
+||installads2.com^
+||iyisayfa.net^
+||kurulum.xyz^
+||load.sumome.com^
+||makroads.net^
+||metrics34.com^
+||minireklam.com^
+||mkazanc.com^
+||mobilpop.com^
+||mobilup.com^
+||mobilure.com^
+||mobon.com^
+||networkad.net^
+||numarapaneli.com^
+||oddsring555.com
+||parasino7.com^
+||perabetads.com^
+||pixenka.com^
+||pmelon.com^
+||pornoizle-hd.com^
+||pradma.com^
+||promoviral.com^
+||rek.mobi^
+||reklam7.com^
+||reklamaction.com^
+||reklamagaci.com^
+||reklambanner.net^
+||reklamfit.com^
+||reklamnative.com^
+||reklamooz.com^
+||reklampazar.com^
+||reklampiksel.com^
+||reklamstore.com^
+||reklamstore.cubecdn.net^
+||reklamtrk.com^
+||reviveservers.com^
+||revotas.com^
+||sadecereklam.net^
+||savoy.storage.cubecdn.net^
+||scarabresearch.com^
+||segmentify.com^
+||sohbetpaneli.xyz^
+||sunucu7.com^
+||tagon.co^
+||tempobanners.com^
+||tracking.redirect.pub^
+||trackocean.com^
+||truvacdn.com^
+||ukbet99.com^
+||uzmanreklam.com^
+||videoustu.com^
+||visilabs.com^
+||visilabs.net^
+||winaffiliates.com^
+||xpornoizlex.net^
+||xyztanitim.com^
+!
+! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
+!
+||ad.sacitaslan.com^
+||cdn.hiperadverts.com^
+||cstkk.720pizle.com^
+||savoy.cubecdn.net^
+!
 ! Section contains list of advertising networks
 !
 ||api.cloudmobi.net
@@ -9848,7 +9993,6 @@ ws*://video.docfilms.info^
 ||adups.com^
 ||adv.mxmcdn.net^
 ||advertiser.fyber.com^
-||adwods.com^
 ||adz.mobi^
 ||adzmobi.com^
 ||adzworld.in^
@@ -9992,7 +10136,6 @@ ws*://video.docfilms.info^
 ||mobilecore.com^
 ||mobiledl.adboe.com^
 ||moboland.net^
-||mobon.com^
 ||mobred.net^
 ||mobzver.ru^
 ||mofox.com^
@@ -10025,7 +10168,6 @@ ws*://video.docfilms.info^
 ||production-adserver-*.amazonaws.com^
 ||pub1.co^
 ||pubnative.net^
-||rek.mobi^
 ||relap.io^
 ||reporo.net^
 ||richpays.com^
@@ -10107,6 +10249,7 @@ ws*://video.docfilms.info^
 ||p.d.1enm.com^
 ||p.d.rpts.org^
 !
+||webanalyzer.bussion.com^
 ||tt.ttarget.ru^
 ||adplus.io^
 ||dewsburg.info^
@@ -10961,7 +11104,6 @@ ws*://video.docfilms.info^
 ||en25.com^
 ||enecto.com^
 ||enectoanalytics.com^
-||engageya.com^
 ||engine212.com^
 ||engine64.com^
 ||enhance.com^
@@ -11569,7 +11711,6 @@ ws*://video.docfilms.info^
 ||livestats.fr^
 ||livewebstats.dk^
 ||lloogg.com^
-||load.sumome.com^
 ||localytics.com^
 ||lockview.cn^
 ||log.go.com^
@@ -12296,7 +12437,6 @@ ws*://video.docfilms.info^
 ||sayyac.net^
 ||sbdtds.com^
 ||scaledb.com^
-||scarabresearch.com^
 ||scastnet.com^
 ||schoolyeargo.com^
 ||sciencerevenue.com^
@@ -12325,7 +12465,6 @@ ws*://video.docfilms.info^
 ||segment-analytics.com^
 ||segment.com^
 ||segment.io^
-||segmentify.com^
 ||seitwert.de^
 ||selaris.com^
 ||selipuquoe.com^
@@ -12898,7 +13037,6 @@ ws*://video.docfilms.info^
 ||visadd.com^
 ||visibility-stats.com^
 ||visibli.com^
-||visilabs.com^
 ||visioncriticalpanels.com^
 ||visistat.com^
 ||visit.webhosting.yahoo.com^
@@ -13134,6 +13272,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||t1.clipkit.com^
+||lentaru.stat.eagleplatform.com^
 ||1l-hit.mail.ru^
 ||analytics.cervellio.com^
 ||stats.qmerce.com^
@@ -13510,6 +13650,8 @@ ws*://video.docfilms.info^
 ||analy.qq.com^
 !
 ! Adguard DNS rules
+||ad.doganburda.com^
+||ads.linksrequest.com^
 ||ads.yenimedya.com.tr^
 ||adeventtracker.spotify.com^
 ||ads.bluelithium.com^
