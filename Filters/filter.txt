@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-04-17 12:26:37
+! Last modified: 2017-04-18 12:03:15
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4752,6 +4752,7 @@
 ||isqgobsgtqsh.com^
 ||itevcsjvtcmb.com^
 ||iuymaolvzery.com^
+||ivkasohqerzl.com^
 ||ivktdwmjhkqy.com^
 ||ivsqnmridfxn.com^
 ||iwrjczthkkla.com^
@@ -5417,6 +5418,7 @@
 ||twdksbsyipqa.com^
 ||twnrkedqefhv.com^
 ||txbvzcyfyyoy.com^
+||txwnwvhkbtzb.com^
 ||txyxoktogdcy.com^
 ||tyzfzrjaxxcg.com^
 ||tzjngascinro.com^
@@ -5968,6 +5970,7 @@
 ||nuaknamg.net^
 ||nualoghy.com^
 ||nuzilung.net^
+||oiurtedh.com^
 ||ootloakr.com^
 ||oplo.org^
 ||opner.co^
@@ -6103,6 +6106,13 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||greeentea.ru^
+||plusadv.ru^
+||litthecho.pro^
+||mxcount.com^
+||lecnet.info^
+||irboga.info^
+://*.a-akamaihd.com^
 ||xalisi.co^
 ||videotrailer.top^
 ||greenfelder.link^
@@ -9352,6 +9362,9 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||fasttoss.com^
+||buzzadnetwork.com^
+||ashow.pcpop.com^
 ||biggestplayer.cachefly.net^
 ||adtwbjs.com^
 ||ssp.adxpremium.com^
@@ -9905,6 +9918,14 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+! ***For test: Duplicated from specific_app.txt ***
+! https://github.com/AdguardTeam/AdguardFilters/issues/3933
+! Yandex apps
+||banners-slb.mobile.yandex.net^
+||banners.mobile.yandex.net^
+!
+||rtb.adentifi.com^
+||adtheorent.com^
 ||qgss8.com^
 ||api.cloudmobi.net
 ||polymorphicads.jp^
@@ -13311,6 +13332,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||ad.kinozal.website^
 ||t1.clipkit.com^
 ||lentaru.stat.eagleplatform.com^
 ||1l-hit.mail.ru^
@@ -13530,6 +13552,9 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||mazu.sec.miui.com^
+||shenghuo.xiaomi.com^
+||api.ad.xiaomi.com^
 ||a.bitmango.com^
 ||tracking.directservices.it^
 ||vortex.data.microsoft.com^
