@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-04-18 12:03:15
+! Last modified: 2017-04-19 12:00:07
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -9774,6 +9774,7 @@ ws*://video.docfilms.info^
 ||js.bulkhentai.com^
 ||script.hqpass.com^
 !
+||genelajans.com^
 ||d1d8vn0fpluuz7.cloudfront.net^
 ||ad.setrowid.com^
 ||savoybettingcustomer.com^
@@ -9924,6 +9925,7 @@ ws*://video.docfilms.info^
 ||banners-slb.mobile.yandex.net^
 ||banners.mobile.yandex.net^
 !
+||dc.altmob.com^
 ||rtb.adentifi.com^
 ||adtheorent.com^
 ||qgss8.com^
@@ -13552,6 +13554,10 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||applog.uc.cn^
+||dispatcher.upmc.uc.cn^
+||gj.applog.uc.cn^
+||gjapplog.uc.cn^
 ||mazu.sec.miui.com^
 ||shenghuo.xiaomi.com^
 ||api.ad.xiaomi.com^
