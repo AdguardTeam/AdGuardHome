@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-04-19 12:00:07
+! Last modified: 2017-04-20 12:03:15
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1363,6 +1363,7 @@
 ||cpxadroit.com^
 ||cpxinteractive.com^
 ||crakmedia.com^
+||crazyhell.com^
 ||crazylead.com^
 ||crazyvideosempire.com^
 ||creative-serving.com^
@@ -2293,6 +2294,7 @@
 ||letysheeps.ru^
 ||lfstmedia.com^
 ||lgse.com^
+||licantrum.com^
 ||liftdna.com^
 ||ligadx.com^
 ||ligational.com^
@@ -3367,6 +3369,7 @@
 ||smilered.com^
 ||smileycentral.com^
 ||smilyes4u.com^
+||smintmouse.com^
 ||smowtion.com^
 ||smpgfx.com^
 ||smrt-view.com^
@@ -4195,6 +4198,7 @@
 ||spillvacation.com^
 ||stormyshock.com^
 ||structuresofa.com^
+||succeedscene.com^
 ||terribleturkey.com^
 ||tidytrail.com^
 ||truthfulhead.com^
@@ -6106,6 +6110,9 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||bbvever.com^
+||directlnk.org^
+||new4.me^
 ||greeentea.ru^
 ||plusadv.ru^
 ||litthecho.pro^
@@ -9283,6 +9290,7 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||code.kinofactor.ru^
 ||tizer.ssl-services.com^
 ||b.books555.com^
 ://*.1picpay.ru^
@@ -9728,6 +9736,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||do67etikr7pwz.cloudfront.net^
 ||d1wi563t0137vz.cloudfront.net^
 ||df0pmigc8xs70.cloudfront.net^
 ||dk45agakx3yfl.cloudfront.net^
@@ -13334,6 +13343,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||marketing.modalife.com^
 ||ad.kinozal.website^
 ||t1.clipkit.com^
 ||lentaru.stat.eagleplatform.com^
