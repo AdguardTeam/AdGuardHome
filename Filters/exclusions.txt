@@ -1,3 +1,9 @@
+! Blocking of these domains can break some sites
+p.d.0emn.com
+p.d.0fmm.com
+p.d.0mme.com
+p.d.1enm.com
+p.d.rpts.org
 ! Too wide rule
 adfox.ru
 ! https://github.com/AdguardTeam/AdguardFilters/issues/4713
