@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-04-20 12:03:15
+! Last modified: 2017-04-21 12:03:30
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4738,6 +4738,7 @@
 ||imrwxmau.com^
 ||imtdtaloqwcz.com^
 ||imyqdbxq.com^
+||inmrjokdxmkh.com^
 ||insbrvwfrcgb.com^
 ||inxhtjrwictg.com^
 ||ioatyggwaypq.com^
@@ -4759,6 +4760,7 @@
 ||ivkasohqerzl.com^
 ||ivktdwmjhkqy.com^
 ||ivsqnmridfxn.com^
+||iwmonrwpeeku.com^
 ||iwrjczthkkla.com^
 ||ixlsylapsdtr.com^
 ||iydghotpzofn.com^
@@ -4770,6 +4772,7 @@
 ||jahsrhlp.com^
 ||jakzxxzrymhz.com^
 ||jamkkydyiyhx.com^
+||jatkcmpxhbba.com^
 ||jauftivogtho.com^
 ||jbbgczjipjvb.com^
 ||jbgehhqvfppf.com^
@@ -4795,6 +4798,7 @@
 ||jlarmqbypyku.com^
 ||jlflzjdt.com^
 ||jlymmwnkxhph.com^
+||jmbhyqijqhxk.com^
 ||jmvjmgofvxnu.com^
 ||jmzaqwcmcbui.com^
 ||jncjzdohkgic.com^
@@ -4898,6 +4902,7 @@
 ||lcxrhcqouqtw.com^
 ||lcyxmuhxroyo.com^
 ||ldaiuhkayqtu.com^
+||ldkyzudgbksh.com^
 ||leuojmgbkpcl.com^
 ||lfvrjrdrgazl.com^
 ||lgnjcntegeqf.com^
@@ -4965,6 +4970,7 @@
 ||mhrfhwlqsnzf.com^
 ||mhwxckevqdkx.com^
 ||miadbbnreara.com^
+||mictxtwtjigs.com^
 ||mizmhwicqhprznhflygfnymqbmvwokewzlmymmvjodqlizwlrf.com^
 ||mjujcjfrgslf.com^
 ||mkceizyfjmmq.com^
@@ -4980,6 +4986,7 @@
 ||mmdifgneivng.com^
 ||mmeddgjhplqy.com^
 ||mmesheltljyi.com^
+||mmknsfgqxxsg.com^
 ||mmnridsrreyh.com^
 ||mmojdtejhgeg.com^
 ||mmvcmovwegkz.com^
@@ -5188,6 +5195,7 @@
 ||pxgkuwybzuqz.com^
 ||pxktkwmrribg.com^
 ||pydpcqjenhjx.com^
+||pzcpotzdkfyn.com^
 ||pzgchrjikhfyueumavkqiccvsdqhdjpljgwhbcobsnjrjfidpq.com^
 ||pzkpyzgqvofi.com^
 ||qajaohrcbpkd.com^
@@ -5227,6 +5235,7 @@
 ||qqvatwaqtzgp.com^
 ||qqylzyrqnewl.com^
 ||qregqtqtuisj.com^
+||qrksjrjppkam.com^
 ||qrozsnmc.com^
 ||qtjafpcpmcri.com^
 ||qtsmzrnccnwz.com^
@@ -5423,6 +5432,7 @@
 ||twnrkedqefhv.com^
 ||txbvzcyfyyoy.com^
 ||txwnwvhkbtzb.com^
+||txwzdalmamma.com^
 ||txyxoktogdcy.com^
 ||tyzfzrjaxxcg.com^
 ||tzjngascinro.com^
@@ -5448,6 +5458,7 @@
 ||uilknldyynwm.com^
 ||ujdctbsbbimb.com^
 ||ujocmihdknwj.com^
+||ujqafhcsrhyz.com^
 ||ujqbxbcqtbqt.com^
 ||ujtyosgemtnx.com^
 ||ujyyciaedxqr.com^
@@ -5629,6 +5640,7 @@
 ||xcjoqraqjwmk.com^
 ||xconeeitqrrq.com^
 ||xcrruqesggzc.com^
+||xcukrfpchsxn.com^
 ||xdqlnidntqmz.com^
 ||xdurrrklybny.com^
 ||xdwqixeyhvqd.com^
@@ -5662,6 +5674,7 @@
 ||xteabvgwersq.com^
 ||xtqfguvsmroo.com^
 ||xttrofww.com^
+||xuhktijdskah.com^
 ||xuwptpzdwyaw.com^
 ||xuwxbdafults.com^
 ||xwavjdqttkum.com^
@@ -5782,6 +5795,7 @@
 ||zuuwfrphdgxk.com^
 ||zvqjjurhikku.com^
 ||zvuespzsdgdq.com^
+||zwcuvwssfydj.com^
 ||zwqfnizwcvbx.com^
 ||zxbjgrxbcgrp.com^
 ||zxqeycvsetkh.com^
@@ -6009,6 +6023,7 @@
 ||regersd.net^
 ||rehyery.com^
 ||reitb.com^
+||reydzcfg.net^
 ||rfgre.info^
 ||rheneyer.net^
 ||rherser.com^
@@ -6110,6 +6125,12 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||crapka.ru^
+||hivideoworld.com^
+||tsygari.info^
+||kjaay.com^
+||recwy.com^
+||buckridge.link^
 ||bbvever.com^
 ||directlnk.org^
 ||new4.me^
@@ -9370,6 +9391,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||shmokiads.com^
 ||fasttoss.com^
 ||buzzadnetwork.com^
 ||ashow.pcpop.com^
@@ -9736,6 +9758,9 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d1czd1q73kbu32.cloudfront.net^
+||d1mroptkfdxko5.cloudfront.net^
+||d2b7n13v8adl6f.cloudfront.net^
 ||do67etikr7pwz.cloudfront.net^
 ||d1wi563t0137vz.cloudfront.net^
 ||df0pmigc8xs70.cloudfront.net^
@@ -9934,6 +9959,7 @@ ws*://video.docfilms.info^
 ||banners-slb.mobile.yandex.net^
 ||banners.mobile.yandex.net^
 !
+||jssdk.rayjump.com^
 ||dc.altmob.com^
 ||rtb.adentifi.com^
 ||adtheorent.com^
@@ -10126,7 +10152,6 @@ ws*://video.docfilms.info^
 ||d830x8j3o1b2k.cloudfront.net^
 ||dante2007.com^
 ||debojuagug1sf.cloudfront.net^
-||decide.mixpanel.com^
 ||dev.appboy.com^
 ||dispatcher.mng-ads.com^
 ||e.apsalar.com^
@@ -10189,7 +10214,6 @@ ws*://video.docfilms.info^
 ||mgage.com^
 ||mi.gdt.qq.com^
 ||microad.net^
-||mixpanel.com^
 ||mmnetwork.mobi^
 ||mob.huimee.net^
 ||moba8.net^
@@ -10312,11 +10336,6 @@ ws*://video.docfilms.info^
 ! Tracking service
 !
 ! Google domains
-||p.d.0emn.com^
-||p.d.0fmm.com^
-||p.d.0mme.com^
-||p.d.1enm.com^
-||p.d.rpts.org^
 !
 ||audienceinsights.net^
 ||pv.pjtsu.com^
@@ -11912,6 +11931,8 @@ ws*://video.docfilms.info^
 ||millioncounter.com^
 ||minewhat.com^
 ||mitmeisseln.de^
+||mixpanel.com^
+||api.segment.io^
 ||mkt3261.com^
 ||mkt51.net^
 ||mkt941.com^
@@ -13630,7 +13651,6 @@ ws*://video.docfilms.info^
 ||api.gameanalytics.com^
 ||api.gimbal.com^
 ||api.sec.miui.com^
-||api.segment.io^
 ||api.taplytics.com^
 ||api.vigo.ru^
 ||app.adjust.com^
