@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-04-21 12:03:30
+! Last modified: 2017-04-24 12:00:12
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -2265,6 +2265,7 @@
 ||larkbe.com^
 ||laserhairremovalstore.com^
 ||launchbit.com^
+||lavetawhiting.com^
 ||layer-ad.org^
 ||layerloop.com^
 ||layerwelt.com^
@@ -2578,6 +2579,7 @@
 ||mtagmonetizationc.com^
 ||mtrcss.com^
 ||mujap.com^
+||mukwonagoacampo.com^
 ||multiadserv.com^
 ||multiview.com^
 ||munically.com^
@@ -3065,6 +3067,7 @@
 ||purpleflag.net^
 ||puserving.com^
 ||push2check.com^
+||puttme.ga^
 ||pwrads.net^
 ||pxl2015x1.com^
 ||pxstda.com^
@@ -3137,6 +3140,7 @@
 ||redirectpopads.com^
 ||rediskina.com^
 ||redpeepers.com^
+||redrosesisleornsay.com^
 ||redstick.online^
 ||reduxmediagroup.com^
 ||reelcentric.com^
@@ -3769,6 +3773,7 @@
 ||uonj2o6i.loan^
 ||upads.info^
 ||upliftsearch.com^
+||upnorma.com^
 ||urbation.net^
 ||ureace.com^
 ||urlads.net^
@@ -4284,6 +4289,7 @@
 ||aqdrzqsuxxvd.com^
 ||aqlvpnfxrkyf.com^
 ||aqornnfwxmua.com^
+||aqryyhyzjveh.com^
 ||aragvjeosjdx.com^
 ||aryufuxbmwnb.com^
 ||asecxggulyrf.com^
@@ -4531,6 +4537,7 @@
 ||exnyzdboihvi.com^
 ||eylyitpslpqu.com^
 ||ezbtpdjeimlv.com^
+||ezemyudhkzvx.com^
 ||ezuosstmbcle.com^
 ||facsowlaufzk.com^
 ||farkkbndawtxczozilrrrunxflspkyowishacdueiqzeddsnuu.com^
@@ -4628,6 +4635,7 @@
 ||gqulrzprheth.com^
 ||grceweaxhbpvclyxhwuozrbtvqzjgbnzklvxdezzficwjnmfil.com^
 ||grfqrhqlzvjl.com^
+||gsiqerorqkxu.com^
 ||gtaouarrwypu.com^
 ||gtbfhyprjhqz.com^
 ||gtevyaeeiged.com^
@@ -4727,6 +4735,7 @@
 ||igyzmhqbihoi.com^
 ||ihflwxrsptqz.com^
 ||ihqxhokndcfq.com^
+||ihriduffgkel.com^
 ||iibcejrrfhxh.com^
 ||iijmodcvlwfk.com^
 ||iknctklddhoh.com^
@@ -4851,6 +4860,7 @@
 ||kjmddlhlejeh.com^
 ||kjplmlvtdoaf.com^
 ||kjqyvgvvazii.com^
+||kknvwhcmqoet.com^
 ||kknwvfdzyqzj.com^
 ||klakcdiqmgxq.com^
 ||kldwitfrqwal.com^
@@ -4935,6 +4945,7 @@
 ||lskzcjgerhzn.com^
 ||lsslotuojpud.com^
 ||lstkfdmmxbmv.com^
+||lttsvesujmry.com^
 ||luhqeqaypvmc.com^
 ||lvlvpdztdnro.com^
 ||lvrvufurxhgp.com^
@@ -5026,6 +5037,7 @@
 ||nbkwnsonadrb.com^
 ||nbrwtboukesx.com^
 ||ncdxfwxijazn.com^
+||ncspvnslmmbv.com^
 ||ndemlviibdyc.com^
 ||ndgmwuxzxppa.com^
 ||ndkvzncsuxgx.com^
@@ -5295,6 +5307,7 @@
 ||rtufxsncbegz.com^
 ||ruovcruc.com^
 ||ruoypiedfpov.com^
+||ruzttiecdedv.com^
 ||rvoxndszxwmo.com^
 ||rvzudtgpvwxz.com^
 ||rwtvvdspsbll.com^
@@ -5473,6 +5486,7 @@
 ||umxzhxfrrkmt.com^
 ||uncumlzowtkn.com^
 ||unffpgtoorpz.com^
+||unztsvrjofqp.com^
 ||uqgloylf.com^
 ||uqhtuahgfmcx.com^
 ||uqpotqld.com^
@@ -5484,6 +5498,7 @@
 ||uupqrsjbxrstncicwcdlzrcgoycrgurvfbuiraklyimzzyimrq.com^
 ||uuproxhcbcsl.com^
 ||uvakjjlbjrmx.com^
+||uvffdmlqwmha.com^
 ||uvmsfffedzzw.com^
 ||uvxaafcozjgh.com^
 ||uwrzafoopcyr.com^
@@ -5583,6 +5598,7 @@
 ||wgefjuno.com^
 ||wggnmbmedlmo.com^
 ||wglbionuopeh.com^
+||whgsyczcofwf.com^
 ||whkwbllcctfm.com^
 ||whsjufifuwkw.com^
 ||whzbmdeypkrb.com^
@@ -5609,6 +5625,7 @@
 ||wqpcxujvkvhr.com^
 ||wqrwopgkkohk.com^
 ||wqzaloayckal.com^
+||wqzorzjhvzqf.com^
 ||wrhpnrkdkbqi.com^
 ||wrmcfyzl.com^
 ||wrmwikcnynbk.com^
@@ -5655,6 +5672,7 @@
 ||xhwtilplkmvbxumaxwmpaqexnwxypcyndhjokwqkxcwbbsclqh.com^
 ||ximeldnjuusl.com^
 ||xirtesuryeqk.com^
+||xiwhhcyzhtem.com^
 ||xjompsubsozc.com^
 ||xjsqhlfscjxo.com^
 ||xkwnadxakuqc.com^
@@ -5725,6 +5743,7 @@
 ||ypbfrhlgquaj.com^
 ||ypyarwgh.com^
 ||yqtzhigbiame.com^
+||yqutkbvrgvar.com^
 ||ytapgckhhvou.com^
 ||ytaujxmxxxmm.com^
 ||ytiyuqfxjbke.com^
@@ -5778,6 +5797,7 @@
 ||zpkobplsfnxf.com^
 ||zpmbsivi.com^
 ||zpnbzxbiqann.com^
+||zprlpkabqlth.com^
 ||zptncsir.com^
 ||zpxbdukjmcft.com^
 ||zpznbracwdai.com^
@@ -6125,6 +6145,14 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||infoclub.info^
+||dcplayeza.pw^
+||luzynka.ru^
+||uppro.ru^
+||letimsnami.ru^
+||medshowtiz.ru^
+||mycdn4.ru^
+||d0wnloads.ru^
 ||crapka.ru^
 ||hivideoworld.com^
 ||tsygari.info^
@@ -9391,6 +9419,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||adbrn.com^
 ||shmokiads.com^
 ||fasttoss.com^
 ||buzzadnetwork.com^
@@ -10337,6 +10366,7 @@ ws*://video.docfilms.info^
 !
 ! Google domains
 !
+||bizrate.com^
 ||audienceinsights.net^
 ||pv.pjtsu.com^
 ||webanalyzer.bussion.com^
