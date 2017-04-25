@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-04-24 12:00:12
+! Last modified: 2017-04-25 12:03:30
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4116,6 +4116,7 @@
 ||havenwrite.com^
 ||la-la-moon.com^
 ||la-la-sf.com^
+||meepwrite.com^
 ||netrosol.net^
 ||new-new-years.com^
 ||new17write.com^
@@ -4986,6 +4987,7 @@
 ||mjujcjfrgslf.com^
 ||mkceizyfjmmq.com^
 ||mkmxovjaijti.com^
+||mkpdquuxcnhl.com^
 ||mkyzqyfschwd.com^
 ||mkzynqxqlcxk.com^
 ||mlbzafthbtsl.com^
@@ -5421,6 +5423,7 @@
 ||tkoatkkdwyky.com^
 ||tksljtdqkqxh.com^
 ||tljikqcijttf.com^
+||tlnoffpocjud.com^
 ||tlzhxxfeteeimoonsegagetpulbygiqyfvulvemqnfqnoazccg.com^
 ||tmdcfkxcckvqbqbixszbdyfjgusfzyguvtvvisojtswwvoduhi.com^
 ||tmexywfvjoei.com^
@@ -6145,6 +6148,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||franecki.net^
+||ububilecif.com^
 ||infoclub.info^
 ||dcplayeza.pw^
 ||luzynka.ru^
@@ -9419,6 +9424,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||23.236.55.237^
 ||adbrn.com^
 ||shmokiads.com^
 ||fasttoss.com^
@@ -10366,6 +10372,8 @@ ws*://video.docfilms.info^
 !
 ! Google domains
 !
+||hydr.work^
+||rosenberg.appmetrica.yandex.net^
 ||bizrate.com^
 ||audienceinsights.net^
 ||pv.pjtsu.com^
