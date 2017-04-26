@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-04-25 12:03:30
+! Last modified: 2017-04-26 12:03:22
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4415,6 +4415,7 @@
 ||csbsyukodmga.com^
 ||cscactmkbfvn.com^
 ||csmqorveetie.com^
+||cstdfxkxbqbc.com^
 ||csyngxtkifrh.com^
 ||ctimfrfrmqip.com^
 ||cuguwxkasghy.com^
@@ -4915,6 +4916,7 @@
 ||ldaiuhkayqtu.com^
 ||ldkyzudgbksh.com^
 ||leuojmgbkpcl.com^
+||lfcnzhcnzded.com^
 ||lfvrjrdrgazl.com^
 ||lgnjcntegeqf.com^
 ||lgthvsytzwtc.com^
@@ -5124,6 +5126,7 @@
 ||ongkidcasarv.com^
 ||onkcjpgmshqx.com^
 ||oofophdrkjoh.com^
+||oonenbygymsl.com^
 ||oosdjdhqayjm.com^
 ||oouggjayokzx.com^
 ||ooyhetoodapmrjvffzpmjdqubnpevefsofghrfsvixxcbwtmrj.com^
@@ -5232,6 +5235,7 @@
 ||qiremmtynkae.com^
 ||qixlpaaeaspr.com^
 ||qjskosdsxanp.com^
+||qklhtphiphni.com^
 ||qkpwdakgxynv.com^
 ||qkuprxbmkeqp.com^
 ||qljczwei.com^
@@ -9344,6 +9348,7 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+://*.simpsonsvideos.ru^
 ||code.kinofactor.ru^
 ||tizer.ssl-services.com^
 ||b.books555.com^
@@ -9424,6 +9429,10 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||cpmly.com^
+||likecontrol.com^
+||xikrik.com^
+||2leep.com^
 ||23.236.55.237^
 ||adbrn.com^
 ||shmokiads.com^
@@ -9793,6 +9802,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d28k9nkt2spnp.cloudfront.net^
 ||d1czd1q73kbu32.cloudfront.net^
 ||d1mroptkfdxko5.cloudfront.net^
 ||d2b7n13v8adl6f.cloudfront.net^
@@ -11295,7 +11305,6 @@ ws*://video.docfilms.info^
 ||ewebanalytics.com^
 ||ewebcounter.com^
 ||exactag.com^
-||exacttarget.com^
 ||exapxl.de^
 ||exclusiveclicks.com^
 ||exelator.com^
