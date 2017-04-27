@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-04-26 12:03:22
+! Last modified: 2017-04-27 12:03:23
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -168,6 +168,7 @@
 ||ad-m.asia^
 ||ad-maven.com^
 ||ad-media.org^
+||ad-recommend.com^
 ||ad-server.co.za^
 ||ad-serverparc.nl^
 ||ad-sponsor.com^
@@ -2167,6 +2168,7 @@
 ||jdproject.net^
 ||jeetyetmedia.com^
 ||jemmgroup.com^
+||jettags.rocks^
 ||jewishcontentnetwork.com^
 ||jf2mn2ms.club^
 ||jfduv7.com^
@@ -2767,6 +2769,7 @@
 ||onrampadvertising.com^
 ||onscroll.com^
 ||onsitemarketplace.net^
+||onti.rocks^
 ||onvertise.com^
 ||onwsys.net^
 ||oodode.com^
@@ -4068,6 +4071,7 @@
 ||z-defense.com^
 ||z5x.net^
 ||zangocash.com^
+||zanyx.club^
 ||zaparena.com^
 ||zappy.co.za^
 ||zapunited.com^
@@ -13411,6 +13415,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||an.reflektion.com^
 ||marketing.modalife.com^
 ||ad.kinozal.website^
 ||t1.clipkit.com^
