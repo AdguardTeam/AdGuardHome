@@ -1,3 +1,5 @@
+! Fixing advertising links in google search results
+googleadservices.com
 ! Blocking of these domains can break some sites
 p.d.0emn.com
 p.d.0fmm.com
