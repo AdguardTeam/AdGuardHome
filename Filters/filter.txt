@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-04-27 12:03:23
+! Last modified: 2017-04-28 12:03:23
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -2938,6 +2938,7 @@
 ||pointroll.com^
 ||points2shop.com^
 ||polanders.com^
+||polarmobile.com^
 ||polluxnetwork.com^
 ||polmontventures.com^
 ||polyad.net^
@@ -4107,6 +4108,7 @@
 ||badtopwitch.work^
 ||bandelcot.com^
 ||belwrite.com^
+||catwrite.com^
 ||centwrite.com^
 ||cold-cold-freezing.com^
 ||del-del-ete.com^
@@ -4262,6 +4264,7 @@
 ||aclsqdpgeaik.com^
 ||acnsavlosahs.com^
 ||acxujxzdluum.com^
+||adfpkxvaqeyj.com^
 ||adtbomthnsyz.com^
 ||adudzlhdjgof.com^
 ||afedispdljgb.com^
@@ -4344,6 +4347,7 @@
 ||bjpktmjdxqpl.com^
 ||bjzcyqezwksznxxhscsfcogugkyiupgjhikadadgoiruasxpxo.com^
 ||bkmmlcbertdbselmdxpzcuyuilaolxqfhtyukmjkklxphbwsae.com^
+||bkmtspywevsk.com^
 ||blprkaomvazv.com^
 ||bmjccqfxlabturkmpzzokhsahleqqrysudwpuzqjbxbqeakgnf.com^
 ||bmqnguru.com^
@@ -4671,6 +4675,7 @@
 ||hbbwlhxfnbpq.com^
 ||hbedvoyluzmq.com^
 ||hbrbtmjyvdsy.com^
+||hbzzkwsuaooc.com^
 ||hcggkyhzxzsv.com^
 ||hcyxksgsxnzb.com^
 ||heefwozhlxgz.com^
@@ -4966,9 +4971,11 @@
 ||lzawbiclvehu.com^
 ||lzbzwpmozwfy.com^
 ||lzmovatu.com^
+||lzrfxzvfbkay.com^
 ||lzvnaaozpqyb.com^
 ||maboflgkaxqn.com^
 ||maxgirlgames.com^
+||mbajaazbqdzc.com^
 ||mbfvfdkawpoi.com^
 ||mbgvhfotcqsj.com^
 ||mbvmecdlwlts.com^
@@ -5266,6 +5273,7 @@
 ||qvsbroqoaggw.com^
 ||qwbnzilogwdc.com^
 ||qwhkndqqxxbq.com^
+||qwqqliynxufj.com^
 ||qxnniyuuaxhv.com^
 ||qxxyzmukttyp.com^
 ||qzcpotzdkfyn.com^
@@ -5304,6 +5312,7 @@
 ||rllvjujeyeuy.com^
 ||rlypbeouoxxw.com^
 ||rmbilhzcytee.com^
+||rmdzbqggjskv.com^
 ||rmetgarrpiouttmwqtuajcnzgesgozrihrzwmjlpxvcnmdqath.com^
 ||rmgxhpflxhmd.com^
 ||rmjxcosbfgyl.com^
@@ -5555,6 +5564,7 @@
 ||vkarvfrrlhmv.com^
 ||vkdbvgcawubn.com^
 ||vlnveqkifcpxdosizybusvjqkfmowoawoshlmcbittpoywblpe.com^
+||vlrzhoueyoxw.com^
 ||vlvowhlxxibn.com^
 ||vmcpydzlqfcg.com^
 ||vmvhmwppcsvd.com^
@@ -10008,6 +10018,7 @@ ws*://video.docfilms.info^
 ||banners-slb.mobile.yandex.net^
 ||banners.mobile.yandex.net^
 !
+||mobsrv.in^
 ||jssdk.rayjump.com^
 ||dc.altmob.com^
 ||rtb.adentifi.com^
@@ -12345,7 +12356,6 @@ ws*://video.docfilms.info^
 ||pocitadlo.cz^
 ||pocitadlo.sk^
 ||pointomatic.com^
-||polarmobile.com^
 ||popsample.com^
 ||popstats.com.br^
 ||populr.me^
@@ -13637,6 +13647,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||tracking.viewster.com^
+||logcollector.viewster.com^
 ||applog.uc.cn^
 ||dispatcher.upmc.uc.cn^
 ||gj.applog.uc.cn^
