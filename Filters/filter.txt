@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-05-01 12:11:34
+! Last modified: 2017-05-02 12:03:09
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1164,7 +1164,6 @@
 ||cbn.tbn.ru^
 ||cc-dt.com^
 ||cd828.com^
-||cdn-image.com^
 ||cdn.mobicow.com^
 ||cdna.tremormedia.com^
 ||cdnads.com^
@@ -4219,6 +4218,7 @@
 ||roastedvoice.com^
 ||similarsabine.com^
 ||sinceresofa.com^
+||snakesort.com^
 ||sneakystamp.com^
 ||spillvacation.com^
 ||stormyshock.com^
@@ -4565,6 +4565,7 @@
 ||etbrjgpsadke.com^
 ||etggiddfdaqd.com^
 ||evhvoeqfrlsb.com^
+||evlvaulglzpu.com^
 ||ewgtanybkkch.com^
 ||exnyzdboihvi.com^
 ||eylyitpslpqu.com^
@@ -4965,6 +4966,7 @@
 ||lfvrjrdrgazl.com^
 ||lgnjcntegeqf.com^
 ||lgthvsytzwtc.com^
+||lgtnwgfqkyyf.com^
 ||lhuqalcxjmtq.com^
 ||liosawitskzd.com^
 ||liqbipkfbafq.com^
@@ -5322,6 +5324,7 @@
 ||qwbnzilogwdc.com^
 ||qwhkndqqxxbq.com^
 ||qwqqliynxufj.com^
+||qwrkigqtgygc.com^
 ||qxnniyuuaxhv.com^
 ||qxxyzmukttyp.com^
 ||qzcpotzdkfyn.com^
@@ -5450,6 +5453,7 @@
 ||sxtzhwvbuflt.com^
 ||sydnkqqscbxc.com^
 ||syorlvhuzgmdqbuxgiulsrusnkgkpvbwmxeqqcboeamyqmyexv.com^
+||szjgylwamcxo.com^
 ||sznxdqqvjgam.com^
 ||szyejlnlvnmy.com^
 ||szynlslqxerx.com^
@@ -5551,6 +5555,7 @@
 ||ukjzdydnveuc.com^
 ||ukxeudykhgdi.com^
 ||ulffbcunqnpv.com^
+||uloywtmpqskx.com^
 ||ulpxnhiugynh.com^
 ||umboffikfkoc.com^
 ||umnsvtykkptl.com^
@@ -5589,6 +5594,7 @@
 ||vbjvbjertwov.com^
 ||vbupfouyymse.com^
 ||vbuqjdyrsrvi.com^
+||vcwdjbbughuy.com^
 ||vdlvaqsbaiok.com^
 ||vdpyueivvsuc.com^
 ||vdqarbfqauec.com^
@@ -5830,6 +5836,7 @@
 ||yupwqyocvvnw.com^
 ||yvvafcqddpmd.com^
 ||ywbfhuofnvuk.com^
+||yxahzybkggol.com^
 ||yxbtyzqcczra.com^
 ||yxhyxfyibqhd.com^
 ||yxlibrsxbycm.com^
@@ -5866,6 +5873,7 @@
 ||zlvbqseyjdna.com^
 ||zmbrweqglexv.com^
 ||zmnqoymznwng.com^
+||zmuyirmzujgk.com^
 ||zmxcefuntbgf.com^
 ||zmytwgfd.com^
 ||znmrgzozlohe.com^
@@ -5905,6 +5913,7 @@
 ||zyqlfplqdgxu.com^
 ! Yavli.com
 ||247view.net^
+||546qwee.net^
 ||absilf.com^
 ||absilf.link^
 ||absquint.com^
@@ -9503,6 +9512,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||rtbnowads.com^
 ||cpmly.com^
 ||likecontrol.com^
 ||xikrik.com^
@@ -10250,6 +10260,7 @@ ws*://video.docfilms.info^
 ||bttn.io^
 ||buzzonclick.com^
 ||campaigns.apps-connects.com^
+||cdn-image.com^
 ||cdn.ads.fotoable.net^
 ||cdn.cpiera.com^
 ||cdn.unityads.unity3d.com^
