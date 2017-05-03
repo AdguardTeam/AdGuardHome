@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-05-02 12:03:09
+! Last modified: 2017-05-03 12:03:35
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4472,6 +4472,7 @@
 ||dgmlubjidcxc.com^
 ||dgwrxyucxpizivncznkpmdhtrdzyyylpoeitiannqfxmdzpmwx.com^
 ||dhlnlwxspczc.com^
+||dhomixidnkas.com^
 ||disbkzufvqhk.com^
 ||ditouyldfqgt.com^
 ||diysqcbfyuru.com^
@@ -4496,6 +4497,7 @@
 ||dppcevxbshdl.com^
 ||dqpamcouthqv.com^
 ||drbwugautcgh.com^
+||drqjihcfdrqj.com^
 ||drtqfejznjnl.com^
 ||dsevjzklcjjb.com^
 ||dsmysdzjhxot.com^
@@ -4521,6 +4523,7 @@
 ||dyzstwcqbgjk.com^
 ||easnviytengk.com^
 ||ebfjbrlcvjlv.com^
+||ebyakgowemds.com^
 ||ecmeqhxevxgmtoxubrjstrrlyfgrrtqhvafyagettmwnwkwltn.com^
 ||ectbduztanog.com^
 ||edgsscofljhc.com^
@@ -4690,6 +4693,7 @@
 ||gxdyluyqciac.com^
 ||gxgnvickedxpuiavkgpisnlsphrcyyvkgtordatszlrspkgppe.com^
 ||gxvbogvbcivs.com^
+||gydlzimosfnz.com^
 ||gyinmxpztbgf.com^
 ||gypxbcrmxsmikqbmnlwtezmjotrrdxpqtafumympsdtsfvkkza.com^
 ||gzkoehgbpozz.com^
@@ -4738,6 +4742,7 @@
 ||hrvxpinmdyjx.com^
 ||hsvqfvjidloc.com^
 ||htllanmhrnjrbestmyabzhyweaccazvuslvadtvutfiqnjyavg.com^
+||htonrwegnifw.com^
 ||hueenmivecmx.com^
 ||huejizictcgd.com^
 ||hutkuzwropgf.com^
@@ -4802,6 +4807,7 @@
 ||irxpndjg.com^
 ||irzdishtggyo.com^
 ||isbzjaedbdjr.com^
+||iscaebizkzyd.com^
 ||isdlyvhegxxz.com^
 ||isggimkjabpa.com^
 ||isqgobsgtqsh.com^
@@ -5143,6 +5149,7 @@
 ||nunsbvlzuhyi.com^
 ||nvajxoahenwe.com^
 ||nwfdrxktftep.com^
+||nwirvhxxcsft.com^
 ||nxcxithvcoeh.com^
 ||nybpurpgexoe.com^
 ||nyqogyaflmln.com^
@@ -5378,6 +5385,7 @@
 ||rscgfvsximqdpowcmruwitolouncrmnribnfobxzfhrpdmahqe.com^
 ||rsvxipjqyvfs.com^
 ||rtufxsncbegz.com^
+||rtxunghyiwiq.com^
 ||ruovcruc.com^
 ||ruoypiedfpov.com^
 ||ruzttiecdedv.com^
@@ -5566,6 +5574,7 @@
 ||unztsvrjofqp.com^
 ||uqgloylf.com^
 ||uqhtuahgfmcx.com^
+||uqoboyvqsqpy.com^
 ||uqpotqld.com^
 ||urpscavikbyv.com^
 ||usoqghurirvz.com^
@@ -5678,6 +5687,7 @@
 ||wfbqjdwwunle.com^
 ||wfiejyjdlbsrkklvxxwkferadhbcwtxrotehopgqppsqwluboc.com^
 ||wgefjuno.com^
+||wggmaxxawkxu.com^
 ||wggnmbmedlmo.com^
 ||wglbionuopeh.com^
 ||whgsyczcofwf.com^
@@ -5801,6 +5811,7 @@
 ||ycmejutxukkz.com^
 ||ycojhxdobkrd.com^
 ||yctquwjbbkfa.com^
+||yehazsnxdevr.com^
 ||yepiafsrxffl.com^
 ||yesucplcylxg.com^
 ||yfkwqoswbghk.com^
@@ -5827,6 +5838,7 @@
 ||yoywgmzjgtfl.com^
 ||ypbfrhlgquaj.com^
 ||ypyarwgh.com^
+||yqjoqncxmufi.com^
 ||yqtzhigbiame.com^
 ||yqutkbvrgvar.com^
 ||ytapgckhhvou.com^
@@ -5901,6 +5913,7 @@
 ||zupeaoohmntp.com^
 ||zuuwfrphdgxk.com^
 ||zvqjjurhikku.com^
+||zvrwttooqgeb.com^
 ||zvuespzsdgdq.com^
 ||zwcuvwssfydj.com^
 ||zwqfnizwcvbx.com^
@@ -6234,6 +6247,9 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||mobisway.info^
+||tds.exopay.ru^
+||listat.biz^
 ||franecki.net^
 ||ububilecif.com^
 ||infoclub.info^
@@ -9430,6 +9446,8 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||an.yandex.ru^
+||an.yandex.
 ||tracking.overwolf.com^
 ://*.simpsonsvideos.ru^
 ||code.kinofactor.ru^
@@ -13497,6 +13515,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||services.wetek.com^
 ||tracking.propelmedia.com^
 ||trac.clicplan.com^
 ||trac.couponandgo.com^
@@ -13923,7 +13942,6 @@ ws*://video.docfilms.info^
 ||ad.adriver.ru^
 ||content.adriver.ru^
 ||ad.3dnews.ru^
-||an.yandex.ru^
 ||t.insigit.com^
 ||traffichunt.com^
 ||sportbets.su^
