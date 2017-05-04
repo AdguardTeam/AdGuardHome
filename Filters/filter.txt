@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-05-03 12:03:35
+! Last modified: 2017-05-04 12:00:09
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -3460,6 +3460,7 @@
 ||sprintrade.com^
 ||sproose.com^
 ||sq2trk2.com^
+||sqweb.com^
 ||srtk.net^
 ||srv.yavli.com^
 ||srx.com.sg^
@@ -4118,6 +4119,7 @@
 ||badtopwitch.work^
 ||bandelcot.com^
 ||belwrite.com^
+||cap-cap-pop.com^
 ||catwrite.com^
 ||centwrite.com^
 ||cold-cold-freezing.com^
@@ -4359,6 +4361,7 @@
 ||bhjhijisulwl.com^
 ||bhmqoolzgxnp.com^
 ||bhyqllgtzjee.com^
+||bijfzvbtwhvf.com^
 ||bircgizd.com^
 ||bjkfmvhygpub.com^
 ||bjpktmjdxqpl.com^
@@ -4625,6 +4628,7 @@
 ||ftytssqazcqx.com^
 ||fuurqgbfhvqx.com^
 ||fvbeyduylvgy.com^
+||fvwcwbdrprdt.com^
 ||fwcrhzvfxoyi.com^
 ||fxjgprpozntk.com^
 ||fxjyultd.com^
@@ -4922,6 +4926,7 @@
 ||kmtubsbmwdep.com^
 ||kmveerigfvyy.com^
 ||kmvupiadkzdn.com^
+||knkxnwscphdk.com^
 ||knslxwqgatnd.com^
 ||konbwfktusra.com^
 ||kplzvizvsqrh.com^
@@ -5052,6 +5057,7 @@
 ||mlgrrqymdsyk.com^
 ||mlkqusrmsfib.com^
 ||mlmjxddzdazr.com^
+||mlstoxplovkj.com^
 ||mmaigzevcfws.com^
 ||mmcltttqfkbh.com^
 ||mmdcibihoimt.com^
@@ -5288,6 +5294,7 @@
 ||qbfvwovkuewm.com^
 ||qclxheddcepf.com^
 ||qdlhprdtwhvgxuzklovisrdbkhptpfarrbcmtrxbzlvhygqisv.com^
+||qenafbvgmoci.com^
 ||qerlbvqwsqtb.com^
 ||qevivcixnngf.com^
 ||qfhjthejwvgm.com^
@@ -5512,6 +5519,7 @@
 ||tmkbpnkruped.com^
 ||tmwhazsjnhip.com^
 ||tnpbbdrvwwip.com^
+||tovkhtekzrlu.com^
 ||toyhxqjgqcjo.com^
 ||tpvprtdclnym.com^
 ||tqdarrhactqc.com^
@@ -5765,6 +5773,7 @@
 ||xhvhisywkvha.com^
 ||xhwtilplkmvbxumaxwmpaqexnwxypcyndhjokwqkxcwbbsclqh.com^
 ||xicuxxferbnn.com^
+||xihwtdncwtxc.com^
 ||ximeldnjuusl.com^
 ||xirtesuryeqk.com^
 ||xiwhhcyzhtem.com^
@@ -5852,6 +5861,7 @@
 ||yxbtyzqcczra.com^
 ||yxhyxfyibqhd.com^
 ||yxlibrsxbycm.com^
+||yxmkiqdvnxsk.com^
 ||yxngmwzubbaa.com^
 ||yyajvvjrcigf.com^
 ||yyuztnlcpiym.com^
@@ -5906,6 +5916,7 @@
 ||zsancthhfvqm.com^
 ||zsihqvjfwwlk.com^
 ||zslembevfypr.com^
+||ztcysvupksjt.com^
 ||ztfrlktqtcnl.com^
 ||ztioesdyffrr.com^
 ||ztyrgxdelngf.com^
@@ -6116,6 +6127,7 @@
 ||opter.co^
 ||osrto.com^
 ||p7vortex.com^
+||pferetgf.com^
 ||pianoldor.com^
 ||picstunoar.com^
 ||pikkr.net^
@@ -6247,6 +6259,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||boogieiwoogie.ru^
 ||mobisway.info^
 ||tds.exopay.ru^
 ||listat.biz^
@@ -10105,6 +10118,7 @@ ws*://video.docfilms.info^
 ||banners-slb.mobile.yandex.net^
 ||banners.mobile.yandex.net^
 !
+||a.applvn.com^
 ||buzzad.io^
 ||adslot.uc.cn^
 ||mobsrv.in^
@@ -13754,6 +13768,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||apiv2.moengage.com^
+||rt.applovin.com^
 ||track.uc.cn^
 ||uc.ucweb.com^
 ||puds.ucweb.com^
