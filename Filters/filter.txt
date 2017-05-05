@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-05-04 12:00:09
+! Last modified: 2017-05-05 12:03:25
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -2765,6 +2765,7 @@
 ||onenetworkdirect.com^
 ||onenetworkdirect.net^
 ||oneopenclose.click^
+||onerror.gq^
 ||onespot.com^
 ||online-adnetwork.com^
 ||online-media24.de^
@@ -2810,6 +2811,7 @@
 ||osiaffiliate.com^
 ||oskale.ru^
 ||ospreymedialp.com^
+||osuq4jc.com^
 ||othersonline.com^
 ||ourunlimitedleads.com^
 ||ov8pc.tv^
@@ -4297,6 +4299,7 @@
 ||ajxftwwmlinv.com^
 ||akrzgxzjynpi.com^
 ||alasdzdnfvtj.com^
+||algkebjdgafa.com^
 ||alvivigqrogq.com^
 ||ambqphwf.com^
 ||amhpbhyxfgvd.com^
@@ -4499,11 +4502,13 @@
 ||dpallyihgtgu.com^
 ||dppcevxbshdl.com^
 ||dqpamcouthqv.com^
+||dqpywdubbxih.com^
 ||drbwugautcgh.com^
 ||drqjihcfdrqj.com^
 ||drtqfejznjnl.com^
 ||dsevjzklcjjb.com^
 ||dsmysdzjhxot.com^
+||dsnjsdrbqwdu.com^
 ||dswwghrlwwcm.com^
 ||dtmwwpykiqng.com^
 ||dubzmzpdkddi.com^
@@ -4524,6 +4529,7 @@
 ||dyjifezeyagm.com^
 ||dyunhvev.com^
 ||dyzstwcqbgjk.com^
+||eaidabmuxbqy.com^
 ||easnviytengk.com^
 ||ebfjbrlcvjlv.com^
 ||ebyakgowemds.com^
@@ -4556,6 +4562,7 @@
 ||emirdzzvhviv.com^
 ||emrumkgmdmdq.com^
 ||enfhddbnariw.com^
+||eniaypwywduf.com^
 ||eovkzcueutgf.com^
 ||epernepojkle.com^
 ||epesogtigole.com^
@@ -4568,6 +4575,7 @@
 ||eslgydoqbedo.com^
 ||eslydbnukkme.com^
 ||esnirgskobfj.com^
+||espnrlezwzvd.com^
 ||etbrjgpsadke.com^
 ||etggiddfdaqd.com^
 ||evhvoeqfrlsb.com^
@@ -4788,6 +4796,7 @@
 ||ihriduffgkel.com^
 ||iibcejrrfhxh.com^
 ||iijmodcvlwfk.com^
+||ikealcmavhpk.com^
 ||iknctklddhoh.com^
 ||ikvltjooosqh.com^
 ||ilsivrexvpyv.com^
@@ -5111,6 +5120,7 @@
 ||ndemlviibdyc.com^
 ||ndgmwuxzxppa.com^
 ||ndkvzncsuxgx.com^
+||ndpegjgxzbbv.com^
 ||ndxidnvvyvwx.com^
 ||nedmppiilnld.com^
 ||nefczemmdcqi.com^
@@ -5154,6 +5164,7 @@
 ||nucqkjkvppgs.com^
 ||nunsbvlzuhyi.com^
 ||nvajxoahenwe.com^
+||nvmjtxnlcdqo.com^
 ||nwfdrxktftep.com^
 ||nwirvhxxcsft.com^
 ||nxcxithvcoeh.com^
@@ -5162,6 +5173,7 @@
 ||nzcpdaboaayv.com^
 ||oalicqudnfhf.com^
 ||oawleebf.com^
+||oaxwtgfhsxod.com^
 ||oazojnwqtsaj.com^
 ||obthqxbm.com^
 ||obuuyneuhfwf.com^
@@ -5169,6 +5181,7 @@
 ||obxwnnheaixf.com^
 ||ocydwjnqasrn.com^
 ||ocyhpouojiss.com^
+||odomcrqlxulb.com^
 ||odpjcjreznno.com^
 ||odplbueosuzw.com^
 ||odsljzffiixm.com^
@@ -5719,6 +5732,7 @@
 ||wmwkwubufart.com^
 ||wnzxwgatxjuf.com^
 ||wpktjtwsidcz.com^
+||wpsyjttctdnt.com^
 ||wpvvlwprfbtm.com^
 ||wqbvqmremvgp.com^
 ||wqnxcthitqpf.com^
@@ -5739,6 +5753,7 @@
 ||wsscyuyclild.com^
 ||wtvyenir.com^
 ||wtxoicsjxbsj.com^
+||wuldwvzqvqet.com^
 ||wvljugmqpfyd.com^
 ||wvqqugicfuac.com^
 ||wwgdpbvbrublvjfbeunqvkrnvggoeubcfxzdjrgcgbnvgcolbf.com^
@@ -5832,6 +5847,7 @@
 ||yiyycuqozjwc.com^
 ||yjjglyoytiew.com^
 ||yjjtxuhfglxa.com^
+||ykacbmxeapwi.com^
 ||ykbcogkoiqdw.com^
 ||yktkodofnikf.com^
 ||ykwdfjergthe.com^
@@ -5903,6 +5919,7 @@
 ||zoileyozfexv.com^
 ||zoowknbw.com^
 ||zpctncydojjh.com^
+||zpkebyxabtsh.com^
 ||zpkobplsfnxf.com^
 ||zpmbsivi.com^
 ||zpnbzxbiqann.com^
@@ -9543,6 +9560,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||cfasync.ml^
 ||rtbnowads.com^
 ||cpmly.com^
 ||likecontrol.com^
@@ -9916,6 +9934,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d160mt023h8h3d.cloudfront.net^
 ||d28k9nkt2spnp.cloudfront.net^
 ||d1czd1q73kbu32.cloudfront.net^
 ||d1mroptkfdxko5.cloudfront.net^
