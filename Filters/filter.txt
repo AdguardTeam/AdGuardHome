@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-05-08 12:03:09
+! Last modified: 2017-05-09 12:03:15
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -120,6 +120,7 @@
 ||888media.net^
 ||888medianetwork.com^
 ||888promos.com^
+||8baf7ae42000024.com^
 ||8s8.eu^
 ||8yxupue8.com^
 ||97d73lsi.com^
@@ -809,6 +810,7 @@
 ||applebarq.com^
 ||appnext.com^
 ||apportium.com^
+||apprupt.com^
 ||apptap.com^
 ||appwebview.com^
 ||april29-disp-download.com^
@@ -4413,6 +4415,7 @@
 ||bzjtjfjteazqzmukjwhyzsaqdtouiopcmtmgdiytfdzboxdann.com^
 ||bzyrhqbdldds.com^
 ||carsxardivaf.com^
+||cawcwpvmpcje.com^
 ||cbwrwcjdctrj.com^
 ||cbxqceuuwnaz.com^
 ||cbxtnudkklwh.com^
@@ -4440,6 +4443,7 @@
 ||cixjmaxkemzknxxuyvkbzlhvvgeqmzgopppvefpfkqdraonoez.com^
 ||cjnoeafncyzb.com^
 ||cjvgnswapbqo.com^
+||cjxdbmxtnqmy.com^
 ||cjxkzkzmdomd.com^
 ||ckryzlnafwyd.com^
 ||ckwpsghi.com^
@@ -4700,6 +4704,7 @@
 ||gphfgyrkpumn.com^
 ||gpnduywxhgme.com^
 ||gqnmautydwky.com^
+||gqorytmpkjdq.com^
 ||gqthfroeirol.com^
 ||gqulrzprheth.com^
 ||grceweaxhbpvclyxhwuozrbtvqzjgbnzklvxdezzficwjnmfil.com^
@@ -4768,6 +4773,7 @@
 ||hpxxzfzdocinivvulcujuhypyrniicjfauortalmjerubjgaja.com^
 ||hqaajpaedpux.com^
 ||hqnyahlpmehp.com^
+||hqxtsqwpvort.com^
 ||hrkshoveizfo.com^
 ||hrvxpinmdyjx.com^
 ||hsvqfvjidloc.com^
@@ -4853,6 +4859,7 @@
 ||iwqugvxozbkd.com^
 ||iwrjczthkkla.com^
 ||ixlsylapsdtr.com^
+||ixzhwyuxxvxb.com^
 ||iydghotpzofn.com^
 ||izhvnderudte.com^
 ||iziwhlafxitn.com^
@@ -4979,6 +4986,7 @@
 ||kutlvuitevgw.com^
 ||kvpofpkxmlpb.com^
 ||kvsyksorguja.com^
+||kvvvdfimdxnu.com^
 ||kvzvtiswjroe.com^
 ||kwgpddeduvje.com^
 ||kwipnlppnybc.com^
@@ -5017,6 +5025,7 @@
 ||ljhuvzutnpza.com^
 ||ljngencgbdbn.com^
 ||ljngjrwkyovx.com^
+||ljzhxfurwibo.com^
 ||lkaarvdprhzx.com^
 ||lkbvfdgqvvpk.com^
 ||lkjmcevfgoxfbyhhmzambtzydolhmeelgkotdllwtfshrkhrev.com^
@@ -5137,6 +5146,7 @@
 ||mzguykhxnuap.com^
 ||mzkhhjueazkn.com^
 ||nahvyfyfpffm.com^
+||nawdwtocxqru.com^
 ||nbbljlzbbpck.com^
 ||nbbvpxfxnamb.com^
 ||nbkwnsonadrb.com^
@@ -5217,6 +5227,7 @@
 ||odtcspsrhbko.com^
 ||oehjxqhiasrk.com^
 ||oewscpwrvoca.com^
+||ofajzowbwzzi.com^
 ||ofgapiydisrw.com^
 ||ofghrodsrqkg.com^
 ||ofjampfenbwv.com^
@@ -5254,6 +5265,7 @@
 ||otrfmbluvrde.com^
 ||oubriojtpnps.com^
 ||ougfkbyllars.com^
+||oulxdvvpmfcd.com^
 ||ovfbwavekglf.com^
 ||ovgzbnjj.com^
 ||ovoczhahelca.com^
@@ -5296,6 +5308,7 @@
 ||plwvwvhudkuv.com^
 ||pmgmbpuiblak.com^
 ||pmlcuxqbngrl.com^
+||pnjeolgxsimj.com^
 ||pnmkuqkonlzj.com^
 ||pnunijdm.com^
 ||popzkvfimbox.com^
@@ -5439,6 +5452,7 @@
 ||rscgfvsximqdpowcmruwitolouncrmnribnfobxzfhrpdmahqe.com^
 ||rsvxipjqyvfs.com^
 ||rtufxsncbegz.com^
+||rtusxaoxemxy.com^
 ||rtxunghyiwiq.com^
 ||ruovcruc.com^
 ||ruoypiedfpov.com^
@@ -5488,6 +5502,8 @@
 ||snetddbbbgbp.com^
 ||snjhhcnr.com^
 ||snpevihwaepwxapnevcpiqxrsewuuonzuslrzrcxqwltupzbwu.com^
+||sockjgaabayf.com^
+||soiegibhwvti.com^
 ||sokanffuyinr.com^
 ||spbflxvnheih.com^
 ||spfrlpjmvkmq.com^
@@ -5519,6 +5535,7 @@
 ||syorlvhuzgmdqbuxgiulsrusnkgkpvbwmxeqqcboeamyqmyexv.com^
 ||szjgylwamcxo.com^
 ||sznxdqqvjgam.com^
+||szvzzuffxatb.com^
 ||szyejlnlvnmy.com^
 ||szynlslqxerx.com^
 ||tabeduhsdhlkalelecelxbcwvsfyspwictbszchbbratpojhlb.com^
@@ -5800,9 +5817,11 @@
 ||wwnlyzbedeum.com^
 ||wxdtvssnezam.com^
 ||wxjqyqvagefw.com^
+||wxonmzkkldhu.com^
 ||wxxfcyoaymug.com^
 ||wydwkpjomckb.com^
 ||wylnauxhkerp.com^
+||wzadmmddcmml.com^
 ||wzjbvbxldfrn.com^
 ||wzueqhwf.com^
 ||xakmsoaozjgm.com^
@@ -5834,6 +5853,7 @@
 ||xiwhhcyzhtem.com^
 ||xjompsubsozc.com^
 ||xjsqhlfscjxo.com^
+||xkawgrrrpszb.com^
 ||xkwnadxakuqc.com^
 ||xkygmtrrjalx.com^
 ||xmmnwyxkfcavuqhsoxfrjplodnhzaafbpsojnqjeoofyqallmf.com^
@@ -5907,6 +5927,7 @@
 ||ypbfrhlgquaj.com^
 ||ypyarwgh.com^
 ||yqjoqncxmufi.com^
+||yqrsfisvrilz.com^
 ||yqtzhigbiame.com^
 ||yqutkbvrgvar.com^
 ||yrfrvrbmipzb.com^
@@ -6322,6 +6343,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||gohillgo.com^
 ||terhimpa.pro^
 ||jonjo.ga^
 ||boogieiwoogie.ru^
@@ -9608,6 +9630,10 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||vkkpv.com^
+||pastilon.com^
+||ssl4anyone2.com^
+||iendoo.com^
 ||cfasync.ml^
 ||rtbnowads.com^
 ||cpmly.com^
