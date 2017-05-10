@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-05-09 12:03:15
+! Last modified: 2017-05-10 12:03:22
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1181,6 +1181,7 @@
 ||cdntrip.com^
 ||centralnervous.net^
 ||cerotop.com^
+||cfasync.ml^
 ||cfasync.tk^
 ||cgecwm.org^
 ||chango.com^
@@ -4321,6 +4322,7 @@
 ||amqtbshegbqg.com^
 ||anasjdzutdmv.com^
 ||anluecyopslm.com^
+||anoufpjmkled.com^
 ||antrtrtyzkhw.com^
 ||anypbbervqig.com^
 ||anyuwksovtwv.com^
@@ -4445,6 +4447,7 @@
 ||cjvgnswapbqo.com^
 ||cjxdbmxtnqmy.com^
 ||cjxkzkzmdomd.com^
+||ckqkwhampiyb.com^
 ||ckryzlnafwyd.com^
 ||ckwpsghi.com^
 ||cmdjujqlfbts.com^
@@ -4460,6 +4463,7 @@
 ||cpamnizzierk.com^
 ||cphxwpicozlatvnsospudjhswfxwmykgbihjzvckxvtxzfsgtx.com^
 ||crkgtnad.com^
+||croxdfrdjfnt.com^
 ||csbsyukodmga.com^
 ||cscactmkbfvn.com^
 ||csmqorveetie.com^
@@ -5379,6 +5383,7 @@
 ||qoiowocphgjm.com^
 ||qolnnepubuyz.com^
 ||qotwtnckqrke.com^
+||qoxsriddwmqx.com^
 ||qpcyafunjtir.com^
 ||qpiyjprptazz.com^
 ||qqapezviufsh.com^
@@ -5399,6 +5404,7 @@
 ||qwrkigqtgygc.com^
 ||qxnniyuuaxhv.com^
 ||qxxyzmukttyp.com^
+||qyvpgddwqynp.com^
 ||qzcpotzdkfyn.com^
 ||qzxtbsnaebfw.com^
 ||rbdmtydtobai.com^
@@ -5857,6 +5863,7 @@
 ||xkwnadxakuqc.com^
 ||xkygmtrrjalx.com^
 ||xmmnwyxkfcavuqhsoxfrjplodnhzaafbpsojnqjeoofyqallmf.com^
+||xnuuzwthzaol.com^
 ||xoqwirroygxv.com^
 ||xpkhmrdqhiux.com^
 ||xpnttdct.com^
@@ -6232,6 +6239,7 @@
 ||qulifiad.com^
 ||qwemfst.com^
 ||qwewas.info^
+||qwewdw.net^
 ||qwrfpgf.com^
 ||qzsccm.com^
 ||r3seek.com^
@@ -9634,7 +9642,6 @@ ws*://video.docfilms.info^
 ||pastilon.com^
 ||ssl4anyone2.com^
 ||iendoo.com^
-||cfasync.ml^
 ||rtbnowads.com^
 ||cpmly.com^
 ||likecontrol.com^
