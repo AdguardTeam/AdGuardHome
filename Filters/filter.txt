@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-05-10 12:03:22
+! Last modified: 2017-05-11 12:03:26
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4341,6 +4341,7 @@
 ||asqamasz.com^
 ||atcyboopajyp.com^
 ||autkmgrbdlbj.com^
+||avdfcctzwfdk.com^
 ||avrdpbiwvwyt.com^
 ||avzkjvbaxgqk.com^
 ||awfjqdhcuftd.com^
@@ -4614,6 +4615,7 @@
 ||facsowlaufzk.com^
 ||farkkbndawtxczozilrrrunxflspkyowishacdueiqzeddsnuu.com^
 ||fbbjlubvwmwd.com^
+||fcjhxlybaiab.com^
 ||fcjnqpkrdglw.com^
 ||fdepobamndfn.com^
 ||fdogfuqpgeub.com^
@@ -4656,6 +4658,7 @@
 ||frlvfzybstsa.com^
 ||frlzxwxictmg.com^
 ||fsddidfmmzvw.com^
+||ftgfmbxqkjda.com^
 ||ftjrekbpjkwe.com^
 ||ftvkgkkmthed.com^
 ||ftytssqazcqx.com^
@@ -4769,7 +4772,9 @@
 ||hlotiwnz.com^
 ||hndesrzcgjmprqbbropdulvkfroonnrlbpqxhvprsavhwrfxtv.com^
 ||hnoajsaivjsg.com^
+||hnqnftzzytjl.com^
 ||hntpbpeiuajc.com^
+||howjkpaynzwf.com^
 ||hpdmnmehzcor.com^
 ||hpkwirncwvxo.com^
 ||hplgpoicsnea.com^
@@ -4790,6 +4795,7 @@
 ||hvfzacisynoq.com^
 ||hvfzshrpfueb.com^
 ||hvukouhckryjudrawwylpboxdsonxhacpodmxvbonqipalsprb.com^
+||hwsbehjaxebh.com^
 ||hwvwuoxsosfp.com^
 ||hxbvbmxv.com^
 ||hxkanryhktub.com^
@@ -4867,6 +4873,7 @@
 ||iydghotpzofn.com^
 ||izhvnderudte.com^
 ||iziwhlafxitn.com^
+||izixtxrvogaq.com^
 ||iznhvszyizwd.com^
 ||iztsbnkxphnj.com^
 ||izwsvyqv.com^
@@ -5163,6 +5170,7 @@
 ||ndkvzncsuxgx.com^
 ||ndndptjtonhh.com^
 ||ndpegjgxzbbv.com^
+||ndtlcaudedxz.com^
 ||ndxidnvvyvwx.com^
 ||nedmppiilnld.com^
 ||nefczemmdcqi.com^
@@ -5258,6 +5266,7 @@
 ||oouggjayokzx.com^
 ||ooyhetoodapmrjvffzpmjdqubnpevefsofghrfsvixxcbwtmrj.com^
 ||ophpbseelohv.com^
+||oppcgcqytazs.com^
 ||opyisszzoyhc.com^
 ||oqmjxcqgdghq.com^
 ||ormnduxoewtl.com^
@@ -5273,11 +5282,13 @@
 ||ovfbwavekglf.com^
 ||ovgzbnjj.com^
 ||ovoczhahelca.com^
+||ovrdkhamiljt.com^
 ||ovzmelkxgtgf.com^
 ||owihjchxgydd.com^
 ||owlmjcogunzx.com^
 ||owodfrquhqui.com^
 ||owqobhxvaack.com^
+||owrqvyeyrzhy.com^
 ||owwewfaxvpch.com^
 ||oyrgxjuvsedi.com^
 ||oytrrdlrovcn.com^
@@ -5350,6 +5361,7 @@
 ||pzcpotzdkfyn.com^
 ||pzgchrjikhfyueumavkqiccvsdqhdjpljgwhbcobsnjrjfidpq.com^
 ||pzkpyzgqvofi.com^
+||qadtkdlqlemf.com^
 ||qajaohrcbpkd.com^
 ||qarqyhfwient.com^
 ||qazzzxwynmot.com^
@@ -5370,6 +5382,7 @@
 ||qiqrguvdhcux.com^
 ||qiremmtynkae.com^
 ||qixlpaaeaspr.com^
+||qjmearsroiyn.com^
 ||qjskosdsxanp.com^
 ||qklhtphiphni.com^
 ||qkpwdakgxynv.com^
@@ -5739,6 +5752,7 @@
 ||vunwzlxfsogj.com^
 ||vuysooqimdbt.com^
 ||vwugfpktabed.com^
+||vwxskpufgwww.com^
 ||vxbtrsqjnjpq.com^
 ||vxlpefsjnmws.com^
 ||vxqhchlyijwu.com^
@@ -9554,6 +9568,7 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+://*.2img-pic.ru^
 ||an.yandex.ru^
 ||an.yandex.
 ||tracking.overwolf.com^
@@ -9638,6 +9653,11 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||s.click.aliexpress.com^
+||mobioffertrck.com
+||trklvs.com
+||suocloud.com^
+||wirelesstube.mobi^
 ||vkkpv.com^
 ||pastilon.com^
 ||ssl4anyone2.com^
