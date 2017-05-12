@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-05-11 12:03:26
+! Last modified: 2017-05-12 12:03:19
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -3089,6 +3089,7 @@
 ||purpleflag.net^
 ||puserving.com^
 ||push2check.com^
+||putrr2.com^
 ||puttme.ga^
 ||pwrads.net^
 ||pxl2015x1.com^
@@ -4386,6 +4387,7 @@
 ||bjkfmvhygpub.com^
 ||bjpktmjdxqpl.com^
 ||bjzcyqezwksznxxhscsfcogugkyiupgjhikadadgoiruasxpxo.com^
+||bkgesylgvrgf.com^
 ||bkmmlcbertdbselmdxpzcuyuilaolxqfhtyukmjkklxphbwsae.com^
 ||bkmtspywevsk.com^
 ||blprkaomvazv.com^
@@ -4445,6 +4447,7 @@
 ||cihnrhqwbcsq.com^
 ||cixjmaxkemzknxxuyvkbzlhvvgeqmzgopppvefpfkqdraonoez.com^
 ||cjnoeafncyzb.com^
+||cjnwobsladbq.com^
 ||cjvgnswapbqo.com^
 ||cjxdbmxtnqmy.com^
 ||cjxkzkzmdomd.com^
@@ -4586,6 +4589,7 @@
 ||emirdzzvhviv.com^
 ||emrumkgmdmdq.com^
 ||enfhddbnariw.com^
+||enhwftpkwvnb.com^
 ||eniaypwywduf.com^
 ||eovkzcueutgf.com^
 ||epernepojkle.com^
@@ -4719,6 +4723,7 @@
 ||gsiqerorqkxu.com^
 ||gtaouarrwypu.com^
 ||gtbfhyprjhqz.com^
+||gtcpsbvtwaqw.com^
 ||gtevyaeeiged.com^
 ||gtmonytxxglu.com^
 ||gtqfsxrrerzu.com^
@@ -4750,6 +4755,7 @@
 ||hbzzkwsuaooc.com^
 ||hcggkyhzxzsv.com^
 ||hcyxksgsxnzb.com^
+||hdwlzheftpin.com^
 ||heefwozhlxgz.com^
 ||heracgjcuqmk.com^
 ||hevdxhsfbwud.com^
@@ -4770,6 +4776,7 @@
 ||hkoxlirf.com^
 ||hlekbinpgsuk.com^
 ||hlotiwnz.com^
+||hmcjupvbxxyx.com^
 ||hndesrzcgjmprqbbropdulvkfroonnrlbpqxhvprsavhwrfxtv.com^
 ||hnoajsaivjsg.com^
 ||hnqnftzzytjl.com^
@@ -4799,6 +4806,7 @@
 ||hwvwuoxsosfp.com^
 ||hxbvbmxv.com^
 ||hxkanryhktub.com^
+||hxlojjtpqtlk.com^
 ||hxuvwqsecumg.com^
 ||hytkatubjuln.com^
 ||hyubowucvkch.com^
@@ -4850,6 +4858,7 @@
 ||ionbpysfukdh.com^
 ||iqmjedevvojm.com^
 ||iqrqmhrfkyuu.com^
+||irbkobqlrbtt.com^
 ||irjaeupzarkvwmxonaeslgicvjvgdruvdywmdvuaoyfsjgdzhk.com^
 ||irrttzthsxot.com^
 ||irxpndjg.com^
@@ -5184,6 +5193,7 @@
 ||nguooqblyjrz.com^
 ||nheanvabodkw.com^
 ||nifyalnngdhb.com^
+||njcdmsgjbbbz.com^
 ||njjybqyiuotl.com^
 ||nkkreqvurtoh.com^
 ||nklivofyjkbt.com^
@@ -5410,6 +5420,7 @@
 ||qtsmzrnccnwz.com^
 ||quaizzywzluk.com^
 ||qudpdpkxffzt.com^
+||qveuxmbhbhmg.com^
 ||qvsbroqoaggw.com^
 ||qwbnzilogwdc.com^
 ||qwhkndqqxxbq.com^
@@ -5647,6 +5658,7 @@
 ||ugxyemavfvlolypdqcksmqzorlphjycckszifyknwlfcvxxihx.com^
 ||uhfqrxwlnszw.com^
 ||uilknldyynwm.com^
+||uipjeyipoumf.com^
 ||ujdctbsbbimb.com^
 ||ujocmihdknwj.com^
 ||ujqafhcsrhyz.com^
@@ -9653,7 +9665,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
-||s.click.aliexpress.com^
+||motohem.com^
 ||mobioffertrck.com
 ||trklvs.com
 ||suocloud.com^
