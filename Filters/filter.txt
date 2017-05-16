@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-05-15 12:00:09
+! Last modified: 2017-05-16 12:03:23
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4358,6 +4358,7 @@
 ||awvrvqxq.com^
 ||axfkfstrbacx.com^
 ||ayjebauqdrys.com^
+||ayozhcgcsyun.com^
 ||azbdbtsmdocl.com^
 ||azditojzcdkc.com^
 ||azeozrjk.com^
@@ -4428,6 +4429,7 @@
 ||byqmzodcdhhu.com^
 ||bzbaizntfrhl.com^
 ||bzfguipyjops.com^
+||bzgwkxnjqjdz.com^
 ||bzjtjfjteazqzmukjwhyzsaqdtouiopcmtmgdiytfdzboxdann.com^
 ||bzyrhqbdldds.com^
 ||carsxardivaf.com^
@@ -4534,6 +4536,7 @@
 ||dmwubqhtuvls.com^
 ||dmyypseympjf.com^
 ||dnqejgrbtlxe.com^
+||dntlpwpjwcfu.com^
 ||dnxpseduuehm.com^
 ||dobgfkflsnmpaeetycphmcloiijxbvxeyfxgjdlczcuuaxmdzz.com^
 ||dobjgpqzygow.com^
@@ -4571,6 +4574,7 @@
 ||dyjifezeyagm.com^
 ||dyunhvev.com^
 ||dyzstwcqbgjk.com^
+||dzdfmwaztrrm.com^
 ||eaidabmuxbqy.com^
 ||easnviytengk.com^
 ||ebfjbrlcvjlv.com^
@@ -4701,6 +4705,7 @@
 ||gbiwxmjw.com^
 ||gbltotkythfh.com^
 ||gbsxcyukuuex.com^
+||gcboyhlfqxhc.com^
 ||gdixpvfqbhun.com^
 ||gdpuknsngvps.com^
 ||geazikjazoid.com^
@@ -4835,6 +4840,7 @@
 ||hyzncftkveum.com^
 ||hzskbnafzwsu.com^
 ||hztkbjdkaiwt.com^
+||hzwxkqnqrdfv.com^
 ||iagvkdeienla.com^
 ||ibqmccuuhjqc.com^
 ||icafyriewzzrwxlxhtoeakmwroueywnwhmqmaxsqdntasgfvhc.com^
@@ -5052,6 +5058,7 @@
 ||kyveduvdkbro.com^
 ||kyzhecmvpiaw.com^
 ||kzqrjfulybvv.com^
+||kzujizavnlxf.com^
 ||kzwddxlpcqww.com^
 ||lazkslkkmtpy.com^
 ||lbfryfttoihl.com^
@@ -5376,6 +5383,7 @@
 ||pnjeolgxsimj.com^
 ||pnmkuqkonlzj.com^
 ||pnunijdm.com^
+||pnuymnyhbbuf.com^
 ||popzkvfimbox.com^
 ||ppqfteducvts.com^
 ||ppuuwencqopa.com^
@@ -5474,6 +5482,7 @@
 ||qzxtbsnaebfw.com^
 ||rbdmtydtobai.com^
 ||rbfxurlfctsz.com^
+||rbgrlqsepeds.com^
 ||rbppnzuxoatx.com^
 ||rbrbvedkazkr.com^
 ||rbsfglbipyfs.com^
@@ -5520,6 +5529,7 @@
 ||rpspeqqiddjm.com^
 ||rpulxcwmnuxi.com^
 ||rqtdnrhjktzr.com^
+||rrrdddbtofnf.com^
 ||rscgfvsximqdpowcmruwitolouncrmnribnfobxzfhrpdmahqe.com^
 ||rsvxipjqyvfs.com^
 ||rtufxsncbegz.com^
@@ -5596,6 +5606,7 @@
 ||suonvyzivnfy.com^
 ||suwadesdshrg.com^
 ||svjloaomrher.com^
+||svnhdfqvhjzn.com^
 ||svrsqqtj.com^
 ||swckuwtoyrklhtccjuuvcstyesxpbmycjogrqkivmmcqqdezld.com^
 ||swgvpkwmojcv.com^
@@ -5689,6 +5700,7 @@
 ||ubxtoqsqusyx.com^
 ||uccgdtmmxota.com^
 ||uckxjsiy.com^
+||ucptqdmerltn.com^
 ||udbwpgvnalth.com^
 ||udvbtgkxwnap.com^
 ||uebcqdgigsid.com^
@@ -6427,6 +6439,10 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||molesi.info^
+||newsportal3.ru^
+||maschina.xyz^
+||manchina.xyz^
 ||gohillgo.com^
 ||terhimpa.pro^
 ||jonjo.ga^
@@ -10300,6 +10316,40 @@ ws*://video.docfilms.info^
 ||banners-slb.mobile.yandex.net^
 ||banners.mobile.yandex.net^
 !
+||abbott.vo.llnwd.net^
+||advantech.vo.llnwd.net^
+||atkins.vo.llnwd.net^
+||bandai.hs.llnwd.net^
+||behance.vo.llnwd.net^
+||edwlifes.vo.llnwd.net^
+||embanet.vo.llnwd.net^
+||finedesign.vo.llnwd.net^
+||gulfstream.vo.llnwd.net^
+||gymboree.hs.llnwd.net^
+||harvardbp.vo.llnwd.net^
+||hbpub.vo.llnwd.net^
+||icvdm.vo.llnwd.net^
+||inskin.vo.llnwd.net^
+||kjos.vo.llnwd.net^
+||msbmopod.vo.llnwd.net^
+||msbrandent.vo.llnwd.net^
+||navigon.vo.llnwd.net^
+||nytelecom.vo.llnwd.net^
+||rbb.ic.llnwd.net^
+||responsys.hs.llnwd.net^
+||surveyor.vo.llnwd.net^
+||synthes.vo.llnwd.net^
+||teachscape.vo.llnwd.net^
+||textron.vo.llnwd.net^
+||tmz.vo.llnwd.net^
+||toyota.vo.llnwd.net^
+||usarmy.vo.llnwd.net^
+||videoplus.vo.llnwd.net^
+||wdig.vo.llnwd.net^
+||xmpie.vo.llnwd.net^
+||appnext.hs.llnwd.net^
+||sdk.adincube.com^
+||ads.avocarrot.com^
 ||adsdk.vrvm.com^
 ||moatads.com.edgekey.net^
 ||nexage.akadns.net^
@@ -13961,6 +14011,9 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||d.applvn.com^
+||rt.applvn.com^
+||sdklogs.avocarrot.com^
 ||apiv2.moengage.com^
 ||rt.applovin.com^
 ||track.uc.cn^
