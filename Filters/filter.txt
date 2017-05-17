@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-05-16 12:03:23
+! Last modified: 2017-05-17 12:00:07
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1380,6 +1380,7 @@
 ||crazylead.com^
 ||crazyvideosempire.com^
 ||creative-serving.com^
+||creativecdn.com^
 ||creditcards15x.tk^
 ||crispads.com^
 ||crocspaceoptimizer.com^
@@ -1712,6 +1713,7 @@
 ||find-abc.com^
 ||find-cheap-hotels.org^
 ||findbestsolution.net^
+||findbetterresults.com^
 ||findsthat.com^
 ||firaxtech.com^
 ||firefeeder.com^
@@ -3394,6 +3396,7 @@
 ||smartdevicemedia.com^
 ||smarterdownloads.net^
 ||smartertravel.com^
+||smartmediarep.com^
 ||smartredirect.de^
 ||smarttargetting.co.uk^
 ||smarttargetting.com^
@@ -4222,6 +4225,7 @@
 ||crownclam.com^
 ||delightdriving.com^
 ||differentdesk.com^
+||familiarfloor.com^
 ||fanaticalfly.com^
 ||flavordecision.com^
 ||foamybox.com^
@@ -4571,6 +4575,7 @@
 ||dxiixnrumvni.com^
 ||dxurtngzawwe.com^
 ||dyazeqpeoykf.com^
+||dyerbegytfkj.com^
 ||dyjifezeyagm.com^
 ||dyunhvev.com^
 ||dyzstwcqbgjk.com^
@@ -4639,6 +4644,7 @@
 ||ezjrnbpjthir.com^
 ||ezuosstmbcle.com^
 ||facsowlaufzk.com^
+||faoxietqwbmu.com^
 ||farkkbndawtxczozilrrrunxflspkyowishacdueiqzeddsnuu.com^
 ||fbbjlubvwmwd.com^
 ||fcjhxlybaiab.com^
@@ -4954,6 +4960,7 @@
 ||jnercechoqjb.com^
 ||jnxqlltlnezn.com^
 ||jnylpjlnjfsp.com^
+||jobveibsozms.com^
 ||jogpsoiyngua.com^
 ||joqpatxugyug.com^
 ||jorndvyzchaq.com^
@@ -5114,6 +5121,7 @@
 ||luhqeqaypvmc.com^
 ||lvlvpdztdnro.com^
 ||lvrvufurxhgp.com^
+||lwasxldakmhx.com^
 ||lwenrqtarmdx.com^
 ||lwqwsptepdxy.com^
 ||lwysswaxnutn.com^
@@ -5127,6 +5135,7 @@
 ||lzrfxzvfbkay.com^
 ||lzvnaaozpqyb.com^
 ||maboflgkaxqn.com^
+||mafndqbvdgkm.com^
 ||magwfymjhils.com^
 ||maxgirlgames.com^
 ||mbajaazbqdzc.com^
@@ -5283,6 +5292,7 @@
 ||obuuyneuhfwf.com^
 ||obvbubmzdvom.com^
 ||obxwnnheaixf.com^
+||ocipbbphfszy.com^
 ||ocydwjnqasrn.com^
 ||ocyhpouojiss.com^
 ||odomcrqlxulb.com^
@@ -5362,6 +5372,7 @@
 ||peewuvgdcian.com^
 ||peqdwnztlzjp.com^
 ||pguxoochezkc.com^
+||pgxciwvwcfof.com^
 ||pifaojvaiofw.com^
 ||piwwplvxvqqi.com^
 ||pixjqfvlsqvu.com^
@@ -5378,6 +5389,7 @@
 ||plmuxaeyapbqxszavtsljaqvmlsuuvifznvttuuqfcxcbgqdnn.com^
 ||plquutxxewil.com^
 ||plwvwvhudkuv.com^
+||plyftjxmrxrk.com^
 ||pmgmbpuiblak.com^
 ||pmlcuxqbngrl.com^
 ||pnjeolgxsimj.com^
@@ -5631,6 +5643,7 @@
 ||tazvowjqekha.com^
 ||tcdikyjqdmsb.com^
 ||tcgojxmwkkgm.com^
+||tcyeyccspxod.com^
 ||tedlrouwixqq.com^
 ||tevrhhgzzutw.com^
 ||teyuzyrjmrdi.com^
@@ -5983,6 +5996,7 @@
 ||yaoslgiweccw.com^
 ||yaqysxlohdyg.com^
 ||yasltdlichfd.com^
+||yattprdmuybn.com^
 ||yaxdboxgsbgh.com^
 ||ybhaoglgbgdk.com^
 ||ybzfsppttoaz.com^
@@ -6074,6 +6088,7 @@
 ||zmytwgfd.com^
 ||znmrgzozlohe.com^
 ||znvctmolksaj.com^
+||zohaqnxwkvyt.com^
 ||zoileyozfexv.com^
 ||zoowknbw.com^
 ||zpctncydojjh.com^
@@ -6439,6 +6454,16 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||hgfsdzfs.com^
+||vztfc.com^
+||aahvz.top^
+||ijrah.top^
+||kjaay.com^
+||rsuuc.com^
+||saferedd.com^
+||uuaoy.com^
+||wydpt.com^
+||xxslu.space^
 ||molesi.info^
 ||newsportal3.ru^
 ||maschina.xyz^
@@ -6463,7 +6488,6 @@
 ||crapka.ru^
 ||hivideoworld.com^
 ||tsygari.info^
-||kjaay.com^
 ||recwy.com^
 ||buckridge.link^
 ||bbvever.com^
@@ -6691,7 +6715,6 @@ thr.ru##.top_branding
 ||a.sdska.ru^
 ||a.thairesort.ru^
 ||aa-ds.ru^
-||aahvz.top^
 ||aastob.com^
 ||abcfilm.org^
 ||abdmi.ru^
@@ -7731,7 +7754,6 @@ thr.ru##.top_branding
 ||ihsibe.ru^
 ||iiutq.xyz^
 ||ijdenha.ru^
-||ijrah.top^
 ||ijtefix.ru^
 ||ikiif.com^
 ||ikritis.ru^
@@ -8712,7 +8734,6 @@ thr.ru##.top_branding
 ||roukel.com^
 ||rs-context.ru^
 ||rss20.ru^
-||rsuuc.com^
 ||rt-image.ru^
 ||rt-ns.ru^
 ||rtb-media.ru^
@@ -8774,7 +8795,6 @@ thr.ru##.top_branding
 ||s1venus.com^
 ||s4block.com^
 ||sadreno.com^
-||saferedd.com^
 ||saferedirrect.com^
 ||salesdoubler.com.ua^
 ||samiana.com^
@@ -9289,7 +9309,6 @@ thr.ru##.top_branding
 ||utarget.pro^
 ||utilient.com^
 ||utrehter.com^
-||uuaoy.com^
 ||uvcwj.com^
 ||uwuyn.us^
 ||uytichas.ru^
@@ -9530,7 +9549,6 @@ thr.ru##.top_branding
 ||www2.domah.ru^
 ||wwwomen.ru^
 ||wycji.top^
-||wydpt.com^
 ||wyuxy.com^
 ||wzor.web-serf.info^
 ||x-busty.org^
@@ -9567,7 +9585,6 @@ thr.ru##.top_branding
 ||xtvoh.com^
 ||xuculit.ru^
 ||xwell.ru/
-||xxslu.space^
 ||xxuhter.ru:8040
 ||xxuhter.ru^
 ||xxx-babes.org^
@@ -9731,6 +9748,10 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||sexpennyauctions.com^
+||78.140.130.88^
+||happer.info^
+||automoc.net^
 ||motohem.com^
 ||mobioffertrck.com
 ||trklvs.com
@@ -10055,7 +10076,6 @@ ws*://video.docfilms.info^
 ||sc.rvtlife.com^
 ||scr.flashcast.org.uk^
 ||serve.williamhill.com^
-||sexpennyauctions.com^
 ||sextadate.net^
 ||sftapi.com^
 ||shorlakmedia.com^
@@ -10113,6 +10133,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||dmtw0i4zln92b.cloudfront.net^
 ||d160mt023h8h3d.cloudfront.net^
 ||d28k9nkt2spnp.cloudfront.net^
 ||d1czd1q73kbu32.cloudfront.net^
@@ -10735,6 +10756,10 @@ ws*://video.docfilms.info^
 !
 ! Google domains
 !
+||get35.com^
+||bbvc2.com^
+||geoplugin.net^
+||ktrackdata.com^
 ||collector.bunchbox.co^
 ||tda.io^
 ||statpipe.ru^
@@ -11425,7 +11450,6 @@ ws*://video.docfilms.info^
 ||craktraffic.com^
 ||crashfootwork.com^
 ||crazyegg.com^
-||creativecdn.com^
 ||criteo.com^
 ||criteo.net^
 ||crm.zenguard.biz^
@@ -11814,7 +11838,6 @@ ws*://video.docfilms.info^
 ||geocontatore.com^
 ||geoip.herewetest.com^
 ||geolocation.performgroup.com^
-||geoplugin.net^
 ||geoservice.curse.com^
 ||getbackstory.com^
 ||getclicky.com^
@@ -14011,6 +14034,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||api.oneaudience.com^
+||api.gameofwhales.com^
 ||d.applvn.com^
 ||rt.applvn.com^
 ||sdklogs.avocarrot.com^
