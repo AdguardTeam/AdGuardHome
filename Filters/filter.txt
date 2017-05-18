@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-05-17 12:00:07
+! Last modified: 2017-05-18 12:03:20
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -967,6 +967,7 @@
 ||bestdeals.ws^
 ||bestfindsite.com^
 ||bestforexpartners.com^
+||bestforexplmdb.com^
 ||bestgameads.com^
 ||besthitsnow.com^
 ||bestofferdirect.com^
@@ -1678,6 +1679,7 @@
 ||ezadserver.net^
 ||ezmob.com^
 ||ezoic.net^
+||f7oddtr.com^
 ||facebooker.top^
 ||faggrim.com^
 ||fairadsnetwork.com^
@@ -3395,7 +3397,6 @@
 ||smartadtags.com^
 ||smartdevicemedia.com^
 ||smarterdownloads.net^
-||smartertravel.com^
 ||smartmediarep.com^
 ||smartredirect.de^
 ||smarttargetting.co.uk^
@@ -4259,6 +4260,53 @@
 ||adhood.com^
 ||atresadvertising.com^
 ! youwatch.org adservers
+||019f2d2d415.review^
+||098c0f90ca673716316.site^
+||107e470d2ace7d8ecc2.stream^
+||164f9d1bd2933.party^
+||1788f63a9a2e67d.date^
+||1bc169ca9feb0f6a.xyz^
+||1j7740kd.website^
+||24ad89fc2690ed9369.com^
+||2ujo8ayw.racing^
+||3472ccbc21c3f567.xyz^
+||3a727dbae773782eb.space^
+||3ef0cfe35714f932c.trade^
+||3k4hppja.stream^
+||48a298f68e0.com^
+||4d28ae0e559c1ba.webcam^
+||4e9wpp17.stream^
+||4oz2rj6t.site^
+||4vaj4jn4.download^
+||57cdb5e39630.racing^
+||5tcgu99n.loan^
+||6191bbf7f50444eccca.site^
+||63bd0b6efb0ecd2.bid^
+||647a4323fe432956c.trade^
+||65e107c5ea9e0573.website^
+||66cpwgln.space^
+||6a0e2d19ac28.com^
+||6g3am6pr.website^
+||6xfcmiy0.science^
+||707e63f068175.party^
+||70b008710ae8.racing^
+||72e9488432b.review^
+||73qbgex1.cricket^
+||79ebttm6.cricket^
+||7t69dbtn.science^
+||7y3bcefa.stream^
+||80d43327c1673.win^
+||8hykthze.cricket^
+||946dc1edc8e5a37.bid^
+||95g804up.download^
+||970215366f5649.download^
+||9icmzvn6.website^
+||9l7y8nel.stream^
+||a2c653c4d145fa5f96a.com^
+||a80zha8c.webcam^
+||a8d2a82ca40.review^
+||aafb1cd4450aa247.website^
+||ab1eo0rx.stream^
 ||acamar.xyz^
 ||achird.xyz^
 ||acubens.xyz^
@@ -4269,6 +4317,53 @@
 ||albaldah.xyz^
 ||albali.xyz^
 ||albireo.xyz^
+||b2530db8a16eaa.download^
+||b2ce5ba15afd9.party^
+||b80077a4be3ec4763.trade^
+||backlogtop.xyz^
+||busyd5s0.faith^
+||c50ba364a21f.online^
+||cg1bz6tf.loan^
+||ckdegfi5.faith^
+||clotraiam.website^
+||d088e52cfa9e344beb.top^
+||d0z4gwv7.webcam^
+||de56aa68299cfdb.webcam^
+||duscb12r.loan^
+||e0e0e4195bb7.racing^
+||e24d38df68c1b898ea.top^
+||f35983cb8ed.review^
+||f4906b7c15ba.com^
+||fcfd5de4b3be3.com^
+||fcve2mi2.review^
+||fkvnjw6d.review^
+||fugggk3i.accountant^
+||gkol15n1.stream^
+||h166g9ej.download^
+||is3eho4w.download^
+||j7gvaliq.cricket^
+||j880iceh.party^
+||jnrzox5e.website^
+||k9pdlefk.website^
+||kge1ru01.science^
+||kgrfw2mp.date^
+||koidt1wn.bid^
+||lr48oe5c.website^
+||lslpv80k.download^
+||lxpl6t0t.cricket^
+||mc09j2u5.loan^
+||mwtpludn.review^
+||or3f3xmk.xyz^
+||pdm8kxw7.website^
+||sbsdjgk0.accountant^
+||t2y16t3g.download^
+||tde2wkyv.stream^
+||tpp1ede2.accountant^
+||txjdgm53.win^
+||wbkaidsc.webcam^
+||wmrdwhv3.faith^
+||x5qa0pxy.science^
+||yqm16b35.lol^
 ! admeasures.com domains
 ||ads-codes.net^
 ||aeghae5y.com^
@@ -4417,6 +4512,8 @@
 ||bqqjowpigdnx.com^
 ||bqytfutmwulr.com^
 ||brqrtgjklary.com^
+||brtcmjchfyel.com^
+||brygxppyaugt.com^
 ||bsaixnxcpaai.com^
 ||bsnbfufjgxrb.com^
 ||bspjagxietut.com^
@@ -4475,6 +4572,7 @@
 ||cmdotgwjhpqf.com^
 ||cmpsuzvr.com^
 ||cmqyhtqkhduy.com^
+||cmrxvyjyaerf.com^
 ||cnfiukuediuy.com^
 ||cnntsmnymvnp.com^
 ||cogxsnvqesph.com^
@@ -4980,6 +5078,7 @@
 ||juyfhwxcvzft.com^
 ||jvodizomnxtg.com^
 ||jwfdyujffrzt.com^
+||jwwlyiicjkuh.com^
 ||jwzegfmsgyba.com^
 ||jxvhdyguseaf.com^
 ||jyauuwrrigim.com^
@@ -5009,6 +5108,7 @@
 ||kfwpyyctzmpk.com^
 ||kgkjlivo.com^
 ||kgvgtudoridc.com^
+||kgzuerzjysxw.com^
 ||kihhgldtpuho.com^
 ||kjbqzbiteubt.com^
 ||kjjlucebvxtu.com^
@@ -5055,6 +5155,7 @@
 ||kvzvtiswjroe.com^
 ||kwgpddeduvje.com^
 ||kwipnlppnybc.com^
+||kwjglwybtlhm.com^
 ||kwystoaqjvml.com^
 ||kxareafqwjop.com^
 ||kxdprqrrfhhn.com^
@@ -5260,7 +5361,9 @@
 ||nnjiluslnwli.com^
 ||nnvjigagpwsh.com^
 ||nokswnfvghee.com^
+||nomlxyhfgeny.com^
 ||noolablkcuyu.com^
+||npauffnlpgzw.com^
 ||npeanaixbjptsemxrcivetuusaagofdeahtrxofqpxoshduhri.com^
 ||npgdqwtrprfq.com^
 ||npikrbynhuzi.com^
@@ -5303,6 +5406,7 @@
 ||oehjxqhiasrk.com^
 ||oewscpwrvoca.com^
 ||ofajzowbwzzi.com^
+||ofbqjpaamioq.com^
 ||ofgapiydisrw.com^
 ||ofghrodsrqkg.com^
 ||ofjampfenbwv.com^
@@ -5432,6 +5536,7 @@
 ||pzgchrjikhfyueumavkqiccvsdqhdjpljgwhbcobsnjrjfidpq.com^
 ||pzkpyzgqvofi.com^
 ||qadtkdlqlemf.com^
+||qahajvkyfjpg.com^
 ||qajaohrcbpkd.com^
 ||qarqyhfwient.com^
 ||qazzzxwynmot.com^
@@ -5487,6 +5592,7 @@
 ||qwhkndqqxxbq.com^
 ||qwqqliynxufj.com^
 ||qwrkigqtgygc.com^
+||qxbnmdjmymqa.com^
 ||qxnniyuuaxhv.com^
 ||qxxyzmukttyp.com^
 ||qyvpgddwqynp.com^
@@ -5627,6 +5733,7 @@
 ||sxtzhwvbuflt.com^
 ||sydnkqqscbxc.com^
 ||syorlvhuzgmdqbuxgiulsrusnkgkpvbwmxeqqcboeamyqmyexv.com^
+||syrnujjldljl.com^
 ||szjgylwamcxo.com^
 ||sznxdqqvjgam.com^
 ||szvzzuffxatb.com^
@@ -5766,6 +5873,7 @@
 ||uxyofgcf.com^
 ||uyfsqkwhpihm.com^
 ||uyqzlnmdtfpnqskyyvidmllmzauitvaijcgqjldwcwvewjgwfj.com^
+||uyusewjlkadj.com^
 ||uzbboiydfzog.com^
 ||uzbciwrwzzhs.com^
 ||uzesptwcwwmt.com^
@@ -5794,6 +5902,7 @@
 ||vgckzqudqhfr.com^
 ||vgfeahkrzixa.com^
 ||vgmrqurgxlimcawbweuzbvbzxabsfuuxseldfapjmxoboaplmg.com^
+||vgtnbvzkepbm.com^
 ||vhatpbmitwcn.com^
 ||vhctcywajcwv.com^
 ||vhiaxerjzbqi.com^
@@ -6009,6 +6118,7 @@
 ||yesucplcylxg.com^
 ||yfkwqoswbghk.com^
 ||yflpucjkuwvh.com^
+||yfqlqjpdsckc.com^
 ||yfzcjqpxunsn.com^
 ||ygrtbssc.com^
 ||yhsxsjzyqfoq.com^
@@ -6019,6 +6129,7 @@
 ||ykacbmxeapwi.com^
 ||ykbcogkoiqdw.com^
 ||yktkodofnikf.com^
+||ykuoujjvngtu.com^
 ||ykwdfjergthe.com^
 ||ylhjsrwqtqqb.com^
 ||yljrefexjymy.com^
@@ -6038,6 +6149,7 @@
 ||yqtzhigbiame.com^
 ||yqutkbvrgvar.com^
 ||yrfrvrbmipzb.com^
+||yrnzxgsjokuv.com^
 ||ytapgckhhvou.com^
 ||ytaujxmxxxmm.com^
 ||ytiyuqfxjbke.com^
@@ -6454,6 +6566,9 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||imwhite.ru^
+||vidmsc.com^
+||puipui.ru^
 ||hgfsdzfs.com^
 ||vztfc.com^
 ||aahvz.top^
@@ -9748,6 +9863,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||putrr3.com^
 ||sexpennyauctions.com^
 ||78.140.130.88^
 ||happer.info^
