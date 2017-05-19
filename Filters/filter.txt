@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-05-18 12:03:20
+! Last modified: 2017-05-19 12:03:32
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -13,6 +13,7 @@
 ||0emn.com^
 ||0fmm.com^
 ||0icep80f.com^
+||0mme.com^
 ||0pixl.com^
 ||0xwxmj21r75kka.com^
 ||101m3.com^
@@ -1605,6 +1606,7 @@
 ||electosake.com^
 ||elefantsearch.com^
 ||elvate.net^
+||em0n.com^
 ||emberads.com^
 ||embraceablemidpointcinnabar.com^
 ||emediate.ch^
@@ -2543,6 +2545,7 @@
 ||mmondi.com^
 ||mmoptional.com^
 ||mmotraffic.com^
+||mn0e.com^
 ||mnetads.com^
 ||moatads.com^
 ||mobatori.com^
@@ -4226,7 +4229,6 @@
 ||crownclam.com^
 ||delightdriving.com^
 ||differentdesk.com^
-||familiarfloor.com^
 ||fanaticalfly.com^
 ||flavordecision.com^
 ||foamybox.com^
@@ -4725,6 +4727,7 @@
 ||erkwkjfompvt.com^
 ||erszwzaidmlc.com^
 ||ervpgpxr.com^
+||esgwceckxumg.com^
 ||eslgydoqbedo.com^
 ||eslydbnukkme.com^
 ||esnirgskobfj.com^
@@ -4924,6 +4927,7 @@
 ||hszyozoawqnk.com^
 ||htllanmhrnjrbestmyabzhyweaccazvuslvadtvutfiqnjyavg.com^
 ||htonrwegnifw.com^
+||huayucnblhgy.com^
 ||hueenmivecmx.com^
 ||huejizictcgd.com^
 ||hutkuzwropgf.com^
@@ -4949,6 +4953,7 @@
 ||ibqmccuuhjqc.com^
 ||icafyriewzzrwxlxhtoeakmwroueywnwhmqmaxsqdntasgfvhc.com^
 ||icjeqbqdzhyx.com^
+||icpfrrffsenr.com^
 ||iczhhiiowapd.com^
 ||idkyfrsbzesx.com^
 ||idpukwmp.com^
@@ -5000,6 +5005,7 @@
 ||isggimkjabpa.com^
 ||isqgobsgtqsh.com^
 ||itevcsjvtcmb.com^
+||iupqelechcmj.com^
 ||iuymaolvzery.com^
 ||ivkasohqerzl.com^
 ||ivktdwmjhkqy.com^
@@ -5045,6 +5051,7 @@
 ||jjdrwkistgfh.com^
 ||jjipgxjf.com^
 ||jjpoxurorlsb.com^
+||jjxsdkphpcwu.com^
 ||jkjoxlhkwnxd.com^
 ||jkkernvkrwdr.com^
 ||jlarmqbypyku.com^
@@ -5668,6 +5675,7 @@
 ||sailznsgbygz.com^
 ||saipuciruuja.com^
 ||sajhiqlcsugy.com^
+||samlmqljptbd.com^
 ||sapvummffiay.com^
 ||sauispjbeisl.com^
 ||sbftffngpzwt.com^
@@ -5857,6 +5865,7 @@
 ||uqhtuahgfmcx.com^
 ||uqoboyvqsqpy.com^
 ||uqpotqld.com^
+||uqqgyniatjtf.com^
 ||urpscavikbyv.com^
 ||usoqghurirvz.com^
 ||usymycvrilyt.com^
@@ -6230,6 +6239,7 @@
 ||zvuespzsdgdq.com^
 ||zwcuvwssfydj.com^
 ||zwqfnizwcvbx.com^
+||zxadziqqayup.com^
 ||zxavxgjcjmkh.com^
 ||zxbjgrxbcgrp.com^
 ||zxqeycvsetkh.com^
@@ -6566,6 +6576,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||ali-bestshop.ru^
 ||imwhite.ru^
 ||vidmsc.com^
 ||puipui.ru^
@@ -10302,6 +10313,7 @@ ws*://video.docfilms.info^
 ||js.bulkhentai.com^
 ||script.hqpass.com^
 !
+||50tlyearabakazan.com^
 ||genelajans.com^
 ||d1d8vn0fpluuz7.cloudfront.net^
 ||ad.setrowid.com^
@@ -10872,6 +10884,12 @@ ws*://video.docfilms.info^
 !
 ! Google domains
 !
+||props.id^
+||hit-pool.upscore.io^
+||gft2.de^
+||happyunicorns.gutefrage.net^
+||beacon.gutefrage.net^
+||srvtrck.com^
 ||get35.com^
 ||bbvc2.com^
 ||geoplugin.net^
