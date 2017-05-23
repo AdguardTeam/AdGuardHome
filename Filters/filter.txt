@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-05-22 12:00:23
+! Last modified: 2017-05-23 12:03:16
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -666,6 +666,7 @@
 ||advrtice.com^
 ||advserver.xyz^
 ||advsnx.net^
+||adwebster.com^
 ||adwires.com^
 ||adwordsservicapi.com^
 ||adworkmedia.com^
@@ -4526,6 +4527,7 @@
 ||bsupflnjmuzn.com^
 ||btbapoifsphl.com^
 ||btcwkbqojiyg.com^
+||btxoeiisonxh.com^
 ||budyxjttmjkf.com^
 ||bufqrxzyrecf.com^
 ||buitxcrnucyi.com^
@@ -4589,6 +4591,7 @@
 ||cpamnizzierk.com^
 ||cphxwpicozlatvnsospudjhswfxwmykgbihjzvckxvtxzfsgtx.com^
 ||cpkbdmkguggh.com^
+||cqbabfsyfqse.com^
 ||cqoyvpldkmqt.com^
 ||crkgtnad.com^
 ||croxdfrdjfnt.com^
@@ -4601,6 +4604,7 @@
 ||ctzvtevpcssx.com^
 ||cuguwxkasghy.com^
 ||cwliihvsjckn.com^
+||cwofongvtbsi.com^
 ||cwtekghutpaq.com^
 ||cwxblalyyvbj.com^
 ||cxgwwsapihlo.com^
@@ -5265,6 +5269,7 @@
 ||mafndqbvdgkm.com^
 ||magwfymjhils.com^
 ||maxgirlgames.com^
+||maziynjxjdoe.com^
 ||mbajaazbqdzc.com^
 ||mbfvfdkawpoi.com^
 ||mbgvhfotcqsj.com^
@@ -5404,6 +5409,7 @@
 ||nubtjnopbjup.com^
 ||nucqkjkvppgs.com^
 ||nunsbvlzuhyi.com^
+||nuscutsdqqcc.com^
 ||nushflxucofk.com^
 ||nvajxoahenwe.com^
 ||nvmjtxnlcdqo.com^
@@ -5465,6 +5471,7 @@
 ||oppcgcqytazs.com^
 ||opyisszzoyhc.com^
 ||oqmjxcqgdghq.com^
+||orddiltnmmlu.com^
 ||ormnduxoewtl.com^
 ||orszajhynaqr.com^
 ||osbblnlmwzcr.com^
@@ -5487,6 +5494,7 @@
 ||owqobhxvaack.com^
 ||owrqvyeyrzhy.com^
 ||owwewfaxvpch.com^
+||oxanehlscsry.com^
 ||oyrgxjuvsedi.com^
 ||oytrrdlrovcn.com^
 ||oyzsverimywg.com^
@@ -5691,6 +5699,7 @@
 ||ruzttiecdedv.com^
 ||rvoxndszxwmo.com^
 ||rvzudtgpvwxz.com^
+||rweqvydtzyre.com^
 ||rwtvvdspsbll.com^
 ||rxicrihobtkf.com^
 ||rxisfwvggzot.com^
@@ -6266,6 +6275,7 @@
 ||ztcysvupksjt.com^
 ||ztfrlktqtcnl.com^
 ||ztioesdyffrr.com^
+||ztmwkxvvyoao.com^
 ||ztyrgxdelngf.com^
 ||zualhpolssus.com^
 ||zupeaoohmntp.com^
@@ -6613,6 +6623,12 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||clicktoclick.ru^
+||mrelko.com^
+||wom8day.ru^
+||puxrotate.ru
+||95.213.231.34^
+||pgold.pro^
 ||ali-bestshop.ru^
 ||imwhite.ru^
 ||vidmsc.com^
@@ -9826,6 +9842,7 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||stepan-fe.go.mail.ru^
 ://*.2img-pic.ru^
 ||an.yandex.ru^
 ||an.yandex.
@@ -10591,7 +10608,6 @@ ws*://video.docfilms.info^
 ||setting.rayjump.com^
 ||ad.myinstashot.com^
 ||net.rayjump.com^
-||95.213.231.34^
 ||ad.cauly.co.kr^
 ||config.appjolt.com
 ||rtb.platform.glispa.com^
@@ -10925,6 +10941,10 @@ ws*://video.docfilms.info^
 !
 ! Google domains
 !
+||bt.mediaimpact.de^
+||trgtcdn.com^
+||irqs.ioam.de^
+||counterfire.info^
 ||props.id^
 ||hit-pool.upscore.io^
 ||gft2.de^
