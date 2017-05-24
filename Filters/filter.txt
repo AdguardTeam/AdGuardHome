@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-05-23 12:03:16
+! Last modified: 2017-05-24 12:03:19
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1868,6 +1868,7 @@
 ||goodadvert.ru^
 ||goodadvertising.info^
 ||goodluckblockingthis.com^
+||goodtag.it^
 ||googleadservicepixel.com^
 ||googlesyndicatiion.com^
 ||gorgonkil.com^
@@ -3124,6 +3125,7 @@
 ||recomendedsite.com^
 ||redcourtside.com^
 ||redintelligence.net^
+||redirectnative.com^
 ||redirectpopads.com^
 ||rediskina.com^
 ||redpeepers.com^
@@ -4553,6 +4555,7 @@
 ||ccwinenmbnso.com^
 ||cdbkxcnfmehf.com^
 ||cdbxuzzlgfhh.com^
+||cdhzxcwuibzk.com^
 ||cdicyazp.com^
 ||cdqmeyhqrwinofutpcepbahedusocxqyfokvehqlqpusttfwve.com^
 ||cdrjblrhsuxljwesjholugzxwukkerpobmonocjygnautvzjjm.com^
@@ -4700,6 +4703,7 @@
 ||ecmeqhxevxgmtoxubrjstrrlyfgrrtqhvafyagettmwnwkwltn.com^
 ||ectbduztanog.com^
 ||edgsscofljhc.com^
+||ednnpxhjsqyd.com^
 ||edvbyybaviln.com^
 ||edwywpsufuda.com^
 ||eefbzuwvnnab.com^
@@ -4776,6 +4780,7 @@
 ||fgkvpyrmkbap.com^
 ||fgmucsiirrsq.com^
 ||fgwsjwiaqtjc.com^
+||fgzaxilcgxum.com^
 ||fhawywadfjlo.com^
 ||fhylnqzxwsbo.com^
 ||firugsivsqot.com^
@@ -4999,6 +5004,7 @@
 ||iknctklddhoh.com^
 ||ikvltjooosqh.com^
 ||ilsivrexvpyv.com^
+||ilvibsabwuza.com^
 ||imbbjywwahev.com^
 ||imgoatxhxior.com^
 ||imqkdsdgfygm.com^
@@ -5164,6 +5170,7 @@
 ||kqsipdhvcejx.com^
 ||krmuxxubtkrg.com^
 ||krovrhmqgupd.com^
+||krsdoqvsmgld.com^
 ||krxexwfnghfu.com^
 ||krxpudrzyvko.com^
 ||krziyrrnvjai.com^
@@ -5989,6 +5996,7 @@
 ||vtcquvxsaosz.com^
 ||vtoygnkflehv.com^
 ||vtqdavdjsymt.com^
+||vtqmlzprsunm.com^
 ||vucanmoywief.com^
 ||vulexmouotod.com^
 ||vunwzlxfsogj.com^
@@ -6623,6 +6631,9 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||nehuha.ru^
+||pabrashu.info^
+||anobufefig.com^
 ||clicktoclick.ru^
 ||mrelko.com^
 ||wom8day.ru^
@@ -9842,6 +9853,7 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+://*.1sexxx.com
 ||stepan-fe.go.mail.ru^
 ://*.2img-pic.ru^
 ||an.yandex.ru^
@@ -9928,6 +9940,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||ssl4me.cf^
 ||putrr3.com^
 ||sexpennyauctions.com^
 ||78.140.130.88^
@@ -10314,6 +10327,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||a75-10-so.ssl.cdn13.com^
 ||dmtw0i4zln92b.cloudfront.net^
 ||d160mt023h8h3d.cloudfront.net^
 ||d28k9nkt2spnp.cloudfront.net^
@@ -13988,6 +14002,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||ca.video-cdn.net^
 ||events.ocdn.eu^
 ||cmp-cdn.ghostery.com^
 ||services.wetek.com^
@@ -14229,6 +14244,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||report.appmetrica.yandex.net^
 ||api.oneaudience.com^
 ||api.gameofwhales.com^
 ||d.applvn.com^
@@ -14376,7 +14392,6 @@ ws*://video.docfilms.info^
 ||quantcount.com^
 ||r.browser.miui.com^
 ||rc.dxsvr.com^
-||report.appmetrica.yandex.net^
 ||rlog-api.under9.co^
 ||rlog.9gag.com^
 ||sc-analytics.appspot.com^
