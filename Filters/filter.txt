@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-05-24 12:03:19
+! Last modified: 2017-05-25 12:03:20
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4477,6 +4477,7 @@
 ||bagoojzsqygg.com^
 ||baiaclwdpztd.com^
 ||bajofdblygev.com^
+||batigfkcbwpb.com^
 ||bayvlsmaahou.com^
 ||bbheuxcancwj.com^
 ||bbjlsdqhpbuqaspgjyxaobmpmzunjnvqmahejnwwvaqbzzqodu.com^
@@ -4628,6 +4629,7 @@
 ||dbwawnzkjniz.com^
 ||dcdalkgtbmip.com^
 ||dcgbswcvywyl.com^
+||dcmatjqifoim.com^
 ||dcneohtx.com^
 ||dcznhkojghrl.com^
 ||ddprxzxnhzbq.com^
@@ -4795,6 +4797,7 @@
 ||flzelfqolfnf.com^
 ||fmuxugcqucuu.com^
 ||fmzxzkgmpmrx.com^
+||fnaolgfubmlc.com^
 ||fneheruhxqtv.com^
 ||fnjcriccyuna.com^
 ||fokisduu.com^
@@ -4849,6 +4852,7 @@
 ||ggzuksudqktn.com^
 ||ghtroafchzrt.com^
 ||giojhiimnvwr.com^
+||givmuvbacwui.com^
 ||giyjhogjmfmc.com^
 ||giyupoeynkfx.com^
 ||gjeyqtunbnap.com^
@@ -4894,6 +4898,7 @@
 ||gxdyluyqciac.com^
 ||gxgnvickedxpuiavkgpisnlsphrcyyvkgtordatszlrspkgppe.com^
 ||gxvbogvbcivs.com^
+||gxxsqeqlepva.com^
 ||gydlzimosfnz.com^
 ||gyinmxpztbgf.com^
 ||gypxbcrmxsmikqbmnlwtezmjotrrdxpqtafumympsdtsfvkkza.com^
@@ -5030,6 +5035,7 @@
 ||isdlyvhegxxz.com^
 ||isggimkjabpa.com^
 ||isqgobsgtqsh.com^
+||itbiwlsxtigx.com^
 ||itevcsjvtcmb.com^
 ||iupqelechcmj.com^
 ||iuymaolvzery.com^
@@ -5064,6 +5070,7 @@
 ||jcctggmdccmt.com^
 ||jcnoeyqsdfrc.com^
 ||jdlnquri.com^
+||jdtufqcyumvb.com^
 ||jertwakjcaym.com^
 ||jevijshpvnwm.com^
 ||jeyoxmhhnofdhaalzlfbrsfmezfxqxgwqjkxthzptjdizuyojh.com^
@@ -5118,6 +5125,7 @@
 ||jxvhdyguseaf.com^
 ||jyauuwrrigim.com^
 ||jydbctzvbqrh.com^
+||jypmcknqvnfd.com^
 ||jzbarlrhbicg.com^
 ||jzbskhgpivyl.com^
 ||jzekquhmaxrk.com^
@@ -5334,6 +5342,7 @@
 ||mpoboqvqhjqv.com^
 ||mpytdykvcdsg.com^
 ||mpzuzvqyuvbh.com^
+||mqcnrhxdsbwr.com^
 ||mqphkzwlartq.com^
 ||mqwkqapsrgnt.com^
 ||mrfveznetjtp.com^
@@ -5588,6 +5597,7 @@
 ||qbfvwovkuewm.com^
 ||qclxheddcepf.com^
 ||qdlhprdtwhvgxuzklovisrdbkhptpfarrbcmtrxbzlvhygqisv.com^
+||qeembhyfvjtq.com^
 ||qekmxaimxkok.com^
 ||qenafbvgmoci.com^
 ||qerlbvqwsqtb.com^
@@ -5608,6 +5618,7 @@
 ||qjmearsroiyn.com^
 ||qjskosdsxanp.com^
 ||qklhtphiphni.com^
+||qknuubmfneib.com^
 ||qkpwdakgxynv.com^
 ||qkuprxbmkeqp.com^
 ||qljczwei.com^
@@ -5749,6 +5760,7 @@
 ||smrqvdpgkbvz.com^
 ||sncpizczabhhafkzeifklgonzzkpqgogmnhyeggikzloelmfmd.com^
 ||snetddbbbgbp.com^
+||snfqpqyecdrb.com^
 ||snjhhcnr.com^
 ||snpevihwaepwxapnevcpiqxrsewuuonzuslrzrcxqwltupzbwu.com^
 ||sockjgaabayf.com^
@@ -5944,6 +5956,7 @@
 ||vblunqrovanf.com^
 ||vbupfouyymse.com^
 ||vbuqjdyrsrvi.com^
+||vbyefnnrswpn.com^
 ||vcwdjbbughuy.com^
 ||vdhmatjdoyqt.com^
 ||vdlvaqsbaiok.com^
@@ -6049,6 +6062,7 @@
 ||wiorcewmylbe.com^
 ||wipjyzwavojq.com^
 ||wjdjovjrxsqx.com^
+||wjnkvhlgvixx.com^
 ||wkexsfmw.com^
 ||wkgaqvvwvqjg.com^
 ||wkggjmkrkvot.com^
@@ -6631,6 +6645,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||octozoon.org^
 ||nehuha.ru^
 ||pabrashu.info^
 ||anobufefig.com^
@@ -9940,6 +9955,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||paclitor.com^
 ||ssl4me.cf^
 ||putrr3.com^
 ||sexpennyauctions.com^
@@ -10327,6 +10343,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d3t9nyds4ufoqz.cloudfront.net^
+||dzs55b7slwyx.cloudfront.net^
 ||a75-10-so.ssl.cdn13.com^
 ||dmtw0i4zln92b.cloudfront.net^
 ||d160mt023h8h3d.cloudfront.net^
@@ -10955,6 +10973,8 @@ ws*://video.docfilms.info^
 !
 ! Google domains
 !
+||ko6ka.ru^
+||pro100news.ru^
 ||bt.mediaimpact.de^
 ||trgtcdn.com^
 ||irqs.ioam.de^
@@ -14002,6 +14022,11 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||stat.radar.imgsmail.ru^
+||mediator.imgsmail.ru^
+||counter.24smi.info^
+||log-player.arte.tv^
+||geoloc.arte.tv^
 ||ca.video-cdn.net^
 ||events.ocdn.eu^
 ||cmp-cdn.ghostery.com^
