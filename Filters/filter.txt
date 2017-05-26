@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-05-25 12:03:20
+! Last modified: 2017-05-26 12:03:24
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -3011,6 +3011,7 @@
 ||promotiontrack.mobi^
 ||propellerads.com^
 ||propellerpops.com^
+||propelllerads.com^
 ||propelplus.com^
 ||proper.io^
 ||prorentisol.com^
@@ -3587,6 +3588,7 @@
 ||thoseads.com^
 ||thoughtleadr.com^
 ||thoughtsondance.info^
+||ti583.com^
 ||ticrite.com^
 ||tidaltv.com^
 ||tightexact.net^
@@ -4104,6 +4106,7 @@
 ||24ad89fc2690ed9369.com^
 ||2h045kx8.review^
 ||2ujo8ayw.racing^
+||321hlnsb.webcam^
 ||3472ccbc21c3f567.xyz^
 ||39o9mcr2.party^
 ||3a727dbae773782eb.space^
@@ -4227,6 +4230,7 @@
 ||r91c6tvs.science^
 ||rkgnmwre.site^
 ||rxlex.faith^
+||ry0brv6w.science^
 ||sbsdjgk0.accountant^
 ||sn5wcs89.science^
 ||t2y16t3g.download^
@@ -4530,6 +4534,7 @@
 ||bsupflnjmuzn.com^
 ||btbapoifsphl.com^
 ||btcwkbqojiyg.com^
+||btkcdqrzmqca.com^
 ||btxoeiisonxh.com^
 ||budyxjttmjkf.com^
 ||bufqrxzyrecf.com^
@@ -4579,6 +4584,7 @@
 ||cjxdbmxtnqmy.com^
 ||cjxkzkzmdomd.com^
 ||ckqkwhampiyb.com^
+||ckqpusmxvilv.com^
 ||ckryzlnafwyd.com^
 ||ckwpsghi.com^
 ||cmdjujqlfbts.com^
@@ -4605,6 +4611,7 @@
 ||cstdfxkxbqbc.com^
 ||csyngxtkifrh.com^
 ||ctimfrfrmqip.com^
+||ctplyvuuzdcv.com^
 ||ctzvtevpcssx.com^
 ||cuguwxkasghy.com^
 ||cwliihvsjckn.com^
@@ -4676,6 +4683,7 @@
 ||dsnjsdrbqwdu.com^
 ||dswwghrlwwcm.com^
 ||dtmwwpykiqng.com^
+||dubijsirwtwq.com^
 ||dubzmzpdkddi.com^
 ||duchmcmpmqqu.com^
 ||dulcetcgvcxr.com^
@@ -4925,6 +4933,7 @@
 ||hfjuehls.com^
 ||hfmtqgiqscvg.com^
 ||hgbmwkklwittcdkjapnpeikxojivfhgszbxmrjfrvajzhzhuks.com^
+||hgzopbyhidre.com^
 ||hgztvnjbsrki.com^
 ||hhwqfmqyqoks.com^
 ||higygtvnzxad.com^
@@ -5265,6 +5274,7 @@
 ||lstkfdmmxbmv.com^
 ||lttsvesujmry.com^
 ||luhqeqaypvmc.com^
+||luraclhaunxv.com^
 ||lvlvpdztdnro.com^
 ||lvrvufurxhgp.com^
 ||lwasxldakmhx.com^
@@ -5289,6 +5299,7 @@
 ||mbfvfdkawpoi.com^
 ||mbgvhfotcqsj.com^
 ||mbvmecdlwlts.com^
+||mcagbtdcwklf.com^
 ||mdeaoowvqxma.com^
 ||mdrkqbsirbry.com^
 ||meagjivconqt.com^
@@ -5754,6 +5765,7 @@
 ||siwtuvvgraum.com^
 ||sjgklyyyraghhrgimsepycygdqvezppyfjkqddhlzbimoabjae.com^
 ||sjpexaylsfjnopulpgkbqtkzieizcdtslnofpkafsqweztufpa.com^
+||sjtevvoviqhe.com^
 ||skknyxzaixws.com^
 ||skzhfyqozkic.com^
 ||slmmjkkvbkyp.com^
@@ -5928,6 +5940,7 @@
 ||usoqghurirvz.com^
 ||usymycvrilyt.com^
 ||uszpxpcoflkl.com^
+||utfffrxmzuvy.com^
 ||utzpjbrtyjuj.com^
 ||uupqrsjbxrstncicwcdlzrcgoycrgurvfbuiraklyimzzyimrq.com^
 ||uuproxhcbcsl.com^
@@ -6075,6 +6088,7 @@
 ||wmvcxgpdgdkz.com^
 ||wmwkwubufart.com^
 ||wnzxwgatxjuf.com^
+||wotilhqoftvl.com^
 ||wpktjtwsidcz.com^
 ||wpsyjttctdnt.com^
 ||wpvvlwprfbtm.com^
@@ -6645,6 +6659,10 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||rustds.click^
+||marchtv.ru^
+||mhzaj.com^
+||rnnuw.com^
 ||octozoon.org^
 ||nehuha.ru^
 ||pabrashu.info^
@@ -9955,6 +9973,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||cdn.plopx.com^
 ||paclitor.com^
 ||ssl4me.cf^
 ||putrr3.com^
@@ -10973,6 +10992,14 @@ ws*://video.docfilms.info^
 !
 ! Google domains
 !
+||pfxlive.com^
+||abs.proxistore.com^
+||cdn.tagcommander.com^
+||fogl1onf.com^
+||mastertag.effiliation.com^
+||technical-service.net^
+||pixel.yabidos.com^
+||api.amplitude.com^
 ||ko6ka.ru^
 ||pro100news.ru^
 ||bt.mediaimpact.de^
@@ -14022,6 +14049,16 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||analytics.faw.sky.com^
+||analytics.global.sky.com^
+||tracker.downdetector.com^
+||d7d3cf2e81d293050033-3dfc0615b0fd7b49143049256703bfce.ssl.cf1.rackcdn.com^
+||tracking.target2sell.com^
+||d3phbp7p78bdk9.cloudfront.net^
+charlestownwyllie.oaklawnnonantum.com^
+||perr.hola.org^
+||dp1fzft1fdb84.cloudfront.net^
+||metrics.n-tv.de^
 ||stat.radar.imgsmail.ru^
 ||mediator.imgsmail.ru^
 ||counter.24smi.info^
@@ -14344,7 +14381,6 @@ ws*://video.docfilms.info^
 ||andmlb.kshwtj.com^
 ||api-analytics-bootstrap.metaps.com^
 ||api-analytics.metaps.com^
-||api.amplitude.com^
 ||api.analytics.omgpop.com^
 ||api.appsee.com^
 ||api.apptentive.com^
