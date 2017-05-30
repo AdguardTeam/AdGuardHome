@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-05-29 12:00:11
+! Last modified: 2017-05-30 12:03:31
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -735,6 +735,8 @@
 ||afterdownload.com^
 ||afterdownloads.com^
 ||afy11.net^
+||againclence.com^
+||againscan.com^
 ||againstein.com^
 ||agcdn.com^
 ||agentcenters.com^
@@ -2535,6 +2537,7 @@
 ||mobytrks.com^
 ||modelegating.com^
 ||modificans.com^
+||modifiscans.com^
 ||moffsets.com^
 ||mogointeractive.com^
 ||mojoaffiliates.com^
@@ -3296,6 +3299,7 @@
 ||senzapudore.net^
 ||sepyw.top^
 ||serialbay.com^
+||seriend.com^
 ||seriousfiles.com^
 ||servali.net^
 ||serve-sys.com^
@@ -4200,7 +4204,9 @@
 ||f4906b7c15ba.com^
 ||fcfd5de4b3be3.com^
 ||fcve2mi2.review^
+||fg18kvv7.date^
 ||ficusoid.xyz^
+||fkdsfk38fnc2bc3.com^
 ||fkvnjw6d.review^
 ||flac2flac.xyz^
 ||fugggk3i.accountant^
@@ -4209,7 +4215,9 @@
 ||gkol15n1.stream^
 ||gotjs.xyz^
 ||h166g9ej.download^
+||h7syblho.bid^
 ||havingo.xyz^
+||hdhvbeyy36fnnc8.com^
 ||i1pnovju.site^
 ||iocawy99.science^
 ||is3eho4w.download^
@@ -4218,19 +4226,23 @@
 ||j4y01i3o.win^
 ||j7gvaliq.cricket^
 ||j880iceh.party^
+||jkfg4hfdss.com^
 ||jnrzox5e.website^
 ||jzeu6qlk.accountant^
 ||k9pdlefk.website^
 ||kge1ru01.science^
 ||kgrfw2mp.date^
+||kjdhfjhvbjsdkbcjk3746.com^
 ||kkddlt2f.site^
 ||klnrew.site^
 ||koidt1wn.bid^
+||ku984o6u.accountant^
 ||kzkjewg7.stream^
 ||lamiflor.xyz^
 ||lostelephants.xyz^
 ||lr48oe5c.website^
 ||lslpv80k.download^
+||lwkef63hfc.com^
 ||lxpl6t0t.cricket^
 ||mansiontheologysoon.xyz^
 ||mb8e17f12.website^
@@ -4246,6 +4258,7 @@
 ||q45nsj9d.accountant^
 ||qmvhcb9d.bid^
 ||qwun46bs.review^
+||qzgoecv5.win^
 ||r91c6tvs.science^
 ||rkgnmwre.site^
 ||rxlex.faith^
@@ -4255,6 +4268,7 @@
 ||sn5wcs89.science^
 ||t2y16t3g.download^
 ||tde2wkyv.stream^
+||te2e12nd.website^
 ||tpp1ede2.accountant^
 ||txjdgm53.win^
 ||vcxzv.website^
@@ -4627,6 +4641,7 @@
 ||comwgi.com^
 ||cortxphssdvc.com^
 ||cpamnizzierk.com^
+||cpdoalzgwnwf.com^
 ||cphxwpicozlatvnsospudjhswfxwmykgbihjzvckxvtxzfsgtx.com^
 ||cpkbdmkguggh.com^
 ||cqbabfsyfqse.com^
@@ -4865,6 +4880,7 @@
 ||fvbeyduylvgy.com^
 ||fvwcwbdrprdt.com^
 ||fwcrhzvfxoyi.com^
+||fwlkncckwcop.com^
 ||fxjgprpozntk.com^
 ||fxjyultd.com^
 ||fxrgikipxnlq.com^
@@ -4886,6 +4902,7 @@
 ||gefaqjwdgzbo.com^
 ||geqcqduubhll.com^
 ||gerpkshe.com^
+||ggbfbseakyqv.com^
 ||gggemaop.com^
 ||ggnabmvnwphu.com^
 ||ggngbgccubvf.com^
@@ -4897,6 +4914,7 @@
 ||giyupoeynkfx.com^
 ||gjeyqtunbnap.com^
 ||gjxdibyzvczd.com^
+||gkblyvnioxpd.com^
 ||gkgdqahkcbmykurmngzrrolrecfqvsjgqdyujvgdrgoezkcobq.com^
 ||gkiryieltcbg.com^
 ||gllkdkxygckb.com^
@@ -5003,6 +5021,7 @@
 ||hueenmivecmx.com^
 ||huejizictcgd.com^
 ||hutkuzwropgf.com^
+||huynrscfbulr.com^
 ||huzmweoxlwanzvstlgygbrnfrmodaodqaczzibeplcezmyjnlv.com^
 ||hvfzacisynoq.com^
 ||hvfzshrpfueb.com^
@@ -5021,6 +5040,7 @@
 ||hzskbnafzwsu.com^
 ||hztkbjdkaiwt.com^
 ||hzwxkqnqrdfv.com^
+||iagsqudxpcfr.com^
 ||iagvkdeienla.com^
 ||ibqmccuuhjqc.com^
 ||icafyriewzzrwxlxhtoeakmwroueywnwhmqmaxsqdntasgfvhc.com^
@@ -5051,6 +5071,7 @@
 ||ikealcmavhpk.com^
 ||iknctklddhoh.com^
 ||ikvltjooosqh.com^
+||ilrxikdjozlk.com^
 ||ilsivrexvpyv.com^
 ||ilvibsabwuza.com^
 ||imbbjywwahev.com^
@@ -5300,6 +5321,7 @@
 ||lplqyocxmify.com^
 ||lppoblhorbrf.com^
 ||lpwvdgfo.com^
+||lqhnrsfkgcfe.com^
 ||lqlksxbltzxw.com^
 ||lqpkjasgqjve.com^
 ||lrjltdosshhd.com^
@@ -5316,6 +5338,7 @@
 ||lvrvufurxhgp.com^
 ||lwasxldakmhx.com^
 ||lwenrqtarmdx.com^
+||lwocvazxfnuj.com^
 ||lwqwsptepdxy.com^
 ||lwysswaxnutn.com^
 ||lxkqybzanzug.com^
@@ -5586,6 +5609,7 @@
 ||pixjqfvlsqvu.com^
 ||pjffrqroudcp.com^
 ||pjnrwznmzguc.com^
+||pjzabhzetdmt.com^
 ||pkklpazhqqda.com^
 ||pkmzxzfazpst.com^
 ||pkougirndckw.com^
@@ -5820,6 +5844,7 @@
 ||sockjgaabayf.com^
 ||soiegibhwvti.com^
 ||sokanffuyinr.com^
+||sovqylkbucid.com^
 ||spbflxvnheih.com^
 ||spfrlpjmvkmq.com^
 ||sqnezuqjdbhe.com^
@@ -6051,6 +6076,7 @@
 ||vmcpydzlqfcg.com^
 ||vmvhmwppcsvd.com^
 ||vnadjbcsxfyt.com^
+||vnhcxditnodg.com^
 ||vnyginzinvmq.com^
 ||vodhaqaujopg.com^
 ||volleqgoafcb.com^
@@ -6708,6 +6734,11 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||vi012.com^
+||1mint1.info^
+||luxupcdna.com^
+||aq.prices25.com^
+||bondzgi.cf^
 ||rustds.click^
 ||marchtv.ru^
 ||mhzaj.com^
@@ -10022,6 +10053,10 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||ssl4anyone.com^
+||ssl4anyone3.com^
+||ssl4anyone4.com^
+||ssl4anyone5.com^
 ||cdn.plopx.com^
 ||ssl4me.cf^
 ||putrr3.com^
@@ -10410,6 +10445,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||jizvehd.makeuseof.com^
 ||d3t9nyds4ufoqz.cloudfront.net^
 ||dzs55b7slwyx.cloudfront.net^
 ||a75-10-so.ssl.cdn13.com^
@@ -11040,6 +11076,8 @@ ws*://video.docfilms.info^
 !
 ! Google domains
 !
+||mc.webvisor.org^
+||bounce-ads.de^
 ||def-platform.com^
 ||globalwebindex.net^
 ||pfxlive.com^
@@ -14098,6 +14136,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||d31j93rd8oukbv.cloudfront.net^
+||librato-collector.genius.com^
 ||session.timecommerce.net^
 ||metrics.tv2.dk^
 ||analytics.faw.sky.com^
