@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-05-30 12:03:31
+! Last modified: 2017-05-31 12:03:20
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4559,6 +4559,7 @@
 ||bmjccqfxlabturkmpzzokhsahleqqrysudwpuzqjbxbqeakgnf.com^
 ||bmqnguru.com^
 ||bmubqabepbcb.com^
+||bmyepmehjzhz.com^
 ||bnkgacehxxmx.com^
 ||bocksnabswdq.com^
 ||boguaokxhdsa.com^
@@ -4894,6 +4895,7 @@
 ||gbiwxmjw.com^
 ||gbltotkythfh.com^
 ||gbsxcyukuuex.com^
+||gbwrjyntqsvr.com^
 ||gcboyhlfqxhc.com^
 ||gdixpvfqbhun.com^
 ||gdpuknsngvps.com^
@@ -4995,6 +4997,7 @@
 ||hklyzmspvqjh.com^
 ||hkoxlirf.com^
 ||hlekbinpgsuk.com^
+||hljiofrtqenc.com^
 ||hlotiwnz.com^
 ||hmcjupvbxxyx.com^
 ||hndesrzcgjmprqbbropdulvkfroonnrlbpqxhvprsavhwrfxtv.com^
@@ -5291,6 +5294,7 @@
 ||ldaiuhkayqtu.com^
 ||ldkyzudgbksh.com^
 ||leuojmgbkpcl.com^
+||lexwdqnzmkdr.com^
 ||lfcnzhcnzded.com^
 ||lfvrjrdrgazl.com^
 ||lgnjcntegeqf.com^
@@ -5386,6 +5390,7 @@
 ||mkpdquuxcnhl.com^
 ||mkyzqyfschwd.com^
 ||mkzynqxqlcxk.com^
+||mlaxgqosoawc.com^
 ||mlbzafthbtsl.com^
 ||mlgrrqymdsyk.com^
 ||mlkqusrmsfib.com^
@@ -5508,6 +5513,7 @@
 ||nybpurpgexoe.com^
 ||nyqogyaflmln.com^
 ||nzcpdaboaayv.com^
+||nzxriltfmrpl.com^
 ||oalicqudnfhf.com^
 ||oawleebf.com^
 ||oaxwtgfhsxod.com^
@@ -5533,6 +5539,7 @@
 ||ofghrodsrqkg.com^
 ||ofjampfenbwv.com^
 ||ofmuojegzbxo.com^
+||ogulzxfxrmow.com^
 ||oguorftbvegb.com^
 ||ohecnqpldvuw.com^
 ||ohmvrqomsitr.com^
@@ -5635,6 +5642,7 @@
 ||ppuuwencqopa.com^
 ||ppxrlfhsouac.com^
 ||ppzfvypsurty.com^
+||pqoznetbeeza.com^
 ||pqwaaocbzrob.com^
 ||praeicwgzapf.com^
 ||prenvifxzjuo.com^
@@ -5713,6 +5721,7 @@
 ||qqbyfhlctzty.com^
 ||qqvatwaqtzgp.com^
 ||qqylzyrqnewl.com^
+||qrcsppwzjryh.com^
 ||qregqtqtuisj.com^
 ||qrksjrjppkam.com^
 ||qrozsnmc.com^
@@ -6070,6 +6079,7 @@
 ||vjzttumdetao.com^
 ||vkarvfrrlhmv.com^
 ||vkdbvgcawubn.com^
+||vkqfzlpowalv.com^
 ||vlnveqkifcpxdosizybusvjqkfmowoawoshlmcbittpoywblpe.com^
 ||vlrzhoueyoxw.com^
 ||vlvowhlxxibn.com^
@@ -6263,6 +6273,7 @@
 ||xztsmbznuwyo.com^
 ||xzwdhymrdxyp.com^
 ||yaifxxudxyns.com^
+||yaizwjvnxctz.com^
 ||yamrxfbkpirt.com^
 ||yaoslgiweccw.com^
 ||yaqysxlohdyg.com^
@@ -6734,6 +6745,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||dlfja.gdn^
+||homenick.biz^
 ||vi012.com^
 ||1mint1.info^
 ||luxupcdna.com^
@@ -11074,8 +11087,10 @@ ws*://video.docfilms.info^
 !
 ! Tracking service
 !
-! Google domains
+! Google Contributor tracking domains
+||p.d.nn0e.com^
 !
+||otik.de^
 ||mc.webvisor.org^
 ||bounce-ads.de^
 ||def-platform.com^
@@ -14263,7 +14278,7 @@ charlestownwyllie.oaklawnnonantum.com^
 ||track.ultimate-guitar.com^
 ||intent.cbsi.com^
 ||bonfire.spklw.com^
-|http://r.i.ua^
+://r.i.ua^
 ||adanalytics.openload.co^
 ||analyticapi.piri.net^
 ||analytics-rollout-*.amazonaws.com^
@@ -14397,7 +14412,8 @@ charlestownwyllie.oaklawnnonantum.com^
 !
 ! Section contains rules for mobile analytics and spyware
 !
-||report.appmetrica.yandex.net^
+||dc.webtrends.com^
+||report.appmetrica.webvisor.com^
 ||api.oneaudience.com^
 ||api.gameofwhales.com^
 ||d.applvn.com^
@@ -14544,6 +14560,7 @@ charlestownwyllie.oaklawnnonantum.com^
 ||quantcount.com^
 ||r.browser.miui.com^
 ||rc.dxsvr.com^
+||report.appmetrica.yandex.net^
 ||rlog-api.under9.co^
 ||rlog.9gag.com^
 ||sc-analytics.appspot.com^
