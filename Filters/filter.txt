@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-05-31 12:03:20
+! Last modified: 2017-06-01 12:00:14
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -811,8 +811,6 @@
 ||apptap.com^
 ||appwebview.com^
 ||april29-disp-download.com^
-||aprtn.com^
-||aprtx.com^
 ||apsmediaagency.com^
 ||apugod.work^
 ||apvdr.com^
@@ -4114,6 +4112,7 @@
 ||zypenetwork.com^
 ! propellerads
 ||019f2d2d415.review^
+||04xdqcfz.faith^
 ||098c0f90ca673716316.site^
 ||0mzot44w.site^
 ||107e470d2ace7d8ecc2.stream^
@@ -4122,6 +4121,7 @@
 ||1788f63a9a2e67d.date^
 ||1bc169ca9feb0f6a.xyz^
 ||1j7740kd.website^
+||1ocy2p4n.website^
 ||1wzfew7a.site^
 ||24ad89fc2690ed9369.com^
 ||2aahvjeq.website^
@@ -4185,6 +4185,7 @@
 ||busyd5s0.faith^
 ||bw94.xyz^
 ||c03jij5q.website^
+||c4p69ovw.science^
 ||c50ba364a21f.online^
 ||c9snorwj.website^
 ||cd8iw9mh.cricket^
@@ -4264,6 +4265,7 @@
 ||rxlex.faith^
 ||ry0brv6w.science^
 ||s72jfisrt3ife.com^
+||s997tc81.loan^
 ||sbsdjgk0.accountant^
 ||sn5wcs89.science^
 ||t2y16t3g.download^
@@ -4375,7 +4377,6 @@
 ||flavordecision.com^
 ||foamybox.com^
 ||ga87z2o.com^
-||giddycoat.com^
 ||illustriousoatmeal.com^
 ||inatye.com^
 ||incrediblesugar.com^
@@ -4778,6 +4779,7 @@
 ||ejgxyfzciwyi.com^
 ||ejjrckrhigez.com^
 ||ejwmxjttljbe.com^
+||ekgmjxjyfzzd.com^
 ||ekhgvpsfrwqm.com^
 ||elbeobjhnsvh.com^
 ||elkpxsfzrubq.com^
@@ -5240,6 +5242,7 @@
 ||knkxnwscphdk.com^
 ||knslxwqgatnd.com^
 ||konbwfktusra.com^
+||kovglrrlpqum.com^
 ||kplzvizvsqrh.com^
 ||kpnuqvpevotn.com^
 ||kpsdnlprwclz.com^
@@ -5262,6 +5265,7 @@
 ||kumekqeccmob.com^
 ||kurtgcwrdakv.com^
 ||kutlvuitevgw.com^
+||kvadaiwjwxdp.com^
 ||kvpofpkxmlpb.com^
 ||kvrozyibdkkt.com^
 ||kvsyksorguja.com^
@@ -5301,6 +5305,7 @@
 ||lgthvsytzwtc.com^
 ||lgtnwgfqkyyf.com^
 ||lhaqzqjbafcu.com^
+||lhekiqlzatfv.com^
 ||lhuqalcxjmtq.com^
 ||liosawitskzd.com^
 ||liqbipkfbafq.com^
@@ -5829,6 +5834,7 @@
 ||sdqspuyipbof.com^
 ||seiqobwpbofg.com^
 ||sfcckxdgfgzo.com^
+||sfmziexfvvru.com^
 ||sfpkwhncpllt.com^
 ||sgfcsnwegazn.com^
 ||sgzsviqlvcxc.com^
@@ -6082,6 +6088,7 @@
 ||vkqfzlpowalv.com^
 ||vlnveqkifcpxdosizybusvjqkfmowoawoshlmcbittpoywblpe.com^
 ||vlrzhoueyoxw.com^
+||vltvhssjbliy.com^
 ||vlvowhlxxibn.com^
 ||vmcpydzlqfcg.com^
 ||vmvhmwppcsvd.com^
@@ -6272,6 +6279,7 @@
 ||xzmqokbeynlv.com^
 ||xztsmbznuwyo.com^
 ||xzwdhymrdxyp.com^
+||xzzcasiospbn.com^
 ||yaifxxudxyns.com^
 ||yaizwjvnxctz.com^
 ||yamrxfbkpirt.com^
@@ -6352,11 +6360,13 @@
 ||zbtqpkimkjcr.com^
 ||zbxzcrldzzgv.com^
 ||zclxwzegqslr.com^
+||zezowfisdfyn.com^
 ||zfkkmayphqrw.com^
 ||zfmqywrpazlx.com^
 ||zfqpjxuycxdl.com^
 ||zfrzdepuaqebzlenihciadhdjzujnexvnksksqtazbaywgmzwl.com^
 ||zftgljkhrdze.com^
+||zfwzdrzcasov.com^
 ||zgalejbegahc.com^
 ||zgdejlhmzjrd.com^
 ||zhabyesrdnvn.com^
@@ -6745,13 +6755,16 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||znnmt.com^
+||khvfg.com^
+||windcdna.com^
 ||dlfja.gdn^
 ||homenick.biz^
 ||vi012.com^
 ||1mint1.info^
 ||luxupcdna.com^
 ||aq.prices25.com^
-||bondzgi.cf^
+||bondzgi.*
 ||rustds.click^
 ||marchtv.ru^
 ||mhzaj.com^
@@ -11090,6 +11103,7 @@ ws*://video.docfilms.info^
 ! Google Contributor tracking domains
 ||p.d.nn0e.com^
 !
+||client.perimeterx.net^
 ||otik.de^
 ||mc.webvisor.org^
 ||bounce-ads.de^
@@ -11384,6 +11398,7 @@ ws*://video.docfilms.info^
 ||apps.poln.co^
 ||apptentive.com^
 ||apptimize.com^
+||aprtx.com^
 ||aqtracker.com^
 ||arcadeweb.com^
 ||arch-nicto.com^
@@ -14468,7 +14483,6 @@ charlestownwyllie.oaklawnnonantum.com^
 ||iapp-cp.nuggad.net^
 ||4seeresults.com^
 ||abtest.mistat.xiaomi.com^
-||acompli.helpshift.com^
 ||ad-analytics-bootstrap.metaps.com^
 ||adfuture.cn^
 ||adj.st^
