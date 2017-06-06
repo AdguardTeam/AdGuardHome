@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-06-05 12:03:14
+! Last modified: 2017-06-06 12:03:11
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -403,6 +403,7 @@
 ||adnmore.co.kr^
 ||adnoble.com^
 ||adnow.com^
+||adnuntius.com^
 ||adnxs.com^
 ||adnxs.net^
 ||adnxs1.com^
@@ -4206,15 +4207,18 @@
 ||cg1bz6tf.loan^
 ||ckdegfi5.faith^
 ||clotraiam.website^
+||cloudcdn376127.com^
 ||cytk85wu.top
 ||d088e52cfa9e344beb.top^
 ||d0z4gwv7.webcam^
 ||dascasdw.xyz^
 ||de56aa68299cfdb.webcam^
+||dkf9g61v.date^
 ||dromorama.xyz^
 ||duscb12r.loan^
 ||e0e0e4195bb7.racing^
 ||e24d38df68c1b898ea.top^
+||e3kgk5su.win^
 ||f35983cb8ed.review^
 ||f4906b7c15ba.com^
 ||fcfd5de4b3be3.com^
@@ -4310,6 +4314,7 @@
 ||xtr8a2dg.bid^
 ||y1xjgfhp.racing^
 ||yqm16b35.lol^
+||yx7xgi4d.site^
 ! /Tag adservers
 ||badtopwitch.work^
 ||bandelcot.com^
@@ -4557,6 +4562,7 @@
 ||bbopkapcgonb.com^
 ||bdafhnltyxlw.com^
 ||bdozkocgkljj.com^
+||bdyzewccsqpw.com^
 ||bebufuspldzh.com^
 ||beghfkrygvxp.com^
 ||behjgnhniasz.com^
@@ -4659,6 +4665,7 @@
 ||ckqpusmxvilv.com^
 ||ckryzlnafwyd.com^
 ||ckwpsghi.com^
+||cledghtdrjtb.com^
 ||cmdjujqlfbts.com^
 ||cmdotgwjhpqf.com^
 ||cmpsuzvr.com^
@@ -4738,6 +4745,7 @@
 ||dmojscqlwewu.com^
 ||dmwubqhtuvls.com^
 ||dmyypseympjf.com^
+||dnoucjqzsasm.com^
 ||dnqejgrbtlxe.com^
 ||dntlpwpjwcfu.com^
 ||dnxpseduuehm.com^
@@ -4825,6 +4833,7 @@
 ||eovkzcueutgf.com^
 ||epernepojkle.com^
 ||epesogtigole.com^
+||epgokiocquxf.com^
 ||epgooipixbbo.com^
 ||epoxtzgddiwp.com^
 ||epzxtposabej.com^
@@ -4877,6 +4886,7 @@
 ||fjvolzrojowa.com^
 ||fkdqrjnoxhch.com^
 ||fkekipafwlqd.com^
+||fkianrxjfumm.com^
 ||fkjyzxnoxusg.com^
 ||fkrrvhoierty.com^
 ||fluohbiy.com^
@@ -5004,6 +5014,7 @@
 ||gzpqlbqyerpb.com^
 ||gzumjmvqjkki.com^
 ||hafbezbemwwd.com^
+||hajcehcnodio.com^
 ||haqlmmii.com^
 ||hbbwlhxfnbpq.com^
 ||hbedvoyluzmq.com^
@@ -5337,6 +5348,7 @@
 ||lcyxmuhxroyo.com^
 ||ldaiuhkayqtu.com^
 ||ldkyzudgbksh.com^
+||ldyiuvdoahxz.com^
 ||leuojmgbkpcl.com^
 ||lexwdqnzmkdr.com^
 ||lfcnzhcnzded.com^
@@ -5516,6 +5528,7 @@
 ||nguooqblyjrz.com^
 ||nhbklvpswckx.com^
 ||nheanvabodkw.com^
+||nidjppokmlcx.com^
 ||nifyalnngdhb.com^
 ||njcdmsgjbbbz.com^
 ||njjybqyiuotl.com^
@@ -6057,6 +6070,7 @@
 ||ukbxppjxfgna.com^
 ||ukffjaqtxhor.com^
 ||ukjzdydnveuc.com^
+||ukolwxqopahb.com^
 ||ukxeudykhgdi.com^
 ||ulffbcunqnpv.com^
 ||uloywtmpqskx.com^
@@ -6159,6 +6173,7 @@
 ||vpwwtzprrkcn.com^
 ||vqaprwkiwset.com^
 ||vqfksrwnxodc.com^
+||vqtjeddutdix.com^
 ||vrqajyuu.com^
 ||vsgherxdcfon.com^
 ||vshsjxfjehju.com^
@@ -6181,6 +6196,7 @@
 ||vxvxsgut.com^
 ||vydlqaxchmij.com^
 ||vyozgtrtyoms.com^
+||vyrwkkiuzgtu.com^
 ||vywycfxgxqlv.com^
 ||vzhbfwpo.com^
 ||vzmnvqiqgxqk.com^
@@ -6198,6 +6214,7 @@
 ||wdcxuezpxivqgmecukeirnsyhjpjoqdqfdtchquwyqatlwxtgq.com^
 ||wddtrsuqmqhw.com^
 ||weekwkbulvsy.com^
+||wehtkuhlwsxy.com^
 ||wephuklsjobdxqllpeklcrvquyyifgkictuepzxxhzpjbclmcq.com^
 ||wepmmzpypfwq.com^
 ||wepzfylndtwu.com^
@@ -6356,6 +6373,7 @@
 ||yehazsnxdevr.com^
 ||yepiafsrxffl.com^
 ||yesucplcylxg.com^
+||yeyddgjqpwya.com^
 ||yfkwqoswbghk.com^
 ||yflpucjkuwvh.com^
 ||yfqlqjpdsckc.com^
@@ -6414,6 +6432,7 @@
 ||zacbwfgqvxan.com^
 ||zamjzpwgekeo.com^
 ||zansceeifcmm.com^
+||zawvukyxyfmi.com^
 ||zbfncjtaiwngdsrxvykupflpibvbrewhemghxlwsdoluaztwyi.com^
 ||zbrkywjutuxu.com^
 ||zbtqpkimkjcr.com^
@@ -6816,6 +6835,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||bondzgi*.
+||it-pearl.com^
 ||cndmyu.ru^
 ||getrotad.ru^
 ||cndmyt.ru^
@@ -6823,7 +6844,6 @@
 ||capliman.com^
 ||advdn.ru^
 ||dondlo.*
-||bondzgi2.*
 ||rutorad.ru^
 ||infomir.pw^
 ||itsibdi.info^
@@ -6841,7 +6861,6 @@
 ||1mint1.info^
 ||luxupcdna.com^
 ||aq.prices25.com^
-||bondzgi.*
 ||rustds.click^
 ||marchtv.ru^
 ||mhzaj.com^
@@ -10156,6 +10175,10 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||torabri.com^
+||cdn.ywxi.net^
+||apploading.mobi^
+||trflog.com^
 ||attirerpage.com^
 ||s2s.rafotech.com^
 ||trotux.com^
@@ -10791,6 +10814,11 @@ ws*://video.docfilms.info^
 ||banners-slb.mobile.yandex.net^
 ||banners.mobile.yandex.net^
 !
+||ad.period-calendar.com^
+||dc.altamob.com^
+||cpactions.com^
+||native.cli.bz^
+||adplatform.vrtcal.com^
 ||appodealx.com^
 ||go.vrvm.com^
 ||c.vrvm.com^
@@ -11215,6 +11243,7 @@ ws*://video.docfilms.info^
 ! Google Contributor tracking domains
 ||p.d.nn0e.com^
 !
+||top10sportsites.com^
 ||client.perimeterx.net^
 ||otik.de^
 ||mc.webvisor.org^
@@ -14278,6 +14307,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||logs.spilgames.com^
+||d22v2nmahyeg2a.cloudfront.net^
 ||log.ecgh.dk^
 ||tagger.opecloud.com^
 ||d31j93rd8oukbv.cloudfront.net^
@@ -14541,6 +14572,8 @@ charlestownwyllie.oaklawnnonantum.com^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||analytics-tracker.thescore.com^
+||app.roximity.com^
 ||dc.webtrends.com^
 ||report.appmetrica.webvisor.com^
 ||api.oneaudience.com^
