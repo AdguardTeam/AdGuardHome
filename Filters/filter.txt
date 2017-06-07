@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-06-06 12:03:11
+! Last modified: 2017-06-07 12:03:12
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -821,6 +821,7 @@
 ||apxtarget.com^
 ||arab4eg.com^
 ||arabweb.biz^
+||aralego.com^
 ||arcadebannerexchange.net^
 ||arcadebannerexchange.org^
 ||arcadebanners.com^
@@ -2979,6 +2980,7 @@
 ||popundertotal.com^
 ||popunderz.com^
 ||popunderzone.com^
+||popupdomination.com^
 ||popuptraffic.com^
 ||popupvia.com^
 ||popwin.net^
@@ -3080,6 +3082,7 @@
 ||puserving.com^
 ||push2check.com^
 ||putrr2.com^
+||putrr3.com^
 ||puttme.ga^
 ||pwrads.net^
 ||pxl2015x1.com^
@@ -3999,6 +4002,7 @@
 ||wwwp.link^
 ||wwwpromoter.com^
 ||x.mochiads.com^
+||x107nqa.com^
 ||x4300tiz.com^
 ||x8bhr.com^
 ||xad.com^
@@ -4336,6 +4340,7 @@
 ||havenwrite.com^
 ||la-la-moon.com^
 ||la-la-sf.com^
+||livwrite.com^
 ||meepwrite.com^
 ||netrosol.net^
 ||new-new-years.com^
@@ -4849,6 +4854,7 @@
 ||espnrlezwzvd.com^
 ||etbrjgpsadke.com^
 ||etggiddfdaqd.com^
+||eupwogkcjczz.com^
 ||evhvoeqfrlsb.com^
 ||evlvaulglzpu.com^
 ||ewgtanybkkch.com^
@@ -4883,6 +4889,7 @@
 ||firugsivsqot.com^
 ||fjcvncxrmmru.com^
 ||fjfxpykp.com^
+||fjuouqwxgbir.com^
 ||fjvolzrojowa.com^
 ||fkdqrjnoxhch.com^
 ||fkekipafwlqd.com^
@@ -5277,6 +5284,7 @@
 ||kjbqzbiteubt.com^
 ||kjjlucebvxtu.com^
 ||kjmddlhlejeh.com^
+||kjnkmidieyrb.com^
 ||kjplmlvtdoaf.com^
 ||kjqyvgvvazii.com^
 ||kknvwhcmqoet.com^
@@ -5821,6 +5829,7 @@
 ||rdlynbosndvx.com^
 ||rdzxpvbveezdkcyustcomuhczsbvteccejkdkfepouuhxpxtmy.com^
 ||reebinbxhlva.com^
+||repefwairfkx.com^
 ||rertazmgduxp.com^
 ||rffjopgiuhsx.com^
 ||rffqzbqqmuhaomjpwatukocrykmesssfdhpjuoptovsthbsswd.com^
@@ -6134,6 +6143,7 @@
 ||vdyqcdxqvebl.com^
 ||veeqneifeblh.com^
 ||vejlbuixnknc.com^
+||vepcsswlpolz.com^
 ||vfasewomnmco.com^
 ||vfkfctmtgrtq.com^
 ||vfnvsvxlgxbvndhgqqohfgdcfprvxqisiqhclfhdpnjzloctny.com^
@@ -6145,6 +6155,7 @@
 ||vhctcywajcwv.com^
 ||vhiaxerjzbqi.com^
 ||vhpqxkhvjgwx.com^
+||vhuveukirbuz.com^
 ||vhwuphctrfil.com^
 ||vicofhozbuaf.com^
 ||viqfxgmgacxv.com^
@@ -6236,6 +6247,7 @@
 ||wijczxvihjyu.com^
 ||wiorcewmylbe.com^
 ||wipjyzwavojq.com^
+||wirfpvmoblpa.com^
 ||wjdjovjrxsqx.com^
 ||wjnkvhlgvixx.com^
 ||wkexsfmw.com^
@@ -6322,6 +6334,7 @@
 ||xkawgrrrpszb.com^
 ||xkwnadxakuqc.com^
 ||xkygmtrrjalx.com^
+||xlavzhffzwgb.com^
 ||xmmnwyxkfcavuqhsoxfrjplodnhzaafbpsojnqjeoofyqallmf.com^
 ||xnuuzwthzaol.com^
 ||xoqwirroygxv.com^
@@ -6377,6 +6390,7 @@
 ||yfkwqoswbghk.com^
 ||yflpucjkuwvh.com^
 ||yfqlqjpdsckc.com^
+||yfrsukbbfzyf.com^
 ||yfzcjqpxunsn.com^
 ||ygrtbssc.com^
 ||yhsxsjzyqfoq.com^
@@ -6835,6 +6849,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||chyatikho.info^
+||aso1.net^
 ||bondzgi*.
 ||it-pearl.com^
 ||cndmyu.ru^
@@ -10088,6 +10104,7 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+://*.kinogo-720.co^
 ://*.1sexxx.com
 ||stepan-fe.go.mail.ru^
 ://*.2img-pic.ru^
@@ -10176,6 +10193,8 @@ ws*://video.docfilms.info^
 ! Section contains list of advertising networks
 !
 ||torabri.com^
+koutube.com##.dwonload_asd
+koutube.com##.iframe_ads
 ||cdn.ywxi.net^
 ||apploading.mobi^
 ||trflog.com^
@@ -10206,7 +10225,6 @@ ws*://video.docfilms.info^
 ||ssl4anyone5.com^
 ||cdn.plopx.com^
 ||ssl4me.cf^
-||putrr3.com^
 ||sexpennyauctions.com^
 ||78.140.130.88^
 ||happer.info^
