@@ -1,5 +1,5 @@
 ! https://forum.adguard.com/index.php?threads/parking-websites-redirect-false-positive.22374/
-www.hxtrack.com
+hxtrack.com
 ! http://tv.naver.com/v/1691094 - video won't play
 smartmediarep.com
 ! Fixing advertising links in google search results
