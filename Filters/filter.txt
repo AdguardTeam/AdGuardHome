@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-06-08 12:00:10
+! Last modified: 2017-06-09 12:03:24
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -455,6 +455,7 @@
 ||adready.com^
 ||adreadytractions.com^
 ||adrecover.com^
+||adrelayer.com^
 ||adresellers.com^
 ||adrevivify.com^
 ||adrevolver.com^
@@ -3082,6 +3083,7 @@
 ||purpleflag.net^
 ||puserving.com^
 ||push2check.com^
+||pussl11.com^
 ||putrr2.com^
 ||putrr3.com^
 ||puttme.ga^
@@ -4499,6 +4501,7 @@
 ||agwsneccrbda.com^
 ||ahkpdnrtjwat.com^
 ||ahwjxktemuyz.com^
+||ahyuzjgukqyd.com^
 ||ahzybvwdwrhi.com^
 ||aiiaqehoqgrj.com^
 ||aiypulgy.com^
@@ -4672,6 +4675,7 @@
 ||ckryzlnafwyd.com^
 ||ckwpsghi.com^
 ||cledghtdrjtb.com^
+||clhkbfqzwpst.com^
 ||cmdjujqlfbts.com^
 ||cmdotgwjhpqf.com^
 ||cmpsuzvr.com^
@@ -4688,6 +4692,7 @@
 ||cphxwpicozlatvnsospudjhswfxwmykgbihjzvckxvtxzfsgtx.com^
 ||cpkbdmkguggh.com^
 ||cqbabfsyfqse.com^
+||cqbphspgvhuk.com^
 ||cqoyvpldkmqt.com^
 ||crkgtnad.com^
 ||croxdfrdjfnt.com^
@@ -4881,6 +4886,7 @@
 ||ffhwzaenzoue.com^
 ||ffpkqjyvvneg.com^
 ||ffwbpadvkcyi.com^
+||fghdembabvwe.com^
 ||fgkvpyrmkbap.com^
 ||fgmucsiirrsq.com^
 ||fgwsjwiaqtjc.com^
@@ -5412,6 +5418,7 @@
 ||lwocvazxfnuj.com^
 ||lwqwsptepdxy.com^
 ||lwysswaxnutn.com^
+||lxghhxdcmumk.com^
 ||lxkqybzanzug.com^
 ||lyifwfhdizcc.com^
 ||lytpdzqyiygthvxlmgblonknzrctcwsjycmlcczifxbkquknsr.com^
@@ -5474,6 +5481,7 @@
 ||mmnridsrreyh.com^
 ||mmojdtejhgeg.com^
 ||mmvcmovwegkz.com^
+||mmygcnboxlam.com^
 ||mnjgoxmx.com^
 ||mnusvlgl.com^
 ||mnyavixcddgx.com^
@@ -5561,6 +5569,7 @@
 ||npeanaixbjptsemxrcivetuusaagofdeahtrxofqpxoshduhri.com^
 ||npgdqwtrprfq.com^
 ||npikrbynhuzi.com^
+||nplrzxvyrhiq.com^
 ||nqlkwyyzzgtn.com^
 ||nrectoqhwdhi.com^
 ||nrgpugas.com^
@@ -5775,6 +5784,7 @@
 ||qixlpaaeaspr.com^
 ||qjmearsroiyn.com^
 ||qjskosdsxanp.com^
+||qkdywnhtmpgc.com^
 ||qklhtphiphni.com^
 ||qknuubmfneib.com^
 ||qkpwdakgxynv.com^
@@ -5888,6 +5898,7 @@
 ||rxuqpktyqixa.com^
 ||rylnirfbokjd.com^
 ||rzcmcqljwxyy.com^
+||rzgiiioqfpny.com^
 ||sagulzuyvybu.com^
 ||sailznsgbygz.com^
 ||saipuciruuja.com^
@@ -5934,6 +5945,7 @@
 ||snpevihwaepwxapnevcpiqxrsewuuonzuslrzrcxqwltupzbwu.com^
 ||sockjgaabayf.com^
 ||soiegibhwvti.com^
+||soirqzccdtyk.com^
 ||sokanffuyinr.com^
 ||sovqylkbucid.com^
 ||spbflxvnheih.com^
@@ -6032,6 +6044,7 @@
 ||tpvprtdclnym.com^
 ||tqdarrhactqc.com^
 ||trcbxjusetvc.com^
+||trdhjlszfbwk.com^
 ||trqbzsxnzxmf.com^
 ||tskctmvpwjdb.com^
 ||tsuitufixxlf.com^
@@ -10619,6 +10632,7 @@ koutube.com##.iframe_ads
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d1i2v9a8xom2hy.cloudfront.net^
 ||d3l4qa0kmel7is.cloudfront.net^
 ||d5ou3dytze6uf.cloudfront.net^
 ||d1vh0xkmncek4z.cloudfront.net^
@@ -10689,6 +10703,8 @@ koutube.com##.iframe_ads
 ||js.bulkhentai.com^
 ||script.hqpass.com^
 !
+||wlgtaffiliates.eacdn.com^
+||ads.usa-media.net^
 ||rek.hepaffiliates.com^
 ||50tlyearabakazan.com^
 ||genelajans.com^
@@ -12531,7 +12547,6 @@ koutube.com##.iframe_ads
 ||hurra.com^
 ||hurterkranach.net^
 ||hwpub.com^
-||hxtrack.com^
 ||hyfntrak.com^
 ||hyperactivate.com^
 ||hypestat.com^
