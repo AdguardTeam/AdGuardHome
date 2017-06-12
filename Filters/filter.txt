@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-06-09 12:03:24
+! Last modified: 2017-06-12 12:00:26
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1654,6 +1654,7 @@
 ||exactdrive.com^
 ||excellenceads.com^
 ||exchange4media.com^
+||exclusivecpms.com^
 ||exdynsrv.com^
 ||exitexplosion.com^
 ||exitjunction.com^
@@ -2473,6 +2474,7 @@
 ||megapopads.com^
 ||megatronmailer.com^
 ||megbase.com^
+||meh0f1b.com^
 ||meinlist.com^
 ||mellowads.com^
 ||mengheng.net^
@@ -2959,6 +2961,7 @@
 ||popads.net^
 ||popadscdn.net^
 ||popcash.net^
+||popclck.net^
 ||popcpm.com^
 ||popcpv.com^
 ||popearn.com^
@@ -4129,6 +4132,9 @@
 ||zxxds.net^
 ||zyiis.net^
 ||zypenetwork.com^
+! adsterra
+||5g9quwq.com^
+||i5rl5lf.com^
 ! propellerads
 ||019f2d2d415.review^
 ||04xdqcfz.faith^
@@ -4170,6 +4176,7 @@
 ||69wnz64h.xyz^
 ||6a0e2d19ac28.com^
 ||6g3am6pr.website^
+||6mg38boa.date^
 ||6xfcmiy0.science^
 ||707e63f068175.party^
 ||70b008710ae8.racing^
@@ -4180,7 +4187,9 @@
 ||7t69dbtn.science^
 ||7y3bcefa.stream^
 ||80d43327c1673.win^
+||87159d7b62fc885.com^
 ||8hykthze.cricket^
+||8iaxbnbk.accountant^
 ||946dc1edc8e5a37.bid^
 ||95g804up.download^
 ||970215366f5649.download^
@@ -4191,6 +4200,9 @@
 ||a8d2a82ca40.review^
 ||aafb1cd4450aa247.website^
 ||ab1eo0rx.stream^
+||adblockwhitelist097.com^
+||adblockwhitelist098.com^
+||ah77llcy.party^
 ||ap76rmx3.accountant^
 ||as1a6nl8.win^
 ||asermtawlfs.xyz^
@@ -4214,6 +4226,8 @@
 ||cg1bz6tf.loan^
 ||ckdegfi5.faith^
 ||clotraiam.website^
+||cloudcdn376125.com^
+||cloudcdn376126.com^
 ||cloudcdn376127.com^
 ||cytk85wu.top
 ||d088e52cfa9e344beb.top^
@@ -4236,6 +4250,8 @@
 ||fkvnjw6d.review^
 ||flac2flac.xyz^
 ||fm3gvfak.bid^
+||fontsapi278.com^
+||fontsapi398.com^
 ||fugggk3i.accountant^
 ||gjol8ib0.website^
 ||gk25qeyc.xyz^
@@ -4278,8 +4294,10 @@
 ||mc09j2u5.loan^
 ||monu.delivery^
 ||mosaicolor.website^
+||ms3wsmbg.loan^
 ||mwtpludn.review^
 ||oilchange.website^
+||openprofilemeta.com^
 ||opzdgga2kkw6yh.com^
 ||or3f3xmk.xyz^
 ||panatran.xyz^
@@ -4420,6 +4438,7 @@
 ||karisimbi.net^
 ||loudloss.com^
 ||matchcows.com^
+||mellowtin.com^
 ||metapelite.com^
 ||mythimna.com^
 ||ovalpigs.com^
@@ -4512,6 +4531,7 @@
 ||akoeurmzrqjg.com^
 ||akrzgxzjynpi.com^
 ||akviqfqbwqqj.com^
+||aladbvddjsxf.com^
 ||alasdzdnfvtj.com^
 ||algkebjdgafa.com^
 ||alvivigqrogq.com^
@@ -4520,7 +4540,9 @@
 ||amnpmitevuxx.com^
 ||amqtbshegbqg.com^
 ||anasjdzutdmv.com^
+||anleqthwxxns.com^
 ||anluecyopslm.com^
+||anogjkubvdfe.com^
 ||anoufpjmkled.com^
 ||antrtrtyzkhw.com^
 ||anypbbervqig.com^
@@ -4547,8 +4569,10 @@
 ||avzkjvbaxgqk.com^
 ||awfjqdhcuftd.com^
 ||awgyhiupjzvu.com^
+||awogbtinorwx.com^
 ||awsatstb.com^
 ||awvrvqxq.com^
+||axaggthnkquj.com^
 ||axfkfstrbacx.com^
 ||ayjebauqdrys.com^
 ||ayozhcgcsyun.com^
@@ -4606,6 +4630,7 @@
 ||bogkmogzrvzf.com^
 ||boguaokxhdsa.com^
 ||bolgooltxygp.com^
+||bpbwwasthwtp.com^
 ||bpprksdgogtw.com^
 ||bqptlqmtroto.com^
 ||bqqjowpigdnx.com^
@@ -4635,6 +4660,7 @@
 ||bzfguipyjops.com^
 ||bzgwkxnjqjdz.com^
 ||bzjtjfjteazqzmukjwhyzsaqdtouiopcmtmgdiytfdzboxdann.com^
+||bznmgijglbpr.com^
 ||bzyrhqbdldds.com^
 ||carsxardivaf.com^
 ||cawcwpvmpcje.com^
@@ -4662,6 +4688,7 @@
 ||chvjfriqlvnt.com^
 ||chxfeymgmwbo.com^
 ||chytrrvwvabg.com^
+||chzashakbgds.com^
 ||cihnrhqwbcsq.com^
 ||cikzhemgwchl.com^
 ||cixjmaxkemzknxxuyvkbzlhvvgeqmzgopppvefpfkqdraonoez.com^
@@ -4687,6 +4714,7 @@
 ||comgnnyx.com^
 ||comwgi.com^
 ||cortxphssdvc.com^
+||covjoecuzyss.com^
 ||cpamnizzierk.com^
 ||cpdoalzgwnwf.com^
 ||cphxwpicozlatvnsospudjhswfxwmykgbihjzvckxvtxzfsgtx.com^
@@ -4720,6 +4748,7 @@
 ||czcyppdffuhh.com^
 ||czgeitdowtlv.com^
 ||czoivochvduv.com^
+||czppmlbidjdx.com^
 ||dacqmkmsjajm.com^
 ||daxzupqivdoj.com^
 ||dbjcbnlwchgu.com^
@@ -4810,6 +4839,7 @@
 ||ednnpxhjsqyd.com^
 ||edvbyybaviln.com^
 ||edwywpsufuda.com^
+||edxvyyywsxqh.com^
 ||eefbzuwvnnab.com^
 ||eejcqlenlsko.com^
 ||eepuawuevovi.com^
@@ -4841,6 +4871,7 @@
 ||enhwftpkwvnb.com^
 ||eniaypwywduf.com^
 ||enzyxtdcacde.com^
+||eojrldtucqsf.com^
 ||eovkzcueutgf.com^
 ||epernepojkle.com^
 ||epesogtigole.com^
@@ -4866,6 +4897,7 @@
 ||ewgtanybkkch.com^
 ||exioptyxiyoo.com^
 ||exnyzdboihvi.com^
+||eydiuqpdtfew.com^
 ||eylyitpslpqu.com^
 ||ezbtpdjeimlv.com^
 ||ezemyudhkzvx.com^
@@ -4927,6 +4959,7 @@
 ||frlzxwxictmg.com^
 ||fsddidfmmzvw.com^
 ||fsvcrapnmmvj.com^
+||fsvxxllfpfhk.com^
 ||ftgfmbxqkjda.com^
 ||ftjrekbpjkwe.com^
 ||ftodxdoolvdm.com^
@@ -5077,6 +5110,7 @@
 ||hqxtsqwpvort.com^
 ||hrkshoveizfo.com^
 ||hrvxpinmdyjx.com^
+||hsoyrqqsludd.com^
 ||hsvqfvjidloc.com^
 ||hszyozoawqnk.com^
 ||htllanmhrnjrbestmyabzhyweaccazvuslvadtvutfiqnjyavg.com^
@@ -5088,6 +5122,7 @@
 ||hutkuzwropgf.com^
 ||huynrscfbulr.com^
 ||huzmweoxlwanzvstlgygbrnfrmodaodqaczzibeplcezmyjnlv.com^
+||hvdddlsdexic.com^
 ||hvfzacisynoq.com^
 ||hvfzshrpfueb.com^
 ||hvukouhckryjudrawwylpboxdsonxhacpodmxvbonqipalsprb.com^
@@ -5152,6 +5187,7 @@
 ||iohaqrkjddeq.com^
 ||ioighavxylne.com^
 ||ionbpysfukdh.com^
+||ipdlsrwctdjb.com^
 ||iqmjedevvojm.com^
 ||iqrqmhrfkyuu.com^
 ||irbkobqlrbtt.com^
@@ -5179,6 +5215,7 @@
 ||ixlsylapsdtr.com^
 ||ixsxgaegvplo.com^
 ||ixzhwyuxxvxb.com^
+||ixznwuxokydz.com^
 ||iydghotpzofn.com^
 ||izhvnderudte.com^
 ||iziwhlafxitn.com^
@@ -5217,6 +5254,7 @@
 ||jjipgxjf.com^
 ||jjpoxurorlsb.com^
 ||jjxsdkphpcwu.com^
+||jjyovwimoydq.com^
 ||jkjoxlhkwnxd.com^
 ||jkkernvkrwdr.com^
 ||jlarmqbypyku.com^
@@ -5239,12 +5277,14 @@
 ||jpuiucicqwan.com^
 ||jpwvdpvsmhow.com^
 ||jqibqqxghcfk.com^
+||jqkxaejcijfz.com^
 ||jqmcbepfjgks.com^
 ||jqqrcwwd.com^
 ||jrmyhchnfawh.com^
 ||jrtawlpbusyg.com^
 ||jseewggtkfrs.com^
 ||jshjrozmwmyj.com^
+||jtumenosmrte.com^
 ||jtzlsdmbmfms.com^
 ||juqmlmoclnhe.com^
 ||jusrlkubhjnr.com^
@@ -5272,6 +5312,8 @@
 ||kbrnfzgglehh.com^
 ||kbrwlgzazfnv.com^
 ||kbsceyleonkq.com^
+||kbzrszspknla.com^
+||kcchjeoufbqu.com^
 ||kceikbfhsnet.com^
 ||kdaskxrcgxhp.com^
 ||kdtictjmofbl.com^
@@ -5360,6 +5402,7 @@
 ||lctpaemybjkv.com^
 ||lcuprkufusba.com^
 ||lcxrhcqouqtw.com^
+||lcyncwbacrgz.com^
 ||lcyxmuhxroyo.com^
 ||ldaiuhkayqtu.com^
 ||ldkyzudgbksh.com^
@@ -5452,6 +5495,7 @@
 ||mfuebmooizdr.com^
 ||mgrxsztbcfeg.com^
 ||mhaafkoekzax.com^
+||mhcttlcbkwvp.com^
 ||mhfvtafbraql.com^
 ||mhghzpotwnoh.com^
 ||mhrfhwlqsnzf.com^
@@ -5511,6 +5555,7 @@
 ||munpprwlhric.com^
 ||mvjuhdjuwqtk.com^
 ||mvqinxgp.com^
+||mvzmmcbxssgp.com^
 ||mwqkpxsrlrus.com^
 ||mxsuikhqaggf.com^
 ||mxtcafifuufp.com^
@@ -5640,6 +5685,7 @@
 ||olwopczjfkng.com^
 ||ompzowzfwwfc.com^
 ||ongkidcasarv.com^
+||onjqfyuxprnq.com^
 ||onkcjpgmshqx.com^
 ||oofophdrkjoh.com^
 ||oonenbygymsl.com^
@@ -5679,6 +5725,7 @@
 ||oytrrdlrovcn.com^
 ||oyzsverimywg.com^
 ||ozhwenyohtpb.com^
+||ozoltyqcnwmu.com^
 ||ozwtmmcdglos.com^
 ||ozymwqsycimr.com^
 ||palzblimzpdk.com^
@@ -5692,6 +5739,7 @@
 ||peewuranpdwo.com^
 ||peewuvgdcian.com^
 ||peqdwnztlzjp.com^
+||pfjwtzlfaivp.com^
 ||pguxoochezkc.com^
 ||pgxciwvwcfof.com^
 ||pifaojvaiofw.com^
@@ -5795,6 +5843,7 @@
 ||qndqwtrwguhv.com^
 ||qnpolbme.com^
 ||qnqrmqwehcpa.com^
+||qnsdwkjctkso.com^
 ||qoiowocphgjm.com^
 ||qolnnepubuyz.com^
 ||qotwtnckqrke.com^
@@ -5839,6 +5888,7 @@
 ||rcnkflgtxspr.com^
 ||rdikvendxamg.com^
 ||rdlynbosndvx.com^
+||rdqyasdstllr.com^
 ||rdzxpvbveezdkcyustcomuhczsbvteccejkdkfepouuhxpxtmy.com^
 ||reebinbxhlva.com^
 ||repefwairfkx.com^
@@ -5881,6 +5931,7 @@
 ||rrscdnsfunoe.com^
 ||rryodgeerrvn.com^
 ||rscgfvsximqdpowcmruwitolouncrmnribnfobxzfhrpdmahqe.com^
+||rsjpgfugttlh.com^
 ||rsvxipjqyvfs.com^
 ||rtufxsncbegz.com^
 ||rtusxaoxemxy.com^
@@ -5926,6 +5977,7 @@
 ||sgzsviqlvcxc.com^
 ||shnmhrlcredd.com^
 ||shnoadlvpylf.com^
+||sijlnueeertd.com^
 ||silrfbopbobw.com^
 ||siogczwibswm.com^
 ||siwtuvvgraum.com^
@@ -6153,6 +6205,7 @@
 ||vcwdjbbughuy.com^
 ||vdhmatjdoyqt.com^
 ||vdlvaqsbaiok.com^
+||vdnwtglxprwx.com^
 ||vdpyueivvsuc.com^
 ||vdqarbfqauec.com^
 ||vduswjwfcexa.com^
@@ -6230,6 +6283,7 @@
 ||vzhbfwpo.com^
 ||vzmnvqiqgxqk.com^
 ||wabxsybclllz.com^
+||wadrzbroefwd.com^
 ||waentchjzuwq.com^
 ||wafavwthigmc.com^
 ||wafrszmnbshq.com^
@@ -6302,6 +6356,7 @@
 ||wscvmnvhanbr.com^
 ||wsfqmxdljrknkalwskqmefnonnyoqjmeapkmzqwghehedukmuj.com^
 ||wsscyuyclild.com^
+||wtjmnbjktbci.com^
 ||wtvyenir.com^
 ||wtxoicsjxbsj.com^
 ||wuldwvzqvqet.com^
@@ -6324,12 +6379,14 @@
 ||xbdlsolradeh.com^
 ||xbynkkqi.com^
 ||xbyvexekkrnt.com^
+||xbzmworkoyrx.com^
 ||xcakezoqgkmj.com^
 ||xcjoqraqjwmk.com^
 ||xconeeitqrrq.com^
 ||xcrruqesggzc.com^
 ||xcukrfpchsxn.com^
 ||xdqlnidntqmz.com^
+||xdtliokpaiej.com^
 ||xdurrrklybny.com^
 ||xdwqixeyhvqd.com^
 ||xegavyzkxowj.com^
@@ -6356,6 +6413,7 @@
 ||xmmnwyxkfcavuqhsoxfrjplodnhzaafbpsojnqjeoofyqallmf.com^
 ||xnuuzwthzaol.com^
 ||xoqwirroygxv.com^
+||xpjizpoxzosn.com^
 ||xpkhmrdqhiux.com^
 ||xpnttdct.com^
 ||xqhgisklvxrh.com^
@@ -6411,6 +6469,7 @@
 ||yfrsukbbfzyf.com^
 ||yfzcjqpxunsn.com^
 ||ygrtbssc.com^
+||yhqojrhfgfsh.com^
 ||yhsxsjzyqfoq.com^
 ||yhzobwqqecaa.com^
 ||yiyycuqozjwc.com^
@@ -6467,10 +6526,12 @@
 ||zansceeifcmm.com^
 ||zawvukyxyfmi.com^
 ||zbfncjtaiwngdsrxvykupflpibvbrewhemghxlwsdoluaztwyi.com^
+||zbihwbypkany.com^
 ||zbrkywjutuxu.com^
 ||zbtqpkimkjcr.com^
 ||zbxzcrldzzgv.com^
 ||zclxwzegqslr.com^
+||zdqsrdamdgmn.com^
 ||zezowfisdfyn.com^
 ||zfkkmayphqrw.com^
 ||zfmqywrpazlx.com^
@@ -6534,6 +6595,7 @@
 ||zxadziqqayup.com^
 ||zxavxgjcjmkh.com^
 ||zxbjgrxbcgrp.com^
+||zxjmybvewmso.com^
 ||zxqeycvsetkh.com^
 ||zyaorkkdvcbl.com^
 ||zycvyudt.com^
@@ -6868,6 +6930,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||obitel.org^
+||kost.tv^
 ||eberalofe.pro
 ||hahedttont.pro^
 ||chyatikho.info^
@@ -10125,6 +10189,7 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+://*.bobfilm1.co^
 ://*.videopron.ru^
 ://*.kinogo-720.co^
 ://*.1sexxx.com
@@ -10214,6 +10279,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||nurno.com^
+||advertica-cdn.com^
 ||torabri.com^
 koutube.com##.dwonload_asd
 koutube.com##.iframe_ads
@@ -10632,6 +10699,7 @@ koutube.com##.iframe_ads
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||d2nzjxafm0iowq.cloudfront.net^
 ||d1i2v9a8xom2hy.cloudfront.net^
 ||d3l4qa0kmel7is.cloudfront.net^
 ||d5ou3dytze6uf.cloudfront.net^
@@ -14799,6 +14867,7 @@ charlestownwyllie.oaklawnnonantum.com^
 ||analy.qq.com^
 !
 ! Adguard DNS rules
+||clicksgear.com^
 ||ad.doganburda.com^
 ||ads.linksrequest.com^
 ||ads.yenimedya.com.tr^
