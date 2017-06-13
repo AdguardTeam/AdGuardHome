@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-06-12 12:00:26
+! Last modified: 2017-06-13 12:03:07
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -606,6 +606,7 @@
 ||adtrovert.com^
 ||adtrue.com^
 ||adtruism.com^
+||adtwbjs.com^
 ||adtwirl.com^
 ||aduacni.com^
 ||adult-adv.com^
@@ -2811,6 +2812,7 @@
 ||orbengine.com^
 ||ordingly.com^
 ||oriel.io^
+||origer.info^
 ||osiaffiliate.com^
 ||oskale.ru^
 ||ospreymedialp.com^
@@ -4715,10 +4717,12 @@
 ||comwgi.com^
 ||cortxphssdvc.com^
 ||covjoecuzyss.com^
+||coyhvotxgrnq.com^
 ||cpamnizzierk.com^
 ||cpdoalzgwnwf.com^
 ||cphxwpicozlatvnsospudjhswfxwmykgbihjzvckxvtxzfsgtx.com^
 ||cpkbdmkguggh.com^
+||cpmjpcefbwqr.com^
 ||cqbabfsyfqse.com^
 ||cqbphspgvhuk.com^
 ||cqoyvpldkmqt.com^
@@ -4828,6 +4832,7 @@
 ||dyunhvev.com^
 ||dyzstwcqbgjk.com^
 ||dzdfmwaztrrm.com^
+||dzzawlkmtvug.com^
 ||eaidabmuxbqy.com^
 ||easnviytengk.com^
 ||ebfjbrlcvjlv.com^
@@ -4970,6 +4975,7 @@
 ||fvrbloxygbrv.com^
 ||fvwcwbdrprdt.com^
 ||fwcrhzvfxoyi.com^
+||fwfgbhjhnlkv.com^
 ||fwlkncckwcop.com^
 ||fxjgprpozntk.com^
 ||fxjyultd.com^
@@ -4997,6 +5003,7 @@
 ||gggemaop.com^
 ||ggnabmvnwphu.com^
 ||ggngbgccubvf.com^
+||ggtujtuyvcci.com^
 ||ggzuksudqktn.com^
 ||ghtroafchzrt.com^
 ||giojhiimnvwr.com^
@@ -5180,6 +5187,7 @@
 ||imrwxmau.com^
 ||imtdtaloqwcz.com^
 ||imyqdbxq.com^
+||inewoioxxdbm.com^
 ||inmrjokdxmkh.com^
 ||insbrvwfrcgb.com^
 ||inxhtjrwictg.com^
@@ -5559,6 +5567,7 @@
 ||mwqkpxsrlrus.com^
 ||mxsuikhqaggf.com^
 ||mxtcafifuufp.com^
+||myfrvfxqeimp.com^
 ||mzbetmhucxih.com^
 ||mzguykhxnuap.com^
 ||mzkhhjueazkn.com^
@@ -5999,6 +6008,7 @@
 ||soiegibhwvti.com^
 ||soirqzccdtyk.com^
 ||sokanffuyinr.com^
+||sossxjmotqqs.com^
 ||sovqylkbucid.com^
 ||spbflxvnheih.com^
 ||spfrlpjmvkmq.com^
@@ -6930,6 +6940,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||magariusaqmuri.cf^
 ||obitel.org^
 ||kost.tv^
 ||eberalofe.pro
@@ -10339,7 +10350,6 @@ koutube.com##.iframe_ads
 ||buzzadnetwork.com^
 ||ashow.pcpop.com^
 ||biggestplayer.cachefly.net^
-||adtwbjs.com^
 ||ssp.adxpremium.com^
 ||pvrtx.net^
 ||luxupcdnb.com^
@@ -11355,6 +11365,7 @@ koutube.com##.iframe_ads
 ! Google Contributor tracking domains
 ||p.d.nn0e.com^
 !
+||akstat.io^
 ||top10sportsites.com^
 ||client.perimeterx.net^
 ||otik.de^
