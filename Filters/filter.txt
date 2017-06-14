@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-06-13 12:03:07
+! Last modified: 2017-06-14 12:03:32
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1967,6 +1967,7 @@
 ||hits.sys.lv^
 ||hitwastedgarden.com^
 ||hlads.com^
+||hlserve.com^
 ||hlu9tseh.men^
 ||hmongcash.com^
 ||hokaybo.com^
@@ -3091,6 +3092,7 @@
 ||pussl11.com^
 ||putrr2.com^
 ||putrr3.com^
+||putrr4.com^
 ||puttme.ga^
 ||pwrads.net^
 ||pxl2015x1.com^
@@ -4136,6 +4138,7 @@
 ||zypenetwork.com^
 ! adsterra
 ||5g9quwq.com^
+||axdxmdv.com^
 ||i5rl5lf.com^
 ! propellerads
 ||019f2d2d415.review^
@@ -4554,6 +4557,7 @@
 ||aoqviogrwckf.com^
 ||apgjczhgjrka.com^
 ||aqdrzqsuxxvd.com^
+||aqeukceruxzd.com^
 ||aqlvpnfxrkyf.com^
 ||aqornnfwxmua.com^
 ||aqryyhyzjveh.com^
@@ -4723,6 +4727,7 @@
 ||cphxwpicozlatvnsospudjhswfxwmykgbihjzvckxvtxzfsgtx.com^
 ||cpkbdmkguggh.com^
 ||cpmjpcefbwqr.com^
+||cpynfeqyqfby.com^
 ||cqbabfsyfqse.com^
 ||cqbphspgvhuk.com^
 ||cqoyvpldkmqt.com^
@@ -5023,6 +5028,7 @@
 ||gmpmuqniggyz.com^
 ||gnadhzstittd.com^
 ||gnipadiiodpa.com^
+||gnnmdzbroemx.com^
 ||goacestnzgrd.com^
 ||gofgfsvnfnfw.com^
 ||gojwyansqmcl.com^
@@ -5037,6 +5043,7 @@
 ||gqulrzprheth.com^
 ||grceweaxhbpvclyxhwuozrbtvqzjgbnzklvxdezzficwjnmfil.com^
 ||grfqrhqlzvjl.com^
+||grxpaizsvdzw.com^
 ||gsiqerorqkxu.com^
 ||gtaouarrwypu.com^
 ||gtbfhyprjhqz.com^
@@ -5267,6 +5274,7 @@
 ||jkkernvkrwdr.com^
 ||jlarmqbypyku.com^
 ||jlflzjdt.com^
+||jlmirsfthnmh.com^
 ||jlymmwnkxhph.com^
 ||jmbhyqijqhxk.com^
 ||jmvjmgofvxnu.com^
@@ -5334,6 +5342,7 @@
 ||kfdwywhuissy.com^
 ||kfpwayrztgjj.com^
 ||kfwpyyctzmpk.com^
+||kfzimhbhjdqa.com^
 ||kgkjlivo.com^
 ||kgvgtudoridc.com^
 ||kgzuerzjysxw.com^
@@ -5513,6 +5522,7 @@
 ||mizmhwicqhprznhflygfnymqbmvwokewzlmymmvjodqlizwlrf.com^
 ||mjujcjfrgslf.com^
 ||mkceizyfjmmq.com^
+||mkfzovhrfrre.com^
 ||mkmxovjaijti.com^
 ||mkpdquuxcnhl.com^
 ||mkyzqyfschwd.com^
@@ -5594,6 +5604,7 @@
 ||negdrvgo.com^
 ||nfdntqlqrgwc.com^
 ||nfniziqm.com^
+||nfnssadfhxov.com^
 ||nfsqrijauncb.com^
 ||nfxusyviqsnh.com^
 ||ngmckvucrjbnyybvgesxozxcwpgnaljhpedttelavqmpgvfsxg.com^
@@ -5820,6 +5831,7 @@
 ||qazzzxwynmot.com^
 ||qbfvwovkuewm.com^
 ||qclxheddcepf.com^
+||qcpegxszbgjm.com^
 ||qdlhprdtwhvgxuzklovisrdbkhptpfarrbcmtrxbzlvhygqisv.com^
 ||qeembhyfvjtq.com^
 ||qekmxaimxkok.com^
@@ -5936,6 +5948,7 @@
 ||rpspeqqiddjm.com^
 ||rpulxcwmnuxi.com^
 ||rqtdnrhjktzr.com^
+||rqthkhiuddlg.com^
 ||rrrdddbtofnf.com^
 ||rrscdnsfunoe.com^
 ||rryodgeerrvn.com^
@@ -6060,6 +6073,7 @@
 ||tbjjzhkwfezt.com^
 ||tcdikyjqdmsb.com^
 ||tcgojxmwkkgm.com^
+||tcrinrvfejjh.com^
 ||tcyeyccspxod.com^
 ||tedlrouwixqq.com^
 ||tevrhhgzzutw.com^
@@ -6400,8 +6414,10 @@
 ||xdurrrklybny.com^
 ||xdwqixeyhvqd.com^
 ||xegavyzkxowj.com^
+||xegvnhpwytev.com^
 ||xewzazxkmzpc.com^
 ||xfgqvqoyzeiu.com^
+||xgaethsnmbzi.com^
 ||xgzybmbwfmjd.com^
 ||xhdzcofomosh.com^
 ||xhojlvfznietogsusdiflwvxpkfhixbgdxcnsdshxwdlnhtlih.com^
@@ -6525,6 +6541,7 @@
 ||yxlibrsxbycm.com^
 ||yxmkiqdvnxsk.com^
 ||yxngmwzubbaa.com^
+||yxpkzxyajjan.com^
 ||yyajvvjrcigf.com^
 ||yyuztnlcpiym.com^
 ||yzlwuuzzehjh.com^
@@ -6559,6 +6576,7 @@
 ||zizmvnytmdto.com^
 ||zjgygpdfudfu.com^
 ||zkennongwozs.com^
+||zkezpfdfnthb.com^
 ||zkzpfpoazfgq.com^
 ||zlbdtqoayesloeazgxkueqhfzadqjqqduwrufqemhpbrjvwaar.com^
 ||zlvbqseyjdna.com^
@@ -6940,6 +6958,10 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||skyad.video^
+||skyadsvideo1.ru^
+||margadoncat.com^
+||skyvideo1.ru^
 ||magariusaqmuri.cf^
 ||obitel.org^
 ||kost.tv^
@@ -12604,7 +12626,6 @@ koutube.com##.iframe_ads
 ||hittracker.com^
 ||hitwake.com^
 ||hitwebcounter.com^
-||hlserve.com^
 ||hm.baidu.com^
 ||homechader.com^
 ||hopurl.org^
@@ -14936,6 +14957,9 @@ charlestownwyllie.oaklawnnonantum.com^
 !--------------------
 !
 ! Adguard DNS exceptions
+! https://github.com/AdguardTeam/AdguardDNS/issues/151
+! Fixing searching ads on Google Search
+@@||pagead.l.doubleclick.net^
 ! Watson News App for iOS https://github.com/AdguardTeam/AdguardFilters/issues/4524
 @@||5471782.fls.doubleclick.net^
 ! bild.de - ad block detection
