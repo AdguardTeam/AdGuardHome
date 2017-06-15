@@ -1,3 +1,5 @@
+! Fixing redirects https://forum.adguard.com/index.php?threads/fiverr-com.22612/
+atdmt.com
 ! Fixing ad block detection on a lot of the sites
 easylist.club
 ! https://forum.adguard.com/index.php?threads/parking-websites-redirect-false-positive.22374/
