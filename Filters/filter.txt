@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-06-14 12:03:32
+! Last modified: 2017-06-15 12:03:35
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -892,6 +892,7 @@
 ||awsmer.com^
 ||awstaticdn.net^
 ||awsurveys.com^
+||axdxmdv.com^
 ||axill.com^
 ||ayboll.com^
 ||azads.com^
@@ -1576,7 +1577,6 @@
 ||easyflirt-partners.biz^
 ||easyhits4u.com^
 ||easyinline.com^
-||easylist.club^
 ||ebannertraffic.com^
 ||ebayobjects.com.au^
 ||ebayobjects.com^
@@ -3389,6 +3389,7 @@
 ||smartad.ee^
 ||smartadserver.com^
 ||smartadtags.com^
+||smartadv.ru^
 ||smartdevicemedia.com^
 ||smarterdownloads.net^
 ||smartredirect.de^
@@ -4138,7 +4139,6 @@
 ||zypenetwork.com^
 ! adsterra
 ||5g9quwq.com^
-||axdxmdv.com^
 ||i5rl5lf.com^
 ! propellerads
 ||019f2d2d415.review^
@@ -4448,6 +4448,7 @@
 ||mythimna.com^
 ||ovalpigs.com^
 ||peacepowder.com^
+||provideplant.com^
 ||puzzlingfall.com^
 ||ritzysponge.com^
 ||roastedvoice.com^
@@ -4599,6 +4600,7 @@
 ||bblznptpffqc.com^
 ||bboemhlddgju.com^
 ||bbopkapcgonb.com^
+||bbzwbxchqgph.com^
 ||bdafhnltyxlw.com^
 ||bdozkocgkljj.com^
 ||bdyzewccsqpw.com^
@@ -4753,6 +4755,7 @@
 ||cxrmgoybhyrk.com^
 ||cymuxbcnhinm.com^
 ||cywegkfcrhup.com^
+||cyxagtpeggjv.com^
 ||czcbkaptwfmv.com^
 ||czcyppdffuhh.com^
 ||czgeitdowtlv.com^
@@ -4764,6 +4767,7 @@
 ||dbojgaxhxalh.com^
 ||dbtaclpoahri.com^
 ||dbwawnzkjniz.com^
+||dbysmkeerpzo.com^
 ||dcdalkgtbmip.com^
 ||dcgbswcvywyl.com^
 ||dcmatjqifoim.com^
@@ -4982,6 +4986,7 @@
 ||fwcrhzvfxoyi.com^
 ||fwfgbhjhnlkv.com^
 ||fwlkncckwcop.com^
+||fxcayktrneld.com^
 ||fxjgprpozntk.com^
 ||fxjyultd.com^
 ||fxrgikipxnlq.com^
@@ -5110,6 +5115,7 @@
 ||hlotiwnz.com^
 ||hmcjupvbxxyx.com^
 ||hndesrzcgjmprqbbropdulvkfroonnrlbpqxhvprsavhwrfxtv.com^
+||hnivikwwypcv.com^
 ||hnoajsaivjsg.com^
 ||hnqnftzzytjl.com^
 ||hntpbpeiuajc.com^
@@ -5491,6 +5497,7 @@
 ||maboflgkaxqn.com^
 ||mafndqbvdgkm.com^
 ||magwfymjhils.com^
+||makhhvgdkhwn.com^
 ||maxgirlgames.com^
 ||maziynjxjdoe.com^
 ||mbajaazbqdzc.com^
@@ -5613,6 +5620,7 @@
 ||nheanvabodkw.com^
 ||nidjppokmlcx.com^
 ||nifyalnngdhb.com^
+||niviemwsmiaq.com^
 ||njcdmsgjbbbz.com^
 ||njjybqyiuotl.com^
 ||nkkreqvurtoh.com^
@@ -5906,6 +5914,7 @@
 ||rbvfibdsouqz.com^
 ||rbyjirwjbibz.com^
 ||rcjthosmxldl.com^
+||rckxwyowygef.com^
 ||rcnkflgtxspr.com^
 ||rdikvendxamg.com^
 ||rdlynbosndvx.com^
@@ -6015,6 +6024,7 @@
 ||snetddbbbgbp.com^
 ||snfqpqyecdrb.com^
 ||sngjaetjozyr.com^
+||snhfjfnvgnry.com^
 ||snjhhcnr.com^
 ||snpevihwaepwxapnevcpiqxrsewuuonzuslrzrcxqwltupzbwu.com^
 ||sockjgaabayf.com^
@@ -6073,6 +6083,7 @@
 ||tbjjzhkwfezt.com^
 ||tcdikyjqdmsb.com^
 ||tcgojxmwkkgm.com^
+||tckofxwcaqts.com^
 ||tcrinrvfejjh.com^
 ||tcyeyccspxod.com^
 ||tedlrouwixqq.com^
@@ -6103,6 +6114,7 @@
 ||tkfsmiyiozuo.com^
 ||tkoatkkdwyky.com^
 ||tksljtdqkqxh.com^
+||tldxywgnezoh.com^
 ||tljikqcijttf.com^
 ||tlnoffpocjud.com^
 ||tlzhxxfeteeimoonsegagetpulbygiqyfvulvemqnfqnoazccg.com^
@@ -6113,6 +6125,7 @@
 ||tmmpbkwnzilv.com^
 ||tmwhazsjnhip.com^
 ||tnpbbdrvwwip.com^
+||toflvbkpwxcr.com^
 ||totvsaexihbe.com^
 ||tovkhtekzrlu.com^
 ||toyhxqjgqcjo.com^
@@ -6133,6 +6146,7 @@
 ||tvammzkprvuv.com^
 ||twdksbsyipqa.com^
 ||twjgylzydlhz.com^
+||twmeccosyivi.com^
 ||twnrkedqefhv.com^
 ||txbvzcyfyyoy.com^
 ||txwnwvhkbtzb.com^
@@ -6177,6 +6191,7 @@
 ||ulffbcunqnpv.com^
 ||uloywtmpqskx.com^
 ||ulpxnhiugynh.com^
+||ulwsjpfxwniz.com^
 ||umboffikfkoc.com^
 ||umnsvtykkptl.com^
 ||umqsrvdg.com^
@@ -6352,6 +6367,7 @@
 ||wkhychiklhdglppaeynvntkublzecyyymosjkiofraxechigon.com^
 ||wkjcdukkwcvr.com^
 ||wklyhvfc.com^
+||wktlsedohnly.com^
 ||wljuxryvolwc.com^
 ||wmhksxycucxb.com^
 ||wmjdnluokizo.com^
@@ -6535,6 +6551,7 @@
 ||yvvafcqddpmd.com^
 ||ywbfhuofnvuk.com^
 ||ywbpprhlpins.com^
+||ywxjbwauqznf.com^
 ||yxahzybkggol.com^
 ||yxbtyzqcczra.com^
 ||yxhyxfyibqhd.com^
@@ -6958,6 +6975,9 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||mtdata.ru^
+||greencuttlefish.com^
+||1rtlfor.info^
 ||skyad.video^
 ||skyadsvideo1.ru^
 ||margadoncat.com^
@@ -10222,6 +10242,7 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||ncs.eadaily.com^
 ://*.bobfilm1.co^
 ://*.videopron.ru^
 ://*.kinogo-720.co^
@@ -10312,6 +10333,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||misosoup.io^
 ||nurno.com^
 ||advertica-cdn.com^
 ||torabri.com^
@@ -11387,6 +11409,7 @@ koutube.com##.iframe_ads
 ! Google Contributor tracking domains
 ||p.d.nn0e.com^
 !
+||stat.media^
 ||akstat.io^
 ||top10sportsites.com^
 ||client.perimeterx.net^
@@ -14450,6 +14473,7 @@ koutube.com##.iframe_ads
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||counter.rian.ru^
 ||logs.spilgames.com^
 ||d22v2nmahyeg2a.cloudfront.net^
 ||log.ecgh.dk^
@@ -14960,6 +14984,7 @@ charlestownwyllie.oaklawnnonantum.com^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/151
 ! Fixing searching ads on Google Search
 @@||pagead.l.doubleclick.net^
+@@//www.googleadservices.com^
 ! Watson News App for iOS https://github.com/AdguardTeam/AdguardFilters/issues/4524
 @@||5471782.fls.doubleclick.net^
 ! bild.de - ad block detection
