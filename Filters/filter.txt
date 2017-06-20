@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-06-19 12:03:43
+! Last modified: 2017-06-20 12:03:38
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -823,6 +823,7 @@
 ||apvdr.com^
 ||apxlv.com^
 ||apxtarget.com^
+||apycomm.com^
 ||arab4eg.com^
 ||arabweb.biz^
 ||aralego.com^
@@ -2149,6 +2150,7 @@
 ||ip-adress.com^
 ||ipowercdn.com^
 ||ipredictive.com^
+||iproblet.com^
 ||ipromote.com^
 ||ipsowrite.com^
 ||isapi.solutions^
@@ -2418,6 +2420,7 @@
 ||mathads.com^
 ||matiro.com^
 ||maudau.com^
+||maxcorpmedia.com^
 ||maxserving.com^
 ||mb01.com^
 ||mb102.com^
@@ -2554,6 +2557,7 @@
 ||mobtrks.com^
 ||mobytrks.com^
 ||modelegating.com^
+||modescrips.info^
 ||modificans.com^
 ||modifiscans.com^
 ||moffsets.com^
@@ -4146,6 +4150,7 @@
 ||zypenetwork.com^
 ! adsterra
 ||04v70ab.com^
+||1yme78h.com^
 ||5g9quwq.com^
 ||i5rl5lf.com^
 ||oihbs34.com^
@@ -4987,6 +4992,7 @@
 ||fjfxpykp.com^
 ||fjuouqwxgbir.com^
 ||fjvolzrojowa.com^
+||fjxlbkwhtpil.com^
 ||fkdqrjnoxhch.com^
 ||fkekipafwlqd.com^
 ||fkianrxjfumm.com^
@@ -5026,6 +5032,7 @@
 ||fuurqgbfhvqx.com^
 ||fvbeyduylvgy.com^
 ||fvrbloxygbrv.com^
+||fvrvxmksxhut.com^
 ||fvwcwbdrprdt.com^
 ||fwcrhzvfxoyi.com^
 ||fwfgbhjhnlkv.com^
@@ -5819,6 +5826,7 @@
 ||oyzsverimywg.com^
 ||ozhwenyohtpb.com^
 ||ozoltyqcnwmu.com^
+||ozvzmgvssaou.com^
 ||ozwtmmcdglos.com^
 ||ozymwqsycimr.com^
 ||palzblimzpdk.com^
@@ -5912,6 +5920,7 @@
 ||qazzzxwynmot.com^
 ||qbfvwovkuewm.com^
 ||qclxheddcepf.com^
+||qcogokgclksa.com^
 ||qcpegxszbgjm.com^
 ||qdlhprdtwhvgxuzklovisrdbkhptpfarrbcmtrxbzlvhygqisv.com^
 ||qeembhyfvjtq.com^
@@ -5991,6 +6000,7 @@
 ||rcjthosmxldl.com^
 ||rckxwyowygef.com^
 ||rcnkflgtxspr.com^
+||rczagufykvpw.com^
 ||rdikvendxamg.com^
 ||rdlynbosndvx.com^
 ||rdqyasdstllr.com^
@@ -6116,6 +6126,7 @@
 ||sovqylkbucid.com^
 ||spbflxvnheih.com^
 ||spfrlpjmvkmq.com^
+||spomwstrgood.com^
 ||sqnezuqjdbhe.com^
 ||sqtsuzrfefwy.com^
 ||srfizvugkheq.com^
@@ -6291,6 +6302,7 @@
 ||uqqgyniatjtf.com^
 ||urbanairship.com^
 ||urpscavikbyv.com^
+||urqxrzrphsga.com^
 ||usoqghurirvz.com^
 ||usymycvrilyt.com^
 ||uszpxpcoflkl.com^
@@ -6320,6 +6332,7 @@
 ||vagttuyfeuij.com^
 ||vamuglchdpte.com^
 ||vaoajrwmjzxp.com^
+||vbehjwhcbhtg.com^
 ||vbjvbjertwov.com^
 ||vblunqrovanf.com^
 ||vbupfouyymse.com^
@@ -10427,6 +10440,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||cpm10.com^
 ||misosoup.io^
 ||nurno.com^
 ||advertica-cdn.com^
@@ -11504,6 +11518,9 @@ koutube.com##.iframe_ads
 ! Google Contributor tracking domains
 ||p.d.nn0e.com^
 !
+||sitestatlog.net^
+||lmodr.biz^
+||hexagon-analytics.com^
 ||stat.media^
 ||akstat.io^
 ||top10sportsites.com^
@@ -14567,6 +14584,9 @@ koutube.com##.iframe_ads
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||d2qmp7jjpd79k7.cloudfront.net^
+||sat.sanoma.fi^
+||analytics.sanoma.fi^
 ||counter.rian.ru^
 ||logs.spilgames.com^
 ||d22v2nmahyeg2a.cloudfront.net^
