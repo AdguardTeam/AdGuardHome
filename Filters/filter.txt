@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-06-21 12:03:38
+! Last modified: 2017-06-22 12:00:25
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -810,6 +810,7 @@
 ||aorpum.com^
 ||apex-ad.com^
 ||apmebf.com^
+||apparest.com^
 ||appendad.com^
 ||applebarq.com^
 ||appnext.com^
@@ -1949,6 +1950,7 @@
 ||hdvid-codecs-dl.net^
 ||hdvidcodecs.com^
 ||header.tech^
+||headlinesnetwork.com^
 ||headup.com^
 ||healthaffiliatesnetwork.com^
 ||healthcarestars.com^
@@ -3369,6 +3371,7 @@
 ||simply.com^
 ||simplyhired.com^
 ||simvinvo.com^
+||siniature.com^
 ||sirfad.com^
 ||sitebrand.com^
 ||siteencore.com^
@@ -4152,6 +4155,7 @@
 ||04v70ab.com^
 ||1yme78h.com^
 ||5g9quwq.com^
+||bjcvibh.com^
 ||i5rl5lf.com^
 ||oihbs34.com^
 ! propellerads
@@ -4413,6 +4417,7 @@
 ||tin-tin-win.com^
 ||tlootas.org^
 ||tok-dan-host.com^
+||totifiquo.com^
 ||tur-tur-key.com^
 ||unoblotto.net^
 ||vacwrite.com^
@@ -4673,6 +4678,7 @@
 ||bmqnguru.com^
 ||bmubqabepbcb.com^
 ||bmyepmehjzhz.com^
+||bniarapemvbd.com^
 ||bnkgacehxxmx.com^
 ||bocksnabswdq.com^
 ||bogkmogzrvzf.com^
@@ -5186,6 +5192,7 @@
 ||hpxxzfzdocinivvulcujuhypyrniicjfauortalmjerubjgaja.com^
 ||hqaajpaedpux.com^
 ||hqnyahlpmehp.com^
+||hqsxomhxwhpq.com^
 ||hqxtsqwpvort.com^
 ||hrdbamvfzipe.com^
 ||hrkshoveizfo.com^
@@ -5466,6 +5473,7 @@
 ||ktrmzzrlkbet.com^
 ||kuavzcushxyd.com^
 ||kuaygqohsbeg.com^
+||kujkgfzzyeol.com^
 ||kumekqeccmob.com^
 ||kurtgcwrdakv.com^
 ||kutlvuitevgw.com^
@@ -5551,6 +5559,7 @@
 ||lttsvesujmry.com^
 ||luhqeqaypvmc.com^
 ||luraclhaunxv.com^
+||lvdtftxgbsiu.com^
 ||lvlvpdztdnro.com^
 ||lvrvufurxhgp.com^
 ||lwasxldakmhx.com^
@@ -5781,6 +5790,7 @@
 ||oiramtfxzqfc.com^
 ||ojngisbfwwyp.com^
 ||ojvwpiqnmecd.com^
+||okaeetrzjyvx.com^
 ||okasfshomqmg.com^
 ||okbiafbcvoqo.com^
 ||okgfvcourjeb.com^
@@ -5972,6 +5982,7 @@
 ||qpiyjprptazz.com^
 ||qqapezviufsh.com^
 ||qqbyfhlctzty.com^
+||qqgtevtjnpwd.com^
 ||qqvatwaqtzgp.com^
 ||qqylzyrqnewl.com^
 ||qrcsppwzjryh.com^
@@ -6304,6 +6315,7 @@
 ||umxzhxfrrkmt.com^
 ||uncumlzowtkn.com^
 ||unffpgtoorpz.com^
+||unrbpcqmiybu.com^
 ||unztsvrjofqp.com^
 ||uqgloylf.com^
 ||uqhtuahgfmcx.com^
@@ -6439,6 +6451,7 @@
 ||wbqliddtojkf.com^
 ||wbtgtphzivet.com^
 ||wbvsgqtwyvjb.com^
+||wcabsbogwfxv.com^
 ||wcgquaaknuha.com^
 ||wcoloqvrhhcf.com^
 ||wdbddckjoguz.com^
@@ -6535,6 +6548,7 @@
 ||xcrruqesggzc.com^
 ||xcukrfpchsxn.com^
 ||xcxepcbypxwf.com^
+||xdjeestdoiis.com^
 ||xdqlnidntqmz.com^
 ||xdtliokpaiej.com^
 ||xdurrrklybny.com^
@@ -6625,6 +6639,7 @@
 ||yfrsukbbfzyf.com^
 ||yfzcjqpxunsn.com^
 ||ygrtbssc.com^
+||yhglrmvdxmxm.com^
 ||yhqojrhfgfsh.com^
 ||yhsxsjzyqfoq.com^
 ||yhzobwqqecaa.com^
@@ -6706,6 +6721,7 @@
 ||zijnobynjmcs.com^
 ||ziuxkdcgsjhq.com^
 ||zizmvnytmdto.com^
+||zjgbpjmqfaow.com^
 ||zjgygpdfudfu.com^
 ||zkennongwozs.com^
 ||zkezpfdfnthb.com^
@@ -10363,6 +10379,7 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+://*.pintastic.by^
 ||news.nest.msk.ru^
 ||ncs.eadaily.com^
 ://*.bobfilm1.co^
@@ -10455,6 +10472,9 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||jeanclementcom.us^
+||inclk.com^
+||clksite.com^
 ||jsc.adskeeper.co.uk^
 ||cpm10.com^
 ||misosoup.io^
@@ -11342,7 +11362,6 @@ koutube.com##.iframe_ads
 ||cp.pushwoosh.com^
 ||crispadvertising.com^
 ||crossboardmobile.com^
-||csi.gstatic.com^
 ||ctl.buyt.in^
 ||d2nrdy2pg3k168.cloudfront.net^
 ||d60y8cj1tje2a.cloudfront.net^
@@ -14600,6 +14619,7 @@ koutube.com##.iframe_ads
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||stat*.1internet.tv^
 ||stats.persgroep.be^
 ||stats.persgroep.nl^
 ||d2qmp7jjpd79k7.cloudfront.net^
@@ -15055,6 +15075,7 @@ charlestownwyllie.oaklawnnonantum.com^
 ||analy.qq.com^
 !
 ! Adguard DNS rules
+||42eed1a0d9c129.com^
 ||clicksgear.com^
 ||ad.doganburda.com^
 ||ads.linksrequest.com^
