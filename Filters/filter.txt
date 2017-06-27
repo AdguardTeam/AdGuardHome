@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-06-26 12:03:40
+! Last modified: 2017-06-27 12:03:31
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1650,6 +1650,7 @@
 ||escalatenetwork.com^
 ||escale.to^
 ||escokuro.com^
+||escottish.com^
 ||especifican.com^
 ||essayads.com^
 ||essaycoupons.com^
@@ -2800,6 +2801,7 @@
 ||oneopenclose.click^
 ||onerror.cf^
 ||onerror.gq^
+||onerror.tk^
 ||onespot.com^
 ||online-adnetwork.com^
 ||online-media24.de^
@@ -4370,7 +4372,9 @@
 ||oilchange.website^
 ||onefontapi91283.com^
 ||opencdb84507.com^
+||opencdb84508.com^
 ||opencdb84509.com^
+||openfonts937443.com^
 ||openprofilemeta.com^
 ||opzdgga2kkw6yh.com^
 ||or3f3xmk.xyz^
@@ -4392,6 +4396,7 @@
 ||s72jfisrt3ife.com^
 ||s997tc81.loan^
 ||sbsdjgk0.accountant^
+||sdfkjndskjfkj.com^
 ||sn5wcs89.science^
 ||stbg8kgm876qwt.com^
 ||t2y16t3g.download^
@@ -5139,6 +5144,7 @@
 ||gkeahnmvduys.com^
 ||gkgdqahkcbmykurmngzrrolrecfqvsjgqdyujvgdrgoezkcobq.com^
 ||gkiryieltcbg.com^
+||gkvhfryrramj.com^
 ||gllkdkxygckb.com^
 ||glnqvqbedbmvtcdzcokrfczopbddhopygrvrnlgmalgvhnsfsc.com^
 ||glslciwwvtxn.com^
@@ -6285,6 +6291,7 @@
 ||tijosnqojfmv.com^
 ||tikwglketskr.com^
 ||tiouqzubepuy.com^
+||tiswsdusmdig.com^
 ||tivlvdeuokwy.com^
 ||tjbgiyek.com^
 ||tjkckpytpnje.com^
@@ -7183,6 +7190,10 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||jzqce.com^
+||karasutanu.com^
+||onivenapud.com^
+||ndyzz.com^
 ||resourse43.com^
 ||info33.info^
 ||adbutton.net^
@@ -10550,6 +10561,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||arrassley.info^
 ||jeanclementcom.us^
 ||inclk.com^
 ||clksite.com^
@@ -11631,6 +11643,7 @@ koutube.com##.iframe_ads
 ! Google Contributor tracking domains
 ||p.d.nn0e.com^
 !
+||adblockanalytics.com^
 ||sitestatlog.net^
 ||lmodr.biz^
 ||hexagon-analytics.com^
