@@ -2,9 +2,9 @@
 !csi.gstatic.com
 iesnare.com
 ! https://forum.adguard.com/index.php?threads/22964/
-||bat.bing.com^
+bat.bing.com
 ! https://github.com/AdguardTeam/AdguardDNS/issues/125
-||qualtrics.com^
+qualtrics.com
 ! Fixing redirects https://forum.adguard.com/index.php?threads/fiverr-com.22612/
 atdmt.com
 ! Fixing ad block detection on a lot of the sites
