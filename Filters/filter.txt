@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-06-28 12:03:35
+! Last modified: 2017-06-29 12:03:37
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -284,6 +284,7 @@
 ||adfrontiers.com^
 ||adfunkyserver.com^
 ||adfusion.com^
+||adg99.com^
 ||adgalax.com^
 ||adgardener.com^
 ||adgatemedia.com^
@@ -805,6 +806,7 @@
 ||anet*.tradedoubler.com^
 ||angege.com^
 ||angeinge.com^
+||animits.com^
 ||anonymousads.com^
 ||anwufkjjja.com^
 ||anyclip-media.com^
@@ -1404,6 +1406,7 @@
 ||cruftexcision.xyz^
 ||cruiseworldinc.com^
 ||csklde.space^
+||css-style-95.com^
 ||ctasnet.com^
 ||ctenetwork.com^
 ||ctm-media.com^
@@ -1716,6 +1719,7 @@
 ||fb-plus.com^
 ||fbgdc.com^
 ||fbsvu.com^
+||fdf4.com^
 ||fearer.info^
 ||fearfulflag.com^
 ||featence.com^
@@ -2008,6 +2012,7 @@
 ||honestlypopularvary.xyz^
 ||hoomezip.biz^
 ||hopfeed.com^
+||hopinionse.com^
 ||horse-racing-affiliate-program.co.uk^
 ||horsered.com^
 ||hortestoz.com^
@@ -2989,6 +2994,7 @@
 ||pointclicktrack.com^
 ||pointroll.com^
 ||points2shop.com^
+||poketraff.com^
 ||polanders.com^
 ||polarmobile.com^
 ||polluxnetwork.com^
@@ -4371,6 +4377,7 @@
 ||mb8e17f12.website^
 ||mbbxbbtm.trade^
 ||mc09j2u5.loan^
+||mixs3ml9.download^
 ||monu.delivery^
 ||mosaicolor.website^
 ||ms3wsmbg.loan^
@@ -4412,9 +4419,12 @@
 ||tde2wkyv.stream^
 ||te2e12nd.website^
 ||tpp1ede2.accountant^
+||trackoffer0192.com^
+||trackoffer0193.com^
 ||trackoffer0194.com^
 ||txjdgm53.win^
 ||tyal449f.top^
+||u4x0ryw1.science^
 ||v2t5re6z.review^
 ||vcxzv.website^
 ||wbkaidsc.webcam^
@@ -7199,6 +7209,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||skypromotion.ru^
 ||armame.info^
 ||jzqce.com^
 ||karasutanu.com^
@@ -10571,6 +10582,8 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||cgjyesqhxzzm.com^
+||nvqsjdvgqnyk.com^
 ||arrassley.info^
 ||jeanclementcom.us^
 ||inclk.com^
@@ -13974,7 +13987,6 @@ koutube.com##.iframe_ads
 ||sitecompass.com^
 ||siteimprove.com^
 ||siteimproveanalytics.com^
-||siteintercept*.qualtrics.com^
 ||sitelinktrack.com^
 ||sitemeter.com^
 ||sitereport.org^
@@ -14720,6 +14732,7 @@ koutube.com##.iframe_ads
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||mtrcs.samba.tv^
 ||stat*.1internet.tv^
 ||stats.persgroep.be^
 ||stats.persgroep.nl^
@@ -14880,7 +14893,6 @@ charlestownwyllie.oaklawnnonantum.com^
 ||b-aws.aol.com^
 ||b-aws.huffingtonpost.com^
 ||b.huffingtonpost.com^
-||bat.bing.com^
 ||beacon.livefyre.com^
 ||beacon.riskified.com^
 ||bi-eventtracker-*.amazonaws.com^
