@@ -1,6 +1,8 @@
 ! westernunion.com is broken https://forum.adguard.com/index.php?threads/22700/ https://forum.adguard.com/index.php?threads/westernunion-com.22897/
 !csi.gstatic.com
 iesnare.com
+! https://forum.adguard.com/index.php?threads/22964/
+||bat.bing.com^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/125
 ||qualtrics.com^
 ! Fixing redirects https://forum.adguard.com/index.php?threads/fiverr-com.22612/
