@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-06-29 12:03:37
+! Last modified: 2017-06-30 12:00:09
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -4405,6 +4405,7 @@
 ||r91c6tvs.science^
 ||rhmed6po.party^
 ||rkgnmwre.site^
+||rl771fhn.men^
 ||rxlex.faith^
 ||rxrfb95v.cricket^
 ||ry0brv6w.science^
@@ -4430,6 +4431,7 @@
 ||wbkaidsc.webcam^
 ||wefbjdsbvksdbvkv.com^
 ||weuigcsch31.com^
+||wjefwuiioe123f.com^
 ||wklvnlkwsc3.com^
 ||wmrdwhv3.faith^
 ||wpzka4t6.site^
@@ -4450,6 +4452,7 @@
 ||badtopwitch.work^
 ||bandelcot.com^
 ||belwrite.com^
+||borotango.com^
 ||cap-cap-pop.com^
 ||catwrite.com^
 ||centwrite.com^
@@ -4475,6 +4478,8 @@
 ||new17write.com^
 ||newsadst.com^
 ||parwrite.com^
+||raz-raz-mataz.com^
+||razwrite.com^
 ||tek-tek-trek.com^
 ||tic-tic-bam.com^
 ||tic-tic-toc.com^
@@ -7209,6 +7214,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||redsquare.rambler.ru^
 ||skypromotion.ru^
 ||armame.info^
 ||jzqce.com^
@@ -10761,7 +10767,6 @@ koutube.com##.iframe_ads
 ||blkget8.com^
 ||block.s*block.com^
 ||boomads.com^
-||borotango.com^
 ||brand.ad^
 ||bravo-lea.com^
 ||breeffnet.com^
