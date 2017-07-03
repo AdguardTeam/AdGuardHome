@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-06-30 12:00:09
+! Last modified: 2017-07-03 12:03:19
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -586,6 +586,7 @@
 ||adtaily.eu^
 ||adtaily.pl^
 ||adtdp.com^
+||adtear.com^
 ||adtecc.com^
 ||adtech.de^
 ||adtechus.com^
@@ -768,6 +769,7 @@
 ||alchemysocial.com^
 ||alfynetwork.com^
 ||algovid.com^
+||alikelys.com^
 ||alimama.com^
 ||allabc.com^
 ||alleliteads.com^
@@ -817,6 +819,7 @@
 ||aorpum.com^
 ||apex-ad.com^
 ||apmebf.com^
+||apparede.com^
 ||apparest.com^
 ||appendad.com^
 ||applebarq.com^
@@ -1201,6 +1204,7 @@
 ||chango.com^
 ||chanished.net^
 ||chanitet.ru^
+||chantly.info^
 ||chargeplatform.com^
 ||charltonmedia.com^
 ||checkapi.xyz^
@@ -1249,6 +1253,7 @@
 ||clickequations.net^
 ||clickexa.com^
 ||clickexperts.net^
+||clickfunnels.com^
 ||clickfuse.com^
 ||clickinc.com^
 ||clickintext.com^
@@ -1400,6 +1405,7 @@
 ||creditcards15x.tk^
 ||crispads.com^
 ||crocspaceoptimizer.com^
+||croea.com^
 ||crossrider.com^
 ||crowdgatheradnetwork.com^
 ||crowdgravity.com^
@@ -1455,6 +1461,7 @@
 ||dbclix.com^
 ||dc121677.com^
 ||dealcurrent.com^
+||decenthat.com^
 ||decisionmark.com^
 ||decisionnews.com^
 ||decknetwork.net^
@@ -1683,6 +1690,7 @@
 ||exchange4media.com^
 ||exclusivecpms.com^
 ||exdynsrv.com^
+||exerciale.com^
 ||exitexplosion.com^
 ||exitjunction.com^
 ||exoclick.com^
@@ -1939,6 +1947,7 @@
 ||greenlabelppc.com^
 ||grenstia.com^
 ||gretzalz.com^
+||greyinstrument.com^
 ||gripdownload.co^
 ||grllopa.com^
 ||grmtas.com^
@@ -2010,6 +2019,7 @@
 ||holdingprice.net^
 ||holidaytravelguide.org^
 ||honestlypopularvary.xyz^
+||honouncil.com^
 ||hoomezip.biz^
 ||hopfeed.com^
 ||hopinionse.com^
@@ -2020,6 +2030,7 @@
 ||hostgit.net^
 ||hosticanaffiliate.com^
 ||hot-hits.us^
+||hot-mob.com^
 ||hotelscombined.com.au^
 ||hotfeed.net^
 ||hotkeys.com^
@@ -2141,6 +2152,7 @@
 ||inskinmedia.com^
 ||inspiringsweater.xyz^
 ||insta-cash.net^
+||installads.net^
 ||instancetour.info^
 ||instantbannercreator.com^
 ||instantclk.com^
@@ -2787,6 +2799,7 @@
 ||offerserve.com^
 ||offersquared.com^
 ||officerrecordscale.info^
+||offshort.info^
 ||ofino.ru^
 ||ogercron.com^
 ||oggifinogi.com^
@@ -2795,6 +2808,7 @@
 ||oileddaintiessunset.info^
 ||oldership.com^
 ||oldtiger.net^
+||omatri.info^
 ||omclick.com^
 ||omg2.com^
 ||omni-ads.com^
@@ -2810,7 +2824,9 @@
 ||onenetworkdirect.net^
 ||oneopenclose.click^
 ||onerror.cf^
+||onerror.ga^
 ||onerror.gq^
+||onerror.ml^
 ||onerror.tk^
 ||onespot.com^
 ||online-adnetwork.com^
@@ -2860,6 +2876,7 @@
 ||ospreymedialp.com^
 ||osuq4jc.com^
 ||othersonline.com^
+||ourbanners.net^
 ||ourunlimitedleads.com^
 ||ov8pc.tv^
 ||oveld.com^
@@ -3138,6 +3155,7 @@
 ||putrr9.com^
 ||puttme.ga^
 ||pwrads.net^
+||px3792.com^
 ||pxl2015x1.com^
 ||pxstda.com^
 ||pzaasocba.com^
@@ -3488,6 +3506,7 @@
 ||specificclick.net^
 ||specificmedia.com^
 ||spectato.com^
+||speculese.com^
 ||speeb.com^
 ||speednetwork14.com^
 ||speedserver.top^
@@ -3522,6 +3541,7 @@
 ||sprintrade.com^
 ||sproose.com^
 ||sq2trk2.com^
+||squarterun.com^
 ||srtk.net^
 ||srv.yavli.com^
 ||srx.com.sg^
@@ -4224,10 +4244,12 @@
 ||3jsbf5.xyz^
 ||3k4hppja.stream^
 ||3wr110.xyz^
+||476vi285.stream^
 ||48a298f68e0.com^
 ||4d28ae0e559c1ba.webcam^
 ||4e9wpp17.stream^
 ||4oz2rj6t.site^
+||4t7su0i3.party^
 ||4vaj4jn4.download^
 ||56fh8x.xyz^
 ||57cdb5e39630.racing^
@@ -4286,6 +4308,7 @@
 ||b6508157d.website^
 ||b80077a4be3ec4763.trade^
 ||backlogtop.xyz^
+||baf3667dbc6a0bc21e0.com^
 ||brakefluid.website^
 ||busyd5s0.faith^
 ||bw94.xyz^
@@ -4297,6 +4320,7 @@
 ||cd8iw9mh.cricket^
 ||cdnmedia.xyz^
 ||cg1bz6tf.loan^
+||cisgbirj.website^
 ||ckdegfi5.faith^
 ||clotraiam.website^
 ||cloudcdn376125.com^
@@ -4306,10 +4330,12 @@
 ||d088e52cfa9e344beb.top^
 ||d0z4gwv7.webcam^
 ||dascasdw.xyz^
+||dbmoviesunlimitedx.com^
 ||de56aa68299cfdb.webcam^
 ||dkf9g61v.date^
 ||dll5uyyj.date^
 ||dromorama.xyz^
+||dsfkwkjnfkjnwjef.com^
 ||duscb12r.loan^
 ||e0e0e4195bb7.racing^
 ||e24d38df68c1b898ea.top^
@@ -4329,6 +4355,8 @@
 ||fontsapi278.com^
 ||fontsapi398.com^
 ||fugggk3i.accountant^
+||gffxdjhgbjhv.com^
+||ghfgcdsdfgcg.com^
 ||gjol8ib0.website^
 ||gk25qeyc.xyz^
 ||gkol15n1.stream^
@@ -4351,6 +4379,7 @@
 ||j4y01i3o.win^
 ||j7gvaliq.cricket^
 ||j880iceh.party^
+||j8tzz1rp.men^
 ||j8w4xqtu.racing^
 ||jkfg4hfdss.com^
 ||jkvjsdjbjkbvsdk.com^
@@ -4384,8 +4413,10 @@
 ||mwgdibcu.site^
 ||mwtpludn.review^
 ||n8jofwjp.date^
+||nzf7rqiv.download^
 ||oilchange.website^
 ||onefontapi91283.com^
+||onlinecinemavideonow.com^
 ||opencdb84507.com^
 ||opencdb84508.com^
 ||opencdb84509.com^
@@ -4393,6 +4424,7 @@
 ||openprofilemeta.com^
 ||opzdgga2kkw6yh.com^
 ||or3f3xmk.xyz^
+||oz67muww.space^
 ||p6t4vu6s.trade^
 ||panatran.xyz^
 ||pdm8kxw7.website^
@@ -4403,6 +4435,7 @@
 ||qwun46bs.review^
 ||qzgoecv5.win^
 ||r91c6tvs.science^
+||rcersu5g.party^
 ||rhmed6po.party^
 ||rkgnmwre.site^
 ||rl771fhn.men^
@@ -4413,12 +4446,14 @@
 ||s997tc81.loan^
 ||sbsdjgk0.accountant^
 ||sdfkjndskjfkj.com^
+||sdmf3f5b.science^
 ||sn5wcs89.science^
 ||stbg8kgm876qwt.com^
 ||t2y16t3g.download^
 ||tdcgjhfgdxfghfch.com^
 ||tde2wkyv.stream^
 ||te2e12nd.website^
+||toponefontsxy.com^
 ||tpp1ede2.accountant^
 ||trackoffer0192.com^
 ||trackoffer0193.com^
@@ -4813,6 +4848,7 @@
 ||cewdbisyrzdv.com^
 ||cfdmkifknsjt.com^
 ||cfsdtzggpcmr.com^
+||cgjyesqhxzzm.com^
 ||cgmkpdqjnedb.com^
 ||chqulqxfghdz.com^
 ||chtpcjezorlo.com^
@@ -5288,6 +5324,7 @@
 ||htonrwegnifw.com^
 ||htrprrrtrwrc.com^
 ||huayucnblhgy.com^
+||hubvotrpjios.com^
 ||hueenmivecmx.com^
 ||huejizictcgd.com^
 ||hutkuzwropgf.com^
@@ -5839,6 +5876,7 @@
 ||nushflxucofk.com^
 ||nvajxoahenwe.com^
 ||nvmjtxnlcdqo.com^
+||nvqsjdvgqnyk.com^
 ||nwdufyamroaf.com^
 ||nwfdrxktftep.com^
 ||nwirvhxxcsft.com^
@@ -7214,6 +7252,10 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||eventwisparwil.ru^
+||wguke.com^
+||ulaen.com^
+||tmozs.com^
 ||redsquare.rambler.ru^
 ||skypromotion.ru^
 ||armame.info^
@@ -10588,8 +10630,6 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
-||cgjyesqhxzzm.com^
-||nvqsjdvgqnyk.com^
 ||arrassley.info^
 ||jeanclementcom.us^
 ||inclk.com^
@@ -10671,7 +10711,6 @@ koutube.com##.iframe_ads
 ||uqie4nzy.com^
 ||globaladmedia.net
 ||xiniuz.com^
-||adtear.com^
 ||siphic5.top^
 ||lamalama.top^
 ||undergiveto54.com^
@@ -11171,7 +11210,6 @@ koutube.com##.iframe_ads
 ||indirads.work^
 ||indirdirek.org^
 ||inrool.com^
-||installads.net^
 ||installads2.com^
 ||iyisayfa.net^
 ||kurulum.xyz^
@@ -11548,6 +11586,7 @@ koutube.com##.iframe_ads
 ||mgage.com^
 ||mi.gdt.qq.com^
 ||microad.net^
+||mixadvert.com
 ||mmnetwork.mobi^
 ||mob.huimee.net^
 ||moba8.net^
@@ -12459,7 +12498,6 @@ koutube.com##.iframe_ads
 ||dc8xl0ndzn2cb.cloudfront.net^
 ||de17a.com^
 ||decdna.net^
-||decenthat.com^
 ||decibelinsight.net^
 ||decideinteractive.com^
 ||declaredthoughtfulness.co^
