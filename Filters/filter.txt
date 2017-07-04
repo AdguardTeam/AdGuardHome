@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-07-03 12:03:19
+! Last modified: 2017-07-04 12:03:31
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1425,6 +1425,7 @@
 ||currentlyobsessed.me^
 ||curtaecompartilha.com^
 ||curtisfrierson.com^
+||cwkuki.com^
 ||cwtrackit.com^
 ||cybmas.com^
 ||cygnus.com^
@@ -3373,6 +3374,7 @@
 ||securitain.com^
 ||sedoparking.com^
 ||seductionprofits.com^
+||seegamese.com^
 ||seekads.net^
 ||seiya.work^
 ||sekindo.com^
@@ -4261,6 +4263,7 @@
 ||66cpwgln.space^
 ||69wnz64h.xyz^
 ||6a0e2d19ac28.com^
+||6apoopbw.trade^
 ||6g3am6pr.website^
 ||6mg38boa.date^
 ||6pueopc4.space^
@@ -4296,6 +4299,7 @@
 ||adblockwhitelist097.com^
 ||adblockwhitelist098.com^
 ||ah77llcy.party^
+||anyoneregistonmay.com^
 ||ap76rmx3.accountant^
 ||as1a6nl8.win^
 ||asermtawlfs.xyz^
@@ -4481,6 +4485,7 @@
 ||xqlo792n.space^
 ||xtr8a2dg.bid^
 ||y1xjgfhp.racing^
+||yhgai58i.cricket^
 ||yqm16b35.lol^
 ||yx7xgi4d.site^
 ! /Tag adservers
@@ -7252,6 +7257,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||an.webvisor.org^
+||d-ughwashes.ru^
 ||eventwisparwil.ru^
 ||wguke.com^
 ||ulaen.com^
@@ -10630,6 +10637,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||wie9eig.top^
 ||arrassley.info^
 ||jeanclementcom.us^
 ||inclk.com^
@@ -11711,6 +11719,7 @@ koutube.com##.iframe_ads
 ! Google Contributor tracking domains
 ||p.d.nn0e.com^
 !
+||measuread.com^
 ||adblockanalytics.com^
 ||sitestatlog.net^
 ||lmodr.biz^
@@ -14775,6 +14784,8 @@ koutube.com##.iframe_ads
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||r.my.com^
+||tracking.g2crowd.com^
 ||mtrcs.samba.tv^
 ||stat*.1internet.tv^
 ||stats.persgroep.be^
