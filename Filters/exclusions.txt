@@ -1,5 +1,7 @@
+! https://forum.adguard.com/index.php?threads/mydealz-blocked-by-adguard-dns.23107/
+digidip.net
 ! westernunion.com is broken https://forum.adguard.com/index.php?threads/22700/ https://forum.adguard.com/index.php?threads/westernunion-com.22897/
-!csi.gstatic.com
+csi.gstatic.com
 iesnare.com
 ! https://forum.adguard.com/index.php?threads/22964/
 bat.bing.com
