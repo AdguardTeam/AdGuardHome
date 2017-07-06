@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-07-05 12:03:33
+! Last modified: 2017-07-06 12:03:42
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1684,6 +1684,7 @@
 ||euym8eel.club^
 ||euz.net^
 ||evewrite.net^
+||eviderable.com^
 ||evolvemediallc.com^
 ||evolvenation.com^
 ||exactdrive.com^
@@ -2735,6 +2736,7 @@
 ||nicheads.com^
 ||nighter.club^
 ||nitmus.com^
+||nization.com^
 ||njkiho.info^
 ||nkredir.com^
 ||nm7xq628.click^
@@ -4213,6 +4215,8 @@
 ||1yme78h.com^
 ||5g9quwq.com^
 ||bjcvibh.com^
+||bxnvdau.com^
+||eiwrwjc.com^
 ||i5rl5lf.com^
 ||oihbs34.com^
 ||sa2xskt.com^
@@ -4315,6 +4319,7 @@
 ||baf3667dbc6a0bc21e0.com^
 ||brakefluid.website^
 ||busyd5s0.faith^
+||bw8moo40.top^
 ||bw94.xyz^
 ||c03jij5q.website^
 ||c4p69ovw.science^
@@ -4381,6 +4386,7 @@
 ||is6pky20.site^
 ||iwfboasiqwohfw.com^
 ||izoyshe6.review^
+||j0qqyhgt.space^
 ||j2ef76da3.website^
 ||j4y01i3o.win^
 ||j7gvaliq.cricket^
@@ -4428,6 +4434,7 @@
 ||opencdb84509.com^
 ||openfonts937443.com^
 ||openprofilemeta.com^
+||openregistrationprjy.com^
 ||opzdgga2kkw6yh.com^
 ||or3f3xmk.xyz^
 ||oz67muww.space^
@@ -7262,6 +7269,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||novwolf.com^
 ||an.webvisor.org^
 ||d-ughwashes.ru^
 ||eventwisparwil.ru^
@@ -11068,6 +11076,8 @@ koutube.com##.iframe_ads
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||dsh1ct2zrfakt.cloudfront.net^
+||djwf0dl2q9i99.cloudfront.net^
 ||ads.contractoruk.com^
 ||d19uh5b0umbjrr.cloudfront.net^
 ||d1byvlfiet2h9q.cloudfront.net^
