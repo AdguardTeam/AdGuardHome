@@ -6,12 +6,17 @@ fi
 
 python Filters/parser.py
 
-git config --global user.name "Travis CI"
-git config --global user.email "travis@travis-ci.org"
-git config --global push.default simple
+if [[ $? = 0 ]]; then
+	git config --global user.name "Travis CI"
+	git config --global user.email "travis@travis-ci.org"
+	git config --global push.default simple
 
-git remote add deploy "https://$GITHUB_TOKEN@github.com/nkartyshov/travis-ci-test.git"
-git fetch deploy
+	git remote add deploy "https://$GITHUB_TOKEN@github.com/AdguardTeam/AdguardDNS.git"
+	git fetch deploy
 
-git commit -a -m "Auto update filters"
-git push -q deploy HEAD:master
+	git commit -a -m "Auto update filters"
+	git push -q deploy HEAD:master
+else 
+	echo "failure: $?"
+	exit 1
+fi 
