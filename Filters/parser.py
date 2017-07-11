@@ -1,8 +1,9 @@
-import urllib2, datetime, mmap, re, sys
+import urllib2, datetime, mmap, re, os, sys
 
 ## GLOBAL VAR ##
+dir = os.path.dirname(__file__)
 processed_rules = set()
-exclusions_file = open('exclusions.txt', 'r').read().split('\n')
+exclusions_file = open(os.path.join(dir, 'exclusions.txt'), 'r').read().split('\n')
 # Remove comments
 exclusions = filter(lambda line : not line.startswith('!'), exclusions_file)
   
@@ -58,18 +59,19 @@ def save_url_rule(line, f):
 
 def save_file_rule(line, f):
     file_name = line.replace('file', '').strip()
-    with open(file_name, 'r') as rf:
+    with open(os.path.join(dir, file_name), 'r') as rf:
         for rule in rf:
             write_rule(rule.rstrip(), f)
 
 ## MAIN ##
-with open('filter.template', 'r') as tmpl:    
-   with open('filter.txt', 'w') as f:
+with open(os.path.join(dir, 'filter.template'), 'r') as tmpl:    
+   with open(os.path.join(dir, 'filter.txt'), 'w') as f:
        for line in tmpl:
             if line.startswith('!'):
                 save_comment(line, f)
             if line.startswith('url'):
                 save_url_rule(line, f)
             if line.startswith('file'):
-                save_file_rule(line, f)
+                save_file_rule(line, f)              
 sys.exit(0)
+
