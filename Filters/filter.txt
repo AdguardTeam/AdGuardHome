@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-07-03 12:03:19
+! Last modified: 2017-07-07 12:20:25
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -1253,7 +1253,6 @@
 ||clickequations.net^
 ||clickexa.com^
 ||clickexperts.net^
-||clickfunnels.com^
 ||clickfuse.com^
 ||clickinc.com^
 ||clickintext.com^
@@ -1425,6 +1424,7 @@
 ||currentlyobsessed.me^
 ||curtaecompartilha.com^
 ||curtisfrierson.com^
+||cwkuki.com^
 ||cwtrackit.com^
 ||cybmas.com^
 ||cygnus.com^
@@ -1554,6 +1554,7 @@
 ||doublerads.com^
 ||doublerecall.com^
 ||doubleverify.com^
+||dowages.com^
 ||down1oads.com^
 ||downloadboutique.com^
 ||downloatransfer.com^
@@ -1683,6 +1684,7 @@
 ||euym8eel.club^
 ||euz.net^
 ||evewrite.net^
+||eviderable.com^
 ||evolvemediallc.com^
 ||evolvenation.com^
 ||exactdrive.com^
@@ -1947,7 +1949,6 @@
 ||greenlabelppc.com^
 ||grenstia.com^
 ||gretzalz.com^
-||greyinstrument.com^
 ||gripdownload.co^
 ||grllopa.com^
 ||grmtas.com^
@@ -2735,6 +2736,7 @@
 ||nicheads.com^
 ||nighter.club^
 ||nitmus.com^
+||nization.com^
 ||njkiho.info^
 ||nkredir.com^
 ||nm7xq628.click^
@@ -3373,6 +3375,7 @@
 ||securitain.com^
 ||sedoparking.com^
 ||seductionprofits.com^
+||seegamese.com^
 ||seekads.net^
 ||seiya.work^
 ||sekindo.com^
@@ -4212,6 +4215,8 @@
 ||1yme78h.com^
 ||5g9quwq.com^
 ||bjcvibh.com^
+||bxnvdau.com^
+||eiwrwjc.com^
 ||i5rl5lf.com^
 ||oihbs34.com^
 ||sa2xskt.com^
@@ -4220,6 +4225,7 @@
 ||019f2d2d415.review^
 ||04xdqcfz.faith^
 ||098c0f90ca673716316.site^
+||0k4iqoj0.download^
 ||0mzot44w.site^
 ||107e470d2ace7d8ecc2.stream^
 ||130hc0ja.site^
@@ -4261,6 +4267,7 @@
 ||66cpwgln.space^
 ||69wnz64h.xyz^
 ||6a0e2d19ac28.com^
+||6apoopbw.trade^
 ||6g3am6pr.website^
 ||6mg38boa.date^
 ||6pueopc4.space^
@@ -4296,6 +4303,7 @@
 ||adblockwhitelist097.com^
 ||adblockwhitelist098.com^
 ||ah77llcy.party^
+||anyoneregistonmay.com^
 ||ap76rmx3.accountant^
 ||as1a6nl8.win^
 ||asermtawlfs.xyz^
@@ -4311,6 +4319,7 @@
 ||baf3667dbc6a0bc21e0.com^
 ||brakefluid.website^
 ||busyd5s0.faith^
+||bw8moo40.top^
 ||bw94.xyz^
 ||c03jij5q.website^
 ||c4p69ovw.science^
@@ -4333,9 +4342,11 @@
 ||dbmoviesunlimitedx.com^
 ||de56aa68299cfdb.webcam^
 ||dkf9g61v.date^
+||dlfxyr7b.science^
 ||dll5uyyj.date^
 ||dromorama.xyz^
 ||dsfkwkjnfkjnwjef.com^
+||dt39ojrs.download^
 ||duscb12r.loan^
 ||e0e0e4195bb7.racing^
 ||e24d38df68c1b898ea.top^
@@ -4375,6 +4386,7 @@
 ||is6pky20.site^
 ||iwfboasiqwohfw.com^
 ||izoyshe6.review^
+||j0qqyhgt.space^
 ||j2ef76da3.website^
 ||j4y01i3o.win^
 ||j7gvaliq.cricket^
@@ -4422,6 +4434,7 @@
 ||opencdb84509.com^
 ||openfonts937443.com^
 ||openprofilemeta.com^
+||openregistrationprjy.com^
 ||opzdgga2kkw6yh.com^
 ||or3f3xmk.xyz^
 ||oz67muww.space^
@@ -4472,6 +4485,7 @@
 ||wpzka4t6.site^
 ||wrhhhtoj.men^
 ||wshp1rbq.website^
+||x5k0pyxd.cricket^
 ||x5qa0pxy.science^
 ||xbfk51p7.review^
 ||xbt0izlb.faith^
@@ -4481,12 +4495,15 @@
 ||xqlo792n.space^
 ||xtr8a2dg.bid^
 ||y1xjgfhp.racing^
+||yhgai58i.cricket^
 ||yqm16b35.lol^
 ||yx7xgi4d.site^
 ! /Tag adservers
 ||badtopwitch.work^
 ||bandelcot.com^
 ||belwrite.com^
+||bip-bip-blip.com^
+||bipwrite.com^
 ||borotango.com^
 ||cap-cap-pop.com^
 ||catwrite.com^
@@ -7252,6 +7269,9 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||novwolf.com^
+||an.webvisor.org^
+||d-ughwashes.ru^
 ||eventwisparwil.ru^
 ||wguke.com^
 ||ulaen.com^
@@ -10630,6 +10650,12 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||adspoi.com^
+||dlyads.com^
+||ab.advertiserurl.com^
+||my.top100.photo^
+||delivery.trafficfabrik.com^
+||wie9eig.top^
 ||arrassley.info^
 ||jeanclementcom.us^
 ||inclk.com^
@@ -11053,6 +11079,8 @@ koutube.com##.iframe_ads
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||dsh1ct2zrfakt.cloudfront.net^
+||djwf0dl2q9i99.cloudfront.net^
 ||ads.contractoruk.com^
 ||d19uh5b0umbjrr.cloudfront.net^
 ||d1byvlfiet2h9q.cloudfront.net^
@@ -11518,7 +11546,6 @@ koutube.com##.iframe_ads
 ||cp.pushwoosh.com^
 ||crispadvertising.com^
 ||crossboardmobile.com^
-||csi.gstatic.com^
 ||ctl.buyt.in^
 ||d2nrdy2pg3k168.cloudfront.net^
 ||d60y8cj1tje2a.cloudfront.net^
@@ -11711,6 +11738,7 @@ koutube.com##.iframe_ads
 ! Google Contributor tracking domains
 ||p.d.nn0e.com^
 !
+||measuread.com^
 ||adblockanalytics.com^
 ||sitestatlog.net^
 ||lmodr.biz^
@@ -12518,7 +12546,6 @@ koutube.com##.iframe_ads
 ||die-rankliste.com^
 ||diffusion-tracker.com^
 ||digdeepdigital.com.au^
-||digidip.net^
 ||digitaloptout.com^
 ||digitaltarget.ru^
 ||dignow.org^
@@ -14775,6 +14802,8 @@ koutube.com##.iframe_ads
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||r.my.com^
+||tracking.g2crowd.com^
 ||mtrcs.samba.tv^
 ||stat*.1internet.tv^
 ||stats.persgroep.be^

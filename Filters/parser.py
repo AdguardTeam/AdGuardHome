@@ -71,5 +71,5 @@ with open('filter.template', 'r') as tmpl:
             if line.startswith('url'):
                 save_url_rule(line, f)
             if line.startswith('file'):
-                save_file_rule(line, f)              
+                save_file_rule(line, f)
 sys.exit(0)
