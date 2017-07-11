@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-07-07 12:20:25
+! Last modified: 2017-07-11 11:56:58
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -208,6 +208,7 @@
 ||adapd.com^
 ||adbard.net^
 ||adbasket.net^
+||adbetclickin.pink^
 ||adbit.co^
 ||adblockerkillswebsites.pw^
 ||adbma.com^
@@ -701,6 +702,7 @@
 ||adzouk.com^
 ||adzpower.com^
 ||adzs.nl^
+||ae1a1e258b8b016.com^
 ||aerobins.com^
 ||afcyhf.com^
 ||afdads.com^
@@ -847,6 +849,7 @@
 ||areasnap.com^
 ||arecio.work^
 ||arti-mediagroup.com^
+||articulty.com^
 ||as-farm.com^
 ||as5000.com^
 ||asafesite.com^
@@ -974,6 +977,7 @@
 ||bentdownload.com^
 ||bepolite.eu^
 ||beringmedia.com^
+||besied.com^
 ||best5ex.com^
 ||bestarmour4u.work^
 ||bestcasinopartner.com^
@@ -1071,6 +1075,7 @@
 ||bostonwall.com^
 ||boteko.work^
 ||bounce.bar^
+||bowells.com^
 ||boydadvertising.co.uk^
 ||boylesportsreklame.com^
 ||bpasyspro.com^
@@ -1470,6 +1475,7 @@
 ||deepintent.com^
 ||deepmetrix.com^
 ||defaultimg.com^
+||defeatural.com^
 ||definitial.com^
 ||deguiste.com^
 ||dehtale.ru^
@@ -1522,6 +1528,7 @@
 ||distilled.ie^
 ||districtm.ca^
 ||dj-updates.com^
+||dk4ywix.com^
 ||dl-rms.com^
 ||dltags.com^
 ||dmu20vut.com^
@@ -1596,6 +1603,7 @@
 ||e-generator.com^
 ||e-planning.net^
 ||e-viral.com^
+||e2ertt.com^
 ||e2yth.tv^
 ||e65ew88.com^
 ||e9mlrvy1.com^
@@ -1660,6 +1668,7 @@
 ||ergodob.ru^
 ||ergoledo.com^
 ||ero-advertising.com^
+||eroterest.net^
 ||erovation.com^
 ||erovinmo.com^
 ||escalatenetwork.com^
@@ -1713,6 +1722,7 @@
 ||ezadserver.net^
 ||ezmob.com^
 ||ezoic.net^
+||eztexas.info^
 ||f-4560.com^
 ||f7oddtr.com^
 ||facebooker.top^
@@ -1806,6 +1816,7 @@
 ||forkizata.com^
 ||forpyke.com^
 ||forrestersurveys.com^
+||foundayu.com^
 ||fphnwvkp.info^
 ||frameptp.com^
 ||free-domain.net^
@@ -2080,6 +2091,7 @@
 ||ieh1ook.bid^
 ||ifmnwi.club^
 ||iframe.mediaplazza.com^
+||ifyoublockthisvideotoo.club^
 ||igameunion.com^
 ||igloohq.com^
 ||ignitioninstaller.com^
@@ -2306,6 +2318,7 @@
 ||koocash.com^
 ||korexo.com^
 ||korrelate.net^
+||kostprice.com^
 ||kovla.com^
 ||kr3vinsx.com^
 ||kromeleta.ru^
@@ -2353,6 +2366,7 @@
 ||letsadvertisetogether.com^
 ||letsgoshopping.tk^
 ||letysheeps.ru^
+||levisites.com^
 ||lfstmedia.com^
 ||lgse.com^
 ||licantrum.com^
@@ -2955,6 +2969,7 @@
 ||performanceadvertising.mobi^
 ||performancetrack.info^
 ||performancingads.com^
+||permanyb.com^
 ||persevered.com^
 ||pezrphjl.com^
 ||pgmediaserve.com^
@@ -3125,6 +3140,7 @@
 ||ptp22.com^
 ||ptp24.com^
 ||pub-fit.com^
+||pub.network^
 ||pubdirecte.com^
 ||pubgears.com^
 ||publicidad.net^
@@ -3235,6 +3251,7 @@
 ||refban.com^
 ||referback.com^
 ||referralargumentationnetwork.info^
+||regardensa.com^
 ||regdfh.info^
 ||registry.cw.cm^
 ||regurgical.com^
@@ -3618,6 +3635,7 @@
 ||suthome.com^
 ||svlu.net^
 ||sw1block.com^
+||sw2block.com^
 ||swadvertising.org^
 ||swan-swan-goose.com^
 ||swbdds.com^
@@ -3807,6 +3825,7 @@
 ||trenpyle.com^
 ||triadmedianetwork.com^
 ||tribalfusion.com^
+||tributedz.com^
 ||trido.club^
 ||trigami.com^
 ||trigr.co^
@@ -3872,6 +3891,7 @@
 ||underclick.ru^
 ||underdog.media^
 ||undertone.com^
+||undousun.com^
 ||unicast.com^
 ||unitethecows.com^
 ||universityofinternetscience.com^
@@ -4238,6 +4258,7 @@
 ||1x9h3h9v.bid^
 ||24ad89fc2690ed9369.com^
 ||25kt8q8l.review^
+||26ohpieu.webcam^
 ||2aahvjeq.website^
 ||2h045kx8.review^
 ||2ujo8ayw.racing^
@@ -4265,6 +4286,7 @@
 ||647a4323fe432956c.trade^
 ||65e107c5ea9e0573.website^
 ||66cpwgln.space^
+||68216c38fb36e0.com^
 ||69wnz64h.xyz^
 ||6a0e2d19ac28.com^
 ||6apoopbw.trade^
@@ -4329,6 +4351,7 @@
 ||cd8iw9mh.cricket^
 ||cdnmedia.xyz^
 ||cg1bz6tf.loan^
+||chenaladenews.com^
 ||cisgbirj.website^
 ||ckdegfi5.faith^
 ||clotraiam.website^
@@ -4338,12 +4361,14 @@
 ||cytk85wu.top
 ||d088e52cfa9e344beb.top^
 ||d0z4gwv7.webcam^
+||d2aizum1.party^
 ||dascasdw.xyz^
 ||dbmoviesunlimitedx.com^
 ||de56aa68299cfdb.webcam^
 ||dkf9g61v.date^
 ||dlfxyr7b.science^
 ||dll5uyyj.date^
+||domainapifeedh.com^
 ||dromorama.xyz^
 ||dsfkwkjnfkjnwjef.com^
 ||dt39ojrs.download^
@@ -4398,6 +4423,7 @@
 ||jnrzox5e.website^
 ||jzeu6qlk.accountant^
 ||k9pdlefk.website^
+||keeonewsbkanews.com^
 ||kge1ru01.science^
 ||kgrfw2mp.date^
 ||kjafuhwuhwf.com^
@@ -4409,6 +4435,8 @@
 ||kvdskjbjkbdfsv.com^
 ||kzkjewg7.stream^
 ||lamiflor.xyz^
+||lifepipenewsdaily.com^
+||limenewsonedailyn.com^
 ||lostelephants.xyz^
 ||lr48oe5c.website^
 ||lslpv80k.download^
@@ -4425,6 +4453,7 @@
 ||mwgdibcu.site^
 ||mwtpludn.review^
 ||n8jofwjp.date^
+||neewweeklylinsz.com^
 ||nzf7rqiv.download^
 ||oilchange.website^
 ||onefontapi91283.com^
@@ -4432,6 +4461,7 @@
 ||opencdb84507.com^
 ||opencdb84508.com^
 ||opencdb84509.com^
+||openfonts47372.com^
 ||openfonts937443.com^
 ||openprofilemeta.com^
 ||openregistrationprjy.com^
@@ -4459,7 +4489,10 @@
 ||s997tc81.loan^
 ||sbsdjgk0.accountant^
 ||sdfkjndskjfkj.com^
+||sdflxcvety.com^
 ||sdmf3f5b.science^
+||setnewsonedayc.com^
+||sk5mb7b2.men^
 ||sn5wcs89.science^
 ||stbg8kgm876qwt.com^
 ||t2y16t3g.download^
@@ -4476,6 +4509,7 @@
 ||u4x0ryw1.science^
 ||v2t5re6z.review^
 ||vcxzv.website^
+||w8n6k9gm.bid^
 ||wbkaidsc.webcam^
 ||wefbjdsbvksdbvkv.com^
 ||weuigcsch31.com^
@@ -4494,6 +4528,7 @@
 ||xmr6v4yg.faith^
 ||xqlo792n.space^
 ||xtr8a2dg.bid^
+||xvdjwsjj.review^
 ||y1xjgfhp.racing^
 ||yhgai58i.cricket^
 ||yqm16b35.lol^
@@ -4599,6 +4634,7 @@
 ||fanaticalfly.com^
 ||flavordecision.com^
 ||foamybox.com^
+||functionalclam.com^
 ||ga87z2o.com^
 ||illustriousoatmeal.com^
 ||inatye.com^
@@ -6475,7 +6511,6 @@
 ||uqoboyvqsqpy.com^
 ||uqpotqld.com^
 ||uqqgyniatjtf.com^
-||urbanairship.com^
 ||urpscavikbyv.com^
 ||urqxrzrphsga.com^
 ||usoqghurirvz.com^
@@ -7269,6 +7304,7 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||52.210.16.150^
 ||novwolf.com^
 ||an.webvisor.org^
 ||d-ughwashes.ru^
@@ -10557,6 +10593,7 @@ thr.ru##.top_branding
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+://*.porno-gid2.info^
 ://*.pintastic.by^
 ||news.nest.msk.ru^
 ||ncs.eadaily.com^
@@ -10650,6 +10687,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||mobileofferplace.site^
 ||adspoi.com^
 ||dlyads.com^
 ||ab.advertiserurl.com^
@@ -11079,6 +11117,7 @@ koutube.com##.iframe_ads
 !
 ! Section contains the list of advertising networks, which are hosted on non advertising sites as subdomains
 !
+||meganz.pushresponse.net^
 ||dsh1ct2zrfakt.cloudfront.net^
 ||djwf0dl2q9i99.cloudfront.net^
 ||ads.contractoruk.com^
@@ -11310,6 +11349,7 @@ koutube.com##.iframe_ads
 ||banners-slb.mobile.yandex.net^
 ||banners.mobile.yandex.net^
 !
+||crosspromotion-us.avosapps.us^
 ||ad.period-calendar.com^
 ||dc.altamob.com^
 ||cpactions.com^
@@ -12995,7 +13035,6 @@ koutube.com##.iframe_ads
 ||hotstats.gr^
 ||hqhrt.com^
 ||hs-analytics.net^
-||hsdn.org^
 ||humanclick.com^
 ||hung.ch^
 ||hunt-leads.com^
@@ -14133,7 +14172,6 @@ koutube.com##.iframe_ads
 ||squidanalytics.com^
 ||srpx.net^
 ||ssl4stats.de^
-||st.dynamicyield.com^
 ||st.top100.ru^
 ||start.ru^
 ||startstat.ru^
@@ -14802,6 +14840,7 @@ koutube.com##.iframe_ads
 !
 ! Section contains the list of tracking servers, which are hosted on useful sites as subdomains
 !
+||top.hsdn.org^
 ||r.my.com^
 ||tracking.g2crowd.com^
 ||mtrcs.samba.tv^
