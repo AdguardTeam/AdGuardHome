@@ -1,5 +1,5 @@
 # AdguardDNS (beta)
-![](https://travis-ci.org/AdguardTeam/AdguardDNS.svg?branch=master)
+![https://travis-ci.org/AdguardTeam/AdguardDNS](https://travis-ci.org/AdguardTeam/AdguardDNS.svg?branch=master)
 
 > **Our IP addresses** 
 >
