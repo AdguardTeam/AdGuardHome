@@ -1,4 +1,5 @@
 # AdguardDNS (beta)
+[![](https://travis-ci.org/AdguardTeam/AdguardDNS.svg?branch=master)](https://travis-ci.org/AdguardTeam/AdguardDNS)
 
 > **Our IP addresses** 
 >

@@ -2,7 +2,7 @@
 ! Title: Simplified domain names filter
 ! Homepage: https://github.com/AdguardTeam/AdguardDNS
 ! License: https://github.com/AdguardTeam/AdguardDNS/blob/master/LICENSE
-! Last modified: 2017-07-11 11:56:58
+! Last modified: 2017-07-12 16:04:43
 ! Decsription: Filter composed from several other filters (English filter, Social media filter, Spyware filter, Mobile ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.
 !
 ! Adservice
@@ -2926,6 +2926,7 @@
 ||paid4ad.de^
 ||paidonresults.net^
 ||paidsearchexperts.com^
+||painterede.com^
 ||pakbanners.com^
 ||panachetech.com^
 ||pantherads.com^
@@ -7304,6 +7305,8 @@
 !
 ! Содержит доменные имена, использующиеся рекламными сетями.
 !
+||log2.ru^
+||srkft.com^
 ||52.210.16.150^
 ||novwolf.com^
 ||an.webvisor.org^
@@ -10687,6 +10690,7 @@ ws*://video.docfilms.info^
 !
 ! Section contains list of advertising networks
 !
+||mediad2.jp^
 ||mobileofferplace.site^
 ||adspoi.com^
 ||dlyads.com^
@@ -15115,6 +15119,8 @@ charlestownwyllie.oaklawnnonantum.com^
 !
 ! Section contains rules for mobile analytics and spyware
 !
+||sync.adotmob.com^
+||tracker.adotmob.com^
 ||analytics-tracker.thescore.com^
 ||app.roximity.com^
 ||dc.webtrends.com^
