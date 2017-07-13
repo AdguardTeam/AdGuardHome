@@ -1,8 +1,8 @@
 #!/bin/bash
-if [ "$TRAVIS_COMMIT_MESSAGE" == "Auto update filters" ]
-then
-	exit 0
-fi
+#if [ "$TRAVIS_COMMIT_MESSAGE" == "Auto update filters" ]
+#then
+#	exit 0
+#fi
 
 python Filters/parser.py
 
