@@ -100,3 +100,5 @@ omtrdc.net
 scorecardresearch.com
 ! https://github.com/AdguardTeam/AdguardDNS/issues/89
 fwmrm.net
+! Otherwise it'd block opening links from the twitter app
+||analytics.twitter.com^
