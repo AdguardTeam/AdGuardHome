@@ -87,7 +87,7 @@ imasdk.googleapis.com
 g17media.com
 ! https://github.com/AdguardTeam/AdguardDNS/issues/43
 alipromo.com
-! ! https://github.com/AdguardTeam/AdguardDNS/issues/41
+! https://github.com/AdguardTeam/AdguardDNS/issues/41
 ! Adverigo captcha
 adverigo.com
 ! VarageSale app (iOS)
@@ -102,5 +102,3 @@ omtrdc.net
 scorecardresearch.com
 ! https://github.com/AdguardTeam/AdguardDNS/issues/89
 fwmrm.net
-! Otherwise it'd block opening links from the twitter app
-||analytics.twitter.com^
