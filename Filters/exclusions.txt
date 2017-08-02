@@ -1,3 +1,5 @@
+! https://forum.adguard.com/index.php?threads/https-userstyles-org.23844/
+freegeoip.net
 ! Fixing Twitter app
 analytics.twitter.com
 ! https://forum.adguard.com/index.php?threads/mydealz-blocked-by-adguard-dns.23107/
