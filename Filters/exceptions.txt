@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardFilters/issues/6486
+@@||track.rutarget.ru^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/151
 ! Fixing searching ads on Google Search
 @@||pagead.l.doubleclick.net^
