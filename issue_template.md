@@ -29,7 +29,7 @@
 
 |   Description  |     Value    |
 | -------------- | ------------ |
-| DNS server in use:| (e.g. Default, 176.103.130.130)|
-| How did you setup DNS configuration:| (System/DNSCrypt app/Router)|
-| Device model:| (e.g. Google Pixel)|
-| Operating system and version:| (e.g. Android 7.1.2)|
+| DNS server in use:| (e.g. Default, 176.103.130.130)
+| How did you setup DNS configuration:| (System/DNSCrypt app/Router)
+| Device model:| (e.g. Google Pixel)
+| Operating system and version:| (e.g. Android 7.1.2)
