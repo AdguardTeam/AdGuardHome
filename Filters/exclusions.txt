@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardFilters/issues/6700
+xg4ken.com
 ! https://github.com/AdguardTeam/AdguardForAndroid/issues/1439
 zdbb.net
 ! https://forum.adguard.com/index.php?threads/https-userstyles-org.23844/
