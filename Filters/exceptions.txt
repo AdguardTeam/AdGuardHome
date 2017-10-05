@@ -10,6 +10,7 @@
 @@||5471782.fls.doubleclick.net^
 ! bild.de - ad block detection
 @@||cdn1.smartadserver.com^
+@@||acdn.adnxs.com^
 ! https://github.com/AdguardTeam/AdguardFilters/issues/4405
 @@||h-sdk.online-metrix.net^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/63
