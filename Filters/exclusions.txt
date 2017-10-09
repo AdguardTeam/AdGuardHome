@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardFilters/issues/7061
+mixpanel.com
 ! https://github.com/AdguardTeam/AdguardDNS/issues/191
 app.adjust.com
 ! https://github.com/AdguardTeam/AdguardFilters/issues/6999
