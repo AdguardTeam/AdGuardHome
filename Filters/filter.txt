@@ -1940,7 +1940,7 @@
 ||goodluckblockingthis.com^
 ||goodtag.it^
 ||googleadservicepixel.com^
-||googlesyndicatiion.com^
+||googlesyndication.com^
 ||gorgonkil.com^
 ||gortags.com^
 ||gotagy.com^
