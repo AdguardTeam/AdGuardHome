@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardFilters/issues/7161
+hellywood.ru
 ! https://forum.adguard.com/index.php?threads/25831/
 heroeswm.ru
 ! https://github.com/AdguardTeam/AdguardFilters/issues/7061
