@@ -1,15 +1,17 @@
 # AdGuard DNS (beta)
 [![](https://travis-ci.org/AdguardTeam/AdguardDNS.svg?branch=master)](https://travis-ci.org/AdguardTeam/AdguardDNS)
 
-> **Our IP addresses** 
->
-> Default mode: 
-> *176.103.130.130, 
-> 176.103.130.131*
->
->Family protection:
->*176.103.130.132, 
->176.103.130.134*
+Default mode (ad & trackers blocking): 
+* *176.103.130.130*
+* *176.103.130.131*
+* *2a00:5a60::ad1:0ff* 
+* *2a00:5a60::ad2:0ff*
+
+Family protection (default + blocking adult websites + enforcing safe search):
+* *176.103.130.132*
+* *176.103.130.134*
+* *2a00:5a60::bad1:0ff*
+* *2a00:5a60::bad2:0ff*
 
 ### What is AdGuard DNS?
 
