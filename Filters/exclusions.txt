@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardDNS/issues/196
+neobux.com
 ! https://github.com/AdguardTeam/AdguardFilters/issues/7161
 hellywood.ru
 ! https://forum.adguard.com/index.php?threads/25831/
