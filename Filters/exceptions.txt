@@ -1,3 +1,5 @@
+! https://forum.adguard.com/index.php?threads/27021/
+@@||href.li^
 ! https://github.com/AdguardTeam/AdguardFilters/issues/6749
 @@||str.hit.gemius.pl^
 ! https://github.com/AdguardTeam/AdguardFilters/issues/6486
