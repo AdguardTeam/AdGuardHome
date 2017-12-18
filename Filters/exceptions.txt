@@ -1,23 +1,23 @@
 ! https://github.com/AdguardTeam/AdguardDNS/issues/192
-@@||clkuk.tradedoubler.com^
+@@||clkuk.tradedoubler.com^|
 ! https://forum.adguard.com/index.php?threads/27021/
-@@||href.li^
+@@||href.li^|
 ! https://github.com/AdguardTeam/AdguardFilters/issues/6749
-@@||str.hit.gemius.pl^
+@@||str.hit.gemius.pl^|
 ! https://github.com/AdguardTeam/AdguardFilters/issues/6486
-@@||track.rutarget.ru^
+@@||track.rutarget.ru^|
 ! https://github.com/AdguardTeam/AdguardDNS/issues/151
 ! Fixing searching ads on Google Search
-@@||pagead.l.doubleclick.net^
-@@||www.googleadservices.com^
+@@||pagead.l.doubleclick.net^|
+@@||www.googleadservices.com^|
 ! Watson News App for iOS https://github.com/AdguardTeam/AdguardFilters/issues/4524
-@@||5471782.fls.doubleclick.net^
+@@||5471782.fls.doubleclick.net^|
 ! bild.de - ad block detection
-@@||cdn1.smartadserver.com^
-@@||acdn.adnxs.com^
+@@||cdn1.smartadserver.com^|
+@@||acdn.adnxs.com^|
 ! https://github.com/AdguardTeam/AdguardFilters/issues/4405
-@@||h-sdk.online-metrix.net^
+@@||h-sdk.online-metrix.net^|
 ! https://github.com/AdguardTeam/AdguardDNS/issues/63
-@@||googleadapis.l.google.com^
+@@||googleadapis.l.google.com^|
 ! Fixing Walmart
-@@||omniture.walmart.com^
+@@||omniture.walmart.com^|
