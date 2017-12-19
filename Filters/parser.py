@@ -52,8 +52,11 @@ def save_url_rule(line, f):
     for rule in get_content(url):
         if is_rule_not_exclusion(rule):      
             if rule.find('$') != -1:
-                idx = rule.find('$');
+                idx = rule.find('$')
                 write_rule(rule[:idx], f)        
+            elif rule.find('##') != -1:
+                idx = rule.find('##')
+                write_rule(rule[:idx], f) 
             else: 
                 write_rule(rule, f)
 
