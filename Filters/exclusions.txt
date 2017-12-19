@@ -1,3 +1,5 @@
+! See customer ID: 1693928
+||wipe.de
 ! some sites are broken on Android
 piguiqproxy.com
 ! https://github.com/AdguardTeam/AdguardDNS/issues/196
