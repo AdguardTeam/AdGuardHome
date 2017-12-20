@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardFilters/issues/8469
+eroterest.net
 ! See customer ID: 1693928
 ||wipe.de
 ! some sites are broken on Android
