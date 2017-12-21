@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardFilters/issues/8698
+seosprint.net
 ! https://github.com/AdguardTeam/AdguardFilters/issues/8469
 eroterest.net
 ! See customer ID: 1693928
