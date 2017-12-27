@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardFilters/issues/8872
+rtoaster.jp
 ! https://github.com/AdguardTeam/AdguardFilters/issues/8698
 seosprint.net
 ! https://github.com/AdguardTeam/AdguardFilters/issues/8469
