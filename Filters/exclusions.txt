@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardFilters/issues/9154
+loader.adrelayer.com
 ! ads replacement on lenta.ru
 ssp.rambler.ru
 ! https://github.com/AdguardTeam/AdguardFilters/issues/8872
