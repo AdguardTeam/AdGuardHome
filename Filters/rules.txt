@@ -34,6 +34,17 @@
 ! https://github.com/AdguardTeam/AdguardDNS/issues/52
 ||mobileanalytics.*.amazonaws.com^
 !-----Vietnamese-----
+||vietnamnetad.vn^
+||cdn-qc.coccoc.com^
+||qc.coccoc.com^
+||adtima.vn^
+||mobilead.vn^
+||amobi.vn^
+||vads.vn^
+||adsota.com^
+||adsplus.vn^
+||novaonads.com^
+||myad.vn^
 ||eclick.vn^
 ||admicro.vn^
 ||admicro*.vcmedia.vn^
