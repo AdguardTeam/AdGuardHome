@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardFilters/issues/9130
+popin.cc
 ! https://forum.adguard.com/index.php?threads/tubepornkiss-com-nsfw.27807/
 webclicks24.com
 ! https://github.com/AdguardTeam/AdguardFilters/issues/9154
