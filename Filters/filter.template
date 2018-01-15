@@ -25,6 +25,9 @@ url https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/SpywareF
 url https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/SpywareFilter/sections/tracking_servers_firstparty.txt
 url https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/MobileFilter/sections/spyware.txt
 !
+! Crypto-miners
+url https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/EnglishFilter/sections/cryptominers.txt
+!
 ! Adguard DNS rules
 file rules.txt
 !
