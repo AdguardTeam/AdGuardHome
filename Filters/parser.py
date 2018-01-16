@@ -55,8 +55,7 @@ def save_url_rule(line, f):
                 idx = rule.find('$')
                 write_rule(rule[:idx], f)        
             elif rule.find('##') != -1:
-                idx = rule.find('##')
-                write_rule(rule[:idx], f) 
+                continue
             else: 
                 write_rule(rule, f)
 
