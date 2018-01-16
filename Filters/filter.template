@@ -29,6 +29,9 @@ url https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/MobileFi
 ! Crypto-miners
 url https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/EnglishFilter/sections/cryptominers.txt
 !
+! ABP Indo List
+url https://raw.githubusercontent.com/ABPindo/indonesianadblockrules/master/abpindo_adservers.txt
+!
 ! Adguard DNS rules
 file rules.txt
 !
