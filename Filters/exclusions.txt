@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardFilters/issues/9241
+statuscake.com
 ! https://github.com/AdguardTeam/AdguardFilters/issues/9748
 impact-ad.jp
 ! https://github.com/AdguardTeam/AdguardFilters/issues/9668
