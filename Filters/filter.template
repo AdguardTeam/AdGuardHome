@@ -19,7 +19,7 @@ url https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/MobileFi
 url https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_adservers.txt
 !
 ! EasyList Germany
-url https://github.com/easylist/easylistgermany/blob/master/easylistgermany/easylistgermany_adservers.txt
+url https://raw.githubusercontent.com/easylist/easylistgermany/master/easylistgermany/easylistgermany_adservers.txt
 !
 ! Tracking service
 url https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/SpywareFilter/sections/tracking_servers.txt
