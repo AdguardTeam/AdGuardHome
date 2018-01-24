@@ -146,3 +146,5 @@ omtrdc.net
 scorecardresearch.com
 ! https://github.com/AdguardTeam/AdguardDNS/issues/89
 fwmrm.net
+.club
+.bid
