@@ -2,6 +2,13 @@ language: python
 
 python:
      - "2.7"
+     
+notifications:
+  email:
+    recipients:
+      - filters@adguard.com
+    on_success: never
+    on_failure: always
 
 script:
     - python Filters/parser.py
