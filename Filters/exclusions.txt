@@ -1,3 +1,5 @@
+! Fixing video player on estream.to
+estream.to
 ! https://github.com/AdguardTeam/AdguardFilters/issues/10136
 adtechus.com
 ! https://github.com/AdguardTeam/AdguardFilters/issues/9241
