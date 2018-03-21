@@ -1,3 +1,4 @@
+||dualstack.adbert-web-lbs-*.elb.amazonaws.com^
 ||vahufapave.com^
 ||cewegncr.com^
 ||dwabissw.com^
