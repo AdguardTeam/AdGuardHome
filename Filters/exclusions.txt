@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardFilters
+clixsense.com
 ! https://github.com/AdguardTeam/AdguardDNS/issues/247
 confirmit.com
 ! https://github.com/AdguardTeam/AdguardFilters/issues/11931
