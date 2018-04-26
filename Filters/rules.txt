@@ -45,6 +45,12 @@
 ! https://github.com/AdguardTeam/AdguardDNS/issues/52
 ||mobileanalytics.*.amazonaws.com^
 !-----Vietnamese-----
+||pub.lavanetwork.net^
+||delivery1.lavanetwork.net^
+||libs.lavanetwork.net^
+||aimadigital.com^
+||yomedia.vn^
+||gammaplatform.com^
 ||vietnamnetad.vn^
 ||cdn-qc.coccoc.com^
 ||qc.coccoc.com^
