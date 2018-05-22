@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardDNS/issues/278
+ezoic.net
 ! https://github.com/AdguardTeam/AdguardDNS/issues/269#issuecomment-381627885
 apptimize.com
 brahe.apptimize.com
