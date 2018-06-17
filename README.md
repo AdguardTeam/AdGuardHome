@@ -1,10 +1,10 @@
 # AdGuard DNS (beta)
 [![](https://travis-ci.org/AdguardTeam/AdguardDNS.svg?branch=master)](https://travis-ci.org/AdguardTeam/AdguardDNS)
 
-Default mode (ad & trackers blocking): 
+Default mode (ad & trackers blocking):
 * *176.103.130.130*
 * *176.103.130.131*
-* *2a00:5a60::ad1:0ff* 
+* *2a00:5a60::ad1:0ff*
 * *2a00:5a60::ad2:0ff*
 
 Family protection (default + blocking adult websites + enforcing safe search):
@@ -23,14 +23,14 @@ If you configure your network to use our DNS servers, every time a website sends
 
 AdGuard DNS works in two modes:
 
- - 'Default' mode blocks ads, various trackers and malware & phishing websites. 
+ - 'Default' mode blocks ads, various trackers and malware & phishing websites.
  - 'Family protection' does the same, but also blocks websites with adult content.
 
 This repository contains filters used by AdGuard DNS server.
 
 #### DNSCrypt
 
-AdGuard supports DNSCrypt — a special protocol that encrypts communication with the DNS server, thus preventing tampering and tracking by any third party, including your ISP. Read more about DNSCrypt [here](https://dnscrypt.org/).
+AdGuard supports DNSCrypt — a special protocol that encrypts communication with the DNS server, thus preventing tampering and tracking by any third party, including your ISP. Read more about DNSCrypt [here](https://dnscrypt.info/).
 
 ### How to use AdGuard DNS?
 
