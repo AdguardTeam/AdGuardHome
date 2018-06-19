@@ -17509,8 +17509,6 @@ charlestownwyllie.oaklawnnonantum.com^
 ||novunu.football-plyus.net^
 ! https://github.com/AdguardTeam/AdguardDNS/issues/52
 !-----Vietnamese-----
-*shop.vnecdn.net^
-*raovat.vnecdn.net^
 ||vietnamnetad.vn^
 ||cdn-qc.coccoc.com^
 ||qc.coccoc.com^
@@ -17532,6 +17530,13 @@ charlestownwyllie.oaklawnnonantum.com^
 ||polyad.net
 ||epi.vn^
 ||ambient-platform.com^
+||f37.img.vnecdn.net^
+||f38.img.vnecdn.net^
+||raovat.vnecdn.net^
+||shop.vnecdn.net^
+||raovat.vnexpress.net^
+||shop.vnexpress.net^
+||imgshop.vnexpress.net^
 ||s.tuoitre.vn^
 ||quangcao.thanhnien.vn^
 ||thongke.24h.com.vn^
