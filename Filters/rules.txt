@@ -45,6 +45,8 @@
 ! https://github.com/AdguardTeam/AdguardDNS/issues/52
 ||mobileanalytics.*.amazonaws.com^
 !-----Vietnamese-----
+shop.vnecdn.net^
+raovat.vnecdn.net^
 ||pub.lavanetwork.net^
 ||delivery1.lavanetwork.net^
 ||libs.lavanetwork.net^
@@ -74,13 +76,6 @@
 ||polyad.net
 ||epi.vn^
 ||ambient-platform.com^
-||f37.img.vnecdn.net^
-||f38.img.vnecdn.net^
-||raovat.vnecdn.net^
-||shop.vnecdn.net^
-||raovat.vnexpress.net^
-||shop.vnexpress.net^
-||imgshop.vnexpress.net^
 ||s.tuoitre.vn^	
 ||quangcao.thanhnien.vn^
 ||thongke.24h.com.vn^

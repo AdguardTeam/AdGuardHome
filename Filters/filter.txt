@@ -4463,9 +4463,12 @@ koutube.com##.iframe_ads
 ||cdn.hiperadverts.com^
 ||cstkk.720pizle.com^
 ||savoy.cubecdn.net^
-!
-! Section contains list of advertising networks
-!
+!
+
+! Section contains list of advertising networks
+
+!
+
 ||freecounterstat.ovh^
 ||01counter.com^
 ||allfreecounter.com^
