@@ -1,4 +1,4 @@
-! Fixing officeal Amazon app
+! Fixing official Amazon app
 amazon-adsystem.com
 ! Fixing Spotify redirect
 adj.st
