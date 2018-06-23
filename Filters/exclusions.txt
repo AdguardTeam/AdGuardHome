@@ -42,6 +42,8 @@ eroterest.net
 ! some sites are broken with DNS filtering
 piguiqproxy.com
 amgload.net
+! https://github.com/AdguardTeam/AdguardDNS/issues/293
+mon.compteczam.fr
 ! https://github.com/AdguardTeam/AdguardDNS/issues/196
 neobux.com
 ! https://github.com/AdguardTeam/AdguardFilters/issues/7161
