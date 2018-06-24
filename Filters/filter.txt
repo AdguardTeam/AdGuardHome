@@ -17557,6 +17557,7 @@ charlestownwyllie.oaklawnnonantum.com^
 ||notifications-online.systems^
 ||push-notification.tools^
 ||superkeeda.com^
+||zuverink.net^
 !--------------------
 !
 ! Adguard DNS exceptions
