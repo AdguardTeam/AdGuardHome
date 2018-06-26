@@ -45,6 +45,11 @@
 ! https://github.com/AdguardTeam/AdguardDNS/issues/52
 ||mobileanalytics.*.amazonaws.com^
 !-----Vietnamese-----
+||adtima-media-td.zadn.vn^
+||ads.zaloapp.com^
+||ads.zdn.vn^
+||zaloapp.ads.zdn.vn^
+||zalo-ads-td.zadn.vn^
 shop.vnecdn.net^
 raovat.vnecdn.net^
 ||pub.lavanetwork.net^
