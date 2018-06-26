@@ -2,6 +2,7 @@
 ||dualstack.adbert-web-lbs-*.elb.amazonaws.com^
 ||vahufapave.com^
 ||cewegncr.com^
+||ads.medi-8.net^
 ||dwabissw.com^
 ||weline.info^
 ||o333o.com^
