@@ -17550,6 +17550,15 @@ charlestownwyllie.oaklawnnonantum.com^
 ||vimobi.com^
 ||channelvn.net^
 ||ad.org.vn^
+! https://github.com/AdguardTeam/AdguardDNS/issues/295
+||jf71qh5v14.com^
+||hibids10.com^
+||cp.abbp1.com^
+||notifications-online.systems^
+||push-notification.tools^
+||superkeeda.com^
+||zuverink.net^
+||iyfubh.com^
 !--------------------
 !
 ! Adguard DNS exceptions
