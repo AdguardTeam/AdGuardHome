@@ -1,5 +1,7 @@
 ! https://github.com/AdguardTeam/AdguardDNS/issues/293
 mon.compteczam.fr
+! Fixing Nvidia Shield Tv issue
+pingdom.net
 ! Fixing Spotify redirect
 adj.st
 ! https://github.com/AdguardTeam/AdguardDNS/issues/278
