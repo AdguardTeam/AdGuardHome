@@ -30,7 +30,7 @@ This repository contains filters used by AdGuard DNS server.
 
 #### DNSCrypt
 
-AdGuard supports DNSCrypt — a special protocol that encrypts communication with the DNS server, thus preventing tampering and tracking by any third party, including your ISP. Read more about DNSCrypt [here](https://dnscrypt.org/).
+AdGuard supports DNSCrypt — a special protocol that encrypts communication with the DNS server, thus preventing tampering and tracking by any third party, including your ISP. Read more about DNSCrypt [here](https://dnscrypt.info/).
 
 ### How to use AdGuard DNS?
 
