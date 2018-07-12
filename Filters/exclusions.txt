@@ -1,3 +1,5 @@
+! https://github.com/AdguardTeam/AdguardFilters/issues/19113
+online-metrix.net
 ! Fixing Nvidia Shield Tv issue
 pingdom.net
 ! Fixing Spotify redirect
