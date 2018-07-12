@@ -1,5 +1,7 @@
 ! https://github.com/AdguardTeam/AdguardFilters/issues/19113
 online-metrix.net
+! https://github.com/AdguardTeam/AdguardDNS/issues/300
+tag.aticdn.net
 ! Fixing Nvidia Shield Tv issue
 pingdom.net
 ! Fixing Spotify redirect
