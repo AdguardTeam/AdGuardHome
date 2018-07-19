@@ -14310,7 +14310,6 @@ a.zortinah.com^
 ||d.impactradius-event.com^
 ||d303e3cdddb4ded4b6ff495a7b496ed5.s3.amazonaws.com^
 ||dacounter.com^
-||dadi.technology^
 ||dailycaller-alerts.com^
 ||dailymotion-ams.gravityrd-services.com^
 ||dapxl.com^
