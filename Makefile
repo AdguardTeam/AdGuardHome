@@ -24,7 +24,8 @@ AdguardDNS: $(STATIC) *.go
 coredns: coredns_plugin/*.go dnsfilter/*.go
 	echo mkfile_dir = $(mkfile_dir)
 	go get -v -d github.com/coredns/coredns
-	cd $(GOPATH)/src/github.com/coredns/coredns && grep -q 'dnsfilter:' plugin.cfg || sed -E -i.bak $$'s|^log:log|log:log\\\ndnsfilter:github.com/AdguardTeam/AdguardDNS/coredns_plugin|g' plugin.cfg
+	cd $(GOPATH)/src/github.com/coredns/coredns && grep -q '^dnsfilter:' plugin.cfg || perl -p -i.bak -e 's|^log:log|log:log\ndnsfilter:github.com/AdguardTeam/AdguardDNS/coredns_plugin|' plugin.cfg
+	grep '^dnsfilter:' $(GOPATH)/src/github.com/coredns/coredns/plugin.cfg ## used to check that plugin.cfg was successfully edited by sed
 	cd $(GOPATH)/src/github.com/coredns/coredns && GOOS=$(NATIVE_GOOS) GOARCH=$(NATIVE_GOARCH) go generate
 	cd $(GOPATH)/src/github.com/coredns/coredns && go get -v -d .
 	cd $(GOPATH)/src/github.com/coredns/coredns && go build -o $(mkfile_dir)/coredns
