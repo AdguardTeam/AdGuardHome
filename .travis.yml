@@ -1,0 +1,12 @@
+language: go
+sudo: false
+go:
+  - 1.10.x
+  - 1.11.x
+  - master
+  - tip
+
+script:
+  - cd dnsfilter && go get -d -t . && go test
+  - cd ../coredns_plugin && go get -d -t . && go test
+

@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/AdguardTeam/AdguardDNS.svg)](https://travis-ci.org/AdguardTeam/AdguardDNS)
+
 # Self-hosted AdGuard DNS
 
 AdGuard DNS is an ad-filtering DNS server with built-in phishing protection and optional family-friendly protection.
