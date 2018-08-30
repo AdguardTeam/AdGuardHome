@@ -1,0 +1,7 @@
+/AdguardDNS
+/AdguardDNS.yaml
+/build/
+/client/node_modules/
+/coredns
+/Corefile
+/dnsfilter.txt

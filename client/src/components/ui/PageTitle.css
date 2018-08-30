@@ -1,0 +1,10 @@
+.page-subtitle {
+    margin-left: 0.7rem;
+    font-size: 0.9rem;
+}
+
+.page-title__actions {
+    display: inline-block;
+    vertical-align: baseline;
+    margin-left: 20px;
+}

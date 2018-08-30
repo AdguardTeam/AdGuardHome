@@ -1,0 +1,19 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+}
+
+.status {
+    margin-top: 30px;
+}
+
+.container--wrap {
+    min-height: calc(100vh - 160px);
+}
+
+@media screen and (min-width: 992px) {
+    .container--wrap {
+        min-height: calc(100vh - 117px);
+    }
+}

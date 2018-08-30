@@ -1,0 +1,13 @@
+.remove-icon {
+    position: relative;
+    top: 2px;
+    display: inline-block;
+    width: 20px;
+    height: 18px;
+    opacity: 0.6;
+}
+
+.remove-icon:hover {
+    cursor: pointer;
+    opacity: 1;
+}

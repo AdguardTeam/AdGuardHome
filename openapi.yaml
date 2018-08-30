@@ -1,0 +1,548 @@
+swagger: '2.0'
+info:
+    title: 'AdGuard DNS'
+    description: 'Control AdGuard DNS server with this API'
+    version: 0.0.0
+basePath: /control
+schemes:
+    - http
+produces:
+    - application/json
+tags:
+    -
+        name: global
+        description: 'DNS server controls'
+    -
+        name: filtering
+        description: 'Rule-based filtering'
+    -
+        name: safebrowsing
+        description: 'Malware/hazardous sites'
+    -
+        name: parental
+        description: 'Sites inappropriate for children'
+    -
+        name: safesearch
+        description: 'Enforce family-friendly results in search engines'
+paths:
+    /start:
+        post:
+            tags:
+                - global
+            operationId: start
+            summary: 'Start DNS server'
+            responses:
+                200:
+                    description: OK
+    /stop:
+        post:
+            tags:
+                - global
+            operationId: stop
+            summary: 'Stop DNS server'
+            responses:
+                200:
+                    description: OK
+    /restart:
+        post:
+            tags:
+                - global
+            operationId: restart
+            summary: 'Restart DNS server'
+            responses:
+                200:
+                    description: OK
+    /status:
+        get:
+            tags:
+                - global
+            operationId: status
+            summary: 'Get DNS server status'
+            responses:
+                200:
+                    description: OK
+    /querylog:
+        get:
+            tags:
+                - global
+            operationId: queryLog
+            summary: 'Get DNS server query log'
+            parameters:
+                - in: query
+                  name: download
+                  type: boolean
+                  description: 'If any value is set, make the browser download the query instead of displaying it by setting Content-Disposition header'
+            responses:
+                200:
+                    description: OK
+                    examples:
+                        application/json:
+                            - answer:
+                              - ttl: 55
+                                type: A
+                                value: 217.69.139.201
+                              - ttl: 55
+                                type: A
+                                value: 94.100.180.200
+                              - ttl: 55
+                                type: A
+                                value: 94.100.180.201
+                              - ttl: 55
+                                type: A
+                                value: 217.69.139.200
+                              elapsed_ms: '65.469556'
+                              question:
+                                class: IN
+                                host: mail.ru
+                                type: A
+                              reason: DNSFILTER_NOTFILTERED_NOTFOUND
+                              status: NOERROR
+                              time: '2018-07-16T22:24:02+03:00'
+                            - elapsed_ms: '0.15716999999999998'
+                              question:
+                                class: IN
+                                host: doubleclick.net
+                                type: A
+                              reason: DNSFILTER_FILTERED_BLACKLIST
+                              rule: "||doubleclick.net^"
+                              status: NXDOMAIN
+                              time: '2018-07-16T22:24:02+03:00'
+                            - answer:
+                              - ttl: 299
+                                type: A
+                                value: 176.103.133.78
+                              elapsed_ms: '132.110929'
+                              question:
+                                class: IN
+                                host: wmconvirus.narod.ru
+                                type: A
+                              reason: DNSFILTER_FILTERED_SAFEBROWSING
+                              rule: adguard-malware-shavar
+                              status: NOERROR
+                              time: '2018-07-16T22:24:02+03:00'
+    /querylog_enable:
+        post:
+            tags:
+                - global
+            operationId: querylogEnable
+            summary: 'Enable querylog'
+            responses:
+                200:
+                    description: OK
+    /querylog_disable:
+        post:
+            tags:
+                - global
+            operationId: querylogDisable
+            summary: 'Disable filtering'
+            responses:
+                200:
+                    description: OK
+    /set_upstream_dns:
+        post:
+            tags:
+                - global
+            operationId: setUpstreamDNS
+            summary: 'Set upstream DNS for coredns, empty value will reset it to default values'
+            consumes:
+                - text/plain
+            parameters:
+                -   in: body
+                    name: upstream
+                    description: 'Upstream servers, separated by newline or space, port is optional after colon'
+                    schema:
+                        type: string
+                        example: |
+                            1.1.1.1
+                            1.0.0.1
+                            8.8.8.8 8.8.4.4
+                            192.168.1.104:53535
+            responses:
+                200:
+                    description: OK
+    /stats_top:
+        get:
+            tags:
+                - global
+            operationId: statusTop
+            summary: 'Get DNS server top client, domain and blocked statistics'
+            responses:
+                200:
+                    description: OK
+                    examples:
+                        application/json:
+                            top_queried_domains:
+                                example.org: 12312
+                                example.com: 12312
+                                example.net: 12312
+                                example.ru: 12312
+                            top_clients:
+                                127.0.0.1: 12312
+                                192.168.0.1: 13211
+                                192.168.0.2: 13211
+                                192.168.0.3: 13211
+                                192.168.0.4: 13211
+                                192.168.0.5: 13211
+                                192.168.0.6: 13211
+                            top_blocked_domains:
+                                example.org: 12312
+                                example.com: 12312
+                                example.net: 12312
+                                example.ru: 12312
+    /stats:
+        get:
+            tags:
+                - global
+            operationId: stats
+            summary: 'Get DNS server statistics'
+            responses:
+                200:
+                    description: 'Gives statistics since start of the server'
+                    examples:
+                        application/json:
+                            dns_queries: 1201
+                            blocked_filtering: 123
+                            replaced_safebrowsing: 5
+                            replaced_parental: 18
+                            replaced_safesearch: 94
+                            avg_processing_time: 123
+    /stats_history:
+        get:
+            tags:
+                - global
+            operationId: stats_history
+            summary: 'Get historical DNS server statistics'
+            parameters:
+                -
+                    name: start_time
+                    in: query
+                    type: string
+                    description: 'Start time in ISO8601 (example: `2018-05-04T17:55:33+00:00`)'
+                    required: true
+                -
+                    name: end_time
+                    in: query
+                    type: string
+                    description: 'End time in ISO8601 (example: `2018-05-04T17:55:33+00:00`)'
+                    required: true
+                -
+                    name: time_unit
+                    in: query
+                    type: string
+                    description: 'Time unit (`minutes` or `hours`)'
+                    required: true
+                    enum:
+                        - minutes
+                        - hours
+            responses:
+                501:
+                    description: 'Requested time window is outside of supported range. It will be supported later, but not now.'
+                200:
+                    description: 'Gives statistics since start of the server. Example below is for 5 minutes. Values are from oldest to newest.'
+                    examples:
+                        application/json:
+                            dns_queries:
+                                - 1201
+                                - 1201
+                                - 1201
+                                - 1201
+                                - 1201
+                            blocked_filtering:
+                                - 123
+                                - 123
+                                - 123
+                                - 123
+                                - 123
+                            replaced_safebrowsing:
+                                - 5
+                                - 5
+                                - 5
+                                - 5
+                                - 5
+                            replaced_parental:
+                                - 18
+                                - 18
+                                - 18
+                                - 18
+                                - 18
+                            replaced_safesearch:
+                                - 94
+                                - 94
+                                - 94
+                                - 94
+                                - 94
+                            avg_processing_time:
+                                - 123
+                                - 123
+                                - 123
+                                - 123
+                                - 123
+    /filtering/enable:
+        post:
+            tags:
+                - filtering
+            operationId: filteringEnable
+            summary: 'Enable filtering'
+            responses:
+                200:
+                    description: OK
+    /filtering/disable:
+        post:
+            tags:
+                - filtering
+            operationId: filteringDisable
+            summary: 'Disable filtering'
+            responses:
+                200:
+                    description: OK
+    /filtering/add_url:
+        put:
+            tags:
+                - filtering
+            operationId: filteringAddURL
+            summary: 'Add filter URL'
+            consumes:
+            - text/plain
+            parameters:
+              - in: body
+                name: url
+                description: 'URL containing filtering rules'
+                required: true
+                schema:
+                    type: string
+                    example: 'url=https://filters.adtidy.org/windows/filters/15.txt'
+            responses:
+                200:
+                    description: OK
+    /filtering/remove_url:
+        delete:
+            tags:
+                - filtering
+            operationId: filteringRemoveURL
+            summary: 'Remove filter URL'
+            consumes:
+            - text/plain
+            parameters:
+              - in: body
+                name: url
+                description: 'Previously added URL containing filtering rules'
+                required: true
+                schema:
+                  type: string
+                  example: 'url=https://filters.adtidy.org/windows/filters/15.txt'
+            responses:
+                200:
+                    description: OK
+    /filtering/enable_url:
+        post:
+            tags:
+                - filtering
+            operationId: filteringEnableURL
+            summary: 'Enable filter URL'
+            consumes:
+            - text/plain
+            parameters:
+              - in: body
+                name: url
+                description: 'Previously added URL containing filtering rules'
+                required: true
+                schema:
+                  type: string
+                  example: 'url=https://filters.adtidy.org/windows/filters/15.txt'
+            responses:
+                200:
+                    description: OK
+    /filtering/disable_url:
+        post:
+            tags:
+                - filtering
+            operationId: filteringDisableURL
+            summary: 'Disable filter URL'
+            consumes:
+            - text/plain
+            parameters:
+              - in: body
+                name: url
+                description: 'Previously added URL containing filtering rules'
+                required: true
+                schema:
+                    type: string
+                    example: 'url=https://filters.adtidy.org/windows/filters/15.txt'
+            responses:
+                200:
+                    description: OK
+    /filtering/refresh:
+        post:
+            tags:
+                - filtering
+            operationId: filteringRefresh
+            summary: |
+                Reload filtering rules from URLs
+
+                This might be needed if new URL was just added and you dont want to wait for automatic refresh to kick in.
+
+                This API request is ratelimited, so you can call it freely as often as you like, it wont create unneccessary burden on servers that host the URL.
+
+                This should work as intended, a `force` parameter is offered as last-resort attempt to make filter lists fresh.
+
+                If you ever find yourself using `force` to make something work that otherwise wont, this is a bug and report it accordingly.
+
+            parameters:
+                -
+                    name: force
+                    in: query
+                    type: boolean
+                    description: 'If any value is set, ignore cache and force re-download of all filters'
+            responses:
+                200:
+                    description: OK with how many filters were actually updated
+    /filtering/status:
+        get:
+            tags:
+                - filtering
+            operationId: filteringStatus
+            summary: 'Get status of rules-based filter'
+            responses:
+                200:
+                    description: OK
+                    examples:
+                        application/json:
+                            enabled: false
+                            urls:
+                                - 'https://filters.adtidy.org/windows/filters/1.txt'
+                                - 'https://filters.adtidy.org/windows/filters/2.txt'
+                            rules:
+                                - '@@||yandex.ru^|'
+    /filtering/set_rules:
+        put:
+            tags:
+                - filtering
+            operationId: filteringSetRules
+            summary: 'Set user-defined filter rules'
+            consumes:
+                - text/plain
+            parameters:
+                -   in: body
+                    name: rules
+                    description: 'All filtering rules, one line per rule'
+                    schema:
+                        type: string
+                        example: '@@||yandex.ru^|'
+            responses:
+                200:
+                    description: OK
+    /safebrowsing/enable:
+        post:
+            tags:
+                - safebrowsing
+            operationId: safebrowsingEnable
+            summary: 'Enable safebrowsing'
+            responses:
+                200:
+                    description: OK
+    /safebrowsing/disable:
+        post:
+            tags:
+                - safebrowsing
+            operationId: safebrowsingDisable
+            summary: 'Disable safebrowsing'
+            responses:
+                200:
+                    description: OK
+    /safebrowsing/status:
+        get:
+            tags:
+                - safebrowsing
+            operationId: safebrowsingStatus
+            summary: 'Get safebrowsing status'
+            responses:
+                200:
+                    description: OK
+                    examples:
+                        application/json:
+                            enabled: false
+    /parental/enable:
+        post:
+            tags:
+                - parental
+            operationId: parentalEnable
+            summary: 'Enable parental filtering'
+            consumes:
+            - text/plain
+            parameters:
+                -   in: body
+                    name: sensitivity
+                    description: |
+                        Age sensitivity for parental filtering,
+                        EARLY_CHILDHOOD is 3
+                        YOUNG is 10
+                        TEEN is 13
+                        MATURE is 17
+
+                    required: true
+                    schema:
+                      type: string
+                      enum:
+                        - EARLY_CHILDHOOD
+                        - YOUNG
+                        - TEEN
+                        - MATURE
+                      example: 'sensitivity=TEEN'
+            responses:
+                200:
+                    description: OK
+    /parental/disable:
+        post:
+            tags:
+                - parental
+            operationId: parentalDisable
+            summary: 'Disable parental filtering'
+            responses:
+                200:
+                    description: OK
+    /parental/status:
+        get:
+            tags:
+                - parental
+            operationId: parentalStatus
+            summary: 'Get parental filtering status'
+            responses:
+                200:
+                    description: OK
+                    examples:
+                        application/json:
+                            enabled: true
+                            sensitivity: 13
+    /safesearch/enable:
+        post:
+            tags:
+                - safesearch
+            operationId: safesearchEnable
+            summary: 'Enable safesearch'
+            responses:
+                200:
+                    description: OK
+    /safesearch/disable:
+        post:
+            tags:
+                - safesearch
+            operationId: safesearchDisable
+            summary: 'Disable safesearch'
+            responses:
+                200:
+                    description: OK
+    /safesearch/status:
+        get:
+            tags:
+                - safesearch
+            operationId: safesearchStatus
+            summary: 'Get safesearch status'
+            responses:
+                200:
+                    description: OK
+                    examples:
+                        application/json:
+                            enabled: false
+definitions:
+    rule:
+        type: string

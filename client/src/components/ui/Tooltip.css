@@ -1,0 +1,49 @@
+.tooltip-custom {
+    position: relative;
+    top: -1px;
+    display: inline-block;
+    vertical-align: middle;
+    width: 18px;
+    height: 18px;
+    margin-left: 5px;
+    background-image: url("./svg/help-circle.svg");
+    background-size: 100%;
+    cursor: pointer;
+}
+
+.tooltip-custom:before {
+    content: attr(data-tooltip);
+    display: block;
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: calc(50% - 103px);
+    width: 206px;
+    padding: 10px 15px;
+    font-size: 0.85rem;
+    text-align: center;
+    color: #fff;
+    background-color: #585965;
+    border-radius: 3px;
+    visibility: hidden;
+    opacity: 0;
+}
+
+.tooltip-custom:after {
+    content: "";
+    position: relative;
+    top: -9px;
+    left: calc(50% - 6px);
+    visibility: hidden;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #585965;
+}
+
+.tooltip-custom:hover:before,
+.tooltip-custom:hover:after {
+    visibility: visible;
+    opacity: 1;
+}

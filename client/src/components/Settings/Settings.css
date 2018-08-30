@@ -1,0 +1,12 @@
+.form__group {
+    margin-bottom: 15px;
+}
+
+.form__group:last-child {
+    margin-bottom: 0;
+}
+
+.btn-standart {
+    padding-left: 20px;
+    padding-right: 20px;
+}
