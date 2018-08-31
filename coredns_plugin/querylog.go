@@ -23,18 +23,20 @@ type logEntry struct {
 	Result  dnsfilter.Result
 	Time    time.Time
 	Elapsed time.Duration
+	IP      string
 }
 
 func init() {
 	logBuffer.SetCapacity(1000)
 }
 
-func logRequest(r *dns.Msg, result dnsfilter.Result, elapsed time.Duration) {
+func logRequest(r *dns.Msg, result dnsfilter.Result, elapsed time.Duration, ip string) {
 	entry := logEntry{
 		R:       r,
 		Result:  result,
 		Time:    time.Now(),
 		Elapsed: elapsed,
+		IP:      ip,
 	}
 	logBuffer.Enqueue(entry)
 }
@@ -52,6 +54,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			"reason":     entry.Result.Reason.String(),
 			"elapsed_ms": strconv.FormatFloat(entry.Elapsed.Seconds()*1000, 'f', -1, 64),
 			"time":       entry.Time.Format(time.RFC3339),
+			"client":     entry.IP,
 		}
 		question := map[string]interface{}{
 			"host":  strings.ToLower(strings.TrimSuffix(entry.R.Question[0].Name, ".")),
