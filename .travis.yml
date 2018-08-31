@@ -12,6 +12,9 @@ os:
   - linux
   - osx
 
+before_install:
+  - which yarn || npm i -g yarn
+
 script:
   - cd dnsfilter && go get -d -t . && go test
   - cd ../coredns_plugin && go get -d -t . && go test
