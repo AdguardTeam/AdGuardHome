@@ -41,9 +41,11 @@ class Filters extends Component {
     }, {
         Header: 'Filter name',
         accessor: 'name',
+        Cell: ({ value }) => (<span title={value}>{value}</span>),
     }, {
         Header: 'Host file URL',
         accessor: 'url',
+        Cell: ({ value }) => (<a href={value} target='_blank' rel='noopener noreferrer'>{value}</a>),
     }, {
         Header: 'Rules count',
         accessor: 'rulesCount',
