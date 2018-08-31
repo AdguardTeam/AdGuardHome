@@ -6,6 +6,9 @@ go:
   - master
   - tip
 
+node_js:
+  - lts/*
+
 os:
   - linux
   - osx
@@ -13,7 +16,7 @@ os:
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then curl -o- -L https://yarnpkg.com/install.sh | bash; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew upgrade && brew install yarn; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install yarn; fi
 
 script:
   - cd dnsfilter && go get -d -t . && go test
