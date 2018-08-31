@@ -452,13 +452,14 @@ func (d *Plugin) serveDNSInternal(ctx context.Context, w dns.ResponseWriter, r *
 func (d *Plugin) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 	start := time.Now()
 	requests.Inc()
+	state := request.Request{W: w, Req: r}
+	ip := state.IP()
 
 	// capture the written answer
 	rrw := dnstest.NewRecorder(w)
 	rcode, err, result := d.serveDNSInternal(ctx, rrw, r)
 	if rcode > 0 {
 		// actually send the answer if we have one
-		state := request.Request{W: w, Req: r}
 		answer := new(dns.Msg)
 		answer.SetRcode(r, rcode)
 		state.SizeAndDo(answer)
@@ -497,7 +498,7 @@ func (d *Plugin) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg)
 
 	// log
 	if d.QueryLogEnabled {
-		logRequest(rrw.Msg, result, time.Since(start))
+		logRequest(rrw.Msg, result, time.Since(start), ip)
 	}
 	return rcode, err
 }
