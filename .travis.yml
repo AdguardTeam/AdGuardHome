@@ -6,6 +6,8 @@ go:
   - master
   - tip
 
+cache: yarn
+
 node_js:
   - lts/*
 
@@ -14,12 +16,10 @@ os:
   - osx
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then curl -o- -L https://yarnpkg.com/install.sh | bash; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install yarn; fi
+  - yarn version
 
-script:
-  - cd dnsfilter && go get -d -t . && go test
-  - cd ../coredns_plugin && go get -d -t . && go test
-  - cd .. && make
+# script:
+#   - cd dnsfilter && go get -d -t . && go test
+#   - cd ../coredns_plugin && go get -d -t . && go test
+#   - cd .. && make
 
