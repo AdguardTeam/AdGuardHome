@@ -8,12 +8,15 @@ go:
 
 cache: yarn
 
+node_js:
+  - 10.9.0
+
 os:
   - linux
   - osx
 
 before_install:
-  - which yarn || npm i -g yarn@1.3.2
+  - which yarn || npm i -g yarn@1.9.4
 
 script:
   - cd dnsfilter && go get -d -t . && go test
