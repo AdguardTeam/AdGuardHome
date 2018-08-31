@@ -429,9 +429,9 @@ func handleStatsTop(w http.ResponseWriter, r *http.Request) {
 	}
 
 	toMarshal := map[string]interface{}{
-		"top_queried_domains": produceTop(domains, 3),
-		"top_blocked_domains": produceTop(blocked, 3),
-		"top_clients":         produceTop(clients, 3),
+		"top_queried_domains": produceTop(domains, 50),
+		"top_blocked_domains": produceTop(blocked, 50),
+		"top_clients":         produceTop(clients, 50),
 	}
 	json, err := json.Marshal(toMarshal)
 	if err != nil {
