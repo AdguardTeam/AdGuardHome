@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build-dev": "NODE_ENV=development webpack --config webpack.dev.js",
-    "watch": "NODE_ENV=development webpack --config webpack.dev.js --watch",
-    "build-prod": "NODE_ENV=production webpack --config webpack.prod.js",
+    "build-dev": "NODE_ENV=development ./node_modules/.bin/webpack --config webpack.dev.js",
+    "watch": "NODE_ENV=development ./node_modules/.bin/webpack --config webpack.dev.js --watch",
+    "build-prod": "NODE_ENV=production ./node_modules/.bin/webpack --config webpack.prod.js",
     "lint": "eslint frontend/"
   },
   "dependencies": {
