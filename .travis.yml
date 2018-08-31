@@ -12,14 +12,15 @@ node_js:
   - 10.9.0
 
 os:
-  - linux
+  #- linux
   - osx
 
 before_install:
   - which yarn || npm i -g yarn@1.9.4
 
 script:
-  - cd dnsfilter && go get -d -t . && go test
-  - cd ../coredns_plugin && go get -d -t . && go test
-  - cd .. && make
+  - make
+  # - cd dnsfilter && go get -d -t . && go test
+  # - cd ../coredns_plugin && go get -d -t . && go test
+  # - cd .. && make
 
