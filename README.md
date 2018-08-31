@@ -25,7 +25,6 @@ Download file `AdguardDNS_*_linux_amd64.tar.gz`, then unpack it and follow [how 
 You will need:
  * [go](https://golang.org/dl/)
  * [node.js](https://nodejs.org/en/download/)
- * [yarn](https://yarnpkg.com/en/docs/install)
 
 You can either install it from these websites or use [brew.sh](https://brew.sh/) if you're on Mac:
 ```bash
