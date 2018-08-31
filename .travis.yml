@@ -13,7 +13,7 @@ os:
   - osx
 
 before_install:
-  - which yarn || npm i -g yarn@1.3.4
+  - which yarn || npm i -g yarn@1.3.2
 
 script:
   - cd dnsfilter && go get -d -t . && go test
