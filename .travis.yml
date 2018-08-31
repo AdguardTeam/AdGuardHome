@@ -2,9 +2,9 @@ language: go
 sudo: false
 go:
   - 1.10.x
-  - 1.11.x
-  - master
-  - tip
+  # - 1.11.x
+  # - master
+  # - tip
 
 cache: yarn
 
