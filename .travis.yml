@@ -2,9 +2,9 @@ language: go
 sudo: false
 go:
   - 1.10.x
-  # - 1.11.x
-  # - master
-  # - tip
+  - 1.11.x
+  - master
+  - tip
 
 cache: yarn
 
@@ -12,7 +12,7 @@ node_js:
   - 10.9.0
 
 os:
-  #- linux
+  - linux
   - osx
 
 before_install:
@@ -20,7 +20,7 @@ before_install:
 
 script:
   - make
-  # - cd dnsfilter && go get -d -t . && go test
-  # - cd ../coredns_plugin && go get -d -t . && go test
-  # - cd .. && make
+  - cd dnsfilter && go get -d -t . && go test
+  - cd ../coredns_plugin && go get -d -t . && go test
+  - cd .. && make
 
