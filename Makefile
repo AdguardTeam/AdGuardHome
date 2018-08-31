@@ -12,8 +12,8 @@ all: build
 build: AdguardDNS coredns
 
 $(STATIC):
-	yarn --cwd client install
-	yarn --cwd client run build-prod
+	cd client; npm install
+	cd client; npm run build-prod
 
 AdguardDNS: $(STATIC) *.go
 	echo mkfile_dir = $(mkfile_dir)
