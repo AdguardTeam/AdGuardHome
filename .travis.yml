@@ -15,11 +15,9 @@ os:
   - linux
   - osx
 
-before_install:
-  - yarn version
-
-# script:
-#   - cd dnsfilter && go get -d -t . && go test
-#   - cd ../coredns_plugin && go get -d -t . && go test
-#   - cd .. && make
+script:
+  - yarn --version
+  # - cd dnsfilter && go get -d -t . && go test
+  # - cd ../coredns_plugin && go get -d -t . && go test
+  # - cd .. && make
 
