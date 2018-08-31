@@ -2,22 +2,18 @@ language: go
 sudo: false
 go:
   - 1.10.x
-  # - 1.11.x
-  # - master
-  # - tip
+  - 1.11.x
+  - master
+  - tip
 
 cache: yarn
-
-node_js:
-  - lts/*
 
 os:
   - linux
   - osx
 
 script:
-  - yarn --version
-  # - cd dnsfilter && go get -d -t . && go test
-  # - cd ../coredns_plugin && go get -d -t . && go test
-  - make
+  - cd dnsfilter && go get -d -t . && go test
+  - cd ../coredns_plugin && go get -d -t . && go test
+  - cd .. && make
 
