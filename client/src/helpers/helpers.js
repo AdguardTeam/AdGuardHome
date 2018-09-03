@@ -14,6 +14,9 @@ export const normalizeLogs = logs => logs.map((log) => {
         time,
         question,
         answer: response,
+        reason,
+        client,
+        rule,
     } = log;
     const { host: domain, type } = question;
     const responsesArray = response ? response.map((response) => {
@@ -25,6 +28,9 @@ export const normalizeLogs = logs => logs.map((log) => {
         domain,
         type,
         response: responsesArray,
+        reason,
+        client,
+        rule,
     };
 });
 

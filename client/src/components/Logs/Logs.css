@@ -1,0 +1,7 @@
+.rt-tr-group .red {
+    background-color: #fff4f2;
+}
+
+.ReactTable .rt-th, .ReactTable .rt-td {
+    overflow: visible;
+}

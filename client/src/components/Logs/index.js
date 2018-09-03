@@ -5,7 +5,8 @@ import { saveAs } from 'file-saver/FileSaver';
 import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
 import Loading from '../ui/Loading';
-import { normalizeLogs } from '../../helpers/helpers';
+import './Logs.css';
+import Tooltip from '../ui/Tooltip';
 
 
 const DOWNLOAD_LOG_FILENAME = 'dns-logs.txt';
@@ -25,6 +26,13 @@ class Logs extends Component {
         }
     }
 
+    renderTooltip(isFiltered, rule) {
+        if (rule) {
+            return (isFiltered && <Tooltip text={rule}/>);
+        }
+        return '';
+    }
+
     renderLogs(logs) {
         const columns = [{
             Header: 'Time',
@@ -42,19 +50,30 @@ class Logs extends Component {
             accessor: 'response',
             Cell: (row) => {
                 const responses = row.value;
+                const isFiltered = row ? row.original.reason.indexOf('Filtered') === 0 : false;
+                const rule = row && row.original && row.original.rule;
                 if (responses.length > 0) {
                     const liNodes = responses.map((response, index) =>
                         (<li key={index}>{response}</li>));
-                    return (<ul className="list-unstyled">{liNodes}</ul>);
+                    return (<React.Fragment>
+                            { this.renderTooltip(isFiltered, rule)}
+                            <ul className="list-unstyled">{liNodes}</ul>
+                        </React.Fragment>);
                 }
-                return 'Empty';
+                return (<React.Fragment>
+                    { this.renderTooltip(isFiltered, rule) }
+                    <span>Empty</span>
+                </React.Fragment>);
             },
-        }];
+        }, {
+            Header: 'Client',
+            accessor: 'client',
+        },
+        ];
 
         if (logs) {
-            const normalizedLogs = normalizeLogs(logs);
             return (<ReactTable
-                data={normalizedLogs}
+                data={logs}
                 columns={columns}
                 showPagination={false}
                 minRows={7}
@@ -65,6 +84,15 @@ class Logs extends Component {
                         desc: true,
                     },
                 ]}
+                getTrProps={(_state, rowInfo) => {
+                    // highlight filtered requests
+                    if (!rowInfo) {
+                        return {};
+                    }
+                    return {
+                        className: (rowInfo.original.reason.indexOf('Filtered') === 0 ? 'red' : ''),
+                    };
+                }}
                 />);
         }
         return undefined;
