@@ -5,9 +5,8 @@ import { saveAs } from 'file-saver/FileSaver';
 import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
 import Loading from '../ui/Loading';
-import './Logs.css';
 import Tooltip from '../ui/Tooltip';
-
+import './Logs.css';
 
 const DOWNLOAD_LOG_FILENAME = 'dns-logs.txt';
 
@@ -37,14 +36,25 @@ class Logs extends Component {
         const columns = [{
             Header: 'Time',
             accessor: 'time',
-            maxWidth: 150,
+            maxWidth: 110,
         }, {
             Header: 'Domain name',
             accessor: 'domain',
+            Cell: (row) => {
+                const response = row.value;
+
+                return (
+                    <div className="logs__row logs__row--overflow" title={response}>
+                        <div className="logs__text">
+                            {response}
+                        </div>
+                    </div>
+                );
+            },
         }, {
             Header: 'Type',
             accessor: 'type',
-            maxWidth: 100,
+            maxWidth: 60,
         }, {
             Header: 'Response',
             accessor: 'response',
@@ -54,20 +64,25 @@ class Logs extends Component {
                 const rule = row && row.original && row.original.rule;
                 if (responses.length > 0) {
                     const liNodes = responses.map((response, index) =>
-                        (<li key={index}>{response}</li>));
-                    return (<React.Fragment>
+                        (<li key={index} title={response}>{response}</li>));
+                    return (
+                        <div className="logs__row">
                             { this.renderTooltip(isFiltered, rule)}
                             <ul className="list-unstyled">{liNodes}</ul>
-                        </React.Fragment>);
+                        </div>
+                    );
                 }
-                return (<React.Fragment>
-                    { this.renderTooltip(isFiltered, rule) }
-                    <span>Empty</span>
-                </React.Fragment>);
+                return (
+                    <div className="logs__row">
+                        { this.renderTooltip(isFiltered, rule) }
+                        <span>Empty</span>
+                    </div>
+                );
             },
         }, {
             Header: 'Client',
             accessor: 'client',
+            maxWidth: 250,
         },
         ];
 

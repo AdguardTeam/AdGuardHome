@@ -1,7 +1,26 @@
-.rt-tr-group .red {
-    background-color: #fff4f2;
+.logs__row {
+    display: flex;
+    align-items: center;
 }
 
-.ReactTable .rt-th, .ReactTable .rt-td {
-    overflow: visible;
+.logs__row--overflow {
+    overflow: hidden;
+}
+
+.logs__row .list-unstyled {
+    margin-bottom: 0;
+    overflow: hidden;
+}
+
+.logs__text,
+.logs__row .list-unstyled li {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.logs__row .tooltip-custom {
+    top: 0;
+    margin-left: 0;
+    margin-right: 5px;
 }
