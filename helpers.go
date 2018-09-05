@@ -51,10 +51,10 @@ func ensureDELETE(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 // --------------------------
 // helper functions for stats
 // --------------------------
-func getSlice(input [statsHistoryElements]float64, start int, end int) []float64 {
+func getReversedSlice(input [statsHistoryElements]float64, start int, end int) []float64 {
 	output := make([]float64, 0)
 	for i := start; i <= end; i++ {
-		output = append(output, input[i])
+		output = append([]float64{input[i]}, output...)
 	}
 	return output
 }
@@ -66,8 +66,8 @@ func generateMapFromStats(stats *periodicStats, start int, end int) map[string]i
 
 	avgProcessingTime := make([]float64, 0)
 
-	count := getSlice(stats.entries[processingTimeCount], start, end)
-	sum := getSlice(stats.entries[processingTimeSum], start, end)
+	count := getReversedSlice(stats.entries[processingTimeCount], start, end)
+	sum := getReversedSlice(stats.entries[processingTimeSum], start, end)
 	for i := 0; i < len(count); i++ {
 		var avg float64
 		if count[i] != 0 {
@@ -78,11 +78,11 @@ func generateMapFromStats(stats *periodicStats, start int, end int) map[string]i
 	}
 
 	result := map[string]interface{}{
-		"dns_queries":           getSlice(stats.entries[totalRequests], start, end),
-		"blocked_filtering":     getSlice(stats.entries[filteredLists], start, end),
-		"replaced_safebrowsing": getSlice(stats.entries[filteredSafebrowsing], start, end),
-		"replaced_safesearch":   getSlice(stats.entries[filteredSafesearch], start, end),
-		"replaced_parental":     getSlice(stats.entries[filteredParental], start, end),
+		"dns_queries":           getReversedSlice(stats.entries[totalRequests], start, end),
+		"blocked_filtering":     getReversedSlice(stats.entries[filteredLists], start, end),
+		"replaced_safebrowsing": getReversedSlice(stats.entries[filteredSafebrowsing], start, end),
+		"replaced_safesearch":   getReversedSlice(stats.entries[filteredSafesearch], start, end),
+		"replaced_parental":     getReversedSlice(stats.entries[filteredParental], start, end),
 		"avg_processing_time":   avgProcessingTime,
 	}
 	return result
