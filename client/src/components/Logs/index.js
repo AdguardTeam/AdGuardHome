@@ -60,8 +60,20 @@ class Logs extends Component {
             accessor: 'response',
             Cell: (row) => {
                 const responses = row.value;
-                const isFiltered = row ? row.original.reason.indexOf('Filtered') === 0 : false;
+                const { reason } = row.original;
+                const isFiltered = row ? reason.indexOf('Filtered') === 0 : false;
+                const parsedFilteredReason = reason.replace('Filtered', 'Filtered by ');
                 const rule = row && row.original && row.original.rule;
+
+                if (isFiltered) {
+                    return (
+                        <div className="logs__row">
+                            { this.renderTooltip(isFiltered, rule) }
+                            <span>{ parsedFilteredReason }</span>
+                        </div>
+                    );
+                }
+
                 if (responses.length > 0) {
                     const liNodes = responses.map((response, index) =>
                         (<li key={index} title={response}>{response}</li>));
