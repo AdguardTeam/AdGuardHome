@@ -19,24 +19,26 @@ import (
 var logBuffer = ring.Ring{}
 
 type logEntry struct {
-	R       *dns.Msg
-	Result  dnsfilter.Result
-	Time    time.Time
-	Elapsed time.Duration
-	IP      string
+	Question *dns.Msg
+	Answer   *dns.Msg
+	Result   dnsfilter.Result
+	Time     time.Time
+	Elapsed  time.Duration
+	IP       string
 }
 
 func init() {
 	logBuffer.SetCapacity(1000)
 }
 
-func logRequest(r *dns.Msg, result dnsfilter.Result, elapsed time.Duration, ip string) {
+func logRequest(question *dns.Msg, answer *dns.Msg, result dnsfilter.Result, elapsed time.Duration, ip string) {
 	entry := logEntry{
-		R:       r,
-		Result:  result,
-		Time:    time.Now(),
-		Elapsed: elapsed,
-		IP:      ip,
+		Question: question,
+		Answer:   answer,
+		Result:   result,
+		Time:     time.Now(),
+		Elapsed:  elapsed,
+		IP:       ip,
 	}
 	logBuffer.Enqueue(entry)
 }
@@ -57,21 +59,21 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			"client":     entry.IP,
 		}
 		question := map[string]interface{}{
-			"host":  strings.ToLower(strings.TrimSuffix(entry.R.Question[0].Name, ".")),
-			"type":  dns.Type(entry.R.Question[0].Qtype).String(),
-			"class": dns.Class(entry.R.Question[0].Qclass).String(),
+			"host":  strings.ToLower(strings.TrimSuffix(entry.Question.Question[0].Name, ".")),
+			"type":  dns.Type(entry.Question.Question[0].Qtype).String(),
+			"class": dns.Class(entry.Question.Question[0].Qclass).String(),
 		}
 		jsonentry["question"] = question
 
-		status, _ := response.Typify(entry.R, time.Now().UTC())
+		status, _ := response.Typify(entry.Answer, time.Now().UTC())
 		jsonentry["status"] = status.String()
 		if len(entry.Result.Rule) > 0 {
 			jsonentry["rule"] = entry.Result.Rule
 		}
 
-		if len(entry.R.Answer) > 0 {
+		if entry.Answer != nil && len(entry.Answer.Answer) > 0 {
 			var answers = []map[string]interface{}{}
-			for _, k := range entry.R.Answer {
+			for _, k := range entry.Answer.Answer {
 				header := k.Header()
 				answer := map[string]interface{}{
 					"type": dns.TypeToString[header.Rrtype],
