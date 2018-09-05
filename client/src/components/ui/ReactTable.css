@@ -1,4 +1,9 @@
 .ReactTable .rt-th,
 .ReactTable .rt-td {
     padding: 10px 15px;
+    overflow: visible;
+}
+
+.rt-tr-group .red {
+    background-color: #fff4f2;
 }

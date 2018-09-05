@@ -5,8 +5,8 @@ import { saveAs } from 'file-saver/FileSaver';
 import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
 import Loading from '../ui/Loading';
-import { normalizeLogs } from '../../helpers/helpers';
-
+import Tooltip from '../ui/Tooltip';
+import './Logs.css';
 
 const DOWNLOAD_LOG_FILENAME = 'dns-logs.txt';
 
@@ -25,36 +25,82 @@ class Logs extends Component {
         }
     }
 
+    renderTooltip(isFiltered, rule) {
+        if (rule) {
+            return (isFiltered && <Tooltip text={rule}/>);
+        }
+        return '';
+    }
+
     renderLogs(logs) {
         const columns = [{
             Header: 'Time',
             accessor: 'time',
-            maxWidth: 150,
+            maxWidth: 110,
         }, {
             Header: 'Domain name',
             accessor: 'domain',
+            Cell: (row) => {
+                const response = row.value;
+
+                return (
+                    <div className="logs__row logs__row--overflow" title={response}>
+                        <div className="logs__text">
+                            {response}
+                        </div>
+                    </div>
+                );
+            },
         }, {
             Header: 'Type',
             accessor: 'type',
-            maxWidth: 100,
+            maxWidth: 60,
         }, {
             Header: 'Response',
             accessor: 'response',
             Cell: (row) => {
                 const responses = row.value;
+                const { reason } = row.original;
+                const isFiltered = row ? reason.indexOf('Filtered') === 0 : false;
+                const parsedFilteredReason = reason.replace('Filtered', 'Filtered by ');
+                const rule = row && row.original && row.original.rule;
+
+                if (isFiltered) {
+                    return (
+                        <div className="logs__row">
+                            { this.renderTooltip(isFiltered, rule) }
+                            <span>{ parsedFilteredReason }</span>
+                        </div>
+                    );
+                }
+
                 if (responses.length > 0) {
                     const liNodes = responses.map((response, index) =>
-                        (<li key={index}>{response}</li>));
-                    return (<ul className="list-unstyled">{liNodes}</ul>);
+                        (<li key={index} title={response}>{response}</li>));
+                    return (
+                        <div className="logs__row">
+                            { this.renderTooltip(isFiltered, rule)}
+                            <ul className="list-unstyled">{liNodes}</ul>
+                        </div>
+                    );
                 }
-                return 'Empty';
+                return (
+                    <div className="logs__row">
+                        { this.renderTooltip(isFiltered, rule) }
+                        <span>Empty</span>
+                    </div>
+                );
             },
-        }];
+        }, {
+            Header: 'Client',
+            accessor: 'client',
+            maxWidth: 250,
+        },
+        ];
 
         if (logs) {
-            const normalizedLogs = normalizeLogs(logs);
             return (<ReactTable
-                data={normalizedLogs}
+                data={logs}
                 columns={columns}
                 showPagination={false}
                 minRows={7}
@@ -65,6 +111,15 @@ class Logs extends Component {
                         desc: true,
                     },
                 ]}
+                getTrProps={(_state, rowInfo) => {
+                    // highlight filtered requests
+                    if (!rowInfo) {
+                        return {};
+                    }
+                    return {
+                        className: (rowInfo.original.reason.indexOf('Filtered') === 0 ? 'red' : ''),
+                    };
+                }}
                 />);
         }
         return undefined;

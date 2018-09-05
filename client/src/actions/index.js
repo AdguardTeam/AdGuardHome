@@ -1,7 +1,7 @@
 import { createAction } from 'redux-actions';
 import round from 'lodash/round';
 
-import { normalizeHistory, normalizeFilteringStatus } from '../helpers/helpers';
+import { normalizeHistory, normalizeFilteringStatus, normalizeLogs } from '../helpers/helpers';
 import Api from '../api/Api';
 
 const apiClient = new Api();
@@ -175,7 +175,7 @@ export const getLogs = () => async (dispatch, getState) => {
         const state = getState();
         const timer = setInterval(async () => {
             if (state.dashboard.isCoreRunning) {
-                const logs = await apiClient.getQueryLog();
+                const logs = normalizeLogs(await apiClient.getQueryLog());
                 dispatch(getLogsSuccess(logs));
                 clearInterval(timer);
             }
