@@ -199,21 +199,23 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 // stats
 // -----
 func handleStats(w http.ResponseWriter, r *http.Request) {
-	snap := &statistics.lastsnap
+	histrical := generateMapFromStats(&statistics.perMinute, 0, 2)
+	// sum them up
+	summed := map[string]interface{}{}
+	for key, values := range histrical {
+		summedValue := 0.0
+		floats, ok := values.([]float64)
+		if !ok {
+			continue
+		}
+		for _, v := range floats {
+			summedValue += v
+		}
+		summed[key] = summedValue
+	}
+	summed["stats_period"] = "3 minutes"
 
-	// generate from last 3 minutes
-	var last3mins statsSnapshot
-	last3mins.filteredTotal = snap.filteredTotal - statistics.perMinute.filteredTotal[2]
-	last3mins.filteredLists = snap.filteredLists - statistics.perMinute.filteredLists[2]
-	last3mins.filteredSafebrowsing = snap.filteredSafebrowsing - statistics.perMinute.filteredSafebrowsing[2]
-	last3mins.filteredParental = snap.filteredParental - statistics.perMinute.filteredParental[2]
-	last3mins.totalRequests = snap.totalRequests - statistics.perMinute.totalRequests[2]
-	last3mins.processingTimeSum = snap.processingTimeSum - statistics.perMinute.processingTimeSum[2]
-	last3mins.processingTimeCount = snap.processingTimeCount - statistics.perMinute.processingTimeCount[2]
-	// rate := computeRate(append([]float64(snap.totalRequests}, statistics.perMinute.totalRequests[0:2])
-
-	data := generateMapFromSnap(last3mins)
-	json, err := json.Marshal(data)
+	json, err := json.Marshal(summed)
 	if err != nil {
 		errortext := fmt.Sprintf("Unable to marshal status json: %s", err)
 		log.Println(errortext)
@@ -232,28 +234,29 @@ func handleStats(w http.ResponseWriter, r *http.Request) {
 
 func handleStatsHistory(w http.ResponseWriter, r *http.Request) {
 	// handle time unit and prepare our time window size
-	limitTime := time.Now()
-	timeUnit := r.URL.Query().Get("time_unit")
+	now := time.Now()
+	timeUnitString := r.URL.Query().Get("time_unit")
 	var stats *periodicStats
-	switch timeUnit {
+	var timeUnit time.Duration
+	switch timeUnitString {
 	case "seconds":
-		limitTime = limitTime.Add(statsHistoryElements * -1 * time.Second)
+		timeUnit = time.Second
 		stats = &statistics.perSecond
 	case "minutes":
-		limitTime = limitTime.Add(statsHistoryElements * -1 * time.Minute)
+		timeUnit = time.Minute
 		stats = &statistics.perMinute
 	case "hours":
-		limitTime = limitTime.Add(statsHistoryElements * -1 * time.Hour)
+		timeUnit = time.Hour
 		stats = &statistics.perHour
 	case "days":
-		limitTime = limitTime.Add(statsHistoryElements * -1 * time.Hour * 24)
+		timeUnit = time.Hour * 24
 		stats = &statistics.perDay
 	default:
 		http.Error(w, "Must specify valid time_unit parameter", 400)
 		return
 	}
 
-	// check if start time is within supported time range
+	// parse start and end time
 	startTime, err := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
 	if err != nil {
 		errortext := fmt.Sprintf("Must specify valid start_time parameter: %s", err)
@@ -261,12 +264,6 @@ func handleStatsHistory(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errortext, 400)
 		return
 	}
-	if startTime.Before(limitTime) {
-		http.Error(w, "start_time parameter is outside of supported range", 501)
-		return
-	}
-
-	// check if end time is within supported time range
 	endTime, err := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
 	if err != nil {
 		errortext := fmt.Sprintf("Must specify valid end_time parameter: %s", err)
@@ -274,28 +271,22 @@ func handleStatsHistory(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errortext, 400)
 		return
 	}
-	if endTime.Before(limitTime) {
+
+	// check if start and time times are within supported time range
+	timeRange := timeUnit * statsHistoryElements
+	if startTime.Add(timeRange).Before(now) {
+		http.Error(w, "start_time parameter is outside of supported range", 501)
+		return
+	}
+	if endTime.Add(timeRange).Before(now) {
 		http.Error(w, "end_time parameter is outside of supported range", 501)
 		return
 	}
 
-	// calculate how which slice range we need to provide
-	var start int
-	var end int
-	switch timeUnit {
-	case "seconds":
-		start = int(startTime.Sub(limitTime).Seconds())
-		end = int(endTime.Sub(limitTime).Seconds())
-	case "minutes":
-		start = int(startTime.Sub(limitTime).Minutes())
-		end = int(endTime.Sub(limitTime).Minutes())
-	case "hours":
-		start = int(startTime.Sub(limitTime).Hours())
-		end = int(endTime.Sub(limitTime).Hours())
-	case "days":
-		start = int(startTime.Sub(limitTime).Hours() / 24.0)
-		end = int(endTime.Sub(limitTime).Hours() / 24.0)
-	}
+	// calculate start and end of our array
+	// basically it's how many hours/minutes/etc have passed since now
+	start := int(now.Sub(endTime) / timeUnit)
+	end := int(now.Sub(startTime) / timeUnit)
 
 	// swap them around if they're inverted
 	if start > end {
