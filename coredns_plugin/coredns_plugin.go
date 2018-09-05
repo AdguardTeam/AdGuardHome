@@ -132,7 +132,7 @@ func setupPlugin(c *caddy.Controller) (*Plugin, error) {
 				}
 			case "querylog":
 				d.QueryLogEnabled = true
-				once.Do(func() {
+				onceQueryLog.Do(func() {
 					go startQueryLogServer() // TODO: how to handle errors?
 				})
 			}
@@ -184,7 +184,7 @@ func setup(c *caddy.Controller) error {
 	})
 
 	c.OnStartup(func() error {
-		once.Do(func() {
+		onceMetrics.Do(func() {
 			m := dnsserver.GetConfig(c).Handler("prometheus")
 			if m == nil {
 				return
@@ -498,11 +498,11 @@ func (d *Plugin) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg)
 
 	// log
 	if d.QueryLogEnabled {
-		logRequest(rrw.Msg, result, time.Since(start), ip)
+		logRequest(r, rrw.Msg, result, time.Since(start), ip)
 	}
 	return rcode, err
 }
 
 func (d *Plugin) Name() string { return "dnsfilter" }
 
-var once sync.Once
+var onceMetrics, onceQueryLog sync.Once
