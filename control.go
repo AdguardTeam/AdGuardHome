@@ -929,9 +929,15 @@ func writeFilterFile() error {
 		data = append(data, []byte(rule)...)
 		data = append(data, '\n')
 	}
-	err := ioutil.WriteFile(filterpath, data, 0644)
+	err := ioutil.WriteFile(filterpath+".tmp", data, 0644)
 	if err != nil {
 		log.Printf("Couldn't write filter file: %s", err)
+		return err
+	}
+
+	err = os.Rename(filterpath+".tmp", filterpath)
+	if err != nil {
+		log.Printf("Couldn't rename filter file: %s", err)
 		return err
 	}
 	return nil

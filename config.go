@@ -108,9 +108,14 @@ func writeConfig() error {
 		log.Printf("Couldn't generate YAML file: %s", err)
 		return err
 	}
-	err = ioutil.WriteFile(configfile, yamlText, 0644)
+	err = ioutil.WriteFile(configfile+".tmp", yamlText, 0644)
 	if err != nil {
 		log.Printf("Couldn't write YAML config: %s", err)
+		return err
+	}
+	err = os.Rename(configfile+".tmp", configfile)
+	if err != nil {
+		log.Printf("Couldn't rename YAML config: %s", err)
 		return err
 	}
 	return nil
@@ -127,9 +132,13 @@ func writeCoreDNSConfig() error {
 		log.Printf("Couldn't generate DNS config: %s", err)
 		return err
 	}
-	err = ioutil.WriteFile(corefile, []byte(configtext), 0644)
+	err = ioutil.WriteFile(corefile+".tmp", []byte(configtext), 0644)
 	if err != nil {
 		log.Printf("Couldn't write DNS config: %s", err)
+	}
+	err = os.Rename(corefile+".tmp", corefile)
+	if err != nil {
+		log.Printf("Couldn't rename DNS config: %s", err)
 	}
 	return err
 }
