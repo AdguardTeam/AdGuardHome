@@ -79,24 +79,22 @@ func isRunning() bool {
 	}
 	return false
 }
-func handleStart(w http.ResponseWriter, r *http.Request) {
+
+func startDNSServer() error {
 	if isRunning() {
-		http.Error(w, fmt.Sprintf("Unable to start coreDNS: Already running"), 400)
-		return
+		return fmt.Errorf("Unable to start coreDNS: Already running")
 	}
 	err := writeCoreDNSConfig()
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to write coredns config: %s", err)
+		errortext := fmt.Errorf("Unable to write coredns config: %s", err)
 		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
-		return
+		return errortext
 	}
 	err = writeFilterFile()
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write filter file: %s", err)
+		errortext := fmt.Errorf("Couldn't write filter file: %s", err)
 		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
-		return
+		return errortext
 	}
 	binarypath := filepath.Join(config.ourBinaryDir, config.CoreDNS.binaryFile)
 	configpath := filepath.Join(config.ourBinaryDir, config.CoreDNS.coreFile)
@@ -105,14 +103,27 @@ func handleStart(w http.ResponseWriter, r *http.Request) {
 	coreDNSCommand.Stderr = os.Stderr
 	err = coreDNSCommand.Start()
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to start coreDNS: %s", err)
+		errortext := fmt.Errorf("Unable to start coreDNS: %s", err)
 		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
-		return
+		return errortext
 	}
 	log.Printf("coredns PID: %v\n", coreDNSCommand.Process.Pid)
-	fmt.Fprintf(w, "OK, PID %d\n", coreDNSCommand.Process.Pid)
 	go childwaiter()
+	return nil
+}
+
+func handleStart(w http.ResponseWriter, r *http.Request) {
+	if isRunning() {
+		http.Error(w, fmt.Sprintf("Unable to start coreDNS: Already running"), 400)
+		return
+	}
+	err := startDNSServer()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "OK, PID %d\n", coreDNSCommand.Process.Pid)
 }
 
 func childwaiter() {
