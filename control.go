@@ -44,7 +44,6 @@ func tellCoreDNSToReload() {
 		log.Printf("os.FindProcess(%d) returned err: %v\n", pid, err)
 		return
 	}
-	log.Printf("os.FindProcess(%d) returned: %v, %v\n", pid, process, err)
 	err = process.Signal(syscall.SIGUSR1)
 	if err != nil {
 		log.Printf("process.Signal on pid %d returned: %v\n", pid, err)
@@ -69,9 +68,10 @@ func isRunning() bool {
 		if err != nil {
 			log.Printf("os.FindProcess(%d) returned err: %v\n", pid, err)
 		} else {
-			log.Printf("os.FindProcess(%d) returned: %v, %v\n", pid, process, err)
 			err := process.Signal(syscall.Signal(0))
-			log.Printf("process.Signal on pid %d returned: %v\n", pid, err)
+			if err != nil {
+				log.Printf("process.Signal on pid %d returned: %v\n", pid, err)
+			}
 			if err == nil {
 				return true
 			}
