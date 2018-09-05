@@ -145,6 +145,7 @@ func setupPlugin(c *caddy.Controller) (*Plugin, error) {
 	}
 	defer file.Close()
 
+	count := 0
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		text := scanner.Text()
@@ -158,7 +159,9 @@ func setupPlugin(c *caddy.Controller) (*Plugin, error) {
 		if err != nil {
 			return nil, err
 		}
+		count++
 	}
+	log.Printf("Added %d rules from %s", count, filterFileName)
 
 	if err = scanner.Err(); err != nil {
 		return nil, err
