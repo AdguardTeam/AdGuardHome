@@ -411,39 +411,44 @@ func (d *Plugin) serveDNSInternal(ctx context.Context, w dns.ResponseWriter, r *
 			return dns.RcodeServerFailure, fmt.Errorf("plugin/dnsfilter: %s", err), dnsfilter.Result{}
 		}
 
-		// safebrowsing
-		if result.IsFiltered == true && result.Reason == dnsfilter.FilteredSafeBrowsing {
-			// return cname safebrowsing.block.dns.adguard.com
-			val := d.SafeBrowsingBlockHost
-			rcode, err := d.replaceHostWithValAndReply(ctx, w, r, host, val, question)
-			if err != nil {
-				return rcode, err, dnsfilter.Result{}
+		if result.IsFiltered {
+			switch result.Reason {
+			case dnsfilter.FilteredSafeBrowsing:
+				// return cname safebrowsing.block.dns.adguard.com
+				val := d.SafeBrowsingBlockHost
+				rcode, err := d.replaceHostWithValAndReply(ctx, w, r, host, val, question)
+				if err != nil {
+					return rcode, err, dnsfilter.Result{}
+				}
+				return rcode, err, result
+			case dnsfilter.FilteredParental:
+				// return cname family.block.dns.adguard.com
+				val := d.ParentalBlockHost
+				rcode, err := d.replaceHostWithValAndReply(ctx, w, r, host, val, question)
+				if err != nil {
+					return rcode, err, dnsfilter.Result{}
+				}
+				return rcode, err, result
+			case dnsfilter.FilteredBlackList:
+				// return NXdomain
+				rcode, err := writeNXdomain(ctx, w, r)
+				if err != nil {
+					return rcode, err, dnsfilter.Result{}
+				}
+				return rcode, err, result
+			default:
+				log.Printf("SHOULD NOT HAPPEN -- got unknown reason for filtering: %T %v %s", result.Reason, result.Reason, result.Reason.String())
 			}
-			return rcode, err, result
-		}
-
-		// parental
-		if result.IsFiltered == true && result.Reason == dnsfilter.FilteredParental {
-			// return cname
-			val := d.ParentalBlockHost
-			rcode, err := d.replaceHostWithValAndReply(ctx, w, r, host, val, question)
-			if err != nil {
-				return rcode, err, dnsfilter.Result{}
+		} else {
+			switch result.Reason {
+			case dnsfilter.NotFilteredWhiteList:
+				rcode, err := plugin.NextOrFailure(d.Name(), d.Next, ctx, w, r)
+				return rcode, err, result
+			case dnsfilter.NotFilteredNotFound:
+				// do nothing, pass through to lower code
+			default:
+				log.Printf("SHOULD NOT HAPPEN -- got unknown reason for not filtering: %T %v %s", result.Reason, result.Reason, result.Reason.String())
 			}
-			return rcode, err, result
-		}
-
-		// blacklist
-		if result.IsFiltered == true && result.Reason == dnsfilter.FilteredBlackList {
-			rcode, err := writeNXdomain(ctx, w, r)
-			if err != nil {
-				return rcode, err, dnsfilter.Result{}
-			}
-			return rcode, err, result
-		}
-		if result.IsFiltered == false && result.Reason == dnsfilter.NotFilteredWhiteList {
-			rcode, err := plugin.NextOrFailure(d.Name(), d.Next, ctx, w, r)
-			return rcode, err, result
 		}
 	}
 	rcode, err := plugin.NextOrFailure(d.Name(), d.Next, ctx, w, r)
