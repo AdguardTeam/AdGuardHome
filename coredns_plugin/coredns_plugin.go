@@ -187,23 +187,21 @@ func setup(c *caddy.Controller) error {
 	})
 
 	c.OnStartup(func() error {
-		onceMetrics.Do(func() {
-			m := dnsserver.GetConfig(c).Handler("prometheus")
-			if m == nil {
-				return
-			}
-			if x, ok := m.(*metrics.Metrics); ok {
-				x.MustRegister(requests)
-				x.MustRegister(filtered)
-				x.MustRegister(filteredLists)
-				x.MustRegister(filteredSafebrowsing)
-				x.MustRegister(filteredParental)
-				x.MustRegister(whitelisted)
-				x.MustRegister(safesearch)
-				x.MustRegister(errorsTotal)
-				x.MustRegister(d)
-			}
-		})
+		m := dnsserver.GetConfig(c).Handler("prometheus")
+		if m == nil {
+			return nil
+		}
+		if x, ok := m.(*metrics.Metrics); ok {
+			x.MustRegister(requests)
+			x.MustRegister(filtered)
+			x.MustRegister(filteredLists)
+			x.MustRegister(filteredSafebrowsing)
+			x.MustRegister(filteredParental)
+			x.MustRegister(whitelisted)
+			x.MustRegister(safesearch)
+			x.MustRegister(errorsTotal)
+			x.MustRegister(d)
+		}
 		return nil
 	})
 	c.OnShutdown(d.OnShutdown)
@@ -508,4 +506,4 @@ func (d *Plugin) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg)
 
 func (d *Plugin) Name() string { return "dnsfilter" }
 
-var onceMetrics, onceQueryLog sync.Once
+var onceQueryLog sync.Once
