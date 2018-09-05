@@ -851,6 +851,7 @@ func refreshFiltersIfNeccessary() int {
 			errortext := fmt.Sprintf("Couldn't write filter file: %s", err)
 			log.Println(errortext)
 		}
+		tellCoreDNSToReload()
 	}
 	return updateCount
 }
