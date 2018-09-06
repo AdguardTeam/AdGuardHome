@@ -51,31 +51,12 @@ func ensureDELETE(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 // --------------------------
 // helper functions for stats
 // --------------------------
-func computeRate(input []float64) []float64 {
+func getReversedSlice(input [statsHistoryElements]float64, start int, end int) []float64 {
 	output := make([]float64, 0)
-	for i := len(input) - 2; i >= 0; i-- {
-		value := input[i]
-		diff := value - input[i+1]
-		output = append([]float64{diff}, output...)
+	for i := start; i <= end; i++ {
+		output = append([]float64{input[i]}, output...)
 	}
 	return output
-}
-
-func generateMapFromSnap(snap statsSnapshot) map[string]interface{} {
-	var avgProcessingTime float64
-	if snap.processingTimeCount > 0 {
-		avgProcessingTime = snap.processingTimeSum / snap.processingTimeCount
-	}
-
-	result := map[string]interface{}{
-		"dns_queries":           snap.totalRequests,
-		"blocked_filtering":     snap.filteredLists,
-		"replaced_safebrowsing": snap.filteredSafebrowsing,
-		"replaced_safesearch":   snap.filteredSafesearch,
-		"replaced_parental":     snap.filteredParental,
-		"avg_processing_time":   avgProcessingTime,
-	}
-	return result
 }
 
 func generateMapFromStats(stats *periodicStats, start int, end int) map[string]interface{} {
@@ -85,8 +66,8 @@ func generateMapFromStats(stats *periodicStats, start int, end int) map[string]i
 
 	avgProcessingTime := make([]float64, 0)
 
-	count := computeRate(stats.processingTimeCount[start:end])
-	sum := computeRate(stats.processingTimeSum[start:end])
+	count := getReversedSlice(stats.entries[processingTimeCount], start, end)
+	sum := getReversedSlice(stats.entries[processingTimeSum], start, end)
 	for i := 0; i < len(count); i++ {
 		var avg float64
 		if count[i] != 0 {
@@ -97,11 +78,11 @@ func generateMapFromStats(stats *periodicStats, start int, end int) map[string]i
 	}
 
 	result := map[string]interface{}{
-		"dns_queries":           computeRate(stats.totalRequests[start:end]),
-		"blocked_filtering":     computeRate(stats.filteredLists[start:end]),
-		"replaced_safebrowsing": computeRate(stats.filteredSafebrowsing[start:end]),
-		"replaced_safesearch":   computeRate(stats.filteredSafesearch[start:end]),
-		"replaced_parental":     computeRate(stats.filteredParental[start:end]),
+		"dns_queries":           getReversedSlice(stats.entries[totalRequests], start, end),
+		"blocked_filtering":     getReversedSlice(stats.entries[filteredLists], start, end),
+		"replaced_safebrowsing": getReversedSlice(stats.entries[filteredSafebrowsing], start, end),
+		"replaced_safesearch":   getReversedSlice(stats.entries[filteredSafesearch], start, end),
+		"replaced_parental":     getReversedSlice(stats.entries[filteredParental], start, end),
 		"avg_processing_time":   avgProcessingTime,
 	}
 	return result

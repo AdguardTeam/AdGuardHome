@@ -385,43 +385,44 @@ var regexRules = []string{"/example\\.org/", "@@||test.example.org^"}
 var maskRules = []string{"test*.example.org^", "exam*.com"}
 
 var tests = []struct {
-	testname string
-	rules    []string
-	hostname string
-	result   bool
+	testname   string
+	rules      []string
+	hostname   string
+	isFiltered bool
+	reason     Reason
 }{
-	{"sanity", []string{"||doubleclick.net^"}, "www.doubleclick.net", true},
-	{"sanity", []string{"||doubleclick.net^"}, "nodoubleclick.net", false},
-	{"sanity", []string{"||doubleclick.net^"}, "doubleclick.net.ru", false},
-	{"sanity", []string{"||doubleclick.net^"}, "wmconvirus.narod.ru", false},
-	{"blocking", blockingRules, "example.org", true},
-	{"blocking", blockingRules, "test.example.org", true},
-	{"blocking", blockingRules, "test.test.example.org", true},
-	{"blocking", blockingRules, "testexample.org", false},
-	{"blocking", blockingRules, "onemoreexample.org", false},
-	{"whitelist", whitelistRules, "example.org", true},
-	{"whitelist", whitelistRules, "test.example.org", false},
-	{"whitelist", whitelistRules, "test.test.example.org", false},
-	{"whitelist", whitelistRules, "testexample.org", false},
-	{"whitelist", whitelistRules, "onemoreexample.org", false},
-	{"important", importantRules, "example.org", false},
-	{"important", importantRules, "test.example.org", true},
-	{"important", importantRules, "test.test.example.org", true},
-	{"important", importantRules, "testexample.org", false},
-	{"important", importantRules, "onemoreexample.org", false},
-	{"regex", regexRules, "example.org", true},
-	{"regex", regexRules, "test.example.org", false},
-	{"regex", regexRules, "test.test.example.org", false},
-	{"regex", regexRules, "testexample.org", true},
-	{"regex", regexRules, "onemoreexample.org", true},
-	{"mask", maskRules, "test.example.org", true},
-	{"mask", maskRules, "test2.example.org", true},
-	{"mask", maskRules, "example.com", true},
-	{"mask", maskRules, "exampleeee.com", true},
-	{"mask", maskRules, "onemoreexamsite.com", true},
-	{"mask", maskRules, "example.org", false},
-	{"mask", maskRules, "testexample.org", false},
-	{"mask", maskRules, "example.co.uk", false},
+	{"sanity", []string{"||doubleclick.net^"}, "www.doubleclick.net", true, FilteredBlackList},
+	{"sanity", []string{"||doubleclick.net^"}, "nodoubleclick.net", false, NotFilteredNotFound},
+	{"sanity", []string{"||doubleclick.net^"}, "doubleclick.net.ru", false, NotFilteredNotFound},
+	{"sanity", []string{"||doubleclick.net^"}, "wmconvirus.narod.ru", false, NotFilteredNotFound},
+	{"blocking", blockingRules, "example.org", true, FilteredBlackList},
+	{"blocking", blockingRules, "test.example.org", true, FilteredBlackList},
+	{"blocking", blockingRules, "test.test.example.org", true, FilteredBlackList},
+	{"blocking", blockingRules, "testexample.org", false, NotFilteredNotFound},
+	{"blocking", blockingRules, "onemoreexample.org", false, NotFilteredNotFound},
+	{"whitelist", whitelistRules, "example.org", true, FilteredBlackList},
+	{"whitelist", whitelistRules, "test.example.org", false, NotFilteredWhiteList},
+	{"whitelist", whitelistRules, "test.test.example.org", false, NotFilteredWhiteList},
+	{"whitelist", whitelistRules, "testexample.org", false, NotFilteredNotFound},
+	{"whitelist", whitelistRules, "onemoreexample.org", false, NotFilteredNotFound},
+	{"important", importantRules, "example.org", false, NotFilteredWhiteList},
+	{"important", importantRules, "test.example.org", true, FilteredBlackList},
+	{"important", importantRules, "test.test.example.org", true, FilteredBlackList},
+	{"important", importantRules, "testexample.org", false, NotFilteredNotFound},
+	{"important", importantRules, "onemoreexample.org", false, NotFilteredNotFound},
+	{"regex", regexRules, "example.org", true, FilteredBlackList},
+	{"regex", regexRules, "test.example.org", false, NotFilteredWhiteList},
+	{"regex", regexRules, "test.test.example.org", false, NotFilteredWhiteList},
+	{"regex", regexRules, "testexample.org", true, FilteredBlackList},
+	{"regex", regexRules, "onemoreexample.org", true, FilteredBlackList},
+	{"mask", maskRules, "test.example.org", true, FilteredBlackList},
+	{"mask", maskRules, "test2.example.org", true, FilteredBlackList},
+	{"mask", maskRules, "example.com", true, FilteredBlackList},
+	{"mask", maskRules, "exampleeee.com", true, FilteredBlackList},
+	{"mask", maskRules, "onemoreexamsite.com", true, FilteredBlackList},
+	{"mask", maskRules, "example.org", false, NotFilteredNotFound},
+	{"mask", maskRules, "testexample.org", false, NotFilteredNotFound},
+	{"mask", maskRules, "example.co.uk", false, NotFilteredNotFound},
 }
 
 func TestMatching(t *testing.T) {
@@ -439,8 +440,11 @@ func TestMatching(t *testing.T) {
 			if err != nil {
 				t.Errorf("Error while matching host %s: %s", test.hostname, err)
 			}
-			if ret.IsFiltered != test.result {
-				t.Errorf("Hostname %s has wrong result (%v must be %v)", test.hostname, ret, test.result)
+			if ret.IsFiltered != test.isFiltered {
+				t.Errorf("Hostname %s has wrong result (%v must be %v)", test.hostname, ret.IsFiltered, test.isFiltered)
+			}
+			if ret.Reason != test.reason {
+				t.Errorf("Hostname %s has wrong reason (%v must be %v)", test.hostname, ret.Reason.String(), test.reason.String())
 			}
 		})
 	}

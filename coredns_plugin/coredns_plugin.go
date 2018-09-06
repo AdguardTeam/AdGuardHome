@@ -132,7 +132,7 @@ func setupPlugin(c *caddy.Controller) (*Plugin, error) {
 				}
 			case "querylog":
 				d.QueryLogEnabled = true
-				once.Do(func() {
+				onceQueryLog.Do(func() {
 					go startQueryLogServer() // TODO: how to handle errors?
 				})
 			}
@@ -145,6 +145,7 @@ func setupPlugin(c *caddy.Controller) (*Plugin, error) {
 	}
 	defer file.Close()
 
+	count := 0
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		text := scanner.Text()
@@ -158,7 +159,9 @@ func setupPlugin(c *caddy.Controller) (*Plugin, error) {
 		if err != nil {
 			return nil, err
 		}
+		count++
 	}
+	log.Printf("Added %d rules from %s", count, filterFileName)
 
 	if err = scanner.Err(); err != nil {
 		return nil, err
@@ -184,23 +187,21 @@ func setup(c *caddy.Controller) error {
 	})
 
 	c.OnStartup(func() error {
-		once.Do(func() {
-			m := dnsserver.GetConfig(c).Handler("prometheus")
-			if m == nil {
-				return
-			}
-			if x, ok := m.(*metrics.Metrics); ok {
-				x.MustRegister(requests)
-				x.MustRegister(filtered)
-				x.MustRegister(filteredLists)
-				x.MustRegister(filteredSafebrowsing)
-				x.MustRegister(filteredParental)
-				x.MustRegister(whitelisted)
-				x.MustRegister(safesearch)
-				x.MustRegister(errorsTotal)
-				x.MustRegister(d)
-			}
-		})
+		m := dnsserver.GetConfig(c).Handler("prometheus")
+		if m == nil {
+			return nil
+		}
+		if x, ok := m.(*metrics.Metrics); ok {
+			x.MustRegister(requests)
+			x.MustRegister(filtered)
+			x.MustRegister(filteredLists)
+			x.MustRegister(filteredSafebrowsing)
+			x.MustRegister(filteredParental)
+			x.MustRegister(whitelisted)
+			x.MustRegister(safesearch)
+			x.MustRegister(errorsTotal)
+			x.MustRegister(d)
+		}
 		return nil
 	})
 	c.OnShutdown(d.OnShutdown)
@@ -410,39 +411,44 @@ func (d *Plugin) serveDNSInternal(ctx context.Context, w dns.ResponseWriter, r *
 			return dns.RcodeServerFailure, fmt.Errorf("plugin/dnsfilter: %s", err), dnsfilter.Result{}
 		}
 
-		// safebrowsing
-		if result.IsFiltered == true && result.Reason == dnsfilter.FilteredSafeBrowsing {
-			// return cname safebrowsing.block.dns.adguard.com
-			val := d.SafeBrowsingBlockHost
-			rcode, err := d.replaceHostWithValAndReply(ctx, w, r, host, val, question)
-			if err != nil {
-				return rcode, err, dnsfilter.Result{}
+		if result.IsFiltered {
+			switch result.Reason {
+			case dnsfilter.FilteredSafeBrowsing:
+				// return cname safebrowsing.block.dns.adguard.com
+				val := d.SafeBrowsingBlockHost
+				rcode, err := d.replaceHostWithValAndReply(ctx, w, r, host, val, question)
+				if err != nil {
+					return rcode, err, dnsfilter.Result{}
+				}
+				return rcode, err, result
+			case dnsfilter.FilteredParental:
+				// return cname family.block.dns.adguard.com
+				val := d.ParentalBlockHost
+				rcode, err := d.replaceHostWithValAndReply(ctx, w, r, host, val, question)
+				if err != nil {
+					return rcode, err, dnsfilter.Result{}
+				}
+				return rcode, err, result
+			case dnsfilter.FilteredBlackList:
+				// return NXdomain
+				rcode, err := writeNXdomain(ctx, w, r)
+				if err != nil {
+					return rcode, err, dnsfilter.Result{}
+				}
+				return rcode, err, result
+			default:
+				log.Printf("SHOULD NOT HAPPEN -- got unknown reason for filtering: %T %v %s", result.Reason, result.Reason, result.Reason.String())
 			}
-			return rcode, err, result
-		}
-
-		// parental
-		if result.IsFiltered == true && result.Reason == dnsfilter.FilteredParental {
-			// return cname
-			val := d.ParentalBlockHost
-			rcode, err := d.replaceHostWithValAndReply(ctx, w, r, host, val, question)
-			if err != nil {
-				return rcode, err, dnsfilter.Result{}
+		} else {
+			switch result.Reason {
+			case dnsfilter.NotFilteredWhiteList:
+				rcode, err := plugin.NextOrFailure(d.Name(), d.Next, ctx, w, r)
+				return rcode, err, result
+			case dnsfilter.NotFilteredNotFound:
+				// do nothing, pass through to lower code
+			default:
+				log.Printf("SHOULD NOT HAPPEN -- got unknown reason for not filtering: %T %v %s", result.Reason, result.Reason, result.Reason.String())
 			}
-			return rcode, err, result
-		}
-
-		// blacklist
-		if result.IsFiltered == true && result.Reason == dnsfilter.FilteredBlackList {
-			rcode, err := writeNXdomain(ctx, w, r)
-			if err != nil {
-				return rcode, err, dnsfilter.Result{}
-			}
-			return rcode, err, result
-		}
-		if result.IsFiltered == false && result.Reason == dnsfilter.NotFilteredWhiteList {
-			rcode, err := plugin.NextOrFailure(d.Name(), d.Next, ctx, w, r)
-			return rcode, err, result
 		}
 	}
 	rcode, err := plugin.NextOrFailure(d.Name(), d.Next, ctx, w, r)
@@ -498,11 +504,11 @@ func (d *Plugin) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg)
 
 	// log
 	if d.QueryLogEnabled {
-		logRequest(rrw.Msg, result, time.Since(start), ip)
+		logRequest(r, rrw.Msg, result, time.Since(start), ip)
 	}
 	return rcode, err
 }
 
 func (d *Plugin) Name() string { return "dnsfilter" }
 
-var once sync.Once
+var onceQueryLog sync.Once

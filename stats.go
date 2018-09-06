@@ -8,70 +8,50 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
 	"time"
 )
 
-type periodicStats struct {
-	totalRequests []float64
-
-	filteredTotal        []float64
-	filteredLists        []float64
-	filteredSafebrowsing []float64
-	filteredSafesearch   []float64
-	filteredParental     []float64
-
-	processingTimeSum   []float64
-	processingTimeCount []float64
-
-	lastRotate time.Time // last time this data was rotated
-}
-
-type statsSnapshot struct {
-	totalRequests float64
-
-	filteredTotal        float64
-	filteredLists        float64
-	filteredSafebrowsing float64
-	filteredSafesearch   float64
-	filteredParental     float64
-
-	processingTimeSum   float64
-	processingTimeCount float64
-}
-
-type statsCollection struct {
-	perSecond periodicStats
-	perMinute periodicStats
-	perHour   periodicStats
-	perDay    periodicStats
-	lastsnap  statsSnapshot
-}
-
-var statistics statsCollection
-
 var client = &http.Client{
 	Timeout: time.Second * 30,
 }
 
-const statsHistoryElements = 60 + 1 // +1 for calculating delta
+// as seen over HTTP
+type statsEntry map[string]float64
+type statsEntries map[string][statsHistoryElements]float64
 
-var requestCountTotalRegex = regexp.MustCompile(`^coredns_dns_request_count_total`)
-var requestDurationSecondsSum = regexp.MustCompile(`^coredns_dns_request_duration_seconds_sum`)
-var requestDurationSecondsCount = regexp.MustCompile(`^coredns_dns_request_duration_seconds_count`)
+const (
+	statsHistoryElements = 60 + 1 // +1 for calculating delta
+	totalRequests        = `coredns_dns_request_count_total`
+	filteredTotal        = `coredns_dnsfilter_filtered_total`
+	filteredLists        = `coredns_dnsfilter_filtered_lists_total`
+	filteredSafebrowsing = `coredns_dnsfilter_filtered_safebrowsing_total`
+	filteredSafesearch   = `coredns_dnsfilter_safesearch_total`
+	filteredParental     = `coredns_dnsfilter_filtered_parental_total`
+	processingTimeSum    = `coredns_dns_request_duration_seconds_sum`
+	processingTimeCount  = `coredns_dns_request_duration_seconds_count`
+)
 
-func initPeriodicStats(stats *periodicStats) {
-	stats.totalRequests = make([]float64, statsHistoryElements)
-	stats.filteredTotal = make([]float64, statsHistoryElements)
-	stats.filteredLists = make([]float64, statsHistoryElements)
-	stats.filteredSafebrowsing = make([]float64, statsHistoryElements)
-	stats.filteredSafesearch = make([]float64, statsHistoryElements)
-	stats.filteredParental = make([]float64, statsHistoryElements)
-	stats.processingTimeSum = make([]float64, statsHistoryElements)
-	stats.processingTimeCount = make([]float64, statsHistoryElements)
+type periodicStats struct {
+	entries    statsEntries
+	lastRotate time.Time // last time this data was rotated
+}
+
+type stats struct {
+	perSecond periodicStats
+	perMinute periodicStats
+	perHour   periodicStats
+	perDay    periodicStats
+
+	lastSeen statsEntry
+}
+
+var statistics stats
+
+func initPeriodicStats(periodic *periodicStats) {
+	periodic.entries = statsEntries{}
 }
 
 func init() {
@@ -106,37 +86,22 @@ func isConnRefused(err error) bool {
 	return false
 }
 
-func sliceRotate(slice *[]float64) {
-	a := (*slice)[:len(*slice)-1]
-	*slice = append([]float64{0}, a...)
-}
-
-func statsRotate(stats *periodicStats, now time.Time) {
-	sliceRotate(&stats.totalRequests)
-	sliceRotate(&stats.filteredTotal)
-	sliceRotate(&stats.filteredLists)
-	sliceRotate(&stats.filteredSafebrowsing)
-	sliceRotate(&stats.filteredSafesearch)
-	sliceRotate(&stats.filteredParental)
-	sliceRotate(&stats.processingTimeSum)
-	sliceRotate(&stats.processingTimeCount)
-	stats.lastRotate = now
-}
-
-func handleValue(input string, target *float64) {
-	value, err := strconv.ParseFloat(input, 64)
-	if err != nil {
-		log.Println("Failed to parse number input:", err)
-		return
+func statsRotate(periodic *periodicStats, now time.Time) {
+	for key, values := range periodic.entries {
+		newValues := [statsHistoryElements]float64{}
+		for i := 1; i < len(values); i++ {
+			newValues[i] = values[i-1]
+		}
+		periodic.entries[key] = newValues
 	}
-	*target = value
+	periodic.lastRotate = now
 }
 
 // called every second, accumulates stats for each second, minute, hour and day
 func collectStats() {
 	now := time.Now()
 	// rotate each second
-	// NOTE: since we are called every second, always rotate, otherwise aliasing problems cause the rotation to skip
+	// NOTE: since we are called every second, always rotate perSecond, otherwise aliasing problems cause the rotation to skip
 	if true {
 		statsRotate(&statistics.perSecond, now)
 	}
@@ -172,6 +137,8 @@ func collectStats() {
 		return
 	}
 
+	entry := statsEntry{}
+
 	// handle body
 	scanner := bufio.NewScanner(strings.NewReader(string(body)))
 	for scanner.Scan() {
@@ -181,38 +148,61 @@ func collectStats() {
 			continue
 		}
 		splitted := strings.Split(line, " ")
-		switch {
-		case splitted[0] == "coredns_dnsfilter_filtered_total":
-			handleValue(splitted[1], &statistics.lastsnap.filteredTotal)
-		case splitted[0] == "coredns_dnsfilter_filtered_lists_total":
-			handleValue(splitted[1], &statistics.lastsnap.filteredLists)
-		case splitted[0] == "coredns_dnsfilter_filtered_safebrowsing_total":
-			handleValue(splitted[1], &statistics.lastsnap.filteredSafebrowsing)
-		case splitted[0] == "coredns_dnsfilter_filtered_parental_total":
-			handleValue(splitted[1], &statistics.lastsnap.filteredParental)
-		case requestCountTotalRegex.MatchString(splitted[0]):
-			handleValue(splitted[1], &statistics.lastsnap.totalRequests)
-		case requestDurationSecondsSum.MatchString(splitted[0]):
-			handleValue(splitted[1], &statistics.lastsnap.processingTimeSum)
-		case requestDurationSecondsCount.MatchString(splitted[0]):
-			handleValue(splitted[1], &statistics.lastsnap.processingTimeCount)
+		if len(splitted) < 2 {
+			continue
 		}
+
+		value, err := strconv.ParseFloat(splitted[1], 64)
+		if err != nil {
+			log.Printf("Failed to parse number input %s: %s", splitted[1], err)
+			continue
+		}
+
+		key := splitted[0]
+		index := strings.IndexByte(key, '{')
+		if index >= 0 {
+			key = key[:index]
+		}
+
+		// empty keys are not ok
+		if key == "" {
+			continue
+		}
+
+		got, ok := entry[key]
+		if ok {
+			value += got
+		}
+		entry[key] = value
 	}
 
-	// put the snap into per-second, per-minute, per-hour and per-day
-	assignSnapToStats(&statistics.perSecond)
-	assignSnapToStats(&statistics.perMinute)
-	assignSnapToStats(&statistics.perHour)
-	assignSnapToStats(&statistics.perDay)
+	// calculate delta
+	delta := calcDelta(entry, statistics.lastSeen)
+
+	// apply delta to second/minute/hour/day
+	applyDelta(&statistics.perSecond, delta)
+	applyDelta(&statistics.perMinute, delta)
+	applyDelta(&statistics.perHour, delta)
+	applyDelta(&statistics.perDay, delta)
+
+	// save last seen
+	statistics.lastSeen = entry
 }
 
-func assignSnapToStats(stats *periodicStats) {
-	stats.totalRequests[0] = statistics.lastsnap.totalRequests
-	stats.filteredTotal[0] = statistics.lastsnap.filteredTotal
-	stats.filteredLists[0] = statistics.lastsnap.filteredLists
-	stats.filteredSafebrowsing[0] = statistics.lastsnap.filteredSafebrowsing
-	stats.filteredSafesearch[0] = statistics.lastsnap.filteredSafesearch
-	stats.filteredParental[0] = statistics.lastsnap.filteredParental
-	stats.processingTimeSum[0] = statistics.lastsnap.processingTimeSum
-	stats.processingTimeCount[0] = statistics.lastsnap.processingTimeCount
+func calcDelta(current, seen statsEntry) statsEntry {
+	delta := statsEntry{}
+	for key, currentValue := range current {
+		seenValue := seen[key]
+		deltaValue := currentValue - seenValue
+		delta[key] = deltaValue
+	}
+	return delta
+}
+
+func applyDelta(current *periodicStats, delta statsEntry) {
+	for key, deltaValue := range delta {
+		currentValues := current.entries[key]
+		currentValues[0] += deltaValue
+		current.entries[key] = currentValues
+	}
 }
