@@ -41,11 +41,11 @@ class Filters extends Component {
     }, {
         Header: 'Filter name',
         accessor: 'name',
-        Cell: ({ value }) => (<span title={value}>{value}</span>),
+        Cell: ({ value }) => (<div className="logs__row logs__row--overflow"><span className="logs__text" title={value}>{value}</span></div>),
     }, {
         Header: 'Host file URL',
         accessor: 'url',
-        Cell: ({ value }) => (<a href={value} target='_blank' rel='noopener noreferrer'>{value}</a>),
+        Cell: ({ value }) => (<div className="logs__row logs__row--overflow"><a href={value} target='_blank' rel='noopener noreferrer' className="link logs__text">{value}</a></div>),
     }, {
         Header: 'Rules count',
         accessor: 'rulesCount',
