@@ -27,8 +27,8 @@ class Dashboard extends Component {
             dashboard.processingTopStats;
 
         const disableButton = <button type="button" className="btn btn-outline-secondary btn-sm mr-2" onClick={() => this.props.disableDns()}>Disable DNS</button>;
-        const refreshFullButton = <button type="button" className="btn btn-outline-primary btn-sm" onClick={() => this.props.getStats()}>Refresh statistics</button>;
-        const refreshButton = <button type="button" className="btn btn-outline-primary btn-sm card-refresh" onClick={() => this.props.getStats()}></button>;
+        const refreshFullButton = <button type="button" className="btn btn-outline-primary btn-sm" onClick={() => this.componentDidMount()}>Refresh statistics</button>;
+        const refreshButton = <button type="button" className="btn btn-outline-primary btn-sm card-refresh" onClick={() => this.componentDidMount()}></button>;
 
         return (
             <Fragment>
