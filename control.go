@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -438,21 +439,35 @@ func handleStatsTop(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	toMarshal := map[string]interface{}{
-		"top_queried_domains": produceTop(domains, 50),
-		"top_blocked_domains": produceTop(blocked, 50),
-		"top_clients":         produceTop(clients, 50),
+	// use manual json marshalling because we want maps to be sorted by value
+	json := bytes.Buffer{}
+	json.WriteString("{\n")
+
+	gen := func(json *bytes.Buffer, name string, top map[string]int, addComma bool) {
+		json.WriteString("  \"")
+		json.WriteString(name)
+		json.WriteString("\": {\n")
+		sorted := sortByValue(top)
+		for i, key := range sorted {
+			fmt.Fprintf(json, "    \"%s\": %d", key, top[key]))
+			if i+1 != len(sorted) {
+				json.WriteByte(',')
+			}
+			json.WriteByte('\n')
+		}
+		json.WriteString("  }")
+		if addComma {
+			json.WriteByte(',')
+		}
+		json.WriteByte('\n')
 	}
-	json, err := json.Marshal(toMarshal)
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't marshal into JSON: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusBadGateway)
-		return
-	}
+	gen(&json, "top_queried_domains", domains, true)
+	gen(&json, "top_blocked_domains", blocked, true)
+	gen(&json, "top_clients", clients, false)
+	json.WriteString("}\n")
 
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(json)
+	_, err = w.Write(json.Bytes())
 	if err != nil {
 		errortext := fmt.Sprintf("Couldn't write body: %s", err)
 		log.Println(errortext)
