@@ -563,7 +563,7 @@ func (d *Dnsfilter) lookupCommon(host string, lookupstats *LookupStats, cache gc
 	// check cache
 	cachedValue, isFound, err := getCachedReason(cache, host)
 	if isFound {
-		atomic.AddUint64(&stats.Safebrowsing.CacheHits, 1)
+		atomic.AddUint64(&lookupstats.CacheHits, 1)
 		return cachedValue, nil
 	}
 	if err != nil {
