@@ -3,15 +3,17 @@ sudo: false
 go:
   - 1.10.x
   - 1.11.x
-  - master
-  - tip
+  - 1.x
 
 os:
   - linux
   - osx
 
+install:
+  - go get -d -t ./...
+  - npm --prefix client install
+
 script:
-  - cd dnsfilter && go get -d -t . && go test
-  - cd ../coredns_plugin && go get -d -t . && go test
-  - cd .. && make
+  - go test ./...
+  - make
 

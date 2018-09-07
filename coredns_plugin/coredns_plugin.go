@@ -261,16 +261,17 @@ func gen(ch interface{}, doFunc statsFunc, name string, text string, value float
 	doFunc(ch, name, text, value, valueType)
 }
 
+func doStatsLookup(ch interface{}, doFunc statsFunc, name string, lookupstats *dnsfilter.LookupStats) {
+	gen(ch, doFunc, fmt.Sprintf("coredns_dnsfilter_%s_requests", name), fmt.Sprintf("Number of %s HTTP requests that were sent", name), float64(lookupstats.Requests), prometheus.CounterValue)
+	gen(ch, doFunc, fmt.Sprintf("coredns_dnsfilter_%s_cachehits", name), fmt.Sprintf("Number of %s lookups that didn't need HTTP requests", name), float64(lookupstats.CacheHits), prometheus.CounterValue)
+	gen(ch, doFunc, fmt.Sprintf("coredns_dnsfilter_%s_pending", name), fmt.Sprintf("Number of currently pending %s HTTP requests", name), float64(lookupstats.Pending), prometheus.GaugeValue)
+	gen(ch, doFunc, fmt.Sprintf("coredns_dnsfilter_%s_pending_max", name), fmt.Sprintf("Maximum number of pending %s HTTP requests", name), float64(lookupstats.PendingMax), prometheus.GaugeValue)
+}
+
 func (d *Plugin) doStats(ch interface{}, doFunc statsFunc) {
 	stats := d.d.GetStats()
-	gen(ch, doFunc, "coredns_dnsfilter_safebrowsing_requests", "Number of safebrowsing HTTP requests that were sent", float64(stats.Safebrowsing.Requests), prometheus.CounterValue)
-	gen(ch, doFunc, "coredns_dnsfilter_safebrowsing_cachehits", "Number of safebrowsing lookups that didn't need HTTP requests", float64(stats.Safebrowsing.CacheHits), prometheus.CounterValue)
-	gen(ch, doFunc, "coredns_dnsfilter_safebrowsing_pending", "Number of currently pending safebrowsing HTTP requests", float64(stats.Safebrowsing.Pending), prometheus.GaugeValue)
-	gen(ch, doFunc, "coredns_dnsfilter_safebrowsing_pending_max", "Maximum number of pending safebrowsing HTTP requests", float64(stats.Safebrowsing.PendingMax), prometheus.GaugeValue)
-	gen(ch, doFunc, "coredns_dnsfilter_parental_requests", "Number of parental HTTP requests that were sent", float64(stats.Parental.Requests), prometheus.CounterValue)
-	gen(ch, doFunc, "coredns_dnsfilter_parental_cachehits", "Number of parental lookups that didn't need HTTP requests", float64(stats.Parental.CacheHits), prometheus.CounterValue)
-	gen(ch, doFunc, "coredns_dnsfilter_parental_pending", "Number of currently pending parental HTTP requests", float64(stats.Parental.Pending), prometheus.GaugeValue)
-	gen(ch, doFunc, "coredns_dnsfilter_parental_pending_max", "Maximum number of pending parental HTTP requests", float64(stats.Parental.PendingMax), prometheus.GaugeValue)
+	doStatsLookup(ch, doFunc, "safebrowsing", &stats.Safebrowsing)
+	doStatsLookup(ch, doFunc, "parental", &stats.Parental)
 }
 
 func (d *Plugin) Describe(ch chan<- *prometheus.Desc) {

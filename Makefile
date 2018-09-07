@@ -12,8 +12,8 @@ all: build
 build: AdguardDNS coredns
 
 $(STATIC):
-	cd client; npm install
-	cd client; npm run build-prod
+	npm --prefix client install
+	npm --prefix client run build-prod
 
 AdguardDNS: $(STATIC) *.go
 	echo mkfile_dir = $(mkfile_dir)

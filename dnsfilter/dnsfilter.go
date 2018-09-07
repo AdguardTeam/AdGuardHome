@@ -521,11 +521,11 @@ func (d *Dnsfilter) checkSafeBrowsing(host string) (Result, error) {
 }
 
 func (d *Dnsfilter) checkParental(host string) (Result, error) {
-	format2 := func(hashparam string) string {
+	format := func(hashparam string) string {
 		url := fmt.Sprintf(defaultParentalURL, hashparam, d.config.parentalSensitivity)
 		return url
 	}
-	handleBody2 := func(body []byte, hashes map[string]bool) (Result, error) {
+	handleBody := func(body []byte, hashes map[string]bool) (Result, error) {
 		// parse json
 		var m []struct {
 			Blocked   bool   `json:"blocked"`
@@ -551,7 +551,7 @@ func (d *Dnsfilter) checkParental(host string) (Result, error) {
 		}
 		return result, nil
 	}
-	result, err := d.lookupCommon(host, &stats.Parental, parentalCache, false, format2, handleBody2)
+	result, err := d.lookupCommon(host, &stats.Parental, parentalCache, false, format, handleBody)
 	return result, err
 }
 
@@ -563,7 +563,7 @@ func (d *Dnsfilter) lookupCommon(host string, lookupstats *LookupStats, cache gc
 	// check cache
 	cachedValue, isFound, err := getCachedReason(cache, host)
 	if isFound {
-		atomic.AddUint64(&stats.Safebrowsing.CacheHits, 1)
+		atomic.AddUint64(&lookupstats.CacheHits, 1)
 		return cachedValue, nil
 	}
 	if err != nil {
