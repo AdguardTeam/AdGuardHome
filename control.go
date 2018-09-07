@@ -409,6 +409,9 @@ func handleStatsTop(w http.ResponseWriter, r *http.Request) {
 	domains := map[string]int{}
 	blocked := map[string]int{}
 	clients := map[string]int{}
+	now := time.Now()
+	timeWindow := time.Minute * 3
+	notBefore := now.Add(timeWindow * -1)
 
 	for _, value := range values {
 		entry, ok := value.(map[string]interface{})
@@ -419,6 +422,11 @@ func handleStatsTop(w http.ResponseWriter, r *http.Request) {
 		host := getHost(entry)
 		reason := getReason(entry)
 		client := getClient(entry)
+		time := getTime(entry)
+		if time.Before(notBefore) {
+			// skip if the entry is before specified cutoff
+			continue
+		}
 		if len(host) > 0 {
 			domains[host]++
 		}

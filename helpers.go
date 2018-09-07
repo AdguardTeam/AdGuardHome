@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"time"
 )
 
 func clamp(value, low, high int) int {
@@ -165,6 +166,22 @@ func getClient(entry map[string]interface{}) string {
 		return ""
 	}
 	return client
+}
+
+func getTime(entry map[string]interface{}) time.Time {
+	t, ok := entry["time"]
+	if !ok {
+		return time.Time{}
+	}
+	tstr, ok := t.(string)
+	if !ok {
+		return time.Time{}
+	}
+	value, err := time.Parse(time.RFC3339, tstr)
+	if err != nil {
+		return time.Time{}
+	}
+	return value
 }
 
 // -------------------------------------------------
