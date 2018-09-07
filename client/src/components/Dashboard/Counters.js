@@ -5,7 +5,7 @@ import Card from '../ui/Card';
 import Tooltip from '../ui/Tooltip';
 
 const Counters = props => (
-    <Card title="General counters" subtitle="in the last 3 minutes" bodyType="card-table" refresh={props.refreshButton}>
+    <Card title="General statistics" subtitle="in the last 3 minutes" bodyType="card-table" refresh={props.refreshButton}>
         <table className="table card-table">
             <tbody>
                 <tr>
