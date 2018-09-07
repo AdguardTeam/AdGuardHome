@@ -449,7 +449,7 @@ func handleStatsTop(w http.ResponseWriter, r *http.Request) {
 		json.WriteString("\": {\n")
 		sorted := sortByValue(top)
 		for i, key := range sorted {
-			fmt.Fprintf(json, "    \"%s\": %d", key, top[key]))
+			fmt.Fprintf(json, "    \"%s\": %d", key, top[key])
 			if i+1 != len(sorted) {
 				json.WriteByte(',')
 			}
