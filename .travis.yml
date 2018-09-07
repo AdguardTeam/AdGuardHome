@@ -10,8 +10,10 @@ os:
   - linux
   - osx
 
+install:
+  - go get -d -t ./...
+
 script:
-  - cd dnsfilter && go get -d -t . && go test
-  - cd ../coredns_plugin && go get -d -t . && go test
-  - cd .. && make
+  - go test ./...
+  - make
 
