@@ -103,6 +103,7 @@ class Logs extends Component {
                 data={logs}
                 columns={columns}
                 showPagination={false}
+                defaultPageSize={1000}
                 minRows={7}
                 noDataText="No logs found"
                 defaultSorted={[
