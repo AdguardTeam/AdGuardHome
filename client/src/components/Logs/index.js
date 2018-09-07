@@ -68,8 +68,10 @@ class Logs extends Component {
                 if (isFiltered) {
                     return (
                         <div className="logs__row">
-                            { this.renderTooltip(isFiltered, rule) }
-                            <span>{ parsedFilteredReason }</span>
+                            {this.renderTooltip(isFiltered, rule)}
+                            <span className="logs__text" title={parsedFilteredReason}>
+                                {parsedFilteredReason}
+                            </span>
                         </div>
                     );
                 }
