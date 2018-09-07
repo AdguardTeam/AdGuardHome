@@ -11,6 +11,7 @@ os:
 
 install:
   - go get -d -t ./...
+  - npm --prefix client install
 
 script:
   - go test ./...
