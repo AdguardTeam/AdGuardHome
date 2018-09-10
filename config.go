@@ -165,6 +165,9 @@ const coreDNSConfigTemplate = `. {
         {{if .QueryLogEnabled}}querylog{{end}}
     }{{end}}
     {{.Pprof}}
+	hosts {
+		fallthrough
+	}
     {{if .UpstreamDNS}}forward . {{range .UpstreamDNS}}{{.}} {{end}}{{end}}
     {{.Cache}}
     {{.Prometheus}}

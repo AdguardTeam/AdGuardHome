@@ -28,7 +28,8 @@ const defaultHTTPMaxIdleConnections = 100
 
 const defaultSafebrowsingServer = "sb.adtidy.org"
 const defaultSafebrowsingURL = "http://%s/safebrowsing-lookup-hash.html?prefixes=%s"
-const defaultParentalURL = "http://pctrl.adguard.com/check-parental-control-hash?prefixes=%s&sensitivity=%d"
+const defaultParentalServer = "pctrl.adguard.com"
+const defaultParentalURL = "http://%s/check-parental-control-hash?prefixes=%s&sensitivity=%d"
 
 var ErrInvalidSyntax = errors.New("dnsfilter: invalid rule syntax")
 var ErrInvalidParental = errors.New("dnsfilter: invalid parental sensitivity, must be either 3, 10, 13 or 17")
@@ -43,6 +44,7 @@ type Config struct {
 	safeBrowsingEnabled bool
 	safeBrowsingServer  string
 	parentalEnabled     bool
+	parentalServer      string
 	parentalSensitivity int // must be either 3, 10, 13 or 17
 }
 
@@ -140,6 +142,7 @@ func (d *Dnsfilter) CheckHost(host string) (Result, error) {
 	if host == "" {
 		return Result{Reason: FilteredInvalid}, nil
 	}
+	host = strings.ToLower(host)
 
 	// try filter lists first
 	result, err := d.matchHost(host)
@@ -487,6 +490,10 @@ func hostnameToHashParam(host string, addslash bool) (string, map[string]bool) {
 }
 
 func (d *Dnsfilter) checkSafeBrowsing(host string) (Result, error) {
+	// prevent recursion -- checking the host of safebrowsing server makes no sense
+	if host == d.config.safeBrowsingServer {
+		return Result{}, nil
+	}
 	format := func(hashparam string) string {
 		url := fmt.Sprintf(defaultSafebrowsingURL, d.config.safeBrowsingServer, hashparam)
 		return url
@@ -521,8 +528,12 @@ func (d *Dnsfilter) checkSafeBrowsing(host string) (Result, error) {
 }
 
 func (d *Dnsfilter) checkParental(host string) (Result, error) {
+	// prevent recursion -- checking the host of parental safety server makes no sense
+	if host == d.config.parentalServer {
+		return Result{}, nil
+	}
 	format := func(hashparam string) string {
-		url := fmt.Sprintf(defaultParentalURL, hashparam, d.config.parentalSensitivity)
+		url := fmt.Sprintf(defaultParentalURL, d.config.parentalServer, hashparam, d.config.parentalSensitivity)
 		return url
 	}
 	handleBody := func(body []byte, hashes map[string]bool) (Result, error) {
@@ -723,6 +734,8 @@ func New() *Dnsfilter {
 		Timeout:   defaultHTTPTimeout,
 	}
 	d.config.safeBrowsingServer = defaultSafebrowsingServer
+	d.config.parentalServer = defaultParentalServer
+
 	return d
 }
 
