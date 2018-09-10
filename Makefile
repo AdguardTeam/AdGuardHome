@@ -24,13 +24,13 @@ AdguardDNS: $(STATIC) *.go
 coredns: coredns_plugin/*.go dnsfilter/*.go
 	echo mkfile_dir = $(mkfile_dir)
 	go get -v -d github.com/coredns/coredns
+	cd $(GOPATH)/src/github.com/prometheus/client_golang && git checkout -q v0.8.0
 	cd $(GOPATH)/src/github.com/coredns/coredns && perl -p -i.bak -e 's/^(trace|route53|federation|kubernetes|etcd):.*//' plugin.cfg
 	cd $(GOPATH)/src/github.com/coredns/coredns && grep -q '^dnsfilter:' plugin.cfg || perl -p -i.bak -e 's|^log:log|log:log\ndnsfilter:github.com/AdguardTeam/AdguardDNS/coredns_plugin|' plugin.cfg
 	grep '^dnsfilter:' $(GOPATH)/src/github.com/coredns/coredns/plugin.cfg ## used to check that plugin.cfg was successfully edited by sed
 	cd $(GOPATH)/src/github.com/coredns/coredns && GOOS=$(NATIVE_GOOS) GOARCH=$(NATIVE_GOARCH) go generate
 	cd $(GOPATH)/src/github.com/coredns/coredns && go get -v -d .
-	cd $(GOPATH)/src/github.com/coredns/coredns && make
-	cd $(GOPATH)/src/github.com/coredns/coredns && mv coredns $(mkfile_dir)/coredns
+	cd $(GOPATH)/src/github.com/coredns/coredns && go build -o $(mkfile_dir)/coredns
 
 clean:
 	rm -vf coredns AdguardDNS
