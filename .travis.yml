@@ -10,10 +10,11 @@ os:
   - osx
 
 install:
-  - go get -d -t ./...
+  - go get -v -d -t ./...
   - npm --prefix client install
 
 script:
+  - (cd `go env GOPATH`/src/github.com/prometheus/client_golang && git checkout -q v0.8.0)
   - go test ./...
   - make
 
