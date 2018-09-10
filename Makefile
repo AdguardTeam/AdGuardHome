@@ -29,7 +29,8 @@ coredns: coredns_plugin/*.go dnsfilter/*.go
 	grep '^dnsfilter:' $(GOPATH)/src/github.com/coredns/coredns/plugin.cfg ## used to check that plugin.cfg was successfully edited by sed
 	cd $(GOPATH)/src/github.com/coredns/coredns && GOOS=$(NATIVE_GOOS) GOARCH=$(NATIVE_GOARCH) go generate
 	cd $(GOPATH)/src/github.com/coredns/coredns && go get -v -d .
-	cd $(GOPATH)/src/github.com/coredns/coredns && go build -o $(mkfile_dir)/coredns
+	cd $(GOPATH)/src/github.com/coredns/coredns && make
+	cd $(GOPATH)/src/github.com/coredns/coredns && mv coredns $(mkfile_dir)/coredns
 
 clean:
 	rm -vf coredns AdguardDNS
