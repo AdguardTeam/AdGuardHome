@@ -370,14 +370,6 @@ func (d *Plugin) serveDNSInternal(ctx context.Context, w dns.ResponseWriter, r *
 	}
 	for _, question := range r.Question {
 		host := strings.ToLower(strings.TrimSuffix(question.Name, "."))
-		// if input is empty host, filter it out right away
-		if index := strings.IndexByte(host, byte('.')); index == -1 {
-			rcode, err := writeNXdomain(ctx, w, r)
-			if err != nil {
-				return rcode, err, dnsfilter.Result{}
-			}
-			return rcode, err, dnsfilter.Result{Reason: dnsfilter.FilteredInvalid}
-		}
 		// is it a safesearch domain?
 		if val, ok := d.d.SafeSearchDomain(host); ok {
 			rcode, err := d.replaceHostWithValAndReply(ctx, w, r, host, val, question)
