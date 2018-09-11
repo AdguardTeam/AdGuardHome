@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import Card from '../ui/Card';
 
 const Statistics = props => (
-    <Card title="Statistics" subtitle="Today" bodyType="card-graph" refresh={props.refreshButton}>
+    <Card title="Statistics" subtitle="Last 24 hours" bodyType="card-graph" refresh={props.refreshButton}>
         {props.history ?
             <ResponsiveLine
                 data={props.history}
@@ -23,7 +23,6 @@ const Statistics = props => (
                     tickSize: 5,
                     tickPadding: 5,
                     tickRotation: -45,
-                    legend: 'time',
                     legendOffset: 50,
                     legendPosition: 'center',
                 }}
@@ -32,7 +31,6 @@ const Statistics = props => (
                     tickSize: 5,
                     tickPadding: 5,
                     tickRotation: 0,
-                    legend: 'count',
                     legendOffset: -40,
                     legendPosition: 'center',
                 }}
