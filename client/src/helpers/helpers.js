@@ -1,6 +1,6 @@
 import dateParse from 'date-fns/parse';
 import dateFormat from 'date-fns/format';
-import startOfToday from 'date-fns/start_of_today';
+import subHours from 'date-fns/sub_hours';
 import addHours from 'date-fns/add_hours';
 import round from 'lodash/round';
 
@@ -37,10 +37,10 @@ export const normalizeLogs = logs => logs.map((log) => {
 export const normalizeHistory = history => Object.keys(history).map((key) => {
     const id = key.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
 
-    const today = startOfToday();
+    const dayAgo = subHours(Date.now(), 24);
 
     const data = history[key].map((item, index) => {
-        const formatHour = dateFormat(addHours(today, index), 'HH:mm');
+        const formatHour = dateFormat(addHours(dayAgo, index), 'ddd HH:00');
         const roundValue = round(item, 2);
 
         return {

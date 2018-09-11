@@ -1,6 +1,5 @@
 import axios from 'axios';
-import startOfToday from 'date-fns/start_of_today';
-import endOfToday from 'date-fns/end_of_today';
+import subHours from 'date-fns/sub_hours';
 import dateFormat from 'date-fns/format';
 
 export default class Api {
@@ -51,13 +50,12 @@ export default class Api {
     getGlobalStatsHistory() {
         const { path, method } = this.GLOBAL_STATS_HISTORY;
         const format = 'YYYY-MM-DDTHH:mm:ssZ';
-        const todayStart = dateFormat(startOfToday(), format);
-        const todayEnd = dateFormat(endOfToday(), format);
+        const dateNow = Date.now();
 
         const config = {
             params: {
-                start_time: todayStart,
-                end_time: todayEnd,
+                start_time: dateFormat(subHours(dateNow, 24), format),
+                end_time: dateFormat(dateNow, format),
                 time_unit: 'hours',
             },
         };
