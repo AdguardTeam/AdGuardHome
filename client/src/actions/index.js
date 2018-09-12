@@ -152,24 +152,19 @@ export const getTopStatsSuccess = createAction('GET_TOP_STATS_SUCCESS');
 
 export const getTopStats = () => async (dispatch, getState) => {
     dispatch(getTopStatsRequest());
-    try {
+    const timer = setInterval(async () => {
         const state = getState();
-        const timer = setInterval(async () => {
-            if (state.dashboard.isCoreRunning) {
-                try {
-                    const stats = await apiClient.getGlobalStatsTop();
-                    dispatch(getTopStatsSuccess(stats));
-                } catch (error) {
-                    alertify.error(`Failed to load statistics with status code ${error.response.status}`);
-                    dispatch(getTopStatsFailure());
-                }
-                clearInterval(timer);
+        if (state.dashboard.isCoreRunning) {
+            clearInterval(timer);
+            try {
+                const stats = await apiClient.getGlobalStatsTop();
+                dispatch(getTopStatsSuccess(stats));
+            } catch (error) {
+                alertify.error(`Failed to load statistics with status code ${error.response.status}`);
+                dispatch(getTopStatsFailure());
             }
-        }, 100);
-    } catch (error) {
-        console.error(error);
-        dispatch(getTopStatsFailure());
-    }
+        }
+    }, 100);
 };
 
 export const getLogsRequest = createAction('GET_LOGS_REQUEST');
@@ -178,24 +173,19 @@ export const getLogsSuccess = createAction('GET_LOGS_SUCCESS');
 
 export const getLogs = () => async (dispatch, getState) => {
     dispatch(getLogsRequest());
-    try {
+    const timer = setInterval(async () => {
         const state = getState();
-        const timer = setInterval(async () => {
-            if (state.dashboard.isCoreRunning) {
-                try {
-                    const logs = normalizeLogs(await apiClient.getQueryLog());
-                    dispatch(getLogsSuccess(logs));
-                } catch (error) {
-                    alertify.error(`Failed to load query log with status code ${error.response.status}`);
-                    dispatch(getLogsFailure());
-                }
-                clearInterval(timer);
+        if (state.dashboard.isCoreRunning) {
+            clearInterval(timer);
+            try {
+                const logs = normalizeLogs(await apiClient.getQueryLog());
+                dispatch(getLogsSuccess(logs));
+            } catch (error) {
+                alertify.error(`Failed to load query log with status code ${error.response.status}`);
+                dispatch(getLogsFailure());
             }
-        }, 100);
-    } catch (error) {
-        console.error(error);
-        dispatch(getLogsFailure());
-    }
+        }
+    }, 100);
 };
 
 export const toggleLogStatusRequest = createAction('TOGGLE_LOGS_REQUEST');
