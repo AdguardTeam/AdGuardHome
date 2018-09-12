@@ -3,8 +3,10 @@ import { HashRouter, Route } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
 import 'react-table/react-table.css';
+import 'alertifyjs/build/css/alertify.min.css';
 import '../ui/Tabler.css';
 import '../ui/ReactTable.css';
+import '../ui/Alertify.css';
 import './index.css';
 
 import Header from '../../containers/Header';

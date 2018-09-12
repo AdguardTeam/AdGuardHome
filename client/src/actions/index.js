@@ -1,5 +1,6 @@
 import { createAction } from 'redux-actions';
 import round from 'lodash/round';
+import alertify from 'alertifyjs';
 
 import { normalizeHistory, normalizeFilteringStatus, normalizeLogs } from '../helpers/helpers';
 import Api from '../api/Api';
@@ -119,6 +120,7 @@ export const disableDns = () => async (dispatch) => {
         dispatch(disableDnsSuccess());
     } catch (error) {
         console.error(error);
+        alertify.error(`Failed to disable DNS with status code ${error.response.status}`);
         dispatch(disableDnsFailure());
     }
 };
@@ -154,8 +156,13 @@ export const getTopStats = () => async (dispatch, getState) => {
         const state = getState();
         const timer = setInterval(async () => {
             if (state.dashboard.isCoreRunning) {
-                const stats = await apiClient.getGlobalStatsTop();
-                dispatch(getTopStatsSuccess(stats));
+                try {
+                    const stats = await apiClient.getGlobalStatsTop();
+                    dispatch(getTopStatsSuccess(stats));
+                } catch (error) {
+                    alertify.error(`Failed to load statistics with status code ${error.response.status}`);
+                    dispatch(getTopStatsFailure());
+                }
                 clearInterval(timer);
             }
         }, 100);
@@ -175,8 +182,13 @@ export const getLogs = () => async (dispatch, getState) => {
         const state = getState();
         const timer = setInterval(async () => {
             if (state.dashboard.isCoreRunning) {
-                const logs = normalizeLogs(await apiClient.getQueryLog());
-                dispatch(getLogsSuccess(logs));
+                try {
+                    const logs = normalizeLogs(await apiClient.getQueryLog());
+                    dispatch(getLogsSuccess(logs));
+                } catch (error) {
+                    alertify.error(`Failed to load query log with status code ${error.response.status}`);
+                    dispatch(getLogsFailure());
+                }
                 clearInterval(timer);
             }
         }, 100);
