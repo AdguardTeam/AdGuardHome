@@ -3,10 +3,8 @@ import { HashRouter, Route } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
 import 'react-table/react-table.css';
-import 'alertifyjs/build/css/alertify.min.css';
 import '../ui/Tabler.css';
 import '../ui/ReactTable.css';
-import '../ui/Alertify.css';
 import './index.css';
 
 import Header from '../../containers/Header';
@@ -15,6 +13,7 @@ import Settings from '../../containers/Settings';
 import Filters from '../../containers/Filters';
 import Logs from '../../containers/Logs';
 import Footer from '../ui/Footer';
+import Toasts from '../Toasts';
 
 import Status from '../ui/Status';
 
@@ -51,6 +50,7 @@ class App extends Component {
                         }
                     </div>
                     <Footer />
+                    <Toasts />
                 </Fragment>
             </HashRouter>
         );
@@ -62,6 +62,7 @@ App.propTypes = {
     enableDns: PropTypes.func,
     dashboard: PropTypes.object,
     isCoreRunning: PropTypes.bool,
+    error: PropTypes.string,
 };
 
 export default App;

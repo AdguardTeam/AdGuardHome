@@ -1,11 +1,14 @@
 import { createAction } from 'redux-actions';
 import round from 'lodash/round';
-import alertify from 'alertifyjs';
 
 import { normalizeHistory, normalizeFilteringStatus, normalizeLogs } from '../helpers/helpers';
 import Api from '../api/Api';
 
 const apiClient = new Api();
+
+export const addErrorToast = createAction('ADD_ERROR_TOAST');
+export const addSuccessToast = createAction('ADD_SUCCESS_TOAST');
+export const removeToast = createAction('REMOVE_TOAST');
 
 export const toggleSettingStatus = createAction('SETTING_STATUS_TOGGLE');
 export const showSettingsFailure = createAction('SETTINGS_FAILURE_SHOW');
@@ -75,6 +78,7 @@ export const initSettings = settingsList => async (dispatch) => {
         dispatch(initSettingsSuccess({ settingsList: newSettingsList }));
     } catch (error) {
         console.error(error);
+        dispatch(addErrorToast({ error }));
         dispatch(initSettingsFailure());
     }
 };
@@ -90,6 +94,7 @@ export const getDnsStatus = () => async (dispatch) => {
         dispatch(dnsStatusSuccess(dnsStatus));
     } catch (error) {
         console.error(error);
+        dispatch(addErrorToast({ error }));
         dispatch(initSettingsFailure());
     }
 };
@@ -105,6 +110,7 @@ export const enableDns = () => async (dispatch) => {
         dispatch(enableDnsSuccess());
     } catch (error) {
         console.error(error);
+        dispatch(addErrorToast({ error }));
         dispatch(enableDnsFailure());
     }
 };
@@ -120,8 +126,8 @@ export const disableDns = () => async (dispatch) => {
         dispatch(disableDnsSuccess());
     } catch (error) {
         console.error(error);
-        alertify.error(`Failed to disable DNS with status code ${error.response.status}`);
-        dispatch(disableDnsFailure());
+        dispatch(disableDnsFailure(error));
+        dispatch(addErrorToast({ error }));
     }
 };
 
@@ -142,6 +148,7 @@ export const getStats = () => async (dispatch) => {
         dispatch(getStatsSuccess(processedStats));
     } catch (error) {
         console.error(error);
+        dispatch(addErrorToast({ error }));
         dispatch(getStatsFailure());
     }
 };
@@ -160,8 +167,9 @@ export const getTopStats = () => async (dispatch, getState) => {
                 const stats = await apiClient.getGlobalStatsTop();
                 dispatch(getTopStatsSuccess(stats));
             } catch (error) {
-                alertify.error(`Failed to load statistics with status code ${error.response.status}`);
-                dispatch(getTopStatsFailure());
+                console.error(error);
+                dispatch(addErrorToast({ error }));
+                dispatch(getTopStatsFailure(error));
             }
         }
     }, 100);
@@ -181,8 +189,9 @@ export const getLogs = () => async (dispatch, getState) => {
                 const logs = normalizeLogs(await apiClient.getQueryLog());
                 dispatch(getLogsSuccess(logs));
             } catch (error) {
-                alertify.error(`Failed to load query log with status code ${error.response.status}`);
-                dispatch(getLogsFailure());
+                console.error(error);
+                dispatch(addErrorToast({ error }));
+                dispatch(getLogsFailure(error));
             }
         }
     }, 100);
@@ -205,6 +214,7 @@ export const toggleLogStatus = queryLogEnabled => async (dispatch) => {
         dispatch(toggleLogStatusSuccess());
     } catch (error) {
         console.error(error);
+        dispatch(addErrorToast({ error }));
         dispatch(toggleLogStatusFailure());
     }
 };
@@ -220,6 +230,7 @@ export const setRules = rules => async (dispatch) => {
         dispatch(setRulesSuccess());
     } catch (error) {
         console.error(error);
+        dispatch(addErrorToast({ error }));
         dispatch(setRulesFailure());
     }
 };
@@ -235,6 +246,7 @@ export const getFilteringStatus = () => async (dispatch) => {
         dispatch(getFilteringStatusSuccess({ status: normalizeFilteringStatus(status) }));
     } catch (error) {
         console.error(error);
+        dispatch(addErrorToast({ error }));
         dispatch(getFilteringStatusFailure());
     }
 };
@@ -261,6 +273,7 @@ export const toggleFilterStatus = url => async (dispatch, getState) => {
         dispatch(getFilteringStatus());
     } catch (error) {
         console.error(error);
+        dispatch(addErrorToast({ error }));
         dispatch(toggleFilterFailure());
     }
 };
@@ -277,6 +290,7 @@ export const refreshFilters = () => async (dispatch) => {
         dispatch(getFilteringStatus());
     } catch (error) {
         console.error(error);
+        dispatch(addErrorToast({ error }));
         dispatch(refreshFiltersFailure());
     }
 };
@@ -295,6 +309,7 @@ export const getStatsHistory = () => async (dispatch) => {
         dispatch(getStatsHistorySuccess(normalizedHistory));
     } catch (error) {
         console.error(error);
+        dispatch(addErrorToast({ error }));
         dispatch(getStatsHistoryFailure());
     }
 };
@@ -311,6 +326,7 @@ export const addFilter = url => async (dispatch) => {
         dispatch(getFilteringStatus());
     } catch (error) {
         console.error(error);
+        dispatch(addErrorToast({ error }));
         dispatch(addFilterFailure());
     }
 };
@@ -328,6 +344,7 @@ export const removeFilter = url => async (dispatch) => {
         dispatch(getFilteringStatus());
     } catch (error) {
         console.error(error);
+        dispatch(addErrorToast({ error }));
         dispatch(removeFilterFailure());
     }
 };
@@ -347,6 +364,7 @@ export const downloadQueryLog = () => async (dispatch) => {
         dispatch(downloadQueryLogSuccess());
     } catch (error) {
         console.error(error);
+        dispatch(addErrorToast({ error }));
         dispatch(downloadQueryLogFailure());
     }
     return data;
@@ -364,6 +382,7 @@ export const setUpstream = url => async (dispatch) => {
         dispatch(setUpstreamSuccess());
     } catch (error) {
         console.error(error);
+        dispatch(addErrorToast({ error }));
         dispatch(setUpstreamFailure());
     }
 };

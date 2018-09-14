@@ -1,5 +1,6 @@
 import { combineReducers } from 'redux';
 import { handleActions } from 'redux-actions';
+import nanoid from 'nanoid';
 
 import * as actions from '../actions';
 
@@ -172,9 +173,38 @@ const filtering = handleActions({
     userRules: '',
 });
 
+const toasts = handleActions({
+    [actions.addErrorToast]: (state, { payload }) => {
+        const errorToast = {
+            id: nanoid(),
+            message: payload.error.toString(),
+            type: 'error',
+        };
+
+        const newState = { ...state, notices: [...state.notices, errorToast] };
+        return newState;
+    },
+    [actions.addSuccessToast]: (state, { payload }) => {
+        const successToast = {
+            id: nanoid(),
+            message: payload,
+            type: 'success',
+        };
+
+        const newState = { ...state, notices: [...state.notices, successToast] };
+        return newState;
+    },
+    [actions.removeToast]: (state, { payload }) => {
+        const filtered = state.notices.filter(notice => notice.id !== payload);
+        const newState = { ...state, notices: filtered };
+        return newState;
+    },
+}, { notices: [] });
+
 export default combineReducers({
     settings,
     dashboard,
     queryLogs,
     filtering,
+    toasts,
 });

@@ -6,12 +6,16 @@ export default class Api {
     baseUrl = 'control';
 
     async makeRequest(path, method = 'POST', config) {
-        const response = await axios({
-            url: `${this.baseUrl}/${path}`,
-            method,
-            ...config,
-        });
-        return response.data;
+        try {
+            const response = await axios({
+                url: `${this.baseUrl}/${path}`,
+                method,
+                ...config,
+            });
+            return response.data;
+        } catch (error) {
+            throw new Error(`${this.baseUrl}/${path} | ${error.response.data} | ${error.response.status}`);
+        }
     }
 
     // Global methods

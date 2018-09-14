@@ -1,9 +1,0 @@
-.alertify-notifier .ajs-message {
-    width: 280px;
-    font-weight: 600;
-    color: #fff;
-}
-
-.alertify-notifier .ajs-message.ajs-error {
-    background-color: rgba(236, 53, 53, 0.76);
-}
