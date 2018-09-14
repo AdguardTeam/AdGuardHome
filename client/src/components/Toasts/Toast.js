@@ -3,11 +3,11 @@ import PropTypes from 'prop-types';
 
 class Toast extends Component {
     componentDidMount() {
-        const timeoutTime = this.props.type === 'error' ? 30000 : 5000;
+        const timeout = this.props.type === 'error' ? 30000 : 5000;
 
         setTimeout(() => {
             this.props.removeToast(this.props.id);
-        }, timeoutTime);
+        }, timeout);
     }
 
     shouldComponentUpdate() {
