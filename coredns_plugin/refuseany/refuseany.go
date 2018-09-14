@@ -3,7 +3,6 @@ package refuseany
 import (
 	"fmt"
 	"log"
-	"sync"
 
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
@@ -15,11 +14,12 @@ import (
 	"golang.org/x/net/context"
 )
 
-type Plugin struct {
+type plug struct {
 	Next plugin.Handler
 }
 
-func (p *Plugin) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+// ServeDNS handles the DNS request and refuses if it's an ANY request
+func (p *plug) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 	if len(r.Question) != 1 {
 		// google DNS, bind and others do the same
 		return dns.RcodeFormatError, fmt.Errorf("Got DNS request with != 1 questions")
@@ -41,9 +41,9 @@ func (p *Plugin) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg)
 			return dns.RcodeServerFailure, err
 		}
 		return rcode, nil
-	} else {
-		return plugin.NextOrFailure(p.Name(), p.Next, ctx, w, r)
 	}
+
+	return plugin.NextOrFailure(p.Name(), p.Next, ctx, w, r)
 }
 
 func init() {
@@ -54,7 +54,7 @@ func init() {
 }
 
 func setup(c *caddy.Controller) error {
-	p := &Plugin{}
+	p := &plug{}
 	config := dnsserver.GetConfig(c)
 
 	config.AddPlugin(func(next plugin.Handler) plugin.Handler {
@@ -63,22 +63,20 @@ func setup(c *caddy.Controller) error {
 	})
 
 	c.OnStartup(func() error {
-		once.Do(func() {
-			m := dnsserver.GetConfig(c).Handler("prometheus")
-			if m == nil {
-				return
-			}
-			if x, ok := m.(*metrics.Metrics); ok {
-				x.MustRegister(ratelimited)
-			}
-		})
+		m := dnsserver.GetConfig(c).Handler("prometheus")
+		if m == nil {
+			return nil
+		}
+		if x, ok := m.(*metrics.Metrics); ok {
+			x.MustRegister(ratelimited)
+		}
 		return nil
 	})
 
 	return nil
 }
 
-func newDnsCounter(name string, help string) prometheus.Counter {
+func newDNSCounter(name string, help string) prometheus.Counter {
 	return prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: plugin.Namespace,
 		Subsystem: "refuseany",
@@ -88,9 +86,8 @@ func newDnsCounter(name string, help string) prometheus.Counter {
 }
 
 var (
-	ratelimited = newDnsCounter("refusedany_total", "Count of ANY requests that have been dropped")
+	ratelimited = newDNSCounter("refusedany_total", "Count of ANY requests that have been dropped")
 )
 
-func (d *Plugin) Name() string { return "refuseany" }
-
-var once sync.Once
+// Name returns name of the plugin as seen in Corefile and plugin.cfg
+func (p *plug) Name() string { return "refuseany" }

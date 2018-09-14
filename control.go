@@ -125,7 +125,11 @@ func handleStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "OK, PID %d\n", coreDNSCommand.Process.Pid)
+	_, err = fmt.Fprintf(w, "OK, PID %d\n", coreDNSCommand.Process.Pid)
+	if err != nil {
+		log.Printf("Couldn't write body in %s(): %s", _Func(), err)
+		return
+	}
 }
 
 func childwaiter() {
@@ -162,8 +166,11 @@ func handleStop(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errortext, 500)
 		return
 	}
-	// this err is ignorable, it shows exit status of coredns
-	fmt.Fprintf(w, "OK\n%s\n", exitstatus)
+	_, err = fmt.Fprintf(w, "OK\n%s\n", exitstatus)
+	if err != nil {
+		log.Printf("Couldn't write body in %s(): %s", _Func(), err)
+		return
+	}
 }
 
 func handleRestart(w http.ResponseWriter, r *http.Request) {
@@ -359,7 +366,12 @@ func handleQueryLogEnable(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errortext, http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintf(w, "OK\n")
+	_, err = fmt.Fprintf(w, "OK\n")
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusInternalServerError)
+	}
 }
 
 func handleQueryLogDisable(w http.ResponseWriter, r *http.Request) {
@@ -371,7 +383,13 @@ func handleQueryLogDisable(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errortext, http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintf(w, "OK\n")
+	_, err = fmt.Fprintf(w, "OK\n")
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusInternalServerError)
+	}
+
 }
 
 func handleStatsTop(w http.ResponseWriter, r *http.Request) {
@@ -450,7 +468,10 @@ func handleStatsTop(w http.ResponseWriter, r *http.Request) {
 		json.WriteString("\": {\n")
 		sorted := sortByValue(top)
 		for i, key := range sorted {
-			fmt.Fprintf(json, "    \"%s\": %d", key, top[key])
+			json.WriteString("    \"")
+			json.WriteString(key)
+			json.WriteString("\": ")
+			json.WriteString(strconv.Itoa(top[key]))
 			if i+1 != len(sorted) {
 				json.WriteByte(',')
 			}
@@ -500,7 +521,12 @@ func handleSetUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tellCoreDNSToReload()
-	fmt.Fprintf(w, "OK %d servers\n", len(hosts))
+	_, err = fmt.Fprintf(w, "OK %d servers\n", len(hosts))
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusInternalServerError)
+	}
 }
 
 func parseIPsOptionalPort(input string) []string {
@@ -533,7 +559,13 @@ func handleFilteringEnable(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errortext, http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintf(w, "OK\n")
+	_, err = fmt.Fprintf(w, "OK\n")
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusInternalServerError)
+	}
+
 }
 
 func handleFilteringDisable(w http.ResponseWriter, r *http.Request) {
@@ -545,7 +577,13 @@ func handleFilteringDisable(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errortext, http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintf(w, "OK\n")
+	_, err = fmt.Fprintf(w, "OK\n")
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusInternalServerError)
+	}
+
 }
 
 func handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
@@ -647,7 +685,12 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tellCoreDNSToReload()
-	fmt.Fprintf(w, "OK %d rules\n", filter.RulesCount)
+	_, err = fmt.Fprintf(w, "OK %d rules\n", filter.RulesCount)
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusInternalServerError)
+	}
 }
 
 func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
@@ -693,7 +736,13 @@ func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tellCoreDNSToReload()
-	fmt.Fprintf(w, "OK\n")
+	_, err = fmt.Fprintf(w, "OK\n")
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusInternalServerError)
+	}
+
 }
 
 func handleFilteringEnableURL(w http.ResponseWriter, r *http.Request) {
@@ -748,7 +797,13 @@ func handleFilteringEnableURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tellCoreDNSToReload()
-	fmt.Fprintf(w, "OK\n")
+	_, err = fmt.Fprintf(w, "OK\n")
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusInternalServerError)
+	}
+
 }
 
 func handleFilteringDisableURL(w http.ResponseWriter, r *http.Request) {
@@ -800,7 +855,13 @@ func handleFilteringDisableURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tellCoreDNSToReload()
-	fmt.Fprintf(w, "OK\n")
+	_, err = fmt.Fprintf(w, "OK\n")
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusInternalServerError)
+	}
+
 	// TODO: regenerate coredns config and tell coredns to reload it if it's running
 }
 
@@ -829,7 +890,13 @@ func handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tellCoreDNSToReload()
-	fmt.Fprintf(w, "OK\n")
+	_, err = fmt.Fprintf(w, "OK\n")
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusInternalServerError)
+	}
+
 }
 
 func handleFilteringRefresh(w http.ResponseWriter, r *http.Request) {
@@ -1015,7 +1082,13 @@ func handleSafeBrowsingEnable(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errortext, http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintf(w, "OK\n")
+	_, err = fmt.Fprintf(w, "OK\n")
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusInternalServerError)
+	}
+
 }
 
 func handleSafeBrowsingDisable(w http.ResponseWriter, r *http.Request) {
@@ -1027,7 +1100,13 @@ func handleSafeBrowsingDisable(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errortext, http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintf(w, "OK\n")
+	_, err = fmt.Fprintf(w, "OK\n")
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusInternalServerError)
+	}
+
 }
 
 func handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Request) {
@@ -1104,7 +1183,13 @@ func handleParentalEnable(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errortext, http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintf(w, "OK\n")
+	_, err = fmt.Fprintf(w, "OK\n")
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusInternalServerError)
+	}
+
 }
 
 func handleParentalDisable(w http.ResponseWriter, r *http.Request) {
@@ -1116,7 +1201,13 @@ func handleParentalDisable(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errortext, http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintf(w, "OK\n")
+	_, err = fmt.Fprintf(w, "OK\n")
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusInternalServerError)
+	}
+
 }
 
 func handleParentalStatus(w http.ResponseWriter, r *http.Request) {
@@ -1157,7 +1248,13 @@ func handleSafeSearchEnable(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errortext, http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintf(w, "OK\n")
+	_, err = fmt.Fprintf(w, "OK\n")
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusInternalServerError)
+	}
+
 }
 
 func handleSafeSearchDisable(w http.ResponseWriter, r *http.Request) {
@@ -1169,7 +1266,13 @@ func handleSafeSearchDisable(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errortext, http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintf(w, "OK\n")
+	_, err = fmt.Fprintf(w, "OK\n")
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusInternalServerError)
+	}
+
 }
 
 func handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {

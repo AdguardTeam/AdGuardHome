@@ -29,20 +29,20 @@ type configuration struct {
 }
 
 type coreDNSConfig struct {
-	Port                int `yaml:"port"`
 	binaryFile          string
 	coreFile            string
 	FilterFile          string   `yaml:"-"`
+	Port                int      `yaml:"port"`
 	FilteringEnabled    bool     `yaml:"filtering_enabled"`
 	SafeBrowsingEnabled bool     `yaml:"safebrowsing_enabled"`
 	SafeSearchEnabled   bool     `yaml:"safesearch_enabled"`
+	QueryLogEnabled     bool     `yaml:"querylog_enabled"`
 	ParentalEnabled     bool     `yaml:"parental_enabled"`
 	ParentalSensitivity int      `yaml:"parental_sensitivity"`
-	QueryLogEnabled     bool     `yaml:"querylog_enabled"`
 	Pprof               string   `yaml:"pprof"`
-	UpstreamDNS         []string `yaml:"upstream_dns"`
 	Cache               string   `yaml:"cache"`
 	Prometheus          string   `yaml:"prometheus"`
+	UpstreamDNS         []string `yaml:"upstream_dns"`
 }
 
 type filter struct {

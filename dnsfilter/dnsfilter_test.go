@@ -3,6 +3,8 @@ package dnsfilter
 import (
 	"net/http"
 	"net/http/httptest"
+	"path"
+	"strings"
 	"testing"
 	"time"
 
@@ -217,12 +219,6 @@ func TestAddRuleFail(t *testing.T) {
 	d.checkAddRuleFail(t, "lkfaojewhoawehfwacoefawr$@#$@3413841384")
 }
 
-func printMemStats(r runtime.MemStats) {
-	fmt.Printf("Alloc: %.2f, HeapAlloc: %.2f Mb, Sys: %.2f Mb, HeapSys: %.2f Mb\n",
-		float64(r.Alloc)/1024.0/1024.0, float64(r.HeapAlloc)/1024.0/1024.0,
-		float64(r.Sys)/1024.0/1024.0, float64(r.HeapSys)/1024.0/1024.0)
-}
-
 func TestLotsOfRulesMemoryUsage(t *testing.T) {
 	var start, afterLoad, end runtime.MemStats
 	runtime.GC()
@@ -251,10 +247,10 @@ func TestLotsOfRulesMemoryUsage(t *testing.T) {
 		if err != nil {
 			t.Errorf("Error while matching host %s: %s", testcase.host, err)
 		}
-		if ret.IsFiltered == false && ret.IsFiltered != testcase.match {
+		if !ret.IsFiltered && ret.IsFiltered != testcase.match {
 			t.Errorf("Expected hostname %s to not match", testcase.host)
 		}
-		if ret.IsFiltered == true && ret.IsFiltered != testcase.match {
+		if ret.IsFiltered && ret.IsFiltered != testcase.match {
 			t.Errorf("Expected hostname %s to match", testcase.host)
 		}
 	}
@@ -641,4 +637,33 @@ func BenchmarkSafeSearchParallel(b *testing.B) {
 
 func TestMain(m *testing.M) {
 	goleak.VerifyTestMain(m)
+}
+
+//
+// helper functions for debugging and testing
+//
+func purgeCaches() {
+	safebrowsingCache.Purge()
+	parentalCache.Purge()
+}
+
+func _Func() string {
+	pc := make([]uintptr, 10) // at least 1 entry needed
+	runtime.Callers(2, pc)
+	f := runtime.FuncForPC(pc[0])
+	return path.Base(f.Name())
+}
+
+func trace(format string, args ...interface{}) {
+	pc := make([]uintptr, 10) // at least 1 entry needed
+	runtime.Callers(2, pc)
+	f := runtime.FuncForPC(pc[0])
+	var buf strings.Builder
+	buf.WriteString(fmt.Sprintf("%s(): ", path.Base(f.Name())))
+	text := fmt.Sprintf(format, args...)
+	buf.WriteString(text)
+	if len(text) == 0 || text[len(text)-1] != '\n' {
+		buf.WriteRune('\n')
+	}
+	fmt.Print(buf.String())
 }
