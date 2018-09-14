@@ -955,7 +955,7 @@ func (filter *filter) update(now time.Time) (bool, error) {
 				continue
 			}
 			if err != nil {
-				log.Printf("Couldn't add rule %s: %s", err)
+				log.Printf("Couldn't add rule %s: %s", filter.URL, err)
 				return false, err
 			}
 			rulesCount++
