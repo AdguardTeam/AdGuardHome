@@ -14,41 +14,55 @@ export const toggleSettingStatus = createAction('SETTING_STATUS_TOGGLE');
 export const showSettingsFailure = createAction('SETTINGS_FAILURE_SHOW');
 
 export const toggleSetting = (settingKey, status) => async (dispatch) => {
-    switch (settingKey) {
-        case 'filtering':
-            if (status) {
-                await apiClient.disableFiltering();
-            } else {
-                await apiClient.enableFiltering();
-            }
-            dispatch(toggleSettingStatus({ settingKey }));
-            break;
-        case 'safebrowsing':
-            if (status) {
-                await apiClient.disableSafebrowsing();
-            } else {
-                await apiClient.enableSafebrowsing();
-            }
-            dispatch(toggleSettingStatus({ settingKey }));
-            break;
-        case 'parental':
-            if (status) {
-                await apiClient.disableParentalControl();
-            } else {
-                await apiClient.enableParentalControl();
-            }
-            dispatch(toggleSettingStatus({ settingKey }));
-            break;
-        case 'safesearch':
-            if (status) {
-                await apiClient.disableSafesearch();
-            } else {
-                await apiClient.enableSafesearch();
-            }
-            dispatch(toggleSettingStatus({ settingKey }));
-            break;
-        default:
-            break;
+    let successMessage = '';
+    try {
+        switch (settingKey) {
+            case 'filtering':
+                if (status) {
+                    successMessage = 'Disabled filtering';
+                    await apiClient.disableFiltering();
+                } else {
+                    successMessage = 'Enabled filtering';
+                    await apiClient.enableFiltering();
+                }
+                dispatch(toggleSettingStatus({ settingKey }));
+                break;
+            case 'safebrowsing':
+                if (status) {
+                    successMessage = 'Disabled safebrowsing';
+                    await apiClient.disableSafebrowsing();
+                } else {
+                    successMessage = 'Enabled safebrowsing';
+                    await apiClient.enableSafebrowsing();
+                }
+                dispatch(toggleSettingStatus({ settingKey }));
+                break;
+            case 'parental':
+                if (status) {
+                    successMessage = 'Disabled parental control';
+                    await apiClient.disableParentalControl();
+                } else {
+                    successMessage = 'Enabled parental control';
+                    await apiClient.enableParentalControl();
+                }
+                dispatch(toggleSettingStatus({ settingKey }));
+                break;
+            case 'safesearch':
+                if (status) {
+                    successMessage = 'Disabled safe search';
+                    await apiClient.disableSafesearch();
+                } else {
+                    successMessage = 'Enabled safe search';
+                    await apiClient.enableSafesearch();
+                }
+                dispatch(toggleSettingStatus({ settingKey }));
+                break;
+            default:
+                break;
+        }
+        dispatch(addSuccessToast(successMessage));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
     }
 };
 
@@ -77,7 +91,6 @@ export const initSettings = settingsList => async (dispatch) => {
         };
         dispatch(initSettingsSuccess({ settingsList: newSettingsList }));
     } catch (error) {
-        console.error(error);
         dispatch(addErrorToast({ error }));
         dispatch(initSettingsFailure());
     }
@@ -93,7 +106,6 @@ export const getDnsStatus = () => async (dispatch) => {
         const dnsStatus = await apiClient.getGlobalStatus();
         dispatch(dnsStatusSuccess(dnsStatus));
     } catch (error) {
-        console.error(error);
         dispatch(addErrorToast({ error }));
         dispatch(initSettingsFailure());
     }
@@ -109,7 +121,6 @@ export const enableDns = () => async (dispatch) => {
         await apiClient.startGlobalFiltering();
         dispatch(enableDnsSuccess());
     } catch (error) {
-        console.error(error);
         dispatch(addErrorToast({ error }));
         dispatch(enableDnsFailure());
     }
@@ -125,7 +136,6 @@ export const disableDns = () => async (dispatch) => {
         await apiClient.stopGlobalFiltering();
         dispatch(disableDnsSuccess());
     } catch (error) {
-        console.error(error);
         dispatch(disableDnsFailure(error));
         dispatch(addErrorToast({ error }));
     }
@@ -147,7 +157,6 @@ export const getStats = () => async (dispatch) => {
 
         dispatch(getStatsSuccess(processedStats));
     } catch (error) {
-        console.error(error);
         dispatch(addErrorToast({ error }));
         dispatch(getStatsFailure());
     }
@@ -167,7 +176,6 @@ export const getTopStats = () => async (dispatch, getState) => {
                 const stats = await apiClient.getGlobalStatsTop();
                 dispatch(getTopStatsSuccess(stats));
             } catch (error) {
-                console.error(error);
                 dispatch(addErrorToast({ error }));
                 dispatch(getTopStatsFailure(error));
             }
@@ -189,7 +197,6 @@ export const getLogs = () => async (dispatch, getState) => {
                 const logs = normalizeLogs(await apiClient.getQueryLog());
                 dispatch(getLogsSuccess(logs));
             } catch (error) {
-                console.error(error);
                 dispatch(addErrorToast({ error }));
                 dispatch(getLogsFailure(error));
             }
@@ -213,7 +220,6 @@ export const toggleLogStatus = queryLogEnabled => async (dispatch) => {
         await toggleMethod();
         dispatch(toggleLogStatusSuccess());
     } catch (error) {
-        console.error(error);
         dispatch(addErrorToast({ error }));
         dispatch(toggleLogStatusFailure());
     }
@@ -229,7 +235,6 @@ export const setRules = rules => async (dispatch) => {
         await apiClient.setRules(rules);
         dispatch(setRulesSuccess());
     } catch (error) {
-        console.error(error);
         dispatch(addErrorToast({ error }));
         dispatch(setRulesFailure());
     }
@@ -245,7 +250,6 @@ export const getFilteringStatus = () => async (dispatch) => {
         const status = await apiClient.getFilteringStatus();
         dispatch(getFilteringStatusSuccess({ status: normalizeFilteringStatus(status) }));
     } catch (error) {
-        console.error(error);
         dispatch(addErrorToast({ error }));
         dispatch(getFilteringStatusFailure());
     }
@@ -272,7 +276,6 @@ export const toggleFilterStatus = url => async (dispatch, getState) => {
         dispatch(toggleFilterSuccess(url));
         dispatch(getFilteringStatus());
     } catch (error) {
-        console.error(error);
         dispatch(addErrorToast({ error }));
         dispatch(toggleFilterFailure());
     }
@@ -289,7 +292,6 @@ export const refreshFilters = () => async (dispatch) => {
         dispatch(refreshFiltersSuccess);
         dispatch(getFilteringStatus());
     } catch (error) {
-        console.error(error);
         dispatch(addErrorToast({ error }));
         dispatch(refreshFiltersFailure());
     }
@@ -308,7 +310,6 @@ export const getStatsHistory = () => async (dispatch) => {
         const normalizedHistory = normalizeHistory(statsHistory);
         dispatch(getStatsHistorySuccess(normalizedHistory));
     } catch (error) {
-        console.error(error);
         dispatch(addErrorToast({ error }));
         dispatch(getStatsHistoryFailure());
     }
@@ -325,7 +326,6 @@ export const addFilter = url => async (dispatch) => {
         dispatch(addFilterSuccess(url));
         dispatch(getFilteringStatus());
     } catch (error) {
-        console.error(error);
         dispatch(addErrorToast({ error }));
         dispatch(addFilterFailure());
     }
@@ -343,7 +343,6 @@ export const removeFilter = url => async (dispatch) => {
         dispatch(removeFilterSuccess(url));
         dispatch(getFilteringStatus());
     } catch (error) {
-        console.error(error);
         dispatch(addErrorToast({ error }));
         dispatch(removeFilterFailure());
     }
@@ -363,7 +362,6 @@ export const downloadQueryLog = () => async (dispatch) => {
         data = await apiClient.downloadQueryLog();
         dispatch(downloadQueryLogSuccess());
     } catch (error) {
-        console.error(error);
         dispatch(addErrorToast({ error }));
         dispatch(downloadQueryLogFailure());
     }
@@ -381,7 +379,6 @@ export const setUpstream = url => async (dispatch) => {
         await apiClient.setUpstream(url);
         dispatch(setUpstreamSuccess());
     } catch (error) {
-        console.error(error);
         dispatch(addErrorToast({ error }));
         dispatch(setUpstreamFailure());
     }
