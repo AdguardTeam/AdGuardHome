@@ -17,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/AdguardTeam/AdguardDNS/dnsfilter"
 	"gopkg.in/asaskevich/govalidator.v4"
 )
 
@@ -593,11 +594,43 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "URL parameter is not valid request URL", 400)
 		return
 	}
-	// TODO: check for duplicates
+
+	// check for duplicates
+	for i := range config.Filters {
+		filter := &config.Filters[i]
+		if filter.URL == url {
+			errortext := fmt.Sprintf("Filter URL already added -- %s", url)
+			log.Println(errortext)
+			http.Error(w, errortext, http.StatusBadRequest)
+			return
+		}
+	}
+
 	var filter = filter{
 		Enabled: true,
 		URL:     url,
 	}
+	ok, err = filter.update(time.Now())
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't fetch filter from url %s: %s", url, err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusBadRequest)
+		return
+	}
+	if filter.RulesCount == 0 {
+		errortext := fmt.Sprintf("Filter at url %s has no rules (maybe it points to blank page?)", url)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusBadRequest)
+		return
+	}
+	if !ok {
+		errortext := fmt.Sprintf("Filter at url %s is invalid (maybe it points to blank page?)", url)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusBadRequest)
+		return
+	}
+
+	// URL is deemed valid, append it to filters, update config, write new filter file and tell coredns to reload it
 	config.Filters = append(config.Filters, filter)
 	err = writeAllConfigs()
 	if err != nil {
@@ -606,8 +639,6 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errortext, http.StatusInternalServerError)
 		return
 	}
-	// kick off refresh of rules from new URLs
-	refreshFiltersIfNeccessary()
 	err = writeFilterFile()
 	if err != nil {
 		errortext := fmt.Sprintf("Couldn't write filter file: %s", err)
@@ -616,7 +647,7 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tellCoreDNSToReload()
-	fmt.Fprintf(w, "OK\n")
+	fmt.Fprintf(w, "OK %d rules\n", filter.RulesCount)
 }
 
 func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
@@ -849,7 +880,7 @@ func refreshFiltersIfNeccessary() int {
 	updateCount := 0
 	for i := range config.Filters {
 		filter := &config.Filters[i] // otherwise we will be operating on a copy
-		updated, err := updateFilter(filter, now)
+		updated, err := filter.update(now)
 		if err != nil {
 			log.Printf("Failed to update filter %s: %s\n", filter.URL, err)
 			continue
@@ -870,7 +901,7 @@ func refreshFiltersIfNeccessary() int {
 	return updateCount
 }
 
-func updateFilter(filter *filter, now time.Time) (bool, error) {
+func (filter *filter) update(now time.Time) (bool, error) {
 	if !filter.Enabled {
 		return false, nil
 	}
@@ -909,6 +940,7 @@ func updateFilter(filter *filter, now time.Time) (bool, error) {
 	lines := strings.Split(string(body), "\n")
 	rulesCount := 0
 	seenTitle := false
+	d := dnsfilter.New()
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line[0] == '!' {
@@ -918,8 +950,20 @@ func updateFilter(filter *filter, now time.Time) (bool, error) {
 				seenTitle = true
 			}
 		} else if len(line) != 0 {
+			err = d.AddRule(line, 0)
+			if err == dnsfilter.ErrInvalidSyntax {
+				continue
+			}
+			if err != nil {
+				log.Printf("Couldn't add rule %s: %s", err)
+				return false, err
+			}
 			rulesCount++
 		}
+	}
+	if bytes.Equal(filter.contents, body) {
+		log.Printf("Filter contents of URL %s are same, not considering it as an update", filter.URL)
+		return false, nil
 	}
 	filter.RulesCount = rulesCount
 	filter.contents = body
