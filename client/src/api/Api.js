@@ -14,6 +14,7 @@ export default class Api {
             });
             return response.data;
         } catch (error) {
+            console.error(error);
             throw new Error(`${this.baseUrl}/${path} | ${error.response.data} | ${error.response.status}`);
         }
     }

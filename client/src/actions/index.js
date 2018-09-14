@@ -16,6 +16,7 @@ export const showSettingsFailure = createAction('SETTINGS_FAILURE_SHOW');
 export const toggleSetting = (settingKey, status) => async (dispatch) => {
     let successMessage = '';
     try {
+        // TODO move setting keys to constants
         switch (settingKey) {
             case 'filtering':
                 if (status) {
