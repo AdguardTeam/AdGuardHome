@@ -13,6 +13,7 @@ import Settings from '../../containers/Settings';
 import Filters from '../../containers/Filters';
 import Logs from '../../containers/Logs';
 import Footer from '../ui/Footer';
+import Toasts from '../Toasts';
 
 import Status from '../ui/Status';
 
@@ -49,6 +50,7 @@ class App extends Component {
                         }
                     </div>
                     <Footer />
+                    <Toasts />
                 </Fragment>
             </HashRouter>
         );
@@ -60,6 +62,7 @@ App.propTypes = {
     enableDns: PropTypes.func,
     dashboard: PropTypes.object,
     isCoreRunning: PropTypes.bool,
+    error: PropTypes.string,
 };
 
 export default App;
