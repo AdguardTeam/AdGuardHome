@@ -356,6 +356,8 @@ func TestParentalControl(t *testing.T) {
 	if stats.Parental.Requests != l {
 		t.Errorf("Parental lookup negative cache is not working")
 	}
+
+	d.checkMatchEmpty(t, "api.jquery.com")
 }
 
 func TestSafeSearch(t *testing.T) {

@@ -542,6 +542,7 @@ func (d *Dnsfilter) checkParental(host string) (Result, error) {
 			Blocked   bool   `json:"blocked"`
 			ClientTTL int    `json:"clientTtl"`
 			Reason    string `json:"reason"`
+			Hash      string `json:"hash"`
 		}
 		err := json.Unmarshal(body, &m)
 		if err != nil {
@@ -553,6 +554,9 @@ func (d *Dnsfilter) checkParental(host string) (Result, error) {
 		result := Result{}
 
 		for i := range m {
+			if !hashes[m[i].Hash] {
+				continue
+			}
 			if m[i].Blocked {
 				result.IsFiltered = true
 				result.Reason = FilteredParental
