@@ -12,15 +12,19 @@ const DOWNLOAD_LOG_FILENAME = 'dns-logs.txt';
 
 class Logs extends Component {
     componentDidMount() {
-        // get logs on initialization if queryLogIsEnabled
-        if (this.props.dashboard.queryLogEnabled) {
-            this.props.getLogs();
-        }
+        this.getLogs();
     }
 
     componentDidUpdate(prevProps) {
         // get logs when queryLog becomes enabled
         if (this.props.dashboard.queryLogEnabled && !prevProps.dashboard.queryLogEnabled) {
+            this.props.getLogs();
+        }
+    }
+
+    getLogs = () => {
+        // get logs on initialization if queryLogIsEnabled
+        if (this.props.dashboard.queryLogEnabled) {
             this.props.getLogs();
         }
     }
@@ -144,11 +148,19 @@ class Logs extends Component {
                     onClick={() => this.props.toggleLogStatus(queryLogEnabled)}
                 >{queryLogEnabled ? 'Disable log' : 'Enable log'}</button>
                 {queryLogEnabled &&
-                <button
-                    className="btn btn-primary btn-standart"
-                    type="submit"
-                    onClick={this.handleDownloadButton}
-                >Download log file</button> }
+                    <button
+                        className="btn btn-primary btn-standart mr-2"
+                        type="submit"
+                        onClick={this.handleDownloadButton}
+                    >Download log file</button>
+                }
+                {queryLogEnabled &&
+                    <button
+                        className="btn btn-outline-primary btn-standart"
+                        type="submit"
+                        onClick={this.getLogs}
+                    >Refresh</button>
+                }
             </div>);
     }
 
