@@ -4,7 +4,6 @@ import (
 	"errors"
 	"log"
 	"strconv"
-	"sync"
 	"time"
 
 	// ratelimiting and per-ip buckets
@@ -29,8 +28,8 @@ var (
 	tokenBuckets = cache.New(time.Hour, time.Hour)
 )
 
-// main function
-func (p *Plugin) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+// ServeDNS handles the DNS request and refuses if it's an beyind specified ratelimit
+func (p *plug) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 	state := request.Request{W: w, Req: r}
 	ip := state.IP()
 	allow, err := p.allowRequest(ip)
@@ -44,7 +43,7 @@ func (p *Plugin) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg)
 	return plugin.NextOrFailure(p.Name(), p.Next, ctx, w, r)
 }
 
-func (p *Plugin) allowRequest(ip string) (bool, error) {
+func (p *plug) allowRequest(ip string) (bool, error) {
 	if _, found := tokenBuckets.Get(ip); !found {
 		tokenBuckets.Set(ip, rate.New(p.ratelimit, time.Second), time.Hour)
 	}
@@ -59,7 +58,7 @@ func (p *Plugin) allowRequest(ip string) (bool, error) {
 	}
 
 	rl, ok := value.(*rate.RateLimiter)
-	if ok == false {
+	if !ok {
 		text := "SHOULD NOT HAPPEN: non-bool entry found in safebrowsing lookup cache"
 		log.Println(text)
 		err := errors.New(text)
@@ -80,7 +79,7 @@ func init() {
 	})
 }
 
-type Plugin struct {
+type plug struct {
 	Next plugin.Handler
 
 	// configuration for creating above
@@ -88,7 +87,7 @@ type Plugin struct {
 }
 
 func setup(c *caddy.Controller) error {
-	p := &Plugin{ratelimit: defaultRatelimit}
+	p := &plug{ratelimit: defaultRatelimit}
 	config := dnsserver.GetConfig(c)
 
 	for c.Next() {
@@ -109,22 +108,20 @@ func setup(c *caddy.Controller) error {
 	})
 
 	c.OnStartup(func() error {
-		once.Do(func() {
-			m := dnsserver.GetConfig(c).Handler("prometheus")
-			if m == nil {
-				return
-			}
-			if x, ok := m.(*metrics.Metrics); ok {
-				x.MustRegister(ratelimited)
-			}
-		})
+		m := dnsserver.GetConfig(c).Handler("prometheus")
+		if m == nil {
+			return nil
+		}
+		if x, ok := m.(*metrics.Metrics); ok {
+			x.MustRegister(ratelimited)
+		}
 		return nil
 	})
 
 	return nil
 }
 
-func newDnsCounter(name string, help string) prometheus.Counter {
+func newDNSCounter(name string, help string) prometheus.Counter {
 	return prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: plugin.Namespace,
 		Subsystem: "ratelimit",
@@ -134,9 +131,8 @@ func newDnsCounter(name string, help string) prometheus.Counter {
 }
 
 var (
-	ratelimited = newDnsCounter("dropped_total", "Count of requests that have been dropped because of rate limit")
+	ratelimited = newDNSCounter("dropped_total", "Count of requests that have been dropped because of rate limit")
 )
 
-func (d *Plugin) Name() string { return "ratelimit" }
-
-var once sync.Once
+// Name returns name of the plugin as seen in Corefile and plugin.cfg
+func (p *plug) Name() string { return "ratelimit" }

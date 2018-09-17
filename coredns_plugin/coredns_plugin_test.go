@@ -46,10 +46,10 @@ func TestEtcHostsParse(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := tmpfile.Write(text); err != nil {
+	if _, err = tmpfile.Write(text); err != nil {
 		t.Fatal(err)
 	}
-	if err := tmpfile.Close(); err != nil {
+	if err = tmpfile.Close(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -80,10 +80,10 @@ func TestEtcHostsFilter(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := tmpfile.Write(text); err != nil {
+	if _, err = tmpfile.Write(text); err != nil {
 		t.Fatal(err)
 	}
-	if err := tmpfile.Close(); err != nil {
+	if err = tmpfile.Close(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -127,10 +127,10 @@ func TestEtcHostsFilter(t *testing.T) {
 			t.Fatalf("ServeDNS return value for host %s has rcode %d that does not match captured rcode %d", testcase.host, rcode, rrw.Rcode)
 		}
 		filtered := rcode == dns.RcodeNameError
-		if testcase.filtered == true && testcase.filtered != filtered {
+		if testcase.filtered && testcase.filtered != filtered {
 			t.Fatalf("Host %s expected to be filtered, instead it is not filtered", testcase.host)
 		}
-		if testcase.filtered == false && testcase.filtered != filtered {
+		if !testcase.filtered && testcase.filtered != filtered {
 			t.Fatalf("Host %s expected to be not filtered, instead it is filtered", testcase.host)
 		}
 	}

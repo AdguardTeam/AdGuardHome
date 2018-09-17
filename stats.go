@@ -26,7 +26,6 @@ const (
 	statsHistoryElements = 60 + 1 // +1 for calculating delta
 	totalRequests        = `coredns_dns_request_count_total`
 	filteredTotal        = `coredns_dnsfilter_filtered_total`
-	filteredLists        = `coredns_dnsfilter_filtered_lists_total`
 	filteredSafebrowsing = `coredns_dnsfilter_filtered_safebrowsing_total`
 	filteredSafesearch   = `coredns_dnsfilter_safesearch_total`
 	filteredParental     = `coredns_dnsfilter_filtered_parental_total`
@@ -124,9 +123,10 @@ func collectStats() {
 		defer resp.Body.Close()
 	}
 	if err != nil {
-		if isConnRefused(err) == false {
-			log.Printf("Couldn't get coredns metrics: %T %s\n", err, err)
+		if isConnRefused(err) {
+			return
 		}
+		log.Printf("Couldn't get coredns metrics: %T %s\n", err, err)
 		return
 	}
 

@@ -31,7 +31,10 @@ const defaultSafebrowsingURL = "http://%s/safebrowsing-lookup-hash.html?prefixes
 const defaultParentalServer = "pctrl.adguard.com"
 const defaultParentalURL = "http://%s/check-parental-control-hash?prefixes=%s&sensitivity=%d"
 
+// ErrInvalidSyntax is returned by AddRule when rule is invalid
 var ErrInvalidSyntax = errors.New("dnsfilter: invalid rule syntax")
+
+// ErrInvalidParental is returned by EnableParental when sensitivity is not a valid value
 var ErrInvalidParental = errors.New("dnsfilter: invalid parental sensitivity, must be either 3, 10, 13 or 17")
 
 const shortcutLength = 6 // used for rule search optimization, 6 hits the sweet spot
@@ -39,16 +42,16 @@ const shortcutLength = 6 // used for rule search optimization, 6 hits the sweet 
 const enableFastLookup = true         // flag for debugging, must be true in production for faster performance
 const enableDelayedCompilation = true // flag for debugging, must be true in production for faster performance
 
-type Config struct {
+type config struct {
+	parentalServer      string
+	parentalSensitivity int // must be either 3, 10, 13 or 17
+	parentalEnabled     bool
 	safeSearchEnabled   bool
 	safeBrowsingEnabled bool
 	safeBrowsingServer  string
-	parentalEnabled     bool
-	parentalServer      string
-	parentalSensitivity int // must be either 3, 10, 13 or 17
 }
 
-type Rule struct {
+type rule struct {
 	text         string // text without @@ decorators or $ options
 	shortcut     string // for speeding up lookup
 	originalText string // original text for reporting back to applications
@@ -57,9 +60,9 @@ type Rule struct {
 	options []string // optional options after $
 
 	// parsed options
+	apps        []string
 	isWhitelist bool
 	isImportant bool
-	apps        []string
 
 	// user-supplied data
 	listID uint32
@@ -70,6 +73,7 @@ type Rule struct {
 	sync.RWMutex
 }
 
+// LookupStats store stats collected during safebrowsing or parental checks
 type LookupStats struct {
 	Requests   uint64 // number of HTTP requests that were sent
 	CacheHits  uint64 // number of lookups that didn't need HTTP requests
@@ -77,6 +81,7 @@ type LookupStats struct {
 	PendingMax int64  // maximum number of pending HTTP requests
 }
 
+// Stats store LookupStats for both safebrowsing and parental
 type Stats struct {
 	Safebrowsing LookupStats
 	Parental     LookupStats
@@ -84,7 +89,7 @@ type Stats struct {
 
 // Dnsfilter holds added rules and performs hostname matches against the rules
 type Dnsfilter struct {
-	storage      map[string]*Rule // rule storage, not used for matching, needs to be key->value
+	storage      map[string]*rule // rule storage, not used for matching, needs to be key->value
 	storageMutex sync.RWMutex
 
 	// rules are checked against these lists in the order defined here
@@ -96,12 +101,12 @@ type Dnsfilter struct {
 	client    http.Client     // handle for http client -- single instance as recommended by docs
 	transport *http.Transport // handle for http transport used by http client
 
-	config Config
+	config config
 }
 
 //go:generate stringer -type=Reason
 
-// filtered/notfiltered reason
+// Reason holds an enum detailing why it was filtered or not filtered
 type Reason int
 
 const (
@@ -125,13 +130,14 @@ var (
 	parentalCache     = gcache.New(defaultCacheSize).LRU().Expiration(defaultCacheTime).Build()
 )
 
-// search result
+// Result holds state of hostname check
 type Result struct {
 	IsFiltered bool
 	Reason     Reason
 	Rule       string
 }
 
+// Matched can be used to see if any match at all was found, no matter filtered or not
 func (r Reason) Matched() bool {
 	return r != NotFilteredNotFound
 }
@@ -188,19 +194,19 @@ func (d *Dnsfilter) CheckHost(host string) (Result, error) {
 //
 
 type rulesTable struct {
-	rulesByShortcut map[string][]*Rule
-	rulesLeftovers  []*Rule
+	rulesByShortcut map[string][]*rule
+	rulesLeftovers  []*rule
 	sync.RWMutex
 }
 
 func newRulesTable() *rulesTable {
 	return &rulesTable{
-		rulesByShortcut: make(map[string][]*Rule),
-		rulesLeftovers:  make([]*Rule, 0),
+		rulesByShortcut: make(map[string][]*rule),
+		rulesLeftovers:  make([]*rule, 0),
 	}
 }
 
-func (r *rulesTable) Add(rule *Rule) {
+func (r *rulesTable) Add(rule *rule) {
 	r.Lock()
 	if len(rule.shortcut) == shortcutLength && enableFastLookup {
 		r.rulesByShortcut[rule.shortcut] = append(r.rulesByShortcut[rule.shortcut], rule)
@@ -295,7 +301,7 @@ func findOptionIndex(text string) int {
 	return -1
 }
 
-func (rule *Rule) extractOptions() error {
+func (rule *rule) extractOptions() error {
 	optIndex := findOptionIndex(rule.text)
 	if optIndex == 0 { // starts with $
 		return ErrInvalidSyntax
@@ -333,7 +339,7 @@ func (rule *Rule) extractOptions() error {
 	return nil
 }
 
-func (rule *Rule) parseOptions() error {
+func (rule *rule) parseOptions() error {
 	err := rule.extractOptions()
 	if err != nil {
 		return err
@@ -354,7 +360,7 @@ func (rule *Rule) parseOptions() error {
 	return nil
 }
 
-func (rule *Rule) extractShortcut() {
+func (rule *rule) extractShortcut() {
 	// regex rules have no shortcuts
 	if rule.text[0] == '/' && rule.text[len(rule.text)-1] == '/' {
 		return
@@ -379,7 +385,7 @@ func (rule *Rule) extractShortcut() {
 	rule.shortcut = strings.ToLower(longestField)
 }
 
-func (rule *Rule) compile() error {
+func (rule *rule) compile() error {
 	rule.RLock()
 	isCompiled := rule.compiled != nil
 	rule.RUnlock()
@@ -404,7 +410,7 @@ func (rule *Rule) compile() error {
 	return nil
 }
 
-func (rule *Rule) match(host string) (Result, error) {
+func (rule *rule) match(host string) (Result, error) {
 	res := Result{}
 	err := rule.compile()
 	if err != nil {
@@ -442,7 +448,7 @@ func getCachedReason(cache gcache.Cache, host string) (result Result, isFound bo
 
 	// since it can be something else, validate that it belongs to proper type
 	cachedValue, ok := rawValue.(Result)
-	if ok == false {
+	if !ok {
 		// this is not our type -- error
 		text := "SHOULD NOT HAPPEN: entry with invalid type was found in lookup cache"
 		log.Println(text)
@@ -458,7 +464,7 @@ func hostnameToHashParam(host string, addslash bool) (string, map[string]bool) {
 	var hashparam bytes.Buffer
 	hashes := map[string]bool{}
 	tld, icann := publicsuffix.PublicSuffix(host)
-	if icann == false {
+	if !icann {
 		// private suffixes like cloudfront.net
 		tld = ""
 	}
@@ -616,7 +622,10 @@ func (d *Dnsfilter) lookupCommon(host string, lookupstats *LookupStats, cache gc
 	switch {
 	case resp.StatusCode == 204:
 		// empty result, save cache
-		cache.Set(host, Result{})
+		err = cache.Set(host, Result{})
+		if err != nil {
+			return Result{}, err
+		}
 		return Result{}, nil
 	case resp.StatusCode != 200:
 		// error, don't save cache
@@ -629,7 +638,10 @@ func (d *Dnsfilter) lookupCommon(host string, lookupstats *LookupStats, cache gc
 		return Result{}, err
 	}
 
-	cache.Set(host, result)
+	err = cache.Set(host, result)
+	if err != nil {
+		return Result{}, err
+	}
 	return result, nil
 }
 
@@ -652,7 +664,7 @@ func (d *Dnsfilter) AddRule(input string, filterListID uint32) error {
 		return ErrInvalidSyntax
 	}
 
-	rule := Rule{
+	rule := rule{
 		text:         input, // will be modified
 		originalText: input,
 		listID:       filterListID,
@@ -716,10 +728,11 @@ func (d *Dnsfilter) matchHost(host string) (Result, error) {
 // lifecycle helper functions
 //
 
+// New creates properly initialized DNS Filter that is ready to be used
 func New() *Dnsfilter {
 	d := new(Dnsfilter)
 
-	d.storage = make(map[string]*Rule)
+	d.storage = make(map[string]*rule)
 	d.important = newRulesTable()
 	d.whiteList = newRulesTable()
 	d.blackList = newRulesTable()
@@ -743,6 +756,8 @@ func New() *Dnsfilter {
 	return d
 }
 
+// Destroy is optional if you want to tidy up goroutines without waiting for them to die off
+// right now it closes idle HTTP connections if there are any
 func (d *Dnsfilter) Destroy() {
 	d.transport.CloseIdleConnections()
 }
@@ -751,10 +766,12 @@ func (d *Dnsfilter) Destroy() {
 // config manipulation helpers
 //
 
+// EnableSafeBrowsing turns on checking hostnames in malware/phishing database
 func (d *Dnsfilter) EnableSafeBrowsing() {
 	d.config.safeBrowsingEnabled = true
 }
 
+// EnableParental turns on checking hostnames for containing adult content
 func (d *Dnsfilter) EnableParental(sensitivity int) error {
 	switch sensitivity {
 	case 3, 10, 13, 17:
@@ -766,10 +783,13 @@ func (d *Dnsfilter) EnableParental(sensitivity int) error {
 	}
 }
 
+// EnableSafeSearch turns on enforcing safesearch in search engines
+// only used in coredns plugin and requires caller to use SafeSearchDomain()
 func (d *Dnsfilter) EnableSafeSearch() {
 	d.config.safeSearchEnabled = true
 }
 
+// SetSafeBrowsingServer lets you optionally change hostname of safesearch lookup
 func (d *Dnsfilter) SetSafeBrowsingServer(host string) {
 	if len(host) == 0 {
 		d.config.safeBrowsingServer = defaultSafebrowsingServer
@@ -778,38 +798,35 @@ func (d *Dnsfilter) SetSafeBrowsingServer(host string) {
 	}
 }
 
+// SetHTTPTimeout lets you optionally change timeout during lookups
 func (d *Dnsfilter) SetHTTPTimeout(t time.Duration) {
 	d.client.Timeout = t
 }
 
+// ResetHTTPTimeout resets lookup timeouts
 func (d *Dnsfilter) ResetHTTPTimeout() {
 	d.client.Timeout = defaultHTTPTimeout
 }
 
+// SafeSearchDomain returns replacement address for search engine
 func (d *Dnsfilter) SafeSearchDomain(host string) (string, bool) {
-	if d.config.safeSearchEnabled == false {
-		return "", false
+	if d.config.safeSearchEnabled {
+		val, ok := safeSearchDomains[host]
+		return val, ok
 	}
-	val, ok := safeSearchDomains[host]
-	return val, ok
+	return "", false
 }
 
 //
 // stats
 //
 
+// GetStats return dns filtering stats since startup
 func (d *Dnsfilter) GetStats() Stats {
 	return stats
 }
 
+// Count returns number of rules added to filter
 func (d *Dnsfilter) Count() int {
 	return len(d.storage)
-}
-
-//
-// cache control, right now needed only for tests
-//
-func purgeCaches() {
-	safebrowsingCache.Purge()
-	parentalCache.Purge()
 }

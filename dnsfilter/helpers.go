@@ -1,9 +1,6 @@
 package dnsfilter
 
 import (
-	"fmt"
-	"path"
-	"runtime"
 	"strings"
 	"sync/atomic"
 )
@@ -49,33 +46,9 @@ func updateMax(valuePtr *int64, maxPtr *int64) {
 			break
 		}
 		swapped := atomic.CompareAndSwapInt64(maxPtr, max, current)
-		if swapped == true {
+		if swapped {
 			break
 		}
 		// swapping failed because value has changed after reading, try again
 	}
-}
-
-//
-// helper functions for debugging and testing
-//
-func _Func() string {
-	pc := make([]uintptr, 10) // at least 1 entry needed
-	runtime.Callers(2, pc)
-	f := runtime.FuncForPC(pc[0])
-	return path.Base(f.Name())
-}
-
-func trace(format string, args ...interface{}) {
-	pc := make([]uintptr, 10) // at least 1 entry needed
-	runtime.Callers(2, pc)
-	f := runtime.FuncForPC(pc[0])
-	var buf strings.Builder
-	buf.WriteString(fmt.Sprintf("%s(): ", path.Base(f.Name())))
-	text := fmt.Sprintf(format, args...)
-	buf.WriteString(text)
-	if len(text) == 0 || text[len(text)-1] != '\n' {
-		buf.WriteRune('\n')
-	}
-	fmt.Print(buf.String())
 }
