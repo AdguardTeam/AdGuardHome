@@ -13,10 +13,14 @@ import Loading from '../ui/Loading';
 
 class Dashboard extends Component {
     componentDidMount() {
+        this.getAllStats();
+    }
+
+    getAllStats = () => {
         this.props.getStats();
         this.props.getStatsHistory();
         this.props.getTopStats();
-    }
+    };
 
     render() {
         const { dashboard } = this.props;
@@ -26,8 +30,8 @@ class Dashboard extends Component {
             dashboard.processingStatsHistory ||
             dashboard.processingTopStats;
 
-        const refreshFullButton = <button type="button" className="btn btn-outline-primary btn-sm" onClick={() => this.componentDidMount()}>Refresh statistics</button>;
-        const refreshButton = <button type="button" className="btn btn-outline-primary btn-sm card-refresh" onClick={() => this.componentDidMount()}></button>;
+        const refreshFullButton = <button type="button" className="btn btn-outline-primary btn-sm" onClick={() => this.getAllStats()}>Refresh statistics</button>;
+        const refreshButton = <button type="button" className="btn btn-outline-primary btn-sm card-refresh" onClick={() => this.getAllStats()} />;
 
         return (
             <Fragment>
