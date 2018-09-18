@@ -21,6 +21,8 @@ type configuration struct {
 
 	BindHost  string        `yaml:"bind_host"`
 	BindPort  int           `yaml:"bind_port"`
+	AuthName  string        `yaml:"auth_name"`
+	AuthPass  string        `yaml:"auth_pass"`
 	CoreDNS   coreDNSConfig `yaml:"coredns"`
 	Filters   []filter      `yaml:"filters"`
 	UserRules []string      `yaml:"user_rules"`
