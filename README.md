@@ -48,7 +48,7 @@ sudo ./AdguardDNS
 
 Now open the browser and point it to http://localhost:3000/ to control AdGuard DNS server.
 
-## Running without superuser
+### Running without superuser
 
 You can run it without superuser privileges, but you need to instruct it to use other port rather than 53. You can do that by opening `AdguardDNS.yaml` and adding this line:
 ```yaml
@@ -58,10 +58,36 @@ coredns:
 
 If the file does not exist, create it and put these two lines down.
 
+### Additional configuration
+
+Open first execution, a file `AdguardDNS.yaml` will be created, with default values written in it. You can modify the file while AdGuard DNS is not running, otherwise any changes to the file will be lost because they will be overwritten by the server.
+
+Explanation of settings:
+
+ * `bind_host` -- Web interface IP address to listen on
+ * `bind_port` -- Web interface IP port to listen on
+ * `auth_name` -- Web interface optional authorization username
+ * `auth_pass` -- Web interface optional authorization password
+ * `coredns` -- CoreDNS configuration section
+   * `port` -- DNS server port to listen on
+   * `filtering_enabled` -- Filtering of DNS requests based on filter lists
+   * `safebrowsing_enabled` -- Filtering of DNS requests based on safebrowsing
+   * `safesearch_enabled` -- Enforcing safe search when accessing search engines
+   * `parental_enabled` -- Filtering of DNS requests based on parental safety
+   * `parental_sensitivity` -- Age group for filtering based on parental safety
+   * `querylog_enabled` -- Query logging, also used to calculate top 50 clients, blocked domains and requested domains for stats
+   * `upstream_dns` -- List of upstream DNS servers
+ * `filters` -- List of filters, each filter has these values:
+   * `url` -- URL pointing to the filter contents
+   * `enabled` -- Enable/disable current filter
+ * `user_rules` -- User-defined filtering rules
+
+Removing an entry from settings file will reset it to default value. Deleting the file will reset all settings to default values.
+
 ## Contributing
 
 You are welcome to fork this repository, make your changes and submit a pull request — https://github.com/AdguardTeam/AdguardDNS/pulls
 
 ## Reporting issues
 
-If you come across any problem, or have a suggestion, head to [this page](https://github.com/AdguardTeam/AdguardDNS/issues) and click on the New issue button.
+If you come across any problem, or have a suggestion, head to [this page](https://github.com/AdguardTeam/AdguardDNS/issues) and click on the `New issue` button.
