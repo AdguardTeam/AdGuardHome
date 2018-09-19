@@ -22,6 +22,7 @@
     "react-dom": "^16.4.0",
     "react-modal": "^3.4.5",
     "react-redux": "^5.0.7",
+    "react-redux-loading-bar": "^4.0.7",
     "react-router-dom": "^4.2.2",
     "react-table": "^6.8.6",
     "react-transition-group": "^2.4.0",

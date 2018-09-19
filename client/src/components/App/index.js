@@ -1,6 +1,7 @@
 import React, { Component, Fragment } from 'react';
 import { HashRouter, Route } from 'react-router-dom';
 import PropTypes from 'prop-types';
+import LoadingBar from 'react-redux-loading-bar';
 
 import 'react-table/react-table.css';
 import '../ui/Tabler.css';
@@ -31,6 +32,7 @@ class App extends Component {
         return (
             <HashRouter hashType='noslash'>
                 <Fragment>
+                    <LoadingBar className="loading-bar" updateTime={1000} />
                     <Route component={Header} />
                     <div className="container container--wrap">
                         {!dashboard.processing && !dashboard.isCoreRunning &&

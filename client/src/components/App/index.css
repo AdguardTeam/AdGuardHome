@@ -17,3 +17,10 @@ body {
         min-height: calc(100vh - 117px);
     }
 }
+
+.loading-bar {
+    position: absolute;
+    z-index: 103;
+    height: 3px;
+    background: linear-gradient(45deg, rgba(99, 125, 120, 1) 0%, rgba(88, 177, 101, 1) 100%);
+}

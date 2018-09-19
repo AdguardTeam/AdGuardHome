@@ -20,7 +20,7 @@ class Dashboard extends Component {
         this.props.getStats();
         this.props.getStatsHistory();
         this.props.getTopStats();
-    };
+    }
 
     render() {
         const { dashboard } = this.props;

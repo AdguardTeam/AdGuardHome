@@ -1,5 +1,6 @@
 import { combineReducers } from 'redux';
 import { handleActions } from 'redux-actions';
+import { loadingBarReducer } from 'react-redux-loading-bar';
 import nanoid from 'nanoid';
 
 import * as actions from '../actions';
@@ -207,4 +208,5 @@ export default combineReducers({
     queryLogs,
     filtering,
     toasts,
+    loadingBar: loadingBarReducer,
 });
