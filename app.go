@@ -119,7 +119,7 @@ func main() {
 	runStatsCollectors()
 	runFilterRefreshers()
 
-	http.Handle("/", http.FileServer(box))
+	http.Handle("/", optionalAuthHandler(http.FileServer(box)))
 	registerControlHandlers()
 
 	err = startDNSServer()
