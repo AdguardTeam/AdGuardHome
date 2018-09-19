@@ -1,5 +1,6 @@
 import { createAction } from 'redux-actions';
 import round from 'lodash/round';
+import { showLoading, hideLoading } from 'react-redux-loading-bar';
 
 import { normalizeHistory, normalizeFilteringStatus, normalizeLogs } from '../helpers/helpers';
 import Api from '../api/Api';
@@ -212,13 +213,17 @@ export const toggleLogStatusSuccess = createAction('TOGGLE_LOGS_SUCCESS');
 export const toggleLogStatus = queryLogEnabled => async (dispatch) => {
     dispatch(toggleLogStatusRequest());
     let toggleMethod;
+    let successMessage;
     if (queryLogEnabled) {
         toggleMethod = apiClient.disableQueryLog.bind(apiClient);
+        successMessage = 'disabled';
     } else {
         toggleMethod = apiClient.enableQueryLog.bind(apiClient);
+        successMessage = 'enabled';
     }
     try {
         await toggleMethod();
+        dispatch(addSuccessToast(`Query log ${successMessage}`));
         dispatch(toggleLogStatusSuccess());
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -234,6 +239,7 @@ export const setRules = rules => async (dispatch) => {
     dispatch(setRulesRequest());
     try {
         await apiClient.setRules(rules);
+        dispatch(addSuccessToast('Custom rules saved'));
         dispatch(setRulesSuccess());
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -288,13 +294,27 @@ export const refreshFiltersSuccess = createAction('FILTERING_REFRESH_SUCCESS');
 
 export const refreshFilters = () => async (dispatch) => {
     dispatch(refreshFiltersRequest);
+    dispatch(showLoading());
     try {
-        await apiClient.refreshFilters();
+        const refreshText = await apiClient.refreshFilters();
         dispatch(refreshFiltersSuccess);
+
+        if (refreshText.includes('OK')) {
+            if (refreshText.includes('OK 0')) {
+                dispatch(addSuccessToast('All filters are already up-to-date'));
+            } else {
+                dispatch(addSuccessToast(refreshText.replace(/OK /g, '')));
+            }
+        } else {
+            dispatch(addErrorToast({ error: refreshText }));
+        }
+
         dispatch(getFilteringStatus());
+        dispatch(hideLoading());
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(refreshFiltersFailure());
+        dispatch(hideLoading());
     }
 };
 
@@ -378,6 +398,7 @@ export const setUpstream = url => async (dispatch) => {
     dispatch(setUpstreamRequest());
     try {
         await apiClient.setUpstream(url);
+        dispatch(addSuccessToast('Upstream DNS servers saved'));
         dispatch(setUpstreamSuccess());
     } catch (error) {
         dispatch(addErrorToast({ error }));
