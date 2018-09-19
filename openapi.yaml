@@ -160,6 +160,35 @@ paths:
             responses:
                 200:
                     description: OK
+    /test_upstream_dns:
+        post:
+            tags:
+                - global
+            operationId: testUpstreamDNS
+            summary: 'Test upstream DNS'
+            consumes:
+                - text/plain
+            parameters:
+                -   in: body
+                    name: upstream
+                    description: 'Upstream servers, separated by newline or space, port is optional after colon'
+                    schema:
+                        type: string
+                        example: |
+                            1.1.1.1
+                            1.0.0.1
+                            8.8.8.8 8.8.4.4
+                            192.168.1.104:53535
+            responses:
+                200:
+                    description: 'Status of testing each requested server, with "OK" meaning that server works, any other text means an error.'
+                    examples:
+                        application/json:
+                            1.1.1.1: OK
+                            1.0.0.1: OK
+                            8.8.8.8: OK
+                            8.8.4.4: OK
+                            "192.168.1.104:53535": "Couldn't communicate with DNS server"
     /stats_top:
         get:
             tags:

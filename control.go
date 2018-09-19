@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdguardDNS/dnsfilter"
+	"github.com/miekg/dns"
 	"gopkg.in/asaskevich/govalidator.v4"
 )
 
@@ -527,6 +528,95 @@ func handleSetUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 		log.Println(errortext)
 		http.Error(w, errortext, http.StatusInternalServerError)
 	}
+}
+
+func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		errortext := fmt.Sprintf("Failed to read request body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, 400)
+		return
+	}
+	hosts := strings.Fields(string(body))
+
+	if len(hosts) == 0 {
+		errortext := fmt.Sprintf("No servers specified")
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusBadRequest)
+		return
+	}
+
+	result := map[string]string{}
+
+	for _, host := range hosts {
+		err := checkDNS(host)
+		if err != nil {
+			log.Println(err)
+			result[host] = err.Error()
+		} else {
+			result[host] = "OK"
+		}
+	}
+
+	json, err := json.Marshal(result)
+	if err != nil {
+		errortext := fmt.Sprintf("Unable to marshal status json: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(json)
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusInternalServerError)
+	}
+}
+
+func checkDNS(host string) error {
+	host = appendPortIfMissing(host)
+	{
+		h, _, err := net.SplitHostPort(host)
+		if err != nil {
+			return err
+		}
+		ip := net.ParseIP(h)
+		if ip == nil {
+			return fmt.Errorf("Invalid DNS server field: %s", h)
+		}
+	}
+
+	req := dns.Msg{}
+	req.Id = dns.Id()
+	req.RecursionDesired = true
+	req.Question = []dns.Question{
+		{"google-public-dns-a.google.com.", dns.TypeA, dns.ClassINET},
+	}
+	resp, err := dns.Exchange(&req, host)
+	if err != nil {
+		return fmt.Errorf("Couldn't communicate with DNS server %s: %s", host, err)
+	}
+	if len(resp.Answer) != 1 {
+		return fmt.Errorf("DNS server %s returned wrong answer", host)
+	}
+	if t, ok := resp.Answer[0].(*dns.A); ok {
+		if !net.IPv4(8, 8, 8, 8).Equal(t.A) {
+			return fmt.Errorf("DNS server %s returned wrong answer: %v", host, t.A)
+		}
+	}
+
+	return nil
+}
+
+func appendPortIfMissing(input string) string {
+	_, _, err := net.SplitHostPort(input)
+	if err == nil {
+		return input
+	}
+	return net.JoinHostPort(input, "53")
 }
 
 func parseIPsOptionalPort(input string) []string {
@@ -1309,6 +1399,7 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/querylog_enable", optionalAuth(ensurePOST(handleQueryLogEnable)))
 	http.HandleFunc("/control/querylog_disable", optionalAuth(ensurePOST(handleQueryLogDisable)))
 	http.HandleFunc("/control/set_upstream_dns", optionalAuth(ensurePOST(handleSetUpstreamDNS)))
+	http.HandleFunc("/control/test_upstream_dns", optionalAuth(ensurePOST(handleTestUpstreamDNS)))
 	http.HandleFunc("/control/filtering/enable", optionalAuth(ensurePOST(handleFilteringEnable)))
 	http.HandleFunc("/control/filtering/disable", optionalAuth(ensurePOST(handleFilteringDisable)))
 	http.HandleFunc("/control/filtering/status", optionalAuth(ensureGET(handleFilteringStatus)))
