@@ -38,20 +38,20 @@ type coreDNSConfig struct {
 	FilteringEnabled    bool     `yaml:"filtering_enabled"`
 	SafeBrowsingEnabled bool     `yaml:"safebrowsing_enabled"`
 	SafeSearchEnabled   bool     `yaml:"safesearch_enabled"`
-	QueryLogEnabled     bool     `yaml:"querylog_enabled"`
 	ParentalEnabled     bool     `yaml:"parental_enabled"`
 	ParentalSensitivity int      `yaml:"parental_sensitivity"`
-	Pprof               string   `yaml:"pprof"`
-	Cache               string   `yaml:"cache"`
-	Prometheus          string   `yaml:"prometheus"`
+	QueryLogEnabled     bool     `yaml:"querylog_enabled"`
+	Pprof               string   `yaml:"-"`
+	Cache               string   `yaml:"-"`
+	Prometheus          string   `yaml:"-"`
 	UpstreamDNS         []string `yaml:"upstream_dns"`
 }
 
 type filter struct {
-	Enabled     bool   `json:"enabled"`
 	URL         string `json:"url"`
-	RulesCount  int    `json:"rules_count" yaml:"-"`
 	Name        string `json:"name" yaml:"-"`
+	Enabled     bool   `json:"enabled"`
+	RulesCount  int    `json:"rules_count" yaml:"-"`
 	contents    []byte
 	LastUpdated time.Time `json:"last_updated" yaml:"-"`
 }
