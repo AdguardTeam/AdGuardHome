@@ -28,6 +28,13 @@ var coreDNSCommand *exec.Cmd
 
 var filterTitle = regexp.MustCompile(`^! Title: +(.*)$`)
 
+// cached version.json to avoid hammering github.io for each page reload
+var versionCheckJSON []byte
+var versionCheckLastTime time.Time
+
+const versionCheckURL = "https://adguardteam.github.io/AdguardDNS/version.json"
+const versionCheckPeriod = time.Hour * 8
+
 // -------------------
 // coredns run control
 // -------------------
@@ -634,6 +641,47 @@ func parseIPsOptionalPort(input string) []string {
 		hosts = append(hosts, field)
 	}
 	return hosts
+}
+
+func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
+	now := time.Now()
+	if now.Sub(versionCheckLastTime) <= versionCheckPeriod && len(versionCheckJSON) != 0 {
+		// return cached copy
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(versionCheckJSON)
+		return
+	}
+
+	resp, err := client.Get(versionCheckURL)
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't get querylog from coredns: %T %s\n", err, err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusBadGateway)
+		return
+	}
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close()
+	}
+
+	// read the body entirely
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't read response body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusBadGateway)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(body)
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusInternalServerError)
+	}
+
+	versionCheckLastTime = now
+	versionCheckJSON = body
 }
 
 // ---------
@@ -1400,6 +1448,7 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/querylog_disable", optionalAuth(ensurePOST(handleQueryLogDisable)))
 	http.HandleFunc("/control/set_upstream_dns", optionalAuth(ensurePOST(handleSetUpstreamDNS)))
 	http.HandleFunc("/control/test_upstream_dns", optionalAuth(ensurePOST(handleTestUpstreamDNS)))
+	http.HandleFunc("/control/version.json", optionalAuth(handleGetVersionJSON))
 	http.HandleFunc("/control/filtering/enable", optionalAuth(ensurePOST(handleFilteringEnable)))
 	http.HandleFunc("/control/filtering/disable", optionalAuth(ensurePOST(handleFilteringDisable)))
 	http.HandleFunc("/control/filtering/status", optionalAuth(ensureGET(handleFilteringStatus)))
