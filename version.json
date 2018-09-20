@@ -1,0 +1,11 @@
+{
+  "version": "v0.1",
+  "announcement": "AdGuard DNS v0.1 is now available!",
+  "announcement_url": "https://github.com/AdguardTeam/AdguardDNS/releases/tag/v0.1",
+  "download_darwin_amd64": "https://github.com/AdguardTeam/AdguardDNS/releases/download/v0.1/AdguardDNS_0.1_MacOS.zip",
+  "download_linux_amd64": "https://github.com/AdguardTeam/AdguardDNS/releases/download/v0.1/AdguardDNS_0.1_linux_amd64.tar.gz",
+  "download_linux_386": "https://github.com/AdguardTeam/AdguardDNS/releases/download/v0.1/AdguardDNS_0.1_linux_386.tar.gz",
+  "download_linux_arm": "https://github.com/AdguardTeam/AdguardDNS/releases/download/v0.1/AdguardDNS_0.1_linux_arm.tar.gz",
+  "download_linux_arm64": "https://github.com/AdguardTeam/AdguardDNS/releases/download/v0.1/AdguardDNS_0.1_linux_arm64.tar.gz",
+  "selfupdate_min_version": "v0.0"
+}
