@@ -31,6 +31,7 @@
     "redux-thunk": "^2.3.0",
     "svg-url-loader": "^2.3.2",
     "tabler-react": "^1.10.0",
+    "tiny-version-compare": "^0.9.1",
     "whatwg-fetch": "2.0.3"
   },
   "devDependencies": {

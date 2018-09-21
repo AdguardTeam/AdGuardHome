@@ -5,7 +5,12 @@ export default function Version(props) {
     const { dnsVersion, dnsAddress, dnsPort } = props;
     return (
         <div className="nav-version">
-            version {dnsVersion} / address: {dnsAddress}:{dnsPort}
+            <div className="nav-version__text">
+                version: <span className="nav-version__value">{dnsVersion}</span>
+            </div>
+            <div className="nav-version__text">
+                address: <span className="nav-version__value">{dnsAddress}:{dnsPort}</span>
+            </div>
         </div>
     );
 }
