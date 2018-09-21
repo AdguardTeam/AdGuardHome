@@ -438,7 +438,7 @@ export const testUpstream = servers => async (dispatch) => {
             return message;
         });
 
-        if (testMessages.every(message => message === testMessages[0])) {
+        if (testMessages.every(message => message === 'OK')) {
             dispatch(addSuccessToast('All servers is OK'));
         }
 
