@@ -420,3 +420,31 @@ export const setUpstream = url => async (dispatch) => {
         dispatch(setUpstreamFailure());
     }
 };
+
+export const testUpstreamRequest = createAction('TEST_UPSTREAM_REQUEST');
+export const testUpstreamFailure = createAction('TEST_UPSTREAM_FAILURE');
+export const testUpstreamSuccess = createAction('TEST_UPSTREAM_SUCCESS');
+
+export const testUpstream = servers => async (dispatch) => {
+    dispatch(testUpstreamRequest());
+    try {
+        const upstreamResponse = await apiClient.testUpstream(servers);
+
+        const testMessages = Object.keys(upstreamResponse).map((key) => {
+            const message = upstreamResponse[key];
+            if (message !== 'OK') {
+                dispatch(addErrorToast({ error: `Server "${key}": could not be used, please check that you've written it correctly` }));
+            }
+            return message;
+        });
+
+        if (testMessages.every(message => message === 'OK')) {
+            dispatch(addSuccessToast('All servers is OK'));
+        }
+
+        dispatch(testUpstreamSuccess());
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(testUpstreamFailure());
+    }
+};

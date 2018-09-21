@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import classnames from 'classnames';
 import Card from '../ui/Card';
 
 export default class Upstream extends Component {
@@ -13,7 +14,16 @@ export default class Upstream extends Component {
         this.props.handleUpstreamSubmit();
     };
 
+    handleTest = () => {
+        this.props.handleUpstreamTest();
+    }
+
     render() {
+        const testButtonClass = classnames({
+            'btn btn-primary btn-standart mr-2': true,
+            'btn btn-primary btn-standart mr-2 btn-loading': this.props.processingTestUpstream,
+        });
+
         return (
             <Card
                 title="Upstream DNS servers"
@@ -29,6 +39,13 @@ export default class Upstream extends Component {
                                 onChange={this.handleChange}
                             />
                             <div className="card-actions">
+                                <button
+                                    className={testButtonClass}
+                                    type="button"
+                                    onClick={this.handleTest}
+                                >
+                                    Test upstreams
+                                </button>
                                 <button
                                     className="btn btn-success btn-standart"
                                     type="submit"
@@ -47,6 +64,8 @@ export default class Upstream extends Component {
 
 Upstream.propTypes = {
     upstream: PropTypes.string,
+    processingTestUpstream: PropTypes.bool,
     handleUpstreamChange: PropTypes.func,
     handleUpstreamSubmit: PropTypes.func,
+    handleUpstreamTest: PropTypes.func,
 };

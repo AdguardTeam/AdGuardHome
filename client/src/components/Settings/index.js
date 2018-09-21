@@ -43,6 +43,14 @@ export default class Settings extends Component {
         this.props.setUpstream(this.props.settings.upstream);
     };
 
+    handleUpstreamTest = () => {
+        if (this.props.settings.upstream.length > 0) {
+            this.props.testUpstream(this.props.settings.upstream);
+        } else {
+            this.props.addErrorToast({ error: 'No servers specified' });
+        }
+    };
+
     renderSettings = (settings) => {
         if (Object.keys(settings).length > 0) {
             return Object.keys(settings).map((key) => {
@@ -77,8 +85,10 @@ export default class Settings extends Component {
                                 </Card>
                                 <Upstream
                                     upstream={upstream}
+                                    processingTestUpstream={settings.processingTestUpstream}
                                     handleUpstreamChange={this.handleUpstreamChange}
                                     handleUpstreamSubmit={this.handleUpstreamSubmit}
+                                    handleUpstreamTest={this.handleUpstreamTest}
                                 />
                             </div>
                         </div>
