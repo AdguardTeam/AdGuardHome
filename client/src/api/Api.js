@@ -31,6 +31,7 @@ export default class Api {
     GLOBAL_QUERY_LOG_ENABLE = { path: 'querylog_enable', method: 'POST' };
     GLOBAL_QUERY_LOG_DISABLE = { path: 'querylog_disable', method: 'POST' };
     GLOBAL_SET_UPSTREAM_DNS = { path: 'set_upstream_dns', method: 'POST' };
+    GLOBAL_VERSION = { path: 'version.json', method: 'GET' };
 
     restartGlobalFiltering() {
         const { path, method } = this.GLOBAL_RESTART;
@@ -105,6 +106,11 @@ export default class Api {
             header: { 'Content-Type': 'text/plain' },
         };
         return this.makeRequest(path, method, config);
+    }
+
+    getGlobalVersion() {
+        const { path, method } = this.GLOBAL_VERSION;
+        return this.makeRequest(path, method);
     }
 
     // Filtering

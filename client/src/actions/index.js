@@ -164,6 +164,21 @@ export const getStats = () => async (dispatch) => {
     }
 };
 
+export const getVersionRequest = createAction('GET_VERSION_REQUEST');
+export const getVersionFailure = createAction('GET_VERSION_FAILURE');
+export const getVersionSuccess = createAction('GET_VERSION_SUCCESS');
+
+export const getVersion = () => async (dispatch) => {
+    dispatch(getVersionRequest());
+    try {
+        const newVersion = await apiClient.getGlobalVersion();
+        dispatch(getVersionSuccess(newVersion));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(getVersionFailure());
+    }
+};
+
 export const getTopStatsRequest = createAction('GET_TOP_STATS_REQUEST');
 export const getTopStatsFailure = createAction('GET_TOP_STATS_FAILURE');
 export const getTopStatsSuccess = createAction('GET_TOP_STATS_SUCCESS');

@@ -15,12 +15,13 @@ import Filters from '../../containers/Filters';
 import Logs from '../../containers/Logs';
 import Footer from '../ui/Footer';
 import Toasts from '../Toasts';
-
 import Status from '../ui/Status';
+import Update from '../ui/Update';
 
 class App extends Component {
     componentDidMount() {
         this.props.getDnsStatus();
+        this.props.getVersion();
     }
 
     handleStatusChange = () => {
@@ -29,9 +30,20 @@ class App extends Component {
 
     render() {
         const { dashboard } = this.props;
+        const updateAvailable =
+            !dashboard.processingVersions &&
+            dashboard.isCoreRunning &&
+            dashboard.isUpdateAvailable;
+
         return (
             <HashRouter hashType='noslash'>
                 <Fragment>
+                    {updateAvailable &&
+                        <Update
+                            announcement={dashboard.announcement}
+                            announcementUrl={dashboard.announcementUrl}
+                        />
+                    }
                     <LoadingBar className="loading-bar" updateTime={1000} />
                     <Route component={Header} />
                     <div className="container container--wrap">
@@ -65,6 +77,7 @@ App.propTypes = {
     dashboard: PropTypes.object,
     isCoreRunning: PropTypes.bool,
     error: PropTypes.string,
+    getVersion: PropTypes.func,
 };
 
 export default App;

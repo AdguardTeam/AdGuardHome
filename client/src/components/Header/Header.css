@@ -67,9 +67,13 @@
 }
 
 .nav-version {
-    padding: 16px 0;
-    font-size: 0.85rem;
+    padding: 7px 0;
+    font-size: 0.80rem;
     text-align: right;
+}
+
+.nav-version__value {
+    font-weight: 600;
 }
 
 .header-brand-img {
@@ -103,7 +107,7 @@
 
     .nav-version {
         padding: 0;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
     }
 }
 

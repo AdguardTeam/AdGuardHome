@@ -1,6 +1,7 @@
 import { combineReducers } from 'redux';
 import { handleActions } from 'redux-actions';
 import { loadingBarReducer } from 'react-redux-loading-bar';
+import versionCompare from 'tiny-version-compare';
 import nanoid from 'nanoid';
 
 import * as actions from '../actions';
@@ -100,12 +101,36 @@ const dashboard = handleActions({
         const { queryLogEnabled } = state;
         return ({ ...state, queryLogEnabled: !queryLogEnabled, logStatusProcessing: false });
     },
+
+    [actions.getVersionRequest]: state => ({ ...state, processingVersion: true }),
+    [actions.getVersionFailure]: state => ({ ...state, processingVersion: false }),
+    [actions.getVersionSuccess]: (state, { payload }) => {
+        const currentVersion = state.dnsVersion === 'undefined' ? 0 : state.dnsVersion;
+
+        if (versionCompare(currentVersion, payload.version) === -1) {
+            const {
+                announcement,
+                announcement_url: announcementUrl,
+            } = payload;
+
+            const newState = {
+                ...state,
+                announcement,
+                announcementUrl,
+                isUpdateAvailable: true,
+            };
+            return newState;
+        }
+
+        return state;
+    },
 }, {
     processing: true,
     isCoreRunning: false,
     processingTopStats: true,
     processingStats: true,
     logStatusProcessing: false,
+    processingVersion: true,
 });
 
 const queryLogs = handleActions({
