@@ -428,26 +428,21 @@ export const testUpstreamSuccess = createAction('TEST_UPSTREAM_SUCCESS');
 export const testUpstream = servers => async (dispatch) => {
     dispatch(testUpstreamRequest());
     try {
-        if (servers.length > 0) {
-            const upstreamResponse = await apiClient.testUpstream(servers);
+        const upstreamResponse = await apiClient.testUpstream(servers);
 
-            const testMessages = Object.keys(upstreamResponse).map((key) => {
-                const message = upstreamResponse[key];
-                if (message !== 'OK') {
-                    dispatch(addErrorToast({ error: `Server "${key}": could not be used, please check that you've written it correctly` }));
-                }
-                return message;
-            });
-
-            if (testMessages.every(message => message === testMessages[0])) {
-                dispatch(addSuccessToast('All servers is OK'));
+        const testMessages = Object.keys(upstreamResponse).map((key) => {
+            const message = upstreamResponse[key];
+            if (message !== 'OK') {
+                dispatch(addErrorToast({ error: `Server "${key}": could not be used, please check that you've written it correctly` }));
             }
+            return message;
+        });
 
-            dispatch(testUpstreamSuccess());
-        } else {
-            dispatch(addErrorToast({ error: 'No servers specified' }));
-            dispatch(testUpstreamFailure());
+        if (testMessages.every(message => message === testMessages[0])) {
+            dispatch(addSuccessToast('All servers is OK'));
         }
+
+        dispatch(testUpstreamSuccess());
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(testUpstreamFailure());

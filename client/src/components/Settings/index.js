@@ -44,7 +44,11 @@ export default class Settings extends Component {
     };
 
     handleUpstreamTest = () => {
-        this.props.testUpstream(this.props.settings.upstream);
+        if (this.props.settings.upstream.length > 0) {
+            this.props.testUpstream(this.props.settings.upstream);
+        } else {
+            this.props.addErrorToast({ error: 'No servers specified' });
+        }
     };
 
     renderSettings = (settings) => {
