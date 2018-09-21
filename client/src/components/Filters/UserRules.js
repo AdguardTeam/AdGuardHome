@@ -27,7 +27,7 @@ export default class UserRules extends Component {
                             type="submit"
                             onClick={this.handleSubmit}
                         >
-                            Apply...
+                            Apply
                         </button>
                     </div>
                 </form>

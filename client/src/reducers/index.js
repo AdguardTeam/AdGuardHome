@@ -31,9 +31,14 @@ const settings = handleActions({
         const { upstream } = payload;
         return { ...state, upstream };
     },
+
+    [actions.testUpstreamRequest]: state => ({ ...state, processingTestUpstream: true }),
+    [actions.testUpstreamFailure]: state => ({ ...state, processingTestUpstream: false }),
+    [actions.testUpstreamSuccess]: state => ({ ...state, processingTestUpstream: false }),
 }, {
     processing: true,
-    processingUpstream: true,
+    processingTestUpstream: false,
+    processingSetUpstream: false,
     upstream: '',
 });
 

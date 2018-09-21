@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import { initSettings, toggleSetting, handleUpstreamChange, setUpstream } from '../actions';
+import { initSettings, toggleSetting, handleUpstreamChange, setUpstream, testUpstream } from '../actions';
 import Settings from '../components/Settings';
 
 const mapStateToProps = (state) => {
@@ -13,6 +13,7 @@ const mapDispatchToProps = {
     toggleSetting,
     handleUpstreamChange,
     setUpstream,
+    testUpstream,
 };
 
 export default connect(

@@ -43,6 +43,10 @@ export default class Settings extends Component {
         this.props.setUpstream(this.props.settings.upstream);
     };
 
+    handleUpstreamTest = () => {
+        this.props.testUpstream(this.props.settings.upstream);
+    };
+
     renderSettings = (settings) => {
         if (Object.keys(settings).length > 0) {
             return Object.keys(settings).map((key) => {
@@ -77,8 +81,10 @@ export default class Settings extends Component {
                                 </Card>
                                 <Upstream
                                     upstream={upstream}
+                                    processingTestUpstream={settings.processingTestUpstream}
                                     handleUpstreamChange={this.handleUpstreamChange}
                                     handleUpstreamSubmit={this.handleUpstreamSubmit}
+                                    handleUpstreamTest={this.handleUpstreamTest}
                                 />
                             </div>
                         </div>
