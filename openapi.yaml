@@ -61,6 +61,16 @@ paths:
             responses:
                 200:
                     description: OK
+                    examples:
+                        application/json:
+                            dns_address: 127.0.0.1
+                            dns_port: 53
+                            querylog_enabled: true
+                            running: true
+                            upstream_dns:
+                              - 1.1.1.1
+                              - 1.0.0.1
+                            version: "v0.1"
     /querylog:
         get:
             tags:

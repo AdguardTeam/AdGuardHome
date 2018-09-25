@@ -193,6 +193,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		"dns_address":      config.BindHost,
 		"dns_port":         config.CoreDNS.Port,
 		"querylog_enabled": config.CoreDNS.QueryLogEnabled,
+		"upstream_dns":     config.CoreDNS.UpstreamDNS,
 	}
 
 	json, err := json.Marshal(data)
