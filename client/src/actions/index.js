@@ -439,7 +439,7 @@ export const testUpstream = servers => async (dispatch) => {
         });
 
         if (testMessages.every(message => message === 'OK')) {
-            dispatch(addSuccessToast('All servers is OK'));
+            dispatch(addSuccessToast('Specified DNS servers are working correctly'));
         }
 
         dispatch(testUpstreamSuccess());
