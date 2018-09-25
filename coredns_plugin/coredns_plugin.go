@@ -92,14 +92,12 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 	p.d = dnsfilter.New()
 	p.hosts = make(map[string]net.IP)
 
-	var filterFileName string
+	filterFileNames := []string{}
 	for c.Next() {
 		args := c.RemainingArgs()
-		if len(args) == 0 {
-			// must have at least one argument
-			return nil, c.ArgErr()
+		if len(args) > 0 {
+			filterFileNames = append(filterFileNames, args...)
 		}
-		filterFileName = args[0]
 		for c.NextBlock() {
 			switch c.Val() {
 			case "safebrowsing":
@@ -139,34 +137,39 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 		}
 	}
 
-	file, err := os.Open(filterFileName)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
+	log.Printf("filterFileNames = %+v", filterFileNames)
 
-	count := 0
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		text := scanner.Text()
-		if p.parseEtcHosts(text) {
-			continue
-		}
-		err = p.d.AddRule(text, 0)
-		if err == dnsfilter.ErrInvalidSyntax {
-			continue
-		}
+	for i, filterFileName := range filterFileNames {
+		file, err := os.Open(filterFileName)
 		if err != nil {
 			return nil, err
 		}
-		count++
-	}
-	log.Printf("Added %d rules from %s", count, filterFileName)
+		defer file.Close()
 
-	if err = scanner.Err(); err != nil {
-		return nil, err
+		count := 0
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			text := scanner.Text()
+			if p.parseEtcHosts(text) {
+				continue
+			}
+			err = p.d.AddRule(text, uint32(i))
+			if err == dnsfilter.ErrInvalidSyntax {
+				continue
+			}
+			if err != nil {
+				return nil, err
+			}
+			count++
+		}
+		log.Printf("Added %d rules from %s", count, filterFileName)
+
+		if err = scanner.Err(); err != nil {
+			return nil, err
+		}
 	}
 
+	var err error
 	p.upstream, err = upstream.New(nil)
 	if err != nil {
 		return nil, err

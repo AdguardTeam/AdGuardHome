@@ -19,7 +19,6 @@ $(STATIC): client/node_modules
 	npm --prefix client run build-prod
 
 AdguardDNS: $(STATIC) *.go
-	echo mkfile_dir = $(mkfile_dir)
 	mkdir -p $(GOPATH)
 	GOPATH=$(GOPATH) go get -v -d .
 	GOPATH=$(GOPATH) go get -v -d -u github.com/AdguardTeam/AdguardDNS
@@ -28,7 +27,6 @@ AdguardDNS: $(STATIC) *.go
 	GOPATH=$(GOPATH) PATH=$(GOPATH)/bin:$(PATH) packr build -ldflags="-X main.VersionString=$(GIT_VERSION)" -o AdguardDNS
 
 coredns: coredns_plugin/*.go dnsfilter/*.go
-	echo mkfile_dir = $(mkfile_dir)
 	GOPATH=$(GOPATH) go get -v -d github.com/coredns/coredns
 	cd $(GOPATH)/src/github.com/prometheus/client_golang && git checkout -q v0.8.0
 	cd $(GOPATH)/src/github.com/coredns/coredns && perl -p -i.bak -e 's/^(trace|route53|federation|kubernetes|etcd):.*//' plugin.cfg
@@ -40,8 +38,8 @@ coredns: coredns_plugin/*.go dnsfilter/*.go
 
 clean:
 	$(MAKE) cleanfast
-	rm -rvf build
-	rm -rvf client/node_modules
+	rm -rf build
+	rm -rf client/node_modules
 
 cleanfast:
-	rm -vf coredns AdguardDNS
+	rm -f coredns AdguardDNS

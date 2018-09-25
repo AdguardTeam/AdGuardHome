@@ -20,7 +20,8 @@ func TestSetup(t *testing.T) {
 		config  string
 		failing bool
 	}{
-		{`dnsfilter`, true},
+		{`dnsfilter`, false},
+		{`dnsfilter /dev/nonexistent/abcdef`, true},
 		{`dnsfilter ../tests/dns.txt`, false},
 		{`dnsfilter ../tests/dns.txt { safebrowsing }`, false},
 		{`dnsfilter ../tests/dns.txt { parental }`, true},
