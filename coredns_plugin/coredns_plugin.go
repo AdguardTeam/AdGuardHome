@@ -384,7 +384,8 @@ func (p *plug) serveDNSInternal(ctx context.Context, w dns.ResponseWriter, r *dn
 		// is it in hosts?
 		if val, ok := p.hosts[host]; ok {
 			// it is, if it's a loopback host, reply with NXDOMAIN
-			if val.IsLoopback() {
+			// TODO: research if it's better than 127.0.0.1
+			if false && val.IsLoopback() {
 				rcode, err := writeNXdomain(ctx, w, r)
 				if err != nil {
 					return rcode, dnsfilter.Result{}, err

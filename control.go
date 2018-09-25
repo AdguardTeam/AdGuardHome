@@ -1148,7 +1148,7 @@ func (filter *filter) update(now time.Time) (bool, error) {
 	d := dnsfilter.New()
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
-		if line[0] == '!' {
+		if len(line) > 0 && line[0] == '!' {
 			if m := filterTitle.FindAllStringSubmatch(line, -1); len(m) > 0 && len(m[0]) >= 2 && !seenTitle {
 				log.Printf("Setting filter title to %s\n", m[0][1])
 				filter.Name = m[0][1]
