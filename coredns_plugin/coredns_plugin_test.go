@@ -126,7 +126,12 @@ func TestEtcHostsFilter(t *testing.T) {
 		if rcode != rrw.Rcode {
 			t.Fatalf("ServeDNS return value for host %s has rcode %d that does not match captured rcode %d", testcase.host, rcode, rrw.Rcode)
 		}
-		filtered := rcode == dns.RcodeNameError
+		A, ok := rrw.Msg.Answer[0].(*dns.A)
+		if !ok {
+			t.Fatalf("Host %s expected to have result A", testcase.host)
+		}
+		ip := net.IPv4(127, 0, 0, 1)
+		filtered := ip.Equal(A.A)
 		if testcase.filtered && testcase.filtered != filtered {
 			t.Fatalf("Host %s expected to be filtered, instead it is not filtered", testcase.host)
 		}
