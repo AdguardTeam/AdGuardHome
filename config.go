@@ -160,16 +160,16 @@ func writeAllConfigs() error {
 }
 
 const coreDNSConfigTemplate = `. {
-    {{if .FilteringEnabled}}dnsfilter {{.FilterFile}} {
+    dnsfilter {{if .FilteringEnabled}}{{.FilterFile}}{{end}} {
         {{if .SafeBrowsingEnabled}}safebrowsing{{end}}
         {{if .ParentalEnabled}}parental {{.ParentalSensitivity}}{{end}}
         {{if .SafeSearchEnabled}}safesearch{{end}}
         {{if .QueryLogEnabled}}querylog{{end}}
-    }{{end}}
+    }
     {{.Pprof}}
-	hosts {
-		fallthrough
-	}
+    hosts {
+        fallthrough
+    }
     {{if .UpstreamDNS}}forward . {{range .UpstreamDNS}}{{.}} {{end}}{{end}}
     {{.Cache}}
     {{.Prometheus}}
