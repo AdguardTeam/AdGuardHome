@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"path"
@@ -245,4 +246,18 @@ func _Func() string {
 	runtime.Callers(2, pc)
 	f := runtime.FuncForPC(pc[0])
 	return path.Base(f.Name())
+}
+
+func trace(format string, args ...interface{}) {
+	pc := make([]uintptr, 10) // at least 1 entry needed
+	runtime.Callers(2, pc)
+	f := runtime.FuncForPC(pc[0])
+	var buf strings.Builder
+	buf.WriteString(fmt.Sprintf("%s(): ", path.Base(f.Name())))
+	text := fmt.Sprintf(format, args...)
+	buf.WriteString(text)
+	if len(text) == 0 || text[len(text)-1] != '\n' {
+		buf.WriteRune('\n')
+	}
+	fmt.Print(buf.String())
 }
