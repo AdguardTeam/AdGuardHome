@@ -167,6 +167,7 @@ const coreDNSConfigTemplate = `. {
         {{if .ParentalEnabled}}parental {{.ParentalSensitivity}}{{end}}
         {{if .SafeSearchEnabled}}safesearch{{end}}
         {{if .QueryLogEnabled}}querylog{{end}}
+        blocked_ttl {{.BlockedResponseTTL}}
     }
     {{.Pprof}}
     hosts {
