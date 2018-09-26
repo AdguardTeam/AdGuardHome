@@ -129,6 +129,18 @@ const dashboard = handleActions({
 
         return state;
     },
+
+    [actions.getFilteringRequest]: state => ({ ...state, processingFiltering: true }),
+    [actions.getFilteringFailure]: state => ({ ...state, processingFiltering: false }),
+    [actions.getFilteringSuccess]: (state, { payload }) => {
+        const newState = { ...state, isFilteringEnabled: payload, processingFiltering: false };
+        return newState;
+    },
+
+    [actions.toggleFilteringSuccess]: (state) => {
+        const newSetting = { ...state, isFilteringEnabled: !state.isFilteringEnabled };
+        return newSetting;
+    },
 }, {
     processing: true,
     isCoreRunning: false,
@@ -136,6 +148,7 @@ const dashboard = handleActions({
     processingStats: true,
     logStatusProcessing: false,
     processingVersion: true,
+    processingFiltering: true,
 });
 
 const queryLogs = handleActions({

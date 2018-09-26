@@ -98,6 +98,46 @@ export const initSettings = settingsList => async (dispatch) => {
     }
 };
 
+export const getFilteringRequest = createAction('GET_FILTERING_REQUEST');
+export const getFilteringFailure = createAction('GET_FILTERING_FAILURE');
+export const getFilteringSuccess = createAction('GET_FILTERING_SUCCESS');
+
+export const getFiltering = () => async (dispatch) => {
+    dispatch(getFilteringRequest());
+    try {
+        const filteringStatus = await apiClient.getFilteringStatus();
+        dispatch(getFilteringSuccess(filteringStatus.enabled));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(getFilteringFailure());
+    }
+};
+
+export const toggleFilteringRequest = createAction('TOGGLE_FILTERING_REQUEST');
+export const toggleFilteringFailure = createAction('TOGGLE_FILTERING_FAILURE');
+export const toggleFilteringSuccess = createAction('TOGGLE_FILTERING_SUCCESS');
+
+export const toggleFiltering = status => async (dispatch) => {
+    dispatch(toggleFilteringRequest());
+    let successMessage = '';
+
+    try {
+        if (status) {
+            successMessage = 'Disabled filtering';
+            await apiClient.disableFiltering();
+        } else {
+            successMessage = 'Enabled filtering';
+            await apiClient.enableFiltering();
+        }
+
+        dispatch(addSuccessToast(successMessage));
+        dispatch(toggleFilteringSuccess());
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(toggleFilteringFailure());
+    }
+};
+
 export const dnsStatusRequest = createAction('DNS_STATUS_REQUEST');
 export const dnsStatusFailure = createAction('DNS_STATUS_FAILURE');
 export const dnsStatusSuccess = createAction('DNS_STATUS_SUCCESS');
