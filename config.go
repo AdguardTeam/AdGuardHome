@@ -56,7 +56,7 @@ type filter struct {
 	LastUpdated time.Time `json:"last_updated" yaml:"-"`
 }
 
-var defaultDNS = []string{"1.1.1.1", "1.0.0.1"}
+var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
 
 // initialize to default values, will be changed later when reading config or parsing command line
 var config = configuration{

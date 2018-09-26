@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"path"
 	"runtime"
 	"sort"
@@ -259,5 +260,5 @@ func trace(format string, args ...interface{}) {
 	if len(text) == 0 || text[len(text)-1] != '\n' {
 		buf.WriteRune('\n')
 	}
-	fmt.Print(buf.String())
+	fmt.Fprint(os.Stderr, buf.String())
 }
