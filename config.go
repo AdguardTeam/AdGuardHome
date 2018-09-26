@@ -70,7 +70,7 @@ var config = configuration{
 		coreFile:            "Corefile",      // only filename, no path
 		FilterFile:          "dnsfilter.txt", // only filename, no path
 		FilteringEnabled:    true,
-		SafeBrowsingEnabled: true,
+		SafeBrowsingEnabled: false,
 		BlockedResponseTTL:  60, // in seconds
 		QueryLogEnabled:     true,
 		UpstreamDNS:         defaultDNS,
