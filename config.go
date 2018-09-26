@@ -40,6 +40,7 @@ type coreDNSConfig struct {
 	SafeSearchEnabled   bool     `yaml:"safesearch_enabled"`
 	ParentalEnabled     bool     `yaml:"parental_enabled"`
 	ParentalSensitivity int      `yaml:"parental_sensitivity"`
+	BlockedResponseTTL  int      `yaml:"blocked_response_ttl"`
 	QueryLogEnabled     bool     `yaml:"querylog_enabled"`
 	Pprof               string   `yaml:"-"`
 	Cache               string   `yaml:"-"`
@@ -70,6 +71,7 @@ var config = configuration{
 		FilterFile:          "dnsfilter.txt", // only filename, no path
 		FilteringEnabled:    true,
 		SafeBrowsingEnabled: true,
+		BlockedResponseTTL:  60, // in seconds
 		QueryLogEnabled:     true,
 		UpstreamDNS:         defaultDNS,
 		Cache:               "cache",
