@@ -34,8 +34,8 @@ export default class Upstream extends Component {
                     <div className="col">
                         <form>
                             <textarea
-                                className="form-control"
-                                value={this.props.upstream}
+                                className="form-control form-control--textarea"
+                                value={this.props.upstreamDns}
                                 onChange={this.handleChange}
                             />
                             <div className="card-actions">
@@ -63,7 +63,7 @@ export default class Upstream extends Component {
 }
 
 Upstream.propTypes = {
-    upstream: PropTypes.string,
+    upstreamDns: PropTypes.string,
     processingTestUpstream: PropTypes.bool,
     handleUpstreamChange: PropTypes.func,
     handleUpstreamSubmit: PropTypes.func,

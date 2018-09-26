@@ -36,16 +36,16 @@ export default class Settings extends Component {
     }
 
     handleUpstreamChange = (value) => {
-        this.props.handleUpstreamChange({ upstream: value });
+        this.props.handleUpstreamChange({ upstreamDns: value });
     };
 
     handleUpstreamSubmit = () => {
-        this.props.setUpstream(this.props.settings.upstream);
+        this.props.setUpstream(this.props.dashboard.upstreamDns);
     };
 
     handleUpstreamTest = () => {
-        if (this.props.settings.upstream.length > 0) {
-            this.props.testUpstream(this.props.settings.upstream);
+        if (this.props.dashboard.upstreamDns.length > 0) {
+            this.props.testUpstream(this.props.dashboard.upstreamDns);
         } else {
             this.props.addErrorToast({ error: 'No servers specified' });
         }
@@ -69,7 +69,8 @@ export default class Settings extends Component {
     }
 
     render() {
-        const { settings, upstream } = this.props;
+        const { settings } = this.props;
+        const { upstreamDns } = this.props.dashboard;
         return (
             <Fragment>
                 <PageTitle title="Settings" />
@@ -84,7 +85,7 @@ export default class Settings extends Component {
                                     </div>
                                 </Card>
                                 <Upstream
-                                    upstream={upstream}
+                                    upstreamDns={upstreamDns}
                                     processingTestUpstream={settings.processingTestUpstream}
                                     handleUpstreamChange={this.handleUpstreamChange}
                                     handleUpstreamSubmit={this.handleUpstreamSubmit}

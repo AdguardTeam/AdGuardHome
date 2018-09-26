@@ -27,10 +27,6 @@ const settings = handleActions({
     [actions.setUpstreamRequest]: state => ({ ...state, processingUpstream: true }),
     [actions.setUpstreamFailure]: state => ({ ...state, processingUpstream: false }),
     [actions.setUpstreamSuccess]: state => ({ ...state, processingUpstream: false }),
-    [actions.handleUpstreamChange]: (state, { payload }) => {
-        const { upstream } = payload;
-        return { ...state, upstream };
-    },
 
     [actions.testUpstreamRequest]: state => ({ ...state, processingTestUpstream: true }),
     [actions.testUpstreamFailure]: state => ({ ...state, processingTestUpstream: false }),
@@ -39,7 +35,6 @@ const settings = handleActions({
     processing: true,
     processingTestUpstream: false,
     processingSetUpstream: false,
-    upstream: '',
 });
 
 const dashboard = handleActions({
@@ -52,6 +47,7 @@ const dashboard = handleActions({
             dns_port: dnsPort,
             dns_address: dnsAddress,
             querylog_enabled: queryLogEnabled,
+            upstream_dns: upstreamDns,
         } = payload;
         const newState = {
             ...state,
@@ -61,6 +57,7 @@ const dashboard = handleActions({
             dnsPort,
             dnsAddress,
             queryLogEnabled,
+            upstreamDns: upstreamDns.join('\n'),
         };
         return newState;
     },
@@ -141,6 +138,11 @@ const dashboard = handleActions({
         const newSetting = { ...state, isFilteringEnabled: !state.isFilteringEnabled };
         return newSetting;
     },
+
+    [actions.handleUpstreamChange]: (state, { payload }) => {
+        const { upstreamDns } = payload;
+        return { ...state, upstreamDns };
+    },
 }, {
     processing: true,
     isCoreRunning: false,
@@ -149,6 +151,7 @@ const dashboard = handleActions({
     logStatusProcessing: false,
     processingVersion: true,
     processingFiltering: true,
+    upstreamDns: [],
 });
 
 const queryLogs = handleActions({
