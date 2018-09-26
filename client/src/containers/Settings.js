@@ -3,8 +3,8 @@ import { initSettings, toggleSetting, handleUpstreamChange, setUpstream, testUps
 import Settings from '../components/Settings';
 
 const mapStateToProps = (state) => {
-    const { settings } = state;
-    const props = { settings };
+    const { settings, dashboard } = state;
+    const props = { settings, dashboard };
     return props;
 };
 

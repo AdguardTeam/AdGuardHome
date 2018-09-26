@@ -10,3 +10,7 @@
     padding-left: 20px;
     padding-right: 20px;
 }
+
+.form-control--textarea {
+    min-height: 110px;
+}
