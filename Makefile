@@ -19,9 +19,9 @@ $(STATIC): client/node_modules
 	npm --prefix client run build-prod
 
 AdguardDNS: $(STATIC) *.go
-	mkdir -p $(GOPATH)
+	mkdir -p $(GOPATH)/src/github.com/AdguardTeam
+	if [[ ! -h $(GOPATH)/src/github.com/AdguardTeam/AdguardDNS ]]; then rm -rf $(GOPATH)/src/github.com/AdguardTeam/AdguardDNS && ln -fs ../../../../.. $(GOPATH)/src/github.com/AdguardTeam/AdguardDNS; fi
 	GOPATH=$(GOPATH) go get -v -d .
-	GOPATH=$(GOPATH) go get -v -d -u github.com/AdguardTeam/AdguardDNS
 	GOPATH=$(GOPATH) GOOS=$(NATIVE_GOOS) GOARCH=$(NATIVE_GOARCH) go get -v github.com/gobuffalo/packr/...
 	mkdir -p $(GOPATH)/src/github.com/AdguardTeam/AdguardDNS/build/static ## work around packr bug
 	GOPATH=$(GOPATH) PATH=$(GOPATH)/bin:$(PATH) packr build -ldflags="-X main.VersionString=$(GIT_VERSION)" -o AdguardDNS

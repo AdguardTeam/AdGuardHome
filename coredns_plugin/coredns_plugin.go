@@ -54,11 +54,13 @@ type plug struct {
 	SafeBrowsingBlockHost string
 	ParentalBlockHost     string
 	QueryLogEnabled       bool
+	BlockedTTL            uint32 // in seconds, default 3600
 }
 
 var defaultPlugin = plug{
 	SafeBrowsingBlockHost: "safebrowsing.block.dns.adguard.com",
 	ParentalBlockHost:     "family.block.dns.adguard.com",
+	BlockedTTL:            3600, // in seconds
 }
 
 func newDNSCounter(name string, help string) prometheus.Counter {
@@ -128,6 +130,15 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 					}
 					p.ParentalBlockHost = c.Val()
 				}
+			case "blocked_ttl":
+				if !c.NextArg() {
+					return nil, c.ArgErr()
+				}
+				blockttl, err := strconv.ParseUint(c.Val(), 10, 32)
+				if err != nil {
+					return nil, c.ArgErr()
+				}
+				p.BlockedTTL = uint32(blockttl)
 			case "querylog":
 				p.QueryLogEnabled = true
 				onceQueryLog.Do(func() {
@@ -294,7 +305,7 @@ func (p *plug) replaceHostWithValAndReply(ctx context.Context, w dns.ResponseWri
 	log.Println("Will give", val, "instead of", host)
 	if addr != nil {
 		// this is an IP address, return it
-		result, err := dns.NewRR(host + " A " + val)
+		result, err := dns.NewRR(fmt.Sprintf("%s %d A %s", host, p.BlockedTTL, val))
 		if err != nil {
 			log.Printf("Got error %s\n", err)
 			return dns.RcodeServerFailure, fmt.Errorf("plugin/dnsfilter: %s", err)
@@ -334,9 +345,9 @@ func (p *plug) replaceHostWithValAndReply(ctx context.Context, w dns.ResponseWri
 
 // generate SOA record that makes DNS clients cache NXdomain results
 // the only value that is important is TTL in header, other values like refresh, retry, expire and minttl are irrelevant
-func genSOA(r *dns.Msg) []dns.RR {
+func (p *plug) genSOA(r *dns.Msg) []dns.RR {
 	zone := r.Question[0].Name
-	header := dns.RR_Header{Name: zone, Rrtype: dns.TypeSOA, Ttl: 3600, Class: dns.ClassINET}
+	header := dns.RR_Header{Name: zone, Rrtype: dns.TypeSOA, Ttl: p.BlockedTTL, Class: dns.ClassINET}
 
 	Mbox := "hostmaster."
 	if zone[0] != '.' {
@@ -352,12 +363,12 @@ func genSOA(r *dns.Msg) []dns.RR {
 	return []dns.RR{soa}
 }
 
-func writeNXdomain(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+func (p *plug) writeNXdomain(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 	state := request.Request{W: w, Req: r, Context: ctx}
 	m := new(dns.Msg)
 	m.SetRcode(state.Req, dns.RcodeNameError)
 	m.Authoritative, m.RecursionAvailable, m.Compress = true, true, true
-	m.Ns = genSOA(r)
+	m.Ns = p.genSOA(r)
 
 	state.SizeAndDo(m)
 	err := state.W.WriteMsg(m)
@@ -389,7 +400,7 @@ func (p *plug) serveDNSInternal(ctx context.Context, w dns.ResponseWriter, r *dn
 			// it is, if it's a loopback host, reply with NXDOMAIN
 			// TODO: research if it's better than 127.0.0.1
 			if false && val.IsLoopback() {
-				rcode, err := writeNXdomain(ctx, w, r)
+				rcode, err := p.writeNXdomain(ctx, w, r)
 				if err != nil {
 					return rcode, dnsfilter.Result{}, err
 				}
@@ -430,7 +441,7 @@ func (p *plug) serveDNSInternal(ctx context.Context, w dns.ResponseWriter, r *dn
 				return rcode, result, err
 			case dnsfilter.FilteredBlackList:
 				// return NXdomain
-				rcode, err := writeNXdomain(ctx, w, r)
+				rcode, err := p.writeNXdomain(ctx, w, r)
 				if err != nil {
 					return rcode, dnsfilter.Result{}, err
 				}
