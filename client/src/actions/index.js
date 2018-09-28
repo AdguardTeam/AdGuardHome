@@ -293,7 +293,10 @@ export const setRulesSuccess = createAction('SET_RULES_SUCCESS');
 export const setRules = rules => async (dispatch) => {
     dispatch(setRulesRequest());
     try {
-        await apiClient.setRules(rules);
+        const replacedLineEndings = rules
+            .replace(/^\n/g, '')
+            .replace(/\n\s*\n/g, '\n');
+        await apiClient.setRules(replacedLineEndings);
         dispatch(addSuccessToast('Custom rules saved'));
         dispatch(setRulesSuccess());
     } catch (error) {

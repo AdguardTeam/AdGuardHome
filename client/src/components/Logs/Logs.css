@@ -1,6 +1,8 @@
 .logs__row {
+    position: relative;
     display: flex;
     align-items: center;
+    min-height: 26px;
 }
 
 .logs__row--overflow {
@@ -23,4 +25,37 @@
     top: 0;
     margin-left: 0;
     margin-right: 5px;
+}
+
+.logs__action {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background-color: #fff;
+    border-radius: 4px;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    visibility: hidden;
+    opacity: 0;
+}
+
+.logs__table .rt-td {
+    position: relative;
+}
+
+.logs__table .rt-tr:hover .logs__action {
+    visibility: visible;
+    opacity: 1;
+}
+
+.logs__table .rt-tr-group:first-child .tooltip-custom:before {
+    top: calc(100% + 12px);
+    bottom: initial;
+    z-index: 1;
+}
+
+.logs__table .rt-tr-group:first-child .tooltip-custom:after {
+    top: initial;
+    bottom: -4px;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid #585965;
 }
