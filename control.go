@@ -1167,7 +1167,6 @@ func (filter *filter) update(now time.Time) (bool, error) {
 	// use same update period for failed filter downloads to avoid flooding with requests
 	filter.LastUpdated = now
 
-	log.Printf("Fetching URL %s...", filter.URL)
 	resp, err := client.Get(filter.URL)
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()
@@ -1188,8 +1187,6 @@ func (filter *filter) update(now time.Time) (bool, error) {
 		return false, err
 	}
 
-	log.Printf("%s: got %v bytes", filter.URL, len(body))
-
 	// extract filter name and count number of rules
 	lines := strings.Split(string(body), "\n")
 	rulesCount := 0
@@ -1199,7 +1196,6 @@ func (filter *filter) update(now time.Time) (bool, error) {
 		line = strings.TrimSpace(line)
 		if len(line) > 0 && line[0] == '!' {
 			if m := filterTitle.FindAllStringSubmatch(line, -1); len(m) > 0 && len(m[0]) >= 2 && !seenTitle {
-				log.Printf("Setting filter title to %s\n", m[0][1])
 				filter.Name = m[0][1]
 				seenTitle = true
 			}
@@ -1216,9 +1212,9 @@ func (filter *filter) update(now time.Time) (bool, error) {
 		}
 	}
 	if bytes.Equal(filter.contents, body) {
-		log.Printf("Filter contents of URL %s are same, not considering it as an update", filter.URL)
 		return false, nil
 	}
+	log.Printf("Filter %s updated: %d bytes, %d rules", filter.URL, len(body), rulesCount)
 	filter.RulesCount = rulesCount
 	filter.contents = body
 	return true, nil
