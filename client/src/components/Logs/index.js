@@ -86,6 +86,7 @@ class Logs extends Component {
             Header: 'Time',
             accessor: 'time',
             maxWidth: 110,
+            filterable: false,
         }, {
             Header: 'Domain name',
             accessor: 'domain',
@@ -142,6 +143,21 @@ class Logs extends Component {
                     </div>
                 );
             },
+            filterMethod: (filter, row) => {
+                if (filter.value === 'filtered') {
+                    return row.originalRow.reason.indexOf('Filtered') === 0;
+                }
+                return true;
+            },
+            Filter: ({ filter, onChange }) =>
+                <select
+                    onChange={event => onChange(event.target.value)}
+                    className="form-control"
+                    value={filter ? filter.value : 'all'}
+                >
+                    <option value="all">Show all</option>
+                    <option value="filtered">Show filtered</option>
+                </select>,
         }, {
             Header: 'Client',
             accessor: 'client',
@@ -165,12 +181,14 @@ class Logs extends Component {
         if (logs) {
             return (<ReactTable
                 className='logs__table'
+                filterable
                 data={logs}
                 columns={columns}
-                showPagination={false}
-                defaultPageSize={1000}
+                showPagination={true}
+                defaultPageSize={50}
                 minRows={7}
                 noDataText="No logs found"
+                originalKey="originalRow"
                 defaultSorted={[
                     {
                         id: 'time',
@@ -200,42 +218,53 @@ class Logs extends Component {
     };
 
     renderButtons(queryLogEnabled) {
-        return (<div className="card-actions-top">
-                <button
-                    className="btn btn-success btn-standart mr-2"
-                    type="submit"
-                    onClick={() => this.props.toggleLogStatus(queryLogEnabled)}
-                >{queryLogEnabled ? 'Disable log' : 'Enable log'}</button>
-                {queryLogEnabled &&
+        if (queryLogEnabled) {
+            return (
+                <Fragment>
                     <button
-                        className="btn btn-primary btn-standart mr-2"
+                        className="btn btn-gray btn-sm mr-2"
+                        type="submit"
+                        onClick={() => this.props.toggleLogStatus(queryLogEnabled)}
+                    >Disable log</button>
+                    <button
+                        className="btn btn-primary btn-sm mr-2"
                         type="submit"
                         onClick={this.handleDownloadButton}
                     >Download log file</button>
-                }
-                {queryLogEnabled &&
                     <button
-                        className="btn btn-outline-primary btn-standart"
+                        className="btn btn-outline-primary btn-sm"
                         type="submit"
                         onClick={this.getLogs}
                     >Refresh</button>
-                }
-            </div>);
+                </Fragment>
+            );
+        }
+
+        return (
+            <button
+                className="btn btn-success btn-sm mr-2"
+                type="submit"
+                onClick={() => this.props.toggleLogStatus(queryLogEnabled)}
+            >Enable log</button>
+        );
     }
 
     render() {
         const { queryLogs, dashboard } = this.props;
         const { queryLogEnabled } = dashboard;
         return (
-            <div>
-                <PageTitle title="Query Log" subtitle="DNS queries log" />
+            <Fragment>
+                <PageTitle title="Query Log" subtitle="Last 1000 DNS queries">
+                    <div className="page-title__actions">
+                        {this.renderButtons(queryLogEnabled)}
+                    </div>
+                </PageTitle>
                 <Card>
-                    {this.renderButtons(queryLogEnabled)}
                     {queryLogEnabled && queryLogs.processing && <Loading />}
                     {queryLogEnabled && !queryLogs.processing &&
                         this.renderLogs(queryLogs.logs)}
                 </Card>
-            </div>
+            </Fragment>
         );
     }
 }
