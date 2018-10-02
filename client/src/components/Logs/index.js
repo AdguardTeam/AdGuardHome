@@ -145,7 +145,8 @@ class Logs extends Component {
             },
             filterMethod: (filter, row) => {
                 if (filter.value === 'filtered') {
-                    return row.originalRow.reason.indexOf('Filtered') === 0;
+                    // eslint-disable-next-line no-underscore-dangle
+                    return row._original.reason.indexOf('Filtered') === 0;
                 }
                 return true;
             },
@@ -188,7 +189,6 @@ class Logs extends Component {
                 defaultPageSize={50}
                 minRows={7}
                 noDataText="No logs found"
-                originalKey="originalRow"
                 defaultSorted={[
                     {
                         id: 'time',
