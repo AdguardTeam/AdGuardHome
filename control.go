@@ -217,7 +217,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 // stats
 // -----
 func handleStats(w http.ResponseWriter, r *http.Request) {
-	histrical := generateMapFromStats(&statistics.perMinute, 0, 2)
+	histrical := generateMapFromStats(&statistics.perHour, 0, 24)
 	// sum them up
 	summed := map[string]interface{}{}
 	for key, values := range histrical {
@@ -231,7 +231,7 @@ func handleStats(w http.ResponseWriter, r *http.Request) {
 		}
 		summed[key] = summedValue
 	}
-	summed["stats_period"] = "3 minutes"
+	summed["stats_period"] = "24 hours"
 
 	json, err := json.Marshal(summed)
 	if err != nil {
@@ -439,7 +439,7 @@ func handleStatsTop(w http.ResponseWriter, r *http.Request) {
 	blocked := map[string]int{}
 	clients := map[string]int{}
 	now := time.Now()
-	timeWindow := time.Minute * 3
+	timeWindow := time.Hour * 24
 	notBefore := now.Add(timeWindow * -1)
 
 	for _, value := range values {
@@ -494,7 +494,8 @@ func handleStatsTop(w http.ResponseWriter, r *http.Request) {
 	}
 	gen(&json, "top_queried_domains", domains, true)
 	gen(&json, "top_blocked_domains", blocked, true)
-	gen(&json, "top_clients", clients, false)
+	gen(&json, "top_clients", clients, true)
+	json.WriteString("  \"stats_period\": \"24 hours\"\n")
 	json.WriteString("}\n")
 
 	w.Header().Set("Content-Type", "application/json")
