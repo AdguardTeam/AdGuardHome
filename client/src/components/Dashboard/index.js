@@ -26,7 +26,7 @@ class Dashboard extends Component {
     getToggleFilteringButton = () => {
         const { isFilteringEnabled } = this.props.dashboard;
         const buttonText = isFilteringEnabled ? 'Disable' : 'Enable';
-        const buttonClass = isFilteringEnabled ? 'btn-outline-secondary' : 'btn-outline-success';
+        const buttonClass = isFilteringEnabled ? 'btn-gray' : 'btn-success';
 
         return (
             <button type="button" className={`btn btn-sm mr-2 ${buttonClass}`} onClick={() => this.props.toggleFiltering(isFilteringEnabled)}>

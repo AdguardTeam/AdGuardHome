@@ -59,3 +59,19 @@
     border-top: 6px solid transparent;
     border-bottom: 6px solid #585965;
 }
+
+.logs__table .rt-thead.-filters input,
+.logs__table .rt-thead.-filters select {
+    padding: 6px 7px;
+    border-radius: 3px;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: #495057;
+    border: 1px solid rgba(0, 40, 100, 0.12);
+}
+
+.logs__table .rt-thead.-filters input:focus,
+.logs__table .rt-thead.-filters select:focus {
+    border-color: #1991eb;
+    box-shadow: 0 0 0 2px rgba(70, 127, 207, 0.25);
+}
