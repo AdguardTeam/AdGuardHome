@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 
@@ -15,7 +16,12 @@ import (
 // VersionString will be set through ldflags, contains current version
 var VersionString = "undefined"
 
+func cleanup() {
+	writeStats()
+}
+
 func main() {
+	c := make(chan os.Signal, 1)
 	log.Printf("AdGuard DNS web interface backend, version %s\n", VersionString)
 	box := packr.NewBox("build/static")
 	{
@@ -113,6 +119,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	err = loadStats()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		<-c
+		cleanup()
+		os.Exit(1)
+	}()
 
 	address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
 

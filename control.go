@@ -217,7 +217,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 // stats
 // -----
 func handleStats(w http.ResponseWriter, r *http.Request) {
-	histrical := generateMapFromStats(&statistics.perHour, 0, 24)
+	histrical := generateMapFromStats(&statistics.PerHour, 0, 24)
 	// sum them up
 	summed := map[string]interface{}{}
 	for key, values := range histrical {
@@ -259,16 +259,16 @@ func handleStatsHistory(w http.ResponseWriter, r *http.Request) {
 	switch timeUnitString {
 	case "seconds":
 		timeUnit = time.Second
-		stats = &statistics.perSecond
+		stats = &statistics.PerSecond
 	case "minutes":
 		timeUnit = time.Minute
-		stats = &statistics.perMinute
+		stats = &statistics.PerMinute
 	case "hours":
 		timeUnit = time.Hour
-		stats = &statistics.perHour
+		stats = &statistics.PerHour
 	case "days":
 		timeUnit = time.Hour * 24
-		stats = &statistics.perDay
+		stats = &statistics.PerDay
 	default:
 		http.Error(w, "Must specify valid time_unit parameter", 400)
 		return
