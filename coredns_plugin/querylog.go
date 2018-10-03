@@ -16,6 +16,8 @@ import (
 	"github.com/zfjagann/golang-ring"
 )
 
+const logBufferCap = 10000
+
 var logBuffer = ring.Ring{}
 
 type logEntry struct {
@@ -28,7 +30,7 @@ type logEntry struct {
 }
 
 func init() {
-	logBuffer.SetCapacity(1000)
+	logBuffer.SetCapacity(logBufferCap)
 }
 
 func logRequest(question *dns.Msg, answer *dns.Msg, result dnsfilter.Result, elapsed time.Duration, ip string) {
