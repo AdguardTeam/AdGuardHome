@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/gobuffalo/packr"
 )
@@ -130,6 +131,16 @@ func main() {
 		<-c
 		cleanup()
 		os.Exit(1)
+	}()
+
+	go func() {
+		for range time.Tick(time.Hour * 24) {
+			err := writeStats()
+			if err != nil {
+				log.Printf("Couldn't write stats: %s", err)
+				// try later on next iteration, don't abort
+			}
+		}
 	}()
 
 	address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
