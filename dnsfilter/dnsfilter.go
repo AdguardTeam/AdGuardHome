@@ -67,6 +67,10 @@ type rule struct {
 	// user-supplied data
 	listID uint32
 
+	// suffix matching
+	isSuffix bool
+	suffix   string
+
 	// compiled regexp
 	compiled *regexp.Regexp
 
@@ -126,8 +130,8 @@ const (
 // these variables need to survive coredns reload
 var (
 	stats             Stats
-	safebrowsingCache = gcache.New(defaultCacheSize).LRU().Expiration(defaultCacheTime).Build()
-	parentalCache     = gcache.New(defaultCacheSize).LRU().Expiration(defaultCacheTime).Build()
+	safebrowsingCache gcache.Cache
+	parentalCache     gcache.Cache
 )
 
 // Result holds state of hostname check
@@ -387,9 +391,18 @@ func (rule *rule) extractShortcut() {
 
 func (rule *rule) compile() error {
 	rule.RLock()
-	isCompiled := rule.compiled != nil
+	isCompiled := rule.isSuffix || rule.compiled != nil
 	rule.RUnlock()
 	if isCompiled {
+		return nil
+	}
+
+	isSuffix, suffix := getSuffix(rule.text)
+	if isSuffix {
+		rule.Lock()
+		rule.isSuffix = isSuffix
+		rule.suffix = suffix
+		rule.Unlock()
 		return nil
 	}
 
@@ -417,7 +430,16 @@ func (rule *rule) match(host string) (Result, error) {
 		return res, err
 	}
 	rule.RLock()
-	matched := rule.compiled.MatchString(host)
+	matched := false
+	if rule.isSuffix {
+		if host == rule.suffix {
+			matched = true
+		} else if strings.HasSuffix(host, "."+rule.suffix) {
+			matched = true
+		}
+	} else {
+		matched = rule.compiled.MatchString(host)
+	}
 	rule.RUnlock()
 	if matched {
 		res.Reason = FilteredBlackList
@@ -529,6 +551,9 @@ func (d *Dnsfilter) checkSafeBrowsing(host string) (Result, error) {
 		}
 		return result, nil
 	}
+	if safebrowsingCache == nil {
+		safebrowsingCache = gcache.New(defaultCacheSize).LRU().Expiration(defaultCacheTime).Build()
+	}
 	result, err := d.lookupCommon(host, &stats.Safebrowsing, safebrowsingCache, true, format, handleBody)
 	return result, err
 }
@@ -571,6 +596,9 @@ func (d *Dnsfilter) checkParental(host string) (Result, error) {
 			}
 		}
 		return result, nil
+	}
+	if parentalCache == nil {
+		parentalCache = gcache.New(defaultCacheSize).LRU().Expiration(defaultCacheTime).Build()
 	}
 	result, err := d.lookupCommon(host, &stats.Parental, parentalCache, false, format, handleBody)
 	return result, err
@@ -759,7 +787,9 @@ func New() *Dnsfilter {
 // Destroy is optional if you want to tidy up goroutines without waiting for them to die off
 // right now it closes idle HTTP connections if there are any
 func (d *Dnsfilter) Destroy() {
-	d.transport.CloseIdleConnections()
+	if d != nil && d.transport != nil {
+		d.transport.CloseIdleConnections()
+	}
 }
 
 //
