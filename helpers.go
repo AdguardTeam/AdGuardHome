@@ -111,8 +111,8 @@ func generateMapFromStats(stats *periodicStats, start int, end int) map[string]i
 
 	avgProcessingTime := make([]float64, 0)
 
-	count := getReversedSlice(stats.entries[processingTimeCount], start, end)
-	sum := getReversedSlice(stats.entries[processingTimeSum], start, end)
+	count := getReversedSlice(stats.Entries[processingTimeCount], start, end)
+	sum := getReversedSlice(stats.Entries[processingTimeSum], start, end)
 	for i := 0; i < len(count); i++ {
 		var avg float64
 		if count[i] != 0 {
@@ -123,11 +123,11 @@ func generateMapFromStats(stats *periodicStats, start int, end int) map[string]i
 	}
 
 	result := map[string]interface{}{
-		"dns_queries":           getReversedSlice(stats.entries[totalRequests], start, end),
-		"blocked_filtering":     getReversedSlice(stats.entries[filteredTotal], start, end),
-		"replaced_safebrowsing": getReversedSlice(stats.entries[filteredSafebrowsing], start, end),
-		"replaced_safesearch":   getReversedSlice(stats.entries[filteredSafesearch], start, end),
-		"replaced_parental":     getReversedSlice(stats.entries[filteredParental], start, end),
+		"dns_queries":           getReversedSlice(stats.Entries[totalRequests], start, end),
+		"blocked_filtering":     getReversedSlice(stats.Entries[filteredTotal], start, end),
+		"replaced_safebrowsing": getReversedSlice(stats.Entries[filteredSafebrowsing], start, end),
+		"replaced_safesearch":   getReversedSlice(stats.Entries[filteredSafesearch], start, end),
+		"replaced_parental":     getReversedSlice(stats.Entries[filteredParental], start, end),
 		"avg_processing_time":   avgProcessingTime,
 	}
 	return result

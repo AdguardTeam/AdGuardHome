@@ -217,7 +217,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 // stats
 // -----
 func handleStats(w http.ResponseWriter, r *http.Request) {
-	histrical := generateMapFromStats(&statistics.perHour, 0, 24)
+	histrical := generateMapFromStats(&statistics.PerHour, 0, 24)
 	// sum them up
 	summed := map[string]interface{}{}
 	for key, values := range histrical {
@@ -259,16 +259,16 @@ func handleStatsHistory(w http.ResponseWriter, r *http.Request) {
 	switch timeUnitString {
 	case "seconds":
 		timeUnit = time.Second
-		stats = &statistics.perSecond
+		stats = &statistics.PerSecond
 	case "minutes":
 		timeUnit = time.Minute
-		stats = &statistics.perMinute
+		stats = &statistics.PerMinute
 	case "hours":
 		timeUnit = time.Hour
-		stats = &statistics.perHour
+		stats = &statistics.PerHour
 	case "days":
 		timeUnit = time.Hour * 24
-		stats = &statistics.perDay
+		stats = &statistics.PerDay
 	default:
 		http.Error(w, "Must specify valid time_unit parameter", 400)
 		return
@@ -399,6 +399,16 @@ func handleQueryLogDisable(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errortext, http.StatusInternalServerError)
 	}
 
+}
+
+func handleStatsReset(w http.ResponseWriter, r *http.Request) {
+	purgeStats()
+
+	_, err := fmt.Fprintf(w, "OK\n")
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "Couldn't write body: %s", err)
+		return
+	}
 }
 
 func handleStatsTop(w http.ResponseWriter, r *http.Request) {
@@ -1489,6 +1499,7 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/stats", optionalAuth(ensureGET(handleStats)))
 	http.HandleFunc("/control/stats_history", optionalAuth(ensureGET(handleStatsHistory)))
 	http.HandleFunc("/control/stats_top", optionalAuth(ensureGET(handleStatsTop)))
+	http.HandleFunc("/control/stats_reset", optionalAuth(ensurePOST(handleStatsReset)))
 	http.HandleFunc("/control/querylog", optionalAuth(ensureGET(handleQueryLog)))
 	http.HandleFunc("/control/querylog_enable", optionalAuth(ensurePOST(handleQueryLogEnable)))
 	http.HandleFunc("/control/querylog_disable", optionalAuth(ensurePOST(handleQueryLogDisable)))

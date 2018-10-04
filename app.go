@@ -6,8 +6,10 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/gobuffalo/packr"
 )
@@ -15,7 +17,12 @@ import (
 // VersionString will be set through ldflags, contains current version
 var VersionString = "undefined"
 
+func cleanup() {
+	writeStats()
+}
+
 func main() {
+	c := make(chan os.Signal, 1)
 	log.Printf("AdGuard DNS web interface backend, version %s\n", VersionString)
 	box := packr.NewBox("build/static")
 	{
@@ -113,6 +120,28 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	err = loadStats()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		<-c
+		cleanup()
+		os.Exit(1)
+	}()
+
+	go func() {
+		for range time.Tick(time.Hour * 24) {
+			err := writeStats()
+			if err != nil {
+				log.Printf("Couldn't write stats: %s", err)
+				// try later on next iteration, don't abort
+			}
+		}
+	}()
 
 	address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
 
