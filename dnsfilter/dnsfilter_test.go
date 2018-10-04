@@ -195,7 +195,7 @@ func TestRuleToRegexp(t *testing.T) {
 		{"/doubleclick/", "doubleclick", nil},
 		{"/", "", ErrInvalidSyntax},
 		{`|double*?.+[]|(){}#$\|`, `^double.*\?\.\+\[\]\|\(\)\{\}\#\$\\$`, nil},
-		{`||doubleclick.net^`, `^([a-z0-9-_.]+\.)?doubleclick\.net([^ a-zA-Z0-9.%]|$)`, nil},
+		{`||doubleclick.net^`, `(?:^|\.)doubleclick\.net$`, nil},
 	}
 	for _, testcase := range tests {
 		converted, err := ruleToRegexp(testcase.rule)
@@ -205,6 +205,38 @@ func TestRuleToRegexp(t *testing.T) {
 		if converted != testcase.result {
 			t.Error("Results do not match, got ", converted, " expected ", testcase.result)
 		}
+	}
+}
+
+func TestSuffixRule(t *testing.T) {
+	for _, testcase := range []struct {
+		rule     string
+		isSuffix bool
+		suffix   string
+	}{
+		{`||doubleclick.net^`, true, `doubleclick.net`}, // entire string or subdomain match
+		{`||doubleclick.net|`, true, `doubleclick.net`}, // entire string or subdomain match
+		{`|doubleclick.net^`, false, ``},                // TODO: ends with doubleclick.net
+		{`*doubleclick.net^`, false, ``},                // TODO: ends with doubleclick.net
+		{`doubleclick.net^`, false, ``},                 // TODO: ends with doubleclick.net
+		{`|*doubleclick.net^`, false, ``},               // TODO: ends with doubleclick.net
+		{`||*doubleclick.net^`, false, ``},              // TODO: ends with doubleclick.net
+		{`||*doubleclick.net|`, false, ``},              // TODO: ends with doubleclick.net
+		{`||*doublec*lick.net^`, false, ``},             // has a wildcard inside, has to be regexp
+		{`||*doublec|lick.net^`, false, ``},             // has a special symbol inside, has to be regexp
+		{`/abracadabra/`, false, ``},                    // regexp, not anchored
+		{`/abracadabra$/`, false, ``},                   // TODO: simplify simple suffix regexes
+	} {
+		isSuffix, suffix := getSuffix(testcase.rule)
+		if testcase.isSuffix != isSuffix {
+			t.Errorf("Results do not match for \"%s\": got %v expected %v", testcase.rule, isSuffix, testcase.isSuffix)
+			continue
+		}
+		if testcase.isSuffix && testcase.suffix != suffix {
+			t.Errorf("Result suffix does not match for \"%s\": got \"%s\" expected \"%s\"", testcase.rule, suffix, testcase.suffix)
+			continue
+		}
+		// trace("\"%s\": %v: %s", testcase.rule, isSuffix, suffix)
 	}
 }
 

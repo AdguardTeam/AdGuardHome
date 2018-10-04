@@ -5,8 +5,8 @@ import (
 )
 
 func ruleToRegexp(rule string) (string, error) {
-	const hostStart = "^([a-z0-9-_.]+\\.)?"
-	const hostEnd = "([^ a-zA-Z0-9.%]|$)"
+	const hostStart = `(?:^|\.)`
+	const hostEnd = `$`
 
 	// empty or short rule -- do nothing
 	if !isValidRule(rule) {
@@ -48,4 +48,39 @@ func ruleToRegexp(rule string) (string, error) {
 	}
 
 	return sb.String(), nil
+}
+
+// handle suffix rule ||example.com^ -- either entire string is example.com or *.example.com
+func getSuffix(rule string) (bool, string) {
+	// if starts with / and ends with /, it's already a regexp
+	// TODO: if a regexp is simple `/abracadabra$/`, then simplify it maybe?
+	if rule[0] == '/' && rule[len(rule)-1] == '/' {
+		return false, ""
+	}
+
+	// must start with ||
+	if rule[0] != '|' || rule[1] != '|' {
+		return false, ""
+	}
+	rule = rule[2:]
+
+	// suffix rule must end with ^ or |
+	lastChar := rule[len(rule)-1]
+	if lastChar != '^' && lastChar != '|' {
+		return false, ""
+	}
+	// last char was checked, eat it
+	rule = rule[:len(rule)-1]
+
+	// check that it doesn't have any special characters inside
+	for _, r := range rule {
+		switch r {
+		case '|':
+			return false, ""
+		case '*':
+			return false, ""
+		}
+	}
+
+	return true, rule
 }

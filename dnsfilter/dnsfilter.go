@@ -67,6 +67,10 @@ type rule struct {
 	// user-supplied data
 	listID uint32
 
+	// suffix matching
+	isSuffix bool
+	suffix   string
+
 	// compiled regexp
 	compiled *regexp.Regexp
 
@@ -387,9 +391,18 @@ func (rule *rule) extractShortcut() {
 
 func (rule *rule) compile() error {
 	rule.RLock()
-	isCompiled := rule.compiled != nil
+	isCompiled := rule.isSuffix || rule.compiled != nil
 	rule.RUnlock()
 	if isCompiled {
+		return nil
+	}
+
+	isSuffix, suffix := getSuffix(rule.text)
+	if isSuffix {
+		rule.Lock()
+		rule.isSuffix = isSuffix
+		rule.suffix = suffix
+		rule.Unlock()
 		return nil
 	}
 
@@ -417,7 +430,16 @@ func (rule *rule) match(host string) (Result, error) {
 		return res, err
 	}
 	rule.RLock()
-	matched := rule.compiled.MatchString(host)
+	matched := false
+	if rule.isSuffix {
+		if host == rule.suffix {
+			matched = true
+		} else if strings.HasSuffix(host, "."+rule.suffix) {
+			matched = true
+		}
+	} else {
+		matched = rule.compiled.MatchString(host)
+	}
 	rule.RUnlock()
 	if matched {
 		res.Reason = FilteredBlackList
