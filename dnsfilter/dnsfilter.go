@@ -130,8 +130,8 @@ const (
 // these variables need to survive coredns reload
 var (
 	stats             Stats
-	safebrowsingCache = gcache.New(defaultCacheSize).LRU().Expiration(defaultCacheTime).Build()
-	parentalCache     = gcache.New(defaultCacheSize).LRU().Expiration(defaultCacheTime).Build()
+	safebrowsingCache gcache.Cache
+	parentalCache     gcache.Cache
 )
 
 // Result holds state of hostname check
@@ -551,6 +551,9 @@ func (d *Dnsfilter) checkSafeBrowsing(host string) (Result, error) {
 		}
 		return result, nil
 	}
+	if safebrowsingCache == nil {
+		safebrowsingCache = gcache.New(defaultCacheSize).LRU().Expiration(defaultCacheTime).Build()
+	}
 	result, err := d.lookupCommon(host, &stats.Safebrowsing, safebrowsingCache, true, format, handleBody)
 	return result, err
 }
@@ -593,6 +596,9 @@ func (d *Dnsfilter) checkParental(host string) (Result, error) {
 			}
 		}
 		return result, nil
+	}
+	if parentalCache == nil {
+		parentalCache = gcache.New(defaultCacheSize).LRU().Expiration(defaultCacheTime).Build()
 	}
 	result, err := d.lookupCommon(host, &stats.Parental, parentalCache, false, format, handleBody)
 	return result, err
@@ -781,7 +787,9 @@ func New() *Dnsfilter {
 // Destroy is optional if you want to tidy up goroutines without waiting for them to die off
 // right now it closes idle HTTP connections if there are any
 func (d *Dnsfilter) Destroy() {
-	d.transport.CloseIdleConnections()
+	if d != nil && d.transport != nil {
+		d.transport.CloseIdleConnections()
+	}
 }
 
 //
