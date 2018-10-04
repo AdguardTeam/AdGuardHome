@@ -62,10 +62,10 @@ type stats struct {
 var statistics stats
 
 func initPeriodicStats(periodic *periodicStats) {
-	periodic.Entries = statsEntries{}
+	*periodic = periodicStats{}
 }
 
-func init() {
+func purgeStats() {
 	initPeriodicStats(&statistics.PerSecond)
 	initPeriodicStats(&statistics.PerMinute)
 	initPeriodicStats(&statistics.PerHour)

@@ -401,6 +401,16 @@ func handleQueryLogDisable(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func handleStatsReset(w http.ResponseWriter, r *http.Request) {
+	purgeStats()
+
+	_, err := fmt.Fprintf(w, "OK\n")
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "Couldn't write body: %s", err)
+		return
+	}
+}
+
 func handleStatsTop(w http.ResponseWriter, r *http.Request) {
 	resp, err := client.Get("http://127.0.0.1:8618/querylog")
 	if err != nil {
@@ -1489,6 +1499,7 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/stats", optionalAuth(ensureGET(handleStats)))
 	http.HandleFunc("/control/stats_history", optionalAuth(ensureGET(handleStatsHistory)))
 	http.HandleFunc("/control/stats_top", optionalAuth(ensureGET(handleStatsTop)))
+	http.HandleFunc("/control/stats_reset", optionalAuth(ensurePOST(handleStatsReset)))
 	http.HandleFunc("/control/querylog", optionalAuth(ensureGET(handleQueryLog)))
 	http.HandleFunc("/control/querylog_enable", optionalAuth(ensurePOST(handleQueryLogEnable)))
 	http.HandleFunc("/control/querylog_disable", optionalAuth(ensurePOST(handleQueryLogDisable)))
