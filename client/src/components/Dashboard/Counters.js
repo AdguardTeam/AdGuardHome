@@ -5,13 +5,13 @@ import Card from '../ui/Card';
 import Tooltip from '../ui/Tooltip';
 
 const Counters = props => (
-    <Card title="General statistics" subtitle="in the last 3 minutes" bodyType="card-table" refresh={props.refreshButton}>
+    <Card title="General statistics" subtitle="in the last 24 hours" bodyType="card-table" refresh={props.refreshButton}>
         <table className="table card-table">
             <tbody>
                 <tr>
                     <td>
                         DNS Queries
-                        <Tooltip text="A number of DNS quieries processed in the last 3 minutes" />
+                        <Tooltip text="A number of DNS quieries processed in the last 24 hours" />
                     </td>
                     <td className="text-right">
                         <span className="text-muted">

@@ -6,7 +6,7 @@ import map from 'lodash/map';
 import Card from '../ui/Card';
 
 const Clients = props => (
-    <Card title="Top clients" subtitle="in the last 3 minutes" bodyType="card-table" refresh={props.refreshButton}>
+    <Card title="Top clients" subtitle="in the last 24 hours" bodyType="card-table" refresh={props.refreshButton}>
         <ReactTable
             data={map(props.topClients, (value, prop) => (
                 { ip: prop, count: value }
