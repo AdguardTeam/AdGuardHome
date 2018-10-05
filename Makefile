@@ -32,6 +32,8 @@ coredns: coredns_plugin/*.go dnsfilter/*.go
 	cd $(GOPATH)/src/github.com/coredns/coredns && perl -p -i.bak -e 's/^(trace|route53|federation|kubernetes|etcd):.*//' plugin.cfg
 	cd $(GOPATH)/src/github.com/coredns/coredns && grep -q '^dnsfilter:' plugin.cfg || perl -p -i.bak -e 's|^log:log|log:log\ndnsfilter:github.com/AdguardTeam/AdguardDNS/coredns_plugin|' plugin.cfg
 	grep '^dnsfilter:' $(GOPATH)/src/github.com/coredns/coredns/plugin.cfg ## used to check that plugin.cfg was successfully edited by sed
+	perl -0777 -p -i.bak -e 's/pprofOnce.Do\(func\(\) {(.*)}\)/\1/ms' $(GOPATH)/src/github.com/coredns/coredns/plugin/pprof/setup.go
+	perl -0777 -p -i.bak -e 's/c.OnShutdown/c.OnRestart/' $(GOPATH)/src/github.com/coredns/coredns/plugin/pprof/setup.go
 	cd $(GOPATH)/src/github.com/coredns/coredns && GOPATH=$(GOPATH) GOOS=$(NATIVE_GOOS) GOARCH=$(NATIVE_GOARCH) go generate
 	cd $(GOPATH)/src/github.com/coredns/coredns && GOPATH=$(GOPATH) go get -v -d .
 	cd $(GOPATH)/src/github.com/coredns/coredns && GOPATH=$(GOPATH) go build -o $(mkfile_dir)/coredns

@@ -446,8 +446,15 @@ func (p *plug) serveDNSInternal(ctx context.Context, w dns.ResponseWriter, r *dn
 					return rcode, dnsfilter.Result{}, err
 				}
 				return rcode, result, err
+			case dnsfilter.FilteredInvalid:
+				// return NXdomain
+				rcode, err := p.writeNXdomain(ctx, w, r)
+				if err != nil {
+					return rcode, dnsfilter.Result{}, err
+				}
+				return rcode, result, err
 			default:
-				log.Printf("SHOULD NOT HAPPEN -- got unknown reason for filtering: %T %v %s", result.Reason, result.Reason, result.Reason.String())
+				log.Printf("SHOULD NOT HAPPEN -- got unknown reason for filtering host \"%s\": %v, %+v", host, result.Reason, result)
 			}
 		} else {
 			switch result.Reason {
@@ -457,7 +464,7 @@ func (p *plug) serveDNSInternal(ctx context.Context, w dns.ResponseWriter, r *dn
 			case dnsfilter.NotFilteredNotFound:
 				// do nothing, pass through to lower code
 			default:
-				log.Printf("SHOULD NOT HAPPEN -- got unknown reason for not filtering: %T %v %s", result.Reason, result.Reason, result.Reason.String())
+				log.Printf("SHOULD NOT HAPPEN -- got unknown reason for not filtering host \"%s\": %v, %+v", host, result.Reason, result)
 			}
 		}
 	}
