@@ -148,9 +148,9 @@ func (r Reason) Matched() bool {
 
 // CheckHost tries to match host against rules, then safebrowsing and parental if they are enabled
 func (d *Dnsfilter) CheckHost(host string) (Result, error) {
-	// sometimes DNS clients will try to resolve ".", which in turns transforms into "" when it reaches here
+	// sometimes DNS clients will try to resolve ".", which is a request to get root servers
 	if host == "" {
-		return Result{Reason: FilteredInvalid}, nil
+		return Result{Reason: NotFilteredNotFound}, nil
 	}
 	host = strings.ToLower(host)
 
