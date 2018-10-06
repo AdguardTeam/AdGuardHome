@@ -62,7 +62,12 @@ type stats struct {
 var statistics stats
 
 func initPeriodicStats(periodic *periodicStats) {
-	*periodic = periodicStats{}
+	periodic.Entries = statsEntries{}
+	periodic.LastRotate = time.Time{}
+}
+
+func init() {
+	purgeStats()
 }
 
 func purgeStats() {

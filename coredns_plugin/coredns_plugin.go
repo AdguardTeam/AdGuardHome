@@ -219,6 +219,7 @@ func setup(c *caddy.Controller) error {
 		return nil
 	})
 	c.OnShutdown(p.onShutdown)
+	c.OnFinalShutdown(p.onFinalShutdown)
 
 	return nil
 }
@@ -247,6 +248,15 @@ func (p *plug) parseEtcHosts(text string) bool {
 func (p *plug) onShutdown() error {
 	p.d.Destroy()
 	p.d = nil
+	return nil
+}
+
+func (p *plug) onFinalShutdown() error {
+	err := flushToFile(logBuffer)
+	if err != nil {
+		log.Printf("failed to flush to file: %s", err)
+		return err
+	}
 	return nil
 }
 
