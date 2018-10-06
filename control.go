@@ -789,10 +789,11 @@ func handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
 		"enabled": config.CoreDNS.FilteringEnabled,
 	}
 
+	config.RLock()
 	data["filters"] = config.Filters
 	data["user_rules"] = config.UserRules
-
 	json, err := json.Marshal(data)
+	config.RUnlock()
 
 	if err != nil {
 		errortext := fmt.Sprintf("Unable to marshal status json: %s", err)
@@ -1122,7 +1123,6 @@ func runFilterRefreshers() {
 func refreshFiltersIfNeccessary() int {
 	now := time.Now()
 	config.Lock()
-	defer config.Unlock()
 
 	// deduplicate
 	// TODO: move it somewhere else
@@ -1154,6 +1154,7 @@ func refreshFiltersIfNeccessary() int {
 			updateCount++
 		}
 	}
+	config.Unlock()
 
 	if updateCount > 0 {
 		err := writeFilterFile()
@@ -1237,6 +1238,7 @@ func writeFilterFile() error {
 	log.Printf("Writing filter file: %s", filterpath)
 	// TODO: check if file contents have modified
 	data := []byte{}
+	config.RLock()
 	filters := config.Filters
 	for _, filter := range filters {
 		if !filter.Enabled {
@@ -1249,6 +1251,7 @@ func writeFilterFile() error {
 		data = append(data, []byte(rule)...)
 		data = append(data, '\n')
 	}
+	config.RUnlock()
 	err := ioutil.WriteFile(filterpath+".tmp", data, 0644)
 	if err != nil {
 		log.Printf("Couldn't write filter file: %s", err)

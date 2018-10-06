@@ -55,6 +55,8 @@ type plug struct {
 	ParentalBlockHost     string
 	QueryLogEnabled       bool
 	BlockedTTL            uint32 // in seconds, default 3600
+
+	sync.RWMutex
 }
 
 var defaultPlugin = plug{
@@ -246,17 +248,21 @@ func (p *plug) parseEtcHosts(text string) bool {
 }
 
 func (p *plug) onShutdown() error {
+	p.Lock()
 	p.d.Destroy()
 	p.d = nil
+	p.Unlock()
 	return nil
 }
 
 func (p *plug) onFinalShutdown() error {
+	logBufferLock.Lock()
 	err := flushToFile(logBuffer)
 	if err != nil {
 		log.Printf("failed to flush to file: %s", err)
 		return err
 	}
+	logBufferLock.Unlock()
 	return nil
 }
 
@@ -293,9 +299,11 @@ func doStatsLookup(ch interface{}, doFunc statsFunc, name string, lookupstats *d
 }
 
 func (p *plug) doStats(ch interface{}, doFunc statsFunc) {
+	p.RLock()
 	stats := p.d.GetStats()
 	doStatsLookup(ch, doFunc, "safebrowsing", &stats.Safebrowsing)
 	doStatsLookup(ch, doFunc, "parental", &stats.Parental)
+	p.RUnlock()
 }
 
 // Describe is called by prometheus handler to know stat types
@@ -365,12 +373,12 @@ func (p *plug) genSOA(r *dns.Msg) []dns.RR {
 	}
 	Ns := "fake-for-negative-caching.adguard.com."
 
-	soa := defaultSOA
+	soa := *defaultSOA
 	soa.Hdr = header
 	soa.Mbox = Mbox
 	soa.Ns = Ns
-	soa.Serial = uint32(time.Now().Unix())
-	return []dns.RR{soa}
+	soa.Serial = 100500 // faster than uint32(time.Now().Unix())
+	return []dns.RR{&soa}
 }
 
 func (p *plug) writeNXdomain(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
@@ -397,13 +405,17 @@ func (p *plug) serveDNSInternal(ctx context.Context, w dns.ResponseWriter, r *dn
 	for _, question := range r.Question {
 		host := strings.ToLower(strings.TrimSuffix(question.Name, "."))
 		// is it a safesearch domain?
+		p.RLock()
 		if val, ok := p.d.SafeSearchDomain(host); ok {
 			rcode, err := p.replaceHostWithValAndReply(ctx, w, r, host, val, question)
 			if err != nil {
+				p.RUnlock()
 				return rcode, dnsfilter.Result{}, err
 			}
+			p.RUnlock()
 			return rcode, dnsfilter.Result{Reason: dnsfilter.FilteredSafeSearch}, err
 		}
+		p.RUnlock()
 
 		// is it in hosts?
 		if val, ok := p.hosts[host]; ok {
@@ -425,11 +437,14 @@ func (p *plug) serveDNSInternal(ctx context.Context, w dns.ResponseWriter, r *dn
 		}
 
 		// needs to be filtered instead
+		p.RLock()
 		result, err := p.d.CheckHost(host)
 		if err != nil {
 			log.Printf("plugin/dnsfilter: %s\n", err)
+			p.RUnlock()
 			return dns.RcodeServerFailure, dnsfilter.Result{}, fmt.Errorf("plugin/dnsfilter: %s", err)
 		}
+		p.RUnlock()
 
 		if result.IsFiltered {
 			switch result.Reason {

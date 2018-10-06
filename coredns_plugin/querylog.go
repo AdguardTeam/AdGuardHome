@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdguardDNS/dnsfilter"
@@ -23,6 +24,7 @@ const (
 )
 
 var (
+	logBufferLock sync.RWMutex
 	logBuffer     []logEntry
 )
 
@@ -65,11 +67,13 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result dnsfilter.Result, ela
 	}
 	var flushBuffer []logEntry
 
+	logBufferLock.Lock()
 	logBuffer = append(logBuffer, entry)
 	if len(logBuffer) >= logBufferCap {
 		flushBuffer = logBuffer
 		logBuffer = nil
 	}
+	logBufferLock.Unlock()
 	if len(flushBuffer) > 0 {
 		// write to file
 		// do it in separate goroutine -- we are stalling DNS response this whole time
@@ -81,7 +85,9 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result dnsfilter.Result, ela
 func handleQueryLog(w http.ResponseWriter, r *http.Request) {
 	// TODO: fetch values from disk if len(logBuffer) < queryLogSize
 	// TODO: cache output
+	logBufferLock.RLock()
 	values := logBuffer
+	logBufferLock.RUnlock()
 	var data = []map[string]interface{}{}
 	for _, entry := range values {
 		var q *dns.Msg

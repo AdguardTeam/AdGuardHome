@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -57,6 +58,7 @@ type stats struct {
 	PerDay    periodicStats
 
 	LastSeen statsEntry
+	sync.RWMutex
 }
 
 var statistics stats
@@ -71,10 +73,12 @@ func init() {
 }
 
 func purgeStats() {
+	statistics.Lock()
 	initPeriodicStats(&statistics.PerSecond)
 	initPeriodicStats(&statistics.PerMinute)
 	initPeriodicStats(&statistics.PerHour)
 	initPeriodicStats(&statistics.PerDay)
+	statistics.Unlock()
 }
 
 func runStatsCollectors() {
@@ -121,10 +125,12 @@ func statsRotate(periodic *periodicStats, now time.Time, rotations int64) {
 // called every second, accumulates stats for each second, minute, hour and day
 func collectStats() {
 	now := time.Now()
+	statistics.Lock()
 	statsRotate(&statistics.PerSecond, now, int64(now.Sub(statistics.PerSecond.LastRotate)/time.Second))
 	statsRotate(&statistics.PerMinute, now, int64(now.Sub(statistics.PerMinute.LastRotate)/time.Minute))
 	statsRotate(&statistics.PerHour, now, int64(now.Sub(statistics.PerHour.LastRotate)/time.Hour))
 	statsRotate(&statistics.PerDay, now, int64(now.Sub(statistics.PerDay.LastRotate)/time.Hour/24))
+	statistics.Unlock()
 
 	// grab HTTP from prometheus
 	resp, err := client.Get("http://127.0.0.1:9153/metrics")
@@ -191,6 +197,7 @@ func collectStats() {
 	}
 
 	// calculate delta
+	statistics.Lock()
 	delta := calcDelta(entry, statistics.LastSeen)
 
 	// apply delta to second/minute/hour/day
@@ -201,6 +208,7 @@ func collectStats() {
 
 	// save last seen
 	statistics.LastSeen = entry
+	statistics.Unlock()
 }
 
 func calcDelta(current, seen statsEntry) statsEntry {
@@ -245,7 +253,9 @@ func loadStats() error {
 func writeStats() error {
 	statsFile := filepath.Join(config.ourBinaryDir, "stats.json")
 	log.Printf("Writing JSON file: %s", statsFile)
+	statistics.RLock()
 	json, err := json.MarshalIndent(statistics, "", "  ")
+	statistics.RUnlock()
 	if err != nil {
 		log.Printf("Couldn't generate JSON: %s", err)
 		return err
