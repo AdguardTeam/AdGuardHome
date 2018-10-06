@@ -142,9 +142,14 @@ func handleStart(w http.ResponseWriter, r *http.Request) {
 
 func childwaiter() {
 	err := coreDNSCommand.Wait()
-	log.Printf("coredns terminated: %s\n", err)
-	err = coreDNSCommand.Process.Release()
-	log.Printf("coredns released: %s\n", err)
+	log.Printf("coredns unexpectedly died: %s\n", err)
+	coreDNSCommand.Process.Release()
+	log.Printf("restarting coredns\n", err)
+	err = startDNSServer()
+	if err != nil {
+		log.Printf("Couldn't restart DNS server: %s\n", err)
+		return
+	}
 }
 
 func handleStop(w http.ResponseWriter, r *http.Request) {
