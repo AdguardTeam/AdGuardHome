@@ -144,3 +144,90 @@ func periodicQueryLogRotate(t time.Duration) {
 		}
 	}
 }
+
+func appendFromLogFile(values []logEntry, maxLen int, timeWindow time.Duration) []logEntry {
+	now := time.Now()
+	// read from querylog files, try newest file first
+	files := []string{
+		queryLogFileName + ".gz",
+		queryLogFileName + ".gz.1",
+	}
+
+	a := []logEntry{}
+
+	// read from all files
+	for _, file := range files {
+		if len(a) >= maxLen {
+			// previous file filled us with enough fresh entries
+			break
+		}
+		if _, err := os.Stat(file); os.IsNotExist(err) {
+			// do nothing, file doesn't exist
+			continue
+		}
+
+		trace("Opening file %s", file)
+		f, err := os.Open(file)
+		if err != nil {
+			log.Printf("Failed to open file \"%s\": %s", file, err)
+			// try next file
+			continue
+		}
+		defer f.Close()
+
+		trace("Creating gzip reader")
+		zr, err := gzip.NewReader(f)
+		if err != nil {
+			log.Printf("Failed to create gzip reader: %s", err)
+			continue
+		}
+
+		trace("Creating json decoder")
+		d := json.NewDecoder(zr)
+
+		i := 0
+		// entries on file are in oldest->newest order
+		// we want maxLen newest
+		for d.More() {
+			var entry logEntry
+			err := d.Decode(&entry)
+			if err != nil {
+				log.Printf("Failed to decode: %s", err)
+				// next entry can be fine, try more
+				continue
+			}
+
+			if now.Sub(entry.Time) > timeWindow {
+				trace("skipping entry")
+				continue
+			}
+
+			i++
+			a = append(a, entry)
+			if len(a) > maxLen {
+				toskip := len(a) - maxLen
+				a = a[toskip:]
+			}
+		}
+		err = zr.Close()
+		if err != nil {
+			log.Printf("Encountered error while closing gzip reader: %s", err)
+		}
+		log.Printf("file \"%s\": read %d entries", file, i)
+	}
+
+	// now that we've read all eligible entries, reverse the slice to make it go from newest->oldest
+	for left, right := 0, len(a)-1; left < right; left, right = left+1, right-1 {
+		a[left], a[right] = a[right], a[left]
+	}
+
+	// append it to values
+	values = append(values, a...)
+
+	// then cut off of it is bigger than maxLen
+	if len(values) > maxLen {
+		values = values[:maxLen]
+	}
+
+	return values
+}

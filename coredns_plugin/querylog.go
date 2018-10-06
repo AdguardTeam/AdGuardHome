@@ -88,6 +88,11 @@ func handleQueryLog(w http.ResponseWriter, r *http.Request) {
 	logBufferLock.RLock()
 	values := logBuffer
 	logBufferLock.RUnlock()
+
+	if len(values) < queryLogAPI {
+		values = appendFromLogFile(values, queryLogAPI, time.Hour*24)
+	}
+
 	var data = []map[string]interface{}{}
 	for _, entry := range values {
 		var q *dns.Msg
