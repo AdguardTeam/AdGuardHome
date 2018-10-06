@@ -30,7 +30,7 @@ var (
 
 type logEntry struct {
 	Question []byte
-	Answer   []byte
+	Answer   []byte `json:",omitempty"` // sometimes empty answers happen like binerdunt.top or rev2.globalrootservers.net
 	Result   dnsfilter.Result
 	Time     time.Time
 	Elapsed  time.Duration
