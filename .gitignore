@@ -5,3 +5,5 @@
 /coredns
 /Corefile
 /dnsfilter.txt
+/querylog.json.gz
+/querylog.json.gz.1
