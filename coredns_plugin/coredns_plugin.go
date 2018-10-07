@@ -147,9 +147,6 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 				p.settings.BlockedTTL = uint32(blockttl)
 			case "querylog":
 				p.settings.QueryLogEnabled = true
-				onceQueryLog.Do(func() {
-					go startQueryLogServer() // TODO: how to handle errors?
-				})
 			}
 		}
 	}
@@ -186,7 +183,19 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 		}
 	}
 
-	var err error
+	log.Printf("Loading top from querylog")
+	err := loadTopFromFiles()
+	if err != nil {
+		log.Printf("Failed to load top from querylog: %s", err)
+		return nil, err
+	}
+
+	if p.settings.QueryLogEnabled {
+		onceQueryLog.Do(func() {
+			go startQueryLogServer() // TODO: how to handle errors?
+		})
+	}
+
 	p.upstream, err = upstream.New(nil)
 	if err != nil {
 		return nil, err

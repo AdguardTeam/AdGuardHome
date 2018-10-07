@@ -145,7 +145,7 @@ func periodicQueryLogRotate(t time.Duration) {
 	}
 }
 
-func appendFromLogFile(values []logEntry, maxLen int, timeWindow time.Duration) []logEntry {
+func genericLoader(onEntry func(entry *logEntry) error, needMore func() bool, timeWindow time.Duration) error {
 	now := time.Now()
 	// read from querylog files, try newest file first
 	files := []string{
@@ -153,12 +153,9 @@ func appendFromLogFile(values []logEntry, maxLen int, timeWindow time.Duration) 
 		queryLogFileName + ".gz.1",
 	}
 
-	a := []logEntry{}
-
 	// read from all files
 	for _, file := range files {
-		if len(a) >= maxLen {
-			// previous file filled us with enough fresh entries
+		if !needMore() {
 			break
 		}
 		if _, err := os.Stat(file); os.IsNotExist(err) {
@@ -181,6 +178,7 @@ func appendFromLogFile(values []logEntry, maxLen int, timeWindow time.Duration) 
 			log.Printf("Failed to create gzip reader: %s", err)
 			continue
 		}
+		defer zr.Close()
 
 		trace("Creating json decoder")
 		d := json.NewDecoder(zr)
@@ -189,6 +187,9 @@ func appendFromLogFile(values []logEntry, maxLen int, timeWindow time.Duration) 
 		// entries on file are in oldest->newest order
 		// we want maxLen newest
 		for d.More() {
+			if !needMore() {
+				break
+			}
 			var entry logEntry
 			err := d.Decode(&entry)
 			if err != nil {
@@ -203,17 +204,39 @@ func appendFromLogFile(values []logEntry, maxLen int, timeWindow time.Duration) 
 			}
 
 			i++
-			a = append(a, entry)
-			if len(a) > maxLen {
-				toskip := len(a) - maxLen
-				a = a[toskip:]
+			err = onEntry(&entry)
+			if err != nil {
+				return err
 			}
 		}
-		err = zr.Close()
-		if err != nil {
-			log.Printf("Encountered error while closing gzip reader: %s", err)
-		}
 		log.Printf("file \"%s\": read %d entries", file, i)
+	}
+	return nil
+}
+
+func appendFromLogFile(values []logEntry, maxLen int, timeWindow time.Duration) []logEntry {
+	a := []logEntry{}
+
+	onEntry := func(entry *logEntry) error {
+		a = append(a, *entry)
+		if len(a) > maxLen {
+			toskip := len(a) - maxLen
+			a = a[toskip:]
+		}
+		return nil
+	}
+
+	needMore := func() bool {
+		if len(a) >= maxLen {
+			return false
+		}
+		return true
+	}
+
+	err := genericLoader(onEntry, needMore, timeWindow)
+	if err != nil {
+		log.Printf("Failed to load entries from querylog: %s", err)
+		return values
 	}
 
 	// now that we've read all eligible entries, reverse the slice to make it go from newest->oldest

@@ -9,9 +9,7 @@ import (
 	"os"
 	"path"
 	"runtime"
-	"sort"
 	"strings"
-	"time"
 )
 
 func clamp(value, low, high int) int {
@@ -131,89 +129,6 @@ func generateMapFromStats(stats *periodicStats, start int, end int) map[string]i
 		"avg_processing_time":   avgProcessingTime,
 	}
 	return result
-}
-
-// -------------------------------------
-// helper functions for querylog parsing
-// -------------------------------------
-func sortByValue(m map[string]int) []string {
-	type kv struct {
-		k string
-		v int
-	}
-	var ss []kv
-	for k, v := range m {
-		ss = append(ss, kv{k, v})
-	}
-	sort.Slice(ss, func(l, r int) bool {
-		return ss[l].v > ss[r].v
-	})
-
-	sorted := []string{}
-	for _, v := range ss {
-		sorted = append(sorted, v.k)
-	}
-	return sorted
-}
-
-func getHost(entry map[string]interface{}) string {
-	q, ok := entry["question"]
-	if !ok {
-		return ""
-	}
-	question, ok := q.(map[string]interface{})
-	if !ok {
-		return ""
-	}
-	h, ok := question["host"]
-	if !ok {
-		return ""
-	}
-	host, ok := h.(string)
-	if !ok {
-		return ""
-	}
-	return host
-}
-
-func getReason(entry map[string]interface{}) string {
-	r, ok := entry["reason"]
-	if !ok {
-		return ""
-	}
-	reason, ok := r.(string)
-	if !ok {
-		return ""
-	}
-	return reason
-}
-
-func getClient(entry map[string]interface{}) string {
-	c, ok := entry["client"]
-	if !ok {
-		return ""
-	}
-	client, ok := c.(string)
-	if !ok {
-		return ""
-	}
-	return client
-}
-
-func getTime(entry map[string]interface{}) time.Time {
-	t, ok := entry["time"]
-	if !ok {
-		return time.Time{}
-	}
-	tstr, ok := t.(string)
-	if !ok {
-		return time.Time{}
-	}
-	value, err := time.Parse(time.RFC3339, tstr)
-	if err != nil {
-		return time.Time{}
-	}
-	return value
 }
 
 // -------------------------------------------------

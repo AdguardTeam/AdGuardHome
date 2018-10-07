@@ -57,11 +57,12 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result dnsfilter.Result, ela
 		}
 	}
 
+	now := time.Now()
 	entry := logEntry{
 		Question: q,
 		Answer:   a,
 		Result:   result,
-		Time:     time.Now(),
+		Time:     now,
 		Elapsed:  elapsed,
 		IP:       ip,
 	}
@@ -74,6 +75,15 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result dnsfilter.Result, ela
 		logBuffer = nil
 	}
 	logBufferLock.Unlock()
+
+	// add it to running top
+	err = runningTop.addEntry(&entry, now)
+	if err != nil {
+		log.Printf("Failed to add entry to running top: %s", err)
+		// don't do failure, just log
+	}
+
+	// if buffer needs to be flushed to disk, do it now
 	if len(flushBuffer) > 0 {
 		// write to file
 		// do it in separate goroutine -- we are stalling DNS response this whole time
@@ -204,8 +214,10 @@ func startQueryLogServer() {
 	listenAddr := "127.0.0.1:8618" // 8618 is sha512sum of "querylog" then each byte summed
 
 	go periodicQueryLogRotate(queryLogRotationPeriod)
+	go periodicHourlyTopRotate()
 
 	http.HandleFunc("/querylog", handleQueryLog)
+	http.HandleFunc("/stats_top", handleStatsTop)
 	if err := http.ListenAndServe(listenAddr, nil); err != nil {
 		log.Fatalf("error in ListenAndServe: %s", err)
 	}
