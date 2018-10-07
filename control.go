@@ -144,7 +144,7 @@ func childwaiter() {
 	err := coreDNSCommand.Wait()
 	log.Printf("coredns unexpectedly died: %s\n", err)
 	coreDNSCommand.Process.Release()
-	log.Printf("restarting coredns\n", err)
+	log.Printf("restarting coredns")
 	err = startDNSServer()
 	if err != nil {
 		log.Printf("Couldn't restart DNS server: %s\n", err)
@@ -510,7 +510,7 @@ func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	result := map[string]string{}
 
 	for _, host := range hosts {
-		err := checkDNS(host)
+		err = checkDNS(host)
 		if err != nil {
 			log.Println(err)
 			result[host] = err.Error()
