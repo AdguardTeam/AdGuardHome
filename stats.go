@@ -254,7 +254,7 @@ func writeStats() error {
 	statsFile := filepath.Join(config.ourBinaryDir, "stats.json")
 	log.Printf("Writing JSON file: %s", statsFile)
 	statistics.RLock()
-	json, err := json.MarshalIndent(statistics, "", "  ")
+	json, err := json.MarshalIndent(&statistics, "", "  ")
 	statistics.RUnlock()
 	if err != nil {
 		log.Printf("Couldn't generate JSON: %s", err)
