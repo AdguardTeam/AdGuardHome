@@ -209,8 +209,8 @@ func (r *dayTop) addEntry(entry *logEntry, now time.Time) error {
 
 func loadTopFromFiles() error {
 	now := time.Now()
-	runningTop.RLock()
-	defer runningTop.RUnlock()
+	runningTop.Lock() // not rlock because we set it at the end of the function
+	defer runningTop.Unlock()
 	if runningTop.loaded {
 		return nil
 	}
