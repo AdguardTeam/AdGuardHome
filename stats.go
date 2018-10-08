@@ -107,6 +107,9 @@ func isConnRefused(err error) bool {
 }
 
 func statsRotate(periodic *periodicStats, now time.Time, rotations int64) {
+	if rotations > statsHistoryElements {
+		rotations = statsHistoryElements
+	}
 	// calculate how many times we should rotate
 	for r := int64(0); r < rotations; r++ {
 		for key, values := range periodic.Entries {
