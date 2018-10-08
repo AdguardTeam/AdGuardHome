@@ -20,7 +20,7 @@ export default class UserRules extends Component {
                 subtitle="Enter one rule on a line. You can use either adblock rules or hosts files syntax."
             >
                 <form onSubmit={this.handleSubmit}>
-                    <textarea className="form-control form-control--textarea" value={this.props.userRules} onChange={this.handleChange} />
+                    <textarea className="form-control form-control--textarea-large" value={this.props.userRules} onChange={this.handleChange} />
                     <div className="card-actions">
                         <button
                             className="btn btn-success btn-standart"
