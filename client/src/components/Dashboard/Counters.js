@@ -4,6 +4,8 @@ import PropTypes from 'prop-types';
 import Card from '../ui/Card';
 import Tooltip from '../ui/Tooltip';
 
+const tooltipType = 'tooltip-custom--narrow';
+
 const Counters = props => (
     <Card title="General statistics" subtitle="in the last 24 hours" bodyType="card-table" refresh={props.refreshButton}>
         <table className="table card-table">
@@ -11,7 +13,7 @@ const Counters = props => (
                 <tr>
                     <td>
                         DNS Queries
-                        <Tooltip text="A number of DNS quieries processed in the last 24 hours" />
+                        <Tooltip text="A number of DNS quieries processed in the last 24 hours" type={tooltipType} />
                     </td>
                     <td className="text-right">
                         <span className="text-muted">
@@ -22,7 +24,7 @@ const Counters = props => (
                 <tr>
                     <td>
                         Blocked by filters
-                        <Tooltip text="A number of DNS requests blocked by filters" />
+                        <Tooltip text="A number of DNS requests blocked by filters" type={tooltipType} />
                     </td>
                     <td className="text-right">
                         <span className="text-muted">
@@ -33,7 +35,7 @@ const Counters = props => (
                 <tr>
                     <td>
                         Blocked malware/phishing
-                        <Tooltip text="A number of DNS requests blocked" />
+                        <Tooltip text="A number of DNS requests blocked" type={tooltipType} />
                     </td>
                     <td className="text-right">
                         <span className="text-muted">
@@ -44,7 +46,7 @@ const Counters = props => (
                 <tr>
                     <td>
                         Blocked adult websites
-                        <Tooltip text="A number of adult websites blocked" />
+                        <Tooltip text="A number of adult websites blocked" type={tooltipType} />
                     </td>
                     <td className="text-right">
                         <span className="text-muted">
@@ -55,7 +57,7 @@ const Counters = props => (
                 <tr>
                     <td>
                         Enforced safe search
-                        <Tooltip text="A number of DNS requests to search engines for which Safe Search was enforced" />
+                        <Tooltip text="A number of DNS requests to search engines for which Safe Search was enforced" type={tooltipType} />
                     </td>
                     <td className="text-right">
                         <span className="text-muted">
@@ -66,7 +68,7 @@ const Counters = props => (
                 <tr>
                     <td>
                         Average processing time
-                        <Tooltip text="Average time in milliseconds on processing a DNS request" />
+                        <Tooltip text="Average time in milliseconds on processing a DNS request" type={tooltipType} />
                     </td>
                     <td className="text-right">
                         <span className="text-muted">

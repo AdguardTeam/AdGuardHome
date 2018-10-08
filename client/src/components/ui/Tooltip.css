@@ -17,14 +17,14 @@
     display: block;
     position: absolute;
     bottom: calc(100% + 12px);
-    left: calc(50% - 103px);
-    width: 206px;
+    left: 50%;
     padding: 10px 15px;
     font-size: 0.85rem;
     text-align: center;
     color: #fff;
     background-color: #585965;
     border-radius: 3px;
+    transform: translateX(-50%);
     visibility: hidden;
     opacity: 0;
 }
@@ -47,4 +47,8 @@
 .tooltip-custom:hover:after {
     visibility: visible;
     opacity: 1;
+}
+
+.tooltip-custom--narrow:before {
+    width: 206px;
 }
