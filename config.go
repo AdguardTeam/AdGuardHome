@@ -27,7 +27,7 @@ type configuration struct {
 	Filters   []filter      `yaml:"filters"`
 	UserRules []string      `yaml:"user_rules"`
 
-	sync.Mutex `yaml:"-"`
+	sync.RWMutex `yaml:"-"`
 }
 
 type coreDNSConfig struct {

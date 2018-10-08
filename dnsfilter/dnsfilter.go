@@ -136,9 +136,9 @@ var (
 
 // Result holds state of hostname check
 type Result struct {
-	IsFiltered bool
-	Reason     Reason
-	Rule       string
+	IsFiltered bool   `json:",omitempty"`
+	Reason     Reason `json:",omitempty"`
+	Rule       string `json:",omitempty"`
 }
 
 // Matched can be used to see if any match at all was found, no matter filtered or not

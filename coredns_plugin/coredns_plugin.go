@@ -45,19 +45,24 @@ func init() {
 	})
 }
 
-type plug struct {
-	d        *dnsfilter.Dnsfilter
-	Next     plugin.Handler
-	upstream upstream.Upstream
-	hosts    map[string]net.IP
-
+type plugSettings struct {
 	SafeBrowsingBlockHost string
 	ParentalBlockHost     string
 	QueryLogEnabled       bool
 	BlockedTTL            uint32 // in seconds, default 3600
 }
 
-var defaultPlugin = plug{
+type plug struct {
+	d        *dnsfilter.Dnsfilter
+	Next     plugin.Handler
+	upstream upstream.Upstream
+	hosts    map[string]net.IP
+	settings plugSettings
+
+	sync.RWMutex
+}
+
+var defaultPluginSettings = plugSettings{
 	SafeBrowsingBlockHost: "safebrowsing.block.dns.adguard.com",
 	ParentalBlockHost:     "family.block.dns.adguard.com",
 	BlockedTTL:            3600, // in seconds
@@ -89,10 +94,11 @@ var (
 //
 func setupPlugin(c *caddy.Controller) (*plug, error) {
 	// create new Plugin and copy default values
-	var p = new(plug)
-	*p = defaultPlugin
-	p.d = dnsfilter.New()
-	p.hosts = make(map[string]net.IP)
+	p := &plug{
+		settings: defaultPluginSettings,
+		d:        dnsfilter.New(),
+		hosts:    make(map[string]net.IP),
+	}
 
 	filterFileNames := []string{}
 	for c.Next() {
@@ -128,7 +134,7 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 					if len(c.Val()) == 0 {
 						return nil, c.ArgErr()
 					}
-					p.ParentalBlockHost = c.Val()
+					p.settings.ParentalBlockHost = c.Val()
 				}
 			case "blocked_ttl":
 				if !c.NextArg() {
@@ -138,12 +144,9 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 				if err != nil {
 					return nil, c.ArgErr()
 				}
-				p.BlockedTTL = uint32(blockttl)
+				p.settings.BlockedTTL = uint32(blockttl)
 			case "querylog":
-				p.QueryLogEnabled = true
-				onceQueryLog.Do(func() {
-					go startQueryLogServer() // TODO: how to handle errors?
-				})
+				p.settings.QueryLogEnabled = true
 			}
 		}
 	}
@@ -180,7 +183,19 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 		}
 	}
 
-	var err error
+	log.Printf("Loading top from querylog")
+	err := loadTopFromFiles()
+	if err != nil {
+		log.Printf("Failed to load top from querylog: %s", err)
+		return nil, err
+	}
+
+	if p.settings.QueryLogEnabled {
+		onceQueryLog.Do(func() {
+			go startQueryLogServer() // TODO: how to handle errors?
+		})
+	}
+
 	p.upstream, err = upstream.New(nil)
 	if err != nil {
 		return nil, err
@@ -219,6 +234,7 @@ func setup(c *caddy.Controller) error {
 		return nil
 	})
 	c.OnShutdown(p.onShutdown)
+	c.OnFinalShutdown(p.onFinalShutdown)
 
 	return nil
 }
@@ -245,8 +261,21 @@ func (p *plug) parseEtcHosts(text string) bool {
 }
 
 func (p *plug) onShutdown() error {
+	p.Lock()
 	p.d.Destroy()
 	p.d = nil
+	p.Unlock()
+	return nil
+}
+
+func (p *plug) onFinalShutdown() error {
+	logBufferLock.Lock()
+	err := flushToFile(logBuffer)
+	if err != nil {
+		log.Printf("failed to flush to file: %s", err)
+		return err
+	}
+	logBufferLock.Unlock()
 	return nil
 }
 
@@ -283,9 +312,11 @@ func doStatsLookup(ch interface{}, doFunc statsFunc, name string, lookupstats *d
 }
 
 func (p *plug) doStats(ch interface{}, doFunc statsFunc) {
+	p.RLock()
 	stats := p.d.GetStats()
 	doStatsLookup(ch, doFunc, "safebrowsing", &stats.Safebrowsing)
 	doStatsLookup(ch, doFunc, "parental", &stats.Parental)
+	p.RUnlock()
 }
 
 // Describe is called by prometheus handler to know stat types
@@ -305,7 +336,7 @@ func (p *plug) replaceHostWithValAndReply(ctx context.Context, w dns.ResponseWri
 	log.Println("Will give", val, "instead of", host)
 	if addr != nil {
 		// this is an IP address, return it
-		result, err := dns.NewRR(fmt.Sprintf("%s %d A %s", host, p.BlockedTTL, val))
+		result, err := dns.NewRR(fmt.Sprintf("%s %d A %s", host, p.settings.BlockedTTL, val))
 		if err != nil {
 			log.Printf("Got error %s\n", err)
 			return dns.RcodeServerFailure, fmt.Errorf("plugin/dnsfilter: %s", err)
@@ -347,7 +378,7 @@ func (p *plug) replaceHostWithValAndReply(ctx context.Context, w dns.ResponseWri
 // the only value that is important is TTL in header, other values like refresh, retry, expire and minttl are irrelevant
 func (p *plug) genSOA(r *dns.Msg) []dns.RR {
 	zone := r.Question[0].Name
-	header := dns.RR_Header{Name: zone, Rrtype: dns.TypeSOA, Ttl: p.BlockedTTL, Class: dns.ClassINET}
+	header := dns.RR_Header{Name: zone, Rrtype: dns.TypeSOA, Ttl: p.settings.BlockedTTL, Class: dns.ClassINET}
 
 	Mbox := "hostmaster."
 	if zone[0] != '.' {
@@ -355,12 +386,12 @@ func (p *plug) genSOA(r *dns.Msg) []dns.RR {
 	}
 	Ns := "fake-for-negative-caching.adguard.com."
 
-	soa := defaultSOA
+	soa := *defaultSOA
 	soa.Hdr = header
 	soa.Mbox = Mbox
 	soa.Ns = Ns
-	soa.Serial = uint32(time.Now().Unix())
-	return []dns.RR{soa}
+	soa.Serial = 100500 // faster than uint32(time.Now().Unix())
+	return []dns.RR{&soa}
 }
 
 func (p *plug) writeNXdomain(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
@@ -387,13 +418,17 @@ func (p *plug) serveDNSInternal(ctx context.Context, w dns.ResponseWriter, r *dn
 	for _, question := range r.Question {
 		host := strings.ToLower(strings.TrimSuffix(question.Name, "."))
 		// is it a safesearch domain?
+		p.RLock()
 		if val, ok := p.d.SafeSearchDomain(host); ok {
 			rcode, err := p.replaceHostWithValAndReply(ctx, w, r, host, val, question)
 			if err != nil {
+				p.RUnlock()
 				return rcode, dnsfilter.Result{}, err
 			}
+			p.RUnlock()
 			return rcode, dnsfilter.Result{Reason: dnsfilter.FilteredSafeSearch}, err
 		}
+		p.RUnlock()
 
 		// is it in hosts?
 		if val, ok := p.hosts[host]; ok {
@@ -415,17 +450,20 @@ func (p *plug) serveDNSInternal(ctx context.Context, w dns.ResponseWriter, r *dn
 		}
 
 		// needs to be filtered instead
+		p.RLock()
 		result, err := p.d.CheckHost(host)
 		if err != nil {
 			log.Printf("plugin/dnsfilter: %s\n", err)
+			p.RUnlock()
 			return dns.RcodeServerFailure, dnsfilter.Result{}, fmt.Errorf("plugin/dnsfilter: %s", err)
 		}
+		p.RUnlock()
 
 		if result.IsFiltered {
 			switch result.Reason {
 			case dnsfilter.FilteredSafeBrowsing:
 				// return cname safebrowsing.block.dns.adguard.com
-				val := p.SafeBrowsingBlockHost
+				val := p.settings.SafeBrowsingBlockHost
 				rcode, err := p.replaceHostWithValAndReply(ctx, w, r, host, val, question)
 				if err != nil {
 					return rcode, dnsfilter.Result{}, err
@@ -433,7 +471,7 @@ func (p *plug) serveDNSInternal(ctx context.Context, w dns.ResponseWriter, r *dn
 				return rcode, result, err
 			case dnsfilter.FilteredParental:
 				// return cname family.block.dns.adguard.com
-				val := p.ParentalBlockHost
+				val := p.settings.ParentalBlockHost
 				rcode, err := p.replaceHostWithValAndReply(ctx, w, r, host, val, question)
 				if err != nil {
 					return rcode, dnsfilter.Result{}, err
@@ -524,7 +562,7 @@ func (p *plug) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (
 	}
 
 	// log
-	if p.QueryLogEnabled {
+	if p.settings.QueryLogEnabled {
 		logRequest(r, rrw.Msg, result, time.Since(start), ip)
 	}
 	return rcode, err

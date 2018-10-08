@@ -142,9 +142,14 @@ func handleStart(w http.ResponseWriter, r *http.Request) {
 
 func childwaiter() {
 	err := coreDNSCommand.Wait()
-	log.Printf("coredns terminated: %s\n", err)
-	err = coreDNSCommand.Process.Release()
-	log.Printf("coredns released: %s\n", err)
+	log.Printf("coredns unexpectedly died: %s\n", err)
+	coreDNSCommand.Process.Release()
+	log.Printf("restarting coredns")
+	err = startDNSServer()
+	if err != nil {
+		log.Printf("Couldn't restart DNS server: %s\n", err)
+		return
+	}
 }
 
 func handleStop(w http.ResponseWriter, r *http.Request) {
@@ -412,9 +417,9 @@ func handleStatsReset(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleStatsTop(w http.ResponseWriter, r *http.Request) {
-	resp, err := client.Get("http://127.0.0.1:8618/querylog")
+	resp, err := client.Get("http://127.0.0.1:8618/stats_top")
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't get querylog from coredns: %T %s\n", err, err)
+		errortext := fmt.Sprintf("Couldn't get stats_top from coredns: %T %s\n", err, err)
 		log.Println(errortext)
 		http.Error(w, errortext, http.StatusBadGateway)
 		return
@@ -423,7 +428,7 @@ func handleStatsTop(w http.ResponseWriter, r *http.Request) {
 		defer resp.Body.Close()
 	}
 
-	// read body
+	// read the body entirely
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		errortext := fmt.Sprintf("Couldn't read response body: %s", err)
@@ -431,85 +436,12 @@ func handleStatsTop(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errortext, http.StatusBadGateway)
 		return
 	}
-	// empty body
-	if len(body) == 0 {
-		return
-	}
 
-	values := []interface{}{}
-	err = json.Unmarshal(body, &values)
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't parse response body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusBadGateway)
-		return
-	}
-
-	domains := map[string]int{}
-	blocked := map[string]int{}
-	clients := map[string]int{}
-	now := time.Now()
-	timeWindow := time.Hour * 24
-	notBefore := now.Add(timeWindow * -1)
-
-	for _, value := range values {
-		entry, ok := value.(map[string]interface{})
-		if !ok {
-			// ignore anything else
-			continue
-		}
-		host := getHost(entry)
-		reason := getReason(entry)
-		client := getClient(entry)
-		time := getTime(entry)
-		if time.Before(notBefore) {
-			// skip if the entry is before specified cutoff
-			continue
-		}
-		if len(host) > 0 {
-			domains[host]++
-		}
-		if len(host) > 0 && strings.HasPrefix(reason, "Filtered") {
-			blocked[host]++
-		}
-		if len(client) > 0 {
-			clients[client]++
-		}
-	}
-
-	// use manual json marshalling because we want maps to be sorted by value
-	json := bytes.Buffer{}
-	json.WriteString("{\n")
-
-	gen := func(json *bytes.Buffer, name string, top map[string]int, addComma bool) {
-		json.WriteString("  \"")
-		json.WriteString(name)
-		json.WriteString("\": {\n")
-		sorted := sortByValue(top)
-		for i, key := range sorted {
-			json.WriteString("    \"")
-			json.WriteString(key)
-			json.WriteString("\": ")
-			json.WriteString(strconv.Itoa(top[key]))
-			if i+1 != len(sorted) {
-				json.WriteByte(',')
-			}
-			json.WriteByte('\n')
-		}
-		json.WriteString("  }")
-		if addComma {
-			json.WriteByte(',')
-		}
-		json.WriteByte('\n')
-	}
-	gen(&json, "top_queried_domains", domains, true)
-	gen(&json, "top_blocked_domains", blocked, true)
-	gen(&json, "top_clients", clients, true)
-	json.WriteString("  \"stats_period\": \"24 hours\"\n")
-	json.WriteString("}\n")
-
+	// forward body entirely with status code
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(json.Bytes())
+	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
+	w.WriteHeader(resp.StatusCode)
+	_, err = w.Write(body)
 	if err != nil {
 		errortext := fmt.Sprintf("Couldn't write body: %s", err)
 		log.Println(errortext)
@@ -578,7 +510,7 @@ func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	result := map[string]string{}
 
 	for _, host := range hosts {
-		err := checkDNS(host)
+		err = checkDNS(host)
 		if err != nil {
 			log.Println(err)
 			result[host] = err.Error()
@@ -789,10 +721,11 @@ func handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
 		"enabled": config.CoreDNS.FilteringEnabled,
 	}
 
+	config.RLock()
 	data["filters"] = config.Filters
 	data["user_rules"] = config.UserRules
-
 	json, err := json.Marshal(data)
+	config.RUnlock()
 
 	if err != nil {
 		errortext := fmt.Sprintf("Unable to marshal status json: %s", err)
@@ -1122,7 +1055,6 @@ func runFilterRefreshers() {
 func refreshFiltersIfNeccessary() int {
 	now := time.Now()
 	config.Lock()
-	defer config.Unlock()
 
 	// deduplicate
 	// TODO: move it somewhere else
@@ -1154,6 +1086,7 @@ func refreshFiltersIfNeccessary() int {
 			updateCount++
 		}
 	}
+	config.Unlock()
 
 	if updateCount > 0 {
 		err := writeFilterFile()
@@ -1237,6 +1170,7 @@ func writeFilterFile() error {
 	log.Printf("Writing filter file: %s", filterpath)
 	// TODO: check if file contents have modified
 	data := []byte{}
+	config.RLock()
 	filters := config.Filters
 	for _, filter := range filters {
 		if !filter.Enabled {
@@ -1249,6 +1183,7 @@ func writeFilterFile() error {
 		data = append(data, []byte(rule)...)
 		data = append(data, '\n')
 	}
+	config.RUnlock()
 	err := ioutil.WriteFile(filterpath+".tmp", data, 0644)
 	if err != nil {
 		log.Printf("Couldn't write filter file: %s", err)

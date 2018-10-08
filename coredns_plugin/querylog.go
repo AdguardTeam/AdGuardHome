@@ -4,54 +4,148 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"os"
+	"path"
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdguardDNS/dnsfilter"
 	"github.com/coredns/coredns/plugin/pkg/response"
 	"github.com/miekg/dns"
-	"github.com/zfjagann/golang-ring"
 )
 
-const logBufferCap = 10000
+const (
+	logBufferCap           = 5000            // maximum capacity of logBuffer before it's flushed to disk
+	queryLogTimeLimit      = time.Hour * 24  // how far in the past we care about querylogs
+	queryLogRotationPeriod = time.Hour * 24  // rotate the log every 24 hours
+	queryLogFileName       = "querylog.json" // .gz added during compression
+	queryLogCacheSize      = 1000            // maximum API response for /querylog
+	queryLogCacheTime      = time.Minute     // if requested more often than this, give out cached response
+	queryLogTopSize        = 500             // Keep in memory only top N values
+	queryLogAPIPort        = "8618"          // 8618 is sha512sum of "querylog" then each byte summed
+)
 
-var logBuffer = ring.Ring{}
+var (
+	logBufferLock sync.RWMutex
+	logBuffer     []logEntry
+
+	queryLogCache []logEntry
+	queryLogLock  sync.RWMutex
+	queryLogTime  time.Time
+)
 
 type logEntry struct {
-	Question *dns.Msg
-	Answer   *dns.Msg
+	Question []byte
+	Answer   []byte `json:",omitempty"` // sometimes empty answers happen like binerdunt.top or rev2.globalrootservers.net
 	Result   dnsfilter.Result
 	Time     time.Time
 	Elapsed  time.Duration
 	IP       string
 }
 
-func init() {
-	logBuffer.SetCapacity(logBufferCap)
-}
-
 func logRequest(question *dns.Msg, answer *dns.Msg, result dnsfilter.Result, elapsed time.Duration, ip string) {
+	var q []byte
+	var a []byte
+	var err error
+
+	if question != nil {
+		q, err = question.Pack()
+		if err != nil {
+			log.Printf("failed to pack question for querylog: %s", err)
+			return
+		}
+	}
+	if answer != nil {
+		a, err = answer.Pack()
+		if err != nil {
+			log.Printf("failed to pack answer for querylog: %s", err)
+			return
+		}
+	}
+
+	now := time.Now()
 	entry := logEntry{
-		Question: question,
-		Answer:   answer,
+		Question: q,
+		Answer:   a,
 		Result:   result,
-		Time:     time.Now(),
+		Time:     now,
 		Elapsed:  elapsed,
 		IP:       ip,
 	}
-	logBuffer.Enqueue(entry)
+	var flushBuffer []logEntry
+
+	logBufferLock.Lock()
+	logBuffer = append(logBuffer, entry)
+	if len(logBuffer) >= logBufferCap {
+		flushBuffer = logBuffer
+		logBuffer = nil
+	}
+	logBufferLock.Unlock()
+
+	// add it to running top
+	err = runningTop.addEntry(&entry, now)
+	if err != nil {
+		log.Printf("Failed to add entry to running top: %s", err)
+		// don't do failure, just log
+	}
+
+	// if buffer needs to be flushed to disk, do it now
+	if len(flushBuffer) > 0 {
+		// write to file
+		// do it in separate goroutine -- we are stalling DNS response this whole time
+		go flushToFile(flushBuffer)
+	}
+	return
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	values := logBuffer.Values()
+func handleQueryLog(w http.ResponseWriter, r *http.Request) {
+	now := time.Now()
+
+	queryLogLock.RLock()
+	values := queryLogCache
+	needRefresh := now.Sub(queryLogTime) >= queryLogCacheTime
+	queryLogLock.RUnlock()
+
+	if needRefresh {
+		// need to get fresh data
+		logBufferLock.RLock()
+		values := logBuffer
+		logBufferLock.RUnlock()
+
+		if len(values) < queryLogCacheSize {
+			values = appendFromLogFile(values, queryLogCacheSize, queryLogTimeLimit)
+		}
+		queryLogLock.Lock()
+		queryLogCache = values
+		queryLogTime = now
+		queryLogLock.Unlock()
+	}
+
 	var data = []map[string]interface{}{}
-	for _, value := range values {
-		entry, ok := value.(logEntry)
-		if !ok {
-			continue
+	for _, entry := range values {
+		var q *dns.Msg
+		var a *dns.Msg
+
+		if len(entry.Question) > 0 {
+			q = new(dns.Msg)
+			if err := q.Unpack(entry.Question); err != nil {
+				// ignore, log and move on
+				log.Printf("Failed to unpack dns message question: %s", err)
+				q = nil
+			}
+		}
+		if len(entry.Answer) > 0 {
+			a = new(dns.Msg)
+			if err := a.Unpack(entry.Answer); err != nil {
+				// ignore, log and move on
+				log.Printf("Failed to unpack dns message question: %s", err)
+				a = nil
+			}
 		}
 
 		jsonentry := map[string]interface{}{
@@ -60,22 +154,25 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			"time":       entry.Time.Format(time.RFC3339),
 			"client":     entry.IP,
 		}
-		question := map[string]interface{}{
-			"host":  strings.ToLower(strings.TrimSuffix(entry.Question.Question[0].Name, ".")),
-			"type":  dns.Type(entry.Question.Question[0].Qtype).String(),
-			"class": dns.Class(entry.Question.Question[0].Qclass).String(),
+		if q != nil {
+			jsonentry["question"] = map[string]interface{}{
+				"host":  strings.ToLower(strings.TrimSuffix(q.Question[0].Name, ".")),
+				"type":  dns.Type(q.Question[0].Qtype).String(),
+				"class": dns.Class(q.Question[0].Qclass).String(),
+			}
 		}
-		jsonentry["question"] = question
 
-		status, _ := response.Typify(entry.Answer, time.Now().UTC())
-		jsonentry["status"] = status.String()
+		if a != nil {
+			status, _ := response.Typify(a, time.Now().UTC())
+			jsonentry["status"] = status.String()
+		}
 		if len(entry.Result.Rule) > 0 {
 			jsonentry["rule"] = entry.Result.Rule
 		}
 
-		if entry.Answer != nil && len(entry.Answer.Answer) > 0 {
+		if a != nil && len(a.Answer) > 0 {
 			var answers = []map[string]interface{}{}
-			for _, k := range entry.Answer.Answer {
+			for _, k := range a.Answer {
 				header := k.Header()
 				answer := map[string]interface{}{
 					"type": dns.TypeToString[header.Rrtype],
@@ -132,22 +229,33 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errortext := fmt.Sprintf("Unable to write response json: %s", err)
 		log.Println(errortext)
-		http.Error(w, errortext, 500)
+		http.Error(w, errortext, http.StatusInternalServerError)
 	}
 }
 
 func startQueryLogServer() {
-	listenAddr := "127.0.0.1:8618" // sha512sum of "querylog" then each byte summed
+	listenAddr := net.JoinHostPort("127.0.0.1", queryLogAPIPort)
 
-	http.HandleFunc("/querylog", handler)
+	go periodicQueryLogRotate()
+	go periodicHourlyTopRotate()
+
+	http.HandleFunc("/querylog", handleQueryLog)
+	http.HandleFunc("/stats_top", handleStatsTop)
 	if err := http.ListenAndServe(listenAddr, nil); err != nil {
 		log.Fatalf("error in ListenAndServe: %s", err)
 	}
 }
 
-func trace(text string) {
+func trace(format string, args ...interface{}) {
 	pc := make([]uintptr, 10) // at least 1 entry needed
 	runtime.Callers(2, pc)
 	f := runtime.FuncForPC(pc[0])
-	log.Printf("%s(): %s\n", f.Name(), text)
+	var buf strings.Builder
+	buf.WriteString(fmt.Sprintf("%s(): ", path.Base(f.Name())))
+	text := fmt.Sprintf(format, args...)
+	buf.WriteString(text)
+	if len(text) == 0 || text[len(text)-1] != '\n' {
+		buf.WriteRune('\n')
+	}
+	fmt.Fprint(os.Stderr, buf.String())
 }
