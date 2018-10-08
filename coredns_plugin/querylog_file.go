@@ -13,11 +13,6 @@ import (
 	"github.com/go-test/deep"
 )
 
-const (
-	queryLogRotationPeriod = time.Hour * 24  // rotate the log every 24 hours
-	queryLogFileName       = "querylog.json" // .gz added during compression
-)
-
 var (
 	fileWriteLock sync.Mutex
 )
@@ -135,8 +130,8 @@ func rotateQueryLog() error {
 	return nil
 }
 
-func periodicQueryLogRotate(t time.Duration) {
-	for range time.Tick(t) {
+func periodicQueryLogRotate() {
+	for range time.Tick(queryLogRotationPeriod) {
 		err := rotateQueryLog()
 		if err != nil {
 			log.Printf("Failed to rotate querylog: %s", err)

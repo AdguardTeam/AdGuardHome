@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"path"
@@ -19,9 +20,14 @@ import (
 )
 
 const (
-	logBufferCap      = 5000 // maximum capacity of logBuffer before it's flushed to disk
-	queryLogCacheSize = 1000 // maximum API response for /querylog
-	queryLogCacheTime = time.Minute
+	logBufferCap           = 5000            // maximum capacity of logBuffer before it's flushed to disk
+	queryLogTimeLimit      = time.Hour * 24  // how far in the past we care about querylogs
+	queryLogRotationPeriod = time.Hour * 24  // rotate the log every 24 hours
+	queryLogFileName       = "querylog.json" // .gz added during compression
+	queryLogCacheSize      = 1000            // maximum API response for /querylog
+	queryLogCacheTime      = time.Minute     // if requested more often than this, give out cached response
+	queryLogTopSize        = 500             // Keep in memory only top N values
+	queryLogAPIPort        = "8618"          // 8618 is sha512sum of "querylog" then each byte summed
 )
 
 var (
@@ -112,7 +118,7 @@ func handleQueryLog(w http.ResponseWriter, r *http.Request) {
 		logBufferLock.RUnlock()
 
 		if len(values) < queryLogCacheSize {
-			values = appendFromLogFile(values, queryLogCacheSize, time.Hour*24)
+			values = appendFromLogFile(values, queryLogCacheSize, queryLogTimeLimit)
 		}
 		queryLogLock.Lock()
 		queryLogCache = values
@@ -223,14 +229,14 @@ func handleQueryLog(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errortext := fmt.Sprintf("Unable to write response json: %s", err)
 		log.Println(errortext)
-		http.Error(w, errortext, 500)
+		http.Error(w, errortext, http.StatusInternalServerError)
 	}
 }
 
 func startQueryLogServer() {
-	listenAddr := "127.0.0.1:8618" // 8618 is sha512sum of "querylog" then each byte summed
+	listenAddr := net.JoinHostPort("127.0.0.1", queryLogAPIPort)
 
-	go periodicQueryLogRotate(queryLogRotationPeriod)
+	go periodicQueryLogRotate()
 	go periodicHourlyTopRotate()
 
 	http.HandleFunc("/querylog", handleQueryLog)

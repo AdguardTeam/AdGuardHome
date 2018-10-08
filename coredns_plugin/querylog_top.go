@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"path"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -30,9 +33,9 @@ type hourTop struct {
 }
 
 func (top *hourTop) init() {
-	top.domains = gcache.New(500).LRU().Build()
-	top.blocked = gcache.New(500).LRU().Build()
-	top.clients = gcache.New(500).LRU().Build()
+	top.domains = gcache.New(topLRUsize).LRU().Build()
+	top.blocked = gcache.New(topLRUsize).LRU().Build()
+	top.clients = gcache.New(topLRUsize).LRU().Build()
 }
 
 type dayTop struct {
@@ -227,7 +230,7 @@ func loadTopFromFiles() error {
 	}
 
 	needMore := func() bool { return true }
-	err := genericLoader(onEntry, needMore, time.Hour*24)
+	err := genericLoader(onEntry, needMore, queryLogTimeLimit)
 	if err != nil {
 		log.Printf("Failed to load entries from querylog: %s", err)
 		return err
@@ -340,20 +343,17 @@ func (d *dayTop) hoursReadUnlock()   { tracelock(); d.hoursLock.RUnlock() }
 func (d *dayTop) loadedWriteLock()   { tracelock(); d.loadedLock.Lock() }
 func (d *dayTop) loadedWriteUnlock() { tracelock(); d.loadedLock.Unlock() }
 
-// func (d *dayTop) loadedReadLock()    { tracelock(); d.loadedLock.RLock() }
-// func (d *dayTop) loadedReadUnlock()  { tracelock(); d.loadedLock.RUnlock() }
-
 func (h *hourTop) Lock()    { tracelock(); h.mutex.Lock() }
 func (h *hourTop) RLock()   { tracelock(); h.mutex.RLock() }
 func (h *hourTop) RUnlock() { tracelock(); h.mutex.RUnlock() }
 func (h *hourTop) Unlock()  { tracelock(); h.mutex.Unlock() }
 
 func tracelock() {
-	/*
+	if false { // not commented out to make code checked during compilation
 		pc := make([]uintptr, 10) // at least 1 entry needed
 		runtime.Callers(2, pc)
 		f := path.Base(runtime.FuncForPC(pc[1]).Name())
 		lockf := path.Base(runtime.FuncForPC(pc[0]).Name())
 		fmt.Fprintf(os.Stderr, "%s(): %s\n", f, lockf)
-	*/
+	}
 }
