@@ -42,14 +42,9 @@ class Logs extends Component {
     toggleBlocking = (type, domain) => {
         const { userRules } = this.props.filtering;
         const lineEnding = !endsWith(userRules, '\n') ? '\n' : '';
-        let blockingRule = `@@||${domain}^$important`;
-        let unblockingRule = `||${domain}^$important`;
-
-        if (type === 'unblock') {
-            blockingRule = `||${domain}^$important`;
-            unblockingRule = `@@||${domain}^$important`;
-        }
-
+        const baseRule = `||${domain}^$important`;
+        const blockingRule = type === 'block' ? `@@${baseRule}` : baseRule;
+        const unblockingRule = type === 'block' ? baseRule : `@@${baseRule}`;
         const preparedBlockingRule = new RegExp(`(^|\n)${escapeRegExp(blockingRule)}($|\n)`);
         const preparedUnblockingRule = new RegExp(`(^|\n)${escapeRegExp(unblockingRule)}($|\n)`);
 
@@ -189,6 +184,11 @@ class Logs extends Component {
                 defaultPageSize={50}
                 minRows={7}
                 noDataText="No logs found"
+                defaultFilterMethod={(filter, row) => {
+                    const id = filter.pivotId || filter.id;
+                    return row[id] !== undefined ?
+                        String(row[id]).indexOf(filter.value) !== -1 : true;
+                }}
                 defaultSorted={[
                     {
                         id: 'time',
