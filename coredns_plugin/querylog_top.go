@@ -270,18 +270,18 @@ func handleStatsTop(w http.ResponseWriter, r *http.Request) {
 	json.WriteString("{\n")
 
 	gen := func(json *bytes.Buffer, name string, top map[string]int, addComma bool) {
-		json.WriteString("  \"")
-		json.WriteString(name)
-		json.WriteString("\": {\n")
+		json.WriteString("  ")
+		json.WriteString(fmt.Sprintf("%q", name))
+		json.WriteString(": {\n")
 		sorted := sortByValue(top)
+		// no more than 50 entries
+		if len(sorted) > 50 {
+			sorted = sorted[:50]
+		}
 		for i, key := range sorted {
-			// no more than 50 entries
-			if i >= 50 {
-				break
-			}
-			json.WriteString("    \"")
-			json.WriteString(key)
-			json.WriteString("\": ")
+			json.WriteString("    ")
+			json.WriteString(fmt.Sprintf("%q", key))
+			json.WriteString(": ")
 			json.WriteString(strconv.Itoa(top[key]))
 			if i+1 != len(sorted) {
 				json.WriteByte(',')
