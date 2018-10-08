@@ -25,7 +25,8 @@ type hourTop struct {
 	domains gcache.Cache
 	blocked gcache.Cache
 	clients gcache.Cache
-	sync.RWMutex
+
+	mutex sync.RWMutex
 }
 
 func (top *hourTop) init() {
@@ -35,31 +36,33 @@ func (top *hourTop) init() {
 }
 
 type dayTop struct {
-	hours        []*hourTop
-	loaded       bool
-	sync.RWMutex // write -- rotating hourTop, read -- anything else
+	hours     []*hourTop
+	hoursLock sync.RWMutex // writelock this lock ONLY WHEN rotating or intializing hours!
+
+	loaded     bool
+	loadedLock sync.Mutex
 }
 
 var runningTop dayTop
 
 func init() {
-	runningTop.Lock()
+	runningTop.hoursWriteLock()
 	for i := 0; i < 24; i++ {
 		hour := hourTop{}
 		hour.init()
 		runningTop.hours = append(runningTop.hours, &hour)
 	}
-	runningTop.Unlock()
+	runningTop.hoursWriteUnlock()
 }
 
 func rotateHourlyTop() {
 	log.Printf("Rotating hourly top")
 	hour := &hourTop{}
 	hour.init()
-	runningTop.Lock()
+	runningTop.hoursWriteLock()
 	runningTop.hours = append([]*hourTop{hour}, runningTop.hours...)
 	runningTop.hours = runningTop.hours[:24]
-	runningTop.Unlock()
+	runningTop.hoursWriteUnlock()
 }
 
 func periodicHourlyTopRotate() {
@@ -180,8 +183,8 @@ func (r *dayTop) addEntry(entry *logEntry, now time.Time) error {
 	hostname := strings.ToLower(strings.TrimSuffix(q.Question[0].Name, "."))
 
 	// get value, if not set, crate one
-	runningTop.RLock()
-	defer runningTop.RUnlock()
+	runningTop.hoursReadLock()
+	defer runningTop.hoursReadUnlock()
 	err := runningTop.hours[hour].incrementDomains(hostname)
 	if err != nil {
 		log.Printf("Failed to increment value: %s", err)
@@ -209,8 +212,8 @@ func (r *dayTop) addEntry(entry *logEntry, now time.Time) error {
 
 func loadTopFromFiles() error {
 	now := time.Now()
-	runningTop.Lock() // not rlock because we set it at the end of the function
-	defer runningTop.Unlock()
+	runningTop.loadedWriteLock()
+	defer runningTop.loadedWriteUnlock()
 	if runningTop.loaded {
 		return nil
 	}
@@ -255,7 +258,7 @@ func handleStatsTop(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	runningTop.RLock()
+	runningTop.hoursReadLock()
 	for hour := 0; hour < 24; hour++ {
 		runningTop.hours[hour].RLock()
 		do(runningTop.hours[hour].domains.Keys(), runningTop.hours[hour].lockedGetDomains, domains)
@@ -263,7 +266,7 @@ func handleStatsTop(w http.ResponseWriter, r *http.Request) {
 		do(runningTop.hours[hour].clients.Keys(), runningTop.hours[hour].lockedGetClients, clients)
 		runningTop.hours[hour].RUnlock()
 	}
-	runningTop.RUnlock()
+	runningTop.hoursReadUnlock()
 
 	// use manual json marshalling because we want maps to be sorted by value
 	json := bytes.Buffer{}
@@ -328,4 +331,29 @@ func sortByValue(m map[string]int) []string {
 		sorted = append(sorted, v.k)
 	}
 	return sorted
+}
+
+func (d *dayTop) hoursWriteLock()    { tracelock(); d.hoursLock.Lock() }
+func (d *dayTop) hoursWriteUnlock()  { tracelock(); d.hoursLock.Unlock() }
+func (d *dayTop) hoursReadLock()     { tracelock(); d.hoursLock.RLock() }
+func (d *dayTop) hoursReadUnlock()   { tracelock(); d.hoursLock.RUnlock() }
+func (d *dayTop) loadedWriteLock()   { tracelock(); d.loadedLock.Lock() }
+func (d *dayTop) loadedWriteUnlock() { tracelock(); d.loadedLock.Unlock() }
+
+// func (d *dayTop) loadedReadLock()    { tracelock(); d.loadedLock.RLock() }
+// func (d *dayTop) loadedReadUnlock()  { tracelock(); d.loadedLock.RUnlock() }
+
+func (h *hourTop) Lock()    { tracelock(); h.mutex.Lock() }
+func (h *hourTop) RLock()   { tracelock(); h.mutex.RLock() }
+func (h *hourTop) RUnlock() { tracelock(); h.mutex.RUnlock() }
+func (h *hourTop) Unlock()  { tracelock(); h.mutex.Unlock() }
+
+func tracelock() {
+	/*
+		pc := make([]uintptr, 10) // at least 1 entry needed
+		runtime.Callers(2, pc)
+		f := path.Base(runtime.FuncForPC(pc[1]).Name())
+		lockf := path.Base(runtime.FuncForPC(pc[0]).Name())
+		fmt.Fprintf(os.Stderr, "%s(): %s\n", f, lockf)
+	*/
 }
