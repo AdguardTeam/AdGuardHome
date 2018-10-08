@@ -33,9 +33,9 @@ type hourTop struct {
 }
 
 func (top *hourTop) init() {
-	top.domains = gcache.New(topLRUsize).LRU().Build()
-	top.blocked = gcache.New(topLRUsize).LRU().Build()
-	top.clients = gcache.New(topLRUsize).LRU().Build()
+	top.domains = gcache.New(queryLogTopSize).LRU().Build()
+	top.blocked = gcache.New(queryLogTopSize).LRU().Build()
+	top.clients = gcache.New(queryLogTopSize).LRU().Build()
 }
 
 type dayTop struct {
