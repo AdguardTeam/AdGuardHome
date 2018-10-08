@@ -19,13 +19,18 @@ import (
 )
 
 const (
-	logBufferCap = 1000 // maximum capacity of logBuffer before it's flushed to disk
-	queryLogAPI  = 1000 // maximum API response for /querylog
+	logBufferCap      = 5000 // maximum capacity of logBuffer before it's flushed to disk
+	queryLogCacheSize = 1000 // maximum API response for /querylog
+	queryLogCacheTime = time.Minute
 )
 
 var (
 	logBufferLock sync.RWMutex
 	logBuffer     []logEntry
+
+	queryLogCache []logEntry
+	queryLogLock  sync.RWMutex
+	queryLogTime  time.Time
 )
 
 type logEntry struct {
@@ -93,14 +98,26 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result dnsfilter.Result, ela
 }
 
 func handleQueryLog(w http.ResponseWriter, r *http.Request) {
-	// TODO: fetch values from disk if len(logBuffer) < queryLogSize
-	// TODO: cache output
-	logBufferLock.RLock()
-	values := logBuffer
-	logBufferLock.RUnlock()
+	now := time.Now()
 
-	if len(values) < queryLogAPI {
-		values = appendFromLogFile(values, queryLogAPI, time.Hour*24)
+	queryLogLock.RLock()
+	values := queryLogCache
+	needRefresh := now.Sub(queryLogTime) >= queryLogCacheTime
+	queryLogLock.RUnlock()
+
+	if needRefresh {
+		// need to get fresh data
+		logBufferLock.RLock()
+		values := logBuffer
+		logBufferLock.RUnlock()
+
+		if len(values) < queryLogCacheSize {
+			values = appendFromLogFile(values, queryLogCacheSize, time.Hour*24)
+		}
+		queryLogLock.Lock()
+		queryLogCache = values
+		queryLogTime = now
+		queryLogLock.Unlock()
 	}
 
 	var data = []map[string]interface{}{}
