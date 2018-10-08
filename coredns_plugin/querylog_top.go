@@ -36,6 +36,7 @@ func (top *hourTop) init() {
 
 type dayTop struct {
 	hours        []*hourTop
+	loaded       bool
 	sync.RWMutex // write -- rotating hourTop, read -- anything else
 }
 
@@ -209,6 +210,9 @@ func (r *dayTop) addEntry(entry *logEntry, now time.Time) error {
 func loadTopFromFiles() error {
 	now := time.Now()
 	runningTop.RLock()
+	if runningTop.loaded {
+		return nil
+	}
 	defer runningTop.RUnlock()
 	onEntry := func(entry *logEntry) error {
 		err := runningTop.addEntry(entry, now)
@@ -225,6 +229,8 @@ func loadTopFromFiles() error {
 		log.Printf("Failed to load entries from querylog: %s", err)
 		return err
 	}
+
+	runningTop.loaded = true
 
 	return nil
 }
