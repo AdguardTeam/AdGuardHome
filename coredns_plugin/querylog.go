@@ -24,7 +24,7 @@ const (
 	queryLogTimeLimit      = time.Hour * 24  // how far in the past we care about querylogs
 	queryLogRotationPeriod = time.Hour * 24  // rotate the log every 24 hours
 	queryLogFileName       = "querylog.json" // .gz added during compression
-	queryLogCacheSize      = 1000            // maximum API response for /querylog
+	queryLogSize           = 5000            // maximum API response for /querylog
 	queryLogCacheTime      = time.Minute     // if requested more often than this, give out cached response
 	queryLogTopSize        = 500             // Keep in memory only top N values
 	queryLogAPIPort        = "8618"          // 8618 is sha512sum of "querylog" then each byte summed
@@ -116,8 +116,8 @@ func handleQueryLog(w http.ResponseWriter, r *http.Request) {
 		values = logBuffer
 		logBufferLock.RUnlock()
 
-		if len(values) < queryLogCacheSize {
-			values = appendFromLogFile(values, queryLogCacheSize, queryLogTimeLimit)
+		if len(values) < queryLogSize {
+			values = appendFromLogFile(values, queryLogSize, queryLogTimeLimit)
 		}
 		queryLogLock.Lock()
 		queryLogCache = values

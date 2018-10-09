@@ -250,9 +250,6 @@ func appendFromLogFile(values []logEntry, maxLen int, timeWindow time.Duration) 
 	}
 
 	needMore := func() bool {
-		if len(a) >= maxLen {
-			return false
-		}
 		return true
 	}
 

@@ -255,7 +255,7 @@ class Logs extends Component {
         const { queryLogEnabled } = dashboard;
         return (
             <Fragment>
-                <PageTitle title="Query Log" subtitle="Last 1000 DNS queries">
+                <PageTitle title="Query Log" subtitle="Last 5000 DNS queries">
                     <div className="page-title__actions">
                         {this.renderButtons(queryLogEnabled)}
                     </div>

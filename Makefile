@@ -4,7 +4,7 @@ NATIVE_GOARCH = $(shell unset GOARCH; go env GOARCH)
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 mkfile_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 GOPATH := $(mkfile_dir)/build/gopath
-STATIC := build/static/bundle.css build/static/bundle.js build/static/index.html
+STATIC := build/static/index.html
 
 .PHONY: all build clean
 all: build
