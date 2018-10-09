@@ -78,7 +78,10 @@ var config = configuration{
 		Prometheus:          "prometheus :9153",
 	},
 	Filters: []filter{
-		{Enabled: true, URL: "https://filters.adtidy.org/windows/filters/15.txt"},
+		{Enabled: true, URL: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"},
+		{Enabled: false, URL: "https://adaway.org/hosts.txt", Title: "AdAway"},
+		{Enabled: false, URL: "https://hosts-file.net/ad_servers.txt", Title: "hpHosts - Ad and Tracking servers only"},
+		{Enabled: false, URL: "http://www.malwaredomainlist.com/hostslist/hosts.txt", Title: "MalwareDomainList.com Hosts List"},
 	},
 }
 
