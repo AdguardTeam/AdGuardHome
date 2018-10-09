@@ -43,8 +43,9 @@ class Logs extends Component {
         const { userRules } = this.props.filtering;
         const lineEnding = !endsWith(userRules, '\n') ? '\n' : '';
         const baseRule = `||${domain}^$important`;
-        const blockingRule = type === 'block' ? `@@${baseRule}` : baseRule;
-        const unblockingRule = type === 'block' ? baseRule : `@@${baseRule}`;
+        const baseUnblocking = `@@${baseRule}`;
+        const blockingRule = type === 'block' ? baseUnblocking : baseRule;
+        const unblockingRule = type === 'block' ? baseRule : baseUnblocking;
         const preparedBlockingRule = new RegExp(`(^|\n)${escapeRegExp(blockingRule)}($|\n)`);
         const preparedUnblockingRule = new RegExp(`(^|\n)${escapeRegExp(unblockingRule)}($|\n)`);
 
