@@ -19,7 +19,7 @@ const config = {
     },
     output: {
         path: PUBLIC_PATH,
-        filename: '[name].js',
+        filename: '[name].[chunkhash].js',
     },
     resolve: {
         modules: ['node_modules'],
@@ -94,10 +94,11 @@ const config = {
         }),
         new HtmlWebpackPlugin({
             inject: true,
+            cache: false,
             template: HTML_PATH,
         }),
         new ExtractTextPlugin({
-            filename: '[name].css',
+            filename: '[name].[contenthash].css',
         }),
     ],
 };
