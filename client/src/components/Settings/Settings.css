@@ -14,3 +14,7 @@
 .form-control--textarea {
     min-height: 110px;
 }
+
+.form-control--textarea-large {
+    min-height: 240px;
+}
