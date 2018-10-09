@@ -88,7 +88,7 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result dnsfilter.Result, ela
 	logBufferLock.Unlock()
 
 	// add it to running top
-	err = runningTop.addEntry(&entry, now)
+	err = runningTop.addEntry(&entry, question, now)
 	if err != nil {
 		log.Printf("Failed to add entry to running top: %s", err)
 		// don't do failure, just log
@@ -100,7 +100,6 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result dnsfilter.Result, ela
 		// do it in separate goroutine -- we are stalling DNS response this whole time
 		go flushToFile(flushBuffer)
 	}
-	return
 }
 
 func handleQueryLog(w http.ResponseWriter, r *http.Request) {
@@ -114,7 +113,7 @@ func handleQueryLog(w http.ResponseWriter, r *http.Request) {
 	if needRefresh {
 		// need to get fresh data
 		logBufferLock.RLock()
-		values := logBuffer
+		values = logBuffer
 		logBufferLock.RUnlock()
 
 		if len(values) < queryLogCacheSize {
@@ -238,9 +237,12 @@ func startQueryLogServer() {
 
 	go periodicQueryLogRotate()
 	go periodicHourlyTopRotate()
+	go statsRotator()
 
 	http.HandleFunc("/querylog", handleQueryLog)
+	http.HandleFunc("/stats", handleStats)
 	http.HandleFunc("/stats_top", handleStatsTop)
+	http.HandleFunc("/stats_history", handleStatsHistory)
 	if err := http.ListenAndServe(listenAddr, nil); err != nil {
 		log.Fatalf("error in ListenAndServe: %s", err)
 	}

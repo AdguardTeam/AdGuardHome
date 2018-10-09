@@ -17,6 +17,8 @@ var (
 	fileWriteLock sync.Mutex
 )
 
+const enableGzip = false
+
 func flushToFile(buffer []logEntry) error {
 	if len(buffer) == 0 {
 		return nil
@@ -42,31 +44,37 @@ func flushToFile(buffer []logEntry) error {
 		return err
 	}
 
-	filenamegz := queryLogFileName + ".gz"
-
 	var zb bytes.Buffer
+	filename := queryLogFileName
 
-	zw := gzip.NewWriter(&zb)
-	zw.Name = queryLogFileName
-	zw.ModTime = time.Now()
+	// gzip enabled?
+	if enableGzip {
+		filename += ".gz"
 
-	_, err = zw.Write(b.Bytes())
-	if err != nil {
-		log.Printf("Couldn't compress to gzip: %s", err)
-		zw.Close()
-		return err
-	}
+		zw := gzip.NewWriter(&zb)
+		zw.Name = queryLogFileName
+		zw.ModTime = time.Now()
 
-	if err = zw.Close(); err != nil {
-		log.Printf("Couldn't close gzip writer: %s", err)
-		return err
+		_, err = zw.Write(b.Bytes())
+		if err != nil {
+			log.Printf("Couldn't compress to gzip: %s", err)
+			zw.Close()
+			return err
+		}
+
+		if err = zw.Close(); err != nil {
+			log.Printf("Couldn't close gzip writer: %s", err)
+			return err
+		}
+	} else {
+		zb = b
 	}
 
 	fileWriteLock.Lock()
 	defer fileWriteLock.Unlock()
-	f, err := os.OpenFile(filenamegz, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
-		log.Printf("failed to create file \"%s\": %s", filenamegz, err)
+		log.Printf("failed to create file \"%s\": %s", filename, err)
 		return err
 	}
 	defer f.Close()
@@ -77,7 +85,7 @@ func flushToFile(buffer []logEntry) error {
 		return err
 	}
 
-	log.Printf("ok \"%s\": %v bytes written", filenamegz, n)
+	log.Printf("ok \"%s\": %v bytes written", filename, n)
 
 	return nil
 }
@@ -111,8 +119,13 @@ func checkBuffer(buffer []logEntry, b bytes.Buffer) error {
 }
 
 func rotateQueryLog() error {
-	from := queryLogFileName + ".gz"
-	to := queryLogFileName + ".gz.1"
+	from := queryLogFileName
+	to := queryLogFileName + ".1"
+
+	if enableGzip {
+		from = queryLogFileName + ".gz"
+		to = queryLogFileName + ".gz.1"
+	}
 
 	if _, err := os.Stat(from); os.IsNotExist(err) {
 		// do nothing, file doesn't exist
@@ -143,9 +156,18 @@ func periodicQueryLogRotate() {
 func genericLoader(onEntry func(entry *logEntry) error, needMore func() bool, timeWindow time.Duration) error {
 	now := time.Now()
 	// read from querylog files, try newest file first
-	files := []string{
-		queryLogFileName + ".gz",
-		queryLogFileName + ".gz.1",
+	files := []string{}
+
+	if enableGzip {
+		files = []string{
+			queryLogFileName + ".gz",
+			queryLogFileName + ".gz.1",
+		}
+	} else {
+		files = []string{
+			queryLogFileName,
+			queryLogFileName + ".1",
+		}
 	}
 
 	// read from all files
@@ -158,7 +180,6 @@ func genericLoader(onEntry func(entry *logEntry) error, needMore func() bool, ti
 			continue
 		}
 
-		trace("Opening file %s", file)
 		f, err := os.Open(file)
 		if err != nil {
 			log.Printf("Failed to open file \"%s\": %s", file, err)
@@ -167,16 +188,22 @@ func genericLoader(onEntry func(entry *logEntry) error, needMore func() bool, ti
 		}
 		defer f.Close()
 
-		trace("Creating gzip reader")
-		zr, err := gzip.NewReader(f)
-		if err != nil {
-			log.Printf("Failed to create gzip reader: %s", err)
-			continue
-		}
-		defer zr.Close()
+		var d *json.Decoder
 
-		trace("Creating json decoder")
-		d := json.NewDecoder(zr)
+		if enableGzip {
+			trace("Creating gzip reader")
+			zr, err := gzip.NewReader(f)
+			if err != nil {
+				log.Printf("Failed to create gzip reader: %s", err)
+				continue
+			}
+			defer zr.Close()
+
+			trace("Creating json decoder")
+			d = json.NewDecoder(zr)
+		} else {
+			d = json.NewDecoder(f)
+		}
 
 		i := 0
 		// entries on file are in oldest->newest order
@@ -204,7 +231,8 @@ func genericLoader(onEntry func(entry *logEntry) error, needMore func() bool, ti
 				return err
 			}
 		}
-		log.Printf("file \"%s\": read %d entries", file, i)
+		elapsed := time.Since(now)
+		log.Printf("file \"%s\": read %d entries in %v, %v/entry", file, i, elapsed, elapsed/time.Duration(i))
 	}
 	return nil
 }

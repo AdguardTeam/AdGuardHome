@@ -222,115 +222,68 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 // stats
 // -----
 func handleStats(w http.ResponseWriter, r *http.Request) {
-	histrical := generateMapFromStats(&statistics.PerHour, 0, 24)
-	// sum them up
-	summed := map[string]interface{}{}
-	for key, values := range histrical {
-		summedValue := 0.0
-		floats, ok := values.([]float64)
-		if !ok {
-			continue
-		}
-		for _, v := range floats {
-			summedValue += v
-		}
-		summed[key] = summedValue
+	resp, err := client.Get("http://127.0.0.1:8618/stats")
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't get stats_top from coredns: %T %s\n", err, err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusBadGateway)
+		return
 	}
-	summed["stats_period"] = "24 hours"
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close()
+	}
 
-	json, err := json.Marshal(summed)
+	// read the body entirely
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to marshal status json: %s", err)
+		errortext := fmt.Sprintf("Couldn't read response body: %s", err)
 		log.Println(errortext)
-		http.Error(w, errortext, 500)
+		http.Error(w, errortext, http.StatusBadGateway)
 		return
 	}
+
+	// forward body entirely with status code
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(json)
+	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
+	w.WriteHeader(resp.StatusCode)
+	_, err = w.Write(body)
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to write response json: %s", err)
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
 		log.Println(errortext)
-		http.Error(w, errortext, 500)
-		return
+		http.Error(w, errortext, http.StatusInternalServerError)
 	}
 }
 
 func handleStatsHistory(w http.ResponseWriter, r *http.Request) {
-	// handle time unit and prepare our time window size
-	now := time.Now()
-	timeUnitString := r.URL.Query().Get("time_unit")
-	var stats *periodicStats
-	var timeUnit time.Duration
-	switch timeUnitString {
-	case "seconds":
-		timeUnit = time.Second
-		stats = &statistics.PerSecond
-	case "minutes":
-		timeUnit = time.Minute
-		stats = &statistics.PerMinute
-	case "hours":
-		timeUnit = time.Hour
-		stats = &statistics.PerHour
-	case "days":
-		timeUnit = time.Hour * 24
-		stats = &statistics.PerDay
-	default:
-		http.Error(w, "Must specify valid time_unit parameter", 400)
-		return
-	}
-
-	// parse start and end time
-	startTime, err := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
+	resp, err := client.Get("http://127.0.0.1:8618/stats_history?" + r.URL.RawQuery)
 	if err != nil {
-		errortext := fmt.Sprintf("Must specify valid start_time parameter: %s", err)
+		errortext := fmt.Sprintf("Couldn't get stats_top from coredns: %T %s\n", err, err)
 		log.Println(errortext)
-		http.Error(w, errortext, 400)
+		http.Error(w, errortext, http.StatusBadGateway)
 		return
 	}
-	endTime, err := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close()
+	}
+
+	// read the body entirely
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		errortext := fmt.Sprintf("Must specify valid end_time parameter: %s", err)
+		errortext := fmt.Sprintf("Couldn't read response body: %s", err)
 		log.Println(errortext)
-		http.Error(w, errortext, 400)
+		http.Error(w, errortext, http.StatusBadGateway)
 		return
 	}
 
-	// check if start and time times are within supported time range
-	timeRange := timeUnit * statsHistoryElements
-	if startTime.Add(timeRange).Before(now) {
-		http.Error(w, "start_time parameter is outside of supported range", 501)
-		return
-	}
-	if endTime.Add(timeRange).Before(now) {
-		http.Error(w, "end_time parameter is outside of supported range", 501)
-		return
-	}
-
-	// calculate start and end of our array
-	// basically it's how many hours/minutes/etc have passed since now
-	start := int(now.Sub(endTime) / timeUnit)
-	end := int(now.Sub(startTime) / timeUnit)
-
-	// swap them around if they're inverted
-	if start > end {
-		start, end = end, start
-	}
-
-	data := generateMapFromStats(stats, start, end)
-	json, err := json.Marshal(data)
-	if err != nil {
-		errortext := fmt.Sprintf("Unable to marshal status json: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 500)
-		return
-	}
+	// forward body entirely with status code
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(json)
+	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
+	w.WriteHeader(resp.StatusCode)
+	_, err = w.Write(body)
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to write response json: %s", err)
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
 		log.Println(errortext)
-		http.Error(w, errortext, 500)
-		return
+		http.Error(w, errortext, http.StatusInternalServerError)
 	}
 }
 
