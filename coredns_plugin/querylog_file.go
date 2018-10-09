@@ -204,7 +204,8 @@ func genericLoader(onEntry func(entry *logEntry) error, needMore func() bool, ti
 				return err
 			}
 		}
-		log.Printf("file \"%s\": read %d entries", file, i)
+		elapsed := time.Since(now)
+		log.Printf("file \"%s\": read %d entries in %v, %v/entry", file, i, elapsed, elapsed/time.Duration(i))
 	}
 	return nil
 }

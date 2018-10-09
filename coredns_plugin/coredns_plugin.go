@@ -68,27 +68,6 @@ var defaultPluginSettings = plugSettings{
 	BlockedTTL:            3600, // in seconds
 }
 
-func newDNSCounter(name string, help string) prometheus.Counter {
-	return prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: plugin.Namespace,
-		Subsystem: "dnsfilter",
-		Name:      name,
-		Help:      help,
-	})
-}
-
-var (
-	requests             = newDNSCounter("requests_total", "Count of requests seen by dnsfilter.")
-	filtered             = newDNSCounter("filtered_total", "Count of requests filtered by dnsfilter.")
-	filteredLists        = newDNSCounter("filtered_lists_total", "Count of requests filtered by dnsfilter using lists.")
-	filteredSafebrowsing = newDNSCounter("filtered_safebrowsing_total", "Count of requests filtered by dnsfilter using safebrowsing.")
-	filteredParental     = newDNSCounter("filtered_parental_total", "Count of requests filtered by dnsfilter using parental.")
-	filteredInvalid      = newDNSCounter("filtered_invalid_total", "Count of requests filtered by dnsfilter because they were invalid.")
-	whitelisted          = newDNSCounter("whitelisted_total", "Count of requests not filtered by dnsfilter because they are whitelisted.")
-	safesearch           = newDNSCounter("safesearch_total", "Count of requests replaced by dnsfilter safesearch.")
-	errorsTotal          = newDNSCounter("errors_total", "Count of requests that dnsfilter couldn't process because of transitive errors.")
-)
-
 //
 // coredns handling functions
 //
@@ -183,10 +162,10 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 		}
 	}
 
-	log.Printf("Loading top from querylog")
-	err := loadTopFromFiles()
+	log.Printf("Loading stats from querylog")
+	err := fillStatsFromQueryLog()
 	if err != nil {
-		log.Printf("Failed to load top from querylog: %s", err)
+		log.Printf("Failed to load stats from querylog: %s", err)
 		return nil, err
 	}
 
@@ -229,6 +208,7 @@ func setup(c *caddy.Controller) error {
 			x.MustRegister(whitelisted)
 			x.MustRegister(safesearch)
 			x.MustRegister(errorsTotal)
+			x.MustRegister(elapsedTime)
 			x.MustRegister(p)
 		}
 		return nil
@@ -562,6 +542,8 @@ func (p *plug) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (
 	}
 
 	// log
+	elapsed := time.Since(start)
+	elapsedTime.Observe(elapsed.Seconds())
 	if p.settings.QueryLogEnabled {
 		logRequest(r, rrw.Msg, result, time.Since(start), ip)
 	}

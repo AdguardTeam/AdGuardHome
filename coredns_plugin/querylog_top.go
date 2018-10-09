@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdguardDNS/dnsfilter"
 	"github.com/bluele/gcache"
 	"github.com/miekg/dns"
 )
@@ -155,31 +156,11 @@ func (top *hourTop) lockedGetClients(key string) (int, error) {
 	return top.lockedGetValue(key, top.clients)
 }
 
-func (r *dayTop) addEntry(entry *logEntry, now time.Time) error {
-	if len(entry.Question) == 0 {
-		log.Printf("entry question is absent, skipping")
-		return nil
-	}
-
-	if entry.Time.After(now) {
-		log.Printf("t %v vs %v is in the future, ignoring", entry.Time, now)
-		return nil
-	}
+func (r *dayTop) addEntry(entry *logEntry, q *dns.Msg, now time.Time) error {
 	// figure out which hour bucket it belongs to
 	hour := int(now.Sub(entry.Time).Hours())
 	if hour >= 24 {
 		log.Printf("t %v is >24 hours ago, ignoring", entry.Time)
-		return nil
-	}
-
-	q := new(dns.Msg)
-	if err := q.Unpack(entry.Question); err != nil {
-		log.Printf("failed to unpack dns message question: %s", err)
-		return err
-	}
-
-	if len(q.Question) != 1 {
-		log.Printf("malformed dns message, has no questions, skipping")
 		return nil
 	}
 
@@ -213,7 +194,7 @@ func (r *dayTop) addEntry(entry *logEntry, now time.Time) error {
 	return nil
 }
 
-func loadTopFromFiles() error {
+func fillStatsFromQueryLog() error {
 	now := time.Now()
 	runningTop.loadedWriteLock()
 	defer runningTop.loadedWriteUnlock()
@@ -221,11 +202,55 @@ func loadTopFromFiles() error {
 		return nil
 	}
 	onEntry := func(entry *logEntry) error {
-		err := runningTop.addEntry(entry, now)
+		if len(entry.Question) == 0 {
+			log.Printf("entry question is absent, skipping")
+			return nil
+		}
+
+		if entry.Time.After(now) {
+			log.Printf("t %v vs %v is in the future, ignoring", entry.Time, now)
+			return nil
+		}
+
+		q := new(dns.Msg)
+		if err := q.Unpack(entry.Question); err != nil {
+			log.Printf("failed to unpack dns message question: %s", err)
+			return err
+		}
+
+		if len(q.Question) != 1 {
+			log.Printf("malformed dns message, has no questions, skipping")
+			return nil
+		}
+
+		err := runningTop.addEntry(entry, q, now)
 		if err != nil {
 			log.Printf("Failed to add entry to running top: %s", err)
 			return err
 		}
+
+		requests.IncWithTime(entry.Time)
+		if entry.Result.IsFiltered {
+			filtered.IncWithTime(entry.Time)
+		}
+		switch entry.Result.Reason {
+		case dnsfilter.NotFilteredWhiteList:
+			whitelisted.IncWithTime(entry.Time)
+		case dnsfilter.NotFilteredError:
+			errorsTotal.IncWithTime(entry.Time)
+		case dnsfilter.FilteredBlackList:
+			filteredLists.IncWithTime(entry.Time)
+		case dnsfilter.FilteredSafeBrowsing:
+			filteredSafebrowsing.IncWithTime(entry.Time)
+		case dnsfilter.FilteredParental:
+			filteredParental.IncWithTime(entry.Time)
+		case dnsfilter.FilteredInvalid:
+			// do nothing
+		case dnsfilter.FilteredSafeSearch:
+			safesearch.IncWithTime(entry.Time)
+		}
+		elapsedTime.ObserveWithTime(entry.Elapsed.Seconds(), entry.Time)
+
 		return nil
 	}
 
