@@ -79,9 +79,9 @@ var config = configuration{
 	},
 	Filters: []filter{
 		{Enabled: true, URL: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"},
-		{Enabled: false, URL: "https://adaway.org/hosts.txt", Title: "AdAway"},
-		{Enabled: false, URL: "https://hosts-file.net/ad_servers.txt", Title: "hpHosts - Ad and Tracking servers only"},
-		{Enabled: false, URL: "http://www.malwaredomainlist.com/hostslist/hosts.txt", Title: "MalwareDomainList.com Hosts List"},
+		{Enabled: false, URL: "https://adaway.org/hosts.txt", Name: "AdAway"},
+		{Enabled: false, URL: "https://hosts-file.net/ad_servers.txt", Name: "hpHosts - Ad and Tracking servers only"},
+		{Enabled: false, URL: "http://www.malwaredomainlist.com/hostslist/hosts.txt", Name: "MalwareDomainList.com Hosts List"},
 	},
 }
 
