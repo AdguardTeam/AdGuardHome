@@ -78,7 +78,7 @@ var config = configuration{
 		Prometheus:          "prometheus :9153",
 	},
 	Filters: []filter{
-		{Enabled: true, URL: "https://filters.adtidy.org/windows/filters/15.txt"},
+		{Enabled: true, URL: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"},
 	},
 }
 
