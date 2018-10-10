@@ -50,7 +50,7 @@ type coreDNSConfig struct {
 
 type filter struct {
 	URL         string `json:"url"`
-	Name        string `json:"name" yaml:"-"`
+	Name        string `json:"name" yaml:"name"`
 	Enabled     bool   `json:"enabled"`
 	RulesCount  int    `json:"rules_count" yaml:"-"`
 	contents    []byte

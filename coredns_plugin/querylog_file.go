@@ -19,7 +19,7 @@ var (
 
 const enableGzip = false
 
-func flushToFile(buffer []logEntry) error {
+func flushToFile(buffer []*logEntry) error {
 	if len(buffer) == 0 {
 		return nil
 	}
@@ -90,7 +90,7 @@ func flushToFile(buffer []logEntry) error {
 	return nil
 }
 
-func checkBuffer(buffer []logEntry, b bytes.Buffer) error {
+func checkBuffer(buffer []*logEntry, b bytes.Buffer) error {
 	l := len(buffer)
 	d := json.NewDecoder(&b)
 
@@ -237,11 +237,11 @@ func genericLoader(onEntry func(entry *logEntry) error, needMore func() bool, ti
 	return nil
 }
 
-func appendFromLogFile(values []logEntry, maxLen int, timeWindow time.Duration) []logEntry {
-	a := []logEntry{}
+func appendFromLogFile(values []*logEntry, maxLen int, timeWindow time.Duration) []*logEntry {
+	a := []*logEntry{}
 
 	onEntry := func(entry *logEntry) error {
-		a = append(a, *entry)
+		a = append(a, entry)
 		if len(a) > maxLen {
 			toskip := len(a) - maxLen
 			a = a[toskip:]

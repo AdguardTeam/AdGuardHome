@@ -45,6 +45,16 @@ func init() {
 	})
 }
 
+type cacheEntry struct {
+	answer      []dns.RR
+	lastUpdated time.Time
+}
+
+var (
+	lookupCacheTime = time.Minute * 30
+	lookupCache     = map[string]cacheEntry{}
+)
+
 type plugSettings struct {
 	SafeBrowsingBlockHost string
 	ParentalBlockHost     string
@@ -324,20 +334,29 @@ func (p *plug) replaceHostWithValAndReply(ctx context.Context, w dns.ResponseWri
 		records = append(records, result)
 	} else {
 		// this is a domain name, need to look it up
-		req := new(dns.Msg)
-		req.SetQuestion(dns.Fqdn(val), question.Qtype)
-		req.RecursionDesired = true
-		reqstate := request.Request{W: w, Req: req, Context: ctx}
-		result, err := p.upstream.Lookup(reqstate, dns.Fqdn(val), reqstate.QType())
-		if err != nil {
-			log.Printf("Got error %s\n", err)
-			return dns.RcodeServerFailure, fmt.Errorf("plugin/dnsfilter: %s", err)
-		}
-		if result != nil {
-			for _, answer := range result.Answer {
-				answer.Header().Name = question.Name
+		cacheentry := lookupCache[val]
+		if time.Since(cacheentry.lastUpdated) > lookupCacheTime {
+			req := new(dns.Msg)
+			req.SetQuestion(dns.Fqdn(val), question.Qtype)
+			req.RecursionDesired = true
+			reqstate := request.Request{W: w, Req: req, Context: ctx}
+			result, err := p.upstream.Lookup(reqstate, dns.Fqdn(val), reqstate.QType())
+			if err != nil {
+				log.Printf("Got error %s\n", err)
+				return dns.RcodeServerFailure, fmt.Errorf("plugin/dnsfilter: %s", err)
 			}
-			records = result.Answer
+			if result != nil {
+				for _, answer := range result.Answer {
+					answer.Header().Name = question.Name
+				}
+				records = result.Answer
+				cacheentry.answer = result.Answer
+				cacheentry.lastUpdated = time.Now()
+				lookupCache[val] = cacheentry
+			}
+		} else {
+			// get from cache
+			records = cacheentry.answer
 		}
 	}
 	m := new(dns.Msg)
