@@ -35,6 +35,7 @@ type coreDNSConfig struct {
 	coreFile            string
 	FilterFile          string   `yaml:"-"`
 	Port                int      `yaml:"port"`
+	ProtectionEnabled   bool     `yaml:"protection_enabled"`
 	FilteringEnabled    bool     `yaml:"filtering_enabled"`
 	SafeBrowsingEnabled bool     `yaml:"safebrowsing_enabled"`
 	SafeSearchEnabled   bool     `yaml:"safesearch_enabled"`
@@ -69,6 +70,7 @@ var config = configuration{
 		binaryFile:          "coredns",       // only filename, no path
 		coreFile:            "Corefile",      // only filename, no path
 		FilterFile:          "dnsfilter.txt", // only filename, no path
+		ProtectionEnabled:   true,
 		FilteringEnabled:    true,
 		SafeBrowsingEnabled: false,
 		BlockedResponseTTL:  60, // in seconds
@@ -165,13 +167,13 @@ func writeAllConfigs() error {
 }
 
 const coreDNSConfigTemplate = `. {
-    dnsfilter {{if .FilteringEnabled}}{{.FilterFile}}{{end}} {
+    {{if .ProtectionEnabled}}dnsfilter {{if .FilteringEnabled}}{{.FilterFile}}{{end}} {
         {{if .SafeBrowsingEnabled}}safebrowsing{{end}}
         {{if .ParentalEnabled}}parental {{.ParentalSensitivity}}{{end}}
         {{if .SafeSearchEnabled}}safesearch{{end}}
         {{if .QueryLogEnabled}}querylog{{end}}
         blocked_ttl {{.BlockedResponseTTL}}
-    }
+    }{{end}}
     {{.Pprof}}
     hosts {
         fallthrough
