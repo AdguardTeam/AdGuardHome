@@ -15,7 +15,7 @@ const QueriedDomains = props => (
                 Header: 'IP',
                 accessor: 'ip',
             }, {
-                Header: 'Request count',
+                Header: 'Requests count',
                 accessor: 'count',
             }]}
             showPagination={false}

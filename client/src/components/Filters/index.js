@@ -39,11 +39,11 @@ class Filters extends Component {
         width: 90,
         className: 'text-center',
     }, {
-        Header: 'Filter name',
+        Header: 'Name',
         accessor: 'name',
         Cell: ({ value }) => (<div className="logs__row logs__row--overflow"><span className="logs__text" title={value}>{value}</span></div>),
     }, {
-        Header: 'Host file URL',
+        Header: 'Filter URL',
         accessor: 'url',
         Cell: ({ value }) => (<div className="logs__row logs__row--overflow"><a href={value} target='_blank' rel='noopener noreferrer' className="link logs__text">{value}</a></div>),
     }, {
@@ -51,7 +51,7 @@ class Filters extends Component {
         accessor: 'rulesCount',
         className: 'text-center',
     }, {
-        Header: 'Last time update',
+        Header: 'Last time updated',
         accessor: 'lastUpdated',
         className: 'text-center',
     }, {
