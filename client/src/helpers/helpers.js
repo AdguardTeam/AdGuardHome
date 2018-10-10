@@ -34,8 +34,20 @@ export const normalizeLogs = logs => logs.map((log) => {
     };
 });
 
+const STATS_NAMES = {
+    avg_processing_time: 'Average processing time',
+    blocked_filtering: 'Blocked by filters',
+    dns_queries: 'DNS queries',
+    replaced_parental: 'Blocked adult websites',
+    replaced_safebrowsing: 'Blocked malware/phishing',
+    replaced_safesearch: 'Enforced safe search',
+};
+
 export const normalizeHistory = history => Object.keys(history).map((key) => {
-    const id = key.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
+    let id = STATS_NAMES[key];
+    if (!id) {
+        id = key.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
+    }
 
     const dayAgo = subHours(Date.now(), 24);
 
