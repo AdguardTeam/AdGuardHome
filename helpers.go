@@ -91,46 +91,6 @@ func optionalAuthHandler(handler http.Handler) http.Handler {
 	return &authHandler{handler}
 }
 
-// --------------------------
-// helper functions for stats
-// --------------------------
-func getReversedSlice(input [statsHistoryElements]float64, start int, end int) []float64 {
-	output := make([]float64, 0)
-	for i := start; i <= end; i++ {
-		output = append([]float64{input[i]}, output...)
-	}
-	return output
-}
-
-func generateMapFromStats(stats *periodicStats, start int, end int) map[string]interface{} {
-	// clamp
-	start = clamp(start, 0, statsHistoryElements)
-	end = clamp(end, 0, statsHistoryElements)
-
-	avgProcessingTime := make([]float64, 0)
-
-	count := getReversedSlice(stats.Entries[processingTimeCount], start, end)
-	sum := getReversedSlice(stats.Entries[processingTimeSum], start, end)
-	for i := 0; i < len(count); i++ {
-		var avg float64
-		if count[i] != 0 {
-			avg = sum[i] / count[i]
-			avg *= 1000
-		}
-		avgProcessingTime = append(avgProcessingTime, avg)
-	}
-
-	result := map[string]interface{}{
-		"dns_queries":           getReversedSlice(stats.Entries[totalRequests], start, end),
-		"blocked_filtering":     getReversedSlice(stats.Entries[filteredTotal], start, end),
-		"replaced_safebrowsing": getReversedSlice(stats.Entries[filteredSafebrowsing], start, end),
-		"replaced_safesearch":   getReversedSlice(stats.Entries[filteredSafesearch], start, end),
-		"replaced_parental":     getReversedSlice(stats.Entries[filteredParental], start, end),
-		"avg_processing_time":   avgProcessingTime,
-	}
-	return result
-}
-
 // -------------------------------------------------
 // helper functions for parsing parameters from body
 // -------------------------------------------------

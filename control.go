@@ -35,6 +35,10 @@ var versionCheckLastTime time.Time
 const versionCheckURL = "https://adguardteam.github.io/AdguardDNS/version.json"
 const versionCheckPeriod = time.Hour * 8
 
+var client = &http.Client{
+	Timeout: time.Second * 30,
+}
+
 // -------------------
 // coredns run control
 // -------------------
@@ -360,12 +364,35 @@ func handleQueryLogDisable(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleStatsReset(w http.ResponseWriter, r *http.Request) {
-	purgeStats()
-
-	_, err := fmt.Fprintf(w, "OK\n")
+	resp, err := client.Post("http://127.0.0.1:8618/stats_reset", "text/plain", nil)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't write body: %s", err)
+		errortext := fmt.Sprintf("Couldn't get stats_top from coredns: %T %s\n", err, err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusBadGateway)
 		return
+	}
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close()
+	}
+
+	// read the body entirely
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't read response body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusBadGateway)
+		return
+	}
+
+	// forward body entirely with status code
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
+	w.WriteHeader(resp.StatusCode)
+	_, err = w.Write(body)
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusInternalServerError)
 	}
 }
 
