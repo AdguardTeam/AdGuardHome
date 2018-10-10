@@ -297,7 +297,7 @@ export const setRules = rules => async (dispatch) => {
             .replace(/^\n/g, '')
             .replace(/\n\s*\n/g, '\n');
         await apiClient.setRules(replacedLineEndings);
-        dispatch(addSuccessToast('Custom rules saved'));
+        dispatch(addSuccessToast('Updated the custom filtering rules'));
         dispatch(setRulesSuccess());
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -456,7 +456,7 @@ export const setUpstream = url => async (dispatch) => {
     dispatch(setUpstreamRequest());
     try {
         await apiClient.setUpstream(url);
-        dispatch(addSuccessToast('Upstream DNS servers saved'));
+        dispatch(addSuccessToast('Updated the upstream DNS servers'));
         dispatch(setUpstreamSuccess());
     } catch (error) {
         dispatch(addErrorToast({ error }));

@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import Card from '../ui/Card';
 
 const Statistics = props => (
-    <Card title="Statistics" subtitle="Last 24 hours" bodyType="card-graph" refresh={props.refreshButton}>
+    <Card title="Statistics" subtitle="for the last 24 hours" bodyType="card-graph" refresh={props.refreshButton}>
         {props.history ?
             <ResponsiveLine
                 data={props.history}

@@ -4,7 +4,8 @@ NATIVE_GOARCH = $(shell unset GOARCH; go env GOARCH)
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 mkfile_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 GOPATH := $(mkfile_dir)/build/gopath
-STATIC := build/static/index.html
+JSFILES = $(shell find client -path client/node_modules -prune -o -type f -name '*.js')
+STATIC = build/static/index.html
 
 .PHONY: all build clean
 all: build
@@ -15,7 +16,7 @@ client/node_modules: client/package.json client/package-lock.json
 	npm --prefix client install
 	touch client/node_modules
 
-$(STATIC): client/node_modules
+$(STATIC): $(JSFILES) client/node_modules
 	npm --prefix client run build-prod
 
 AdguardDNS: $(STATIC) *.go

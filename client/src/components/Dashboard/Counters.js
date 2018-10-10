@@ -7,13 +7,13 @@ import Tooltip from '../ui/Tooltip';
 const tooltipType = 'tooltip-custom--narrow';
 
 const Counters = props => (
-    <Card title="General statistics" subtitle="in the last 24 hours" bodyType="card-table" refresh={props.refreshButton}>
+    <Card title="General statistics" subtitle="for the last 24 hours" bodyType="card-table" refresh={props.refreshButton}>
         <table className="table card-table">
             <tbody>
                 <tr>
                     <td>
                         DNS Queries
-                        <Tooltip text="A number of DNS quieries processed in the last 24 hours" type={tooltipType} />
+                        <Tooltip text="A number of DNS quieries processed for the last 24 hours" type={tooltipType} />
                     </td>
                     <td className="text-right">
                         <span className="text-muted">
@@ -23,8 +23,8 @@ const Counters = props => (
                 </tr>
                 <tr>
                     <td>
-                        Blocked by filters
-                        <Tooltip text="A number of DNS requests blocked by filters" type={tooltipType} />
+                        Blocked by <a href="#filters">Filters</a>
+                        <Tooltip text="A number of DNS requests blocked by adblock filters and hosts blocklists" type={tooltipType} />
                     </td>
                     <td className="text-right">
                         <span className="text-muted">
@@ -35,7 +35,7 @@ const Counters = props => (
                 <tr>
                     <td>
                         Blocked malware/phishing
-                        <Tooltip text="A number of DNS requests blocked" type={tooltipType} />
+                        <Tooltip text="A number of DNS requests blocked by the AdGuard browsing security module" type={tooltipType} />
                     </td>
                     <td className="text-right">
                         <span className="text-muted">

@@ -39,11 +39,11 @@ class Filters extends Component {
         width: 90,
         className: 'text-center',
     }, {
-        Header: 'Filter name',
+        Header: 'Name',
         accessor: 'name',
         Cell: ({ value }) => (<div className="logs__row logs__row--overflow"><span className="logs__text" title={value}>{value}</span></div>),
     }, {
-        Header: 'Host file URL',
+        Header: 'Filter URL',
         accessor: 'url',
         Cell: ({ value }) => (<div className="logs__row logs__row--overflow"><a href={value} target='_blank' rel='noopener noreferrer' className="link logs__text">{value}</a></div>),
     }, {
@@ -51,7 +51,7 @@ class Filters extends Component {
         accessor: 'rulesCount',
         className: 'text-center',
     }, {
-        Header: 'Last time update',
+        Header: 'Last time updated',
         accessor: 'lastUpdated',
         className: 'text-center',
     }, {
@@ -73,7 +73,7 @@ class Filters extends Component {
                     <div className="row">
                         <div className="col-md-12">
                             <Card
-                                title="Blocking filters and hosts files"
+                                title="Filters and hosts blocklists"
                                 subtitle="AdGuard DNS understands basic adblock rules and hosts files syntax."
                             >
                                 <ReactTable
@@ -104,7 +104,7 @@ class Filters extends Component {
                     addFilter={this.props.addFilter}
                     isFilterAdded={this.props.filtering.isFilterAdded}
                     title="New filter subscription"
-                    inputDescription="Enter valid URL or file path of the filter into field above. You will be subscribed to that filter."
+                    inputDescription="Enter a valid URL to a filter subscription or a hosts file."
                 />
             </div>
         );

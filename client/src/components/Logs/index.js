@@ -51,10 +51,10 @@ class Logs extends Component {
 
         if (userRules.match(preparedBlockingRule)) {
             this.props.setRules(userRules.replace(`${blockingRule}`, ''));
-            this.props.addSuccessToast(`Removing rule from custom list: ${blockingRule}`);
+            this.props.addSuccessToast(`Rule removed from the custom filtering rules: ${blockingRule}`);
         } else if (!userRules.match(preparedUnblockingRule)) {
             this.props.setRules(`${userRules}${lineEnding}${unblockingRule}\n`);
-            this.props.addSuccessToast(`Adding rule to custom list: ${unblockingRule}`);
+            this.props.addSuccessToast(`Rule added to the custom filtering rules: ${unblockingRule}`);
         }
 
         this.props.getFilteringStatus();
