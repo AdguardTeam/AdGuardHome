@@ -223,6 +223,14 @@ func fillStatsFromQueryLog() error {
 			return err
 		}
 
+		queryLogLock.Lock()
+		queryLogCache = append(queryLogCache, entry)
+		if len(queryLogCache) > queryLogSize {
+			toremove := len(queryLogCache) - queryLogSize
+			queryLogCache = queryLogCache[toremove:]
+		}
+		queryLogLock.Unlock()
+
 		requests.IncWithTime(entry.Time)
 		if entry.Result.IsFiltered {
 			filtered.IncWithTime(entry.Time)

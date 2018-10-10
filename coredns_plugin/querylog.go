@@ -25,16 +25,15 @@ const (
 	queryLogRotationPeriod = time.Hour * 24  // rotate the log every 24 hours
 	queryLogFileName       = "querylog.json" // .gz added during compression
 	queryLogSize           = 5000            // maximum API response for /querylog
-	queryLogCacheTime      = time.Minute     // if requested more often than this, give out cached response
 	queryLogTopSize        = 500             // Keep in memory only top N values
 	queryLogAPIPort        = "8618"          // 8618 is sha512sum of "querylog" then each byte summed
 )
 
 var (
 	logBufferLock sync.RWMutex
-	logBuffer     []logEntry
+	logBuffer     []*logEntry
 
-	queryLogCache []logEntry
+	queryLogCache []*logEntry
 	queryLogLock  sync.RWMutex
 	queryLogTime  time.Time
 )
@@ -77,15 +76,22 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result dnsfilter.Result, ela
 		Elapsed:  elapsed,
 		IP:       ip,
 	}
-	var flushBuffer []logEntry
+	var flushBuffer []*logEntry
 
 	logBufferLock.Lock()
-	logBuffer = append(logBuffer, entry)
+	logBuffer = append(logBuffer, &entry)
 	if len(logBuffer) >= logBufferCap {
 		flushBuffer = logBuffer
 		logBuffer = nil
 	}
 	logBufferLock.Unlock()
+	queryLogLock.Lock()
+	queryLogCache = append(queryLogCache, &entry)
+	if len(queryLogCache) > queryLogSize {
+		toremove := len(queryLogCache) - queryLogSize
+		queryLogCache = queryLogCache[toremove:]
+	}
+	queryLogLock.Unlock()
 
 	// add it to running top
 	err = runningTop.addEntry(&entry, question, now)
@@ -103,26 +109,14 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result dnsfilter.Result, ela
 }
 
 func handleQueryLog(w http.ResponseWriter, r *http.Request) {
-	now := time.Now()
-
 	queryLogLock.RLock()
-	values := queryLogCache
-	needRefresh := now.Sub(queryLogTime) >= queryLogCacheTime
+	values := make([]*logEntry, len(queryLogCache))
+	copy(values, queryLogCache)
 	queryLogLock.RUnlock()
 
-	if needRefresh {
-		// need to get fresh data
-		logBufferLock.RLock()
-		values = logBuffer
-		logBufferLock.RUnlock()
-
-		if len(values) < queryLogSize {
-			values = appendFromLogFile(values, queryLogSize, queryLogTimeLimit)
-		}
-		queryLogLock.Lock()
-		queryLogCache = values
-		queryLogTime = now
-		queryLogLock.Unlock()
+	// reverse it so that newest is first
+	for left, right := 0, len(values)-1; left < right; left, right = left+1, right-1 {
+		values[left], values[right] = values[right], values[left]
 	}
 
 	var data = []map[string]interface{}{}
