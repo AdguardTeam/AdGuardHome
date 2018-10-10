@@ -73,7 +73,7 @@ class Filters extends Component {
                     <div className="row">
                         <div className="col-md-12">
                             <Card
-                                title="Blocking filters and hosts files"
+                                title="Filters and hosts blocklists"
                                 subtitle="AdGuard DNS understands basic adblock rules and hosts files syntax."
                             >
                                 <ReactTable
@@ -104,7 +104,7 @@ class Filters extends Component {
                     addFilter={this.props.addFilter}
                     isFilterAdded={this.props.filtering.isFilterAdded}
                     title="New filter subscription"
-                    inputDescription="Enter valid URL or file path of the filter into field above. You will be subscribed to that filter."
+                    inputDescription="Enter a valid URL to a filter subscription or a hosts file."
                 />
             </div>
         );

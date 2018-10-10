@@ -17,7 +17,7 @@ export default class Settings extends Component {
         safebrowsing: {
             enabled: false,
             title: 'Use AdGuard browsing security web service',
-            subtitle: 'AdGuard DNS will check if domain is blacklisted by the browsing security web service (sb.adtidy.org). It will use privacy-safe lookup API to do the check.',
+            subtitle: 'AdGuard DNS will check if domain is blacklisted by the browsing security web service. It will use privacy-friendly lookup API to perform the check: only a short prefix of the domain name SHA256 hash is sent to the server.',
         },
         parental: {
             enabled: false,
@@ -27,7 +27,7 @@ export default class Settings extends Component {
         safesearch: {
             enabled: false,
             title: 'Enforce safe search',
-            subtitle: 'AdGuard DNS can enforce safe search in the major search engines: Google, Bing, Yandex.',
+            subtitle: 'AdGuard DNS can enforce safe search in the following search engines: Google, Bing, Yandex.',
         },
     };
 

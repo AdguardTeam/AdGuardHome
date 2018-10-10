@@ -19,12 +19,6 @@ import (
 	"github.com/miekg/dns"
 )
 
-// top domains/clients/blocked stats in the last 24 hours
-
-// on start we read the saved stats from the last 24 hours and add them to the stats
-
-// stats are counted using hourly LRU, rotating hourly and keeping last 24 hours
-
 type hourTop struct {
 	domains gcache.Cache
 	blocked gcache.Cache
