@@ -42,7 +42,7 @@ class Header extends Component {
                                 <Link to="/" className="nav-link pl-0 pr-1">
                                     <img src={logo} alt="" className="header-brand-img" />
                                 </Link>
-                                {!dashboard.proccessing &&
+                                {!dashboard.proccessing && dashboard.isCoreRunning &&
                                     <span className={badgeClass}>
                                         {dashboard.protectionEnabled ? 'ON' : 'OFF'}
                                     </span>
