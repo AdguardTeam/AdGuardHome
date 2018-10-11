@@ -169,10 +169,11 @@ export default class Api {
 
     addFilter(url, name) {
         const { path, method } = this.FILTERING_ADD_FILTER;
-        const requestBody = `url=${url}&name=${name}`;
         const config = {
-            data: requestBody,
-            header: { 'Content-Type': 'text/plain' },
+            data: {
+                name,
+                url,
+            },
         };
         return this.makeRequest(path, method, config);
     }
