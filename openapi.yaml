@@ -25,33 +25,6 @@ tags:
         name: safesearch
         description: 'Enforce family-friendly results in search engines'
 paths:
-    /start:
-        post:
-            tags:
-                - global
-            operationId: start
-            summary: 'Start DNS server'
-            responses:
-                200:
-                    description: OK
-    /stop:
-        post:
-            tags:
-                - global
-            operationId: stop
-            summary: 'Stop DNS server'
-            responses:
-                200:
-                    description: OK
-    /restart:
-        post:
-            tags:
-                - global
-            operationId: restart
-            summary: 'Restart DNS server'
-            responses:
-                200:
-                    description: OK
     /status:
         get:
             tags:

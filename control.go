@@ -9,22 +9,19 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
+	coredns_plugin "github.com/AdguardTeam/AdguardDNS/coredns_plugin"
 	"github.com/AdguardTeam/AdguardDNS/dnsfilter"
 	"github.com/miekg/dns"
 	"gopkg.in/asaskevich/govalidator.v4"
 )
 
 const updatePeriod = time.Minute * 30
-
-var coreDNSCommand *exec.Cmd
 
 var filterTitle = regexp.MustCompile(`^! Title: +(.*)$`)
 
@@ -43,26 +40,7 @@ var client = &http.Client{
 // coredns run control
 // -------------------
 func tellCoreDNSToReload() {
-	// not running -- cheap check
-	if coreDNSCommand == nil && coreDNSCommand.Process == nil {
-		return
-	}
-	// not running -- more expensive check
-	if !isRunning() {
-		return
-	}
-
-	pid := coreDNSCommand.Process.Pid
-	process, err := os.FindProcess(pid)
-	if err != nil {
-		log.Printf("os.FindProcess(%d) returned err: %v\n", pid, err)
-		return
-	}
-	err = process.Signal(syscall.SIGUSR1)
-	if err != nil {
-		log.Printf("process.Signal on pid %d returned: %v\n", pid, err)
-		return
-	}
+	coredns_plugin.Reload <- true
 }
 
 func writeAllConfigsAndReloadCoreDNS() error {
@@ -93,126 +71,6 @@ func returnOK(w http.ResponseWriter, r *http.Request) {
 		log.Println(errortext)
 		http.Error(w, errortext, http.StatusInternalServerError)
 	}
-}
-
-func isRunning() bool {
-	if coreDNSCommand != nil && coreDNSCommand.Process != nil {
-		pid := coreDNSCommand.Process.Pid
-		process, err := os.FindProcess(pid)
-		if err != nil {
-			log.Printf("os.FindProcess(%d) returned err: %v\n", pid, err)
-		} else {
-			err := process.Signal(syscall.Signal(0))
-			if err != nil {
-				log.Printf("process.Signal on pid %d returned: %v\n", pid, err)
-			}
-			if err == nil {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func startDNSServer() error {
-	if isRunning() {
-		return fmt.Errorf("Unable to start coreDNS: Already running")
-	}
-	err := writeCoreDNSConfig()
-	if err != nil {
-		errortext := fmt.Errorf("Unable to write coredns config: %s", err)
-		log.Println(errortext)
-		return errortext
-	}
-	err = writeFilterFile()
-	if err != nil {
-		errortext := fmt.Errorf("Couldn't write filter file: %s", err)
-		log.Println(errortext)
-		return errortext
-	}
-	binarypath := filepath.Join(config.ourBinaryDir, config.CoreDNS.binaryFile)
-	configpath := filepath.Join(config.ourBinaryDir, config.CoreDNS.coreFile)
-	coreDNSCommand = exec.Command(binarypath, "-conf", configpath, "-dns.port", fmt.Sprintf("%d", config.CoreDNS.Port))
-	coreDNSCommand.Stdout = os.Stdout
-	coreDNSCommand.Stderr = os.Stderr
-	err = coreDNSCommand.Start()
-	if err != nil {
-		errortext := fmt.Errorf("Unable to start coreDNS: %s", err)
-		log.Println(errortext)
-		return errortext
-	}
-	log.Printf("coredns PID: %v\n", coreDNSCommand.Process.Pid)
-	go childwaiter()
-	return nil
-}
-
-func handleStart(w http.ResponseWriter, r *http.Request) {
-	if isRunning() {
-		http.Error(w, fmt.Sprintf("Unable to start coreDNS: Already running"), 400)
-		return
-	}
-	err := startDNSServer()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	_, err = fmt.Fprintf(w, "OK, PID %d\n", coreDNSCommand.Process.Pid)
-	if err != nil {
-		log.Printf("Couldn't write body in %s(): %s", _Func(), err)
-		return
-	}
-}
-
-func childwaiter() {
-	err := coreDNSCommand.Wait()
-	log.Printf("coredns unexpectedly died: %s\n", err)
-	coreDNSCommand.Process.Release()
-	log.Printf("restarting coredns")
-	err = startDNSServer()
-	if err != nil {
-		log.Printf("Couldn't restart DNS server: %s\n", err)
-		return
-	}
-}
-
-func handleStop(w http.ResponseWriter, r *http.Request) {
-	if coreDNSCommand == nil || coreDNSCommand.Process == nil {
-		http.Error(w, fmt.Sprintf("Unable to start coreDNS: Not running"), 400)
-		return
-	}
-	if isRunning() {
-		http.Error(w, fmt.Sprintf("Unable to start coreDNS: Not running"), 400)
-		return
-	}
-	cmd := coreDNSCommand
-	// TODO: send SIGTERM first, then SIGKILL
-	err := cmd.Process.Kill()
-	if err != nil {
-		errortext := fmt.Sprintf("Unable to stop coreDNS:\nGot error %T\n%v\n%s", err, err, err)
-		log.Println(errortext)
-		http.Error(w, errortext, 500)
-		return
-	}
-	exitstatus := cmd.Wait()
-
-	err = cmd.Process.Release()
-	if err != nil {
-		errortext := fmt.Sprintf("Unable to release process resources: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 500)
-		return
-	}
-	_, err = fmt.Fprintf(w, "OK\n%s\n", exitstatus)
-	if err != nil {
-		log.Printf("Couldn't write body in %s(): %s", _Func(), err)
-		return
-	}
-}
-
-func handleRestart(w http.ResponseWriter, r *http.Request) {
-	handleStop(w, r)
-	handleStart(w, r)
 }
 
 func handleStatus(w http.ResponseWriter, r *http.Request) {
@@ -1246,9 +1104,6 @@ func handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func registerControlHandlers() {
-	http.HandleFunc("/control/start", optionalAuth(ensurePOST(handleStart)))
-	http.HandleFunc("/control/stop", optionalAuth(ensurePOST(handleStop)))
-	http.HandleFunc("/control/restart", optionalAuth(ensurePOST(handleRestart)))
 	http.HandleFunc("/control/status", optionalAuth(ensureGET(handleStatus)))
 	http.HandleFunc("/control/enable_protection", optionalAuth(ensurePOST(handleProtectionEnable)))
 	http.HandleFunc("/control/disable_protection", optionalAuth(ensurePOST(handleProtectionDisable)))

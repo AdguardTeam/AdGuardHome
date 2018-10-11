@@ -185,6 +185,10 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 		})
 	}
 
+	onceHook.Do(func() {
+		caddy.RegisterEventHook("dnsfilter-reload", hook)
+	})
+
 	p.upstream, err = upstream.New(nil)
 	if err != nil {
 		return nil, err
@@ -573,4 +577,5 @@ func (p *plug) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (
 // Name returns name of the plugin as seen in Corefile and plugin.cfg
 func (p *plug) Name() string { return "dnsfilter" }
 
+var onceHook sync.Once
 var onceQueryLog sync.Once

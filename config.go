@@ -166,7 +166,7 @@ func writeAllConfigs() error {
 	return nil
 }
 
-const coreDNSConfigTemplate = `. {
+const coreDNSConfigTemplate = `.:{{.Port}} {
     {{if .ProtectionEnabled}}dnsfilter {{if .FilteringEnabled}}{{.FilterFile}}{{end}} {
         {{if .SafeBrowsingEnabled}}safebrowsing{{end}}
         {{if .ParentalEnabled}}parental {{.ParentalSensitivity}}{{end}}
