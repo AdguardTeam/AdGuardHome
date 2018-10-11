@@ -437,6 +437,7 @@ func handleStatsTop(w http.ResponseWriter, r *http.Request) {
 
 func httpError(w http.ResponseWriter, code int, format string, args ...interface{}) {
 	text := fmt.Sprintf(format, args...)
+	log.Println(text)
 	http.Error(w, text, code)
 }
 
@@ -705,55 +706,49 @@ func handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
-	parameters, err := parseParametersFromBody(r.Body)
+	filter := filter{}
+	err := json.NewDecoder(r.Body).Decode(&filter)
 	if err != nil {
-		errortext := fmt.Sprintf("failed to parse parameters from body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 400)
+		httpError(w, http.StatusBadRequest, "Failed to parse request body json: %s", err)
 		return
 	}
 
-	url, ok := parameters["url"]
-	if !ok {
+	filter.Enabled = true
+	if len(filter.URL) == 0 {
 		http.Error(w, "URL parameter was not specified", 400)
 		return
 	}
 
-	if valid := govalidator.IsRequestURL(url); !valid {
+	if valid := govalidator.IsRequestURL(filter.URL); !valid {
 		http.Error(w, "URL parameter is not valid request URL", 400)
 		return
 	}
 
 	// check for duplicates
 	for i := range config.Filters {
-		filter := &config.Filters[i]
-		if filter.URL == url {
-			errortext := fmt.Sprintf("Filter URL already added -- %s", url)
+		if config.Filters[i].URL == filter.URL {
+			errortext := fmt.Sprintf("Filter URL already added -- %s", filter.URL)
 			log.Println(errortext)
 			http.Error(w, errortext, http.StatusBadRequest)
 			return
 		}
 	}
 
-	var filter = filter{
-		Enabled: true,
-		URL:     url,
-	}
-	ok, err = filter.update(time.Now())
+	ok, err := filter.update(time.Now())
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't fetch filter from url %s: %s", url, err)
+		errortext := fmt.Sprintf("Couldn't fetch filter from url %s: %s", filter.URL, err)
 		log.Println(errortext)
 		http.Error(w, errortext, http.StatusBadRequest)
 		return
 	}
 	if filter.RulesCount == 0 {
-		errortext := fmt.Sprintf("Filter at url %s has no rules (maybe it points to blank page?)", url)
+		errortext := fmt.Sprintf("Filter at url %s has no rules (maybe it points to blank page?)", filter.URL)
 		log.Println(errortext)
 		http.Error(w, errortext, http.StatusBadRequest)
 		return
 	}
 	if !ok {
-		errortext := fmt.Sprintf("Filter at url %s is invalid (maybe it points to blank page?)", url)
+		errortext := fmt.Sprintf("Filter at url %s is invalid (maybe it points to blank page?)", filter.URL)
 		log.Println(errortext)
 		http.Error(w, errortext, http.StatusBadRequest)
 		return

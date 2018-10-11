@@ -221,7 +221,7 @@ func genericLoader(onEntry func(entry *logEntry) error, needMore func() bool, ti
 			}
 
 			if now.Sub(entry.Time) > timeWindow {
-				trace("skipping entry")
+				// trace("skipping entry") // debug logging
 				continue
 			}
 

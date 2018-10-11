@@ -242,9 +242,10 @@ func (p *plug) parseEtcHosts(text string) bool {
 		return false
 	}
 	for _, host := range fields[1:] {
-		if val, ok := p.hosts[host]; ok {
-			log.Printf("warning: host %s already has value %s, will overwrite it with %s", host, val, addr)
-		}
+		// debug logging for duplicate values, pretty common if you subscribe to many hosts files
+		// if val, ok := p.hosts[host]; ok {
+		// 	log.Printf("warning: host %s already has value %s, will overwrite it with %s", host, val, addr)
+		// }
 		p.hosts[host] = addr
 	}
 	return true
@@ -323,7 +324,7 @@ func (p *plug) replaceHostWithValAndReply(ctx context.Context, w dns.ResponseWri
 	// check if it's a domain name or IP address
 	addr := net.ParseIP(val)
 	var records []dns.RR
-	log.Println("Will give", val, "instead of", host)
+	// log.Println("Will give", val, "instead of", host) // debug logging
 	if addr != nil {
 		// this is an IP address, return it
 		result, err := dns.NewRR(fmt.Sprintf("%s %d A %s", host, p.settings.BlockedTTL, val))

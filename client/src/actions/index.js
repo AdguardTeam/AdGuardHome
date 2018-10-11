@@ -398,10 +398,10 @@ export const addFilterRequest = createAction('ADD_FILTER_REQUEST');
 export const addFilterFailure = createAction('ADD_FILTER_FAILURE');
 export const addFilterSuccess = createAction('ADD_FILTER_SUCCESS');
 
-export const addFilter = url => async (dispatch) => {
+export const addFilter = (url, name) => async (dispatch) => {
     dispatch(addFilterRequest());
     try {
-        await apiClient.addFilter(url);
+        await apiClient.addFilter(url, name);
         dispatch(addFilterSuccess(url));
         dispatch(getFilteringStatus());
     } catch (error) {
