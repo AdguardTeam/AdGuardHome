@@ -96,8 +96,8 @@ func checkBuffer(buffer []*logEntry, b bytes.Buffer) error {
 
 	i := 0
 	for d.More() {
-		var entry logEntry
-		err := d.Decode(&entry)
+		entry := &logEntry{}
+		err := d.Decode(entry)
 		if err != nil {
 			log.Printf("Failed to decode: %s", err)
 			return err
