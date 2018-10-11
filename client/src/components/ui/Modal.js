@@ -7,11 +7,14 @@ import './Modal.css';
 
 ReactModal.setAppElement('#root');
 
+const initialState = {
+    url: '',
+    name: '',
+    isUrlValid: false,
+};
+
 export default class Modal extends Component {
-    state = {
-        url: '',
-        isUrlValid: false,
-    };
+    state = initialState;
 
     // eslint-disable-next-line
     isUrlValid = url => {
@@ -27,33 +30,48 @@ export default class Modal extends Component {
         }
     };
 
+    handleNameChange = (e) => {
+        const { value: name } = e.currentTarget;
+        this.setState({ ...this.state, name });
+    };
+
     handleNext = () => {
-        this.props.addFilter(this.state.url);
+        this.props.addFilter(this.state.url, this.state.name);
         setTimeout(() => {
             if (this.props.isFilterAdded) {
-                this.props.toggleModal();
+                this.closeModal();
             }
         }, 2000);
     };
+
+    closeModal = () => {
+        this.props.toggleModal();
+        this.setState({ ...this.state, ...initialState });
+    }
+
     render() {
         const {
             isOpen,
-            toggleModal,
             title,
             inputDescription,
         } = this.props;
-        const { isUrlValid, url } = this.state;
-        const inputClass = classnames({
+        const { isUrlValid, url, name } = this.state;
+        const inputUrlClass = classnames({
             'form-control mb-2': true,
             'is-invalid': url.length > 0 && !isUrlValid,
             'is-valid': url.length > 0 && isUrlValid,
+        });
+        const inputNameClass = classnames({
+            'form-control mb-2': true,
+            'is-valid': name.length > 0,
         });
 
         const renderBody = () => {
             if (!this.props.isFilterAdded) {
                 return (
                     <React.Fragment>
-                        <input type="text" className={inputClass} placeholder="Enter URL or path" onChange={this.handleUrlChange}/>
+                        <input type="text" className={inputNameClass} placeholder="Enter name" onChange={this.handleNameChange} />
+                        <input type="text" className={inputUrlClass} placeholder="Enter URL" onChange={this.handleUrlChange} />
                         {inputDescription &&
                             <div className="description">
                                 {inputDescription}
@@ -68,21 +86,21 @@ export default class Modal extends Component {
             );
         };
 
-        const isValidForSubmit = !(url.length > 0 && isUrlValid);
+        const isValidForSubmit = !(url.length > 0 && isUrlValid && name.length > 0);
 
         return (
             <ReactModal
                 className="Modal__Bootstrap modal-dialog modal-dialog-centered"
                 closeTimeoutMS={0}
                 isOpen={ isOpen }
-                onRequestClose={toggleModal}
+                onRequestClose={this.closeModal}
             >
                 <div className="modal-content">
                     <div className="modal-header">
                     <h4 className="modal-title">
                         {title}
                     </h4>
-                    <button type="button" className="close" onClick={toggleModal}>
+                    <button type="button" className="close" onClick={this.closeModal}>
                         <span className="sr-only">Close</span>
                     </button>
                     </div>
@@ -92,7 +110,7 @@ export default class Modal extends Component {
                     {
                         !this.props.isFilterAdded &&
                             <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={toggleModal}>Cancel</button>
+                                <button type="button" className="btn btn-secondary" onClick={this.closeModal}>Cancel</button>
                                 <button type="button" className="btn btn-success" onClick={this.handleNext} disabled={isValidForSubmit}>Add filter</button>
                             </div>
                     }
