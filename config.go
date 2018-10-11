@@ -71,7 +71,7 @@ var config = configuration{
 		FilterFile:          "dnsfilter.txt", // only filename, no path
 		FilteringEnabled:    true,
 		SafeBrowsingEnabled: false,
-		BlockedResponseTTL:  60, // in seconds
+		BlockedResponseTTL:  10, // in seconds
 		QueryLogEnabled:     true,
 		UpstreamDNS:         defaultDNS,
 		Cache:               "cache",
