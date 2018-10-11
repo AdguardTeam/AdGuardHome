@@ -26,8 +26,8 @@ class Header extends Component {
         const { dashboard } = this.props;
         const badgeClass = classnames({
             'badge dns-status': true,
-            'badge-success': dashboard.isCoreRunning,
-            'badge-danger': !dashboard.isCoreRunning,
+            'badge-success': dashboard.protectionEnabled,
+            'badge-danger': !dashboard.protectionEnabled,
         });
 
         return (
@@ -44,7 +44,7 @@ class Header extends Component {
                                 </Link>
                                 {!dashboard.proccessing &&
                                     <span className={badgeClass}>
-                                        {dashboard.isCoreRunning ? 'ON' : 'OFF'}
+                                        {dashboard.protectionEnabled ? 'ON' : 'OFF'}
                                     </span>
                                 }
                             </div>
