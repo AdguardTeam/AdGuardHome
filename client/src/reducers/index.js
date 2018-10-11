@@ -48,6 +48,7 @@ const dashboard = handleActions({
             dns_address: dnsAddress,
             querylog_enabled: queryLogEnabled,
             upstream_dns: upstreamDns,
+            protection_enabled: protectionEnabled,
         } = payload;
         const newState = {
             ...state,
@@ -58,6 +59,7 @@ const dashboard = handleActions({
             dnsAddress,
             queryLogEnabled,
             upstreamDns: upstreamDns.join('\n'),
+            protectionEnabled,
         };
         return newState;
     },
@@ -134,9 +136,9 @@ const dashboard = handleActions({
         return newState;
     },
 
-    [actions.toggleFilteringSuccess]: (state) => {
-        const newSetting = { ...state, isFilteringEnabled: !state.isFilteringEnabled };
-        return newSetting;
+    [actions.toggleProtectionSuccess]: (state) => {
+        const newState = { ...state, protectionEnabled: !state.protectionEnabled };
+        return newState;
     },
 
     [actions.handleUpstreamChange]: (state, { payload }) => {
@@ -152,6 +154,7 @@ const dashboard = handleActions({
     processingVersion: true,
     processingFiltering: true,
     upstreamDns: [],
+    protectionEnabled: false,
 });
 
 const queryLogs = handleActions({

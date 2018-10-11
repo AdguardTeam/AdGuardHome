@@ -113,28 +113,28 @@ export const getFiltering = () => async (dispatch) => {
     }
 };
 
-export const toggleFilteringRequest = createAction('TOGGLE_FILTERING_REQUEST');
-export const toggleFilteringFailure = createAction('TOGGLE_FILTERING_FAILURE');
-export const toggleFilteringSuccess = createAction('TOGGLE_FILTERING_SUCCESS');
+export const toggleProtectionRequest = createAction('TOGGLE_PROTECTION_REQUEST');
+export const toggleProtectionFailure = createAction('TOGGLE_PROTECTION_FAILURE');
+export const toggleProtectionSuccess = createAction('TOGGLE_PROTECTION_SUCCESS');
 
-export const toggleFiltering = status => async (dispatch) => {
-    dispatch(toggleFilteringRequest());
+export const toggleProtection = status => async (dispatch) => {
+    dispatch(toggleProtectionRequest());
     let successMessage = '';
 
     try {
         if (status) {
-            successMessage = 'Disabled filtering';
-            await apiClient.disableFiltering();
+            successMessage = 'Disabled protection';
+            await apiClient.disableGlobalProtection();
         } else {
-            successMessage = 'Enabled filtering';
-            await apiClient.enableFiltering();
+            successMessage = 'Enabled protection';
+            await apiClient.enableGlobalProtection();
         }
 
         dispatch(addSuccessToast(successMessage));
-        dispatch(toggleFilteringSuccess());
+        dispatch(toggleProtectionSuccess());
     } catch (error) {
         dispatch(addErrorToast({ error }));
-        dispatch(toggleFilteringFailure());
+        dispatch(toggleProtectionFailure());
     }
 };
 

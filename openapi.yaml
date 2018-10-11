@@ -65,12 +65,31 @@ paths:
                         application/json:
                             dns_address: 127.0.0.1
                             dns_port: 53
+                            protection_enabled: true
                             querylog_enabled: true
                             running: true
                             upstream_dns:
                               - 1.1.1.1
                               - 1.0.0.1
                             version: "v0.1"
+    /enable_protection:
+        post:
+            tags:
+                -global
+            operationId: enableProtection
+            summary: "Enable protection (turns on dnsfilter module in coredns)"
+            responses:
+                200:
+                    description: OK
+    /disable_protection:
+        post:
+            tags:
+                -global
+            operationId: disableProtection
+            summary: "Disable protection (turns off filtering, sb, parental, safesearch temporarily by disabling dnsfilter module in coredns)"
+            responses:
+                200:
+                    description: OK
     /querylog:
         get:
             tags:
@@ -316,6 +335,15 @@ paths:
                                 - 123
                                 - 123
                                 - 123
+    /stats_reset:
+        post:
+            tags:
+                -global
+            operationId: statsReset
+            summary: "Reset all statistics to zeroes"
+            responses:
+                200:
+                    description: OK
     /filtering/enable:
         post:
             tags:

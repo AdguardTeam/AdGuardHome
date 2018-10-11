@@ -26,8 +26,8 @@ class Header extends Component {
         const { dashboard } = this.props;
         const badgeClass = classnames({
             'badge dns-status': true,
-            'badge-success': dashboard.isCoreRunning,
-            'badge-danger': !dashboard.isCoreRunning,
+            'badge-success': dashboard.protectionEnabled,
+            'badge-danger': !dashboard.protectionEnabled,
         });
 
         return (
@@ -42,9 +42,9 @@ class Header extends Component {
                                 <Link to="/" className="nav-link pl-0 pr-1">
                                     <img src={logo} alt="" className="header-brand-img" />
                                 </Link>
-                                {!dashboard.proccessing &&
+                                {!dashboard.proccessing && dashboard.isCoreRunning &&
                                     <span className={badgeClass}>
-                                        {dashboard.isCoreRunning ? 'ON' : 'OFF'}
+                                        {dashboard.protectionEnabled ? 'ON' : 'OFF'}
                                     </span>
                                 }
                             </div>
