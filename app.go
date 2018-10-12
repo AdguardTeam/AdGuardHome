@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"net"
@@ -10,6 +11,7 @@ import (
 	"strconv"
 
 	"github.com/gobuffalo/packr"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 // VersionString will be set through ldflags, contains current version
@@ -96,8 +98,14 @@ func main() {
 		if configFilename != nil {
 			config.ourConfigFilename = *configFilename
 		}
+
+		err := askUsernamePasswordIfPossible()
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		// parse from config file
-		err := parseConfig()
+		err = parseConfig()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -129,4 +137,90 @@ func main() {
 	URL := fmt.Sprintf("http://%s", address)
 	log.Println("Go to " + URL)
 	log.Fatal(http.ListenAndServe(address, nil))
+}
+
+func getInput() (string, error) {
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	text := scanner.Text()
+	err := scanner.Err()
+	return text, err
+}
+
+func promptAndGet(prompt string) (string, error) {
+	for {
+		fmt.Printf(prompt)
+		input, err := getInput()
+		if err != nil {
+			log.Printf("Failed to get input, aborting: %s", err)
+			return "", err
+		}
+		if len(input) != 0 {
+			return input, nil
+		}
+		// try again
+	}
+	return "", nil
+}
+
+func promptAndGetPassword(prompt string) (string, error) {
+	for {
+		fmt.Printf(prompt)
+		password, err := terminal.ReadPassword(int(os.Stdin.Fd()))
+		fmt.Printf("\n")
+		if err != nil {
+			log.Printf("Failed to get input, aborting: %s", err)
+			return "", err
+		}
+		if len(password) != 0 {
+			return string(password), nil
+		}
+		// try again
+	}
+}
+
+func askUsernamePasswordIfPossible() error {
+	configfile := filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
+	_, err := os.Stat(configfile)
+	if !os.IsNotExist(err) {
+		// do nothing, file exists
+		trace("File %s exists, won't ask for password", configfile)
+		return nil
+	}
+	if !terminal.IsTerminal(int(os.Stdin.Fd())) {
+		return nil // do nothing
+	}
+	if !terminal.IsTerminal(int(os.Stdout.Fd())) {
+		return nil // do nothing
+	}
+	fmt.Printf("Would you like to set user/password for the web interface authentication (yes/no)?\n")
+	yesno, err := promptAndGet("Please type 'yes' or 'no': ")
+	if err != nil {
+		return err
+	}
+	if yesno[0] != 'y' && yesno[0] != 'Y' {
+		return nil
+	}
+	username, err := promptAndGet("Please enter the username: ")
+	if err != nil {
+		return err
+	}
+
+	password, err := promptAndGetPassword("Please enter the password: ")
+	if err != nil {
+		return err
+	}
+
+	password2, err := promptAndGetPassword("Please enter password again: ")
+	if err != nil {
+		return err
+	}
+	if password2 != password {
+		fmt.Printf("Passwords do not match! Aborting\n")
+		os.Exit(1)
+	}
+
+	config.AuthName = username
+	config.AuthPass = password
+	return nil
 }
