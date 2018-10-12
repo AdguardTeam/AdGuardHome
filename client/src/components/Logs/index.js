@@ -6,10 +6,12 @@ import escapeRegExp from 'lodash/escapeRegExp';
 import endsWith from 'lodash/endsWith';
 
 import { formatTime } from '../../helpers/helpers';
+import { getTrackerData } from '../../helpers/whotracksme';
 import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
 import Loading from '../ui/Loading';
 import Tooltip from '../ui/Tooltip';
+import Popover from '../ui/Popover';
 import './Logs.css';
 
 const DOWNLOAD_LOG_FILENAME = 'dns-logs.txt';
@@ -91,12 +93,14 @@ class Logs extends Component {
             accessor: 'domain',
             Cell: (row) => {
                 const response = row.value;
+                const trackerData = getTrackerData(response);
 
                 return (
-                    <div className="logs__row logs__row--overflow" title={response}>
+                    <div className="logs__row" title={response}>
                         <div className="logs__text">
                             {response}
                         </div>
+                        {trackerData && <Popover data={trackerData}/>}
                     </div>
                 );
             },

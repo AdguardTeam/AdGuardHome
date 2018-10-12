@@ -4,6 +4,10 @@
     overflow: visible;
 }
 
+.ReactTable .rt-tbody {
+    overflow: visible;
+}
+
 .rt-tr-group .red {
     background-color: #fff4f2;
 }

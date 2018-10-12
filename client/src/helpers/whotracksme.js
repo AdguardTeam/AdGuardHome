@@ -5,7 +5,7 @@ import trackersDb from './whotracksmedb.json';
   @type {object}
   @property {string} id - tracker ID.
   @property {string} name - tracker name.
-  @property {number} age - tracker category.
+  @property {number} category - tracker category.
  */
 
 /**
@@ -22,9 +22,9 @@ export const getTrackerData = (domainName) => {
     const parts = domainName.split(/\./g).reverse();
     let hostToCheck = '';
 
-    // Check every subdomain except the TLD
-    for (let i = 1; i < parts.length; i += 1) {
-        hostToCheck = hostToCheck + (i > 0 ? '.' : '') + parts[i];
+    // Check every subdomain
+    for (let i = 0; i < parts.length; i += 1) {
+        hostToCheck = parts[i] + (i > 0 ? '.' : '') + hostToCheck;
         const trackerId = trackersDb.trackerDomains[hostToCheck];
 
         if (trackerId) {

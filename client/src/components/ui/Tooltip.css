@@ -16,7 +16,7 @@
     content: attr(data-tooltip);
     display: block;
     position: absolute;
-    bottom: calc(100% + 12px);
+    bottom: calc(100% + 10px);
     left: 50%;
     padding: 10px 15px;
     font-size: 0.85rem;
@@ -32,7 +32,7 @@
 .tooltip-custom:after {
     content: "";
     position: relative;
-    top: -9px;
+    top: -7px;
     left: calc(50% - 6px);
     visibility: hidden;
     opacity: 0;
