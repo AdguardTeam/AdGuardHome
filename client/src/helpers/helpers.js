@@ -6,7 +6,7 @@ import round from 'lodash/round';
 
 import { STATS_NAMES } from './constants';
 
-const formatTime = (time) => {
+export const formatTime = (time) => {
     const parsedTime = dateParse(time);
     return dateFormat(parsedTime, 'HH:mm:ss');
 };
@@ -26,7 +26,7 @@ export const normalizeLogs = logs => logs.map((log) => {
         return `${type}: ${value} (ttl=${ttl})`;
     }) : [];
     return {
-        time: formatTime(time),
+        time,
         domain,
         type,
         response: responsesArray,

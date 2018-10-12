@@ -4,6 +4,8 @@ import ReactTable from 'react-table';
 import { saveAs } from 'file-saver/FileSaver';
 import escapeRegExp from 'lodash/escapeRegExp';
 import endsWith from 'lodash/endsWith';
+
+import { formatTime } from '../../helpers/helpers';
 import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
 import Loading from '../ui/Loading';
@@ -83,6 +85,7 @@ class Logs extends Component {
             accessor: 'time',
             maxWidth: 110,
             filterable: false,
+            Cell: ({ value }) => (<div className="logs__row"><span className="logs__text" title={value}>{formatTime(value)}</span></div>),
         }, {
             Header: 'Domain name',
             accessor: 'domain',
@@ -261,8 +264,8 @@ class Logs extends Component {
                     </div>
                 </PageTitle>
                 <Card>
-                    {queryLogEnabled && queryLogs.processing && <Loading />}
-                    {queryLogEnabled && !queryLogs.processing &&
+                    {queryLogEnabled && queryLogs.getLogsProcessing && <Loading />}
+                    {queryLogEnabled && !queryLogs.getLogsProcessing &&
                         this.renderLogs(queryLogs.logs)}
                 </Card>
             </Fragment>
