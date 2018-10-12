@@ -26,7 +26,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 400px;
 }
 
 .card-body--status {
@@ -47,4 +46,41 @@
 .card-refresh:not(:disabled):not(.disabled):active,
 .card-refresh:focus:active {
     background-image: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiBoZWlnaHQ9IjI0IiBzdHJva2U9IiNmZmYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIyIiB2aWV3Qm94PSIwIDAgMjQgMjQiIHdpZHRoPSIyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJtMjMgNHY2aC02Ii8+PHBhdGggZD0ibTEgMjB2LTZoNiIvPjxwYXRoIGQ9Im0zLjUxIDlhOSA5IDAgMCAxIDE0Ljg1LTMuMzZsNC42NCA0LjM2bS0yMiA0IDQuNjQgNC4zNmE5IDkgMCAwIDAgMTQuODUtMy4zNiIvPjwvc3ZnPg==");
+}
+
+.card-title-stats {
+    color: #9aa0ac;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.card-body-stats {
+    position: relative;
+    flex: 1 1 auto;
+    margin: 0;
+    padding: 1rem 1.5rem;
+}
+
+.card-value-stats {
+    display: block;
+    font-size: 2.1rem;
+    line-height: 2.7rem;
+    height: 2.7rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.card-value-percent {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 0.9rem;
+    line-height: 1;
+    height: auto;
+}
+
+.card-value-percent:after {
+    content: "%";
 }

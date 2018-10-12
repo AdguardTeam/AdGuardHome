@@ -75,4 +75,9 @@ export const normalizeFilteringStatus = (filteringStatus) => {
     return { enabled, userRules: newUserRules, filters: newFilters };
 };
 
-export const getPercent = (amount, number) => round(100 / (amount / number));
+export const getPercent = (amount, number) => {
+    if (amount > 0 && number > 0) {
+        return round(100 / (amount / number), 2);
+    }
+    return 0;
+};

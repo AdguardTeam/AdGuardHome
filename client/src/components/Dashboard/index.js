@@ -61,6 +61,10 @@ class Dashboard extends Component {
                                 <Statistics
                                     history={dashboard.statsHistory}
                                     refreshButton={refreshButton}
+                                    dnsQueries={dashboard.stats.dns_queries}
+                                    blockedFiltering={dashboard.stats.blocked_filtering}
+                                    replacedSafebrowsing={dashboard.stats.replaced_safebrowsing}
+                                    replacedParental={dashboard.stats.replaced_parental}
                                 />
                             </div>
                         }
@@ -81,12 +85,14 @@ class Dashboard extends Component {
                             <Fragment>
                                 <div className="col-lg-6">
                                     <Clients
+                                        dnsQueries={dashboard.stats.dns_queries}
                                         refreshButton={refreshButton}
                                         topClients={dashboard.topStats.top_clients}
                                     />
                                 </div>
                                 <div className="col-lg-6">
                                     <QueriedDomains
+                                        dnsQueries={dashboard.stats.dns_queries}
                                         refreshButton={refreshButton}
                                         topQueriedDomains={dashboard.topStats.top_queried_domains}
                                     />
@@ -95,6 +101,9 @@ class Dashboard extends Component {
                                     <BlockedDomains
                                         refreshButton={refreshButton}
                                         topBlockedDomains={dashboard.topStats.top_blocked_domains}
+                                        blockedFiltering={dashboard.stats.blocked_filtering}
+                                        replacedSafebrowsing={dashboard.stats.replaced_safebrowsing}
+                                        replacedParental={dashboard.stats.replaced_parental}
                                     />
                                 </div>
                             </Fragment>
