@@ -4,6 +4,8 @@ import subHours from 'date-fns/sub_hours';
 import addHours from 'date-fns/add_hours';
 import round from 'lodash/round';
 
+import { STATS_NAMES } from './constants';
+
 const formatTime = (time) => {
     const parsedTime = dateParse(time);
     return dateFormat(parsedTime, 'HH:mm:ss');
@@ -33,15 +35,6 @@ export const normalizeLogs = logs => logs.map((log) => {
         rule,
     };
 });
-
-const STATS_NAMES = {
-    avg_processing_time: 'Average processing time',
-    blocked_filtering: 'Blocked by filters',
-    dns_queries: 'DNS queries',
-    replaced_parental: 'Blocked adult websites',
-    replaced_safebrowsing: 'Blocked malware/phishing',
-    replaced_safesearch: 'Enforced safe search',
-};
 
 export const normalizeHistory = history => Object.keys(history).map((key) => {
     let id = STATS_NAMES[key];
@@ -81,3 +74,5 @@ export const normalizeFilteringStatus = (filteringStatus) => {
     const newUserRules = Array.isArray(userRules) ? userRules.join('\n') : '';
     return { enabled, userRules: newUserRules, filters: newFilters };
 };
+
+export const getPercent = (amount, number) => round(100 / (amount / number));
