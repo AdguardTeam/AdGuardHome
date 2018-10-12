@@ -1,0 +1,15 @@
+{
+  "name": "whotracksme-converter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "download-file-sync": "^1.0.4",
+    "sqlite3": "^4.0.2"
+  }
+}
