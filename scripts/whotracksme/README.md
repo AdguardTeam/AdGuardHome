@@ -9,4 +9,4 @@ yarn install
 yarn index.js
 ```
 
-You'll find the output in the `whotracksme.json` file.
+You'll find the output in the `whotracksmedb.json` file.
