@@ -4,6 +4,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const webpack = require('webpack');
 const flexBugsFixes = require('postcss-flexbugs-fixes');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
 
 const RESOURCES_PATH = path.resolve(__dirname);
 const ENTRY_REACT = path.resolve(RESOURCES_PATH, 'src/index.js');
@@ -91,6 +92,11 @@ const config = {
     plugins: [
         new webpack.DefinePlugin({
             'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+        }),
+        new CleanWebpackPlugin(['*.*'], {
+            root: PUBLIC_PATH,
+            verbose: false,
+            dry: false,
         }),
         new HtmlWebpackPlugin({
             inject: true,

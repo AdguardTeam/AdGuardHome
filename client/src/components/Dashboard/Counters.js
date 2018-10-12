@@ -88,7 +88,7 @@ Counters.propTypes = {
     replacedParental: PropTypes.number.isRequired,
     replacedSafesearch: PropTypes.number.isRequired,
     avgProcessingTime: PropTypes.number.isRequired,
-    refreshButton: PropTypes.node,
+    refreshButton: PropTypes.node.isRequired,
 };
 
 export default Counters;

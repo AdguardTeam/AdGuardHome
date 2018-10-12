@@ -9,7 +9,7 @@
     "lint": "eslint frontend/"
   },
   "dependencies": {
-    "@nivo/line": "^0.42.1",
+    "@nivo/line": "^0.49.1",
     "axios": "^0.18.0",
     "classnames": "^2.2.6",
     "date-fns": "^1.29.0",
@@ -44,6 +44,7 @@
     "babel-preset-react": "^6.24.1",
     "babel-preset-stage-2": "^6.24.1",
     "babel-runtime": "6.26.0",
+    "clean-webpack-plugin": "^0.1.19",
     "compression-webpack-plugin": "^1.1.11",
     "css-loader": "^0.28.11",
     "eslint": "^4.19.1",

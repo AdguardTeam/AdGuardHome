@@ -13,6 +13,13 @@
         "commonjs": true
     },
 
+    "settings": {
+        "react": {
+            "pragma": "React",
+            "version": "16.4"
+        }
+    },
+
     "rules": {
         "indent": ["error", 4, {
             "SwitchCase": 1,
@@ -43,6 +50,6 @@
         }],
         "no-console": ["warn", { "allow": ["warn", "error"] }],
         "import/no-extraneous-dependencies": ["error", { "devDependencies": true }],
-        "import/prefer-default-export": "off",
+        "import/prefer-default-export": "off"
     }
 }

@@ -12,17 +12,23 @@ class Footer extends Component {
                 <div className="container">
                     <div className="row align-items-center flex-row-reverse">
                         <div className="col-12 col-lg-auto ml-lg-auto">
-                            <ul className="list-inline list-inline-dots text-center mb-0">
-                                <li className="list-inline-item">
-                                    <a href="https://adguard.com/adguard-dns/overview.html" target="_blank" rel="noopener noreferrer">Homepage</a>
-                                </li>
-                                <li className="list-inline-item">
-                                    <a href="https://github.com/AdguardTeam/AdguardDNS" target="_blank" rel="noopener noreferrer">Github</a>
-                                </li>
-                            </ul>
+                            <div className="row align-items-center justify-content-center">
+                                <div className="col-auto">
+                                    <ul className="list-inline text-center mb-0">
+                                        <li className="list-inline-item">
+                                            <a href="https://github.com/AdguardTeam/AdguardDNS" target="_blank" rel="noopener noreferrer">Homepage</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div className="col-auto">
+                                    <a href="https://github.com/AdguardTeam/AdguardDNS/issues/new" className="btn btn-outline-primary btn-sm" target="_blank" rel="noopener noreferrer">
+                                        Report an issue
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                         <div className="col-12 col-lg-auto mt-3 mt-lg-0 text-center">
-                            © AdGuard {this.getYear()}
+                            Copyright © {this.getYear()} <a href="https://adguard.com/">AdGuard</a>.
                         </div>
                     </div>
                 </div>
