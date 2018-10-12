@@ -117,6 +117,11 @@ func main() {
 		}
 	}
 
+	// eat all args so that coredns can start happily
+	if len(os.Args) > 1 {
+		os.Args = os.Args[:1]
+	}
+
 	err := writeConfig()
 	if err != nil {
 		log.Fatal(err)
