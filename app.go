@@ -187,22 +187,18 @@ func askUsernamePasswordIfPossible() error {
 		trace("File %s exists, won't ask for password", configfile)
 		return nil
 	}
-
 	if !terminal.IsTerminal(int(os.Stdin.Fd())) {
 		return nil // do nothing
 	}
-	trace("stdin is a terminal")
 	if !terminal.IsTerminal(int(os.Stdout.Fd())) {
 		return nil // do nothing
 	}
-	trace("stdout is a terminal")
 	fmt.Printf("Would you like to set user/password for the web interface authentication (yes/no)?\n")
 	yesno, err := promptAndGet("Please type 'yes' or 'no': ")
 	if err != nil {
 		return err
 	}
 	if yesno[0] != 'y' && yesno[0] != 'Y' {
-		trace("User didn't want password, exiting")
 		return nil
 	}
 	username, err := promptAndGet("Please enter the username: ")
