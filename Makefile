@@ -7,10 +7,12 @@ GOPATH := $(mkfile_dir)/build/gopath
 JSFILES = $(shell find client -path client/node_modules -prune -o -type f -name '*.js')
 STATIC = build/static/index.html
 
+TARGET=AdguardDNS
+
 .PHONY: all build clean
 all: build
 
-build: AdguardDNS
+build: $(TARGET)
 
 client/node_modules: client/package.json client/package-lock.json
 	npm --prefix client install
@@ -19,7 +21,7 @@ client/node_modules: client/package.json client/package-lock.json
 $(STATIC): $(JSFILES) client/node_modules
 	npm --prefix client run build-prod
 
-AdguardDNS: $(STATIC) *.go coredns_plugin/*.go dnsfilter/*.go
+$(TARGET): $(STATIC) *.go coredns_plugin/*.go dnsfilter/*.go
 	mkdir -p $(GOPATH)/src/github.com/AdguardTeam
 	if [ ! -h $(GOPATH)/src/github.com/AdguardTeam/AdguardDNS ]; then rm -rf $(GOPATH)/src/github.com/AdguardTeam/AdguardDNS && ln -fs ../../../../.. $(GOPATH)/src/github.com/AdguardTeam/AdguardDNS; fi
 	GOPATH=$(GOPATH) go get -v -d .
@@ -28,7 +30,7 @@ AdguardDNS: $(STATIC) *.go coredns_plugin/*.go dnsfilter/*.go
 	cd $(GOPATH)/src/github.com/prometheus/client_golang && git reset --hard v0.8.0
 	perl -0777 -p -i.bak -e 's/pprofOnce.Do\(func\(\) {(.*)}\)/\1/ms' $(GOPATH)/src/github.com/coredns/coredns/plugin/pprof/setup.go
 	perl -0777 -p -i.bak -e 's/c.OnShutdown/c.OnRestart/' $(GOPATH)/src/github.com/coredns/coredns/plugin/pprof/setup.go
-	GOPATH=$(GOPATH) PATH=$(GOPATH)/bin:$(PATH) packr build -ldflags="-X main.VersionString=$(GIT_VERSION)" -o AdguardDNS
+	GOPATH=$(GOPATH) PATH=$(GOPATH)/bin:$(PATH) packr build -ldflags="-X main.VersionString=$(GIT_VERSION)" -o $(TARGET)
 
 clean:
 	$(MAKE) cleanfast
@@ -36,4 +38,4 @@ clean:
 	rm -rf client/node_modules
 
 cleanfast:
-	rm -f AdguardDNS
+	rm -f $(TARGET)
