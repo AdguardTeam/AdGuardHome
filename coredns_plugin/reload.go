@@ -17,10 +17,7 @@ func hook(event caddy.EventName, info interface{}) error {
 	instance := info.(*caddy.Instance)
 
 	go func() {
-		trace("Will wait for Reload channel")
-
 		for range Reload {
-			trace("Got message on Reload, restarting coredns")
 			corefile, err := caddy.LoadCaddyfile(instance.Caddyfile().ServerType())
 			if err != nil {
 				continue
