@@ -232,7 +232,11 @@ func genericLoader(onEntry func(entry *logEntry) error, needMore func() bool, ti
 			}
 		}
 		elapsed := time.Since(now)
-		log.Printf("file \"%s\": read %d entries in %v, %v/entry", file, i, elapsed, elapsed/time.Duration(i))
+		var perunit time.Duration
+		if i > 0 {
+			perunit = elapsed / time.Duration(i)
+		}
+		log.Printf("file \"%s\": read %d entries in %v, %v/entry", file, i, elapsed, perunit)
 	}
 	return nil
 }
