@@ -10,6 +10,7 @@ import BlockedDomains from './BlockedDomains';
 
 import PageTitle from '../ui/PageTitle';
 import Loading from '../ui/Loading';
+import './Dashboard.css';
 
 class Dashboard extends Component {
     componentDidMount() {

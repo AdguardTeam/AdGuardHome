@@ -1,0 +1,22 @@
+.stats__table .popover__body {
+    left: 0;
+    transform: none;
+}
+
+.stats__table .popover__body:after {
+    left: 13px;
+}
+
+.stats__table .rt-tr-group:first-child .popover__body,
+.stats__table .rt-tr-group:nth-child(2) .popover__body {
+    top: calc(100% + 5px);
+    bottom: initial;
+    z-index: 1;
+}
+
+.stats__table .rt-tr-group:first-child .popover__body:after,
+.stats__table .rt-tr-group:nth-child(2) .popover__body:after {
+    top: -11px;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid #585965;
+}

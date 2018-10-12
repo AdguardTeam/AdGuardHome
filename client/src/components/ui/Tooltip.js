@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import './Tooltip.css';
 
 const Tooltip = props => (
-    <div data-tooltip={props.text} className={`tooltip-custom ${props.type}`}></div>
+    <div data-tooltip={props.text} className={`tooltip-custom ${props.type || ''}`}></div>
 );
 
 Tooltip.propTypes = {

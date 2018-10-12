@@ -5,7 +5,9 @@ import map from 'lodash/map';
 
 import Card from '../ui/Card';
 import Cell from '../ui/Cell';
+import Popover from '../ui/Popover';
 
+import { getTrackerData } from '../../helpers/whotracksme';
 import { getPercent } from '../../helpers/helpers';
 import { STATUS_COLORS } from '../../helpers/constants';
 
@@ -13,7 +15,19 @@ class BlockedDomains extends Component {
     columns = [{
         Header: 'IP',
         accessor: 'ip',
-        Cell: ({ value }) => (<div className="logs__row logs__row--overflow"><span className="logs__text" title={value}>{value}</span></div>),
+        Cell: (row) => {
+            const { value } = row;
+            const trackerData = getTrackerData(value);
+
+            return (
+                <div className="logs__row" title={value}>
+                    <div className="logs__text">
+                        {value}
+                    </div>
+                    {trackerData && <Popover data={trackerData} />}
+                </div>
+            );
+        },
     }, {
         Header: 'Requests count',
         accessor: 'domain',
@@ -43,7 +57,7 @@ class BlockedDomains extends Component {
                     showPagination={false}
                     noDataText="No domains found"
                     minRows={6}
-                    className="-striped -highlight card-table-overflow"
+                    className="-striped -highlight card-table-overflow stats__table"
                 />
             </Card>
         );

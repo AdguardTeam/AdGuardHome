@@ -60,6 +60,18 @@
     border-bottom: 6px solid #585965;
 }
 
+.logs__table .rt-tr-group:first-child .popover__body {
+    top: calc(100% + 5px);
+    bottom: initial;
+    z-index: 1;
+}
+
+.logs__table .rt-tr-group:first-child .popover__body:after {
+    top: -11px;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid #585965;
+}
+
 .logs__table .rt-thead.-filters input,
 .logs__table .rt-thead.-filters select {
     padding: 6px 7px;
