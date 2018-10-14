@@ -44,7 +44,7 @@ export default class UserRules extends Component {
                             domain and all its subdomains
                         </li>
                         <li>
-                            <code>127.0.0.1 example.org</code> - AdGuard DNS will now return
+                            <code>127.0.0.1 example.org</code> - AdGuard Home will now return
                             127.0.0.1 address for the example.org domain (but not its subdomains).
                         </li>
                         <li>

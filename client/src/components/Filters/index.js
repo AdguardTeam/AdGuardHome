@@ -74,7 +74,7 @@ class Filters extends Component {
                         <div className="col-md-12">
                             <Card
                                 title="Filters and hosts blocklists"
-                                subtitle="AdGuard DNS understands basic adblock rules and hosts files syntax."
+                                subtitle="AdGuard Home understands basic adblock rules and hosts files syntax."
                             >
                                 <ReactTable
                                     data={filters}

@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
-    title: 'AdGuard DNS'
-    description: 'Control AdGuard DNS server with this API'
+    title: 'AdGuard Home'
+    description: 'Control AdGuard Home server with this API'
     version: 0.0.0
 basePath: /control
 schemes:

@@ -17,17 +17,17 @@ export default class Settings extends Component {
         safebrowsing: {
             enabled: false,
             title: 'Use AdGuard browsing security web service',
-            subtitle: 'AdGuard DNS will check if domain is blacklisted by the browsing security web service. It will use privacy-friendly lookup API to perform the check: only a short prefix of the domain name SHA256 hash is sent to the server.',
+            subtitle: 'AdGuard Home will check if domain is blacklisted by the browsing security web service. It will use privacy-friendly lookup API to perform the check: only a short prefix of the domain name SHA256 hash is sent to the server.',
         },
         parental: {
             enabled: false,
             title: 'Use AdGuard parental control web service',
-            subtitle: 'AdGuard DNS will check if domain contains adult materials. It uses the same privacy-friendly API as the browsing security web service.',
+            subtitle: 'AdGuard Home will check if domain contains adult materials. It uses the same privacy-friendly API as the browsing security web service.',
         },
         safesearch: {
             enabled: false,
             title: 'Enforce safe search',
-            subtitle: 'AdGuard DNS can enforce safe search in the following search engines: Google, Bing, Yandex.',
+            subtitle: 'AdGuard Home can enforce safe search in the following search engines: Google, Bing, Yandex.',
         },
     };
 

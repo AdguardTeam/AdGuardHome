@@ -15,7 +15,7 @@ class Popover extends Component {
                 <div className="popover__body">
                     <div className="popover__list">
                         <div className="popover__list-title">
-                            This domain belongs to a known tracker.
+                            This domain belongs to the Whotracksme database.
                         </div>
                         <div className="popover__list-item">
                             Name: <strong>{data.name}</strong>

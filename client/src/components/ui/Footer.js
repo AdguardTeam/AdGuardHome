@@ -10,9 +10,12 @@ class Footer extends Component {
         return (
             <footer className="footer">
                 <div className="container">
-                    <div className="row align-items-center flex-row-reverse">
-                        <div className="col-12 col-lg-auto ml-lg-auto">
+                    <div className="row align-items-center flex-row">
+                        <div className="col-12 col-lg-auto mt-3 mt-lg-0 text-center">
                             <div className="row align-items-center justify-content-center">
+                                <div className="col-auto">
+                                    Copyright © {this.getYear()} <a href="https://adguard.com/">AdGuard</a>
+                                </div>
                                 <div className="col-auto">
                                     <ul className="list-inline text-center mb-0">
                                         <li className="list-inline-item">
@@ -26,9 +29,6 @@ class Footer extends Component {
                                     </a>
                                 </div>
                             </div>
-                        </div>
-                        <div className="col-12 col-lg-auto mt-3 mt-lg-0 text-center">
-                            Copyright © {this.getYear()} <a href="https://adguard.com/">AdGuard</a>.
                         </div>
                     </div>
                 </div>
