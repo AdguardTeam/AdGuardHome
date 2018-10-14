@@ -36,7 +36,9 @@ const Line = props => (
                     {slice.data.map(d => (
                         <div key={d.serie.id} className="line__tooltip">
                             <span className="line__tooltip-text">
-                                {d.data.y}
+                                <strong>{d.data.y}</strong>
+                                <br/>
+                                <small>{d.data.x}</small>
                             </span>
                         </div>
                     ))}
