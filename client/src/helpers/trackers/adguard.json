@@ -46,6 +46,21 @@
             "name": "AppsFlyer",
             "categoryId": 101,
             "url": "https://www.appsflyer.com/"
+        },
+        "yandex_appmetrica": {
+            "name": "Yandex AppMetrica",
+            "categoryId": 101,
+            "url": "https://appmetrica.yandex.com/"
+        },
+        "adjust": {
+            "name": "Adjust",
+            "categoryId": 101,
+            "url": "https://www.adjust.com/"
+        },
+        "branch": {
+            "name": "Branch.io",
+            "categoryId": 101,
+            "url": "https://branch.io/"
         }
     },
     "trackerDomains": {
@@ -54,6 +69,9 @@
         "flurry.com": "flurry",
         "hockeyapp.net": "hockeyapp",
         "app-measurement.com": "firebase",
-        "appsflyer.com": "appsflyer"
+        "appsflyer.com": "appsflyer",
+        "appmetrica.yandex.com": "yandex_appmetrica",
+        "adjust.com": "adjust",
+        "mobileapptracking.com": "branch"
     }
 }
