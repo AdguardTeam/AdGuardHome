@@ -6,7 +6,7 @@ import escapeRegExp from 'lodash/escapeRegExp';
 import endsWith from 'lodash/endsWith';
 
 import { formatTime } from '../../helpers/helpers';
-import { getTrackerData } from '../../helpers/whotracksme';
+import { getTrackerData } from '../../helpers/trackers/trackers';
 import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
 import Loading from '../ui/Loading';

@@ -3,7 +3,7 @@ const sqlite3 = require('sqlite3').verbose();
 const downloadFileSync = require('download-file-sync');
 
 const INPUT_SQL_URL = 'https://raw.githubusercontent.com/cliqz-oss/whotracks.me/master/whotracksme/data/assets/trackerdb.sql';
-const OUTPUT_PATH = 'whotracksmedb.json';
+const OUTPUT_PATH = 'whotracksme.json';
 
 console.log('Downloading ' + INPUT_SQL_URL);
 let trackersDbSql = downloadFileSync(INPUT_SQL_URL).toString();
@@ -50,7 +50,8 @@ db.serialize(function() {
 
         whotracksme.trackers[row.id] = {
             "name": row.name,
-            "categoryId": row.category_id
+            "categoryId": row.category_id,
+            "url": row.website_url
         };
     });
 

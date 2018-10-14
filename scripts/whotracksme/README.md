@@ -6,7 +6,7 @@ A simple script that converts the Ghostery/Cliqz trackers database to a json for
 
 ```
 yarn install
-yarn index.js
+node index.js
 ```
 
 You'll find the output in the `whotracksmedb.json` file.

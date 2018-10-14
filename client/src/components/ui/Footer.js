@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { REPOSITORY } from '../../helpers/constants';
 
 class Footer extends Component {
     getYear = () => {
@@ -19,12 +20,12 @@ class Footer extends Component {
                                 <div className="col-auto">
                                     <ul className="list-inline text-center mb-0">
                                         <li className="list-inline-item">
-                                            <a href="https://github.com/AdguardTeam/AdguardDNS" target="_blank" rel="noopener noreferrer">Homepage</a>
+                                            <a href={REPOSITORY.URL} target="_blank" rel="noopener noreferrer">Homepage</a>
                                         </li>
                                     </ul>
                                 </div>
                                 <div className="col-auto">
-                                    <a href="https://github.com/AdguardTeam/AdguardDNS/issues/new" className="btn btn-outline-primary btn-sm" target="_blank" rel="noopener noreferrer">
+                                    <a href={`${REPOSITORY.URL}/issues/new`} className="btn btn-outline-primary btn-sm" target="_blank" rel="noopener noreferrer">
                                         Report an issue
                                     </a>
                                 </div>

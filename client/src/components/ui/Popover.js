@@ -1,11 +1,26 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { getSourceData } from '../../helpers/trackers/trackers';
 
 import './Popover.css';
 
 class Popover extends Component {
     render() {
         const { data } = this.props;
+
+        const sourceData = getSourceData(data);
+
+        const source = (
+            <div className="popover__list-item">
+                Source: <a className="popover__link" target="_blank" rel="noopener noreferrer" href={sourceData.url}><strong>{sourceData.name}</strong></a>
+            </div>
+        );
+
+        const tracker = (
+            <div className="popover__list-item">
+                Name: <a className="popover__link" target="_blank" rel="noopener noreferrer" href={data.url}><strong>{data.name}</strong></a>
+            </div>
+        );
 
         return (
             <div className="popover-wrap">
@@ -15,17 +30,13 @@ class Popover extends Component {
                 <div className="popover__body">
                     <div className="popover__list">
                         <div className="popover__list-title">
-                            This domain belongs to the Whotracksme database.
+                            Found in the known domains database.
                         </div>
-                        <div className="popover__list-item">
-                            Name: <strong>{data.name}</strong>
-                        </div>
+                        {tracker}
                         <div className="popover__list-item">
                             Category: <strong>{data.category}</strong>
                         </div>
-                        <div className="popover__list-item">
-                            <a href={`https://whotracks.me/trackers/${data.id}.html`} className="popover__link" target="_blank" rel="noopener noreferrer">More information on Whotracksme</a>
-                        </div>
+                        {source}
                     </div>
                 </div>
             </div>

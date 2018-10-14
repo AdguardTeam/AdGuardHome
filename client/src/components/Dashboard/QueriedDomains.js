@@ -7,7 +7,7 @@ import Card from '../ui/Card';
 import Cell from '../ui/Cell';
 import Popover from '../ui/Popover';
 
-import { getTrackerData } from '../../helpers/whotracksme';
+import { getTrackerData } from '../../helpers/trackers/trackers';
 import { getPercent } from '../../helpers/helpers';
 import { STATUS_COLORS } from '../../helpers/constants';
 
