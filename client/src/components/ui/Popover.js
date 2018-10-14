@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { getSourceData } from '../../helpers/trackers/trackers';
+import { captitalizeWords } from '../../helpers/helpers';
 
 import './Popover.css';
 
@@ -22,6 +23,8 @@ class Popover extends Component {
             </div>
         );
 
+        const categoryName = captitalizeWords(data.category);
+
         return (
             <div className="popover-wrap">
                 <div className="popover__trigger">
@@ -34,7 +37,7 @@ class Popover extends Component {
                         </div>
                         {tracker}
                         <div className="popover__list-item">
-                            Category: <strong>{data.category}</strong>
+                            Category: <strong>{categoryName}</strong>
                         </div>
                         {source}
                     </div>

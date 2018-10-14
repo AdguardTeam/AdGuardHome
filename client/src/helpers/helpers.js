@@ -81,3 +81,5 @@ export const getPercent = (amount, number) => {
     }
     return 0;
 };
+
+export const captitalizeWords = text => text.split(/[ -_]/g).map(str => str.charAt(0).toUpperCase() + str.substr(1)).join(' ');
