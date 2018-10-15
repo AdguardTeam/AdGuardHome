@@ -206,6 +206,9 @@ func genericLoader(onEntry func(entry *logEntry) error, needMore func() bool, ti
 		}
 
 		i := 0
+		over := 0
+		max := 10000 * time.Second
+		var sum time.Duration
 		// entries on file are in oldest->newest order
 		// we want maxLen newest
 		for d.More() {
@@ -225,6 +228,12 @@ func genericLoader(onEntry func(entry *logEntry) error, needMore func() bool, ti
 				continue
 			}
 
+			if entry.Elapsed > max {
+				over++
+			} else {
+				sum += entry.Elapsed
+			}
+
 			i++
 			err = onEntry(&entry)
 			if err != nil {
@@ -233,10 +242,12 @@ func genericLoader(onEntry func(entry *logEntry) error, needMore func() bool, ti
 		}
 		elapsed := time.Since(now)
 		var perunit time.Duration
+		var avg time.Duration
 		if i > 0 {
 			perunit = elapsed / time.Duration(i)
+			avg = sum / time.Duration(i)
 		}
-		log.Printf("file \"%s\": read %d entries in %v, %v/entry", file, i, elapsed, perunit)
+		log.Printf("file \"%s\": read %d entries in %v, %v/entry, %v over %v, %v avg", file, i, elapsed, perunit, over, max, avg)
 	}
 	return nil
 }
