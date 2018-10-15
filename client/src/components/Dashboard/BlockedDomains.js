@@ -31,6 +31,7 @@ class BlockedDomains extends Component {
     }, {
         Header: 'Requests count',
         accessor: 'domain',
+        maxWidth: 190,
         Cell: ({ value }) => {
             const {
                 blockedFiltering,
