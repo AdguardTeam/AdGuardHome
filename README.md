@@ -161,5 +161,6 @@ This software wouldn't have been possible without:
    * [React.js](https://reactjs.org)
    * [Tabler](https://github.com/tabler/tabler)
    * And many more node.js packages.
+ * [whotracks.me data](https://github.com/cliqz-oss/whotracks.me)
 
 For a full list of all node.js packages in use, please take a look at [client/package.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/package.json) file.
