@@ -18,7 +18,7 @@ import (
 var VersionString = "undefined"
 
 func main() {
-	log.Printf("AdGuard DNS web interface backend, version %s\n", VersionString)
+	log.Printf("AdGuard Home web interface backend, version %s\n", VersionString)
 	box := packr.NewBox("build/static")
 	{
 		executable, err := os.Executable()

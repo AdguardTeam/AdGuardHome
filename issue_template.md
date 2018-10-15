@@ -29,7 +29,7 @@
 
 |   Description  |     Value    |
 | -------------- | ------------ |
-| Version of AdGuard DNS server:| (e.g. v1.0)
+| Version of AdGuard Home server:| (e.g. v1.0)
 | How did you setup DNS configuration:| (System/Router/IoT)
 | If it's a router or IoT, please write device model:| (e.g. Raspberry Pi 3 Model B)
 | Operating system and version:| (e.g. Ubuntu 18.04.1)

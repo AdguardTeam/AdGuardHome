@@ -1,0 +1,77 @@
+{
+    "timeUpdated": "2018-10-14",
+    "categories": {
+        "0": "audio_video_player",
+        "1": "comments",
+        "2": "customer_interaction",
+        "3": "pornvertising",
+        "4": "advertising",
+        "5": "essential",
+        "6": "site_analytics",
+        "7": "social_media",
+        "8": "misc",
+        "9": "cdn",
+        "10": "hosting",
+        "11": "unknown",
+        "12": "extensions",
+        "101": "mobile_analytics"
+    },
+    "trackers": {
+        "facebook_audience": {
+            "name": "Facebook Audience Network",
+            "categoryId": 4,
+            "url": "https://www.facebook.com/business/products/audience-network"
+        },
+        "crashlytics": {
+            "name": "Crashlytics",
+            "categoryId": 101,
+            "url": "https://crashlytics.com/"
+        },
+        "flurry": {
+            "name": "Flurry",
+            "categoryId": 101,
+            "url": "http://www.flurry.com/"
+        },
+        "hockeyapp": {
+            "name": "HockeyApp",
+            "categoryId": 101,
+            "url": "https://hockeyapp.net/"
+        },
+        "firebase": {
+            "name": "Firebase",
+            "categoryId": 101,
+            "url": "https://firebase.google.com/"
+        },
+        "appsflyer": {
+            "name": "AppsFlyer",
+            "categoryId": 101,
+            "url": "https://www.appsflyer.com/"
+        },
+        "yandex_appmetrica": {
+            "name": "Yandex AppMetrica",
+            "categoryId": 101,
+            "url": "https://appmetrica.yandex.com/"
+        },
+        "adjust": {
+            "name": "Adjust",
+            "categoryId": 101,
+            "url": "https://www.adjust.com/"
+        },
+        "branch": {
+            "name": "Branch.io",
+            "categoryId": 101,
+            "url": "https://branch.io/"
+        }
+    },
+    "trackerDomains": {
+        "graph.facebook.com": "facebook_audience",
+        "crashlytics.com": "crashlytics",
+        "flurry.com": "flurry",
+        "hockeyapp.net": "hockeyapp",
+        "app-measurement.com": "firebase",
+        "appsflyer.com": "appsflyer",
+        "appmetrica.yandex.com": "yandex_appmetrica",
+        "adjust.com": "adjust",
+        "mobileapptracking.com": "branch"
+    }
+}

@@ -15,3 +15,8 @@ export const STATUS_COLORS = {
     green: '#5eba00',
     yellow: '#f1c40f',
 };
+
+export const REPOSITORY = {
+    URL: 'https://github.com/AdguardTeam/AdguardDNS',
+    TRACKERS_DB: 'https://github.com/AdguardTeam/AdguardDNS/tree/master/client/src/helpers/trackers/adguard.json',
+};

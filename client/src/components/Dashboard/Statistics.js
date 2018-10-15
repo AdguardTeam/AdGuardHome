@@ -48,7 +48,7 @@ class Statistics extends Component {
                                 {getPercent(dnsQueries, blockedFiltering)}
                             </div>
                             <div className="card-title-stats">
-                                Blocked by Filters
+                                Blocked by <a href="#filters">Filters</a>
                             </div>
                         </div>
                         <div className="card-chart-bg">
