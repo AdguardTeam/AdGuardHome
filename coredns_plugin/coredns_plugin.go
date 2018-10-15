@@ -12,20 +12,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdguardDNS/dnsfilter"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/plugin/metrics"
 	"github.com/coredns/coredns/plugin/pkg/dnstest"
 	"github.com/coredns/coredns/plugin/pkg/upstream"
 	"github.com/coredns/coredns/request"
-
 	"github.com/mholt/caddy"
-
 	"github.com/miekg/dns"
-
 	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/AdguardTeam/AdguardDNS/dnsfilter"
 	"golang.org/x/net/context"
 )
 
@@ -450,7 +446,9 @@ func (p *plug) serveDNSInternal(ctx context.Context, w dns.ResponseWriter, r *dn
 			if err != nil {
 				return rcode, dnsfilter.Result{}, err
 			}
-			return rcode, dnsfilter.Result{Reason: dnsfilter.FilteredSafeSearch}, err
+			// TODO: This must be handled in the dnsfilter and not here!
+			rule := val.String() + " " + host
+			return rcode, dnsfilter.Result{Reason: dnsfilter.FilteredBlackList, Rule: rule}, err
 		}
 
 		// needs to be filtered instead
