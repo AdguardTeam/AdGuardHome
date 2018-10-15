@@ -17,7 +17,7 @@
       <img src="https://travis-ci.org/AdguardTeam/AdGuardHome.svg" alt="Build status" />
     </a>
     <a href="https://github.com/AdguardTeam/AdGuardHome/releases">
-        <img src="https://img.shields.io/github/release/AdguardTeam/AdGuardHome.svg" alt="Latest release" />
+        <img src="https://img.shields.io/github/release/AdguardTeam/AdGuardHome/all.svg" alt="Latest release" />
     </a>
 </p>
 
@@ -146,3 +146,20 @@ You are welcome to fork this repository, make your changes and submit a pull req
 ## Reporting issues
 
 If you run into any problem or have a suggestion, head to [this page](https://github.com/AdguardTeam/AdGuardHome/issues) and click on the `New issue` button.
+
+## Acknowledgments
+
+This software wouldn't have been possible without:
+
+ * [Go](https://golang.org/dl/) and it's libraries:
+   * [CoreDNS](https://coredns.io)
+   * [packr](https://github.com/gobuffalo/packr)
+   * [gcache](https://github.com/bluele/gcache)
+   * [miekg's dns](https://github.com/miekg/dns)
+   * [go-yaml](https://github.com/go-yaml/yaml)
+ * [Node.js](https://nodejs.org/) and it's libraries:
+   * [React.js](https://reactjs.org)
+   * [Tabler](https://github.com/tabler/tabler)
+   * And many more node.js packages.
+
+For a full list of all node.js packages in use, please take a look at [client/package.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/package.json) file.
