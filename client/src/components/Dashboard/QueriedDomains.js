@@ -40,6 +40,7 @@ class QueriedDomains extends Component {
     }, {
         Header: 'Requests count',
         accessor: 'count',
+        maxWidth: 190,
         Cell: ({ value }) => {
             const percent = getPercent(this.props.dnsQueries, value);
             const percentColor = this.getPercentColor(percent);
