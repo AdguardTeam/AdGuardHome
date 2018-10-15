@@ -62,7 +62,7 @@ var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
 
 // initialize to default values, will be changed later when reading config or parsing command line
 var config = configuration{
-	ourConfigFilename: "AdguardDNS.yaml",
+	ourConfigFilename: "AdGuardHome.yaml",
 	BindPort:          3000,
 	BindHost:          "127.0.0.1",
 	CoreDNS: coreDNSConfig{

@@ -7,7 +7,7 @@ GOPATH := $(mkfile_dir)/build/gopath
 JSFILES = $(shell find client -path client/node_modules -prune -o -type f -name '*.js')
 STATIC = build/static/index.html
 
-TARGET=AdguardDNS
+TARGET=AdGuardHome
 
 .PHONY: all build clean
 all: build
@@ -23,10 +23,10 @@ $(STATIC): $(JSFILES) client/node_modules
 
 $(TARGET): $(STATIC) *.go coredns_plugin/*.go dnsfilter/*.go
 	mkdir -p $(GOPATH)/src/github.com/AdguardTeam
-	if [ ! -h $(GOPATH)/src/github.com/AdguardTeam/AdguardDNS ]; then rm -rf $(GOPATH)/src/github.com/AdguardTeam/AdguardDNS && ln -fs ../../../../.. $(GOPATH)/src/github.com/AdguardTeam/AdguardDNS; fi
+	if [ ! -h $(GOPATH)/src/github.com/AdguardTeam/AdGuardHome ]; then rm -rf $(GOPATH)/src/github.com/AdguardTeam/AdGuardHome && ln -fs ../../../../.. $(GOPATH)/src/github.com/AdguardTeam/AdGuardHome; fi
 	GOPATH=$(GOPATH) go get -v -d .
 	GOPATH=$(GOPATH) GOOS=$(NATIVE_GOOS) GOARCH=$(NATIVE_GOARCH) go get -v github.com/gobuffalo/packr/...
-	mkdir -p $(GOPATH)/src/github.com/AdguardTeam/AdguardDNS/build/static ## work around packr bug
+	mkdir -p $(GOPATH)/src/github.com/AdguardTeam/AdGuardHome/build/static ## work around packr bug
 	cd $(GOPATH)/src/github.com/prometheus/client_golang && git reset --hard v0.8.0
 	perl -0777 -p -i.bak -e 's/pprofOnce.Do\(func\(\) {(.*)}\)/\1/ms' $(GOPATH)/src/github.com/coredns/coredns/plugin/pprof/setup.go
 	perl -0777 -p -i.bak -e 's/c.OnShutdown/c.OnRestart/' $(GOPATH)/src/github.com/coredns/coredns/plugin/pprof/setup.go

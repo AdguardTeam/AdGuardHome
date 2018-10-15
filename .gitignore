@@ -1,8 +1,8 @@
 .DS_Store
 .vscode
 debug
-/AdguardDNS
-/AdguardDNS.yaml
+/AdGuardHome
+/AdGuardHome.yaml
 /build/
 /client/node_modules/
 /coredns

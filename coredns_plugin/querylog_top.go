@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdguardDNS/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/bluele/gcache"
 	"github.com/miekg/dns"
 )
