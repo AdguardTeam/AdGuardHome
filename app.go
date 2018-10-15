@@ -28,6 +28,8 @@ func main() {
 		config.ourBinaryDir = filepath.Dir(executable)
 	}
 
+	doConfigRename := true
+
 	// config can be specified, which reads options from there, but other command line flags have to override config values
 	// therefore, we must do it manually instead of using a lib
 	{
@@ -96,7 +98,16 @@ func main() {
 			}
 		}
 		if configFilename != nil {
+			// config was manually specified, don't do anything
+			doConfigRename = false
 			config.ourConfigFilename = *configFilename
+		}
+
+		if doConfigRename {
+			err := renameOldConfigIfNeccessary()
+			if err != nil {
+				panic(err)
+			}
 		}
 
 		err := askUsernamePasswordIfPossible()
@@ -227,5 +238,31 @@ func askUsernamePasswordIfPossible() error {
 
 	config.AuthName = username
 	config.AuthPass = password
+	return nil
+}
+
+func renameOldConfigIfNeccessary() error {
+	oldConfigFile := filepath.Join(config.ourBinaryDir, "AdguardDNS.yaml")
+	_, err := os.Stat(oldConfigFile)
+	if os.IsNotExist(err) {
+		// do nothing, file doesn't exist
+		trace("File %s doesn't exist, nothing to do", oldConfigFile)
+		return nil
+	}
+
+	newConfigFile := filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
+	_, err = os.Stat(newConfigFile)
+	if !os.IsNotExist(err) {
+		// do nothing, file doesn't exist
+		trace("File %s already exists, will not overwrite", newConfigFile)
+		return nil
+	}
+
+	err = os.Rename(oldConfigFile, newConfigFile)
+	if err != nil {
+		log.Printf("Failed to rename %s to %s: %s", oldConfigFile, newConfigFile, err)
+		return err
+	}
+
 	return nil
 }

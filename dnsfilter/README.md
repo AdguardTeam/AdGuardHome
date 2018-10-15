@@ -1,9 +1,9 @@
-# AdGuard DNS Go library
+# AdGuard Home's DNS filtering go library
 
 Example use:
 ```bash
 [ -z "$GOPATH" ] && export GOPATH=$HOME/go
-go get -d github.com/AdguardTeam/AdguardDNS/dnsfilter
+go get -d github.com/AdguardTeam/AdGuardHome/dnsfilter
 ```
 
 Create file filter.go
@@ -11,7 +11,7 @@ Create file filter.go
 package main
 
 import (
-    "github.com/AdguardTeam/AdguardDNS/dnsfilter"
+    "github.com/AdguardTeam/AdGuardHome/dnsfilter"
     "log"
 )
 
@@ -48,7 +48,7 @@ You can also enable checking against AdGuard's SafeBrowsing:
 package main
 
 import (
-    "github.com/AdguardTeam/AdguardDNS/dnsfilter"
+    "github.com/AdguardTeam/AdGuardHome/dnsfilter"
     "log"
 )
 

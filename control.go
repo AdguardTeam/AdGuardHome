@@ -15,8 +15,8 @@ import (
 	"strings"
 	"time"
 
-	coredns_plugin "github.com/AdguardTeam/AdguardDNS/coredns_plugin"
-	"github.com/AdguardTeam/AdguardDNS/dnsfilter"
+	coredns_plugin "github.com/AdguardTeam/AdGuardHome/coredns_plugin"
+	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/miekg/dns"
 	"gopkg.in/asaskevich/govalidator.v4"
 )
@@ -29,7 +29,7 @@ var filterTitle = regexp.MustCompile(`^! Title: +(.*)$`)
 var versionCheckJSON []byte
 var versionCheckLastTime time.Time
 
-const versionCheckURL = "https://adguardteam.github.io/AdguardDNS/version.json"
+const versionCheckURL = "https://adguardteam.github.io/AdGuardHome/version.json"
 const versionCheckPeriod = time.Hour * 8
 
 var client = &http.Client{

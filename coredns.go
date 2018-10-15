@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	// Include all plugins.
-	_ "github.com/AdguardTeam/AdguardDNS/coredns_plugin"
+	_ "github.com/AdguardTeam/AdGuardHome/coredns_plugin"
 	_ "github.com/coredns/coredns/plugin/auto"
 	_ "github.com/coredns/coredns/plugin/autopath"
 	_ "github.com/coredns/coredns/plugin/bind"

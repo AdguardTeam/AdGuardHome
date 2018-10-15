@@ -27,7 +27,7 @@ export default class Upstream extends Component {
         return (
             <Card
                 title="Upstream DNS servers"
-                subtitle="If you keep this field empty, AdGuard will use <a href='https://1.1.1.1/' target='_blank'>Cloudflare DNS</a> as an upstream. Use tls:// prefix for DNS over TLS servers."
+                subtitle="If you keep this field empty, AdGuard Home will use <a href='https://1.1.1.1/' target='_blank'>Cloudflare DNS</a> as an upstream. Use tls:// prefix for DNS over TLS servers."
                 bodyType="card-body box-body--settings"
             >
                 <div className="row">

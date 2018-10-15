@@ -1,16 +1,16 @@
-[![Build Status](https://travis-ci.org/AdguardTeam/AdguardDNS.svg)](https://travis-ci.org/AdguardTeam/AdguardDNS)
+[![Build Status](https://travis-ci.org/AdguardTeam/AdGuardHome.svg)](https://travis-ci.org/AdguardTeam/AdGuardHome)
 
-# Self-hosted AdGuard DNS
+# AdGuard Home
 
-AdGuard DNS is an alternative way to block ads, trackers and phishing websites, and also a parental control instrument.
+AdGuard Home is an alternative way to block ads, trackers and phishing websites, and also a parental control instrument.
 
-## How does AdGuard DNS work?
+## How does AdGuard Home work?
 
-If you configure your network to use this DNS server, every time a website sends an ad or phishing request, our server sends back a null ("empty") response. AdGuard has a database of domain names that serve for an ad, tracking or phishing purposes (and adult content, in case of parental control mode), and this database is regularly updated.
+It works as a DNS server, if you configure your network to use this DNS server, every time a website sends an ad or phishing request, our server sends back a null ("empty") response. AdGuard has a database of domain names that serve for an ad, tracking or phishing purposes (and adult content, in case of parental control mode), and this database is regularly updated.
 
 ## How is this different from public AdGuard DNS servers?
 
-Running your own AdGuard DNS offers you more options:
+Running your own AdGuard Home offers you more options:
  * Enable/disable ad blocking on the fly.
  * Enable/disable blocking of phishing and malware websites.
  * Enable/disable blocking of websites with adult content.
@@ -18,7 +18,7 @@ Running your own AdGuard DNS offers you more options:
  * See DNS query log — it shows what requests were sent by which clients and why a request was blocked.
  * Add your own custom filtering rules.
 
-This repository describes how to set up and run your self-hosted instance of AdGuard DNS — it comes with a web dashboard that can be accessed via browser to control the DNS server and change its settings, it also allows to add your own filters written in both "hosts" and AdGuard syntaxes.
+This repository describes how to set up and run your self-hosted instance of AdGuard Home — it comes with a web dashboard that can be accessed via browser to control the DNS server and change its settings, it also allows to add your own filters written in both "hosts" and AdGuard syntaxes.
 
 If this seems too complicated, you can always use our public AdGuard DNS servers — they are running the same code as in this repository and provide the same ad blocking/phishing protection/parental control functionality — https://adguard.com/en/adguard-dns/overview.html
 
@@ -26,33 +26,33 @@ If this seems too complicated, you can always use our public AdGuard DNS servers
 
 ### Mac
 
-Download this file: [AdguardDNS_0.1_MacOS.zip](https://github.com/AdguardTeam/AdguardDNS/releases/download/v0.1/AdguardDNS_0.1_MacOS.zip), then unpack it and follow ["How to run"](#how-to-run) instructions below.
+Download this file: [AdGuardHome_0.1_MacOS.zip](https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.1/AdGuardHome_0.1_MacOS.zip), then unpack it and follow ["How to run"](#how-to-run) instructions below.
 
 ### Linux 64-bit Intel
 
-Download this file: [AdguardDNS_0.1_linux_amd64.tar.gz](https://github.com/AdguardTeam/AdguardDNS/releases/download/v0.1/AdguardDNS_0.1_linux_amd64.tar.gz), then unpack it and follow ["How to run"](#how-to-run) instructions below.
+Download this file: [AdGuardHome_0.1_linux_amd64.tar.gz](https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.1/AdGuardHome_0.1_linux_amd64.tar.gz), then unpack it and follow ["How to run"](#how-to-run) instructions below.
 
 ### Linux 32-bit Intel
 
-Download this file: [AdguardDNS_0.1_linux_386.tar.gz](https://github.com/AdguardTeam/AdguardDNS/releases/download/v0.1/AdguardDNS_0.1_linux_386.tar.gz), then unpack it and follow ["How to run"](#how-to-run) instructions below.
+Download this file: [AdGuardHome_0.1_linux_386.tar.gz](https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.1/AdGuardHome_0.1_linux_386.tar.gz), then unpack it and follow ["How to run"](#how-to-run) instructions below.
 
 ### Raspberry Pi (32-bit ARM)
 
-Download this file: [AdguardDNS_0.1_linux_arm.tar.gz](https://github.com/AdguardTeam/AdguardDNS/releases/download/v0.1/AdguardDNS_0.1_linux_arm.tar.gz), then unpack it and follow ["How to run"](#how-to-run) instructions below.
+Download this file: [AdGuardHome_0.1_linux_arm.tar.gz](https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.1/AdGuardHome_0.1_linux_arm.tar.gz), then unpack it and follow ["How to run"](#how-to-run) instructions below.
 
 ## How to run
 
 DNS works on port 53, which requires superuser privileges. Therefore, you need to run it with `sudo` in terminal:
 
 ```bash
-sudo ./AdguardDNS
+sudo ./AdGuardHome
 ```
 
-Now open the browser and navigate to http://localhost:3000/ to control your AdGuard DNS server.
+Now open the browser and navigate to http://localhost:3000/ to control your AdGuard Home service.
 
 ### Running without superuser
 
-You can run AdGuard DNS without superuser privileges, but you need to instruct it to use a different port rather than 53. You can do that by editing `AdguardDNS.yaml` and finding these two lines:
+You can run AdGuard Home without superuser privileges, but you need to instruct it to use a different port rather than 53. You can do that by editing `AdGuardHome.yaml` and finding these two lines:
 
 ```yaml
 coredns:
@@ -65,7 +65,7 @@ If the file does not exist, create it in the same folder, type these two lines d
 
 ### Additional configuration
 
-Upon the first execution, a file named `AdguardDNS.yaml` will be created, with default values written in it. You can modify the file while your AdGuard DNS is not running. Otherwise, any changes to the file will be lost because the running program will overwrite them.
+Upon the first execution, a file named `AdGuardHome.yaml` will be created, with default values written in it. You can modify the file while your AdGuard Home service is not running. Otherwise, any changes to the file will be lost because the running program will overwrite them.
 
 Settings are stored in [YAML format](https://en.wikipedia.org/wiki/YAML), possible parameters that you can configure are listed below:
 
@@ -109,15 +109,15 @@ brew install go node
 Open Terminal and execute these commands:
 
 ```bash
-git clone https://github.com/AdguardTeam/AdguardDNS
-cd AdguardDNS
+git clone https://github.com/AdguardTeam/AdGuardHome
+cd AdGuardHome
 make
 ```
 
 ## Contributing
 
-You are welcome to fork this repository, make your changes and submit a pull request — https://github.com/AdguardTeam/AdguardDNS/pulls
+You are welcome to fork this repository, make your changes and submit a pull request — https://github.com/AdguardTeam/AdGuardHome/pulls
 
 ## Reporting issues
 
-If you run into any problem or have a suggestion, head to [this page](https://github.com/AdguardTeam/AdguardDNS/issues) and click on the `New issue` button.
+If you run into any problem or have a suggestion, head to [this page](https://github.com/AdguardTeam/AdGuardHome/issues) and click on the `New issue` button.
