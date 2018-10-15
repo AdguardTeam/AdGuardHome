@@ -242,6 +242,14 @@ func handleStats(w http.ResponseWriter, r *http.Request) {
 		}
 		summed[key] = summedValue
 	}
+	// don't forget to divide by number of elements in returned slice
+	if val, ok := summed["avg_processing_time"]; ok {
+		if flval, flok := val.(float64); flok {
+			flval /= float64(len(histrical))
+			summed["avg_processing_time"] = flval
+		}
+	}
+
 	summed["stats_period"] = "24 hours"
 
 	json, err := json.Marshal(summed)
