@@ -1,26 +1,51 @@
-[![Build Status](https://travis-ci.org/AdguardTeam/AdGuardHome.svg)](https://travis-ci.org/AdguardTeam/AdGuardHome)
+&nbsp;
+<p align="center">
+  <img src="https://cdn.adguard.com/public/Adguard/Common/adguard_home.svg" width="300px" alt="AdGuard Home" />
+</p>
+<h3 align="center">Privacy protection center for you and your devices</h3>
+<p align="center">
+  Free and open source, powerful network-wide ads & trackers blocking DNS server.
+</p>
+
+<p align="center">
+    <a href="https://adguard.com/">AdGuard.com</a> |
+    <a href="https://github.com/AdguardTeam/AdGuardHome/wiki">Wiki</a> |
+    <a href="https://reddit.com/r/Adguard">Reddit</a> |
+    <a href="https://twitter.com/AdGuard">Twitter</a>
+    <br /><br />
+    <a href="https://travis-ci.org/AdguardTeam/AdGuardHome">
+      <img src="https://travis-ci.org/AdguardTeam/AdGuardHome.svg" alt="Build status" />
+    </a>
+    <a href="https://github.com/AdguardTeam/AdGuardHome/releases">
+        <img src="https://img.shields.io/github/release/AdguardTeam/AdGuardHome.svg" alt="Latest release" />
+    </a>
+</p>
+
+<br />
+
+<p align="center">
+    <img src="https://cdn.adguard.com/public/Adguard/Common/adguard_home.gif" width="800" />
+</p>
+
+<hr />
 
 # AdGuard Home
 
-AdGuard Home is an alternative way to block ads, trackers and phishing websites, and also a parental control instrument.
+AdGuard Home is a network-wide software for blocking ads & tracking. After you set it up, it'll cover ALL your home devices, and you don't need any client-side software for that.
 
 ## How does AdGuard Home work?
 
-It works as a DNS server, if you configure your network to use this DNS server, every time a website sends an ad or phishing request, our server sends back a null ("empty") response. AdGuard has a database of domain names that serve for an ad, tracking or phishing purposes (and adult content, in case of parental control mode), and this database is regularly updated.
+AdGuard Home operates as a DNS server that re-routes tracking domains to a "black hole," thus preventing your devices from connecting to those servers. It's based on software we use for our public [AdGuard DNS](https://adguard.com/en/adguard-dns/overview.html) servers -- both share a lot of common code.
 
 ## How is this different from public AdGuard DNS servers?
 
-Running your own AdGuard Home offers you more options:
- * Enable/disable ad blocking on the fly.
- * Enable/disable blocking of phishing and malware websites.
- * Enable/disable blocking of websites with adult content.
- * Optional ability to enforce "Safe search" option in Google, Yandex and Bing.
- * See DNS query log — it shows what requests were sent by which clients and why a request was blocked.
- * Add your own custom filtering rules.
+Running your own AdGuard Home server allows you to do much more than using a public DNS server.
 
-This repository describes how to set up and run your self-hosted instance of AdGuard Home — it comes with a web dashboard that can be accessed via browser to control the DNS server and change its settings, it also allows to add your own filters written in both "hosts" and AdGuard syntaxes.
+* Choose what exactly will the server block or not block;
+* Monitor your network activity;
+* Add your own custom filtering rules;
 
-If this seems too complicated, you can always use our public AdGuard DNS servers — they are running the same code as in this repository and provide the same ad blocking/phishing protection/parental control functionality — https://adguard.com/en/adguard-dns/overview.html
+In the future, AdGuard Home is supposed to become more than just a DNS server.
 
 ## Installation
 
