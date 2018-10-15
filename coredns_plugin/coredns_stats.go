@@ -228,7 +228,8 @@ func (h *histogram) Collect(ch chan<- prometheus.Metric) {
 // stats
 // -----
 func handleStats(w http.ResponseWriter, r *http.Request) {
-	histrical := generateMapFromStats(&statistics.PerHour, 0, 24)
+	const numHours = 24
+	histrical := generateMapFromStats(&statistics.PerHour, 0, numHours)
 	// sum them up
 	summed := map[string]interface{}{}
 	for key, values := range histrical {
@@ -245,7 +246,7 @@ func handleStats(w http.ResponseWriter, r *http.Request) {
 	// don't forget to divide by number of elements in returned slice
 	if val, ok := summed["avg_processing_time"]; ok {
 		if flval, flok := val.(float64); flok {
-			flval /= float64(len(histrical))
+			flval /= numHours
 			summed["avg_processing_time"] = flval
 		}
 	}
