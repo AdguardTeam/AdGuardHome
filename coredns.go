@@ -3,10 +3,13 @@ package main
 import (
 	"fmt"
 	"log"
-	"sync"
+	"os"
+	"path/filepath"
+	"sync" // Include all plugins.
 
-	// Include all plugins.
 	_ "github.com/AdguardTeam/AdGuardHome/coredns_plugin"
+	"github.com/coredns/coredns/core/dnsserver"
+	"github.com/coredns/coredns/coremain"
 	_ "github.com/coredns/coredns/plugin/auto"
 	_ "github.com/coredns/coredns/plugin/autopath"
 	_ "github.com/coredns/coredns/plugin/bind"
@@ -37,9 +40,6 @@ import (
 	_ "github.com/coredns/coredns/plugin/tls"
 	_ "github.com/coredns/coredns/plugin/whoami"
 	_ "github.com/mholt/caddy/onevent"
-
-	"github.com/coredns/coredns/core/dnsserver"
-	"github.com/coredns/coredns/coremain"
 )
 
 // Directives are registered in the order they should be
@@ -108,6 +108,11 @@ func startDNSServer() error {
 	}
 	isCoreDNSRunning = true
 	isCoreDNSRunningLock.Unlock()
+
+	configpath := filepath.Join(config.ourBinaryDir, config.CoreDNS.coreFile)
+	os.Args = os.Args[:1]
+	os.Args = append(os.Args, "-conf")
+	os.Args = append(os.Args, configpath)
 
 	err := writeCoreDNSConfig()
 	if err != nil {

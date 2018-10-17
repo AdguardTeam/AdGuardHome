@@ -195,8 +195,10 @@ func generateCoreDNSConfigText() (string, error) {
 	}
 
 	var configBytes bytes.Buffer
+	temporaryConfig := config.CoreDNS
+	temporaryConfig.FilterFile = filepath.Join(config.ourBinaryDir, config.CoreDNS.FilterFile)
 	// run the template
-	err = t.Execute(&configBytes, config.CoreDNS)
+	err = t.Execute(&configBytes, &temporaryConfig)
 	if err != nil {
 		log.Printf("Couldn't generate DNS config: %s", err)
 		return "", err
