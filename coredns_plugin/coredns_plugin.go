@@ -177,7 +177,9 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 
 	if p.settings.QueryLogEnabled {
 		onceQueryLog.Do(func() {
-			go startQueryLogServer() // TODO: how to handle errors?
+			go periodicQueryLogRotate()
+			go periodicHourlyTopRotate()
+			go statsRotator()
 		})
 	}
 

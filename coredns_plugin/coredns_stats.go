@@ -227,7 +227,7 @@ func (h *histogram) Collect(ch chan<- prometheus.Metric) {
 // -----
 // stats
 // -----
-func handleStats(w http.ResponseWriter, r *http.Request) {
+func HandleStats(w http.ResponseWriter, r *http.Request) {
 	const numHours = 24
 	histrical := generateMapFromStats(&statistics.PerHour, 0, numHours)
 	// sum them up
@@ -299,7 +299,7 @@ func generateMapFromStats(stats *periodicStats, start int, end int) map[string]i
 	return result
 }
 
-func handleStatsHistory(w http.ResponseWriter, r *http.Request) {
+func HandleStatsHistory(w http.ResponseWriter, r *http.Request) {
 	// handle time unit and prepare our time window size
 	now := time.Now()
 	timeUnitString := r.URL.Query().Get("time_unit")
@@ -375,6 +375,16 @@ func handleStatsHistory(w http.ResponseWriter, r *http.Request) {
 		log.Println(errortext)
 		http.Error(w, errortext, 500)
 		return
+	}
+}
+
+func HandleStatsReset(w http.ResponseWriter, r *http.Request) {
+	purgeStats()
+	_, err := fmt.Fprintf(w, "OK\n")
+	if err != nil {
+		errortext := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errortext)
+		http.Error(w, errortext, http.StatusInternalServerError)
 	}
 }
 

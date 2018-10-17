@@ -114,109 +114,6 @@ func handleProtectionDisable(w http.ResponseWriter, r *http.Request) {
 // -----
 // stats
 // -----
-func handleStats(w http.ResponseWriter, r *http.Request) {
-	resp, err := client.Get("http://127.0.0.1:8618/stats")
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't get stats_top from coredns: %T %s\n", err, err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusBadGateway)
-		return
-	}
-	if resp != nil && resp.Body != nil {
-		defer resp.Body.Close()
-	}
-
-	// read the body entirely
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't read response body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusBadGateway)
-		return
-	}
-
-	// forward body entirely with status code
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
-	w.WriteHeader(resp.StatusCode)
-	_, err = w.Write(body)
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
-	}
-}
-
-func handleStatsHistory(w http.ResponseWriter, r *http.Request) {
-	resp, err := client.Get("http://127.0.0.1:8618/stats_history?" + r.URL.RawQuery)
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't get stats_top from coredns: %T %s\n", err, err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusBadGateway)
-		return
-	}
-	if resp != nil && resp.Body != nil {
-		defer resp.Body.Close()
-	}
-
-	// read the body entirely
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't read response body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusBadGateway)
-		return
-	}
-
-	// forward body entirely with status code
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
-	w.WriteHeader(resp.StatusCode)
-	_, err = w.Write(body)
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
-	}
-}
-
-func handleQueryLog(w http.ResponseWriter, r *http.Request) {
-	isDownload := r.URL.Query().Get("download") != ""
-	resp, err := client.Get("http://127.0.0.1:8618/querylog")
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't get querylog from coredns: %T %s\n", err, err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusBadGateway)
-		return
-	}
-	if resp != nil && resp.Body != nil {
-		defer resp.Body.Close()
-	}
-
-	// read the body entirely
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't read response body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusBadGateway)
-		return
-	}
-
-	// forward body entirely with status code
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
-	if isDownload {
-		w.Header().Set("Content-Disposition", "attachment; filename=querylog.json")
-	}
-	w.WriteHeader(resp.StatusCode)
-	_, err = w.Write(body)
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
-	}
-}
-
 func handleQueryLogEnable(w http.ResponseWriter, r *http.Request) {
 	config.CoreDNS.QueryLogEnabled = true
 	httpUpdateConfigReloadDNSReturnOK(w, r)
@@ -225,72 +122,6 @@ func handleQueryLogEnable(w http.ResponseWriter, r *http.Request) {
 func handleQueryLogDisable(w http.ResponseWriter, r *http.Request) {
 	config.CoreDNS.QueryLogEnabled = false
 	httpUpdateConfigReloadDNSReturnOK(w, r)
-}
-
-func handleStatsReset(w http.ResponseWriter, r *http.Request) {
-	resp, err := client.Post("http://127.0.0.1:8618/stats_reset", "text/plain", nil)
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't get stats_top from coredns: %T %s\n", err, err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusBadGateway)
-		return
-	}
-	if resp != nil && resp.Body != nil {
-		defer resp.Body.Close()
-	}
-
-	// read the body entirely
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't read response body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusBadGateway)
-		return
-	}
-
-	// forward body entirely with status code
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
-	w.WriteHeader(resp.StatusCode)
-	_, err = w.Write(body)
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
-	}
-}
-
-func handleStatsTop(w http.ResponseWriter, r *http.Request) {
-	resp, err := client.Get("http://127.0.0.1:8618/stats_top")
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't get stats_top from coredns: %T %s\n", err, err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusBadGateway)
-		return
-	}
-	if resp != nil && resp.Body != nil {
-		defer resp.Body.Close()
-	}
-
-	// read the body entirely
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't read response body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusBadGateway)
-		return
-	}
-
-	// forward body entirely with status code
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
-	w.WriteHeader(resp.StatusCode)
-	_, err = w.Write(body)
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
-	}
 }
 
 func httpError(w http.ResponseWriter, code int, format string, args ...interface{}) {
@@ -1107,15 +938,15 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/status", optionalAuth(ensureGET(handleStatus)))
 	http.HandleFunc("/control/enable_protection", optionalAuth(ensurePOST(handleProtectionEnable)))
 	http.HandleFunc("/control/disable_protection", optionalAuth(ensurePOST(handleProtectionDisable)))
-	http.HandleFunc("/control/querylog", optionalAuth(ensureGET(handleQueryLog)))
+	http.HandleFunc("/control/querylog", optionalAuth(ensureGET(coredns_plugin.HandleQueryLog)))
 	http.HandleFunc("/control/querylog_enable", optionalAuth(ensurePOST(handleQueryLogEnable)))
 	http.HandleFunc("/control/querylog_disable", optionalAuth(ensurePOST(handleQueryLogDisable)))
 	http.HandleFunc("/control/set_upstream_dns", optionalAuth(ensurePOST(handleSetUpstreamDNS)))
 	http.HandleFunc("/control/test_upstream_dns", optionalAuth(ensurePOST(handleTestUpstreamDNS)))
-	http.HandleFunc("/control/stats_top", optionalAuth(ensureGET(handleStatsTop)))
-	http.HandleFunc("/control/stats", optionalAuth(ensureGET(handleStats)))
-	http.HandleFunc("/control/stats_history", optionalAuth(ensureGET(handleStatsHistory)))
-	http.HandleFunc("/control/stats_reset", optionalAuth(ensurePOST(handleStatsReset)))
+	http.HandleFunc("/control/stats_top", optionalAuth(ensureGET(coredns_plugin.HandleStatsTop)))
+	http.HandleFunc("/control/stats", optionalAuth(ensureGET(coredns_plugin.HandleStats)))
+	http.HandleFunc("/control/stats_history", optionalAuth(ensureGET(coredns_plugin.HandleStatsHistory)))
+	http.HandleFunc("/control/stats_reset", optionalAuth(ensurePOST(coredns_plugin.HandleStatsReset)))
 	http.HandleFunc("/control/version.json", optionalAuth(handleGetVersionJSON))
 	http.HandleFunc("/control/filtering/enable", optionalAuth(ensurePOST(handleFilteringEnable)))
 	http.HandleFunc("/control/filtering/disable", optionalAuth(ensurePOST(handleFilteringDisable)))
