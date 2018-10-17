@@ -23,7 +23,7 @@ $(STATIC): $(JSFILES) client/node_modules
 
 $(TARGET): $(STATIC) *.go coredns_plugin/*.go dnsfilter/*.go
 	mkdir -p $(GOPATH)/src/github.com/AdguardTeam
-	if [ ! -h $(GOPATH)/src/github.com/AdguardTeam/AdGuardHome ]; then rm -rf $(GOPATH)/src/github.com/AdguardTeam/AdGuardHome && ln -fs ../../../../.. $(GOPATH)/src/github.com/AdguardTeam/AdGuardHome; fi
+	if [ ! -h $(GOPATH)/src/github.com/AdguardTeam/AdGuardHome ]; then rm -rf $(GOPATH)/src/github.com/AdguardTeam/AdGuardHome && ln -fs $(mkfile_dir) $(GOPATH)/src/github.com/AdguardTeam/AdGuardHome; fi
 	GOPATH=$(GOPATH) go get -v -d .
 	GOPATH=$(GOPATH) GOOS=$(NATIVE_GOOS) GOARCH=$(NATIVE_GOARCH) go get -v github.com/gobuffalo/packr/...
 	mkdir -p $(GOPATH)/src/github.com/AdguardTeam/AdGuardHome/build/static ## work around packr bug

@@ -268,7 +268,7 @@ func fillStatsFromQueryLog() error {
 	return nil
 }
 
-func handleStatsTop(w http.ResponseWriter, r *http.Request) {
+func HandleStatsTop(w http.ResponseWriter, r *http.Request) {
 	domains := map[string]int{}
 	blocked := map[string]int{}
 	clients := map[string]int{}

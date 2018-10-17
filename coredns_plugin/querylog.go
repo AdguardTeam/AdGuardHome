@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"path"
@@ -108,7 +107,7 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result dnsfilter.Result, ela
 	}
 }
 
-func handleQueryLog(w http.ResponseWriter, r *http.Request) {
+func HandleQueryLog(w http.ResponseWriter, r *http.Request) {
 	queryLogLock.RLock()
 	values := make([]*logEntry, len(queryLogCache))
 	copy(values, queryLogCache)
@@ -223,22 +222,6 @@ func handleQueryLog(w http.ResponseWriter, r *http.Request) {
 		errortext := fmt.Sprintf("Unable to write response json: %s", err)
 		log.Println(errortext)
 		http.Error(w, errortext, http.StatusInternalServerError)
-	}
-}
-
-func startQueryLogServer() {
-	listenAddr := net.JoinHostPort("127.0.0.1", queryLogAPIPort)
-
-	go periodicQueryLogRotate()
-	go periodicHourlyTopRotate()
-	go statsRotator()
-
-	http.HandleFunc("/querylog", handleQueryLog)
-	http.HandleFunc("/stats", handleStats)
-	http.HandleFunc("/stats_top", handleStatsTop)
-	http.HandleFunc("/stats_history", handleStatsHistory)
-	if err := http.ListenAndServe(listenAddr, nil); err != nil {
-		log.Fatalf("error in ListenAndServe: %s", err)
 	}
 }
 
