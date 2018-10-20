@@ -222,7 +222,7 @@ func checkDNS(input string) error {
 	req.Id = dns.Id()
 	req.RecursionDesired = true
 	req.Question = []dns.Question{
-		{"google-public-dns-a.google.com.", dns.TypeA, dns.ClassINET},
+		{Name: "google-public-dns-a.google.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
 	}
 
 	prefix, host := splitDNSServerPrefixServer(input)
