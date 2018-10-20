@@ -176,7 +176,6 @@ func promptAndGet(prompt string) (string, error) {
 		}
 		// try again
 	}
-	return "", nil
 }
 
 func promptAndGetPassword(prompt string) (string, error) {

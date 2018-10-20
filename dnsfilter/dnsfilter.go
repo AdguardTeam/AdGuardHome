@@ -22,9 +22,9 @@ import (
 )
 
 const defaultCacheSize = 64 * 1024 // in number of elements
-const defaultCacheTime time.Duration = 30 * time.Minute
+const defaultCacheTime = 30 * time.Minute
 
-const defaultHTTPTimeout time.Duration = 5 * time.Minute
+const defaultHTTPTimeout = 5 * time.Minute
 const defaultHTTPMaxIdleConnections = 100
 
 const defaultSafebrowsingServer = "sb.adtidy.org"

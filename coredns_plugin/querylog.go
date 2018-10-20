@@ -208,7 +208,7 @@ func HandleQueryLog(w http.ResponseWriter, r *http.Request) {
 		data = append(data, jsonentry)
 	}
 
-	json, err := json.Marshal(data)
+	jsonVal, err := json.Marshal(data)
 	if err != nil {
 		errortext := fmt.Sprintf("Couldn't marshal data into json: %s", err)
 		log.Println(errortext)
@@ -217,7 +217,7 @@ func HandleQueryLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(json)
+	_, err = w.Write(jsonVal)
 	if err != nil {
 		errortext := fmt.Sprintf("Unable to write response json: %s", err)
 		log.Println(errortext)
