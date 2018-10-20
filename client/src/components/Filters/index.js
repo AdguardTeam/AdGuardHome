@@ -50,6 +50,7 @@ class Filters extends Component {
         Header: 'Rules count',
         accessor: 'rulesCount',
         className: 'text-center',
+        Cell: props => props.value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
     }, {
         Header: 'Last time updated',
         accessor: 'lastUpdated',
