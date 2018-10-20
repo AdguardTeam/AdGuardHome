@@ -84,7 +84,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		"version":            VersionString,
 	}
 
-	json, err := json.Marshal(data)
+	jsonVal, err := json.Marshal(data)
 	if err != nil {
 		errortext := fmt.Sprintf("Unable to marshal status json: %s", err)
 		log.Println(errortext)
@@ -92,7 +92,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(json)
+	_, err = w.Write(jsonVal)
 	if err != nil {
 		errortext := fmt.Sprintf("Unable to write response json: %s", err)
 		log.Println(errortext)
@@ -195,7 +195,7 @@ func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	json, err := json.Marshal(result)
+	jsonVal, err := json.Marshal(result)
 	if err != nil {
 		errortext := fmt.Sprintf("Unable to marshal status json: %s", err)
 		log.Println(errortext)
@@ -204,7 +204,7 @@ func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(json)
+	_, err = w.Write(jsonVal)
 	if err != nil {
 		errortext := fmt.Sprintf("Couldn't write body: %s", err)
 		log.Println(errortext)
@@ -374,7 +374,7 @@ func handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
 	config.RLock()
 	data["filters"] = config.Filters
 	data["user_rules"] = config.UserRules
-	json, err := json.Marshal(data)
+	jsonVal, err := json.Marshal(data)
 	config.RUnlock()
 
 	if err != nil {
@@ -385,7 +385,7 @@ func handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(json)
+	_, err = w.Write(jsonVal)
 	if err != nil {
 		errortext := fmt.Sprintf("Unable to write response json: %s", err)
 		log.Println(errortext)
@@ -802,7 +802,7 @@ func handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"enabled": config.CoreDNS.SafeBrowsingEnabled,
 	}
-	json, err := json.Marshal(data)
+	jsonVal, err := json.Marshal(data)
 	if err != nil {
 		errortext := fmt.Sprintf("Unable to marshal status json: %s", err)
 		log.Println(errortext)
@@ -810,7 +810,7 @@ func handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(json)
+	_, err = w.Write(jsonVal)
 	if err != nil {
 		errortext := fmt.Sprintf("Unable to write response json: %s", err)
 		log.Println(errortext)
@@ -880,7 +880,7 @@ func handleParentalStatus(w http.ResponseWriter, r *http.Request) {
 	if config.CoreDNS.ParentalEnabled {
 		data["sensitivity"] = config.CoreDNS.ParentalSensitivity
 	}
-	json, err := json.Marshal(data)
+	jsonVal, err := json.Marshal(data)
 	if err != nil {
 		errortext := fmt.Sprintf("Unable to marshal status json: %s", err)
 		log.Println(errortext)
@@ -889,7 +889,7 @@ func handleParentalStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(json)
+	_, err = w.Write(jsonVal)
 	if err != nil {
 		errortext := fmt.Sprintf("Unable to write response json: %s", err)
 		log.Println(errortext)
@@ -916,7 +916,7 @@ func handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"enabled": config.CoreDNS.SafeSearchEnabled,
 	}
-	json, err := json.Marshal(data)
+	jsonVal, err := json.Marshal(data)
 	if err != nil {
 		errortext := fmt.Sprintf("Unable to marshal status json: %s", err)
 		log.Println(errortext)
@@ -925,7 +925,7 @@ func handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(json)
+	_, err = w.Write(jsonVal)
 	if err != nil {
 		errortext := fmt.Sprintf("Unable to write response json: %s", err)
 		log.Println(errortext)
