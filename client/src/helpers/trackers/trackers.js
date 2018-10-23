@@ -62,6 +62,7 @@ const getTrackerDataFromDb = (domainName, trackersDb, source) => {
 /**
  * Gets the source metadata for the specified tracker
  * @param {TrackerData} trackerData tracker data
+ * @returns {source} source metadata or null if no matching tracker found
  */
 export const getSourceData = (trackerData) => {
     if (!trackerData || !trackerData.source) {
