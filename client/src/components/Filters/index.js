@@ -50,7 +50,7 @@ class Filters extends Component {
         Header: 'Rules count',
         accessor: 'rulesCount',
         className: 'text-center',
-        Cell: props => new Number(props.value).toLocaleString(),
+        Cell: props => props.value.toLocaleString(),
     }, {
         Header: 'Last time updated',
         accessor: 'lastUpdated',
