@@ -10373,6 +10373,8 @@ body.fixed-header .header {
     font-size: 0.875rem;
     padding: 1.25rem 0;
     color: #9aa0ac;
+    position: relative;
+    z-index: 102;
 }
 
 .footer a:not(.btn) {
