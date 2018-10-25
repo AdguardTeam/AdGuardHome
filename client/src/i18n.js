@@ -13,12 +13,12 @@ i18n
         },
         fallbackLng: 'en',
         keySeparator: false, // we use content as keys
+        nsSeparator: false, // Fix character in content
         interpolation: {
             escapeValue: false, // not needed for react!!
         },
         react: {
             wait: true,
-            nsMode: 'fallback',
         },
     });
 
