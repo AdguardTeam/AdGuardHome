@@ -15,10 +15,10 @@ i18n
         keySeparator: false, // we use content as keys
         interpolation: {
             escapeValue: false, // not needed for react!!
-            formatSeparator: ',',
         },
         react: {
             wait: true,
+            nsMode: 'fallback',
         },
     });
 
