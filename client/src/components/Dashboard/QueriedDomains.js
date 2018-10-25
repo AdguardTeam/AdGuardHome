@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import ReactTable from 'react-table';
 import PropTypes from 'prop-types';
 import map from 'lodash/map';
+import { withNamespaces, Trans } from 'react-i18next';
 
 import Card from '../ui/Card';
 import Cell from '../ui/Cell';
@@ -38,7 +39,7 @@ class QueriedDomains extends Component {
             );
         },
     }, {
-        Header: 'Requests count',
+        Header: <Trans>Requests count</Trans>,
         accessor: 'count',
         maxWidth: 190,
         Cell: ({ value }) => {
@@ -52,15 +53,16 @@ class QueriedDomains extends Component {
     }];
 
     render() {
+        const { t } = this.props;
         return (
-            <Card title="Top queried domains" subtitle="for the last 24 hours" bodyType="card-table" refresh={this.props.refreshButton}>
+            <Card title={ t('Top queried domains') } subtitle={ t('for the last 24 hours') } bodyType="card-table" refresh={this.props.refreshButton}>
                 <ReactTable
                     data={map(this.props.topQueriedDomains, (value, prop) => (
                         { ip: prop, count: value }
                     ))}
                     columns={this.columns}
                     showPagination={false}
-                    noDataText="No domains found"
+                    noDataText={ t('No domains found') }
                     minRows={6}
                     className="-striped -highlight card-table-overflow stats__table"
                 />
@@ -73,6 +75,7 @@ QueriedDomains.propTypes = {
     topQueriedDomains: PropTypes.object.isRequired,
     dnsQueries: PropTypes.number.isRequired,
     refreshButton: PropTypes.node.isRequired,
+    t: PropTypes.func,
 };
 
-export default QueriedDomains;
+export default withNamespaces()(QueriedDomains);

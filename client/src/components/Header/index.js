@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
+import { Trans } from 'react-i18next';
 
 import Menu from './Menu';
 import Version from './Version';
@@ -44,7 +45,7 @@ class Header extends Component {
                                 </Link>
                                 {!dashboard.proccessing && dashboard.isCoreRunning &&
                                     <span className={badgeClass}>
-                                        {dashboard.protectionEnabled ? 'ON' : 'OFF'}
+                                        <Trans>{dashboard.protectionEnabled ? 'ON' : 'OFF'}</Trans>
                                     </span>
                                 }
                             </div>

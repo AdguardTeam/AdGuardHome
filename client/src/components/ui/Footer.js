@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Trans } from 'react-i18next';
 import { REPOSITORY } from '../../helpers/constants';
 
 class Footer extends Component {
@@ -20,13 +21,13 @@ class Footer extends Component {
                                 <div className="col-auto">
                                     <ul className="list-inline text-center mb-0">
                                         <li className="list-inline-item">
-                                            <a href={REPOSITORY.URL} target="_blank" rel="noopener noreferrer">Homepage</a>
+                                            <a href={REPOSITORY.URL} target="_blank" rel="noopener noreferrer"><Trans>Homepage</Trans></a>
                                         </li>
                                     </ul>
                                 </div>
                                 <div className="col-auto">
                                     <a href={`${REPOSITORY.URL}/issues/new`} className="btn btn-outline-primary btn-sm" target="_blank" rel="noopener noreferrer">
-                                        Report an issue
+                                        <Trans>Report an issue</Trans>
                                     </a>
                                 </div>
                             </div>

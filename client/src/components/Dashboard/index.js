@@ -1,6 +1,7 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import 'whatwg-fetch';
+import { Trans, withNamespaces } from 'react-i18next';
 
 import Statistics from './Statistics';
 import Counters from './Counters';
@@ -30,25 +31,25 @@ class Dashboard extends Component {
 
         return (
             <button type="button" className={`btn btn-sm mr-2 ${buttonClass}`} onClick={() => this.props.toggleProtection(protectionEnabled)}>
-                {buttonText} protection
+                <Trans>{buttonText} protection</Trans>
             </button>
         );
     }
 
     render() {
-        const { dashboard } = this.props;
+        const { dashboard, t } = this.props;
         const dashboardProcessing =
             dashboard.processing ||
             dashboard.processingStats ||
             dashboard.processingStatsHistory ||
             dashboard.processingTopStats;
 
-        const refreshFullButton = <button type="button" className="btn btn-outline-primary btn-sm" onClick={() => this.getAllStats()}>Refresh statistics</button>;
+        const refreshFullButton = <button type="button" className="btn btn-outline-primary btn-sm" onClick={() => this.getAllStats()}><Trans>Refresh statistics</Trans></button>;
         const refreshButton = <button type="button" className="btn btn-outline-primary btn-sm card-refresh" onClick={() => this.getAllStats()} />;
 
         return (
             <Fragment>
-                <PageTitle title="Dashboard">
+                <PageTitle title={ t('Dashboard') }>
                     <div className="page-title__actions">
                         {this.getToggleFilteringButton()}
                         {refreshFullButton}
@@ -124,6 +125,7 @@ Dashboard.propTypes = {
     isCoreRunning: PropTypes.bool,
     getFiltering: PropTypes.func,
     toggleProtection: PropTypes.func,
+    t: PropTypes.func,
 };
 
-export default Dashboard;
+export default withNamespaces()(Dashboard);
