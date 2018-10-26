@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { Trans } from 'react-i18next';
 
 class Toast extends Component {
     componentDidMount() {
@@ -18,7 +19,7 @@ class Toast extends Component {
         return (
             <div className={`toast toast--${this.props.type}`}>
                 <p className="toast__content">
-                    {this.props.message}
+                    <Trans>{this.props.message}</Trans>
                 </p>
                 <button className="toast__dismiss" onClick={() => this.props.removeToast(this.props.id)}>
                     <svg stroke="#fff" fill="none" width="20" height="20" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m18 6-12 12"/><path d="m6 6 12 12"/></svg>

@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import ReactTable from 'react-table';
 import PropTypes from 'prop-types';
+import { Trans, withNamespaces } from 'react-i18next';
 import Modal from '../ui/Modal';
 import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
@@ -33,32 +34,32 @@ class Filters extends Component {
     };
 
     columns = [{
-        Header: 'Enabled',
+        Header: this.props.t('Enabled'),
         accessor: 'enabled',
         Cell: this.renderCheckbox,
         width: 90,
         className: 'text-center',
     }, {
-        Header: 'Name',
+        Header: this.props.t('Name'),
         accessor: 'name',
         Cell: ({ value }) => (<div className="logs__row logs__row--overflow"><span className="logs__text" title={value}>{value}</span></div>),
     }, {
-        Header: 'Filter URL',
+        Header: this.props.t('Filter URL'),
         accessor: 'url',
         Cell: ({ value }) => (<div className="logs__row logs__row--overflow"><a href={value} target='_blank' rel='noopener noreferrer' className="link logs__text">{value}</a></div>),
     }, {
-        Header: 'Rules count',
+        Header: this.props.t('Rules count'),
         accessor: 'rulesCount',
         className: 'text-center',
         Cell: props => props.value.toLocaleString(),
     }, {
-        Header: 'Last time updated',
+        Header: this.props.t('Last time updated'),
         accessor: 'lastUpdated',
         className: 'text-center',
     }, {
-        Header: 'Actions',
+        Header: this.props.t('Actions'),
         accessor: 'url',
-        Cell: ({ value }) => (<span className='remove-icon fe fe-trash-2' onClick={() => this.props.removeFilter(value)}/>),
+        Cell: ({ value }) => (<span title={ this.props.t('Delete') } className='remove-icon fe fe-trash-2' onClick={() => this.props.removeFilter(value)}/>),
         className: 'text-center',
         width: 75,
         sortable: false,
@@ -66,27 +67,28 @@ class Filters extends Component {
     ];
 
     render() {
+        const { t } = this.props;
         const { filters, userRules } = this.props.filtering;
         return (
             <div>
-                <PageTitle title="Filters" />
+                <PageTitle title={ t('Filters') } />
                 <div className="content">
                     <div className="row">
                         <div className="col-md-12">
                             <Card
-                                title="Filters and hosts blocklists"
-                                subtitle="AdGuard Home understands basic adblock rules and hosts files syntax."
+                                title={ t('Filters and hosts blocklists') }
+                                subtitle={ t('AdGuard Home understands basic adblock rules and hosts files syntax.') }
                             >
                                 <ReactTable
                                     data={filters}
                                     columns={this.columns}
                                     showPagination={false}
-                                    noDataText="No filters added"
+                                    noDataText={ t('No filters added') }
                                     minRows={4} // TODO find out what to show if rules.length is 0
                                 />
                                 <div className="card-actions">
-                                    <button className="btn btn-success btn-standart mr-2" type="submit" onClick={this.props.toggleFilteringModal}>Add filter</button>
-                                    <button className="btn btn-primary btn-standart" type="submit" onClick={this.props.refreshFilters}>Check updates</button>
+                                    <button className="btn btn-success btn-standart mr-2" type="submit" onClick={this.props.toggleFilteringModal}><Trans>Add filter</Trans></button>
+                                    <button className="btn btn-primary btn-standart" type="submit" onClick={this.props.refreshFilters}><Trans>Check updates</Trans></button>
                                 </div>
                             </Card>
                         </div>
@@ -104,8 +106,8 @@ class Filters extends Component {
                     toggleModal={this.props.toggleFilteringModal}
                     addFilter={this.props.addFilter}
                     isFilterAdded={this.props.filtering.isFilterAdded}
-                    title="New filter subscription"
-                    inputDescription="Enter a valid URL to a filter subscription or a hosts file."
+                    title={ t('New filter subscription') }
+                    inputDescription={ t('Enter a valid URL to a filter subscription or a hosts file.') }
                 />
             </div>
         );
@@ -127,7 +129,8 @@ Filters.propTypes = {
     toggleFilteringModal: PropTypes.func.isRequired,
     handleRulesChange: PropTypes.func.isRequired,
     refreshFilters: PropTypes.func.isRequired,
+    t: PropTypes.func,
 };
 
 
-export default Filters;
+export default withNamespaces()(Filters);

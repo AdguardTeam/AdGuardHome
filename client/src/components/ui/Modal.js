@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import ReactModal from 'react-modal';
 import classnames from 'classnames';
+import { Trans, withNamespaces } from 'react-i18next';
 import { R_URL_REQUIRES_PROTOCOL } from '../../helpers/constants';
 import './Modal.css';
 
@@ -13,7 +14,7 @@ const initialState = {
     isUrlValid: false,
 };
 
-export default class Modal extends Component {
+class Modal extends Component {
     state = initialState;
 
     // eslint-disable-next-line
@@ -70,8 +71,8 @@ export default class Modal extends Component {
             if (!this.props.isFilterAdded) {
                 return (
                     <React.Fragment>
-                        <input type="text" className={inputNameClass} placeholder="Enter name" onChange={this.handleNameChange} />
-                        <input type="text" className={inputUrlClass} placeholder="Enter URL" onChange={this.handleUrlChange} />
+                        <input type="text" className={inputNameClass} placeholder={ this.props.t('Enter name') } onChange={this.handleNameChange} />
+                        <input type="text" className={inputUrlClass} placeholder={ this.props.t('Enter URL') } onChange={this.handleUrlChange} />
                         {inputDescription &&
                             <div className="description">
                                 {inputDescription}
@@ -81,7 +82,7 @@ export default class Modal extends Component {
             }
             return (
                 <div className="description">
-                    Url added successfully
+                    <Trans>Url added successfully</Trans>
                 </div>
             );
         };
@@ -110,8 +111,8 @@ export default class Modal extends Component {
                     {
                         !this.props.isFilterAdded &&
                             <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={this.closeModal}>Cancel</button>
-                                <button type="button" className="btn btn-success" onClick={this.handleNext} disabled={isValidForSubmit}>Add filter</button>
+                                <button type="button" className="btn btn-secondary" onClick={this.closeModal}><Trans>Cancel</Trans></button>
+                                <button type="button" className="btn btn-success" onClick={this.handleNext} disabled={isValidForSubmit}><Trans>Add filter</Trans></button>
                             </div>
                     }
                 </div>
@@ -127,4 +128,7 @@ Modal.propTypes = {
     inputDescription: PropTypes.string,
     addFilter: PropTypes.func.isRequired,
     isFilterAdded: PropTypes.bool,
+    t: PropTypes.func,
 };
+
+export default withNamespaces()(Modal);

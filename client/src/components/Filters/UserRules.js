@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { Trans, withNamespaces } from 'react-i18next';
 import Card from '../ui/Card';
 
-export default class UserRules extends Component {
+class UserRules extends Component {
     handleChange = (e) => {
         const { value } = e.currentTarget;
         this.props.handleRulesChange(value);
@@ -14,10 +15,11 @@ export default class UserRules extends Component {
     };
 
     render() {
+        const { t } = this.props;
         return (
             <Card
-                title="Custom filtering rules"
-                subtitle="Enter one rule on a line. You can use either adblock rules or hosts files syntax."
+                title={ t('Custom filtering rules') }
+                subtitle={ t('Enter one rule on a line. You can use either adblock rules or hosts files syntax.') }
             >
                 <form onSubmit={this.handleSubmit}>
                     <textarea className="form-control form-control--textarea-large" value={this.props.userRules} onChange={this.handleChange} />
@@ -27,31 +29,28 @@ export default class UserRules extends Component {
                             type="submit"
                             onClick={this.handleSubmit}
                         >
-                            Apply
+                            <Trans>Apply</Trans>
                         </button>
                     </div>
                 </form>
                 <hr/>
                 <div className="list leading-loose">
-                    Examples:
+                    <Trans>Examples</Trans>:
                     <ol className="leading-loose">
                         <li>
-                            <code>||example.org^</code> - block access to the example.org domain
-                            and all its subdomains
+                            <code>||example.org^</code> - { t('block access to the example.org domain and all its subdomains') }
                         </li>
                         <li>
-                            <code> @@||example.org^</code> - unblock access to the example.org
-                            domain and all its subdomains
+                            <code> @@||example.org^</code> - { t('unblock access to the example.org domain and all its subdomains') }
                         </li>
                         <li>
-                            <code>127.0.0.1 example.org</code> - AdGuard Home will now return
-                            127.0.0.1 address for the example.org domain (but not its subdomains).
+                            <code>127.0.0.1 example.org</code> - { t('AdGuard Home will now return 127.0.0.1 address for the example.org domain (but not its subdomains).') }
                         </li>
                         <li>
-                            <code>! Here goes a comment</code> - just a comment
+                            <code>{ t('! Here goes a comment') }</code> - { t('just a comment') }
                         </li>
                         <li>
-                            <code># Also a comment</code> - just a comment
+                            <code>{ t('# Also a comment') }</code> - { t('just a comment') }
                         </li>
                     </ol>
                 </div>
@@ -64,4 +63,7 @@ UserRules.propTypes = {
     userRules: PropTypes.string,
     handleRulesChange: PropTypes.func,
     handleRulesSubmit: PropTypes.func,
+    t: PropTypes.func,
 };
+
+export default withNamespaces()(UserRules);

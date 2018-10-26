@@ -4,6 +4,7 @@ import ReactTable from 'react-table';
 import { saveAs } from 'file-saver/FileSaver';
 import escapeRegExp from 'lodash/escapeRegExp';
 import endsWith from 'lodash/endsWith';
+import { Trans, withNamespaces } from 'react-i18next';
 
 import { formatTime } from '../../helpers/helpers';
 import { getTrackerData } from '../../helpers/trackers/trackers';
@@ -75,21 +76,22 @@ class Logs extends Component {
                     className={`btn btn-sm ${buttonClass}`}
                     onClick={() => this.toggleBlocking(buttonText.toLowerCase(), domain)}
                 >
-                    {buttonText}
+                    <Trans>{buttonText}</Trans>
                 </button>
             </div>
         );
     }
 
     renderLogs(logs) {
+        const { t } = this.props;
         const columns = [{
-            Header: 'Time',
+            Header: t('Time'),
             accessor: 'time',
             maxWidth: 110,
             filterable: false,
             Cell: ({ value }) => (<div className="logs__row"><span className="logs__text" title={value}>{formatTime(value)}</span></div>),
         }, {
-            Header: 'Domain name',
+            Header: t('Domain name'),
             accessor: 'domain',
             Cell: (row) => {
                 const response = row.value;
@@ -105,11 +107,11 @@ class Logs extends Component {
                 );
             },
         }, {
-            Header: 'Type',
+            Header: t('Type'),
             accessor: 'type',
             maxWidth: 60,
         }, {
-            Header: 'Response',
+            Header: t('Response'),
             accessor: 'response',
             Cell: (row) => {
                 const responses = row.value;
@@ -142,7 +144,7 @@ class Logs extends Component {
                 return (
                     <div className="logs__row">
                         {this.renderTooltip(isFiltered, rule)}
-                        <span>Empty</span>
+                        <span><Trans>Empty</Trans></span>
                     </div>
                 );
             },
@@ -159,11 +161,11 @@ class Logs extends Component {
                     className="form-control"
                     value={filter ? filter.value : 'all'}
                 >
-                    <option value="all">Show all</option>
-                    <option value="filtered">Show filtered</option>
+                    <option value="all">{ t('Show all') }</option>
+                    <option value="filtered">{ t('Show filtered') }</option>
                 </select>,
         }, {
-            Header: 'Client',
+            Header: t('Client'),
             accessor: 'client',
             maxWidth: 250,
             Cell: (row) => {
@@ -191,7 +193,14 @@ class Logs extends Component {
                 showPagination={true}
                 defaultPageSize={50}
                 minRows={7}
-                noDataText="No logs found"
+                // Text
+                previousText={ t('Previous') }
+                nextText={ t('Next') }
+                loadingText={ t('Loading...') }
+                pageText={ t('Page') }
+                ofText={ t('of') }
+                rowsText={ t('rows') }
+                noDataText={ t('No logs found') }
                 defaultFilterMethod={(filter, row) => {
                     const id = filter.pivotId || filter.id;
                     return row[id] !== undefined ?
@@ -233,17 +242,17 @@ class Logs extends Component {
                         className="btn btn-gray btn-sm mr-2"
                         type="submit"
                         onClick={() => this.props.toggleLogStatus(queryLogEnabled)}
-                    >Disable log</button>
+                    ><Trans>Disable log</Trans></button>
                     <button
                         className="btn btn-primary btn-sm mr-2"
                         type="submit"
                         onClick={this.handleDownloadButton}
-                    >Download log file</button>
+                    ><Trans>Download log file</Trans></button>
                     <button
                         className="btn btn-outline-primary btn-sm"
                         type="submit"
                         onClick={this.getLogs}
-                    >Refresh</button>
+                    ><Trans>Refresh</Trans></button>
                 </Fragment>
             );
         }
@@ -253,16 +262,16 @@ class Logs extends Component {
                 className="btn btn-success btn-sm mr-2"
                 type="submit"
                 onClick={() => this.props.toggleLogStatus(queryLogEnabled)}
-            >Enable log</button>
+            ><Trans>Enable log</Trans></button>
         );
     }
 
     render() {
-        const { queryLogs, dashboard } = this.props;
+        const { queryLogs, dashboard, t } = this.props;
         const { queryLogEnabled } = dashboard;
         return (
             <Fragment>
-                <PageTitle title="Query Log" subtitle="Last 5000 DNS queries">
+                <PageTitle title={ t('Query Log') } subtitle={ t('Last 5000 DNS queries') }>
                     <div className="page-title__actions">
                         {this.renderButtons(queryLogEnabled)}
                     </div>
@@ -288,6 +297,7 @@ Logs.propTypes = {
     userRules: PropTypes.string,
     setRules: PropTypes.func,
     addSuccessToast: PropTypes.func,
+    t: PropTypes.func,
 };
 
-export default Logs;
+export default withNamespaces()(Logs);
