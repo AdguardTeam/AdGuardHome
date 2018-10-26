@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { Trans } from 'react-i18next';
 import { getSourceData } from '../../helpers/trackers/trackers';
 import { captitalizeWords } from '../../helpers/helpers';
 
@@ -13,13 +14,13 @@ class Popover extends Component {
 
         const source = (
             <div className="popover__list-item">
-                Source: <a className="popover__link" target="_blank" rel="noopener noreferrer" href={sourceData.url}><strong>{sourceData.name}</strong></a>
+                <Trans>Source</Trans>: <a className="popover__link" target="_blank" rel="noopener noreferrer" href={sourceData.url}><strong>{sourceData.name}</strong></a>
             </div>
         );
 
         const tracker = (
             <div className="popover__list-item">
-                Name: <a className="popover__link" target="_blank" rel="noopener noreferrer" href={data.url}><strong>{data.name}</strong></a>
+                <Trans>Name</Trans>: <a className="popover__link" target="_blank" rel="noopener noreferrer" href={data.url}><strong>{data.name}</strong></a>
             </div>
         );
 
@@ -33,11 +34,11 @@ class Popover extends Component {
                 <div className="popover__body">
                     <div className="popover__list">
                         <div className="popover__list-title">
-                            Found in the known domains database.
+                            <Trans>Found in the known domains database.</Trans>
                         </div>
                         {tracker}
                         <div className="popover__list-item">
-                            Category: <strong>{categoryName}</strong>
+                            <Trans>Category</Trans>: <strong><Trans>{categoryName}</Trans></strong>
                         </div>
                         {source}
                     </div>

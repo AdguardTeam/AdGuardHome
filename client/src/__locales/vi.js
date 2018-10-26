@@ -112,5 +112,9 @@ export default {
         Page: 'Trang',
         of: 'của',
         rows: 'hàng',
+        // Popover
+        Source: 'Nguồn',
+        'Found in the known domains database.': 'Tìm thấy trong cơ sở dữ liệu tên miền',
+        Category: 'Thể loại',
     },
 };
