@@ -19,11 +19,11 @@ const Line = props => (
             curve='linear'
             axisBottom={{
                 tickSize: 0,
-                tickPadding: 0,
+                tickPadding: 10,
             }}
             axisLeft={{
                 tickSize: 0,
-                tickPadding: 0,
+                tickPadding: 10,
             }}
             enableGridX={false}
             enableGridY={false}
