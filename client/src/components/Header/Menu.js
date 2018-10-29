@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import enhanceWithClickOutside from 'react-click-outside';
 import classnames from 'classnames';
-import { Trans } from 'react-i18next';
+import { Trans, withNamespaces } from 'react-i18next';
 import { REPOSITORY } from '../../helpers/constants';
 
 class Menu extends Component {
@@ -74,4 +74,4 @@ Menu.propTypes = {
     toggleMenuOpen: PropTypes.func,
 };
 
-export default enhanceWithClickOutside(Menu);
+export default withNamespaces()(enhanceWithClickOutside(Menu));

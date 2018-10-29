@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Trans } from 'react-i18next';
+import { Trans, withNamespaces } from 'react-i18next';
 
-export default function Version(props) {
+function Version(props) {
     const { dnsVersion, dnsAddress, dnsPort } = props;
     return (
         <div className="nav-version">
@@ -21,3 +21,5 @@ Version.propTypes = {
     dnsAddress: PropTypes.string,
     dnsPort: PropTypes.number,
 };
+
+export default withNamespaces()(Version);

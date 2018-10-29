@@ -1,12 +1,17 @@
 import React, { Component } from 'react';
-import { Trans } from 'react-i18next';
+import { Trans, withNamespaces } from 'react-i18next';
 import { REPOSITORY } from '../../helpers/constants';
+import i18n from '../../i18n';
 
 class Footer extends Component {
     getYear = () => {
         const today = new Date();
         return today.getFullYear();
     };
+
+    changeLanguage = () => {
+        i18n.changeLanguage(i18n.language === 'en' ? 'vi' : 'en');
+    }
 
     render() {
         return (
@@ -26,6 +31,12 @@ class Footer extends Component {
                                     </ul>
                                 </div>
                                 <div className="col-auto">
+                                    <button className="btn btn-outline-info btn-sm" onClick={this.changeLanguage}
+                                        title={i18n.language === 'en' ? 'Chuyển sang Tiếng Việt' : 'Change to English'}>
+                                        {i18n.language === 'en' ? 'English' : 'Tiếng Việt'}
+                                    </button>
+                                </div>
+                                <div className="col-auto">
                                     <a href={`${REPOSITORY.URL}/issues/new`} className="btn btn-outline-primary btn-sm" target="_blank" rel="noopener noreferrer">
                                         <Trans>Report an issue</Trans>
                                     </a>
@@ -39,4 +50,4 @@ class Footer extends Component {
     }
 }
 
-export default Footer;
+export default withNamespaces()(Footer);

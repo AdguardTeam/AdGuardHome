@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Trans } from 'react-i18next';
+import { Trans, withNamespaces } from 'react-i18next';
 import { getSourceData } from '../../helpers/trackers/trackers';
 import { captitalizeWords } from '../../helpers/helpers';
 
@@ -52,4 +52,4 @@ Popover.propTypes = {
     data: PropTypes.object.isRequired,
 };
 
-export default Popover;
+export default withNamespaces()(Popover);
