@@ -19,11 +19,17 @@ func isValidRule(rule string) bool {
 		return false
 	}
 
+	// Filter out all sorts of cosmetic rules:
+	// https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#cosmetic-rules
 	masks := []string{
 		"##",
 		"#@#",
+		"#?#",
+		"#@?#",
 		"#$#",
 		"#@$#",
+		"#?$#",
+		"#@?$#",
 		"$$",
 		"$@$",
 		"#%#",

@@ -11,3 +11,12 @@ debug
 /dnsfilter.txt
 /querylog.json
 /querylog.json.1
+
+# Test output
+dnsfilter/dnsfilter.TestLotsOfRulesLotsOfHostsMemoryUsage1.pprof
+dnsfilter/dnsfilter.TestLotsOfRulesLotsOfHostsMemoryUsage2.pprof
+dnsfilter/dnsfilter.TestLotsOfRulesLotsOfHostsMemoryUsage3.pprof
+dnsfilter/dnsfilter.TestLotsOfRulesMemoryUsage1.pprof
+dnsfilter/dnsfilter.TestLotsOfRulesMemoryUsage2.pprof
+dnsfilter/dnsfilter.TestLotsOfRulesMemoryUsage3.pprof
+tests/top-1m.csv

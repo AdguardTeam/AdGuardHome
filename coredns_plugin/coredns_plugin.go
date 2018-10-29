@@ -62,7 +62,6 @@ type plug struct {
 	d        *dnsfilter.Dnsfilter
 	Next     plugin.Handler
 	upstream upstream.Upstream
-	hosts    map[string]net.IP
 	settings plugSettings
 
 	sync.RWMutex
@@ -82,7 +81,6 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 	p := &plug{
 		settings: defaultPluginSettings,
 		d:        dnsfilter.New(),
-		hosts:    make(map[string]net.IP),
 	}
 
 	filterFileNames := []string{}
@@ -149,9 +147,7 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
 			text := scanner.Text()
-			if p.parseEtcHosts(text) {
-				continue
-			}
+
 			err = p.d.AddRule(text, uint32(i))
 			if err == dnsfilter.ErrInvalidSyntax {
 				continue
@@ -229,28 +225,6 @@ func setup(c *caddy.Controller) error {
 	c.OnFinalShutdown(p.onFinalShutdown)
 
 	return nil
-}
-
-func (p *plug) parseEtcHosts(text string) bool {
-	if pos := strings.IndexByte(text, '#'); pos != -1 {
-		text = text[0:pos]
-	}
-	fields := strings.Fields(text)
-	if len(fields) < 2 {
-		return false
-	}
-	addr := net.ParseIP(fields[0])
-	if addr == nil {
-		return false
-	}
-	for _, host := range fields[1:] {
-		// debug logging for duplicate values, pretty common if you subscribe to many hosts files
-		// if val, ok := p.hosts[host]; ok {
-		// 	log.Printf("warning: host %s already has value %s, will overwrite it with %s", host, val, addr)
-		// }
-		p.hosts[host] = addr
-	}
-	return true
 }
 
 func (p *plug) onShutdown() error {
@@ -432,27 +406,6 @@ func (p *plug) serveDNSInternal(ctx context.Context, w dns.ResponseWriter, r *dn
 		}
 		p.RUnlock()
 
-		// is it in hosts?
-		if val, ok := p.hosts[host]; ok {
-			// it is, if it's a loopback host, reply with NXDOMAIN
-			// TODO: research if it's better than 127.0.0.1
-			if false && val.IsLoopback() {
-				rcode, err := p.writeNXdomain(ctx, w, r)
-				if err != nil {
-					return rcode, dnsfilter.Result{}, err
-				}
-				return rcode, dnsfilter.Result{Reason: dnsfilter.FilteredInvalid}, err
-			}
-			// it's not a loopback host, replace it with value specified
-			rcode, err := p.replaceHostWithValAndReply(ctx, w, r, host, val.String(), question)
-			if err != nil {
-				return rcode, dnsfilter.Result{}, err
-			}
-			// TODO: This must be handled in the dnsfilter and not here!
-			rule := val.String() + " " + host
-			return rcode, dnsfilter.Result{Reason: dnsfilter.FilteredBlackList, Rule: rule}, err
-		}
-
 		// needs to be filtered instead
 		p.RLock()
 		result, err := p.d.CheckHost(host)
@@ -482,12 +435,22 @@ func (p *plug) serveDNSInternal(ctx context.Context, w dns.ResponseWriter, r *dn
 				}
 				return rcode, result, err
 			case dnsfilter.FilteredBlackList:
-				// return NXdomain
-				rcode, err := p.writeNXdomain(ctx, w, r)
-				if err != nil {
-					return rcode, dnsfilter.Result{}, err
+
+				if result.Ip == nil {
+					// return NXDomain
+					rcode, err := p.writeNXdomain(ctx, w, r)
+					if err != nil {
+						return rcode, dnsfilter.Result{}, err
+					}
+					return rcode, result, err
+				} else {
+					// This is a hosts-syntax rule
+					rcode, err := p.replaceHostWithValAndReply(ctx, w, r, host, result.Ip.String(), question)
+					if err != nil {
+						return rcode, dnsfilter.Result{}, err
+					}
+					return rcode, result, err
 				}
-				return rcode, result, err
 			case dnsfilter.FilteredInvalid:
 				// return NXdomain
 				rcode, err := p.writeNXdomain(ctx, w, r)

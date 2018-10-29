@@ -281,6 +281,20 @@ func (d *Dnsfilter) checkMatch(t *testing.T, hostname string) {
 	}
 }
 
+func (d *Dnsfilter) checkMatchIp(t *testing.T, hostname string, ip string) {
+	t.Helper()
+	ret, err := d.CheckHost(hostname)
+	if err != nil {
+		t.Errorf("Error while matching host %s: %s", hostname, err)
+	}
+	if !ret.IsFiltered {
+		t.Errorf("Expected hostname %s to match", hostname)
+	}
+	if ret.Ip == nil || ret.Ip.String() != ip {
+		t.Errorf("Expected ip %s to match, actual: %v", ip, ret.Ip)
+	}
+}
+
 func (d *Dnsfilter) checkMatchEmpty(t *testing.T, hostname string) {
 	t.Helper()
 	ret, err := d.CheckHost(hostname)
@@ -343,6 +357,20 @@ func TestSanityCheck(t *testing.T) {
 	d.checkMatchEmpty(t, "doubleclick.net.ru")
 	d.checkMatchEmpty(t, "wmconvirus.narod.ru")
 	d.checkAddRuleFail(t, "lkfaojewhoawehfwacoefawr$@#$@3413841384")
+}
+
+func TestEtcHostsMatching(t *testing.T) {
+	d := NewForTest()
+	defer d.Destroy()
+
+	addr := "216.239.38.120"
+	text := fmt.Sprintf("   %s  google.com www.google.com   # enforce google's safesearch   ", addr)
+
+	d.checkAddRule(t, text)
+	d.checkMatchIp(t, "google.com", addr)
+	d.checkMatchIp(t, "www.google.com", addr)
+	d.checkMatchEmpty(t, "subdomain.google.com")
+	d.checkMatchEmpty(t, "example.org")
 }
 
 func TestSuffixMatching1(t *testing.T) {
