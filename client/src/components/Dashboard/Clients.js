@@ -23,22 +23,7 @@ class Clients extends Component {
         Header: 'IP',
         accessor: 'ip',
         Cell: ({ value }) => (<div className="logs__row logs__row--overflow"><span className="logs__text" title={value}>{value}</span></div>),
-        sortMethod: (a, b) => {
-            const nextValue = a.split('.');
-            const prevValue = b.split('.');
-
-            for (let i = 0; i < nextValue.length; i += 1) {
-                const nextNumber = parseInt(nextValue[i], 10);
-                const prevNumber = parseInt(prevValue[i], 10);
-
-                if (nextNumber < prevNumber) {
-                    return -1;
-                } else if (nextNumber > prevNumber) {
-                    return 1;
-                }
-            }
-            return 0;
-        },
+        sortMethod: (a, b) => parseInt(a.replace(/\./g, ''), 10) - parseInt(b.replace(/\./g, ''), 10),
     }, {
         Header: 'Requests count',
         accessor: 'count',
