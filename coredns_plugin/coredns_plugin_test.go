@@ -15,6 +15,7 @@ import (
 	"github.com/miekg/dns"
 )
 
+// TODO: Change tests -- there's new config template now
 func TestSetup(t *testing.T) {
 	for i, testcase := range []struct {
 		config  string

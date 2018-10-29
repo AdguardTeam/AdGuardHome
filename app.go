@@ -25,10 +25,18 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		config.ourBinaryDir = filepath.Dir(executable)
-	}
 
-	doConfigRename := true
+		executableName := filepath.Base(executable)
+		if executableName == "AdGuardHome" {
+			// Binary build
+			config.ourBinaryDir = filepath.Dir(executable)
+		} else {
+			// Most likely we're debugging -- using current working directory in this case
+			workDir, _ := os.Getwd()
+			config.ourBinaryDir = workDir
+		}
+		log.Printf("Current working directory is %s", config.ourBinaryDir)
+	}
 
 	// config can be specified, which reads options from there, but other command line flags have to override config values
 	// therefore, we must do it manually instead of using a lib
@@ -98,16 +106,7 @@ func main() {
 			}
 		}
 		if configFilename != nil {
-			// config was manually specified, don't do anything
-			doConfigRename = false
 			config.ourConfigFilename = *configFilename
-		}
-
-		if doConfigRename {
-			err := renameOldConfigIfNeccessary()
-			if err != nil {
-				panic(err)
-			}
 		}
 
 		err := askUsernamePasswordIfPossible()
@@ -128,14 +127,30 @@ func main() {
 		}
 	}
 
-	// eat all args so that coredns can start happily
+	// Eat all args so that coredns can start happily
 	if len(os.Args) > 1 {
 		os.Args = os.Args[:1]
 	}
 
-	err := writeConfig()
+	// Do the upgrade if necessary
+	err := upgradeConfig()
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	// Save the updated config
+	err = writeConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Load filters from the disk
+	for i := range config.Filters {
+		filter := &config.Filters[i]
+		err = filter.load()
+		if err != nil {
+			log.Printf("Couldn't load filter %d contents due to %s", filter.ID, err)
+		}
 	}
 
 	address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
@@ -240,27 +255,71 @@ func askUsernamePasswordIfPossible() error {
 	return nil
 }
 
-func renameOldConfigIfNeccessary() error {
-	oldConfigFile := filepath.Join(config.ourBinaryDir, "AdguardDNS.yaml")
-	_, err := os.Stat(oldConfigFile)
-	if os.IsNotExist(err) {
-		// do nothing, file doesn't exist
-		trace("File %s doesn't exist, nothing to do", oldConfigFile)
+// Performs necessary upgrade operations if needed
+func upgradeConfig() error {
+
+	if config.SchemaVersion == SchemaVersion {
+		// No upgrade, do nothing
 		return nil
 	}
 
-	newConfigFile := filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
-	_, err = os.Stat(newConfigFile)
-	if !os.IsNotExist(err) {
-		// do nothing, file doesn't exist
-		trace("File %s already exists, will not overwrite", newConfigFile)
-		return nil
+	if config.SchemaVersion > SchemaVersion {
+		// Unexpected -- config file is newer than the
+		return fmt.Errorf("configuration file is supposed to be used with a newer version of AdGuard Home, schema=%d", config.SchemaVersion)
 	}
 
-	err = os.Rename(oldConfigFile, newConfigFile)
-	if err != nil {
-		log.Printf("Failed to rename %s to %s: %s", oldConfigFile, newConfigFile, err)
-		return err
+	// Perform upgrade operations for each consecutive version upgrade
+	for oldVersion, newVersion := config.SchemaVersion, config.SchemaVersion+1; newVersion <= SchemaVersion; {
+
+		err := upgradeConfigSchema(oldVersion, newVersion)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Increment old and new versions
+		oldVersion++
+		newVersion++
+	}
+
+	// Save the current schema version
+	config.SchemaVersion = SchemaVersion
+
+	return nil
+}
+
+// Upgrade from oldVersion to newVersion
+func upgradeConfigSchema(oldVersion int, newVersion int) error {
+
+	if oldVersion == 0 && newVersion == 1 {
+		log.Printf("Updating schema from %d to %d", oldVersion, newVersion)
+
+		// The first schema upgrade:
+		// Added "ID" field to "filter" -- we need to populate this field now
+		// Added "config.ourDataDir" -- where we will now store filters contents
+		for i := range config.Filters {
+
+			filter := &config.Filters[i] // otherwise we will be operating on a copy
+
+			log.Printf("Seting ID=%d for filter %s", i, filter.URL)
+			filter.ID = i + 1 // start with ID=1
+
+			// Forcibly update the filter
+			_, err := filter.update(true)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		// No more "dnsfilter.txt", filters are now loaded from config.ourDataDir/filters/
+		dnsFilterPath := filepath.Join(config.ourBinaryDir, "dnsfilter.txt")
+		_, err := os.Stat(dnsFilterPath)
+		if !os.IsNotExist(err) {
+			log.Printf("Deleting %s as we don't need it anymore", dnsFilterPath)
+			err = os.Remove(dnsFilterPath)
+			if err != nil {
+				log.Printf("Cannot remove %s due to %s", dnsFilterPath, err)
+			}
+		}
 	}
 
 	return nil
