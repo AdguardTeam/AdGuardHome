@@ -1,5 +1,6 @@
 .DS_Store
 .vscode
+.idea
 debug
 /AdGuardHome
 /AdGuardHome.yaml
@@ -10,3 +11,7 @@ debug
 /dnsfilter.txt
 /querylog.json
 /querylog.json.1
+
+# Test output
+dnsfilter/dnsfilter.TestLotsOfRules*.pprof
+tests/top-1m.csv
