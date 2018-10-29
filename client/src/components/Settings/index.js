@@ -12,23 +12,23 @@ class Settings extends Component {
     settings = {
         filtering: {
             enabled: false,
-            title: this.props.t('Block domains using filters and hosts files'),
-            subtitle: this.props.t('You can setup blocking rules in the <a href="#filters">Filters</a> settings.'),
+            title: 'Block domains using filters and hosts files',
+            subtitle: 'You can setup blocking rules in the <a href="#filters">Filters</a> settings.',
         },
         safebrowsing: {
             enabled: false,
-            title: this.props.t('Use AdGuard browsing security web service'),
-            subtitle: this.props.t('AdGuard Home will check if domain is blacklisted by the browsing security web service. It will use privacy-friendly lookup API to perform the check: only a short prefix of the domain name SHA256 hash is sent to the server.'),
+            title: 'Use AdGuard browsing security web service',
+            subtitle: 'AdGuard Home will check if domain is blacklisted by the browsing security web service. It will use privacy-friendly lookup API to perform the check: only a short prefix of the domain name SHA256 hash is sent to the server.',
         },
         parental: {
             enabled: false,
-            title: this.props.t('Use AdGuard parental control web service'),
-            subtitle: this.props.t('AdGuard Home will check if domain contains adult materials. It uses the same privacy-friendly API as the browsing security web service.'),
+            title: 'Use AdGuard parental control web service',
+            subtitle: 'AdGuard Home will check if domain contains adult materials. It uses the same privacy-friendly API as the browsing security web service.',
         },
         safesearch: {
             enabled: false,
-            title: this.props.t('Enforce safe search'),
-            subtitle: this.props.t('AdGuard Home can enforce safe search in the following search engines: Google, Bing, Yandex.'),
+            title: 'Enforce safe search',
+            subtitle: 'AdGuard Home can enforce safe search in the following search engines: Google, Bing, Yandex.',
         },
     };
 

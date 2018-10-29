@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { withNamespaces } from 'react-i18next';
 
 import './Checkbox.css';
 
@@ -10,6 +11,7 @@ class Checkbox extends Component {
             subtitle,
             enabled,
             handleChange,
+            t,
         } = this.props;
         return (
             <div className="form__group">
@@ -18,8 +20,8 @@ class Checkbox extends Component {
                 <input type="checkbox" className="checkbox__input" onChange={handleChange} checked={enabled}/>
                 <span className="checkbox__label">
                     <span className="checkbox__label-text">
-                    <span className="checkbox__label-title">{title}</span>
-                    <span className="checkbox__label-subtitle" dangerouslySetInnerHTML={{ __html: subtitle }}/>
+                    <span className="checkbox__label-title">{ t(title) }</span>
+                    <span className="checkbox__label-subtitle" dangerouslySetInnerHTML={{ __html: t(subtitle) }}/>
                     </span>
                 </span>
                 </label>
@@ -33,6 +35,7 @@ Checkbox.propTypes = {
     subtitle: PropTypes.string.isRequired,
     enabled: PropTypes.bool.isRequired,
     handleChange: PropTypes.func.isRequired,
+    t: PropTypes.func,
 };
 
-export default Checkbox;
+export default withNamespaces()(Checkbox);
