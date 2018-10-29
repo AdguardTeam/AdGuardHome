@@ -23,6 +23,7 @@ class Clients extends Component {
         Header: 'IP',
         accessor: 'ip',
         Cell: ({ value }) => (<div className="logs__row logs__row--overflow"><span className="logs__text" title={value}>{value}</span></div>),
+        sortMethod: (a, b) => parseInt(a.replace(/\./g, ''), 10) - parseInt(b.replace(/\./g, ''), 10),
     }, {
         Header: 'Requests count',
         accessor: 'count',
