@@ -126,11 +126,11 @@ const (
 	NotFilteredError                   // there was a transitive error during check
 
 	// reasons for filtering
-	FilteredBlackList     // the host was matched to be advertising host
-	FilteredSafeBrowsing  // the host was matched to be malicious/phishing
-	FilteredParental      // the host was matched to be outside of parental control settings
-	FilteredInvalid       // the request was invalid and was not processed
-	FilteredSafeSearch    // the host was replaced with safesearch variant
+	FilteredBlackList    // the host was matched to be advertising host
+	FilteredSafeBrowsing // the host was matched to be malicious/phishing
+	FilteredParental     // the host was matched to be outside of parental control settings
+	FilteredInvalid      // the request was invalid and was not processed
+	FilteredSafeSearch   // the host was replaced with safesearch variant
 )
 
 // these variables need to survive coredns reload
