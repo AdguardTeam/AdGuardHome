@@ -33,8 +33,11 @@ const defaultSafebrowsingURL = "http://%s/safebrowsing-lookup-hash.html?prefixes
 const defaultParentalServer = "pctrl.adguard.com"
 const defaultParentalURL = "http://%s/check-parental-control-hash?prefixes=%s&sensitivity=%d"
 
-// ErrInvalidSyntax is returned by AddRule when rule is invalid
+// ErrInvalidSyntax is returned by AddRule when the rule is invalid
 var ErrInvalidSyntax = errors.New("dnsfilter: invalid rule syntax")
+
+// ErrInvalidSyntax is returned by AddRule when the rule was already added to the filter
+var ErrAlreadyExists = errors.New("dnsfilter: rule was already added")
 
 // ErrInvalidParental is returned by EnableParental when sensitivity is not a valid value
 var ErrInvalidParental = errors.New("dnsfilter: invalid parental sensitivity, must be either 3, 10, 13 or 17")
@@ -737,8 +740,7 @@ func (d *Dnsfilter) AddRule(input string, filterListID uint32) error {
 	d.storageMutex.RUnlock()
 	if exists {
 		// already added
-		// TODO: Change the error type
-		return ErrInvalidSyntax
+		return ErrAlreadyExists
 	}
 
 	if !isValidRule(input) {

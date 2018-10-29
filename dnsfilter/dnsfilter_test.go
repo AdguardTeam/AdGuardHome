@@ -261,7 +261,7 @@ func (d *Dnsfilter) checkAddRule(t *testing.T, rule string) {
 func (d *Dnsfilter) checkAddRuleFail(t *testing.T, rule string) {
 	t.Helper()
 	err := d.AddRule(rule, 0)
-	if err == ErrInvalidSyntax {
+	if err == ErrInvalidSyntax || err == ErrAlreadyExists {
 		return
 	}
 	if err != nil {
@@ -318,7 +318,7 @@ func loadTestRules(d *Dnsfilter) error {
 	for scanner.Scan() {
 		rule := scanner.Text()
 		err = d.AddRule(rule, 0)
-		if err == ErrInvalidSyntax {
+		if err == ErrInvalidSyntax || err == ErrAlreadyExists {
 			continue
 		}
 		if err != nil {
@@ -724,6 +724,7 @@ func BenchmarkAddRule(b *testing.B) {
 		err := d.AddRule(rule, 0)
 		switch err {
 		case nil:
+		case ErrAlreadyExists: // ignore rules which were already added
 		case ErrInvalidSyntax: // ignore invalid syntax
 		default:
 			b.Fatalf("Error while adding rule %s: %s", rule, err)
@@ -743,6 +744,7 @@ func BenchmarkAddRuleParallel(b *testing.B) {
 		}
 		switch err {
 		case nil:
+		case ErrAlreadyExists: // ignore rules which were already added
 		case ErrInvalidSyntax: // ignore invalid syntax
 		default:
 			b.Fatalf("Error while adding rule %s: %s", rule, err)

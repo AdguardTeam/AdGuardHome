@@ -149,11 +149,13 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 			text := scanner.Text()
 
 			err = p.d.AddRule(text, uint32(i))
-			if err == dnsfilter.ErrInvalidSyntax {
+			if err == dnsfilter.ErrAlreadyExists || err == dnsfilter.ErrInvalidSyntax {
 				continue
 			}
 			if err != nil {
-				return nil, err
+				log.Printf("Cannot add rule %s: %s", text, err)
+				// Just ignore invalid rules
+				continue
 			}
 			count++
 		}
