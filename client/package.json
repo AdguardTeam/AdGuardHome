@@ -30,7 +30,6 @@
     "redux-actions": "^2.4.0",
     "redux-thunk": "^2.3.0",
     "svg-url-loader": "^2.3.2",
-    "tiny-version-compare": "^0.9.1",
     "whatwg-fetch": "2.0.3"
   },
   "devDependencies": {
