@@ -500,11 +500,11 @@ func (rule *rule) match(host string) (Result, error) {
 		res.Reason = FilteredBlackList
 		res.IsFiltered = true
 		res.FilterID = rule.listID
+		res.Rule = rule.originalText
 		if rule.isWhitelist {
 			res.Reason = NotFilteredWhiteList
 			res.IsFiltered = false
 		}
-		res.Rule = rule.text
 	}
 	return res, nil
 }
