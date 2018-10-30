@@ -185,7 +185,7 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 			}
 			count++
 		}
-		log.Printf("Added %d rules from %d", count, filter.ID)
+		log.Printf("Added %d rules from filter ID=%d", count, filter.ID)
 
 		if err = scanner.Err(); err != nil {
 			return nil, err

@@ -15,17 +15,26 @@ import (
 	"github.com/miekg/dns"
 )
 
-// TODO: Change tests -- there's new config template now
 func TestSetup(t *testing.T) {
 	for i, testcase := range []struct {
 		config  string
 		failing bool
 	}{
 		{`dnsfilter`, false},
-		{`dnsfilter /dev/nonexistent/abcdef`, true},
-		{`dnsfilter ../tests/dns.txt`, false},
-		{`dnsfilter ../tests/dns.txt { safebrowsing }`, false},
-		{`dnsfilter ../tests/dns.txt { parental }`, true},
+		{`dnsfilter { 
+					filter 0 /dev/nonexistent/abcdef
+				}`, true},
+		{`dnsfilter { 
+					filter 0 ../tests/dns.txt
+				}`, false},
+		{`dnsfilter { 
+					safebrowsing
+					filter 0 ../tests/dns.txt 
+				}`, false},
+		{`dnsfilter { 
+					parental
+					filter 0 ../tests/dns.txt
+				}`, true},
 	} {
 		c := caddy.NewTestController("dns", testcase.config)
 		err := setup(c)
@@ -56,7 +65,8 @@ func TestEtcHostsFilter(t *testing.T) {
 
 	defer os.Remove(tmpfile.Name())
 
-	c := caddy.NewTestController("dns", fmt.Sprintf("dnsfilter %s", tmpfile.Name()))
+	configText := fmt.Sprintf("dnsfilter {\nfilter 0 %s\n}", tmpfile.Name())
+	c := caddy.NewTestController("dns", configText)
 	p, err := setupPlugin(c)
 	if err != nil {
 		t.Fatal(err)

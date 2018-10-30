@@ -244,10 +244,9 @@ func generateCoreDNSConfigText() (string, error) {
 	// first of all, append the user filter
 	userFilter := getUserFilter()
 
-	// TODO: Don't add if empty
-	//if len(userFilter.contents) > 0 {
-	filters = append(filters, coreDnsFilter{ID: userFilter.ID, Path: userFilter.getFilterFilePath()})
-	//}
+	if len(userFilter.contents) > 0 {
+		filters = append(filters, coreDnsFilter{ID: userFilter.ID, Path: userFilter.getFilterFilePath()})
+	}
 
 	// then go through other filters
 	for i := range config.Filters {

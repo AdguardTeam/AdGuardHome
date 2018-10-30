@@ -149,6 +149,7 @@ func main() {
 		filter := &config.Filters[i]
 		err = filter.load()
 		if err != nil {
+			// This is okay for the first start, the filter will be loaded later
 			log.Printf("Couldn't load filter %d contents due to %s", filter.ID, err)
 		}
 	}
@@ -264,7 +265,7 @@ func upgradeConfig() error {
 	}
 
 	if config.SchemaVersion > SchemaVersion {
-		// Unexpected -- config file is newer than the
+		// Unexpected -- the config file is newer than we expect
 		return fmt.Errorf("configuration file is supposed to be used with a newer version of AdGuard Home, schema=%d", config.SchemaVersion)
 	}
 
