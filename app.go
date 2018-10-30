@@ -119,6 +119,8 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		// override bind host/port from the console
 		if bindHost != nil {
 			config.BindHost = *bindHost
 		}
@@ -156,7 +158,7 @@ func main() {
 
 	address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
 
-	runFilterRefreshers()
+	runFiltersUpdatesTimer()
 
 	http.Handle("/", optionalAuthHandler(http.FileServer(box)))
 	registerControlHandlers()
@@ -306,6 +308,12 @@ func upgradeConfigSchema(oldVersion int, newVersion int) error {
 
 			// Forcibly update the filter
 			_, err := filter.update(true)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// Saving it to the filters dir now
+			err = filter.save()
 			if err != nil {
 				log.Fatal(err)
 			}

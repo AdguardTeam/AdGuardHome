@@ -499,6 +499,7 @@ func (rule *rule) match(host string) (Result, error) {
 	if matched {
 		res.Reason = FilteredBlackList
 		res.IsFiltered = true
+		res.FilterID = rule.listID
 		if rule.isWhitelist {
 			res.Reason = NotFilteredWhiteList
 			res.IsFiltered = false

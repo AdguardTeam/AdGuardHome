@@ -25,7 +25,6 @@ const (
 	queryLogFileName       = "querylog.json" // .gz added during compression
 	queryLogSize           = 5000            // maximum API response for /querylog
 	queryLogTopSize        = 500             // Keep in memory only top N values
-	queryLogAPIPort        = "8618"          // 8618 is sha512sum of "querylog" then each byte summed
 )
 
 var (
@@ -34,7 +33,6 @@ var (
 
 	queryLogCache []*logEntry
 	queryLogLock  sync.RWMutex
-	queryLogTime  time.Time
 )
 
 type logEntry struct {
@@ -107,6 +105,7 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result dnsfilter.Result, ela
 	}
 }
 
+//noinspection GoUnusedParameter
 func HandleQueryLog(w http.ResponseWriter, r *http.Request) {
 	queryLogLock.RLock()
 	values := make([]*logEntry, len(queryLogCache))
@@ -140,14 +139,14 @@ func HandleQueryLog(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		jsonentry := map[string]interface{}{
+		jsonEntry := map[string]interface{}{
 			"reason":     entry.Result.Reason.String(),
-			"elapsed_ms": strconv.FormatFloat(entry.Elapsed.Seconds()*1000, 'f', -1, 64),
+			"elapsedMs": strconv.FormatFloat(entry.Elapsed.Seconds()*1000, 'f', -1, 64),
 			"time":       entry.Time.Format(time.RFC3339),
 			"client":     entry.IP,
 		}
 		if q != nil {
-			jsonentry["question"] = map[string]interface{}{
+			jsonEntry["question"] = map[string]interface{}{
 				"host":  strings.ToLower(strings.TrimSuffix(q.Question[0].Name, ".")),
 				"type":  dns.Type(q.Question[0].Qtype).String(),
 				"class": dns.Class(q.Question[0].Qclass).String(),
@@ -156,10 +155,11 @@ func HandleQueryLog(w http.ResponseWriter, r *http.Request) {
 
 		if a != nil {
 			status, _ := response.Typify(a, time.Now().UTC())
-			jsonentry["status"] = status.String()
+			jsonEntry["status"] = status.String()
 		}
 		if len(entry.Result.Rule) > 0 {
-			jsonentry["rule"] = entry.Result.Rule
+			jsonEntry["rule"] = entry.Result.Rule
+			jsonEntry["filterId"] = entry.Result.FilterID
 		}
 
 		if a != nil && len(a.Answer) > 0 {
@@ -202,26 +202,26 @@ func HandleQueryLog(w http.ResponseWriter, r *http.Request) {
 				}
 				answers = append(answers, answer)
 			}
-			jsonentry["answer"] = answers
+			jsonEntry["answer"] = answers
 		}
 
-		data = append(data, jsonentry)
+		data = append(data, jsonEntry)
 	}
 
 	jsonVal, err := json.Marshal(data)
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't marshal data into json: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
+		errorText := fmt.Sprintf("Couldn't marshal data into json: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(jsonVal)
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to write response json: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
+		errorText := fmt.Sprintf("Unable to write response json: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
 	}
 }
 

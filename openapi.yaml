@@ -92,7 +92,7 @@ paths:
                               - ttl: 55
                                 type: A
                                 value: 217.69.139.200
-                              elapsed_ms: '65.469556'
+                              elapsedMs: '65.469556'
                               question:
                                 class: IN
                                 host: mail.ru
@@ -100,7 +100,7 @@ paths:
                               reason: DNSFILTER_NOTFILTERED_NOTFOUND
                               status: NOERROR
                               time: '2018-07-16T22:24:02+03:00'
-                            - elapsed_ms: '0.15716999999999998'
+                            - elapsedMs: '0.15716999999999998'
                               question:
                                 class: IN
                                 host: doubleclick.net
@@ -113,13 +113,14 @@ paths:
                               - ttl: 299
                                 type: A
                                 value: 176.103.133.78
-                              elapsed_ms: '132.110929'
+                              elapsedMs: '132.110929'
                               question:
                                 class: IN
                                 host: wmconvirus.narod.ru
                                 type: A
                               reason: DNSFILTER_FILTERED_SAFEBROWSING
                               rule: adguard-malware-shavar
+                              filterId: 1
                               status: NOERROR
                               time: '2018-07-16T22:24:02+03:00'
     /querylog_enable:
@@ -448,9 +449,13 @@ paths:
                     examples:
                         application/json:
                             enabled: false
-                            urls:
-                                - 'https://filters.adtidy.org/windows/filters/1.txt'
-                                - 'https://filters.adtidy.org/windows/filters/2.txt'
+                            - filters:
+                              enabled: true
+                              id: 1
+                              lastUpdated: "2018-10-30T12:18:57.223101822+03:00"
+                              name: "AdGuard Simplified Domain Names filter"
+                              rulesCount: 24896
+                              url: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"
                             rules:
                                 - '@@||yandex.ru^|'
     /filtering/set_rules:

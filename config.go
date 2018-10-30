@@ -20,10 +20,15 @@ const SchemaVersion = 1
 // Directory where we'll store all downloaded filters contents
 const FiltersDir = "filters"
 
+// Just a counter that we use for incrementing the filter ID
+var NextFilterId int
+
 // configuration is loaded from YAML
 type configuration struct {
+	// Config filename (can be overriden via the command line arguments)
 	ourConfigFilename string
-	ourBinaryDir      string
+	// Basically, this is our working directory
+	ourBinaryDir string
 	// Directory to store data (i.e. filters contents)
 	ourDataDir string
 
@@ -65,13 +70,13 @@ type coreDNSConfig struct {
 }
 
 type filter struct {
-	ID          int    `json:"ID"` // auto-assigned when filter is added
+	ID          int    `json:"id" yaml:"id"` // auto-assigned when filter is added (see NextFilterId)
 	URL         string `json:"url"`
 	Name        string `json:"name" yaml:"name"`
 	Enabled     bool   `json:"enabled"`
-	RulesCount  int    `json:"rules_count" yaml:"-"`
+	RulesCount  int    `json:"rulesCount" yaml:"-"`
 	contents    []byte
-	LastUpdated time.Time `json:"last_updated" yaml:"-"`
+	LastUpdated time.Time `json:"lastUpdated" yaml:"last_updated"`
 }
 
 var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
@@ -107,7 +112,7 @@ var config = configuration{
 func getUserFilter() filter {
 
 	// TODO: This should be calculated when UserRules are set
-	contents := []byte{}
+	var contents []byte
 	for _, rule := range config.UserRules {
 		contents = append(contents, []byte(rule)...)
 		contents = append(contents, '\n')
@@ -123,15 +128,16 @@ func getUserFilter() filter {
 	return userFilter
 }
 
+// Loads configuration from the YAML file
 func parseConfig() error {
-	configfile := filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
-	log.Printf("Reading YAML file: %s", configfile)
-	if _, err := os.Stat(configfile); os.IsNotExist(err) {
+	configFile := filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
+	log.Printf("Reading YAML file: %s", configFile)
+	if _, err := os.Stat(configFile); os.IsNotExist(err) {
 		// do nothing, file doesn't exist
-		log.Printf("YAML file doesn't exist, skipping: %s", configfile)
+		log.Printf("YAML file doesn't exist, skipping: %s", configFile)
 		return nil
 	}
-	yamlFile, err := ioutil.ReadFile(configfile)
+	yamlFile, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		log.Printf("Couldn't read config file: %s", err)
 		return err
@@ -142,18 +148,42 @@ func parseConfig() error {
 		return err
 	}
 
+	// Deduplicate filters
+	{
+		i := 0 // output index, used for deletion later
+		urls := map[string]bool{}
+		for _, filter := range config.Filters {
+			if _, ok := urls[filter.URL]; !ok {
+				// we didn't see it before, keep it
+				urls[filter.URL] = true // remember the URL
+				config.Filters[i] = filter
+				i++
+			}
+		}
+		// all entries we want to keep are at front, delete the rest
+		config.Filters = config.Filters[:i]
+	}
+
+	// Set the next filter ID to max(filter.ID) + 1
+	for i := range config.Filters {
+		if NextFilterId < config.Filters[i].ID {
+			NextFilterId = config.Filters[i].ID + 1
+		}
+	}
+
 	return nil
 }
 
+// Saves configuration to the YAML file and also saves the user filter contents to a file
 func writeConfig() error {
-	configfile := filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
-	log.Printf("Writing YAML file: %s", configfile)
+	configFile := filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
+	log.Printf("Writing YAML file: %s", configFile)
 	yamlText, err := yaml.Marshal(&config)
 	if err != nil {
 		log.Printf("Couldn't generate YAML file: %s", err)
 		return err
 	}
-	err = writeFileSafe(configfile, yamlText)
+	err = writeFileSafe(configFile, yamlText)
 	if err != nil {
 		log.Printf("Couldn't save YAML config: %s", err)
 		return err
@@ -173,14 +203,14 @@ func writeConfig() error {
 // coredns config
 // --------------
 func writeCoreDNSConfig() error {
-	corefile := filepath.Join(config.ourBinaryDir, config.CoreDNS.coreFile)
-	log.Printf("Writing DNS config: %s", corefile)
-	configtext, err := generateCoreDNSConfigText()
+	coreFile := filepath.Join(config.ourBinaryDir, config.CoreDNS.coreFile)
+	log.Printf("Writing DNS config: %s", coreFile)
+	configText, err := generateCoreDNSConfigText()
 	if err != nil {
 		log.Printf("Couldn't generate DNS config: %s", err)
 		return err
 	}
-	err = writeFileSafe(corefile, []byte(configtext))
+	err = writeFileSafe(coreFile, []byte(configText))
 	if err != nil {
 		log.Printf("Couldn't save DNS config: %s", err)
 		return err
@@ -227,7 +257,7 @@ const coreDNSConfigTemplate = `.:{{.Port}} {
 
 var removeEmptyLines = regexp.MustCompile("([\t ]*\n)+")
 
-// generate config text
+// generate CoreDNS config text
 func generateCoreDNSConfigText() (string, error) {
 	t, err := template.New("config").Parse(coreDNSConfigTemplate)
 	if err != nil {
@@ -264,9 +294,9 @@ func generateCoreDNSConfigText() (string, error) {
 		log.Printf("Couldn't generate DNS config: %s", err)
 		return "", err
 	}
-	configtext := configBytes.String()
+	configText := configBytes.String()
 
 	// remove empty lines from generated config
-	configtext = removeEmptyLines.ReplaceAllString(configtext, "\n")
-	return configtext, nil
+	configText = removeEmptyLines.ReplaceAllString(configText, "\n")
+	return configText, nil
 }

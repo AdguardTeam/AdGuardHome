@@ -64,7 +64,7 @@ export const normalizeFilteringStatus = (filteringStatus) => {
     const { enabled, filters, user_rules: userRules } = filteringStatus;
     const newFilters = filters ? filters.map((filter) => {
         const {
-            url, enabled, last_updated: lastUpdated = Date.now(), name = 'Default name', rules_count: rulesCount = 0,
+            url, enabled, lastUpdated: lastUpdated = Date.now(), name = 'Default name', rulesCount: rulesCount = 0,
         } = filter;
 
         return {
