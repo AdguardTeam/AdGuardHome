@@ -18,6 +18,7 @@ export const normalizeLogs = logs => logs.map((log) => {
         answer: response,
         reason,
         client,
+        filterId,
         rule,
     } = log;
     const { host: domain, type } = question;
@@ -32,6 +33,7 @@ export const normalizeLogs = logs => logs.map((log) => {
         response: responsesArray,
         reason,
         client,
+        filterId,
         rule,
     };
 });
@@ -64,11 +66,11 @@ export const normalizeFilteringStatus = (filteringStatus) => {
     const { enabled, filters, user_rules: userRules } = filteringStatus;
     const newFilters = filters ? filters.map((filter) => {
         const {
-            url, enabled, lastUpdated: lastUpdated = Date.now(), name = 'Default name', rulesCount: rulesCount = 0,
+            id, url, enabled, lastUpdated: lastUpdated = Date.now(), name = 'Default name', rulesCount: rulesCount = 0,
         } = filter;
 
         return {
-            url, enabled, lastUpdated: formatTime(lastUpdated), name, rulesCount,
+            id, url, enabled, lastUpdated: formatTime(lastUpdated), name, rulesCount,
         };
     }) : [];
     const newUserRules = Array.isArray(userRules) ? userRules.join('\n') : '';
