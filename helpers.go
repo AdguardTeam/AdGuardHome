@@ -5,21 +5,39 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 )
 
-func clamp(value, low, high int) int {
-	if value < low {
-		return low
+// ----------------------------------
+// helper functions for working with files
+// ----------------------------------
+
+// Writes data first to a temporary file and then renames it to what's specified in path
+func writeFileSafe(path string, data []byte) error {
+
+	dir := filepath.Dir(path)
+	err := os.MkdirAll(dir, 0755)
+	if err != nil {
+		return err
 	}
-	if value > high {
-		return high
+
+	tmpPath := path + ".tmp"
+	err = ioutil.WriteFile(tmpPath, data, 0644)
+	if err != nil {
+		return err
 	}
-	return value
+	err = os.Rename(tmpPath, path)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // ----------------------------------
@@ -117,13 +135,6 @@ func parseParametersFromBody(r io.Reader) (map[string]string, error) {
 // ---------------------
 // debug logging helpers
 // ---------------------
-func _Func() string {
-	pc := make([]uintptr, 10) // at least 1 entry needed
-	runtime.Callers(2, pc)
-	f := runtime.FuncForPC(pc[0])
-	return path.Base(f.Name())
-}
-
 func trace(format string, args ...interface{}) {
 	pc := make([]uintptr, 10) // at least 1 entry needed
 	runtime.Callers(2, pc)

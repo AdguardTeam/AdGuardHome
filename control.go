@@ -15,15 +15,14 @@ import (
 	"strings"
 	"time"
 
-	coredns_plugin "github.com/AdguardTeam/AdGuardHome/coredns_plugin"
-	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
+	corednsplugin "github.com/AdguardTeam/AdGuardHome/coredns_plugin"
 	"github.com/miekg/dns"
 	"gopkg.in/asaskevich/govalidator.v4"
 )
 
 const updatePeriod = time.Minute * 30
 
-var filterTitle = regexp.MustCompile(`^! Title: +(.*)$`)
+var filterTitleRegexp = regexp.MustCompile(`^! Title: +(.*)$`)
 
 // cached version.json to avoid hammering github.io for each page reload
 var versionCheckJSON []byte
@@ -40,7 +39,7 @@ var client = &http.Client{
 // coredns run control
 // -------------------
 func tellCoreDNSToReload() {
-	coredns_plugin.Reload <- true
+	corednsplugin.Reload <- true
 }
 
 func writeAllConfigsAndReloadCoreDNS() error {
@@ -64,6 +63,7 @@ func httpUpdateConfigReloadDNSReturnOK(w http.ResponseWriter, r *http.Request) {
 	returnOK(w, r)
 }
 
+//noinspection GoUnusedParameter
 func returnOK(w http.ResponseWriter, r *http.Request) {
 	_, err := fmt.Fprintf(w, "OK\n")
 	if err != nil {
@@ -73,6 +73,7 @@ func returnOK(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//noinspection GoUnusedParameter
 func handleStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"dns_address":        config.BindHost,
@@ -237,7 +238,7 @@ func checkDNS(input string) error {
 
 	resp, rtt, err := c.Exchange(&req, host)
 	if err != nil {
-		return fmt.Errorf("Couldn't communicate with DNS server %s: %s", input, err)
+		return fmt.Errorf("couldn't communicate with DNS server %s: %s", input, err)
 	}
 	trace("exchange with %s took %v", input, rtt)
 	if len(resp.Answer) != 1 {
@@ -254,7 +255,7 @@ func checkDNS(input string) error {
 
 func sanitiseDNSServers(input string) ([]string, error) {
 	fields := strings.Fields(input)
-	hosts := []string{}
+	hosts := make([]string, 0)
 	for _, field := range fields {
 		sanitized, err := sanitizeDNSServer(field)
 		if err != nil {
@@ -292,7 +293,7 @@ func sanitizeDNSServer(input string) (string, error) {
 		}
 		ip := net.ParseIP(h)
 		if ip == nil {
-			return "", fmt.Errorf("Invalid DNS server field: %s", h)
+			return "", fmt.Errorf("invalid DNS server field: %s", h)
 		}
 	}
 	return prefix + host, nil
@@ -311,6 +312,7 @@ func appendPortIfMissing(prefix, input string) string {
 	return net.JoinHostPort(input, port)
 }
 
+//noinspection GoUnusedParameter
 func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 	if now.Sub(versionCheckLastTime) <= versionCheckPeriod && len(versionCheckJSON) != 0 {
@@ -366,6 +368,7 @@ func handleFilteringDisable(w http.ResponseWriter, r *http.Request) {
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
+//noinspection GoUnusedParameter
 func handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"enabled": config.CoreDNS.FilteringEnabled,
@@ -395,6 +398,7 @@ func handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
+
 	filter := filter{}
 	err := json.NewDecoder(r.Body).Decode(&filter)
 	if err != nil {
@@ -402,7 +406,6 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filter.Enabled = true
 	if len(filter.URL) == 0 {
 		http.Error(w, "URL parameter was not specified", 400)
 		return
@@ -413,33 +416,48 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// check for duplicates
+	// Check for duplicates
 	for i := range config.Filters {
 		if config.Filters[i].URL == filter.URL {
-			errortext := fmt.Sprintf("Filter URL already added -- %s", filter.URL)
-			log.Println(errortext)
-			http.Error(w, errortext, http.StatusBadRequest)
+			errorText := fmt.Sprintf("Filter URL already added -- %s", filter.URL)
+			log.Println(errorText)
+			http.Error(w, errorText, http.StatusBadRequest)
 			return
 		}
 	}
 
-	ok, err := filter.update(time.Now())
+	// Set necessary properties
+	filter.ID = NextFilterId
+	filter.Enabled = true
+	NextFilterId++
+
+	// Download the filter contents
+	ok, err := filter.update(true)
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't fetch filter from url %s: %s", filter.URL, err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusBadRequest)
+		errorText := fmt.Sprintf("Couldn't fetch filter from url %s: %s", filter.URL, err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusBadRequest)
 		return
 	}
 	if filter.RulesCount == 0 {
-		errortext := fmt.Sprintf("Filter at url %s has no rules (maybe it points to blank page?)", filter.URL)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusBadRequest)
+		errorText := fmt.Sprintf("Filter at the url %s has no rules (maybe it points to blank page?)", filter.URL)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusBadRequest)
 		return
 	}
 	if !ok {
-		errortext := fmt.Sprintf("Filter at url %s is invalid (maybe it points to blank page?)", filter.URL)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusBadRequest)
+		errorText := fmt.Sprintf("Filter at the url %s is invalid (maybe it points to blank page?)", filter.URL)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusBadRequest)
+		return
+	}
+
+	// Save the filter contents
+	err = filter.save()
+	if err != nil {
+		errorText := fmt.Sprintf("Failed to save filter %d due to %s", filter.ID, err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusBadRequest)
 		return
 	}
 
@@ -447,33 +465,28 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 	config.Filters = append(config.Filters, filter)
 	err = writeAllConfigs()
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write config file: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
+		errorText := fmt.Sprintf("Couldn't write config file: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
 		return
 	}
-	err = writeFilterFile()
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write filter file: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
-		return
-	}
+
 	tellCoreDNSToReload()
+
 	_, err = fmt.Fprintf(w, "OK %d rules\n", filter.RulesCount)
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
+		errorText := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
 	}
 }
 
 func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 	parameters, err := parseParametersFromBody(r.Body)
 	if err != nil {
-		errortext := fmt.Sprintf("failed to parse parameters from body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 400)
+		errorText := fmt.Sprintf("failed to parse parameters from body: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 400)
 		return
 	}
 
@@ -493,25 +506,27 @@ func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 	for _, filter := range config.Filters {
 		if filter.URL != url {
 			newFilters = append(newFilters, filter)
+		} else {
+			// Remove the filter file
+			err := os.Remove(filter.getFilterFilePath())
+			if err != nil {
+				errorText := fmt.Sprintf("Couldn't remove the filter file: %s", err)
+				http.Error(w, errorText, http.StatusInternalServerError)
+				return
+			}
 		}
 	}
+	// Update the configuration after removing filter files
 	config.Filters = newFilters
-	err = writeFilterFile()
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write filter file: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
-		return
-	}
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleFilteringEnableURL(w http.ResponseWriter, r *http.Request) {
 	parameters, err := parseParametersFromBody(r.Body)
 	if err != nil {
-		errortext := fmt.Sprintf("failed to parse parameters from body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 400)
+		errorText := fmt.Sprintf("failed to parse parameters from body: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 400)
 		return
 	}
 
@@ -541,23 +556,16 @@ func handleFilteringEnableURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// kick off refresh of rules from new URLs
-	refreshFiltersIfNeccessary()
-	err = writeFilterFile()
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write filter file: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
-		return
-	}
+	checkFiltersUpdates(false)
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleFilteringDisableURL(w http.ResponseWriter, r *http.Request) {
 	parameters, err := parseParametersFromBody(r.Body)
 	if err != nil {
-		errortext := fmt.Sprintf("failed to parse parameters from body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 400)
+		errorText := fmt.Sprintf("failed to parse parameters from body: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 400)
 		return
 	}
 
@@ -586,116 +594,108 @@ func handleFilteringDisableURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = writeFilterFile()
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write filter file: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
-		return
-	}
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		errortext := fmt.Sprintf("Failed to read request body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 400)
+		errorText := fmt.Sprintf("Failed to read request body: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 400)
 		return
 	}
 
 	config.UserRules = strings.Split(string(body), "\n")
-	err = writeFilterFile()
-	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write filter file: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
-		return
-	}
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleFilteringRefresh(w http.ResponseWriter, r *http.Request) {
 	force := r.URL.Query().Get("force")
-	if force != "" {
-		config.Lock()
-		for i := range config.Filters {
-			filter := &config.Filters[i] // otherwise we will be operating on a copy
-			filter.LastUpdated = time.Unix(0, 0)
-		}
-		config.Unlock() // not defer because refreshFiltersIfNeccessary locks it too
-	}
-	updated := refreshFiltersIfNeccessary()
+	updated := checkFiltersUpdates(force != "")
 	fmt.Fprintf(w, "OK %d filters updated\n", updated)
 }
 
-func runFilterRefreshers() {
+// Sets up a timer that will be checking for filters updates periodically
+func runFiltersUpdatesTimer() {
 	go func() {
-		for range time.Tick(time.Second) {
-			refreshFiltersIfNeccessary()
+		for range time.Tick(time.Minute) {
+			checkFiltersUpdates(false)
 		}
 	}()
 }
 
-func refreshFiltersIfNeccessary() int {
-	now := time.Now()
+// Checks filters updates if necessary
+// If force is true, it ignores the filter.LastUpdated field value
+func checkFiltersUpdates(force bool) int {
 	config.Lock()
-
-	// deduplicate
-	// TODO: move it somewhere else
-	{
-		i := 0 // output index, used for deletion later
-		urls := map[string]bool{}
-		for _, filter := range config.Filters {
-			if _, ok := urls[filter.URL]; !ok {
-				// we didn't see it before, keep it
-				urls[filter.URL] = true // remember the URL
-				config.Filters[i] = filter
-				i++
-			}
-		}
-		// all entries we want to keep are at front, delete the rest
-		config.Filters = config.Filters[:i]
-	}
 
 	// fetch URLs
 	updateCount := 0
 	for i := range config.Filters {
 		filter := &config.Filters[i] // otherwise we will be operating on a copy
-		updated, err := filter.update(now)
+		updated, err := filter.update(force)
 		if err != nil {
 			log.Printf("Failed to update filter %s: %s\n", filter.URL, err)
 			continue
 		}
 		if updated {
+			// Saving it to the filters dir now
+			err = filter.save()
+			if err != nil {
+				log.Printf("Failed to save the updated filter %d: %s", filter.ID, err)
+				continue
+			}
+
 			updateCount++
 		}
 	}
 	config.Unlock()
 
 	if updateCount > 0 {
-		err := writeFilterFile()
-		if err != nil {
-			errortext := fmt.Sprintf("Couldn't write filter file: %s", err)
-			log.Println(errortext)
-		}
 		tellCoreDNSToReload()
 	}
 	return updateCount
 }
 
-func (filter *filter) update(now time.Time) (bool, error) {
+// A helper function that parses filter contents and returns a number of rules and a filter name (if there's any)
+func parseFilterContents(contents []byte) (int, string) {
+	lines := strings.Split(string(contents), "\n")
+	rulesCount := 0
+	name := ""
+	seenTitle := false
+
+	// Count lines in the filter
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if len(line) > 0 && line[0] == '!' {
+			if m := filterTitleRegexp.FindAllStringSubmatch(line, -1); len(m) > 0 && len(m[0]) >= 2 && !seenTitle {
+				name = m[0][1]
+				seenTitle = true
+			}
+		} else if len(line) != 0 {
+			rulesCount++
+		}
+	}
+
+	return rulesCount, name
+}
+
+// Checks for filters updates
+// If "force" is true -- does not check the filter's LastUpdated field
+// Call "save" to persist the filter contents
+func (filter *filter) update(force bool) (bool, error) {
 	if !filter.Enabled {
 		return false, nil
 	}
-	elapsed := time.Since(filter.LastUpdated)
-	if elapsed <= updatePeriod {
+	if !force && time.Since(filter.LastUpdated) <= updatePeriod {
 		return false, nil
 	}
 
-	// use same update period for failed filter downloads to avoid flooding with requests
-	filter.LastUpdated = now
+	log.Printf("Downloading update for filter %d from %s", filter.ID, filter.URL)
+
+	// use the same update period for failed filter downloads to avoid flooding with requests
+	filter.LastUpdated = time.Now()
 
 	resp, err := client.Get(filter.URL)
 	if resp != nil && resp.Body != nil {
@@ -706,9 +706,15 @@ func (filter *filter) update(now time.Time) (bool, error) {
 		return false, err
 	}
 
-	if resp.StatusCode >= 400 {
+	if resp.StatusCode != 200 {
 		log.Printf("Got status code %d from URL %s, skipping", resp.StatusCode, filter.URL)
-		return false, fmt.Errorf("Got status code >= 400: %d", resp.StatusCode)
+		return false, fmt.Errorf("got status code != 200: %d", resp.StatusCode)
+	}
+
+	contentType := strings.ToLower(resp.Header.Get("content-type"))
+	if !strings.HasPrefix(contentType, "text/plain") {
+		log.Printf("Non-text response %s from %s, skipping", contentType, filter.URL)
+		return false, fmt.Errorf("non-text response %s", contentType)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -717,72 +723,74 @@ func (filter *filter) update(now time.Time) (bool, error) {
 		return false, err
 	}
 
-	// extract filter name and count number of rules
-	lines := strings.Split(string(body), "\n")
-	rulesCount := 0
-	seenTitle := false
-	d := dnsfilter.New()
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if len(line) > 0 && line[0] == '!' {
-			if m := filterTitle.FindAllStringSubmatch(line, -1); len(m) > 0 && len(m[0]) >= 2 && !seenTitle {
-				filter.Name = m[0][1]
-				seenTitle = true
-			}
-		} else if len(line) != 0 {
-			err = d.AddRule(line, 0)
-			if err == dnsfilter.ErrAlreadyExists || err == dnsfilter.ErrInvalidSyntax {
-				continue
-			}
-			if err != nil {
-				log.Printf("Cannot add rule %s from %s: %s", line, filter.URL, err)
-				// Just ignore invalid rules
-				continue
-			}
-			rulesCount++
-		}
+	// Extract filter name and count number of rules
+	rulesCount, filterName := parseFilterContents(body)
+
+	if filterName != "" {
+		filter.Name = filterName
 	}
+
+	// Check if the filter has been really changed
 	if bytes.Equal(filter.contents, body) {
+		log.Printf("The filter %d text has not changed", filter.ID)
 		return false, nil
 	}
-	log.Printf("Filter %s updated: %d bytes, %d rules", filter.URL, len(body), rulesCount)
+
+	log.Printf("Filter %d has been updated: %d bytes, %d rules", filter.ID, len(body), rulesCount)
 	filter.RulesCount = rulesCount
 	filter.contents = body
+
 	return true, nil
 }
 
-// write filter file
-func writeFilterFile() error {
-	filterpath := filepath.Join(config.ourBinaryDir, config.CoreDNS.FilterFile)
-	log.Printf("Writing filter file: %s", filterpath)
-	// TODO: check if file contents have modified
-	data := []byte{}
-	config.RLock()
-	filters := config.Filters
-	for _, filter := range filters {
-		if !filter.Enabled {
-			continue
-		}
-		data = append(data, filter.contents...)
-		data = append(data, '\n')
-	}
-	for _, rule := range config.UserRules {
-		data = append(data, []byte(rule)...)
-		data = append(data, '\n')
-	}
-	config.RUnlock()
-	err := ioutil.WriteFile(filterpath+".tmp", data, 0644)
+// saves filter contents to the file in config.ourDataDir
+func (filter *filter) save() error {
+
+	filterFilePath := filter.getFilterFilePath()
+	log.Printf("Saving filter %d contents to: %s", filter.ID, filterFilePath)
+
+	err := writeFileSafe(filterFilePath, filter.contents)
 	if err != nil {
-		log.Printf("Couldn't write filter file: %s", err)
 		return err
 	}
 
-	err = os.Rename(filterpath+".tmp", filterpath)
-	if err != nil {
-		log.Printf("Couldn't rename filter file: %s", err)
+	return nil
+}
+
+// loads filter contents from the file in config.ourDataDir
+func (filter *filter) load() error {
+
+	if !filter.Enabled {
+		// No need to load a filter that is not enabled
+		return nil
+	}
+
+	filterFilePath := filter.getFilterFilePath()
+	log.Printf("Loading filter %d contents to: %s", filter.ID, filterFilePath)
+
+	if _, err := os.Stat(filterFilePath); os.IsNotExist(err) {
+		// do nothing, file doesn't exist
 		return err
 	}
+
+	filterFileContents, err := ioutil.ReadFile(filterFilePath)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Filter %d length is %d", filter.ID, len(filterFileContents))
+	filter.contents = filterFileContents
+
+	// Now extract the rules count
+	rulesCount, _ := parseFilterContents(filter.contents)
+	filter.RulesCount = rulesCount
+
 	return nil
+}
+
+// Path to the filter contents
+func (filter *filter) getFilterFilePath() string {
+	return filepath.Join(config.ourBinaryDir, config.ourDataDir, FiltersDir, strconv.FormatInt(filter.ID, 10)+".txt")
 }
 
 // ------------
@@ -799,6 +807,7 @@ func handleSafeBrowsingDisable(w http.ResponseWriter, r *http.Request) {
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
+//noinspection GoUnusedParameter
 func handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"enabled": config.CoreDNS.SafeBrowsingEnabled,
@@ -874,6 +883,7 @@ func handleParentalDisable(w http.ResponseWriter, r *http.Request) {
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
+//noinspection GoUnusedParameter
 func handleParentalStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"enabled": config.CoreDNS.ParentalEnabled,
@@ -913,6 +923,7 @@ func handleSafeSearchDisable(w http.ResponseWriter, r *http.Request) {
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
+//noinspection GoUnusedParameter
 func handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"enabled": config.CoreDNS.SafeSearchEnabled,
@@ -939,15 +950,15 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/status", optionalAuth(ensureGET(handleStatus)))
 	http.HandleFunc("/control/enable_protection", optionalAuth(ensurePOST(handleProtectionEnable)))
 	http.HandleFunc("/control/disable_protection", optionalAuth(ensurePOST(handleProtectionDisable)))
-	http.HandleFunc("/control/querylog", optionalAuth(ensureGET(coredns_plugin.HandleQueryLog)))
+	http.HandleFunc("/control/querylog", optionalAuth(ensureGET(corednsplugin.HandleQueryLog)))
 	http.HandleFunc("/control/querylog_enable", optionalAuth(ensurePOST(handleQueryLogEnable)))
 	http.HandleFunc("/control/querylog_disable", optionalAuth(ensurePOST(handleQueryLogDisable)))
 	http.HandleFunc("/control/set_upstream_dns", optionalAuth(ensurePOST(handleSetUpstreamDNS)))
 	http.HandleFunc("/control/test_upstream_dns", optionalAuth(ensurePOST(handleTestUpstreamDNS)))
-	http.HandleFunc("/control/stats_top", optionalAuth(ensureGET(coredns_plugin.HandleStatsTop)))
-	http.HandleFunc("/control/stats", optionalAuth(ensureGET(coredns_plugin.HandleStats)))
-	http.HandleFunc("/control/stats_history", optionalAuth(ensureGET(coredns_plugin.HandleStatsHistory)))
-	http.HandleFunc("/control/stats_reset", optionalAuth(ensurePOST(coredns_plugin.HandleStatsReset)))
+	http.HandleFunc("/control/stats_top", optionalAuth(ensureGET(corednsplugin.HandleStatsTop)))
+	http.HandleFunc("/control/stats", optionalAuth(ensureGET(corednsplugin.HandleStats)))
+	http.HandleFunc("/control/stats_history", optionalAuth(ensureGET(corednsplugin.HandleStatsHistory)))
+	http.HandleFunc("/control/stats_reset", optionalAuth(ensurePOST(corednsplugin.HandleStatsReset)))
 	http.HandleFunc("/control/version.json", optionalAuth(handleGetVersionJSON))
 	http.HandleFunc("/control/filtering/enable", optionalAuth(ensurePOST(handleFilteringEnable)))
 	http.HandleFunc("/control/filtering/disable", optionalAuth(ensurePOST(handleFilteringDisable)))

@@ -51,11 +51,17 @@ var (
 	lookupCache     = map[string]cacheEntry{}
 )
 
+type plugFilter struct {
+	ID   int64
+	Path string
+}
+
 type plugSettings struct {
 	SafeBrowsingBlockHost string
 	ParentalBlockHost     string
 	QueryLogEnabled       bool
 	BlockedTTL            uint32 // in seconds, default 3600
+	Filters               []plugFilter
 }
 
 type plug struct {
@@ -71,6 +77,7 @@ var defaultPluginSettings = plugSettings{
 	SafeBrowsingBlockHost: "safebrowsing.block.dns.adguard.com",
 	ParentalBlockHost:     "family.block.dns.adguard.com",
 	BlockedTTL:            3600, // in seconds
+	Filters:               make([]plugFilter, 0),
 }
 
 //
@@ -83,15 +90,14 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 		d:        dnsfilter.New(),
 	}
 
-	filterFileNames := []string{}
+	log.Println("Initializing the CoreDNS plugin")
+
 	for c.Next() {
-		args := c.RemainingArgs()
-		if len(args) > 0 {
-			filterFileNames = append(filterFileNames, args...)
-		}
 		for c.NextBlock() {
-			switch c.Val() {
+			blockValue := c.Val()
+			switch blockValue {
 			case "safebrowsing":
+				log.Println("Browsing security service is enabled")
 				p.d.EnableSafeBrowsing()
 				if c.NextArg() {
 					if len(c.Val()) == 0 {
@@ -100,6 +106,7 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 					p.d.SetSafeBrowsingServer(c.Val())
 				}
 			case "safesearch":
+				log.Println("Safe search is enabled")
 				p.d.EnableSafeSearch()
 			case "parental":
 				if !c.NextArg() {
@@ -109,6 +116,8 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 				if err != nil {
 					return nil, c.ArgErr()
 				}
+
+				log.Println("Parental control is enabled")
 				err = p.d.EnableParental(sensitivity)
 				if err != nil {
 					return nil, c.ArgErr()
@@ -123,24 +132,46 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 				if !c.NextArg() {
 					return nil, c.ArgErr()
 				}
-				blockttl, err := strconv.ParseUint(c.Val(), 10, 32)
+				blockedTtl, err := strconv.ParseUint(c.Val(), 10, 32)
 				if err != nil {
 					return nil, c.ArgErr()
 				}
-				p.settings.BlockedTTL = uint32(blockttl)
+				log.Printf("Blocked request TTL is %d", blockedTtl)
+				p.settings.BlockedTTL = uint32(blockedTtl)
 			case "querylog":
+				log.Println("Query log is enabled")
 				p.settings.QueryLogEnabled = true
+			case "filter":
+				if !c.NextArg() {
+					return nil, c.ArgErr()
+				}
+
+				filterId, err := strconv.ParseInt(c.Val(), 10, 64)
+				if err != nil {
+					return nil, c.ArgErr()
+				}
+				if !c.NextArg() {
+					return nil, c.ArgErr()
+				}
+				filterPath := c.Val()
+
+				// Initialize filter and add it to the list
+				p.settings.Filters = append(p.settings.Filters, plugFilter{
+					ID:   filterId,
+					Path: filterPath,
+				})
 			}
 		}
 	}
 
-	log.Printf("filterFileNames = %+v", filterFileNames)
+	for _, filter := range p.settings.Filters {
+		log.Printf("Loading rules from %s", filter.Path)
 
-	for i, filterFileName := range filterFileNames {
-		file, err := os.Open(filterFileName)
+		file, err := os.Open(filter.Path)
 		if err != nil {
 			return nil, err
 		}
+		//noinspection GoDeferInLoop
 		defer file.Close()
 
 		count := 0
@@ -148,7 +179,7 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 		for scanner.Scan() {
 			text := scanner.Text()
 
-			err = p.d.AddRule(text, uint32(i))
+			err = p.d.AddRule(text, filter.ID)
 			if err == dnsfilter.ErrAlreadyExists || err == dnsfilter.ErrInvalidSyntax {
 				continue
 			}
@@ -159,7 +190,7 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 			}
 			count++
 		}
-		log.Printf("Added %d rules from %s", count, filterFileName)
+		log.Printf("Added %d rules from filter ID=%d", count, filter.ID)
 
 		if err = scanner.Err(); err != nil {
 			return nil, err
@@ -250,6 +281,7 @@ func (p *plug) onFinalShutdown() error {
 
 type statsFunc func(ch interface{}, name string, text string, value float64, valueType prometheus.ValueType)
 
+//noinspection GoUnusedParameter
 func doDesc(ch interface{}, name string, text string, value float64, valueType prometheus.ValueType) {
 	realch, ok := ch.(chan<- *prometheus.Desc)
 	if !ok {
@@ -391,7 +423,7 @@ func (p *plug) writeNXdomain(ctx context.Context, w dns.ResponseWriter, r *dns.M
 func (p *plug) serveDNSInternal(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, dnsfilter.Result, error) {
 	if len(r.Question) != 1 {
 		// google DNS, bind and others do the same
-		return dns.RcodeFormatError, dnsfilter.Result{}, fmt.Errorf("Got DNS request with != 1 questions")
+		return dns.RcodeFormatError, dnsfilter.Result{}, fmt.Errorf("got a DNS request with more than one Question")
 	}
 	for _, question := range r.Question {
 		host := strings.ToLower(strings.TrimSuffix(question.Name, "."))

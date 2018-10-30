@@ -71,7 +71,7 @@ type rule struct {
 	isImportant bool
 
 	// user-supplied data
-	listID uint32
+	listID int64
 
 	// suffix matching
 	isSuffix bool
@@ -146,7 +146,7 @@ type Result struct {
 	Reason     Reason `json:",omitempty"` // Reason for blocking / unblocking
 	Rule       string `json:",omitempty"` // Original rule text
 	Ip         net.IP `json:",omitempty"` // Not nil only in the case of a hosts file syntax
-	FilterID   uint32 `json:",omitempty"` // Filter ID the rule belongs to
+	FilterID   int64  `json:",omitempty"` // Filter ID the rule belongs to
 }
 
 // Matched can be used to see if any match at all was found, no matter filtered or not
@@ -499,11 +499,12 @@ func (rule *rule) match(host string) (Result, error) {
 	if matched {
 		res.Reason = FilteredBlackList
 		res.IsFiltered = true
+		res.FilterID = rule.listID
+		res.Rule = rule.originalText
 		if rule.isWhitelist {
 			res.Reason = NotFilteredWhiteList
 			res.IsFiltered = false
 		}
-		res.Rule = rule.text
 	}
 	return res, nil
 }
@@ -733,7 +734,7 @@ func (d *Dnsfilter) lookupCommon(host string, lookupstats *LookupStats, cache gc
 //
 
 // AddRule adds a rule, checking if it is a valid rule first and if it wasn't added already
-func (d *Dnsfilter) AddRule(input string, filterListID uint32) error {
+func (d *Dnsfilter) AddRule(input string, filterListID int64) error {
 	input = strings.TrimSpace(input)
 	d.storageMutex.RLock()
 	_, exists := d.storage[input]
@@ -796,7 +797,7 @@ func (d *Dnsfilter) AddRule(input string, filterListID uint32) error {
 }
 
 // Parses the hosts-syntax rules. Returns false if the input string is not of hosts-syntax.
-func (d *Dnsfilter) parseEtcHosts(input string, filterListID uint32) bool {
+func (d *Dnsfilter) parseEtcHosts(input string, filterListID int64) bool {
 	// Strip the trailing comment
 	ruleText := input
 	if pos := strings.IndexByte(ruleText, '#'); pos != -1 {

@@ -4,6 +4,7 @@
 debug
 /AdGuardHome
 /AdGuardHome.yaml
+/data/
 /build/
 /client/node_modules/
 /coredns

@@ -10,7 +10,7 @@ import { getTrackerData } from '../../helpers/trackers/trackers';
 import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
 import Loading from '../ui/Loading';
-import Tooltip from '../ui/Tooltip';
+import PopoverFiltered from '../ui/PopoverFilter';
 import Popover from '../ui/Popover';
 import './Logs.css';
 
@@ -36,9 +36,9 @@ class Logs extends Component {
         }
     }
 
-    renderTooltip(isFiltered, rule) {
+    renderTooltip(isFiltered, rule, filter) {
         if (rule) {
-            return (isFiltered && <Tooltip text={rule}/>);
+            return (isFiltered && <PopoverFiltered rule={rule} filter={filter}/>);
         }
         return '';
     }
@@ -117,14 +117,27 @@ class Logs extends Component {
                 const isFiltered = row ? reason.indexOf('Filtered') === 0 : false;
                 const parsedFilteredReason = reason.replace('Filtered', 'Filtered by ');
                 const rule = row && row.original && row.original.rule;
+                const { filterId } = row.original;
+                const { filters } = this.props.filtering;
+                let filterName = '';
+
+                if (reason === 'FilteredBlackList' || reason === 'NotFilteredWhiteList') {
+                    if (filterId === 0) {
+                        filterName = 'Custom filtering rules';
+                    } else {
+                        const filterItem = Object.keys(filters)
+                            .filter(key => filters[key].id === filterId);
+                        filterName = filters[filterItem].name;
+                    }
+                }
 
                 if (isFiltered) {
                     return (
                         <div className="logs__row">
-                            {this.renderTooltip(isFiltered, rule)}
                             <span className="logs__text" title={parsedFilteredReason}>
                                 {parsedFilteredReason}
                             </span>
+                            {this.renderTooltip(isFiltered, rule, filterName)}
                         </div>
                     );
                 }
@@ -132,17 +145,19 @@ class Logs extends Component {
                 if (responses.length > 0) {
                     const liNodes = responses.map((response, index) =>
                         (<li key={index} title={response}>{response}</li>));
+                    const isRenderTooltip = reason === 'NotFilteredWhiteList';
+
                     return (
                         <div className="logs__row">
-                            {this.renderTooltip(isFiltered, rule)}
                             <ul className="list-unstyled">{liNodes}</ul>
+                            {this.renderTooltip(isRenderTooltip, rule, filterName)}
                         </div>
                     );
                 }
                 return (
                     <div className="logs__row">
-                        {this.renderTooltip(isFiltered, rule)}
                         <span>Empty</span>
+                        {this.renderTooltip(isFiltered, rule, filterName)}
                     </div>
                 );
             },
@@ -208,8 +223,19 @@ class Logs extends Component {
                     if (!rowInfo) {
                         return {};
                     }
+
+                    if (rowInfo.original.reason.indexOf('Filtered') === 0) {
+                        return {
+                            className: 'red',
+                        };
+                    } else if (rowInfo.original.reason === 'NotFilteredWhiteList') {
+                        return {
+                            className: 'green',
+                        };
+                    }
+
                     return {
-                        className: (rowInfo.original.reason.indexOf('Filtered') === 0 ? 'red' : ''),
+                        className: '',
                     };
                 }}
                 />);
