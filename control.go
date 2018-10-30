@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	coreDnsPlugin "github.com/AdguardTeam/AdGuardHome/coredns_plugin"
+	corednsplugin "github.com/AdguardTeam/AdGuardHome/coredns_plugin"
 	"github.com/miekg/dns"
 	"gopkg.in/asaskevich/govalidator.v4"
 )
@@ -39,7 +39,7 @@ var client = &http.Client{
 // coredns run control
 // -------------------
 func tellCoreDNSToReload() {
-	coreDnsPlugin.Reload <- true
+	corednsplugin.Reload <- true
 }
 
 func writeAllConfigsAndReloadCoreDNS() error {
@@ -790,7 +790,7 @@ func (filter *filter) load() error {
 
 // Path to the filter contents
 func (filter *filter) getFilterFilePath() string {
-	return filepath.Join(config.ourBinaryDir, config.ourDataDir, FiltersDir, strconv.Itoa(filter.ID)+".txt")
+	return filepath.Join(config.ourBinaryDir, config.ourDataDir, FiltersDir, strconv.FormatInt(filter.ID, 10)+".txt")
 }
 
 // ------------
@@ -950,15 +950,15 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/status", optionalAuth(ensureGET(handleStatus)))
 	http.HandleFunc("/control/enable_protection", optionalAuth(ensurePOST(handleProtectionEnable)))
 	http.HandleFunc("/control/disable_protection", optionalAuth(ensurePOST(handleProtectionDisable)))
-	http.HandleFunc("/control/querylog", optionalAuth(ensureGET(coreDnsPlugin.HandleQueryLog)))
+	http.HandleFunc("/control/querylog", optionalAuth(ensureGET(corednsplugin.HandleQueryLog)))
 	http.HandleFunc("/control/querylog_enable", optionalAuth(ensurePOST(handleQueryLogEnable)))
 	http.HandleFunc("/control/querylog_disable", optionalAuth(ensurePOST(handleQueryLogDisable)))
 	http.HandleFunc("/control/set_upstream_dns", optionalAuth(ensurePOST(handleSetUpstreamDNS)))
 	http.HandleFunc("/control/test_upstream_dns", optionalAuth(ensurePOST(handleTestUpstreamDNS)))
-	http.HandleFunc("/control/stats_top", optionalAuth(ensureGET(coreDnsPlugin.HandleStatsTop)))
-	http.HandleFunc("/control/stats", optionalAuth(ensureGET(coreDnsPlugin.HandleStats)))
-	http.HandleFunc("/control/stats_history", optionalAuth(ensureGET(coreDnsPlugin.HandleStatsHistory)))
-	http.HandleFunc("/control/stats_reset", optionalAuth(ensurePOST(coreDnsPlugin.HandleStatsReset)))
+	http.HandleFunc("/control/stats_top", optionalAuth(ensureGET(corednsplugin.HandleStatsTop)))
+	http.HandleFunc("/control/stats", optionalAuth(ensureGET(corednsplugin.HandleStats)))
+	http.HandleFunc("/control/stats_history", optionalAuth(ensureGET(corednsplugin.HandleStatsHistory)))
+	http.HandleFunc("/control/stats_reset", optionalAuth(ensurePOST(corednsplugin.HandleStatsReset)))
 	http.HandleFunc("/control/version.json", optionalAuth(handleGetVersionJSON))
 	http.HandleFunc("/control/filtering/enable", optionalAuth(ensurePOST(handleFilteringEnable)))
 	http.HandleFunc("/control/filtering/disable", optionalAuth(ensurePOST(handleFilteringDisable)))

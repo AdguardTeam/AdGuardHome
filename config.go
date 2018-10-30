@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"os"
@@ -11,6 +10,8 @@ import (
 	"sync"
 	"text/template"
 	"time"
+
+	"gopkg.in/yaml.v2"
 )
 
 // Current schema version. We compare it with the value from
@@ -20,8 +21,11 @@ const SchemaVersion = 1
 // Directory where we'll store all downloaded filters contents
 const FiltersDir = "filters"
 
+// User filter ID is always 0
+const UserFilterId = 0
+
 // Just a counter that we use for incrementing the filter ID
-var NextFilterId int
+var NextFilterId = time.Now().Unix()
 
 // configuration is loaded from YAML
 type configuration struct {
@@ -46,7 +50,7 @@ type configuration struct {
 }
 
 type coreDnsFilter struct {
-	ID   int    `yaml:"-"`
+	ID   int64  `yaml:"-"`
 	Path string `yaml:"-"`
 }
 
@@ -70,7 +74,7 @@ type coreDNSConfig struct {
 }
 
 type filter struct {
-	ID          int    `json:"id" yaml:"id"` // auto-assigned when filter is added (see NextFilterId)
+	ID          int64  `json:"id" yaml:"id"` // auto-assigned when filter is added (see NextFilterId)
 	URL         string `json:"url"`
 	Name        string `json:"name" yaml:"name"`
 	Enabled     bool   `json:"enabled"`
@@ -119,8 +123,8 @@ func getUserFilter() filter {
 	}
 
 	userFilter := filter{
-		// User filter always has ID=0
-		ID:       0,
+		// User filter always has constant ID=0
+		ID:       UserFilterId,
 		contents: contents,
 		Enabled:  true,
 	}

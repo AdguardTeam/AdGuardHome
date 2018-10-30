@@ -52,7 +52,7 @@ var (
 )
 
 type plugFilter struct {
-	ID   uint32
+	ID   int64
 	Path string
 }
 
@@ -146,7 +146,7 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 					return nil, c.ArgErr()
 				}
 
-				filterId, err := strconv.Atoi(c.Val())
+				filterId, err := strconv.ParseInt(c.Val(), 10, 64)
 				if err != nil {
 					return nil, c.ArgErr()
 				}
@@ -157,7 +157,7 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 
 				// Initialize filter and add it to the list
 				p.settings.Filters = append(p.settings.Filters, plugFilter{
-					ID:   uint32(filterId),
+					ID:   filterId,
 					Path: filterPath,
 				})
 			}

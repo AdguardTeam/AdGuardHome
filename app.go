@@ -303,8 +303,10 @@ func upgradeConfigSchema(oldVersion int, newVersion int) error {
 
 			filter := &config.Filters[i] // otherwise we will be operating on a copy
 
-			log.Printf("Seting ID=%d for filter %s", i, filter.URL)
-			filter.ID = i + 1 // start with ID=1
+			// Set the filter ID
+			log.Printf("Seting ID=%d for filter %s", NextFilterId, filter.URL)
+			filter.ID = NextFilterId
+			NextFilterId++
 
 			// Forcibly update the filter
 			_, err := filter.update(true)
