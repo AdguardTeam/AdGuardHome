@@ -223,8 +223,19 @@ class Logs extends Component {
                     if (!rowInfo) {
                         return {};
                     }
+
+                    if (rowInfo.original.reason.indexOf('Filtered') === 0) {
+                        return {
+                            className: 'red',
+                        };
+                    } else if (rowInfo.original.reason === 'NotFilteredWhiteList') {
+                        return {
+                            className: 'green',
+                        };
+                    }
+
                     return {
-                        className: (rowInfo.original.reason.indexOf('Filtered') === 0 ? 'red' : ''),
+                        className: '',
                     };
                 }}
                 />);
