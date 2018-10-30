@@ -1,7 +1,9 @@
 .popover-wrap {
     position: relative;
+    top: 1px;
     display: inline-block;
     vertical-align: middle;
+    align-self: flex-start;
 }
 
 .popover__trigger {
@@ -24,9 +26,9 @@
     content: "";
     display: flex;
     position: absolute;
-    min-width: 275px;
     bottom: calc(100% + 3px);
     left: 50%;
+    min-width: 275px;
     padding: 10px 15px;
     font-size: 0.8rem;
     white-space: normal;
@@ -37,6 +39,10 @@
     transform: translateX(-50%);
     visibility: hidden;
     opacity: 0;
+}
+
+.popover__body--filter {
+    min-width: 100%;
 }
 
 .popover__body:after {
@@ -63,12 +69,23 @@
     stroke: #9aa0ac;
 }
 
+.popover__icon--green {
+    stroke: #66b574;
+}
+
 .popover__list-title {
     margin-bottom: 3px;
 }
 
 .popover__list-item {
     margin-bottom: 2px;
+}
+
+.popover__list-item--nowrap {
+    max-width: 300px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .popover__list-item:last-child {
