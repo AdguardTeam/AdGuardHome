@@ -30,8 +30,8 @@ class QueriedDomains extends Component {
             const trackerData = getTrackerData(value);
 
             return (
-                <div className="logs__row" title={value}>
-                    <div className="logs__text">
+                <div className="logs__row">
+                    <div className="logs__text" title={value}>
                         {value}
                     </div>
                     {trackerData && <Popover data={trackerData} />}

@@ -61,6 +61,11 @@
             "name": "Branch.io",
             "categoryId": 101,
             "url": "https://branch.io/"
+        },
+        "adocean": {
+            "name": "Gemius Adocean",
+            "categoryId": 4,
+            "url": "https://adocean-global.com/"
         }
     },
     "trackerDomains": {
@@ -72,6 +77,7 @@
         "appsflyer.com": "appsflyer",
         "appmetrica.yandex.com": "yandex_appmetrica",
         "adjust.com": "adjust",
-        "mobileapptracking.com": "branch"
+        "mobileapptracking.com": "branch",
+        "adocean.cz": "adocean"
     }
 }

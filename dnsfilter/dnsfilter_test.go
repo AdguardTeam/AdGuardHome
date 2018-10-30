@@ -261,7 +261,7 @@ func (d *Dnsfilter) checkAddRule(t *testing.T, rule string) {
 func (d *Dnsfilter) checkAddRuleFail(t *testing.T, rule string) {
 	t.Helper()
 	err := d.AddRule(rule, 0)
-	if err == ErrInvalidSyntax {
+	if err == ErrInvalidSyntax || err == ErrAlreadyExists {
 		return
 	}
 	if err != nil {
@@ -278,6 +278,20 @@ func (d *Dnsfilter) checkMatch(t *testing.T, hostname string) {
 	}
 	if !ret.IsFiltered {
 		t.Errorf("Expected hostname %s to match", hostname)
+	}
+}
+
+func (d *Dnsfilter) checkMatchIp(t *testing.T, hostname string, ip string) {
+	t.Helper()
+	ret, err := d.CheckHost(hostname)
+	if err != nil {
+		t.Errorf("Error while matching host %s: %s", hostname, err)
+	}
+	if !ret.IsFiltered {
+		t.Errorf("Expected hostname %s to match", hostname)
+	}
+	if ret.Ip == nil || ret.Ip.String() != ip {
+		t.Errorf("Expected ip %s to match, actual: %v", ip, ret.Ip)
 	}
 }
 
@@ -304,7 +318,7 @@ func loadTestRules(d *Dnsfilter) error {
 	for scanner.Scan() {
 		rule := scanner.Text()
 		err = d.AddRule(rule, 0)
-		if err == ErrInvalidSyntax {
+		if err == ErrInvalidSyntax || err == ErrAlreadyExists {
 			continue
 		}
 		if err != nil {
@@ -343,6 +357,20 @@ func TestSanityCheck(t *testing.T) {
 	d.checkMatchEmpty(t, "doubleclick.net.ru")
 	d.checkMatchEmpty(t, "wmconvirus.narod.ru")
 	d.checkAddRuleFail(t, "lkfaojewhoawehfwacoefawr$@#$@3413841384")
+}
+
+func TestEtcHostsMatching(t *testing.T) {
+	d := NewForTest()
+	defer d.Destroy()
+
+	addr := "216.239.38.120"
+	text := fmt.Sprintf("   %s  google.com www.google.com   # enforce google's safesearch   ", addr)
+
+	d.checkAddRule(t, text)
+	d.checkMatchIp(t, "google.com", addr)
+	d.checkMatchIp(t, "www.google.com", addr)
+	d.checkMatchEmpty(t, "subdomain.google.com")
+	d.checkMatchEmpty(t, "example.org")
 }
 
 func TestSuffixMatching1(t *testing.T) {
@@ -696,6 +724,7 @@ func BenchmarkAddRule(b *testing.B) {
 		err := d.AddRule(rule, 0)
 		switch err {
 		case nil:
+		case ErrAlreadyExists: // ignore rules which were already added
 		case ErrInvalidSyntax: // ignore invalid syntax
 		default:
 			b.Fatalf("Error while adding rule %s: %s", rule, err)
@@ -715,6 +744,7 @@ func BenchmarkAddRuleParallel(b *testing.B) {
 		}
 		switch err {
 		case nil:
+		case ErrAlreadyExists: // ignore rules which were already added
 		case ErrInvalidSyntax: // ignore invalid syntax
 		default:
 			b.Fatalf("Error while adding rule %s: %s", rule, err)

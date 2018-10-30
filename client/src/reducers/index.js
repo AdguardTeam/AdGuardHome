@@ -1,8 +1,8 @@
 import { combineReducers } from 'redux';
 import { handleActions } from 'redux-actions';
 import { loadingBarReducer } from 'react-redux-loading-bar';
-import versionCompare from 'tiny-version-compare';
 import nanoid from 'nanoid';
+import versionCompare from '../helpers/versionCompare';
 
 import * as actions from '../actions';
 

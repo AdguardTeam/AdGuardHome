@@ -731,12 +731,13 @@ func (filter *filter) update(now time.Time) (bool, error) {
 			}
 		} else if len(line) != 0 {
 			err = d.AddRule(line, 0)
-			if err == dnsfilter.ErrInvalidSyntax {
+			if err == dnsfilter.ErrAlreadyExists || err == dnsfilter.ErrInvalidSyntax {
 				continue
 			}
 			if err != nil {
-				log.Printf("Couldn't add rule %s: %s", filter.URL, err)
-				return false, err
+				log.Printf("Cannot add rule %s from %s: %s", line, filter.URL, err)
+				// Just ignore invalid rules
+				continue
 			}
 			rulesCount++
 		}

@@ -40,41 +40,6 @@ func TestSetup(t *testing.T) {
 	}
 }
 
-func TestEtcHostsParse(t *testing.T) {
-	addr := "216.239.38.120"
-	text := []byte(fmt.Sprintf("   %s  google.com www.google.com   # enforce google's safesearch   ", addr))
-	tmpfile, err := ioutil.TempFile("", "")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err = tmpfile.Write(text); err != nil {
-		t.Fatal(err)
-	}
-	if err = tmpfile.Close(); err != nil {
-		t.Fatal(err)
-	}
-
-	defer os.Remove(tmpfile.Name())
-
-	c := caddy.NewTestController("dns", fmt.Sprintf("dnsfilter %s", tmpfile.Name()))
-	p, err := setupPlugin(c)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(p.hosts) != 2 {
-		t.Fatal("Expected p.hosts to have two keys")
-	}
-
-	val, ok := p.hosts["google.com"]
-	if !ok {
-		t.Fatal("Expected google.com to be set in p.hosts")
-	}
-	if !val.Equal(net.ParseIP(addr)) {
-		t.Fatalf("Expected google.com's value %s to match %s", val, addr)
-	}
-}
-
 func TestEtcHostsFilter(t *testing.T) {
 	text := []byte("127.0.0.1 doubleclick.net\n" + "127.0.0.1 example.org example.net www.example.org www.example.net")
 	tmpfile, err := ioutil.TempFile("", "")

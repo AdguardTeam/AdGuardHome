@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"regexp"
 	"strings"
@@ -32,8 +33,11 @@ const defaultSafebrowsingURL = "http://%s/safebrowsing-lookup-hash.html?prefixes
 const defaultParentalServer = "pctrl.adguard.com"
 const defaultParentalURL = "http://%s/check-parental-control-hash?prefixes=%s&sensitivity=%d"
 
-// ErrInvalidSyntax is returned by AddRule when rule is invalid
+// ErrInvalidSyntax is returned by AddRule when the rule is invalid
 var ErrInvalidSyntax = errors.New("dnsfilter: invalid rule syntax")
+
+// ErrInvalidSyntax is returned by AddRule when the rule was already added to the filter
+var ErrAlreadyExists = errors.New("dnsfilter: rule was already added")
 
 // ErrInvalidParental is returned by EnableParental when sensitivity is not a valid value
 var ErrInvalidParental = errors.New("dnsfilter: invalid parental sensitivity, must be either 3, 10, 13 or 17")
@@ -56,6 +60,7 @@ type rule struct {
 	text         string // text without @@ decorators or $ options
 	shortcut     string // for speeding up lookup
 	originalText string // original text for reporting back to applications
+	ip           net.IP // IP address (for the case when we're matching a hosts file)
 
 	// options
 	options []string // optional options after $
@@ -94,7 +99,7 @@ type Stats struct {
 
 // Dnsfilter holds added rules and performs hostname matches against the rules
 type Dnsfilter struct {
-	storage      map[string]*rule // rule storage, not used for matching, needs to be key->value
+	storage      map[string]bool // rule storage, not used for matching, just for filtering out duplicates
 	storageMutex sync.RWMutex
 
 	// rules are checked against these lists in the order defined here
@@ -137,9 +142,11 @@ var (
 
 // Result holds state of hostname check
 type Result struct {
-	IsFiltered bool   `json:",omitempty"`
-	Reason     Reason `json:",omitempty"`
-	Rule       string `json:",omitempty"`
+	IsFiltered bool   `json:",omitempty"` // True if the host name is filtered
+	Reason     Reason `json:",omitempty"` // Reason for blocking / unblocking
+	Rule       string `json:",omitempty"` // Original rule text
+	Ip         net.IP `json:",omitempty"` // Not nil only in the case of a hosts file syntax
+	FilterID   uint32 `json:",omitempty"` // Filter ID the rule belongs to
 }
 
 // Matched can be used to see if any match at all was found, no matter filtered or not
@@ -199,6 +206,7 @@ func (d *Dnsfilter) CheckHost(host string) (Result, error) {
 //
 
 type rulesTable struct {
+	rulesByHost     map[string]*rule
 	rulesByShortcut map[string][]*rule
 	rulesLeftovers  []*rule
 	sync.RWMutex
@@ -206,6 +214,7 @@ type rulesTable struct {
 
 func newRulesTable() *rulesTable {
 	return &rulesTable{
+		rulesByHost:     make(map[string]*rule),
 		rulesByShortcut: make(map[string][]*rule),
 		rulesLeftovers:  make([]*rule, 0),
 	}
@@ -213,16 +222,27 @@ func newRulesTable() *rulesTable {
 
 func (r *rulesTable) Add(rule *rule) {
 	r.Lock()
-	if len(rule.shortcut) == shortcutLength && enableFastLookup {
+
+	if rule.ip != nil {
+		// Hosts syntax
+		r.rulesByHost[rule.text] = rule
+	} else if //noinspection GoBoolExpressions
+	len(rule.shortcut) == shortcutLength && enableFastLookup {
+
+		// Adblock syntax with a shortcut
 		r.rulesByShortcut[rule.shortcut] = append(r.rulesByShortcut[rule.shortcut], rule)
 	} else {
+
+		// Adblock syntax -- too short to have a shortcut
 		r.rulesLeftovers = append(r.rulesLeftovers, rule)
 	}
 	r.Unlock()
 }
 
 func (r *rulesTable) matchByHost(host string) (Result, error) {
-	res, err := r.searchShortcuts(host)
+
+	// First: examine the hosts-syntax rules
+	res, err := r.searchByHost(host)
 	if err != nil {
 		return res, err
 	}
@@ -230,12 +250,33 @@ func (r *rulesTable) matchByHost(host string) (Result, error) {
 		return res, nil
 	}
 
+	// Second: examine the adblock-syntax rules with shortcuts
+	res, err = r.searchShortcuts(host)
+	if err != nil {
+		return res, err
+	}
+	if res.Reason.Matched() {
+		return res, nil
+	}
+
+	// Third: examine the others
 	res, err = r.searchLeftovers(host)
 	if err != nil {
 		return res, err
 	}
 	if res.Reason.Matched() {
 		return res, nil
+	}
+
+	return Result{}, nil
+}
+
+func (r *rulesTable) searchByHost(host string) (Result, error) {
+
+	rule, ok := r.rulesByHost[host]
+
+	if ok {
+		return rule.match(host)
 	}
 
 	return Result{}, nil
@@ -424,8 +465,21 @@ func (rule *rule) compile() error {
 	return nil
 }
 
+// Checks if the rule matches the specified host and returns a corresponding Result object
 func (rule *rule) match(host string) (Result, error) {
 	res := Result{}
+
+	if rule.ip != nil && rule.text == host {
+		// This is a hosts-syntax rule -- just check that the hostname matches and return the result
+		return Result{
+			IsFiltered: true,
+			Reason:     FilteredBlackList,
+			Rule:       rule.originalText,
+			Ip:         rule.ip,
+			FilterID:   rule.listID,
+		}, nil
+	}
+
 	err := rule.compile()
 	if err != nil {
 		return res, err
@@ -686,20 +740,27 @@ func (d *Dnsfilter) AddRule(input string, filterListID uint32) error {
 	d.storageMutex.RUnlock()
 	if exists {
 		// already added
-		return ErrInvalidSyntax
+		return ErrAlreadyExists
 	}
 
 	if !isValidRule(input) {
 		return ErrInvalidSyntax
 	}
 
+	// First, check if this is a hosts-syntax rule
+	if d.parseEtcHosts(input, filterListID) {
+		// This is a valid hosts-syntax rule, no need for further parsing
+		return nil
+	}
+
+	// Start parsing the rule
 	rule := rule{
 		text:         input, // will be modified
 		originalText: input,
 		listID:       filterListID,
 	}
 
-	// mark rule as whitelist if it starts with @@
+	// Mark rule as whitelist if it starts with @@
 	if strings.HasPrefix(rule.text, "@@") {
 		rule.isWhitelist = true
 		rule.text = rule.text[2:]
@@ -712,6 +773,7 @@ func (d *Dnsfilter) AddRule(input string, filterListID uint32) error {
 
 	rule.extractShortcut()
 
+	//noinspection GoBoolExpressions
 	if !enableDelayedCompilation {
 		err := rule.compile()
 		if err != nil {
@@ -727,10 +789,42 @@ func (d *Dnsfilter) AddRule(input string, filterListID uint32) error {
 	}
 
 	d.storageMutex.Lock()
-	d.storage[input] = &rule
+	d.storage[input] = true
 	d.storageMutex.Unlock()
 	destination.Add(&rule)
 	return nil
+}
+
+// Parses the hosts-syntax rules. Returns false if the input string is not of hosts-syntax.
+func (d *Dnsfilter) parseEtcHosts(input string, filterListID uint32) bool {
+	// Strip the trailing comment
+	ruleText := input
+	if pos := strings.IndexByte(ruleText, '#'); pos != -1 {
+		ruleText = ruleText[0:pos]
+	}
+	fields := strings.Fields(ruleText)
+	if len(fields) < 2 {
+		return false
+	}
+	addr := net.ParseIP(fields[0])
+	if addr == nil {
+		return false
+	}
+
+	d.storageMutex.Lock()
+	d.storage[input] = true
+	d.storageMutex.Unlock()
+
+	for _, host := range fields[1:] {
+		rule := rule{
+			text:         host,
+			originalText: input,
+			listID:       filterListID,
+			ip:           addr,
+		}
+		d.blackList.Add(&rule)
+	}
+	return true
 }
 
 // matchHost is a low-level way to check only if hostname is filtered by rules, skipping expensive safebrowsing and parental lookups
@@ -761,7 +855,7 @@ func (d *Dnsfilter) matchHost(host string) (Result, error) {
 func New() *Dnsfilter {
 	d := new(Dnsfilter)
 
-	d.storage = make(map[string]*rule)
+	d.storage = make(map[string]bool)
 	d.important = newRulesTable()
 	d.whiteList = newRulesTable()
 	d.blackList = newRulesTable()
