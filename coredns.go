@@ -120,12 +120,6 @@ func startDNSServer() error {
 		log.Println(errortext)
 		return errortext
 	}
-	err = writeFilterFile()
-	if err != nil {
-		errortext := fmt.Errorf("Couldn't write filter file: %s", err)
-		log.Println(errortext)
-		return errortext
-	}
 
 	go coremain.Run()
 	return nil
