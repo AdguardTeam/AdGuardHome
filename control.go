@@ -134,9 +134,9 @@ func httpError(w http.ResponseWriter, code int, format string, args ...interface
 func handleSetUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		errortext := fmt.Sprintf("Failed to read request body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusBadRequest)
+		errorText := fmt.Sprintf("Failed to read request body: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusBadRequest)
 		return
 	}
 	// if empty body -- user is asking for default servers
@@ -153,34 +153,34 @@ func handleSetUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 
 	err = writeAllConfigs()
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write config file: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
+		errorText := fmt.Sprintf("Couldn't write config file: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
 		return
 	}
 	tellCoreDNSToReload()
 	_, err = fmt.Fprintf(w, "OK %d servers\n", len(hosts))
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
+		errorText := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
 	}
 }
 
 func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		errortext := fmt.Sprintf("Failed to read request body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 400)
+		errorText := fmt.Sprintf("Failed to read request body: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 400)
 		return
 	}
 	hosts := strings.Fields(string(body))
 
 	if len(hosts) == 0 {
-		errortext := fmt.Sprintf("No servers specified")
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusBadRequest)
+		errorText := fmt.Sprintf("No servers specified")
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusBadRequest)
 		return
 	}
 
@@ -198,18 +198,18 @@ func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 
 	jsonVal, err := json.Marshal(result)
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to marshal status json: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
+		errorText := fmt.Sprintf("Unable to marshal status json: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(jsonVal)
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
+		errorText := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
 	}
 }
 
