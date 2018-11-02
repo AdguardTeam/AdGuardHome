@@ -17,7 +17,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	_ "github.com/benburkert/dns/init"
 	"github.com/bluele/gcache"
 	"golang.org/x/net/publicsuffix"
 )
