@@ -116,5 +116,8 @@ export default {
         Source: 'Nguồn',
         'Found in the known domains database.': 'Tìm thấy trong cơ sở dữ liệu tên miền',
         Category: 'Thể loại',
+        // Popover filter
+        Rule: 'Quy tắc',
+        Filter: 'Bộ lọc',
     },
 };
