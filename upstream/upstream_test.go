@@ -2,14 +2,13 @@ package upstream
 
 import (
 	"github.com/miekg/dns"
-	"log"
 	"net"
 	"testing"
 )
 
 func TestDnsUpstream(t *testing.T) {
 
-	u, err := NewDnsUpstream("8.8.8.8:53")
+	u, err := NewDnsUpstream("8.8.8.8:53", "udp", "")
 
 	if err != nil {
 		t.Errorf("cannot create a DNS upstream")
@@ -44,12 +43,12 @@ func TestDnsOverTlsUpstream(t *testing.T) {
 		tlsServerName string
 	}{
 		{"1.1.1.1:853", ""},
-		{"8.8.8.8:853", ""},
+		{"9.9.9.9:853", ""},
 		{"185.228.168.10:853", "security-filter-dns.cleanbrowsing.org"},
 	}
 
 	for _, test := range tests {
-		u, err := NewDnsOverTlsUpstream(test.endpoint, test.tlsServerName)
+		u, err := NewDnsUpstream(test.endpoint, "tcp-tls", test.tlsServerName)
 
 		if err != nil {
 			t.Errorf("cannot create a DNS-over-TLS upstream")
@@ -60,27 +59,41 @@ func TestDnsOverTlsUpstream(t *testing.T) {
 }
 
 func testUpstream(t *testing.T, u Upstream) {
-	req := dns.Msg{}
-	req.Id = dns.Id()
-	req.RecursionDesired = true
-	req.Question = []dns.Question{
-		{Name: "google-public-dns-a.google.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+
+	var tests = []struct {
+		name     string
+		expected net.IP
+	}{
+		{"google-public-dns-a.google.com.", net.IPv4(8, 8, 8, 8)},
+		{"google-public-dns-b.google.com.", net.IPv4(8, 8, 4, 4)},
 	}
 
-	resp, err := u.Exchange(nil, &req)
+	for _, test := range tests {
+		req := dns.Msg{}
+		req.Id = dns.Id()
+		req.RecursionDesired = true
+		req.Question = []dns.Question{
+			{Name: test.name, Qtype: dns.TypeA, Qclass: dns.ClassINET},
+		}
 
-	if err != nil {
-		t.Errorf("error while making an upstream request: %s", err)
-	}
+		resp, err := u.Exchange(nil, &req)
 
-	if len(resp.Answer) != 1 {
-		t.Errorf("no answer section in the response")
-	}
-	if answer, ok := resp.Answer[0].(*dns.A); ok {
-		if !net.IPv4(8, 8, 8, 8).Equal(answer.A) {
-			t.Errorf("wrong IP in the response: %v", answer.A)
+		if err != nil {
+			t.Errorf("error while making an upstream request: %s", err)
+		}
+
+		if len(resp.Answer) != 1 {
+			t.Errorf("no answer section in the response")
+		}
+		if answer, ok := resp.Answer[0].(*dns.A); ok {
+			if !test.expected.Equal(answer.A) {
+				t.Errorf("wrong IP in the response: %v", answer.A)
+			}
 		}
 	}
 
-	log.Printf("response: %v", resp)
+	err := u.Close()
+	if err != nil {
+		t.Errorf("Error while closing the upstream: %s", err)
+	}
 }

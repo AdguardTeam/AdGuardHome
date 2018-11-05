@@ -18,6 +18,8 @@ const (
 	dnsMessageContentType = "application/dns-message"
 )
 
+// TODO: Add bootstrap DNS resolver field
+
 // HttpsUpstream is the upstream implementation for DNS-over-HTTPS
 type HttpsUpstream struct {
 	client   *http.Client
@@ -106,4 +108,9 @@ func (u *HttpsUpstream) exchangeWireformat(msg []byte) ([]byte, error) {
 	}
 
 	return buf, nil
+}
+
+// Clear resources
+func (u *HttpsUpstream) Close() error {
+	return nil
 }

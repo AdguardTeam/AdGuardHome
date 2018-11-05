@@ -5,6 +5,8 @@ import (
 	"github.com/miekg/dns"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
+	"log"
+	"runtime"
 	"time"
 )
 
@@ -12,9 +14,12 @@ const (
 	defaultTimeout = 5 * time.Second
 )
 
+// TODO: Add a helper method for health-checking an upstream (see health.go in coredns)
+
 // Upstream is a simplified interface for proxy destination
 type Upstream interface {
 	Exchange(ctx context.Context, query *dns.Msg) (*dns.Msg, error)
+	Close() error
 }
 
 // UpstreamPlugin is a simplified DNS proxy using a generic upstream interface
@@ -23,11 +28,21 @@ type UpstreamPlugin struct {
 	Next      plugin.Handler
 }
 
+// Initialize the upstream plugin
+func New() *UpstreamPlugin {
+	p := &UpstreamPlugin{}
+
+	// Make sure all resources are cleaned up
+	runtime.SetFinalizer(p, (*UpstreamPlugin).finalizer)
+	return p
+}
+
 // ServeDNS implements interface for CoreDNS plugin
-func (p UpstreamPlugin) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+func (p *UpstreamPlugin) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 	var reply *dns.Msg
 	var backendErr error
 
+	// TODO: Change the way we call upstreams
 	for _, upstream := range p.Upstreams {
 		reply, backendErr = upstream.Exchange(ctx, r)
 		if backendErr == nil {
@@ -40,4 +55,16 @@ func (p UpstreamPlugin) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *d
 }
 
 // Name implements interface for CoreDNS plugin
-func (p UpstreamPlugin) Name() string { return "upstream" }
+func (p *UpstreamPlugin) Name() string { return "upstream" }
+
+func (p *UpstreamPlugin) finalizer() {
+
+	for i := range p.Upstreams {
+
+		u := p.Upstreams[i]
+		err := u.Close()
+		if err != nil {
+			log.Printf("Error while closing the upstream: %s", err)
+		}
+	}
+}
