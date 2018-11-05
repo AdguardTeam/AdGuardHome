@@ -42,8 +42,8 @@ func (p *UpstreamPlugin) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *
 	var reply *dns.Msg
 	var backendErr error
 
-	// TODO: Change the way we call upstreams
-	for _, upstream := range p.Upstreams {
+	for i := range p.Upstreams {
+		upstream := p.Upstreams[i]
 		reply, backendErr = upstream.Exchange(ctx, r)
 		if backendErr == nil {
 			w.WriteMsg(reply)

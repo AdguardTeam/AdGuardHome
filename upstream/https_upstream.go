@@ -10,15 +10,16 @@ import (
 	"golang.org/x/net/http2"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 const (
 	dnsMessageContentType = "application/dns-message"
+	defaultKeepAlive      = 30 * time.Second
 )
-
-// TODO: Add bootstrap DNS resolver field
 
 // HttpsUpstream is the upstream implementation for DNS-over-HTTPS
 type HttpsUpstream struct {
@@ -27,10 +28,30 @@ type HttpsUpstream struct {
 }
 
 // NewHttpsUpstream creates a new DNS-over-HTTPS upstream from hostname
-func NewHttpsUpstream(endpoint string) (Upstream, error) {
+func NewHttpsUpstream(endpoint string, bootstrap string) (Upstream, error) {
 	u, err := url.Parse(endpoint)
 	if err != nil {
 		return nil, err
+	}
+
+	// Initialize bootstrap resolver
+	bootstrapResolver := net.DefaultResolver
+	if bootstrap != "" {
+		bootstrapResolver = &net.Resolver{
+			PreferGo: true,
+			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+				var d net.Dialer
+				conn, err := d.DialContext(ctx, network, bootstrap)
+				return conn, err
+			},
+		}
+	}
+
+	dialer := &net.Dialer{
+		Timeout:   defaultTimeout,
+		KeepAlive: defaultKeepAlive,
+		DualStack: true,
+		Resolver:  bootstrapResolver,
 	}
 
 	// Update TLS and HTTP client configuration
@@ -39,6 +60,7 @@ func NewHttpsUpstream(endpoint string) (Upstream, error) {
 		TLSClientConfig:    tlsConfig,
 		DisableCompression: true,
 		MaxIdleConns:       1,
+		DialContext:        dialer.DialContext,
 	}
 	http2.ConfigureTransport(transport)
 

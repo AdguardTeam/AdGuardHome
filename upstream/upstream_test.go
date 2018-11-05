@@ -6,27 +6,107 @@ import (
 	"testing"
 )
 
-func TestDnsUpstream(t *testing.T) {
+func TestDnsUpstreamIsAlive(t *testing.T) {
 
-	u, err := NewDnsUpstream("8.8.8.8:53", "udp", "")
-
-	if err != nil {
-		t.Errorf("cannot create a DNS upstream")
+	var tests = []struct {
+		endpoint string
+		proto    string
+	}{
+		{"8.8.8.8:53", "udp"},
+		{"8.8.8.8:53", "tcp"},
+		{"1.1.1.1:53", "udp"},
 	}
 
-	testUpstream(t, u)
+	for _, test := range tests {
+		u, err := NewDnsUpstream(test.endpoint, test.proto, "")
+
+		if err != nil {
+			t.Errorf("cannot create a DNS upstream")
+		}
+
+		testUpstreamIsAlive(t, u)
+	}
+}
+
+func TestHttpsUpstreamIsAlive(t *testing.T) {
+
+	var tests = []struct {
+		url       string
+		bootstrap string
+	}{
+		{"https://cloudflare-dns.com/dns-query", "8.8.8.8:53"},
+		{"https://dns.google.com/experimental", "8.8.8.8:53"},
+		{"https://doh.cleanbrowsing.org/doh/security-filter/", ""}, // TODO: status 201??
+	}
+
+	for _, test := range tests {
+		u, err := NewHttpsUpstream(test.url, test.bootstrap)
+
+		if err != nil {
+			t.Errorf("cannot create a DNS-over-HTTPS upstream")
+		}
+
+		testUpstreamIsAlive(t, u)
+	}
+}
+
+func TestDnsOverTlsIsAlive(t *testing.T) {
+
+	var tests = []struct {
+		endpoint      string
+		tlsServerName string
+	}{
+		{"1.1.1.1:853", ""},
+		{"9.9.9.9:853", ""},
+		{"185.228.168.10:853", "security-filter-dns.cleanbrowsing.org"},
+	}
+
+	for _, test := range tests {
+		u, err := NewDnsUpstream(test.endpoint, "tcp-tls", test.tlsServerName)
+
+		if err != nil {
+			t.Errorf("cannot create a DNS-over-TLS upstream")
+		}
+
+		testUpstreamIsAlive(t, u)
+	}
+}
+
+func TestDnsUpstream(t *testing.T) {
+
+	var tests = []struct {
+		endpoint string
+		proto    string
+	}{
+		{"8.8.8.8:53", "udp"},
+		{"8.8.8.8:53", "tcp"},
+		{"1.1.1.1:53", "udp"},
+	}
+
+	for _, test := range tests {
+		u, err := NewDnsUpstream(test.endpoint, test.proto, "")
+
+		if err != nil {
+			t.Errorf("cannot create a DNS upstream")
+		}
+
+		testUpstream(t, u)
+	}
 }
 
 func TestHttpsUpstream(t *testing.T) {
 
-	testCases := []string{
-		"https://cloudflare-dns.com/dns-query",
-		"https://dns.google.com/experimental",
-		"https://doh.cleanbrowsing.org/doh/security-filter/",
+	var tests = []struct {
+		url       string
+		bootstrap string
+	}{
+		{"https://cloudflare-dns.com/dns-query", "8.8.8.8:53"},
+		{"https://dns.google.com/experimental", "8.8.8.8:53"},
+		{"https://doh.cleanbrowsing.org/doh/security-filter/", ""},
 	}
 
-	for _, url := range testCases {
-		u, err := NewHttpsUpstream(url)
+	for _, test := range tests {
+		u, err := NewHttpsUpstream(test.url, test.bootstrap)
 
 		if err != nil {
 			t.Errorf("cannot create a DNS-over-HTTPS upstream")
@@ -56,6 +136,15 @@ func TestDnsOverTlsUpstream(t *testing.T) {
 
 		testUpstream(t, u)
 	}
+}
+
+func testUpstreamIsAlive(t *testing.T, u Upstream) {
+	alive, err := IsAlive(u)
+	if !alive || err != nil {
+		t.Errorf("Upstream is not alive")
+	}
+
+	u.Close()
 }
 
 func testUpstream(t *testing.T, u Upstream) {
