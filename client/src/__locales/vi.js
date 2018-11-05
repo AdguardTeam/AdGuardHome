@@ -90,6 +90,9 @@ export default {
         '! Here goes a comment': '! Đây là một chú thích',
         'just a comment': 'Chỉ là một chú thích',
         '# Also a comment': '# Cũng là một chú thích',
+        'All filters are already up-to-date': 'Tất cả bộ lọc đã được cập nhật',
+        'Updated the upstream DNS servers': 'Đã cập nhật máy chủ DNS tìm kiếm',
+        'Specified DNS servers are working correctly': 'Máy chủ DNS đang hoạt động',
         // Logs
         Unblock: 'Bỏ chặn',
         Block: 'Chặn',
