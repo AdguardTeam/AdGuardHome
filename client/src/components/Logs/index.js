@@ -46,6 +46,7 @@ class Logs extends Component {
 
     toggleBlocking = (type, domain) => {
         const { userRules } = this.props.filtering;
+        const { t } = this.props;
         const lineEnding = !endsWith(userRules, '\n') ? '\n' : '';
         const baseRule = `||${domain}^$important`;
         const baseUnblocking = `@@${baseRule}`;
@@ -56,10 +57,10 @@ class Logs extends Component {
 
         if (userRules.match(preparedBlockingRule)) {
             this.props.setRules(userRules.replace(`${blockingRule}`, ''));
-            this.props.addSuccessToast(`Rule removed from the custom filtering rules: ${blockingRule}`);
+            this.props.addSuccessToast(`${t('Rule removed from the custom filtering rules')}: ${blockingRule}`);
         } else if (!userRules.match(preparedUnblockingRule)) {
             this.props.setRules(`${userRules}${lineEnding}${unblockingRule}\n`);
-            this.props.addSuccessToast(`Rule added to the custom filtering rules: ${unblockingRule}`);
+            this.props.addSuccessToast(`${t('Rule added to the custom filtering rules')}: ${unblockingRule}`);
         }
 
         this.props.getFilteringStatus();

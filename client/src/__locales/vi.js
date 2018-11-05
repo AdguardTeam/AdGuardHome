@@ -112,6 +112,9 @@ export default {
         Page: 'Trang',
         of: 'của',
         rows: 'hàng',
+        'Updated the custom filtering rules': 'Đã cập nhật quy tắc lọc tuỳ chỉnh',
+        'Rule removed from the custom filtering rules': 'Quy tắc đã được xoá khỏi quy tắc lọc tuỳ chỉnh',
+        'Rule added to the custom filtering rules': 'Quy tắc đã được thêm vào quy tắc lọc tuỳ chỉnh',
         // Popover
         Source: 'Nguồn',
         'Found in the known domains database.': 'Tìm thấy trong cơ sở dữ liệu tên miền',
