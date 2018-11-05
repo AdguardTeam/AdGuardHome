@@ -218,6 +218,7 @@ func checkDNS(input string) error {
 	if err != nil {
 		return err
 	}
+	defer u.Close()
 
 	alive, err := upstream.IsAlive(u)
 
