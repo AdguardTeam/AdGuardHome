@@ -106,8 +106,10 @@ Settings are stored in [YAML format](https://en.wikipedia.org/wiki/YAML), possib
    * `parental_enabled` — Parental control-based DNS requests filtering
    * `parental_sensitivity` — Age group for parental control-based filtering, must be either 3, 10, 13 or 17
    * `querylog_enabled` — Query logging (also used to calculate top 50 clients, blocked domains and requested domains for statistic purposes)
+   * `bootstrap_dns` — DNS server used for initial hostnames resolution in case if upstream is DoH or DoT with a hostname
    * `upstream_dns` — List of upstream DNS servers
  * `filters` — List of filters, each filter has the following values:
+   * `ID` - filter ID (must be unique)
    * `url` — URL pointing to the filter contents (filtering rules)
    * `enabled` — Current filter's status (enabled/disabled)
  * `user_rules` — User-specified filtering rules
