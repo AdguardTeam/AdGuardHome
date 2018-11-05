@@ -72,8 +72,7 @@ func CreateResolver(bootstrap string) *net.Resolver {
 			PreferGo: true,
 			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
 				var d net.Dialer
-				conn, err := d.DialContext(ctx, network, bootstrap)
-				return conn, err
+				return d.DialContext(ctx, network, bootstrap)
 			},
 		}
 	}

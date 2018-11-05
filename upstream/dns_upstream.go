@@ -27,7 +27,7 @@ func NewDnsUpstream(endpoint string, proto string, tlsServerName string) (Upstre
 
 	var tlsConfig *tls.Config
 
-	if tlsServerName != "" {
+	if proto == "tcp-tls" {
 		tlsConfig = new(tls.Config)
 		tlsConfig.ServerName = tlsServerName
 	}
@@ -101,6 +101,9 @@ func (u *DnsUpstream) exchange(proto string, query *dns.Msg) (r *dns.Msg, err er
 		conn.Close() // Not giving it back
 	}
 
-	u.transport.Yield(conn)
+	if err == nil {
+		// Return it back to the connections cache if there were no errors
+		u.transport.Yield(conn)
+	}
 	return r, err
 }

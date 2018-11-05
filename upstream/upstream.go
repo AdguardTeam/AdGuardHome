@@ -52,4 +52,6 @@ func (p *UpstreamPlugin) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *
 }
 
 // Name implements interface for CoreDNS plugin
-func (p *UpstreamPlugin) Name() string { return "upstream" }
+func (p *UpstreamPlugin) Name() string {
+	return "upstream"
+}
