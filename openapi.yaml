@@ -41,6 +41,7 @@ paths:
                             protection_enabled: true
                             querylog_enabled: true
                             running: true
+                            bootstrap_dns: 8.8.8.8:53
                             upstream_dns:
                               - 1.1.1.1
                               - 1.0.0.1

@@ -93,7 +93,7 @@ func IsAlive(u Upstream) (bool, error) {
 	// If we got a header, we're alright, basically only care about I/O errors 'n stuff.
 	if err != nil && resp != nil {
 		// Silly check, something sane came back.
-		if resp.Response || resp.Opcode == dns.OpcodeQuery {
+		if resp.Rcode != dns.RcodeServerFailure {
 			err = nil
 		}
 	}

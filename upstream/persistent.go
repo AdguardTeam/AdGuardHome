@@ -10,6 +10,8 @@ import (
 	"github.com/miekg/dns"
 )
 
+// Persistent connections cache -- almost similar to the same used in the CoreDNS forward plugin
+
 const (
 	defaultExpire       = 10 * time.Second
 	minDialTimeout      = 100 * time.Millisecond
