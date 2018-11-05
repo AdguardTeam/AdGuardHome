@@ -2,6 +2,7 @@ package upstream
 
 import (
 	"github.com/miekg/dns"
+	"golang.org/x/net/context"
 	"net"
 	"testing"
 )
@@ -169,7 +170,7 @@ func testUpstream(t *testing.T, u Upstream) {
 			{Name: test.name, Qtype: dns.TypeA, Qclass: dns.ClassINET},
 		}
 
-		resp, err := u.Exchange(nil, &req)
+		resp, err := u.Exchange(context.Background(), &req)
 
 		if err != nil {
 			t.Errorf("error while making an upstream request: %s", err)

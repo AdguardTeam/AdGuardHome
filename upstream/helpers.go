@@ -87,7 +87,7 @@ func IsAlive(u Upstream) (bool, error) {
 	ping := new(dns.Msg)
 	ping.SetQuestion("ipv4only.arpa.", dns.TypeA)
 
-	resp, err := u.Exchange(nil, ping)
+	resp, err := u.Exchange(context.Background(), ping)
 
 	// If we got a header, we're alright, basically only care about I/O errors 'n stuff.
 	if err != nil && resp != nil {

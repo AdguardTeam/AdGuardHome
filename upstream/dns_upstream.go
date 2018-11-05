@@ -42,7 +42,20 @@ func NewDnsUpstream(endpoint string, proto string, tlsServerName string) (Upstre
 // Exchange provides an implementation for the Upstream interface
 func (u *DnsUpstream) Exchange(ctx context.Context, query *dns.Msg) (*dns.Msg, error) {
 
-	resp, err := u.exchange(query)
+	resp, err := u.exchange(u.proto, query)
+
+	// Retry over TCP if response is truncated
+	if err == dns.ErrTruncated && u.proto == "udp" {
+		resp, err = u.exchange("tcp", query)
+	} else if err == dns.ErrTruncated && resp != nil {
+		// Reassemble something to be sent to client
+		m := new(dns.Msg)
+		m.SetReply(query)
+		m.Truncated = true
+		m.Authoritative = true
+		m.Rcode = dns.RcodeSuccess
+		return m, nil
+	}
 
 	if err != nil {
 		resp = &dns.Msg{}
@@ -62,10 +75,10 @@ func (u *DnsUpstream) Close() error {
 
 // Performs a synchronous query. It sends the message m via the conn
 // c and waits for a reply. The conn c is not closed.
-func (u *DnsUpstream) exchange(query *dns.Msg) (r *dns.Msg, err error) {
+func (u *DnsUpstream) exchange(proto string, query *dns.Msg) (r *dns.Msg, err error) {
 
 	// Establish a connection if needed (or reuse cached)
-	conn, err := u.transport.Dial(u.proto)
+	conn, err := u.transport.Dial(proto)
 	if err != nil {
 		return nil, err
 	}

@@ -253,7 +253,7 @@ const coreDNSConfigTemplate = `.:{{.Port}} {
     hosts {
         fallthrough
     }
-    {{if .UpstreamDNS}}forward . {{range .UpstreamDNS}}{{.}} {{end}}{{end}}
+    {{if .UpstreamDNS}}upstream {{range .UpstreamDNS}}{{.}} {{end}} { bootstrap 8.8.8.8:53 }{{end}}
     {{.Cache}}
     {{.Prometheus}}
 }
