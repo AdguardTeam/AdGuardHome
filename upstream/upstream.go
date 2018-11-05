@@ -1,11 +1,12 @@
 package upstream
 
 import (
+	"time"
+
 	"github.com/coredns/coredns/plugin"
 	"github.com/miekg/dns"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
-	"time"
 )
 
 const (

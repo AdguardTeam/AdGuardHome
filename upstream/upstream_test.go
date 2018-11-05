@@ -1,10 +1,11 @@
 package upstream
 
 import (
-	"github.com/miekg/dns"
-	"golang.org/x/net/context"
 	"net"
 	"testing"
+
+	"github.com/miekg/dns"
+	"golang.org/x/net/context"
 )
 
 func TestDnsUpstreamIsAlive(t *testing.T) {

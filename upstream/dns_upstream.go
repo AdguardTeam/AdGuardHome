@@ -2,9 +2,10 @@ package upstream
 
 import (
 	"crypto/tls"
+	"time"
+
 	"github.com/miekg/dns"
 	"golang.org/x/net/context"
-	"time"
 )
 
 // DnsUpstream is a very simple upstream implementation for plain DNS

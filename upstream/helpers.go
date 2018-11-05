@@ -1,10 +1,11 @@
 package upstream
 
 import (
-	"github.com/miekg/dns"
-	"golang.org/x/net/context"
 	"net"
 	"strings"
+
+	"github.com/miekg/dns"
+	"golang.org/x/net/context"
 )
 
 // Detects the upstream type from the specified url and creates a proper Upstream object

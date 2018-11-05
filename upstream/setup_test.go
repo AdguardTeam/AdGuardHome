@@ -1,8 +1,9 @@
 package upstream
 
 import (
-	"github.com/mholt/caddy"
 	"testing"
+
+	"github.com/mholt/caddy"
 )
 
 func TestSetup(t *testing.T) {

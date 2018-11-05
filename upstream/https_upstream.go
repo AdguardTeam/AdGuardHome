@@ -4,16 +4,17 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	"github.com/miekg/dns"
-	"github.com/pkg/errors"
-	"golang.org/x/net/context"
-	"golang.org/x/net/http2"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/miekg/dns"
+	"github.com/pkg/errors"
+	"golang.org/x/net/context"
+	"golang.org/x/net/http2"
 )
 
 const (
