@@ -27,7 +27,7 @@ type HttpsUpstream struct {
 	endpoint *url.URL
 }
 
-// NewHttpsUpstream creates a new DNS-over-HTTPS upstream from hostname
+// NewHttpsUpstream creates a new DNS-over-HTTPS upstream from the specified url
 func NewHttpsUpstream(endpoint string, bootstrap string) (Upstream, error) {
 	u, err := url.Parse(endpoint)
 	if err != nil {
@@ -35,18 +35,7 @@ func NewHttpsUpstream(endpoint string, bootstrap string) (Upstream, error) {
 	}
 
 	// Initialize bootstrap resolver
-	bootstrapResolver := net.DefaultResolver
-	if bootstrap != "" {
-		bootstrapResolver = &net.Resolver{
-			PreferGo: true,
-			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-				var d net.Dialer
-				conn, err := d.DialContext(ctx, network, bootstrap)
-				return conn, err
-			},
-		}
-	}
-
+	bootstrapResolver := CreateResolver(bootstrap)
 	dialer := &net.Dialer{
 		Timeout:   defaultTimeout,
 		KeepAlive: defaultKeepAlive,
