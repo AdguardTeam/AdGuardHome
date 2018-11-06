@@ -92,7 +92,8 @@ export default {
         '# Also a comment': '# Cũng là một chú thích',
         'All filters are already up-to-date': 'Tất cả bộ lọc đã được cập nhật',
         'Updated the upstream DNS servers': 'Đã cập nhật máy chủ DNS tìm kiếm',
-        'Specified DNS servers are working correctly': 'Máy chủ DNS đang hoạt động',
+        'Specified DNS servers are working correctly': 'Máy chủ DNS có thể sử dụng',
+        'Server "{{key}}": could not be used, please check that you\'ve written it correctly': 'Máy chủ "{{key}}": không thể sử dụng, vui lòng kiểm tra bạn đã điền chính xác',
         // Logs
         Unblock: 'Bỏ chặn',
         Block: 'Chặn',

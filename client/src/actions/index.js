@@ -1,5 +1,6 @@
 import { createAction } from 'redux-actions';
 import round from 'lodash/round';
+import { t } from 'i18next';
 import { showLoading, hideLoading } from 'react-redux-loading-bar';
 
 import { normalizeHistory, normalizeFilteringStatus, normalizeLogs } from '../helpers/helpers';
@@ -476,7 +477,7 @@ export const testUpstream = servers => async (dispatch) => {
         const testMessages = Object.keys(upstreamResponse).map((key) => {
             const message = upstreamResponse[key];
             if (message !== 'OK') {
-                dispatch(addErrorToast({ error: `Server "${key}": could not be used, please check that you've written it correctly` }));
+                dispatch(addErrorToast({ error: t('Server "{{key}}": could not be used, please check that you\'ve written it correctly', { key }) }));
             }
             return message;
         });
