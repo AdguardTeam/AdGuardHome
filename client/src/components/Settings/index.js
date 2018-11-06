@@ -27,7 +27,7 @@ export default class Settings extends Component {
         safesearch: {
             enabled: false,
             title: 'Enforce safe search',
-            subtitle: 'AdGuard Home can enforce safe search in the following search engines: Google, Bing, Yandex.',
+            subtitle: 'AdGuard Home can enforce safe search in the following search engines: Google, Youtube, Bing, and Yandex.',
         },
     };
 
