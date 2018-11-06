@@ -24,13 +24,16 @@ tags:
     -
         name: safesearch
         description: 'Enforce family-friendly results in search engines'
+    -
+        name: dhcp
+        description: 'Build-in DHCP server management'
 paths:
     /status:
         get:
             tags:
                 - global
             operationId: status
-            summary: 'Get DNS server status'
+            summary: 'Get DNS server status and settings'
             responses:
                 200:
                     description: OK
@@ -347,6 +350,59 @@ paths:
             responses:
                 200:
                     description: OK
+    /dhcp/status:
+      post:
+        tags:
+          -dhcp
+        operationId: dhcpStatus
+        summary: "Gets the current DHCP settings"
+        responses:
+          200:
+            description: OK
+            examples:
+              application/json:
+                dhcpEnabled: false
+                gatewayIp: 192.168.1.1
+                subnetMask: 255.255.255.0
+                rangeStart: 192.168.1.2
+                rangeEnd: 192.168.10.50
+                leaseDuration: 12h
+                - leases:
+                  mac: 001109b3b3b8
+                  ip: 192.168.1.22
+                  hostname: dell
+                  expires: '2018-10-30T12:18:57.223101822+03:00'
+    /dhcp/set_config:
+      post:
+        tags:
+          -dhcp
+        operationId: dhcpSetConfig
+        summary: "Updates the current DHCP server configuration"
+        consumes:
+        - application/json
+        parameters:
+        - in: body
+          name: dhcpConfig
+          description: 'Updates the DHCP module configuration'
+          schema:
+            type: json
+            example: '{ gatewayIp: "192.168.1.1", subnetMask: "255.255.255.0", "rangeStart": "192.168.1.2", "rangeEnd": "192.168.10.50", leaseDuration: "12h" }'
+        responses:
+          200:
+            description: OK
+    /dhcp/check_active_dhcp:
+      post:
+        tags:
+          -dhcp
+        operationId: checkActiveDhcp
+        summary: "Checks if there's an active DHCP server on the network"
+        responses:
+          200:
+            description: OK
+            examples:
+              application/json:
+                found: true
+                gatewayIp: 192.168.1.1
     /filtering/enable:
         post:
             tags:
