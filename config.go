@@ -70,6 +70,7 @@ type coreDNSConfig struct {
 	Pprof               string          `yaml:"-"`
 	Cache               string          `yaml:"-"`
 	Prometheus          string          `yaml:"-"`
+	BootstrapDNS        string          `yaml:"bootstrap_dns"`
 	UpstreamDNS         []string        `yaml:"upstream_dns"`
 }
 
@@ -100,6 +101,7 @@ var config = configuration{
 		SafeBrowsingEnabled: false,
 		BlockedResponseTTL:  10, // in seconds
 		QueryLogEnabled:     true,
+		BootstrapDNS:        "8.8.8.8:53",
 		UpstreamDNS:         defaultDNS,
 		Cache:               "cache",
 		Prometheus:          "prometheus :9153",
@@ -253,7 +255,7 @@ const coreDNSConfigTemplate = `.:{{.Port}} {
     hosts {
         fallthrough
     }
-    {{if .UpstreamDNS}}forward . {{range .UpstreamDNS}}{{.}} {{end}}{{end}}
+    {{if .UpstreamDNS}}upstream {{range .UpstreamDNS}}{{.}} {{end}} { bootstrap {{.BootstrapDNS}} }{{end}}
     {{.Cache}}
     {{.Prometheus}}
 }
