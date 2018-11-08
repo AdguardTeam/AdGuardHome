@@ -8,6 +8,7 @@ import (
 	"sync" // Include all plugins.
 
 	_ "github.com/AdguardTeam/AdGuardHome/coredns_plugin"
+	_ "github.com/AdguardTeam/AdGuardHome/upstream"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/coremain"
 	_ "github.com/coredns/coredns/plugin/auto"
@@ -79,6 +80,7 @@ var directives = []string{
 	"loop",
 	"forward",
 	"proxy",
+	"upstream",
 	"erratic",
 	"whoami",
 	"on",

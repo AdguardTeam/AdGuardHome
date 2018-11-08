@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -15,8 +14,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/upstream"
+
 	corednsplugin "github.com/AdguardTeam/AdGuardHome/coredns_plugin"
-	"github.com/miekg/dns"
 	"gopkg.in/asaskevich/govalidator.v4"
 )
 
@@ -81,6 +81,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		"protection_enabled": config.CoreDNS.ProtectionEnabled,
 		"querylog_enabled":   config.CoreDNS.QueryLogEnabled,
 		"running":            isRunning(),
+		"bootstrap_dns":      config.CoreDNS.BootstrapDNS,
 		"upstream_dns":       config.CoreDNS.UpstreamDNS,
 		"version":            VersionString,
 	}
@@ -134,17 +135,14 @@ func httpError(w http.ResponseWriter, code int, format string, args ...interface
 func handleSetUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		errortext := fmt.Sprintf("Failed to read request body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusBadRequest)
+		errorText := fmt.Sprintf("Failed to read request body: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusBadRequest)
 		return
 	}
 	// if empty body -- user is asking for default servers
-	hosts, err := sanitiseDNSServers(string(body))
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "Invalid DNS servers were given: %s", err)
-		return
-	}
+	hosts := strings.Fields(string(body))
+
 	if len(hosts) == 0 {
 		config.CoreDNS.UpstreamDNS = defaultDNS
 	} else {
@@ -153,34 +151,34 @@ func handleSetUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 
 	err = writeAllConfigs()
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write config file: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
+		errorText := fmt.Sprintf("Couldn't write config file: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
 		return
 	}
 	tellCoreDNSToReload()
 	_, err = fmt.Fprintf(w, "OK %d servers\n", len(hosts))
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
+		errorText := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
 	}
 }
 
 func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		errortext := fmt.Sprintf("Failed to read request body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 400)
+		errorText := fmt.Sprintf("Failed to read request body: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 400)
 		return
 	}
 	hosts := strings.Fields(string(body))
 
 	if len(hosts) == 0 {
-		errortext := fmt.Sprintf("No servers specified")
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusBadRequest)
+		errorText := fmt.Sprintf("No servers specified")
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusBadRequest)
 		return
 	}
 
@@ -198,118 +196,41 @@ func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 
 	jsonVal, err := json.Marshal(result)
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to marshal status json: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
+		errorText := fmt.Sprintf("Unable to marshal status json: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(jsonVal)
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
+		errorText := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
 	}
 }
 
 func checkDNS(input string) error {
-	input, err := sanitizeDNSServer(input)
+
+	u, err := upstream.NewUpstream(input, config.CoreDNS.BootstrapDNS)
+
 	if err != nil {
 		return err
 	}
+	defer u.Close()
 
-	req := dns.Msg{}
-	req.Id = dns.Id()
-	req.RecursionDesired = true
-	req.Question = []dns.Question{
-		{Name: "google-public-dns-a.google.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
-	}
+	alive, err := upstream.IsAlive(u)
 
-	prefix, host := splitDNSServerPrefixServer(input)
-
-	c := dns.Client{
-		Timeout: time.Minute,
-	}
-	switch prefix {
-	case "tls://":
-		c.Net = "tcp-tls"
-	}
-
-	resp, rtt, err := c.Exchange(&req, host)
 	if err != nil {
 		return fmt.Errorf("couldn't communicate with DNS server %s: %s", input, err)
 	}
-	trace("exchange with %s took %v", input, rtt)
-	if len(resp.Answer) != 1 {
-		return fmt.Errorf("DNS server %s returned wrong answer", input)
-	}
-	if t, ok := resp.Answer[0].(*dns.A); ok {
-		if !net.IPv4(8, 8, 8, 8).Equal(t.A) {
-			return fmt.Errorf("DNS server %s returned wrong answer: %v", input, t.A)
-		}
+
+	if !alive {
+		return fmt.Errorf("DNS server has not passed the healthcheck: %s", input)
 	}
 
 	return nil
-}
-
-func sanitiseDNSServers(input string) ([]string, error) {
-	fields := strings.Fields(input)
-	hosts := make([]string, 0)
-	for _, field := range fields {
-		sanitized, err := sanitizeDNSServer(field)
-		if err != nil {
-			return hosts, err
-		}
-		hosts = append(hosts, sanitized)
-	}
-	return hosts, nil
-}
-
-func getDNSServerPrefix(input string) string {
-	prefix := ""
-	switch {
-	case strings.HasPrefix(input, "dns://"):
-		prefix = "dns://"
-	case strings.HasPrefix(input, "tls://"):
-		prefix = "tls://"
-	}
-	return prefix
-}
-
-func splitDNSServerPrefixServer(input string) (string, string) {
-	prefix := getDNSServerPrefix(input)
-	host := strings.TrimPrefix(input, prefix)
-	return prefix, host
-}
-
-func sanitizeDNSServer(input string) (string, error) {
-	prefix, host := splitDNSServerPrefixServer(input)
-	host = appendPortIfMissing(prefix, host)
-	{
-		h, _, err := net.SplitHostPort(host)
-		if err != nil {
-			return "", err
-		}
-		ip := net.ParseIP(h)
-		if ip == nil {
-			return "", fmt.Errorf("invalid DNS server field: %s", h)
-		}
-	}
-	return prefix + host, nil
-}
-
-func appendPortIfMissing(prefix, input string) string {
-	port := "53"
-	switch prefix {
-	case "tls://":
-		port = "853"
-	}
-	_, _, err := net.SplitHostPort(input)
-	if err == nil {
-		return input
-	}
-	return net.JoinHostPort(input, port)
 }
 
 //noinspection GoUnusedParameter
