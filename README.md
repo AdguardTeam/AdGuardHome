@@ -122,7 +122,7 @@ Removing an entry from settings file will reset it to the default value. Deletin
 
 You will need:
 
- * [go](https://golang.org/dl/)
+ * [go](https://golang.org/dl/) v1.11 or later.
  * [node.js](https://nodejs.org/en/download/)
 
 You can either install it via the provided links or use [brew.sh](https://brew.sh/) if you're on Mac:
