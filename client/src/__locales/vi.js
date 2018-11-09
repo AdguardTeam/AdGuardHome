@@ -48,7 +48,7 @@ export default {
         use_adguard_parental: 'Sử dụng dịch vụ quản lý của phụ huynh AdGuard',
         use_adguard_parental_hint: 'AdGuard Home sẽ kiểm tra nếu tên miền chứa từ khoá người lớn. Tính năng sử dụng API thân thiện với quyền riêng tư tương tự với dịch vụ bảo vệ duyệt web',
         enforce_safe_search: 'Bắt buộc tìm kiếm an toàn',
-        enforce_save_search_hint: 'AdGuard Home có thể bắt buộc tìm kiếm an toàn với các dịch vụ tìm kiếm: Google, Bing, Yandex.',
+        enforce_save_search_hint: 'AdGuard Home có thể bắt buộc tìm kiếm an toàn với các dịch vụ tìm kiếm: Google, Youtube, Bing, Yandex.',
         no_servers_specified: 'Không có máy chủ nào được liệt kê',
         no_settings: 'Không có cài đặt nào',
         general_settings: 'Cài đặt chung',
