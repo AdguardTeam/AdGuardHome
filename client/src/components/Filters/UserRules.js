@@ -18,8 +18,8 @@ class UserRules extends Component {
         const { t } = this.props;
         return (
             <Card
-                title={ t('Custom filtering rules') }
-                subtitle={ t('Enter one rule on a line. You can use either adblock rules or hosts files syntax.') }
+                title={ t('custom_filter_rules') }
+                subtitle={ t('custom_filter_rules_hint') }
             >
                 <form onSubmit={this.handleSubmit}>
                     <textarea className="form-control form-control--textarea-large" value={this.props.userRules} onChange={this.handleChange} />
@@ -29,28 +29,28 @@ class UserRules extends Component {
                             type="submit"
                             onClick={this.handleSubmit}
                         >
-                            <Trans>Apply</Trans>
+                            <Trans>apply_btn</Trans>
                         </button>
                     </div>
                 </form>
                 <hr/>
                 <div className="list leading-loose">
-                    <Trans>Examples</Trans>:
+                    <Trans>examples_title</Trans>:
                     <ol className="leading-loose">
                         <li>
-                            <code>||example.org^</code> - { t('block access to the example.org domain and all its subdomains') }
+                            <code>||example.org^</code> - { t('example_meaning_filter_block') }
                         </li>
                         <li>
-                            <code> @@||example.org^</code> - { t('unblock access to the example.org domain and all its subdomains') }
+                            <code> @@||example.org^</code> - { t('example_meaning_filter_whitelist') }
                         </li>
                         <li>
-                            <code>127.0.0.1 example.org</code> - { t('AdGuard Home will now return 127.0.0.1 address for the example.org domain (but not its subdomains).') }
+                            <code>127.0.0.1 example.org</code> - { t('example_comment') }
                         </li>
                         <li>
-                            <code>{ t('! Here goes a comment') }</code> - { t('just a comment') }
+                            <code>{ t('example_comment') }</code> - { t('example_comment_meaning') }
                         </li>
                         <li>
-                            <code>{ t('# Also a comment') }</code> - { t('just a comment') }
+                            <code>{ t('example_comment_hash') }</code> - { t('example_comment_meaning') }
                         </li>
                     </ol>
                 </div>

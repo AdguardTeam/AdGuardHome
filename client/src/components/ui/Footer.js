@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Trans, withNamespaces } from 'react-i18next';
 import { REPOSITORY } from '../../helpers/constants';
-import i18n from '../../i18n';
+import i18n, { languages } from '../../i18n';
 
 class Footer extends Component {
     getYear = () => {
@@ -9,8 +9,8 @@ class Footer extends Component {
         return today.getFullYear();
     };
 
-    changeLanguage = () => {
-        i18n.changeLanguage(i18n.language === 'en' ? 'vi' : 'en');
+    changeLanguage = (event) => {
+        i18n.changeLanguage(event.target.value);
     }
 
     render() {
@@ -24,21 +24,23 @@ class Footer extends Component {
                                     Copyright © {this.getYear()} <a href="https://adguard.com/">AdGuard</a>
                                 </div>
                                 <div className="col-auto">
+                                    <select className="form-control" value={i18n.language} onChange={this.changeLanguage}>
+                                        { languages.map(language => <option
+                                            key={language.key} value={language.key}>
+                                                {language.name}
+                                            </option>) }
+                                    </select>
+                                </div>
+                                <div className="col-auto">
                                     <ul className="list-inline text-center mb-0">
                                         <li className="list-inline-item">
-                                            <a href={REPOSITORY.URL} target="_blank" rel="noopener noreferrer"><Trans>Homepage</Trans></a>
+                                            <a href={REPOSITORY.URL} target="_blank" rel="noopener noreferrer"><Trans>homepage</Trans></a>
                                         </li>
                                     </ul>
                                 </div>
                                 <div className="col-auto">
-                                    <button className="btn btn-outline-info btn-sm" onClick={this.changeLanguage}
-                                        title={i18n.language === 'en' ? 'Chuyển sang Tiếng Việt' : 'Change to English'}>
-                                        {i18n.language === 'en' ? 'English' : 'Tiếng Việt'}
-                                    </button>
-                                </div>
-                                <div className="col-auto">
                                     <a href={`${REPOSITORY.URL}/issues/new`} className="btn btn-outline-primary btn-sm" target="_blank" rel="noopener noreferrer">
-                                        <Trans>Report an issue</Trans>
+                                        <Trans>report_an_issue</Trans>
                                     </a>
                                 </div>
                             </div>

@@ -45,7 +45,7 @@ class Header extends Component {
                                 </Link>
                                 {!dashboard.proccessing && dashboard.isCoreRunning &&
                                     <span className={badgeClass}>
-                                        <Trans>{dashboard.protectionEnabled ? 'ON' : 'OFF'}</Trans>
+                                        <Trans>{dashboard.protectionEnabled ? 'on' : 'off'}</Trans>
                                     </span>
                                 }
                             </div>

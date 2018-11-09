@@ -31,7 +31,7 @@ class Statistics extends Component {
                                 {dnsQueries}
                             </div>
                             <div className="card-title-stats">
-                                <Trans>DNS Queries</Trans>
+                                <Trans>dns_query</Trans>
                             </div>
                         </div>
                         <div className="card-chart-bg">
@@ -49,7 +49,7 @@ class Statistics extends Component {
                                 {getPercent(dnsQueries, blockedFiltering)}
                             </div>
                             <div className="card-title-stats">
-                                <Trans>Blocked by</Trans> <a href="#filters"><Trans>Filters</Trans></a>
+                                <Trans>blocked_by</Trans> <a href="#filters"><Trans>Filters</Trans></a>
                             </div>
                         </div>
                         <div className="card-chart-bg">
@@ -67,7 +67,7 @@ class Statistics extends Component {
                                 {getPercent(dnsQueries, replacedSafebrowsing)}
                             </div>
                             <div className="card-title-stats">
-                                <Trans>Blocked malware/phishing</Trans>
+                                <Trans>stats_malware_phishing</Trans>
                             </div>
                         </div>
                         <div className="card-chart-bg">
@@ -85,7 +85,7 @@ class Statistics extends Component {
                                 {getPercent(dnsQueries, replacedParental)}
                             </div>
                             <div className="card-title-stats">
-                                <Trans>Blocked adult websites</Trans>
+                                <Trans>stats_adult</Trans>
                             </div>
                         </div>
                         <div className="card-chart-bg">

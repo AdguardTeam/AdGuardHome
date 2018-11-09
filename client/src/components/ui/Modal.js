@@ -71,8 +71,8 @@ class Modal extends Component {
             if (!this.props.isFilterAdded) {
                 return (
                     <React.Fragment>
-                        <input type="text" className={inputNameClass} placeholder={ this.props.t('Enter name') } onChange={this.handleNameChange} />
-                        <input type="text" className={inputUrlClass} placeholder={ this.props.t('Enter URL') } onChange={this.handleUrlChange} />
+                        <input type="text" className={inputNameClass} placeholder={ this.props.t('enter_name_hint') } onChange={this.handleNameChange} />
+                        <input type="text" className={inputUrlClass} placeholder={ this.props.t('enter_url_hint') } onChange={this.handleUrlChange} />
                         {inputDescription &&
                             <div className="description">
                                 {inputDescription}
@@ -111,8 +111,8 @@ class Modal extends Component {
                     {
                         !this.props.isFilterAdded &&
                             <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={this.closeModal}><Trans>Cancel</Trans></button>
-                                <button type="button" className="btn btn-success" onClick={this.handleNext} disabled={isValidForSubmit}><Trans>Add filter</Trans></button>
+                                <button type="button" className="btn btn-secondary" onClick={this.closeModal}><Trans>cancel_btn</Trans></button>
+                                <button type="button" className="btn btn-success" onClick={this.handleNext} disabled={isValidForSubmit}><Trans>add_filter_btn</Trans></button>
                             </div>
                     }
                 </div>

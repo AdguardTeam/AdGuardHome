@@ -14,13 +14,13 @@ class Popover extends Component {
 
         const source = (
             <div className="popover__list-item">
-                <Trans>Source</Trans>: <a className="popover__link" target="_blank" rel="noopener noreferrer" href={sourceData.url}><strong>{sourceData.name}</strong></a>
+                <Trans>source_label</Trans>: <a className="popover__link" target="_blank" rel="noopener noreferrer" href={sourceData.url}><strong>{sourceData.name}</strong></a>
             </div>
         );
 
         const tracker = (
             <div className="popover__list-item">
-                <Trans>Name</Trans>: <a className="popover__link" target="_blank" rel="noopener noreferrer" href={data.url}><strong>{data.name}</strong></a>
+                <Trans>name_table_header</Trans>: <a className="popover__link" target="_blank" rel="noopener noreferrer" href={data.url}><strong>{data.name}</strong></a>
             </div>
         );
 
@@ -34,11 +34,12 @@ class Popover extends Component {
                 <div className="popover__body">
                     <div className="popover__list">
                         <div className="popover__list-title">
-                            <Trans>Found in the known domains database.</Trans>
+                            <Trans>found_in_known_domain_db</Trans>
                         </div>
                         {tracker}
                         <div className="popover__list-item">
-                            <Trans>Category</Trans>: <strong><Trans>{categoryName}</Trans></strong>
+                            <Trans>category_label</Trans>: <strong>
+                            <Trans>{categoryName}</Trans></strong>
                         </div>
                         {source}
                     </div>

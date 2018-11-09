@@ -30,7 +30,7 @@ class BlockedDomains extends Component {
             );
         },
     }, {
-        Header: <Trans>Requests count</Trans>,
+        Header: <Trans>requests_count</Trans>,
         accessor: 'domain',
         maxWidth: 190,
         Cell: ({ value }) => {
@@ -51,14 +51,14 @@ class BlockedDomains extends Component {
     render() {
         const { t } = this.props;
         return (
-            <Card title={ t('Top blocked domains') } subtitle={ t('for the last 24 hours') } bodyType="card-table" refresh={this.props.refreshButton}>
+            <Card title={ t('top_blocked_domains') } subtitle={ t('for_last_24_hours') } bodyType="card-table" refresh={this.props.refreshButton}>
                 <ReactTable
                     data={map(this.props.topBlockedDomains, (value, prop) => (
                         { ip: prop, domain: value }
                     ))}
                     columns={this.columns}
                     showPagination={false}
-                    noDataText={ t('No domains found') }
+                    noDataText={ t('no_domains_found') }
                     minRows={6}
                     className="-striped -highlight card-table-overflow stats__table"
                 />

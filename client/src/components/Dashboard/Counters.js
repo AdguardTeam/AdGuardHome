@@ -8,13 +8,13 @@ import Tooltip from '../ui/Tooltip';
 const tooltipType = 'tooltip-custom--narrow';
 
 const Counters = props => (
-    <Card title={ props.t('General statistics') } subtitle={ props.t('for the last 24 hours') } bodyType="card-table" refresh={props.refreshButton}>
+    <Card title={ props.t('general_statistics') } subtitle={ props.t('for_last_24_hours') } bodyType="card-table" refresh={props.refreshButton}>
         <table className="table card-table">
             <tbody>
                 <tr>
                     <td>
-                        <Trans>DNS Queries</Trans>
-                        <Tooltip text={ props.t('A number of DNS quieries processed for the last 24 hours') } type={tooltipType} />
+                        <Trans>dns_query</Trans>
+                        <Tooltip text={ props.t('number_of_dns_query_24_hours') } type={tooltipType} />
                     </td>
                     <td className="text-right">
                         <span className="text-muted">
@@ -24,8 +24,8 @@ const Counters = props => (
                 </tr>
                 <tr>
                     <td>
-                        <Trans>Blocked by</Trans> <a href="#filters"><Trans>Filters</Trans></a>
-                        <Tooltip text={ props.t('A number of DNS requests blocked by adblock filters and hosts blocklists') } type={tooltipType} />
+                        <Trans>blocked_by</Trans> <a href="#filters"><Trans>Filters</Trans></a>
+                        <Tooltip text={ props.t('number_of_dns_query_blocked_24_hours') } type={tooltipType} />
                     </td>
                     <td className="text-right">
                         <span className="text-muted">
@@ -35,8 +35,8 @@ const Counters = props => (
                 </tr>
                 <tr>
                     <td>
-                        <Trans>Blocked malware/phishing</Trans>
-                        <Tooltip text={ props.t('A number of DNS requests blocked by the AdGuard browsing security module') } type={tooltipType} />
+                        <Trans>stats_malware_phishing</Trans>
+                        <Tooltip text={ props.t('number_of_dns_query_blocked_24_hours_by_sec') } type={tooltipType} />
                     </td>
                     <td className="text-right">
                         <span className="text-muted">
@@ -46,8 +46,8 @@ const Counters = props => (
                 </tr>
                 <tr>
                     <td>
-                        <Trans>Blocked adult websites</Trans>
-                        <Tooltip text={ props.t('A number of adult websites blocked') } type={tooltipType} />
+                        <Trans>stats_adult</Trans>
+                        <Tooltip text={ props.t('number_of_dns_query_blocked_24_hours_adult') } type={tooltipType} />
                     </td>
                     <td className="text-right">
                         <span className="text-muted">
@@ -57,8 +57,8 @@ const Counters = props => (
                 </tr>
                 <tr>
                     <td>
-                        <Trans>Enforced safe search</Trans>
-                        <Tooltip text={ props.t('A number of DNS requests to search engines for which Safe Search was enforced') } type={tooltipType} />
+                        <Trans>enforced_save_search</Trans>
+                        <Tooltip text={ props.t('number_of_dns_query_to_safe_search') } type={tooltipType} />
                     </td>
                     <td className="text-right">
                         <span className="text-muted">
@@ -68,8 +68,8 @@ const Counters = props => (
                 </tr>
                 <tr>
                     <td>
-                        <Trans>Average processing time</Trans>
-                        <Tooltip text={ props.t('Average time in milliseconds on processing a DNS request') } type={tooltipType} />
+                        <Trans>average_processing_time</Trans>
+                        <Tooltip text={ props.t('average_processing_time_hint') } type={tooltipType} />
                     </td>
                     <td className="text-right">
                         <span className="text-muted">

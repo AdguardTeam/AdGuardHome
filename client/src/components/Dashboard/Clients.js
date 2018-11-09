@@ -26,7 +26,7 @@ class Clients extends Component {
         Cell: ({ value }) => (<div className="logs__row logs__row--overflow"><span className="logs__text" title={value}>{value}</span></div>),
         sortMethod: (a, b) => parseInt(a.replace(/\./g, ''), 10) - parseInt(b.replace(/\./g, ''), 10),
     }, {
-        Header: <Trans>Requests count</Trans>,
+        Header: <Trans>requests_count</Trans>,
         accessor: 'count',
         Cell: ({ value }) => {
             const percent = getPercent(this.props.dnsQueries, value);
@@ -41,14 +41,14 @@ class Clients extends Component {
     render() {
         const { t } = this.props;
         return (
-            <Card title={ t('Top clients') } subtitle={ t('for the last 24 hours') } bodyType="card-table" refresh={this.props.refreshButton}>
+            <Card title={ t('top_clients') } subtitle={ t('for_last_24_hours') } bodyType="card-table" refresh={this.props.refreshButton}>
                 <ReactTable
                     data={map(this.props.topClients, (value, prop) => (
                         { ip: prop, count: value }
                     ))}
                     columns={this.columns}
                     showPagination={false}
-                    noDataText={ t('No clients found') }
+                    noDataText={ t('no_clients_found') }
                     minRows={6}
                     className="-striped -highlight card-table-overflow"
                 />

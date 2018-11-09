@@ -26,12 +26,12 @@ class Dashboard extends Component {
 
     getToggleFilteringButton = () => {
         const { protectionEnabled } = this.props.dashboard;
-        const buttonText = protectionEnabled ? 'Disable' : 'Enable';
+        const buttonText = protectionEnabled ? 'disable_protection' : 'enable_protection';
         const buttonClass = protectionEnabled ? 'btn-gray' : 'btn-success';
 
         return (
             <button type="button" className={`btn btn-sm mr-2 ${buttonClass}`} onClick={() => this.props.toggleProtection(protectionEnabled)}>
-                <Trans>{buttonText} protection</Trans>
+                <Trans>{buttonText}</Trans>
             </button>
         );
     }
@@ -44,12 +44,12 @@ class Dashboard extends Component {
             dashboard.processingStatsHistory ||
             dashboard.processingTopStats;
 
-        const refreshFullButton = <button type="button" className="btn btn-outline-primary btn-sm" onClick={() => this.getAllStats()}><Trans>Refresh statistics</Trans></button>;
+        const refreshFullButton = <button type="button" className="btn btn-outline-primary btn-sm" onClick={() => this.getAllStats()}><Trans>refresh_statics</Trans></button>;
         const refreshButton = <button type="button" className="btn btn-outline-primary btn-sm card-refresh" onClick={() => this.getAllStats()} />;
 
         return (
             <Fragment>
-                <PageTitle title={ t('Dashboard') }>
+                <PageTitle title={ t('dashboard') }>
                     <div className="page-title__actions">
                         {this.getToggleFilteringButton()}
                         {refreshFullButton}

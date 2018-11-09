@@ -14,10 +14,10 @@ class PopoverFilter extends Component {
                 <div className="popover__body popover__body--filter">
                     <div className="popover__list">
                         <div className="popover__list-item popover__list-item--nowrap">
-                            <Trans>Rule</Trans>: <strong>{this.props.rule}</strong>
+                            <Trans>rule_label</Trans>: <strong>{this.props.rule}</strong>
                         </div>
                         {this.props.filter && <div className="popover__list-item popover__list-item--nowrap">
-                            <Trans>Filter</Trans>: <strong>{this.props.filter}</strong>
+                            <Trans>filter_label</Trans>: <strong>{this.props.filter}</strong>
                         </div>}
                     </div>
                 </div>

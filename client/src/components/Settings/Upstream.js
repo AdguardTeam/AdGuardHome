@@ -28,8 +28,8 @@ class Upstream extends Component {
 
         return (
             <Card
-                title={ t('Upstream DNS servers') }
-                subtitle={ t('If you keep this field empty, AdGuard Home will use <a href="https://1.1.1.1/" target="_blank">Cloudflare DNS</a> as an upstream. Use tls:// prefix for DNS over TLS servers.') }
+                title={ t('upstream_dns') }
+                subtitle={ t('upstream_dns_hint') }
                 bodyType="card-body box-body--settings"
             >
                 <div className="row">
@@ -46,14 +46,14 @@ class Upstream extends Component {
                                     type="button"
                                     onClick={this.handleTest}
                                 >
-                                    <Trans>Test upstreams</Trans>
+                                    <Trans>test_upstream_btn</Trans>
                                 </button>
                                 <button
                                     className="btn btn-success btn-standart"
                                     type="submit"
                                     onClick={this.handleSubmit}
                                 >
-                                    <Trans>Apply</Trans>
+                                    <Trans>apply_btn</Trans>
                                 </button>
                             </div>
                         </form>
