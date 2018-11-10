@@ -24,7 +24,7 @@ const Counters = props => (
                 </tr>
                 <tr>
                     <td>
-                        <Trans>blocked_by</Trans> <a href="#filters"><Trans>Filters</Trans></a>
+                        <Trans>blocked_by</Trans> <a href="#filters"><Trans>filters</Trans></a>
                         <Tooltip text={ props.t('number_of_dns_query_blocked_24_hours') } type={tooltipType} />
                     </td>
                     <td className="text-right">

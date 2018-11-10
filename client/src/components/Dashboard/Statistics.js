@@ -49,7 +49,7 @@ class Statistics extends Component {
                                 {getPercent(dnsQueries, blockedFiltering)}
                             </div>
                             <div className="card-title-stats">
-                                <Trans>blocked_by</Trans> <a href="#filters"><Trans>Filters</Trans></a>
+                                <Trans>blocked_by</Trans> <a href="#filters"><Trans>filters</Trans></a>
                             </div>
                         </div>
                         <div className="card-chart-bg">
