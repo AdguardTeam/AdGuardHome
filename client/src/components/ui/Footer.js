@@ -21,7 +21,7 @@ class Footer extends Component {
                         <div className="col-12 col-lg-auto mt-3 mt-lg-0 text-center">
                             <div className="row align-items-center justify-content-center">
                                 <div className="col-auto">
-                                    Copyright © {this.getYear()} <a href="https://adguard.com/">AdGuard</a>
+                                    <Trans>copyright</Trans> © {this.getYear()} <a href="https://adguard.com/">AdGuard</a>
                                 </div>
                                 <div className="col-auto">
                                     <select className="form-control" value={i18n.language} onChange={this.changeLanguage}>

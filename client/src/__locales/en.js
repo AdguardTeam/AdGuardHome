@@ -12,6 +12,7 @@ export default {
         on: 'ON',
         off: 'OFF',
         // Footer
+        copyright: 'Copyright',
         homepage: 'Homepage',
         report_an_issue: 'Report an issue',
         // Dashboard

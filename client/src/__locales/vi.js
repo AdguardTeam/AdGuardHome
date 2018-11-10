@@ -12,6 +12,7 @@ export default {
         on: 'Đang bật',
         off: 'Đang tắt',
         // Footer
+        copyright: 'Bản quyền',
         homepage: 'Trang chủ',
         report_an_issue: 'Báo lỗi',
         // Dashboard
