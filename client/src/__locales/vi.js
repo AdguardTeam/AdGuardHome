@@ -98,7 +98,7 @@ export default {
         dns_test_ok_toast: 'Máy chủ DNS có thể sử dụng',
         dns_test_not_ok_toast: 'Máy chủ "{{key}}": không thể sử dụng, vui lòng kiểm tra bạn đã điền chính xác',
         // Logs
-        ublock_btn: 'Bỏ chặn',
+        unblock_btn: 'Bỏ chặn',
         block_btn: 'Chặn',
         time_table_header: 'Thời gian',
         domain_name_table_header: 'Tên miền',

@@ -98,7 +98,7 @@ export default {
         dns_test_ok_toast: 'Specified DNS servers are working correctly',
         dns_test_not_ok_toast: 'Server "{{key}}": could not be used, please check that you\'ve written it correctly',
         // Logs
-        ublock_btn: 'Unblock',
+        unblock_btn: 'Unblock',
         block_btn: 'Block',
         time_table_header: 'Time',
         domain_name_table_header: 'Domain name',

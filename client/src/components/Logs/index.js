@@ -68,7 +68,7 @@ class Logs extends Component {
 
     renderBlockingButton(isFiltered, domain) {
         const buttonClass = isFiltered ? 'btn-outline-secondary' : 'btn-outline-danger';
-        const buttonText = isFiltered ? 'ublock_btn' : 'block_btn';
+        const buttonText = isFiltered ? 'unblock_btn' : 'block_btn';
 
         return (
             <div className="logs__action">
