@@ -12,6 +12,8 @@ debug
 /dnsfilter.txt
 /querylog.json
 /querylog.json.1
+/client/src/helpers/translations/node_modules
+/client/src/helpers/translations/oneskyapp.json
 
 # Test output
 dnsfilter/dnsfilter.TestLotsOfRules*.pprof

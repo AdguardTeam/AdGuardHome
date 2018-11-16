@@ -298,7 +298,7 @@ class Logs extends Component {
         const { queryLogEnabled } = dashboard;
         return (
             <Fragment>
-                <PageTitle title={ t('query_log') } subtitle={ t('last_5000_dns_queries') }>
+                <PageTitle title={ t('query_log') } subtitle={ t('last_dns_queries') }>
                     <div className="page-title__actions">
                         {this.renderButtons(queryLogEnabled)}
                     </div>
