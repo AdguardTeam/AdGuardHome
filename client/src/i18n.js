@@ -5,6 +5,7 @@ import langDetect from 'i18next-browser-languagedetector';
 
 import vi from './__locales/vi.json';
 import en from './__locales/en.json';
+import ru from './__locales/ru.json';
 
 export const languages = [
     {
@@ -27,11 +28,14 @@ i18n
     .use(reactI18nextModule) // passes i18n down to react-i18next
     .init({
         resources: {
+            en: {
+                translation: en,
+            },
             vi: {
                 translation: vi,
             },
-            en: {
-                translation: en,
+            ru: {
+                translation: ru,
             },
         },
         fallbackLng: 'en',

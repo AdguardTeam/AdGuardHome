@@ -61,7 +61,7 @@ class Filters extends Component {
         accessor: 'url',
         Cell: ({ value }) => (<span title={ this.props.t('delete_table_action') } className='remove-icon fe fe-trash-2' onClick={() => this.props.removeFilter(value)}/>),
         className: 'text-center',
-        width: 75,
+        width: 80,
         sortable: false,
     },
     ];

@@ -44,7 +44,7 @@ class UserRules extends Component {
                             <code> @@||example.org^</code> - { t('example_meaning_filter_whitelist') }
                         </li>
                         <li>
-                            <code>127.0.0.1 example.org</code> - { t('example_comment') }
+                            <code>127.0.0.1 example.org</code> - { t('example_meaning_host_block') }
                         </li>
                         <li>
                             <code>{ t('example_comment') }</code> - { t('example_comment_meaning') }
