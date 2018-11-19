@@ -2,11 +2,8 @@
     "name": "translations",
     "version": "0.1.0",
     "private": true,
-    "scripts": {
-        "download-locales": "node download.js",
-        "upload-locales": "node upload.js"
-    },
     "dependencies": {
+        "request": "^2.88.0",
         "request-promise": "^4.2.2"
     }
 }

@@ -25,7 +25,7 @@ class Statistics extends Component {
         return (
             <div className="row">
                 <div className="col-sm-6 col-lg-3">
-                    <Card bodyType="card-wrap">
+                    <Card type="card--full" bodyType="card-wrap">
                         <div className="card-body-stats">
                             <div className="card-value card-value-stats text-blue">
                                 {dnsQueries}
@@ -40,7 +40,7 @@ class Statistics extends Component {
                     </Card>
                 </div>
                 <div className="col-sm-6 col-lg-3">
-                    <Card bodyType="card-wrap">
+                    <Card type="card--full" bodyType="card-wrap">
                         <div className="card-body-stats">
                             <div className="card-value card-value-stats text-red">
                                 {blockedFiltering}
@@ -49,7 +49,7 @@ class Statistics extends Component {
                                 {getPercent(dnsQueries, blockedFiltering)}
                             </div>
                             <div className="card-title-stats">
-                                <Trans>blocked_by</Trans> <a href="#filters"><Trans>filters</Trans></a>
+                                <Trans>blocked_by</Trans><a href="#filters"> <Trans>filters</Trans></a>
                             </div>
                         </div>
                         <div className="card-chart-bg">
@@ -58,7 +58,7 @@ class Statistics extends Component {
                     </Card>
                 </div>
                 <div className="col-sm-6 col-lg-3">
-                    <Card bodyType="card-wrap">
+                    <Card type="card--full" bodyType="card-wrap">
                         <div className="card-body-stats">
                             <div className="card-value card-value-stats text-green">
                                 {replacedSafebrowsing}
@@ -76,7 +76,7 @@ class Statistics extends Component {
                     </Card>
                 </div>
                 <div className="col-sm-6 col-lg-3">
-                    <Card bodyType="card-wrap">
+                    <Card type="card--full" bodyType="card-wrap">
                         <div className="card-body-stats">
                             <div className="card-value card-value-stats text-yellow">
                                 {replacedParental}

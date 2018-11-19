@@ -17,14 +17,14 @@ class Menu extends Component {
 
     render() {
         const menuClass = classnames({
-            'col-lg mobile-menu': true,
+            'col-lg-6 mobile-menu': true,
             'mobile-menu--active': this.props.isMenuOpen,
         });
 
         return (
             <Fragment>
                 <div className={menuClass}>
-                    <ul className="nav nav-tabs border-0 flex-column flex-lg-row">
+                    <ul className="nav nav-tabs border-0 flex-column flex-lg-row flex-nowrap">
                         <li className="nav-item border-bottom d-lg-none" onClick={this.toggleMenu}>
                             <div className="nav-link nav-link--back">
                                 <svg className="nav-icon" fill="none" height="24" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="m19 12h-14"/><path d="m12 19-7-7 7-7"/></svg>

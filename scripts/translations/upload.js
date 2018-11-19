@@ -3,7 +3,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const request = require('request-promise');
 
-const LOCALES_DIR = '../../__locales';
+const LOCALES_DIR = '../../client/src/__locales';
 
 /**
  * Hash content
