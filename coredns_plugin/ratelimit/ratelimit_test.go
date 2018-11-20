@@ -53,7 +53,7 @@ func TestRatelimiting(t *testing.T) {
 
 	allowed, err = p.allowRequest("127.0.0.1")
 
-	if err != nil || allowed {
+	if err != nil || !allowed {
 		t.Fatal("Second request must have been ratelimited")
 	}
 }
@@ -61,7 +61,7 @@ func TestRatelimiting(t *testing.T) {
 func TestWhitelist(t *testing.T) {
 
 	// rate limit is 1 per sec
-	c := caddy.NewTestController("dns", `ratelimit 1 { whitelist 127.0.0.1 }`)
+	c := caddy.NewTestController("dns", `ratelimit 1 { whitelist 127.0.0.2 127.0.0.125 }`)
 	p, err := setupPlugin(c)
 
 	if err != nil {

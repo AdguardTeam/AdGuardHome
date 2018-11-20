@@ -45,8 +45,12 @@ func (p *plug) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (
 
 func (p *plug) allowRequest(ip string) (bool, error) {
 
-	if len(p.whitelist) > 0 && sort.SearchStrings(p.whitelist, ip) >= 0 {
-		return true, nil
+	if len(p.whitelist) > 0 {
+		i := sort.SearchStrings(p.whitelist, ip)
+
+		if i < len(p.whitelist) && p.whitelist[i] == ip {
+			return true, nil
+		}
 	}
 
 	if _, found := tokenBuckets.Get(ip); !found {
