@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Trans, withNamespaces } from 'react-i18next';
-import { REPOSITORY } from '../../helpers/constants';
-import i18n, { languages } from '../../i18n';
+import { REPOSITORY, LANGUAGES } from '../../helpers/constants';
+import i18n from '../../i18n';
 
 import './Footer.css';
 import './Select.css';
@@ -36,10 +36,10 @@ class Footer extends Component {
                         </div>
                         <div className="footer__column footer__column--language">
                             <select className="form-control select select--language" value={i18n.language} onChange={this.changeLanguage}>
-                                { languages.map(language => <option
-                                    key={language.key} value={language.key}>
+                                {LANGUAGES.map(language =>
+                                    <option key={language.key} value={language.key}>
                                         {language.name}
-                                    </option>) }
+                                    </option>)}
                             </select>
                         </div>
                     </div>

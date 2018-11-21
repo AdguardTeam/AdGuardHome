@@ -7,21 +7,6 @@ import vi from './__locales/vi.json';
 import en from './__locales/en.json';
 import ru from './__locales/ru.json';
 
-export const languages = [
-    {
-        key: 'en',
-        name: 'English',
-    },
-    {
-        key: 'vi',
-        name: 'Tiếng Việt',
-    },
-    {
-        key: 'ru',
-        name: 'Русский',
-    },
-];
-
 i18n
     .use(langDetect)
     .use(initReactI18n)
