@@ -46,6 +46,7 @@ paths:
                               - 1.1.1.1
                               - 1.0.0.1
                             version: "v0.1"
+                            language: "en"
     /enable_protection:
         post:
             tags:
@@ -193,6 +194,33 @@ paths:
                             8.8.8.8: OK
                             8.8.4.4: OK
                             "192.168.1.104:53535": "Couldn't communicate with DNS server"
+    /i18n/change_language:
+        post:
+            tags:
+                - i18n
+            operationId: changeLanguage
+            summary: "Change current language. Argument must be an ISO 639-1 two-letter code"
+            consumes:
+                - text/plain
+            parameters:
+                - in: body
+                  name: language
+                  description: "New language. It must be known to the server and must be an ISO 639-1 two-letter code"
+                  schema:
+                    type: string
+                    example: en
+    /i18n/current_language:
+        get:
+            tags:
+                - i18n
+            operationId: currentLanguage
+            summary: "Get currently set language. Result is ISO 639-1 two-letter code. Empty result means default language."
+            responses:
+                200:
+                    description: OK
+                    examples:
+                        text/plain:
+                            en
     /stats_top:
         get:
             tags:
