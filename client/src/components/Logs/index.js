@@ -4,6 +4,7 @@ import ReactTable from 'react-table';
 import { saveAs } from 'file-saver/FileSaver';
 import escapeRegExp from 'lodash/escapeRegExp';
 import endsWith from 'lodash/endsWith';
+import { Trans, withNamespaces } from 'react-i18next';
 
 import { formatTime } from '../../helpers/helpers';
 import { getTrackerData } from '../../helpers/trackers/trackers';
@@ -45,6 +46,7 @@ class Logs extends Component {
 
     toggleBlocking = (type, domain) => {
         const { userRules } = this.props.filtering;
+        const { t } = this.props;
         const lineEnding = !endsWith(userRules, '\n') ? '\n' : '';
         const baseRule = `||${domain}^$important`;
         const baseUnblocking = `@@${baseRule}`;
@@ -55,10 +57,10 @@ class Logs extends Component {
 
         if (userRules.match(preparedBlockingRule)) {
             this.props.setRules(userRules.replace(`${blockingRule}`, ''));
-            this.props.addSuccessToast(`Rule removed from the custom filtering rules: ${blockingRule}`);
+            this.props.addSuccessToast(`${t('rule_removed_from_custom_filtering_toast')}: ${blockingRule}`);
         } else if (!userRules.match(preparedUnblockingRule)) {
             this.props.setRules(`${userRules}${lineEnding}${unblockingRule}\n`);
-            this.props.addSuccessToast(`Rule added to the custom filtering rules: ${unblockingRule}`);
+            this.props.addSuccessToast(`${t('rule_added_to_custom_filtering_toast')}: ${unblockingRule}`);
         }
 
         this.props.getFilteringStatus();
@@ -66,7 +68,7 @@ class Logs extends Component {
 
     renderBlockingButton(isFiltered, domain) {
         const buttonClass = isFiltered ? 'btn-outline-secondary' : 'btn-outline-danger';
-        const buttonText = isFiltered ? 'Unblock' : 'Block';
+        const buttonText = isFiltered ? 'unblock_btn' : 'block_btn';
 
         return (
             <div className="logs__action">
@@ -75,21 +77,22 @@ class Logs extends Component {
                     className={`btn btn-sm ${buttonClass}`}
                     onClick={() => this.toggleBlocking(buttonText.toLowerCase(), domain)}
                 >
-                    {buttonText}
+                    <Trans>{buttonText}</Trans>
                 </button>
             </div>
         );
     }
 
     renderLogs(logs) {
+        const { t } = this.props;
         const columns = [{
-            Header: 'Time',
+            Header: t('time_table_header'),
             accessor: 'time',
             maxWidth: 110,
             filterable: false,
             Cell: ({ value }) => (<div className="logs__row"><span className="logs__text" title={value}>{formatTime(value)}</span></div>),
         }, {
-            Header: 'Domain name',
+            Header: t('domain_name_table_header'),
             accessor: 'domain',
             Cell: (row) => {
                 const response = row.value;
@@ -105,11 +108,11 @@ class Logs extends Component {
                 );
             },
         }, {
-            Header: 'Type',
+            Header: t('type_table_header'),
             accessor: 'type',
             maxWidth: 60,
         }, {
-            Header: 'Response',
+            Header: t('response_table_header'),
             accessor: 'response',
             Cell: (row) => {
                 const responses = row.value;
@@ -123,7 +126,7 @@ class Logs extends Component {
 
                 if (reason === 'FilteredBlackList' || reason === 'NotFilteredWhiteList') {
                     if (filterId === 0) {
-                        filterName = 'Custom filtering rules';
+                        filterName = 'custom_filter_rules';
                     } else {
                         const filterItem = Object.keys(filters)
                             .filter(key => filters[key].id === filterId);
@@ -156,7 +159,7 @@ class Logs extends Component {
                 }
                 return (
                     <div className="logs__row">
-                        <span>Empty</span>
+                        <span><Trans>empty_response_status</Trans></span>
                         {this.renderTooltip(isFiltered, rule, filterName)}
                     </div>
                 );
@@ -174,11 +177,11 @@ class Logs extends Component {
                     className="form-control"
                     value={filter ? filter.value : 'all'}
                 >
-                    <option value="all">Show all</option>
-                    <option value="filtered">Show filtered</option>
+                    <option value="all">{ t('show_all_filter_type') }</option>
+                    <option value="filtered">{ t('show_filtered_type') }</option>
                 </select>,
         }, {
-            Header: 'Client',
+            Header: t('Client'),
             accessor: 'client',
             maxWidth: 250,
             Cell: (row) => {
@@ -206,7 +209,14 @@ class Logs extends Component {
                 showPagination={true}
                 defaultPageSize={50}
                 minRows={7}
-                noDataText="No logs found"
+                // Text
+                previousText={ t('previous_btn') }
+                nextText={ t('next_btn') }
+                loadingText={ t('loading_table_status') }
+                pageText={ t('page_table_footer_text') }
+                ofText={ t('of_table_footer_text') }
+                rowsText={ t('rows_table_footer_text') }
+                noDataText={ t('no_logs_found') }
                 defaultFilterMethod={(filter, row) => {
                     const id = filter.pivotId || filter.id;
                     return row[id] !== undefined ?
@@ -259,17 +269,17 @@ class Logs extends Component {
                         className="btn btn-gray btn-sm mr-2"
                         type="submit"
                         onClick={() => this.props.toggleLogStatus(queryLogEnabled)}
-                    >Disable log</button>
+                    ><Trans>disabled_log_btn</Trans></button>
                     <button
                         className="btn btn-primary btn-sm mr-2"
                         type="submit"
                         onClick={this.handleDownloadButton}
-                    >Download log file</button>
+                    ><Trans>download_log_file_btn</Trans></button>
                     <button
                         className="btn btn-outline-primary btn-sm"
                         type="submit"
                         onClick={this.getLogs}
-                    >Refresh</button>
+                    ><Trans>refresh_btn</Trans></button>
                 </Fragment>
             );
         }
@@ -279,16 +289,16 @@ class Logs extends Component {
                 className="btn btn-success btn-sm mr-2"
                 type="submit"
                 onClick={() => this.props.toggleLogStatus(queryLogEnabled)}
-            >Enable log</button>
+            ><Trans>enabled_log_btn</Trans></button>
         );
     }
 
     render() {
-        const { queryLogs, dashboard } = this.props;
+        const { queryLogs, dashboard, t } = this.props;
         const { queryLogEnabled } = dashboard;
         return (
             <Fragment>
-                <PageTitle title="Query Log" subtitle="Last 5000 DNS queries">
+                <PageTitle title={ t('query_log') } subtitle={ t('last_dns_queries') }>
                     <div className="page-title__actions">
                         {this.renderButtons(queryLogEnabled)}
                     </div>
@@ -314,6 +324,7 @@ Logs.propTypes = {
     userRules: PropTypes.string,
     setRules: PropTypes.func,
     addSuccessToast: PropTypes.func,
+    t: PropTypes.func,
 };
 
-export default Logs;
+export default withNamespaces()(Logs);

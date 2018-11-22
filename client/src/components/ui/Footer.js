@@ -1,5 +1,10 @@
 import React, { Component } from 'react';
-import { REPOSITORY } from '../../helpers/constants';
+import { Trans, withNamespaces } from 'react-i18next';
+import { REPOSITORY, LANGUAGES } from '../../helpers/constants';
+import i18n from '../../i18n';
+
+import './Footer.css';
+import './Select.css';
 
 class Footer extends Component {
     getYear = () => {
@@ -7,29 +12,35 @@ class Footer extends Component {
         return today.getFullYear();
     };
 
+    changeLanguage = (event) => {
+        i18n.changeLanguage(event.target.value);
+    }
+
     render() {
         return (
             <footer className="footer">
                 <div className="container">
-                    <div className="row align-items-center flex-row">
-                        <div className="col-12 col-lg-auto mt-3 mt-lg-0 text-center">
-                            <div className="row align-items-center justify-content-center">
-                                <div className="col-auto">
-                                    Copyright © {this.getYear()} <a href="https://adguard.com/">AdGuard</a>
-                                </div>
-                                <div className="col-auto">
-                                    <ul className="list-inline text-center mb-0">
-                                        <li className="list-inline-item">
-                                            <a href={REPOSITORY.URL} target="_blank" rel="noopener noreferrer">Homepage</a>
-                                        </li>
-                                    </ul>
-                                </div>
-                                <div className="col-auto">
-                                    <a href={`${REPOSITORY.URL}/issues/new`} className="btn btn-outline-primary btn-sm" target="_blank" rel="noopener noreferrer">
-                                        Report an issue
-                                    </a>
-                                </div>
+                    <div className="footer__row">
+                        <div className="footer__column">
+                            <div className="footer__copyright">
+                                <Trans>copyright</Trans> © {this.getYear()} <a href="https://adguard.com/">AdGuard</a>
                             </div>
+                        </div>
+                        <div className="footer__column">
+                            <a href={REPOSITORY.URL} className="footer__link" target="_blank" rel="noopener noreferrer">
+                                <Trans>homepage</Trans>
+                            </a>
+                            <a href={`${REPOSITORY.URL}/issues/new`} className="btn btn-outline-primary btn-sm footer__link footer__link--report" target="_blank" rel="noopener noreferrer">
+                                <Trans>report_an_issue</Trans>
+                            </a>
+                        </div>
+                        <div className="footer__column footer__column--language">
+                            <select className="form-control select select--language" value={i18n.language} onChange={this.changeLanguage}>
+                                {LANGUAGES.map(language =>
+                                    <option key={language.key} value={language.key}>
+                                        {language.name}
+                                    </option>)}
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -38,4 +49,4 @@ class Footer extends Component {
     }
 }
 
-export default Footer;
+export default withNamespaces()(Footer);

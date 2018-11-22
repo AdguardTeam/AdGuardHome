@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
+import { Trans, withNamespaces } from 'react-i18next';
 import Card from '../ui/Card';
 
-export default class Upstream extends Component {
+class Upstream extends Component {
     handleChange = (e) => {
         const { value } = e.currentTarget;
         this.props.handleUpstreamChange(value);
@@ -23,11 +24,12 @@ export default class Upstream extends Component {
             'btn btn-primary btn-standart mr-2': true,
             'btn btn-primary btn-standart mr-2 btn-loading': this.props.processingTestUpstream,
         });
+        const { t } = this.props;
 
         return (
             <Card
-                title="Upstream DNS servers"
-                subtitle="If you keep this field empty, AdGuard Home will use <a href='https://1.1.1.1/' target='_blank'>Cloudflare DNS</a> as an upstream. Use tls:// prefix for DNS over TLS servers."
+                title={ t('upstream_dns') }
+                subtitle={ t('upstream_dns_hint') }
                 bodyType="card-body box-body--settings"
             >
                 <div className="row">
@@ -44,14 +46,14 @@ export default class Upstream extends Component {
                                     type="button"
                                     onClick={this.handleTest}
                                 >
-                                    Test upstreams
+                                    <Trans>test_upstream_btn</Trans>
                                 </button>
                                 <button
                                     className="btn btn-success btn-standart"
                                     type="submit"
                                     onClick={this.handleSubmit}
                                 >
-                                    Apply
+                                    <Trans>apply_btn</Trans>
                                 </button>
                             </div>
                         </form>
@@ -68,4 +70,7 @@ Upstream.propTypes = {
     handleUpstreamChange: PropTypes.func,
     handleUpstreamSubmit: PropTypes.func,
     handleUpstreamTest: PropTypes.func,
+    t: PropTypes.func,
 };
+
+export default withNamespaces()(Upstream);

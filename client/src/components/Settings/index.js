@@ -1,5 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
+import { withNamespaces, Trans } from 'react-i18next';
 import Upstream from './Upstream';
 import Checkbox from '../ui/Checkbox';
 import Loading from '../ui/Loading';
@@ -7,27 +8,27 @@ import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
 import './Settings.css';
 
-export default class Settings extends Component {
+class Settings extends Component {
     settings = {
         filtering: {
             enabled: false,
-            title: 'Block domains using filters and hosts files',
-            subtitle: 'You can setup blocking rules in the <a href="#filters">Filters</a> settings.',
+            title: 'block_domain_use_filters_and_hosts',
+            subtitle: 'filters_block_toggle_hint',
         },
         safebrowsing: {
             enabled: false,
-            title: 'Use AdGuard browsing security web service',
-            subtitle: 'AdGuard Home will check if domain is blacklisted by the browsing security web service. It will use privacy-friendly lookup API to perform the check: only a short prefix of the domain name SHA256 hash is sent to the server.',
+            title: 'use_adguard_browsing_sec',
+            subtitle: 'use_adguard_browsing_sec_hint',
         },
         parental: {
             enabled: false,
-            title: 'Use AdGuard parental control web service',
-            subtitle: 'AdGuard Home will check if domain contains adult materials. It uses the same privacy-friendly API as the browsing security web service.',
+            title: 'use_adguard_parental',
+            subtitle: 'use_adguard_parental_hint',
         },
         safesearch: {
             enabled: false,
-            title: 'Enforce safe search',
-            subtitle: 'AdGuard Home can enforce safe search in the following search engines: Google, Youtube, Bing, and Yandex.',
+            title: 'enforce_safe_search',
+            subtitle: 'enforce_save_search_hint',
         },
     };
 
@@ -47,7 +48,7 @@ export default class Settings extends Component {
         if (this.props.dashboard.upstreamDns.length > 0) {
             this.props.testUpstream(this.props.dashboard.upstreamDns);
         } else {
-            this.props.addErrorToast({ error: 'No servers specified' });
+            this.props.addErrorToast({ error: this.props.t('no_servers_specified') });
         }
     };
 
@@ -64,22 +65,22 @@ export default class Settings extends Component {
             });
         }
         return (
-            <div>No settings</div>
+            <div><Trans>no_settings</Trans></div>
         );
     }
 
     render() {
-        const { settings } = this.props;
+        const { settings, t } = this.props;
         const { upstreamDns } = this.props.dashboard;
         return (
             <Fragment>
-                <PageTitle title="Settings" />
+                <PageTitle title={ t('settings') } />
                 {settings.processing && <Loading />}
                 {!settings.processing &&
                     <div className="content">
                         <div className="row">
                             <div className="col-md-12">
-                                <Card title="General settings" bodyType="card-body box-body--settings">
+                                <Card title={ t('general_settings') } bodyType="card-body box-body--settings">
                                     <div className="form">
                                         {this.renderSettings(settings.settingsList)}
                                     </div>
@@ -108,4 +109,7 @@ Settings.propTypes = {
     handleUpstreamChange: PropTypes.func,
     setUpstream: PropTypes.func,
     upstream: PropTypes.string,
+    t: PropTypes.func,
 };
+
+export default withNamespaces()(Settings);

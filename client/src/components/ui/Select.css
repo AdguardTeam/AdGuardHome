@@ -1,0 +1,16 @@
+.select.select--language {
+    height: 45px;
+    padding: 0 32px 2px 33px;
+    outline: 0;
+    border-color: rgba(0, 40, 100, 0.12);
+    background-image: url("./svg/globe.svg"), url("./svg/chevron-down.svg");
+    background-repeat: no-repeat, no-repeat;
+    background-position: left 11px center, right 9px center;
+    background-size: 14px, 17px 20px;
+    appearance: none;
+    cursor: pointer;
+}
+
+.select--language::-ms-expand {
+    opacity: 0;
+}

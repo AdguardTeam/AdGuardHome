@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { Trans, withNamespaces } from 'react-i18next';
 
 import Card from '../ui/Card';
 import Line from '../ui/Line';
@@ -24,13 +25,13 @@ class Statistics extends Component {
         return (
             <div className="row">
                 <div className="col-sm-6 col-lg-3">
-                    <Card bodyType="card-wrap">
+                    <Card type="card--full" bodyType="card-wrap">
                         <div className="card-body-stats">
                             <div className="card-value card-value-stats text-blue">
                                 {dnsQueries}
                             </div>
                             <div className="card-title-stats">
-                                DNS Queries
+                                <Trans>dns_query</Trans>
                             </div>
                         </div>
                         <div className="card-chart-bg">
@@ -39,7 +40,7 @@ class Statistics extends Component {
                     </Card>
                 </div>
                 <div className="col-sm-6 col-lg-3">
-                    <Card bodyType="card-wrap">
+                    <Card type="card--full" bodyType="card-wrap">
                         <div className="card-body-stats">
                             <div className="card-value card-value-stats text-red">
                                 {blockedFiltering}
@@ -48,7 +49,7 @@ class Statistics extends Component {
                                 {getPercent(dnsQueries, blockedFiltering)}
                             </div>
                             <div className="card-title-stats">
-                                Blocked by <a href="#filters">Filters</a>
+                                <Trans>blocked_by</Trans><a href="#filters"> <Trans>filters</Trans></a>
                             </div>
                         </div>
                         <div className="card-chart-bg">
@@ -57,7 +58,7 @@ class Statistics extends Component {
                     </Card>
                 </div>
                 <div className="col-sm-6 col-lg-3">
-                    <Card bodyType="card-wrap">
+                    <Card type="card--full" bodyType="card-wrap">
                         <div className="card-body-stats">
                             <div className="card-value card-value-stats text-green">
                                 {replacedSafebrowsing}
@@ -66,7 +67,7 @@ class Statistics extends Component {
                                 {getPercent(dnsQueries, replacedSafebrowsing)}
                             </div>
                             <div className="card-title-stats">
-                                Blocked malware/phishing
+                                <Trans>stats_malware_phishing</Trans>
                             </div>
                         </div>
                         <div className="card-chart-bg">
@@ -75,7 +76,7 @@ class Statistics extends Component {
                     </Card>
                 </div>
                 <div className="col-sm-6 col-lg-3">
-                    <Card bodyType="card-wrap">
+                    <Card type="card--full" bodyType="card-wrap">
                         <div className="card-body-stats">
                             <div className="card-value card-value-stats text-yellow">
                                 {replacedParental}
@@ -84,7 +85,7 @@ class Statistics extends Component {
                                 {getPercent(dnsQueries, replacedParental)}
                             </div>
                             <div className="card-title-stats">
-                                Blocked adult websites
+                                <Trans>stats_adult</Trans>
                             </div>
                         </div>
                         <div className="card-chart-bg">
@@ -106,4 +107,4 @@ Statistics.propTypes = {
     refreshButton: PropTypes.node.isRequired,
 };
 
-export default Statistics;
+export default withNamespaces()(Statistics);

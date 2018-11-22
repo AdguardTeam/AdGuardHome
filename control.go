@@ -84,6 +84,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		"bootstrap_dns":      config.CoreDNS.BootstrapDNS,
 		"upstream_dns":       config.CoreDNS.UpstreamDNS,
 		"version":            VersionString,
+		"language":           config.Language,
 	}
 
 	jsonVal, err := json.Marshal(data)
@@ -876,6 +877,8 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/querylog_disable", optionalAuth(ensurePOST(handleQueryLogDisable)))
 	http.HandleFunc("/control/set_upstream_dns", optionalAuth(ensurePOST(handleSetUpstreamDNS)))
 	http.HandleFunc("/control/test_upstream_dns", optionalAuth(ensurePOST(handleTestUpstreamDNS)))
+	http.HandleFunc("/control/i18n/change_language", optionalAuth(ensurePOST(handleI18nChangeLanguage)))
+	http.HandleFunc("/control/i18n/current_language", optionalAuth(ensureGET(handleI18nCurrentLanguage)))
 	http.HandleFunc("/control/stats_top", optionalAuth(ensureGET(corednsplugin.HandleStatsTop)))
 	http.HandleFunc("/control/stats", optionalAuth(ensureGET(corednsplugin.HandleStats)))
 	http.HandleFunc("/control/stats_history", optionalAuth(ensureGET(corednsplugin.HandleStatsHistory)))

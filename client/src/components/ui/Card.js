@@ -4,8 +4,8 @@ import PropTypes from 'prop-types';
 import './Card.css';
 
 const Card = props => (
-    <div className="card">
-        { props.title &&
+    <div className={props.type ? `card ${props.type}` : 'card'}>
+        {props.title &&
         <div className="card-header with-border">
             <div className="card-inner">
                 <div className="card-title">
@@ -33,6 +33,7 @@ Card.propTypes = {
     title: PropTypes.string,
     subtitle: PropTypes.string,
     bodyType: PropTypes.string,
+    type: PropTypes.string,
     refresh: PropTypes.node,
     children: PropTypes.node.isRequired,
 };

@@ -17,6 +17,7 @@ import Footer from '../ui/Footer';
 import Toasts from '../Toasts';
 import Status from '../ui/Status';
 import Update from '../ui/Update';
+import i18n from '../../i18n';
 
 class App extends Component {
     componentDidMount() {
@@ -24,9 +25,31 @@ class App extends Component {
         this.props.getVersion();
     }
 
+    componentDidUpdate(prevProps) {
+        if (this.props.dashboard.language !== prevProps.dashboard.language) {
+            this.setLanguage();
+        }
+    }
+
     handleStatusChange = () => {
         this.props.enableDns();
     };
+
+    setLanguage = () => {
+        const { processing, language } = this.props.dashboard;
+
+        if (!processing) {
+            if (!language) {
+                this.props.changeLanguage(i18n.language);
+            } else {
+                i18n.changeLanguage(language);
+            }
+        }
+
+        i18n.on('languageChanged', (lang) => {
+            this.props.changeLanguage(lang);
+        });
+    }
 
     render() {
         const { dashboard } = this.props;
@@ -78,6 +101,7 @@ App.propTypes = {
     isCoreRunning: PropTypes.bool,
     error: PropTypes.string,
     getVersion: PropTypes.func,
+    changeLanguage: PropTypes.func,
 };
 
 export default App;

@@ -1,5 +1,6 @@
 import { createAction } from 'redux-actions';
 import round from 'lodash/round';
+import { t } from 'i18next';
 import { showLoading, hideLoading } from 'react-redux-loading-bar';
 
 import { normalizeHistory, normalizeFilteringStatus, normalizeLogs } from '../helpers/helpers';
@@ -21,40 +22,40 @@ export const toggleSetting = (settingKey, status) => async (dispatch) => {
         switch (settingKey) {
             case 'filtering':
                 if (status) {
-                    successMessage = 'Disabled filtering';
+                    successMessage = 'disabled_filtering_toast';
                     await apiClient.disableFiltering();
                 } else {
-                    successMessage = 'Enabled filtering';
+                    successMessage = 'enabled_filtering_toast';
                     await apiClient.enableFiltering();
                 }
                 dispatch(toggleSettingStatus({ settingKey }));
                 break;
             case 'safebrowsing':
                 if (status) {
-                    successMessage = 'Disabled safebrowsing';
+                    successMessage = 'disabled_safe_browsing_toast';
                     await apiClient.disableSafebrowsing();
                 } else {
-                    successMessage = 'Enabled safebrowsing';
+                    successMessage = 'enabled_safe_browsing_toast';
                     await apiClient.enableSafebrowsing();
                 }
                 dispatch(toggleSettingStatus({ settingKey }));
                 break;
             case 'parental':
                 if (status) {
-                    successMessage = 'Disabled parental control';
+                    successMessage = 'disabled_parental_toast';
                     await apiClient.disableParentalControl();
                 } else {
-                    successMessage = 'Enabled parental control';
+                    successMessage = 'enabled_parental_toast';
                     await apiClient.enableParentalControl();
                 }
                 dispatch(toggleSettingStatus({ settingKey }));
                 break;
             case 'safesearch':
                 if (status) {
-                    successMessage = 'Disabled safe search';
+                    successMessage = 'disabled_safe_search_toast';
                     await apiClient.disableSafesearch();
                 } else {
-                    successMessage = 'Enabled safe search';
+                    successMessage = 'enabled_save_search_toast';
                     await apiClient.enableSafesearch();
                 }
                 dispatch(toggleSettingStatus({ settingKey }));
@@ -123,10 +124,10 @@ export const toggleProtection = status => async (dispatch) => {
 
     try {
         if (status) {
-            successMessage = 'Disabled protection';
+            successMessage = 'disabled_protection';
             await apiClient.disableGlobalProtection();
         } else {
-            successMessage = 'Enabled protection';
+            successMessage = 'enabled_protection';
             await apiClient.enableGlobalProtection();
         }
 
@@ -271,14 +272,14 @@ export const toggleLogStatus = queryLogEnabled => async (dispatch) => {
     let successMessage;
     if (queryLogEnabled) {
         toggleMethod = apiClient.disableQueryLog.bind(apiClient);
-        successMessage = 'disabled';
+        successMessage = 'query_log_disabled_toast';
     } else {
         toggleMethod = apiClient.enableQueryLog.bind(apiClient);
-        successMessage = 'enabled';
+        successMessage = 'query_log_enabled_toast';
     }
     try {
         await toggleMethod();
-        dispatch(addSuccessToast(`Query log ${successMessage}`));
+        dispatch(addSuccessToast(successMessage));
         dispatch(toggleLogStatusSuccess());
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -297,7 +298,7 @@ export const setRules = rules => async (dispatch) => {
             .replace(/^\n/g, '')
             .replace(/\n\s*\n/g, '\n');
         await apiClient.setRules(replacedLineEndings);
-        dispatch(addSuccessToast('Updated the custom filtering rules'));
+        dispatch(addSuccessToast('updated_custom_filtering_toast'));
         dispatch(setRulesSuccess());
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -359,7 +360,7 @@ export const refreshFilters = () => async (dispatch) => {
 
         if (refreshText.includes('OK')) {
             if (refreshText.includes('OK 0')) {
-                dispatch(addSuccessToast('All filters are already up-to-date'));
+                dispatch(addSuccessToast('all_filters_up_to_date_toast'));
             } else {
                 dispatch(addSuccessToast(refreshText.replace(/OK /g, '')));
             }
@@ -456,7 +457,7 @@ export const setUpstream = url => async (dispatch) => {
     dispatch(setUpstreamRequest());
     try {
         await apiClient.setUpstream(url);
-        dispatch(addSuccessToast('Updated the upstream DNS servers'));
+        dispatch(addSuccessToast('updated_upstream_dns_toast'));
         dispatch(setUpstreamSuccess());
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -476,18 +477,48 @@ export const testUpstream = servers => async (dispatch) => {
         const testMessages = Object.keys(upstreamResponse).map((key) => {
             const message = upstreamResponse[key];
             if (message !== 'OK') {
-                dispatch(addErrorToast({ error: `Server "${key}": could not be used, please check that you've written it correctly` }));
+                dispatch(addErrorToast({ error: t('dns_test_not_ok_toast', { key }) }));
             }
             return message;
         });
 
         if (testMessages.every(message => message === 'OK')) {
-            dispatch(addSuccessToast('Specified DNS servers are working correctly'));
+            dispatch(addSuccessToast('dns_test_ok_toast'));
         }
 
         dispatch(testUpstreamSuccess());
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(testUpstreamFailure());
+    }
+};
+
+export const changeLanguageRequest = createAction('CHANGE_LANGUAGE_REQUEST');
+export const changeLanguageFailure = createAction('CHANGE_LANGUAGE_FAILURE');
+export const changeLanguageSuccess = createAction('CHANGE_LANGUAGE_SUCCESS');
+
+export const changeLanguage = lang => async (dispatch) => {
+    dispatch(changeLanguageRequest());
+    try {
+        await apiClient.changeLanguage(lang);
+        dispatch(changeLanguageSuccess());
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(changeLanguageFailure());
+    }
+};
+
+export const getLanguageRequest = createAction('GET_LANGUAGE_REQUEST');
+export const getLanguageFailure = createAction('GET_LANGUAGE_FAILURE');
+export const getLanguageSuccess = createAction('GET_LANGUAGE_SUCCESS');
+
+export const getLanguage = () => async (dispatch) => {
+    dispatch(getLanguageRequest());
+    try {
+        const language = await apiClient.getCurrentLanguage();
+        dispatch(getLanguageSuccess(language));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(getLanguageFailure());
     }
 };

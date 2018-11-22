@@ -49,15 +49,14 @@
 }
 
 .card-title-stats {
+    font-size: 13px;
     color: #9aa0ac;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
 }
 
 .card-body-stats {
     position: relative;
     flex: 1 1 auto;
+    height: calc(100% - 3rem);
     margin: 0;
     padding: 1rem 1.5rem;
 }
@@ -83,4 +82,18 @@
 
 .card-value-percent:after {
     content: "%";
+}
+
+.card--full {
+    height: calc(100% - 1.5rem);
+}
+
+.card-wrap {
+    height: 100%;
+}
+
+@media screen and (min-width: 1280px) {
+    .card-title-stats {
+        font-size: 14px;
+    }
 }

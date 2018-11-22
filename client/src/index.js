@@ -5,6 +5,7 @@ import './components/App/index.css';
 import App from './containers/App';
 import configureStore from './configureStore';
 import reducers from './reducers';
+import './i18n';
 
 const store = configureStore(reducers, {}); // set initial state
 ReactDOM.render(

@@ -45,6 +45,7 @@ type configuration struct {
 	CoreDNS       coreDNSConfig `yaml:"coredns"`
 	Filters       []filter      `yaml:"filters"`
 	UserRules     []string      `yaml:"user_rules"`
+	Language      string        `yaml:"language"` // two-letter ISO 639-1 language code
 
 	sync.RWMutex `yaml:"-"`
 }

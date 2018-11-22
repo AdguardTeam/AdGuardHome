@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import ReactTable from 'react-table';
 import PropTypes from 'prop-types';
 import map from 'lodash/map';
+import { Trans, withNamespaces } from 'react-i18next';
 
 import Card from '../ui/Card';
 import Cell from '../ui/Cell';
@@ -25,7 +26,7 @@ class Clients extends Component {
         Cell: ({ value }) => (<div className="logs__row logs__row--overflow"><span className="logs__text" title={value}>{value}</span></div>),
         sortMethod: (a, b) => parseInt(a.replace(/\./g, ''), 10) - parseInt(b.replace(/\./g, ''), 10),
     }, {
-        Header: 'Requests count',
+        Header: <Trans>requests_count</Trans>,
         accessor: 'count',
         Cell: ({ value }) => {
             const percent = getPercent(this.props.dnsQueries, value);
@@ -38,15 +39,16 @@ class Clients extends Component {
     }];
 
     render() {
+        const { t } = this.props;
         return (
-            <Card title="Top clients" subtitle="for the last 24 hours" bodyType="card-table" refresh={this.props.refreshButton}>
+            <Card title={ t('top_clients') } subtitle={ t('for_last_24_hours') } bodyType="card-table" refresh={this.props.refreshButton}>
                 <ReactTable
                     data={map(this.props.topClients, (value, prop) => (
                         { ip: prop, count: value }
                     ))}
                     columns={this.columns}
                     showPagination={false}
-                    noDataText="No clients found"
+                    noDataText={ t('no_clients_found') }
                     minRows={6}
                     className="-striped -highlight card-table-overflow"
                 />
@@ -59,6 +61,7 @@ Clients.propTypes = {
     topClients: PropTypes.object.isRequired,
     dnsQueries: PropTypes.number.isRequired,
     refreshButton: PropTypes.node.isRequired,
+    t: PropTypes.func,
 };
 
-export default Clients;
+export default withNamespaces()(Clients);

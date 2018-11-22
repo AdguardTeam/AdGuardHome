@@ -141,9 +141,43 @@ cd AdGuardHome
 make
 ```
 
+### How to update translations
+
+Before updating translations you need to install dependencies:
+```
+cd scripts/translations
+npm install
+```
+
+Create file `oneskyapp.json` in `scripts/translations` folder.
+
+Example of `oneskyapp.json`
+```
+{
+    "url": "https://platform.api.onesky.io/1/projects/",
+    "projectId": <PROJECT ID>,
+    "apiKey": <API KEY>,
+    "secretKey": <SECRET KEY>
+}
+```
+
+#### Upload translations
+```
+node upload.js
+```
+
+#### Download translations
+```
+node download.js
+```
+
 ## Contributing
 
 You are welcome to fork this repository, make your changes and submit a pull request — https://github.com/AdguardTeam/AdGuardHome/pulls
+
+If you want to help with AdGuard Home translations, please learn more about translating AdGuard products here: https://kb.adguard.com/en/general/adguard-translations
+
+Here is a direct link to AdGuard Home project: http://translate.adguard.com/collaboration/project?id=153384
 
 ## Reporting issues
 

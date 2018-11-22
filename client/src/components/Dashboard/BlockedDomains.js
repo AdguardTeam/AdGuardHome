@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import ReactTable from 'react-table';
 import PropTypes from 'prop-types';
 import map from 'lodash/map';
+import { withNamespaces, Trans } from 'react-i18next';
 
 import Card from '../ui/Card';
 import Cell from '../ui/Cell';
@@ -29,7 +30,7 @@ class BlockedDomains extends Component {
             );
         },
     }, {
-        Header: 'Requests count',
+        Header: <Trans>requests_count</Trans>,
         accessor: 'domain',
         maxWidth: 190,
         Cell: ({ value }) => {
@@ -48,15 +49,16 @@ class BlockedDomains extends Component {
     }];
 
     render() {
+        const { t } = this.props;
         return (
-            <Card title="Top blocked domains" subtitle="for the last 24 hours" bodyType="card-table" refresh={this.props.refreshButton}>
+            <Card title={ t('top_blocked_domains') } subtitle={ t('for_last_24_hours') } bodyType="card-table" refresh={this.props.refreshButton}>
                 <ReactTable
                     data={map(this.props.topBlockedDomains, (value, prop) => (
                         { ip: prop, domain: value }
                     ))}
                     columns={this.columns}
                     showPagination={false}
-                    noDataText="No domains found"
+                    noDataText={ t('no_domains_found') }
                     minRows={6}
                     className="-striped -highlight card-table-overflow stats__table"
                 />
@@ -71,6 +73,7 @@ BlockedDomains.propTypes = {
     replacedSafebrowsing: PropTypes.number.isRequired,
     replacedParental: PropTypes.number.isRequired,
     refreshButton: PropTypes.node.isRequired,
+    t: PropTypes.func,
 };
 
-export default BlockedDomains;
+export default withNamespaces()(BlockedDomains);
