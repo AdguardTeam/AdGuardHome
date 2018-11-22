@@ -27,7 +27,8 @@ func isLanguageAllowed(language string) bool {
 
 func handleI18nCurrentLanguage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
-	_, err := fmt.Fprintf(w, config.Language)
+	log.Printf("config.Language is %s", config.Language)
+	_, err := fmt.Fprintf(w, "%s\n", config.Language)
 	if err != nil {
 		errortext := fmt.Sprintf("Unable to write response json: %s", err)
 		log.Println(errortext)

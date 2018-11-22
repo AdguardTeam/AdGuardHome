@@ -492,3 +492,33 @@ export const testUpstream = servers => async (dispatch) => {
         dispatch(testUpstreamFailure());
     }
 };
+
+export const changeLanguageRequest = createAction('CHANGE_LANGUAGE_REQUEST');
+export const changeLanguageFailure = createAction('CHANGE_LANGUAGE_FAILURE');
+export const changeLanguageSuccess = createAction('CHANGE_LANGUAGE_SUCCESS');
+
+export const changeLanguage = lang => async (dispatch) => {
+    dispatch(changeLanguageRequest());
+    try {
+        await apiClient.changeLanguage(lang);
+        dispatch(changeLanguageSuccess());
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(changeLanguageFailure());
+    }
+};
+
+export const getLanguageRequest = createAction('GET_LANGUAGE_REQUEST');
+export const getLanguageFailure = createAction('GET_LANGUAGE_FAILURE');
+export const getLanguageSuccess = createAction('GET_LANGUAGE_SUCCESS');
+
+export const getLanguage = () => async (dispatch) => {
+    dispatch(getLanguageRequest());
+    try {
+        const language = await apiClient.getCurrentLanguage();
+        dispatch(getLanguageSuccess(language));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(getLanguageFailure());
+    }
+};

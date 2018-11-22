@@ -49,6 +49,7 @@ const dashboard = handleActions({
             querylog_enabled: queryLogEnabled,
             upstream_dns: upstreamDns,
             protection_enabled: protectionEnabled,
+            language,
         } = payload;
         const newState = {
             ...state,
@@ -60,6 +61,7 @@ const dashboard = handleActions({
             queryLogEnabled,
             upstreamDns: upstreamDns.join('\n'),
             protectionEnabled,
+            language,
         };
         return newState;
     },
@@ -144,6 +146,11 @@ const dashboard = handleActions({
     [actions.handleUpstreamChange]: (state, { payload }) => {
         const { upstreamDns } = payload;
         return { ...state, upstreamDns };
+    },
+
+    [actions.getLanguageSuccess]: (state, { payload }) => {
+        const newState = { ...state, language: payload };
+        return newState;
     },
 }, {
     processing: true,

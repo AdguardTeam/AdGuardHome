@@ -284,4 +284,22 @@ export default class Api {
         const { path, method } = this.SAFESEARCH_DISABLE;
         return this.makeRequest(path, method);
     }
+
+    // Language
+    CURRENT_LANGUAGE = { path: 'i18n/current_language', method: 'GET' };
+    CHANGE_LANGUAGE = { path: 'i18n/change_language', method: 'POST' };
+
+    getCurrentLanguage() {
+        const { path, method } = this.CURRENT_LANGUAGE;
+        return this.makeRequest(path, method);
+    }
+
+    changeLanguage(lang) {
+        const { path, method } = this.CHANGE_LANGUAGE;
+        const parameters = {
+            data: lang,
+            headers: { 'Content-Type': 'text/plain' },
+        };
+        return this.makeRequest(path, method, parameters);
+    }
 }
