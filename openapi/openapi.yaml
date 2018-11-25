@@ -132,53 +132,8 @@ paths:
             responses:
                 200:
                     description: OK
-                    examples:
-                        application/json:
-                        # TODO: move to definitions
-                            - answer:
-                              - ttl: 55
-                                type: A
-                                value: 217.69.139.201
-                              - ttl: 55
-                                type: A
-                                value: 94.100.180.200
-                              - ttl: 55
-                                type: A
-                                value: 94.100.180.201
-                              - ttl: 55
-                                type: A
-                                value: 217.69.139.200
-                              elapsedMs: '65.469556'
-                              question:
-                                class: IN
-                                host: mail.ru
-                                type: A
-                              reason: DNSFILTER_NOTFILTERED_NOTFOUND
-                              status: NOERROR
-                              time: '2018-07-16T22:24:02+03:00'
-                            - elapsedMs: '0.15716999999999998'
-                              question:
-                                class: IN
-                                host: doubleclick.net
-                                type: A
-                              reason: DNSFILTER_FILTERED_BLACKLIST
-                              rule: "||doubleclick.net^"
-                              status: NXDOMAIN
-                              time: '2018-07-16T22:24:02+03:00'
-                            - answer:
-                              - ttl: 299
-                                type: A
-                                value: 176.103.133.78
-                              elapsedMs: '132.110929'
-                              question:
-                                class: IN
-                                host: wmconvirus.narod.ru
-                                type: A
-                              reason: DNSFILTER_FILTERED_SAFEBROWSING
-                              rule: adguard-malware-shavar
-                              filterId: 1
-                              status: NOERROR
-                              time: '2018-07-16T22:24:02+03:00'
+                    schema:
+                        $ref: '#/definitions/QueryLog'
     /querylog_enable:
         post:
             tags:
@@ -217,22 +172,15 @@ paths:
             summary: 'Get DNS server statistics'
             responses:
                 200:
-                    description: 'Gives statistics since start of the server'
-                    examples:
-                        # TODO: move to definitions
-                        application/json:
-                            dns_queries: 1201
-                            blocked_filtering: 123
-                            replaced_safebrowsing: 5
-                            replaced_parental: 18
-                            replaced_safesearch: 94
-                            avg_processing_time: 123
+                    description: 'Returns general statistics for the last 24 hours'
+                    schema:
+                        $ref: "#/definitions/Stats"
     /stats_history:
         get:
             tags:
                 - stats
             operationId: stats_history
-            summary: 'Get historical DNS server statistics'
+            summary: 'Get historical DNS server statistics for the last 24 hours'
             parameters:
                 -
                     name: start_time
@@ -259,46 +207,9 @@ paths:
                 501:
                     description: 'Requested time window is outside of supported range. It will be supported later, but not now.'
                 200:
-                    description: 'Gives statistics since start of the server. Example below is for 5 minutes. Values are from oldest to newest.'
-                    examples:
-                        # TODO: move to definitions
-                        application/json:
-                            dns_queries:
-                                - 1201
-                                - 1201
-                                - 1201
-                                - 1201
-                                - 1201
-                            blocked_filtering:
-                                - 123
-                                - 123
-                                - 123
-                                - 123
-                                - 123
-                            replaced_safebrowsing:
-                                - 5
-                                - 5
-                                - 5
-                                - 5
-                                - 5
-                            replaced_parental:
-                                - 18
-                                - 18
-                                - 18
-                                - 18
-                                - 18
-                            replaced_safesearch:
-                                - 94
-                                - 94
-                                - 94
-                                - 94
-                                - 94
-                            avg_processing_time:
-                                - 123
-                                - 123
-                                - 123
-                                - 123
-                                - 123
+                    description: 'Returns historical stats for the specified time interval.'
+                    schema:
+                        $ref: '#/definitions/StatsHistory'
     /stats_reset:
         post:
             tags:
@@ -738,17 +649,8 @@ definitions:
             avg_processing_time:
                 type: "number"
                 format: "float"
-                description: "Average time in milliseconds on processing a DNS request"
+                description: "Average time in milliseconds on processing a DNS"
                 example: 0.34
-            
-
-                            # dns_queries: 1201
-                            # blocked_filtering: 123
-                            # replaced_safebrowsing: 5
-                            # replaced_parental: 18
-                            # replaced_safesearch: 94
-                            # avg_processing_time: 123
-
     StatsTop:
         type: "object"
         description: "Server stats top charts"
@@ -781,6 +683,78 @@ definitions:
                     example.org: 12312
                     example.com: 321
                     example.net: 5555
+    StatsHistory:
+        type: "object"
+        description: "Historical stats of the DNS server. Example below is for 5 minutes. Values are from oldest to newest."
+        required:
+            - "dns_queries"
+            - "blocked_filtering"
+            - "replaced_safebrowsing"
+            - "replaced_parental"
+            - "replaced_safesearch"
+            - "avg_processing_time"
+        properties:
+            dns_queries:
+                type: "array"
+                items:
+                    type: "integer"
+                example:
+                    - 1201
+                    - 1501
+                    - 1251
+                    - 1231
+                    - 120
+            blocked_filtering:
+                type: "array"
+                items:
+                    type: "integer"
+                example:
+                    - 421
+                    - 124
+                    - 5
+                    - 12
+                    - 43
+            replaced_safebrowsing:
+                type: "array"
+                items:
+                    type: "integer"
+                example:
+                    - 1
+                    - 0
+                    - 5
+                    - 0
+                    - 0
+            replaced_parental:
+                type: "array"
+                items:
+                    type: "integer"
+                example:
+                    - 120
+                    - 10
+                    - 5
+                    - 12
+                    - 1
+            replaced_safesearch:
+                type: "array"
+                items:
+                    type: "integer"
+                example:
+                    - 1
+                    - 0
+                    - 0
+                    - 0
+                    - 5
+            avg_processing_time:
+                type: "array"
+                items:
+                    type: "number"
+                    format: "float"
+                example:
+                    - 1.25
+                    - 5.12
+                    - 4.12
+                    - 123.12
+                    - 0.12
     DhcpConfig:
         type: "object"
         description: "Built-in DHCP server configuration"
@@ -833,6 +807,7 @@ definitions:
                 example: "2017-07-21T17:32:28Z"
     DhcpStatus:
         type: "object"
+        description: "Built-in DHCP server configuration and status"
         required:
             - "config"
             - "leases"
@@ -843,3 +818,78 @@ definitions:
                 type: "array"
                 items:
                     $ref: "#/definitions/DhcpLease"
+    DnsAnswer:
+        type: "object"
+        description: "DNS answer section"
+        properties:
+            ttl:
+                type: "integer"
+                example: 55
+            type:
+                type: "string"
+                example: "A"
+            value:
+                type: "string"
+                example: "217.69.139.201"
+    DnsQuestion:
+        type: "object"
+        description: "DNS question section"
+        properties:
+            class:
+                type: "string"
+                example: "IN"
+            host:
+                type: "string"
+                example: "example.org"
+            type:
+                type: "string"
+                example: "A"
+    QueryLogItem:
+        type: "object"
+        description: "Query log item"
+        properties:
+            answer:
+                type: "array"
+                items:
+                    $ref: "#/definitions/DnsAnswer"
+            client:
+                type: "string"
+                example: "192.168.0.1"
+            elapsedMs:
+                type: "string"
+                example: "54.023928"
+            question:
+                $ref: "#/definitions/DnsQuestion"
+            filterId:
+                type: "integer"
+                example: 123123
+                description: "In case if there's a rule applied to this DNS request, this is ID of the filter that rule belongs to."
+            rule:
+                type: "string"
+                example: "||example.org^"
+                description: "Filtering rule applied to the request (if any)"
+            reason:
+                type: "string"
+                description: "DNS filter status"
+                enum:
+                - "NotFilteredNotFound"
+                - "NotFilteredWhiteList"
+                - "NotFilteredError"
+                - "FilteredBlackList"
+                - "FilteredSafeBrowsing"
+                - "FilteredParental"
+                - "FilteredInvalid"
+                - "FilteredSafeSearch"
+            status:
+                type: "string"
+                description: "DNS response status"
+                example: "NOERROR"
+            time:
+                type: "string"
+                description: "DNS request processing start time"
+                example: "2018-11-26T00:02:41+03:00"
+    QueryLog:
+        type: "array"
+        description: "Query log"
+        items:
+            $ref: "#/definitions/QueryLogItem"
