@@ -3,7 +3,6 @@ info:
     title: 'AdGuard Home'
     description: 'AdGuard Home REST API. Admin web interface is built on top of this REST API.'
     version: 0.91.0
-basePath: /control
 schemes:
     - http
 produces:
@@ -11,7 +10,10 @@ produces:
 tags:
     -
         name: global
-        description: 'DNS server general settings and controls'
+        description: 'AdGuard Home server general settings and controls'
+    -
+        name: stats
+        description: 'AdGuard Home statistics'
     -
         name: i18n
         description: 'Application localization'
@@ -37,22 +39,13 @@ paths:
                 - global
             operationId: status
             summary: 'Get DNS server current status and general settings'
+            produces:
+                - application/json
             responses:
                 200:
                     description: OK
-                    examples:
-                        application/json:
-                            dns_address: 127.0.0.1
-                            dns_port: 53
-                            protection_enabled: true
-                            querylog_enabled: true
-                            running: true
-                            bootstrap_dns: 8.8.8.8:53
-                            upstream_dns:
-                              - tls://1.1.1.1
-                              - tls://1.0.0.1
-                            version: "v0.1"
-                            language: "en"
+                    schema:
+                        $ref: "#/definitions/ServerStatus"
     /enable_protection:
         post:
             tags:
@@ -71,10 +64,64 @@ paths:
             responses:
                 200:
                     description: OK
+    /set_upstream_dns:
+        post:
+            tags:
+                - global
+            operationId: setUpstreamDNS
+            summary: 'Set upstream DNS for coredns, empty value will reset it to default values'
+            consumes:
+                - text/plain
+            parameters:
+                -   in: body
+                    name: upstream
+                    description: 'Upstream servers, separated by newline or space, port is optional after colon'
+                    schema:
+                        # TODO: use JSON
+                        type: string
+                        example: |
+                            1.1.1.1
+                            1.0.0.1
+                            8.8.8.8 8.8.4.4
+                            192.168.1.104:53535
+            responses:
+                200:
+                    description: OK
+    /test_upstream_dns:
+        post:
+            tags:
+                - global
+            operationId: testUpstreamDNS
+            summary: 'Test upstream DNS'
+            consumes:
+                - text/plain
+            parameters:
+                -   in: body
+                    name: upstream
+                    description: 'Upstream servers, separated by newline or space, port is optional after colon'
+                    schema:
+                        # TODO: use JSON
+                        type: string
+                        example: |
+                            1.1.1.1
+                            1.0.0.1
+                            8.8.8.8 8.8.4.4
+                            192.168.1.104:53535
+            responses:
+                200:
+                    description: 'Status of testing each requested server, with "OK" meaning that server works, any other text means an error.'
+                    examples:
+                        application/json:
+                            1.1.1.1: OK
+                            1.0.0.1: OK
+                            8.8.8.8: OK
+                            8.8.4.4: OK
+                            "192.168.1.104:53535": "Couldn't communicate with DNS server"
+
     /querylog:
         get:
             tags:
-                - global
+                - stats
             operationId: queryLog
             summary: 'Get DNS server query log'
             parameters:
@@ -87,6 +134,7 @@ paths:
                     description: OK
                     examples:
                         application/json:
+                        # TODO: move to definitions
                             - answer:
                               - ttl: 55
                                 type: A
@@ -134,7 +182,7 @@ paths:
     /querylog_enable:
         post:
             tags:
-                - global
+                - stats
             operationId: querylogEnable
             summary: 'Enable querylog'
             responses:
@@ -143,129 +191,35 @@ paths:
     /querylog_disable:
         post:
             tags:
-                - global
+                - stats
             operationId: querylogDisable
             summary: 'Disable filtering'
             responses:
                 200:
                     description: OK
-    /set_upstream_dns:
-        post:
-            tags:
-                - global
-            operationId: setUpstreamDNS
-            summary: 'Set upstream DNS for coredns, empty value will reset it to default values'
-            consumes:
-                - text/plain
-            parameters:
-                -   in: body
-                    name: upstream
-                    description: 'Upstream servers, separated by newline or space, port is optional after colon'
-                    schema:
-                        type: string
-                        example: |
-                            1.1.1.1
-                            1.0.0.1
-                            8.8.8.8 8.8.4.4
-                            192.168.1.104:53535
-            responses:
-                200:
-                    description: OK
-    /test_upstream_dns:
-        post:
-            tags:
-                - global
-            operationId: testUpstreamDNS
-            summary: 'Test upstream DNS'
-            consumes:
-                - text/plain
-            parameters:
-                -   in: body
-                    name: upstream
-                    description: 'Upstream servers, separated by newline or space, port is optional after colon'
-                    schema:
-                        type: string
-                        example: |
-                            1.1.1.1
-                            1.0.0.1
-                            8.8.8.8 8.8.4.4
-                            192.168.1.104:53535
-            responses:
-                200:
-                    description: 'Status of testing each requested server, with "OK" meaning that server works, any other text means an error.'
-                    examples:
-                        application/json:
-                            1.1.1.1: OK
-                            1.0.0.1: OK
-                            8.8.8.8: OK
-                            8.8.4.4: OK
-                            "192.168.1.104:53535": "Couldn't communicate with DNS server"
-    /i18n/change_language:
-        post:
-            tags:
-                - i18n
-            operationId: changeLanguage
-            summary: "Change current language. Argument must be an ISO 639-1 two-letter code"
-            consumes:
-                - text/plain
-            parameters:
-                - in: body
-                  name: language
-                  description: "New language. It must be known to the server and must be an ISO 639-1 two-letter code"
-                  schema:
-                    type: string
-                    example: en
-    /i18n/current_language:
-        get:
-            tags:
-                - i18n
-            operationId: currentLanguage
-            summary: "Get currently set language. Result is ISO 639-1 two-letter code. Empty result means default language."
-            responses:
-                200:
-                    description: OK
-                    examples:
-                        text/plain:
-                            en
+
     /stats_top:
         get:
             tags:
-                - global
+                - stats
             operationId: statusTop
             summary: 'Get DNS server top client, domain and blocked statistics'
             responses:
                 200:
                     description: OK
-                    examples:
-                        application/json:
-                            top_queried_domains:
-                                example.org: 12312
-                                example.com: 12312
-                                example.net: 12312
-                                example.ru: 12312
-                            top_clients:
-                                127.0.0.1: 12312
-                                192.168.0.1: 13211
-                                192.168.0.2: 13211
-                                192.168.0.3: 13211
-                                192.168.0.4: 13211
-                                192.168.0.5: 13211
-                                192.168.0.6: 13211
-                            top_blocked_domains:
-                                example.org: 12312
-                                example.com: 12312
-                                example.net: 12312
-                                example.ru: 12312
+                    schema:
+                        $ref: "#/definitions/StatsTop"
     /stats:
         get:
             tags:
-                - global
+                - stats
             operationId: stats
             summary: 'Get DNS server statistics'
             responses:
                 200:
                     description: 'Gives statistics since start of the server'
                     examples:
+                        # TODO: move to definitions
                         application/json:
                             dns_queries: 1201
                             blocked_filtering: 123
@@ -276,7 +230,7 @@ paths:
     /stats_history:
         get:
             tags:
-                - global
+                - stats
             operationId: stats_history
             summary: 'Get historical DNS server statistics'
             parameters:
@@ -307,6 +261,7 @@ paths:
                 200:
                     description: 'Gives statistics since start of the server. Example below is for 5 minutes. Values are from oldest to newest.'
                     examples:
+                        # TODO: move to definitions
                         application/json:
                             dns_queries:
                                 - 1201
@@ -347,52 +302,42 @@ paths:
     /stats_reset:
         post:
             tags:
-                - global
+                - stats
             operationId: statsReset
             summary: "Reset all statistics to zeroes"
             responses:
                 200:
                     description: OK
+
     /dhcp/status:
-      post:
-        tags:
-            - dhcp
-        operationId: dhcpStatus
-        summary: "Gets the current DHCP settings"
-        responses:
-          200:
-            description: OK
-            examples:
-              application/json:
-                dhcpEnabled: false
-                gatewayIp: 192.168.1.1
-                subnetMask: 255.255.255.0
-                rangeStart: 192.168.1.2
-                rangeEnd: 192.168.10.50
-                leaseDuration: 12h
-                leases:
-                    mac: 001109b3b3b8
-                    ip: 192.168.1.22
-                    hostname: dell
-                    expires: '2018-10-30T12:18:57.223101822+03:00'
+        get:
+            tags:
+                - dhcp
+            operationId: dhcpStatus
+            summary: "Gets the current DHCP settings and status"
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/DhcpStatus"
     /dhcp/set_config:
-      post:
-        tags:
-            - dhcp
-        operationId: dhcpSetConfig
-        summary: "Updates the current DHCP server configuration"
-        consumes:
-        - application/json
-        parameters:
-        - in: body
-          name: dhcpConfig
-          description: 'Updates the DHCP module configuration'
-          schema:
-            type: json
-            example: '{ gatewayIp: "192.168.1.1", subnetMask: "255.255.255.0", "rangeStart": "192.168.1.2", "rangeEnd": "192.168.10.50", leaseDuration: "12h" }'
-        responses:
-          200:
-            description: OK
+        post:
+            tags:
+                - dhcp
+            operationId: dhcpSetConfig
+            summary: "Updates the current DHCP server configuration"
+            consumes:
+            - application/json
+            parameters:
+            - in: "body"
+              name: "body"
+              description: "DHCP configuration JSON"
+              required: true
+              schema:
+                $ref: "#/definitions/DhcpConfig"
+            responses:
+                200:
+                    description: OK
     /dhcp/check_active_dhcp:
       post:
         tags:
@@ -406,6 +351,7 @@ paths:
               application/json:
                 found: true
                 gatewayIp: 192.168.1.1
+
     /filtering/enable:
         post:
             tags:
@@ -535,6 +481,7 @@ paths:
                 200:
                     description: OK
                     examples:
+                    # TODO: move to definitions
                         application/json:
                             enabled: false
                             filters:
@@ -559,11 +506,13 @@ paths:
                     name: rules
                     description: 'All filtering rules, one line per rule'
                     schema:
+                        # TODO: move to definitions
                         type: string
                         example: '@@||yandex.ru^|'
             responses:
                 200:
                     description: OK
+
     /safebrowsing/enable:
         post:
             tags:
@@ -594,6 +543,7 @@ paths:
                     examples:
                         application/json:
                             enabled: false
+
     /parental/enable:
         post:
             tags:
@@ -646,6 +596,7 @@ paths:
                         application/json:
                             enabled: true
                             sensitivity: 13
+
     /safesearch/enable:
         post:
             tags:
@@ -676,6 +627,219 @@ paths:
                     examples:
                         application/json:
                             enabled: false
+
+    /i18n/change_language:
+        post:
+            tags:
+                - i18n
+            operationId: changeLanguage
+            summary: "Change current language. Argument must be an ISO 639-1 two-letter code"
+            consumes:
+                - text/plain
+            parameters:
+                - in: body
+                  name: language
+                  description: "New language. It must be known to the server and must be an ISO 639-1 two-letter code"
+                  schema:
+                    # TODO: use JSON?
+                    type: string
+                    example: en
+            responses:
+                200:
+                    description: OK
+    /i18n/current_language:
+        get:
+            tags:
+                - i18n
+            operationId: currentLanguage
+            summary: "Get currently set language. Result is ISO 639-1 two-letter code. Empty result means default language."
+            responses:
+                200:
+                    description: OK
+                    examples:
+                        text/plain:
+                            en
+
 definitions:
     rule:
         type: string
+    ServerStatus:
+        type: "object"
+        description: "AdGuard Home server status and configuration"
+        required:
+            - "dns_address"
+            - "dns_port"
+            - "protection_enabled"
+            - "querylog_enabled"
+            - "running"
+            - "bootstrap_dns"
+            - "upstream_dns"
+            - "version"
+            - "language"
+        properties:
+            dns_address:
+                type: "string"
+                example: "127.0.0.1"
+            dns_port:
+                type: "integer"
+                format: "int32"
+                example: 53
+                minimum: 1
+                maximum: 65535
+            protection_enabled:
+                type: "boolean"
+            querylog_enabled:
+                type: "boolean"
+            running:
+                type: "boolean"
+            bootstrap_dns:
+                type: "string"
+                example: "8.8.8.8:53"
+            upstream_dns:
+                type: "array"
+                items:
+                    type: "string"
+                example:
+                  - "tls://1.1.1.1"
+                  - "tls://1.0.0.1"
+            version:
+                type: "string"
+                example: "0.1"
+            language:
+                type: "string"
+                example: "en"
+    Stats:
+        type: "object"
+        description: "General server stats for the last 24 hours"
+        required:
+            - "dns_queries"
+            - "blocked_filtering"
+            - "replaced_safebrowsing"
+            - "replaced_parental"
+            - "replaced_safesearch"
+            - "avg_processing_time"
+        properties:
+            dns_queries:
+                type: "integer"
+                description: "Total number of DNS queries"
+                example: 123
+            blocked_filtering:
+                type: "integer"
+                description: "Number of requests blocked by filtering rules"
+                example: 50
+            replaced_safebrowsing:
+                type: "integer"
+                description: "Number of requests blocked by the safebrowsing module"
+                example: 5
+            replaced_parental:
+                type: "integer"
+                description: "Number of blocked adult websites"
+                example: 15
+            avg_processing_time:
+                type: "number"
+                format: "float"
+                description: "Average time in milliseconds on processing a DNS request"
+                example: 0.34
+            
+
+                            # dns_queries: 1201
+                            # blocked_filtering: 123
+                            # replaced_safebrowsing: 5
+                            # replaced_parental: 18
+                            # replaced_safesearch: 94
+                            # avg_processing_time: 123
+
+    StatsTop:
+        type: "object"
+        description: "Server stats top charts"
+        required:
+            - "top_queried_domains"
+            - "top_clients"
+            - "top_blocked_domains"
+        properties:
+            top_queried_domains:
+                type: "array"
+                items:
+                    type: "object"
+                example:
+                    example.org: 12312
+                    example.com: 321
+                    example.net: 5555
+            top_clients:
+                type: "array"
+                items:
+                    type: "object"
+                example:
+                    127.0.0.1: 12312
+                    192.168.0.1: 13211
+                    192.168.0.3: 13211
+            top_blocked_domains:
+                type: "array"
+                items:
+                    type: "object"
+                example:
+                    example.org: 12312
+                    example.com: 321
+                    example.net: 5555
+    DhcpConfig:
+        type: "object"
+        description: "Built-in DHCP server configuration"
+        required:
+            - "enabled"
+            - "gateway_ip"
+            - "subnet_mask"
+            - "range_start"
+            - "range_end"
+            - "lease_duration"
+        properties:
+            enabled:
+                type: "boolean"
+            gateway_ip:
+                type: "string"
+                example: "192.168.1.1"
+            subnet_mask:
+                type: "string"
+                example: "255.255.255.0"
+            range_start:
+                type: "string"
+                example: "192.168.1.2"
+            range_end:
+                type: "string"
+                example: "192.168.10.50"
+            lease_duration:
+                type: "string"
+                example: "12h"
+    DhcpLease:
+        type: "object"
+        description: "DHCP lease information"
+        required:
+            - "mac"
+            - "ip"
+            - "hostname"
+            - "expires"
+        properties:
+            mac:
+                type: "string"
+                example: "001109b3b3b8"
+            ip:
+                type: "string"
+                example: "192.168.1.22"
+            hostname:
+                type: "string"
+                example: "dell"
+            expires:
+                type: "string"
+                format: "date-time"
+                example: "2017-07-21T17:32:28Z"
+    DhcpStatus:
+        type: "object"
+        required:
+            - "config"
+            - "leases"
+        properties:
+            config:
+                $ref: "#/definitions/DhcpConfig"
+            leases:
+                type: "array"
+                items:
+                    $ref: "#/definitions/DhcpLease"
