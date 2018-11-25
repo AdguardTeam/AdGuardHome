@@ -23,7 +23,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-const defaultRatelimit = 100
+const defaultRatelimit = 30
 const defaultResponseSize = 1000
 
 var (

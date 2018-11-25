@@ -253,7 +253,7 @@ const coreDNSConfigTemplate = `.:{{.Port}} {
 		{{end}}
     }{{end}}
     {{.Pprof}}
-    ratelimit 30
+    ratelimit
 	hosts {
         fallthrough
     }
