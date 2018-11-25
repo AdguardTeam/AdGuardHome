@@ -1,0 +1,12 @@
+{
+    "name": "adguard-home-api",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "start": "node index.js"
+    },
+    "dependencies": {
+        "express": "^4.16.4",
+        "swagger-ui-dist": "^3.20.1"
+    }
+}

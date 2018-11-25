@@ -1,8 +1,8 @@
 swagger: '2.0'
 info:
     title: 'AdGuard Home'
-    description: 'Control AdGuard Home server with this API'
-    version: 0.0.0
+    description: 'AdGuard Home REST API. Admin web interface is built on top of this REST API.'
+    version: 0.91.0
 basePath: /control
 schemes:
     - http
@@ -11,29 +11,32 @@ produces:
 tags:
     -
         name: global
-        description: 'DNS server controls'
+        description: 'DNS server general settings and controls'
+    -
+        name: i18n
+        description: 'Application localization'
     -
         name: filtering
         description: 'Rule-based filtering'
     -
         name: safebrowsing
-        description: 'Malware/hazardous sites'
+        description: 'Blocking malware/phishing sites'
     -
         name: parental
-        description: 'Sites inappropriate for children'
+        description: 'Blocking adult and explicit materials'
     -
         name: safesearch
         description: 'Enforce family-friendly results in search engines'
     -
         name: dhcp
-        description: 'Build-in DHCP server management'
+        description: 'Built-in DHCP server controls'
 paths:
     /status:
         get:
             tags:
                 - global
             operationId: status
-            summary: 'Get DNS server status and settings'
+            summary: 'Get DNS server current status and general settings'
             responses:
                 200:
                     description: OK
@@ -46,14 +49,14 @@ paths:
                             running: true
                             bootstrap_dns: 8.8.8.8:53
                             upstream_dns:
-                              - 1.1.1.1
-                              - 1.0.0.1
+                              - tls://1.1.1.1
+                              - tls://1.0.0.1
                             version: "v0.1"
                             language: "en"
     /enable_protection:
         post:
             tags:
-                -global
+                - global
             operationId: enableProtection
             summary: "Enable protection (turns on dnsfilter module in coredns)"
             responses:
@@ -62,7 +65,7 @@ paths:
     /disable_protection:
         post:
             tags:
-                -global
+                - global
             operationId: disableProtection
             summary: "Disable protection (turns off filtering, sb, parental, safesearch temporarily by disabling dnsfilter module in coredns)"
             responses:
@@ -344,7 +347,7 @@ paths:
     /stats_reset:
         post:
             tags:
-                -global
+                - global
             operationId: statsReset
             summary: "Reset all statistics to zeroes"
             responses:
@@ -353,7 +356,7 @@ paths:
     /dhcp/status:
       post:
         tags:
-          -dhcp
+            - dhcp
         operationId: dhcpStatus
         summary: "Gets the current DHCP settings"
         responses:
@@ -367,15 +370,15 @@ paths:
                 rangeStart: 192.168.1.2
                 rangeEnd: 192.168.10.50
                 leaseDuration: 12h
-                - leases:
-                  mac: 001109b3b3b8
-                  ip: 192.168.1.22
-                  hostname: dell
-                  expires: '2018-10-30T12:18:57.223101822+03:00'
+                leases:
+                    mac: 001109b3b3b8
+                    ip: 192.168.1.22
+                    hostname: dell
+                    expires: '2018-10-30T12:18:57.223101822+03:00'
     /dhcp/set_config:
       post:
         tags:
-          -dhcp
+            - dhcp
         operationId: dhcpSetConfig
         summary: "Updates the current DHCP server configuration"
         consumes:
@@ -393,7 +396,7 @@ paths:
     /dhcp/check_active_dhcp:
       post:
         tags:
-          -dhcp
+            - dhcp
         operationId: checkActiveDhcp
         summary: "Checks if there's an active DHCP server on the network"
         responses:
@@ -534,13 +537,13 @@ paths:
                     examples:
                         application/json:
                             enabled: false
-                            - filters:
-                              enabled: true
-                              id: 1
-                              lastUpdated: "2018-10-30T12:18:57.223101822+03:00"
-                              name: "AdGuard Simplified Domain Names filter"
-                              rulesCount: 24896
-                              url: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"
+                            filters:
+                                enabled: true
+                                id: 1
+                                lastUpdated: "2018-10-30T12:18:57.223101822+03:00"
+                                name: "AdGuard Simplified Domain Names filter"
+                                rulesCount: 24896
+                                url: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"
                             rules:
                                 - '@@||yandex.ru^|'
     /filtering/set_rules:
