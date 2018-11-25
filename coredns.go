@@ -66,6 +66,7 @@ var directives = []string{
 	"errors",
 	"log",
 	"dnsfilter",
+	"ratelimit",
 	"dnstap",
 	"chaos",
 	"loadbalance",
