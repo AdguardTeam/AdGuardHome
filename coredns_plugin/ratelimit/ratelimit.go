@@ -15,6 +15,7 @@ import (
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/plugin/metrics"
+	"github.com/coredns/coredns/plugin/pkg/dnstest"
 	"github.com/coredns/coredns/request"
 	"github.com/mholt/caddy"
 	"github.com/miekg/dns"
@@ -23,6 +24,7 @@ import (
 )
 
 const defaultRatelimit = 100
+const defaultResponseSize = 1000
 
 var (
 	tokenBuckets = cache.New(time.Hour, time.Hour)
@@ -40,7 +42,22 @@ func (p *plug) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (
 		ratelimited.Inc()
 		return 0, nil
 	}
-	return plugin.NextOrFailure(p.Name(), p.Next, ctx, w, r)
+
+	// Record response to get status code and size of the reply.
+	rw := dnstest.NewRecorder(w)
+	status, err := plugin.NextOrFailure(p.Name(), p.Next, ctx, rw, r)
+
+	size := rw.Len
+
+	if size > defaultResponseSize && state.Proto() == "udp" {
+		// For large UDP responses we call allowRequest more times
+		// The exact number of times depends on the response size
+		for i := 0; i < size/defaultResponseSize; i++ {
+			p.allowRequest(ip)
+		}
+	}
+
+	return status, err
 }
 
 func (p *plug) allowRequest(ip string) (bool, error) {
@@ -94,7 +111,6 @@ type plug struct {
 	// configuration for creating above
 	ratelimit int      // in requests per second per IP
 	whitelist []string // a list of whitelisted IP addresses
-
 }
 
 func setupPlugin(c *caddy.Controller) (*plug, error) {

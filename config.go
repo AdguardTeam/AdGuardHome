@@ -253,7 +253,8 @@ const coreDNSConfigTemplate = `.:{{.Port}} {
 		{{end}}
     }{{end}}
     {{.Pprof}}
-    hosts {
+    ratelimit 30
+	hosts {
         fallthrough
     }
     {{if .UpstreamDNS}}upstream {{range .UpstreamDNS}}{{.}} {{end}} { bootstrap {{.BootstrapDNS}} }{{end}}
