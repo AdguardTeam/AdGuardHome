@@ -68,8 +68,8 @@ type coreDNSConfig struct {
 	ParentalSensitivity int             `yaml:"parental_sensitivity"`
 	BlockedResponseTTL  int             `yaml:"blocked_response_ttl"`
 	QueryLogEnabled     bool            `yaml:"querylog_enabled"`
-	Ratelimit           int             `yaml:"-"`
-	RefuseAny           bool            `yaml:"-"`
+	Ratelimit           int             `yaml:"ratelimit"`
+	RefuseAny           bool            `yaml:"refuse_any"`
 	Pprof               string          `yaml:"-"`
 	Cache               string          `yaml:"-"`
 	Prometheus          string          `yaml:"-"`
