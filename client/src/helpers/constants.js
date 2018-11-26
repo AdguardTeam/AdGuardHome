@@ -27,11 +27,31 @@ export const LANGUAGES = [
         name: 'English',
     },
     {
-        key: 'ru',
-        name: 'Русский',
+        key: 'es',
+        name: 'Español',
+    },
+    {
+        key: 'fr',
+        name: 'Français',
+    },
+    {
+        key: 'pt-br',
+        name: 'Português (BR)',
+    },
+    {
+        key: 'sv',
+        name: 'Svenska',
     },
     {
         key: 'vi',
         name: 'Tiếng Việt',
+    },
+    {
+        key: 'ru',
+        name: 'Русский',
+    },
+    {
+        key: 'ja',
+        name: '日本語',
     },
 ];

@@ -12,9 +12,14 @@ import (
 // internationalization
 // --------------------
 var allowedLanguages = map[string]bool{
-	"en": true,
-	"ru": true,
-	"vi": true,
+	"en":    true,
+	"ru":    true,
+	"vi":    true,
+	"es":    true,
+	"fr":    true,
+	"ja":    true,
+	"sv":    true,
+	"pt-br": true,
 }
 
 func isLanguageAllowed(language string) bool {
