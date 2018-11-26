@@ -500,8 +500,7 @@ export const changeLanguageSuccess = createAction('CHANGE_LANGUAGE_SUCCESS');
 export const changeLanguage = lang => async (dispatch) => {
     dispatch(changeLanguageRequest());
     try {
-        const langCode = lang.substring(0, 2);
-        await apiClient.changeLanguage(langCode);
+        await apiClient.changeLanguage(lang);
         dispatch(changeLanguageSuccess());
     } catch (error) {
         dispatch(addErrorToast({ error }));
