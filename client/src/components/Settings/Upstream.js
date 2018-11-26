@@ -57,6 +57,24 @@ class Upstream extends Component {
                                 </button>
                             </div>
                         </form>
+                        <hr/>
+                        <div className="list leading-loose">
+                            <Trans>examples_title</Trans>:
+                            <ol className="leading-loose">
+                                <li>
+                                    <code>1.1.1.1</code> - { t('example_upstream_regular') }
+                                </li>
+                                <li>
+                                    <code>tls://1dot1dot1dot1.cloudflare-dns.com</code> - <span dangerouslySetInnerHTML={{ __html: t('example_upstream_dot') }} />
+                                </li>
+                                <li>
+                                    <code>https://cloudflare-dns.com/dns-query</code> - <span dangerouslySetInnerHTML={{ __html: t('example_upstream_doh') }} />
+                                </li>
+                                <li>
+                                    <code>tcp://1.1.1.1</code> - { t('example_upstream_tcp') }
+                                </li>
+                            </ol>
+                        </div>
                     </div>
                 </div>
             </Card>
