@@ -65,10 +65,10 @@ class Upstream extends Component {
                                     <code>1.1.1.1</code> - { t('example_upstream_regular') }
                                 </li>
                                 <li>
-                                    <code>tls://1dot1dot1dot1.cloudflare-dns.com</code> - { t('example_upstream_dot') }
+                                    <code>tls://1dot1dot1dot1.cloudflare-dns.com</code> - <span dangerouslySetInnerHTML={{ __html: t('example_upstream_dot') }} />
                                 </li>
                                 <li>
-                                    <code>https://cloudflare-dns.com/dns-query</code> - { t('example_upstream_doh') }
+                                    <code>https://cloudflare-dns.com/dns-query</code> - <span dangerouslySetInnerHTML={{ __html: t('example_upstream_doh') }} />
                                 </li>
                                 <li>
                                     <code>tcp://1.1.1.1</code> - { t('example_upstream_tcp') }

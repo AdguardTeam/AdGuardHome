@@ -49,7 +49,7 @@
     "no_settings": "No settings",
     "general_settings": "General settings",
     "upstream_dns": "Upstream DNS servers",
-    "upstream_dns_hint": "If you keep this field empty, AdGuard Home will use <a href='https:\/\/1.1.1.1\/' target='_blank'>Cloudflare DNS<\/a> as an upstream.",
+    "upstream_dns_hint": "If you keep this field empty, AdGuard Home will use <a href='https:\/\/1.1.1.1\/' target='_blank'>Cloudflare DNS<\/a> as an upstream. Use tls:\/\/ prefix for DNS over TLS servers.",
     "test_upstream_btn": "Test upstreams",
     "apply_btn": "Apply",
     "disabled_filtering_toast": "Disabled filtering",
