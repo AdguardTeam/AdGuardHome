@@ -199,9 +199,9 @@ var safeSearchDomains = map[string]string{
 	"www.google.ws":     "forcesafesearch.google.com",
 	"www.google.rs":     "forcesafesearch.google.com",
 
-	"www.youtube.com":          "restrict.youtube.com",
-	"m.youtube.com":            "restrict.youtube.com",
-	"youtubei.googleapis.com":  "restrict.youtube.com",
-	"youtube.googleapis.com":   "restrict.youtube.com",
-	"www.youtube-nocookie.com": "restrict.youtube.com",
+	"www.youtube.com":          "restrictmoderate.youtube.com",
+	"m.youtube.com":            "restrictmoderate.youtube.com",
+	"youtubei.googleapis.com":  "restrictmoderate.youtube.com",
+	"youtube.googleapis.com":   "restrictmoderate.youtube.com",
+	"www.youtube-nocookie.com": "restrictmoderate.youtube.com",
 }
