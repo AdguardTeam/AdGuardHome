@@ -39,9 +39,7 @@ class App extends Component {
         const { processing, language } = this.props.dashboard;
 
         if (!processing) {
-            if (!language) {
-                this.props.changeLanguage(i18n.language);
-            } else {
+            if (language) {
                 i18n.changeLanguage(language);
             }
         }
