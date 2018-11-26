@@ -213,7 +213,10 @@ func promptAndGetPassword(prompt string) (string, error) {
 }
 
 func askUsernamePasswordIfPossible() error {
-	configfile := filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
+	configfile := config.ourConfigFilename
+	if !filepath.IsAbs(configfile) {
+		configfile = filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
+	}
 	_, err := os.Stat(configfile)
 	if !os.IsNotExist(err) {
 		// do nothing, file exists
