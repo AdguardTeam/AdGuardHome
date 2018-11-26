@@ -474,6 +474,15 @@ func TestDnsFilterWhitelist(t *testing.T) {
 	d.checkMatch(t, "example.org")
 	d.checkMatchEmpty(t, "test.example.org")
 	d.checkMatchEmpty(t, "test.test.example.org")
+
+	d.checkAddRule(t, "||googleadapis.l.google.com^|")
+	d.checkMatch(t, "googleadapis.l.google.com")
+	d.checkMatch(t, "test.googleadapis.l.google.com")
+
+	d.checkAddRule(t, "@@||googleadapis.l.google.com|")
+	d.checkMatchEmpty(t, "googleadapis.l.google.com")
+	d.checkMatchEmpty(t, "test.googleadapis.l.google.com")
+
 }
 
 func TestDnsFilterImportant(t *testing.T) {
