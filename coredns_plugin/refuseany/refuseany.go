@@ -27,8 +27,6 @@ func (p *plug) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (
 
 	q := r.Question[0]
 	if q.Qtype == dns.TypeANY {
-		log.Printf("Got request with type ANY, will respond with NOTIMP\n")
-
 		state := request.Request{W: w, Req: r, Context: ctx}
 		rcode := dns.RcodeNotImplemented
 
