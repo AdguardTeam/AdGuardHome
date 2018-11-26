@@ -5,6 +5,7 @@ info:
     version: 0.91.0
 schemes:
     - http
+basePath: /control
 produces:
     - application/json
 tags:
@@ -134,6 +135,24 @@ paths:
                             8.8.8.8: OK
                             8.8.4.4: OK
                             "192.168.1.104:53535": "Couldn't communicate with DNS server"
+
+    /version.json:
+        get:
+            tags:
+                - global
+            operationId: getVersionJson
+            summary: 'Gets information about the latest available version of AdGuard'
+            produces:
+                - 'application/json'
+            responses:
+                200:
+                    description: 'Version info'
+                    schema:
+                        $ref: "#/definitions/VersionInfo"
+                500:
+                    description: 'Cannot write answer'
+                502:
+                    description: 'Cannot retrieve the version.json file contents'
 
     # --------------------------------------------------
     # Query log methods
@@ -723,6 +742,43 @@ definitions:
                 example:
                     - '||example.org^'
                     - '||example.com^'
+    VersionInfo:
+        type: "object"
+        description: "Information about the latest available version of AdGuard Home"
+        required:
+            - "version"
+            - "announcement"
+            - "announcement_url"
+            - "download_darwin_amd64"
+            - "download_linux_amd64"
+            - "download_linux_386"
+            - "download_linux_arm"
+            - "selfupdate_min_version"
+        properties:
+            version:
+                type: "string"
+                example: "v0.9"
+            announcement:
+                type: "string"
+                example: "AdGuard Home v0.9 is now available!"
+            announcement_url:
+                type: "string"
+                example: "https://github.com/AdguardTeam/AdGuardHome/releases/tag/v0.9"
+            download_darwin_amd64:
+                type: "string"
+                example: "https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.9/AdGuardHome_v0.9_MacOS.zip"
+            download_linux_amd64:
+                type: "string"
+                example: "https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.9/AdGuardHome_v0.9_linux_amd64.tar.gz"
+            download_linux_386:
+                type: "string"
+                example: "https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.9/AdGuardHome_v0.9_linux_386.tar.gz"
+            download_linux_arm:
+                type: "string"
+                example: "https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.9/AdGuardHome_v0.9_linux_arm.tar.gz"
+            selfupdate_min_version:
+                type: "string"
+                example: "v0.0"
     Stats:
         type: "object"
         description: "General server stats for the last 24 hours"
