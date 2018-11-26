@@ -72,6 +72,11 @@ func getSuffix(rule string) (bool, string) {
 	// last char was checked, eat it
 	rule = rule[:len(rule)-1]
 
+	// it might also end with ^|
+	if rule[len(rule)-1] == '^' {
+		rule = rule[:len(rule)-1]
+	}
+
 	// check that it doesn't have any special characters inside
 	for _, r := range rule {
 		switch r {

@@ -68,6 +68,8 @@ type coreDNSConfig struct {
 	ParentalSensitivity int             `yaml:"parental_sensitivity"`
 	BlockedResponseTTL  int             `yaml:"blocked_response_ttl"`
 	QueryLogEnabled     bool            `yaml:"querylog_enabled"`
+	Ratelimit           int             `yaml:"-"`
+	RefuseAny           bool            `yaml:"-"`
 	Pprof               string          `yaml:"-"`
 	Cache               string          `yaml:"-"`
 	Prometheus          string          `yaml:"-"`
@@ -102,6 +104,8 @@ var config = configuration{
 		SafeBrowsingEnabled: false,
 		BlockedResponseTTL:  10, // in seconds
 		QueryLogEnabled:     true,
+		Ratelimit:           20,
+		RefuseAny:           true,
 		BootstrapDNS:        "8.8.8.8:53",
 		UpstreamDNS:         defaultDNS,
 		Cache:               "cache",
@@ -253,7 +257,8 @@ const coreDNSConfigTemplate = `.:{{.Port}} {
 		{{end}}
     }{{end}}
     {{.Pprof}}
-    ratelimit
+	{{if .RefuseAny}}refuseany{{end}}
+	{{if gt .Ratelimit 0}}ratelimit {{.Ratelimit}}{{end}}
 	hosts {
         fallthrough
     }
