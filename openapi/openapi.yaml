@@ -12,6 +12,9 @@ tags:
         name: global
         description: 'AdGuard Home server general settings and controls'
     -
+        name: log
+        description: 'AdGuard Home query log'
+    -
         name: stats
         description: 'AdGuard Home statistics'
     -
@@ -33,6 +36,16 @@ tags:
         name: dhcp
         description: 'Built-in DHCP server controls'
 paths:
+
+    # API TO-DO LIST
+    # TODO: Use JSON where it is possible
+    # TODO: Use lower_case for all objects' properties
+    # TODO: Move to definitions what's missing from there
+
+    # --------------------------------------------------
+    # General settings and controls
+    # --------------------------------------------------
+
     /status:
         get:
             tags:
@@ -46,6 +59,7 @@ paths:
                     description: OK
                     schema:
                         $ref: "#/definitions/ServerStatus"
+
     /enable_protection:
         post:
             tags:
@@ -55,6 +69,7 @@ paths:
             responses:
                 200:
                     description: OK
+
     /disable_protection:
         post:
             tags:
@@ -64,6 +79,7 @@ paths:
             responses:
                 200:
                     description: OK
+
     /set_upstream_dns:
         post:
             tags:
@@ -87,6 +103,7 @@ paths:
             responses:
                 200:
                     description: OK
+
     /test_upstream_dns:
         post:
             tags:
@@ -118,10 +135,14 @@ paths:
                             8.8.4.4: OK
                             "192.168.1.104:53535": "Couldn't communicate with DNS server"
 
+    # --------------------------------------------------
+    # Query log methods
+    # --------------------------------------------------
+
     /querylog:
         get:
             tags:
-                - stats
+                - log
             operationId: queryLog
             summary: 'Get DNS server query log'
             parameters:
@@ -137,7 +158,7 @@ paths:
     /querylog_enable:
         post:
             tags:
-                - stats
+                - log
             operationId: querylogEnable
             summary: 'Enable querylog'
             responses:
@@ -146,12 +167,16 @@ paths:
     /querylog_disable:
         post:
             tags:
-                - stats
+                - log
             operationId: querylogDisable
             summary: 'Disable filtering'
             responses:
                 200:
                     description: OK
+
+    # --------------------------------------------------
+    # General statistics methods
+    # --------------------------------------------------
 
     /stats_top:
         get:
@@ -164,6 +189,7 @@ paths:
                     description: OK
                     schema:
                         $ref: "#/definitions/StatsTop"
+
     /stats:
         get:
             tags:
@@ -175,6 +201,7 @@ paths:
                     description: 'Returns general statistics for the last 24 hours'
                     schema:
                         $ref: "#/definitions/Stats"
+
     /stats_history:
         get:
             tags:
@@ -210,6 +237,7 @@ paths:
                     description: 'Returns historical stats for the specified time interval.'
                     schema:
                         $ref: '#/definitions/StatsHistory'
+
     /stats_reset:
         post:
             tags:
@@ -219,6 +247,10 @@ paths:
             responses:
                 200:
                     description: OK
+
+    # --------------------------------------------------
+    # DHCP server methods
+    # --------------------------------------------------
 
     /dhcp/status:
         get:
@@ -231,6 +263,7 @@ paths:
                     description: OK
                     schema:
                         $ref: "#/definitions/DhcpStatus"
+
     /dhcp/set_config:
         post:
             tags:
@@ -249,19 +282,34 @@ paths:
             responses:
                 200:
                     description: OK
-    /dhcp/check_active_dhcp:
-      post:
+
+    /dhcp/find_active_dhcp:
+      get:
         tags:
             - dhcp
         operationId: checkActiveDhcp
-        summary: "Checks if there's an active DHCP server on the network"
+        summary: "Searches for an active DHCP server on the network"
         responses:
           200:
             description: OK
-            examples:
-              application/json:
-                found: true
-                gatewayIp: 192.168.1.1
+            schema:
+                $ref: "#/definitions/DhcpSearchResult"
+
+    # --------------------------------------------------
+    # Filtering status methods
+    # --------------------------------------------------
+
+    /filtering/status:
+        get:
+            tags:
+                - filtering
+            operationId: filteringStatus
+            summary: 'Get status of rules-based filter'
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/FilteringStatus"
 
     /filtering/enable:
         post:
@@ -272,6 +320,7 @@ paths:
             responses:
                 200:
                     description: OK
+
     /filtering/disable:
         post:
             tags:
@@ -281,6 +330,7 @@ paths:
             responses:
                 200:
                     description: OK
+
     /filtering/add_url:
         put:
             tags:
@@ -300,6 +350,7 @@ paths:
             responses:
                 200:
                     description: OK
+
     /filtering/remove_url:
         delete:
             tags:
@@ -319,6 +370,7 @@ paths:
             responses:
                 200:
                     description: OK
+
     /filtering/enable_url:
         post:
             tags:
@@ -338,6 +390,7 @@ paths:
             responses:
                 200:
                     description: OK
+
     /filtering/disable_url:
         post:
             tags:
@@ -357,6 +410,7 @@ paths:
             responses:
                 200:
                     description: OK
+
     /filtering/refresh:
         post:
             tags:
@@ -382,28 +436,7 @@ paths:
             responses:
                 200:
                     description: OK with how many filters were actually updated
-    /filtering/status:
-        get:
-            tags:
-                - filtering
-            operationId: filteringStatus
-            summary: 'Get status of rules-based filter'
-            responses:
-                200:
-                    description: OK
-                    examples:
-                    # TODO: move to definitions
-                        application/json:
-                            enabled: false
-                            filters:
-                                enabled: true
-                                id: 1
-                                lastUpdated: "2018-10-30T12:18:57.223101822+03:00"
-                                name: "AdGuard Simplified Domain Names filter"
-                                rulesCount: 24896
-                                url: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"
-                            rules:
-                                - '@@||yandex.ru^|'
+
     /filtering/set_rules:
         put:
             tags:
@@ -424,6 +457,10 @@ paths:
                 200:
                     description: OK
 
+    # --------------------------------------------------
+    # Safebrowsing methods
+    # --------------------------------------------------
+
     /safebrowsing/enable:
         post:
             tags:
@@ -433,6 +470,7 @@ paths:
             responses:
                 200:
                     description: OK
+
     /safebrowsing/disable:
         post:
             tags:
@@ -442,6 +480,7 @@ paths:
             responses:
                 200:
                     description: OK
+
     /safebrowsing/status:
         get:
             tags:
@@ -454,6 +493,10 @@ paths:
                     examples:
                         application/json:
                             enabled: false
+
+    # --------------------------------------------------
+    # Parental control methods
+    # --------------------------------------------------
 
     /parental/enable:
         post:
@@ -485,6 +528,7 @@ paths:
             responses:
                 200:
                     description: OK
+
     /parental/disable:
         post:
             tags:
@@ -494,6 +538,7 @@ paths:
             responses:
                 200:
                     description: OK
+
     /parental/status:
         get:
             tags:
@@ -508,6 +553,10 @@ paths:
                             enabled: true
                             sensitivity: 13
 
+    # --------------------------------------------------
+    # Safe search methods
+    # --------------------------------------------------
+
     /safesearch/enable:
         post:
             tags:
@@ -517,6 +566,7 @@ paths:
             responses:
                 200:
                     description: OK
+
     /safesearch/disable:
         post:
             tags:
@@ -526,6 +576,7 @@ paths:
             responses:
                 200:
                     description: OK
+
     /safesearch/status:
         get:
             tags:
@@ -538,6 +589,10 @@ paths:
                     examples:
                         application/json:
                             enabled: false
+
+    # --------------------------------------------------
+    # I18N methods
+    # --------------------------------------------------
 
     /i18n/change_language:
         post:
@@ -558,6 +613,7 @@ paths:
             responses:
                 200:
                     description: OK
+
     /i18n/current_language:
         get:
             tags:
@@ -572,8 +628,6 @@ paths:
                             en
 
 definitions:
-    rule:
-        type: string
     ServerStatus:
         type: "object"
         description: "AdGuard Home server status and configuration"
@@ -619,6 +673,56 @@ definitions:
             language:
                 type: "string"
                 example: "en"
+    Filter:
+        type: "object"
+        description: "Filter subscription info"
+        required:
+            - "enabled"
+            - "id"
+            - "lastUpdated"
+            - "name"
+            - "rulesCount"
+            - "url"
+        properties:
+            enabled:
+                type: "boolean"
+            id:
+                type: "integer"
+                example: 1234
+            lastUpdated:
+                type: "string"
+                format: "date-time"
+                example: "2018-10-30T12:18:57.223101822+03:00"
+            name:
+                type: "string"
+                example: "AdGuard Simplified Domain Names filter"
+            rulesCount:
+                type: "integer"
+                example: 5912
+            url:
+                type: "string"
+                example: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"
+    FilteringStatus:
+        type: "object"
+        description: "Filtering settings"
+        required:
+            - "enabled"
+            - "filters"
+            - "user_rules"
+        properties:
+            enabled:
+                type: "boolean"
+            filters:
+                type: "array"
+                items:
+                    $ref: "#/definitions/Filter"
+            user_rules:
+                type: "array"
+                items:
+                    type: "string"
+                example:
+                    - '||example.org^'
+                    - '||example.com^'
     Stats:
         type: "object"
         description: "General server stats for the last 24 hours"
@@ -818,6 +922,17 @@ definitions:
                 type: "array"
                 items:
                     $ref: "#/definitions/DhcpLease"
+    DhcpSearchResult:
+        type: "object"
+        description: "Information about a DHCP server discovered in the current network"
+        required:
+            - "found"
+        properties:
+            found:
+                type: "boolean"
+            gateway_ip:
+                type: "string"
+                example: "192.168.1.1"
     DnsAnswer:
         type: "object"
         description: "DNS answer section"
