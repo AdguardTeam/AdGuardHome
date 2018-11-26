@@ -69,13 +69,14 @@ class Logs extends Component {
     renderBlockingButton(isFiltered, domain) {
         const buttonClass = isFiltered ? 'btn-outline-secondary' : 'btn-outline-danger';
         const buttonText = isFiltered ? 'unblock_btn' : 'block_btn';
+        const buttonType = isFiltered ? 'unblock' : 'block';
 
         return (
             <div className="logs__action">
                 <button
                     type="button"
                     className={`btn btn-sm ${buttonClass}`}
-                    onClick={() => this.toggleBlocking(buttonText.toLowerCase(), domain)}
+                    onClick={() => this.toggleBlocking(buttonType, domain)}
                 >
                     <Trans>{buttonText}</Trans>
                 </button>
@@ -126,7 +127,7 @@ class Logs extends Component {
 
                 if (reason === 'FilteredBlackList' || reason === 'NotFilteredWhiteList') {
                     if (filterId === 0) {
-                        filterName = 'custom_filter_rules';
+                        filterName = t('custom_filter_rules');
                     } else {
                         const filterItem = Object.keys(filters)
                             .filter(key => filters[key].id === filterId);
@@ -167,7 +168,7 @@ class Logs extends Component {
             filterMethod: (filter, row) => {
                 if (filter.value === 'filtered') {
                     // eslint-disable-next-line no-underscore-dangle
-                    return row._original.reason.indexOf('Filtered') === 0;
+                    return row._original.reason.indexOf('Filtered') === 0 || row._original.reason === 'NotFilteredWhiteList';
                 }
                 return true;
             },
