@@ -156,7 +156,7 @@ func main() {
 
 	// Update filters we've just loaded right away, don't wait for periodic update timer
 	go func() {
-		checkFiltersUpdates(false)
+		refreshFiltersIfNeccessary(false)
 		// Save the updated config
 		err := writeConfig()
 		if err != nil {
@@ -177,7 +177,7 @@ func main() {
 
 	address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
 
-	runFiltersUpdatesTimer()
+	go periodicallyRefreshFilters()
 
 	http.Handle("/", optionalAuthHandler(http.FileServer(box)))
 	registerControlHandlers()

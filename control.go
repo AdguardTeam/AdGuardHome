@@ -471,7 +471,7 @@ func handleFilteringEnableURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// kick off refresh of rules from new URLs
-	checkFiltersUpdates(false)
+	refreshFiltersIfNeccessary(false)
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
@@ -527,22 +527,20 @@ func handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
 
 func handleFilteringRefresh(w http.ResponseWriter, r *http.Request) {
 	force := r.URL.Query().Get("force")
-	updated := checkFiltersUpdates(force != "")
+	updated := refreshFiltersIfNeccessary(force != "")
 	fmt.Fprintf(w, "OK %d filters updated\n", updated)
 }
 
 // Sets up a timer that will be checking for filters updates periodically
-func runFiltersUpdatesTimer() {
-	go func() {
-		for range time.Tick(time.Minute) {
-			checkFiltersUpdates(false)
-		}
-	}()
+func periodicallyRefreshFilters() {
+	for range time.Tick(time.Minute) {
+		refreshFiltersIfNeccessary(false)
+	}
 }
 
 // Checks filters updates if necessary
 // If force is true, it ignores the filter.LastUpdated field value
-func checkFiltersUpdates(force bool) int {
+func refreshFiltersIfNeccessary(force bool) int {
 	config.Lock()
 
 	// fetch URLs
