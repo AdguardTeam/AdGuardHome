@@ -659,7 +659,7 @@ func (filter *filter) update(force bool) (bool, error) {
 	return true, nil
 }
 
-// saves filter contents to the file in config.ourDataDir
+// saves filter contents to the file in dataDir
 func (filter *filter) save() error {
 	filterFilePath := filter.Path()
 	log.Printf("Saving filter %d contents to: %s", filter.ID, filterFilePath)
@@ -672,7 +672,7 @@ func (filter *filter) save() error {
 	return nil
 }
 
-// loads filter contents from the file in config.ourDataDir
+// loads filter contents from the file in dataDir
 func (filter *filter) load() error {
 	if !filter.Enabled {
 		// No need to load a filter that is not enabled
@@ -704,7 +704,7 @@ func (filter *filter) load() error {
 
 // Path to the filter contents
 func (filter *filter) Path() string {
-	return filepath.Join(config.ourBinaryDir, config.ourDataDir, FiltersDir, strconv.FormatInt(filter.ID, 10)+".txt")
+	return filepath.Join(config.ourBinaryDir, dataDir, filterDir, strconv.FormatInt(filter.ID, 10)+".txt")
 }
 
 // ------------

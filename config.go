@@ -14,42 +14,37 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Current schema version. We compare it with the value from
-// the configuration file and perform necessary upgrade operations if needed
-const CurrentSchemaVersion = 1
-
-// Directory where we'll store all downloaded filters contents
-const FiltersDir = "filters"
-
-// User filter ID is always 0
-const UserFilterId = 0
+const (
+	currentSchemaVersion = 1         // used for upgrading from old configs to new config
+	dataDir              = "data"    // data storage
+	filterDir            = "filters" // cache location for downloaded filters, it's under DataDir
+	userFilterID         = 0         // special filter ID, always 0
+)
 
 // Just a counter that we use for incrementing the filter ID
 var NextFilterId = time.Now().Unix()
 
 // configuration is loaded from YAML
+// field ordering is important -- yaml fields will mirror ordering from here
 type configuration struct {
-	// Config filename (can be overriden via the command line arguments)
-	ourConfigFilename string
-	// Basically, this is our working directory
-	ourBinaryDir string
-	// Directory to store data (i.e. filters contents)
-	ourDataDir string
+	ourConfigFilename string // Config filename (can be overriden via the command line arguments)
+	ourBinaryDir      string // Location of our directory, used to protect against CWD being somewhere else
 
-	// Schema version of the config file. This value is used when performing the app updates.
-	SchemaVersion int           `yaml:"schema_version"`
-	BindHost      string        `yaml:"bind_host"`
-	BindPort      int           `yaml:"bind_port"`
-	AuthName      string        `yaml:"auth_name"`
-	AuthPass      string        `yaml:"auth_pass"`
-	CoreDNS       coreDNSConfig `yaml:"coredns"`
-	Filters       []filter      `yaml:"filters"`
-	UserRules     []string      `yaml:"user_rules"`
-	Language      string        `yaml:"language"` // two-letter ISO 639-1 language code
+	BindHost  string        `yaml:"bind_host"`
+	BindPort  int           `yaml:"bind_port"`
+	AuthName  string        `yaml:"auth_name"`
+	AuthPass  string        `yaml:"auth_pass"`
+	Language  string        `yaml:"language"` // two-letter ISO 639-1 language code
+	CoreDNS   coreDNSConfig `yaml:"coredns"`
+	Filters   []filter      `yaml:"filters"`
+	UserRules []string      `yaml:"user_rules,omitempty"`
 
 	sync.RWMutex `yaml:"-"`
+
+	SchemaVersion int `yaml:"schema_version"` // keeping last so that users will be less tempted to change it -- used when upgrading between versions
 }
 
+// field ordering is important -- yaml fields will mirror ordering from here
 type coreDNSConfig struct {
 	binaryFile          string
 	coreFile            string
@@ -72,14 +67,16 @@ type coreDNSConfig struct {
 	UpstreamDNS         []string `yaml:"upstream_dns"`
 }
 
+// field ordering is important -- yaml fields will mirror ordering from here
 type filter struct {
-	ID          int64     `json:"id" yaml:"id"` // auto-assigned when filter is added (see NextFilterId)
+	Enabled     bool      `json:"enabled"`
 	URL         string    `json:"url"`
 	Name        string    `json:"name" yaml:"name"`
-	Enabled     bool      `json:"enabled"`
 	RulesCount  int       `json:"rulesCount" yaml:"-"`
-	Contents    []byte    `json:"-" yaml:"-"`
-	LastUpdated time.Time `json:"lastUpdated" yaml:"last_updated"`
+	LastUpdated time.Time `json:"lastUpdated,omitempty" yaml:"last_updated,omitempty"`
+	ID          int64     // auto-assigned when filter is added (see NextFilterId)
+
+	Contents []byte `json:"-" yaml:"-"` // not in yaml or json
 }
 
 var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
@@ -87,7 +84,6 @@ var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
 // initialize to default values, will be changed later when reading config or parsing command line
 var config = configuration{
 	ourConfigFilename: "AdGuardHome.yaml",
-	ourDataDir:        "data",
 	BindPort:          3000,
 	BindHost:          "127.0.0.1",
 	CoreDNS: coreDNSConfig{
@@ -125,7 +121,7 @@ func userFilter() filter {
 
 	userFilter := filter{
 		// User filter always has constant ID=0
-		ID:       UserFilterId,
+		ID:       userFilterID,
 		Contents: contents,
 		Enabled:  true,
 	}

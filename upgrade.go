@@ -45,7 +45,7 @@ func upgradeConfig() error {
 		return err
 	}
 
-	if schemaVersion == CurrentSchemaVersion {
+	if schemaVersion == currentSchemaVersion {
 		// do nothing
 		return nil
 	}
