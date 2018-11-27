@@ -22,7 +22,7 @@ const (
 )
 
 // Just a counter that we use for incrementing the filter ID
-var NextFilterId = time.Now().Unix()
+var nextFilterID int64 = time.Now().Unix()
 
 // configuration is loaded from YAML
 // field ordering is important -- yaml fields will mirror ordering from here
@@ -74,7 +74,7 @@ type filter struct {
 	Name        string    `json:"name" yaml:"name"`
 	RulesCount  int       `json:"rulesCount" yaml:"-"`
 	LastUpdated time.Time `json:"lastUpdated,omitempty" yaml:"last_updated,omitempty"`
-	ID          int64     // auto-assigned when filter is added (see NextFilterId)
+	ID          int64     // auto-assigned when filter is added (see nextFilterID)
 
 	Contents []byte `json:"-" yaml:"-"` // not in yaml or json
 }
@@ -165,12 +165,7 @@ func parseConfig() error {
 		config.Filters = config.Filters[:i]
 	}
 
-	// Set the next filter ID to max(filter.ID) + 1
-	for i := range config.Filters {
-		if NextFilterId < config.Filters[i].ID {
-			NextFilterId = config.Filters[i].ID + 1
-		}
-	}
+	updateUniqueFilterID(config.Filters)
 
 	return nil
 }
@@ -292,4 +287,19 @@ func generateCoreDNSConfigText() (string, error) {
 	// remove empty lines from generated config
 	configText = removeEmptyLines.ReplaceAllString(configText, "\n")
 	return configText, nil
+}
+
+// Set the next filter ID to max(filter.ID) + 1
+func updateUniqueFilterID(filters []filter) {
+	for _, filter := range filters {
+		if nextFilterID < filter.ID {
+			nextFilterID = filter.ID + 1
+		}
+	}
+}
+
+func assignUniqueFilterID() int64 {
+	value := nextFilterID
+	nextFilterID += 1
+	return value
 }

@@ -343,9 +343,8 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set necessary properties
-	filter.ID = NextFilterId
+	filter.ID = assignUniqueFilterID()
 	filter.Enabled = true
-	NextFilterId++
 
 	// Download the filter contents
 	ok, err := filter.update(true)
@@ -550,6 +549,11 @@ func checkFiltersUpdates(force bool) int {
 	updateCount := 0
 	for i := range config.Filters {
 		filter := &config.Filters[i] // otherwise we will be operating on a copy
+
+		if filter.ID == 0 { // protect against users modifying the yaml and removing the ID
+			filter.ID = assignUniqueFilterID()
+		}
+
 		updated, err := filter.update(force)
 		if err != nil {
 			log.Printf("Failed to update filter %s: %s\n", filter.URL, err)
@@ -601,6 +605,9 @@ func parseFilterContents(contents []byte) (int, string) {
 // If "force" is true -- does not check the filter's LastUpdated field
 // Call "save" to persist the filter contents
 func (filter *filter) update(force bool) (bool, error) {
+	if filter.ID == 0 { // protect against users deleting the ID
+		filter.ID = assignUniqueFilterID()
+	}
 	if !filter.Enabled {
 		return false, nil
 	}

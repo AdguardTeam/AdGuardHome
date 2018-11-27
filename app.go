@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/gobuffalo/packr"
 	"golang.org/x/crypto/ssh/terminal"
@@ -135,6 +136,34 @@ func main() {
 		}
 	}
 
+	// Load filters from the disk
+	// And if any filter has zero ID, assign a new one
+	for i := range config.Filters {
+		filter := &config.Filters[i] // otherwise we're operating on a copy
+		if filter.ID == 0 {
+			filter.ID = assignUniqueFilterID()
+		}
+		err := filter.load()
+		if err != nil {
+			// This is okay for the first start, the filter will be loaded later
+			log.Printf("Couldn't load filter %d contents due to %s", filter.ID, err)
+			// clear LastUpdated so it gets fetched right away
+		}
+		if len(filter.Contents) == 0 {
+			filter.LastUpdated = time.Time{}
+		}
+	}
+
+	// Update filters we've just loaded right away, don't wait for periodic update timer
+	go func() {
+		checkFiltersUpdates(false)
+		// Save the updated config
+		err := writeConfig()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
 	// Eat all args so that coredns can start happily
 	if len(os.Args) > 1 {
 		os.Args = os.Args[:1]
@@ -144,16 +173,6 @@ func main() {
 	err := writeConfig()
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	// Load filters from the disk
-	for i := range config.Filters {
-		filter := &config.Filters[i]
-		err = filter.load()
-		if err != nil {
-			// This is okay for the first start, the filter will be loaded later
-			log.Printf("Couldn't load filter %d contents due to %s", filter.ID, err)
-		}
 	}
 
 	address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))

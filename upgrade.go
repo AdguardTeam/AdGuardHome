@@ -87,30 +87,7 @@ func upgradeSchema0to1(diskConfig *map[string]interface{}) error {
 	trace("Called")
 
 	// The first schema upgrade:
-	// Added "ID" field to "filter" -- we need to populate this field now
-	// Added "config.ourDataDir" -- where we will now store filters contents
-	for i := range config.Filters {
-		filter := &config.Filters[i] // otherwise we will be operating on a copy
-
-		// Set the filter ID
-		log.Printf("Seting ID=%d for filter %s", NextFilterId, filter.URL)
-		filter.ID = NextFilterId
-		NextFilterId++
-
-		// Forcibly update the filter
-		_, err := filter.update(true)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// Saving it to the filters dir now
-		err = filter.save()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	// No more "dnsfilter.txt", filters are now loaded from config.ourDataDir/filters/
+	// No more "dnsfilter.txt", filters are now kept in data/filters/
 	dnsFilterPath := filepath.Join(config.ourBinaryDir, "dnsfilter.txt")
 	_, err := os.Stat(dnsFilterPath)
 	if !os.IsNotExist(err) {
