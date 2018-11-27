@@ -36,7 +36,6 @@ func TestSetup(t *testing.T) {
 }
 
 func TestRatelimiting(t *testing.T) {
-
 	// rate limit is 1 per sec
 	c := caddy.NewTestController("dns", `ratelimit 1`)
 	p, err := setupPlugin(c)
@@ -59,7 +58,6 @@ func TestRatelimiting(t *testing.T) {
 }
 
 func TestWhitelist(t *testing.T) {
-
 	// rate limit is 1 per sec
 	c := caddy.NewTestController("dns", `ratelimit 1 { whitelist 127.0.0.2 127.0.0.1 127.0.0.125 }`)
 	p, err := setupPlugin(c)

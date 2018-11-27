@@ -10,7 +10,6 @@ import (
 
 // Detects the upstream type from the specified url and creates a proper Upstream object
 func NewUpstream(url string, bootstrap string) (Upstream, error) {
-
 	proto := "udp"
 	prefix := ""
 
@@ -64,7 +63,6 @@ func NewUpstream(url string, bootstrap string) (Upstream, error) {
 }
 
 func CreateResolver(bootstrap string) *net.Resolver {
-
 	bootstrapResolver := net.DefaultResolver
 
 	if bootstrap != "" {
@@ -82,7 +80,6 @@ func CreateResolver(bootstrap string) *net.Resolver {
 
 // Performs a simple health-check of the specified upstream
 func IsAlive(u Upstream) (bool, error) {
-
 	// Using ipv4only.arpa. domain as it is a part of DNS64 RFC and it should exist everywhere
 	ping := new(dns.Msg)
 	ping.SetQuestion("ipv4only.arpa.", dns.TypeA)

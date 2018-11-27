@@ -18,7 +18,6 @@ type DnsUpstream struct {
 
 // NewDnsUpstream creates a new DNS upstream
 func NewDnsUpstream(endpoint string, proto string, tlsServerName string) (Upstream, error) {
-
 	u := &DnsUpstream{
 		endpoint: endpoint,
 		timeout:  defaultTimeout,
@@ -42,7 +41,6 @@ func NewDnsUpstream(endpoint string, proto string, tlsServerName string) (Upstre
 
 // Exchange provides an implementation for the Upstream interface
 func (u *DnsUpstream) Exchange(ctx context.Context, query *dns.Msg) (*dns.Msg, error) {
-
 	resp, err := u.exchange(u.proto, query)
 
 	// Retry over TCP if response is truncated
@@ -68,7 +66,6 @@ func (u *DnsUpstream) Exchange(ctx context.Context, query *dns.Msg) (*dns.Msg, e
 
 // Clear resources
 func (u *DnsUpstream) Close() error {
-
 	// Close active connections
 	u.transport.Stop()
 	return nil
@@ -77,7 +74,6 @@ func (u *DnsUpstream) Close() error {
 // Performs a synchronous query. It sends the message m via the conn
 // c and waits for a reply. The conn c is not closed.
 func (u *DnsUpstream) exchange(proto string, query *dns.Msg) (r *dns.Msg, err error) {
-
 	// Establish a connection if needed (or reuse cached)
 	conn, err := u.transport.Dial(proto)
 	if err != nil {

@@ -7,7 +7,6 @@ import (
 )
 
 func TestSetup(t *testing.T) {
-
 	var tests = []struct {
 		config string
 	}{

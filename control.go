@@ -63,7 +63,6 @@ func httpUpdateConfigReloadDNSReturnOK(w http.ResponseWriter, r *http.Request) {
 	returnOK(w, r)
 }
 
-//noinspection GoUnusedParameter
 func returnOK(w http.ResponseWriter, r *http.Request) {
 	_, err := fmt.Fprintf(w, "OK\n")
 	if err != nil {
@@ -73,7 +72,6 @@ func returnOK(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//noinspection GoUnusedParameter
 func handleStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"dns_address":        config.BindHost,
@@ -213,7 +211,6 @@ func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkDNS(input string) error {
-
 	u, err := upstream.NewUpstream(input, config.CoreDNS.BootstrapDNS)
 
 	if err != nil {
@@ -234,7 +231,6 @@ func checkDNS(input string) error {
 	return nil
 }
 
-//noinspection GoUnusedParameter
 func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 	if now.Sub(versionCheckLastTime) <= versionCheckPeriod && len(versionCheckJSON) != 0 {
@@ -290,7 +286,6 @@ func handleFilteringDisable(w http.ResponseWriter, r *http.Request) {
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
-//noinspection GoUnusedParameter
 func handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"enabled": config.CoreDNS.FilteringEnabled,
@@ -320,7 +315,6 @@ func handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
-
 	filter := filter{}
 	err := json.NewDecoder(r.Body).Decode(&filter)
 	if err != nil {
@@ -667,7 +661,6 @@ func (filter *filter) update(force bool) (bool, error) {
 
 // saves filter contents to the file in config.ourDataDir
 func (filter *filter) save() error {
-
 	filterFilePath := filter.getFilterFilePath()
 	log.Printf("Saving filter %d contents to: %s", filter.ID, filterFilePath)
 
@@ -681,7 +674,6 @@ func (filter *filter) save() error {
 
 // loads filter contents from the file in config.ourDataDir
 func (filter *filter) load() error {
-
 	if !filter.Enabled {
 		// No need to load a filter that is not enabled
 		return nil
@@ -729,7 +721,6 @@ func handleSafeBrowsingDisable(w http.ResponseWriter, r *http.Request) {
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
-//noinspection GoUnusedParameter
 func handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"enabled": config.CoreDNS.SafeBrowsingEnabled,
@@ -805,7 +796,6 @@ func handleParentalDisable(w http.ResponseWriter, r *http.Request) {
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
-//noinspection GoUnusedParameter
 func handleParentalStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"enabled": config.CoreDNS.ParentalEnabled,
@@ -845,7 +835,6 @@ func handleSafeSearchDisable(w http.ResponseWriter, r *http.Request) {
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
-//noinspection GoUnusedParameter
 func handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"enabled": config.CoreDNS.SafeSearchEnabled,

@@ -17,7 +17,6 @@ func init() {
 
 // Read the configuration and initialize upstreams
 func setup(c *caddy.Controller) error {
-
 	p, err := setupPlugin(c)
 	if err != nil {
 		return err
@@ -34,7 +33,6 @@ func setup(c *caddy.Controller) error {
 
 // Read the configuration
 func setupPlugin(c *caddy.Controller) (*UpstreamPlugin, error) {
-
 	p := New()
 
 	log.Println("Initializing the Upstream plugin")
@@ -72,7 +70,6 @@ func setupPlugin(c *caddy.Controller) (*UpstreamPlugin, error) {
 
 func (p *UpstreamPlugin) onShutdown() error {
 	for i := range p.Upstreams {
-
 		u := p.Upstreams[i]
 		err := u.Close()
 		if err != nil {

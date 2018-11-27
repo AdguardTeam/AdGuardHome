@@ -161,7 +161,6 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 		if err != nil {
 			return nil, err
 		}
-		//noinspection GoDeferInLoop
 		defer file.Close()
 
 		count := 0
@@ -271,7 +270,6 @@ func (p *plug) onFinalShutdown() error {
 
 type statsFunc func(ch interface{}, name string, text string, value float64, valueType prometheus.ValueType)
 
-//noinspection GoUnusedParameter
 func doDesc(ch interface{}, name string, text string, value float64, valueType prometheus.ValueType) {
 	realch, ok := ch.(chan<- *prometheus.Desc)
 	if !ok {

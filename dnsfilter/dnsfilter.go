@@ -225,13 +225,10 @@ func (r *rulesTable) Add(rule *rule) {
 	if rule.ip != nil {
 		// Hosts syntax
 		r.rulesByHost[rule.text] = rule
-	} else if //noinspection GoBoolExpressions
-	len(rule.shortcut) == shortcutLength && enableFastLookup {
-
+	} else if len(rule.shortcut) == shortcutLength && enableFastLookup {
 		// Adblock syntax with a shortcut
 		r.rulesByShortcut[rule.shortcut] = append(r.rulesByShortcut[rule.shortcut], rule)
 	} else {
-
 		// Adblock syntax -- too short to have a shortcut
 		r.rulesLeftovers = append(r.rulesLeftovers, rule)
 	}
@@ -239,7 +236,6 @@ func (r *rulesTable) Add(rule *rule) {
 }
 
 func (r *rulesTable) matchByHost(host string) (Result, error) {
-
 	// First: examine the hosts-syntax rules
 	res, err := r.searchByHost(host)
 	if err != nil {
@@ -271,7 +267,6 @@ func (r *rulesTable) matchByHost(host string) (Result, error) {
 }
 
 func (r *rulesTable) searchByHost(host string) (Result, error) {
-
 	rule, ok := r.rulesByHost[host]
 
 	if ok {
@@ -773,7 +768,6 @@ func (d *Dnsfilter) AddRule(input string, filterListID int64) error {
 
 	rule.extractShortcut()
 
-	//noinspection GoBoolExpressions
 	if !enableDelayedCompilation {
 		err := rule.compile()
 		if err != nil {

@@ -61,7 +61,6 @@ func (p *plug) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (
 }
 
 func (p *plug) allowRequest(ip string) (bool, error) {
-
 	if len(p.whitelist) > 0 {
 		i := sort.SearchStrings(p.whitelist, ip)
 
@@ -114,7 +113,6 @@ type plug struct {
 }
 
 func setupPlugin(c *caddy.Controller) (*plug, error) {
-
 	p := &plug{ratelimit: defaultRatelimit}
 
 	for c.Next() {

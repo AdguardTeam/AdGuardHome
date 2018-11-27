@@ -9,7 +9,6 @@ import (
 )
 
 func TestDnsUpstreamIsAlive(t *testing.T) {
-
 	var tests = []struct {
 		url       string
 		bootstrap string
@@ -32,7 +31,6 @@ func TestDnsUpstreamIsAlive(t *testing.T) {
 }
 
 func TestHttpsUpstreamIsAlive(t *testing.T) {
-
 	var tests = []struct {
 		url       string
 		bootstrap string
@@ -54,7 +52,6 @@ func TestHttpsUpstreamIsAlive(t *testing.T) {
 }
 
 func TestDnsOverTlsIsAlive(t *testing.T) {
-
 	var tests = []struct {
 		url       string
 		bootstrap string
@@ -77,7 +74,6 @@ func TestDnsOverTlsIsAlive(t *testing.T) {
 }
 
 func TestDnsUpstream(t *testing.T) {
-
 	var tests = []struct {
 		url       string
 		bootstrap string
@@ -100,7 +96,6 @@ func TestDnsUpstream(t *testing.T) {
 }
 
 func TestHttpsUpstream(t *testing.T) {
-
 	var tests = []struct {
 		url       string
 		bootstrap string
@@ -122,7 +117,6 @@ func TestHttpsUpstream(t *testing.T) {
 }
 
 func TestDnsOverTlsUpstream(t *testing.T) {
-
 	var tests = []struct {
 		url       string
 		bootstrap string
@@ -154,7 +148,6 @@ func testUpstreamIsAlive(t *testing.T, u Upstream) {
 }
 
 func testUpstream(t *testing.T, u Upstream) {
-
 	var tests = []struct {
 		name     string
 		expected net.IP

@@ -121,7 +121,6 @@ var config = configuration{
 
 // Creates a helper object for working with the user rules
 func getUserFilter() filter {
-
 	// TODO: This should be calculated when UserRules are set
 	var contents []byte
 	for _, rule := range config.UserRules {

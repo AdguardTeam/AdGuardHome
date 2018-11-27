@@ -105,7 +105,6 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result dnsfilter.Result, ela
 	}
 }
 
-//noinspection GoUnusedParameter
 func HandleQueryLog(w http.ResponseWriter, r *http.Request) {
 	queryLogLock.RLock()
 	values := make([]*logEntry, len(queryLogCache))
@@ -140,10 +139,10 @@ func HandleQueryLog(w http.ResponseWriter, r *http.Request) {
 		}
 
 		jsonEntry := map[string]interface{}{
-			"reason":     entry.Result.Reason.String(),
+			"reason":    entry.Result.Reason.String(),
 			"elapsedMs": strconv.FormatFloat(entry.Elapsed.Seconds()*1000, 'f', -1, 64),
-			"time":       entry.Time.Format(time.RFC3339),
-			"client":     entry.IP,
+			"time":      entry.Time.Format(time.RFC3339),
+			"client":    entry.IP,
 		}
 		if q != nil {
 			jsonEntry["question"] = map[string]interface{}{

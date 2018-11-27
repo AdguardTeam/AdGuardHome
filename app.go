@@ -263,7 +263,6 @@ func askUsernamePasswordIfPossible() error {
 
 // Performs necessary upgrade operations if needed
 func upgradeConfig() error {
-
 	if config.SchemaVersion == SchemaVersion {
 		// No upgrade, do nothing
 		return nil
@@ -276,7 +275,6 @@ func upgradeConfig() error {
 
 	// Perform upgrade operations for each consecutive version upgrade
 	for oldVersion, newVersion := config.SchemaVersion, config.SchemaVersion+1; newVersion <= SchemaVersion; {
-
 		err := upgradeConfigSchema(oldVersion, newVersion)
 		if err != nil {
 			log.Fatal(err)
@@ -295,7 +293,6 @@ func upgradeConfig() error {
 
 // Upgrade from oldVersion to newVersion
 func upgradeConfigSchema(oldVersion int, newVersion int) error {
-
 	if oldVersion == 0 && newVersion == 1 {
 		log.Printf("Updating schema from %d to %d", oldVersion, newVersion)
 
@@ -303,7 +300,6 @@ func upgradeConfigSchema(oldVersion int, newVersion int) error {
 		// Added "ID" field to "filter" -- we need to populate this field now
 		// Added "config.ourDataDir" -- where we will now store filters contents
 		for i := range config.Filters {
-
 			filter := &config.Filters[i] // otherwise we will be operating on a copy
 
 			// Set the filter ID
