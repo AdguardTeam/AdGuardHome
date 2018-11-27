@@ -50,40 +50,35 @@ type configuration struct {
 	sync.RWMutex `yaml:"-"`
 }
 
-type coreDnsFilter struct {
-	ID   int64  `yaml:"-"`
-	Path string `yaml:"-"`
-}
-
 type coreDNSConfig struct {
 	binaryFile          string
 	coreFile            string
-	Filters             []coreDnsFilter `yaml:"-"`
-	Port                int             `yaml:"port"`
-	ProtectionEnabled   bool            `yaml:"protection_enabled"`
-	FilteringEnabled    bool            `yaml:"filtering_enabled"`
-	SafeBrowsingEnabled bool            `yaml:"safebrowsing_enabled"`
-	SafeSearchEnabled   bool            `yaml:"safesearch_enabled"`
-	ParentalEnabled     bool            `yaml:"parental_enabled"`
-	ParentalSensitivity int             `yaml:"parental_sensitivity"`
-	BlockedResponseTTL  int             `yaml:"blocked_response_ttl"`
-	QueryLogEnabled     bool            `yaml:"querylog_enabled"`
-	Ratelimit           int             `yaml:"ratelimit"`
-	RefuseAny           bool            `yaml:"refuse_any"`
-	Pprof               string          `yaml:"-"`
-	Cache               string          `yaml:"-"`
-	Prometheus          string          `yaml:"-"`
-	BootstrapDNS        string          `yaml:"bootstrap_dns"`
-	UpstreamDNS         []string        `yaml:"upstream_dns"`
+	Filters             []filter `yaml:"-"`
+	Port                int      `yaml:"port"`
+	ProtectionEnabled   bool     `yaml:"protection_enabled"`
+	FilteringEnabled    bool     `yaml:"filtering_enabled"`
+	SafeBrowsingEnabled bool     `yaml:"safebrowsing_enabled"`
+	SafeSearchEnabled   bool     `yaml:"safesearch_enabled"`
+	ParentalEnabled     bool     `yaml:"parental_enabled"`
+	ParentalSensitivity int      `yaml:"parental_sensitivity"`
+	BlockedResponseTTL  int      `yaml:"blocked_response_ttl"`
+	QueryLogEnabled     bool     `yaml:"querylog_enabled"`
+	Ratelimit           int      `yaml:"ratelimit"`
+	RefuseAny           bool     `yaml:"refuse_any"`
+	Pprof               string   `yaml:"-"`
+	Cache               string   `yaml:"-"`
+	Prometheus          string   `yaml:"-"`
+	BootstrapDNS        string   `yaml:"bootstrap_dns"`
+	UpstreamDNS         []string `yaml:"upstream_dns"`
 }
 
 type filter struct {
-	ID          int64  `json:"id" yaml:"id"` // auto-assigned when filter is added (see NextFilterId)
-	URL         string `json:"url"`
-	Name        string `json:"name" yaml:"name"`
-	Enabled     bool   `json:"enabled"`
-	RulesCount  int    `json:"rulesCount" yaml:"-"`
-	contents    []byte
+	ID          int64     `json:"id" yaml:"id"` // auto-assigned when filter is added (see NextFilterId)
+	URL         string    `json:"url"`
+	Name        string    `json:"name" yaml:"name"`
+	Enabled     bool      `json:"enabled"`
+	RulesCount  int       `json:"rulesCount" yaml:"-"`
+	Contents    []byte    `json:"-" yaml:"-"`
 	LastUpdated time.Time `json:"lastUpdated" yaml:"last_updated"`
 }
 
@@ -120,7 +115,7 @@ var config = configuration{
 }
 
 // Creates a helper object for working with the user rules
-func getUserFilter() filter {
+func userFilter() filter {
 	// TODO: This should be calculated when UserRules are set
 	var contents []byte
 	for _, rule := range config.UserRules {
@@ -131,7 +126,7 @@ func getUserFilter() filter {
 	userFilter := filter{
 		// User filter always has constant ID=0
 		ID:       UserFilterId,
-		contents: contents,
+		Contents: contents,
 		Enabled:  true,
 	}
 
@@ -199,7 +194,7 @@ func writeConfig() error {
 		return err
 	}
 
-	userFilter := getUserFilter()
+	userFilter := userFilter()
 	err = userFilter.save()
 	if err != nil {
 		log.Printf("Couldn't save the user filter: %s", err)
@@ -243,27 +238,25 @@ func writeAllConfigs() error {
 }
 
 const coreDNSConfigTemplate = `.:{{.Port}} {
-    {{if .ProtectionEnabled}}dnsfilter {
-        {{if .SafeBrowsingEnabled}}safebrowsing{{end}}
-        {{if .ParentalEnabled}}parental {{.ParentalSensitivity}}{{end}}
-        {{if .SafeSearchEnabled}}safesearch{{end}}
-        {{if .QueryLogEnabled}}querylog{{end}}
-        blocked_ttl {{.BlockedResponseTTL}}
-		{{if .FilteringEnabled}}
-		{{range .Filters}}
+	{{if .ProtectionEnabled}}dnsfilter {
+		{{if .SafeBrowsingEnabled}}safebrowsing{{end}}
+		{{if .ParentalEnabled}}parental {{.ParentalSensitivity}}{{end}}
+		{{if .SafeSearchEnabled}}safesearch{{end}}
+		{{if .QueryLogEnabled}}querylog{{end}}
+		blocked_ttl {{.BlockedResponseTTL}}
+		{{if .FilteringEnabled}}{{range .Filters}}{{if and .Enabled .Contents}}
 		filter {{.ID}} "{{.Path}}"
-		{{end}}
-		{{end}}
-    }{{end}}
-    {{.Pprof}}
+		{{end}}{{end}}{{end}}
+	}{{end}}
+	{{.Pprof}}
 	{{if .RefuseAny}}refuseany{{end}}
 	{{if gt .Ratelimit 0}}ratelimit {{.Ratelimit}}{{end}}
 	hosts {
-        fallthrough
-    }
-    {{if .UpstreamDNS}}upstream {{range .UpstreamDNS}}{{.}} {{end}} { bootstrap {{.BootstrapDNS}} }{{end}}
-    {{.Cache}}
-    {{.Prometheus}}
+		fallthrough
+	}
+	{{if .UpstreamDNS}}upstream {{range .UpstreamDNS}}{{.}} {{end}} { bootstrap {{.BootstrapDNS}} }{{end}}
+	{{.Cache}}
+	{{.Prometheus}}
 }
 `
 
@@ -280,24 +273,16 @@ func generateCoreDNSConfigText() (string, error) {
 	var configBytes bytes.Buffer
 	temporaryConfig := config.CoreDNS
 
-	// fill the list of filters
-	filters := make([]coreDnsFilter, 0)
+	// generate temporary filter list, needed to put userfilter in coredns config
+	filters := []filter{}
 
 	// first of all, append the user filter
-	userFilter := getUserFilter()
+	userFilter := userFilter()
 
-	if len(userFilter.contents) > 0 {
-		filters = append(filters, coreDnsFilter{ID: userFilter.ID, Path: userFilter.getFilterFilePath()})
-	}
+	filters = append(filters, userFilter)
 
 	// then go through other filters
-	for i := range config.Filters {
-		filter := &config.Filters[i]
-
-		if filter.Enabled && len(filter.contents) > 0 {
-			filters = append(filters, coreDnsFilter{ID: filter.ID, Path: filter.getFilterFilePath()})
-		}
-	}
+	filters = append(filters, config.Filters...)
 	temporaryConfig.Filters = filters
 
 	// run the template

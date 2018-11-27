@@ -424,7 +424,7 @@ func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 			newFilters = append(newFilters, filter)
 		} else {
 			// Remove the filter file
-			err := os.Remove(filter.getFilterFilePath())
+			err := os.Remove(filter.Path())
 			if err != nil {
 				errorText := fmt.Sprintf("Couldn't remove the filter file: %s", err)
 				http.Error(w, errorText, http.StatusInternalServerError)
@@ -647,24 +647,24 @@ func (filter *filter) update(force bool) (bool, error) {
 	}
 
 	// Check if the filter has been really changed
-	if bytes.Equal(filter.contents, body) {
+	if bytes.Equal(filter.Contents, body) {
 		log.Printf("The filter %d text has not changed", filter.ID)
 		return false, nil
 	}
 
 	log.Printf("Filter %d has been updated: %d bytes, %d rules", filter.ID, len(body), rulesCount)
 	filter.RulesCount = rulesCount
-	filter.contents = body
+	filter.Contents = body
 
 	return true, nil
 }
 
 // saves filter contents to the file in config.ourDataDir
 func (filter *filter) save() error {
-	filterFilePath := filter.getFilterFilePath()
+	filterFilePath := filter.Path()
 	log.Printf("Saving filter %d contents to: %s", filter.ID, filterFilePath)
 
-	err := writeFileSafe(filterFilePath, filter.contents)
+	err := writeFileSafe(filterFilePath, filter.Contents)
 	if err != nil {
 		return err
 	}
@@ -679,7 +679,7 @@ func (filter *filter) load() error {
 		return nil
 	}
 
-	filterFilePath := filter.getFilterFilePath()
+	filterFilePath := filter.Path()
 	log.Printf("Loading filter %d contents to: %s", filter.ID, filterFilePath)
 
 	if _, err := os.Stat(filterFilePath); os.IsNotExist(err) {
@@ -693,17 +693,17 @@ func (filter *filter) load() error {
 	}
 
 	log.Printf("Filter %d length is %d", filter.ID, len(filterFileContents))
-	filter.contents = filterFileContents
+	filter.Contents = filterFileContents
 
 	// Now extract the rules count
-	rulesCount, _ := parseFilterContents(filter.contents)
+	rulesCount, _ := parseFilterContents(filter.Contents)
 	filter.RulesCount = rulesCount
 
 	return nil
 }
 
 // Path to the filter contents
-func (filter *filter) getFilterFilePath() string {
+func (filter *filter) Path() string {
 	return filepath.Join(config.ourBinaryDir, config.ourDataDir, FiltersDir, strconv.FormatInt(filter.ID, 10)+".txt")
 }
 
