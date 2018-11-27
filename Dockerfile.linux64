@@ -2,7 +2,7 @@ FROM alpine:latest
 LABEL maintainer="Erik Rogers <erik.rogers@live.com>"
 
 # AdGuard version
-ARG ADGUARD_VERSION="0.9"
+ARG ADGUARD_VERSION="0.91"
 ENV ADGUARD_VERSION $ADGUARD_VERSION
 
 # AdGuard architecture and package info
