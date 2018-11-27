@@ -114,6 +114,12 @@ func main() {
 			log.Fatal(err)
 		}
 
+		// Do the upgrade if necessary
+		err = upgradeConfig()
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		// parse from config file
 		err = parseConfig()
 		if err != nil {
@@ -134,14 +140,8 @@ func main() {
 		os.Args = os.Args[:1]
 	}
 
-	// Do the upgrade if necessary
-	err := upgradeConfig()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// Save the updated config
-	err = writeConfig()
+	err := writeConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -258,79 +258,5 @@ func askUsernamePasswordIfPossible() error {
 
 	config.AuthName = username
 	config.AuthPass = password
-	return nil
-}
-
-// Performs necessary upgrade operations if needed
-func upgradeConfig() error {
-	if config.SchemaVersion == SchemaVersion {
-		// No upgrade, do nothing
-		return nil
-	}
-
-	if config.SchemaVersion > SchemaVersion {
-		// Unexpected -- the config file is newer than we expect
-		return fmt.Errorf("configuration file is supposed to be used with a newer version of AdGuard Home, schema=%d", config.SchemaVersion)
-	}
-
-	// Perform upgrade operations for each consecutive version upgrade
-	for oldVersion, newVersion := config.SchemaVersion, config.SchemaVersion+1; newVersion <= SchemaVersion; {
-		err := upgradeConfigSchema(oldVersion, newVersion)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// Increment old and new versions
-		oldVersion++
-		newVersion++
-	}
-
-	// Save the current schema version
-	config.SchemaVersion = SchemaVersion
-
-	return nil
-}
-
-// Upgrade from oldVersion to newVersion
-func upgradeConfigSchema(oldVersion int, newVersion int) error {
-	if oldVersion == 0 && newVersion == 1 {
-		log.Printf("Updating schema from %d to %d", oldVersion, newVersion)
-
-		// The first schema upgrade:
-		// Added "ID" field to "filter" -- we need to populate this field now
-		// Added "config.ourDataDir" -- where we will now store filters contents
-		for i := range config.Filters {
-			filter := &config.Filters[i] // otherwise we will be operating on a copy
-
-			// Set the filter ID
-			log.Printf("Seting ID=%d for filter %s", NextFilterId, filter.URL)
-			filter.ID = NextFilterId
-			NextFilterId++
-
-			// Forcibly update the filter
-			_, err := filter.update(true)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			// Saving it to the filters dir now
-			err = filter.save()
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-
-		// No more "dnsfilter.txt", filters are now loaded from config.ourDataDir/filters/
-		dnsFilterPath := filepath.Join(config.ourBinaryDir, "dnsfilter.txt")
-		_, err := os.Stat(dnsFilterPath)
-		if !os.IsNotExist(err) {
-			log.Printf("Deleting %s as we don't need it anymore", dnsFilterPath)
-			err = os.Remove(dnsFilterPath)
-			if err != nil {
-				log.Printf("Cannot remove %s due to %s", dnsFilterPath, err)
-			}
-		}
-	}
-
 	return nil
 }

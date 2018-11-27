@@ -16,7 +16,7 @@ import (
 
 // Current schema version. We compare it with the value from
 // the configuration file and perform necessary upgrade operations if needed
-const SchemaVersion = 1
+const CurrentSchemaVersion = 1
 
 // Directory where we'll store all downloaded filters contents
 const FiltersDir = "filters"
@@ -188,7 +188,7 @@ func writeConfig() error {
 		log.Printf("Couldn't generate YAML file: %s", err)
 		return err
 	}
-	err = writeFileSafe(configFile, yamlText)
+	err = safeWriteFile(configFile, yamlText)
 	if err != nil {
 		log.Printf("Couldn't save YAML config: %s", err)
 		return err
@@ -215,7 +215,7 @@ func writeCoreDNSConfig() error {
 		log.Printf("Couldn't generate DNS config: %s", err)
 		return err
 	}
-	err = writeFileSafe(coreFile, []byte(configText))
+	err = safeWriteFile(coreFile, []byte(configText))
 	if err != nil {
 		log.Printf("Couldn't save DNS config: %s", err)
 		return err

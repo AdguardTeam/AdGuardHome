@@ -19,7 +19,7 @@ import (
 // ----------------------------------
 
 // Writes data first to a temporary file and then renames it to what's specified in path
-func writeFileSafe(path string, data []byte) error {
+func safeWriteFile(path string, data []byte) error {
 	dir := filepath.Dir(path)
 	err := os.MkdirAll(dir, 0755)
 	if err != nil {

@@ -664,7 +664,7 @@ func (filter *filter) save() error {
 	filterFilePath := filter.Path()
 	log.Printf("Saving filter %d contents to: %s", filter.ID, filterFilePath)
 
-	err := writeFileSafe(filterFilePath, filter.Contents)
+	err := safeWriteFile(filterFilePath, filter.Contents)
 	if err != nil {
 		return err
 	}
