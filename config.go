@@ -76,7 +76,7 @@ type filter struct {
 	LastUpdated time.Time `json:"lastUpdated,omitempty" yaml:"last_updated,omitempty"`
 	ID          int64     `json:"id"` // auto-assigned when filter is added (see nextFilterID), json by default keeps ID uppercase but we need lowercase
 
-	Contents []byte `json:"-" yaml:"-"` // not in yaml or json
+	Rules []string `json:"-" yaml:"-"` // not in yaml or json
 }
 
 var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
@@ -112,21 +112,12 @@ var config = configuration{
 
 // Creates a helper object for working with the user rules
 func userFilter() filter {
-	// TODO: This should be calculated when UserRules are set
-	var contents []byte
-	for _, rule := range config.UserRules {
-		contents = append(contents, []byte(rule)...)
-		contents = append(contents, '\n')
-	}
-
-	userFilter := filter{
+	return filter{
 		// User filter always has constant ID=0
-		ID:       userFilterID,
-		Contents: contents,
-		Enabled:  true,
+		ID:      userFilterID,
+		Rules:   config.UserRules,
+		Enabled: true,
 	}
-
-	return userFilter
 }
 
 // Loads configuration from the YAML file

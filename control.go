@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -577,7 +577,7 @@ func refreshFiltersIfNeccessary(force bool) int {
 }
 
 // A helper function that parses filter contents and returns a number of rules and a filter name (if there's any)
-func parseFilterContents(contents []byte) (int, string) {
+func parseFilterContents(contents []byte) (int, string, []string) {
 	lines := strings.Split(string(contents), "\n")
 	rulesCount := 0
 	name := ""
@@ -596,7 +596,7 @@ func parseFilterContents(contents []byte) (int, string) {
 		}
 	}
 
-	return rulesCount, name
+	return rulesCount, name, lines
 }
 
 // Checks for filters updates
@@ -645,21 +645,21 @@ func (filter *filter) update(force bool) (bool, error) {
 	}
 
 	// Extract filter name and count number of rules
-	rulesCount, filterName := parseFilterContents(body)
+	rulesCount, filterName, rules := parseFilterContents(body)
 
 	if filterName != "" {
 		filter.Name = filterName
 	}
 
 	// Check if the filter has been really changed
-	if bytes.Equal(filter.Contents, body) {
+	if reflect.DeepEqual(filter.Rules, rules) {
 		log.Printf("The filter %d text has not changed", filter.ID)
 		return false, nil
 	}
 
 	log.Printf("Filter %d has been updated: %d bytes, %d rules", filter.ID, len(body), rulesCount)
 	filter.RulesCount = rulesCount
-	filter.Contents = body
+	filter.Rules = rules
 
 	return true, nil
 }
@@ -668,8 +668,9 @@ func (filter *filter) update(force bool) (bool, error) {
 func (filter *filter) save() error {
 	filterFilePath := filter.Path()
 	log.Printf("Saving filter %d contents to: %s", filter.ID, filterFilePath)
+	body := []byte(strings.Join(filter.Rules, "\n"))
 
-	return safeWriteFile(filterFilePath, filter.Contents)
+	return safeWriteFile(filterFilePath, body)
 }
 
 // loads filter contents from the file in dataDir
@@ -692,12 +693,11 @@ func (filter *filter) load() error {
 		return err
 	}
 
-	log.Printf("Filter %d length is %d", filter.ID, len(filterFileContents))
-	filter.Contents = filterFileContents
+	log.Printf("File %s, id %d, length %d", filterFilePath, filter.ID, len(filterFileContents))
+	rulesCount, _, rules := parseFilterContents(filterFileContents)
 
-	// Now extract the rules count
-	rulesCount, _ := parseFilterContents(filter.Contents)
 	filter.RulesCount = rulesCount
+	filter.Rules = rules
 
 	return nil
 }

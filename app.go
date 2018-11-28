@@ -149,7 +149,7 @@ func main() {
 			log.Printf("Couldn't load filter %d contents due to %s", filter.ID, err)
 			// clear LastUpdated so it gets fetched right away
 		}
-		if len(filter.Contents) == 0 {
+		if len(filter.Rules) == 0 {
 			filter.LastUpdated = time.Time{}
 		}
 	}
