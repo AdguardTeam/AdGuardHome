@@ -28,6 +28,13 @@ func isConnClosed(err error) bool {
 // ---------------------
 // debug logging helpers
 // ---------------------
+func _Func() string {
+	pc := make([]uintptr, 10) // at least 1 entry needed
+	runtime.Callers(2, pc)
+	f := runtime.FuncForPC(pc[0])
+	return path.Base(f.Name())
+}
+
 func trace(format string, args ...interface{}) {
 	pc := make([]uintptr, 10) // at least 1 entry needed
 	runtime.Callers(2, pc)

@@ -32,6 +32,46 @@ type Server struct {
 	ServerConfig
 }
 
+// uncomment this block to have tracing of locks
+/*
+func (s *Server) Lock() {
+	pc := make([]uintptr, 10) // at least 1 entry needed
+	runtime.Callers(2, pc)
+	f := runtime.FuncForPC(pc[0])
+	file, line := f.FileLine(pc[0])
+	fmt.Fprintf(os.Stderr, "%s:%d %s() -> Lock() -> in progress\n", path.Base(file), line, path.Base(f.Name()))
+	s.RWMutex.Lock()
+	fmt.Fprintf(os.Stderr, "%s:%d %s() -> Lock() -> done\n", path.Base(file), line, path.Base(f.Name()))
+}
+func (s *Server) RLock() {
+	pc := make([]uintptr, 10) // at least 1 entry needed
+	runtime.Callers(2, pc)
+	f := runtime.FuncForPC(pc[0])
+	file, line := f.FileLine(pc[0])
+	fmt.Fprintf(os.Stderr, "%s:%d %s() -> RLock() -> in progress\n", path.Base(file), line, path.Base(f.Name()))
+	s.RWMutex.RLock()
+	fmt.Fprintf(os.Stderr, "%s:%d %s() -> RLock() -> done\n", path.Base(file), line, path.Base(f.Name()))
+}
+func (s *Server) Unlock() {
+	pc := make([]uintptr, 10) // at least 1 entry needed
+	runtime.Callers(2, pc)
+	f := runtime.FuncForPC(pc[0])
+	file, line := f.FileLine(pc[0])
+	fmt.Fprintf(os.Stderr, "%s:%d %s() -> Unlock() -> in progress\n", path.Base(file), line, path.Base(f.Name()))
+	s.RWMutex.Unlock()
+	fmt.Fprintf(os.Stderr, "%s:%d %s() -> Unlock() -> done\n", path.Base(file), line, path.Base(f.Name()))
+}
+func (s *Server) RUnlock() {
+	pc := make([]uintptr, 10) // at least 1 entry needed
+	runtime.Callers(2, pc)
+	f := runtime.FuncForPC(pc[0])
+	file, line := f.FileLine(pc[0])
+	fmt.Fprintf(os.Stderr, "%s:%d %s() -> RUnlock() -> in progress\n", path.Base(file), line, path.Base(f.Name()))
+	s.RWMutex.RUnlock()
+	fmt.Fprintf(os.Stderr, "%s:%d %s() -> RUnlock() -> done\n", path.Base(file), line, path.Base(f.Name()))
+}
+*/
+
 // The zero ServerConfig is empty and ready for use.
 type ServerConfig struct {
 	UDPListenAddr *net.UDPAddr // if nil, then default is is used (port 53 on *)
@@ -97,16 +137,7 @@ func (s *Server) packetLoop() {
 		if err != nil {
 			if isConnClosed(err) {
 				log.Printf("ReadFrom() returned because we're reading from a closed connection, exiting loop")
-				var err error
-				s.Lock()
-				if s.udpListen != nil {
-					err = s.udpListen.Close()
-					s.udpListen = nil
-				}
-				s.Unlock()
-				if err != nil {
-					log.Printf("Failed to close udp connection while exiting loop: %s", err)
-				}
+				// don't try to nullify s.udpListen here, because s.udpListen could be already re-bound to listen
 				break
 			}
 			log.Printf("Got error when reading from udp listen: %s", err)
