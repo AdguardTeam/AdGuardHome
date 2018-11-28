@@ -146,6 +146,16 @@ func (c *configuration) write() error {
 		return err
 	}
 
+	return nil
+}
+
+func writeAllConfigs() error {
+	err := config.write()
+	if err != nil {
+		log.Printf("Couldn't write config: %s", err)
+		return err
+	}
+
 	userFilter := userFilter()
 	err = userFilter.save()
 	if err != nil {
@@ -155,8 +165,3 @@ func (c *configuration) write() error {
 
 	return nil
 }
-
-func writeAllConfigs() error {
-	return config.write()
-}
-
