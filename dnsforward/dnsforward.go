@@ -74,15 +74,15 @@ func (s *Server) RUnlock() {
 
 // The zero ServerConfig is empty and ready for use.
 type ServerConfig struct {
-	UDPListenAddr *net.UDPAddr // if nil, then default is is used (port 53 on *)
-	BlockedTTL    uint32       // if 0, then default is used (3600)
-	Upstreams     []Upstream
-	Filters       []Filter
+	UDPListenAddr      *net.UDPAddr // if nil, then default is is used (port 53 on *)
+	BlockedResponseTTL uint32       // if 0, then default is used (3600)
+	Upstreams          []Upstream
+	Filters            []Filter
 }
 
 var defaultValues = ServerConfig{
-	UDPListenAddr: &net.UDPAddr{Port: 53},
-	BlockedTTL:    3600,
+	UDPListenAddr:      &net.UDPAddr{Port: 53},
+	BlockedResponseTTL: 3600,
 	Upstreams: []Upstream{
 		//// dns over HTTPS
 		// &dnsOverHTTPS{Address: "https://1.1.1.1/dns-query"},
@@ -273,17 +273,17 @@ func (s *Server) reconfigureListenAddr(new ServerConfig) error {
 	return nil
 }
 
-func (s *Server) reconfigureBlockedTTL(new ServerConfig) {
-	newVal := new.BlockedTTL
+func (s *Server) reconfigureBlockedResponseTTL(new ServerConfig) {
+	newVal := new.BlockedResponseTTL
 	if newVal == 0 {
-		newVal = defaultValues.BlockedTTL
+		newVal = defaultValues.BlockedResponseTTL
 	}
-	oldVal := s.BlockedTTL
+	oldVal := s.BlockedResponseTTL
 	if oldVal == 0 {
-		oldVal = defaultValues.BlockedTTL
+		oldVal = defaultValues.BlockedResponseTTL
 	}
 	if newVal != oldVal {
-		s.BlockedTTL = new.BlockedTTL
+		s.BlockedResponseTTL = new.BlockedResponseTTL
 	}
 }
 
@@ -341,7 +341,7 @@ func (s *Server) reconfigureFilters(new ServerConfig) {
 }
 
 func (s *Server) Reconfigure(new ServerConfig) error {
-	s.reconfigureBlockedTTL(new)
+	s.reconfigureBlockedResponseTTL(new)
 	s.reconfigureUpstreams(new)
 	s.reconfigureFilters(new)
 
@@ -510,13 +510,13 @@ func (s *Server) genSOA(request *dns.Msg) []dns.RR {
 		Hdr: dns.RR_Header{
 			Name:   zone,
 			Rrtype: dns.TypeSOA,
-			Ttl:    s.BlockedTTL,
+			Ttl:    s.BlockedResponseTTL,
 			Class:  dns.ClassINET,
 		},
 		Mbox: "hostmaster.", // zone will be appended later if it's not empty or "."
 	}
 	if soa.Hdr.Ttl == 0 {
-		soa.Hdr.Ttl = defaultValues.BlockedTTL
+		soa.Hdr.Ttl = defaultValues.BlockedResponseTTL
 	}
 	if len(zone) > 0 && zone[0] != '.' {
 		soa.Mbox += zone

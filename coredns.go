@@ -29,9 +29,9 @@ func startDNSServer() error {
 	}
 
 	newconfig := dnsforward.ServerConfig{
-		UDPListenAddr: &net.UDPAddr{Port: config.CoreDNS.Port},
-		BlockedTTL:    config.CoreDNS.BlockedResponseTTL,
-		Filters:       filters,
+		UDPListenAddr:      &net.UDPAddr{Port: config.CoreDNS.Port},
+		BlockedResponseTTL: config.CoreDNS.BlockedResponseTTL,
+		Filters:            filters,
 	}
 
 	for _, u := range config.CoreDNS.UpstreamDNS {
