@@ -167,11 +167,11 @@ func testUpstream(t *testing.T, u Upstream) {
 		resp, err := u.Exchange(context.Background(), &req)
 
 		if err != nil {
-			t.Errorf("error while making an upstream request: %s", err)
+			t.Fatalf("error while making an upstream request: %s", err)
 		}
 
 		if len(resp.Answer) != 1 {
-			t.Errorf("no answer section in the response")
+			t.Fatalf("no answer section in the response")
 		}
 		if answer, ok := resp.Answer[0].(*dns.A); ok {
 			if !test.expected.Equal(answer.A) {
