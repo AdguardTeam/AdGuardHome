@@ -185,19 +185,23 @@ func (s *Server) reconfigureListenAddr(new ServerConfig) error {
 		if err != nil {
 			return errorx.Decorate(err, "Couldn't bind to %v", newAddr)
 		}
+		s.Lock()
 		if s.udpListen != nil {
-			err := s.udpListen.Close()
-			if err != nil {
-				return errorx.Decorate(err, "Couldn't close UDP listening socket")
-			}
+			err = s.udpListen.Close()
+		}
+		s.Unlock()
+		if err != nil {
+			return errorx.Decorate(err, "Couldn't close UDP listening socket")
 		}
 	} else {
 		log.Printf("Rebinding -- ports are same so close first then bind")
+		s.Lock()
 		if s.udpListen != nil {
-			err := s.udpListen.Close()
-			if err != nil {
-				return errorx.Decorate(err, "Couldn't close UDP listening socket")
-			}
+			err = s.udpListen.Close()
+		}
+		s.Unlock()
+		if err != nil {
+			return errorx.Decorate(err, "Couldn't close UDP listening socket")
 		}
 		newListen, err = net.ListenUDP("udp", newAddr)
 		if err != nil {
