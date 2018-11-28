@@ -38,17 +38,13 @@ var client = &http.Client{
 // -------------------
 // coredns run control
 // -------------------
-func tellCoreDNSToReload() {
-	corednsplugin.Reload <- true
-}
-
 func writeAllConfigsAndReloadCoreDNS() error {
 	err := writeAllConfigs()
 	if err != nil {
 		log.Printf("Couldn't write all configs: %s", err)
 		return err
 	}
-	tellCoreDNSToReload()
+	reconfigureDNSServer()
 	return nil
 }
 
@@ -155,7 +151,7 @@ func handleSetUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errorText, http.StatusInternalServerError)
 		return
 	}
-	tellCoreDNSToReload()
+	reconfigureDNSServer()
 	_, err = fmt.Fprintf(w, "OK %d servers\n", len(hosts))
 	if err != nil {
 		errorText := fmt.Sprintf("Couldn't write body: %s", err)
@@ -386,7 +382,7 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tellCoreDNSToReload()
+	reconfigureDNSServer()
 
 	_, err = fmt.Fprintf(w, "OK %d rules\n", filter.RulesCount)
 	if err != nil {
@@ -571,7 +567,7 @@ func refreshFiltersIfNeccessary(force bool) int {
 	config.Unlock()
 
 	if updateCount > 0 {
-		tellCoreDNSToReload()
+		reconfigureDNSServer()
 	}
 	return updateCount
 }

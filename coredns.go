@@ -15,11 +15,7 @@ func isRunning() bool {
 	return dnsServer.IsRunning()
 }
 
-func startDNSServer() error {
-	if isRunning() {
-		return fmt.Errorf("Unable to start coreDNS: Already running")
-	}
-
+func generateServerConfig() dnsforward.ServerConfig {
 	filters := []dnsforward.Filter{}
 	for _, filter := range config.Filters {
 		filters = append(filters, dnsforward.Filter{
@@ -43,8 +39,29 @@ func startDNSServer() error {
 		}
 		newconfig.Upstreams = append(newconfig.Upstreams, upstream)
 	}
+	return newconfig
+}
 
+func startDNSServer() error {
+	if isRunning() {
+		return fmt.Errorf("Unable to start forwarding DNS server: Already running")
+	}
+
+	newconfig := generateServerConfig()
 	err := dnsServer.Start(&newconfig)
+	if err != nil {
+		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
+	}
+
+	return nil
+}
+
+func reconfigureDNSServer() error {
+	if !isRunning() {
+		return fmt.Errorf("Refusing to reconfigure forwarding DNS server: not running")
+	}
+
+	err := dnsServer.Reconfigure(generateServerConfig())
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
 	}
