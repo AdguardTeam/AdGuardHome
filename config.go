@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/dnsforward"
 	"gopkg.in/yaml.v2"
 )
 
@@ -71,9 +72,8 @@ type filter struct {
 	Name        string    `json:"name" yaml:"name"`
 	RulesCount  int       `json:"rulesCount" yaml:"-"`
 	LastUpdated time.Time `json:"lastUpdated,omitempty" yaml:"last_updated,omitempty"`
-	ID          int64     `json:"id"` // auto-assigned when filter is added (see nextFilterID), json by default keeps ID uppercase but we need lowercase
 
-	Rules []string `json:"-" yaml:"-"` // not in yaml or json
+	dnsforward.Filter `yaml:",inline"`
 }
 
 var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
@@ -100,10 +100,10 @@ var config = configuration{
 		Prometheus:          "prometheus :9153",
 	},
 	Filters: []filter{
-		{ID: 1, Enabled: true, URL: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt", Name: "AdGuard Simplified Domain Names filter"},
-		{ID: 2, Enabled: false, URL: "https://adaway.org/hosts.txt", Name: "AdAway"},
-		{ID: 3, Enabled: false, URL: "https://hosts-file.net/ad_servers.txt", Name: "hpHosts - Ad and Tracking servers only"},
-		{ID: 4, Enabled: false, URL: "http://www.malwaredomainlist.com/hostslist/hosts.txt", Name: "MalwareDomainList.com Hosts List"},
+		{Filter: dnsforward.Filter{ID: 1}, Enabled: true, URL: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt", Name: "AdGuard Simplified Domain Names filter"},
+		{Filter: dnsforward.Filter{ID: 2}, Enabled: false, URL: "https://adaway.org/hosts.txt", Name: "AdAway"},
+		{Filter: dnsforward.Filter{ID: 3}, Enabled: false, URL: "https://hosts-file.net/ad_servers.txt", Name: "hpHosts - Ad and Tracking servers only"},
+		{Filter: dnsforward.Filter{ID: 4}, Enabled: false, URL: "http://www.malwaredomainlist.com/hostslist/hosts.txt", Name: "MalwareDomainList.com Hosts List"},
 	},
 }
 
@@ -111,9 +111,11 @@ var config = configuration{
 func userFilter() filter {
 	return filter{
 		// User filter always has constant ID=0
-		ID:      userFilterID,
-		Rules:   config.UserRules,
 		Enabled: true,
+		Filter: dnsforward.Filter{
+			ID:    userFilterID,
+			Rules: config.UserRules,
+		},
 	}
 }
 
