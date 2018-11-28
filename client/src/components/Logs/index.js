@@ -182,7 +182,7 @@ class Logs extends Component {
                     <option value="filtered">{ t('show_filtered_type') }</option>
                 </select>,
         }, {
-            Header: t('Client'),
+            Header: t('client_table_header'),
             accessor: 'client',
             maxWidth: 250,
             Cell: (row) => {

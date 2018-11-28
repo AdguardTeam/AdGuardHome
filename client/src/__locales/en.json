@@ -100,6 +100,7 @@
     "domain_name_table_header": "Domain name",
     "type_table_header": "Type",
     "response_table_header": "Response",
+    "client_table_header": "Client",
     "empty_response_status": "Empty",
     "show_all_filter_type": "Show all",
     "show_filtered_type": "Show filtered",

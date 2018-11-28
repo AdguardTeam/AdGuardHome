@@ -34,30 +34,30 @@ class Filters extends Component {
     };
 
     columns = [{
-        Header: this.props.t('enabled_table_header'),
+        Header: <Trans>enabled_table_header</Trans>,
         accessor: 'enabled',
         Cell: this.renderCheckbox,
         width: 90,
         className: 'text-center',
     }, {
-        Header: this.props.t('name_table_header'),
+        Header: <Trans>name_table_header</Trans>,
         accessor: 'name',
         Cell: ({ value }) => (<div className="logs__row logs__row--overflow"><span className="logs__text" title={value}>{value}</span></div>),
     }, {
-        Header: this.props.t('filter_url_table_header'),
+        Header: <Trans>filter_url_table_header</Trans>,
         accessor: 'url',
         Cell: ({ value }) => (<div className="logs__row logs__row--overflow"><a href={value} target='_blank' rel='noopener noreferrer' className="link logs__text">{value}</a></div>),
     }, {
-        Header: this.props.t('rules_count_table_header'),
+        Header: <Trans>rules_count_table_header</Trans>,
         accessor: 'rulesCount',
         className: 'text-center',
         Cell: props => props.value.toLocaleString(),
     }, {
-        Header: this.props.t('last_time_updated_table_header'),
+        Header: <Trans>last_time_updated_table_header</Trans>,
         accessor: 'lastUpdated',
         className: 'text-center',
     }, {
-        Header: this.props.t('actions_table_header'),
+        Header: <Trans>actions_table_header</Trans>,
         accessor: 'url',
         Cell: ({ value }) => (<span title={ this.props.t('delete_table_action') } className='remove-icon fe fe-trash-2' onClick={() => this.props.removeFilter(value)}/>),
         className: 'text-center',
