@@ -1,14 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sync"
-	"text/template"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -56,7 +53,7 @@ type coreDNSConfig struct {
 	SafeSearchEnabled   bool     `yaml:"safesearch_enabled"`
 	ParentalEnabled     bool     `yaml:"parental_enabled"`
 	ParentalSensitivity int      `yaml:"parental_sensitivity"`
-	BlockedResponseTTL  int      `yaml:"blocked_response_ttl"`
+	BlockedResponseTTL  uint32   `yaml:"blocked_response_ttl"`
 	QueryLogEnabled     bool     `yaml:"querylog_enabled"`
 	Ratelimit           int      `yaml:"ratelimit"`
 	RefuseAny           bool     `yaml:"refuse_any"`
@@ -188,98 +185,8 @@ func (c *configuration) write() error {
 	return nil
 }
 
-// --------------
-// coredns config
-// --------------
-func writeCoreDNSConfig() error {
-	coreFile := filepath.Join(config.ourBinaryDir, config.CoreDNS.coreFile)
-	log.Printf("Writing DNS config: %s", coreFile)
-	configText, err := generateCoreDNSConfigText()
-	if err != nil {
-		log.Printf("Couldn't generate DNS config: %s", err)
-		return err
-	}
-	err = safeWriteFile(coreFile, []byte(configText))
-	if err != nil {
-		log.Printf("Couldn't save DNS config: %s", err)
-		return err
-	}
-	return nil
-}
-
 func writeAllConfigs() error {
-	err := config.write()
-	if err != nil {
-		log.Printf("Couldn't write our config: %s", err)
-		return err
-	}
-	err = writeCoreDNSConfig()
-	if err != nil {
-		log.Printf("Couldn't write DNS config: %s", err)
-		return err
-	}
-	return nil
-}
-
-const coreDNSConfigTemplate = `.:{{.Port}} {
-	{{if .ProtectionEnabled}}dnsfilter {
-		{{if .SafeBrowsingEnabled}}safebrowsing{{end}}
-		{{if .ParentalEnabled}}parental {{.ParentalSensitivity}}{{end}}
-		{{if .SafeSearchEnabled}}safesearch{{end}}
-		{{if .QueryLogEnabled}}querylog{{end}}
-		blocked_ttl {{.BlockedResponseTTL}}
-		{{if .FilteringEnabled}}{{range .Filters}}{{if and .Enabled .Contents}}
-		filter {{.ID}} "{{.Path}}"
-		{{end}}{{end}}{{end}}
-	}{{end}}
-	{{.Pprof}}
-	{{if .RefuseAny}}refuseany{{end}}
-	{{if gt .Ratelimit 0}}ratelimit {{.Ratelimit}}{{end}}
-	hosts {
-		fallthrough
-	}
-	{{if .UpstreamDNS}}upstream {{range .UpstreamDNS}}{{.}} {{end}} { bootstrap {{.BootstrapDNS}} }{{end}}
-	{{.Cache}}
-	{{.Prometheus}}
-}
-`
-
-var removeEmptyLines = regexp.MustCompile("([\t ]*\n)+")
-
-// generate CoreDNS config text
-func generateCoreDNSConfigText() (string, error) {
-	t, err := template.New("config").Parse(coreDNSConfigTemplate)
-	if err != nil {
-		log.Printf("Couldn't generate DNS config: %s", err)
-		return "", err
-	}
-
-	var configBytes bytes.Buffer
-	temporaryConfig := config.CoreDNS
-
-	// generate temporary filter list, needed to put userfilter in coredns config
-	filters := []filter{}
-
-	// first of all, append the user filter
-	userFilter := userFilter()
-
-	filters = append(filters, userFilter)
-
-	// then go through other filters
-	filters = append(filters, config.Filters...)
-	temporaryConfig.Filters = filters
-
-	// run the template
-	err = t.Execute(&configBytes, &temporaryConfig)
-	if err != nil {
-		log.Printf("Couldn't generate DNS config: %s", err)
-		return "", err
-	}
-	configText := configBytes.String()
-
-	// remove empty lines from generated config
-	configText = removeEmptyLines.ReplaceAllString(configText, "\n")
-	return configText, nil
+	return config.write()
 }
 
 // Set the next filter ID to max(filter.ID) + 1

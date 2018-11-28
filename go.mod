@@ -14,6 +14,7 @@ require (
 	github.com/gobuffalo/packr v1.19.0
 	github.com/google/uuid v1.0.0 // indirect
 	github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645 // indirect
+	github.com/joomcode/errorx v0.1.0
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/mholt/caddy v0.11.0
 	github.com/miekg/dns v1.0.15
