@@ -97,6 +97,16 @@ func (s *Server) packetLoop() {
 		if err != nil {
 			if isConnClosed(err) {
 				log.Printf("ReadFrom() returned because we're reading from a closed connection, exiting loop")
+				var err error
+				s.Lock()
+				if s.udpListen != nil {
+					err = s.udpListen.Close()
+					s.udpListen = nil
+				}
+				s.Unlock()
+				if err != nil {
+					log.Printf("Failed to close udp connection while exiting loop: %s", err)
+				}
 				break
 			}
 			log.Printf("Got error when reading from udp listen: %s", err)
@@ -124,6 +134,7 @@ func (s *Server) Start(config *ServerConfig) error {
 		}
 		s.udpListen, err = net.ListenUDP("udp", addr)
 		if err != nil {
+			s.udpListen = nil
 			return errorx.Decorate(err, "Couldn't listen to UDP socket")
 		}
 		log.Println(s.udpListen.LocalAddr(), s.UDPListenAddr)
@@ -144,10 +155,10 @@ func (s *Server) Stop() error {
 	defer s.Unlock()
 	if s.udpListen != nil {
 		err := s.udpListen.Close()
+		s.udpListen = nil
 		if err != nil {
 			return errorx.Decorate(err, "Couldn't close UDP listening socket")
 		}
-		s.udpListen = nil
 	}
 	return nil
 }
@@ -188,6 +199,7 @@ func (s *Server) reconfigureListenAddr(new ServerConfig) error {
 		s.Lock()
 		if s.udpListen != nil {
 			err = s.udpListen.Close()
+			s.udpListen = nil
 		}
 		s.Unlock()
 		if err != nil {
@@ -198,6 +210,7 @@ func (s *Server) reconfigureListenAddr(new ServerConfig) error {
 		s.Lock()
 		if s.udpListen != nil {
 			err = s.udpListen.Close()
+			s.udpListen = nil
 		}
 		s.Unlock()
 		if err != nil {
