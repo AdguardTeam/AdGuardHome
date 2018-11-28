@@ -72,12 +72,24 @@ func (s *Server) RUnlock() {
 }
 */
 
+type FilteringConfig struct {
+	ProtectionEnabled   bool   `yaml:"protection_enabled"`
+	FilteringEnabled    bool   `yaml:"filtering_enabled"`
+	SafeBrowsingEnabled bool   `yaml:"safebrowsing_enabled"`
+	SafeSearchEnabled   bool   `yaml:"safesearch_enabled"`
+	ParentalEnabled     bool   `yaml:"parental_enabled"`
+	ParentalSensitivity int    `yaml:"parental_sensitivity"`
+	BlockedResponseTTL  uint32 `yaml:"blocked_response_ttl"`
+}
+
 // The zero ServerConfig is empty and ready for use.
 type ServerConfig struct {
 	UDPListenAddr      *net.UDPAddr // if nil, then default is is used (port 53 on *)
 	BlockedResponseTTL uint32       // if 0, then default is used (3600)
 	Upstreams          []Upstream
 	Filters            []Filter
+
+	FilteringConfig
 }
 
 var defaultValues = ServerConfig{

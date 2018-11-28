@@ -44,25 +44,21 @@ type configuration struct {
 
 // field ordering is important -- yaml fields will mirror ordering from here
 type coreDNSConfig struct {
-	binaryFile          string
-	coreFile            string
-	Filters             []filter `yaml:"-"`
-	Port                int      `yaml:"port"`
-	ProtectionEnabled   bool     `yaml:"protection_enabled"`
-	FilteringEnabled    bool     `yaml:"filtering_enabled"`
-	SafeBrowsingEnabled bool     `yaml:"safebrowsing_enabled"`
-	SafeSearchEnabled   bool     `yaml:"safesearch_enabled"`
-	ParentalEnabled     bool     `yaml:"parental_enabled"`
-	ParentalSensitivity int      `yaml:"parental_sensitivity"`
-	BlockedResponseTTL  uint32   `yaml:"blocked_response_ttl"`
-	QueryLogEnabled     bool     `yaml:"querylog_enabled"`
-	Ratelimit           int      `yaml:"ratelimit"`
-	RefuseAny           bool     `yaml:"refuse_any"`
-	Pprof               string   `yaml:"-"`
-	Cache               string   `yaml:"-"`
-	Prometheus          string   `yaml:"-"`
-	BootstrapDNS        string   `yaml:"bootstrap_dns"`
-	UpstreamDNS         []string `yaml:"upstream_dns"`
+	binaryFile string
+	coreFile   string
+	Filters    []filter `yaml:"-"`
+	Port       int      `yaml:"port"`
+
+	dnsforward.FilteringConfig `yaml:",inline"`
+
+	QueryLogEnabled bool     `yaml:"querylog_enabled"`
+	Ratelimit       int      `yaml:"ratelimit"`
+	RefuseAny       bool     `yaml:"refuse_any"`
+	Pprof           string   `yaml:"-"`
+	Cache           string   `yaml:"-"`
+	Prometheus      string   `yaml:"-"`
+	BootstrapDNS    string   `yaml:"bootstrap_dns"`
+	UpstreamDNS     []string `yaml:"upstream_dns"`
 }
 
 // field ordering is important -- yaml fields will mirror ordering from here
@@ -84,20 +80,22 @@ var config = configuration{
 	BindPort:          3000,
 	BindHost:          "127.0.0.1",
 	CoreDNS: coreDNSConfig{
-		Port:                53,
-		binaryFile:          "coredns",  // only filename, no path
-		coreFile:            "Corefile", // only filename, no path
-		ProtectionEnabled:   true,
-		FilteringEnabled:    true,
-		SafeBrowsingEnabled: false,
-		BlockedResponseTTL:  10, // in seconds
-		QueryLogEnabled:     true,
-		Ratelimit:           20,
-		RefuseAny:           true,
-		BootstrapDNS:        "8.8.8.8:53",
-		UpstreamDNS:         defaultDNS,
-		Cache:               "cache",
-		Prometheus:          "prometheus :9153",
+		Port:       53,
+		binaryFile: "coredns",  // only filename, no path
+		coreFile:   "Corefile", // only filename, no path
+		FilteringConfig: dnsforward.FilteringConfig{
+			ProtectionEnabled:   true,
+			FilteringEnabled:    true,
+			SafeBrowsingEnabled: false,
+			BlockedResponseTTL:  10, // in seconds
+		},
+		QueryLogEnabled: true,
+		Ratelimit:       20,
+		RefuseAny:       true,
+		BootstrapDNS:    "8.8.8.8:53",
+		UpstreamDNS:     defaultDNS,
+		Cache:           "cache",
+		Prometheus:      "prometheus :9153",
 	},
 	Filters: []filter{
 		{Filter: dnsforward.Filter{ID: 1}, Enabled: true, URL: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt", Name: "AdGuard Simplified Domain Names filter"},
