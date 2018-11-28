@@ -41,8 +41,7 @@ type configuration struct {
 type coreDNSConfig struct {
 	binaryFile string
 	coreFile   string
-	Filters    []filter `yaml:"-"`
-	Port       int      `yaml:"port"`
+	Port       int `yaml:"port"`
 
 	dnsforward.FilteringConfig `yaml:",inline"`
 
