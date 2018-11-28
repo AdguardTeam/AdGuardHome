@@ -55,14 +55,14 @@ var defaultValues = ServerConfig{
 		//// dns over TLS
 		// &dnsOverTLS{Address: "tls://8.8.8.8:853"},
 		// &dnsOverTLS{Address: "tls://8.8.4.4:853"},
-		&dnsOverTLS{Address: "tls://1.1.1.1:853"},
-		&dnsOverTLS{Address: "tls://1.0.0.1:853"},
+		// &dnsOverTLS{Address: "tls://1.1.1.1:853"},
+		// &dnsOverTLS{Address: "tls://1.0.0.1:853"},
 
 		//// plainDNS
-		// &plainDNS{Address: "8.8.8.8:53"},
-		// &plainDNS{Address: "8.8.4.4:53"},
-		// &plainDNS{Address: "1.1.1.1:53"},
-		// &plainDNS{Address: "1.0.0.1:53"},
+		&plainDNS{Address: "8.8.8.8:53"},
+		&plainDNS{Address: "8.8.4.4:53"},
+		&plainDNS{Address: "1.1.1.1:53"},
+		&plainDNS{Address: "1.0.0.1:53"},
 	},
 }
 
