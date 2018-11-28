@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
 	"gopkg.in/yaml.v2"
@@ -16,11 +15,7 @@ const (
 	currentSchemaVersion = 1         // used for upgrading from old configs to new config
 	dataDir              = "data"    // data storage
 	filterDir            = "filters" // cache location for downloaded filters, it's under DataDir
-	userFilterID         = 0         // special filter ID, always 0
 )
-
-// Just a counter that we use for incrementing the filter ID
-var nextFilterID int64 = time.Now().Unix()
 
 // configuration is loaded from YAML
 // field ordering is important -- yaml fields will mirror ordering from here
@@ -61,17 +56,6 @@ type coreDNSConfig struct {
 	UpstreamDNS     []string `yaml:"upstream_dns"`
 }
 
-// field ordering is important -- yaml fields will mirror ordering from here
-type filter struct {
-	Enabled     bool      `json:"enabled"`
-	URL         string    `json:"url"`
-	Name        string    `json:"name" yaml:"name"`
-	RulesCount  int       `json:"rulesCount" yaml:"-"`
-	LastUpdated time.Time `json:"lastUpdated,omitempty" yaml:"last_updated,omitempty"`
-
-	dnsforward.Filter `yaml:",inline"`
-}
-
 var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
 
 // initialize to default values, will be changed later when reading config or parsing command line
@@ -103,18 +87,6 @@ var config = configuration{
 		{Filter: dnsforward.Filter{ID: 3}, Enabled: false, URL: "https://hosts-file.net/ad_servers.txt", Name: "hpHosts - Ad and Tracking servers only"},
 		{Filter: dnsforward.Filter{ID: 4}, Enabled: false, URL: "http://www.malwaredomainlist.com/hostslist/hosts.txt", Name: "MalwareDomainList.com Hosts List"},
 	},
-}
-
-// Creates a helper object for working with the user rules
-func userFilter() filter {
-	return filter{
-		// User filter always has constant ID=0
-		Enabled: true,
-		Filter: dnsforward.Filter{
-			ID:    userFilterID,
-			Rules: config.UserRules,
-		},
-	}
 }
 
 // Loads configuration from the YAML file
@@ -189,17 +161,3 @@ func writeAllConfigs() error {
 	return config.write()
 }
 
-// Set the next filter ID to max(filter.ID) + 1
-func updateUniqueFilterID(filters []filter) {
-	for _, filter := range filters {
-		if nextFilterID < filter.ID {
-			nextFilterID = filter.ID + 1
-		}
-	}
-}
-
-func assignUniqueFilterID() int64 {
-	value := nextFilterID
-	nextFilterID += 1
-	return value
-}
