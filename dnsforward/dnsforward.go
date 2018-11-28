@@ -163,6 +163,16 @@ func (s *Server) Stop() error {
 	return nil
 }
 
+func (s *Server) IsRunning() bool {
+	s.RLock()
+	isRunning := true
+	if s.udpListen == nil {
+		isRunning = false
+	}
+	s.RUnlock()
+	return isRunning
+}
+
 //
 // Server reconfigure
 //
