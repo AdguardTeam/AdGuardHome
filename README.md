@@ -141,7 +141,7 @@ cd AdGuardHome
 make
 ```
 
-### How to update translations
+## How to update translations
 
 Before updating translations you need to install dependencies:
 ```
