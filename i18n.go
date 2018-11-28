@@ -24,10 +24,7 @@ var allowedLanguages = map[string]bool{
 
 func isLanguageAllowed(language string) bool {
 	l := strings.ToLower(language)
-	if allowedLanguages[l] {
-		return true
-	}
-	return false
+	return allowedLanguages[l]
 }
 
 func handleI18nCurrentLanguage(w http.ResponseWriter, r *http.Request) {

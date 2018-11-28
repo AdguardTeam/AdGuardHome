@@ -31,12 +31,7 @@ func safeWriteFile(path string, data []byte) error {
 	if err != nil {
 		return err
 	}
-	err = os.Rename(tmpPath, path)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return os.Rename(tmpPath, path)
 }
 
 // ----------------------------------

@@ -669,12 +669,7 @@ func (filter *filter) save() error {
 	filterFilePath := filter.Path()
 	log.Printf("Saving filter %d contents to: %s", filter.ID, filterFilePath)
 
-	err := safeWriteFile(filterFilePath, filter.Contents)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return safeWriteFile(filterFilePath, filter.Contents)
 }
 
 // loads filter contents from the file in dataDir

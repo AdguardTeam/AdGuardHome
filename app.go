@@ -202,7 +202,7 @@ func getInput() (string, error) {
 
 func promptAndGet(prompt string) (string, error) {
 	for {
-		fmt.Printf(prompt)
+		fmt.Print(prompt)
 		input, err := getInput()
 		if err != nil {
 			log.Printf("Failed to get input, aborting: %s", err)
@@ -217,9 +217,9 @@ func promptAndGet(prompt string) (string, error) {
 
 func promptAndGetPassword(prompt string) (string, error) {
 	for {
-		fmt.Printf(prompt)
+		fmt.Print(prompt)
 		password, err := terminal.ReadPassword(int(os.Stdin.Fd()))
-		fmt.Printf("\n")
+		fmt.Print("\n")
 		if err != nil {
 			log.Printf("Failed to get input, aborting: %s", err)
 			return "", err
