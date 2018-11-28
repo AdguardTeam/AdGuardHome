@@ -32,7 +32,7 @@ func upgradeConfig() error {
 	}
 
 	schemaVersionInterface, ok := diskConfig["schema_version"]
-	trace("schemaVersionInterface = %v, ok = %v", schemaVersionInterface, ok)
+	log.Printf("%s(): got schema version %v", _Func(), schemaVersionInterface)
 	if !ok {
 		// no schema version, set it to 0
 		schemaVersionInterface = 0
@@ -84,7 +84,7 @@ func upgradeConfigSchema(oldVersion int, diskConfig *map[string]interface{}) err
 }
 
 func upgradeSchema0to1(diskConfig *map[string]interface{}) error {
-	trace("Called")
+	log.Printf("%s(): called", _Func())
 
 	// The first schema upgrade:
 	// No more "dnsfilter.txt", filters are now kept in data/filters/

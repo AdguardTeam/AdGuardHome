@@ -239,7 +239,6 @@ func askUsernamePasswordIfPossible() error {
 	_, err := os.Stat(configfile)
 	if !os.IsNotExist(err) {
 		// do nothing, file exists
-		trace("File %s exists, won't ask for password", configfile)
 		return nil
 	}
 	if !terminal.IsTerminal(int(os.Stdin.Fd())) {
