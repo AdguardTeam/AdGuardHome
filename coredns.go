@@ -17,6 +17,11 @@ func isRunning() bool {
 
 func generateServerConfig() dnsforward.ServerConfig {
 	filters := []dnsforward.Filter{}
+	userFilter := userFilter()
+	filters = append(filters, dnsforward.Filter{
+		ID:    userFilter.ID,
+		Rules: userFilter.Rules,
+	})
 	for _, filter := range config.Filters {
 		filters = append(filters, dnsforward.Filter{
 			ID:    filter.ID,
