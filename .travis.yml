@@ -15,12 +15,9 @@ os:
   - osx
 
 install:
-  - go get -v -d -t ./...
   - npm --prefix client install
-  - go env
 
 script:
-  - (cd `go env GOPATH`/src/github.com/prometheus/client_golang && git checkout -q v0.8.0)
   - go test ./...
   - make
 
