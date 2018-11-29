@@ -172,6 +172,8 @@ func parseConfig() error {
 
 // Saves configuration to the YAML file and also saves the user filter contents to a file
 func writeConfig() error {
+	c.Lock()
+	defer c.Unlock()
 	configFile := filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
 	log.Printf("Writing YAML file: %s", configFile)
 	yamlText, err := yaml.Marshal(&config)
