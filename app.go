@@ -158,7 +158,7 @@ func main() {
 	go func() {
 		refreshFiltersIfNeccessary(false)
 		// Save the updated config
-		err := writeConfig()
+		err := config.write()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -170,7 +170,7 @@ func main() {
 	}
 
 	// Save the updated config
-	err := writeConfig()
+	err := config.write()
 	if err != nil {
 		log.Fatal(err)
 	}
