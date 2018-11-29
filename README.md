@@ -65,6 +65,16 @@ Download this file: [AdGuardHome_v0.91_linux_386.tar.gz](https://github.com/Adgu
 
 Download this file: [AdGuardHome_v0.91_linux_arm.tar.gz](https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.91/AdGuardHome_v0.91_linux_arm.tar.gz), then unpack it and follow ["How to run"](#how-to-run) instructions below.
 
+## How to update
+
+We have not yet implemented an auto-update of AdGuard Home, but it is planned for future versions: #448.
+
+At the moment, the update procedure is manual:
+
+1. Download the new AdGuard Home binary.
+2. Replace the old file with the new one.
+3. Restart AdGuard Home.
+
 ## How to run
 
 DNS works on port 53, which requires superuser privileges. Therefore, you need to run it with `sudo` in terminal:
