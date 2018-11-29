@@ -19,5 +19,6 @@ install:
 
 script:
   - go test ./...
+  - make build/static/index.html
   - make
 
