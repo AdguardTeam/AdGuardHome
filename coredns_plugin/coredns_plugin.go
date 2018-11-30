@@ -88,7 +88,7 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 			switch blockValue {
 			case "safebrowsing":
 				log.Println("Browsing security service is enabled")
-				p.d.EnableSafeBrowsing()
+				p.d.SafeBrowsingEnabled = true
 				if c.NextArg() {
 					if len(c.Val()) == 0 {
 						return nil, c.ArgErr()
@@ -97,7 +97,7 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 				}
 			case "safesearch":
 				log.Println("Safe search is enabled")
-				p.d.EnableSafeSearch()
+				p.d.SafeSearchEnabled = true
 			case "parental":
 				if !c.NextArg() {
 					return nil, c.ArgErr()
@@ -108,10 +108,11 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 				}
 
 				log.Println("Parental control is enabled")
-				err = p.d.EnableParental(sensitivity)
-				if err != nil {
-					return nil, c.ArgErr()
+				if !dnsfilter.IsParentalSensitivityValid(sensitivity) {
+					return nil, dnsfilter.ErrInvalidParental
 				}
+				p.d.ParentalEnabled = true
+				p.d.ParentalSensitivity = sensitivity
 				if c.NextArg() {
 					if len(c.Val()) == 0 {
 						return nil, c.ArgErr()

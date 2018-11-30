@@ -46,13 +46,17 @@ const shortcutLength = 6 // used for rule search optimization, 6 hits the sweet 
 const enableFastLookup = true         // flag for debugging, must be true in production for faster performance
 const enableDelayedCompilation = true // flag for debugging, must be true in production for faster performance
 
-type config struct {
-	parentalServer      string
-	parentalSensitivity int // must be either 3, 10, 13 or 17
-	parentalEnabled     bool
-	safeSearchEnabled   bool
-	safeBrowsingEnabled bool
-	safeBrowsingServer  string
+// Config allows you to configure DNS filtering with New() or just change variables directly.
+type Config struct {
+	ParentalSensitivity int  `yaml:"parental_sensitivity"` // must be either 3, 10, 13 or 17
+	ParentalEnabled     bool `yaml:"parental_enabled"`
+	SafeSearchEnabled   bool `yaml:"safesearch_enabled"`
+	SafeBrowsingEnabled bool `yaml:"safebrowsing_enabled"`
+}
+
+type privateConfig struct {
+	parentalServer     string // access via methods
+	safeBrowsingServer string // access via methods
 }
 
 type rule struct {
@@ -110,7 +114,8 @@ type Dnsfilter struct {
 	client    http.Client     // handle for http client -- single instance as recommended by docs
 	transport *http.Transport // handle for http transport used by http client
 
-	config config
+	Config // for direct access by library users, even a = assignment
+	privateConfig
 }
 
 type Filter struct {
@@ -176,7 +181,7 @@ func (d *Dnsfilter) CheckHost(host string) (Result, error) {
 	}
 
 	// check safebrowsing if no match
-	if d.config.safeBrowsingEnabled {
+	if d.SafeBrowsingEnabled {
 		result, err = d.checkSafeBrowsing(host)
 		if err != nil {
 			// failed to do HTTP lookup -- treat it as if we got empty response, but don't save cache
@@ -189,7 +194,7 @@ func (d *Dnsfilter) CheckHost(host string) (Result, error) {
 	}
 
 	// check parental if no match
-	if d.config.parentalEnabled {
+	if d.ParentalEnabled {
 		result, err = d.checkParental(host)
 		if err != nil {
 			// failed to do HTTP lookup -- treat it as if we got empty response, but don't save cache
@@ -574,11 +579,11 @@ func hostnameToHashParam(host string, addslash bool) (string, map[string]bool) {
 
 func (d *Dnsfilter) checkSafeBrowsing(host string) (Result, error) {
 	// prevent recursion -- checking the host of safebrowsing server makes no sense
-	if host == d.config.safeBrowsingServer {
+	if host == d.safeBrowsingServer {
 		return Result{}, nil
 	}
 	format := func(hashparam string) string {
-		url := fmt.Sprintf(defaultSafebrowsingURL, d.config.safeBrowsingServer, hashparam)
+		url := fmt.Sprintf(defaultSafebrowsingURL, d.safeBrowsingServer, hashparam)
 		return url
 	}
 	handleBody := func(body []byte, hashes map[string]bool) (Result, error) {
@@ -615,11 +620,11 @@ func (d *Dnsfilter) checkSafeBrowsing(host string) (Result, error) {
 
 func (d *Dnsfilter) checkParental(host string) (Result, error) {
 	// prevent recursion -- checking the host of parental safety server makes no sense
-	if host == d.config.parentalServer {
+	if host == d.parentalServer {
 		return Result{}, nil
 	}
 	format := func(hashparam string) string {
-		url := fmt.Sprintf(defaultParentalURL, d.config.parentalServer, hashparam, d.config.parentalSensitivity)
+		url := fmt.Sprintf(defaultParentalURL, d.parentalServer, hashparam, d.ParentalSensitivity)
 		return url
 	}
 	handleBody := func(body []byte, hashes map[string]bool) (Result, error) {
@@ -872,8 +877,8 @@ func New() *Dnsfilter {
 		Transport: d.transport,
 		Timeout:   defaultHTTPTimeout,
 	}
-	d.config.safeBrowsingServer = defaultSafebrowsingServer
-	d.config.parentalServer = defaultParentalServer
+	d.safeBrowsingServer = defaultSafebrowsingServer
+	d.parentalServer = defaultParentalServer
 
 	return d
 }
@@ -890,35 +895,21 @@ func (d *Dnsfilter) Destroy() {
 // config manipulation helpers
 //
 
-// EnableSafeBrowsing turns on checking hostnames in malware/phishing database
-func (d *Dnsfilter) EnableSafeBrowsing() {
-	d.config.safeBrowsingEnabled = true
-}
-
-// EnableParental turns on checking hostnames for containing adult content
-func (d *Dnsfilter) EnableParental(sensitivity int) error {
+// IsParentalSensitivityValid checks if sensitivity is valid value
+func IsParentalSensitivityValid(sensitivity int) bool {
 	switch sensitivity {
 	case 3, 10, 13, 17:
-		d.config.parentalSensitivity = sensitivity
-		d.config.parentalEnabled = true
-		return nil
-	default:
-		return ErrInvalidParental
+		return true
 	}
-}
-
-// EnableSafeSearch turns on enforcing safesearch in search engines
-// only used in coredns plugin and requires caller to use SafeSearchDomain()
-func (d *Dnsfilter) EnableSafeSearch() {
-	d.config.safeSearchEnabled = true
+	return false
 }
 
 // SetSafeBrowsingServer lets you optionally change hostname of safesearch lookup
 func (d *Dnsfilter) SetSafeBrowsingServer(host string) {
 	if len(host) == 0 {
-		d.config.safeBrowsingServer = defaultSafebrowsingServer
+		d.safeBrowsingServer = defaultSafebrowsingServer
 	} else {
-		d.config.safeBrowsingServer = host
+		d.safeBrowsingServer = host
 	}
 }
 
@@ -934,7 +925,7 @@ func (d *Dnsfilter) ResetHTTPTimeout() {
 
 // SafeSearchDomain returns replacement address for search engine
 func (d *Dnsfilter) SafeSearchDomain(host string) (string, bool) {
-	if d.config.safeSearchEnabled {
+	if d.SafeSearchEnabled {
 		val, ok := safeSearchDomains[host]
 		return val, ok
 	}
