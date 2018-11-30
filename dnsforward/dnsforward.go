@@ -178,7 +178,12 @@ func (s *Server) Start(config *ServerConfig) error {
 
 	if s.dnsFilter == nil {
 		log.Printf("Creating dnsfilter")
-		s.dnsFilter = dnsfilter.New(nil)
+		dnsFilterConfig := &config.Config
+		s.dnsFilter = dnsfilter.New(dnsFilterConfig)
+		// add rules only if they are enabled
+		if s.FilteringEnabled {
+			s.dnsFilter.AddRules(s.Filters)
+		}
 	}
 
 	go s.packetLoop()
@@ -308,7 +313,7 @@ func (s *Server) reconfigureUpstreams(new ServerConfig) {
 	s.Upstreams = new.Upstreams
 }
 
-func (s *Server) reconfigureFilters(new ServerConfig) {
+func (s *Server) reconfigureFiltering(new ServerConfig) {
 	newFilters := new.Filters
 	if len(newFilters) == 0 {
 		newFilters = defaultValues.Filters
@@ -317,11 +322,22 @@ func (s *Server) reconfigureFilters(new ServerConfig) {
 	if len(oldFilters) == 0 {
 		oldFilters = defaultValues.Filters
 	}
-	if reflect.DeepEqual(newFilters, oldFilters) {
-		// they're exactly the same, do nothing
+
+	needUpdate := false
+	if !reflect.DeepEqual(newFilters, oldFilters) {
+		needUpdate = true
+	}
+
+	if !reflect.DeepEqual(new.FilteringConfig, s.FilteringConfig) {
+		needUpdate = true
+	}
+
+	if !needUpdate {
+		// nothing to do, everything is same
 		return
 	}
 
+	// TODO: instead of creating new dnsfilter, change existing one's settings and filters
 	dnsFilter := dnsfilter.New(&new.Config) // sets safebrowsing, safesearch and parental
 
 	// add rules only if they are enabled
@@ -332,6 +348,7 @@ func (s *Server) reconfigureFilters(new ServerConfig) {
 	s.Lock()
 	oldDnsFilter := s.dnsFilter
 	s.dnsFilter = dnsFilter
+	s.FilteringConfig = new.FilteringConfig
 	s.Unlock()
 
 	oldDnsFilter.Destroy()
@@ -340,7 +357,7 @@ func (s *Server) reconfigureFilters(new ServerConfig) {
 func (s *Server) Reconfigure(new ServerConfig) error {
 	s.reconfigureBlockedResponseTTL(new)
 	s.reconfigureUpstreams(new)
-	s.reconfigureFilters(new)
+	s.reconfigureFiltering(new)
 
 	err := s.reconfigureListenAddr(new)
 	if err != nil {
