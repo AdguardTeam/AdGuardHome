@@ -113,6 +113,11 @@ type Dnsfilter struct {
 	config config
 }
 
+type Filter struct {
+	ID    int64    `json:"id"`         // auto-assigned when filter is added (see nextFilterID), json by default keeps ID uppercase but we need lowercase
+	Rules []string `json:"-" yaml:"-"` // not in yaml or json
+}
+
 //go:generate stringer -type=Reason
 
 // Reason holds an enum detailing why it was filtered or not filtered

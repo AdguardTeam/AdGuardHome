@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 
+	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
 	"github.com/joomcode/errorx"
 )
@@ -16,14 +17,14 @@ func isRunning() bool {
 }
 
 func generateServerConfig() dnsforward.ServerConfig {
-	filters := []dnsforward.Filter{}
+	filters := []dnsfilter.Filter{}
 	userFilter := userFilter()
-	filters = append(filters, dnsforward.Filter{
+	filters = append(filters, dnsfilter.Filter{
 		ID:    userFilter.ID,
 		Rules: userFilter.Rules,
 	})
 	for _, filter := range config.Filters {
-		filters = append(filters, dnsforward.Filter{
+		filters = append(filters, dnsfilter.Filter{
 			ID:    filter.ID,
 			Rules: filter.Rules,
 		})

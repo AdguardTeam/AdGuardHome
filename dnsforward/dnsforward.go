@@ -88,7 +88,7 @@ type ServerConfig struct {
 	UDPListenAddr      *net.UDPAddr // if nil, then default is is used (port 53 on *)
 	BlockedResponseTTL uint32       // if 0, then default is used (3600)
 	Upstreams          []Upstream
-	Filters            []Filter
+	Filters            []dnsfilter.Filter
 
 	FilteringConfig
 }
@@ -117,11 +117,6 @@ var defaultValues = ServerConfig{
 		&plainDNS{Address: "1.1.1.1:53"},
 		&plainDNS{Address: "1.0.0.1:53"},
 	},
-}
-
-type Filter struct {
-	ID    int64    `json:"id"`         // auto-assigned when filter is added (see nextFilterID), json by default keeps ID uppercase but we need lowercase
-	Rules []string `json:"-" yaml:"-"` // not in yaml or json
 }
 
 //

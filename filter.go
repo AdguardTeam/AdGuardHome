@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/dnsforward"
+	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 )
 
 var (
@@ -28,7 +28,7 @@ type filter struct {
 	RulesCount  int       `json:"rulesCount" yaml:"-"`
 	LastUpdated time.Time `json:"lastUpdated,omitempty" yaml:"last_updated,omitempty"`
 
-	dnsforward.Filter `yaml:",inline"`
+	dnsfilter.Filter `yaml:",inline"`
 }
 
 // Creates a helper object for working with the user rules
@@ -36,7 +36,7 @@ func userFilter() filter {
 	return filter{
 		// User filter always has constant ID=0
 		Enabled: true,
-		Filter: dnsforward.Filter{
+		Filter: dnsfilter.Filter{
 			Rules: config.UserRules,
 		},
 	}
