@@ -31,9 +31,9 @@ func generateServerConfig() dnsforward.ServerConfig {
 	}
 
 	newconfig := dnsforward.ServerConfig{
-		UDPListenAddr:      &net.UDPAddr{Port: config.CoreDNS.Port},
-		BlockedResponseTTL: config.CoreDNS.BlockedResponseTTL,
-		Filters:            filters,
+		UDPListenAddr:   &net.UDPAddr{Port: config.CoreDNS.Port},
+		FilteringConfig: config.CoreDNS.FilteringConfig,
+		Filters:         filters,
 	}
 
 	for _, u := range config.CoreDNS.UpstreamDNS {

@@ -74,28 +74,25 @@ func (s *Server) RUnlock() {
 */
 
 type FilteringConfig struct {
-	ProtectionEnabled   bool   `yaml:"protection_enabled"`
-	FilteringEnabled    bool   `yaml:"filtering_enabled"`
-	SafeBrowsingEnabled bool   `yaml:"safebrowsing_enabled"`
-	SafeSearchEnabled   bool   `yaml:"safesearch_enabled"`
-	ParentalEnabled     bool   `yaml:"parental_enabled"`
-	ParentalSensitivity int    `yaml:"parental_sensitivity"`
-	BlockedResponseTTL  uint32 `yaml:"blocked_response_ttl"`
+	ProtectionEnabled  bool   `yaml:"protection_enabled"`
+	FilteringEnabled   bool   `yaml:"filtering_enabled"`
+	BlockedResponseTTL uint32 `yaml:"blocked_response_ttl"` // if 0, then default is used (3600)
+
+	dnsfilter.Config `yaml:",inline"`
 }
 
 // The zero ServerConfig is empty and ready for use.
 type ServerConfig struct {
-	UDPListenAddr      *net.UDPAddr // if nil, then default is is used (port 53 on *)
-	BlockedResponseTTL uint32       // if 0, then default is used (3600)
-	Upstreams          []Upstream
-	Filters            []dnsfilter.Filter
+	UDPListenAddr *net.UDPAddr // if nil, then default is is used (port 53 on *)
+	Upstreams     []Upstream
+	Filters       []dnsfilter.Filter
 
 	FilteringConfig
 }
 
 var defaultValues = ServerConfig{
-	UDPListenAddr:      &net.UDPAddr{Port: 53},
-	BlockedResponseTTL: 3600,
+	UDPListenAddr:   &net.UDPAddr{Port: 53},
+	FilteringConfig: FilteringConfig{BlockedResponseTTL: 3600},
 	Upstreams: []Upstream{
 		//// dns over HTTPS
 		// &dnsOverHTTPS{Address: "https://1.1.1.1/dns-query"},

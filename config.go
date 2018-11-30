@@ -68,10 +68,9 @@ var config = configuration{
 		binaryFile: "coredns",  // only filename, no path
 		coreFile:   "Corefile", // only filename, no path
 		FilteringConfig: dnsforward.FilteringConfig{
-			ProtectionEnabled:   true,
-			FilteringEnabled:    true,
-			SafeBrowsingEnabled: false,
-			BlockedResponseTTL:  10, // in seconds
+			ProtectionEnabled:  true, // whether or not use any of dnsfilter features
+			FilteringEnabled:   true, // whether or not use filter lists
+			BlockedResponseTTL: 10,   // in seconds
 		},
 		QueryLogEnabled: true,
 		Ratelimit:       20,
