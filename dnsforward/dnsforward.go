@@ -178,7 +178,7 @@ func (s *Server) Start(config *ServerConfig) error {
 
 	if s.dnsFilter == nil {
 		log.Printf("Creating dnsfilter")
-		s.dnsFilter = dnsfilter.New()
+		s.dnsFilter = dnsfilter.New(nil)
 	}
 
 	go s.packetLoop()
@@ -322,7 +322,7 @@ func (s *Server) reconfigureFilters(new ServerConfig) {
 		return
 	}
 
-	dnsFilter := dnsfilter.New()
+	dnsFilter := dnsfilter.New(&new.Config) // sets safebrowsing, safesearch and parental
 	for _, f := range newFilters {
 		for _, rule := range f.Rules {
 			err := dnsFilter.AddRule(rule, f.ID)

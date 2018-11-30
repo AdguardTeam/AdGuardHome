@@ -856,7 +856,7 @@ func (d *Dnsfilter) matchHost(host string) (Result, error) {
 //
 
 // New creates properly initialized DNS Filter that is ready to be used
-func New() *Dnsfilter {
+func New(c *Config) *Dnsfilter {
 	d := new(Dnsfilter)
 
 	d.storage = make(map[string]bool)
@@ -879,6 +879,9 @@ func New() *Dnsfilter {
 	}
 	d.safeBrowsingServer = defaultSafebrowsingServer
 	d.parentalServer = defaultParentalServer
+	if c != nil {
+		d.Config = *c
+	}
 
 	return d
 }

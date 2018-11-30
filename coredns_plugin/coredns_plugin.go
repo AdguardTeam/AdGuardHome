@@ -77,7 +77,7 @@ func setupPlugin(c *caddy.Controller) (*plug, error) {
 	// create new Plugin and copy default values
 	p := &plug{
 		settings: defaultPluginSettings,
-		d:        dnsfilter.New(),
+		d:        dnsfilter.New(nil),
 	}
 
 	log.Println("Initializing the CoreDNS plugin")
