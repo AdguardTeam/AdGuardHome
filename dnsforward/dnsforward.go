@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"reflect"
+	"strings"
 	"sync"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
@@ -406,7 +407,7 @@ func (s *Server) handlePacket(p []byte, addr net.Addr, conn *net.UDPConn) {
 			return
 		}
 	}
-	host := msg.Question[0].Name
+	host := strings.TrimSuffix(msg.Question[0].Name, ".")
 	res, err := s.dnsFilter.CheckHost(host)
 	if err != nil {
 		log.Printf("dnsfilter failed to check host '%s': %s", host, err)
