@@ -393,21 +393,7 @@ func (s *Server) handlePacket(p []byte, addr net.Addr, conn *net.UDPConn) {
 		}
 	}
 
-	{
-		val, ok := s.cache.Get(&msg)
-		if ok && val != nil {
-			err = s.respond(val, addr, conn)
-			if err != nil {
-				if isConnClosed(err) {
-					// ignore this error, the connection was closed and that's ok
-					return
-				}
-				log.Printf("Couldn't respond to UDP packet: %s", err)
-				return
-			}
-			return
-		}
-	}
+	// use dnsfilter before cache -- changed settings or filters would require cache invalidation otherwise
 	host := strings.TrimSuffix(msg.Question[0].Name, ".")
 	res, err := s.dnsFilter.CheckHost(host)
 	if err != nil {
@@ -426,9 +412,23 @@ func (s *Server) handlePacket(p []byte, addr net.Addr, conn *net.UDPConn) {
 		}
 	}
 
+	{
+		val, ok := s.cache.Get(&msg)
+		if ok && val != nil {
+			err = s.respond(val, addr, conn)
+			if err != nil {
+				if isConnClosed(err) {
+					// ignore this error, the connection was closed and that's ok
+					return
+				}
+				log.Printf("Couldn't respond to UDP packet: %s", err)
+				return
+			}
+			return
+		}
+	}
+
 	// TODO: replace with single-socket implementation
-	// TODO: replace 8.8.8.8:53 with configurable upstreams
-	// TODO: support DoH, DoT and TCP
 	upstream := s.chooseUpstream()
 	reply, err := upstream.Exchange(&msg)
 	if err != nil {
