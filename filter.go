@@ -196,7 +196,7 @@ func (filter *filter) update(force bool) (bool, error) {
 
 	// Check if the filter has been really changed
 	if reflect.DeepEqual(filter.Rules, rules) {
-		log.Printf("The filter %d text has not changed", filter.ID)
+		log.Printf("Filter #%d at URL %s hasn't changed, not updating it", filter.ID, filter.URL)
 		return false, nil
 	}
 
