@@ -737,6 +737,24 @@ func (d *Dnsfilter) lookupCommon(host string, lookupstats *LookupStats, cache gc
 // Adding rule and matching against the rules
 //
 
+// AddRules is a convinience function to add an array of filters in one call
+func (d *Dnsfilter) AddRules(filters []Filter) error {
+	for _, f := range filters {
+		for _, rule := range f.Rules {
+			err := d.AddRule(rule, f.ID)
+			if err == ErrAlreadyExists || err == ErrInvalidSyntax {
+				continue
+			}
+			if err != nil {
+				log.Printf("Cannot add rule %s: %s", rule, err)
+				// Just ignore invalid rules
+				continue
+			}
+		}
+	}
+	return nil
+}
+
 // AddRule adds a rule, checking if it is a valid rule first and if it wasn't added already
 func (d *Dnsfilter) AddRule(input string, filterListID int64) error {
 	input = strings.TrimSpace(input)

@@ -323,18 +323,10 @@ func (s *Server) reconfigureFilters(new ServerConfig) {
 	}
 
 	dnsFilter := dnsfilter.New(&new.Config) // sets safebrowsing, safesearch and parental
-	for _, f := range newFilters {
-		for _, rule := range f.Rules {
-			err := dnsFilter.AddRule(rule, f.ID)
-			if err == dnsfilter.ErrAlreadyExists || err == dnsfilter.ErrInvalidSyntax {
-				continue
-			}
-			if err != nil {
-				log.Printf("Cannot add rule %s: %s", rule, err)
-				// Just ignore invalid rules
-				continue
-			}
-		}
+
+	// add rules only if they are enabled
+	if new.FilteringEnabled {
+		dnsFilter.AddRules(newFilters)
 	}
 
 	s.Lock()
