@@ -178,8 +178,7 @@ func (s *Server) Start(config *ServerConfig) error {
 
 	if s.dnsFilter == nil {
 		log.Printf("Creating dnsfilter")
-		dnsFilterConfig := &config.Config
-		s.dnsFilter = dnsfilter.New(dnsFilterConfig)
+		s.dnsFilter = dnsfilter.New(&s.Config)
 		// add rules only if they are enabled
 		if s.FilteringEnabled {
 			s.dnsFilter.AddRules(s.Filters)
