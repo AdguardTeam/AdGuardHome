@@ -74,7 +74,7 @@ type filter struct {
 	Name        string    `json:"name" yaml:"name"`
 	RulesCount  int       `json:"rulesCount" yaml:"-"`
 	LastUpdated time.Time `json:"lastUpdated,omitempty" yaml:"last_updated,omitempty"`
-	ID          int64     // auto-assigned when filter is added (see nextFilterID)
+	ID          int64     `json:"id"` // auto-assigned when filter is added (see nextFilterID), json by default keeps ID uppercase but we need lowercase
 
 	Contents []byte `json:"-" yaml:"-"` // not in yaml or json
 }
