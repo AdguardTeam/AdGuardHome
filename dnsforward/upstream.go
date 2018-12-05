@@ -29,7 +29,8 @@ type Upstream interface {
 // plain DNS
 //
 type plainDNS struct {
-	address string
+	address   string
+	preferTCP bool
 }
 
 var defaultUDPClient = dns.Client{
@@ -46,6 +47,11 @@ var defaultTCPClient = dns.Client{
 func (p *plainDNS) Address() string { return p.address }
 
 func (p *plainDNS) Exchange(m *dns.Msg) (*dns.Msg, error) {
+	if p.preferTCP {
+		reply, _, err := defaultTCPClient.Exchange(m, p.address)
+		return reply, err
+	}
+
 	reply, _, err := defaultUDPClient.Exchange(m, p.address)
 	if err != nil && reply != nil && reply.Truncated {
 		log.Printf("Truncated message was received, retrying over TCP, question: %s", m.Question[0].String())
@@ -183,7 +189,12 @@ func GetUpstream(address string) (Upstream, error) {
 			if url.Port() == "" {
 				url.Host += ":53"
 			}
-			return &plainDNS{address: url.String()}, nil
+			return &plainDNS{address: url.Host}, nil
+		case "tcp":
+			if url.Port() == "" {
+				url.Host += ":53"
+			}
+			return &plainDNS{address: url.Host, preferTCP: true}, nil
 		case "tls":
 			if url.Port() == "" {
 				url.Host += ":853"
