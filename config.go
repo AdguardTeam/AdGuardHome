@@ -13,9 +13,8 @@ import (
 )
 
 const (
-	currentSchemaVersion = 1         // used for upgrading from old configs to new config
-	dataDir              = "data"    // data storage
-	filterDir            = "filters" // cache location for downloaded filters, it's under DataDir
+	dataDir   = "data"    // data storage
+	filterDir = "filters" // cache location for downloaded filters, it's under DataDir
 )
 
 // configuration is loaded from YAML
@@ -24,14 +23,14 @@ type configuration struct {
 	ourConfigFilename string // Config filename (can be overriden via the command line arguments)
 	ourBinaryDir      string // Location of our directory, used to protect against CWD being somewhere else
 
-	BindHost  string        `yaml:"bind_host"`
-	BindPort  int           `yaml:"bind_port"`
-	AuthName  string        `yaml:"auth_name"`
-	AuthPass  string        `yaml:"auth_pass"`
-	Language  string        `yaml:"language"` // two-letter ISO 639-1 language code
-	CoreDNS   coreDNSConfig `yaml:"coredns"`
-	Filters   []filter      `yaml:"filters"`
-	UserRules []string      `yaml:"user_rules,omitempty"`
+	BindHost  string    `yaml:"bind_host"`
+	BindPort  int       `yaml:"bind_port"`
+	AuthName  string    `yaml:"auth_name"`
+	AuthPass  string    `yaml:"auth_pass"`
+	Language  string    `yaml:"language"` // two-letter ISO 639-1 language code
+	DNS       dnsConfig `yaml:"dns"`
+	Filters   []filter  `yaml:"filters"`
+	UserRules []string  `yaml:"user_rules,omitempty"`
 
 	sync.RWMutex `yaml:"-"`
 
@@ -39,16 +38,11 @@ type configuration struct {
 }
 
 // field ordering is important -- yaml fields will mirror ordering from here
-type coreDNSConfig struct {
-	binaryFile string
-	coreFile   string
-	Port       int `yaml:"port"`
+type dnsConfig struct {
+	Port int `yaml:"port"`
 
 	dnsforward.FilteringConfig `yaml:",inline"`
 
-	Pprof        string   `yaml:"-"`
-	Cache        string   `yaml:"-"`
-	Prometheus   string   `yaml:"-"`
 	BootstrapDNS string   `yaml:"bootstrap_dns"`
 	UpstreamDNS  []string `yaml:"upstream_dns"`
 }
@@ -60,10 +54,8 @@ var config = configuration{
 	ourConfigFilename: "AdGuardHome.yaml",
 	BindPort:          3000,
 	BindHost:          "127.0.0.1",
-	CoreDNS: coreDNSConfig{
-		Port:       53,
-		binaryFile: "coredns",  // only filename, no path
-		coreFile:   "Corefile", // only filename, no path
+	DNS: dnsConfig{
+		Port: 53,
 		FilteringConfig: dnsforward.FilteringConfig{
 			ProtectionEnabled:  true, // whether or not use any of dnsfilter features
 			FilteringEnabled:   true, // whether or not use filter lists
@@ -74,8 +66,6 @@ var config = configuration{
 		},
 		BootstrapDNS: "8.8.8.8:53",
 		UpstreamDNS:  defaultDNS,
-		Cache:        "cache",
-		Prometheus:   "prometheus :9153",
 	},
 	Filters: []filter{
 		{Filter: dnsfilter.Filter{ID: 1}, Enabled: true, URL: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt", Name: "AdGuard Simplified Domain Names filter"},

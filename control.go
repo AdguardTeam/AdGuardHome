@@ -32,9 +32,9 @@ var client = &http.Client{
 }
 
 // -------------------
-// coredns run control
+// dns run control
 // -------------------
-func writeAllConfigsAndReloadCoreDNS() error {
+func writeAllConfigsAndReloadDNS() error {
 	err := writeAllConfigs()
 	if err != nil {
 		log.Printf("Couldn't write all configs: %s", err)
@@ -45,7 +45,7 @@ func writeAllConfigsAndReloadCoreDNS() error {
 }
 
 func httpUpdateConfigReloadDNSReturnOK(w http.ResponseWriter, r *http.Request) {
-	err := writeAllConfigsAndReloadCoreDNS()
+	err := writeAllConfigsAndReloadDNS()
 	if err != nil {
 		errortext := fmt.Sprintf("Couldn't write config file: %s", err)
 		log.Println(errortext)
@@ -67,12 +67,12 @@ func returnOK(w http.ResponseWriter, r *http.Request) {
 func handleStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"dns_address":        config.BindHost,
-		"dns_port":           config.CoreDNS.Port,
-		"protection_enabled": config.CoreDNS.ProtectionEnabled,
-		"querylog_enabled":   config.CoreDNS.QueryLogEnabled,
+		"dns_port":           config.DNS.Port,
+		"protection_enabled": config.DNS.ProtectionEnabled,
+		"querylog_enabled":   config.DNS.QueryLogEnabled,
 		"running":            isRunning(),
-		"bootstrap_dns":      config.CoreDNS.BootstrapDNS,
-		"upstream_dns":       config.CoreDNS.UpstreamDNS,
+		"bootstrap_dns":      config.DNS.BootstrapDNS,
+		"upstream_dns":       config.DNS.UpstreamDNS,
 		"version":            VersionString,
 		"language":           config.Language,
 	}
@@ -95,12 +95,12 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleProtectionEnable(w http.ResponseWriter, r *http.Request) {
-	config.CoreDNS.ProtectionEnabled = true
+	config.DNS.ProtectionEnabled = true
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleProtectionDisable(w http.ResponseWriter, r *http.Request) {
-	config.CoreDNS.ProtectionEnabled = false
+	config.DNS.ProtectionEnabled = false
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
@@ -108,12 +108,12 @@ func handleProtectionDisable(w http.ResponseWriter, r *http.Request) {
 // stats
 // -----
 func handleQueryLogEnable(w http.ResponseWriter, r *http.Request) {
-	config.CoreDNS.QueryLogEnabled = true
+	config.DNS.QueryLogEnabled = true
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleQueryLogDisable(w http.ResponseWriter, r *http.Request) {
-	config.CoreDNS.QueryLogEnabled = false
+	config.DNS.QueryLogEnabled = false
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
@@ -135,9 +135,9 @@ func handleSetUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	hosts := strings.Fields(string(body))
 
 	if len(hosts) == 0 {
-		config.CoreDNS.UpstreamDNS = defaultDNS
+		config.DNS.UpstreamDNS = defaultDNS
 	} else {
-		config.CoreDNS.UpstreamDNS = hosts
+		config.DNS.UpstreamDNS = hosts
 	}
 
 	err = writeAllConfigs()
@@ -243,7 +243,7 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := client.Get(versionCheckURL)
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't get querylog from coredns: %T %s\n", err, err)
+		errortext := fmt.Sprintf("Couldn't get version check json from %s: %T %s\n", versionCheckURL, err, err)
 		log.Println(errortext)
 		http.Error(w, errortext, http.StatusBadGateway)
 		return
@@ -255,7 +255,7 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	// read the body entirely
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't read response body: %s", err)
+		errortext := fmt.Sprintf("Couldn't read response body from %s: %s", versionCheckURL, err)
 		log.Println(errortext)
 		http.Error(w, errortext, http.StatusBadGateway)
 		return
@@ -278,18 +278,18 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 // ---------
 
 func handleFilteringEnable(w http.ResponseWriter, r *http.Request) {
-	config.CoreDNS.FilteringEnabled = true
+	config.DNS.FilteringEnabled = true
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleFilteringDisable(w http.ResponseWriter, r *http.Request) {
-	config.CoreDNS.FilteringEnabled = false
+	config.DNS.FilteringEnabled = false
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
-		"enabled": config.CoreDNS.FilteringEnabled,
+		"enabled": config.DNS.FilteringEnabled,
 	}
 
 	config.RLock()
@@ -377,7 +377,8 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// URL is deemed valid, append it to filters, update config, write new filter file and tell coredns to reload it
+	// URL is deemed valid, append it to filters, update config, write new filter file and tell dns to reload it
+	// TODO: since we directly feed filters in-memory, revisit if writing configs is always neccessary
 	config.Filters = append(config.Filters, filter)
 	err = writeAllConfigs()
 	if err != nil {
@@ -537,18 +538,18 @@ func handleFilteringRefresh(w http.ResponseWriter, r *http.Request) {
 // ------------
 
 func handleSafeBrowsingEnable(w http.ResponseWriter, r *http.Request) {
-	config.CoreDNS.SafeBrowsingEnabled = true
+	config.DNS.SafeBrowsingEnabled = true
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleSafeBrowsingDisable(w http.ResponseWriter, r *http.Request) {
-	config.CoreDNS.SafeBrowsingEnabled = false
+	config.DNS.SafeBrowsingEnabled = false
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
-		"enabled": config.CoreDNS.SafeBrowsingEnabled,
+		"enabled": config.DNS.SafeBrowsingEnabled,
 	}
 	jsonVal, err := json.Marshal(data)
 	if err != nil {
@@ -611,22 +612,22 @@ func handleParentalEnable(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Sensitivity must be set to valid value", 400)
 		return
 	}
-	config.CoreDNS.ParentalSensitivity = i
-	config.CoreDNS.ParentalEnabled = true
+	config.DNS.ParentalSensitivity = i
+	config.DNS.ParentalEnabled = true
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleParentalDisable(w http.ResponseWriter, r *http.Request) {
-	config.CoreDNS.ParentalEnabled = false
+	config.DNS.ParentalEnabled = false
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleParentalStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
-		"enabled": config.CoreDNS.ParentalEnabled,
+		"enabled": config.DNS.ParentalEnabled,
 	}
-	if config.CoreDNS.ParentalEnabled {
-		data["sensitivity"] = config.CoreDNS.ParentalSensitivity
+	if config.DNS.ParentalEnabled {
+		data["sensitivity"] = config.DNS.ParentalSensitivity
 	}
 	jsonVal, err := json.Marshal(data)
 	if err != nil {
@@ -651,18 +652,18 @@ func handleParentalStatus(w http.ResponseWriter, r *http.Request) {
 // ------------
 
 func handleSafeSearchEnable(w http.ResponseWriter, r *http.Request) {
-	config.CoreDNS.SafeSearchEnabled = true
+	config.DNS.SafeSearchEnabled = true
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleSafeSearchDisable(w http.ResponseWriter, r *http.Request) {
-	config.CoreDNS.SafeSearchEnabled = false
+	config.DNS.SafeSearchEnabled = false
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
-		"enabled": config.CoreDNS.SafeSearchEnabled,
+		"enabled": config.DNS.SafeSearchEnabled,
 	}
 	jsonVal, err := json.Marshal(data)
 	if err != nil {

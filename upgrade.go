@@ -10,6 +10,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const currentSchemaVersion = 2 // used for upgrading from old configs to new config
+
 // Performs necessary upgrade operations if needed
 func upgradeConfig() error {
 	// read a config file into an interface map, so we can manipulate values without losing any
@@ -57,7 +59,12 @@ func upgradeConfig() error {
 func upgradeConfigSchema(oldVersion int, diskConfig *map[string]interface{}) error {
 	switch oldVersion {
 	case 0:
-		err := upgradeSchema0to1(diskConfig)
+		err := upgradeSchema0to2(diskConfig)
+		if err != nil {
+			return err
+		}
+	case 1:
+		err := upgradeSchema1to2(diskConfig)
 		if err != nil {
 			return err
 		}
@@ -83,14 +90,13 @@ func upgradeConfigSchema(oldVersion int, diskConfig *map[string]interface{}) err
 	return nil
 }
 
+// The first schema upgrade:
+// No more "dnsfilter.txt", filters are now kept in data/filters/
 func upgradeSchema0to1(diskConfig *map[string]interface{}) error {
 	log.Printf("%s(): called", _Func())
 
-	// The first schema upgrade:
-	// No more "dnsfilter.txt", filters are now kept in data/filters/
 	dnsFilterPath := filepath.Join(config.ourBinaryDir, "dnsfilter.txt")
-	_, err := os.Stat(dnsFilterPath)
-	if !os.IsNotExist(err) {
+	if _, err := os.Stat(dnsFilterPath); !os.IsNotExist(err) {
 		log.Printf("Deleting %s as we don't need it anymore", dnsFilterPath)
 		err = os.Remove(dnsFilterPath)
 		if err != nil {
@@ -102,4 +108,37 @@ func upgradeSchema0to1(diskConfig *map[string]interface{}) error {
 	(*diskConfig)["schema_version"] = 1
 
 	return nil
+}
+
+// Second schema upgrade:
+// coredns is now dns in config
+// delete 'Corefile', since we don't use that anymore
+func upgradeSchema1to2(diskConfig *map[string]interface{}) error {
+	log.Printf("%s(): called", _Func())
+
+	coreFilePath := filepath.Join(config.ourBinaryDir, "Corefile")
+	if _, err := os.Stat(coreFilePath); !os.IsNotExist(err) {
+		log.Printf("Deleting %s as we don't need it anymore", coreFilePath)
+		err = os.Remove(coreFilePath)
+		if err != nil {
+			log.Printf("Cannot remove %s due to %s", coreFilePath, err)
+			// not fatal, move on
+		}
+	}
+
+	(*diskConfig)["dns"] = (*diskConfig)["coredns"]
+	delete((*diskConfig), "coredns")
+	(*diskConfig)["schema_version"] = 2
+
+	return nil
+}
+
+// jump two schemas at once -- this time we just do it sequentially
+func upgradeSchema0to2(diskConfig *map[string]interface{}) error {
+	err := upgradeSchema0to1(diskConfig)
+	if err != nil {
+		return err
+	}
+
+	return upgradeSchema1to2(diskConfig)
 }

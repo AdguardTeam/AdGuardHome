@@ -90,7 +90,7 @@ Now open the browser and navigate to http://localhost:3000/ to control your AdGu
 You can run AdGuard Home without superuser privileges, but you need to instruct it to use a different port rather than 53. You can do that by editing `AdGuardHome.yaml` and finding these two lines:
 
 ```yaml
-coredns:
+dns:
   port: 53
 ```
 
@@ -108,7 +108,7 @@ Settings are stored in [YAML format](https://en.wikipedia.org/wiki/YAML), possib
  * `bind_port` — Web interface IP port to listen on
  * `auth_name` — Web interface optional authorization username
  * `auth_pass` — Web interface optional authorization password
- * `coredns` — CoreDNS configuration section
+ * `dns` — DNS configuration section
    * `port` — DNS server port to listen on
    * `filtering_enabled` — Filtering of DNS requests based on filter lists
    * `safebrowsing_enabled` — Filtering of DNS requests based on safebrowsing
@@ -208,6 +208,6 @@ This software wouldn't have been possible without:
    * And many more node.js packages.
  * [whotracks.me data](https://github.com/cliqz-oss/whotracks.me)
 
-You might have seen coredns mentioned here before, but we've stopped using it in AdGuardHome. While we still use it on our servers, it seemed like an overkill and impeded with Home features that we wanted to implement.
+You might have seen that coredns was mentioned here before — we've stopped using it in AdGuardHome. While we still use it on our servers, it seemed like an overkill and it impeded with Home features that we wanted to implement.
 
 For a full list of all node.js packages in use, please take a look at [client/package.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/package.json) file.

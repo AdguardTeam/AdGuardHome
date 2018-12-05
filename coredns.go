@@ -31,12 +31,12 @@ func generateServerConfig() dnsforward.ServerConfig {
 	}
 
 	newconfig := dnsforward.ServerConfig{
-		UDPListenAddr:   &net.UDPAddr{Port: config.CoreDNS.Port},
-		FilteringConfig: config.CoreDNS.FilteringConfig,
+		UDPListenAddr:   &net.UDPAddr{Port: config.DNS.Port},
+		FilteringConfig: config.DNS.FilteringConfig,
 		Filters:         filters,
 	}
 
-	for _, u := range config.CoreDNS.UpstreamDNS {
+	for _, u := range config.DNS.UpstreamDNS {
 		upstream, err := dnsforward.GetUpstream(u)
 		if err != nil {
 			log.Printf("Couldn't get upstream: %s", err)

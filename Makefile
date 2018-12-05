@@ -19,7 +19,7 @@ client/node_modules: client/package.json client/package-lock.json
 $(STATIC): $(JSFILES) client/node_modules
 	npm --prefix client run build-prod
 
-$(TARGET): $(STATIC) *.go coredns_plugin/*.go dnsfilter/*.go
+$(TARGET): $(STATIC) *.go dnsfilter/*.go dnsforward/*.go
 	go get -d .
 	GOOS=$(NATIVE_GOOS) GOARCH=$(NATIVE_GOARCH) GO111MODULE=off go get -v github.com/gobuffalo/packr/...
 	PATH=$(GOPATH)/bin:$(PATH) packr -z
