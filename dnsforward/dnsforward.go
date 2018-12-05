@@ -472,7 +472,11 @@ func (s *Server) handlePacket(p []byte, addr net.Addr, conn *net.UDPConn) {
 	if upstream != nil {
 		upstreamAddr = upstream.Address()
 	}
-	logRequest(msg, reply, result, elapsed, addr.String(), upstreamAddr)
+	host, _, err := net.SplitHostPort(addr.String())
+	if err != nil {
+		log.Printf("Failed to split %v into host/port: %s", addr, err)
+	}
+	logRequest(msg, reply, result, elapsed, host, upstreamAddr)
 }
 
 //
