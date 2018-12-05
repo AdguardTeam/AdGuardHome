@@ -126,8 +126,10 @@ func upgradeSchema1to2(diskConfig *map[string]interface{}) error {
 		}
 	}
 
-	(*diskConfig)["dns"] = (*diskConfig)["coredns"]
-	delete((*diskConfig), "coredns")
+	if _, ok := (*diskConfig)["dns"]; !ok {
+		(*diskConfig)["dns"] = (*diskConfig)["coredns"]
+		delete((*diskConfig), "coredns")
+	}
 	(*diskConfig)["schema_version"] = 2
 
 	return nil
