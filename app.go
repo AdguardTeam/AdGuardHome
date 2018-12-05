@@ -7,8 +7,10 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/gobuffalo/packr"
@@ -164,10 +166,13 @@ func main() {
 		}
 	}()
 
-	// Eat all args so that coredns can start happily
-	if len(os.Args) > 1 {
-		os.Args = os.Args[:1]
-	}
+	signal_channel := make(chan os.Signal)
+	signal.Notify(signal_channel, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
+	go func() {
+		<-signal_channel
+		cleanup()
+		os.Exit(0)
+	}()
 
 	// Save the updated config
 	err := config.write()
@@ -190,6 +195,13 @@ func main() {
 	URL := fmt.Sprintf("http://%s", address)
 	log.Println("Go to " + URL)
 	log.Fatal(http.ListenAndServe(address, nil))
+}
+
+func cleanup() {
+	err := stopDNSServer()
+	if err != nil {
+		log.Printf("Couldn't stop DNS server: %s", err)
+	}
 }
 
 func getInput() (string, error) {
