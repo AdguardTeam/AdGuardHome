@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
@@ -12,7 +13,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
-	"github.com/AdguardTeam/AdGuardHome/upstream"
+	"github.com/miekg/dns"
 
 	"gopkg.in/asaskevich/govalidator.v4"
 )
@@ -202,23 +203,32 @@ func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkDNS(input string) error {
-	u, err := upstream.NewUpstream(input, config.CoreDNS.BootstrapDNS)
-
+	log.Printf("Checking if DNS %s works...", input)
+	u, err := dnsforward.GetUpstream(input)
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to choose upstream for %s: %s", input, err)
 	}
-	defer u.Close()
 
-	alive, err := upstream.IsAlive(u)
-
+	req := dns.Msg{}
+	req.Id = dns.Id()
+	req.RecursionDesired = true
+	req.Question = []dns.Question{
+		{Name: "google-public-dns-a.google.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+	}
+	reply, err := u.Exchange(&req)
 	if err != nil {
 		return fmt.Errorf("couldn't communicate with DNS server %s: %s", input, err)
 	}
-
-	if !alive {
-		return fmt.Errorf("DNS server has not passed the healthcheck: %s", input)
+	if len(reply.Answer) != 1 {
+		return fmt.Errorf("DNS server %s returned wrong answer", input)
+	}
+	if t, ok := reply.Answer[0].(*dns.A); ok {
+		if !net.IPv4(8, 8, 8, 8).Equal(t.A) {
+			return fmt.Errorf("DNS server %s returned wrong answer: %v", input, t.A)
+		}
 	}
 
+	log.Printf("DNS %s works OK", input)
 	return nil
 }
 
