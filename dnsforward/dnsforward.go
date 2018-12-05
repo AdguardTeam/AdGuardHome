@@ -86,6 +86,7 @@ type FilteringConfig struct {
 	Ratelimit          int      `yaml:"ratelimit"`
 	RatelimitWhitelist []string `yaml:"ratelimit_whitelist"`
 	RefuseAny          bool     `yaml:"refuse_any"`
+	BootstrapDNS       string   `yaml:"bootstrap_dns"`
 
 	dnsfilter.Config `yaml:",inline"`
 }
@@ -105,24 +106,24 @@ var defaultValues = ServerConfig{
 	FilteringConfig: FilteringConfig{BlockedResponseTTL: 3600},
 	Upstreams: []Upstream{
 		//// dns over HTTPS
-		// &dnsOverHTTPS{address: "https://1.1.1.1/dns-query"},
-		// &dnsOverHTTPS{address: "https://dns.google.com/experimental"},
-		// &dnsOverHTTPS{address: "https://doh.cleanbrowsing.org/doh/security-filter/"},
-		// &dnsOverHTTPS{address: "https://dns10.quad9.net/dns-query"},
-		// &dnsOverHTTPS{address: "https://doh.powerdns.org"},
-		// &dnsOverHTTPS{address: "https://doh.securedns.eu/dns-query"},
+		// &dnsOverHTTPS{boot: toBoot("https://1.1.1.1/dns-query", "")},
+		// &dnsOverHTTPS{boot: toBoot("https://dns.google.com/experimental", "")},
+		// &dnsOverHTTPS{boot: toBoot("https://doh.cleanbrowsing.org/doh/security-filter/", "")},
+		// &dnsOverHTTPS{boot: toBoot("https://dns10.quad9.net/dns-query", "")},
+		// &dnsOverHTTPS{boot: toBoot("https://doh.powerdns.org", "")},
+		// &dnsOverHTTPS{boot: toBoot("https://doh.securedns.eu/dns-query", "")},
 
 		//// dns over TLS
-		// &dnsOverTLS{address: "tls://8.8.8.8:853"},
-		// &dnsOverTLS{address: "tls://8.8.4.4:853"},
-		// &dnsOverTLS{address: "tls://1.1.1.1:853"},
-		// &dnsOverTLS{address: "tls://1.0.0.1:853"},
+		// &dnsOverTLS{boot: toBoot("tls://8.8.8.8:853", "")},
+		// &dnsOverTLS{boot: toBoot("tls://8.8.4.4:853", "")},
+		// &dnsOverTLS{boot: toBoot("tls://1.1.1.1:853", "")},
+		// &dnsOverTLS{boot: toBoot("tls://1.0.0.1:853", "")},
 
 		//// plainDNS
-		&plainDNS{address: "8.8.8.8:53"},
-		&plainDNS{address: "8.8.4.4:53"},
-		&plainDNS{address: "1.1.1.1:53"},
-		&plainDNS{address: "1.0.0.1:53"},
+		&plainDNS{boot: toBoot("8.8.8.8:53", "")},
+		&plainDNS{boot: toBoot("8.8.4.4:53", "")},
+		&plainDNS{boot: toBoot("1.1.1.1:53", "")},
+		&plainDNS{boot: toBoot("1.0.0.1:53", "")},
 	},
 }
 

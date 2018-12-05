@@ -204,7 +204,7 @@ func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 
 func checkDNS(input string) error {
 	log.Printf("Checking if DNS %s works...", input)
-	u, err := dnsforward.GetUpstream(input)
+	u, err := dnsforward.AddressToUpstream(input, "")
 	if err != nil {
 		return fmt.Errorf("Failed to choose upstream for %s: %s", input, err)
 	}

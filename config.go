@@ -43,8 +43,7 @@ type dnsConfig struct {
 
 	dnsforward.FilteringConfig `yaml:",inline"`
 
-	BootstrapDNS string   `yaml:"bootstrap_dns"`
-	UpstreamDNS  []string `yaml:"upstream_dns"`
+	UpstreamDNS []string `yaml:"upstream_dns"`
 }
 
 var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
@@ -63,9 +62,9 @@ var config = configuration{
 			QueryLogEnabled:    true,
 			Ratelimit:          20,
 			RefuseAny:          true,
+			BootstrapDNS:       "8.8.8.8:53",
 		},
-		BootstrapDNS: "8.8.8.8:53",
-		UpstreamDNS:  defaultDNS,
+		UpstreamDNS: defaultDNS,
 	},
 	Filters: []filter{
 		{Filter: dnsfilter.Filter{ID: 1}, Enabled: true, URL: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt", Name: "AdGuard Simplified Domain Names filter"},

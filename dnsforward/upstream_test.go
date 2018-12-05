@@ -7,53 +7,65 @@ import (
 	"github.com/miekg/dns"
 )
 
-func TestUpstreamDNS(t *testing.T) {
-	upstreams := []string{
-		"8.8.8.8:53",
-		"1.1.1.1",
-		"tcp://1.1.1.1:53",
-		"176.103.130.130:5353",
+func TestUpstreams(t *testing.T) {
+	upstreams := []struct {
+		address   string
+		bootstrap string
+	}{
+		{
+			address:   "8.8.8.8:53",
+			bootstrap: "8.8.8.8:53",
+		},
+		{
+			address:   "1.1.1.1",
+			bootstrap: "",
+		},
+		{
+			address:   "tcp://1.1.1.1:53",
+			bootstrap: "",
+		},
+		{
+			address:   "176.103.130.130:5353",
+			bootstrap: "",
+		},
+		{
+			address:   "tls://1.1.1.1",
+			bootstrap: "",
+		},
+		{
+			address:   "tls://9.9.9.9:853",
+			bootstrap: "",
+		},
+		{
+			address:   "tls://security-filter-dns.cleanbrowsing.org",
+			bootstrap: "8.8.8.8:53",
+		},
+		{
+			address:   "tls://adult-filter-dns.cleanbrowsing.org:853",
+			bootstrap: "8.8.8.8:53",
+		},
+		{
+			address:   "https://cloudflare-dns.com/dns-query",
+			bootstrap: "8.8.8.8:53",
+		},
+		{
+			address:   "https://dns.google.com/experimental",
+			bootstrap: "8.8.8.8:53",
+		},
+		{
+			address:   "https://doh.cleanbrowsing.org/doh/security-filter/",
+			bootstrap: "",
+		},
 	}
-	for _, input := range upstreams {
-		u, err := GetUpstream(input)
-		if err != nil {
-			t.Fatalf("Failed to choose upstream for %s: %s", input, err)
-		}
+	for _, test := range upstreams {
+		t.Run(test.address, func(t *testing.T) {
+			u, err := AddressToUpstream(test.address, test.bootstrap)
+			if err != nil {
+				t.Fatalf("Failed to generate upstream from address %s: %s", test.address, err)
+			}
 
-		checkUpstream(t, u, input)
-	}
-}
-
-func TestUpstreamTLS(t *testing.T) {
-	upstreams := []string{
-		"tls://1.1.1.1",
-		"tls://9.9.9.9:853",
-		"tls://security-filter-dns.cleanbrowsing.org",
-		"tls://adult-filter-dns.cleanbrowsing.org:853",
-	}
-	for _, input := range upstreams {
-		u, err := GetUpstream(input)
-		if err != nil {
-			t.Fatalf("Failed to choose upstream for %s: %s", input, err)
-		}
-
-		checkUpstream(t, u, input)
-	}
-}
-
-func TestUpstreamHTTPS(t *testing.T) {
-	upstreams := []string{
-		"https://cloudflare-dns.com/dns-query",
-		"https://dns.google.com/experimental",
-		"https://doh.cleanbrowsing.org/doh/security-filter/",
-	}
-	for _, input := range upstreams {
-		u, err := GetUpstream(input)
-		if err != nil {
-			t.Fatalf("Failed to choose upstream for %s: %s", input, err)
-		}
-
-		checkUpstream(t, u, input)
+			checkUpstream(t, u, test.address)
+		})
 	}
 }
 

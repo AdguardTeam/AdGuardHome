@@ -37,7 +37,7 @@ func generateServerConfig() dnsforward.ServerConfig {
 	}
 
 	for _, u := range config.DNS.UpstreamDNS {
-		upstream, err := dnsforward.GetUpstream(u)
+		upstream, err := dnsforward.AddressToUpstream(u, config.DNS.BootstrapDNS)
 		if err != nil {
 			log.Printf("Couldn't get upstream: %s", err)
 			// continue, just ignore the upstream
