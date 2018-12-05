@@ -96,24 +96,24 @@ var defaultValues = ServerConfig{
 	FilteringConfig: FilteringConfig{BlockedResponseTTL: 3600},
 	Upstreams: []Upstream{
 		//// dns over HTTPS
-		// &dnsOverHTTPS{Address: "https://1.1.1.1/dns-query"},
-		// &dnsOverHTTPS{Address: "https://dns.google.com/experimental"},
-		// &dnsOverHTTPS{Address: "https://doh.cleanbrowsing.org/doh/security-filter/"},
-		// &dnsOverHTTPS{Address: "https://dns10.quad9.net/dns-query"},
-		// &dnsOverHTTPS{Address: "https://doh.powerdns.org"},
-		// &dnsOverHTTPS{Address: "https://doh.securedns.eu/dns-query"},
+		// &dnsOverHTTPS{address: "https://1.1.1.1/dns-query"},
+		// &dnsOverHTTPS{address: "https://dns.google.com/experimental"},
+		// &dnsOverHTTPS{address: "https://doh.cleanbrowsing.org/doh/security-filter/"},
+		// &dnsOverHTTPS{address: "https://dns10.quad9.net/dns-query"},
+		// &dnsOverHTTPS{address: "https://doh.powerdns.org"},
+		// &dnsOverHTTPS{address: "https://doh.securedns.eu/dns-query"},
 
 		//// dns over TLS
-		// &dnsOverTLS{Address: "tls://8.8.8.8:853"},
-		// &dnsOverTLS{Address: "tls://8.8.4.4:853"},
-		// &dnsOverTLS{Address: "tls://1.1.1.1:853"},
-		// &dnsOverTLS{Address: "tls://1.0.0.1:853"},
+		// &dnsOverTLS{address: "tls://8.8.8.8:853"},
+		// &dnsOverTLS{address: "tls://8.8.4.4:853"},
+		// &dnsOverTLS{address: "tls://1.1.1.1:853"},
+		// &dnsOverTLS{address: "tls://1.0.0.1:853"},
 
 		//// plainDNS
-		&plainDNS{Address: "8.8.8.8:53"},
-		&plainDNS{Address: "8.8.4.4:53"},
-		&plainDNS{Address: "1.1.1.1:53"},
-		&plainDNS{Address: "1.0.0.1:53"},
+		&plainDNS{address: "8.8.8.8:53"},
+		&plainDNS{address: "8.8.4.4:53"},
+		&plainDNS{address: "1.1.1.1:53"},
+		&plainDNS{address: "1.0.0.1:53"},
 	},
 }
 

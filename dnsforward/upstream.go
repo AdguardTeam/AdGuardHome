@@ -22,13 +22,14 @@ const defaultTimeout = time.Second * 10
 
 type Upstream interface {
 	Exchange(m *dns.Msg) (*dns.Msg, error)
+	Address() string
 }
 
 //
 // plain DNS
 //
 type plainDNS struct {
-	Address string
+	address string
 }
 
 var defaultUDPClient = dns.Client{
@@ -42,11 +43,13 @@ var defaultTCPClient = dns.Client{
 	Timeout: defaultTimeout,
 }
 
+func (p *plainDNS) Address() string { return p.address }
+
 func (p *plainDNS) Exchange(m *dns.Msg) (*dns.Msg, error) {
-	reply, _, err := defaultUDPClient.Exchange(m, p.Address)
+	reply, _, err := defaultUDPClient.Exchange(m, p.address)
 	if err != nil && reply != nil && reply.Truncated {
 		log.Printf("Truncated message was received, retrying over TCP, question: %s", m.Question[0].String())
-		reply, _, err = defaultTCPClient.Exchange(m, p.Address)
+		reply, _, err = defaultTCPClient.Exchange(m, p.address)
 	}
 	return reply, err
 }
@@ -55,7 +58,7 @@ func (p *plainDNS) Exchange(m *dns.Msg) (*dns.Msg, error) {
 // DNS-over-TLS
 //
 type dnsOverTLS struct {
-	Address string
+	address string
 	pool    *TLSPool
 
 	sync.RWMutex // protects pool
@@ -68,6 +71,8 @@ var defaultTLSClient = dns.Client{
 	TLSConfig: &tls.Config{},
 }
 
+func (p *dnsOverTLS) Address() string { return p.address }
+
 func (p *dnsOverTLS) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	var pool *TLSPool
 	p.RLock()
@@ -76,7 +81,7 @@ func (p *dnsOverTLS) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	if pool == nil {
 		p.Lock()
 		// lazy initialize it
-		p.pool = &TLSPool{Address: p.Address}
+		p.pool = &TLSPool{Address: p.address}
 		p.Unlock()
 	}
 
@@ -84,19 +89,19 @@ func (p *dnsOverTLS) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	poolConn, err := p.pool.Get()
 	p.RUnlock()
 	if err != nil {
-		return nil, errorx.Decorate(err, "Failed to get a connection from TLSPool to %s", p.Address)
+		return nil, errorx.Decorate(err, "Failed to get a connection from TLSPool to %s", p.address)
 	}
 	c := dns.Conn{Conn: poolConn}
 	err = c.WriteMsg(m)
 	if err != nil {
 		poolConn.Close()
-		return nil, errorx.Decorate(err, "Failed to send a request to %s", p.Address)
+		return nil, errorx.Decorate(err, "Failed to send a request to %s", p.address)
 	}
 
 	reply, err := c.ReadMsg()
 	if err != nil {
 		poolConn.Close()
-		return nil, errorx.Decorate(err, "Failed to read a request from %s", p.Address)
+		return nil, errorx.Decorate(err, "Failed to read a request from %s", p.address)
 	}
 	p.RLock()
 	p.pool.Put(poolConn)
@@ -108,7 +113,7 @@ func (p *dnsOverTLS) Exchange(m *dns.Msg) (*dns.Msg, error) {
 // DNS-over-https
 //
 type dnsOverHTTPS struct {
-	Address string
+	address string
 }
 
 var defaultHTTPSTransport = http.Transport{}
@@ -118,33 +123,35 @@ var defaultHTTPSClient = http.Client{
 	Timeout:   defaultTimeout,
 }
 
+func (p *dnsOverHTTPS) Address() string { return p.address }
+
 func (p *dnsOverHTTPS) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	buf, err := m.Pack()
 	if err != nil {
 		return nil, errorx.Decorate(err, "Couldn't pack request msg")
 	}
 	bb := bytes.NewBuffer(buf)
-	resp, err := http.Post(p.Address, "application/dns-message", bb)
+	resp, err := http.Post(p.address, "application/dns-message", bb)
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}
 	if err != nil {
-		return nil, errorx.Decorate(err, "Couldn't do a POST request to '%s'", p.Address)
+		return nil, errorx.Decorate(err, "Couldn't do a POST request to '%s'", p.address)
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errorx.Decorate(err, "Couldn't read body contents for '%s'", p.Address)
+		return nil, errorx.Decorate(err, "Couldn't read body contents for '%s'", p.address)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Got an unexpected HTTP status code %d from '%s'", resp.StatusCode, p.Address)
+		return nil, fmt.Errorf("Got an unexpected HTTP status code %d from '%s'", resp.StatusCode, p.address)
 	}
 	if len(body) == 0 {
-		return nil, fmt.Errorf("Got an unexpected empty body from '%s'", p.Address)
+		return nil, fmt.Errorf("Got an unexpected empty body from '%s'", p.address)
 	}
 	response := dns.Msg{}
 	err = response.Unpack(body)
 	if err != nil {
-		return nil, errorx.Decorate(err, "Couldn't unpack DNS response from '%s': body is %s", p.Address, string(body))
+		return nil, errorx.Decorate(err, "Couldn't unpack DNS response from '%s': body is %s", p.address, string(body))
 	}
 	return &response, nil
 }
@@ -176,20 +183,20 @@ func GetUpstream(address string) (Upstream, error) {
 			if url.Port() == "" {
 				url.Host += ":53"
 			}
-			return &plainDNS{Address: url.String()}, nil
+			return &plainDNS{address: url.String()}, nil
 		case "tls":
 			if url.Port() == "" {
 				url.Host += ":853"
 			}
-			return &dnsOverTLS{Address: url.String()}, nil
+			return &dnsOverTLS{address: url.String()}, nil
 		case "https":
-			return &dnsOverHTTPS{Address: url.String()}, nil
+			return &dnsOverHTTPS{address: url.String()}, nil
 		default:
 			// assume it's plain DNS
 			if url.Port() == "" {
 				url.Host += ":53"
 			}
-			return &plainDNS{Address: url.String()}, nil
+			return &plainDNS{address: url.String()}, nil
 		}
 	}
 
@@ -199,5 +206,5 @@ func GetUpstream(address string) (Upstream, error) {
 		// doesn't have port, default to 53
 		address = net.JoinHostPort(address, "53")
 	}
-	return &plainDNS{Address: address}, nil
+	return &plainDNS{address: address}, nil
 }
