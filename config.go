@@ -30,7 +30,7 @@ type configuration struct {
 	Language  string    `yaml:"language"` // two-letter ISO 639-1 language code
 	DNS       dnsConfig `yaml:"dns"`
 	Filters   []filter  `yaml:"filters"`
-	UserRules []string  `yaml:"user_rules,omitempty"`
+	UserRules []string  `yaml:"user_rules"`
 
 	sync.RWMutex `yaml:"-"`
 
