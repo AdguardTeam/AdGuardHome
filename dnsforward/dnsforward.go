@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/joomcode/errorx"
@@ -186,6 +187,19 @@ func (s *Server) Start(config *ServerConfig) error {
 		}
 	}
 
+	log.Printf("Loading stats from querylog")
+	err := fillStatsFromQueryLog()
+	if err != nil {
+		log.Printf("Failed to load stats from querylog: %s", err)
+		return err
+	}
+
+	once.Do(func() {
+		go periodicQueryLogRotate()
+		go periodicHourlyTopRotate()
+		go statsRotator()
+	})
+
 	go s.packetLoop()
 
 	return nil
@@ -346,12 +360,12 @@ func (s *Server) reconfigureFiltering(new ServerConfig) {
 	}
 
 	s.Lock()
-	oldDnsFilter := s.dnsFilter
+	oldDNSFilter := s.dnsFilter
 	s.dnsFilter = dnsFilter
 	s.FilteringConfig = new.FilteringConfig
 	s.Unlock()
 
-	oldDnsFilter.Destroy()
+	oldDNSFilter.Destroy()
 }
 
 func (s *Server) Reconfigure(new ServerConfig) error {
@@ -370,15 +384,13 @@ func (s *Server) Reconfigure(new ServerConfig) error {
 // packet handling functions
 //
 
-func (s *Server) handlePacket(p []byte, addr net.Addr, conn *net.UDPConn) {
+// handlePacketInternal processes the incoming packet bytes and returns with an optional response packet.
+//
+// If an empty dns.Msg is returned, do not try to send anything back to client, otherwise send contents of dns.Msg.
+//
+// If an error is returned, log it, don't try to generate data based on that error.
+func (s *Server) handlePacketInternal(msg *dns.Msg, addr net.Addr, conn *net.UDPConn) (*dns.Msg, *dnsfilter.Result, Upstream, error) {
 	// log.Printf("Got packet %d bytes from %s: %v", len(p), addr, p)
-	msg := dns.Msg{}
-	err := msg.Unpack(p)
-	if err != nil {
-		log.Printf("failed to unpack DNS packet: %s", err)
-		return
-	}
-
 	//
 	// DNS packet byte format is valid
 	//
@@ -386,11 +398,7 @@ func (s *Server) handlePacket(p []byte, addr net.Addr, conn *net.UDPConn) {
 	// log.Printf("Unpacked: %v", msg.String())
 	if len(msg.Question) != 1 {
 		log.Printf("Got invalid number of questions: %v", len(msg.Question))
-		err := s.respondWithServerFailure(&msg, addr, conn)
-		if err != nil {
-			log.Printf("Couldn't respond to UDP packet: %s", err)
-			return
-		}
+		return s.genServerFailure(msg), nil, nil, nil
 	}
 
 	// use dnsfilter before cache -- changed settings or filters would require cache invalidation otherwise
@@ -398,73 +406,61 @@ func (s *Server) handlePacket(p []byte, addr net.Addr, conn *net.UDPConn) {
 	res, err := s.dnsFilter.CheckHost(host)
 	if err != nil {
 		log.Printf("dnsfilter failed to check host '%s': %s", host, err)
-		err := s.respondWithServerFailure(&msg, addr, conn)
-		if err != nil {
-			log.Printf("Couldn't respond to UDP packet: %s", err)
-			return
-		}
+		return s.genServerFailure(msg), &res, nil, err
 	} else if res.IsFiltered {
 		log.Printf("Host %s is filtered, reason - '%s', matched rule: '%s'", host, res.Reason, res.Rule)
-		err := s.respondWithNXDomain(&msg, addr, conn)
-		if err != nil {
-			log.Printf("Couldn't respond to UDP packet: %s", err)
-			return
-		}
+		return s.genNXDomain(msg), &res, nil, nil
 	}
 
 	{
-		val, ok := s.cache.Get(&msg)
+		val, ok := s.cache.Get(msg)
 		if ok && val != nil {
-			err = s.respond(val, addr, conn)
-			if err != nil {
-				if isConnClosed(err) {
-					// ignore this error, the connection was closed and that's ok
-					return
-				}
-				log.Printf("Couldn't respond to UDP packet: %s", err)
-				return
-			}
-			return
+			return val, &res, nil, nil
 		}
 	}
 
 	// TODO: replace with single-socket implementation
 	upstream := s.chooseUpstream()
-	reply, err := upstream.Exchange(&msg)
+	reply, err := upstream.Exchange(msg)
 	if err != nil {
 		log.Printf("talking to upstream failed for host '%s': %s", host, err)
-		err := s.respondWithServerFailure(&msg, addr, conn)
-		if err != nil {
-			if isConnClosed(err) {
-				// ignore this error, the connection was closed and that's ok
-				return
-			}
-			log.Printf("Couldn't respond to UDP packet with server failure: %s", err)
-			return
-		}
-		return
+		return s.genServerFailure(msg), &res, upstream, err
 	}
 	if reply == nil {
 		log.Printf("SHOULD NOT HAPPEN upstream returned empty message for host '%s'. Request is %v", host, msg.String())
-		err := s.respondWithServerFailure(&msg, addr, conn)
-		if err != nil {
-			log.Printf("Couldn't respond to UDP packet with should not happen: %s", err)
-			return
-		}
-		return
-	}
-
-	err = s.respond(reply, addr, conn)
-	if err != nil {
-		if isConnClosed(err) {
-			// ignore this error, the connection was closed and that's ok
-			return
-		}
-		log.Printf("Couldn't respond to UDP packet: %s", err)
-		return
+		return s.genServerFailure(msg), &res, upstream, nil
 	}
 
 	s.cache.Set(reply)
+
+	return reply, &res, upstream, nil
+}
+
+func (s *Server) handlePacket(p []byte, addr net.Addr, conn *net.UDPConn) {
+	start := time.Now()
+
+	msg := &dns.Msg{}
+	err := msg.Unpack(p)
+	if err != nil {
+		log.Printf("got invalid DNS packet: %s", err)
+		return // do nothing
+	}
+
+	reply, result, upstream, err := s.handlePacketInternal(msg, addr, conn)
+	if reply != nil {
+		rerr := s.respond(reply, addr, conn)
+		if rerr != nil {
+			log.Printf("Couldn't respond to UDP packet: %s", err)
+		}
+	}
+
+	// query logging and stats counters
+	elapsed := time.Since(start)
+	upstreamAddr := ""
+	if upstream != nil {
+		upstreamAddr = upstream.Address()
+	}
+	logRequest(msg, reply, result, elapsed, addr.String(), upstreamAddr)
 }
 
 //
@@ -491,17 +487,17 @@ func (s *Server) respond(resp *dns.Msg, addr net.Addr, conn *net.UDPConn) error 
 	return nil
 }
 
-func (s *Server) respondWithServerFailure(request *dns.Msg, addr net.Addr, conn *net.UDPConn) error {
+func (s *Server) genServerFailure(request *dns.Msg) *dns.Msg {
 	resp := dns.Msg{}
 	resp.SetRcode(request, dns.RcodeServerFailure)
-	return s.respond(&resp, addr, conn)
+	return &resp
 }
 
-func (s *Server) respondWithNXDomain(request *dns.Msg, addr net.Addr, conn *net.UDPConn) error {
+func (s *Server) genNXDomain(request *dns.Msg) *dns.Msg {
 	resp := dns.Msg{}
 	resp.SetRcode(request, dns.RcodeNameError)
 	resp.Ns = s.genSOA(request)
-	return s.respond(&resp, addr, conn)
+	return &resp
 }
 
 func (s *Server) genSOA(request *dns.Msg) []dns.RR {
@@ -537,3 +533,5 @@ func (s *Server) genSOA(request *dns.Msg) []dns.RR {
 	}
 	return []dns.RR{&soa}
 }
+
+var once sync.Once
