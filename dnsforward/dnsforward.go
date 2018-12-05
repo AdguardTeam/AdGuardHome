@@ -215,6 +215,18 @@ func (s *Server) Stop() error {
 			return errorx.Decorate(err, "Couldn't close UDP listening socket")
 		}
 	}
+
+	// flush remainder to file
+	logBufferLock.Lock()
+	flushBuffer := logBuffer
+	logBuffer = nil
+	logBufferLock.Unlock()
+	err := flushToFile(flushBuffer)
+	if err != nil {
+		log.Printf("Saving querylog to file failed: %s", err)
+		return err
+	}
+
 	return nil
 }
 
