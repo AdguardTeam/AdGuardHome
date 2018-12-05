@@ -13,13 +13,14 @@ import (
 	"github.com/miekg/dns"
 )
 
-// Server is the main way to start a DNS server
+// Server is the main way to start a DNS server.
+//
 // Example:
-// s := dnsforward.Server{}
-// err := s.Start(nil) // will start a DNS server listening on default port 53, in a goroutine
-// err := s.Reconfigure(ServerConfig{UDPListenAddr: &net.UDPAddr{Port: 53535}}) // will reconfigure running DNS server to listen on UDP port 53535
-// err := s.Stop() // will stop listening on port 53535 and cancel all goroutines
-// err := s.Start(nil) // will start listening again, on port 53535, in a goroutine
+//  s := dnsforward.Server{}
+//  err := s.Start(nil) // will start a DNS server listening on default port 53, in a goroutine
+//  err := s.Reconfigure(ServerConfig{UDPListenAddr: &net.UDPAddr{Port: 53535}}) // will reconfigure running DNS server to listen on UDP port 53535
+//  err := s.Stop() // will stop listening on port 53535 and cancel all goroutines
+//  err := s.Start(nil) // will start listening again, on port 53535, in a goroutine
 //
 // The zero Server is empty and ready for use.
 type Server struct {

@@ -10,22 +10,22 @@ import (
 	"github.com/joomcode/errorx"
 )
 
-// upstream TLS pool.
+// Upstream TLS pool.
 //
 // Example:
-// pool := TLSPool{Address: "tls://1.1.1.1:853"}
-// netConn, err := pool.Get()
-// if err != nil {panic(err)}
-// c := dns.Conn{Conn: netConn}
-// q := dns.Msg{}
-// q.SetQuestion("google.com.", dns.TypeA)
-// log.Println(q)
-// err = c.WriteMsg(&q)
-// if err != nil {panic(err)}
-// r, err := c.ReadMsg()
-// if err != nil {panic(err)}
-// log.Println(r)
-// pool.Put(c.Conn)
+//  pool := TLSPool{Address: "tls://1.1.1.1:853"}
+//  netConn, err := pool.Get()
+//  if err != nil {panic(err)}
+//  c := dns.Conn{Conn: netConn}
+//  q := dns.Msg{}
+//  q.SetQuestion("google.com.", dns.TypeA)
+//  log.Println(q)
+//  err = c.WriteMsg(&q)
+//  if err != nil {panic(err)}
+//  r, err := c.ReadMsg()
+//  if err != nil {panic(err)}
+//  log.Println(r)
+//  pool.Put(c.Conn)
 type TLSPool struct {
 	Address            string
 	parsedAddress      *url.URL
