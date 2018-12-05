@@ -151,7 +151,15 @@ cd AdGuardHome
 make
 ```
 
-## How to update translations
+## Contributing
+
+You are welcome to fork this repository, make your changes and submit a pull request — https://github.com/AdguardTeam/AdGuardHome/pulls
+
+### How to update translations
+
+If you want to help with AdGuard Home translations, please learn more about translating AdGuard products here: https://kb.adguard.com/en/general/adguard-translations
+
+Here is a direct link to AdGuard Home project: http://translate.adguard.com/collaboration/project?id=153384
 
 Before updating translations you need to install dependencies:
 ```
@@ -181,14 +189,6 @@ node upload.js
 node download.js
 ```
 
-## Contributing
-
-You are welcome to fork this repository, make your changes and submit a pull request — https://github.com/AdguardTeam/AdGuardHome/pulls
-
-If you want to help with AdGuard Home translations, please learn more about translating AdGuard products here: https://kb.adguard.com/en/general/adguard-translations
-
-Here is a direct link to AdGuard Home project: http://translate.adguard.com/collaboration/project?id=153384
-
 ## Reporting issues
 
 If you run into any problem or have a suggestion, head to [this page](https://github.com/AdguardTeam/AdGuardHome/issues) and click on the `New issue` button.
@@ -198,7 +198,6 @@ If you run into any problem or have a suggestion, head to [this page](https://gi
 This software wouldn't have been possible without:
 
  * [Go](https://golang.org/dl/) and it's libraries:
-   * [CoreDNS](https://coredns.io)
    * [packr](https://github.com/gobuffalo/packr)
    * [gcache](https://github.com/bluele/gcache)
    * [miekg's dns](https://github.com/miekg/dns)
@@ -208,5 +207,7 @@ This software wouldn't have been possible without:
    * [Tabler](https://github.com/tabler/tabler)
    * And many more node.js packages.
  * [whotracks.me data](https://github.com/cliqz-oss/whotracks.me)
+
+You might have seen coredns mentioned here before, but we've stopped using it in AdGuardHome. While we still use it on our servers, it seemed like an overkill and impeded with Home features that we wanted to implement.
 
 For a full list of all node.js packages in use, please take a look at [client/package.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/package.json) file.
