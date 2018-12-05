@@ -46,14 +46,11 @@ type coreDNSConfig struct {
 
 	dnsforward.FilteringConfig `yaml:",inline"`
 
-	QueryLogEnabled bool     `yaml:"querylog_enabled"`
-	Ratelimit       int      `yaml:"ratelimit"`
-	RefuseAny       bool     `yaml:"refuse_any"`
-	Pprof           string   `yaml:"-"`
-	Cache           string   `yaml:"-"`
-	Prometheus      string   `yaml:"-"`
-	BootstrapDNS    string   `yaml:"bootstrap_dns"`
-	UpstreamDNS     []string `yaml:"upstream_dns"`
+	Pprof        string   `yaml:"-"`
+	Cache        string   `yaml:"-"`
+	Prometheus   string   `yaml:"-"`
+	BootstrapDNS string   `yaml:"bootstrap_dns"`
+	UpstreamDNS  []string `yaml:"upstream_dns"`
 }
 
 var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
@@ -71,14 +68,14 @@ var config = configuration{
 			ProtectionEnabled:  true, // whether or not use any of dnsfilter features
 			FilteringEnabled:   true, // whether or not use filter lists
 			BlockedResponseTTL: 10,   // in seconds
+			QueryLogEnabled:    true,
+			Ratelimit:          20,
+			RefuseAny:          true,
 		},
-		QueryLogEnabled: true,
-		Ratelimit:       20,
-		RefuseAny:       true,
-		BootstrapDNS:    "8.8.8.8:53",
-		UpstreamDNS:     defaultDNS,
-		Cache:           "cache",
-		Prometheus:      "prometheus :9153",
+		BootstrapDNS: "8.8.8.8:53",
+		UpstreamDNS:  defaultDNS,
+		Cache:        "cache",
+		Prometheus:   "prometheus :9153",
 	},
 	Filters: []filter{
 		{Filter: dnsfilter.Filter{ID: 1}, Enabled: true, URL: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt", Name: "AdGuard Simplified Domain Names filter"},
