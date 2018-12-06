@@ -1,20 +1,16 @@
-package dnsfilter
+package dnsforward
 
 import (
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"path"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
-	"github.com/coredns/coredns/plugin/pkg/response"
 	"github.com/miekg/dns"
 )
 
@@ -42,9 +38,10 @@ type logEntry struct {
 	Time     time.Time
 	Elapsed  time.Duration
 	IP       string
+	Upstream string `json:",omitempty"` // if empty, means it was cached
 }
 
-func logRequest(question *dns.Msg, answer *dns.Msg, result dnsfilter.Result, elapsed time.Duration, ip string) {
+func logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, elapsed time.Duration, ip string, upstream string) {
 	var q []byte
 	var a []byte
 	var err error
@@ -64,14 +61,19 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result dnsfilter.Result, ela
 		}
 	}
 
+	if result == nil {
+		result = &dnsfilter.Result{}
+	}
+
 	now := time.Now()
 	entry := logEntry{
 		Question: q,
 		Answer:   a,
-		Result:   result,
+		Result:   *result,
 		Time:     now,
 		Elapsed:  elapsed,
 		IP:       ip,
+		Upstream: upstream,
 	}
 	var flushBuffer []*logEntry
 
@@ -96,6 +98,8 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result dnsfilter.Result, ela
 		log.Printf("Failed to add entry to running top: %s", err)
 		// don't do failure, just log
 	}
+
+	incrementCounters(&entry)
 
 	// if buffer needs to be flushed to disk, do it now
 	if len(flushBuffer) > 0 {
@@ -153,8 +157,7 @@ func HandleQueryLog(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if a != nil {
-			status, _ := response.Typify(a, time.Now().UTC())
-			jsonEntry["status"] = status.String()
+			jsonEntry["status"] = dns.RcodeToString[a.Rcode]
 		}
 		if len(entry.Result.Rule) > 0 {
 			jsonEntry["rule"] = entry.Result.Rule
@@ -222,18 +225,4 @@ func HandleQueryLog(w http.ResponseWriter, r *http.Request) {
 		log.Println(errorText)
 		http.Error(w, errorText, http.StatusInternalServerError)
 	}
-}
-
-func trace(format string, args ...interface{}) {
-	pc := make([]uintptr, 10) // at least 1 entry needed
-	runtime.Callers(2, pc)
-	f := runtime.FuncForPC(pc[0])
-	var buf strings.Builder
-	buf.WriteString(fmt.Sprintf("%s(): ", path.Base(f.Name())))
-	text := fmt.Sprintf(format, args...)
-	buf.WriteString(text)
-	if len(text) == 0 || text[len(text)-1] != '\n' {
-		buf.WriteRune('\n')
-	}
-	fmt.Fprint(os.Stderr, buf.String())
 }

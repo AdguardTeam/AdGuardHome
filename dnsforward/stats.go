@@ -1,4 +1,4 @@
-package dnsfilter
+package dnsforward
 
 import (
 	"encoding/json"
@@ -8,21 +8,20 @@ import (
 	"sync"
 	"time"
 
-	"github.com/coredns/coredns/plugin"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 )
 
 var (
-	requests             = newDNSCounter("requests_total", "Count of requests seen by dnsfilter.")
-	filtered             = newDNSCounter("filtered_total", "Count of requests filtered by dnsfilter.")
-	filteredLists        = newDNSCounter("filtered_lists_total", "Count of requests filtered by dnsfilter using lists.")
-	filteredSafebrowsing = newDNSCounter("filtered_safebrowsing_total", "Count of requests filtered by dnsfilter using safebrowsing.")
-	filteredParental     = newDNSCounter("filtered_parental_total", "Count of requests filtered by dnsfilter using parental.")
-	filteredInvalid      = newDNSCounter("filtered_invalid_total", "Count of requests filtered by dnsfilter because they were invalid.")
-	whitelisted          = newDNSCounter("whitelisted_total", "Count of requests not filtered by dnsfilter because they are whitelisted.")
-	safesearch           = newDNSCounter("safesearch_total", "Count of requests replaced by dnsfilter safesearch.")
-	errorsTotal          = newDNSCounter("errors_total", "Count of requests that dnsfilter couldn't process because of transitive errors.")
-	elapsedTime          = newDNSHistogram("request_duration", "Histogram of the time (in seconds) each request took.")
+	requests             = newDNSCounter("requests_total")
+	filtered             = newDNSCounter("filtered_total")
+	filteredLists        = newDNSCounter("filtered_lists_total")
+	filteredSafebrowsing = newDNSCounter("filtered_safebrowsing_total")
+	filteredParental     = newDNSCounter("filtered_parental_total")
+	filteredInvalid      = newDNSCounter("filtered_invalid_total")
+	whitelisted          = newDNSCounter("whitelisted_total")
+	safesearch           = newDNSCounter("safesearch_total")
+	errorsTotal          = newDNSCounter("errors_total")
+	elapsedTime          = newDNSHistogram("request_duration")
 )
 
 // entries for single time period (for example all per-second entries)
@@ -143,21 +142,13 @@ func statsRotator() {
 type counter struct {
 	name  string // used as key in periodic stats
 	value int64
-	prom  prometheus.Counter
 }
 
-func newDNSCounter(name string, help string) *counter {
+func newDNSCounter(name string) *counter {
 	// trace("called")
-	c := &counter{}
-	c.prom = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: plugin.Namespace,
-		Subsystem: "dnsfilter",
-		Name:      name,
-		Help:      help,
-	})
-	c.name = name
-
-	return c
+	return &counter{
+		name: name,
+	}
 }
 
 func (c *counter) IncWithTime(when time.Time) {
@@ -166,40 +157,22 @@ func (c *counter) IncWithTime(when time.Time) {
 	statistics.PerHour.Inc(c.name, when)
 	statistics.PerDay.Inc(c.name, when)
 	c.value++
-	c.prom.Inc()
 }
 
 func (c *counter) Inc() {
 	c.IncWithTime(time.Now())
 }
 
-func (c *counter) Describe(ch chan<- *prometheus.Desc) {
-	c.prom.Describe(ch)
-}
-
-func (c *counter) Collect(ch chan<- prometheus.Metric) {
-	c.prom.Collect(ch)
-}
-
 type histogram struct {
 	name  string // used as key in periodic stats
 	count int64
 	total float64
-	prom  prometheus.Histogram
 }
 
-func newDNSHistogram(name string, help string) *histogram {
-	// trace("called")
-	h := &histogram{}
-	h.prom = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Namespace: plugin.Namespace,
-		Subsystem: "dnsfilter",
-		Name:      name,
-		Help:      help,
-	})
-	h.name = name
-
-	return h
+func newDNSHistogram(name string) *histogram {
+	return &histogram{
+		name: name,
+	}
 }
 
 func (h *histogram) ObserveWithTime(value float64, when time.Time) {
@@ -209,24 +182,40 @@ func (h *histogram) ObserveWithTime(value float64, when time.Time) {
 	statistics.PerDay.Observe(h.name, when, value)
 	h.count++
 	h.total += value
-	h.prom.Observe(value)
 }
 
 func (h *histogram) Observe(value float64) {
 	h.ObserveWithTime(value, time.Now())
 }
 
-func (h *histogram) Describe(ch chan<- *prometheus.Desc) {
-	h.prom.Describe(ch)
-}
-
-func (h *histogram) Collect(ch chan<- prometheus.Metric) {
-	h.prom.Collect(ch)
-}
-
 // -----
 // stats
 // -----
+func incrementCounters(entry *logEntry) {
+	requests.IncWithTime(entry.Time)
+	if entry.Result.IsFiltered {
+		filtered.IncWithTime(entry.Time)
+	}
+
+	switch entry.Result.Reason {
+	case dnsfilter.NotFilteredWhiteList:
+		whitelisted.IncWithTime(entry.Time)
+	case dnsfilter.NotFilteredError:
+		errorsTotal.IncWithTime(entry.Time)
+	case dnsfilter.FilteredBlackList:
+		filteredLists.IncWithTime(entry.Time)
+	case dnsfilter.FilteredSafeBrowsing:
+		filteredSafebrowsing.IncWithTime(entry.Time)
+	case dnsfilter.FilteredParental:
+		filteredParental.IncWithTime(entry.Time)
+	case dnsfilter.FilteredInvalid:
+		// do nothing
+	case dnsfilter.FilteredSafeSearch:
+		safesearch.IncWithTime(entry.Time)
+	}
+	elapsedTime.ObserveWithTime(entry.Elapsed.Seconds(), entry.Time)
+}
+
 func HandleStats(w http.ResponseWriter, r *http.Request) {
 	const numHours = 24
 	histrical := generateMapFromStats(&statistics.PerHour, 0, numHours)

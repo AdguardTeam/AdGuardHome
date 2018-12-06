@@ -1,4 +1,4 @@
-package dnsfilter
+package dnsforward
 
 import (
 	"bytes"
@@ -14,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/bluele/gcache"
 	"github.com/miekg/dns"
 )
@@ -231,27 +230,7 @@ func fillStatsFromQueryLog() error {
 		}
 		queryLogLock.Unlock()
 
-		requests.IncWithTime(entry.Time)
-		if entry.Result.IsFiltered {
-			filtered.IncWithTime(entry.Time)
-		}
-		switch entry.Result.Reason {
-		case dnsfilter.NotFilteredWhiteList:
-			whitelisted.IncWithTime(entry.Time)
-		case dnsfilter.NotFilteredError:
-			errorsTotal.IncWithTime(entry.Time)
-		case dnsfilter.FilteredBlackList:
-			filteredLists.IncWithTime(entry.Time)
-		case dnsfilter.FilteredSafeBrowsing:
-			filteredSafebrowsing.IncWithTime(entry.Time)
-		case dnsfilter.FilteredParental:
-			filteredParental.IncWithTime(entry.Time)
-		case dnsfilter.FilteredInvalid:
-			// do nothing
-		case dnsfilter.FilteredSafeSearch:
-			safesearch.IncWithTime(entry.Time)
-		}
-		elapsedTime.ObserveWithTime(entry.Elapsed.Seconds(), entry.Time)
+		incrementCounters(entry)
 
 		return nil
 	}

@@ -90,7 +90,7 @@ Now open the browser and navigate to http://localhost:3000/ to control your AdGu
 You can run AdGuard Home without superuser privileges, but you need to instruct it to use a different port rather than 53. You can do that by editing `AdGuardHome.yaml` and finding these two lines:
 
 ```yaml
-coredns:
+dns:
   port: 53
 ```
 
@@ -104,25 +104,32 @@ Upon the first execution, a file named `AdGuardHome.yaml` will be created, with 
 
 Settings are stored in [YAML format](https://en.wikipedia.org/wiki/YAML), possible parameters that you can configure are listed below:
 
- * `bind_host` — Web interface IP address to listen on
- * `bind_port` — Web interface IP port to listen on
- * `auth_name` — Web interface optional authorization username
- * `auth_pass` — Web interface optional authorization password
- * `coredns` — CoreDNS configuration section
-   * `port` — DNS server port to listen on
-   * `filtering_enabled` — Filtering of DNS requests based on filter lists
-   * `safebrowsing_enabled` — Filtering of DNS requests based on safebrowsing
-   * `safesearch_enabled` — Enforcing "Safe search" option for search engines, when possible
-   * `parental_enabled` — Parental control-based DNS requests filtering
-   * `parental_sensitivity` — Age group for parental control-based filtering, must be either 3, 10, 13 or 17
-   * `querylog_enabled` — Query logging (also used to calculate top 50 clients, blocked domains and requested domains for statistic purposes)
-   * `bootstrap_dns` — DNS server used for initial hostnames resolution in case if upstream is DoH or DoT with a hostname
-   * `upstream_dns` — List of upstream DNS servers
+ * `bind_host` — Web interface IP address to listen on.
+ * `bind_port` — Web interface IP port to listen on.
+ * `auth_name` — Web interface optional authorization username.
+ * `auth_pass` — Web interface optional authorization password.
+ * `dns` — DNS configuration section.
+   * `port` — DNS server port to listen on.
+   * `protection_enabled` — Whether any kind of filtering and protection should be done, when off it works as a plain dns forwarder.
+   * `filtering_enabled` — Filtering of DNS requests based on filter lists.
+   * `blocked_response_ttl` — For how many seconds the clients should cache a filtered response. Low values are useful on LAN if you change filters very often, high values are useful to increase performance and save traffic.
+   * `querylog_enabled` — Query logging (also used to calculate top 50 clients, blocked domains and requested domains for statistical purposes).
+   * `ratelimit` — DDoS protection, specifies in how many packets per second a client should receive. Anything above that is silently dropped. To disable set 0, default is 20. Safe to disable if DNS server is not available from internet.
+   * `ratelimit_whitelist` — If you want exclude some IP addresses from ratelimiting but keep ratelimiting on for others, put them here.
+   * `refuse_any` — Another DDoS protection mechanism. Requests of type ANY are rarely needed, so refusing to serve them mitigates against attackers trying to use your DNS as a reflection. Safe to disable if DNS server is not available from internet.
+   * `bootstrap_dns` — DNS server used for initial hostname resolution in case if upstream server name is a hostname.
+   * `parental_sensitivity` — Age group for parental control-based filtering, must be either 3, 10, 13 or 17 if enabled.
+   * `parental_enabled` — Parental control-based DNS requests filtering.
+   * `safesearch_enabled` — Enforcing "Safe search" option for search engines, when possible.
+   * `safebrowsing_enabled` — Filtering of DNS requests based on safebrowsing.
+   * `upstream_dns` — List of upstream DNS servers.
  * `filters` — List of filters, each filter has the following values:
-   * `ID` - filter ID (must be unique)
-   * `url` — URL pointing to the filter contents (filtering rules)
-   * `enabled` — Current filter's status (enabled/disabled)
- * `user_rules` — User-specified filtering rules
+   * `enabled` — Current filter's status (enabled/disabled).
+   * `url` — URL pointing to the filter contents (filtering rules).
+   * `name` — Name of the filter. If it's an adguard syntax filter it will get updated automatically, otherwise it stays unchanged.
+   * `last_updated` — Time when the filter was last updated from server.
+   * `ID` - filter ID (must be unique).
+ * `user_rules` — User-specified filtering rules.
 
 Removing an entry from settings file will reset it to the default value. Deleting the file will reset all settings to the default values.
 
@@ -151,7 +158,15 @@ cd AdGuardHome
 make
 ```
 
-## How to update translations
+## Contributing
+
+You are welcome to fork this repository, make your changes and submit a pull request — https://github.com/AdguardTeam/AdGuardHome/pulls
+
+### How to update translations
+
+If you want to help with AdGuard Home translations, please learn more about translating AdGuard products here: https://kb.adguard.com/en/general/adguard-translations
+
+Here is a direct link to AdGuard Home project: http://translate.adguard.com/collaboration/project?id=153384
 
 Before updating translations you need to install dependencies:
 ```
@@ -181,14 +196,6 @@ node upload.js
 node download.js
 ```
 
-## Contributing
-
-You are welcome to fork this repository, make your changes and submit a pull request — https://github.com/AdguardTeam/AdGuardHome/pulls
-
-If you want to help with AdGuard Home translations, please learn more about translating AdGuard products here: https://kb.adguard.com/en/general/adguard-translations
-
-Here is a direct link to AdGuard Home project: http://translate.adguard.com/collaboration/project?id=153384
-
 ## Reporting issues
 
 If you run into any problem or have a suggestion, head to [this page](https://github.com/AdguardTeam/AdGuardHome/issues) and click on the `New issue` button.
@@ -198,7 +205,6 @@ If you run into any problem or have a suggestion, head to [this page](https://gi
 This software wouldn't have been possible without:
 
  * [Go](https://golang.org/dl/) and it's libraries:
-   * [CoreDNS](https://coredns.io)
    * [packr](https://github.com/gobuffalo/packr)
    * [gcache](https://github.com/bluele/gcache)
    * [miekg's dns](https://github.com/miekg/dns)
@@ -208,5 +214,7 @@ This software wouldn't have been possible without:
    * [Tabler](https://github.com/tabler/tabler)
    * And many more node.js packages.
  * [whotracks.me data](https://github.com/cliqz-oss/whotracks.me)
+
+You might have seen that [CoreDNS](https://coredns.io) was mentioned here before — we've stopped using it in AdGuardHome. While we still use it on our servers for [AdGuard DNS](https://adguard.com/adguard-dns/overview.html) service, it seemed like an overkill for Home as it impeded with Home features that we plan to implement.
 
 For a full list of all node.js packages in use, please take a look at [client/package.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/package.json) file.

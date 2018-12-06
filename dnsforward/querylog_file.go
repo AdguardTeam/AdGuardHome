@@ -1,4 +1,4 @@
-package dnsfilter
+package dnsforward
 
 import (
 	"bytes"
@@ -250,42 +250,4 @@ func genericLoader(onEntry func(entry *logEntry) error, needMore func() bool, ti
 		log.Printf("file \"%s\": read %d entries in %v, %v/entry, %v over %v, %v avg", file, i, elapsed, perunit, over, max, avg)
 	}
 	return nil
-}
-
-func appendFromLogFile(values []*logEntry, maxLen int, timeWindow time.Duration) []*logEntry {
-	a := []*logEntry{}
-
-	onEntry := func(entry *logEntry) error {
-		a = append(a, entry)
-		if len(a) > maxLen {
-			toskip := len(a) - maxLen
-			a = a[toskip:]
-		}
-		return nil
-	}
-
-	needMore := func() bool {
-		return true
-	}
-
-	err := genericLoader(onEntry, needMore, timeWindow)
-	if err != nil {
-		log.Printf("Failed to load entries from querylog: %s", err)
-		return values
-	}
-
-	// now that we've read all eligible entries, reverse the slice to make it go from newest->oldest
-	for left, right := 0, len(a)-1; left < right; left, right = left+1, right-1 {
-		a[left], a[right] = a[right], a[left]
-	}
-
-	// append it to values
-	values = append(values, a...)
-
-	// then cut off of it is bigger than maxLen
-	if len(values) > maxLen {
-		values = values[:maxLen]
-	}
-
-	return values
 }

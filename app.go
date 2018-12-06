@@ -7,8 +7,10 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/gobuffalo/packr"
@@ -149,7 +151,7 @@ func main() {
 			log.Printf("Couldn't load filter %d contents due to %s", filter.ID, err)
 			// clear LastUpdated so it gets fetched right away
 		}
-		if len(filter.Contents) == 0 {
+		if len(filter.Rules) == 0 {
 			filter.LastUpdated = time.Time{}
 		}
 	}
@@ -164,10 +166,13 @@ func main() {
 		}
 	}()
 
-	// Eat all args so that coredns can start happily
-	if len(os.Args) > 1 {
-		os.Args = os.Args[:1]
-	}
+	signalChannel := make(chan os.Signal)
+	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
+	go func() {
+		<-signalChannel
+		cleanup()
+		os.Exit(0)
+	}()
 
 	// Save the updated config
 	err := config.write()
@@ -190,6 +195,13 @@ func main() {
 	URL := fmt.Sprintf("http://%s", address)
 	log.Println("Go to " + URL)
 	log.Fatal(http.ListenAndServe(address, nil))
+}
+
+func cleanup() {
+	err := stopDNSServer()
+	if err != nil {
+		log.Printf("Couldn't stop DNS server: %s", err)
+	}
 }
 
 func getInput() (string, error) {
