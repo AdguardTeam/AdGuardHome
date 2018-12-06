@@ -96,20 +96,7 @@ func parseConfig() error {
 	}
 
 	// Deduplicate filters
-	{
-		i := 0 // output index, used for deletion later
-		urls := map[string]bool{}
-		for _, filter := range config.Filters {
-			if _, ok := urls[filter.URL]; !ok {
-				// we didn't see it before, keep it
-				urls[filter.URL] = true // remember the URL
-				config.Filters[i] = filter
-				i++
-			}
-		}
-		// all entries we want to keep are at front, delete the rest
-		config.Filters = config.Filters[:i]
-	}
+	deduplicateFilters()
 
 	updateUniqueFilterID(config.Filters)
 
