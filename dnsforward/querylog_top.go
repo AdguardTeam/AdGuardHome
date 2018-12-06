@@ -168,7 +168,7 @@ func (r *dayTop) addEntry(entry *logEntry, q *dns.Msg, now time.Time) error {
 		return err
 	}
 
-	if entry.Result != nil && entry.Result.IsFiltered {
+	if entry.Result.IsFiltered {
 		err := runningTop.hours[hour].incrementBlocked(hostname)
 		if err != nil {
 			log.Printf("Failed to increment value: %s", err)

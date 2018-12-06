@@ -34,7 +34,7 @@ var (
 type logEntry struct {
 	Question []byte
 	Answer   []byte `json:",omitempty"` // sometimes empty answers happen like binerdunt.top or rev2.globalrootservers.net
-	Result   *dnsfilter.Result
+	Result   dnsfilter.Result
 	Time     time.Time
 	Elapsed  time.Duration
 	IP       string
@@ -61,11 +61,15 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, el
 		}
 	}
 
+	if result == nil {
+		result = &dnsfilter.Result{}
+	}
+
 	now := time.Now()
 	entry := logEntry{
 		Question: q,
 		Answer:   a,
-		Result:   result,
+		Result:   *result,
 		Time:     now,
 		Elapsed:  elapsed,
 		IP:       ip,

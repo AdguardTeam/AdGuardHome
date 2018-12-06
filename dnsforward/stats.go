@@ -193,27 +193,25 @@ func (h *histogram) Observe(value float64) {
 // -----
 func incrementCounters(entry *logEntry) {
 	requests.IncWithTime(entry.Time)
-	if entry.Result != nil {
-		if entry.Result.IsFiltered {
-			filtered.IncWithTime(entry.Time)
-		}
+	if entry.Result.IsFiltered {
+		filtered.IncWithTime(entry.Time)
+	}
 
-		switch entry.Result.Reason {
-		case dnsfilter.NotFilteredWhiteList:
-			whitelisted.IncWithTime(entry.Time)
-		case dnsfilter.NotFilteredError:
-			errorsTotal.IncWithTime(entry.Time)
-		case dnsfilter.FilteredBlackList:
-			filteredLists.IncWithTime(entry.Time)
-		case dnsfilter.FilteredSafeBrowsing:
-			filteredSafebrowsing.IncWithTime(entry.Time)
-		case dnsfilter.FilteredParental:
-			filteredParental.IncWithTime(entry.Time)
-		case dnsfilter.FilteredInvalid:
-			// do nothing
-		case dnsfilter.FilteredSafeSearch:
-			safesearch.IncWithTime(entry.Time)
-		}
+	switch entry.Result.Reason {
+	case dnsfilter.NotFilteredWhiteList:
+		whitelisted.IncWithTime(entry.Time)
+	case dnsfilter.NotFilteredError:
+		errorsTotal.IncWithTime(entry.Time)
+	case dnsfilter.FilteredBlackList:
+		filteredLists.IncWithTime(entry.Time)
+	case dnsfilter.FilteredSafeBrowsing:
+		filteredSafebrowsing.IncWithTime(entry.Time)
+	case dnsfilter.FilteredParental:
+		filteredParental.IncWithTime(entry.Time)
+	case dnsfilter.FilteredInvalid:
+		// do nothing
+	case dnsfilter.FilteredSafeSearch:
+		safesearch.IncWithTime(entry.Time)
 	}
 	elapsedTime.ObserveWithTime(entry.Elapsed.Seconds(), entry.Time)
 }
