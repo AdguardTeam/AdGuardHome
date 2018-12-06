@@ -166,10 +166,10 @@ func main() {
 		}
 	}()
 
-	signal_channel := make(chan os.Signal)
-	signal.Notify(signal_channel, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
+	signalChannel := make(chan os.Signal)
+	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 	go func() {
-		<-signal_channel
+		<-signalChannel
 		cleanup()
 		os.Exit(0)
 	}()
