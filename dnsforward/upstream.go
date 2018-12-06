@@ -76,13 +76,6 @@ type dnsOverTLS struct {
 	sync.RWMutex // protects pool
 }
 
-var defaultTLSClient = dns.Client{
-	Net:       "tcp-tls",
-	Timeout:   defaultTimeout,
-	UDPSize:   dns.MaxMsgSize,
-	TLSConfig: &tls.Config{},
-}
-
 func (p *dnsOverTLS) Address() string { return p.boot.address }
 
 func (p *dnsOverTLS) Exchange(m *dns.Msg) (*dns.Msg, error) {
@@ -126,13 +119,6 @@ func (p *dnsOverTLS) Exchange(m *dns.Msg) (*dns.Msg, error) {
 //
 type dnsOverHTTPS struct {
 	boot bootstrapper
-}
-
-var defaultHTTPSTransport = http.Transport{}
-
-var defaultHTTPSClient = http.Client{
-	Transport: &defaultHTTPSTransport,
-	Timeout:   defaultTimeout,
 }
 
 func (p *dnsOverHTTPS) Address() string { return p.boot.address }

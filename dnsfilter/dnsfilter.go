@@ -38,9 +38,6 @@ var ErrInvalidSyntax = errors.New("dnsfilter: invalid rule syntax")
 // ErrInvalidSyntax is returned by AddRule when the rule was already added to the filter
 var ErrAlreadyExists = errors.New("dnsfilter: rule was already added")
 
-// ErrInvalidParental is returned by EnableParental when sensitivity is not a valid value
-var ErrInvalidParental = errors.New("dnsfilter: invalid parental sensitivity, must be either 3, 10, 13 or 17")
-
 const shortcutLength = 6 // used for rule search optimization, 6 hits the sweet spot
 
 const enableFastLookup = true         // flag for debugging, must be true in production for faster performance
