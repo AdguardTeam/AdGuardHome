@@ -2,7 +2,6 @@ package dnsforward
 
 import (
 	"bytes"
-	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"log"
