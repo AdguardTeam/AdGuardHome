@@ -338,7 +338,7 @@ func mustLoadTestRules(d *Dnsfilter) {
 }
 
 func NewForTest() *Dnsfilter {
-	d := New()
+	d := New(nil)
 	purgeCaches()
 	return d
 }
@@ -542,7 +542,7 @@ func TestSafeBrowsing(t *testing.T) {
 		t.Run(fmt.Sprintf("%s in %s", tc, _Func()), func(t *testing.T) {
 			d := NewForTest()
 			defer d.Destroy()
-			d.EnableSafeBrowsing()
+			d.SafeBrowsingEnabled = true
 			stats.Safebrowsing.Requests = 0
 			d.checkMatch(t, "wmconvirus.narod.ru")
 			d.checkMatch(t, "wmconvirus.narod.ru")
@@ -570,7 +570,7 @@ func TestSafeBrowsing(t *testing.T) {
 func TestParallelSB(t *testing.T) {
 	d := NewForTest()
 	defer d.Destroy()
-	d.EnableSafeBrowsing()
+	d.SafeBrowsingEnabled = true
 	t.Run("group", func(t *testing.T) {
 		for i := 0; i < 100; i++ {
 			t.Run(fmt.Sprintf("aaa%d", i), func(t *testing.T) {
@@ -597,7 +597,7 @@ func TestSafeBrowsingCustomServerFail(t *testing.T) {
 	defer ts.Close()
 	address := ts.Listener.Addr().String()
 
-	d.EnableSafeBrowsing()
+	d.SafeBrowsingEnabled = true
 	d.SetHTTPTimeout(time.Second * 5)
 	d.SetSafeBrowsingServer(address) // this will ensure that test fails
 	d.checkMatchEmpty(t, "wmconvirus.narod.ru")
@@ -606,7 +606,8 @@ func TestSafeBrowsingCustomServerFail(t *testing.T) {
 func TestParentalControl(t *testing.T) {
 	d := NewForTest()
 	defer d.Destroy()
-	d.EnableParental(3)
+	d.ParentalEnabled = true
+	d.ParentalSensitivity = 3
 	d.checkMatch(t, "pornhub.com")
 	d.checkMatch(t, "pornhub.com")
 	if stats.Parental.Requests != 1 {
@@ -637,7 +638,7 @@ func TestSafeSearch(t *testing.T) {
 	if ok {
 		t.Errorf("Expected safesearch to error when disabled")
 	}
-	d.EnableSafeSearch()
+	d.SafeSearchEnabled = true
 	val, ok := d.SafeSearchDomain("www.google.com")
 	if !ok {
 		t.Errorf("Expected safesearch to find result for www.google.com")
@@ -924,7 +925,7 @@ func BenchmarkLotsOfRulesLotsOfHostsParallel(b *testing.B) {
 func BenchmarkSafeBrowsing(b *testing.B) {
 	d := NewForTest()
 	defer d.Destroy()
-	d.EnableSafeBrowsing()
+	d.SafeBrowsingEnabled = true
 	for n := 0; n < b.N; n++ {
 		hostname := "wmconvirus.narod.ru"
 		ret, err := d.CheckHost(hostname)
@@ -940,7 +941,7 @@ func BenchmarkSafeBrowsing(b *testing.B) {
 func BenchmarkSafeBrowsingParallel(b *testing.B) {
 	d := NewForTest()
 	defer d.Destroy()
-	d.EnableSafeBrowsing()
+	d.SafeBrowsingEnabled = true
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			hostname := "wmconvirus.narod.ru"
@@ -958,7 +959,7 @@ func BenchmarkSafeBrowsingParallel(b *testing.B) {
 func BenchmarkSafeSearch(b *testing.B) {
 	d := NewForTest()
 	defer d.Destroy()
-	d.EnableSafeSearch()
+	d.SafeSearchEnabled = true
 	for n := 0; n < b.N; n++ {
 		val, ok := d.SafeSearchDomain("www.google.com")
 		if !ok {
@@ -973,7 +974,7 @@ func BenchmarkSafeSearch(b *testing.B) {
 func BenchmarkSafeSearchParallel(b *testing.B) {
 	d := NewForTest()
 	defer d.Destroy()
-	d.EnableSafeSearch()
+	d.SafeSearchEnabled = true
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			val, ok := d.SafeSearchDomain("www.google.com")
@@ -1008,18 +1009,4 @@ func _Func() string {
 	runtime.Callers(2, pc)
 	f := runtime.FuncForPC(pc[0])
 	return path.Base(f.Name())
-}
-
-func trace(format string, args ...interface{}) {
-	pc := make([]uintptr, 10) // at least 1 entry needed
-	runtime.Callers(2, pc)
-	f := runtime.FuncForPC(pc[0])
-	var buf strings.Builder
-	buf.WriteString(fmt.Sprintf("%s(): ", path.Base(f.Name())))
-	text := fmt.Sprintf(format, args...)
-	buf.WriteString(text)
-	if len(text) == 0 || text[len(text)-1] != '\n' {
-		buf.WriteRune('\n')
-	}
-	fmt.Print(buf.String())
 }
