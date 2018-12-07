@@ -499,8 +499,18 @@ func (s *Server) handlePacket(p []byte, addr net.Addr, conn *net.UDPConn) {
 		}
 	}
 
+	//
 	// query logging and stats counters
-	if s.QueryLogEnabled {
+	//
+
+	shouldLog := true
+
+	// don't log ANY request if refuseAny is enabled
+	if len(msg.Question) >= 1 && msg.Question[0].Qtype == dns.TypeANY && s.RefuseAny {
+		shouldLog = false
+	}
+
+	if s.QueryLogEnabled && shouldLog {
 		elapsed := time.Since(start)
 		upstreamAddr := ""
 		if upstream != nil {
