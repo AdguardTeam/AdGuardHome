@@ -426,15 +426,19 @@ func (s *Server) handlePacketInternal(msg *dns.Msg, addr net.Addr, conn *net.UDP
 		return s.genNotImpl(msg), nil, nil, nil
 	}
 
-	// use dnsfilter before cache -- changed settings or filters would require cache invalidation otherwise
 	host := strings.TrimSuffix(msg.Question[0].Name, ".")
-	res, err := s.dnsFilter.CheckHost(host)
-	if err != nil {
-		log.Printf("dnsfilter failed to check host '%s': %s", host, err)
-		return s.genServerFailure(msg), &res, nil, err
-	} else if res.IsFiltered {
-		log.Printf("Host %s is filtered, reason - '%s', matched rule: '%s'", host, res.Reason, res.Rule)
-		return s.genNXDomain(msg), &res, nil, nil
+	// use dnsfilter before cache -- changed settings or filters would require cache invalidation otherwise
+	var res dnsfilter.Result
+	var err error
+	if s.ProtectionEnabled {
+		res, err = s.dnsFilter.CheckHost(host)
+		if err != nil {
+			log.Printf("dnsfilter failed to check host '%s': %s", host, err)
+			return s.genServerFailure(msg), &res, nil, err
+		} else if res.IsFiltered {
+			log.Printf("Host %s is filtered, reason - '%s', matched rule: '%s'", host, res.Reason, res.Rule)
+			return s.genNXDomain(msg), &res, nil, nil
+		}
 	}
 
 	{
