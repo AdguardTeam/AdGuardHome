@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
@@ -31,6 +32,7 @@ type configuration struct {
 	DNS       dnsConfig `yaml:"dns"`
 	Filters   []filter  `yaml:"filters"`
 	UserRules []string  `yaml:"user_rules"`
+	DHCP      dhcpState `yaml:"dhcp"`
 
 	sync.RWMutex `yaml:"-"`
 
@@ -47,6 +49,30 @@ type dnsConfig struct {
 }
 
 var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
+
+// field ordering is important -- yaml fields will mirror ordering from here
+type dhcpState struct {
+	dhcpConfig
+	Leases []dhcpLease
+}
+
+// field ordering is important -- yaml fields will mirror ordering from here
+type dhcpConfig struct {
+	Enabled       bool
+	GatewayIP     string        `json:"gateway_ip" yaml:"gateway_ip"`
+	SubnetMask    string        `json:"subnet_mask" yaml:"subnet_mask"`
+	RangeStart    string        `json:"range_start" yaml:"range_start"`
+	RangeEnd      string        `json:"range_end" yaml:"range_end"`
+	LeaseDuration time.Duration `json:"lease_duration" yaml:"lease_duration"`
+}
+
+// field ordering is important -- yaml fields will mirror ordering from here
+type dhcpLease struct {
+	HWAddr   [6]byte `json:"mac" yaml:"hwaddr"`
+	IP       string  `json:"ip"` // json by default keeps IP uppercase but we need lowercase
+	Hostname string
+	Expires  time.Time
+}
 
 // initialize to default values, will be changed later when reading config or parsing command line
 var config = configuration{
@@ -72,6 +98,9 @@ var config = configuration{
 		{Filter: dnsfilter.Filter{ID: 3}, Enabled: false, URL: "https://hosts-file.net/ad_servers.txt", Name: "hpHosts - Ad and Tracking servers only"},
 		{Filter: dnsfilter.Filter{ID: 4}, Enabled: false, URL: "http://www.malwaredomainlist.com/hostslist/hosts.txt", Name: "MalwareDomainList.com Hosts List"},
 	},
+	DHCP: dhcpState{dhcpConfig: dhcpConfig{
+		LeaseDuration: time.Hour * 12,
+	}},
 	SchemaVersion: currentSchemaVersion,
 }
 
