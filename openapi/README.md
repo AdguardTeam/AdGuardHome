@@ -10,4 +10,4 @@ The easiest way would be to use [Swagger Editor](http://editor.swagger.io/) and 
 
 1. `yarn install`
 2. `yarn start`
-3. Open `http://localhost:3000/`
+3. Open `http://localhost:4000/`
