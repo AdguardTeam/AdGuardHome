@@ -302,4 +302,71 @@ export default class Api {
         };
         return this.makeRequest(path, method, parameters);
     }
+
+    // DHCP
+    DHCP_STATUS = { path: 'dhcp/status', method: 'GET' };
+    DHCP_SET_CONFIG = { path: 'dhcp/set_config', method: 'POST' };
+    DHCP_FIND_ACTIVE = { path: 'dhcp/find_active_dhcp', method: 'GET' };
+
+    getDhcpStatus() {
+        // const { path, method } = this.DHCP_STATUS;
+        // return this.makeRequest(path, method);
+
+        const example = {
+            config: {
+                enabled: false,
+                gateway_ip: '192.168.1.1',
+                subnet_mask: '255.255.255.0',
+                range_start: '192.168.1.2',
+                range_end: '192.168.10.50',
+                lease_duration: '43200',
+            },
+            leases: [
+                {
+                    mac: '001109b3b3b8',
+                    ip: '192.168.1.22',
+                    hostname: 'dell',
+                    expires: '2017-07-21T17:32:28Z',
+                },
+                {
+                    mac: '001109b3b3b9',
+                    ip: '192.168.1.23',
+                    hostname: 'dell',
+                    expires: '2017-07-21T17:32:28Z',
+                },
+            ],
+        };
+
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve(example);
+            }, 1000);
+        });
+    }
+
+    setDhcpConfig(config) {
+        // const { path, method } = this.DHCP_SET_CONFIG;
+        // const parameters = config;
+        // return this.makeRequest(path, method, parameters);
+
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve(window.alert(`Set config:\n\n${JSON.stringify(config, null, 2)}`));
+            }, 1000);
+        });
+    }
+
+    findActiveDhcp() {
+        // const { path, method } = this.DHCP_FIND_ACTIVE;
+        // return this.makeRequest(path, method);
+
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve({
+                    gateway_ip: '127.0.0.1',
+                    found: true,
+                });
+            }, 10000);
+        });
+    }
 }

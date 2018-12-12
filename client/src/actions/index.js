@@ -522,3 +522,73 @@ export const getLanguage = () => async (dispatch) => {
         dispatch(getLanguageFailure());
     }
 };
+
+export const getDhcpStatusRequest = createAction('GET_DHCP_STATUS_REQUEST');
+export const getDhcpStatusSuccess = createAction('GET_DHCP_STATUS_SUCCESS');
+export const getDhcpStatusFailure = createAction('GET_DHCP_STATUS_FAILURE');
+
+export const getDhcpStatus = () => async (dispatch) => {
+    dispatch(getDhcpStatusRequest());
+    try {
+        const status = await apiClient.getDhcpStatus();
+        dispatch(getDhcpStatusSuccess(status));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(getDhcpStatusFailure());
+    }
+};
+
+export const setDhcpConfigRequest = createAction('SET_DHCP_CONFIG_REQUEST');
+export const setDhcpConfigSuccess = createAction('SET_DHCP_CONFIG_SUCCESS');
+export const setDhcpConfigFailure = createAction('SET_DHCP_CONFIG_FAILURE');
+
+export const setDhcpConfig = config => async (dispatch) => {
+    dispatch(setDhcpConfigRequest());
+    try {
+        await apiClient.setDhcpConfig(config);
+        dispatch(setDhcpConfigSuccess());
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(setDhcpConfigFailure());
+    }
+};
+
+export const findActiveDhcpRequest = createAction('FIND_ACTIVE_DHCP_REQUEST');
+export const findActiveDhcpSuccess = createAction('FIND_ACTIVE_DHCP_SUCCESS');
+export const findActiveDhcpFailure = createAction('FIND_ACTIVE_DHCP_FAILURE');
+
+export const findActiveDhcp = () => async (dispatch) => {
+    dispatch(findActiveDhcpRequest());
+    try {
+        const result = await apiClient.findActiveDhcp();
+        dispatch(findActiveDhcpSuccess(result));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(findActiveDhcpFailure());
+    }
+};
+
+export const toggleDhcpRequest = createAction('TOGGLE_DHCP_REQUEST');
+export const toggleDhcpFailure = createAction('TOGGLE_DHCP_FAILURE');
+export const toggleDhcpSuccess = createAction('TOGGLE_DHCP_SUCCESS');
+
+export const toggleDhcp = status => async (dispatch) => {
+    dispatch(toggleDhcpRequest());
+    let successMessage = '';
+
+    try {
+        if (status) {
+            successMessage = 'disabled_dhcp';
+            await apiClient.disableGlobalProtection();
+        } else {
+            successMessage = 'enabled_dhcp';
+            await apiClient.enableGlobalProtection();
+        }
+
+        dispatch(addSuccessToast(successMessage));
+        dispatch(toggleDhcpSuccess());
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(toggleDhcpFailure());
+    }
+};

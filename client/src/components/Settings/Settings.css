@@ -1,9 +1,14 @@
 .form__group {
+    position: relative;
     margin-bottom: 15px;
 }
 
 .form__group:last-child {
     margin-bottom: 0;
+}
+
+.form__group--dhcp:last-child {
+    margin-bottom: 15px;
 }
 
 .btn-standart {
@@ -17,4 +22,12 @@
 
 .form-control--textarea-large {
     min-height: 240px;
+}
+
+.form__message {
+    font-size: 11px;
+}
+
+.form__message--error {
+    color: #cd201f;
 }
