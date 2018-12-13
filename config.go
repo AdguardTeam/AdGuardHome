@@ -99,7 +99,7 @@ var config = configuration{
 		{Filter: dnsfilter.Filter{ID: 4}, Enabled: false, URL: "http://www.malwaredomainlist.com/hostslist/hosts.txt", Name: "MalwareDomainList.com Hosts List"},
 	},
 	DHCP: dhcpState{Config: dhcpConfig{
-		LeaseDuration: time.Hour * 12,
+		LeaseDuration: 12 * 60 * 60, // in seconds
 	}},
 	SchemaVersion: currentSchemaVersion,
 }
