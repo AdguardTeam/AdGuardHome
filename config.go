@@ -58,12 +58,12 @@ type dhcpState struct {
 
 // field ordering is important -- yaml fields will mirror ordering from here
 type dhcpConfig struct {
-	Enabled       bool          `json:"enabled" yaml:"enabled"`
-	GatewayIP     string        `json:"gateway_ip" yaml:"gateway_ip"`
-	SubnetMask    string        `json:"subnet_mask" yaml:"subnet_mask"`
-	RangeStart    string        `json:"range_start" yaml:"range_start"`
-	RangeEnd      string        `json:"range_end" yaml:"range_end"`
-	LeaseDuration time.Duration `json:"lease_duration" yaml:"lease_duration"`
+	Enabled       bool   `json:"enabled" yaml:"enabled"`
+	GatewayIP     string `json:"gateway_ip" yaml:"gateway_ip"`
+	SubnetMask    string `json:"subnet_mask" yaml:"subnet_mask"`
+	RangeStart    string `json:"range_start" yaml:"range_start"`
+	RangeEnd      string `json:"range_end" yaml:"range_end"`
+	LeaseDuration uint64 `json:"lease_duration" yaml:"lease_duration"` // in seconds
 }
 
 // field ordering is important -- yaml fields will mirror ordering from here
