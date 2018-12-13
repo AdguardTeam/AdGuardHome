@@ -561,8 +561,8 @@ export const findActiveDhcpFailure = createAction('FIND_ACTIVE_DHCP_FAILURE');
 export const findActiveDhcp = () => async (dispatch) => {
     dispatch(findActiveDhcpRequest());
     try {
-        const result = await apiClient.findActiveDhcp();
-        dispatch(findActiveDhcpSuccess(result));
+        await apiClient.findActiveDhcp();
+        dispatch(findActiveDhcpSuccess());
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(findActiveDhcpFailure());

@@ -303,7 +303,7 @@ paths:
                     description: OK
 
     /dhcp/find_active_dhcp:
-      get:
+      post:
         tags:
             - dhcp
         operationId: checkActiveDhcp

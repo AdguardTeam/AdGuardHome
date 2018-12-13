@@ -306,7 +306,7 @@ export default class Api {
     // DHCP
     DHCP_STATUS = { path: 'dhcp/status', method: 'GET' };
     DHCP_SET_CONFIG = { path: 'dhcp/set_config', method: 'POST' };
-    DHCP_FIND_ACTIVE = { path: 'dhcp/find_active_dhcp', method: 'GET' };
+    DHCP_FIND_ACTIVE = { path: 'dhcp/find_active_dhcp', method: 'POST' };
 
     getDhcpStatus() {
         const { path, method } = this.DHCP_STATUS;
