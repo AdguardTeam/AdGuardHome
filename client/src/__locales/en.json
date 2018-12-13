@@ -138,5 +138,6 @@
     "dhcp_disable": "Disable DHCP server",
     "dhcp_not_found": "No active DHCP servers found on the network. It is safe to enable the built-in DHCP server.",
     "dhcp_leases": "DHCP leases",
-    "dhcp_leases_not_found": "No DHCP leases found"
+    "dhcp_leases_not_found": "No DHCP leases found",
+    "dhcp_config_saved": "Saved DHCP server config"
 }

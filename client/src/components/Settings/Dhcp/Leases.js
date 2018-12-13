@@ -19,7 +19,7 @@ const columns = [{
 
 const Leases = props => (
     <ReactTable
-        data={props.leases}
+        data={props.leases || []}
         columns={columns}
         showPagination={false}
         noDataText={ props.t('dhcp_leases_not_found') }

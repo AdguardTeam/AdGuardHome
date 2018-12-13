@@ -289,6 +289,10 @@ const dhcp = handleActions({
 }, {
     processing: true,
     processingStatus: false,
+    config: {
+        enabled: false,
+    },
+    leases: [],
 });
 
 export default combineReducers({

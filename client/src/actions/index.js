@@ -546,6 +546,7 @@ export const setDhcpConfig = config => async (dispatch) => {
     dispatch(setDhcpConfigRequest());
     try {
         await apiClient.setDhcpConfig(config);
+        dispatch(addSuccessToast('dhcp_config_saved'));
         dispatch(setDhcpConfigSuccess());
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -572,17 +573,17 @@ export const toggleDhcpRequest = createAction('TOGGLE_DHCP_REQUEST');
 export const toggleDhcpFailure = createAction('TOGGLE_DHCP_FAILURE');
 export const toggleDhcpSuccess = createAction('TOGGLE_DHCP_SUCCESS');
 
-export const toggleDhcp = status => async (dispatch) => {
+export const toggleDhcp = config => async (dispatch) => {
     dispatch(toggleDhcpRequest());
     let successMessage = '';
 
     try {
-        if (status) {
+        if (config.enabled) {
             successMessage = 'disabled_dhcp';
-            await apiClient.disableGlobalProtection();
+            await apiClient.setDhcpConfig({ ...config, enabled: false });
         } else {
             successMessage = 'enabled_dhcp';
-            await apiClient.enableGlobalProtection();
+            await apiClient.setDhcpConfig({ ...config, enabled: true });
         }
 
         dispatch(addSuccessToast(successMessage));

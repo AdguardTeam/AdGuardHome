@@ -17,12 +17,12 @@ class Dhcp extends Component {
     }
 
     getToggleDhcpButton = () => {
-        const { enabled } = this.props.dhcp.config;
-        const buttonText = enabled ? 'dhcp_disable' : 'dhcp_enable';
-        const buttonClass = enabled ? 'btn-gray' : 'btn-success';
+        const { config } = this.props.dhcp;
+        const buttonText = config.enabled ? 'dhcp_disable' : 'dhcp_enable';
+        const buttonClass = config.enabled ? 'btn-gray' : 'btn-success';
 
         return (
-            <button type="button" className={`btn btn-standart mr-2 ${buttonClass}`} onClick={() => this.props.toggleDhcp(enabled)}>
+            <button type="button" className={`btn btn-standart mr-2 ${buttonClass}`} onClick={() => this.props.toggleDhcp(config)}>
                 <Trans>{buttonText}</Trans>
             </button>
         );
