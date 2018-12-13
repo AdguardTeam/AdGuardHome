@@ -4,7 +4,7 @@ import { Field, reduxForm } from 'redux-form';
 import { R_IPV4 } from '../../../helpers/constants';
 
 const required = (value) => {
-    if (value) {
+    if (value || value === 0) {
         return false;
     }
     return 'Required field';
@@ -16,6 +16,15 @@ const ipv4 = (value) => {
     }
     return false;
 };
+
+const isPositive = (value) => {
+    if ((value || value === 0) && (value <= 0)) {
+        return 'Must be greater than 0';
+    }
+    return false;
+};
+
+const toNumber = value => value && parseInt(value, 10);
 
 const renderField = ({
     input, className, placeholder, type, disabled, meta: { touched, error },
@@ -104,8 +113,9 @@ const Form = (props) => {
                             type="number"
                             className="form-control"
                             placeholder="Lease duration"
-                            validate={[required]}
+                            validate={[required, isPositive]}
                             disabled={!enabled}
+                            normalize={toNumber}
                         />
                     </div>
                 </div>
