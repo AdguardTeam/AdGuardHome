@@ -8,7 +8,7 @@ import (
 
 func handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	status := map[string]interface{}{
-		"config": config.DHCP.dhcpConfig,
+		"config": config.DHCP.Config,
 		"leases": config.DHCP.Leases,
 	}
 
@@ -28,7 +28,7 @@ func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	config.DHCP.dhcpConfig = newconfig
+	config.DHCP.Config = newconfig
 }
 
 // TODO: implement

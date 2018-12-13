@@ -52,7 +52,7 @@ var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
 
 // field ordering is important -- yaml fields will mirror ordering from here
 type dhcpState struct {
-	dhcpConfig
+	Config dhcpConfig
 	Leases []dhcpLease
 }
 
@@ -98,7 +98,7 @@ var config = configuration{
 		{Filter: dnsfilter.Filter{ID: 3}, Enabled: false, URL: "https://hosts-file.net/ad_servers.txt", Name: "hpHosts - Ad and Tracking servers only"},
 		{Filter: dnsfilter.Filter{ID: 4}, Enabled: false, URL: "http://www.malwaredomainlist.com/hostslist/hosts.txt", Name: "MalwareDomainList.com Hosts List"},
 	},
-	DHCP: dhcpState{dhcpConfig: dhcpConfig{
+	DHCP: dhcpState{Config: dhcpConfig{
 		LeaseDuration: time.Hour * 12,
 	}},
 	SchemaVersion: currentSchemaVersion,
