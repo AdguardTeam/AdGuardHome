@@ -203,7 +203,8 @@ func (p *dnsCrypt) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	serverInfo = p.serverInfo
 	p.RUnlock()
 
-	if client == nil || serverInfo == nil {
+	now := uint32(time.Now().Unix())
+	if client == nil || serverInfo == nil || (serverInfo != nil && serverInfo.ServerCert.NotAfter < now) {
 		p.Lock()
 
 		// Using "udp" for DNSCrypt upstreams by default
@@ -222,6 +223,17 @@ func (p *dnsCrypt) Exchange(m *dns.Msg) (*dns.Msg, error) {
 	}
 
 	reply, _, err := client.Exchange(m, serverInfo)
+
+	if err, ok := err.(net.Error); ok && err.Timeout() {
+		// If request times out, it is possible that the server configuration has been changed.
+		// It is safe to assume that the key was rotated (for instance, as it is described here: https://dnscrypt.pl/2017/02/26/how-key-rotation-is-automated/).
+		// We should re-fetch the server certificate info so that the new requests were not failing.
+		p.Lock()
+		p.client = nil
+		p.serverInfo = nil
+		p.Unlock()
+	}
+
 	return reply, err
 }
 
