@@ -131,7 +131,14 @@ class Logs extends Component {
                     } else {
                         const filterItem = Object.keys(filters)
                             .filter(key => filters[key].id === filterId);
-                        filterName = filters[filterItem].name;
+
+                        if (typeof filterItem !== 'undefined' && typeof filters[filterItem] !== 'undefined') {
+                            filterName = filters[filterItem].name;
+                        }
+
+                        if (!filterName) {
+                            filterName = t('unknown_filter', { filterId });
+                        }
                     }
                 }
 
