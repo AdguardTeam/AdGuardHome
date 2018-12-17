@@ -125,5 +125,6 @@
     "found_in_known_domain_db": "Found in the known domains database.",
     "category_label": "Category",
     "rule_label": "Rule",
-    "filter_label": "Filter"
+    "filter_label": "Filter",
+    "unknown_filter": "Unknown filter {{filterId}}"
 }
