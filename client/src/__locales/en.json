@@ -139,5 +139,15 @@
     "dhcp_not_found": "No active DHCP servers found on the network. It is safe to enable the built-in DHCP server.",
     "dhcp_leases": "DHCP leases",
     "dhcp_leases_not_found": "No DHCP leases found",
-    "dhcp_config_saved": "Saved DHCP server config"
+    "dhcp_config_saved": "Saved DHCP server config",
+    "form_error_required": "Required field",
+    "form_error_ip_format": "Invalid IPv4 format",
+    "form_error_positive": "Must be greater than 0",
+    "dhcp_form_gateway_input": "Gateway IP",
+    "dhcp_form_subnet_input": "Subnet mask",
+    "dhcp_form_range_title": "Range of IP addresses",
+    "dhcp_form_range_start": "Range start",
+    "dhcp_form_range_end": "Range end",
+    "dhcp_form_lease_title": "DHCP lease time (in seconds)",
+    "dhcp_form_lease_input": "Lease duration"
 }

@@ -1,25 +1,28 @@
 import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { Field, reduxForm } from 'redux-form';
+import { withNamespaces, Trans } from 'react-i18next';
+import flow from 'lodash/flow';
+
 import { R_IPV4 } from '../../../helpers/constants';
 
 const required = (value) => {
     if (value || value === 0) {
         return false;
     }
-    return 'Required field';
+    return <Trans>form_error_required</Trans>;
 };
 
 const ipv4 = (value) => {
     if (value && !new RegExp(R_IPV4).test(value)) {
-        return 'Invalid IPv4 format';
+        return <Trans>form_error_ip_format</Trans>;
     }
     return false;
 };
 
 const isPositive = (value) => {
     if ((value || value === 0) && (value <= 0)) {
-        return 'Must be greater than 0';
+        return <Trans>form_error_positive</Trans>;
     }
     return false;
 };
@@ -43,7 +46,7 @@ const renderField = ({
 
 const Form = (props) => {
     const {
-        handleSubmit, pristine, submitting, enabled,
+        handleSubmit, pristine, submitting, enabled, t,
     } = props;
 
     return (
@@ -51,25 +54,25 @@ const Form = (props) => {
             <div className="row">
                 <div className="col-lg-6">
                     <div className="form__group form__group--dhcp">
-                        <label>Gateway IP</label>
+                        <label>{t('dhcp_form_gateway_input')}</label>
                         <Field
                             name="gateway_ip"
                             component={renderField}
                             type="text"
                             className="form-control"
-                            placeholder="Gateway IP"
+                            placeholder={t('dhcp_form_gateway_input')}
                             validate={[ipv4, required]}
                             disabled={!enabled}
                         />
                     </div>
                     <div className="form__group form__group--dhcp">
-                        <label>Subnet mask</label>
+                        <label>{t('dhcp_form_subnet_input')}</label>
                         <Field
                             name="subnet_mask"
                             component={renderField}
                             type="text"
                             className="form-control"
-                            placeholder="Subnet mask"
+                            placeholder={t('dhcp_form_subnet_input')}
                             validate={[ipv4, required]}
                             disabled={!enabled}
                         />
@@ -79,7 +82,7 @@ const Form = (props) => {
                     <div className="form__group form__group--dhcp">
                         <div className="row">
                             <div className="col-12">
-                                <label>Range of IP addresses</label>
+                                <label>{t('dhcp_form_range_title')}</label>
                             </div>
                             <div className="col">
                                 <Field
@@ -87,7 +90,7 @@ const Form = (props) => {
                                     component={renderField}
                                     type="text"
                                     className="form-control"
-                                    placeholder="Range start"
+                                    placeholder={t('dhcp_form_range_start')}
                                     validate={[ipv4, required]}
                                     disabled={!enabled}
                                 />
@@ -98,7 +101,7 @@ const Form = (props) => {
                                     component={renderField}
                                     type="text"
                                     className="form-control"
-                                    placeholder="Range end"
+                                    placeholder={t('dhcp_form_range_end')}
                                     validate={[ipv4, required]}
                                     disabled={!enabled}
                                 />
@@ -106,13 +109,13 @@ const Form = (props) => {
                         </div>
                     </div>
                     <div className="form__group form__group--dhcp">
-                        <label>DHCP lease time (in seconds)</label>
+                        <label>{t('dhcp_form_lease_title')}</label>
                         <Field
                             name="lease_duration"
                             component={renderField}
                             type="number"
                             className="form-control"
-                            placeholder="Lease duration"
+                            placeholder={t('dhcp_form_lease_input')}
                             validate={[required, isPositive]}
                             disabled={!enabled}
                             normalize={toNumber}
@@ -126,7 +129,7 @@ const Form = (props) => {
                 className="btn btn-success btn-standart"
                 disabled={pristine || submitting || !enabled}
             >
-                Save config
+                {t('save_config')}
             </button>
         </form>
     );
@@ -137,8 +140,10 @@ Form.propTypes = {
     pristine: PropTypes.bool,
     submitting: PropTypes.bool,
     enabled: PropTypes.bool,
+    t: PropTypes.func,
 };
 
-export default reduxForm({
-    form: 'dhcpForm',
-})(Form);
+export default flow([
+    withNamespaces(),
+    reduxForm({ form: 'dhcpForm' }),
+])(Form);
