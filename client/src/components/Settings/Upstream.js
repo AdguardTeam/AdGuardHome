@@ -73,6 +73,9 @@ class Upstream extends Component {
                                 <li>
                                     <code>tcp://1.1.1.1</code> - { t('example_upstream_tcp') }
                                 </li>
+                                <li>
+                                    <code>sdns://...</code> - <span dangerouslySetInnerHTML={{ __html: t('example_upstream_sdns') }} />
+                                </li>
                             </ol>
                         </div>
                     </div>

@@ -8,6 +8,7 @@ import (
 )
 
 func TestUpstreams(t *testing.T) {
+
 	upstreams := []struct {
 		address   string
 		bootstrap string
@@ -56,8 +57,34 @@ func TestUpstreams(t *testing.T) {
 			address:   "https://doh.cleanbrowsing.org/doh/security-filter/",
 			bootstrap: "",
 		},
+		{
+			// AdGuard DNS (DNSCrypt)
+			address:   "sdns://AQIAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
+			bootstrap: "",
+		},
+		{
+			// Cisco OpenDNS (DNSCrypt)
+			address:   "sdns://AQAAAAAAAAAADjIwOC42Ny4yMjAuMjIwILc1EUAgbyJdPivYItf9aR6hwzzI1maNDL4Ev6vKQ_t5GzIuZG5zY3J5cHQtY2VydC5vcGVuZG5zLmNvbQ",
+			bootstrap: "8.8.8.8:53",
+		},
+		{
+			// Cloudflare DNS (DoH)
+			address:   "sdns://AgcAAAAAAAAABzEuMC4wLjGgENk8mGSlIfMGXMOlIlCcKvq7AVgcrZxtjon911-ep0cg63Ul-I8NlFj4GplQGb_TTLiczclX57DvMV8Q-JdjgRgSZG5zLmNsb3VkZmxhcmUuY29tCi9kbnMtcXVlcnk",
+			bootstrap: "8.8.8.8:53",
+		},
+		{
+			// doh-cleanbrowsing-security (https://doh.cleanbrowsing.org/doh/security-filter/)
+			address:   "sdns://AgMAAAAAAAAAAAAVZG9oLmNsZWFuYnJvd3Npbmcub3JnFS9kb2gvc2VjdXJpdHktZmlsdGVyLw",
+			bootstrap: "8.8.8.8:53",
+		},
+		{
+			// Google (DNS-over-HTTPS)
+			address:   "sdns://AgUAAAAAAAAAACAe9iTP_15r07rd8_3b_epWVGfjdymdx-5mdRZvMAzBuQ5kbnMuZ29vZ2xlLmNvbQ0vZXhwZXJpbWVudGFs",
+			bootstrap: "8.8.8.8:53",
+		},
 	}
 	for _, test := range upstreams {
+
 		t.Run(test.address, func(t *testing.T) {
 			u, err := AddressToUpstream(test.address, test.bootstrap)
 			if err != nil {
