@@ -47,10 +47,10 @@ func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type responseInterface struct {
-		Name         string
-		MTU          int
-		HardwareAddr string
-		Addresses    []string
+		Name         string   `json:"name"`
+		MTU          int      `json:"mtu"`
+		HardwareAddr string   `json:"hardware_address"`
+		Addresses    []string `json:"ip_addresses"`
 	}
 
 	for i := range ifaces {
