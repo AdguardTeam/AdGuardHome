@@ -77,15 +77,6 @@ func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		for _, addr := range addrs {
-			// ip, ok := addr.(*net.IPNet)
-			// if !ok {
-			// 	// not an IP address
-			// 	continue
-			// }
-			// responseAddr := address{
-			// 	IP:      ip.IP.String(),
-			// 	Netmask: ip.Mask.String(),
-			// }
 			iface.Addresses = append(iface.Addresses, addr.String())
 		}
 		if len(iface.Addresses) == 0 {
