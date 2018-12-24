@@ -3,7 +3,6 @@ package dnsforward
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/miekg/dns"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -53,6 +53,7 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, el
 			return
 		}
 	}
+
 	if answer != nil {
 		a, err = answer.Pack()
 		if err != nil {

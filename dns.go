@@ -7,6 +7,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
+	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/joomcode/errorx"
 )
 
@@ -37,7 +38,7 @@ func generateServerConfig() dnsforward.ServerConfig {
 	}
 
 	for _, u := range config.DNS.UpstreamDNS {
-		upstream, err := dnsforward.AddressToUpstream(u, config.DNS.BootstrapDNS)
+		upstream, err := upstream.AddressToUpstream(u, config.DNS.BootstrapDNS)
 		if err != nil {
 			log.Printf("Couldn't get upstream: %s", err)
 			// continue, just ignore the upstream
@@ -67,7 +68,8 @@ func reconfigureDNSServer() error {
 		return fmt.Errorf("Refusing to reconfigure forwarding DNS server: not running")
 	}
 
-	err := dnsServer.Reconfigure(generateServerConfig())
+	config := generateServerConfig()
+	err := dnsServer.Reconfigure(&config)
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
 	}
