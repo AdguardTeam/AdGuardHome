@@ -82,7 +82,8 @@ class Filters extends Component {
                                 <ReactTable
                                     data={filters}
                                     columns={this.columns}
-                                    showPagination={false}
+                                    showPagination={true}
+                                    defaultPageSize={10}
                                     noDataText={ t('no_filters_added') }
                                     minRows={4} // TODO find out what to show if rules.length is 0
                                 />
