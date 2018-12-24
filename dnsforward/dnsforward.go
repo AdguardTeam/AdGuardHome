@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/AdguardTeam/dnsproxy/upstream"
 
 	"github.com/AdguardTeam/dnsproxy/proxy"
@@ -97,21 +99,19 @@ func (s *Server) startInternal(config *ServerConfig) error {
 		s.ServerConfig = *config
 	}
 
-	if s.dnsFilter == nil {
-		log.Printf("Creating dnsfilter")
-		s.dnsFilter = dnsfilter.New(&s.Config)
-		// add rules only if they are enabled
-		if s.FilteringEnabled {
-			// TODO: Handle error
-			s.dnsFilter.AddRules(s.Filters)
-		}
+	if s.dnsFilter != nil || s.dnsProxy != nil {
+		return errors.New("DNS server is already started")
+	}
+
+	err := s.initDNSFilter()
+	if err != nil {
+		return err
 	}
 
 	log.Printf("Loading stats from querylog")
-	err := fillStatsFromQueryLog()
+	err = fillStatsFromQueryLog()
 	if err != nil {
-		log.Printf("Failed to load stats from querylog: %s", err)
-		return err
+		return errorx.Decorate(err, "failed to load stats from querylog")
 	}
 
 	once.Do(func() {
@@ -139,12 +139,23 @@ func (s *Server) startInternal(config *ServerConfig) error {
 		proxyConfig.Upstreams = defaultValues.Upstreams
 	}
 
-	// TODO: Don't let call Start the second time
-	// Initialize the DNS proxy
+	// Initialize and start the DNS proxy
 	s.dnsProxy = &proxy.Proxy{Config: proxyConfig}
+	return s.dnsProxy.Start()
+}
 
-	err = s.dnsProxy.Start()
-	return err
+// Initializes the DNS filter
+func (s *Server) initDNSFilter() error {
+	log.Printf("Creating dnsfilter")
+	s.dnsFilter = dnsfilter.New(&s.Config)
+	// add rules only if they are enabled
+	if s.FilteringEnabled {
+		err := s.dnsFilter.AddRules(s.Filters)
+		if err != nil {
+			return errorx.Decorate(err, "could not initialize dnsfilter")
+		}
+	}
+	return nil
 }
 
 // Stop stops the DNS server

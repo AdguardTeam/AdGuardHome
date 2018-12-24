@@ -13,6 +13,7 @@ require (
 	github.com/joomcode/errorx v0.1.0
 	github.com/miekg/dns v1.1.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/pkg/errors v0.8.0
 	github.com/shirou/gopsutil v2.18.10+incompatible
 	github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4 // indirect
 	github.com/sirupsen/logrus v1.2.0

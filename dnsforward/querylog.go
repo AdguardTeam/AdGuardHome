@@ -3,7 +3,6 @@ package dnsforward
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/miekg/dns"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
