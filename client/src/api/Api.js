@@ -307,9 +307,15 @@ export default class Api {
     DHCP_STATUS = { path: 'dhcp/status', method: 'GET' };
     DHCP_SET_CONFIG = { path: 'dhcp/set_config', method: 'POST' };
     DHCP_FIND_ACTIVE = { path: 'dhcp/find_active_dhcp', method: 'POST' };
+    DHCP_INTERFACES = { path: 'dhcp/interfaces', method: 'GET' };
 
     getDhcpStatus() {
         const { path, method } = this.DHCP_STATUS;
+        return this.makeRequest(path, method);
+    }
+
+    getDhcpInterfaces() {
+        const { path, method } = this.DHCP_INTERFACES;
         return this.makeRequest(path, method);
     }
 

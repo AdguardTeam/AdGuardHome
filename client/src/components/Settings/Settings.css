@@ -31,3 +31,16 @@
 .form__message--error {
     color: #cd201f;
 }
+
+.interface__title {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.interface__ip:after {
+    content: ", ";
+}
+
+.interface__ip:last-child:after {
+    content: "";
+}

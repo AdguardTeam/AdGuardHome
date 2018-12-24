@@ -36,6 +36,7 @@ class Settings extends Component {
     componentDidMount() {
         this.props.initSettings(this.settings);
         this.props.getDhcpStatus();
+        this.props.getDhcpInterfaces();
     }
 
     handleUpstreamChange = (value) => {

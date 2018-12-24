@@ -61,6 +61,8 @@ class Dhcp extends Component {
                                     onSubmit={this.handleFormSubmit}
                                     initialValues={dhcp.config}
                                     enabled={dhcp.config.enabled}
+                                    interfaces={dhcp.interfaces}
+                                    processing={dhcp.processingInterfaces}
                                 />
                             </div>
                         </div>

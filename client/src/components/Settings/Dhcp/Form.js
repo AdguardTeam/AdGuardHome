@@ -1,6 +1,7 @@
 import React, { Fragment } from 'react';
+import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import { Field, reduxForm } from 'redux-form';
+import { Field, reduxForm, formValueSelector } from 'redux-form';
 import { withNamespaces, Trans } from 'react-i18next';
 import flow from 'lodash/flow';
 
@@ -44,14 +45,82 @@ const renderField = ({
     </Fragment>
 );
 
-const Form = (props) => {
+const renderInterfaces = (interfaces => (
+    Object.keys(interfaces).map((item) => {
+        const option = interfaces[item];
+        const { name } = option;
+        let interfaceIP = option.ip_addresses[0];
+
+        option.ip_addresses.forEach((ip) => {
+            if (!ip.includes(':')) {
+                interfaceIP = ip;
+            }
+        });
+
+        return (
+            <option value={name} key={name}>
+                {name} - {interfaceIP}
+            </option>
+        );
+    })
+));
+
+const renderInterfaceValues = (interfaceValues => (
+    <ul className="list-unstyled mt-1 mb-0">
+        <li>
+            <span className="interface__title">MTU: </span>
+            {interfaceValues.mtu}
+        </li>
+        <li>
+            <span className="interface__title"><Trans>dhcp_hardware_address</Trans>: </span>
+            {interfaceValues.hardware_address}
+        </li>
+        <li>
+            <span className="interface__title"><Trans>dhcp_ip_addresses</Trans>: </span>
+            {
+                interfaceValues.ip_addresses
+                    .map(ip => <span key={ip} className="interface__ip">{ip}</span>)
+            }
+        </li>
+    </ul>
+));
+
+let Form = (props) => {
     const {
-        handleSubmit, pristine, submitting, enabled, t,
+        t,
+        handleSubmit,
+        pristine,
+        submitting,
+        enabled,
+        interfaces,
+        processing,
+        interfaceValue,
     } = props;
 
     return (
         <form onSubmit={handleSubmit}>
             <div className="row">
+                <div className="col-12">
+                    {!processing && interfaces &&
+                        <div className="row">
+                            <div className="col-sm-12 col-md-6">
+                                <div className="form__group form__group--dhcp">
+                                    <label>{t('dhcp_interface_select')}</label>
+                                    <Field name="interface_name" component="select" className="form-control custom-select">
+                                        <option value="">{t('dhcp_interface_select')}</option>
+                                        {renderInterfaces(interfaces)}
+                                    </Field>
+                                </div>
+                            </div>
+                            {interfaceValue &&
+                                <div className="col-sm-12 col-md-6">
+                                    {renderInterfaceValues(interfaces[interfaceValue])}
+                                </div>
+                            }
+                        </div>
+                    }
+                    <hr/>
+                </div>
                 <div className="col-lg-6">
                     <div className="form__group form__group--dhcp">
                         <label>{t('dhcp_form_gateway_input')}</label>
@@ -140,8 +209,20 @@ Form.propTypes = {
     pristine: PropTypes.bool,
     submitting: PropTypes.bool,
     enabled: PropTypes.bool,
+    interfaces: PropTypes.object,
+    processing: PropTypes.bool,
+    interfaceValue: PropTypes.string,
     t: PropTypes.func,
 };
+
+const selector = formValueSelector('dhcpForm');
+
+Form = connect((state) => {
+    const interfaceValue = selector(state, 'interface_name');
+    return {
+        interfaceValue,
+    };
+})(Form);
 
 export default flow([
     withNamespaces(),

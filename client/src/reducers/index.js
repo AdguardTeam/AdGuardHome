@@ -272,6 +272,17 @@ const dhcp = handleActions({
         return newState;
     },
 
+    [actions.getDhcpInterfacesRequest]: state => ({ ...state, processingInterfaces: true }),
+    [actions.getDhcpInterfacesFailure]: state => ({ ...state, processingInterfaces: false }),
+    [actions.getDhcpInterfacesSuccess]: (state, { payload }) => {
+        const newState = {
+            ...state,
+            interfaces: payload,
+            processingInterfaces: false,
+        };
+        return newState;
+    },
+
     [actions.findActiveDhcpRequest]: state => ({ ...state, processingStatus: true }),
     [actions.findActiveDhcpFailure]: state => ({ ...state, processingStatus: false }),
     [actions.findActiveDhcpSuccess]: (state, { payload }) => ({
@@ -289,6 +300,7 @@ const dhcp = handleActions({
 }, {
     processing: true,
     processingStatus: false,
+    processingInterfaces: false,
     config: {
         enabled: false,
     },

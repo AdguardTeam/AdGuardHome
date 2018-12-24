@@ -149,5 +149,8 @@
     "dhcp_form_range_start": "Range start",
     "dhcp_form_range_end": "Range end",
     "dhcp_form_lease_title": "DHCP lease time (in seconds)",
-    "dhcp_form_lease_input": "Lease duration"
+    "dhcp_form_lease_input": "Lease duration",
+    "dhcp_interface_select": "Select DHCP interface",
+    "dhcp_hardware_address": "Hardware address",
+    "dhcp_ip_addresses": "IP addresses"
 }

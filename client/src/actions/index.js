@@ -538,6 +538,21 @@ export const getDhcpStatus = () => async (dispatch) => {
     }
 };
 
+export const getDhcpInterfacesRequest = createAction('GET_DHCP_INTERFACES_REQUEST');
+export const getDhcpInterfacesSuccess = createAction('GET_DHCP_INTERFACES_SUCCESS');
+export const getDhcpInterfacesFailure = createAction('GET_DHCP_INTERFACES_FAILURE');
+
+export const getDhcpInterfaces = () => async (dispatch) => {
+    dispatch(getDhcpInterfacesRequest());
+    try {
+        const interfaces = await apiClient.getDhcpInterfaces();
+        dispatch(getDhcpInterfacesSuccess(interfaces));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(getDhcpInterfacesFailure());
+    }
+};
+
 export const setDhcpConfigRequest = createAction('SET_DHCP_CONFIG_REQUEST');
 export const setDhcpConfigSuccess = createAction('SET_DHCP_CONFIG_SUCCESS');
 export const setDhcpConfigFailure = createAction('SET_DHCP_CONFIG_FAILURE');

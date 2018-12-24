@@ -8,6 +8,7 @@ import {
     addErrorToast,
     toggleDhcp,
     getDhcpStatus,
+    getDhcpInterfaces,
     setDhcpConfig,
     findActiveDhcp,
 } from '../actions';
@@ -28,6 +29,7 @@ const mapDispatchToProps = {
     addErrorToast,
     toggleDhcp,
     getDhcpStatus,
+    getDhcpInterfaces,
     setDhcpConfig,
     findActiveDhcp,
 };
