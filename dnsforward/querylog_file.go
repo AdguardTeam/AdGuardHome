@@ -191,15 +191,12 @@ func genericLoader(onEntry func(entry *logEntry) error, needMore func() bool, ti
 		var d *json.Decoder
 
 		if enableGzip {
-			trace("Creating gzip reader")
 			zr, err := gzip.NewReader(f)
 			if err != nil {
 				log.Printf("Failed to create gzip reader: %s", err)
 				continue
 			}
 			defer zr.Close()
-
-			trace("Creating json decoder")
 			d = json.NewDecoder(zr)
 		} else {
 			d = json.NewDecoder(f)

@@ -53,6 +53,7 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, el
 			return
 		}
 	}
+
 	if answer != nil {
 		a, err = answer.Pack()
 		if err != nil {
