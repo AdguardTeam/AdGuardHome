@@ -4,6 +4,8 @@ github.com/AdguardTeam/dnsproxy v0.9.1 h1:+F6jqrVOrUjpbzhALjtbwqHfxW4M2YS3mYdhGx
 github.com/AdguardTeam/dnsproxy v0.9.1/go.mod h1:CKZVVknYdoHVirXqqbALEkC+DBY65yCQrzSKYS78GoE=
 github.com/AdguardTeam/dnsproxy v0.9.2 h1:P3B2IECZejGv8sxjyLXDbCKMgWqUEFb5rq67lxXCKZ0=
 github.com/AdguardTeam/dnsproxy v0.9.2/go.mod h1:CKZVVknYdoHVirXqqbALEkC+DBY65yCQrzSKYS78GoE=
+github.com/AdguardTeam/dnsproxy v0.9.3 h1:zgLcsMEQ0hPhU0LjFwPMz4qeXDF+Yy1MO9xc9QaGjbk=
+github.com/AdguardTeam/dnsproxy v0.9.3/go.mod h1:GsppU3a1x0hIRtIh7Te8CWHKNHtJaoRXQh08DSRqk0A=
 github.com/StackExchange/wmi v0.0.0-20180725035823-b12b22c5341f h1:5ZfJxyXo8KyX8DgGXC5B7ILL8y51fci/qYz2B4j8iLY=
 github.com/StackExchange/wmi v0.0.0-20180725035823-b12b22c5341f/go.mod h1:3eOhrUMpNV+6aFIbp5/iudMxNCF27Vw2OZgy4xEx0Fg=
 github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da h1:KjTM2ks9d14ZYCvmHS9iAKVt9AyzRSqNU1qabPih5BY=
@@ -12,6 +14,8 @@ github.com/aead/poly1305 v0.0.0-20180717145839-3fee0db0b635 h1:52m0LGchQBBVqJRyY
 github.com/aead/poly1305 v0.0.0-20180717145839-3fee0db0b635/go.mod h1:lmLxL+FV291OopO93Bwf9fQLQeLyt33VJRUg5VJ30us=
 github.com/ameshkov/dnscrypt v1.0.0 h1:Y7YexPCxtVCTDXlXu9n17+1H5YS25vftx8vV8Dhuu+E=
 github.com/ameshkov/dnscrypt v1.0.0/go.mod h1:EC7Z1GguyEEwhuLXrcgkRTE3GdyPDSWq2OXefhydGWo=
+github.com/ameshkov/dnscrypt v1.0.1 h1:Aoy/Sqiqk1b/AlBwdLb31QFUi+O02gzB+wDjhdePie0=
+github.com/ameshkov/dnscrypt v1.0.1/go.mod h1:fEeZ+/h8DTt4FxEv9sxN61ygy/8m/vFRqRJcNGJR+r0=
 github.com/beefsack/go-rate v0.0.0-20180408011153-efa7637bb9b6 h1:KXlsf+qt/X5ttPGEjR0tPH1xaWWoKBEg9Q1THAj2h3I=
 github.com/beefsack/go-rate v0.0.0-20180408011153-efa7637bb9b6/go.mod h1:6YNgTHLutezwnBvyneBbwvB8C82y3dcoOj5EQJIdGXA=
 github.com/bluele/gcache v0.0.0-20171010155617-472614239ac7 h1:NpQ+gkFOH27AyDypSCJ/LdsIi/b4rdnEb1N5+IpFfYs=
@@ -31,8 +35,6 @@ github.com/gobuffalo/packr v1.19.0/go.mod h1:MstrNkfCQhd5o+Ct4IJ0skWlxN8emOq8Dso
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/jedisct1/go-dnsstamps v0.0.0-20180418170050-1e4999280f86 h1:Olj4M6T1omUfx7yTTcnhLf4xo6gYMmRHSJIfeA1NZy0=
 github.com/jedisct1/go-dnsstamps v0.0.0-20180418170050-1e4999280f86/go.mod h1:j/ONpSHHmPgDwmFKXg9vhQvIjADe/ft1X4a3TVOmp9g=
-github.com/jedisct1/xsecretbox v0.0.0-20180508184500-7a679c0bcd9a h1:2nyBWKszM41RO/gt5ElUXigAFiRgJ9KifHDlWOlw0lc=
-github.com/jedisct1/xsecretbox v0.0.0-20180508184500-7a679c0bcd9a/go.mod h1:YlN58h704uRFD0BwsEGTq+7Wx+WG2i7P49bc+HwHyAY=
 github.com/jessevdk/go-flags v1.4.0 h1:4IU2WS7AumrZ/40jfhf4QVDMsQwqA7VEHozFRrGARJA=
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
 github.com/jmcvetta/randutil v0.0.0-20150817122601-2bb1b664bcff h1:6NvhExg4omUC9NfA+l4Oq3ibNNeJUdiAF3iBVB0PlDk=
