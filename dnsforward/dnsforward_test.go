@@ -10,20 +10,16 @@ import (
 	"github.com/miekg/dns"
 )
 
-const (
-	listenPort = 48122
-)
-
 func TestServer(t *testing.T) {
 	s := Server{}
-	s.UDPListenAddr = &net.UDPAddr{Port: listenPort}
+	s.UDPListenAddr = &net.UDPAddr{Port: 0}
 	err := s.Start(nil)
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
 
 	// server is running, send a message
-	addr := s.UDPListenAddr
+	addr := s.dnsProxy.Addr("udp")
 	req := dns.Msg{}
 	req.Id = dns.Id()
 	req.RecursionDesired = true
@@ -54,14 +50,14 @@ func TestServer(t *testing.T) {
 
 func TestInvalidRequest(t *testing.T) {
 	s := Server{}
-	s.UDPListenAddr = &net.UDPAddr{Port: listenPort}
+	s.UDPListenAddr = &net.UDPAddr{Port: 0}
 	err := s.Start(nil)
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
 
 	// server is running, send a message
-	addr := s.UDPListenAddr
+	addr := s.dnsProxy.Addr("udp")
 	req := dns.Msg{}
 	req.Id = dns.Id()
 	req.RecursionDesired = true
@@ -80,12 +76,12 @@ func TestInvalidRequest(t *testing.T) {
 }
 
 func TestBlockedRequest(t *testing.T) {
-	s, addr := createTestServer()
-
+	s := createTestServer()
 	err := s.Start(nil)
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
+	addr := s.dnsProxy.Addr("udp")
 
 	//
 	// NXDomain blocking
@@ -112,12 +108,12 @@ func TestBlockedRequest(t *testing.T) {
 }
 
 func TestBlockedByHosts(t *testing.T) {
-	s, addr := createTestServer()
-
+	s := createTestServer()
 	err := s.Start(nil)
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
+	addr := s.dnsProxy.Addr("udp")
 
 	//
 	// Hosts blocking
@@ -151,12 +147,12 @@ func TestBlockedByHosts(t *testing.T) {
 }
 
 func TestBlockedBySafeBrowsing(t *testing.T) {
-	s, addr := createTestServer()
-
+	s := createTestServer()
 	err := s.Start(nil)
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
+	addr := s.dnsProxy.Addr("udp")
 
 	//
 	// Safebrowsing blocking
@@ -200,10 +196,9 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 	}
 }
 
-func createTestServer() (*Server, net.Addr) {
+func createTestServer() *Server {
 	s := Server{}
-	addr := &net.UDPAddr{Port: listenPort}
-	s.UDPListenAddr = addr
+	s.UDPListenAddr = &net.UDPAddr{Port: 0}
 	s.FilteringConfig.FilteringEnabled = true
 	s.FilteringConfig.ProtectionEnabled = true
 	s.FilteringConfig.SafeBrowsingEnabled = true
@@ -215,5 +210,5 @@ func createTestServer() (*Server, net.Addr) {
 	}
 	filter := dnsfilter.Filter{ID: 1, Rules: rules}
 	s.Filters = append(s.Filters, filter)
-	return &s, addr
+	return &s
 }

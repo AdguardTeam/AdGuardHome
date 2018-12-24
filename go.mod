@@ -1,7 +1,7 @@
 module github.com/AdguardTeam/AdGuardHome
 
 require (
-	github.com/AdguardTeam/dnsproxy v0.9.0
+	github.com/AdguardTeam/dnsproxy v0.9.1
 	github.com/StackExchange/wmi v0.0.0-20180725035823-b12b22c5341f // indirect
 	github.com/ameshkov/dnscrypt v1.0.0
 	github.com/beefsack/go-rate v0.0.0-20180408011153-efa7637bb9b6
@@ -19,8 +19,9 @@ require (
 	github.com/sirupsen/logrus v1.2.0
 	go.uber.org/goleak v0.10.0
 	golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9
-	golang.org/x/net v0.0.0-20181217023233-e147a9138326
-	golang.org/x/sys v0.0.0-20181217223516-dcdaa6325bcb // indirect
+	golang.org/x/net v0.0.0-20181220203305-927f97764cc3
+	golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4 // indirect
+	golang.org/x/sys v0.0.0-20181221143128-b4a75ba826a6 // indirect
 	gopkg.in/asaskevich/govalidator.v4 v4.0.0-20160518190739-766470278477
 	gopkg.in/yaml.v2 v2.2.1
 )

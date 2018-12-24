@@ -125,7 +125,7 @@ func (s *Server) startInternal(config *ServerConfig) error {
 		RefuseAny:          s.RefuseAny,
 		CacheEnabled:       true,
 		Upstreams:          s.Upstreams,
-		Handler:            s,
+		Handler:            s.handleDNSRequest,
 	}
 
 	if proxyConfig.UDPListenAddr == nil {
@@ -220,8 +220,8 @@ func (s *Server) Reconfigure(config *ServerConfig) error {
 	return nil
 }
 
-// ServeDNS filters the incoming DNS requests and writes them to the query log
-func (s *Server) ServeDNS(d *proxy.DNSContext, next proxy.Handler) error {
+// handleDNSRequest filters the incoming DNS requests and writes them to the query log
+func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 	start := time.Now()
 
 	// use dnsfilter before cache -- changed settings or filters would require cache invalidation otherwise
@@ -232,7 +232,7 @@ func (s *Server) ServeDNS(d *proxy.DNSContext, next proxy.Handler) error {
 
 	if d.Res == nil {
 		// request was not filtered so let it be processed further
-		err = next.ServeDNS(d, nil)
+		err = p.Resolve(d)
 		if err != nil {
 			return err
 		}
