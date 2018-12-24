@@ -1,19 +1,16 @@
 package dnsforward
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
-
-	"github.com/AdguardTeam/dnsproxy/upstream"
-
-	"github.com/AdguardTeam/dnsproxy/proxy"
-
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
+	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/joomcode/errorx"
 	"github.com/miekg/dns"
 	log "github.com/sirupsen/logrus"
