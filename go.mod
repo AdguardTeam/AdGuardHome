@@ -1,7 +1,7 @@
 module github.com/AdguardTeam/AdGuardHome
 
 require (
-	github.com/AdguardTeam/dnsproxy v0.9.1
+	github.com/AdguardTeam/dnsproxy v0.9.2
 	github.com/StackExchange/wmi v0.0.0-20180725035823-b12b22c5341f // indirect
 	github.com/ameshkov/dnscrypt v1.0.0
 	github.com/beefsack/go-rate v0.0.0-20180408011153-efa7637bb9b6

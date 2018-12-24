@@ -19,6 +19,7 @@ import (
 const (
 	safeBrowsingBlockHost = "standard-block.dns.adguard.com"
 	parentalBlockHost     = "family-block.dns.adguard.com"
+	defaultTimeout        = 10 * time.Second
 )
 
 // Server is the main way to start a DNS server.
@@ -75,7 +76,7 @@ func init() {
 
 	defaultUpstreams := make([]upstream.Upstream, 0)
 	for _, addr := range defaultDNS {
-		u, err := upstream.AddressToUpstream(addr, "")
+		u, err := upstream.AddressToUpstream(addr, "", defaultTimeout)
 		if err == nil {
 			defaultUpstreams = append(defaultUpstreams, u)
 		}
