@@ -252,7 +252,7 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 		if d.Upstream != nil {
 			upstreamAddr = d.Upstream.Address()
 		}
-		logRequest(msg, d.Res, res, elapsed, d.Addr.String(), upstreamAddr)
+		logRequest(msg, d.Res, res, elapsed, d.Addr, upstreamAddr)
 	}
 
 	return nil

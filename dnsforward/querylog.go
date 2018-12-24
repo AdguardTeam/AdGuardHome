@@ -3,6 +3,7 @@ package dnsforward
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -41,10 +42,11 @@ type logEntry struct {
 	Upstream string `json:",omitempty"` // if empty, means it was cached
 }
 
-func logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, elapsed time.Duration, ip string, upstream string) {
+func logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, elapsed time.Duration, addr net.Addr, upstream string) {
 	var q []byte
 	var a []byte
 	var err error
+	ip := getIPString(addr)
 
 	if question != nil {
 		q, err = question.Pack()
@@ -226,4 +228,15 @@ func HandleQueryLog(w http.ResponseWriter, r *http.Request) {
 		log.Println(errorText)
 		http.Error(w, errorText, http.StatusInternalServerError)
 	}
+}
+
+// getIPString is a helper function that extracts IP address from net.Addr
+func getIPString(addr net.Addr) string {
+	switch addr := addr.(type) {
+	case *net.UDPAddr:
+		return addr.IP.String()
+	case *net.TCPAddr:
+		return addr.IP.String()
+	}
+	return ""
 }
