@@ -16,6 +16,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// DefaultTimeout is the default upstream timeout
+const DefaultTimeout = 10 * time.Second
+
 const (
 	safeBrowsingBlockHost = "standard-block.dns.adguard.com"
 	parentalBlockHost     = "family-block.dns.adguard.com"
@@ -75,7 +78,7 @@ func init() {
 
 	defaultUpstreams := make([]upstream.Upstream, 0)
 	for _, addr := range defaultDNS {
-		u, err := upstream.AddressToUpstream(addr, "")
+		u, err := upstream.AddressToUpstream(addr, "", DefaultTimeout)
 		if err == nil {
 			defaultUpstreams = append(defaultUpstreams, u)
 		}
