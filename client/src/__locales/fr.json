@@ -18,7 +18,7 @@
     "disabled_protection": "Protection d\u00e9sactiv\u00e9e",
     "refresh_statics": "Renouveler les statistiques",
     "dns_query": "Requ\u00eates\u001c DNS",
-    "blocked_by": "Bloqu\u00e9 par <a href='#filters'>Filtres<\/a>",
+    "blocked_by": "Bloqu\u00e9 par Filtres",
     "stats_malware_phishing": "Tentative de malware\/hamme\u00e7onnage bloqu\u00e9e",
     "stats_adult": "Sites \u00e0 contenu adulte bloqu\u00e9s",
     "stats_query_domain": "Domaines les plus recherch\u00e9s",

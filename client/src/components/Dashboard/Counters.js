@@ -24,7 +24,9 @@ const Counters = props => (
                 </tr>
                 <tr>
                     <td>
-                        <span dangerouslySetInnerHTML={{ __html: props.t('blocked_by') }} />
+                        <a href="#filters">
+                            <Trans>blocked_by</Trans>
+                        </a>
                         <Tooltip text={ props.t('number_of_dns_query_blocked_24_hours') } type={tooltipType} />
                     </td>
                     <td className="text-right">

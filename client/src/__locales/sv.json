@@ -18,7 +18,7 @@
     "disabled_protection": "Kopplade bort skydd",
     "refresh_statics": "Uppdatera statistik",
     "dns_query": "DNS-f\u00f6rfr\u00e5gningar",
-    "blocked_by": "Blockerat av <a href='#filters'>Filter<\/a>",
+    "blocked_by": "Blockerat av Filter",
     "stats_malware_phishing": "Blockerad skadekod\/phising",
     "stats_adult": "Blockerade vuxensajter",
     "stats_query_domain": "Mest efters\u00f6kta dom\u00e4ner",
