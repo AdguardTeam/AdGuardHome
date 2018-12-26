@@ -18,7 +18,7 @@
     "disabled_protection": "\u0110\u00e3 t\u1eaft b\u1ea3o v\u1ec7",
     "refresh_statics": "L\u00e0m m\u1edbi th\u1ed1ng k\u00ea",
     "dns_query": "Truy v\u1ea5n DNS",
-    "blocked_by": "Ch\u1eb7n b\u1edfi",
+    "blocked_by": "Ch\u1eb7n b\u1edfi <a href='#filters'>B\u1ed9 l\u1ecdc<\/a>",
     "stats_malware_phishing": "M\u00e3 \u0111\u1ed9c\/l\u1eeba \u0111\u1ea3o \u0111\u00e3 ch\u1eb7n",
     "stats_adult": "Website ng\u01b0\u1eddi l\u1edbn \u0111\u00e3 ch\u1eb7n",
     "stats_query_domain": "T\u00ean mi\u1ec1n truy v\u1ea5n nhi\u1ec1u",

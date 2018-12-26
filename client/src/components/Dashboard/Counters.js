@@ -24,7 +24,7 @@ const Counters = props => (
                 </tr>
                 <tr>
                     <td>
-                        <Trans>blocked_by</Trans> <a href="#filters"><Trans>filters</Trans></a>
+                        <span dangerouslySetInnerHTML={{ __html: props.t('blocked_by') }} />
                         <Tooltip text={ props.t('number_of_dns_query_blocked_24_hours') } type={tooltipType} />
                     </td>
                     <td className="text-right">
@@ -90,7 +90,7 @@ Counters.propTypes = {
     replacedSafesearch: PropTypes.number.isRequired,
     avgProcessingTime: PropTypes.number.isRequired,
     refreshButton: PropTypes.node.isRequired,
-    t: PropTypes.func,
+    t: PropTypes.func.isRequired,
 };
 
 export default withNamespaces()(Counters);

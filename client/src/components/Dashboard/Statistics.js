@@ -15,6 +15,7 @@ class Statistics extends Component {
             blockedFiltering,
             replacedSafebrowsing,
             replacedParental,
+            t,
         } = this.props;
 
         const filteringData = [this.props.history[1]];
@@ -49,7 +50,7 @@ class Statistics extends Component {
                                 {getPercent(dnsQueries, blockedFiltering)}
                             </div>
                             <div className="card-title-stats">
-                                <Trans>blocked_by</Trans><a href="#filters"> <Trans>filters</Trans></a>
+                                <span dangerouslySetInnerHTML={{ __html: t('blocked_by') }} />
                             </div>
                         </div>
                         <div className="card-chart-bg">
@@ -105,6 +106,7 @@ Statistics.propTypes = {
     replacedSafebrowsing: PropTypes.number.isRequired,
     replacedParental: PropTypes.number.isRequired,
     refreshButton: PropTypes.node.isRequired,
+    t: PropTypes.func.isRequired,
 };
 
 export default withNamespaces()(Statistics);

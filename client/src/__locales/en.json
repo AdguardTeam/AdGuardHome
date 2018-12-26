@@ -18,7 +18,7 @@
     "disabled_protection": "Disabled protection",
     "refresh_statics": "Refresh statistics",
     "dns_query": "DNS Queries",
-    "blocked_by": "Blocked by",
+    "blocked_by": "Blocked by <a href='#filters'>Filters<\/a>",
     "stats_malware_phishing": "Blocked malware\/phishing",
     "stats_adult": "Blocked adult websites",
     "stats_query_domain": "Top queried domains",
