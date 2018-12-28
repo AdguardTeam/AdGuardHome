@@ -192,6 +192,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	err = startDHCPServer()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	URL := fmt.Sprintf("http://%s", address)
 	log.Println("Go to " + URL)
 	log.Fatal(http.ListenAndServe(address, nil))

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
+	"github.com/joomcode/errorx"
 )
 
 var dhcpServer = dhcpd.Server{}
@@ -107,7 +108,6 @@ func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// implement
 func handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
 	found, err := dhcpd.CheckIfOtherDHCPServersPresent(config.DHCP.InterfaceName)
 	result := map[string]interface{}{}
@@ -122,4 +122,12 @@ func handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusInternalServerError, "Failed to marshal DHCP found json: %s", err)
 		return
 	}
+}
+
+func startDHCPServer() error {
+	err := dhcpServer.Start(&config.DHCP)
+	if err != nil {
+		return errorx.Decorate(err, "Couldn't start DHCP server")
+	}
+	return nil
 }
