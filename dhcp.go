@@ -2,15 +2,18 @@ package main
 
 import (
 	"encoding/json"
-	"math/rand"
 	"net"
 	"net/http"
+
+	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 )
+
+var dhcpServer = dhcpd.Server{}
 
 func handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	status := map[string]interface{}{
-		"config": config.DHCP.Config,
-		"leases": config.DHCP.Leases,
+		"config": config.DHCP,
+		"leases": dhcpServer.Leases(),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -22,14 +25,24 @@ func handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
-	newconfig := dhcpConfig{}
+	newconfig := dhcpd.ServerConfig{}
 	err := json.NewDecoder(r.Body).Decode(&newconfig)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Failed to parse new DHCP config json: %s", err)
 		return
 	}
 
-	config.DHCP.Config = newconfig
+	if newconfig.Enabled {
+		err := dhcpServer.Start(&newconfig)
+		if err != nil {
+			httpError(w, http.StatusBadRequest, "Failed to start DHCP server: %s", err)
+			return
+		}
+	}
+	if !newconfig.Enabled {
+		dhcpServer.Stop()
+	}
+	config.DHCP = newconfig
 }
 
 func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
@@ -93,13 +106,18 @@ func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// TODO: implement
+// implement
 func handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
-	found := map[string]bool{
-		"found": rand.Intn(2) == 1,
+	found, err := dhcpd.CheckIfOtherDHCPServersPresent(config.DHCP.InterfaceName)
+	result := map[string]interface{}{
+		"found": found,
+	}
+	if err != nil {
+		result["found"] = false
+		result["error"] = err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(found)
+	err = json.NewEncoder(w).Encode(result)
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Failed to marshal DHCP found json: %s", err)
 		return

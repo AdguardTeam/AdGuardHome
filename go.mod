@@ -6,11 +6,13 @@ require (
 	github.com/ameshkov/dnscrypt v1.0.1
 	github.com/beefsack/go-rate v0.0.0-20180408011153-efa7637bb9b6
 	github.com/bluele/gcache v0.0.0-20171010155617-472614239ac7
+	github.com/davecgh/go-spew v1.1.1
 	github.com/go-ole/go-ole v1.2.1 // indirect
 	github.com/go-test/deep v1.0.1
 	github.com/gobuffalo/packr v1.19.0
 	github.com/jedisct1/go-dnsstamps v0.0.0-20180418170050-1e4999280f86
 	github.com/joomcode/errorx v0.1.0
+	github.com/krolaw/dhcp4 v0.0.0-20180925202202-7cead472c414
 	github.com/miekg/dns v1.1.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.8.0
