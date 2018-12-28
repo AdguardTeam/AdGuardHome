@@ -14,9 +14,9 @@ const defaultDiscoverTime = time.Second * 3
 
 // field ordering is important -- yaml fields will mirror ordering from here
 type Lease struct {
-	hwaddr net.HardwareAddr `json:"mac" yaml:"hwaddr"`
-	ip     net.IP           `json:"ip"`
-	expiry time.Time        `json:"expires"`
+	HWAddr net.HardwareAddr `json:"mac" yaml:"hwaddr"`
+	IP     net.IP           `json:"ip"`
+	Expiry time.Time        `json:"expires"`
 }
 
 // field ordering is important -- yaml fields will mirror ordering from here
@@ -176,7 +176,7 @@ func (s *Server) reserveLease(p dhcp4.Packet) (*Lease, error) {
 		return nil, wrapErrPrint(err, "Couldn't find free IP for the lease %s", hwaddr.String())
 	}
 	trace("Assigning to %s IP address %s", hwaddr, ip.String())
-	lease := &Lease{hwaddr: hwaddr, ip: ip}
+	lease := &Lease{HWAddr: hwaddr, IP: ip}
 	s.leases = append(s.leases, lease)
 	return lease, nil
 }
@@ -184,7 +184,7 @@ func (s *Server) reserveLease(p dhcp4.Packet) (*Lease, error) {
 func (s *Server) locateLease(p dhcp4.Packet) *Lease {
 	hwaddr := p.CHAddr()
 	for i := range s.leases {
-		if bytes.Equal([]byte(hwaddr), []byte(s.leases[i].hwaddr)) {
+		if bytes.Equal([]byte(hwaddr), []byte(s.leases[i].HWAddr)) {
 			// trace("bytes.Equal(%s, %s) returned true", hwaddr, s.leases[i].hwaddr)
 			return s.leases[i]
 		}
@@ -247,7 +247,7 @@ func (s *Server) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options dh
 	trace("Got %v message", msgType)
 	trace("Leases:")
 	for i, lease := range s.leases {
-		trace("Lease #%d: hwaddr %s, ip %s, expiry %s", i, lease.hwaddr, lease.ip, lease.expiry)
+		trace("Lease #%d: hwaddr %s, ip %s, expiry %s", i, lease.HWAddr, lease.IP, lease.Expiry)
 	}
 	trace("IP pool:")
 	for ip, hwaddr := range s.IPpool {
@@ -285,8 +285,8 @@ func (s *Server) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options dh
 			// couldn't find lease, don't respond
 			return nil
 		}
-		reply := dhcp4.ReplyPacket(p, dhcp4.Offer, s.ipnet.IP, lease.ip, s.leaseTime, s.leaseOptions.SelectOrderOrAll(options[dhcp4.OptionParameterRequestList]))
-		trace("Replying with offer: offered IP %v for %v with options %+v", lease.ip, s.leaseTime, reply.ParseOptions())
+		reply := dhcp4.ReplyPacket(p, dhcp4.Offer, s.ipnet.IP, lease.IP, s.leaseTime, s.leaseOptions.SelectOrderOrAll(options[dhcp4.OptionParameterRequestList]))
+		trace("Replying with offer: offered IP %v for %v with options %+v", lease.IP, s.leaseTime, reply.ParseOptions())
 		return reply
 	case dhcp4.Request: // Broadcast From Client - I'll take that IP (Also start for renewals)
 		// start/renew a lease -- update lease time
@@ -320,35 +320,35 @@ func (s *Server) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options dh
 			return nil
 		}
 
-		if lease.ip.Equal(reqIP) {
+		if lease.IP.Equal(reqIP) {
 			// IP matches lease IP, nothing else to do
-			lease.expiry = time.Now().Add(s.leaseTime)
-			trace("Replying with ACK: request IP matches lease IP, nothing else to do. IP %v for %v", lease.ip, p.CHAddr())
-			return dhcp4.ReplyPacket(p, dhcp4.ACK, s.ipnet.IP, lease.ip, s.leaseTime, s.leaseOptions.SelectOrderOrAll(options[dhcp4.OptionParameterRequestList]))
+			lease.Expiry = time.Now().Add(s.leaseTime)
+			trace("Replying with ACK: request IP matches lease IP, nothing else to do. IP %v for %v", lease.IP, p.CHAddr())
+			return dhcp4.ReplyPacket(p, dhcp4.ACK, s.ipnet.IP, lease.IP, s.leaseTime, s.leaseOptions.SelectOrderOrAll(options[dhcp4.OptionParameterRequestList]))
 		}
 
 		//
 		// requested IP different from lease
 		//
 
-		trace("lease IP is different from requested IP: %s vs %s", lease.ip, reqIP)
+		trace("lease IP is different from requested IP: %s vs %s", lease.IP, reqIP)
 
 		hwaddr := s.getIPpool(reqIP)
 		if hwaddr == nil {
 			// not in pool, check if it's in DHCP range
 			if dhcp4.IPInRange(s.leaseStart, s.leaseStop, reqIP) {
 				// okay, we can give it to our client -- it's in our DHCP range and not taken, so let them use their IP
-				trace("Replying with ACK: request IP %v is not taken, so assigning lease IP %v to it, for %v", reqIP, lease.ip, p.CHAddr())
-				s.unreserveIP(lease.ip)
-				lease.ip = reqIP
+				trace("Replying with ACK: request IP %v is not taken, so assigning lease IP %v to it, for %v", reqIP, lease.IP, p.CHAddr())
+				s.unreserveIP(lease.IP)
+				lease.IP = reqIP
 				s.reserveIP(reqIP, p.CHAddr())
-				lease.expiry = time.Now().Add(s.leaseTime)
-				return dhcp4.ReplyPacket(p, dhcp4.ACK, s.ipnet.IP, lease.ip, s.leaseTime, s.leaseOptions.SelectOrderOrAll(options[dhcp4.OptionParameterRequestList]))
+				lease.Expiry = time.Now().Add(s.leaseTime)
+				return dhcp4.ReplyPacket(p, dhcp4.ACK, s.ipnet.IP, lease.IP, s.leaseTime, s.leaseOptions.SelectOrderOrAll(options[dhcp4.OptionParameterRequestList]))
 			}
 		}
 
-		if hwaddr != nil && !bytes.Equal(hwaddr, lease.hwaddr) {
-			log.Printf("SHOULD NOT HAPPEN: IP pool hwaddr does not match lease hwaddr: %s vs %s", hwaddr, lease.hwaddr)
+		if hwaddr != nil && !bytes.Equal(hwaddr, lease.HWAddr) {
+			log.Printf("SHOULD NOT HAPPEN: IP pool hwaddr does not match lease hwaddr: %s vs %s", hwaddr, lease.HWAddr)
 		}
 
 		// requsted IP is not sufficient, reply with NAK
