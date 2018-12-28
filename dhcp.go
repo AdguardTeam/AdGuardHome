@@ -110,12 +110,11 @@ func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 // implement
 func handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
 	found, err := dhcpd.CheckIfOtherDHCPServersPresent(config.DHCP.InterfaceName)
-	result := map[string]interface{}{
-		"found": found,
-	}
+	result := map[string]interface{}{}
 	if err != nil {
-		result["found"] = false
-		result["error"] = err
+		result["error"] = err.Error()
+	} else {
+		result["found"] = found
 	}
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(result)
