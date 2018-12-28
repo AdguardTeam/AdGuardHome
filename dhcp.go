@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 	"github.com/joomcode/errorx"
@@ -12,9 +13,20 @@ import (
 var dhcpServer = dhcpd.Server{}
 
 func handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
+	rawLeases := dhcpServer.Leases()
+	leases := []map[string]string{}
+	for i := range rawLeases {
+		lease := map[string]string{
+			"mac":     rawLeases[i].HWAddr.String(),
+			"ip":      rawLeases[i].IP.String(),
+			"expires": rawLeases[i].Expiry.Format(time.RFC3339),
+		}
+		leases = append(leases, lease)
+
+	}
 	status := map[string]interface{}{
 		"config": config.DHCP,
-		"leases": dhcpServer.Leases(),
+		"leases": leases,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
