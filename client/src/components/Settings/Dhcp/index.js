@@ -22,7 +22,12 @@ class Dhcp extends Component {
         const buttonClass = config.enabled ? 'btn-gray' : 'btn-success';
 
         return (
-            <button type="button" className={`btn btn-standart mr-2 ${buttonClass}`} onClick={() => this.props.toggleDhcp(config)}>
+            <button
+                type="button"
+                className={`btn btn-standart mr-2 ${buttonClass}`}
+                onClick={() => this.props.toggleDhcp(config)}
+                disabled={!config.interface_name}
+            >
                 <Trans>{buttonText}</Trans>
             </button>
         );
@@ -41,22 +46,6 @@ class Dhcp extends Component {
                     <Card title={ t('dhcp_title') } subtitle={ t('dhcp_description') } bodyType="card-body box-body--settings">
                         <div className="row">
                             <div className="col">
-                                <div className="card-actions mt-0 mb-3">
-                                    {this.getToggleDhcpButton()}
-                                    <button
-                                        className={statusButtonClass}
-                                        type="button"
-                                        onClick={this.handleRefresh}
-                                    >
-                                        <Trans>refresh_status</Trans>
-                                    </button>
-                                </div>
-                                {dhcp.active && !dhcp.active.found &&
-                                    <div className="text-secondary">
-                                        <Trans>dhcp_not_found</Trans>
-                                    </div>
-                                }
-                                <hr/>
                                 <Form
                                     onSubmit={this.handleFormSubmit}
                                     initialValues={dhcp.config}
@@ -64,6 +53,29 @@ class Dhcp extends Component {
                                     interfaces={dhcp.interfaces}
                                     processing={dhcp.processingInterfaces}
                                 />
+                                <hr/>
+                                <div className="card-actions mb-3">
+                                    {this.getToggleDhcpButton()}
+                                    <button
+                                        className={statusButtonClass}
+                                        type="button"
+                                        onClick={this.handleRefresh}
+                                        disabled={!dhcp.config.interface_name}
+                                    >
+                                        <Trans>refresh_status</Trans>
+                                    </button>
+                                </div>
+                                {dhcp.active &&
+                                    <div className="text-secondary">
+                                        {dhcp.active.found ? (
+                                            <span className="text-danger">
+                                                <Trans>dhcp_found</Trans>
+                                            </span>
+                                        ) : (
+                                            <Trans>dhcp_not_found</Trans>
+                                        )}
+                                    </div>
+                                }
                             </div>
                         </div>
                     </Card>

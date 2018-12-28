@@ -561,6 +561,7 @@ export const setDhcpConfig = config => async (dispatch) => {
     dispatch(setDhcpConfigRequest());
     try {
         await apiClient.setDhcpConfig(config);
+        dispatch(getDhcpStatus());
         dispatch(addSuccessToast('dhcp_config_saved'));
         dispatch(setDhcpConfigSuccess());
     } catch (error) {
@@ -576,8 +577,8 @@ export const findActiveDhcpFailure = createAction('FIND_ACTIVE_DHCP_FAILURE');
 export const findActiveDhcp = () => async (dispatch) => {
     dispatch(findActiveDhcpRequest());
     try {
-        await apiClient.findActiveDhcp();
-        dispatch(findActiveDhcpSuccess());
+        const activeDhcp = await apiClient.findActiveDhcp();
+        dispatch(findActiveDhcpSuccess(activeDhcp));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(findActiveDhcpFailure());

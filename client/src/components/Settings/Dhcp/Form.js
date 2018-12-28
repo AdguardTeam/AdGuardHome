@@ -49,16 +49,19 @@ const renderInterfaces = (interfaces => (
     Object.keys(interfaces).map((item) => {
         const option = interfaces[item];
         const { name } = option;
+        const onlyIPv6 = option.ip_addresses.every(ip => ip.includes(':'));
         let interfaceIP = option.ip_addresses[0];
 
-        option.ip_addresses.forEach((ip) => {
-            if (!ip.includes(':')) {
-                interfaceIP = ip;
-            }
-        });
+        if (!onlyIPv6) {
+            option.ip_addresses.forEach((ip) => {
+                if (!ip.includes(':')) {
+                    interfaceIP = ip;
+                }
+            });
+        }
 
         return (
-            <option value={name} key={name}>
+            <option value={name} key={name} disabled={onlyIPv6}>
                 {name} - {interfaceIP}
             </option>
         );
@@ -91,7 +94,6 @@ let Form = (props) => {
         handleSubmit,
         pristine,
         submitting,
-        enabled,
         interfaces,
         processing,
         interfaceValue,
@@ -106,7 +108,11 @@ let Form = (props) => {
                             <div className="col-sm-12 col-md-6">
                                 <div className="form__group form__group--dhcp">
                                     <label>{t('dhcp_interface_select')}</label>
-                                    <Field name="interface_name" component="select" className="form-control custom-select">
+                                    <Field
+                                        name="interface_name"
+                                        component="select"
+                                        className="form-control custom-select"
+                                    >
                                         <option value="">{t('dhcp_interface_select')}</option>
                                         {renderInterfaces(interfaces)}
                                     </Field>
@@ -131,7 +137,6 @@ let Form = (props) => {
                             className="form-control"
                             placeholder={t('dhcp_form_gateway_input')}
                             validate={[ipv4, required]}
-                            disabled={!enabled}
                         />
                     </div>
                     <div className="form__group form__group--dhcp">
@@ -143,7 +148,6 @@ let Form = (props) => {
                             className="form-control"
                             placeholder={t('dhcp_form_subnet_input')}
                             validate={[ipv4, required]}
-                            disabled={!enabled}
                         />
                     </div>
                 </div>
@@ -161,7 +165,6 @@ let Form = (props) => {
                                     className="form-control"
                                     placeholder={t('dhcp_form_range_start')}
                                     validate={[ipv4, required]}
-                                    disabled={!enabled}
                                 />
                             </div>
                             <div className="col">
@@ -172,7 +175,6 @@ let Form = (props) => {
                                     className="form-control"
                                     placeholder={t('dhcp_form_range_end')}
                                     validate={[ipv4, required]}
-                                    disabled={!enabled}
                                 />
                             </div>
                         </div>
@@ -186,7 +188,6 @@ let Form = (props) => {
                             className="form-control"
                             placeholder={t('dhcp_form_lease_input')}
                             validate={[required, isPositive]}
-                            disabled={!enabled}
                             normalize={toNumber}
                         />
                     </div>
@@ -196,7 +197,7 @@ let Form = (props) => {
             <button
                 type="submit"
                 className="btn btn-success btn-standart"
-                disabled={pristine || submitting || !enabled}
+                disabled={pristine || submitting}
             >
                 {t('save_config')}
             </button>
@@ -208,10 +209,10 @@ Form.propTypes = {
     handleSubmit: PropTypes.func,
     pristine: PropTypes.bool,
     submitting: PropTypes.bool,
-    enabled: PropTypes.bool,
     interfaces: PropTypes.object,
     processing: PropTypes.bool,
     interfaceValue: PropTypes.string,
+    initialValues: PropTypes.object,
     t: PropTypes.func,
 };
 
