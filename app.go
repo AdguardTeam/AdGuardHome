@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -14,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gobuffalo/packr"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -62,6 +62,7 @@ func main() {
 				}
 				bindPort = &v
 			}},
+			{"verbose", "v", "enable verbose output", nil},
 			{"help", "h", "print this help", nil},
 		}
 		printHelp := func() {
@@ -78,6 +79,9 @@ func main() {
 			if v == "--help" || v == "-h" {
 				printHelp()
 				os.Exit(64)
+			}
+			if v == "--verbose" || v == "-v" {
+				log.SetLevel(log.TraceLevel)
 			}
 			knownParam := false
 			for _, opt := range opts {
