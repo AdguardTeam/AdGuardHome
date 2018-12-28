@@ -43,6 +43,7 @@ func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		dhcpServer.Stop()
 	}
 	config.DHCP = newconfig
+	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
