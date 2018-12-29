@@ -14,9 +14,10 @@ const defaultDiscoverTime = time.Second * 3
 
 // field ordering is important -- yaml fields will mirror ordering from here
 type Lease struct {
-	HWAddr net.HardwareAddr `json:"mac" yaml:"hwaddr"`
-	IP     net.IP           `json:"ip"`
-	Expiry time.Time        `json:"expires"`
+	HWAddr   net.HardwareAddr `json:"mac" yaml:"hwaddr"`
+	IP       net.IP           `json:"ip"`
+	Hostname string           `json:"hostname"`
+	Expiry   time.Time        `json:"expires"`
 }
 
 // field ordering is important -- yaml fields will mirror ordering from here
@@ -176,7 +177,8 @@ func (s *Server) reserveLease(p dhcp4.Packet) (*Lease, error) {
 		return nil, wrapErrPrint(err, "Couldn't find free IP for the lease %s", hwaddr.String())
 	}
 	trace("Assigning to %s IP address %s", hwaddr, ip.String())
-	lease := &Lease{HWAddr: hwaddr, IP: ip}
+	hostname := p.ParseOptions()[dhcp4.OptionHostName]
+	lease := &Lease{HWAddr: hwaddr, IP: ip, Hostname: string(hostname)}
 	s.leases = append(s.leases, lease)
 	return lease, nil
 }
