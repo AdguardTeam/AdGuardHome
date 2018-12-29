@@ -1,5 +1,5 @@
 {
-    "refresh_status": "Refresh status",
+    "check_dhcp_servers": "Check for DHCP servers",
     "save_config": "Save config",
     "enabled_dhcp": "DHCP server enabled",
     "disabled_dhcp": "DHCP server disabled",

@@ -304,6 +304,7 @@ const dhcp = handleActions({
     config: {
         enabled: false,
     },
+    active: null,
     leases: [],
 });
 

@@ -328,8 +328,12 @@ export default class Api {
         return this.makeRequest(path, method, parameters);
     }
 
-    findActiveDhcp() {
+    findActiveDhcp(name) {
         const { path, method } = this.DHCP_FIND_ACTIVE;
-        return this.makeRequest(path, method);
+        const parameters = {
+            data: name,
+            headers: { 'Content-Type': 'text/plain' },
+        };
+        return this.makeRequest(path, method, parameters);
     }
 }
