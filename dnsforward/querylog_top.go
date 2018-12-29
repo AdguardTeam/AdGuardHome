@@ -158,6 +158,11 @@ func (r *dayTop) addEntry(entry *logEntry, q *dns.Msg, now time.Time) error {
 		return nil
 	}
 
+	// if a DNS query doesn't have questions, do nothing
+	if len(q.Question) == 0 {
+		return nil
+	}
+
 	hostname := strings.ToLower(strings.TrimSuffix(q.Question[0].Name, "."))
 
 	// get value, if not set, crate one
