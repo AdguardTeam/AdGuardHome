@@ -3,7 +3,7 @@
     "save_config": "Save config",
     "enabled_dhcp": "DHCP server enabled",
     "disabled_dhcp": "DHCP server disabled",
-    "dhcp_title": "DHCP server",
+    "dhcp_title": "DHCP server (experimental!)",
     "dhcp_description": "If your router does not provide DHCP settings, you can use AdGuard's own built-in DHCP server.",
     "dhcp_enable": "Enable DHCP server",
     "dhcp_disable": "Disable DHCP server",
