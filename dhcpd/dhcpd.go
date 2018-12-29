@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/hmage/golibs/log"
@@ -47,6 +48,7 @@ type Server struct {
 	IPpool map[[4]byte]net.HardwareAddr
 
 	ServerConfig
+	sync.RWMutex
 }
 
 // Start will listen on port 67 and serve DHCP requests.
@@ -179,7 +181,9 @@ func (s *Server) reserveLease(p dhcp4.Packet) (*Lease, error) {
 	log.Tracef("Assigning to %s IP address %s", hwaddr, ip.String())
 	hostname := p.ParseOptions()[dhcp4.OptionHostName]
 	lease := &Lease{HWAddr: hwaddr, IP: ip, Hostname: string(hostname)}
+	s.Lock()
 	s.leases = append(s.leases, lease)
+	s.Unlock()
 	return lease, nil
 }
 
@@ -387,5 +391,8 @@ func (s *Server) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options dh
 }
 
 func (s *Server) Leases() []*Lease {
-	return s.leases
+	s.RLock()
+	result := s.leases
+	s.RUnlock()
+	return result
 }

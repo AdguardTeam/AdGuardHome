@@ -142,6 +142,8 @@ func statsRotator() {
 type counter struct {
 	name  string // used as key in periodic stats
 	value int64
+
+	sync.Mutex
 }
 
 func newDNSCounter(name string) *counter {
@@ -156,7 +158,9 @@ func (c *counter) IncWithTime(when time.Time) {
 	statistics.PerMinute.Inc(c.name, when)
 	statistics.PerHour.Inc(c.name, when)
 	statistics.PerDay.Inc(c.name, when)
+	c.Lock()
 	c.value++
+	c.Unlock()
 }
 
 func (c *counter) Inc() {
@@ -167,6 +171,8 @@ type histogram struct {
 	name  string // used as key in periodic stats
 	count int64
 	total float64
+
+	sync.Mutex
 }
 
 func newDNSHistogram(name string) *histogram {
@@ -180,8 +186,10 @@ func (h *histogram) ObserveWithTime(value float64, when time.Time) {
 	statistics.PerMinute.Observe(h.name, when, value)
 	statistics.PerHour.Observe(h.name, when, value)
 	statistics.PerDay.Observe(h.name, when, value)
+	h.Lock()
 	h.count++
 	h.total += value
+	h.Unlock()
 }
 
 func (h *histogram) Observe(value float64) {
