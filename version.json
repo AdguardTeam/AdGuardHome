@@ -1,10 +1,11 @@
 {
-  "version": "v0.91",
-  "announcement": "AdGuard Home v0.91 is now available!",
-  "announcement_url": "https://github.com/AdguardTeam/AdGuardHome/releases/tag/v0.91",
-  "download_darwin_amd64": "https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.91/AdGuardHome_v0.91_MacOS.zip",
-  "download_linux_amd64": "https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.91/AdGuardHome_v0.91_linux_amd64.tar.gz",
-  "download_linux_386": "https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.91/AdGuardHome_v0.91_linux_386.tar.gz",
-  "download_linux_arm": "https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.91/AdGuardHome_v0.91_linux_arm.tar.gz",
+  "version": "v0.92",
+  "announcement": "AdGuard Home v0.92 is now available!",
+  "announcement_url": "https://github.com/AdguardTeam/AdGuardHome/releases/tag/v0.92",
+  "download_windows_amd64": "https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.92/AdGuardHome_v0.92_Windows.zip",
+  "download_darwin_amd64": "https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.92/AdGuardHome_v0.92_MacOS.zip",
+  "download_linux_amd64": "https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.92/AdGuardHome_v0.92_linux_amd64.tar.gz",
+  "download_linux_386": "https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.92/AdGuardHome_v0.92_linux_386.tar.gz",
+  "download_linux_arm": "https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.92/AdGuardHome_v0.92_linux_arm.tar.gz",
   "selfupdate_min_version": "v0.0"
 }

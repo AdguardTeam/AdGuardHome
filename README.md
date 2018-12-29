@@ -51,19 +51,23 @@ In the future, AdGuard Home is supposed to become more than just a DNS server.
 
 ### Mac
 
-Download this file: [AdGuardHome_v0.91_MacOS.zip](https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.91/AdGuardHome_v0.91_MacOS.zip), then unpack it and follow ["How to run"](#how-to-run) instructions below.
+Download this file: [AdGuardHome_v0.92_MacOS.zip](https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.92/AdGuardHome_v0.92_MacOS.zip), then unpack it and follow ["How to run"](#how-to-run) instructions below.
+
+### Windows 64-bit
+
+Download this file: [AdGuardHome_v0.92_Windows.zip](https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.92/AdGuardHome_v0.92_Windows.zip), then unpack it and follow ["How to run"](#how-to-run) instructions below.
 
 ### Linux 64-bit Intel
 
-Download this file: [AdGuardHome_v0.91_linux_amd64.tar.gz](https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.91/AdGuardHome_v0.91_linux_amd64.tar.gz), then unpack it and follow ["How to run"](#how-to-run) instructions below.
+Download this file: [AdGuardHome_v0.92_linux_amd64.tar.gz](https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.92/AdGuardHome_v0.92_linux_amd64.tar.gz), then unpack it and follow ["How to run"](#how-to-run) instructions below.
 
 ### Linux 32-bit Intel
 
-Download this file: [AdGuardHome_v0.91_linux_386.tar.gz](https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.91/AdGuardHome_v0.91_linux_386.tar.gz), then unpack it and follow ["How to run"](#how-to-run) instructions below.
+Download this file: [AdGuardHome_v0.92_linux_386.tar.gz](https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.92/AdGuardHome_v0.92_linux_386.tar.gz), then unpack it and follow ["How to run"](#how-to-run) instructions below.
 
 ### Raspberry Pi (32-bit ARM)
 
-Download this file: [AdGuardHome_v0.91_linux_arm.tar.gz](https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.91/AdGuardHome_v0.91_linux_arm.tar.gz), then unpack it and follow ["How to run"](#how-to-run) instructions below.
+Download this file: [AdGuardHome_v0.92_linux_arm.tar.gz](https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.92/AdGuardHome_v0.92_linux_arm.tar.gz), then unpack it and follow ["How to run"](#how-to-run) instructions below.
 
 ## How to update
 

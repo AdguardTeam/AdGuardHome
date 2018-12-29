@@ -2,7 +2,7 @@ swagger: '2.0'
 info:
     title: 'AdGuard Home'
     description: 'AdGuard Home REST API. Admin web interface is built on top of this REST API.'
-    version: 0.91.0
+    version: 0.92.0
 schemes:
     - http
 basePath: /control
