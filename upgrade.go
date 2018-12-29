@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/AdguardTeam/AdGuardHome/log"
+	"github.com/hmage/golibs/log"
 	"gopkg.in/yaml.v2"
 )
 

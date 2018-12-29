@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
-	"github.com/AdguardTeam/AdGuardHome/log"
+	"github.com/hmage/golibs/log"
 	"github.com/joomcode/errorx"
 )
 

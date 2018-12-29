@@ -10,6 +10,7 @@ require (
 	github.com/go-ole/go-ole v1.2.1 // indirect
 	github.com/go-test/deep v1.0.1
 	github.com/gobuffalo/packr v1.19.0
+	github.com/hmage/golibs v0.0.0-20181229160906-c8491df0bfc4
 	github.com/jedisct1/go-dnsstamps v0.0.0-20180418170050-1e4999280f86
 	github.com/joomcode/errorx v0.1.0
 	github.com/krolaw/dhcp4 v0.0.0-20180925202202-7cead472c414

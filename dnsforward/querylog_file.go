@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/log"
 	"github.com/go-test/deep"
+	"github.com/hmage/golibs/log"
 )
 
 var (

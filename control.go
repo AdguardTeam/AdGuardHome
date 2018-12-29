@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
-	"github.com/AdguardTeam/AdGuardHome/log"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/hmage/golibs/log"
 	"github.com/miekg/dns"
 	"gopkg.in/asaskevich/govalidator.v4"
 )

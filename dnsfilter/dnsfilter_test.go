@@ -17,7 +17,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/AdguardTeam/AdGuardHome/log"
+	"github.com/hmage/golibs/log"
 	"github.com/shirou/gopsutil/process"
 	"go.uber.org/goleak"
 )

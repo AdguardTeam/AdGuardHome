@@ -5,7 +5,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/AdguardTeam/AdGuardHome/log"
+	"github.com/hmage/golibs/log"
 	"github.com/joomcode/errorx"
 )
 

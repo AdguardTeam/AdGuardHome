@@ -12,8 +12,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/log"
 	"github.com/gobuffalo/packr"
+	"github.com/hmage/golibs/log"
 	"golang.org/x/crypto/ssh/terminal"
 )
 

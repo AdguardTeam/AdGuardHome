@@ -6,7 +6,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/log"
+	"github.com/hmage/golibs/log"
 	"github.com/krolaw/dhcp4"
 )
 

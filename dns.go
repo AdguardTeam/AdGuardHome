@@ -6,8 +6,8 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
-	"github.com/AdguardTeam/AdGuardHome/log"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/hmage/golibs/log"
 	"github.com/joomcode/errorx"
 )
 

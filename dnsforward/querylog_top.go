@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/log"
 	"github.com/bluele/gcache"
+	"github.com/hmage/golibs/log"
 	"github.com/miekg/dns"
 )
 

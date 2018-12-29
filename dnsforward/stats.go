@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
-	"github.com/AdguardTeam/AdGuardHome/log"
+	"github.com/hmage/golibs/log"
 )
 
 var (
