@@ -31,6 +31,7 @@
     "react-transition-group": "^2.4.0",
     "redux": "^4.0.0",
     "redux-actions": "^2.4.0",
+    "redux-form": "^7.4.2",
     "redux-thunk": "^2.3.0",
     "svg-url-loader": "^2.3.2",
     "whatwg-fetch": "2.0.3"

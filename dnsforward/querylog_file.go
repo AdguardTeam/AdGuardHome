@@ -9,9 +9,8 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/go-test/deep"
+	"github.com/hmage/golibs/log"
 )
 
 var (
@@ -222,7 +221,7 @@ func genericLoader(onEntry func(entry *logEntry) error, needMore func() bool, ti
 			}
 
 			if now.Sub(entry.Time) > timeWindow {
-				// trace("skipping entry") // debug logging
+				// log.Tracef("skipping entry") // debug logging
 				continue
 			}
 

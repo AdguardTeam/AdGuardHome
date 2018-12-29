@@ -1,4 +1,5 @@
 export const R_URL_REQUIRES_PROTOCOL = /^https?:\/\/\w[\w_\-.]*\.[a-z]{2,8}[^\s]*$/;
+export const R_IPV4 = /^(?:(?:^|\.)(?:2(?:5[0-5]|[0-4]\d)|1?\d?\d)){4}$/g;
 
 export const STATS_NAMES = {
     avg_processing_time: 'average_processing_time',

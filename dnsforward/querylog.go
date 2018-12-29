@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
+	"github.com/hmage/golibs/log"
 	"github.com/miekg/dns"
-	log "github.com/sirupsen/logrus"
 )
 
 const (

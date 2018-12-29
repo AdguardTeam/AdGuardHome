@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 
+	"github.com/hmage/golibs/log"
 	"gopkg.in/yaml.v2"
 )
 

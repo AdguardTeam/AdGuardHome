@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"regexp"
@@ -18,6 +17,7 @@ import (
 	"time"
 
 	"github.com/bluele/gcache"
+	"github.com/hmage/golibs/log"
 	"golang.org/x/net/publicsuffix"
 )
 

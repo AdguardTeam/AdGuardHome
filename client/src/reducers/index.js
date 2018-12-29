@@ -2,6 +2,7 @@ import { combineReducers } from 'redux';
 import { handleActions } from 'redux-actions';
 import { loadingBarReducer } from 'react-redux-loading-bar';
 import nanoid from 'nanoid';
+import { reducer as formReducer } from 'redux-form';
 import versionCompare from '../helpers/versionCompare';
 
 import * as actions from '../actions';
@@ -35,6 +36,7 @@ const settings = handleActions({
     processing: true,
     processingTestUpstream: false,
     processingSetUpstream: false,
+    processingDhcpStatus: false,
 });
 
 const dashboard = handleActions({
@@ -258,11 +260,61 @@ const toasts = handleActions({
     },
 }, { notices: [] });
 
+const dhcp = handleActions({
+    [actions.getDhcpStatusRequest]: state => ({ ...state, processing: true }),
+    [actions.getDhcpStatusFailure]: state => ({ ...state, processing: false }),
+    [actions.getDhcpStatusSuccess]: (state, { payload }) => {
+        const newState = {
+            ...state,
+            ...payload,
+            processing: false,
+        };
+        return newState;
+    },
+
+    [actions.getDhcpInterfacesRequest]: state => ({ ...state, processingInterfaces: true }),
+    [actions.getDhcpInterfacesFailure]: state => ({ ...state, processingInterfaces: false }),
+    [actions.getDhcpInterfacesSuccess]: (state, { payload }) => {
+        const newState = {
+            ...state,
+            interfaces: payload,
+            processingInterfaces: false,
+        };
+        return newState;
+    },
+
+    [actions.findActiveDhcpRequest]: state => ({ ...state, processingStatus: true }),
+    [actions.findActiveDhcpFailure]: state => ({ ...state, processingStatus: false }),
+    [actions.findActiveDhcpSuccess]: (state, { payload }) => ({
+        ...state,
+        active: payload,
+        processingStatus: false,
+    }),
+
+    [actions.toggleDhcpSuccess]: (state) => {
+        const { config } = state;
+        const newConfig = { ...config, enabled: !config.enabled };
+        const newState = { ...state, config: newConfig };
+        return newState;
+    },
+}, {
+    processing: true,
+    processingStatus: false,
+    processingInterfaces: false,
+    config: {
+        enabled: false,
+    },
+    active: null,
+    leases: [],
+});
+
 export default combineReducers({
     settings,
     dashboard,
     queryLogs,
     filtering,
     toasts,
+    dhcp,
     loadingBar: loadingBarReducer,
+    form: formReducer,
 });

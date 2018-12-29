@@ -2,13 +2,14 @@ package main
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"sync"
 
+	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
+	"github.com/hmage/golibs/log"
 	"gopkg.in/yaml.v2"
 )
 
@@ -23,14 +24,15 @@ type configuration struct {
 	ourConfigFilename string // Config filename (can be overriden via the command line arguments)
 	ourBinaryDir      string // Location of our directory, used to protect against CWD being somewhere else
 
-	BindHost  string    `yaml:"bind_host"`
-	BindPort  int       `yaml:"bind_port"`
-	AuthName  string    `yaml:"auth_name"`
-	AuthPass  string    `yaml:"auth_pass"`
-	Language  string    `yaml:"language"` // two-letter ISO 639-1 language code
-	DNS       dnsConfig `yaml:"dns"`
-	Filters   []filter  `yaml:"filters"`
-	UserRules []string  `yaml:"user_rules"`
+	BindHost  string             `yaml:"bind_host"`
+	BindPort  int                `yaml:"bind_port"`
+	AuthName  string             `yaml:"auth_name"`
+	AuthPass  string             `yaml:"auth_pass"`
+	Language  string             `yaml:"language"` // two-letter ISO 639-1 language code
+	DNS       dnsConfig          `yaml:"dns"`
+	Filters   []filter           `yaml:"filters"`
+	UserRules []string           `yaml:"user_rules"`
+	DHCP      dhcpd.ServerConfig `yaml:"dhcp"`
 
 	sync.RWMutex `yaml:"-"`
 

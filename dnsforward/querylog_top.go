@@ -13,9 +13,8 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/bluele/gcache"
+	"github.com/hmage/golibs/log"
 	"github.com/miekg/dns"
 )
 

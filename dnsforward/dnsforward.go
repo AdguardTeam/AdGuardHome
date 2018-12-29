@@ -11,9 +11,9 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/hmage/golibs/log"
 	"github.com/joomcode/errorx"
 	"github.com/miekg/dns"
-	log "github.com/sirupsen/logrus"
 )
 
 // DefaultTimeout is the default upstream timeout
@@ -283,7 +283,7 @@ func (s *Server) filterDNSRequest(d *proxy.DNSContext) (*dnsfilter.Result, error
 		// Return immediately if there's an error
 		return nil, errorx.Decorate(err, "dnsfilter failed to check host '%s'", host)
 	} else if res.IsFiltered {
-		log.Debugf("Host %s is filtered, reason - '%s', matched rule: '%s'", host, res.Reason, res.Rule)
+		// log.Tracef("Host %s is filtered, reason - '%s', matched rule: '%s'", host, res.Reason, res.Rule)
 		d.Res = s.genDNSFilterMessage(d, &res)
 	}
 
@@ -324,7 +324,7 @@ func (s *Server) genARecord(request *dns.Msg, ip net.IP) *dns.Msg {
 	resp.SetReply(request)
 	answer, err := dns.NewRR(fmt.Sprintf("%s %d A %s", request.Question[0].Name, s.BlockedResponseTTL, ip.String()))
 	if err != nil {
-		log.Warnf("Couldn't generate A record for up replacement host '%s': %s", ip.String(), err)
+		log.Printf("Couldn't generate A record for replacement host '%s': %s", ip.String(), err)
 		return s.genServerFailure(request)
 	}
 	resp.Answer = append(resp.Answer, answer)

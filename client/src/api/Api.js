@@ -302,4 +302,38 @@ export default class Api {
         };
         return this.makeRequest(path, method, parameters);
     }
+
+    // DHCP
+    DHCP_STATUS = { path: 'dhcp/status', method: 'GET' };
+    DHCP_SET_CONFIG = { path: 'dhcp/set_config', method: 'POST' };
+    DHCP_FIND_ACTIVE = { path: 'dhcp/find_active_dhcp', method: 'POST' };
+    DHCP_INTERFACES = { path: 'dhcp/interfaces', method: 'GET' };
+
+    getDhcpStatus() {
+        const { path, method } = this.DHCP_STATUS;
+        return this.makeRequest(path, method);
+    }
+
+    getDhcpInterfaces() {
+        const { path, method } = this.DHCP_INTERFACES;
+        return this.makeRequest(path, method);
+    }
+
+    setDhcpConfig(config) {
+        const { path, method } = this.DHCP_SET_CONFIG;
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, parameters);
+    }
+
+    findActiveDhcp(name) {
+        const { path, method } = this.DHCP_FIND_ACTIVE;
+        const parameters = {
+            data: name,
+            headers: { 'Content-Type': 'text/plain' },
+        };
+        return this.makeRequest(path, method, parameters);
+    }
 }
