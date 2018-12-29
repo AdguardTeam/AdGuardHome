@@ -121,7 +121,22 @@ func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
-	found, err := dhcpd.CheckIfOtherDHCPServersPresent(config.DHCP.InterfaceName)
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		errorText := fmt.Sprintf("failed to read request body: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusBadRequest)
+		return
+	}
+
+	interfaceName := strings.TrimSpace(string(body))
+	if interfaceName == "" {
+		errorText := fmt.Sprintf("empty interface name specified")
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusBadRequest)
+		return
+	}
+	found, err := dhcpd.CheckIfOtherDHCPServersPresent(interfaceName)
 	result := map[string]interface{}{}
 	if err != nil {
 		result["error"] = err.Error()
