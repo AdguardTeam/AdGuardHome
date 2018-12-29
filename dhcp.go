@@ -137,6 +137,10 @@ func handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
 }
 
 func startDHCPServer() error {
+	if config.DHCP.Enabled == false {
+		// not enabled, don't do anything
+		return nil
+	}
 	err := dhcpServer.Start(&config.DHCP)
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start DHCP server")
