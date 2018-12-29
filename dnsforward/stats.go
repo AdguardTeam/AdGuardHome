@@ -3,12 +3,12 @@ package dnsforward
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/log"
 )
 
 var (
@@ -69,7 +69,7 @@ func purgeStats() {
 func (p *periodicStats) Inc(name string, when time.Time) {
 	// calculate how many periods ago this happened
 	elapsed := int64(time.Since(when) / p.period)
-	// trace("%s: %v as %v -> [%v]", name, time.Since(when), p.period, elapsed)
+	// log.Tracef("%s: %v as %v -> [%v]", name, time.Since(when), p.period, elapsed)
 	if elapsed >= statsHistoryElements {
 		return // outside of our timeframe
 	}
@@ -83,7 +83,7 @@ func (p *periodicStats) Inc(name string, when time.Time) {
 func (p *periodicStats) Observe(name string, when time.Time, value float64) {
 	// calculate how many periods ago this happened
 	elapsed := int64(time.Since(when) / p.period)
-	// trace("%s: %v as %v -> [%v]", name, time.Since(when), p.period, elapsed)
+	// log.Tracef("%s: %v as %v -> [%v]", name, time.Since(when), p.period, elapsed)
 	if elapsed >= statsHistoryElements {
 		return // outside of our timeframe
 	}
@@ -92,7 +92,7 @@ func (p *periodicStats) Observe(name string, when time.Time, value float64) {
 		countname := name + "_count"
 		currentValues := p.Entries[countname]
 		value := currentValues[elapsed]
-		// trace("Will change p.Entries[%s][%d] from %v to %v", countname, elapsed, value, value+1)
+		// log.Tracef("Will change p.Entries[%s][%d] from %v to %v", countname, elapsed, value, value+1)
 		value += 1
 		currentValues[elapsed] = value
 		p.Entries[countname] = currentValues
@@ -145,7 +145,7 @@ type counter struct {
 }
 
 func newDNSCounter(name string) *counter {
-	// trace("called")
+	// log.Tracef("called")
 	return &counter{
 		name: name,
 	}

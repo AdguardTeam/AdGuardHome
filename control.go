@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -12,11 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/dnsproxy/upstream"
-
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
+	"github.com/AdguardTeam/AdGuardHome/log"
+	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/miekg/dns"
-
 	"gopkg.in/asaskevich/govalidator.v4"
 )
 

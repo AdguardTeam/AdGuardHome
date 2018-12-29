@@ -17,6 +17,7 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/AdguardTeam/AdGuardHome/log"
 	"github.com/shirou/gopsutil/process"
 	"go.uber.org/goleak"
 )
@@ -24,7 +25,7 @@ import (
 // first in file because it must be run first
 func TestLotsOfRulesMemoryUsage(t *testing.T) {
 	start := getRSS()
-	trace("RSS before loading rules - %d kB\n", start/1024)
+	log.Tracef("RSS before loading rules - %d kB\n", start/1024)
 	dumpMemProfile(_Func() + "1.pprof")
 
 	d := NewForTest()
@@ -35,7 +36,7 @@ func TestLotsOfRulesMemoryUsage(t *testing.T) {
 	}
 
 	afterLoad := getRSS()
-	trace("RSS after loading rules - %d kB (%d kB diff)\n", afterLoad/1024, (afterLoad-start)/1024)
+	log.Tracef("RSS after loading rules - %d kB (%d kB diff)\n", afterLoad/1024, (afterLoad-start)/1024)
 	dumpMemProfile(_Func() + "2.pprof")
 
 	tests := []struct {
@@ -58,7 +59,7 @@ func TestLotsOfRulesMemoryUsage(t *testing.T) {
 		}
 	}
 	afterMatch := getRSS()
-	trace("RSS after matching - %d kB (%d kB diff)\n", afterMatch/1024, (afterMatch-afterLoad)/1024)
+	log.Tracef("RSS after matching - %d kB (%d kB diff)\n", afterMatch/1024, (afterMatch-afterLoad)/1024)
 	dumpMemProfile(_Func() + "3.pprof")
 }
 
@@ -88,20 +89,20 @@ func dumpMemProfile(name string) {
 const topHostsFilename = "../tests/top-1m.csv"
 
 func fetchTopHostsFromNet() {
-	trace("Fetching top hosts from network")
+	log.Tracef("Fetching top hosts from network")
 	resp, err := http.Get("http://s3-us-west-1.amazonaws.com/umbrella-static/top-1m.csv.zip")
 	if err != nil {
 		panic(err)
 	}
 	defer resp.Body.Close()
 
-	trace("Reading zipfile body")
+	log.Tracef("Reading zipfile body")
 	zipfile, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		panic(err)
 	}
 
-	trace("Opening zipfile")
+	log.Tracef("Opening zipfile")
 	r, err := zip.NewReader(bytes.NewReader(zipfile), int64(len(zipfile)))
 	if err != nil {
 		panic(err)
@@ -111,19 +112,19 @@ func fetchTopHostsFromNet() {
 		panic(fmt.Errorf("zipfile must have only one entry: %+v", r))
 	}
 	f := r.File[0]
-	trace("Unpacking file %s from zipfile", f.Name)
+	log.Tracef("Unpacking file %s from zipfile", f.Name)
 	rc, err := f.Open()
 	if err != nil {
 		panic(err)
 	}
-	trace("Reading file %s contents", f.Name)
+	log.Tracef("Reading file %s contents", f.Name)
 	body, err := ioutil.ReadAll(rc)
 	if err != nil {
 		panic(err)
 	}
 	rc.Close()
 
-	trace("Writing file %s contents to disk", f.Name)
+	log.Tracef("Writing file %s contents to disk", f.Name)
 	err = ioutil.WriteFile(topHostsFilename+".tmp", body, 0644)
 	if err != nil {
 		panic(err)
@@ -144,16 +145,16 @@ func getTopHosts() {
 
 func TestLotsOfRulesLotsOfHostsMemoryUsage(t *testing.T) {
 	start := getRSS()
-	trace("RSS before loading rules - %d kB\n", start/1024)
+	log.Tracef("RSS before loading rules - %d kB\n", start/1024)
 	dumpMemProfile(_Func() + "1.pprof")
 
 	d := NewForTest()
 	defer d.Destroy()
 	mustLoadTestRules(d)
-	trace("Have %d rules", d.Count())
+	log.Tracef("Have %d rules", d.Count())
 
 	afterLoad := getRSS()
-	trace("RSS after loading rules - %d kB (%d kB diff)\n", afterLoad/1024, (afterLoad-start)/1024)
+	log.Tracef("RSS after loading rules - %d kB (%d kB diff)\n", afterLoad/1024, (afterLoad-start)/1024)
 	dumpMemProfile(_Func() + "2.pprof")
 
 	getTopHosts()
@@ -163,7 +164,7 @@ func TestLotsOfRulesLotsOfHostsMemoryUsage(t *testing.T) {
 	}
 	defer hostnames.Close()
 	afterHosts := getRSS()
-	trace("RSS after loading hosts - %d kB (%d kB diff)\n", afterHosts/1024, (afterHosts-afterLoad)/1024)
+	log.Tracef("RSS after loading hosts - %d kB (%d kB diff)\n", afterHosts/1024, (afterHosts-afterLoad)/1024)
 	dumpMemProfile(_Func() + "2.pprof")
 
 	{
@@ -182,7 +183,7 @@ func TestLotsOfRulesLotsOfHostsMemoryUsage(t *testing.T) {
 	}
 
 	afterMatch := getRSS()
-	trace("RSS after matching - %d kB (%d kB diff)\n", afterMatch/1024, (afterMatch-afterLoad)/1024)
+	log.Tracef("RSS after matching - %d kB (%d kB diff)\n", afterMatch/1024, (afterMatch-afterLoad)/1024)
 	dumpMemProfile(_Func() + "3.pprof")
 }
 
@@ -236,7 +237,7 @@ func TestSuffixRule(t *testing.T) {
 			t.Errorf("Result suffix does not match for \"%s\": got \"%s\" expected \"%s\"", testcase.rule, suffix, testcase.suffix)
 			continue
 		}
-		// trace("\"%s\": %v: %s", testcase.rule, isSuffix, suffix)
+		// log.Tracef("\"%s\": %v: %s", testcase.rule, isSuffix, suffix)
 	}
 }
 

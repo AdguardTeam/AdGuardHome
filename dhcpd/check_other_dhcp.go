@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/log"
 	"github.com/krolaw/dhcp4"
 )
 
@@ -85,7 +86,7 @@ func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 	}
 
 	// bind to 0.0.0.0:68
-	trace("Listening to udp4 %+v", udpAddr)
+	log.Tracef("Listening to udp4 %+v", udpAddr)
 	c, err := net.ListenPacket("udp4", src)
 	if c != nil {
 		defer c.Close()
@@ -104,7 +105,7 @@ func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 	}
 
 	// wait for answer
-	trace("Waiting %v for an answer", defaultDiscoverTime)
+	log.Tracef("Waiting %v for an answer", defaultDiscoverTime)
 	// TODO: replicate dhclient's behaviour of retrying several times with progressively bigger timeouts
 	b := make([]byte, 1500)
 	c.SetReadDeadline(time.Now().Add(defaultDiscoverTime))

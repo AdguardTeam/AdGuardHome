@@ -3,10 +3,10 @@ package dhcpd
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"net"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/log"
 	"github.com/krolaw/dhcp4"
 )
 
@@ -167,16 +167,16 @@ func (s *Server) reserveLease(p dhcp4.Packet) (*Lease, error) {
 	copy(hwaddr, hwaddrCOW)
 	foundLease := s.locateLease(p)
 	if foundLease != nil {
-		// trace("found lease for %s: %+v", hwaddr, foundLease)
+		// log.Tracef("found lease for %s: %+v", hwaddr, foundLease)
 		return foundLease, nil
 	}
 	// not assigned a lease, create new one, find IP from LRU
-	trace("Lease not found for %s: creating new one", hwaddr)
+	log.Tracef("Lease not found for %s: creating new one", hwaddr)
 	ip, err := s.findFreeIP(p, hwaddr)
 	if err != nil {
 		return nil, wrapErrPrint(err, "Couldn't find free IP for the lease %s", hwaddr.String())
 	}
-	trace("Assigning to %s IP address %s", hwaddr, ip.String())
+	log.Tracef("Assigning to %s IP address %s", hwaddr, ip.String())
 	hostname := p.ParseOptions()[dhcp4.OptionHostName]
 	lease := &Lease{HWAddr: hwaddr, IP: ip, Hostname: string(hostname)}
 	s.leases = append(s.leases, lease)
@@ -187,7 +187,7 @@ func (s *Server) locateLease(p dhcp4.Packet) *Lease {
 	hwaddr := p.CHAddr()
 	for i := range s.leases {
 		if bytes.Equal([]byte(hwaddr), []byte(s.leases[i].HWAddr)) {
-			// trace("bytes.Equal(%s, %s) returned true", hwaddr, s.leases[i].hwaddr)
+			// log.Tracef("bytes.Equal(%s, %s) returned true", hwaddr, s.leases[i].hwaddr)
 			return s.leases[i]
 		}
 	}
@@ -205,12 +205,12 @@ func (s *Server) findFreeIP(p dhcp4.Packet, hwaddr net.HardwareAddr) (net.IP, er
 	for i := 0; i < dhcp4.IPRange(s.leaseStart, s.leaseStop); i++ {
 		newIP := dhcp4.IPAdd(s.leaseStart, i)
 		foundHWaddr := s.getIPpool(newIP)
-		trace("tried IP %v, got hwaddr %v", newIP, foundHWaddr)
+		log.Tracef("tried IP %v, got hwaddr %v", newIP, foundHWaddr)
 		if foundHWaddr != nil && len(foundHWaddr) != 0 {
 			// if !bytes.Equal(foundHWaddr, hwaddr) {
-			// 	trace("SHOULD NOT HAPPEN: hwaddr in IP pool %s is not equal to hwaddr in lease %s", foundHWaddr, hwaddr)
+			// 	log.Tracef("SHOULD NOT HAPPEN: hwaddr in IP pool %s is not equal to hwaddr in lease %s", foundHWaddr, hwaddr)
 			// }
-			trace("will try again")
+			log.Tracef("will try again")
 			continue
 		}
 		foundIP = newIP
@@ -246,14 +246,14 @@ func (s *Server) unreserveIP(ip net.IP) {
 }
 
 func (s *Server) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options dhcp4.Options) dhcp4.Packet {
-	trace("Got %v message", msgType)
-	trace("Leases:")
+	log.Tracef("Got %v message", msgType)
+	log.Tracef("Leases:")
 	for i, lease := range s.leases {
-		trace("Lease #%d: hwaddr %s, ip %s, expiry %s", i, lease.HWAddr, lease.IP, lease.Expiry)
+		log.Tracef("Lease #%d: hwaddr %s, ip %s, expiry %s", i, lease.HWAddr, lease.IP, lease.Expiry)
 	}
-	trace("IP pool:")
+	log.Tracef("IP pool:")
 	for ip, hwaddr := range s.IPpool {
-		trace("IP pool entry %s -> %s", net.IPv4(ip[0], ip[1], ip[2], ip[3]), hwaddr)
+		log.Tracef("IP pool entry %s -> %s", net.IPv4(ip[0], ip[1], ip[2], ip[3]), hwaddr)
 	}
 	// spew.Dump(s.leases, s.IPpool)
 	// log.Printf("Called with msgType = %v, options = %+v", msgType, options)
@@ -280,22 +280,22 @@ func (s *Server) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options dh
 	switch msgType {
 	case dhcp4.Discover: // Broadcast Packet From Client - Can I have an IP?
 		// find a lease, but don't update lease time
-		trace("Got from client: Discover")
+		log.Tracef("Got from client: Discover")
 		lease, err := s.reserveLease(p)
 		if err != nil {
-			trace("Couldn't find free lease: %s", err)
+			log.Tracef("Couldn't find free lease: %s", err)
 			// couldn't find lease, don't respond
 			return nil
 		}
 		reply := dhcp4.ReplyPacket(p, dhcp4.Offer, s.ipnet.IP, lease.IP, s.leaseTime, s.leaseOptions.SelectOrderOrAll(options[dhcp4.OptionParameterRequestList]))
-		trace("Replying with offer: offered IP %v for %v with options %+v", lease.IP, s.leaseTime, reply.ParseOptions())
+		log.Tracef("Replying with offer: offered IP %v for %v with options %+v", lease.IP, s.leaseTime, reply.ParseOptions())
 		return reply
 	case dhcp4.Request: // Broadcast From Client - I'll take that IP (Also start for renewals)
 		// start/renew a lease -- update lease time
 		// some clients (OSX) just go right ahead and do Request first from previously known IP, if they get NAK, they restart full cycle with Discover then Request
-		trace("Got from client: Request")
+		log.Tracef("Got from client: Request")
 		if server, ok := options[dhcp4.OptionServerIdentifier]; ok && !net.IP(server).Equal(s.ipnet.IP) {
-			trace("Request message not for this DHCP server (%v vs %v)", p, server, s.ipnet.IP)
+			log.Tracef("Request message not for this DHCP server (%v vs %v)", server, s.ipnet.IP)
 			return nil // Message not for this dhcp server
 		}
 
@@ -305,19 +305,19 @@ func (s *Server) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options dh
 		}
 
 		if reqIP.To4() == nil {
-			trace("Replying with NAK: request IP isn't valid IPv4: %s", reqIP)
+			log.Tracef("Replying with NAK: request IP isn't valid IPv4: %s", reqIP)
 			return dhcp4.ReplyPacket(p, dhcp4.NAK, s.ipnet.IP, nil, 0, nil)
 		}
 
 		if reqIP.Equal(net.IPv4zero) {
-			trace("Replying with NAK: request IP is 0.0.0.0")
+			log.Tracef("Replying with NAK: request IP is 0.0.0.0")
 			return dhcp4.ReplyPacket(p, dhcp4.NAK, s.ipnet.IP, nil, 0, nil)
 		}
 
-		trace("requested IP is %s", reqIP)
+		log.Tracef("requested IP is %s", reqIP)
 		lease, err := s.reserveLease(p)
 		if err != nil {
-			trace("Couldn't find free lease: %s", err)
+			log.Tracef("Couldn't find free lease: %s", err)
 			// couldn't find lease, don't respond
 			return nil
 		}
@@ -325,7 +325,7 @@ func (s *Server) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options dh
 		if lease.IP.Equal(reqIP) {
 			// IP matches lease IP, nothing else to do
 			lease.Expiry = time.Now().Add(s.leaseTime)
-			trace("Replying with ACK: request IP matches lease IP, nothing else to do. IP %v for %v", lease.IP, p.CHAddr())
+			log.Tracef("Replying with ACK: request IP matches lease IP, nothing else to do. IP %v for %v", lease.IP, p.CHAddr())
 			return dhcp4.ReplyPacket(p, dhcp4.ACK, s.ipnet.IP, lease.IP, s.leaseTime, s.leaseOptions.SelectOrderOrAll(options[dhcp4.OptionParameterRequestList]))
 		}
 
@@ -333,14 +333,14 @@ func (s *Server) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options dh
 		// requested IP different from lease
 		//
 
-		trace("lease IP is different from requested IP: %s vs %s", lease.IP, reqIP)
+		log.Tracef("lease IP is different from requested IP: %s vs %s", lease.IP, reqIP)
 
 		hwaddr := s.getIPpool(reqIP)
 		if hwaddr == nil {
 			// not in pool, check if it's in DHCP range
 			if dhcp4.IPInRange(s.leaseStart, s.leaseStop, reqIP) {
 				// okay, we can give it to our client -- it's in our DHCP range and not taken, so let them use their IP
-				trace("Replying with ACK: request IP %v is not taken, so assigning lease IP %v to it, for %v", reqIP, lease.IP, p.CHAddr())
+				log.Tracef("Replying with ACK: request IP %v is not taken, so assigning lease IP %v to it, for %v", reqIP, lease.IP, p.CHAddr())
 				s.unreserveIP(lease.IP)
 				lease.IP = reqIP
 				s.reserveIP(reqIP, p.CHAddr())
@@ -355,21 +355,21 @@ func (s *Server) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options dh
 
 		// requsted IP is not sufficient, reply with NAK
 		if hwaddr != nil {
-			trace("Replying with NAK: request IP %s is taken, asked by %v", reqIP, p.CHAddr())
+			log.Tracef("Replying with NAK: request IP %s is taken, asked by %v", reqIP, p.CHAddr())
 			return dhcp4.ReplyPacket(p, dhcp4.NAK, s.ipnet.IP, nil, 0, nil)
 		}
 
 		// requested IP is outside of DHCP range
-		trace("Replying with NAK: request IP %s is outside of DHCP range [%s, %s], asked by %v", reqIP, s.leaseStart, s.leaseStop, p.CHAddr())
+		log.Tracef("Replying with NAK: request IP %s is outside of DHCP range [%s, %s], asked by %v", reqIP, s.leaseStart, s.leaseStop, p.CHAddr())
 		return dhcp4.ReplyPacket(p, dhcp4.NAK, s.ipnet.IP, nil, 0, nil)
 	case dhcp4.Decline: // Broadcast From Client - Sorry I can't use that IP
-		trace("Got from client: Decline")
+		log.Tracef("Got from client: Decline")
 
 	case dhcp4.Release: // From Client, I don't need that IP anymore
-		trace("Got from client: Release")
+		log.Tracef("Got from client: Release")
 
 	case dhcp4.Inform: // From Client, I have this IP and there's nothing you can do about it
-		trace("Got from client: Inform")
+		log.Tracef("Got from client: Inform")
 		// do nothing
 
 	// from server -- ignore those but enumerate just in case

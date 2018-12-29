@@ -5,11 +5,11 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/log"
 	"github.com/go-test/deep"
 )
 
@@ -221,7 +221,7 @@ func genericLoader(onEntry func(entry *logEntry) error, needMore func() bool, ti
 			}
 
 			if now.Sub(entry.Time) > timeWindow {
-				// trace("skipping entry") // debug logging
+				// log.Tracef("skipping entry") // debug logging
 				continue
 			}
 
