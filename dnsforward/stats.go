@@ -3,11 +3,10 @@ package dnsforward
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"sync"
 	"time"
-
-	log "github.com/sirupsen/logrus"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 )

@@ -18,7 +18,6 @@ require (
 	github.com/pkg/errors v0.8.0
 	github.com/shirou/gopsutil v2.18.10+incompatible
 	github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4 // indirect
-	github.com/sirupsen/logrus v1.2.0
 	go.uber.org/goleak v0.10.0
 	golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9
 	golang.org/x/net v0.0.0-20181220203305-927f97764cc3

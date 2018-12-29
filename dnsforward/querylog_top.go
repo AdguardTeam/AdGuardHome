@@ -3,6 +3,7 @@ package dnsforward
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path"
@@ -12,8 +13,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	log "github.com/sirupsen/logrus"
 
 	"github.com/bluele/gcache"
 	"github.com/miekg/dns"
