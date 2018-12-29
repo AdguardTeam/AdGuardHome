@@ -7,13 +7,15 @@ import (
 	"golang.org/x/net/ipv4"
 )
 
+// filterConn listens to 0.0.0.0:67, but accepts packets only from specific interface
+// This is neccessary for DHCP daemon to work, since binding to IP address doesn't
+// us access to see Discover/Request packets from clients.
+//
 // TODO: on windows, controlmessage does not work, try to find out another way
 // https://github.com/golang/net/blob/master/ipv4/payload.go#L13
-
 type filterConn struct {
 	iface net.Interface
 	conn  *ipv4.PacketConn
-	// cm    *ipv4.ControlMessage
 }
 
 func newFilterConn(iface net.Interface, address string) (*filterConn, error) {
