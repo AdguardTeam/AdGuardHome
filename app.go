@@ -44,28 +44,30 @@ func main() {
 	// config can be specified, which reads options from there, but other command line flags have to override config values
 	// therefore, we must do it manually instead of using a lib
 	{
+		var printHelp func()
 		var configFilename *string
 		var bindHost *string
 		var bindPort *int
 		var opts = []struct {
-			longName    string
-			shortName   string
-			description string
-			callback    func(value string)
+			longName          string
+			shortName         string
+			description       string
+			callbackWithValue func(value string)
+			callbackNoValue   func()
 		}{
-			{"config", "c", "path to config file", func(value string) { configFilename = &value }},
-			{"host", "h", "host address to bind HTTP server on", func(value string) { bindHost = &value }},
+			{"config", "c", "path to config file", func(value string) { configFilename = &value }, nil},
+			{"host", "h", "host address to bind HTTP server on", func(value string) { bindHost = &value }, nil},
 			{"port", "p", "port to serve HTTP pages on", func(value string) {
 				v, err := strconv.Atoi(value)
 				if err != nil {
 					panic("Got port that is not a number")
 				}
 				bindPort = &v
-			}},
-			{"verbose", "v", "enable verbose output", nil},
-			{"help", "h", "print this help", nil},
+			}, nil},
+			{"verbose", "v", "enable verbose output", nil, func() { log.SetLevel(log.TraceLevel) }},
+			{"help", "h", "print this help", nil, func() { printHelp(); os.Exit(64) }},
 		}
-		printHelp := func() {
+		printHelp = func() {
 			fmt.Printf("Usage:\n\n")
 			fmt.Printf("%s [options]\n\n", os.Args[0])
 			fmt.Printf("Options:\n")
@@ -75,33 +77,19 @@ func main() {
 		}
 		for i := 1; i < len(os.Args); i++ {
 			v := os.Args[i]
-			// short-circuit for help
-			if v == "--help" || v == "-h" {
-				printHelp()
-				os.Exit(64)
-			}
-			if v == "--verbose" || v == "-v" {
-				log.SetLevel(log.TraceLevel)
-			}
 			knownParam := false
 			for _, opt := range opts {
-				if v == "--"+opt.longName {
-					if i+1 > len(os.Args) {
-						log.Printf("ERROR: Got %s without argument\n", v)
-						os.Exit(64)
+				if v == "--"+opt.longName || v == "-"+opt.shortName {
+					if opt.callbackWithValue != nil {
+						if i+1 > len(os.Args) {
+							log.Printf("ERROR: Got %s without argument\n", v)
+							os.Exit(64)
+						}
+						i++
+						opt.callbackWithValue(os.Args[i])
+					} else if opt.callbackNoValue != nil {
+						opt.callbackNoValue()
 					}
-					i++
-					opt.callback(os.Args[i])
-					knownParam = true
-					break
-				}
-				if v == "-"+opt.shortName {
-					if i+1 > len(os.Args) {
-						log.Printf("ERROR: Got %s without argument\n", v)
-						os.Exit(64)
-					}
-					i++
-					opt.callback(os.Args[i])
 					knownParam = true
 					break
 				}
