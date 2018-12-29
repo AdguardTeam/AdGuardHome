@@ -21,9 +21,10 @@ func handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	leases := []map[string]string{}
 	for i := range rawLeases {
 		lease := map[string]string{
-			"mac":     rawLeases[i].HWAddr.String(),
-			"ip":      rawLeases[i].IP.String(),
-			"expires": rawLeases[i].Expiry.Format(time.RFC3339),
+			"mac":      rawLeases[i].HWAddr.String(),
+			"ip":       rawLeases[i].IP.String(),
+			"hostname": rawLeases[i].Hostname,
+			"expires":  rawLeases[i].Expiry.Format(time.RFC3339),
 		}
 		leases = append(leases, lease)
 
