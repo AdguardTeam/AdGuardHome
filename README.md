@@ -84,7 +84,8 @@ At the moment, the update procedure is manual:
 DNS works on port 53, which requires superuser privileges. Therefore, you need to run it with `sudo` in terminal:
 
 ```bash
-sudo ./AdGuardHome
+sudo setcap cap_net_bind_service=+ep ./AdGuardHome
+./AdGuardHome
 ```
 
 Now open the browser and navigate to http://localhost:3000/ to control your AdGuard Home service.
