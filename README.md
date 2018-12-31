@@ -95,6 +95,8 @@ You can run AdGuard Home without superuser privileges, but you need to either gr
 
 #### Granting the CAP_NET_BIND_SERVICE capability (on Linux)
 
+Note: using this method requires installing the `setcap` utilty.  You may need to install it using your Linux distribution's package manager.
+
 To allow AdGuard Home running on Linux to listen on port 53 without superuser privileges, run:
 
 ```bash
