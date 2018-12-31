@@ -91,7 +91,21 @@ Now open the browser and navigate to http://localhost:3000/ to control your AdGu
 
 ### Running without superuser
 
-You can run AdGuard Home without superuser privileges, but you need to instruct it to use a different port rather than 53. You can do that by editing `AdGuardHome.yaml` and finding these two lines:
+You can run AdGuard Home without superuser privileges, but you need to either grant the binary a capability (on Linux) or instruct it to use a different port (all platforms).
+
+#### Granting the CAP_NET_BIND_SERVICE capability (on Linux)
+
+To allow AdGuard Home running on Linux to listen on port 53 without superuser privileges, run:
+
+```bash
+sudo setcap CAP_NET_BIND_SERVICE=+eip ./AdGuardHome
+```
+
+Then run `./AdGuardHome` as a unprivileged user.
+
+#### Changing the DNS listen port
+
+To configure AdGuard Home to listen on a port that does not require superuser privileges, edit `AdGuardHome.yaml` and find these two lines:
 
 ```yaml
 dns:
