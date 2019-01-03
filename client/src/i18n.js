@@ -11,6 +11,7 @@ import fr from './__locales/fr.json';
 import ja from './__locales/ja.json';
 import sv from './__locales/sv.json';
 import ptBR from './__locales/pt-br.json';
+import zhTW from './__locales/zh-tw.json';
 
 const resources = {
     en: {
@@ -36,6 +37,9 @@ const resources = {
     },
     'pt-BR': {
         translation: ptBR,
+    },
+    'zh-TW': {
+        translation: zhTW,
     },
 };
 
