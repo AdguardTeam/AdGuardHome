@@ -2,7 +2,7 @@ FROM easypi/alpine-arm:latest
 LABEL maintainer="Erik Rogers <erik.rogers@live.com>"
 
 # AdGuard version
-ARG ADGUARD_VERSION="0.92"
+ARG ADGUARD_VERSION="0.92-hotfix1"
 ENV ADGUARD_VERSION $ADGUARD_VERSION
 
 # AdGuard architecture and package info
