@@ -426,7 +426,7 @@ func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 		} else {
 			// Remove the filter file
 			err := os.Remove(filter.Path())
-			if err != nil {
+			if err != nil && !os.IsNotExist(err) {
 				errorText := fmt.Sprintf("Couldn't remove the filter file: %s", err)
 				http.Error(w, errorText, http.StatusInternalServerError)
 				return
