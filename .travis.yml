@@ -14,10 +14,16 @@ os:
   - linux
   - osx
 
+before_install:
+  - nvm install node
+  - npm install -g npm
+
 install:
   - npm --prefix client install
 
 script:
+  - node -v
+  - npm -v
   - go test ./...
   - make build/static/index.html
   - make

@@ -55,4 +55,8 @@ export const LANGUAGES = [
         key: 'ja',
         name: '日本語',
     },
+    {
+        key: 'zh-tw',
+        name: '正體中文',
+    },
 ];
