@@ -13,6 +13,7 @@ import (
 func TestServer(t *testing.T) {
 	s := Server{}
 	s.UDPListenAddr = &net.UDPAddr{Port: 0}
+	s.TCPListenAddr = &net.TCPAddr{Port: 0}
 	err := s.Start(nil)
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
@@ -47,6 +48,7 @@ func TestServer(t *testing.T) {
 func TestInvalidRequest(t *testing.T) {
 	s := Server{}
 	s.UDPListenAddr = &net.UDPAddr{Port: 0}
+	s.TCPListenAddr = &net.TCPAddr{Port: 0}
 	err := s.Start(nil)
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)

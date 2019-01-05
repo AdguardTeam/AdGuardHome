@@ -122,7 +122,6 @@ func (s *Server) startInternal(config *ServerConfig) error {
 		go statsRotator()
 	})
 
-	// TODO: Add TCPListenAddr
 	proxyConfig := proxy.Config{
 		UDPListenAddr:      s.UDPListenAddr,
 		TCPListenAddr:      s.TCPListenAddr,
