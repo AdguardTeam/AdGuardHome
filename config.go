@@ -41,7 +41,8 @@ type configuration struct {
 
 // field ordering is important -- yaml fields will mirror ordering from here
 type dnsConfig struct {
-	Port int `yaml:"port"`
+	BindInterface string `yaml:"bind_interface"`
+	Port          int    `yaml:"port"`
 
 	dnsforward.FilteringConfig `yaml:",inline"`
 
@@ -56,7 +57,8 @@ var config = configuration{
 	BindPort:          3000,
 	BindHost:          "127.0.0.1",
 	DNS: dnsConfig{
-		Port: 53,
+		BindInterface: "wlan0",
+		Port:          53,
 		FilteringConfig: dnsforward.FilteringConfig{
 			ProtectionEnabled:  true, // whether or not use any of dnsfilter features
 			FilteringEnabled:   true, // whether or not use filter lists
