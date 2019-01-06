@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
-  "strings"
+	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
