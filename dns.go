@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+  "strings"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
@@ -31,8 +32,19 @@ func generateServerConfig() dnsforward.ServerConfig {
 		})
 	}
 
+  ief, err := net.InterfaceByName(config.DNS.BindInterface)
+	if err != nil {
+		log.Fatal(err)
+	}
+	addrs, err := ief.Addrs()
+	if err != nil {
+		log.Fatal(err)
+	}
+  externalIpAddr := addrs[0].String()[:strings.Index(addrs[0].String(), "/")]
+	fmt.Println("DNS Binding if:ip ", config.DNS.BindInterface + ":" + externalIpAddr)
+
 	newconfig := dnsforward.ServerConfig{
-		UDPListenAddr:   &net.UDPAddr{Port: config.DNS.Port},
+		UDPListenAddr:   &net.UDPAddr{IP: net.ParseIP(externalIpAddr), Port: config.DNS.Port},
 		FilteringConfig: config.DNS.FilteringConfig,
 		Filters:         filters,
 	}
