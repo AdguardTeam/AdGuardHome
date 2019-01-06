@@ -32,7 +32,7 @@ func generateServerConfig() dnsforward.ServerConfig {
 		})
 	}
 
-  ief, err := net.InterfaceByName(config.DNS.BindInterface)
+	ief, err := net.InterfaceByName(config.DNS.BindInterface)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -40,8 +40,8 @@ func generateServerConfig() dnsforward.ServerConfig {
 	if err != nil {
 		log.Fatal(err)
 	}
-  externalIpAddr := addrs[0].String()[:strings.Index(addrs[0].String(), "/")]
-	fmt.Println("DNS Binding if:ip ", config.DNS.BindInterface + ":" + externalIpAddr)
+	externalIpAddr := addrs[0].String()[:strings.Index(addrs[0].String(), "/")]
+	log.Println("DNS Binding if:ip ", config.DNS.BindInterface + ":" + externalIpAddr)
 
 	newconfig := dnsforward.ServerConfig{
 		UDPListenAddr:   &net.UDPAddr{IP: net.ParseIP(externalIpAddr), Port: config.DNS.Port},

@@ -41,8 +41,8 @@ type configuration struct {
 
 // field ordering is important -- yaml fields will mirror ordering from here
 type dnsConfig struct {
-  BindInterface string  `yaml:"bind_interface"`
-	Port          int     `yaml:"port"`
+	BindInterface	string	`yaml:"bind_interface"`
+	Port					int			`yaml:"port"`
 
 	dnsforward.FilteringConfig `yaml:",inline"`
 
