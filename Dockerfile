@@ -1,5 +1,4 @@
 FROM balenalib/raspberry-pi-alpine-golang as go-builder
-#FROM balenalib/amd64-alpine-golang as go-builder
 
 RUN apk --update add make npm
 
@@ -9,9 +8,8 @@ RUN make
 
 #####################################################################
 
-FROM alpine
-#FROM resin/rpi-alpine
-#FROM arm32v6/alpine
+FROM resin/rpi-alpine
+#FROM resin/raspberry-pi-alpine
 LABEL maintainer="Erik Rogers <erik.rogers@live.com>"
 
 RUN apk --no-cache --update add ca-certificates
