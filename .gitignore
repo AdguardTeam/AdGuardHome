@@ -2,7 +2,7 @@
 /.vscode
 /.idea
 /AdGuardHome
-/AdGuardHome.yaml
+#/AdGuardHome.yaml
 /data/
 /build/
 /client/node_modules/
@@ -10,6 +10,7 @@
 /querylog.json.1
 /scripts/translations/node_modules
 /scripts/translations/oneskyapp.json
+/.balena
 
 # Test output
 dnsfilter/dnsfilter.TestLotsOfRules*.pprof
