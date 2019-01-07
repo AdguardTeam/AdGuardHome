@@ -21,9 +21,9 @@ $(STATIC): $(JSFILES) client/node_modules
 
 $(TARGET): $(STATIC) *.go dhcpd/*.go dnsfilter/*.go dnsforward/*.go
 	go get -d .
-	GOOS=linux GOARCH=arm GO111MODULE=off go get -v github.com/gobuffalo/packr/...
+	GOOS=linux GOARM=6 GOARCH=arm GO111MODULE=off go get -v github.com/gobuffalo/packr/...
 	PATH=$(GOPATH)/bin:$(PATH) packr -z
-	GOOS=linux GOARCH=arm CGO_ENABLED=0 go build -ldflags="-s -w -X main.VersionString=$(GIT_VERSION)" -asmflags="-trimpath=$(PWD)" -gcflags="-trimpath=$(PWD)"
+	GOOS=linux GOARM=6 GOARCH=arm CGO_ENABLED=0 go build -ldflags="-s -w -X main.VersionString=$(GIT_VERSION)" -asmflags="-trimpath=$(PWD)" -gcflags="-trimpath=$(PWD)"
 	PATH=$(GOPATH)/bin:$(PATH) packr clean
 
 clean:
