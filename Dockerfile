@@ -1,6 +1,6 @@
 FROM balenalib/raspberry-pi-alpine-golang as go-builder
 
-RUN apk --update add make npm
+RUN apk --update add git make npm
 
 WORKDIR /src/AdGuardHome
 COPY . /src/AdGuardHome
