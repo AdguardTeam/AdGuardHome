@@ -12,7 +12,10 @@ RUN make
 FROM resin/raspberry-pi-alpine
 LABEL maintainer="Erik Rogers <erik.rogers@live.com>"
 
-RUN apk --no-cache --update add ca-certificates readelf
+# enable container init system.
+ENV INITSYSTEM on
+
+RUN apk --no-cache --update add ca-certificates binutils
 
 WORKDIR /root/
 COPY --from=go-builder /src/AdGuardHome/AdGuardHome /AdGuardHome
