@@ -8,11 +8,11 @@ RUN make
 
 #####################################################################
 
-FROM resin/rpi-alpine
-#FROM resin/raspberry-pi-alpine
+#FROM resin/rpi-alpine
+FROM resin/raspberry-pi-alpine
 LABEL maintainer="Erik Rogers <erik.rogers@live.com>"
 
-RUN apk --no-cache --update add ca-certificates
+RUN apk --no-cache --update add ca-certificates readelf
 
 WORKDIR /root/
 COPY --from=go-builder /src/AdGuardHome/AdGuardHome /AdGuardHome
