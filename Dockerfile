@@ -8,8 +8,8 @@ RUN make
 
 #####################################################################
 
-#FROM resin/rpi-alpine
-FROM resin/raspberry-pi-alpine
+FROM resin/rpi-alpine
+#FROM resin/raspberry-pi-alpine
 LABEL maintainer="Erik Rogers <erik.rogers@live.com>"
 
 # enable container init system.
@@ -26,6 +26,4 @@ EXPOSE 53 3000
 VOLUME /data
 
 ENTRYPOINT ["/AdGuardHome"]
-#ENTRYPOINT ["/bin/sh"]
-#CMD ["-h", "0.0.0.0"]
 

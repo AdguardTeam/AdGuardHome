@@ -42,10 +42,10 @@ filters:
 user_rules: []
 dhcp:
   enabled: false
-  interface_name: ""
-  gateway_ip: ""
-  subnet_mask: ""
-  range_start: ""
-  range_end: ""
-  lease_duration: 0
+  interface_name: wlan0
+  gateway_ip: 192.168.1.1
+  subnet_mask: 255.255.255.0
+  range_start: 192.168.1.10
+  range_end: 192.168.1.190
+  lease_duration: 86400
 schema_version: 2
