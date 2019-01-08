@@ -15,7 +15,7 @@ LABEL maintainer="Erik Rogers <erik.rogers@live.com>"
 # enable container init system.
 ENV INITSYSTEM on
 
-RUN apk --no-cache --update add ca-certificates binutils
+RUN apk --no-cache --update add ca-certificates
 
 WORKDIR /root/
 COPY --from=go-builder /src/AdGuardHome/AdGuardHome /AdGuardHome
@@ -25,7 +25,7 @@ EXPOSE 53 3000
 
 VOLUME /data
 
-#ENTRYPOINT ["/AdGuardHome"]
-ENTRYPOINT ["/bin/sh"]
+ENTRYPOINT ["/AdGuardHome"]
+#ENTRYPOINT ["/bin/sh"]
 #CMD ["-h", "0.0.0.0"]
 
