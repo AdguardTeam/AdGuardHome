@@ -84,8 +84,15 @@ class Filters extends Component {
                                     columns={this.columns}
                                     showPagination={true}
                                     defaultPageSize={10}
-                                    noDataText={ t('no_filters_added') }
                                     minRows={4} // TODO find out what to show if rules.length is 0
+                                    // Text
+                                    previousText={ t('previous_btn') }
+                                    nextText={ t('next_btn') }
+                                    loadingText={ t('loading_table_status') }
+                                    pageText={ t('page_table_footer_text') }
+                                    ofText={ t('of_table_footer_text') }
+                                    rowsText={ t('rows_table_footer_text') }
+                                    noDataText={ t('no_filters_added') }
                                 />
                                 <div className="card-actions">
                                     <button className="btn btn-success btn-standart mr-2" type="submit" onClick={this.props.toggleFilteringModal}><Trans>add_filter_btn</Trans></button>
