@@ -125,5 +125,6 @@
     "found_in_known_domain_db": "T\u00ecm th\u1ea5y trong c\u01a1 s\u1edf d\u1eef li\u1ec7u t\u00ean mi\u1ec1n",
     "category_label": "Th\u1ec3 lo\u1ea1i",
     "rule_label": "Quy t\u1eafc",
-    "filter_label": "B\u1ed9 l\u1ecdc"
+    "filter_label": "B\u1ed9 l\u1ecdc",
+    "url_added_successfully": "Th\u00eam b\u1ed9 l\u1ecdc th\u00e0nh c\u00f4ng"
 }

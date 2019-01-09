@@ -82,7 +82,7 @@ class Modal extends Component {
             }
             return (
                 <div className="description">
-                    <Trans>Url added successfully</Trans>
+                    <Trans>url_added_successfully</Trans>
                 </div>
             );
         };
