@@ -124,6 +124,7 @@
     "unblock_btn": "Unblock",
     "block_btn": "Block",
     "time_table_header": "Time",
+    "url_added_successfully": "Url added successfully",
     "domain_name_table_header": "Domain name",
     "type_table_header": "Type",
     "response_table_header": "Response",
