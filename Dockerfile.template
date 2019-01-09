@@ -1,0 +1,27 @@
+FROM balenalib/%%BALENA_MACHINE_NAME%%-alpine-golang:build as go-builder
+
+RUN apk --update add git make npm
+
+WORKDIR /src/AdGuardHome
+COPY . /src/AdGuardHome
+RUN make
+
+#####################################################################
+
+FROM balenalib/%%BALENA_MACHINE_NAME%%-alpine:run
+
+# enable container init system.
+ENV INITSYSTEM on
+
+RUN apk --no-cache --update add ca-certificates
+
+WORKDIR /root/
+COPY --from=go-builder /src/AdGuardHome/AdGuardHome /AdGuardHome
+COPY --from=go-builder /src/AdGuardHome/AdGuardHome.yaml /AdGuardHome.yaml
+
+EXPOSE 53 3000
+
+VOLUME /data
+
+ENTRYPOINT ["/AdGuardHome"]
+
