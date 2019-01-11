@@ -23,5 +23,6 @@ EXPOSE 53 3000
 
 VOLUME /data
 
-CMD ["/AdGuardHome"]
+#CMD ["/AdGuardHome"]
+ENTRYPOINT ["/AdGuardHome"]
 
