@@ -4,6 +4,8 @@ RUN apk --update add git make npm
 
 WORKDIR /src/AdGuardHome
 COPY . /src/AdGuardHome
+COPY .git /src/AdGuardHome/.git
+RUN ls -a
 RUN make
 
 #####################################################################
@@ -23,6 +25,5 @@ EXPOSE 53 3000
 
 VOLUME /data
 
-#CMD ["/AdGuardHome"]
-ENTRYPOINT ["/AdGuardHome"]
+CMD ["/AdGuardHome"]
 
