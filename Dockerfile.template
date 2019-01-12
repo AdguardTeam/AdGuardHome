@@ -4,9 +4,7 @@ RUN apk --update add git make npm
 
 WORKDIR /src/AdGuardHome
 COPY . .
-RUN ls -a
-RUN git describe --abbrev=4 --dirty --always --tags
-#RUN make clean && make
+RUN make clean && make
 
 #####################################################################
 
