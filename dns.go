@@ -45,6 +45,7 @@ func generateServerConfig() dnsforward.ServerConfig {
 
 	newconfig := dnsforward.ServerConfig{
 		UDPListenAddr:   &net.UDPAddr{IP: net.ParseIP(externalIpAddr), Port: config.DNS.Port},
+		TCPListenAddr:   &net.TCPAddr{Port: config.DNS.Port},
 		FilteringConfig: config.DNS.FilteringConfig,
 		Filters:         filters,
 	}

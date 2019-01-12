@@ -61,6 +61,7 @@ type FilteringConfig struct {
 // The zero ServerConfig is empty and ready for use.
 type ServerConfig struct {
 	UDPListenAddr *net.UDPAddr        // UDP listen address
+	TCPListenAddr *net.TCPAddr        // TCP listen address
 	Upstreams     []upstream.Upstream // Configured upstreams
 	Filters       []dnsfilter.Filter  // A list of filters to use
 
@@ -70,6 +71,7 @@ type ServerConfig struct {
 // if any of ServerConfig values are zero, then default values from below are used
 var defaultValues = ServerConfig{
 	UDPListenAddr:   &net.UDPAddr{Port: 53},
+	TCPListenAddr:   &net.TCPAddr{Port: 53},
 	FilteringConfig: FilteringConfig{BlockedResponseTTL: 3600},
 }
 
@@ -120,9 +122,9 @@ func (s *Server) startInternal(config *ServerConfig) error {
 		go statsRotator()
 	})
 
-	// TODO: Add TCPListenAddr
 	proxyConfig := proxy.Config{
 		UDPListenAddr:      s.UDPListenAddr,
+		TCPListenAddr:      s.TCPListenAddr,
 		Ratelimit:          s.Ratelimit,
 		RatelimitWhitelist: s.RatelimitWhitelist,
 		RefuseAny:          s.RefuseAny,
@@ -133,6 +135,10 @@ func (s *Server) startInternal(config *ServerConfig) error {
 
 	if proxyConfig.UDPListenAddr == nil {
 		proxyConfig.UDPListenAddr = defaultValues.UDPListenAddr
+	}
+
+	if proxyConfig.TCPListenAddr == nil {
+		proxyConfig.TCPListenAddr = defaultValues.TCPListenAddr
 	}
 
 	if len(proxyConfig.Upstreams) == 0 {
