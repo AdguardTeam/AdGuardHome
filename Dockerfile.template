@@ -3,8 +3,8 @@ FROM balenalib/%%BALENA_MACHINE_NAME%%-alpine-golang:build as go-builder
 RUN apk --update add git make npm
 
 WORKDIR /src/AdGuardHome
-COPY . /src/AdGuardHome
-RUN make
+COPY . .
+RUN make clean && make
 
 #####################################################################
 
