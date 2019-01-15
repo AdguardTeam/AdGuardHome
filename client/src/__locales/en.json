@@ -1,4 +1,5 @@
 {
+    "url_added_successfully": "Url added successfully",
     "check_dhcp_servers": "Check for DHCP servers",
     "save_config": "Save config",
     "enabled_dhcp": "DHCP server enabled",
@@ -8,7 +9,7 @@
     "dhcp_enable": "Enable DHCP server",
     "dhcp_disable": "Disable DHCP server",
     "dhcp_not_found": "No active DHCP servers found on the network. It is safe to enable the built-in DHCP server.",
-    "dhcp_found": "Found active DHCP servers found on the network. It is not safe to enable the built-in DHCP server.",
+    "dhcp_found": "Some active DHCP servers found on the network. It is not safe to enable the built-in DHCP server.",
     "dhcp_leases": "DHCP leases",
     "dhcp_leases_not_found": "No DHCP leases found",
     "dhcp_config_saved": "Saved DHCP server config",
@@ -25,6 +26,8 @@
     "dhcp_interface_select": "Select DHCP interface",
     "dhcp_hardware_address": "Hardware address",
     "dhcp_ip_addresses": "IP addresses",
+    "dhcp_table_hostname": "Hostname",
+    "dhcp_table_expires": "Expires",
     "back": "Back",
     "dashboard": "Dashboard",
     "settings": "Settings",
