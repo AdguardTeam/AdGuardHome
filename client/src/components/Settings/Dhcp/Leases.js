@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import ReactTable from 'react-table';
-import { withNamespaces } from 'react-i18next';
+import { Trans, withNamespaces } from 'react-i18next';
 
 const columns = [{
     Header: 'MAC',
@@ -10,10 +10,10 @@ const columns = [{
     Header: 'IP',
     accessor: 'ip',
 }, {
-    Header: 'Hostname',
+    Header: <Trans>dhcp_table_hostname</Trans>,
     accessor: 'hostname',
 }, {
-    Header: 'Expires',
+    Header: <Trans>dhcp_table_expires</Trans>,
     accessor: 'expires',
 }];
 
