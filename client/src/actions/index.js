@@ -352,11 +352,11 @@ export const refreshFiltersFailure = createAction('FILTERING_REFRESH_FAILURE');
 export const refreshFiltersSuccess = createAction('FILTERING_REFRESH_SUCCESS');
 
 export const refreshFilters = () => async (dispatch) => {
-    dispatch(refreshFiltersRequest);
+    dispatch(refreshFiltersRequest());
     dispatch(showLoading());
     try {
         const refreshText = await apiClient.refreshFilters();
-        dispatch(refreshFiltersSuccess);
+        dispatch(refreshFiltersSuccess());
 
         if (refreshText.includes('OK')) {
             if (refreshText.includes('OK 0')) {
