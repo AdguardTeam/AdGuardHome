@@ -77,6 +77,7 @@ class Logs extends Component {
                     type="button"
                     className={`btn btn-sm ${buttonClass}`}
                     onClick={() => this.toggleBlocking(buttonType, domain)}
+                    disabled={this.props.filtering.processingRules}
                 >
                     <Trans>{buttonText}</Trans>
                 </button>
@@ -269,7 +270,7 @@ class Logs extends Component {
         saveAs(dataBlob, DOWNLOAD_LOG_FILENAME);
     };
 
-    renderButtons(queryLogEnabled) {
+    renderButtons(queryLogEnabled, logStatusProcessing) {
         if (queryLogEnabled) {
             return (
                 <Fragment>
@@ -277,6 +278,7 @@ class Logs extends Component {
                         className="btn btn-gray btn-sm mr-2"
                         type="submit"
                         onClick={() => this.props.toggleLogStatus(queryLogEnabled)}
+                        disabled={logStatusProcessing}
                     ><Trans>disabled_log_btn</Trans></button>
                     <button
                         className="btn btn-primary btn-sm mr-2"
@@ -297,6 +299,7 @@ class Logs extends Component {
                 className="btn btn-success btn-sm mr-2"
                 type="submit"
                 onClick={() => this.props.toggleLogStatus(queryLogEnabled)}
+                disabled={logStatusProcessing}
             ><Trans>enabled_log_btn</Trans></button>
         );
     }
@@ -308,7 +311,7 @@ class Logs extends Component {
             <Fragment>
                 <PageTitle title={ t('query_log') } subtitle={ t('last_dns_queries') }>
                     <div className="page-title__actions">
-                        {this.renderButtons(queryLogEnabled)}
+                        {this.renderButtons(queryLogEnabled, dashboard.logStatusProcessing)}
                     </div>
                 </PageTitle>
                 <Card>
@@ -332,6 +335,8 @@ Logs.propTypes = {
     userRules: PropTypes.string,
     setRules: PropTypes.func,
     addSuccessToast: PropTypes.func,
+    processingRules: PropTypes.bool,
+    logStatusProcessing: PropTypes.bool,
     t: PropTypes.func,
 };
 
