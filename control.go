@@ -695,15 +695,13 @@ func handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleGetDefaultAddresses(w http.ResponseWriter, r *http.Request) {
+	type ipport struct {
+		IP   string `json:"ip"`
+		Port int    `json:"port"`
+	}
 	data := struct {
-		Web struct {
-			IP   string
-			Port int
-		}
-		DNS struct {
-			IP   string
-			Port int
-		}
+		Web ipport `json:"web"`
+		DNS ipport `json:"dns"`
 	}{}
 
 	// TODO: replace mockup with actual data
