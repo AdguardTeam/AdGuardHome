@@ -4,6 +4,7 @@ require (
 	github.com/AdguardTeam/dnsproxy v0.9.10
 	github.com/StackExchange/wmi v0.0.0-20180725035823-b12b22c5341f // indirect
 	github.com/bluele/gcache v0.0.0-20171010155617-472614239ac7
+	github.com/davecgh/go-spew v1.1.1
 	github.com/go-ole/go-ole v1.2.1 // indirect
 	github.com/go-test/deep v1.0.1
 	github.com/gobuffalo/packr v1.19.0

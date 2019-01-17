@@ -13,6 +13,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hmage/golibs/log"
 	"github.com/miekg/dns"
 	govalidator "gopkg.in/asaskevich/govalidator.v4"
@@ -693,6 +694,43 @@ func handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handleGetDefaultAddresses(w http.ResponseWriter, r *http.Request) {
+	data := struct {
+		Web struct {
+			IP   string
+			Port int
+		}
+		DNS struct {
+			IP   string
+			Port int
+		}
+	}{}
+
+	// TODO: replace mockup with actual data
+	data.Web.IP = "192.168.104.104"
+	data.Web.Port = 3000
+	data.DNS.IP = "192.168.104.104"
+	data.DNS.Port = 53
+
+	w.Header().Set("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(data)
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "Unable to marshal default addresses to json: %s", err)
+		return
+	}
+}
+
+func handleSetAllSettings(w http.ResponseWriter, r *http.Request) {
+	newSettings := map[string]interface{}{}
+	err := json.NewDecoder(r.Body).Decode(&newSettings)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Failed to parse new DHCP config json: %s", err)
+		return
+	}
+
+	spew.Dump(newSettings)
+}
+
 func registerControlHandlers() {
 	http.HandleFunc("/control/status", optionalAuth(ensureGET(handleStatus)))
 	http.HandleFunc("/control/enable_protection", optionalAuth(ensurePOST(handleProtectionEnable)))
@@ -731,4 +769,8 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/dhcp/interfaces", optionalAuth(ensureGET(handleDHCPInterfaces)))
 	http.HandleFunc("/control/dhcp/set_config", optionalAuth(ensurePOST(handleDHCPSetConfig)))
 	http.HandleFunc("/control/dhcp/find_active_dhcp", optionalAuth(ensurePOST(handleDHCPFindActiveServer)))
+
+	// TODO: move to registerInstallHandlers()
+	http.HandleFunc("/control/install/get_default_addresses", ensureGET(handleGetDefaultAddresses))
+	http.HandleFunc("/control/install/set_all_settings", ensurePOST(handleSetAllSettings))
 }
