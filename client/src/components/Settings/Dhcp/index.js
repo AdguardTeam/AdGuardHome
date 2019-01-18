@@ -23,7 +23,7 @@ class Dhcp extends Component {
     }
 
     getToggleDhcpButton = () => {
-        const { config, active } = this.props.dhcp;
+        const { config, active, processingDhcp } = this.props.dhcp;
         const activeDhcpFound = active && active.found;
         const filledConfig = Object.keys(config).every((key) => {
             if (key === 'enabled') {
@@ -39,6 +39,7 @@ class Dhcp extends Component {
                     type="button"
                     className="btn btn-standart mr-2 btn-gray"
                     onClick={() => this.props.toggleDhcp(config)}
+                    disabled={processingDhcp}
                 >
                     <Trans>dhcp_disable</Trans>
                 </button>
@@ -50,7 +51,7 @@ class Dhcp extends Component {
                 type="button"
                 className="btn btn-standart mr-2 btn-success"
                 onClick={() => this.handleToggle(config)}
-                disabled={!filledConfig || activeDhcpFound}
+                disabled={!filledConfig || activeDhcpFound || processingDhcp}
             >
                 <Trans>dhcp_enable</Trans>
             </button>
