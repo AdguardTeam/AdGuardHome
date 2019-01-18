@@ -336,4 +336,22 @@ export default class Api {
         };
         return this.makeRequest(path, method, parameters);
     }
+
+    // Installation
+    GET_DEFAULT_ADDRESSES = { path: 'install/get_default_addresses', method: 'GET' };
+    SET_ALL_SETTINGS = { path: 'install/set_all_settings', method: 'POST' };
+
+    getDefaultAddresses() {
+        const { path, method } = this.GET_DEFAULT_ADDRESSES;
+        return this.makeRequest(path, method);
+    }
+
+    setAllSettings(config) {
+        const { path, method } = this.SET_ALL_SETTINGS;
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, parameters);
+    }
 }

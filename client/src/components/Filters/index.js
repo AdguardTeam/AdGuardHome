@@ -96,14 +96,14 @@ class Filters extends Component {
                                 />
                                 <div className="card-actions">
                                     <button
-                                        className="btn btn-success btn-standart mr-2"
+                                        className="btn btn-success btn-standard mr-2"
                                         type="submit"
                                         onClick={this.props.toggleFilteringModal}
                                     >
                                         <Trans>add_filter_btn</Trans>
                                     </button>
                                     <button
-                                        className="btn btn-primary btn-standart"
+                                        className="btn btn-primary btn-standard"
                                         type="submit"
                                         onClick={this.props.refreshFilters}
                                         disabled={processingRefreshFilters}

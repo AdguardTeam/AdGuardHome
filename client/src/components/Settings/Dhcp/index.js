@@ -37,7 +37,7 @@ class Dhcp extends Component {
             return (
                 <button
                     type="button"
-                    className="btn btn-standart mr-2 btn-gray"
+                    className="btn btn-standard mr-2 btn-gray"
                     onClick={() => this.props.toggleDhcp(config)}
                     disabled={processingDhcp}
                 >
@@ -49,7 +49,7 @@ class Dhcp extends Component {
         return (
             <button
                 type="button"
-                className="btn btn-standart mr-2 btn-success"
+                className="btn btn-standard mr-2 btn-success"
                 onClick={() => this.handleToggle(config)}
                 disabled={!filledConfig || activeDhcpFound || processingDhcp}
             >
@@ -91,8 +91,8 @@ class Dhcp extends Component {
     render() {
         const { t, dhcp } = this.props;
         const statusButtonClass = classnames({
-            'btn btn-primary btn-standart': true,
-            'btn btn-primary btn-standart btn-loading': dhcp.processingStatus,
+            'btn btn-primary btn-standard': true,
+            'btn btn-primary btn-standard btn-loading': dhcp.processingStatus,
         });
 
         return (

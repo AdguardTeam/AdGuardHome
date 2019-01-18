@@ -60,3 +60,6 @@ export const LANGUAGES = [
         name: '正體中文',
     },
 ];
+
+export const INSTALL_FIRST_STEP = 1;
+export const INSTALL_TOTAL_STEPS = 5;

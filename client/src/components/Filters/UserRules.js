@@ -25,7 +25,7 @@ class UserRules extends Component {
                     <textarea className="form-control form-control--textarea-large" value={this.props.userRules} onChange={this.handleChange} />
                     <div className="card-actions">
                         <button
-                            className="btn btn-success btn-standart"
+                            className="btn btn-success btn-standard"
                             type="submit"
                             onClick={this.handleSubmit}
                         >

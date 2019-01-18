@@ -124,7 +124,7 @@ const Form = (props) => {
 
             <button
                 type="submit"
-                className="btn btn-success btn-standart"
+                className="btn btn-success btn-standard"
                 disabled={pristine || submitting}
             >
                 {t('save_config')}

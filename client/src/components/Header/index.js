@@ -6,7 +6,7 @@ import { Trans, withNamespaces } from 'react-i18next';
 
 import Menu from './Menu';
 import Version from './Version';
-import logo from './logo.svg';
+import logo from '../ui/svg/logo.svg';
 import './Header.css';
 
 class Header extends Component {
