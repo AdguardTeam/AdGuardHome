@@ -1,7 +1,12 @@
 .setup {
     min-height: calc(100vh - 80px);
-    padding: 50px 0;
     line-height: 1.48;
+}
+
+@media screen and (min-width: 768px) {
+    .setup {
+        padding: 50px 0;
+    }
 }
 
 .setup__container {
