@@ -25,12 +25,17 @@ class Dashboard extends Component {
     }
 
     getToggleFilteringButton = () => {
-        const { protectionEnabled } = this.props.dashboard;
+        const { protectionEnabled, processingProtection } = this.props.dashboard;
         const buttonText = protectionEnabled ? 'disable_protection' : 'enable_protection';
         const buttonClass = protectionEnabled ? 'btn-gray' : 'btn-success';
 
         return (
-            <button type="button" className={`btn btn-sm mr-2 ${buttonClass}`} onClick={() => this.props.toggleProtection(protectionEnabled)}>
+            <button
+                type="button"
+                className={`btn btn-sm mr-2 ${buttonClass}`}
+                onClick={() => this.props.toggleProtection(protectionEnabled)}
+                disabled={processingProtection}
+            >
                 <Trans>{buttonText}</Trans>
             </button>
         );
@@ -125,6 +130,7 @@ Dashboard.propTypes = {
     isCoreRunning: PropTypes.bool,
     getFiltering: PropTypes.func,
     toggleProtection: PropTypes.func,
+    processingProtection: PropTypes.bool,
     t: PropTypes.func,
 };
 

@@ -19,7 +19,9 @@ body {
 }
 
 .loading-bar {
-    position: absolute;
+    position: fixed;
+    top: 0;
+    left: 0;
     z-index: 103;
     height: 3px;
     background: linear-gradient(45deg, rgba(99, 125, 120, 1) 0%, rgba(88, 177, 101, 1) 100%);

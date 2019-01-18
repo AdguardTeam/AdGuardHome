@@ -55,6 +55,7 @@ class Modal extends Component {
             isOpen,
             title,
             inputDescription,
+            processingAddFilter,
         } = this.props;
         const { isUrlValid, url, name } = this.state;
         const inputUrlClass = classnames({
@@ -71,8 +72,8 @@ class Modal extends Component {
             if (!this.props.isFilterAdded) {
                 return (
                     <React.Fragment>
-                        <input type="text" className={inputNameClass} placeholder={ this.props.t('enter_name_hint') } onChange={this.handleNameChange} />
-                        <input type="text" className={inputUrlClass} placeholder={ this.props.t('enter_url_hint') } onChange={this.handleUrlChange} />
+                        <input type="text" className={inputNameClass} placeholder={this.props.t('enter_name_hint')} onChange={this.handleNameChange} />
+                        <input type="text" className={inputUrlClass} placeholder={this.props.t('enter_url_hint')} onChange={this.handleUrlChange} />
                         {inputDescription &&
                             <div className="description">
                                 {inputDescription}
@@ -82,7 +83,7 @@ class Modal extends Component {
             }
             return (
                 <div className="description">
-                    <Trans>Url added successfully</Trans>
+                    <Trans>url_added_successfully</Trans>
                 </div>
             );
         };
@@ -93,7 +94,7 @@ class Modal extends Component {
             <ReactModal
                 className="Modal__Bootstrap modal-dialog modal-dialog-centered"
                 closeTimeoutMS={0}
-                isOpen={ isOpen }
+                isOpen={isOpen}
                 onRequestClose={this.closeModal}
             >
                 <div className="modal-content">
@@ -106,14 +107,26 @@ class Modal extends Component {
                     </button>
                     </div>
                     <div className="modal-body">
-                        { renderBody()}
+                        {renderBody()}
                     </div>
-                    {
-                        !this.props.isFilterAdded &&
-                            <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={this.closeModal}><Trans>cancel_btn</Trans></button>
-                                <button type="button" className="btn btn-success" onClick={this.handleNext} disabled={isValidForSubmit}><Trans>add_filter_btn</Trans></button>
-                            </div>
+                    {!this.props.isFilterAdded &&
+                        <div className="modal-footer">
+                            <button
+                                type="button"
+                                className="btn btn-secondary"
+                                onClick={this.closeModal}
+                            >
+                                <Trans>cancel_btn</Trans>
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-success"
+                                onClick={this.handleNext}
+                                disabled={isValidForSubmit || processingAddFilter}
+                            >
+                                <Trans>add_filter_btn</Trans>
+                            </button>
+                        </div>
                     }
                 </div>
             </ReactModal>
@@ -128,6 +141,7 @@ Modal.propTypes = {
     inputDescription: PropTypes.string,
     addFilter: PropTypes.func.isRequired,
     isFilterAdded: PropTypes.bool,
+    processingAddFilter: PropTypes.bool,
     t: PropTypes.func,
 };
 

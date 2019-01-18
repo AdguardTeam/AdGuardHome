@@ -140,8 +140,14 @@ const dashboard = handleActions({
         return newState;
     },
 
+    [actions.toggleProtectionRequest]: state => ({ ...state, processingProtection: true }),
+    [actions.toggleProtectionFailure]: state => ({ ...state, processingProtection: false }),
     [actions.toggleProtectionSuccess]: (state) => {
-        const newState = { ...state, protectionEnabled: !state.protectionEnabled };
+        const newState = {
+            ...state,
+            protectionEnabled: !state.protectionEnabled,
+            processingProtection: false,
+        };
         return newState;
     },
 
@@ -164,6 +170,7 @@ const dashboard = handleActions({
     processingFiltering: true,
     upstreamDns: [],
     protectionEnabled: false,
+    processingProtection: false,
 });
 
 const queryLogs = handleActions({
@@ -228,6 +235,8 @@ const filtering = handleActions({
     isFilteringModalOpen: false,
     processingFilters: false,
     processingRules: false,
+    processingAddFilter: false,
+    processingRefreshFilters: false,
     filters: [],
     userRules: '',
 });
@@ -291,16 +300,19 @@ const dhcp = handleActions({
         processingStatus: false,
     }),
 
+    [actions.toggleDhcpRequest]: state => ({ ...state, processingDhcp: true }),
+    [actions.toggleDhcpFailure]: state => ({ ...state, processingDhcp: false }),
     [actions.toggleDhcpSuccess]: (state) => {
         const { config } = state;
         const newConfig = { ...config, enabled: !config.enabled };
-        const newState = { ...state, config: newConfig };
+        const newState = { ...state, config: newConfig, processingDhcp: false };
         return newState;
     },
 }, {
     processing: true,
     processingStatus: false,
     processingInterfaces: false,
+    processingDhcp: false,
     config: {
         enabled: false,
     },
