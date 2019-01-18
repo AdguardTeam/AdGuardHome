@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"net"
-
+	"net"	
+  
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -30,7 +30,7 @@ func generateServerConfig() dnsforward.ServerConfig {
 			Rules: filter.Rules,
 		})
 	}
-
+  
 	newconfig := dnsforward.ServerConfig{
 		UDPListenAddr:   &net.UDPAddr{IP: net.ParseIP(config.DNS.BindHost), Port: config.DNS.Port},
 		TCPListenAddr:   &net.TCPAddr{IP: net.ParseIP(config.DNS.BindHost), Port: config.DNS.Port},

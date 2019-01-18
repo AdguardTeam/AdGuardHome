@@ -13,8 +13,8 @@
     <a href="https://reddit.com/r/Adguard">Reddit</a> |
     <a href="https://twitter.com/AdGuard">Twitter</a>
     <br /><br />
-    <a href="https://travis-ci.org/AdguardTeam/AdGuardHome">
-      <img src="https://travis-ci.org/AdguardTeam/AdGuardHome.svg" alt="Build status" />
+    <a href="https://travis-ci.org/rpassmore/AdGuardHome">
+      <img src="https://travis-ci.org/rpassmore/AdGuardHome.svg" alt="Build status" />
     </a>
     <a href="https://github.com/AdguardTeam/AdGuardHome/releases">
         <img src="https://img.shields.io/github/release/AdguardTeam/AdGuardHome/all.svg" alt="Latest release" />
