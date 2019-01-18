@@ -33,7 +33,7 @@ func generateServerConfig() dnsforward.ServerConfig {
 
 	newconfig := dnsforward.ServerConfig{
 		UDPListenAddr:   &net.UDPAddr{IP: net.ParseIP(config.DNS.BindHost), Port: config.DNS.Port},
-		TCPListenAddr:   &net.UDPAddr{IP: net.ParseIP(config.DNS.BindHost), Port: config.DNS.Port},
+		TCPListenAddr:   &net.TCPAddr{IP: net.ParseIP(config.DNS.BindHost), Port: config.DNS.Port},
 		FilteringConfig: config.DNS.FilteringConfig,
 		Filters:         filters,
 	}
