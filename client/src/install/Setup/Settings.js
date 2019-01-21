@@ -36,6 +36,7 @@ let Settings = (props) => {
         handleSubmit,
         interfaceIp,
         dnsIp,
+        invalid,
     } = props;
 
     return (
@@ -122,7 +123,7 @@ let Settings = (props) => {
                     <Trans>install_settings_dns_desc</Trans> <strong>{dnsIp}</strong>
                 </p>
             </div>
-            <Controls />
+            <Controls invalid={invalid} />
         </form>
     );
 };
@@ -131,8 +132,7 @@ Settings.propTypes = {
     handleSubmit: PropTypes.func.isRequired,
     interfaceIp: PropTypes.string.isRequired,
     dnsIp: PropTypes.string.isRequired,
-    pristine: PropTypes.bool.isRequired,
-    submitting: PropTypes.bool.isRequired,
+    invalid: PropTypes.bool.isRequired,
     initialValues: PropTypes.object,
 };
 

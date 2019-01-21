@@ -4,8 +4,8 @@ import { Field, reduxForm } from 'redux-form';
 import { withNamespaces, Trans } from 'react-i18next';
 import flow from 'lodash/flow';
 
+import i18n from '../../i18n';
 import Controls from './Controls';
-import validate from './validate';
 import renderField from './renderField';
 
 const required = (value) => {
@@ -15,11 +15,21 @@ const required = (value) => {
     return <Trans>form_error_required</Trans>;
 };
 
+const validate = (values) => {
+    const errors = {};
+
+    if (values.confirm_password !== values.password) {
+        errors.confirm_password = i18n.t('form_error_password');
+    }
+
+    return errors;
+};
+
 const Auth = (props) => {
     const {
         handleSubmit,
-        submitting,
         pristine,
+        invalid,
         t,
     } = props;
 
@@ -75,7 +85,7 @@ const Auth = (props) => {
                     />
                 </div>
             </div>
-            <Controls submitting={submitting} pristine={pristine} />
+            <Controls pristine={pristine} invalid={invalid} />
         </form>
     );
 };
@@ -83,7 +93,7 @@ const Auth = (props) => {
 Auth.propTypes = {
     handleSubmit: PropTypes.func.isRequired,
     pristine: PropTypes.bool.isRequired,
-    submitting: PropTypes.bool.isRequired,
+    invalid: PropTypes.bool.isRequired,
     t: PropTypes.func.isRequired,
 };
 

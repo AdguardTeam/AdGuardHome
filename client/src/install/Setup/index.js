@@ -13,6 +13,7 @@ import Devices from './Devices';
 import Submit from './Submit';
 import Progress from './Progress';
 
+import Toasts from '../../components/Toasts';
 import Footer from '../../components/ui/Footer';
 import logo from '../../components/ui/svg/logo.svg';
 
@@ -85,6 +86,7 @@ class Setup extends Component {
                             </div>
                         </div>
                         <Footer />
+                        <Toasts />
                     </Fragment>
                 }
             </Fragment>
@@ -104,8 +106,8 @@ Setup.propTypes = {
 };
 
 const mapStateToProps = (state) => {
-    const { install } = state;
-    const props = { install };
+    const { install, toasts } = state;
+    const props = { install, toasts };
     return props;
 };
 

@@ -18,19 +18,19 @@ const Devices = () => (
             <Tabs>
                 <div label="Router">
                     <div className="tab__title">
-                        <Trans>install_decices_router</Trans>
+                        <Trans>install_devices_router</Trans>
                     </div>
                     <div className="tab__text">
-                        <Trans>install_decices_router_desc</Trans>
+                        <Trans>install_devices_router_desc</Trans>
                         <ol>
                             <li>
-                                <Trans>install_decices_router_list_1</Trans>
+                                <Trans>install_devices_router_list_1</Trans>
                             </li>
                             <li>
-                                <Trans>install_decices_router_list_2</Trans>
+                                <Trans>install_devices_router_list_2</Trans>
                             </li>
                             <li>
-                                <Trans>install_decices_router_list_3</Trans>
+                                <Trans>install_devices_router_list_3</Trans>
                             </li>
                         </ol>
                     </div>

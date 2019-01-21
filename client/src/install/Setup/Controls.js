@@ -45,7 +45,7 @@ class Controls extends Component {
                         <button
                             type="submit"
                             className="btn btn-success btn-standard btn-lg"
-                            disabled={this.props.submitting || this.props.pristine}
+                            disabled={this.props.invalid || this.props.pristine}
                         >
                             <Trans>next</Trans>
                         </button>
@@ -65,7 +65,6 @@ class Controls extends Component {
                             type="button"
                             className="btn btn-success btn-standard btn-lg"
                             onClick={this.props.nextStep}
-                            disabled={this.props.submitting || this.props.pristine}
                         >
                             <Trans>next</Trans>
                         </button>
@@ -101,6 +100,7 @@ Controls.propTypes = {
     prevStep: PropTypes.func,
     pristine: PropTypes.bool,
     submitting: PropTypes.bool,
+    invalid: PropTypes.bool,
 };
 
 const mapStateToProps = (state) => {
