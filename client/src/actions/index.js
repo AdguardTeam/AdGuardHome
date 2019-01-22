@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { showLoading, hideLoading } from 'react-redux-loading-bar';
 
 import { normalizeHistory, normalizeFilteringStatus, normalizeLogs } from '../helpers/helpers';
+import { SETTINGS_NAMES } from '../helpers/constants';
 import Api from '../api/Api';
 
 const apiClient = new Api();
@@ -18,9 +19,8 @@ export const showSettingsFailure = createAction('SETTINGS_FAILURE_SHOW');
 export const toggleSetting = (settingKey, status) => async (dispatch) => {
     let successMessage = '';
     try {
-        // TODO move setting keys to constants
         switch (settingKey) {
-            case 'filtering':
+            case SETTINGS_NAMES.filtering:
                 if (status) {
                     successMessage = 'disabled_filtering_toast';
                     await apiClient.disableFiltering();
@@ -30,7 +30,7 @@ export const toggleSetting = (settingKey, status) => async (dispatch) => {
                 }
                 dispatch(toggleSettingStatus({ settingKey }));
                 break;
-            case 'safebrowsing':
+            case SETTINGS_NAMES.safebrowsing:
                 if (status) {
                     successMessage = 'disabled_safe_browsing_toast';
                     await apiClient.disableSafebrowsing();
@@ -40,7 +40,7 @@ export const toggleSetting = (settingKey, status) => async (dispatch) => {
                 }
                 dispatch(toggleSettingStatus({ settingKey }));
                 break;
-            case 'parental':
+            case SETTINGS_NAMES.parental:
                 if (status) {
                     successMessage = 'disabled_parental_toast';
                     await apiClient.disableParentalControl();
@@ -50,7 +50,7 @@ export const toggleSetting = (settingKey, status) => async (dispatch) => {
                 }
                 dispatch(toggleSettingStatus({ settingKey }));
                 break;
-            case 'safesearch':
+            case SETTINGS_NAMES.safesearch:
                 if (status) {
                     successMessage = 'disabled_safe_search_toast';
                     await apiClient.disableSafesearch();
@@ -434,7 +434,6 @@ export const downloadQueryLogRequest = createAction('DOWNLOAD_QUERY_LOG_REQUEST'
 export const downloadQueryLogFailure = createAction('DOWNLOAD_QUERY_LOG_FAILURE');
 export const downloadQueryLogSuccess = createAction('DOWNLOAD_QUERY_LOG_SUCCESS');
 
-// TODO create some common flasher with all server errors
 export const downloadQueryLog = () => async (dispatch) => {
     let data;
     dispatch(downloadQueryLogRequest());
@@ -575,34 +574,36 @@ export const setDhcpConfigFailure = createAction('SET_DHCP_CONFIG_FAILURE');
 // TODO rewrite findActiveDhcp part
 export const setDhcpConfig = config => async (dispatch) => {
     dispatch(setDhcpConfigRequest());
-    try {
-        if (config.interface_name) {
-            dispatch(findActiveDhcpRequest());
-            try {
-                const activeDhcp = await apiClient.findActiveDhcp(config.interface_name);
-                dispatch(findActiveDhcpSuccess(activeDhcp));
 
-                if (!activeDhcp.found) {
-                    await apiClient.setDhcpConfig(config);
-                    dispatch(addSuccessToast('dhcp_config_saved'));
-                    dispatch(setDhcpConfigSuccess());
-                    dispatch(getDhcpStatus());
-                } else {
-                    dispatch(addErrorToast({ error: 'dhcp_found' }));
-                }
-            } catch (error) {
-                dispatch(addErrorToast({ error }));
-                dispatch(findActiveDhcpFailure());
+    if (config.interface_name) {
+        dispatch(findActiveDhcpRequest());
+        try {
+            const activeDhcp = await apiClient.findActiveDhcp(config.interface_name);
+            dispatch(findActiveDhcpSuccess(activeDhcp));
+
+            if (!activeDhcp.found) {
+                await apiClient.setDhcpConfig(config);
+                dispatch(addSuccessToast('dhcp_config_saved'));
+                dispatch(setDhcpConfigSuccess());
+                dispatch(getDhcpStatus());
+            } else {
+                dispatch(addErrorToast({ error: 'dhcp_found' }));
             }
-        } else {
+        } catch (error) {
+            dispatch(addErrorToast({ error }));
+            dispatch(findActiveDhcpFailure());
+            dispatch(setDhcpConfigFailure());
+        }
+    } else {
+        try {
             await apiClient.setDhcpConfig(config);
             dispatch(addSuccessToast('dhcp_config_saved'));
             dispatch(setDhcpConfigSuccess());
             dispatch(getDhcpStatus());
+        } catch (error) {
+            dispatch(addErrorToast({ error }));
+            dispatch(setDhcpConfigFailure());
         }
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
-        dispatch(setDhcpConfigFailure());
     }
 };
 

@@ -31,9 +31,9 @@ class Tabs extends Component {
 
                         return (
                             <Tab
-                                activeTab={activeTab}
                                 key={label}
                                 label={label}
+                                activeTab={activeTab}
                                 onClick={this.onClickTabControl}
                             />
                         );

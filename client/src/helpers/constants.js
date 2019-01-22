@@ -63,3 +63,10 @@ export const LANGUAGES = [
 
 export const INSTALL_FIRST_STEP = 1;
 export const INSTALL_TOTAL_STEPS = 5;
+
+export const SETTINGS_NAMES = {
+    filtering: 'filtering',
+    safebrowsing: 'safebrowsing',
+    parental: 'parental',
+    safesearch: 'safesearch',
+};

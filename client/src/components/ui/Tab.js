@@ -23,7 +23,7 @@ class Tab extends Component {
                 className={tabClass}
                 onClick={this.handleClick}
             >
-                 <svg className="tab__icon">
+                <svg className="tab__icon">
                     <use xlinkHref={`#${label.toLowerCase()}`} />
                 </svg>
                 {label}

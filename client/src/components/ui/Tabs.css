@@ -40,3 +40,12 @@
     margin-bottom: 6px;
     fill: #4a4a4a;
 }
+
+.tab__text {
+    line-height: 1.7;
+}
+
+.tab__text li,
+.tab__text p {
+    margin-bottom: 5px;
+}

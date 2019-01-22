@@ -84,7 +84,7 @@ class Filters extends Component {
                                     columns={this.columns}
                                     showPagination={true}
                                     defaultPageSize={10}
-                                    minRows={4} // TODO find out what to show if rules.length is 0
+                                    minRows={4}
                                     // Text
                                     previousText={ t('previous_btn') }
                                     nextText={ t('next_btn') }
