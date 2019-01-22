@@ -2,7 +2,8 @@ import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Field, reduxForm, formValueSelector } from 'redux-form';
-import { Trans } from 'react-i18next';
+import { Trans, withNamespaces } from 'react-i18next';
+import flow from 'lodash/flow';
 
 import Controls from './Controls';
 import renderField from './renderField';
@@ -153,8 +154,11 @@ Settings = connect((state) => {
     };
 })(Settings);
 
-export default reduxForm({
-    form: 'install',
-    destroyOnUnmount: false,
-    forceUnregisterOnUnmount: true,
-})(Settings);
+export default flow([
+    withNamespaces(),
+    reduxForm({
+        form: 'install',
+        destroyOnUnmount: false,
+        forceUnregisterOnUnmount: true,
+    }),
+])(Settings);

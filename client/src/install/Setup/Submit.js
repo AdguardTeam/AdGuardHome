@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { reduxForm } from 'redux-form';
-import { Trans } from 'react-i18next';
+import { Trans, withNamespaces } from 'react-i18next';
+import flow from 'lodash/flow';
 
 import Controls from './Controls';
 
@@ -37,8 +38,11 @@ Submit.propTypes = {
     submitting: PropTypes.bool.isRequired,
 };
 
-export default reduxForm({
-    form: 'install',
-    destroyOnUnmount: false,
-    forceUnregisterOnUnmount: true,
-})(Submit);
+export default flow([
+    withNamespaces(),
+    reduxForm({
+        form: 'install',
+        destroyOnUnmount: false,
+        forceUnregisterOnUnmount: true,
+    }),
+])(Submit);

@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Trans } from 'react-i18next';
+import { Trans, withNamespaces } from 'react-i18next';
 
 import { INSTALL_TOTAL_STEPS } from '../../helpers/constants';
 
@@ -22,4 +22,4 @@ Progress.propTypes = {
     step: PropTypes.number.isRequired,
 };
 
-export default Progress;
+export default withNamespaces()(Progress);

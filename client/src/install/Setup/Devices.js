@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trans } from 'react-i18next';
+import { Trans, withNamespaces } from 'react-i18next';
 
 import Tabs from '../../components/ui/Tabs';
 import Icons from '../../components/ui/Icons';
@@ -90,4 +90,4 @@ const Devices = () => (
     </div>
 );
 
-export default Devices;
+export default withNamespaces()(Devices);

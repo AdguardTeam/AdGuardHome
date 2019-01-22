@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Trans } from 'react-i18next';
+import { Trans, withNamespaces } from 'react-i18next';
 import Controls from './Controls';
 
 class Greeting extends Component {
@@ -20,4 +20,4 @@ class Greeting extends Component {
     }
 }
 
-export default Greeting;
+export default withNamespaces()(Greeting);
