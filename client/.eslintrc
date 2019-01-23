@@ -45,9 +45,7 @@
         }],
         "class-methods-use-this": "off",
         "no-shadow": "off",
-        "camelcase": ["error", {
-            "properties": "never"
-        }],
+        "camelcase": "off",
         "no-console": ["warn", { "allow": ["warn", "error"] }],
         "import/no-extraneous-dependencies": ["error", { "devDependencies": true }],
         "import/prefer-default-export": "off"

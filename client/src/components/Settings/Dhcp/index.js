@@ -13,17 +13,14 @@ class Dhcp extends Component {
         this.props.setDhcpConfig(values);
     };
 
-    handleFormChange = (value) => {
-        this.props.setDhcpConfig(value);
-    }
-
     handleToggle = (config) => {
         this.props.toggleDhcp(config);
-        this.props.findActiveDhcp(config.interface_name);
     }
 
     getToggleDhcpButton = () => {
-        const { config, active, processingDhcp } = this.props.dhcp;
+        const {
+            config, active, processingDhcp, processingConfig,
+        } = this.props.dhcp;
         const activeDhcpFound = active && active.found;
         const filledConfig = Object.keys(config).every((key) => {
             if (key === 'enabled') {
@@ -39,7 +36,7 @@ class Dhcp extends Component {
                     type="button"
                     className="btn btn-standard mr-2 btn-gray"
                     onClick={() => this.props.toggleDhcp(config)}
-                    disabled={processingDhcp}
+                    disabled={processingDhcp || processingConfig}
                 >
                     <Trans>dhcp_disable</Trans>
                 </button>
@@ -51,7 +48,12 @@ class Dhcp extends Component {
                 type="button"
                 className="btn btn-standard mr-2 btn-success"
                 onClick={() => this.handleToggle(config)}
-                disabled={!filledConfig || activeDhcpFound || processingDhcp}
+                disabled={
+                    !filledConfig
+                    || activeDhcpFound
+                    || processingDhcp
+                    || processingConfig
+                }
             >
                 <Trans>dhcp_enable</Trans>
             </button>
@@ -94,6 +96,22 @@ class Dhcp extends Component {
             'btn btn-primary btn-standard': true,
             'btn btn-primary btn-standard btn-loading': dhcp.processingStatus,
         });
+        const {
+            gateway_ip,
+            interface_name,
+            lease_duration,
+            range_end,
+            range_start,
+            subnet_mask,
+        } = dhcp.config;
+        const initialForm = {
+            gateway_ip,
+            lease_duration,
+            range_end,
+            range_start,
+            subnet_mask,
+        };
+        const initialSelect = { interface_name };
 
         return (
             <Fragment>
@@ -102,17 +120,17 @@ class Dhcp extends Component {
                         {!dhcp.processing &&
                             <Fragment>
                                 <Interface
-                                    onChange={this.handleFormChange}
-                                    initialValues={dhcp.config}
+                                    onChange={this.handleFormSubmit}
+                                    initialValues={initialSelect}
                                     interfaces={dhcp.interfaces}
                                     processing={dhcp.processingInterfaces}
                                     enabled={dhcp.config.enabled}
                                 />
                                 <Form
                                     onSubmit={this.handleFormSubmit}
-                                    initialValues={dhcp.config}
+                                    initialValues={initialForm}
                                     interfaces={dhcp.interfaces}
-                                    processing={dhcp.processingInterfaces}
+                                    processingConfig={dhcp.processingConfig}
                                 />
                                 <hr/>
                                 <div className="card-actions mb-3">
@@ -123,7 +141,7 @@ class Dhcp extends Component {
                                         onClick={() =>
                                             this.props.findActiveDhcp(dhcp.config.interface_name)
                                         }
-                                        disabled={!dhcp.config.interface_name}
+                                        disabled={!dhcp.config.interface_name || dhcp.processingConfig}
                                     >
                                         <Trans>check_dhcp_servers</Trans>
                                     </button>

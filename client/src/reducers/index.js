@@ -308,11 +308,21 @@ const dhcp = handleActions({
         const newState = { ...state, config: newConfig, processingDhcp: false };
         return newState;
     },
+
+    [actions.setDhcpConfigRequest]: state => ({ ...state, processingConfig: true }),
+    [actions.setDhcpConfigFailure]: state => ({ ...state, processingConfig: false }),
+    [actions.setDhcpConfigSuccess]: (state, { payload }) => {
+        const { config } = state;
+        const newConfig = { ...config, ...payload };
+        const newState = { ...state, config: newConfig, processingConfig: false };
+        return newState;
+    },
 }, {
     processing: true,
     processingStatus: false,
     processingInterfaces: false,
     processingDhcp: false,
+    processingConfig: false,
     config: {
         enabled: false,
     },
