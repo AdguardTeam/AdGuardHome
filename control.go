@@ -1025,6 +1025,29 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ---
+// TLS
+// ---
+func handleTLSStatus(w http.ResponseWriter, r *http.Request) {
+	err := json.NewEncoder(w).Encode(&config.TLS)
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "Failed to marshal json with TLS status: %s", err)
+		return
+	}
+}
+
+func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
+	newconfig := tlsConfig{}
+	err := json.NewDecoder(r.body).Decode(&newconfig)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Failed to parse new TLS config json: %s", err)
+		return
+	}
+
+	// TODO: validate before applying
+	config.TLS = newconfig
+}
+
 func registerInstallHandlers() {
 	http.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(handleInstallGetAddresses)))
 	http.HandleFunc("/control/install/configure", preInstall(ensurePOST(handleInstallConfigure)))
@@ -1068,4 +1091,7 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/dhcp/interfaces", postInstall(optionalAuth(ensureGET(handleDHCPInterfaces))))
 	http.HandleFunc("/control/dhcp/set_config", postInstall(optionalAuth(ensurePOST(handleDHCPSetConfig))))
 	http.HandleFunc("/control/dhcp/find_active_dhcp", postInstall(optionalAuth(ensurePOST(handleDHCPFindActiveServer))))
+
+	http.HandleFunc("/control/tls/status", postInstall(optionalAuth(ensureGET(handleTLSStatus))))
+	http.HandleFunc("/control/tls/configure", postInstall(optionalAuth(ensurePOST(handleTLSConfigure))))
 }
