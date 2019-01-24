@@ -58,7 +58,10 @@ func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if !newconfig.Enabled {
-		dhcpServer.Stop()
+		err := dhcpServer.Stop()
+		if err != nil {
+			log.Printf("failed to stop the DHCP server: %s", err)
+		}
 	}
 	config.DHCP = newconfig
 	httpUpdateConfigReloadDNSReturnOK(w, r)
@@ -71,11 +74,6 @@ func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Couldn't get list of interfaces: %s", err)
 		return
-	}
-
-	type address struct {
-		IP      string
-		Netmask string
 	}
 
 	type responseInterface struct {

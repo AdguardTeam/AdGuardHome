@@ -70,20 +70,20 @@ func updateUniqueFilterID(filters []filter) {
 
 func assignUniqueFilterID() int64 {
 	value := nextFilterID
-	nextFilterID += 1
+	nextFilterID++
 	return value
 }
 
 // Sets up a timer that will be checking for filters updates periodically
 func periodicallyRefreshFilters() {
 	for range time.Tick(time.Minute) {
-		refreshFiltersIfNeccessary(false)
+		refreshFiltersIfNecessary(false)
 	}
 }
 
 // Checks filters updates if necessary
 // If force is true, it ignores the filter.LastUpdated field value
-func refreshFiltersIfNeccessary(force bool) int {
+func refreshFiltersIfNecessary(force bool) int {
 	config.Lock()
 
 	// fetch URLs
@@ -113,8 +113,12 @@ func refreshFiltersIfNeccessary(force bool) int {
 	}
 	config.Unlock()
 
-	if updateCount > 0 {
-		reconfigureDNSServer()
+	if updateCount > 0 && isRunning() {
+		err := reconfigureDNSServer()
+		if err != nil {
+			msg := fmt.Sprintf("SHOULD NOT HAPPEN: cannot reconfigure DNS server with the new filters: %s", err)
+			panic(msg)
+		}
 	}
 	return updateCount
 }

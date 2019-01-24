@@ -35,7 +35,7 @@ const defaultParentalURL = "http://%s/check-parental-control-hash?prefixes=%s&se
 // ErrInvalidSyntax is returned by AddRule when the rule is invalid
 var ErrInvalidSyntax = errors.New("dnsfilter: invalid rule syntax")
 
-// ErrInvalidSyntax is returned by AddRule when the rule was already added to the filter
+// ErrAlreadyExists is returned by AddRule when the rule was already added to the filter
 var ErrAlreadyExists = errors.New("dnsfilter: rule was already added")
 
 const shortcutLength = 6 // used for rule search optimization, 6 hits the sweet spot
@@ -115,6 +115,7 @@ type Dnsfilter struct {
 	privateConfig
 }
 
+// Filter represents a filter list
 type Filter struct {
 	ID    int64    `json:"id"`         // auto-assigned when filter is added (see nextFilterID), json by default keeps ID uppercase but we need lowercase
 	Rules []string `json:"-" yaml:"-"` // not in yaml or json
@@ -127,16 +128,26 @@ type Reason int
 
 const (
 	// reasons for not filtering
-	NotFilteredNotFound  Reason = iota // host was not find in any checks, default value for result
-	NotFilteredWhiteList               // the host is explicitly whitelisted
-	NotFilteredError                   // there was a transitive error during check
+
+	// NotFilteredNotFound - host was not find in any checks, default value for result
+	NotFilteredNotFound Reason = iota
+	// NotFilteredWhiteList - the host is explicitly whitelisted
+	NotFilteredWhiteList
+	// NotFilteredError - there was a transitive error during check
+	NotFilteredError
 
 	// reasons for filtering
-	FilteredBlackList    // the host was matched to be advertising host
-	FilteredSafeBrowsing // the host was matched to be malicious/phishing
-	FilteredParental     // the host was matched to be outside of parental control settings
-	FilteredInvalid      // the request was invalid and was not processed
-	FilteredSafeSearch   // the host was replaced with safesearch variant
+
+	// FilteredBlackList - the host was matched to be advertising host
+	FilteredBlackList
+	// FilteredSafeBrowsing - the host was matched to be malicious/phishing
+	FilteredSafeBrowsing
+	// FilteredParental - the host was matched to be outside of parental control settings
+	FilteredParental
+	// FilteredInvalid - the request was invalid and was not processed
+	FilteredInvalid
+	// FilteredSafeSearch - the host was replaced with safesearch variant
+	FilteredSafeSearch
 )
 
 // these variables need to survive coredns reload
@@ -151,7 +162,7 @@ type Result struct {
 	IsFiltered bool   `json:",omitempty"` // True if the host name is filtered
 	Reason     Reason `json:",omitempty"` // Reason for blocking / unblocking
 	Rule       string `json:",omitempty"` // Original rule text
-	Ip         net.IP `json:",omitempty"` // Not nil only in the case of a hosts file syntax
+	IP         net.IP `json:",omitempty"` // Not nil only in the case of a hosts file syntax
 	FilterID   int64  `json:",omitempty"` // Filter ID the rule belongs to
 }
 
@@ -228,7 +239,6 @@ func newRulesTable() *rulesTable {
 
 func (r *rulesTable) Add(rule *rule) {
 	r.Lock()
-
 	if rule.ip != nil {
 		// Hosts syntax
 		r.rulesByHost[rule.text] = rule
@@ -476,7 +486,7 @@ func (rule *rule) match(host string) (Result, error) {
 			IsFiltered: true,
 			Reason:     FilteredBlackList,
 			Rule:       rule.originalText,
-			Ip:         rule.ip,
+			IP:         rule.ip,
 			FilterID:   rule.listID,
 		}, nil
 	}
@@ -661,8 +671,11 @@ func (d *Dnsfilter) checkParental(host string) (Result, error) {
 	return result, err
 }
 
+type formatHandler func(hashparam string) string
+type handleBodyHandler func(body []byte, hashes map[string]bool) (Result, error)
+
 // real implementation of lookup/check
-func (d *Dnsfilter) lookupCommon(host string, lookupstats *LookupStats, cache gcache.Cache, hashparamNeedSlash bool, format func(hashparam string) string, handleBody func(body []byte, hashes map[string]bool) (Result, error)) (Result, error) {
+func (d *Dnsfilter) lookupCommon(host string, lookupstats *LookupStats, cache gcache.Cache, hashparamNeedSlash bool, format formatHandler, handleBody handleBodyHandler) (Result, error) {
 	// if host ends with a dot, trim it
 	host = strings.ToLower(strings.Trim(host, "."))
 
@@ -912,15 +925,6 @@ func (d *Dnsfilter) Destroy() {
 //
 // config manipulation helpers
 //
-
-// IsParentalSensitivityValid checks if sensitivity is valid value
-func IsParentalSensitivityValid(sensitivity int) bool {
-	switch sensitivity {
-	case 3, 10, 13, 17:
-		return true
-	}
-	return false
-}
 
 // SetSafeBrowsingServer lets you optionally change hostname of safesearch lookup
 func (d *Dnsfilter) SetSafeBrowsingServer(host string) {

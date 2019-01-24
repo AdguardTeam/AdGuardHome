@@ -21,7 +21,7 @@ const (
 // configuration is loaded from YAML
 // field ordering is important -- yaml fields will mirror ordering from here
 type configuration struct {
-	ourConfigFilename string // Config filename (can be overriden via the command line arguments)
+	ourConfigFilename string // Config filename (can be overridden via the command line arguments)
 	ourBinaryDir      string // Location of our directory, used to protect against CWD being somewhere else
 
 	BindHost  string             `yaml:"bind_host"`
@@ -41,8 +41,8 @@ type configuration struct {
 
 // field ordering is important -- yaml fields will mirror ordering from here
 type dnsConfig struct {
-	BindHost  string `yaml:"bind_host"`
-	Port      int    `yaml:"port"`
+	BindHost string `yaml:"bind_host"`
+	Port     int    `yaml:"port"`
 
 	dnsforward.FilteringConfig `yaml:",inline"`
 

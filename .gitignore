@@ -12,5 +12,5 @@
 /scripts/translations/oneskyapp.json
 
 # Test output
-dnsfilter/dnsfilter.TestLotsOfRules*.pprof
-tests/top-1m.csv
+dnsfilter/tests/top-1m.csv
+dnsfilter/tests/dnsfilter.TestLotsOfRules*.pprof

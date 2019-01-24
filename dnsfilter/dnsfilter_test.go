@@ -26,7 +26,7 @@ import (
 func TestLotsOfRulesMemoryUsage(t *testing.T) {
 	start := getRSS()
 	log.Tracef("RSS before loading rules - %d kB\n", start/1024)
-	dumpMemProfile(_Func() + "1.pprof")
+	dumpMemProfile("tests/" + _Func() + "1.pprof")
 
 	d := NewForTest()
 	defer d.Destroy()
@@ -37,7 +37,7 @@ func TestLotsOfRulesMemoryUsage(t *testing.T) {
 
 	afterLoad := getRSS()
 	log.Tracef("RSS after loading rules - %d kB (%d kB diff)\n", afterLoad/1024, (afterLoad-start)/1024)
-	dumpMemProfile(_Func() + "2.pprof")
+	dumpMemProfile("tests/" + _Func() + "2.pprof")
 
 	tests := []struct {
 		host  string
@@ -60,7 +60,7 @@ func TestLotsOfRulesMemoryUsage(t *testing.T) {
 	}
 	afterMatch := getRSS()
 	log.Tracef("RSS after matching - %d kB (%d kB diff)\n", afterMatch/1024, (afterMatch-afterLoad)/1024)
-	dumpMemProfile(_Func() + "3.pprof")
+	dumpMemProfile("tests/" + _Func() + "3.pprof")
 }
 
 func getRSS() uint64 {
@@ -69,6 +69,9 @@ func getRSS() uint64 {
 		panic(err)
 	}
 	minfo, err := proc.MemoryInfo()
+	if err != nil {
+		panic(err)
+	}
 	return minfo.RSS
 }
 
@@ -86,7 +89,7 @@ func dumpMemProfile(name string) {
 	}
 }
 
-const topHostsFilename = "../tests/top-1m.csv"
+const topHostsFilename = "tests/top-1m.csv"
 
 func fetchTopHostsFromNet() {
 	log.Tracef("Fetching top hosts from network")
@@ -146,7 +149,7 @@ func getTopHosts() {
 func TestLotsOfRulesLotsOfHostsMemoryUsage(t *testing.T) {
 	start := getRSS()
 	log.Tracef("RSS before loading rules - %d kB\n", start/1024)
-	dumpMemProfile(_Func() + "1.pprof")
+	dumpMemProfile("tests/" + _Func() + "1.pprof")
 
 	d := NewForTest()
 	defer d.Destroy()
@@ -155,7 +158,7 @@ func TestLotsOfRulesLotsOfHostsMemoryUsage(t *testing.T) {
 
 	afterLoad := getRSS()
 	log.Tracef("RSS after loading rules - %d kB (%d kB diff)\n", afterLoad/1024, (afterLoad-start)/1024)
-	dumpMemProfile(_Func() + "2.pprof")
+	dumpMemProfile("tests/" + _Func() + "2.pprof")
 
 	getTopHosts()
 	hostnames, err := os.Open(topHostsFilename)
@@ -165,7 +168,7 @@ func TestLotsOfRulesLotsOfHostsMemoryUsage(t *testing.T) {
 	defer hostnames.Close()
 	afterHosts := getRSS()
 	log.Tracef("RSS after loading hosts - %d kB (%d kB diff)\n", afterHosts/1024, (afterHosts-afterLoad)/1024)
-	dumpMemProfile(_Func() + "2.pprof")
+	dumpMemProfile("tests/" + _Func() + "2.pprof")
 
 	{
 		scanner := bufio.NewScanner(hostnames)
@@ -184,7 +187,7 @@ func TestLotsOfRulesLotsOfHostsMemoryUsage(t *testing.T) {
 
 	afterMatch := getRSS()
 	log.Tracef("RSS after matching - %d kB (%d kB diff)\n", afterMatch/1024, (afterMatch-afterLoad)/1024)
-	dumpMemProfile(_Func() + "3.pprof")
+	dumpMemProfile("tests/" + _Func() + "3.pprof")
 }
 
 func TestRuleToRegexp(t *testing.T) {
@@ -282,7 +285,7 @@ func (d *Dnsfilter) checkMatch(t *testing.T, hostname string) {
 	}
 }
 
-func (d *Dnsfilter) checkMatchIp(t *testing.T, hostname string, ip string) {
+func (d *Dnsfilter) checkMatchIP(t *testing.T, hostname string, ip string) {
 	t.Helper()
 	ret, err := d.CheckHost(hostname)
 	if err != nil {
@@ -291,8 +294,8 @@ func (d *Dnsfilter) checkMatchIp(t *testing.T, hostname string, ip string) {
 	if !ret.IsFiltered {
 		t.Errorf("Expected hostname %s to match", hostname)
 	}
-	if ret.Ip == nil || ret.Ip.String() != ip {
-		t.Errorf("Expected ip %s to match, actual: %v", ip, ret.Ip)
+	if ret.IP == nil || ret.IP.String() != ip {
+		t.Errorf("Expected ip %s to match, actual: %v", ip, ret.IP)
 	}
 }
 
@@ -308,7 +311,7 @@ func (d *Dnsfilter) checkMatchEmpty(t *testing.T, hostname string) {
 }
 
 func loadTestRules(d *Dnsfilter) error {
-	filterFileName := "../tests/dns.txt"
+	filterFileName := "tests/dns.txt"
 	file, err := os.Open(filterFileName)
 	if err != nil {
 		return err
@@ -368,8 +371,8 @@ func TestEtcHostsMatching(t *testing.T) {
 	text := fmt.Sprintf("   %s  google.com www.google.com   # enforce google's safesearch   ", addr)
 
 	d.checkAddRule(t, text)
-	d.checkMatchIp(t, "google.com", addr)
-	d.checkMatchIp(t, "www.google.com", addr)
+	d.checkMatchIP(t, "google.com", addr)
+	d.checkMatchIP(t, "www.google.com", addr)
 	d.checkMatchEmpty(t, "subdomain.google.com")
 	d.checkMatchEmpty(t, "example.org")
 }

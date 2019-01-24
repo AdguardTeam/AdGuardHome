@@ -40,27 +40,26 @@ func writeAllConfigsAndReloadDNS() error {
 		log.Printf("Couldn't write all configs: %s", err)
 		return err
 	}
-	reconfigureDNSServer()
-	return nil
+	return reconfigureDNSServer()
 }
 
 func httpUpdateConfigReloadDNSReturnOK(w http.ResponseWriter, r *http.Request) {
 	err := writeAllConfigsAndReloadDNS()
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write config file: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
+		errorText := fmt.Sprintf("Couldn't write config file: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
 		return
 	}
-	returnOK(w, r)
+	returnOK(w)
 }
 
-func returnOK(w http.ResponseWriter, r *http.Request) {
+func returnOK(w http.ResponseWriter) {
 	_, err := fmt.Fprintf(w, "OK\n")
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
+		errorText := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
 	}
 }
 
@@ -79,17 +78,17 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 
 	jsonVal, err := json.Marshal(data)
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to marshal status json: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 500)
+		errorText := fmt.Sprintf("Unable to marshal status json: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 500)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(jsonVal)
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to write response json: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 500)
+		errorText := fmt.Sprintf("Unable to write response json: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 500)
 		return
 	}
 }
@@ -147,7 +146,13 @@ func handleSetUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errorText, http.StatusInternalServerError)
 		return
 	}
-	reconfigureDNSServer()
+	err = reconfigureDNSServer()
+	if err != nil {
+		errorText := fmt.Sprintf("Couldn't reconfigure the DNS server: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
+		return
+	}
 	_, err = fmt.Fprintf(w, "OK %d servers\n", len(hosts))
 	if err != nil {
 		errorText := fmt.Sprintf("Couldn't write body: %s", err)
@@ -206,7 +211,7 @@ func checkDNS(input string) error {
 	log.Printf("Checking if DNS %s works...", input)
 	u, err := upstream.AddressToUpstream(input, "", dnsforward.DefaultTimeout)
 	if err != nil {
-		return fmt.Errorf("Failed to choose upstream for %s: %s", input, err)
+		return fmt.Errorf("failed to choose upstream for %s: %s", input, err)
 	}
 
 	req := dns.Msg{}
@@ -243,9 +248,9 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := client.Get(versionCheckURL)
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't get version check json from %s: %T %s\n", versionCheckURL, err, err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusBadGateway)
+		errorText := fmt.Sprintf("Couldn't get version check json from %s: %T %s\n", versionCheckURL, err, err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusBadGateway)
 		return
 	}
 	if resp != nil && resp.Body != nil {
@@ -255,18 +260,18 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	// read the body entirely
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't read response body from %s: %s", versionCheckURL, err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusBadGateway)
+		errorText := fmt.Sprintf("Couldn't read response body from %s: %s", versionCheckURL, err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusBadGateway)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(body)
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
+		errorText := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
 	}
 
 	versionCheckLastTime = now
@@ -299,18 +304,18 @@ func handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
 	config.RUnlock()
 
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to marshal status json: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 500)
+		errorText := fmt.Sprintf("Unable to marshal status json: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 500)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(jsonVal)
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to write response json: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 500)
+		errorText := fmt.Sprintf("Unable to write response json: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 500)
 		return
 	}
 }
@@ -378,7 +383,7 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// URL is deemed valid, append it to filters, update config, write new filter file and tell dns to reload it
-	// TODO: since we directly feed filters in-memory, revisit if writing configs is always neccessary
+	// TODO: since we directly feed filters in-memory, revisit if writing configs is always necessary
 	config.Filters = append(config.Filters, filter)
 	err = writeAllConfigs()
 	if err != nil {
@@ -473,7 +478,7 @@ func handleFilteringEnableURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// kick off refresh of rules from new URLs
-	refreshFiltersIfNeccessary(false)
+	refreshFiltersIfNecessary(false)
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
@@ -529,7 +534,7 @@ func handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
 
 func handleFilteringRefresh(w http.ResponseWriter, r *http.Request) {
 	force := r.URL.Query().Get("force")
-	updated := refreshFiltersIfNeccessary(force != "")
+	updated := refreshFiltersIfNecessary(force != "")
 	fmt.Fprintf(w, "OK %d filters updated\n", updated)
 }
 
@@ -553,17 +558,17 @@ func handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	jsonVal, err := json.Marshal(data)
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to marshal status json: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 500)
+		errorText := fmt.Sprintf("Unable to marshal status json: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 500)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(jsonVal)
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to write response json: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 500)
+		errorText := fmt.Sprintf("Unable to write response json: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 500)
 		return
 	}
 }
@@ -574,9 +579,9 @@ func handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Request) {
 func handleParentalEnable(w http.ResponseWriter, r *http.Request) {
 	parameters, err := parseParametersFromBody(r.Body)
 	if err != nil {
-		errortext := fmt.Sprintf("failed to parse parameters from body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 400)
+		errorText := fmt.Sprintf("failed to parse parameters from body: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 400)
 		return
 	}
 
@@ -631,18 +636,18 @@ func handleParentalStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	jsonVal, err := json.Marshal(data)
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to marshal status json: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 500)
+		errorText := fmt.Sprintf("Unable to marshal status json: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 500)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(jsonVal)
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to write response json: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 500)
+		errorText := fmt.Sprintf("Unable to write response json: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 500)
 		return
 	}
 }
@@ -667,18 +672,18 @@ func handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	jsonVal, err := json.Marshal(data)
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to marshal status json: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 500)
+		errorText := fmt.Sprintf("Unable to marshal status json: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 500)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(jsonVal)
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to write response json: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 500)
+		errorText := fmt.Sprintf("Unable to write response json: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 500)
 		return
 	}
 }

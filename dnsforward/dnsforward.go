@@ -310,8 +310,8 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 	case dnsfilter.FilteredParental:
 		return s.genBlockedHost(m, parentalBlockHost, d.Upstream)
 	default:
-		if result.Ip != nil {
-			return s.genARecord(m, result.Ip)
+		if result.IP != nil {
+			return s.genARecord(m, result.IP)
 		}
 
 		return s.genNXDomain(m)

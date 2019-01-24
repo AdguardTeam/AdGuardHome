@@ -17,7 +17,6 @@ var (
 	filteredLists        = newDNSCounter("filtered_lists_total")
 	filteredSafebrowsing = newDNSCounter("filtered_safebrowsing_total")
 	filteredParental     = newDNSCounter("filtered_parental_total")
-	filteredInvalid      = newDNSCounter("filtered_invalid_total")
 	whitelisted          = newDNSCounter("whitelisted_total")
 	safesearch           = newDNSCounter("safesearch_total")
 	errorsTotal          = newDNSCounter("errors_total")
@@ -93,7 +92,7 @@ func (p *periodicStats) Observe(name string, when time.Time, value float64) {
 		currentValues := p.Entries[countname]
 		value := currentValues[elapsed]
 		// log.Tracef("Will change p.Entries[%s][%d] from %v to %v", countname, elapsed, value, value+1)
-		value += 1
+		value++
 		currentValues[elapsed] = value
 		p.Entries[countname] = currentValues
 	}
@@ -224,6 +223,7 @@ func incrementCounters(entry *logEntry) {
 	elapsedTime.ObserveWithTime(entry.Elapsed.Seconds(), entry.Time)
 }
 
+// HandleStats returns aggregated stats data for the 24 hours
 func HandleStats(w http.ResponseWriter, r *http.Request) {
 	const numHours = 24
 	histrical := generateMapFromStats(&statistics.PerHour, 0, numHours)
@@ -252,17 +252,17 @@ func HandleStats(w http.ResponseWriter, r *http.Request) {
 
 	json, err := json.Marshal(summed)
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to marshal status json: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 500)
+		errorText := fmt.Sprintf("Unable to marshal status json: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 500)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(json)
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to write response json: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 500)
+		errorText := fmt.Sprintf("Unable to write response json: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 500)
 		return
 	}
 }
@@ -296,6 +296,7 @@ func generateMapFromStats(stats *periodicStats, start int, end int) map[string]i
 	return result
 }
 
+// HandleStatsHistory returns historical stats data for the 24 hours
 func HandleStatsHistory(w http.ResponseWriter, r *http.Request) {
 	// handle time unit and prepare our time window size
 	now := time.Now()
@@ -323,16 +324,16 @@ func HandleStatsHistory(w http.ResponseWriter, r *http.Request) {
 	// parse start and end time
 	startTime, err := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
 	if err != nil {
-		errortext := fmt.Sprintf("Must specify valid start_time parameter: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 400)
+		errorText := fmt.Sprintf("Must specify valid start_time parameter: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 400)
 		return
 	}
 	endTime, err := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
 	if err != nil {
-		errortext := fmt.Sprintf("Must specify valid end_time parameter: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 400)
+		errorText := fmt.Sprintf("Must specify valid end_time parameter: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 400)
 		return
 	}
 
@@ -360,28 +361,29 @@ func HandleStatsHistory(w http.ResponseWriter, r *http.Request) {
 	data := generateMapFromStats(stats, start, end)
 	json, err := json.Marshal(data)
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to marshal status json: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 500)
+		errorText := fmt.Sprintf("Unable to marshal status json: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 500)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(json)
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to write response json: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, 500)
+		errorText := fmt.Sprintf("Unable to write response json: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 500)
 		return
 	}
 }
 
+// HandleStatsReset resets the stats caches
 func HandleStatsReset(w http.ResponseWriter, r *http.Request) {
 	purgeStats()
 	_, err := fmt.Fprintf(w, "OK\n")
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
+		errorText := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
 	}
 }
 

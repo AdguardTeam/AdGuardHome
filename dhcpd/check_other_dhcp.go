@@ -13,6 +13,8 @@ import (
 	"github.com/krolaw/dhcp4"
 )
 
+// CheckIfOtherDHCPServersPresent sends a DHCP request to the specified network interface,
+// and waits for a response for a period defined by defaultDiscoverTime
 func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 	iface, err := net.InterfaceByName(ifaceName)
 	if err != nil {
@@ -30,8 +32,8 @@ func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 	dst := "255.255.255.255:67"
 
 	// form a DHCP request packet, try to emulate existing client as much as possible
-	xId := make([]byte, 8)
-	n, err := rand.Read(xId)
+	xID := make([]byte, 8)
+	n, err := rand.Read(xID)
 	if n != 8 && err == nil {
 		err = fmt.Errorf("Generated less than 8 bytes")
 	}
@@ -60,13 +62,13 @@ func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 	leaseTime := uint32(math.RoundToEven(time.Duration(time.Hour * 24 * 90).Seconds()))
 	binary.BigEndian.PutUint32(leaseTimeRaw, leaseTime)
 	options := []dhcp4.Option{
-		{dhcp4.OptionParameterRequestList, requestList},
-		{dhcp4.OptionMaximumDHCPMessageSize, maxUDPsizeRaw},
-		{dhcp4.OptionClientIdentifier, append([]byte{0x01}, iface.HardwareAddr...)},
-		{dhcp4.OptionIPAddressLeaseTime, leaseTimeRaw},
-		{dhcp4.OptionHostName, []byte(hostname)},
+		{Code: dhcp4.OptionParameterRequestList, Value: requestList},
+		{Code: dhcp4.OptionMaximumDHCPMessageSize, Value: maxUDPsizeRaw},
+		{Code: dhcp4.OptionClientIdentifier, Value: append([]byte{0x01}, iface.HardwareAddr...)},
+		{Code: dhcp4.OptionIPAddressLeaseTime, Value: leaseTimeRaw},
+		{Code: dhcp4.OptionHostName, Value: []byte(hostname)},
 	}
-	packet := dhcp4.RequestPacket(dhcp4.Discover, iface.HardwareAddr, nil, xId, false, options)
+	packet := dhcp4.RequestPacket(dhcp4.Discover, iface.HardwareAddr, nil, xID, false, options)
 
 	// resolve 0.0.0.0:68
 	udpAddr, err := net.ResolveUDPAddr("udp4", src)
@@ -98,7 +100,7 @@ func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 	}
 
 	// send to 255.255.255.255:67
-	n, err = c.WriteTo(packet, dstAddr)
+	_, err = c.WriteTo(packet, dstAddr)
 	// spew.Dump(n, err)
 	if err != nil {
 		return false, wrapErrPrint(err, "Couldn't send a packet to %s", dst)

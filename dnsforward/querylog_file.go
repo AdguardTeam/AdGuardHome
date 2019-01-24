@@ -156,7 +156,7 @@ func periodicQueryLogRotate() {
 func genericLoader(onEntry func(entry *logEntry) error, needMore func() bool, timeWindow time.Duration) error {
 	now := time.Now()
 	// read from querylog files, try newest file first
-	files := []string{}
+	var files []string
 
 	if enableGzip {
 		files = []string{

@@ -39,13 +39,13 @@ func generateServerConfig() dnsforward.ServerConfig {
 	}
 
 	for _, u := range config.DNS.UpstreamDNS {
-		upstream, err := upstream.AddressToUpstream(u, config.DNS.BootstrapDNS, dnsforward.DefaultTimeout)
+		dnsUpstream, err := upstream.AddressToUpstream(u, config.DNS.BootstrapDNS, dnsforward.DefaultTimeout)
 		if err != nil {
 			log.Printf("Couldn't get upstream: %s", err)
 			// continue, just ignore the upstream
 			continue
 		}
-		newconfig.Upstreams = append(newconfig.Upstreams, upstream)
+		newconfig.Upstreams = append(newconfig.Upstreams, dnsUpstream)
 	}
 	return newconfig
 }

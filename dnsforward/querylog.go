@@ -112,6 +112,7 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, el
 	}
 }
 
+// HandleQueryLog handles query log web request
 func HandleQueryLog(w http.ResponseWriter, r *http.Request) {
 	queryLogLock.RLock()
 	values := make([]*logEntry, len(queryLogCache))
@@ -123,6 +124,7 @@ func HandleQueryLog(w http.ResponseWriter, r *http.Request) {
 		values[left], values[right] = values[right], values[left]
 	}
 
+	// iterate
 	var data = []map[string]interface{}{}
 	for _, entry := range values {
 		var q *dns.Msg
@@ -167,46 +169,8 @@ func HandleQueryLog(w http.ResponseWriter, r *http.Request) {
 			jsonEntry["filterId"] = entry.Result.FilterID
 		}
 
-		if a != nil && len(a.Answer) > 0 {
-			var answers = []map[string]interface{}{}
-			for _, k := range a.Answer {
-				header := k.Header()
-				answer := map[string]interface{}{
-					"type": dns.TypeToString[header.Rrtype],
-					"ttl":  header.Ttl,
-				}
-				// try most common record types
-				switch v := k.(type) {
-				case *dns.A:
-					answer["value"] = v.A
-				case *dns.AAAA:
-					answer["value"] = v.AAAA
-				case *dns.MX:
-					answer["value"] = fmt.Sprintf("%v %v", v.Preference, v.Mx)
-				case *dns.CNAME:
-					answer["value"] = v.Target
-				case *dns.NS:
-					answer["value"] = v.Ns
-				case *dns.SPF:
-					answer["value"] = v.Txt
-				case *dns.TXT:
-					answer["value"] = v.Txt
-				case *dns.PTR:
-					answer["value"] = v.Ptr
-				case *dns.SOA:
-					answer["value"] = fmt.Sprintf("%v %v %v %v %v %v %v", v.Ns, v.Mbox, v.Serial, v.Refresh, v.Retry, v.Expire, v.Minttl)
-				case *dns.CAA:
-					answer["value"] = fmt.Sprintf("%v %v \"%v\"", v.Flag, v.Tag, v.Value)
-				case *dns.HINFO:
-					answer["value"] = fmt.Sprintf("\"%v\" \"%v\"", v.Cpu, v.Os)
-				case *dns.RRSIG:
-					answer["value"] = fmt.Sprintf("%v %v %v %v %v %v %v %v %v", dns.TypeToString[v.TypeCovered], v.Algorithm, v.Labels, v.OrigTtl, v.Expiration, v.Inception, v.KeyTag, v.SignerName, v.Signature)
-				default:
-					// type unknown, marshall it as-is
-					answer["value"] = v
-				}
-				answers = append(answers, answer)
-			}
+		answers := answerToMap(a)
+		if answers != nil {
 			jsonEntry["answer"] = answers
 		}
 
@@ -228,6 +192,54 @@ func HandleQueryLog(w http.ResponseWriter, r *http.Request) {
 		log.Println(errorText)
 		http.Error(w, errorText, http.StatusInternalServerError)
 	}
+}
+
+func answerToMap(a *dns.Msg) []map[string]interface{} {
+	if a == nil || len(a.Answer) == 0 {
+		return nil
+	}
+
+	var answers = []map[string]interface{}{}
+	for _, k := range a.Answer {
+		header := k.Header()
+		answer := map[string]interface{}{
+			"type": dns.TypeToString[header.Rrtype],
+			"ttl":  header.Ttl,
+		}
+		// try most common record types
+		switch v := k.(type) {
+		case *dns.A:
+			answer["value"] = v.A
+		case *dns.AAAA:
+			answer["value"] = v.AAAA
+		case *dns.MX:
+			answer["value"] = fmt.Sprintf("%v %v", v.Preference, v.Mx)
+		case *dns.CNAME:
+			answer["value"] = v.Target
+		case *dns.NS:
+			answer["value"] = v.Ns
+		case *dns.SPF:
+			answer["value"] = v.Txt
+		case *dns.TXT:
+			answer["value"] = v.Txt
+		case *dns.PTR:
+			answer["value"] = v.Ptr
+		case *dns.SOA:
+			answer["value"] = fmt.Sprintf("%v %v %v %v %v %v %v", v.Ns, v.Mbox, v.Serial, v.Refresh, v.Retry, v.Expire, v.Minttl)
+		case *dns.CAA:
+			answer["value"] = fmt.Sprintf("%v %v \"%v\"", v.Flag, v.Tag, v.Value)
+		case *dns.HINFO:
+			answer["value"] = fmt.Sprintf("\"%v\" \"%v\"", v.Cpu, v.Os)
+		case *dns.RRSIG:
+			answer["value"] = fmt.Sprintf("%v %v %v %v %v %v %v %v %v", dns.TypeToString[v.TypeCovered], v.Algorithm, v.Labels, v.OrigTtl, v.Expiration, v.Inception, v.KeyTag, v.SignerName, v.Signature)
+		default:
+			// type unknown, marshall it as-is
+			answer["value"] = v
+		}
+		answers = append(answers, answer)
+	}
+
+	return answers
 }
 
 // getIPString is a helper function that extracts IP address from net.Addr

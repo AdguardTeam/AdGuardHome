@@ -13,6 +13,7 @@ import (
 
 const defaultDiscoverTime = time.Second * 3
 
+// Lease contains the necessary information about a DHCP lease
 // field ordering is important -- yaml fields will mirror ordering from here
 type Lease struct {
 	HWAddr   net.HardwareAddr `json:"mac" yaml:"hwaddr"`
@@ -21,6 +22,7 @@ type Lease struct {
 	Expiry   time.Time        `json:"expires"`
 }
 
+// ServerConfig - DHCP server configuration
 // field ordering is important -- yaml fields will mirror ordering from here
 type ServerConfig struct {
 	Enabled       bool   `json:"enabled" yaml:"enabled"`
@@ -32,6 +34,7 @@ type ServerConfig struct {
 	LeaseDuration uint   `json:"lease_duration" yaml:"lease_duration"` // in seconds
 }
 
+// Server - the current state of the DHCP server
 type Server struct {
 	conn *filterConn // listening UDP socket
 
@@ -137,6 +140,7 @@ func (s *Server) Start(config *ServerConfig) error {
 	return nil
 }
 
+// Stop closes the listening UDP socket
 func (s *Server) Stop() error {
 	if s.conn == nil {
 		// nothing to do, return silently
@@ -249,6 +253,7 @@ func (s *Server) unreserveIP(ip net.IP) {
 	delete(s.IPpool, IP4)
 }
 
+// ServeDHCP handles an incoming DHCP request
 func (s *Server) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options dhcp4.Options) dhcp4.Packet {
 	log.Tracef("Got %v message", msgType)
 	log.Tracef("Leases:")
@@ -259,27 +264,6 @@ func (s *Server) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options dh
 	for ip, hwaddr := range s.IPpool {
 		log.Tracef("IP pool entry %s -> %s", net.IPv4(ip[0], ip[1], ip[2], ip[3]), hwaddr)
 	}
-	// spew.Dump(s.leases, s.IPpool)
-	// log.Printf("Called with msgType = %v, options = %+v", msgType, options)
-	// spew.Dump(p)
-	// log.Printf("%14s %v", "p.Broadcast", p.Broadcast())       // false
-	// log.Printf("%14s %v", "p.CHAddr", p.CHAddr())             // 2c:f0:a2:f2:31:00
-	// log.Printf("%14s %v", "p.CIAddr", p.CIAddr())             // 0.0.0.0
-	// log.Printf("%14s %v", "p.Cookie", p.Cookie())             // [99 130 83 99]
-	// log.Printf("%14s %v", "p.File", p.File())                 // []
-	// log.Printf("%14s %v", "p.Flags", p.Flags())               // [0 0]
-	// log.Printf("%14s %v", "p.GIAddr", p.GIAddr())             // 0.0.0.0
-	// log.Printf("%14s %v", "p.HLen", p.HLen())                 // 6
-	// log.Printf("%14s %v", "p.HType", p.HType())               // 1
-	// log.Printf("%14s %v", "p.Hops", p.Hops())                 // 0
-	// log.Printf("%14s %v", "p.OpCode", p.OpCode())             // BootRequest
-	// log.Printf("%14s %v", "p.Options", p.Options())           // [53 1 1 55 10 1 121 3 6 15 119 252 95 44 46 57 2 5 220 61 7 1 44 240 162 242 49 0 51 4 0 118 167 0 12 4 119 104 109 100 255 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]
-	// log.Printf("%14s %v", "p.ParseOptions", p.ParseOptions()) // map[OptionParameterRequestList:[1 121 3 6 15 119 252 95 44 46] OptionDHCPMessageType:[1] OptionMaximumDHCPMessageSize:[5 220] OptionClientIdentifier:[1 44 240 162 242 49 0] OptionIPAddressLeaseTime:[0 118 167 0] OptionHostName:[119 104 109 100]]
-	// log.Printf("%14s %v", "p.SIAddr", p.SIAddr())             // 0.0.0.0
-	// log.Printf("%14s %v", "p.SName", p.SName())               // []
-	// log.Printf("%14s %v", "p.Secs", p.Secs())                 // [0 8]
-	// log.Printf("%14s %v", "p.XId", p.XId())                   // [211 184 20 44]
-	// log.Printf("%14s %v", "p.YIAddr", p.YIAddr())             // 0.0.0.0
 
 	switch msgType {
 	case dhcp4.Discover: // Broadcast Packet From Client - Can I have an IP?
@@ -297,75 +281,7 @@ func (s *Server) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options dh
 	case dhcp4.Request: // Broadcast From Client - I'll take that IP (Also start for renewals)
 		// start/renew a lease -- update lease time
 		// some clients (OSX) just go right ahead and do Request first from previously known IP, if they get NAK, they restart full cycle with Discover then Request
-		log.Tracef("Got from client: Request")
-		if server, ok := options[dhcp4.OptionServerIdentifier]; ok && !net.IP(server).Equal(s.ipnet.IP) {
-			log.Tracef("Request message not for this DHCP server (%v vs %v)", server, s.ipnet.IP)
-			return nil // Message not for this dhcp server
-		}
-
-		reqIP := net.IP(options[dhcp4.OptionRequestedIPAddress])
-		if reqIP == nil {
-			reqIP = net.IP(p.CIAddr())
-		}
-
-		if reqIP.To4() == nil {
-			log.Tracef("Replying with NAK: request IP isn't valid IPv4: %s", reqIP)
-			return dhcp4.ReplyPacket(p, dhcp4.NAK, s.ipnet.IP, nil, 0, nil)
-		}
-
-		if reqIP.Equal(net.IPv4zero) {
-			log.Tracef("Replying with NAK: request IP is 0.0.0.0")
-			return dhcp4.ReplyPacket(p, dhcp4.NAK, s.ipnet.IP, nil, 0, nil)
-		}
-
-		log.Tracef("requested IP is %s", reqIP)
-		lease, err := s.reserveLease(p)
-		if err != nil {
-			log.Tracef("Couldn't find free lease: %s", err)
-			// couldn't find lease, don't respond
-			return nil
-		}
-
-		if lease.IP.Equal(reqIP) {
-			// IP matches lease IP, nothing else to do
-			lease.Expiry = time.Now().Add(s.leaseTime)
-			log.Tracef("Replying with ACK: request IP matches lease IP, nothing else to do. IP %v for %v", lease.IP, p.CHAddr())
-			return dhcp4.ReplyPacket(p, dhcp4.ACK, s.ipnet.IP, lease.IP, s.leaseTime, s.leaseOptions.SelectOrderOrAll(options[dhcp4.OptionParameterRequestList]))
-		}
-
-		//
-		// requested IP different from lease
-		//
-
-		log.Tracef("lease IP is different from requested IP: %s vs %s", lease.IP, reqIP)
-
-		hwaddr := s.getIPpool(reqIP)
-		if hwaddr == nil {
-			// not in pool, check if it's in DHCP range
-			if dhcp4.IPInRange(s.leaseStart, s.leaseStop, reqIP) {
-				// okay, we can give it to our client -- it's in our DHCP range and not taken, so let them use their IP
-				log.Tracef("Replying with ACK: request IP %v is not taken, so assigning lease IP %v to it, for %v", reqIP, lease.IP, p.CHAddr())
-				s.unreserveIP(lease.IP)
-				lease.IP = reqIP
-				s.reserveIP(reqIP, p.CHAddr())
-				lease.Expiry = time.Now().Add(s.leaseTime)
-				return dhcp4.ReplyPacket(p, dhcp4.ACK, s.ipnet.IP, lease.IP, s.leaseTime, s.leaseOptions.SelectOrderOrAll(options[dhcp4.OptionParameterRequestList]))
-			}
-		}
-
-		if hwaddr != nil && !bytes.Equal(hwaddr, lease.HWAddr) {
-			log.Printf("SHOULD NOT HAPPEN: IP pool hwaddr does not match lease hwaddr: %s vs %s", hwaddr, lease.HWAddr)
-		}
-
-		// requsted IP is not sufficient, reply with NAK
-		if hwaddr != nil {
-			log.Tracef("Replying with NAK: request IP %s is taken, asked by %v", reqIP, p.CHAddr())
-			return dhcp4.ReplyPacket(p, dhcp4.NAK, s.ipnet.IP, nil, 0, nil)
-		}
-
-		// requested IP is outside of DHCP range
-		log.Tracef("Replying with NAK: request IP %s is outside of DHCP range [%s, %s], asked by %v", reqIP, s.leaseStart, s.leaseStop, p.CHAddr())
-		return dhcp4.ReplyPacket(p, dhcp4.NAK, s.ipnet.IP, nil, 0, nil)
+		return s.handleDHCP4Request(p, msgType, options)
 	case dhcp4.Decline: // Broadcast From Client - Sorry I can't use that IP
 		log.Tracef("Got from client: Decline")
 
@@ -390,6 +306,79 @@ func (s *Server) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options dh
 	return nil
 }
 
+func (s *Server) handleDHCP4Request(p dhcp4.Packet, msgType dhcp4.MessageType, options dhcp4.Options) dhcp4.Packet {
+	log.Tracef("Got from client: Request")
+	if server, ok := options[dhcp4.OptionServerIdentifier]; ok && !net.IP(server).Equal(s.ipnet.IP) {
+		log.Tracef("Request message not for this DHCP server (%v vs %v)", server, s.ipnet.IP)
+		return nil // Message not for this dhcp server
+	}
+
+	reqIP := net.IP(options[dhcp4.OptionRequestedIPAddress])
+	if reqIP == nil {
+		reqIP = net.IP(p.CIAddr())
+	}
+
+	if reqIP.To4() == nil {
+		log.Tracef("Replying with NAK: request IP isn't valid IPv4: %s", reqIP)
+		return dhcp4.ReplyPacket(p, dhcp4.NAK, s.ipnet.IP, nil, 0, nil)
+	}
+
+	if reqIP.Equal(net.IPv4zero) {
+		log.Tracef("Replying with NAK: request IP is 0.0.0.0")
+		return dhcp4.ReplyPacket(p, dhcp4.NAK, s.ipnet.IP, nil, 0, nil)
+	}
+
+	log.Tracef("requested IP is %s", reqIP)
+	lease, err := s.reserveLease(p)
+	if err != nil {
+		log.Tracef("Couldn't find free lease: %s", err)
+		// couldn't find lease, don't respond
+		return nil
+	}
+
+	if lease.IP.Equal(reqIP) {
+		// IP matches lease IP, nothing else to do
+		lease.Expiry = time.Now().Add(s.leaseTime)
+		log.Tracef("Replying with ACK: request IP matches lease IP, nothing else to do. IP %v for %v", lease.IP, p.CHAddr())
+		return dhcp4.ReplyPacket(p, dhcp4.ACK, s.ipnet.IP, lease.IP, s.leaseTime, s.leaseOptions.SelectOrderOrAll(options[dhcp4.OptionParameterRequestList]))
+	}
+
+	//
+	// requested IP different from lease
+	//
+
+	log.Tracef("lease IP is different from requested IP: %s vs %s", lease.IP, reqIP)
+
+	hwaddr := s.getIPpool(reqIP)
+	if hwaddr == nil {
+		// not in pool, check if it's in DHCP range
+		if dhcp4.IPInRange(s.leaseStart, s.leaseStop, reqIP) {
+			// okay, we can give it to our client -- it's in our DHCP range and not taken, so let them use their IP
+			log.Tracef("Replying with ACK: request IP %v is not taken, so assigning lease IP %v to it, for %v", reqIP, lease.IP, p.CHAddr())
+			s.unreserveIP(lease.IP)
+			lease.IP = reqIP
+			s.reserveIP(reqIP, p.CHAddr())
+			lease.Expiry = time.Now().Add(s.leaseTime)
+			return dhcp4.ReplyPacket(p, dhcp4.ACK, s.ipnet.IP, lease.IP, s.leaseTime, s.leaseOptions.SelectOrderOrAll(options[dhcp4.OptionParameterRequestList]))
+		}
+	}
+
+	if hwaddr != nil && !bytes.Equal(hwaddr, lease.HWAddr) {
+		log.Printf("SHOULD NOT HAPPEN: IP pool hwaddr does not match lease hwaddr: %s vs %s", hwaddr, lease.HWAddr)
+	}
+
+	// requsted IP is not sufficient, reply with NAK
+	if hwaddr != nil {
+		log.Tracef("Replying with NAK: request IP %s is taken, asked by %v", reqIP, p.CHAddr())
+		return dhcp4.ReplyPacket(p, dhcp4.NAK, s.ipnet.IP, nil, 0, nil)
+	}
+
+	// requested IP is outside of DHCP range
+	log.Tracef("Replying with NAK: request IP %s is outside of DHCP range [%s, %s], asked by %v", reqIP, s.leaseStart, s.leaseStop, p.CHAddr())
+	return dhcp4.ReplyPacket(p, dhcp4.NAK, s.ipnet.IP, nil, 0, nil)
+}
+
+// Leases returns the list of current DHCP leases
 func (s *Server) Leases() []*Lease {
 	s.RLock()
 	result := s.leases

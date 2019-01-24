@@ -34,9 +34,9 @@ func handleI18nCurrentLanguage(w http.ResponseWriter, r *http.Request) {
 	log.Printf("config.Language is %s", config.Language)
 	_, err := fmt.Fprintf(w, "%s\n", config.Language)
 	if err != nil {
-		errortext := fmt.Sprintf("Unable to write response json: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
+		errorText := fmt.Sprintf("Unable to write response json: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
 		return
 	}
 }

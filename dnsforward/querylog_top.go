@@ -26,10 +26,10 @@ type hourTop struct {
 	mutex sync.RWMutex
 }
 
-func (top *hourTop) init() {
-	top.domains = gcache.New(queryLogTopSize).LRU().Build()
-	top.blocked = gcache.New(queryLogTopSize).LRU().Build()
-	top.clients = gcache.New(queryLogTopSize).LRU().Build()
+func (h *hourTop) init() {
+	h.domains = gcache.New(queryLogTopSize).LRU().Build()
+	h.blocked = gcache.New(queryLogTopSize).LRU().Build()
+	h.clients = gcache.New(queryLogTopSize).LRU().Build()
 }
 
 type dayTop struct {
@@ -69,9 +69,9 @@ func periodicHourlyTopRotate() {
 	}
 }
 
-func (top *hourTop) incrementValue(key string, cache gcache.Cache) error {
-	top.Lock()
-	defer top.Unlock()
+func (h *hourTop) incrementValue(key string, cache gcache.Cache) error {
+	h.Lock()
+	defer h.Unlock()
 	ivalue, err := cache.Get(key)
 	if err == gcache.KeyNotFoundError {
 		// we just set it and we're done
@@ -103,20 +103,20 @@ func (top *hourTop) incrementValue(key string, cache gcache.Cache) error {
 	return nil
 }
 
-func (top *hourTop) incrementDomains(key string) error {
-	return top.incrementValue(key, top.domains)
+func (h *hourTop) incrementDomains(key string) error {
+	return h.incrementValue(key, h.domains)
 }
 
-func (top *hourTop) incrementBlocked(key string) error {
-	return top.incrementValue(key, top.blocked)
+func (h *hourTop) incrementBlocked(key string) error {
+	return h.incrementValue(key, h.blocked)
 }
 
-func (top *hourTop) incrementClients(key string) error {
-	return top.incrementValue(key, top.clients)
+func (h *hourTop) incrementClients(key string) error {
+	return h.incrementValue(key, h.clients)
 }
 
 // if does not exist -- return 0
-func (top *hourTop) lockedGetValue(key string, cache gcache.Cache) (int, error) {
+func (h *hourTop) lockedGetValue(key string, cache gcache.Cache) (int, error) {
 	ivalue, err := cache.Get(key)
 	if err == gcache.KeyNotFoundError {
 		return 0, nil
@@ -137,19 +137,19 @@ func (top *hourTop) lockedGetValue(key string, cache gcache.Cache) (int, error) 
 	return value, nil
 }
 
-func (top *hourTop) lockedGetDomains(key string) (int, error) {
-	return top.lockedGetValue(key, top.domains)
+func (h *hourTop) lockedGetDomains(key string) (int, error) {
+	return h.lockedGetValue(key, h.domains)
 }
 
-func (top *hourTop) lockedGetBlocked(key string) (int, error) {
-	return top.lockedGetValue(key, top.blocked)
+func (h *hourTop) lockedGetBlocked(key string) (int, error) {
+	return h.lockedGetValue(key, h.blocked)
 }
 
-func (top *hourTop) lockedGetClients(key string) (int, error) {
-	return top.lockedGetValue(key, top.clients)
+func (h *hourTop) lockedGetClients(key string) (int, error) {
+	return h.lockedGetValue(key, h.clients)
 }
 
-func (r *dayTop) addEntry(entry *logEntry, q *dns.Msg, now time.Time) error {
+func (d *dayTop) addEntry(entry *logEntry, q *dns.Msg, now time.Time) error {
 	// figure out which hour bucket it belongs to
 	hour := int(now.Sub(entry.Time).Hours())
 	if hour >= 24 {
@@ -252,6 +252,7 @@ func fillStatsFromQueryLog() error {
 	return nil
 }
 
+// HandleStatsTop returns the current top stats
 func HandleStatsTop(w http.ResponseWriter, r *http.Request) {
 	domains := map[string]int{}
 	blocked := map[string]int{}
@@ -320,9 +321,9 @@ func HandleStatsTop(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_, err := w.Write(json.Bytes())
 	if err != nil {
-		errortext := fmt.Sprintf("Couldn't write body: %s", err)
-		log.Println(errortext)
-		http.Error(w, errortext, http.StatusInternalServerError)
+		errorText := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
 	}
 }
 
