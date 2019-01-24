@@ -302,6 +302,33 @@ const dhcp = handleActions({
     leases: [],
 });
 
+const encryption = handleActions({
+    [actions.getTlsStatusRequest]: state => ({ ...state, processing: true }),
+    [actions.getTlsStatusFailure]: state => ({ ...state, processing: false }),
+    [actions.getTlsStatusSuccess]: (state, { payload }) => {
+        const newState = {
+            ...state,
+            ...payload,
+            processing: false,
+        };
+        return newState;
+    },
+
+    [actions.setTlsConfigRequest]: state => ({ ...state, processingConfig: true }),
+    [actions.setTlsConfigFailure]: state => ({ ...state, processingConfig: false }),
+    [actions.setTlsConfigSuccess]: (state, { payload }) => {
+        const newState = {
+            ...state,
+            ...payload,
+            processingConfig: false,
+        };
+        return newState;
+    },
+}, {
+    processing: true,
+    processingConfig: false,
+});
+
 export default combineReducers({
     settings,
     dashboard,
@@ -309,6 +336,7 @@ export default combineReducers({
     filtering,
     toasts,
     dhcp,
+    encryption,
     loadingBar: loadingBarReducer,
     form: formReducer,
 });

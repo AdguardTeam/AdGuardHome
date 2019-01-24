@@ -1,48 +1,10 @@
-import React, { Fragment } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Field, reduxForm } from 'redux-form';
-import { withNamespaces, Trans } from 'react-i18next';
+import { withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 
-import { R_IPV4 } from '../../../helpers/constants';
-
-const required = (value) => {
-    if (value || value === 0) {
-        return false;
-    }
-    return <Trans>form_error_required</Trans>;
-};
-
-const ipv4 = (value) => {
-    if (value && !new RegExp(R_IPV4).test(value)) {
-        return <Trans>form_error_ip_format</Trans>;
-    }
-    return false;
-};
-
-const isPositive = (value) => {
-    if ((value || value === 0) && (value <= 0)) {
-        return <Trans>form_error_positive</Trans>;
-    }
-    return false;
-};
-
-const toNumber = value => value && parseInt(value, 10);
-
-const renderField = ({
-    input, className, placeholder, type, disabled, meta: { touched, error },
-}) => (
-    <Fragment>
-        <input
-            {...input}
-            placeholder={placeholder}
-            type={type}
-            className={className}
-            disabled={disabled}
-        />
-        {!disabled && touched && (error && <span className="form__message form__message--error">{error}</span>)}
-    </Fragment>
-);
+import { renderField, required, ipv4, isPositive, toNumber } from '../../../helpers/form';
 
 const Form = (props) => {
     const {
@@ -57,7 +19,7 @@ const Form = (props) => {
         <form onSubmit={handleSubmit}>
             <div className="row">
                 <div className="col-lg-6">
-                    <div className="form__group form__group--dhcp">
+                    <div className="form__group form__group--settings">
                         <label>{t('dhcp_form_gateway_input')}</label>
                         <Field
                             name="gateway_ip"
@@ -68,7 +30,7 @@ const Form = (props) => {
                             validate={[ipv4, required]}
                         />
                     </div>
-                    <div className="form__group form__group--dhcp">
+                    <div className="form__group form__group--settings">
                         <label>{t('dhcp_form_subnet_input')}</label>
                         <Field
                             name="subnet_mask"
@@ -81,7 +43,7 @@ const Form = (props) => {
                     </div>
                 </div>
                 <div className="col-lg-6">
-                    <div className="form__group form__group--dhcp">
+                    <div className="form__group form__group--settings">
                         <div className="row">
                             <div className="col-12">
                                 <label>{t('dhcp_form_range_title')}</label>
@@ -108,7 +70,7 @@ const Form = (props) => {
                             </div>
                         </div>
                     </div>
-                    <div className="form__group form__group--dhcp">
+                    <div className="form__group form__group--settings">
                         <label>{t('dhcp_form_lease_title')}</label>
                         <Field
                             name="lease_duration"

@@ -650,3 +650,34 @@ export const toggleDhcp = config => async (dispatch) => {
         }
     }
 };
+
+export const getTlsStatusRequest = createAction('GET_TLS_STATUS_REQUEST');
+export const getTlsStatusFailure = createAction('GET_TLS_STATUS_FAILURE');
+export const getTlsStatusSuccess = createAction('GET_TLS_STATUS_SUCCESS');
+
+export const getTlsStatus = () => async (dispatch) => {
+    dispatch(getTlsStatusRequest());
+    try {
+        const status = await apiClient.getTlsStatus();
+        dispatch(getTlsStatusSuccess(status));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(getTlsStatusFailure());
+    }
+};
+
+export const setTlsConfigRequest = createAction('SET_TLS_CONFIG_REQUEST');
+export const setTlsConfigFailure = createAction('SET_TLS_CONFIG_FAILURE');
+export const setTlsConfigSuccess = createAction('SET_TLS_CONFIG_SUCCESS');
+
+export const setTlsConfig = config => async (dispatch) => {
+    dispatch(setTlsConfigRequest());
+    try {
+        await apiClient.setTlsConfig(config);
+        dispatch(setTlsConfigSuccess(config));
+        dispatch(addSuccessToast('encryption_config_saved'));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(setTlsConfigFailure());
+    }
+};

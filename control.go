@@ -1038,7 +1038,7 @@ func handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 
 func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	newconfig := tlsConfig{}
-	err := json.NewDecoder(r.body).Decode(&newconfig)
+	err := json.NewDecoder(r.Body).Decode(&newconfig)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Failed to parse new TLS config json: %s", err)
 		return

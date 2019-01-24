@@ -354,4 +354,22 @@ export default class Api {
         };
         return this.makeRequest(path, method, parameters);
     }
+
+    // DNS-over-HTTPS and DNS-over-TLS
+    TLS_STATUS = { path: 'tls/status', method: 'GET' };
+    TLS_CONFIG = { path: 'tls/configure', method: 'POST' };
+
+    getTlsStatus() {
+        const { path, method } = this.TLS_STATUS;
+        return this.makeRequest(path, method);
+    }
+
+    setTlsConfig(config) {
+        const { path, method } = this.TLS_CONFIG;
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, parameters);
+    }
 }

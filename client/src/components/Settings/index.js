@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { withNamespaces, Trans } from 'react-i18next';
 import Upstream from './Upstream';
 import Dhcp from './Dhcp';
+import Encryption from './Encryption';
 import Checkbox from '../ui/Checkbox';
 import Loading from '../ui/Loading';
 import PageTitle from '../ui/PageTitle';
@@ -37,6 +38,7 @@ class Settings extends Component {
         this.props.initSettings(this.settings);
         this.props.getDhcpStatus();
         this.props.getDhcpInterfaces();
+        this.props.getTlsStatus();
     }
 
     handleUpstreamChange = (value) => {
@@ -94,6 +96,10 @@ class Settings extends Component {
                                     handleUpstreamChange={this.handleUpstreamChange}
                                     handleUpstreamSubmit={this.handleUpstreamSubmit}
                                     handleUpstreamTest={this.handleUpstreamTest}
+                                />
+                                <Encryption
+                                    encryption={this.props.encryption}
+                                    setTlsConfig={this.props.setTlsConfig}
                                 />
                                 <Dhcp
                                     dhcp={this.props.dhcp}
