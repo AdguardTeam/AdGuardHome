@@ -52,6 +52,9 @@ class UserRules extends Component {
                         <li>
                             <code>{ t('example_comment_hash') }</code> - { t('example_comment_meaning') }
                         </li>
+                        <li>
+                            <code>/REGEX/</code> - { t('example_regex_meaning') }
+                        </li>
                     </ol>
                 </div>
             </Card>

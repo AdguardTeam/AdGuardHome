@@ -115,6 +115,7 @@
     "example_comment": "! Here goes a comment",
     "example_comment_meaning": "just a comment",
     "example_comment_hash": "# Also a comment",
+    "example_regex_meaning": "block access to the domains matching the specified regular expression",
     "example_upstream_regular": "regular DNS (over UDP)",
     "example_upstream_dot": "encrypted <a href='https:\/\/en.wikipedia.org\/wiki\/DNS_over_TLS' target='_blank'>DNS-over-TLS<\/a>",
     "example_upstream_doh": "encrypted <a href='https:\/\/en.wikipedia.org\/wiki\/DNS_over_HTTPS' target='_blank'>DNS-over-HTTPS<\/a>",
