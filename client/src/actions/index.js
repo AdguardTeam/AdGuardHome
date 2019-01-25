@@ -659,6 +659,9 @@ export const getTlsStatus = () => async (dispatch) => {
     dispatch(getTlsStatusRequest());
     try {
         const status = await apiClient.getTlsStatus();
+        status.certificate_chain = decodeURIComponent(status.certificate_chain);
+        status.private_key = decodeURIComponent(status.private_key);
+
         dispatch(getTlsStatusSuccess(status));
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -673,7 +676,11 @@ export const setTlsConfigSuccess = createAction('SET_TLS_CONFIG_SUCCESS');
 export const setTlsConfig = config => async (dispatch) => {
     dispatch(setTlsConfigRequest());
     try {
-        await apiClient.setTlsConfig(config);
+        const values = { ...config };
+        values.certificate_chain = encodeURIComponent(values.certificate_chain);
+        values.private_key = encodeURIComponent(values.private_key);
+
+        await apiClient.setTlsConfig(values);
         dispatch(setTlsConfigSuccess(config));
         dispatch(addSuccessToast('encryption_config_saved'));
     } catch (error) {

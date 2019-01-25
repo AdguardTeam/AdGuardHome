@@ -114,7 +114,12 @@ const Form = (props) => {
                             <Trans>encryption_certificates</Trans>
                         </label>
                         <div className="form__desc form__desc--top">
-                            <Trans>encryption_certificates_desc</Trans>
+                            <Trans
+                                values={{ link: 'letsencrypt.org' }}
+                                components={[<a href="https://letsencrypt.org/" key="0">link</a>]}
+                            >
+                                encryption_certificates_desc
+                            </Trans>
                         </div>
                         <Field
                             id="certificate_chain"
@@ -130,12 +135,14 @@ const Form = (props) => {
                                 <Trans>encryption_status</Trans>:
                             </div>
                             <div>
-                                <Trans>encryption_certificates_for</Trans>
-                                *.example.org, example.org
+                                <Trans values={{ domains: '*.example.org, example.org' }}>
+                                    encryption_certificates_for
+                                </Trans>
                             </div>
                             <div>
-                                <Trans>encryption_expire</Trans>
-                                2022-01-01
+                                <Trans values={{ date: '2022-01-01' }}>
+                                    encryption_expire
+                                </Trans>
                             </div>
                         </div>
                     </div>

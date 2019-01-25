@@ -1,6 +1,7 @@
 import React, { Component, Fragment } from 'react';
 import { HashRouter, Route } from 'react-router-dom';
 import PropTypes from 'prop-types';
+import { Trans, withNamespaces } from 'react-i18next';
 import LoadingBar from 'react-redux-loading-bar';
 
 import 'react-table/react-table.css';
@@ -16,7 +17,7 @@ import Logs from '../../containers/Logs';
 import Footer from '../ui/Footer';
 import Toasts from '../Toasts';
 import Status from '../ui/Status';
-import Update from '../ui/Update';
+import Topline from '../ui/Topline';
 import i18n from '../../i18n';
 
 class App extends Component {
@@ -55,15 +56,22 @@ class App extends Component {
             !dashboard.processingVersions &&
             dashboard.isCoreRunning &&
             dashboard.isUpdateAvailable;
+        const isExpiringCertificate = false;
 
         return (
             <HashRouter hashType='noslash'>
                 <Fragment>
                     {updateAvailable &&
-                        <Update
-                            announcement={dashboard.announcement}
-                            announcementUrl={dashboard.announcementUrl}
-                        />
+                        <Topline type="info">
+                            {dashboard.announcement} <a href={dashboard.announcementUrl} target="_blank" rel="noopener noreferrer">Click here</a> for more info.
+                        </Topline>
+                    }
+                    {isExpiringCertificate &&
+                        <Topline type="warning">
+                            <Trans components={[<a href="#settings" key="0">link</a>]}>
+                                topline_expiring_certificate
+                            </Trans>
+                        </Topline>
                     }
                     <LoadingBar className="loading-bar" updateTime={1000} />
                     <Route component={Header} />
@@ -100,6 +108,7 @@ App.propTypes = {
     error: PropTypes.string,
     getVersion: PropTypes.func,
     changeLanguage: PropTypes.func,
+    encryption: PropTypes.object,
 };
 
-export default App;
+export default withNamespaces()(App);
