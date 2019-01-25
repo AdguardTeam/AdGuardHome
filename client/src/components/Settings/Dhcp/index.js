@@ -97,6 +97,7 @@ class Dhcp extends Component {
             'btn btn-primary btn-standard btn-loading': dhcp.processingStatus,
         });
         const {
+            enabled,
             interface_name,
             ...values
         } = dhcp.config;
