@@ -11,10 +11,17 @@
     <a href="https://adguard.com/">AdGuard.com</a> |
     <a href="https://github.com/AdguardTeam/AdGuardHome/wiki">Wiki</a> |
     <a href="https://reddit.com/r/Adguard">Reddit</a> |
-    <a href="https://twitter.com/AdGuard">Twitter</a>
+    <a href="https://twitter.com/AdGuard">Twitter</a> |
+    <a href="https://t.me/adguard_en">Telegram</a>
     <br /><br />
     <a href="https://travis-ci.org/AdguardTeam/AdGuardHome">
       <img src="https://travis-ci.org/AdguardTeam/AdGuardHome.svg" alt="Build status" />
+    </a>
+    <a href="https://codecov.io/github/AdguardTeam/AdGuardHome?branch=master">
+      <img src="https://img.shields.io/codecov/c/github/AdguardTeam/AdGuardHome/master.svg" alt="Code Coverage" />
+    </a>
+    <a href="https://goreportcard.com/report/AdguardTeam/AdGuardHome">
+      <img src="https://goreportcard.com/badge/github.com/AdguardTeam/AdGuardHome" alt="Go Report Card" />
     </a>
     <a href="https://github.com/AdguardTeam/AdGuardHome/releases">
         <img src="https://img.shields.io/github/release/AdguardTeam/AdGuardHome/all.svg" alt="Latest release" />

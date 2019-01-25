@@ -24,7 +24,11 @@ install:
 script:
   - node -v
   - npm -v
-  - go test ./...
+  # Run tests
+  - go test -race -v -bench=. -coverprofile=coverage.txt -covermode=atomic ./...
+  # Make
   - make build/static/index.html
   - make
 
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
