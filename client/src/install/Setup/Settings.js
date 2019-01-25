@@ -80,7 +80,12 @@ let Settings = (props) => {
                     </div>
                 </div>
                 <div className="setup__desc">
-                    <Trans>install_settings_interface_link</Trans> <a href={`http://${interfaceIp}`}>{`http://${interfaceIp}`}</a>
+                    <Trans
+                        components={[<a href={`http://${interfaceIp}`} key="0">link</a>]}
+                        values={{ link: `http://${interfaceIp}` }}
+                    >
+                        install_settings_interface_link
+                    </Trans>
                 </div>
             </div>
             <div className="setup__group">
@@ -121,7 +126,12 @@ let Settings = (props) => {
                     </div>
                 </div>
                 <p className="setup__desc">
-                    <Trans>install_settings_dns_desc</Trans> <strong>{dnsIp}</strong>
+                    <Trans
+                        components={[<strong key="0">ip</strong>]}
+                        values={{ ip: dnsIp }}
+                    >
+                        install_settings_dns_desc
+                    </Trans>
                 </p>
             </div>
             <Controls invalid={invalid} />

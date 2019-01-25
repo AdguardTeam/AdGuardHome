@@ -97,21 +97,9 @@ class Dhcp extends Component {
             'btn btn-primary btn-standard btn-loading': dhcp.processingStatus,
         });
         const {
-            gateway_ip,
             interface_name,
-            lease_duration,
-            range_end,
-            range_start,
-            subnet_mask,
+            ...values
         } = dhcp.config;
-        const initialForm = {
-            gateway_ip,
-            lease_duration,
-            range_end,
-            range_start,
-            subnet_mask,
-        };
-        const initialSelect = { interface_name };
 
         return (
             <Fragment>
@@ -121,14 +109,14 @@ class Dhcp extends Component {
                             <Fragment>
                                 <Interface
                                     onChange={this.handleFormSubmit}
-                                    initialValues={initialSelect}
+                                    initialValues={{ interface_name }}
                                     interfaces={dhcp.interfaces}
                                     processing={dhcp.processingInterfaces}
                                     enabled={dhcp.config.enabled}
                                 />
                                 <Form
                                     onSubmit={this.handleFormSubmit}
-                                    initialValues={initialForm}
+                                    initialValues={{ ...values }}
                                     interfaces={dhcp.interfaces}
                                     processingConfig={dhcp.processingConfig}
                                 />
