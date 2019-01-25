@@ -8,7 +8,7 @@ import (
 )
 
 // filterConn listens to 0.0.0.0:67, but accepts packets only from specific interface
-// This is neccessary for DHCP daemon to work, since binding to IP address doesn't
+// This is necessary for DHCP daemon to work, since binding to IP address doesn't
 // us access to see Discover/Request packets from clients.
 //
 // TODO: on windows, controlmessage does not work, try to find out another way
@@ -49,7 +49,6 @@ func (f *filterConn) ReadFrom(b []byte) (int, net.Addr, error) {
 		}
 		// packet doesn't match criteria, drop it
 	}
-	return 0, nil, nil
 }
 
 func (f *filterConn) WriteTo(b []byte, addr net.Addr) (int, error) {

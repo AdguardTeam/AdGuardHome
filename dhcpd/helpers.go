@@ -3,7 +3,6 @@ package dhcpd
 import (
 	"fmt"
 	"net"
-	"strings"
 
 	"github.com/hmage/golibs/log"
 	"github.com/joomcode/errorx"
@@ -43,22 +42,6 @@ func getIfaceIPv4(iface *net.Interface) *net.IPNet {
 		}
 	}
 	return nil
-}
-
-func isConnClosed(err error) bool {
-	if err == nil {
-		return false
-	}
-	nerr, ok := err.(*net.OpError)
-	if !ok {
-		return false
-	}
-
-	if strings.Contains(nerr.Err.Error(), "use of closed network connection") {
-		return true
-	}
-
-	return false
 }
 
 func wrapErrPrint(err error, message string, args ...interface{}) error {

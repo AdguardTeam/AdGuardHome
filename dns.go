@@ -39,20 +39,20 @@ func generateServerConfig() dnsforward.ServerConfig {
 	}
 
 	for _, u := range config.DNS.UpstreamDNS {
-		upstream, err := upstream.AddressToUpstream(u, config.DNS.BootstrapDNS, dnsforward.DefaultTimeout)
+		dnsUpstream, err := upstream.AddressToUpstream(u, config.DNS.BootstrapDNS, dnsforward.DefaultTimeout)
 		if err != nil {
 			log.Printf("Couldn't get upstream: %s", err)
 			// continue, just ignore the upstream
 			continue
 		}
-		newconfig.Upstreams = append(newconfig.Upstreams, upstream)
+		newconfig.Upstreams = append(newconfig.Upstreams, dnsUpstream)
 	}
 	return newconfig
 }
 
 func startDNSServer() error {
 	if isRunning() {
-		return fmt.Errorf("Unable to start forwarding DNS server: Already running")
+		return fmt.Errorf("unable to start forwarding DNS server: Already running")
 	}
 
 	newconfig := generateServerConfig()

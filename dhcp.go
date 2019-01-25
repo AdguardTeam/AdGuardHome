@@ -58,7 +58,10 @@ func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if !newconfig.Enabled {
-		dhcpServer.Stop()
+		err := dhcpServer.Stop()
+		if err != nil {
+			log.Printf("failed to stop the DHCP server: %s", err)
+		}
 	}
 	config.DHCP = newconfig
 	httpUpdateConfigReloadDNSReturnOK(w, r)
@@ -71,11 +74,6 @@ func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Couldn't get list of interfaces: %s", err)
 		return
-	}
-
-	type address struct {
-		IP      string
-		Netmask string
 	}
 
 	type responseInterface struct {
@@ -103,9 +101,9 @@ func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 			MTU:          ifaces[i].MTU,
 			HardwareAddr: ifaces[i].HardwareAddr.String(),
 		}
-		addrs, err := ifaces[i].Addrs()
-		if err != nil {
-			httpError(w, http.StatusInternalServerError, "Failed to get addresses for interface %v: %s", ifaces[i].Name, err)
+		addrs, errAddrs := ifaces[i].Addrs()
+		if errAddrs != nil {
+			httpError(w, http.StatusInternalServerError, "Failed to get addresses for interface %v: %s", ifaces[i].Name, errAddrs)
 			return
 		}
 		for _, addr := range addrs {
@@ -157,7 +155,7 @@ func handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
 }
 
 func startDHCPServer() error {
-	if config.DHCP.Enabled == false {
+	if !config.DHCP.Enabled {
 		// not enabled, don't do anything
 		return nil
 	}
