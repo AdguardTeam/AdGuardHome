@@ -869,7 +869,7 @@ func BenchmarkLotsOfRulesLotsOfHosts(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		havedata := scanner.Scan()
 		if !havedata {
-			hostnames.Seek(0, 0)
+			_, _ = hostnames.Seek(0, 0)
 			scanner = bufio.NewScanner(hostnames)
 			havedata = scanner.Scan()
 		}
@@ -906,7 +906,7 @@ func BenchmarkLotsOfRulesLotsOfHostsParallel(b *testing.B) {
 		for pb.Next() {
 			havedata := scanner.Scan()
 			if !havedata {
-				hostnames.Seek(0, 0)
+				_, _ = hostnames.Seek(0, 0)
 				scanner = bufio.NewScanner(hostnames)
 				havedata = scanner.Scan()
 			}

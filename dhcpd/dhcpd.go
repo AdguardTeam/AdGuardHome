@@ -83,6 +83,7 @@ func (s *Server) Start(config *ServerConfig) error {
 
 	s.leaseStart, err = parseIPv4(s.RangeStart)
 	if err != nil {
+
 		s.closeConn() // in case it was already started
 		return wrapErrPrint(err, "Failed to parse range start address %s", s.RangeStart)
 	}
@@ -178,7 +179,7 @@ func (s *Server) reserveLease(p dhcp4.Packet) (*Lease, error) {
 	}
 	// not assigned a lease, create new one, find IP from LRU
 	log.Tracef("Lease not found for %s: creating new one", hwaddr)
-	ip, err := s.findFreeIP(p, hwaddr)
+	ip, err := s.findFreeIP(hwaddr)
 	if err != nil {
 		return nil, wrapErrPrint(err, "Couldn't find free IP for the lease %s", hwaddr.String())
 	}
@@ -202,7 +203,7 @@ func (s *Server) locateLease(p dhcp4.Packet) *Lease {
 	return nil
 }
 
-func (s *Server) findFreeIP(p dhcp4.Packet, hwaddr net.HardwareAddr) (net.IP, error) {
+func (s *Server) findFreeIP(hwaddr net.HardwareAddr) (net.IP, error) {
 	// if IP pool is nil, lazy initialize it
 	if s.IPpool == nil {
 		s.IPpool = make(map[[4]byte]net.HardwareAddr)
@@ -227,7 +228,7 @@ func (s *Server) findFreeIP(p dhcp4.Packet, hwaddr net.HardwareAddr) (net.IP, er
 
 	if foundIP == nil {
 		// TODO: LRU
-		return nil, fmt.Errorf("Couldn't find free entry in IP pool")
+		return nil, fmt.Errorf("couldn't find free entry in IP pool")
 	}
 
 	s.reserveIP(foundIP, hwaddr)
@@ -281,7 +282,7 @@ func (s *Server) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options dh
 	case dhcp4.Request: // Broadcast From Client - I'll take that IP (Also start for renewals)
 		// start/renew a lease -- update lease time
 		// some clients (OSX) just go right ahead and do Request first from previously known IP, if they get NAK, they restart full cycle with Discover then Request
-		return s.handleDHCP4Request(p, msgType, options)
+		return s.handleDHCP4Request(p, options)
 	case dhcp4.Decline: // Broadcast From Client - Sorry I can't use that IP
 		log.Tracef("Got from client: Decline")
 
@@ -306,7 +307,7 @@ func (s *Server) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options dh
 	return nil
 }
 
-func (s *Server) handleDHCP4Request(p dhcp4.Packet, msgType dhcp4.MessageType, options dhcp4.Options) dhcp4.Packet {
+func (s *Server) handleDHCP4Request(p dhcp4.Packet, options dhcp4.Options) dhcp4.Packet {
 	log.Tracef("Got from client: Request")
 	if server, ok := options[dhcp4.OptionServerIdentifier]; ok && !net.IP(server).Equal(s.ipnet.IP) {
 		log.Tracef("Request message not for this DHCP server (%v vs %v)", server, s.ipnet.IP)
@@ -315,7 +316,7 @@ func (s *Server) handleDHCP4Request(p dhcp4.Packet, msgType dhcp4.MessageType, o
 
 	reqIP := net.IP(options[dhcp4.OptionRequestedIPAddress])
 	if reqIP == nil {
-		reqIP = net.IP(p.CIAddr())
+		reqIP = p.CIAddr()
 	}
 
 	if reqIP.To4() == nil {

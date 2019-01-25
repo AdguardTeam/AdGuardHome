@@ -52,7 +52,7 @@ func generateServerConfig() dnsforward.ServerConfig {
 
 func startDNSServer() error {
 	if isRunning() {
-		return fmt.Errorf("Unable to start forwarding DNS server: Already running")
+		return fmt.Errorf("unable to start forwarding DNS server: Already running")
 	}
 
 	newconfig := generateServerConfig()

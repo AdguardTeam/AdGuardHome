@@ -108,7 +108,12 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, el
 	if len(flushBuffer) > 0 {
 		// write to file
 		// do it in separate goroutine -- we are stalling DNS response this whole time
-		go flushToFile(flushBuffer)
+		go func() {
+			err := flushToFile(flushBuffer)
+			if err != nil {
+				log.Printf("Failed to flush the query log: %s", err)
+			}
+		}()
 	}
 }
 

@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/hmage/golibs/log"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 const currentSchemaVersion = 2 // used for upgrading from old configs to new config

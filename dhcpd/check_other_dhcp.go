@@ -59,7 +59,7 @@ func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 	maxUDPsizeRaw := make([]byte, 2)
 	binary.BigEndian.PutUint16(maxUDPsizeRaw, 1500)
 	leaseTimeRaw := make([]byte, 4)
-	leaseTime := uint32(math.RoundToEven(time.Duration(time.Hour * 24 * 90).Seconds()))
+	leaseTime := uint32(math.RoundToEven((time.Hour * 24 * 90).Seconds()))
 	binary.BigEndian.PutUint32(leaseTimeRaw, leaseTime)
 	options := []dhcp4.Option{
 		{Code: dhcp4.OptionParameterRequestList, Value: requestList},

@@ -15,7 +15,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/hmage/golibs/log"
 	"github.com/miekg/dns"
-	"gopkg.in/asaskevich/govalidator.v4"
+	govalidator "gopkg.in/asaskevich/govalidator.v4"
 )
 
 const updatePeriod = time.Minute * 30
@@ -321,27 +321,27 @@ func handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
-	filter := filter{}
-	err := json.NewDecoder(r.Body).Decode(&filter)
+	f := filter{}
+	err := json.NewDecoder(r.Body).Decode(&f)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Failed to parse request body json: %s", err)
 		return
 	}
 
-	if len(filter.URL) == 0 {
+	if len(f.URL) == 0 {
 		http.Error(w, "URL parameter was not specified", 400)
 		return
 	}
 
-	if valid := govalidator.IsRequestURL(filter.URL); !valid {
+	if valid := govalidator.IsRequestURL(f.URL); !valid {
 		http.Error(w, "URL parameter is not valid request URL", 400)
 		return
 	}
 
 	// Check for duplicates
 	for i := range config.Filters {
-		if config.Filters[i].URL == filter.URL {
-			errorText := fmt.Sprintf("Filter URL already added -- %s", filter.URL)
+		if config.Filters[i].URL == f.URL {
+			errorText := fmt.Sprintf("Filter URL already added -- %s", f.URL)
 			log.Println(errorText)
 			http.Error(w, errorText, http.StatusBadRequest)
 			return
@@ -349,34 +349,34 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set necessary properties
-	filter.ID = assignUniqueFilterID()
-	filter.Enabled = true
+	f.ID = assignUniqueFilterID()
+	f.Enabled = true
 
 	// Download the filter contents
-	ok, err := filter.update(true)
+	ok, err := f.update(true)
 	if err != nil {
-		errorText := fmt.Sprintf("Couldn't fetch filter from url %s: %s", filter.URL, err)
+		errorText := fmt.Sprintf("Couldn't fetch filter from url %s: %s", f.URL, err)
 		log.Println(errorText)
 		http.Error(w, errorText, http.StatusBadRequest)
 		return
 	}
-	if filter.RulesCount == 0 {
-		errorText := fmt.Sprintf("Filter at the url %s has no rules (maybe it points to blank page?)", filter.URL)
+	if f.RulesCount == 0 {
+		errorText := fmt.Sprintf("Filter at the url %s has no rules (maybe it points to blank page?)", f.URL)
 		log.Println(errorText)
 		http.Error(w, errorText, http.StatusBadRequest)
 		return
 	}
 	if !ok {
-		errorText := fmt.Sprintf("Filter at the url %s is invalid (maybe it points to blank page?)", filter.URL)
+		errorText := fmt.Sprintf("Filter at the url %s is invalid (maybe it points to blank page?)", f.URL)
 		log.Println(errorText)
 		http.Error(w, errorText, http.StatusBadRequest)
 		return
 	}
 
 	// Save the filter contents
-	err = filter.save()
+	err = f.save()
 	if err != nil {
-		errorText := fmt.Sprintf("Failed to save filter %d due to %s", filter.ID, err)
+		errorText := fmt.Sprintf("Failed to save filter %d due to %s", f.ID, err)
 		log.Println(errorText)
 		http.Error(w, errorText, http.StatusBadRequest)
 		return
@@ -384,7 +384,7 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 
 	// URL is deemed valid, append it to filters, update config, write new filter file and tell dns to reload it
 	// TODO: since we directly feed filters in-memory, revisit if writing configs is always necessary
-	config.Filters = append(config.Filters, filter)
+	config.Filters = append(config.Filters, f)
 	err = writeAllConfigs()
 	if err != nil {
 		errorText := fmt.Sprintf("Couldn't write config file: %s", err)
@@ -393,9 +393,14 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reconfigureDNSServer()
+	err = reconfigureDNSServer()
+	if err != nil {
+		errorText := fmt.Sprintf("Couldn't reconfigure the DNS server: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
+	}
 
-	_, err = fmt.Fprintf(w, "OK %d rules\n", filter.RulesCount)
+	_, err = fmt.Fprintf(w, "OK %d rules\n", f.RulesCount)
 	if err != nil {
 		errorText := fmt.Sprintf("Couldn't write body: %s", err)
 		log.Println(errorText)

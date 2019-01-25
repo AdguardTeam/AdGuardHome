@@ -39,7 +39,7 @@ func safeWriteFile(path string, data []byte) error {
 func ensure(method string, handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
-			http.Error(w, "This request must be "+method, 405)
+			http.Error(w, "This request must be "+method, http.StatusMethodNotAllowed)
 			return
 		}
 		handler(w, r)

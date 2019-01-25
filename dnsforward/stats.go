@@ -340,11 +340,11 @@ func HandleStatsHistory(w http.ResponseWriter, r *http.Request) {
 	// check if start and time times are within supported time range
 	timeRange := timeUnit * statsHistoryElements
 	if startTime.Add(timeRange).Before(now) {
-		http.Error(w, "start_time parameter is outside of supported range", 501)
+		http.Error(w, "start_time parameter is outside of supported range", http.StatusBadRequest)
 		return
 	}
 	if endTime.Add(timeRange).Before(now) {
-		http.Error(w, "end_time parameter is outside of supported range", 501)
+		http.Error(w, "end_time parameter is outside of supported range", http.StatusBadRequest)
 		return
 	}
 
