@@ -23,6 +23,9 @@
     <a href="https://goreportcard.com/report/AdguardTeam/AdGuardHome">
       <img src="https://goreportcard.com/badge/github.com/AdguardTeam/AdGuardHome" alt="Go Report Card" />
     </a>
+    <a href="https://golangci.com/r/github.com/AdguardTeam/AdGuardHome">
+      <img src="https://golangci.com/badges/github.com/AdguardTeam/AdGuardHome.svg" alt="GolangCI" />
+    </a>
     <a href="https://github.com/AdguardTeam/AdGuardHome/releases">
         <img src="https://img.shields.io/github/release/AdguardTeam/AdGuardHome/all.svg" alt="Latest release" />
     </a>
