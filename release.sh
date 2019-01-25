@@ -9,20 +9,23 @@ version=`git describe --abbrev=4 --dirty --always --tags`
 f() {
 	make cleanfast; CGO_DISABLED=1 make
 	if [[ $GOOS == darwin ]]; then
-	    rm -f ../AdGuardHome_"$version"_MacOS.zip
-	    zip ../AdGuardHome_"$version"_MacOS.zip AdGuardHome README.md LICENSE.TXT
+	    zip dist/AdGuardHome_"$version"_MacOS.zip AdGuardHome README.md LICENSE.txt
 	elif [[ $GOOS == windows ]]; then
-	    rm -f ../AdGuardHome_"$version"_Windows.zip
-	    zip ../AdGuardHome_"$version"_Windows.zip AdGuardHome.exe README.md LICENSE.TXT
+	    zip dist/AdGuardHome_"$version"_Windows.zip AdGuardHome.exe README.md LICENSE.txt
 	else
-	    pushd ..
-	    tar zcvf AdGuardHome_"$version"_"$GOOS"_"$GOARCH".tar.gz AdGuardHome/{AdGuardHome,LICENSE.TXT,README.md}
-	    popd
+	    tar zcvf dist/AdGuardHome_"$version"_"$GOOS"_"$GOARCH".tar.gz AdGuardHome README.md LICENSE.txt
 	fi
 }
 
-#make clean
-#make
+# Clean and rebuild both static and binary
+make clean
+make
+
+# Prepare the dist folder
+rm -rf dist
+mkdir -p dist
+
+# Prepare releases
 GOOS=darwin GOARCH=amd64 f
 GOOS=linux GOARCH=amd64 f
 GOOS=linux GOARCH=386 f
