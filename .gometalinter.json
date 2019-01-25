@@ -16,24 +16,7 @@
   },
   "WarnUnmatchedDirective": true,
 
-  "DisableAll": true,
-  "Enable": [
-    "deadcode",
-    "gocyclo",
-    "gofmt",
-    "goimports",
-    "golint",
-    "gosimple",
-    "ineffassign",
-    "interfacer",
-    "lll",
-    "misspell",
-    "nakedret",
-    "unconvert",
-    "unparam",
-    "unused",
-    "vet"
-  ],
+  "EnableAll": true,
 
   "Cyclo": 20,
   "LineLength": 200

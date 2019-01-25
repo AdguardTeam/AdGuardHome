@@ -672,10 +672,10 @@ func (d *Dnsfilter) checkParental(host string) (Result, error) {
 }
 
 type formatHandler func(hashparam string) string
-type handleBodyHandler func(body []byte, hashes map[string]bool) (Result, error)
+type bodyHandler func(body []byte, hashes map[string]bool) (Result, error)
 
 // real implementation of lookup/check
-func (d *Dnsfilter) lookupCommon(host string, lookupstats *LookupStats, cache gcache.Cache, hashparamNeedSlash bool, format formatHandler, handleBody handleBodyHandler) (Result, error) {
+func (d *Dnsfilter) lookupCommon(host string, lookupstats *LookupStats, cache gcache.Cache, hashparamNeedSlash bool, format formatHandler, handleBody bodyHandler) (Result, error) {
 	// if host ends with a dot, trim it
 	host = strings.ToLower(strings.Trim(host, "."))
 
@@ -787,43 +787,43 @@ func (d *Dnsfilter) AddRule(input string, filterListID int64) error {
 	}
 
 	// Start parsing the rule
-	rule := rule{
+	r := rule{
 		text:         input, // will be modified
 		originalText: input,
 		listID:       filterListID,
 	}
 
 	// Mark rule as whitelist if it starts with @@
-	if strings.HasPrefix(rule.text, "@@") {
-		rule.isWhitelist = true
-		rule.text = rule.text[2:]
+	if strings.HasPrefix(r.text, "@@") {
+		r.isWhitelist = true
+		r.text = r.text[2:]
 	}
 
-	err := rule.parseOptions()
+	err := r.parseOptions()
 	if err != nil {
 		return err
 	}
 
-	rule.extractShortcut()
+	r.extractShortcut()
 
 	if !enableDelayedCompilation {
-		err := rule.compile()
+		err := r.compile()
 		if err != nil {
 			return err
 		}
 	}
 
 	destination := d.blackList
-	if rule.isImportant {
+	if r.isImportant {
 		destination = d.important
-	} else if rule.isWhitelist {
+	} else if r.isWhitelist {
 		destination = d.whiteList
 	}
 
 	d.storageMutex.Lock()
 	d.storage[input] = true
 	d.storageMutex.Unlock()
-	destination.Add(&rule)
+	destination.Add(&r)
 	return nil
 }
 
@@ -848,13 +848,13 @@ func (d *Dnsfilter) parseEtcHosts(input string, filterListID int64) bool {
 	d.storageMutex.Unlock()
 
 	for _, host := range fields[1:] {
-		rule := rule{
+		r := rule{
 			text:         host,
 			originalText: input,
 			listID:       filterListID,
 			ip:           addr,
 		}
-		d.blackList.Add(&rule)
+		d.blackList.Add(&r)
 	}
 	return true
 }
