@@ -1,15 +1,9 @@
 language: go
 sudo: false
+
 go:
   - 1.11.x
   - 1.x
-
-cache:
-  directories:
-    - $HOME/.cache/go-build
-    - $HOME/gopath/pkg/mod
-    - $HOME/Library/Caches/go-build
-
 os:
   - linux
   - osx
@@ -20,6 +14,12 @@ before_install:
 
 install:
   - npm --prefix client install
+
+cache:
+  directories:
+    - $HOME/.cache/go-build
+    - $HOME/gopath/pkg/mod
+    - $HOME/Library/Caches/go-build
 
 script:
   - node -v
@@ -32,3 +32,33 @@ script:
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+
+matrix:
+  include:
+    # Release build configuration
+    - name: release
+      go:
+        - 1.11.x
+      os:
+        - linux
+
+      script:
+        - node -v
+        - npm -v
+        # Run tests just in case
+        - go test -race -v -bench=. ./...
+        # Prepare releases
+        - ./release.sh
+        - ls -l dist
+
+      deploy:
+        provider: releases
+        api_key: $GITHUB_TOKEN
+        file:
+          - dist/AdGuardHome_*
+        on:
+          repo: AdguardTeam/AdGuardHome
+          tags: true
+        draft: true
+        file_glob: true
+        skip_cleanup: true
