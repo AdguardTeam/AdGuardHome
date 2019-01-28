@@ -11,7 +11,7 @@ FROM alpine:latest
 LABEL maintainer="AdGuard Team <devteam@adguard.com>"
 
 # Update CA certs
-RUN apk --no-cache --update add ca-certificates \
+RUN apk --no-cache --update add ca-certificates && \
     rm -rf /var/cache/apk/*
 
 COPY --from=build /src/AdGuardHome/AdGuardHome /opt/AdGuardHome
