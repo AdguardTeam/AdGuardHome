@@ -1,0 +1,40 @@
+FROM alpine:latest
+LABEL maintainer="AdGuard Team <devteam@adguard.com>"
+
+# This is the location of the releases.
+ENV ADGUARD_RELEASES="https://github.com/AdguardTeam/AdGuardHome/releases/download"
+
+# AdGuard version
+ARG ADGUARD_VERSION=${SOURCE_BRANCH:-"v0.92-hotfix2"}
+ENV ADGUARD_VERSION $ADGUARD_VERSION
+
+# AdGuard architecture and package info
+ARG ADGUARD_ARCH="linux_amd64"
+ENV ADGUARD_ARCH ${ADGUARD_ARCH}
+ENV ADGUARD_PACKAGE "AdGuardHome_v${ADGUARD_VERSION}_${ADGUARD_ARCH}"
+
+RUN set -eux && \
+    apk --no-cache --update add ca-certificates && \
+    mkdir -p /tmp/AdGuardDistr && \
+    apkArch="$(apk --print-arch)" && \
+    case "${apkArch}" in \
+        aarch64) agHomeArch='arm64' ;; \
+        armhf) agHomeArch='arm' ;; \
+        x86) agHomeArch='386' ;; \
+        x86_64) agHomeArch='amd64' ;; \
+        *) echo >&2 "error: unsupported architecture: ${apkArch} (see https://github.com/AdguardTeam/AdGuardHome/releases)" && exit 1 ;; \
+    esac && \
+    cd /tmp/AdGuardDistr && \
+    wget ${ADGUARD_RELEASES}/${ADGUARD_VERSION}/AdGuardHome_${ADGUARD_VERSION}_linux_${agHomeArch}.tar.gz && \
+    tar xvf AdGuardHome_${ADGUARD_VERSION}_linux_${agHomeArch}.tar.gz && \
+    cp "AdGuardHome/AdGuardHome" / && \
+    chmod +x "/AdGuardHome" && \
+    cd /tmp && \
+    rm -rf /tmp/AdGuardDistr
+
+EXPOSE 53 3000
+
+VOLUME /data
+
+ENTRYPOINT ["/AdGuardHome"]
+CMD ["-h", "0.0.0.0"]
