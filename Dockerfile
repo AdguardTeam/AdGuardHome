@@ -14,11 +14,11 @@ LABEL maintainer="AdGuard Team <devteam@adguard.com>"
 RUN apk --no-cache --update add ca-certificates && \
     rm -rf /var/cache/apk/*
 
-COPY --from=build /src/AdGuardHome/AdGuardHome /opt/AdGuardHome
+COPY --from=build /src/AdGuardHome/AdGuardHome /AdGuardHome
 
 EXPOSE 53 3000
 
 VOLUME /data
 
-ENTRYPOINT ["/opt/AdGuardHome"]
+ENTRYPOINT ["/AdGuardHome"]
 CMD ["-h", "0.0.0.0"]
