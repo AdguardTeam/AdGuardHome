@@ -28,6 +28,7 @@
     "dhcp_ip_addresses": "IP addresses",
     "dhcp_table_hostname": "Hostname",
     "dhcp_table_expires": "Expires",
+    "dhcp_warning": "If you want to enable the built-in DHCP server, make sure that there is no other active DHCP server. Otherwise, it can break the internet for connected devices!",
     "back": "Back",
     "dashboard": "Dashboard",
     "settings": "Settings",

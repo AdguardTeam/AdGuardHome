@@ -66,14 +66,14 @@ class Dhcp extends Component {
         if (active) {
             if (active.error) {
                 return (
-                    <div className="text-danger">
+                    <div className="text-danger mb-2">
                         {active.error}
                     </div>
                 );
             }
 
             return (
-                <Fragment>
+                <div className="mb-2">
                     {active.found ? (
                         <div className="text-danger">
                             <Trans>dhcp_found</Trans>
@@ -83,7 +83,7 @@ class Dhcp extends Component {
                             <Trans>dhcp_not_found</Trans>
                         </div>
                     )}
-                </Fragment>
+                </div>
             );
         }
 
@@ -130,12 +130,18 @@ class Dhcp extends Component {
                                         onClick={() =>
                                             this.props.findActiveDhcp(dhcp.config.interface_name)
                                         }
-                                        disabled={!dhcp.config.interface_name || dhcp.processingConfig}
+                                        disabled={
+                                            !dhcp.config.interface_name
+                                            || dhcp.processingConfig
+                                        }
                                     >
                                         <Trans>check_dhcp_servers</Trans>
                                     </button>
                                 </div>
                                 {this.getActiveDhcpMessage()}
+                                <div className="text-danger">
+                                    <Trans>dhcp_warning</Trans>
+                                </div>
                             </Fragment>
                         }
                     </div>
