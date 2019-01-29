@@ -78,6 +78,4 @@ matrix:
         - docker login -u="$DOCKER_USER" -p="$DOCKER_PASSWORD"
         - ./build_docker.sh
       after_script:
-        - docker images
-    
-    
+        - docker images    

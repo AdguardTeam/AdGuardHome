@@ -2,9 +2,11 @@
 /.vscode
 /.idea
 /AdGuardHome
+/AdGuardHome.exe
 /AdGuardHome.yaml
 /data/
 /build/
+/dist/
 /client/node_modules/
 /querylog.json
 /querylog.json.1
