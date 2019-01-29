@@ -29,6 +29,7 @@ type logSettings struct {
 type configuration struct {
 	ourConfigFilename string // Config filename (can be overridden via the command line arguments)
 	ourBinaryDir      string // Location of our directory, used to protect against CWD being somewhere else
+	firstRun          bool   // if set to true, don't run any services except HTTP web inteface, and serve only first-run html
 
 	BindHost  string             `yaml:"bind_host"`
 	BindPort  int                `yaml:"bind_port"`
@@ -152,6 +153,10 @@ func readConfigFile() ([]byte, error) {
 func (c *configuration) write() error {
 	c.Lock()
 	defer c.Unlock()
+	if config.firstRun {
+		log.Tracef("Silently refusing to write config because first run and not configured yet")
+		return nil
+	}
 	configFile := config.getConfigFilename()
 	log.Printf("Writing YAML file: %s", configFile)
 	yamlText, err := yaml.Marshal(&config)

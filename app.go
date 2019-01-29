@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	stdlog "log"
 	"net"
@@ -17,7 +16,6 @@ import (
 	"github.com/gobuffalo/packr"
 
 	"github.com/hmage/golibs/log"
-	"golang.org/x/crypto/ssh/terminal"
 )
 
 // VersionString will be set through ldflags, contains current version
@@ -72,13 +70,10 @@ func run(args options) {
 		log.Printf("AdGuard Home is running as a service")
 	}
 
-	err := askUsernamePasswordIfPossible()
-	if err != nil {
-		log.Fatal(err)
-	}
+	config.firstRun = detectFirstRun()
 
 	// Do the upgrade if necessary
-	err = upgradeConfig()
+	err := upgradeConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -145,7 +140,9 @@ func run(args options) {
 
 	// Initialize and run the admin Web interface
 	box := packr.NewBox("build/static")
-	http.Handle("/", optionalAuthHandler(http.FileServer(box)))
+	// if not configured, redirect / to /install.html, otherwise redirect /install.html to /
+	http.Handle("/", postInstallHandler(optionalAuthHandler(http.FileServer(box))))
+	http.Handle("/install.html", preInstallHandler(http.FileServer(box)))
 	registerControlHandlers()
 
 	address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
@@ -220,14 +217,6 @@ func cleanup() {
 	if err != nil {
 		log.Printf("Couldn't stop DHCP server: %s", err)
 	}
-}
-
-func getInput() (string, error) {
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	text := scanner.Text()
-	err := scanner.Err()
-	return text, err
 }
 
 // command-line arguments
@@ -317,80 +306,4 @@ func loadOptions() options {
 	}
 
 	return o
-}
-
-func promptAndGet(prompt string) (string, error) {
-	for {
-		fmt.Print(prompt)
-		input, err := getInput()
-		if err != nil {
-			log.Printf("Failed to get input, aborting: %s", err)
-			return "", err
-		}
-		if len(input) != 0 {
-			return input, nil
-		}
-		// try again
-	}
-}
-
-func promptAndGetPassword(prompt string) (string, error) {
-	for {
-		fmt.Print(prompt)
-		password, err := terminal.ReadPassword(int(os.Stdin.Fd()))
-		fmt.Print("\n")
-		if err != nil {
-			log.Printf("Failed to get input, aborting: %s", err)
-			return "", err
-		}
-		if len(password) != 0 {
-			return string(password), nil
-		}
-		// try again
-	}
-}
-
-func askUsernamePasswordIfPossible() error {
-	configFile := config.getConfigFilename()
-	_, err := os.Stat(configFile)
-	if !os.IsNotExist(err) {
-		// do nothing, file exists
-		return nil
-	}
-	if !terminal.IsTerminal(int(os.Stdin.Fd())) {
-		return nil // do nothing
-	}
-	if !terminal.IsTerminal(int(os.Stdout.Fd())) {
-		return nil // do nothing
-	}
-	fmt.Printf("Would you like to set user/password for the web interface authentication (yes/no)?\n")
-	yesno, err := promptAndGet("Please type 'yes' or 'no': ")
-	if err != nil {
-		return err
-	}
-	if yesno[0] != 'y' && yesno[0] != 'Y' {
-		return nil
-	}
-	username, err := promptAndGet("Please enter the username: ")
-	if err != nil {
-		return err
-	}
-
-	password, err := promptAndGetPassword("Please enter the password: ")
-	if err != nil {
-		return err
-	}
-
-	password2, err := promptAndGetPassword("Please enter password again: ")
-	if err != nil {
-		return err
-	}
-	if password2 != password {
-		fmt.Printf("Passwords do not match! Aborting\n")
-		os.Exit(1)
-	}
-
-	config.AuthName = username
-	config.AuthPass = password
-	return nil
 }

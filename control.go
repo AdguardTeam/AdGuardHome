@@ -694,24 +694,43 @@ func handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleGetDefaultAddresses(w http.ResponseWriter, r *http.Request) {
-	type ipport struct {
-		IP   string `json:"ip"`
-		Port int    `json:"port"`
-	}
-	data := struct {
-		Web ipport `json:"web"`
-		DNS ipport `json:"dns"`
-	}{}
+type ipport struct {
+	IP   string `json:"ip"`
+	Port int    `json:"port"`
+}
 
-	// TODO: replace mockup with actual data
-	data.Web.IP = "192.168.104.104"
-	data.Web.Port = 3000
-	data.DNS.IP = "192.168.104.104"
-	data.DNS.Port = 53
+type firstRunData struct {
+	Web      ipport `json:"web"`
+	DNS      ipport `json:"dns"`
+	Username string `json:"username,omitempty"`
+	Password string `json:"password,omitempty"`
+}
+
+func handleGetDefaultAddresses(w http.ResponseWriter, r *http.Request) {
+	data := firstRunData{}
+	ifaces, err := getValidNetInterfaces()
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
+		return
+	}
+	if len(ifaces) == 0 {
+		httpError(w, http.StatusServiceUnavailable, "Couldn't find any legible interface, plase try again later")
+		return
+	}
+
+	// find an interface with an ipv4 address
+	addr := findIPv4IfaceAddr(ifaces)
+	if len(addr) == 0 {
+		httpError(w, http.StatusServiceUnavailable, "Couldn't find any interface with IPv4, plase try again later")
+		return
+	}
+	data.Web.IP = addr
+	data.DNS.IP = addr
+	data.Web.Port = 3000 // TODO: find out if port 80 is available -- if not, fall back to 3000
+	data.DNS.Port = 53   // TODO: find out if port 53 is available -- if not, show a big warning
 
 	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(data)
+	err = json.NewEncoder(w).Encode(data)
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Unable to marshal default addresses to json: %s", err)
 		return
@@ -719,7 +738,7 @@ func handleGetDefaultAddresses(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleSetAllSettings(w http.ResponseWriter, r *http.Request) {
-	newSettings := map[string]interface{}{}
+	newSettings := firstRunData{}
 	err := json.NewDecoder(r.Body).Decode(&newSettings)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Failed to parse new DHCP config json: %s", err)
@@ -727,48 +746,57 @@ func handleSetAllSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	spew.Dump(newSettings)
+	config.firstRun = false
+	config.BindHost = newSettings.Web.IP
+	config.BindPort = newSettings.Web.Port
+	config.DNS.BindHost = newSettings.DNS.IP
+	config.DNS.Port = newSettings.DNS.Port
+	config.AuthName = newSettings.Username
+	config.AuthPass = newSettings.Password
+
+	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func registerControlHandlers() {
-	http.HandleFunc("/control/status", optionalAuth(ensureGET(handleStatus)))
-	http.HandleFunc("/control/enable_protection", optionalAuth(ensurePOST(handleProtectionEnable)))
-	http.HandleFunc("/control/disable_protection", optionalAuth(ensurePOST(handleProtectionDisable)))
-	http.HandleFunc("/control/querylog", optionalAuth(ensureGET(dnsforward.HandleQueryLog)))
-	http.HandleFunc("/control/querylog_enable", optionalAuth(ensurePOST(handleQueryLogEnable)))
-	http.HandleFunc("/control/querylog_disable", optionalAuth(ensurePOST(handleQueryLogDisable)))
-	http.HandleFunc("/control/set_upstream_dns", optionalAuth(ensurePOST(handleSetUpstreamDNS)))
-	http.HandleFunc("/control/test_upstream_dns", optionalAuth(ensurePOST(handleTestUpstreamDNS)))
-	http.HandleFunc("/control/i18n/change_language", optionalAuth(ensurePOST(handleI18nChangeLanguage)))
-	http.HandleFunc("/control/i18n/current_language", optionalAuth(ensureGET(handleI18nCurrentLanguage)))
-	http.HandleFunc("/control/stats_top", optionalAuth(ensureGET(dnsforward.HandleStatsTop)))
-	http.HandleFunc("/control/stats", optionalAuth(ensureGET(dnsforward.HandleStats)))
-	http.HandleFunc("/control/stats_history", optionalAuth(ensureGET(dnsforward.HandleStatsHistory)))
-	http.HandleFunc("/control/stats_reset", optionalAuth(ensurePOST(dnsforward.HandleStatsReset)))
-	http.HandleFunc("/control/version.json", optionalAuth(handleGetVersionJSON))
-	http.HandleFunc("/control/filtering/enable", optionalAuth(ensurePOST(handleFilteringEnable)))
-	http.HandleFunc("/control/filtering/disable", optionalAuth(ensurePOST(handleFilteringDisable)))
-	http.HandleFunc("/control/filtering/add_url", optionalAuth(ensurePUT(handleFilteringAddURL)))
-	http.HandleFunc("/control/filtering/remove_url", optionalAuth(ensureDELETE(handleFilteringRemoveURL)))
-	http.HandleFunc("/control/filtering/enable_url", optionalAuth(ensurePOST(handleFilteringEnableURL)))
-	http.HandleFunc("/control/filtering/disable_url", optionalAuth(ensurePOST(handleFilteringDisableURL)))
-	http.HandleFunc("/control/filtering/refresh", optionalAuth(ensurePOST(handleFilteringRefresh)))
-	http.HandleFunc("/control/filtering/status", optionalAuth(ensureGET(handleFilteringStatus)))
-	http.HandleFunc("/control/filtering/set_rules", optionalAuth(ensurePUT(handleFilteringSetRules)))
-	http.HandleFunc("/control/safebrowsing/enable", optionalAuth(ensurePOST(handleSafeBrowsingEnable)))
-	http.HandleFunc("/control/safebrowsing/disable", optionalAuth(ensurePOST(handleSafeBrowsingDisable)))
-	http.HandleFunc("/control/safebrowsing/status", optionalAuth(ensureGET(handleSafeBrowsingStatus)))
-	http.HandleFunc("/control/parental/enable", optionalAuth(ensurePOST(handleParentalEnable)))
-	http.HandleFunc("/control/parental/disable", optionalAuth(ensurePOST(handleParentalDisable)))
-	http.HandleFunc("/control/parental/status", optionalAuth(ensureGET(handleParentalStatus)))
-	http.HandleFunc("/control/safesearch/enable", optionalAuth(ensurePOST(handleSafeSearchEnable)))
-	http.HandleFunc("/control/safesearch/disable", optionalAuth(ensurePOST(handleSafeSearchDisable)))
-	http.HandleFunc("/control/safesearch/status", optionalAuth(ensureGET(handleSafeSearchStatus)))
-	http.HandleFunc("/control/dhcp/status", optionalAuth(ensureGET(handleDHCPStatus)))
-	http.HandleFunc("/control/dhcp/interfaces", optionalAuth(ensureGET(handleDHCPInterfaces)))
-	http.HandleFunc("/control/dhcp/set_config", optionalAuth(ensurePOST(handleDHCPSetConfig)))
-	http.HandleFunc("/control/dhcp/find_active_dhcp", optionalAuth(ensurePOST(handleDHCPFindActiveServer)))
+	http.HandleFunc("/control/status", postInstall(optionalAuth(ensureGET(handleStatus))))
+	http.HandleFunc("/control/enable_protection", postInstall(optionalAuth(ensurePOST(handleProtectionEnable))))
+	http.HandleFunc("/control/disable_protection", postInstall(optionalAuth(ensurePOST(handleProtectionDisable))))
+	http.HandleFunc("/control/querylog", postInstall(optionalAuth(ensureGET(dnsforward.HandleQueryLog))))
+	http.HandleFunc("/control/querylog_enable", postInstall(optionalAuth(ensurePOST(handleQueryLogEnable))))
+	http.HandleFunc("/control/querylog_disable", postInstall(optionalAuth(ensurePOST(handleQueryLogDisable))))
+	http.HandleFunc("/control/set_upstream_dns", postInstall(optionalAuth(ensurePOST(handleSetUpstreamDNS))))
+	http.HandleFunc("/control/test_upstream_dns", postInstall(optionalAuth(ensurePOST(handleTestUpstreamDNS))))
+	http.HandleFunc("/control/i18n/change_language", postInstall(optionalAuth(ensurePOST(handleI18nChangeLanguage))))
+	http.HandleFunc("/control/i18n/current_language", postInstall(optionalAuth(ensureGET(handleI18nCurrentLanguage))))
+	http.HandleFunc("/control/stats_top", postInstall(optionalAuth(ensureGET(dnsforward.HandleStatsTop))))
+	http.HandleFunc("/control/stats", postInstall(optionalAuth(ensureGET(dnsforward.HandleStats))))
+	http.HandleFunc("/control/stats_history", postInstall(optionalAuth(ensureGET(dnsforward.HandleStatsHistory))))
+	http.HandleFunc("/control/stats_reset", postInstall(optionalAuth(ensurePOST(dnsforward.HandleStatsReset))))
+	http.HandleFunc("/control/version.json", postInstall(optionalAuth(handleGetVersionJSON)))
+	http.HandleFunc("/control/filtering/enable", postInstall(optionalAuth(ensurePOST(handleFilteringEnable))))
+	http.HandleFunc("/control/filtering/disable", postInstall(optionalAuth(ensurePOST(handleFilteringDisable))))
+	http.HandleFunc("/control/filtering/add_url", postInstall(optionalAuth(ensurePUT(handleFilteringAddURL))))
+	http.HandleFunc("/control/filtering/remove_url", postInstall(optionalAuth(ensureDELETE(handleFilteringRemoveURL))))
+	http.HandleFunc("/control/filtering/enable_url", postInstall(optionalAuth(ensurePOST(handleFilteringEnableURL))))
+	http.HandleFunc("/control/filtering/disable_url", postInstall(optionalAuth(ensurePOST(handleFilteringDisableURL))))
+	http.HandleFunc("/control/filtering/refresh", postInstall(optionalAuth(ensurePOST(handleFilteringRefresh))))
+	http.HandleFunc("/control/filtering/status", postInstall(optionalAuth(ensureGET(handleFilteringStatus))))
+	http.HandleFunc("/control/filtering/set_rules", postInstall(optionalAuth(ensurePUT(handleFilteringSetRules))))
+	http.HandleFunc("/control/safebrowsing/enable", postInstall(optionalAuth(ensurePOST(handleSafeBrowsingEnable))))
+	http.HandleFunc("/control/safebrowsing/disable", postInstall(optionalAuth(ensurePOST(handleSafeBrowsingDisable))))
+	http.HandleFunc("/control/safebrowsing/status", postInstall(optionalAuth(ensureGET(handleSafeBrowsingStatus))))
+	http.HandleFunc("/control/parental/enable", postInstall(optionalAuth(ensurePOST(handleParentalEnable))))
+	http.HandleFunc("/control/parental/disable", postInstall(optionalAuth(ensurePOST(handleParentalDisable))))
+	http.HandleFunc("/control/parental/status", postInstall(optionalAuth(ensureGET(handleParentalStatus))))
+	http.HandleFunc("/control/safesearch/enable", postInstall(optionalAuth(ensurePOST(handleSafeSearchEnable))))
+	http.HandleFunc("/control/safesearch/disable", postInstall(optionalAuth(ensurePOST(handleSafeSearchDisable))))
+	http.HandleFunc("/control/safesearch/status", postInstall(optionalAuth(ensureGET(handleSafeSearchStatus))))
+	http.HandleFunc("/control/dhcp/status", postInstall(optionalAuth(ensureGET(handleDHCPStatus))))
+	http.HandleFunc("/control/dhcp/interfaces", postInstall(optionalAuth(ensureGET(handleDHCPInterfaces))))
+	http.HandleFunc("/control/dhcp/set_config", postInstall(optionalAuth(ensurePOST(handleDHCPSetConfig))))
+	http.HandleFunc("/control/dhcp/find_active_dhcp", postInstall(optionalAuth(ensurePOST(handleDHCPFindActiveServer))))
 
 	// TODO: move to registerInstallHandlers()
-	http.HandleFunc("/control/install/get_default_addresses", ensureGET(handleGetDefaultAddresses))
-	http.HandleFunc("/control/install/set_all_settings", ensurePOST(handleSetAllSettings))
+	http.HandleFunc("/control/install/get_default_addresses", preInstall(ensureGET(handleGetDefaultAddresses)))
+	http.HandleFunc("/control/install/set_all_settings", preInstall(ensurePOST(handleSetAllSettings)))
 }
