@@ -1034,13 +1034,17 @@ func handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 		tlsConfig `json:",inline"`
 
 		// only for API, no need to be stored in config
-		Status  string `yaml:"-" json:"status,omitempty"`
-		Warning string `yaml:"-" json:"warning,omitempty"`
+		StatusCertificate string `yaml:"-" json:"status_cert,omitempty"`
+		StatusKey         string `yaml:"-" json:"status_key,omitempty"`
+		Warning           string `yaml:"-" json:"warning,omitempty"`
 	}{
 		tlsConfig: config.TLS,
 	}
 	if rand.Intn(2) == 0 {
-		data.Status = fmt.Sprintf("Random status #%s", RandStringBytesMaskImpr(6))
+		data.StatusCertificate = fmt.Sprintf("Random certificate status #%s", RandStringBytesMaskImpr(6))
+	}
+	if rand.Intn(2) == 0 {
+		data.StatusKey = fmt.Sprintf("Random key status #%s", RandStringBytesMaskImpr(6))
 	}
 	if rand.Intn(2) == 0 {
 		data.Warning = fmt.Sprintf("Random warning #%s", RandStringBytesMaskImpr(6))
