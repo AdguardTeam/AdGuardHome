@@ -1,0 +1,15 @@
+FROM alpine:latest
+LABEL maintainer="AdGuard Team <devteam@adguard.com>"
+
+# Update CA certs
+RUN apk --no-cache --update add ca-certificates && \
+    rm -rf /var/cache/apk/*
+
+COPY ./AdGuardHome /AdGuardHome
+
+EXPOSE 53 3000
+
+VOLUME /data
+
+ENTRYPOINT ["/AdGuardHome"]
+CMD ["-h", "0.0.0.0"]

@@ -62,3 +62,20 @@ matrix:
         draft: true
         file_glob: true
         skip_cleanup: true
+
+    - name: docker
+      if: type != pull_request AND (branch = master OR tag = true)
+      go:
+        - 1.11.x
+      os:
+        - linux
+      services:
+        - docker
+      before_script:
+        - nvm install node
+        - npm install -g npm
+      script:
+        - docker login -u="$DOCKER_USER" -p="$DOCKER_PASSWORD"
+        - ./build_docker.sh
+      after_script:
+        - docker images    
