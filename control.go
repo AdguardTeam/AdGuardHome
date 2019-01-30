@@ -3,10 +3,12 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -1030,25 +1032,7 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 // TLS
 // ---
 func handleTLSStatus(w http.ResponseWriter, r *http.Request) {
-	data := struct {
-		tlsConfig `json:",inline"`
-
-		// only for API, no need to be stored in config
-		StatusCertificate string `yaml:"-" json:"status_cert,omitempty"`
-		StatusKey         string `yaml:"-" json:"status_key,omitempty"`
-		Warning           string `yaml:"-" json:"warning,omitempty"`
-	}{
-		tlsConfig: config.TLS,
-	}
-	if rand.Intn(2) == 0 {
-		data.StatusCertificate = fmt.Sprintf("Random certificate status #%s", RandStringBytesMaskImpr(6))
-	}
-	if rand.Intn(2) == 0 {
-		data.StatusKey = fmt.Sprintf("Random key status #%s", RandStringBytesMaskImpr(6))
-	}
-	if rand.Intn(2) == 0 {
-		data.Warning = fmt.Sprintf("Random warning #%s", RandStringBytesMaskImpr(6))
-	}
+	data := config.TLS
 	err := json.NewEncoder(w).Encode(&data)
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Failed to marshal json with TLS status: %s", err)
@@ -1057,15 +1041,100 @@ func handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
-	newconfig := tlsConfig{}
-	err := json.NewDecoder(r.Body).Decode(&newconfig)
+	data := tlsConfig{}
+	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Failed to parse new TLS config json: %s", err)
 		return
 	}
 
-	// TODO: validate before applying
-	config.TLS = newconfig
+	_, err = tls.X509KeyPair([]byte(data.CertificateChain), []byte(data.PrivateKey))
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Invalid certificate or key: %s", err)
+		return
+	}
+
+	// now do a more extended validation
+	var certs []*pem.Block    // PEM-encoded certificates
+	var skippedBytes []string // skipped bytes
+
+	pemblock := []byte(data.CertificateChain)
+	for {
+		var decoded *pem.Block
+		decoded, pemblock = pem.Decode(pemblock)
+		if decoded == nil {
+			break
+		}
+		if decoded.Type == "CERTIFICATE" {
+			certs = append(certs, decoded)
+		} else {
+			skippedBytes = append(skippedBytes, decoded.Type)
+		}
+	}
+
+	var parsedCerts []*x509.Certificate
+
+	for _, cert := range certs {
+		parsed, err := x509.ParseCertificate(cert.Bytes)
+		if err != nil {
+			httpError(w, http.StatusBadRequest, "failed to parse certificate: %s", err)
+			return
+		}
+		parsedCerts = append(parsedCerts, parsed)
+	}
+
+	if len(parsedCerts) == 0 {
+		httpError(w, http.StatusBadRequest, "You have specified an empty certificate")
+		return
+	}
+
+	// spew.Dump(parsedCerts)
+
+	opts := x509.VerifyOptions{
+		DNSName: data.ServerName,
+	}
+
+	log.Printf("number of certs - %d", len(parsedCerts))
+	if len(parsedCerts) > 1 {
+		// set up an intermediate
+		pool := x509.NewCertPool()
+		for _, cert := range parsedCerts[1:] {
+			log.Printf("got an intermediate cert")
+			pool.AddCert(cert)
+		}
+		opts.Intermediates = pool
+	}
+
+	// TODO: save it as a warning rather than error it out -- shouldn't be a big problem
+	mainCert := parsedCerts[0]
+	chains, err := mainCert.Verify(opts)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Your certificate does not verify: %s", err)
+		return
+	}
+	// spew.Dump(chains)
+
+	config.TLS = data
+
+	// update status
+	config.TLS.StatusCertificate = fmt.Sprintf("Certificate expires on %s", mainCert.NotAfter) //, valid for hostname %s", mainCert.NotAfter, mainCert.Subject.CommonName)
+	if len(mainCert.DNSNames) == 1 {
+		config.TLS.StatusCertificate += fmt.Sprintf(", valid for hostname %s", mainCert.DNSNames[0])
+	} else if len(mainCert.DNSNames) > 1 {
+		config.TLS.StatusCertificate += ", valid for hostnames " + strings.Join(mainCert.DNSNames, ", ")
+	}
+
+	// issue a warning if certificate is about to expire
+	now := time.Now()
+	if mainCert.NotAfter.AddDate(0, 0, -30).After(now) {
+		timeLeft := time.Until(mainCert.NotAfter)
+		if timeLeft > 0 {
+			config.TLS.Warning = fmt.Sprintf("Your certificate expires in %.0f days, we recommend you update it soon", timeLeft.Hours()/24)
+		} else {
+			config.TLS.Warning = fmt.Sprintf("Your certificate has expired on %s, we recommend you update it immediatedly", mainCert.NotAfter)
+		}
+	}
+	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func registerInstallHandlers() {

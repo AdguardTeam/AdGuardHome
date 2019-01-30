@@ -69,6 +69,11 @@ type tlsConfig struct {
 	PortDNSOverTLS   int    `yaml:"port_dns_over_tls" json:"port_dns_over_tls,omitempty"`
 	CertificateChain string `yaml:"certificate_chain" json:"certificate_chain"`
 	PrivateKey       string `yaml:"private_key" json:"private_key"`
+
+	// only for API, no need to be stored in config
+	StatusCertificate string `yaml:"status_cert" json:"status_cert,omitempty"`
+	StatusKey         string `yaml:"status_key" json:"status_key,omitempty"`
+	Warning           string `yaml:"warning" json:"warning,omitempty"`
 }
 
 // initialize to default values, will be changed later when reading config or parsing command line
