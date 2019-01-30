@@ -1107,7 +1107,7 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: save it as a warning rather than error it out -- shouldn't be a big problem
 	mainCert := parsedCerts[0]
-	chains, err := mainCert.Verify(opts)
+	_, err = mainCert.Verify(opts)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Your certificate does not verify: %s", err)
 		return
