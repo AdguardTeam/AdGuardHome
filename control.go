@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -1029,7 +1030,22 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 // TLS
 // ---
 func handleTLSStatus(w http.ResponseWriter, r *http.Request) {
-	err := json.NewEncoder(w).Encode(&config.TLS)
+	data := struct {
+		tlsConfig `json:",inline"`
+
+		// only for API, no need to be stored in config
+		Status  string `yaml:"-" json:"status,omitempty"`
+		Warning string `yaml:"-" json:"warning,omitempty"`
+	}{
+		tlsConfig: config.TLS,
+	}
+	if rand.Intn(2) == 0 {
+		data.Status = fmt.Sprintf("Random status #%s", RandStringBytesMaskImpr(6))
+	}
+	if rand.Intn(2) == 0 {
+		data.Warning = fmt.Sprintf("Random warning #%s", RandStringBytesMaskImpr(6))
+	}
+	err := json.NewEncoder(w).Encode(&data)
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Failed to marshal json with TLS status: %s", err)
 		return
