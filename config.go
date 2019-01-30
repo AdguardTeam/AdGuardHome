@@ -37,10 +37,10 @@ type configuration struct {
 	AuthPass  string             `yaml:"auth_pass"`
 	Language  string             `yaml:"language"` // two-letter ISO 639-1 language code
 	DNS       dnsConfig          `yaml:"dns"`
+	TLS       tlsConfig          `yaml:"tls"`
 	Filters   []filter           `yaml:"filters"`
 	UserRules []string           `yaml:"user_rules"`
 	DHCP      dhcpd.ServerConfig `yaml:"dhcp"`
-	TLS       tlsConfig          `yaml:"tls"`
 
 	logSettings `yaml:",inline"`
 
@@ -63,10 +63,10 @@ var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
 
 // field ordering is important -- yaml fields will mirror ordering from here
 type tlsConfig struct {
-	ServerName       string `yaml:"server_name" json:"server_name"`
-	ForceHTTPS       bool   `yaml:"force_https" json:"force_https"`
-	PortHTTPS        int    `yaml:"port_https" json:"port_https"`
-	PortDNSOverTLS   int    `yaml:"port_dns_over_tls" json:"port_dns_over_tls"`
+	ServerName       string `yaml:"server_name" json:"server_name,omitempty"`
+	ForceHTTPS       bool   `yaml:"force_https" json:"force_https,omitempty"`
+	PortHTTPS        int    `yaml:"port_https" json:"port_https,omitempty"`
+	PortDNSOverTLS   int    `yaml:"port_dns_over_tls" json:"port_dns_over_tls,omitempty"`
 	CertificateChain string `yaml:"certificate_chain" json:"certificate_chain"`
 	PrivateKey       string `yaml:"private_key" json:"private_key"`
 }
