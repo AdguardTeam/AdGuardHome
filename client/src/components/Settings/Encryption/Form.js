@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { Field, reduxForm } from 'redux-form';
 import { Trans, withNamespaces } from 'react-i18next';
@@ -25,6 +25,8 @@ const Form = (props) => {
         invalid,
         submitting,
         processing,
+        statusCert,
+        statusKey,
     } = props;
 
     return (
@@ -131,10 +133,17 @@ const Form = (props) => {
                             validate={[required]}
                         />
                         <div className="form__status">
-                            <div className="form__label form__label--bold">
-                                <Trans>encryption_status</Trans>:
-                            </div>
-                            <div>
+                            {statusCert &&
+                                <Fragment>
+                                    <div className="form__label form__label--bold">
+                                        <Trans>encryption_status</Trans>:
+                                    </div>
+                                    <div>
+                                        {statusCert}
+                                    </div>
+                                </Fragment>
+                            }
+                            {/* <div>
                                 <Trans values={{ domains: '*.example.org, example.org' }}>
                                     encryption_certificates_for
                                 </Trans>
@@ -143,7 +152,7 @@ const Form = (props) => {
                                 <Trans values={{ date: '2022-01-01' }}>
                                     encryption_expire
                                 </Trans>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
                 </div>
@@ -164,10 +173,16 @@ const Form = (props) => {
                             validate={[required]}
                         />
                         <div className="form__status">
-                            <div className="form__label form__label--bold">
-                                <Trans>encryption_status</Trans>:
-                            </div>
-                            <div>Valid RSA private key</div>
+                            {statusKey &&
+                                <Fragment>
+                                    <div className="form__label form__label--bold">
+                                        <Trans>encryption_status</Trans>:
+                                    </div>
+                                    <div>
+                                        {statusKey}
+                                    </div>
+                                </Fragment>
+                            }
                         </div>
                     </div>
                 </div>
@@ -190,6 +205,8 @@ Form.propTypes = {
     invalid: PropTypes.bool.isRequired,
     initialValues: PropTypes.object.isRequired,
     processing: PropTypes.bool.isRequired,
+    statusCert: PropTypes.string,
+    statusKey: PropTypes.string,
     t: PropTypes.func.isRequired,
 };
 

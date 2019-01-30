@@ -15,6 +15,8 @@ class Encryption extends Component {
         const {
             processing,
             processingConfig,
+            status_cert: statusCert,
+            status_key: statusKey,
             ...values
         } = encryption;
 
@@ -29,6 +31,8 @@ class Encryption extends Component {
                         <Form
                             initialValues={{ ...values }}
                             processing={encryption.processingConfig}
+                            statusCert={statusCert}
+                            statusKey={statusKey}
                             onSubmit={this.handleFormSubmit}
                         />
                     </Card>

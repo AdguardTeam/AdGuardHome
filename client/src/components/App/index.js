@@ -51,12 +51,12 @@ class App extends Component {
     }
 
     render() {
-        const { dashboard } = this.props;
+        const { dashboard, encryption } = this.props;
         const updateAvailable =
             !dashboard.processingVersions &&
             dashboard.isCoreRunning &&
             dashboard.isUpdateAvailable;
-        const isExpiringCertificate = false;
+        const isExpiringCertificate = !encryption.processing && encryption.warning;
 
         return (
             <HashRouter hashType='noslash'>
