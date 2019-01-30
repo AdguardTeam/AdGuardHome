@@ -683,6 +683,7 @@ export const setTlsConfig = config => async (dispatch) => {
         await apiClient.setTlsConfig(values);
         dispatch(setTlsConfigSuccess(config));
         dispatch(addSuccessToast('encryption_config_saved'));
+        dispatch(getTlsStatus());
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(setTlsConfigFailure());

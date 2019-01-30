@@ -22,7 +22,7 @@ class Encryption extends Component {
 
         return (
             <div className="encryption">
-                {encryption && !encryption.processing &&
+                {encryption &&
                     <Card
                         title={t('encryption_title')}
                         subtitle={t('encryption_desc')}

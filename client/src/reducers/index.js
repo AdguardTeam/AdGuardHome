@@ -327,6 +327,8 @@ const encryption = handleActions({
 }, {
     processing: true,
     processingConfig: false,
+    status_cert: '',
+    status_key: '',
 });
 
 export default combineReducers({
