@@ -700,10 +700,11 @@ type ipport struct {
 }
 
 type firstRunData struct {
-	Web      ipport `json:"web"`
-	DNS      ipport `json:"dns"`
-	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
+	Web        ipport                 `json:"web"`
+	DNS        ipport                 `json:"dns"`
+	Username   string                 `json:"username,omitempty"`
+	Password   string                 `json:"password,omitempty"`
+	Interfaces map[string]interface{} `json:"interfaces"`
 }
 
 func handleGetDefaultAddresses(w http.ResponseWriter, r *http.Request) {
@@ -718,16 +719,13 @@ func handleGetDefaultAddresses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// find an interface with an ipv4 address
-	addr := findIPv4IfaceAddr(ifaces)
-	if len(addr) == 0 {
-		httpError(w, http.StatusServiceUnavailable, "Couldn't find any interface with IPv4, plase try again later")
-		return
-	}
-	data.Web.IP = addr
-	data.DNS.IP = addr
+	// fill out the fields
 	data.Web.Port = 3000 // TODO: find out if port 80 is available -- if not, fall back to 3000
 	data.DNS.Port = 53   // TODO: find out if port 53 is available -- if not, show a big warning
+	data.Interfaces = make(map[string]interface{})
+	for _, iface := range ifaces {
+		data.Interfaces[iface.Name] = iface
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(data)
@@ -746,6 +744,7 @@ func handleSetAllSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	spew.Dump(newSettings)
+	// TODO: validate that hosts and ports are bindable
 	config.firstRun = false
 	config.BindHost = newSettings.Web.IP
 	config.BindPort = newSettings.Web.Port
