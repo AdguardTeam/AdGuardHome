@@ -767,12 +767,12 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	// validate that hosts and ports are bindable
 
 	if !checkPortAvailable(newSettings.Web.IP, newSettings.Web.Port) {
-		httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s:%d", newSettings.Web.IP, newSettings.Web.Port)
+		httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s", net.JoinHostPort(newSettings.Web.IP, strconv.Itoa(newSettings.Web.Port)))
 		return
 	}
 
 	if !checkPacketPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port) {
-		httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s:%d", newSettings.DNS.IP, newSettings.DNS.Port)
+		httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s", net.JoinHostPort(newSettings.DNS.IP, strconv.Itoa(newSettings.DNS.Port)))
 		return
 	}
 
@@ -783,6 +783,14 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	config.DNS.Port = newSettings.DNS.Port
 	config.AuthName = newSettings.Username
 	config.AuthPass = newSettings.Password
+
+	if config.DNS.Port != 0 {
+		err = startDNSServer()
+		if err != nil {
+			httpError(w, http.StatusInternalServerError, "Couldn't start DNS server: %s", err)
+			return
+		}
+	}
 
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
