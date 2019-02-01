@@ -332,8 +332,6 @@ const encryption = handleActions({
     certificate_chain: '',
     private_key: '',
     server_name: '',
-    port_https: 0,
-    port_dns_over_tls: 0,
 });
 
 export default combineReducers({

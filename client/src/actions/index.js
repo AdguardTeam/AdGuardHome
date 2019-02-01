@@ -679,6 +679,8 @@ export const setTlsConfig = config => async (dispatch) => {
         const values = { ...config };
         values.certificate_chain = btoa(values.certificate_chain);
         values.private_key = btoa(values.private_key);
+        values.port_https = values.port_https || 0;
+        values.port_dns_over_tls = values.port_dns_over_tls || 0;
 
         await apiClient.setTlsConfig(values);
         dispatch(setTlsConfigSuccess(config));
