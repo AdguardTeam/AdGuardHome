@@ -258,6 +258,16 @@ func findIPv4IfaceAddr(ifaces []netInterface) string {
 	return ""
 }
 
+// checkPortAvailable is not a cheap test to see if the port is bindable, because it's actually doing the bind momentarily
+func checkPortAvailable(port int) bool {
+	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	if err != nil {
+		return false
+	}
+	ln.Close()
+	return true
+}
+
 // ---------------------
 // debug logging helpers
 // ---------------------

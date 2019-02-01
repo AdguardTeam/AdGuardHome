@@ -695,8 +695,9 @@ func handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 type ipport struct {
-	IP   string `json:"ip"`
-	Port int    `json:"port"`
+	IP      string `json:"ip"`
+	Port    int    `json:"port"`
+	Warning string `json:"warning"`
 }
 
 type firstRunData struct {
@@ -720,8 +721,20 @@ func handleGetDefaultAddresses(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// fill out the fields
-	data.Web.Port = 3000 // TODO: find out if port 80 is available -- if not, fall back to 3000
-	data.DNS.Port = 53   // TODO: find out if port 53 is available -- if not, show a big warning
+
+	// find out if port 80 is available -- if not, fall back to 3000
+	if checkPortAvailable(80) {
+		data.Web.Port = 80
+	} else {
+		data.Web.Port = 3000
+	}
+
+	// find out if port 53 is available -- if not, show a big warning
+	data.DNS.Port = 53
+	if !checkPortAvailable(53) {
+		data.DNS.Warning = "Port 53 is not available for binding -- this will make DNS clients unable to contact AdGuard Home."
+	}
+
 	data.Interfaces = make(map[string]interface{})
 	for _, iface := range ifaces {
 		data.Interfaces[iface.Name] = iface
