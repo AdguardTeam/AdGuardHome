@@ -12,6 +12,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/hmage/golibs/log"
@@ -259,8 +260,17 @@ func findIPv4IfaceAddr(ifaces []netInterface) string {
 }
 
 // checkPortAvailable is not a cheap test to see if the port is bindable, because it's actually doing the bind momentarily
-func checkPortAvailable(port int) bool {
-	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+func checkPortAvailable(host string, port int) bool {
+	ln, err := net.Listen("tcp", net.JoinHostPort(host, strconv.Itoa(port)))
+	if err != nil {
+		return false
+	}
+	ln.Close()
+	return true
+}
+
+func checkPacketPortAvailable(host string, port int) bool {
+	ln, err := net.ListenPacket("udp", net.JoinHostPort(host, strconv.Itoa(port)))
 	if err != nil {
 		return false
 	}

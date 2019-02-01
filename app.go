@@ -116,14 +116,16 @@ func run(args options) {
 		log.Fatal(err)
 	}
 
-	err = startDNSServer()
-	if err != nil {
-		log.Fatal(err)
-	}
+	if !config.firstRun {
+		err = startDNSServer()
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	err = startDHCPServer()
-	if err != nil {
-		log.Fatal(err)
+		err = startDHCPServer()
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	// Update filters we've just loaded right away, don't wait for periodic update timer

@@ -723,7 +723,7 @@ func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 	// fill out the fields
 
 	// find out if port 80 is available -- if not, fall back to 3000
-	if checkPortAvailable(80) {
+	if checkPortAvailable("", 80) {
 		data.Web.Port = 80
 	} else {
 		data.Web.Port = 3000
@@ -731,7 +731,7 @@ func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 
 	// find out if port 53 is available -- if not, show a big warning
 	data.DNS.Port = 53
-	if !checkPortAvailable(53) {
+	if !checkPacketPortAvailable("", 53) {
 		data.DNS.Warning = "Port 53 is not available for binding -- this will make DNS clients unable to contact AdGuard Home."
 	}
 
@@ -764,7 +764,18 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 
 	spew.Dump(newSettings)
-	// TODO: validate that hosts and ports are bindable
+	// validate that hosts and ports are bindable
+
+	if !checkPortAvailable(newSettings.Web.IP, newSettings.Web.Port) {
+		httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s:%d", newSettings.Web.IP, newSettings.Web.Port)
+		return
+	}
+
+	if !checkPacketPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port) {
+		httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s:%d", newSettings.DNS.IP, newSettings.DNS.Port)
+		return
+	}
+
 	config.firstRun = false
 	config.BindHost = newSettings.Web.IP
 	config.BindPort = newSettings.Web.Port
