@@ -19,7 +19,26 @@ class Controls extends Component {
         }
     }
 
-    renderButtons(step) {
+    renderPrevButton(step) {
+        switch (step) {
+            case 2:
+            case 3:
+            case 4:
+                return (
+                    <button
+                            type="button"
+                            className="btn btn-secondary btn-standard btn-lg"
+                            onClick={this.props.prevStep}
+                        >
+                            <Trans>back</Trans>
+                        </button>
+                );
+            default:
+                return false;
+        }
+    }
+
+    renderNextButton(step) {
         switch (step) {
             case 1:
                 return (
@@ -34,48 +53,30 @@ class Controls extends Component {
             case 2:
             case 3:
                 return (
-                    <div className="btn-list">
-                        <button
-                            type="button"
-                            className="btn btn-secondary btn-standard btn-lg"
-                            onClick={this.props.prevStep}
-                        >
-                            <Trans>back</Trans>
-                        </button>
-                        <button
-                            type="submit"
-                            className="btn btn-success btn-standard btn-lg"
-                            disabled={this.props.invalid || this.props.pristine}
-                        >
-                            <Trans>next</Trans>
-                        </button>
-                    </div>
+                    <button
+                        type="submit"
+                        className="btn btn-success btn-standard btn-lg"
+                        disabled={this.props.invalid || this.props.pristine}
+                    >
+                        <Trans>next</Trans>
+                    </button>
                 );
             case 4:
                 return (
-                    <div className="btn-list">
-                        <button
-                            type="button"
-                            className="btn btn-secondary btn-standard btn-lg"
-                            onClick={this.props.prevStep}
-                        >
-                            <Trans>back</Trans>
-                        </button>
-                        <button
-                            type="button"
-                            className="btn btn-success btn-standard btn-lg"
-                            onClick={this.props.nextStep}
-                        >
-                            <Trans>next</Trans>
-                        </button>
-                    </div>
+                    <button
+                        type="button"
+                        className="btn btn-success btn-standard btn-lg"
+                        onClick={this.props.nextStep}
+                    >
+                        <Trans>next</Trans>
+                    </button>
                 );
             case 5:
                 return (
                     <button
-                        type="submit"
+                        type="button"
                         className="btn btn-success btn-standard btn-lg"
-                        disabled={this.props.submitting || this.props.pristine}
+                        onClick={this.props.openDashboard}
                     >
                         <Trans>open_dashboard</Trans>
                     </button>
@@ -88,7 +89,10 @@ class Controls extends Component {
     render() {
         return (
             <div className="setup__nav">
-                {this.renderButtons(this.props.step)}
+                <div className="btn-list">
+                    {this.renderPrevButton(this.props.step)}
+                    {this.renderNextButton(this.props.step)}
+                </div>
             </div>
         );
     }
@@ -98,9 +102,10 @@ Controls.propTypes = {
     step: PropTypes.number.isRequired,
     nextStep: PropTypes.func,
     prevStep: PropTypes.func,
-    pristine: PropTypes.bool,
+    openDashboard: PropTypes.func,
     submitting: PropTypes.bool,
     invalid: PropTypes.bool,
+    pristine: PropTypes.bool,
 };
 
 const mapStateToProps = (state) => {

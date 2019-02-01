@@ -1,19 +1,29 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+import { connect } from 'react-redux';
+import { reduxForm, formValueSelector } from 'redux-form';
 import { Trans, withNamespaces } from 'react-i18next';
+import flow from 'lodash/flow';
 
 import Tabs from '../../components/ui/Tabs';
 import Icons from '../../components/ui/Icons';
 import Controls from './Controls';
 
-const Devices = () => (
+let Devices = props => (
     <div className="setup__step">
         <div className="setup__group">
             <div className="setup__subtitle">
                 <Trans>install_devices_title</Trans>
             </div>
-            <p className="setup__desc">
+            <div className="setup__desc">
                 <Trans>install_devices_desc</Trans>
-            </p>
+                <div className="mt-1">
+                    <Trans>install_devices_address</Trans>:
+                </div>
+                <div>
+                    <strong>{`${props.dnsIp}:${props.dnsPort}`}</strong>
+                </div>
+            </div>
             <Icons />
             <Tabs>
                 <div label="Router">
@@ -90,4 +100,28 @@ const Devices = () => (
     </div>
 );
 
-export default withNamespaces()(Devices);
+Devices.propTypes = {
+    dnsIp: PropTypes.string.isRequired,
+    dnsPort: PropTypes.number.isRequired,
+};
+
+const selector = formValueSelector('install');
+
+Devices = connect((state) => {
+    const dnsIp = selector(state, 'dns.ip');
+    const dnsPort = selector(state, 'dns.port');
+
+    return {
+        dnsIp,
+        dnsPort,
+    };
+})(Devices);
+
+export default flow([
+    withNamespaces(),
+    reduxForm({
+        form: 'install',
+        destroyOnUnmount: false,
+        forceUnregisterOnUnmount: true,
+    }),
+])(Devices);

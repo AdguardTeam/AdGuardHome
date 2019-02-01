@@ -10,7 +10,10 @@ const install = handleActions({
     [actions.getDefaultAddressesRequest]: state => ({ ...state, processingDefault: true }),
     [actions.getDefaultAddressesFailure]: state => ({ ...state, processingDefault: false }),
     [actions.getDefaultAddressesSuccess]: (state, { payload }) => {
-        const newState = { ...state, ...payload, processingDefault: false };
+        const values = payload;
+        values.web.ip = state.web.ip;
+        values.dns.ip = state.dns.ip;
+        const newState = { ...state, ...values, processingDefault: false };
         return newState;
     },
 
@@ -23,6 +26,17 @@ const install = handleActions({
 }, {
     step: INSTALL_FIRST_STEP,
     processingDefault: true,
+    web: {
+        ip: '0.0.0.0',
+        port: 80,
+        warning: '',
+    },
+    dns: {
+        ip: '0.0.0.0',
+        port: 53,
+        warning: '',
+    },
+    interfaces: {},
 });
 
 const toasts = handleActions({

@@ -338,16 +338,16 @@ export default class Api {
     }
 
     // Installation
-    GET_DEFAULT_ADDRESSES = { path: 'install/get_default_addresses', method: 'GET' };
-    SET_ALL_SETTINGS = { path: 'install/set_all_settings', method: 'POST' };
+    INSTALL_GET_ADDRESSES = { path: 'install/get_addresses', method: 'GET' };
+    INSTALL_CONFIGURE = { path: 'install/configure', method: 'POST' };
 
     getDefaultAddresses() {
-        const { path, method } = this.GET_DEFAULT_ADDRESSES;
+        const { path, method } = this.INSTALL_GET_ADDRESSES;
         return this.makeRequest(path, method);
     }
 
     setAllSettings(config) {
-        const { path, method } = this.SET_ALL_SETTINGS;
+        const { path, method } = this.INSTALL_CONFIGURE;
         const parameters = {
             data: config,
             headers: { 'Content-Type': 'application/json' },

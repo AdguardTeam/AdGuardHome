@@ -48,8 +48,10 @@ export const setAllSettings = values => async (dispatch) => {
         await apiClient.setAllSettings(config);
         dispatch(setAllSettingsSuccess());
         dispatch(addSuccessToast('install_saved'));
+        dispatch(nextStep());
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(setAllSettingsFailure());
+        dispatch(prevStep());
     }
 };

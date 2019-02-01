@@ -29,6 +29,10 @@ class Setup extends Component {
         this.props.setAllSettings(values);
     };
 
+    openDashboard = () => {
+        console.log('Open dashboard');
+    }
+
     nextStep = () => {
         if (this.props.install.step < INSTALL_TOTAL_STEPS) {
             this.props.nextStep();
@@ -41,7 +45,7 @@ class Setup extends Component {
         }
     }
 
-    renderPage(step, config) {
+    renderPage(step, config, interfaces) {
         switch (step) {
             case 1:
                 return <Greeting />;
@@ -49,17 +53,20 @@ class Setup extends Component {
                 return (
                     <Settings
                         initialValues={config}
+                        interfaces={interfaces}
+                        webWarning={config.web.warning}
+                        dnsWarning={config.dns.warning}
                         onSubmit={this.nextStep}
                     />
                 );
             case 3:
                 return (
-                    <Auth onSubmit={this.nextStep} />
+                    <Auth onSubmit={this.handleFormSubmit} />
                 );
             case 4:
                 return <Devices />;
             case 5:
-                return <Submit onSubmit={this.handleFormSubmit} />;
+                return <Submit onSubmit={this.openDashboard} />;
             default:
                 return false;
         }
@@ -71,6 +78,7 @@ class Setup extends Component {
             step,
             web,
             dns,
+            interfaces,
         } = this.props.install;
 
         return (
@@ -81,7 +89,7 @@ class Setup extends Component {
                         <div className="setup">
                             <div className="setup__container">
                                 <img src={logo} className="setup__logo" alt="logo" />
-                                {this.renderPage(step, { web, dns })}
+                                {this.renderPage(step, { web, dns }, interfaces)}
                                 <Progress step={step} />
                             </div>
                         </div>

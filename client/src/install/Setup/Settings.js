@@ -7,20 +7,12 @@ import flow from 'lodash/flow';
 
 import Controls from './Controls';
 import renderField from './renderField';
-import { R_IPV4 } from '../../helpers/constants';
 
 const required = (value) => {
     if (value || value === 0) {
         return false;
     }
     return <Trans>form_error_required</Trans>;
-};
-
-const ipv4 = (value) => {
-    if (value && !new RegExp(R_IPV4).test(value)) {
-        return <Trans>form_error_ip_format</Trans>;
-    }
-    return false;
 };
 
 const port = (value) => {
@@ -32,6 +24,29 @@ const port = (value) => {
 
 const toNumber = value => value && parseInt(value, 10);
 
+const renderInterfaces = (interfaces => (
+    Object.keys(interfaces).map((item) => {
+        const option = interfaces[item];
+        const { name } = option;
+        const onlyIPv6 = option.ip_addresses.every(ip => ip.includes(':'));
+        let interfaceIP = option.ip_addresses[0];
+
+        if (!onlyIPv6) {
+            option.ip_addresses.forEach((ip) => {
+                if (!ip.includes(':')) {
+                    interfaceIP = ip;
+                }
+            });
+        }
+
+        return (
+            <option value={interfaceIP} key={name}>
+                {name} - {interfaceIP}
+            </option>
+        );
+    })
+));
+
 let Settings = (props) => {
     const {
         handleSubmit,
@@ -39,7 +54,10 @@ let Settings = (props) => {
         interfacePort,
         dnsIp,
         dnsPort,
+        interfaces,
         invalid,
+        webWarning,
+        dnsWarning,
     } = props;
     const dnsAddress = dnsPort && dnsPort !== 53 ? `${dnsIp}:${dnsPort}` : dnsIp;
     const interfaceAddress = interfacePort ? `http://${interfaceIp}:${interfacePort}` : `http://${interfaceIp}`;
@@ -58,12 +76,14 @@ let Settings = (props) => {
                             </label>
                             <Field
                                 name="web.ip"
-                                component={renderField}
-                                type="text"
-                                className="form-control"
-                                placeholder="0.0.0.0"
-                                validate={[ipv4, required]}
-                            />
+                                component="select"
+                                className="form-control custom-select"
+                            >
+                                <option value="0.0.0.0">
+                                    <Trans>install_settings_all_interfaces</Trans>
+                                </option>
+                                {renderInterfaces(interfaces)}
+                            </Field>
                         </div>
                     </div>
                     <div className="col-4">
@@ -90,6 +110,11 @@ let Settings = (props) => {
                     >
                         install_settings_interface_link
                     </Trans>
+                    {webWarning &&
+                        <div className="text-danger mt-2">
+                            {webWarning}
+                        </div>
+                    }
                 </div>
             </div>
             <div className="setup__group">
@@ -104,12 +129,14 @@ let Settings = (props) => {
                             </label>
                             <Field
                                 name="dns.ip"
-                                component={renderField}
-                                type="text"
-                                className="form-control"
-                                placeholder="0.0.0.0"
-                                validate={[ipv4, required]}
-                            />
+                                component="select"
+                                className="form-control custom-select"
+                            >
+                                <option value="0.0.0.0" defaultValue>
+                                    <Trans>install_settings_all_interfaces</Trans>
+                                </option>
+                                {renderInterfaces(interfaces)}
+                            </Field>
                         </div>
                     </div>
                     <div className="col-4">
@@ -129,14 +156,19 @@ let Settings = (props) => {
                         </div>
                     </div>
                 </div>
-                <p className="setup__desc">
+                <div className="setup__desc">
                     <Trans
                         components={[<strong key="0">ip</strong>]}
                         values={{ ip: dnsAddress }}
                     >
                         install_settings_dns_desc
                     </Trans>
-                </p>
+                    {dnsWarning &&
+                        <div className="text-danger mt-2">
+                            {dnsWarning}
+                        </div>
+                    }
+                </div>
             </div>
             <Controls invalid={invalid} />
         </form>
@@ -155,15 +187,11 @@ Settings.propTypes = {
         PropTypes.string,
         PropTypes.number,
     ]),
+    webWarning: PropTypes.string.isRequired,
+    dnsWarning: PropTypes.string.isRequired,
+    interfaces: PropTypes.object.isRequired,
     invalid: PropTypes.bool.isRequired,
     initialValues: PropTypes.object,
-};
-
-Settings.defaultProps = {
-    interfaceIp: '192.168.0.1',
-    interfacePort: 3000,
-    dnsIp: '192.168.0.1',
-    dnsPort: 53,
 };
 
 const selector = formValueSelector('install');
