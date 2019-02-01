@@ -4,15 +4,17 @@ import { Field, reduxForm } from 'redux-form';
 import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 
-import { renderField, renderSelectField, required, toNumber, port } from '../../../helpers/form';
+import { renderField, renderSelectField, toNumber, port } from '../../../helpers/form';
 import i18n from '../../../i18n';
 
 const validate = (values) => {
     const errors = {};
 
-    if (values.port_dns_over_tls === values.port_https) {
-        errors.port_dns_over_tls = i18n.t('form_error_equal');
-        errors.port_https = i18n.t('form_error_equal');
+    if (values.port_dns_over_tls && values.port_https) {
+        if (values.port_dns_over_tls === values.port_https) {
+            errors.port_dns_over_tls = i18n.t('form_error_equal');
+            errors.port_https = i18n.t('form_error_equal');
+        }
     }
 
     return errors;
@@ -22,6 +24,7 @@ const Form = (props) => {
     const {
         t,
         handleSubmit,
+        reset,
         invalid,
         submitting,
         processing,
@@ -46,7 +49,6 @@ const Form = (props) => {
                             type="text"
                             className="form-control"
                             placeholder={t('encryption_server_enter')}
-                            validate={[required]}
                         />
                         <div className="form__desc">
                             <Trans>encryption_server_desc</Trans>
@@ -80,7 +82,7 @@ const Form = (props) => {
                             type="number"
                             className="form-control"
                             placeholder={t('encryption_https')}
-                            validate={[required, port]}
+                            validate={[port]}
                             normalize={toNumber}
                         />
                         <div className="form__desc">
@@ -100,7 +102,7 @@ const Form = (props) => {
                             type="number"
                             className="form-control"
                             placeholder={t('encryption_dot')}
-                            validate={[required, port]}
+                            validate={[port]}
                             normalize={toNumber}
                         />
                         <div className="form__desc">
@@ -130,7 +132,6 @@ const Form = (props) => {
                             type="text"
                             className="form-control form-control--textarea"
                             placeholder={t('encryption_certificates_input')}
-                            validate={[required]}
                         />
                         <div className="form__status">
                             {statusCert &&
@@ -170,7 +171,6 @@ const Form = (props) => {
                             type="text"
                             className="form-control form-control--textarea"
                             placeholder="Copy/paste your PEM-encoded private key for your cerficate here."
-                            validate={[required]}
                         />
                         <div className="form__status">
                             {statusKey &&
@@ -188,19 +188,30 @@ const Form = (props) => {
                 </div>
             </div>
 
-            <button
-                type="submit"
-                className="btn btn-success btn-standart"
-                disabled={invalid || submitting || processing}
-            >
-                {t('save_config')}
-            </button>
+            <div className="btn-list">
+                <button
+                    type="submit"
+                    className="btn btn-success btn-standart"
+                    disabled={invalid || submitting || processing}
+                >
+                    <Trans>save_config</Trans>
+                </button>
+                <button
+                    type="submit"
+                    className="btn btn-secondary btn-standart"
+                    disabled={submitting || processing}
+                    onClick={reset}
+                >
+                    <Trans>reset_settings</Trans>
+                </button>
+            </div>
         </form>
     );
 };
 
 Form.propTypes = {
     handleSubmit: PropTypes.func.isRequired,
+    reset: PropTypes.func.isRequired,
     submitting: PropTypes.bool.isRequired,
     invalid: PropTypes.bool.isRequired,
     initialValues: PropTypes.object.isRequired,

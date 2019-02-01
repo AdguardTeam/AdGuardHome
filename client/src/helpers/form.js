@@ -63,7 +63,7 @@ export const isPositive = (value) => {
 };
 
 export const port = (value) => {
-    if (value < 80 || value > 65535) {
+    if (value && (value < 80 || value > 65535)) {
         return <Trans>form_error_port_range</Trans>;
     }
     return false;
