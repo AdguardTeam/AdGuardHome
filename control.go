@@ -708,7 +708,7 @@ type firstRunData struct {
 	Interfaces map[string]interface{} `json:"interfaces"`
 }
 
-func handleGetDefaultAddresses(w http.ResponseWriter, r *http.Request) {
+func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 	data := firstRunData{}
 	ifaces, err := getValidNetInterfaces()
 	if err != nil {
@@ -755,7 +755,7 @@ func handleGetDefaultAddresses(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleSetAllSettings(w http.ResponseWriter, r *http.Request) {
+func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	newSettings := firstRunData{}
 	err := json.NewDecoder(r.Body).Decode(&newSettings)
 	if err != nil {
@@ -816,6 +816,6 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/dhcp/find_active_dhcp", postInstall(optionalAuth(ensurePOST(handleDHCPFindActiveServer))))
 
 	// TODO: move to registerInstallHandlers()
-	http.HandleFunc("/control/install/get_default_addresses", preInstall(ensureGET(handleGetDefaultAddresses)))
-	http.HandleFunc("/control/install/set_all_settings", preInstall(ensurePOST(handleSetAllSettings)))
+	http.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(handleInstallGetAddresses)))
+	http.HandleFunc("/control/install/configure", preInstall(ensurePOST(handleInstallConfigure)))
 }
