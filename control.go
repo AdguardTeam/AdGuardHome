@@ -737,6 +737,13 @@ func handleGetDefaultAddresses(w http.ResponseWriter, r *http.Request) {
 
 	data.Interfaces = make(map[string]interface{})
 	for _, iface := range ifaces {
+		for i := range iface.Addresses {
+			ip, _, err := net.ParseCIDR(iface.Addresses[i])
+			if err != nil {
+				continue
+			}
+			iface.Addresses[i] = ip.String()
+		}
 		data.Interfaces[iface.Name] = iface
 	}
 
