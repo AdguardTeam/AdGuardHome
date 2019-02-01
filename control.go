@@ -695,7 +695,7 @@ func handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 type ipport struct {
-	IP      string `json:"ip"`
+	IP      string `json:"ip,omitempty"`
 	Port    int    `json:"port"`
 	Warning string `json:"warning"`
 }
