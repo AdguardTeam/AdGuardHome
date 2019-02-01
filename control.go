@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -1048,7 +1049,21 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = tls.X509KeyPair([]byte(data.CertificateChain), []byte(data.PrivateKey))
+	certPEM, err := base64.StdEncoding.DecodeString(data.CertificateChain)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Failed to base64-decode certificate chain: %s", err)
+		return
+	}
+
+	keyPEM, err := base64.StdEncoding.DecodeString(data.PrivateKey)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Failed to base64-decode private key: %s", err)
+		return
+	}
+
+	log.Printf("got certificate: %s", certPEM)
+
+	_, err = tls.X509KeyPair(certPEM, keyPEM)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Invalid certificate or key: %s", err)
 		return
@@ -1058,7 +1073,7 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	var certs []*pem.Block    // PEM-encoded certificates
 	var skippedBytes []string // skipped bytes
 
-	pemblock := []byte(data.CertificateChain)
+	pemblock := []byte(certPEM)
 	for {
 		var decoded *pem.Block
 		decoded, pemblock = pem.Decode(pemblock)
@@ -1109,6 +1124,7 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	mainCert := parsedCerts[0]
 	_, err = mainCert.Verify(opts)
 	if err != nil {
+		// TODO: let self-signed certs through
 		httpError(w, http.StatusBadRequest, "Your certificate does not verify: %s", err)
 		return
 	}
