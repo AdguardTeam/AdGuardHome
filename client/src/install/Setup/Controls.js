@@ -4,26 +4,12 @@ import PropTypes from 'prop-types';
 import { Trans } from 'react-i18next';
 
 import * as actionCreators from '../../actions/install';
-import { INSTALL_FIRST_STEP, INSTALL_TOTAL_STEPS } from '../../helpers/constants';
 
 class Controls extends Component {
-    nextStep = () => {
-        if (this.props.step < INSTALL_TOTAL_STEPS) {
-            this.props.nextStep();
-        }
-    }
-
-    prevStep = () => {
-        if (this.props.step > INSTALL_FIRST_STEP) {
-            this.props.prevStep();
-        }
-    }
-
     renderPrevButton(step) {
         switch (step) {
             case 2:
             case 3:
-            case 4:
                 return (
                     <button
                             type="button"
@@ -76,7 +62,7 @@ class Controls extends Component {
                     <button
                         type="button"
                         className="btn btn-success btn-standard btn-lg"
-                        onClick={this.props.openDashboard}
+                        onClick={() => this.props.openDashboard(this.props.address)}
                     >
                         <Trans>open_dashboard</Trans>
                     </button>
@@ -106,6 +92,7 @@ Controls.propTypes = {
     submitting: PropTypes.bool,
     invalid: PropTypes.bool,
     pristine: PropTypes.bool,
+    address: PropTypes.string,
 };
 
 const mapStateToProps = (state) => {

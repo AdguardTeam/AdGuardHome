@@ -6,7 +6,9 @@ import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 
 import Controls from './Controls';
+import AddressList from './AddressList';
 import renderField from './renderField';
+import { getInterfaceIp } from '../../helpers/helpers';
 
 const required = (value) => {
     if (value || value === 0) {
@@ -28,20 +30,11 @@ const renderInterfaces = (interfaces => (
     Object.keys(interfaces).map((item) => {
         const option = interfaces[item];
         const { name } = option;
-        const onlyIPv6 = option.ip_addresses.every(ip => ip.includes(':'));
-        let interfaceIP = option.ip_addresses[0];
-
-        if (!onlyIPv6) {
-            option.ip_addresses.forEach((ip) => {
-                if (!ip.includes(':')) {
-                    interfaceIP = ip;
-                }
-            });
-        }
+        const ip = getInterfaceIp(option);
 
         return (
-            <option value={interfaceIP} key={name}>
-                {name} - {interfaceIP}
+            <option value={ip} key={name}>
+                {name} - {ip}
             </option>
         );
     })
@@ -50,8 +43,8 @@ const renderInterfaces = (interfaces => (
 let Settings = (props) => {
     const {
         handleSubmit,
-        interfaceIp,
-        interfacePort,
+        webIp,
+        webPort,
         dnsIp,
         dnsPort,
         interfaces,
@@ -59,8 +52,6 @@ let Settings = (props) => {
         webWarning,
         dnsWarning,
     } = props;
-    const dnsAddress = dnsPort && dnsPort !== 53 ? `${dnsIp}:${dnsPort}` : dnsIp;
-    const interfaceAddress = interfacePort ? `http://${interfaceIp}:${interfacePort}` : `http://${interfaceIp}`;
 
     return (
         <form className="setup__step" onSubmit={handleSubmit}>
@@ -104,12 +95,14 @@ let Settings = (props) => {
                     </div>
                 </div>
                 <div className="setup__desc">
-                    <Trans
-                        components={[<a href={`http://${interfaceIp}`} key="0">link</a>]}
-                        values={{ link: interfaceAddress }}
-                    >
-                        install_settings_interface_link
-                    </Trans>
+                    <Trans>install_settings_interface_link</Trans>
+                    <div className="mt-1">
+                        <AddressList
+                            interfaces={interfaces}
+                            address={webIp}
+                            port={webPort}
+                        />
+                    </div>
                     {webWarning &&
                         <div className="text-danger mt-2">
                             {webWarning}
@@ -132,7 +125,7 @@ let Settings = (props) => {
                                 component="select"
                                 className="form-control custom-select"
                             >
-                                <option value="0.0.0.0" defaultValue>
+                                <option value="0.0.0.0">
                                     <Trans>install_settings_all_interfaces</Trans>
                                 </option>
                                 {renderInterfaces(interfaces)}
@@ -157,12 +150,15 @@ let Settings = (props) => {
                     </div>
                 </div>
                 <div className="setup__desc">
-                    <Trans
-                        components={[<strong key="0">ip</strong>]}
-                        values={{ ip: dnsAddress }}
-                    >
-                        install_settings_dns_desc
-                    </Trans>
+                    <Trans>install_settings_dns_desc</Trans>
+                    <div className="mt-1">
+                        <AddressList
+                            interfaces={interfaces}
+                            address={dnsIp}
+                            port={dnsPort}
+                            isDns={true}
+                        />
+                    </div>
                     {dnsWarning &&
                         <div className="text-danger mt-2">
                             {dnsWarning}
@@ -177,9 +173,9 @@ let Settings = (props) => {
 
 Settings.propTypes = {
     handleSubmit: PropTypes.func.isRequired,
-    interfaceIp: PropTypes.string.isRequired,
+    webIp: PropTypes.string.isRequired,
     dnsIp: PropTypes.string.isRequired,
-    interfacePort: PropTypes.oneOfType([
+    webPort: PropTypes.oneOfType([
         PropTypes.string,
         PropTypes.number,
     ]),
@@ -197,14 +193,14 @@ Settings.propTypes = {
 const selector = formValueSelector('install');
 
 Settings = connect((state) => {
-    const interfaceIp = selector(state, 'web.ip');
-    const interfacePort = selector(state, 'web.port');
+    const webIp = selector(state, 'web.ip');
+    const webPort = selector(state, 'web.port');
     const dnsIp = selector(state, 'dns.ip');
     const dnsPort = selector(state, 'dns.port');
 
     return {
-        interfaceIp,
-        interfacePort,
+        webIp,
+        webPort,
         dnsIp,
         dnsPort,
     };

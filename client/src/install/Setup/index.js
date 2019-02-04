@@ -29,8 +29,8 @@ class Setup extends Component {
         this.props.setAllSettings(values);
     };
 
-    openDashboard = () => {
-        console.log('Open dashboard');
+    openDashboard = (address) => {
+        window.location.replace(address);
     }
 
     nextStep = () => {
@@ -64,9 +64,9 @@ class Setup extends Component {
                     <Auth onSubmit={this.handleFormSubmit} />
                 );
             case 4:
-                return <Devices />;
+                return <Devices interfaces={interfaces} />;
             case 5:
-                return <Submit onSubmit={this.openDashboard} />;
+                return <Submit openDashboard={this.openDashboard} />;
             default:
                 return false;
         }

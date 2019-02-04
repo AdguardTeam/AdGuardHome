@@ -6,6 +6,7 @@ import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 
 import Controls from './Controls';
+import { getAddress } from '../../helpers/helpers';
 
 let Submit = props => (
     <div className="setup__step">
@@ -17,33 +18,31 @@ let Submit = props => (
                 <Trans>install_submit_desc</Trans>
             </p>
         </div>
-        <form onSubmit={props.handleSubmit}>
-            <Controls
-                submitting={props.submitting}
-                pristine={props.pristine}
-                address={`http://${props.interfaceIp}`}
-            />
-        </form>
+        <Controls
+            openDashboard={props.openDashboard}
+            address={getAddress(props.webIp, props.webPort)}
+        />
     </div>
 );
 
 Submit.propTypes = {
-    interfaceIp: PropTypes.string.isRequired,
-    interfacePort: PropTypes.number.isRequired,
+    webIp: PropTypes.string.isRequired,
+    webPort: PropTypes.number.isRequired,
     handleSubmit: PropTypes.func.isRequired,
     pristine: PropTypes.bool.isRequired,
     submitting: PropTypes.bool.isRequired,
+    openDashboard: PropTypes.func.isRequired,
 };
 
 const selector = formValueSelector('install');
 
 Submit = connect((state) => {
-    const interfaceIp = selector(state, 'web.ip');
-    const interfacePort = selector(state, 'web.port');
+    const webIp = selector(state, 'web.ip');
+    const webPort = selector(state, 'web.port');
 
     return {
-        interfaceIp,
-        interfacePort,
+        webIp,
+        webPort,
     };
 })(Submit);
 

@@ -70,3 +70,5 @@ export const SETTINGS_NAMES = {
     parental: 'parental',
     safesearch: 'safesearch',
 };
+
+export const STANDARD_DNS_PORT = 53;

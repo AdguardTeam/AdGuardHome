@@ -8,6 +8,7 @@ import flow from 'lodash/flow';
 import Tabs from '../../components/ui/Tabs';
 import Icons from '../../components/ui/Icons';
 import Controls from './Controls';
+import AddressList from './AddressList';
 
 let Devices = props => (
     <div className="setup__step">
@@ -20,8 +21,13 @@ let Devices = props => (
                 <div className="mt-1">
                     <Trans>install_devices_address</Trans>:
                 </div>
-                <div>
-                    <strong>{`${props.dnsIp}:${props.dnsPort}`}</strong>
+                <div className="mt-1">
+                    <AddressList
+                        interfaces={props.interfaces}
+                        address={props.dnsIp}
+                        port={props.dnsPort}
+                        isDns={true}
+                    />
                 </div>
             </div>
             <Icons />
@@ -101,6 +107,7 @@ let Devices = props => (
 );
 
 Devices.propTypes = {
+    interfaces: PropTypes.object.isRequired,
     dnsIp: PropTypes.string.isRequired,
     dnsPort: PropTypes.number.isRequired,
 };
