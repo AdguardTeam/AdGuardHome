@@ -165,3 +165,20 @@ func startDHCPServer() error {
 	}
 	return nil
 }
+
+func stopDHCPServer() error {
+	if !config.DHCP.Enabled {
+		return nil
+	}
+
+	if !dhcpServer.Enabled {
+		return nil
+	}
+
+	err := dhcpServer.Stop()
+	if err != nil {
+		return errorx.Decorate(err, "Couldn't stop DHCP server")
+	}
+
+	return nil
+}

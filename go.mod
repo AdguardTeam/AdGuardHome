@@ -9,6 +9,7 @@ require (
 	github.com/gobuffalo/packr v1.19.0
 	github.com/hmage/golibs v0.0.0-20181229160906-c8491df0bfc4
 	github.com/joomcode/errorx v0.1.0
+	github.com/kardianos/service v0.0.0-20181115005516-4c239ee84e7b
 	github.com/krolaw/dhcp4 v0.0.0-20180925202202-7cead472c414
 	github.com/miekg/dns v1.1.1
 	github.com/shirou/gopsutil v2.18.10+incompatible
