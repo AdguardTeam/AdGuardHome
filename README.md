@@ -279,6 +279,7 @@ This software wouldn't have been possible without:
    * [gcache](https://github.com/bluele/gcache)
    * [miekg's dns](https://github.com/miekg/dns)
    * [go-yaml](https://github.com/go-yaml/yaml)
+   * [service](https://godoc.org/github.com/kardianos/service)
  * [Node.js](https://nodejs.org/) and it's libraries:
    * [React.js](https://reactjs.org)
    * [Tabler](https://github.com/tabler/tabler)
