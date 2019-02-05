@@ -8,11 +8,9 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
-	"strings"
 	"syscall"
 	"time"
 
@@ -26,9 +24,6 @@ import (
 var VersionString = "undefined"
 
 const (
-	// We use it to detect the working dir
-	executableName = "AdGuardHome"
-
 	// Used in config to indicate that syslog or eventlog (win) should be used for logger output
 	configSyslog = "syslog"
 )
@@ -65,7 +60,7 @@ func run(args options) {
 	}
 
 	// configure working dir and config path
-	initWorkingDir()
+	initWorkingDir(args)
 
 	// configure log level and output
 	configureLogger(args)
@@ -160,21 +155,17 @@ func run(args options) {
 }
 
 // initWorkingDir initializes the ourBinaryDir (basically, we use it as a working dir)
-func initWorkingDir() {
+func initWorkingDir(args options) {
 	exec, err := os.Executable()
 	if err != nil {
 		panic(err)
 	}
 
-	currentExecutableName := filepath.Base(exec)
-	currentExecutableName = strings.TrimSuffix(currentExecutableName, path.Ext(currentExecutableName))
-	if currentExecutableName == executableName {
-		// Binary build
-		config.ourBinaryDir = filepath.Dir(exec)
+	if args.configFilename != "" {
+		// If there is a custom config file, use it's directory as our working dir
+		config.ourBinaryDir = filepath.Dir(args.configFilename)
 	} else {
-		// Most likely we're debugging -- using current working directory in this case
-		workDir, _ := os.Getwd()
-		config.ourBinaryDir = workDir
+		config.ourBinaryDir = filepath.Dir(exec)
 	}
 }
 
@@ -356,11 +347,8 @@ func promptAndGetPassword(prompt string) (string, error) {
 }
 
 func askUsernamePasswordIfPossible() error {
-	configfile := config.ourConfigFilename
-	if !filepath.IsAbs(configfile) {
-		configfile = filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
-	}
-	_, err := os.Stat(configfile)
+	configFile := config.getConfigFilename()
+	_, err := os.Stat(configFile)
 	if !os.IsNotExist(err) {
 		// do nothing, file exists
 		return nil

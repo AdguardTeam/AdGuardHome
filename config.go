@@ -87,6 +87,15 @@ var config = configuration{
 	SchemaVersion: currentSchemaVersion,
 }
 
+// getConfigFilename returns path to the current config file
+func (c *configuration) getConfigFilename() string {
+	configFile := config.ourConfigFilename
+	if !filepath.IsAbs(configFile) {
+		configFile = filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
+	}
+	return configFile
+}
+
 // getLogSettings reads logging settings from the config file.
 // we do it in a separate method in order to configure logger before the actual configuration is parsed and applied.
 func getLogSettings() logSettings {
@@ -104,7 +113,7 @@ func getLogSettings() logSettings {
 
 // parseConfig loads configuration from the YAML file
 func parseConfig() error {
-	configFile := filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
+	configFile := config.getConfigFilename()
 	log.Printf("Reading YAML file: %s", configFile)
 	yamlFile, err := readConfigFile()
 	if err != nil {
@@ -131,7 +140,7 @@ func parseConfig() error {
 
 // readConfigFile reads config file contents if it exists
 func readConfigFile() ([]byte, error) {
-	configFile := filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
+	configFile := config.getConfigFilename()
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
 		// do nothing, file doesn't exist
 		return nil, nil
@@ -143,7 +152,7 @@ func readConfigFile() ([]byte, error) {
 func (c *configuration) write() error {
 	c.Lock()
 	defer c.Unlock()
-	configFile := filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
+	configFile := config.getConfigFilename()
 	log.Printf("Writing YAML file: %s", configFile)
 	yamlText, err := yaml.Marshal(&config)
 	if err != nil {
