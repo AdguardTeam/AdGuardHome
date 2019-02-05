@@ -17,6 +17,11 @@
   "WarnUnmatchedDirective": true,
 
   "EnableAll": true,
+  "DisableAll": false,
+  "Disable": [
+    "maligned",
+    "goconst"
+  ],
 
   "Cyclo": 20,
   "LineLength": 200

@@ -18,6 +18,12 @@ const (
 	filterDir = "filters" // cache location for downloaded filters, it's under DataDir
 )
 
+// logSettings
+type logSettings struct {
+	LogFile string `yaml:"log_file"` // Path to the log file. If empty, write to stdout. If "syslog", writes to syslog
+	Verbose bool   `yaml:"verbose"`  // If true, verbose logging is enabled
+}
+
 // configuration is loaded from YAML
 // field ordering is important -- yaml fields will mirror ordering from here
 type configuration struct {
@@ -33,6 +39,8 @@ type configuration struct {
 	Filters   []filter           `yaml:"filters"`
 	UserRules []string           `yaml:"user_rules"`
 	DHCP      dhcpd.ServerConfig `yaml:"dhcp"`
+
+	logSettings `yaml:",inline"`
 
 	sync.RWMutex `yaml:"-"`
 
@@ -79,19 +87,42 @@ var config = configuration{
 	SchemaVersion: currentSchemaVersion,
 }
 
-// Loads configuration from the YAML file
-func parseConfig() error {
-	configFile := filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
-	log.Printf("Reading YAML file: %s", configFile)
-	if _, err := os.Stat(configFile); os.IsNotExist(err) {
-		// do nothing, file doesn't exist
-		log.Printf("YAML file doesn't exist, skipping: %s", configFile)
-		return nil
+// getConfigFilename returns path to the current config file
+func (c *configuration) getConfigFilename() string {
+	configFile := config.ourConfigFilename
+	if !filepath.IsAbs(configFile) {
+		configFile = filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
 	}
-	yamlFile, err := ioutil.ReadFile(configFile)
+	return configFile
+}
+
+// getLogSettings reads logging settings from the config file.
+// we do it in a separate method in order to configure logger before the actual configuration is parsed and applied.
+func getLogSettings() logSettings {
+	l := logSettings{}
+	yamlFile, err := readConfigFile()
+	if err != nil || yamlFile == nil {
+		return l
+	}
+	err = yaml.Unmarshal(yamlFile, &l)
+	if err != nil {
+		log.Printf("Couldn't get logging settings from the configuration: %s", err)
+	}
+	return l
+}
+
+// parseConfig loads configuration from the YAML file
+func parseConfig() error {
+	configFile := config.getConfigFilename()
+	log.Printf("Reading YAML file: %s", configFile)
+	yamlFile, err := readConfigFile()
 	if err != nil {
 		log.Printf("Couldn't read config file: %s", err)
 		return err
+	}
+	if yamlFile == nil {
+		log.Printf("YAML file doesn't exist, skipping it")
+		return nil
 	}
 	err = yaml.Unmarshal(yamlFile, &config)
 	if err != nil {
@@ -107,11 +138,21 @@ func parseConfig() error {
 	return nil
 }
 
+// readConfigFile reads config file contents if it exists
+func readConfigFile() ([]byte, error) {
+	configFile := config.getConfigFilename()
+	if _, err := os.Stat(configFile); os.IsNotExist(err) {
+		// do nothing, file doesn't exist
+		return nil, nil
+	}
+	return ioutil.ReadFile(configFile)
+}
+
 // Saves configuration to the YAML file and also saves the user filter contents to a file
 func (c *configuration) write() error {
 	c.Lock()
 	defer c.Unlock()
-	configFile := filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
+	configFile := config.getConfigFilename()
 	log.Printf("Writing YAML file: %s", configFile)
 	yamlText, err := yaml.Marshal(&config)
 	if err != nil {

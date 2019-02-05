@@ -15,7 +15,7 @@ const currentSchemaVersion = 2 // used for upgrading from old configs to new con
 // Performs necessary upgrade operations if needed
 func upgradeConfig() error {
 	// read a config file into an interface map, so we can manipulate values without losing any
-	configFile := filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
+	configFile := config.getConfigFilename()
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
 		log.Printf("config file %s does not exist, nothing to upgrade", configFile)
 		return nil
@@ -74,7 +74,7 @@ func upgradeConfigSchema(oldVersion int, diskConfig *map[string]interface{}) err
 		return err
 	}
 
-	configFile := filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
+	configFile := config.getConfigFilename()
 	body, err := yaml.Marshal(diskConfig)
 	if err != nil {
 		log.Printf("Couldn't generate YAML file: %s", err)

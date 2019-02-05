@@ -99,6 +99,51 @@ sudo ./AdGuardHome
 
 Now open the browser and navigate to http://localhost:3000/ to control your AdGuard Home service.
 
+### Running as a service
+
+You can register AdGuard Home as a system service on Windows, Linux/(systemd | Upstart | SysV), and OSX/Launchd.
+
+* `AdGuardHome -s install` - install AdGuard Home as a system service.
+* `AdGuardHome -s uninstall` - uninstalls the AdGuard Home service.
+* `AdGuardHome -s start` - starts the service.
+* `AdGuardHome -s stop` - stops the service.
+* `AdGuardHome -s restart` - restarts the service.
+* `AdGuardHome -s status` - shows the current service status.
+
+### Logging
+
+By default, the log is written to `stderr` when you run AdGuard Home as a console application.
+
+If you run it as a service/daemon, the log output depends on the platform:
+
+* Linux: the log is written to syslog.
+* MacOS: the log is written to `/var/log/AdGuardHome.*.log` files.
+* Windows: the log is written to the Windows event log.  
+
+You can redefine this behavior in AdGuard Home configuration file (see below).
+
+### Command-line arguments
+
+Here is a list of all available command-line arguments.
+
+```
+$ ./AdGuardHome -h
+Usage:
+
+./AdGuardHome [options]
+
+Options:
+  -c, --config                       path to config file
+  -o, --host                         host address to bind HTTP server on
+  -p, --port                         port to serve HTTP pages on
+  -v, --verbose                      enable verbose output
+  -s, --service                      service control action: status, install, uninstall, start, stop, restart
+  -l, --logfile                      path to the log file. If empty, writes to stdout, if 'syslog' -- system log
+  -h, --help                         print this help
+```
+
+Please note, that the command-line arguments override settings from the configuration file.
+
 ### Running without superuser
 
 You can run AdGuard Home without superuser privileges, but you need to either grant the binary a capability (on Linux) or instruct it to use a different port (all platforms).
@@ -139,6 +184,7 @@ Settings are stored in [YAML format](https://en.wikipedia.org/wiki/YAML), possib
  * `auth_name` — Web interface optional authorization username.
  * `auth_pass` — Web interface optional authorization password.
  * `dns` — DNS configuration section.
+   * `bind_host` - DNS interface IP address to listen on. 
    * `port` — DNS server port to listen on.
    * `protection_enabled` — Whether any kind of filtering and protection should be done, when off it works as a plain dns forwarder.
    * `filtering_enabled` — Filtering of DNS requests based on filter lists.
@@ -159,7 +205,17 @@ Settings are stored in [YAML format](https://en.wikipedia.org/wiki/YAML), possib
    * `name` — Name of the filter. If it's an adguard syntax filter it will get updated automatically, otherwise it stays unchanged.
    * `last_updated` — Time when the filter was last updated from server.
    * `ID` - filter ID (must be unique).
+ * `dhcp` - Built-in DHCP server configuration.
+   * `enabled` - DHCP server status.
+   * `interface_name` - network interface name (eth0, en0 and so on).
+   * `gateway_ip` - gateway IP address.
+   * `subnet_mask` - subnet mask.
+   * `range_start` - start IP address of the controlled range.  
+   * `range_end` - end IP address of the controlled range.
+   * `lease_duration` - lease duration in seconds. If 0, using default duration (2 hours).
  * `user_rules` — User-specified filtering rules.
+ * `log_file` — Path to the log file. If empty, writes to stdout, if `syslog` -- system log (or eventlog on Windows).
+ * `verbose` — Enable our disables debug verbose output.
 
 Removing an entry from settings file will reset it to the default value. Deleting the file will reset all settings to the default values.
 
@@ -239,6 +295,7 @@ This software wouldn't have been possible without:
    * [gcache](https://github.com/bluele/gcache)
    * [miekg's dns](https://github.com/miekg/dns)
    * [go-yaml](https://github.com/go-yaml/yaml)
+   * [service](https://godoc.org/github.com/kardianos/service)
  * [Node.js](https://nodejs.org/) and it's libraries:
    * [React.js](https://reactjs.org)
    * [Tabler](https://github.com/tabler/tabler)
