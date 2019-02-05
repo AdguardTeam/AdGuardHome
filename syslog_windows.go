@@ -8,9 +8,6 @@ import (
 	"golang.org/x/sys/windows/svc/eventlog"
 )
 
-// should be the same as the service name!
-const eventLogSrc = "AdGuardHome"
-
 type eventLogWriter struct {
 	el *eventlog.Log
 }
@@ -21,15 +18,18 @@ func (w *eventLogWriter) Write(b []byte) (int, error) {
 }
 
 func configureSyslog() error {
+	// Note that the eventlog src is the same as the service name
+	// Otherwise, we will get "the description for event id cannot be found" warning in every log record
+
 	// Continue if we receive "registry key already exists" or if we get
 	// ERROR_ACCESS_DENIED so that we can log without administrative permissions
 	// for pre-existing eventlog sources.
-	if err := eventlog.InstallAsEventCreate(eventLogSrc, eventlog.Info|eventlog.Warning|eventlog.Error); err != nil {
+	if err := eventlog.InstallAsEventCreate(serviceName, eventlog.Info|eventlog.Warning|eventlog.Error); err != nil {
 		if !strings.Contains(err.Error(), "registry key already exists") && err != windows.ERROR_ACCESS_DENIED {
 			return err
 		}
 	}
-	el, err := eventlog.Open(eventLogSrc)
+	el, err := eventlog.Open(serviceName)
 	if err != nil {
 		return err
 	}

@@ -9,8 +9,11 @@ import (
 )
 
 const (
-	launchdStdoutPath = "/var/log/AdGuardHome.stdout.log"
-	launchdStderrPath = "/var/log/AdGuardHome.stderr.log"
+	launchdStdoutPath  = "/var/log/AdGuardHome.stdout.log"
+	launchdStderrPath  = "/var/log/AdGuardHome.stderr.log"
+	serviceName        = "AdGuardHome"
+	serviceDisplayName = "AdGuard Home service"
+	serviceDescription = "AdGuard Home: Network-level blocker"
 )
 
 // Represents the program that will be launched by a service or daemon
@@ -51,9 +54,9 @@ func handleServiceControlAction(action string) {
 		log.Fatal("Unable to find the path to the current directory")
 	}
 	svcConfig := &service.Config{
-		Name:             "AdGuardHome",
-		DisplayName:      "AdGuard Home service",
-		Description:      "AdGuard Home: Network-level blocker",
+		Name:             serviceName,
+		DisplayName:      serviceDisplayName,
+		Description:      serviceDescription,
 		WorkingDirectory: pwd,
 		Arguments:        []string{"-s", "run"},
 	}

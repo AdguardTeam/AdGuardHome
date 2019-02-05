@@ -9,7 +9,7 @@ import (
 
 // configureSyslog reroutes standard logger output to syslog
 func configureSyslog() error {
-	w, err := syslog.New(syslog.LOG_NOTICE|syslog.LOG_USER, "AdGuard Home")
+	w, err := syslog.New(syslog.LOG_NOTICE|syslog.LOG_USER, serviceName)
 	if err != nil {
 		return err
 	}
