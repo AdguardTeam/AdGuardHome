@@ -127,19 +127,19 @@ You can redefine this behavior in AdGuard Home configuration file (see below).
 Here is a list of all available command-line arguments.
 
 ```
-$ ./AdGuardHome -h
+$ ./AdGuardHome --help
 Usage:
 
 ./AdGuardHome [options]
 
 Options:
   -c, --config                       path to config file
-  -o, --host                         host address to bind HTTP server on
+  -h, --host                         host address to bind HTTP server on
   -p, --port                         port to serve HTTP pages on
-  -v, --verbose                      enable verbose output
   -s, --service                      service control action: status, install, uninstall, start, stop, restart
   -l, --logfile                      path to the log file. If empty, writes to stdout, if 'syslog' -- system log
-  -h, --help                         print this help
+  -v, --verbose                      enable verbose output
+  --help                              print this help
 ```
 
 Please note, that the command-line arguments override settings from the configuration file.

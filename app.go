@@ -258,7 +258,7 @@ func loadOptions() options {
 		callbackNoValue   func()
 	}{
 		{"config", "c", "path to config file", func(value string) { o.configFilename = value }, nil},
-		{"host", "o", "host address to bind HTTP server on", func(value string) { o.bindHost = value }, nil},
+		{"host", "h", "host address to bind HTTP server on", func(value string) { o.bindHost = value }, nil},
 		{"port", "p", "port to serve HTTP pages on", func(value string) {
 			v, err := strconv.Atoi(value)
 			if err != nil {
@@ -273,7 +273,7 @@ func loadOptions() options {
 			o.logFile = value
 		}, nil},
 		{"verbose", "v", "enable verbose output", nil, func() { o.verbose = true }},
-		{"help", "h", "print this help", nil, func() {
+		{"help", "", "print this help", nil, func() {
 			printHelp()
 			os.Exit(64)
 		}},
@@ -283,14 +283,18 @@ func loadOptions() options {
 		fmt.Printf("%s [options]\n\n", os.Args[0])
 		fmt.Printf("Options:\n")
 		for _, opt := range opts {
-			fmt.Printf("  -%s, %-30s %s\n", opt.shortName, "--"+opt.longName, opt.description)
+			if opt.shortName != "" {
+				fmt.Printf("  -%s, %-30s %s\n", opt.shortName, "--"+opt.longName, opt.description)
+			} else {
+				fmt.Printf("  %-34s %s\n", "--"+opt.longName, opt.description)
+			}
 		}
 	}
 	for i := 1; i < len(os.Args); i++ {
 		v := os.Args[i]
 		knownParam := false
 		for _, opt := range opts {
-			if v == "--"+opt.longName || v == "-"+opt.shortName {
+			if v == "--"+opt.longName || (opt.shortName != "" && v == "-"+opt.shortName) {
 				if opt.callbackWithValue != nil {
 					if i+1 >= len(os.Args) {
 						log.Printf("ERROR: Got %s without argument\n", v)

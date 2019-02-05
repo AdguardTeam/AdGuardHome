@@ -21,4 +21,4 @@ EXPOSE 53 3000
 VOLUME /data
 
 ENTRYPOINT ["/AdGuardHome"]
-CMD ["-o", "0.0.0.0"]
+CMD ["-h", "0.0.0.0"]
