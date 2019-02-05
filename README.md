@@ -110,6 +110,18 @@ You can register AdGuard Home as a system service on Windows, Linux/(systemd | U
 * `AdGuardHome -s restart` - restarts the service.
 * `AdGuardHome -s status` - shows the current service status.
 
+### Logging
+
+By default, the log is written to `stderr` when you run AdGuard Home as a console application.
+
+If you run it as a service/daemon, the log output depends on the platform:
+
+* Linux: the log is written to syslog.
+* MacOS: the log is written to `/var/log/AdGuardHome.*.log` files.
+* Windows: the log is written to the Windows event log.  
+
+You can redefine this behavior in AdGuard Home configuration file (see below).
+
 ### Command-line arguments
 
 Here is a list of all available command-line arguments.
@@ -129,6 +141,8 @@ Options:
   -l, --logfile                      path to the log file. If empty, writes to stdout, if 'syslog' -- system log
   -h, --help                         print this help
 ```
+
+Please note, that the command-line arguments override settings from the configuration file.
 
 ### Running without superuser
 
