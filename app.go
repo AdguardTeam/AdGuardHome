@@ -4,23 +4,34 @@ import (
 	"bufio"
 	"fmt"
 	stdlog "log"
-	"log/syslog"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
 	"path/filepath"
+	"runtime"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/gobuffalo/packr"
+
 	"github.com/hmage/golibs/log"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
 // VersionString will be set through ldflags, contains current version
 var VersionString = "undefined"
+
+const (
+	// We use it to detect the working dir
+	executableName = "AdGuardHome"
+
+	// Used in config to indicate that syslog or eventlog (win) should be used for logger output
+	configSyslog = "syslog"
+)
 
 // main is the entry point
 func main() {
@@ -33,9 +44,6 @@ func main() {
 		return
 	}
 
-	// run the protection
-	run(args)
-
 	signalChannel := make(chan os.Signal)
 	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 	go func() {
@@ -44,23 +52,30 @@ func main() {
 		os.Exit(0)
 	}()
 
-	address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
-	URL := fmt.Sprintf("http://%s", address)
-	log.Println("Go to " + URL)
-	log.Fatal(http.ListenAndServe(address, nil))
+	// run the protection
+	run(args)
 }
 
 // run initializes configuration and runs the AdGuard Home
+// run is a blocking method and it won't exit until the service is stopped!
 func run(args options) {
+	// config file path can be overridden by command-line arguments:
 	if args.configFilename != "" {
 		config.ourConfigFilename = args.configFilename
 	}
+
+	// configure working dir and config path
+	initWorkingDir()
 
 	// configure log level and output
 	configureLogger(args)
 
 	// print the first message after logger is configured
 	log.Printf("AdGuard Home, version %s\n", VersionString)
+	log.Printf("Current working directory is %s", config.ourBinaryDir)
+	if args.runningAsService {
+		log.Printf("AdGuard Home is running as a service")
+	}
 
 	err := askUsernamePasswordIfPossible()
 	if err != nil {
@@ -111,27 +126,6 @@ func run(args options) {
 		log.Fatal(err)
 	}
 
-	box := packr.NewBox("build/static")
-	{
-		executable, osErr := os.Executable()
-		if osErr != nil {
-			panic(osErr)
-		}
-
-		executableName := filepath.Base(executable)
-		if executableName == "AdGuardHome" {
-			// Binary build
-			config.ourBinaryDir = filepath.Dir(executable)
-		} else {
-			// Most likely we're debugging -- using current working directory in this case
-			workDir, _ := os.Getwd()
-			config.ourBinaryDir = workDir
-		}
-		log.Printf("Current working directory is %s", config.ourBinaryDir)
-	}
-	http.Handle("/", optionalAuthHandler(http.FileServer(box)))
-	registerControlHandlers()
-
 	err = startDNSServer()
 	if err != nil {
 		log.Fatal(err)
@@ -153,6 +147,35 @@ func run(args options) {
 	}()
 	// Schedule automatic filters updates
 	go periodicallyRefreshFilters()
+
+	// Initialize and run the admin Web interface
+	box := packr.NewBox("build/static")
+	http.Handle("/", optionalAuthHandler(http.FileServer(box)))
+	registerControlHandlers()
+
+	address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
+	URL := fmt.Sprintf("http://%s", address)
+	log.Println("Go to " + URL)
+	log.Fatal(http.ListenAndServe(address, nil))
+}
+
+// initWorkingDir initializes the ourBinaryDir (basically, we use it as a working dir)
+func initWorkingDir() {
+	exec, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+
+	currentExecutableName := filepath.Base(exec)
+	currentExecutableName = strings.TrimSuffix(currentExecutableName, path.Ext(currentExecutableName))
+	if currentExecutableName == executableName {
+		// Binary build
+		config.ourBinaryDir = filepath.Dir(exec)
+	} else {
+		// Most likely we're debugging -- using current working directory in this case
+		workDir, _ := os.Getwd()
+		config.ourBinaryDir = workDir
+	}
 }
 
 // configureLogger configures logger level and output
@@ -169,25 +192,30 @@ func configureLogger(args options) {
 
 	log.Verbose = ls.Verbose
 
+	if args.runningAsService && ls.LogFile == "" && runtime.GOOS == "windows" {
+		// When running as a Windows service, use eventlog by default if nothing else is configured
+		// Otherwise, we'll simply loose the log output
+		ls.LogFile = configSyslog
+	}
+
 	if ls.LogFile == "" {
 		return
 	}
 
-	// TODO: add windows eventlog support
-	if ls.LogFile == "syslog" {
-		w, err := syslog.New(syslog.LOG_INFO, "AdGuard Home")
+	if ls.LogFile == configSyslog {
+		// Use syslog where it is possible and eventlog on Windows
+		err := configureSyslog()
 		if err != nil {
 			log.Fatalf("cannot initialize syslog: %s", err)
 		}
-		stdlog.SetOutput(w)
+	} else {
+		logFilePath := filepath.Join(config.ourBinaryDir, ls.LogFile)
+		file, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0755)
+		if err != nil {
+			log.Fatalf("cannot create a log file: %s", err)
+		}
+		stdlog.SetOutput(file)
 	}
-
-	logFilePath := filepath.Join(config.ourBinaryDir, ls.LogFile)
-	file, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0755)
-	if err != nil {
-		log.Fatalf("cannot create a log file: %s", err)
-	}
-	stdlog.SetOutput(file)
 }
 
 func cleanup() {
@@ -221,6 +249,9 @@ type options struct {
 
 	// service control action (see service.ControlAction array + "status" command)
 	serviceControlAction string
+
+	// runningAsService flag is set to true when options are passed from the service runner
+	runningAsService bool
 }
 
 // loadOptions reads command line arguments and initializes configuration

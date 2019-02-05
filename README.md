@@ -99,6 +99,17 @@ sudo ./AdGuardHome
 
 Now open the browser and navigate to http://localhost:3000/ to control your AdGuard Home service.
 
+### Running as a service
+
+You can register AdGuard Home as a system service on Windows, Linux/(systemd | Upstart | SysV), and OSX/Launchd.
+
+* `AdGuardHome -s install` - install AdGuard Home as a system service.
+* `AdGuardHome -s uninstall` - uninstalls the AdGuard Home service.
+* `AdGuardHome -s start` - starts the service.
+* `AdGuardHome -s stop` - stops the service.
+* `AdGuardHome -s restart` - restarts the service.
+* `AdGuardHome -s status` - shows the current service status.
+
 ### Command-line arguments
 
 Here is a list of all available command-line arguments.
@@ -118,15 +129,6 @@ Options:
   -l, --logfile                      path to the log file. If empty, writes to stdout, if 'syslog' -- system log
   -h, --help                         print this help
 ```
-
-Please note, that you can register AdGuard Home as a system service on Windows, Linux/(systemd | Upstart | SysV), and OSX/Launchd.
-
-* `AdGuardHome -s install` - install as a system service.
-* `AdGuardHome -s uninstall` - uninstall's AdGuard Home service.
-* `AdGuardHome -s start` - starts the service.
-* `AdGuardHome -s stop` - stops the service.
-* `AdGuardHome -s restart` - restarts the service.
-* `AdGuardHome -s status` - shows the current service status.
 
 ### Running without superuser
 
@@ -198,7 +200,7 @@ Settings are stored in [YAML format](https://en.wikipedia.org/wiki/YAML), possib
    * `range_end` - end IP address of the controlled range.
    * `lease_duration` - lease duration in seconds. If 0, using default duration (2 hours).
  * `user_rules` — User-specified filtering rules.
- * `log_file` — Path to the log file. If empty, writes to stdout, if 'syslog' -- system log.
+ * `log_file` — Path to the log file. If empty, writes to stdout, if `syslog` -- system log (or eventlog on Windows).
  * `verbose` — Enable our disables debug verbose output.
 
 Removing an entry from settings file will reset it to the default value. Deleting the file will reset all settings to the default values.
