@@ -6,7 +6,7 @@ import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 
 import Controls from './Controls';
-import { getAddress } from '../../helpers/helpers';
+import { getWebAddress } from '../../helpers/helpers';
 
 let Submit = props => (
     <div className="setup__step">
@@ -20,7 +20,7 @@ let Submit = props => (
         </div>
         <Controls
             openDashboard={props.openDashboard}
-            address={getAddress(props.webIp, props.webPort)}
+            address={getWebAddress(props.webIp, props.webPort)}
         />
     </div>
 );

@@ -4,7 +4,7 @@ import subHours from 'date-fns/sub_hours';
 import addHours from 'date-fns/add_hours';
 import round from 'lodash/round';
 
-import { STATS_NAMES, STANDARD_DNS_PORT } from './constants';
+import { STATS_NAMES, STANDARD_DNS_PORT, STANDARD_WEB_PORT } from './constants';
 
 export const formatTime = (time) => {
     const parsedTime = dateParse(time);
@@ -111,20 +111,32 @@ export const getIpList = (interfaces) => {
     return list.sort();
 };
 
-export const getAddress = (ip, port = '', isDns = false) => {
-    if (!port) {
-        return isDns ? ip : `http://${ip}`;
-    }
+export const getDnsAddress = (ip, port = '') => {
+    const isStandardDnsPort = port === STANDARD_DNS_PORT;
+    let address = ip;
 
-    if (isDns) {
-        if (ip.includes(':') && port !== STANDARD_DNS_PORT) {
-            return `[${ip}]:${port}`;
-        } else if (port !== STANDARD_DNS_PORT) {
-            return `${ip}:${port}`;
+    if (port) {
+        if (ip.includes(':') && !isStandardDnsPort) {
+            address = `[${ip}]:${port}`;
+        } else if (!isStandardDnsPort) {
+            address = `${ip}:${port}`;
         }
-
-        return ip;
     }
 
-    return ip.includes(':') ? `http://[${ip}]:${port}` : `http://${ip}:${port}`;
+    return address;
+};
+
+export const getWebAddress = (ip, port = '') => {
+    const isStandardWebPort = port === STANDARD_WEB_PORT;
+    let address = `http://${ip}`;
+
+    if (port) {
+        if (ip.includes(':') && !isStandardWebPort) {
+            address = `http://[${ip}]:${port}`;
+        } else if (!isStandardWebPort) {
+            address = `http://${ip}:${port}`;
+        }
+    }
+
+    return address;
 };

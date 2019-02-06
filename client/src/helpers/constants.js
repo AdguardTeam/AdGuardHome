@@ -72,3 +72,4 @@ export const SETTINGS_NAMES = {
 };
 
 export const STANDARD_DNS_PORT = 53;
+export const STANDARD_WEB_PORT = 80;
