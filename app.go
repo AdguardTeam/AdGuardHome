@@ -20,6 +20,7 @@ import (
 
 // VersionString will be set through ldflags, contains current version
 var VersionString = "undefined"
+var httpServer *http.Server
 
 const (
 	// Used in config to indicate that syslog or eventlog (win) should be used for logger output
@@ -147,10 +148,22 @@ func run(args options) {
 	http.Handle("/install.html", preInstallHandler(http.FileServer(box)))
 	registerControlHandlers()
 
-	address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
-	URL := fmt.Sprintf("http://%s", address)
-	log.Println("Go to " + URL)
-	log.Fatal(http.ListenAndServe(address, nil))
+	// this loop is used as an ability to change listening host and/or port
+	for {
+		address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
+		URL := fmt.Sprintf("http://%s", address)
+		log.Println("Go to " + URL)
+		// we need to have new instance, because after Shutdown() the Server is not usable
+		httpServer = &http.Server{
+			Addr: address,
+		}
+		err := httpServer.ListenAndServe()
+		if err != http.ErrServerClosed {
+			log.Fatal(err)
+			os.Exit(1)
+		}
+		// We use ErrServerClosed as a sign that we need to rebind on new address, so go back to the start of the loop
+	}
 }
 
 // initWorkingDir initializes the ourBinaryDir (basically, we use it as a working dir)

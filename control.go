@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -793,6 +794,11 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpUpdateConfigReloadDNSReturnOK(w, r)
+	// this needs to be done in a goroutine because Shutdown() is a blocking call, and it will block
+	// until all requests are finished, and _we_ are inside a request right now, so it will block indefinitely
+	go func() {
+		httpServer.Shutdown(context.TODO())
+	}()
 }
 
 func registerControlHandlers() {
