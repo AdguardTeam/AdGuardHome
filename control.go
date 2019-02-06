@@ -14,7 +14,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
 	"github.com/AdguardTeam/dnsproxy/upstream"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hmage/golibs/log"
 	"github.com/miekg/dns"
 	govalidator "gopkg.in/asaskevich/govalidator.v4"
@@ -764,9 +763,7 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	spew.Dump(newSettings)
 	// validate that hosts and ports are bindable
-
 	if !checkPortAvailable(newSettings.Web.IP, newSettings.Web.Port) {
 		httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s", net.JoinHostPort(newSettings.Web.IP, strconv.Itoa(newSettings.Web.Port)))
 		return
