@@ -145,8 +145,13 @@ func run(args options) {
 	box := packr.NewBox("build/static")
 	// if not configured, redirect / to /install.html, otherwise redirect /install.html to /
 	http.Handle("/", postInstallHandler(optionalAuthHandler(http.FileServer(box))))
-	http.Handle("/install.html", preInstallHandler(http.FileServer(box)))
 	registerControlHandlers()
+
+	// add handlers for /install paths, we only need them when we're not configured yet
+	if config.firstRun {
+		http.Handle("/install.html", preInstallHandler(http.FileServer(box)))
+		registerInstallHandlers()
+	}
 
 	// this loop is used as an ability to change listening host and/or port
 	for {

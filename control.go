@@ -801,6 +801,11 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	}()
 }
 
+func registerInstallHandlers() {
+	http.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(handleInstallGetAddresses)))
+	http.HandleFunc("/control/install/configure", preInstall(ensurePOST(handleInstallConfigure)))
+}
+
 func registerControlHandlers() {
 	http.HandleFunc("/control/status", postInstall(optionalAuth(ensureGET(handleStatus))))
 	http.HandleFunc("/control/enable_protection", postInstall(optionalAuth(ensurePOST(handleProtectionEnable))))
@@ -839,8 +844,4 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/dhcp/interfaces", postInstall(optionalAuth(ensureGET(handleDHCPInterfaces))))
 	http.HandleFunc("/control/dhcp/set_config", postInstall(optionalAuth(ensurePOST(handleDHCPSetConfig))))
 	http.HandleFunc("/control/dhcp/find_active_dhcp", postInstall(optionalAuth(ensurePOST(handleDHCPFindActiveServer))))
-
-	// TODO: move to registerInstallHandlers()
-	http.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(handleInstallGetAddresses)))
-	http.HandleFunc("/control/install/configure", preInstall(ensurePOST(handleInstallConfigure)))
 }
