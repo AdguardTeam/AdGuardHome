@@ -64,7 +64,7 @@ var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
 var config = configuration{
 	ourConfigFilename: "AdGuardHome.yaml",
 	BindPort:          3000,
-	BindHost:          "127.0.0.1",
+	BindHost:          "0.0.0.0",
 	DNS: dnsConfig{
 		BindHost: "0.0.0.0",
 		Port:     53,
