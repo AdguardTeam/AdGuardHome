@@ -110,7 +110,7 @@ func (s *Server) startInternal(config *ServerConfig) error {
 		return err
 	}
 
-	log.Printf("Loading stats from querylog")
+	log.Tracef("Loading stats from querylog")
 	err = fillStatsFromQueryLog()
 	if err != nil {
 		return errorx.Decorate(err, "failed to load stats from querylog")
@@ -152,7 +152,7 @@ func (s *Server) startInternal(config *ServerConfig) error {
 
 // Initializes the DNS filter
 func (s *Server) initDNSFilter() error {
-	log.Printf("Creating dnsfilter")
+	log.Tracef("Creating dnsfilter")
 	s.dnsFilter = dnsfilter.New(&s.Config)
 	// add rules only if they are enabled
 	if s.FilteringEnabled {

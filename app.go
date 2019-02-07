@@ -66,7 +66,7 @@ func run(args options) {
 
 	// print the first message after logger is configured
 	log.Printf("AdGuard Home, version %s\n", VersionString)
-	log.Printf("Current working directory is %s", config.ourBinaryDir)
+	log.Tracef("Current working directory is %s", config.ourBinaryDir)
 	if args.runningAsService {
 		log.Printf("AdGuard Home is running as a service")
 	}
