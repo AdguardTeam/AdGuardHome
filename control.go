@@ -788,11 +788,19 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	restartHTTP := true
+	if config.BindHost == newSettings.Web.IP && config.BindPort == newSettings.Web.Port {
+		// no need to rebind
+		restartHTTP = false
+	}
+
 	// validate that hosts and ports are bindable
-	err = checkPortAvailable(newSettings.Web.IP, newSettings.Web.Port)
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s", net.JoinHostPort(newSettings.Web.IP, strconv.Itoa(newSettings.Web.Port)), err)
-		return
+	if restartHTTP {
+		err = checkPortAvailable(newSettings.Web.IP, newSettings.Web.Port)
+		if err != nil {
+			httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s", net.JoinHostPort(newSettings.Web.IP, strconv.Itoa(newSettings.Web.Port)), err)
+			return
+		}
 	}
 
 	err = checkPacketPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
@@ -820,9 +828,11 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 	// this needs to be done in a goroutine because Shutdown() is a blocking call, and it will block
 	// until all requests are finished, and _we_ are inside a request right now, so it will block indefinitely
-	go func() {
-		httpServer.Shutdown(context.TODO())
-	}()
+	if restartHTTP {
+		go func() {
+			httpServer.Shutdown(context.TODO())
+		}()
+	}
 }
 
 func registerInstallHandlers() {
