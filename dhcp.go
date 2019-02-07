@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -75,8 +76,48 @@ func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for i := range ifaces {
-		response[ifaces[i].Name] = ifaces[i]
+	for _, iface := range ifaces {
+		if iface.Flags&net.FlagLoopback != 0 {
+			// it's a loopback, skip it
+			continue
+		}
+		if iface.Flags&net.FlagBroadcast == 0 {
+			// this interface doesn't support broadcast, skip it
+			continue
+		}
+		addrs, err := iface.Addrs()
+		if err != nil {
+			httpError(w, http.StatusInternalServerError, "Failed to get addresses for interface %s: %s", iface.Name, err)
+			return
+		}
+
+		jsonIface := netInterface{
+			Name:         iface.Name,
+			MTU:          iface.MTU,
+			HardwareAddr: iface.HardwareAddr.String(),
+		}
+
+		if iface.Flags != 0 {
+			jsonIface.Flags = iface.Flags.String()
+		}
+		// we don't want link-local addresses in json, so skip them
+		for _, addr := range addrs {
+			ipnet, ok := addr.(*net.IPNet)
+			if !ok {
+				// not an IPNet, should not happen
+				httpError(w, http.StatusInternalServerError, "SHOULD NOT HAPPEN: got iface.Addrs() element %s that is not net.IPNet, it is %T", addr, addr)
+				return
+			}
+			// ignore link-local
+			if ipnet.IP.IsLinkLocalUnicast() {
+				continue
+			}
+			jsonIface.Addresses = append(jsonIface.Addresses, ipnet.IP.String())
+		}
+		if len(jsonIface.Addresses) != 0 {
+			response[iface.Name] = jsonIface
+		}
+
 	}
 
 	err = json.NewEncoder(w).Encode(response)

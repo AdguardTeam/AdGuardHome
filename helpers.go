@@ -190,49 +190,26 @@ type netInterface struct {
 	MTU          int      `json:"mtu"`
 	HardwareAddr string   `json:"hardware_address"`
 	Addresses    []string `json:"ip_addresses"`
+	Flags        string   `json:"flags"`
 }
 
-// getValidNetInterfaces() returns interfaces that are eligible for DNS and/or DHCP
-// invalid interface is either a loopback, ppp interface, or the one that doesn't allow broadcasts
-func getValidNetInterfaces() ([]netInterface, error) {
+// getValidNetInterfaces returns interfaces that are eligible for DNS and/or DHCP
+// invalid interface is a ppp interface or the one that doesn't allow broadcasts
+func getValidNetInterfaces() ([]net.Interface, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		return nil, fmt.Errorf("Couldn't get list of interfaces: %s", err)
 	}
 
-	netIfaces := []netInterface{}
+	netIfaces := []net.Interface{}
 
 	for i := range ifaces {
-		if ifaces[i].Flags&net.FlagLoopback != 0 {
-			// it's a loopback, skip it
-			continue
-		}
-		if ifaces[i].Flags&net.FlagBroadcast == 0 {
-			// this interface doesn't support broadcast, skip it
-			continue
-		}
 		if ifaces[i].Flags&net.FlagPointToPoint != 0 {
-			// this interface is ppp, don't do dhcp over it
+			// this interface is ppp, we're not interested in this one
 			continue
 		}
 
-		iface := netInterface{
-			Name:         ifaces[i].Name,
-			MTU:          ifaces[i].MTU,
-			HardwareAddr: ifaces[i].HardwareAddr.String(),
-		}
-
-		addrs, err := ifaces[i].Addrs()
-		if err != nil {
-			return nil, fmt.Errorf("Failed to get addresses for interface %v: %s", ifaces[i].Name, err)
-		}
-		for _, addr := range addrs {
-			iface.Addresses = append(iface.Addresses, addr.String())
-		}
-		if len(iface.Addresses) == 0 {
-			// this interface has no addresses, skip it
-			continue
-		}
+		iface := ifaces[i]
 		netIfaces = append(netIfaces, iface)
 	}
 

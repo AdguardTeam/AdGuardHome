@@ -737,14 +737,39 @@ func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 
 	data.Interfaces = make(map[string]interface{})
 	for _, iface := range ifaces {
-		for i := range iface.Addresses {
-			ip, _, e := net.ParseCIDR(iface.Addresses[i])
-			if e != nil {
+		addrs, err := iface.Addrs()
+		if err != nil {
+			httpError(w, http.StatusInternalServerError, "Failed to get addresses for interface %s: %s", iface.Name, err)
+			return
+		}
+
+		jsonIface := netInterface{
+			Name:         iface.Name,
+			MTU:          iface.MTU,
+			HardwareAddr: iface.HardwareAddr.String(),
+		}
+
+		if iface.Flags != 0 {
+			jsonIface.Flags = iface.Flags.String()
+		}
+
+		// we don't want link-local addresses in json, so skip them
+		for _, addr := range addrs {
+			ipnet, ok := addr.(*net.IPNet)
+			if !ok {
+				// not an IPNet, should not happen
+				httpError(w, http.StatusInternalServerError, "SHOULD NOT HAPPEN: got iface.Addrs() element %s that is not net.IPNet, it is %T", addr, addr)
+				return
+			}
+			// ignore link-local
+			if ipnet.IP.IsLinkLocalUnicast() {
 				continue
 			}
-			iface.Addresses[i] = ip.String()
+			jsonIface.Addresses = append(jsonIface.Addresses, ipnet.IP.String())
 		}
-		data.Interfaces[iface.Name] = iface
+		if len(jsonIface.Addresses) != 0 {
+			data.Interfaces[iface.Name] = jsonIface
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
