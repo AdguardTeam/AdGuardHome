@@ -109,3 +109,9 @@
 .form__message--error {
     color: #cd201f;
 }
+
+.setup__button {
+    min-width: 120px;
+    padding-left: 30px;
+    padding-right: 30px;
+}

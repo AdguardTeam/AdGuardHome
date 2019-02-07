@@ -13,7 +13,7 @@ class Controls extends Component {
                 return (
                     <button
                             type="button"
-                            className="btn btn-secondary btn-standard btn-lg"
+                            className="btn btn-secondary btn-lg setup__button"
                             onClick={this.props.prevStep}
                         >
                             <Trans>back</Trans>
@@ -30,7 +30,7 @@ class Controls extends Component {
                 return (
                     <button
                         type="button"
-                        className="btn btn-success btn-standard btn-lg"
+                        className="btn btn-success btn-lg setup__button"
                         onClick={this.props.nextStep}
                     >
                         <Trans>get_started</Trans>
@@ -41,7 +41,7 @@ class Controls extends Component {
                 return (
                     <button
                         type="submit"
-                        className="btn btn-success btn-standard btn-lg"
+                        className="btn btn-success btn-lg setup__button"
                         disabled={
                             this.props.invalid
                             || this.props.pristine
@@ -55,7 +55,7 @@ class Controls extends Component {
                 return (
                     <button
                         type="button"
-                        className="btn btn-success btn-standard btn-lg"
+                        className="btn btn-success btn-lg setup__button"
                         onClick={this.props.nextStep}
                     >
                         <Trans>next</Trans>
@@ -65,7 +65,7 @@ class Controls extends Component {
                 return (
                     <button
                         type="button"
-                        className="btn btn-success btn-standard btn-lg"
+                        className="btn btn-success btn-lg setup__button"
                         onClick={() => this.props.openDashboard(this.props.address)}
                     >
                         <Trans>open_dashboard</Trans>
