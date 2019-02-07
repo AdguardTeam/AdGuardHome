@@ -1,11 +1,11 @@
 import { combineReducers } from 'redux';
 import { handleActions } from 'redux-actions';
 import { loadingBarReducer } from 'react-redux-loading-bar';
-import nanoid from 'nanoid';
 import { reducer as formReducer } from 'redux-form';
 import versionCompare from '../helpers/versionCompare';
 
 import * as actions from '../actions';
+import toasts from './toasts';
 
 const settings = handleActions({
     [actions.initSettingsRequest]: state => ({ ...state, processing: true }),
@@ -240,34 +240,6 @@ const filtering = handleActions({
     filters: [],
     userRules: '',
 });
-
-const toasts = handleActions({
-    [actions.addErrorToast]: (state, { payload }) => {
-        const errorToast = {
-            id: nanoid(),
-            message: payload.error.toString(),
-            type: 'error',
-        };
-
-        const newState = { ...state, notices: [...state.notices, errorToast] };
-        return newState;
-    },
-    [actions.addSuccessToast]: (state, { payload }) => {
-        const successToast = {
-            id: nanoid(),
-            message: payload,
-            type: 'success',
-        };
-
-        const newState = { ...state, notices: [...state.notices, successToast] };
-        return newState;
-    },
-    [actions.removeToast]: (state, { payload }) => {
-        const filtered = state.notices.filter(notice => notice.id !== payload);
-        const newState = { ...state, notices: filtered };
-        return newState;
-    },
-}, { notices: [] });
 
 const dhcp = handleActions({
     [actions.getDhcpStatusRequest]: state => ({ ...state, processing: true }),

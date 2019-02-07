@@ -1,11 +1,9 @@
 import { createAction } from 'redux-actions';
 import Api from '../api/Api';
+import { addErrorToast, addSuccessToast } from './index';
 
 const apiClient = new Api();
 
-export const addErrorToast = createAction('ADD_ERROR_TOAST');
-export const addSuccessToast = createAction('ADD_SUCCESS_TOAST');
-export const removeToast = createAction('REMOVE_TOAST');
 export const nextStep = createAction('NEXT_STEP');
 export const prevStep = createAction('PREV_STEP');
 

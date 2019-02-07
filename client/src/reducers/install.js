@@ -1,9 +1,9 @@
 import { combineReducers } from 'redux';
 import { handleActions } from 'redux-actions';
 import { reducer as formReducer } from 'redux-form';
-import nanoid from 'nanoid';
 
 import * as actions from '../actions/install';
+import toasts from './toasts';
 import { INSTALL_FIRST_STEP } from '../helpers/constants';
 
 const install = handleActions({
@@ -38,34 +38,6 @@ const install = handleActions({
     },
     interfaces: {},
 });
-
-const toasts = handleActions({
-    [actions.addErrorToast]: (state, { payload }) => {
-        const errorToast = {
-            id: nanoid(),
-            message: payload.error.toString(),
-            type: 'error',
-        };
-
-        const newState = { ...state, notices: [...state.notices, errorToast] };
-        return newState;
-    },
-    [actions.addSuccessToast]: (state, { payload }) => {
-        const successToast = {
-            id: nanoid(),
-            message: payload,
-            type: 'success',
-        };
-
-        const newState = { ...state, notices: [...state.notices, successToast] };
-        return newState;
-    },
-    [actions.removeToast]: (state, { payload }) => {
-        const filtered = state.notices.filter(notice => notice.id !== payload);
-        const newState = { ...state, notices: filtered };
-        return newState;
-    },
-}, { notices: [] });
 
 export default combineReducers({
     install,
