@@ -149,6 +149,7 @@ func run(args options) {
 
 	// add handlers for /install paths, we only need them when we're not configured yet
 	if config.firstRun {
+		log.Printf("This is the first launch of AdGuard Home, redirecting everything to /install.html ")
 		http.Handle("/install.html", preInstallHandler(http.FileServer(box)))
 		registerInstallHandlers()
 	}

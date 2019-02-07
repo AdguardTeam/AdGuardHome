@@ -723,7 +723,7 @@ func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 	// fill out the fields
 
 	// find out if port 80 is available -- if not, fall back to 3000
-	if checkPortAvailable("", 80) {
+	if checkPortAvailable("", 80) == nil {
 		data.Web.Port = 80
 	} else {
 		data.Web.Port = 3000
@@ -731,15 +731,15 @@ func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 
 	// find out if port 53 is available -- if not, show a big warning
 	data.DNS.Port = 53
-	if !checkPacketPortAvailable("", 53) {
+	if checkPacketPortAvailable("", 53) != nil {
 		data.DNS.Warning = "Port 53 is not available for binding -- this will make DNS clients unable to contact AdGuard Home."
 	}
 
 	data.Interfaces = make(map[string]interface{})
 	for _, iface := range ifaces {
 		for i := range iface.Addresses {
-			ip, _, err := net.ParseCIDR(iface.Addresses[i])
-			if err != nil {
+			ip, _, e := net.ParseCIDR(iface.Addresses[i])
+			if e != nil {
 				continue
 			}
 			iface.Addresses[i] = ip.String()
@@ -764,13 +764,15 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// validate that hosts and ports are bindable
-	if !checkPortAvailable(newSettings.Web.IP, newSettings.Web.Port) {
-		httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s", net.JoinHostPort(newSettings.Web.IP, strconv.Itoa(newSettings.Web.Port)))
+	err = checkPortAvailable(newSettings.Web.IP, newSettings.Web.Port)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s", net.JoinHostPort(newSettings.Web.IP, strconv.Itoa(newSettings.Web.Port)), err)
 		return
 	}
 
-	if !checkPacketPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port) {
-		httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s", net.JoinHostPort(newSettings.DNS.IP, strconv.Itoa(newSettings.DNS.Port)))
+	err = checkPacketPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s", net.JoinHostPort(newSettings.DNS.IP, strconv.Itoa(newSettings.DNS.Port)), err)
 		return
 	}
 

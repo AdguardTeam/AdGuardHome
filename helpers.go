@@ -14,8 +14,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-
-	"github.com/hmage/golibs/log"
 )
 
 // ----------------------------------
@@ -124,7 +122,7 @@ func preInstall(handler func(http.ResponseWriter, *http.Request)) func(http.Resp
 	}
 }
 
-// preInstallStruct wraps preInstall into a struct that can be returned as an interface where neccessary
+// preInstallStruct wraps preInstall into a struct that can be returned as an interface where necessary
 type preInstallHandlerStruct struct {
 	handler http.Handler
 }
@@ -241,41 +239,23 @@ func getValidNetInterfaces() ([]netInterface, error) {
 	return netIfaces, nil
 }
 
-func findIPv4IfaceAddr(ifaces []netInterface) string {
-	for _, iface := range ifaces {
-		for _, addr := range iface.Addresses {
-			ip, _, err := net.ParseCIDR(addr)
-			if err != nil {
-				log.Printf("SHOULD NOT HAPPEN: got iface.Addresses element that's not a parseable CIDR: %s", addr)
-				continue
-			}
-			if ip.To4() == nil {
-				log.Tracef("Ignoring IP that isn't IPv4: %s", ip)
-				continue
-			}
-			return ip.To4().String()
-		}
-	}
-	return ""
-}
-
 // checkPortAvailable is not a cheap test to see if the port is bindable, because it's actually doing the bind momentarily
-func checkPortAvailable(host string, port int) bool {
+func checkPortAvailable(host string, port int) error {
 	ln, err := net.Listen("tcp", net.JoinHostPort(host, strconv.Itoa(port)))
 	if err != nil {
-		return false
+		return err
 	}
 	ln.Close()
-	return true
+	return nil
 }
 
-func checkPacketPortAvailable(host string, port int) bool {
+func checkPacketPortAvailable(host string, port int) error {
 	ln, err := net.ListenPacket("udp", net.JoinHostPort(host, strconv.Itoa(port)))
 	if err != nil {
-		return false
+		return err
 	}
 	ln.Close()
-	return true
+	return err
 }
 
 // ---------------------

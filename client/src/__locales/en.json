@@ -160,7 +160,7 @@
     "filter_label": "Filter",
     "unknown_filter": "Unknown filter {{filterId}}",
     "install_welcome_title": "Welcome to AdGuard Home!",
-    "install_welcome_desc": "Lorem ipsum dolor sit amet consectetur adipisicing elit.",
+    "install_welcome_desc": "AdGuard Home is a network-wide ad-and-tracker blocking DNS server. Its purpose is to let you control your entire network and all your devices, and it does not require using a client-side program.",
     "install_settings_title": "Admin Web Interface",
     "install_settings_listen": "Listen interface",
     "install_settings_port": "Port",
