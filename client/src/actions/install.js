@@ -30,18 +30,9 @@ export const setAllSettings = values => async (dispatch) => {
     dispatch(setAllSettingsRequest());
     try {
         const {
-            web,
-            dns,
-            username,
-            password,
+            confirm_password,
+            ...config
         } = values;
-
-        const config = {
-            web,
-            dns,
-            username,
-            password,
-        };
 
         await apiClient.setAllSettings(config);
         dispatch(setAllSettingsSuccess());
