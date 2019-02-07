@@ -30,13 +30,18 @@ const renderInterfaces = (interfaces => (
     Object.keys(interfaces).map((item) => {
         const option = interfaces[item];
         const { name } = option;
-        const ip = getInterfaceIp(option);
 
-        return (
-            <option value={ip} key={name}>
-                {name} - {ip}
-            </option>
-        );
+        if (option.ip_addresses && option.ip_addresses.length > 0) {
+            const ip = getInterfaceIp(option);
+
+            return (
+                <option value={ip} key={name}>
+                    {name} - {ip}
+                </option>
+            );
+        }
+
+        return false;
     })
 ));
 

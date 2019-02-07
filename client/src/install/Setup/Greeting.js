@@ -10,7 +10,7 @@ class Greeting extends Component {
                     <h1 className="setup__title">
                         <Trans>install_welcome_title</Trans>
                     </h1>
-                    <p className="setup__desc">
+                    <p className="setup__desc text-center">
                         <Trans>install_welcome_desc</Trans>
                     </p>
                 </div>
