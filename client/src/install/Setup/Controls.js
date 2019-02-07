@@ -42,7 +42,11 @@ class Controls extends Component {
                     <button
                         type="submit"
                         className="btn btn-success btn-standard btn-lg"
-                        disabled={this.props.invalid || this.props.pristine}
+                        disabled={
+                            this.props.invalid
+                            || this.props.pristine
+                            || this.props.install.processingSubmit
+                        }
                     >
                         <Trans>next</Trans>
                     </button>
@@ -73,11 +77,13 @@ class Controls extends Component {
     }
 
     render() {
+        const { install } = this.props;
+
         return (
             <div className="setup__nav">
                 <div className="btn-list">
-                    {this.renderPrevButton(this.props.step)}
-                    {this.renderNextButton(this.props.step)}
+                    {this.renderPrevButton(install.step)}
+                    {this.renderNextButton(install.step)}
                 </div>
             </div>
         );
@@ -85,7 +91,7 @@ class Controls extends Component {
 }
 
 Controls.propTypes = {
-    step: PropTypes.number.isRequired,
+    install: PropTypes.object.isRequired,
     nextStep: PropTypes.func,
     prevStep: PropTypes.func,
     openDashboard: PropTypes.func,
@@ -96,8 +102,8 @@ Controls.propTypes = {
 };
 
 const mapStateToProps = (state) => {
-    const { step } = state.install;
-    const props = { step };
+    const { install } = state;
+    const props = { install };
     return props;
 };
 

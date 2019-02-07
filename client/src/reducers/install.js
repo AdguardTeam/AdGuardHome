@@ -26,6 +26,7 @@ const install = handleActions({
 }, {
     step: INSTALL_FIRST_STEP,
     processingDefault: true,
+    processingSubmit: false,
     web: {
         ip: '0.0.0.0',
         port: 80,
