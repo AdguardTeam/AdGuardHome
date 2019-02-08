@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	stdlog "log"
 	"net"
@@ -17,11 +16,11 @@ import (
 	"github.com/gobuffalo/packr"
 
 	"github.com/hmage/golibs/log"
-	"golang.org/x/crypto/ssh/terminal"
 )
 
 // VersionString will be set through ldflags, contains current version
 var VersionString = "undefined"
+var httpServer *http.Server
 
 const (
 	// Used in config to indicate that syslog or eventlog (win) should be used for logger output
@@ -67,18 +66,15 @@ func run(args options) {
 
 	// print the first message after logger is configured
 	log.Printf("AdGuard Home, version %s\n", VersionString)
-	log.Printf("Current working directory is %s", config.ourBinaryDir)
+	log.Tracef("Current working directory is %s", config.ourBinaryDir)
 	if args.runningAsService {
 		log.Printf("AdGuard Home is running as a service")
 	}
 
-	err := askUsernamePasswordIfPossible()
-	if err != nil {
-		log.Fatal(err)
-	}
+	config.firstRun = detectFirstRun()
 
 	// Do the upgrade if necessary
-	err = upgradeConfig()
+	err := upgradeConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -121,14 +117,16 @@ func run(args options) {
 		log.Fatal(err)
 	}
 
-	err = startDNSServer()
-	if err != nil {
-		log.Fatal(err)
-	}
+	if !config.firstRun {
+		err = startDNSServer()
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	err = startDHCPServer()
-	if err != nil {
-		log.Fatal(err)
+		err = startDHCPServer()
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	// Update filters we've just loaded right away, don't wait for periodic update timer
@@ -145,13 +143,33 @@ func run(args options) {
 
 	// Initialize and run the admin Web interface
 	box := packr.NewBox("build/static")
-	http.Handle("/", optionalAuthHandler(http.FileServer(box)))
+	// if not configured, redirect / to /install.html, otherwise redirect /install.html to /
+	http.Handle("/", postInstallHandler(optionalAuthHandler(http.FileServer(box))))
 	registerControlHandlers()
 
-	address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
-	URL := fmt.Sprintf("http://%s", address)
-	log.Println("Go to " + URL)
-	log.Fatal(http.ListenAndServe(address, nil))
+	// add handlers for /install paths, we only need them when we're not configured yet
+	if config.firstRun {
+		log.Printf("This is the first launch of AdGuard Home, redirecting everything to /install.html ")
+		http.Handle("/install.html", preInstallHandler(http.FileServer(box)))
+		registerInstallHandlers()
+	}
+
+	// this loop is used as an ability to change listening host and/or port
+	for {
+		address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
+		URL := fmt.Sprintf("http://%s", address)
+		log.Println("Go to " + URL)
+		// we need to have new instance, because after Shutdown() the Server is not usable
+		httpServer = &http.Server{
+			Addr: address,
+		}
+		err := httpServer.ListenAndServe()
+		if err != http.ErrServerClosed {
+			log.Fatal(err)
+			os.Exit(1)
+		}
+		// We use ErrServerClosed as a sign that we need to rebind on new address, so go back to the start of the loop
+	}
 }
 
 // initWorkingDir initializes the ourBinaryDir (basically, we use it as a working dir)
@@ -220,14 +238,6 @@ func cleanup() {
 	if err != nil {
 		log.Printf("Couldn't stop DHCP server: %s", err)
 	}
-}
-
-func getInput() (string, error) {
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	text := scanner.Text()
-	err := scanner.Err()
-	return text, err
 }
 
 // command-line arguments
@@ -317,80 +327,4 @@ func loadOptions() options {
 	}
 
 	return o
-}
-
-func promptAndGet(prompt string) (string, error) {
-	for {
-		fmt.Print(prompt)
-		input, err := getInput()
-		if err != nil {
-			log.Printf("Failed to get input, aborting: %s", err)
-			return "", err
-		}
-		if len(input) != 0 {
-			return input, nil
-		}
-		// try again
-	}
-}
-
-func promptAndGetPassword(prompt string) (string, error) {
-	for {
-		fmt.Print(prompt)
-		password, err := terminal.ReadPassword(int(os.Stdin.Fd()))
-		fmt.Print("\n")
-		if err != nil {
-			log.Printf("Failed to get input, aborting: %s", err)
-			return "", err
-		}
-		if len(password) != 0 {
-			return string(password), nil
-		}
-		// try again
-	}
-}
-
-func askUsernamePasswordIfPossible() error {
-	configFile := config.getConfigFilename()
-	_, err := os.Stat(configFile)
-	if !os.IsNotExist(err) {
-		// do nothing, file exists
-		return nil
-	}
-	if !terminal.IsTerminal(int(os.Stdin.Fd())) {
-		return nil // do nothing
-	}
-	if !terminal.IsTerminal(int(os.Stdout.Fd())) {
-		return nil // do nothing
-	}
-	fmt.Printf("Would you like to set user/password for the web interface authentication (yes/no)?\n")
-	yesno, err := promptAndGet("Please type 'yes' or 'no': ")
-	if err != nil {
-		return err
-	}
-	if yesno[0] != 'y' && yesno[0] != 'Y' {
-		return nil
-	}
-	username, err := promptAndGet("Please enter the username: ")
-	if err != nil {
-		return err
-	}
-
-	password, err := promptAndGetPassword("Please enter the password: ")
-	if err != nil {
-		return err
-	}
-
-	password2, err := promptAndGetPassword("Please enter password again: ")
-	if err != nil {
-		return err
-	}
-	if password2 != password {
-		fmt.Printf("Passwords do not match! Aborting\n")
-		os.Exit(1)
-	}
-
-	config.AuthName = username
-	config.AuthPass = password
-	return nil
 }

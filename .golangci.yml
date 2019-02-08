@@ -51,5 +51,6 @@ issues:
     - .safeBrowsingServer. is unused
     # errcheck
     - Error return value of .s.closeConn. is not checked
+    - Error return value of ..*.Shutdown.
     # goconst
     - string .forcesafesearch.google.com. has 3 occurrences

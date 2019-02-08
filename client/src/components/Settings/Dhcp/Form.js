@@ -48,8 +48,9 @@ const Form = (props) => {
     const {
         t,
         handleSubmit,
-        pristine,
         submitting,
+        invalid,
+        processingConfig,
     } = props;
 
     return (
@@ -124,8 +125,8 @@ const Form = (props) => {
 
             <button
                 type="submit"
-                className="btn btn-success btn-standart"
-                disabled={pristine || submitting}
+                className="btn btn-success btn-standard"
+                disabled={submitting || invalid || processingConfig}
             >
                 {t('save_config')}
             </button>
@@ -135,11 +136,11 @@ const Form = (props) => {
 
 Form.propTypes = {
     handleSubmit: PropTypes.func,
-    pristine: PropTypes.bool,
     submitting: PropTypes.bool,
+    invalid: PropTypes.bool,
     interfaces: PropTypes.object,
-    processing: PropTypes.bool,
     initialValues: PropTypes.object,
+    processingConfig: PropTypes.bool,
     t: PropTypes.func,
 };
 

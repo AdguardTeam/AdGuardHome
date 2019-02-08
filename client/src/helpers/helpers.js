@@ -4,7 +4,7 @@ import subHours from 'date-fns/sub_hours';
 import addHours from 'date-fns/add_hours';
 import round from 'lodash/round';
 
-import { STATS_NAMES } from './constants';
+import { STATS_NAMES, STANDARD_DNS_PORT, STANDARD_WEB_PORT } from './constants';
 
 export const formatTime = (time) => {
     const parsedTime = dateParse(time);
@@ -85,3 +85,58 @@ export const getPercent = (amount, number) => {
 };
 
 export const captitalizeWords = text => text.split(/[ -_]/g).map(str => str.charAt(0).toUpperCase() + str.substr(1)).join(' ');
+
+export const getInterfaceIp = (option) => {
+    const onlyIPv6 = option.ip_addresses.every(ip => ip.includes(':'));
+    let interfaceIP = option.ip_addresses[0];
+
+    if (!onlyIPv6) {
+        option.ip_addresses.forEach((ip) => {
+            if (!ip.includes(':')) {
+                interfaceIP = ip;
+            }
+        });
+    }
+
+    return interfaceIP;
+};
+
+export const getIpList = (interfaces) => {
+    let list = [];
+
+    Object.keys(interfaces).forEach((item) => {
+        list = [...list, ...interfaces[item].ip_addresses];
+    });
+
+    return list.sort();
+};
+
+export const getDnsAddress = (ip, port = '') => {
+    const isStandardDnsPort = port === STANDARD_DNS_PORT;
+    let address = ip;
+
+    if (port) {
+        if (ip.includes(':') && !isStandardDnsPort) {
+            address = `[${ip}]:${port}`;
+        } else if (!isStandardDnsPort) {
+            address = `${ip}:${port}`;
+        }
+    }
+
+    return address;
+};
+
+export const getWebAddress = (ip, port = '') => {
+    const isStandardWebPort = port === STANDARD_WEB_PORT;
+    let address = `http://${ip}`;
+
+    if (port) {
+        if (ip.includes(':') && !isStandardWebPort) {
+            address = `http://[${ip}]:${port}`;
+        } else if (!isStandardWebPort) {
+            address = `http://${ip}:${port}`;
+        }
+    }
+
+    return address;
+};

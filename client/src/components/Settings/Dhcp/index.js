@@ -13,17 +13,14 @@ class Dhcp extends Component {
         this.props.setDhcpConfig(values);
     };
 
-    handleFormChange = (value) => {
-        this.props.setDhcpConfig(value);
-    }
-
     handleToggle = (config) => {
         this.props.toggleDhcp(config);
-        this.props.findActiveDhcp(config.interface_name);
     }
 
     getToggleDhcpButton = () => {
-        const { config, active, processingDhcp } = this.props.dhcp;
+        const {
+            config, active, processingDhcp, processingConfig,
+        } = this.props.dhcp;
         const activeDhcpFound = active && active.found;
         const filledConfig = Object.keys(config).every((key) => {
             if (key === 'enabled') {
@@ -37,9 +34,9 @@ class Dhcp extends Component {
             return (
                 <button
                     type="button"
-                    className="btn btn-standart mr-2 btn-gray"
+                    className="btn btn-standard mr-2 btn-gray"
                     onClick={() => this.props.toggleDhcp(config)}
-                    disabled={processingDhcp}
+                    disabled={processingDhcp || processingConfig}
                 >
                     <Trans>dhcp_disable</Trans>
                 </button>
@@ -49,9 +46,14 @@ class Dhcp extends Component {
         return (
             <button
                 type="button"
-                className="btn btn-standart mr-2 btn-success"
+                className="btn btn-standard mr-2 btn-success"
                 onClick={() => this.handleToggle(config)}
-                disabled={!filledConfig || activeDhcpFound || processingDhcp}
+                disabled={
+                    !filledConfig
+                    || activeDhcpFound
+                    || processingDhcp
+                    || processingConfig
+                }
             >
                 <Trans>dhcp_enable</Trans>
             </button>
@@ -64,14 +66,14 @@ class Dhcp extends Component {
         if (active) {
             if (active.error) {
                 return (
-                    <div className="text-danger">
+                    <div className="text-danger mb-2">
                         {active.error}
                     </div>
                 );
             }
 
             return (
-                <Fragment>
+                <div className="mb-2">
                     {active.found ? (
                         <div className="text-danger">
                             <Trans>dhcp_found</Trans>
@@ -81,7 +83,7 @@ class Dhcp extends Component {
                             <Trans>dhcp_not_found</Trans>
                         </div>
                     )}
-                </Fragment>
+                </div>
             );
         }
 
@@ -91,9 +93,14 @@ class Dhcp extends Component {
     render() {
         const { t, dhcp } = this.props;
         const statusButtonClass = classnames({
-            'btn btn-primary btn-standart': true,
-            'btn btn-primary btn-standart btn-loading': dhcp.processingStatus,
+            'btn btn-primary btn-standard': true,
+            'btn btn-primary btn-standard btn-loading': dhcp.processingStatus,
         });
+        const {
+            enabled,
+            interface_name,
+            ...values
+        } = dhcp.config;
 
         return (
             <Fragment>
@@ -102,17 +109,17 @@ class Dhcp extends Component {
                         {!dhcp.processing &&
                             <Fragment>
                                 <Interface
-                                    onChange={this.handleFormChange}
-                                    initialValues={dhcp.config}
+                                    onChange={this.handleFormSubmit}
+                                    initialValues={{ interface_name }}
                                     interfaces={dhcp.interfaces}
                                     processing={dhcp.processingInterfaces}
                                     enabled={dhcp.config.enabled}
                                 />
                                 <Form
                                     onSubmit={this.handleFormSubmit}
-                                    initialValues={dhcp.config}
+                                    initialValues={{ ...values }}
                                     interfaces={dhcp.interfaces}
-                                    processing={dhcp.processingInterfaces}
+                                    processingConfig={dhcp.processingConfig}
                                 />
                                 <hr/>
                                 <div className="card-actions mb-3">
@@ -123,12 +130,18 @@ class Dhcp extends Component {
                                         onClick={() =>
                                             this.props.findActiveDhcp(dhcp.config.interface_name)
                                         }
-                                        disabled={!dhcp.config.interface_name}
+                                        disabled={
+                                            !dhcp.config.interface_name
+                                            || dhcp.processingConfig
+                                        }
                                     >
                                         <Trans>check_dhcp_servers</Trans>
                                     </button>
                                 </div>
                                 {this.getActiveDhcpMessage()}
+                                <div className="text-danger">
+                                    <Trans>dhcp_warning</Trans>
+                                </div>
                             </Fragment>
                         }
                     </div>

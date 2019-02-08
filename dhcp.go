@@ -70,50 +70,54 @@ func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{}
 
-	ifaces, err := net.Interfaces()
+	ifaces, err := getValidNetInterfaces()
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't get list of interfaces: %s", err)
+		httpError(w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
 		return
 	}
 
-	type responseInterface struct {
-		Name         string   `json:"name"`
-		MTU          int      `json:"mtu"`
-		HardwareAddr string   `json:"hardware_address"`
-		Addresses    []string `json:"ip_addresses"`
-	}
-
-	for i := range ifaces {
-		if ifaces[i].Flags&net.FlagLoopback != 0 {
+	for _, iface := range ifaces {
+		if iface.Flags&net.FlagLoopback != 0 {
 			// it's a loopback, skip it
 			continue
 		}
-		if ifaces[i].Flags&net.FlagBroadcast == 0 {
+		if iface.Flags&net.FlagBroadcast == 0 {
 			// this interface doesn't support broadcast, skip it
 			continue
 		}
-		if ifaces[i].Flags&net.FlagPointToPoint != 0 {
-			// this interface is ppp, don't do dhcp over it
-			continue
-		}
-		iface := responseInterface{
-			Name:         ifaces[i].Name,
-			MTU:          ifaces[i].MTU,
-			HardwareAddr: ifaces[i].HardwareAddr.String(),
-		}
-		addrs, errAddrs := ifaces[i].Addrs()
-		if errAddrs != nil {
-			httpError(w, http.StatusInternalServerError, "Failed to get addresses for interface %v: %s", ifaces[i].Name, errAddrs)
+		addrs, err := iface.Addrs()
+		if err != nil {
+			httpError(w, http.StatusInternalServerError, "Failed to get addresses for interface %s: %s", iface.Name, err)
 			return
 		}
+
+		jsonIface := netInterface{
+			Name:         iface.Name,
+			MTU:          iface.MTU,
+			HardwareAddr: iface.HardwareAddr.String(),
+		}
+
+		if iface.Flags != 0 {
+			jsonIface.Flags = iface.Flags.String()
+		}
+		// we don't want link-local addresses in json, so skip them
 		for _, addr := range addrs {
-			iface.Addresses = append(iface.Addresses, addr.String())
+			ipnet, ok := addr.(*net.IPNet)
+			if !ok {
+				// not an IPNet, should not happen
+				httpError(w, http.StatusInternalServerError, "SHOULD NOT HAPPEN: got iface.Addrs() element %s that is not net.IPNet, it is %T", addr, addr)
+				return
+			}
+			// ignore link-local
+			if ipnet.IP.IsLinkLocalUnicast() {
+				continue
+			}
+			jsonIface.Addresses = append(jsonIface.Addresses, ipnet.IP.String())
 		}
-		if len(iface.Addresses) == 0 {
-			// this interface has no addresses, skip it
-			continue
+		if len(jsonIface.Addresses) != 0 {
+			response[iface.Name] = jsonIface
 		}
-		response[ifaces[i].Name] = iface
+
 	}
 
 	err = json.NewEncoder(w).Encode(response)

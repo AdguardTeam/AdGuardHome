@@ -892,15 +892,16 @@ func New(c *Config) *Dnsfilter {
 	d.whiteList = newRulesTable()
 	d.blackList = newRulesTable()
 
-	// Customize the Transport to have larger connection pool
-	defaultRoundTripper := http.DefaultTransport
-	defaultTransportPointer, ok := defaultRoundTripper.(*http.Transport)
-	if !ok {
-		panic(fmt.Sprintf("defaultRoundTripper not an *http.Transport"))
+	// Customize the Transport to have larger connection pool,
+	// We are not (re)using http.DefaultTransport because of race conditions found by tests
+	d.transport = &http.Transport{
+		Proxy:                 http.ProxyFromEnvironment,
+		MaxIdleConns:          defaultHTTPMaxIdleConnections, // default 100
+		MaxIdleConnsPerHost:   defaultHTTPMaxIdleConnections, // default 2
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
 	}
-	d.transport = defaultTransportPointer                           // dereference it to get a copy of the struct that the pointer points to
-	d.transport.MaxIdleConns = defaultHTTPMaxIdleConnections        // default 100
-	d.transport.MaxIdleConnsPerHost = defaultHTTPMaxIdleConnections // default 2
 	d.client = http.Client{
 		Transport: d.transport,
 		Timeout:   defaultHTTPTimeout,

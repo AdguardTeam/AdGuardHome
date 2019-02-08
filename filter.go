@@ -228,7 +228,7 @@ func (filter *filter) load() error {
 	}
 
 	filterFilePath := filter.Path()
-	log.Printf("Loading filter %d contents to: %s", filter.ID, filterFilePath)
+	log.Tracef("Loading filter %d contents to: %s", filter.ID, filterFilePath)
 
 	if _, err := os.Stat(filterFilePath); os.IsNotExist(err) {
 		// do nothing, file doesn't exist
@@ -240,7 +240,7 @@ func (filter *filter) load() error {
 		return err
 	}
 
-	log.Printf("File %s, id %d, length %d", filterFilePath, filter.ID, len(filterFileContents))
+	log.Tracef("File %s, id %d, length %d", filterFilePath, filter.ID, len(filterFileContents))
 	rulesCount, _, rules := parseFilterContents(filterFileContents)
 
 	filter.RulesCount = rulesCount

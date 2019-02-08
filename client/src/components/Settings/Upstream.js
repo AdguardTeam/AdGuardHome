@@ -21,8 +21,8 @@ class Upstream extends Component {
 
     render() {
         const testButtonClass = classnames({
-            'btn btn-primary btn-standart mr-2': true,
-            'btn btn-primary btn-standart mr-2 btn-loading': this.props.processingTestUpstream,
+            'btn btn-primary btn-standard mr-2': true,
+            'btn btn-primary btn-standard mr-2 btn-loading': this.props.processingTestUpstream,
         });
         const { t } = this.props;
 
@@ -49,7 +49,7 @@ class Upstream extends Component {
                                     <Trans>test_upstream_btn</Trans>
                                 </button>
                                 <button
-                                    className="btn btn-success btn-standart"
+                                    className="btn btn-success btn-standard"
                                     type="submit"
                                     onClick={this.handleSubmit}
                                 >

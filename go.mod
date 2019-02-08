@@ -16,7 +16,6 @@ require (
 	github.com/shirou/gopsutil v2.18.10+incompatible
 	github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4 // indirect
 	go.uber.org/goleak v0.10.0
-	golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9
 	golang.org/x/net v0.0.0-20181220203305-927f97764cc3
 	golang.org/x/sys v0.0.0-20181228144115-9a3f9b0469bb
 	gopkg.in/asaskevich/govalidator.v4 v4.0.0-20160518190739-766470278477

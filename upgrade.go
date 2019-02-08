@@ -34,7 +34,7 @@ func upgradeConfig() error {
 	}
 
 	schemaVersionInterface, ok := diskConfig["schema_version"]
-	log.Printf("%s(): got schema version %v", _Func(), schemaVersionInterface)
+	log.Tracef("got schema version %v", schemaVersionInterface)
 	if !ok {
 		// no schema version, set it to 0
 		schemaVersionInterface = 0

@@ -31,11 +31,11 @@ func getIfaceIPv4(iface *net.Interface) *net.IPNet {
 		}
 
 		if ipnet.IP.To4() == nil {
-			log.Printf("Got IP that is not IPv4: %v", ipnet.IP)
+			log.Tracef("Got IP that is not IPv4: %v", ipnet.IP)
 			continue
 		}
 
-		log.Printf("Got IP that is IPv4: %v", ipnet.IP)
+		log.Tracef("Got IP that is IPv4: %v", ipnet.IP)
 		return &net.IPNet{
 			IP:   ipnet.IP.To4(),
 			Mask: ipnet.Mask,
