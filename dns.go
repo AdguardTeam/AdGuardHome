@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"os"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
@@ -11,10 +12,22 @@ import (
 	"github.com/joomcode/errorx"
 )
 
-var dnsServer = dnsforward.Server{}
+var dnsServer *dnsforward.Server
+
+// initDNSServer creates an instance of the dnsforward.Server
+// Please note that we must do it even if we don't start it
+// so that we had access to the query log and the stats
+func initDNSServer(baseDir string) {
+	err := os.MkdirAll(baseDir, 0755)
+	if err != nil {
+		log.Fatalf("Cannot create DNS data dir at %s: %s", baseDir, err)
+	}
+
+	dnsServer = dnsforward.NewServer(baseDir)
+}
 
 func isRunning() bool {
-	return dnsServer.IsRunning()
+	return dnsServer != nil && dnsServer.IsRunning()
 }
 
 func generateServerConfig() dnsforward.ServerConfig {

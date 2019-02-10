@@ -85,8 +85,8 @@ func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 			// this interface doesn't support broadcast, skip it
 			continue
 		}
-		addrs, err := iface.Addrs()
-		if err != nil {
+		addrs, e := iface.Addrs()
+		if e != nil {
 			httpError(w, http.StatusInternalServerError, "Failed to get addresses for interface %s: %s", iface.Name, err)
 			return
 		}

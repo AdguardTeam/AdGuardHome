@@ -19,7 +19,23 @@ var (
 
 const enableGzip = false
 
-func flushToFile(buffer []*logEntry) error {
+// clearLogBuffer flushes the current buffer to file and resets the current buffer
+func (l *queryLog) clearLogBuffer() error {
+	// flush remainder to file
+	l.logBufferLock.Lock()
+	flushBuffer := l.logBuffer
+	l.logBuffer = nil
+	l.logBufferLock.Unlock()
+	err := l.flushToFile(flushBuffer)
+	if err != nil {
+		log.Printf("Saving querylog to file failed: %s", err)
+		return err
+	}
+	return nil
+}
+
+// flushToFile saves the specified log entries to the query log file
+func (l *queryLog) flushToFile(buffer []*logEntry) error {
 	if len(buffer) == 0 {
 		return nil
 	}
@@ -45,14 +61,14 @@ func flushToFile(buffer []*logEntry) error {
 	}
 
 	var zb bytes.Buffer
-	filename := queryLogFileName
+	filename := l.logFile
 
 	// gzip enabled?
 	if enableGzip {
 		filename += ".gz"
 
 		zw := gzip.NewWriter(&zb)
-		zw.Name = queryLogFileName
+		zw.Name = l.logFile
 		zw.ModTime = time.Now()
 
 		_, err = zw.Write(b.Bytes())
@@ -118,13 +134,13 @@ func checkBuffer(buffer []*logEntry, b bytes.Buffer) error {
 	return nil
 }
 
-func rotateQueryLog() error {
-	from := queryLogFileName
-	to := queryLogFileName + ".1"
+func (l *queryLog) rotateQueryLog() error {
+	from := l.logFile
+	to := l.logFile + ".1"
 
 	if enableGzip {
-		from = queryLogFileName + ".gz"
-		to = queryLogFileName + ".gz.1"
+		from = l.logFile + ".gz"
+		to = l.logFile + ".gz.1"
 	}
 
 	if _, err := os.Stat(from); os.IsNotExist(err) {
@@ -143,9 +159,9 @@ func rotateQueryLog() error {
 	return nil
 }
 
-func periodicQueryLogRotate() {
+func (l *queryLog) periodicQueryLogRotate() {
 	for range time.Tick(queryLogRotationPeriod) {
-		err := rotateQueryLog()
+		err := l.rotateQueryLog()
 		if err != nil {
 			log.Printf("Failed to rotate querylog: %s", err)
 			// do nothing, continue rotating
@@ -153,20 +169,20 @@ func periodicQueryLogRotate() {
 	}
 }
 
-func genericLoader(onEntry func(entry *logEntry) error, needMore func() bool, timeWindow time.Duration) error {
+func (l *queryLog) genericLoader(onEntry func(entry *logEntry) error, needMore func() bool, timeWindow time.Duration) error {
 	now := time.Now()
 	// read from querylog files, try newest file first
 	var files []string
 
 	if enableGzip {
 		files = []string{
-			queryLogFileName + ".gz",
-			queryLogFileName + ".gz.1",
+			l.logFile + ".gz",
+			l.logFile + ".gz.1",
 		}
 	} else {
 		files = []string{
-			queryLogFileName,
-			queryLogFileName + ".1",
+			l.logFile,
+			l.logFile + ".1",
 		}
 	}
 

@@ -100,7 +100,7 @@ func optionalAuthHandler(handler http.Handler) http.Handler {
 func detectFirstRun() bool {
 	configfile := config.ourConfigFilename
 	if !filepath.IsAbs(configfile) {
-		configfile = filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
+		configfile = filepath.Join(config.ourWorkingDir, config.ourConfigFilename)
 	}
 	_, err := os.Stat(configfile)
 	if !os.IsNotExist(err) {

@@ -1,68 +1,76 @@
 package dnsforward
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
-	"github.com/hmage/golibs/log"
 )
-
-var (
-	requests             = newDNSCounter("requests_total")
-	filtered             = newDNSCounter("filtered_total")
-	filteredLists        = newDNSCounter("filtered_lists_total")
-	filteredSafebrowsing = newDNSCounter("filtered_safebrowsing_total")
-	filteredParental     = newDNSCounter("filtered_parental_total")
-	whitelisted          = newDNSCounter("whitelisted_total")
-	safesearch           = newDNSCounter("safesearch_total")
-	errorsTotal          = newDNSCounter("errors_total")
-	elapsedTime          = newDNSHistogram("request_duration")
-)
-
-// entries for single time period (for example all per-second entries)
-type statsEntries map[string][statsHistoryElements]float64
 
 // how far back to keep the stats
 const statsHistoryElements = 60 + 1 // +1 for calculating delta
 
+// entries for single time period (for example all per-second entries)
+type statsEntries map[string][statsHistoryElements]float64
+
 // each periodic stat is a map of arrays
 type periodicStats struct {
-	Entries    statsEntries
+	entries    statsEntries
 	period     time.Duration // how long one entry lasts
-	LastRotate time.Time     // last time this data was rotated
+	lastRotate time.Time     // last time this data was rotated
 
 	sync.RWMutex
 }
 
+// stats is the DNS server historical statistics
 type stats struct {
-	PerSecond periodicStats
-	PerMinute periodicStats
-	PerHour   periodicStats
-	PerDay    periodicStats
+	perSecond periodicStats
+	perMinute periodicStats
+	perHour   periodicStats
+	perDay    periodicStats
+
+	requests             *counter   // total number of requests
+	filtered             *counter   // total number of filtered requests
+	filteredLists        *counter   // total number of requests blocked by filter lists
+	filteredSafebrowsing *counter   // total number of requests blocked by safebrowsing
+	filteredParental     *counter   // total number of requests blocked by the parental control
+	whitelisted          *counter   // total number of requests whitelisted by filter lists
+	safesearch           *counter   // total number of requests for which safe search rules were applied
+	errorsTotal          *counter   // total number of errors
+	elapsedTime          *histogram // requests duration histogram
 }
 
-// per-second/per-minute/per-hour/per-day stats
-var statistics stats
+// initializes an empty stats structure
+func newStats() *stats {
+	s := &stats{
+		requests:             newDNSCounter("requests_total"),
+		filtered:             newDNSCounter("filtered_total"),
+		filteredLists:        newDNSCounter("filtered_lists_total"),
+		filteredSafebrowsing: newDNSCounter("filtered_safebrowsing_total"),
+		filteredParental:     newDNSCounter("filtered_parental_total"),
+		whitelisted:          newDNSCounter("whitelisted_total"),
+		safesearch:           newDNSCounter("safesearch_total"),
+		errorsTotal:          newDNSCounter("errors_total"),
+		elapsedTime:          newDNSHistogram("request_duration"),
+	}
+
+	// Initializes empty per-sec/minute/hour/day stats
+	s.purgeStats()
+	return s
+}
 
 func initPeriodicStats(periodic *periodicStats, period time.Duration) {
-	periodic.Entries = statsEntries{}
-	periodic.LastRotate = time.Now()
+	periodic.entries = statsEntries{}
+	periodic.lastRotate = time.Now()
 	periodic.period = period
 }
 
-func init() {
-	purgeStats()
-}
-
-func purgeStats() {
-	initPeriodicStats(&statistics.PerSecond, time.Second)
-	initPeriodicStats(&statistics.PerMinute, time.Minute)
-	initPeriodicStats(&statistics.PerHour, time.Hour)
-	initPeriodicStats(&statistics.PerDay, time.Hour*24)
+func (s *stats) purgeStats() {
+	initPeriodicStats(&s.perSecond, time.Second)
+	initPeriodicStats(&s.perMinute, time.Minute)
+	initPeriodicStats(&s.perHour, time.Hour)
+	initPeriodicStats(&s.perDay, time.Hour*24)
 }
 
 func (p *periodicStats) Inc(name string, when time.Time) {
@@ -73,9 +81,9 @@ func (p *periodicStats) Inc(name string, when time.Time) {
 		return // outside of our timeframe
 	}
 	p.Lock()
-	currentValues := p.Entries[name]
+	currentValues := p.entries[name]
 	currentValues[elapsed]++
-	p.Entries[name] = currentValues
+	p.entries[name] = currentValues
 	p.Unlock()
 }
 
@@ -89,51 +97,51 @@ func (p *periodicStats) Observe(name string, when time.Time, value float64) {
 	p.Lock()
 	{
 		countname := name + "_count"
-		currentValues := p.Entries[countname]
+		currentValues := p.entries[countname]
 		v := currentValues[elapsed]
-		// log.Tracef("Will change p.Entries[%s][%d] from %v to %v", countname, elapsed, value, value+1)
+		// log.Tracef("Will change p.entries[%s][%d] from %v to %v", countname, elapsed, value, value+1)
 		v++
 		currentValues[elapsed] = v
-		p.Entries[countname] = currentValues
+		p.entries[countname] = currentValues
 	}
 	{
 		totalname := name + "_sum"
-		currentValues := p.Entries[totalname]
+		currentValues := p.entries[totalname]
 		currentValues[elapsed] += value
-		p.Entries[totalname] = currentValues
+		p.entries[totalname] = currentValues
 	}
 	p.Unlock()
 }
 
 func (p *periodicStats) statsRotate(now time.Time) {
 	p.Lock()
-	rotations := int64(now.Sub(p.LastRotate) / p.period)
+	rotations := int64(now.Sub(p.lastRotate) / p.period)
 	if rotations > statsHistoryElements {
 		rotations = statsHistoryElements
 	}
 	// calculate how many times we should rotate
 	for r := int64(0); r < rotations; r++ {
-		for key, values := range p.Entries {
+		for key, values := range p.entries {
 			newValues := [statsHistoryElements]float64{}
 			for i := 1; i < len(values); i++ {
 				newValues[i] = values[i-1]
 			}
-			p.Entries[key] = newValues
+			p.entries[key] = newValues
 		}
 	}
 	if rotations > 0 {
-		p.LastRotate = now
+		p.lastRotate = now
 	}
 	p.Unlock()
 }
 
-func statsRotator() {
+func (s *stats) statsRotator() {
 	for range time.Tick(time.Second) {
 		now := time.Now()
-		statistics.PerSecond.statsRotate(now)
-		statistics.PerMinute.statsRotate(now)
-		statistics.PerHour.statsRotate(now)
-		statistics.PerDay.statsRotate(now)
+		s.perSecond.statsRotate(now)
+		s.perMinute.statsRotate(now)
+		s.perHour.statsRotate(now)
+		s.perDay.statsRotate(now)
 	}
 }
 
@@ -152,18 +160,14 @@ func newDNSCounter(name string) *counter {
 	}
 }
 
-func (c *counter) IncWithTime(when time.Time) {
-	statistics.PerSecond.Inc(c.name, when)
-	statistics.PerMinute.Inc(c.name, when)
-	statistics.PerHour.Inc(c.name, when)
-	statistics.PerDay.Inc(c.name, when)
+func (s *stats) incWithTime(c *counter, when time.Time) {
+	s.perSecond.Inc(c.name, when)
+	s.perMinute.Inc(c.name, when)
+	s.perHour.Inc(c.name, when)
+	s.perDay.Inc(c.name, when)
 	c.Lock()
 	c.value++
 	c.Unlock()
-}
-
-func (c *counter) Inc() {
-	c.IncWithTime(time.Now())
 }
 
 type histogram struct {
@@ -180,56 +184,52 @@ func newDNSHistogram(name string) *histogram {
 	}
 }
 
-func (h *histogram) ObserveWithTime(value float64, when time.Time) {
-	statistics.PerSecond.Observe(h.name, when, value)
-	statistics.PerMinute.Observe(h.name, when, value)
-	statistics.PerHour.Observe(h.name, when, value)
-	statistics.PerDay.Observe(h.name, when, value)
+func (s *stats) observeWithTime(h *histogram, value float64, when time.Time) {
+	s.perSecond.Observe(h.name, when, value)
+	s.perMinute.Observe(h.name, when, value)
+	s.perHour.Observe(h.name, when, value)
+	s.perDay.Observe(h.name, when, value)
 	h.Lock()
 	h.count++
 	h.total += value
 	h.Unlock()
 }
 
-func (h *histogram) Observe(value float64) {
-	h.ObserveWithTime(value, time.Now())
-}
-
 // -----
 // stats
 // -----
-func incrementCounters(entry *logEntry) {
-	requests.IncWithTime(entry.Time)
+func (s *stats) incrementCounters(entry *logEntry) {
+	s.incWithTime(s.requests, entry.Time)
 	if entry.Result.IsFiltered {
-		filtered.IncWithTime(entry.Time)
+		s.incWithTime(s.filtered, entry.Time)
 	}
 
 	switch entry.Result.Reason {
 	case dnsfilter.NotFilteredWhiteList:
-		whitelisted.IncWithTime(entry.Time)
+		s.incWithTime(s.whitelisted, entry.Time)
 	case dnsfilter.NotFilteredError:
-		errorsTotal.IncWithTime(entry.Time)
+		s.incWithTime(s.errorsTotal, entry.Time)
 	case dnsfilter.FilteredBlackList:
-		filteredLists.IncWithTime(entry.Time)
+		s.incWithTime(s.filteredLists, entry.Time)
 	case dnsfilter.FilteredSafeBrowsing:
-		filteredSafebrowsing.IncWithTime(entry.Time)
+		s.incWithTime(s.filteredSafebrowsing, entry.Time)
 	case dnsfilter.FilteredParental:
-		filteredParental.IncWithTime(entry.Time)
+		s.incWithTime(s.filteredParental, entry.Time)
 	case dnsfilter.FilteredInvalid:
 		// do nothing
 	case dnsfilter.FilteredSafeSearch:
-		safesearch.IncWithTime(entry.Time)
+		s.incWithTime(s.safesearch, entry.Time)
 	}
-	elapsedTime.ObserveWithTime(entry.Elapsed.Seconds(), entry.Time)
+	s.observeWithTime(s.elapsedTime, entry.Elapsed.Seconds(), entry.Time)
 }
 
-// HandleStats returns aggregated stats data for the 24 hours
-func HandleStats(w http.ResponseWriter, r *http.Request) {
+// getAggregatedStats returns aggregated stats data for the 24 hours
+func (s *stats) getAggregatedStats() map[string]interface{} {
 	const numHours = 24
-	histrical := generateMapFromStats(&statistics.PerHour, 0, numHours)
+	historical := s.generateMapFromStats(&s.perHour, 0, numHours)
 	// sum them up
 	summed := map[string]interface{}{}
-	for key, values := range histrical {
+	for key, values := range historical {
 		summedValue := 0.0
 		floats, ok := values.([]float64)
 		if !ok {
@@ -249,33 +249,18 @@ func HandleStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	summed["stats_period"] = "24 hours"
-
-	json, err := json.Marshal(summed)
-	if err != nil {
-		errorText := fmt.Sprintf("Unable to marshal status json: %s", err)
-		log.Println(errorText)
-		http.Error(w, errorText, 500)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(json)
-	if err != nil {
-		errorText := fmt.Sprintf("Unable to write response json: %s", err)
-		log.Println(errorText)
-		http.Error(w, errorText, 500)
-		return
-	}
+	return summed
 }
 
-func generateMapFromStats(stats *periodicStats, start int, end int) map[string]interface{} {
+func (s *stats) generateMapFromStats(stats *periodicStats, start int, end int) map[string]interface{} {
 	// clamp
 	start = clamp(start, 0, statsHistoryElements)
 	end = clamp(end, 0, statsHistoryElements)
 
 	avgProcessingTime := make([]float64, 0)
 
-	count := getReversedSlice(stats.Entries[elapsedTime.name+"_count"], start, end)
-	sum := getReversedSlice(stats.Entries[elapsedTime.name+"_sum"], start, end)
+	count := getReversedSlice(stats.entries[s.elapsedTime.name+"_count"], start, end)
+	sum := getReversedSlice(stats.entries[s.elapsedTime.name+"_sum"], start, end)
 	for i := 0; i < len(count); i++ {
 		var avg float64
 		if count[i] != 0 {
@@ -286,66 +271,48 @@ func generateMapFromStats(stats *periodicStats, start int, end int) map[string]i
 	}
 
 	result := map[string]interface{}{
-		"dns_queries":           getReversedSlice(stats.Entries[requests.name], start, end),
-		"blocked_filtering":     getReversedSlice(stats.Entries[filtered.name], start, end),
-		"replaced_safebrowsing": getReversedSlice(stats.Entries[filteredSafebrowsing.name], start, end),
-		"replaced_safesearch":   getReversedSlice(stats.Entries[safesearch.name], start, end),
-		"replaced_parental":     getReversedSlice(stats.Entries[filteredParental.name], start, end),
+		"dns_queries":           getReversedSlice(stats.entries[s.requests.name], start, end),
+		"blocked_filtering":     getReversedSlice(stats.entries[s.filtered.name], start, end),
+		"replaced_safebrowsing": getReversedSlice(stats.entries[s.filteredSafebrowsing.name], start, end),
+		"replaced_safesearch":   getReversedSlice(stats.entries[s.safesearch.name], start, end),
+		"replaced_parental":     getReversedSlice(stats.entries[s.filteredParental.name], start, end),
 		"avg_processing_time":   avgProcessingTime,
 	}
 	return result
 }
 
-// HandleStatsHistory returns historical stats data for the 24 hours
-func HandleStatsHistory(w http.ResponseWriter, r *http.Request) {
-	// handle time unit and prepare our time window size
-	now := time.Now()
-	timeUnitString := r.URL.Query().Get("time_unit")
+// getStatsHistory gets stats history aggregated by the specified time unit
+// timeUnit is either time.Second, time.Minute, time.Hour, or 24*time.Hour
+// start is start of the time range
+// end is end of the time range
+// returns nil if time unit is not supported
+func (s *stats) getStatsHistory(timeUnit time.Duration, startTime time.Time, endTime time.Time) (map[string]interface{}, error) {
 	var stats *periodicStats
-	var timeUnit time.Duration
-	switch timeUnitString {
-	case "seconds":
-		timeUnit = time.Second
-		stats = &statistics.PerSecond
-	case "minutes":
-		timeUnit = time.Minute
-		stats = &statistics.PerMinute
-	case "hours":
-		timeUnit = time.Hour
-		stats = &statistics.PerHour
-	case "days":
-		timeUnit = time.Hour * 24
-		stats = &statistics.PerDay
-	default:
-		http.Error(w, "Must specify valid time_unit parameter", 400)
-		return
+
+	switch timeUnit {
+	case time.Second:
+		stats = &s.perSecond
+	case time.Minute:
+		stats = &s.perMinute
+	case time.Hour:
+		stats = &s.perHour
+	case 24 * time.Hour:
+		stats = &s.perDay
 	}
 
-	// parse start and end time
-	startTime, err := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
-	if err != nil {
-		errorText := fmt.Sprintf("Must specify valid start_time parameter: %s", err)
-		log.Println(errorText)
-		http.Error(w, errorText, 400)
-		return
+	if stats == nil {
+		return nil, fmt.Errorf("unsupported time unit: %v", timeUnit)
 	}
-	endTime, err := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
-	if err != nil {
-		errorText := fmt.Sprintf("Must specify valid end_time parameter: %s", err)
-		log.Println(errorText)
-		http.Error(w, errorText, 400)
-		return
-	}
+
+	now := time.Now()
 
 	// check if start and time times are within supported time range
 	timeRange := timeUnit * statsHistoryElements
 	if startTime.Add(timeRange).Before(now) {
-		http.Error(w, "start_time parameter is outside of supported range", http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("start_time parameter is outside of supported range: %s", startTime.String())
 	}
 	if endTime.Add(timeRange).Before(now) {
-		http.Error(w, "end_time parameter is outside of supported range", http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("end_time parameter is outside of supported range: %s", startTime.String())
 	}
 
 	// calculate start and end of our array
@@ -358,33 +325,7 @@ func HandleStatsHistory(w http.ResponseWriter, r *http.Request) {
 		start, end = end, start
 	}
 
-	data := generateMapFromStats(stats, start, end)
-	json, err := json.Marshal(data)
-	if err != nil {
-		errorText := fmt.Sprintf("Unable to marshal status json: %s", err)
-		log.Println(errorText)
-		http.Error(w, errorText, 500)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(json)
-	if err != nil {
-		errorText := fmt.Sprintf("Unable to write response json: %s", err)
-		log.Println(errorText)
-		http.Error(w, errorText, 500)
-		return
-	}
-}
-
-// HandleStatsReset resets the stats caches
-func HandleStatsReset(w http.ResponseWriter, r *http.Request) {
-	purgeStats()
-	_, err := fmt.Fprintf(w, "OK\n")
-	if err != nil {
-		errorText := fmt.Sprintf("Couldn't write body: %s", err)
-		log.Println(errorText)
-		http.Error(w, errorText, http.StatusInternalServerError)
-	}
+	return s.generateMapFromStats(stats, start, end), nil
 }
 
 func clamp(value, low, high int) int {

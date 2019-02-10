@@ -66,7 +66,7 @@ func run(args options) {
 
 	// print the first message after logger is configured
 	log.Printf("AdGuard Home, version %s\n", VersionString)
-	log.Tracef("Current working directory is %s", config.ourBinaryDir)
+	log.Tracef("Current working directory is %s", config.ourWorkingDir)
 	if args.runningAsService {
 		log.Printf("AdGuard Home is running as a service")
 	}
@@ -116,6 +116,10 @@ func run(args options) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// Init the DNS server instance before registering HTTP handlers
+	dnsBaseDir := filepath.Join(config.ourWorkingDir, dataDir)
+	initDNSServer(dnsBaseDir)
 
 	if !config.firstRun {
 		err = startDNSServer()
@@ -172,18 +176,19 @@ func run(args options) {
 	}
 }
 
-// initWorkingDir initializes the ourBinaryDir (basically, we use it as a working dir)
+// initWorkingDir initializes the ourWorkingDir
+// if no command-line arguments specified, we use the directory where our binary file is located
 func initWorkingDir(args options) {
 	exec, err := os.Executable()
 	if err != nil {
 		panic(err)
 	}
 
-	if args.configFilename != "" {
+	if args.workDir != "" {
 		// If there is a custom config file, use it's directory as our working dir
-		config.ourBinaryDir = filepath.Dir(args.configFilename)
+		config.ourWorkingDir = args.workDir
 	} else {
-		config.ourBinaryDir = filepath.Dir(exec)
+		config.ourWorkingDir = filepath.Dir(exec)
 	}
 }
 
@@ -218,7 +223,7 @@ func configureLogger(args options) {
 			log.Fatalf("cannot initialize syslog: %s", err)
 		}
 	} else {
-		logFilePath := filepath.Join(config.ourBinaryDir, ls.LogFile)
+		logFilePath := filepath.Join(config.ourWorkingDir, ls.LogFile)
 		file, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0755)
 		if err != nil {
 			log.Fatalf("cannot create a log file: %s", err)
@@ -244,6 +249,7 @@ func cleanup() {
 type options struct {
 	verbose        bool   // is verbose logging enabled
 	configFilename string // path to the config file
+	workDir        string // path to the working directory where we will store the filters data and the querylog
 	bindHost       string // host address to bind HTTP server on
 	bindPort       int    // port to serve HTTP pages on
 	logFile        string // Path to the log file. If empty, write to stdout. If "syslog", writes to syslog
@@ -267,7 +273,8 @@ func loadOptions() options {
 		callbackWithValue func(value string)
 		callbackNoValue   func()
 	}{
-		{"config", "c", "path to config file", func(value string) { o.configFilename = value }, nil},
+		{"config", "c", "path to the config file", func(value string) { o.configFilename = value }, nil},
+		{"work-dir", "w", "path to the working directory", func(value string) { o.workDir = value }, nil},
 		{"host", "h", "host address to bind HTTP server on", func(value string) { o.bindHost = value }, nil},
 		{"port", "p", "port to serve HTTP pages on", func(value string) {
 			v, err := strconv.Atoi(value)
