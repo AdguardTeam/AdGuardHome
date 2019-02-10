@@ -115,7 +115,7 @@ func getLogSettings() logSettings {
 // parseConfig loads configuration from the YAML file
 func parseConfig() error {
 	configFile := config.getConfigFilename()
-	log.Tracef("Reading YAML file: %s", configFile)
+	log.Printf("Reading config file: %s", configFile)
 	yamlFile, err := readConfigFile()
 	if err != nil {
 		log.Printf("Couldn't read config file: %s", err)

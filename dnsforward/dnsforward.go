@@ -39,6 +39,7 @@ type Server struct {
 	dnsFilter *dnsfilter.Dnsfilter // DNS filter instance
 	queryLog  *queryLog            // Query log instance
 	stats     *stats               // General server statistics
+	once      sync.Once
 
 	sync.RWMutex
 	ServerConfig
@@ -126,8 +127,9 @@ func (s *Server) startInternal(config *ServerConfig) error {
 		return errorx.Decorate(err, "failed to load stats from querylog")
 	}
 
-	// TODO: Start starts rotators, stop stops rotators
-	once.Do(func() {
+	// TODO: Think about reworking this, the current approach won't work properly if AG Home is restarted periodically
+	s.once.Do(func() {
+		log.Printf("Start DNS server periodic jobs")
 		go s.queryLog.periodicQueryLogRotate()
 		go s.queryLog.runningTop.periodicHourlyTopRotate()
 		go s.stats.statsRotator()
@@ -436,5 +438,3 @@ func (s *Server) genSOA(request *dns.Msg) []dns.RR {
 	}
 	return []dns.RR{&soa}
 }
-
-var once sync.Once
