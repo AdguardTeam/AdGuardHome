@@ -95,6 +95,10 @@ var config = configuration{
 		},
 		UpstreamDNS: defaultDNS,
 	},
+	TLS: tlsConfig{
+		PortHTTPS:      443,
+		PortDNSOverTLS: 853, // needs to be passed through to dnsproxy
+	},
 	Filters: []filter{
 		{Filter: dnsfilter.Filter{ID: 1}, Enabled: true, URL: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt", Name: "AdGuard Simplified Domain Names filter"},
 		{Filter: dnsfilter.Filter{ID: 2}, Enabled: false, URL: "https://adaway.org/hosts.txt", Name: "AdAway"},
