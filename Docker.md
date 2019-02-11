@@ -1,61 +1,10 @@
-&nbsp;
-<p align="center">
-  <img src="https://cdn.adguard.com/public/Adguard/Common/adguard_home.svg" width="300px" alt="AdGuard Home" />
-</p>
-<h3 align="center">Privacy protection center for you and your devices</h3>
-<p align="center">
-  Free and open source, powerful network-wide ads & trackers blocking DNS server.
-</p>
-
-<p align="center">
-    <a href="https://adguard.com/">AdGuard.com</a> |
-    <a href="https://github.com/AdguardTeam/AdGuardHome/wiki">Wiki</a> |
-    <a href="https://reddit.com/r/Adguard">Reddit</a> |
-    <a href="https://twitter.com/AdGuard">Twitter</a> |
-    <a href="https://t.me/adguard_en">Telegram</a>
-    <br /><br />
-    <a href="https://travis-ci.org/AdguardTeam/AdGuardHome">
-      <img src="https://travis-ci.org/AdguardTeam/AdGuardHome.svg" alt="Build status" />
-    </a>
-    <a href="https://codecov.io/github/AdguardTeam/AdGuardHome?branch=master">
-      <img src="https://img.shields.io/codecov/c/github/AdguardTeam/AdGuardHome/master.svg" alt="Code Coverage" />
-    </a>
-    <a href="https://goreportcard.com/report/AdguardTeam/AdGuardHome">
-      <img src="https://goreportcard.com/badge/github.com/AdguardTeam/AdGuardHome" alt="Go Report Card" />
-    </a>
-    <a href="https://golangci.com/r/github.com/AdguardTeam/AdGuardHome">
-      <img src="https://golangci.com/badges/github.com/AdguardTeam/AdGuardHome.svg" alt="GolangCI" />
-    </a>
-    <a href="https://github.com/AdguardTeam/AdGuardHome/releases">
-        <img src="https://img.shields.io/github/release/AdguardTeam/AdGuardHome/all.svg" alt="Latest release" />
-    </a>
-</p>
-
-<br />
-
-<p align="center">
-    <img src="https://cdn.adguard.com/public/Adguard/Common/adguard_home.gif" width="800" />
-</p>
-
-<hr />
-
-# AdGuard Home
+# AdGuard Home - Docker
 
 AdGuard Home is a network-wide software for blocking ads & tracking. After you set it up, it'll cover ALL your home devices, and you don't need any client-side software for that.
 
 ## How does AdGuard Home work?
 
 AdGuard Home operates as a DNS server that re-routes tracking domains to a "black hole," thus preventing your devices from connecting to those servers. It's based on software we use for our public [AdGuard DNS](https://adguard.com/en/adguard-dns/overview.html) servers -- both share a lot of common code.
-
-## How is this different from public AdGuard DNS servers?
-
-Running your own AdGuard Home server allows you to do much more than using a public DNS server.
-
-* Choose what exactly will the server block or not block;
-* Monitor your network activity;
-* Add your own custom filtering rules;
-
-In the future, AdGuard Home is supposed to become more than just a DNS server.
 
 ## Supported tags / architectures
 
@@ -143,9 +92,3 @@ To update the image for a specific architecture e.g. `arm64`:
 ```bash
 docker pull adguard/adguardhome:arm64-latest
 ```
-
-## Reporting issues
-
-If you run into any problem or have a suggestion, head to [this page](https://github.com/AdguardTeam/AdGuardHome/issues) and click on the `New issue` button.
-
-
