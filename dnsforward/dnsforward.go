@@ -35,12 +35,23 @@ const (
 //
 // The zero Server is empty and ready for use.
 type Server struct {
-	dnsProxy *proxy.Proxy // DNS proxy instance
-
+	dnsProxy  *proxy.Proxy         // DNS proxy instance
 	dnsFilter *dnsfilter.Dnsfilter // DNS filter instance
+	queryLog  *queryLog            // Query log instance
+	stats     *stats               // General server statistics
+	once      sync.Once
 
 	sync.RWMutex
 	ServerConfig
+}
+
+// NewServer creates a new instance of the dnsforward.Server
+// baseDir is the base directory for query logs
+func NewServer(baseDir string) *Server {
+	return &Server{
+		queryLog: newQueryLog(baseDir),
+		stats:    newStats(),
+	}
 }
 
 // FilteringConfig represents the DNS filtering configuration of AdGuard Home
@@ -105,21 +116,31 @@ func (s *Server) startInternal(config *ServerConfig) error {
 		return errors.New("DNS server is already started")
 	}
 
+	if s.queryLog == nil {
+		s.queryLog = newQueryLog(".")
+	}
+
+	if s.stats == nil {
+		s.stats = newStats()
+	}
+
 	err := s.initDNSFilter()
 	if err != nil {
 		return err
 	}
 
 	log.Tracef("Loading stats from querylog")
-	err = fillStatsFromQueryLog()
+	err = s.queryLog.fillStatsFromQueryLog(s.stats)
 	if err != nil {
 		return errorx.Decorate(err, "failed to load stats from querylog")
 	}
 
-	once.Do(func() {
-		go periodicQueryLogRotate()
-		go periodicHourlyTopRotate()
-		go statsRotator()
+	// TODO: Think about reworking this, the current approach won't work properly if AG Home is restarted periodically
+	s.once.Do(func() {
+		log.Printf("Start DNS server periodic jobs")
+		go s.queryLog.periodicQueryLogRotate()
+		go s.queryLog.runningTop.periodicHourlyTopRotate()
+		go s.stats.statsRotator()
 	})
 
 	proxyConfig := proxy.Config{
@@ -187,17 +208,7 @@ func (s *Server) stopInternal() error {
 	}
 
 	// flush remainder to file
-	logBufferLock.Lock()
-	flushBuffer := logBuffer
-	logBuffer = nil
-	logBufferLock.Unlock()
-	err := flushToFile(flushBuffer)
-	if err != nil {
-		log.Printf("Saving querylog to file failed: %s", err)
-		return err
-	}
-
-	return nil
+	return s.queryLog.flushLogBuffer()
 }
 
 // IsRunning returns true if the DNS server is running
@@ -227,6 +238,36 @@ func (s *Server) Reconfigure(config *ServerConfig) error {
 	}
 
 	return nil
+}
+
+// GetQueryLog returns a map with the current query log ready to be converted to a JSON
+func (s *Server) GetQueryLog() []map[string]interface{} {
+	return s.queryLog.getQueryLog()
+}
+
+// GetStatsTop returns the current stop stats
+func (s *Server) GetStatsTop() *StatsTop {
+	return s.queryLog.runningTop.getStatsTop()
+}
+
+// PurgeStats purges current server stats
+func (s *Server) PurgeStats() {
+	// TODO: Locks?
+	s.stats.purgeStats()
+}
+
+// GetAggregatedStats returns aggregated stats data for the 24 hours
+func (s *Server) GetAggregatedStats() map[string]interface{} {
+	return s.stats.getAggregatedStats()
+}
+
+// GetStatsHistory gets stats history aggregated by the specified time unit
+// timeUnit is either time.Second, time.Minute, time.Hour, or 24*time.Hour
+// start is start of the time range
+// end is end of the time range
+// returns nil if time unit is not supported
+func (s *Server) GetStatsHistory(timeUnit time.Duration, startTime time.Time, endTime time.Time) (map[string]interface{}, error) {
+	return s.stats.getStatsHistory(timeUnit, startTime, endTime)
 }
 
 // handleDNSRequest filters the incoming DNS requests and writes them to the query log
@@ -261,7 +302,10 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 		if d.Upstream != nil {
 			upstreamAddr = d.Upstream.Address()
 		}
-		logRequest(msg, d.Res, res, elapsed, d.Addr, upstreamAddr)
+		entry := s.queryLog.logRequest(msg, d.Res, res, elapsed, d.Addr, upstreamAddr)
+		if entry != nil {
+			s.stats.incrementCounters(entry)
+		}
 	}
 
 	return nil
@@ -402,5 +446,3 @@ func (s *Server) genSOA(request *dns.Msg) []dns.RR {
 	}
 	return []dns.RR{&soa}
 }
-
-var once sync.Once

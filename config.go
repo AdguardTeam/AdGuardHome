@@ -28,7 +28,7 @@ type logSettings struct {
 // field ordering is important -- yaml fields will mirror ordering from here
 type configuration struct {
 	ourConfigFilename string // Config filename (can be overridden via the command line arguments)
-	ourBinaryDir      string // Location of our directory, used to protect against CWD being somewhere else
+	ourWorkingDir     string // Location of our directory, used to protect against CWD being somewhere else
 	firstRun          bool   // if set to true, don't run any services except HTTP web inteface, and serve only first-run html
 
 	BindHost  string             `yaml:"bind_host"`
@@ -92,7 +92,7 @@ var config = configuration{
 func (c *configuration) getConfigFilename() string {
 	configFile := config.ourConfigFilename
 	if !filepath.IsAbs(configFile) {
-		configFile = filepath.Join(config.ourBinaryDir, config.ourConfigFilename)
+		configFile = filepath.Join(config.ourWorkingDir, config.ourConfigFilename)
 	}
 	return configFile
 }
@@ -115,7 +115,7 @@ func getLogSettings() logSettings {
 // parseConfig loads configuration from the YAML file
 func parseConfig() error {
 	configFile := config.getConfigFilename()
-	log.Tracef("Reading YAML file: %s", configFile)
+	log.Printf("Reading config file: %s", configFile)
 	yamlFile, err := readConfigFile()
 	if err != nil {
 		log.Printf("Couldn't read config file: %s", err)

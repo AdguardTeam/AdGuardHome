@@ -1,10 +1,9 @@
 package dnsforward
 
 import (
-	"encoding/json"
 	"fmt"
 	"net"
-	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -24,13 +23,27 @@ const (
 	queryLogTopSize        = 500             // Keep in memory only top N values
 )
 
-var (
+// queryLog is a structure that writes and reads the DNS query log
+type queryLog struct {
+	logFile    string  // path to the log file
+	runningTop *dayTop // current top charts
+
 	logBufferLock sync.RWMutex
 	logBuffer     []*logEntry
 
 	queryLogCache []*logEntry
 	queryLogLock  sync.RWMutex
-)
+}
+
+// newQueryLog creates a new instance of the query log
+func newQueryLog(baseDir string) *queryLog {
+	l := &queryLog{
+		logFile:    filepath.Join(baseDir, queryLogFileName),
+		runningTop: &dayTop{},
+	}
+	l.runningTop.init()
+	return l
+}
 
 type logEntry struct {
 	Question []byte
@@ -42,7 +55,7 @@ type logEntry struct {
 	Upstream string `json:",omitempty"` // if empty, means it was cached
 }
 
-func logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, elapsed time.Duration, addr net.Addr, upstream string) {
+func (l *queryLog) logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, elapsed time.Duration, addr net.Addr, upstream string) *logEntry {
 	var q []byte
 	var a []byte
 	var err error
@@ -52,7 +65,7 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, el
 		q, err = question.Pack()
 		if err != nil {
 			log.Printf("failed to pack question for querylog: %s", err)
-			return
+			return nil
 		}
 	}
 
@@ -60,7 +73,7 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, el
 		a, err = answer.Pack()
 		if err != nil {
 			log.Printf("failed to pack answer for querylog: %s", err)
-			return
+			return nil
 		}
 	}
 
@@ -80,49 +93,49 @@ func logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, el
 	}
 	var flushBuffer []*logEntry
 
-	logBufferLock.Lock()
-	logBuffer = append(logBuffer, &entry)
-	if len(logBuffer) >= logBufferCap {
-		flushBuffer = logBuffer
-		logBuffer = nil
+	l.logBufferLock.Lock()
+	l.logBuffer = append(l.logBuffer, &entry)
+	if len(l.logBuffer) >= logBufferCap {
+		flushBuffer = l.logBuffer
+		l.logBuffer = nil
 	}
-	logBufferLock.Unlock()
-	queryLogLock.Lock()
-	queryLogCache = append(queryLogCache, &entry)
-	if len(queryLogCache) > queryLogSize {
-		toremove := len(queryLogCache) - queryLogSize
-		queryLogCache = queryLogCache[toremove:]
+	l.logBufferLock.Unlock()
+	l.queryLogLock.Lock()
+	l.queryLogCache = append(l.queryLogCache, &entry)
+	if len(l.queryLogCache) > queryLogSize {
+		toremove := len(l.queryLogCache) - queryLogSize
+		l.queryLogCache = l.queryLogCache[toremove:]
 	}
-	queryLogLock.Unlock()
+	l.queryLogLock.Unlock()
 
 	// add it to running top
-	err = runningTop.addEntry(&entry, question, now)
+	err = l.runningTop.addEntry(&entry, question, now)
 	if err != nil {
 		log.Printf("Failed to add entry to running top: %s", err)
 		// don't do failure, just log
 	}
-
-	incrementCounters(&entry)
 
 	// if buffer needs to be flushed to disk, do it now
 	if len(flushBuffer) > 0 {
 		// write to file
 		// do it in separate goroutine -- we are stalling DNS response this whole time
 		go func() {
-			err := flushToFile(flushBuffer)
+			err := l.flushToFile(flushBuffer)
 			if err != nil {
 				log.Printf("Failed to flush the query log: %s", err)
 			}
 		}()
 	}
+
+	return &entry
 }
 
-// HandleQueryLog handles query log web request
-func HandleQueryLog(w http.ResponseWriter, r *http.Request) {
-	queryLogLock.RLock()
-	values := make([]*logEntry, len(queryLogCache))
-	copy(values, queryLogCache)
-	queryLogLock.RUnlock()
+// getQueryLogJson returns a map with the current query log ready to be converted to a JSON
+func (l *queryLog) getQueryLog() []map[string]interface{} {
+	l.queryLogLock.RLock()
+	values := make([]*logEntry, len(l.queryLogCache))
+	copy(values, l.queryLogCache)
+	l.queryLogLock.RUnlock()
 
 	// reverse it so that newest is first
 	for left, right := 0, len(values)-1; left < right; left, right = left+1, right-1 {
@@ -182,21 +195,7 @@ func HandleQueryLog(w http.ResponseWriter, r *http.Request) {
 		data = append(data, jsonEntry)
 	}
 
-	jsonVal, err := json.Marshal(data)
-	if err != nil {
-		errorText := fmt.Sprintf("Couldn't marshal data into json: %s", err)
-		log.Println(errorText)
-		http.Error(w, errorText, http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
-	if err != nil {
-		errorText := fmt.Sprintf("Unable to write response json: %s", err)
-		log.Println(errorText)
-		http.Error(w, errorText, http.StatusInternalServerError)
-	}
+	return data
 }
 
 func answerToMap(a *dns.Msg) []map[string]interface{} {

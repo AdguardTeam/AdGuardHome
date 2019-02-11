@@ -26,7 +26,7 @@ type filter struct {
 	URL         string    `json:"url"`
 	Name        string    `json:"name" yaml:"name"`
 	RulesCount  int       `json:"rulesCount" yaml:"-"`
-	LastUpdated time.Time `json:"lastUpdated,omitempty" yaml:"last_updated,omitempty"`
+	LastUpdated time.Time `json:"lastUpdated,omitempty" yaml:"-"`
 
 	dnsfilter.Filter `yaml:",inline"`
 }
@@ -93,6 +93,12 @@ func refreshFiltersIfNecessary(force bool) int {
 
 		if filter.ID == 0 { // protect against users modifying the yaml and removing the ID
 			filter.ID = assignUniqueFilterID()
+		}
+
+		if len(filter.Rules) == 0 {
+			// Try reloading filter from the disk before updating
+			// This is useful for the case when we simply enable a previously downloaded filter
+			_ = filter.load()
 		}
 
 		updated, err := filter.update(force)
@@ -162,9 +168,6 @@ func (filter *filter) update(force bool) (bool, error) {
 
 	log.Printf("Downloading update for filter %d from %s", filter.ID, filter.URL)
 
-	// use the same update period for failed filter downloads to avoid flooding with requests
-	filter.LastUpdated = time.Now()
-
 	resp, err := client.Get(filter.URL)
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()
@@ -217,7 +220,11 @@ func (filter *filter) save() error {
 	log.Printf("Saving filter %d contents to: %s", filter.ID, filterFilePath)
 	body := []byte(strings.Join(filter.Rules, "\n"))
 
-	return safeWriteFile(filterFilePath, body)
+	err := safeWriteFile(filterFilePath, body)
+
+	// update LastUpdated field after saving the file
+	filter.LastUpdated = filter.LastTimeUpdated()
+	return err
 }
 
 // loads filter contents from the file in dataDir
@@ -245,11 +252,30 @@ func (filter *filter) load() error {
 
 	filter.RulesCount = rulesCount
 	filter.Rules = rules
+	filter.LastUpdated = filter.LastTimeUpdated()
 
 	return nil
 }
 
 // Path to the filter contents
 func (filter *filter) Path() string {
-	return filepath.Join(config.ourBinaryDir, dataDir, filterDir, strconv.FormatInt(filter.ID, 10)+".txt")
+	return filepath.Join(config.ourWorkingDir, dataDir, filterDir, strconv.FormatInt(filter.ID, 10)+".txt")
+}
+
+// LastUpdated returns the time when the filter was last time updated
+func (filter *filter) LastTimeUpdated() time.Time {
+	filterFilePath := filter.Path()
+	if _, err := os.Stat(filterFilePath); os.IsNotExist(err) {
+		// if the filter file does not exist, return 0001-01-01
+		return time.Time{}
+	}
+
+	s, err := os.Stat(filterFilePath)
+	if err != nil {
+		// if the filter file does not exist, return 0001-01-01
+		return time.Time{}
+	}
+
+	// filter file modified time
+	return s.ModTime()
 }

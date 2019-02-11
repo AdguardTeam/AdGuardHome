@@ -1,14 +1,10 @@
 package dnsforward
 
 import (
-	"bytes"
 	"fmt"
-	"net/http"
 	"os"
 	"path"
 	"runtime"
-	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -40,32 +36,30 @@ type dayTop struct {
 	loadedLock sync.Mutex
 }
 
-var runningTop dayTop
-
-func init() {
-	runningTop.hoursWriteLock()
+func (d *dayTop) init() {
+	d.hoursWriteLock()
 	for i := 0; i < 24; i++ {
 		hour := hourTop{}
 		hour.init()
-		runningTop.hours = append(runningTop.hours, &hour)
+		d.hours = append(d.hours, &hour)
 	}
-	runningTop.hoursWriteUnlock()
+	d.hoursWriteUnlock()
 }
 
-func rotateHourlyTop() {
+func (d *dayTop) rotateHourlyTop() {
 	log.Printf("Rotating hourly top")
 	hour := &hourTop{}
 	hour.init()
-	runningTop.hoursWriteLock()
-	runningTop.hours = append([]*hourTop{hour}, runningTop.hours...)
-	runningTop.hours = runningTop.hours[:24]
-	runningTop.hoursWriteUnlock()
+	d.hoursWriteLock()
+	d.hours = append([]*hourTop{hour}, d.hours...)
+	d.hours = d.hours[:24]
+	d.hoursWriteUnlock()
 }
 
-func periodicHourlyTopRotate() {
+func (d *dayTop) periodicHourlyTopRotate() {
 	t := time.Hour
 	for range time.Tick(t) {
-		rotateHourlyTop()
+		d.rotateHourlyTop()
 	}
 }
 
@@ -165,16 +159,16 @@ func (d *dayTop) addEntry(entry *logEntry, q *dns.Msg, now time.Time) error {
 	hostname := strings.ToLower(strings.TrimSuffix(q.Question[0].Name, "."))
 
 	// get value, if not set, crate one
-	runningTop.hoursReadLock()
-	defer runningTop.hoursReadUnlock()
-	err := runningTop.hours[hour].incrementDomains(hostname)
+	d.hoursReadLock()
+	defer d.hoursReadUnlock()
+	err := d.hours[hour].incrementDomains(hostname)
 	if err != nil {
 		log.Printf("Failed to increment value: %s", err)
 		return err
 	}
 
 	if entry.Result.IsFiltered {
-		err := runningTop.hours[hour].incrementBlocked(hostname)
+		err := d.hours[hour].incrementBlocked(hostname)
 		if err != nil {
 			log.Printf("Failed to increment value: %s", err)
 			return err
@@ -182,7 +176,7 @@ func (d *dayTop) addEntry(entry *logEntry, q *dns.Msg, now time.Time) error {
 	}
 
 	if len(entry.IP) > 0 {
-		err := runningTop.hours[hour].incrementClients(entry.IP)
+		err := d.hours[hour].incrementClients(entry.IP)
 		if err != nil {
 			log.Printf("Failed to increment value: %s", err)
 			return err
@@ -192,11 +186,11 @@ func (d *dayTop) addEntry(entry *logEntry, q *dns.Msg, now time.Time) error {
 	return nil
 }
 
-func fillStatsFromQueryLog() error {
+func (l *queryLog) fillStatsFromQueryLog(s *stats) error {
 	now := time.Now()
-	runningTop.loadedWriteLock()
-	defer runningTop.loadedWriteUnlock()
-	if runningTop.loaded {
+	l.runningTop.loadedWriteLock()
+	defer l.runningTop.loadedWriteUnlock()
+	if l.runningTop.loaded {
 		return nil
 	}
 	onEntry := func(entry *logEntry) error {
@@ -221,42 +215,49 @@ func fillStatsFromQueryLog() error {
 			return nil
 		}
 
-		err := runningTop.addEntry(entry, q, now)
+		err := l.runningTop.addEntry(entry, q, now)
 		if err != nil {
 			log.Printf("Failed to add entry to running top: %s", err)
 			return err
 		}
 
-		queryLogLock.Lock()
-		queryLogCache = append(queryLogCache, entry)
-		if len(queryLogCache) > queryLogSize {
-			toremove := len(queryLogCache) - queryLogSize
-			queryLogCache = queryLogCache[toremove:]
+		l.queryLogLock.Lock()
+		l.queryLogCache = append(l.queryLogCache, entry)
+		if len(l.queryLogCache) > queryLogSize {
+			toremove := len(l.queryLogCache) - queryLogSize
+			l.queryLogCache = l.queryLogCache[toremove:]
 		}
-		queryLogLock.Unlock()
+		l.queryLogLock.Unlock()
 
-		incrementCounters(entry)
-
+		s.incrementCounters(entry)
 		return nil
 	}
 
 	needMore := func() bool { return true }
-	err := genericLoader(onEntry, needMore, queryLogTimeLimit)
+	err := l.genericLoader(onEntry, needMore, queryLogTimeLimit)
 	if err != nil {
 		log.Printf("Failed to load entries from querylog: %s", err)
 		return err
 	}
 
-	runningTop.loaded = true
-
+	l.runningTop.loaded = true
 	return nil
 }
 
-// HandleStatsTop returns the current top stats
-func HandleStatsTop(w http.ResponseWriter, r *http.Request) {
-	domains := map[string]int{}
-	blocked := map[string]int{}
-	clients := map[string]int{}
+// StatsTop represents top stat charts
+type StatsTop struct {
+	Domains map[string]int // Domains - top requested domains
+	Blocked map[string]int // Blocked - top blocked domains
+	Clients map[string]int // Clients - top DNS clients
+}
+
+// getStatsTop returns the current top stats
+func (d *dayTop) getStatsTop() *StatsTop {
+	s := &StatsTop{
+		Domains: map[string]int{},
+		Blocked: map[string]int{},
+		Clients: map[string]int{},
+	}
 
 	do := func(keys []interface{}, getter func(key string) (int, error), result map[string]int) {
 		for _, ikey := range keys {
@@ -273,79 +274,17 @@ func HandleStatsTop(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	runningTop.hoursReadLock()
+	d.hoursReadLock()
 	for hour := 0; hour < 24; hour++ {
-		runningTop.hours[hour].RLock()
-		do(runningTop.hours[hour].domains.Keys(), runningTop.hours[hour].lockedGetDomains, domains)
-		do(runningTop.hours[hour].blocked.Keys(), runningTop.hours[hour].lockedGetBlocked, blocked)
-		do(runningTop.hours[hour].clients.Keys(), runningTop.hours[hour].lockedGetClients, clients)
-		runningTop.hours[hour].RUnlock()
+		d.hours[hour].RLock()
+		do(d.hours[hour].domains.Keys(), d.hours[hour].lockedGetDomains, s.Domains)
+		do(d.hours[hour].blocked.Keys(), d.hours[hour].lockedGetBlocked, s.Blocked)
+		do(d.hours[hour].clients.Keys(), d.hours[hour].lockedGetClients, s.Clients)
+		d.hours[hour].RUnlock()
 	}
-	runningTop.hoursReadUnlock()
+	d.hoursReadUnlock()
 
-	// use manual json marshalling because we want maps to be sorted by value
-	json := bytes.Buffer{}
-	json.WriteString("{\n")
-
-	gen := func(json *bytes.Buffer, name string, top map[string]int, addComma bool) {
-		json.WriteString("  ")
-		json.WriteString(fmt.Sprintf("%q", name))
-		json.WriteString(": {\n")
-		sorted := sortByValue(top)
-		// no more than 50 entries
-		if len(sorted) > 50 {
-			sorted = sorted[:50]
-		}
-		for i, key := range sorted {
-			json.WriteString("    ")
-			json.WriteString(fmt.Sprintf("%q", key))
-			json.WriteString(": ")
-			json.WriteString(strconv.Itoa(top[key]))
-			if i+1 != len(sorted) {
-				json.WriteByte(',')
-			}
-			json.WriteByte('\n')
-		}
-		json.WriteString("  }")
-		if addComma {
-			json.WriteByte(',')
-		}
-		json.WriteByte('\n')
-	}
-	gen(&json, "top_queried_domains", domains, true)
-	gen(&json, "top_blocked_domains", blocked, true)
-	gen(&json, "top_clients", clients, true)
-	json.WriteString("  \"stats_period\": \"24 hours\"\n")
-	json.WriteString("}\n")
-
-	w.Header().Set("Content-Type", "application/json")
-	_, err := w.Write(json.Bytes())
-	if err != nil {
-		errorText := fmt.Sprintf("Couldn't write body: %s", err)
-		log.Println(errorText)
-		http.Error(w, errorText, http.StatusInternalServerError)
-	}
-}
-
-// helper function for querylog API
-func sortByValue(m map[string]int) []string {
-	type kv struct {
-		k string
-		v int
-	}
-	var ss []kv
-	for k, v := range m {
-		ss = append(ss, kv{k, v})
-	}
-	sort.Slice(ss, func(l, r int) bool {
-		return ss[l].v > ss[r].v
-	})
-
-	sorted := []string{}
-	for _, v := range ss {
-		sorted = append(sorted, v.k)
-	}
-	return sorted
+	return s
 }
 
 func (d *dayTop) hoursWriteLock()    { tracelock(); d.hoursLock.Lock() }

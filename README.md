@@ -133,13 +133,14 @@ Usage:
 ./AdGuardHome [options]
 
 Options:
-  -c, --config                       path to config file
+  -c, --config                       path to the config file
+  -w, --work-dir                     path to the working directory
   -h, --host                         host address to bind HTTP server on
   -p, --port                         port to serve HTTP pages on
   -s, --service                      service control action: status, install, uninstall, start, stop, restart
   -l, --logfile                      path to the log file. If empty, writes to stdout, if 'syslog' -- system log
   -v, --verbose                      enable verbose output
-  --help                              print this help
+  --help                             print this help
 ```
 
 Please note, that the command-line arguments override settings from the configuration file.
