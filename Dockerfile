@@ -12,13 +12,13 @@ LABEL maintainer="AdGuard Team <devteam@adguard.com>"
 
 # Update CA certs
 RUN apk --no-cache --update add ca-certificates && \
-    rm -rf /var/cache/apk/*
+    rm -rf /var/cache/apk/* && mkdir -p /opt/adguardhome
 
-COPY --from=build /src/AdGuardHome/AdGuardHome /AdGuardHome
+COPY --from=build /src/AdGuardHome/AdGuardHome /opt/adguardhome/AdGuardHome
 
 EXPOSE 53 3000
 
-VOLUME /data
+VOLUME ["/opt/adguardhome/conf", "/opt/adguardhome/work"]
 
-ENTRYPOINT ["/AdGuardHome"]
-CMD ["-h", "0.0.0.0"]
+ENTRYPOINT ["/opt/adguardhome/AdGuardHome"]
+CMD ["-h", "0.0.0.0", "-c", "/opt/adguardhome/conf/AdGuardHome.yaml", "-w", "/opt/adguardhome/work"]
