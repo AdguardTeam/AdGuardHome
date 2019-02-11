@@ -5,9 +5,11 @@ set -o pipefail
 set -x
 
 DOCKERFILE="Dockerfile.travis"
-if [ "${TRAVIS_BRANCH}" == "master" ]
+IMAGE_NAME="adguard/adguardhome"
+
+if [[ "${TRAVIS_BRANCH}" == "master" ]]
 then
-  VERSION="latest"
+  VERSION="edge"
 else
   VERSION=`git describe --abbrev=4 --dirty --always --tags`
 fi
@@ -37,11 +39,11 @@ build_image() {
            ;;
     esac
 
-    if [ "${GOOS}" == "linux" ] && [ "${GOARCH}" == "amd64" ]
+    if [[ "${GOOS}" == "linux" ]] && [[ "${GOARCH}" == "amd64" ]]
     then
-        image="adguard/adguardhome:${VERSION}"
+        image="${IMAGE_NAME}:${VERSION}"
     else
-        image="adguard/adguardhome:${imageArch}-${VERSION}"
+        image="${IMAGE_NAME}:${imageArch}-${VERSION}"
     fi
 
     make cleanfast; CGO_DISABLED=1 make
@@ -50,6 +52,13 @@ build_image() {
     docker tag "multiarch/alpine:${alpineArch}" "$from"
     docker build -t "${image}" -f ${DOCKERFILE} .
     docker push ${image}
+    if [[ "${VERSION}" != "edge" ]]
+    then
+        latest=${image/$VERSION/latest}
+        docker tag "${image}" "${latest}"
+        docker push ${latest}
+        docker rmi ${latest}
+    fi
     docker rmi "$from"
 }
 
