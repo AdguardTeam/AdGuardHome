@@ -19,8 +19,8 @@ var (
 
 const enableGzip = false
 
-// clearLogBuffer flushes the current buffer to file and resets the current buffer
-func (l *queryLog) clearLogBuffer() error {
+// flushLogBuffer flushes the current buffer to file and resets the current buffer
+func (l *queryLog) flushLogBuffer() error {
 	// flush remainder to file
 	l.logBufferLock.Lock()
 	flushBuffer := l.logBuffer

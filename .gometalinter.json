@@ -20,7 +20,8 @@
   "DisableAll": false,
   "Disable": [
     "maligned",
-    "goconst"
+    "goconst",
+    "vetshadow"
   ],
 
   "Cyclo": 20,

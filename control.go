@@ -198,7 +198,7 @@ func handleStatsTop(w http.ResponseWriter, r *http.Request) {
 
 // handleStatsReset resets the stats caches
 func handleStatsReset(w http.ResponseWriter, r *http.Request) {
-	dnsServer.ResetStats()
+	dnsServer.PurgeStats()
 	_, err := fmt.Fprintf(w, "OK\n")
 	if err != nil {
 		errorText := fmt.Sprintf("Couldn't write body: %s", err)

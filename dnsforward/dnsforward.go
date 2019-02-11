@@ -116,6 +116,14 @@ func (s *Server) startInternal(config *ServerConfig) error {
 		return errors.New("DNS server is already started")
 	}
 
+	if s.queryLog == nil {
+		s.queryLog = newQueryLog(".")
+	}
+
+	if s.stats == nil {
+		s.stats = newStats()
+	}
+
 	err := s.initDNSFilter()
 	if err != nil {
 		return err
@@ -200,7 +208,7 @@ func (s *Server) stopInternal() error {
 	}
 
 	// flush remainder to file
-	return s.queryLog.clearLogBuffer()
+	return s.queryLog.flushLogBuffer()
 }
 
 // IsRunning returns true if the DNS server is running
@@ -242,8 +250,8 @@ func (s *Server) GetStatsTop() *StatsTop {
 	return s.queryLog.runningTop.getStatsTop()
 }
 
-// ResetStats purges current server stats
-func (s *Server) ResetStats() {
+// PurgeStats purges current server stats
+func (s *Server) PurgeStats() {
 	// TODO: Locks?
 	s.stats.purgeStats()
 }

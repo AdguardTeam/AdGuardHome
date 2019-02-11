@@ -95,13 +95,10 @@ func refreshFiltersIfNecessary(force bool) int {
 			filter.ID = assignUniqueFilterID()
 		}
 
-		// Re-load it from the disk before updating
 		if len(filter.Rules) == 0 {
-			err := filter.load()
-			if err != nil {
-				log.Printf("Failed to reload filter %s: %s", filter.URL, err)
-				continue
-			}
+			// Try reloading filter from the disk before updating
+			// This is useful for the case when we simply enable a previously downloaded filter
+			_ = filter.load()
 		}
 
 		updated, err := filter.update(force)
