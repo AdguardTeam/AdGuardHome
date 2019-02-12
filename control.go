@@ -1057,8 +1057,6 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var mainCert *x509.Certificate
-
 	if data.CertificateChain != "" {
 		certPEM, err := base64.StdEncoding.DecodeString(data.CertificateChain)
 		if err != nil {
@@ -1145,30 +1143,30 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		// spew.Dump(chains)
-	}
 
-	config.TLS = data
+		// update status
+		if mainCert != nil {
+			data.StatusCertificate = fmt.Sprintf("Certificate expires on %s", mainCert.NotAfter) //, valid for hostname %s", mainCert.NotAfter, mainCert.Subject.CommonName)
+			if len(mainCert.DNSNames) == 1 {
+				data.StatusCertificate += fmt.Sprintf(", valid for hostname %s", mainCert.DNSNames[0])
+			} else if len(mainCert.DNSNames) > 1 {
+				data.StatusCertificate += ", valid for hostnames " + strings.Join(mainCert.DNSNames, ", ")
+			}
 
-	// update status
-	if mainCert != nil {
-		config.TLS.StatusCertificate = fmt.Sprintf("Certificate expires on %s", mainCert.NotAfter) //, valid for hostname %s", mainCert.NotAfter, mainCert.Subject.CommonName)
-		if len(mainCert.DNSNames) == 1 {
-			config.TLS.StatusCertificate += fmt.Sprintf(", valid for hostname %s", mainCert.DNSNames[0])
-		} else if len(mainCert.DNSNames) > 1 {
-			config.TLS.StatusCertificate += ", valid for hostnames " + strings.Join(mainCert.DNSNames, ", ")
-		}
-
-		// issue a warning if certificate is about to expire
-		now := time.Now()
-		if mainCert.NotAfter.AddDate(0, 0, -30).After(now) {
-			timeLeft := time.Until(mainCert.NotAfter)
-			if timeLeft > 0 {
-				config.TLS.Warning = fmt.Sprintf("Your certificate expires in %.0f days, we recommend you update it soon", timeLeft.Hours()/24)
-			} else {
-				config.TLS.Warning = fmt.Sprintf("Your certificate has expired on %s, we recommend you update it immediatedly", mainCert.NotAfter)
+			// issue a warning if certificate is about to expire
+			now := time.Now()
+			if mainCert.NotAfter.AddDate(0, 0, -30).After(now) {
+				timeLeft := time.Until(mainCert.NotAfter)
+				if timeLeft > 0 {
+					data.Warning = fmt.Sprintf("Your certificate expires in %.0f days, we recommend you update it soon", timeLeft.Hours()/24)
+				} else {
+					data.Warning = fmt.Sprintf("Your certificate has expired on %s, we recommend you update it immediatedly", mainCert.NotAfter)
+				}
 			}
 		}
 	}
+
+	config.TLS = data
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
