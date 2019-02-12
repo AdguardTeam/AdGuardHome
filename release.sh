@@ -17,10 +17,6 @@ f() {
 	fi
 }
 
-# Clean and rebuild both static and binary
-make clean
-make
-
 # Prepare the dist folder
 rm -rf dist
 mkdir -p dist
