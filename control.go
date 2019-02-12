@@ -21,6 +21,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/hmage/golibs/log"
+	"github.com/joomcode/errorx"
 	"github.com/miekg/dns"
 	govalidator "gopkg.in/asaskevich/govalidator.v4"
 )
@@ -1050,33 +1051,17 @@ func handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
-	data := tlsConfig{}
-	err := json.NewDecoder(r.Body).Decode(&data)
+	data, err := unmarshalTLS(r)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to parse new TLS config json: %s", err)
+		httpError(w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
 		return
 	}
 
 	if data.CertificateChain != "" {
-		certPEM, err := base64.StdEncoding.DecodeString(data.CertificateChain)
-		if err != nil {
-			httpError(w, http.StatusBadRequest, "Failed to base64-decode certificate chain: %s", err)
-			return
-		}
-		data.CertificateChain = string(certPEM)
-
-		log.Printf("got certificate: %s", certPEM)
+		log.Printf("got certificate: %s", data.CertificateChain)
 
 		if data.PrivateKey != "" {
-			keyPEM, err := base64.StdEncoding.DecodeString(data.PrivateKey)
-			if err != nil {
-				httpError(w, http.StatusBadRequest, "Failed to base64-decode private key: %s", err)
-				return
-			}
-
-			data.PrivateKey = string(keyPEM)
-
-			_, err = tls.X509KeyPair(certPEM, keyPEM)
+			_, err = tls.X509KeyPair([]byte(data.CertificateChain), []byte(data.PrivateKey))
 			if err != nil {
 				httpError(w, http.StatusBadRequest, "Invalid certificate or key: %s", err)
 				return
@@ -1087,7 +1072,7 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		var certs []*pem.Block    // PEM-encoded certificates
 		var skippedBytes []string // skipped bytes
 
-		pemblock := []byte(certPEM)
+		pemblock := []byte(data.CertificateChain)
 		for {
 			var decoded *pem.Block
 			decoded, pemblock = pem.Decode(pemblock)
@@ -1170,6 +1155,37 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
+// unmarshalTLS handles base64-encoded certificates transparently
+func unmarshalTLS(r *http.Request) (tlsConfig, error) {
+	data := tlsConfig{}
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		return data, errorx.Decorate(err, "Failed to parse new TLS config json")
+	}
+
+	if data.CertificateChain != "" {
+		certPEM, err := base64.StdEncoding.DecodeString(data.CertificateChain)
+		if err != nil {
+			return data, errorx.Decorate(err, "Failed to base64-decode certificate chain")
+		}
+		data.CertificateChain = string(certPEM)
+	}
+
+	if data.PrivateKey != "" {
+		keyPEM, err := base64.StdEncoding.DecodeString(data.PrivateKey)
+		if err != nil {
+			return data, errorx.Decorate(err, "Failed to base64-decode private key")
+		}
+
+		data.PrivateKey = string(keyPEM)
+	}
+
+	return data, nil
+}
+
+// ------------------------
+// registration of handlers
+// ------------------------
 func registerInstallHandlers() {
 	http.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(handleInstallGetAddresses)))
 	http.HandleFunc("/control/install/configure", preInstall(ensurePOST(handleInstallConfigure)))
