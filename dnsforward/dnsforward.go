@@ -1,6 +1,7 @@
 package dnsforward
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net"
@@ -55,6 +56,7 @@ func NewServer(baseDir string) *Server {
 }
 
 // FilteringConfig represents the DNS filtering configuration of AdGuard Home
+// The zero FilteringConfig is empty and ready for use.
 type FilteringConfig struct {
 	ProtectionEnabled  bool     `yaml:"protection_enabled"`   // whether or not use any of dnsfilter features
 	FilteringEnabled   bool     `yaml:"filtering_enabled"`    // whether or not use filter lists
@@ -68,6 +70,12 @@ type FilteringConfig struct {
 	dnsfilter.Config `yaml:",inline"`
 }
 
+type TLSConfig struct {
+	TLSListenAddr    *net.TCPAddr `yaml:"-" json:"-"`
+	CertificateChain string       `yaml:"certificate_chain" json:"certificate_chain"`
+	PrivateKey       string       `yaml:"private_key" json:"private_key"`
+}
+
 // ServerConfig represents server configuration.
 // The zero ServerConfig is empty and ready for use.
 type ServerConfig struct {
@@ -77,6 +85,7 @@ type ServerConfig struct {
 	Filters       []dnsfilter.Filter  // A list of filters to use
 
 	FilteringConfig
+	TLSConfig
 }
 
 // if any of ServerConfig values are zero, then default values from below are used
@@ -152,6 +161,15 @@ func (s *Server) startInternal(config *ServerConfig) error {
 		CacheEnabled:       true,
 		Upstreams:          s.Upstreams,
 		Handler:            s.handleDNSRequest,
+	}
+
+	if s.TLSListenAddr != nil && s.CertificateChain != "" && s.PrivateKey != "" {
+		proxyConfig.TLSListenAddr = s.TLSListenAddr
+		keypair, err := tls.X509KeyPair([]byte(s.CertificateChain), []byte(s.PrivateKey))
+		if err != nil {
+			return errorx.Decorate(err, "Failed to parse TLS keypair")
+		}
+		proxyConfig.TLSConfig = &tls.Config{Certificates: []tls.Certificate{keypair}}
 	}
 
 	if proxyConfig.UDPListenAddr == nil {

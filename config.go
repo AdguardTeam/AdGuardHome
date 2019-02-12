@@ -63,12 +63,12 @@ var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
 
 // field ordering is important -- yaml fields will mirror ordering from here
 type tlsConfig struct {
-	ServerName       string `yaml:"server_name" json:"server_name,omitempty"`
-	ForceHTTPS       bool   `yaml:"force_https" json:"force_https,omitempty"`
-	PortHTTPS        int    `yaml:"port_https" json:"port_https,omitempty"`
-	PortDNSOverTLS   int    `yaml:"port_dns_over_tls" json:"port_dns_over_tls,omitempty"`
-	CertificateChain string `yaml:"certificate_chain" json:"certificate_chain"`
-	PrivateKey       string `yaml:"private_key" json:"private_key"`
+	ServerName     string `yaml:"server_name" json:"server_name,omitempty"`
+	ForceHTTPS     bool   `yaml:"force_https" json:"force_https,omitempty"`
+	PortHTTPS      int    `yaml:"port_https" json:"port_https,omitempty"`
+	PortDNSOverTLS int    `yaml:"port_dns_over_tls" json:"port_dns_over_tls,omitempty"`
+
+	dnsforward.TLSConfig `yaml:",inline" json:",inline"`
 
 	// only for API, no need to be stored in config
 	StatusCertificate string `yaml:"status_cert" json:"status_cert,omitempty"`
