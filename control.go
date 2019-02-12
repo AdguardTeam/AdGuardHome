@@ -1147,8 +1147,8 @@ func validateCertificates(data tlsConfig) (tlsConfig, error) {
 		mainCert := parsedCerts[0]
 		_, err := mainCert.Verify(opts)
 		if err != nil {
-			// TODO: let self-signed certs through
-			return data, errorx.Decorate(err, "Your certificate does not verify")
+			// let self-signed certs through
+			data.WarningValidation = fmt.Sprintf("Your certificate does not verify: %s", err)
 		}
 		// spew.Dump(chains)
 

@@ -74,6 +74,7 @@ type tlsConfig struct {
 	StatusCertificate string `yaml:"status_cert" json:"status_cert,omitempty"`
 	StatusKey         string `yaml:"status_key" json:"status_key,omitempty"`
 	Warning           string `yaml:"warning" json:"warning,omitempty"`
+	WarningValidation string `yaml:"warning_validation" json:"warning_validation,omitempty"`
 }
 
 // initialize to default values, will be changed later when reading config or parsing command line
