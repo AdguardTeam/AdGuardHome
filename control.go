@@ -1050,6 +1050,20 @@ func handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handleTLSValidate(w http.ResponseWriter, r *http.Request) {
+	data, err := unmarshalTLS(r)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
+		return
+	}
+
+	data, err = validateCertificates(data)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "New TLS configuration does not validate: %s", err)
+		return
+	}
+}
+
 func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	data, err := unmarshalTLS(r)
 	if err != nil {
@@ -1057,14 +1071,25 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	data, err = validateCertificates(data)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "New TLS configuration does not validate: %s", err)
+		return
+	}
+	config.TLS = data
+	httpUpdateConfigReloadDNSReturnOK(w, r)
+}
+
+func validateCertificates(data tlsConfig) (tlsConfig, error) {
+	var err error
+
 	if data.CertificateChain != "" {
 		log.Printf("got certificate: %s", data.CertificateChain)
 
 		if data.PrivateKey != "" {
 			_, err = tls.X509KeyPair([]byte(data.CertificateChain), []byte(data.PrivateKey))
 			if err != nil {
-				httpError(w, http.StatusBadRequest, "Invalid certificate or key: %s", err)
-				return
+				return data, errorx.Decorate(err, "Invalid certificate or key")
 			}
 		}
 
@@ -1091,15 +1116,13 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		for _, cert := range certs {
 			parsed, err := x509.ParseCertificate(cert.Bytes)
 			if err != nil {
-				httpError(w, http.StatusBadRequest, "failed to parse certificate: %s", err)
-				return
+				return data, errorx.Decorate(err, "Failed to parse certificate")
 			}
 			parsedCerts = append(parsedCerts, parsed)
 		}
 
 		if len(parsedCerts) == 0 {
-			httpError(w, http.StatusBadRequest, "You have specified an empty certificate")
-			return
+			return data, fmt.Errorf("You have specified an empty certificate")
 		}
 
 		// spew.Dump(parsedCerts)
@@ -1121,11 +1144,10 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 
 		// TODO: save it as a warning rather than error it out -- shouldn't be a big problem
 		mainCert := parsedCerts[0]
-		_, err = mainCert.Verify(opts)
+		_, err := mainCert.Verify(opts)
 		if err != nil {
 			// TODO: let self-signed certs through
-			httpError(w, http.StatusBadRequest, "Your certificate does not verify: %s", err)
-			return
+			return data, errorx.Decorate(err, "Your certificate does not verify")
 		}
 		// spew.Dump(chains)
 
@@ -1151,8 +1173,7 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	config.TLS = data
-	httpUpdateConfigReloadDNSReturnOK(w, r)
+	return data, nil
 }
 
 // unmarshalTLS handles base64-encoded certificates transparently
@@ -1232,4 +1253,5 @@ func registerControlHandlers() {
 
 	http.HandleFunc("/control/tls/status", postInstall(optionalAuth(ensureGET(handleTLSStatus))))
 	http.HandleFunc("/control/tls/configure", postInstall(optionalAuth(ensurePOST(handleTLSConfigure))))
+	http.HandleFunc("/control/tls/validate", postInstall(optionalAuth(ensurePOST(handleTLSValidate))))
 }
