@@ -34,7 +34,7 @@ AdGuard Home operates as a DNS server that re-routes tracking domains to a "blac
 To run `AdGuardHome` image:
 
 ```bash
-docker run -d -p 53:53 -p 53:53/udp -p 3000:3000 adguard/adguardhome
+docker run -d --net=host adguard/adguardhome
 ```
 
 Now open the browser and navigate to http://DOCKER_HOST_IP:3000/ to control your AdGuard Home service.
@@ -66,7 +66,7 @@ Create a **config** directory on a suitable volume on your host system, e.g. **/
 Start your `adguard/adguardhome` container like this:
 
 ```
-docker run --name adguardhome -v /my/own/workdir:/opt/adguardhome/work -v /my/own/confdir:/opt/adguardhome/conf -d -p 53:53 -p 53:53/udp -p 3000:3000 adguard/adguardhome
+docker run --name adguardhome -v /my/own/workdir:/opt/adguardhome/work -v /my/own/confdir:/opt/adguardhome/conf -d --net=host adguard/adguardhome
 ```
 
 The `-v /my/own/workdir:/opt/adguardhome/work` part of the command mounts the `/my/own/workdir` directory from the underlying host system as `/opt/adguardhome/work` inside the container, 
