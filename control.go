@@ -1034,6 +1034,14 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 // ---
 func handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 	data := config.TLS
+	if data.CertificateChain != "" {
+		encoded := base64.StdEncoding.EncodeToString([]byte(data.CertificateChain))
+		data.CertificateChain = string(encoded)
+	}
+	if data.PrivateKey != "" {
+		encoded := base64.StdEncoding.EncodeToString([]byte(data.PrivateKey))
+		data.PrivateKey = string(encoded)
+	}
 	err := json.NewEncoder(w).Encode(&data)
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Failed to marshal json with TLS status: %s", err)
@@ -1057,6 +1065,7 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 			httpError(w, http.StatusBadRequest, "Failed to base64-decode certificate chain: %s", err)
 			return
 		}
+		data.CertificateChain = string(certPEM)
 
 		log.Printf("got certificate: %s", certPEM)
 
@@ -1066,6 +1075,8 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 				httpError(w, http.StatusBadRequest, "Failed to base64-decode private key: %s", err)
 				return
 			}
+
+			data.PrivateKey = string(keyPEM)
 
 			_, err = tls.X509KeyPair(certPEM, keyPEM)
 			if err != nil {
