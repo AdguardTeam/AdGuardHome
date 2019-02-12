@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	stdlog "log"
 	"net"
@@ -10,6 +11,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"sync"
 	"syscall"
 	"time"
 
@@ -21,6 +23,11 @@ import (
 // VersionString will be set through ldflags, contains current version
 var VersionString = "undefined"
 var httpServer *http.Server
+var httpsServer struct {
+	server     *http.Server
+	cond       *sync.Cond // reacts to config.TLS.PortHTTPS, CertificateChain and PrivateKey
+	sync.Mutex            // protects config.TLS
+}
 
 const (
 	// Used in config to indicate that syslog or eventlog (win) should be used for logger output
@@ -158,6 +165,42 @@ func run(args options) {
 		http.Handle("/install.html", preInstallHandler(http.FileServer(box)))
 		registerInstallHandlers()
 	}
+
+	httpsServer.cond = sync.NewCond(&httpsServer.Mutex)
+
+	// for https, we have a separate goroutine loop
+	go func() {
+		for { // this is an endless loop
+			httpsServer.cond.L.Lock()
+			// this mechanism doesn't let us through until all conditions are ment
+			for config.TLS.PortHTTPS == 0 || config.TLS.PrivateKey == "" || config.TLS.CertificateChain == "" { // sleep until neccessary data is supplied
+				httpsServer.cond.Wait()
+			}
+			log.Printf("%+v", config.TLS)
+			address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.TLS.PortHTTPS))
+			cert, err := tls.X509KeyPair([]byte(config.TLS.CertificateChain), []byte(config.TLS.PrivateKey))
+			if err != nil {
+				log.Fatal(err)
+				os.Exit(1)
+			}
+			config := &tls.Config{
+				Certificates: []tls.Certificate{cert},
+			}
+			httpsServer.server = &http.Server{
+				Addr:      address,
+				TLSConfig: config,
+			}
+			httpsServer.cond.L.Unlock()
+
+			URL := fmt.Sprintf("https://%s", address)
+			log.Println("Go to " + URL)
+			err = httpsServer.server.ListenAndServeTLS("", "")
+			if err != http.ErrServerClosed {
+				log.Fatal(err)
+				os.Exit(1)
+			}
+		}
+	}()
 
 	// this loop is used as an ability to change listening host and/or port
 	for {

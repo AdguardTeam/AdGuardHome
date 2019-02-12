@@ -1077,6 +1077,7 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	config.TLS = data
+	httpsServer.cond.Broadcast()
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
