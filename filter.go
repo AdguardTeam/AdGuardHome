@@ -166,7 +166,7 @@ func (filter *filter) update(force bool) (bool, error) {
 		return false, nil
 	}
 
-	log.Printf("Downloading update for filter %d from %s", filter.ID, filter.URL)
+	log.Tracef("Downloading update for filter %d from %s", filter.ID, filter.URL)
 
 	resp, err := client.Get(filter.URL)
 	if resp != nil && resp.Body != nil {
@@ -203,7 +203,7 @@ func (filter *filter) update(force bool) (bool, error) {
 
 	// Check if the filter has been really changed
 	if reflect.DeepEqual(filter.Rules, rules) {
-		log.Printf("Filter #%d at URL %s hasn't changed, not updating it", filter.ID, filter.URL)
+		log.Tracef("Filter #%d at URL %s hasn't changed, not updating it", filter.ID, filter.URL)
 		return false, nil
 	}
 
