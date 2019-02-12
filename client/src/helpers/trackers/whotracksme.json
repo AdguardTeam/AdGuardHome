@@ -1,5 +1,5 @@
 {
-    "timeUpdated": "2018-10-14T19:21:45.099Z",
+    "timeUpdated": "2019-02-12T11:43:54.596Z",
     "categories": {
         "0": "audio_video_player",
         "1": "comments",
@@ -29,7 +29,7 @@
         "google": {
             "name": "Google",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.google.com/"
         },
         "googleapis.com": {
             "name": "Google APIs",
@@ -39,7 +39,7 @@
         "google_tag_manager": {
             "name": "Google Tag Manager",
             "categoryId": 5,
-            "url": "http://www.google.com"
+            "url": "https://marketingplatform.google.com/about/tag-manager/"
         },
         "facebook": {
             "name": "Facebook",
@@ -49,7 +49,7 @@
         "infonline": {
             "name": "INFOnline",
             "categoryId": 6,
-            "url": "http://www2.infonline.de/"
+            "url": "http://www.infonline.de/"
         },
         "google_adservices": {
             "name": "Google AdServices",
@@ -64,7 +64,7 @@
         "amazon_web_services": {
             "name": "Amazon Web Services",
             "categoryId": 10,
-            "url": null
+            "url": "https://aws.amazon.com/"
         },
         "criteo": {
             "name": "Criteo",
@@ -92,9 +92,9 @@
             "url": "http://www.adform.com"
         },
         "scorecard_research_beacon": {
-            "name": "ScoreCard Research Beacon",
+            "name": "ScoreCard Research",
             "categoryId": 4,
-            "url": "http://www.voicefive.com/"
+            "url": "https://www.scorecardresearch.com/"
         },
         "optimizely": {
             "name": "Optimizely",
@@ -114,17 +114,17 @@
         "bing_ads": {
             "name": "Bing Ads",
             "categoryId": 4,
-            "url": "https://adcenter.microsoft.com/"
+            "url": "https://bingads.microsoft.com/"
         },
         "openx": {
             "name": "OpenX",
             "categoryId": 4,
-            "url": "http://www.openx.org/"
+            "url": "http://www.openx.com"
         },
         "youtube": {
             "name": "YouTube",
             "categoryId": 0,
-            "url": null
+            "url": "https://www.youtube.com/"
         },
         "the_adex": {
             "name": "The ADEX",
@@ -183,8 +183,8 @@
         },
         "akamai_technologies": {
             "name": "Akamai Technologies",
-            "categoryId": 6,
-            "url": null
+            "categoryId": 9,
+            "url": "https://www.akamai.com/"
         },
         "mediamath": {
             "name": "MediaMath",
@@ -208,7 +208,7 @@
         },
         "bluekai": {
             "name": "BlueKai",
-            "categoryId": 4,
+            "categoryId": 6,
             "url": "http://www.bluekai.com/"
         },
         "exactag": {
@@ -229,7 +229,7 @@
         "adobe_dynamic_tag_management": {
             "name": "Adobe Dynamic Tag Management",
             "categoryId": 5,
-            "url": null
+            "url": "https://dtm.adobe.com/sign_in"
         },
         "united_internet_media_gmbh": {
             "name": "United Internet Media GmbH",
@@ -249,7 +249,7 @@
         "outbrain": {
             "name": "Outbrain",
             "categoryId": 8,
-            "url": null
+            "url": "http://www.outbrain.com/"
         },
         "hotjar": {
             "name": "Hotjar",
@@ -274,7 +274,7 @@
         "yahoo": {
             "name": "Yahoo!",
             "categoryId": 6,
-            "url": null
+            "url": "https://developer.yahoo.com/analytics/"
         },
         "trusted_shops": {
             "name": "Trusted Shops",
@@ -289,7 +289,7 @@
         "smart_adserver": {
             "name": "SMART AdServer",
             "categoryId": 4,
-            "url": "http://www.smartadserver.co.uk/"
+            "url": ""
         },
         "quantcast": {
             "name": "Quantcast",
@@ -324,7 +324,7 @@
         "krux_digital": {
             "name": "Krux Digital",
             "categoryId": 4,
-            "url": "http://kruxdigital.com/"
+            "url": "http://www.krux.com/"
         },
         "pinterest": {
             "name": "Pinterest",
@@ -364,7 +364,7 @@
         "turn_inc.": {
             "name": "Turn Inc.",
             "categoryId": 4,
-            "url": "http://www.turn.com/corp/"
+            "url": "https://www.amobee.com/company/"
         },
         "tapad": {
             "name": "Tapad",
@@ -379,12 +379,12 @@
         "liveramp": {
             "name": "LiveRamp",
             "categoryId": 4,
-            "url": "http://www.rapleaf.com/"
+            "url": "https://liveramp.com/"
         },
         "advertising.com": {
             "name": "Advertising.com",
             "categoryId": 4,
-            "url": "http://www.platform-a.com/"
+            "url": ""
         },
         "xhamster": {
             "name": "xHamster",
@@ -399,7 +399,7 @@
         "netratings_sitecensus": {
             "name": "NetRatings SiteCensus",
             "categoryId": 4,
-            "url": "http://www.nielsen-online.com"
+            "url": "http://www.nielsen-online.com/intlpage.html"
         },
         "visual_website_optimizer": {
             "name": "Visual Website Optimizer",
@@ -449,7 +449,7 @@
         "pornhub": {
             "name": "PornHub",
             "categoryId": 3,
-            "url": null
+            "url": "https://www.pornhub.com/"
         },
         "drawbridge": {
             "name": "Drawbridge",
@@ -459,7 +459,7 @@
         "wikimedia.org": {
             "name": "WikiMedia",
             "categoryId": 9,
-            "url": null
+            "url": "https://wikimediafoundation.org/"
         },
         "crazy_egg": {
             "name": "Crazy Egg",
@@ -474,7 +474,7 @@
         "integral_ad_science": {
             "name": "Integral Ad Science",
             "categoryId": 4,
-            "url": "http://www.adsafemedia.com/"
+            "url": "https://integralads.com/"
         },
         "econda": {
             "name": "Econda",
@@ -499,7 +499,7 @@
         "jw_player": {
             "name": "JW Player",
             "categoryId": 0,
-            "url": null
+            "url": "https://www.jwplayer.com/"
         },
         "paypal": {
             "name": "PayPal",
@@ -544,7 +544,7 @@
         "ebay": {
             "name": "eBay Stats",
             "categoryId": 4,
-            "url": "https://www.ebaypartnernetwork.com/files/hub/en-US/index.htmln progress "
+            "url": "https://partnernetwork.ebay.com/"
         },
         "indeed": {
             "name": "Indeed",
@@ -554,7 +554,7 @@
         "linkedin": {
             "name": "LinkedIn",
             "categoryId": 8,
-            "url": null
+            "url": "https://www.linkedin.com/"
         },
         "sevenone_media": {
             "name": "SevenOne Media",
@@ -588,7 +588,7 @@
         },
         "liveinternet": {
             "name": "LiveInternet",
-            "categoryId": 1,
+            "categoryId": 6,
             "url": "http://www.liveinternet.ru/"
         },
         "visual_revenue": {
@@ -759,7 +759,7 @@
         "weborama": {
             "name": "Weborama",
             "categoryId": 4,
-            "url": "http://weborama.com/2/?l=en"
+            "url": "https://weborama.com/"
         },
         "soasta_mpulse": {
             "name": "SOASTA mPulse",
@@ -777,7 +777,7 @@
             "url": "https://usabilla.com/"
         },
         "otto.de": {
-            "name": "otto.de",
+            "name": "Otto Group",
             "categoryId": 8,
             "url": null
         },
@@ -999,7 +999,7 @@
         "datalogix": {
             "name": "Datalogix",
             "categoryId": 4,
-            "url": "http://www.nextaction.net/"
+            "url": "https://www.oracle.com/corporate/acquisitions/datalogix/"
         },
         "refined_labs": {
             "name": "Refined Labs",
@@ -1099,7 +1099,7 @@
         "onesignal": {
             "name": "OneSignal",
             "categoryId": 5,
-            "url": null
+            "url": "https://onesignal.com/"
         },
         "zendesk": {
             "name": "Zendesk",
@@ -1164,7 +1164,7 @@
         "imgur": {
             "name": "Imgur",
             "categoryId": 8,
-            "url": null
+            "url": "https://imgur.com/"
         },
         "hurra_tracker": {
             "name": "Hurra Tracker",
@@ -1313,11 +1313,6 @@
         },
         "kontextr": {
             "name": "Kontextr",
-            "categoryId": 4,
-            "url": null
-        },
-        "content_spread": {
-            "name": "Content Spread",
             "categoryId": 4,
             "url": null
         },
@@ -1517,9 +1512,9 @@
             "url": null
         },
         "rambler": {
-            "name": "Rambler",
-            "categoryId": 8,
-            "url": null
+            "name": "Rambler&Co",
+            "categoryId": 6,
+            "url": "https://top100.rambler.ru/"
         },
         "lockerz_share": {
             "name": "AddToAny",
@@ -2924,7 +2919,7 @@
         "vivalu": {
             "name": "VIVALU",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.vivalu.com/"
         },
         "errorception": {
             "name": "Errorception",
@@ -3054,7 +3049,7 @@
         "clever_push": {
             "name": "Clever Push",
             "categoryId": 6,
-            "url": null
+            "url": "https://clevertap.com/"
         },
         "recreativ": {
             "name": "Recreativ",
@@ -3074,7 +3069,7 @@
         "microsoft": {
             "name": "Microsoft Services",
             "categoryId": 8,
-            "url": null
+            "url": "http://www.microsoft.com/"
         },
         "intent_media": {
             "name": "Intent Media",
@@ -3398,8 +3393,8 @@
         },
         "smi2.ru": {
             "name": "smi2.ru",
-            "categoryId": 4,
-            "url": "https://smi2.ru/"
+            "categoryId": 5,
+            "url": "https://smi2.net/"
         },
         "vooxe.com": {
             "name": "vooxe.com",
@@ -4048,7 +4043,7 @@
         },
         "acxiom": {
             "name": "Acxiom",
-            "categoryId": 6,
+            "categoryId": 4,
             "url": null
         },
         "twenga": {
@@ -4714,7 +4709,7 @@
         "google_photos": {
             "name": "Google Photos",
             "categoryId": 9,
-            "url": null
+            "url": "https://photos.google.com/"
         },
         "vinted": {
             "name": "Vinted",
@@ -4729,7 +4724,7 @@
         "amazon_cloudfront": {
             "name": "Amazon CloudFront",
             "categoryId": 10,
-            "url": null
+            "url": "https://aws.amazon.com/cloudfront/?nc1=h_ls"
         },
         "adthink": {
             "name": "Adthink",
@@ -6403,7 +6398,7 @@
         },
         "urban_airship": {
             "name": "Urban Airship",
-            "categoryId": 2,
+            "categoryId": 6,
             "url": "https://www.urbanairship.com/"
         },
         "trueanthem": {
@@ -6453,7 +6448,7 @@
         },
         "yandex_direct": {
             "name": "Yandex.Direct",
-            "categoryId": 6,
+            "categoryId": 4,
             "url": "https://direct.yandex.com/"
         },
         "ispot.tv": {
@@ -6640,6 +6635,521 @@
             "name": "DataTables",
             "categoryId": 2,
             "url": "https://datatables.net/"
+        },
+        "freedom_mortgage": {
+            "name": "Freedom Mortgage",
+            "categoryId": 6,
+            "url": "https://www.freedommortgage.com/"
+        },
+        "reed_business_information": {
+            "name": "Reed Business Information",
+            "categoryId": 6,
+            "url": "http://www.reedbusiness.com/"
+        },
+        "mediascope": {
+            "name": "Mediascope",
+            "categoryId": 6,
+            "url": "http://mediascope.net/"
+        },
+        "makeappdev.xyz": {
+            "name": "makeappdev.xyz",
+            "categoryId": 12,
+            "url": null
+        },
+        "atlassian_marketplace": {
+            "name": "Atlassian Marketplace",
+            "categoryId": 9,
+            "url": "https://marketplace.atlassian.com/"
+        },
+        "hoholikik.club": {
+            "name": "hoholikik.club",
+            "categoryId": 12,
+            "url": null
+        },
+        "mercado": {
+            "name": "Mercado-Analytics",
+            "categoryId": 6,
+            "url": "https://www.mercadolivre.com.br/"
+        },
+        "smartlink.cool": {
+            "name": "smartlink.cool",
+            "categoryId": 11,
+            "url": null
+        },
+        "xen-media.com": {
+            "name": "xen-media.com",
+            "categoryId": 11,
+            "url": null
+        },
+        "fastly_insights": {
+            "name": "Fastly Insights",
+            "categoryId": 6,
+            "url": "https://insights.fastlylabs.com/"
+        },
+        "canvas": {
+            "name": "Canvas",
+            "categoryId": 2,
+            "url": "https://www.canvas.net/"
+        },
+        "sina_cdn": {
+            "name": "Sina CDN",
+            "categoryId": 9,
+            "url": "https://www.sina.com.cn/"
+        },
+        "tableteducation.com": {
+            "name": "tableteducation.com",
+            "categoryId": 11,
+            "url": null
+        },
+        "globalnotifier.com": {
+            "name": "globalnotifier.com",
+            "categoryId": 11,
+            "url": null
+        },
+        "tomnewsupdate.info": {
+            "name": "tomnewsupdate.info",
+            "categoryId": 12,
+            "url": null
+        },
+        "ivcbrasil.org.br": {
+            "name": "IVC Brasil",
+            "categoryId": 6,
+            "url": "https://ivcbrasil.org.br/#/home"
+        },
+        "newsupdatewe.info": {
+            "name": "newsupdatewe.info",
+            "categoryId": 12,
+            "url": null
+        },
+        "ihvmcqojoj.com": {
+            "name": "ihvmcqojoj.com",
+            "categoryId": 11,
+            "url": null
+        },
+        "icuazeczpeoohx.com": {
+            "name": "icuazeczpeoohx.com",
+            "categoryId": 11,
+            "url": null
+        },
+        "oghub.io": {
+            "name": "OG Hub",
+            "categoryId": 11,
+            "url": null
+        },
+        "aaxads.com": {
+            "name": "Acceptable Ads Exchange",
+            "categoryId": 4,
+            "url": "https://aax.media/"
+        },
+        "bodelen.com": {
+            "name": "bodelen.com",
+            "categoryId": 4,
+            "url": null
+        },
+        "div.show": {
+            "name": "div.show",
+            "categoryId": 12,
+            "url": null
+        },
+        "clcknads.pro": {
+            "name": "clcknads.pro",
+            "categoryId": 3,
+            "url": null
+        },
+        "ad-blocker.org": {
+            "name": "ad-blocker.org",
+            "categoryId": 11,
+            "url": null
+        },
+        "healte.de": {
+            "name": "healte.de",
+            "categoryId": 11,
+            "url": null
+        },
+        "sitelabweb.com": {
+            "name": "sitelabweb.com",
+            "categoryId": 11,
+            "url": null
+        },
+        "forter": {
+            "name": "Forter",
+            "categoryId": 4,
+            "url": "https://www.forter.com/"
+        },
+        "social_miner": {
+            "name": "Social Miner",
+            "categoryId": 7,
+            "url": "https://socialminer.com/"
+        },
+        "profitshare": {
+            "name": "Profitshare",
+            "categoryId": 6,
+            "url": "https://profitshare.ro/"
+        },
+        "yotpo": {
+            "name": "Yotpo",
+            "categoryId": 2,
+            "url": "https://www.yotpo.com/"
+        },
+        "bluetriangle": {
+            "name": "Blue Triangle",
+            "categoryId": 6,
+            "url": "https://www.bluetriangle.com/"
+        },
+        "queue-it": {
+            "name": "Queue-it",
+            "categoryId": 6,
+            "url": "https://queue-it.com/"
+        },
+        "pushame.com": {
+            "name": "pushame.com",
+            "categoryId": 11,
+            "url": null
+        },
+        "bluecore.com": {
+            "name": "Bluecore",
+            "categoryId": 4,
+            "url": "https://www.bluecore.com/"
+        },
+        "pushwhy.com": {
+            "name": "pushwhy.com",
+            "categoryId": 11,
+            "url": null
+        },
+        "clearsale": {
+            "name": "clearsale",
+            "categoryId": 4,
+            "url": "https://www.clear.sale/"
+        },
+        "luckypushh.com": {
+            "name": "luckypushh.com",
+            "categoryId": 11,
+            "url": null
+        },
+        "civicscience.com": {
+            "name": "CivicScience",
+            "categoryId": 6,
+            "url": "https://civicscience.com/"
+        },
+        "chaordic": {
+            "name": "Chaordic",
+            "categoryId": 4,
+            "url": "https://www.chaordic.com.br/"
+        },
+        "stripst.com": {
+            "name": "stripst.com",
+            "categoryId": 3,
+            "url": null
+        },
+        "adtng.com": {
+            "name": "adtng.com",
+            "categoryId": 3,
+            "url": null
+        },
+        "wnzmauurgol.com": {
+            "name": "wnzmauurgol.com",
+            "categoryId": 11,
+            "url": null
+        },
+        "srvvtrk.com": {
+            "name": "srvvtrk.com",
+            "categoryId": 11,
+            "url": null
+        },
+        "ymzrrizntbhde.com": {
+            "name": "ymzrrizntbhde.com",
+            "categoryId": 11,
+            "url": null
+        },
+        "umebiggestern.club": {
+            "name": "umebiggestern.club",
+            "categoryId": 11,
+            "url": null
+        },
+        "tensitionschoo.club": {
+            "name": "tensitionschoo.club",
+            "categoryId": 11,
+            "url": null
+        },
+        "brandmetrics.com": {
+            "name": "Brandmetrics.com",
+            "categoryId": 4,
+            "url": "https://www.brandmetrics.com/"
+        },
+        "pcvark.com": {
+            "name": "pcvark.com",
+            "categoryId": 11,
+            "url": "https://pcvark.com/"
+        },
+        "siblesectiveal.club": {
+            "name": "siblesectiveal.club",
+            "categoryId": 11,
+            "url": null
+        },
+        "gannett": {
+            "name": "Gannett Media",
+            "categoryId": 0,
+            "url": " https://www.gannett.com/"
+        },
+        "makesource.cool": {
+            "name": "makesource.cool",
+            "categoryId": 11,
+            "url": null
+        },
+        "cdnondemand.org": {
+            "name": "cdnondemand.org",
+            "categoryId": 11,
+            "url": null
+        },
+        "runative": {
+            "name": "Runative",
+            "categoryId": 4,
+            "url": "https://runative.com/"
+        },
+        "lytics": {
+            "name": "Lytics",
+            "categoryId": 6,
+            "url": "https://www.lytics.com/"
+        },
+        "commercialvalue.org": {
+            "name": "commercialvalue.org",
+            "categoryId": 11,
+            "url": null
+        },
+        "semantiqo.com": {
+            "name": "Semantiqo",
+            "categoryId": 4,
+            "url": "https://semantiqo.com/"
+        },
+        "art19": {
+            "name": "Art19",
+            "categoryId": 4,
+            "url": "https://art19.com/"
+        },
+        "yandex_metrika": {
+            "name": "Yandex Metrika",
+            "categoryId": 6,
+            "url": "https://metrica.yandex.com/"
+        },
+        "dsp_rambler": {
+            "name": "Rambler DSP",
+            "categoryId": 4,
+            "url": "http://dsp.rambler.ru/"
+        },
+        "blis": {
+            "name": "Blis",
+            "categoryId": 6,
+            "url": "http://www.blis.com/index.php"
+        },
+        "yabbi": {
+            "name": "Yabbi",
+            "categoryId": 4,
+            "url": "https://yabbi.me/"
+        },
+        "omniscienta": {
+            "name": "Omniscienta",
+            "categoryId": 4,
+            "url": "http://www.omniscienta.com/"
+        },
+        "undertone": {
+            "name": "Undertone",
+            "categoryId": 4,
+            "url": "https://www.undertone.com/"
+        },
+        "innovid": {
+            "name": "Innovid",
+            "categoryId": 4,
+            "url": "https://www.innovid.com/"
+        },
+        "wp_engine": {
+            "name": "WP Engine",
+            "categoryId": 5,
+            "url": "https://wpengine.com/"
+        },
+        "vigo": {
+            "name": "Vigo",
+            "categoryId": 6,
+            "url": "https://vigo.one/"
+        },
+        "wurfl": {
+            "name": "WURFL",
+            "categoryId": 6,
+            "url": "https://web.wurfl.io/"
+        },
+        "stride": {
+            "name": "Stride",
+            "categoryId": 6,
+            "url": "https://www.getstride.com/"
+        },
+        "rockerbox": {
+            "name": "Rockerbox",
+            "categoryId": 6,
+            "url": "https://www.rockerbox.com/privacy"
+        },
+        "global_web_index": {
+            "name": "GlobalWebIndex",
+            "categoryId": 6,
+            "url": "https://www.globalwebindex.com/"
+        },
+        "swiftype": {
+            "name": "Swiftype",
+            "categoryId": 9,
+            "url": "https://swiftype.com/"
+        },
+        "groovinads": {
+            "name": "GroovinAds",
+            "categoryId": 4,
+            "url": "http://www.groovinads.com/en"
+        },
+        "tyroo": {
+            "name": "Tyroo",
+            "categoryId": 7,
+            "url": "http://www.tyroo.com/"
+        },
+        "delve_networks": {
+            "name": "Delve Networks",
+            "categoryId": 7,
+            "url": "http://www.delvenetworks.com/"
+        },
+        "sellpoints": {
+            "name": "Sellpoints",
+            "categoryId": 4,
+            "url": "https://www.sellpoints.com/"
+        },
+        "intent_iq": {
+            "name": "Intent IQ",
+            "categoryId": 6,
+            "url": null
+        },
+        "chute": {
+            "name": "Chute",
+            "categoryId": 5,
+            "url": "https://www.getchute.com/"
+        },
+        "fivetran": {
+            "name": "Fivetran",
+            "categoryId": 6,
+            "url": "https://fivetran.com/"
+        },
+        "eqs_group": {
+            "name": "EQS Group",
+            "categoryId": 6,
+            "url": "https://www.eqs.com/"
+        },
+        "boxever": {
+            "name": "Boxever",
+            "categoryId": 4,
+            "url": "https://www.boxever.com/"
+        },
+        "zmags": {
+            "name": "Zmags",
+            "categoryId": 7,
+            "url": "https://zmags.com/"
+        },
+        "engagio": {
+            "name": "Engagio",
+            "categoryId": 6,
+            "url": "https://www.engagio.com/"
+        },
+        "vendemore": {
+            "name": "Vendemore",
+            "categoryId": 1,
+            "url": "https://vendemore.com/"
+        },
+        "clever_tap": {
+            "name": "CleverTap",
+            "categoryId": 6,
+            "url": null
+        },
+        "digital_remedy": {
+            "name": "Digital Remedy",
+            "categoryId": 4,
+            "url": "https://www.digitalremedy.com/"
+        },
+        "amobee": {
+            "name": "Amobee",
+            "categoryId": 4,
+            "url": "https://www.amobee.com/"
+        },
+        "shopzilla": {
+            "name": "Shopzilla",
+            "categoryId": 4,
+            "url": "http://www.shopzilla.com/"
+        },
+        "autopilothq": {
+            "name": "AutopilotHQ",
+            "categoryId": 4,
+            "url": "https://www.autopilothq.com/"
+        },
+        "eyereturnmarketing": {
+            "name": "Eyereturn Marketing",
+            "categoryId": 4,
+            "url": "https://eyereturnmarketing.com/"
+        },
+        "groundtruth": {
+            "name": "GroundTruth",
+            "categoryId": 4,
+            "url": "http://www.groundtruth.com/"
+        },
+        "ipromote": {
+            "name": "iPromote",
+            "categoryId": 4,
+            "url": "http://www.ipromote.com/"
+        },
+        "ihs_markit": {
+            "name": "IHS Markit",
+            "categoryId": 6,
+            "url": "https://ihsmarkit.com/index.html"
+        },
+        "trueffect": {
+            "name": "Trueffect",
+            "categoryId": 4,
+            "url": "http://www.trueffect.com/"
+        },
+        "blogher": {
+            "name": "BlogHer",
+            "categoryId": 4,
+            "url": "https://www.blogher.com/"
+        },
+        "appsflyer": {
+            "name": "AppsFlyer",
+            "categoryId": 6,
+            "url": "https://www.appsflyer.com/"
+        },
+        "adjust": {
+            "name": "Adjust",
+            "categoryId": 6,
+            "url": "https://www.adjust.com/"
+        },
+        "mopub": {
+            "name": "MoPub",
+            "categoryId": 4,
+            "url": "https://www.mopub.com/"
+        },
+        "fiksu": {
+            "name": "Fiksu",
+            "categoryId": 4,
+            "url": "https://fiksu.com/"
+        },
+        "clear_pier": {
+            "name": "ClearPier",
+            "categoryId": 4,
+            "url": "http://clearpier.com/"
+        },
+        "somoaudience": {
+            "name": "SoMo Audience",
+            "categoryId": 4,
+            "url": "https://somoaudience.com/"
+        },
+        "giantmedia": {
+            "name": "GiantMedia",
+            "categoryId": 4,
+            "url": "http://giantmedia.com/"
+        },
+        "facetz.dca": {
+            "name": "Facetz.DCA",
+            "categoryId": 6,
+            "url": "http://facetz.net"
         }
     },
     "trackerDomains": {
@@ -6766,7 +7276,6 @@
         "research.de.com": "meetrics",
         "mxcdn.net": "meetrics",
         "mookie1.com": "media_innovation_group",
-        "bkrtx.com": "bluekai",
         "bluekai.com": "bluekai",
         "exactag.com": "exactag",
         "googleusercontent.com": "google_users",
@@ -6800,10 +7309,10 @@
         "quantserve.com": "quantcast",
         "adrtx.net": "adality_gmbh",
         "imageg.net": "omniture__adobe_analytics_",
-        "freedom.com": "omniture__adobe_analytics_",
+        "freedom.com": "freedom_mortgage",
         "du8783wkf05yr.cloudfront.net": "omniture__adobe_analytics_",
         "hitbox.com": "omniture__adobe_analytics_",
-        "reedbusiness.net": "omniture__adobe_analytics_",
+        "reedbusiness.net": "reed_business_information",
         "omtrdc.net": "omniture__adobe_analytics_",
         "2o7.net": "omniture__adobe_analytics_",
         "yandex.ru": "yandex",
@@ -6813,7 +7322,7 @@
         "krxd.net": "krux_digital",
         "pinimg.com": "pinterest",
         "pinterest.com": "pinterest",
-        "d3io1k5o0zdpqr.cloudfront.net": "pinterest",
+        "d3io1k5o0zdpqr.cloudfront.net": "amazon",
         "adscale.de": "adscale",
         "ebay.de": "ebay",
         "moatpixel.com": "moat",
@@ -7094,7 +7603,7 @@
         "tns-gallup.dk": "tns",
         "spring-tns.net": "tns",
         "statistik-gallup.net": "tns",
-        "tns-counter.ru": "tns",
+        "tns-counter.ru": "mediascope",
         "sesamestats.com": "tns",
         "tns-cs.net": "tns",
         "research-int.se": "tns",
@@ -7161,7 +7670,7 @@
         "yieldoptimizer.com": "adara_analytics",
         "ktxtr.com": "kontextr",
         "sndcdn.com": "soundcloud",
-        "contentspread.net": "content_spread",
+        "contentspread.net": "neory_",
         "myvisualiq.net": "visual_iq",
         "ciuvo.com": "ciuvo.com",
         "company-target.com": "demandbase",
@@ -7191,7 +7700,6 @@
         "xplusone.com": "rocket_fuel",
         "de17a.com": "delta_projects",
         "adaction.se": "delta_projects",
-        "cdngc.net": "clicktale",
         "clicktale.net": "clicktale",
         "pantherssl.com": "clicktale",
         "onthe.io": "onthe.io",
@@ -7312,7 +7820,6 @@
         "adtr02.com": "adtr02.com",
         "scribblelive.com": "scribblelive",
         "unrulymedia.com": "unruly_media",
-        "bidr.io": "beeswax",
         "contentsquare.net": "contentsquare.net",
         "geotrust.com": "geotrust",
         "zemanta.com": "zemanta",
@@ -7333,7 +7840,7 @@
         "adlooxtracking.com": "adloox",
         "gmads.net": "groupm_server",
         "grmtech.net": "groupm_server",
-        "acxiomapac.com": "acxiom",
+        "acxiom.com": "acxiom",
         "bongacams.com": "bongacams.com",
         "norton.com": "symantec",
         "verisign.com": "symantec",
@@ -8167,7 +8674,7 @@
         "mapbox.com": "mapbox",
         "startappservice.com": "startapp",
         "ipify.org": "ipify",
-        "yimg.jp": "yahoo",
+        "yimg.jp": "yahoo_japan",
         "keywee.co": "keywee",
         "trvl-px.com": "expedia",
         "rtbsuperhub.com": "rtbsuperhub.com",
@@ -8218,7 +8725,6 @@
         "perfdrive.com": "perfdrive.com",
         "pendo.io": "pendo.io",
         "otm-r.com": "otm-r.com",
-        "rnet.plus": "rambler",
         "beeline.ru": "beeline.ru",
         "wp.pl": "wp.pl",
         "24smi.net": "24smi",
@@ -8571,7 +9077,6 @@
         "hatena.ne.jp": "st-hatena",
         "zukxd6fkxqn.com": "zukxd6fkxqn.com",
         "treasuredata.com": "treasuredata",
-        "webvisor.org": "yandex_direct",
         "storage-yahoo.jp": "yahoo_japan",
         "ispot.tv": "ispot.tv",
         "microad.co.jp": "microad",
@@ -8623,6 +9128,136 @@
         "turner.com": "turner",
         "google.co.id": "google",
         "digitalgov.gov": "digital.gov",
-        "datatables.net": "datatables"
+        "datatables.net": "datatables",
+        "neory-tm.com": "neory_",
+        "deepthought.online": "the_reach_group",
+        "simptrack.com": "neory_",
+        "makeappdev.xyz": "makeappdev.xyz",
+        "d1xfq2052q7thw.cloudfront.net": "atlassian_marketplace",
+        "marketplace.atlassian.com": "atlassian_marketplace",
+        "hoholikik.club": "hoholikik.club",
+        "mlstatic.com": "mercado",
+        "mercadoclics.com": "mercado",
+        "smartlink.cool": "smartlink.cool",
+        "vk-analytics.com": "vk.com",
+        "xen-media.com": "xen-media.com",
+        "fastly-insights.com": "fastly_insights",
+        "du11hjcvx0uqb.cloudfront.net": "canvas",
+        "canvas.net": "canvas",
+        "canvasnetwork.com": "canvas",
+        "txmblr.com": "tumblr_analytics",
+        "sinaimg.cn": "sina_cdn",
+        "tableteducation.com": "tableteducation.com",
+        "globalnotifier.com": "globalnotifier.com",
+        "tomnewsupdate.info": "tomnewsupdate.info",
+        "ivcbrasil.org.br": "ivcbrasil.org.br",
+        "newsupdatewe.info": "newsupdatewe.info",
+        "ihvmcqojoj.com": "ihvmcqojoj.com",
+        "w-x.co": "the_weather_company",
+        "cdn-vk.com": "vk.com",
+        "icuazeczpeoohx.com": "icuazeczpeoohx.com",
+        "imageshack.host": "revenue_hits",
+        "oghub.io": "oghub.io",
+        "servedby-buysellads.com": "buysellads",
+        "aaxads.com": "aaxads.com",
+        "bodelen.com": "bodelen.com",
+        "div.show": "div.show",
+        "clcknads.pro": "clcknads.pro",
+        "ad-blocker.org": "ad-blocker.org",
+        "healte.de": "healte.de",
+        "sitelabweb.com": "sitelabweb.com",
+        "forter.com": "forter",
+        "soclminer.com.br": "social_miner",
+        "profitshare.ro": "profitshare",
+        "yotpo.com": "yotpo",
+        "btttag.com": "bluetriangle",
+        "queue-it.net": "queue-it",
+        "pushame.com": "pushame.com",
+        "bluecore.com": "bluecore.com",
+        "pushwhy.com": "pushwhy.com",
+        "clearsale.com.br": "clearsale",
+        "luckypushh.com": "luckypushh.com",
+        "civicscience.com": "civicscience.com",
+        "chaordicsystems.com": "chaordic",
+        "stripst.com": "stripst.com",
+        "adtng.com": "adtng.com",
+        "wnzmauurgol.com": "wnzmauurgol.com",
+        "srvvtrk.com": "srvvtrk.com",
+        "ymzrrizntbhde.com": "ymzrrizntbhde.com",
+        "umebiggestern.club": "umebiggestern.club",
+        "tensitionschoo.club": "tensitionschoo.club",
+        "brandmetrics.com": "brandmetrics.com",
+        "pcvark.com": "pcvark.com",
+        "siblesectiveal.club": "siblesectiveal.club",
+        "justservingfiles.net": "hqentertainmentnetwork.com",
+        "gannett-cdn.com": "gannett",
+        "makesource.cool": "makesource.cool",
+        "ottogroup.media": "otto.de",
+        "cdnondemand.org": "cdnondemand.org",
+        "un-syndicate.com": "runative",
+        "lytics.io": "lytics",
+        "commercialvalue.org": "commercialvalue.org",
+        "semantiqo.com": "semantiqo.com",
+        "art19.com": "art19",
+        "mc.yandex.ru": "yandex_metrika",
+        "an.yandex.ru": "yandex_direct",
+        "awaps.yandex.ru": "yandex_direct",
+        "stat.media": "smi2.ru",
+        "dsp-rambler.ru": "dsp_rambler",
+        "blismedia.com": "blis",
+        "bidr.io": "beeswax",
+        "adx.com.ru": "yabbi",
+        "yabbi.me": "yabbi",
+        "omnidsp.com": "omniscienta",
+        "ads.undertone.com": "undertone",
+        "innovid.com": "innovid",
+        "inextaction.net": "datalogix",
+        "m6d.com": "dstillery",
+        "wiredminds.com": "wiredminds",
+        "wpengine.com": "wp_engine",
+        "vigo.one": "vigo",
+        "vigo.ru": "vigo",
+        "wurfl.io": "wurfl",
+        "tracking.stridespark.com": "stride",
+        "cdn.stridespark.com": "stride",
+        "getrockerbox.com": "rockerbox",
+        "globalwebindex.net": "global_web_index",
+        "swiftypecdn.com": "swiftype",
+        "groovinads.com": "groovinads",
+        "tyroodr.com": "tyroo",
+        "clicktale.com": "clicktale",
+        "delvenetworks.com": "delve_networks",
+        "sellpoint.net": "sellpoints",
+        "sellpoints.com": "sellpoints",
+        "intentiq.com": "intent_iq",
+        "api.getchute.com": "chute",
+        "media.chute.io": "chute",
+        "fivetran.com": "fivetran",
+        "equitystory.com": "eqs_group",
+        "boxever.com": "boxever",
+        "zmags.com": "zmags",
+        "engagio.com": "engagio",
+        "vendemore.com": "vendemore",
+        "wzrkt.com": "clever_tap",
+        "adready.com": "digital_remedy",
+        "ad.amgdgt.com": "amobee",
+        "ads.amgdgt.com": "amobee",
+        "shopzilla.com": "shopzilla",
+        "api.autopilothq.com": "autopilothq",
+        "eyereturn.com": "eyereturnmarketing",
+        "bidagent.xad.com": "groundtruth",
+        "ipromote.com": "ipromote",
+        "ad.wsod.com": "ihs_markit",
+        "adlegend.com": "trueffect",
+        "blogherads.com": "blogher",
+        "blogher.com": "blogher",
+        "appsflyer.com": "appsflyer",
+        "adjust.com": "adjust",
+        "mopub.com": "mopub",
+        "fiksu.com": "fiksu",
+        "pulseradius.com": "clear_pier",
+        "mobileadtrading.com": "somoaudience",
+        "videostat.com": "giantmedia",
+        "facetz.net": "facetz.dca"
     }
 }
