@@ -176,7 +176,6 @@ func run(args options) {
 			for config.TLS.PortHTTPS == 0 || config.TLS.PrivateKey == "" || config.TLS.CertificateChain == "" { // sleep until neccessary data is supplied
 				httpsServer.cond.Wait()
 			}
-			log.Printf("%+v", config.TLS)
 			address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.TLS.PortHTTPS))
 			cert, err := tls.X509KeyPair([]byte(config.TLS.CertificateChain), []byte(config.TLS.PrivateKey))
 			if err != nil {
