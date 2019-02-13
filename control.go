@@ -1167,7 +1167,8 @@ func validateCertificates(data tlsConfig) (tlsConfig, error) {
 
 		// update status
 		if mainCert != nil {
-			data.StatusCertificate = fmt.Sprintf("Certificate expires on %s", mainCert.NotAfter) //, valid for hostname %s", mainCert.NotAfter, mainCert.Subject.CommonName)
+			notAfter := mainCert.NotAfter
+			data.StatusCertificate = fmt.Sprintf("Certificate expires on %s", notAfter) //, valid for hostname %s", mainCert.NotAfter, mainCert.Subject.CommonName)
 			if len(mainCert.DNSNames) == 1 {
 				data.StatusCertificate += fmt.Sprintf(", valid for hostname %s", mainCert.DNSNames[0])
 			} else if len(mainCert.DNSNames) > 1 {
@@ -1176,8 +1177,8 @@ func validateCertificates(data tlsConfig) (tlsConfig, error) {
 
 			// issue a warning if certificate is about to expire
 			now := time.Now()
-			if mainCert.NotAfter.AddDate(0, 0, -30).After(now) {
-				timeLeft := time.Until(mainCert.NotAfter)
+			if now.AddDate(0, 0, 30).After(notAfter) {
+				timeLeft := notAfter.Sub(now)
 				if timeLeft > 0 {
 					data.Warning = fmt.Sprintf("Your certificate expires in %.0f days, we recommend you update it soon", timeLeft.Hours()/24)
 				} else {
