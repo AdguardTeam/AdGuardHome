@@ -61,14 +61,18 @@ type dnsConfig struct {
 
 var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
 
-// field ordering is important -- yaml fields will mirror ordering from here
-type tlsConfig struct {
+type tlsConfigSettings struct {
 	ServerName     string `yaml:"server_name" json:"server_name,omitempty"`
 	ForceHTTPS     bool   `yaml:"force_https" json:"force_https,omitempty"`
 	PortHTTPS      int    `yaml:"port_https" json:"port_https,omitempty"`
 	PortDNSOverTLS int    `yaml:"port_dns_over_tls" json:"port_dns_over_tls,omitempty"`
 
 	dnsforward.TLSConfig `yaml:",inline" json:",inline"`
+}
+
+// field ordering is important -- yaml fields will mirror ordering from here
+type tlsConfig struct {
+	tlsConfigSettings `yaml:",inline" json:",inline"`
 
 	// only for API, no need to be stored in config
 	StatusCertificate string `yaml:"status_cert" json:"status_cert,omitempty"`
@@ -97,8 +101,10 @@ var config = configuration{
 		UpstreamDNS: defaultDNS,
 	},
 	TLS: tlsConfig{
-		PortHTTPS:      443,
-		PortDNSOverTLS: 853, // needs to be passed through to dnsproxy
+		tlsConfigSettings: tlsConfigSettings{
+			PortHTTPS:      443,
+			PortDNSOverTLS: 853, // needs to be passed through to dnsproxy
+		},
 	},
 	Filters: []filter{
 		{Filter: dnsfilter.Filter{ID: 1}, Enabled: true, URL: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt", Name: "AdGuard Simplified Domain Names filter"},

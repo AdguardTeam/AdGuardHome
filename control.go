@@ -13,6 +13,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -1076,9 +1077,21 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusBadRequest, "New TLS configuration does not validate: %s", err)
 		return
 	}
+	restartHTTPS := false
+	if !reflect.DeepEqual(config.TLS.tlsConfigSettings, data.tlsConfigSettings) {
+		log.Printf("tls config settings have changed, will restart HTTPS server")
+		restartHTTPS = true
+	}
 	config.TLS = data
-	httpsServer.cond.Broadcast()
 	httpUpdateConfigReloadDNSReturnOK(w, r)
+	// this needs to be done in a goroutine because Shutdown() is a blocking call, and it will block
+	// until all requests are finished, and _we_ are inside a request right now, so it will block indefinitely
+	if restartHTTPS {
+		go func() {
+			httpsServer.cond.Broadcast()
+			httpsServer.server.Shutdown(context.TODO())
+		}()
+	}
 }
 
 func validateCertificates(data tlsConfig) (tlsConfig, error) {
