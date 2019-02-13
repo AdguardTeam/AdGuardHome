@@ -72,6 +72,7 @@ type tlsConfigSettings struct {
 
 // field ordering is not important -- these are for API and are recalculated on each run
 type tlsConfigStatus struct {
+	NotAfter          string `yaml:"-" json:"not_after,omitempty"`
 	StatusCertificate string `yaml:"-" json:"status_cert,omitempty"`
 	StatusKey         string `yaml:"-" json:"status_key,omitempty"`
 	Warning           string `yaml:"-" json:"warning,omitempty"`

@@ -1171,6 +1171,7 @@ func validateCertificates(data tlsConfig) (tlsConfig, error) {
 		// update status
 		if mainCert != nil {
 			notAfter := mainCert.NotAfter
+			data.NotAfter = notAfter.Format(time.RFC3339)
 			data.StatusCertificate = fmt.Sprintf("Certificate expires on %s", notAfter) //, valid for hostname %s", mainCert.NotAfter, mainCert.Subject.CommonName)
 			if len(mainCert.DNSNames) == 1 {
 				data.StatusCertificate += fmt.Sprintf(", valid for hostname %s", mainCert.DNSNames[0])
