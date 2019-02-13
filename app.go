@@ -183,7 +183,7 @@ func run(args options) {
 				log.Fatal(err)
 				os.Exit(1)
 			}
-			confing.TLS = data // update warnings
+			config.TLS = data // update warnings
 
 			// prepare cert for HTTPS server
 			cert, err := tls.X509KeyPair([]byte(config.TLS.CertificateChain), []byte(config.TLS.PrivateKey))
