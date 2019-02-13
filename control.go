@@ -1156,6 +1156,9 @@ func validateCertificates(data tlsConfig) (tlsConfig, error) {
 			opts.Intermediates = pool
 		}
 
+		// clear out all warnings and statuses
+		data.tlsConfigStatus = tlsConfigStatus{}
+
 		// TODO: save it as a warning rather than error it out -- shouldn't be a big problem
 		mainCert := parsedCerts[0]
 		_, err := mainCert.Verify(opts)

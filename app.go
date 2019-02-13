@@ -177,19 +177,29 @@ func run(args options) {
 				httpsServer.cond.Wait()
 			}
 			address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.TLS.PortHTTPS))
+			// validate current TLS config and update warnings (it could have been loaded from file)
+			data, err := validateCertificates(config.TLS)
+			if err != nil {
+				log.Fatal(err)
+				os.Exit(1)
+			}
+			confing.TLS = data // update warnings
+
+			// prepare cert for HTTPS server
 			cert, err := tls.X509KeyPair([]byte(config.TLS.CertificateChain), []byte(config.TLS.PrivateKey))
 			if err != nil {
 				log.Fatal(err)
 				os.Exit(1)
 			}
-			config := &tls.Config{
-				Certificates: []tls.Certificate{cert},
-			}
-			httpsServer.server = &http.Server{
-				Addr:      address,
-				TLSConfig: config,
-			}
 			httpsServer.cond.L.Unlock()
+
+			// prepare HTTPS server
+			httpsServer.server = &http.Server{
+				Addr: address,
+				TLSConfig: &tls.Config{
+					Certificates: []tls.Certificate{cert},
+				},
+			}
 
 			URL := fmt.Sprintf("https://%s", address)
 			log.Println("Go to " + URL)

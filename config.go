@@ -70,15 +70,18 @@ type tlsConfigSettings struct {
 	dnsforward.TLSConfig `yaml:",inline" json:",inline"`
 }
 
+// field ordering is not important -- these are for API and are recalculated on each run
+type tlsConfigStatus struct {
+	StatusCertificate string `yaml:"-" json:"status_cert,omitempty"`
+	StatusKey         string `yaml:"-" json:"status_key,omitempty"`
+	Warning           string `yaml:"-" json:"warning,omitempty"`
+	WarningValidation string `yaml:"-" json:"warning_validation,omitempty"`
+}
+
 // field ordering is important -- yaml fields will mirror ordering from here
 type tlsConfig struct {
 	tlsConfigSettings `yaml:",inline" json:",inline"`
-
-	// only for API, no need to be stored in config
-	StatusCertificate string `yaml:"status_cert" json:"status_cert,omitempty"`
-	StatusKey         string `yaml:"status_key" json:"status_key,omitempty"`
-	Warning           string `yaml:"warning" json:"warning,omitempty"`
-	WarningValidation string `yaml:"warning_validation" json:"warning_validation,omitempty"`
+	tlsConfigStatus   `yaml:"-" json:",inline"`
 }
 
 // initialize to default values, will be changed later when reading config or parsing command line
