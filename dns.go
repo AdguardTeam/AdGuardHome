@@ -51,9 +51,11 @@ func generateServerConfig() dnsforward.ServerConfig {
 		Filters:         filters,
 	}
 
-	newconfig.TLSConfig = config.TLS.TLSConfig
-	if config.TLS.PortDNSOverTLS != 0 {
-		newconfig.TLSListenAddr = &net.TCPAddr{IP: net.ParseIP(config.DNS.BindHost), Port: config.TLS.PortDNSOverTLS}
+	if config.TLS.Enabled {
+		newconfig.TLSConfig = config.TLS.TLSConfig
+		if config.TLS.PortDNSOverTLS != 0 {
+			newconfig.TLSListenAddr = &net.TCPAddr{IP: net.ParseIP(config.DNS.BindHost), Port: config.TLS.PortDNSOverTLS}
+		}
 	}
 
 	for _, u := range config.DNS.UpstreamDNS {

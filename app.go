@@ -25,7 +25,7 @@ var VersionString = "undefined"
 var httpServer *http.Server
 var httpsServer struct {
 	server     *http.Server
-	cond       *sync.Cond // reacts to config.TLS.PortHTTPS, CertificateChain and PrivateKey
+	cond       *sync.Cond // reacts to config.TLS.Enabled, PortHTTPS, CertificateChain and PrivateKey
 	sync.Mutex            // protects config.TLS
 }
 
@@ -173,7 +173,7 @@ func run(args options) {
 		for { // this is an endless loop
 			httpsServer.cond.L.Lock()
 			// this mechanism doesn't let us through until all conditions are ment
-			for config.TLS.PortHTTPS == 0 || config.TLS.PrivateKey == "" || config.TLS.CertificateChain == "" { // sleep until neccessary data is supplied
+			for config.TLS.Enabled == false || config.TLS.PortHTTPS == 0 || config.TLS.PrivateKey == "" || config.TLS.CertificateChain == "" { // sleep until neccessary data is supplied
 				httpsServer.cond.Wait()
 			}
 			address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.TLS.PortHTTPS))
