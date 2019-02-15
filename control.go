@@ -78,9 +78,7 @@ func writeAllConfigsAndReloadDNS() error {
 func httpUpdateConfigReloadDNSReturnOK(w http.ResponseWriter, r *http.Request) {
 	err := writeAllConfigsAndReloadDNS()
 	if err != nil {
-		errorText := fmt.Sprintf("Couldn't write config file: %s", err)
-		log.Println(errorText)
-		http.Error(w, errorText, http.StatusInternalServerError)
+		httpError(w, http.StatusInternalServerError, "Couldn't write config file: %s", err)
 		return
 	}
 	returnOK(w)
@@ -1039,20 +1037,7 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 // TLS
 // ---
 func handleTLSStatus(w http.ResponseWriter, r *http.Request) {
-	data := config.TLS
-	if data.CertificateChain != "" {
-		encoded := base64.StdEncoding.EncodeToString([]byte(data.CertificateChain))
-		data.CertificateChain = string(encoded)
-	}
-	if data.PrivateKey != "" {
-		encoded := base64.StdEncoding.EncodeToString([]byte(data.PrivateKey))
-		data.PrivateKey = string(encoded)
-	}
-	err := json.NewEncoder(w).Encode(&data)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Failed to marshal json with TLS status: %s", err)
-		return
-	}
+	marshalTLS(w, config.TLS)
 }
 
 func handleTLSValidate(w http.ResponseWriter, r *http.Request) {
@@ -1062,11 +1047,8 @@ func handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err = validateCertificates(data)
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "New TLS configuration does not validate: %s", err)
-		return
-	}
+	data = validateCertificates(data)
+	marshalTLS(w, data)
 }
 
 func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
@@ -1076,18 +1058,21 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err = validateCertificates(data)
+	restartHTTPS := false
+	data = validateCertificates(data)
+	if data.WarningValidation == "" {
+		if !reflect.DeepEqual(config.TLS.tlsConfigSettings, data.tlsConfigSettings) {
+			log.Printf("tls config settings have changed, will restart HTTPS server")
+			restartHTTPS = true
+		}
+		config.TLS = data
+	}
+	err = writeAllConfigsAndReloadDNS()
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "New TLS configuration does not validate: %s", err)
+		httpError(w, http.StatusInternalServerError, "Couldn't write config file: %s", err)
 		return
 	}
-	restartHTTPS := false
-	if !reflect.DeepEqual(config.TLS.tlsConfigSettings, data.tlsConfigSettings) {
-		log.Printf("tls config settings have changed, will restart HTTPS server")
-		restartHTTPS = true
-	}
-	config.TLS = data
-	httpUpdateConfigReloadDNSReturnOK(w, r)
+	marshalTLS(w, data)
 	// this needs to be done in a goroutine because Shutdown() is a blocking call, and it will block
 	// until all requests are finished, and _we_ are inside a request right now, so it will block indefinitely
 	if restartHTTPS && httpsServer.server != nil {
@@ -1098,7 +1083,7 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func validateCertificates(data tlsConfig) (tlsConfig, error) {
+func validateCertificates(data tlsConfig) tlsConfig {
 	var err error
 
 	// clear out status for certificates
@@ -1131,13 +1116,15 @@ func validateCertificates(data tlsConfig) (tlsConfig, error) {
 		for _, cert := range certs {
 			parsed, err := x509.ParseCertificate(cert.Bytes)
 			if err != nil {
-				return data, errorx.Decorate(err, "Failed to parse certificate")
+				data.WarningValidation = fmt.Sprintf("Failed to parse certificate: %s", err)
+				return data
 			}
 			parsedCerts = append(parsedCerts, parsed)
 		}
 
 		if len(parsedCerts) == 0 {
-			return data, fmt.Errorf("You have specified an empty certificate")
+			data.WarningValidation = fmt.Sprintf("You have specified an empty certificate")
+			return data
 		}
 
 		// spew.Dump(parsedCerts)
@@ -1223,13 +1210,15 @@ func validateCertificates(data tlsConfig) (tlsConfig, error) {
 		}
 
 		if key == nil {
-			return data, fmt.Errorf("No valid keys were found")
+			data.WarningValidation = "No valid keys were found"
+			return data
 		}
 
 		// parse the decoded key
 		_, keytype, err := parsePrivateKey(key.Bytes)
 		if err != nil {
-			return data, errorx.Decorate(err, "Failed to parse private key")
+			data.WarningValidation = fmt.Sprintf("Failed to parse private key: %s", err)
+			return data
 		}
 
 		data.ValidKey = true
@@ -1240,11 +1229,12 @@ func validateCertificates(data tlsConfig) (tlsConfig, error) {
 	if data.PrivateKey != "" && data.CertificateChain != "" {
 		_, err = tls.X509KeyPair([]byte(data.CertificateChain), []byte(data.PrivateKey))
 		if err != nil {
-			return data, errorx.Decorate(err, "Invalid certificate or key")
+			data.WarningValidation = fmt.Sprintf("Invalid certificate or key: %s", err)
+			return data
 		}
 	}
 
-	return data, nil
+	return data
 }
 
 // Attempt to parse the given private key DER block. OpenSSL 0.9.8 generates
@@ -1297,6 +1287,23 @@ func unmarshalTLS(r *http.Request) (tlsConfig, error) {
 	}
 
 	return data, nil
+}
+
+func marshalTLS(w http.ResponseWriter, data tlsConfig) {
+	w.Header().Set("Content-Type", "application/json")
+	if data.CertificateChain != "" {
+		encoded := base64.StdEncoding.EncodeToString([]byte(data.CertificateChain))
+		data.CertificateChain = string(encoded)
+	}
+	if data.PrivateKey != "" {
+		encoded := base64.StdEncoding.EncodeToString([]byte(data.PrivateKey))
+		data.PrivateKey = string(encoded)
+	}
+	err := json.NewEncoder(w).Encode(data)
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "Failed to marshal json with TLS status: %s", err)
+		return
+	}
 }
 
 // ------------------------
