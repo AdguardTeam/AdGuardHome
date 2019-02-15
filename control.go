@@ -3,11 +3,15 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto"
+	"crypto/ecdsa"
+	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -1097,15 +1101,12 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 func validateCertificates(data tlsConfig) (tlsConfig, error) {
 	var err error
 
+	// clear out status for certificates
+	data.tlsConfigStatus = tlsConfigStatus{}
+
+	// check only public certificate separetely from the key
 	if data.CertificateChain != "" {
 		log.Printf("got certificate: %s", data.CertificateChain)
-
-		if data.PrivateKey != "" {
-			_, err = tls.X509KeyPair([]byte(data.CertificateChain), []byte(data.PrivateKey))
-			if err != nil {
-				return data, errorx.Decorate(err, "Invalid certificate or key")
-			}
-		}
 
 		// now do a more extended validation
 		var certs []*pem.Block    // PEM-encoded certificates
@@ -1165,13 +1166,20 @@ func validateCertificates(data tlsConfig) (tlsConfig, error) {
 		if err != nil {
 			// let self-signed certs through
 			data.WarningValidation = fmt.Sprintf("Your certificate does not verify: %s", err)
+		} else {
+			data.ValidChain = true
 		}
 		// spew.Dump(chains)
 
 		// update status
 		if mainCert != nil {
 			notAfter := mainCert.NotAfter
-			data.NotAfter = notAfter.Format(time.RFC3339)
+			data.Subject = mainCert.Subject.String()
+			data.Issuer = mainCert.Issuer.String()
+			data.NotAfter = notAfter
+			data.NotBefore = mainCert.NotBefore
+			data.DNSNames = mainCert.DNSNames
+
 			data.StatusCertificate = fmt.Sprintf("Certificate expires on %s", notAfter) //, valid for hostname %s", mainCert.NotAfter, mainCert.Subject.CommonName)
 			if len(mainCert.DNSNames) == 1 {
 				data.StatusCertificate += fmt.Sprintf(", valid for hostname %s", mainCert.DNSNames[0])
@@ -1192,7 +1200,75 @@ func validateCertificates(data tlsConfig) (tlsConfig, error) {
 		}
 	}
 
+	// validate private key (right now the only validation possible is just parsing it)
+	if data.PrivateKey != "" {
+		// now do a more extended validation
+		var key *pem.Block        // PEM-encoded certificates
+		var skippedBytes []string // skipped bytes
+
+		// go through all pem blocks, but take first valid pem block and drop the rest
+		pemblock := []byte(data.PrivateKey)
+		for {
+			var decoded *pem.Block
+			decoded, pemblock = pem.Decode(pemblock)
+			if decoded == nil {
+				break
+			}
+			if decoded.Type == "PRIVATE KEY" || strings.HasSuffix(decoded.Type, " PRIVATE KEY") {
+				key = decoded
+				break
+			} else {
+				skippedBytes = append(skippedBytes, decoded.Type)
+			}
+		}
+
+		if key == nil {
+			return data, fmt.Errorf("No valid keys were found")
+		}
+
+		// parse the decoded key
+		_, keytype, err := parsePrivateKey(key.Bytes)
+		if err != nil {
+			return data, errorx.Decorate(err, "Failed to parse private key")
+		}
+
+		data.ValidKey = true
+		data.KeyType = keytype
+	}
+
+	// if both are set, validate both in unison
+	if data.PrivateKey != "" && data.CertificateChain != "" {
+		_, err = tls.X509KeyPair([]byte(data.CertificateChain), []byte(data.PrivateKey))
+		if err != nil {
+			return data, errorx.Decorate(err, "Invalid certificate or key")
+		}
+	}
+
 	return data, nil
+}
+
+// Attempt to parse the given private key DER block. OpenSSL 0.9.8 generates
+// PKCS#1 private keys by default, while OpenSSL 1.0.0 generates PKCS#8 keys.
+// OpenSSL ecparam generates SEC1 EC private keys for ECDSA. We try all three.
+func parsePrivateKey(der []byte) (crypto.PrivateKey, string, error) {
+	if key, err := x509.ParsePKCS1PrivateKey(der); err == nil {
+		return key, "RSA", nil
+	}
+	if key, err := x509.ParsePKCS8PrivateKey(der); err == nil {
+		switch key := key.(type) {
+		case *rsa.PrivateKey:
+			return key, "RSA", nil
+		case *ecdsa.PrivateKey:
+			return key, "ECDSA", nil
+		default:
+			return nil, "", errors.New("tls: found unknown private key type in PKCS#8 wrapping")
+		}
+	}
+	if key, err := x509.ParseECPrivateKey(der); err == nil {
+		return key, "ECDSA", nil
+	}
+
+	return nil, "", errors.New("tls: failed to parse private key")
 }
 
 // unmarshalTLS handles base64-encoded certificates transparently

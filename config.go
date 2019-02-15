@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
@@ -73,9 +74,20 @@ type tlsConfigSettings struct {
 
 // field ordering is not important -- these are for API and are recalculated on each run
 type tlsConfigStatus struct {
-	NotAfter          string `yaml:"-" json:"not_after,omitempty"`
-	StatusCertificate string `yaml:"-" json:"status_cert,omitempty"`
-	StatusKey         string `yaml:"-" json:"status_key,omitempty"`
+	// certificate status
+	ValidChain        bool      `yaml:"-" json:"valid_chain"`
+	Subject           string    `yaml:"-" json:"subject,omitempty"`
+	Issuer            string    `yaml:"-" json:"issuer,omitempty"`
+	NotBefore         time.Time `yaml:"-" json:"not_before,omitempty"`
+	NotAfter          time.Time `yaml:"-" json:"not_after,omitempty"`
+	DNSNames          []string  `yaml:"-" json:"dns_names"`
+	StatusCertificate string    `yaml:"-" json:"status_cert,omitempty"`
+
+	// key status
+	ValidKey bool   `yaml:"-" json:"valid_key"`
+	KeyType  string `yaml:"-" json:"key_type,omitempty"`
+
+	// warnings
 	Warning           string `yaml:"-" json:"warning,omitempty"`
 	WarningValidation string `yaml:"-" json:"warning_validation,omitempty"`
 }
