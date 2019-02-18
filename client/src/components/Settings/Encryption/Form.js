@@ -260,9 +260,7 @@ let Form = (props) => {
                         invalid
                         || submitting
                         || processing
-                        || !valid_chain
                         || !valid_key
-                        || warning_validation
                     }
                 >
                     <Trans>save_config</Trans>
