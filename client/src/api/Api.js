@@ -15,7 +15,11 @@ export default class Api {
             return response.data;
         } catch (error) {
             console.error(error);
-            throw new Error(`${this.baseUrl}/${path} | ${error.response.data} | ${error.response.status}`);
+            const errorPath = `${this.baseUrl}/${path}`;
+            if (error.response) {
+                throw new Error(`${errorPath} | ${error.response.data} | ${error.response.status}`);
+            }
+            throw new Error(`${errorPath} | ${error}`);
         }
     }
 
