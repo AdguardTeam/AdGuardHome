@@ -15,9 +15,13 @@ f() {
 	    rm -f dist/AdGuardHome_"$version"_Windows.zip
 	    zip dist/AdGuardHome_"$version"_Windows.zip AdGuardHome.exe README.md LICENSE.txt
 	else
-	    pushd ..
-	    tar zcvf AdGuardHome/dist/AdGuardHome_"$version"_"$GOOS"_"$GOARCH".tar.gz AdGuardHome/{AdGuardHome,LICENSE.txt,README.md}
+	    rm -rf dist/AdguardHome
+	    mkdir -p dist/AdGuardHome
+	    cp -pv {AdGuardHome,LICENSE.txt,README.md} dist/AdGuardHome/
+	    pushd dist
+	    tar zcvf AdGuardHome_"$version"_"$GOOS"_"$GOARCH".tar.gz AdGuardHome/{AdGuardHome,LICENSE.txt,README.md}
 	    popd
+	    rm -rf dist/AdguardHome
 	fi
 }
 
