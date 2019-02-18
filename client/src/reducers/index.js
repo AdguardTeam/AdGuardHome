@@ -6,6 +6,7 @@ import versionCompare from '../helpers/versionCompare';
 
 import * as actions from '../actions';
 import toasts from './toasts';
+import encryption from './encryption';
 
 const settings = handleActions({
     [actions.initSettingsRequest]: state => ({ ...state, processing: true }),
@@ -300,38 +301,6 @@ const dhcp = handleActions({
     },
     active: null,
     leases: [],
-});
-
-const encryption = handleActions({
-    [actions.getTlsStatusRequest]: state => ({ ...state, processing: true }),
-    [actions.getTlsStatusFailure]: state => ({ ...state, processing: false }),
-    [actions.getTlsStatusSuccess]: (state, { payload }) => {
-        const newState = {
-            ...state,
-            ...payload,
-            processing: false,
-        };
-        return newState;
-    },
-
-    [actions.setTlsConfigRequest]: state => ({ ...state, processingConfig: true }),
-    [actions.setTlsConfigFailure]: state => ({ ...state, processingConfig: false }),
-    [actions.setTlsConfigSuccess]: (state, { payload }) => {
-        const newState = {
-            ...state,
-            ...payload,
-            processingConfig: false,
-        };
-        return newState;
-    },
-}, {
-    processing: true,
-    processingConfig: false,
-    status_cert: '',
-    status_key: '',
-    certificate_chain: '',
-    private_key: '',
-    server_name: '',
 });
 
 export default combineReducers({

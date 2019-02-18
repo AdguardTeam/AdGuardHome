@@ -100,6 +100,7 @@ class Settings extends Component {
                                 <Encryption
                                     encryption={this.props.encryption}
                                     setTlsConfig={this.props.setTlsConfig}
+                                    validateTlsConfig={this.props.validateTlsConfig}
                                 />
                                 <Dhcp
                                     dhcp={this.props.dhcp}

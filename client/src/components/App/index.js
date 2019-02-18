@@ -1,7 +1,7 @@
 import React, { Component, Fragment } from 'react';
 import { HashRouter, Route } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { Trans, withNamespaces } from 'react-i18next';
+import { withNamespaces } from 'react-i18next';
 import LoadingBar from 'react-redux-loading-bar';
 
 import 'react-table/react-table.css';
@@ -18,6 +18,7 @@ import Footer from '../ui/Footer';
 import Toasts from '../Toasts';
 import Status from '../ui/Status';
 import Topline from '../ui/Topline';
+import EncryptionTopline from '../ui/EncryptionTopline';
 import i18n from '../../i18n';
 
 class App extends Component {
@@ -56,7 +57,6 @@ class App extends Component {
             !dashboard.processingVersions &&
             dashboard.isCoreRunning &&
             dashboard.isUpdateAvailable;
-        const isExpiringCertificate = !encryption.processing && encryption.warning;
 
         return (
             <HashRouter hashType='noslash'>
@@ -66,12 +66,8 @@ class App extends Component {
                             {dashboard.announcement} <a href={dashboard.announcementUrl} target="_blank" rel="noopener noreferrer">Click here</a> for more info.
                         </Topline>
                     }
-                    {isExpiringCertificate &&
-                        <Topline type="warning">
-                            <Trans components={[<a href="#settings" key="0">link</a>]}>
-                                topline_expiring_certificate
-                            </Trans>
-                        </Topline>
+                    {!encryption.processing &&
+                        <EncryptionTopline notAfter={encryption.not_after} />
                     }
                     <LoadingBar className="loading-bar" updateTime={1000} />
                     <Route component={Header} />

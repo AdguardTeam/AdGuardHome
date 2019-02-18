@@ -11,9 +11,12 @@ import {
     getDhcpInterfaces,
     setDhcpConfig,
     findActiveDhcp,
+} from '../actions';
+import {
     getTlsStatus,
     setTlsConfig,
-} from '../actions';
+    validateTlsConfig,
+} from '../actions/encryption';
 import Settings from '../components/Settings';
 
 const mapStateToProps = (state) => {
@@ -46,6 +49,7 @@ const mapDispatchToProps = {
     findActiveDhcp,
     getTlsStatus,
     setTlsConfig,
+    validateTlsConfig,
 };
 
 export default connect(

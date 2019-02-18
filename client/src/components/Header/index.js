@@ -12,7 +12,6 @@ import './Header.css';
 class Header extends Component {
     state = {
         isMenuOpen: false,
-        isDropdownOpen: false,
     };
 
     toggleMenuOpen = () => {
@@ -25,6 +24,7 @@ class Header extends Component {
 
     render() {
         const { dashboard } = this.props;
+        const { isMenuOpen } = this.state;
         const badgeClass = classnames({
             'badge dns-status': true,
             'badge-success': dashboard.protectionEnabled,
@@ -52,7 +52,7 @@ class Header extends Component {
                         </div>
                         <Menu
                             location={this.props.location}
-                            isMenuOpen={this.state.isMenuOpen}
+                            isMenuOpen={isMenuOpen}
                             toggleMenuOpen={this.toggleMenuOpen}
                             closeMenu={this.closeMenu}
                         />

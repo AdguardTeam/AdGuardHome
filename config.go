@@ -63,7 +63,7 @@ type dnsConfig struct {
 var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
 
 type tlsConfigSettings struct {
-	Enabled        bool   `yaml:"enaled" json:"enabled"`
+	Enabled        bool   `yaml:"enabled" json:"enabled"`
 	ServerName     string `yaml:"server_name" json:"server_name,omitempty"`
 	ForceHTTPS     bool   `yaml:"force_https" json:"force_https,omitempty"`
 	PortHTTPS      int    `yaml:"port_https" json:"port_https,omitempty"`

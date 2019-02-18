@@ -1,10 +1,13 @@
 import React, { Fragment } from 'react';
+import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import { Field, reduxForm } from 'redux-form';
+import { Field, reduxForm, formValueSelector } from 'redux-form';
 import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
+import format from 'date-fns/format';
 
 import { renderField, renderSelectField, toNumber, port } from '../../../helpers/form';
+import { EMPTY_DATE } from '../../../helpers/constants';
 import i18n from '../../../i18n';
 
 const validate = (values) => {
@@ -20,21 +23,46 @@ const validate = (values) => {
     return errors;
 };
 
-const Form = (props) => {
+let Form = (props) => {
     const {
         t,
         handleSubmit,
+        handleChange,
+        isEnabled,
+        certificateChain,
+        privateKey,
         reset,
         invalid,
         submitting,
         processing,
-        statusCert,
-        statusKey,
+        not_after,
+        valid_chain,
+        valid_key,
+        dns_names,
+        key_type,
+        issuer,
+        subject,
+        warning_validation,
     } = props;
 
     return (
         <form onSubmit={handleSubmit}>
             <div className="row">
+                <div className="col-12">
+                    <div className="form__group form__group--settings">
+                        <Field
+                            name="enabled"
+                            type="checkbox"
+                            component={renderSelectField}
+                            placeholder={t('encryption_enable')}
+                            onChange={handleChange}
+                        />
+                    </div>
+                    <div className="form__desc">
+                        <Trans>encryption_enable_desc</Trans>
+                    </div>
+                    <hr/>
+                </div>
                 <div className="col-12">
                     <label className="form__label" htmlFor="server_name">
                         <Trans>encryption_server</Trans>
@@ -49,6 +77,8 @@ const Form = (props) => {
                             type="text"
                             className="form-control"
                             placeholder={t('encryption_server_enter')}
+                            onChange={handleChange}
+                            disabled={!isEnabled}
                         />
                         <div className="form__desc">
                             <Trans>encryption_server_desc</Trans>
@@ -62,6 +92,8 @@ const Form = (props) => {
                             type="checkbox"
                             component={renderSelectField}
                             placeholder={t('encryption_redirect')}
+                            onChange={handleChange}
+                            disabled={!isEnabled}
                         />
                         <div className="form__desc">
                             <Trans>encryption_redirect_desc</Trans>
@@ -84,6 +116,8 @@ const Form = (props) => {
                             placeholder={t('encryption_https')}
                             validate={[port]}
                             normalize={toNumber}
+                            onChange={handleChange}
+                            disabled={!isEnabled}
                         />
                         <div className="form__desc">
                             <Trans>encryption_https_desc</Trans>
@@ -104,6 +138,8 @@ const Form = (props) => {
                             placeholder={t('encryption_dot')}
                             validate={[port]}
                             normalize={toNumber}
+                            onChange={handleChange}
+                            disabled={!isEnabled}
                         />
                         <div className="form__desc">
                             <Trans>encryption_dot_desc</Trans>
@@ -132,28 +168,42 @@ const Form = (props) => {
                             type="text"
                             className="form-control form-control--textarea"
                             placeholder={t('encryption_certificates_input')}
+                            onChange={handleChange}
+                            disabled={!isEnabled}
                         />
                         <div className="form__status">
-                            {statusCert &&
+                            {certificateChain &&
                                 <Fragment>
                                     <div className="form__label form__label--bold">
                                         <Trans>encryption_status</Trans>:
                                     </div>
-                                    <div>
-                                        {statusCert}
-                                    </div>
+                                    <ul>
+                                        <li className={valid_chain ? 'text-success' : 'text-danger'}>
+                                            {valid_chain ?
+                                                <Trans>encryption_chain_valid</Trans>
+                                                : <Trans>encryption_chain_invalid</Trans>
+                                            }
+                                        </li>
+                                        {subject &&
+                                            <li><Trans>encryption_subject</Trans>: {subject}</li>
+                                        }
+                                        {issuer &&
+                                            <li><Trans>encryption_issuer</Trans>: {issuer}</li>
+                                        }
+                                        {not_after && not_after !== EMPTY_DATE &&
+                                            <li>
+                                                <Trans>encryption_expire</Trans>:&nbsp;
+                                                {format(not_after, 'YYYY-MM-DD HH:mm:ss')}
+                                            </li>
+                                        }
+                                        {dns_names &&
+                                            <li>
+                                                <Trans>encryption_hostnames</Trans>: {dns_names}
+                                            </li>
+                                        }
+                                    </ul>
                                 </Fragment>
                             }
-                            {/* <div>
-                                <Trans values={{ domains: '*.example.org, example.org' }}>
-                                    encryption_certificates_for
-                                </Trans>
-                            </div>
-                            <div>
-                                <Trans values={{ date: '2022-01-01' }}>
-                                    encryption_expire
-                                </Trans>
-                            </div> */}
                         </div>
                     </div>
                 </div>
@@ -171,33 +221,54 @@ const Form = (props) => {
                             type="text"
                             className="form-control form-control--textarea"
                             placeholder="Copy/paste your PEM-encoded private key for your cerficate here."
+                            onChange={handleChange}
+                            disabled={!isEnabled}
                         />
                         <div className="form__status">
-                            {statusKey &&
+                            {privateKey &&
                                 <Fragment>
                                     <div className="form__label form__label--bold">
                                         <Trans>encryption_status</Trans>:
                                     </div>
-                                    <div>
-                                        {statusKey}
-                                    </div>
+                                    <p className={valid_key ? 'text-success' : 'text-danger'}>
+                                        {valid_key ?
+                                            <Trans values={{ type: key_type }}>
+                                                encryption_key_valid
+                                            </Trans>
+                                            : <Trans values={{ type: key_type }}>
+                                                encryption_key_invalid
+                                            </Trans>
+                                        }
+                                    </p>
                                 </Fragment>
                             }
                         </div>
                     </div>
                 </div>
+                <div className="col-12">
+                    <p className="text-danger">
+                        {warning_validation && warning_validation}
+                    </p>
+                </div>
             </div>
 
-            <div className="btn-list">
+            <div className="btn-list mt-2">
                 <button
                     type="submit"
                     className="btn btn-success btn-standart"
-                    disabled={invalid || submitting || processing}
+                    disabled={
+                        invalid
+                        || submitting
+                        || processing
+                        || !valid_chain
+                        || !valid_key
+                        || warning_validation
+                    }
                 >
                     <Trans>save_config</Trans>
                 </button>
                 <button
-                    type="submit"
+                    type="button"
                     className="btn btn-secondary btn-standart"
                     disabled={submitting || processing}
                     onClick={reset}
@@ -211,15 +282,39 @@ const Form = (props) => {
 
 Form.propTypes = {
     handleSubmit: PropTypes.func.isRequired,
+    handleChange: PropTypes.func,
+    isEnabled: PropTypes.bool.isRequired,
+    certificateChain: PropTypes.string.isRequired,
+    privateKey: PropTypes.string.isRequired,
     reset: PropTypes.func.isRequired,
     submitting: PropTypes.bool.isRequired,
     invalid: PropTypes.bool.isRequired,
     initialValues: PropTypes.object.isRequired,
     processing: PropTypes.bool.isRequired,
-    statusCert: PropTypes.string,
-    statusKey: PropTypes.string,
+    status_key: PropTypes.string,
+    not_after: PropTypes.string,
+    warning_validation: PropTypes.string,
+    valid_chain: PropTypes.bool,
+    valid_key: PropTypes.bool,
+    dns_names: PropTypes.string,
+    key_type: PropTypes.string,
+    issuer: PropTypes.string,
+    subject: PropTypes.string,
     t: PropTypes.func.isRequired,
 };
+
+const selector = formValueSelector('encryptionForm');
+
+Form = connect((state) => {
+    const isEnabled = selector(state, 'enabled');
+    const certificateChain = selector(state, 'certificate_chain');
+    const privateKey = selector(state, 'private_key');
+    return {
+        isEnabled,
+        certificateChain,
+        privateKey,
+    };
+})(Form);
 
 export default flow([
     withNamespaces(),
