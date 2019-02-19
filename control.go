@@ -1088,13 +1088,11 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 
 	restartHTTPS := false
 	data = validateCertificates(data)
-	if data.usable {
-		if !reflect.DeepEqual(config.TLS.tlsConfigSettings, data.tlsConfigSettings) {
-			log.Printf("tls config settings have changed, will restart HTTPS server")
-			restartHTTPS = true
-		}
-		config.TLS = data
+	if !reflect.DeepEqual(config.TLS.tlsConfigSettings, data.tlsConfigSettings) {
+		log.Printf("tls config settings have changed, will restart HTTPS server")
+		restartHTTPS = true
 	}
+	config.TLS = data
 	err = writeAllConfigsAndReloadDNS()
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Couldn't write config file: %s", err)
