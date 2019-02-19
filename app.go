@@ -185,8 +185,13 @@ func run(args options) {
 			}
 			config.TLS = data // update warnings
 
-			// prepare cert for HTTPS server
-			cert, err := tls.X509KeyPair([]byte(config.TLS.CertificateChain), []byte(config.TLS.PrivateKey))
+			// prepare certs for HTTPS server
+			// important -- they have to be copies, otherwise changing the contents in config.TLS will break encryption for in-flight requests
+			certchain := make([]byte, len(config.TLS.CertificateChain))
+			copy(certchain, []byte(config.TLS.CertificateChain))
+			privatekey := make([]byte, len(config.TLS.PrivateKey))
+			copy(privatekey, []byte(config.TLS.PrivateKey))
+			cert, err := tls.X509KeyPair(certchain, privatekey)
 			if err != nil {
 				log.Fatal(err)
 				os.Exit(1)
