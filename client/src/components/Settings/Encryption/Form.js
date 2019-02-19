@@ -6,7 +6,7 @@ import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 import format from 'date-fns/format';
 
-import { renderField, renderSelectField, toNumber, port } from '../../../helpers/form';
+import { renderField, renderSelectField, toNumber, port, isSafePort } from '../../../helpers/form';
 import { EMPTY_DATE } from '../../../helpers/constants';
 import i18n from '../../../i18n';
 
@@ -129,7 +129,7 @@ let Form = (props) => {
                             type="number"
                             className="form-control"
                             placeholder={t('encryption_https')}
-                            validate={[port]}
+                            validate={[port, isSafePort]}
                             normalize={toNumber}
                             onChange={handleChange}
                             disabled={!isEnabled}

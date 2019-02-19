@@ -241,6 +241,7 @@
     "topline_expiring_certificate": "Your SSL certificate is about to expire. Update <0>Encryption settings</0>.",
     "topline_expired_certificate": "Your SSL certificate is expired. Update <0>Encryption settings</0>.",
     "form_error_port_range": "Enter port value in the range of 80-65535",
+    "form_error_port_unsafe": "This is an unsafe port",
     "form_error_equal": "Shouldn't be equal",
     "form_error_password": "Password mismatched",
     "reset_settings": "Reset settings"

@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react';
 import { Trans } from 'react-i18next';
 
-import { R_IPV4 } from '../helpers/constants';
+import { R_IPV4, UNSAFE_PORTS } from '../helpers/constants';
 
 export const renderField = ({
     input, id, className, placeholder, type, disabled, meta: { touched, error },
@@ -65,6 +65,13 @@ export const isPositive = (value) => {
 export const port = (value) => {
     if (value && (value < 80 || value > 65535)) {
         return <Trans>form_error_port_range</Trans>;
+    }
+    return false;
+};
+
+export const isSafePort = (value) => {
+    if (UNSAFE_PORTS.includes(value)) {
+        return <Trans>form_error_port_unsafe</Trans>;
     }
     return false;
 };
