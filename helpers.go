@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -138,10 +139,29 @@ func preInstallHandler(handler http.Handler) http.Handler {
 }
 
 // postInstall lets the handler run only if firstRun is false, and redirects to /install.html otherwise
+// it also enforces HTTPS if it is enabled and configured
 func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if config.firstRun && !strings.HasPrefix(r.URL.Path, "/install.") {
 			http.Redirect(w, r, "/install.html", http.StatusSeeOther) // should not be cacheable
+			return
+		}
+		// enforce https?
+		if config.TLS.ForceHTTPS && r.TLS == nil && config.TLS.Enabled && config.TLS.PortHTTPS != 0 && httpsServer.server != nil {
+			// yes, and we want host from host:port
+			host, _, err := net.SplitHostPort(r.Host)
+			if err != nil {
+				// no port in host
+				host = r.Host
+			}
+			// construct new URL to redirect to
+			newURL := url.URL{
+				Scheme:   "https",
+				Host:     net.JoinHostPort(host, strconv.Itoa(config.TLS.PortHTTPS)),
+				Path:     r.URL.Path,
+				RawQuery: r.URL.RawQuery,
+			}
+			http.Redirect(w, r, newURL.String(), http.StatusTemporaryRedirect)
 			return
 		}
 		handler(w, r)
