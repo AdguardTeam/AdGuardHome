@@ -75,6 +75,7 @@ type tlsConfigSettings struct {
 // field ordering is not important -- these are for API and are recalculated on each run
 type tlsConfigStatus struct {
 	// certificate status
+	ValidCert         bool      `yaml:"-" json:"valid_cert"`
 	ValidChain        bool      `yaml:"-" json:"valid_chain"`
 	Subject           string    `yaml:"-" json:"subject,omitempty"`
 	Issuer            string    `yaml:"-" json:"issuer,omitempty"`
