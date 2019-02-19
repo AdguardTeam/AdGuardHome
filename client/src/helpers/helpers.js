@@ -160,9 +160,11 @@ export const redirectToCurrentProtocol = (values) => {
         // TODO
         const redirectCheck = setInterval(() => {
             fetch(`https://${hostname}${httpsPort}/${hash}`, { mode: 'no-cors' })
-                .then(() => {
-                    clearInterval(redirectCheck);
-                    window.location.replace(`https://${hostname}${httpsPort}/${hash}`);
+                .then((response) => {
+                    if (response) {
+                        clearInterval(redirectCheck);
+                        window.location.replace(`https://${hostname}${httpsPort}/${hash}`);
+                    }
                 })
                 .catch(() => false);
         }, CHECK_TIMEOUT);
