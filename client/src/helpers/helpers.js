@@ -4,7 +4,13 @@ import subHours from 'date-fns/sub_hours';
 import addHours from 'date-fns/add_hours';
 import round from 'lodash/round';
 
-import { STATS_NAMES, STANDARD_DNS_PORT, STANDARD_WEB_PORT } from './constants';
+import {
+    STATS_NAMES,
+    STANDARD_DNS_PORT,
+    STANDARD_WEB_PORT,
+    CHECK_TIMEOUT,
+    STOP_TIMEOUT,
+} from './constants';
 
 export const formatTime = (time) => {
     const parsedTime = dateParse(time);
@@ -151,7 +157,19 @@ export const redirectToCurrentProtocol = (values) => {
     if (protocol !== 'https:' && enabled && port_https) {
         window.location.replace(`https://${hostname}${httpsPort}/${hash}`);
     } else if (protocol === 'https:' && enabled && port_https && port_https !== port) {
-        window.location.replace(`https://${hostname}${httpsPort}/${hash}`);
+        // TODO
+        const redirectCheck = setInterval(() => {
+            fetch(`https://${hostname}${httpsPort}/${hash}`, { mode: 'no-cors' })
+                .then(() => {
+                    clearInterval(redirectCheck);
+                    window.location.replace(`https://${hostname}${httpsPort}/${hash}`);
+                })
+                .catch(() => false);
+        }, CHECK_TIMEOUT);
+        setTimeout(() => {
+            clearInterval(redirectCheck);
+            console.error('Redirect check stopped');
+        }, STOP_TIMEOUT);
     } else if (protocol === 'https:' && (!enabled || !port_https)) {
         window.location.replace(`http://${hostname}/${hash}`);
     }

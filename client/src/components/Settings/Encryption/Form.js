@@ -199,22 +199,33 @@ let Form = (props) => {
                                                 : <Trans>encryption_chain_invalid</Trans>
                                             }
                                         </li>
-                                        {subject &&
-                                            <li><Trans>encryption_subject</Trans>: {subject}</li>
-                                        }
-                                        {issuer &&
-                                            <li><Trans>encryption_issuer</Trans>: {issuer}</li>
-                                        }
-                                        {not_after && not_after !== EMPTY_DATE &&
-                                            <li>
-                                                <Trans>encryption_expire</Trans>:&nbsp;
-                                                {format(not_after, 'YYYY-MM-DD HH:mm:ss')}
-                                            </li>
-                                        }
-                                        {dns_names &&
-                                            <li>
-                                                <Trans>encryption_hostnames</Trans>: {dns_names}
-                                            </li>
+                                        {valid_cert &&
+                                            <Fragment>
+                                                {subject &&
+                                                    <li>
+                                                        <Trans>encryption_subject</Trans>:&nbsp;
+                                                        {subject}
+                                                    </li>
+                                                }
+                                                {issuer &&
+                                                    <li>
+                                                        <Trans>encryption_issuer</Trans>:&nbsp;
+                                                        {issuer}
+                                                    </li>
+                                                }
+                                                {not_after && not_after !== EMPTY_DATE &&
+                                                    <li>
+                                                        <Trans>encryption_expire</Trans>:&nbsp;
+                                                        {format(not_after, 'YYYY-MM-DD HH:mm:ss')}
+                                                    </li>
+                                                }
+                                                {dns_names &&
+                                                    <li>
+                                                        <Trans>encryption_hostnames</Trans>:&nbsp;
+                                                        {dns_names}
+                                                    </li>
+                                                }
+                                            </Fragment>
                                         }
                                     </ul>
                                 </Fragment>

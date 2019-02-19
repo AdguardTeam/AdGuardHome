@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { withNamespaces } from 'react-i18next';
 import debounce from 'lodash/debounce';
 
+import { DEBOUNCE_TIMEOUT } from '../../../helpers/constants';
 import Form from './Form';
 import Card from '../../ui/Card';
 
@@ -13,7 +14,7 @@ class Encryption extends Component {
 
     handleFormChange = debounce((values) => {
         this.props.validateTlsConfig(values);
-    }, 300);
+    }, DEBOUNCE_TIMEOUT);
 
     render() {
         const { encryption, t } = this.props;
