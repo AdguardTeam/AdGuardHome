@@ -19,7 +19,7 @@ export default class Api {
             if (error.response) {
                 throw new Error(`${errorPath} | ${error.response.data} | ${error.response.status}`);
             }
-            throw new Error(`${errorPath} | ${error}`);
+            throw new Error(`${errorPath} | ${error.message ? error.message : error}`);
         }
     }
 
