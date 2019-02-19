@@ -73,12 +73,17 @@
     opacity: 0;
 }
 
-.checkbox__input:checked+.checkbox__label:before {
+.checkbox__input:checked + .checkbox__label:before {
     background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMi4zIDkuMiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbGluZWNhcD0icm91bmQiPjxwYXRoIGQ9Ik0xMS44IDAuNUw1LjMgOC41IDAuNSA0LjIiLz48L3N2Zz4=);
 }
 
-.checkbox__input:focus+.checkbox__label:before {
+.checkbox__input:focus + .checkbox__label:before {
     box-shadow: 0 0 1px 1px rgba(74, 74, 74, 0.32);
+}
+
+.checkbox__input:disabled + .checkbox__label {
+    opacity: 0.7;
+    cursor: default;
 }
 
 .checkbox__label-text {

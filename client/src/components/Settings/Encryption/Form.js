@@ -23,6 +23,19 @@ const validate = (values) => {
     return errors;
 };
 
+const clearFields = (change) => {
+    const fields = {
+        private_key: '',
+        certificate_chain: '',
+        port_https: '',
+        port_dns_over_tls: '',
+        server_name: '',
+        force_https: false,
+        enabled: false,
+    };
+    Object.keys(fields).forEach(field => change(field, fields[field]));
+};
+
 let Form = (props) => {
     const {
         t,
@@ -31,7 +44,7 @@ let Form = (props) => {
         isEnabled,
         certificateChain,
         privateKey,
-        reset,
+        change,
         invalid,
         submitting,
         processing,
@@ -269,7 +282,7 @@ let Form = (props) => {
                     type="button"
                     className="btn btn-secondary btn-standart"
                     disabled={submitting || processing}
-                    onClick={reset}
+                    onClick={() => clearFields(change)}
                 >
                     <Trans>reset_settings</Trans>
                 </button>
@@ -284,7 +297,7 @@ Form.propTypes = {
     isEnabled: PropTypes.bool.isRequired,
     certificateChain: PropTypes.string.isRequired,
     privateKey: PropTypes.string.isRequired,
-    reset: PropTypes.func.isRequired,
+    change: PropTypes.func.isRequired,
     submitting: PropTypes.bool.isRequired,
     invalid: PropTypes.bool.isRequired,
     initialValues: PropTypes.object.isRequired,
