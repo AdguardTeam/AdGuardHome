@@ -1047,6 +1047,20 @@ func handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// check if port is available
+	// BUT: if we are already using this port, no need
+	alreadyRunning := false
+	if httpsServer.server != nil {
+		alreadyRunning = true
+	}
+	if !alreadyRunning {
+		err = checkPortAvailable(config.BindHost, data.PortHTTPS)
+		if err != nil {
+			httpError(w, http.StatusBadRequest, "port %d is not available, cannot enable HTTPS on it", data.PortHTTPS)
+			return
+		}
+	}
+
 	data = validateCertificates(data)
 	marshalTLS(w, data)
 }
@@ -1056,6 +1070,20 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
 		return
+	}
+
+	// check if port is available
+	// BUT: if we are already using this port, no need
+	alreadyRunning := false
+	if httpsServer.server != nil {
+		alreadyRunning = true
+	}
+	if !alreadyRunning {
+		err = checkPortAvailable(config.BindHost, data.PortHTTPS)
+		if err != nil {
+			httpError(w, http.StatusBadRequest, "port %d is not available, cannot enable HTTPS on it", data.PortHTTPS)
+			return
+		}
 	}
 
 	restartHTTPS := false
