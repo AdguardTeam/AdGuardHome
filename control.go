@@ -1088,7 +1088,7 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 
 	restartHTTPS := false
 	data = validateCertificates(data)
-	if data.WarningValidation == "" {
+	if data.usable {
 		if !reflect.DeepEqual(config.TLS.tlsConfigSettings, data.tlsConfigSettings) {
 			log.Printf("tls config settings have changed, will restart HTTPS server")
 			restartHTTPS = true
@@ -1259,6 +1259,7 @@ func validateCertificates(data tlsConfig) tlsConfig {
 			data.WarningValidation = fmt.Sprintf("Invalid certificate or key: %s", err)
 			return data
 		}
+		data.usable = true
 	}
 
 	return data

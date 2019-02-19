@@ -179,7 +179,7 @@ func run(args options) {
 			address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.TLS.PortHTTPS))
 			// validate current TLS config and update warnings (it could have been loaded from file)
 			data := validateCertificates(config.TLS)
-			if data.WarningValidation != "" {
+			if !data.usable {
 				log.Fatal(data.WarningValidation)
 				os.Exit(1)
 			}

@@ -88,6 +88,9 @@ type tlsConfigStatus struct {
 	ValidKey bool   `yaml:"-" json:"valid_key"`
 	KeyType  string `yaml:"-" json:"key_type,omitempty"`
 
+	// is usable? set by validator
+	usable bool
+
 	// warnings
 	Warning           string `yaml:"-" json:"warning,omitempty"`
 	WarningValidation string `yaml:"-" json:"warning_validation,omitempty"`
