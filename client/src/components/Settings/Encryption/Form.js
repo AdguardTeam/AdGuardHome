@@ -47,7 +47,7 @@ let Form = (props) => {
         change,
         invalid,
         submitting,
-        processing,
+        processingConfig,
         processingValidate,
         not_after,
         valid_chain,
@@ -278,7 +278,7 @@ let Form = (props) => {
                     disabled={
                         invalid
                         || submitting
-                        || processing
+                        || processingConfig
                         || processingValidate
                         || (privateKey && !valid_key)
                         || (certificateChain && !valid_cert)
@@ -289,7 +289,7 @@ let Form = (props) => {
                 <button
                     type="button"
                     className="btn btn-secondary btn-standart"
-                    disabled={submitting || processing}
+                    disabled={submitting || processingConfig}
                     onClick={() => clearFields(change)}
                 >
                     <Trans>reset_settings</Trans>
@@ -309,7 +309,7 @@ Form.propTypes = {
     submitting: PropTypes.bool.isRequired,
     invalid: PropTypes.bool.isRequired,
     initialValues: PropTypes.object.isRequired,
-    processing: PropTypes.bool.isRequired,
+    processingConfig: PropTypes.bool.isRequired,
     processingValidate: PropTypes.bool.isRequired,
     status_key: PropTypes.string,
     not_after: PropTypes.string,
