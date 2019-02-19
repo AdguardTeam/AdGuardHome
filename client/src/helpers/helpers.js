@@ -142,12 +142,16 @@ export const getWebAddress = (ip, port = '') => {
 };
 
 export const redirectToCurrentProtocol = (values) => {
-    const { protocol, hostname, hash } = window.location;
+    const {
+        protocol, hostname, hash, port,
+    } = window.location;
     const { enabled, port_https } = values;
+    const httpsPort = port_https !== 443 ? `:${port_https}` : '';
 
     if (protocol !== 'https:' && enabled && port_https) {
-        const port = port_https !== 443 ? `:${port_https}` : '';
-        window.location.replace(`https://${hostname}${port}/${hash}`);
+        window.location.replace(`https://${hostname}${httpsPort}/${hash}`);
+    } else if (protocol === 'https:' && enabled && port_https && port_https !== port) {
+        window.location.replace(`https://${hostname}${httpsPort}/${hash}`);
     } else if (protocol === 'https:' && (!enabled || !port_https)) {
         window.location.replace(`http://${hostname}/${hash}`);
     }
