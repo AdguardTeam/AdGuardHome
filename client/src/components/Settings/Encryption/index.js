@@ -46,6 +46,7 @@ class Encryption extends Component {
                                 private_key,
                             }}
                             processing={encryption.processingConfig}
+                            processingValidate={encryption.processingValidate}
                             onSubmit={this.handleFormSubmit}
                             onChange={this.handleFormChange}
                             {...this.props.encryption}

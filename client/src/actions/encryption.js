@@ -1,6 +1,7 @@
 import { createAction } from 'redux-actions';
 import Api from '../api/Api';
 import { addErrorToast, addSuccessToast } from './index';
+import { redirectToCurrentProtocol } from '../helpers/helpers';
 
 const apiClient = new Api();
 
@@ -40,6 +41,7 @@ export const setTlsConfig = config => async (dispatch) => {
         response.private_key = atob(response.private_key);
         dispatch(setTlsConfigSuccess(response));
         dispatch(addSuccessToast('encryption_config_saved'));
+        redirectToCurrentProtocol(response);
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(setTlsConfigFailure());

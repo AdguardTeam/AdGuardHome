@@ -140,3 +140,15 @@ export const getWebAddress = (ip, port = '') => {
 
     return address;
 };
+
+export const redirectToCurrentProtocol = (values) => {
+    const { protocol, hostname, hash } = window.location;
+    const { enabled, port_https } = values;
+
+    if (protocol !== 'https:' && enabled && port_https) {
+        const port = port_https !== 443 ? `:${port_https}` : '';
+        window.location.replace(`https://${hostname}${port}/${hash}`);
+    } else if (protocol === 'https:' && (!enabled || !port_https)) {
+        window.location.replace(`http://${hostname}/${hash}`);
+    }
+};

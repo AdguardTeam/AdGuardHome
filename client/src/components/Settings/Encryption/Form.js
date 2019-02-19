@@ -48,9 +48,11 @@ let Form = (props) => {
         invalid,
         submitting,
         processing,
+        processingValidate,
         not_after,
         valid_chain,
         valid_key,
+        valid_cert,
         dns_names,
         key_type,
         issuer,
@@ -260,7 +262,11 @@ let Form = (props) => {
                 </div>
                 <div className="col-12">
                     <p className="text-danger">
-                        {warning_validation && warning_validation}
+                        {
+                            (certificateChain || privateKey)
+                            && warning_validation
+                            && warning_validation
+                        }
                     </p>
                 </div>
             </div>
@@ -273,7 +279,9 @@ let Form = (props) => {
                         invalid
                         || submitting
                         || processing
-                        || !valid_key
+                        || processingValidate
+                        || (privateKey && !valid_key)
+                        || (certificateChain && !valid_cert)
                     }
                 >
                     <Trans>save_config</Trans>
@@ -302,11 +310,13 @@ Form.propTypes = {
     invalid: PropTypes.bool.isRequired,
     initialValues: PropTypes.object.isRequired,
     processing: PropTypes.bool.isRequired,
+    processingValidate: PropTypes.bool.isRequired,
     status_key: PropTypes.string,
     not_after: PropTypes.string,
     warning_validation: PropTypes.string,
     valid_chain: PropTypes.bool,
     valid_key: PropTypes.bool,
+    valid_cert: PropTypes.bool,
     dns_names: PropTypes.string,
     key_type: PropTypes.string,
     issuer: PropTypes.string,
