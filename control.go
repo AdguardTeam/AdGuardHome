@@ -1101,10 +1101,12 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	marshalTLS(w, data)
 	// this needs to be done in a goroutine because Shutdown() is a blocking call, and it will block
 	// until all requests are finished, and _we_ are inside a request right now, so it will block indefinitely
-	if restartHTTPS && httpsServer.server != nil {
+	if restartHTTPS {
 		go func() {
 			httpsServer.cond.Broadcast()
-			httpsServer.server.Shutdown(context.TODO())
+			if httpsServer.server != nil {
+				httpsServer.server.Shutdown(context.TODO())
+			}
 		}()
 	}
 }
