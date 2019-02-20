@@ -164,6 +164,7 @@ func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.Res
 			http.Redirect(w, r, newURL.String(), http.StatusTemporaryRedirect)
 			return
 		}
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		handler(w, r)
 	}
 }
