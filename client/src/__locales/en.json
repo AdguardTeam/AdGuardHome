@@ -245,5 +245,6 @@
     "form_error_port_unsafe": "This is an unsafe port",
     "form_error_equal": "Shouldn't be equal",
     "form_error_password": "Password mismatched",
-    "reset_settings": "Reset settings"
+    "reset_settings": "Reset settings",
+    "update_announcement": "AdGuard Home {{version}} is now available! <0>Click here</0> for more info."
 }

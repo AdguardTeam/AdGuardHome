@@ -120,13 +120,13 @@ const dashboard = handleActions({
 
         if (versionCompare(currentVersion, payload.version) === -1) {
             const {
-                announcement,
+                version,
                 announcement_url: announcementUrl,
             } = payload;
 
             const newState = {
                 ...state,
-                announcement,
+                version,
                 announcementUrl,
                 isUpdateAvailable: true,
             };

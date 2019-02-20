@@ -17,7 +17,7 @@ import Logs from '../../containers/Logs';
 import Footer from '../ui/Footer';
 import Toasts from '../Toasts';
 import Status from '../ui/Status';
-import Topline from '../ui/Topline';
+import UpdateTopline from '../ui/UpdateTopline';
 import EncryptionTopline from '../ui/EncryptionTopline';
 import i18n from '../../i18n';
 
@@ -62,9 +62,10 @@ class App extends Component {
             <HashRouter hashType='noslash'>
                 <Fragment>
                     {updateAvailable &&
-                        <Topline type="info">
-                            {dashboard.announcement} <a href={dashboard.announcementUrl} target="_blank" rel="noopener noreferrer">Click here</a> for more info.
-                        </Topline>
+                        <UpdateTopline
+                            url={dashboard.announcementUrl}
+                            version={dashboard.version}
+                        />
                     }
                     {!encryption.processing &&
                         <EncryptionTopline notAfter={encryption.not_after} />
