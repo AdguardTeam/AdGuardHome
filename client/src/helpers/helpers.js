@@ -3,11 +3,13 @@ import dateFormat from 'date-fns/format';
 import subHours from 'date-fns/sub_hours';
 import addHours from 'date-fns/add_hours';
 import round from 'lodash/round';
+import axios from 'axios';
 
 import {
     STATS_NAMES,
     STANDARD_DNS_PORT,
     STANDARD_WEB_PORT,
+    STANDARD_HTTPS_PORT,
     CHECK_TIMEOUT,
     STOP_TIMEOUT,
 } from './constants';
@@ -147,31 +149,39 @@ export const getWebAddress = (ip, port = '') => {
     return address;
 };
 
+export const redirectCheck = (url) => {
+    const redirectCheck = setInterval(() => {
+        axios.get(url)
+            .then((response) => {
+                if (response) {
+                    clearInterval(redirectCheck);
+                    window.location.replace(url);
+                }
+            })
+            .catch((error) => {
+                if (error.response) {
+                    clearInterval(redirectCheck);
+                    window.location.replace(url);
+                }
+            });
+    }, CHECK_TIMEOUT);
+    setTimeout(() => {
+        clearInterval(redirectCheck);
+        console.error('Redirect check stopped');
+    }, STOP_TIMEOUT);
+};
+
 export const redirectToCurrentProtocol = (values) => {
     const {
         protocol, hostname, hash, port,
     } = window.location;
     const { enabled, port_https } = values;
-    const httpsPort = port_https !== 443 ? `:${port_https}` : '';
+    const httpsPort = port_https !== STANDARD_HTTPS_PORT ? `:${port_https}` : '';
 
     if (protocol !== 'https:' && enabled && port_https) {
-        window.location.replace(`https://${hostname}${httpsPort}/${hash}`);
+        redirectCheck(`https://${hostname}${httpsPort}/${hash}`);
     } else if (protocol === 'https:' && enabled && port_https && port_https !== port) {
-        // TODO
-        const redirectCheck = setInterval(() => {
-            fetch(`https://${hostname}${httpsPort}/${hash}`, { mode: 'no-cors' })
-                .then((response) => {
-                    if (response) {
-                        clearInterval(redirectCheck);
-                        window.location.replace(`https://${hostname}${httpsPort}/${hash}`);
-                    }
-                })
-                .catch(() => false);
-        }, CHECK_TIMEOUT);
-        setTimeout(() => {
-            clearInterval(redirectCheck);
-            console.error('Redirect check stopped');
-        }, STOP_TIMEOUT);
+        redirectCheck(`https://${hostname}${httpsPort}/${hash}`);
     } else if (protocol === 'https:' && (!enabled || !port_https)) {
         window.location.replace(`http://${hostname}/${hash}`);
     }

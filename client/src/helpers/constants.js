@@ -73,6 +73,7 @@ export const SETTINGS_NAMES = {
 
 export const STANDARD_DNS_PORT = 53;
 export const STANDARD_WEB_PORT = 80;
+export const STANDARD_HTTPS_PORT = 443;
 
 export const EMPTY_DATE = '0001-01-01T00:00:00Z';
 
