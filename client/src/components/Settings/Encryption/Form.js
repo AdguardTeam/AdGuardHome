@@ -23,7 +23,7 @@ const validate = (values) => {
     return errors;
 };
 
-const clearFields = (change) => {
+const clearFields = (change, setTlsConfig, t) => {
     const fields = {
         private_key: '',
         certificate_chain: '',
@@ -33,7 +33,11 @@ const clearFields = (change) => {
         force_https: false,
         enabled: false,
     };
-    Object.keys(fields).forEach(field => change(field, fields[field]));
+    // eslint-disable-next-line no-alert
+    if (window.confirm(t('encryption_reset'))) {
+        Object.keys(fields).forEach(field => change(field, fields[field]));
+        setTlsConfig(fields);
+    }
 };
 
 let Form = (props) => {
@@ -58,6 +62,7 @@ let Form = (props) => {
         issuer,
         subject,
         warning_validation,
+        setTlsConfig,
     } = props;
 
     return (
@@ -303,7 +308,7 @@ let Form = (props) => {
                     type="button"
                     className="btn btn-secondary btn-standart"
                     disabled={submitting || processingConfig}
-                    onClick={() => clearFields(change)}
+                    onClick={() => clearFields(change, setTlsConfig, t)}
                 >
                     <Trans>reset_settings</Trans>
                 </button>
@@ -335,6 +340,7 @@ Form.propTypes = {
     issuer: PropTypes.string,
     subject: PropTypes.string,
     t: PropTypes.func.isRequired,
+    setTlsConfig: PropTypes.func.isRequired,
 };
 
 const selector = formValueSelector('encryptionForm');

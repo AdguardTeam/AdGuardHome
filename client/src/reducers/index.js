@@ -53,6 +53,7 @@ const dashboard = handleActions({
             upstream_dns: upstreamDns,
             protection_enabled: protectionEnabled,
             language,
+            http_port: httpPort,
         } = payload;
         const newState = {
             ...state,
@@ -65,6 +66,7 @@ const dashboard = handleActions({
             upstreamDns: upstreamDns.join('\n'),
             protectionEnabled,
             language,
+            httpPort,
         };
         return newState;
     },
@@ -172,6 +174,7 @@ const dashboard = handleActions({
     upstreamDns: [],
     protectionEnabled: false,
     processingProtection: false,
+    httpPort: 80,
 });
 
 const queryLogs = handleActions({

@@ -8,6 +8,10 @@ import Form from './Form';
 import Card from '../../ui/Card';
 
 class Encryption extends Component {
+    componentDidMount() {
+        this.props.validateTlsConfig(this.props.encryption);
+    }
+
     handleFormSubmit = (values) => {
         this.props.setTlsConfig(values);
     };
@@ -48,6 +52,7 @@ class Encryption extends Component {
                             }}
                             onSubmit={this.handleFormSubmit}
                             onChange={this.handleFormChange}
+                            setTlsConfig={this.props.setTlsConfig}
                             {...this.props.encryption}
                         />
                     </Card>

@@ -27,9 +27,10 @@ export const setTlsConfigRequest = createAction('SET_TLS_CONFIG_REQUEST');
 export const setTlsConfigFailure = createAction('SET_TLS_CONFIG_FAILURE');
 export const setTlsConfigSuccess = createAction('SET_TLS_CONFIG_SUCCESS');
 
-export const setTlsConfig = config => async (dispatch) => {
+export const setTlsConfig = config => async (dispatch, getState) => {
     dispatch(setTlsConfigRequest());
     try {
+        const { httpPort } = getState().dashboard;
         const values = { ...config };
         values.certificate_chain = btoa(values.certificate_chain);
         values.private_key = btoa(values.private_key);
@@ -41,7 +42,7 @@ export const setTlsConfig = config => async (dispatch) => {
         response.private_key = atob(response.private_key);
         dispatch(setTlsConfigSuccess(response));
         dispatch(addSuccessToast('encryption_config_saved'));
-        redirectToCurrentProtocol(response);
+        redirectToCurrentProtocol(response, httpPort);
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(setTlsConfigFailure());

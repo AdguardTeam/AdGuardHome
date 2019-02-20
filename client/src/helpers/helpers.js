@@ -171,7 +171,7 @@ export const redirectCheck = (url) => {
     }, STOP_TIMEOUT);
 };
 
-export const redirectToCurrentProtocol = (values) => {
+export const redirectToCurrentProtocol = (values, httpPort = 80) => {
     const {
         protocol, hostname, hash, port,
     } = window.location;
@@ -183,6 +183,6 @@ export const redirectToCurrentProtocol = (values) => {
     } else if (protocol === 'https:' && enabled && port_https && port_https !== port) {
         redirectCheck(`https://${hostname}${httpsPort}/${hash}`);
     } else if (protocol === 'https:' && (!enabled || !port_https)) {
-        window.location.replace(`http://${hostname}/${hash}`);
+        window.location.replace(`http://${hostname}:${httpPort}/${hash}`);
     }
 };

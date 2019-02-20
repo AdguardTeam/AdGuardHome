@@ -238,6 +238,7 @@
     "encryption_subject": "Subject",
     "encryption_issuer": "Issuer",
     "encryption_hostnames": "Hostnames",
+    "encryption_reset": "Are you sure you want to reset encryption settings?",
     "topline_expiring_certificate": "Your SSL certificate is about to expire. Update <0>Encryption settings</0>.",
     "topline_expired_certificate": "Your SSL certificate is expired. Update <0>Encryption settings</0>.",
     "form_error_port_range": "Enter port value in the range of 80-65535",
