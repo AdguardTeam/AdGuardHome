@@ -298,6 +298,7 @@ let Form = (props) => {
                         || submitting
                         || processingConfig
                         || processingValidate
+                        || (isEnabled && (!privateKey || !certificateChain))
                         || (privateKey && !valid_key)
                         || (certificateChain && !valid_cert)
                     }
