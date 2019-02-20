@@ -192,7 +192,7 @@ let Form = (props) => {
                                     <div className="form__label form__label--bold">
                                         <Trans>encryption_status</Trans>:
                                     </div>
-                                    <ul>
+                                    <ul className="encryption__list">
                                         <li className={valid_chain ? 'text-success' : 'text-danger'}>
                                             {valid_chain ?
                                                 <Trans>encryption_chain_valid</Trans>
@@ -256,16 +256,18 @@ let Form = (props) => {
                                     <div className="form__label form__label--bold">
                                         <Trans>encryption_status</Trans>:
                                     </div>
-                                    <p className={valid_key ? 'text-success' : 'text-danger'}>
-                                        {valid_key ?
-                                            <Trans values={{ type: key_type }}>
-                                                encryption_key_valid
-                                            </Trans>
-                                            : <Trans values={{ type: key_type }}>
-                                                encryption_key_invalid
-                                            </Trans>
-                                        }
-                                    </p>
+                                    <ul className="encryption__list">
+                                        <li className={valid_key ? 'text-success' : 'text-danger'}>
+                                            {valid_key ?
+                                                <Trans values={{ type: key_type }}>
+                                                    encryption_key_valid
+                                                </Trans>
+                                                : <Trans values={{ type: key_type }}>
+                                                    encryption_key_invalid
+                                                </Trans>
+                                            }
+                                        </li>
+                                    </ul>
                                 </Fragment>
                             }
                         </div>
