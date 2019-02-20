@@ -87,6 +87,7 @@ func httpUpdateConfigReloadDNSReturnOK(w http.ResponseWriter, r *http.Request) {
 func handleStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"dns_address":        config.BindHost,
+		"http_port":          config.BindPort,
 		"dns_port":           config.DNS.Port,
 		"protection_enabled": config.DNS.ProtectionEnabled,
 		"querylog_enabled":   config.DNS.QueryLogEnabled,
