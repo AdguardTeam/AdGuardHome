@@ -1120,7 +1120,7 @@ func validateCertificates(data tlsConfig) tlsConfig {
 
 	// check only public certificate separetely from the key
 	if data.CertificateChain != "" {
-		log.Printf("got certificate: %s", data.CertificateChain)
+		log.Tracef("got certificate: %s", data.CertificateChain)
 
 		// now do a more extended validation
 		var certs []*pem.Block    // PEM-encoded certificates
