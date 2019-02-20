@@ -28,9 +28,27 @@ const encryption = handleActions({
     [actions.validateTlsConfigRequest]: state => ({ ...state, processingValidate: true }),
     [actions.validateTlsConfigFailure]: state => ({ ...state, processingValidate: false }),
     [actions.validateTlsConfigSuccess]: (state, { payload }) => {
+        const {
+            issuer = '',
+            key_type = '',
+            not_after = '',
+            not_before = '',
+            subject = '',
+            warning_validation = '',
+            dns_names = '',
+            ...values
+        } = payload;
+
         const newState = {
             ...state,
-            ...payload,
+            ...values,
+            issuer,
+            key_type,
+            not_after,
+            not_before,
+            subject,
+            warning_validation,
+            dns_names,
             processingValidate: false,
         };
         return newState;

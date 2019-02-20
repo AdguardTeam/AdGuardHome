@@ -278,15 +278,13 @@ let Form = (props) => {
                         </div>
                     </div>
                 </div>
-                <div className="col-12">
-                    <p className="text-danger">
-                        {
-                            (certificateChain || privateKey)
-                            && warning_validation
-                            && warning_validation
-                        }
-                    </p>
-                </div>
+                {warning_validation &&
+                    <div className="col-12">
+                        <p className="text-danger">
+                            {warning_validation}
+                        </p>
+                    </div>
+                }
             </div>
 
             <div className="btn-list mt-2">
