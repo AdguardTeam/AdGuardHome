@@ -11,7 +11,6 @@ import {
     STANDARD_WEB_PORT,
     STANDARD_HTTPS_PORT,
     CHECK_TIMEOUT,
-    STOP_TIMEOUT,
 } from './constants';
 
 export const formatTime = (time) => {
@@ -149,26 +148,42 @@ export const getWebAddress = (ip, port = '') => {
     return address;
 };
 
-export const redirectCheck = (url) => {
-    const redirectCheck = setInterval(() => {
-        axios.get(url)
-            .then((response) => {
-                if (response) {
-                    clearInterval(redirectCheck);
-                    window.location.replace(url);
-                }
-            })
-            .catch((error) => {
-                if (error.response) {
-                    clearInterval(redirectCheck);
-                    window.location.replace(url);
-                }
-            });
-    }, CHECK_TIMEOUT);
-    setTimeout(() => {
-        clearInterval(redirectCheck);
-        console.error('Redirect check stopped');
-    }, STOP_TIMEOUT);
+export const checkRedirect = (url, attempts) => {
+    let count = attempts || 1;
+
+    if (count > 10) {
+        window.location.replace(url);
+        return false;
+    }
+
+    const rmTimeout = t => t && clearTimeout(t);
+    const setRecursiveTimeout = (time, ...args) => setTimeout(
+        checkRedirect,
+        time,
+        ...args,
+    );
+
+    let timeout;
+
+    axios.get(url)
+        .then((response) => {
+            rmTimeout(timeout);
+            if (response) {
+                window.location.replace(url);
+                return;
+            }
+            timeout = setRecursiveTimeout(CHECK_TIMEOUT, url, count += 1);
+        })
+        .catch((error) => {
+            rmTimeout(timeout);
+            if (error.response) {
+                window.location.replace(url);
+                return;
+            }
+            timeout = setRecursiveTimeout(CHECK_TIMEOUT, url, count += 1);
+        });
+
+    return false;
 };
 
 export const redirectToCurrentProtocol = (values, httpPort = 80) => {
@@ -179,9 +194,9 @@ export const redirectToCurrentProtocol = (values, httpPort = 80) => {
     const httpsPort = port_https !== STANDARD_HTTPS_PORT ? `:${port_https}` : '';
 
     if (protocol !== 'https:' && enabled && port_https) {
-        redirectCheck(`https://${hostname}${httpsPort}/${hash}`);
+        checkRedirect(`https://${hostname}${httpsPort}/${hash}`);
     } else if (protocol === 'https:' && enabled && port_https && port_https !== port) {
-        redirectCheck(`https://${hostname}${httpsPort}/${hash}`);
+        checkRedirect(`https://${hostname}${httpsPort}/${hash}`);
     } else if (protocol === 'https:' && (!enabled || !port_https)) {
         window.location.replace(`http://${hostname}:${httpPort}/${hash}`);
     }

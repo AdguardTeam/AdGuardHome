@@ -27,8 +27,8 @@ const clearFields = (change, setTlsConfig, t) => {
     const fields = {
         private_key: '',
         certificate_chain: '',
-        port_https: '',
-        port_dns_over_tls: '',
+        port_https: 443,
+        port_dns_over_tls: 853,
         server_name: '',
         force_https: false,
         enabled: false,
