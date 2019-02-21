@@ -1105,10 +1105,12 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	if restartHTTPS {
 		go func() {
 			time.Sleep(time.Second) // TODO: could not find a way to reliably know that data was fully sent to client by https server, so we wait a bit to let response through before closing the server
+			httpsServer.cond.L.Lock()
 			httpsServer.cond.Broadcast()
 			if httpsServer.server != nil {
 				httpsServer.server.Shutdown(context.TODO())
 			}
+			httpsServer.cond.L.Unlock()
 		}()
 	}
 }

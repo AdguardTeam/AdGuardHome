@@ -183,7 +183,9 @@ func run(args options) {
 				log.Fatal(data.WarningValidation)
 				os.Exit(1)
 			}
+			config.Lock()
 			config.TLS = data // update warnings
+			config.Unlock()
 
 			// prepare certs for HTTPS server
 			// important -- they have to be copies, otherwise changing the contents in config.TLS will break encryption for in-flight requests
