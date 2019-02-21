@@ -195,7 +195,7 @@ export const redirectToCurrentProtocol = (values, httpPort = 80) => {
 
     if (protocol !== 'https:' && enabled && port_https) {
         checkRedirect(`https://${hostname}${httpsPort}/${hash}`);
-    } else if (protocol === 'https:' && enabled && port_https && port_https !== port) {
+    } else if (protocol === 'https:' && enabled && port_https && port_https !== parseInt(port, 10)) {
         checkRedirect(`https://${hostname}${httpsPort}/${hash}`);
     } else if (protocol === 'https:' && (!enabled || !port_https)) {
         window.location.replace(`http://${hostname}:${httpPort}/${hash}`);
