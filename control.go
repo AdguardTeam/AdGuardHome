@@ -1118,7 +1118,7 @@ func validateCertificates(data tlsConfig) tlsConfig {
 	// clear out status for certificates
 	data.tlsConfigStatus = tlsConfigStatus{}
 
-	// check only public certificate separetely from the key
+	// check only public certificate separately from the key
 	if data.CertificateChain != "" {
 		log.Tracef("got certificate: %s", data.CertificateChain)
 
@@ -1194,24 +1194,6 @@ func validateCertificates(data tlsConfig) tlsConfig {
 			data.NotAfter = notAfter
 			data.NotBefore = mainCert.NotBefore
 			data.DNSNames = mainCert.DNSNames
-
-			data.StatusCertificate = fmt.Sprintf("Certificate expires on %s", notAfter) //, valid for hostname %s", mainCert.NotAfter, mainCert.Subject.CommonName)
-			if len(mainCert.DNSNames) == 1 {
-				data.StatusCertificate += fmt.Sprintf(", valid for hostname %s", mainCert.DNSNames[0])
-			} else if len(mainCert.DNSNames) > 1 {
-				data.StatusCertificate += ", valid for hostnames " + strings.Join(mainCert.DNSNames, ", ")
-			}
-
-			// issue a warning if certificate is about to expire
-			now := time.Now()
-			if now.AddDate(0, 0, 30).After(notAfter) {
-				timeLeft := notAfter.Sub(now)
-				if timeLeft > 0 {
-					data.Warning = fmt.Sprintf("Your certificate expires in %.0f days, we recommend you update it soon", timeLeft.Hours()/24)
-				} else {
-					data.Warning = fmt.Sprintf("Your certificate has expired on %s, we recommend you update it immediatedly", mainCert.NotAfter)
-				}
-			}
 		}
 	}
 
@@ -1322,11 +1304,11 @@ func marshalTLS(w http.ResponseWriter, data tlsConfig) {
 	w.Header().Set("Content-Type", "application/json")
 	if data.CertificateChain != "" {
 		encoded := base64.StdEncoding.EncodeToString([]byte(data.CertificateChain))
-		data.CertificateChain = string(encoded)
+		data.CertificateChain = encoded
 	}
 	if data.PrivateKey != "" {
 		encoded := base64.StdEncoding.EncodeToString([]byte(data.PrivateKey))
-		data.PrivateKey = string(encoded)
+		data.PrivateKey = encoded
 	}
 	err := json.NewEncoder(w).Encode(data)
 	if err != nil {

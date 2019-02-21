@@ -63,37 +63,34 @@ type dnsConfig struct {
 var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
 
 type tlsConfigSettings struct {
-	Enabled        bool   `yaml:"enabled" json:"enabled"`
-	ServerName     string `yaml:"server_name" json:"server_name,omitempty"`
-	ForceHTTPS     bool   `yaml:"force_https" json:"force_https,omitempty"`
-	PortHTTPS      int    `yaml:"port_https" json:"port_https,omitempty"`
-	PortDNSOverTLS int    `yaml:"port_dns_over_tls" json:"port_dns_over_tls,omitempty"`
+	Enabled        bool   `yaml:"enabled" json:"enabled"`                               // Enabled is the encryption (DOT/DOH/HTTPS) status
+	ServerName     string `yaml:"server_name" json:"server_name,omitempty"`             // ServerName is the hostname of your HTTPS/TLS server
+	ForceHTTPS     bool   `yaml:"force_https" json:"force_https,omitempty"`             // ForceHTTPS: if true, forces HTTP->HTTPS redirect
+	PortHTTPS      int    `yaml:"port_https" json:"port_https,omitempty"`               // HTTPS port. If 0, HTTPS will be disabled
+	PortDNSOverTLS int    `yaml:"port_dns_over_tls" json:"port_dns_over_tls,omitempty"` // DNS-over-TLS port. If 0, DOT will be disabled
 
 	dnsforward.TLSConfig `yaml:",inline" json:",inline"`
 }
 
 // field ordering is not important -- these are for API and are recalculated on each run
 type tlsConfigStatus struct {
-	// certificate status
-	ValidCert         bool      `yaml:"-" json:"valid_cert"`
-	ValidChain        bool      `yaml:"-" json:"valid_chain"`
-	Subject           string    `yaml:"-" json:"subject,omitempty"`
-	Issuer            string    `yaml:"-" json:"issuer,omitempty"`
-	NotBefore         time.Time `yaml:"-" json:"not_before,omitempty"`
-	NotAfter          time.Time `yaml:"-" json:"not_after,omitempty"`
-	DNSNames          []string  `yaml:"-" json:"dns_names"`
-	StatusCertificate string    `yaml:"-" json:"status_cert,omitempty"`
+	ValidCert  bool      `yaml:"-" json:"valid_cert"`           // ValidCert is true if the specified certificates chain is a valid chain of X509 certificates
+	ValidChain bool      `yaml:"-" json:"valid_chain"`          // ValidChain is true if the specified certificates chain is verified and issued by a known CA
+	Subject    string    `yaml:"-" json:"subject,omitempty"`    // Subject is the subject of the first certificate in the chain
+	Issuer     string    `yaml:"-" json:"issuer,omitempty"`     // Issuer is the issuer of the first certificate in the chain
+	NotBefore  time.Time `yaml:"-" json:"not_before,omitempty"` // NotBefore is the NotBefore field of the first certificate in the chain
+	NotAfter   time.Time `yaml:"-" json:"not_after,omitempty"`  // NotAfter is the NotAfter field of the first certificate in the chain
+	DNSNames   []string  `yaml:"-" json:"dns_names"`            // DNSNames is the value of SubjectAltNames field of the first certificate in the chain
 
 	// key status
-	ValidKey bool   `yaml:"-" json:"valid_key"`
-	KeyType  string `yaml:"-" json:"key_type,omitempty"`
+	ValidKey bool   `yaml:"-" json:"valid_key"`          // ValidKey is true if the key is a valid private key
+	KeyType  string `yaml:"-" json:"key_type,omitempty"` // KeyType is one of RSA or ECDSA
 
 	// is usable? set by validator
 	usable bool
 
 	// warnings
-	Warning           string `yaml:"-" json:"warning,omitempty"`
-	WarningValidation string `yaml:"-" json:"warning_validation,omitempty"`
+	WarningValidation string `yaml:"-" json:"warning_validation,omitempty"` // WarningValidation is a validation warning message with the issue description
 }
 
 // field ordering is important -- yaml fields will mirror ordering from here
