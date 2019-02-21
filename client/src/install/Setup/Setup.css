@@ -15,7 +15,7 @@
     padding: 30px 20px;
     line-height: 1.6;
     background-color: #fff;
-    box-shadow: 0 1px 4px rgba(74, 74, 74, .36);
+    box-shadow: 0 1px 4px rgba(74, 74, 74, 0.36);
     border-radius: 3px;
 }
 
@@ -92,7 +92,7 @@
     line-height: 20px;
     color: #fff;
     text-align: center;
-    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .15);
+    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);
     transition: width 0.6s ease;
     background: linear-gradient(45deg, rgba(99, 125, 120, 1) 0%, rgba(88, 177, 101, 1) 100%);
 }
