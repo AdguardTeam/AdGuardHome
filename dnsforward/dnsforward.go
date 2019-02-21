@@ -72,8 +72,8 @@ type FilteringConfig struct {
 
 type TLSConfig struct {
 	TLSListenAddr    *net.TCPAddr `yaml:"-" json:"-"`
-	CertificateChain string       `yaml:"certificate_chain" json:"certificate_chain"`
-	PrivateKey       string       `yaml:"private_key" json:"private_key"`
+	CertificateChain string       `yaml:"certificate_chain" json:"certificate_chain"` // PEM-encoded certificates chain
+	PrivateKey       string       `yaml:"private_key" json:"private_key"`             // PEM-encoded private key
 }
 
 // ServerConfig represents server configuration.
