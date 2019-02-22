@@ -399,7 +399,14 @@ func loadOptions() options {
 // proto is either "http" or "https"
 func printHTTPAddresses(proto string) {
 	var address string
-	if config.BindHost == "0.0.0.0" {
+
+	if proto == "https" && config.TLS.ServerName != "" {
+		if config.TLS.PortHTTPS == 443 {
+			log.Printf("Go to https://%s", config.TLS.ServerName)
+		} else {
+			log.Printf("Go to https://%s:%d", config.TLS.ServerName, config.TLS.PortHTTPS)
+		}
+	} else if config.BindHost == "0.0.0.0" {
 		log.Println("AdGuard Home is available on the following addresses:")
 		ifaces, err := getValidNetInterfacesForWeb()
 		if err != nil {
