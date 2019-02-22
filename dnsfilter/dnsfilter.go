@@ -620,7 +620,7 @@ func (d *Dnsfilter) checkSafeSearch(host string) (Result, error) {
 		return Result{}, nil
 	}
 
-	res := Result {IsFiltered: true, Reason: FilteredSafeSearch}
+	res := Result{IsFiltered: true, Reason: FilteredSafeSearch}
 	if ip := net.ParseIP(safeHost); ip != nil {
 		res.IP = ip
 		err = safeSearchCache.Set(host, res)
