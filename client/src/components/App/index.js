@@ -1,6 +1,7 @@
 import React, { Component, Fragment } from 'react';
 import { HashRouter, Route } from 'react-router-dom';
 import PropTypes from 'prop-types';
+import { withNamespaces } from 'react-i18next';
 import LoadingBar from 'react-redux-loading-bar';
 
 import 'react-table/react-table.css';
@@ -16,7 +17,8 @@ import Logs from '../../containers/Logs';
 import Footer from '../ui/Footer';
 import Toasts from '../Toasts';
 import Status from '../ui/Status';
-import Update from '../ui/Update';
+import UpdateTopline from '../ui/UpdateTopline';
+import EncryptionTopline from '../ui/EncryptionTopline';
 import i18n from '../../i18n';
 
 class App extends Component {
@@ -50,7 +52,7 @@ class App extends Component {
     }
 
     render() {
-        const { dashboard } = this.props;
+        const { dashboard, encryption } = this.props;
         const updateAvailable =
             !dashboard.processingVersions &&
             dashboard.isCoreRunning &&
@@ -60,10 +62,13 @@ class App extends Component {
             <HashRouter hashType='noslash'>
                 <Fragment>
                     {updateAvailable &&
-                        <Update
-                            announcement={dashboard.announcement}
-                            announcementUrl={dashboard.announcementUrl}
+                        <UpdateTopline
+                            url={dashboard.announcementUrl}
+                            version={dashboard.version}
                         />
+                    }
+                    {!encryption.processing &&
+                        <EncryptionTopline notAfter={encryption.not_after} />
                     }
                     <LoadingBar className="loading-bar" updateTime={1000} />
                     <Route component={Header} />
@@ -100,6 +105,7 @@ App.propTypes = {
     error: PropTypes.string,
     getVersion: PropTypes.func,
     changeLanguage: PropTypes.func,
+    encryption: PropTypes.object,
 };
 
-export default App;
+export default withNamespaces()(App);

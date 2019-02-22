@@ -23,7 +23,7 @@ class Footer extends Component {
                     <div className="footer__row">
                         <div className="footer__column">
                             <div className="footer__copyright">
-                                <Trans>copyright</Trans> © {this.getYear()} <a href="https://adguard.com/">AdGuard</a>
+                                <Trans>copyright</Trans> &copy; {this.getYear()} <a href="https://adguard.com/">AdGuard</a>
                             </div>
                         </div>
                         <div className="footer__column">

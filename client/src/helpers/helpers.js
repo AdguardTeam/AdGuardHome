@@ -3,8 +3,15 @@ import dateFormat from 'date-fns/format';
 import subHours from 'date-fns/sub_hours';
 import addHours from 'date-fns/add_hours';
 import round from 'lodash/round';
+import axios from 'axios';
 
-import { STATS_NAMES, STANDARD_DNS_PORT, STANDARD_WEB_PORT } from './constants';
+import {
+    STATS_NAMES,
+    STANDARD_DNS_PORT,
+    STANDARD_WEB_PORT,
+    STANDARD_HTTPS_PORT,
+    CHECK_TIMEOUT,
+} from './constants';
 
 export const formatTime = (time) => {
     const parsedTime = dateParse(time);
@@ -139,4 +146,58 @@ export const getWebAddress = (ip, port = '') => {
     }
 
     return address;
+};
+
+export const checkRedirect = (url, attempts) => {
+    let count = attempts || 1;
+
+    if (count > 10) {
+        window.location.replace(url);
+        return false;
+    }
+
+    const rmTimeout = t => t && clearTimeout(t);
+    const setRecursiveTimeout = (time, ...args) => setTimeout(
+        checkRedirect,
+        time,
+        ...args,
+    );
+
+    let timeout;
+
+    axios.get(url)
+        .then((response) => {
+            rmTimeout(timeout);
+            if (response) {
+                window.location.replace(url);
+                return;
+            }
+            timeout = setRecursiveTimeout(CHECK_TIMEOUT, url, count += 1);
+        })
+        .catch((error) => {
+            rmTimeout(timeout);
+            if (error.response) {
+                window.location.replace(url);
+                return;
+            }
+            timeout = setRecursiveTimeout(CHECK_TIMEOUT, url, count += 1);
+        });
+
+    return false;
+};
+
+export const redirectToCurrentProtocol = (values, httpPort = 80) => {
+    const {
+        protocol, hostname, hash, port,
+    } = window.location;
+    const { enabled, port_https } = values;
+    const httpsPort = port_https !== STANDARD_HTTPS_PORT ? `:${port_https}` : '';
+
+    if (protocol !== 'https:' && enabled && port_https) {
+        checkRedirect(`https://${hostname}${httpsPort}/${hash}`);
+    } else if (protocol === 'https:' && enabled && port_https && port_https !== parseInt(port, 10)) {
+        checkRedirect(`https://${hostname}${httpsPort}/${hash}`);
+    } else if (protocol === 'https:' && (!enabled || !port_https)) {
+        window.location.replace(`http://${hostname}:${httpPort}/${hash}`);
+    }
 };

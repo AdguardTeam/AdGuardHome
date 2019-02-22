@@ -1,9 +1,11 @@
 package dnsforward
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -55,6 +57,7 @@ func NewServer(baseDir string) *Server {
 }
 
 // FilteringConfig represents the DNS filtering configuration of AdGuard Home
+// The zero FilteringConfig is empty and ready for use.
 type FilteringConfig struct {
 	ProtectionEnabled  bool     `yaml:"protection_enabled"`   // whether or not use any of dnsfilter features
 	FilteringEnabled   bool     `yaml:"filtering_enabled"`    // whether or not use filter lists
@@ -68,6 +71,13 @@ type FilteringConfig struct {
 	dnsfilter.Config `yaml:",inline"`
 }
 
+// TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
+type TLSConfig struct {
+	TLSListenAddr    *net.TCPAddr `yaml:"-" json:"-"`
+	CertificateChain string       `yaml:"certificate_chain" json:"certificate_chain"` // PEM-encoded certificates chain
+	PrivateKey       string       `yaml:"private_key" json:"private_key"`             // PEM-encoded private key
+}
+
 // ServerConfig represents server configuration.
 // The zero ServerConfig is empty and ready for use.
 type ServerConfig struct {
@@ -77,6 +87,7 @@ type ServerConfig struct {
 	Filters       []dnsfilter.Filter  // A list of filters to use
 
 	FilteringConfig
+	TLSConfig
 }
 
 // if any of ServerConfig values are zero, then default values from below are used
@@ -91,7 +102,7 @@ func init() {
 
 	defaultUpstreams := make([]upstream.Upstream, 0)
 	for _, addr := range defaultDNS {
-		u, err := upstream.AddressToUpstream(addr, "", DefaultTimeout)
+		u, err := upstream.AddressToUpstream(addr, upstream.Options{Timeout: DefaultTimeout})
 		if err == nil {
 			defaultUpstreams = append(defaultUpstreams, u)
 		}
@@ -152,6 +163,15 @@ func (s *Server) startInternal(config *ServerConfig) error {
 		CacheEnabled:       true,
 		Upstreams:          s.Upstreams,
 		Handler:            s.handleDNSRequest,
+	}
+
+	if s.TLSListenAddr != nil && s.CertificateChain != "" && s.PrivateKey != "" {
+		proxyConfig.TLSListenAddr = s.TLSListenAddr
+		keypair, err := tls.X509KeyPair([]byte(s.CertificateChain), []byte(s.PrivateKey))
+		if err != nil {
+			return errorx.Decorate(err, "Failed to parse TLS keypair")
+		}
+		proxyConfig.TLSConfig = &tls.Config{Certificates: []tls.Certificate{keypair}}
 	}
 
 	if proxyConfig.UDPListenAddr == nil {
@@ -240,24 +260,38 @@ func (s *Server) Reconfigure(config *ServerConfig) error {
 	return nil
 }
 
+// ServeHTTP is a HTTP handler method we use to provide DNS-over-HTTPS
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.RLock()
+	s.dnsProxy.ServeHTTP(w, r)
+	s.RUnlock()
+}
+
 // GetQueryLog returns a map with the current query log ready to be converted to a JSON
 func (s *Server) GetQueryLog() []map[string]interface{} {
+	s.RLock()
+	defer s.RUnlock()
 	return s.queryLog.getQueryLog()
 }
 
 // GetStatsTop returns the current stop stats
 func (s *Server) GetStatsTop() *StatsTop {
+	s.RLock()
+	defer s.RUnlock()
 	return s.queryLog.runningTop.getStatsTop()
 }
 
 // PurgeStats purges current server stats
 func (s *Server) PurgeStats() {
-	// TODO: Locks?
+	s.Lock()
+	defer s.Unlock()
 	s.stats.purgeStats()
 }
 
 // GetAggregatedStats returns aggregated stats data for the 24 hours
 func (s *Server) GetAggregatedStats() map[string]interface{} {
+	s.RLock()
+	defer s.RUnlock()
 	return s.stats.getAggregatedStats()
 }
 
@@ -267,6 +301,8 @@ func (s *Server) GetAggregatedStats() map[string]interface{} {
 // end is end of the time range
 // returns nil if time unit is not supported
 func (s *Server) GetStatsHistory(timeUnit time.Duration, startTime time.Time, endTime time.Time) (map[string]interface{}, error) {
+	s.RLock()
+	defer s.RUnlock()
 	return s.stats.getStatsHistory(timeUnit, startTime, endTime)
 }
 
@@ -350,9 +386,9 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 
 	switch result.Reason {
 	case dnsfilter.FilteredSafeBrowsing:
-		return s.genBlockedHost(m, safeBrowsingBlockHost, d.Upstream)
+		return s.genBlockedHost(m, safeBrowsingBlockHost, d)
 	case dnsfilter.FilteredParental:
-		return s.genBlockedHost(m, parentalBlockHost, d.Upstream)
+		return s.genBlockedHost(m, parentalBlockHost, d)
 	default:
 		if result.IP != nil {
 			return s.genARecord(m, result.IP)
@@ -381,22 +417,30 @@ func (s *Server) genARecord(request *dns.Msg, ip net.IP) *dns.Msg {
 	return &resp
 }
 
-func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, upstream upstream.Upstream) *dns.Msg {
+func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, d *proxy.DNSContext) *dns.Msg {
 	// look up the hostname, TODO: cache
 	replReq := dns.Msg{}
 	replReq.SetQuestion(dns.Fqdn(newAddr), request.Question[0].Qtype)
 	replReq.RecursionDesired = true
-	reply, err := upstream.Exchange(&replReq)
+
+	newContext := &proxy.DNSContext{
+		Proto:     d.Proto,
+		Addr:      d.Addr,
+		StartTime: time.Now(),
+		Req:       &replReq,
+	}
+
+	err := s.dnsProxy.Resolve(newContext)
 	if err != nil {
-		log.Printf("Couldn't look up replacement host '%s' on upstream %s: %s", newAddr, upstream.Address(), err)
+		log.Printf("Couldn't look up replacement host '%s': %s", newAddr, err)
 		return s.genServerFailure(request)
 	}
 
 	resp := dns.Msg{}
 	resp.SetReply(request)
 	resp.Authoritative, resp.RecursionAvailable = true, true
-	if reply != nil {
-		for _, answer := range reply.Answer {
+	if newContext.Res != nil {
+		for _, answer := range newContext.Res.Answer {
 			answer.Header().Name = request.Question[0].Name
 			resp.Answer = append(resp.Answer, answer)
 		}

@@ -2,7 +2,7 @@ swagger: '2.0'
 info:
     title: 'AdGuard Home'
     description: 'AdGuard Home REST API. Admin web interface is built on top of this REST API.'
-    version: 0.92.0
+    version: 0.93.0
 schemes:
     - http
 basePath: /control
@@ -12,6 +12,9 @@ tags:
     -
         name: global
         description: 'AdGuard Home server general settings and controls'
+    -
+        name: tls
+        description: 'AdGuard Home HTTPS/DOH/DOT settings'
     -
         name: log
         description: 'AdGuard Home query log'
@@ -36,6 +39,9 @@ tags:
     -
         name: dhcp
         description: 'Built-in DHCP server controls'
+    -
+        name: install
+        description: 'First-time install configuration handlers'
 paths:
 
     # API TO-DO LIST
@@ -266,6 +272,70 @@ paths:
             responses:
                 200:
                     description: OK
+
+    # --------------------------------------------------
+    # TLS server methods
+    # --------------------------------------------------
+
+    /tls/status:
+        get:
+            tags:
+                - tls
+            operationId: tlsStatus
+            summary: "Returns TLS configuration and its status"
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/TlsConfig"
+
+    /tls/configure:
+        post:
+            tags:
+                - tls
+            operationId: tlsConfigure
+            summary: "Updates current TLS configuration"
+            consumes:
+                - application/json
+            parameters:
+                - in: "body"
+                  name: "body"
+                  description: "TLS configuration JSON"
+                  required: true
+                  schema:
+                      $ref: "#/definitions/TlsConfig"
+            responses:
+                200:
+                    description: "TLS configuration and its status"
+                    schema:
+                        $ref: "#/definitions/TlsConfig"
+                400:
+                    description: "Invalid configuration or unavailable port"
+                500:
+                    description: "Error occurred while applying configuration"
+
+    /tls/validate:
+        post:
+            tags:
+                - tls
+            operationId: tlsValidate
+            summary: "Checks if the current TLS configuration is valid"
+            consumes:
+                - application/json
+            parameters:
+                - in: "body"
+                  name: "body"
+                  description: "TLS configuration JSON"
+                  required: true
+                  schema:
+                      $ref: "#/definitions/TlsConfig"
+            responses:
+                200:
+                    description: "TLS configuration and its status"
+                    schema:
+                        $ref: "#/definitions/TlsConfig"
+                400:
+                    description: "Invalid configuration or unavailable port"
 
     # --------------------------------------------------
     # DHCP server methods
@@ -645,6 +715,42 @@ paths:
                     examples:
                         text/plain:
                             en
+
+    # --------------------------------------------------
+    # First-time install configuration methods
+    # --------------------------------------------------
+
+    /install/get_addresses:
+        get:
+            tags:
+                - install
+            operationId: installGetAddresses
+            summary: "Gets the network interfaces information."
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/AddressesInfo"
+    /install/configure:
+        post:
+            tags:
+                - install
+            operationId: installConfigure
+            summary: "Applies the initial configuration."
+            parameters:
+                - in: "body"
+                  name: "body"
+                  description: "Initial configuration JSON"
+                  required: true
+                  schema:
+                      $ref: "#/definitions/InitialConfiguration"
+            responses:
+                200:
+                    description: OK
+                400:
+                    description: "Failed to parse initial configuration or cannot listen to the specified addresses"
+                500:
+                    description: "Cannot start the DNS server"
 
 definitions:
     ServerStatus:
@@ -1064,3 +1170,146 @@ definitions:
         description: "Query log"
         items:
             $ref: "#/definitions/QueryLogItem"
+    TlsConfig:
+        type: "object"
+        description: "TLS configuration settings and status"
+        properties:
+            # TLS configuration
+            enabled:
+                type: "boolean"
+                example: "true"
+                description: "enabled is the encryption (DOT/DOH/HTTPS) status"
+            server_name:
+                type: "string"
+                example: "example.org"
+                description: "server_name is the hostname of your HTTPS/TLS server"
+            force_https:
+                type: "boolean"
+                example: "true"
+                description: "if true, forces HTTP->HTTPS redirect"
+            port_https:
+                type: "integer"
+                format: "int32"
+                example: 443
+                description: "HTTPS port. If 0, HTTPS will be disabled."
+            port_dns_over_tls:
+                type: "integer"
+                format: "int32"
+                example: 853
+                description: "DNS-over-TLS port. If 0, DOT will be disabled."
+            certificate_chain:
+                type: "string"
+                description: "Base64 string with PEM-encoded certificates chain"
+            private_key:
+                type: "string"
+                description: "Base64 string with PEM-encoded private key"
+            # Below goes validation fields
+            valid_cert:
+                type: "boolean"
+                example: "true"
+                description: "valid_cert is true if the specified certificates chain is a valid chain of X509 certificates"
+            valid_chain:
+                type: "boolean"
+                example: "true"
+                description: "valid_chain is true if the specified certificates chain is verified and issued by a known CA"
+            subject:
+                type: "string"
+                example: "CN=example.org"
+                description: "subject is the subject of the first certificate in the chain"
+            issuer:
+                type: "string"
+                example: "CN=Let's Encrypt Authority X3,O=Let's Encrypt,C=US"
+                description: "issuer is the issuer of the first certificate in the chain"
+            not_before:
+                type: "string"
+                example: "2019-01-31T10:47:32Z"
+                description: "not_before is the NotBefore field of the first certificate in the chain"
+            not_after:
+                type: "string"
+                example: "2019-05-01T10:47:32Z"
+                description: "not_after is the NotAfter field of the first certificate in the chain"
+            dns_names:
+                type: "array"
+                items:
+                    type: "string"
+                description: "dns_names is the value of SubjectAltNames field of the first certificate in the chain"
+                example:
+                    - "*.example.org"
+            valid_key:
+                type: "boolean"
+                example: "true"
+                description: "valid_key is true if the key is a valid private key"
+            key_type:
+                type: "string"
+                example: "RSA"
+                description: "key_type is either RSA or ECDSA"
+            warning_validation:
+                type: "string"
+                example: "You have specified an empty certificate"
+                description: "warning_validation is a validation warning message with the issue description"
+    NetInterface:
+        type: "object"
+        description: "Network interface info"
+        properties:
+            flags:
+                type: "string"
+                example: "up|broadcast|multicast"
+            hardware_address:
+                type: "string"
+                example: "52:54:00:11:09:ba"
+            mtu:
+                type: "integer"
+                format: "int32"
+                example: 1500
+            name:
+                type: "string"
+                example: "eth0"
+            ip_addresses:
+                type: "array"
+                items:
+                    type: "string"
+                example:
+                    - "127.0.0.1"
+    AddressInfo:
+        type: "object"
+        description: "Port information"
+        properties:
+            ip:
+                type: "string"
+                example: "127.0.01"
+            port:
+                type: "integer"
+                format: "int32"
+                example: 53
+            warning:
+                type: "string"
+                example: "Cannot bind to this port"
+    AddressesInfo:
+        type: "object"
+        description: "AdGuard Home addresses configuration"
+        properties:
+            dns:
+                $ref: "#/definitions/AddressInfo"
+            web:
+                $ref: "#/definitions/AddressInfo"
+            interfaces:
+                type: "object"
+                description: "Network interfaces dictionary (key is the interface name)"
+                additionalProperties:
+                    $ref: "#/definitions/NetInterface"
+    InitialConfiguration:
+        type: "object"
+        description: "AdGuard Home initial configuration (for the first-install wizard)"
+        properties:
+            dns:
+                $ref: "#/definitions/AddressInfo"
+            web:
+                $ref: "#/definitions/AddressInfo"
+            username:
+                type: "string"
+                description: "Basic auth username"
+                example: "admin"
+            password:
+                type: "string"
+                description: "Basic auth password"
+                example: "password"

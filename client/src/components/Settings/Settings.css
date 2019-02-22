@@ -7,8 +7,8 @@
     margin-bottom: 0;
 }
 
-.form__group--dhcp:last-child {
-    margin-bottom: 15px;
+.form__group--settings:last-child {
+    margin-bottom: 20px;
 }
 
 .btn-standard {
@@ -47,4 +47,32 @@
 
 .dhcp {
     min-height: 450px;
+}
+
+.form__desc {
+    margin-top: 10px;
+    font-size: 13px;
+    color: rgba(74, 74, 74, 0.7);
+}
+
+.form__desc--top {
+    margin: 0 0 8px;
+}
+
+.form__label--bold {
+    font-weight: 700;
+}
+
+.form__status {
+    margin-top: 10px;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.encryption__list {
+    padding-left: 0;
+}
+
+.encryption__list li {
+    list-style: inside;
 }

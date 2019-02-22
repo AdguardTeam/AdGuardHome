@@ -12,11 +12,26 @@ import {
     setDhcpConfig,
     findActiveDhcp,
 } from '../actions';
+import {
+    getTlsStatus,
+    setTlsConfig,
+    validateTlsConfig,
+} from '../actions/encryption';
 import Settings from '../components/Settings';
 
 const mapStateToProps = (state) => {
-    const { settings, dashboard, dhcp } = state;
-    const props = { settings, dashboard, dhcp };
+    const {
+        settings,
+        dashboard,
+        dhcp,
+        encryption,
+    } = state;
+    const props = {
+        settings,
+        dashboard,
+        dhcp,
+        encryption,
+    };
     return props;
 };
 
@@ -32,6 +47,9 @@ const mapDispatchToProps = {
     getDhcpInterfaces,
     setDhcpConfig,
     findActiveDhcp,
+    getTlsStatus,
+    setTlsConfig,
+    validateTlsConfig,
 };
 
 export default connect(

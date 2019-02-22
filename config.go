@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
@@ -31,12 +32,13 @@ type configuration struct {
 	ourWorkingDir     string // Location of our directory, used to protect against CWD being somewhere else
 	firstRun          bool   // if set to true, don't run any services except HTTP web inteface, and serve only first-run html
 
-	BindHost  string             `yaml:"bind_host"`
-	BindPort  int                `yaml:"bind_port"`
-	AuthName  string             `yaml:"auth_name"`
-	AuthPass  string             `yaml:"auth_pass"`
-	Language  string             `yaml:"language"` // two-letter ISO 639-1 language code
+	BindHost  string             `yaml:"bind_host"` // BindHost is the IP address of the HTTP server to bind to
+	BindPort  int                `yaml:"bind_port"` // BindPort is the port the HTTP server
+	AuthName  string             `yaml:"auth_name"` // AuthName is the basic auth username
+	AuthPass  string             `yaml:"auth_pass"` // AuthPass is the basic auth password
+	Language  string             `yaml:"language"`  // two-letter ISO 639-1 language code
 	DNS       dnsConfig          `yaml:"dns"`
+	TLS       tlsConfig          `yaml:"tls"`
 	Filters   []filter           `yaml:"filters"`
 	UserRules []string           `yaml:"user_rules"`
 	DHCP      dhcpd.ServerConfig `yaml:"dhcp"`
@@ -60,6 +62,43 @@ type dnsConfig struct {
 
 var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
 
+type tlsConfigSettings struct {
+	Enabled        bool   `yaml:"enabled" json:"enabled"`                               // Enabled is the encryption (DOT/DOH/HTTPS) status
+	ServerName     string `yaml:"server_name" json:"server_name,omitempty"`             // ServerName is the hostname of your HTTPS/TLS server
+	ForceHTTPS     bool   `yaml:"force_https" json:"force_https,omitempty"`             // ForceHTTPS: if true, forces HTTP->HTTPS redirect
+	PortHTTPS      int    `yaml:"port_https" json:"port_https,omitempty"`               // HTTPS port. If 0, HTTPS will be disabled
+	PortDNSOverTLS int    `yaml:"port_dns_over_tls" json:"port_dns_over_tls,omitempty"` // DNS-over-TLS port. If 0, DOT will be disabled
+
+	dnsforward.TLSConfig `yaml:",inline" json:",inline"`
+}
+
+// field ordering is not important -- these are for API and are recalculated on each run
+type tlsConfigStatus struct {
+	ValidCert  bool      `yaml:"-" json:"valid_cert"`           // ValidCert is true if the specified certificates chain is a valid chain of X509 certificates
+	ValidChain bool      `yaml:"-" json:"valid_chain"`          // ValidChain is true if the specified certificates chain is verified and issued by a known CA
+	Subject    string    `yaml:"-" json:"subject,omitempty"`    // Subject is the subject of the first certificate in the chain
+	Issuer     string    `yaml:"-" json:"issuer,omitempty"`     // Issuer is the issuer of the first certificate in the chain
+	NotBefore  time.Time `yaml:"-" json:"not_before,omitempty"` // NotBefore is the NotBefore field of the first certificate in the chain
+	NotAfter   time.Time `yaml:"-" json:"not_after,omitempty"`  // NotAfter is the NotAfter field of the first certificate in the chain
+	DNSNames   []string  `yaml:"-" json:"dns_names"`            // DNSNames is the value of SubjectAltNames field of the first certificate in the chain
+
+	// key status
+	ValidKey bool   `yaml:"-" json:"valid_key"`          // ValidKey is true if the key is a valid private key
+	KeyType  string `yaml:"-" json:"key_type,omitempty"` // KeyType is one of RSA or ECDSA
+
+	// is usable? set by validator
+	usable bool
+
+	// warnings
+	WarningValidation string `yaml:"-" json:"warning_validation,omitempty"` // WarningValidation is a validation warning message with the issue description
+}
+
+// field ordering is important -- yaml fields will mirror ordering from here
+type tlsConfig struct {
+	tlsConfigSettings `yaml:",inline" json:",inline"`
+	tlsConfigStatus   `yaml:"-" json:",inline"`
+}
+
 // initialize to default values, will be changed later when reading config or parsing command line
 var config = configuration{
 	ourConfigFilename: "AdGuardHome.yaml",
@@ -78,6 +117,12 @@ var config = configuration{
 			BootstrapDNS:       "8.8.8.8:53",
 		},
 		UpstreamDNS: defaultDNS,
+	},
+	TLS: tlsConfig{
+		tlsConfigSettings: tlsConfigSettings{
+			PortHTTPS:      443,
+			PortDNSOverTLS: 853, // needs to be passed through to dnsproxy
+		},
 	},
 	Filters: []filter{
 		{Filter: dnsfilter.Filter{ID: 1}, Enabled: true, URL: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt", Name: "AdGuard Simplified Domain Names filter"},
