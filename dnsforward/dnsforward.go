@@ -70,6 +70,7 @@ type FilteringConfig struct {
 	dnsfilter.Config `yaml:",inline"`
 }
 
+// TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
 type TLSConfig struct {
 	TLSListenAddr    *net.TCPAddr `yaml:"-" json:"-"`
 	CertificateChain string       `yaml:"certificate_chain" json:"certificate_chain"` // PEM-encoded certificates chain
