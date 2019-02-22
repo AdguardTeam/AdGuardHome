@@ -86,7 +86,7 @@ func httpUpdateConfigReloadDNSReturnOK(w http.ResponseWriter, r *http.Request) {
 
 func handleStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
-		"dns_address":        config.BindHost,
+		"dns_address":        config.DNS.BindHost,
 		"http_port":          config.BindPort,
 		"dns_port":           config.DNS.Port,
 		"protection_enabled": config.DNS.ProtectionEnabled,
@@ -409,7 +409,7 @@ func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 
 func checkDNS(input string) error {
 	log.Printf("Checking if DNS %s works...", input)
-	u, err := upstream.AddressToUpstream(input, "", dnsforward.DefaultTimeout)
+	u, err := upstream.AddressToUpstream(input, upstream.Options{Timeout: dnsforward.DefaultTimeout})
 	if err != nil {
 		return fmt.Errorf("failed to choose upstream for %s: %s", input, err)
 	}

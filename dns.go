@@ -59,7 +59,11 @@ func generateServerConfig() dnsforward.ServerConfig {
 	}
 
 	for _, u := range config.DNS.UpstreamDNS {
-		dnsUpstream, err := upstream.AddressToUpstream(u, config.DNS.BootstrapDNS, dnsforward.DefaultTimeout)
+		opts := upstream.Options{
+			Timeout:   dnsforward.DefaultTimeout,
+			Bootstrap: []string{config.DNS.BootstrapDNS},
+		}
+		dnsUpstream, err := upstream.AddressToUpstream(u, opts)
 		if err != nil {
 			log.Printf("Couldn't get upstream: %s", err)
 			// continue, just ignore the upstream

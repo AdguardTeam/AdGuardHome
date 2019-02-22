@@ -102,7 +102,7 @@ func init() {
 
 	defaultUpstreams := make([]upstream.Upstream, 0)
 	for _, addr := range defaultDNS {
-		u, err := upstream.AddressToUpstream(addr, "", DefaultTimeout)
+		u, err := upstream.AddressToUpstream(addr, upstream.Options{Timeout: DefaultTimeout})
 		if err == nil {
 			defaultUpstreams = append(defaultUpstreams, u)
 		}
