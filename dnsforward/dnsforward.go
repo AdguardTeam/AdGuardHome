@@ -386,9 +386,9 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 
 	switch result.Reason {
 	case dnsfilter.FilteredSafeBrowsing:
-		return s.genBlockedHost(m, safeBrowsingBlockHost, d.Upstream)
+		return s.genBlockedHost(m, safeBrowsingBlockHost, d)
 	case dnsfilter.FilteredParental:
-		return s.genBlockedHost(m, parentalBlockHost, d.Upstream)
+		return s.genBlockedHost(m, parentalBlockHost, d)
 	default:
 		if result.IP != nil {
 			return s.genARecord(m, result.IP)
@@ -417,22 +417,30 @@ func (s *Server) genARecord(request *dns.Msg, ip net.IP) *dns.Msg {
 	return &resp
 }
 
-func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, upstream upstream.Upstream) *dns.Msg {
+func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, d *proxy.DNSContext) *dns.Msg {
 	// look up the hostname, TODO: cache
 	replReq := dns.Msg{}
 	replReq.SetQuestion(dns.Fqdn(newAddr), request.Question[0].Qtype)
 	replReq.RecursionDesired = true
-	reply, err := upstream.Exchange(&replReq)
+
+	newContext := &proxy.DNSContext{
+		Proto:     d.Proto,
+		Addr:      d.Addr,
+		StartTime: time.Now(),
+		Req:       &replReq,
+	}
+
+	err := s.dnsProxy.Resolve(newContext)
 	if err != nil {
-		log.Printf("Couldn't look up replacement host '%s' on upstream %s: %s", newAddr, upstream.Address(), err)
+		log.Printf("Couldn't look up replacement host '%s': %s", newAddr, err)
 		return s.genServerFailure(request)
 	}
 
 	resp := dns.Msg{}
 	resp.SetReply(request)
 	resp.Authoritative, resp.RecursionAvailable = true, true
-	if reply != nil {
-		for _, answer := range reply.Answer {
+	if newContext.Res != nil {
+		for _, answer := range newContext.Res.Answer {
 			answer.Header().Name = request.Question[0].Name
 			resp.Answer = append(resp.Answer, answer)
 		}
