@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"path"
@@ -605,6 +606,151 @@ func TestSafeBrowsingCustomServerFail(t *testing.T) {
 	d.SetHTTPTimeout(time.Second * 5)
 	d.SetSafeBrowsingServer(address) // this will ensure that test fails
 	d.checkMatchEmpty(t, "wmconvirus.narod.ru")
+}
+
+func TestCheckHostSafeSearchYandex(t *testing.T) {
+	d := NewForTest()
+	defer d.Destroy()
+
+	// Enable safesearch
+	d.SafeSearchEnabled = true
+
+	// Slice of yandex domains
+	yandex := []string{"yAndeX.ru", "YANdex.COM", "yandex.ua", "yandex.by", "yandex.kz", "www.yandex.com"}
+
+	// Check host for each domain
+	for _, host := range yandex {
+		result, err := d.CheckHost(host)
+		if err != nil {
+			t.Errorf("SafeSearch doesn't work for yandex domain `%s` cause %s", host, err)
+		}
+
+		if result.IP.String() != "213.180.193.56" {
+			t.Errorf("SafeSearch doesn't work for yandex domain `%s`", host)
+		}
+	}
+}
+
+func TestCheckHostSafeSearchGoogle(t *testing.T) {
+	d := NewForTest()
+	defer d.Destroy()
+
+	// Enable safesearch
+	d.SafeSearchEnabled = true
+
+	// Slice of google domains
+	googleDomains := []string{"www.google.com", "www.google.im", "www.google.co.in", "www.google.iq", "www.google.is", "www.google.it", "www.google.je"}
+
+	// Check host for each domain
+	for _, host := range googleDomains {
+		result, err := d.CheckHost(host)
+		if err != nil {
+			t.Errorf("SafeSearch doesn't work for %s cause %s", host, err)
+		}
+
+		if result.IP == nil {
+			t.Errorf("SafeSearch doesn't work for %s", host)
+		}
+	}
+}
+
+func TestSafeSearchCacheYandex (t *testing.T) {
+	d := NewForTest()
+	defer d.Destroy()
+	domain := "yandex.ru"
+
+	// Check host with disabled safesearch
+	result, err := d.CheckHost(domain)
+	if result.IP != nil {
+		t.Fatalf("SafeSearch is not enabled but there is an answer for `%s` !", domain)
+	}
+
+	// Enable safesearch
+	d.SafeSearchEnabled = true
+	result, err = d.CheckHost(domain)
+	if err != nil {
+		t.Fatalf("CheckHost for safesearh domain %s failed cause %s", domain, err)
+	}
+
+	// Fir yandex we already know valid ip
+	if result.IP.String() != "213.180.193.56" {
+		t.Fatalf("Wrong IP for %s safesearch: %s", domain, result.IP.String())
+	}
+
+	// Check cache
+	cachedValue, isFound, err := getCachedReason(safeSearchCache, domain)
+
+	if err != nil {
+		t.Fatalf("An error occured during cache search for %s: %s", domain, err)
+	}
+
+	if !isFound {
+		t.Fatalf("Safesearch cache doesn't work for %s!", domain)
+	}
+
+	if cachedValue.IP.String() != "213.180.193.56" {
+		t.Fatalf("Wrong IP in cache for %s safesearch: %s", domain, cachedValue.IP.String())
+	}
+}
+
+func TestSafeSearchCacheGoogle (t *testing.T) {
+	d := NewForTest()
+	defer d.Destroy()
+	domain := "www.google.ru"
+	result, err := d.CheckHost(domain)
+	if result.IP != nil {
+		t.Fatalf("SafeSearch is not enabled but there is an answer!")
+	}
+
+
+	// Let's lookup for safesearch domain
+	safeDomain, ok := d.SafeSearchDomain(domain)
+	if !ok {
+		t.Fatalf("Failed to get safesearch domain for %s", domain)
+	}
+
+	ips, err := net.LookupIP(safeDomain)
+	if err != nil {
+		t.Fatalf("Failed to lookup for %s", safeDomain)
+	}
+
+	var ip net.IP
+	for _, i := range ips {
+		if len(i) == net.IPv6len && i.To4() != nil {
+			ip = i
+		}
+	}
+
+	if ip == nil || len(ip) == 0 {
+		ip = ips[0]
+	}
+
+	// Enable safesearch and check host
+	d.SafeSearchEnabled = true
+
+	result, err = d.CheckHost(domain)
+	if err != nil {
+		t.Fatalf("CheckHost for safesearh domain %s failed cause %s", domain, err)
+	}
+
+	if result.IP.String() != ip.String() {
+		t.Fatalf("Wrong IP for %s safesearch: %s", domain, result.IP.String())
+	}
+
+	// Check cache
+	cachedValue, isFound, err := getCachedReason(safeSearchCache, domain)
+
+	if err != nil {
+		t.Fatalf("An error occured during cache search for %s: %s", domain, err)
+	}
+
+	if !isFound {
+		t.Fatalf("Safesearch cache doesn't work for %s!", domain)
+	}
+
+	if cachedValue.IP.String() != ip.String() {
+		t.Fatalf("Wrong IP in cache for %s safesearch: %s", domain, cachedValue.IP.String())
+	}
 }
 
 func TestParentalControl(t *testing.T) {
