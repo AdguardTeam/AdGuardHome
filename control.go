@@ -909,17 +909,6 @@ type firstRunData struct {
 
 func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 	data := firstRunData{}
-	ifaces, err := getValidNetInterfaces()
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
-		return
-	}
-	if len(ifaces) == 0 {
-		httpError(w, http.StatusServiceUnavailable, "Couldn't find any legible interface, plase try again later")
-		return
-	}
-
-	// fill out the fields
 
 	// find out if port 80 is available -- if not, fall back to 3000
 	if checkPortAvailable("", 80) == nil {
@@ -934,41 +923,15 @@ func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 		data.DNS.Warning = "Port 53 is not available for binding -- this will make DNS clients unable to contact AdGuard Home."
 	}
 
+	ifaces, err := getValidNetInterfacesForWeb()
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
+		return
+	}
+
 	data.Interfaces = make(map[string]interface{})
 	for _, iface := range ifaces {
-		addrs, e := iface.Addrs()
-		if e != nil {
-			httpError(w, http.StatusInternalServerError, "Failed to get addresses for interface %s: %s", iface.Name, err)
-			return
-		}
-
-		jsonIface := netInterface{
-			Name:         iface.Name,
-			MTU:          iface.MTU,
-			HardwareAddr: iface.HardwareAddr.String(),
-		}
-
-		if iface.Flags != 0 {
-			jsonIface.Flags = iface.Flags.String()
-		}
-
-		// we don't want link-local addresses in json, so skip them
-		for _, addr := range addrs {
-			ipnet, ok := addr.(*net.IPNet)
-			if !ok {
-				// not an IPNet, should not happen
-				httpError(w, http.StatusInternalServerError, "SHOULD NOT HAPPEN: got iface.Addrs() element %s that is not net.IPNet, it is %T", addr, addr)
-				return
-			}
-			// ignore link-local
-			if ipnet.IP.IsLinkLocalUnicast() {
-				continue
-			}
-			jsonIface.Addresses = append(jsonIface.Addresses, ipnet.IP.String())
-		}
-		if len(jsonIface.Addresses) != 0 {
-			data.Interfaces[iface.Name] = jsonIface
-		}
+		data.Interfaces[iface.Name] = iface
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -983,7 +946,7 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	newSettings := firstRunData{}
 	err := json.NewDecoder(r.Body).Decode(&newSettings)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to parse new DHCP config json: %s", err)
+		httpError(w, http.StatusBadRequest, "Failed to parse new config json: %s", err)
 		return
 	}
 

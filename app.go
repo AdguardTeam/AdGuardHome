@@ -208,8 +208,7 @@ func run(args options) {
 				},
 			}
 
-			URL := fmt.Sprintf("https://%s", address)
-			log.Println("Go to " + URL)
+			printHTTPAddresses("https")
 			err = httpsServer.server.ListenAndServeTLS("", "")
 			if err != http.ErrServerClosed {
 				log.Fatal(err)
@@ -220,10 +219,10 @@ func run(args options) {
 
 	// this loop is used as an ability to change listening host and/or port
 	for {
-		address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
-		URL := fmt.Sprintf("http://%s", address)
-		log.Println("Go to " + URL)
+		printHTTPAddresses("http")
+
 		// we need to have new instance, because after Shutdown() the Server is not usable
+		address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
 		httpServer = &http.Server{
 			Addr: address,
 		}
@@ -394,4 +393,28 @@ func loadOptions() options {
 	}
 
 	return o
+}
+
+// prints IP addresses which user can use to open the admin interface
+// proto is either "http" or "https"
+func printHTTPAddresses(proto string) {
+	var address string
+	if config.BindHost == "0.0.0.0" {
+		log.Println("AdGuard Home is available on the following addresses:")
+		ifaces, err := getValidNetInterfacesForWeb()
+		if err != nil {
+			// That's weird, but we'll ignore it
+			address = net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
+			log.Printf("Go to %s://%s", proto, address)
+			return
+		}
+
+		for _, iface := range ifaces {
+			address = net.JoinHostPort(iface.Addresses[0], strconv.Itoa(config.BindPort))
+			log.Printf("Go to %s://%s", proto, address)
+		}
+	} else {
+		address = net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
+		log.Printf("Go to %s://%s", proto, address)
+	}
 }

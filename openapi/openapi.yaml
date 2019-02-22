@@ -39,6 +39,9 @@ tags:
     -
         name: dhcp
         description: 'Built-in DHCP server controls'
+    -
+        name: install
+        description: 'First-time install configuration handlers'
 paths:
 
     # API TO-DO LIST
@@ -713,6 +716,42 @@ paths:
                         text/plain:
                             en
 
+    # --------------------------------------------------
+    # First-time install configuration methods
+    # --------------------------------------------------
+
+    /install/get_addresses:
+        get:
+            tags:
+                - install
+            operationId: installGetAddresses
+            summary: "Gets the network interfaces information."
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/AddressesInfo"
+    /install/configure:
+        post:
+            tags:
+                - install
+            operationId: installConfigure
+            summary: "Applies the initial configuration."
+            parameters:
+                - in: "body"
+                  name: "body"
+                  description: "Initial configuration JSON"
+                  required: true
+                  schema:
+                      $ref: "#/definitions/InitialConfiguration"
+            responses:
+                200:
+                    description: OK
+                400:
+                    description: "Failed to parse initial configuration or cannot listen to the specified addresses"
+                500:
+                    description: "Cannot start the DNS server"
+
 definitions:
     ServerStatus:
         type: "object"
@@ -1208,3 +1247,69 @@ definitions:
                 type: "string"
                 example: "You have specified an empty certificate"
                 description: "warning_validation is a validation warning message with the issue description"
+    NetInterface:
+        type: "object"
+        description: "Network interface info"
+        properties:
+            flags:
+                type: "string"
+                example: "up|broadcast|multicast"
+            hardware_address:
+                type: "string"
+                example: "52:54:00:11:09:ba"
+            mtu:
+                type: "integer"
+                format: "int32"
+                example: 1500
+            name:
+                type: "string"
+                example: "eth0"
+            ip_addresses:
+                type: "array"
+                items:
+                    type: "string"
+                example:
+                    - "127.0.0.1"
+    AddressInfo:
+        type: "object"
+        description: "Port information"
+        properties:
+            ip:
+                type: "string"
+                example: "127.0.01"
+            port:
+                type: "integer"
+                format: "int32"
+                example: 53
+            warning:
+                type: "string"
+                example: "Cannot bind to this port"
+    AddressesInfo:
+        type: "object"
+        description: "AdGuard Home addresses configuration"
+        properties:
+            dns:
+                $ref: "#/definitions/AddressInfo"
+            web:
+                $ref: "#/definitions/AddressInfo"
+            interfaces:
+                type: "object"
+                description: "Network interfaces dictionary (key is the interface name)"
+                additionalProperties:
+                    $ref: "#/definitions/NetInterface"
+    InitialConfiguration:
+        type: "object"
+        description: "AdGuard Home initial configuration (for the first-install wizard)"
+        properties:
+            dns:
+                $ref: "#/definitions/AddressInfo"
+            web:
+                $ref: "#/definitions/AddressInfo"
+            username:
+                type: "string"
+                description: "Basic auth username"
+                example: "admin"
+            password:
+                type: "string"
+                description: "Basic auth password"
+                example: "password"
