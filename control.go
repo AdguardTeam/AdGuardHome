@@ -1320,6 +1320,23 @@ func marshalTLS(w http.ResponseWriter, data tlsConfig) {
 	}
 }
 
+// --------------
+// DNS-over-HTTPS
+// --------------
+func handleDOH(w http.ResponseWriter, r *http.Request) {
+	if r.TLS == nil {
+		httpError(w, http.StatusNotFound, "Not Found")
+		return
+	}
+
+	if !isRunning() {
+		httpError(w, http.StatusInternalServerError, "DNS server is not running")
+		return
+	}
+
+	dnsServer.ServeHTTP(w, r)
+}
+
 // ------------------------
 // registration of handlers
 // ------------------------
@@ -1370,4 +1387,6 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/tls/status", postInstall(optionalAuth(ensureGET(handleTLSStatus))))
 	http.HandleFunc("/control/tls/configure", postInstall(optionalAuth(ensurePOST(handleTLSConfigure))))
 	http.HandleFunc("/control/tls/validate", postInstall(optionalAuth(ensurePOST(handleTLSValidate))))
+
+	http.HandleFunc("/dns-query", postInstall(handleDOH))
 }

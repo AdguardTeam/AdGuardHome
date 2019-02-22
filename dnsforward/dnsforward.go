@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -259,24 +260,38 @@ func (s *Server) Reconfigure(config *ServerConfig) error {
 	return nil
 }
 
+// ServeHTTP is a HTTP handler method we use to provide DNS-over-HTTPS
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.RLock()
+	s.dnsProxy.ServeHTTP(w, r)
+	s.RUnlock()
+}
+
 // GetQueryLog returns a map with the current query log ready to be converted to a JSON
 func (s *Server) GetQueryLog() []map[string]interface{} {
+	s.RLock()
+	defer s.RUnlock()
 	return s.queryLog.getQueryLog()
 }
 
 // GetStatsTop returns the current stop stats
 func (s *Server) GetStatsTop() *StatsTop {
+	s.RLock()
+	defer s.RUnlock()
 	return s.queryLog.runningTop.getStatsTop()
 }
 
 // PurgeStats purges current server stats
 func (s *Server) PurgeStats() {
-	// TODO: Locks?
+	s.Lock()
+	defer s.Unlock()
 	s.stats.purgeStats()
 }
 
 // GetAggregatedStats returns aggregated stats data for the 24 hours
 func (s *Server) GetAggregatedStats() map[string]interface{} {
+	s.RLock()
+	defer s.RUnlock()
 	return s.stats.getAggregatedStats()
 }
 
@@ -286,6 +301,8 @@ func (s *Server) GetAggregatedStats() map[string]interface{} {
 // end is end of the time range
 // returns nil if time unit is not supported
 func (s *Server) GetStatsHistory(timeUnit time.Duration, startTime time.Time, endTime time.Time) (map[string]interface{}, error) {
+	s.RLock()
+	defer s.RUnlock()
 	return s.stats.getStatsHistory(timeUnit, startTime, endTime)
 }
 
