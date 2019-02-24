@@ -54,7 +54,14 @@ It operates as a DNS server that re-routes tracking domains to a "black hole," t
 
 Please read the [Getting Started](https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started) article on our Wiki to learn how to install AdGuard Home, and how to configure your devices to use it.
 
-Alternatively, you can use our [official Docker image](https://hub.docker.com/r/adguard/adguardhome).
+Alternatively, you can use our [official Docker image](https://hub.docker.com/r/adguard/adguardhome). 
+
+### Guides
+
+* [Configuration](https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration)
+* [AdGuard Home as a DNS-over-HTTPS or DNS-over-TLS server](https://github.com/AdguardTeam/AdGuardHome/wiki/Encryption)
+* [How to install and run AdGuard Home on Raspberry Pi](https://github.com/AdguardTeam/AdGuardHome/wiki/Raspberry-Pi)
+* [How to install and run AdGuard Home on a Virtual Private Server](https://github.com/AdguardTeam/AdGuardHome/wiki/VPS)
 
 <a id="how-to-build"></a>
 ## How to build from source
