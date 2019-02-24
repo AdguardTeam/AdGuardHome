@@ -39,195 +39,24 @@
 
 <hr />
 
-# AdGuard Home
-
 AdGuard Home is a network-wide software for blocking ads & tracking. After you set it up, it'll cover ALL your home devices, and you don't need any client-side software for that.
 
-## How does AdGuard Home work?
+It operates as a DNS server that re-routes tracking domains to a "black hole," thus preventing your devices from connecting to those servers. It's based on software we use for our public [AdGuard DNS](https://adguard.com/en/adguard-dns/overview.html) servers -- both share a lot of common code.
 
-AdGuard Home operates as a DNS server that re-routes tracking domains to a "black hole," thus preventing your devices from connecting to those servers. It's based on software we use for our public [AdGuard DNS](https://adguard.com/en/adguard-dns/overview.html) servers -- both share a lot of common code.
+* [Getting Started](#getting-started)
+* [How to build from source](#how-to-build)
+* [Contributing](#contributing)
+* [Reporting issues](#reporting-issues)
+* [Acknowledgments](#acknowledgments)
 
-## How is this different from public AdGuard DNS servers?
+<a id="getting-started"></a>
+## Getting Started
 
-Running your own AdGuard Home server allows you to do much more than using a public DNS server.
+Please read the [Getting Started](https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started) article on our Wiki to learn how to install AdGuard Home, and how to configure your devices to use it.
 
-* Choose what exactly will the server block or not block;
-* Monitor your network activity;
-* Add your own custom filtering rules;
+Alternatively, you can use our [official Docker image](https://hub.docker.com/r/adguard/adguardhome).
 
-In the future, AdGuard Home is supposed to become more than just a DNS server.
-
-## Installation
-
-### Mac
-
-Download this file: [AdGuardHome_v0.92-hotfix2_MacOS.zip](https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.92-hotfix2/AdGuardHome_v0.92-hotfix2_MacOS.zip), then unpack it and follow ["How to run"](#how-to-run) instructions below.
-
-### Windows 64-bit
-
-Download this file: [AdGuardHome_v0.92-hotfix2_Windows.zip](https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.92-hotfix2/AdGuardHome_v0.92-hotfix2_Windows.zip), then unpack it and follow ["How to run"](#how-to-run) instructions below.
-
-### Linux 64-bit Intel
-
-Download this file: [AdGuardHome_v0.92-hotfix2_linux_amd64.tar.gz](https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.92-hotfix2/AdGuardHome_v0.92-hotfix2_linux_amd64.tar.gz), then unpack it and follow ["How to run"](#how-to-run) instructions below.
-
-### Linux 32-bit Intel
-
-Download this file: [AdGuardHome_v0.92-hotfix2_linux_386.tar.gz](https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.92-hotfix2/AdGuardHome_v0.92-hotfix2_linux_386.tar.gz), then unpack it and follow ["How to run"](#how-to-run) instructions below.
-
-### Raspberry Pi (32-bit ARM)
-
-Download this file: [AdGuardHome_v0.92-hotfix2_linux_arm.tar.gz](https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.92-hotfix2/AdGuardHome_v0.92-hotfix2_linux_arm.tar.gz), then unpack it and follow ["How to run"](#how-to-run) instructions below.
-
-## How to update
-
-We have not yet implemented an auto-update of AdGuard Home, but it is planned for future versions: #448.
-
-At the moment, the update procedure is manual:
-
-1. Download the new AdGuard Home binary.
-2. Replace the old file with the new one.
-3. Restart AdGuard Home.
-
-## How to run
-
-DNS works on port 53, which requires superuser privileges. Therefore, you need to run it with `sudo` in terminal:
-
-```bash
-sudo ./AdGuardHome
-```
-
-Now open the browser and navigate to http://localhost:3000/ to control your AdGuard Home service.
-
-### Running as a service
-
-You can register AdGuard Home as a system service on Windows, Linux/(systemd | Upstart | SysV), and OSX/Launchd.
-
-* `AdGuardHome -s install` - install AdGuard Home as a system service.
-* `AdGuardHome -s uninstall` - uninstalls the AdGuard Home service.
-* `AdGuardHome -s start` - starts the service.
-* `AdGuardHome -s stop` - stops the service.
-* `AdGuardHome -s restart` - restarts the service.
-* `AdGuardHome -s status` - shows the current service status.
-
-### Logging
-
-By default, the log is written to `stderr` when you run AdGuard Home as a console application.
-
-If you run it as a service/daemon, the log output depends on the platform:
-
-* Linux: the log is written to syslog.
-* MacOS: the log is written to `/var/log/AdGuardHome.*.log` files.
-* Windows: the log is written to the Windows event log.  
-
-You can redefine this behavior in AdGuard Home configuration file (see below).
-
-### Command-line arguments
-
-Here is a list of all available command-line arguments.
-
-```
-$ ./AdGuardHome --help
-Usage:
-
-./AdGuardHome [options]
-
-Options:
-  -c, --config                       path to the config file
-  -w, --work-dir                     path to the working directory
-  -h, --host                         host address to bind HTTP server on
-  -p, --port                         port to serve HTTP pages on
-  -s, --service                      service control action: status, install, uninstall, start, stop, restart
-  -l, --logfile                      path to the log file. If empty, writes to stdout, if 'syslog' -- system log
-  -v, --verbose                      enable verbose output
-  --help                             print this help
-```
-
-Please note, that the command-line arguments override settings from the configuration file.
-
-### Running without superuser
-
-You can run AdGuard Home without superuser privileges, but you need to either grant the binary a capability (on Linux) or instruct it to use a different port (all platforms).
-
-#### Granting the CAP_NET_BIND_SERVICE capability (on Linux)
-
-Note: using this method requires the `setcap` utility.  You may need to install it using your Linux distribution's package manager.
-
-To allow AdGuard Home running on Linux to listen on port 53 without superuser privileges, run:
-
-```bash
-sudo setcap CAP_NET_BIND_SERVICE=+eip ./AdGuardHome
-```
-
-Then run `./AdGuardHome` as a unprivileged user.
-
-#### Changing the DNS listen port
-
-To configure AdGuard Home to listen on a port that does not require superuser privileges, edit `AdGuardHome.yaml` and find these two lines:
-
-```yaml
-dns:
-  port: 53
-```
-
-You can change port 53 to anything above 1024 to avoid requiring superuser privileges.
-
-If the file does not exist, create it in the same folder, type these two lines down and save.
-
-### Additional configuration
-
-Upon the first execution, a file named `AdGuardHome.yaml` will be created, with default values written in it. You can modify the file while your AdGuard Home service is not running. Otherwise, any changes to the file will be lost because the running program will overwrite them.
-
-Settings are stored in [YAML format](https://en.wikipedia.org/wiki/YAML), possible parameters that you can configure are listed below:
-
- * `bind_host` — Web interface IP address to listen on.
- * `bind_port` — Web interface IP port to listen on.
- * `auth_name` — Web interface optional authorization username.
- * `auth_pass` — Web interface optional authorization password.
- * `dns` — DNS configuration section.
-   * `bind_host` - DNS interface IP address to listen on. 
-   * `port` — DNS server port to listen on.
-   * `protection_enabled` — Whether any kind of filtering and protection should be done, when off it works as a plain dns forwarder.
-   * `filtering_enabled` — Filtering of DNS requests based on filter lists.
-   * `blocked_response_ttl` — For how many seconds the clients should cache a filtered response. Low values are useful on LAN if you change filters very often, high values are useful to increase performance and save traffic.
-   * `querylog_enabled` — Query logging (also used to calculate top 50 clients, blocked domains and requested domains for statistical purposes).
-   * `ratelimit` — DDoS protection, specifies in how many packets per second a client should receive. Anything above that is silently dropped. To disable set 0, default is 20. Safe to disable if DNS server is not available from internet.
-   * `ratelimit_whitelist` — If you want exclude some IP addresses from ratelimiting but keep ratelimiting on for others, put them here.
-   * `refuse_any` — Another DDoS protection mechanism. Requests of type ANY are rarely needed, so refusing to serve them mitigates against attackers trying to use your DNS as a reflection. Safe to disable if DNS server is not available from internet.
-   * `bootstrap_dns` — DNS server used for initial hostname resolution in case if upstream server name is a hostname.
-   * `parental_sensitivity` — Age group for parental control-based filtering, must be either 3, 10, 13 or 17 if enabled.
-   * `parental_enabled` — Parental control-based DNS requests filtering.
-   * `safesearch_enabled` — Enforcing "Safe search" option for search engines, when possible.
-   * `safebrowsing_enabled` — Filtering of DNS requests based on safebrowsing.
-   * `upstream_dns` — List of upstream DNS servers.
- * `filters` — List of filters, each filter has the following values:
-   * `enabled` — Current filter's status (enabled/disabled).
-   * `url` — URL pointing to the filter contents (filtering rules).
-   * `name` — Name of the filter. If it's an adguard syntax filter it will get updated automatically, otherwise it stays unchanged.
-   * `last_updated` — Time when the filter was last updated from server.
-   * `ID` - filter ID (must be unique).
- * `dhcp` - Built-in DHCP server configuration.
-   * `enabled` - DHCP server status.
-   * `interface_name` - network interface name (eth0, en0 and so on).
-   * `gateway_ip` - gateway IP address.
-   * `subnet_mask` - subnet mask.
-   * `range_start` - start IP address of the controlled range.  
-   * `range_end` - end IP address of the controlled range.
-   * `lease_duration` - lease duration in seconds. If 0, using default duration (2 hours).
- * `tls` - HTTPS/DOH/DOT settings.
-   * `enabled` - encryption (DOT/DOH/HTTPS) status.
-   * `server_name` - the hostname of your HTTPS/TLS server.
-   * `force_https` - if true, forces HTTP->HTTPS redirect.
-   * `port_https` - HTTPS port. If 0, HTTPS will be disabled.
-   * `port_dns_over_tls` - DNS-over-TLS port. If 0, DOT will be disabled.
-   * `certificate_chain` - PEM-encoded certificates chain.
-   * `private_key` - PEM-encoded private key.
- * `user_rules` — User-specified filtering rules.
- * `log_file` — Path to the log file. If empty, writes to stdout, if `syslog` -- system log (or eventlog on Windows).
- * `verbose` — Enable our disables debug verbose output.
-
-Removing an entry from settings file will reset it to the default value. Deleting the file will reset all settings to the default values.
-
+<a id="how-to-build"></a>
 ## How to build from source
 
 ### Prerequisites
@@ -253,6 +82,7 @@ cd AdGuardHome
 make
 ```
 
+<a id="contributing"></a>
 ## Contributing
 
 You are welcome to fork this repository, make your changes and submit a pull request — https://github.com/AdguardTeam/AdGuardHome/pulls
@@ -291,10 +121,12 @@ node upload.js
 node download.js
 ```
 
+<a id="reporting-issues"></a>
 ## Reporting issues
 
 If you run into any problem or have a suggestion, head to [this page](https://github.com/AdguardTeam/AdGuardHome/issues) and click on the `New issue` button.
 
+<a id="acknowledgments"></a>
 ## Acknowledgments
 
 This software wouldn't have been possible without:
@@ -305,6 +137,7 @@ This software wouldn't have been possible without:
    * [miekg's dns](https://github.com/miekg/dns)
    * [go-yaml](https://github.com/go-yaml/yaml)
    * [service](https://godoc.org/github.com/kardianos/service)
+   * [dnsproxy](https://github.com/AdguardTeam/dnsproxy)
  * [Node.js](https://nodejs.org/) and it's libraries:
    * [React.js](https://reactjs.org)
    * [Tabler](https://github.com/tabler/tabler)
