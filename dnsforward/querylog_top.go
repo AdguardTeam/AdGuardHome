@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/bluele/gcache"
-	"github.com/hmage/golibs/log"
+	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
 

@@ -10,7 +10,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
-	"github.com/hmage/golibs/log"
+	"github.com/AdguardTeam/golibs/log"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -152,7 +152,7 @@ func getLogSettings() logSettings {
 	}
 	err = yaml.Unmarshal(yamlFile, &l)
 	if err != nil {
-		log.Printf("Couldn't get logging settings from the configuration: %s", err)
+		log.Error("Couldn't get logging settings from the configuration: %s", err)
 	}
 	return l
 }
@@ -160,19 +160,19 @@ func getLogSettings() logSettings {
 // parseConfig loads configuration from the YAML file
 func parseConfig() error {
 	configFile := config.getConfigFilename()
-	log.Printf("Reading config file: %s", configFile)
+	log.Debug("Reading config file: %s", configFile)
 	yamlFile, err := readConfigFile()
 	if err != nil {
-		log.Printf("Couldn't read config file: %s", err)
+		log.Error("Couldn't read config file: %s", err)
 		return err
 	}
 	if yamlFile == nil {
-		log.Printf("YAML file doesn't exist, skipping it")
+		log.Error("YAML file doesn't exist, skipping it")
 		return nil
 	}
 	err = yaml.Unmarshal(yamlFile, &config)
 	if err != nil {
-		log.Printf("Couldn't parse config file: %s", err)
+		log.Error("Couldn't parse config file: %s", err)
 		return err
 	}
 
@@ -199,19 +199,19 @@ func (c *configuration) write() error {
 	c.Lock()
 	defer c.Unlock()
 	if config.firstRun {
-		log.Tracef("Silently refusing to write config because first run and not configured yet")
+		log.Debug("Silently refusing to write config because first run and not configured yet")
 		return nil
 	}
 	configFile := config.getConfigFilename()
-	log.Tracef("Writing YAML file: %s", configFile)
+	log.Debug("Writing YAML file: %s", configFile)
 	yamlText, err := yaml.Marshal(&config)
 	if err != nil {
-		log.Printf("Couldn't generate YAML file: %s", err)
+		log.Error("Couldn't generate YAML file: %s", err)
 		return err
 	}
 	err = safeWriteFile(configFile, yamlText)
 	if err != nil {
-		log.Printf("Couldn't save YAML config: %s", err)
+		log.Error("Couldn't save YAML config: %s", err)
 		return err
 	}
 
@@ -221,14 +221,14 @@ func (c *configuration) write() error {
 func writeAllConfigs() error {
 	err := config.write()
 	if err != nil {
-		log.Printf("Couldn't write config: %s", err)
+		log.Error("Couldn't write config: %s", err)
 		return err
 	}
 
 	userFilter := userFilter()
 	err = userFilter.save()
 	if err != nil {
-		log.Printf("Couldn't save the user filter: %s", err)
+		log.Error("Couldn't save the user filter: %s", err)
 		return err
 	}
 

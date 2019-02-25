@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/golibs/log"
 	"github.com/go-test/deep"
-	"github.com/hmage/golibs/log"
 )
 
 var (
@@ -28,7 +28,7 @@ func (l *queryLog) flushLogBuffer() error {
 	l.logBufferLock.Unlock()
 	err := l.flushToFile(flushBuffer)
 	if err != nil {
-		log.Printf("Saving querylog to file failed: %s", err)
+		log.Error("Saving querylog to file failed: %s", err)
 		return err
 	}
 	return nil
@@ -46,17 +46,17 @@ func (l *queryLog) flushToFile(buffer []*logEntry) error {
 	for _, entry := range buffer {
 		err := e.Encode(entry)
 		if err != nil {
-			log.Printf("Failed to marshal entry: %s", err)
+			log.Error("Failed to marshal entry: %s", err)
 			return err
 		}
 	}
 
 	elapsed := time.Since(start)
-	log.Printf("%d elements serialized via json in %v: %d kB, %v/entry, %v/entry", len(buffer), elapsed, b.Len()/1024, float64(b.Len())/float64(len(buffer)), elapsed/time.Duration(len(buffer)))
+	log.Debug("%d elements serialized via json in %v: %d kB, %v/entry, %v/entry", len(buffer), elapsed, b.Len()/1024, float64(b.Len())/float64(len(buffer)), elapsed/time.Duration(len(buffer)))
 
 	err := checkBuffer(buffer, b)
 	if err != nil {
-		log.Printf("failed to check buffer: %s", err)
+		log.Error("failed to check buffer: %s", err)
 		return err
 	}
 
@@ -73,13 +73,13 @@ func (l *queryLog) flushToFile(buffer []*logEntry) error {
 
 		_, err = zw.Write(b.Bytes())
 		if err != nil {
-			log.Printf("Couldn't compress to gzip: %s", err)
+			log.Error("Couldn't compress to gzip: %s", err)
 			zw.Close()
 			return err
 		}
 
 		if err = zw.Close(); err != nil {
-			log.Printf("Couldn't close gzip writer: %s", err)
+			log.Error("Couldn't close gzip writer: %s", err)
 			return err
 		}
 	} else {
@@ -90,18 +90,18 @@ func (l *queryLog) flushToFile(buffer []*logEntry) error {
 	defer fileWriteLock.Unlock()
 	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
-		log.Printf("failed to create file \"%s\": %s", filename, err)
+		log.Error("failed to create file \"%s\": %s", filename, err)
 		return err
 	}
 	defer f.Close()
 
 	n, err := f.Write(zb.Bytes())
 	if err != nil {
-		log.Printf("Couldn't write to file: %s", err)
+		log.Error("Couldn't write to file: %s", err)
 		return err
 	}
 
-	log.Printf("ok \"%s\": %v bytes written", filename, n)
+	log.Debug("ok \"%s\": %v bytes written", filename, n)
 
 	return nil
 }
@@ -115,21 +115,21 @@ func checkBuffer(buffer []*logEntry, b bytes.Buffer) error {
 		entry := &logEntry{}
 		err := d.Decode(entry)
 		if err != nil {
-			log.Printf("Failed to decode: %s", err)
+			log.Error("Failed to decode: %s", err)
 			return err
 		}
 		if diff := deep.Equal(entry, buffer[i]); diff != nil {
-			log.Printf("decoded buffer differs: %s", diff)
+			log.Error("decoded buffer differs: %s", diff)
 			return fmt.Errorf("decoded buffer differs: %s", diff)
 		}
 		i++
 	}
 	if i != l {
 		err := fmt.Errorf("check fail: %d vs %d entries", l, i)
-		log.Print(err)
+		log.Error("%v", err)
 		return err
 	}
-	log.Printf("check ok: %d entries", i)
+	log.Debug("check ok: %d entries", i)
 
 	return nil
 }
@@ -150,11 +150,11 @@ func (l *queryLog) rotateQueryLog() error {
 
 	err := os.Rename(from, to)
 	if err != nil {
-		log.Printf("Failed to rename querylog: %s", err)
+		log.Error("Failed to rename querylog: %s", err)
 		return err
 	}
 
-	log.Printf("Rotated from %s to %s successfully", from, to)
+	log.Debug("Rotated from %s to %s successfully", from, to)
 
 	return nil
 }
@@ -163,7 +163,7 @@ func (l *queryLog) periodicQueryLogRotate() {
 	for range time.Tick(queryLogRotationPeriod) {
 		err := l.rotateQueryLog()
 		if err != nil {
-			log.Printf("Failed to rotate querylog: %s", err)
+			log.Error("Failed to rotate querylog: %s", err)
 			// do nothing, continue rotating
 		}
 	}
@@ -198,7 +198,7 @@ func (l *queryLog) genericLoader(onEntry func(entry *logEntry) error, needMore f
 
 		f, err := os.Open(file)
 		if err != nil {
-			log.Printf("Failed to open file \"%s\": %s", file, err)
+			log.Error("Failed to open file \"%s\": %s", file, err)
 			// try next file
 			continue
 		}
@@ -209,7 +209,7 @@ func (l *queryLog) genericLoader(onEntry func(entry *logEntry) error, needMore f
 		if enableGzip {
 			zr, err := gzip.NewReader(f)
 			if err != nil {
-				log.Printf("Failed to create gzip reader: %s", err)
+				log.Error("Failed to create gzip reader: %s", err)
 				continue
 			}
 			defer zr.Close()
@@ -231,7 +231,7 @@ func (l *queryLog) genericLoader(onEntry func(entry *logEntry) error, needMore f
 			var entry logEntry
 			err := d.Decode(&entry)
 			if err != nil {
-				log.Printf("Failed to decode: %s", err)
+				log.Error("Failed to decode: %s", err)
 				// next entry can be fine, try more
 				continue
 			}
@@ -260,7 +260,7 @@ func (l *queryLog) genericLoader(onEntry func(entry *logEntry) error, needMore f
 			perunit = elapsed / time.Duration(i)
 			avg = sum / time.Duration(i)
 		}
-		log.Printf("file \"%s\": read %d entries in %v, %v/entry, %v over %v, %v avg", file, i, elapsed, perunit, over, max, avg)
+		log.Debug("file \"%s\": read %d entries in %v, %v/entry, %v over %v, %v avg", file, i, elapsed, perunit, over, max, avg)
 	}
 	return nil
 }
