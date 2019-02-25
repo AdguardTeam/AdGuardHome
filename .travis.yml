@@ -64,7 +64,7 @@ matrix:
         skip_cleanup: true
 
     - name: docker
-      if: type != pull_request AND (branch = master OR tag = true)
+      if: type != pull_request AND (branch = master OR tag IS present)
       go:
         - 1.11.x
       os:
