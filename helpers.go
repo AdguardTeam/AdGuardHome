@@ -8,12 +8,15 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/joomcode/errorx"
 )
 
 // ----------------------------------
@@ -137,12 +140,32 @@ func preInstallHandler(handler http.Handler) http.Handler {
 }
 
 // postInstall lets the handler run only if firstRun is false, and redirects to /install.html otherwise
+// it also enforces HTTPS if it is enabled and configured
 func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if config.firstRun && !strings.HasPrefix(r.URL.Path, "/install.") {
 			http.Redirect(w, r, "/install.html", http.StatusSeeOther) // should not be cacheable
 			return
 		}
+		// enforce https?
+		if config.TLS.ForceHTTPS && r.TLS == nil && config.TLS.Enabled && config.TLS.PortHTTPS != 0 && httpsServer.server != nil {
+			// yes, and we want host from host:port
+			host, _, err := net.SplitHostPort(r.Host)
+			if err != nil {
+				// no port in host
+				host = r.Host
+			}
+			// construct new URL to redirect to
+			newURL := url.URL{
+				Scheme:   "https",
+				Host:     net.JoinHostPort(host, strconv.Itoa(config.TLS.PortHTTPS)),
+				Path:     r.URL.Path,
+				RawQuery: r.URL.RawQuery,
+			}
+			http.Redirect(w, r, newURL.String(), http.StatusTemporaryRedirect)
+			return
+		}
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		handler(w, r)
 	}
 }
@@ -214,6 +237,56 @@ func getValidNetInterfaces() ([]net.Interface, error) {
 	}
 
 	return netIfaces, nil
+}
+
+// getValidNetInterfacesMap returns interfaces that are eligible for DNS and WEB only
+// we do not return link-local addresses here
+func getValidNetInterfacesForWeb() ([]netInterface, error) {
+	ifaces, err := getValidNetInterfaces()
+	if err != nil {
+		return nil, errorx.Decorate(err, "Couldn't get interfaces")
+	}
+	if len(ifaces) == 0 {
+		return nil, errors.New("couldn't find any legible interface")
+	}
+
+	var netInterfaces []netInterface
+
+	for _, iface := range ifaces {
+		addrs, e := iface.Addrs()
+		if e != nil {
+			return nil, errorx.Decorate(e, "Failed to get addresses for interface %s", iface.Name)
+		}
+
+		netIface := netInterface{
+			Name:         iface.Name,
+			MTU:          iface.MTU,
+			HardwareAddr: iface.HardwareAddr.String(),
+		}
+
+		if iface.Flags != 0 {
+			netIface.Flags = iface.Flags.String()
+		}
+
+		// we don't want link-local addresses in json, so skip them
+		for _, addr := range addrs {
+			ipnet, ok := addr.(*net.IPNet)
+			if !ok {
+				// not an IPNet, should not happen
+				return nil, fmt.Errorf("SHOULD NOT HAPPEN: got iface.Addrs() element %s that is not net.IPNet, it is %T", addr, addr)
+			}
+			// ignore link-local
+			if ipnet.IP.IsLinkLocalUnicast() {
+				continue
+			}
+			netIface.Addresses = append(netIface.Addresses, ipnet.IP.String())
+		}
+		if len(netIface.Addresses) != 0 {
+			netInterfaces = append(netInterfaces, netIface)
+		}
+	}
+
+	return netInterfaces, nil
 }
 
 // checkPortAvailable is not a cheap test to see if the port is bindable, because it's actually doing the bind momentarily

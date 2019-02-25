@@ -6,6 +6,7 @@ import versionCompare from '../helpers/versionCompare';
 
 import * as actions from '../actions';
 import toasts from './toasts';
+import encryption from './encryption';
 
 const settings = handleActions({
     [actions.initSettingsRequest]: state => ({ ...state, processing: true }),
@@ -52,6 +53,7 @@ const dashboard = handleActions({
             upstream_dns: upstreamDns,
             protection_enabled: protectionEnabled,
             language,
+            http_port: httpPort,
         } = payload;
         const newState = {
             ...state,
@@ -64,6 +66,7 @@ const dashboard = handleActions({
             upstreamDns: upstreamDns.join('\n'),
             protectionEnabled,
             language,
+            httpPort,
         };
         return newState;
     },
@@ -117,13 +120,13 @@ const dashboard = handleActions({
 
         if (versionCompare(currentVersion, payload.version) === -1) {
             const {
-                announcement,
+                version,
                 announcement_url: announcementUrl,
             } = payload;
 
             const newState = {
                 ...state,
-                announcement,
+                version,
                 announcementUrl,
                 isUpdateAvailable: true,
             };
@@ -171,6 +174,7 @@ const dashboard = handleActions({
     upstreamDns: [],
     protectionEnabled: false,
     processingProtection: false,
+    httpPort: 80,
 });
 
 const queryLogs = handleActions({
@@ -309,6 +313,7 @@ export default combineReducers({
     filtering,
     toasts,
     dhcp,
+    encryption,
     loadingBar: loadingBarReducer,
     form: formReducer,
 });

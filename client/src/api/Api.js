@@ -15,7 +15,11 @@ export default class Api {
             return response.data;
         } catch (error) {
             console.error(error);
-            throw new Error(`${this.baseUrl}/${path} | ${error.response.data} | ${error.response.status}`);
+            const errorPath = `${this.baseUrl}/${path}`;
+            if (error.response) {
+                throw new Error(`${errorPath} | ${error.response.data} | ${error.response.status}`);
+            }
+            throw new Error(`${errorPath} | ${error.message ? error.message : error}`);
         }
     }
 
@@ -348,6 +352,34 @@ export default class Api {
 
     setAllSettings(config) {
         const { path, method } = this.INSTALL_CONFIGURE;
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, parameters);
+    }
+
+    // DNS-over-HTTPS and DNS-over-TLS
+    TLS_STATUS = { path: 'tls/status', method: 'GET' };
+    TLS_CONFIG = { path: 'tls/configure', method: 'POST' };
+    TLS_VALIDATE = { path: 'tls/validate', method: 'POST' };
+
+    getTlsStatus() {
+        const { path, method } = this.TLS_STATUS;
+        return this.makeRequest(path, method);
+    }
+
+    setTlsConfig(config) {
+        const { path, method } = this.TLS_CONFIG;
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, parameters);
+    }
+
+    validateTlsConfig(config) {
+        const { path, method } = this.TLS_VALIDATE;
         const parameters = {
             data: config,
             headers: { 'Content-Type': 'application/json' },

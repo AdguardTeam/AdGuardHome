@@ -214,6 +214,14 @@ Settings are stored in [YAML format](https://en.wikipedia.org/wiki/YAML), possib
    * `range_start` - start IP address of the controlled range.  
    * `range_end` - end IP address of the controlled range.
    * `lease_duration` - lease duration in seconds. If 0, using default duration (2 hours).
+ * `tls` - HTTPS/DOH/DOT settings.
+   * `enabled` - encryption (DOT/DOH/HTTPS) status.
+   * `server_name` - the hostname of your HTTPS/TLS server.
+   * `force_https` - if true, forces HTTP->HTTPS redirect.
+   * `port_https` - HTTPS port. If 0, HTTPS will be disabled.
+   * `port_dns_over_tls` - DNS-over-TLS port. If 0, DOT will be disabled.
+   * `certificate_chain` - PEM-encoded certificates chain.
+   * `private_key` - PEM-encoded private key.
  * `user_rules` — User-specified filtering rules.
  * `log_file` — Path to the log file. If empty, writes to stdout, if `syslog` -- system log (or eventlog on Windows).
  * `verbose` — Enable our disables debug verbose output.

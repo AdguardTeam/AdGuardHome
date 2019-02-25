@@ -63,7 +63,7 @@ let Interface = (props) => {
             {!processing && interfaces &&
                 <div className="row">
                     <div className="col-sm-12 col-md-6">
-                        <div className="form__group form__group--dhcp">
+                        <div className="form__group form__group--settings">
                             <label>{t('dhcp_interface_select')}</label>
                             <Field
                                 name="interface_name"

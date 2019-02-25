@@ -51,8 +51,19 @@ func generateServerConfig() dnsforward.ServerConfig {
 		Filters:         filters,
 	}
 
+	if config.TLS.Enabled {
+		newconfig.TLSConfig = config.TLS.TLSConfig
+		if config.TLS.PortDNSOverTLS != 0 {
+			newconfig.TLSListenAddr = &net.TCPAddr{IP: net.ParseIP(config.DNS.BindHost), Port: config.TLS.PortDNSOverTLS}
+		}
+	}
+
 	for _, u := range config.DNS.UpstreamDNS {
-		dnsUpstream, err := upstream.AddressToUpstream(u, config.DNS.BootstrapDNS, dnsforward.DefaultTimeout)
+		opts := upstream.Options{
+			Timeout:   dnsforward.DefaultTimeout,
+			Bootstrap: []string{config.DNS.BootstrapDNS},
+		}
+		dnsUpstream, err := upstream.AddressToUpstream(u, opts)
 		if err != nil {
 			log.Printf("Couldn't get upstream: %s", err)
 			// continue, just ignore the upstream

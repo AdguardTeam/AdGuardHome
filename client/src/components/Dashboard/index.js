@@ -1,6 +1,5 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
-import 'whatwg-fetch';
 import { Trans, withNamespaces } from 'react-i18next';
 
 import Statistics from './Statistics';

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	stdlog "log"
 	"net"
@@ -10,6 +11,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"sync"
 	"syscall"
 	"time"
 
@@ -21,6 +23,11 @@ import (
 // VersionString will be set through ldflags, contains current version
 var VersionString = "undefined"
 var httpServer *http.Server
+var httpsServer struct {
+	server     *http.Server
+	cond       *sync.Cond // reacts to config.TLS.Enabled, PortHTTPS, CertificateChain and PrivateKey
+	sync.Mutex            // protects config.TLS
+}
 
 const (
 	// Used in config to indicate that syslog or eventlog (win) should be used for logger output
@@ -159,12 +166,63 @@ func run(args options) {
 		registerInstallHandlers()
 	}
 
+	httpsServer.cond = sync.NewCond(&httpsServer.Mutex)
+
+	// for https, we have a separate goroutine loop
+	go func() {
+		for { // this is an endless loop
+			httpsServer.cond.L.Lock()
+			// this mechanism doesn't let us through until all conditions are ment
+			for config.TLS.Enabled == false || config.TLS.PortHTTPS == 0 || config.TLS.PrivateKey == "" || config.TLS.CertificateChain == "" { // sleep until necessary data is supplied
+				httpsServer.cond.Wait()
+			}
+			address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.TLS.PortHTTPS))
+			// validate current TLS config and update warnings (it could have been loaded from file)
+			data := validateCertificates(config.TLS)
+			if !data.usable {
+				log.Fatal(data.WarningValidation)
+				os.Exit(1)
+			}
+			config.Lock()
+			config.TLS = data // update warnings
+			config.Unlock()
+
+			// prepare certs for HTTPS server
+			// important -- they have to be copies, otherwise changing the contents in config.TLS will break encryption for in-flight requests
+			certchain := make([]byte, len(config.TLS.CertificateChain))
+			copy(certchain, []byte(config.TLS.CertificateChain))
+			privatekey := make([]byte, len(config.TLS.PrivateKey))
+			copy(privatekey, []byte(config.TLS.PrivateKey))
+			cert, err := tls.X509KeyPair(certchain, privatekey)
+			if err != nil {
+				log.Fatal(err)
+				os.Exit(1)
+			}
+			httpsServer.cond.L.Unlock()
+
+			// prepare HTTPS server
+			httpsServer.server = &http.Server{
+				Addr: address,
+				TLSConfig: &tls.Config{
+					Certificates: []tls.Certificate{cert},
+				},
+			}
+
+			printHTTPAddresses("https")
+			err = httpsServer.server.ListenAndServeTLS("", "")
+			if err != http.ErrServerClosed {
+				log.Fatal(err)
+				os.Exit(1)
+			}
+		}
+	}()
+
 	// this loop is used as an ability to change listening host and/or port
 	for {
-		address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
-		URL := fmt.Sprintf("http://%s", address)
-		log.Println("Go to " + URL)
+		printHTTPAddresses("http")
+
 		// we need to have new instance, because after Shutdown() the Server is not usable
+		address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
 		httpServer = &http.Server{
 			Addr: address,
 		}
@@ -335,4 +393,35 @@ func loadOptions() options {
 	}
 
 	return o
+}
+
+// prints IP addresses which user can use to open the admin interface
+// proto is either "http" or "https"
+func printHTTPAddresses(proto string) {
+	var address string
+
+	if proto == "https" && config.TLS.ServerName != "" {
+		if config.TLS.PortHTTPS == 443 {
+			log.Printf("Go to https://%s", config.TLS.ServerName)
+		} else {
+			log.Printf("Go to https://%s:%d", config.TLS.ServerName, config.TLS.PortHTTPS)
+		}
+	} else if config.BindHost == "0.0.0.0" {
+		log.Println("AdGuard Home is available on the following addresses:")
+		ifaces, err := getValidNetInterfacesForWeb()
+		if err != nil {
+			// That's weird, but we'll ignore it
+			address = net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
+			log.Printf("Go to %s://%s", proto, address)
+			return
+		}
+
+		for _, iface := range ifaces {
+			address = net.JoinHostPort(iface.Addresses[0], strconv.Itoa(config.BindPort))
+			log.Printf("Go to %s://%s", proto, address)
+		}
+	} else {
+		address = net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
+		log.Printf("Go to %s://%s", proto, address)
+	}
 }

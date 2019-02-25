@@ -3,12 +3,21 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto"
+	"crypto/ecdsa"
+	"crypto/rsa"
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -17,6 +26,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/hmage/golibs/log"
+	"github.com/joomcode/errorx"
 	"github.com/miekg/dns"
 	govalidator "gopkg.in/asaskevich/govalidator.v4"
 )
@@ -68,9 +78,7 @@ func writeAllConfigsAndReloadDNS() error {
 func httpUpdateConfigReloadDNSReturnOK(w http.ResponseWriter, r *http.Request) {
 	err := writeAllConfigsAndReloadDNS()
 	if err != nil {
-		errorText := fmt.Sprintf("Couldn't write config file: %s", err)
-		log.Println(errorText)
-		http.Error(w, errorText, http.StatusInternalServerError)
+		httpError(w, http.StatusInternalServerError, "Couldn't write config file: %s", err)
 		return
 	}
 	returnOK(w)
@@ -78,7 +86,8 @@ func httpUpdateConfigReloadDNSReturnOK(w http.ResponseWriter, r *http.Request) {
 
 func handleStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
-		"dns_address":        config.BindHost,
+		"dns_address":        config.DNS.BindHost,
+		"http_port":          config.BindPort,
 		"dns_port":           config.DNS.Port,
 		"protection_enabled": config.DNS.ProtectionEnabled,
 		"querylog_enabled":   config.DNS.QueryLogEnabled,
@@ -400,7 +409,7 @@ func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 
 func checkDNS(input string) error {
 	log.Printf("Checking if DNS %s works...", input)
-	u, err := upstream.AddressToUpstream(input, "", dnsforward.DefaultTimeout)
+	u, err := upstream.AddressToUpstream(input, upstream.Options{Timeout: dnsforward.DefaultTimeout})
 	if err != nil {
 		return fmt.Errorf("failed to choose upstream for %s: %s", input, err)
 	}
@@ -900,17 +909,6 @@ type firstRunData struct {
 
 func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 	data := firstRunData{}
-	ifaces, err := getValidNetInterfaces()
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
-		return
-	}
-	if len(ifaces) == 0 {
-		httpError(w, http.StatusServiceUnavailable, "Couldn't find any legible interface, plase try again later")
-		return
-	}
-
-	// fill out the fields
 
 	// find out if port 80 is available -- if not, fall back to 3000
 	if checkPortAvailable("", 80) == nil {
@@ -925,41 +923,15 @@ func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 		data.DNS.Warning = "Port 53 is not available for binding -- this will make DNS clients unable to contact AdGuard Home."
 	}
 
+	ifaces, err := getValidNetInterfacesForWeb()
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
+		return
+	}
+
 	data.Interfaces = make(map[string]interface{})
 	for _, iface := range ifaces {
-		addrs, e := iface.Addrs()
-		if e != nil {
-			httpError(w, http.StatusInternalServerError, "Failed to get addresses for interface %s: %s", iface.Name, err)
-			return
-		}
-
-		jsonIface := netInterface{
-			Name:         iface.Name,
-			MTU:          iface.MTU,
-			HardwareAddr: iface.HardwareAddr.String(),
-		}
-
-		if iface.Flags != 0 {
-			jsonIface.Flags = iface.Flags.String()
-		}
-
-		// we don't want link-local addresses in json, so skip them
-		for _, addr := range addrs {
-			ipnet, ok := addr.(*net.IPNet)
-			if !ok {
-				// not an IPNet, should not happen
-				httpError(w, http.StatusInternalServerError, "SHOULD NOT HAPPEN: got iface.Addrs() element %s that is not net.IPNet, it is %T", addr, addr)
-				return
-			}
-			// ignore link-local
-			if ipnet.IP.IsLinkLocalUnicast() {
-				continue
-			}
-			jsonIface.Addresses = append(jsonIface.Addresses, ipnet.IP.String())
-		}
-		if len(jsonIface.Addresses) != 0 {
-			data.Interfaces[iface.Name] = jsonIface
-		}
+		data.Interfaces[iface.Name] = iface
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -974,7 +946,7 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	newSettings := firstRunData{}
 	err := json.NewDecoder(r.Body).Decode(&newSettings)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to parse new DHCP config json: %s", err)
+		httpError(w, http.StatusBadRequest, "Failed to parse new config json: %s", err)
 		return
 	}
 
@@ -1025,6 +997,312 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ---
+// TLS
+// ---
+func handleTLSStatus(w http.ResponseWriter, r *http.Request) {
+	marshalTLS(w, config.TLS)
+}
+
+func handleTLSValidate(w http.ResponseWriter, r *http.Request) {
+	data, err := unmarshalTLS(r)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
+		return
+	}
+
+	// check if port is available
+	// BUT: if we are already using this port, no need
+	alreadyRunning := false
+	if httpsServer.server != nil {
+		alreadyRunning = true
+	}
+	if !alreadyRunning {
+		err = checkPortAvailable(config.BindHost, data.PortHTTPS)
+		if err != nil {
+			httpError(w, http.StatusBadRequest, "port %d is not available, cannot enable HTTPS on it", data.PortHTTPS)
+			return
+		}
+	}
+
+	data = validateCertificates(data)
+	marshalTLS(w, data)
+}
+
+func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
+	data, err := unmarshalTLS(r)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
+		return
+	}
+
+	// check if port is available
+	// BUT: if we are already using this port, no need
+	alreadyRunning := false
+	if httpsServer.server != nil {
+		alreadyRunning = true
+	}
+	if !alreadyRunning {
+		err = checkPortAvailable(config.BindHost, data.PortHTTPS)
+		if err != nil {
+			httpError(w, http.StatusBadRequest, "port %d is not available, cannot enable HTTPS on it", data.PortHTTPS)
+			return
+		}
+	}
+
+	restartHTTPS := false
+	data = validateCertificates(data)
+	if !reflect.DeepEqual(config.TLS.tlsConfigSettings, data.tlsConfigSettings) {
+		log.Printf("tls config settings have changed, will restart HTTPS server")
+		restartHTTPS = true
+	}
+	config.TLS = data
+	err = writeAllConfigsAndReloadDNS()
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "Couldn't write config file: %s", err)
+		return
+	}
+	marshalTLS(w, data)
+	// this needs to be done in a goroutine because Shutdown() is a blocking call, and it will block
+	// until all requests are finished, and _we_ are inside a request right now, so it will block indefinitely
+	if restartHTTPS {
+		go func() {
+			time.Sleep(time.Second) // TODO: could not find a way to reliably know that data was fully sent to client by https server, so we wait a bit to let response through before closing the server
+			httpsServer.cond.L.Lock()
+			httpsServer.cond.Broadcast()
+			if httpsServer.server != nil {
+				httpsServer.server.Shutdown(context.TODO())
+			}
+			httpsServer.cond.L.Unlock()
+		}()
+	}
+}
+
+func validateCertificates(data tlsConfig) tlsConfig {
+	var err error
+
+	// clear out status for certificates
+	data.tlsConfigStatus = tlsConfigStatus{}
+
+	// check only public certificate separately from the key
+	if data.CertificateChain != "" {
+		log.Tracef("got certificate: %s", data.CertificateChain)
+
+		// now do a more extended validation
+		var certs []*pem.Block    // PEM-encoded certificates
+		var skippedBytes []string // skipped bytes
+
+		pemblock := []byte(data.CertificateChain)
+		for {
+			var decoded *pem.Block
+			decoded, pemblock = pem.Decode(pemblock)
+			if decoded == nil {
+				break
+			}
+			if decoded.Type == "CERTIFICATE" {
+				certs = append(certs, decoded)
+			} else {
+				skippedBytes = append(skippedBytes, decoded.Type)
+			}
+		}
+
+		var parsedCerts []*x509.Certificate
+
+		for _, cert := range certs {
+			parsed, err := x509.ParseCertificate(cert.Bytes)
+			if err != nil {
+				data.WarningValidation = fmt.Sprintf("Failed to parse certificate: %s", err)
+				return data
+			}
+			parsedCerts = append(parsedCerts, parsed)
+		}
+
+		if len(parsedCerts) == 0 {
+			data.WarningValidation = fmt.Sprintf("You have specified an empty certificate")
+			return data
+		}
+
+		data.ValidCert = true
+
+		// spew.Dump(parsedCerts)
+
+		opts := x509.VerifyOptions{
+			DNSName: data.ServerName,
+		}
+
+		log.Printf("number of certs - %d", len(parsedCerts))
+		if len(parsedCerts) > 1 {
+			// set up an intermediate
+			pool := x509.NewCertPool()
+			for _, cert := range parsedCerts[1:] {
+				log.Printf("got an intermediate cert")
+				pool.AddCert(cert)
+			}
+			opts.Intermediates = pool
+		}
+
+		// TODO: save it as a warning rather than error it out -- shouldn't be a big problem
+		mainCert := parsedCerts[0]
+		_, err := mainCert.Verify(opts)
+		if err != nil {
+			// let self-signed certs through
+			data.WarningValidation = fmt.Sprintf("Your certificate does not verify: %s", err)
+		} else {
+			data.ValidChain = true
+		}
+		// spew.Dump(chains)
+
+		// update status
+		if mainCert != nil {
+			notAfter := mainCert.NotAfter
+			data.Subject = mainCert.Subject.String()
+			data.Issuer = mainCert.Issuer.String()
+			data.NotAfter = notAfter
+			data.NotBefore = mainCert.NotBefore
+			data.DNSNames = mainCert.DNSNames
+		}
+	}
+
+	// validate private key (right now the only validation possible is just parsing it)
+	if data.PrivateKey != "" {
+		// now do a more extended validation
+		var key *pem.Block        // PEM-encoded certificates
+		var skippedBytes []string // skipped bytes
+
+		// go through all pem blocks, but take first valid pem block and drop the rest
+		pemblock := []byte(data.PrivateKey)
+		for {
+			var decoded *pem.Block
+			decoded, pemblock = pem.Decode(pemblock)
+			if decoded == nil {
+				break
+			}
+			if decoded.Type == "PRIVATE KEY" || strings.HasSuffix(decoded.Type, " PRIVATE KEY") {
+				key = decoded
+				break
+			} else {
+				skippedBytes = append(skippedBytes, decoded.Type)
+			}
+		}
+
+		if key == nil {
+			data.WarningValidation = "No valid keys were found"
+			return data
+		}
+
+		// parse the decoded key
+		_, keytype, err := parsePrivateKey(key.Bytes)
+		if err != nil {
+			data.WarningValidation = fmt.Sprintf("Failed to parse private key: %s", err)
+			return data
+		}
+
+		data.ValidKey = true
+		data.KeyType = keytype
+	}
+
+	// if both are set, validate both in unison
+	if data.PrivateKey != "" && data.CertificateChain != "" {
+		_, err = tls.X509KeyPair([]byte(data.CertificateChain), []byte(data.PrivateKey))
+		if err != nil {
+			data.WarningValidation = fmt.Sprintf("Invalid certificate or key: %s", err)
+			return data
+		}
+		data.usable = true
+	}
+
+	return data
+}
+
+// Attempt to parse the given private key DER block. OpenSSL 0.9.8 generates
+// PKCS#1 private keys by default, while OpenSSL 1.0.0 generates PKCS#8 keys.
+// OpenSSL ecparam generates SEC1 EC private keys for ECDSA. We try all three.
+func parsePrivateKey(der []byte) (crypto.PrivateKey, string, error) {
+	if key, err := x509.ParsePKCS1PrivateKey(der); err == nil {
+		return key, "RSA", nil
+	}
+	if key, err := x509.ParsePKCS8PrivateKey(der); err == nil {
+		switch key := key.(type) {
+		case *rsa.PrivateKey:
+			return key, "RSA", nil
+		case *ecdsa.PrivateKey:
+			return key, "ECDSA", nil
+		default:
+			return nil, "", errors.New("tls: found unknown private key type in PKCS#8 wrapping")
+		}
+	}
+	if key, err := x509.ParseECPrivateKey(der); err == nil {
+		return key, "ECDSA", nil
+	}
+
+	return nil, "", errors.New("tls: failed to parse private key")
+}
+
+// unmarshalTLS handles base64-encoded certificates transparently
+func unmarshalTLS(r *http.Request) (tlsConfig, error) {
+	data := tlsConfig{}
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		return data, errorx.Decorate(err, "Failed to parse new TLS config json")
+	}
+
+	if data.CertificateChain != "" {
+		certPEM, err := base64.StdEncoding.DecodeString(data.CertificateChain)
+		if err != nil {
+			return data, errorx.Decorate(err, "Failed to base64-decode certificate chain")
+		}
+		data.CertificateChain = string(certPEM)
+	}
+
+	if data.PrivateKey != "" {
+		keyPEM, err := base64.StdEncoding.DecodeString(data.PrivateKey)
+		if err != nil {
+			return data, errorx.Decorate(err, "Failed to base64-decode private key")
+		}
+
+		data.PrivateKey = string(keyPEM)
+	}
+
+	return data, nil
+}
+
+func marshalTLS(w http.ResponseWriter, data tlsConfig) {
+	w.Header().Set("Content-Type", "application/json")
+	if data.CertificateChain != "" {
+		encoded := base64.StdEncoding.EncodeToString([]byte(data.CertificateChain))
+		data.CertificateChain = encoded
+	}
+	if data.PrivateKey != "" {
+		encoded := base64.StdEncoding.EncodeToString([]byte(data.PrivateKey))
+		data.PrivateKey = encoded
+	}
+	err := json.NewEncoder(w).Encode(data)
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "Failed to marshal json with TLS status: %s", err)
+		return
+	}
+}
+
+// --------------
+// DNS-over-HTTPS
+// --------------
+func handleDOH(w http.ResponseWriter, r *http.Request) {
+	if r.TLS == nil {
+		httpError(w, http.StatusNotFound, "Not Found")
+		return
+	}
+
+	if !isRunning() {
+		httpError(w, http.StatusInternalServerError, "DNS server is not running")
+		return
+	}
+
+	dnsServer.ServeHTTP(w, r)
+}
+
+// ------------------------
+// registration of handlers
+// ------------------------
 func registerInstallHandlers() {
 	http.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(handleInstallGetAddresses)))
 	http.HandleFunc("/control/install/configure", preInstall(ensurePOST(handleInstallConfigure)))
@@ -1068,4 +1346,10 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/dhcp/interfaces", postInstall(optionalAuth(ensureGET(handleDHCPInterfaces))))
 	http.HandleFunc("/control/dhcp/set_config", postInstall(optionalAuth(ensurePOST(handleDHCPSetConfig))))
 	http.HandleFunc("/control/dhcp/find_active_dhcp", postInstall(optionalAuth(ensurePOST(handleDHCPFindActiveServer))))
+
+	http.HandleFunc("/control/tls/status", postInstall(optionalAuth(ensureGET(handleTLSStatus))))
+	http.HandleFunc("/control/tls/configure", postInstall(optionalAuth(ensurePOST(handleTLSConfigure))))
+	http.HandleFunc("/control/tls/validate", postInstall(optionalAuth(ensurePOST(handleTLSValidate))))
+
+	http.HandleFunc("/dns-query", postInstall(handleDOH))
 }
