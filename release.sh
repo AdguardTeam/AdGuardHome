@@ -25,6 +25,10 @@ f() {
 	fi
 }
 
+# Clean dist and build
+make clean
+rm -rf dist
+
 # Prepare the dist folder
 mkdir -p dist
 
