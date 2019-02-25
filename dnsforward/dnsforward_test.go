@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/dnsproxy/proxy"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
@@ -152,7 +153,7 @@ func TestSafeSearch(t *testing.T) {
 	}
 
 	// Test safe search for yandex. We already know safe search ip
-	addr := s.dnsProxy.Addr("udp")
+	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 	client := dns.Client{Net: "udp"}
 	yandexDomains := []string{"yandex.com.", "yandex.by.", "yandex.kz.", "yandex.ru.", "yandex.com."}
 	for _, host := range yandexDomains {
@@ -185,17 +186,17 @@ func TestSafeSearch(t *testing.T) {
 	}
 
 	// Check aggregated stats
-	assert.Equal(t, s.GetAggregatedStats()["replaced_safesearch"], float64(len(yandexDomains) + len(googleDomains)))
-	assert.Equal(t, s.GetAggregatedStats()["blocked_filtering"], float64(len(yandexDomains) + len(googleDomains)))
-	assert.Equal(t, s.GetAggregatedStats()["dns_queries"], float64(len(yandexDomains) + len(googleDomains)))
+	assert.Equal(t, s.GetAggregatedStats()["replaced_safesearch"], float64(len(yandexDomains)+len(googleDomains)))
+	assert.Equal(t, s.GetAggregatedStats()["blocked_filtering"], float64(len(yandexDomains)+len(googleDomains)))
+	assert.Equal(t, s.GetAggregatedStats()["dns_queries"], float64(len(yandexDomains)+len(googleDomains)))
 
 	// Do one more exchange
 	exchangeAndAssertResponse(t, client, addr, "google-public-dns-a.google.com.", "8.8.8.8")
 
 	// Check aggregated stats
-	assert.Equal(t, s.GetAggregatedStats()["replaced_safesearch"], float64(len(yandexDomains) + len(googleDomains)))
-	assert.Equal(t, s.GetAggregatedStats()["blocked_filtering"], float64(len(yandexDomains) + len(googleDomains)))
-	assert.Equal(t, s.GetAggregatedStats()["dns_queries"], float64(len(yandexDomains) + len(googleDomains) + 1))
+	assert.Equal(t, s.GetAggregatedStats()["replaced_safesearch"], float64(len(yandexDomains)+len(googleDomains)))
+	assert.Equal(t, s.GetAggregatedStats()["blocked_filtering"], float64(len(yandexDomains)+len(googleDomains)))
+	assert.Equal(t, s.GetAggregatedStats()["dns_queries"], float64(len(yandexDomains)+len(googleDomains)+1))
 
 	// Count of blocked domains	(there is `yandex.com` duplicate in yandexDomains array)
 	blockedCount := len(yandexDomains) - 1 + len(googleDomains)

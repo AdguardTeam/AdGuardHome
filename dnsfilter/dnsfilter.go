@@ -631,6 +631,7 @@ func (d *Dnsfilter) checkSafeSearch(host string) (Result, error) {
 		return res, nil
 	}
 
+	// TODO this address should be resolved with upstream that was configured in dnsforward
 	addrs, err := net.LookupIP(safeHost)
 	if err != nil {
 		log.Tracef("SafeSearchDomain for %s was found but failed to lookup for %s cause %s", host, safeHost, err)
