@@ -72,13 +72,18 @@ func TestSafeSearch(t *testing.T) {
 		t.Fatalf("Failed to start server: %s", err)
 	}
 
-	// Test safesearch for yandex. We already know safesearch ip
+	// Test safe search for yandex. We already know safe search ip
 	addr := s.dnsProxy.Addr("udp")
 	client := dns.Client{Net: "udp"}
 	yandexDomains := []string{"yandex.com.", "yandex.by.", "yandex.kz.", "yandex.ru.", "yandex.com."}
 	for _, host := range yandexDomains {
 		exchangeAndAssertResponse(t, client, addr, host, "213.180.193.56")
 	}
+
+	// Check aggregated stats
+	assert.Equal(t, s.GetAggregatedStats()["replaced_safesearch"], float64(len(yandexDomains)))
+	assert.Equal(t, s.GetAggregatedStats()["blocked_filtering"], float64(len(yandexDomains)))
+	assert.Equal(t, s.GetAggregatedStats()["dns_queries"], float64(len(yandexDomains)))
 
 	// Let's lookup for google safesearch ip
 	ips, err := net.LookupIP("forcesafesearch.google.com")
@@ -94,11 +99,32 @@ func TestSafeSearch(t *testing.T) {
 		}
 	}
 
-	// Test safeseacrh for google.
+	// Test safe search for google.
 	googleDomains := []string{"www.google.com.", "www.google.com.af.", "www.google.be.", "www.google.by."}
 	for _, host := range googleDomains {
 		exchangeAndAssertResponse(t, client, addr, host, ip.String())
 	}
+
+	// Check aggregated stats
+	assert.Equal(t, s.GetAggregatedStats()["replaced_safesearch"], float64(len(yandexDomains) + len(googleDomains)))
+	assert.Equal(t, s.GetAggregatedStats()["blocked_filtering"], float64(len(yandexDomains) + len(googleDomains)))
+	assert.Equal(t, s.GetAggregatedStats()["dns_queries"], float64(len(yandexDomains) + len(googleDomains)))
+
+	// Do one more exchange
+	exchangeAndAssertResponse(t, client, addr, "google-public-dns-a.google.com.", "8.8.8.8")
+
+	// Check aggregated stats
+	assert.Equal(t, s.GetAggregatedStats()["replaced_safesearch"], float64(len(yandexDomains) + len(googleDomains)))
+	assert.Equal(t, s.GetAggregatedStats()["blocked_filtering"], float64(len(yandexDomains) + len(googleDomains)))
+	assert.Equal(t, s.GetAggregatedStats()["dns_queries"], float64(len(yandexDomains) + len(googleDomains) + 1))
+
+	// Count of blocked domains	(there is `yandex.com` duplicate in yandexDomains array)
+	blockedCount := len(yandexDomains) - 1 + len(googleDomains)
+	assert.Equal(t, len(s.GetStatsTop().Blocked), blockedCount)
+
+	// Count of domains (blocked domains + `google-public-dns-a.google.com`)
+	domainsCount := blockedCount + 1
+	assert.Equal(t, len(s.GetStatsTop().Domains), domainsCount)
 
 	err = s.Stop()
 	if err != nil {
