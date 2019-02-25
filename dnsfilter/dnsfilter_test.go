@@ -702,6 +702,8 @@ func TestSafeSearchCacheGoogle (t *testing.T) {
 		t.Fatalf("SafeSearch is not enabled but there is an answer!")
 	}
 
+	// Enable safesearch and check host
+	d.SafeSearchEnabled = true
 
 	// Let's lookup for safesearch domain
 	safeDomain, ok := d.SafeSearchDomain(domain)
@@ -714,19 +716,12 @@ func TestSafeSearchCacheGoogle (t *testing.T) {
 		t.Fatalf("Failed to lookup for %s", safeDomain)
 	}
 
-	var ip net.IP
+	ip := ips[0]
 	for _, i := range ips {
 		if len(i) == net.IPv6len && i.To4() != nil {
 			ip = i
 		}
 	}
-
-	if ip == nil || len(ip) == 0 {
-		ip = ips[0]
-	}
-
-	// Enable safesearch and check host
-	d.SafeSearchEnabled = true
 
 	result, err = d.CheckHost(domain)
 	if err != nil {

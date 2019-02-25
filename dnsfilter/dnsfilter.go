@@ -637,16 +637,13 @@ func (d *Dnsfilter) checkSafeSearch(host string) (Result, error) {
 		return Result{}, err
 	}
 
+	res.IP = addrs[0]
 	// The next bug may occurs: LookupIP returns DNS64 mapped ipv4 address with zero-prefix
 	for _, i := range addrs {
 		if ipv4 := i.To4(); ipv4 != nil && len(i) == net.IPv6len {
 			res.IP = ipv4
 			break
 		}
-	}
-
-	if res.IP == nil || len(res.IP) == 0 {
-		res.IP = addrs[0]
 	}
 
 	// Cache result
