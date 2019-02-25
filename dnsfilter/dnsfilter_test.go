@@ -654,13 +654,19 @@ func TestCheckHostSafeSearchGoogle(t *testing.T) {
 	}
 }
 
-func TestSafeSearchCacheYandex (t *testing.T) {
+func TestSafeSearchCacheYandex(t *testing.T) {
 	d := NewForTest()
 	defer d.Destroy()
 	domain := "yandex.ru"
 
+	var result Result
+	var err error
+
 	// Check host with disabled safesearch
-	result, err := d.CheckHost(domain)
+	result, err = d.CheckHost(domain)
+	if err != nil {
+		t.Fatalf("Cannot check host due to %s", err)
+	}
 	if result.IP != nil {
 		t.Fatalf("SafeSearch is not enabled but there is an answer for `%s` !", domain)
 	}
@@ -693,11 +699,14 @@ func TestSafeSearchCacheYandex (t *testing.T) {
 	}
 }
 
-func TestSafeSearchCacheGoogle (t *testing.T) {
+func TestSafeSearchCacheGoogle(t *testing.T) {
 	d := NewForTest()
 	defer d.Destroy()
 	domain := "www.google.ru"
 	result, err := d.CheckHost(domain)
+	if err != nil {
+		t.Fatalf("Cannot check host due to %s", err)
+	}
 	if result.IP != nil {
 		t.Fatalf("SafeSearch is not enabled but there is an answer!")
 	}

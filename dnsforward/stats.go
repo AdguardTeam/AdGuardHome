@@ -61,9 +61,11 @@ func newStats() *stats {
 }
 
 func initPeriodicStats(periodic *periodicStats, period time.Duration) {
+	periodic.Lock()
 	periodic.entries = statsEntries{}
 	periodic.lastRotate = time.Now()
 	periodic.period = period
+	periodic.Unlock()
 }
 
 func (s *stats) purgeStats() {
@@ -253,6 +255,9 @@ func (s *stats) getAggregatedStats() map[string]interface{} {
 }
 
 func (s *stats) generateMapFromStats(stats *periodicStats, start int, end int) map[string]interface{} {
+	stats.RLock()
+	defer stats.RUnlock()
+
 	// clamp
 	start = clamp(start, 0, statsHistoryElements)
 	end = clamp(end, 0, statsHistoryElements)

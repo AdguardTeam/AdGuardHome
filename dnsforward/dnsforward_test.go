@@ -157,7 +157,7 @@ func TestSafeSearch(t *testing.T) {
 	client := dns.Client{Net: "udp"}
 	yandexDomains := []string{"yandex.com.", "yandex.by.", "yandex.kz.", "yandex.ru.", "yandex.com."}
 	for _, host := range yandexDomains {
-		exchangeAndAssertResponse(t, client, addr, host, "213.180.193.56")
+		exchangeAndAssertResponse(t, &client, addr, host, "213.180.193.56")
 	}
 
 	// Check aggregated stats
@@ -182,7 +182,7 @@ func TestSafeSearch(t *testing.T) {
 	// Test safe search for google.
 	googleDomains := []string{"www.google.com.", "www.google.com.af.", "www.google.be.", "www.google.by."}
 	for _, host := range googleDomains {
-		exchangeAndAssertResponse(t, client, addr, host, ip.String())
+		exchangeAndAssertResponse(t, &client, addr, host, ip.String())
 	}
 
 	// Check aggregated stats
@@ -191,7 +191,7 @@ func TestSafeSearch(t *testing.T) {
 	assert.Equal(t, s.GetAggregatedStats()["dns_queries"], float64(len(yandexDomains)+len(googleDomains)))
 
 	// Do one more exchange
-	exchangeAndAssertResponse(t, client, addr, "google-public-dns-a.google.com.", "8.8.8.8")
+	exchangeAndAssertResponse(t, &client, addr, "google-public-dns-a.google.com.", "8.8.8.8")
 
 	// Check aggregated stats
 	assert.Equal(t, s.GetAggregatedStats()["replaced_safesearch"], float64(len(yandexDomains)+len(googleDomains)))
@@ -524,7 +524,7 @@ func sendTestMessages(t *testing.T, conn *dns.Conn) {
 	}
 }
 
-func exchangeAndAssertResponse(t *testing.T, client dns.Client, addr net.Addr, host, ip string) {
+func exchangeAndAssertResponse(t *testing.T, client *dns.Client, addr net.Addr, host, ip string) {
 	req := createTestMessage(host)
 	reply, _, err := client.Exchange(req, addr.String())
 	if err != nil {
