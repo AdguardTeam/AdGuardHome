@@ -91,10 +91,11 @@ type LookupStats struct {
 	PendingMax int64  // maximum number of pending HTTP requests
 }
 
-// Stats store LookupStats for both safebrowsing and parental
+// Stats store LookupStats for safebrowsing, parental and safesearch
 type Stats struct {
 	Safebrowsing LookupStats
 	Parental     LookupStats
+	Safesearch   LookupStats
 }
 
 // Dnsfilter holds added rules and performs hostname matches against the rules
@@ -155,6 +156,7 @@ var (
 	stats             Stats
 	safebrowsingCache gcache.Cache
 	parentalCache     gcache.Cache
+	safeSearchCache   gcache.Cache
 )
 
 // Result holds state of hostname check
@@ -186,6 +188,19 @@ func (d *Dnsfilter) CheckHost(host string) (Result, error) {
 	}
 	if result.Reason.Matched() {
 		return result, nil
+	}
+
+	// check safeSearch if no match
+	if d.SafeSearchEnabled {
+		result, err = d.checkSafeSearch(host)
+		if err != nil {
+			log.Printf("Failed to safesearch HTTP lookup, ignoring check: %v", err)
+			return Result{}, nil
+		}
+
+		if result.Reason.Matched() {
+			return result, nil
+		}
 	}
 
 	// check safebrowsing if no match
@@ -582,6 +597,62 @@ func hostnameToHashParam(host string, addslash bool) (string, map[string]bool) {
 		curhost = curhost[pos+1:]
 	}
 	return hashparam.String(), hashes
+}
+
+func (d *Dnsfilter) checkSafeSearch(host string) (Result, error) {
+	if safeSearchCache == nil {
+		safeSearchCache = gcache.New(defaultCacheSize).LRU().Expiration(defaultCacheTime).Build()
+	}
+
+	// Check cache. Return cached result if it was found
+	cachedValue, isFound, err := getCachedReason(safeSearchCache, host)
+	if isFound {
+		atomic.AddUint64(&stats.Safesearch.CacheHits, 1)
+		return cachedValue, nil
+	}
+
+	if err != nil {
+		return Result{}, err
+	}
+
+	safeHost, ok := d.SafeSearchDomain(host)
+	if !ok {
+		return Result{}, nil
+	}
+
+	res := Result{IsFiltered: true, Reason: FilteredSafeSearch}
+	if ip := net.ParseIP(safeHost); ip != nil {
+		res.IP = ip
+		err = safeSearchCache.Set(host, res)
+		if err != nil {
+			return Result{}, nil
+		}
+
+		return res, nil
+	}
+
+	// TODO this address should be resolved with upstream that was configured in dnsforward
+	addrs, err := net.LookupIP(safeHost)
+	if err != nil {
+		log.Tracef("SafeSearchDomain for %s was found but failed to lookup for %s cause %s", host, safeHost, err)
+		return Result{}, err
+	}
+
+	res.IP = addrs[0]
+	// The next bug may occurs: LookupIP returns DNS64 mapped ipv4 address with zero-prefix
+	for _, i := range addrs {
+		if ipv4 := i.To4(); ipv4 != nil && len(i) == net.IPv6len {
+			res.IP = ipv4
+			break
+		}
+	}
+
+	// Cache result
+	err = safeSearchCache.Set(host, res)
+	if err != nil {
+		return Result{}, nil
+	}
+	return res, nil
 }
 
 func (d *Dnsfilter) checkSafeBrowsing(host string) (Result, error) {

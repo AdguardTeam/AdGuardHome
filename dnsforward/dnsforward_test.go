@@ -38,14 +38,14 @@ func TestServer(t *testing.T) {
 	}
 
 	// message over UDP
-	req := createTestMessage()
+	req := createGoogleATestMessage()
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 	client := dns.Client{Net: "udp"}
 	reply, _, err := client.Exchange(req, addr.String())
 	if err != nil {
 		t.Fatalf("Couldn't talk to server %s: %s", addr, err)
 	}
-	assertResponse(t, reply)
+	assertGoogleAResponse(t, reply)
 
 	// check query log and stats
 	log := s.GetQueryLog()
@@ -56,14 +56,14 @@ func TestServer(t *testing.T) {
 	assert.Equal(t, 1, len(stats.Clients), "Top clients length")
 
 	// message over TCP
-	req = createTestMessage()
+	req = createGoogleATestMessage()
 	addr = s.dnsProxy.Addr("tcp")
 	client = dns.Client{Net: "tcp"}
 	reply, _, err = client.Exchange(req, addr.String())
 	if err != nil {
 		t.Fatalf("Couldn't talk to server %s: %s", addr, err)
 	}
-	assertResponse(t, reply)
+	assertGoogleAResponse(t, reply)
 
 	// check query log and stats again
 	log = s.GetQueryLog()
@@ -140,6 +140,75 @@ func TestServerRace(t *testing.T) {
 	err = s.Stop()
 	if err != nil {
 		t.Fatalf("DNS server failed to stop: %s", err)
+	}
+}
+
+func TestSafeSearch(t *testing.T) {
+	s := createTestServer(t)
+	s.SafeSearchEnabled = true
+	defer removeDataDir(t)
+	err := s.Start(nil)
+	if err != nil {
+		t.Fatalf("Failed to start server: %s", err)
+	}
+
+	// Test safe search for yandex. We already know safe search ip
+	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
+	client := dns.Client{Net: "udp"}
+	yandexDomains := []string{"yandex.com.", "yandex.by.", "yandex.kz.", "yandex.ru.", "yandex.com."}
+	for _, host := range yandexDomains {
+		exchangeAndAssertResponse(t, client, addr, host, "213.180.193.56")
+	}
+
+	// Check aggregated stats
+	assert.Equal(t, s.GetAggregatedStats()["replaced_safesearch"], float64(len(yandexDomains)))
+	assert.Equal(t, s.GetAggregatedStats()["blocked_filtering"], float64(len(yandexDomains)))
+	assert.Equal(t, s.GetAggregatedStats()["dns_queries"], float64(len(yandexDomains)))
+
+	// Let's lookup for google safesearch ip
+	ips, err := net.LookupIP("forcesafesearch.google.com")
+	if err != nil {
+		t.Fatalf("Failed to lookup for forcesafesearch.google.com: %s", err)
+	}
+
+	ip := ips[0]
+	for _, i := range ips {
+		if len(i) == net.IPv6len && i.To4() != nil {
+			ip = i
+			break
+		}
+	}
+
+	// Test safe search for google.
+	googleDomains := []string{"www.google.com.", "www.google.com.af.", "www.google.be.", "www.google.by."}
+	for _, host := range googleDomains {
+		exchangeAndAssertResponse(t, client, addr, host, ip.String())
+	}
+
+	// Check aggregated stats
+	assert.Equal(t, s.GetAggregatedStats()["replaced_safesearch"], float64(len(yandexDomains)+len(googleDomains)))
+	assert.Equal(t, s.GetAggregatedStats()["blocked_filtering"], float64(len(yandexDomains)+len(googleDomains)))
+	assert.Equal(t, s.GetAggregatedStats()["dns_queries"], float64(len(yandexDomains)+len(googleDomains)))
+
+	// Do one more exchange
+	exchangeAndAssertResponse(t, client, addr, "google-public-dns-a.google.com.", "8.8.8.8")
+
+	// Check aggregated stats
+	assert.Equal(t, s.GetAggregatedStats()["replaced_safesearch"], float64(len(yandexDomains)+len(googleDomains)))
+	assert.Equal(t, s.GetAggregatedStats()["blocked_filtering"], float64(len(yandexDomains)+len(googleDomains)))
+	assert.Equal(t, s.GetAggregatedStats()["dns_queries"], float64(len(yandexDomains)+len(googleDomains)+1))
+
+	// Count of blocked domains	(there is `yandex.com` duplicate in yandexDomains array)
+	blockedCount := len(yandexDomains) - 1 + len(googleDomains)
+	assert.Equal(t, len(s.GetStatsTop().Blocked), blockedCount)
+
+	// Count of domains (blocked domains + `google-public-dns-a.google.com`)
+	domainsCount := blockedCount + 1
+	assert.Equal(t, len(s.GetStatsTop().Domains), domainsCount)
+
+	err = s.Stop()
+	if err != nil {
+		t.Fatalf("Can not stopd server cause: %s", err)
 	}
 }
 
@@ -413,7 +482,7 @@ func sendTestMessageAsync(t *testing.T, conn *dns.Conn, g *sync.WaitGroup) {
 		g.Done()
 	}()
 
-	req := createTestMessage()
+	req := createGoogleATestMessage()
 	err := conn.WriteMsg(req)
 	if err != nil {
 		t.Fatalf("cannot write message: %s", err)
@@ -423,7 +492,7 @@ func sendTestMessageAsync(t *testing.T, conn *dns.Conn, g *sync.WaitGroup) {
 	if err != nil {
 		t.Fatalf("cannot read response to message: %s", err)
 	}
-	assertResponse(t, res)
+	assertGoogleAResponse(t, res)
 }
 
 // sendTestMessagesAsync sends messages in parallel
@@ -441,7 +510,7 @@ func sendTestMessagesAsync(t *testing.T, conn *dns.Conn) {
 
 func sendTestMessages(t *testing.T, conn *dns.Conn) {
 	for i := 0; i < 10; i++ {
-		req := createTestMessage()
+		req := createGoogleATestMessage()
 		err := conn.WriteMsg(req)
 		if err != nil {
 			t.Fatalf("cannot write message #%d: %s", i, err)
@@ -451,27 +520,44 @@ func sendTestMessages(t *testing.T, conn *dns.Conn) {
 		if err != nil {
 			t.Fatalf("cannot read response to message #%d: %s", i, err)
 		}
-		assertResponse(t, res)
+		assertGoogleAResponse(t, res)
 	}
 }
 
-func createTestMessage() *dns.Msg {
+func exchangeAndAssertResponse(t *testing.T, client dns.Client, addr net.Addr, host, ip string) {
+	req := createTestMessage(host)
+	reply, _, err := client.Exchange(req, addr.String())
+	if err != nil {
+		t.Fatalf("Couldn't talk to server %s: %s", addr, err)
+	}
+	assertResponse(t, reply, ip)
+}
+
+func createGoogleATestMessage() *dns.Msg {
+	return createTestMessage("google-public-dns-a.google.com.")
+}
+
+func createTestMessage(host string) *dns.Msg {
 	req := dns.Msg{}
 	req.Id = dns.Id()
 	req.RecursionDesired = true
 	req.Question = []dns.Question{
-		{Name: "google-public-dns-a.google.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+		{Name: host, Qtype: dns.TypeA, Qclass: dns.ClassINET},
 	}
 	return &req
 }
 
-func assertResponse(t *testing.T, reply *dns.Msg) {
+func assertGoogleAResponse(t *testing.T, reply *dns.Msg) {
+	assertResponse(t, reply, "8.8.8.8")
+}
+
+func assertResponse(t *testing.T, reply *dns.Msg, ip string) {
 	if len(reply.Answer) != 1 {
 		t.Fatalf("DNS server returned reply with wrong number of answers - %d", len(reply.Answer))
 	}
 	if a, ok := reply.Answer[0].(*dns.A); ok {
-		if !net.IPv4(8, 8, 8, 8).Equal(a.A) {
-			t.Fatalf("DNS server returned wrong answer instead of 8.8.8.8: %v", a.A)
+		if !net.ParseIP(ip).Equal(a.A) {
+			t.Fatalf("DNS server returned wrong answer instead of %s: %v", ip, a.A)
 		}
 	} else {
 		t.Fatalf("DNS server returned wrong answer type instead of A: %v", reply.Answer[0])
