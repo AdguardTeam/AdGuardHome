@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/dnsproxy/proxy"
-
 	"github.com/stretchr/testify/assert"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
@@ -482,7 +481,7 @@ func sendTestMessageAsync(t *testing.T, conn *dns.Conn, g *sync.WaitGroup) {
 		g.Done()
 	}()
 
-	req := createTestMessage()
+	req := createGoogleATestMessage()
 	err := conn.WriteMsg(req)
 	if err != nil {
 		t.Fatalf("cannot write message: %s", err)
@@ -492,7 +491,7 @@ func sendTestMessageAsync(t *testing.T, conn *dns.Conn, g *sync.WaitGroup) {
 	if err != nil {
 		t.Fatalf("cannot read response to message: %s", err)
 	}
-	assertResponse(t, res)
+	assertGoogleAResponse(t, res)
 }
 
 // sendTestMessagesAsync sends messages in parallel
@@ -510,7 +509,7 @@ func sendTestMessagesAsync(t *testing.T, conn *dns.Conn) {
 
 func sendTestMessages(t *testing.T, conn *dns.Conn) {
 	for i := 0; i < 10; i++ {
-		req := createTestMessage()
+		req := createGoogleATestMessage()
 		err := conn.WriteMsg(req)
 		if err != nil {
 			t.Fatalf("cannot write message #%d: %s", i, err)
@@ -520,7 +519,7 @@ func sendTestMessages(t *testing.T, conn *dns.Conn) {
 		if err != nil {
 			t.Fatalf("cannot read response to message #%d: %s", i, err)
 		}
-		assertResponse(t, res)
+		assertGoogleAResponse(t, res)
 	}
 }
 
