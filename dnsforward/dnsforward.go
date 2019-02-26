@@ -67,6 +67,7 @@ type FilteringConfig struct {
 	RatelimitWhitelist []string `yaml:"ratelimit_whitelist"`
 	RefuseAny          bool     `yaml:"refuse_any"`
 	BootstrapDNS       string   `yaml:"bootstrap_dns"`
+	AllServers         bool     `yaml:"all_servers"`
 
 	dnsfilter.Config `yaml:",inline"`
 }
@@ -163,6 +164,7 @@ func (s *Server) startInternal(config *ServerConfig) error {
 		CacheEnabled:       true,
 		Upstreams:          s.Upstreams,
 		Handler:            s.handleDNSRequest,
+		AllServers:         s.AllServers,
 	}
 
 	if s.TLSListenAddr != nil && s.CertificateChain != "" && s.PrivateKey != "" {

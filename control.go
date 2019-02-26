@@ -94,6 +94,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		"running":            isRunning(),
 		"bootstrap_dns":      config.DNS.BootstrapDNS,
 		"upstream_dns":       config.DNS.UpstreamDNS,
+		"all_servers":        config.DNS.AllServers,
 		"version":            VersionString,
 		"language":           config.Language,
 	}
@@ -358,6 +359,38 @@ func handleSetUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 		errorText := fmt.Sprintf("Couldn't write body: %s", err)
 		log.Println(errorText)
 		http.Error(w, errorText, http.StatusInternalServerError)
+	}
+}
+
+func handleAllServersEnable(w http.ResponseWriter, r *http.Request) {
+	config.DNS.AllServers = true
+	httpUpdateConfigReloadDNSReturnOK(w, r)
+}
+
+func handleAllServersDisable(w http.ResponseWriter, r *http.Request) {
+	config.DNS.AllServers = false
+	httpUpdateConfigReloadDNSReturnOK(w, r)
+}
+
+func handleAllServersStatus(w http.ResponseWriter, r *http.Request) {
+	data := map[string]interface{}{
+		"enabled": config.DNS.AllServers,
+	}
+	jsonVal, err := json.Marshal(data)
+	if err != nil {
+		errorText := fmt.Sprintf("Unable to marshal status json: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(jsonVal)
+	if err != nil {
+		errorText := fmt.Sprintf("Unable to write response json: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, 500)
+		return
 	}
 }
 
@@ -1317,6 +1350,9 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/querylog_disable", postInstall(optionalAuth(ensurePOST(handleQueryLogDisable))))
 	http.HandleFunc("/control/set_upstream_dns", postInstall(optionalAuth(ensurePOST(handleSetUpstreamDNS))))
 	http.HandleFunc("/control/test_upstream_dns", postInstall(optionalAuth(ensurePOST(handleTestUpstreamDNS))))
+	http.HandleFunc("/control/all_servers/enable", postInstall(optionalAuth(ensurePOST(handleAllServersEnable))))
+	http.HandleFunc("/control/all_servers/disable", postInstall(optionalAuth(ensurePOST(handleAllServersDisable))))
+	http.HandleFunc("/control/all_servers/status", postInstall(optionalAuth(ensureGET(handleAllServersStatus))))
 	http.HandleFunc("/control/i18n/change_language", postInstall(optionalAuth(ensurePOST(handleI18nChangeLanguage))))
 	http.HandleFunc("/control/i18n/current_language", postInstall(optionalAuth(ensureGET(handleI18nCurrentLanguage))))
 	http.HandleFunc("/control/stats_top", postInstall(optionalAuth(ensureGET(handleStatsTop))))

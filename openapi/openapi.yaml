@@ -111,6 +111,39 @@ paths:
                 200:
                     description: OK
 
+    /all_servers/enable:
+        post:
+            tags:
+                - global
+            operationId: allServersEnable
+            summary: 'Enable parallel queries'
+            responses:
+                200:
+                    description: OK
+
+    /all_servers/disable:
+        post:
+            tags:
+                - global
+            operationId: allServersDisable
+            summary: 'Disable parallel queries'
+            responses:
+                200:
+                    description: OK
+
+    /all_servers/status:
+        get:
+            tags:
+                - global
+            operationId: allServersStatus
+            summary: 'Get parallel queries status'
+            responses:
+                200:
+                    description: OK
+                    examples:
+                        application/json:
+                            enabled: false
+
     /test_upstream_dns:
         post:
             tags:

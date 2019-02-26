@@ -114,6 +114,7 @@ var config = configuration{
 			QueryLogEnabled:    true,
 			Ratelimit:          20,
 			RefuseAny:          true,
+			AllServers:         false,
 			BootstrapDNS:       "8.8.8.8:53",
 		},
 		UpstreamDNS: defaultDNS,
