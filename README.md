@@ -70,7 +70,7 @@ Alternatively, you can use our [official Docker image](https://hub.docker.com/r/
 
 You will need:
 
- * [go](https://golang.org/dl/) v1.11 or later.
+ * [go](https://golang.org/dl/) v1.12 or later.
  * [node.js](https://nodejs.org/en/download/) v10 or later.
 
 You can either install it via the provided links or use [brew.sh](https://brew.sh/) if you're on Mac:
