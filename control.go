@@ -85,7 +85,7 @@ func httpUpdateConfigReloadDNSReturnOK(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleStatus(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	data := map[string]interface{}{
 		"dns_address":        config.DNS.BindHost,
 		"http_port":          config.BindPort,
@@ -117,13 +117,13 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleProtectionEnable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	config.DNS.ProtectionEnabled = true
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleProtectionDisable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	config.DNS.ProtectionEnabled = false
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
@@ -132,19 +132,19 @@ func handleProtectionDisable(w http.ResponseWriter, r *http.Request) {
 // stats
 // -----
 func handleQueryLogEnable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	config.DNS.QueryLogEnabled = true
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleQueryLogDisable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	config.DNS.QueryLogEnabled = false
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleQueryLog(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	data := dnsServer.GetQueryLog()
 
 	jsonVal, err := json.Marshal(data)
@@ -165,7 +165,7 @@ func handleQueryLog(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleStatsTop(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	s := dnsServer.GetStatsTop()
 
 	// use manual json marshalling because we want maps to be sorted by value
@@ -214,7 +214,7 @@ func handleStatsTop(w http.ResponseWriter, r *http.Request) {
 
 // handleStatsReset resets the stats caches
 func handleStatsReset(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	dnsServer.PurgeStats()
 	_, err := fmt.Fprintf(w, "OK\n")
 	if err != nil {
@@ -226,7 +226,7 @@ func handleStatsReset(w http.ResponseWriter, r *http.Request) {
 
 // handleStats returns aggregated stats data for the 24 hours
 func handleStats(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	summed := dnsServer.GetAggregatedStats()
 
 	statsJSON, err := json.Marshal(summed)
@@ -248,7 +248,7 @@ func handleStats(w http.ResponseWriter, r *http.Request) {
 
 // HandleStatsHistory returns historical stats data for the 24 hours
 func handleStatsHistory(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	// handle time unit and prepare our time window size
 	timeUnitString := r.URL.Query().Get("time_unit")
 	var timeUnit time.Duration
@@ -333,7 +333,7 @@ func sortByValue(m map[string]int) []string {
 // -----------------------
 
 func handleSetUpstreamDNS(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		errorText := fmt.Sprintf("Failed to read request body: %s", err)
@@ -373,7 +373,7 @@ func handleSetUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		errorText := fmt.Sprintf("Failed to read request body: %s", err)
@@ -450,7 +450,7 @@ func checkDNS(input string) error {
 }
 
 func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	now := time.Now()
 	if now.Sub(versionCheckLastTime) <= versionCheckPeriod && len(versionCheckJSON) != 0 {
 		// return cached copy
@@ -496,19 +496,19 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 // ---------
 
 func handleFilteringEnable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	config.DNS.FilteringEnabled = true
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleFilteringDisable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	config.DNS.FilteringEnabled = false
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	data := map[string]interface{}{
 		"enabled": config.DNS.FilteringEnabled,
 	}
@@ -537,7 +537,7 @@ func handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	f := filter{}
 	err := json.NewDecoder(r.Body).Decode(&f)
 	if err != nil {
@@ -626,7 +626,7 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	parameters, err := parseParametersFromBody(r.Body)
 	if err != nil {
 		errorText := fmt.Sprintf("failed to parse parameters from body: %s", err)
@@ -667,7 +667,7 @@ func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleFilteringEnableURL(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	parameters, err := parseParametersFromBody(r.Body)
 	if err != nil {
 		errorText := fmt.Sprintf("failed to parse parameters from body: %s", err)
@@ -707,7 +707,7 @@ func handleFilteringEnableURL(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleFilteringDisableURL(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	parameters, err := parseParametersFromBody(r.Body)
 	if err != nil {
 		errorText := fmt.Sprintf("failed to parse parameters from body: %s", err)
@@ -745,7 +745,7 @@ func handleFilteringDisableURL(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		errorText := fmt.Sprintf("Failed to read request body: %s", err)
@@ -759,7 +759,7 @@ func handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleFilteringRefresh(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	force := r.URL.Query().Get("force")
 	updated := refreshFiltersIfNecessary(force != "")
 	fmt.Fprintf(w, "OK %d filters updated\n", updated)
@@ -770,19 +770,19 @@ func handleFilteringRefresh(w http.ResponseWriter, r *http.Request) {
 // ------------
 
 func handleSafeBrowsingEnable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	config.DNS.SafeBrowsingEnabled = true
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleSafeBrowsingDisable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	config.DNS.SafeBrowsingEnabled = false
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	data := map[string]interface{}{
 		"enabled": config.DNS.SafeBrowsingEnabled,
 	}
@@ -807,7 +807,7 @@ func handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Request) {
 // parental
 // --------
 func handleParentalEnable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	parameters, err := parseParametersFromBody(r.Body)
 	if err != nil {
 		errorText := fmt.Sprintf("failed to parse parameters from body: %s", err)
@@ -854,13 +854,13 @@ func handleParentalEnable(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleParentalDisable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	config.DNS.ParentalEnabled = false
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleParentalStatus(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	data := map[string]interface{}{
 		"enabled": config.DNS.ParentalEnabled,
 	}
@@ -890,19 +890,19 @@ func handleParentalStatus(w http.ResponseWriter, r *http.Request) {
 // ------------
 
 func handleSafeSearchEnable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	config.DNS.SafeSearchEnabled = true
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleSafeSearchDisable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	config.DNS.SafeSearchEnabled = false
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	data := map[string]interface{}{
 		"enabled": config.DNS.SafeSearchEnabled,
 	}
@@ -939,7 +939,7 @@ type firstRunData struct {
 }
 
 func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	data := firstRunData{}
 
 	// find out if port 80 is available -- if not, fall back to 3000
@@ -975,7 +975,7 @@ func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	newSettings := firstRunData{}
 	err := json.NewDecoder(r.Body).Decode(&newSettings)
 	if err != nil {
@@ -1034,12 +1034,12 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 // TLS
 // ---
 func handleTLSStatus(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	marshalTLS(w, config.TLS)
 }
 
 func handleTLSValidate(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	data, err := unmarshalTLS(r)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
@@ -1065,7 +1065,7 @@ func handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	data, err := unmarshalTLS(r)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
@@ -1323,7 +1323,7 @@ func marshalTLS(w http.ResponseWriter, data tlsConfig) {
 // DNS-over-HTTPS
 // --------------
 func handleDOH(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("")
+	log.Tracef("%s %v", r.Method, r.URL)
 	if r.TLS == nil {
 		httpError(w, http.StatusNotFound, "Not Found")
 		return
