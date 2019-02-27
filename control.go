@@ -338,6 +338,7 @@ func handleSetUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleSetBootstrapDNS(w http.ResponseWriter, r *http.Request) {
+	log.Tracef("%s %v", r.Method, r.URL)
 	setDNSServers(w, r, false)
 }
 
