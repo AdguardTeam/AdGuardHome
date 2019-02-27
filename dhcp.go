@@ -37,7 +37,7 @@ func handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(status)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to marshal DHCP status json: %s", err)
+		httpError(&w, http.StatusInternalServerError, "Unable to marshal DHCP status json: %s", err)
 		return
 	}
 }
@@ -46,14 +46,14 @@ func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 	newconfig := dhcpd.ServerConfig{}
 	err := json.NewDecoder(r.Body).Decode(&newconfig)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to parse new DHCP config json: %s", err)
+		httpError(&w, http.StatusBadRequest, "Failed to parse new DHCP config json: %s", err)
 		return
 	}
 
 	if newconfig.Enabled {
 		err := dhcpServer.Start(&newconfig)
 		if err != nil {
-			httpError(w, http.StatusBadRequest, "Failed to start DHCP server: %s", err)
+			httpError(&w, http.StatusBadRequest, "Failed to start DHCP server: %s", err)
 			return
 		}
 	}
@@ -72,7 +72,7 @@ func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 
 	ifaces, err := getValidNetInterfaces()
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
+		httpError(&w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
 		return
 	}
 
@@ -87,7 +87,7 @@ func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 		}
 		addrs, err := iface.Addrs()
 		if err != nil {
-			httpError(w, http.StatusInternalServerError, "Failed to get addresses for interface %s: %s", iface.Name, err)
+			httpError(&w, http.StatusInternalServerError, "Failed to get addresses for interface %s: %s", iface.Name, err)
 			return
 		}
 
@@ -105,7 +105,7 @@ func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 			ipnet, ok := addr.(*net.IPNet)
 			if !ok {
 				// not an IPNet, should not happen
-				httpError(w, http.StatusInternalServerError, "SHOULD NOT HAPPEN: got iface.Addrs() element %s that is not net.IPNet, it is %T", addr, addr)
+				httpError(&w, http.StatusInternalServerError, "SHOULD NOT HAPPEN: got iface.Addrs() element %s that is not net.IPNet, it is %T", addr, addr)
 				return
 			}
 			// ignore link-local
@@ -122,7 +122,7 @@ func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Failed to marshal json with available interfaces: %s", err)
+		httpError(&w, http.StatusInternalServerError, "Failed to marshal json with available interfaces: %s", err)
 		return
 	}
 }
@@ -153,7 +153,7 @@ func handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(result)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Failed to marshal DHCP found json: %s", err)
+		httpError(&w, http.StatusInternalServerError, "Failed to marshal DHCP found json: %s", err)
 		return
 	}
 }

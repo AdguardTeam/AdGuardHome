@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -10,7 +11,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-const currentSchemaVersion = 2 // used for upgrading from old configs to new config
+const currentSchemaVersion = 3 // used for upgrading from old configs to new config
 
 // Performs necessary upgrade operations if needed
 func upgradeConfig() error {
@@ -59,12 +60,17 @@ func upgradeConfig() error {
 func upgradeConfigSchema(oldVersion int, diskConfig *map[string]interface{}) error {
 	switch oldVersion {
 	case 0:
-		err := upgradeSchema0to2(diskConfig)
+		err := upgradeSchema0to3(diskConfig)
 		if err != nil {
 			return err
 		}
 	case 1:
-		err := upgradeSchema1to2(diskConfig)
+		err := upgradeSchema1to3(diskConfig)
+		if err != nil {
+			return err
+		}
+	case 2:
+		err := upgradeSchema2to3(diskConfig)
 		if err != nil {
 			return err
 		}
@@ -135,12 +141,60 @@ func upgradeSchema1to2(diskConfig *map[string]interface{}) error {
 	return nil
 }
 
-// jump two schemas at once -- this time we just do it sequentially
-func upgradeSchema0to2(diskConfig *map[string]interface{}) error {
+// Third schema upgrade:
+// Bootstrap DNS becomes an array
+func upgradeSchema2to3(diskConfig *map[string]interface{}) error {
+	log.Printf("%s(): called", _Func())
+
+	// Let's read dns configuration from diskConfig
+	dnsConfig, ok := (*diskConfig)["dns"]
+	if !ok {
+		return errors.New("no DNS configuration in config file")
+	}
+
+	// Convert interface{} to map[string]interface{}
+	newDNSConfig := make(map[string]interface{})
+
+	switch v := dnsConfig.(type) {
+	case map[interface{}]interface{}:
+		for k, v := range v {
+			newDNSConfig[fmt.Sprint(k)] = v
+		}
+	default:
+		return errors.New("DNS configuration is not a map")
+	}
+
+	// Replace bootstrap_dns value filed with new array contains old bootstrap_dns inside
+	if bootstrapDNS, ok := (newDNSConfig)["bootstrap_dns"]; ok {
+		newBootstrapConfig := []string{fmt.Sprint(bootstrapDNS)}
+		(newDNSConfig)["bootstrap_dns"] = newBootstrapConfig
+		(*diskConfig)["dns"] = newDNSConfig
+	} else {
+		return errors.New("no bootstrap DNS in DNS config")
+	}
+
+	// Bump schema version
+	(*diskConfig)["schema_version"] = 3
+
+	return nil
+}
+
+// jump three schemas at once -- this time we just do it sequentially
+func upgradeSchema0to3(diskConfig *map[string]interface{}) error {
 	err := upgradeSchema0to1(diskConfig)
 	if err != nil {
 		return err
 	}
 
-	return upgradeSchema1to2(diskConfig)
+	return upgradeSchema1to3(diskConfig)
+}
+
+// jump two schemas at once -- this time we just do it sequentially
+func upgradeSchema1to3(diskConfig *map[string]interface{}) error {
+	err := upgradeSchema1to2(diskConfig)
+	if err != nil {
+		return err
+	}
+
+	return upgradeSchema2to3(diskConfig)
 }

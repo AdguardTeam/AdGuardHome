@@ -57,10 +57,10 @@ func returnOK(w http.ResponseWriter) {
 	}
 }
 
-func httpError(w http.ResponseWriter, code int, format string, args ...interface{}) {
+func httpError(w *http.ResponseWriter, code int, format string, args ...interface{}) {
 	text := fmt.Sprintf(format, args...)
 	log.Println(text)
-	http.Error(w, text, code)
+	http.Error(*w, text, code)
 }
 
 // ---------------
@@ -78,7 +78,7 @@ func writeAllConfigsAndReloadDNS() error {
 func httpUpdateConfigReloadDNSReturnOK(w http.ResponseWriter, r *http.Request) {
 	err := writeAllConfigsAndReloadDNS()
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't write config file: %s", err)
+		httpError(&w, http.StatusInternalServerError, "Couldn't write config file: %s", err)
 		return
 	}
 	returnOK(w)
@@ -334,9 +334,7 @@ func handleSetBootstrapDNS(w http.ResponseWriter, r *http.Request) {
 func setDNSServers(w *http.ResponseWriter, r *http.Request, upstreams bool) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		errorText := fmt.Sprintf("Failed to read request body: %s", err)
-		log.Println(errorText)
-		http.Error(*w, errorText, http.StatusBadRequest)
+		httpError(w, http.StatusBadRequest, "Failed to read request body: %s", err)
 		return
 	}
 	// if empty body -- user is asking for default servers
@@ -379,23 +377,17 @@ func setDNSServers(w *http.ResponseWriter, r *http.Request, upstreams bool) {
 
 	err = writeAllConfigs()
 	if err != nil {
-		errorText := fmt.Sprintf("Couldn't write config file: %s", err)
-		log.Println(errorText)
-		http.Error(*w, errorText, http.StatusInternalServerError)
+		httpError(w, http.StatusInternalServerError, "Couldn't write config file: %s", err)
 		return
 	}
 	err = reconfigureDNSServer()
 	if err != nil {
-		errorText := fmt.Sprintf("Couldn't reconfigure the DNS server: %s", err)
-		log.Println(errorText)
-		http.Error(*w, errorText, http.StatusInternalServerError)
+		httpError(w, http.StatusInternalServerError, "Couldn't reconfigure the DNS server: %s", err)
 		return
 	}
 	_, err = fmt.Fprintf(*w, "OK %d servers\n", count)
 	if err != nil {
-		errorText := fmt.Sprintf("Couldn't write body: %s", err)
-		log.Println(errorText)
-		http.Error(*w, errorText, http.StatusInternalServerError)
+		httpError(w, http.StatusInternalServerError, "Couldn't write body: %s", err)
 	}
 }
 
@@ -574,7 +566,7 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 	f := filter{}
 	err := json.NewDecoder(r.Body).Decode(&f)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to parse request body json: %s", err)
+		httpError(&w, http.StatusBadRequest, "Failed to parse request body json: %s", err)
 		return
 	}
 
@@ -975,7 +967,7 @@ func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 
 	ifaces, err := getValidNetInterfacesForWeb()
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
+		httpError(&w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
 		return
 	}
 
@@ -987,7 +979,7 @@ func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(data)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to marshal default addresses to json: %s", err)
+		httpError(&w, http.StatusInternalServerError, "Unable to marshal default addresses to json: %s", err)
 		return
 	}
 }
@@ -996,7 +988,7 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	newSettings := firstRunData{}
 	err := json.NewDecoder(r.Body).Decode(&newSettings)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to parse new config json: %s", err)
+		httpError(&w, http.StatusBadRequest, "Failed to parse new config json: %s", err)
 		return
 	}
 
@@ -1010,14 +1002,14 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	if restartHTTP {
 		err = checkPortAvailable(newSettings.Web.IP, newSettings.Web.Port)
 		if err != nil {
-			httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s", net.JoinHostPort(newSettings.Web.IP, strconv.Itoa(newSettings.Web.Port)), err)
+			httpError(&w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s", net.JoinHostPort(newSettings.Web.IP, strconv.Itoa(newSettings.Web.Port)), err)
 			return
 		}
 	}
 
 	err = checkPacketPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s", net.JoinHostPort(newSettings.DNS.IP, strconv.Itoa(newSettings.DNS.Port)), err)
+		httpError(&w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s", net.JoinHostPort(newSettings.DNS.IP, strconv.Itoa(newSettings.DNS.Port)), err)
 		return
 	}
 
@@ -1032,7 +1024,7 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	if config.DNS.Port != 0 {
 		err = startDNSServer()
 		if err != nil {
-			httpError(w, http.StatusInternalServerError, "Couldn't start DNS server: %s", err)
+			httpError(&w, http.StatusInternalServerError, "Couldn't start DNS server: %s", err)
 			return
 		}
 	}
@@ -1057,7 +1049,7 @@ func handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 func handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	data, err := unmarshalTLS(r)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
+		httpError(&w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
 		return
 	}
 
@@ -1070,7 +1062,7 @@ func handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	if !alreadyRunning {
 		err = checkPortAvailable(config.BindHost, data.PortHTTPS)
 		if err != nil {
-			httpError(w, http.StatusBadRequest, "port %d is not available, cannot enable HTTPS on it", data.PortHTTPS)
+			httpError(&w, http.StatusBadRequest, "port %d is not available, cannot enable HTTPS on it", data.PortHTTPS)
 			return
 		}
 	}
@@ -1082,7 +1074,7 @@ func handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	data, err := unmarshalTLS(r)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
+		httpError(&w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
 		return
 	}
 
@@ -1095,7 +1087,7 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	if !alreadyRunning {
 		err = checkPortAvailable(config.BindHost, data.PortHTTPS)
 		if err != nil {
-			httpError(w, http.StatusBadRequest, "port %d is not available, cannot enable HTTPS on it", data.PortHTTPS)
+			httpError(&w, http.StatusBadRequest, "port %d is not available, cannot enable HTTPS on it", data.PortHTTPS)
 			return
 		}
 	}
@@ -1109,7 +1101,7 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	config.TLS = data
 	err = writeAllConfigsAndReloadDNS()
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't write config file: %s", err)
+		httpError(&w, http.StatusInternalServerError, "Couldn't write config file: %s", err)
 		return
 	}
 	marshalTLS(w, data)
@@ -1328,7 +1320,7 @@ func marshalTLS(w http.ResponseWriter, data tlsConfig) {
 	}
 	err := json.NewEncoder(w).Encode(data)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Failed to marshal json with TLS status: %s", err)
+		httpError(&w, http.StatusInternalServerError, "Failed to marshal json with TLS status: %s", err)
 		return
 	}
 }
@@ -1338,12 +1330,12 @@ func marshalTLS(w http.ResponseWriter, data tlsConfig) {
 // --------------
 func handleDOH(w http.ResponseWriter, r *http.Request) {
 	if r.TLS == nil {
-		httpError(w, http.StatusNotFound, "Not Found")
+		httpError(&w, http.StatusNotFound, "Not Found")
 		return
 	}
 
 	if !isRunning() {
-		httpError(w, http.StatusInternalServerError, "DNS server is not running")
+		httpError(&w, http.StatusInternalServerError, "DNS server is not running")
 		return
 	}
 
