@@ -25,7 +25,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
 	"github.com/AdguardTeam/dnsproxy/upstream"
-	"github.com/hmage/golibs/log"
+	"github.com/AdguardTeam/golibs/log"
 	"github.com/joomcode/errorx"
 	"github.com/miekg/dns"
 	govalidator "gopkg.in/asaskevich/govalidator.v4"
@@ -57,7 +57,7 @@ func returnOK(w http.ResponseWriter) {
 
 func httpError(w http.ResponseWriter, code int, format string, args ...interface{}) {
 	text := fmt.Sprintf(format, args...)
-	log.Println(text)
+	log.Info(text)
 	http.Error(w, text, code)
 }
 
@@ -67,7 +67,7 @@ func httpError(w http.ResponseWriter, code int, format string, args ...interface
 func writeAllConfigsAndReloadDNS() error {
 	err := writeAllConfigs()
 	if err != nil {
-		log.Printf("Couldn't write all configs: %s", err)
+		log.Error("Couldn't write all configs: %s", err)
 		return err
 	}
 	return reconfigureDNSServer()
@@ -388,7 +388,7 @@ func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	for _, host := range hosts {
 		err = checkDNS(host)
 		if err != nil {
-			log.Println(err)
+			log.Info("%v", err)
 			result[host] = err.Error()
 		} else {
 			result[host] = "OK"
@@ -409,7 +409,7 @@ func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkDNS(input string) error {
-	log.Printf("Checking if DNS %s works...", input)
+	log.Debug("Checking if DNS %s works...", input)
 	u, err := upstream.AddressToUpstream(input, upstream.Options{Timeout: dnsforward.DefaultTimeout})
 	if err != nil {
 		return fmt.Errorf("failed to choose upstream for %s: %s", input, err)
@@ -434,7 +434,7 @@ func checkDNS(input string) error {
 		}
 	}
 
-	log.Printf("DNS %s works OK", input)
+	log.Debug("DNS %s works OK", input)
 	return nil
 }
 

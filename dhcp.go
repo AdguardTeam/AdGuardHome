@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
-	"github.com/hmage/golibs/log"
+	"github.com/AdguardTeam/golibs/log"
 	"github.com/joomcode/errorx"
 )
 
@@ -60,7 +60,7 @@ func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 	if !newconfig.Enabled {
 		err := dhcpServer.Stop()
 		if err != nil {
-			log.Printf("failed to stop the DHCP server: %s", err)
+			log.Error("failed to stop the DHCP server: %s", err)
 		}
 	}
 	config.DHCP = newconfig
@@ -131,7 +131,7 @@ func handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		errorText := fmt.Sprintf("failed to read request body: %s", err)
-		log.Println(errorText)
+		log.Error(errorText)
 		http.Error(w, errorText, http.StatusBadRequest)
 		return
 	}
@@ -139,7 +139,7 @@ func handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
 	interfaceName := strings.TrimSpace(string(body))
 	if interfaceName == "" {
 		errorText := fmt.Sprintf("empty interface name specified")
-		log.Println(errorText)
+		log.Error(errorText)
 		http.Error(w, errorText, http.StatusBadRequest)
 		return
 	}
