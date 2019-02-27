@@ -354,23 +354,19 @@ func setDNSServers(w *http.ResponseWriter, r *http.Request, upstreams bool) {
 	}
 
 	// count of upstream or bootstrap servers
-	var count int
-	if upstreams {
-		count = len(hosts)
-	} else {
+	count := len(hosts)
+	if !upstreams {
 		count = len(bootstraps)
 	}
 
 	if upstreams {
-		if count == 0 {
-			config.DNS.UpstreamDNS = defaultDNS
-		} else {
+		config.DNS.UpstreamDNS = defaultDNS
+		if count != 0 {
 			config.DNS.UpstreamDNS = hosts
 		}
 	} else {
-		if count == 0 {
-			config.DNS.BootstrapDNS = defaultBootstrap
-		} else {
+		config.DNS.BootstrapDNS = defaultBootstrap
+		if count != 0 {
 			config.DNS.BootstrapDNS = bootstraps
 		}
 	}
