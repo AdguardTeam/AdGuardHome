@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/hmage/golibs/log"
+	"github.com/AdguardTeam/golibs/log"
 )
 
 // --------------------

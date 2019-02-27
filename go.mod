@@ -1,13 +1,13 @@
 module github.com/AdguardTeam/AdGuardHome
 
 require (
-	github.com/AdguardTeam/dnsproxy v0.11.1
+	github.com/AdguardTeam/dnsproxy v0.11.2
+	github.com/AdguardTeam/golibs v0.1.0
 	github.com/StackExchange/wmi v0.0.0-20180725035823-b12b22c5341f // indirect
 	github.com/bluele/gcache v0.0.0-20171010155617-472614239ac7
 	github.com/go-ole/go-ole v1.2.1 // indirect
 	github.com/go-test/deep v1.0.1
 	github.com/gobuffalo/packr v1.19.0
-	github.com/hmage/golibs v0.0.0-20190121112702-20153bd03c24
 	github.com/joomcode/errorx v0.1.0
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1 // indirect
 	github.com/kardianos/service v0.0.0-20181115005516-4c239ee84e7b

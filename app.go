@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
-	stdlog "log"
 	"net"
 	"net/http"
 	"os"
@@ -15,9 +14,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/AdguardTeam/golibs/log"
 	"github.com/gobuffalo/packr"
-
-	"github.com/hmage/golibs/log"
 )
 
 // VersionString will be set through ldflags, contains current version
@@ -73,9 +71,9 @@ func run(args options) {
 
 	// print the first message after logger is configured
 	log.Printf("AdGuard Home, version %s\n", VersionString)
-	log.Tracef("Current working directory is %s", config.ourWorkingDir)
+	log.Debug("Current working directory is %s", config.ourWorkingDir)
 	if args.runningAsService {
-		log.Printf("AdGuard Home is running as a service")
+		log.Info("AdGuard Home is running as a service")
 	}
 
 	config.firstRun = detectFirstRun()
@@ -110,7 +108,7 @@ func run(args options) {
 		err = filter.load()
 		if err != nil {
 			// This is okay for the first start, the filter will be loaded later
-			log.Printf("Couldn't load filter %d contents due to %s", filter.ID, err)
+			log.Debug("Couldn't load filter %d contents due to %s", filter.ID, err)
 			// clear LastUpdated so it gets fetched right away
 		}
 
@@ -161,7 +159,7 @@ func run(args options) {
 
 	// add handlers for /install paths, we only need them when we're not configured yet
 	if config.firstRun {
-		log.Printf("This is the first launch of AdGuard Home, redirecting everything to /install.html ")
+		log.Info("This is the first launch of AdGuard Home, redirecting everything to /install.html ")
 		http.Handle("/install.html", preInstallHandler(http.FileServer(box)))
 		registerInstallHandlers()
 	}
@@ -263,7 +261,11 @@ func configureLogger(args options) {
 		ls.LogFile = args.logFile
 	}
 
-	log.Verbose = ls.Verbose
+	level := log.INFO
+	if ls.Verbose {
+		level = log.DEBUG
+	}
+	log.SetLevel(level)
 
 	if args.runningAsService && ls.LogFile == "" && runtime.GOOS == "windows" {
 		// When running as a Windows service, use eventlog by default if nothing else is configured
@@ -287,20 +289,20 @@ func configureLogger(args options) {
 		if err != nil {
 			log.Fatalf("cannot create a log file: %s", err)
 		}
-		stdlog.SetOutput(file)
+		log.SetOutput(file)
 	}
 }
 
 func cleanup() {
-	log.Printf("Stopping AdGuard Home")
+	log.Info("Stopping AdGuard Home")
 
 	err := stopDNSServer()
 	if err != nil {
-		log.Printf("Couldn't stop DNS server: %s", err)
+		log.Error("Couldn't stop DNS server: %s", err)
 	}
 	err = stopDHCPServer()
 	if err != nil {
-		log.Printf("Couldn't stop DHCP server: %s", err)
+		log.Error("Couldn't stop DHCP server: %s", err)
 	}
 }
 
@@ -373,7 +375,7 @@ func loadOptions() options {
 			if v == "--"+opt.longName || (opt.shortName != "" && v == "-"+opt.shortName) {
 				if opt.callbackWithValue != nil {
 					if i+1 >= len(os.Args) {
-						log.Printf("ERROR: Got %s without argument\n", v)
+						log.Error("Got %s without argument\n", v)
 						os.Exit(64)
 					}
 					i++
@@ -386,7 +388,7 @@ func loadOptions() options {
 			}
 		}
 		if !knownParam {
-			log.Printf("ERROR: unknown option %v\n", v)
+			log.Error("unknown option %v\n", v)
 			printHelp()
 			os.Exit(64)
 		}

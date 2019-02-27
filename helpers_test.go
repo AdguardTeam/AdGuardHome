@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/hmage/golibs/log"
+	"github.com/AdguardTeam/golibs/log"
 )
 
 func TestGetValidNetInterfacesForWeb(t *testing.T) {

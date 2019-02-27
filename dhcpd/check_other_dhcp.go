@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/hmage/golibs/log"
+	"github.com/AdguardTeam/golibs/log"
 	"github.com/krolaw/dhcp4"
 )
 

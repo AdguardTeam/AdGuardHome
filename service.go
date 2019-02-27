@@ -4,7 +4,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/hmage/golibs/log"
+	"github.com/AdguardTeam/golibs/log"
 	"github.com/kardianos/service"
 )
 
