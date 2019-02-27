@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"time"
 
@@ -60,8 +61,6 @@ type dnsConfig struct {
 	UpstreamDNS []string `yaml:"upstream_dns"`
 }
 
-var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
-
 type tlsConfigSettings struct {
 	Enabled        bool   `yaml:"enabled" json:"enabled"`                               // Enabled is the encryption (DOT/DOH/HTTPS) status
 	ServerName     string `yaml:"server_name" json:"server_name,omitempty"`             // ServerName is the hostname of your HTTPS/TLS server
@@ -99,6 +98,8 @@ type tlsConfig struct {
 	tlsConfigStatus   `yaml:"-" json:",inline"`
 }
 
+var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
+
 // initialize to default values, will be changed later when reading config or parsing command line
 var config = configuration{
 	ourConfigFilename: "AdGuardHome.yaml",
@@ -131,6 +132,16 @@ var config = configuration{
 		{Filter: dnsfilter.Filter{ID: 4}, Enabled: false, URL: "http://www.malwaredomainlist.com/hostslist/hosts.txt", Name: "MalwareDomainList.com Hosts List"},
 	},
 	SchemaVersion: currentSchemaVersion,
+}
+
+// init initializes default configuration for the current OS&ARCH
+func init() {
+	if runtime.GOARCH == "mips" || runtime.GOARCH == "mipsle" {
+		// Use plain DNS on MIPS, encryption is too slow
+		defaultDNS = []string{"1.1.1.1", "1.0.0.1"}
+		// also change the default config
+		config.DNS.UpstreamDNS = defaultDNS
+	}
 }
 
 // getConfigFilename returns path to the current config file
