@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -149,7 +148,7 @@ func upgradeSchema2to3(diskConfig *map[string]interface{}) error {
 	// Let's read dns configuration from diskConfig
 	dnsConfig, ok := (*diskConfig)["dns"]
 	if !ok {
-		return errors.New("no DNS configuration in config file")
+		return fmt.Errorf("no DNS configuration in config file")
 	}
 
 	// Convert interface{} to map[string]interface{}
@@ -161,7 +160,7 @@ func upgradeSchema2to3(diskConfig *map[string]interface{}) error {
 			newDNSConfig[fmt.Sprint(k)] = v
 		}
 	default:
-		return errors.New("DNS configuration is not a map")
+		return fmt.Errorf("DNS configuration is not a map")
 	}
 
 	// Replace bootstrap_dns value filed with new array contains old bootstrap_dns inside
@@ -170,7 +169,7 @@ func upgradeSchema2to3(diskConfig *map[string]interface{}) error {
 		(newDNSConfig)["bootstrap_dns"] = newBootstrapConfig
 		(*diskConfig)["dns"] = newDNSConfig
 	} else {
-		return errors.New("no bootstrap DNS in DNS config")
+		return fmt.Errorf("no bootstrap DNS in DNS config")
 	}
 
 	// Bump schema version

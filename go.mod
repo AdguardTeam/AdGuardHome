@@ -13,7 +13,6 @@ require (
 	github.com/kardianos/service v0.0.0-20181115005516-4c239ee84e7b
 	github.com/krolaw/dhcp4 v0.0.0-20180925202202-7cead472c414
 	github.com/miekg/dns v1.1.1
-	github.com/pkg/errors v0.8.0
 	github.com/shirou/gopsutil v2.18.10+incompatible
 	github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4 // indirect
 	github.com/stretchr/testify v1.2.2
