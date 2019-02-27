@@ -10,12 +10,10 @@ import (
 . Bad private key
 . Valid certificate & private key */
 func TestValidateCertificates(t *testing.T) {
-	var data tlsConfig
+	var data tlsConfigStatus
 
 	// bad cert
-	data.CertificateChain = "bad cert"
-	data.PrivateKey = ""
-	data = validateCertificates(data)
+	data = validateCertificates("bad cert", "", "")
 	if !(data.WarningValidation != "" &&
 		!data.ValidCert &&
 		!data.ValidChain) {
@@ -23,16 +21,14 @@ func TestValidateCertificates(t *testing.T) {
 	}
 
 	// bad priv key
-	data.CertificateChain = ""
-	data.PrivateKey = "bad priv key"
-	data = validateCertificates(data)
+	data = validateCertificates("", "bad priv key", "")
 	if !(data.WarningValidation != "" &&
 		!data.ValidKey) {
 		t.Fatalf("bad priv key: validateCertificates(): %v", data)
 	}
 
 	// valid cert & priv key
-	data.CertificateChain = `-----BEGIN CERTIFICATE-----
+	CertificateChain := `-----BEGIN CERTIFICATE-----
 MIICKzCCAZSgAwIBAgIJAMT9kPVJdM7LMA0GCSqGSIb3DQEBCwUAMC0xFDASBgNV
 BAoMC0FkR3VhcmQgTHRkMRUwEwYDVQQDDAxBZEd1YXJkIEhvbWUwHhcNMTkwMjI3
 MDkyNDIzWhcNNDYwNzE0MDkyNDIzWjAtMRQwEgYDVQQKDAtBZEd1YXJkIEx0ZDEV
@@ -46,7 +42,7 @@ LwlXfbakf7qkVTlCNXgoY7RaJ8rJdPgOZPoCTVToEhT6u/cb1c2qp8QB0dNExDna
 b0Z+dnODTZqQOJo6z/wIXlcUrnR4cQVvytXt8lFn+26l6Y6EMI26twC/xWr+1swq
 Muj4FeWHVDerquH4yMr1jsYLD3ci+kc5sbIX6TfVxQ==
 -----END CERTIFICATE-----`
-	data.PrivateKey = `-----BEGIN PRIVATE KEY-----
+	PrivateKey := `-----BEGIN PRIVATE KEY-----
 MIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBALC/BSc8mI68tw5p
 aYa7pjrySwWvXeetcFywOWHGVfLw9qiFWLdfESa3Y6tWMpZAXD9t1Xh9n211YUBV
 FGSB4ZshnM/tgEPU6t787lJD4NsIIRp++MkJxdAitN4oUTqL0bdpIwezQ/CrYuBX
@@ -62,7 +58,7 @@ O5EX70gpeGQMPDK0QSWpaazg956njJSDbNCFM4BccrdQbJu1cW4qOsfBAkAMgZuG
 O88slmgTRHX4JGFmy3rrLiHNI2BbJSuJ++Yllz8beVzh6NfvuY+HKRCmPqoBPATU
 kXS9jgARhhiWXJrk
 -----END PRIVATE KEY-----`
-	data = validateCertificates(data)
+	data = validateCertificates(CertificateChain, PrivateKey, "")
 	notBefore, _ := time.Parse(time.RFC3339, "2019-02-27T09:24:23Z")
 	notAfter, _ := time.Parse(time.RFC3339, "2046-07-14T09:24:23Z")
 	if !(data.WarningValidation != "" /* self signed */ &&

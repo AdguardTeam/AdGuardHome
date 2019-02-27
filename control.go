@@ -1025,7 +1025,7 @@ func handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	data = validateCertificates(data)
+	data.tlsConfigStatus = validateCertificates(data.CertificateChain, data.PrivateKey, data.ServerName)
 	marshalTLS(w, data)
 }
 
@@ -1051,7 +1051,7 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 
 	restartHTTPS := false
-	data = validateCertificates(data)
+	data.tlsConfigStatus = validateCertificates(data.CertificateChain, data.PrivateKey, data.ServerName)
 	if !reflect.DeepEqual(config.TLS.tlsConfigSettings, data.tlsConfigSettings) {
 		log.Printf("tls config settings have changed, will restart HTTPS server")
 		restartHTTPS = true
@@ -1078,21 +1078,24 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func validateCertificates(data tlsConfig) tlsConfig {
+/* Process certificate data and its private key.
+CertificateChain, PrivateKey parameters are optional.
+On error, return partially set object
+ with 'WarningValidation' field containing error description.
+*/
+func validateCertificates(CertificateChain, PrivateKey, ServerName string) tlsConfigStatus {
 	var err error
-
-	// clear out status for certificates
-	data.tlsConfigStatus = tlsConfigStatus{}
+	var data tlsConfigStatus
 
 	// check only public certificate separately from the key
-	if data.CertificateChain != "" {
-		log.Tracef("got certificate: %s", data.CertificateChain)
+	if CertificateChain != "" {
+		log.Tracef("got certificate: %s", CertificateChain)
 
 		// now do a more extended validation
 		var certs []*pem.Block    // PEM-encoded certificates
 		var skippedBytes []string // skipped bytes
 
-		pemblock := []byte(data.CertificateChain)
+		pemblock := []byte(CertificateChain)
 		for {
 			var decoded *pem.Block
 			decoded, pemblock = pem.Decode(pemblock)
@@ -1127,7 +1130,7 @@ func validateCertificates(data tlsConfig) tlsConfig {
 		// spew.Dump(parsedCerts)
 
 		opts := x509.VerifyOptions{
-			DNSName: data.ServerName,
+			DNSName: ServerName,
 		}
 
 		log.Printf("number of certs - %d", len(parsedCerts))
@@ -1164,13 +1167,13 @@ func validateCertificates(data tlsConfig) tlsConfig {
 	}
 
 	// validate private key (right now the only validation possible is just parsing it)
-	if data.PrivateKey != "" {
+	if PrivateKey != "" {
 		// now do a more extended validation
 		var key *pem.Block        // PEM-encoded certificates
 		var skippedBytes []string // skipped bytes
 
 		// go through all pem blocks, but take first valid pem block and drop the rest
-		pemblock := []byte(data.PrivateKey)
+		pemblock := []byte(PrivateKey)
 		for {
 			var decoded *pem.Block
 			decoded, pemblock = pem.Decode(pemblock)
@@ -1202,8 +1205,8 @@ func validateCertificates(data tlsConfig) tlsConfig {
 	}
 
 	// if both are set, validate both in unison
-	if data.PrivateKey != "" && data.CertificateChain != "" {
-		_, err = tls.X509KeyPair([]byte(data.CertificateChain), []byte(data.PrivateKey))
+	if PrivateKey != "" && CertificateChain != "" {
+		_, err = tls.X509KeyPair([]byte(CertificateChain), []byte(PrivateKey))
 		if err != nil {
 			data.WarningValidation = fmt.Sprintf("Invalid certificate or key: %s", err)
 			return data
