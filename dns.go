@@ -71,6 +71,7 @@ func generateServerConfig() dnsforward.ServerConfig {
 		}
 		newconfig.Upstreams = append(newconfig.Upstreams, dnsUpstream)
 	}
+	newconfig.AllServers = config.DNS.AllServers
 	return newconfig
 }
 
