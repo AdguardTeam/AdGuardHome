@@ -1078,135 +1078,151 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Return 0 on success
+func verifyCertChain(data *tlsConfigStatus, certChain string, serverName string) int {
+	log.Tracef("got certificate: %s", certChain)
+
+	// now do a more extended validation
+	var certs []*pem.Block    // PEM-encoded certificates
+	var skippedBytes []string // skipped bytes
+
+	pemblock := []byte(certChain)
+	for {
+		var decoded *pem.Block
+		decoded, pemblock = pem.Decode(pemblock)
+		if decoded == nil {
+			break
+		}
+		if decoded.Type == "CERTIFICATE" {
+			certs = append(certs, decoded)
+		} else {
+			skippedBytes = append(skippedBytes, decoded.Type)
+		}
+	}
+
+	var parsedCerts []*x509.Certificate
+
+	for _, cert := range certs {
+		parsed, err := x509.ParseCertificate(cert.Bytes)
+		if err != nil {
+			data.WarningValidation = fmt.Sprintf("Failed to parse certificate: %s", err)
+			return 1
+		}
+		parsedCerts = append(parsedCerts, parsed)
+	}
+
+	if len(parsedCerts) == 0 {
+		data.WarningValidation = fmt.Sprintf("You have specified an empty certificate")
+		return 1
+	}
+
+	data.ValidCert = true
+
+	// spew.Dump(parsedCerts)
+
+	opts := x509.VerifyOptions{
+		DNSName: serverName,
+	}
+
+	log.Printf("number of certs - %d", len(parsedCerts))
+	if len(parsedCerts) > 1 {
+		// set up an intermediate
+		pool := x509.NewCertPool()
+		for _, cert := range parsedCerts[1:] {
+			log.Printf("got an intermediate cert")
+			pool.AddCert(cert)
+		}
+		opts.Intermediates = pool
+	}
+
+	// TODO: save it as a warning rather than error it out -- shouldn't be a big problem
+	mainCert := parsedCerts[0]
+	_, err := mainCert.Verify(opts)
+	if err != nil {
+		// let self-signed certs through
+		data.WarningValidation = fmt.Sprintf("Your certificate does not verify: %s", err)
+	} else {
+		data.ValidChain = true
+	}
+	// spew.Dump(chains)
+
+	// update status
+	if mainCert != nil {
+		notAfter := mainCert.NotAfter
+		data.Subject = mainCert.Subject.String()
+		data.Issuer = mainCert.Issuer.String()
+		data.NotAfter = notAfter
+		data.NotBefore = mainCert.NotBefore
+		data.DNSNames = mainCert.DNSNames
+	}
+
+	return 0
+}
+
+// Return 0 on success
+func validatePkey(data *tlsConfigStatus, pkey string) int {
+	// now do a more extended validation
+	var key *pem.Block        // PEM-encoded certificates
+	var skippedBytes []string // skipped bytes
+
+	// go through all pem blocks, but take first valid pem block and drop the rest
+	pemblock := []byte(pkey)
+	for {
+		var decoded *pem.Block
+		decoded, pemblock = pem.Decode(pemblock)
+		if decoded == nil {
+			break
+		}
+		if decoded.Type == "PRIVATE KEY" || strings.HasSuffix(decoded.Type, " PRIVATE KEY") {
+			key = decoded
+			break
+		} else {
+			skippedBytes = append(skippedBytes, decoded.Type)
+		}
+	}
+
+	if key == nil {
+		data.WarningValidation = "No valid keys were found"
+		return 1
+	}
+
+	// parse the decoded key
+	_, keytype, err := parsePrivateKey(key.Bytes)
+	if err != nil {
+		data.WarningValidation = fmt.Sprintf("Failed to parse private key: %s", err)
+		return 1
+	}
+
+	data.ValidKey = true
+	data.KeyType = keytype
+	return 0
+}
+
 /* Process certificate data and its private key.
-CertificateChain, PrivateKey parameters are optional.
+All parameters are optional.
 On error, return partially set object
  with 'WarningValidation' field containing error description.
 */
-func validateCertificates(CertificateChain, PrivateKey, ServerName string) tlsConfigStatus {
-	var err error
+func validateCertificates(certChain, pkey, serverName string) tlsConfigStatus {
 	var data tlsConfigStatus
 
 	// check only public certificate separately from the key
-	if CertificateChain != "" {
-		log.Tracef("got certificate: %s", CertificateChain)
-
-		// now do a more extended validation
-		var certs []*pem.Block    // PEM-encoded certificates
-		var skippedBytes []string // skipped bytes
-
-		pemblock := []byte(CertificateChain)
-		for {
-			var decoded *pem.Block
-			decoded, pemblock = pem.Decode(pemblock)
-			if decoded == nil {
-				break
-			}
-			if decoded.Type == "CERTIFICATE" {
-				certs = append(certs, decoded)
-			} else {
-				skippedBytes = append(skippedBytes, decoded.Type)
-			}
-		}
-
-		var parsedCerts []*x509.Certificate
-
-		for _, cert := range certs {
-			parsed, err := x509.ParseCertificate(cert.Bytes)
-			if err != nil {
-				data.WarningValidation = fmt.Sprintf("Failed to parse certificate: %s", err)
-				return data
-			}
-			parsedCerts = append(parsedCerts, parsed)
-		}
-
-		if len(parsedCerts) == 0 {
-			data.WarningValidation = fmt.Sprintf("You have specified an empty certificate")
+	if certChain != "" {
+		if verifyCertChain(&data, certChain, serverName) != 0 {
 			return data
-		}
-
-		data.ValidCert = true
-
-		// spew.Dump(parsedCerts)
-
-		opts := x509.VerifyOptions{
-			DNSName: ServerName,
-		}
-
-		log.Printf("number of certs - %d", len(parsedCerts))
-		if len(parsedCerts) > 1 {
-			// set up an intermediate
-			pool := x509.NewCertPool()
-			for _, cert := range parsedCerts[1:] {
-				log.Printf("got an intermediate cert")
-				pool.AddCert(cert)
-			}
-			opts.Intermediates = pool
-		}
-
-		// TODO: save it as a warning rather than error it out -- shouldn't be a big problem
-		mainCert := parsedCerts[0]
-		_, err := mainCert.Verify(opts)
-		if err != nil {
-			// let self-signed certs through
-			data.WarningValidation = fmt.Sprintf("Your certificate does not verify: %s", err)
-		} else {
-			data.ValidChain = true
-		}
-		// spew.Dump(chains)
-
-		// update status
-		if mainCert != nil {
-			notAfter := mainCert.NotAfter
-			data.Subject = mainCert.Subject.String()
-			data.Issuer = mainCert.Issuer.String()
-			data.NotAfter = notAfter
-			data.NotBefore = mainCert.NotBefore
-			data.DNSNames = mainCert.DNSNames
 		}
 	}
 
 	// validate private key (right now the only validation possible is just parsing it)
-	if PrivateKey != "" {
-		// now do a more extended validation
-		var key *pem.Block        // PEM-encoded certificates
-		var skippedBytes []string // skipped bytes
-
-		// go through all pem blocks, but take first valid pem block and drop the rest
-		pemblock := []byte(PrivateKey)
-		for {
-			var decoded *pem.Block
-			decoded, pemblock = pem.Decode(pemblock)
-			if decoded == nil {
-				break
-			}
-			if decoded.Type == "PRIVATE KEY" || strings.HasSuffix(decoded.Type, " PRIVATE KEY") {
-				key = decoded
-				break
-			} else {
-				skippedBytes = append(skippedBytes, decoded.Type)
-			}
-		}
-
-		if key == nil {
-			data.WarningValidation = "No valid keys were found"
+	if pkey != "" {
+		if validatePkey(&data, pkey) != 0 {
 			return data
 		}
-
-		// parse the decoded key
-		_, keytype, err := parsePrivateKey(key.Bytes)
-		if err != nil {
-			data.WarningValidation = fmt.Sprintf("Failed to parse private key: %s", err)
-			return data
-		}
-
-		data.ValidKey = true
-		data.KeyType = keytype
 	}
 
 	// if both are set, validate both in unison
-	if PrivateKey != "" && CertificateChain != "" {
-		_, err = tls.X509KeyPair([]byte(CertificateChain), []byte(PrivateKey))
+	if pkey != "" && certChain != "" {
+		_, err := tls.X509KeyPair([]byte(certChain), []byte(pkey))
 		if err != nil {
 			data.WarningValidation = fmt.Sprintf("Invalid certificate or key: %s", err)
 			return data
