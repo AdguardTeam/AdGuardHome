@@ -142,6 +142,30 @@ paths:
                             8.8.4.4: OK
                             "192.168.1.104:53535": "Couldn't communicate with DNS server"
 
+    /set_bootstrap_dns:
+        post:
+            tags:
+                - global
+            operationId: setBootstrapDNS
+            summary: 'Set bootstrap DNS for DNS-over-HTTPS and DNS-over-TLS upstreams, empty value will reset it to default values'
+            consumes:
+                - text/plain
+            parameters:
+                -   in: body
+                    name: upstream
+                    description: 'Bootstrap servers, separated by newline or space, port is optional after colon'
+                    schema:
+                        # TODO: use JSON
+                        type: string
+                        example: |
+                            1.1.1.1
+                            1.0.0.1
+                            8.8.8.8 8.8.4.4
+                            192.168.1.104:53535
+            responses:
+                200:
+                    description: OK
+
     /version.json:
         get:
             tags:

@@ -437,6 +437,45 @@ func checkDNS(input string) error {
 	return nil
 }
 
+func handleSetBootstrapDNS(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		errorText := fmt.Sprintf("Failed to read request body: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusBadRequest)
+		return
+	}
+	// if empty body -- user is asking for default servers
+	hosts := strings.Fields(string(body))
+
+	if len(hosts) == 0 {
+		config.DNS.BootstrapDNS = defaultBootstrap
+	} else {
+		config.DNS.BootstrapDNS = hosts
+	}
+
+	err = writeAllConfigs()
+	if err != nil {
+		errorText := fmt.Sprintf("Couldn't write config file: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
+		return
+	}
+	err = reconfigureDNSServer()
+	if err != nil {
+		errorText := fmt.Sprintf("Couldn't reconfigure the DNS server: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
+		return
+	}
+	_, err = fmt.Fprintf(w, "OK %d bootsrap servers\n", len(hosts))
+	if err != nil {
+		errorText := fmt.Sprintf("Couldn't write body: %s", err)
+		log.Println(errorText)
+		http.Error(w, errorText, http.StatusInternalServerError)
+	}
+}
+
 func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 	if now.Sub(versionCheckLastTime) <= versionCheckPeriod && len(versionCheckJSON) != 0 {
@@ -1317,6 +1356,7 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/querylog_disable", postInstall(optionalAuth(ensurePOST(handleQueryLogDisable))))
 	http.HandleFunc("/control/set_upstream_dns", postInstall(optionalAuth(ensurePOST(handleSetUpstreamDNS))))
 	http.HandleFunc("/control/test_upstream_dns", postInstall(optionalAuth(ensurePOST(handleTestUpstreamDNS))))
+	http.HandleFunc("/control/set_bootstrap_dns", postInstall(optionalAuth(ensurePOST(handleSetBootstrapDNS))))
 	http.HandleFunc("/control/i18n/change_language", postInstall(optionalAuth(ensurePOST(handleI18nChangeLanguage))))
 	http.HandleFunc("/control/i18n/current_language", postInstall(optionalAuth(ensureGET(handleI18nCurrentLanguage))))
 	http.HandleFunc("/control/stats_top", postInstall(optionalAuth(ensureGET(handleStatsTop))))
