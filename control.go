@@ -1114,8 +1114,7 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Return 0 on success
-func verifyCertChain(data *tlsConfigStatus, certChain string, serverName string) int {
+func verifyCertChain(data *tlsConfigStatus, certChain string, serverName string) error {
 	log.Tracef("got certificate: %s", certChain)
 
 	// now do a more extended validation
@@ -1142,14 +1141,14 @@ func verifyCertChain(data *tlsConfigStatus, certChain string, serverName string)
 		parsed, err := x509.ParseCertificate(cert.Bytes)
 		if err != nil {
 			data.WarningValidation = fmt.Sprintf("Failed to parse certificate: %s", err)
-			return 1
+			return errors.New("")
 		}
 		parsedCerts = append(parsedCerts, parsed)
 	}
 
 	if len(parsedCerts) == 0 {
 		data.WarningValidation = fmt.Sprintf("You have specified an empty certificate")
-		return 1
+		return errors.New("")
 	}
 
 	data.ValidCert = true
@@ -1192,11 +1191,10 @@ func verifyCertChain(data *tlsConfigStatus, certChain string, serverName string)
 		data.DNSNames = mainCert.DNSNames
 	}
 
-	return 0
+	return nil
 }
 
-// Return 0 on success
-func validatePkey(data *tlsConfigStatus, pkey string) int {
+func validatePkey(data *tlsConfigStatus, pkey string) error {
 	// now do a more extended validation
 	var key *pem.Block        // PEM-encoded certificates
 	var skippedBytes []string // skipped bytes
@@ -1219,19 +1217,19 @@ func validatePkey(data *tlsConfigStatus, pkey string) int {
 
 	if key == nil {
 		data.WarningValidation = "No valid keys were found"
-		return 1
+		return errors.New("")
 	}
 
 	// parse the decoded key
 	_, keytype, err := parsePrivateKey(key.Bytes)
 	if err != nil {
 		data.WarningValidation = fmt.Sprintf("Failed to parse private key: %s", err)
-		return 1
+		return errors.New("")
 	}
 
 	data.ValidKey = true
 	data.KeyType = keytype
-	return 0
+	return nil
 }
 
 /* Process certificate data and its private key.
@@ -1244,14 +1242,14 @@ func validateCertificates(certChain, pkey, serverName string) tlsConfigStatus {
 
 	// check only public certificate separately from the key
 	if certChain != "" {
-		if verifyCertChain(&data, certChain, serverName) != 0 {
+		if verifyCertChain(&data, certChain, serverName) != nil {
 			return data
 		}
 	}
 
 	// validate private key (right now the only validation possible is just parsing it)
 	if pkey != "" {
-		if validatePkey(&data, pkey) != 0 {
+		if validatePkey(&data, pkey) != nil {
 			return data
 		}
 	}
