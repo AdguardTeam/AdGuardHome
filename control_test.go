@@ -71,7 +71,7 @@ kXS9jgARhhiWXJrk
 		data.NotBefore == notBefore &&
 		data.NotAfter == notAfter &&
 		// data.DNSNames[0] ==  &&
-		data.usable) {
+		data.ValidPair) {
 		t.Fatalf("valid cert & priv key: validateCertificates(): %v", data)
 	}
 }

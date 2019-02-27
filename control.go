@@ -1227,7 +1227,7 @@ func validateCertificates(certChain, pkey, serverName string) tlsConfigStatus {
 			data.WarningValidation = fmt.Sprintf("Invalid certificate or key: %s", err)
 			return data
 		}
-		data.usable = true
+		data.ValidPair = true
 	}
 
 	return data
