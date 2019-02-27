@@ -391,7 +391,6 @@ func setDNSServers(w *http.ResponseWriter, r *http.Request, upstreams bool) {
 		http.Error(*w, errorText, http.StatusInternalServerError)
 		return
 	}
-
 	_, err = fmt.Fprintf(*w, "OK %d servers\n", count)
 	if err != nil {
 		errorText := fmt.Sprintf("Couldn't write body: %s", err)
@@ -400,6 +399,7 @@ func setDNSServers(w *http.ResponseWriter, r *http.Request, upstreams bool) {
 	}
 }
 
+// checkBootstrapDNS checks if host is plain DNS
 func checkBootstrapDNS(host string) error {
 	// Check if host is ip without port
 	if net.ParseIP(host) != nil {
