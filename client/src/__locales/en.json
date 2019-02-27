@@ -215,7 +215,7 @@
     "encryption_config_saved": "Encryption config saved",
     "encryption_server": "Server name",
     "encryption_server_enter": "Enter your domain name",
-    "encryption_server_desc": "In order to use HTTPS, you need yo enter the server name that matches your SSL certificate.",
+    "encryption_server_desc": "In order to use HTTPS, you need to enter the server name that matches your SSL certificate.",
     "encryption_redirect": "Redirect to HTTPS automatically",
     "encryption_redirect_desc": "If checked, AdGuard Home will automatically redirect you from HTTP to HTTPS addresses.",
     "encryption_https": "HTTPS port",
