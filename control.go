@@ -329,15 +329,13 @@ func handleSetUpstreamConfig(w http.ResponseWriter, r *http.Request) {
 
 	// bootstrap servers are plain DNS only. We should remove tls:// https:// and sdns:// hosts from slice
 	bootstraps := []string{}
-	if len(newconfig.bootstrapDNS) > 0 {
-		for _, host := range newconfig.bootstrapDNS {
-			err := checkBootstrapDNS(host)
-			if err != nil {
-				log.Tracef("%s can not be used as bootstrap DNS cause: %s", host, err)
-				continue
-			}
-			bootstraps = append(bootstraps, host)
+	for _, host := range newconfig.bootstrapDNS {
+		err := checkBootstrapDNS(host)
+		if err != nil {
+			log.Tracef("%s can not be used as bootstrap DNS cause: %s", host, err)
+			continue
 		}
+		bootstraps = append(bootstraps, host)
 	}
 
 	config.DNS.BootstrapDNS = defaultBootstrap
