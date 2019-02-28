@@ -229,10 +229,10 @@ func validatePkey(data *tlsConfigStatus, pkey string) error {
 	return nil
 }
 
-/* Process certificate data and its private key.
-All parameters are optional.
-On error, return partially set object
- with 'WarningValidation' field containing error description. */
+// Process certificate data and its private key.
+// All parameters are optional.
+// On error, return partially set object
+//  with 'WarningValidation' field containing error description.
 func validateCertificates(certChain, pkey, serverName string) tlsConfigStatus {
 	var data tlsConfigStatus
 
