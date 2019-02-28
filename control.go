@@ -322,44 +322,31 @@ func handleSetUpstreamConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	setDNSServers(newconfig.upstreams, true)
-	setDNSServers(newconfig.bootstrapDNS, false)
-	config.DNS.AllServers = newconfig.allServers
-	httpUpdateConfigReloadDNSReturnOK(w, r)
-}
+	config.DNS.UpstreamDNS = defaultDNS
+	if len(newconfig.upstreams) > 0 {
+		config.DNS.UpstreamDNS = newconfig.upstreams
+	}
 
-// setDNSServers sets upstream and bootstrap DNS servers
-func setDNSServers(hosts []string, upstreams bool) {
 	// bootstrap servers are plain DNS only. We should remove tls:// https:// and sdns:// hosts from slice
 	bootstraps := []string{}
-	if !upstreams && len(hosts) > 0 {
-		for _, host := range hosts {
+	if len(newconfig.bootstrapDNS) > 0 {
+		for _, host := range newconfig.bootstrapDNS {
 			err := checkBootstrapDNS(host)
 			if err != nil {
 				log.Tracef("%s can not be used as bootstrap DNS cause: %s", host, err)
 				continue
 			}
-			hosts = append(bootstraps, host)
+			bootstraps = append(bootstraps, host)
 		}
 	}
 
-	// count of upstream or bootstrap servers
-	count := len(hosts)
-	if !upstreams {
-		count = len(bootstraps)
+	config.DNS.BootstrapDNS = defaultBootstrap
+	if len(bootstraps) > 0 {
+		config.DNS.BootstrapDNS = bootstraps
 	}
 
-	if upstreams {
-		config.DNS.UpstreamDNS = defaultDNS
-		if count != 0 {
-			config.DNS.UpstreamDNS = hosts
-		}
-	} else {
-		config.DNS.BootstrapDNS = defaultBootstrap
-		if count != 0 {
-			config.DNS.BootstrapDNS = bootstraps
-		}
-	}
+	config.DNS.AllServers = newconfig.allServers
+	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 // checkBootstrapDNS checks if host is plain DNS
