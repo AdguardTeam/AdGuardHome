@@ -306,35 +306,35 @@ func sortByValue(m map[string]int) []string {
 // upstreams configuration
 // -----------------------
 
+// TODO this struct will become unnecessary after config file rework
+type upstreamConfig struct {
+	upstreams    []string // Upstreams
+	bootstrapDNS []string // Bootstrap DNS
+	allServers   bool     // --all-servers param for dnsproxy
+}
+
 func handleSetUpstreamConfig(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
-}
+	newconfig := upstreamConfig{}
+	err := json.NewDecoder(r.Body).Decode(&newconfig)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Failed to parse new upstreams config json: %s", err)
+		return
+	}
 
-func handleSetUpstreamDNS(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-	setDNSServers(w, r, true)
-}
-
-func handleSetBootstrapDNS(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-	setDNSServers(w, r, false)
+	setDNSServers(newconfig.upstreams, true)
+	setDNSServers(newconfig.bootstrapDNS, false)
+	config.DNS.AllServers = newconfig.allServers
+	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 // setDNSServers sets upstream and bootstrap DNS servers
-func setDNSServers(w http.ResponseWriter, r *http.Request, upstreams bool) {
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to read request body: %s", err)
-		return
-	}
-	// if empty body -- user is asking for default servers
-	hosts := strings.Fields(string(body))
-
+func setDNSServers(hosts []string, upstreams bool) {
 	// bootstrap servers are plain DNS only. We should remove tls:// https:// and sdns:// hosts from slice
 	bootstraps := []string{}
 	if !upstreams && len(hosts) > 0 {
 		for _, host := range hosts {
-			err = checkBootstrapDNS(host)
+			err := checkBootstrapDNS(host)
 			if err != nil {
 				log.Tracef("%s can not be used as bootstrap DNS cause: %s", host, err)
 				continue
@@ -359,52 +359,6 @@ func setDNSServers(w http.ResponseWriter, r *http.Request, upstreams bool) {
 		if count != 0 {
 			config.DNS.BootstrapDNS = bootstraps
 		}
-	}
-
-	err = writeAllConfigs()
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't write config file: %s", err)
-		return
-	}
-	err = reconfigureDNSServer()
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't reconfigure the DNS server: %s", err)
-		return
-	}
-	_, err = fmt.Fprintf(w, "OK %d servers\n", count)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't write body: %s", err)
-	}
-}
-
-func handleAllServersEnable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-	config.DNS.AllServers = true
-	httpUpdateConfigReloadDNSReturnOK(w, r)
-}
-
-func handleAllServersDisable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-	config.DNS.AllServers = false
-	httpUpdateConfigReloadDNSReturnOK(w, r)
-}
-
-func handleAllServersStatus(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-	data := map[string]interface{}{
-		"enabled": config.DNS.AllServers,
-	}
-	jsonVal, err := json.Marshal(data)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to marshal status json: %s", err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to write response json: %s", err)
-		return
 	}
 }
 
@@ -1343,13 +1297,8 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/querylog", postInstall(optionalAuth(ensureGET(handleQueryLog))))
 	http.HandleFunc("/control/querylog_enable", postInstall(optionalAuth(ensurePOST(handleQueryLogEnable))))
 	http.HandleFunc("/control/querylog_disable", postInstall(optionalAuth(ensurePOST(handleQueryLogDisable))))
-	http.HandleFunc("/control/set_upstream_dns", postInstall(optionalAuth(ensurePOST(handleSetUpstreamDNS))))
 	http.HandleFunc("/control/set_upstreams_config", postInstall(optionalAuth(ensurePOST(handleSetUpstreamConfig))))
 	http.HandleFunc("/control/test_upstream_dns", postInstall(optionalAuth(ensurePOST(handleTestUpstreamDNS))))
-	http.HandleFunc("/control/set_bootstrap_dns", postInstall(optionalAuth(ensurePOST(handleSetBootstrapDNS))))
-	http.HandleFunc("/control/all_servers/enable", postInstall(optionalAuth(ensurePOST(handleAllServersEnable))))
-	http.HandleFunc("/control/all_servers/disable", postInstall(optionalAuth(ensurePOST(handleAllServersDisable))))
-	http.HandleFunc("/control/all_servers/status", postInstall(optionalAuth(ensureGET(handleAllServersStatus))))
 	http.HandleFunc("/control/i18n/change_language", postInstall(optionalAuth(ensurePOST(handleI18nChangeLanguage))))
 	http.HandleFunc("/control/i18n/current_language", postInstall(optionalAuth(ensureGET(handleI18nCurrentLanguage))))
 	http.HandleFunc("/control/stats_top", postInstall(optionalAuth(ensureGET(handleStatsTop))))

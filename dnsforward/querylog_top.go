@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bluele/gcache"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/bluele/gcache"
 	"github.com/miekg/dns"
 )
 

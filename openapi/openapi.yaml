@@ -106,63 +106,6 @@ paths:
                 200:
                     description: OK
 
-    /set_upstream_dns:
-        post:
-            tags:
-                - global
-            operationId: setUpstreamDNS
-            summary: 'Set upstream DNS for coredns, empty value will reset it to default values'
-            consumes:
-                - text/plain
-            parameters:
-                -   in: body
-                    name: upstream
-                    description: 'Upstream servers, separated by newline or space, port is optional after colon'
-                    schema:
-                        # TODO: use JSON
-                        type: string
-                        example: |
-                            1.1.1.1
-                            1.0.0.1
-                            8.8.8.8 8.8.4.4
-                            192.168.1.104:53535
-            responses:
-                200:
-                    description: OK
-
-    /all_servers/enable:
-        post:
-            tags:
-                - global
-            operationId: allServersEnable
-            summary: 'Enable parallel queries'
-            responses:
-                200:
-                    description: OK
-
-    /all_servers/disable:
-        post:
-            tags:
-                - global
-            operationId: allServersDisable
-            summary: 'Disable parallel queries'
-            responses:
-                200:
-                    description: OK
-
-    /all_servers/status:
-        get:
-            tags:
-                - global
-            operationId: allServersStatus
-            summary: 'Get parallel queries status'
-            responses:
-                200:
-                    description: OK
-                    examples:
-                        application/json:
-                            enabled: false
-
     /test_upstream_dns:
         post:
             tags:
@@ -193,30 +136,6 @@ paths:
                             8.8.8.8: OK
                             8.8.4.4: OK
                             "192.168.1.104:53535": "Couldn't communicate with DNS server"
-
-    /set_bootstrap_dns:
-        post:
-            tags:
-                - global
-            operationId: setBootstrapDNS
-            summary: 'Set bootstrap DNS for DNS-over-HTTPS and DNS-over-TLS upstreams, empty value will reset it to default values'
-            consumes:
-                - text/plain
-            parameters:
-                -   in: body
-                    name: upstream
-                    description: 'Bootstrap servers, separated by newline or space, port is optional after colon'
-                    schema:
-                        # TODO: use JSON
-                        type: string
-                        example: |
-                            1.1.1.1
-                            1.0.0.1
-                            8.8.8.8 8.8.4.4
-                            192.168.1.104:53535
-            responses:
-                200:
-                    description: OK
 
     /version.json:
         get:
@@ -880,12 +799,19 @@ definitions:
         required:
             - "bootstrap_dns"
             - "upstream_dns"
+            - "all_servers"
         properties:
             bootstrap_dns:
-                type: "string"
-                example: "8.8.8.8:53"
+                type: "array"
+                description: 'Bootstrap servers, port is optional after colon. Empty value will reset it to default values'
+                items:
+                    type: "string"
+                example:
+                    - "8.8.8.8:53"
+                    - "1.1.1.1:53"
             upstream_dns:
                 type: "array"
+                description: 'Upstream servers, port is optional after colon. Empty value will reset it to default values'
                 items:
                     type: "string"
                 example:
@@ -893,6 +819,7 @@ definitions:
                     - "tls://1.0.0.1"
             all_servers:
                 type: "boolean"
+                description: "If true, parallel queries to all configured upstream servers are enabled"
     Filter:
         type: "object"
         description: "Filter subscription info"
