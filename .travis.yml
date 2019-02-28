@@ -2,7 +2,7 @@ language: go
 sudo: false
 
 go:
-  - 1.11.x
+  - 1.12.x
   - 1.x
 os:
   - linux
@@ -38,7 +38,7 @@ matrix:
     # Release build configuration
     - name: release
       go:
-        - 1.11.x
+        - 1.12.x
       os:
         - linux
 
@@ -66,7 +66,7 @@ matrix:
     - name: docker
       if: type != pull_request AND (branch = master OR tag IS present)
       go:
-        - 1.11.x
+        - 1.12.x
       os:
         - linux
       services:

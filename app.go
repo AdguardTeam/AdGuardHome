@@ -69,6 +69,9 @@ func run(args options) {
 	// configure log level and output
 	configureLogger(args)
 
+	// enable TLS 1.3
+	enableTLS13()
+
 	// print the first message after logger is configured
 	log.Printf("AdGuard Home, version %s\n", VersionString)
 	log.Debug("Current working directory is %s", config.ourWorkingDir)
@@ -290,6 +293,14 @@ func configureLogger(args options) {
 			log.Fatalf("cannot create a log file: %s", err)
 		}
 		log.SetOutput(file)
+	}
+}
+
+// TODO after GO 1.13 release TLS 1.3 will be enabled by default. Remove this afterward
+func enableTLS13() {
+	err := os.Setenv("GODEBUG", os.Getenv("GODEBUG")+",tls13=1")
+	if err != nil {
+		log.Fatalf("Failed to enable TLS 1.3: %s", err)
 	}
 }
 
