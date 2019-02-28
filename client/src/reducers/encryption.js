@@ -70,6 +70,7 @@ const encryption = handleActions({
     valid_chain: false,
     valid_key: false,
     valid_cert: false,
+    valid_pair: false,
     status_cert: '',
     status_key: '',
     certificate_chain: '',

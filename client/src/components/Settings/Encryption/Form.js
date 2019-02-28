@@ -57,6 +57,7 @@ let Form = (props) => {
         valid_chain,
         valid_key,
         valid_cert,
+        valid_pair,
         dns_names,
         key_type,
         issuer,
@@ -64,6 +65,15 @@ let Form = (props) => {
         warning_validation,
         setTlsConfig,
     } = props;
+
+    const isSavingDisabled = invalid
+        || submitting
+        || processingConfig
+        || processingValidate
+        || (isEnabled && (!privateKey || !certificateChain))
+        || (privateKey && !valid_key)
+        || (certificateChain && !valid_cert)
+        || (privateKey && certificateChain && !valid_pair);
 
     return (
         <form onSubmit={handleSubmit}>
@@ -291,15 +301,7 @@ let Form = (props) => {
                 <button
                     type="submit"
                     className="btn btn-success btn-standart"
-                    disabled={
-                        invalid
-                        || submitting
-                        || processingConfig
-                        || processingValidate
-                        || (isEnabled && (!privateKey || !certificateChain))
-                        || (privateKey && !valid_key)
-                        || (certificateChain && !valid_cert)
-                    }
+                    disabled={isSavingDisabled}
                 >
                     <Trans>save_config</Trans>
                 </button>
@@ -334,6 +336,7 @@ Form.propTypes = {
     valid_chain: PropTypes.bool,
     valid_key: PropTypes.bool,
     valid_cert: PropTypes.bool,
+    valid_pair: PropTypes.bool,
     dns_names: PropTypes.string,
     key_type: PropTypes.string,
     issuer: PropTypes.string,
