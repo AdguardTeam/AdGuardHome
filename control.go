@@ -306,6 +306,10 @@ func sortByValue(m map[string]int) []string {
 // upstreams configuration
 // -----------------------
 
+func handleSetUpstreamConfig(w http.ResponseWriter, r *http.Request) {
+	log.Tracef("%s %v", r.Method, r.URL)
+}
+
 func handleSetUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
 	body, err := ioutil.ReadAll(r.Body)
@@ -1293,6 +1297,7 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/querylog_enable", postInstall(optionalAuth(ensurePOST(handleQueryLogEnable))))
 	http.HandleFunc("/control/querylog_disable", postInstall(optionalAuth(ensurePOST(handleQueryLogDisable))))
 	http.HandleFunc("/control/set_upstream_dns", postInstall(optionalAuth(ensurePOST(handleSetUpstreamDNS))))
+	http.HandleFunc("/control/set_upstreams_config", postInstall(optionalAuth(ensurePOST(handleSetUpstreamConfig))))
 	http.HandleFunc("/control/test_upstream_dns", postInstall(optionalAuth(ensurePOST(handleTestUpstreamDNS))))
 	http.HandleFunc("/control/all_servers/enable", postInstall(optionalAuth(ensurePOST(handleAllServersEnable))))
 	http.HandleFunc("/control/all_servers/disable", postInstall(optionalAuth(ensurePOST(handleAllServersDisable))))

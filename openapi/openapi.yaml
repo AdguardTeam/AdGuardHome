@@ -87,6 +87,25 @@ paths:
                 200:
                     description: OK
 
+    /set_upstreams_config:
+        post:
+            tags:
+                - global
+            operationId: setUpstreamsConfig
+            summary: "Updates the current upstreams configuration"
+            consumes:
+                - application/json
+            parameters:
+                - in: "body"
+                  name: "body"
+                  description: "Upstreams configuration JSON"
+                  required: true
+                  schema:
+                      $ref: "#/definitions/UpstreamsConfig"
+            responses:
+                200:
+                    description: OK
+
     /set_upstream_dns:
         post:
             tags:
@@ -831,6 +850,25 @@ definitions:
             language:
                 type: "string"
                 example: "en"
+    UpstreamsConfig:
+        type: "object"
+        description: "Upstreams configuration"
+        required:
+            - "bootstrap_dns"
+            - "upstream_dns"
+        properties:
+            bootstrap_dns:
+                type: "string"
+                example: "8.8.8.8:53"
+            upstream_dns:
+                type: "array"
+                items:
+                    type: "string"
+                example:
+                    - "tls://1.1.1.1"
+                    - "tls://1.0.0.1"
+            all_servers:
+                type: "boolean"
     Filter:
         type: "object"
         description: "Filter subscription info"
