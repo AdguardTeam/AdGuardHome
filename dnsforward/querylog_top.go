@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bluele/gcache"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/bluele/gcache"
 	"github.com/miekg/dns"
 )
 
@@ -157,6 +157,11 @@ func (d *dayTop) addEntry(entry *logEntry, q *dns.Msg, now time.Time) error {
 	}
 
 	hostname := strings.ToLower(strings.TrimSuffix(q.Question[0].Name, "."))
+
+	// if question hostname is empty, do nothing
+	if hostname == "" {
+		return nil
+	}
 
 	// get value, if not set, crate one
 	d.hoursReadLock()
