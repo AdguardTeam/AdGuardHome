@@ -312,6 +312,16 @@ func handleSetUpstreamConfig(w http.ResponseWriter, r *http.Request) {
 
 func handleSetUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
+	setDNSServers(w, r, true)
+}
+
+func handleSetBootstrapDNS(w http.ResponseWriter, r *http.Request) {
+	log.Tracef("%s %v", r.Method, r.URL)
+	setDNSServers(w, r, false)
+}
+
+// setDNSServers sets upstream and bootstrap DNS servers
+func setDNSServers(w http.ResponseWriter, r *http.Request, upstreams bool) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Failed to read request body: %s", err)
@@ -320,10 +330,35 @@ func handleSetUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	// if empty body -- user is asking for default servers
 	hosts := strings.Fields(string(body))
 
-	if len(hosts) == 0 {
+	// bootstrap servers are plain DNS only. We should remove tls:// https:// and sdns:// hosts from slice
+	bootstraps := []string{}
+	if !upstreams && len(hosts) > 0 {
+		for _, host := range hosts {
+			err = checkBootstrapDNS(host)
+			if err != nil {
+				log.Tracef("%s can not be used as bootstrap DNS cause: %s", host, err)
+				continue
+			}
+			hosts = append(bootstraps, host)
+		}
+	}
+
+	// count of upstream or bootstrap servers
+	count := len(hosts)
+	if !upstreams {
+		count = len(bootstraps)
+	}
+
+	if upstreams {
 		config.DNS.UpstreamDNS = defaultDNS
+		if count != 0 {
+			config.DNS.UpstreamDNS = hosts
+		}
 	} else {
-		config.DNS.UpstreamDNS = hosts
+		config.DNS.BootstrapDNS = defaultBootstrap
+		if count != 0 {
+			config.DNS.BootstrapDNS = bootstraps
+		}
 	}
 
 	err = writeAllConfigs()
@@ -336,7 +371,7 @@ func handleSetUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusInternalServerError, "Couldn't reconfigure the DNS server: %s", err)
 		return
 	}
-	_, err = fmt.Fprintf(w, "OK %d servers\n", len(hosts))
+	_, err = fmt.Fprintf(w, "OK %d servers\n", count)
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Couldn't write body: %s", err)
 	}
@@ -371,6 +406,18 @@ func handleAllServersStatus(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusInternalServerError, "Unable to write response json: %s", err)
 		return
 	}
+}
+
+// checkBootstrapDNS checks if host is plain DNS
+func checkBootstrapDNS(host string) error {
+	// Check if host is ip without port
+	if net.ParseIP(host) != nil {
+		return nil
+	}
+
+	// Check if host is ip with port
+	_, _, err := net.SplitHostPort(host)
+	return err
 }
 
 func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
@@ -1299,6 +1346,7 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/set_upstream_dns", postInstall(optionalAuth(ensurePOST(handleSetUpstreamDNS))))
 	http.HandleFunc("/control/set_upstreams_config", postInstall(optionalAuth(ensurePOST(handleSetUpstreamConfig))))
 	http.HandleFunc("/control/test_upstream_dns", postInstall(optionalAuth(ensurePOST(handleTestUpstreamDNS))))
+	http.HandleFunc("/control/set_bootstrap_dns", postInstall(optionalAuth(ensurePOST(handleSetBootstrapDNS))))
 	http.HandleFunc("/control/all_servers/enable", postInstall(optionalAuth(ensurePOST(handleAllServersEnable))))
 	http.HandleFunc("/control/all_servers/disable", postInstall(optionalAuth(ensurePOST(handleAllServersDisable))))
 	http.HandleFunc("/control/all_servers/status", postInstall(optionalAuth(ensureGET(handleAllServersStatus))))

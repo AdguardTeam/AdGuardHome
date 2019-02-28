@@ -66,7 +66,7 @@ type FilteringConfig struct {
 	Ratelimit          int      `yaml:"ratelimit"`
 	RatelimitWhitelist []string `yaml:"ratelimit_whitelist"`
 	RefuseAny          bool     `yaml:"refuse_any"`
-	BootstrapDNS       string   `yaml:"bootstrap_dns"`
+	BootstrapDNS       []string `yaml:"bootstrap_dns"`
 	AllServers         bool     `yaml:"all_servers"`
 
 	dnsfilter.Config `yaml:",inline"`
