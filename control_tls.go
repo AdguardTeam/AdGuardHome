@@ -138,14 +138,14 @@ func verifyCertChain(data *tlsConfigStatus, certChain string, serverName string)
 		parsed, err := x509.ParseCertificate(cert.Bytes)
 		if err != nil {
 			data.WarningValidation = fmt.Sprintf("Failed to parse certificate: %s", err)
-			return errors.New("")
+			return errors.New(data.WarningValidation)
 		}
 		parsedCerts = append(parsedCerts, parsed)
 	}
 
 	if len(parsedCerts) == 0 {
 		data.WarningValidation = fmt.Sprintf("You have specified an empty certificate")
-		return errors.New("")
+		return errors.New(data.WarningValidation)
 	}
 
 	data.ValidCert = true
@@ -214,14 +214,14 @@ func validatePkey(data *tlsConfigStatus, pkey string) error {
 
 	if key == nil {
 		data.WarningValidation = "No valid keys were found"
-		return errors.New("")
+		return errors.New(data.WarningValidation)
 	}
 
 	// parse the decoded key
 	_, keytype, err := parsePrivateKey(key.Bytes)
 	if err != nil {
 		data.WarningValidation = fmt.Sprintf("Failed to parse private key: %s", err)
-		return errors.New("")
+		return errors.New(data.WarningValidation)
 	}
 
 	data.ValidKey = true
