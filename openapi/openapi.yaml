@@ -1247,6 +1247,10 @@ definitions:
                 type: "string"
                 example: "You have specified an empty certificate"
                 description: "warning_validation is a validation warning message with the issue description"
+            valid_pair:
+                type: "boolean"
+                example: "true"
+                description: "valid_pair is true if both certificate and private key are correct"
     NetInterface:
         type: "object"
         description: "Network interface info"

@@ -87,7 +87,7 @@ type tlsConfigStatus struct {
 	KeyType  string `yaml:"-" json:"key_type,omitempty"` // KeyType is one of RSA or ECDSA
 
 	// is usable? set by validator
-	usable bool
+	ValidPair bool `yaml:"-" json:"valid_pair"` // ValidPair is true if both certificate and private key are correct
 
 	// warnings
 	WarningValidation string `yaml:"-" json:"warning_validation,omitempty"` // WarningValidation is a validation warning message with the issue description
