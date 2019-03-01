@@ -368,3 +368,11 @@ func (s *Server) Leases() []*Lease {
 	s.RUnlock()
 	return result
 }
+
+// Reset internal state
+func (s *Server) reset() {
+	s.Lock()
+	s.leases = nil
+	s.Unlock()
+	s.IPpool = make(map[[4]byte]net.HardwareAddr)
+}
