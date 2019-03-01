@@ -358,33 +358,6 @@ func (s *Server) handleDHCP4Request(p dhcp4.Packet, options dhcp4.Options) dhcp4
 	//
 
 	log.Tracef("lease IP is different from requested IP: %s vs %s", lease.IP, reqIP)
-
-	hwaddr := s.findReservedHWaddr(reqIP)
-	if hwaddr == nil {
-		// not in pool, check if it's in DHCP range
-		if dhcp4.IPInRange(s.leaseStart, s.leaseStop, reqIP) {
-			// okay, we can give it to our client -- it's in our DHCP range and not taken, so let them use their IP
-			log.Tracef("Replying with ACK: request IP %v is not taken, so assigning lease IP %v to it, for %v", reqIP, lease.IP, p.CHAddr())
-			s.unreserveIP(lease.IP)
-			lease.IP = reqIP
-			s.reserveIP(reqIP, p.CHAddr())
-			lease.Expiry = time.Now().Add(s.leaseTime)
-			return dhcp4.ReplyPacket(p, dhcp4.ACK, s.ipnet.IP, lease.IP, s.leaseTime, s.leaseOptions.SelectOrderOrAll(options[dhcp4.OptionParameterRequestList]))
-		}
-	}
-
-	if hwaddr != nil && !bytes.Equal(hwaddr, lease.HWAddr) {
-		log.Printf("SHOULD NOT HAPPEN: IP pool hwaddr does not match lease hwaddr: %s vs %s", hwaddr, lease.HWAddr)
-	}
-
-	// requsted IP is not sufficient, reply with NAK
-	if hwaddr != nil {
-		log.Tracef("Replying with NAK: request IP %s is taken, asked by %v", reqIP, p.CHAddr())
-		return dhcp4.ReplyPacket(p, dhcp4.NAK, s.ipnet.IP, nil, 0, nil)
-	}
-
-	// requested IP is outside of DHCP range
-	log.Tracef("Replying with NAK: request IP %s is outside of DHCP range [%s, %s], asked by %v", reqIP, s.leaseStart, s.leaseStop, p.CHAddr())
 	return dhcp4.ReplyPacket(p, dhcp4.NAK, s.ipnet.IP, nil, 0, nil)
 }
 
