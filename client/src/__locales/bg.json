@@ -4,7 +4,7 @@
     "save_config": "Запиши настройките",
     "enabled_dhcp": "DHCP е разрешен",
     "disabled_dhcp": "DHCP е забранен",
-    "dhcp_title": "DHCP сървър (нестабилен!)",
+    "dhcp_title": "DHCP сървър (тестови!)",
     "dhcp_description": "Ако рутера ви не раздава DHCP адреси, може да използвате вградения в AdGuard DHCP сървър.",
     "dhcp_enable": "Рзреши DHCP сървъра",
     "dhcp_disable": "Забрани DHCP сървъра",
