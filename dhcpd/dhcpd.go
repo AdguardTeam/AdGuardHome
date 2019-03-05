@@ -40,6 +40,11 @@ type Server struct {
 
 	ipnet *net.IPNet // if interface name changes, this needs to be reset
 
+	cond     *sync.Cond // Synchronize worker thread with main thread
+	mutex    sync.Mutex // Mutex for 'cond'
+	running  bool       // Set if the worker thread is running
+	stopping bool       // Set if the worker thread should be stopped
+
 	// leases
 	leases       []*Lease
 	leaseStart   net.IP        // parsed from config RangeStart
@@ -131,14 +136,18 @@ func (s *Server) Start(config *ServerConfig) error {
 	log.Info("DHCP: listening on 0.0.0.0:67")
 
 	s.conn = c
+	s.cond = sync.NewCond(&s.mutex)
 
+	s.running = true
 	go func() {
 		// operate on c instead of c.conn because c.conn can change over time
 		err := dhcp4.Serve(c, s)
-		if err != nil {
+		if err != nil && !s.stopping {
 			log.Printf("dhcp4.Serve() returned with error: %s", err)
 		}
 		c.Close() // in case Serve() exits for other reason than listening socket closure
+		s.running = false
+		s.cond.Signal()
 	}()
 
 	return nil
@@ -150,10 +159,21 @@ func (s *Server) Stop() error {
 		// nothing to do, return silently
 		return nil
 	}
+
+	s.stopping = true
+
 	err := s.closeConn()
 	if err != nil {
 		return wrapErrPrint(err, "Couldn't close UDP listening socket")
 	}
+
+	// We've just closed the listening socket.
+	// Worker thread should exit right after it tries to read from the socket.
+	s.mutex.Lock()
+	for s.running {
+		s.cond.Wait()
+	}
+	s.mutex.Unlock()
 
 	s.dbStore()
 	return nil
