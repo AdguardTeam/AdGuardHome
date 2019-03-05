@@ -3,6 +3,7 @@ package dhcpd
 import (
 	"bytes"
 	"net"
+	"os"
 	"testing"
 	"time"
 
@@ -112,4 +113,48 @@ func misc(t *testing.T, s *Server) {
 	check(t, bytes.Equal(p2.CHAddr(), hw), "p2.CHAddr")
 	check(t, bytes.Equal(opt[dhcp4.OptionIPAddressLeaseTime], dhcp4.OptionsLeaseTime(5*time.Second)), "OptionIPAddressLeaseTime")
 	check(t, bytes.Equal(opt[dhcp4.OptionServerIdentifier], s.ipnet.IP), "OptionServerIdentifier")
+}
+
+// Leases database store/load
+func TestDB(t *testing.T) {
+	var s = Server{}
+	var p dhcp4.Packet
+	var hw1, hw2 net.HardwareAddr
+	var lease *Lease
+
+	s.leaseStart = []byte{1, 1, 1, 1}
+	s.leaseStop = []byte{1, 1, 1, 2}
+	s.leaseTime = 5 * time.Second
+	s.leaseOptions = dhcp4.Options{}
+	s.ipnet = &net.IPNet{
+		IP:   []byte{1, 2, 3, 4},
+		Mask: []byte{0xff, 0xff, 0xff, 0xff},
+	}
+
+	p = make(dhcp4.Packet, 241)
+
+	hw1 = []byte{1, 2, 3, 4, 5, 6}
+	p.SetCHAddr(hw1)
+	lease, _ = s.reserveLease(p)
+	lease.Expiry = time.Unix(4000000001, 0)
+
+	hw2 = []byte{2, 2, 3, 4, 5, 6}
+	p.SetCHAddr(hw2)
+	lease, _ = s.reserveLease(p)
+	lease.Expiry = time.Unix(4000000002, 0)
+
+	os.Remove("leases.db")
+	s.dbStore()
+	s.reset()
+
+	s.dbLoad()
+	check(t, bytes.Equal(s.leases[0].HWAddr, hw1), "leases[0].HWAddr")
+	check(t, bytes.Equal(s.leases[0].IP, []byte{1, 1, 1, 1}), "leases[0].IP")
+	check(t, s.leases[0].Expiry.Unix() == 4000000001, "leases[0].Expiry")
+
+	check(t, bytes.Equal(s.leases[1].HWAddr, hw2), "leases[1].HWAddr")
+	check(t, bytes.Equal(s.leases[1].IP, []byte{1, 1, 1, 2}), "leases[1].IP")
+	check(t, s.leases[1].Expiry.Unix() == 4000000002, "leases[1].Expiry")
+
+	os.Remove("leases.db")
 }

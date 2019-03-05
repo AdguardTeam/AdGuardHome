@@ -122,6 +122,8 @@ func (s *Server) Start(config *ServerConfig) error {
 		s.closeConn()
 	}
 
+	s.dbLoad()
+
 	c, err := newFilterConn(*iface, ":67") // it has to be bound to 0.0.0.0:67, otherwise it won't see DHCP discover/request packets
 	if err != nil {
 		return wrapErrPrint(err, "Couldn't start listening socket on 0.0.0.0:67")
@@ -153,6 +155,7 @@ func (s *Server) Stop() error {
 		return wrapErrPrint(err, "Couldn't close UDP listening socket")
 	}
 
+	s.dbStore()
 	return nil
 }
 
