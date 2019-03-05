@@ -27,6 +27,12 @@ func ensure(method string, handler func(http.ResponseWriter, *http.Request)) fun
 			http.Error(w, "This request must be "+method, http.StatusMethodNotAllowed)
 			return
 		}
+
+		if method == "POST" || method == "PUT" || method == "DELETE" {
+			controlLock.Lock()
+			defer controlLock.Unlock()
+		}
+
 		handler(w, r)
 	}
 }
