@@ -361,12 +361,12 @@ func checkBootstrapDNS(host string) error {
 
 func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
-	body, err := ioutil.ReadAll(r.Body)
+	hosts := []string{}
+	err := json.NewDecoder(r.Body).Decode(&hosts)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Failed to read request body: %s", err)
 		return
 	}
-	hosts := strings.Fields(string(body))
 
 	if len(hosts) == 0 {
 		httpError(w, http.StatusBadRequest, "No servers specified")
