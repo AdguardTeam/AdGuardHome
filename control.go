@@ -329,7 +329,7 @@ func handleSetUpstreamConfig(w http.ResponseWriter, r *http.Request) {
 
 	// bootstrap servers are plain DNS only. We should return http error if there are tls:// https:// or sdns:// hosts in slice
 	for _, host := range newconfig.BootstrapDNS {
-		err := checkBootstrapDNS(host)
+		err := checkPlainDNS(host)
 		if err != nil {
 			httpError(w, http.StatusBadRequest, "%s can not be used as bootstrap dns cause: %s", host, err)
 			return
@@ -345,16 +345,29 @@ func handleSetUpstreamConfig(w http.ResponseWriter, r *http.Request) {
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
-// checkBootstrapDNS checks if host is plain DNS
-func checkBootstrapDNS(host string) error {
+// checkPlainDNS checks if host is plain DNS
+func checkPlainDNS(host string) error {
 	// Check if host is ip without port
 	if net.ParseIP(host) != nil {
 		return nil
 	}
 
 	// Check if host is ip with port
-	_, _, err := net.SplitHostPort(host)
-	return err
+	ip, port, err := net.SplitHostPort(host)
+	if err != nil {
+		return err
+	}
+
+	if net.ParseIP(ip) == nil {
+		return fmt.Errorf("%s is not valid IP", ip)
+	}
+
+	_, err = strconv.ParseInt(port, 0, 64)
+	if err != nil {
+		return fmt.Errorf("%s is not valid port: %s", port, err)
+	}
+
+	return nil
 }
 
 func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
