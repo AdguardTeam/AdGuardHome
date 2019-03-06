@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -18,26 +17,6 @@ import (
 
 	"github.com/joomcode/errorx"
 )
-
-// ----------------------------------
-// helper functions for working with files
-// ----------------------------------
-
-// Writes data first to a temporary file and then renames it to what's specified in path
-func safeWriteFile(path string, data []byte) error {
-	dir := filepath.Dir(path)
-	err := os.MkdirAll(dir, 0755)
-	if err != nil {
-		return err
-	}
-
-	tmpPath := path + ".tmp"
-	err = ioutil.WriteFile(tmpPath, data, 0644)
-	if err != nil {
-		return err
-	}
-	return os.Rename(tmpPath, path)
-}
 
 // ----------------------------------
 // helper functions for HTTP handlers

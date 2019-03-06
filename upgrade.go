@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/AdguardTeam/golibs/file"
 	"github.com/AdguardTeam/golibs/log"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -86,7 +87,7 @@ func upgradeConfigSchema(oldVersion int, diskConfig *map[string]interface{}) err
 		return err
 	}
 
-	err = safeWriteFile(configFile, body)
+	err = file.SafeWrite(configFile, body)
 	if err != nil {
 		log.Printf("Couldn't save YAML config: %s", err)
 		return err

@@ -10,6 +10,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
+	"github.com/AdguardTeam/golibs/file"
 	"github.com/AdguardTeam/golibs/log"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -217,7 +218,7 @@ func (c *configuration) write() error {
 		log.Error("Couldn't generate YAML file: %s", err)
 		return err
 	}
-	err = safeWriteFile(configFile, yamlText)
+	err = file.SafeWrite(configFile, yamlText)
 	if err != nil {
 		log.Error("Couldn't save YAML config: %s", err)
 		return err
