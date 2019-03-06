@@ -327,20 +327,18 @@ func handleSetUpstreamConfig(w http.ResponseWriter, r *http.Request) {
 		config.DNS.UpstreamDNS = newconfig.Upstreams
 	}
 
-	// bootstrap servers are plain DNS only. We should remove tls:// https:// and sdns:// hosts from slice
-	bootstraps := []string{}
+	// bootstrap servers are plain DNS only. We should return http error if there are tls:// https:// or sdns:// hosts in slice
 	for _, host := range newconfig.BootstrapDNS {
 		err := checkBootstrapDNS(host)
 		if err != nil {
-			log.Tracef("%s can not be used as bootstrap DNS cause: %s", host, err)
-			continue
+			httpError(w, http.StatusBadRequest, "%s can not be used as bootstrap dns cause: %s", host, err)
+			return
 		}
-		bootstraps = append(bootstraps, host)
 	}
 
 	config.DNS.BootstrapDNS = defaultBootstrap
-	if len(bootstraps) > 0 {
-		config.DNS.BootstrapDNS = bootstraps
+	if len(newconfig.BootstrapDNS) > 0 {
+		config.DNS.BootstrapDNS = newconfig.BootstrapDNS
 	}
 
 	config.DNS.AllServers = newconfig.AllServers
@@ -361,22 +359,22 @@ func checkBootstrapDNS(host string) error {
 
 func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
-	hosts := []string{}
-	err := json.NewDecoder(r.Body).Decode(&hosts)
+	upstreamConfig := upstreamConfig{}
+	err := json.NewDecoder(r.Body).Decode(&upstreamConfig)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Failed to read request body: %s", err)
 		return
 	}
 
-	if len(hosts) == 0 {
+	if len(upstreamConfig.Upstreams) == 0 {
 		httpError(w, http.StatusBadRequest, "No servers specified")
 		return
 	}
 
 	result := map[string]string{}
 
-	for _, host := range hosts {
-		err = checkDNS(host)
+	for _, host := range upstreamConfig.Upstreams {
+		err = checkDNS(host, upstreamConfig.BootstrapDNS)
 		if err != nil {
 			log.Info("%v", err)
 			result[host] = err.Error()
@@ -398,9 +396,13 @@ func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func checkDNS(input string) error {
+func checkDNS(input string, bootstrap []string) error {
+	if len(bootstrap) == 0 {
+		bootstrap = defaultBootstrap
+	}
+
 	log.Debug("Checking if DNS %s works...", input)
-	u, err := upstream.AddressToUpstream(input, upstream.Options{Timeout: dnsforward.DefaultTimeout})
+	u, err := upstream.AddressToUpstream(input, upstream.Options{Bootstrap: bootstrap, Timeout: dnsforward.DefaultTimeout})
 	if err != nil {
 		return fmt.Errorf("failed to choose upstream for %s: %s", input, err)
 	}

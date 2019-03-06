@@ -111,15 +111,15 @@ paths:
             tags:
                 - global
             operationId: testUpstreamDNS
-            summary: "Test upstream DNS"
+            summary: "Test upstream configuration"
             consumes:
                 - application/json
             parameters:
                 -   in: "body"
                     name: "body"
-                    description: "Upstream servers to be tested"
+                    description: "Upstream configuration to be tested"
                     schema:
-                        $ref: "#/definitions/TestUpstreams"
+                        $ref: "#/definitions/UpstreamsConfig"
             responses:
                 200:
                     description: 'Status of testing each requested server, with "OK" meaning that server works, any other text means an error.'
@@ -814,20 +814,6 @@ definitions:
             all_servers:
                 type: "boolean"
                 description: "If true, parallel queries to all configured upstream servers are enabled"
-    TestUpstreams:
-        type: "object"
-        description: "Upstream servers to be tested"
-        required:
-            - "upstream_dns"
-        properties:
-            upstream_dns:
-                type: "array"
-                description: 'Upstream servers, port is optional after colon'
-                items:
-                    type: "string"
-                example:
-                    - "tls://1.1.1.1"
-                    - "tls://1.0.0.1"
     Filter:
         type: "object"
         description: "Filter subscription info"
