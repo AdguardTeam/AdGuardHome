@@ -308,9 +308,9 @@ func sortByValue(m map[string]int) []string {
 
 // TODO this struct will become unnecessary after config file rework
 type upstreamConfig struct {
-	upstreams    []string // Upstreams
-	bootstrapDNS []string // Bootstrap DNS
-	allServers   bool     // --all-servers param for dnsproxy
+	Upstreams    []string `json:"upstream_dns"`  // Upstreams
+	BootstrapDNS []string `json:"bootstrap_dns"` // Bootstrap DNS
+	AllServers   bool     `json:"all_servers"`   // --all-servers param for dnsproxy
 }
 
 func handleSetUpstreamConfig(w http.ResponseWriter, r *http.Request) {
@@ -323,13 +323,13 @@ func handleSetUpstreamConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	config.DNS.UpstreamDNS = defaultDNS
-	if len(newconfig.upstreams) > 0 {
-		config.DNS.UpstreamDNS = newconfig.upstreams
+	if len(newconfig.Upstreams) > 0 {
+		config.DNS.UpstreamDNS = newconfig.Upstreams
 	}
 
 	// bootstrap servers are plain DNS only. We should remove tls:// https:// and sdns:// hosts from slice
 	bootstraps := []string{}
-	for _, host := range newconfig.bootstrapDNS {
+	for _, host := range newconfig.BootstrapDNS {
 		err := checkBootstrapDNS(host)
 		if err != nil {
 			log.Tracef("%s can not be used as bootstrap DNS cause: %s", host, err)
@@ -343,7 +343,7 @@ func handleSetUpstreamConfig(w http.ResponseWriter, r *http.Request) {
 		config.DNS.BootstrapDNS = bootstraps
 	}
 
-	config.DNS.AllServers = newconfig.allServers
+	config.DNS.AllServers = newconfig.AllServers
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
