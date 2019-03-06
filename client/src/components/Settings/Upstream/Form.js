@@ -14,6 +14,8 @@ let Form = (props) => {
         handleSubmit,
         testUpstream,
         upstreamDns,
+        bootstrapDns,
+        allServers,
         submitting,
         invalid,
         processingSetUpstream,
@@ -30,7 +32,9 @@ let Form = (props) => {
             <div className="row">
                 <div className="col-12">
                     <div className="form__group form__group--settings">
-                        <label>{t('upstream_dns')}</label>
+                        <label className="form__label" htmlFor="upstream_dns">
+                            <Trans>upstream_dns</Trans>
+                        </label>
                         <Field
                             id="upstream_dns"
                             name="upstream_dns"
@@ -53,14 +57,19 @@ let Form = (props) => {
                 </div>
                 <div className="col-12">
                     <div className="form__group">
-                        <label>{t('bootstrap_dns')}</label>
+                        <label className="form__label" htmlFor="bootstrap_dns">
+                            <Trans>bootstrap_dns</Trans>
+                        </label>
+                        <div className="form__desc form__desc--top">
+                            <Trans>bootstrap_dns_desc</Trans>
+                        </div>
                         <Field
                             id="bootstrap_dns"
                             name="bootstrap_dns"
                             component="textarea"
                             type="text"
                             className="form-control"
-                            placeholder={t('bootstrap_dns_desc')}
+                            placeholder={t('bootstrap_dns')}
                         />
                     </div>
                 </div>
@@ -70,7 +79,11 @@ let Form = (props) => {
                     <button
                         type="button"
                         className={testButtonClass}
-                        onClick={() => testUpstream(upstreamDns)}
+                        onClick={() => testUpstream({
+                            upstream_dns: upstreamDns,
+                            bootstrap_dns: bootstrapDns,
+                            all_servers: allServers,
+                        })}
                         disabled={!upstreamDns || processingTestUpstream}
                     >
                         <Trans>test_upstream_btn</Trans>
@@ -100,6 +113,8 @@ Form.propTypes = {
     invalid: PropTypes.bool,
     initialValues: PropTypes.object,
     upstreamDns: PropTypes.string,
+    bootstrapDns: PropTypes.string,
+    allServers: PropTypes.bool,
     processingTestUpstream: PropTypes.bool,
     processingSetUpstream: PropTypes.bool,
     t: PropTypes.func,
@@ -109,8 +124,12 @@ const selector = formValueSelector('upstreamForm');
 
 Form = connect((state) => {
     const upstreamDns = selector(state, 'upstream_dns');
+    const bootstrapDns = selector(state, 'bootstrap_dns');
+    const allServers = selector(state, 'all_servers');
     return {
         upstreamDns,
+        bootstrapDns,
+        allServers,
     };
 })(Form);
 
