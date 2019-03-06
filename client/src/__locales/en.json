@@ -249,5 +249,5 @@
     "update_announcement": "AdGuard Home {{version}} is now available! <0>Click here</0> for more info.",
     "upstream_parallel": "Use parallel queries to speed up resolving by simultaneously querying all upstream servers",
     "bootstrap_dns": "Bootstrap DNS servers",
-    "bootstrap_dns_desc": "Bootstrap DNS servers are used to resolve the IP address of the DOH/DOT resolvers you specify as upstreams."
+    "bootstrap_dns_desc": "Bootstrap DNS servers are used to resolve IP address of the DOH/DOT resolvers you specify as upstreams."
 }
