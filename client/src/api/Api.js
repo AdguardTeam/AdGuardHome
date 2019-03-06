@@ -34,7 +34,7 @@ export default class Api {
     GLOBAL_QUERY_LOG = { path: 'querylog', method: 'GET' };
     GLOBAL_QUERY_LOG_ENABLE = { path: 'querylog_enable', method: 'POST' };
     GLOBAL_QUERY_LOG_DISABLE = { path: 'querylog_disable', method: 'POST' };
-    GLOBAL_SET_UPSTREAM_DNS = { path: 'set_upstream_dns', method: 'POST' };
+    GLOBAL_SET_UPSTREAM_DNS = { path: 'set_upstreams_config', method: 'POST' };
     GLOBAL_TEST_UPSTREAM_DNS = { path: 'test_upstream_dns', method: 'POST' };
     GLOBAL_VERSION = { path: 'version.json', method: 'GET' };
     GLOBAL_ENABLE_PROTECTION = { path: 'enable_protection', method: 'POST' };
@@ -110,7 +110,7 @@ export default class Api {
         const { path, method } = this.GLOBAL_SET_UPSTREAM_DNS;
         const config = {
             data: url,
-            header: { 'Content-Type': 'text/plain' },
+            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, config);
     }
@@ -119,7 +119,7 @@ export default class Api {
         const { path, method } = this.GLOBAL_TEST_UPSTREAM_DNS;
         const config = {
             data: servers,
-            header: { 'Content-Type': 'text/plain' },
+            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, config);
     }

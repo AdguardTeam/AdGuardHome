@@ -41,22 +41,6 @@ class Settings extends Component {
         this.props.getTlsStatus();
     }
 
-    handleUpstreamChange = (value) => {
-        this.props.handleUpstreamChange({ upstreamDns: value });
-    };
-
-    handleUpstreamSubmit = () => {
-        this.props.setUpstream(this.props.dashboard.upstreamDns);
-    };
-
-    handleUpstreamTest = () => {
-        if (this.props.dashboard.upstreamDns.length > 0) {
-            this.props.testUpstream(this.props.dashboard.upstreamDns);
-        } else {
-            this.props.addErrorToast({ error: this.props.t('no_servers_specified') });
-        }
-    };
-
     renderSettings = (settings) => {
         if (Object.keys(settings).length > 0) {
             return Object.keys(settings).map((key) => {
@@ -75,8 +59,7 @@ class Settings extends Component {
     }
 
     render() {
-        const { settings, t } = this.props;
-        const { upstreamDns } = this.props.dashboard;
+        const { settings, dashboard, t } = this.props;
         return (
             <Fragment>
                 <PageTitle title={ t('settings') } />
@@ -91,11 +74,13 @@ class Settings extends Component {
                                     </div>
                                 </Card>
                                 <Upstream
-                                    upstreamDns={upstreamDns}
+                                    upstreamDns={dashboard.upstreamDns}
+                                    boostrapDns={dashboard.boostrapDns}
+                                    allServers={dashboard.allServers}
+                                    setUpstream={this.props.setUpstream}
+                                    testUpstream={this.props.testUpstream}
                                     processingTestUpstream={settings.processingTestUpstream}
-                                    handleUpstreamChange={this.handleUpstreamChange}
-                                    handleUpstreamSubmit={this.handleUpstreamSubmit}
-                                    handleUpstreamTest={this.handleUpstreamTest}
+                                    processingSetUpstream={settings.processingSetUpstream}
                                 />
                                 <Encryption
                                     encryption={this.props.encryption}
