@@ -418,6 +418,10 @@ func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkDNS(input string, bootstrap []string) error {
+	if err := validateUpstream(input); err != nil {
+		return fmt.Errorf("wrong upstream format: %s", err)
+	}
+
 	if len(bootstrap) == 0 {
 		bootstrap = defaultBootstrap
 	}
