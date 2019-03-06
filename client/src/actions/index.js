@@ -486,7 +486,6 @@ export const testUpstream = config => async (dispatch) => {
         values.upstream_dns = (
             values.upstream_dns && normalizeTextarea(values.upstream_dns)
         ) || [];
-        console.log(values);
 
         const upstreamResponse = await apiClient.testUpstream(values);
         const testMessages = Object.keys(upstreamResponse).map((key) => {
