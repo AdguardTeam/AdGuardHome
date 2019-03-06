@@ -75,7 +75,7 @@ class Settings extends Component {
                                 </Card>
                                 <Upstream
                                     upstreamDns={dashboard.upstreamDns}
-                                    boostrapDns={dashboard.boostrapDns}
+                                    bootstrapDns={dashboard.bootstrapDns}
                                     allServers={dashboard.allServers}
                                     setUpstream={this.props.setUpstream}
                                     testUpstream={this.props.testUpstream}
@@ -110,7 +110,6 @@ Settings.propTypes = {
     toggleSetting: PropTypes.func,
     handleUpstreamChange: PropTypes.func,
     setUpstream: PropTypes.func,
-    upstream: PropTypes.string,
     t: PropTypes.func,
 };
 

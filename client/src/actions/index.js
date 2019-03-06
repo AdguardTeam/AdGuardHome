@@ -456,8 +456,12 @@ export const setUpstream = config => async (dispatch) => {
     dispatch(setUpstreamRequest());
     try {
         const values = { ...config };
-        values.bootstrap_dns = (values.bootstrap_dns && normalizeTextarea(values.bootstrap_dns)) || '';
-        values.upstream_dns = (values.upstream_dns && normalizeTextarea(values.upstream_dns)) || '';
+        values.bootstrap_dns = (
+            values.bootstrap_dns && normalizeTextarea(values.bootstrap_dns)
+        ) || [];
+        values.upstream_dns = (
+            values.upstream_dns && normalizeTextarea(values.upstream_dns)
+        ) || [];
 
         await apiClient.setUpstream(values);
         dispatch(addSuccessToast('updated_upstream_dns_toast'));
@@ -472,12 +476,19 @@ export const testUpstreamRequest = createAction('TEST_UPSTREAM_REQUEST');
 export const testUpstreamFailure = createAction('TEST_UPSTREAM_FAILURE');
 export const testUpstreamSuccess = createAction('TEST_UPSTREAM_SUCCESS');
 
-export const testUpstream = values => async (dispatch) => {
+export const testUpstream = config => async (dispatch) => {
     dispatch(testUpstreamRequest());
     try {
-        const servers = normalizeTextarea(values);
-        const upstreamResponse = await apiClient.testUpstream(servers);
+        const values = { ...config };
+        values.bootstrap_dns = (
+            values.bootstrap_dns && normalizeTextarea(values.bootstrap_dns)
+        ) || [];
+        values.upstream_dns = (
+            values.upstream_dns && normalizeTextarea(values.upstream_dns)
+        ) || [];
+        console.log(values);
 
+        const upstreamResponse = await apiClient.testUpstream(values);
         const testMessages = Object.keys(upstreamResponse).map((key) => {
             const message = upstreamResponse[key];
             if (message !== 'OK') {
