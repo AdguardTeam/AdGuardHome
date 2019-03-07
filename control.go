@@ -27,6 +27,8 @@ const updatePeriod = time.Minute * 30
 var versionCheckJSON []byte
 var versionCheckLastTime time.Time
 
+var protocols = []string{"tls://", "https://", "tcp://", "sdns://"}
+
 const versionCheckURL = "https://adguardteam.github.io/AdGuardHome/version.json"
 const versionCheckPeriod = time.Hour * 8
 
@@ -342,8 +344,10 @@ func handleSetUpstreamConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func validateUpstream(upstream string) error {
-	if strings.HasPrefix(upstream, "tls://") || strings.HasPrefix(upstream, "https://") || strings.HasPrefix(upstream, "sdns://") || strings.HasPrefix(upstream, "tcp://") {
-		return nil
+	for _, proto := range protocols {
+		if strings.HasPrefix(upstream, proto) {
+			return nil
+		}
 	}
 
 	if strings.Contains(upstream, "://") {
