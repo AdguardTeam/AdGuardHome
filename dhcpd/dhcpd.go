@@ -369,7 +369,6 @@ func (s *Server) handleDiscover(p dhcp4.Packet, options dhcp4.Options) dhcp4.Pac
 
 func (s *Server) handleDHCP4Request(p dhcp4.Packet, options dhcp4.Options) dhcp4.Packet {
 	var lease *Lease
-	var err error
 
 	reqIP := net.IP(options[dhcp4.OptionRequestedIPAddress])
 	log.Tracef("Message from client: Request.  IP: %s  ReqIP: %s  HW: %s",
@@ -395,12 +394,8 @@ func (s *Server) handleDHCP4Request(p dhcp4.Packet, options dhcp4.Options) dhcp4
 
 	lease = s.findLease(p)
 	if lease == nil {
-		lease, err = s.reserveLease(p)
-		if err != nil {
-			log.Tracef("Couldn't find free lease: %s", err)
-			// couldn't find lease, don't respond
-			return nil
-		}
+		log.Tracef("Lease for %s isn't found", p.CHAddr())
+		return dhcp4.ReplyPacket(p, dhcp4.NAK, s.ipnet.IP, nil, 0, nil)
 	}
 
 	if !lease.IP.Equal(reqIP) {
