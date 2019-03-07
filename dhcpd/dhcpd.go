@@ -10,6 +10,7 @@ import (
 
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/krolaw/dhcp4"
+	"github.com/sparrc/go-ping"
 )
 
 const defaultDiscoverTime = time.Second * 3
@@ -33,6 +34,10 @@ type ServerConfig struct {
 	RangeStart    string `json:"range_start" yaml:"range_start"`
 	RangeEnd      string `json:"range_end" yaml:"range_end"`
 	LeaseDuration uint   `json:"lease_duration" yaml:"lease_duration"` // in seconds
+
+	// IP conflict detector: time (ms) to wait for ICMP reply.
+	// 0: disable
+	ICMPTimeout uint `json:"icmp_timeout_msec" yaml:"icmp_timeout_msec"`
 }
 
 // Server - the current state of the DHCP server
@@ -325,6 +330,51 @@ func (s *Server) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options dh
 	return nil
 }
 
+// Send ICMP to the specified machine
+// Return TRUE if it doesn't reply, which probably means that the IP is available
+func (s *Server) addrAvailable(target net.IP) bool {
+
+	if s.ICMPTimeout == 0 {
+		return true
+	}
+
+	pinger, err := ping.NewPinger(target.String())
+	if err != nil {
+		log.Error("ping.NewPinger(): %v", err)
+		return true
+	}
+
+	pinger.SetPrivileged(true)
+	pinger.Timeout = time.Duration(s.ICMPTimeout) * time.Millisecond
+	pinger.Count = 1
+	reply := false
+	pinger.OnRecv = func(pkt *ping.Packet) {
+		// log.Tracef("Received ICMP Reply from %v", target)
+		reply = true
+	}
+	log.Tracef("Sending ICMP Echo to %v", target)
+	pinger.Run()
+
+	if reply {
+		log.Info("DHCP: IP conflict: %v is already used by another device", target)
+		return false
+	}
+
+	log.Tracef("ICMP procedure is complete: %v", target)
+	return true
+}
+
+// Add the specified IP to the black list for a time period
+func (s *Server) blacklistLease(lease *Lease) {
+	hw := make(net.HardwareAddr, 6)
+	s.reserveIP(lease.IP, hw)
+	s.Lock()
+	lease.HWAddr = hw
+	lease.Hostname = ""
+	lease.Expiry = time.Now().Add(s.leaseTime)
+	s.Unlock()
+}
+
 // Return TRUE if DHCP packet is correct
 func isValidPacket(p dhcp4.Packet) bool {
 	hw := p.CHAddr()
@@ -356,6 +406,12 @@ func (s *Server) handleDiscover(p dhcp4.Packet, options dhcp4.Options) dhcp4.Pac
 		if err != nil {
 			log.Error("Couldn't find free lease: %s", err)
 			return nil
+		}
+
+		if !s.addrAvailable(lease.IP) {
+			s.blacklistLease(lease)
+			lease = nil
+			continue
 		}
 
 		break
