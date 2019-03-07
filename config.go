@@ -60,7 +60,7 @@ type dnsConfig struct {
 	UpstreamDNS []string `yaml:"upstream_dns"`
 }
 
-var defaultDNS = []string{"https://dns.adguard.com/dns-query", "https://dns.cloudflare.com/dns-query"}
+var defaultDNS = []string{"https://dns.cloudflare.com/dns-query"}
 var defaultBootstrap = []string{"1.1.1.1"}
 
 type tlsConfigSettings struct {
