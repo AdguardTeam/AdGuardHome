@@ -325,6 +325,17 @@ func (s *Server) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options dh
 	return nil
 }
 
+// Return TRUE if DHCP packet is correct
+func isValidPacket(p dhcp4.Packet) bool {
+	hw := p.CHAddr()
+	zeroes := make([]byte, len(hw))
+	if bytes.Equal(hw, zeroes) {
+		log.Tracef("Packet has empty CHAddr")
+		return false
+	}
+	return true
+}
+
 func (s *Server) handleDiscover(p dhcp4.Packet, options dhcp4.Options) dhcp4.Packet {
 	// find a lease, but don't update lease time
 	var lease *Lease
@@ -334,6 +345,10 @@ func (s *Server) handleDiscover(p dhcp4.Packet, options dhcp4.Options) dhcp4.Pac
 	hostname := p.ParseOptions()[dhcp4.OptionHostName]
 	log.Tracef("Message from client: Discover.  ReqIP: %s  HW: %s  Hostname: %s",
 		reqIP, p.CHAddr(), hostname)
+
+	if !isValidPacket(p) {
+		return nil
+	}
 
 	lease = s.findLease(p)
 	for lease == nil {
@@ -359,6 +374,10 @@ func (s *Server) handleDHCP4Request(p dhcp4.Packet, options dhcp4.Options) dhcp4
 	reqIP := net.IP(options[dhcp4.OptionRequestedIPAddress])
 	log.Tracef("Message from client: Request.  IP: %s  ReqIP: %s  HW: %s",
 		p.CIAddr(), reqIP, p.CHAddr())
+
+	if !isValidPacket(p) {
+		return nil
+	}
 
 	server := options[dhcp4.OptionServerIdentifier]
 	if server != nil && !net.IP(server).Equal(s.ipnet.IP) {
