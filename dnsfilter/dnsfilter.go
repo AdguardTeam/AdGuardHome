@@ -16,8 +16,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/bluele/gcache"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/bluele/gcache"
 	"golang.org/x/net/publicsuffix"
 )
 
