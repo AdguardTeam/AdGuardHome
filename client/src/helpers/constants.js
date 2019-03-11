@@ -48,6 +48,10 @@ export const LANGUAGES = [
         name: 'Tiếng Việt',
     },
     {
+        key: 'bg',
+        name: 'Български',
+    },
+    {
         key: 'ru',
         name: 'Русский',
     },
