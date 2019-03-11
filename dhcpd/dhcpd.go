@@ -215,14 +215,30 @@ func (s *Server) reserveLease(p dhcp4.Packet) (*Lease, error) {
 	hwaddr := make(net.HardwareAddr, len(hwaddrCOW))
 	copy(hwaddr, hwaddrCOW)
 	// not assigned a lease, create new one, find IP from LRU
+	hostname := p.ParseOptions()[dhcp4.OptionHostName]
+	lease := &Lease{HWAddr: hwaddr, Hostname: string(hostname)}
+
 	log.Tracef("Lease not found for %s: creating new one", hwaddr)
 	ip, err := s.findFreeIP(hwaddr)
 	if err != nil {
-		return nil, wrapErrPrint(err, "Couldn't find free IP for the lease %s", hwaddr.String())
+		i := s.findExpiredLease()
+		if i < 0 {
+			return nil, wrapErrPrint(err, "Couldn't find free IP for the lease %s", hwaddr.String())
+		}
+
+		log.Tracef("Assigning IP address %s to %s (lease for %s expired at %s)",
+			s.leases[i].IP, hwaddr, s.leases[i].HWAddr, s.leases[i].Expiry)
+		lease.IP = s.leases[i].IP
+		s.Lock()
+		s.leases[i] = lease
+		s.Unlock()
+
+		s.reserveIP(lease.IP, hwaddr)
+		return lease, nil
 	}
+
 	log.Tracef("Assigning to %s IP address %s", hwaddr, ip.String())
-	hostname := p.ParseOptions()[dhcp4.OptionHostName]
-	lease := &Lease{HWAddr: hwaddr, IP: ip, Hostname: string(hostname)}
+	lease.IP = ip
 	s.Lock()
 	s.leases = append(s.leases, lease)
 	s.Unlock()
@@ -239,6 +255,17 @@ func (s *Server) findLease(p dhcp4.Packet) *Lease {
 		}
 	}
 	return nil
+}
+
+// Find an expired lease and return its index or -1
+func (s *Server) findExpiredLease() int {
+	now := time.Now().Unix()
+	for i, lease := range s.leases {
+		if lease.Expiry.Unix() <= now {
+			return i
+		}
+	}
+	return -1
 }
 
 func (s *Server) findFreeIP(hwaddr net.HardwareAddr) (net.IP, error) {
