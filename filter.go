@@ -263,7 +263,7 @@ func (filter *filter) Path() string {
 	return filepath.Join(config.ourWorkingDir, dataDir, filterDir, strconv.FormatInt(filter.ID, 10)+".txt")
 }
 
-// LastUpdated returns the time when the filter was last time updated
+// LastTimeUpdated returns the time when the filter was last time updated
 func (filter *filter) LastTimeUpdated() time.Time {
 	filterFilePath := filter.Path()
 	if _, err := os.Stat(filterFilePath); os.IsNotExist(err) {
