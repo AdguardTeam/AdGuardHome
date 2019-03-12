@@ -87,26 +87,21 @@ paths:
                 200:
                     description: OK
 
-    /set_upstream_dns:
+    /set_upstreams_config:
         post:
             tags:
                 - global
-            operationId: setUpstreamDNS
-            summary: 'Set upstream DNS for coredns, empty value will reset it to default values'
+            operationId: setUpstreamsConfig
+            summary: "Updates the current upstreams configuration"
             consumes:
-                - text/plain
+                - application/json
             parameters:
-                -   in: body
-                    name: upstream
-                    description: 'Upstream servers, separated by newline or space, port is optional after colon'
-                    schema:
-                        # TODO: use JSON
-                        type: string
-                        example: |
-                            1.1.1.1
-                            1.0.0.1
-                            8.8.8.8 8.8.4.4
-                            192.168.1.104:53535
+                - in: "body"
+                  name: "body"
+                  description: "Upstreams configuration JSON"
+                  required: true
+                  schema:
+                      $ref: "#/definitions/UpstreamsConfig"
             responses:
                 200:
                     description: OK
@@ -116,21 +111,15 @@ paths:
             tags:
                 - global
             operationId: testUpstreamDNS
-            summary: 'Test upstream DNS'
+            summary: "Test upstream configuration"
             consumes:
-                - text/plain
+                - application/json
             parameters:
-                -   in: body
-                    name: upstream
-                    description: 'Upstream servers, separated by newline or space, port is optional after colon'
+                -   in: "body"
+                    name: "body"
+                    description: "Upstream configuration to be tested"
                     schema:
-                        # TODO: use JSON
-                        type: string
-                        example: |
-                            1.1.1.1
-                            1.0.0.1
-                            8.8.8.8 8.8.4.4
-                            192.168.1.104:53535
+                        $ref: "#/definitions/UpstreamsConfig"
             responses:
                 200:
                     description: 'Status of testing each requested server, with "OK" meaning that server works, any other text means an error.'
@@ -798,6 +787,33 @@ definitions:
             language:
                 type: "string"
                 example: "en"
+    UpstreamsConfig:
+        type: "object"
+        description: "Upstreams configuration"
+        required:
+            - "bootstrap_dns"
+            - "upstream_dns"
+            - "all_servers"
+        properties:
+            bootstrap_dns:
+                type: "array"
+                description: 'Bootstrap servers, port is optional after colon. Empty value will reset it to default values'
+                items:
+                    type: "string"
+                example:
+                    - "8.8.8.8:53"
+                    - "1.1.1.1:53"
+            upstream_dns:
+                type: "array"
+                description: 'Upstream servers, port is optional after colon. Empty value will reset it to default values'
+                items:
+                    type: "string"
+                example:
+                    - "tls://1.1.1.1"
+                    - "tls://1.0.0.1"
+            all_servers:
+                type: "boolean"
+                description: "If true, parallel queries to all configured upstream servers are enabled"
     Filter:
         type: "object"
         description: "Filter subscription info"

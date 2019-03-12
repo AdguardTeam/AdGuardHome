@@ -62,11 +62,12 @@ type FilteringConfig struct {
 	ProtectionEnabled  bool     `yaml:"protection_enabled"`   // whether or not use any of dnsfilter features
 	FilteringEnabled   bool     `yaml:"filtering_enabled"`    // whether or not use filter lists
 	BlockedResponseTTL uint32   `yaml:"blocked_response_ttl"` // if 0, then default is used (3600)
-	QueryLogEnabled    bool     `yaml:"querylog_enabled"`
-	Ratelimit          int      `yaml:"ratelimit"`
-	RatelimitWhitelist []string `yaml:"ratelimit_whitelist"`
-	RefuseAny          bool     `yaml:"refuse_any"`
-	BootstrapDNS       string   `yaml:"bootstrap_dns"`
+	QueryLogEnabled    bool     `yaml:"querylog_enabled"`     // if true, query log is enabled
+	Ratelimit          int      `yaml:"ratelimit"`            // max number of requests per second from a given IP (0 to disable)
+	RatelimitWhitelist []string `yaml:"ratelimit_whitelist"`  // a list of whitelisted client IP addresses
+	RefuseAny          bool     `yaml:"refuse_any"`           // if true, refuse ANY requests
+	BootstrapDNS       []string `yaml:"bootstrap_dns"`        // a list of bootstrap DNS for DoH and DoT (plain DNS only)
+	AllServers         bool     `yaml:"all_servers"`          // if true, parallel queries to all configured upstream servers are enabled
 
 	dnsfilter.Config `yaml:",inline"`
 }
@@ -163,6 +164,7 @@ func (s *Server) startInternal(config *ServerConfig) error {
 		CacheEnabled:       true,
 		Upstreams:          s.Upstreams,
 		Handler:            s.handleDNSRequest,
+		AllServers:         s.AllServers,
 	}
 
 	if s.TLSListenAddr != nil && s.CertificateChain != "" && s.PrivateKey != "" {

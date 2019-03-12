@@ -60,7 +60,8 @@ type dnsConfig struct {
 	UpstreamDNS []string `yaml:"upstream_dns"`
 }
 
-var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
+var defaultDNS = []string{"https://dns.cloudflare.com/dns-query"}
+var defaultBootstrap = []string{"1.1.1.1"}
 
 type tlsConfigSettings struct {
 	Enabled        bool   `yaml:"enabled" json:"enabled"`                               // Enabled is the encryption (DOT/DOH/HTTPS) status
@@ -114,7 +115,8 @@ var config = configuration{
 			QueryLogEnabled:    true,
 			Ratelimit:          20,
 			RefuseAny:          true,
-			BootstrapDNS:       "8.8.8.8:53",
+			BootstrapDNS:       defaultBootstrap,
+			AllServers:         false,
 		},
 		UpstreamDNS: defaultDNS,
 	},

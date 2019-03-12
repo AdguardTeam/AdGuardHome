@@ -201,3 +201,5 @@ export const redirectToCurrentProtocol = (values, httpPort = 80) => {
         window.location.replace(`http://${hostname}:${httpPort}/${hash}`);
     }
 };
+
+export const normalizeTextarea = text => text && text.replace(/[;, ]/g, '\n').split('\n').filter(n => n);

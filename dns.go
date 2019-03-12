@@ -61,7 +61,7 @@ func generateServerConfig() dnsforward.ServerConfig {
 	for _, u := range config.DNS.UpstreamDNS {
 		opts := upstream.Options{
 			Timeout:   dnsforward.DefaultTimeout,
-			Bootstrap: []string{config.DNS.BootstrapDNS},
+			Bootstrap: config.DNS.BootstrapDNS,
 		}
 		dnsUpstream, err := upstream.AddressToUpstream(u, opts)
 		if err != nil {
@@ -71,6 +71,7 @@ func generateServerConfig() dnsforward.ServerConfig {
 		}
 		newconfig.Upstreams = append(newconfig.Upstreams, dnsUpstream)
 	}
+	newconfig.AllServers = config.DNS.AllServers
 	return newconfig
 }
 

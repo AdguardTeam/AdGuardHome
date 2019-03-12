@@ -32,7 +32,7 @@ export const renderSelectField = ({
                 disabled={disabled}
             />
             <span className="checkbox__label">
-                <span className="checkbox__label-text">
+                <span className="checkbox__label-text checkbox__label-text--long">
                     <span className="checkbox__label-title">{placeholder}</span>
                 </span>
             </span>
