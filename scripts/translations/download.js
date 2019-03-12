@@ -15,6 +15,7 @@ const LOCALES_LIST = [
     'pt-br',
     'zh-tw',
     'bg',
+    'zh-cn',
 ];
 
 /**

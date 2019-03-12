@@ -23,6 +23,7 @@ var allowedLanguages = map[string]bool{
 	"pt-br": true,
 	"zh-tw": true,
 	"bg":    true,
+	"zh-cn": true,
 }
 
 func isLanguageAllowed(language string) bool {

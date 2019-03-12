@@ -13,6 +13,7 @@ import sv from './__locales/sv.json';
 import ptBR from './__locales/pt-br.json';
 import zhTW from './__locales/zh-tw.json';
 import bg from './__locales/bg.json';
+import zhCN from './__locales/zh-cn.json';
 
 const resources = {
     en: {
@@ -44,6 +45,9 @@ const resources = {
     },
     bg: {
         translation: bg,
+    },
+    'zh-CN': {
+        translation: zhCN,
     },
 };
 
