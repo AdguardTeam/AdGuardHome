@@ -63,6 +63,10 @@ export const LANGUAGES = [
         key: 'zh-tw',
         name: '正體中文',
     },
+    {
+        key: 'zh-cn',
+        name: '简体中文',
+    },
 ];
 
 export const INSTALL_FIRST_STEP = 1;
