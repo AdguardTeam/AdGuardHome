@@ -137,9 +137,15 @@ var config = configuration{
 
 // getConfigFilename returns path to the current config file
 func (c *configuration) getConfigFilename() string {
-	configFile := config.ourConfigFilename
+	configFile, err := filepath.EvalSymlinks(config.ourConfigFilename)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			log.Error("unexpected error while config file path evaluation: %s", err)
+		}
+		configFile = config.ourConfigFilename
+	}
 	if !filepath.IsAbs(configFile) {
-		configFile = filepath.Join(config.ourWorkingDir, config.ourConfigFilename)
+		configFile = filepath.Join(config.ourWorkingDir, configFile)
 	}
 	return configFile
 }
