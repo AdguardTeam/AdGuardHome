@@ -179,7 +179,11 @@ func refreshFiltersIfNecessary(force bool) int {
 			continue
 		}
 
-		updated, err := filter.update(force)
+		if !force && time.Since(filter.LastUpdated) <= updatePeriod {
+			continue
+		}
+
+		updated, err := filter.update()
 		if err != nil {
 			log.Printf("Failed to update filter %s: %s\n", filter.URL, err)
 			continue
@@ -193,6 +197,11 @@ func refreshFiltersIfNecessary(force bool) int {
 			}
 
 			updateCount++
+
+		} else {
+			mtime := time.Now()
+			os.Chtimes(filter.Path(), mtime, mtime)
+			filter.LastUpdated = mtime
 		}
 	}
 	config.Unlock()
@@ -236,14 +245,8 @@ func parseFilterContents(contents []byte) (int, string, []string) {
 	return rulesCount, name, lines
 }
 
-// Checks for filters updates
-// If "force" is true -- does not check the filter's LastUpdated field
-// Call "save" to persist the filter contents
-func (filter *filter) update(force bool) (bool, error) {
-	if !force && time.Since(filter.LastUpdated) <= updatePeriod {
-		return false, nil
-	}
-
+// Perform upgrade on a filter
+func (filter *filter) update() (bool, error) {
 	log.Tracef("Downloading update for filter %d from %s", filter.ID, filter.URL)
 
 	resp, err := client.Get(filter.URL)

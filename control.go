@@ -569,7 +569,7 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 	f.Enabled = true
 
 	// Download the filter contents
-	ok, err := f.update(true)
+	ok, err := f.update()
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Couldn't fetch filter from url %s: %s", f.URL, err)
 		return
