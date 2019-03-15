@@ -139,13 +139,19 @@ func parseFilterContents(contents []byte) (int, string, []string) {
 
 	// Count lines in the filter
 	for _, line := range lines {
+
 		line = strings.TrimSpace(line)
-		if len(line) > 0 && line[0] == '!' {
-			if m := filterTitleRegexp.FindAllStringSubmatch(line, -1); len(m) > 0 && len(m[0]) >= 2 && !seenTitle {
+		if len(line) == 0 {
+			continue
+		}
+
+		if line[0] == '!' {
+			m := filterTitleRegexp.FindAllStringSubmatch(line, -1)
+			if len(m) > 0 && len(m[0]) >= 2 && !seenTitle {
 				name = m[0][1]
 				seenTitle = true
 			}
-		} else if len(line) != 0 {
+		} else {
 			rulesCount++
 		}
 	}
@@ -266,12 +272,12 @@ func (filter *filter) Path() string {
 // LastTimeUpdated returns the time when the filter was last time updated
 func (filter *filter) LastTimeUpdated() time.Time {
 	filterFilePath := filter.Path()
-	if _, err := os.Stat(filterFilePath); os.IsNotExist(err) {
+	s, err := os.Stat(filterFilePath)
+	if os.IsNotExist(err) {
 		// if the filter file does not exist, return 0001-01-01
 		return time.Time{}
 	}
 
-	s, err := os.Stat(filterFilePath)
 	if err != nil {
 		// if the filter file does not exist, return 0001-01-01
 		return time.Time{}
