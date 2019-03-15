@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
+	"hash/crc32"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -28,6 +28,7 @@ type filter struct {
 	Name        string    `json:"name" yaml:"name"`
 	RulesCount  int       `json:"rulesCount" yaml:"-"`
 	LastUpdated time.Time `json:"lastUpdated,omitempty" yaml:"-"`
+	checksum    uint32    // checksum of the file data
 
 	dnsfilter.Filter `yaml:",inline"`
 }
@@ -201,22 +202,22 @@ func (filter *filter) update(force bool) (bool, error) {
 		return false, err
 	}
 
-	// Extract filter name and count number of rules
-	rulesCount, filterName, rules := parseFilterContents(body)
-
-	if filterName != "" {
-		filter.Name = filterName
-	}
-
 	// Check if the filter has been really changed
-	if reflect.DeepEqual(filter.Rules, rules) {
+	checksum := crc32.ChecksumIEEE(body)
+	if filter.checksum == checksum {
 		log.Tracef("Filter #%d at URL %s hasn't changed, not updating it", filter.ID, filter.URL)
 		return false, nil
 	}
 
+	// Extract filter name and count number of rules
+	rulesCount, filterName, rules := parseFilterContents(body)
 	log.Printf("Filter %d has been updated: %d bytes, %d rules", filter.ID, len(body), rulesCount)
+	if filterName != "" {
+		filter.Name = filterName
+	}
 	filter.RulesCount = rulesCount
 	filter.Rules = rules
+	filter.checksum = checksum
 
 	return true, nil
 }
@@ -259,6 +260,7 @@ func (filter *filter) load() error {
 
 	filter.RulesCount = rulesCount
 	filter.Rules = rules
+	filter.checksum = crc32.ChecksumIEEE(filterFileContents)
 	filter.LastUpdated = filter.LastTimeUpdated()
 
 	return nil
