@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	github.com/AdguardTeam/dnsproxy v0.11.2
-	github.com/AdguardTeam/golibs v0.1.0
+	github.com/AdguardTeam/golibs v0.1.1
 	github.com/StackExchange/wmi v0.0.0-20180725035823-b12b22c5341f // indirect
 	github.com/bluele/gcache v0.0.0-20171010155617-472614239ac7
 	github.com/go-ole/go-ole v1.2.1 // indirect
@@ -17,6 +17,7 @@ require (
 	github.com/miekg/dns v1.1.1
 	github.com/shirou/gopsutil v2.18.10+incompatible
 	github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4 // indirect
+	github.com/sparrc/go-ping v0.0.0-20181106165434-ef3ab45e41b0
 	github.com/stretchr/testify v1.2.2
 	go.uber.org/goleak v0.10.0
 	golang.org/x/net v0.0.0-20190119204137-ed066c81e75e

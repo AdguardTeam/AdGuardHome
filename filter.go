@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
+	"github.com/AdguardTeam/golibs/file"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -220,7 +221,7 @@ func (filter *filter) save() error {
 	log.Printf("Saving filter %d contents to: %s", filter.ID, filterFilePath)
 	body := []byte(strings.Join(filter.Rules, "\n"))
 
-	err := safeWriteFile(filterFilePath, body)
+	err := file.SafeWrite(filterFilePath, body)
 
 	// update LastUpdated field after saving the file
 	filter.LastUpdated = filter.LastTimeUpdated()
@@ -262,7 +263,7 @@ func (filter *filter) Path() string {
 	return filepath.Join(config.ourWorkingDir, dataDir, filterDir, strconv.FormatInt(filter.ID, 10)+".txt")
 }
 
-// LastUpdated returns the time when the filter was last time updated
+// LastTimeUpdated returns the time when the filter was last time updated
 func (filter *filter) LastTimeUpdated() time.Time {
 	filterFilePath := filter.Path()
 	if _, err := os.Stat(filterFilePath); os.IsNotExist(err) {
