@@ -17,6 +17,7 @@ import (
 var dhcpServer = dhcpd.Server{}
 
 func handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
+	log.Tracef("%s %v", r.Method, r.URL)
 	rawLeases := dhcpServer.Leases()
 	leases := []map[string]string{}
 	for i := range rawLeases {
@@ -43,11 +44,17 @@ func handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
+	log.Tracef("%s %v", r.Method, r.URL)
 	newconfig := dhcpd.ServerConfig{}
 	err := json.NewDecoder(r.Body).Decode(&newconfig)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Failed to parse new DHCP config json: %s", err)
 		return
+	}
+
+	err = dhcpServer.Stop()
+	if err != nil {
+		log.Error("failed to stop the DHCP server: %s", err)
 	}
 
 	if newconfig.Enabled {
@@ -57,17 +64,13 @@ func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if !newconfig.Enabled {
-		err := dhcpServer.Stop()
-		if err != nil {
-			log.Error("failed to stop the DHCP server: %s", err)
-		}
-	}
+
 	config.DHCP = newconfig
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
+	log.Tracef("%s %v", r.Method, r.URL)
 	response := map[string]interface{}{}
 
 	ifaces, err := getValidNetInterfaces()
@@ -128,6 +131,7 @@ func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
+	log.Tracef("%s %v", r.Method, r.URL)
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		errorText := fmt.Sprintf("failed to read request body: %s", err)

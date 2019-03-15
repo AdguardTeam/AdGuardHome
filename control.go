@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
@@ -35,6 +36,8 @@ const versionCheckPeriod = time.Hour * 8
 var client = &http.Client{
 	Timeout: time.Second * 30,
 }
+
+var controlLock sync.Mutex
 
 // ----------------
 // helper functions
