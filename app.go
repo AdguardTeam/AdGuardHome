@@ -288,7 +288,11 @@ func configureLogger(args options) {
 		}
 	} else {
 		logFilePath := filepath.Join(config.ourWorkingDir, ls.LogFile)
-		file, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0755)
+		if filepath.IsAbs(ls.LogFile) {
+			logFilePath = ls.LogFile
+		}
+
+		file, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
 			log.Fatalf("cannot create a log file: %s", err)
 		}
