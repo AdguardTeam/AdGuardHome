@@ -127,11 +127,6 @@ func configureService(c *service.Config) {
 	// POSIX
 	// Redirect StdErr & StdOut to files.
 	c.Option["LogOutput"] = true
-
-	// Windows
-	if runtime.GOOS == "windows" {
-		c.UserName = "NT AUTHORITY\\NetworkService"
-	}
 }
 
 // cleanupService called on the service uninstall, cleans up additional files if needed
