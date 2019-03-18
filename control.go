@@ -559,15 +559,10 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check for duplicates
-	config.RLock()
-	for i := range config.Filters {
-		if config.Filters[i].URL == f.URL {
-			config.RUnlock()
-			httpError(w, http.StatusBadRequest, "Filter URL already added -- %s", f.URL)
-			return
-		}
+	if filterExists(f.URL) {
+		httpError(w, http.StatusBadRequest, "Filter URL already added -- %s", f.URL)
+		return
 	}
-	config.RUnlock()
 
 	// Set necessary properties
 	f.ID = assignUniqueFilterID()
@@ -597,19 +592,10 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 
 	// URL is deemed valid, append it to filters, update config, write new filter file and tell dns to reload it
 	// TODO: since we directly feed filters in-memory, revisit if writing configs is always necessary
-	config.Lock()
-
-	// Check for duplicates
-	for i := range config.Filters {
-		if config.Filters[i].URL == f.URL {
-			config.Unlock()
-			httpError(w, http.StatusBadRequest, "Filter URL already added -- %s", f.URL)
-			return
-		}
+	if !filterAdd(f) {
+		httpError(w, http.StatusBadRequest, "Filter URL already added -- %s", f.URL)
+		return
 	}
-
-	config.Filters = append(config.Filters, f)
-	config.Unlock()
 
 	err = writeAllConfigs()
 	if err != nil {

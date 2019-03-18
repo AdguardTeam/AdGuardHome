@@ -72,6 +72,38 @@ func filterEnable(url string, enable bool) bool {
 	return r
 }
 
+// Return TRUE if a filter with this URL exists
+func filterExists(url string) bool {
+	r := false
+	config.RLock()
+	for i := range config.Filters {
+		if config.Filters[i].URL == url {
+			r = true
+			break
+		}
+	}
+	config.RUnlock()
+	return r
+}
+
+// Add a filter
+// Return FALSE if a filter with this URL exists
+func filterAdd(f filter) bool {
+	config.Lock()
+
+	// Check for duplicates
+	for i := range config.Filters {
+		if config.Filters[i].URL == f.URL {
+			config.Unlock()
+			return false
+		}
+	}
+
+	config.Filters = append(config.Filters, f)
+	config.Unlock()
+	return true
+}
+
 // Load filters from the disk
 // And if any filter has zero ID, assign a new one
 func loadFilters() {
