@@ -167,44 +167,83 @@ func periodicallyRefreshFilters() {
 
 // Checks filters updates if necessary
 // If force is true, it ignores the filter.LastUpdated field value
+//
+// Algorithm:
+// . Get the list of filters to be updated
+// . For each filter run the download and checksum check operation
+//  . If filter data hasn't changed, set new update time
+//  . If filter data has changed, parse it, save it on disk, set new update time
+//  . Apply changes to the current configuration
+// . Restart server
 func refreshFiltersIfNecessary(force bool) int {
-	config.Lock()
+	var updateFilters []filter
 
-	// fetch URLs
-	updateCount := 0
+	config.RLock()
 	for i := range config.Filters {
-		filter := &config.Filters[i] // otherwise we will be operating on a copy
+		f := &config.Filters[i] // otherwise we will be operating on a copy
 
-		if !filter.Enabled {
+		if !f.Enabled {
 			continue
 		}
 
-		if !force && time.Since(filter.LastUpdated) <= updatePeriod {
+		if !force && time.Since(f.LastUpdated) <= updatePeriod {
 			continue
 		}
 
-		updated, err := filter.update()
+		var uf filter
+		uf.ID = f.ID
+		uf.URL = f.URL
+		uf.checksum = f.checksum
+		updateFilters = append(updateFilters, uf)
+	}
+	config.RUnlock()
+
+	updateCount := 0
+	for i := range updateFilters {
+		uf := &updateFilters[i]
+		updated, err := uf.update()
 		if err != nil {
-			log.Printf("Failed to update filter %s: %s\n", filter.URL, err)
+			log.Printf("Failed to update filter %s: %s\n", uf.URL, err)
 			continue
 		}
 		if updated {
 			// Saving it to the filters dir now
-			err = filter.save()
+			err = uf.save()
 			if err != nil {
-				log.Printf("Failed to save the updated filter %d: %s", filter.ID, err)
+				log.Printf("Failed to save the updated filter %d: %s", uf.ID, err)
 				continue
 			}
 
-			updateCount++
-
 		} else {
 			mtime := time.Now()
-			os.Chtimes(filter.Path(), mtime, mtime)
-			filter.LastUpdated = mtime
+			e := os.Chtimes(uf.Path(), mtime, mtime)
+			if e != nil {
+				log.Error("os.Chtimes(): %v", e)
+			}
+			uf.LastUpdated = mtime
 		}
+
+		config.Lock()
+		for k := range config.Filters {
+			f := &config.Filters[k]
+			if f.ID != uf.ID || f.URL != uf.URL {
+				continue
+			}
+			f.LastUpdated = uf.LastUpdated
+			if !updated {
+				continue
+			}
+
+			log.Info("Updated filter #%d.  Rules: %d -> %d",
+				f.ID, f.RulesCount, uf.RulesCount)
+			f.Name = uf.Name
+			f.Rules = uf.Rules
+			f.RulesCount = uf.RulesCount
+			f.checksum = uf.checksum
+			updateCount++
+		}
+		config.Unlock()
 	}
-	config.Unlock()
 
 	if updateCount > 0 && isRunning() {
 		err := reconfigureDNSServer()
