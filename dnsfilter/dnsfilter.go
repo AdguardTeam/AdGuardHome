@@ -600,6 +600,11 @@ func hostnameToHashParam(host string, addslash bool) (string, map[string]bool) {
 }
 
 func (d *Dnsfilter) checkSafeSearch(host string) (Result, error) {
+	if log.GetLevel() >= log.DEBUG {
+		timer := log.StartTimer()
+		defer timer.LogElapsed("SafeSearch HTTP lookup for %s", host)
+	}
+
 	if safeSearchCache == nil {
 		safeSearchCache = gcache.New(defaultCacheSize).LRU().Expiration(defaultCacheTime).Build()
 	}
@@ -608,6 +613,7 @@ func (d *Dnsfilter) checkSafeSearch(host string) (Result, error) {
 	cachedValue, isFound, err := getCachedReason(safeSearchCache, host)
 	if isFound {
 		atomic.AddUint64(&stats.Safesearch.CacheHits, 1)
+		log.Tracef("%s: found in SafeSearch cache", host)
 		return cachedValue, nil
 	}
 
@@ -656,6 +662,11 @@ func (d *Dnsfilter) checkSafeSearch(host string) (Result, error) {
 }
 
 func (d *Dnsfilter) checkSafeBrowsing(host string) (Result, error) {
+	if log.GetLevel() >= log.DEBUG {
+		timer := log.StartTimer()
+		defer timer.LogElapsed("SafeBrowsing HTTP lookup for %s", host)
+	}
+
 	// prevent recursion -- checking the host of safebrowsing server makes no sense
 	if host == d.safeBrowsingServer {
 		return Result{}, nil
@@ -697,6 +708,11 @@ func (d *Dnsfilter) checkSafeBrowsing(host string) (Result, error) {
 }
 
 func (d *Dnsfilter) checkParental(host string) (Result, error) {
+	if log.GetLevel() >= log.DEBUG {
+		timer := log.StartTimer()
+		defer timer.LogElapsed("Parental HTTP lookup for %s", host)
+	}
+
 	// prevent recursion -- checking the host of parental safety server makes no sense
 	if host == d.parentalServer {
 		return Result{}, nil
@@ -754,6 +770,7 @@ func (d *Dnsfilter) lookupCommon(host string, lookupstats *LookupStats, cache gc
 	cachedValue, isFound, err := getCachedReason(cache, host)
 	if isFound {
 		atomic.AddUint64(&lookupstats.CacheHits, 1)
+		log.Tracef("%s: found in the lookup cache", host)
 		return cachedValue, nil
 	}
 	if err != nil {
