@@ -688,24 +688,12 @@ func handleFilteringEnableURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	found := false
-	config.Lock()
-	for i := range config.Filters {
-		filter := &config.Filters[i] // otherwise we will be operating on a copy
-		if filter.URL == url {
-			filter.Enabled = true
-			found = true
-		}
-	}
-	config.Unlock()
-
+	found := filterEnable(url, true)
 	if !found {
 		http.Error(w, "URL parameter was not previously added", http.StatusBadRequest)
 		return
 	}
 
-	// kick off refresh of rules from new URLs
-	refreshFiltersIfNecessary(false)
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
@@ -728,17 +716,7 @@ func handleFilteringDisableURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	found := false
-	config.Lock()
-	for i := range config.Filters {
-		filter := &config.Filters[i] // otherwise we will be operating on a copy
-		if filter.URL == url {
-			filter.Enabled = false
-			found = true
-		}
-	}
-	config.Unlock()
-
+	found := filterEnable(url, false)
 	if !found {
 		http.Error(w, "URL parameter was not previously added", http.StatusBadRequest)
 		return

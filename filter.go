@@ -44,6 +44,34 @@ func userFilter() filter {
 	}
 }
 
+// Enable or disable a filter
+func filterEnable(url string, enable bool) bool {
+	r := false
+	config.Lock()
+	for i := range config.Filters {
+		filter := &config.Filters[i] // otherwise we will be operating on a copy
+		if filter.URL == url {
+			filter.Enabled = enable
+			if enable {
+				e := filter.load()
+				if e != nil {
+					// This isn't a fatal error,
+					//  because it may occur when someone removes the file from disk.
+					// In this case the periodic update task will try to download the file.
+					filter.LastUpdated = time.Time{}
+					log.Tracef("%s filter load: %v", url, e)
+				}
+			} else {
+				filter.unload()
+			}
+			r = true
+			break
+		}
+	}
+	config.Unlock()
+	return r
+}
+
 // Load filters from the disk
 // And if any filter has zero ID, assign a new one
 func loadFilters() {
@@ -282,6 +310,12 @@ func (filter *filter) load() error {
 	filter.LastUpdated = filter.LastTimeUpdated()
 
 	return nil
+}
+
+// Clear filter rules
+func (filter *filter) unload() {
+	filter.Rules = []string{}
+	filter.RulesCount = 0
 }
 
 // Path to the filter contents
