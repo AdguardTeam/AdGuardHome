@@ -559,12 +559,15 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check for duplicates
+	config.RLock()
 	for i := range config.Filters {
 		if config.Filters[i].URL == f.URL {
+			config.RUnlock()
 			httpError(w, http.StatusBadRequest, "Filter URL already added -- %s", f.URL)
 			return
 		}
 	}
+	config.RUnlock()
 
 	// Set necessary properties
 	f.ID = assignUniqueFilterID()
@@ -594,7 +597,20 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 
 	// URL is deemed valid, append it to filters, update config, write new filter file and tell dns to reload it
 	// TODO: since we directly feed filters in-memory, revisit if writing configs is always necessary
+	config.Lock()
+
+	// Check for duplicates
+	for i := range config.Filters {
+		if config.Filters[i].URL == f.URL {
+			config.Unlock()
+			httpError(w, http.StatusBadRequest, "Filter URL already added -- %s", f.URL)
+			return
+		}
+	}
+
 	config.Filters = append(config.Filters, f)
+	config.Unlock()
+
 	err = writeAllConfigs()
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Couldn't write config file: %s", err)
@@ -632,6 +648,7 @@ func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// go through each element and delete if url matches
+	config.Lock()
 	newFilters := config.Filters[:0]
 	for _, filter := range config.Filters {
 		if filter.URL != url {
@@ -647,6 +664,7 @@ func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 	}
 	// Update the configuration after removing filter files
 	config.Filters = newFilters
+	config.Unlock()
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
@@ -670,6 +688,7 @@ func handleFilteringEnableURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	found := false
+	config.Lock()
 	for i := range config.Filters {
 		filter := &config.Filters[i] // otherwise we will be operating on a copy
 		if filter.URL == url {
@@ -677,6 +696,7 @@ func handleFilteringEnableURL(w http.ResponseWriter, r *http.Request) {
 			found = true
 		}
 	}
+	config.Unlock()
 
 	if !found {
 		http.Error(w, "URL parameter was not previously added", http.StatusBadRequest)
@@ -708,6 +728,7 @@ func handleFilteringDisableURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	found := false
+	config.Lock()
 	for i := range config.Filters {
 		filter := &config.Filters[i] // otherwise we will be operating on a copy
 		if filter.URL == url {
@@ -715,6 +736,7 @@ func handleFilteringDisableURL(w http.ResponseWriter, r *http.Request) {
 			found = true
 		}
 	}
+	config.Unlock()
 
 	if !found {
 		http.Error(w, "URL parameter was not previously added", http.StatusBadRequest)
