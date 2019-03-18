@@ -127,11 +127,6 @@ func run(args options) {
 	// Update filters we've just loaded right away, don't wait for periodic update timer
 	go func() {
 		refreshFiltersIfNecessary(false)
-		// Save the updated config
-		err := config.write()
-		if err != nil {
-			log.Fatal(err)
-		}
 	}()
 	// Schedule automatic filters updates
 	go periodicallyRefreshFilters()
