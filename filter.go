@@ -52,15 +52,16 @@ func loadFilters() {
 		if filter.ID == 0 {
 			filter.ID = assignUniqueFilterID()
 		}
+
+		if !filter.Enabled {
+			// No need to load a filter that is not enabled
+			continue
+		}
+
 		err := filter.load()
 		if err != nil {
 			// This is okay for the first start, the filter will be loaded later
 			log.Debug("Couldn't load filter %d contents due to %s", filter.ID, err)
-			// clear LastUpdated so it gets fetched right away
-		}
-
-		if len(filter.Rules) == 0 {
-			filter.LastUpdated = time.Time{}
 		}
 	}
 }
@@ -113,6 +114,10 @@ func refreshFiltersIfNecessary(force bool) int {
 	updateCount := 0
 	for i := range config.Filters {
 		filter := &config.Filters[i] // otherwise we will be operating on a copy
+
+		if !filter.Enabled {
+			continue
+		}
 
 		if filter.ID == 0 { // protect against users modifying the yaml and removing the ID
 			filter.ID = assignUniqueFilterID()
@@ -188,9 +193,6 @@ func (filter *filter) update(force bool) (bool, error) {
 	if filter.ID == 0 { // protect against users deleting the ID
 		filter.ID = assignUniqueFilterID()
 	}
-	if !filter.Enabled {
-		return false, nil
-	}
 	if !force && time.Since(filter.LastUpdated) <= updatePeriod {
 		return false, nil
 	}
@@ -258,11 +260,6 @@ func (filter *filter) save() error {
 
 // loads filter contents from the file in dataDir
 func (filter *filter) load() error {
-	if !filter.Enabled {
-		// No need to load a filter that is not enabled
-		return nil
-	}
-
 	filterFilePath := filter.Path()
 	log.Tracef("Loading filter %d contents to: %s", filter.ID, filterFilePath)
 
