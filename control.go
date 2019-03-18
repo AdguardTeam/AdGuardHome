@@ -620,6 +620,7 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 	err = reconfigureDNSServer()
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Couldn't reconfigure the DNS server: %s", err)
+		return
 	}
 
 	_, err = fmt.Fprintf(w, "OK %d rules\n", f.RulesCount)
