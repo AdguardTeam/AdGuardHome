@@ -147,16 +147,6 @@ func refreshFiltersIfNecessary(force bool) int {
 			continue
 		}
 
-		if filter.ID == 0 { // protect against users modifying the yaml and removing the ID
-			filter.ID = assignUniqueFilterID()
-		}
-
-		if len(filter.Rules) == 0 {
-			// Try reloading filter from the disk before updating
-			// This is useful for the case when we simply enable a previously downloaded filter
-			_ = filter.load()
-		}
-
 		updated, err := filter.update(force)
 		if err != nil {
 			log.Printf("Failed to update filter %s: %s\n", filter.URL, err)
@@ -218,9 +208,6 @@ func parseFilterContents(contents []byte) (int, string, []string) {
 // If "force" is true -- does not check the filter's LastUpdated field
 // Call "save" to persist the filter contents
 func (filter *filter) update(force bool) (bool, error) {
-	if filter.ID == 0 { // protect against users deleting the ID
-		filter.ID = assignUniqueFilterID()
-	}
 	if !force && time.Since(filter.LastUpdated) <= updatePeriod {
 		return false, nil
 	}
