@@ -56,11 +56,13 @@ class Header extends Component {
                             toggleMenuOpen={this.toggleMenuOpen}
                             closeMenu={this.closeMenu}
                         />
-                        <div className="col col-sm-6 col-lg-3">
-                            <Version
-                                { ...this.props.dashboard }
-                            />
-                        </div>
+                        {!dashboard.processing &&
+                            <div className="col col-sm-6 col-lg-3">
+                                <Version
+                                    { ...this.props.dashboard }
+                                />
+                            </div>
+                        }
                     </div>
                 </div>
             </div>

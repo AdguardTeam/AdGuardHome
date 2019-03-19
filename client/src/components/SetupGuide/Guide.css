@@ -1,0 +1,15 @@
+.guide {
+    max-width: 768px;
+    margin: 0 auto;
+}
+
+.guide__title {
+    margin-bottom: 10px;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.guide__desc {
+    margin-bottom: 20px;
+    font-size: 15px;
+}

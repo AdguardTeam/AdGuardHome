@@ -14,8 +14,9 @@ import Dashboard from '../../containers/Dashboard';
 import Settings from '../../containers/Settings';
 import Filters from '../../containers/Filters';
 import Logs from '../../containers/Logs';
-import Footer from '../ui/Footer';
+import SetupGuide from '../../containers/SetupGuide';
 import Toasts from '../Toasts';
+import Footer from '../ui/Footer';
 import Status from '../ui/Status';
 import UpdateTopline from '../ui/UpdateTopline';
 import EncryptionTopline from '../ui/EncryptionTopline';
@@ -86,6 +87,7 @@ class App extends Component {
                                 <Route path="/settings" component={Settings} />
                                 <Route path="/filters" component={Filters} />
                                 <Route path="/logs" component={Logs} />
+                                <Route path="/guide" component={SetupGuide} />
                             </Fragment>
                         }
                     </div>

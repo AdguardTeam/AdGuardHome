@@ -48,7 +48,7 @@ const dashboard = handleActions({
             version,
             running,
             dns_port: dnsPort,
-            dns_address: dnsAddress,
+            dns_addresses: dnsAddresses,
             querylog_enabled: queryLogEnabled,
             upstream_dns: upstreamDns,
             bootstrap_dns: bootstrapDns,
@@ -63,7 +63,7 @@ const dashboard = handleActions({
             processing: false,
             dnsVersion: version,
             dnsPort,
-            dnsAddress,
+            dnsAddresses,
             queryLogEnabled,
             upstreamDns: upstreamDns.join('\n'),
             bootstrapDns: bootstrapDns.join('\n'),
@@ -181,6 +181,9 @@ const dashboard = handleActions({
     protectionEnabled: false,
     processingProtection: false,
     httpPort: 80,
+    dnsPort: 53,
+    dnsAddresses: [],
+    dnsVersion: '',
 });
 
 const queryLogs = handleActions({
