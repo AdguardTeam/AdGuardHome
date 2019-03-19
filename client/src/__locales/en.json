@@ -1,4 +1,7 @@
 {
+    "upstream_parallel": "Use parallel queries to speed up resolving by simultaneously querying all upstream servers",
+    "bootstrap_dns": "Bootstrap DNS servers",
+    "bootstrap_dns_desc": "Bootstrap DNS servers are used to resolve IP addresses of the DoH\/DoT resolvers you specify as upstreams.",
     "url_added_successfully": "URL added successfully",
     "check_dhcp_servers": "Check for DHCP servers",
     "save_config": "Save config",
@@ -246,10 +249,7 @@
     "form_error_equal": "Shouldn't be equal",
     "form_error_password": "Password mismatched",
     "reset_settings": "Reset settings",
-    "update_announcement": "AdGuard Home {{version}} is now available! <0>Click here</0> for more info.",
-    "upstream_parallel": "Use parallel queries to speed up resolving by simultaneously querying all upstream servers",
-    "bootstrap_dns": "Bootstrap DNS servers",
-    "bootstrap_dns_desc": "Bootstrap DNS servers are used to resolve IP addresses of the DOH/DOT resolvers you specify as upstreams.",
+    "update_announcement": "AdGuard Home {{version}} is now available! <0>Click here<\/0> for more info.",
     "setup_guide": "Setup guide",
     "dns_addresses": "DNS addresses"
 }
