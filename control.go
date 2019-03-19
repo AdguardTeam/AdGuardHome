@@ -79,8 +79,25 @@ func httpUpdateConfigReloadDNSReturnOK(w http.ResponseWriter, r *http.Request) {
 
 func handleStatus(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
+
+	dnsAddresses := []string{}
+	if config.DNS.BindHost == "0.0.0.0" {
+		ifaces, e := getValidNetInterfacesForWeb()
+		if e != nil {
+			log.Error("Couldn't get network interfaces: %v", e)
+		}
+		for _, iface := range ifaces {
+			for _, addr := range iface.Addresses {
+				dnsAddresses = append(dnsAddresses, addr)
+			}
+		}
+	}
+	if len(dnsAddresses) == 0 {
+		dnsAddresses = append(dnsAddresses, config.DNS.BindHost)
+	}
+
 	data := map[string]interface{}{
-		"dns_address":        config.DNS.BindHost,
+		"dns_addresses":      dnsAddresses,
 		"http_port":          config.BindPort,
 		"dns_port":           config.DNS.Port,
 		"protection_enabled": config.DNS.ProtectionEnabled,
