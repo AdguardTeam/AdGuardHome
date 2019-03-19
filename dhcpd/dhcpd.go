@@ -517,10 +517,17 @@ func (s *Server) handleDecline(p dhcp4.Packet, options dhcp4.Options) dhcp4.Pack
 }
 
 // Leases returns the list of current DHCP leases (thread-safe)
-func (s *Server) Leases() []*Lease {
+func (s *Server) Leases() []Lease {
+	var result []Lease
+	now := time.Now().Unix()
 	s.RLock()
-	result := s.leases
+	for _, lease := range s.leases {
+		if lease.Expiry.Unix() > now {
+			result = append(result, *lease)
+		}
+	}
 	s.RUnlock()
+
 	return result
 }
 
