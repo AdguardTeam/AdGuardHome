@@ -1063,6 +1063,7 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/dhcp/find_active_dhcp", postInstall(optionalAuth(ensurePOST(handleDHCPFindActiveServer))))
 
 	RegisterTLSHandlers()
+	RegisterClientsHandlers()
 
 	http.HandleFunc("/dns-query", postInstall(handleDOH))
 }
