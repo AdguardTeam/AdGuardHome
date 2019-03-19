@@ -738,8 +738,7 @@ func handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
 
 func handleFilteringRefresh(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
-	force := r.URL.Query().Get("force")
-	updated := refreshFiltersIfNecessary(force != "")
+	updated := refreshFiltersIfNecessary(true)
 	fmt.Fprintf(w, "OK %d filters updated\n", updated)
 }
 
