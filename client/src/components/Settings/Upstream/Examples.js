@@ -22,7 +22,7 @@ const Examples = props => (
                 <code>sdns://...</code> - <span dangerouslySetInnerHTML={{ __html: props.t('example_upstream_sdns') }} />
             </li>
             <li>
-                <code>[/host.com/]1.1.1.1</code> - <span dangerouslySetInnerHTML={{ __html: props.t('example_upstream_reserved') }} />
+                <code>[/example.local/]1.1.1.1</code> - <span dangerouslySetInnerHTML={{ __html: props.t('example_upstream_reserved') }} />
             </li>
         </ol>
     </div>

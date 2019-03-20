@@ -369,23 +369,22 @@ func validateUpstreams(upstreams []string) error {
 	return nil
 }
 
-func validateUpstream(u string) (defaultUpstream bool, err error) {
+func validateUpstream(u string) (bool, error) {
 	// Check if user tries to specify upstream for domain
-	defaultUpstream = true
-	u, defaultUpstream, err = separateUpstream(u)
+	u, defaultUpstream, err := separateUpstream(u)
 	if err != nil {
-		return
+		return defaultUpstream, err
 	}
 
 	// The special server address '#' means "use the default servers"
 	if u == "#" && !defaultUpstream {
-		return
+		return defaultUpstream, nil
 	}
 
 	// Check if the upstream has a valid protocol prefix
 	for _, proto := range protocols {
 		if strings.HasPrefix(u, proto) {
-			return
+			return defaultUpstream, nil
 		}
 	}
 
