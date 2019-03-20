@@ -6,7 +6,7 @@ import escapeRegExp from 'lodash/escapeRegExp';
 import endsWith from 'lodash/endsWith';
 import { Trans, withNamespaces } from 'react-i18next';
 
-import { formatTime } from '../../helpers/helpers';
+import { formatTime, getClientName } from '../../helpers/helpers';
 import { getTrackerData } from '../../helpers/trackers/trackers';
 import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
@@ -86,7 +86,7 @@ class Logs extends Component {
     }
 
     renderLogs(logs) {
-        const { t } = this.props;
+        const { t, dashboard } = this.props;
         const columns = [{
             Header: t('time_table_header'),
             accessor: 'time',
@@ -196,11 +196,19 @@ class Logs extends Component {
             Cell: (row) => {
                 const { reason } = row.original;
                 const isFiltered = row ? reason.indexOf('Filtered') === 0 : false;
+                const clientName = getClientName(dashboard.clients, row.value);
+                let client;
+
+                if (clientName) {
+                    client = <span>{clientName} <small>({row.value})</small></span>;
+                } else {
+                    client = row.value;
+                }
 
                 return (
                     <Fragment>
                         <div className="logs__row">
-                            {row.value}
+                            {client}
                         </div>
                         {this.renderBlockingButton(isFiltered, row.original.domain)}
                     </Fragment>
@@ -315,9 +323,18 @@ class Logs extends Component {
                     </div>
                 </PageTitle>
                 <Card>
-                    {queryLogEnabled && queryLogs.getLogsProcessing && <Loading />}
-                    {queryLogEnabled && !queryLogs.getLogsProcessing &&
-                        this.renderLogs(queryLogs.logs)}
+                    {
+                        queryLogEnabled
+                        && queryLogs.getLogsProcessing
+                        && dashboard.processingClients
+                        && <Loading />
+                    }
+                    {
+                        queryLogEnabled
+                        && !queryLogs.getLogsProcessing
+                        && !dashboard.processingClients
+                        && this.renderLogs(queryLogs.logs)
+                    }
                 </Card>
             </Fragment>
         );

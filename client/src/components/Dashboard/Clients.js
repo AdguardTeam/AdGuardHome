@@ -7,7 +7,7 @@ import { Trans, withNamespaces } from 'react-i18next';
 import Card from '../ui/Card';
 import Cell from '../ui/Cell';
 
-import { getPercent } from '../../helpers/helpers';
+import { getPercent, getClientName } from '../../helpers/helpers';
 import { STATUS_COLORS } from '../../helpers/constants';
 
 class Clients extends Component {
@@ -23,7 +23,24 @@ class Clients extends Component {
     columns = [{
         Header: 'IP',
         accessor: 'ip',
-        Cell: ({ value }) => (<div className="logs__row logs__row--overflow"><span className="logs__text" title={value}>{value}</span></div>),
+        Cell: ({ value }) => {
+            const clientName = getClientName(this.props.clients, value);
+            let client;
+
+            if (clientName) {
+                client = <span>{clientName} <small>({value})</small></span>;
+            } else {
+                client = value;
+            }
+
+            return (
+                <div className="logs__row logs__row--overflow">
+                    <span className="logs__text" title={value}>
+                        {client}
+                    </span>
+                </div>
+            );
+        },
         sortMethod: (a, b) => parseInt(a.replace(/\./g, ''), 10) - parseInt(b.replace(/\./g, ''), 10),
     }, {
         Header: <Trans>requests_count</Trans>,
@@ -61,6 +78,7 @@ Clients.propTypes = {
     topClients: PropTypes.object.isRequired,
     dnsQueries: PropTypes.number.isRequired,
     refreshButton: PropTypes.node.isRequired,
+    clients: PropTypes.array.isRequired,
     t: PropTypes.func,
 };
 

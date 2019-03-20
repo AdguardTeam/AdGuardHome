@@ -203,3 +203,8 @@ export const redirectToCurrentProtocol = (values, httpPort = 80) => {
 };
 
 export const normalizeTextarea = text => text && text.replace(/[;, ]/g, '\n').split('\n').filter(n => n);
+
+export const getClientName = (clients, ip) => {
+    const client = clients.find(item => ip === item.ip);
+    return (client && client.name) || '';
+};
