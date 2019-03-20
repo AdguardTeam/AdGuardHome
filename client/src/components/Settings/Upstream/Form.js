@@ -7,6 +7,7 @@ import flow from 'lodash/flow';
 import classnames from 'classnames';
 
 import { renderSelectField } from '../../../helpers/form';
+import Examples from './Examples';
 
 let Form = (props) => {
     const {
@@ -54,6 +55,10 @@ let Form = (props) => {
                             placeholder={t('upstream_parallel')}
                         />
                     </div>
+                </div>
+                <div className="col-12">
+                    <Examples />
+                    <hr/>
                 </div>
                 <div className="col-12">
                     <div className="form__group">

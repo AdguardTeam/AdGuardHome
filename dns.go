@@ -7,7 +7,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
-	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/joomcode/errorx"
 )
@@ -58,19 +58,12 @@ func generateServerConfig() dnsforward.ServerConfig {
 		}
 	}
 
-	for _, u := range config.DNS.UpstreamDNS {
-		opts := upstream.Options{
-			Timeout:   dnsforward.DefaultTimeout,
-			Bootstrap: config.DNS.BootstrapDNS,
-		}
-		dnsUpstream, err := upstream.AddressToUpstream(u, opts)
-		if err != nil {
-			log.Printf("Couldn't get upstream: %s", err)
-			// continue, just ignore the upstream
-			continue
-		}
-		newconfig.Upstreams = append(newconfig.Upstreams, dnsUpstream)
+	upstreamConfig, err := proxy.ParseUpstreamsConfig(config.DNS.UpstreamDNS, config.DNS.BootstrapDNS, dnsforward.DefaultTimeout)
+	if err != nil {
+		log.Error("Couldn't get upstreams configuration cause: %s", err)
 	}
+	newconfig.Upstreams = upstreamConfig.Upstreams
+	newconfig.DomainsReservedUpstreams = upstreamConfig.DomainReservedUpstreams
 	newconfig.AllServers = config.DNS.AllServers
 	return newconfig
 }

@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { withNamespaces } from 'react-i18next';
 
 import Form from './Form';
-import Examples from './Examples';
 import Card from '../../ui/Card';
 
 class Upstream extends Component {
@@ -44,8 +43,6 @@ class Upstream extends Component {
                             processingTestUpstream={processingTestUpstream}
                             processingSetUpstream={processingSetUpstream}
                         />
-                        <hr/>
-                        <Examples />
                     </div>
                 </div>
             </Card>
