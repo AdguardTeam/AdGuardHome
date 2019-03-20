@@ -576,11 +576,9 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check for duplicates
-	for i := range config.Filters {
-		if config.Filters[i].URL == f.URL {
-			httpError(w, http.StatusBadRequest, "Filter URL already added -- %s", f.URL)
-			return
-		}
+	if filterExists(f.URL) {
+		httpError(w, http.StatusBadRequest, "Filter URL already added -- %s", f.URL)
+		return
 	}
 
 	// Set necessary properties
@@ -588,7 +586,7 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 	f.Enabled = true
 
 	// Download the filter contents
-	ok, err := f.update(true)
+	ok, err := f.update()
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Couldn't fetch filter from url %s: %s", f.URL, err)
 		return
@@ -611,7 +609,11 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 
 	// URL is deemed valid, append it to filters, update config, write new filter file and tell dns to reload it
 	// TODO: since we directly feed filters in-memory, revisit if writing configs is always necessary
-	config.Filters = append(config.Filters, f)
+	if !filterAdd(f) {
+		httpError(w, http.StatusBadRequest, "Filter URL already added -- %s", f.URL)
+		return
+	}
+
 	err = writeAllConfigs()
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Couldn't write config file: %s", err)
@@ -621,6 +623,7 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 	err = reconfigureDNSServer()
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Couldn't reconfigure the DNS server: %s", err)
+		return
 	}
 
 	_, err = fmt.Fprintf(w, "OK %d rules\n", f.RulesCount)
@@ -649,6 +652,7 @@ func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// go through each element and delete if url matches
+	config.Lock()
 	newFilters := config.Filters[:0]
 	for _, filter := range config.Filters {
 		if filter.URL != url {
@@ -664,6 +668,7 @@ func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 	}
 	// Update the configuration after removing filter files
 	config.Filters = newFilters
+	config.Unlock()
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
@@ -686,22 +691,12 @@ func handleFilteringEnableURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	found := false
-	for i := range config.Filters {
-		filter := &config.Filters[i] // otherwise we will be operating on a copy
-		if filter.URL == url {
-			filter.Enabled = true
-			found = true
-		}
-	}
-
+	found := filterEnable(url, true)
 	if !found {
 		http.Error(w, "URL parameter was not previously added", http.StatusBadRequest)
 		return
 	}
 
-	// kick off refresh of rules from new URLs
-	refreshFiltersIfNecessary(false)
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
@@ -724,15 +719,7 @@ func handleFilteringDisableURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	found := false
-	for i := range config.Filters {
-		filter := &config.Filters[i] // otherwise we will be operating on a copy
-		if filter.URL == url {
-			filter.Enabled = false
-			found = true
-		}
-	}
-
+	found := filterEnable(url, false)
 	if !found {
 		http.Error(w, "URL parameter was not previously added", http.StatusBadRequest)
 		return
