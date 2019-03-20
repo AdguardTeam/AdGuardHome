@@ -1,4 +1,7 @@
 {
+    "upstream_parallel": "\u900f\u904e\u540c\u6642\u5730\u67e5\u8a62\u6240\u6709\u4e0a\u6e38\u7684\u4f3a\u670d\u5668\uff0c\u4f7f\u7528\u4e26\u884c\u7684\u67e5\u8a62\u4ee5\u52a0\u901f\u89e3\u6790",
+    "bootstrap_dns": "\u81ea\u6211\u555f\u52d5\uff08Bootstrap\uff09DNS \u4f3a\u670d\u5668",
+    "bootstrap_dns_desc": "\u81ea\u6211\u555f\u52d5\uff08Bootstrap\uff09DNS\u4f3a\u670d\u5668\u88ab\u7528\u65bc\u89e3\u6790\u60a8\u660e\u78ba\u6307\u5b9a\u4f5c\u70ba\u4e0a\u6e38\u7684DoH\/DoT\u89e3\u6790\u5668\u4e4bIP\u4f4d\u5740\u3002",
     "url_added_successfully": "\u7db2\u5740\u88ab\u6210\u529f\u5730\u52a0\u5165",
     "check_dhcp_servers": "\u6aa2\u67e5\u52d5\u614b\u4e3b\u6a5f\u8a2d\u5b9a\u5354\u5b9a\uff08DHCP\uff09\u4f3a\u670d\u5668",
     "save_config": "\u5132\u5b58\u914d\u7f6e",
@@ -79,7 +82,7 @@
     "no_settings": "\u7121\u8a2d\u5b9a",
     "general_settings": "\u4e00\u822c\u7684\u8a2d\u5b9a",
     "upstream_dns": "\u4e0a\u6e38\u7684DNS\u4f3a\u670d\u5668",
-    "upstream_dns_hint": "\u5982\u679c\u60a8\u4fdd\u7559\u8a72\u6b04\u4f4d\u7a7a\u767d\u7684\uff0cAdGuard Home\u5c07\u4f7f\u7528<a href='https:\/\/1.1.1.1\/' target='_blank'>Cloudflare DNS<\/a>\u4f5c\u70ba\u4e0a\u6e38\u3002\u5c0d\u65bcDNS over TLS\u4f3a\u670d\u5668\u4f7f\u7528 tls:\/\/ \u524d\u7db4\u3002",
+    "upstream_dns_hint": "\u5982\u679c\u60a8\u5c07\u8a72\u6b04\u4f4d\u7559\u7a7a\uff0cAdGuard Home\u5c07\u4f7f\u7528<a href='https:\/\/1.1.1.1\/' target='_blank'>Cloudflare DNS<\/a>\u4f5c\u70ba\u4e0a\u6e38\u3002",
     "test_upstream_btn": "\u6e2c\u8a66\u4e0a\u884c\u8cc7\u6599\u6d41",
     "apply_btn": "\u5957\u7528",
     "disabled_filtering_toast": "\u5df2\u7981\u7528\u904e\u6ffe",
@@ -118,9 +121,9 @@
     "example_comment_hash": "# \u4e5f\u662f\u4e00\u500b\u8a3b\u89e3",
     "example_regex_meaning": "\u5c01\u9396\u81f3\u8207\u5df2\u660e\u78ba\u6307\u5b9a\u7684\u898f\u5247\u904b\u7b97\u5f0f\uff08Regular Expression\uff09\u76f8\u7b26\u7684\u7db2\u57df\u4e4b\u5b58\u53d6",
     "example_upstream_regular": "\u4e00\u822c\u7684 DNS\uff08\u900f\u904eUDP\uff09",
-    "example_upstream_dot": "\u52a0\u5bc6\u7684 <a href='https:\/\/en.wikipedia.org\/wiki\/DNS_over_TLS' target='_blank'>DNS-over-TLS<\/a>",
-    "example_upstream_doh": "\u52a0\u5bc6\u7684 <a href='https:\/\/en.wikipedia.org\/wiki\/DNS_over_HTTPS' target='_blank'>DNS-over-HTTPS <\/a>",
-    "example_upstream_sdns": "\u60a8\u53ef\u4f7f\u7528\u95dc\u65bc <a href='https:\/\/dnscrypt.info\/' target='_blank'>DNSCrypt<\/a> \u6216 <a href='https:\/\/en.wikipedia.org\/wiki\/DNS_over_HTTPS' target='_blank'>DNS-over-HTTPS<\/a> \u89e3\u6790\u5668\u4e4b <a href='https:\/\/dnscrypt.info\/stamps\/' target='_blank'>DNS \u6233\u8a18<\/a>",
+    "example_upstream_dot": "\u52a0\u5bc6\u7684 <0>DNS-over-TLS<\/0>",
+    "example_upstream_doh": "\u52a0\u5bc6\u7684 <0>DNS-over-HTTPS <\/0>",
+    "example_upstream_sdns": "\u60a8\u53ef\u4f7f\u7528\u95dc\u65bc <0>DNSCrypt<\/0> \u6216 <1>DNS-over-HTTPS<\/1> \u89e3\u6790\u5668\u4e4b <2>DNS \u6233\u8a18<\/2>",
     "example_upstream_tcp": "\u4e00\u822c\u7684 DNS\uff08\u900f\u904eTCP\uff09",
     "all_filters_up_to_date_toast": "\u6240\u6709\u7684\u904e\u6ffe\u5668\u5df2\u662f\u6700\u65b0\u7684",
     "updated_upstream_dns_toast": "\u5df2\u66f4\u65b0\u4e0a\u6e38\u7684DNS\u4f3a\u670d\u5668",
@@ -246,5 +249,7 @@
     "form_error_equal": "\u4e0d\u61c9\u70ba\u76f8\u7b49\u7684",
     "form_error_password": "\u4e0d\u76f8\u7b26\u7684\u5bc6\u78bc",
     "reset_settings": "\u91cd\u7f6e\u8a2d\u5b9a",
-    "update_announcement": "AdGuard Home {{version}} \u73fe\u70ba\u53ef\u7528\u7684\uff01\u95dc\u65bc\u66f4\u591a\u7684\u8cc7\u8a0a\uff0c<0>\u9ede\u64ca\u9019\u88e1<\/0>\u3002"
+    "update_announcement": "AdGuard Home {{version}} \u73fe\u70ba\u53ef\u7528\u7684\uff01\u95dc\u65bc\u66f4\u591a\u7684\u8cc7\u8a0a\uff0c<0>\u9ede\u64ca\u9019\u88e1<\/0>\u3002",
+    "setup_guide": "\u5b89\u88dd\u6307\u5357",
+    "dns_addresses": "DNS \u4f4d\u5740"
 }
