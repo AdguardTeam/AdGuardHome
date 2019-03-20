@@ -38,7 +38,7 @@ func TestDHCP(t *testing.T) {
 	p = make(dhcp4.Packet, 241)
 
 	// Reserve an IP
-	hw = []byte{1, 2, 3, 4, 5, 6}
+	hw = []byte{3, 2, 3, 4, 5, 6}
 	p.SetCHAddr(hw)
 	lease, _ = s.reserveLease(p)
 	check(t, bytes.Equal(lease.HWAddr, hw), "lease.HWAddr")
@@ -54,10 +54,13 @@ func TestDHCP(t *testing.T) {
 	check(t, bytes.Equal(lease.HWAddr, hw), "lease.HWAddr")
 	check(t, bytes.Equal(lease.IP, []byte{1, 1, 1, 2}), "lease.IP")
 
-	// Reserve an IP - we have no more available IPs
-	p.SetCHAddr([]byte{3, 2, 3, 4, 5, 6})
+	// Reserve an IP - we have no more available IPs,
+	//  so the first expired (or, in our case, not yet committed) lease is returned
+	hw = []byte{1, 2, 3, 4, 5, 6}
+	p.SetCHAddr(hw)
 	lease, _ = s.reserveLease(p)
-	check(t, lease == nil, "lease == nil")
+	check(t, bytes.Equal(lease.HWAddr, hw), "lease.HWAddr")
+	check(t, bytes.Equal(lease.IP, []byte{1, 1, 1, 1}), "lease.IP")
 
 	// Decline request for a lease which doesn't match our internal state
 	hw = []byte{1, 2, 3, 4, 5, 6}
@@ -83,6 +86,21 @@ func TestDHCP(t *testing.T) {
 	check(t, bytes.Equal(p2.CHAddr(), hw), "p2.CHAddr")
 	check(t, bytes.Equal(opt[dhcp4.OptionIPAddressLeaseTime], dhcp4.OptionsLeaseTime(5*time.Second)), "OptionIPAddressLeaseTime")
 	check(t, bytes.Equal(opt[dhcp4.OptionServerIdentifier], s.ipnet.IP), "OptionServerIdentifier")
+
+	// Commit the previously reserved lease #2
+	hw = []byte{2, 2, 3, 4, 5, 6}
+	p.SetCHAddr(hw)
+	p.SetCIAddr([]byte{0, 0, 0, 0})
+	opt = make(dhcp4.Options, 10)
+	opt[dhcp4.OptionRequestedIPAddress] = []byte{1, 1, 1, 2}
+	p2 = s.handleDHCP4Request(p, opt)
+	check(t, bytes.Equal(p2.YIAddr(), []byte{1, 1, 1, 2}), "p2.YIAddr")
+
+	// Reserve an IP - we have no more available IPs
+	hw = []byte{3, 2, 3, 4, 5, 6}
+	p.SetCHAddr(hw)
+	lease, _ = s.reserveLease(p)
+	check(t, lease == nil, "lease == nil")
 
 	s.reset()
 	misc(t, &s)
