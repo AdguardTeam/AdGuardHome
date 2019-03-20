@@ -1315,7 +1315,7 @@ definitions:
         properties:
             ip:
                 type: "string"
-                example: "127.0.01"
+                example: "127.0.0.1"
             port:
                 type: "integer"
                 format: "int32"
