@@ -121,9 +121,9 @@
     "example_comment_hash": "# \u4e5f\u662f\u4e00\u500b\u8a3b\u89e3",
     "example_regex_meaning": "\u5c01\u9396\u81f3\u8207\u5df2\u660e\u78ba\u6307\u5b9a\u7684\u898f\u5247\u904b\u7b97\u5f0f\uff08Regular Expression\uff09\u76f8\u7b26\u7684\u7db2\u57df\u4e4b\u5b58\u53d6",
     "example_upstream_regular": "\u4e00\u822c\u7684 DNS\uff08\u900f\u904eUDP\uff09",
-    "example_upstream_dot": "\u52a0\u5bc6\u7684 <a href='https:\/\/en.wikipedia.org\/wiki\/DNS_over_TLS' target='_blank'>DNS-over-TLS<\/a>",
-    "example_upstream_doh": "\u52a0\u5bc6\u7684 <a href='https:\/\/en.wikipedia.org\/wiki\/DNS_over_HTTPS' target='_blank'>DNS-over-HTTPS <\/a>",
-    "example_upstream_sdns": "\u60a8\u53ef\u4f7f\u7528\u95dc\u65bc <a href='https:\/\/dnscrypt.info\/' target='_blank'>DNSCrypt<\/a> \u6216 <a href='https:\/\/en.wikipedia.org\/wiki\/DNS_over_HTTPS' target='_blank'>DNS-over-HTTPS<\/a> \u89e3\u6790\u5668\u4e4b <a href='https:\/\/dnscrypt.info\/stamps\/' target='_blank'>DNS \u6233\u8a18<\/a>",
+    "example_upstream_dot": "\u52a0\u5bc6\u7684 <0>DNS-over-TLS<\/0>",
+    "example_upstream_doh": "\u52a0\u5bc6\u7684 <0>DNS-over-HTTPS <\/0>",
+    "example_upstream_sdns": "\u60a8\u53ef\u4f7f\u7528\u95dc\u65bc <0>DNSCrypt<\/0> \u6216 <1>DNS-over-HTTPS<\/1> \u89e3\u6790\u5668\u4e4b <2>DNS \u6233\u8a18<\/2>",
     "example_upstream_tcp": "\u4e00\u822c\u7684 DNS\uff08\u900f\u904eTCP\uff09",
     "all_filters_up_to_date_toast": "\u6240\u6709\u7684\u904e\u6ffe\u5668\u5df2\u662f\u6700\u65b0\u7684",
     "updated_upstream_dns_toast": "\u5df2\u66f4\u65b0\u4e0a\u6e38\u7684DNS\u4f3a\u670d\u5668",
@@ -249,5 +249,7 @@
     "form_error_equal": "\u4e0d\u61c9\u70ba\u76f8\u7b49\u7684",
     "form_error_password": "\u4e0d\u76f8\u7b26\u7684\u5bc6\u78bc",
     "reset_settings": "\u91cd\u7f6e\u8a2d\u5b9a",
-    "update_announcement": "AdGuard Home {{version}} \u73fe\u70ba\u53ef\u7528\u7684\uff01\u95dc\u65bc\u66f4\u591a\u7684\u8cc7\u8a0a\uff0c<0>\u9ede\u64ca\u9019\u88e1<\/0>\u3002"
+    "update_announcement": "AdGuard Home {{version}} \u73fe\u70ba\u53ef\u7528\u7684\uff01\u95dc\u65bc\u66f4\u591a\u7684\u8cc7\u8a0a\uff0c<0>\u9ede\u64ca\u9019\u88e1<\/0>\u3002",
+    "setup_guide": "\u5b89\u88dd\u6307\u5357",
+    "dns_addresses": "DNS \u4f4d\u5740"
 }

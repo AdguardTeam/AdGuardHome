@@ -10,16 +10,69 @@ const Examples = props => (
                 <code>1.1.1.1</code> - { props.t('example_upstream_regular') }
             </li>
             <li>
-                <code>tls://1dot1dot1dot1.cloudflare-dns.com</code> - <span dangerouslySetInnerHTML={{ __html: props.t('example_upstream_dot') }} />
+                <code>tls://1dot1dot1dot1.cloudflare-dns.com</code> –&nbsp;
+                <span>
+                    <Trans
+                        components={[
+                            <a href="https://en.wikipedia.org/wiki/DNS_over_TLS" target="_blank" rel="noopener noreferrer" key="0">
+                                DNS-over-TLS
+                            </a>,
+                        ]}
+                    >
+                        example_upstream_dot
+                    </Trans>
+                </span>
             </li>
             <li>
-                <code>https://cloudflare-dns.com/dns-query</code> - <span dangerouslySetInnerHTML={{ __html: props.t('example_upstream_doh') }} />
+                <code>https://cloudflare-dns.com/dns-query</code> –&nbsp;
+                <span>
+                    <Trans
+                        components={[
+                            <a href="https://en.wikipedia.org/wiki/DNS_over_HTTPS" target="_blank" rel="noopener noreferrer" key="0">
+                                DNS-over-HTTPS
+                            </a>,
+                        ]}
+                    >
+                        example_upstream_doh
+                    </Trans>
+                </span>
             </li>
             <li>
-                <code>tcp://1.1.1.1</code> - { props.t('example_upstream_tcp') }
+                <code>tcp://1.1.1.1</code> – <Trans>example_upstream_tcp</Trans>
             </li>
             <li>
-                <code>sdns://...</code> - <span dangerouslySetInnerHTML={{ __html: props.t('example_upstream_sdns') }} />
+                <code>sdns://...</code> –&nbsp;
+                <span>
+                    <Trans
+                        components={[
+                            <a href="https://dnscrypt.info/stamps/" target="_blank" rel="noopener noreferrer" key="0">
+                                DNS Stamps
+                            </a>,
+                            <a href="https://dnscrypt.info/" target="_blank" rel="noopener noreferrer" key="1">
+                                DNSCrypt
+                            </a>,
+                            <a href="https://en.wikipedia.org/wiki/DNS_over_HTTPS" target="_blank" rel="noopener noreferrer" key="2">
+                                DNS-over-HTTPS
+                            </a>,
+                        ]}
+                    >
+                        example_upstream_sdns
+                    </Trans>
+                </span>
+            </li>
+            <li>
+                <code>[/example.local/]1.1.1.1</code> –&nbsp;
+                <span>
+                    <Trans
+                        components={[
+                            <a href="https://github.com/AdguardTeam/dnsproxy#specifying-upstreams-for-domains" target="_blank" rel="noopener noreferrer" key="0">
+                                Link
+                            </a>,
+                        ]}
+                    >
+                        example_upstream_reserved
+                    </Trans>
+                </span>
             </li>
         </ol>
     </div>

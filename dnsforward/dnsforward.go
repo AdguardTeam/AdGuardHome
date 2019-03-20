@@ -82,10 +82,11 @@ type TLSConfig struct {
 // ServerConfig represents server configuration.
 // The zero ServerConfig is empty and ready for use.
 type ServerConfig struct {
-	UDPListenAddr *net.UDPAddr        // UDP listen address
-	TCPListenAddr *net.TCPAddr        // TCP listen address
-	Upstreams     []upstream.Upstream // Configured upstreams
-	Filters       []dnsfilter.Filter  // A list of filters to use
+	UDPListenAddr            *net.UDPAddr                   // UDP listen address
+	TCPListenAddr            *net.TCPAddr                   // TCP listen address
+	Upstreams                []upstream.Upstream            // Configured upstreams
+	DomainsReservedUpstreams map[string][]upstream.Upstream // Map of domains and lists of configured upstreams
+	Filters                  []dnsfilter.Filter             // A list of filters to use
 
 	FilteringConfig
 	TLSConfig
@@ -156,15 +157,16 @@ func (s *Server) startInternal(config *ServerConfig) error {
 	})
 
 	proxyConfig := proxy.Config{
-		UDPListenAddr:      s.UDPListenAddr,
-		TCPListenAddr:      s.TCPListenAddr,
-		Ratelimit:          s.Ratelimit,
-		RatelimitWhitelist: s.RatelimitWhitelist,
-		RefuseAny:          s.RefuseAny,
-		CacheEnabled:       true,
-		Upstreams:          s.Upstreams,
-		Handler:            s.handleDNSRequest,
-		AllServers:         s.AllServers,
+		UDPListenAddr:            s.UDPListenAddr,
+		TCPListenAddr:            s.TCPListenAddr,
+		Ratelimit:                s.Ratelimit,
+		RatelimitWhitelist:       s.RatelimitWhitelist,
+		RefuseAny:                s.RefuseAny,
+		CacheEnabled:             true,
+		Upstreams:                s.Upstreams,
+		DomainsReservedUpstreams: s.DomainsReservedUpstreams,
+		Handler:                  s.handleDNSRequest,
+		AllServers:               s.AllServers,
 	}
 
 	if s.TLSListenAddr != nil && s.CertificateChain != "" && s.PrivateKey != "" {
