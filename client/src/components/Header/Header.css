@@ -76,6 +76,13 @@
     font-weight: 600;
 }
 
+.nav-version__link {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dashed #495057;
+    cursor: pointer;
+}
+
 .header-brand-img {
     height: 32px;
 }

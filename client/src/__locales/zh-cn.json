@@ -1,4 +1,7 @@
 {
+    "upstream_parallel": "\u901a\u8fc7\u540c\u65f6\u67e5\u8be2\u6240\u6709\u4e0a\u6d41\u670d\u52a1\u5668\u4ee5\u4f7f\u7528\u5e76\u884c\u67e5\u8be2\u52a0\u901f\u89e3\u6790",
+    "bootstrap_dns": "Bootstrap DNS \u670d\u52a1\u5668",
+    "bootstrap_dns_desc": "Bootstrap DNS servers are used to resolve IP addresses of the DoH\/DoT resolvers you specify as upstreams.",
     "url_added_successfully": "\u7f51\u5740\u6dfb\u52a0\u6210\u529f",
     "check_dhcp_servers": "\u68c0\u67e5 DHCP \u670d\u52a1\u5668",
     "save_config": "\u4fdd\u5b58\u914d\u7f6e",
