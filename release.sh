@@ -38,5 +38,5 @@ GOOS=linux GOARCH=arm GOARM=6 f
 GOOS=linux GOARCH=arm64 GOARM=6 f
 GOOS=windows GOARCH=amd64 f
 GOOS=windows GOARCH=386 f
-GOOS=linux GOARCH=mipsle f
-GOOS=linux GOARCH=mips f
+GOOS=linux GOARCH=mipsle GOMIPS=softfloat f
+GOOS=linux GOARCH=mips GOMIPS=softfloat f
