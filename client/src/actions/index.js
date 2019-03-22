@@ -3,7 +3,7 @@ import round from 'lodash/round';
 import { t } from 'i18next';
 import { showLoading, hideLoading } from 'react-redux-loading-bar';
 
-import { normalizeHistory, normalizeFilteringStatus, normalizeLogs } from '../helpers/helpers';
+import { normalizeHistory, normalizeFilteringStatus, normalizeLogs, normalizeTextarea } from '../helpers/helpers';
 import { SETTINGS_NAMES } from '../helpers/constants';
 import Api from '../api/Api';
 
@@ -452,10 +452,18 @@ export const setUpstreamRequest = createAction('SET_UPSTREAM_REQUEST');
 export const setUpstreamFailure = createAction('SET_UPSTREAM_FAILURE');
 export const setUpstreamSuccess = createAction('SET_UPSTREAM_SUCCESS');
 
-export const setUpstream = url => async (dispatch) => {
+export const setUpstream = config => async (dispatch) => {
     dispatch(setUpstreamRequest());
     try {
-        await apiClient.setUpstream(url);
+        const values = { ...config };
+        values.bootstrap_dns = (
+            values.bootstrap_dns && normalizeTextarea(values.bootstrap_dns)
+        ) || [];
+        values.upstream_dns = (
+            values.upstream_dns && normalizeTextarea(values.upstream_dns)
+        ) || [];
+
+        await apiClient.setUpstream(values);
         dispatch(addSuccessToast('updated_upstream_dns_toast'));
         dispatch(setUpstreamSuccess());
     } catch (error) {
@@ -468,11 +476,18 @@ export const testUpstreamRequest = createAction('TEST_UPSTREAM_REQUEST');
 export const testUpstreamFailure = createAction('TEST_UPSTREAM_FAILURE');
 export const testUpstreamSuccess = createAction('TEST_UPSTREAM_SUCCESS');
 
-export const testUpstream = servers => async (dispatch) => {
+export const testUpstream = config => async (dispatch) => {
     dispatch(testUpstreamRequest());
     try {
-        const upstreamResponse = await apiClient.testUpstream(servers);
+        const values = { ...config };
+        values.bootstrap_dns = (
+            values.bootstrap_dns && normalizeTextarea(values.bootstrap_dns)
+        ) || [];
+        values.upstream_dns = (
+            values.upstream_dns && normalizeTextarea(values.upstream_dns)
+        ) || [];
 
+        const upstreamResponse = await apiClient.testUpstream(values);
         const testMessages = Object.keys(upstreamResponse).map((key) => {
             const message = upstreamResponse[key];
             if (message !== 'OK') {

@@ -11,7 +11,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
-	"github.com/hmage/golibs/log"
+	"github.com/AdguardTeam/golibs/file"
+	"github.com/AdguardTeam/golibs/log"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -61,6 +62,9 @@ type dnsConfig struct {
 	UpstreamDNS []string `yaml:"upstream_dns"`
 }
 
+var defaultDNS = []string{"https://dns.cloudflare.com/dns-query"}
+var defaultBootstrap = []string{"1.1.1.1"}
+
 type tlsConfigSettings struct {
 	Enabled        bool   `yaml:"enabled" json:"enabled"`                               // Enabled is the encryption (DOT/DOH/HTTPS) status
 	ServerName     string `yaml:"server_name" json:"server_name,omitempty"`             // ServerName is the hostname of your HTTPS/TLS server
@@ -86,7 +90,7 @@ type tlsConfigStatus struct {
 	KeyType  string `yaml:"-" json:"key_type,omitempty"` // KeyType is one of RSA or ECDSA
 
 	// is usable? set by validator
-	usable bool
+	ValidPair bool `yaml:"-" json:"valid_pair"` // ValidPair is true if both certificate and private key are correct
 
 	// warnings
 	WarningValidation string `yaml:"-" json:"warning_validation,omitempty"` // WarningValidation is a validation warning message with the issue description
@@ -97,8 +101,6 @@ type tlsConfig struct {
 	tlsConfigSettings `yaml:",inline" json:",inline"`
 	tlsConfigStatus   `yaml:"-" json:",inline"`
 }
-
-var defaultDNS = []string{"tls://1.1.1.1", "tls://1.0.0.1"}
 
 // initialize to default values, will be changed later when reading config or parsing command line
 var config = configuration{
@@ -115,7 +117,8 @@ var config = configuration{
 			QueryLogEnabled:    true,
 			Ratelimit:          20,
 			RefuseAny:          true,
-			BootstrapDNS:       "8.8.8.8:53",
+			BootstrapDNS:       defaultBootstrap,
+			AllServers:         false,
 		},
 		UpstreamDNS: defaultDNS,
 	},
@@ -129,7 +132,7 @@ var config = configuration{
 		{Filter: dnsfilter.Filter{ID: 1}, Enabled: true, URL: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt", Name: "AdGuard Simplified Domain Names filter"},
 		{Filter: dnsfilter.Filter{ID: 2}, Enabled: false, URL: "https://adaway.org/hosts.txt", Name: "AdAway"},
 		{Filter: dnsfilter.Filter{ID: 3}, Enabled: false, URL: "https://hosts-file.net/ad_servers.txt", Name: "hpHosts - Ad and Tracking servers only"},
-		{Filter: dnsfilter.Filter{ID: 4}, Enabled: false, URL: "http://www.malwaredomainlist.com/hostslist/hosts.txt", Name: "MalwareDomainList.com Hosts List"},
+		{Filter: dnsfilter.Filter{ID: 4}, Enabled: false, URL: "https://www.malwaredomainlist.com/hostslist/hosts.txt", Name: "MalwareDomainList.com Hosts List"},
 	},
 	SchemaVersion: currentSchemaVersion,
 }
@@ -146,9 +149,15 @@ func init() {
 
 // getConfigFilename returns path to the current config file
 func (c *configuration) getConfigFilename() string {
-	configFile := config.ourConfigFilename
+	configFile, err := filepath.EvalSymlinks(config.ourConfigFilename)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			log.Error("unexpected error while config file path evaluation: %s", err)
+		}
+		configFile = config.ourConfigFilename
+	}
 	if !filepath.IsAbs(configFile) {
-		configFile = filepath.Join(config.ourWorkingDir, config.ourConfigFilename)
+		configFile = filepath.Join(config.ourWorkingDir, configFile)
 	}
 	return configFile
 }
@@ -163,7 +172,7 @@ func getLogSettings() logSettings {
 	}
 	err = yaml.Unmarshal(yamlFile, &l)
 	if err != nil {
-		log.Printf("Couldn't get logging settings from the configuration: %s", err)
+		log.Error("Couldn't get logging settings from the configuration: %s", err)
 	}
 	return l
 }
@@ -171,19 +180,19 @@ func getLogSettings() logSettings {
 // parseConfig loads configuration from the YAML file
 func parseConfig() error {
 	configFile := config.getConfigFilename()
-	log.Printf("Reading config file: %s", configFile)
+	log.Debug("Reading config file: %s", configFile)
 	yamlFile, err := readConfigFile()
 	if err != nil {
-		log.Printf("Couldn't read config file: %s", err)
+		log.Error("Couldn't read config file: %s", err)
 		return err
 	}
 	if yamlFile == nil {
-		log.Printf("YAML file doesn't exist, skipping it")
+		log.Error("YAML file doesn't exist, skipping it")
 		return nil
 	}
 	err = yaml.Unmarshal(yamlFile, &config)
 	if err != nil {
-		log.Printf("Couldn't parse config file: %s", err)
+		log.Error("Couldn't parse config file: %s", err)
 		return err
 	}
 
@@ -210,19 +219,19 @@ func (c *configuration) write() error {
 	c.Lock()
 	defer c.Unlock()
 	if config.firstRun {
-		log.Tracef("Silently refusing to write config because first run and not configured yet")
+		log.Debug("Silently refusing to write config because first run and not configured yet")
 		return nil
 	}
 	configFile := config.getConfigFilename()
-	log.Tracef("Writing YAML file: %s", configFile)
+	log.Debug("Writing YAML file: %s", configFile)
 	yamlText, err := yaml.Marshal(&config)
 	if err != nil {
-		log.Printf("Couldn't generate YAML file: %s", err)
+		log.Error("Couldn't generate YAML file: %s", err)
 		return err
 	}
-	err = safeWriteFile(configFile, yamlText)
+	err = file.SafeWrite(configFile, yamlText)
 	if err != nil {
-		log.Printf("Couldn't save YAML config: %s", err)
+		log.Error("Couldn't save YAML config: %s", err)
 		return err
 	}
 
@@ -232,14 +241,14 @@ func (c *configuration) write() error {
 func writeAllConfigs() error {
 	err := config.write()
 	if err != nil {
-		log.Printf("Couldn't write config: %s", err)
+		log.Error("Couldn't write config: %s", err)
 		return err
 	}
 
 	userFilter := userFilter()
 	err = userFilter.save()
 	if err != nil {
-		log.Printf("Couldn't save the user filter: %s", err)
+		log.Error("Couldn't save the user filter: %s", err)
 		return err
 	}
 

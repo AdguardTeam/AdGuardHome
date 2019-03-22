@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
-	stdlog "log"
 	"net"
 	"net/http"
 	"os"
@@ -13,11 +12,9 @@ import (
 	"strconv"
 	"sync"
 	"syscall"
-	"time"
 
+	"github.com/AdguardTeam/golibs/log"
 	"github.com/gobuffalo/packr"
-
-	"github.com/hmage/golibs/log"
 )
 
 // VersionString will be set through ldflags, contains current version
@@ -71,11 +68,14 @@ func run(args options) {
 	// configure log level and output
 	configureLogger(args)
 
+	// enable TLS 1.3
+	enableTLS13()
+
 	// print the first message after logger is configured
 	log.Printf("AdGuard Home, version %s\n", VersionString)
-	log.Tracef("Current working directory is %s", config.ourWorkingDir)
+	log.Debug("Current working directory is %s", config.ourWorkingDir)
 	if args.runningAsService {
-		log.Printf("AdGuard Home is running as a service")
+		log.Info("AdGuard Home is running as a service")
 	}
 
 	config.firstRun = detectFirstRun()
@@ -100,24 +100,7 @@ func run(args options) {
 		config.BindPort = args.bindPort
 	}
 
-	// Load filters from the disk
-	// And if any filter has zero ID, assign a new one
-	for i := range config.Filters {
-		filter := &config.Filters[i] // otherwise we're operating on a copy
-		if filter.ID == 0 {
-			filter.ID = assignUniqueFilterID()
-		}
-		err = filter.load()
-		if err != nil {
-			// This is okay for the first start, the filter will be loaded later
-			log.Printf("Couldn't load filter %d contents due to %s", filter.ID, err)
-			// clear LastUpdated so it gets fetched right away
-		}
-
-		if len(filter.Rules) == 0 {
-			filter.LastUpdated = time.Time{}
-		}
-	}
+	loadFilters()
 
 	// Save the updated config
 	err = config.write()
@@ -144,11 +127,6 @@ func run(args options) {
 	// Update filters we've just loaded right away, don't wait for periodic update timer
 	go func() {
 		refreshFiltersIfNecessary(false)
-		// Save the updated config
-		err := config.write()
-		if err != nil {
-			log.Fatal(err)
-		}
 	}()
 	// Schedule automatic filters updates
 	go periodicallyRefreshFilters()
@@ -161,7 +139,7 @@ func run(args options) {
 
 	// add handlers for /install paths, we only need them when we're not configured yet
 	if config.firstRun {
-		log.Printf("This is the first launch of AdGuard Home, redirecting everything to /install.html ")
+		log.Info("This is the first launch of AdGuard Home, redirecting everything to /install.html ")
 		http.Handle("/install.html", preInstallHandler(http.FileServer(box)))
 		registerInstallHandlers()
 	}
@@ -178,13 +156,13 @@ func run(args options) {
 			}
 			address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.TLS.PortHTTPS))
 			// validate current TLS config and update warnings (it could have been loaded from file)
-			data := validateCertificates(config.TLS)
-			if !data.usable {
+			data := validateCertificates(config.TLS.CertificateChain, config.TLS.PrivateKey, config.TLS.ServerName)
+			if !data.ValidPair {
 				log.Fatal(data.WarningValidation)
 				os.Exit(1)
 			}
 			config.Lock()
-			config.TLS = data // update warnings
+			config.TLS.tlsConfigStatus = data // update warnings
 			config.Unlock()
 
 			// prepare certs for HTTPS server
@@ -263,7 +241,11 @@ func configureLogger(args options) {
 		ls.LogFile = args.logFile
 	}
 
-	log.Verbose = ls.Verbose
+	level := log.INFO
+	if ls.Verbose {
+		level = log.DEBUG
+	}
+	log.SetLevel(level)
 
 	if args.runningAsService && ls.LogFile == "" && runtime.GOOS == "windows" {
 		// When running as a Windows service, use eventlog by default if nothing else is configured
@@ -283,24 +265,36 @@ func configureLogger(args options) {
 		}
 	} else {
 		logFilePath := filepath.Join(config.ourWorkingDir, ls.LogFile)
-		file, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0755)
+		if filepath.IsAbs(ls.LogFile) {
+			logFilePath = ls.LogFile
+		}
+
+		file, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
 			log.Fatalf("cannot create a log file: %s", err)
 		}
-		stdlog.SetOutput(file)
+		log.SetOutput(file)
+	}
+}
+
+// TODO after GO 1.13 release TLS 1.3 will be enabled by default. Remove this afterward
+func enableTLS13() {
+	err := os.Setenv("GODEBUG", os.Getenv("GODEBUG")+",tls13=1")
+	if err != nil {
+		log.Fatalf("Failed to enable TLS 1.3: %s", err)
 	}
 }
 
 func cleanup() {
-	log.Printf("Stopping AdGuard Home")
+	log.Info("Stopping AdGuard Home")
 
 	err := stopDNSServer()
 	if err != nil {
-		log.Printf("Couldn't stop DNS server: %s", err)
+		log.Error("Couldn't stop DNS server: %s", err)
 	}
 	err = stopDHCPServer()
 	if err != nil {
-		log.Printf("Couldn't stop DHCP server: %s", err)
+		log.Error("Couldn't stop DHCP server: %s", err)
 	}
 }
 
@@ -373,7 +367,7 @@ func loadOptions() options {
 			if v == "--"+opt.longName || (opt.shortName != "" && v == "-"+opt.shortName) {
 				if opt.callbackWithValue != nil {
 					if i+1 >= len(os.Args) {
-						log.Printf("ERROR: Got %s without argument\n", v)
+						log.Error("Got %s without argument\n", v)
 						os.Exit(64)
 					}
 					i++
@@ -386,7 +380,7 @@ func loadOptions() options {
 			}
 		}
 		if !knownParam {
-			log.Printf("ERROR: unknown option %v\n", v)
+			log.Error("unknown option %v\n", v)
 			printHelp()
 			os.Exit(64)
 		}

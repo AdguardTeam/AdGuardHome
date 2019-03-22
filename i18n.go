@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/hmage/golibs/log"
+	"github.com/AdguardTeam/golibs/log"
 )
 
 // --------------------
@@ -22,6 +22,8 @@ var allowedLanguages = map[string]bool{
 	"sv":    true,
 	"pt-br": true,
 	"zh-tw": true,
+	"bg":    true,
+	"zh-cn": true,
 }
 
 func isLanguageAllowed(language string) bool {

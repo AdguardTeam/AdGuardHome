@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
-	"github.com/hmage/golibs/log"
+	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
 

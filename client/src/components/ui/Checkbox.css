@@ -91,6 +91,10 @@
     line-height: 1.5;
 }
 
+.checkbox__label-text--long {
+    max-width: initial;
+}
+
 .checkbox__label-title {
     display: block;
     line-height: 1.5;

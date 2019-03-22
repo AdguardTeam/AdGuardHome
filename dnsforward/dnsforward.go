@@ -13,7 +13,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
-	"github.com/hmage/golibs/log"
+	"github.com/AdguardTeam/golibs/log"
 	"github.com/joomcode/errorx"
 	"github.com/miekg/dns"
 )
@@ -62,11 +62,12 @@ type FilteringConfig struct {
 	ProtectionEnabled  bool     `yaml:"protection_enabled"`   // whether or not use any of dnsfilter features
 	FilteringEnabled   bool     `yaml:"filtering_enabled"`    // whether or not use filter lists
 	BlockedResponseTTL uint32   `yaml:"blocked_response_ttl"` // if 0, then default is used (3600)
-	QueryLogEnabled    bool     `yaml:"querylog_enabled"`
-	Ratelimit          int      `yaml:"ratelimit"`
-	RatelimitWhitelist []string `yaml:"ratelimit_whitelist"`
-	RefuseAny          bool     `yaml:"refuse_any"`
-	BootstrapDNS       string   `yaml:"bootstrap_dns"`
+	QueryLogEnabled    bool     `yaml:"querylog_enabled"`     // if true, query log is enabled
+	Ratelimit          int      `yaml:"ratelimit"`            // max number of requests per second from a given IP (0 to disable)
+	RatelimitWhitelist []string `yaml:"ratelimit_whitelist"`  // a list of whitelisted client IP addresses
+	RefuseAny          bool     `yaml:"refuse_any"`           // if true, refuse ANY requests
+	BootstrapDNS       []string `yaml:"bootstrap_dns"`        // a list of bootstrap DNS for DoH and DoT (plain DNS only)
+	AllServers         bool     `yaml:"all_servers"`          // if true, parallel queries to all configured upstream servers are enabled
 
 	dnsfilter.Config `yaml:",inline"`
 }
@@ -81,10 +82,11 @@ type TLSConfig struct {
 // ServerConfig represents server configuration.
 // The zero ServerConfig is empty and ready for use.
 type ServerConfig struct {
-	UDPListenAddr *net.UDPAddr        // UDP listen address
-	TCPListenAddr *net.TCPAddr        // TCP listen address
-	Upstreams     []upstream.Upstream // Configured upstreams
-	Filters       []dnsfilter.Filter  // A list of filters to use
+	UDPListenAddr            *net.UDPAddr                   // UDP listen address
+	TCPListenAddr            *net.TCPAddr                   // TCP listen address
+	Upstreams                []upstream.Upstream            // Configured upstreams
+	DomainsReservedUpstreams map[string][]upstream.Upstream // Map of domains and lists of configured upstreams
+	Filters                  []dnsfilter.Filter             // A list of filters to use
 
 	FilteringConfig
 	TLSConfig
@@ -155,14 +157,16 @@ func (s *Server) startInternal(config *ServerConfig) error {
 	})
 
 	proxyConfig := proxy.Config{
-		UDPListenAddr:      s.UDPListenAddr,
-		TCPListenAddr:      s.TCPListenAddr,
-		Ratelimit:          s.Ratelimit,
-		RatelimitWhitelist: s.RatelimitWhitelist,
-		RefuseAny:          s.RefuseAny,
-		CacheEnabled:       true,
-		Upstreams:          s.Upstreams,
-		Handler:            s.handleDNSRequest,
+		UDPListenAddr:            s.UDPListenAddr,
+		TCPListenAddr:            s.TCPListenAddr,
+		Ratelimit:                s.Ratelimit,
+		RatelimitWhitelist:       s.RatelimitWhitelist,
+		RefuseAny:                s.RefuseAny,
+		CacheEnabled:             true,
+		Upstreams:                s.Upstreams,
+		DomainsReservedUpstreams: s.DomainsReservedUpstreams,
+		Handler:                  s.handleDNSRequest,
+		AllServers:               s.AllServers,
 	}
 
 	if s.TLSListenAddr != nil && s.CertificateChain != "" && s.PrivateKey != "" {
