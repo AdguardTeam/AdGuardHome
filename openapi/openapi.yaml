@@ -40,6 +40,9 @@ tags:
         name: dhcp
         description: 'Built-in DHCP server controls'
     -
+        name: clients
+        description: 'Clients list operations'
+    -
         name: install
         description: 'First-time install configuration handlers'
 paths:
@@ -669,6 +672,22 @@ paths:
                             enabled: false
 
     # --------------------------------------------------
+    # Clients list methods
+    # --------------------------------------------------
+
+    /clients:
+        get:
+            tags:
+                - clients
+            operationId: clientsStatus
+            summary: 'Get information about configured clients'
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/Clients"
+
+    # --------------------------------------------------
     # I18N methods
     # --------------------------------------------------
 
@@ -1296,7 +1315,7 @@ definitions:
         properties:
             ip:
                 type: "string"
-                example: "127.0.01"
+                example: "127.0.0.1"
             port:
                 type: "integer"
                 format: "int32"
@@ -1317,6 +1336,23 @@ definitions:
                 description: "Network interfaces dictionary (key is the interface name)"
                 additionalProperties:
                     $ref: "#/definitions/NetInterface"
+    Client:
+        type: "object"
+        description: "Client information"
+        properties:
+            ip:
+                type: "string"
+                description: "IP address"
+                example: "127.0.0.1"
+            name:
+                type: "string"
+                description: "Name"
+                example: "localhost"
+    Clients:
+        type: "array"
+        items:
+            $ref: "#/definitions/Client"
+        description: "Clients array"
     InitialConfiguration:
         type: "object"
         description: "AdGuard Home initial configuration (for the first-install wizard)"

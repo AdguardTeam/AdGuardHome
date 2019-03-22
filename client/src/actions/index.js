@@ -665,3 +665,18 @@ export const toggleDhcp = config => async (dispatch) => {
         }
     }
 };
+
+export const getClientsRequest = createAction('GET_CLIENTS_REQUEST');
+export const getClientsFailure = createAction('GET_CLIENTS_FAILURE');
+export const getClientsSuccess = createAction('GET_CLIENTS_SUCCESS');
+
+export const getClients = () => async (dispatch) => {
+    dispatch(getClientsRequest());
+    try {
+        const clients = await apiClient.getGlobalClients();
+        dispatch(getClientsSuccess(clients));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(getClientsFailure());
+    }
+};

@@ -167,6 +167,17 @@ const dashboard = handleActions({
         const newState = { ...state, language: payload };
         return newState;
     },
+
+    [actions.getClientsRequest]: state => ({ ...state, processingClients: true }),
+    [actions.getClientsFailure]: state => ({ ...state, processingClients: false }),
+    [actions.getClientsSuccess]: (state, { payload }) => {
+        const newState = {
+            ...state,
+            clients: payload,
+            processingClients: false,
+        };
+        return newState;
+    },
 }, {
     processing: true,
     isCoreRunning: false,
@@ -175,6 +186,7 @@ const dashboard = handleActions({
     logStatusProcessing: false,
     processingVersion: true,
     processingFiltering: true,
+    processingClients: true,
     upstreamDns: '',
     bootstrapDns: '',
     allServers: false,
@@ -184,6 +196,7 @@ const dashboard = handleActions({
     dnsPort: 53,
     dnsAddresses: [],
     dnsVersion: '',
+    clients: [],
 });
 
 const queryLogs = handleActions({
