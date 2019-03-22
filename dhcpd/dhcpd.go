@@ -10,7 +10,7 @@ import (
 
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/krolaw/dhcp4"
-	"github.com/sparrc/go-ping"
+	ping "github.com/sparrc/go-ping"
 )
 
 const defaultDiscoverTime = time.Second * 3

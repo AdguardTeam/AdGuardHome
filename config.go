@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"time"
 
@@ -134,6 +135,16 @@ var config = configuration{
 		{Filter: dnsfilter.Filter{ID: 4}, Enabled: false, URL: "https://www.malwaredomainlist.com/hostslist/hosts.txt", Name: "MalwareDomainList.com Hosts List"},
 	},
 	SchemaVersion: currentSchemaVersion,
+}
+
+// init initializes default configuration for the current OS&ARCH
+func init() {
+	if runtime.GOARCH == "mips" || runtime.GOARCH == "mipsle" {
+		// Use plain DNS on MIPS, encryption is too slow
+		defaultDNS = []string{"1.1.1.1", "1.0.0.1"}
+		// also change the default config
+		config.DNS.UpstreamDNS = defaultDNS
+	}
 }
 
 // getConfigFilename returns path to the current config file
