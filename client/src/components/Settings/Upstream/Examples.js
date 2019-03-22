@@ -65,7 +65,7 @@ const Examples = props => (
                 <span>
                     <Trans
                         components={[
-                            <a href="https://github.com/AdguardTeam/dnsproxy#specifying-upstreams-for-domains" target="_blank" rel="noopener noreferrer" key="0">
+                            <a href="https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#upstreams-for-domains" target="_blank" rel="noopener noreferrer" key="0">
                                 Link
                             </a>,
                         ]}
