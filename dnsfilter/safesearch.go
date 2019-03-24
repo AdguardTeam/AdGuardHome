@@ -13,6 +13,10 @@ var safeSearchDomains = map[string]string{
 	"www.yandex.kz":  "213.180.193.56",
 
 	"www.bing.com": "strict.bing.com",
+	
+	"duckduckgo.com": "safe.duckduckgo.com",
+	"start.duckduckgo.com": "safe.duckduckgo.com",
+	"www.duckduckgo.com": "safe.duckduckgo.com",
 
 	"www.google.com":    "forcesafesearch.google.com",
 	"www.google.ad":     "forcesafesearch.google.com",
