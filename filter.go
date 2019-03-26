@@ -193,6 +193,7 @@ func refreshFiltersIfNecessary(force bool) int {
 		var uf filter
 		uf.ID = f.ID
 		uf.URL = f.URL
+		uf.Name = f.Name
 		uf.checksum = f.checksum
 		updateFilters = append(updateFilters, uf)
 	}
