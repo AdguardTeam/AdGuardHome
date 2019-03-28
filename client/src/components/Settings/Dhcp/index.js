@@ -24,7 +24,7 @@ class Dhcp extends Component {
         } = this.props.dhcp;
         const activeDhcpFound = active && active.found;
         const filledConfig = Object.keys(config).every((key) => {
-            if (key === 'enabled') {
+            if (key === 'enabled' || key === 'icmp_timeout_msec') {
                 return true;
             }
 
