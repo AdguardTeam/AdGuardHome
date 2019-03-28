@@ -25,8 +25,6 @@ import i18n from '../../i18n';
 class App extends Component {
     componentDidMount() {
         this.props.getDnsStatus();
-        this.props.getVersion();
-        this.props.getClients();
     }
 
     componentDidUpdate(prevProps) {
@@ -106,10 +104,8 @@ App.propTypes = {
     dashboard: PropTypes.object,
     isCoreRunning: PropTypes.bool,
     error: PropTypes.string,
-    getVersion: PropTypes.func,
     changeLanguage: PropTypes.func,
     encryption: PropTypes.object,
-    getClients: PropTypes.func,
 };
 
 export default withNamespaces()(App);

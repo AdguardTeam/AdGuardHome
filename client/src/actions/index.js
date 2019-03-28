@@ -139,6 +139,36 @@ export const toggleProtection = status => async (dispatch) => {
     }
 };
 
+export const getVersionRequest = createAction('GET_VERSION_REQUEST');
+export const getVersionFailure = createAction('GET_VERSION_FAILURE');
+export const getVersionSuccess = createAction('GET_VERSION_SUCCESS');
+
+export const getVersion = () => async (dispatch) => {
+    dispatch(getVersionRequest());
+    try {
+        const newVersion = await apiClient.getGlobalVersion();
+        dispatch(getVersionSuccess(newVersion));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(getVersionFailure());
+    }
+};
+
+export const getClientsRequest = createAction('GET_CLIENTS_REQUEST');
+export const getClientsFailure = createAction('GET_CLIENTS_FAILURE');
+export const getClientsSuccess = createAction('GET_CLIENTS_SUCCESS');
+
+export const getClients = () => async (dispatch) => {
+    dispatch(getClientsRequest());
+    try {
+        const clients = await apiClient.getGlobalClients();
+        dispatch(getClientsSuccess(clients));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(getClientsFailure());
+    }
+};
+
 export const dnsStatusRequest = createAction('DNS_STATUS_REQUEST');
 export const dnsStatusFailure = createAction('DNS_STATUS_FAILURE');
 export const dnsStatusSuccess = createAction('DNS_STATUS_SUCCESS');
@@ -148,6 +178,8 @@ export const getDnsStatus = () => async (dispatch) => {
     try {
         const dnsStatus = await apiClient.getGlobalStatus();
         dispatch(dnsStatusSuccess(dnsStatus));
+        dispatch(getVersion());
+        dispatch(getClients());
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(initSettingsFailure());
@@ -202,21 +234,6 @@ export const getStats = () => async (dispatch) => {
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(getStatsFailure());
-    }
-};
-
-export const getVersionRequest = createAction('GET_VERSION_REQUEST');
-export const getVersionFailure = createAction('GET_VERSION_FAILURE');
-export const getVersionSuccess = createAction('GET_VERSION_SUCCESS');
-
-export const getVersion = () => async (dispatch) => {
-    dispatch(getVersionRequest());
-    try {
-        const newVersion = await apiClient.getGlobalVersion();
-        dispatch(getVersionSuccess(newVersion));
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
-        dispatch(getVersionFailure());
     }
 };
 
@@ -663,20 +680,5 @@ export const toggleDhcp = config => async (dispatch) => {
             dispatch(addErrorToast({ error }));
             dispatch(findActiveDhcpFailure());
         }
-    }
-};
-
-export const getClientsRequest = createAction('GET_CLIENTS_REQUEST');
-export const getClientsFailure = createAction('GET_CLIENTS_FAILURE');
-export const getClientsSuccess = createAction('GET_CLIENTS_SUCCESS');
-
-export const getClients = () => async (dispatch) => {
-    dispatch(getClientsRequest());
-    try {
-        const clients = await apiClient.getGlobalClients();
-        dispatch(getClientsSuccess(clients));
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
-        dispatch(getClientsFailure());
     }
 };
