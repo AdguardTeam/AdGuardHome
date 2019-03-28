@@ -134,6 +134,10 @@ var config = configuration{
 		{Filter: dnsfilter.Filter{ID: 3}, Enabled: false, URL: "https://hosts-file.net/ad_servers.txt", Name: "hpHosts - Ad and Tracking servers only"},
 		{Filter: dnsfilter.Filter{ID: 4}, Enabled: false, URL: "https://www.malwaredomainlist.com/hostslist/hosts.txt", Name: "MalwareDomainList.com Hosts List"},
 	},
+	DHCP: dhcpd.ServerConfig{
+		LeaseDuration: 86400,
+		ICMPTimeout:   1000,
+	},
 	SchemaVersion: currentSchemaVersion,
 }
 
