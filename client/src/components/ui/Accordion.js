@@ -13,12 +13,14 @@ class Accordion extends Component {
     };
 
     render() {
-        const accordionClass = this.state.isOpen ? 'accordion__label--open' : '';
+        const accordionClass = this.state.isOpen
+            ? 'accordion__label accordion__label--open'
+            : 'accordion__label';
 
         return (
             <div className="accordion">
                 <div
-                    className={`accordion__label ${accordionClass}`}
+                    className={accordionClass}
                     onClick={this.handleClick}
                 >
                     {this.props.label}
