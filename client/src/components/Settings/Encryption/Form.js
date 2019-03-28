@@ -261,7 +261,7 @@ let Form = (props) => {
                             component="textarea"
                             type="text"
                             className="form-control form-control--textarea"
-                            placeholder="Copy/paste your PEM-encoded private key for your cerficate here."
+                            placeholder={t('encryption_key_input')}
                             onChange={handleChange}
                             disabled={!isEnabled}
                         />

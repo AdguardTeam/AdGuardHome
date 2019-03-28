@@ -117,6 +117,10 @@
     .nav-version {
         padding: 0;
     }
+
+    .nav-icon {
+        display: none;
+    }
 }
 
 @media screen and (min-width: 1280px) {
@@ -126,6 +130,10 @@
 
     .nav-version {
         font-size: 0.85rem;
+    }
+
+    .nav-icon {
+        display: block;
     }
 }
 

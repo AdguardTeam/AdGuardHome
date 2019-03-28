@@ -78,7 +78,8 @@ let Interface = (props) => {
                     </div>
                     {interfaceValue &&
                         <div className="col-sm-12 col-md-6">
-                            {renderInterfaceValues(interfaces[interfaceValue])}
+                            {interfaces[interfaceValue] &&
+                                renderInterfaceValues(interfaces[interfaceValue])}
                         </div>
                     }
                 </div>
