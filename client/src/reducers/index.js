@@ -303,7 +303,9 @@ const dhcp = handleActions({
     [actions.toggleDhcpSuccess]: (state) => {
         const { config } = state;
         const newConfig = { ...config, enabled: !config.enabled };
-        const newState = { ...state, config: newConfig, processingDhcp: false };
+        const newState = {
+            ...state, config: newConfig, active: null, processingDhcp: false,
+        };
         return newState;
     },
 

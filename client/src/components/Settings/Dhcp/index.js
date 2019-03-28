@@ -148,7 +148,8 @@ class Dhcp extends Component {
                                             this.props.findActiveDhcp(dhcp.config.interface_name)
                                         }
                                         disabled={
-                                            !dhcp.config.interface_name
+                                            dhcp.config.enabled
+                                            || !dhcp.config.interface_name
                                             || dhcp.processingConfig
                                         }
                                     >
