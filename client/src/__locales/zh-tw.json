@@ -1,4 +1,5 @@
 {
+    "example_upstream_reserved": "\u60a8\u53ef\u660e\u78ba\u6307\u5b9a<0>\u7528\u65bc\u7279\u5b9a\u7684\u7db2\u57df<\/0>\u4e4bDNS\u4e0a\u6e38",
     "upstream_parallel": "\u900f\u904e\u540c\u6642\u5730\u67e5\u8a62\u6240\u6709\u4e0a\u6e38\u7684\u4f3a\u670d\u5668\uff0c\u4f7f\u7528\u4e26\u884c\u7684\u67e5\u8a62\u4ee5\u52a0\u901f\u89e3\u6790",
     "bootstrap_dns": "\u81ea\u6211\u555f\u52d5\uff08Bootstrap\uff09DNS \u4f3a\u670d\u5668",
     "bootstrap_dns_desc": "\u81ea\u6211\u555f\u52d5\uff08Bootstrap\uff09DNS\u4f3a\u670d\u5668\u88ab\u7528\u65bc\u89e3\u6790\u60a8\u660e\u78ba\u6307\u5b9a\u4f5c\u70ba\u4e0a\u6e38\u7684DoH\/DoT\u89e3\u6790\u5668\u4e4bIP\u4f4d\u5740\u3002",
@@ -122,8 +123,8 @@
     "example_regex_meaning": "\u5c01\u9396\u81f3\u8207\u5df2\u660e\u78ba\u6307\u5b9a\u7684\u898f\u5247\u904b\u7b97\u5f0f\uff08Regular Expression\uff09\u76f8\u7b26\u7684\u7db2\u57df\u4e4b\u5b58\u53d6",
     "example_upstream_regular": "\u4e00\u822c\u7684 DNS\uff08\u900f\u904eUDP\uff09",
     "example_upstream_dot": "\u52a0\u5bc6\u7684 <0>DNS-over-TLS<\/0>",
-    "example_upstream_doh": "\u52a0\u5bc6\u7684 <0>DNS-over-HTTPS <\/0>",
-    "example_upstream_sdns": "\u60a8\u53ef\u4f7f\u7528\u95dc\u65bc <0>DNSCrypt<\/0> \u6216 <1>DNS-over-HTTPS<\/1> \u89e3\u6790\u5668\u4e4b <2>DNS \u6233\u8a18<\/2>",
+    "example_upstream_doh": "\u52a0\u5bc6\u7684 <0>DNS-over-HTTPS<\/0>",
+    "example_upstream_sdns": "\u60a8\u53ef\u4f7f\u7528\u95dc\u65bc <1>DNSCrypt<\/1> \u6216 <2>DNS-over-HTTPS<\/2> \u89e3\u6790\u5668\u4e4b <0>DNS \u6233\u8a18<\/0>",
     "example_upstream_tcp": "\u4e00\u822c\u7684 DNS\uff08\u900f\u904eTCP\uff09",
     "all_filters_up_to_date_toast": "\u6240\u6709\u7684\u904e\u6ffe\u5668\u5df2\u662f\u6700\u65b0\u7684",
     "updated_upstream_dns_toast": "\u5df2\u66f4\u65b0\u4e0a\u6e38\u7684DNS\u4f3a\u670d\u5668",
