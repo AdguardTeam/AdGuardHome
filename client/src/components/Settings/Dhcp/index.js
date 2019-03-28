@@ -7,6 +7,7 @@ import Form from './Form';
 import Leases from './Leases';
 import Interface from './Interface';
 import Card from '../../ui/Card';
+import Accordion from '../../ui/Accordion';
 
 class Dhcp extends Component {
     handleFormSubmit = (values) => {
@@ -60,14 +61,17 @@ class Dhcp extends Component {
         );
     }
 
-    getActiveDhcpMessage = () => {
-        const { active } = this.props.dhcp;
-
+    getActiveDhcpMessage = (t, active) => {
         if (active) {
             if (active.error) {
                 return (
                     <div className="text-danger mb-2">
-                        {active.error}
+                        <Trans>dhcp_error</Trans>
+                        <div className="mt-2 mb-2">
+                            <Accordion label={t('error_details')}>
+                                <span>{active.error}</span>
+                            </Accordion>
+                        </div>
                     </div>
                 );
             }
@@ -88,6 +92,18 @@ class Dhcp extends Component {
         }
 
         return '';
+    }
+
+    getDhcpWarning = (active) => {
+        if (active && active.found === false) {
+            return '';
+        }
+
+        return (
+            <div className="text-danger">
+                <Trans>dhcp_warning</Trans>
+            </div>
+        );
     }
 
     render() {
@@ -138,10 +154,8 @@ class Dhcp extends Component {
                                         <Trans>check_dhcp_servers</Trans>
                                     </button>
                                 </div>
-                                {this.getActiveDhcpMessage()}
-                                <div className="text-danger">
-                                    <Trans>dhcp_warning</Trans>
-                                </div>
+                                {this.getActiveDhcpMessage(t, dhcp.active)}
+                                {this.getDhcpWarning(dhcp.active)}
                             </Fragment>
                         }
                     </div>
