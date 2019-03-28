@@ -51,6 +51,7 @@ class Dhcp extends Component {
                 onClick={() => this.handleToggle(config)}
                 disabled={
                     !filledConfig
+                    || !active
                     || activeDhcpFound
                     || processingDhcp
                     || processingConfig
@@ -95,7 +96,7 @@ class Dhcp extends Component {
     }
 
     getDhcpWarning = (active) => {
-        if (active && active.found === false) {
+        if (!active || (active && active.found === false)) {
             return '';
         }
 
@@ -154,8 +155,12 @@ class Dhcp extends Component {
                                         <Trans>check_dhcp_servers</Trans>
                                     </button>
                                 </div>
-                                {this.getActiveDhcpMessage(t, dhcp.active)}
-                                {this.getDhcpWarning(dhcp.active)}
+                                {!enabled &&
+                                    <Fragment>
+                                        {this.getActiveDhcpMessage(t, dhcp.active)}
+                                        {this.getDhcpWarning(dhcp.active)}
+                                    </Fragment>
+                                }
                             </Fragment>
                         }
                     </div>
