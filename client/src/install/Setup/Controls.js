@@ -25,13 +25,22 @@ class Controls extends Component {
     }
 
     renderNextButton(step) {
+        const {
+            nextStep,
+            invalid,
+            pristine,
+            install,
+            ip,
+            port,
+        } = this.props;
+
         switch (step) {
             case 1:
                 return (
                     <button
                         type="button"
                         className="btn btn-success btn-lg setup__button"
-                        onClick={this.props.nextStep}
+                        onClick={nextStep}
                     >
                         <Trans>get_started</Trans>
                     </button>
@@ -43,9 +52,9 @@ class Controls extends Component {
                         type="submit"
                         className="btn btn-success btn-lg setup__button"
                         disabled={
-                            this.props.invalid
-                            || this.props.pristine
-                            || this.props.install.processingSubmit
+                            invalid
+                            || pristine
+                            || install.processingSubmit
                         }
                     >
                         <Trans>next</Trans>
@@ -56,7 +65,7 @@ class Controls extends Component {
                     <button
                         type="button"
                         className="btn btn-success btn-lg setup__button"
-                        onClick={this.props.nextStep}
+                        onClick={nextStep}
                     >
                         <Trans>next</Trans>
                     </button>
@@ -66,7 +75,8 @@ class Controls extends Component {
                     <button
                         type="button"
                         className="btn btn-success btn-lg setup__button"
-                        onClick={() => this.props.openDashboard(this.props.address)}
+                        onClick={() =>
+                            this.props.openDashboard(ip, port)}
                     >
                         <Trans>open_dashboard</Trans>
                     </button>
@@ -98,7 +108,8 @@ Controls.propTypes = {
     submitting: PropTypes.bool,
     invalid: PropTypes.bool,
     pristine: PropTypes.bool,
-    address: PropTypes.string,
+    ip: PropTypes.string,
+    port: PropTypes.number,
 };
 
 const mapStateToProps = (state) => {

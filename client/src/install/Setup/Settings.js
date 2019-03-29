@@ -9,6 +9,7 @@ import Controls from './Controls';
 import AddressList from './AddressList';
 import renderField from './renderField';
 import { getInterfaceIp } from '../../helpers/helpers';
+import { ALL_INTERFACES_IP } from '../../helpers/constants';
 
 const required = (value) => {
     if (value || value === 0) {
@@ -75,7 +76,7 @@ let Settings = (props) => {
                                 component="select"
                                 className="form-control custom-select"
                             >
-                                <option value="0.0.0.0">
+                                <option value={ALL_INTERFACES_IP}>
                                     <Trans>install_settings_all_interfaces</Trans>
                                 </option>
                                 {renderInterfaces(interfaces)}
@@ -130,7 +131,7 @@ let Settings = (props) => {
                                 component="select"
                                 className="form-control custom-select"
                             >
-                                <option value="0.0.0.0">
+                                <option value={ALL_INTERFACES_IP}>
                                     <Trans>install_settings_all_interfaces</Trans>
                                 </option>
                                 {renderInterfaces(interfaces)}

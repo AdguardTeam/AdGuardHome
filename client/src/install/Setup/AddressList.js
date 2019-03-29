@@ -2,12 +2,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import { getIpList, getDnsAddress, getWebAddress } from '../../helpers/helpers';
+import { ALL_INTERFACES_IP } from '../../helpers/constants';
 
 const AddressList = (props) => {
     let webAddress = getWebAddress(props.address, props.port);
     let dnsAddress = getDnsAddress(props.address, props.port);
 
-    if (props.address === '0.0.0.0') {
+    if (props.address === ALL_INTERFACES_IP) {
         return getIpList(props.interfaces).map((ip) => {
             webAddress = getWebAddress(ip, props.port);
             dnsAddress = getDnsAddress(ip, props.port);

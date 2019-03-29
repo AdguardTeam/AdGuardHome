@@ -155,3 +155,5 @@ export const UNSAFE_PORTS = [
     6668,
     6669,
 ];
+
+export const ALL_INTERFACES_IP = '0.0.0.0';
