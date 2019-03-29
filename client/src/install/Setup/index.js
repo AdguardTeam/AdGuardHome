@@ -3,7 +3,12 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
 import * as actionCreators from '../../actions/install';
-import { INSTALL_FIRST_STEP, INSTALL_TOTAL_STEPS } from '../../helpers/constants';
+import { getWebAddress } from '../../helpers/helpers';
+import {
+    INSTALL_FIRST_STEP,
+    INSTALL_TOTAL_STEPS,
+    ALL_INTERFACES_IP,
+} from '../../helpers/constants';
 
 import Loading from '../../components/ui/Loading';
 import Greeting from './Greeting';
@@ -29,7 +34,13 @@ class Setup extends Component {
         this.props.setAllSettings(values);
     };
 
-    openDashboard = (address) => {
+    openDashboard = (ip, port) => {
+        let address = getWebAddress(ip, port);
+
+        if (ip === ALL_INTERFACES_IP) {
+            address = getWebAddress(window.location.hostname, port);
+        }
+
         window.location.replace(address);
     }
 
