@@ -33,7 +33,7 @@
     "dhcp_table_hostname": "Hostname",
     "dhcp_table_expires": "Expires",
     "dhcp_warning": "If you want to enable DHCP server anyway, make sure that there is no other active DHCP server in your network. Otherwise, it can break the Internet for connected devices!",
-    "dhcp_error": "We couldn't determine whether an another DHCP server exists in the network.",
+    "dhcp_error": "We could not determine whether there is another DHCP server in the network.",
     "error_details": "Error details",
     "back": "Back",
     "dashboard": "Dashboard",
