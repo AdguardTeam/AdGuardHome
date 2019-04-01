@@ -35,7 +35,7 @@ const versionCheckURL = "https://adguardteam.github.io/AdGuardHome/version.json"
 const versionCheckPeriod = time.Hour * 8
 
 var client = &http.Client{
-	Timeout: time.Second * 30,
+	Timeout: time.Minute,
 }
 
 var controlLock sync.Mutex
