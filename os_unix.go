@@ -3,6 +3,7 @@
 package main
 
 import (
+	"os"
 	"syscall"
 
 	"github.com/AdguardTeam/golibs/log"
@@ -18,4 +19,9 @@ func setRlimit(val uint) {
 	if err != nil {
 		log.Error("Setrlimit() failed: %v", err)
 	}
+}
+
+// Check if the current user has root (administrator) rights
+func haveAdminRights() (bool, error) {
+	return os.Getuid() == 0, nil
 }

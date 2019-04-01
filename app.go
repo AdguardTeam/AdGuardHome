@@ -1,16 +1,20 @@
 package main
 
 import (
+	"bufio"
 	"crypto/tls"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 
@@ -45,15 +49,6 @@ func main() {
 		return
 	}
 
-	signalChannel := make(chan os.Signal)
-	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
-	go func() {
-		<-signalChannel
-		cleanup()
-		cleanupAlways()
-		os.Exit(0)
-	}()
-
 	// run the protection
 	run(args)
 }
@@ -83,6 +78,18 @@ func run(args options) {
 	}
 
 	config.firstRun = detectFirstRun()
+	if config.firstRun {
+		requireAdminRights()
+	}
+
+	signalChannel := make(chan os.Signal)
+	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
+	go func() {
+		<-signalChannel
+		cleanup()
+		cleanupAlways()
+		os.Exit(0)
+	}()
 
 	// Do the upgrade if necessary
 	err := upgradeConfig()
@@ -225,6 +232,37 @@ func run(args options) {
 			log.Fatal(err)
 		}
 		// We use ErrServerClosed as a sign that we need to rebind on new address, so go back to the start of the loop
+	}
+}
+
+// Check if the current user has root (administrator) rights
+//  and if not, ask and try to run as root
+func requireAdminRights() {
+	admin, _ := haveAdminRights()
+	if admin {
+		return
+	}
+
+	if runtime.GOOS == "windows" {
+		log.Fatal("This is the first launch of AdGuard Home. You must run it as Administrator.")
+
+	} else {
+		log.Error("This is the first launch of AdGuard Home. You must run it as root.")
+
+		_, _ = io.WriteString(os.Stdout, "Do you want to start AdGuard Home as root user? [y/n] ")
+		stdin := bufio.NewReader(os.Stdin)
+		buf, _ := stdin.ReadString('\n')
+		buf = strings.TrimSpace(buf)
+		if buf != "y" {
+			os.Exit(1)
+		}
+
+		cmd := exec.Command("sudo", os.Args...)
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		_ = cmd.Run()
+		os.Exit(1)
 	}
 }
 
