@@ -970,15 +970,9 @@ func handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type ipport struct {
-	IP      string `json:"ip,omitempty"`
-	Port    int    `json:"port"`
-	Warning string `json:"warning"`
-}
-
 type firstRunData struct {
-	Web        ipport                 `json:"web"`
-	DNS        ipport                 `json:"dns"`
+	WebPort    int                    `json:"web_port"`
+	DNSPort    int                    `json:"dns_port"`
 	Username   string                 `json:"username,omitempty"`
 	Password   string                 `json:"password,omitempty"`
 	Interfaces map[string]interface{} `json:"interfaces"`
@@ -987,19 +981,8 @@ type firstRunData struct {
 func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
 	data := firstRunData{}
-
-	// find out if port 80 is available -- if not, fall back to 3000
-	if checkPortAvailable("", 80) == nil {
-		data.Web.Port = 80
-	} else {
-		data.Web.Port = 3000
-	}
-
-	// find out if port 53 is available -- if not, show a big warning
-	data.DNS.Port = 53
-	if checkPacketPortAvailable("", 53) != nil {
-		data.DNS.Warning = "Port 53 is not available for binding -- this will make DNS clients unable to contact AdGuard Home."
-	}
+	data.WebPort = 80
+	data.DNSPort = 53
 
 	ifaces, err := getValidNetInterfacesForWeb()
 	if err != nil {
