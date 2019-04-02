@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"sort"
 	"strconv"
 	"strings"
@@ -1039,8 +1040,25 @@ func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if reqData.DNS.Port != 0 && reqData.DNS.Port != config.DNS.Port {
+	if reqData.DNS.Port != 0 {
 		err = checkPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+
+		if errorIsAddrInUse(err) {
+			canAutofix := checkDNSStubListener()
+			if canAutofix && reqData.DNS.Autofix {
+
+				err = disableDNSStubListener()
+				if err != nil {
+					log.Error("Couldn't disable DNSStubListener: %s", err)
+				}
+
+				err = checkPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+				canAutofix = false
+			}
+
+			respData.DNS.CanAutofix = canAutofix
+		}
+
 		if err != nil {
 			respData.DNS.Status = fmt.Sprintf("%v", err)
 		}
@@ -1052,6 +1070,56 @@ func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusInternalServerError, "Unable to marshal JSON: %s", err)
 		return
 	}
+}
+
+// Check if DNSStubListener is active
+func checkDNSStubListener() bool {
+	cmd := exec.Command("systemctl", "is-enabled", "systemd-resolved")
+	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
+	_, err := cmd.Output()
+	if err != nil || cmd.ProcessState.ExitCode() != 0 {
+		log.Error("command %s has failed: %v code:%d",
+			cmd.Path, err, cmd.ProcessState.ExitCode())
+		return false
+	}
+
+	cmd = exec.Command("grep", "-E", "#?DNSStubListener=yes", "/etc/systemd/resolved.conf")
+	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
+	_, err = cmd.Output()
+	if err != nil || cmd.ProcessState.ExitCode() != 0 {
+		log.Error("command %s has failed: %v code:%d",
+			cmd.Path, err, cmd.ProcessState.ExitCode())
+		return false
+	}
+
+	return true
+}
+
+// Deactivate DNSStubListener
+func disableDNSStubListener() error {
+	cmd := exec.Command("sed", "-r", "-i.orig", "s/#?DNSStubListener=yes/DNSStubListener=no/g", "/etc/systemd/resolved.conf")
+	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
+	_, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+	if cmd.ProcessState.ExitCode() != 0 {
+		return fmt.Errorf("process %s exited with an error: %d",
+			cmd.Path, cmd.ProcessState.ExitCode())
+	}
+
+	cmd = exec.Command("systemctl", "reload-or-restart", "systemd-resolved")
+	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
+	_, err = cmd.Output()
+	if err != nil {
+		return err
+	}
+	if cmd.ProcessState.ExitCode() != 0 {
+		return fmt.Errorf("process %s exited with an error: %d",
+			cmd.Path, cmd.ProcessState.ExitCode())
+	}
+
+	return nil
 }
 
 type applyConfigReqEnt struct {
