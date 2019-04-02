@@ -1003,6 +1003,58 @@ func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type checkConfigReqEnt struct {
+	Port    int    `json:"port"`
+	IP      string `json:"ip"`
+	Autofix bool   `json:"autofix"`
+}
+type checkConfigReq struct {
+	Web checkConfigReqEnt `json:"web"`
+	DNS checkConfigReqEnt `json:"dns"`
+}
+
+type checkConfigRespEnt struct {
+	Status     string `json:"status"`
+	CanAutofix bool   `json:"can_autofix"`
+}
+type checkConfigResp struct {
+	Web checkConfigRespEnt `json:"web"`
+	DNS checkConfigRespEnt `json:"dns"`
+}
+
+// Check if ports are available, respond with results
+func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
+	log.Tracef("%s %v", r.Method, r.URL)
+	reqData := checkConfigReq{}
+	respData := checkConfigResp{}
+	err := json.NewDecoder(r.Body).Decode(&reqData)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Failed to parse 'check_config' JSON data: %s", err)
+		return
+	}
+
+	if reqData.Web.Port != 0 && reqData.Web.Port != config.BindPort {
+		err = checkPortAvailable(reqData.Web.IP, reqData.Web.Port)
+		if err != nil {
+			respData.Web.Status = fmt.Sprintf("%v", err)
+		}
+	}
+
+	if reqData.DNS.Port != 0 && reqData.DNS.Port != config.DNS.Port {
+		err = checkPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+		if err != nil {
+			respData.DNS.Status = fmt.Sprintf("%v", err)
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(respData)
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "Unable to marshal JSON: %s", err)
+		return
+	}
+}
+
 func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
 	newSettings := firstRunData{}
@@ -1082,6 +1134,7 @@ func handleDOH(w http.ResponseWriter, r *http.Request) {
 // ------------------------
 func registerInstallHandlers() {
 	http.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(handleInstallGetAddresses)))
+	http.HandleFunc("/control/install/check_config", preInstall(ensurePOST(handleInstallCheckConfig)))
 	http.HandleFunc("/control/install/configure", preInstall(ensurePOST(handleInstallConfigure)))
 }
 
