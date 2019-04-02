@@ -973,11 +973,10 @@ func handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
 type firstRunData struct {
 	WebPort    int                    `json:"web_port"`
 	DNSPort    int                    `json:"dns_port"`
-	Username   string                 `json:"username,omitempty"`
-	Password   string                 `json:"password,omitempty"`
 	Interfaces map[string]interface{} `json:"interfaces"`
 }
 
+// Get initial installation settings
 func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
 	data := firstRunData{}
@@ -1055,12 +1054,24 @@ func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type applyConfigReqEnt struct {
+	IP   string `json:"ip"`
+	Port int    `json:"port"`
+}
+type applyConfigReq struct {
+	Web      applyConfigReqEnt `json:"web"`
+	DNS      applyConfigReqEnt `json:"dns"`
+	Username string            `json:"username"`
+	Password string            `json:"password"`
+}
+
+// Apply new configuration, start DNS server, restart Web server
 func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
-	newSettings := firstRunData{}
+	newSettings := applyConfigReq{}
 	err := json.NewDecoder(r.Body).Decode(&newSettings)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to parse new config json: %s", err)
+		httpError(w, http.StatusBadRequest, "Failed to parse 'configure' JSON: %s", err)
 		return
 	}
 
@@ -1074,14 +1085,16 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	if restartHTTP {
 		err = checkPortAvailable(newSettings.Web.IP, newSettings.Web.Port)
 		if err != nil {
-			httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s", net.JoinHostPort(newSettings.Web.IP, strconv.Itoa(newSettings.Web.Port)), err)
+			httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s",
+				net.JoinHostPort(newSettings.Web.IP, strconv.Itoa(newSettings.Web.Port)), err)
 			return
 		}
 	}
 
 	err = checkPacketPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s", net.JoinHostPort(newSettings.DNS.IP, strconv.Itoa(newSettings.DNS.Port)), err)
+		httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s",
+			net.JoinHostPort(newSettings.DNS.IP, strconv.Itoa(newSettings.DNS.Port)), err)
 		return
 	}
 
