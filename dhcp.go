@@ -147,13 +147,22 @@ func handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errorText, http.StatusBadRequest)
 		return
 	}
+
 	found, err := dhcpd.CheckIfOtherDHCPServersPresent(interfaceName)
-	result := map[string]interface{}{}
-	if err != nil {
-		result["error"] = err.Error()
-	} else {
-		result["found"] = found
+
+	othSrv := map[string]interface{}{}
+	foundVal := "no"
+	if found {
+		foundVal = "yes"
+	} else if err != nil {
+		foundVal = "error"
+		othSrv["error"] = err.Error()
 	}
+	othSrv["found"] = foundVal
+
+	result := map[string]interface{}{}
+	result["other-server"] = othSrv
+
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(result)
 	if err != nil {
