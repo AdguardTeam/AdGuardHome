@@ -2,10 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 
@@ -130,6 +133,10 @@ func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Perform the following tasks:
+// . Search for another DHCP server running
+// . Check if a static IP is configured for the network interface
+// Respond with results
 func handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
 	body, err := ioutil.ReadAll(r.Body)
@@ -160,8 +167,21 @@ func handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
 	}
 	othSrv["found"] = foundVal
 
+	staticIP := map[string]interface{}{}
+	isStaticIP, err := hasStaticIP(interfaceName)
+	staticIPStatus := "yes"
+	if err != nil {
+		staticIPStatus = "error"
+		staticIP["error"] = err.Error()
+	} else if !isStaticIP {
+		staticIPStatus = "no"
+		staticIP["ip"] = getFullIP(interfaceName)
+	}
+	staticIP["static"] = staticIPStatus
+
 	result := map[string]interface{}{}
-	result["other-server"] = othSrv
+	result["other_server"] = othSrv
+	result["static_ip"] = staticIP
 
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(result)
@@ -169,6 +189,73 @@ func handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusInternalServerError, "Failed to marshal DHCP found json: %s", err)
 		return
 	}
+}
+
+// Check if network interface has a static IP configured
+func hasStaticIP(ifaceName string) (bool, error) {
+	if runtime.GOOS == "windows" {
+		return false, errors.New("Can't detect static IP: not supported on Windows")
+	}
+
+	body, err := ioutil.ReadFile("/etc/dhcpcd.conf")
+	if err != nil {
+		return false, err
+	}
+	lines := strings.Split(string(body), "\n")
+	nameLine := fmt.Sprintf("interface %s", ifaceName)
+	state := 0
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
+		if state == 1 && len(line) == 0 {
+			// an empty line resets our state
+			state = 0
+		}
+
+		if len(line) == 0 || line[0] == '#' {
+			continue
+		}
+		line = strings.TrimSpace(line)
+
+		if state == 0 {
+			if line == nameLine {
+				state = 1
+			}
+
+		} else if state == 1 {
+			if strings.HasPrefix(line, "interface ") {
+				state = 0
+				continue
+			}
+			if strings.HasPrefix(line, "static ip_address=") {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
+}
+
+// Get IP address with netmask
+func getFullIP(ifaceName string) string {
+	cmd := exec.Command("ip", "-oneline", "-family", "inet", "address", "show", ifaceName)
+	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
+	d, err := cmd.Output()
+	if err != nil || cmd.ProcessState.ExitCode() != 0 {
+		return ""
+	}
+
+	fields := strings.Fields(string(d))
+	if len(fields) < 4 {
+		return ""
+	}
+	_, _, err = net.ParseCIDR(fields[3])
+	if err != nil {
+		return ""
+	}
+
+	return fields[3]
 }
 
 func startDHCPServer() error {
