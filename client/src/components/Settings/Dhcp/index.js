@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { Trans, withNamespaces } from 'react-i18next';
 
+import { RESPONSE_STATUS } from '../../../helpers/constants';
 import Form from './Form';
 import Leases from './Leases';
 import Interface from './Interface';
@@ -20,9 +21,10 @@ class Dhcp extends Component {
 
     getToggleDhcpButton = () => {
         const {
-            config, active, processingDhcp, processingConfig,
+            config, check, processingDhcp, processingConfig,
         } = this.props.dhcp;
-        const activeDhcpFound = active && active.found;
+        const otherDhcpFound =
+            check && check.otherServer && check.otherServer.found === RESPONSE_STATUS.YES;
         const filledConfig = Object.keys(config).every((key) => {
             if (key === 'enabled' || key === 'icmp_timeout_msec') {
                 return true;
@@ -51,8 +53,8 @@ class Dhcp extends Component {
                 onClick={() => this.handleToggle(config)}
                 disabled={
                     !filledConfig
-                    || !active
-                    || activeDhcpFound
+                    || !check
+                    || otherDhcpFound
                     || processingDhcp
                     || processingConfig
                 }
@@ -62,41 +64,39 @@ class Dhcp extends Component {
         );
     }
 
-    getActiveDhcpMessage = (t, active) => {
-        if (active) {
-            if (active.error) {
-                return (
-                    <div className="text-danger mb-2">
-                        <Trans>dhcp_error</Trans>
-                        <div className="mt-2 mb-2">
-                            <Accordion label={t('error_details')}>
-                                <span>{active.error}</span>
-                            </Accordion>
-                        </div>
-                    </div>
-                );
-            }
+    getActiveDhcpMessage = (t, check) => {
+        const { found } = check.otherServer;
 
+        if (found === RESPONSE_STATUS.ERROR) {
             return (
-                <div className="mb-2">
-                    {active.found ? (
-                        <div className="text-danger">
-                            <Trans>dhcp_found</Trans>
-                        </div>
-                    ) : (
-                        <div className="text-secondary">
-                            <Trans>dhcp_not_found</Trans>
-                        </div>
-                    )}
+                <div className="text-danger mb-2">
+                    <Trans>dhcp_error</Trans>
+                    <div className="mt-2 mb-2">
+                        <Accordion label={t('error_details')}>
+                            <span>{check.otherServer.error}</span>
+                        </Accordion>
+                    </div>
                 </div>
             );
         }
 
-        return '';
+        return (
+            <div className="mb-2">
+                {found === RESPONSE_STATUS.YES ? (
+                    <div className="text-danger">
+                        <Trans>dhcp_found</Trans>
+                    </div>
+                ) : (
+                    <div className="text-secondary">
+                        <Trans>dhcp_not_found</Trans>
+                    </div>
+                )}
+            </div>
+        );
     }
 
-    getDhcpWarning = (active) => {
-        if (!active || (active && active.found === false)) {
+    getDhcpWarning = (check) => {
+        if (check.otherServer.found === RESPONSE_STATUS.NO) {
             return '';
         }
 
@@ -105,6 +105,49 @@ class Dhcp extends Component {
                 <Trans>dhcp_warning</Trans>
             </div>
         );
+    }
+
+    getStaticIpWarning = (t, check, interfaceName) => {
+        if (check.staticIP.static === RESPONSE_STATUS.ERROR) {
+            return (
+                <Fragment>
+                    <div className="text-danger mb-2">
+                        <Trans>dhcp_static_ip_error</Trans>
+                        <div className="mt-2 mb-2">
+                            <Accordion label={t('error_details')}>
+                                <span>{check.staticIP.error}</span>
+                            </Accordion>
+                        </div>
+                    </div>
+                    <hr className="mt-4 mb-4"/>
+                </Fragment>
+            );
+        } else if (
+            check.staticIP.static === RESPONSE_STATUS.YES
+            && check.staticIP.ip
+            && interfaceName
+        ) {
+            return (
+                <Fragment>
+                    <div className="text-secondary mb-2">
+                        <Trans
+                            components={[
+                                <strong key="0">example</strong>,
+                            ]}
+                            values={{
+                                interfaceName,
+                                ipAddress: check.staticIP.ip,
+                            }}
+                        >
+                            dhcp_dynamic_ip_found
+                        </Trans>
+                    </div>
+                    <hr className="mt-4 mb-4"/>
+                </Fragment>
+            );
+        }
+
+        return '';
     }
 
     render() {
@@ -156,10 +199,11 @@ class Dhcp extends Component {
                                         <Trans>check_dhcp_servers</Trans>
                                     </button>
                                 </div>
-                                {!enabled &&
+                                {!enabled && dhcp.check &&
                                     <Fragment>
-                                        {this.getActiveDhcpMessage(t, dhcp.active)}
-                                        {this.getDhcpWarning(dhcp.active)}
+                                        {this.getStaticIpWarning(t, dhcp.check, interface_name)}
+                                        {this.getActiveDhcpMessage(t, dhcp.check)}
+                                        {this.getDhcpWarning(dhcp.check)}
                                     </Fragment>
                                 }
                             </Fragment>
