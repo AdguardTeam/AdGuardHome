@@ -32,6 +32,7 @@ func (p *program) Start(s service.Service) error {
 func (p *program) Stop(s service.Service) error {
 	// Stop should not block. Return with a few seconds.
 	cleanup()
+	cleanupAlways()
 	os.Exit(0)
 	return nil
 }
