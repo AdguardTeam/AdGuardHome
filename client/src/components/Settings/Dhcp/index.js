@@ -123,7 +123,7 @@ class Dhcp extends Component {
                 </Fragment>
             );
         } else if (
-            check.staticIP.static === DHCP_STATUS_RESPONSE.YES
+            check.staticIP.static === DHCP_STATUS_RESPONSE.NO
             && check.staticIP.ip
             && interfaceName
         ) {
