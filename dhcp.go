@@ -214,14 +214,14 @@ func hasStaticIP(ifaceName string) (bool, error) {
 	}
 	lines := strings.Split(string(body), "\n")
 	nameLine := fmt.Sprintf("interface %s", ifaceName)
-	state := 0
+	withinInterfaceCtx := false
 
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 
-		if state == 1 && len(line) == 0 {
+		if withinInterfaceCtx && len(line) == 0 {
 			// an empty line resets our state
-			state = 0
+			withinInterfaceCtx = false
 		}
 
 		if len(line) == 0 || line[0] == '#' {
@@ -229,14 +229,16 @@ func hasStaticIP(ifaceName string) (bool, error) {
 		}
 		line = strings.TrimSpace(line)
 
-		if state == 0 {
+		if !withinInterfaceCtx {
 			if line == nameLine {
-				state = 1
+				// we found our interface
+				withinInterfaceCtx = true
 			}
 
-		} else if state == 1 {
+		} else {
 			if strings.HasPrefix(line, "interface ") {
-				state = 0
+				// we found another interface - reset our state
+				withinInterfaceCtx = false
 				continue
 			}
 			if strings.HasPrefix(line, "static ip_address=") {
