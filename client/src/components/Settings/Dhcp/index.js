@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { Trans, withNamespaces } from 'react-i18next';
 
-import { RESPONSE_STATUS } from '../../../helpers/constants';
+import { DHCP_STATUS_RESPONSE } from '../../../helpers/constants';
 import Form from './Form';
 import Leases from './Leases';
 import Interface from './Interface';
@@ -24,7 +24,7 @@ class Dhcp extends Component {
             config, check, processingDhcp, processingConfig,
         } = this.props.dhcp;
         const otherDhcpFound =
-            check && check.otherServer && check.otherServer.found === RESPONSE_STATUS.YES;
+            check && check.otherServer && check.otherServer.found === DHCP_STATUS_RESPONSE.YES;
         const filledConfig = Object.keys(config).every((key) => {
             if (key === 'enabled' || key === 'icmp_timeout_msec') {
                 return true;
@@ -67,7 +67,7 @@ class Dhcp extends Component {
     getActiveDhcpMessage = (t, check) => {
         const { found } = check.otherServer;
 
-        if (found === RESPONSE_STATUS.ERROR) {
+        if (found === DHCP_STATUS_RESPONSE.ERROR) {
             return (
                 <div className="text-danger mb-2">
                     <Trans>dhcp_error</Trans>
@@ -82,7 +82,7 @@ class Dhcp extends Component {
 
         return (
             <div className="mb-2">
-                {found === RESPONSE_STATUS.YES ? (
+                {found === DHCP_STATUS_RESPONSE.YES ? (
                     <div className="text-danger">
                         <Trans>dhcp_found</Trans>
                     </div>
@@ -96,7 +96,7 @@ class Dhcp extends Component {
     }
 
     getDhcpWarning = (check) => {
-        if (check.otherServer.found === RESPONSE_STATUS.NO) {
+        if (check.otherServer.found === DHCP_STATUS_RESPONSE.NO) {
             return '';
         }
 
@@ -108,7 +108,7 @@ class Dhcp extends Component {
     }
 
     getStaticIpWarning = (t, check, interfaceName) => {
-        if (check.staticIP.static === RESPONSE_STATUS.ERROR) {
+        if (check.staticIP.static === DHCP_STATUS_RESPONSE.ERROR) {
             return (
                 <Fragment>
                     <div className="text-danger mb-2">
@@ -123,7 +123,7 @@ class Dhcp extends Component {
                 </Fragment>
             );
         } else if (
-            check.staticIP.static === RESPONSE_STATUS.YES
+            check.staticIP.static === DHCP_STATUS_RESPONSE.YES
             && check.staticIP.ip
             && interfaceName
         ) {

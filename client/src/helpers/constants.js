@@ -158,7 +158,7 @@ export const UNSAFE_PORTS = [
 
 export const ALL_INTERFACES_IP = '0.0.0.0';
 
-export const RESPONSE_STATUS = {
+export const DHCP_STATUS_RESPONSE = {
     YES: 'yes',
     NO: 'no',
     ERROR: 'error',
