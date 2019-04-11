@@ -9,7 +9,9 @@ import Card from '../../ui/Card';
 
 class Encryption extends Component {
     componentDidMount() {
-        this.props.validateTlsConfig(this.props.encryption);
+        if (this.props.encryption.enabled) {
+            this.props.validateTlsConfig(this.props.encryption);
+        }
     }
 
     handleFormSubmit = (values) => {
