@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -25,6 +26,7 @@ var httpsServer struct {
 	cond       *sync.Cond // reacts to config.TLS.Enabled, PortHTTPS, CertificateChain and PrivateKey
 	sync.Mutex            // protects config.TLS
 }
+var pidFileName string // PID file name.  Empty if no PID file was created.
 
 const (
 	// Used in config to indicate that syslog or eventlog (win) should be used for logger output
@@ -47,6 +49,7 @@ func main() {
 	go func() {
 		<-signalChannel
 		cleanup()
+		cleanupAlways()
 		os.Exit(0)
 	}()
 
@@ -124,6 +127,10 @@ func run(args options) {
 		}
 	}
 
+	if len(args.pidFile) != 0 && writePIDFile(args.pidFile) {
+		pidFileName = args.pidFile
+	}
+
 	// Update filters we've just loaded right away, don't wait for periodic update timer
 	go func() {
 		refreshFiltersIfNecessary(false)
@@ -158,8 +165,8 @@ func run(args options) {
 			// validate current TLS config and update warnings (it could have been loaded from file)
 			data := validateCertificates(config.TLS.CertificateChain, config.TLS.PrivateKey, config.TLS.ServerName)
 			if !data.ValidPair {
+				cleanupAlways()
 				log.Fatal(data.WarningValidation)
-				os.Exit(1)
 			}
 			config.Lock()
 			config.TLS.tlsConfigStatus = data // update warnings
@@ -173,8 +180,8 @@ func run(args options) {
 			copy(privatekey, []byte(config.TLS.PrivateKey))
 			cert, err := tls.X509KeyPair(certchain, privatekey)
 			if err != nil {
+				cleanupAlways()
 				log.Fatal(err)
-				os.Exit(1)
 			}
 			httpsServer.cond.L.Unlock()
 
@@ -189,8 +196,8 @@ func run(args options) {
 			printHTTPAddresses("https")
 			err = httpsServer.server.ListenAndServeTLS("", "")
 			if err != http.ErrServerClosed {
+				cleanupAlways()
 				log.Fatal(err)
-				os.Exit(1)
 			}
 		}
 	}()
@@ -206,11 +213,22 @@ func run(args options) {
 		}
 		err := httpServer.ListenAndServe()
 		if err != http.ErrServerClosed {
+			cleanupAlways()
 			log.Fatal(err)
-			os.Exit(1)
 		}
 		// We use ErrServerClosed as a sign that we need to rebind on new address, so go back to the start of the loop
 	}
+}
+
+// Write PID to a file
+func writePIDFile(fn string) bool {
+	data := fmt.Sprintf("%d", os.Getpid())
+	err := ioutil.WriteFile(fn, []byte(data), 0644)
+	if err != nil {
+		log.Error("Couldn't write PID to file %s: %v", fn, err)
+		return false
+	}
+	return true
 }
 
 // initWorkingDir initializes the ourWorkingDir
@@ -298,6 +316,13 @@ func cleanup() {
 	}
 }
 
+// This function is called before application exits
+func cleanupAlways() {
+	if len(pidFileName) != 0 {
+		os.Remove(pidFileName)
+	}
+}
+
 // command-line arguments
 type options struct {
 	verbose        bool   // is verbose logging enabled
@@ -306,6 +331,7 @@ type options struct {
 	bindHost       string // host address to bind HTTP server on
 	bindPort       int    // port to serve HTTP pages on
 	logFile        string // Path to the log file. If empty, write to stdout. If "syslog", writes to syslog
+	pidFile        string // File name to save PID to
 
 	// service control action (see service.ControlAction array + "status" command)
 	serviceControlAction string
@@ -342,6 +368,7 @@ func loadOptions() options {
 		{"logfile", "l", "path to the log file. If empty, writes to stdout, if 'syslog' -- system log", func(value string) {
 			o.logFile = value
 		}, nil},
+		{"pidfile", "", "File name to save PID to", func(value string) { o.pidFile = value }, nil},
 		{"verbose", "v", "enable verbose output", nil, func() { o.verbose = true }},
 		{"help", "", "print this help", nil, func() {
 			printHelp()
