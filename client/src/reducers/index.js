@@ -292,18 +292,31 @@ const dhcp = handleActions({
 
     [actions.findActiveDhcpRequest]: state => ({ ...state, processingStatus: true }),
     [actions.findActiveDhcpFailure]: state => ({ ...state, processingStatus: false }),
-    [actions.findActiveDhcpSuccess]: (state, { payload }) => ({
-        ...state,
-        active: payload,
-        processingStatus: false,
-    }),
+    [actions.findActiveDhcpSuccess]: (state, { payload }) => {
+        const {
+            other_server: otherServer,
+            static_ip: staticIP,
+        } = payload;
+
+        const newState = {
+            ...state,
+            check: {
+                otherServer,
+                staticIP,
+            },
+            processingStatus: false,
+        };
+        return newState;
+    },
 
     [actions.toggleDhcpRequest]: state => ({ ...state, processingDhcp: true }),
     [actions.toggleDhcpFailure]: state => ({ ...state, processingDhcp: false }),
     [actions.toggleDhcpSuccess]: (state) => {
         const { config } = state;
         const newConfig = { ...config, enabled: !config.enabled };
-        const newState = { ...state, config: newConfig, processingDhcp: false };
+        const newState = {
+            ...state, config: newConfig, check: null, processingDhcp: false,
+        };
         return newState;
     },
 
@@ -324,7 +337,7 @@ const dhcp = handleActions({
     config: {
         enabled: false,
     },
-    active: null,
+    check: null,
     leases: [],
 });
 
