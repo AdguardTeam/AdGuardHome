@@ -34,11 +34,13 @@ type configuration struct {
 	ourWorkingDir     string // Location of our directory, used to protect against CWD being somewhere else
 	firstRun          bool   // if set to true, don't run any services except HTTP web inteface, and serve only first-run html
 
-	BindHost  string             `yaml:"bind_host"` // BindHost is the IP address of the HTTP server to bind to
-	BindPort  int                `yaml:"bind_port"` // BindPort is the port the HTTP server
-	AuthName  string             `yaml:"auth_name"` // AuthName is the basic auth username
-	AuthPass  string             `yaml:"auth_pass"` // AuthPass is the basic auth password
-	Language  string             `yaml:"language"`  // two-letter ISO 639-1 language code
+	BindHost     string `yaml:"bind_host"`     // BindHost is the IP address of the HTTP server to bind to
+	BindPort     int    `yaml:"bind_port"`     // BindPort is the port the HTTP server
+	AuthName     string `yaml:"auth_name"`     // AuthName is the basic auth username
+	AuthPass     string `yaml:"auth_pass"`     // AuthPass is the basic auth password
+	Language     string `yaml:"language"`      // two-letter ISO 639-1 language code
+	RlimitNoFile uint   `yaml:"rlimit_nofile"` // Maximum number of opened fd's per process (0: default)
+
 	DNS       dnsConfig          `yaml:"dns"`
 	TLS       tlsConfig          `yaml:"tls"`
 	Filters   []filter           `yaml:"filters"`
