@@ -149,9 +149,9 @@ export default class Api {
     FILTERING_STATUS = { path: 'filtering/status', method: 'GET' };
     FILTERING_ENABLE = { path: 'filtering/enable', method: 'POST' };
     FILTERING_DISABLE = { path: 'filtering/disable', method: 'POST' };
-    FILTERING_ADD_FILTER = { path: 'filtering/add_url', method: 'PUT' };
-    FILTERING_REMOVE_FILTER = { path: 'filtering/remove_url', method: 'DELETE' };
-    FILTERING_SET_RULES = { path: 'filtering/set_rules', method: 'PUT' };
+    FILTERING_ADD_FILTER = { path: 'filtering/add_url', method: 'POST' };
+    FILTERING_REMOVE_FILTER = { path: 'filtering/remove_url', method: 'POST' };
+    FILTERING_SET_RULES = { path: 'filtering/set_rules', method: 'POST' };
     FILTERING_ENABLE_FILTER = { path: 'filtering/enable_url', method: 'POST' };
     FILTERING_DISABLE_FILTER = { path: 'filtering/disable_url', method: 'POST' };
     FILTERING_REFRESH = { path: 'filtering/refresh', method: 'POST' };
