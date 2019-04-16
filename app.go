@@ -311,18 +311,6 @@ func enableTLS13() {
 	}
 }
 
-// Set user-specified limit of how many fd's we can use
-// https://github.com/AdguardTeam/AdGuardHome/issues/659
-func setRlimit(val uint) {
-	var rlim syscall.Rlimit
-	rlim.Max = uint64(val)
-	rlim.Cur = uint64(val)
-	err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rlim)
-	if err != nil {
-		log.Error("Setrlimit() failed: %v", err)
-	}
-}
-
 func cleanup() {
 	log.Info("Stopping AdGuard Home")
 
