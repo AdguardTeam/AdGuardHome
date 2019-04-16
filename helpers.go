@@ -60,14 +60,6 @@ func ensureGETHandler(handler func(http.ResponseWriter, *http.Request)) http.Han
 	return &h
 }
 
-func ensurePUT(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
-	return ensure("PUT", handler)
-}
-
-func ensureDELETE(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
-	return ensure("DELETE", handler)
-}
-
 func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if config.AuthName == "" || config.AuthPass == "" {
