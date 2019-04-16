@@ -1,6 +1,7 @@
 package dhcpd
 
 import (
+	"bytes"
 	"crypto/rand"
 	"encoding/binary"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/krolaw/dhcp4"
+	"golang.org/x/net/ipv4"
 )
 
 // CheckIfOtherDHCPServersPresent sends a DHCP request to the specified network interface,
@@ -32,13 +34,13 @@ func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 	dst := "255.255.255.255:67"
 
 	// form a DHCP request packet, try to emulate existing client as much as possible
-	xID := make([]byte, 8)
+	xID := make([]byte, 4)
 	n, err := rand.Read(xID)
-	if n != 8 && err == nil {
-		err = fmt.Errorf("Generated less than 8 bytes")
+	if n != 4 && err == nil {
+		err = fmt.Errorf("Generated less than 4 bytes")
 	}
 	if err != nil {
-		return false, wrapErrPrint(err, "Couldn't generate 8 random bytes")
+		return false, wrapErrPrint(err, "Couldn't generate random bytes")
 	}
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -89,58 +91,63 @@ func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 
 	// bind to 0.0.0.0:68
 	log.Tracef("Listening to udp4 %+v", udpAddr)
-	c, err := net.ListenPacket("udp4", src)
+	c, err := newBroadcastPacketConn(net.IPv4(0, 0, 0, 0), 68, ifaceName)
 	if c != nil {
 		defer c.Close()
 	}
 	// spew.Dump(c, err)
 	// spew.Printf("net.ListenUDP returned %v, %v\n", c, err)
 	if err != nil {
-		return false, wrapErrPrint(err, "Couldn't listen to %s", src)
+		return false, wrapErrPrint(err, "Couldn't listen on :68")
 	}
 
 	// send to 255.255.255.255:67
-	_, err = c.WriteTo(packet, dstAddr)
+	cm := ipv4.ControlMessage{}
+	_, err = c.WriteTo(packet, &cm, dstAddr)
 	// spew.Dump(n, err)
 	if err != nil {
 		return false, wrapErrPrint(err, "Couldn't send a packet to %s", dst)
 	}
 
-	// wait for answer
-	log.Tracef("Waiting %v for an answer", defaultDiscoverTime)
-	// TODO: replicate dhclient's behaviour of retrying several times with progressively bigger timeouts
-	b := make([]byte, 1500)
-	c.SetReadDeadline(time.Now().Add(defaultDiscoverTime))
-	n, _, err = c.ReadFrom(b)
-	if isTimeout(err) {
-		// timed out -- no DHCP servers
-		return false, nil
-	}
-	if err != nil {
-		return false, wrapErrPrint(err, "Couldn't receive packet")
-	}
-	if n > 0 {
-		b = b[:n]
-	}
-	// spew.Dump(n, fromAddr, err, b)
+	for {
+		// wait for answer
+		log.Tracef("Waiting %v for an answer", defaultDiscoverTime)
+		// TODO: replicate dhclient's behaviour of retrying several times with progressively bigger timeouts
+		b := make([]byte, 1500)
+		_ = c.SetReadDeadline(time.Now().Add(defaultDiscoverTime))
+		n, _, _, err = c.ReadFrom(b)
+		if isTimeout(err) {
+			// timed out -- no DHCP servers
+			return false, nil
+		}
+		if err != nil {
+			return false, wrapErrPrint(err, "Couldn't receive packet")
+		}
+		// spew.Dump(n, fromAddr, err, b)
 
-	if n < 240 {
-		// packet too small for dhcp
-		return false, wrapErrPrint(err, "got packet that's too small for DHCP")
-	}
+		log.Tracef("Received packet (%v bytes)", n)
 
-	response := dhcp4.Packet(b[:n])
-	if response.HLen() > 16 {
-		// invalid size
-		return false, wrapErrPrint(err, "got malformed packet with HLen() > 16")
-	}
+		if n < 240 {
+			// packet too small for dhcp
+			continue
+		}
 
-	parsedOptions := response.ParseOptions()
-	_, ok := parsedOptions[dhcp4.OptionDHCPMessageType]
-	if !ok {
-		return false, wrapErrPrint(err, "got malformed packet without DHCP message type")
-	}
+		response := dhcp4.Packet(b[:n])
+		if response.OpCode() != dhcp4.BootReply ||
+			response.HType() != 1 /*Ethernet*/ ||
+			response.HLen() > 16 ||
+			!bytes.Equal(response.CHAddr(), iface.HardwareAddr) ||
+			!bytes.Equal(response.XId(), xID) {
+			continue
+		}
 
-	// that's a DHCP server there
-	return true, nil
+		parsedOptions := response.ParseOptions()
+		if t := parsedOptions[dhcp4.OptionDHCPMessageType]; len(t) != 1 {
+			continue //packet without DHCP message type
+		}
+
+		log.Tracef("The packet is from an active DHCP server")
+		// that's a DHCP server there
+		return true, nil
+	}
 }
