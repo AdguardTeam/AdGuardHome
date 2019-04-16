@@ -45,6 +45,21 @@ func ensureGET(handler func(http.ResponseWriter, *http.Request)) func(http.Respo
 	return ensure("GET", handler)
 }
 
+// Bridge between http.Handler object and Go function
+type httpHandler struct {
+	handler func(http.ResponseWriter, *http.Request)
+}
+
+func (h *httpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.handler(w, r)
+}
+
+func ensureGETHandler(handler func(http.ResponseWriter, *http.Request)) http.Handler {
+	h := httpHandler{}
+	h.handler = ensure("GET", handler)
+	return &h
+}
+
 func ensurePUT(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return ensure("PUT", handler)
 }

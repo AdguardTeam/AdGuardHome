@@ -15,6 +15,7 @@ import (
 	"syscall"
 
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/NYTimes/gziphandler"
 	"github.com/gobuffalo/packr"
 )
 
@@ -145,8 +146,9 @@ func run(args options) {
 
 	// Initialize and run the admin Web interface
 	box := packr.NewBox("build/static")
+
 	// if not configured, redirect / to /install.html, otherwise redirect /install.html to /
-	http.Handle("/", postInstallHandler(optionalAuthHandler(http.FileServer(box))))
+	http.Handle("/", postInstallHandler(optionalAuthHandler(gziphandler.GzipHandler(http.FileServer(box)))))
 	registerControlHandlers()
 
 	// add handlers for /install paths, we only need them when we're not configured yet

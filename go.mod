@@ -5,6 +5,7 @@ go 1.12
 require (
 	github.com/AdguardTeam/dnsproxy v0.12.0
 	github.com/AdguardTeam/golibs v0.1.3
+	github.com/NYTimes/gziphandler v1.1.1
 	github.com/StackExchange/wmi v0.0.0-20180725035823-b12b22c5341f // indirect
 	github.com/bluele/gcache v0.0.0-20190203144525-2016d595ccb0
 	github.com/go-ole/go-ole v1.2.1 // indirect
@@ -18,7 +19,7 @@ require (
 	github.com/shirou/gopsutil v2.18.10+incompatible
 	github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4 // indirect
 	github.com/sparrc/go-ping v0.0.0-20181106165434-ef3ab45e41b0
-	github.com/stretchr/testify v1.2.2
+	github.com/stretchr/testify v1.3.0
 	go.uber.org/goleak v0.10.0
 	golang.org/x/net v0.0.0-20190119204137-ed066c81e75e
 	golang.org/x/sys v0.0.0-20190122071731-054c452bb702
