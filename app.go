@@ -197,6 +197,7 @@ func run(args options) {
 				Addr: address,
 				TLSConfig: &tls.Config{
 					Certificates: []tls.Certificate{cert},
+					MinVersion:   tls.VersionTLS12,
 				},
 			}
 
