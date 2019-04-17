@@ -1137,6 +1137,16 @@ type applyConfigReq struct {
 	Password string            `json:"password"`
 }
 
+// Copy installation parameters between two configuration objects
+func copyInstallSettings(dst *configuration, src *configuration) {
+	dst.BindHost = src.BindHost
+	dst.BindPort = src.BindPort
+	dst.DNS.BindHost = src.DNS.BindHost
+	dst.DNS.Port = src.DNS.Port
+	dst.AuthName = src.AuthName
+	dst.AuthPass = src.AuthPass
+}
+
 // Apply new configuration, start DNS server, restart Web server
 func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
@@ -1175,6 +1185,9 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var curConfig configuration
+	copyInstallSettings(&curConfig, &config)
+
 	config.firstRun = false
 	config.BindHost = newSettings.Web.IP
 	config.BindPort = newSettings.Web.Port
@@ -1183,15 +1196,22 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	config.AuthName = newSettings.Username
 	config.AuthPass = newSettings.Password
 
-	if config.DNS.Port != 0 {
-		err = startDNSServer()
-		if err != nil {
-			httpError(w, http.StatusInternalServerError, "Couldn't start DNS server: %s", err)
-			return
-		}
+	err = startDNSServer()
+	if err != nil {
+		config.firstRun = true
+		copyInstallSettings(&config, &curConfig)
+		httpError(w, http.StatusInternalServerError, "Couldn't start DNS server: %s", err)
+		return
 	}
 
-	httpUpdateConfigReloadDNSReturnOK(w, r)
+	err = config.write()
+	if err != nil {
+		config.firstRun = true
+		copyInstallSettings(&config, &curConfig)
+		httpError(w, http.StatusInternalServerError, "Couldn't write config: %s", err)
+		return
+	}
+
 	// this needs to be done in a goroutine because Shutdown() is a blocking call, and it will block
 	// until all requests are finished, and _we_ are inside a request right now, so it will block indefinitely
 	if restartHTTP {
@@ -1199,6 +1219,8 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 			httpServer.Shutdown(context.TODO())
 		}()
 	}
+
+	returnOK(w)
 }
 
 // --------------
