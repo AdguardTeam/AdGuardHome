@@ -1157,6 +1157,11 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if newSettings.Web.Port == 0 || newSettings.DNS.Port == 0 {
+		httpError(w, http.StatusBadRequest, "port value can't be 0")
+		return
+	}
+
 	restartHTTP := true
 	if config.BindHost == newSettings.Web.IP && config.BindPort == newSettings.Web.Port {
 		// no need to rebind
