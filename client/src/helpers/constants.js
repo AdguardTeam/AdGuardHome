@@ -22,6 +22,8 @@ export const REPOSITORY = {
     TRACKERS_DB: 'https://github.com/AdguardTeam/AdGuardHome/tree/master/client/src/helpers/trackers/adguard.json',
 };
 
+export const PRIVACY_POLICY_LINK = 'https://adguard.com/privacy/home.html';
+
 export const LANGUAGES = [
     {
         key: 'en',
