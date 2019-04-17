@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Trans, withNamespaces } from 'react-i18next';
-import { REPOSITORY, LANGUAGES } from '../../helpers/constants';
+import { REPOSITORY, LANGUAGES, PRIVACY_POLICY_LINK } from '../../helpers/constants';
 import i18n from '../../i18n';
 
 import './Footer.css';
@@ -29,6 +29,9 @@ class Footer extends Component {
                         <div className="footer__column">
                             <a href={REPOSITORY.URL} className="footer__link" target="_blank" rel="noopener noreferrer">
                                 <Trans>homepage</Trans>
+                            </a>
+                            <a href={PRIVACY_POLICY_LINK} className="footer__link" target="_blank" rel="noopener noreferrer">
+                                <Trans>privacy_policy</Trans>
                             </a>
                             <a href={`${REPOSITORY.URL}/issues/new`} className="btn btn-outline-primary btn-sm footer__link footer__link--report" target="_blank" rel="noopener noreferrer">
                                 <Trans>report_an_issue</Trans>
