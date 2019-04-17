@@ -1059,6 +1059,10 @@ func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 			respData.DNS.CanAutofix = canAutofix
 		}
 
+		if err == nil {
+			err = checkPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+		}
+
 		if err != nil {
 			respData.DNS.Status = fmt.Sprintf("%v", err)
 		}
@@ -1161,8 +1165,13 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 
 	err = checkPacketPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s",
-			net.JoinHostPort(newSettings.DNS.IP, strconv.Itoa(newSettings.DNS.Port)), err)
+		httpError(w, http.StatusBadRequest, "%s", err)
+		return
+	}
+
+	err = checkPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "%s", err)
 		return
 	}
 
