@@ -108,6 +108,15 @@ func handleServiceControlAction(action string) {
 				log.Fatalf("Failed to start the service: %s", err)
 			}
 			log.Printf("Service has been started")
+
+			if detectFirstRun() {
+				log.Printf(`Almost ready!
+AdGuard Home is successfully installed and will automatically start on boot.
+There are a few more things that must be configured before you can use it.
+Click on the link below and follow the Installation Wizard steps to finish setup.`)
+				printHTTPAddresses("http")
+			}
+
 		} else if action == "uninstall" {
 			cleanupService()
 		}
