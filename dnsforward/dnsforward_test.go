@@ -101,7 +101,11 @@ func TestDotServer(t *testing.T) {
 	// Add our self-signed generated config to roots
 	roots := x509.NewCertPool()
 	roots.AppendCertsFromPEM(certPem)
-	tlsConfig := &tls.Config{ServerName: tlsServerName, RootCAs: roots}
+	tlsConfig := &tls.Config{
+		ServerName: tlsServerName,
+		RootCAs:    roots,
+		MinVersion: tls.VersionTLS12,
+	}
 
 	// Create a DNS-over-TLS client connection
 	addr := s.dnsProxy.Addr(proxy.ProtoTLS)
@@ -459,7 +463,7 @@ func createServerTLSConfig(t *testing.T) (*tls.Config, []byte, []byte) {
 		t.Fatalf("failed to create certificate: %s", err)
 	}
 
-	return &tls.Config{Certificates: []tls.Certificate{cert}, ServerName: tlsServerName}, certPem, keyPem
+	return &tls.Config{Certificates: []tls.Certificate{cert}, ServerName: tlsServerName, MinVersion: tls.VersionTLS12}, certPem, keyPem
 }
 
 func createDataDir(t *testing.T) string {

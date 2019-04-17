@@ -175,7 +175,10 @@ func (s *Server) startInternal(config *ServerConfig) error {
 		if err != nil {
 			return errorx.Decorate(err, "Failed to parse TLS keypair")
 		}
-		proxyConfig.TLSConfig = &tls.Config{Certificates: []tls.Certificate{keypair}}
+		proxyConfig.TLSConfig = &tls.Config{
+			Certificates: []tls.Certificate{keypair},
+			MinVersion:   tls.VersionTLS12,
+		}
 	}
 
 	if proxyConfig.UDPListenAddr == nil {
