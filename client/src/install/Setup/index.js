@@ -94,6 +94,7 @@ class Setup extends Component {
                         interfaces={interfaces}
                         onSubmit={this.nextStep}
                         onChange={this.handleFormChange}
+                        validateForm={this.handleFormChange}
                         handleAutofix={this.handleAutofix}
                     />
                 );
