@@ -55,6 +55,8 @@ class Controls extends Component {
                             invalid
                             || pristine
                             || install.processingSubmit
+                            || install.dns.status
+                            || install.web.status
                         }
                     >
                         <Trans>next</Trans>

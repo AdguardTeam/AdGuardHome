@@ -44,3 +44,18 @@ export const setAllSettings = values => async (dispatch) => {
         dispatch(prevStep());
     }
 };
+
+export const checkConfigRequest = createAction('CHECK_CONFIG_REQUEST');
+export const checkConfigFailure = createAction('CHECK_CONFIG_FAILURE');
+export const checkConfigSuccess = createAction('CHECK_CONFIG_SUCCESS');
+
+export const checkConfig = values => async (dispatch) => {
+    dispatch(checkConfigRequest());
+    try {
+        const check = await apiClient.checkConfig(values);
+        dispatch(checkConfigSuccess(check));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(checkConfigFailure());
+    }
+};
