@@ -50,6 +50,7 @@ func generateServerConfig() dnsforward.ServerConfig {
 		FilteringConfig: config.DNS.FilteringConfig,
 		Filters:         filters,
 	}
+	newconfig.ResolverAddress = fmt.Sprintf("%s:%d", config.DNS.BindHost, config.DNS.Port)
 
 	if config.TLS.Enabled {
 		newconfig.TLSConfig = config.TLS.TLSConfig
