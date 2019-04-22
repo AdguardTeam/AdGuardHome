@@ -1142,14 +1142,33 @@ definitions:
     DhcpSearchResult:
         type: "object"
         description: "Information about a DHCP server discovered in the current network"
-        required:
-            - "found"
+        properties:
+            other_server:
+                $ref: "#/definitions/DhcpSearchResultOtherServer"
+            static_ip:
+                $ref: "#/definitions/DhcpSearchResultStaticIP"
+    DhcpSearchResultOtherServer:
+        type: "object"
         properties:
             found:
-                type: "boolean"
-            gateway_ip:
                 type: "string"
-                example: "192.168.1.1"
+                description: "yes|no|error"
+                example: "no"
+            error:
+                type: "string"
+                description: "Set if found=error"
+                example: ""
+    DhcpSearchResultStaticIP:
+        type: "object"
+        properties:
+            static:
+                type: "string"
+                description: "yes|no|error"
+                example: "yes"
+            ip:
+                type: "string"
+                description: "Set if static=no"
+                example: ""
     DnsAnswer:
         type: "object"
         description: "DNS answer section"
