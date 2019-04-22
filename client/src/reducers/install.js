@@ -11,8 +11,8 @@ const install = handleActions({
     [actions.getDefaultAddressesFailure]: state => ({ ...state, processingDefault: false }),
     [actions.getDefaultAddressesSuccess]: (state, { payload }) => {
         const { interfaces } = payload;
-        const web = { ...state.web, ...payload.web };
-        const dns = { ...state.dns, ...payload.dns };
+        const web = { ...state.web, port: payload.web_port };
+        const dns = { ...state.dns, port: payload.dns_port };
 
         const newState = {
             ...state, web, dns, interfaces, processingDefault: false,
