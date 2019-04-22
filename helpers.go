@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -14,7 +15,10 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/log"
 	"github.com/joomcode/errorx"
 )
 
@@ -298,6 +302,48 @@ func checkPacketPortAvailable(host string, port int) error {
 	}
 	ln.Close()
 	return err
+}
+
+// Connect to a remote server resolving hostname using our own DNS server
+func customDialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	log.Tracef("network:%v  addr:%v", network, addr)
+
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return nil, err
+	}
+
+	dialer := &net.Dialer{
+		Timeout: time.Minute * 5,
+	}
+
+	if net.ParseIP(host) != nil {
+		con, err := dialer.DialContext(ctx, network, addr)
+		return con, err
+	}
+
+	resolverAddr := fmt.Sprintf("%s:%d", config.DNS.BindHost, config.DNS.Port)
+	r := upstream.NewResolver(resolverAddr, 30*time.Second)
+	addrs, e := r.LookupIPAddr(ctx, host)
+	log.Tracef("LookupIPAddr: %s: %v", host, addrs)
+	if e != nil {
+		return nil, e
+	}
+
+	var firstErr error
+	firstErr = nil
+	for _, a := range addrs {
+		addr = fmt.Sprintf("%s:%s", a.String(), port)
+		con, err := dialer.DialContext(ctx, network, addr)
+		if err != nil {
+			if firstErr == nil {
+				firstErr = err
+			}
+			continue
+		}
+		return con, err
+	}
+	return nil, firstErr
 }
 
 // ---------------------
