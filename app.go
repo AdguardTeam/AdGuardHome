@@ -168,54 +168,7 @@ func run(args options) {
 	httpsServer.cond = sync.NewCond(&httpsServer.Mutex)
 
 	// for https, we have a separate goroutine loop
-	go func() {
-		for { // this is an endless loop
-			httpsServer.cond.L.Lock()
-			// this mechanism doesn't let us through until all conditions are ment
-			for config.TLS.Enabled == false || config.TLS.PortHTTPS == 0 || config.TLS.PrivateKey == "" || config.TLS.CertificateChain == "" { // sleep until necessary data is supplied
-				httpsServer.cond.Wait()
-			}
-			address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.TLS.PortHTTPS))
-			// validate current TLS config and update warnings (it could have been loaded from file)
-			data := validateCertificates(config.TLS.CertificateChain, config.TLS.PrivateKey, config.TLS.ServerName)
-			if !data.ValidPair {
-				cleanupAlways()
-				log.Fatal(data.WarningValidation)
-			}
-			config.Lock()
-			config.TLS.tlsConfigStatus = data // update warnings
-			config.Unlock()
-
-			// prepare certs for HTTPS server
-			// important -- they have to be copies, otherwise changing the contents in config.TLS will break encryption for in-flight requests
-			certchain := make([]byte, len(config.TLS.CertificateChain))
-			copy(certchain, []byte(config.TLS.CertificateChain))
-			privatekey := make([]byte, len(config.TLS.PrivateKey))
-			copy(privatekey, []byte(config.TLS.PrivateKey))
-			cert, err := tls.X509KeyPair(certchain, privatekey)
-			if err != nil {
-				cleanupAlways()
-				log.Fatal(err)
-			}
-			httpsServer.cond.L.Unlock()
-
-			// prepare HTTPS server
-			httpsServer.server = &http.Server{
-				Addr: address,
-				TLSConfig: &tls.Config{
-					Certificates: []tls.Certificate{cert},
-					MinVersion:   tls.VersionTLS12,
-				},
-			}
-
-			printHTTPAddresses("https")
-			err = httpsServer.server.ListenAndServeTLS("", "")
-			if err != http.ErrServerClosed {
-				cleanupAlways()
-				log.Fatal(err)
-			}
-		}
-	}()
+	go httpServerLoop()
 
 	// this loop is used as an ability to change listening host and/or port
 	for {
@@ -232,6 +185,58 @@ func run(args options) {
 			log.Fatal(err)
 		}
 		// We use ErrServerClosed as a sign that we need to rebind on new address, so go back to the start of the loop
+	}
+}
+
+func httpServerLoop() {
+	for {
+		httpsServer.cond.L.Lock()
+		// this mechanism doesn't let us through until all conditions are met
+		for config.TLS.Enabled == false ||
+			config.TLS.PortHTTPS == 0 ||
+			config.TLS.PrivateKey == "" ||
+			config.TLS.CertificateChain == "" { // sleep until necessary data is supplied
+			httpsServer.cond.Wait()
+		}
+		address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.TLS.PortHTTPS))
+		// validate current TLS config and update warnings (it could have been loaded from file)
+		data := validateCertificates(config.TLS.CertificateChain, config.TLS.PrivateKey, config.TLS.ServerName)
+		if !data.ValidPair {
+			cleanupAlways()
+			log.Fatal(data.WarningValidation)
+		}
+		config.Lock()
+		config.TLS.tlsConfigStatus = data // update warnings
+		config.Unlock()
+
+		// prepare certs for HTTPS server
+		// important -- they have to be copies, otherwise changing the contents in config.TLS will break encryption for in-flight requests
+		certchain := make([]byte, len(config.TLS.CertificateChain))
+		copy(certchain, []byte(config.TLS.CertificateChain))
+		privatekey := make([]byte, len(config.TLS.PrivateKey))
+		copy(privatekey, []byte(config.TLS.PrivateKey))
+		cert, err := tls.X509KeyPair(certchain, privatekey)
+		if err != nil {
+			cleanupAlways()
+			log.Fatal(err)
+		}
+		httpsServer.cond.L.Unlock()
+
+		// prepare HTTPS server
+		httpsServer.server = &http.Server{
+			Addr: address,
+			TLSConfig: &tls.Config{
+				Certificates: []tls.Certificate{cert},
+				MinVersion:   tls.VersionTLS12,
+			},
+		}
+
+		printHTTPAddresses("https")
+		err = httpsServer.server.ListenAndServeTLS("", "")
+		if err != http.ErrServerClosed {
+			cleanupAlways()
+			log.Fatal(err)
+		}
 	}
 }
 
