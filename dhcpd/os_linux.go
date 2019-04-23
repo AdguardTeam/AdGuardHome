@@ -1,5 +1,3 @@
-// +build aix darwin dragonfly freebsd netbsd openbsd solaris
-
 package dhcpd
 
 import (
@@ -21,6 +19,9 @@ func newBroadcastPacketConn(bindAddr net.IP, port int, ifname string) (*ipv4.Pac
 		return nil, err
 	}
 	if err := syscall.SetsockoptInt(s, syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1); err != nil {
+		return nil, err
+	}
+	if err := syscall.SetsockoptString(s, syscall.SOL_SOCKET, syscall.SO_BINDTODEVICE, ifname); err != nil {
 		return nil, err
 	}
 

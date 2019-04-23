@@ -649,13 +649,15 @@ func (d *Dnsfilter) checkSafeSearch(host string) (Result, error) {
 		return Result{}, err
 	}
 
-	res.IP = addrs[0]
-	// The next bug may occurs: LookupIP returns DNS64 mapped ipv4 address with zero-prefix
 	for _, i := range addrs {
-		if ipv4 := i.To4(); ipv4 != nil && len(i) == net.IPv6len {
+		if ipv4 := i.To4(); ipv4 != nil {
 			res.IP = ipv4
 			break
 		}
+	}
+
+	if len(res.IP) == 0 {
+		return Result{}, fmt.Errorf("no ipv4 addresses in safe search response for %s", safeHost)
 	}
 
 	// Cache result
@@ -1036,7 +1038,7 @@ func New(c *Config) *Dnsfilter {
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
 	}
-	if len(c.ResolverAddress) != 0 {
+	if c != nil && len(c.ResolverAddress) != 0 {
 		resolverAddr = c.ResolverAddress
 		d.transport.DialContext = customDialContext
 	}
