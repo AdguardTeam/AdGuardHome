@@ -1038,7 +1038,7 @@ func New(c *Config) *Dnsfilter {
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
 	}
-	if len(c.ResolverAddress) != 0 {
+	if c != nil && len(c.ResolverAddress) != 0 {
 		resolverAddr = c.ResolverAddress
 		d.transport.DialContext = customDialContext
 	}
