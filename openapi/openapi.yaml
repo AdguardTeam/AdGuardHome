@@ -739,6 +739,26 @@ paths:
                     description: OK
                     schema:
                         $ref: "#/definitions/AddressesInfo"
+    /install/check_config:
+        post:
+            tags:
+                - install
+            operationId: installCheckConfig
+            summary: "Checks configuration"
+            parameters:
+                - in: "body"
+                  name: "body"
+                  description: "Configuration to be checked"
+                  required: true
+                  schema:
+                      $ref: "#/definitions/CheckConfigRequest"
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/CheckConfigResponse"
+                400:
+                    description: "Failed to parse JSON or cannot listen on the specified address"
     /install/configure:
         post:
             tags:
@@ -1320,17 +1340,18 @@ definitions:
                 type: "integer"
                 format: "int32"
                 example: 53
-            warning:
-                type: "string"
-                example: "Cannot bind to this port"
     AddressesInfo:
         type: "object"
         description: "AdGuard Home addresses configuration"
         properties:
-            dns:
-                $ref: "#/definitions/AddressInfo"
-            web:
-                $ref: "#/definitions/AddressInfo"
+            dns_port:
+                type: "integer"
+                format: "int32"
+                example: 53
+            web_port:
+                type: "integer"
+                format: "int32"
+                example: 80
             interfaces:
                 type: "object"
                 description: "Network interfaces dictionary (key is the interface name)"
@@ -1353,6 +1374,43 @@ definitions:
         items:
             $ref: "#/definitions/Client"
         description: "Clients array"
+    CheckConfigRequest:
+        type: "object"
+        description: "Configuration to be checked"
+        properties:
+            dns:
+                $ref: "#/definitions/CheckConfigRequestInfo"
+            web:
+                $ref: "#/definitions/CheckConfigRequestInfo"
+    CheckConfigRequestInfo:
+        type: "object"
+        properties:
+            ip:
+                type: "string"
+                example: "127.0.0.1"
+            port:
+                type: "integer"
+                format: "int32"
+                example: 53
+            autofix:
+                type: "boolean"
+                example: false
+    CheckConfigResponse:
+        type: "object"
+        properties:
+            dns:
+                $ref: "#/definitions/CheckConfigResponseInfo"
+            web:
+                $ref: "#/definitions/CheckConfigResponseInfo"
+    CheckConfigResponseInfo:
+        type: "object"
+        properties:
+            status:
+                type: "string"
+                example: ""
+            can_autofix:
+                type: "boolean"
+                example: false
     InitialConfiguration:
         type: "object"
         description: "AdGuard Home initial configuration (for the first-install wizard)"

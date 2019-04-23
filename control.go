@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -970,112 +969,6 @@ func handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type ipport struct {
-	IP      string `json:"ip,omitempty"`
-	Port    int    `json:"port"`
-	Warning string `json:"warning"`
-}
-
-type firstRunData struct {
-	Web        ipport                 `json:"web"`
-	DNS        ipport                 `json:"dns"`
-	Username   string                 `json:"username,omitempty"`
-	Password   string                 `json:"password,omitempty"`
-	Interfaces map[string]interface{} `json:"interfaces"`
-}
-
-func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-	data := firstRunData{}
-
-	// find out if port 80 is available -- if not, fall back to 3000
-	if checkPortAvailable("", 80) == nil {
-		data.Web.Port = 80
-	} else {
-		data.Web.Port = 3000
-	}
-
-	// find out if port 53 is available -- if not, show a big warning
-	data.DNS.Port = 53
-	if checkPacketPortAvailable("", 53) != nil {
-		data.DNS.Warning = "Port 53 is not available for binding -- this will make DNS clients unable to contact AdGuard Home."
-	}
-
-	ifaces, err := getValidNetInterfacesForWeb()
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
-		return
-	}
-
-	data.Interfaces = make(map[string]interface{})
-	for _, iface := range ifaces {
-		data.Interfaces[iface.Name] = iface
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(data)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to marshal default addresses to json: %s", err)
-		return
-	}
-}
-
-func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-	newSettings := firstRunData{}
-	err := json.NewDecoder(r.Body).Decode(&newSettings)
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to parse new config json: %s", err)
-		return
-	}
-
-	restartHTTP := true
-	if config.BindHost == newSettings.Web.IP && config.BindPort == newSettings.Web.Port {
-		// no need to rebind
-		restartHTTP = false
-	}
-
-	// validate that hosts and ports are bindable
-	if restartHTTP {
-		err = checkPortAvailable(newSettings.Web.IP, newSettings.Web.Port)
-		if err != nil {
-			httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s", net.JoinHostPort(newSettings.Web.IP, strconv.Itoa(newSettings.Web.Port)), err)
-			return
-		}
-	}
-
-	err = checkPacketPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s", net.JoinHostPort(newSettings.DNS.IP, strconv.Itoa(newSettings.DNS.Port)), err)
-		return
-	}
-
-	config.firstRun = false
-	config.BindHost = newSettings.Web.IP
-	config.BindPort = newSettings.Web.Port
-	config.DNS.BindHost = newSettings.DNS.IP
-	config.DNS.Port = newSettings.DNS.Port
-	config.AuthName = newSettings.Username
-	config.AuthPass = newSettings.Password
-
-	if config.DNS.Port != 0 {
-		err = startDNSServer()
-		if err != nil {
-			httpError(w, http.StatusInternalServerError, "Couldn't start DNS server: %s", err)
-			return
-		}
-	}
-
-	httpUpdateConfigReloadDNSReturnOK(w, r)
-	// this needs to be done in a goroutine because Shutdown() is a blocking call, and it will block
-	// until all requests are finished, and _we_ are inside a request right now, so it will block indefinitely
-	if restartHTTP {
-		go func() {
-			httpServer.Shutdown(context.TODO())
-		}()
-	}
-}
-
 // --------------
 // DNS-over-HTTPS
 // --------------
@@ -1097,11 +990,6 @@ func handleDOH(w http.ResponseWriter, r *http.Request) {
 // ------------------------
 // registration of handlers
 // ------------------------
-func registerInstallHandlers() {
-	http.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(handleInstallGetAddresses)))
-	http.HandleFunc("/control/install/configure", preInstall(ensurePOST(handleInstallConfigure)))
-}
-
 func registerControlHandlers() {
 	http.HandleFunc("/control/status", postInstall(optionalAuth(ensureGET(handleStatus))))
 	http.HandleFunc("/control/enable_protection", postInstall(optionalAuth(ensurePOST(handleProtectionEnable))))

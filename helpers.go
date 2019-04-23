@@ -15,6 +15,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -344,6 +345,31 @@ func customDialContext(ctx context.Context, network, addr string) (net.Conn, err
 		return con, err
 	}
 	return nil, firstErr
+}
+
+// check if error is "address already in use"
+func errorIsAddrInUse(err error) bool {
+	errOpError, ok := err.(*net.OpError)
+	if !ok {
+		return false
+	}
+
+	errSyscallError, ok := errOpError.Err.(*os.SyscallError)
+	if !ok {
+		return false
+	}
+
+	errErrno, ok := errSyscallError.Err.(syscall.Errno)
+	if !ok {
+		return false
+	}
+
+	if runtime.GOOS == "windows" {
+		const WSAEADDRINUSE = 10048
+		return errErrno == WSAEADDRINUSE
+	}
+
+	return errErrno == syscall.EADDRINUSE
 }
 
 // ---------------------

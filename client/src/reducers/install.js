@@ -10,10 +10,13 @@ const install = handleActions({
     [actions.getDefaultAddressesRequest]: state => ({ ...state, processingDefault: true }),
     [actions.getDefaultAddressesFailure]: state => ({ ...state, processingDefault: false }),
     [actions.getDefaultAddressesSuccess]: (state, { payload }) => {
-        const values = payload;
-        values.web.ip = state.web.ip;
-        values.dns.ip = state.dns.ip;
-        const newState = { ...state, ...values, processingDefault: false };
+        const { interfaces } = payload;
+        const web = { ...state.web, port: payload.web_port };
+        const dns = { ...state.dns, port: payload.dns_port };
+
+        const newState = {
+            ...state, web, dns, interfaces, processingDefault: false,
+        };
         return newState;
     },
 
@@ -23,19 +26,34 @@ const install = handleActions({
     [actions.setAllSettingsRequest]: state => ({ ...state, processingSubmit: true }),
     [actions.setAllSettingsFailure]: state => ({ ...state, processingSubmit: false }),
     [actions.setAllSettingsSuccess]: state => ({ ...state, processingSubmit: false }),
+
+    [actions.checkConfigRequest]: state => ({ ...state, processingCheck: true }),
+    [actions.checkConfigFailure]: state => ({ ...state, processingCheck: false }),
+    [actions.checkConfigSuccess]: (state, { payload }) => {
+        const web = { ...state.web, ...payload.web };
+        const dns = { ...state.dns, ...payload.dns };
+
+        const newState = {
+            ...state, web, dns, processingCheck: false,
+        };
+        return newState;
+    },
 }, {
     step: INSTALL_FIRST_STEP,
     processingDefault: true,
     processingSubmit: false,
+    processingCheck: false,
     web: {
         ip: '0.0.0.0',
         port: 80,
-        warning: '',
+        status: '',
+        can_autofix: false,
     },
     dns: {
         ip: '0.0.0.0',
         port: 53,
-        warning: '',
+        status: '',
+        can_autofix: false,
     },
     interfaces: {},
 });

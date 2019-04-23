@@ -257,5 +257,7 @@
     "reset_settings": "Reset settings",
     "update_announcement": "AdGuard Home {{version}} is now available! <0>Click here<\/0> for more info.",
     "setup_guide": "Setup guide",
-    "dns_addresses": "DNS addresses"
+    "dns_addresses": "DNS addresses",
+    "down": "Down",
+    "fix": "Fix"
 }

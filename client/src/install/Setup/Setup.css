@@ -115,3 +115,7 @@
     padding-left: 30px;
     padding-right: 30px;
 }
+
+.setup__error {
+    margin: -5px 0 5px;
+}

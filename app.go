@@ -1,16 +1,20 @@
 package main
 
 import (
+	"bufio"
 	"crypto/tls"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 
@@ -45,15 +49,6 @@ func main() {
 		return
 	}
 
-	signalChannel := make(chan os.Signal)
-	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
-	go func() {
-		<-signalChannel
-		cleanup()
-		cleanupAlways()
-		os.Exit(0)
-	}()
-
 	// run the protection
 	run(args)
 }
@@ -83,6 +78,18 @@ func run(args options) {
 	}
 
 	config.firstRun = detectFirstRun()
+	if config.firstRun {
+		requireAdminRights()
+	}
+
+	signalChannel := make(chan os.Signal)
+	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
+	go func() {
+		<-signalChannel
+		cleanup()
+		cleanupAlways()
+		os.Exit(0)
+	}()
 
 	// Do the upgrade if necessary
 	err := upgradeConfig()
@@ -161,54 +168,7 @@ func run(args options) {
 	httpsServer.cond = sync.NewCond(&httpsServer.Mutex)
 
 	// for https, we have a separate goroutine loop
-	go func() {
-		for { // this is an endless loop
-			httpsServer.cond.L.Lock()
-			// this mechanism doesn't let us through until all conditions are ment
-			for config.TLS.Enabled == false || config.TLS.PortHTTPS == 0 || config.TLS.PrivateKey == "" || config.TLS.CertificateChain == "" { // sleep until necessary data is supplied
-				httpsServer.cond.Wait()
-			}
-			address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.TLS.PortHTTPS))
-			// validate current TLS config and update warnings (it could have been loaded from file)
-			data := validateCertificates(config.TLS.CertificateChain, config.TLS.PrivateKey, config.TLS.ServerName)
-			if !data.ValidPair {
-				cleanupAlways()
-				log.Fatal(data.WarningValidation)
-			}
-			config.Lock()
-			config.TLS.tlsConfigStatus = data // update warnings
-			config.Unlock()
-
-			// prepare certs for HTTPS server
-			// important -- they have to be copies, otherwise changing the contents in config.TLS will break encryption for in-flight requests
-			certchain := make([]byte, len(config.TLS.CertificateChain))
-			copy(certchain, []byte(config.TLS.CertificateChain))
-			privatekey := make([]byte, len(config.TLS.PrivateKey))
-			copy(privatekey, []byte(config.TLS.PrivateKey))
-			cert, err := tls.X509KeyPair(certchain, privatekey)
-			if err != nil {
-				cleanupAlways()
-				log.Fatal(err)
-			}
-			httpsServer.cond.L.Unlock()
-
-			// prepare HTTPS server
-			httpsServer.server = &http.Server{
-				Addr: address,
-				TLSConfig: &tls.Config{
-					Certificates: []tls.Certificate{cert},
-					MinVersion:   tls.VersionTLS12,
-				},
-			}
-
-			printHTTPAddresses("https")
-			err = httpsServer.server.ListenAndServeTLS("", "")
-			if err != http.ErrServerClosed {
-				cleanupAlways()
-				log.Fatal(err)
-			}
-		}
-	}()
+	go httpServerLoop()
 
 	// this loop is used as an ability to change listening host and/or port
 	for {
@@ -225,6 +185,89 @@ func run(args options) {
 			log.Fatal(err)
 		}
 		// We use ErrServerClosed as a sign that we need to rebind on new address, so go back to the start of the loop
+	}
+}
+
+func httpServerLoop() {
+	for {
+		httpsServer.cond.L.Lock()
+		// this mechanism doesn't let us through until all conditions are met
+		for config.TLS.Enabled == false ||
+			config.TLS.PortHTTPS == 0 ||
+			config.TLS.PrivateKey == "" ||
+			config.TLS.CertificateChain == "" { // sleep until necessary data is supplied
+			httpsServer.cond.Wait()
+		}
+		address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.TLS.PortHTTPS))
+		// validate current TLS config and update warnings (it could have been loaded from file)
+		data := validateCertificates(config.TLS.CertificateChain, config.TLS.PrivateKey, config.TLS.ServerName)
+		if !data.ValidPair {
+			cleanupAlways()
+			log.Fatal(data.WarningValidation)
+		}
+		config.Lock()
+		config.TLS.tlsConfigStatus = data // update warnings
+		config.Unlock()
+
+		// prepare certs for HTTPS server
+		// important -- they have to be copies, otherwise changing the contents in config.TLS will break encryption for in-flight requests
+		certchain := make([]byte, len(config.TLS.CertificateChain))
+		copy(certchain, []byte(config.TLS.CertificateChain))
+		privatekey := make([]byte, len(config.TLS.PrivateKey))
+		copy(privatekey, []byte(config.TLS.PrivateKey))
+		cert, err := tls.X509KeyPair(certchain, privatekey)
+		if err != nil {
+			cleanupAlways()
+			log.Fatal(err)
+		}
+		httpsServer.cond.L.Unlock()
+
+		// prepare HTTPS server
+		httpsServer.server = &http.Server{
+			Addr: address,
+			TLSConfig: &tls.Config{
+				Certificates: []tls.Certificate{cert},
+				MinVersion:   tls.VersionTLS12,
+			},
+		}
+
+		printHTTPAddresses("https")
+		err = httpsServer.server.ListenAndServeTLS("", "")
+		if err != http.ErrServerClosed {
+			cleanupAlways()
+			log.Fatal(err)
+		}
+	}
+}
+
+// Check if the current user has root (administrator) rights
+//  and if not, ask and try to run as root
+func requireAdminRights() {
+	admin, _ := haveAdminRights()
+	if admin {
+		return
+	}
+
+	if runtime.GOOS == "windows" {
+		log.Fatal("This is the first launch of AdGuard Home. You must run it as Administrator.")
+
+	} else {
+		log.Error("This is the first launch of AdGuard Home. You must run it as root.")
+
+		_, _ = io.WriteString(os.Stdout, "Do you want to start AdGuard Home as root user? [y/n] ")
+		stdin := bufio.NewReader(os.Stdin)
+		buf, _ := stdin.ReadString('\n')
+		buf = strings.TrimSpace(buf)
+		if buf != "y" {
+			os.Exit(1)
+		}
+
+		cmd := exec.Command("sudo", os.Args...)
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		_ = cmd.Run()
+		os.Exit(1)
 	}
 }
 
@@ -308,18 +351,6 @@ func enableTLS13() {
 	err := os.Setenv("GODEBUG", os.Getenv("GODEBUG")+",tls13=1")
 	if err != nil {
 		log.Fatalf("Failed to enable TLS 1.3: %s", err)
-	}
-}
-
-// Set user-specified limit of how many fd's we can use
-// https://github.com/AdguardTeam/AdGuardHome/issues/659
-func setRlimit(val uint) {
-	var rlim syscall.Rlimit
-	rlim.Max = uint64(val)
-	rlim.Cur = uint64(val)
-	err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rlim)
-	if err != nil {
-		log.Error("Setrlimit() failed: %v", err)
 	}
 }
 

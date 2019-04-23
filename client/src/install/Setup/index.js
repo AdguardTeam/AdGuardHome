@@ -1,6 +1,7 @@
 import React, { Component, Fragment } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
+import debounce from 'lodash/debounce';
 
 import * as actionCreators from '../../actions/install';
 import { getWebAddress } from '../../helpers/helpers';
@@ -8,6 +9,7 @@ import {
     INSTALL_FIRST_STEP,
     INSTALL_TOTAL_STEPS,
     ALL_INTERFACES_IP,
+    DEBOUNCE_TIMEOUT,
 } from '../../helpers/constants';
 
 import Loading from '../../components/ui/Loading';
@@ -32,6 +34,30 @@ class Setup extends Component {
 
     handleFormSubmit = (values) => {
         this.props.setAllSettings(values);
+    };
+
+    handleFormChange = debounce((values) => {
+        if (values && values.web.port && values.dns.port) {
+            this.props.checkConfig(values);
+        }
+    }, DEBOUNCE_TIMEOUT);
+
+    handleAutofix = (type, ip, port) => {
+        const data = {
+            ip,
+            port,
+            autofix: true,
+        };
+
+        if (type === 'web') {
+            this.props.checkConfig({
+                web: { ...data },
+            });
+        } else {
+            this.props.checkConfig({
+                dns: { ...data },
+            });
+        }
     };
 
     openDashboard = (ip, port) => {
@@ -63,11 +89,13 @@ class Setup extends Component {
             case 2:
                 return (
                     <Settings
+                        config={config}
                         initialValues={config}
                         interfaces={interfaces}
-                        webWarning={config.web.warning}
-                        dnsWarning={config.dns.warning}
                         onSubmit={this.nextStep}
+                        onChange={this.handleFormChange}
+                        validateForm={this.handleFormChange}
+                        handleAutofix={this.handleAutofix}
                     />
                 );
             case 3:
@@ -116,6 +144,7 @@ class Setup extends Component {
 Setup.propTypes = {
     getDefaultAddresses: PropTypes.func.isRequired,
     setAllSettings: PropTypes.func.isRequired,
+    checkConfig: PropTypes.func.isRequired,
     nextStep: PropTypes.func.isRequired,
     prevStep: PropTypes.func.isRequired,
     install: PropTypes.object.isRequired,
