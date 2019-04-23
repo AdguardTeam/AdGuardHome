@@ -323,7 +323,11 @@ func customDialContext(ctx context.Context, network, addr string) (net.Conn, err
 		return con, err
 	}
 
-	resolverAddr := fmt.Sprintf("%s:%d", config.DNS.BindHost, config.DNS.Port)
+	bindhost := config.DNS.BindHost
+	if config.DNS.BindHost == "0.0.0.0" {
+		bindhost = "127.0.0.1"
+	}
+	resolverAddr := fmt.Sprintf("%s:%d", bindhost, config.DNS.Port)
 	r := upstream.NewResolver(resolverAddr, 30*time.Second)
 	addrs, e := r.LookupIPAddr(ctx, host)
 	log.Tracef("LookupIPAddr: %s: %v", host, addrs)

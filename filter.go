@@ -178,6 +178,10 @@ func periodicallyRefreshFilters() {
 func refreshFiltersIfNecessary(force bool) int {
 	var updateFilters []filter
 
+	if config.firstRun {
+		return 0
+	}
+
 	config.RLock()
 	for i := range config.Filters {
 		f := &config.Filters[i] // otherwise we will be operating on a copy
