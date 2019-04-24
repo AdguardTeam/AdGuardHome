@@ -9,6 +9,9 @@ Contents:
 	* "Check configuration" command
 	* Disable DNSStubListener
 	* "Apply configuration" command
+* Updating
+	* Get version command
+	* Update command
 * Enable DHCP server
 	* "Check DHCP" command
 	* "Enable DHCP" command
@@ -185,6 +188,92 @@ On error, server responds with code 400 or 500.  In this case UI should show err
 	400 Bad Request
 
 	ERROR MESSAGE
+
+
+## Updating
+
+Algorithm of an update by command:
+
+* UI requests the latest version information from Server
+* Server requests information from Internet;  stores the data in cache for several hours;  sends data to UI
+* If UI sees that a new version is available, it shows notification message and "Update Now" button
+* When user clicks on "Update Now" button, UI sends Update command to Server
+* UI shows "Please wait, AGH is being updated..." message
+* Server performs an update:
+	* Use working directory from `--work-dir` if necessary
+	* Download new package for the current OS and CPU
+	* Unpack the package to a temporary directory `update-vXXX`
+	* Copy the current configuration file to the directory we unpacked new AGH to
+	* Check configuration compatibility by executing `./AGH --check-config`.  If this command fails, we won't be able to update.
+	* Create `backup-vXXX` directory and copy the current configuration file there
+	* Stop all tasks, including DNS server, DHCP server, HTTP server
+	* Move the current binary file to backup directory
+	* Note: if power fails here, AGH won't be able to start at system boot.  Administrator has to fix it manually
+	* Move new binary file to the current directory
+	* If AGH is running as a service, use service control functionality to restart
+	* If AGH is not running as a service, use the current process arguments to start a new process
+	* Exit process
+* UI resends Get Status command until Server responds to it with the new version.  This means that Server is successfully restarted after update.
+* UI reloads itself
+
+
+### Get version command
+
+On receiving this request server downloads version.json data from github and stores it in cache for several hours.
+
+Example of version.json data:
+
+	{
+	"version": "v0.95-hotfix",
+	"announcement": "AdGuard Home v0.95-hotfix is now available!",
+	"announcement_url": "",
+	"download_windows_amd64": "",
+	"download_windows_386": "",
+	"download_darwin_amd64": "",
+	"download_linux_amd64": "",
+	"download_linux_386": "",
+	"download_linux_arm": "",
+	"download_linux_arm64": "",
+	"download_linux_mips": "",
+	"download_linux_mipsle": "",
+	"selfupdate_min_version": "v0.0"
+	}
+
+Request:
+
+	GET /control/version.json
+
+Response:
+
+	200 OK
+
+	{
+	"new_version": "v0.95",
+	"announcement": "AdGuard Home v0.95 is now available!",
+	"announcement_url": "http://...",
+	"can_autoupdate": true
+	}
+
+If `can_autoupdate` is true, then the server can automatically upgrade to a new version.
+
+
+### Update command
+
+Perform an update procedure to the latest available version
+
+Request:
+
+	POST /control/update
+
+Response:
+
+	200 OK
+
+Error response:
+
+	500
+
+UI shows error message "Auto-update has failed"
 
 
 ## Enable DHCP server
