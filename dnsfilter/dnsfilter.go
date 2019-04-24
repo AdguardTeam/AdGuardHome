@@ -185,6 +185,10 @@ func (d *Dnsfilter) CheckHost(host string) (Result, error) {
 		return Result{Reason: NotFilteredNotFound}, nil
 	}
 	host = strings.ToLower(host)
+	// prevent recursion
+	if host == d.parentalServer || host == d.safeBrowsingServer {
+		return Result{}, nil
+	}
 
 	// try filter lists first
 	result, err := d.matchHost(host)
@@ -674,10 +678,6 @@ func (d *Dnsfilter) checkSafeBrowsing(host string) (Result, error) {
 		defer timer.LogElapsed("SafeBrowsing HTTP lookup for %s", host)
 	}
 
-	// prevent recursion -- checking the host of safebrowsing server makes no sense
-	if host == d.safeBrowsingServer {
-		return Result{}, nil
-	}
 	format := func(hashparam string) string {
 		url := fmt.Sprintf(defaultSafebrowsingURL, d.safeBrowsingServer, hashparam)
 		return url
@@ -720,10 +720,6 @@ func (d *Dnsfilter) checkParental(host string) (Result, error) {
 		defer timer.LogElapsed("Parental HTTP lookup for %s", host)
 	}
 
-	// prevent recursion -- checking the host of parental safety server makes no sense
-	if host == d.parentalServer {
-		return Result{}, nil
-	}
 	format := func(hashparam string) string {
 		url := fmt.Sprintf(defaultParentalURL, d.parentalServer, hashparam, d.ParentalSensitivity)
 		return url
