@@ -559,11 +559,17 @@ func checkDNS(input string, bootstrap []string) error {
 
 func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
+
 	now := time.Now()
-	if now.Sub(versionCheckLastTime) <= versionCheckPeriod && len(versionCheckJSON) != 0 {
+	controlLock.Lock()
+	cached := now.Sub(versionCheckLastTime) <= versionCheckPeriod && len(versionCheckJSON) != 0
+	data := versionCheckJSON
+	controlLock.Unlock()
+
+	if cached {
 		// return cached copy
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(versionCheckJSON)
+		w.Write(data)
 		return
 	}
 
@@ -589,8 +595,10 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusInternalServerError, "Couldn't write body: %s", err)
 	}
 
+	controlLock.Lock()
 	versionCheckLastTime = now
 	versionCheckJSON = body
+	controlLock.Unlock()
 }
 
 // ---------
