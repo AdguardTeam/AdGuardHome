@@ -318,7 +318,7 @@ func customDialContext(ctx context.Context, network, addr string) (net.Conn, err
 		Timeout: time.Minute * 5,
 	}
 
-	if net.ParseIP(host) != nil {
+	if net.ParseIP(host) != nil || config.DNS.Port == 0 {
 		con, err := dialer.DialContext(ctx, network, addr)
 		return con, err
 	}
