@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -30,6 +31,7 @@ var httpsServer struct {
 	server     *http.Server
 	cond       *sync.Cond // reacts to config.TLS.Enabled, PortHTTPS, CertificateChain and PrivateKey
 	sync.Mutex            // protects config.TLS
+	shutdown   bool       // if TRUE, don't restart the server
 }
 var pidFileName string // PID file name.  Empty if no PID file was created.
 
@@ -171,7 +173,7 @@ func run(args options) {
 	go httpServerLoop()
 
 	// this loop is used as an ability to change listening host and/or port
-	for {
+	for !httpsServer.shutdown {
 		printHTTPAddresses("http")
 
 		// we need to have new instance, because after Shutdown() the Server is not usable
@@ -186,10 +188,13 @@ func run(args options) {
 		}
 		// We use ErrServerClosed as a sign that we need to rebind on new address, so go back to the start of the loop
 	}
+
+	// wait indefinitely for other go-routines to complete their job
+	select {}
 }
 
 func httpServerLoop() {
-	for {
+	for !httpsServer.shutdown {
 		httpsServer.cond.L.Lock()
 		// this mechanism doesn't let us through until all conditions are met
 		for config.TLS.Enabled == false ||
@@ -365,6 +370,15 @@ func cleanup() {
 	if err != nil {
 		log.Error("Couldn't stop DHCP server: %s", err)
 	}
+}
+
+// Stop HTTP server, possibly waiting for all active connections to be closed
+func stopHTTPServer() {
+	httpsServer.shutdown = true
+	if httpsServer.server != nil {
+		httpsServer.server.Shutdown(context.TODO())
+	}
+	httpServer.Shutdown(context.TODO())
 }
 
 // This function is called before application exits

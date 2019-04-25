@@ -557,50 +557,6 @@ func checkDNS(input string, bootstrap []string) error {
 	return nil
 }
 
-func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-
-	now := time.Now()
-	controlLock.Lock()
-	cached := now.Sub(versionCheckLastTime) <= versionCheckPeriod && len(versionCheckJSON) != 0
-	data := versionCheckJSON
-	controlLock.Unlock()
-
-	if cached {
-		// return cached copy
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(data)
-		return
-	}
-
-	resp, err := client.Get(versionCheckURL)
-	if err != nil {
-		httpError(w, http.StatusBadGateway, "Couldn't get version check json from %s: %T %s\n", versionCheckURL, err, err)
-		return
-	}
-	if resp != nil && resp.Body != nil {
-		defer resp.Body.Close()
-	}
-
-	// read the body entirely
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		httpError(w, http.StatusBadGateway, "Couldn't read response body from %s: %s", versionCheckURL, err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(body)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't write body: %s", err)
-	}
-
-	controlLock.Lock()
-	versionCheckLastTime = now
-	versionCheckJSON = body
-	controlLock.Unlock()
-}
-
 // ---------
 // filtering
 // ---------
@@ -1014,6 +970,7 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/stats_history", postInstall(optionalAuth(ensureGET(handleStatsHistory))))
 	http.HandleFunc("/control/stats_reset", postInstall(optionalAuth(ensurePOST(handleStatsReset))))
 	http.HandleFunc("/control/version.json", postInstall(optionalAuth(handleGetVersionJSON)))
+	http.HandleFunc("/control/update", postInstall(optionalAuth(ensurePOST(handleUpdate))))
 	http.HandleFunc("/control/filtering/enable", postInstall(optionalAuth(ensurePOST(handleFilteringEnable))))
 	http.HandleFunc("/control/filtering/disable", postInstall(optionalAuth(ensurePOST(handleFilteringDisable))))
 	http.HandleFunc("/control/filtering/add_url", postInstall(optionalAuth(ensurePOST(handleFilteringAddURL))))
