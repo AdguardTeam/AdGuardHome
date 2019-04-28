@@ -63,11 +63,19 @@ const renderInterfaces = (interfaces => (
 
 class Settings extends Component {
     componentDidMount() {
-        const { web, dns } = this.props.config;
+        const {
+            webIp, webPort, dnsIp, dnsPort,
+        } = this.props;
 
         this.props.validateForm({
-            web,
-            dns,
+            web: {
+                ip: webIp,
+                port: webPort,
+            },
+            dns: {
+                ip: dnsIp,
+                port: dnsPort,
+            },
         });
     }
 
