@@ -259,5 +259,6 @@
     "setup_guide": "Setup guide",
     "dns_addresses": "DNS addresses",
     "down": "Down",
-    "fix": "Fix"
+    "fix": "Fix",
+    "dns_providers": "Here is a <0>list of known DNS providers</0> to choose from."
 }

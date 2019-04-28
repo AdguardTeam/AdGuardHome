@@ -4,6 +4,17 @@ import { Trans, withNamespaces } from 'react-i18next';
 
 const Examples = props => (
     <div className="list leading-loose">
+        <p>
+            <Trans
+                components={[
+                    <a href="https://kb.adguard.com/general/dns-providers" target="_blank" rel="noopener noreferrer" key="0">
+                        DNS providers
+                    </a>,
+                ]}
+            >
+                dns_providers
+            </Trans>
+        </p>
         <Trans>examples_title</Trans>:
         <ol className="leading-loose">
             <li>
