@@ -427,26 +427,26 @@ func loadOptions() options {
 		callbackWithValue func(value string)
 		callbackNoValue   func()
 	}{
-		{"config", "c", "path to the config file", func(value string) { o.configFilename = value }, nil},
-		{"work-dir", "w", "path to the working directory", func(value string) { o.workDir = value }, nil},
-		{"host", "h", "host address to bind HTTP server on", func(value string) { o.bindHost = value }, nil},
-		{"port", "p", "port to serve HTTP pages on", func(value string) {
+		{"config", "c", "Path to the config file", func(value string) { o.configFilename = value }, nil},
+		{"work-dir", "w", "Path to the working directory", func(value string) { o.workDir = value }, nil},
+		{"host", "h", "Host address to bind HTTP server on", func(value string) { o.bindHost = value }, nil},
+		{"port", "p", "Port to serve HTTP pages on", func(value string) {
 			v, err := strconv.Atoi(value)
 			if err != nil {
 				panic("Got port that is not a number")
 			}
 			o.bindPort = v
 		}, nil},
-		{"service", "s", "service control action: status, install, uninstall, start, stop, restart", func(value string) {
+		{"service", "s", "Service control action: status, install, uninstall, start, stop, restart", func(value string) {
 			o.serviceControlAction = value
 		}, nil},
-		{"logfile", "l", "path to the log file. If empty, writes to stdout, if 'syslog' -- system log", func(value string) {
+		{"logfile", "l", "Path to log file. If empty: write to stdout; if 'syslog': write to system log", func(value string) {
 			o.logFile = value
 		}, nil},
-		{"pidfile", "", "File name to save PID to", func(value string) { o.pidFile = value }, nil},
+		{"pidfile", "", "Path to a file where PID is stored", func(value string) { o.pidFile = value }, nil},
 		{"check-config", "", "Check configuration and exit", nil, func() { o.checkConfig = true }},
-		{"verbose", "v", "enable verbose output", nil, func() { o.verbose = true }},
-		{"help", "", "print this help", nil, func() {
+		{"verbose", "v", "Enable verbose output", nil, func() { o.verbose = true }},
+		{"help", "", "Print this help", nil, func() {
 			printHelp()
 			os.Exit(64)
 		}},
@@ -456,10 +456,14 @@ func loadOptions() options {
 		fmt.Printf("%s [options]\n\n", os.Args[0])
 		fmt.Printf("Options:\n")
 		for _, opt := range opts {
+			val := ""
+			if opt.callbackWithValue != nil {
+				val = " VALUE"
+			}
 			if opt.shortName != "" {
-				fmt.Printf("  -%s, %-30s %s\n", opt.shortName, "--"+opt.longName, opt.description)
+				fmt.Printf("  -%s, %-30s %s\n", opt.shortName, "--"+opt.longName+val, opt.description)
 			} else {
-				fmt.Printf("  %-34s %s\n", "--"+opt.longName, opt.description)
+				fmt.Printf("  %-34s %s\n", "--"+opt.longName+val, opt.description)
 			}
 		}
 	}
