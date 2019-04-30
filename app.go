@@ -104,6 +104,11 @@ func run(args options) {
 		if err != nil {
 			os.Exit(1)
 		}
+
+		if args.checkConfig {
+			log.Info("Configuration file is OK")
+			os.Exit(0)
+		}
 	}
 
 	if (runtime.GOOS == "linux" || runtime.GOOS == "darwin") &&
@@ -401,6 +406,7 @@ type options struct {
 	bindPort       int    // port to serve HTTP pages on
 	logFile        string // Path to the log file. If empty, write to stdout. If "syslog", writes to syslog
 	pidFile        string // File name to save PID to
+	checkConfig    bool   // Check configuration and exit
 
 	// service control action (see service.ControlAction array + "status" command)
 	serviceControlAction string
@@ -438,6 +444,7 @@ func loadOptions() options {
 			o.logFile = value
 		}, nil},
 		{"pidfile", "", "File name to save PID to", func(value string) { o.pidFile = value }, nil},
+		{"check-config", "", "Check configuration and exit", nil, func() { o.checkConfig = true }},
 		{"verbose", "v", "enable verbose output", nil, func() { o.verbose = true }},
 		{"help", "", "print this help", nil, func() {
 			printHelp()
