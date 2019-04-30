@@ -93,16 +93,17 @@ func run(args options) {
 		os.Exit(0)
 	}()
 
-	// Do the upgrade if necessary
-	err := upgradeConfig()
-	if err != nil {
-		log.Fatal(err)
-	}
+	if !config.firstRun {
+		// Do the upgrade if necessary
+		err := upgradeConfig()
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	// parse from config file
-	err = parseConfig()
-	if err != nil {
-		log.Fatal(err)
+		err = parseConfig()
+		if err != nil {
+			os.Exit(1)
+		}
 	}
 
 	if (runtime.GOOS == "linux" || runtime.GOOS == "darwin") &&
@@ -120,10 +121,12 @@ func run(args options) {
 
 	loadFilters()
 
-	// Save the updated config
-	err = config.write()
-	if err != nil {
-		log.Fatal(err)
+	if !config.firstRun {
+		// Save the updated config
+		err := config.write()
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	// Init the DNS server instance before registering HTTP handlers
@@ -131,7 +134,7 @@ func run(args options) {
 	initDNSServer(dnsBaseDir)
 
 	if !config.firstRun {
-		err = startDNSServer()
+		err := startDNSServer()
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -16,21 +15,15 @@ const currentSchemaVersion = 3 // used for upgrading from old configs to new con
 // Performs necessary upgrade operations if needed
 func upgradeConfig() error {
 	// read a config file into an interface map, so we can manipulate values without losing any
-	configFile := config.getConfigFilename()
-	if _, err := os.Stat(configFile); os.IsNotExist(err) {
-		log.Printf("config file %s does not exist, nothing to upgrade", configFile)
-		return nil
-	}
 	diskConfig := map[string]interface{}{}
-	body, err := ioutil.ReadFile(configFile)
+	body, err := readConfigFile()
 	if err != nil {
-		log.Printf("Couldn't read config file '%s': %s", configFile, err)
 		return err
 	}
 
 	err = yaml.Unmarshal(body, &diskConfig)
 	if err != nil {
-		log.Printf("Couldn't parse config file '%s': %s", configFile, err)
+		log.Printf("Couldn't parse config file: %s", err)
 		return err
 	}
 
@@ -87,6 +80,7 @@ func upgradeConfigSchema(oldVersion int, diskConfig *map[string]interface{}) err
 		return err
 	}
 
+	config.fileData = body
 	err = file.SafeWrite(configFile, body)
 	if err != nil {
 		log.Printf("Couldn't save YAML config: %s", err)
