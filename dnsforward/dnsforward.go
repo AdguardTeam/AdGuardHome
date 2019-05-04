@@ -61,6 +61,7 @@ func NewServer(baseDir string) *Server {
 type FilteringConfig struct {
 	ProtectionEnabled  bool     `yaml:"protection_enabled"`   // whether or not use any of dnsfilter features
 	FilteringEnabled   bool     `yaml:"filtering_enabled"`    // whether or not use filter lists
+	BlockingMode       string   `yaml:"blocking_mode"`        // mode how to answer filtered requests
 	BlockedResponseTTL uint32   `yaml:"blocked_response_ttl"` // if 0, then default is used (3600)
 	QueryLogEnabled    bool     `yaml:"querylog_enabled"`     // if true, query log is enabled
 	Ratelimit          int      `yaml:"ratelimit"`            // max number of requests per second from a given IP (0 to disable)
@@ -399,6 +400,10 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 	default:
 		if result.IP != nil {
 			return s.genARecord(m, result.IP)
+		}
+
+		if s.BlockingMode == "null_ip" {
+			return s.genARecord(m, net.IPv4zero)
 		}
 
 		return s.genNXDomain(m)
