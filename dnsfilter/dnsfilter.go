@@ -29,9 +29,9 @@ const defaultHTTPTimeout = 5 * time.Minute
 const defaultHTTPMaxIdleConnections = 100
 
 const defaultSafebrowsingServer = "sb.adtidy.org"
-const defaultSafebrowsingURL = "http://%s/safebrowsing-lookup-hash.html?prefixes=%s"
+const defaultSafebrowsingURL = "https://%s/safebrowsing-lookup-hash.html?prefixes=%s"
 const defaultParentalServer = "pctrl.adguard.com"
-const defaultParentalURL = "http://%s/check-parental-control-hash?prefixes=%s&sensitivity=%d"
+const defaultParentalURL = "https://%s/check-parental-control-hash?prefixes=%s&sensitivity=%d"
 const maxDialCacheSize = 2 // the number of host names for safebrowsing and parental control
 
 // ErrInvalidSyntax is returned by AddRule when the rule is invalid
