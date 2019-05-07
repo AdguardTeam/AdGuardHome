@@ -2,7 +2,7 @@ swagger: '2.0'
 info:
     title: 'AdGuard Home'
     description: 'AdGuard Home REST API. Admin web interface is built on top of this REST API.'
-    version: 0.95.0
+    version: 0.96.0
 schemes:
     - http
 basePath: /control
@@ -698,6 +698,54 @@ paths:
                     schema:
                         $ref: "#/definitions/Clients"
 
+    /clients/add:
+        post:
+            tags:
+                - clients
+            operationId: clientsAdd
+            summary: 'Add a new client'
+            parameters:
+                - in: "body"
+                  name: "body"
+                  required: true
+                  schema:
+                      $ref: "#/definitions/Client"
+            responses:
+                200:
+                    description: OK
+
+    /clients/delete:
+        post:
+            tags:
+                - clients
+            operationId: clientsDelete
+            summary: 'Remove a client'
+            parameters:
+                - in: "body"
+                  name: "body"
+                  required: true
+                  schema:
+                      $ref: "#/definitions/ClientDelete"
+            responses:
+                200:
+                    description: OK
+
+    /clients/update:
+        post:
+            tags:
+                - clients
+            operationId: clientsUpdate
+            summary: 'Update client information'
+            parameters:
+                - in: "body"
+                  name: "body"
+                  required: true
+                  schema:
+                      $ref: "#/definitions/ClientUpdate"
+            responses:
+                200:
+                    description: OK
+
     # --------------------------------------------------
     # I18N methods
     # --------------------------------------------------
@@ -1377,11 +1425,65 @@ definitions:
                 type: "string"
                 description: "Name"
                 example: "localhost"
+            mac:
+                type: "string"
+            use_global_settings:
+                type: "boolean"
+            filtering_enabled:
+                type: "boolean"
+            parental_enabled:
+                type: "boolean"
+            safebrowsing_enabled:
+                type: "boolean"
+            safesearch_enabled:
+                type: "boolean"
+    ClientAuto:
+        type: "object"
+        description: "Auto-Client information"
+        properties:
+            ip:
+                type: "string"
+                description: "IP address"
+                example: "127.0.0.1"
+            name:
+                type: "string"
+                description: "Name"
+                example: "localhost"
+            source:
+                type: "string"
+                description: "The source of this information"
+                example: "etc/hosts"
+    ClientUpdate:
+        type: "object"
+        description: "Client update request"
+        properties:
+            name:
+                type: "string"
+            data:
+                $ref: "#/definitions/Client"
+    ClientDelete:
+        type: "object"
+        description: "Client delete request"
+        properties:
+            name:
+                type: "string"
     Clients:
+        type: "object"
+        properties:
+            clients:
+                $ref: "#/definitions/ClientsArray"
+            auto_clients:
+                $ref: "#/definitions/ClientsAutoArray"
+    ClientsArray:
         type: "array"
         items:
             $ref: "#/definitions/Client"
         description: "Clients array"
+    ClientsAutoArray:
+        type: "array"
+        items:
+            $ref: "#/definitions/ClientAuto"
+        description: "Auto-Clients array"
     CheckConfigRequest:
         type: "object"
         description: "Configuration to be checked"
