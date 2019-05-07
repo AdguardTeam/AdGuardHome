@@ -424,7 +424,7 @@ paths:
                     description: OK
 
     /filtering/add_url:
-        put:
+        post:
             tags:
                 - filtering
             operationId: filteringAddURL
@@ -444,7 +444,7 @@ paths:
                     description: OK
 
     /filtering/remove_url:
-        delete:
+        post:
             tags:
                 - filtering
             operationId: filteringRemoveURL
@@ -530,7 +530,7 @@ paths:
                     description: OK with how many filters were actually updated
 
     /filtering/set_rules:
-        put:
+        post:
             tags:
                 - filtering
             operationId: filteringSetRules
