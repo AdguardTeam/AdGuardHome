@@ -400,11 +400,12 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 	case dnsfilter.FilteredParental:
 		return s.genBlockedHost(m, parentalBlockHost, d)
 	default:
-		if s.NullFilter {
-			result.IP = net.ParseIP(unspecifiedAddress)
+		if result.IP != nil {
+			return s.genARecord(m, result.IP)
 		}
 
-		if result.IP != nil {
+		if s.NullFilter {
+			result.IP = net.ParseIP(unspecifiedAddress)
 			return s.genARecord(m, result.IP)
 		}
 
