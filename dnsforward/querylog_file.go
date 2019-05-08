@@ -37,6 +37,7 @@ func (l *queryLog) flushLogBuffer() error {
 // flushToFile saves the specified log entries to the query log file
 func (l *queryLog) flushToFile(buffer []*logEntry) error {
 	if len(buffer) == 0 {
+		log.Debug("querylog: there's nothing to write to a file")
 		return nil
 	}
 	start := time.Now()
