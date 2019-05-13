@@ -157,7 +157,7 @@ const (
 // these variables need to survive coredns reload
 var (
 	stats             Stats
-	securityCache     gcache.Cache // "host" -> "IP" cache for safebrowsing and parental control servers
+	dialCache         gcache.Cache // "host" -> "IP" cache for safebrowsing and parental control servers
 	safebrowsingCache gcache.Cache
 	parentalCache     gcache.Cache
 	safeSearchCache   gcache.Cache
@@ -974,14 +974,14 @@ func (d *Dnsfilter) matchHost(host string) (Result, error) {
 //
 
 // Return TRUE if this host's IP should be cached
-func (d *Dnsfilter) shouldCache(host string) bool {
+func (d *Dnsfilter) shouldBeInDialCache(host string) bool {
 	return host == d.safeBrowsingServer ||
 		host == d.parentalServer
 }
 
 // Search for an IP address by host name
-func searchInCache(host string) string {
-	rawValue, err := securityCache.Get(host)
+func searchInDialCache(host string) string {
+	rawValue, err := dialCache.Get(host)
 	if err != nil {
 		return ""
 	}
@@ -992,8 +992,8 @@ func searchInCache(host string) string {
 }
 
 // Add "hostname" -> "IP address" entry to cache
-func addToCache(host, ip string) {
-	securityCache.Set(host, ip)
+func addToDialCache(host, ip string) {
+	dialCache.Set(host, ip)
 	log.Debug("Added to cache: %s -> %s", host, ip)
 }
 
@@ -1018,9 +1018,9 @@ func (d *Dnsfilter) createCustomDialContext(resolverAddr string) dialFunctionTyp
 			return con, err
 		}
 
-		cache := d.shouldCache(host)
+		cache := d.shouldBeInDialCache(host)
 		if cache {
-			ip := searchInCache(host)
+			ip := searchInDialCache(host)
 			if len(ip) != 0 {
 				addr = fmt.Sprintf("%s:%s", ip, port)
 				return dialer.DialContext(ctx, network, addr)
@@ -1047,7 +1047,7 @@ func (d *Dnsfilter) createCustomDialContext(resolverAddr string) dialFunctionTyp
 			}
 
 			if cache {
-				addToCache(host, a.String())
+				addToDialCache(host, a.String())
 			}
 
 			return con, err
@@ -1076,7 +1076,7 @@ func New(c *Config) *Dnsfilter {
 		ExpectContinueTimeout: 1 * time.Second,
 	}
 	if c != nil && len(c.ResolverAddress) != 0 {
-		securityCache = gcache.New(2).LRU().Expiration(defaultCacheTime).Build()
+		dialCache = gcache.New(2).LRU().Expiration(defaultCacheTime).Build()
 		d.transport.DialContext = d.createCustomDialContext(c.ResolverAddress)
 	}
 	d.client = http.Client{
