@@ -26,8 +26,6 @@ const (
 	parentalBlockHost     = "family-block.dns.adguard.com"
 )
 
-const unspecifiedAddress = "0.0.0.0"
-
 // Server is the main way to start a DNS server.
 //
 // Example:
@@ -405,8 +403,7 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 		}
 
 		if s.BlockingMode == "null_ip" {
-			result.IP = net.ParseIP(unspecifiedAddress)
-			return s.genARecord(m, result.IP)
+			return s.genARecord(m, net.IPv4zero)
 		}
 
 		return s.genNXDomain(m)
