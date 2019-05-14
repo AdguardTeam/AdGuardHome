@@ -286,11 +286,6 @@ func (s *Server) findExpiredLease() int {
 }
 
 func (s *Server) findFreeIP(hwaddr net.HardwareAddr) (net.IP, error) {
-	// if IP pool is nil, lazy initialize it
-	if s.IPpool == nil {
-		s.IPpool = make(map[[4]byte]net.HardwareAddr)
-	}
-
 	// go from start to end, find unreserved IP
 	var foundIP net.IP
 	for i := 0; i < dhcp4.IPRange(s.leaseStart, s.leaseStop); i++ {

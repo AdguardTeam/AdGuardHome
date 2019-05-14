@@ -23,8 +23,20 @@ type leaseJSON struct {
 	Expiry   int64  `json:"exp"`
 }
 
+// Safe version of dhcp4.IPInRange()
+func ipInRange(start, stop, ip net.IP) bool {
+	if len(start) != len(stop) ||
+		len(start) != len(ip) {
+		return false
+	}
+	return dhcp4.IPInRange(start, stop, ip)
+}
+
 // Load lease table from DB
 func (s *Server) dbLoad() {
+	s.leases = nil
+	s.IPpool = make(map[[4]byte]net.HardwareAddr)
+
 	data, err := ioutil.ReadFile(dbFilename)
 	if err != nil {
 		if !os.IsNotExist(err) {
@@ -40,13 +52,10 @@ func (s *Server) dbLoad() {
 		return
 	}
 
-	s.leases = nil
-	s.IPpool = make(map[[4]byte]net.HardwareAddr)
-
 	numLeases := len(obj)
 	for i := range obj {
 
-		if !dhcp4.IPInRange(s.leaseStart, s.leaseStop, obj[i].IP) {
+		if !ipInRange(s.leaseStart, s.leaseStop, obj[i].IP) {
 			log.Tracef("Skipping a lease with IP %s: not within current IP range", obj[i].IP)
 			continue
 		}
