@@ -451,10 +451,6 @@ func stopDHCPServer() error {
 		return nil
 	}
 
-	if !dhcpServer.Enabled {
-		return nil
-	}
-
 	err := dhcpServer.Stop()
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't stop DHCP server")
