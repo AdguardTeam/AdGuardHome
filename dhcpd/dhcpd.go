@@ -75,6 +75,12 @@ func printInterfaces() {
 	log.Info("Available network interfaces: %s", buf.String())
 }
 
+// CheckConfig checks the configuration
+func (s *Server) CheckConfig(config ServerConfig) error {
+	tmpServer := Server{}
+	return tmpServer.setConfig(config)
+}
+
 // Init checks the configuration and initializes the server
 func (s *Server) Init(config ServerConfig) error {
 	err := s.setConfig(config)
