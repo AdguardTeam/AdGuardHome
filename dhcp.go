@@ -20,20 +20,28 @@ import (
 
 var dhcpServer = dhcpd.Server{}
 
+// []dhcpd.Lease -> JSON
+func convertLeases(inputLeases []dhcpd.Lease, includeExpires bool) []map[string]string {
+	leases := []map[string]string{}
+	for _, l := range inputLeases {
+		lease := map[string]string{
+			"mac":      l.HWAddr.String(),
+			"ip":       l.IP.String(),
+			"hostname": l.Hostname,
+		}
+
+		if includeExpires {
+			lease["expires"] = l.Expiry.Format(time.RFC3339)
+		}
+
+		leases = append(leases, lease)
+	}
+	return leases
+}
+
 func handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
-	rawLeases := dhcpServer.Leases()
-	leases := []map[string]string{}
-	for i := range rawLeases {
-		lease := map[string]string{
-			"mac":      rawLeases[i].HWAddr.String(),
-			"ip":       rawLeases[i].IP.String(),
-			"hostname": rawLeases[i].Hostname,
-			"expires":  rawLeases[i].Expiry.Format(time.RFC3339),
-		}
-		leases = append(leases, lease)
-
-	}
+	leases := convertLeases(dhcpServer.Leases(), true)
 	status := map[string]interface{}{
 		"config": config.DHCP,
 		"leases": leases,
