@@ -75,16 +75,21 @@ func printInterfaces() {
 	log.Info("Available network interfaces: %s", buf.String())
 }
 
-// Start will listen on port 67 and serve DHCP requests.
-// Even though config can be nil, it is not optional (at least for now), since there are no default values (yet).
-func (s *Server) Start(config *ServerConfig) error {
-	if config != nil {
-		s.ServerConfig = *config
+// Init checks the configuration and initializes the server
+func (s *Server) Init(config ServerConfig) error {
+	err := s.setConfig(config)
+	if err != nil {
+		return err
 	}
+	s.dbLoad()
+	return nil
+}
+
+func (s *Server) setConfig(config ServerConfig) error {
+	s.ServerConfig = config
 
 	iface, err := net.InterfaceByName(s.InterfaceName)
 	if err != nil {
-		s.closeConn() // in case it was already started
 		printInterfaces()
 		return wrapErrPrint(err, "Couldn't find interface by name %s", s.InterfaceName)
 	}
@@ -92,7 +97,6 @@ func (s *Server) Start(config *ServerConfig) error {
 	// get ipv4 address of an interface
 	s.ipnet = getIfaceIPv4(iface)
 	if s.ipnet == nil {
-		s.closeConn() // in case it was already started
 		return wrapErrPrint(err, "Couldn't find IPv4 address of interface %s %+v", s.InterfaceName, iface)
 	}
 
@@ -105,31 +109,25 @@ func (s *Server) Start(config *ServerConfig) error {
 
 	s.leaseStart, err = parseIPv4(s.RangeStart)
 	if err != nil {
-
-		s.closeConn() // in case it was already started
 		return wrapErrPrint(err, "Failed to parse range start address %s", s.RangeStart)
 	}
 
 	s.leaseStop, err = parseIPv4(s.RangeEnd)
 	if err != nil {
-		s.closeConn() // in case it was already started
 		return wrapErrPrint(err, "Failed to parse range end address %s", s.RangeEnd)
 	}
 
 	subnet, err := parseIPv4(s.SubnetMask)
 	if err != nil {
-		s.closeConn() // in case it was already started
 		return wrapErrPrint(err, "Failed to parse subnet mask %s", s.SubnetMask)
 	}
 
 	// if !bytes.Equal(subnet, s.ipnet.Mask) {
-	// 	s.closeConn() // in case it was already started
 	// 	return wrapErrPrint(err, "specified subnet mask %s does not meatch interface %s subnet mask %s", s.SubnetMask, s.InterfaceName, s.ipnet.Mask)
 	// }
 
 	router, err := parseIPv4(s.GatewayIP)
 	if err != nil {
-		s.closeConn() // in case it was already started
 		return wrapErrPrint(err, "Failed to parse gateway IP %s", s.GatewayIP)
 	}
 
@@ -139,12 +137,21 @@ func (s *Server) Start(config *ServerConfig) error {
 		dhcp4.OptionDomainNameServer: s.ipnet.IP,
 	}
 
+	return nil
+}
+
+// Start will listen on port 67 and serve DHCP requests.
+func (s *Server) Start() error {
+
 	// TODO: don't close if interface and addresses are the same
 	if s.conn != nil {
 		s.closeConn()
 	}
 
-	s.dbLoad()
+	iface, err := net.InterfaceByName(s.InterfaceName)
+	if err != nil {
+		return wrapErrPrint(err, "Couldn't find interface by name %s", s.InterfaceName)
+	}
 
 	c, err := newFilterConn(*iface, ":67") // it has to be bound to 0.0.0.0:67, otherwise it won't see DHCP discover/request packets
 	if err != nil {
