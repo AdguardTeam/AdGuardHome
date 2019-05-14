@@ -47,9 +47,13 @@ func handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type dhcpServerConfigJSON struct {
+	dhcpd.ServerConfig `json:",inline"`
+}
+
 func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
-	newconfig := dhcpd.ServerConfig{}
+	newconfig := dhcpServerConfigJSON{}
 	err := json.NewDecoder(r.Body).Decode(&newconfig)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Failed to parse new DHCP config json: %s", err)
@@ -72,14 +76,14 @@ func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		err = dhcpServer.Start(&newconfig)
+		err = dhcpServer.Start(&newconfig.ServerConfig)
 		if err != nil {
 			httpError(w, http.StatusBadRequest, "Failed to start DHCP server: %s", err)
 			return
 		}
 	}
 
-	config.DHCP = newconfig
+	config.DHCP = newconfig.ServerConfig
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
