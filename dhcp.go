@@ -42,9 +42,11 @@ func convertLeases(inputLeases []dhcpd.Lease, includeExpires bool) []map[string]
 func handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
 	leases := convertLeases(dhcpServer.Leases(), true)
+	staticLeases := convertLeases(dhcpServer.StaticLeases(), false)
 	status := map[string]interface{}{
-		"config": config.DHCP,
-		"leases": leases,
+		"config":        config.DHCP,
+		"leases":        leases,
+		"static_leases": staticLeases,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

@@ -606,6 +606,25 @@ func (s *Server) Leases() []Lease {
 	return result
 }
 
+// StaticLeases returns the list of statically-configured DHCP leases (thread-safe)
+func (s *Server) StaticLeases() []Lease {
+	s.Lock()
+	if s.IPpool == nil {
+		s.dbLoad()
+	}
+	s.Unlock()
+
+	var result []Lease
+	s.RLock()
+	for _, lease := range s.leases {
+		if lease.Expiry.Unix() == 1 {
+			result = append(result, *lease)
+		}
+	}
+	s.RUnlock()
+	return result
+}
+
 // Print information about the current leases
 func (s *Server) printLeases() {
 	log.Tracef("Leases:")

@@ -55,7 +55,9 @@ func (s *Server) dbLoad() {
 	numLeases := len(obj)
 	for i := range obj {
 
-		if !ipInRange(s.leaseStart, s.leaseStop, obj[i].IP) {
+		if obj[i].Expiry != leaseExpireStatic &&
+			!ipInRange(s.leaseStart, s.leaseStop, obj[i].IP) {
+
 			log.Tracef("Skipping a lease with IP %s: not within current IP range", obj[i].IP)
 			continue
 		}
