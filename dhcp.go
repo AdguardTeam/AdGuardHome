@@ -60,9 +60,21 @@ func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = dhcpServer.CheckConfig(newconfig.ServerConfig)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Invalid DHCP configuration: %s", err)
+		return
+	}
+
 	err = dhcpServer.Stop()
 	if err != nil {
 		log.Error("failed to stop the DHCP server: %s", err)
+	}
+
+	err = dhcpServer.Init(newconfig.ServerConfig)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Invalid DHCP configuration: %s", err)
+		return
 	}
 
 	if newconfig.Enabled {
@@ -76,7 +88,7 @@ func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		err = dhcpServer.Start(&newconfig.ServerConfig)
+		err = dhcpServer.Start()
 		if err != nil {
 			httpError(w, http.StatusBadRequest, "Failed to start DHCP server: %s", err)
 			return
@@ -342,7 +354,13 @@ func startDHCPServer() error {
 		// not enabled, don't do anything
 		return nil
 	}
-	err := dhcpServer.Start(&config.DHCP)
+
+	err := dhcpServer.Init(config.DHCP)
+	if err != nil {
+		return errorx.Decorate(err, "Couldn't init DHCP server")
+	}
+
+	err = dhcpServer.Start()
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start DHCP server")
 	}
