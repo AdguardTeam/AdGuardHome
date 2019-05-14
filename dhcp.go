@@ -47,8 +47,15 @@ func handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type leaseJSON struct {
+	HWAddr   string `json:"mac"`
+	IP       string `json:"ip"`
+	Hostname string `json:"hostname"`
+}
+
 type dhcpServerConfigJSON struct {
 	dhcpd.ServerConfig `json:",inline"`
+	StaticLeases       []leaseJSON `json:"static_leases"`
 }
 
 func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
@@ -347,6 +354,68 @@ func setStaticIP(ifaceName string) error {
 	}
 
 	return nil
+}
+
+func handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request) {
+	log.Tracef("%s %v", r.Method, r.URL)
+
+	lj := leaseJSON{}
+	err := json.NewDecoder(r.Body).Decode(&lj)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "json.Decode: %s", err)
+		return
+	}
+
+	ip := parseIPv4(lj.IP)
+	if ip == nil {
+		httpError(w, http.StatusBadRequest, "invalid IP")
+		return
+	}
+
+	mac, _ := net.ParseMAC(lj.HWAddr)
+
+	lease := dhcpd.Lease{
+		IP:       ip,
+		HWAddr:   mac,
+		Hostname: lj.Hostname,
+	}
+	err = dhcpServer.AddStaticLease(lease)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "%s", err)
+		return
+	}
+	returnOK(w)
+}
+
+func handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Request) {
+	log.Tracef("%s %v", r.Method, r.URL)
+
+	lj := leaseJSON{}
+	err := json.NewDecoder(r.Body).Decode(&lj)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "json.Decode: %s", err)
+		return
+	}
+
+	ip := parseIPv4(lj.IP)
+	if ip == nil {
+		httpError(w, http.StatusBadRequest, "invalid IP")
+		return
+	}
+
+	mac, _ := net.ParseMAC(lj.HWAddr)
+
+	lease := dhcpd.Lease{
+		IP:       ip,
+		HWAddr:   mac,
+		Hostname: lj.Hostname,
+	}
+	err = dhcpServer.RemoveStaticLease(lease)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "%s", err)
+		return
+	}
+	returnOK(w)
 }
 
 func startDHCPServer() error {

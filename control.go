@@ -993,6 +993,8 @@ func registerControlHandlers() {
 	http.HandleFunc("/control/dhcp/interfaces", postInstall(optionalAuth(ensureGET(handleDHCPInterfaces))))
 	http.HandleFunc("/control/dhcp/set_config", postInstall(optionalAuth(ensurePOST(handleDHCPSetConfig))))
 	http.HandleFunc("/control/dhcp/find_active_dhcp", postInstall(optionalAuth(ensurePOST(handleDHCPFindActiveServer))))
+	http.HandleFunc("/control/dhcp/add_static_lease", postInstall(optionalAuth(ensurePOST(handleDHCPAddStaticLease))))
+	http.HandleFunc("/control/dhcp/remove_static_lease", postInstall(optionalAuth(ensurePOST(handleDHCPRemoveStaticLease))))
 
 	RegisterTLSHandlers()
 	RegisterClientsHandlers()

@@ -14,6 +14,7 @@ import (
 )
 
 const defaultDiscoverTime = time.Second * 3
+const leaseExpireStatic = 1
 
 // Lease contains the necessary information about a DHCP lease
 // field ordering is important -- yaml fields will mirror ordering from here
@@ -21,7 +22,10 @@ type Lease struct {
 	HWAddr   net.HardwareAddr `json:"mac" yaml:"hwaddr"`
 	IP       net.IP           `json:"ip"`
 	Hostname string           `json:"hostname"`
-	Expiry   time.Time        `json:"expires"`
+
+	// Lease expiration time
+	// 1: static lease
+	Expiry time.Time `json:"expires"`
 }
 
 // ServerConfig - DHCP server configuration
@@ -274,7 +278,7 @@ func (s *Server) findLease(p dhcp4.Packet) *Lease {
 func (s *Server) findExpiredLease() int {
 	now := time.Now().Unix()
 	for i, lease := range s.leases {
-		if lease.Expiry.Unix() <= now {
+		if lease.Expiry.Unix() <= now && lease.Expiry.Unix() != leaseExpireStatic {
 			return i
 		}
 	}
@@ -526,6 +530,69 @@ func (s *Server) handleDecline(p dhcp4.Packet, options dhcp4.Options) dhcp4.Pack
 	log.Tracef("Message from client: Decline.  IP: %s  HW: %s",
 		reqIP, p.CHAddr())
 
+	return nil
+}
+
+// AddStaticLease adds a static lease (thread-safe)
+func (s *Server) AddStaticLease(l Lease) error {
+	if s.IPpool == nil {
+		return fmt.Errorf("DHCP server isn't started")
+	}
+
+	if len(l.IP) != 4 {
+		return fmt.Errorf("Invalid IP")
+	}
+	if len(l.HWAddr) != 6 {
+		return fmt.Errorf("Invalid MAC")
+	}
+	l.Expiry = time.Unix(leaseExpireStatic, 0)
+
+	s.leasesLock.Lock()
+	defer s.leasesLock.Unlock()
+
+	if s.findReservedHWaddr(l.IP) != nil {
+		return fmt.Errorf("IP is already used")
+	}
+	s.leases = append(s.leases, &l)
+	s.reserveIP(l.IP, l.HWAddr)
+	s.dbStore()
+	return nil
+}
+
+// RemoveStaticLease removes a static lease (thread-safe)
+func (s *Server) RemoveStaticLease(l Lease) error {
+	if s.IPpool == nil {
+		return fmt.Errorf("DHCP server isn't started")
+	}
+
+	if len(l.IP) != 4 {
+		return fmt.Errorf("Invalid IP")
+	}
+	if len(l.HWAddr) != 6 {
+		return fmt.Errorf("Invalid MAC")
+	}
+
+	s.leasesLock.Lock()
+	defer s.leasesLock.Unlock()
+
+	if s.findReservedHWaddr(l.IP) == nil {
+		return fmt.Errorf("Lease not found")
+	}
+
+	var newLeases []*Lease
+	for _, lease := range s.leases {
+		if bytes.Equal(lease.IP.To4(), l.IP) {
+			if !bytes.Equal(lease.HWAddr, l.HWAddr) ||
+				lease.Hostname != l.Hostname {
+				return fmt.Errorf("Lease not found")
+			}
+			continue
+		}
+		newLeases = append(newLeases, lease)
+	}
+	s.leases = newLeases
+	s.unreserveIP(l.IP)
+	s.dbStore()
 	return nil
 }
 
