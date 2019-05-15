@@ -20,11 +20,20 @@ var (
 const enableGzip = false
 
 // flushLogBuffer flushes the current buffer to file and resets the current buffer
-func (l *queryLog) flushLogBuffer() error {
+func (l *queryLog) flushLogBuffer(fullFlush bool) error {
+	l.fileFlushLock.Lock()
+	defer l.fileFlushLock.Unlock()
+
 	// flush remainder to file
 	l.logBufferLock.Lock()
+	needFlush := len(l.logBuffer) >= logBufferCap
+	if !needFlush && !fullFlush {
+		l.logBufferLock.Unlock()
+		return nil
+	}
 	flushBuffer := l.logBuffer
 	l.logBuffer = nil
+	l.flushPending = false
 	l.logBufferLock.Unlock()
 	err := l.flushToFile(flushBuffer)
 	if err != nil {
@@ -37,6 +46,7 @@ func (l *queryLog) flushLogBuffer() error {
 // flushToFile saves the specified log entries to the query log file
 func (l *queryLog) flushToFile(buffer []*logEntry) error {
 	if len(buffer) == 0 {
+		log.Debug("querylog: there's nothing to write to a file")
 		return nil
 	}
 	start := time.Now()

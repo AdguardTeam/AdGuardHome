@@ -372,6 +372,7 @@ func cleanupAlways() {
 	if len(pidFileName) != 0 {
 		os.Remove(pidFileName)
 	}
+	log.Info("Stopped")
 }
 
 // command-line arguments

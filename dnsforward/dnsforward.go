@@ -236,7 +236,7 @@ func (s *Server) stopInternal() error {
 	}
 
 	// flush remainder to file
-	return s.queryLog.flushLogBuffer()
+	return s.queryLog.flushLogBuffer(true)
 }
 
 // IsRunning returns true if the DNS server is running
