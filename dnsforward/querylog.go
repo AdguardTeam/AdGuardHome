@@ -30,6 +30,8 @@ type queryLog struct {
 
 	logBufferLock sync.RWMutex
 	logBuffer     []*logEntry
+	fileFlushLock sync.Mutex // synchronize a file-flushing goroutine and main thread
+	flushPending  bool       // don't start another goroutine while the previous one is still running
 
 	queryLogCache []*logEntry
 	queryLogLock  sync.RWMutex
@@ -91,13 +93,15 @@ func (l *queryLog) logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfil
 		IP:       ip,
 		Upstream: upstream,
 	}
-	var flushBuffer []*logEntry
 
 	l.logBufferLock.Lock()
 	l.logBuffer = append(l.logBuffer, &entry)
-	if len(l.logBuffer) >= logBufferCap {
-		flushBuffer = l.logBuffer
-		l.logBuffer = nil
+	needFlush := false
+	if !l.flushPending {
+		needFlush = len(l.logBuffer) >= logBufferCap
+		if needFlush {
+			l.flushPending = true
+		}
 	}
 	l.logBufferLock.Unlock()
 	l.queryLogLock.Lock()
@@ -116,15 +120,10 @@ func (l *queryLog) logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfil
 	}
 
 	// if buffer needs to be flushed to disk, do it now
-	if len(flushBuffer) > 0 {
+	if needFlush {
 		// write to file
 		// do it in separate goroutine -- we are stalling DNS response this whole time
-		go func() {
-			err := l.flushToFile(flushBuffer)
-			if err != nil {
-				log.Printf("Failed to flush the query log: %s", err)
-			}
-		}()
+		go l.flushLogBuffer(false)
 	}
 
 	return &entry
