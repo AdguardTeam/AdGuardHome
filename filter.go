@@ -35,13 +35,12 @@ type filter struct {
 
 // Creates a helper object for working with the user rules
 func userFilter() filter {
-	return filter{
+	f := filter{
 		// User filter always has constant ID=0
 		Enabled: true,
-		Filter: dnsfilter.Filter{
-			Rules: config.UserRules,
-		},
 	}
+	f.Filter.Data = []byte(strings.Join(config.UserRules, "\n"))
+	return f
 }
 
 // Enable or disable a filter
@@ -242,7 +241,7 @@ func refreshFiltersIfNecessary(force bool) int {
 			log.Info("Updated filter #%d.  Rules: %d -> %d",
 				f.ID, f.RulesCount, uf.RulesCount)
 			f.Name = uf.Name
-			f.Rules = uf.Rules
+			f.Data = uf.Data
 			f.RulesCount = uf.RulesCount
 			f.checksum = uf.checksum
 			updateCount++
@@ -261,7 +260,7 @@ func refreshFiltersIfNecessary(force bool) int {
 }
 
 // A helper function that parses filter contents and returns a number of rules and a filter name (if there's any)
-func parseFilterContents(contents []byte) (int, string, []string) {
+func parseFilterContents(contents []byte) (int, string) {
 	lines := strings.Split(string(contents), "\n")
 	rulesCount := 0
 	name := ""
@@ -286,7 +285,7 @@ func parseFilterContents(contents []byte) (int, string, []string) {
 		}
 	}
 
-	return rulesCount, name, lines
+	return rulesCount, name
 }
 
 // Perform upgrade on a filter
@@ -327,13 +326,13 @@ func (filter *filter) update() (bool, error) {
 	}
 
 	// Extract filter name and count number of rules
-	rulesCount, filterName, rules := parseFilterContents(body)
+	rulesCount, filterName := parseFilterContents(body)
 	log.Printf("Filter %d has been updated: %d bytes, %d rules", filter.ID, len(body), rulesCount)
 	if filterName != "" {
 		filter.Name = filterName
 	}
 	filter.RulesCount = rulesCount
-	filter.Rules = rules
+	filter.Data = body
 	filter.checksum = checksum
 
 	return true, nil
@@ -343,9 +342,8 @@ func (filter *filter) update() (bool, error) {
 func (filter *filter) save() error {
 	filterFilePath := filter.Path()
 	log.Printf("Saving filter %d contents to: %s", filter.ID, filterFilePath)
-	body := []byte(strings.Join(filter.Rules, "\n"))
 
-	err := file.SafeWrite(filterFilePath, body)
+	err := file.SafeWrite(filterFilePath, filter.Data)
 
 	// update LastUpdated field after saving the file
 	filter.LastUpdated = filter.LastTimeUpdated()
@@ -368,10 +366,10 @@ func (filter *filter) load() error {
 	}
 
 	log.Tracef("File %s, id %d, length %d", filterFilePath, filter.ID, len(filterFileContents))
-	rulesCount, _, rules := parseFilterContents(filterFileContents)
+	rulesCount, _ := parseFilterContents(filterFileContents)
 
 	filter.RulesCount = rulesCount
-	filter.Rules = rules
+	filter.Data = filterFileContents
 	filter.checksum = crc32.ChecksumIEEE(filterFileContents)
 	filter.LastUpdated = filter.LastTimeUpdated()
 
@@ -380,7 +378,7 @@ func (filter *filter) load() error {
 
 // Clear filter rules
 func (filter *filter) unload() {
-	filter.Rules = []string{}
+	filter.Data = nil
 	filter.RulesCount = 0
 }
 
