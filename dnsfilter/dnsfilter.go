@@ -33,6 +33,7 @@ const defaultSafebrowsingServer = "sb.adtidy.org"
 const defaultSafebrowsingURL = "http://%s/safebrowsing-lookup-hash.html?prefixes=%s"
 const defaultParentalServer = "pctrl.adguard.com"
 const defaultParentalURL = "http://%s/check-parental-control-hash?prefixes=%s&sensitivity=%d"
+const maxDialCacheSize = 2 // the number of host names for safebrowsing and parental control
 
 // ErrInvalidSyntax is returned by AddRule when the rule is invalid
 var ErrInvalidSyntax = errors.New("dnsfilter: invalid rule syntax")
@@ -1076,7 +1077,7 @@ func New(c *Config) *Dnsfilter {
 		ExpectContinueTimeout: 1 * time.Second,
 	}
 	if c != nil && len(c.ResolverAddress) != 0 {
-		dialCache = gcache.New(2).LRU().Expiration(defaultCacheTime).Build()
+		dialCache = gcache.New(maxDialCacheSize).LRU().Expiration(defaultCacheTime).Build()
 		d.transport.DialContext = d.createCustomDialContext(c.ResolverAddress)
 	}
 	d.client = http.Client{
