@@ -17,6 +17,7 @@ import (
 
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/urlfilter"
 	"github.com/bluele/gcache"
 	"golang.org/x/net/publicsuffix"
 )
@@ -46,11 +47,12 @@ const enableDelayedCompilation = true // flag for debugging, must be true in pro
 
 // Config allows you to configure DNS filtering with New() or just change variables directly.
 type Config struct {
-	ParentalSensitivity int    `yaml:"parental_sensitivity"` // must be either 3, 10, 13 or 17
-	ParentalEnabled     bool   `yaml:"parental_enabled"`
-	SafeSearchEnabled   bool   `yaml:"safesearch_enabled"`
-	SafeBrowsingEnabled bool   `yaml:"safebrowsing_enabled"`
-	ResolverAddress     string // DNS server address
+	FilteringTempFilename string `yaml:"filtering_temp_filename"` // temporary file for storing unused filtering rules
+	ParentalSensitivity   int    `yaml:"parental_sensitivity"`    // must be either 3, 10, 13 or 17
+	ParentalEnabled       bool   `yaml:"parental_enabled"`
+	SafeSearchEnabled     bool   `yaml:"safesearch_enabled"`
+	SafeBrowsingEnabled   bool   `yaml:"safebrowsing_enabled"`
+	ResolverAddress       string // DNS server address
 }
 
 type privateConfig struct {
@@ -75,6 +77,9 @@ type Stats struct {
 
 // Dnsfilter holds added rules and performs hostname matches against the rules
 type Dnsfilter struct {
+	rulesStorage    *urlfilter.RulesStorage
+	filteringEngine *urlfilter.DNSEngine
+
 	// HTTP lookups for safebrowsing and parental
 	client    http.Client     // handle for http client -- single instance as recommended by docs
 	transport *http.Transport // handle for http transport used by http client
@@ -499,13 +504,59 @@ func (d *Dnsfilter) lookupCommon(host string, lookupstats *LookupStats, cache gc
 // Adding rule and matching against the rules
 //
 
-// AddRules is a convinience function to add an array of filters in one call
-func (d *Dnsfilter) AddRules(filters []Filter) error {
+// Initialize urlfilter objects
+func (d *Dnsfilter) initFiltering(filters map[int]string) error {
+	var err error
+	d.rulesStorage, err = urlfilter.NewRuleStorage(d.FilteringTempFilename)
+	if err != nil {
+		return err
+	}
+
+	d.filteringEngine = urlfilter.NewDNSEngine(filters, d.rulesStorage)
 	return nil
 }
 
 // matchHost is a low-level way to check only if hostname is filtered by rules, skipping expensive safebrowsing and parental lookups
 func (d *Dnsfilter) matchHost(host string) (Result, error) {
+	if d.filteringEngine == nil {
+		return Result{}, nil
+	}
+
+	rules, ok := d.filteringEngine.Match(host)
+	if !ok {
+		return Result{}, nil
+	}
+
+	for _, rule := range rules {
+
+		log.Tracef("Found rule for host '%s': '%s'  list_id: %d",
+			host, rule.Text(), rule.GetFilterListID())
+
+		res := Result{}
+		res.Reason = FilteredBlackList
+		res.IsFiltered = true
+		res.FilterID = int64(rule.GetFilterListID())
+		res.Rule = rule.Text()
+
+		if netRule, ok := rule.(*urlfilter.NetworkRule); ok {
+
+			if netRule.Whitelist {
+				res.Reason = NotFilteredWhiteList
+				res.IsFiltered = false
+			}
+			return res, nil
+
+		} else if hostRule, ok := rule.(*urlfilter.HostRule); ok {
+
+			res.IP = hostRule.IP
+			return res, nil
+
+		} else {
+			log.Tracef("Rule type is unsupported: '%s'  list_id: %d",
+				rule.Text(), rule.GetFilterListID())
+		}
+	}
+
 	return Result{}, nil
 }
 
@@ -597,7 +648,7 @@ func (d *Dnsfilter) createCustomDialContext(resolverAddr string) dialFunctionTyp
 }
 
 // New creates properly initialized DNS Filter that is ready to be used
-func New(c *Config) *Dnsfilter {
+func New(c *Config, filters map[int]string) *Dnsfilter {
 	d := new(Dnsfilter)
 
 	// Customize the Transport to have larger connection pool,
@@ -624,6 +675,15 @@ func New(c *Config) *Dnsfilter {
 		d.Config = *c
 	}
 
+	if filters != nil {
+		err := d.initFiltering(filters)
+		if err != nil {
+			log.Error("Can't initialize filtering subsystem: %s", err)
+			d.Destroy()
+			return nil
+		}
+	}
+
 	return d
 }
 
@@ -632,6 +692,11 @@ func New(c *Config) *Dnsfilter {
 func (d *Dnsfilter) Destroy() {
 	if d != nil && d.transport != nil {
 		d.transport.CloseIdleConnections()
+	}
+
+	if d.rulesStorage != nil {
+		d.rulesStorage.Close()
+		d.rulesStorage = nil
 	}
 }
 
