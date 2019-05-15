@@ -18,6 +18,36 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
+// Convert version.json data to our JSON response
+func getVersionResp(data []byte) []byte {
+	versionJSON := make(map[string]interface{})
+	err := json.Unmarshal(data, &versionJSON)
+	if err != nil {
+		log.Error("version.json: %s", err)
+		return []byte{}
+	}
+
+	ret := make(map[string]interface{})
+	ret["can_autoupdate"] = false
+
+	var ok1, ok2, ok3 bool
+	ret["new_version"], ok1 = versionJSON["version"].(string)
+	ret["announcement"], ok2 = versionJSON["announcement"].(string)
+	ret["announcement_url"], ok3 = versionJSON["announcement_url"].(string)
+	if !ok1 || !ok2 || !ok3 {
+		log.Error("version.json: invalid data")
+		return []byte{}
+	}
+
+	_, ok := versionJSON[fmt.Sprintf("download_%s_%s", runtime.GOOS, runtime.GOARCH)]
+	if ok && ret["new_version"] != VersionString {
+		ret["can_autoupdate"] = true
+	}
+
+	d, _ := json.Marshal(ret)
+	return d
+}
+
 // Get the latest available version from the Internet
 func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
@@ -31,7 +61,7 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	if cached {
 		// return cached copy
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(data)
+		w.Write(getVersionResp(data))
 		return
 	}
 
@@ -51,16 +81,16 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(body)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't write body: %s", err)
-	}
-
 	controlLock.Lock()
 	versionCheckLastTime = now
 	versionCheckJSON = body
 	controlLock.Unlock()
+
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(getVersionResp(body))
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "Couldn't write body: %s", err)
+	}
 }
 
 // Copy file on disk
