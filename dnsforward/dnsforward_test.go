@@ -293,6 +293,55 @@ func TestBlockedRequest(t *testing.T) {
 	}
 }
 
+func TestNullBlockedRequest(t *testing.T) {
+	s := createTestServer(t)
+	s.FilteringConfig.BlockingMode = "null_ip"
+	defer removeDataDir(t)
+	err := s.Start(nil)
+	if err != nil {
+		t.Fatalf("Failed to start server: %s", err)
+	}
+	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
+
+	//
+	// Null filter blocking
+	//
+	req := dns.Msg{}
+	req.Id = dns.Id()
+	req.RecursionDesired = true
+	req.Question = []dns.Question{
+		{Name: "null.example.org.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+	}
+
+	reply, err := dns.Exchange(&req, addr.String())
+	if err != nil {
+		t.Fatalf("Couldn't talk to server %s: %s", addr, err)
+	}
+	if len(reply.Answer) != 1 {
+		t.Fatalf("DNS server %s returned reply with wrong number of answers - %d", addr, len(reply.Answer))
+	}
+	if a, ok := reply.Answer[0].(*dns.A); ok {
+		if !net.IPv4zero.Equal(a.A) {
+			t.Fatalf("DNS server %s returned wrong answer instead of 0.0.0.0: %v", addr, a.A)
+		}
+	} else {
+		t.Fatalf("DNS server %s returned wrong answer type instead of A: %v", addr, reply.Answer[0])
+	}
+
+	// check query log and stats
+	log := s.GetQueryLog()
+	assert.Equal(t, 1, len(log), "Log size")
+	stats := s.GetStatsTop()
+	assert.Equal(t, 1, len(stats.Domains), "Top domains length")
+	assert.Equal(t, 1, len(stats.Blocked), "Top blocked length")
+	assert.Equal(t, 1, len(stats.Clients), "Top clients length")
+
+	err = s.Stop()
+	if err != nil {
+		t.Fatalf("DNS server failed to stop: %s", err)
+	}
+}
+
 func TestBlockedByHosts(t *testing.T) {
 	s := createTestServer(t)
 	defer removeDataDir(t)
@@ -413,6 +462,7 @@ func createTestServer(t *testing.T) *Server {
 
 	rules := []string{
 		"||nxdomain.example.org^",
+		"||null.example.org^",
 		"127.0.0.1	host.example.org",
 	}
 	filter := dnsfilter.Filter{ID: 1, Rules: rules}

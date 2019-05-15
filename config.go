@@ -115,6 +115,7 @@ var config = configuration{
 		FilteringConfig: dnsforward.FilteringConfig{
 			ProtectionEnabled:  true, // whether or not use any of dnsfilter features
 			FilteringEnabled:   true, // whether or not use filter lists
+			BlockingMode:       "nxdomain", // mode how to answer filtered requests
 			BlockedResponseTTL: 10,   // in seconds
 			QueryLogEnabled:    true,
 			Ratelimit:          20,
