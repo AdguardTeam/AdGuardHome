@@ -4,7 +4,7 @@ import { t } from 'i18next';
 import { showLoading, hideLoading } from 'react-redux-loading-bar';
 
 import { normalizeHistory, normalizeFilteringStatus, normalizeLogs, normalizeTextarea } from '../helpers/helpers';
-import { SETTINGS_NAMES } from '../helpers/constants';
+import { SETTINGS_NAMES, CHECK_TIMEOUT } from '../helpers/constants';
 import Api from '../api/Api';
 
 const apiClient = new Api();
@@ -151,6 +151,29 @@ export const getVersion = () => async (dispatch) => {
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(getVersionFailure());
+    }
+};
+
+export const getUpdateRequest = createAction('GET_UPDATE_REQUEST');
+export const getUpdateFailure = createAction('GET_UPDATE_FAILURE');
+export const getUpdateSuccess = createAction('GET_UPDATE_SUCCESS');
+
+export const getUpdate = () => async (dispatch) => {
+    dispatch(getUpdateRequest());
+    try {
+        await apiClient.getUpdate();
+
+        const timer = setInterval(async () => {
+            const dnsStatus = await apiClient.getGlobalStatus();
+            if (dnsStatus) {
+                clearInterval(timer);
+                dispatch(getUpdateSuccess());
+                window.location.reload(true);
+            }
+        }, CHECK_TIMEOUT);
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(getUpdateFailure());
     }
 };
 
