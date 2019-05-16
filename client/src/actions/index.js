@@ -172,7 +172,7 @@ export const getUpdate = () => async (dispatch) => {
             }
         }, CHECK_TIMEOUT);
     } catch (error) {
-        dispatch(addErrorToast({ error }));
+        dispatch(addErrorToast({ error: 'update_failed' }));
         dispatch(getUpdateFailure());
     }
 };
