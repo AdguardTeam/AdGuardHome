@@ -202,13 +202,19 @@ func (s *Server) startInternal(config *ServerConfig) error {
 // Initializes the DNS filter
 func (s *Server) initDNSFilter() error {
 	log.Tracef("Creating dnsfilter")
-	s.dnsFilter = dnsfilter.New(&s.conf.Config)
-	// add rules only if they are enabled
+
+	var filters map[int]string
+	filters = nil
 	if s.conf.FilteringEnabled {
-		err := s.dnsFilter.AddRules(s.conf.Filters)
-		if err != nil {
-			return errorx.Decorate(err, "could not initialize dnsfilter")
+		filters = make(map[int]string)
+		for _, f := range s.conf.Filters {
+			filters[int(f.ID)] = string(f.Data)
 		}
+	}
+
+	s.dnsFilter = dnsfilter.New(&s.conf.Config, filters)
+	if s.dnsFilter == nil {
+		return fmt.Errorf("could not initialize dnsfilter")
 	}
 	return nil
 }
