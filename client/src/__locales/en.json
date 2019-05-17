@@ -263,5 +263,6 @@
     "dns_providers": "Here is a <0>list of known DNS providers</0> to choose from.",
     "update_now": "Update now",
     "update_failed": "Update failed",
+    "update_failed_try_later": "Update failed, please try again later",
     "processing_update": "Please wait, AdGuard Home is being updated"
 }

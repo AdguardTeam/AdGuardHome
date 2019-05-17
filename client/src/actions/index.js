@@ -2,6 +2,7 @@ import { createAction } from 'redux-actions';
 import round from 'lodash/round';
 import { t } from 'i18next';
 import { showLoading, hideLoading } from 'react-redux-loading-bar';
+import axios from 'axios';
 
 import { normalizeHistory, normalizeFilteringStatus, normalizeLogs, normalizeTextarea } from '../helpers/helpers';
 import { SETTINGS_NAMES, CHECK_TIMEOUT } from '../helpers/constants';
@@ -163,14 +164,43 @@ export const getUpdate = () => async (dispatch) => {
     try {
         await apiClient.getUpdate();
 
-        const timer = setInterval(async () => {
-            const dnsStatus = await apiClient.getGlobalStatus();
-            if (dnsStatus) {
-                clearInterval(timer);
-                dispatch(getUpdateSuccess());
-                window.location.reload(true);
+        const checkUpdate = async (attempts) => {
+            let count = attempts || 1;
+            let timeout;
+
+            if (count > 60) {
+                dispatch(addErrorToast({ error: 'update_failed_try_later' }));
+                dispatch(getUpdateFailure());
+                return false;
             }
-        }, CHECK_TIMEOUT);
+
+            const rmTimeout = t => t && clearTimeout(t);
+            const setRecursiveTimeout = (time, ...args) => setTimeout(
+                checkUpdate,
+                time,
+                ...args,
+            );
+
+            console.log(count);
+
+            axios.get('control/status')
+                .then((response) => {
+                    rmTimeout(timeout);
+                    if (response) {
+                        dispatch(getUpdateSuccess());
+                        window.location.reload(true);
+                    }
+                    timeout = setRecursiveTimeout(CHECK_TIMEOUT, count += 1);
+                })
+                .catch(() => {
+                    rmTimeout(timeout);
+                    timeout = setRecursiveTimeout(CHECK_TIMEOUT, count += 1);
+                });
+
+            return false;
+        };
+
+        checkUpdate();
     } catch (error) {
         dispatch(addErrorToast({ error: 'update_failed' }));
         dispatch(getUpdateFailure());
