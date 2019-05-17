@@ -78,6 +78,7 @@ func run(args options) {
 	if args.runningAsService {
 		log.Info("AdGuard Home is running as a service")
 	}
+	config.runningAsService = args.runningAsService
 
 	config.firstRun = detectFirstRun()
 	if config.firstRun {
