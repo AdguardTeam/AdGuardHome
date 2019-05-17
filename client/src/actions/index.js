@@ -12,6 +12,7 @@ const apiClient = new Api();
 
 export const addErrorToast = createAction('ADD_ERROR_TOAST');
 export const addSuccessToast = createAction('ADD_SUCCESS_TOAST');
+export const addNoticeToast = createAction('ADD_NOTICE_TOAST');
 export const removeToast = createAction('REMOVE_TOAST');
 
 export const toggleSettingStatus = createAction('SETTING_STATUS_TOGGLE');
@@ -169,7 +170,7 @@ export const getUpdate = () => async (dispatch) => {
             let timeout;
 
             if (count > 60) {
-                dispatch(addErrorToast({ error: 'update_failed_try_later' }));
+                dispatch(addNoticeToast({ error: 'update_failed' }));
                 dispatch(getUpdateFailure());
                 return false;
             }
@@ -180,8 +181,6 @@ export const getUpdate = () => async (dispatch) => {
                 time,
                 ...args,
             );
-
-            console.log(count);
 
             axios.get('control/status')
                 .then((response) => {
@@ -202,7 +201,7 @@ export const getUpdate = () => async (dispatch) => {
 
         checkUpdate();
     } catch (error) {
-        dispatch(addErrorToast({ error: 'update_failed' }));
+        dispatch(addNoticeToast({ error: 'update_failed' }));
         dispatch(getUpdateFailure());
     }
 };

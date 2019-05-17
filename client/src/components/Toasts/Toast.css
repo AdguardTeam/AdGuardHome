@@ -32,6 +32,12 @@
     overflow: hidden;
 }
 
+.toast__content a {
+    font-weight: 600;
+    color: #fff;
+    text-decoration: underline;
+}
+
 .toast__dismiss {
     display: block;
     flex: 0 0 auto;
