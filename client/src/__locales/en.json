@@ -15,6 +15,7 @@
     "dhcp_not_found": "It is safe to enable the built-in DHCP server - we didn't find any active DHCP servers on the network. However, we encourage you to re-check it manually as our automatic test currently doesn't give 100% guarantee.",
     "dhcp_found": "An active DHCP server is found on the network. It is not safe to enable the built-in DHCP server.",
     "dhcp_leases": "DHCP leases",
+    "dhcp_static_leases": "DHCP static leases",
     "dhcp_leases_not_found": "No DHCP leases found",
     "dhcp_config_saved": "Saved DHCP server config",
     "form_error_required": "Required field",

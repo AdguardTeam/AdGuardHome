@@ -287,11 +287,18 @@ const dhcp = handleActions({
     [actions.getDhcpStatusRequest]: state => ({ ...state, processing: true }),
     [actions.getDhcpStatusFailure]: state => ({ ...state, processing: false }),
     [actions.getDhcpStatusSuccess]: (state, { payload }) => {
+        const {
+            static_leases: staticLeases,
+            ...values
+        } = payload;
+
         const newState = {
             ...state,
-            ...payload,
+            staticLeases,
             processing: false,
+            ...values,
         };
+
         return newState;
     },
 
@@ -355,6 +362,7 @@ const dhcp = handleActions({
     },
     check: null,
     leases: [],
+    staticLeases: [],
 });
 
 export default combineReducers({

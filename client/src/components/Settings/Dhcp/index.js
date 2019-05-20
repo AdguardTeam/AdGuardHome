@@ -6,6 +6,7 @@ import { Trans, withNamespaces } from 'react-i18next';
 import { DHCP_STATUS_RESPONSE } from '../../../helpers/constants';
 import Form from './Form';
 import Leases from './Leases';
+import StaticLeases from './StaticLeases';
 import Interface from './Interface';
 import Card from '../../ui/Card';
 import Accordion from '../../ui/Accordion';
@@ -211,13 +212,22 @@ class Dhcp extends Component {
                     </div>
                 </Card>
                 {!dhcp.processing && dhcp.config.enabled &&
-                    <Card title={ t('dhcp_leases') } bodyType="card-body box-body--settings">
-                        <div className="row">
-                            <div className="col">
-                                <Leases leases={dhcp.leases} />
+                    <Fragment>
+                        <Card title={ t('dhcp_leases') } bodyType="card-body box-body--settings">
+                            <div className="row">
+                                <div className="col">
+                                    <Leases leases={dhcp.leases} />
+                                </div>
                             </div>
-                        </div>
-                    </Card>
+                        </Card>
+                        <Card title={ t('dhcp_static_leases') } bodyType="card-body box-body--settings">
+                            <div className="row">
+                                <div className="col">
+                                    <StaticLeases staticLeases={dhcp.staticLeases} />
+                                </div>
+                            </div>
+                        </Card>
+                    </Fragment>
                 }
             </Fragment>
         );
