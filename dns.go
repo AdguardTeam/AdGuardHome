@@ -34,13 +34,13 @@ func generateServerConfig() dnsforward.ServerConfig {
 	filters := []dnsfilter.Filter{}
 	userFilter := userFilter()
 	filters = append(filters, dnsfilter.Filter{
-		ID:    userFilter.ID,
-		Rules: userFilter.Rules,
+		ID:   userFilter.ID,
+		Data: userFilter.Data,
 	})
 	for _, filter := range config.Filters {
 		filters = append(filters, dnsfilter.Filter{
-			ID:    filter.ID,
-			Rules: filter.Rules,
+			ID:   filter.ID,
+			Data: filter.Data,
 		})
 	}
 

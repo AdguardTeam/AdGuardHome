@@ -86,7 +86,7 @@ func TestDotServer(t *testing.T) {
 	s := createTestServer(t)
 	defer removeDataDir(t)
 
-	s.TLSConfig = TLSConfig{
+	s.conf.TLSConfig = TLSConfig{
 		TLSListenAddr:    &net.TCPAddr{Port: 0},
 		CertificateChain: string(certPem),
 		PrivateKey:       string(keyPem),
@@ -149,7 +149,7 @@ func TestServerRace(t *testing.T) {
 
 func TestSafeSearch(t *testing.T) {
 	s := createTestServer(t)
-	s.SafeSearchEnabled = true
+	s.conf.SafeSearchEnabled = true
 	defer removeDataDir(t)
 	err := s.Start(nil)
 	if err != nil {
@@ -295,7 +295,7 @@ func TestBlockedRequest(t *testing.T) {
 
 func TestNullBlockedRequest(t *testing.T) {
 	s := createTestServer(t)
-	s.FilteringConfig.BlockingMode = "null_ip"
+	s.conf.FilteringConfig.BlockingMode = "null_ip"
 	defer removeDataDir(t)
 	err := s.Start(nil)
 	if err != nil {
@@ -451,14 +451,14 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 
 func createTestServer(t *testing.T) *Server {
 	s := NewServer(createDataDir(t))
-	s.UDPListenAddr = &net.UDPAddr{Port: 0}
-	s.TCPListenAddr = &net.TCPAddr{Port: 0}
+	s.conf.UDPListenAddr = &net.UDPAddr{Port: 0}
+	s.conf.TCPListenAddr = &net.TCPAddr{Port: 0}
 
-	s.QueryLogEnabled = true
-	s.FilteringConfig.FilteringEnabled = true
-	s.FilteringConfig.ProtectionEnabled = true
-	s.FilteringConfig.SafeBrowsingEnabled = true
-	s.Filters = make([]dnsfilter.Filter, 0)
+	s.conf.QueryLogEnabled = true
+	s.conf.FilteringConfig.FilteringEnabled = true
+	s.conf.FilteringConfig.ProtectionEnabled = true
+	s.conf.FilteringConfig.SafeBrowsingEnabled = true
+	s.conf.Filters = make([]dnsfilter.Filter, 0)
 
 	rules := []string{
 		"||nxdomain.example.org^",
@@ -466,7 +466,7 @@ func createTestServer(t *testing.T) *Server {
 		"127.0.0.1	host.example.org",
 	}
 	filter := dnsfilter.Filter{ID: 1, Rules: rules}
-	s.Filters = append(s.Filters, filter)
+	s.conf.Filters = append(s.conf.Filters, filter)
 	return s
 }
 

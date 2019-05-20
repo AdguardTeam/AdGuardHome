@@ -11,14 +11,13 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
-	"regexp"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/urlfilter"
 	"github.com/bluele/gcache"
 	"golang.org/x/net/publicsuffix"
 )
@@ -48,43 +47,17 @@ const enableDelayedCompilation = true // flag for debugging, must be true in pro
 
 // Config allows you to configure DNS filtering with New() or just change variables directly.
 type Config struct {
-	ParentalSensitivity int    `yaml:"parental_sensitivity"` // must be either 3, 10, 13 or 17
-	ParentalEnabled     bool   `yaml:"parental_enabled"`
-	SafeSearchEnabled   bool   `yaml:"safesearch_enabled"`
-	SafeBrowsingEnabled bool   `yaml:"safebrowsing_enabled"`
-	ResolverAddress     string // DNS server address
+	FilteringTempFilename string `yaml:"filtering_temp_filename"` // temporary file for storing unused filtering rules
+	ParentalSensitivity   int    `yaml:"parental_sensitivity"`    // must be either 3, 10, 13 or 17
+	ParentalEnabled       bool   `yaml:"parental_enabled"`
+	SafeSearchEnabled     bool   `yaml:"safesearch_enabled"`
+	SafeBrowsingEnabled   bool   `yaml:"safebrowsing_enabled"`
+	ResolverAddress       string // DNS server address
 }
 
 type privateConfig struct {
 	parentalServer     string // access via methods
 	safeBrowsingServer string // access via methods
-}
-
-type rule struct {
-	text         string // text without @@ decorators or $ options
-	shortcut     string // for speeding up lookup
-	originalText string // original text for reporting back to applications
-	ip           net.IP // IP address (for the case when we're matching a hosts file)
-
-	// options
-	options []string // optional options after $
-
-	// parsed options
-	apps        []string
-	isWhitelist bool
-	isImportant bool
-
-	// user-supplied data
-	listID int64
-
-	// suffix matching
-	isSuffix bool
-	suffix   string
-
-	// compiled regexp
-	compiled *regexp.Regexp
-
-	sync.RWMutex
 }
 
 // LookupStats store stats collected during safebrowsing or parental checks
@@ -104,13 +77,8 @@ type Stats struct {
 
 // Dnsfilter holds added rules and performs hostname matches against the rules
 type Dnsfilter struct {
-	storage      map[string]bool // rule storage, not used for matching, just for filtering out duplicates
-	storageMutex sync.RWMutex
-
-	// rules are checked against these lists in the order defined here
-	important *rulesTable // more important than whitelist and is checked first
-	whiteList *rulesTable // more important than blacklist
-	blackList *rulesTable
+	rulesStorage    *urlfilter.RulesStorage
+	filteringEngine *urlfilter.DNSEngine
 
 	// HTTP lookups for safebrowsing and parental
 	client    http.Client     // handle for http client -- single instance as recommended by docs
@@ -122,8 +90,8 @@ type Dnsfilter struct {
 
 // Filter represents a filter list
 type Filter struct {
-	ID    int64    `json:"id"`         // auto-assigned when filter is added (see nextFilterID), json by default keeps ID uppercase but we need lowercase
-	Rules []string `json:"-" yaml:"-"` // not in yaml or json
+	ID   int64  `json:"id"`         // auto-assigned when filter is added (see nextFilterID), json by default keeps ID uppercase but we need lowercase
+	Data []byte `json:"-" yaml:"-"` // List of rules divided by '\n'
 }
 
 //go:generate stringer -type=Reason
@@ -240,308 +208,6 @@ func (d *Dnsfilter) CheckHost(host string) (Result, error) {
 
 	// nothing matched, return nothing
 	return Result{}, nil
-}
-
-//
-// rules table
-//
-
-type rulesTable struct {
-	rulesByHost     map[string]*rule
-	rulesByShortcut map[string][]*rule
-	rulesLeftovers  []*rule
-	sync.RWMutex
-}
-
-func newRulesTable() *rulesTable {
-	return &rulesTable{
-		rulesByHost:     make(map[string]*rule),
-		rulesByShortcut: make(map[string][]*rule),
-		rulesLeftovers:  make([]*rule, 0),
-	}
-}
-
-func (r *rulesTable) Add(rule *rule) {
-	r.Lock()
-	if rule.ip != nil {
-		// Hosts syntax
-		r.rulesByHost[rule.text] = rule
-	} else if len(rule.shortcut) == shortcutLength && enableFastLookup {
-		// Adblock syntax with a shortcut
-		r.rulesByShortcut[rule.shortcut] = append(r.rulesByShortcut[rule.shortcut], rule)
-	} else {
-		// Adblock syntax -- too short to have a shortcut
-		r.rulesLeftovers = append(r.rulesLeftovers, rule)
-	}
-	r.Unlock()
-}
-
-func (r *rulesTable) matchByHost(host string) (Result, error) {
-	// First: examine the hosts-syntax rules
-	res, err := r.searchByHost(host)
-	if err != nil {
-		return res, err
-	}
-	if res.Reason.Matched() {
-		return res, nil
-	}
-
-	// Second: examine the adblock-syntax rules with shortcuts
-	res, err = r.searchShortcuts(host)
-	if err != nil {
-		return res, err
-	}
-	if res.Reason.Matched() {
-		return res, nil
-	}
-
-	// Third: examine the others
-	res, err = r.searchLeftovers(host)
-	if err != nil {
-		return res, err
-	}
-	if res.Reason.Matched() {
-		return res, nil
-	}
-
-	return Result{}, nil
-}
-
-func (r *rulesTable) searchByHost(host string) (Result, error) {
-	rule, ok := r.rulesByHost[host]
-
-	if ok {
-		return rule.match(host)
-	}
-
-	return Result{}, nil
-}
-
-func (r *rulesTable) searchShortcuts(host string) (Result, error) {
-	// check in shortcuts first
-	for i := 0; i < len(host); i++ {
-		shortcut := host[i:]
-		if len(shortcut) > shortcutLength {
-			shortcut = shortcut[:shortcutLength]
-		}
-		if len(shortcut) != shortcutLength {
-			continue
-		}
-		rules, ok := r.rulesByShortcut[shortcut]
-		if !ok {
-			continue
-		}
-		for _, rule := range rules {
-			res, err := rule.match(host)
-			// error? stop search
-			if err != nil {
-				return res, err
-			}
-			// matched? stop search
-			if res.Reason.Matched() {
-				return res, err
-			}
-			// continue otherwise
-		}
-	}
-	return Result{}, nil
-}
-
-func (r *rulesTable) searchLeftovers(host string) (Result, error) {
-	for _, rule := range r.rulesLeftovers {
-		res, err := rule.match(host)
-		// error? stop search
-		if err != nil {
-			return res, err
-		}
-		// matched? stop search
-		if res.Reason.Matched() {
-			return res, err
-		}
-		// continue otherwise
-	}
-	return Result{}, nil
-}
-
-func findOptionIndex(text string) int {
-	for i, r := range text {
-		// ignore non-$
-		if r != '$' {
-			continue
-		}
-		// ignore `\$`
-		if i > 0 && text[i-1] == '\\' {
-			continue
-		}
-		// ignore `$/`
-		if i > len(text) && text[i+1] == '/' {
-			continue
-		}
-		return i + 1
-	}
-	return -1
-}
-
-func (rule *rule) extractOptions() error {
-	optIndex := findOptionIndex(rule.text)
-	if optIndex == 0 { // starts with $
-		return ErrInvalidSyntax
-	}
-	if optIndex == len(rule.text) { // ends with $
-		return ErrInvalidSyntax
-	}
-	if optIndex < 0 {
-		return nil
-	}
-
-	optionsStr := rule.text[optIndex:]
-	rule.text = rule.text[:optIndex-1] // remove options from text
-
-	begin := 0
-	i := 0
-	for i = 0; i < len(optionsStr); i++ {
-		switch optionsStr[i] {
-		case ',':
-			if i > 0 {
-				// it might be escaped, if so, ignore
-				if optionsStr[i-1] == '\\' {
-					break // from switch, not for loop
-				}
-			}
-			rule.options = append(rule.options, optionsStr[begin:i])
-			begin = i + 1
-		}
-	}
-	if begin != i {
-		// there's still an option remaining
-		rule.options = append(rule.options, optionsStr[begin:])
-	}
-
-	return nil
-}
-
-func (rule *rule) parseOptions() error {
-	err := rule.extractOptions()
-	if err != nil {
-		return err
-	}
-
-	for _, option := range rule.options {
-		switch {
-		case option == "important":
-			rule.isImportant = true
-		case strings.HasPrefix(option, "app="):
-			option = strings.TrimPrefix(option, "app=")
-			rule.apps = strings.Split(option, "|")
-		default:
-			return ErrInvalidSyntax
-		}
-	}
-
-	return nil
-}
-
-func (rule *rule) extractShortcut() {
-	// regex rules have no shortcuts
-	if rule.text[0] == '/' && rule.text[len(rule.text)-1] == '/' {
-		return
-	}
-
-	fields := strings.FieldsFunc(rule.text, func(r rune) bool {
-		switch r {
-		case '*', '^', '|':
-			return true
-		}
-		return false
-	})
-	longestField := ""
-	for _, field := range fields {
-		if len(field) > len(longestField) {
-			longestField = field
-		}
-	}
-	if len(longestField) > shortcutLength {
-		longestField = longestField[:shortcutLength]
-	}
-	rule.shortcut = strings.ToLower(longestField)
-}
-
-func (rule *rule) compile() error {
-	rule.RLock()
-	isCompiled := rule.isSuffix || rule.compiled != nil
-	rule.RUnlock()
-	if isCompiled {
-		return nil
-	}
-
-	isSuffix, suffix := getSuffix(rule.text)
-	if isSuffix {
-		rule.Lock()
-		rule.isSuffix = isSuffix
-		rule.suffix = suffix
-		rule.Unlock()
-		return nil
-	}
-
-	expr, err := ruleToRegexp(rule.text)
-	if err != nil {
-		return err
-	}
-
-	compiled, err := regexp.Compile(expr)
-	if err != nil {
-		return err
-	}
-
-	rule.Lock()
-	rule.compiled = compiled
-	rule.Unlock()
-
-	return nil
-}
-
-// Checks if the rule matches the specified host and returns a corresponding Result object
-func (rule *rule) match(host string) (Result, error) {
-	res := Result{}
-
-	if rule.ip != nil && rule.text == host {
-		// This is a hosts-syntax rule -- just check that the hostname matches and return the result
-		return Result{
-			IsFiltered: true,
-			Reason:     FilteredBlackList,
-			Rule:       rule.originalText,
-			IP:         rule.ip,
-			FilterID:   rule.listID,
-		}, nil
-	}
-
-	err := rule.compile()
-	if err != nil {
-		return res, err
-	}
-	rule.RLock()
-	matched := false
-	if rule.isSuffix {
-		if host == rule.suffix {
-			matched = true
-		} else if strings.HasSuffix(host, "."+rule.suffix) {
-			matched = true
-		}
-	} else {
-		matched = rule.compiled.MatchString(host)
-	}
-	rule.RUnlock()
-	if matched {
-		res.Reason = FilteredBlackList
-		res.IsFiltered = true
-		res.FilterID = rule.listID
-		res.Rule = rule.originalText
-		if rule.isWhitelist {
-			res.Reason = NotFilteredWhiteList
-			res.IsFiltered = false
-		}
-	}
-	return res, nil
 }
 
 func getCachedReason(cache gcache.Cache, host string) (result Result, isFound bool, err error) {
@@ -838,135 +504,59 @@ func (d *Dnsfilter) lookupCommon(host string, lookupstats *LookupStats, cache gc
 // Adding rule and matching against the rules
 //
 
-// AddRules is a convinience function to add an array of filters in one call
-func (d *Dnsfilter) AddRules(filters []Filter) error {
-	for _, f := range filters {
-		for _, rule := range f.Rules {
-			err := d.AddRule(rule, f.ID)
-			if err == ErrAlreadyExists || err == ErrInvalidSyntax {
-				continue
-			}
-			if err != nil {
-				log.Printf("Cannot add rule %s: %s", rule, err)
-				// Just ignore invalid rules
-				continue
-			}
-		}
-	}
-	return nil
-}
-
-// AddRule adds a rule, checking if it is a valid rule first and if it wasn't added already
-func (d *Dnsfilter) AddRule(input string, filterListID int64) error {
-	input = strings.TrimSpace(input)
-	d.storageMutex.RLock()
-	_, exists := d.storage[input]
-	d.storageMutex.RUnlock()
-	if exists {
-		// already added
-		return ErrAlreadyExists
-	}
-
-	if !isValidRule(input) {
-		return ErrInvalidSyntax
-	}
-
-	// First, check if this is a hosts-syntax rule
-	if d.parseEtcHosts(input, filterListID) {
-		// This is a valid hosts-syntax rule, no need for further parsing
-		return nil
-	}
-
-	// Start parsing the rule
-	r := rule{
-		text:         input, // will be modified
-		originalText: input,
-		listID:       filterListID,
-	}
-
-	// Mark rule as whitelist if it starts with @@
-	if strings.HasPrefix(r.text, "@@") {
-		r.isWhitelist = true
-		r.text = r.text[2:]
-	}
-
-	err := r.parseOptions()
+// Initialize urlfilter objects
+func (d *Dnsfilter) initFiltering(filters map[int]string) error {
+	var err error
+	d.rulesStorage, err = urlfilter.NewRuleStorage(d.FilteringTempFilename)
 	if err != nil {
 		return err
 	}
 
-	r.extractShortcut()
-
-	if !enableDelayedCompilation {
-		err := r.compile()
-		if err != nil {
-			return err
-		}
-	}
-
-	destination := d.blackList
-	if r.isImportant {
-		destination = d.important
-	} else if r.isWhitelist {
-		destination = d.whiteList
-	}
-
-	d.storageMutex.Lock()
-	d.storage[input] = true
-	d.storageMutex.Unlock()
-	destination.Add(&r)
+	d.filteringEngine = urlfilter.NewDNSEngine(filters, d.rulesStorage)
 	return nil
-}
-
-// Parses the hosts-syntax rules. Returns false if the input string is not of hosts-syntax.
-func (d *Dnsfilter) parseEtcHosts(input string, filterListID int64) bool {
-	// Strip the trailing comment
-	ruleText := input
-	if pos := strings.IndexByte(ruleText, '#'); pos != -1 {
-		ruleText = ruleText[0:pos]
-	}
-	fields := strings.Fields(ruleText)
-	if len(fields) < 2 {
-		return false
-	}
-	addr := net.ParseIP(fields[0])
-	if addr == nil {
-		return false
-	}
-
-	d.storageMutex.Lock()
-	d.storage[input] = true
-	d.storageMutex.Unlock()
-
-	for _, host := range fields[1:] {
-		r := rule{
-			text:         host,
-			originalText: input,
-			listID:       filterListID,
-			ip:           addr,
-		}
-		d.blackList.Add(&r)
-	}
-	return true
 }
 
 // matchHost is a low-level way to check only if hostname is filtered by rules, skipping expensive safebrowsing and parental lookups
 func (d *Dnsfilter) matchHost(host string) (Result, error) {
-	lists := []*rulesTable{
-		d.important,
-		d.whiteList,
-		d.blackList,
+	if d.filteringEngine == nil {
+		return Result{}, nil
 	}
 
-	for _, table := range lists {
-		res, err := table.matchByHost(host)
-		if err != nil {
-			return res, err
-		}
-		if res.Reason.Matched() {
+	rules, ok := d.filteringEngine.Match(host)
+	if !ok {
+		return Result{}, nil
+	}
+
+	for _, rule := range rules {
+
+		log.Tracef("Found rule for host '%s': '%s'  list_id: %d",
+			host, rule.Text(), rule.GetFilterListID())
+
+		res := Result{}
+		res.Reason = FilteredBlackList
+		res.IsFiltered = true
+		res.FilterID = int64(rule.GetFilterListID())
+		res.Rule = rule.Text()
+
+		if netRule, ok := rule.(*urlfilter.NetworkRule); ok {
+
+			if netRule.Whitelist {
+				res.Reason = NotFilteredWhiteList
+				res.IsFiltered = false
+			}
 			return res, nil
+
+		} else if hostRule, ok := rule.(*urlfilter.HostRule); ok {
+
+			res.IP = hostRule.IP
+			return res, nil
+
+		} else {
+			log.Tracef("Rule type is unsupported: '%s'  list_id: %d",
+				rule.Text(), rule.GetFilterListID())
 		}
 	}
+
 	return Result{}, nil
 }
 
@@ -1058,13 +648,8 @@ func (d *Dnsfilter) createCustomDialContext(resolverAddr string) dialFunctionTyp
 }
 
 // New creates properly initialized DNS Filter that is ready to be used
-func New(c *Config) *Dnsfilter {
+func New(c *Config, filters map[int]string) *Dnsfilter {
 	d := new(Dnsfilter)
-
-	d.storage = make(map[string]bool)
-	d.important = newRulesTable()
-	d.whiteList = newRulesTable()
-	d.blackList = newRulesTable()
 
 	// Customize the Transport to have larger connection pool,
 	// We are not (re)using http.DefaultTransport because of race conditions found by tests
@@ -1090,6 +675,15 @@ func New(c *Config) *Dnsfilter {
 		d.Config = *c
 	}
 
+	if filters != nil {
+		err := d.initFiltering(filters)
+		if err != nil {
+			log.Error("Can't initialize filtering subsystem: %s", err)
+			d.Destroy()
+			return nil
+		}
+	}
+
 	return d
 }
 
@@ -1098,6 +692,11 @@ func New(c *Config) *Dnsfilter {
 func (d *Dnsfilter) Destroy() {
 	if d != nil && d.transport != nil {
 		d.transport.CloseIdleConnections()
+	}
+
+	if d.rulesStorage != nil {
+		d.rulesStorage.Close()
+		d.rulesStorage = nil
 	}
 }
 
@@ -1140,9 +739,4 @@ func (d *Dnsfilter) SafeSearchDomain(host string) (string, bool) {
 // GetStats return dns filtering stats since startup
 func (d *Dnsfilter) GetStats() Stats {
 	return stats
-}
-
-// Count returns number of rules added to filter
-func (d *Dnsfilter) Count() int {
-	return len(d.storage)
 }
