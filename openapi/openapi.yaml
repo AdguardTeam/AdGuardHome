@@ -151,6 +151,17 @@ paths:
                     description: 'Cannot write answer'
                 502:
                     description: 'Cannot retrieve the version.json file contents'
+    /update:
+        post:
+            tags:
+                - global
+            operationId: beginUpdate
+            summary: 'Begin auto-upgrade procedure'
+            responses:
+                200:
+                    description: OK
+                500:
+                    description: Failed
 
     # --------------------------------------------------
     # Query log methods
@@ -906,17 +917,8 @@ definitions:
     VersionInfo:
         type: "object"
         description: "Information about the latest available version of AdGuard Home"
-        required:
-            - "version"
-            - "announcement"
-            - "announcement_url"
-            - "download_darwin_amd64"
-            - "download_linux_amd64"
-            - "download_linux_386"
-            - "download_linux_arm"
-            - "selfupdate_min_version"
         properties:
-            version:
+            new_version:
                 type: "string"
                 example: "v0.9"
             announcement:
@@ -925,21 +927,8 @@ definitions:
             announcement_url:
                 type: "string"
                 example: "https://github.com/AdguardTeam/AdGuardHome/releases/tag/v0.9"
-            download_darwin_amd64:
-                type: "string"
-                example: "https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.9/AdGuardHome_v0.9_MacOS.zip"
-            download_linux_amd64:
-                type: "string"
-                example: "https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.9/AdGuardHome_v0.9_linux_amd64.tar.gz"
-            download_linux_386:
-                type: "string"
-                example: "https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.9/AdGuardHome_v0.9_linux_386.tar.gz"
-            download_linux_arm:
-                type: "string"
-                example: "https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.9/AdGuardHome_v0.9_linux_arm.tar.gz"
-            selfupdate_min_version:
-                type: "string"
-                example: "v0.0"
+            can_autoupdate:
+                type: "boolean"
     Stats:
         type: "object"
         description: "General server stats for the last 24 hours"

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -30,6 +31,7 @@ var httpsServer struct {
 	server     *http.Server
 	cond       *sync.Cond // reacts to config.TLS.Enabled, PortHTTPS, CertificateChain and PrivateKey
 	sync.Mutex            // protects config.TLS
+	shutdown   bool       // if TRUE, don't restart the server
 }
 var pidFileName string // PID file name.  Empty if no PID file was created.
 
@@ -76,6 +78,7 @@ func run(args options) {
 	if args.runningAsService {
 		log.Info("AdGuard Home is running as a service")
 	}
+	config.runningAsService = args.runningAsService
 
 	config.firstRun = detectFirstRun()
 	if config.firstRun {
@@ -91,16 +94,22 @@ func run(args options) {
 		os.Exit(0)
 	}()
 
-	// Do the upgrade if necessary
-	err := upgradeConfig()
-	if err != nil {
-		log.Fatal(err)
-	}
+	if !config.firstRun {
+		// Do the upgrade if necessary
+		err := upgradeConfig()
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	// parse from config file
-	err = parseConfig()
-	if err != nil {
-		log.Fatal(err)
+		err = parseConfig()
+		if err != nil {
+			os.Exit(1)
+		}
+
+		if args.checkConfig {
+			log.Info("Configuration file is OK")
+			os.Exit(0)
+		}
 	}
 
 	if (runtime.GOOS == "linux" || runtime.GOOS == "darwin") &&
@@ -118,10 +127,12 @@ func run(args options) {
 
 	loadFilters()
 
-	// Save the updated config
-	err = config.write()
-	if err != nil {
-		log.Fatal(err)
+	if !config.firstRun {
+		// Save the updated config
+		err := config.write()
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	// Init the DNS server instance before registering HTTP handlers
@@ -129,7 +140,7 @@ func run(args options) {
 	initDNSServer(dnsBaseDir)
 
 	if !config.firstRun {
-		err = startDNSServer()
+		err := startDNSServer()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -171,7 +182,7 @@ func run(args options) {
 	go httpServerLoop()
 
 	// this loop is used as an ability to change listening host and/or port
-	for {
+	for !httpsServer.shutdown {
 		printHTTPAddresses("http")
 
 		// we need to have new instance, because after Shutdown() the Server is not usable
@@ -186,10 +197,13 @@ func run(args options) {
 		}
 		// We use ErrServerClosed as a sign that we need to rebind on new address, so go back to the start of the loop
 	}
+
+	// wait indefinitely for other go-routines to complete their job
+	select {}
 }
 
 func httpServerLoop() {
-	for {
+	for !httpsServer.shutdown {
 		httpsServer.cond.L.Lock()
 		// this mechanism doesn't let us through until all conditions are met
 		for config.TLS.Enabled == false ||
@@ -367,6 +381,15 @@ func cleanup() {
 	}
 }
 
+// Stop HTTP server, possibly waiting for all active connections to be closed
+func stopHTTPServer() {
+	httpsServer.shutdown = true
+	if httpsServer.server != nil {
+		httpsServer.server.Shutdown(context.TODO())
+	}
+	httpServer.Shutdown(context.TODO())
+}
+
 // This function is called before application exits
 func cleanupAlways() {
 	if len(pidFileName) != 0 {
@@ -384,6 +407,7 @@ type options struct {
 	bindPort       int    // port to serve HTTP pages on
 	logFile        string // Path to the log file. If empty, write to stdout. If "syslog", writes to syslog
 	pidFile        string // File name to save PID to
+	checkConfig    bool   // Check configuration and exit
 
 	// service control action (see service.ControlAction array + "status" command)
 	serviceControlAction string
@@ -404,25 +428,26 @@ func loadOptions() options {
 		callbackWithValue func(value string)
 		callbackNoValue   func()
 	}{
-		{"config", "c", "path to the config file", func(value string) { o.configFilename = value }, nil},
-		{"work-dir", "w", "path to the working directory", func(value string) { o.workDir = value }, nil},
-		{"host", "h", "host address to bind HTTP server on", func(value string) { o.bindHost = value }, nil},
-		{"port", "p", "port to serve HTTP pages on", func(value string) {
+		{"config", "c", "Path to the config file", func(value string) { o.configFilename = value }, nil},
+		{"work-dir", "w", "Path to the working directory", func(value string) { o.workDir = value }, nil},
+		{"host", "h", "Host address to bind HTTP server on", func(value string) { o.bindHost = value }, nil},
+		{"port", "p", "Port to serve HTTP pages on", func(value string) {
 			v, err := strconv.Atoi(value)
 			if err != nil {
 				panic("Got port that is not a number")
 			}
 			o.bindPort = v
 		}, nil},
-		{"service", "s", "service control action: status, install, uninstall, start, stop, restart", func(value string) {
+		{"service", "s", "Service control action: status, install, uninstall, start, stop, restart", func(value string) {
 			o.serviceControlAction = value
 		}, nil},
-		{"logfile", "l", "path to the log file. If empty, writes to stdout, if 'syslog' -- system log", func(value string) {
+		{"logfile", "l", "Path to log file. If empty: write to stdout; if 'syslog': write to system log", func(value string) {
 			o.logFile = value
 		}, nil},
-		{"pidfile", "", "File name to save PID to", func(value string) { o.pidFile = value }, nil},
-		{"verbose", "v", "enable verbose output", nil, func() { o.verbose = true }},
-		{"help", "", "print this help", nil, func() {
+		{"pidfile", "", "Path to a file where PID is stored", func(value string) { o.pidFile = value }, nil},
+		{"check-config", "", "Check configuration and exit", nil, func() { o.checkConfig = true }},
+		{"verbose", "v", "Enable verbose output", nil, func() { o.verbose = true }},
+		{"help", "", "Print this help", nil, func() {
 			printHelp()
 			os.Exit(64)
 		}},
@@ -432,10 +457,14 @@ func loadOptions() options {
 		fmt.Printf("%s [options]\n\n", os.Args[0])
 		fmt.Printf("Options:\n")
 		for _, opt := range opts {
+			val := ""
+			if opt.callbackWithValue != nil {
+				val = " VALUE"
+			}
 			if opt.shortName != "" {
-				fmt.Printf("  -%s, %-30s %s\n", opt.shortName, "--"+opt.longName, opt.description)
+				fmt.Printf("  -%s, %-30s %s\n", opt.shortName, "--"+opt.longName+val, opt.description)
 			} else {
-				fmt.Printf("  %-34s %s\n", "--"+opt.longName, opt.description)
+				fmt.Printf("  %-34s %s\n", "--"+opt.longName+val, opt.description)
 			}
 		}
 	}

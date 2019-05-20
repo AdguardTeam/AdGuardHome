@@ -2,15 +2,17 @@ import { createAction } from 'redux-actions';
 import round from 'lodash/round';
 import { t } from 'i18next';
 import { showLoading, hideLoading } from 'react-redux-loading-bar';
+import axios from 'axios';
 
 import { normalizeHistory, normalizeFilteringStatus, normalizeLogs, normalizeTextarea } from '../helpers/helpers';
-import { SETTINGS_NAMES } from '../helpers/constants';
+import { SETTINGS_NAMES, CHECK_TIMEOUT } from '../helpers/constants';
 import Api from '../api/Api';
 
 const apiClient = new Api();
 
 export const addErrorToast = createAction('ADD_ERROR_TOAST');
 export const addSuccessToast = createAction('ADD_SUCCESS_TOAST');
+export const addNoticeToast = createAction('ADD_NOTICE_TOAST');
 export const removeToast = createAction('REMOVE_TOAST');
 
 export const toggleSettingStatus = createAction('SETTING_STATUS_TOGGLE');
@@ -151,6 +153,56 @@ export const getVersion = () => async (dispatch) => {
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(getVersionFailure());
+    }
+};
+
+export const getUpdateRequest = createAction('GET_UPDATE_REQUEST');
+export const getUpdateFailure = createAction('GET_UPDATE_FAILURE');
+export const getUpdateSuccess = createAction('GET_UPDATE_SUCCESS');
+
+export const getUpdate = () => async (dispatch) => {
+    dispatch(getUpdateRequest());
+    try {
+        await apiClient.getUpdate();
+
+        const checkUpdate = async (attempts) => {
+            let count = attempts || 1;
+            let timeout;
+
+            if (count > 60) {
+                dispatch(addNoticeToast({ error: 'update_failed' }));
+                dispatch(getUpdateFailure());
+                return false;
+            }
+
+            const rmTimeout = t => t && clearTimeout(t);
+            const setRecursiveTimeout = (time, ...args) => setTimeout(
+                checkUpdate,
+                time,
+                ...args,
+            );
+
+            axios.get('control/status')
+                .then((response) => {
+                    rmTimeout(timeout);
+                    if (response) {
+                        dispatch(getUpdateSuccess());
+                        window.location.reload(true);
+                    }
+                    timeout = setRecursiveTimeout(CHECK_TIMEOUT, count += 1);
+                })
+                .catch(() => {
+                    rmTimeout(timeout);
+                    timeout = setRecursiveTimeout(CHECK_TIMEOUT, count += 1);
+                });
+
+            return false;
+        };
+
+        checkUpdate();
+    } catch (error) {
+        dispatch(addNoticeToast({ error: 'update_failed' }));
+        dispatch(getUpdateFailure());
     }
 };
 

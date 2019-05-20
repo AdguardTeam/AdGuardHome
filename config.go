@@ -30,9 +30,15 @@ type logSettings struct {
 // configuration is loaded from YAML
 // field ordering is important -- yaml fields will mirror ordering from here
 type configuration struct {
+	// Raw file data to avoid re-reading of configuration file
+	// It's reset after config is parsed
+	fileData []byte
+
 	ourConfigFilename string // Config filename (can be overridden via the command line arguments)
 	ourWorkingDir     string // Location of our directory, used to protect against CWD being somewhere else
 	firstRun          bool   // if set to true, don't run any services except HTTP web inteface, and serve only first-run html
+	// runningAsService flag is set to true when options are passed from the service runner
+	runningAsService bool
 
 	BindHost     string `yaml:"bind_host"`     // BindHost is the IP address of the HTTP server to bind to
 	BindPort     int    `yaml:"bind_port"`     // BindPort is the port the HTTP server
@@ -113,10 +119,10 @@ var config = configuration{
 		BindHost: "0.0.0.0",
 		Port:     53,
 		FilteringConfig: dnsforward.FilteringConfig{
-			ProtectionEnabled:  true, // whether or not use any of dnsfilter features
-			FilteringEnabled:   true, // whether or not use filter lists
+			ProtectionEnabled:  true,       // whether or not use any of dnsfilter features
+			FilteringEnabled:   true,       // whether or not use filter lists
 			BlockingMode:       "nxdomain", // mode how to answer filtered requests
-			BlockedResponseTTL: 10,   // in seconds
+			BlockedResponseTTL: 10,         // in seconds
 			QueryLogEnabled:    true,
 			Ratelimit:          20,
 			RefuseAny:          true,
@@ -174,7 +180,7 @@ func (c *configuration) getConfigFilename() string {
 func getLogSettings() logSettings {
 	l := logSettings{}
 	yamlFile, err := readConfigFile()
-	if err != nil || yamlFile == nil {
+	if err != nil {
 		return l
 	}
 	err = yaml.Unmarshal(yamlFile, &l)
@@ -190,13 +196,9 @@ func parseConfig() error {
 	log.Debug("Reading config file: %s", configFile)
 	yamlFile, err := readConfigFile()
 	if err != nil {
-		log.Error("Couldn't read config file: %s", err)
 		return err
 	}
-	if yamlFile == nil {
-		log.Error("YAML file doesn't exist, skipping it")
-		return nil
-	}
+	config.fileData = nil
 	err = yaml.Unmarshal(yamlFile, &config)
 	if err != nil {
 		log.Error("Couldn't parse config file: %s", err)
@@ -213,22 +215,23 @@ func parseConfig() error {
 
 // readConfigFile reads config file contents if it exists
 func readConfigFile() ([]byte, error) {
-	configFile := config.getConfigFilename()
-	if _, err := os.Stat(configFile); os.IsNotExist(err) {
-		// do nothing, file doesn't exist
-		return nil, nil
+	if len(config.fileData) != 0 {
+		return config.fileData, nil
 	}
-	return ioutil.ReadFile(configFile)
+
+	configFile := config.getConfigFilename()
+	d, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		log.Error("Couldn't read config file %s: %s", configFile, err)
+		return nil, err
+	}
+	return d, nil
 }
 
 // Saves configuration to the YAML file and also saves the user filter contents to a file
 func (c *configuration) write() error {
 	c.Lock()
 	defer c.Unlock()
-	if config.firstRun {
-		log.Debug("Silently refusing to write config because first run and not configured yet")
-		return nil
-	}
 	configFile := config.getConfigFilename()
 	log.Debug("Writing YAML file: %s", configFile)
 	yamlText, err := yaml.Marshal(&config)

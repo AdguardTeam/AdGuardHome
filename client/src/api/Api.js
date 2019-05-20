@@ -40,6 +40,8 @@ export default class Api {
     GLOBAL_ENABLE_PROTECTION = { path: 'enable_protection', method: 'POST' };
     GLOBAL_DISABLE_PROTECTION = { path: 'disable_protection', method: 'POST' };
     GLOBAL_CLIENTS = { path: 'clients', method: 'GET' }
+    GLOBAL_CLIENTS = { path: 'clients', method: 'GET' };
+    GLOBAL_UPDATE = { path: 'update', method: 'POST' };
 
     restartGlobalFiltering() {
         const { path, method } = this.GLOBAL_RESTART;
@@ -142,6 +144,11 @@ export default class Api {
 
     getGlobalClients() {
         const { path, method } = this.GLOBAL_CLIENTS;
+        return this.makeRequest(path, method);
+    }
+
+    getUpdate() {
+        const { path, method } = this.GLOBAL_UPDATE;
         return this.makeRequest(path, method);
     }
 

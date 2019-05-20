@@ -1,7 +1,7 @@
 import { handleActions } from 'redux-actions';
 import nanoid from 'nanoid';
 
-import { addErrorToast, addSuccessToast, removeToast } from '../actions';
+import { addErrorToast, addSuccessToast, addNoticeToast, removeToast } from '../actions';
 
 const toasts = handleActions({
     [addErrorToast]: (state, { payload }) => {
@@ -22,6 +22,16 @@ const toasts = handleActions({
         };
 
         const newState = { ...state, notices: [...state.notices, successToast] };
+        return newState;
+    },
+    [addNoticeToast]: (state, { payload }) => {
+        const noticeToast = {
+            id: nanoid(),
+            message: payload.error.toString(),
+            type: 'notice',
+        };
+
+        const newState = { ...state, notices: [...state.notices, noticeToast] };
         return newState;
     },
     [removeToast]: (state, { payload }) => {

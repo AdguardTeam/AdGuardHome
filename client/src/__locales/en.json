@@ -260,5 +260,8 @@
     "dns_addresses": "DNS addresses",
     "down": "Down",
     "fix": "Fix",
-    "dns_providers": "Here is a <0>list of known DNS providers</0> to choose from."
+    "dns_providers": "Here is a <0>list of known DNS providers</0> to choose from.",
+    "update_now": "Update now",
+    "update_failed": "Auto-update failed. Please <a href='https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#update'>follow the steps<\/a> to update manually.",
+    "processing_update": "Please wait, AdGuard Home is being updated"
 }

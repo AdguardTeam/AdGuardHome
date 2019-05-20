@@ -126,18 +126,29 @@ const dashboard = handleActions({
             const {
                 version,
                 announcement_url: announcementUrl,
+                new_version: newVersion,
+                can_autoupdate: canAutoUpdate,
             } = payload;
 
             const newState = {
                 ...state,
                 version,
                 announcementUrl,
+                newVersion,
+                canAutoUpdate,
                 isUpdateAvailable: true,
             };
             return newState;
         }
 
         return state;
+    },
+
+    [actions.getUpdateRequest]: state => ({ ...state, processingUpdate: true }),
+    [actions.getUpdateFailure]: state => ({ ...state, processingUpdate: false }),
+    [actions.getUpdateSuccess]: (state) => {
+        const newState = { ...state, processingUpdate: false };
+        return newState;
     },
 
     [actions.getFilteringRequest]: state => ({ ...state, processingFiltering: true }),
@@ -187,6 +198,7 @@ const dashboard = handleActions({
     processingVersion: true,
     processingFiltering: true,
     processingClients: true,
+    processingUpdate: false,
     upstreamDns: '',
     bootstrapDns: '',
     allServers: false,
