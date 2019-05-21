@@ -88,6 +88,7 @@ type ServerConfig struct {
 	Upstreams                []upstream.Upstream            // Configured upstreams
 	DomainsReservedUpstreams map[string][]upstream.Upstream // Map of domains and lists of configured upstreams
 	Filters                  []dnsfilter.Filter             // A list of filters to use
+	OnDNSRequest             func(d *proxy.DNSContext)
 
 	FilteringConfig
 	TLSConfig
@@ -323,6 +324,10 @@ func (s *Server) GetStatsHistory(timeUnit time.Duration, startTime time.Time, en
 // handleDNSRequest filters the incoming DNS requests and writes them to the query log
 func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 	start := time.Now()
+
+	if s.conf.OnDNSRequest != nil {
+		s.conf.OnDNSRequest(d)
+	}
 
 	// use dnsfilter before cache -- changed settings or filters would require cache invalidation otherwise
 	res, err := s.filterDNSRequest(d)
