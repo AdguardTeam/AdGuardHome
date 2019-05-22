@@ -197,7 +197,6 @@ class Clients extends Component {
                     <ReactTable
                         data={clients || []}
                         columns={this.columns}
-                        noDataText={t('dhcp_leases_not_found')}
                         className="-striped -highlight card-table-overflow"
                         showPagination={true}
                         defaultPageSize={10}
@@ -209,6 +208,7 @@ class Clients extends Component {
                         pageText={t('page_table_footer_text')}
                         ofText={t('of_table_footer_text')}
                         rowsText={t('rows_table_footer_text')}
+                        noDataText={t('clients_not_found')}
                     />
                     <button
                         type="button"
