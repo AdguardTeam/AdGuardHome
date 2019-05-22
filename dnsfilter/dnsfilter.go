@@ -19,6 +19,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/bluele/gcache"
+	"github.com/miekg/dns"
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -147,7 +148,7 @@ func (r Reason) Matched() bool {
 }
 
 // CheckHost tries to match host against rules, then safebrowsing and parental if they are enabled
-func (d *Dnsfilter) CheckHost(host string) (Result, error) {
+func (d *Dnsfilter) CheckHost(host string, qtype uint16) (Result, error) {
 	// sometimes DNS clients will try to resolve ".", which is a request to get root servers
 	if host == "" {
 		return Result{Reason: NotFilteredNotFound}, nil
@@ -159,7 +160,7 @@ func (d *Dnsfilter) CheckHost(host string) (Result, error) {
 	}
 
 	// try filter lists first
-	result, err := d.matchHost(host)
+	result, err := d.matchHost(host, qtype)
 	if err != nil {
 		return result, err
 	}
@@ -517,7 +518,7 @@ func (d *Dnsfilter) initFiltering(filters map[int]string) error {
 }
 
 // matchHost is a low-level way to check only if hostname is filtered by rules, skipping expensive safebrowsing and parental lookups
-func (d *Dnsfilter) matchHost(host string) (Result, error) {
+func (d *Dnsfilter) matchHost(host string, qtype uint16) (Result, error) {
 	if d.filteringEngine == nil {
 		return Result{}, nil
 	}
@@ -526,6 +527,8 @@ func (d *Dnsfilter) matchHost(host string) (Result, error) {
 	if !ok {
 		return Result{}, nil
 	}
+
+	log.Tracef("%d rules matched for host '%s'", len(rules), host)
 
 	for _, rule := range rules {
 
@@ -548,8 +551,15 @@ func (d *Dnsfilter) matchHost(host string) (Result, error) {
 
 		} else if hostRule, ok := rule.(*urlfilter.HostRule); ok {
 
-			res.IP = hostRule.IP
-			return res, nil
+			if qtype == dns.TypeA && hostRule.IP.To4() != nil {
+				// either IPv4 or IPv4-mapped IPv6 address
+				res.IP = hostRule.IP.To4()
+				return res, nil
+			} else if qtype == dns.TypeAAAA && hostRule.IP.To4() == nil {
+				res.IP = hostRule.IP
+				return res, nil
+			}
+			continue
 
 		} else {
 			log.Tracef("Rule type is unsupported: '%s'  list_id: %d",
