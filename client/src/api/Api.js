@@ -409,4 +409,42 @@ export default class Api {
         };
         return this.makeRequest(path, method, parameters);
     }
+
+    // Per-client settings
+    GET_CLIENTS = { path: 'clients', method: 'GET' }
+    ADD_CLIENT = { path: 'clients/add', method: 'POST' }
+    DELETE_CLIENT = { path: 'clients/delete', method: 'POST' }
+    UPDATE_CLIENT = { path: 'clients/update', method: 'POST' }
+
+    getClients() {
+        const { path, method } = this.GET_CLIENTS;
+        return this.makeRequest(path, method);
+    }
+
+    addClient(config) {
+        const { path, method } = this.ADD_CLIENT;
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, parameters);
+    }
+
+    deleteClient(config) {
+        const { path, method } = this.DELETE_CLIENT;
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, parameters);
+    }
+
+    updateClient(config) {
+        const { path, method } = this.UPDATE_CLIENT;
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, parameters);
+    }
 }

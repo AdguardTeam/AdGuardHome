@@ -4,6 +4,7 @@ import { withNamespaces, Trans } from 'react-i18next';
 import Upstream from './Upstream';
 import Dhcp from './Dhcp';
 import Encryption from './Encryption';
+import Clients from './Clients';
 import Checkbox from '../ui/Checkbox';
 import Loading from '../ui/Loading';
 import PageTitle from '../ui/PageTitle';
@@ -46,29 +47,38 @@ class Settings extends Component {
             return Object.keys(settings).map((key) => {
                 const setting = settings[key];
                 const { enabled } = setting;
-                return (<Checkbox
-                    key={key}
-                    {...settings[key]}
-                    handleChange={() => this.props.toggleSetting(key, enabled)}
-                    />);
+                return (
+                    <Checkbox
+                        key={key}
+                        {...settings[key]}
+                        handleChange={() => this.props.toggleSetting(key, enabled)}
+                    />
+                );
             });
         }
         return (
-            <div><Trans>no_settings</Trans></div>
+            <div>
+                <Trans>no_settings</Trans>
+            </div>
         );
-    }
+    };
 
     render() {
-        const { settings, dashboard, t } = this.props;
+        const {
+            settings, dashboard, clients, t,
+        } = this.props;
         return (
             <Fragment>
-                <PageTitle title={ t('settings') } />
+                <PageTitle title={t('settings')} />
                 {settings.processing && <Loading />}
-                {!settings.processing &&
+                {!settings.processing && (
                     <div className="content">
                         <div className="row">
                             <div className="col-md-12">
-                                <Card title={ t('general_settings') } bodyType="card-body box-body--settings">
+                                <Card
+                                    title={t('general_settings')}
+                                    bodyType="card-body box-body--settings"
+                                >
                                     <div className="form">
                                         {this.renderSettings(settings.settingsList)}
                                     </div>
@@ -82,6 +92,22 @@ class Settings extends Component {
                                     processingTestUpstream={settings.processingTestUpstream}
                                     processingSetUpstream={settings.processingSetUpstream}
                                 />
+                                {!dashboard.processingTopStats && !dashboard.processingClients && (
+                                    <Clients
+                                        clients={dashboard.clients}
+                                        topStats={dashboard.topStats}
+                                        isModalOpen={clients.isModalOpen}
+                                        modalClientName={clients.modalClientName}
+                                        modalType={clients.modalType}
+                                        addClient={this.props.addClient}
+                                        updateClient={this.props.updateClient}
+                                        deleteClient={this.props.deleteClient}
+                                        toggleClientModal={this.props.toggleClientModal}
+                                        processingAdding={clients.processingAdding}
+                                        processingDeleting={clients.processingDeleting}
+                                        processingUpdating={clients.processingUpdating}
+                                    />
+                                )}
                                 <Encryption
                                     encryption={this.props.encryption}
                                     setTlsConfig={this.props.setTlsConfig}
@@ -97,7 +123,7 @@ class Settings extends Component {
                             </div>
                         </div>
                     </div>
-                }
+                )}
             </Fragment>
         );
     }

@@ -4,7 +4,7 @@ import { t } from 'i18next';
 import { showLoading, hideLoading } from 'react-redux-loading-bar';
 import axios from 'axios';
 
-import { normalizeHistory, normalizeFilteringStatus, normalizeLogs, normalizeTextarea } from '../helpers/helpers';
+import { normalizeHistory, normalizeFilteringStatus, normalizeLogs, normalizeTextarea, sortClients } from '../helpers/helpers';
 import { SETTINGS_NAMES, CHECK_TIMEOUT } from '../helpers/constants';
 import Api from '../api/Api';
 
@@ -213,12 +213,34 @@ export const getClientsSuccess = createAction('GET_CLIENTS_SUCCESS');
 export const getClients = () => async (dispatch) => {
     dispatch(getClientsRequest());
     try {
-        const clients = await apiClient.getGlobalClients();
-        dispatch(getClientsSuccess(clients));
+        const clients = await apiClient.getClients();
+        const sortedClients = sortClients(clients);
+        dispatch(getClientsSuccess(sortedClients));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(getClientsFailure());
     }
+};
+
+export const getTopStatsRequest = createAction('GET_TOP_STATS_REQUEST');
+export const getTopStatsFailure = createAction('GET_TOP_STATS_FAILURE');
+export const getTopStatsSuccess = createAction('GET_TOP_STATS_SUCCESS');
+
+export const getTopStats = () => async (dispatch, getState) => {
+    dispatch(getTopStatsRequest());
+    const timer = setInterval(async () => {
+        const state = getState();
+        if (state.dashboard.isCoreRunning) {
+            clearInterval(timer);
+            try {
+                const stats = await apiClient.getGlobalStatsTop();
+                dispatch(getTopStatsSuccess(stats));
+            } catch (error) {
+                dispatch(addErrorToast({ error }));
+                dispatch(getTopStatsFailure(error));
+            }
+        }
+    }, 100);
 };
 
 export const dnsStatusRequest = createAction('DNS_STATUS_REQUEST');
@@ -232,6 +254,7 @@ export const getDnsStatus = () => async (dispatch) => {
         dispatch(dnsStatusSuccess(dnsStatus));
         dispatch(getVersion());
         dispatch(getClients());
+        dispatch(getTopStats());
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(initSettingsFailure());
@@ -287,27 +310,6 @@ export const getStats = () => async (dispatch) => {
         dispatch(addErrorToast({ error }));
         dispatch(getStatsFailure());
     }
-};
-
-export const getTopStatsRequest = createAction('GET_TOP_STATS_REQUEST');
-export const getTopStatsFailure = createAction('GET_TOP_STATS_FAILURE');
-export const getTopStatsSuccess = createAction('GET_TOP_STATS_SUCCESS');
-
-export const getTopStats = () => async (dispatch, getState) => {
-    dispatch(getTopStatsRequest());
-    const timer = setInterval(async () => {
-        const state = getState();
-        if (state.dashboard.isCoreRunning) {
-            clearInterval(timer);
-            try {
-                const stats = await apiClient.getGlobalStatsTop();
-                dispatch(getTopStatsSuccess(stats));
-            } catch (error) {
-                dispatch(addErrorToast({ error }));
-                dispatch(getTopStatsFailure(error));
-            }
-        }
-    }, 100);
 };
 
 export const getLogsRequest = createAction('GET_LOGS_REQUEST');

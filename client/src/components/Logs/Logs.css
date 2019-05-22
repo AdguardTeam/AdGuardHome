@@ -5,6 +5,10 @@
     min-height: 26px;
 }
 
+.logs__row--center {
+    justify-content: center;
+}
+
 .logs__row--overflow {
     overflow: hidden;
 }

@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react';
 import { Trans } from 'react-i18next';
 
-import { R_IPV4, UNSAFE_PORTS } from '../helpers/constants';
+import { R_IPV4, R_MAC, UNSAFE_PORTS } from '../helpers/constants';
 
 export const renderField = ({
     input, id, className, placeholder, type, disabled, meta: { touched, error },
@@ -51,6 +51,13 @@ export const required = (value) => {
 export const ipv4 = (value) => {
     if (value && !new RegExp(R_IPV4).test(value)) {
         return <Trans>form_error_ip_format</Trans>;
+    }
+    return false;
+};
+
+export const mac = (value) => {
+    if (value && !new RegExp(R_MAC).test(value)) {
+        return <Trans>form_error_mac_format</Trans>;
     }
     return false;
 };
