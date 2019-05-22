@@ -213,15 +213,14 @@ export const sortClients = (clients) => {
     const compare = (a, b) => {
         const nameA = a.name.toUpperCase();
         const nameB = b.name.toUpperCase();
-        let comparison = 0;
 
         if (nameA > nameB) {
-            comparison = 1;
+            return 1;
         } else if (nameA < nameB) {
-            comparison = -1;
+            return -1;
         }
 
-        return comparison;
+        return 0;
     };
 
     return clients.sort(compare);
