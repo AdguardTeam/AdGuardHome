@@ -9,6 +9,8 @@ import (
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/miekg/dns"
 )
 
 // HELPERS
@@ -50,7 +52,7 @@ func NewForTestFilters(filters map[int]string) *Dnsfilter {
 
 func (d *Dnsfilter) checkMatch(t *testing.T, hostname string) {
 	t.Helper()
-	ret, err := d.CheckHost(hostname)
+	ret, err := d.CheckHost(hostname, dns.TypeA)
 	if err != nil {
 		t.Errorf("Error while matching host %s: %s", hostname, err)
 	}
@@ -59,9 +61,9 @@ func (d *Dnsfilter) checkMatch(t *testing.T, hostname string) {
 	}
 }
 
-func (d *Dnsfilter) checkMatchIP(t *testing.T, hostname string, ip string) {
+func (d *Dnsfilter) checkMatchIP(t *testing.T, hostname string, ip string, qtype uint16) {
 	t.Helper()
-	ret, err := d.CheckHost(hostname)
+	ret, err := d.CheckHost(hostname, qtype)
 	if err != nil {
 		t.Errorf("Error while matching host %s: %s", hostname, err)
 	}
@@ -75,7 +77,7 @@ func (d *Dnsfilter) checkMatchIP(t *testing.T, hostname string, ip string) {
 
 func (d *Dnsfilter) checkMatchEmpty(t *testing.T, hostname string) {
 	t.Helper()
-	ret, err := d.CheckHost(hostname)
+	ret, err := d.CheckHost(hostname, dns.TypeA)
 	if err != nil {
 		t.Errorf("Error while matching host %s: %s", hostname, err)
 	}
@@ -86,16 +88,25 @@ func (d *Dnsfilter) checkMatchEmpty(t *testing.T, hostname string) {
 
 func TestEtcHostsMatching(t *testing.T) {
 	addr := "216.239.38.120"
-	text := fmt.Sprintf("   %s  google.com www.google.com   # enforce google's safesearch   ", addr)
+	addr6 := "::1"
+	text := fmt.Sprintf("   %s  google.com www.google.com   # enforce google's safesearch   \n%s  google.com\n0.0.0.0 block.com\n",
+		addr, addr6)
 	filters := make(map[int]string)
 	filters[0] = text
 	d := NewForTestFilters(filters)
 	defer d.Destroy()
 
-	d.checkMatchIP(t, "google.com", addr)
-	d.checkMatchIP(t, "www.google.com", addr)
+	d.checkMatchIP(t, "google.com", addr, dns.TypeA)
+	d.checkMatchIP(t, "www.google.com", addr, dns.TypeA)
 	d.checkMatchEmpty(t, "subdomain.google.com")
 	d.checkMatchEmpty(t, "example.org")
+
+	// IPv6 address
+	d.checkMatchIP(t, "google.com", addr6, dns.TypeAAAA)
+
+	// block both IPv4 and IPv6
+	d.checkMatchIP(t, "block.com", "0.0.0.0", dns.TypeA)
+	d.checkMatchIP(t, "block.com", "::", dns.TypeAAAA)
 }
 
 // SAFE BROWSING
@@ -201,7 +212,7 @@ func TestCheckHostSafeSearchYandex(t *testing.T) {
 
 	// Check host for each domain
 	for _, host := range yandex {
-		result, err := d.CheckHost(host)
+		result, err := d.CheckHost(host, dns.TypeA)
 		if err != nil {
 			t.Errorf("SafeSearch doesn't work for yandex domain `%s` cause %s", host, err)
 		}
@@ -224,7 +235,7 @@ func TestCheckHostSafeSearchGoogle(t *testing.T) {
 
 	// Check host for each domain
 	for _, host := range googleDomains {
-		result, err := d.CheckHost(host)
+		result, err := d.CheckHost(host, dns.TypeA)
 		if err != nil {
 			t.Errorf("SafeSearch doesn't work for %s cause %s", host, err)
 		}
@@ -244,7 +255,7 @@ func TestSafeSearchCacheYandex(t *testing.T) {
 	var err error
 
 	// Check host with disabled safesearch
-	result, err = d.CheckHost(domain)
+	result, err = d.CheckHost(domain, dns.TypeA)
 	if err != nil {
 		t.Fatalf("Cannot check host due to %s", err)
 	}
@@ -254,7 +265,7 @@ func TestSafeSearchCacheYandex(t *testing.T) {
 
 	// Enable safesearch
 	d.SafeSearchEnabled = true
-	result, err = d.CheckHost(domain)
+	result, err = d.CheckHost(domain, dns.TypeA)
 	if err != nil {
 		t.Fatalf("CheckHost for safesearh domain %s failed cause %s", domain, err)
 	}
@@ -284,7 +295,7 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 	d := NewForTest()
 	defer d.Destroy()
 	domain := "www.google.ru"
-	result, err := d.CheckHost(domain)
+	result, err := d.CheckHost(domain, dns.TypeA)
 	if err != nil {
 		t.Fatalf("Cannot check host due to %s", err)
 	}
@@ -313,7 +324,7 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 		}
 	}
 
-	result, err = d.CheckHost(domain)
+	result, err = d.CheckHost(domain, dns.TypeA)
 	if err != nil {
 		t.Fatalf("CheckHost for safesearh domain %s failed cause %s", domain, err)
 	}
@@ -430,7 +441,7 @@ func TestMatching(t *testing.T) {
 			d := NewForTestFilters(filters)
 			defer d.Destroy()
 
-			ret, err := d.CheckHost(test.hostname)
+			ret, err := d.CheckHost(test.hostname, dns.TypeA)
 			if err != nil {
 				t.Errorf("Error while matching host %s: %s", test.hostname, err)
 			}
@@ -452,7 +463,7 @@ func BenchmarkSafeBrowsing(b *testing.B) {
 	d.SafeBrowsingEnabled = true
 	for n := 0; n < b.N; n++ {
 		hostname := "wmconvirus.narod.ru"
-		ret, err := d.CheckHost(hostname)
+		ret, err := d.CheckHost(hostname, dns.TypeA)
 		if err != nil {
 			b.Errorf("Error while matching host %s: %s", hostname, err)
 		}
@@ -469,7 +480,7 @@ func BenchmarkSafeBrowsingParallel(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			hostname := "wmconvirus.narod.ru"
-			ret, err := d.CheckHost(hostname)
+			ret, err := d.CheckHost(hostname, dns.TypeA)
 			if err != nil {
 				b.Errorf("Error while matching host %s: %s", hostname, err)
 			}
