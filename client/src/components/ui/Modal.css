@@ -5,7 +5,7 @@
     overflow-x: hidden;
     overflow-y: auto;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 105;
+    z-index: 104;
 }
 
 .ReactModal__Overlay--after-open {

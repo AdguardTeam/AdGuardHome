@@ -32,7 +32,6 @@ export const addClient = config => async (dispatch) => {
         dispatch(addSuccessToast(t('client_added', { key: config.name })));
         dispatch(getClients());
     } catch (error) {
-        dispatch(toggleClientModal());
         dispatch(addErrorToast({ error }));
         dispatch(addClientFailure());
     }
@@ -79,7 +78,6 @@ export const updateClient = (config, name) => async (dispatch) => {
         dispatch(addSuccessToast(t('client_updated', { key: name })));
         dispatch(getClients());
     } catch (error) {
-        dispatch(toggleClientModal());
         dispatch(addErrorToast({ error }));
         dispatch(updateClientFailure());
     }

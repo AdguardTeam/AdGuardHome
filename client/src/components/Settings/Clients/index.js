@@ -59,6 +59,13 @@ class Clients extends Component {
         return '';
     };
 
+    handleDelete = (data) => {
+        // eslint-disable-next-line no-alert
+        if (window.confirm(this.props.t('client_confirm_delete', { key: data.name }))) {
+            this.props.deleteClient(data);
+        }
+    }
+
     columns = [
         {
             Header: this.props.t('table_client'),
@@ -136,7 +143,6 @@ class Clients extends Component {
                 const clientName = row.original.name;
                 const {
                     toggleClientModal,
-                    deleteClient,
                     processingDeleting,
                     processingUpdating,
                 } = this.props;
@@ -159,7 +165,7 @@ class Clients extends Component {
                         <button
                             type="button"
                             className="btn btn-outline-secondary btn-sm"
-                            onClick={() => deleteClient({ name: clientName })}
+                            onClick={() => this.handleDelete({ name: clientName })}
                             disabled={processingDeleting}
                         >
                             <Trans>delete_table_action</Trans>

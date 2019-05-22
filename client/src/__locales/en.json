@@ -286,5 +286,6 @@
     "client_added":  "Client \"{{key}}\" successfully added",
     "client_updated":  "Client \"{{key}}\" successfully updated",
     "table_statistics": "Statistics (last 24 hours)",
-    "clients_not_found": "No clients found"
+    "clients_not_found": "No clients found",
+    "client_confirm_delete": "Are you sure you want to delete client \"{{key}}\"?"
 }
