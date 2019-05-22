@@ -93,8 +93,6 @@ class Clients extends Component {
         {
             Header: this.props.t('settings'),
             accessor: 'use_global_settings',
-            maxWidth: 180,
-            minWidth: 150,
             Cell: ({ value }) => {
                 const title = value ? (
                     <Trans>settings_global</Trans>
@@ -134,8 +132,6 @@ class Clients extends Component {
         {
             Header: this.props.t('actions_table_header'),
             accessor: 'actions',
-            maxWidth: 220,
-            minWidth: 150,
             Cell: (row) => {
                 const clientName = row.original.name;
                 const {
