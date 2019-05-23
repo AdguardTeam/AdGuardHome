@@ -54,6 +54,11 @@ class AutoClients extends Component {
             Cell: this.cellWrap,
         },
         {
+            Header: this.props.t('source_label'),
+            accessor: 'source',
+            Cell: this.cellWrap,
+        },
+        {
             Header: this.props.t('table_statistics'),
             accessor: 'statistics',
             Cell: (row) => {
