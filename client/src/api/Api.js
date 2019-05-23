@@ -39,8 +39,6 @@ export default class Api {
     GLOBAL_VERSION = { path: 'version.json', method: 'GET' };
     GLOBAL_ENABLE_PROTECTION = { path: 'enable_protection', method: 'POST' };
     GLOBAL_DISABLE_PROTECTION = { path: 'disable_protection', method: 'POST' };
-    GLOBAL_CLIENTS = { path: 'clients', method: 'GET' }
-    GLOBAL_CLIENTS = { path: 'clients', method: 'GET' };
     GLOBAL_UPDATE = { path: 'update', method: 'POST' };
 
     restartGlobalFiltering() {
@@ -139,11 +137,6 @@ export default class Api {
 
     disableGlobalProtection() {
         const { path, method } = this.GLOBAL_DISABLE_PROTECTION;
-        return this.makeRequest(path, method);
-    }
-
-    getGlobalClients() {
-        const { path, method } = this.GLOBAL_CLIENTS;
         return this.makeRequest(path, method);
     }
 
