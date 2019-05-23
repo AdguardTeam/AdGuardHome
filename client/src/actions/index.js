@@ -213,9 +213,14 @@ export const getClientsSuccess = createAction('GET_CLIENTS_SUCCESS');
 export const getClients = () => async (dispatch) => {
     dispatch(getClientsRequest());
     try {
-        const clients = await apiClient.getClients();
-        const sortedClients = sortClients(clients);
-        dispatch(getClientsSuccess(sortedClients));
+        const data = await apiClient.getClients();
+        const sortedClients = data.clients && sortClients(data.clients);
+        const sortedAutoClients = data.auto_clients && sortClients(data.auto_clients);
+
+        dispatch(getClientsSuccess({
+            clients: sortedClients || [],
+            autoClients: sortedAutoClients || [],
+        }));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(getClientsFailure());

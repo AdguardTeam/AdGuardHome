@@ -185,7 +185,8 @@ const dashboard = handleActions({
     [actions.getClientsSuccess]: (state, { payload }) => {
         const newState = {
             ...state,
-            clients: payload,
+            clients: payload.clients,
+            autoClients: payload.autoClients,
             processingClients: false,
         };
         return newState;
@@ -210,6 +211,7 @@ const dashboard = handleActions({
     dnsAddresses: [],
     dnsVersion: '',
     clients: [],
+    autoClients: [],
     topStats: [],
 });
 

@@ -24,7 +24,8 @@ class Clients extends Component {
         Header: 'IP',
         accessor: 'ip',
         Cell: ({ value }) => {
-            const clientName = getClientName(this.props.clients, value);
+            const clientName = getClientName(this.props.clients, value)
+                || getClientName(this.props.autoClients, value);
             let client;
 
             if (clientName) {
@@ -79,6 +80,7 @@ Clients.propTypes = {
     dnsQueries: PropTypes.number.isRequired,
     refreshButton: PropTypes.node.isRequired,
     clients: PropTypes.array.isRequired,
+    autoClients: PropTypes.array.isRequired,
     t: PropTypes.func,
 };
 

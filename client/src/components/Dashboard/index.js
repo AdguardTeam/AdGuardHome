@@ -96,6 +96,7 @@ class Dashboard extends Component {
                                         refreshButton={refreshButton}
                                         topClients={dashboard.topStats.top_clients}
                                         clients={dashboard.clients}
+                                        autoClients={dashboard.autoClients}
                                     />
                                 </div>
                                 <div className="col-lg-6">

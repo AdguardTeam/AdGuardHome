@@ -196,7 +196,8 @@ class Logs extends Component {
             Cell: (row) => {
                 const { reason } = row.original;
                 const isFiltered = row ? reason.indexOf('Filtered') === 0 : false;
-                const clientName = getClientName(dashboard.clients, row.value);
+                const clientName = getClientName(dashboard.clients, row.value)
+                    || getClientName(dashboard.autoClients, row.value);
                 let client;
 
                 if (clientName) {
