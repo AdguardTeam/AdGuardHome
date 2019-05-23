@@ -46,7 +46,7 @@ class Clients extends Component {
         }
 
         return {
-            identifier: 'ip',
+            identifier: CLIENT_ID.IP,
             use_global_settings: true,
         };
     };
@@ -71,19 +71,19 @@ class Clients extends Component {
             Header: this.props.t('table_client'),
             accessor: 'ip',
             Cell: (row) => {
-                if (row.value) {
-                    return (
-                        <div className="logs__row logs__row--overflow">
-                            <span className="logs__text" title={row.value}>
-                                {row.value} <em>(IP)</em>
-                            </span>
-                        </div>
-                    );
-                } else if (row.original && row.original.mac) {
+                if (row.original && row.original.mac) {
                     return (
                         <div className="logs__row logs__row--overflow">
                             <span className="logs__text" title={row.original.mac}>
                                 {row.original.mac} <em>(MAC)</em>
+                            </span>
+                        </div>
+                    );
+                } else if (row.value) {
+                    return (
+                        <div className="logs__row logs__row--overflow">
+                            <span className="logs__text" title={row.value}>
+                                {row.value} <em>(IP)</em>
                             </span>
                         </div>
                     );
