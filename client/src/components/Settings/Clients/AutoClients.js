@@ -34,42 +34,24 @@ class AutoClients extends Component {
         return '';
     };
 
+    cellWrap = ({ value }) => (
+        <div className="logs__row logs__row--overflow">
+            <span className="logs__text" title={value}>
+                {value}
+            </span>
+        </div>
+    );
+
     columns = [
         {
             Header: this.props.t('table_client'),
             accessor: 'ip',
-            Cell: (row) => {
-                if (row.value) {
-                    return (
-                        <div className="logs__row logs__row--overflow">
-                            <span className="logs__text" title={row.value}>
-                                {row.value} <em>(IP)</em>
-                            </span>
-                        </div>
-                    );
-                } else if (row.original && row.original.mac) {
-                    return (
-                        <div className="logs__row logs__row--overflow">
-                            <span className="logs__text" title={row.original.mac}>
-                                {row.original.mac} <em>(MAC)</em>
-                            </span>
-                        </div>
-                    );
-                }
-
-                return '';
-            },
+            Cell: this.cellWrap,
         },
         {
             Header: this.props.t('table_name'),
             accessor: 'name',
-            Cell: ({ value }) => (
-                <div className="logs__row logs__row--overflow">
-                    <span className="logs__text" title={value}>
-                        {value}
-                    </span>
-                </div>
-            ),
+            Cell: this.cellWrap,
         },
         {
             Header: this.props.t('table_statistics'),
