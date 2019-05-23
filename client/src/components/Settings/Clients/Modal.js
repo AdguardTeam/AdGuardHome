@@ -3,11 +3,13 @@ import PropTypes from 'prop-types';
 import { Trans, withNamespaces } from 'react-i18next';
 import ReactModal from 'react-modal';
 
+import { MODAL_TYPE } from '../../../helpers/constants';
 import Form from './Form';
 
 const Modal = (props) => {
     const {
         isModalOpen,
+        modalType,
         currentClientData,
         handleSubmit,
         toggleClientModal,
@@ -25,7 +27,11 @@ const Modal = (props) => {
             <div className="modal-content">
                 <div className="modal-header">
                     <h4 className="modal-title">
-                        <Trans>client_new</Trans>
+                        {modalType === MODAL_TYPE.EDIT ? (
+                            <Trans>client_edit</Trans>
+                        ) : (
+                            <Trans>client_new</Trans>
+                        )}
                     </h4>
                     <button type="button" className="close" onClick={() => toggleClientModal()}>
                         <span className="sr-only">Close</span>
@@ -47,6 +53,7 @@ const Modal = (props) => {
 
 Modal.propTypes = {
     isModalOpen: PropTypes.bool.isRequired,
+    modalType: PropTypes.string.isRequired,
     currentClientData: PropTypes.object.isRequired,
     handleSubmit: PropTypes.func.isRequired,
     toggleClientModal: PropTypes.func.isRequired,

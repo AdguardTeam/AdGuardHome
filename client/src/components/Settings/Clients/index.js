@@ -139,19 +139,21 @@ class Clients extends Component {
         {
             Header: this.props.t('actions_table_header'),
             accessor: 'actions',
+            maxWidth: 150,
             Cell: (row) => {
                 const clientName = row.original.name;
                 const {
                     toggleClientModal,
                     processingDeleting,
                     processingUpdating,
+                    t,
                 } = this.props;
 
                 return (
                     <div className="logs__row logs__row--center">
                         <button
                             type="button"
-                            className="btn btn-outline-primary btn-sm mr-2"
+                            className="btn btn-icon btn-outline-primary btn-sm mr-2"
                             onClick={() =>
                                 toggleClientModal({
                                     type: MODAL_TYPE.EDIT,
@@ -159,16 +161,22 @@ class Clients extends Component {
                                 })
                             }
                             disabled={processingUpdating}
+                            title={t('edit_table_action')}
                         >
-                            <Trans>edit_table_action</Trans>
+                            <svg className="icons">
+                                <use xlinkHref="#edit" />
+                            </svg>
                         </button>
                         <button
                             type="button"
-                            className="btn btn-outline-secondary btn-sm"
+                            className="btn btn-icon btn-outline-secondary btn-sm"
                             onClick={() => this.handleDelete({ name: clientName })}
                             disabled={processingDeleting}
+                            title={t('delete_table_action')}
                         >
-                            <Trans>delete_table_action</Trans>
+                            <svg className="icons">
+                                <use xlinkHref="#delete" />
+                            </svg>
                         </button>
                     </div>
                 );
@@ -181,6 +189,7 @@ class Clients extends Component {
             t,
             clients,
             isModalOpen,
+            modalType,
             modalClientName,
             toggleClientModal,
             processingAdding,
@@ -203,7 +212,6 @@ class Clients extends Component {
                         showPagination={true}
                         defaultPageSize={10}
                         minRows={5}
-                        resizable={false}
                         previousText={t('previous_btn')}
                         nextText={t('next_btn')}
                         loadingText={t('loading_table_status')}
@@ -218,11 +226,12 @@ class Clients extends Component {
                         onClick={() => toggleClientModal(MODAL_TYPE.ADD)}
                         disabled={processingAdding}
                     >
-                        <Trans>add_client</Trans>
+                        <Trans>client_add</Trans>
                     </button>
 
                     <Modal
                         isModalOpen={isModalOpen}
+                        modalType={modalType}
                         toggleClientModal={toggleClientModal}
                         currentClientData={currentClientData}
                         handleSubmit={this.handleSubmit}

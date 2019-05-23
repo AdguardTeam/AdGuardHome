@@ -103,7 +103,9 @@ let Form = (props) => {
                 </div>
 
                 <div className="mb-4">
-                    <strong>Settings</strong>
+                    <strong>
+                        <Trans>settings</Trans>
+                    </strong>
                 </div>
 
                 <div className="form__group">

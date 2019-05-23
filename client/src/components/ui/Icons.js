@@ -1,5 +1,7 @@
 import React from 'react';
 
+import './Icons.css';
+
 const Icons = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="hidden">
         <symbol id="android" viewBox="0 0 14 16" fill="currentColor">
@@ -20,6 +22,14 @@ const Icons = () => (
 
         <symbol id="router" viewBox="0 0 30 30" fill="currentColor">
             <path d="M17.646 2.332a1 1 0 0 0-.697 1.719 6.984 6.984 0 0 1 0 9.898 1 1 0 1 0 1.414 1.414c3.507-3.506 3.507-9.22 0-12.726a1 1 0 0 0-.717-.305zm-12.662.654A1 1 0 0 0 4 4v14a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h22a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2H12V9a1 1 0 0 0-1.016-1.014A1 1 0 0 0 10 9v9H6V4a1 1 0 0 0-1.016-1.014zm9.834 2.176a1 1 0 0 0-.697 1.717 2.985 2.985 0 0 1 0 4.242 1 1 0 1 0 1.414 1.414 5.014 5.014 0 0 0 0-7.07 1 1 0 0 0-.717-.303zM5 21a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm4 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" />
+        </symbol>
+
+        <symbol id="edit" viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </symbol>
+
+        <symbol id="delete" viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2">
+            <path d="m3 6h2 16"/><path d="m19 6v14a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2-2v-14m3 0v-2a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="m10 11v6"/><path d="m14 11v6"/>
         </symbol>
     </svg>
 );
