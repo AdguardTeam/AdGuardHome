@@ -140,7 +140,9 @@ func preInstallHandler(handler http.Handler) http.Handler {
 // it also enforces HTTPS if it is enabled and configured
 func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if config.firstRun && !strings.HasPrefix(r.URL.Path, "/install.") {
+		if config.firstRun &&
+			!strings.HasPrefix(r.URL.Path, "/install.") &&
+			r.URL.Path != "/favicon.ico" {
 			http.Redirect(w, r, "/install.html", http.StatusSeeOther) // should not be cacheable
 			return
 		}
