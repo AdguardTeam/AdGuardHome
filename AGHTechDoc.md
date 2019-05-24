@@ -24,6 +24,9 @@ Contents:
 	* "Enable DHCP" command
 	* Static IP check/set
 	* Add a static lease
+* DNS access settings
+	* List access settings
+	* Set access settings
 
 
 ## First startup
@@ -626,3 +629,47 @@ Response:
 Error response (Client not found):
 
 	400
+
+
+## DNS access settings
+
+There are low-level settings that can block undesired DNS requests.  "Blocking" means not responding to request.
+
+There are 3 types of access settings:
+* allowed_clients: Only these clients are allowed to make DNS requests.
+* disallowed_clients: These clients are not allowed to make DNS requests.
+* blocked_hosts: These hosts are not allowed to be resolved by a DNS request.
+
+
+### List access settings
+
+Request:
+
+	GET /control/access/list
+
+Response:
+
+	200 OK
+
+	{
+		allowed_clients: ["127.0.0.1", ...]
+		disallowed_clients: ["127.0.0.1", ...]
+		blocked_hosts: ["host.com", ...]
+	}
+
+
+### Set access settings
+
+Request:
+
+	POST /control/access/set
+
+	{
+		allowed_clients: ["127.0.0.1", ...]
+		disallowed_clients: ["127.0.0.1", ...]
+		blocked_hosts: ["host.com", ...]
+	}
+
+Response:
+
+	200 OK
