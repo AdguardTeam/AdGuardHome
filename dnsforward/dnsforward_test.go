@@ -15,12 +15,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/dnsproxy/proxy"
-
-	"github.com/stretchr/testify/assert"
-
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
+	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/miekg/dns"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -460,12 +458,8 @@ func createTestServer(t *testing.T) *Server {
 	s.conf.FilteringConfig.SafeBrowsingEnabled = true
 	s.conf.Filters = make([]dnsfilter.Filter, 0)
 
-	rules := []string{
-		"||nxdomain.example.org^",
-		"||null.example.org^",
-		"127.0.0.1	host.example.org",
-	}
-	filter := dnsfilter.Filter{ID: 1, Rules: rules}
+	rules := "||nxdomain.example.org^\n||null.example.org^\n127.0.0.1	host.example.org\n"
+	filter := dnsfilter.Filter{ID: 1, Data: []byte(rules)}
 	s.conf.Filters = append(s.conf.Filters, filter)
 	return s
 }
@@ -626,5 +620,74 @@ func publicKey(priv interface{}) interface{} {
 		return &k.PublicKey
 	default:
 		return nil
+	}
+}
+
+func TestIsBlockedIPAllowed(t *testing.T) {
+	s := createTestServer(t)
+	s.conf.AllowedClients = []string{"1.1.1.1", "2.2.0.0/16"}
+
+	err := s.Start(nil)
+	defer removeDataDir(t)
+	if err != nil {
+		t.Fatalf("Failed to start server: %s", err)
+	}
+
+	if s.isBlockedIP("1.1.1.1") {
+		t.Fatalf("isBlockedIP")
+	}
+	if !s.isBlockedIP("1.1.1.2") {
+		t.Fatalf("isBlockedIP")
+	}
+	if s.isBlockedIP("2.2.1.1") {
+		t.Fatalf("isBlockedIP")
+	}
+	if !s.isBlockedIP("2.3.1.1") {
+		t.Fatalf("isBlockedIP")
+	}
+}
+
+func TestIsBlockedIPDisallowed(t *testing.T) {
+	s := createTestServer(t)
+	s.conf.DisallowedClients = []string{"1.1.1.1", "2.2.0.0/16"}
+
+	err := s.Start(nil)
+	defer removeDataDir(t)
+	if err != nil {
+		t.Fatalf("Failed to start server: %s", err)
+	}
+
+	if !s.isBlockedIP("1.1.1.1") {
+		t.Fatalf("isBlockedIP")
+	}
+	if s.isBlockedIP("1.1.1.2") {
+		t.Fatalf("isBlockedIP")
+	}
+	if !s.isBlockedIP("2.2.1.1") {
+		t.Fatalf("isBlockedIP")
+	}
+	if s.isBlockedIP("2.3.1.1") {
+		t.Fatalf("isBlockedIP")
+	}
+}
+
+func TestIsBlockedIPBlockedDomain(t *testing.T) {
+	s := createTestServer(t)
+	s.conf.BlockedHosts = []string{"host1", "host2"}
+
+	err := s.Start(nil)
+	defer removeDataDir(t)
+	if err != nil {
+		t.Fatalf("Failed to start server: %s", err)
+	}
+
+	if !s.isBlockedDomain("host1") {
+		t.Fatalf("isBlockedDomain")
+	}
+	if !s.isBlockedDomain("host2") {
+		t.Fatalf("isBlockedDomain")
+	}
+	if s.isBlockedDomain("host3") {
+		t.Fatalf("isBlockedDomain")
 	}
 }

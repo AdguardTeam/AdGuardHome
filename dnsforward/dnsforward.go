@@ -43,6 +43,12 @@ type Server struct {
 	stats     *stats               // General server statistics
 	once      sync.Once
 
+	AllowedClients         map[string]bool // IP addresses of whitelist clients
+	DisallowedClients      map[string]bool // IP addresses of clients that should be blocked
+	AllowedClientsIPNet    []net.IPNet     // CIDRs of whitelist clients
+	DisallowedClientsIPNet []net.IPNet     // CIDRs of clients that should be blocked
+	BlockedHosts           map[string]bool // hosts that should be blocked
+
 	sync.RWMutex
 	conf ServerConfig
 }
@@ -69,6 +75,10 @@ type FilteringConfig struct {
 	RefuseAny          bool     `yaml:"refuse_any"`           // if true, refuse ANY requests
 	BootstrapDNS       []string `yaml:"bootstrap_dns"`        // a list of bootstrap DNS for DoH and DoT (plain DNS only)
 	AllServers         bool     `yaml:"all_servers"`          // if true, parallel queries to all configured upstream servers are enabled
+
+	AllowedClients    []string `yaml:"allowed_clients"`    // IP addresses of whitelist clients
+	DisallowedClients []string `yaml:"disallowed_clients"` // IP addresses of clients that should be blocked
+	BlockedHosts      []string `yaml:"blocked_hosts"`      // hosts that should be blocked
 
 	dnsfilter.Config `yaml:",inline"`
 }
@@ -121,6 +131,34 @@ func (s *Server) Start(config *ServerConfig) error {
 	return s.startInternal(config)
 }
 
+func convertArrayToMap(dst *map[string]bool, src []string) {
+	*dst = make(map[string]bool)
+	for _, s := range src {
+		(*dst)[s] = true
+	}
+}
+
+// Split array of IP or CIDR into 2 containers for fast search
+func processIPCIDRArray(dst *map[string]bool, dstIPNet *[]net.IPNet, src []string) error {
+	*dst = make(map[string]bool)
+
+	for _, s := range src {
+		ip := net.ParseIP(s)
+		if ip != nil {
+			(*dst)[s] = true
+			continue
+		}
+
+		_, ipnet, err := net.ParseCIDR(s)
+		if err != nil {
+			return err
+		}
+		*dstIPNet = append(*dstIPNet, *ipnet)
+	}
+
+	return nil
+}
+
 // startInternal starts without locking
 func (s *Server) startInternal(config *ServerConfig) error {
 	if config != nil {
@@ -167,9 +205,22 @@ func (s *Server) startInternal(config *ServerConfig) error {
 		CacheEnabled:             true,
 		Upstreams:                s.conf.Upstreams,
 		DomainsReservedUpstreams: s.conf.DomainsReservedUpstreams,
-		Handler:                  s.handleDNSRequest,
+		BeforeRequestHandler:     s.beforeRequestHandler,
+		RequestHandler:           s.handleDNSRequest,
 		AllServers:               s.conf.AllServers,
 	}
+
+	err = processIPCIDRArray(&s.AllowedClients, &s.AllowedClientsIPNet, s.conf.AllowedClients)
+	if err != nil {
+		return err
+	}
+
+	err = processIPCIDRArray(&s.DisallowedClients, &s.DisallowedClientsIPNet, s.conf.DisallowedClients)
+	if err != nil {
+		return err
+	}
+
+	convertArrayToMap(&s.BlockedHosts, s.conf.BlockedHosts)
 
 	if s.conf.TLSListenAddr != nil && s.conf.CertificateChain != "" && s.conf.PrivateKey != "" {
 		proxyConfig.TLSListenAddr = s.conf.TLSListenAddr
@@ -319,6 +370,67 @@ func (s *Server) GetStatsHistory(timeUnit time.Duration, startTime time.Time, en
 	s.RLock()
 	defer s.RUnlock()
 	return s.stats.getStatsHistory(timeUnit, startTime, endTime)
+}
+
+// Return TRUE if this client should be blocked
+func (s *Server) isBlockedIP(ip string) bool {
+	if len(s.AllowedClients) != 0 || len(s.AllowedClientsIPNet) != 0 {
+		_, ok := s.AllowedClients[ip]
+		if ok {
+			return false
+		}
+
+		if len(s.AllowedClientsIPNet) != 0 {
+			ipAddr := net.ParseIP(ip)
+			for _, ipnet := range s.AllowedClientsIPNet {
+				if ipnet.Contains(ipAddr) {
+					return false
+				}
+			}
+		}
+
+		return true
+	}
+
+	_, ok := s.DisallowedClients[ip]
+	if ok {
+		return true
+	}
+
+	if len(s.DisallowedClientsIPNet) != 0 {
+		ipAddr := net.ParseIP(ip)
+		for _, ipnet := range s.DisallowedClientsIPNet {
+			if ipnet.Contains(ipAddr) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// Return TRUE if this domain should be blocked
+func (s *Server) isBlockedDomain(host string) bool {
+	_, ok := s.BlockedHosts[host]
+	return ok
+}
+
+func (s *Server) beforeRequestHandler(p *proxy.Proxy, d *proxy.DNSContext) (bool, error) {
+	ip, _, _ := net.SplitHostPort(d.Addr.String())
+	if s.isBlockedIP(ip) {
+		log.Tracef("Client IP %s is blocked by settings", ip)
+		return false, nil
+	}
+
+	if len(d.Req.Question) == 1 {
+		host := strings.TrimSuffix(d.Req.Question[0].Name, ".")
+		if s.isBlockedDomain(host) {
+			log.Tracef("Domain %s is blocked by settings", host)
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
 
 // handleDNSRequest filters the incoming DNS requests and writes them to the query log
