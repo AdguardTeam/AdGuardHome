@@ -52,6 +52,11 @@ func getVersionResp(data []byte) []byte {
 func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
 
+	if config.disableUpdate {
+		log.Tracef("New app version check is disabled by user")
+		return
+	}
+
 	now := time.Now()
 	controlLock.Lock()
 	cached := now.Sub(versionCheckLastTime) <= versionCheckPeriod && len(versionCheckJSON) != 0

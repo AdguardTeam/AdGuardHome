@@ -256,6 +256,12 @@ Response:
 
 If `can_autoupdate` is true, then the server can automatically upgrade to a new version.
 
+Response with empty body:
+
+	200 OK
+
+It means that update check is disabled by user.  UI should do nothing.
+
 
 ### Update command
 
