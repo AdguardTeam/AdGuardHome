@@ -378,7 +378,11 @@ func (s *Server) filterDNSRequest(d *proxy.DNSContext) (*dnsfilter.Result, error
 	var res dnsfilter.Result
 	var err error
 
-	res, err = dnsFilter.CheckHost(host, d.Req.Question[0].Qtype)
+	clientAddr := ""
+	if d.Addr != nil {
+		clientAddr, _, _ = net.SplitHostPort(d.Addr.String())
+	}
+	res, err = dnsFilter.CheckHost(host, d.Req.Question[0].Qtype, clientAddr)
 	if err != nil {
 		// Return immediately if there's an error
 		return nil, errorx.Decorate(err, "dnsfilter failed to check host '%s'", host)
