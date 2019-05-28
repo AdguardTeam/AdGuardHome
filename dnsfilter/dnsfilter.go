@@ -46,6 +46,14 @@ const shortcutLength = 6 // used for rule search optimization, 6 hits the sweet 
 const enableFastLookup = true         // flag for debugging, must be true in production for faster performance
 const enableDelayedCompilation = true // flag for debugging, must be true in production for faster performance
 
+// Custom filtering settings
+type RequestFilteringSettings struct {
+	FilteringEnabled    bool
+	SafeSearchEnabled   bool
+	SafeBrowsingEnabled bool
+	ParentalEnabled     bool
+}
+
 // Config allows you to configure DNS filtering with New() or just change variables directly.
 type Config struct {
 	FilteringTempFilename string `yaml:"filtering_temp_filename"` // temporary file for storing unused filtering rules
@@ -55,6 +63,9 @@ type Config struct {
 	SafeSearchEnabled     bool   `yaml:"safesearch_enabled"`
 	SafeBrowsingEnabled   bool   `yaml:"safebrowsing_enabled"`
 	ResolverAddress       string // DNS server address
+
+	// Filtering callback function
+	FilterHandler func(clientAddr string, settings *RequestFilteringSettings) `yaml:"-"`
 }
 
 type privateConfig struct {
@@ -149,7 +160,7 @@ func (r Reason) Matched() bool {
 }
 
 // CheckHost tries to match host against rules, then safebrowsing and parental if they are enabled
-func (d *Dnsfilter) CheckHost(host string, qtype uint16) (Result, error) {
+func (d *Dnsfilter) CheckHost(host string, qtype uint16, clientAddr string) (Result, error) {
 	// sometimes DNS clients will try to resolve ".", which is a request to get root servers
 	if host == "" {
 		return Result{Reason: NotFilteredNotFound}, nil
@@ -160,17 +171,30 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16) (Result, error) {
 		return Result{}, nil
 	}
 
-	// try filter lists first
-	result, err := d.matchHost(host, qtype)
-	if err != nil {
-		return result, err
+	var setts RequestFilteringSettings
+	setts.FilteringEnabled = true
+	setts.SafeSearchEnabled = d.SafeSearchEnabled
+	setts.SafeBrowsingEnabled = d.SafeBrowsingEnabled
+	setts.ParentalEnabled = d.ParentalEnabled
+	if len(clientAddr) != 0 && d.FilterHandler != nil {
+		d.FilterHandler(clientAddr, &setts)
 	}
-	if result.Reason.Matched() {
-		return result, nil
+
+	var result Result
+	var err error
+	// try filter lists first
+	if setts.FilteringEnabled {
+		result, err = d.matchHost(host, qtype)
+		if err != nil {
+			return result, err
+		}
+		if result.Reason.Matched() {
+			return result, nil
+		}
 	}
 
 	// check safeSearch if no match
-	if d.SafeSearchEnabled {
+	if setts.SafeSearchEnabled {
 		result, err = d.checkSafeSearch(host)
 		if err != nil {
 			log.Printf("Failed to safesearch HTTP lookup, ignoring check: %v", err)
@@ -183,7 +207,7 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16) (Result, error) {
 	}
 
 	// check safebrowsing if no match
-	if d.SafeBrowsingEnabled {
+	if setts.SafeBrowsingEnabled {
 		result, err = d.checkSafeBrowsing(host)
 		if err != nil {
 			// failed to do HTTP lookup -- treat it as if we got empty response, but don't save cache
@@ -196,7 +220,7 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16) (Result, error) {
 	}
 
 	// check parental if no match
-	if d.ParentalEnabled {
+	if setts.ParentalEnabled {
 		result, err = d.checkParental(host)
 		if err != nil {
 			// failed to do HTTP lookup -- treat it as if we got empty response, but don't save cache

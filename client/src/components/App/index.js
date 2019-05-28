@@ -21,6 +21,7 @@ import Status from '../ui/Status';
 import UpdateTopline from '../ui/UpdateTopline';
 import UpdateOverlay from '../ui/UpdateOverlay';
 import EncryptionTopline from '../ui/EncryptionTopline';
+import Icons from '../ui/Icons';
 import i18n from '../../i18n';
 
 class App extends Component {
@@ -103,6 +104,7 @@ class App extends Component {
                     </div>
                     <Footer />
                     <Toasts />
+                    <Icons />
                 </Fragment>
             </HashRouter>
         );

@@ -17,6 +17,12 @@ import {
     setTlsConfig,
     validateTlsConfig,
 } from '../actions/encryption';
+import {
+    addClient,
+    updateClient,
+    deleteClient,
+    toggleClientModal,
+} from '../actions/clients';
 import Settings from '../components/Settings';
 
 const mapStateToProps = (state) => {
@@ -25,12 +31,14 @@ const mapStateToProps = (state) => {
         dashboard,
         dhcp,
         encryption,
+        clients,
     } = state;
     const props = {
         settings,
         dashboard,
         dhcp,
         encryption,
+        clients,
     };
     return props;
 };
@@ -50,6 +58,10 @@ const mapDispatchToProps = {
     getTlsStatus,
     setTlsConfig,
     validateTlsConfig,
+    addClient,
+    updateClient,
+    deleteClient,
+    toggleClientModal,
 };
 
 export default connect(

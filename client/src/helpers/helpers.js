@@ -208,3 +208,20 @@ export const getClientName = (clients, ip) => {
     const client = clients.find(item => ip === item.ip);
     return (client && client.name) || '';
 };
+
+export const sortClients = (clients) => {
+    const compare = (a, b) => {
+        const nameA = a.name.toUpperCase();
+        const nameB = b.name.toUpperCase();
+
+        if (nameA > nameB) {
+            return 1;
+        } else if (nameA < nameB) {
+            return -1;
+        }
+
+        return 0;
+    };
+
+    return clients.sort(compare);
+};

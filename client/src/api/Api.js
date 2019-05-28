@@ -39,8 +39,6 @@ export default class Api {
     GLOBAL_VERSION = { path: 'version.json', method: 'GET' };
     GLOBAL_ENABLE_PROTECTION = { path: 'enable_protection', method: 'POST' };
     GLOBAL_DISABLE_PROTECTION = { path: 'disable_protection', method: 'POST' };
-    GLOBAL_CLIENTS = { path: 'clients', method: 'GET' }
-    GLOBAL_CLIENTS = { path: 'clients', method: 'GET' };
     GLOBAL_UPDATE = { path: 'update', method: 'POST' };
 
     restartGlobalFiltering() {
@@ -139,11 +137,6 @@ export default class Api {
 
     disableGlobalProtection() {
         const { path, method } = this.GLOBAL_DISABLE_PROTECTION;
-        return this.makeRequest(path, method);
-    }
-
-    getGlobalClients() {
-        const { path, method } = this.GLOBAL_CLIENTS;
         return this.makeRequest(path, method);
     }
 
@@ -403,6 +396,44 @@ export default class Api {
 
     validateTlsConfig(config) {
         const { path, method } = this.TLS_VALIDATE;
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, parameters);
+    }
+
+    // Per-client settings
+    GET_CLIENTS = { path: 'clients', method: 'GET' }
+    ADD_CLIENT = { path: 'clients/add', method: 'POST' }
+    DELETE_CLIENT = { path: 'clients/delete', method: 'POST' }
+    UPDATE_CLIENT = { path: 'clients/update', method: 'POST' }
+
+    getClients() {
+        const { path, method } = this.GET_CLIENTS;
+        return this.makeRequest(path, method);
+    }
+
+    addClient(config) {
+        const { path, method } = this.ADD_CLIENT;
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, parameters);
+    }
+
+    deleteClient(config) {
+        const { path, method } = this.DELETE_CLIENT;
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, parameters);
+    }
+
+    updateClient(config) {
+        const { path, method } = this.UPDATE_CLIENT;
         const parameters = {
             data: config,
             headers: { 'Content-Type': 'application/json' },

@@ -76,3 +76,11 @@
 .encryption__list li {
     list-style: inside;
 }
+
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+}

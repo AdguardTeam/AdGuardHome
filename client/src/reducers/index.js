@@ -7,6 +7,7 @@ import versionCompare from '../helpers/versionCompare';
 import * as actions from '../actions';
 import toasts from './toasts';
 import encryption from './encryption';
+import clients from './clients';
 
 const settings = handleActions({
     [actions.initSettingsRequest]: state => ({ ...state, processing: true }),
@@ -184,7 +185,8 @@ const dashboard = handleActions({
     [actions.getClientsSuccess]: (state, { payload }) => {
         const newState = {
             ...state,
-            clients: payload,
+            clients: payload.clients,
+            autoClients: payload.autoClients,
             processingClients: false,
         };
         return newState;
@@ -209,6 +211,8 @@ const dashboard = handleActions({
     dnsAddresses: [],
     dnsVersion: '',
     clients: [],
+    autoClients: [],
+    topStats: [],
 });
 
 const queryLogs = handleActions({
@@ -361,6 +365,7 @@ export default combineReducers({
     toasts,
     dhcp,
     encryption,
+    clients,
     loadingBar: loadingBarReducer,
     form: formReducer,
 });

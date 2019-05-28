@@ -6,7 +6,6 @@ import Modal from '../ui/Modal';
 import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
 import UserRules from './UserRules';
-import './Filters.css';
 
 class Filters extends Component {
     componentDidMount() {
@@ -59,7 +58,18 @@ class Filters extends Component {
     }, {
         Header: <Trans>actions_table_header</Trans>,
         accessor: 'url',
-        Cell: ({ value }) => (<span title={ this.props.t('delete_table_action') } className='remove-icon fe fe-trash-2' onClick={() => this.props.removeFilter(value)}/>),
+        Cell: ({ value }) => (
+            <button
+                type="button"
+                className="btn btn-icon btn-outline-secondary btn-sm"
+                onClick={() => this.props.removeFilter(value)}
+                title={this.props.t('delete_table_action')}
+            >
+                <svg className="icons">
+                    <use xlinkHref="#delete" />
+                </svg>
+            </button>
+        ),
         className: 'text-center',
         width: 80,
         sortable: false,

@@ -27,6 +27,17 @@ type logSettings struct {
 	Verbose bool   `yaml:"verbose"`  // If true, verbose logging is enabled
 }
 
+type clientObject struct {
+	Name                string `yaml:"name"`
+	IP                  string `yaml:"ip"`
+	MAC                 string `yaml:"mac"`
+	UseGlobalSettings   bool   `yaml:"use_global_settings"`
+	FilteringEnabled    bool   `yaml:"filtering_enabled"`
+	ParentalEnabled     bool   `yaml:"parental_enabled"`
+	SafeSearchEnabled   bool   `yaml:"safebrowsing_enabled"`
+	SafeBrowsingEnabled bool   `yaml:"safesearch_enabled"`
+}
+
 // configuration is loaded from YAML
 // field ordering is important -- yaml fields will mirror ordering from here
 type configuration struct {
@@ -53,6 +64,9 @@ type configuration struct {
 	Filters   []filter           `yaml:"filters"`
 	UserRules []string           `yaml:"user_rules"`
 	DHCP      dhcpd.ServerConfig `yaml:"dhcp"`
+
+	// Note: this array is filled only before file read/write and then it's cleared
+	Clients []clientObject `yaml:"clients"`
 
 	logSettings `yaml:",inline"`
 
@@ -206,6 +220,25 @@ func parseConfig() error {
 		return err
 	}
 
+	clientsInit()
+	for _, cy := range config.Clients {
+		cli := Client{
+			Name:                cy.Name,
+			IP:                  cy.IP,
+			MAC:                 cy.MAC,
+			UseOwnSettings:      !cy.UseGlobalSettings,
+			FilteringEnabled:    cy.FilteringEnabled,
+			ParentalEnabled:     cy.ParentalEnabled,
+			SafeSearchEnabled:   cy.SafeSearchEnabled,
+			SafeBrowsingEnabled: cy.SafeBrowsingEnabled,
+		}
+		_, err = clientAdd(cli)
+		if err != nil {
+			log.Tracef("clientAdd: %s", err)
+		}
+	}
+	config.Clients = nil
+
 	// Deduplicate filters
 	deduplicateFilters()
 
@@ -233,9 +266,30 @@ func readConfigFile() ([]byte, error) {
 func (c *configuration) write() error {
 	c.Lock()
 	defer c.Unlock()
+
+	clientsList := clientsGetList()
+	for _, cli := range clientsList {
+		ip := cli.IP
+		if len(cli.MAC) != 0 {
+			ip = ""
+		}
+		cy := clientObject{
+			Name:                cli.Name,
+			IP:                  ip,
+			MAC:                 cli.MAC,
+			UseGlobalSettings:   !cli.UseOwnSettings,
+			FilteringEnabled:    cli.FilteringEnabled,
+			ParentalEnabled:     cli.ParentalEnabled,
+			SafeSearchEnabled:   cli.SafeSearchEnabled,
+			SafeBrowsingEnabled: cli.SafeBrowsingEnabled,
+		}
+		config.Clients = append(config.Clients, cy)
+	}
+
 	configFile := config.getConfigFilename()
 	log.Debug("Writing YAML file: %s", configFile)
 	yamlText, err := yaml.Marshal(&config)
+	config.Clients = nil
 	if err != nil {
 		log.Error("Couldn't generate YAML file: %s", err)
 		return err

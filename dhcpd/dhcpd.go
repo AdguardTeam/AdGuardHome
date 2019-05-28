@@ -540,6 +540,19 @@ func (s *Server) printLeases() {
 	}
 }
 
+// FindIPbyMAC finds an IP address by MAC address in the currently active DHCP leases
+func (s *Server) FindIPbyMAC(mac net.HardwareAddr) net.IP {
+	now := time.Now().Unix()
+	s.RLock()
+	defer s.RUnlock()
+	for _, l := range s.leases {
+		if l.Expiry.Unix() > now && bytes.Equal(mac, l.HWAddr) {
+			return l.IP
+		}
+	}
+	return nil
+}
+
 // Reset internal state
 func (s *Server) reset() {
 	s.Lock()

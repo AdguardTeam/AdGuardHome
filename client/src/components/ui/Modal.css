@@ -5,7 +5,7 @@
     overflow-x: hidden;
     overflow-y: auto;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1;
+    z-index: 104;
 }
 
 .ReactModal__Overlay--after-open {
@@ -37,4 +37,10 @@
 .ReactModal__Content.modal-dialog {
     border: none;
     background-color: transparent;
+}
+
+@media (min-width: 576px) {
+    .modal-dialog--clients {
+        max-width: 650px;
+    }
 }

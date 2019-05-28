@@ -12,6 +12,12 @@ Contents:
 * Updating
 	* Get version command
 	* Update command
+* Device Names and Per-client Settings
+	* Per-client settings
+	* Get list of clients
+	* Add client
+	* Update client
+	* Delete client
 * Enable DHCP server
 	* "Check DHCP" command
 	* "Enable DHCP" command
@@ -420,3 +426,135 @@ Step 2.
 If we would set a different IP address, we'd need to replace the IP address for the current network configuration.  But currently this step isn't necessary.
 
 	ip addr replace dev eth0 192.168.0.1/24
+
+
+## Device Names and Per-client Settings
+
+When a client requests information from DNS server, he's identified by IP address.
+Administrator can set a name for a client with a known IP and also override global settings for this client.  The name is used to improve readability of DNS logs: client's name is shown in UI next to its IP address.  The names are loaded from 3 sources:
+* automatically from "/etc/hosts" file.  It's a list of `IP<->Name` entries which is loaded once on AGH startup from "/etc/hosts" file.
+* automatically using rDNS.  It's a list of `IP<->Name` entries which is added in runtime using rDNS mechanism when a client first makes a DNS request.
+* manually configured via UI.  It's a list of client's names and their settings which is loaded from configuration file and stored on disk.
+
+### Per-client settings
+
+UI provides means to manage the list of known clients (List/Add/Update/Delete) and their settings.  These settings are stored in configuration file as an array of objects.
+
+Notes:
+
+* `name`, `ip` and `mac` values are unique.
+
+* `ip` & `mac` values can't be set both at the same time.
+
+* If `mac` is set and DHCP server is enabled, IP is taken from DHCP lease table.
+
+* If `use_global_settings` is true, then DNS responses for this client are processed and filtered using global settings.
+
+* If `use_global_settings` is false, then the client-specific settings are used to override (disable) global settings.  For example, if global setting `parental_enabled` is true, then per-client setting `parental_enabled:false` can disable Parental Control for this specific client.
+
+
+### Get list of clients
+
+Request:
+
+	GET /control/clients
+
+Response:
+
+	200 OK
+
+	{
+	clients: [
+		{
+			name: "client1"
+			ip: "..."
+			mac: "..."
+			use_global_settings: true
+			filtering_enabled: false
+			parental_enabled: false
+			safebrowsing_enabled: false
+			safesearch_enabled: false
+		}
+	]
+	auto_clients: [
+		{
+			name: "host"
+			ip: "..."
+			source: "etc/hosts" || "rDNS"
+		}
+	]
+	}
+
+
+### Add client
+
+Request:
+
+	POST /control/clients/add
+
+	{
+		name: "client1"
+		ip: "..."
+		mac: "..."
+		use_global_settings: true
+		filtering_enabled: false
+		parental_enabled: false
+		safebrowsing_enabled: false
+		safesearch_enabled: false
+	}
+
+Response:
+
+	200 OK
+
+Error response (Client already exists):
+
+	400
+
+
+### Update client
+
+Request:
+
+	POST /control/clients/update
+
+	{
+		name: "client1"
+		data: {
+			name: "client1"
+			ip: "..."
+			mac: "..."
+			use_global_settings: true
+			filtering_enabled: false
+			parental_enabled: false
+			safebrowsing_enabled: false
+			safesearch_enabled: false
+		}
+	}
+
+Response:
+
+	200 OK
+
+Error response (Client not found):
+
+	400
+
+
+### Delete client
+
+Request:
+
+	POST /control/clients/delete
+
+	{
+		name: "client1"
+	}
+
+Response:
+
+	200 OK
+
+Error response (Client not found):
+
+	400

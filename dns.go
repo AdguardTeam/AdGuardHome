@@ -70,7 +70,30 @@ func generateServerConfig() dnsforward.ServerConfig {
 	newconfig.Upstreams = upstreamConfig.Upstreams
 	newconfig.DomainsReservedUpstreams = upstreamConfig.DomainReservedUpstreams
 	newconfig.AllServers = config.DNS.AllServers
+	newconfig.FilterHandler = applyClientSettings
 	return newconfig
+}
+
+// If a client has his own settings, apply them
+func applyClientSettings(clientAddr string, setts *dnsfilter.RequestFilteringSettings) {
+	c, ok := clientFind(clientAddr)
+	if !ok || !c.UseOwnSettings {
+		return
+	}
+
+	log.Debug("Using settings for client with IP %s", clientAddr)
+	if !c.FilteringEnabled {
+		setts.FilteringEnabled = false
+	}
+	if !c.SafeSearchEnabled {
+		setts.SafeSearchEnabled = false
+	}
+	if !c.SafeBrowsingEnabled {
+		setts.SafeBrowsingEnabled = false
+	}
+	if !c.ParentalEnabled {
+		setts.ParentalEnabled = false
+	}
 }
 
 func startDNSServer() error {
