@@ -835,7 +835,7 @@ func handleParentalEnable(w http.ResponseWriter, r *http.Request) {
 
 	sensitivity, ok := parameters["sensitivity"]
 	if !ok {
-		http.Error(w, "URL parameter was not specified", 400)
+		http.Error(w, "Sensitivity parameter was not specified", 400)
 		return
 	}
 
