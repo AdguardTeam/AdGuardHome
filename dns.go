@@ -58,6 +58,7 @@ func initDNSServer(baseDir string) {
 		log.Error("upstream.AddressToUpstream: %s", err)
 		return
 	}
+	dnsctx.rdnsIP = make(map[string]bool)
 	dnsctx.rdnsChannel = make(chan string, 256)
 	go asyncRDNSLoop()
 }
