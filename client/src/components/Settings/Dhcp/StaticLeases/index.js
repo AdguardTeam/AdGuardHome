@@ -18,9 +18,10 @@ class StaticLeases extends Component {
         this.props.addStaticLease(data);
     }
 
-    handleDelete = (ip, mac, hostname) => {
+    handleDelete = (ip, mac, hostname = '') => {
+        const name = hostname || ip;
         // eslint-disable-next-line no-alert
-        if (window.confirm(this.props.t('delete_confirm', { key: hostname }))) {
+        if (window.confirm(this.props.t('delete_confirm', { key: name }))) {
             this.props.removeStaticLease({ ip, mac, hostname });
         }
     }

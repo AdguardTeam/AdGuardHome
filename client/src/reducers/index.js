@@ -362,9 +362,19 @@ const dhcp = handleActions({
 
     [actions.addStaticLeaseRequest]: state => ({ ...state, processingAdding: true }),
     [actions.addStaticLeaseFailure]: state => ({ ...state, processingAdding: false }),
-    [actions.addStaticLeaseSuccess]: (state) => {
+    [actions.addStaticLeaseSuccess]: (state, { payload }) => {
+        const {
+            ip, mac, hostname,
+        } = payload;
+        const newLease = {
+            ip,
+            mac,
+            hostname: hostname || '',
+        };
+        const leases = [...state.staticLeases, newLease];
         const newState = {
             ...state,
+            staticLeases: leases,
             processingAdding: false,
         };
         return newState;
@@ -372,9 +382,12 @@ const dhcp = handleActions({
 
     [actions.removeStaticLeaseRequest]: state => ({ ...state, processingDeleting: true }),
     [actions.removeStaticLeaseFailure]: state => ({ ...state, processingDeleting: false }),
-    [actions.removeStaticLeaseSuccess]: (state) => {
+    [actions.removeStaticLeaseSuccess]: (state, { payload }) => {
+        const leaseToRemove = payload.ip;
+        const leases = state.staticLeases.filter(item => item.ip !== leaseToRemove);
         const newState = {
             ...state,
+            staticLeases: leases,
             processingDeleting: false,
         };
         return newState;

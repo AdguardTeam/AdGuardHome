@@ -50,7 +50,6 @@ const Form = (props) => {
                         type="text"
                         className="form-control"
                         placeholder={t('form_enter_hostname')}
-                        validate={[required]}
                     />
                 </div>
             </div>

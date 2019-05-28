@@ -711,11 +711,11 @@ export const addStaticLeaseSuccess = createAction('ADD_STATIC_LEASE_SUCCESS');
 export const addStaticLease = config => async (dispatch) => {
     dispatch(addStaticLeaseRequest());
     try {
+        const name = config.hostname || config.ip;
         await apiClient.addStaticLease(config);
-        dispatch(addStaticLeaseSuccess());
-        dispatch(addSuccessToast(t('dhcp_lease_added', { key: config.hostname })));
+        dispatch(addStaticLeaseSuccess(config));
+        dispatch(addSuccessToast(t('dhcp_lease_added', { key: name })));
         dispatch(toggleLeaseModal());
-        dispatch(getDhcpStatus());
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(addStaticLeaseFailure());
@@ -729,10 +729,10 @@ export const removeStaticLeaseSuccess = createAction('REMOVE_STATIC_LEASE_SUCCES
 export const removeStaticLease = config => async (dispatch) => {
     dispatch(removeStaticLeaseRequest());
     try {
+        const name = config.hostname || config.ip;
         await apiClient.removeStaticLease(config);
-        dispatch(removeStaticLeaseSuccess());
-        dispatch(addSuccessToast(t('dhcp_lease_deleted', { key: config.hostname })));
-        dispatch(getDhcpStatus());
+        dispatch(removeStaticLeaseSuccess(config));
+        dispatch(addSuccessToast(t('dhcp_lease_deleted', { key: name })));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(removeStaticLeaseFailure());
