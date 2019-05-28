@@ -351,18 +351,49 @@ const dhcp = handleActions({
         const newState = { ...state, config: newConfig, processingConfig: false };
         return newState;
     },
+
+    [actions.toggleLeaseModal]: (state) => {
+        const newState = {
+            ...state,
+            isModalOpen: !state.isModalOpen,
+        };
+        return newState;
+    },
+
+    [actions.addStaticLeaseRequest]: state => ({ ...state, processingAdding: true }),
+    [actions.addStaticLeaseFailure]: state => ({ ...state, processingAdding: false }),
+    [actions.addStaticLeaseSuccess]: (state) => {
+        const newState = {
+            ...state,
+            processingAdding: false,
+        };
+        return newState;
+    },
+
+    [actions.removeStaticLeaseRequest]: state => ({ ...state, processingDeleting: true }),
+    [actions.removeStaticLeaseFailure]: state => ({ ...state, processingDeleting: false }),
+    [actions.removeStaticLeaseSuccess]: (state) => {
+        const newState = {
+            ...state,
+            processingDeleting: false,
+        };
+        return newState;
+    },
 }, {
     processing: true,
     processingStatus: false,
     processingInterfaces: false,
     processingDhcp: false,
     processingConfig: false,
+    processingAdding: false,
+    processingDeleting: false,
     config: {
         enabled: false,
     },
     check: null,
     leases: [],
     staticLeases: [],
+    isModalOpen: false,
 });
 
 export default combineReducers({

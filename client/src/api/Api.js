@@ -318,6 +318,8 @@ export default class Api {
     DHCP_SET_CONFIG = { path: 'dhcp/set_config', method: 'POST' };
     DHCP_FIND_ACTIVE = { path: 'dhcp/find_active_dhcp', method: 'POST' };
     DHCP_INTERFACES = { path: 'dhcp/interfaces', method: 'GET' };
+    DHCP_ADD_STATIC_LEASE = { path: 'dhcp/add_static_lease', method: 'POST' };
+    DHCP_REMOVE_STATIC_LEASE = { path: 'dhcp/remove_static_lease', method: 'POST' };
 
     getDhcpStatus() {
         const { path, method } = this.DHCP_STATUS;
@@ -343,6 +345,24 @@ export default class Api {
         const parameters = {
             data: name,
             headers: { 'Content-Type': 'text/plain' },
+        };
+        return this.makeRequest(path, method, parameters);
+    }
+
+    addStaticLease(config) {
+        const { path, method } = this.DHCP_ADD_STATIC_LEASE;
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, parameters);
+    }
+
+    removeStaticLease(config) {
+        const { path, method } = this.DHCP_REMOVE_STATIC_LEASE;
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
     }

@@ -6,14 +6,15 @@ import { Trans, withNamespaces } from 'react-i18next';
 import { DHCP_STATUS_RESPONSE } from '../../../helpers/constants';
 import Form from './Form';
 import Leases from './Leases';
-import StaticLeases from './StaticLeases';
-import Interface from './Interface';
+import StaticLeases from './StaticLeases/index';
 import Card from '../../ui/Card';
 import Accordion from '../../ui/Accordion';
 
 class Dhcp extends Component {
     handleFormSubmit = (values) => {
-        this.props.setDhcpConfig(values);
+        if (values.interface_name) {
+            this.props.setDhcpConfig(values);
+        }
     };
 
     handleToggle = (config) => {
@@ -169,18 +170,16 @@ class Dhcp extends Component {
                     <div className="dhcp">
                         {!dhcp.processing &&
                             <Fragment>
-                                <Interface
-                                    onChange={this.handleFormSubmit}
-                                    initialValues={{ interface_name }}
-                                    interfaces={dhcp.interfaces}
-                                    processing={dhcp.processingInterfaces}
-                                    enabled={dhcp.config.enabled}
-                                />
                                 <Form
                                     onSubmit={this.handleFormSubmit}
-                                    initialValues={{ ...values }}
+                                    initialValues={{
+                                        interface_name,
+                                        ...values,
+                                    }}
                                     interfaces={dhcp.interfaces}
                                     processingConfig={dhcp.processingConfig}
+                                    processingInterfaces={dhcp.processingInterfaces}
+                                    enabled={enabled}
                                 />
                                 <hr/>
                                 <div className="card-actions mb-3">
@@ -189,11 +188,11 @@ class Dhcp extends Component {
                                         type="button"
                                         className={statusButtonClass}
                                         onClick={() =>
-                                            this.props.findActiveDhcp(dhcp.config.interface_name)
+                                            this.props.findActiveDhcp(interface_name)
                                         }
                                         disabled={
-                                            dhcp.config.enabled
-                                            || !dhcp.config.interface_name
+                                            enabled
+                                            || !interface_name
                                             || dhcp.processingConfig
                                         }
                                     >
@@ -222,8 +221,25 @@ class Dhcp extends Component {
                         </Card>
                         <Card title={ t('dhcp_static_leases') } bodyType="card-body box-body--settings">
                             <div className="row">
-                                <div className="col">
-                                    <StaticLeases staticLeases={dhcp.staticLeases} />
+                                <div className="col-12">
+                                    <StaticLeases
+                                        staticLeases={dhcp.staticLeases}
+                                        isModalOpen={dhcp.isModalOpen}
+                                        addStaticLease={this.props.addStaticLease}
+                                        removeStaticLease={this.props.removeStaticLease}
+                                        toggleLeaseModal={this.props.toggleLeaseModal}
+                                        processingAdding={dhcp.processingAdding}
+                                        processingDeleting={dhcp.processingDeleting}
+                                    />
+                                </div>
+                                <div className="col-12">
+                                    <button
+                                        type="button"
+                                        className="btn btn-success btn-standard mt-3"
+                                        onClick={() => this.props.toggleLeaseModal()}
+                                    >
+                                        <Trans>dhcp_add_static_lease</Trans>
+                                    </button>
                                 </div>
                             </div>
                         </Card>
@@ -241,6 +257,9 @@ Dhcp.propTypes = {
     setDhcpConfig: PropTypes.func,
     findActiveDhcp: PropTypes.func,
     handleSubmit: PropTypes.func,
+    addStaticLease: PropTypes.func,
+    removeStaticLease: PropTypes.func,
+    toggleLeaseModal: PropTypes.func,
     t: PropTypes.func,
 };
 

@@ -128,6 +128,9 @@ class Settings extends Component {
                                     getDhcpStatus={this.props.getDhcpStatus}
                                     findActiveDhcp={this.props.findActiveDhcp}
                                     setDhcpConfig={this.props.setDhcpConfig}
+                                    addStaticLease={this.props.addStaticLease}
+                                    removeStaticLease={this.props.removeStaticLease}
+                                    toggleLeaseModal={this.props.toggleLeaseModal}
                                 />
                             </div>
                         </div>

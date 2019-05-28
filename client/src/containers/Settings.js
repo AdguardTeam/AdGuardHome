@@ -11,6 +11,9 @@ import {
     getDhcpInterfaces,
     setDhcpConfig,
     findActiveDhcp,
+    addStaticLease,
+    removeStaticLease,
+    toggleLeaseModal,
 } from '../actions';
 import {
     getTlsStatus,
@@ -62,6 +65,9 @@ const mapDispatchToProps = {
     updateClient,
     deleteClient,
     toggleClientModal,
+    addStaticLease,
+    removeStaticLease,
+    toggleLeaseModal,
 };
 
 export default connect(

@@ -662,41 +662,18 @@ export const setDhcpConfigRequest = createAction('SET_DHCP_CONFIG_REQUEST');
 export const setDhcpConfigSuccess = createAction('SET_DHCP_CONFIG_SUCCESS');
 export const setDhcpConfigFailure = createAction('SET_DHCP_CONFIG_FAILURE');
 
-// TODO rewrite findActiveDhcp part
 export const setDhcpConfig = values => async (dispatch, getState) => {
     const { config } = getState().dhcp;
     const updatedConfig = { ...config, ...values };
     dispatch(setDhcpConfigRequest());
-    if (values.interface_name) {
-        dispatch(findActiveDhcpRequest());
-        try {
-            const activeDhcp = await apiClient.findActiveDhcp(values.interface_name);
-            dispatch(findActiveDhcpSuccess(activeDhcp));
-            if (!activeDhcp.found) {
-                try {
-                    await apiClient.setDhcpConfig(updatedConfig);
-                    dispatch(setDhcpConfigSuccess(updatedConfig));
-                    dispatch(addSuccessToast('dhcp_config_saved'));
-                } catch (error) {
-                    dispatch(addErrorToast({ error }));
-                    dispatch(setDhcpConfigFailure());
-                }
-            } else {
-                dispatch(addErrorToast({ error: 'dhcp_found' }));
-            }
-        } catch (error) {
-            dispatch(addErrorToast({ error }));
-            dispatch(findActiveDhcpFailure());
-        }
-    } else {
-        try {
-            await apiClient.setDhcpConfig(updatedConfig);
-            dispatch(setDhcpConfigSuccess(updatedConfig));
-            dispatch(addSuccessToast('dhcp_config_saved'));
-        } catch (error) {
-            dispatch(addErrorToast({ error }));
-            dispatch(setDhcpConfigFailure());
-        }
+    dispatch(findActiveDhcp(values.interface_name));
+    try {
+        await apiClient.setDhcpConfig(updatedConfig);
+        dispatch(setDhcpConfigSuccess(updatedConfig));
+        dispatch(addSuccessToast('dhcp_config_saved'));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(setDhcpConfigFailure());
     }
 };
 
@@ -704,40 +681,60 @@ export const toggleDhcpRequest = createAction('TOGGLE_DHCP_REQUEST');
 export const toggleDhcpFailure = createAction('TOGGLE_DHCP_FAILURE');
 export const toggleDhcpSuccess = createAction('TOGGLE_DHCP_SUCCESS');
 
-// TODO rewrite findActiveDhcp part
-export const toggleDhcp = config => async (dispatch) => {
+export const toggleDhcp = values => async (dispatch) => {
     dispatch(toggleDhcpRequest());
+    let config = { ...values, enabled: false };
+    let successMessage = 'disabled_dhcp';
 
-    if (config.enabled) {
-        try {
-            await apiClient.setDhcpConfig({ ...config, enabled: false });
-            dispatch(toggleDhcpSuccess());
-            dispatch(addSuccessToast('disabled_dhcp'));
-        } catch (error) {
-            dispatch(addErrorToast({ error }));
-            dispatch(toggleDhcpFailure());
-        }
-    } else {
-        dispatch(findActiveDhcpRequest());
-        try {
-            const activeDhcp = await apiClient.findActiveDhcp(config.interface_name);
-            dispatch(findActiveDhcpSuccess(activeDhcp));
+    if (!values.enabled) {
+        config = { ...values, enabled: true };
+        successMessage = 'enabled_dhcp';
+        dispatch(findActiveDhcp(values.interface_name));
+    }
 
-            if (!activeDhcp.found) {
-                try {
-                    await apiClient.setDhcpConfig({ ...config, enabled: true });
-                    dispatch(toggleDhcpSuccess());
-                    dispatch(addSuccessToast('enabled_dhcp'));
-                } catch (error) {
-                    dispatch(addErrorToast({ error }));
-                    dispatch(toggleDhcpFailure());
-                }
-            } else {
-                dispatch(addErrorToast({ error: 'dhcp_found' }));
-            }
-        } catch (error) {
-            dispatch(addErrorToast({ error }));
-            dispatch(findActiveDhcpFailure());
-        }
+    try {
+        await apiClient.setDhcpConfig(config);
+        dispatch(toggleDhcpSuccess());
+        dispatch(addSuccessToast(successMessage));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(toggleDhcpFailure());
+    }
+};
+
+export const toggleLeaseModal = createAction('TOGGLE_LEASE_MODAL');
+
+export const addStaticLeaseRequest = createAction('ADD_STATIC_LEASE_REQUEST');
+export const addStaticLeaseFailure = createAction('ADD_STATIC_LEASE_FAILURE');
+export const addStaticLeaseSuccess = createAction('ADD_STATIC_LEASE_SUCCESS');
+
+export const addStaticLease = config => async (dispatch) => {
+    dispatch(addStaticLeaseRequest());
+    try {
+        await apiClient.addStaticLease(config);
+        dispatch(addStaticLeaseSuccess());
+        dispatch(addSuccessToast(t('dhcp_lease_added', { key: config.hostname })));
+        dispatch(toggleLeaseModal());
+        dispatch(getDhcpStatus());
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(addStaticLeaseFailure());
+    }
+};
+
+export const removeStaticLeaseRequest = createAction('REMOVE_STATIC_LEASE_REQUEST');
+export const removeStaticLeaseFailure = createAction('REMOVE_STATIC_LEASE_FAILURE');
+export const removeStaticLeaseSuccess = createAction('REMOVE_STATIC_LEASE_SUCCESS');
+
+export const removeStaticLease = config => async (dispatch) => {
+    dispatch(removeStaticLeaseRequest());
+    try {
+        await apiClient.removeStaticLease(config);
+        dispatch(removeStaticLeaseSuccess());
+        dispatch(addSuccessToast(t('dhcp_lease_deleted', { key: config.hostname })));
+        dispatch(getDhcpStatus());
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(removeStaticLeaseFailure());
     }
 };
