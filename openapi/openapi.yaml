@@ -387,6 +387,42 @@ paths:
             schema:
                 $ref: "#/definitions/DhcpSearchResult"
 
+    /dhcp/add_static_lease:
+        post:
+            tags:
+                - dhcp
+            operationId: dhcpAddStaticLease
+            summary: "Adds a static lease"
+            consumes:
+            - application/json
+            parameters:
+            - in: "body"
+              name: "body"
+              required: true
+              schema:
+                $ref: "#/definitions/DhcpStaticLease"
+            responses:
+                200:
+                    description: OK
+
+    /dhcp/remove_static_lease:
+        post:
+            tags:
+                - dhcp
+            operationId: dhcpRemoveStaticLease
+            summary: "Removes a static lease"
+            consumes:
+            - application/json
+            parameters:
+            - in: "body"
+              name: "body"
+              required: true
+              schema:
+                $ref: "#/definitions/DhcpStaticLease"
+            responses:
+                200:
+                    description: OK
+
     # --------------------------------------------------
     # Filtering status methods
     # --------------------------------------------------
@@ -1152,7 +1188,7 @@ definitions:
         properties:
             mac:
                 type: "string"
-                example: "001109b3b3b8"
+                example: "00:11:09:b3:b3:b8"
             ip:
                 type: "string"
                 example: "192.168.1.22"
@@ -1163,6 +1199,24 @@ definitions:
                 type: "string"
                 format: "date-time"
                 example: "2017-07-21T17:32:28Z"
+    DhcpStaticLease:
+        type: "object"
+        description: "DHCP static lease information"
+        required:
+            - "mac"
+            - "ip"
+            - "hostname"
+            - "expires"
+        properties:
+            mac:
+                type: "string"
+                example: "00:11:09:b3:b3:b8"
+            ip:
+                type: "string"
+                example: "192.168.1.22"
+            hostname:
+                type: "string"
+                example: "dell"
     DhcpStatus:
         type: "object"
         description: "Built-in DHCP server configuration and status"
@@ -1176,6 +1230,10 @@ definitions:
                 type: "array"
                 items:
                     $ref: "#/definitions/DhcpLease"
+            static_leases   :
+                type: "array"
+                items:
+                    $ref: "#/definitions/DhcpStaticLease"
     DhcpSearchResult:
         type: "object"
         description: "Information about a DHCP server discovered in the current network"

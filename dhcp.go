@@ -20,23 +20,33 @@ import (
 
 var dhcpServer = dhcpd.Server{}
 
+// []dhcpd.Lease -> JSON
+func convertLeases(inputLeases []dhcpd.Lease, includeExpires bool) []map[string]string {
+	leases := []map[string]string{}
+	for _, l := range inputLeases {
+		lease := map[string]string{
+			"mac":      l.HWAddr.String(),
+			"ip":       l.IP.String(),
+			"hostname": l.Hostname,
+		}
+
+		if includeExpires {
+			lease["expires"] = l.Expiry.Format(time.RFC3339)
+		}
+
+		leases = append(leases, lease)
+	}
+	return leases
+}
+
 func handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
-	rawLeases := dhcpServer.Leases()
-	leases := []map[string]string{}
-	for i := range rawLeases {
-		lease := map[string]string{
-			"mac":      rawLeases[i].HWAddr.String(),
-			"ip":       rawLeases[i].IP.String(),
-			"hostname": rawLeases[i].Hostname,
-			"expires":  rawLeases[i].Expiry.Format(time.RFC3339),
-		}
-		leases = append(leases, lease)
-
-	}
+	leases := convertLeases(dhcpServer.Leases(), true)
+	staticLeases := convertLeases(dhcpServer.StaticLeases(), false)
 	status := map[string]interface{}{
-		"config": config.DHCP,
-		"leases": leases,
+		"config":        config.DHCP,
+		"leases":        leases,
+		"static_leases": staticLeases,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -47,18 +57,41 @@ func handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type leaseJSON struct {
+	HWAddr   string `json:"mac"`
+	IP       string `json:"ip"`
+	Hostname string `json:"hostname"`
+}
+
+type dhcpServerConfigJSON struct {
+	dhcpd.ServerConfig `json:",inline"`
+	StaticLeases       []leaseJSON `json:"static_leases"`
+}
+
 func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
-	newconfig := dhcpd.ServerConfig{}
+	newconfig := dhcpServerConfigJSON{}
 	err := json.NewDecoder(r.Body).Decode(&newconfig)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Failed to parse new DHCP config json: %s", err)
 		return
 	}
 
+	err = dhcpServer.CheckConfig(newconfig.ServerConfig)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Invalid DHCP configuration: %s", err)
+		return
+	}
+
 	err = dhcpServer.Stop()
 	if err != nil {
 		log.Error("failed to stop the DHCP server: %s", err)
+	}
+
+	err = dhcpServer.Init(newconfig.ServerConfig)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Invalid DHCP configuration: %s", err)
+		return
 	}
 
 	if newconfig.Enabled {
@@ -72,14 +105,14 @@ func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		err = dhcpServer.Start(&newconfig)
+		err = dhcpServer.Start()
 		if err != nil {
 			httpError(w, http.StatusBadRequest, "Failed to start DHCP server: %s", err)
 			return
 		}
 	}
 
-	config.DHCP = newconfig
+	config.DHCP = newconfig.ServerConfig
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
@@ -333,12 +366,80 @@ func setStaticIP(ifaceName string) error {
 	return nil
 }
 
+func handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request) {
+	log.Tracef("%s %v", r.Method, r.URL)
+
+	lj := leaseJSON{}
+	err := json.NewDecoder(r.Body).Decode(&lj)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "json.Decode: %s", err)
+		return
+	}
+
+	ip := parseIPv4(lj.IP)
+	if ip == nil {
+		httpError(w, http.StatusBadRequest, "invalid IP")
+		return
+	}
+
+	mac, _ := net.ParseMAC(lj.HWAddr)
+
+	lease := dhcpd.Lease{
+		IP:       ip,
+		HWAddr:   mac,
+		Hostname: lj.Hostname,
+	}
+	err = dhcpServer.AddStaticLease(lease)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "%s", err)
+		return
+	}
+	returnOK(w)
+}
+
+func handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Request) {
+	log.Tracef("%s %v", r.Method, r.URL)
+
+	lj := leaseJSON{}
+	err := json.NewDecoder(r.Body).Decode(&lj)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "json.Decode: %s", err)
+		return
+	}
+
+	ip := parseIPv4(lj.IP)
+	if ip == nil {
+		httpError(w, http.StatusBadRequest, "invalid IP")
+		return
+	}
+
+	mac, _ := net.ParseMAC(lj.HWAddr)
+
+	lease := dhcpd.Lease{
+		IP:       ip,
+		HWAddr:   mac,
+		Hostname: lj.Hostname,
+	}
+	err = dhcpServer.RemoveStaticLease(lease)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "%s", err)
+		return
+	}
+	returnOK(w)
+}
+
 func startDHCPServer() error {
 	if !config.DHCP.Enabled {
 		// not enabled, don't do anything
 		return nil
 	}
-	err := dhcpServer.Start(&config.DHCP)
+
+	err := dhcpServer.Init(config.DHCP)
+	if err != nil {
+		return errorx.Decorate(err, "Couldn't init DHCP server")
+	}
+
+	err = dhcpServer.Start()
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start DHCP server")
 	}
@@ -347,10 +448,6 @@ func startDHCPServer() error {
 
 func stopDHCPServer() error {
 	if !config.DHCP.Enabled {
-		return nil
-	}
-
-	if !dhcpServer.Enabled {
 		return nil
 	}
 

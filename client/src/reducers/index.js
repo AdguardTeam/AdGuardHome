@@ -287,11 +287,18 @@ const dhcp = handleActions({
     [actions.getDhcpStatusRequest]: state => ({ ...state, processing: true }),
     [actions.getDhcpStatusFailure]: state => ({ ...state, processing: false }),
     [actions.getDhcpStatusSuccess]: (state, { payload }) => {
+        const {
+            static_leases: staticLeases,
+            ...values
+        } = payload;
+
         const newState = {
             ...state,
-            ...payload,
+            staticLeases,
             processing: false,
+            ...values,
         };
+
         return newState;
     },
 
@@ -344,17 +351,62 @@ const dhcp = handleActions({
         const newState = { ...state, config: newConfig, processingConfig: false };
         return newState;
     },
+
+    [actions.toggleLeaseModal]: (state) => {
+        const newState = {
+            ...state,
+            isModalOpen: !state.isModalOpen,
+        };
+        return newState;
+    },
+
+    [actions.addStaticLeaseRequest]: state => ({ ...state, processingAdding: true }),
+    [actions.addStaticLeaseFailure]: state => ({ ...state, processingAdding: false }),
+    [actions.addStaticLeaseSuccess]: (state, { payload }) => {
+        const {
+            ip, mac, hostname,
+        } = payload;
+        const newLease = {
+            ip,
+            mac,
+            hostname: hostname || '',
+        };
+        const leases = [...state.staticLeases, newLease];
+        const newState = {
+            ...state,
+            staticLeases: leases,
+            processingAdding: false,
+        };
+        return newState;
+    },
+
+    [actions.removeStaticLeaseRequest]: state => ({ ...state, processingDeleting: true }),
+    [actions.removeStaticLeaseFailure]: state => ({ ...state, processingDeleting: false }),
+    [actions.removeStaticLeaseSuccess]: (state, { payload }) => {
+        const leaseToRemove = payload.ip;
+        const leases = state.staticLeases.filter(item => item.ip !== leaseToRemove);
+        const newState = {
+            ...state,
+            staticLeases: leases,
+            processingDeleting: false,
+        };
+        return newState;
+    },
 }, {
     processing: true,
     processingStatus: false,
     processingInterfaces: false,
     processingDhcp: false,
     processingConfig: false,
+    processingAdding: false,
+    processingDeleting: false,
     config: {
         enabled: false,
     },
     check: null,
     leases: [],
+    staticLeases: [],
+    isModalOpen: false,
 });
 
 export default combineReducers({

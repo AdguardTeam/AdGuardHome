@@ -19,9 +19,11 @@ Contents:
 	* Update client
 	* Delete client
 * Enable DHCP server
+	* "Show DHCP status" command
 	* "Check DHCP" command
 	* "Enable DHCP" command
 	* Static IP check/set
+	* Add a static lease
 
 
 ## First startup
@@ -302,6 +304,38 @@ Algorithm:
 * UI shows the status
 
 
+### "Show DHCP status" command
+
+Request:
+
+	GET /control/dhcp/status
+
+Response:
+
+	200 OK
+
+	{
+		"config":{
+			"enabled":false,
+			"interface_name":"...",
+			"gateway_ip":"...",
+			"subnet_mask":"...",
+			"range_start":"...",
+			"range_end":"...",
+			"lease_duration":60,
+			"icmp_timeout_msec":0
+		},
+		"leases":[
+			{"ip":"...","mac":"...","hostname":"...","expires":"..."}
+			...
+		],
+		"static_leases":[
+			{"ip":"...","mac":"...","hostname":"..."}
+			...
+		]
+	}
+
+
 ### "Check DHCP" command
 
 Request:
@@ -426,6 +460,40 @@ Step 2.
 If we would set a different IP address, we'd need to replace the IP address for the current network configuration.  But currently this step isn't necessary.
 
 	ip addr replace dev eth0 192.168.0.1/24
+
+
+### Add a static lease
+
+Request:
+
+	POST /control/dhcp/add_static_lease
+
+	{
+		"mac":"...",
+		"ip":"...",
+		"hostname":"..."
+	}
+
+Response:
+
+	200 OK
+
+
+### Remove a static lease
+
+Request:
+
+	POST /control/dhcp/remove_static_lease
+
+	{
+		"mac":"...",
+		"ip":"...",
+		"hostname":"..."
+	}
+
+Response:
+
+	200 OK
 
 
 ## Device Names and Per-client Settings
