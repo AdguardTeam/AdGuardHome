@@ -122,7 +122,7 @@ const dashboard = handleActions({
     [actions.getVersionSuccess]: (state, { payload }) => {
         const currentVersion = state.dnsVersion === 'undefined' ? 0 : state.dnsVersion;
 
-        if (versionCompare(currentVersion, payload.version) === -1) {
+        if (payload && versionCompare(currentVersion, payload.version) === -1) {
             const {
                 version,
                 announcement_url: announcementUrl,

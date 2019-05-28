@@ -29,4 +29,4 @@ WORKDIR /opt/adguardhome/work
 #USER nobody
 
 ENTRYPOINT ["/opt/adguardhome/AdGuardHome"]
-CMD ["-c", "/opt/adguardhome/conf/AdGuardHome.yaml", "-w", "/opt/adguardhome/work"]
+CMD ["-c", "/opt/adguardhome/conf/AdGuardHome.yaml", "-w", "/opt/adguardhome/work", "--no-check-update"]

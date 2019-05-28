@@ -79,6 +79,7 @@ func run(args options) {
 		log.Info("AdGuard Home is running as a service")
 	}
 	config.runningAsService = args.runningAsService
+	config.disableUpdate = args.disableUpdate
 
 	config.firstRun = detectFirstRun()
 	if config.firstRun {
@@ -408,6 +409,7 @@ type options struct {
 	logFile        string // Path to the log file. If empty, write to stdout. If "syslog", writes to syslog
 	pidFile        string // File name to save PID to
 	checkConfig    bool   // Check configuration and exit
+	disableUpdate  bool   // If set, don't check for updates
 
 	// service control action (see service.ControlAction array + "status" command)
 	serviceControlAction string
@@ -446,6 +448,7 @@ func loadOptions() options {
 		}, nil},
 		{"pidfile", "", "Path to a file where PID is stored", func(value string) { o.pidFile = value }, nil},
 		{"check-config", "", "Check configuration and exit", nil, func() { o.checkConfig = true }},
+		{"no-check-update", "", "Don't check for updates", nil, func() { o.disableUpdate = true }},
 		{"verbose", "v", "Enable verbose output", nil, func() { o.verbose = true }},
 		{"help", "", "Print this help", nil, func() {
 			printHelp()
