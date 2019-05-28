@@ -30,9 +30,9 @@ const defaultHTTPTimeout = 5 * time.Minute
 const defaultHTTPMaxIdleConnections = 100
 
 const defaultSafebrowsingServer = "sb.adtidy.org"
-const defaultSafebrowsingURL = "https://%s/safebrowsing-lookup-hash.html?prefixes=%s"
+const defaultSafebrowsingURL = "%s://%s/safebrowsing-lookup-hash.html?prefixes=%s"
 const defaultParentalServer = "pctrl.adguard.com"
-const defaultParentalURL = "https://%s/check-parental-control-hash?prefixes=%s&sensitivity=%d"
+const defaultParentalURL = "%s://%s/check-parental-control-hash?prefixes=%s&sensitivity=%d"
 const maxDialCacheSize = 2 // the number of host names for safebrowsing and parental control
 
 // ErrInvalidSyntax is returned by AddRule when the rule is invalid
@@ -51,6 +51,7 @@ type Config struct {
 	FilteringTempFilename string `yaml:"filtering_temp_filename"` // temporary file for storing unused filtering rules
 	ParentalSensitivity   int    `yaml:"parental_sensitivity"`    // must be either 3, 10, 13 or 17
 	ParentalEnabled       bool   `yaml:"parental_enabled"`
+	UsePlainHTTP          bool   `yaml:"-"` // use plain HTTP for requests to parental and safe browsing servers
 	SafeSearchEnabled     bool   `yaml:"safesearch_enabled"`
 	SafeBrowsingEnabled   bool   `yaml:"safebrowsing_enabled"`
 	ResolverAddress       string // DNS server address
@@ -346,7 +347,11 @@ func (d *Dnsfilter) checkSafeBrowsing(host string) (Result, error) {
 	}
 
 	format := func(hashparam string) string {
-		url := fmt.Sprintf(defaultSafebrowsingURL, d.safeBrowsingServer, hashparam)
+		schema := "https"
+		if d.UsePlainHTTP {
+			schema = "http"
+		}
+		url := fmt.Sprintf(defaultSafebrowsingURL, schema, d.safeBrowsingServer, hashparam)
 		return url
 	}
 	handleBody := func(body []byte, hashes map[string]bool) (Result, error) {
@@ -388,7 +393,11 @@ func (d *Dnsfilter) checkParental(host string) (Result, error) {
 	}
 
 	format := func(hashparam string) string {
-		url := fmt.Sprintf(defaultParentalURL, d.parentalServer, hashparam, d.ParentalSensitivity)
+		schema := "https"
+		if d.UsePlainHTTP {
+			schema = "http"
+		}
+		url := fmt.Sprintf(defaultParentalURL, schema, d.parentalServer, hashparam, d.ParentalSensitivity)
 		return url
 	}
 	handleBody := func(body []byte, hashes map[string]bool) (Result, error) {
