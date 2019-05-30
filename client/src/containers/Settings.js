@@ -26,6 +26,10 @@ import {
     deleteClient,
     toggleClientModal,
 } from '../actions/clients';
+import {
+    getAccessList,
+    setAccessList,
+} from '../actions/access';
 import Settings from '../components/Settings';
 
 const mapStateToProps = (state) => {
@@ -35,6 +39,7 @@ const mapStateToProps = (state) => {
         dhcp,
         encryption,
         clients,
+        access,
     } = state;
     const props = {
         settings,
@@ -42,6 +47,7 @@ const mapStateToProps = (state) => {
         dhcp,
         encryption,
         clients,
+        access,
     };
     return props;
 };
@@ -68,6 +74,8 @@ const mapDispatchToProps = {
     addStaticLease,
     removeStaticLease,
     toggleLeaseModal,
+    getAccessList,
+    setAccessList,
 };
 
 export default connect(

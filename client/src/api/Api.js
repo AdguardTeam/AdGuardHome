@@ -460,4 +460,22 @@ export default class Api {
         };
         return this.makeRequest(path, method, parameters);
     }
+
+    // DNS access settings
+    ACCESS_LIST = { path: 'access/list', method: 'GET' };
+    ACCESS_SET = { path: 'access/set', method: 'POST' };
+
+    getAccessList() {
+        const { path, method } = this.ACCESS_LIST;
+        return this.makeRequest(path, method);
+    }
+
+    setAccessList(config) {
+        const { path, method } = this.ACCESS_SET;
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, parameters);
+    }
 }
