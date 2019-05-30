@@ -15,12 +15,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/dnsproxy/proxy"
-
-	"github.com/stretchr/testify/assert"
-
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
+	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/miekg/dns"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -177,7 +175,7 @@ func TestSafeSearch(t *testing.T) {
 
 	ip := ips[0]
 	for _, i := range ips {
-		if len(i) == net.IPv6len && i.To4() != nil {
+		if i.To4() != nil {
 			ip = i
 			break
 		}
@@ -460,12 +458,8 @@ func createTestServer(t *testing.T) *Server {
 	s.conf.FilteringConfig.SafeBrowsingEnabled = true
 	s.conf.Filters = make([]dnsfilter.Filter, 0)
 
-	rules := []string{
-		"||nxdomain.example.org^",
-		"||null.example.org^",
-		"127.0.0.1	host.example.org",
-	}
-	filter := dnsfilter.Filter{ID: 1, Rules: rules}
+	rules := "||nxdomain.example.org^\n||null.example.org^\n127.0.0.1	host.example.org\n"
+	filter := dnsfilter.Filter{ID: 1, Data: []byte(rules)}
 	s.conf.Filters = append(s.conf.Filters, filter)
 	return s
 }

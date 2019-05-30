@@ -35,17 +35,6 @@ const defaultParentalServer = "pctrl.adguard.com"
 const defaultParentalURL = "%s://%s/check-parental-control-hash?prefixes=%s&sensitivity=%d"
 const maxDialCacheSize = 2 // the number of host names for safebrowsing and parental control
 
-// ErrInvalidSyntax is returned by AddRule when the rule is invalid
-var ErrInvalidSyntax = errors.New("dnsfilter: invalid rule syntax")
-
-// ErrAlreadyExists is returned by AddRule when the rule was already added to the filter
-var ErrAlreadyExists = errors.New("dnsfilter: rule was already added")
-
-const shortcutLength = 6 // used for rule search optimization, 6 hits the sweet spot
-
-const enableFastLookup = true         // flag for debugging, must be true in production for faster performance
-const enableDelayedCompilation = true // flag for debugging, must be true in production for faster performance
-
 // Custom filtering settings
 type RequestFilteringSettings struct {
 	FilteringEnabled    bool
@@ -636,7 +625,10 @@ func searchInDialCache(host string) string {
 
 // Add "hostname" -> "IP address" entry to cache
 func addToDialCache(host, ip string) {
-	dialCache.Set(host, ip)
+	err := dialCache.Set(host, ip)
+	if err != nil {
+		log.Debug("dialCache.Set: %s", err)
+	}
 	log.Debug("Added to cache: %s -> %s", host, ip)
 }
 

@@ -318,10 +318,12 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 		t.Fatalf("Failed to lookup for %s", safeDomain)
 	}
 
+	t.Logf("IP addresses: %v", ips)
 	ip := ips[0]
 	for _, i := range ips {
-		if len(i) == net.IPv6len && i.To4() != nil {
+		if i.To4() != nil {
 			ip = i
+			break
 		}
 	}
 
@@ -331,7 +333,8 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 	}
 
 	if result.IP.String() != ip.String() {
-		t.Fatalf("Wrong IP for %s safesearch: %s", domain, result.IP.String())
+		t.Fatalf("Wrong IP for %s safesearch: %s.  Should be: %s",
+			domain, result.IP.String(), ip)
 	}
 
 	// Check cache
