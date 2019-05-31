@@ -34,7 +34,7 @@ func TestClients(t *testing.T) {
 		IP:   "1.2.3.5",
 		Name: "client1",
 	}
-	b, e = clientAdd(c)
+	b, _ = clientAdd(c)
 	if b {
 		t.Fatalf("clientAdd - name in use")
 	}
@@ -111,7 +111,7 @@ func TestClients(t *testing.T) {
 
 	// failed add - ip exists
 	b, e = clientAddHost("1.1.1.1", "host", ClientSourceHostsFile)
-	if b {
+	if b || e != nil {
 		t.Fatalf("clientAddHost - ip exists")
 	}
 

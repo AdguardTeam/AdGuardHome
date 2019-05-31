@@ -136,7 +136,7 @@ func asyncRDNSLoop() {
 		delete(dnsctx.rdnsIP, ip)
 		dnsctx.rdnsLock.Unlock()
 
-		clientAddHost(ip, host, ClientSourceRDNS)
+		_, _ = clientAddHost(ip, host, ClientSourceRDNS)
 	}
 }
 

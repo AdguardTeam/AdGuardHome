@@ -54,7 +54,11 @@ func main() {
 		GatewayIP:     "192.168.7.1",
 	}
 	log.Printf("Starting DHCP server")
-	err = server.Start(&config)
+	err = server.Init(config)
+	if err != nil {
+		panic(err)
+	}
+	err = server.Start()
 	if err != nil {
 		panic(err)
 	}
@@ -66,12 +70,12 @@ func main() {
 		panic(err)
 	}
 	log.Printf("Starting DHCP server")
-	err = server.Start(&config)
+	err = server.Start()
 	if err != nil {
 		panic(err)
 	}
 	log.Printf("Starting DHCP server while it's already running")
-	err = server.Start(&config)
+	err = server.Start()
 	if err != nil {
 		panic(err)
 	}

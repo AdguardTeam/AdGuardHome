@@ -95,6 +95,8 @@ func run(args options) {
 		os.Exit(0)
 	}()
 
+	clientsInit()
+
 	if !config.firstRun {
 		// Do the upgrade if necessary
 		err := upgradeConfig()

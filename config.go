@@ -220,7 +220,6 @@ func parseConfig() error {
 		return err
 	}
 
-	clientsInit()
 	for _, cy := range config.Clients {
 		cli := Client{
 			Name:                cy.Name,

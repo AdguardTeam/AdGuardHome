@@ -26,6 +26,7 @@ func TestDHCP(t *testing.T) {
 	var lease *Lease
 	var opt dhcp4.Options
 
+	s.reset()
 	s.leaseStart = []byte{1, 1, 1, 1}
 	s.leaseStop = []byte{1, 1, 1, 2}
 	s.leaseTime = 5 * time.Second
@@ -132,6 +133,7 @@ func TestDB(t *testing.T) {
 	var hw1, hw2 net.HardwareAddr
 	var lease *Lease
 
+	s.reset()
 	s.leaseStart = []byte{1, 1, 1, 1}
 	s.leaseStop = []byte{1, 1, 1, 2}
 	s.leaseTime = 5 * time.Second
