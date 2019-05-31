@@ -12,7 +12,7 @@ const ENTRY_REACT = path.resolve(RESOURCES_PATH, 'src/index.js');
 const ENTRY_INSTALL = path.resolve(RESOURCES_PATH, 'src/install/index.js');
 const HTML_PATH = path.resolve(RESOURCES_PATH, 'public/index.html');
 const HTML_INSTALL_PATH = path.resolve(RESOURCES_PATH, 'public/install.html');
-const FAVICON_PATH = path.resolve(RESOURCES_PATH, 'public/favicon.ico');
+const FAVICON_PATH = path.resolve(RESOURCES_PATH, 'public/favicon.png');
 
 const PUBLIC_PATH = path.resolve(__dirname, '../build/static');
 

@@ -143,7 +143,7 @@ func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.Res
 	return func(w http.ResponseWriter, r *http.Request) {
 		if config.firstRun &&
 			!strings.HasPrefix(r.URL.Path, "/install.") &&
-			r.URL.Path != "/favicon.ico" {
+			r.URL.Path != "/favicon.png" {
 			http.Redirect(w, r, "/install.html", http.StatusSeeOther) // should not be cacheable
 			return
 		}
