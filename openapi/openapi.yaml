@@ -144,7 +144,7 @@ paths:
                 - 'application/json'
             responses:
                 200:
-                    description: 'Version info.  If response message is empty, UI doesn't show a version update message.'
+                    description: 'Version info.  If response message is empty, UI does not show a version update message.'
                     schema:
                         $ref: "#/definitions/VersionInfo"
                 500:
