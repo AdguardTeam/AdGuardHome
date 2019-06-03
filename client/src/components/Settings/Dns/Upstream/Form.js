@@ -6,7 +6,7 @@ import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 import classnames from 'classnames';
 
-import { renderSelectField } from '../../../helpers/form';
+import { renderSelectField } from '../../../../helpers/form';
 import Examples from './Examples';
 
 let Form = (props) => {
@@ -58,7 +58,7 @@ let Form = (props) => {
                 </div>
                 <div className="col-12">
                     <Examples />
-                    <hr/>
+                    <hr />
                 </div>
                 <div className="col-12">
                     <div className="form__group">
@@ -84,11 +84,13 @@ let Form = (props) => {
                     <button
                         type="button"
                         className={testButtonClass}
-                        onClick={() => testUpstream({
-                            upstream_dns: upstreamDns,
-                            bootstrap_dns: bootstrapDns,
-                            all_servers: allServers,
-                        })}
+                        onClick={() =>
+                            testUpstream({
+                                upstream_dns: upstreamDns,
+                                bootstrap_dns: bootstrapDns,
+                                all_servers: allServers,
+                            })
+                        }
                         disabled={!upstreamDns || processingTestUpstream}
                     >
                         <Trans>test_upstream_btn</Trans>
@@ -97,10 +99,7 @@ let Form = (props) => {
                         type="submit"
                         className="btn btn-success btn-standard"
                         disabled={
-                            submitting
-                            || invalid
-                            || processingSetUpstream
-                            || processingTestUpstream
+                            submitting || invalid || processingSetUpstream || processingTestUpstream
                         }
                     >
                         <Trans>apply_btn</Trans>
@@ -140,5 +139,7 @@ Form = connect((state) => {
 
 export default flow([
     withNamespaces(),
-    reduxForm({ form: 'upstreamForm' }),
+    reduxForm({
+        form: 'upstreamForm',
+    }),
 ])(Form);

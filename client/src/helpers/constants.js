@@ -177,3 +177,5 @@ export const CLIENT_ID = {
     MAC: 'mac',
     IP: 'ip',
 };
+
+export const SETTINGS_URLS = ['/encryption', '/dhcp', '/dns', '/settings', '/clients'];

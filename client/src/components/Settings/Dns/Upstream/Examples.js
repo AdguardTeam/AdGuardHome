@@ -7,7 +7,12 @@ const Examples = props => (
         <p>
             <Trans
                 components={[
-                    <a href="https://kb.adguard.com/general/dns-providers" target="_blank" rel="noopener noreferrer" key="0">
+                    <a
+                        href="https://kb.adguard.com/general/dns-providers"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        key="0"
+                    >
                         DNS providers
                     </a>,
                 ]}
@@ -18,14 +23,19 @@ const Examples = props => (
         <Trans>examples_title</Trans>:
         <ol className="leading-loose">
             <li>
-                <code>1.1.1.1</code> - { props.t('example_upstream_regular') }
+                <code>1.1.1.1</code> - {props.t('example_upstream_regular')}
             </li>
             <li>
                 <code>tls://1dot1dot1dot1.cloudflare-dns.com</code> –&nbsp;
                 <span>
                     <Trans
                         components={[
-                            <a href="https://en.wikipedia.org/wiki/DNS_over_TLS" target="_blank" rel="noopener noreferrer" key="0">
+                            <a
+                                href="https://en.wikipedia.org/wiki/DNS_over_TLS"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                key="0"
+                            >
                                 DNS-over-TLS
                             </a>,
                         ]}
@@ -39,7 +49,12 @@ const Examples = props => (
                 <span>
                     <Trans
                         components={[
-                            <a href="https://en.wikipedia.org/wiki/DNS_over_HTTPS" target="_blank" rel="noopener noreferrer" key="0">
+                            <a
+                                href="https://en.wikipedia.org/wiki/DNS_over_HTTPS"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                key="0"
+                            >
                                 DNS-over-HTTPS
                             </a>,
                         ]}
@@ -56,13 +71,28 @@ const Examples = props => (
                 <span>
                     <Trans
                         components={[
-                            <a href="https://dnscrypt.info/stamps/" target="_blank" rel="noopener noreferrer" key="0">
+                            <a
+                                href="https://dnscrypt.info/stamps/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                key="0"
+                            >
                                 DNS Stamps
                             </a>,
-                            <a href="https://dnscrypt.info/" target="_blank" rel="noopener noreferrer" key="1">
+                            <a
+                                href="https://dnscrypt.info/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                key="1"
+                            >
                                 DNSCrypt
                             </a>,
-                            <a href="https://en.wikipedia.org/wiki/DNS_over_HTTPS" target="_blank" rel="noopener noreferrer" key="2">
+                            <a
+                                href="https://en.wikipedia.org/wiki/DNS_over_HTTPS"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                key="2"
+                            >
                                 DNS-over-HTTPS
                             </a>,
                         ]}
@@ -76,7 +106,12 @@ const Examples = props => (
                 <span>
                     <Trans
                         components={[
-                            <a href="https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#upstreams-for-domains" target="_blank" rel="noopener noreferrer" key="0">
+                            <a
+                                href="https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#upstreams-for-domains"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                key="0"
+                            >
                                 Link
                             </a>,
                         ]}
