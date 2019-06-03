@@ -7,6 +7,7 @@ import Dhcp from './Dhcp';
 import Encryption from './Encryption';
 import Clients from './Clients';
 import AutoClients from './Clients/AutoClients';
+import Access from './Access';
 import Checkbox from '../ui/Checkbox';
 import Loading from '../ui/Loading';
 import PageTitle from '../ui/PageTitle';
@@ -43,6 +44,7 @@ class Settings extends Component {
         this.props.getDhcpStatus();
         this.props.getDhcpInterfaces();
         this.props.getTlsStatus();
+        this.props.getAccessList();
     }
 
     renderSettings = (settings) => {
@@ -68,7 +70,7 @@ class Settings extends Component {
 
     render() {
         const {
-            settings, dashboard, clients, t,
+            settings, dashboard, clients, access, t,
         } = this.props;
         return (
             <Fragment>
@@ -117,6 +119,7 @@ class Settings extends Component {
                                         />
                                     </Fragment>
                                 )}
+                                <Access access={access} setAccessList={this.props.setAccessList} />
                                 <Encryption
                                     encryption={this.props.encryption}
                                     setTlsConfig={this.props.setTlsConfig}

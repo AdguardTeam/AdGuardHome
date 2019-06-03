@@ -62,7 +62,7 @@ let Form = (props) => {
                 </div>
                 <div className="col-12">
                     <div className="form__group">
-                        <label className="form__label" htmlFor="bootstrap_dns">
+                        <label className="form__label form__label--with-desc" htmlFor="bootstrap_dns">
                             <Trans>bootstrap_dns</Trans>
                         </label>
                         <div className="form__desc form__desc--top">

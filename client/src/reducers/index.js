@@ -8,6 +8,7 @@ import * as actions from '../actions';
 import toasts from './toasts';
 import encryption from './encryption';
 import clients from './clients';
+import access from './access';
 
 const settings = handleActions({
     [actions.initSettingsRequest]: state => ({ ...state, processing: true }),
@@ -418,6 +419,7 @@ export default combineReducers({
     dhcp,
     encryption,
     clients,
+    access,
     loadingBar: loadingBarReducer,
     form: formReducer,
 });

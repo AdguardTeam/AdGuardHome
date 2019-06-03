@@ -622,3 +622,72 @@ func publicKey(priv interface{}) interface{} {
 		return nil
 	}
 }
+
+func TestIsBlockedIPAllowed(t *testing.T) {
+	s := createTestServer(t)
+	s.conf.AllowedClients = []string{"1.1.1.1", "2.2.0.0/16"}
+
+	err := s.Start(nil)
+	defer removeDataDir(t)
+	if err != nil {
+		t.Fatalf("Failed to start server: %s", err)
+	}
+
+	if s.isBlockedIP("1.1.1.1") {
+		t.Fatalf("isBlockedIP")
+	}
+	if !s.isBlockedIP("1.1.1.2") {
+		t.Fatalf("isBlockedIP")
+	}
+	if s.isBlockedIP("2.2.1.1") {
+		t.Fatalf("isBlockedIP")
+	}
+	if !s.isBlockedIP("2.3.1.1") {
+		t.Fatalf("isBlockedIP")
+	}
+}
+
+func TestIsBlockedIPDisallowed(t *testing.T) {
+	s := createTestServer(t)
+	s.conf.DisallowedClients = []string{"1.1.1.1", "2.2.0.0/16"}
+
+	err := s.Start(nil)
+	defer removeDataDir(t)
+	if err != nil {
+		t.Fatalf("Failed to start server: %s", err)
+	}
+
+	if !s.isBlockedIP("1.1.1.1") {
+		t.Fatalf("isBlockedIP")
+	}
+	if s.isBlockedIP("1.1.1.2") {
+		t.Fatalf("isBlockedIP")
+	}
+	if !s.isBlockedIP("2.2.1.1") {
+		t.Fatalf("isBlockedIP")
+	}
+	if s.isBlockedIP("2.3.1.1") {
+		t.Fatalf("isBlockedIP")
+	}
+}
+
+func TestIsBlockedIPBlockedDomain(t *testing.T) {
+	s := createTestServer(t)
+	s.conf.BlockedHosts = []string{"host1", "host2"}
+
+	err := s.Start(nil)
+	defer removeDataDir(t)
+	if err != nil {
+		t.Fatalf("Failed to start server: %s", err)
+	}
+
+	if !s.isBlockedDomain("host1") {
+		t.Fatalf("isBlockedDomain")
+	}
+	if !s.isBlockedDomain("host2") {
+		t.Fatalf("isBlockedDomain")
+	}
+	if s.isBlockedDomain("host3") {
+		t.Fatalf("isBlockedDomain")
+	}
+}

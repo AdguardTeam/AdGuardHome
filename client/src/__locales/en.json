@@ -298,5 +298,14 @@
     "clients_not_found": "No clients found",
     "client_confirm_delete": "Are you sure you want to delete client \"{{key}}\"?",
     "auto_clients_title": "Clients (runtime)",
-    "auto_clients_desc": "Data on the clients that use AdGuard Home, but not stored in the configuration"
+    "auto_clients_desc": "Data on the clients that use AdGuard Home, but not stored in the configuration",
+    "access_title": "Access settings",
+    "access_desc": "Here you can configure access rules for the AdGuard Home DNS server.",
+    "access_allowed_title": "Allowed clients",
+    "access_allowed_desc": "A list of CIDR or IP addresses. If configured, AdGuard Home will accept requests from these IP addresses only.",
+    "access_disallowed_title": "Disallowed clients",
+    "access_disallowed_desc": "A list of CIDR or IP addresses. If configured, AdGuard Home will drop requests from these IP addresses.",
+    "access_blocked_title": "Blocked domains",
+    "access_blocked_desc": "Don't confuse this with filters. AdGuard Home will drop DNS queries with these domains in query's question.",
+    "access_settings_saved": "Access settings successfully saved"
 }
