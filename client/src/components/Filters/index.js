@@ -32,6 +32,13 @@ class Filters extends Component {
         );
     };
 
+    handleDelete = (url) => {
+        // eslint-disable-next-line no-alert
+        if (window.confirm(this.props.t('filter_confirm_delete'))) {
+            this.props.removeFilter({ url });
+        }
+    }
+
     columns = [{
         Header: <Trans>enabled_table_header</Trans>,
         accessor: 'enabled',
@@ -62,7 +69,7 @@ class Filters extends Component {
             <button
                 type="button"
                 className="btn btn-icon btn-outline-secondary btn-sm"
-                onClick={() => this.props.removeFilter(value)}
+                onClick={() => this.handleDelete(value)}
                 title={this.props.t('delete_table_action')}
             >
                 <svg className="icons">

@@ -676,19 +676,18 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 
 func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
-	parameters, err := parseParametersFromBody(r.Body)
+
+	type request struct {
+		URL string `json:"url"`
+	}
+	req := request{}
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "failed to parse parameters from body: %s", err)
+		httpError(w, http.StatusBadRequest, "Failed to parse request body json: %s", err)
 		return
 	}
 
-	url, ok := parameters["url"]
-	if !ok {
-		http.Error(w, "URL parameter was not specified", http.StatusBadRequest)
-		return
-	}
-
-	if valid := govalidator.IsRequestURL(url); !valid {
+	if valid := govalidator.IsRequestURL(req.URL); !valid {
 		http.Error(w, "URL parameter is not valid request URL", http.StatusBadRequest)
 		return
 	}
@@ -697,7 +696,7 @@ func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 	config.Lock()
 	newFilters := config.Filters[:0]
 	for _, filter := range config.Filters {
-		if filter.URL != url {
+		if filter.URL != req.URL {
 			newFilters = append(newFilters, filter)
 		} else {
 			// Remove the filter file

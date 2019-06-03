@@ -188,15 +188,14 @@ export default class Api {
         return this.makeRequest(path, method, config);
     }
 
-    removeFilter(url) {
+    removeFilter(config) {
         const { path, method } = this.FILTERING_REMOVE_FILTER;
-        const parameter = 'url';
-        const requestBody = `${parameter}=${url}`;
-        const config = {
-            data: requestBody,
-            header: { 'Content-Type': 'text/plain' },
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
         };
-        return this.makeRequest(path, method, config);
+
+        return this.makeRequest(path, method, parameters);
     }
 
     setRules(rules) {
@@ -424,10 +423,10 @@ export default class Api {
     }
 
     // Per-client settings
-    GET_CLIENTS = { path: 'clients', method: 'GET' }
-    ADD_CLIENT = { path: 'clients/add', method: 'POST' }
-    DELETE_CLIENT = { path: 'clients/delete', method: 'POST' }
-    UPDATE_CLIENT = { path: 'clients/update', method: 'POST' }
+    GET_CLIENTS = { path: 'clients', method: 'GET' };
+    ADD_CLIENT = { path: 'clients/add', method: 'POST' };
+    DELETE_CLIENT = { path: 'clients/delete', method: 'POST' };
+    UPDATE_CLIENT = { path: 'clients/update', method: 'POST' };
 
     getClients() {
         const { path, method } = this.GET_CLIENTS;

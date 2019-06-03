@@ -301,6 +301,7 @@
     "table_statistics": "Requests count (last 24 hours)",
     "clients_not_found": "No clients found",
     "client_confirm_delete": "Are you sure you want to delete client \"{{key}}\"?",
+    "filter_confirm_delete": "Are you sure you want to delete filter?",
     "auto_clients_title": "Clients (runtime)",
     "auto_clients_desc": "Data on the clients that use AdGuard Home, but not stored in the configuration",
     "access_title": "Access settings",
