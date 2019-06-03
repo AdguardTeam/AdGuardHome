@@ -1,5 +1,4 @@
 import { connect } from 'react-redux';
-import { addErrorToast } from '../actions';
 import { getTlsStatus, setTlsConfig, validateTlsConfig } from '../actions/encryption';
 import Encryption from '../components/Settings/Encryption';
 
@@ -12,7 +11,6 @@ const mapStateToProps = (state) => {
 };
 
 const mapDispatchToProps = {
-    addErrorToast,
     getTlsStatus,
     setTlsConfig,
     validateTlsConfig,

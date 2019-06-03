@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import { handleUpstreamChange, setUpstream, testUpstream, addErrorToast } from '../actions';
+import { handleUpstreamChange, setUpstream, testUpstream } from '../actions';
 import { getAccessList, setAccessList } from '../actions/access';
 import Dns from '../components/Settings/Dns';
 
@@ -17,7 +17,6 @@ const mapDispatchToProps = {
     handleUpstreamChange,
     setUpstream,
     testUpstream,
-    addErrorToast,
     getAccessList,
     setAccessList,
 };

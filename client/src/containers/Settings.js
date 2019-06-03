@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import { initSettings, toggleSetting, addErrorToast } from '../actions';
+import { initSettings, toggleSetting } from '../actions';
 import Settings from '../components/Settings';
 
 const mapStateToProps = (state) => {
@@ -13,7 +13,6 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = {
     initSettings,
     toggleSetting,
-    addErrorToast,
 };
 
 export default connect(

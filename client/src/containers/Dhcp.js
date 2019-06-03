@@ -1,6 +1,5 @@
 import { connect } from 'react-redux';
 import {
-    addErrorToast,
     toggleDhcp,
     getDhcpStatus,
     getDhcpInterfaces,
@@ -21,7 +20,6 @@ const mapStateToProps = (state) => {
 };
 
 const mapDispatchToProps = {
-    addErrorToast,
     toggleDhcp,
     getDhcpStatus,
     getDhcpInterfaces,
