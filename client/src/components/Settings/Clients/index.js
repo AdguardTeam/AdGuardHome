@@ -9,12 +9,20 @@ import Loading from '../../ui/Loading';
 
 class Clients extends Component {
     render() {
-        const { dashboard, clients, t } = this.props;
+        const {
+            t,
+            dashboard,
+            clients,
+            addClient,
+            updateClient,
+            deleteClient,
+            toggleClientModal,
+        } = this.props;
 
         return (
             <Fragment>
                 <PageTitle title={t('clients_settings')} />
-                {!dashboard.processingTopStats || (!dashboard.processingClients && <Loading />)}
+                {(dashboard.processingTopStats || dashboard.processingClients) && <Loading />}
                 {!dashboard.processingTopStats && !dashboard.processingClients && (
                     <Fragment>
                         <ClientsTable
@@ -23,10 +31,10 @@ class Clients extends Component {
                             isModalOpen={clients.isModalOpen}
                             modalClientName={clients.modalClientName}
                             modalType={clients.modalType}
-                            addClient={this.props.addClient}
-                            updateClient={this.props.updateClient}
-                            deleteClient={this.props.deleteClient}
-                            toggleClientModal={this.props.toggleClientModal}
+                            addClient={addClient}
+                            updateClient={updateClient}
+                            deleteClient={deleteClient}
+                            toggleClientModal={toggleClientModal}
                             processingAdding={clients.processingAdding}
                             processingDeleting={clients.processingDeleting}
                             processingUpdating={clients.processingUpdating}
@@ -45,18 +53,12 @@ class Clients extends Component {
 Clients.propTypes = {
     t: PropTypes.func.isRequired,
     dashboard: PropTypes.object.isRequired,
-    clients: PropTypes.array.isRequired,
-    topStats: PropTypes.object.isRequired,
+    clients: PropTypes.object.isRequired,
     toggleClientModal: PropTypes.func.isRequired,
     deleteClient: PropTypes.func.isRequired,
     addClient: PropTypes.func.isRequired,
     updateClient: PropTypes.func.isRequired,
-    isModalOpen: PropTypes.bool.isRequired,
-    modalType: PropTypes.string.isRequired,
-    modalClientName: PropTypes.string.isRequired,
-    processingAdding: PropTypes.bool.isRequired,
-    processingDeleting: PropTypes.bool.isRequired,
-    processingUpdating: PropTypes.bool.isRequired,
+    topStats: PropTypes.object,
 };
 
 export default withNamespaces()(Clients);

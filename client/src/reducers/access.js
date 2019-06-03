@@ -17,6 +17,7 @@ const access = handleActions(
                 allowed_clients: allowed_clients.join('\n'),
                 disallowed_clients: disallowed_clients.join('\n'),
                 blocked_hosts: blocked_hosts.join('\n'),
+                processing: false,
             };
             return newState;
         },
