@@ -484,15 +484,13 @@ paths:
             operationId: filteringRemoveURL
             summary: 'Remove filter URL'
             consumes:
-            - text/plain
+            - application/json
             parameters:
-              - in: body
-                name: url
-                description: 'Previously added URL containing filtering rules'
-                required: true
-                schema:
-                  type: string
-                  example: 'url=https://filters.adtidy.org/windows/filters/15.txt'
+            - in: "body"
+              name: "body"
+              required: true
+              schema:
+                $ref: "#/definitions/RemoveUrlRequest"
             responses:
                 200:
                     description: OK
@@ -1296,6 +1294,14 @@ definitions:
                 type: "string"
             url:
                 description: "URL containing filtering rules"
+                type: "string"
+                example: "https://filters.adtidy.org/windows/filters/15.txt"
+    RemoveUrlRequest:
+        type: "object"
+        description: "/remove_url request data"
+        properties:
+            url:
+                description: "Previously added URL containing filtering rules"
                 type: "string"
                 example: "https://filters.adtidy.org/windows/filters/15.txt"
     QueryLogItem:
