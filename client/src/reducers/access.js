@@ -14,9 +14,9 @@ const access = handleActions(
             } = payload;
             const newState = {
                 ...state,
-                allowed_clients: allowed_clients.join('\n'),
-                disallowed_clients: disallowed_clients.join('\n'),
-                blocked_hosts: blocked_hosts.join('\n'),
+                allowed_clients: (allowed_clients && allowed_clients.join('\n')) || '',
+                disallowed_clients: (disallowed_clients && disallowed_clients.join('\n')) || '',
+                blocked_hosts: (blocked_hosts && blocked_hosts.join('\n')) || '',
                 processing: false,
             };
             return newState;
@@ -35,9 +35,9 @@ const access = handleActions(
     {
         processing: true,
         processingSet: false,
-        allowed_clients: null,
-        disallowed_clients: null,
-        blocked_hosts: null,
+        allowed_clients: '',
+        disallowed_clients: '',
+        blocked_hosts: '',
     },
 );
 
