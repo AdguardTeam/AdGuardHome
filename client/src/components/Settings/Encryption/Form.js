@@ -66,14 +66,15 @@ let Form = (props) => {
         setTlsConfig,
     } = props;
 
-    const isSavingDisabled = invalid
-        || submitting
-        || processingConfig
-        || processingValidate
-        || (isEnabled && (!privateKey || !certificateChain))
-        || (privateKey && !valid_key)
-        || (certificateChain && !valid_cert)
-        || (privateKey && certificateChain && !valid_pair);
+    const isSavingDisabled =
+        invalid ||
+        submitting ||
+        processingConfig ||
+        processingValidate ||
+        (isEnabled && (!privateKey || !certificateChain)) ||
+        (privateKey && !valid_key) ||
+        (certificateChain && !valid_cert) ||
+        (privateKey && certificateChain && !valid_pair);
 
     return (
         <form onSubmit={handleSubmit}>
@@ -91,7 +92,7 @@ let Form = (props) => {
                     <div className="form__desc">
                         <Trans>encryption_enable_desc</Trans>
                     </div>
-                    <hr/>
+                    <hr />
                 </div>
                 <div className="col-12">
                     <label className="form__label" htmlFor="server_name">
@@ -180,13 +181,20 @@ let Form = (props) => {
             <div className="row">
                 <div className="col-12">
                     <div className="form__group form__group--settings">
-                        <label className="form__label form__label--bold" htmlFor="certificate_chain">
+                        <label
+                            className="form__label form__label--bold"
+                            htmlFor="certificate_chain"
+                        >
                             <Trans>encryption_certificates</Trans>
                         </label>
                         <div className="form__desc form__desc--top">
                             <Trans
                                 values={{ link: 'letsencrypt.org' }}
-                                components={[<a href="https://letsencrypt.org/" key="0">link</a>]}
+                                components={[
+                                    <a href="https://letsencrypt.org/" key="0">
+                                        link
+                                    </a>,
+                                ]}
                             >
                                 encryption_certificates_desc
                             </Trans>
@@ -202,49 +210,52 @@ let Form = (props) => {
                             disabled={!isEnabled}
                         />
                         <div className="form__status">
-                            {certificateChain &&
+                            {certificateChain && (
                                 <Fragment>
                                     <div className="form__label form__label--bold">
                                         <Trans>encryption_status</Trans>:
                                     </div>
                                     <ul className="encryption__list">
-                                        <li className={valid_chain ? 'text-success' : 'text-danger'}>
-                                            {valid_chain ?
+                                        <li
+                                            className={valid_chain ? 'text-success' : 'text-danger'}
+                                        >
+                                            {valid_chain ? (
                                                 <Trans>encryption_chain_valid</Trans>
-                                                : <Trans>encryption_chain_invalid</Trans>
-                                            }
+                                            ) : (
+                                                <Trans>encryption_chain_invalid</Trans>
+                                            )}
                                         </li>
-                                        {valid_cert &&
+                                        {valid_cert && (
                                             <Fragment>
-                                                {subject &&
+                                                {subject && (
                                                     <li>
                                                         <Trans>encryption_subject</Trans>:&nbsp;
                                                         {subject}
                                                     </li>
-                                                }
-                                                {issuer &&
+                                                )}
+                                                {issuer && (
                                                     <li>
                                                         <Trans>encryption_issuer</Trans>:&nbsp;
                                                         {issuer}
                                                     </li>
-                                                }
-                                                {not_after && not_after !== EMPTY_DATE &&
+                                                )}
+                                                {not_after && not_after !== EMPTY_DATE && (
                                                     <li>
                                                         <Trans>encryption_expire</Trans>:&nbsp;
                                                         {format(not_after, 'YYYY-MM-DD HH:mm:ss')}
                                                     </li>
-                                                }
-                                                {dns_names &&
+                                                )}
+                                                {dns_names && (
                                                     <li>
                                                         <Trans>encryption_hostnames</Trans>:&nbsp;
                                                         {dns_names}
                                                     </li>
-                                                }
+                                                )}
                                             </Fragment>
-                                        }
+                                        )}
                                     </ul>
                                 </Fragment>
-                            }
+                            )}
                         </div>
                     </div>
                 </div>
@@ -266,35 +277,34 @@ let Form = (props) => {
                             disabled={!isEnabled}
                         />
                         <div className="form__status">
-                            {privateKey &&
+                            {privateKey && (
                                 <Fragment>
                                     <div className="form__label form__label--bold">
                                         <Trans>encryption_status</Trans>:
                                     </div>
                                     <ul className="encryption__list">
                                         <li className={valid_key ? 'text-success' : 'text-danger'}>
-                                            {valid_key ?
+                                            {valid_key ? (
                                                 <Trans values={{ type: key_type }}>
                                                     encryption_key_valid
                                                 </Trans>
-                                                : <Trans values={{ type: key_type }}>
+                                            ) : (
+                                                <Trans values={{ type: key_type }}>
                                                     encryption_key_invalid
                                                 </Trans>
-                                            }
+                                            )}
                                         </li>
                                     </ul>
                                 </Fragment>
-                            }
+                            )}
                         </div>
                     </div>
                 </div>
-                {warning_validation &&
+                {warning_validation && (
                     <div className="col-12">
-                        <p className="text-danger">
-                            {warning_validation}
-                        </p>
+                        <p className="text-danger">{warning_validation}</p>
                     </div>
-                }
+                )}
             </div>
 
             <div className="btn-list mt-2">

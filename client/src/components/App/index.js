@@ -13,6 +13,12 @@ import Header from '../../containers/Header';
 import Dashboard from '../../containers/Dashboard';
 import Settings from '../../containers/Settings';
 import Filters from '../../containers/Filters';
+
+import Dns from '../../containers/Dns';
+import Encryption from '../../containers/Encryption';
+import Dhcp from '../../containers/Dhcp';
+import Clients from '../../containers/Clients';
+
 import Logs from '../../containers/Logs';
 import SetupGuide from '../../containers/SetupGuide';
 import Toasts from '../Toasts';
@@ -41,7 +47,7 @@ class App extends Component {
 
     handleUpdate = () => {
         this.props.getUpdate();
-    }
+    };
 
     setLanguage = () => {
         const { processing, language } = this.props.dashboard;
@@ -55,19 +61,17 @@ class App extends Component {
         i18n.on('languageChanged', (lang) => {
             this.props.changeLanguage(lang);
         });
-    }
+    };
 
     render() {
         const { dashboard, encryption } = this.props;
         const updateAvailable =
-            !dashboard.processingVersions &&
-            dashboard.isCoreRunning &&
-            dashboard.isUpdateAvailable;
+            !dashboard.processingVersions && dashboard.isCoreRunning && dashboard.isUpdateAvailable;
 
         return (
-            <HashRouter hashType='noslash'>
+            <HashRouter hashType="noslash">
                 <Fragment>
-                    {updateAvailable &&
+                    {updateAvailable && (
                         <Fragment>
                             <UpdateTopline
                                 url={dashboard.announcementUrl}
@@ -78,29 +82,33 @@ class App extends Component {
                             />
                             <UpdateOverlay processingUpdate={dashboard.processingUpdate} />
                         </Fragment>
-                    }
-                    {!encryption.processing &&
+                    )}
+                    {!encryption.processing && (
                         <EncryptionTopline notAfter={encryption.not_after} />
-                    }
+                    )}
                     <LoadingBar className="loading-bar" updateTime={1000} />
                     <Route component={Header} />
                     <div className="container container--wrap">
-                        {!dashboard.processing && !dashboard.isCoreRunning &&
+                        {!dashboard.processing && !dashboard.isCoreRunning && (
                             <div className="row row-cards">
                                 <div className="col-lg-12">
                                     <Status handleStatusChange={this.handleStatusChange} />
                                 </div>
                             </div>
-                        }
-                        {!dashboard.processing && dashboard.isCoreRunning &&
+                        )}
+                        {!dashboard.processing && dashboard.isCoreRunning && (
                             <Fragment>
                                 <Route path="/" exact component={Dashboard} />
                                 <Route path="/settings" component={Settings} />
+                                <Route path="/dns" component={Dns} />
+                                <Route path="/encryption" component={Encryption} />
+                                <Route path="/dhcp" component={Dhcp} />
+                                <Route path="/clients" component={Clients} />
                                 <Route path="/filters" component={Filters} />
                                 <Route path="/logs" component={Logs} />
                                 <Route path="/guide" component={SetupGuide} />
                             </Fragment>
-                        }
+                        )}
                     </div>
                     <Footer />
                     <Toasts />

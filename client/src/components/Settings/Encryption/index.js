@@ -6,11 +6,17 @@ import debounce from 'lodash/debounce';
 import { DEBOUNCE_TIMEOUT } from '../../../helpers/constants';
 import Form from './Form';
 import Card from '../../ui/Card';
+import PageTitle from '../../ui/PageTitle';
+import Loading from '../../ui/Loading';
 
 class Encryption extends Component {
     componentDidMount() {
-        if (this.props.encryption.enabled) {
-            this.props.validateTlsConfig(this.props.encryption);
+        const { getTlsStatus, validateTlsConfig, encryption } = this.props;
+
+        getTlsStatus();
+
+        if (encryption.enabled) {
+            validateTlsConfig(encryption);
         }
     }
 
@@ -36,7 +42,9 @@ class Encryption extends Component {
 
         return (
             <div className="encryption">
-                {encryption &&
+                <PageTitle title={t('encryption_settings')} />
+                {encryption.processing && <Loading />}
+                {!encryption.processing && (
                     <Card
                         title={t('encryption_title')}
                         subtitle={t('encryption_desc')}
@@ -58,7 +66,7 @@ class Encryption extends Component {
                             {...this.props.encryption}
                         />
                     </Card>
-                }
+                )}
             </div>
         );
     }

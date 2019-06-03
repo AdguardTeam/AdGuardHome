@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { withNamespaces } from 'react-i18next';
 
 import Form from './Form';
-import Card from '../../ui/Card';
+import Card from '../../../ui/Card';
 
 class Access extends Component {
     handleFormSubmit = (values) => {

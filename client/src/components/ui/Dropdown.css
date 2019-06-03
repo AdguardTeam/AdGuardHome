@@ -1,0 +1,8 @@
+.dropdown-item.active,
+.dropdown-item:active {
+    background-color: #66b574;
+}
+
+.dropdown-menu {
+    cursor: default;
+}

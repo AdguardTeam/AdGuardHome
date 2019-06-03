@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { withNamespaces } from 'react-i18next';
 
 import Form from './Form';
-import Card from '../../ui/Card';
+import Card from '../../../ui/Card';
 
 class Upstream extends Component {
     handleSubmit = (values) => {
@@ -12,7 +12,7 @@ class Upstream extends Component {
 
     handleTest = (values) => {
         this.props.testUpstream(values);
-    }
+    };
 
     render() {
         const {
@@ -26,8 +26,8 @@ class Upstream extends Component {
 
         return (
             <Card
-                title={ t('upstream_dns') }
-                subtitle={ t('upstream_dns_hint') }
+                title={t('upstream_dns')}
+                subtitle={t('upstream_dns_hint')}
                 bodyType="card-body box-body--settings"
             >
                 <div className="row">

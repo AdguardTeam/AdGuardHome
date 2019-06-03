@@ -9,8 +9,15 @@ import Leases from './Leases';
 import StaticLeases from './StaticLeases/index';
 import Card from '../../ui/Card';
 import Accordion from '../../ui/Accordion';
+import PageTitle from '../../ui/PageTitle';
+import Loading from '../../ui/Loading';
 
 class Dhcp extends Component {
+    componentDidMount() {
+        this.props.getDhcpStatus();
+        this.props.getDhcpInterfaces();
+    }
+
     handleFormSubmit = (values) => {
         if (values.interface_name) {
             this.props.setDhcpConfig(values);
@@ -19,7 +26,7 @@ class Dhcp extends Component {
 
     handleToggle = (config) => {
         this.props.toggleDhcp(config);
-    }
+    };
 
     getToggleDhcpButton = () => {
         const {
@@ -54,17 +61,13 @@ class Dhcp extends Component {
                 className="btn btn-standard mr-2 btn-success"
                 onClick={() => this.handleToggle(config)}
                 disabled={
-                    !filledConfig
-                    || !check
-                    || otherDhcpFound
-                    || processingDhcp
-                    || processingConfig
+                    !filledConfig || !check || otherDhcpFound || processingDhcp || processingConfig
                 }
             >
                 <Trans>dhcp_enable</Trans>
             </button>
         );
-    }
+    };
 
     getActiveDhcpMessage = (t, check) => {
         const { found } = check.otherServer;
@@ -95,7 +98,7 @@ class Dhcp extends Component {
                 )}
             </div>
         );
-    }
+    };
 
     getDhcpWarning = (check) => {
         if (check.otherServer.found === DHCP_STATUS_RESPONSE.NO) {
@@ -107,7 +110,7 @@ class Dhcp extends Component {
                 <Trans>dhcp_warning</Trans>
             </div>
         );
-    }
+    };
 
     getStaticIpWarning = (t, check, interfaceName) => {
         if (check.staticIP.static === DHCP_STATUS_RESPONSE.ERROR) {
@@ -121,21 +124,19 @@ class Dhcp extends Component {
                             </Accordion>
                         </div>
                     </div>
-                    <hr className="mt-4 mb-4"/>
+                    <hr className="mt-4 mb-4" />
                 </Fragment>
             );
         } else if (
-            check.staticIP.static === DHCP_STATUS_RESPONSE.NO
-            && check.staticIP.ip
-            && interfaceName
+            check.staticIP.static === DHCP_STATUS_RESPONSE.NO &&
+            check.staticIP.ip &&
+            interfaceName
         ) {
             return (
                 <Fragment>
                     <div className="text-secondary mb-2">
                         <Trans
-                            components={[
-                                <strong key="0">example</strong>,
-                            ]}
+                            components={[<strong key="0">example</strong>]}
                             values={{
                                 interfaceName,
                                 ipAddress: check.staticIP.ip,
@@ -144,13 +145,13 @@ class Dhcp extends Component {
                             dhcp_dynamic_ip_found
                         </Trans>
                     </div>
-                    <hr className="mt-4 mb-4"/>
+                    <hr className="mt-4 mb-4" />
                 </Fragment>
             );
         }
 
         return '';
-    }
+    };
 
     render() {
         const { t, dhcp } = this.props;
@@ -158,93 +159,101 @@ class Dhcp extends Component {
             'btn btn-primary btn-standard': true,
             'btn btn-primary btn-standard btn-loading': dhcp.processingStatus,
         });
-        const {
-            enabled,
-            interface_name,
-            ...values
-        } = dhcp.config;
+        const { enabled, interface_name, ...values } = dhcp.config;
 
         return (
             <Fragment>
-                <Card title={ t('dhcp_title') } subtitle={ t('dhcp_description') } bodyType="card-body box-body--settings">
-                    <div className="dhcp">
-                        {!dhcp.processing &&
-                            <Fragment>
-                                <Form
-                                    onSubmit={this.handleFormSubmit}
-                                    initialValues={{
-                                        interface_name,
-                                        ...values,
-                                    }}
-                                    interfaces={dhcp.interfaces}
-                                    processingConfig={dhcp.processingConfig}
-                                    processingInterfaces={dhcp.processingInterfaces}
-                                    enabled={enabled}
-                                />
-                                <hr/>
-                                <div className="card-actions mb-3">
-                                    {this.getToggleDhcpButton()}
-                                    <button
-                                        type="button"
-                                        className={statusButtonClass}
-                                        onClick={() =>
-                                            this.props.findActiveDhcp(interface_name)
-                                        }
-                                        disabled={
-                                            enabled
-                                            || !interface_name
-                                            || dhcp.processingConfig
-                                        }
-                                    >
-                                        <Trans>check_dhcp_servers</Trans>
-                                    </button>
-                                </div>
-                                {!enabled && dhcp.check &&
-                                    <Fragment>
-                                        {this.getStaticIpWarning(t, dhcp.check, interface_name)}
-                                        {this.getActiveDhcpMessage(t, dhcp.check)}
-                                        {this.getDhcpWarning(dhcp.check)}
-                                    </Fragment>
-                                }
-                            </Fragment>
-                        }
-                    </div>
-                </Card>
-                {!dhcp.processing && dhcp.config.enabled &&
+                <PageTitle title={t('dhcp_settings')} />
+                {(dhcp.processing || dhcp.processingInterfaces) && <Loading />}
+                {!dhcp.processing && !dhcp.processingInterfaces && (
                     <Fragment>
-                        <Card title={ t('dhcp_leases') } bodyType="card-body box-body--settings">
-                            <div className="row">
-                                <div className="col">
-                                    <Leases leases={dhcp.leases} />
-                                </div>
-                            </div>
-                        </Card>
-                        <Card title={ t('dhcp_static_leases') } bodyType="card-body box-body--settings">
-                            <div className="row">
-                                <div className="col-12">
-                                    <StaticLeases
-                                        staticLeases={dhcp.staticLeases}
-                                        isModalOpen={dhcp.isModalOpen}
-                                        addStaticLease={this.props.addStaticLease}
-                                        removeStaticLease={this.props.removeStaticLease}
-                                        toggleLeaseModal={this.props.toggleLeaseModal}
-                                        processingAdding={dhcp.processingAdding}
-                                        processingDeleting={dhcp.processingDeleting}
+                        <Card
+                            title={t('dhcp_title')}
+                            subtitle={t('dhcp_description')}
+                            bodyType="card-body box-body--settings"
+                        >
+                            <div className="dhcp">
+                                <Fragment>
+                                    <Form
+                                        onSubmit={this.handleFormSubmit}
+                                        initialValues={{
+                                            interface_name,
+                                            ...values,
+                                        }}
+                                        interfaces={dhcp.interfaces}
+                                        processingConfig={dhcp.processingConfig}
+                                        processingInterfaces={dhcp.processingInterfaces}
+                                        enabled={enabled}
                                     />
-                                </div>
-                                <div className="col-12">
-                                    <button
-                                        type="button"
-                                        className="btn btn-success btn-standard mt-3"
-                                        onClick={() => this.props.toggleLeaseModal()}
-                                    >
-                                        <Trans>dhcp_add_static_lease</Trans>
-                                    </button>
-                                </div>
+                                    <hr />
+                                    <div className="card-actions mb-3">
+                                        {this.getToggleDhcpButton()}
+                                        <button
+                                            type="button"
+                                            className={statusButtonClass}
+                                            onClick={() =>
+                                                this.props.findActiveDhcp(interface_name)
+                                            }
+                                            disabled={
+                                                enabled || !interface_name || dhcp.processingConfig
+                                            }
+                                        >
+                                            <Trans>check_dhcp_servers</Trans>
+                                        </button>
+                                    </div>
+                                    {!enabled && dhcp.check && (
+                                        <Fragment>
+                                            {this.getStaticIpWarning(t, dhcp.check, interface_name)}
+                                            {this.getActiveDhcpMessage(t, dhcp.check)}
+                                            {this.getDhcpWarning(dhcp.check)}
+                                        </Fragment>
+                                    )}
+                                </Fragment>
                             </div>
                         </Card>
+                        {dhcp.config.enabled && (
+                            <Fragment>
+                                <Card
+                                    title={t('dhcp_leases')}
+                                    bodyType="card-body box-body--settings"
+                                >
+                                    <div className="row">
+                                        <div className="col">
+                                            <Leases leases={dhcp.leases} />
+                                        </div>
+                                    </div>
+                                </Card>
+                                <Card
+                                    title={t('dhcp_static_leases')}
+                                    bodyType="card-body box-body--settings"
+                                >
+                                    <div className="row">
+                                        <div className="col-12">
+                                            <StaticLeases
+                                                staticLeases={dhcp.staticLeases}
+                                                isModalOpen={dhcp.isModalOpen}
+                                                addStaticLease={this.props.addStaticLease}
+                                                removeStaticLease={this.props.removeStaticLease}
+                                                toggleLeaseModal={this.props.toggleLeaseModal}
+                                                processingAdding={dhcp.processingAdding}
+                                                processingDeleting={dhcp.processingDeleting}
+                                            />
+                                        </div>
+                                        <div className="col-12">
+                                            <button
+                                                type="button"
+                                                className="btn btn-success btn-standard mt-3"
+                                                onClick={() => this.props.toggleLeaseModal()}
+                                            >
+                                                <Trans>dhcp_add_static_lease</Trans>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </Card>
+                            </Fragment>
+                        )}
                     </Fragment>
-                }
+                )}
             </Fragment>
         );
     }
@@ -256,10 +265,10 @@ Dhcp.propTypes = {
     getDhcpStatus: PropTypes.func,
     setDhcpConfig: PropTypes.func,
     findActiveDhcp: PropTypes.func,
-    handleSubmit: PropTypes.func,
     addStaticLease: PropTypes.func,
     removeStaticLease: PropTypes.func,
     toggleLeaseModal: PropTypes.func,
+    getDhcpInterfaces: PropTypes.func,
     t: PropTypes.func,
 };
 

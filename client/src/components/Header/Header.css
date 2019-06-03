@@ -16,11 +16,13 @@
     stroke: #9aa0ac;
 }
 
-.nav-tabs .nav-link.active .nav-icon {
+.nav-tabs .nav-link.active .nav-icon,
+.nav-tabs .nav-item.show .nav-icon {
     stroke: #66b574;
 }
 
-.nav-tabs .nav-link.active:hover .nav-icon {
+.nav-tabs .nav-link.active:hover .nav-icon,
+.nav-tabs .nav-item.show:hover .nav-icon {
     stroke: #58a273;
 }
 
@@ -85,6 +87,12 @@
 
 .header-brand-img {
     height: 32px;
+}
+
+.nav-tabs .nav-item.show .nav-link {
+    color: #66b574;
+    background-color: #fff;
+    border-bottom-color: #66b574;
 }
 
 @media screen and (min-width: 992px) {
