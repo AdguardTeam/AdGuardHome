@@ -93,26 +93,26 @@ func resolveRDNS(ip string) string {
 	var err error
 	req.Question[0].Name, err = dns.ReverseAddr(ip)
 	if err != nil {
-		log.Error("dns.ReverseAddr: %s", err)
+		log.Debug("Error while calling dns.ReverseAddr(%s): %s", ip, err)
 		return ""
 	}
 
 	resp, err := dnsctx.upstream.Exchange(&req)
 	if err != nil {
-		log.Error("upstream.Exchange: %s", err)
+		log.Error("Error while making an rDNS lookup for %s: %s", ip, err)
 		return ""
 	}
 	if len(resp.Answer) != 1 {
-		log.Error("len(resp.Answer) != 1")
+		log.Debug("No answer for rDNS lookup of %s", ip)
 		return ""
 	}
 	ptr, ok := resp.Answer[0].(*dns.PTR)
 	if !ok {
-		log.Error("not a dns.PTR response")
+		log.Error("not a PTR response for %s", ip)
 		return ""
 	}
 
-	log.Tracef("PTR response: %s", ptr.String())
+	log.Tracef("PTR response for %s: %s", ip, ptr.String())
 	if strings.HasSuffix(ptr.Ptr, ".") {
 		ptr.Ptr = ptr.Ptr[:len(ptr.Ptr)-1]
 	}
