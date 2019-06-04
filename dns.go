@@ -154,10 +154,18 @@ func asyncRDNSLoop() {
 }
 
 func onDNSRequest(d *proxy.DNSContext) {
-	if d.Req.Question[0].Qtype == dns.TypeA {
-		ip, _, _ := net.SplitHostPort(d.Addr.String())
-		beginAsyncRDNS(ip)
+	qType := d.Req.Question[0].Qtype
+	if qType != dns.TypeA && qType != dns.TypeAAAA {
+		return
 	}
+
+	ip := dnsforward.GetIPString(d.Addr)
+	if ip == "" {
+		// This would be quite weird if we get here
+		return
+	}
+
+	beginAsyncRDNS(ip)
 }
 
 func generateServerConfig() dnsforward.ServerConfig {

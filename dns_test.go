@@ -1,6 +1,8 @@
 package main
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestResolveRDNS(t *testing.T) {
 	config.DNS.BindHost = "1.1.1.1"

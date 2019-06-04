@@ -61,7 +61,7 @@ func (l *queryLog) logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfil
 	var q []byte
 	var a []byte
 	var err error
-	ip := getIPString(addr)
+	ip := GetIPString(addr)
 
 	if question != nil {
 		q, err = question.Pack()
@@ -243,15 +243,4 @@ func answerToMap(a *dns.Msg) []map[string]interface{} {
 	}
 
 	return answers
-}
-
-// getIPString is a helper function that extracts IP address from net.Addr
-func getIPString(addr net.Addr) string {
-	switch addr := addr.(type) {
-	case *net.UDPAddr:
-		return addr.IP.String()
-	case *net.TCPAddr:
-		return addr.IP.String()
-	}
-	return ""
 }
