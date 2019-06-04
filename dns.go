@@ -68,6 +68,19 @@ func isRunning() bool {
 }
 
 func beginAsyncRDNS(ip string) {
+	if clientExists(ip) {
+		return
+	}
+
+	// add IP to rdnsIP, if not exists
+	dnsctx.rdnsLock.Lock()
+	defer dnsctx.rdnsLock.Unlock()
+	_, ok := dnsctx.rdnsIP[ip]
+	if ok {
+		return
+	}
+	dnsctx.rdnsIP[ip] = true
+
 	log.Tracef("Adding %s for rDNS resolve", ip)
 	select {
 	case dnsctx.rdnsChannel <- ip:
@@ -143,19 +156,6 @@ func asyncRDNSLoop() {
 func onDNSRequest(d *proxy.DNSContext) {
 	if d.Req.Question[0].Qtype == dns.TypeA {
 		ip, _, _ := net.SplitHostPort(d.Addr.String())
-		if clientExists(ip) {
-			return
-		}
-
-		// add IP to rdnsIP, if not exists
-		dnsctx.rdnsLock.Lock()
-		defer dnsctx.rdnsLock.Unlock()
-		_, ok := dnsctx.rdnsIP[ip]
-		if ok {
-			return
-		}
-		dnsctx.rdnsIP[ip] = true
-
 		beginAsyncRDNS(ip)
 	}
 }
@@ -236,6 +236,11 @@ func startDNSServer() error {
 	err := dnsServer.Start(&newconfig)
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
+	}
+
+	top := dnsServer.GetStatsTop()
+	for k := range top.Clients {
+		beginAsyncRDNS(k)
 	}
 
 	return nil
