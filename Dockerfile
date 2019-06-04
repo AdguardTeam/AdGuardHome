@@ -16,7 +16,7 @@ RUN apk --no-cache --update add ca-certificates libcap && \
     mkdir -p /opt/adguardhome/conf /opt/adguardhome/work && \
     chown -R nobody: /opt/adguardhome
 
-COPY --from=build --chown=nobody: /src/AdGuardHome/AdGuardHome /opt/adguardhome/AdGuardHome
+COPY --from=build --chown=nobody:nogroup /src/AdGuardHome/AdGuardHome /opt/adguardhome/AdGuardHome
 
 RUN setcap 'cap_net_bind_service=+eip' /opt/adguardhome/AdGuardHome
 
