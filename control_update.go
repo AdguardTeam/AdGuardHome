@@ -1,7 +1,9 @@
 package main
 
 import (
+	"archive/tar"
 	"archive/zip"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -215,14 +217,72 @@ func zipFileUnpack(zipfile, outdir string) error {
 }
 
 // Unpack all files from .tar.gz file to the specified directory
-func targzFileUnpack(tarfile, outdir string) error {
-	cmd := exec.Command("tar", "zxf", tarfile, "-C", outdir)
-	log.Tracef("Unpacking: %v", cmd.Args)
-	_, err := cmd.Output()
-	if err != nil || cmd.ProcessState.ExitCode() != 0 {
-		return fmt.Errorf("exec.Command() failed: %s", err)
+// Existing files are overwritten
+// Return the list of files (not directories) written
+func targzFileUnpack(tarfile, outdir string) ([]string, error) {
+
+	f, err := os.Open(tarfile)
+	if err != nil {
+		return nil, fmt.Errorf("os.Open(): %s", err)
 	}
-	return nil
+	defer f.Close()
+
+	gzReader, err := gzip.NewReader(f)
+	if err != nil {
+		return nil, fmt.Errorf("gzip.NewReader(): %s", err)
+	}
+
+	var files []string
+	var err2 error
+	tarReader := tar.NewReader(gzReader)
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			err2 = nil
+			break
+		}
+		if err != nil {
+			err2 = fmt.Errorf("tarReader.Next(): %s", err)
+			break
+		}
+		if len(header.Name) == 0 {
+			continue
+		}
+
+		fn := filepath.Join(outdir, header.Name)
+
+		if header.Typeflag == tar.TypeDir {
+			err = os.Mkdir(fn, os.FileMode(header.Mode&0777))
+			if err != nil && !os.IsExist(err) {
+				err2 = fmt.Errorf("os.Mkdir(%s): %s", fn, err)
+				break
+			}
+			log.Tracef("created directory %s", fn)
+			continue
+		} else if header.Typeflag != tar.TypeReg {
+			log.Tracef("%s: unknown file type %d, skipping", header.Name, header.Typeflag)
+			continue
+		}
+
+		f, err := os.OpenFile(fn, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode&0777))
+		if err != nil {
+			err2 = fmt.Errorf("os.OpenFile(%s): %s", fn, err)
+			break
+		}
+		_, err = io.Copy(f, tarReader)
+		if err != nil {
+			f.Close()
+			err2 = fmt.Errorf("io.Copy(): %s", err)
+			break
+		}
+		f.Close()
+
+		log.Tracef("created file %s", fn)
+		files = append(files, header.Name)
+	}
+
+	gzReader.Close()
+	return files, err2
 }
 
 // Perform an update procedure
@@ -259,7 +319,7 @@ func doUpdate(u *updateInfo) error {
 			return fmt.Errorf("zipFileUnpack() failed: %s", err)
 		}
 	} else if strings.HasSuffix(file, ".tar.gz") {
-		err = targzFileUnpack(u.pkgName, u.updateDir)
+		_, err = targzFileUnpack(u.pkgName, u.updateDir)
 		if err != nil {
 			return fmt.Errorf("zipFileUnpack() failed: %s", err)
 		}

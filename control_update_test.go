@@ -27,6 +27,18 @@ func testDoUpdate(t *testing.T) {
 	os.RemoveAll(u.updateDir)
 }
 
+func testTargzFileUnpack(t *testing.T) {
+	fn := "./dist/AdGuardHome_v0.95_linux_amd64.tar.gz"
+	outdir := "./test-unpack"
+	_ = os.Mkdir(outdir, 0755)
+	files, e := targzFileUnpack(fn, outdir)
+	if e != nil {
+		t.Fatalf("FAILED: %s", e)
+	}
+	t.Logf("%v", files)
+	os.RemoveAll(outdir)
+}
+
 func testZipFileUnpack(t *testing.T) {
 	fn := "./dist/AdGuardHome_v0.95_Windows_amd64.zip"
 	outdir := "./test-unpack"
