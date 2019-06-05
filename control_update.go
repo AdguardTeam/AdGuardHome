@@ -149,14 +149,15 @@ func getUpdateInfo(jsonData []byte) (*updateInfo, error) {
 		return nil, fmt.Errorf("No need to update")
 	}
 
+	u.updateDir = filepath.Join(workDir, fmt.Sprintf("agh-update-%s", u.newVer))
+	u.backupDir = filepath.Join(workDir, fmt.Sprintf("agh-backup-%s", VersionString))
+
 	_, pkgFileName := filepath.Split(u.pkgURL)
 	if len(pkgFileName) == 0 {
 		return nil, fmt.Errorf("Invalid JSON")
 	}
-	u.pkgName = filepath.Join(workDir, pkgFileName)
+	u.pkgName = filepath.Join(u.updateDir, pkgFileName)
 
-	u.updateDir = filepath.Join(workDir, fmt.Sprintf("update-%s", u.newVer))
-	u.backupDir = filepath.Join(workDir, fmt.Sprintf("backup-%s", VersionString))
 	u.configName = config.getConfigFilename()
 	u.updateConfigName = filepath.Join(u.updateDir, "AdGuardHome", "AdGuardHome.yaml")
 	if strings.HasSuffix(pkgFileName, ".zip") {
@@ -361,6 +362,8 @@ func doUpdate(u *updateInfo) error {
 	log.Info("Updating from %s to %s.  URL:%s  Package:%s",
 		VersionString, u.newVer, u.pkgURL, u.pkgName)
 
+	_ = os.Mkdir(u.updateDir, 0755)
+
 	var err error
 	err = getPackageFile(u)
 	if err != nil {
@@ -368,7 +371,6 @@ func doUpdate(u *updateInfo) error {
 	}
 
 	log.Tracef("Unpacking the package")
-	_ = os.Mkdir(u.updateDir, 0755)
 	_, file := filepath.Split(u.pkgName)
 	var files []string
 	if strings.HasSuffix(file, ".zip") {
@@ -434,7 +436,7 @@ func doUpdate(u *updateInfo) error {
 	log.Tracef("Renamed: %s -> %s", u.newBinName, u.curBinName)
 
 	_ = os.Remove(u.pkgName)
-	// _ = os.RemoveAll(u.updateDir)
+	_ = os.RemoveAll(u.updateDir)
 	return nil
 }
 
