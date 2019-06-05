@@ -43,9 +43,10 @@ func testZipFileUnpack(t *testing.T) {
 	fn := "./dist/AdGuardHome_v0.95_Windows_amd64.zip"
 	outdir := "./test-unpack"
 	_ = os.Mkdir(outdir, 0755)
-	e := zipFileUnpack(fn, outdir)
+	files, e := zipFileUnpack(fn, outdir)
 	if e != nil {
 		t.Fatalf("FAILED: %s", e)
 	}
+	t.Logf("%v", files)
 	os.RemoveAll(outdir)
 }
