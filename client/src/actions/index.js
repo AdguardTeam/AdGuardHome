@@ -160,7 +160,9 @@ export const getUpdateRequest = createAction('GET_UPDATE_REQUEST');
 export const getUpdateFailure = createAction('GET_UPDATE_FAILURE');
 export const getUpdateSuccess = createAction('GET_UPDATE_SUCCESS');
 
-export const getUpdate = () => async (dispatch) => {
+export const getUpdate = () => async (dispatch, getState) => {
+    const { dnsVersion } = getState().dashboard;
+
     dispatch(getUpdateRequest());
     try {
         await apiClient.getUpdate();
@@ -185,9 +187,13 @@ export const getUpdate = () => async (dispatch) => {
             axios.get('control/status')
                 .then((response) => {
                     rmTimeout(timeout);
-                    if (response) {
-                        dispatch(getUpdateSuccess());
-                        window.location.reload(true);
+                    if (response && response.status === 200) {
+                        const responseVersion = response.data && response.data.version;
+
+                        if (dnsVersion !== responseVersion) {
+                            dispatch(getUpdateSuccess());
+                            window.location.reload(true);
+                        }
                     }
                     timeout = setRecursiveTimeout(CHECK_TIMEOUT, count += 1);
                 })
