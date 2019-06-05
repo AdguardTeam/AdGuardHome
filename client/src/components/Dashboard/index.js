@@ -21,6 +21,7 @@ class Dashboard extends Component {
         this.props.getStats();
         this.props.getStatsHistory();
         this.props.getTopStats();
+        this.props.getClients();
     }
 
     getToggleFilteringButton = () => {
@@ -132,6 +133,7 @@ Dashboard.propTypes = {
     isCoreRunning: PropTypes.bool,
     getFiltering: PropTypes.func,
     toggleProtection: PropTypes.func,
+    getClients: PropTypes.func,
     processingProtection: PropTypes.bool,
     t: PropTypes.func,
 };

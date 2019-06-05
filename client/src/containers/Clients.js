@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import { addErrorToast } from '../actions';
+import { getClients } from '../actions';
 import { addClient, updateClient, deleteClient, toggleClientModal } from '../actions/clients';
 import Clients from '../components/Settings/Clients';
 
@@ -13,7 +13,7 @@ const mapStateToProps = (state) => {
 };
 
 const mapDispatchToProps = {
-    addErrorToast,
+    getClients,
     addClient,
     updateClient,
     deleteClient,
