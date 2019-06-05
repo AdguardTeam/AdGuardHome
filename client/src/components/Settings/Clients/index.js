@@ -8,6 +8,10 @@ import PageTitle from '../../ui/PageTitle';
 import Loading from '../../ui/Loading';
 
 class Clients extends Component {
+    componentDidMount() {
+        this.props.getClients();
+    }
+
     render() {
         const {
             t,
@@ -58,6 +62,7 @@ Clients.propTypes = {
     deleteClient: PropTypes.func.isRequired,
     addClient: PropTypes.func.isRequired,
     updateClient: PropTypes.func.isRequired,
+    getClients: PropTypes.func.isRequired,
     topStats: PropTypes.object,
 };
 
