@@ -305,11 +305,35 @@ func targzFileUnpack(tarfile, outdir string) ([]string, error) {
 	return files, err2
 }
 
-// Perform an update procedure
-func doUpdate(u *updateInfo) error {
-	log.Info("Updating from %s to %s.  URL:%s  Package:%s",
-		VersionString, u.newVer, u.pkgURL, u.pkgName)
+func copySupportingFiles(files []string, srcdir, dstdir string, useSrcNameOnly, useDstNameOnly bool) error {
+	for _, f := range files {
+		_, name := filepath.Split(f)
+		if name == "AdGuardHome" || name == "AdGuardHome.exe" || name == "AdGuardHome.yaml" {
+			continue
+		}
 
+		src := filepath.Join(srcdir, f)
+		if useSrcNameOnly {
+			src = filepath.Join(srcdir, name)
+		}
+
+		dst := filepath.Join(dstdir, f)
+		if useDstNameOnly {
+			dst = filepath.Join(dstdir, name)
+		}
+
+		err := copyFile(src, dst)
+		if err != nil && !os.IsNotExist(err) {
+			return err
+		}
+
+		log.Tracef("Copied: %s -> %s", src, dst)
+	}
+	return nil
+}
+
+// Download package file and save it to disk
+func getPackageFile(u *updateInfo) error {
 	resp, err := client.Get(u.pkgURL)
 	if err != nil {
 		return fmt.Errorf("HTTP request failed: %s", err)
@@ -329,19 +353,33 @@ func doUpdate(u *updateInfo) error {
 	if err != nil {
 		return fmt.Errorf("ioutil.WriteFile() failed: %s", err)
 	}
+	return nil
+}
+
+// Perform an update procedure
+func doUpdate(u *updateInfo) error {
+	log.Info("Updating from %s to %s.  URL:%s  Package:%s",
+		VersionString, u.newVer, u.pkgURL, u.pkgName)
+
+	var err error
+	err = getPackageFile(u)
+	if err != nil {
+		return err
+	}
 
 	log.Tracef("Unpacking the package")
 	_ = os.Mkdir(u.updateDir, 0755)
 	_, file := filepath.Split(u.pkgName)
+	var files []string
 	if strings.HasSuffix(file, ".zip") {
-		_, err = zipFileUnpack(u.pkgName, u.updateDir)
+		files, err = zipFileUnpack(u.pkgName, u.updateDir)
 		if err != nil {
 			return fmt.Errorf("zipFileUnpack() failed: %s", err)
 		}
 	} else if strings.HasSuffix(file, ".tar.gz") {
-		_, err = targzFileUnpack(u.pkgName, u.updateDir)
+		files, err = targzFileUnpack(u.pkgName, u.updateDir)
 		if err != nil {
-			return fmt.Errorf("zipFileUnpack() failed: %s", err)
+			return fmt.Errorf("targzFileUnpack() failed: %s", err)
 		}
 	} else {
 		return fmt.Errorf("Unknown package extension")
@@ -363,6 +401,20 @@ func doUpdate(u *updateInfo) error {
 	err = copyFile(u.configName, filepath.Join(u.backupDir, "AdGuardHome.yaml"))
 	if err != nil {
 		return fmt.Errorf("copyFile() failed: %s", err)
+	}
+
+	// ./README.md -> backup/README.md
+	err = copySupportingFiles(files, config.ourWorkingDir, u.backupDir, true, true)
+	if err != nil {
+		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %s",
+			config.ourWorkingDir, u.backupDir, err)
+	}
+
+	// update/[AdGuardHome/]README.md -> ./README.md
+	err = copySupportingFiles(files, u.updateDir, config.ourWorkingDir, false, true)
+	if err != nil {
+		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %s",
+			u.updateDir, config.ourWorkingDir, err)
 	}
 
 	log.Tracef("Renaming: %s -> %s", u.curBinName, u.bkpBinName)

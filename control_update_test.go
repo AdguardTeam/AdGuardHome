@@ -7,6 +7,7 @@ import (
 
 func testDoUpdate(t *testing.T) {
 	config.DNS.Port = 0
+	config.ourWorkingDir = "."
 	u := updateInfo{
 		pkgURL:           "https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.95/AdGuardHome_v0.95_linux_amd64.tar.gz",
 		pkgName:          "./AdGuardHome_v0.95_linux_amd64.tar.gz",
