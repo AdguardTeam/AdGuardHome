@@ -34,13 +34,14 @@ func getVersionResp(data []byte) []byte {
 	ret["new_version"], ok1 = versionJSON["version"].(string)
 	ret["announcement"], ok2 = versionJSON["announcement"].(string)
 	ret["announcement_url"], ok3 = versionJSON["announcement_url"].(string)
-	if !ok1 || !ok2 || !ok3 {
+	selfUpdateMinVersion, ok4 := versionJSON["selfupdate_min_version"].(string)
+	if !ok1 || !ok2 || !ok3 || !ok4 {
 		log.Error("version.json: invalid data")
 		return []byte{}
 	}
 
 	_, ok := versionJSON[fmt.Sprintf("download_%s_%s", runtime.GOOS, runtime.GOARCH)]
-	if ok && ret["new_version"] != VersionString {
+	if ok && ret["new_version"] != VersionString && VersionString >= selfUpdateMinVersion {
 		ret["can_autoupdate"] = true
 	}
 

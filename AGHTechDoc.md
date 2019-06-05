@@ -250,6 +250,8 @@ Example of version.json data:
 	"selfupdate_min_version": "v0.0"
 	}
 
+Server can only auto-update if the current version is equal or higher than `selfupdate_min_version`.
+
 Request:
 
 	GET /control/version.json
