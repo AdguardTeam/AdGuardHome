@@ -99,7 +99,7 @@
     "dns_settings": "DNS settings",
     "encryption_settings": "Encryption settings",
     "dhcp_settings": "DHCP settings",
-    "clients_settings": "Clients settings",
+    "client_settings": "Client settings",
     "upstream_dns": "Servidores DNS upstream",
     "upstream_dns_hint": "Se voc\u00ea deixar este campo vazio, o AdGuard Home ir\u00e1 usar o<a href='https:\/\/1.1.1.1\/' target='_blank'>DNS da Cloudflare<\/a> como upstream.",
     "test_upstream_btn": "Testar upstreams",

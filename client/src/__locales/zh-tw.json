@@ -99,7 +99,7 @@
     "dns_settings": "DNS settings",
     "encryption_settings": "Encryption settings",
     "dhcp_settings": "DHCP settings",
-    "clients_settings": "Clients settings",
+    "client_settings": "Clients settings",
     "upstream_dns": "\u4e0a\u6e38\u7684 DNS \u4f3a\u670d\u5668",
     "upstream_dns_hint": "\u5982\u679c\u60a8\u5c07\u8a72\u6b04\u4f4d\u7559\u7a7a\uff0cAdGuard Home \u5c07\u4f7f\u7528 <a href='https:\/\/1.1.1.1\/' target='_blank'>Cloudflare DNS<\/a> \u4f5c\u70ba\u4e0a\u6e38\u3002",
     "test_upstream_btn": "\u6e2c\u8a66\u4e0a\u884c\u8cc7\u6599\u6d41",

@@ -99,7 +99,7 @@
     "dns_settings": "DNS settings",
     "encryption_settings": "Encryption settings",
     "dhcp_settings": "DHCP settings",
-    "clients_settings": "Clients settings",
+    "client_settings": "Client settings",
     "upstream_dns": "Servidores DNS de subida",
     "upstream_dns_hint": "Si mantiene este campo vac\u00edo, AdGuard Home utilizar\u00e1 <a href='https:\/\/1.1.1.1\/' target='_blank'>Cloudflare DNS<\/a> como DNS de subida. Utilice el prefijo tls:\/\/ para los servidores DNS mediante TLS.",
     "test_upstream_btn": "Probar DNS de subida",

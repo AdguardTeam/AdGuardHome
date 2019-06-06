@@ -69,7 +69,7 @@ class Menu extends Component {
                                     <Trans>encryption_settings</Trans>
                                 </NavLink>
                                 <NavLink to="/clients" className="dropdown-item">
-                                    <Trans>clients_settings</Trans>
+                                    <Trans>client_settings</Trans>
                                 </NavLink>
                                 <NavLink to="/dhcp" className="dropdown-item">
                                     <Trans>dhcp_settings</Trans>

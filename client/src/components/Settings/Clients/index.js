@@ -25,7 +25,7 @@ class Clients extends Component {
 
         return (
             <Fragment>
-                <PageTitle title={t('clients_settings')} />
+                <PageTitle title={t('client_settings')} />
                 {(dashboard.processingTopStats || dashboard.processingClients) && <Loading />}
                 {!dashboard.processingTopStats && !dashboard.processingClients && (
                     <Fragment>
