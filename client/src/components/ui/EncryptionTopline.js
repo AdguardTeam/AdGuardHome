@@ -18,7 +18,7 @@ const EncryptionTopline = (props) => {
     if (isExpired) {
         return (
             <Topline type="danger">
-                <Trans components={[<a href="#settings" key="0">link</a>]}>
+                <Trans components={[<a href="#encryption" key="0">link</a>]}>
                     topline_expired_certificate
                 </Trans>
             </Topline>
@@ -26,7 +26,7 @@ const EncryptionTopline = (props) => {
     } else if (isAboutExpire) {
         return (
             <Topline type="warning">
-                <Trans components={[<a href="#settings" key="0">link</a>]}>
+                <Trans components={[<a href="#encryption" key="0">link</a>]}>
                     topline_expiring_certificate
                 </Trans>
             </Topline>
