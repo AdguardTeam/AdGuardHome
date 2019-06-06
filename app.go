@@ -18,6 +18,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/NYTimes/gziphandler"
@@ -26,6 +27,13 @@ import (
 
 // VersionString will be set through ldflags, contains current version
 var VersionString = "undefined"
+
+// updateChannel can be set via ldflags
+var updateChannel = "release"
+var versionCheckURL = "https://static.adguard.com/adguardhome/" + updateChannel + "/version.json"
+
+const versionCheckPeriod = time.Hour * 8
+
 var httpServer *http.Server
 var httpsServer struct {
 	server     *http.Server
@@ -73,7 +81,7 @@ func run(args options) {
 	enableTLS13()
 
 	// print the first message after logger is configured
-	log.Printf("AdGuard Home, version %s\n", VersionString)
+	log.Printf("AdGuard Home, version %s, channel %s\n", VersionString, updateChannel)
 	log.Debug("Current working directory is %s", config.ourWorkingDir)
 	if args.runningAsService {
 		log.Info("AdGuard Home is running as a service")

@@ -31,9 +31,6 @@ var versionCheckLastTime time.Time
 
 var protocols = []string{"tls://", "https://", "tcp://", "sdns://"}
 
-const versionCheckURL = "https://adguardteam.github.io/AdGuardHome/version.json"
-const versionCheckPeriod = time.Hour * 8
-
 var transport = &http.Transport{
 	DialContext: customDialContext,
 }
