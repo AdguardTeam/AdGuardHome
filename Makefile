@@ -4,6 +4,7 @@ NATIVE_GOARCH = $(shell unset GOARCH; go env GOARCH)
 GOPATH := $(shell go env GOPATH)
 JSFILES = $(shell find client -path client/node_modules -prune -o -type f -name '*.js')
 STATIC = build/static/index.html
+CHANNEL ?= release
 
 TARGET=AdGuardHome
 
@@ -22,7 +23,7 @@ $(STATIC): $(JSFILES) client/node_modules
 $(TARGET): $(STATIC) *.go dhcpd/*.go dnsfilter/*.go dnsforward/*.go
 	GOOS=$(NATIVE_GOOS) GOARCH=$(NATIVE_GOARCH) GO111MODULE=off go get -v github.com/gobuffalo/packr/...
 	PATH=$(GOPATH)/bin:$(PATH) packr -z
-	CGO_ENABLED=0 go build -ldflags="-s -w -X main.VersionString=$(GIT_VERSION)" -asmflags="-trimpath=$(PWD)" -gcflags="-trimpath=$(PWD)"
+	CGO_ENABLED=0 go build -ldflags="-s -w -X main.VersionString=$(GIT_VERSION) -X main.updateChannel=$(CHANNEL)" -asmflags="-trimpath=$(PWD)" -gcflags="-trimpath=$(PWD)"
 	PATH=$(GOPATH)/bin:$(PATH) packr clean
 
 clean:
