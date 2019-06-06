@@ -221,18 +221,10 @@ func applyClientSettings(clientAddr string, setts *dnsfilter.RequestFilteringSet
 	}
 
 	log.Debug("Using settings for client with IP %s", clientAddr)
-	if !c.FilteringEnabled {
-		setts.FilteringEnabled = false
-	}
-	if !c.SafeSearchEnabled {
-		setts.SafeSearchEnabled = false
-	}
-	if !c.SafeBrowsingEnabled {
-		setts.SafeBrowsingEnabled = false
-	}
-	if !c.ParentalEnabled {
-		setts.ParentalEnabled = false
-	}
+	setts.FilteringEnabled = c.FilteringEnabled
+	setts.SafeSearchEnabled = c.SafeSearchEnabled
+	setts.SafeBrowsingEnabled = c.SafeBrowsingEnabled
+	setts.ParentalEnabled = c.UseOwnSettings
 }
 
 func startDNSServer() error {
