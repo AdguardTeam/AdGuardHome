@@ -216,7 +216,7 @@ func generateServerConfig() dnsforward.ServerConfig {
 // If a client has his own settings, apply them
 func applyClientSettings(clientAddr string, setts *dnsfilter.RequestFilteringSettings) {
 	c, ok := clientFind(clientAddr)
-	if !ok || !c.UseOwnSettings {
+	if !ok || c == nil || !c.UseOwnSettings {
 		return
 	}
 
@@ -224,7 +224,7 @@ func applyClientSettings(clientAddr string, setts *dnsfilter.RequestFilteringSet
 	setts.FilteringEnabled = c.FilteringEnabled
 	setts.SafeSearchEnabled = c.SafeSearchEnabled
 	setts.SafeBrowsingEnabled = c.SafeBrowsingEnabled
-	setts.ParentalEnabled = c.UseOwnSettings
+	setts.ParentalEnabled = c.ParentalEnabled
 }
 
 func startDNSServer() error {

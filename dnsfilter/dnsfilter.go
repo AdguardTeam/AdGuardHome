@@ -33,7 +33,8 @@ const defaultSafebrowsingServer = "sb.adtidy.org"
 const defaultSafebrowsingURL = "%s://%s/safebrowsing-lookup-hash.html?prefixes=%s"
 const defaultParentalServer = "pctrl.adguard.com"
 const defaultParentalURL = "%s://%s/check-parental-control-hash?prefixes=%s&sensitivity=%d"
-const maxDialCacheSize = 2 // the number of host names for safebrowsing and parental control
+const defaultParentalSensitivity = 13 // use "TEEN" by default
+const maxDialCacheSize = 2            // the number of host names for safebrowsing and parental control
 
 // Custom filtering settings
 type RequestFilteringSettings struct {
@@ -410,7 +411,11 @@ func (d *Dnsfilter) checkParental(host string) (Result, error) {
 		if d.UsePlainHTTP {
 			schema = "http"
 		}
-		url := fmt.Sprintf(defaultParentalURL, schema, d.parentalServer, hashparam, d.ParentalSensitivity)
+		sensitivity := d.ParentalSensitivity
+		if sensitivity == 0 {
+			sensitivity = defaultParentalSensitivity
+		}
+		url := fmt.Sprintf(defaultParentalURL, schema, d.parentalServer, hashparam, sensitivity)
 		return url
 	}
 	handleBody := func(body []byte, hashes map[string]bool) (Result, error) {

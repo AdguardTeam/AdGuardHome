@@ -123,7 +123,7 @@ func (l *queryLog) logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfil
 	if needFlush {
 		// write to file
 		// do it in separate goroutine -- we are stalling DNS response this whole time
-		go l.flushLogBuffer(false)
+		go l.flushLogBuffer(false) // nolint
 	}
 
 	return &entry
