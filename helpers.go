@@ -341,7 +341,7 @@ func customDialContext(ctx context.Context, network, addr string) (net.Conn, err
 	var firstErr error
 	firstErr = nil
 	for _, a := range addrs {
-		addr = fmt.Sprintf("%s:%s", a.String(), port)
+		addr = net.JoinHostPort(a.String(), port)
 		con, err := dialer.DialContext(ctx, network, addr)
 		if err != nil {
 			if firstErr == nil {

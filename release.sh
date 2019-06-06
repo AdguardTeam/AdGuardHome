@@ -20,7 +20,7 @@ f() {
 	    mkdir -p dist/AdGuardHome
 	    cp -pv {AdGuardHome,LICENSE.txt,README.md} dist/AdGuardHome/
 	    pushd dist
-	    tar zcvf AdGuardHome_"$GOOS"_"$GOARCH".tar.gz AdGuardHome/{AdGuardHome,LICENSE.txt,README.md}
+	    tar zcvf AdGuardHome_"$GOOS"_"$GOARCH".tar.gz AdGuardHome/
 	    popd
 	    rm -rf dist/AdguardHome
 	fi
