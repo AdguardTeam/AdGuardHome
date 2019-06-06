@@ -1,3 +1,5 @@
+// +build ignore
+
 package main
 
 import (
@@ -5,7 +7,7 @@ import (
 	"testing"
 )
 
-func testDoUpdate(t *testing.T) {
+func TestDoUpdate(t *testing.T) {
 	config.DNS.Port = 0
 	config.ourWorkingDir = "."
 	u := updateInfo{
@@ -27,7 +29,7 @@ func testDoUpdate(t *testing.T) {
 	os.RemoveAll(u.backupDir)
 }
 
-func testTargzFileUnpack(t *testing.T) {
+func TestTargzFileUnpack(t *testing.T) {
 	fn := "./dist/AdGuardHome_v0.95_linux_amd64.tar.gz"
 	outdir := "./test-unpack"
 	_ = os.Mkdir(outdir, 0755)
@@ -39,7 +41,7 @@ func testTargzFileUnpack(t *testing.T) {
 	os.RemoveAll(outdir)
 }
 
-func testZipFileUnpack(t *testing.T) {
+func TestZipFileUnpack(t *testing.T) {
 	fn := "./dist/AdGuardHome_v0.95_Windows_amd64.zip"
 	outdir := "./test-unpack"
 	_ = os.Mkdir(outdir, 0755)
