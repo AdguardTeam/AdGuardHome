@@ -217,10 +217,13 @@ Algorithm of an update by command:
 	* Copy the current configuration file to the directory we unpacked new AGH to
 	* Check configuration compatibility by executing `./AGH --check-config`.  If this command fails, we won't be able to update.
 	* Create `backup-vXXX` directory and copy the current configuration file there
-	* Stop all tasks, including DNS server, DHCP server, HTTP server
+	* Copy supporting files (README, LICENSE, etc.) to backup directory
+	* Copy supporting files from the update directory to the current directory
 	* Move the current binary file to backup directory
 	* Note: if power fails here, AGH won't be able to start at system boot.  Administrator has to fix it manually
 	* Move new binary file to the current directory
+	* Send response to UI
+	* Stop all tasks, including DNS server, DHCP server, HTTP server
 	* If AGH is running as a service, use service control functionality to restart
 	* If AGH is not running as a service, use the current process arguments to start a new process
 	* Exit process
@@ -249,6 +252,8 @@ Example of version.json data:
 	"download_linux_mipsle": "",
 	"selfupdate_min_version": "v0.0"
 	}
+
+Server can only auto-update if the current version is equal or higher than `selfupdate_min_version`.
 
 Request:
 
