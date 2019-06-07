@@ -216,7 +216,7 @@ func generateServerConfig() dnsforward.ServerConfig {
 // If a client has his own settings, apply them
 func applyClientSettings(clientAddr string, setts *dnsfilter.RequestFilteringSettings) {
 	c, ok := clientFind(clientAddr)
-	if !ok || c == nil || !c.UseOwnSettings {
+	if !ok || !c.UseOwnSettings {
 		return
 	}
 
