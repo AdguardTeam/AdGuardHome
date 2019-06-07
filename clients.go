@@ -89,13 +89,13 @@ func clientExists(ip string) bool {
 }
 
 // Search for a client by IP
-func clientFind(ip string) (*Client, bool) {
+func clientFind(ip string) (Client, bool) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
 	c, ok := clients.ipIndex[ip]
 	if ok {
-		return c, true
+		return *c, true
 	}
 
 	for _, c = range clients.list {
@@ -109,12 +109,12 @@ func clientFind(ip string) (*Client, bool) {
 				continue
 			}
 			if ip == ipAddr.String() {
-				return c, true
+				return *c, true
 			}
 		}
 	}
 
-	return nil, false
+	return Client{}, false
 }
 
 // Check if Client object's fields are correct

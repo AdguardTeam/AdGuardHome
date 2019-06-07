@@ -526,7 +526,7 @@ Notes:
 
 * If `use_global_settings` is true, then DNS responses for this client are processed and filtered using global settings.
 
-* If `use_global_settings` is false, then the client-specific settings are used to override (disable) global settings.  For example, if global setting `parental_enabled` is true, then per-client setting `parental_enabled:false` can disable Parental Control for this specific client.
+* If `use_global_settings` is false, then the client-specific settings are used to override (enable or disable) global settings.
 
 
 ### Get list of clients
