@@ -20,7 +20,7 @@ client/node_modules: client/package.json client/package-lock.json
 $(STATIC): $(JSFILES) client/node_modules
 	npm --prefix client run build-prod
 
-$(TARGET): $(STATIC) *.go dhcpd/*.go dnsfilter/*.go dnsforward/*.go
+$(TARGET): $(STATIC) *.go home/*.go dhcpd/*.go dnsfilter/*.go dnsforward/*.go
 	GOOS=$(NATIVE_GOOS) GOARCH=$(NATIVE_GOARCH) GO111MODULE=off go get -v github.com/gobuffalo/packr/...
 	PATH=$(GOPATH)/bin:$(PATH) packr -z
 	CGO_ENABLED=0 go build -ldflags="-s -w -X main.VersionString=$(GIT_VERSION) -X main.updateChannel=$(CHANNEL)" -asmflags="-trimpath=$(PWD)" -gcflags="-trimpath=$(PWD)"

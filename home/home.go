@@ -1,4 +1,4 @@
-package main
+package home
 
 import (
 	"bufio"
@@ -49,7 +49,7 @@ const (
 )
 
 // main is the entry point
-func main() {
+func Main() {
 	// config can be specified, which reads options from there, but other command line flags have to override config values
 	// therefore, we must do it manually instead of using a lib
 	args := loadOptions()
@@ -174,7 +174,7 @@ func run(args options) {
 	go periodicallyRefreshFilters()
 
 	// Initialize and run the admin Web interface
-	box := packr.NewBox("build/static")
+	box := packr.NewBox("../build/static")
 
 	// if not configured, redirect / to /install.html, otherwise redirect /install.html to /
 	http.Handle("/", postInstallHandler(optionalAuthHandler(gziphandler.GzipHandler(http.FileServer(box)))))
