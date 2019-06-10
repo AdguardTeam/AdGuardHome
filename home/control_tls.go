@@ -1,6 +1,6 @@
 // Control: TLS configuring handlers
 
-package main
+package home
 
 import (
 	"context"

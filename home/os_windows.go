@@ -1,4 +1,4 @@
-package main
+package home
 
 import "golang.org/x/sys/windows"
 

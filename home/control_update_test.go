@@ -1,6 +1,6 @@
 // +build ignore
 
-package main
+package home
 
 import (
 	"os"
