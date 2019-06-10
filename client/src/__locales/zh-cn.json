@@ -249,5 +249,19 @@
     "form_error_equal": "\u4e0d\u5e94\u8be5\u76f8\u540c",
     "form_error_password": "\u5bc6\u7801\u4e0d\u5339\u914d",
     "reset_settings": "\u91cd\u7f6e\u8bbe\u7f6e",
-    "update_announcement": "AdGuard Home {{version}} \u73b0\u5df2\u53d1\u5e03\uff01 <0>\u70b9\u51fb\u6b64\u5904<\/0> \u4ee5\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\u3002"
+    "update_announcement": "AdGuard Home {{version}} \u73b0\u5df2\u53d1\u5e03\uff01 <0>\u70b9\u51fb\u6b64\u5904<\/0> \u4ee5\u83b7\u53d6\u8be6\u7ec6\u4fe1\u606f\u3002",
+    "setup_guide": "\u8bbe\u7f6e\u5411\u5bfc",
+    "dns_settings": "DNS \u8bbe\u7f6e",
+    "encryption_settings": "\u52a0\u5bc6\u8bbe\u7f6e",
+    "dhcp_settings": "DHCP \u8bbe\u7f6e",
+    "client_settings": "\u5ba2\u6237\u7aef\u8bbe\u7f6e",
+    "privacy_policy": "\u9690\u79c1\u653f\u7b56",
+    "access_title": "\u8bbf\u95ee\u8bbe\u7f6e",
+    "access_desc": "\u60a8\u53ef\u4ee5\u5728\u6b64\u5904\u914d\u7f6e AdGuard Home DNS \u670d\u52a1\u5668\u7684\u8bbf\u95ee\u89c4\u5219\u3002",
+    "access_allowed_title": "\u5141\u8bb8\u7684\u5ba2\u6237\u7aef",
+    "access_allowed_desc": "CIDR \u6216 IP \u5730\u5740\u5217\u8868\u3002\u5982\u679c\u5df2\u914d\u7f6e\uff0cAdGuard Home \u5c06\u4ec5\u63a5\u53d7\u6765\u81ea\u8fd9\u4e9b IP \u5730\u5740\u7684\u8bf7\u6c42\u3002",
+    "access_disallowed_title": "\u4e0d\u5141\u8bb8\u7684\u5ba2\u6237\u7aef",
+    "access_disallowed_desc": "CIDR \u6216 IP \u5730\u5740\u5217\u8868\u3002\u5982\u679c\u5df2\u914d\u7f6e\uff0cAdGuard Home \u5c06\u4e22\u5f03\u6765\u81ea\u8fd9\u4e9b IP \u5730\u5740\u7684\u8bf7\u6c42\u3002",
+    "access_blocked_title": "\u88ab\u963b\u6b62\u7684\u57df\u540d",
+    "access_settings_saved": "\u8bbf\u95ee\u8bbe\u7f6e\u5df2\u6210\u529f\u4fdd\u5b58"
 }
