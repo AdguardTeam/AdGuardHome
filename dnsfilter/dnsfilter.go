@@ -15,6 +15,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/joomcode/errorx"
+
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter"
@@ -674,15 +676,16 @@ func (d *Dnsfilter) createCustomDialContext(resolverAddr string) dialFunctionTyp
 			return nil, e
 		}
 
-		var firstErr error
-		firstErr = nil
+		if len(addrs) == 0 {
+			return nil, fmt.Errorf("couldn't lookup host: %s", host)
+		}
+
+		var dialErrs []error
 		for _, a := range addrs {
 			addr = fmt.Sprintf("%s:%s", a.String(), port)
 			con, err := dialer.DialContext(ctx, network, addr)
 			if err != nil {
-				if firstErr == nil {
-					firstErr = err
-				}
+				dialErrs = append(dialErrs, err)
 				continue
 			}
 
@@ -692,7 +695,7 @@ func (d *Dnsfilter) createCustomDialContext(resolverAddr string) dialFunctionTyp
 
 			return con, err
 		}
-		return nil, firstErr
+		return nil, errorx.DecorateMany(fmt.Sprintf("couldn't dial to %s", addr), dialErrs...)
 	}
 }
 

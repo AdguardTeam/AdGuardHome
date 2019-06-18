@@ -338,20 +338,21 @@ func customDialContext(ctx context.Context, network, addr string) (net.Conn, err
 		return nil, e
 	}
 
-	var firstErr error
-	firstErr = nil
+	if len(addrs) == 0 {
+		return nil, fmt.Errorf("couldn't lookup host: %s", host)
+	}
+
+	var dialErrs []error
 	for _, a := range addrs {
 		addr = net.JoinHostPort(a.String(), port)
 		con, err := dialer.DialContext(ctx, network, addr)
 		if err != nil {
-			if firstErr == nil {
-				firstErr = err
-			}
+			dialErrs = append(dialErrs, err)
 			continue
 		}
 		return con, err
 	}
-	return nil, firstErr
+	return nil, errorx.DecorateMany(fmt.Sprintf("couldn't dial to %s", addr), dialErrs...)
 }
 
 // check if error is "address already in use"
