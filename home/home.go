@@ -25,15 +25,6 @@ import (
 	"github.com/gobuffalo/packr"
 )
 
-// VersionString will be set through ldflags, contains current version
-var VersionString = "undefined"
-
-// updateChannel can be set via ldflags
-var updateChannel = "release"
-var versionCheckURL = "https://static.adguard.com/adguardhome/" + updateChannel + "/version.json"
-
-const versionCheckPeriod = time.Hour * 8
-
 var httpServer *http.Server
 var httpsServer struct {
 	server     *http.Server
@@ -48,8 +39,22 @@ const (
 	configSyslog = "syslog"
 )
 
+// Update-related variables
+var (
+	versionString   string
+	updateChannel   string
+	versionCheckURL string
+)
+
+const versionCheckPeriod = time.Hour * 8
+
 // main is the entry point
-func Main() {
+func Main(version string, channel string) {
+	// Init update-related global variables
+	versionString = version
+	updateChannel = channel
+	versionCheckURL = "https://static.adguard.com/adguardhome/" + updateChannel + "/version.json"
+
 	// config can be specified, which reads options from there, but other command line flags have to override config values
 	// therefore, we must do it manually instead of using a lib
 	args := loadOptions()
@@ -81,7 +86,7 @@ func run(args options) {
 	enableTLS13()
 
 	// print the first message after logger is configured
-	log.Printf("AdGuard Home, version %s, channel %s\n", VersionString, updateChannel)
+	log.Printf("AdGuard Home, version %s, channel %s\n", versionString, updateChannel)
 	log.Debug("Current working directory is %s", config.ourWorkingDir)
 	if args.runningAsService {
 		log.Info("AdGuard Home is running as a service")

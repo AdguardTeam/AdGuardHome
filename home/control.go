@@ -109,7 +109,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		"bootstrap_dns":      config.DNS.BootstrapDNS,
 		"upstream_dns":       config.DNS.UpstreamDNS,
 		"all_servers":        config.DNS.AllServers,
-		"version":            VersionString,
+		"version":            versionString,
 		"language":           config.Language,
 	}
 

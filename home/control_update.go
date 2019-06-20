@@ -43,7 +43,7 @@ func getVersionResp(data []byte) []byte {
 	}
 
 	_, ok := versionJSON[fmt.Sprintf("download_%s_%s", runtime.GOOS, runtime.GOARCH)]
-	if ok && ret["new_version"] != VersionString && VersionString >= selfUpdateMinVersion {
+	if ok && ret["new_version"] != versionString && versionString >= selfUpdateMinVersion {
 		ret["can_autoupdate"] = true
 	}
 
@@ -145,12 +145,12 @@ func getUpdateInfo(jsonData []byte) (*updateInfo, error) {
 		return nil, fmt.Errorf("Invalid JSON")
 	}
 
-	if u.newVer == VersionString {
+	if u.newVer == versionString {
 		return nil, fmt.Errorf("No need to update")
 	}
 
 	u.updateDir = filepath.Join(workDir, fmt.Sprintf("agh-update-%s", u.newVer))
-	u.backupDir = filepath.Join(workDir, fmt.Sprintf("agh-backup-%s", VersionString))
+	u.backupDir = filepath.Join(workDir, fmt.Sprintf("agh-backup-%s", versionString))
 
 	_, pkgFileName := filepath.Split(u.pkgURL)
 	if len(pkgFileName) == 0 {
@@ -360,7 +360,7 @@ func getPackageFile(u *updateInfo) error {
 // Perform an update procedure
 func doUpdate(u *updateInfo) error {
 	log.Info("Updating from %s to %s.  URL:%s  Package:%s",
-		VersionString, u.newVer, u.pkgURL, u.pkgName)
+		versionString, u.newVer, u.pkgURL, u.pkgName)
 
 	_ = os.Mkdir(u.updateDir, 0755)
 
