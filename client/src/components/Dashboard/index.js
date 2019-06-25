@@ -50,8 +50,26 @@ class Dashboard extends Component {
             dashboard.processingClients ||
             dashboard.processingTopStats;
 
-        const refreshFullButton = <button type="button" className="btn btn-outline-primary btn-sm" onClick={() => this.getAllStats()}><Trans>refresh_statics</Trans></button>;
-        const refreshButton = <button type="button" className="btn btn-outline-primary btn-sm card-refresh" onClick={() => this.getAllStats()} />;
+        const refreshFullButton = (
+            <button
+                type="button"
+                className="btn btn-outline-primary btn-sm"
+                onClick={() => this.getAllStats()}
+            >
+                <Trans>refresh_statics</Trans>
+            </button>
+        );
+        const refreshButton = (
+            <button
+                type="button"
+                className="btn btn-icon btn-outline-primary btn-sm"
+                onClick={() => this.getAllStats()}
+            >
+                <svg className="icons">
+                    <use xlinkHref="#refresh" />
+                </svg>
+            </button>
+        );
 
         return (
             <Fragment>

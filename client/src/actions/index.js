@@ -145,11 +145,14 @@ export const getVersionRequest = createAction('GET_VERSION_REQUEST');
 export const getVersionFailure = createAction('GET_VERSION_FAILURE');
 export const getVersionSuccess = createAction('GET_VERSION_SUCCESS');
 
-export const getVersion = () => async (dispatch) => {
+export const getVersion = (recheck = false) => async (dispatch) => {
     dispatch(getVersionRequest());
     try {
-        const newVersion = await apiClient.getGlobalVersion();
+        const newVersion = await apiClient.getGlobalVersion({ recheck_now: recheck });
         dispatch(getVersionSuccess(newVersion));
+        if (recheck) {
+            dispatch(addSuccessToast('updates_checked'));
+        }
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(getVersionFailure());

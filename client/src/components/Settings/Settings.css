@@ -88,3 +88,10 @@
     width: 30px;
     height: 30px;
 }
+
+.btn-icon-sm {
+    width: 23px;
+    height: 23px;
+    min-width: 23px;
+    padding: 5px;
+}

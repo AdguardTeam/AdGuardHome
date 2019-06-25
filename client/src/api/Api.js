@@ -36,7 +36,7 @@ export default class Api {
     GLOBAL_QUERY_LOG_DISABLE = { path: 'querylog_disable', method: 'POST' };
     GLOBAL_SET_UPSTREAM_DNS = { path: 'set_upstreams_config', method: 'POST' };
     GLOBAL_TEST_UPSTREAM_DNS = { path: 'test_upstream_dns', method: 'POST' };
-    GLOBAL_VERSION = { path: 'version.json', method: 'GET' };
+    GLOBAL_VERSION = { path: 'version.json', method: 'POST' };
     GLOBAL_ENABLE_PROTECTION = { path: 'enable_protection', method: 'POST' };
     GLOBAL_DISABLE_PROTECTION = { path: 'disable_protection', method: 'POST' };
     GLOBAL_UPDATE = { path: 'update', method: 'POST' };
@@ -125,9 +125,13 @@ export default class Api {
         return this.makeRequest(path, method, config);
     }
 
-    getGlobalVersion() {
+    getGlobalVersion(data) {
         const { path, method } = this.GLOBAL_VERSION;
-        return this.makeRequest(path, method);
+        const config = {
+            data,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, config);
     }
 
     enableGlobalProtection() {
