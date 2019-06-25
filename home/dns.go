@@ -165,7 +165,10 @@ func onDNSRequest(d *proxy.DNSContext) {
 		return
 	}
 
-	beginAsyncRDNS(ip)
+	ipAddr := net.ParseIP(ip)
+	if !ipAddr.IsLoopback() {
+		beginAsyncRDNS(ip)
+	}
 }
 
 func generateServerConfig() dnsforward.ServerConfig {
