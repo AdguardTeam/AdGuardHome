@@ -104,15 +104,27 @@ func TestClients(t *testing.T) {
 	}
 
 	// add host client
-	b, e = clientAddHost("1.1.1.1", "host", ClientSourceHostsFile)
+	b, e = clientAddHost("1.1.1.1", "host", ClientSourceARP)
 	if !b || e != nil {
 		t.Fatalf("clientAddHost")
 	}
 
 	// failed add - ip exists
-	b, e = clientAddHost("1.1.1.1", "host", ClientSourceHostsFile)
+	b, e = clientAddHost("1.1.1.1", "host1", ClientSourceRDNS)
 	if b || e != nil {
 		t.Fatalf("clientAddHost - ip exists")
+	}
+
+	// overwrite with new data
+	b, e = clientAddHost("1.1.1.1", "host2", ClientSourceARP)
+	if !b || e != nil {
+		t.Fatalf("clientAddHost - overwrite with new data")
+	}
+
+	// overwrite with new data (higher priority)
+	b, e = clientAddHost("1.1.1.1", "host3", ClientSourceHostsFile)
+	if !b || e != nil {
+		t.Fatalf("clientAddHost - overwrite with new data (higher priority)")
 	}
 
 	// get

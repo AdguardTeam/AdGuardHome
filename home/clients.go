@@ -7,11 +7,18 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"runtime"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/utils"
+)
+
+const (
+	clientsUpdatePeriod = 1 * time.Hour
 )
 
 // Client information
@@ -40,8 +47,10 @@ type clientJSON struct {
 type clientSource uint
 
 const (
-	ClientSourceHostsFile clientSource = 0 // from /etc/hosts
-	ClientSourceRDNS      clientSource = 1 // from rDNS
+	// Priority: etc/hosts > ARP > rDNS
+	ClientSourceRDNS      clientSource = 0 // from rDNS
+	ClientSourceARP       clientSource = 1 // from 'arp -a'
+	ClientSourceHostsFile clientSource = 2 // from /etc/hosts
 )
 
 // ClientHost information
@@ -68,7 +77,15 @@ func clientsInit() {
 	clients.ipIndex = make(map[string]*Client)
 	clients.ipHost = make(map[string]ClientHost)
 
-	clientsAddFromHostsFile()
+	go periodicClientsUpdate()
+}
+
+func periodicClientsUpdate() {
+	for {
+		clientsAddFromHostsFile()
+		clientsAddFromSystemARP()
+		time.Sleep(clientsUpdatePeriod)
+	}
 }
 
 func clientsGetList() map[string]*Client {
@@ -240,13 +257,16 @@ func clientUpdate(name string, c Client) error {
 	return nil
 }
 
+// Add new IP -> Host pair
+// Use priority of the source (etc/hosts > ARP > rDNS)
+//  so we overwrite existing entries with an equal or higher priority
 func clientAddHost(ip, host string, source clientSource) (bool, error) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
 	// check index
-	_, ok := clients.ipHost[ip]
-	if ok {
+	c, ok := clients.ipHost[ip]
+	if ok && c.Source > source {
 		return false, nil
 	}
 
@@ -254,7 +274,7 @@ func clientAddHost(ip, host string, source clientSource) (bool, error) {
 		Host:   host,
 		Source: source,
 	}
-	log.Tracef("'%s': '%s' -> [%d]", host, ip, len(clients.ipHost))
+	log.Tracef("'%s' -> '%s' [%d]", ip, host, len(clients.ipHost))
 	return true, nil
 }
 
@@ -294,6 +314,52 @@ func clientsAddFromHostsFile() {
 	}
 
 	log.Info("Added %d client aliases from %s", n, hostsFn)
+}
+
+// Add IP -> Host pairs from the system's `arp -a` command output
+// The command's output is:
+// HOST (IP) at MAC on IFACE
+func clientsAddFromSystemARP() {
+
+	if runtime.GOOS == "windows" {
+		return
+	}
+
+	cmd := exec.Command("arp", "-a")
+	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
+	data, err := cmd.Output()
+	if err != nil || cmd.ProcessState.ExitCode() != 0 {
+		log.Debug("command %s has failed: %v code:%d",
+			cmd.Path, err, cmd.ProcessState.ExitCode())
+		return
+	}
+
+	n := 0
+	lines := strings.Split(string(data), "\n")
+	for _, ln := range lines {
+
+		open := strings.Index(ln, " (")
+		close := strings.Index(ln, ") ")
+		if open == -1 || close == -1 || open >= close {
+			continue
+		}
+
+		host := ln[:open]
+		ip := ln[open+2 : close]
+		if utils.IsValidHostname(host) != nil || net.ParseIP(ip) == nil {
+			continue
+		}
+
+		ok, e := clientAddHost(ip, host, ClientSourceARP)
+		if e != nil {
+			log.Tracef("%s", e)
+		}
+		if ok {
+			n++
+		}
+	}
+
+	log.Info("Added %d client aliases from 'arp -a' command output", n)
 }
 
 type clientHostJSON struct {
@@ -342,8 +408,11 @@ func handleGetClients(w http.ResponseWriter, r *http.Request) {
 			Name: ch.Host,
 		}
 		cj.Source = "etc/hosts"
-		if ch.Source == ClientSourceRDNS {
+		switch ch.Source {
+		case ClientSourceRDNS:
 			cj.Source = "rDNS"
+		case ClientSourceARP:
+			cj.Source = "ARP"
 		}
 		data.AutoClients = append(data.AutoClients, cj)
 	}
