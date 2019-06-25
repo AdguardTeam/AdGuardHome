@@ -257,7 +257,11 @@ Server can only auto-update if the current version is equal or higher than `self
 
 Request:
 
-	GET /control/version.json
+	POST /control/version.json
+
+	{
+		"recheck_now": true | false // if false, server will check for a new version data only once in several hours
+	}
 
 Response:
 
