@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bluele/gcache"
 	"github.com/miekg/dns"
 )
 
@@ -571,4 +572,18 @@ func BenchmarkSafeSearchParallel(b *testing.B) {
 			}
 		}
 	})
+}
+
+func TestDnsfilterDialCache(t *testing.T) {
+	d := Dnsfilter{}
+	dialCache = gcache.New(1).LRU().Expiration(30 * time.Minute).Build()
+
+	d.shouldBeInDialCache("hostname")
+	if searchInDialCache("hostname") != "" {
+		t.Errorf("searchInDialCache")
+	}
+	addToDialCache("hostname", "1.1.1.1")
+	if searchInDialCache("hostname") != "1.1.1.1" {
+		t.Errorf("searchInDialCache")
+	}
 }
