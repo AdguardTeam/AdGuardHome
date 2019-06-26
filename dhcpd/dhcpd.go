@@ -235,6 +235,10 @@ func (s *Server) reserveLease(p dhcp4.Packet) (*Lease, error) {
 	lease := &Lease{HWAddr: hwaddr, Hostname: string(hostname)}
 
 	log.Tracef("Lease not found for %s: creating new one", hwaddr)
+
+	s.leasesLock.Lock()
+	defer s.leasesLock.Unlock()
+
 	ip, err := s.findFreeIP(hwaddr)
 	if err != nil {
 		i := s.findExpiredLease()
@@ -245,9 +249,7 @@ func (s *Server) reserveLease(p dhcp4.Packet) (*Lease, error) {
 		log.Tracef("Assigning IP address %s to %s (lease for %s expired at %s)",
 			s.leases[i].IP, hwaddr, s.leases[i].HWAddr, s.leases[i].Expiry)
 		lease.IP = s.leases[i].IP
-		s.leasesLock.Lock()
 		s.leases[i] = lease
-		s.leasesLock.Unlock()
 
 		s.reserveIP(lease.IP, hwaddr)
 		return lease, nil
@@ -255,9 +257,7 @@ func (s *Server) reserveLease(p dhcp4.Packet) (*Lease, error) {
 
 	log.Tracef("Assigning to %s IP address %s", hwaddr, ip.String())
 	lease.IP = ip
-	s.leasesLock.Lock()
 	s.leases = append(s.leases, lease)
-	s.leasesLock.Unlock()
 	return lease, nil
 }
 
@@ -405,8 +405,8 @@ func (s *Server) addrAvailable(target net.IP) bool {
 // Add the specified IP to the black list for a time period
 func (s *Server) blacklistLease(lease *Lease) {
 	hw := make(net.HardwareAddr, 6)
-	s.reserveIP(lease.IP, hw)
 	s.leasesLock.Lock()
+	s.reserveIP(lease.IP, hw)
 	lease.HWAddr = hw
 	lease.Hostname = ""
 	lease.Expiry = time.Now().Add(s.leaseTime)
@@ -608,19 +608,18 @@ func (s *Server) Leases() []Lease {
 // StaticLeases returns the list of statically-configured DHCP leases (thread-safe)
 func (s *Server) StaticLeases() []Lease {
 	s.leasesLock.Lock()
+	defer s.leasesLock.Unlock()
+
 	if s.IPpool == nil {
 		s.dbLoad()
 	}
-	s.leasesLock.Unlock()
 
 	var result []Lease
-	s.leasesLock.RLock()
 	for _, lease := range s.leases {
 		if lease.Expiry.Unix() == 1 {
 			result = append(result, *lease)
 		}
 	}
-	s.leasesLock.RUnlock()
 	return result
 }
 
@@ -650,6 +649,6 @@ func (s *Server) FindIPbyMAC(mac net.HardwareAddr) net.IP {
 func (s *Server) reset() {
 	s.leasesLock.Lock()
 	s.leases = nil
-	s.leasesLock.Unlock()
 	s.IPpool = make(map[[4]byte]net.HardwareAddr)
+	s.leasesLock.Unlock()
 }
