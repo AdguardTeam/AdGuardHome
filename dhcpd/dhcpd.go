@@ -207,8 +207,6 @@ func (s *Server) Stop() error {
 		s.cond.Wait()
 	}
 	s.mutex.Unlock()
-
-	s.dbStore()
 	return nil
 }
 
@@ -250,6 +248,7 @@ func (s *Server) reserveLease(p dhcp4.Packet) (*Lease, error) {
 			s.leases[i].IP, hwaddr, s.leases[i].HWAddr, s.leases[i].Expiry)
 		lease.IP = s.leases[i].IP
 		s.leases[i] = lease
+		s.dbStore()
 
 		s.reserveIP(lease.IP, hwaddr)
 		return lease, nil
@@ -258,6 +257,7 @@ func (s *Server) reserveLease(p dhcp4.Packet) (*Lease, error) {
 	log.Tracef("Assigning to %s IP address %s", hwaddr, ip.String())
 	lease.IP = ip
 	s.leases = append(s.leases, lease)
+	s.dbStore()
 	return lease, nil
 }
 
@@ -410,6 +410,7 @@ func (s *Server) blacklistLease(lease *Lease) {
 	lease.HWAddr = hw
 	lease.Hostname = ""
 	lease.Expiry = time.Now().Add(s.leaseTime)
+	s.dbStore()
 	s.leasesLock.Unlock()
 }
 
