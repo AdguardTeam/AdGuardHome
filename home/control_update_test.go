@@ -8,20 +8,57 @@ import (
 )
 
 func TestDoUpdate(t *testing.T) {
+
 	config.DNS.Port = 0
-	config.ourWorkingDir = "."
-	u := updateInfo{
-		pkgURL:           "https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.95/AdGuardHome_v0.95_linux_amd64.tar.gz",
-		pkgName:          "./AdGuardHome_v0.95_linux_amd64.tar.gz",
-		newVer:           "v0.95",
-		updateDir:        "./agh-update-v0.95",
-		backupDir:        "./agh-backup-v0.94",
-		configName:       "./AdGuardHome.yaml",
-		updateConfigName: "./agh-update-v0.95/AdGuardHome/AdGuardHome.yaml",
-		curBinName:       "./AdGuardHome",
-		bkpBinName:       "./agh-backup-v0.94/AdGuardHome",
-		newBinName:       "./agh-update-v0.95/AdGuardHome/AdGuardHome",
+	config.ourWorkingDir = "..." // set absolute path
+	newver := "v0.96"
+
+	data := `{
+		"version": "v0.96",
+		"announcement": "AdGuard Home v0.96 is now available!",
+		"announcement_url": "",
+		"download_windows_amd64": "",
+		"download_windows_386": "",
+		"download_darwin_amd64": "",
+		"download_linux_amd64": "https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.96/AdGuardHome_linux_amd64.tar.gz",
+		"download_linux_386": "",
+		"download_linux_arm": "",
+		"download_linux_arm64": "",
+		"download_linux_mips": "",
+		"download_linux_mipsle": "",
+		"selfupdate_min_version": "v0.0"
+	}`
+	uu, err := getUpdateInfo([]byte(data))
+	if err != nil {
+		t.Fatalf("getUpdateInfo: %s", err)
 	}
+
+	u := updateInfo{
+		pkgURL:           "https://github.com/AdguardTeam/AdGuardHome/releases/download/" + newver + "/AdGuardHome_linux_amd64.tar.gz",
+		pkgName:          config.ourWorkingDir + "/agh-update-" + newver + "/AdGuardHome_linux_amd64.tar.gz",
+		newVer:           newver,
+		updateDir:        config.ourWorkingDir + "/agh-update-" + newver,
+		backupDir:        config.ourWorkingDir + "/agh-backup",
+		configName:       config.ourWorkingDir + "/AdGuardHome.yaml",
+		updateConfigName: config.ourWorkingDir + "/agh-update-" + newver + "/AdGuardHome/AdGuardHome.yaml",
+		curBinName:       config.ourWorkingDir + "/AdGuardHome",
+		bkpBinName:       config.ourWorkingDir + "/agh-backup/AdGuardHome",
+		newBinName:       config.ourWorkingDir + "/agh-update-" + newver + "/AdGuardHome/AdGuardHome",
+	}
+
+	if uu.pkgURL != u.pkgURL ||
+		uu.pkgName != u.pkgName ||
+		uu.newVer != u.newVer ||
+		uu.updateDir != u.updateDir ||
+		uu.backupDir != u.backupDir ||
+		uu.configName != u.configName ||
+		uu.updateConfigName != u.updateConfigName ||
+		uu.curBinName != u.curBinName ||
+		uu.bkpBinName != u.bkpBinName ||
+		uu.newBinName != u.newBinName {
+		t.Fatalf("getUpdateInfo: %v != %v", uu, u)
+	}
+
 	e := doUpdate(&u)
 	if e != nil {
 		t.Fatalf("FAILED: %s", e)
