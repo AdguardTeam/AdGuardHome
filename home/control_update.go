@@ -150,7 +150,7 @@ func getUpdateInfo(jsonData []byte) (*updateInfo, error) {
 	}
 
 	u.updateDir = filepath.Join(workDir, fmt.Sprintf("agh-update-%s", u.newVer))
-	u.backupDir = filepath.Join(workDir, fmt.Sprintf("agh-backup-%s", versionString))
+	u.backupDir = filepath.Join(workDir, "agh-backup")
 
 	_, pkgFileName := filepath.Split(u.pkgURL)
 	if len(pkgFileName) == 0 {
