@@ -135,11 +135,19 @@ paths:
                             "192.168.1.104:53535": "Couldn't communicate with DNS server"
 
     /version.json:
-        get:
+        post:
             tags:
                 - global
             operationId: getVersionJson
             summary: 'Gets information about the latest available version of AdGuard'
+            consumes:
+            - application/json
+            parameters:
+            - in: "body"
+              name: "body"
+              required: true
+              schema:
+                $ref: "#/definitions/GetVersionRequest"
             produces:
                 - 'application/json'
             responses:
@@ -994,6 +1002,13 @@ definitions:
                 example:
                     - '||example.org^'
                     - '||example.com^'
+    GetVersionRequest:
+        type: "object"
+        description: "/version.json request data"
+        properties:
+            recheck_now:
+                description: "If false, server will check for a new version data only once in several hours"
+                type: "boolean"
     VersionInfo:
         type: "object"
         description: "Information about the latest available version of AdGuard Home"
