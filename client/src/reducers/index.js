@@ -137,6 +137,7 @@ const dashboard = handleActions({
                 newVersion,
                 canAutoUpdate,
                 isUpdateAvailable: true,
+                processingVersion: false,
             };
             return newState;
         }

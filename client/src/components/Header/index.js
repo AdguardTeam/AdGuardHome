@@ -23,7 +23,7 @@ class Header extends Component {
     };
 
     render() {
-        const { dashboard } = this.props;
+        const { dashboard, getVersion, location } = this.props;
         const { isMenuOpen } = this.state;
         const badgeClass = classnames({
             'badge dns-status': true,
@@ -51,7 +51,7 @@ class Header extends Component {
                             </div>
                         </div>
                         <Menu
-                            location={this.props.location}
+                            location={location}
                             isMenuOpen={isMenuOpen}
                             toggleMenuOpen={this.toggleMenuOpen}
                             closeMenu={this.closeMenu}
@@ -59,7 +59,8 @@ class Header extends Component {
                         {!dashboard.processing &&
                             <div className="col col-sm-6 col-lg-3">
                                 <Version
-                                    { ...this.props.dashboard }
+                                    { ...dashboard }
+                                    getVersion={getVersion}
                                 />
                             </div>
                         }
@@ -71,8 +72,9 @@ class Header extends Component {
 }
 
 Header.propTypes = {
-    dashboard: PropTypes.object,
-    location: PropTypes.object,
+    dashboard: PropTypes.object.isRequired,
+    location: PropTypes.object.isRequired,
+    getVersion: PropTypes.func.isRequired,
 };
 
 export default withNamespaces()(Header);

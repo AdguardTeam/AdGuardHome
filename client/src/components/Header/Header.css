@@ -75,7 +75,11 @@
 }
 
 .nav-version__value {
+    max-width: 110px;
     font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .nav-version__link {
@@ -83,6 +87,11 @@
     display: inline-block;
     border-bottom: 1px dashed #495057;
     cursor: pointer;
+}
+
+.nav-version__text {
+    display: flex;
+    justify-content: flex-end;
 }
 
 .header-brand-img {

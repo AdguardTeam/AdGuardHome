@@ -65,8 +65,7 @@ class App extends Component {
 
     render() {
         const { dashboard, encryption } = this.props;
-        const updateAvailable =
-            !dashboard.processingVersions && dashboard.isCoreRunning && dashboard.isUpdateAvailable;
+        const updateAvailable = dashboard.isCoreRunning && dashboard.isUpdateAvailable;
 
         return (
             <HashRouter hashType="noslash">

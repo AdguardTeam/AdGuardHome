@@ -51,6 +51,10 @@ func getVersionResp(data []byte) []byte {
 	return d
 }
 
+type getVersionJSONRequest struct {
+	RecheckNow bool `json:"recheck_now"`
+}
+
 // Get the latest available version from the Internet
 func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
@@ -60,19 +64,29 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	now := time.Now()
-	controlLock.Lock()
-	cached := now.Sub(versionCheckLastTime) <= versionCheckPeriod && len(versionCheckJSON) != 0
-	data := versionCheckJSON
-	controlLock.Unlock()
-
-	if cached {
-		// return cached copy
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(getVersionResp(data))
+	req := getVersionJSONRequest{}
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "JSON parse: %s", err)
 		return
 	}
 
+	now := time.Now()
+	if !req.RecheckNow {
+		controlLock.Lock()
+		cached := now.Sub(versionCheckLastTime) <= versionCheckPeriod && len(versionCheckJSON) != 0
+		data := versionCheckJSON
+		controlLock.Unlock()
+
+		if cached {
+			log.Tracef("Returning cached data")
+			w.Header().Set("Content-Type", "application/json")
+			w.Write(getVersionResp(data))
+			return
+		}
+	}
+
+	log.Tracef("Downloading data from %s", versionCheckURL)
 	resp, err := client.Get(versionCheckURL)
 	if err != nil {
 		httpError(w, http.StatusBadGateway, "Couldn't get version check json from %s: %T %s\n", versionCheckURL, err, err)
