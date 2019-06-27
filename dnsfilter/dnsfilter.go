@@ -128,7 +128,7 @@ const (
 	FilteredSafeSearch
 )
 
-type dnsfContext struct {
+type dnsFilterContext struct {
 	stats             Stats
 	dialCache         gcache.Cache // "host" -> "IP" cache for safebrowsing and parental control servers
 	safebrowsingCache gcache.Cache
@@ -136,7 +136,7 @@ type dnsfContext struct {
 	safeSearchCache   gcache.Cache
 }
 
-var gctx dnsfContext // global dnsfilter context
+var gctx dnsFilterContext // global dnsfilter context
 
 // Result holds state of hostname check
 type Result struct {
