@@ -38,12 +38,19 @@ func TestDHCP(t *testing.T) {
 
 	p = make(dhcp4.Packet, 241)
 
-	// Reserve an IP
+	// Discover and reserve an IP
 	hw = []byte{3, 2, 3, 4, 5, 6}
 	p.SetCHAddr(hw)
-	lease, _ = s.reserveLease(p)
-	check(t, bytes.Equal(lease.HWAddr, hw), "lease.HWAddr")
-	check(t, bytes.Equal(lease.IP, []byte{1, 1, 1, 1}), "lease.IP")
+	p.SetCIAddr([]byte{0, 0, 0, 0})
+	opt = make(dhcp4.Options, 10)
+	p2 = s.handleDiscover(p, opt)
+	opt = p2.ParseOptions()
+	check(t, bytes.Equal(opt[dhcp4.OptionDHCPMessageType], []byte{byte(dhcp4.Offer)}), "dhcp4.Offer")
+	check(t, bytes.Equal(p2.YIAddr(), []byte{1, 1, 1, 1}), "p2.YIAddr")
+	check(t, bytes.Equal(p2.CHAddr(), hw), "p2.CHAddr")
+	check(t, bytes.Equal(opt[dhcp4.OptionIPAddressLeaseTime], dhcp4.OptionsLeaseTime(5*time.Second)), "OptionIPAddressLeaseTime")
+	check(t, bytes.Equal(opt[dhcp4.OptionServerIdentifier], s.ipnet.IP), "OptionServerIdentifier")
+
 	lease = s.findLease(p)
 	check(t, bytes.Equal(lease.HWAddr, hw), "lease.HWAddr")
 	check(t, bytes.Equal(lease.IP, []byte{1, 1, 1, 1}), "lease.IP")
@@ -88,6 +95,8 @@ func TestDHCP(t *testing.T) {
 	check(t, bytes.Equal(opt[dhcp4.OptionIPAddressLeaseTime], dhcp4.OptionsLeaseTime(5*time.Second)), "OptionIPAddressLeaseTime")
 	check(t, bytes.Equal(opt[dhcp4.OptionServerIdentifier], s.ipnet.IP), "OptionServerIdentifier")
 
+	check(t, bytes.Equal(s.FindIPbyMAC(hw), []byte{1, 1, 1, 1}), "FindIPbyMAC")
+
 	// Commit the previously reserved lease #2
 	hw = []byte{2, 2, 3, 4, 5, 6}
 	p.SetCHAddr(hw)
@@ -104,7 +113,25 @@ func TestDHCP(t *testing.T) {
 	check(t, lease == nil, "lease == nil")
 
 	s.reset()
+	testStaticLeases(t, &s)
+
+	s.reset()
 	misc(t, &s)
+}
+
+func testStaticLeases(t *testing.T, s *Server) {
+	var err error
+	var l Lease
+	l.IP = []byte{1, 1, 1, 1}
+	l.HWAddr = []byte{2, 2, 3, 4, 5, 6}
+	err = s.AddStaticLease(l)
+	check(t, err == nil, "AddStaticLease")
+
+	ll := s.StaticLeases()
+	check(t, len(ll) != 0 && bytes.Equal(ll[0].IP, []byte{1, 1, 1, 1}), "StaticLeases")
+
+	err = s.RemoveStaticLease(l)
+	check(t, err == nil, "RemoveStaticLease")
 }
 
 // Small tests that don't require a static server's state

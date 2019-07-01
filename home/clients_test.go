@@ -29,6 +29,16 @@ func TestClients(t *testing.T) {
 		t.Fatalf("clientAdd #2")
 	}
 
+	c, b = clientFind("1.1.1.1")
+	if !b || c.Name != "client1" {
+		t.Fatalf("clientFind #1")
+	}
+
+	c, b = clientFind("2.2.2.2")
+	if !b || c.Name != "client2" {
+		t.Fatalf("clientFind #2")
+	}
+
 	// failed add - name in use
 	c = Client{
 		IP:   "1.2.3.5",
