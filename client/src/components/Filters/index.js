@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import ReactTable from 'react-table';
 import PropTypes from 'prop-types';
 import { Trans, withNamespaces } from 'react-i18next';
-import Modal from '../ui/Modal';
+import Modal from './Modal';
 import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
 import UserRules from './UserRules';
