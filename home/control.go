@@ -80,27 +80,43 @@ func httpUpdateConfigReloadDNSReturnOK(w http.ResponseWriter, r *http.Request) {
 	returnOK(w)
 }
 
-func handleStatus(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
+func addDNSAddress(dnsAddresses *[]string, addr string) {
+	if config.DNS.Port != 53 {
+		addr = fmt.Sprintf("%s:%d", addr, config.DNS.Port)
+	}
+	*dnsAddresses = append(*dnsAddresses, addr)
+}
 
+// Get the list of DNS addresses the server is listening on
+func getDNSAddresses() []string {
 	dnsAddresses := []string{}
+
 	if config.DNS.BindHost == "0.0.0.0" {
+
 		ifaces, e := getValidNetInterfacesForWeb()
 		if e != nil {
 			log.Error("Couldn't get network interfaces: %v", e)
+			return []string{}
 		}
+
 		for _, iface := range ifaces {
 			for _, addr := range iface.Addresses {
-				dnsAddresses = append(dnsAddresses, addr)
+				addDNSAddress(&dnsAddresses, addr)
 			}
 		}
-	}
-	if len(dnsAddresses) == 0 {
-		dnsAddresses = append(dnsAddresses, config.DNS.BindHost)
+
+	} else {
+		addDNSAddress(&dnsAddresses, config.DNS.BindHost)
 	}
 
+	return dnsAddresses
+}
+
+func handleStatus(w http.ResponseWriter, r *http.Request) {
+	log.Tracef("%s %v", r.Method, r.URL)
+
 	data := map[string]interface{}{
-		"dns_addresses":      dnsAddresses,
+		"dns_addresses":      getDNSAddresses(),
 		"http_port":          config.BindPort,
 		"dns_port":           config.DNS.Port,
 		"protection_enabled": config.DNS.ProtectionEnabled,
