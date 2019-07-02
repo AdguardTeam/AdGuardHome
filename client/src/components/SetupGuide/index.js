@@ -2,8 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Trans, withNamespaces } from 'react-i18next';
 
-import { getDnsAddress } from '../../helpers/helpers';
-
 import Guide from '../ui/Guide';
 import Card from '../ui/Card';
 import PageTitle from '../ui/PageTitle';
@@ -13,7 +11,6 @@ const SetupGuide = ({
     t,
     dashboard: {
         dnsAddresses,
-        dnsPort,
     },
 }) => (
     <div className="guide">
@@ -28,9 +25,7 @@ const SetupGuide = ({
                     <Trans>install_devices_address</Trans>:
                 </div>
                 <div className="mt-2 font-weight-bold">
-                    {dnsAddresses
-                        .map(ip => <li key={ip}>{getDnsAddress(ip, dnsPort)}</li>)
-                    }
+                    {dnsAddresses.map(ip => <li key={ip}>{ip}</li>)}
                 </div>
             </div>
             <Guide />

@@ -314,5 +314,20 @@
     "access_blocked_desc": "Don't confuse this with filters. AdGuard Home will drop DNS queries with these domains in query's question.",
     "access_settings_saved": "Access settings successfully saved",
     "updates_checked": "Updates successfully checked",
-    "check_updates_now": "Check updates now"
+    "check_updates_now": "Check for updates now",
+    "dns_privacy": "DNS Privacy",
+    "setup_dns_privacy_1": "<0>DNS-over-TLS:</0> Use <1>{{address}}</1> string.",
+    "setup_dns_privacy_2": "<0>DNS-over-HTTPS:</0> Use <1>{{address}}</1> string.",
+    "setup_dns_privacy_3": "<0>Please note that encrypted DNS protocols are not supported at the operating system level (except Android 9), so now the installation of additional software is required.</0><0>Here's a list of software you can use.</0>",
+    "setup_dns_privacy_android_1": "Android 9 supports DNS-over-TLS natively. To configure it, go to Settings → Network & internet → Advanced → Private DNS and enter your domain name there.",
+    "setup_dns_privacy_android_2": "<0>AdGuard for Android</0> supports <1>DNS-over-HTTPS</1> and <1>DNS-over-TLS</1>.",
+    "setup_dns_privacy_android_3": "<0>Intra</0> adds <1>DNS-over-HTTPS</1> support to Android.",
+    "setup_dns_privacy_ios_1": "<0>DNSCloak</0> supports <1>DNS-over-HTTPS</1>, but in order to configure it to use your own server, you'll need to generate a <2>DNS Stamp</2> for it.",
+    "setup_dns_privacy_ios_2": "<0>AdGuard for iOS</0> supports <1>DNS-over-HTTPS</1> and <1>DNS-over-TLS</1> setup.",
+    "setup_dns_privacy_other_title": "Other implementations",
+    "setup_dns_privacy_other_1": "AdGuard Home itself can be a secure DNS client on any platform.",
+    "setup_dns_privacy_other_2": "<0>dnsproxy</0> supports all known secure DNS protocols.",
+    "setup_dns_privacy_other_3": "<0>dnscrypt-proxy</0> supports <1>DNS-over-HTTPS</1>.",
+    "setup_dns_privacy_other_4": "<0>Mozilla Firefox</0> supports <1>DNS-over-HTTPS</1>.",
+    "setup_dns_privacy_other_5": "You will find more implementations <0>here</0> and <1>here</1>."
 }

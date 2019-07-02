@@ -27,12 +27,13 @@ class Tabs extends Component {
             <div className="tabs">
                 <div className="tabs__controls">
                     {children.map((child) => {
-                        const { label } = child.props;
+                        const { label, title } = child.props;
 
                         return (
                             <Tab
                                 key={label}
                                 label={label}
+                                title={title}
                                 activeTab={activeTab}
                                 onClick={this.onClickTabControl}
                             />
