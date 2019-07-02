@@ -4,7 +4,7 @@ import ReactModal from 'react-modal';
 import classnames from 'classnames';
 import { Trans, withNamespaces } from 'react-i18next';
 import { R_URL_REQUIRES_PROTOCOL } from '../../helpers/constants';
-import './Modal.css';
+import '../ui/Modal.css';
 
 ReactModal.setAppElement('#root');
 
@@ -17,10 +17,7 @@ const initialState = {
 class Modal extends Component {
     state = initialState;
 
-    // eslint-disable-next-line
-    isUrlValid = url => {
-        return R_URL_REQUIRES_PROTOCOL.test(url);
-    };
+    isUrlValid = url => R_URL_REQUIRES_PROTOCOL.test(url);
 
     handleUrlChange = async (e) => {
         const { value: url } = e.currentTarget;
