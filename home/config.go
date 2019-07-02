@@ -51,6 +51,7 @@ type configuration struct {
 	// runningAsService flag is set to true when options are passed from the service runner
 	runningAsService bool
 	disableUpdate    bool // If set, don't check for updates
+	appSignalChannel chan os.Signal
 
 	BindHost     string `yaml:"bind_host"`     // BindHost is the IP address of the HTTP server to bind to
 	BindPort     int    `yaml:"bind_port"`     // BindPort is the port the HTTP server
