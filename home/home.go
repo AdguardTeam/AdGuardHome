@@ -99,10 +99,10 @@ func run(args options) {
 		requireAdminRights()
 	}
 
-	signalChannel := make(chan os.Signal)
-	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
+	config.appSignalChannel = make(chan os.Signal)
+	signal.Notify(config.appSignalChannel, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 	go func() {
-		<-signalChannel
+		<-config.appSignalChannel
 		cleanup()
 		cleanupAlways()
 		os.Exit(0)

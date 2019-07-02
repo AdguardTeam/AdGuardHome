@@ -3,6 +3,7 @@ package home
 import (
 	"os"
 	"runtime"
+	"syscall"
 
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/kardianos/service"
@@ -31,9 +32,10 @@ func (p *program) Start(s service.Service) error {
 // Stop stops the program
 func (p *program) Stop(s service.Service) error {
 	// Stop should not block. Return with a few seconds.
-	cleanup()
-	cleanupAlways()
-	os.Exit(0)
+	if config.appSignalChannel == nil {
+		os.Exit(0)
+	}
+	config.appSignalChannel <- syscall.SIGINT
 	return nil
 }
 
