@@ -109,6 +109,23 @@ func getDNSAddresses() []string {
 		addDNSAddress(&dnsAddresses, config.DNS.BindHost)
 	}
 
+	if config.TLS.Enabled && len(config.TLS.ServerName) != 0 {
+
+		if config.TLS.PortHTTPS != 0 {
+			addr := config.TLS.ServerName
+			if config.TLS.PortHTTPS != 443 {
+				addr = fmt.Sprintf("%s:%d", addr, config.TLS.PortHTTPS)
+			}
+			addr = fmt.Sprintf("https://%s/dns-query", addr)
+			dnsAddresses = append(dnsAddresses, addr)
+		}
+
+		if config.TLS.PortDNSOverTLS != 0 {
+			addr := fmt.Sprintf("tls://%s:%d", config.TLS.ServerName, config.TLS.PortDNSOverTLS)
+			dnsAddresses = append(dnsAddresses, addr)
+		}
+	}
+
 	return dnsAddresses
 }
 
