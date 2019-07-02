@@ -80,7 +80,7 @@ let Form = (props) => {
                     <div className="form__desc">
                         <Trans
                             components={[
-                                <a href="#settings_dhcp" key="0">
+                                <a href="#dhcp" key="0">
                                     link
                                 </a>,
                             ]}
