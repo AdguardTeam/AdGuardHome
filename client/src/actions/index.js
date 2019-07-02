@@ -6,6 +6,7 @@ import axios from 'axios';
 
 import { normalizeHistory, normalizeFilteringStatus, normalizeLogs, normalizeTextarea, sortClients } from '../helpers/helpers';
 import { SETTINGS_NAMES, CHECK_TIMEOUT } from '../helpers/constants';
+import { getTlsStatus } from './encryption';
 import Api from '../api/Api';
 
 const apiClient = new Api();
@@ -269,6 +270,7 @@ export const getDnsStatus = () => async (dispatch) => {
         dispatch(getVersion());
         dispatch(getClients());
         dispatch(getTopStats());
+        dispatch(getTlsStatus());
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(initSettingsFailure());

@@ -11,9 +11,7 @@ import Loading from '../../ui/Loading';
 
 class Encryption extends Component {
     componentDidMount() {
-        const { getTlsStatus, validateTlsConfig, encryption } = this.props;
-
-        getTlsStatus();
+        const { validateTlsConfig, encryption } = this.props;
 
         if (encryption.enabled) {
             validateTlsConfig(encryption);

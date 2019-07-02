@@ -91,6 +91,7 @@
 
 .nav-version__text {
     display: flex;
+    align-items: center;
     justify-content: flex-end;
 }
 
