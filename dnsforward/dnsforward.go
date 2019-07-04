@@ -260,7 +260,11 @@ func (s *Server) initDNSFilter() error {
 	if s.conf.FilteringEnabled {
 		filters = make(map[int]string)
 		for _, f := range s.conf.Filters {
-			filters[int(f.ID)] = string(f.Data)
+			if f.ID == 0 {
+				filters[int(f.ID)] = string(f.Data)
+			} else {
+				filters[int(f.ID)] = f.FilePath
+			}
 		}
 	}
 

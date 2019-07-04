@@ -48,13 +48,12 @@ type RequestFilteringSettings struct {
 
 // Config allows you to configure DNS filtering with New() or just change variables directly.
 type Config struct {
-	FilteringTempFilename string `yaml:"filtering_temp_filename"` // temporary file for storing unused filtering rules
-	ParentalSensitivity   int    `yaml:"parental_sensitivity"`    // must be either 3, 10, 13 or 17
-	ParentalEnabled       bool   `yaml:"parental_enabled"`
-	UsePlainHTTP          bool   `yaml:"-"` // use plain HTTP for requests to parental and safe browsing servers
-	SafeSearchEnabled     bool   `yaml:"safesearch_enabled"`
-	SafeBrowsingEnabled   bool   `yaml:"safebrowsing_enabled"`
-	ResolverAddress       string // DNS server address
+	ParentalSensitivity int    `yaml:"parental_sensitivity"` // must be either 3, 10, 13 or 17
+	ParentalEnabled     bool   `yaml:"parental_enabled"`
+	UsePlainHTTP        bool   `yaml:"-"` // use plain HTTP for requests to parental and safe browsing servers
+	SafeSearchEnabled   bool   `yaml:"safesearch_enabled"`
+	SafeBrowsingEnabled bool   `yaml:"safebrowsing_enabled"`
+	ResolverAddress     string // DNS server address
 
 	// Filtering callback function
 	FilterHandler func(clientAddr string, settings *RequestFilteringSettings) `yaml:"-"`
@@ -82,7 +81,7 @@ type Stats struct {
 
 // Dnsfilter holds added rules and performs hostname matches against the rules
 type Dnsfilter struct {
-	rulesStorage    *urlfilter.RulesStorage
+	rulesStorage    *urlfilter.RuleStorage
 	filteringEngine *urlfilter.DNSEngine
 
 	// HTTP lookups for safebrowsing and parental
@@ -95,8 +94,9 @@ type Dnsfilter struct {
 
 // Filter represents a filter list
 type Filter struct {
-	ID   int64  `json:"id"`         // auto-assigned when filter is added (see nextFilterID), json by default keeps ID uppercase but we need lowercase
-	Data []byte `json:"-" yaml:"-"` // List of rules divided by '\n'
+	ID       int64  `json:"id"`         // auto-assigned when filter is added (see nextFilterID), json by default keeps ID uppercase but we need lowercase
+	Data     []byte `json:"-" yaml:"-"` // List of rules divided by '\n'
+	FilePath string `json:"-" yaml:"-"` // Path to a filtering rules file
 }
 
 //go:generate stringer -type=Reason
@@ -527,13 +527,31 @@ func (d *Dnsfilter) lookupCommon(host string, lookupstats *LookupStats, cache gc
 
 // Initialize urlfilter objects
 func (d *Dnsfilter) initFiltering(filters map[int]string) error {
-	var err error
-	d.rulesStorage, err = urlfilter.NewRuleStorage(d.FilteringTempFilename)
-	if err != nil {
-		return err
+	listArray := []urlfilter.RuleList{}
+	for id, dataOrFilePath := range filters {
+		var list urlfilter.RuleList
+		if id == 0 {
+			list = &urlfilter.StringRuleList{
+				ID:             0,
+				RulesText:      dataOrFilePath,
+				IgnoreCosmetic: false,
+			}
+		} else {
+			var err error
+			list, err = urlfilter.NewFileRuleList(id, dataOrFilePath, false)
+			if err != nil {
+				return fmt.Errorf("urlfilter.NewFileRuleList(): %s: %s", dataOrFilePath, err)
+			}
+		}
+		listArray = append(listArray, list)
 	}
 
-	d.filteringEngine = urlfilter.NewDNSEngine(filters, d.rulesStorage)
+	var err error
+	d.rulesStorage, err = urlfilter.NewRuleStorage(listArray)
+	if err != nil {
+		return fmt.Errorf("urlfilter.NewRuleStorage(): %s", err)
+	}
+	d.filteringEngine = urlfilter.NewDNSEngine(d.rulesStorage)
 	return nil
 }
 
