@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { showLoading, hideLoading } from 'react-redux-loading-bar';
 import axios from 'axios';
 
+import versionCompare from '../helpers/versionCompare';
 import { normalizeHistory, normalizeFilteringStatus, normalizeLogs, normalizeTextarea, sortClients } from '../helpers/helpers';
 import { SETTINGS_NAMES, CHECK_TIMEOUT } from '../helpers/constants';
 import { getTlsStatus } from './encryption';
@@ -146,13 +147,21 @@ export const getVersionRequest = createAction('GET_VERSION_REQUEST');
 export const getVersionFailure = createAction('GET_VERSION_FAILURE');
 export const getVersionSuccess = createAction('GET_VERSION_SUCCESS');
 
-export const getVersion = (recheck = false) => async (dispatch) => {
+export const getVersion = (recheck = false) => async (dispatch, getState) => {
     dispatch(getVersionRequest());
     try {
-        const newVersion = await apiClient.getGlobalVersion({ recheck_now: recheck });
-        dispatch(getVersionSuccess(newVersion));
+        const data = await apiClient.getGlobalVersion({ recheck_now: recheck });
+        dispatch(getVersionSuccess(data));
+
         if (recheck) {
-            dispatch(addSuccessToast('updates_checked'));
+            const { dnsVersion } = getState().dashboard;
+            const currentVersion = dnsVersion === 'undefined' ? 0 : dnsVersion;
+
+            if (data && versionCompare(currentVersion, data.new_version) === -1) {
+                dispatch(addSuccessToast('updates_checked'));
+            } else {
+                dispatch(addSuccessToast('updates_version_equal'));
+            }
         }
     } catch (error) {
         dispatch(addErrorToast({ error }));
