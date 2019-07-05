@@ -41,7 +41,7 @@ export const LANGUAGES = [
     },
     {
         key: 'pt-br',
-        name: 'Português (BR)',
+        name: 'Portuguese (BR)',
     },
     {
         key: 'sv',
