@@ -28,7 +28,7 @@ const SetupGuide = ({
                     {dnsAddresses.map(ip => <li key={ip}>{ip}</li>)}
                 </div>
             </div>
-            <Guide />
+            <Guide dnsAddresses={dnsAddresses} />
         </Card>
     </div>
 );

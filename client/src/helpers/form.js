@@ -76,6 +76,15 @@ export const port = (value) => {
     return false;
 };
 
+export const portTLS = (value) => {
+    if (value === 0) {
+        return false;
+    } else if (value && (value < 80 || value > 65535)) {
+        return <Trans>form_error_port_range</Trans>;
+    }
+    return false;
+};
+
 export const isSafePort = (value) => {
     if (UNSAFE_PORTS.includes(value)) {
         return <Trans>form_error_port_unsafe</Trans>;
