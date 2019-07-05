@@ -2,11 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Trans, withNamespaces } from 'react-i18next';
 
-import { getDnsAddress } from '../../helpers/helpers';
-
 const Version = (props) => {
     const {
-        dnsVersion, dnsAddresses, dnsPort, processingVersion, t,
+        dnsVersion, dnsAddresses, processingVersion, t,
     } = props;
 
     return (
@@ -31,9 +29,7 @@ const Version = (props) => {
                 </div>
                 <div className="popover__body popover__body--address">
                     <div className="popover__list">
-                        {dnsAddresses.map(ip => (
-                            <li key={ip}>{getDnsAddress(ip, dnsPort)}</li>
-                        ))}
+                        {dnsAddresses.map(ip => <li key={ip}>{ip}</li>)}
                     </div>
                 </div>
             </div>

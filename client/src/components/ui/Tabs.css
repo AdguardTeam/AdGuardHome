@@ -49,3 +49,12 @@
 .tab__text p {
     margin-bottom: 5px;
 }
+
+.tab__text ul,
+.tab__text ol {
+    padding-left: 25px;
+}
+
+.tab__paragraph {
+    margin-bottom: 10px;
+}
