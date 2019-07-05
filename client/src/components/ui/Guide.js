@@ -143,7 +143,7 @@ const Guide = (props) => {
                         {httpsAddress && httpsAddress.length > 0 && (
                             <div className="tab__paragraph">
                                 <Trans
-                                    values={{ address: `${httpsAddress[0]}/dns-query` }}
+                                    values={{ address: httpsAddress[0] }}
                                     components={[
                                         <strong key="0">text</strong>,
                                         <code key="1">text</code>,
