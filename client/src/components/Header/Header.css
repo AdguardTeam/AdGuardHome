@@ -82,6 +82,14 @@
     overflow: hidden;
 }
 
+@media screen and (min-width: 992px) {
+    .nav-version__value {
+        max-width: 100%;
+        overflow: visible;
+        white-space: normal;
+    }
+}
+
 .nav-version__link {
     position: relative;
     display: inline-block;
