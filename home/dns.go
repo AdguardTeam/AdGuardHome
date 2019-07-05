@@ -180,8 +180,8 @@ func generateServerConfig() (dnsforward.ServerConfig, error) {
 	})
 	for _, filter := range config.Filters {
 		filters = append(filters, dnsfilter.Filter{
-			ID:   filter.ID,
-			Data: filter.Data,
+			ID:       filter.ID,
+			FilePath: filter.Path(),
 		})
 	}
 

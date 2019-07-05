@@ -241,7 +241,7 @@ func refreshFiltersIfNecessary(force bool) int {
 			log.Info("Updated filter #%d.  Rules: %d -> %d",
 				f.ID, f.RulesCount, uf.RulesCount)
 			f.Name = uf.Name
-			f.Data = uf.Data
+			f.Data = nil
 			f.RulesCount = uf.RulesCount
 			f.checksum = uf.checksum
 			updateCount++
@@ -339,6 +339,9 @@ func (filter *filter) update() (bool, error) {
 }
 
 // saves filter contents to the file in dataDir
+// This method is safe to call during filters update,
+//  because it creates a new file and then renames it,
+//  so the currently opened file descriptors to the old filter file remain valid.
 func (filter *filter) save() error {
 	filterFilePath := filter.Path()
 	log.Printf("Saving filter %d contents to: %s", filter.ID, filterFilePath)
@@ -369,7 +372,7 @@ func (filter *filter) load() error {
 	rulesCount, _ := parseFilterContents(filterFileContents)
 
 	filter.RulesCount = rulesCount
-	filter.Data = filterFileContents
+	filter.Data = nil
 	filter.checksum = crc32.ChecksumIEEE(filterFileContents)
 	filter.LastUpdated = filter.LastTimeUpdated()
 
