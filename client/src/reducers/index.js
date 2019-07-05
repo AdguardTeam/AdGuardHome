@@ -142,7 +142,10 @@ const dashboard = handleActions({
             return newState;
         }
 
-        return state;
+        return {
+            ...state,
+            processingVersion: false,
+        };
     },
 
     [actions.getUpdateRequest]: state => ({ ...state, processingUpdate: true }),
