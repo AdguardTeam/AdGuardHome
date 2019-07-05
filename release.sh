@@ -43,6 +43,7 @@ CHANNEL=$channel GOOS=windows GOARCH=amd64 f
 CHANNEL=$channel GOOS=windows GOARCH=386 f
 CHANNEL=$channel GOOS=linux GOARCH=mipsle GOMIPS=softfloat f
 CHANNEL=$channel GOOS=linux GOARCH=mips GOMIPS=softfloat f
+CHANNEL=$channel GOOS=freebsd GOARCH=amd64 f
 
 # Variables for CI
 echo "version=$version" > $dst/version.txt
@@ -61,5 +62,6 @@ echo "  \"download_linux_arm\": \"$baseUrl/AdGuardHome_linux_arm.tar.gz\"," >> $
 echo "  \"download_linux_arm64\": \"$baseUrl/AdGuardHome_linux_arm64.tar.gz\"," >> $dst/version.json
 echo "  \"download_linux_mips\": \"$baseUrl/AdGuardHome_linux_mips.tar.gz\"," >> $dst/version.json
 echo "  \"download_linux_mipsle\": \"$baseUrl/AdGuardHome_linux_mipsle.tar.gz\"," >> $dst/version.json
+echo "  \"download_freebsd_amd64\": \"$baseUrl/AdGuardHome_freebsd_amd64.tar.gz\"," >> $dst/version.json
 echo "  \"selfupdate_min_version\": \"v0.0\"" >> $dst/version.json
 echo "}" >> $dst/version.json
