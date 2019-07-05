@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -525,17 +526,34 @@ func (d *Dnsfilter) lookupCommon(host string, lookupstats *LookupStats, cache gc
 // Adding rule and matching against the rules
 //
 
+// Return TRUE if file exists
+func fileExists(fn string) bool {
+	_, err := os.Stat(fn)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 // Initialize urlfilter objects
 func (d *Dnsfilter) initFiltering(filters map[int]string) error {
 	listArray := []urlfilter.RuleList{}
 	for id, dataOrFilePath := range filters {
 		var list urlfilter.RuleList
+
 		if id == 0 {
 			list = &urlfilter.StringRuleList{
 				ID:             0,
 				RulesText:      dataOrFilePath,
 				IgnoreCosmetic: false,
 			}
+
+		} else if !fileExists(dataOrFilePath) {
+			list = &urlfilter.StringRuleList{
+				ID:             id,
+				IgnoreCosmetic: false,
+			}
+
 		} else {
 			var err error
 			list, err = urlfilter.NewFileRuleList(id, dataOrFilePath, false)
