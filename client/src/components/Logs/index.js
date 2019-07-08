@@ -21,6 +21,7 @@ class Logs extends Component {
     componentDidMount() {
         this.getLogs();
         this.props.getFilteringStatus();
+        this.props.getClients();
     }
 
     componentDidUpdate(prevProps) {
@@ -356,6 +357,7 @@ Logs.propTypes = {
     processingRules: PropTypes.bool,
     logStatusProcessing: PropTypes.bool,
     t: PropTypes.func,
+    getClients: PropTypes.func.isRequired,
 };
 
 export default withNamespaces()(Logs);

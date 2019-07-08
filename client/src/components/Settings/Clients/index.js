@@ -10,6 +10,7 @@ import Loading from '../../ui/Loading';
 class Clients extends Component {
     componentDidMount() {
         this.props.getClients();
+        this.props.getTopStats();
     }
 
     render() {
@@ -63,6 +64,7 @@ Clients.propTypes = {
     addClient: PropTypes.func.isRequired,
     updateClient: PropTypes.func.isRequired,
     getClients: PropTypes.func.isRequired,
+    getTopStats: PropTypes.func.isRequired,
     topStats: PropTypes.object,
 };
 
