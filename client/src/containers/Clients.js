@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import { getClients } from '../actions';
+import { getClients, getTopStats } from '../actions';
 import { addClient, updateClient, deleteClient, toggleClientModal } from '../actions/clients';
 import Clients from '../components/Settings/Clients';
 
@@ -14,6 +14,7 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = {
     getClients,
+    getTopStats,
     addClient,
     updateClient,
     deleteClient,

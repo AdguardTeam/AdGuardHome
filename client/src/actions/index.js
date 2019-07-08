@@ -277,8 +277,6 @@ export const getDnsStatus = () => async (dispatch) => {
         const dnsStatus = await apiClient.getGlobalStatus();
         dispatch(dnsStatusSuccess(dnsStatus));
         dispatch(getVersion());
-        dispatch(getClients());
-        dispatch(getTopStats());
         dispatch(getTlsStatus());
     } catch (error) {
         dispatch(addErrorToast({ error }));
