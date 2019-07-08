@@ -17,12 +17,13 @@ class UserRules extends Component {
     render() {
         const { t } = this.props;
         return (
-            <Card
-                title={ t('custom_filter_rules') }
-                subtitle={ t('custom_filter_rules_hint') }
-            >
+            <Card title={t('custom_filter_rules')} subtitle={t('custom_filter_rules_hint')}>
                 <form onSubmit={this.handleSubmit}>
-                    <textarea className="form-control form-control--textarea-large" value={this.props.userRules} onChange={this.handleChange} />
+                    <textarea
+                        className="form-control form-control--textarea-large"
+                        value={this.props.userRules}
+                        onChange={this.handleChange}
+                    />
                     <div className="card-actions">
                         <button
                             className="btn btn-success btn-standard"
@@ -33,27 +34,42 @@ class UserRules extends Component {
                         </button>
                     </div>
                 </form>
-                <hr/>
+                <hr />
                 <div className="list leading-loose">
                     <Trans>examples_title</Trans>:
                     <ol className="leading-loose">
                         <li>
-                            <code>||example.org^</code> - { t('example_meaning_filter_block') }
+                            <code>||example.org^</code> – {t('example_meaning_filter_block')}
                         </li>
                         <li>
-                            <code> @@||example.org^</code> - { t('example_meaning_filter_whitelist') }
+                            <code> @@||example.org^</code> – {t('example_meaning_filter_whitelist')}
                         </li>
                         <li>
-                            <code>127.0.0.1 example.org</code> - { t('example_meaning_host_block') }
+                            <code>127.0.0.1 example.org</code> – {t('example_meaning_host_block')}
                         </li>
                         <li>
-                            <code>{ t('example_comment') }</code> - { t('example_comment_meaning') }
+                            <code>{t('example_comment')}</code> – {t('example_comment_meaning')}
                         </li>
                         <li>
-                            <code>{ t('example_comment_hash') }</code> - { t('example_comment_meaning') }
+                            <code>{t('example_comment_hash')}</code> –&nbsp;
+                            {t('example_comment_meaning')}
                         </li>
                         <li>
-                            <code>/REGEX/</code> - { t('example_regex_meaning') }
+                            <code>/REGEX/</code> –&nbsp;
+                            <Trans
+                                components={[
+                                    <a
+                                        href="https://kb.adguard.com/general/dns-filtering-syntax"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        key="0"
+                                    >
+                                        link
+                                    </a>,
+                                ]}
+                            >
+                                example_regex_meaning
+                            </Trans>
                         </li>
                     </ol>
                 </div>
