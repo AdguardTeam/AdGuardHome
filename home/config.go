@@ -70,6 +70,7 @@ type configuration struct {
 	versionCheckJSON     []byte
 	versionCheckLastTime time.Time
 
+	dnsctx      dnsContext
 	dnsServer   *dnsforward.Server
 	dhcpServer  dhcpd.Server
 	httpServer  *http.Server

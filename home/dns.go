@@ -30,8 +30,6 @@ type dnsContext struct {
 	upstream upstream.Upstream // Upstream object for our own DNS server
 }
 
-var dnsctx dnsContext
-
 // initDNSServer creates an instance of the dnsforward.Server
 // Please note that we must do it even if we don't start it
 // so that we had access to the query log and the stats
@@ -51,13 +49,13 @@ func initDNSServer(baseDir string) {
 	opts := upstream.Options{
 		Timeout: rdnsTimeout,
 	}
-	dnsctx.upstream, err = upstream.AddressToUpstream(resolverAddress, opts)
+	config.dnsctx.upstream, err = upstream.AddressToUpstream(resolverAddress, opts)
 	if err != nil {
 		log.Error("upstream.AddressToUpstream: %s", err)
 		return
 	}
-	dnsctx.rdnsIP = make(map[string]bool)
-	dnsctx.rdnsChannel = make(chan string, 256)
+	config.dnsctx.rdnsIP = make(map[string]bool)
+	config.dnsctx.rdnsChannel = make(chan string, 256)
 	go asyncRDNSLoop()
 }
 
@@ -71,17 +69,17 @@ func beginAsyncRDNS(ip string) {
 	}
 
 	// add IP to rdnsIP, if not exists
-	dnsctx.rdnsLock.Lock()
-	defer dnsctx.rdnsLock.Unlock()
-	_, ok := dnsctx.rdnsIP[ip]
+	config.dnsctx.rdnsLock.Lock()
+	defer config.dnsctx.rdnsLock.Unlock()
+	_, ok := config.dnsctx.rdnsIP[ip]
 	if ok {
 		return
 	}
-	dnsctx.rdnsIP[ip] = true
+	config.dnsctx.rdnsIP[ip] = true
 
 	log.Tracef("Adding %s for rDNS resolve", ip)
 	select {
-	case dnsctx.rdnsChannel <- ip:
+	case config.dnsctx.rdnsChannel <- ip:
 		//
 	default:
 		log.Tracef("rDNS queue is full")
@@ -108,7 +106,7 @@ func resolveRDNS(ip string) string {
 		return ""
 	}
 
-	resp, err := dnsctx.upstream.Exchange(&req)
+	resp, err := config.dnsctx.upstream.Exchange(&req)
 	if err != nil {
 		log.Error("Error while making an rDNS lookup for %s: %s", ip, err)
 		return ""
@@ -136,16 +134,16 @@ func resolveRDNS(ip string) string {
 func asyncRDNSLoop() {
 	for {
 		var ip string
-		ip = <-dnsctx.rdnsChannel
+		ip = <-config.dnsctx.rdnsChannel
 
 		host := resolveRDNS(ip)
 		if len(host) == 0 {
 			continue
 		}
 
-		dnsctx.rdnsLock.Lock()
-		delete(dnsctx.rdnsIP, ip)
-		dnsctx.rdnsLock.Unlock()
+		config.dnsctx.rdnsLock.Lock()
+		delete(config.dnsctx.rdnsIP, ip)
+		config.dnsctx.rdnsLock.Unlock()
 
 		_, _ = config.clients.AddHost(ip, host, ClientSourceRDNS)
 	}
