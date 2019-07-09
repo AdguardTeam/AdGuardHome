@@ -17,8 +17,6 @@ import (
 	"github.com/miekg/dns"
 )
 
-var dnsServer *dnsforward.Server
-
 const (
 	rdnsTimeout = 3 * time.Second // max time to wait for rDNS response
 )
@@ -43,7 +41,7 @@ func initDNSServer(baseDir string) {
 		log.Fatalf("Cannot create DNS data dir at %s: %s", baseDir, err)
 	}
 
-	dnsServer = dnsforward.NewServer(baseDir)
+	config.dnsServer = dnsforward.NewServer(baseDir)
 
 	bindhost := config.DNS.BindHost
 	if config.DNS.BindHost == "0.0.0.0" {
@@ -64,7 +62,7 @@ func initDNSServer(baseDir string) {
 }
 
 func isRunning() bool {
-	return dnsServer != nil && dnsServer.IsRunning()
+	return config.dnsServer != nil && config.dnsServer.IsRunning()
 }
 
 func beginAsyncRDNS(ip string) {
@@ -242,12 +240,12 @@ func startDNSServer() error {
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
 	}
-	err = dnsServer.Start(&newconfig)
+	err = config.dnsServer.Start(&newconfig)
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
 	}
 
-	top := dnsServer.GetStatsTop()
+	top := config.dnsServer.GetStatsTop()
 	for k := range top.Clients {
 		beginAsyncRDNS(k)
 	}
@@ -256,11 +254,11 @@ func startDNSServer() error {
 }
 
 func reconfigureDNSServer() error {
-	config, err := generateServerConfig()
+	newconfig, err := generateServerConfig()
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
 	}
-	err = dnsServer.Reconfigure(&config)
+	err = config.dnsServer.Reconfigure(&newconfig)
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
 	}
@@ -273,7 +271,7 @@ func stopDNSServer() error {
 		return nil
 	}
 
-	err := dnsServer.Stop()
+	err := config.dnsServer.Stop()
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't stop forwarding DNS server")
 	}

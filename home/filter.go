@@ -222,7 +222,7 @@ func refreshFiltersIfNecessary(force bool) int {
 
 	stopped := false
 	if updateCount != 0 {
-		_ = dnsServer.Stop()
+		_ = config.dnsServer.Stop()
 		stopped = true
 	}
 

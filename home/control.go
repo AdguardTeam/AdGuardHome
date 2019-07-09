@@ -172,7 +172,7 @@ func handleQueryLogDisable(w http.ResponseWriter, r *http.Request) {
 
 func handleQueryLog(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
-	data := dnsServer.GetQueryLog()
+	data := config.dnsServer.GetQueryLog()
 
 	jsonVal, err := json.Marshal(data)
 	if err != nil {
@@ -189,7 +189,7 @@ func handleQueryLog(w http.ResponseWriter, r *http.Request) {
 
 func handleStatsTop(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
-	s := dnsServer.GetStatsTop()
+	s := config.dnsServer.GetStatsTop()
 
 	// use manual json marshalling because we want maps to be sorted by value
 	statsJSON := bytes.Buffer{}
@@ -236,7 +236,7 @@ func handleStatsTop(w http.ResponseWriter, r *http.Request) {
 // handleStatsReset resets the stats caches
 func handleStatsReset(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
-	dnsServer.PurgeStats()
+	config.dnsServer.PurgeStats()
 	_, err := fmt.Fprintf(w, "OK\n")
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Couldn't write body: %s", err)
@@ -246,7 +246,7 @@ func handleStatsReset(w http.ResponseWriter, r *http.Request) {
 // handleStats returns aggregated stats data for the 24 hours
 func handleStats(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
-	summed := dnsServer.GetAggregatedStats()
+	summed := config.dnsServer.GetAggregatedStats()
 
 	statsJSON, err := json.Marshal(summed)
 	if err != nil {
@@ -293,7 +293,7 @@ func handleStatsHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := dnsServer.GetStatsHistory(timeUnit, startTime, endTime)
+	data, err := config.dnsServer.GetStatsHistory(timeUnit, startTime, endTime)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Cannot get stats history: %s", err)
 		return
@@ -709,7 +709,7 @@ func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 	// Stop DNS server:
 	//  we close urlfilter object which in turn closes file descriptors to filter files.
 	// Otherwise, Windows won't allow us to remove the file which is being currently used.
-	_ = dnsServer.Stop()
+	_ = config.dnsServer.Stop()
 
 	// go through each element and delete if url matches
 	config.Lock()
@@ -968,7 +968,7 @@ func handleDOH(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dnsServer.ServeHTTP(w, r)
+	config.dnsServer.ServeHTTP(w, r)
 }
 
 // ------------------------
