@@ -150,7 +150,6 @@ type tlsConfig struct {
 }
 
 // initialize to default values, will be changed later when reading config or parsing command line
-// TODO: Get rid of global variables
 var config = configuration{
 	ourConfigFilename: "AdGuardHome.yaml",
 	BindPort:          3000,

@@ -39,7 +39,7 @@ var (
 
 const versionCheckPeriod = time.Hour * 8
 
-// main is the entry point
+// Main is the entry point
 func Main(version string, channel string) {
 	// Init update-related global variables
 	versionString = version
