@@ -39,6 +39,13 @@ type clientObject struct {
 	SafeBrowsingEnabled bool   `yaml:"safesearch_enabled"`
 }
 
+type HTTPSServer struct {
+	server     *http.Server
+	cond       *sync.Cond // reacts to config.TLS.Enabled, PortHTTPS, CertificateChain and PrivateKey
+	sync.Mutex            // protects config.TLS
+	shutdown   bool       // if TRUE, don't restart the server
+}
+
 // configuration is loaded from YAML
 // field ordering is important -- yaml fields will mirror ordering from here
 type configuration struct {
@@ -62,6 +69,8 @@ type configuration struct {
 	// cached version.json to avoid hammering github.io for each page reload
 	versionCheckJSON     []byte
 	versionCheckLastTime time.Time
+
+	httpsServer HTTPSServer
 
 	BindHost     string `yaml:"bind_host"`     // BindHost is the IP address of the HTTP server to bind to
 	BindPort     int    `yaml:"bind_port"`     // BindPort is the port the HTTP server

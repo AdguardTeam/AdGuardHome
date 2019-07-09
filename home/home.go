@@ -26,12 +26,6 @@ import (
 )
 
 var httpServer *http.Server
-var httpsServer struct {
-	server     *http.Server
-	cond       *sync.Cond // reacts to config.TLS.Enabled, PortHTTPS, CertificateChain and PrivateKey
-	sync.Mutex            // protects config.TLS
-	shutdown   bool       // if TRUE, don't restart the server
-}
 
 const (
 	// Used in config to indicate that syslog or eventlog (win) should be used for logger output
@@ -192,13 +186,13 @@ func run(args options) {
 		registerInstallHandlers()
 	}
 
-	httpsServer.cond = sync.NewCond(&httpsServer.Mutex)
+	config.httpsServer.cond = sync.NewCond(&config.httpsServer.Mutex)
 
 	// for https, we have a separate goroutine loop
 	go httpServerLoop()
 
 	// this loop is used as an ability to change listening host and/or port
-	for !httpsServer.shutdown {
+	for !config.httpsServer.shutdown {
 		printHTTPAddresses("http")
 
 		// we need to have new instance, because after Shutdown() the Server is not usable
@@ -219,14 +213,14 @@ func run(args options) {
 }
 
 func httpServerLoop() {
-	for !httpsServer.shutdown {
-		httpsServer.cond.L.Lock()
+	for !config.httpsServer.shutdown {
+		config.httpsServer.cond.L.Lock()
 		// this mechanism doesn't let us through until all conditions are met
 		for config.TLS.Enabled == false ||
 			config.TLS.PortHTTPS == 0 ||
 			config.TLS.PrivateKey == "" ||
 			config.TLS.CertificateChain == "" { // sleep until necessary data is supplied
-			httpsServer.cond.Wait()
+			config.httpsServer.cond.Wait()
 		}
 		address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.TLS.PortHTTPS))
 		// validate current TLS config and update warnings (it could have been loaded from file)
@@ -250,10 +244,10 @@ func httpServerLoop() {
 			cleanupAlways()
 			log.Fatal(err)
 		}
-		httpsServer.cond.L.Unlock()
+		config.httpsServer.cond.L.Unlock()
 
 		// prepare HTTPS server
-		httpsServer.server = &http.Server{
+		config.httpsServer.server = &http.Server{
 			Addr: address,
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{cert},
@@ -262,7 +256,7 @@ func httpServerLoop() {
 		}
 
 		printHTTPAddresses("https")
-		err = httpsServer.server.ListenAndServeTLS("", "")
+		err = config.httpsServer.server.ListenAndServeTLS("", "")
 		if err != http.ErrServerClosed {
 			cleanupAlways()
 			log.Fatal(err)
@@ -399,9 +393,9 @@ func cleanup() {
 
 // Stop HTTP server, possibly waiting for all active connections to be closed
 func stopHTTPServer() {
-	httpsServer.shutdown = true
-	if httpsServer.server != nil {
-		httpsServer.server.Shutdown(context.TODO())
+	config.httpsServer.shutdown = true
+	if config.httpsServer.server != nil {
+		config.httpsServer.server.Shutdown(context.TODO())
 	}
 	httpServer.Shutdown(context.TODO())
 }
