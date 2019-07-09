@@ -2,6 +2,7 @@ package home
 
 import (
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -54,6 +55,8 @@ type configuration struct {
 	appSignalChannel chan os.Signal
 	clients          clientsContainer
 	controlLock      sync.Mutex
+	transport        *http.Transport
+	client           *http.Client
 
 	BindHost     string `yaml:"bind_host"`     // BindHost is the IP address of the HTTP server to bind to
 	BindPort     int    `yaml:"bind_port"`     // BindPort is the port the HTTP server
@@ -169,8 +172,16 @@ var config = configuration{
 	SchemaVersion: currentSchemaVersion,
 }
 
-// init initializes default configuration for the current OS&ARCH
-func init() {
+// initConfig initializes default configuration for the current OS&ARCH
+func initConfig() {
+	config.transport = &http.Transport{
+		DialContext: customDialContext,
+	}
+	config.client = &http.Client{
+		Timeout:   time.Minute * 5,
+		Transport: config.transport,
+	}
+
 	if runtime.GOARCH == "mips" || runtime.GOARCH == "mipsle" {
 		// Use plain DNS on MIPS, encryption is too slow
 		defaultDNS = []string{"1.1.1.1", "1.0.0.1"}

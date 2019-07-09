@@ -87,7 +87,7 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Tracef("Downloading data from %s", versionCheckURL)
-	resp, err := client.Get(versionCheckURL)
+	resp, err := config.client.Get(versionCheckURL)
 	if err != nil {
 		httpError(w, http.StatusBadGateway, "Couldn't get version check json from %s: %T %s\n", versionCheckURL, err, err)
 		return
@@ -349,7 +349,7 @@ func copySupportingFiles(files []string, srcdir, dstdir string, useSrcNameOnly, 
 
 // Download package file and save it to disk
 func getPackageFile(u *updateInfo) error {
-	resp, err := client.Get(u.pkgURL)
+	resp, err := config.client.Get(u.pkgURL)
 	if err != nil {
 		return fmt.Errorf("HTTP request failed: %s", err)
 	}

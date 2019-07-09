@@ -108,6 +108,7 @@ func run(args options) {
 		os.Exit(0)
 	}()
 
+	initConfig()
 	config.clients.Init()
 
 	if !config.firstRun {

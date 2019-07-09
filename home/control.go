@@ -30,15 +30,6 @@ var versionCheckLastTime time.Time
 
 var protocols = []string{"tls://", "https://", "tcp://", "sdns://"}
 
-var transport = &http.Transport{
-	DialContext: customDialContext,
-}
-
-var client = &http.Client{
-	Timeout:   time.Minute * 5,
-	Transport: transport,
-}
-
 // ----------------
 // helper functions
 // ----------------
