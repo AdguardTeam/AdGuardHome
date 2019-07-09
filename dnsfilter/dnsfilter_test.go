@@ -561,7 +561,7 @@ func BenchmarkSafeSearchParallel(b *testing.B) {
 
 func TestDnsfilterDialCache(t *testing.T) {
 	d := Dnsfilter{}
-	dialCache = gcache.New(1).LRU().Expiration(30 * time.Minute).Build()
+	gctx.dialCache = gcache.New(1).LRU().Expiration(30 * time.Minute).Build()
 
 	d.shouldBeInDialCache("hostname")
 	if searchInDialCache("hostname") != "" {
