@@ -49,6 +49,7 @@ type configuration struct {
 	ourConfigFilename string // Config filename (can be overridden via the command line arguments)
 	ourWorkingDir     string // Location of our directory, used to protect against CWD being somewhere else
 	firstRun          bool   // if set to true, don't run any services except HTTP web inteface, and serve only first-run html
+	pidFileName       string // PID file name.  Empty if no PID file was created.
 	// runningAsService flag is set to true when options are passed from the service runner
 	runningAsService bool
 	disableUpdate    bool // If set, don't check for updates

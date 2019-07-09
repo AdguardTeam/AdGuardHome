@@ -32,7 +32,6 @@ var httpsServer struct {
 	sync.Mutex            // protects config.TLS
 	shutdown   bool       // if TRUE, don't restart the server
 }
-var pidFileName string // PID file name.  Empty if no PID file was created.
 
 const (
 	// Used in config to indicate that syslog or eventlog (win) should be used for logger output
@@ -169,7 +168,7 @@ func run(args options) {
 	}
 
 	if len(args.pidFile) != 0 && writePIDFile(args.pidFile) {
-		pidFileName = args.pidFile
+		config.pidFileName = args.pidFile
 	}
 
 	// Update filters we've just loaded right away, don't wait for periodic update timer
@@ -409,8 +408,8 @@ func stopHTTPServer() {
 
 // This function is called before application exits
 func cleanupAlways() {
-	if len(pidFileName) != 0 {
-		os.Remove(pidFileName)
+	if len(config.pidFileName) != 0 {
+		os.Remove(config.pidFileName)
 	}
 	log.Info("Stopped")
 }
