@@ -53,6 +53,7 @@ type configuration struct {
 	disableUpdate    bool // If set, don't check for updates
 	appSignalChannel chan os.Signal
 	clients          clientsContainer
+	controlLock      sync.Mutex
 
 	BindHost     string `yaml:"bind_host"`     // BindHost is the IP address of the HTTP server to bind to
 	BindPort     int    `yaml:"bind_port"`     // BindPort is the port the HTTP server

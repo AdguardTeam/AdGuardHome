@@ -35,8 +35,8 @@ func ensure(method string, handler func(http.ResponseWriter, *http.Request)) fun
 		}
 
 		if method == "POST" || method == "PUT" || method == "DELETE" {
-			controlLock.Lock()
-			defer controlLock.Unlock()
+			config.controlLock.Lock()
+			defer config.controlLock.Unlock()
 		}
 
 		handler(w, r)

@@ -11,7 +11,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
@@ -39,8 +38,6 @@ var client = &http.Client{
 	Timeout:   time.Minute * 5,
 	Transport: transport,
 }
-
-var controlLock sync.Mutex
 
 // ----------------
 // helper functions

@@ -73,10 +73,10 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 
 	now := time.Now()
 	if !req.RecheckNow {
-		controlLock.Lock()
+		config.controlLock.Lock()
 		cached := now.Sub(versionCheckLastTime) <= versionCheckPeriod && len(versionCheckJSON) != 0
 		data := versionCheckJSON
-		controlLock.Unlock()
+		config.controlLock.Unlock()
 
 		if cached {
 			log.Tracef("Returning cached data")
@@ -103,10 +103,10 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	controlLock.Lock()
+	config.controlLock.Lock()
 	versionCheckLastTime = now
 	versionCheckJSON = body
-	controlLock.Unlock()
+	config.controlLock.Unlock()
 
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(getVersionResp(body))
