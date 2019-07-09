@@ -122,7 +122,7 @@ func (clients *clientsContainer) Find(ip string) (Client, bool) {
 			if err != nil {
 				continue
 			}
-			ipAddr := dhcpServer.FindIPbyMAC(mac)
+			ipAddr := config.dhcpServer.FindIPbyMAC(mac)
 			if ipAddr == nil {
 				continue
 			}
@@ -395,7 +395,7 @@ func handleGetClients(w http.ResponseWriter, r *http.Request) {
 
 		if len(c.MAC) != 0 {
 			hwAddr, _ := net.ParseMAC(c.MAC)
-			ipAddr := dhcpServer.FindIPbyMAC(hwAddr)
+			ipAddr := config.dhcpServer.FindIPbyMAC(hwAddr)
 			if ipAddr != nil {
 				cj.IP = ipAddr.String()
 			}

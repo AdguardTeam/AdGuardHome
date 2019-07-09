@@ -70,6 +70,7 @@ type configuration struct {
 	versionCheckJSON     []byte
 	versionCheckLastTime time.Time
 
+	dhcpServer  dhcpd.Server
 	httpServer  *http.Server
 	httpsServer HTTPSServer
 
