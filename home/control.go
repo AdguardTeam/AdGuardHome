@@ -24,10 +24,6 @@ import (
 
 const updatePeriod = time.Minute * 30
 
-// cached version.json to avoid hammering github.io for each page reload
-var versionCheckJSON []byte
-var versionCheckLastTime time.Time
-
 var protocols = []string{"tls://", "https://", "tcp://", "sdns://"}
 
 // ----------------

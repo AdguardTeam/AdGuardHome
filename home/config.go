@@ -58,6 +58,10 @@ type configuration struct {
 	transport        *http.Transport
 	client           *http.Client
 
+	// cached version.json to avoid hammering github.io for each page reload
+	versionCheckJSON     []byte
+	versionCheckLastTime time.Time
+
 	BindHost     string `yaml:"bind_host"`     // BindHost is the IP address of the HTTP server to bind to
 	BindPort     int    `yaml:"bind_port"`     // BindPort is the port the HTTP server
 	AuthName     string `yaml:"auth_name"`     // AuthName is the basic auth username

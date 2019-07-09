@@ -74,8 +74,8 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 	if !req.RecheckNow {
 		config.controlLock.Lock()
-		cached := now.Sub(versionCheckLastTime) <= versionCheckPeriod && len(versionCheckJSON) != 0
-		data := versionCheckJSON
+		cached := now.Sub(config.versionCheckLastTime) <= versionCheckPeriod && len(config.versionCheckJSON) != 0
+		data := config.versionCheckJSON
 		config.controlLock.Unlock()
 
 		if cached {
@@ -104,8 +104,8 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 	config.controlLock.Lock()
-	versionCheckLastTime = now
-	versionCheckJSON = body
+	config.versionCheckLastTime = now
+	config.versionCheckJSON = body
 	config.controlLock.Unlock()
 
 	w.Header().Set("Content-Type", "application/json")
@@ -501,12 +501,12 @@ func finishUpdate(u *updateInfo) {
 func handleUpdate(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
 
-	if len(versionCheckJSON) == 0 {
+	if len(config.versionCheckJSON) == 0 {
 		httpError(w, http.StatusBadRequest, "/update request isn't allowed now")
 		return
 	}
 
-	u, err := getUpdateInfo(versionCheckJSON)
+	u, err := getUpdateInfo(config.versionCheckJSON)
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "%s", err)
 		return
