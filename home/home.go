@@ -25,8 +25,6 @@ import (
 	"github.com/gobuffalo/packr"
 )
 
-var httpServer *http.Server
-
 const (
 	// Used in config to indicate that syslog or eventlog (win) should be used for logger output
 	configSyslog = "syslog"
@@ -197,10 +195,10 @@ func run(args options) {
 
 		// we need to have new instance, because after Shutdown() the Server is not usable
 		address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
-		httpServer = &http.Server{
+		config.httpServer = &http.Server{
 			Addr: address,
 		}
-		err := httpServer.ListenAndServe()
+		err := config.httpServer.ListenAndServe()
 		if err != http.ErrServerClosed {
 			cleanupAlways()
 			log.Fatal(err)
@@ -397,7 +395,7 @@ func stopHTTPServer() {
 	if config.httpsServer.server != nil {
 		config.httpsServer.server.Shutdown(context.TODO())
 	}
-	httpServer.Shutdown(context.TODO())
+	config.httpServer.Shutdown(context.TODO())
 }
 
 // This function is called before application exits

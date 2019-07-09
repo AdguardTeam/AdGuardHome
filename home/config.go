@@ -70,6 +70,7 @@ type configuration struct {
 	versionCheckJSON     []byte
 	versionCheckLastTime time.Time
 
+	httpServer  *http.Server
 	httpsServer HTTPSServer
 
 	BindHost     string `yaml:"bind_host"`     // BindHost is the IP address of the HTTP server to bind to
