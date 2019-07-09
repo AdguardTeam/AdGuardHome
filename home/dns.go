@@ -68,7 +68,7 @@ func isRunning() bool {
 }
 
 func beginAsyncRDNS(ip string) {
-	if clientExists(ip) {
+	if config.clients.Exists(ip) {
 		return
 	}
 
@@ -149,7 +149,7 @@ func asyncRDNSLoop() {
 		delete(dnsctx.rdnsIP, ip)
 		dnsctx.rdnsLock.Unlock()
 
-		_, _ = clientAddHost(ip, host, ClientSourceRDNS)
+		_, _ = config.clients.AddHost(ip, host, ClientSourceRDNS)
 	}
 }
 
@@ -221,7 +221,7 @@ func generateServerConfig() (dnsforward.ServerConfig, error) {
 
 // If a client has his own settings, apply them
 func applyClientSettings(clientAddr string, setts *dnsfilter.RequestFilteringSettings) {
-	c, ok := clientFind(clientAddr)
+	c, ok := config.clients.Find(clientAddr)
 	if !ok || !c.UseOwnSettings {
 		return
 	}

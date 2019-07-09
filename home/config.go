@@ -52,6 +52,7 @@ type configuration struct {
 	runningAsService bool
 	disableUpdate    bool // If set, don't check for updates
 	appSignalChannel chan os.Signal
+	clients          clientsContainer
 
 	BindHost     string `yaml:"bind_host"`     // BindHost is the IP address of the HTTP server to bind to
 	BindPort     int    `yaml:"bind_port"`     // BindPort is the port the HTTP server
@@ -233,7 +234,7 @@ func parseConfig() error {
 			SafeSearchEnabled:   cy.SafeSearchEnabled,
 			SafeBrowsingEnabled: cy.SafeBrowsingEnabled,
 		}
-		_, err = clientAdd(cli)
+		_, err = config.clients.Add(cli)
 		if err != nil {
 			log.Tracef("clientAdd: %s", err)
 		}
@@ -268,7 +269,7 @@ func (c *configuration) write() error {
 	c.Lock()
 	defer c.Unlock()
 
-	clientsList := clientsGetList()
+	clientsList := config.clients.GetList()
 	for _, cli := range clientsList {
 		ip := cli.IP
 		if len(cli.MAC) != 0 {

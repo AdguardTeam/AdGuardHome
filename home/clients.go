@@ -66,10 +66,9 @@ type clientsContainer struct {
 	lock    sync.Mutex
 }
 
-var clients clientsContainer
-
-// Initialize clients container
-func clientsInit() {
+// Init initializes clients container
+// Note: this function must be called only once
+func (clients *clientsContainer) Init() {
 	if clients.list != nil {
 		log.Fatal("clients.list != nil")
 	}
@@ -77,22 +76,24 @@ func clientsInit() {
 	clients.ipIndex = make(map[string]*Client)
 	clients.ipHost = make(map[string]ClientHost)
 
-	go periodicClientsUpdate()
+	go clients.periodicUpdate()
 }
 
-func periodicClientsUpdate() {
+func (clients *clientsContainer) periodicUpdate() {
 	for {
-		clientsAddFromHostsFile()
-		clientsAddFromSystemARP()
+		clients.addFromHostsFile()
+		clients.addFromSystemARP()
 		time.Sleep(clientsUpdatePeriod)
 	}
 }
 
-func clientsGetList() map[string]*Client {
+// GetList returns the pointer to clients list
+func (clients *clientsContainer) GetList() map[string]*Client {
 	return clients.list
 }
 
-func clientExists(ip string) bool {
+// Exists checks if client with this IP already exists
+func (clients *clientsContainer) Exists(ip string) bool {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
@@ -105,8 +106,8 @@ func clientExists(ip string) bool {
 	return ok
 }
 
-// Search for a client by IP
-func clientFind(ip string) (Client, bool) {
+// Find searches for a client by IP
+func (clients *clientsContainer) Find(ip string) (Client, bool) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
@@ -135,7 +136,7 @@ func clientFind(ip string) (Client, bool) {
 }
 
 // Check if Client object's fields are correct
-func clientCheck(c *Client) error {
+func (c *Client) check() error {
 	if len(c.Name) == 0 {
 		return fmt.Errorf("Invalid Name")
 	}
@@ -162,8 +163,8 @@ func clientCheck(c *Client) error {
 
 // Add a new client object
 // Return true: success;  false: client exists.
-func clientAdd(c Client) (bool, error) {
-	e := clientCheck(&c)
+func (clients *clientsContainer) Add(c Client) (bool, error) {
+	e := c.check()
 	if e != nil {
 		return false, e
 	}
@@ -194,8 +195,8 @@ func clientAdd(c Client) (bool, error) {
 	return true, nil
 }
 
-// Remove a client
-func clientDel(name string) bool {
+// Del removes a client
+func (clients *clientsContainer) Del(name string) bool {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
@@ -210,8 +211,8 @@ func clientDel(name string) bool {
 }
 
 // Update a client
-func clientUpdate(name string, c Client) error {
-	err := clientCheck(&c)
+func (clients *clientsContainer) Update(name string, c Client) error {
+	err := c.check()
 	if err != nil {
 		return err
 	}
@@ -257,10 +258,10 @@ func clientUpdate(name string, c Client) error {
 	return nil
 }
 
-// Add new IP -> Host pair
+// AddHost adds new IP -> Host pair
 // Use priority of the source (etc/hosts > ARP > rDNS)
 //  so we overwrite existing entries with an equal or higher priority
-func clientAddHost(ip, host string, source clientSource) (bool, error) {
+func (clients *clientsContainer) AddHost(ip, host string, source clientSource) (bool, error) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
@@ -279,7 +280,7 @@ func clientAddHost(ip, host string, source clientSource) (bool, error) {
 }
 
 // Parse system 'hosts' file and fill clients array
-func clientsAddFromHostsFile() {
+func (clients *clientsContainer) addFromHostsFile() {
 	hostsFn := "/etc/hosts"
 	if runtime.GOOS == "windows" {
 		hostsFn = os.ExpandEnv("$SystemRoot\\system32\\drivers\\etc\\hosts")
@@ -304,7 +305,7 @@ func clientsAddFromHostsFile() {
 			continue
 		}
 
-		ok, e := clientAddHost(fields[0], fields[1], ClientSourceHostsFile)
+		ok, e := clients.AddHost(fields[0], fields[1], ClientSourceHostsFile)
 		if e != nil {
 			log.Tracef("%s", e)
 		}
@@ -319,7 +320,7 @@ func clientsAddFromHostsFile() {
 // Add IP -> Host pairs from the system's `arp -a` command output
 // The command's output is:
 // HOST (IP) at MAC on IFACE
-func clientsAddFromSystemARP() {
+func (clients *clientsContainer) addFromSystemARP() {
 
 	if runtime.GOOS == "windows" {
 		return
@@ -350,7 +351,7 @@ func clientsAddFromSystemARP() {
 			continue
 		}
 
-		ok, e := clientAddHost(ip, host, ClientSourceARP)
+		ok, e := clients.AddHost(ip, host, ClientSourceARP)
 		if e != nil {
 			log.Tracef("%s", e)
 		}
@@ -379,8 +380,8 @@ func handleGetClients(w http.ResponseWriter, r *http.Request) {
 
 	data := clientListJSON{}
 
-	clients.lock.Lock()
-	for _, c := range clients.list {
+	config.clients.lock.Lock()
+	for _, c := range config.clients.list {
 		cj := clientJSON{
 			IP:                  c.IP,
 			MAC:                 c.MAC,
@@ -402,7 +403,7 @@ func handleGetClients(w http.ResponseWriter, r *http.Request) {
 
 		data.Clients = append(data.Clients, cj)
 	}
-	for ip, ch := range clients.ipHost {
+	for ip, ch := range config.clients.ipHost {
 		cj := clientHostJSON{
 			IP:   ip,
 			Name: ch.Host,
@@ -416,7 +417,7 @@ func handleGetClients(w http.ResponseWriter, r *http.Request) {
 		}
 		data.AutoClients = append(data.AutoClients, cj)
 	}
-	clients.lock.Unlock()
+	config.clients.lock.Unlock()
 
 	w.Header().Set("Content-Type", "application/json")
 	e := json.NewEncoder(w).Encode(data)
@@ -462,7 +463,7 @@ func handleAddClient(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
 	}
-	ok, err := clientAdd(*c)
+	ok, err := config.clients.Add(*c)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
@@ -492,7 +493,7 @@ func handleDelClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !clientDel(cj.Name) {
+	if !config.clients.Del(cj.Name) {
 		httpError(w, http.StatusBadRequest, "Client not found")
 		return
 	}
@@ -501,7 +502,7 @@ func handleDelClient(w http.ResponseWriter, r *http.Request) {
 	returnOK(w)
 }
 
-type clientUpdateJSON struct {
+type updateJSON struct {
 	Name string     `json:"name"`
 	Data clientJSON `json:"data"`
 }
@@ -515,7 +516,7 @@ func handleUpdateClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var dj clientUpdateJSON
+	var dj updateJSON
 	err = json.Unmarshal(body, &dj)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "JSON parse: %s", err)
@@ -532,7 +533,7 @@ func handleUpdateClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = clientUpdate(dj.Name, *c)
+	err = config.clients.Update(dj.Name, *c)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
