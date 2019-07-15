@@ -722,6 +722,11 @@ func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Stop DNS server:
+	//  we close urlfilter object which in turn closes file descriptors to filter files.
+	// Otherwise, Windows won't allow us to remove the file which is being currently used.
+	_ = dnsServer.Stop()
+
 	// go through each element and delete if url matches
 	config.Lock()
 	newFilters := config.Filters[:0]
@@ -732,9 +737,11 @@ func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 			// Remove the filter file
 			err := os.Remove(filter.Path())
 			if err != nil && !os.IsNotExist(err) {
+				config.Unlock()
 				httpError(w, http.StatusInternalServerError, "Couldn't remove the filter file: %s", err)
 				return
 			}
+			log.Debug("os.Remove(%s)", filter.Path())
 		}
 	}
 	// Update the configuration after removing filter files
