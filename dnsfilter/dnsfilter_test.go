@@ -455,13 +455,16 @@ func TestMatching(t *testing.T) {
 func applyClientSettings(clientAddr string, setts *RequestFilteringSettings) {
 	setts.FilteringEnabled = false
 	setts.ParentalEnabled = false
+	setts.SafeBrowsingEnabled = true
 }
 
+// Check behaviour without any per-client settings,
+//  then apply per-client settings and check behaviour once again
 func TestClientSettings(t *testing.T) {
 	var r Result
 	filters := make(map[int]string)
 	filters[0] = "||example.org^\n"
-	d := NewForTest(&Config{ParentalEnabled: true}, filters)
+	d := NewForTest(&Config{ParentalEnabled: true, SafeBrowsingEnabled: false}, filters)
 	defer d.Destroy()
 	d.ParentalSensitivity = 3
 
@@ -479,6 +482,12 @@ func TestClientSettings(t *testing.T) {
 		t.Fatalf("CheckHost FilteredParental")
 	}
 
+	// safesearch is disabled
+	r, _ = d.CheckHost("wmconvirus.narod.ru", dns.TypeA, "1.1.1.1")
+	if r.IsFiltered {
+		t.Fatalf("CheckHost safesearch")
+	}
+
 	// override client settings:
 	d.FilterHandler = applyClientSettings
 
@@ -488,10 +497,16 @@ func TestClientSettings(t *testing.T) {
 		t.Fatalf("CheckHost")
 	}
 
-	// override parental settings
+	// override parental settings (force disable parental)
 	r, _ = d.CheckHost("pornhub.com", dns.TypeA, "1.1.1.1")
 	if r.IsFiltered {
 		t.Fatalf("CheckHost")
+	}
+
+	// override safesearch settings (force enable safesearch)
+	r, _ = d.CheckHost("wmconvirus.narod.ru", dns.TypeA, "1.1.1.1")
+	if !r.IsFiltered || r.Reason != FilteredSafeBrowsing {
+		t.Fatalf("CheckHost FilteredSafeBrowsing")
 	}
 }
 
