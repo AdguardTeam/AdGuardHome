@@ -179,6 +179,9 @@ func generateServerConfig() (dnsforward.ServerConfig, error) {
 		Data: userFilter.Data,
 	})
 	for _, filter := range config.Filters {
+		if !filter.Enabled {
+			continue
+		}
 		filters = append(filters, dnsfilter.Filter{
 			ID:       filter.ID,
 			FilePath: filter.Path(),
