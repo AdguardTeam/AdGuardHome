@@ -731,13 +731,13 @@ func New(c *Config, filters map[int]string) *Dnsfilter {
 
 	if c != nil {
 		// initialize objects only once
-		if c.SafeBrowsingEnabled && gctx.safebrowsingCache == nil {
+		if gctx.safebrowsingCache == nil {
 			gctx.safebrowsingCache = gcache.New(defaultCacheSize).LRU().Expiration(defaultCacheTime).Build()
 		}
-		if c.SafeSearchEnabled && gctx.safeSearchCache == nil {
+		if gctx.safeSearchCache == nil {
 			gctx.safeSearchCache = gcache.New(defaultCacheSize).LRU().Expiration(defaultCacheTime).Build()
 		}
-		if c.ParentalEnabled && gctx.parentalCache == nil {
+		if gctx.parentalCache == nil {
 			gctx.parentalCache = gcache.New(defaultCacheSize).LRU().Expiration(defaultCacheTime).Build()
 		}
 		if len(c.ResolverAddress) != 0 && gctx.dialCache == nil {
