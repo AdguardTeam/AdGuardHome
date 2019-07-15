@@ -257,7 +257,7 @@ func startDNSServer() error {
 
 func reconfigureDNSServer() error {
 	if !isRunning() {
-		return fmt.Errorf("Refusing to reconfigure forwarding DNS server: not running")
+		return nil
 	}
 
 	config, err := generateServerConfig()
@@ -274,7 +274,7 @@ func reconfigureDNSServer() error {
 
 func stopDNSServer() error {
 	if !isRunning() {
-		return fmt.Errorf("Refusing to stop forwarding DNS server: not running")
+		return nil
 	}
 
 	err := dnsServer.Stop()
