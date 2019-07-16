@@ -31,6 +31,9 @@ Contents:
 	* API: List rewrite entries
 	* API: Add a rewrite entry
 	* API: Remove a rewrite entry
+* Services Filter
+	* API: Get blocked services list
+	* API: Set blocked services list
 
 
 ## First startup
@@ -536,6 +539,8 @@ Notes:
 
 * If `use_global_settings` is false, then the client-specific settings are used to override (enable or disable) global settings.
 
+* If `use_global_blocked_services` is false, then the client-specific settings are used to override (enable or disable) global Blocked Services settings.
+
 
 ### Get list of clients
 
@@ -558,6 +563,8 @@ Response:
 			parental_enabled: false
 			safebrowsing_enabled: false
 			safesearch_enabled: false
+			use_global_blocked_services: true
+			blocked_services: [ "name1", ... ]
 		}
 	]
 	auto_clients: [
@@ -585,6 +592,8 @@ Request:
 		parental_enabled: false
 		safebrowsing_enabled: false
 		safesearch_enabled: false
+		use_global_blocked_services: true
+		blocked_services: [ "name1", ... ]
 	}
 
 Response:
@@ -613,6 +622,8 @@ Request:
 			parental_enabled: false
 			safebrowsing_enabled: false
 			safesearch_enabled: false
+			use_global_blocked_services: true
+			blocked_services: [ "name1", ... ]
 		}
 	}
 
@@ -739,6 +750,52 @@ Request:
 		domain: "..."
 		answer: "..."
 	}
+
+Response:
+
+	200 OK
+
+
+## Services Filter
+
+Allows to quickly block popular sites globally or for specific client only.
+UI manages these settings via global or per-client API.
+UI and server have the same list of the services supported and this list must always be in synchronization.
+UI code also contains icons for each service: `client/src/components/ui/Icons.js`.
+
+How it works:
+* UI presents the list of services which user may want to block
+* Admin clicks on the checkboxes in front of the services to block and presses Save
+* UI sends `Set blocked services list` or `Update client` message
+* Server updates the internal configuration
+* When a user sends a DNS request for a host which is blocked by these settings, he won't receive its IP address
+* Query log will show that this request was blocked by "Blocked services"
+
+Internally, all supported services are stored as a map:
+
+	service name -> list of rules
+
+
+### API: Get blocked services list
+
+Request:
+
+	GET /control/blocked_services/list
+
+Response:
+
+	200 OK
+
+	[ "name1", ... ]
+
+
+### API: Set blocked services list
+
+Request:
+
+	POST /control/blocked_services/set
+
+	[ "name1", ... ]
 
 Response:
 
