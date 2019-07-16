@@ -209,12 +209,12 @@ func refreshFiltersIfNecessary(force bool) int {
 	for i := range updateFilters {
 		uf := &updateFilters[i]
 		updated, err := uf.update()
+		updateFlags = append(updateFlags, updated)
 		if err != nil {
 			log.Printf("Failed to update filter %s: %s\n", uf.URL, err)
 			continue
 		}
 		uf.LastUpdated = time.Now()
-		updateFlags = append(updateFlags, updated)
 		if updated {
 			updateCount++
 		}
