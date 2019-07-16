@@ -256,10 +256,6 @@ func startDNSServer() error {
 }
 
 func reconfigureDNSServer() error {
-	if !isRunning() {
-		return nil
-	}
-
 	config, err := generateServerConfig()
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
