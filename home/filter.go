@@ -215,11 +215,18 @@ func refreshFiltersIfNecessary(force bool) int {
 		}
 		uf.LastUpdated = time.Now()
 		updateFlags = append(updateFlags, updated)
+		if updated {
+			updateCount++
+		}
 	}
 
-	isRunning := isRunning()
-	_ = dnsServer.Stop()
+	stopped := false
+	if updateCount != 0 {
+		_ = dnsServer.Stop()
+		stopped = true
+	}
 
+	updateCount = 0
 	for i := range updateFilters {
 		uf := &updateFilters[i]
 		updated := updateFlags[i]
@@ -259,7 +266,7 @@ func refreshFiltersIfNecessary(force bool) int {
 		config.Unlock()
 	}
 
-	if updateCount > 0 && isRunning {
+	if stopped {
 		err := reconfigureDNSServer()
 		if err != nil {
 			log.Error("cannot reconfigure DNS server with the new filters: %s", err)
