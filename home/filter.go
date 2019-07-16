@@ -170,12 +170,15 @@ func periodicallyRefreshFilters() {
 // Algorithm:
 // . Get the list of filters to be updated
 // . For each filter run the download and checksum check operation
-//  . If filter data hasn't changed, set new update time
-//  . If filter data has changed, parse it, save it on disk, set new update time
+// . Stop server
+// . For each filter:
+//  . If filter data hasn't changed, just set new update time on file
+//  . If filter data has changed, save it on disk
 //  . Apply changes to the current configuration
-// . Restart server
+// . Start server
 func refreshFiltersIfNecessary(force bool) int {
 	var updateFilters []filter
+	var updateFlags []bool // 'true' if filter data has changed
 
 	if config.firstRun {
 		return 0
@@ -210,21 +213,28 @@ func refreshFiltersIfNecessary(force bool) int {
 			log.Printf("Failed to update filter %s: %s\n", uf.URL, err)
 			continue
 		}
+		uf.LastUpdated = time.Now()
+		updateFlags = append(updateFlags, updated)
+	}
+
+	isRunning := isRunning()
+	_ = dnsServer.Stop()
+
+	for i := range updateFilters {
+		uf := &updateFilters[i]
+		updated := updateFlags[i]
 		if updated {
 			// Saving it to the filters dir now
-			err = uf.save()
+			err := uf.save()
 			if err != nil {
 				log.Printf("Failed to save the updated filter %d: %s", uf.ID, err)
 				continue
 			}
-
 		} else {
-			mtime := time.Now()
-			e := os.Chtimes(uf.Path(), mtime, mtime)
+			e := os.Chtimes(uf.Path(), uf.LastUpdated, uf.LastUpdated)
 			if e != nil {
 				log.Error("os.Chtimes(): %v", e)
 			}
-			uf.LastUpdated = mtime
 		}
 
 		config.Lock()
@@ -249,11 +259,10 @@ func refreshFiltersIfNecessary(force bool) int {
 		config.Unlock()
 	}
 
-	if updateCount > 0 && isRunning() {
+	if updateCount > 0 && isRunning {
 		err := reconfigureDNSServer()
 		if err != nil {
-			msg := fmt.Sprintf("SHOULD NOT HAPPEN: cannot reconfigure DNS server with the new filters: %s", err)
-			panic(msg)
+			log.Error("cannot reconfigure DNS server with the new filters: %s", err)
 		}
 	}
 	return updateCount
