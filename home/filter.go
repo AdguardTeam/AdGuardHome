@@ -262,8 +262,7 @@ func refreshFiltersIfNecessary(force bool) int {
 	if updateCount > 0 && isRunning {
 		err := reconfigureDNSServer()
 		if err != nil {
-			msg := fmt.Sprintf("SHOULD NOT HAPPEN: cannot reconfigure DNS server with the new filters: %s", err)
-			panic(msg)
+			log.Error("cannot reconfigure DNS server with the new filters: %s", err)
 		}
 	}
 	return updateCount
