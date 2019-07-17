@@ -37,6 +37,9 @@ type clientObject struct {
 	ParentalEnabled     bool   `yaml:"parental_enabled"`
 	SafeSearchEnabled   bool   `yaml:"safebrowsing_enabled"`
 	SafeBrowsingEnabled bool   `yaml:"safesearch_enabled"`
+
+	UseGlobalBlockedServices bool     `yaml:"use_global_blocked_services"`
+	BlockedServices          []string `yaml:"blocked_services"`
 }
 
 type HTTPSServer struct {
@@ -266,6 +269,9 @@ func parseConfig() error {
 			ParentalEnabled:     cy.ParentalEnabled,
 			SafeSearchEnabled:   cy.SafeSearchEnabled,
 			SafeBrowsingEnabled: cy.SafeBrowsingEnabled,
+
+			UseOwnBlockedServices: !cy.UseGlobalBlockedServices,
+			BlockedServices:       cy.BlockedServices,
 		}
 		_, err = config.clients.Add(cli)
 		if err != nil {
@@ -317,6 +323,9 @@ func (c *configuration) write() error {
 			ParentalEnabled:     cli.ParentalEnabled,
 			SafeSearchEnabled:   cli.SafeSearchEnabled,
 			SafeBrowsingEnabled: cli.SafeBrowsingEnabled,
+
+			UseGlobalBlockedServices: !cli.UseOwnBlockedServices,
+			BlockedServices:          cli.BlockedServices,
 		}
 		config.Clients = append(config.Clients, cy)
 	}
