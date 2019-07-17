@@ -127,7 +127,7 @@ func (s *Server) setConfig(config ServerConfig) error {
 	}
 
 	subnet, err := parseIPv4(config.SubnetMask)
-	if err != nil {
+	if err != nil || !isValidSubnetMask(subnet) {
 		return wrapErrPrint(err, "Failed to parse subnet mask %s", config.SubnetMask)
 	}
 

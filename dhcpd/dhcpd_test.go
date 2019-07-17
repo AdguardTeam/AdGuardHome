@@ -197,3 +197,15 @@ func TestDB(t *testing.T) {
 
 	os.Remove("leases.db")
 }
+
+func TestIsValidSubnetMask(t *testing.T) {
+	if !isValidSubnetMask([]byte{255, 255, 255, 0}) {
+		t.Fatalf("isValidSubnetMask([]byte{255,255,255,0})")
+	}
+	if isValidSubnetMask([]byte{255, 255, 253, 0}) {
+		t.Fatalf("isValidSubnetMask([]byte{255,255,253,0})")
+	}
+	if isValidSubnetMask([]byte{0, 255, 255, 255}) {
+		t.Fatalf("isValidSubnetMask([]byte{255,255,253,0})")
+	}
+}
