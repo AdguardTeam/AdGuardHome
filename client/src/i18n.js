@@ -60,6 +60,7 @@ i18n
         fallbackLng: 'en',
         keySeparator: false, // we use content as keys
         nsSeparator: false, // Fix character in content
+        returnEmptyString: false, // count empty value as invalid
         interpolation: {
             escapeValue: false, // not needed for react!!
         },

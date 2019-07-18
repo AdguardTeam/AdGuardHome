@@ -11,8 +11,6 @@
 /client/node_modules/
 /querylog.json
 /querylog.json.1
-/scripts/translations/node_modules
-/scripts/translations/oneskyapp.json
 /a_main-packr.go
 
 # Test output

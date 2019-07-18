@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
 const requestPromise = require('request-promise');
 
 const LOCALES_DIR = '../../client/src/__locales';
@@ -17,32 +16,17 @@ const LOCALES_LIST = [
     'bg',
     'zh-cn',
 ];
+const BASE_FILE = 'en.json';
+const TWOSKY_URI = process.env.TWOSKY_URI;
+const TWOSKY_PROJECT_ID = 'home';
 
 /**
- * Hash content
- * @param {string} content
- */
-const hashString = content => crypto.createHash('md5').update(content, 'utf8').digest('hex');
-
-/**
- * Prepare params to get translations from oneskyapp
+ * Prepare params to get translations from twosky
  * @param {string} locale language shortcut
- * @param {object} oneskyapp config oneskyapp
+ * @param {object} twosky config twosky
  */
-const prepare = (locale, oneskyapp) => {
-    const timestamp = Math.round(new Date().getTime() / 1000);
-
-    let url = [];
-    url.push(oneskyapp.url + oneskyapp.projectId);
-    url.push(`/translations?locale=${locale}`);
-    url.push('&source_file_name=en.json');
-    url.push(`&export_file_name=${locale}.json`);
-    url.push(`&api_key=${oneskyapp.apiKey}`);
-    url.push(`&timestamp=${timestamp}`);
-    url.push(`&dev_hash=${hashString(timestamp + oneskyapp.secretKey)}`);
-    url = url.join('');
-
-    return url;
+const getRequestUrl = (locale, url, projectId) => {
+    return `${url}/download?format=json&language=${locale}&filename=${BASE_FILE}&project=${projectId}`;
 };
 
 /**
@@ -51,16 +35,18 @@ const prepare = (locale, oneskyapp) => {
  * @param {any} body
  */
 function writeInFile(filename, body) {
+    let normalizedBody = removeEmpty(JSON.parse(body));
+
     return new Promise((resolve, reject) => {
-        if (typeof body !== 'string') {
+        if (typeof normalizedBody !== 'string') {
             try {
-                body = JSON.stringify(body, null, 4); // eslint-disable-line
+                normalizedBody = JSON.stringify(normalizedBody, null, 4); // eslint-disable-line
             } catch (err) {
                 reject(err);
             }
         }
 
-        fs.writeFile(filename, body, (err) => {
+        fs.writeFile(filename, normalizedBody, (err) => {
             if (err) reject(err);
             resolve('Ok');
         });
@@ -68,7 +54,21 @@ function writeInFile(filename, body) {
 }
 
 /**
- * Request to server onesky
+ * Clear initial from empty value keys
+ * @param {object} initialObject
+ */
+function removeEmpty(initialObject) {
+    let processedObject = {};
+    Object.keys(initialObject).forEach(prop => {
+        if (initialObject[prop]) {
+            processedObject[prop] = initialObject[prop];
+        }
+    });
+    return processedObject;
+}
+
+/**
+ * Request twosky
  * @param {string} url
  * @param {string} locale
  */
@@ -96,15 +96,14 @@ const request = (url, locale) => (
  */
 const download = () => {
     const locales = LOCALES_LIST;
-    let oneskyapp;
-    try {
-        oneskyapp = JSON.parse(fs.readFileSync('./oneskyapp.json'));
-    } catch (err) {
-        throw new Error(err);
+
+    if (!TWOSKY_URI) {
+        console.error('No credentials');
+        return;
     }
 
     const requests = locales.map((locale) => {
-        const url = prepare(locale, oneskyapp);
+        const url = getRequestUrl(locale, TWOSKY_URI, TWOSKY_PROJECT_ID);
         return request(url, locale);
     });
 

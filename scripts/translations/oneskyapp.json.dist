@@ -1,6 +1,0 @@
-{
-    "url": "https://platform.api.onesky.io/1/projects/",
-    "projectId": "<PROJECT ID>",
-    "apiKey": "<API KEY>",
-    "secretKey": "<SECRET KEY>"
-}
