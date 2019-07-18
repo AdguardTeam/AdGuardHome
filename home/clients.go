@@ -31,6 +31,9 @@ type Client struct {
 	SafeSearchEnabled   bool
 	SafeBrowsingEnabled bool
 	ParentalEnabled     bool
+
+	UseOwnBlockedServices bool // false: use global settings
+	BlockedServices       []string
 }
 
 type clientJSON struct {
@@ -42,6 +45,9 @@ type clientJSON struct {
 	ParentalEnabled     bool   `json:"parental_enabled"`
 	SafeSearchEnabled   bool   `json:"safebrowsing_enabled"`
 	SafeBrowsingEnabled bool   `json:"safesearch_enabled"`
+
+	UseGlobalBlockedServices bool     `json:"use_global_blocked_services"`
+	BlockedServices          []string `json:"blocked_services"`
 }
 
 type clientSource uint
@@ -391,6 +397,9 @@ func handleGetClients(w http.ResponseWriter, r *http.Request) {
 			ParentalEnabled:     c.ParentalEnabled,
 			SafeSearchEnabled:   c.SafeSearchEnabled,
 			SafeBrowsingEnabled: c.SafeBrowsingEnabled,
+
+			UseGlobalBlockedServices: !c.UseOwnBlockedServices,
+			BlockedServices:          c.BlockedServices,
 		}
 
 		if len(c.MAC) != 0 {
@@ -438,6 +447,9 @@ func jsonToClient(cj clientJSON) (*Client, error) {
 		ParentalEnabled:     cj.ParentalEnabled,
 		SafeSearchEnabled:   cj.SafeSearchEnabled,
 		SafeBrowsingEnabled: cj.SafeBrowsingEnabled,
+
+		UseOwnBlockedServices: !cj.UseGlobalBlockedServices,
+		BlockedServices:       cj.BlockedServices,
 	}
 	return &c, nil
 }
