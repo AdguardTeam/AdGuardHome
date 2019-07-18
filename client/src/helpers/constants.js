@@ -181,3 +181,66 @@ export const CLIENT_ID = {
 };
 
 export const SETTINGS_URLS = ['/encryption', '/dhcp', '/dns', '/settings', '/clients'];
+
+export const SERVICES = [
+    {
+        id: 'facebook',
+        name: 'Facebook',
+    },
+    {
+        id: 'whatsapp',
+        name: 'WhatsApp',
+    },
+    {
+        id: 'instagram',
+        name: 'Instagram',
+    },
+    {
+        id: 'twitter',
+        name: 'Twitter',
+    },
+    {
+        id: 'youtube',
+        name: 'YouTube',
+    },
+    {
+        id: 'netflix',
+        name: 'Netflix',
+    },
+    {
+        id: 'snapchat',
+        name: 'Snapchat',
+    },
+    {
+        id: 'messenger',
+        name: 'Messenger',
+    },
+    {
+        id: 'twitch',
+        name: 'Twitch',
+    },
+    {
+        id: 'discord',
+        name: 'Discord',
+    },
+    {
+        id: 'skype',
+        name: 'Skype',
+    },
+    {
+        id: 'steam',
+        name: 'Steam',
+    },
+    {
+        id: 'ok',
+        name: 'OK',
+    },
+    {
+        id: 'vk',
+        name: 'VK',
+    },
+    {
+        id: 'mail_ru',
+        name: 'mail.ru',
+    },
+];

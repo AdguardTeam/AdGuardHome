@@ -2,6 +2,7 @@ import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { withNamespaces, Trans } from 'react-i18next';
 
+import Services from './Services';
 import Checkbox from '../ui/Checkbox';
 import Loading from '../ui/Loading';
 import PageTitle from '../ui/PageTitle';
@@ -35,6 +36,7 @@ class Settings extends Component {
 
     componentDidMount() {
         this.props.initSettings(this.settings);
+        this.props.getBlockedServices();
     }
 
     renderSettings = (settings) => {
@@ -59,7 +61,9 @@ class Settings extends Component {
     };
 
     render() {
-        const { settings, t } = this.props;
+        const {
+            settings, services, setBlockedServices, t,
+        } = this.props;
         return (
             <Fragment>
                 <PageTitle title={t('general_settings')} />
@@ -73,6 +77,12 @@ class Settings extends Component {
                                         {this.renderSettings(settings.settingsList)}
                                     </div>
                                 </Card>
+                            </div>
+                            <div className="col-md-12">
+                                <Services
+                                    services={services}
+                                    setBlockedServices={setBlockedServices}
+                                />
                             </div>
                         </div>
                     </div>

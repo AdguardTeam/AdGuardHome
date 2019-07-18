@@ -19,6 +19,11 @@
     overflow: hidden;
 }
 
+.logs__row--icons {
+    max-width: 180px;
+    flex-flow: row wrap;
+}
+
 .logs__row .list-unstyled {
     margin-bottom: 0;
     overflow: hidden;
@@ -26,6 +31,7 @@
 
 .logs__text,
 .logs__row .list-unstyled li {
+    padding: 0 1px;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;

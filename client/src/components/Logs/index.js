@@ -8,6 +8,7 @@ import { Trans, withNamespaces } from 'react-i18next';
 import { HashLink as Link } from 'react-router-hash-link';
 
 import { formatTime, getClientName } from '../../helpers/helpers';
+import { SERVICES } from '../../helpers/constants';
 import { getTrackerData } from '../../helpers/trackers/trackers';
 import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
@@ -39,12 +40,8 @@ class Logs extends Component {
         }
     }
 
-    renderTooltip(isFiltered, rule, filter) {
-        if (rule) {
-            return (isFiltered && <PopoverFiltered rule={rule} filter={filter}/>);
-        }
-        return '';
-    }
+    renderTooltip = (isFiltered, rule, filter, service) =>
+        isFiltered && <PopoverFiltered rule={rule} filter={filter} service={service} />;
 
     toggleBlocking = (type, domain) => {
         const { userRules } = this.props.filtering;
@@ -144,6 +141,21 @@ class Logs extends Component {
                             filterName = t('unknown_filter', { filterId });
                         }
                     }
+                }
+
+                if (reason === 'FilteredBlockedService') {
+                    const getService = SERVICES
+                        .find(service => service.id === row.original.serviceName);
+                    const serviceName = getService && getService.name;
+
+                    return (
+                        <div className="logs__row">
+                            <span className="logs__text" title={parsedFilteredReason}>
+                                {parsedFilteredReason}
+                            </span>
+                            {this.renderTooltip(isFiltered, '', '', serviceName)}
+                        </div>
+                    );
                 }
 
                 if (isFiltered) {

@@ -27,6 +27,7 @@ export const normalizeLogs = logs => logs.map((log) => {
         client,
         filterId,
         rule,
+        service_name,
     } = log;
     const { host: domain, type } = question;
     const responsesArray = response ? response.map((response) => {
@@ -42,6 +43,7 @@ export const normalizeLogs = logs => logs.map((log) => {
         client,
         filterId,
         rule,
+        serviceName: service_name,
     };
 });
 
@@ -224,4 +226,8 @@ export const sortClients = (clients) => {
     };
 
     return clients.sort(compare);
+};
+
+export const toggleAllServices = (services, change, isSelected) => {
+    services.forEach(service => change(`blocked_services.${service.id}`, isSelected));
 };

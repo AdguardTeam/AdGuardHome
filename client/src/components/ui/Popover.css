@@ -109,9 +109,11 @@
     width: 20px;
     height: 20px;
     stroke: #9aa0ac;
+    color: #9aa0ac;
 }
 
 .popover__icon--green {
+    color: #66b574;
     stroke: #66b574;
 }
 

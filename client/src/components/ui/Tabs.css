@@ -6,6 +6,20 @@
     border-bottom: 1px solid #e8e8e8;
 }
 
+.tabs__controls--form {
+    justify-content: flex-start;
+}
+
+.tabs__controls--form .tab__control {
+    min-width: initial;
+    margin-right: 25px;
+    font-size: 14px;
+}
+
+.tabs__controls--form .tab__icon {
+    display: none;
+}
+
 .tab__control {
     display: flex;
     flex-direction: column;

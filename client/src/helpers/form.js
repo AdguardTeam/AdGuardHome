@@ -27,6 +27,23 @@ export const renderField = ({
     </Fragment>
 );
 
+export const renderRadioField = ({
+    input, placeholder, disabled, meta: { touched, error },
+}) => (
+    <Fragment>
+        <label className="custom-control custom-radio custom-control-inline">
+            <input
+                {...input}
+                type="radio"
+                className="custom-control-input"
+                disabled={disabled}
+            />
+            <span className="custom-control-label">{placeholder}</span>
+        </label>
+        {!disabled && touched && (error && <span className="form__message form__message--error">{error}</span>)}
+    </Fragment>
+);
+
 export const renderSelectField = ({
     input, placeholder, disabled, meta: { touched, error },
 }) => (
@@ -43,6 +60,28 @@ export const renderSelectField = ({
         {!disabled &&
             touched &&
             (error && <span className="form__message form__message--error">{error}</span>)}
+    </Fragment>
+);
+
+export const renderServiceField = ({
+    input, placeholder, disabled, modifier, icon, meta: { touched, error },
+}) => (
+    <Fragment>
+        <label className={`service custom-switch ${modifier}`}>
+            <input
+                {...input}
+                type="checkbox"
+                className="custom-switch-input"
+                value={placeholder.toLowerCase()}
+                disabled={disabled}
+            />
+            <span className="service__switch custom-switch-indicator"></span>
+            <span className="service__text">{placeholder}</span>
+            <svg className="service__icon">
+                <use xlinkHref={`#${icon}`} />
+            </svg>
+        </label>
+        {!disabled && touched && (error && <span className="form__message form__message--error">{error}</span>)}
     </Fragment>
 );
 
