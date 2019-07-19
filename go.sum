@@ -5,8 +5,8 @@ github.com/AdguardTeam/golibs v0.1.3 h1:hmapdTtMtIk3T8eQDwTOLdqZLGDKNKk9325uC8z1
 github.com/AdguardTeam/golibs v0.1.3/go.mod h1:b0XkhgIcn2TxwX6C5AQMtpIFAgjPehNgxJErWkwA3ko=
 github.com/AdguardTeam/urlfilter v0.3.0 h1:WNd3uZEYWwxylUuA8QS6V5DqHNsVFw3ZD/E2rd5HGpo=
 github.com/AdguardTeam/urlfilter v0.3.0/go.mod h1:9xfZ6R2vB8LlT8G9LxtbNhDsbr/xybUOSwmJvpXhl/c=
-github.com/AdguardTeam/urlfilter v0.4.0 h1:s4EFwI4+gzBdnATNKbuOY53wS2PCHgFZBv1Ixxva6tg=
-github.com/AdguardTeam/urlfilter v0.4.0/go.mod h1:6YehXZ8e0Hx2MvqeQWLFom6IkPinm04tNhO1CkwAxmg=
+github.com/AdguardTeam/urlfilter v0.4.1 h1:fuQLSEAk8A0zKroLtfvUgWvVnyBmOwK9uAjtIr50Wlk=
+github.com/AdguardTeam/urlfilter v0.4.1/go.mod h1:6YehXZ8e0Hx2MvqeQWLFom6IkPinm04tNhO1CkwAxmg=
 github.com/NYTimes/gziphandler v1.1.1 h1:ZUDjpQae29j0ryrS0u/B8HZfJBtBQHjqw2rQ2cqUQ3I=
 github.com/NYTimes/gziphandler v1.1.1/go.mod h1:n/CVRwUEOgIxrgPvAQhUUr9oeUtvrhMomdKFjzJNB0c=
 github.com/StackExchange/wmi v0.0.0-20181212234831-e0a55b97c705 h1:UUppSQnhf4Yc6xGxSkoQpPhb7RVzuv5Nb1mwJ5VId9s=
