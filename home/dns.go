@@ -17,8 +17,6 @@ import (
 	"github.com/miekg/dns"
 )
 
-var dnsServer *dnsforward.Server
-
 const (
 	rdnsTimeout = 3 * time.Second // max time to wait for rDNS response
 )
@@ -32,8 +30,6 @@ type dnsContext struct {
 	upstream upstream.Upstream // Upstream object for our own DNS server
 }
 
-var dnsctx dnsContext
-
 // initDNSServer creates an instance of the dnsforward.Server
 // Please note that we must do it even if we don't start it
 // so that we had access to the query log and the stats
@@ -43,7 +39,7 @@ func initDNSServer(baseDir string) {
 		log.Fatalf("Cannot create DNS data dir at %s: %s", baseDir, err)
 	}
 
-	dnsServer = dnsforward.NewServer(baseDir)
+	config.dnsServer = dnsforward.NewServer(baseDir)
 
 	bindhost := config.DNS.BindHost
 	if config.DNS.BindHost == "0.0.0.0" {
@@ -53,37 +49,37 @@ func initDNSServer(baseDir string) {
 	opts := upstream.Options{
 		Timeout: rdnsTimeout,
 	}
-	dnsctx.upstream, err = upstream.AddressToUpstream(resolverAddress, opts)
+	config.dnsctx.upstream, err = upstream.AddressToUpstream(resolverAddress, opts)
 	if err != nil {
 		log.Error("upstream.AddressToUpstream: %s", err)
 		return
 	}
-	dnsctx.rdnsIP = make(map[string]bool)
-	dnsctx.rdnsChannel = make(chan string, 256)
+	config.dnsctx.rdnsIP = make(map[string]bool)
+	config.dnsctx.rdnsChannel = make(chan string, 256)
 	go asyncRDNSLoop()
 }
 
 func isRunning() bool {
-	return dnsServer != nil && dnsServer.IsRunning()
+	return config.dnsServer != nil && config.dnsServer.IsRunning()
 }
 
 func beginAsyncRDNS(ip string) {
-	if clientExists(ip) {
+	if config.clients.Exists(ip) {
 		return
 	}
 
 	// add IP to rdnsIP, if not exists
-	dnsctx.rdnsLock.Lock()
-	defer dnsctx.rdnsLock.Unlock()
-	_, ok := dnsctx.rdnsIP[ip]
+	config.dnsctx.rdnsLock.Lock()
+	defer config.dnsctx.rdnsLock.Unlock()
+	_, ok := config.dnsctx.rdnsIP[ip]
 	if ok {
 		return
 	}
-	dnsctx.rdnsIP[ip] = true
+	config.dnsctx.rdnsIP[ip] = true
 
 	log.Tracef("Adding %s for rDNS resolve", ip)
 	select {
-	case dnsctx.rdnsChannel <- ip:
+	case config.dnsctx.rdnsChannel <- ip:
 		//
 	default:
 		log.Tracef("rDNS queue is full")
@@ -110,7 +106,7 @@ func resolveRDNS(ip string) string {
 		return ""
 	}
 
-	resp, err := dnsctx.upstream.Exchange(&req)
+	resp, err := config.dnsctx.upstream.Exchange(&req)
 	if err != nil {
 		log.Error("Error while making an rDNS lookup for %s: %s", ip, err)
 		return ""
@@ -138,18 +134,18 @@ func resolveRDNS(ip string) string {
 func asyncRDNSLoop() {
 	for {
 		var ip string
-		ip = <-dnsctx.rdnsChannel
+		ip = <-config.dnsctx.rdnsChannel
 
 		host := resolveRDNS(ip)
 		if len(host) == 0 {
 			continue
 		}
 
-		dnsctx.rdnsLock.Lock()
-		delete(dnsctx.rdnsIP, ip)
-		dnsctx.rdnsLock.Unlock()
+		config.dnsctx.rdnsLock.Lock()
+		delete(config.dnsctx.rdnsIP, ip)
+		config.dnsctx.rdnsLock.Unlock()
 
-		_, _ = clientAddHost(ip, host, ClientSourceRDNS)
+		_, _ = config.clients.AddHost(ip, host, ClientSourceRDNS)
 	}
 }
 
@@ -221,7 +217,7 @@ func generateServerConfig() (dnsforward.ServerConfig, error) {
 
 // If a client has his own settings, apply them
 func applyClientSettings(clientAddr string, setts *dnsfilter.RequestFilteringSettings) {
-	c, ok := clientFind(clientAddr)
+	c, ok := config.clients.Find(clientAddr)
 	if !ok || !c.UseOwnSettings {
 		return
 	}
@@ -242,12 +238,12 @@ func startDNSServer() error {
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
 	}
-	err = dnsServer.Start(&newconfig)
+	err = config.dnsServer.Start(&newconfig)
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
 	}
 
-	top := dnsServer.GetStatsTop()
+	top := config.dnsServer.GetStatsTop()
 	for k := range top.Clients {
 		beginAsyncRDNS(k)
 	}
@@ -256,11 +252,11 @@ func startDNSServer() error {
 }
 
 func reconfigureDNSServer() error {
-	config, err := generateServerConfig()
+	newconfig, err := generateServerConfig()
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
 	}
-	err = dnsServer.Reconfigure(&config)
+	err = config.dnsServer.Reconfigure(&newconfig)
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
 	}
@@ -273,7 +269,7 @@ func stopDNSServer() error {
 		return nil
 	}
 
-	err := dnsServer.Stop()
+	err := config.dnsServer.Stop()
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't stop forwarding DNS server")
 	}

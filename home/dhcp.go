@@ -18,8 +18,6 @@ import (
 	"github.com/joomcode/errorx"
 )
 
-var dhcpServer = dhcpd.Server{}
-
 // []dhcpd.Lease -> JSON
 func convertLeases(inputLeases []dhcpd.Lease, includeExpires bool) []map[string]string {
 	leases := []map[string]string{}
@@ -41,8 +39,8 @@ func convertLeases(inputLeases []dhcpd.Lease, includeExpires bool) []map[string]
 
 func handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
-	leases := convertLeases(dhcpServer.Leases(), true)
-	staticLeases := convertLeases(dhcpServer.StaticLeases(), false)
+	leases := convertLeases(config.dhcpServer.Leases(), true)
+	staticLeases := convertLeases(config.dhcpServer.StaticLeases(), false)
 	status := map[string]interface{}{
 		"config":        config.DHCP,
 		"leases":        leases,
@@ -77,18 +75,18 @@ func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = dhcpServer.CheckConfig(newconfig.ServerConfig)
+	err = config.dhcpServer.CheckConfig(newconfig.ServerConfig)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Invalid DHCP configuration: %s", err)
 		return
 	}
 
-	err = dhcpServer.Stop()
+	err = config.dhcpServer.Stop()
 	if err != nil {
 		log.Error("failed to stop the DHCP server: %s", err)
 	}
 
-	err = dhcpServer.Init(newconfig.ServerConfig)
+	err = config.dhcpServer.Init(newconfig.ServerConfig)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Invalid DHCP configuration: %s", err)
 		return
@@ -105,7 +103,7 @@ func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		err = dhcpServer.Start()
+		err = config.dhcpServer.Start()
 		if err != nil {
 			httpError(w, http.StatusBadRequest, "Failed to start DHCP server: %s", err)
 			return
@@ -389,7 +387,7 @@ func handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request) {
 		HWAddr:   mac,
 		Hostname: lj.Hostname,
 	}
-	err = dhcpServer.AddStaticLease(lease)
+	err = config.dhcpServer.AddStaticLease(lease)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
@@ -420,7 +418,7 @@ func handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Request) {
 		HWAddr:   mac,
 		Hostname: lj.Hostname,
 	}
-	err = dhcpServer.RemoveStaticLease(lease)
+	err = config.dhcpServer.RemoveStaticLease(lease)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
@@ -434,12 +432,12 @@ func startDHCPServer() error {
 		return nil
 	}
 
-	err := dhcpServer.Init(config.DHCP)
+	err := config.dhcpServer.Init(config.DHCP)
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't init DHCP server")
 	}
 
-	err = dhcpServer.Start()
+	err = config.dhcpServer.Start()
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start DHCP server")
 	}
@@ -451,7 +449,7 @@ func stopDHCPServer() error {
 		return nil
 	}
 
-	err := dhcpServer.Stop()
+	err := config.dhcpServer.Stop()
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't stop DHCP server")
 	}

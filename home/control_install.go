@@ -264,7 +264,7 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	// until all requests are finished, and _we_ are inside a request right now, so it will block indefinitely
 	if restartHTTP {
 		go func() {
-			httpServer.Shutdown(context.TODO())
+			config.httpServer.Shutdown(context.TODO())
 		}()
 	}
 

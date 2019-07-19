@@ -17,13 +17,13 @@ type accessListJSON struct {
 func handleAccessList(w http.ResponseWriter, r *http.Request) {
 	log.Tracef("%s %v", r.Method, r.URL)
 
-	controlLock.Lock()
+	config.controlLock.Lock()
 	j := accessListJSON{
 		AllowedClients:    config.DNS.AllowedClients,
 		DisallowedClients: config.DNS.DisallowedClients,
 		BlockedHosts:      config.DNS.BlockedHosts,
 	}
-	controlLock.Unlock()
+	config.controlLock.Unlock()
 
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(j)

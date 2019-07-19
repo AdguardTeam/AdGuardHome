@@ -222,7 +222,7 @@ func refreshFiltersIfNecessary(force bool) int {
 
 	stopped := false
 	if updateCount != 0 {
-		_ = dnsServer.Stop()
+		_ = config.dnsServer.Stop()
 		stopped = true
 	}
 
@@ -308,7 +308,7 @@ func parseFilterContents(contents []byte) (int, string) {
 func (filter *filter) update() (bool, error) {
 	log.Tracef("Downloading update for filter %d from %s", filter.ID, filter.URL)
 
-	resp, err := client.Get(filter.URL)
+	resp, err := config.client.Get(filter.URL)
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}

@@ -25,15 +25,6 @@ import (
 	"github.com/gobuffalo/packr"
 )
 
-var httpServer *http.Server
-var httpsServer struct {
-	server     *http.Server
-	cond       *sync.Cond // reacts to config.TLS.Enabled, PortHTTPS, CertificateChain and PrivateKey
-	sync.Mutex            // protects config.TLS
-	shutdown   bool       // if TRUE, don't restart the server
-}
-var pidFileName string // PID file name.  Empty if no PID file was created.
-
 const (
 	// Used in config to indicate that syslog or eventlog (win) should be used for logger output
 	configSyslog = "syslog"
@@ -48,7 +39,7 @@ var (
 
 const versionCheckPeriod = time.Hour * 8
 
-// main is the entry point
+// Main is the entry point
 func Main(version string, channel string) {
 	// Init update-related global variables
 	versionString = version
@@ -108,7 +99,8 @@ func run(args options) {
 		os.Exit(0)
 	}()
 
-	clientsInit()
+	initConfig()
+	config.clients.Init()
 
 	if !config.firstRun {
 		// Do the upgrade if necessary
@@ -168,7 +160,7 @@ func run(args options) {
 	}
 
 	if len(args.pidFile) != 0 && writePIDFile(args.pidFile) {
-		pidFileName = args.pidFile
+		config.pidFileName = args.pidFile
 	}
 
 	// Update filters we've just loaded right away, don't wait for periodic update timer
@@ -192,21 +184,21 @@ func run(args options) {
 		registerInstallHandlers()
 	}
 
-	httpsServer.cond = sync.NewCond(&httpsServer.Mutex)
+	config.httpsServer.cond = sync.NewCond(&config.httpsServer.Mutex)
 
 	// for https, we have a separate goroutine loop
 	go httpServerLoop()
 
 	// this loop is used as an ability to change listening host and/or port
-	for !httpsServer.shutdown {
+	for !config.httpsServer.shutdown {
 		printHTTPAddresses("http")
 
 		// we need to have new instance, because after Shutdown() the Server is not usable
 		address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
-		httpServer = &http.Server{
+		config.httpServer = &http.Server{
 			Addr: address,
 		}
-		err := httpServer.ListenAndServe()
+		err := config.httpServer.ListenAndServe()
 		if err != http.ErrServerClosed {
 			cleanupAlways()
 			log.Fatal(err)
@@ -219,14 +211,14 @@ func run(args options) {
 }
 
 func httpServerLoop() {
-	for !httpsServer.shutdown {
-		httpsServer.cond.L.Lock()
+	for !config.httpsServer.shutdown {
+		config.httpsServer.cond.L.Lock()
 		// this mechanism doesn't let us through until all conditions are met
 		for config.TLS.Enabled == false ||
 			config.TLS.PortHTTPS == 0 ||
 			config.TLS.PrivateKey == "" ||
 			config.TLS.CertificateChain == "" { // sleep until necessary data is supplied
-			httpsServer.cond.Wait()
+			config.httpsServer.cond.Wait()
 		}
 		address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.TLS.PortHTTPS))
 		// validate current TLS config and update warnings (it could have been loaded from file)
@@ -250,10 +242,10 @@ func httpServerLoop() {
 			cleanupAlways()
 			log.Fatal(err)
 		}
-		httpsServer.cond.L.Unlock()
+		config.httpsServer.cond.L.Unlock()
 
 		// prepare HTTPS server
-		httpsServer.server = &http.Server{
+		config.httpsServer.server = &http.Server{
 			Addr: address,
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{cert},
@@ -262,7 +254,7 @@ func httpServerLoop() {
 		}
 
 		printHTTPAddresses("https")
-		err = httpsServer.server.ListenAndServeTLS("", "")
+		err = config.httpsServer.server.ListenAndServeTLS("", "")
 		if err != http.ErrServerClosed {
 			cleanupAlways()
 			log.Fatal(err)
@@ -399,17 +391,17 @@ func cleanup() {
 
 // Stop HTTP server, possibly waiting for all active connections to be closed
 func stopHTTPServer() {
-	httpsServer.shutdown = true
-	if httpsServer.server != nil {
-		httpsServer.server.Shutdown(context.TODO())
+	config.httpsServer.shutdown = true
+	if config.httpsServer.server != nil {
+		config.httpsServer.server.Shutdown(context.TODO())
 	}
-	httpServer.Shutdown(context.TODO())
+	config.httpServer.Shutdown(context.TODO())
 }
 
 // This function is called before application exits
 func cleanupAlways() {
-	if len(pidFileName) != 0 {
-		os.Remove(pidFileName)
+	if len(config.pidFileName) != 0 {
+		os.Remove(config.pidFileName)
 	}
 	log.Info("Stopped")
 }

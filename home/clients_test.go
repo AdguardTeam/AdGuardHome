@@ -6,17 +6,18 @@ func TestClients(t *testing.T) {
 	var c Client
 	var e error
 	var b bool
+	clients := clientsContainer{}
 
-	clientsInit()
+	clients.Init()
 
 	// add
 	c = Client{
 		IP:   "1.1.1.1",
 		Name: "client1",
 	}
-	b, e = clientAdd(c)
+	b, e = clients.Add(c)
 	if !b || e != nil {
-		t.Fatalf("clientAdd #1")
+		t.Fatalf("Add #1")
 	}
 
 	// add #2
@@ -24,19 +25,19 @@ func TestClients(t *testing.T) {
 		IP:   "2.2.2.2",
 		Name: "client2",
 	}
-	b, e = clientAdd(c)
+	b, e = clients.Add(c)
 	if !b || e != nil {
-		t.Fatalf("clientAdd #2")
+		t.Fatalf("Add #2")
 	}
 
-	c, b = clientFind("1.1.1.1")
+	c, b = clients.Find("1.1.1.1")
 	if !b || c.Name != "client1" {
-		t.Fatalf("clientFind #1")
+		t.Fatalf("Find #1")
 	}
 
-	c, b = clientFind("2.2.2.2")
+	c, b = clients.Find("2.2.2.2")
 	if !b || c.Name != "client2" {
-		t.Fatalf("clientFind #2")
+		t.Fatalf("Find #2")
 	}
 
 	// failed add - name in use
@@ -44,9 +45,9 @@ func TestClients(t *testing.T) {
 		IP:   "1.2.3.5",
 		Name: "client1",
 	}
-	b, _ = clientAdd(c)
+	b, _ = clients.Add(c)
 	if b {
-		t.Fatalf("clientAdd - name in use")
+		t.Fatalf("Add - name in use")
 	}
 
 	// failed add - ip in use
@@ -54,91 +55,91 @@ func TestClients(t *testing.T) {
 		IP:   "2.2.2.2",
 		Name: "client3",
 	}
-	b, e = clientAdd(c)
+	b, e = clients.Add(c)
 	if b || e == nil {
-		t.Fatalf("clientAdd - ip in use")
+		t.Fatalf("Add - ip in use")
 	}
 
 	// get
-	if clientExists("1.2.3.4") {
-		t.Fatalf("clientExists")
+	if clients.Exists("1.2.3.4") {
+		t.Fatalf("Exists")
 	}
-	if !clientExists("1.1.1.1") {
-		t.Fatalf("clientExists #1")
+	if !clients.Exists("1.1.1.1") {
+		t.Fatalf("Exists #1")
 	}
-	if !clientExists("2.2.2.2") {
-		t.Fatalf("clientExists #2")
+	if !clients.Exists("2.2.2.2") {
+		t.Fatalf("Exists #2")
 	}
 
 	// failed update - no such name
 	c.IP = "1.2.3.0"
 	c.Name = "client3"
-	if clientUpdate("client3", c) == nil {
-		t.Fatalf("clientUpdate")
+	if clients.Update("client3", c) == nil {
+		t.Fatalf("Update")
 	}
 
 	// failed update - name in use
 	c.IP = "1.2.3.0"
 	c.Name = "client2"
-	if clientUpdate("client1", c) == nil {
-		t.Fatalf("clientUpdate - name in use")
+	if clients.Update("client1", c) == nil {
+		t.Fatalf("Update - name in use")
 	}
 
 	// failed update - ip in use
 	c.IP = "2.2.2.2"
 	c.Name = "client1"
-	if clientUpdate("client1", c) == nil {
-		t.Fatalf("clientUpdate - ip in use")
+	if clients.Update("client1", c) == nil {
+		t.Fatalf("Update - ip in use")
 	}
 
 	// update
 	c.IP = "1.1.1.2"
 	c.Name = "client1"
-	if clientUpdate("client1", c) != nil {
-		t.Fatalf("clientUpdate")
+	if clients.Update("client1", c) != nil {
+		t.Fatalf("Update")
 	}
 
 	// get after update
-	if clientExists("1.1.1.1") || !clientExists("1.1.1.2") {
-		t.Fatalf("clientExists - get after update")
+	if clients.Exists("1.1.1.1") || !clients.Exists("1.1.1.2") {
+		t.Fatalf("Exists - get after update")
 	}
 
 	// failed remove - no such name
-	if clientDel("client3") {
-		t.Fatalf("clientDel - no such name")
+	if clients.Del("client3") {
+		t.Fatalf("Del - no such name")
 	}
 
 	// remove
-	if !clientDel("client1") || clientExists("1.1.1.2") {
-		t.Fatalf("clientDel")
+	if !clients.Del("client1") || clients.Exists("1.1.1.2") {
+		t.Fatalf("Del")
 	}
 
 	// add host client
-	b, e = clientAddHost("1.1.1.1", "host", ClientSourceARP)
+	b, e = clients.AddHost("1.1.1.1", "host", ClientSourceARP)
 	if !b || e != nil {
 		t.Fatalf("clientAddHost")
 	}
 
 	// failed add - ip exists
-	b, e = clientAddHost("1.1.1.1", "host1", ClientSourceRDNS)
+	b, e = clients.AddHost("1.1.1.1", "host1", ClientSourceRDNS)
 	if b || e != nil {
 		t.Fatalf("clientAddHost - ip exists")
 	}
 
 	// overwrite with new data
-	b, e = clientAddHost("1.1.1.1", "host2", ClientSourceARP)
+	b, e = clients.AddHost("1.1.1.1", "host2", ClientSourceARP)
 	if !b || e != nil {
 		t.Fatalf("clientAddHost - overwrite with new data")
 	}
 
 	// overwrite with new data (higher priority)
-	b, e = clientAddHost("1.1.1.1", "host3", ClientSourceHostsFile)
+	b, e = clients.AddHost("1.1.1.1", "host3", ClientSourceHostsFile)
 	if !b || e != nil {
 		t.Fatalf("clientAddHost - overwrite with new data (higher priority)")
 	}
 
 	// get
-	if !clientExists("1.1.1.1") {
+	if !clients.Exists("1.1.1.1") {
 		t.Fatalf("clientAddHost")
 	}
 }

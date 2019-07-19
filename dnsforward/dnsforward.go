@@ -41,7 +41,6 @@ type Server struct {
 	dnsFilter *dnsfilter.Dnsfilter // DNS filter instance
 	queryLog  *queryLog            // Query log instance
 	stats     *stats               // General server statistics
-	once      sync.Once
 
 	AllowedClients         map[string]bool // IP addresses of whitelist clients
 	DisallowedClients      map[string]bool // IP addresses of clients that should be blocked
@@ -55,11 +54,24 @@ type Server struct {
 
 // NewServer creates a new instance of the dnsforward.Server
 // baseDir is the base directory for query logs
+// Note: this function must be called only once
 func NewServer(baseDir string) *Server {
-	return &Server{
+	s := &Server{
 		queryLog: newQueryLog(baseDir),
 		stats:    newStats(),
 	}
+
+	log.Tracef("Loading stats from querylog")
+	err := s.queryLog.fillStatsFromQueryLog(s.stats)
+	if err != nil {
+		log.Error("failed to load stats from querylog: %s", err)
+	}
+
+	log.Printf("Start DNS server periodic jobs")
+	go s.queryLog.periodicQueryLogRotate()
+	go s.queryLog.runningTop.periodicHourlyTopRotate()
+	go s.stats.statsRotator()
+	return s
 }
 
 // FilteringConfig represents the DNS filtering configuration of AdGuard Home
@@ -169,32 +181,10 @@ func (s *Server) startInternal(config *ServerConfig) error {
 		return errors.New("DNS server is already started")
 	}
 
-	if s.queryLog == nil {
-		s.queryLog = newQueryLog(".")
-	}
-
-	if s.stats == nil {
-		s.stats = newStats()
-	}
-
 	err := s.initDNSFilter()
 	if err != nil {
 		return err
 	}
-
-	log.Tracef("Loading stats from querylog")
-	err = s.queryLog.fillStatsFromQueryLog(s.stats)
-	if err != nil {
-		return errorx.Decorate(err, "failed to load stats from querylog")
-	}
-
-	// TODO: Think about reworking this, the current approach won't work properly if AG Home is restarted periodically
-	s.once.Do(func() {
-		log.Printf("Start DNS server periodic jobs")
-		go s.queryLog.periodicQueryLogRotate()
-		go s.queryLog.runningTop.periodicHourlyTopRotate()
-		go s.stats.statsRotator()
-	})
 
 	proxyConfig := proxy.Config{
 		UDPListenAddr:            s.conf.UDPListenAddr,

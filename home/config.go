@@ -2,6 +2,7 @@ package home
 
 import (
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -38,6 +39,13 @@ type clientObject struct {
 	SafeBrowsingEnabled bool   `yaml:"safesearch_enabled"`
 }
 
+type HTTPSServer struct {
+	server     *http.Server
+	cond       *sync.Cond // reacts to config.TLS.Enabled, PortHTTPS, CertificateChain and PrivateKey
+	sync.Mutex            // protects config.TLS
+	shutdown   bool       // if TRUE, don't restart the server
+}
+
 // configuration is loaded from YAML
 // field ordering is important -- yaml fields will mirror ordering from here
 type configuration struct {
@@ -48,10 +56,25 @@ type configuration struct {
 	ourConfigFilename string // Config filename (can be overridden via the command line arguments)
 	ourWorkingDir     string // Location of our directory, used to protect against CWD being somewhere else
 	firstRun          bool   // if set to true, don't run any services except HTTP web inteface, and serve only first-run html
+	pidFileName       string // PID file name.  Empty if no PID file was created.
 	// runningAsService flag is set to true when options are passed from the service runner
 	runningAsService bool
 	disableUpdate    bool // If set, don't check for updates
 	appSignalChannel chan os.Signal
+	clients          clientsContainer
+	controlLock      sync.Mutex
+	transport        *http.Transport
+	client           *http.Client
+
+	// cached version.json to avoid hammering github.io for each page reload
+	versionCheckJSON     []byte
+	versionCheckLastTime time.Time
+
+	dnsctx      dnsContext
+	dnsServer   *dnsforward.Server
+	dhcpServer  dhcpd.Server
+	httpServer  *http.Server
+	httpsServer HTTPSServer
 
 	BindHost     string `yaml:"bind_host"`     // BindHost is the IP address of the HTTP server to bind to
 	BindPort     int    `yaml:"bind_port"`     // BindPort is the port the HTTP server
@@ -127,7 +150,6 @@ type tlsConfig struct {
 }
 
 // initialize to default values, will be changed later when reading config or parsing command line
-// TODO: Get rid of global variables
 var config = configuration{
 	ourConfigFilename: "AdGuardHome.yaml",
 	BindPort:          3000,
@@ -167,8 +189,16 @@ var config = configuration{
 	SchemaVersion: currentSchemaVersion,
 }
 
-// init initializes default configuration for the current OS&ARCH
-func init() {
+// initConfig initializes default configuration for the current OS&ARCH
+func initConfig() {
+	config.transport = &http.Transport{
+		DialContext: customDialContext,
+	}
+	config.client = &http.Client{
+		Timeout:   time.Minute * 5,
+		Transport: config.transport,
+	}
+
 	if runtime.GOARCH == "mips" || runtime.GOARCH == "mipsle" {
 		// Use plain DNS on MIPS, encryption is too slow
 		defaultDNS = []string{"1.1.1.1", "1.0.0.1"}
@@ -233,7 +263,7 @@ func parseConfig() error {
 			SafeSearchEnabled:   cy.SafeSearchEnabled,
 			SafeBrowsingEnabled: cy.SafeBrowsingEnabled,
 		}
-		_, err = clientAdd(cli)
+		_, err = config.clients.Add(cli)
 		if err != nil {
 			log.Tracef("clientAdd: %s", err)
 		}
@@ -268,7 +298,7 @@ func (c *configuration) write() error {
 	c.Lock()
 	defer c.Unlock()
 
-	clientsList := clientsGetList()
+	clientsList := config.clients.GetList()
 	for _, cli := range clientsList {
 		ip := cli.IP
 		if len(cli.MAC) != 0 {
