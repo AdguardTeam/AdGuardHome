@@ -92,6 +92,10 @@ type FilteringConfig struct {
 	DisallowedClients []string `yaml:"disallowed_clients"` // IP addresses of clients that should be blocked
 	BlockedHosts      []string `yaml:"blocked_hosts"`      // hosts that should be blocked
 
+	// IP (or domain name) which is used to respond to DNS requests blocked by parental control or safe-browsing
+	ParentalBlockHost     string `yaml:"parental_block_host"`
+	SafeBrowsingBlockHost string `yaml:"safebrowsing_block_host"`
+
 	dnsfilter.Config `yaml:",inline"`
 }
 
@@ -256,6 +260,13 @@ func (s *Server) initDNSFilter() error {
 				filters[int(f.ID)] = f.FilePath
 			}
 		}
+	}
+
+	if len(s.conf.ParentalBlockHost) == 0 {
+		s.conf.ParentalBlockHost = parentalBlockHost
+	}
+	if len(s.conf.SafeBrowsingBlockHost) == 0 {
+		s.conf.SafeBrowsingBlockHost = safeBrowsingBlockHost
 	}
 
 	s.dnsFilter = dnsfilter.New(&s.conf.Config, filters)
@@ -515,9 +526,9 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 
 	switch result.Reason {
 	case dnsfilter.FilteredSafeBrowsing:
-		return s.genBlockedHost(m, safeBrowsingBlockHost, d)
+		return s.genBlockedHost(m, s.conf.SafeBrowsingBlockHost, d)
 	case dnsfilter.FilteredParental:
-		return s.genBlockedHost(m, parentalBlockHost, d)
+		return s.genBlockedHost(m, s.conf.ParentalBlockHost, d)
 	default:
 		if result.IP != nil {
 			if m.Question[0].Qtype == dns.TypeA {
