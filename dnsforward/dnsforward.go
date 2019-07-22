@@ -601,7 +601,27 @@ func (s *Server) genAAAAAnswer(req *dns.Msg, ip net.IP) *dns.AAAA {
 	return answer
 }
 
+// generate DNS response message with an IP address
+func (s *Server) genResponseWithIP(req *dns.Msg, ip net.IP) *dns.Msg {
+	if req.Question[0].Qtype == dns.TypeA && ip.To4() != nil {
+		return s.genARecord(req, ip.To4())
+	} else if req.Question[0].Qtype == dns.TypeAAAA && ip.To4() == nil {
+		return s.genAAAARecord(req, ip)
+	}
+
+	// empty response
+	resp := dns.Msg{}
+	resp.SetReply(req)
+	return &resp
+}
+
 func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, d *proxy.DNSContext) *dns.Msg {
+
+	ip := net.ParseIP(newAddr)
+	if ip != nil {
+		return s.genResponseWithIP(request, ip)
+	}
+
 	// look up the hostname, TODO: cache
 	replReq := dns.Msg{}
 	replReq.SetQuestion(dns.Fqdn(newAddr), request.Question[0].Qtype)
