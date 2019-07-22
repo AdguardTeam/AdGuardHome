@@ -13,6 +13,12 @@
     overflow: hidden;
 }
 
+.logs__row--column {
+    flex-direction: column;
+    align-items: flex-start;
+    overflow: hidden;
+}
+
 .logs__row .list-unstyled {
     margin-bottom: 0;
     overflow: hidden;
