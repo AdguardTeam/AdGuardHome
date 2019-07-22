@@ -177,15 +177,11 @@ func processIPCIDRArray(dst *map[string]bool, dstIPNet *[]net.IPNet, src []strin
 
 // startInternal starts without locking
 func (s *Server) startInternal(config *ServerConfig) error {
-	if config != nil {
-		s.conf = *config
-	}
-
 	if s.dnsFilter != nil || s.dnsProxy != nil {
 		return errors.New("DNS server is already started")
 	}
 
-	err := s.initDNSFilter()
+	err := s.initDNSFilter(config)
 	if err != nil {
 		return err
 	}
@@ -246,8 +242,12 @@ func (s *Server) startInternal(config *ServerConfig) error {
 }
 
 // Initializes the DNS filter
-func (s *Server) initDNSFilter() error {
+func (s *Server) initDNSFilter(config *ServerConfig) error {
 	log.Tracef("Creating dnsfilter")
+
+	if config != nil {
+		s.conf = *config
+	}
 
 	var filters map[int]string
 	filters = nil
