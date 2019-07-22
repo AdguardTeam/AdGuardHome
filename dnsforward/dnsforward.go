@@ -531,16 +531,7 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 		return s.genBlockedHost(m, s.conf.ParentalBlockHost, d)
 	default:
 		if result.IP != nil {
-			if m.Question[0].Qtype == dns.TypeA {
-				return s.genARecord(m, result.IP)
-			} else if m.Question[0].Qtype == dns.TypeAAAA {
-				return s.genAAAARecord(m, result.IP)
-			}
-
-			// empty response
-			resp := dns.Msg{}
-			resp.SetReply(m)
-			return &resp
+			return s.genResponseWithIP(m, result.IP)
 		}
 
 		if s.conf.BlockingMode == "null_ip" {
