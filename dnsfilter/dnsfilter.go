@@ -133,6 +133,23 @@ const (
 	FilteredSafeSearch
 )
 
+func (i Reason) String() string {
+	names := []string{
+		"NotFilteredNotFound",
+		"NotFilteredWhiteList",
+		"NotFilteredError",
+		"FilteredBlackList",
+		"FilteredSafeBrowsing",
+		"FilteredParental",
+		"FilteredInvalid",
+		"FilteredSafeSearch",
+	}
+	if uint(i) >= uint(len(names)) {
+		return ""
+	}
+	return names[i]
+}
+
 type dnsFilterContext struct {
 	stats             Stats
 	dialCache         gcache.Cache // "host" -> "IP" cache for safebrowsing and parental control servers
