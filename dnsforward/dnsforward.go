@@ -96,6 +96,10 @@ type FilteringConfig struct {
 	ParentalBlockHost     string `yaml:"parental_block_host"`
 	SafeBrowsingBlockHost string `yaml:"safebrowsing_block_host"`
 
+	// Names of services to block (globally).
+	// Per-client settings can override this configuration.
+	BlockedServices []string `json:"blocked_services"`
+
 	dnsfilter.Config `yaml:",inline"`
 }
 

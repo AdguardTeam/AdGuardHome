@@ -101,6 +101,7 @@ func run(args options) {
 
 	initConfig()
 	config.clients.Init()
+	initServices()
 
 	if !config.firstRun {
 		// Do the upgrade if necessary

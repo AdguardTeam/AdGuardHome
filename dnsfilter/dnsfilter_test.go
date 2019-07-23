@@ -10,8 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/urlfilter"
 	"github.com/bluele/gcache"
 	"github.com/miekg/dns"
+	"github.com/stretchr/testify/assert"
 )
 
 // HELPERS
@@ -453,6 +455,12 @@ func applyClientSettings(clientAddr string, setts *RequestFilteringSettings) {
 	setts.FilteringEnabled = false
 	setts.ParentalEnabled = false
 	setts.SafeBrowsingEnabled = true
+
+	rule, _ := urlfilter.NewNetworkRule("||facebook.com^", 0)
+	s := ServiceEntry{}
+	s.Name = "facebook"
+	s.Rules = []*urlfilter.NetworkRule{rule}
+	setts.ServicesRules = append(setts.ServicesRules, s)
 }
 
 // Check behaviour without any per-client settings,
@@ -485,6 +493,10 @@ func TestClientSettings(t *testing.T) {
 		t.Fatalf("CheckHost safesearch")
 	}
 
+	// not blocked
+	r, _ = d.CheckHost("facebook.com", dns.TypeA, "1.1.1.1")
+	assert.True(t, !r.IsFiltered)
+
 	// override client settings:
 	d.FilterHandler = applyClientSettings
 
@@ -505,6 +517,10 @@ func TestClientSettings(t *testing.T) {
 	if !r.IsFiltered || r.Reason != FilteredSafeBrowsing {
 		t.Fatalf("CheckHost FilteredSafeBrowsing")
 	}
+
+	// blocked by additional rules
+	r, _ = d.CheckHost("facebook.com", dns.TypeA, "1.1.1.1")
+	assert.True(t, r.IsFiltered && r.Reason == FilteredBlockedService)
 }
 
 // BENCHMARKS
