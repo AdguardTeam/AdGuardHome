@@ -1,6 +1,9 @@
 package home
 
 import (
+	"encoding/json"
+	"net/http"
+
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter"
@@ -67,4 +70,50 @@ func ApplyBlockedServices(setts *dnsfilter.RequestFilteringSettings, list []stri
 		s.Rules = rules
 		setts.ServicesRules = append(setts.ServicesRules, s)
 	}
+}
+
+func handleBlockedServicesList(w http.ResponseWriter, r *http.Request) {
+	log.Tracef("%s %v", r.Method, r.URL)
+
+	config.RLock()
+	list := config.DNS.BlockedServices
+	config.RUnlock()
+
+	w.Header().Set("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(list)
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "json.Encode: %s", err)
+		return
+	}
+}
+
+func handleBlockedServicesSet(w http.ResponseWriter, r *http.Request) {
+	log.Tracef("%s %v", r.Method, r.URL)
+
+	list := []string{}
+	err := json.NewDecoder(r.Body).Decode(&list)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "json.Decode: %s", err)
+		return
+	}
+
+	config.Lock()
+	config.DNS.BlockedServices = list
+	config.Unlock()
+
+	log.Debug("Updated blocked services list: %d", len(list))
+
+	err = writeAllConfigsAndReloadDNS()
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "%s", err)
+		return
+	}
+
+	returnOK(w)
+}
+
+// RegisterBlockedServicesHandlers - register HTTP handlers
+func RegisterBlockedServicesHandlers() {
+	http.HandleFunc("/control/blocked_services/list", postInstall(optionalAuth(ensureGET(handleBlockedServicesList))))
+	http.HandleFunc("/control/blocked_services/set", postInstall(optionalAuth(ensurePOST(handleBlockedServicesSet))))
 }
