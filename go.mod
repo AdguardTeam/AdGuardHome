@@ -7,6 +7,7 @@ require (
 	github.com/AdguardTeam/golibs v0.1.3
 	github.com/AdguardTeam/urlfilter v0.4.1
 	github.com/NYTimes/gziphandler v1.1.1
+	github.com/VictoriaMetrics/fastcache v1.5.1
 	github.com/bluele/gcache v0.0.0-20190203144525-2016d595ccb0
 	github.com/go-test/deep v1.0.1
 	github.com/gobuffalo/packr v1.19.0
