@@ -26,7 +26,6 @@ import (
 	"golang.org/x/net/publicsuffix"
 )
 
-const defaultCacheSize = 64 * 1024 // in number of elements
 const defaultCacheTime = 30 * time.Minute
 
 const defaultHTTPTimeout = 5 * time.Minute
@@ -55,6 +54,10 @@ type Config struct {
 	SafeSearchEnabled   bool   `yaml:"safesearch_enabled"`
 	SafeBrowsingEnabled bool   `yaml:"safebrowsing_enabled"`
 	ResolverAddress     string // DNS server address
+
+	SafeBrowsingCacheSize int `yaml:"safebrowsing_cache_size"`
+	SafeSearchCacheSize   int `yaml:"safesearch_cache_size"`
+	ParentalCacheSize     int `yaml:"parental_cache_size"`
 
 	// Filtering callback function
 	FilterHandler func(clientAddr string, settings *RequestFilteringSettings) `yaml:"-"`
@@ -732,13 +735,13 @@ func New(c *Config, filters map[int]string) *Dnsfilter {
 	if c != nil {
 		// initialize objects only once
 		if gctx.safebrowsingCache == nil {
-			gctx.safebrowsingCache = gcache.New(defaultCacheSize).LRU().Expiration(defaultCacheTime).Build()
+			gctx.safebrowsingCache = gcache.New(c.SafeBrowsingCacheSize).LRU().Expiration(defaultCacheTime).Build()
 		}
 		if gctx.safeSearchCache == nil {
-			gctx.safeSearchCache = gcache.New(defaultCacheSize).LRU().Expiration(defaultCacheTime).Build()
+			gctx.safeSearchCache = gcache.New(c.SafeSearchCacheSize).LRU().Expiration(defaultCacheTime).Build()
 		}
 		if gctx.parentalCache == nil {
-			gctx.parentalCache = gcache.New(defaultCacheSize).LRU().Expiration(defaultCacheTime).Build()
+			gctx.parentalCache = gcache.New(c.ParentalCacheSize).LRU().Expiration(defaultCacheTime).Build()
 		}
 		if len(c.ResolverAddress) != 0 && gctx.dialCache == nil {
 			gctx.dialCache = gcache.New(maxDialCacheSize).LRU().Expiration(defaultCacheTime).Build()
