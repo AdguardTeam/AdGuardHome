@@ -26,13 +26,13 @@ import (
 
 func purgeCaches() {
 	if gctx.safebrowsingCache != nil {
-		gctx.safebrowsingCache.Purge()
+		gctx.safebrowsingCache.Reset()
 	}
 	if gctx.parentalCache != nil {
-		gctx.parentalCache.Purge()
+		gctx.parentalCache.Reset()
 	}
 	if gctx.safeSearchCache != nil {
-		gctx.safeSearchCache.Purge()
+		gctx.safeSearchCache.Reset()
 	}
 }
 
@@ -44,6 +44,11 @@ func _Func() string {
 }
 
 func NewForTest(c *Config, filters map[int]string) *Dnsfilter {
+	if c != nil {
+		c.SafeBrowsingCacheSize = 1024
+		c.SafeSearchCacheSize = 1024
+		c.ParentalCacheSize = 1024
+	}
 	d := New(c, filters)
 	purgeCaches()
 	return d
@@ -269,11 +274,7 @@ func TestSafeSearchCacheYandex(t *testing.T) {
 	}
 
 	// Check cache
-	cachedValue, isFound, err := getCachedReason(gctx.safeSearchCache, domain)
-
-	if err != nil {
-		t.Fatalf("An error occured during cache search for %s: %s", domain, err)
-	}
+	cachedValue, isFound := getCachedResult(gctx.safeSearchCache, domain)
 
 	if !isFound {
 		t.Fatalf("Safesearch cache doesn't work for %s!", domain)
@@ -330,11 +331,7 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 	}
 
 	// Check cache
-	cachedValue, isFound, err := getCachedReason(gctx.safeSearchCache, domain)
-
-	if err != nil {
-		t.Fatalf("An error occured during cache search for %s: %s", domain, err)
-	}
+	cachedValue, isFound := getCachedResult(gctx.safeSearchCache, domain)
 
 	if !isFound {
 		t.Fatalf("Safesearch cache doesn't work for %s!", domain)
