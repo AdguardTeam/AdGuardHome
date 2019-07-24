@@ -92,6 +92,10 @@ type FilteringConfig struct {
 	DisallowedClients []string `yaml:"disallowed_clients"` // IP addresses of clients that should be blocked
 	BlockedHosts      []string `yaml:"blocked_hosts"`      // hosts that should be blocked
 
+	// IP (or domain name) which is used to respond to DNS requests blocked by parental control or safe-browsing
+	ParentalBlockHost     string `yaml:"parental_block_host"`
+	SafeBrowsingBlockHost string `yaml:"safebrowsing_block_host"`
+
 	dnsfilter.Config `yaml:",inline"`
 }
 
@@ -173,15 +177,11 @@ func processIPCIDRArray(dst *map[string]bool, dstIPNet *[]net.IPNet, src []strin
 
 // startInternal starts without locking
 func (s *Server) startInternal(config *ServerConfig) error {
-	if config != nil {
-		s.conf = *config
-	}
-
 	if s.dnsFilter != nil || s.dnsProxy != nil {
 		return errors.New("DNS server is already started")
 	}
 
-	err := s.initDNSFilter()
+	err := s.initDNSFilter(config)
 	if err != nil {
 		return err
 	}
@@ -242,8 +242,12 @@ func (s *Server) startInternal(config *ServerConfig) error {
 }
 
 // Initializes the DNS filter
-func (s *Server) initDNSFilter() error {
+func (s *Server) initDNSFilter(config *ServerConfig) error {
 	log.Tracef("Creating dnsfilter")
+
+	if config != nil {
+		s.conf = *config
+	}
 
 	var filters map[int]string
 	filters = nil
@@ -256,6 +260,13 @@ func (s *Server) initDNSFilter() error {
 				filters[int(f.ID)] = f.FilePath
 			}
 		}
+	}
+
+	if len(s.conf.ParentalBlockHost) == 0 {
+		s.conf.ParentalBlockHost = parentalBlockHost
+	}
+	if len(s.conf.SafeBrowsingBlockHost) == 0 {
+		s.conf.SafeBrowsingBlockHost = safeBrowsingBlockHost
 	}
 
 	s.dnsFilter = dnsfilter.New(&s.conf.Config, filters)
@@ -515,21 +526,12 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 
 	switch result.Reason {
 	case dnsfilter.FilteredSafeBrowsing:
-		return s.genBlockedHost(m, safeBrowsingBlockHost, d)
+		return s.genBlockedHost(m, s.conf.SafeBrowsingBlockHost, d)
 	case dnsfilter.FilteredParental:
-		return s.genBlockedHost(m, parentalBlockHost, d)
+		return s.genBlockedHost(m, s.conf.ParentalBlockHost, d)
 	default:
 		if result.IP != nil {
-			if m.Question[0].Qtype == dns.TypeA {
-				return s.genARecord(m, result.IP)
-			} else if m.Question[0].Qtype == dns.TypeAAAA {
-				return s.genAAAARecord(m, result.IP)
-			}
-
-			// empty response
-			resp := dns.Msg{}
-			resp.SetReply(m)
-			return &resp
+			return s.genResponseWithIP(m, result.IP)
 		}
 
 		if s.conf.BlockingMode == "null_ip" {
@@ -590,7 +592,27 @@ func (s *Server) genAAAAAnswer(req *dns.Msg, ip net.IP) *dns.AAAA {
 	return answer
 }
 
+// generate DNS response message with an IP address
+func (s *Server) genResponseWithIP(req *dns.Msg, ip net.IP) *dns.Msg {
+	if req.Question[0].Qtype == dns.TypeA && ip.To4() != nil {
+		return s.genARecord(req, ip.To4())
+	} else if req.Question[0].Qtype == dns.TypeAAAA && ip.To4() == nil {
+		return s.genAAAARecord(req, ip)
+	}
+
+	// empty response
+	resp := dns.Msg{}
+	resp.SetReply(req)
+	return &resp
+}
+
 func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, d *proxy.DNSContext) *dns.Msg {
+
+	ip := net.ParseIP(newAddr)
+	if ip != nil {
+		return s.genResponseWithIP(request, ip)
+	}
+
 	// look up the hostname, TODO: cache
 	replReq := dns.Msg{}
 	replReq.SetQuestion(dns.Fqdn(newAddr), request.Question[0].Qtype)
