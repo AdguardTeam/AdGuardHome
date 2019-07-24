@@ -1,6 +1,8 @@
 package main
 
 import (
+	"runtime/debug"
+
 	"github.com/AdguardTeam/AdGuardHome/home"
 )
 
@@ -11,5 +13,6 @@ var version = "undefined"
 var channel = "release"
 
 func main() {
+	debug.SetGCPercent(10)
 	home.Main(version, channel)
 }
