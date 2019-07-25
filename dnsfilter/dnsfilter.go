@@ -206,7 +206,7 @@ func (r Reason) Matched() bool {
 }
 
 // CheckHost tries to match host against rules, then safebrowsing and parental if they are enabled
-func (d *Dnsfilter) CheckHost(host string, qtype uint16, clientAddr string) (Result, error) {
+func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFilteringSettings) (Result, error) {
 	// sometimes DNS clients will try to resolve ".", which is a request to get root servers
 	if host == "" {
 		return Result{Reason: NotFilteredNotFound}, nil
@@ -215,15 +215,6 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, clientAddr string) (Res
 	// prevent recursion
 	if host == d.parentalServer || host == d.safeBrowsingServer {
 		return Result{}, nil
-	}
-
-	var setts RequestFilteringSettings
-	setts.FilteringEnabled = true
-	setts.SafeSearchEnabled = d.SafeSearchEnabled
-	setts.SafeBrowsingEnabled = d.SafeBrowsingEnabled
-	setts.ParentalEnabled = d.ParentalEnabled
-	if d.FilterHandler != nil {
-		d.FilterHandler(clientAddr, &setts)
 	}
 
 	var result Result
