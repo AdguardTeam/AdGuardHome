@@ -1572,6 +1572,12 @@ definitions:
                 type: "boolean"
             safesearch_enabled:
                 type: "boolean"
+            use_global_blocked_services:
+                type: "boolean"
+            blocked_services:
+                type: "array"
+                items:
+                    type: "string"
     ClientAuto:
         type: "object"
         description: "Auto-Client information"
