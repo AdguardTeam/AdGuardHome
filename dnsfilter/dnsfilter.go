@@ -39,12 +39,18 @@ const defaultParentalURL = "%s://%s/check-parental-control-hash?prefixes=%s&sens
 const defaultParentalSensitivity = 13 // use "TEEN" by default
 const maxDialCacheSize = 2            // the number of host names for safebrowsing and parental control
 
-// Custom filtering settings
+// RequestFilteringSettings is custom filtering settings
 type RequestFilteringSettings struct {
 	FilteringEnabled    bool
 	SafeSearchEnabled   bool
 	SafeBrowsingEnabled bool
 	ParentalEnabled     bool
+}
+
+// RewriteEntry is a rewrite array element
+type RewriteEntry struct {
+	Domain string `yaml:"domain"`
+	Answer string `yaml:"answer"` // IP address or canonical name
 }
 
 // Config allows you to configure DNS filtering with New() or just change variables directly.
@@ -59,6 +65,8 @@ type Config struct {
 	SafeBrowsingCacheSize int `yaml:"safebrowsing_cache_size"`
 	SafeSearchCacheSize   int `yaml:"safesearch_cache_size"`
 	ParentalCacheSize     int `yaml:"parental_cache_size"`
+
+	Rewrites []RewriteEntry `yaml:"rewrites"`
 
 	// Filtering callback function
 	FilterHandler func(clientAddr string, settings *RequestFilteringSettings) `yaml:"-"`
@@ -131,6 +139,9 @@ const (
 	FilteredInvalid
 	// FilteredSafeSearch - the host was replaced with safesearch variant
 	FilteredSafeSearch
+
+	// ReasonRewrite - rewrite rule was applied
+	ReasonRewrite
 )
 
 func (i Reason) String() string {
@@ -138,11 +149,14 @@ func (i Reason) String() string {
 		"NotFilteredNotFound",
 		"NotFilteredWhiteList",
 		"NotFilteredError",
+
 		"FilteredBlackList",
 		"FilteredSafeBrowsing",
 		"FilteredParental",
 		"FilteredInvalid",
 		"FilteredSafeSearch",
+
+		"Rewrite",
 	}
 	if uint(i) >= uint(len(names)) {
 		return ""
@@ -167,6 +181,10 @@ type Result struct {
 	Rule       string `json:",omitempty"` // Original rule text
 	IP         net.IP `json:",omitempty"` // Not nil only in the case of a hosts file syntax
 	FilterID   int64  `json:",omitempty"` // Filter ID the rule belongs to
+
+	// for ReasonRewrite:
+	CanonName string   `json:",omitempty"` // CNAME value
+	IPList    []net.IP `json:",omitempty"` // list of IP addresses
 }
 
 // Matched can be used to see if any match at all was found, no matter filtered or not
@@ -197,6 +215,12 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, clientAddr string) (Res
 
 	var result Result
 	var err error
+
+	result = d.processRewrites(host, qtype)
+	if result.Reason == ReasonRewrite {
+		return result, nil
+	}
+
 	// try filter lists first
 	if setts.FilteringEnabled {
 		result, err = d.matchHost(host, qtype)
@@ -249,6 +273,57 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, clientAddr string) (Res
 
 	// nothing matched, return nothing
 	return Result{}, nil
+}
+
+// Process rewrites table
+// . Find CNAME for a domain name
+//  . if found, set domain name to canonical name
+// . Find A or AAAA record for a domain name
+//  . if found, return IP addresses
+func (d *Dnsfilter) processRewrites(host string, qtype uint16) Result {
+	var res Result
+
+	for _, r := range d.Rewrites {
+		if r.Domain != host {
+			continue
+		}
+
+		ip := net.ParseIP(r.Answer)
+		if ip == nil {
+			log.Debug("Rewrite: CNAME for %s is %s", host, r.Answer)
+			host = r.Answer
+			res.CanonName = r.Answer
+			res.Reason = ReasonRewrite
+			break
+		}
+	}
+
+	for _, r := range d.Rewrites {
+		if r.Domain != host {
+			continue
+		}
+
+		ip := net.ParseIP(r.Answer)
+		if ip == nil {
+			continue
+		}
+		ip4 := ip.To4()
+
+		if qtype == dns.TypeA && ip4 != nil {
+			res.IPList = append(res.IPList, ip4)
+			log.Debug("Rewrite: A for %s is %s", host, ip4)
+
+		} else if qtype == dns.TypeAAAA && ip4 == nil {
+			res.IPList = append(res.IPList, ip)
+			log.Debug("Rewrite: AAAA for %s is %s", host, ip)
+		}
+	}
+
+	if len(res.IPList) != 0 {
+		res.Reason = ReasonRewrite
+	}
+
+	return res
 }
 
 func setCacheResult(cache *fastcache.Cache, host string, res Result) {
