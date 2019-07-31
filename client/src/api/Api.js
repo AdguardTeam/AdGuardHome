@@ -481,4 +481,32 @@ export default class Api {
         };
         return this.makeRequest(path, method, parameters);
     }
+
+    // DNS rewrites
+    REWRITES_LIST = { path: 'rewrite/list', method: 'GET' };
+    REWRITE_ADD = { path: 'rewrite/add', method: 'POST' };
+    REWRITE_DELETE = { path: 'rewrite/delete', method: 'POST' };
+
+    getRewritesList() {
+        const { path, method } = this.REWRITES_LIST;
+        return this.makeRequest(path, method);
+    }
+
+    addRewrite(config) {
+        const { path, method } = this.REWRITE_ADD;
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, parameters);
+    }
+
+    deleteRewrite(config) {
+        const { path, method } = this.REWRITE_DELETE;
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, parameters);
+    }
 }

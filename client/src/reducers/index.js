@@ -9,6 +9,7 @@ import toasts from './toasts';
 import encryption from './encryption';
 import clients from './clients';
 import access from './access';
+import rewrites from './rewrites';
 
 const settings = handleActions({
     [actions.initSettingsRequest]: state => ({ ...state, processing: true }),
@@ -422,6 +423,7 @@ export default combineReducers({
     encryption,
     clients,
     access,
+    rewrites,
     loadingBar: loadingBarReducer,
     form: formReducer,
 });

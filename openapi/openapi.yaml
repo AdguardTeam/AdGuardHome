@@ -787,6 +787,54 @@ paths:
                     description: OK
 
     # --------------------------------------------------
+    # Rewrite methods
+    # --------------------------------------------------
+
+    /rewrite/list:
+        get:
+            tags:
+                - rewrite
+            operationId: rewriteList
+            summary: 'Get list of Rewrite rules'
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/RewriteList"
+
+    /rewrite/add:
+        post:
+            tags:
+                - rewrite
+            operationId: rewriteAdd
+            summary: 'Add a new Rewrite rule'
+            parameters:
+                - in: "body"
+                  name: "body"
+                  required: true
+                  schema:
+                      $ref: "#/definitions/RewriteEntry"
+            responses:
+                200:
+                    description: OK
+
+    /rewrite/delete:
+        post:
+            tags:
+                - rewrite
+            operationId: rewriteDelete
+            summary: 'Remove a Rewrite rule'
+            parameters:
+                - in: "body"
+                  name: "body"
+                  required: true
+                  schema:
+                      $ref: "#/definitions/RewriteEntry"
+            responses:
+                200:
+                    description: OK
+
+    # --------------------------------------------------
     # I18N methods
     # --------------------------------------------------
 
@@ -1571,6 +1619,25 @@ definitions:
         items:
             $ref: "#/definitions/ClientAuto"
         description: "Auto-Clients array"
+
+    RewriteList:
+        type: "array"
+        items:
+            $ref: "#/definitions/RewriteEntry"
+        description: "Rewrite rules array"
+    RewriteEntry:
+        type: "object"
+        description: "Rewrite rule"
+        properties:
+            domain:
+                type: "string"
+                description: "Domain name"
+                example: "example.org"
+            answer:
+                type: "string"
+                description: "value of A, AAAA or CNAME DNS record"
+                example: "127.0.0.1"
+
     CheckConfigRequest:
         type: "object"
         description: "Configuration to be checked"

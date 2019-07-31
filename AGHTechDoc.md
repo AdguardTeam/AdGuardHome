@@ -27,6 +27,10 @@ Contents:
 * DNS access settings
 	* List access settings
 	* Set access settings
+* Rewrites
+	* API: List rewrite entries
+	* API: Add a rewrite entry
+	* API: Remove a rewrite entry
 
 
 ## First startup
@@ -677,6 +681,63 @@ Request:
 		allowed_clients: ["127.0.0.1", ...]
 		disallowed_clients: ["127.0.0.1", ...]
 		blocked_hosts: ["host.com", ...]
+	}
+
+Response:
+
+	200 OK
+
+
+## Rewrites
+
+This section allows the administrator to easily configure custom DNS response for a specific domain name.
+A, AAAA and CNAME records are supported.
+
+
+### API: List rewrite entries
+
+Request:
+
+	GET /control/rewrite/list
+
+Response:
+
+	200 OK
+
+	[
+	{
+		domain: "..."
+		answer: "..."
+	}
+	...
+	]
+
+
+### API: Add a rewrite entry
+
+Request:
+
+	POST /control/rewrite/add
+
+	{
+		domain: "..."
+		answer: "..." // "1.2.3.4" (A) || "::1" (AAAA) || "hostname" (CNAME)
+	}
+
+Response:
+
+	200 OK
+
+
+### API: Remove a rewrite entry
+
+Request:
+
+	POST /control/rewrite/delete
+
+	{
+		domain: "..."
+		answer: "..."
 	}
 
 Response:

@@ -453,10 +453,30 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 	}
 
 	if d.Res == nil {
+		answer := []dns.RR{}
+		originalQuestion := d.Req.Question[0]
+
+		if res.Reason == dnsfilter.ReasonRewrite && len(res.CanonName) != 0 {
+			answer = append(answer, s.genCNAMEAnswer(d.Req, res.CanonName))
+			// resolve canonical name, not the original host name
+			d.Req.Question[0].Name = dns.Fqdn(res.CanonName)
+		}
+
 		// request was not filtered so let it be processed further
 		err = p.Resolve(d)
 		if err != nil {
 			return err
+		}
+
+		if res.Reason == dnsfilter.ReasonRewrite && len(res.CanonName) != 0 {
+
+			d.Req.Question[0] = originalQuestion
+			d.Res.Question[0] = originalQuestion
+
+			if len(d.Res.Answer) != 0 {
+				answer = append(answer, d.Res.Answer...) // host -> IP
+				d.Res.Answer = answer
+			}
 		}
 	}
 
@@ -485,8 +505,10 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 
 // filterDNSRequest applies the dnsFilter and sets d.Res if the request was filtered
 func (s *Server) filterDNSRequest(d *proxy.DNSContext) (*dnsfilter.Result, error) {
-	msg := d.Req
-	host := strings.TrimSuffix(msg.Question[0].Name, ".")
+	var res dnsfilter.Result
+	req := d.Req
+	host := strings.TrimSuffix(req.Question[0].Name, ".")
+	origHost := host
 
 	s.RLock()
 	protectionEnabled := s.conf.ProtectionEnabled
@@ -497,7 +519,10 @@ func (s *Server) filterDNSRequest(d *proxy.DNSContext) (*dnsfilter.Result, error
 		return nil, nil
 	}
 
-	var res dnsfilter.Result
+	if host != origHost {
+		log.Debug("Rewrite: not supported: CNAME for %s is %s", origHost, host)
+	}
+
 	var err error
 
 	clientAddr := ""
@@ -508,9 +533,35 @@ func (s *Server) filterDNSRequest(d *proxy.DNSContext) (*dnsfilter.Result, error
 	if err != nil {
 		// Return immediately if there's an error
 		return nil, errorx.Decorate(err, "dnsfilter failed to check host '%s'", host)
+
 	} else if res.IsFiltered {
 		// log.Tracef("Host %s is filtered, reason - '%s', matched rule: '%s'", host, res.Reason, res.Rule)
 		d.Res = s.genDNSFilterMessage(d, &res)
+
+	} else if res.Reason == dnsfilter.ReasonRewrite && len(res.IPList) != 0 {
+		resp := dns.Msg{}
+		resp.SetReply(req)
+
+		name := host
+		if len(res.CanonName) != 0 {
+			resp.Answer = append(resp.Answer, s.genCNAMEAnswer(req, res.CanonName))
+			name = res.CanonName
+		}
+
+		for _, ip := range res.IPList {
+			if req.Question[0].Qtype == dns.TypeA {
+				a := s.genAAnswer(req, ip)
+				a.Hdr.Name = dns.Fqdn(name)
+				resp.Answer = append(resp.Answer, a)
+
+			} else if req.Question[0].Qtype == dns.TypeAAAA {
+				a := s.genAAAAAnswer(req, res.IP)
+				a.Hdr.Name = dns.Fqdn(name)
+				resp.Answer = append(resp.Answer, a)
+			}
+		}
+
+		d.Res = &resp
 	}
 
 	return &res, err
@@ -642,6 +693,19 @@ func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, d *proxy.DNSCo
 	}
 
 	return &resp
+}
+
+// Make a CNAME response
+func (s *Server) genCNAMEAnswer(req *dns.Msg, cname string) *dns.CNAME {
+	answer := new(dns.CNAME)
+	answer.Hdr = dns.RR_Header{
+		Name:   req.Question[0].Name,
+		Rrtype: dns.TypeCNAME,
+		Ttl:    s.conf.BlockedResponseTTL,
+		Class:  dns.ClassINET,
+	}
+	answer.Target = dns.Fqdn(cname)
+	return answer
 }
 
 func (s *Server) genNXDomain(request *dns.Msg) *dns.Msg {

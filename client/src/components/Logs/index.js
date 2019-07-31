@@ -5,6 +5,7 @@ import { saveAs } from 'file-saver/FileSaver';
 import escapeRegExp from 'lodash/escapeRegExp';
 import endsWith from 'lodash/endsWith';
 import { Trans, withNamespaces } from 'react-i18next';
+import { HashLink as Link } from 'react-router-hash-link';
 
 import { formatTime, getClientName } from '../../helpers/helpers';
 import { getTrackerData } from '../../helpers/trackers/trackers';
@@ -125,6 +126,7 @@ class Logs extends Component {
                 const rule = row && row.original && row.original.rule;
                 const { filterId } = row.original;
                 const { filters } = this.props.filtering;
+                const isRewrite = reason && reason === 'Rewrite';
                 let filterName = '';
 
                 if (reason === 'FilteredBlackList' || reason === 'NotFilteredWhiteList') {
@@ -161,14 +163,16 @@ class Logs extends Component {
                     const isRenderTooltip = reason === 'NotFilteredWhiteList';
 
                     return (
-                        <div className="logs__row">
+                        <div className={`logs__row ${isRewrite && 'logs__row--column'}`}>
+                            {isRewrite && <strong><Trans>rewrite_applied</Trans></strong>}
                             <ul className="list-unstyled">{liNodes}</ul>
                             {this.renderTooltip(isRenderTooltip, rule, filterName)}
                         </div>
                     );
                 }
                 return (
-                    <div className="logs__row">
+                    <div className={`logs__row ${isRewrite && 'logs__row--column'}`}>
+                        {isRewrite && <strong><Trans>rewrite_applied</Trans></strong>}
                         <span><Trans>empty_response_status</Trans></span>
                         {this.renderTooltip(isFiltered, rule, filterName)}
                     </div>
@@ -197,6 +201,7 @@ class Logs extends Component {
             Cell: (row) => {
                 const { reason } = row.original;
                 const isFiltered = row ? reason.indexOf('Filtered') === 0 : false;
+                const isRewrite = reason && reason === 'Rewrite';
                 const clientName = getClientName(dashboard.clients, row.value)
                     || getClientName(dashboard.autoClients, row.value);
                 let client;
@@ -205,6 +210,21 @@ class Logs extends Component {
                     client = <span>{clientName} <small>({row.value})</small></span>;
                 } else {
                     client = row.value;
+                }
+
+                if (isRewrite) {
+                    return (
+                        <Fragment>
+                            <div className="logs__row">
+                                {client}
+                            </div>
+                            <div className="logs__action">
+                                <Link to="/dns#rewrites" className="btn btn-sm btn-outline-primary">
+                                    <Trans>configure</Trans>
+                                </Link>
+                            </div>
+                        </Fragment>
+                    );
                 }
 
                 return (
@@ -260,6 +280,10 @@ class Logs extends Component {
                     } else if (rowInfo.original.reason === 'NotFilteredWhiteList') {
                         return {
                             className: 'green',
+                        };
+                    } else if (rowInfo.original.reason === 'Rewrite') {
+                        return {
+                            className: 'blue',
                         };
                     }
 

@@ -1021,6 +1021,7 @@ func registerControlHandlers() {
 
 	RegisterTLSHandlers()
 	RegisterClientsHandlers()
+	registerRewritesHandlers()
 
 	http.HandleFunc("/dns-query", postInstall(handleDOH))
 }
