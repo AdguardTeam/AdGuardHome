@@ -191,25 +191,7 @@ If you run into any problem or have a suggestion, head to [this page](https://gi
 
 If you want to help with AdGuard Home translations, please learn more about translating AdGuard products here: https://kb.adguard.com/en/general/adguard-translations
 
-Here is a direct link to AdGuard Home project: http://translate.adguard.com/collaboration/project?id=153384
-
-Before updating translations you need to install dependencies:
-```
-cd scripts/translations
-npm install
-```
-
-Create file `oneskyapp.json` in `scripts/translations` folder.
-
-Example of `oneskyapp.json`
-```
-{
-    "url": "https://platform.api.onesky.io/1/projects/",
-    "projectId": <PROJECT ID>,
-    "apiKey": <API KEY>,
-    "secretKey": <SECRET KEY>
-}
-```
+Here is a link to AdGuard Home project: https://crowdin.com/project/adguard-applications
 
 <a id="acknowledgments"></a>
 ## Acknowledgments
