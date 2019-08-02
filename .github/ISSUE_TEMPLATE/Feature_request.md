@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an idea for Electron
+about: Suggest an idea for AdGuard Home
 
 ---
 
