@@ -509,4 +509,22 @@ export default class Api {
         };
         return this.makeRequest(path, method, parameters);
     }
+
+    // Blocked services
+    BLOCKED_SERVICES_LIST = { path: 'blocked_services/list', method: 'GET' };
+    BLOCKED_SERVICES_SET = { path: 'blocked_services/set', method: 'POST' };
+
+    getBlockedServices() {
+        const { path, method } = this.BLOCKED_SERVICES_LIST;
+        return this.makeRequest(path, method);
+    }
+
+    setBlockedServices(config) {
+        const { path, method } = this.BLOCKED_SERVICES_SET;
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, parameters);
+    }
 }

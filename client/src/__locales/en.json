@@ -344,5 +344,14 @@
     "form_answer": "Enter IP address or domain name",
     "form_error_domain_format": "Invalid domain format",
     "form_error_answer_format": "Invalid answer format",
-    "configure": "Configure"
+    "configure": "Configure",
+    "main_settings": "Main settings",
+    "block_services": "Block specific services",
+    "blocked_services": "Blocked services",
+    "blocked_services_desc": "Allows to quickly block popular sites and services.",
+    "blocked_services_saved": "Blocked services successfully saved",
+    "blocked_services_global": "Use global blocked services",
+    "blocked_service": "Blocked service",
+    "block_all": "Block all",
+    "unblock_all": "Unblock all"
 }

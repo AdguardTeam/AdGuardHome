@@ -10,6 +10,7 @@ import encryption from './encryption';
 import clients from './clients';
 import access from './access';
 import rewrites from './rewrites';
+import services from './services';
 
 const settings = handleActions({
     [actions.initSettingsRequest]: state => ({ ...state, processing: true }),
@@ -424,6 +425,7 @@ export default combineReducers({
     clients,
     access,
     rewrites,
+    services,
     loadingBar: loadingBarReducer,
     form: formReducer,
 });

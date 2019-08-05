@@ -6,6 +6,24 @@ import ReactModal from 'react-modal';
 import { MODAL_TYPE } from '../../../helpers/constants';
 import Form from './Form';
 
+const getInitialData = (initial) => {
+    if (initial && initial.blocked_services) {
+        const { blocked_services } = initial;
+        const blocked = {};
+
+        blocked_services.forEach((service) => {
+            blocked[service] = true;
+        });
+
+        return {
+            ...initial,
+            blocked_services: blocked,
+        };
+    }
+
+    return initial;
+};
+
 const Modal = (props) => {
     const {
         isModalOpen,
@@ -16,6 +34,7 @@ const Modal = (props) => {
         processingAdding,
         processingUpdating,
     } = props;
+    const initialData = getInitialData(currentClientData);
 
     return (
         <ReactModal
@@ -38,9 +57,7 @@ const Modal = (props) => {
                     </button>
                 </div>
                 <Form
-                    initialValues={{
-                        ...currentClientData,
-                    }}
+                    initialValues={{ ...initialData }}
                     onSubmit={handleSubmit}
                     toggleClientModal={toggleClientModal}
                     processingAdding={processingAdding}

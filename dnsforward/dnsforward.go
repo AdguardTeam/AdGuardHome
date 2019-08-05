@@ -96,6 +96,10 @@ type FilteringConfig struct {
 	ParentalBlockHost     string `yaml:"parental_block_host"`
 	SafeBrowsingBlockHost string `yaml:"safebrowsing_block_host"`
 
+	// Names of services to block (globally).
+	// Per-client settings can override this configuration.
+	BlockedServices []string `json:"blocked_services"`
+
 	dnsfilter.Config `yaml:",inline"`
 }
 
@@ -529,7 +533,17 @@ func (s *Server) filterDNSRequest(d *proxy.DNSContext) (*dnsfilter.Result, error
 	if d.Addr != nil {
 		clientAddr, _, _ = net.SplitHostPort(d.Addr.String())
 	}
-	res, err = dnsFilter.CheckHost(host, d.Req.Question[0].Qtype, clientAddr)
+
+	var setts dnsfilter.RequestFilteringSettings
+	setts.FilteringEnabled = true
+	setts.SafeSearchEnabled = s.conf.SafeSearchEnabled
+	setts.SafeBrowsingEnabled = s.conf.SafeBrowsingEnabled
+	setts.ParentalEnabled = s.conf.ParentalEnabled
+	if s.conf.FilterHandler != nil {
+		s.conf.FilterHandler(clientAddr, &setts)
+	}
+
+	res, err = dnsFilter.CheckHost(host, d.Req.Question[0].Qtype, &setts)
 	if err != nil {
 		// Return immediately if there's an error
 		return nil, errorx.Decorate(err, "dnsfilter failed to check host '%s'", host)

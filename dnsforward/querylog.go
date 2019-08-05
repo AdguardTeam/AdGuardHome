@@ -186,6 +186,10 @@ func (l *queryLog) getQueryLog() []map[string]interface{} {
 			jsonEntry["filterId"] = entry.Result.FilterID
 		}
 
+		if len(entry.Result.ServiceName) != 0 {
+			jsonEntry["service_name"] = entry.Result.ServiceName
+		}
+
 		answers := answerToMap(a)
 		if answers != nil {
 			jsonEntry["answer"] = answers

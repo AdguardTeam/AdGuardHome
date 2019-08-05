@@ -1,0 +1,79 @@
+.service {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+@media screen and (min-width: 768px) {
+    .services {
+        display: flex;
+        flex-flow: row wrap;
+    }
+
+    .service {
+        flex-grow: 0;
+        flex-shrink: 0;
+        flex-basis: calc(99.9% * 4/12 - (30px - 30px * 4/12));
+        max-width: calc(99.9% * 4/12 - (30px - 30px * 4/12));
+        width: calc(99.9% * 4/12 - (30px - 30px * 4/12));
+    }
+
+    .service--global {
+        flex-basis: 1;
+        max-width: 100%;
+        width: 100%;
+    }
+
+    .service:nth-child(1n) {
+        margin-right: 30px;
+        margin-left: 0;
+    }
+    
+    .service:nth-child(3n) {
+        margin-right: 0;
+        margin-left: auto;
+    }
+}
+
+.service__icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    margin-right: 10px;
+    color: #495057;
+}
+
+.service--global .service__icon {
+    display: none;
+}
+
+.service__icon--table {
+    margin-bottom: 3px;
+    color: #9aa0ac;
+}
+
+.service__switch {
+    margin-left: auto;
+    border: 1px solid rgba(150, 150, 150, 0.12);
+}
+
+.custom-switch-input:checked ~ .service__switch {
+    background-color: #cd201f;
+}
+
+.custom-switch-input:focus ~ .service__switch {
+    box-shadow: 0 0 0 2px #cd201f3b;
+    border-color: #ec4241;
+}
+
+.custom-switch-input:disabled ~ .service__switch,
+.custom-switch-input:disabled ~ .service__text,
+.custom-switch-input:disabled ~ .service__icon {
+    opacity: 0.5;
+    cursor: pointer;
+}

@@ -17,10 +17,19 @@ class ClientsTable extends Component {
     };
 
     handleSubmit = (values) => {
+        let config = values;
+
+        if (values && values.blocked_services) {
+            const blocked_services = Object
+                .keys(values.blocked_services)
+                .filter(service => values.blocked_services[service]);
+            config = { ...values, blocked_services };
+        }
+
         if (this.props.modalType === MODAL_TYPE.EDIT) {
-            this.handleFormUpdate(values, this.props.modalClientName);
+            this.handleFormUpdate(config, this.props.modalClientName);
         } else {
-            this.handleFormAdd(values);
+            this.handleFormAdd(config);
         }
     };
 
@@ -41,6 +50,7 @@ class ClientsTable extends Component {
             return {
                 identifier,
                 use_global_settings: true,
+                use_global_blocked_services: true,
                 ...client,
             };
         }
@@ -48,6 +58,7 @@ class ClientsTable extends Component {
         return {
             identifier: CLIENT_ID.IP,
             use_global_settings: true,
+            use_global_blocked_services: true,
         };
     };
 
@@ -112,6 +123,27 @@ class ClientsTable extends Component {
                         <div className="logs__text" title={title}>
                             {title}
                         </div>
+                    </div>
+                );
+            },
+        },
+        {
+            Header: this.props.t('blocked_services'),
+            accessor: 'blocked_services',
+            Cell: (row) => {
+                const { value, original } = row;
+
+                if (original.use_global_blocked_services) {
+                    return <Trans>settings_global</Trans>;
+                }
+
+                return (
+                    <div className="logs__row logs__row--icons">
+                        {value && value.length > 0 ? value.map(service => (
+                            <svg className="service__icon service__icon--table" title={service} key={service}>
+                                <use xlinkHref={`#service_${service}`} />
+                            </svg>
+                        )) : '–'}
                     </div>
                 );
             },

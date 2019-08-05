@@ -10,7 +10,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-const currentSchemaVersion = 3 // used for upgrading from old configs to new config
+const currentSchemaVersion = 4 // used for upgrading from old configs to new config
 
 // Performs necessary upgrade operations if needed
 func upgradeConfig() error {
@@ -53,17 +53,25 @@ func upgradeConfig() error {
 func upgradeConfigSchema(oldVersion int, diskConfig *map[string]interface{}) error {
 	switch oldVersion {
 	case 0:
-		err := upgradeSchema0to3(diskConfig)
+		err := upgradeSchema0to1(diskConfig)
 		if err != nil {
 			return err
 		}
+		fallthrough
 	case 1:
-		err := upgradeSchema1to3(diskConfig)
+		err := upgradeSchema1to2(diskConfig)
 		if err != nil {
 			return err
 		}
+		fallthrough
 	case 2:
 		err := upgradeSchema2to3(diskConfig)
+		if err != nil {
+			return err
+		}
+		fallthrough
+	case 3:
+		err := upgradeSchema3to4(diskConfig)
 		if err != nil {
 			return err
 		}
@@ -173,22 +181,35 @@ func upgradeSchema2to3(diskConfig *map[string]interface{}) error {
 	return nil
 }
 
-// jump three schemas at once -- this time we just do it sequentially
-func upgradeSchema0to3(diskConfig *map[string]interface{}) error {
-	err := upgradeSchema0to1(diskConfig)
-	if err != nil {
-		return err
+// Add use_global_blocked_services=true setting for existing "clients" array
+func upgradeSchema3to4(diskConfig *map[string]interface{}) error {
+	log.Printf("%s(): called", _Func())
+
+	(*diskConfig)["schema_version"] = 4
+
+	clients, ok := (*diskConfig)["clients"]
+	if !ok {
+		return nil
 	}
 
-	return upgradeSchema1to3(diskConfig)
-}
+	switch arr := clients.(type) {
+	case []interface{}:
 
-// jump two schemas at once -- this time we just do it sequentially
-func upgradeSchema1to3(diskConfig *map[string]interface{}) error {
-	err := upgradeSchema1to2(diskConfig)
-	if err != nil {
-		return err
+		for i := range arr {
+
+			switch c := arr[i].(type) {
+
+			case map[interface{}]interface{}:
+				c["use_global_blocked_services"] = true
+
+			default:
+				continue
+			}
+		}
+
+	default:
+		return nil
 	}
 
-	return upgradeSchema2to3(diskConfig)
+	return nil
 }

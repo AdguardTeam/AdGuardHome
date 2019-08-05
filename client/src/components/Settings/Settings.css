@@ -11,9 +11,18 @@
     margin-bottom: 20px;
 }
 
+.form__inline {
+    display: flex;
+    justify-content: flex-start;
+}
+
 .btn-standard {
     padding-left: 20px;
     padding-right: 20px;
+}
+
+.btn-large {
+    min-width: 150px;
 }
 
 .form-control--textarea {

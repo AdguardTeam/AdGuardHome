@@ -786,6 +786,35 @@ paths:
                 200:
                     description: OK
 
+
+    /blocked_services/list:
+        get:
+            tags:
+                - blocked_services
+            operationId: blockedServicesList
+            summary: 'Get blocked services list'
+            responses:
+                200:
+                    description: OK
+                    schema:
+                      $ref: "#/definitions/BlockedServicesArray"
+
+    /blocked_services/set:
+        post:
+            tags:
+                - blocked_services
+            operationId: blockedServicesSet
+            summary: 'Set blocked services list'
+            parameters:
+              - in: body
+                name: "body"
+                schema:
+                    $ref: "#/definitions/BlockedServicesArray"
+            responses:
+                200:
+                    description: OK
+
+
     # --------------------------------------------------
     # Rewrite methods
     # --------------------------------------------------
@@ -1572,6 +1601,12 @@ definitions:
                 type: "boolean"
             safesearch_enabled:
                 type: "boolean"
+            use_global_blocked_services:
+                type: "boolean"
+            blocked_services:
+                type: "array"
+                items:
+                    type: "string"
     ClientAuto:
         type: "object"
         description: "Auto-Client information"
@@ -1637,6 +1672,11 @@ definitions:
                 type: "string"
                 description: "value of A, AAAA or CNAME DNS record"
                 example: "127.0.0.1"
+
+    BlockedServicesArray:
+        type: "array"
+        items:
+            type: "string"
 
     CheckConfigRequest:
         type: "object"

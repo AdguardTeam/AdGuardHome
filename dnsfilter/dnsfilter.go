@@ -39,12 +39,19 @@ const defaultParentalURL = "%s://%s/check-parental-control-hash?prefixes=%s&sens
 const defaultParentalSensitivity = 13 // use "TEEN" by default
 const maxDialCacheSize = 2            // the number of host names for safebrowsing and parental control
 
+// ServiceEntry - blocked service array element
+type ServiceEntry struct {
+	Name  string
+	Rules []*urlfilter.NetworkRule
+}
+
 // RequestFilteringSettings is custom filtering settings
 type RequestFilteringSettings struct {
 	FilteringEnabled    bool
 	SafeSearchEnabled   bool
 	SafeBrowsingEnabled bool
 	ParentalEnabled     bool
+	ServicesRules       []ServiceEntry
 }
 
 // RewriteEntry is a rewrite array element
@@ -139,6 +146,8 @@ const (
 	FilteredInvalid
 	// FilteredSafeSearch - the host was replaced with safesearch variant
 	FilteredSafeSearch
+	// FilteredBlockedService - the host is blocked by "blocked services" settings
+	FilteredBlockedService
 
 	// ReasonRewrite - rewrite rule was applied
 	ReasonRewrite
@@ -155,6 +164,7 @@ func (i Reason) String() string {
 		"FilteredParental",
 		"FilteredInvalid",
 		"FilteredSafeSearch",
+		"FilteredBlockedService",
 
 		"Rewrite",
 	}
@@ -185,6 +195,9 @@ type Result struct {
 	// for ReasonRewrite:
 	CanonName string   `json:",omitempty"` // CNAME value
 	IPList    []net.IP `json:",omitempty"` // list of IP addresses
+
+	// for FilteredBlockedService:
+	ServiceName string `json:",omitempty"` // Name of the blocked service
 }
 
 // Matched can be used to see if any match at all was found, no matter filtered or not
@@ -193,7 +206,7 @@ func (r Reason) Matched() bool {
 }
 
 // CheckHost tries to match host against rules, then safebrowsing and parental if they are enabled
-func (d *Dnsfilter) CheckHost(host string, qtype uint16, clientAddr string) (Result, error) {
+func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFilteringSettings) (Result, error) {
 	// sometimes DNS clients will try to resolve ".", which is a request to get root servers
 	if host == "" {
 		return Result{Reason: NotFilteredNotFound}, nil
@@ -202,15 +215,6 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, clientAddr string) (Res
 	// prevent recursion
 	if host == d.parentalServer || host == d.safeBrowsingServer {
 		return Result{}, nil
-	}
-
-	var setts RequestFilteringSettings
-	setts.FilteringEnabled = true
-	setts.SafeSearchEnabled = d.SafeSearchEnabled
-	setts.SafeBrowsingEnabled = d.SafeBrowsingEnabled
-	setts.ParentalEnabled = d.ParentalEnabled
-	if len(clientAddr) != 0 && d.FilterHandler != nil {
-		d.FilterHandler(clientAddr, &setts)
 	}
 
 	var result Result
@@ -227,6 +231,13 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, clientAddr string) (Res
 		if err != nil {
 			return result, err
 		}
+		if result.Reason.Matched() {
+			return result, nil
+		}
+	}
+
+	if len(setts.ServicesRules) != 0 {
+		result = matchBlockedServicesRules(host, setts.ServicesRules)
 		if result.Reason.Matched() {
 			return result, nil
 		}
@@ -323,6 +334,26 @@ func (d *Dnsfilter) processRewrites(host string, qtype uint16) Result {
 		res.Reason = ReasonRewrite
 	}
 
+	return res
+}
+
+func matchBlockedServicesRules(host string, svcs []ServiceEntry) Result {
+	req := urlfilter.NewRequestForHostname(host)
+	res := Result{}
+
+	for _, s := range svcs {
+		for _, rule := range s.Rules {
+			if rule.Match(req) {
+				res.Reason = FilteredBlockedService
+				res.IsFiltered = true
+				res.ServiceName = s.Name
+				res.Rule = rule.Text()
+				log.Debug("Blocked Services: matched rule: %s  host: %s  service: %s",
+					res.Rule, host, s.Name)
+				return res
+			}
+		}
+	}
 	return res
 }
 

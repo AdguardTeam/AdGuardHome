@@ -54,6 +54,7 @@ func initDNSServer(baseDir string) {
 		log.Error("upstream.AddressToUpstream: %s", err)
 		return
 	}
+
 	config.dnsctx.rdnsIP = make(map[string]bool)
 	config.dnsctx.rdnsChannel = make(chan string, 256)
 	go asyncRDNSLoop()
@@ -210,19 +211,35 @@ func generateServerConfig() (dnsforward.ServerConfig, error) {
 	newconfig.Upstreams = upstreamConfig.Upstreams
 	newconfig.DomainsReservedUpstreams = upstreamConfig.DomainReservedUpstreams
 	newconfig.AllServers = config.DNS.AllServers
-	newconfig.FilterHandler = applyClientSettings
+	newconfig.FilterHandler = applyAdditionalFiltering
 	newconfig.OnDNSRequest = onDNSRequest
 	return newconfig, nil
 }
 
 // If a client has his own settings, apply them
-func applyClientSettings(clientAddr string, setts *dnsfilter.RequestFilteringSettings) {
+func applyAdditionalFiltering(clientAddr string, setts *dnsfilter.RequestFilteringSettings) {
+
+	ApplyBlockedServices(setts, config.DNS.BlockedServices)
+
+	if len(clientAddr) == 0 {
+		return
+	}
+
 	c, ok := config.clients.Find(clientAddr)
-	if !ok || !c.UseOwnSettings {
+	if !ok {
 		return
 	}
 
 	log.Debug("Using settings for client with IP %s", clientAddr)
+
+	if c.UseOwnBlockedServices {
+		ApplyBlockedServices(setts, c.BlockedServices)
+	}
+
+	if !c.UseOwnSettings {
+		return
+	}
+
 	setts.FilteringEnabled = c.FilteringEnabled
 	setts.SafeSearchEnabled = c.SafeSearchEnabled
 	setts.SafeBrowsingEnabled = c.SafeBrowsingEnabled

@@ -10,9 +10,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/urlfilter"
 	"github.com/bluele/gcache"
 	"github.com/miekg/dns"
+	"github.com/stretchr/testify/assert"
 )
+
+var setts RequestFilteringSettings
 
 // HELPERS
 // SAFE BROWSING
@@ -44,10 +48,16 @@ func _Func() string {
 }
 
 func NewForTest(c *Config, filters map[int]string) *Dnsfilter {
+	setts = RequestFilteringSettings{}
+	setts.FilteringEnabled = true
 	if c != nil {
 		c.SafeBrowsingCacheSize = 1024
 		c.SafeSearchCacheSize = 1024
 		c.ParentalCacheSize = 1024
+
+		setts.SafeSearchEnabled = c.SafeSearchEnabled
+		setts.SafeBrowsingEnabled = c.SafeBrowsingEnabled
+		setts.ParentalEnabled = c.ParentalEnabled
 	}
 	d := New(c, filters)
 	purgeCaches()
@@ -56,7 +66,7 @@ func NewForTest(c *Config, filters map[int]string) *Dnsfilter {
 
 func (d *Dnsfilter) checkMatch(t *testing.T, hostname string) {
 	t.Helper()
-	ret, err := d.CheckHost(hostname, dns.TypeA, "")
+	ret, err := d.CheckHost(hostname, dns.TypeA, &setts)
 	if err != nil {
 		t.Errorf("Error while matching host %s: %s", hostname, err)
 	}
@@ -67,7 +77,7 @@ func (d *Dnsfilter) checkMatch(t *testing.T, hostname string) {
 
 func (d *Dnsfilter) checkMatchIP(t *testing.T, hostname string, ip string, qtype uint16) {
 	t.Helper()
-	ret, err := d.CheckHost(hostname, qtype, "")
+	ret, err := d.CheckHost(hostname, qtype, &setts)
 	if err != nil {
 		t.Errorf("Error while matching host %s: %s", hostname, err)
 	}
@@ -81,7 +91,7 @@ func (d *Dnsfilter) checkMatchIP(t *testing.T, hostname string, ip string, qtype
 
 func (d *Dnsfilter) checkMatchEmpty(t *testing.T, hostname string) {
 	t.Helper()
-	ret, err := d.CheckHost(hostname, dns.TypeA, "")
+	ret, err := d.CheckHost(hostname, dns.TypeA, &setts)
 	if err != nil {
 		t.Errorf("Error while matching host %s: %s", hostname, err)
 	}
@@ -212,7 +222,7 @@ func TestCheckHostSafeSearchYandex(t *testing.T) {
 
 	// Check host for each domain
 	for _, host := range yandex {
-		result, err := d.CheckHost(host, dns.TypeA, "")
+		result, err := d.CheckHost(host, dns.TypeA, &setts)
 		if err != nil {
 			t.Errorf("SafeSearch doesn't work for yandex domain `%s` cause %s", host, err)
 		}
@@ -232,7 +242,7 @@ func TestCheckHostSafeSearchGoogle(t *testing.T) {
 
 	// Check host for each domain
 	for _, host := range googleDomains {
-		result, err := d.CheckHost(host, dns.TypeA, "")
+		result, err := d.CheckHost(host, dns.TypeA, &setts)
 		if err != nil {
 			t.Errorf("SafeSearch doesn't work for %s cause %s", host, err)
 		}
@@ -252,7 +262,7 @@ func TestSafeSearchCacheYandex(t *testing.T) {
 	var err error
 
 	// Check host with disabled safesearch
-	result, err = d.CheckHost(domain, dns.TypeA, "")
+	result, err = d.CheckHost(domain, dns.TypeA, &setts)
 	if err != nil {
 		t.Fatalf("Cannot check host due to %s", err)
 	}
@@ -263,7 +273,7 @@ func TestSafeSearchCacheYandex(t *testing.T) {
 	d = NewForTest(&Config{SafeSearchEnabled: true}, nil)
 	defer d.Destroy()
 
-	result, err = d.CheckHost(domain, dns.TypeA, "")
+	result, err = d.CheckHost(domain, dns.TypeA, &setts)
 	if err != nil {
 		t.Fatalf("CheckHost for safesearh domain %s failed cause %s", domain, err)
 	}
@@ -289,7 +299,7 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 	d := NewForTest(nil, nil)
 	defer d.Destroy()
 	domain := "www.google.ru"
-	result, err := d.CheckHost(domain, dns.TypeA, "")
+	result, err := d.CheckHost(domain, dns.TypeA, &setts)
 	if err != nil {
 		t.Fatalf("Cannot check host due to %s", err)
 	}
@@ -320,7 +330,7 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 		}
 	}
 
-	result, err = d.CheckHost(domain, dns.TypeA, "")
+	result, err = d.CheckHost(domain, dns.TypeA, &setts)
 	if err != nil {
 		t.Fatalf("CheckHost for safesearh domain %s failed cause %s", domain, err)
 	}
@@ -433,7 +443,7 @@ func TestMatching(t *testing.T) {
 			d := NewForTest(nil, filters)
 			defer d.Destroy()
 
-			ret, err := d.CheckHost(test.hostname, dns.TypeA, "")
+			ret, err := d.CheckHost(test.hostname, dns.TypeA, &setts)
 			if err != nil {
 				t.Errorf("Error while matching host %s: %s", test.hostname, err)
 			}
@@ -449,10 +459,16 @@ func TestMatching(t *testing.T) {
 
 // CLIENT SETTINGS
 
-func applyClientSettings(clientAddr string, setts *RequestFilteringSettings) {
+func applyClientSettings(setts *RequestFilteringSettings) {
 	setts.FilteringEnabled = false
 	setts.ParentalEnabled = false
 	setts.SafeBrowsingEnabled = true
+
+	rule, _ := urlfilter.NewNetworkRule("||facebook.com^", 0)
+	s := ServiceEntry{}
+	s.Name = "facebook"
+	s.Rules = []*urlfilter.NetworkRule{rule}
+	setts.ServicesRules = append(setts.ServicesRules, s)
 }
 
 // Check behaviour without any per-client settings,
@@ -468,43 +484,51 @@ func TestClientSettings(t *testing.T) {
 	// no client settings:
 
 	// blocked by filters
-	r, _ = d.CheckHost("example.org", dns.TypeA, "1.1.1.1")
+	r, _ = d.CheckHost("example.org", dns.TypeA, &setts)
 	if !r.IsFiltered || r.Reason != FilteredBlackList {
 		t.Fatalf("CheckHost FilteredBlackList")
 	}
 
 	// blocked by parental
-	r, _ = d.CheckHost("pornhub.com", dns.TypeA, "1.1.1.1")
+	r, _ = d.CheckHost("pornhub.com", dns.TypeA, &setts)
 	if !r.IsFiltered || r.Reason != FilteredParental {
 		t.Fatalf("CheckHost FilteredParental")
 	}
 
 	// safesearch is disabled
-	r, _ = d.CheckHost("wmconvirus.narod.ru", dns.TypeA, "1.1.1.1")
+	r, _ = d.CheckHost("wmconvirus.narod.ru", dns.TypeA, &setts)
 	if r.IsFiltered {
 		t.Fatalf("CheckHost safesearch")
 	}
 
+	// not blocked
+	r, _ = d.CheckHost("facebook.com", dns.TypeA, &setts)
+	assert.True(t, !r.IsFiltered)
+
 	// override client settings:
-	d.FilterHandler = applyClientSettings
+	applyClientSettings(&setts)
 
 	// override filtering settings
-	r, _ = d.CheckHost("example.org", dns.TypeA, "1.1.1.1")
+	r, _ = d.CheckHost("example.org", dns.TypeA, &setts)
 	if r.IsFiltered {
 		t.Fatalf("CheckHost")
 	}
 
 	// override parental settings (force disable parental)
-	r, _ = d.CheckHost("pornhub.com", dns.TypeA, "1.1.1.1")
+	r, _ = d.CheckHost("pornhub.com", dns.TypeA, &setts)
 	if r.IsFiltered {
 		t.Fatalf("CheckHost")
 	}
 
 	// override safesearch settings (force enable safesearch)
-	r, _ = d.CheckHost("wmconvirus.narod.ru", dns.TypeA, "1.1.1.1")
+	r, _ = d.CheckHost("wmconvirus.narod.ru", dns.TypeA, &setts)
 	if !r.IsFiltered || r.Reason != FilteredSafeBrowsing {
 		t.Fatalf("CheckHost FilteredSafeBrowsing")
 	}
+
+	// blocked by additional rules
+	r, _ = d.CheckHost("facebook.com", dns.TypeA, &setts)
+	assert.True(t, r.IsFiltered && r.Reason == FilteredBlockedService)
 }
 
 // BENCHMARKS
@@ -514,7 +538,7 @@ func BenchmarkSafeBrowsing(b *testing.B) {
 	defer d.Destroy()
 	for n := 0; n < b.N; n++ {
 		hostname := "wmconvirus.narod.ru"
-		ret, err := d.CheckHost(hostname, dns.TypeA, "")
+		ret, err := d.CheckHost(hostname, dns.TypeA, &setts)
 		if err != nil {
 			b.Errorf("Error while matching host %s: %s", hostname, err)
 		}
@@ -530,7 +554,7 @@ func BenchmarkSafeBrowsingParallel(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			hostname := "wmconvirus.narod.ru"
-			ret, err := d.CheckHost(hostname, dns.TypeA, "")
+			ret, err := d.CheckHost(hostname, dns.TypeA, &setts)
 			if err != nil {
 				b.Errorf("Error while matching host %s: %s", hostname, err)
 			}

@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import classnames from 'classnames';
 
 import Tab from './Tab';
 import './Tabs.css';
@@ -16,6 +17,7 @@ class Tabs extends Component {
     render() {
         const {
             props: {
+                controlClass,
                 children,
             },
             state: {
@@ -23,9 +25,14 @@ class Tabs extends Component {
             },
         } = this;
 
+        const getControlClass = classnames({
+            tabs__controls: true,
+            [`tabs__controls--${controlClass}`]: controlClass,
+        });
+
         return (
             <div className="tabs">
-                <div className="tabs__controls">
+                <div className={getControlClass}>
                     {children.map((child) => {
                         const { label, title } = child.props;
 
@@ -54,6 +61,7 @@ class Tabs extends Component {
 }
 
 Tabs.propTypes = {
+    controlClass: PropTypes.string,
     children: PropTypes.array.isRequired,
 };
 
