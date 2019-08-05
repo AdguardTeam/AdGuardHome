@@ -180,7 +180,7 @@ let Form = (props) => {
                                 {SERVICES.map(service => (
                                     <Field
                                         key={service.id}
-                                        icon={service.id}
+                                        icon={`service_${service.id}`}
                                         name={`blocked_services.${service.id}`}
                                         type="checkbox"
                                         component={renderServiceField}

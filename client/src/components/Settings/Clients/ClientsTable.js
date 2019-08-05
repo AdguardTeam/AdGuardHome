@@ -141,7 +141,7 @@ class ClientsTable extends Component {
                     <div className="logs__row logs__row--icons">
                         {value && value.length > 0 ? value.map(service => (
                             <svg className="service__icon service__icon--table" title={service} key={service}>
-                                <use xlinkHref={`#${service}`} />
+                                <use xlinkHref={`#service_${service}`} />
                             </svg>
                         )) : '–'}
                     </div>
