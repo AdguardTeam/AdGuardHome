@@ -53,20 +53,23 @@ func upgradeConfig() error {
 func upgradeConfigSchema(oldVersion int, diskConfig *map[string]interface{}) error {
 	switch oldVersion {
 	case 0:
-		err := upgradeSchema0to3(diskConfig)
+		err := upgradeSchema0to1(diskConfig)
 		if err != nil {
 			return err
 		}
+		fallthrough
 	case 1:
-		err := upgradeSchema1to3(diskConfig)
+		err := upgradeSchema1to2(diskConfig)
 		if err != nil {
 			return err
 		}
+		fallthrough
 	case 2:
 		err := upgradeSchema2to3(diskConfig)
 		if err != nil {
 			return err
 		}
+		fallthrough
 	case 3:
 		err := upgradeSchema3to4(diskConfig)
 		if err != nil {
@@ -209,24 +212,4 @@ func upgradeSchema3to4(diskConfig *map[string]interface{}) error {
 	}
 
 	return nil
-}
-
-// jump three schemas at once -- this time we just do it sequentially
-func upgradeSchema0to3(diskConfig *map[string]interface{}) error {
-	err := upgradeSchema0to1(diskConfig)
-	if err != nil {
-		return err
-	}
-
-	return upgradeSchema1to3(diskConfig)
-}
-
-// jump two schemas at once -- this time we just do it sequentially
-func upgradeSchema1to3(diskConfig *map[string]interface{}) error {
-	err := upgradeSchema1to2(diskConfig)
-	if err != nil {
-		return err
-	}
-
-	return upgradeSchema2to3(diskConfig)
 }
