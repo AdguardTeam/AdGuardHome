@@ -83,7 +83,7 @@ func resolveRDNS(ip string) string {
 
 	resp, err := config.dnsctx.upstream.Exchange(&req)
 	if err != nil {
-		log.Error("Error while making an rDNS lookup for %s: %s", ip, err)
+		log.Debug("Error while making an rDNS lookup for %s: %s", ip, err)
 		return ""
 	}
 	if len(resp.Answer) != 1 {
@@ -92,7 +92,7 @@ func resolveRDNS(ip string) string {
 	}
 	ptr, ok := resp.Answer[0].(*dns.PTR)
 	if !ok {
-		log.Error("not a PTR response for %s", ip)
+		log.Debug("not a PTR response for %s", ip)
 		return ""
 	}
 
