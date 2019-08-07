@@ -510,7 +510,21 @@ func (d *Dnsfilter) checkSafeBrowsing(host string) (Result, error) {
 		}
 		return result, nil
 	}
-	result, err := d.lookupCommon(host, &gctx.stats.Safebrowsing, gctx.safebrowsingCache, true, format, handleBody)
+
+	// check cache
+	cachedValue, isFound := getCachedResult(gctx.safebrowsingCache, host)
+	if isFound {
+		atomic.AddUint64(&gctx.stats.Safebrowsing.CacheHits, 1)
+		log.Tracef("%s: found in the lookup cache %p", host, gctx.safebrowsingCache)
+		return cachedValue, nil
+	}
+
+	result, err := d.lookupCommon(host, &gctx.stats.Safebrowsing, true, format, handleBody)
+
+	if err == nil {
+		setCacheResult(gctx.safebrowsingCache, host, result)
+	}
+
 	return result, err
 }
 
@@ -562,7 +576,21 @@ func (d *Dnsfilter) checkParental(host string) (Result, error) {
 		}
 		return result, nil
 	}
-	result, err := d.lookupCommon(host, &gctx.stats.Parental, gctx.parentalCache, false, format, handleBody)
+
+	// check cache
+	cachedValue, isFound := getCachedResult(gctx.parentalCache, host)
+	if isFound {
+		atomic.AddUint64(&gctx.stats.Parental.CacheHits, 1)
+		log.Tracef("%s: found in the lookup cache %p", host, gctx.parentalCache)
+		return cachedValue, nil
+	}
+
+	result, err := d.lookupCommon(host, &gctx.stats.Parental, false, format, handleBody)
+
+	if err == nil {
+		setCacheResult(gctx.parentalCache, host, result)
+	}
+
 	return result, err
 }
 
@@ -570,18 +598,7 @@ type formatHandler func(hashparam string) string
 type bodyHandler func(body []byte, hashes map[string]bool) (Result, error)
 
 // real implementation of lookup/check
-func (d *Dnsfilter) lookupCommon(host string, lookupstats *LookupStats, cache *fastcache.Cache, hashparamNeedSlash bool, format formatHandler, handleBody bodyHandler) (Result, error) {
-	// if host ends with a dot, trim it
-	host = strings.ToLower(strings.Trim(host, "."))
-
-	// check cache
-	cachedValue, isFound := getCachedResult(cache, host)
-	if isFound {
-		atomic.AddUint64(&lookupstats.CacheHits, 1)
-		log.Tracef("%s: found in the lookup cache %p", host, cache)
-		return cachedValue, nil
-	}
-
+func (d *Dnsfilter) lookupCommon(host string, lookupstats *LookupStats, hashparamNeedSlash bool, format formatHandler, handleBody bodyHandler) (Result, error) {
 	// convert hostname to hash parameters
 	hashparam, hashes := hostnameToHashParam(host, hashparamNeedSlash)
 
@@ -613,20 +630,16 @@ func (d *Dnsfilter) lookupCommon(host string, lookupstats *LookupStats, cache *f
 	switch {
 	case resp.StatusCode == 204:
 		// empty result, save cache
-		setCacheResult(cache, host, Result{})
 		return Result{}, nil
 	case resp.StatusCode != 200:
-		// error, don't save cache
-		return Result{}, nil
+		return Result{}, fmt.Errorf("HTTP status code: %d", resp.StatusCode)
 	}
 
 	result, err := handleBody(body, hashes)
 	if err != nil {
-		// error, don't save cache
 		return Result{}, err
 	}
 
-	setCacheResult(cache, host, result)
 	return result, nil
 }
 
