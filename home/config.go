@@ -107,6 +107,9 @@ type dnsConfig struct {
 	BindHost string `yaml:"bind_host"`
 	Port     int    `yaml:"port"`
 
+	// time interval for statistics (in days)
+	StatsInterval uint `yaml:"statistics_interval"`
+
 	dnsforward.FilteringConfig `yaml:",inline"`
 
 	UpstreamDNS []string `yaml:"upstream_dns"`
@@ -161,8 +164,9 @@ var config = configuration{
 	BindPort:          3000,
 	BindHost:          "0.0.0.0",
 	DNS: dnsConfig{
-		BindHost: "0.0.0.0",
-		Port:     53,
+		BindHost:      "0.0.0.0",
+		Port:          53,
+		StatsInterval: 1,
 		FilteringConfig: dnsforward.FilteringConfig{
 			ProtectionEnabled:  true,       // whether or not use any of dnsfilter features
 			FilteringEnabled:   true,       // whether or not use filter lists
@@ -262,6 +266,10 @@ func parseConfig() error {
 	if err != nil {
 		log.Error("Couldn't parse config file: %s", err)
 		return err
+	}
+
+	if !checkStatsInterval(config.DNS.StatsInterval) {
+		config.DNS.StatsInterval = 1
 	}
 
 	for _, cy := range config.Clients {
