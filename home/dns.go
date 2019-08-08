@@ -152,11 +152,6 @@ func startDNSServer() error {
 		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
 	}
 
-	top := config.dnsServer.GetStatsTop()
-	for k := range top.Clients {
-		beginAsyncRDNS(k)
-	}
-
 	return nil
 }
 

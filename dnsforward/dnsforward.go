@@ -40,7 +40,6 @@ type Server struct {
 	dnsProxy  *proxy.Proxy         // DNS proxy instance
 	dnsFilter *dnsfilter.Dnsfilter // DNS filter instance
 	queryLog  *queryLog            // Query log instance
-	stats     *stats               // General server statistics
 
 	AllowedClients         map[string]bool // IP addresses of whitelist clients
 	DisallowedClients      map[string]bool // IP addresses of clients that should be blocked
@@ -58,19 +57,10 @@ type Server struct {
 func NewServer(baseDir string) *Server {
 	s := &Server{
 		queryLog: newQueryLog(baseDir),
-		stats:    newStats(),
-	}
-
-	log.Tracef("Loading stats from querylog")
-	err := s.queryLog.fillStatsFromQueryLog(s.stats)
-	if err != nil {
-		log.Error("failed to load stats from querylog: %s", err)
 	}
 
 	log.Printf("Start DNS server periodic jobs")
 	go s.queryLog.periodicQueryLogRotate()
-	go s.queryLog.runningTop.periodicHourlyTopRotate()
-	go s.stats.statsRotator()
 	return s
 }
 
@@ -357,38 +347,6 @@ func (s *Server) GetQueryLog() []map[string]interface{} {
 	return s.queryLog.getQueryLog()
 }
 
-// GetStatsTop returns the current stop stats
-func (s *Server) GetStatsTop() *StatsTop {
-	s.RLock()
-	defer s.RUnlock()
-	return s.queryLog.runningTop.getStatsTop()
-}
-
-// PurgeStats purges current server stats
-func (s *Server) PurgeStats() {
-	s.Lock()
-	defer s.Unlock()
-	s.stats.purgeStats()
-}
-
-// GetAggregatedStats returns aggregated stats data for the 24 hours
-func (s *Server) GetAggregatedStats() map[string]interface{} {
-	s.RLock()
-	defer s.RUnlock()
-	return s.stats.getAggregatedStats()
-}
-
-// GetStatsHistory gets stats history aggregated by the specified time unit
-// timeUnit is either time.Second, time.Minute, time.Hour, or 24*time.Hour
-// start is start of the time range
-// end is end of the time range
-// returns nil if time unit is not supported
-func (s *Server) GetStatsHistory(timeUnit time.Duration, startTime time.Time, endTime time.Time) (map[string]interface{}, error) {
-	s.RLock()
-	defer s.RUnlock()
-	return s.stats.getStatsHistory(timeUnit, startTime, endTime)
-}
-
 // Return TRUE if this client should be blocked
 func (s *Server) isBlockedIP(ip string) bool {
 	if len(s.AllowedClients) != 0 || len(s.AllowedClientsIPNet) != 0 {
@@ -513,10 +471,7 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 		if d.Upstream != nil {
 			upstreamAddr = d.Upstream.Address()
 		}
-		entry := s.queryLog.logRequest(msg, d.Res, res, elapsed, d.Addr, upstreamAddr)
-		if entry != nil {
-			s.stats.incrementCounters(entry)
-		}
+		_ = s.queryLog.logRequest(msg, d.Res, res, elapsed, d.Addr, upstreamAddr)
 	}
 
 	return nil
