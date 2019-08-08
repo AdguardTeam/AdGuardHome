@@ -144,9 +144,7 @@ func TestSafeBrowsing(t *testing.T) {
 			if gctx.stats.Safebrowsing.Requests != 1 {
 				t.Errorf("Safebrowsing lookup positive cache is not working: %v", gctx.stats.Safebrowsing.Requests)
 			}
-			d.checkMatch(t, "wmconvirus.narod.ru.")
 			d.checkMatch(t, "test.wmconvirus.narod.ru")
-			d.checkMatch(t, "test.wmconvirus.narod.ru.")
 			d.checkMatchEmpty(t, "yandex.ru")
 			d.checkMatchEmpty(t, "pornhub.com")
 			l := gctx.stats.Safebrowsing.Requests
@@ -166,9 +164,7 @@ func TestParallelSB(t *testing.T) {
 			t.Run(fmt.Sprintf("aaa%d", i), func(t *testing.T) {
 				t.Parallel()
 				d.checkMatch(t, "wmconvirus.narod.ru")
-				d.checkMatch(t, "wmconvirus.narod.ru.")
 				d.checkMatch(t, "test.wmconvirus.narod.ru")
-				d.checkMatch(t, "test.wmconvirus.narod.ru.")
 				d.checkMatchEmpty(t, "yandex.ru")
 				d.checkMatchEmpty(t, "pornhub.com")
 			})
@@ -368,8 +364,6 @@ func TestParentalControl(t *testing.T) {
 		t.Errorf("Parental lookup positive cache is not working")
 	}
 	d.checkMatch(t, "www.pornhub.com")
-	d.checkMatch(t, "pornhub.com.")
-	d.checkMatch(t, "www.pornhub.com.")
 	d.checkMatchEmpty(t, "www.yandex.ru")
 	d.checkMatchEmpty(t, "yandex.ru")
 	l := gctx.stats.Parental.Requests
