@@ -527,4 +527,22 @@ export default class Api {
         };
         return this.makeRequest(path, method, parameters);
     }
+
+    // Settings for statistics
+    STATS_INFO = { path: 'stats_info', method: 'GET' };
+    STATS_CONFIG = { path: 'stats_config', method: 'POST' };
+
+    getStatsInfo() {
+        const { path, method } = this.STATS_INFO;
+        return this.makeRequest(path, method);
+    }
+
+    setStatsConfig(data) {
+        const { path, method } = this.STATS_CONFIG;
+        const config = {
+            data,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, config);
+    }
 }

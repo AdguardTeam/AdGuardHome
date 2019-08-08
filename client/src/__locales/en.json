@@ -361,5 +361,10 @@
     "encryption_certificates_source_path": "Set a certificates file path",
     "encryption_certificates_source_content":"Paste the certificates contents",
     "encryption_key_source_path": "Set a private key file",
-    "encryption_key_source_content": "Paste the private key contents"
+    "encryption_key_source_content": "Paste the private key contents",
+    "stats_params": "Statistics configuration",
+    "config_successfully_saved": "Configuration successfully saved",
+    "interval_24_hour": "24 hours",
+    "interval_days": "{{value}} days",
+    "time_period": "Time period"
 }

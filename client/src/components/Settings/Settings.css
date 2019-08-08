@@ -104,3 +104,8 @@
     min-width: 23px;
     padding: 5px;
 }
+
+.custom-control-label,
+.custom-control-label:before {
+    transition: 0.3s ease-in-out background-color, 0.3s ease-in-out color;
+}

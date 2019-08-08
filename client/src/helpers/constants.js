@@ -260,3 +260,5 @@ export const FILTERED_STATUS = {
     FILTERED_BLOCKED_SERVICE: 'FilteredBlockedService',
     REWRITE: 'Rewrite',
 };
+
+export const STATS_INTERVALS = [1, 7, 30, 90];

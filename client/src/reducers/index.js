@@ -11,6 +11,7 @@ import clients from './clients';
 import access from './access';
 import rewrites from './rewrites';
 import services from './services';
+import stats from './stats';
 
 const settings = handleActions({
     [actions.initSettingsRequest]: state => ({ ...state, processing: true }),
@@ -218,6 +219,14 @@ const dashboard = handleActions({
     clients: [],
     autoClients: [],
     topStats: [],
+    stats: {
+        dns_queries: '',
+        blocked_filtering: '',
+        replaced_safebrowsing: '',
+        replaced_parental: '',
+        replaced_safesearch: '',
+        avg_processing_time: '',
+    },
 });
 
 const queryLogs = handleActions({
@@ -230,7 +239,11 @@ const queryLogs = handleActions({
     [actions.downloadQueryLogRequest]: state => ({ ...state, logsDownloading: true }),
     [actions.downloadQueryLogFailure]: state => ({ ...state, logsDownloading: false }),
     [actions.downloadQueryLogSuccess]: state => ({ ...state, logsDownloading: false }),
-}, { getLogsProcessing: false, logsDownloading: false });
+}, {
+    getLogsProcessing: false,
+    logsDownloading: false,
+    logs: [],
+});
 
 const filtering = handleActions({
     [actions.setRulesRequest]: state => ({ ...state, processingRules: true }),
@@ -426,6 +439,7 @@ export default combineReducers({
     access,
     rewrites,
     services,
+    stats,
     loadingBar: loadingBarReducer,
     form: formReducer,
 });
