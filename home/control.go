@@ -22,7 +22,7 @@ import (
 	govalidator "gopkg.in/asaskevich/govalidator.v4"
 )
 
-const updatePeriod = time.Minute * 30
+const updatePeriod = time.Hour * 24
 
 var protocols = []string{"tls://", "https://", "tcp://", "sdns://"}
 
