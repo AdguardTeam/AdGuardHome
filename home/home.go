@@ -218,13 +218,13 @@ func httpServerLoop() {
 		// this mechanism doesn't let us through until all conditions are met
 		for config.TLS.Enabled == false ||
 			config.TLS.PortHTTPS == 0 ||
-			config.TLS.PrivateKey == "" ||
-			config.TLS.CertificateChain == "" { // sleep until necessary data is supplied
+			len(config.TLS.PrivateKeyData) == 0 ||
+			len(config.TLS.CertificateChainData) == 0 { // sleep until necessary data is supplied
 			config.httpsServer.cond.Wait()
 		}
 		address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.TLS.PortHTTPS))
 		// validate current TLS config and update warnings (it could have been loaded from file)
-		data := validateCertificates(config.TLS.CertificateChain, config.TLS.PrivateKey, config.TLS.ServerName)
+		data := validateCertificates(string(config.TLS.CertificateChainData), string(config.TLS.PrivateKeyData), config.TLS.ServerName)
 		if !data.ValidPair {
 			cleanupAlways()
 			log.Fatal(data.WarningValidation)
@@ -235,10 +235,10 @@ func httpServerLoop() {
 
 		// prepare certs for HTTPS server
 		// important -- they have to be copies, otherwise changing the contents in config.TLS will break encryption for in-flight requests
-		certchain := make([]byte, len(config.TLS.CertificateChain))
-		copy(certchain, []byte(config.TLS.CertificateChain))
-		privatekey := make([]byte, len(config.TLS.PrivateKey))
-		copy(privatekey, []byte(config.TLS.PrivateKey))
+		certchain := make([]byte, len(config.TLS.CertificateChainData))
+		copy(certchain, config.TLS.CertificateChainData)
+		privatekey := make([]byte, len(config.TLS.PrivateKeyData))
+		copy(privatekey, config.TLS.PrivateKeyData)
 		cert, err := tls.X509KeyPair(certchain, privatekey)
 		if err != nil {
 			cleanupAlways()

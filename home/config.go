@@ -279,6 +279,12 @@ func parseConfig() error {
 	}
 	config.Clients = nil
 
+	status := tlsConfigStatus{}
+	if !tlsLoadConfig(&config.TLS, &status) {
+		log.Error("%s", status.WarningValidation)
+		return err
+	}
+
 	// Deduplicate filters
 	deduplicateFilters()
 

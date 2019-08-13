@@ -118,9 +118,9 @@ func TestDotServer(t *testing.T) {
 	defer removeDataDir(t)
 
 	s.conf.TLSConfig = TLSConfig{
-		TLSListenAddr:    &net.TCPAddr{Port: 0},
-		CertificateChain: string(certPem),
-		PrivateKey:       string(keyPem),
+		TLSListenAddr:        &net.TCPAddr{Port: 0},
+		CertificateChainData: certPem,
+		PrivateKeyData:       keyPem,
 	}
 
 	// Starting the server

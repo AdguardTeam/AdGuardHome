@@ -12,6 +12,9 @@ Contents:
 * Updating
 	* Get version command
 	* Update command
+* TLS
+	* API: Get TLS configuration
+	* API: Set TLS configuration
 * Device Names and Per-client Settings
 	* Per-client settings
 	* Get list of clients
@@ -508,6 +511,66 @@ Request:
 		"mac":"...",
 		"ip":"...",
 		"hostname":"..."
+	}
+
+Response:
+
+	200 OK
+
+
+## TLS
+
+
+### API: Get TLS configuration
+
+Request:
+
+	GET /control/tls/status
+
+Response:
+
+	200 OK
+
+	{
+	"enabled":true,
+	"server_name":"...",
+	"port_https":443,
+	"port_dns_over_tls":853,
+	"certificate_chain":"...",
+	"private_key":"...",
+	"certificate_path":"...",
+	"private_key_path":"..."
+
+	"subject":"CN=...",
+	"issuer":"CN=...",
+	"not_before":"2019-03-19T08:23:45Z",
+	"not_after":"2029-03-16T08:23:45Z",
+	"dns_names":null,
+	"key_type":"RSA",
+	"valid_cert":true,
+	"valid_key":true,
+	"valid_chain":false,
+	"valid_pair":true,
+	"warning_validation":"Your certificate does not verify: x509: certificate signed by unknown authority"
+	}
+
+
+### API: Set TLS configuration
+
+Request:
+
+	POST /control/tls/configure
+
+	{
+	"enabled":true,
+	"server_name":"hostname",
+	"force_https":false,
+	"port_https":443,
+	"port_dns_over_tls":853,
+	"certificate_chain":"...",
+	"private_key":"...",
+	"certificate_path":"...", // if set, certificate_chain must be empty
+	"private_key_path":"..." // if set, private_key must be empty
 	}
 
 Response:

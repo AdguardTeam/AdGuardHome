@@ -108,6 +108,12 @@ type TLSConfig struct {
 	TLSListenAddr    *net.TCPAddr `yaml:"-" json:"-"`
 	CertificateChain string       `yaml:"certificate_chain" json:"certificate_chain"` // PEM-encoded certificates chain
 	PrivateKey       string       `yaml:"private_key" json:"private_key"`             // PEM-encoded private key
+
+	CertificatePath string `yaml:"certificate_path" json:"certificate_path"` // certificate file name
+	PrivateKeyPath  string `yaml:"private_key_path" json:"private_key_path"` // private key file name
+
+	CertificateChainData []byte `yaml:"-" json:"-"`
+	PrivateKeyData       []byte `yaml:"-" json:"-"`
 }
 
 // ServerConfig represents server configuration.
@@ -216,9 +222,9 @@ func (s *Server) startInternal(config *ServerConfig) error {
 
 	convertArrayToMap(&s.BlockedHosts, s.conf.BlockedHosts)
 
-	if s.conf.TLSListenAddr != nil && s.conf.CertificateChain != "" && s.conf.PrivateKey != "" {
+	if s.conf.TLSListenAddr != nil && len(s.conf.CertificateChainData) != 0 && len(s.conf.PrivateKeyData) != 0 {
 		proxyConfig.TLSListenAddr = s.conf.TLSListenAddr
-		keypair, err := tls.X509KeyPair([]byte(s.conf.CertificateChain), []byte(s.conf.PrivateKey))
+		keypair, err := tls.X509KeyPair(s.conf.CertificateChainData, s.conf.PrivateKeyData)
 		if err != nil {
 			return errorx.Decorate(err, "Failed to parse TLS keypair")
 		}
