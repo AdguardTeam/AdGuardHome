@@ -150,5 +150,19 @@
     "category_label": "Catégorie",
     "rule_label": "Règle",
     "filter_label": "Filtre",
-    "unknown_filter": "Filtre inconnu {{filterId}}"
+    "unknown_filter": "Filtre inconnu {{filterId}}",
+    "install_devices_desc": "Pour commencer à utiliser AdGuard Home, vous devez configurer vos appareils.",
+    "install_submit_title": "Félicitations !",
+    "install_submit_desc": "La procédure d'installation est terminée et vous êtes prêt(e) pour commencer à utiliser AdGuard Home.",
+    "install_devices_router": "Routeur",
+    "install_devices_router_desc": "Cette installation impactera automatiquement tous les appareils connectés au routeur de votre maison et vous n'aurez pas besoin de configurer manuellement chaque appareil.",
+    "install_devices_address": "Le serveur DNS AdGuard Home écoute sur les adresses suivantes",
+    "install_devices_router_list_1": "Ouvrez les préférences de votre routeur. Normalement, vous pouvez y accéder depuis votre navigateur Web via une URL (exemple http://192.168.0.1/ ou http://192.168.1.1/). Vous devrez peut-être saisir le mot de passe. Si vous ne vous en rappelez plus, vous pouvez le réinitialiser en appuyant sur le bouton du routeur. Certains routeurs fonctionnent sous une application spécifique, qui devrait être déjà installée sur votre ordinateur/téléphone.",
+    "install_devices_router_list_2": "Trouvez les paramètres DHCP/DNS. Recherchez les lettres DNS près d'une zone qui permet la saisie de 2 ou 3 blocs de chiffres, chacun composé de 4 parties de 1 à 3 chiffres.",
+    "install_devices_router_list_3": "Saisissez vos adresses de serveur AdGuard Home ici.",
+    "install_devices_windows_list_1": "Ouvrez votre Panneau de configuration depuis le menu Démarrer ou la recherche Windows.",
+    "install_devices_windows_list_2": "Allez dans la catégorie Réseau et Internet et ensuite dans le Centre Réseau et Partage.",
+    "install_devices_windows_list_3": "Sur la partie gauche de l'écran, recherchez Modifier les paramètres de la carte et cliquez dessus.",
+    "install_devices_windows_list_4": "Sélectionnez votre connexion active, clic droit dessus et sélectionnez Propriétés.",
+    "install_devices_windows_list_5": "Recherchez la version du protocole Internet 4 (TCP/IP) dans la liste, sélectionnez-la puis cliquez à nouveau sur Propriétés."
 }
