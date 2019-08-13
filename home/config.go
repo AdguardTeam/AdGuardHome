@@ -112,8 +112,11 @@ type dnsConfig struct {
 	UpstreamDNS []string `yaml:"upstream_dns"`
 }
 
-var defaultDNS = []string{"https://dns.cloudflare.com/dns-query"}
-var defaultBootstrap = []string{"1.1.1.1"}
+var defaultDNS = []string{
+	"https://1.1.1.1/dns-query",
+	"https://1.0.0.1/dns-query",
+}
+var defaultBootstrap = []string{"1.1.1.1", "1.0.0.1"}
 
 type tlsConfigSettings struct {
 	Enabled        bool   `yaml:"enabled" json:"enabled"`                               // Enabled is the encryption (DOT/DOH/HTTPS) status
