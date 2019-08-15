@@ -4,7 +4,13 @@ A service-script for openrc based systems, for example if you run AdGuardHome in
 
 ### Installation
 
-Copy the script to /etc/init.d/adguardhome
+Install openrc:
+```
+apk update
+apk add openrc
+```
+
+Then copy the script to /etc/init.d/adguardhome
 
 ### Usage
 
