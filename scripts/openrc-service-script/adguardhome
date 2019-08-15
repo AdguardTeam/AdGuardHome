@@ -1,0 +1,38 @@
+#!/sbin/openrc-run
+#
+# openrc service-script for AdGuardHome
+#
+# place in /etc/init.d/
+# start on boot: "rc-update add adguardhome"
+# control service: "service adguardhome <start|stop|restart|checkconfig>"
+#
+
+description="AdGuard Home: Network-level blocker"
+
+pidfile="/run/$RC_SVCNAME.pid"
+command="/opt/AdGuardHome/AdGuardHome"
+command_args="-s run"
+command_background=true
+
+extra_commands="checkconfig"
+
+depend() {
+	need net
+	provide dns
+	after firewall
+}
+
+checkconfig() {
+	"$command" --check-config || return 1
+}
+
+stop() {
+	if [ "${RC_CMD}" = "restart" ] ; then
+		checkconfig || return 1
+	fi
+
+	ebegin "Stopping $RC_SVCNAME"
+	start-stop-daemon --stop --exec "$command" \
+		--pidfile "$pidfile" --quiet
+	eend $?
+}
