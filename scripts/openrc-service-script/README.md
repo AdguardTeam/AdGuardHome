@@ -21,5 +21,5 @@ rc-update add adguardhome
 
 Controlling AdGuardHome:
 ```
-service adguardhome <start|stop|restart|checkconfig>
+service adguardhome <start|stop|restart|status|checkconfig>
 ```

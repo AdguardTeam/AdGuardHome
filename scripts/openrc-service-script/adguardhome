@@ -4,7 +4,7 @@
 #
 # place in /etc/init.d/
 # start on boot: "rc-update add adguardhome"
-# control service: "service adguardhome <start|stop|restart|checkconfig>"
+# control service: "service adguardhome <start|stop|restart|status|checkconfig>"
 #
 
 description="AdGuard Home: Network-level blocker"
