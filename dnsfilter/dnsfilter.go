@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
-	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -16,7 +15,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/VictoriaMetrics/fastcache"
 	"github.com/joomcode/errorx"
 
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -177,9 +175,9 @@ func (i Reason) String() string {
 type dnsFilterContext struct {
 	stats             Stats
 	dialCache         gcache.Cache // "host" -> "IP" cache for safebrowsing and parental control servers
-	safebrowsingCache *fastcache.Cache
-	parentalCache     *fastcache.Cache
-	safeSearchCache   *fastcache.Cache
+	safebrowsingCache gcache.Cache
+	parentalCache     gcache.Cache
+	safeSearchCache   gcache.Cache
 }
 
 var gctx dnsFilterContext // global dnsfilter context
@@ -357,33 +355,39 @@ func matchBlockedServicesRules(host string, svcs []ServiceEntry) Result {
 	return res
 }
 
-func setCacheResult(cache *fastcache.Cache, host string, res Result) {
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	_ = enc.Encode(res)
-	cache.Set([]byte(host), buf.Bytes())
-	log.Debug("Stored in cache %p: %s => [%d]", cache, host, buf.Len())
+func setCacheResult(cache gcache.Cache, host string, res Result) {
+	err := cache.Set(host, res)
+	if err != nil {
+		log.Debug("cache.Set: %s", err)
+		return
+	}
+	log.Debug("Stored in cache %p: %s", cache, host)
 }
 
-func getCachedResult(cache *fastcache.Cache, host string) (result Result, isFound bool) {
+func getCachedResult(cache gcache.Cache, host string) (result Result, isFound bool) {
 	isFound = false // not found yet
 
 	// get raw value
-	rawValue := cache.Get(nil, []byte(host))
-	if len(rawValue) == 0 {
+	rawValue, err := cache.Get(host)
+	if err == gcache.KeyNotFoundError {
+		// not a real error, just not found
+		return Result{}, false
+	}
+	if err != nil {
+		// real error
 		return Result{}, false
 	}
 
-	var buf bytes.Buffer
-	buf.Write(rawValue)
-	dec := gob.NewDecoder(&buf)
-	cachedValue := Result{}
-	err := dec.Decode(&cachedValue)
-	if err != nil {
-		log.Debug("gob.Decode(): %s", err)
-		return Result{}, false
+	// since it can be something else, validate that it belongs to proper type
+	cachedValue, ok := rawValue.(Result)
+	if !ok {
+		// this is not our type -- error
+		text := "SHOULD NOT HAPPEN: entry with invalid type was found in lookup cache"
+		log.Println(text)
+		return
 	}
-	return cachedValue, true
+	isFound = ok
+	return cachedValue, isFound
 }
 
 // for each dot, hash it and add it to string
@@ -853,13 +857,13 @@ func New(c *Config, filters map[int]string) *Dnsfilter {
 	if c != nil {
 		// initialize objects only once
 		if gctx.safebrowsingCache == nil {
-			gctx.safebrowsingCache = fastcache.New(c.SafeBrowsingCacheSize)
+			gctx.safebrowsingCache = gcache.New(c.SafeBrowsingCacheSize).LRU().Expiration(defaultCacheTime).Build()
 		}
 		if gctx.safeSearchCache == nil {
-			gctx.safeSearchCache = fastcache.New(c.SafeSearchCacheSize)
+			gctx.safeSearchCache = gcache.New(c.SafeSearchCacheSize).LRU().Expiration(defaultCacheTime).Build()
 		}
 		if gctx.parentalCache == nil {
-			gctx.parentalCache = fastcache.New(c.ParentalCacheSize)
+			gctx.parentalCache = gcache.New(c.ParentalCacheSize).LRU().Expiration(defaultCacheTime).Build()
 		}
 		if len(c.ResolverAddress) != 0 && gctx.dialCache == nil {
 			gctx.dialCache = gcache.New(maxDialCacheSize).LRU().Expiration(defaultCacheTime).Build()
