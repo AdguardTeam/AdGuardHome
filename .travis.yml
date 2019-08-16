@@ -33,6 +33,9 @@ script:
 after_success:
   - bash <(curl -s https://codecov.io/bash)
 
+notifications:
+  slack: $SLACK_TOKEN
+
 matrix:
   include:
     # Release build configuration
