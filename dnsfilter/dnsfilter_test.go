@@ -30,13 +30,13 @@ var setts RequestFilteringSettings
 
 func purgeCaches() {
 	if gctx.safebrowsingCache != nil {
-		gctx.safebrowsingCache.Reset()
+		gctx.safebrowsingCache.Purge()
 	}
 	if gctx.parentalCache != nil {
-		gctx.parentalCache.Reset()
+		gctx.parentalCache.Purge()
 	}
 	if gctx.safeSearchCache != nil {
-		gctx.safeSearchCache.Reset()
+		gctx.safeSearchCache.Purge()
 	}
 }
 
@@ -51,10 +51,6 @@ func NewForTest(c *Config, filters map[int]string) *Dnsfilter {
 	setts = RequestFilteringSettings{}
 	setts.FilteringEnabled = true
 	if c != nil {
-		c.SafeBrowsingCacheSize = 1024
-		c.SafeSearchCacheSize = 1024
-		c.ParentalCacheSize = 1024
-
 		setts.SafeSearchEnabled = c.SafeSearchEnabled
 		setts.SafeBrowsingEnabled = c.SafeBrowsingEnabled
 		setts.ParentalEnabled = c.ParentalEnabled

@@ -211,10 +211,6 @@ func initConfig() {
 		// also change the default config
 		config.DNS.UpstreamDNS = defaultDNS
 	}
-
-	config.DNS.SafeBrowsingCacheSize = 64 * 1024
-	config.DNS.SafeSearchCacheSize = 64 * 1024
-	config.DNS.ParentalCacheSize = 64 * 1024
 }
 
 // getConfigFilename returns path to the current config file

@@ -3,12 +3,11 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.12
 
 require (
-	github.com/AdguardTeam/dnsproxy v0.18.1
+	github.com/AdguardTeam/dnsproxy v0.18.2
 	github.com/AdguardTeam/golibs v0.1.4
 	github.com/AdguardTeam/urlfilter v0.5.0
 	github.com/NYTimes/gziphandler v1.1.1
-	github.com/VictoriaMetrics/fastcache v1.5.1
-	github.com/bluele/gcache v0.0.0-20190203144525-2016d595ccb0
+	github.com/bluele/gcache v0.0.0-20190518031135-bc40bd653833
 	github.com/go-test/deep v1.0.1
 	github.com/gobuffalo/packr v1.19.0
 	github.com/joomcode/errorx v0.8.0
