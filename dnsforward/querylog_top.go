@@ -282,9 +282,9 @@ func (d *dayTop) getStatsTop() *StatsTop {
 	d.hoursReadLock()
 	for hour := 0; hour < 24; hour++ {
 		d.hours[hour].RLock()
-		do(d.hours[hour].domains.Keys(), d.hours[hour].lockedGetDomains, s.Domains)
-		do(d.hours[hour].blocked.Keys(), d.hours[hour].lockedGetBlocked, s.Blocked)
-		do(d.hours[hour].clients.Keys(), d.hours[hour].lockedGetClients, s.Clients)
+		do(d.hours[hour].domains.Keys(false), d.hours[hour].lockedGetDomains, s.Domains)
+		do(d.hours[hour].blocked.Keys(false), d.hours[hour].lockedGetBlocked, s.Blocked)
+		do(d.hours[hour].clients.Keys(false), d.hours[hour].lockedGetClients, s.Clients)
 		d.hours[hour].RUnlock()
 	}
 	d.hoursReadUnlock()
