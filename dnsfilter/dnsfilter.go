@@ -148,7 +148,7 @@ const (
 	ReasonRewrite
 )
 
-func (i Reason) String() string {
+func (r Reason) String() string {
 	names := []string{
 		"NotFilteredNotFound",
 		"NotFilteredWhiteList",
@@ -163,10 +163,10 @@ func (i Reason) String() string {
 
 		"Rewrite",
 	}
-	if uint(i) >= uint(len(names)) {
+	if uint(r) >= uint(len(names)) {
 		return ""
 	}
-	return names[i]
+	return names[r]
 }
 
 type dnsFilterContext struct {

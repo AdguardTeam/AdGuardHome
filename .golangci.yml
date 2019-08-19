@@ -13,6 +13,7 @@ run:
   skip-files:
     - ".*generated.*"
     - dnsfilter/rule_to_regexp.go
+    - ".*_test.go"
 
 
 # all available settings of specific linters
