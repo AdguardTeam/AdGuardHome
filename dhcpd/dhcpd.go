@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -38,6 +39,8 @@ type ServerConfig struct {
 	RangeStart    string `json:"range_start" yaml:"range_start"`
 	RangeEnd      string `json:"range_end" yaml:"range_end"`
 	LeaseDuration uint   `json:"lease_duration" yaml:"lease_duration"` // in seconds
+	WorkDir       string `json:"-" yaml:"-"`
+	DBFilePath    string `json:"-" yaml:"-"` // path to DB file
 
 	// IP conflict detector: time (ms) to wait for ICMP reply.
 	// 0: disable
@@ -97,6 +100,7 @@ func (s *Server) Init(config ServerConfig) error {
 
 func (s *Server) setConfig(config ServerConfig) error {
 	s.conf = config
+	s.conf.DBFilePath = filepath.Join(config.WorkDir, dbFilename)
 
 	iface, err := net.InterfaceByName(config.InterfaceName)
 	if err != nil {

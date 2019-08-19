@@ -37,10 +37,10 @@ func (s *Server) dbLoad() {
 	s.leases = nil
 	s.IPpool = make(map[[4]byte]net.HardwareAddr)
 
-	data, err := ioutil.ReadFile(dbFilename)
+	data, err := ioutil.ReadFile(s.conf.DBFilePath)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			log.Error("DHCP: can't read file %s: %v", dbFilename, err)
+			log.Error("DHCP: can't read file %s: %v", s.conf.DBFilePath, err)
 		}
 		return
 	}
@@ -99,10 +99,10 @@ func (s *Server) dbStore() {
 		return
 	}
 
-	err = file.SafeWrite(dbFilename, data)
+	err = file.SafeWrite(s.conf.DBFilePath, data)
 	if err != nil {
 		log.Error("DHCP: can't store lease table on disk: %v  filename: %s",
-			err, dbFilename)
+			err, s.conf.DBFilePath)
 		return
 	}
 	log.Info("DHCP: stored %d leases in DB", len(leases))
