@@ -21,6 +21,7 @@ func check(t *testing.T, result bool, msg string) {
 // . Handle Request message (lease commit)
 func TestDHCP(t *testing.T) {
 	var s = Server{}
+	s.conf.DBFilePath = dbFilename
 	var p, p2 dhcp4.Packet
 	var hw net.HardwareAddr
 	var lease *Lease
@@ -156,6 +157,7 @@ func misc(t *testing.T, s *Server) {
 // Leases database store/load
 func TestDB(t *testing.T) {
 	var s = Server{}
+	s.conf.DBFilePath = dbFilename
 	var p dhcp4.Packet
 	var hw1, hw2 net.HardwareAddr
 	var lease *Lease

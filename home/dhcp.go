@@ -75,6 +75,7 @@ func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	newconfig.ServerConfig.WorkDir = config.ourWorkingDir
 	err = config.dhcpServer.CheckConfig(newconfig.ServerConfig)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Invalid DHCP configuration: %s", err)
