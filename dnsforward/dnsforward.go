@@ -451,7 +451,15 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 	}
 
 	// use dnsfilter before cache -- changed settings or filters would require cache invalidation otherwise
+	s.RLock()
+	// Synchronize access to s.dnsFilter so it won't be suddenly uninitialized while in use.
+	// This could happen after proxy server has been stopped, but its workers are not yet exited.
+	//
+	// A better approach is for proxy.Stop() to wait until all its workers exit,
+	//  but this would require the Upstream interface to have Close() function
+	//  (to prevent from hanging while waiting for unresponsive DNS server to respond).
 	res, err := s.filterDNSRequest(d)
+	s.RUnlock()
 	if err != nil {
 		return err
 	}
@@ -511,19 +519,11 @@ func (s *Server) filterDNSRequest(d *proxy.DNSContext) (*dnsfilter.Result, error
 	var res dnsfilter.Result
 	req := d.Req
 	host := strings.TrimSuffix(req.Question[0].Name, ".")
-	origHost := host
 
-	s.RLock()
-	protectionEnabled := s.conf.ProtectionEnabled
 	dnsFilter := s.dnsFilter
-	s.RUnlock()
 
-	if !protectionEnabled {
+	if !s.conf.ProtectionEnabled {
 		return &dnsfilter.Result{}, nil
-	}
-
-	if host != origHost {
-		log.Debug("Rewrite: not supported: CNAME for %s is %s", origHost, host)
 	}
 
 	var err error
