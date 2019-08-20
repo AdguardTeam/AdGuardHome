@@ -78,6 +78,39 @@ func TestServer(t *testing.T) {
 	}
 }
 
+func TestServerWithProtectionDisabled(t *testing.T) {
+	s := createTestServer(t)
+	s.conf.ProtectionEnabled = false
+	defer removeDataDir(t)
+	err := s.Start(nil)
+	if err != nil {
+		t.Fatalf("Failed to start server: %s", err)
+	}
+
+	// message over UDP
+	req := createGoogleATestMessage()
+	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
+	client := dns.Client{Net: "udp"}
+	reply, _, err := client.Exchange(req, addr.String())
+	if err != nil {
+		t.Fatalf("Couldn't talk to server %s: %s", addr, err)
+	}
+	assertGoogleAResponse(t, reply)
+
+	// check query log and stats
+	log := s.GetQueryLog()
+	assert.Equal(t, 1, len(log), "Log size")
+	stats := s.GetStatsTop()
+	assert.Equal(t, 1, len(stats.Domains), "Top domains length")
+	assert.Equal(t, 0, len(stats.Blocked), "Top blocked length")
+	assert.Equal(t, 1, len(stats.Clients), "Top clients length")
+
+	err = s.Stop()
+	if err != nil {
+		t.Fatalf("DNS server failed to stop: %s", err)
+	}
+}
+
 func TestDotServer(t *testing.T) {
 	// Prepare the proxy server
 	_, certPem, keyPem := createServerTLSConfig(t)

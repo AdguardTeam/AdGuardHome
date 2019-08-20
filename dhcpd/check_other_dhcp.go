@@ -17,6 +17,7 @@ import (
 
 // CheckIfOtherDHCPServersPresent sends a DHCP request to the specified network interface,
 // and waits for a response for a period defined by defaultDiscoverTime
+// nolint
 func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 	iface, err := net.InterfaceByName(ifaceName)
 	if err != nil {
@@ -95,8 +96,6 @@ func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 	if c != nil {
 		defer c.Close()
 	}
-	// spew.Dump(c, err)
-	// spew.Printf("net.ListenUDP returned %v, %v\n", c, err)
 	if err != nil {
 		return false, wrapErrPrint(err, "Couldn't listen on :68")
 	}
@@ -104,7 +103,6 @@ func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 	// send to 255.255.255.255:67
 	cm := ipv4.ControlMessage{}
 	_, err = c.WriteTo(packet, &cm, dstAddr)
-	// spew.Dump(n, err)
 	if err != nil {
 		return false, wrapErrPrint(err, "Couldn't send a packet to %s", dst)
 	}

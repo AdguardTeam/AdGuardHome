@@ -61,6 +61,7 @@ func Main(version string, channel string) {
 
 // run initializes configuration and runs the AdGuard Home
 // run is a blocking method and it won't exit until the service is stopped!
+// nolint
 func run(args options) {
 	// config file path can be overridden by command-line arguments:
 	if args.configFilename != "" {

@@ -473,7 +473,6 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 		}
 
 		if res.Reason == dnsfilter.ReasonRewrite && len(res.CanonName) != 0 {
-
 			d.Req.Question[0] = originalQuestion
 			d.Res.Question[0] = originalQuestion
 
@@ -520,7 +519,7 @@ func (s *Server) filterDNSRequest(d *proxy.DNSContext) (*dnsfilter.Result, error
 	s.RUnlock()
 
 	if !protectionEnabled {
-		return nil, nil
+		return &dnsfilter.Result{}, nil
 	}
 
 	if host != origHost {
