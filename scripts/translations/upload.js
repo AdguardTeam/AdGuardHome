@@ -1,12 +1,12 @@
 const path = require('path');
 const fs = require('fs');
 const request = require('request-promise');
+const twoskyConfig = require('../../.twosky.json')[0];
 
+const { project_id: TWOSKY_PROJECT_ID, base_locale: LANGUAGE } = twoskyConfig;
 const LOCALES_DIR = '../../client/src/__locales';
 const BASE_FILE = 'en.json';
-const LANGUAGE = 'en';
 const TWOSKY_URI = process.env.TWOSKY_URI;
-const TWOSKY_PROJECT_ID = 'home';
 
 /**
  * Prepare post params

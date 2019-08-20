@@ -1,4 +1,9 @@
 {
+    "client_settings": "Paramètres du client",
+    "example_upstream_reserved": "vous pouvez spécifier un DNS upstream <0>pour un/des domaine(s) spécifique(s)</0>",
+    "upstream_parallel": "Utilisez des requêtes parallèles pour accélérer la résolution en requêtant simultanément tous les serveurs upstream",
+    "bootstrap_dns": "Serveurs DNS d'amorçage",
+    "bootstrap_dns_desc": "Les serveurs DNS d'amorçage sont utilisés pour résoudre les adresses IP des résolveurs DoH/DoT que vous spécifiez comme upstream.",
     "url_added_successfully": "Url ajoutée",
     "check_dhcp_servers": "Rechercher les serveurs DHCP",
     "save_config": "Sauvegarder la configuration",
