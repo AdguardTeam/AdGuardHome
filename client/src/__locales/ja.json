@@ -350,6 +350,7 @@
     "blocked_services": "ブロックするサービス",
     "blocked_services_desc": "人気のあるサイトやサービスを一気にブロック。",
     "blocked_services_saved": "ブロックするサービスを保存完了しました。",
+    "blocked_services_global": "ブロックするサービスに対しグローバル設定を使用する",
     "blocked_service": "ブロックするサービス",
     "block_all": "すべてブロック",
     "unblock_all": "すべてのブロックを解除"

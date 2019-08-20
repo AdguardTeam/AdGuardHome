@@ -1,0 +1,20 @@
+[
+  {
+    "project_id": "home",
+    "base_locale": "en",
+    "localizable_files": "client/src/__locales/en.json",
+    "languages": {
+      "en": "English",
+      "es": "Español",
+      "fr": "Français",
+      "pt-br": "Portuguese (BR)",
+      "sv": "Svenska",
+      "vi": "Tiếng Việt",
+      "bg": "Български",
+      "ru": "Русский",
+      "ja": "日本語",
+      "zh-tw": "正體中文",
+      "zh-cn": "简体中文"
+    }
+  }
+]

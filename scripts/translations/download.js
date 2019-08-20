@@ -1,24 +1,13 @@
 const fs = require('fs');
 const path = require('path');
 const requestPromise = require('request-promise');
+const twoskyConfig = require('../../.twosky.json')[0];
 
+const { project_id: TWOSKY_PROJECT_ID, languages } = twoskyConfig;
 const LOCALES_DIR = '../../client/src/__locales';
-const LOCALES_LIST = [
-    'en',
-    'ru',
-    'vi',
-    'es',
-    'fr',
-    'ja',
-    'sv',
-    'pt-br',
-    'zh-tw',
-    'bg',
-    'zh-cn',
-];
+const LOCALES_LIST = Object.keys(languages);
 const BASE_FILE = 'en.json';
 const TWOSKY_URI = process.env.TWOSKY_URI;
-const TWOSKY_PROJECT_ID = 'home';
 
 /**
  * Prepare params to get translations from twosky
