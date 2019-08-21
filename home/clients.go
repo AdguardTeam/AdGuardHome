@@ -382,8 +382,6 @@ type clientListJSON struct {
 
 // respond with information about configured clients
 func handleGetClients(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-
 	data := clientListJSON{}
 
 	config.clients.lock.Lock()
@@ -456,7 +454,6 @@ func jsonToClient(cj clientJSON) (*Client, error) {
 
 // Add a new client
 func handleAddClient(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "failed to read request body: %s", err)
@@ -491,7 +488,6 @@ func handleAddClient(w http.ResponseWriter, r *http.Request) {
 
 // Remove client
 func handleDelClient(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "failed to read request body: %s", err)
@@ -521,7 +517,6 @@ type updateJSON struct {
 
 // Update client's properties
 func handleUpdateClient(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "failed to read request body: %s", err)
@@ -557,8 +552,8 @@ func handleUpdateClient(w http.ResponseWriter, r *http.Request) {
 
 // RegisterClientsHandlers registers HTTP handlers
 func RegisterClientsHandlers() {
-	http.HandleFunc("/control/clients", postInstall(optionalAuth(ensureGET(handleGetClients))))
-	http.HandleFunc("/control/clients/add", postInstall(optionalAuth(ensurePOST(handleAddClient))))
-	http.HandleFunc("/control/clients/delete", postInstall(optionalAuth(ensurePOST(handleDelClient))))
-	http.HandleFunc("/control/clients/update", postInstall(optionalAuth(ensurePOST(handleUpdateClient))))
+	httpRegister(http.MethodGet, "/control/clients", handleGetClients)
+	httpRegister(http.MethodPost, "/control/clients/add", handleAddClient)
+	httpRegister(http.MethodPost, "/control/clients/delete", handleDelClient)
+	httpRegister(http.MethodPost, "/control/clients/update", handleUpdateClient)
 }

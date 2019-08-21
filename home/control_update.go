@@ -57,10 +57,9 @@ type getVersionJSONRequest struct {
 
 // Get the latest available version from the Internet
 func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 
 	if config.disableUpdate {
-		log.Tracef("New app version check is disabled by user")
+		httpError(w, http.StatusInternalServerError, "New app version check is disabled by user")
 		return
 	}
 
@@ -499,7 +498,6 @@ func finishUpdate(u *updateInfo) {
 
 // Perform an update procedure to the latest available version
 func handleUpdate(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 
 	if len(config.versionCheckJSON) == 0 {
 		httpError(w, http.StatusBadRequest, "/update request isn't allowed now")

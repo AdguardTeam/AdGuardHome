@@ -25,18 +25,16 @@ import (
 
 // RegisterTLSHandlers registers HTTP handlers for TLS configuration
 func RegisterTLSHandlers() {
-	http.HandleFunc("/control/tls/status", postInstall(optionalAuth(ensureGET(handleTLSStatus))))
-	http.HandleFunc("/control/tls/configure", postInstall(optionalAuth(ensurePOST(handleTLSConfigure))))
-	http.HandleFunc("/control/tls/validate", postInstall(optionalAuth(ensurePOST(handleTLSValidate))))
+	httpRegister(http.MethodGet, "/control/tls/status", handleTLSStatus)
+	httpRegister(http.MethodPost, "/control/tls/configure", handleTLSConfigure)
+	httpRegister(http.MethodPost, "/control/tls/validate", handleTLSValidate)
 }
 
 func handleTLSStatus(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	marshalTLS(w, config.TLS)
 }
 
 func handleTLSValidate(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	data, err := unmarshalTLS(r)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
@@ -62,7 +60,6 @@ func handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	data, err := unmarshalTLS(r)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)

@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
-	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -19,7 +17,6 @@ import (
 	"github.com/AdguardTeam/golibs/utils"
 	"github.com/NYTimes/gziphandler"
 	"github.com/miekg/dns"
-	govalidator "gopkg.in/asaskevich/govalidator.v4"
 )
 
 const updatePeriod = time.Hour * 24
@@ -114,8 +111,6 @@ func getDNSAddresses() []string {
 }
 
 func handleStatus(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-
 	data := map[string]interface{}{
 		"dns_addresses":      getDNSAddresses(),
 		"http_port":          config.BindPort,
@@ -144,13 +139,11 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleProtectionEnable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	config.DNS.ProtectionEnabled = true
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleProtectionDisable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	config.DNS.ProtectionEnabled = false
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
@@ -159,19 +152,16 @@ func handleProtectionDisable(w http.ResponseWriter, r *http.Request) {
 // stats
 // -----
 func handleQueryLogEnable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	config.DNS.QueryLogEnabled = true
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleQueryLogDisable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	config.DNS.QueryLogEnabled = false
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleQueryLog(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	data := config.dnsServer.GetQueryLog()
 
 	jsonVal, err := json.Marshal(data)
@@ -188,7 +178,6 @@ func handleQueryLog(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleStatsTop(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	s := config.dnsServer.GetStatsTop()
 
 	// use manual json marshalling because we want maps to be sorted by value
@@ -235,7 +224,6 @@ func handleStatsTop(w http.ResponseWriter, r *http.Request) {
 
 // handleStatsReset resets the stats caches
 func handleStatsReset(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	config.dnsServer.PurgeStats()
 	_, err := fmt.Fprintf(w, "OK\n")
 	if err != nil {
@@ -245,7 +233,6 @@ func handleStatsReset(w http.ResponseWriter, r *http.Request) {
 
 // handleStats returns aggregated stats data for the 24 hours
 func handleStats(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	summed := config.dnsServer.GetAggregatedStats()
 
 	statsJSON, err := json.Marshal(summed)
@@ -263,7 +250,6 @@ func handleStats(w http.ResponseWriter, r *http.Request) {
 
 // HandleStatsHistory returns historical stats data for the 24 hours
 func handleStatsHistory(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	// handle time unit and prepare our time window size
 	timeUnitString := r.URL.Query().Get("time_unit")
 	var timeUnit time.Duration
@@ -346,7 +332,6 @@ type upstreamConfig struct {
 }
 
 func handleSetUpstreamConfig(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	newconfig := upstreamConfig{}
 	err := json.NewDecoder(r.Body).Decode(&newconfig)
 	if err != nil {
@@ -484,7 +469,6 @@ func checkPlainDNS(upstream string) error {
 }
 
 func handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	upstreamConfig := upstreamConfig{}
 	err := json.NewDecoder(r.Body).Decode(&upstreamConfig)
 	if err != nil {
@@ -571,261 +555,21 @@ func checkDNS(input string, bootstrap []string) error {
 	return nil
 }
 
-// ---------
-// filtering
-// ---------
-
-func handleFilteringEnable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-	config.DNS.FilteringEnabled = true
-	httpUpdateConfigReloadDNSReturnOK(w, r)
-}
-
-func handleFilteringDisable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-	config.DNS.FilteringEnabled = false
-	httpUpdateConfigReloadDNSReturnOK(w, r)
-}
-
-func handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-	data := map[string]interface{}{
-		"enabled": config.DNS.FilteringEnabled,
-	}
-
-	config.RLock()
-	data["filters"] = config.Filters
-	data["user_rules"] = config.UserRules
-	jsonVal, err := json.Marshal(data)
-	config.RUnlock()
-
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to marshal status json: %s", err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to write response json: %s", err)
-		return
-	}
-}
-
-func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-	f := filter{}
-	err := json.NewDecoder(r.Body).Decode(&f)
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to parse request body json: %s", err)
-		return
-	}
-
-	if len(f.URL) == 0 {
-		http.Error(w, "URL parameter was not specified", http.StatusBadRequest)
-		return
-	}
-
-	if valid := govalidator.IsRequestURL(f.URL); !valid {
-		http.Error(w, "URL parameter is not valid request URL", http.StatusBadRequest)
-		return
-	}
-
-	// Check for duplicates
-	if filterExists(f.URL) {
-		httpError(w, http.StatusBadRequest, "Filter URL already added -- %s", f.URL)
-		return
-	}
-
-	// Set necessary properties
-	f.ID = assignUniqueFilterID()
-	f.Enabled = true
-
-	// Download the filter contents
-	ok, err := f.update()
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "Couldn't fetch filter from url %s: %s", f.URL, err)
-		return
-	}
-	if f.RulesCount == 0 {
-		httpError(w, http.StatusBadRequest, "Filter at the url %s has no rules (maybe it points to blank page?)", f.URL)
-		return
-	}
-	if !ok {
-		httpError(w, http.StatusBadRequest, "Filter at the url %s is invalid (maybe it points to blank page?)", f.URL)
-		return
-	}
-
-	// Save the filter contents
-	err = f.save()
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to save filter %d due to %s", f.ID, err)
-		return
-	}
-
-	// URL is deemed valid, append it to filters, update config, write new filter file and tell dns to reload it
-	// TODO: since we directly feed filters in-memory, revisit if writing configs is always necessary
-	if !filterAdd(f) {
-		httpError(w, http.StatusBadRequest, "Filter URL already added -- %s", f.URL)
-		return
-	}
-
-	err = writeAllConfigs()
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't write config file: %s", err)
-		return
-	}
-
-	err = reconfigureDNSServer()
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't reconfigure the DNS server: %s", err)
-		return
-	}
-
-	_, err = fmt.Fprintf(w, "OK %d rules\n", f.RulesCount)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't write body: %s", err)
-	}
-}
-
-func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-
-	type request struct {
-		URL string `json:"url"`
-	}
-	req := request{}
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to parse request body json: %s", err)
-		return
-	}
-
-	if valid := govalidator.IsRequestURL(req.URL); !valid {
-		http.Error(w, "URL parameter is not valid request URL", http.StatusBadRequest)
-		return
-	}
-
-	// Stop DNS server:
-	//  we close urlfilter object which in turn closes file descriptors to filter files.
-	// Otherwise, Windows won't allow us to remove the file which is being currently used.
-	_ = config.dnsServer.Stop()
-
-	// go through each element and delete if url matches
-	config.Lock()
-	newFilters := config.Filters[:0]
-	for _, filter := range config.Filters {
-		if filter.URL != req.URL {
-			newFilters = append(newFilters, filter)
-		} else {
-			// Remove the filter file
-			err := os.Remove(filter.Path())
-			if err != nil && !os.IsNotExist(err) {
-				config.Unlock()
-				httpError(w, http.StatusInternalServerError, "Couldn't remove the filter file: %s", err)
-				return
-			}
-			log.Debug("os.Remove(%s)", filter.Path())
-		}
-	}
-	// Update the configuration after removing filter files
-	config.Filters = newFilters
-	config.Unlock()
-	httpUpdateConfigReloadDNSReturnOK(w, r)
-}
-
-func handleFilteringEnableURL(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-	parameters, err := parseParametersFromBody(r.Body)
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "failed to parse parameters from body: %s", err)
-		return
-	}
-
-	url, ok := parameters["url"]
-	if !ok {
-		http.Error(w, "URL parameter was not specified", http.StatusBadRequest)
-		return
-	}
-
-	if valid := govalidator.IsRequestURL(url); !valid {
-		http.Error(w, "URL parameter is not valid request URL", http.StatusBadRequest)
-		return
-	}
-
-	found := filterEnable(url, true)
-	if !found {
-		http.Error(w, "URL parameter was not previously added", http.StatusBadRequest)
-		return
-	}
-
-	httpUpdateConfigReloadDNSReturnOK(w, r)
-}
-
-func handleFilteringDisableURL(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-	parameters, err := parseParametersFromBody(r.Body)
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "failed to parse parameters from body: %s", err)
-		return
-	}
-
-	url, ok := parameters["url"]
-	if !ok {
-		http.Error(w, "URL parameter was not specified", http.StatusBadRequest)
-		return
-	}
-
-	if valid := govalidator.IsRequestURL(url); !valid {
-		http.Error(w, "URL parameter is not valid request URL", http.StatusBadRequest)
-		return
-	}
-
-	found := filterEnable(url, false)
-	if !found {
-		http.Error(w, "URL parameter was not previously added", http.StatusBadRequest)
-		return
-	}
-
-	httpUpdateConfigReloadDNSReturnOK(w, r)
-}
-
-func handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to read request body: %s", err)
-		return
-	}
-
-	config.UserRules = strings.Split(string(body), "\n")
-	httpUpdateConfigReloadDNSReturnOK(w, r)
-}
-
-func handleFilteringRefresh(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-	updated := refreshFiltersIfNecessary(true)
-	fmt.Fprintf(w, "OK %d filters updated\n", updated)
-}
-
 // ------------
 // safebrowsing
 // ------------
 
 func handleSafeBrowsingEnable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	config.DNS.SafeBrowsingEnabled = true
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleSafeBrowsingDisable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	config.DNS.SafeBrowsingEnabled = false
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	data := map[string]interface{}{
 		"enabled": config.DNS.SafeBrowsingEnabled,
 	}
@@ -846,7 +590,6 @@ func handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Request) {
 // parental
 // --------
 func handleParentalEnable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	parameters, err := parseParametersFromBody(r.Body)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "failed to parse parameters from body: %s", err)
@@ -891,13 +634,11 @@ func handleParentalEnable(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleParentalDisable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	config.DNS.ParentalEnabled = false
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleParentalStatus(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	data := map[string]interface{}{
 		"enabled": config.DNS.ParentalEnabled,
 	}
@@ -923,19 +664,16 @@ func handleParentalStatus(w http.ResponseWriter, r *http.Request) {
 // ------------
 
 func handleSafeSearchEnable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	config.DNS.SafeSearchEnabled = true
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleSafeSearchDisable(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	config.DNS.SafeSearchEnabled = false
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
 func handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	data := map[string]interface{}{
 		"enabled": config.DNS.SafeSearchEnabled,
 	}
@@ -957,7 +695,6 @@ func handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
 // DNS-over-HTTPS
 // --------------
 func handleDOH(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	if r.TLS == nil {
 		httpError(w, http.StatusNotFound, "Not Found")
 		return
@@ -975,49 +712,49 @@ func handleDOH(w http.ResponseWriter, r *http.Request) {
 // registration of handlers
 // ------------------------
 func registerControlHandlers() {
-	http.HandleFunc("/control/status", postInstall(optionalAuth(ensureGET(handleStatus))))
-	http.HandleFunc("/control/enable_protection", postInstall(optionalAuth(ensurePOST(handleProtectionEnable))))
-	http.HandleFunc("/control/disable_protection", postInstall(optionalAuth(ensurePOST(handleProtectionDisable))))
-	http.Handle("/control/querylog", postInstallHandler(optionalAuthHandler(gziphandler.GzipHandler(ensureGETHandler(handleQueryLog)))))
-	http.HandleFunc("/control/querylog_enable", postInstall(optionalAuth(ensurePOST(handleQueryLogEnable))))
-	http.HandleFunc("/control/querylog_disable", postInstall(optionalAuth(ensurePOST(handleQueryLogDisable))))
-	http.HandleFunc("/control/set_upstreams_config", postInstall(optionalAuth(ensurePOST(handleSetUpstreamConfig))))
-	http.HandleFunc("/control/test_upstream_dns", postInstall(optionalAuth(ensurePOST(handleTestUpstreamDNS))))
-	http.HandleFunc("/control/i18n/change_language", postInstall(optionalAuth(ensurePOST(handleI18nChangeLanguage))))
-	http.HandleFunc("/control/i18n/current_language", postInstall(optionalAuth(ensureGET(handleI18nCurrentLanguage))))
-	http.HandleFunc("/control/stats_top", postInstall(optionalAuth(ensureGET(handleStatsTop))))
-	http.HandleFunc("/control/stats", postInstall(optionalAuth(ensureGET(handleStats))))
-	http.HandleFunc("/control/stats_history", postInstall(optionalAuth(ensureGET(handleStatsHistory))))
-	http.HandleFunc("/control/stats_reset", postInstall(optionalAuth(ensurePOST(handleStatsReset))))
+	httpRegister(http.MethodGet, "/control/status", handleStatus)
+	httpRegister(http.MethodPost, "/control/enable_protection", handleProtectionEnable)
+	httpRegister(http.MethodPost, "/control/disable_protection", handleProtectionDisable)
+	httpRegister(http.MethodGet, "/control/querylog", handleQueryLog)
+	httpRegister(http.MethodPost, "/control/querylog_enable", handleQueryLogEnable)
+	httpRegister(http.MethodPost, "/control/querylog_disable", handleQueryLogDisable)
+	httpRegister(http.MethodPost, "/control/set_upstreams_config", handleSetUpstreamConfig)
+	httpRegister(http.MethodPost, "/control/test_upstream_dns", handleTestUpstreamDNS)
+	httpRegister(http.MethodPost, "/control/i18n/change_language", handleI18nChangeLanguage)
+	httpRegister(http.MethodGet, "/control/i18n/current_language", handleI18nCurrentLanguage)
+	httpRegister(http.MethodGet, "/control/stats_top", handleStatsTop)
+	httpRegister(http.MethodGet, "/control/stats", handleStats)
+	httpRegister(http.MethodGet, "/control/stats_history", handleStatsHistory)
+	httpRegister(http.MethodPost, "/control/stats_reset", handleStatsReset)
 	http.HandleFunc("/control/version.json", postInstall(optionalAuth(handleGetVersionJSON)))
-	http.HandleFunc("/control/update", postInstall(optionalAuth(ensurePOST(handleUpdate))))
-	http.HandleFunc("/control/filtering/enable", postInstall(optionalAuth(ensurePOST(handleFilteringEnable))))
-	http.HandleFunc("/control/filtering/disable", postInstall(optionalAuth(ensurePOST(handleFilteringDisable))))
-	http.HandleFunc("/control/filtering/add_url", postInstall(optionalAuth(ensurePOST(handleFilteringAddURL))))
-	http.HandleFunc("/control/filtering/remove_url", postInstall(optionalAuth(ensurePOST(handleFilteringRemoveURL))))
-	http.HandleFunc("/control/filtering/enable_url", postInstall(optionalAuth(ensurePOST(handleFilteringEnableURL))))
-	http.HandleFunc("/control/filtering/disable_url", postInstall(optionalAuth(ensurePOST(handleFilteringDisableURL))))
-	http.HandleFunc("/control/filtering/refresh", postInstall(optionalAuth(ensurePOST(handleFilteringRefresh))))
-	http.HandleFunc("/control/filtering/status", postInstall(optionalAuth(ensureGET(handleFilteringStatus))))
-	http.HandleFunc("/control/filtering/set_rules", postInstall(optionalAuth(ensurePOST(handleFilteringSetRules))))
-	http.HandleFunc("/control/safebrowsing/enable", postInstall(optionalAuth(ensurePOST(handleSafeBrowsingEnable))))
-	http.HandleFunc("/control/safebrowsing/disable", postInstall(optionalAuth(ensurePOST(handleSafeBrowsingDisable))))
-	http.HandleFunc("/control/safebrowsing/status", postInstall(optionalAuth(ensureGET(handleSafeBrowsingStatus))))
-	http.HandleFunc("/control/parental/enable", postInstall(optionalAuth(ensurePOST(handleParentalEnable))))
-	http.HandleFunc("/control/parental/disable", postInstall(optionalAuth(ensurePOST(handleParentalDisable))))
-	http.HandleFunc("/control/parental/status", postInstall(optionalAuth(ensureGET(handleParentalStatus))))
-	http.HandleFunc("/control/safesearch/enable", postInstall(optionalAuth(ensurePOST(handleSafeSearchEnable))))
-	http.HandleFunc("/control/safesearch/disable", postInstall(optionalAuth(ensurePOST(handleSafeSearchDisable))))
-	http.HandleFunc("/control/safesearch/status", postInstall(optionalAuth(ensureGET(handleSafeSearchStatus))))
-	http.HandleFunc("/control/dhcp/status", postInstall(optionalAuth(ensureGET(handleDHCPStatus))))
-	http.HandleFunc("/control/dhcp/interfaces", postInstall(optionalAuth(ensureGET(handleDHCPInterfaces))))
-	http.HandleFunc("/control/dhcp/set_config", postInstall(optionalAuth(ensurePOST(handleDHCPSetConfig))))
-	http.HandleFunc("/control/dhcp/find_active_dhcp", postInstall(optionalAuth(ensurePOST(handleDHCPFindActiveServer))))
-	http.HandleFunc("/control/dhcp/add_static_lease", postInstall(optionalAuth(ensurePOST(handleDHCPAddStaticLease))))
-	http.HandleFunc("/control/dhcp/remove_static_lease", postInstall(optionalAuth(ensurePOST(handleDHCPRemoveStaticLease))))
+	httpRegister(http.MethodPost, "/control/update", handleUpdate)
+	httpRegister(http.MethodPost, "/control/filtering/enable", handleFilteringEnable)
+	httpRegister(http.MethodPost, "/control/filtering/disable", handleFilteringDisable)
+	httpRegister(http.MethodPost, "/control/filtering/add_url", handleFilteringAddURL)
+	httpRegister(http.MethodPost, "/control/filtering/remove_url", handleFilteringRemoveURL)
+	httpRegister(http.MethodPost, "/control/filtering/enable_url", handleFilteringEnableURL)
+	httpRegister(http.MethodPost, "/control/filtering/disable_url", handleFilteringDisableURL)
+	httpRegister(http.MethodPost, "/control/filtering/refresh", handleFilteringRefresh)
+	httpRegister(http.MethodGet, "/control/filtering/status", handleFilteringStatus)
+	httpRegister(http.MethodPost, "/control/filtering/set_rules", handleFilteringSetRules)
+	httpRegister(http.MethodPost, "/control/safebrowsing/enable", handleSafeBrowsingEnable)
+	httpRegister(http.MethodPost, "/control/safebrowsing/disable", handleSafeBrowsingDisable)
+	httpRegister(http.MethodGet, "/control/safebrowsing/status", handleSafeBrowsingStatus)
+	httpRegister(http.MethodPost, "/control/parental/enable", handleParentalEnable)
+	httpRegister(http.MethodPost, "/control/parental/disable", handleParentalDisable)
+	httpRegister(http.MethodGet, "/control/parental/status", handleParentalStatus)
+	httpRegister(http.MethodPost, "/control/safesearch/enable", handleSafeSearchEnable)
+	httpRegister(http.MethodPost, "/control/safesearch/disable", handleSafeSearchDisable)
+	httpRegister(http.MethodGet, "/control/safesearch/status", handleSafeSearchStatus)
+	httpRegister(http.MethodGet, "/control/dhcp/status", handleDHCPStatus)
+	httpRegister(http.MethodGet, "/control/dhcp/interfaces", handleDHCPInterfaces)
+	httpRegister(http.MethodPost, "/control/dhcp/set_config", handleDHCPSetConfig)
+	httpRegister(http.MethodPost, "/control/dhcp/find_active_dhcp", handleDHCPFindActiveServer)
+	httpRegister(http.MethodPost, "/control/dhcp/add_static_lease", handleDHCPAddStaticLease)
+	httpRegister(http.MethodPost, "/control/dhcp/remove_static_lease", handleDHCPRemoveStaticLease)
 
-	http.HandleFunc("/control/access/list", postInstall(optionalAuth(ensureGET(handleAccessList))))
-	http.HandleFunc("/control/access/set", postInstall(optionalAuth(ensurePOST(handleAccessSet))))
+	httpRegister(http.MethodGet, "/control/access/list", handleAccessList)
+	httpRegister(http.MethodPost, "/control/access/set", handleAccessSet)
 
 	RegisterTLSHandlers()
 	RegisterClientsHandlers()
@@ -1025,4 +762,10 @@ func registerControlHandlers() {
 	RegisterBlockedServicesHandlers()
 
 	http.HandleFunc("/dns-query", postInstall(handleDOH))
+}
+
+type httpHandlerType func(http.ResponseWriter, *http.Request)
+
+func httpRegister(method string, url string, handler httpHandlerType) {
+	http.Handle(url, postInstallHandler(optionalAuthHandler(gziphandler.GzipHandler(ensureHandler(method, handler)))))
 }

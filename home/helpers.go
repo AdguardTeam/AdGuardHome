@@ -29,6 +29,8 @@ import (
 // ----------------------------------
 func ensure(method string, handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Debug("%s %v", r.Method, r.URL)
+
 		if r.Method != method {
 			http.Error(w, "This request must be "+method, http.StatusMethodNotAllowed)
 			return
@@ -60,9 +62,9 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.handler(w, r)
 }
 
-func ensureGETHandler(handler func(http.ResponseWriter, *http.Request)) http.Handler {
+func ensureHandler(method string, handler func(http.ResponseWriter, *http.Request)) http.Handler {
 	h := httpHandler{}
-	h.handler = ensure("GET", handler)
+	h.handler = ensure(method, handler)
 	return &h
 }
 
