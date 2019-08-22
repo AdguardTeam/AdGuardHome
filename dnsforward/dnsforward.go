@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
@@ -40,6 +41,7 @@ type Server struct {
 	dnsProxy  *proxy.Proxy         // DNS proxy instance
 	dnsFilter *dnsfilter.Dnsfilter // DNS filter instance
 	queryLog  *queryLog            // Query log instance
+	stats     stats.Stats
 
 	AllowedClients         map[string]bool // IP addresses of whitelist clients
 	DisallowedClients      map[string]bool // IP addresses of clients that should be blocked
@@ -54,10 +56,11 @@ type Server struct {
 // NewServer creates a new instance of the dnsforward.Server
 // baseDir is the base directory for query logs
 // Note: this function must be called only once
-func NewServer(baseDir string) *Server {
+func NewServer(baseDir string, stats stats.Stats) *Server {
 	s := &Server{
 		queryLog: newQueryLog(baseDir),
 	}
+	s.stats = stats
 
 	log.Printf("Start DNS server periodic jobs")
 	go s.queryLog.periodicQueryLogRotate()
@@ -465,8 +468,8 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 		shouldLog = false
 	}
 
+	elapsed := time.Since(start)
 	if s.conf.QueryLogEnabled && shouldLog {
-		elapsed := time.Since(start)
 		upstreamAddr := ""
 		if d.Upstream != nil {
 			upstreamAddr = d.Upstream.Address()
@@ -474,7 +477,50 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 		_ = s.queryLog.logRequest(msg, d.Res, res, elapsed, d.Addr, upstreamAddr)
 	}
 
+	s.updateStats(d, elapsed, *res)
+
 	return nil
+}
+
+func (s *Server) updateStats(d *proxy.DNSContext, elapsed time.Duration, res dnsfilter.Result) {
+	if s.stats == nil {
+		return
+	}
+
+	e := stats.Entry{}
+	e.Domain = strings.ToLower(d.Req.Question[0].Name)
+	e.Domain = e.Domain[:len(e.Domain)-1] // remove last "."
+	switch addr := d.Addr.(type) {
+	case *net.UDPAddr:
+		e.Client = addr.IP
+	case *net.TCPAddr:
+		e.Client = addr.IP
+	}
+	e.Time = uint(elapsed / 1000)
+	switch res.Reason {
+
+	case dnsfilter.NotFilteredNotFound:
+		fallthrough
+	case dnsfilter.NotFilteredWhiteList:
+		fallthrough
+	case dnsfilter.NotFilteredError:
+		e.Result = stats.RNotFiltered
+
+	case dnsfilter.FilteredSafeBrowsing:
+		e.Result = stats.RSafeBrowsing
+	case dnsfilter.FilteredParental:
+		e.Result = stats.RParental
+	case dnsfilter.FilteredSafeSearch:
+		e.Result = stats.RSafeSearch
+
+	case dnsfilter.FilteredBlackList:
+		fallthrough
+	case dnsfilter.FilteredInvalid:
+		fallthrough
+	case dnsfilter.FilteredBlockedService:
+		e.Result = stats.RFiltered
+	}
+	s.stats.Update(e)
 }
 
 // filterDNSRequest applies the dnsFilter and sets d.Res if the request was filtered

@@ -422,7 +422,7 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 }
 
 func createTestServer(t *testing.T) *Server {
-	s := NewServer(createDataDir(t))
+	s := NewServer(createDataDir(t), nil)
 	s.conf.UDPListenAddr = &net.UDPAddr{Port: 0}
 	s.conf.TCPListenAddr = &net.TCPAddr{Port: 0}
 
