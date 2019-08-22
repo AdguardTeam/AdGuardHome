@@ -94,27 +94,6 @@ const dashboard = handleActions({
         return newState;
     },
 
-    [actions.getStatsRequest]: state => ({ ...state, processingStats: true }),
-    [actions.getStatsFailure]: state => ({ ...state, processingStats: false }),
-    [actions.getStatsSuccess]: (state, { payload }) => {
-        const newState = { ...state, stats: payload, processingStats: false };
-        return newState;
-    },
-
-    [actions.getTopStatsRequest]: state => ({ ...state, processingTopStats: true }),
-    [actions.getTopStatsFailure]: state => ({ ...state, processingTopStats: false }),
-    [actions.getTopStatsSuccess]: (state, { payload }) => {
-        const newState = { ...state, topStats: payload, processingTopStats: false };
-        return newState;
-    },
-
-    [actions.getStatsHistoryRequest]: state => ({ ...state, processingStatsHistory: true }),
-    [actions.getStatsHistoryFailure]: state => ({ ...state, processingStatsHistory: false }),
-    [actions.getStatsHistorySuccess]: (state, { payload }) => {
-        const newState = { ...state, statsHistory: payload, processingStatsHistory: false };
-        return newState;
-    },
-
     [actions.toggleLogStatusRequest]: state => ({ ...state, logStatusProcessing: true }),
     [actions.toggleLogStatusFailure]: state => ({ ...state, logStatusProcessing: false }),
     [actions.toggleLogStatusSuccess]: (state) => {
@@ -200,8 +179,6 @@ const dashboard = handleActions({
 }, {
     processing: true,
     isCoreRunning: false,
-    processingTopStats: true,
-    processingStats: true,
     logStatusProcessing: false,
     processingVersion: true,
     processingFiltering: true,
@@ -218,15 +195,6 @@ const dashboard = handleActions({
     dnsVersion: '',
     clients: [],
     autoClients: [],
-    topStats: [],
-    stats: {
-        dns_queries: '',
-        blocked_filtering: '',
-        replaced_safebrowsing: '',
-        replaced_parental: '',
-        replaced_safesearch: '',
-        avg_processing_time: '',
-    },
 });
 
 const queryLogs = handleActions({

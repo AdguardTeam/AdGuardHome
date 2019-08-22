@@ -1,6 +1,4 @@
 import axios from 'axios';
-import subHours from 'date-fns/sub_hours';
-import dateFormat from 'date-fns/format';
 
 export default class Api {
     baseUrl = 'control';
@@ -26,11 +24,8 @@ export default class Api {
     // Global methods
     GLOBAL_RESTART = { path: 'restart', method: 'POST' };
     GLOBAL_START = { path: 'start', method: 'POST' };
-    GLOBAL_STATS = { path: 'stats', method: 'GET' };
-    GLOBAL_STATS_HISTORY = { path: 'stats_history', method: 'GET' };
     GLOBAL_STATUS = { path: 'status', method: 'GET' };
     GLOBAL_STOP = { path: 'stop', method: 'POST' };
-    GLOBAL_STATS_TOP = { path: 'stats_top', method: 'GET' };
     GLOBAL_QUERY_LOG = { path: 'querylog', method: 'GET' };
     GLOBAL_QUERY_LOG_ENABLE = { path: 'querylog_enable', method: 'POST' };
     GLOBAL_QUERY_LOG_DISABLE = { path: 'querylog_disable', method: 'POST' };
@@ -56,33 +51,8 @@ export default class Api {
         return this.makeRequest(path, method);
     }
 
-    getGlobalStats() {
-        const { path, method } = this.GLOBAL_STATS;
-        return this.makeRequest(path, method);
-    }
-
-    getGlobalStatsHistory() {
-        const { path, method } = this.GLOBAL_STATS_HISTORY;
-        const format = 'YYYY-MM-DDTHH:mm:ssZ';
-        const dateNow = Date.now();
-
-        const config = {
-            params: {
-                start_time: dateFormat(subHours(dateNow, 24), format),
-                end_time: dateFormat(dateNow, format),
-                time_unit: 'hours',
-            },
-        };
-        return this.makeRequest(path, method, config);
-    }
-
     getGlobalStatus() {
         const { path, method } = this.GLOBAL_STATUS;
-        return this.makeRequest(path, method);
-    }
-
-    getGlobalStatsTop() {
-        const { path, method } = this.GLOBAL_STATS_TOP;
         return this.makeRequest(path, method);
     }
 
@@ -529,8 +499,14 @@ export default class Api {
     }
 
     // Settings for statistics
+    GET_STATS = { path: 'stats', method: 'GET' };
     STATS_INFO = { path: 'stats_info', method: 'GET' };
     STATS_CONFIG = { path: 'stats_config', method: 'POST' };
+
+    getStats() {
+        const { path, method } = this.GET_STATS;
+        return this.makeRequest(path, method);
+    }
 
     getStatsInfo() {
         const { path, method } = this.STATS_INFO;

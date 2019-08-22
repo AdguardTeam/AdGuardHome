@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import ReactTable from 'react-table';
 import PropTypes from 'prop-types';
-import map from 'lodash/map';
 import { Trans, withNamespaces } from 'react-i18next';
 
 import Card from '../ui/Card';
@@ -18,55 +17,71 @@ class Clients extends Component {
             return STATUS_COLORS.yellow;
         }
         return STATUS_COLORS.red;
-    }
+    };
 
-    columns = [{
-        Header: 'IP',
-        accessor: 'ip',
-        Cell: ({ value }) => {
-            const clientName = getClientName(this.props.clients, value)
-                || getClientName(this.props.autoClients, value);
-            let client;
+    columns = [
+        {
+            Header: 'IP',
+            accessor: 'ip',
+            Cell: ({ value }) => {
+                const clientName =
+                    getClientName(this.props.clients, value) ||
+                    getClientName(this.props.autoClients, value);
+                let client;
 
-            if (clientName) {
-                client = <span>{clientName} <small>({value})</small></span>;
-            } else {
-                client = value;
-            }
+                if (clientName) {
+                    client = (
+                        <span>
+                            {clientName} <small>({value})</small>
+                        </span>
+                    );
+                } else {
+                    client = value;
+                }
 
-            return (
-                <div className="logs__row logs__row--overflow">
-                    <span className="logs__text" title={value}>
-                        {client}
-                    </span>
-                </div>
-            );
+                return (
+                    <div className="logs__row logs__row--overflow">
+                        <span className="logs__text" title={value}>
+                            {client}
+                        </span>
+                    </div>
+                );
+            },
+            sortMethod: (a, b) =>
+                parseInt(a.replace(/\./g, ''), 10) - parseInt(b.replace(/\./g, ''), 10),
         },
-        sortMethod: (a, b) => parseInt(a.replace(/\./g, ''), 10) - parseInt(b.replace(/\./g, ''), 10),
-    }, {
-        Header: <Trans>requests_count</Trans>,
-        accessor: 'count',
-        Cell: ({ value }) => {
-            const percent = getPercent(this.props.dnsQueries, value);
-            const percentColor = this.getPercentColor(percent);
+        {
+            Header: <Trans>requests_count</Trans>,
+            accessor: 'count',
+            Cell: ({ value }) => {
+                const percent = getPercent(this.props.dnsQueries, value);
+                const percentColor = this.getPercentColor(percent);
 
-            return (
-                <Cell value={value} percent={percent} color={percentColor} />
-            );
+                return <Cell value={value} percent={percent} color={percentColor} />;
+            },
         },
-    }];
+    ];
 
     render() {
-        const { t } = this.props;
+        const {
+            t, refreshButton, topClients, subtitle,
+        } = this.props;
+
         return (
-            <Card title={ t('top_clients') } subtitle={ t('for_last_24_hours') } bodyType="card-table" refresh={this.props.refreshButton}>
+            <Card
+                title={t('top_clients')}
+                subtitle={subtitle}
+                bodyType="card-table"
+                refresh={refreshButton}
+            >
                 <ReactTable
-                    data={map(this.props.topClients, (value, prop) => (
-                        { ip: prop, count: value }
-                    ))}
+                    data={topClients.map(item => ({
+                        ip: item.name,
+                        count: item.count,
+                    }))}
                     columns={this.columns}
                     showPagination={false}
-                    noDataText={ t('no_clients_found') }
+                    noDataText={t('no_clients_found')}
                     minRows={6}
                     className="-striped -highlight card-table-overflow"
                 />
@@ -76,12 +91,13 @@ class Clients extends Component {
 }
 
 Clients.propTypes = {
-    topClients: PropTypes.object.isRequired,
+    topClients: PropTypes.array.isRequired,
     dnsQueries: PropTypes.number.isRequired,
     refreshButton: PropTypes.node.isRequired,
     clients: PropTypes.array.isRequired,
     autoClients: PropTypes.array.isRequired,
-    t: PropTypes.func,
+    subtitle: PropTypes.string.isRequired,
+    t: PropTypes.func.isRequired,
 };
 
 export default withNamespaces()(Clients);

@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import ReactTable from 'react-table';
 import PropTypes from 'prop-types';
-import map from 'lodash/map';
 import { withNamespaces, Trans } from 'react-i18next';
 
 import Card from '../ui/Card';
@@ -13,52 +12,58 @@ import { getPercent } from '../../helpers/helpers';
 import { STATUS_COLORS } from '../../helpers/constants';
 
 class BlockedDomains extends Component {
-    columns = [{
-        Header: 'IP',
-        accessor: 'ip',
-        Cell: (row) => {
-            const { value } = row;
-            const trackerData = getTrackerData(value);
+    columns = [
+        {
+            Header: <Trans>domain</Trans>,
+            accessor: 'domain',
+            Cell: (row) => {
+                const { value } = row;
+                const trackerData = getTrackerData(value);
 
-            return (
-                <div className="logs__row">
-                    <div className="logs__text" title={value}>
-                        {value}
+                return (
+                    <div className="logs__row">
+                        <div className="logs__text" title={value}>
+                            {value}
+                        </div>
+                        {trackerData && <Popover data={trackerData} />}
                     </div>
-                    {trackerData && <Popover data={trackerData} />}
-                </div>
-            );
+                );
+            },
         },
-    }, {
-        Header: <Trans>requests_count</Trans>,
-        accessor: 'domain',
-        maxWidth: 190,
-        Cell: ({ value }) => {
-            const {
-                blockedFiltering,
-                replacedSafebrowsing,
-                replacedParental,
-            } = this.props;
-            const blocked = blockedFiltering + replacedSafebrowsing + replacedParental;
-            const percent = getPercent(blocked, value);
+        {
+            Header: <Trans>requests_count</Trans>,
+            accessor: 'count',
+            maxWidth: 190,
+            Cell: ({ value }) => {
+                const { blockedFiltering, replacedSafebrowsing, replacedParental } = this.props;
+                const blocked = blockedFiltering + replacedSafebrowsing + replacedParental;
+                const percent = getPercent(blocked, value);
 
-            return (
-                <Cell value={value} percent={percent} color={STATUS_COLORS.red} />
-            );
+                return <Cell value={value} percent={percent} color={STATUS_COLORS.red} />;
+            },
         },
-    }];
+    ];
 
     render() {
-        const { t } = this.props;
+        const {
+            t, refreshButton, topBlockedDomains, subtitle,
+        } = this.props;
+
         return (
-            <Card title={ t('top_blocked_domains') } subtitle={ t('for_last_24_hours') } bodyType="card-table" refresh={this.props.refreshButton}>
+            <Card
+                title={t('top_blocked_domains')}
+                subtitle={subtitle}
+                bodyType="card-table"
+                refresh={refreshButton}
+            >
                 <ReactTable
-                    data={map(this.props.topBlockedDomains, (value, prop) => (
-                        { ip: prop, domain: value }
-                    ))}
+                    data={topBlockedDomains.map(item => ({
+                        domain: item.name,
+                        count: item.count,
+                    }))}
                     columns={this.columns}
                     showPagination={false}
-                    noDataText={ t('no_domains_found') }
+                    noDataText={t('no_domains_found')}
                     minRows={6}
                     className="-striped -highlight card-table-overflow stats__table"
                 />
@@ -68,12 +73,13 @@ class BlockedDomains extends Component {
 }
 
 BlockedDomains.propTypes = {
-    topBlockedDomains: PropTypes.object.isRequired,
+    topBlockedDomains: PropTypes.array.isRequired,
     blockedFiltering: PropTypes.number.isRequired,
     replacedSafebrowsing: PropTypes.number.isRequired,
     replacedParental: PropTypes.number.isRequired,
     refreshButton: PropTypes.node.isRequired,
-    t: PropTypes.func,
+    subtitle: PropTypes.string.isRequired,
+    t: PropTypes.func.isRequired,
 };
 
 export default withNamespaces()(BlockedDomains);

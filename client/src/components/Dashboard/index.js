@@ -19,10 +19,9 @@ class Dashboard extends Component {
 
     getAllStats = () => {
         this.props.getStats();
-        this.props.getStatsHistory();
-        this.props.getTopStats();
+        this.props.getStatsConfig();
         this.props.getClients();
-    }
+    };
 
     getToggleFilteringButton = () => {
         const { protectionEnabled, processingProtection } = this.props.dashboard;
@@ -39,16 +38,20 @@ class Dashboard extends Component {
                 <Trans>{buttonText}</Trans>
             </button>
         );
-    }
+    };
 
     render() {
-        const { dashboard, t } = this.props;
+        const { dashboard, stats, t } = this.props;
         const dashboardProcessing =
             dashboard.processing ||
-            dashboard.processingStats ||
-            dashboard.processingStatsHistory ||
             dashboard.processingClients ||
-            dashboard.processingTopStats;
+            stats.processingStats ||
+            stats.processingGetConfig;
+
+        const subtitle =
+            stats.interval === 1
+                ? t('for_last_24_hours')
+                : t('for_last_days', { value: stats.interval });
 
         const refreshFullButton = (
             <button
@@ -59,6 +62,7 @@ class Dashboard extends Component {
                 <Trans>refresh_statics</Trans>
             </button>
         );
+
         const refreshButton = (
             <button
                 type="button"
@@ -73,87 +77,85 @@ class Dashboard extends Component {
 
         return (
             <Fragment>
-                <PageTitle title={ t('dashboard') }>
+                <PageTitle title={t('dashboard')}>
                     <div className="page-title__actions">
                         {this.getToggleFilteringButton()}
                         {refreshFullButton}
                     </div>
                 </PageTitle>
                 {dashboardProcessing && <Loading />}
-                {!dashboardProcessing &&
+                {!dashboardProcessing && (
                     <div className="row row-cards">
-                        {dashboard.statsHistory &&
-                            <div className="col-lg-12">
-                                <Statistics
-                                    history={dashboard.statsHistory}
-                                    refreshButton={refreshButton}
-                                    dnsQueries={dashboard.stats.dns_queries}
-                                    blockedFiltering={dashboard.stats.blocked_filtering}
-                                    replacedSafebrowsing={dashboard.stats.replaced_safebrowsing}
-                                    replacedParental={dashboard.stats.replaced_parental}
-                                />
-                            </div>
-                        }
-                        <div className="col-lg-6">
-                            {dashboard.stats &&
-                                <Counters
-                                    refreshButton={refreshButton}
-                                    dnsQueries={dashboard.stats.dns_queries}
-                                    blockedFiltering={dashboard.stats.blocked_filtering}
-                                    replacedSafebrowsing={dashboard.stats.replaced_safebrowsing}
-                                    replacedParental={dashboard.stats.replaced_parental}
-                                    replacedSafesearch={dashboard.stats.replaced_safesearch}
-                                    avgProcessingTime={dashboard.stats.avg_processing_time}
-                                />
-                            }
+                        <div className="col-lg-12">
+                            <Statistics
+                                interval={stats.interval}
+                                dnsQueries={stats.dnsQueries}
+                                blockedFiltering={stats.blockedFiltering}
+                                replacedSafebrowsing={stats.replacedSafebrowsing}
+                                replacedParental={stats.replacedParental}
+                                numDnsQueries={stats.numDnsQueries}
+                                numBlockedFiltering={stats.numBlockedFiltering}
+                                numReplacedSafebrowsing={stats.numReplacedSafebrowsing}
+                                numReplacedParental={stats.numReplacedParental}
+                                refreshButton={refreshButton}
+                            />
                         </div>
-                        {dashboard.topStats &&
-                            <Fragment>
-                                <div className="col-lg-6">
-                                    <Clients
-                                        dnsQueries={dashboard.stats.dns_queries}
-                                        refreshButton={refreshButton}
-                                        topClients={dashboard.topStats.top_clients}
-                                        clients={dashboard.clients}
-                                        autoClients={dashboard.autoClients}
-                                    />
-                                </div>
-                                <div className="col-lg-6">
-                                    <QueriedDomains
-                                        dnsQueries={dashboard.stats.dns_queries}
-                                        refreshButton={refreshButton}
-                                        topQueriedDomains={dashboard.topStats.top_queried_domains}
-                                    />
-                                </div>
-                                <div className="col-lg-6">
-                                    <BlockedDomains
-                                        refreshButton={refreshButton}
-                                        topBlockedDomains={dashboard.topStats.top_blocked_domains}
-                                        blockedFiltering={dashboard.stats.blocked_filtering}
-                                        replacedSafebrowsing={dashboard.stats.replaced_safebrowsing}
-                                        replacedParental={dashboard.stats.replaced_parental}
-                                    />
-                                </div>
-                            </Fragment>
-                        }
+                        <div className="col-lg-6">
+                            <Counters
+                                subtitle={subtitle}
+                                interval={stats.interval}
+                                dnsQueries={stats.numDnsQueries}
+                                blockedFiltering={stats.numBlockedFiltering}
+                                replacedSafebrowsing={stats.numReplacedSafebrowsing}
+                                replacedParental={stats.numReplacedParental}
+                                replacedSafesearch={stats.numReplacedSafesearch}
+                                avgProcessingTime={stats.avgProcessingTime}
+                                refreshButton={refreshButton}
+                            />
+                        </div>
+                        <div className="col-lg-6">
+                            <Clients
+                                subtitle={subtitle}
+                                dnsQueries={stats.numDnsQueries}
+                                topClients={stats.topClients}
+                                clients={dashboard.clients}
+                                autoClients={dashboard.autoClients}
+                                refreshButton={refreshButton}
+                            />
+                        </div>
+                        <div className="col-lg-6">
+                            <QueriedDomains
+                                subtitle={subtitle}
+                                dnsQueries={stats.numDnsQueries}
+                                topQueriedDomains={stats.topQueriedDomains}
+                                refreshButton={refreshButton}
+                            />
+                        </div>
+                        <div className="col-lg-6">
+                            <BlockedDomains
+                                subtitle={subtitle}
+                                topBlockedDomains={stats.topBlockedDomains}
+                                blockedFiltering={stats.numBlockedFiltering}
+                                replacedSafebrowsing={stats.numReplacedSafebrowsing}
+                                replacedParental={stats.numReplacedParental}
+                                refreshButton={refreshButton}
+                            />
+                        </div>
                     </div>
-                }
+                )}
             </Fragment>
         );
     }
 }
 
 Dashboard.propTypes = {
-    getStats: PropTypes.func,
-    getStatsHistory: PropTypes.func,
-    getTopStats: PropTypes.func,
-    dashboard: PropTypes.object,
-    isCoreRunning: PropTypes.bool,
-    getFiltering: PropTypes.func,
-    toggleProtection: PropTypes.func,
-    getClients: PropTypes.func,
-    processingProtection: PropTypes.bool,
-    t: PropTypes.func,
+    dashboard: PropTypes.object.isRequired,
+    stats: PropTypes.object.isRequired,
+    getStats: PropTypes.func.isRequired,
+    getStatsConfig: PropTypes.func.isRequired,
+    toggleProtection: PropTypes.func.isRequired,
+    getClients: PropTypes.func.isRequired,
+    t: PropTypes.func.isRequired,
 };
 
 export default withNamespaces()(Dashboard);

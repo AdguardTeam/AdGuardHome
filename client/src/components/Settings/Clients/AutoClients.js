@@ -27,8 +27,9 @@ class AutoClients extends Component {
     };
 
     getStats = (ip, stats) => {
-        if (stats && stats.top_clients) {
-            return stats.top_clients[ip];
+        if (stats) {
+            const statsForCurrentIP = stats.find(item => item.name === ip);
+            return statsForCurrentIP && statsForCurrentIP.count;
         }
 
         return '';
@@ -59,11 +60,11 @@ class AutoClients extends Component {
             Cell: this.cellWrap,
         },
         {
-            Header: this.props.t('table_statistics'),
+            Header: this.props.t('requests_count'),
             accessor: 'statistics',
             Cell: (row) => {
                 const clientIP = row.original.ip;
-                const clientStats = clientIP && this.getStats(clientIP, this.props.topStats);
+                const clientStats = clientIP && this.getStats(clientIP, this.props.topClients);
 
                 if (clientStats) {
                     return (
@@ -112,7 +113,7 @@ class AutoClients extends Component {
 AutoClients.propTypes = {
     t: PropTypes.func.isRequired,
     autoClients: PropTypes.array.isRequired,
-    topStats: PropTypes.object.isRequired,
+    topClients: PropTypes.array.isRequired,
 };
 
 export default withNamespaces()(AutoClients);

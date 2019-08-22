@@ -1,14 +1,23 @@
 import { connect } from 'react-redux';
-import * as actionCreators from '../actions';
+import { toggleProtection, getClients } from '../actions';
+import { getStats, getStatsConfig, setStatsConfig } from '../actions/stats';
 import Dashboard from '../components/Dashboard';
 
 const mapStateToProps = (state) => {
-    const { dashboard } = state;
-    const props = { dashboard };
+    const { dashboard, stats } = state;
+    const props = { dashboard, stats };
     return props;
+};
+
+const mapDispatchToProps = {
+    toggleProtection,
+    getClients,
+    getStats,
+    getStatsConfig,
+    setStatsConfig,
 };
 
 export default connect(
     mapStateToProps,
-    actionCreators,
+    mapDispatchToProps,
 )(Dashboard);

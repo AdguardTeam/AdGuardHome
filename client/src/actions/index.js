@@ -1,11 +1,10 @@
 import { createAction } from 'redux-actions';
-import round from 'lodash/round';
 import { t } from 'i18next';
 import { showLoading, hideLoading } from 'react-redux-loading-bar';
 import axios from 'axios';
 
 import versionCompare from '../helpers/versionCompare';
-import { normalizeHistory, normalizeFilteringStatus, normalizeLogs, normalizeTextarea, sortClients } from '../helpers/helpers';
+import { normalizeFilteringStatus, normalizeLogs, normalizeTextarea, sortClients } from '../helpers/helpers';
 import { SETTINGS_NAMES, CHECK_TIMEOUT } from '../helpers/constants';
 import { getTlsStatus } from './encryption';
 import Api from '../api/Api';
@@ -246,27 +245,6 @@ export const getClients = () => async (dispatch) => {
     }
 };
 
-export const getTopStatsRequest = createAction('GET_TOP_STATS_REQUEST');
-export const getTopStatsFailure = createAction('GET_TOP_STATS_FAILURE');
-export const getTopStatsSuccess = createAction('GET_TOP_STATS_SUCCESS');
-
-export const getTopStats = () => async (dispatch, getState) => {
-    dispatch(getTopStatsRequest());
-    const timer = setInterval(async () => {
-        const state = getState();
-        if (state.dashboard.isCoreRunning) {
-            clearInterval(timer);
-            try {
-                const stats = await apiClient.getGlobalStatsTop();
-                dispatch(getTopStatsSuccess(stats));
-            } catch (error) {
-                dispatch(addErrorToast({ error }));
-                dispatch(getTopStatsFailure(error));
-            }
-        }
-    }, 100);
-};
-
 export const dnsStatusRequest = createAction('DNS_STATUS_REQUEST');
 export const dnsStatusFailure = createAction('DNS_STATUS_FAILURE');
 export const dnsStatusSuccess = createAction('DNS_STATUS_SUCCESS');
@@ -311,27 +289,6 @@ export const disableDns = () => async (dispatch) => {
     } catch (error) {
         dispatch(disableDnsFailure(error));
         dispatch(addErrorToast({ error }));
-    }
-};
-
-export const getStatsRequest = createAction('GET_STATS_REQUEST');
-export const getStatsFailure = createAction('GET_STATS_FAILURE');
-export const getStatsSuccess = createAction('GET_STATS_SUCCESS');
-
-export const getStats = () => async (dispatch) => {
-    dispatch(getStatsRequest());
-    try {
-        const stats = await apiClient.getGlobalStats();
-
-        const processedStats = {
-            ...stats,
-            avg_processing_time: round(stats.avg_processing_time, 2),
-        };
-
-        dispatch(getStatsSuccess(processedStats));
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
-        dispatch(getStatsFailure());
     }
 };
 
@@ -472,22 +429,6 @@ export const refreshFilters = () => async (dispatch) => {
 };
 
 export const handleRulesChange = createAction('HANDLE_RULES_CHANGE');
-
-export const getStatsHistoryRequest = createAction('GET_STATS_HISTORY_REQUEST');
-export const getStatsHistoryFailure = createAction('GET_STATS_HISTORY_FAILURE');
-export const getStatsHistorySuccess = createAction('GET_STATS_HISTORY_SUCCESS');
-
-export const getStatsHistory = () => async (dispatch) => {
-    dispatch(getStatsHistoryRequest());
-    try {
-        const statsHistory = await apiClient.getGlobalStatsHistory();
-        const normalizedHistory = normalizeHistory(statsHistory);
-        dispatch(getStatsHistorySuccess(normalizedHistory));
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
-        dispatch(getStatsHistoryFailure());
-    }
-};
 
 export const addFilterRequest = createAction('ADD_FILTER_REQUEST');
 export const addFilterFailure = createAction('ADD_FILTER_FAILURE');

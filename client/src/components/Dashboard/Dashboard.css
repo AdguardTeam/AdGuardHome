@@ -20,3 +20,8 @@
     border-top: 6px solid transparent;
     border-bottom: 6px solid #585965;
 }
+
+.card-chart-bg {
+    left: -20px;
+    width: calc(100% + 20px);
+}

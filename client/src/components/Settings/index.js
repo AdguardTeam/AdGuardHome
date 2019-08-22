@@ -88,7 +88,7 @@ class Settings extends Component {
                             <div className="col-md-12">
                                 <StatsConfig
                                     interval={stats.interval}
-                                    processing={stats.setConfigProcessing}
+                                    processing={stats.processingSetConfig}
                                     setStatsConfig={setStatsConfig}
                                 />
                             </div>

@@ -10,13 +10,14 @@ import Loading from '../../ui/Loading';
 class Clients extends Component {
     componentDidMount() {
         this.props.getClients();
-        this.props.getTopStats();
+        this.props.getStats();
     }
 
     render() {
         const {
             t,
             dashboard,
+            stats,
             clients,
             addClient,
             updateClient,
@@ -27,12 +28,12 @@ class Clients extends Component {
         return (
             <Fragment>
                 <PageTitle title={t('client_settings')} />
-                {(dashboard.processingTopStats || dashboard.processingClients) && <Loading />}
-                {!dashboard.processingTopStats && !dashboard.processingClients && (
+                {(stats.processingStats || dashboard.processingClients) && <Loading />}
+                {!stats.processingStats && !dashboard.processingClients && (
                     <Fragment>
                         <ClientsTable
                             clients={dashboard.clients}
-                            topStats={dashboard.topStats}
+                            topClients={stats.topClients}
                             isModalOpen={clients.isModalOpen}
                             modalClientName={clients.modalClientName}
                             modalType={clients.modalType}
@@ -46,7 +47,7 @@ class Clients extends Component {
                         />
                         <AutoClients
                             autoClients={dashboard.autoClients}
-                            topStats={dashboard.topStats}
+                            topClients={stats.topClients}
                         />
                     </Fragment>
                 )}
@@ -58,14 +59,14 @@ class Clients extends Component {
 Clients.propTypes = {
     t: PropTypes.func.isRequired,
     dashboard: PropTypes.object.isRequired,
+    stats: PropTypes.object.isRequired,
     clients: PropTypes.object.isRequired,
     toggleClientModal: PropTypes.func.isRequired,
     deleteClient: PropTypes.func.isRequired,
     addClient: PropTypes.func.isRequired,
     updateClient: PropTypes.func.isRequired,
     getClients: PropTypes.func.isRequired,
-    getTopStats: PropTypes.func.isRequired,
-    topStats: PropTypes.object,
+    getStats: PropTypes.func.isRequired,
 };
 
 export default withNamespaces()(Clients);
