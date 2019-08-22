@@ -14,12 +14,12 @@ class Table extends Component {
 
     columns = [
         {
-            Header: 'Domain',
+            Header: this.props.t('domain'),
             accessor: 'domain',
             Cell: this.cellWrap,
         },
         {
-            Header: 'Answer',
+            Header: this.props.t('answer'),
             accessor: 'answer',
             Cell: this.cellWrap,
         },

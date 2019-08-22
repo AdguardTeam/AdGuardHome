@@ -44,7 +44,7 @@ class Services extends Component {
         return (
             <Card
                 title={t('blocked_services')}
-                subtitle={t('Allows to quickly block popular sites.')}
+                subtitle={t('blocked_services_desc')}
                 bodyType="card-body box-body--settings"
             >
                 <div className="form">

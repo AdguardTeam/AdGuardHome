@@ -78,8 +78,8 @@
     "top_clients": "Top clients",
     "no_clients_found": "No clients found",
     "general_statistics": "General statistics",
-    "number_of_dns_query_days": "A number of DNS quieries processed for the last {{value}} days",
-    "number_of_dns_query_24_hours": "A number of DNS quieries processed for the last 24 hours",
+    "number_of_dns_query_days": "A number of DNS queries processed for the last {{value}} days",
+    "number_of_dns_query_24_hours": "A number of DNS queries processed for the last 24 hours",
     "number_of_dns_query_blocked_24_hours": "A number of DNS requests blocked by adblock filters and hosts blocklists",
     "number_of_dns_query_blocked_24_hours_by_sec": "A number of DNS requests blocked by the AdGuard browsing security module",
     "number_of_dns_query_blocked_24_hours_adult": "A number of adult websites blocked",
@@ -368,5 +368,6 @@
     "interval_days": "{{value}} days",
     "time_period": "Time period",
     "domain": "Domain",
-    "filter_added_successfully": "Filter has been added successfully"
+    "answer": "Answer",
+    "filter_added_successfully": "The filter has been successfully added"
 }

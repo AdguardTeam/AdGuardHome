@@ -24,7 +24,7 @@ const Modal = (props) => {
             <div className="modal-content">
                 <div className="modal-header">
                     <h4 className="modal-title">
-                        <Trans>Add DNS rewrite</Trans>
+                        <Trans>rewrite_add</Trans>
                     </h4>
                     <button type="button" className="close" onClick={() => toggleRewritesModal()}>
                         <span className="sr-only">Close</span>
