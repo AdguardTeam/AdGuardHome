@@ -98,7 +98,7 @@ type FilteringConfig struct {
 
 	// Names of services to block (globally).
 	// Per-client settings can override this configuration.
-	BlockedServices []string `json:"blocked_services"`
+	BlockedServices []string `yaml:"blocked_services"`
 
 	dnsfilter.Config `yaml:",inline"`
 }
