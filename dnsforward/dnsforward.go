@@ -522,7 +522,7 @@ func (s *Server) filterDNSRequest(d *proxy.DNSContext) (*dnsfilter.Result, error
 
 	dnsFilter := s.dnsFilter
 
-	if !s.conf.ProtectionEnabled {
+	if !s.conf.ProtectionEnabled || s.dnsFilter == nil {
 		return &dnsfilter.Result{}, nil
 	}
 
