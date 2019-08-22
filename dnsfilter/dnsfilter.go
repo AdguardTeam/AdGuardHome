@@ -5,6 +5,8 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/binary"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -18,15 +20,13 @@ import (
 	"github.com/joomcode/errorx"
 
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/bluele/gcache"
 	"github.com/miekg/dns"
 	"golang.org/x/net/publicsuffix"
 )
-
-const defaultCacheSize = 64 * 1024 // in number of elements
-const defaultCacheTime = 30 * time.Minute
 
 const defaultHTTPTimeout = 5 * time.Minute
 const defaultHTTPMaxIdleConnections = 100
@@ -67,6 +67,11 @@ type Config struct {
 	SafeSearchEnabled   bool   `yaml:"safesearch_enabled"`
 	SafeBrowsingEnabled bool   `yaml:"safebrowsing_enabled"`
 	ResolverAddress     string // DNS server address
+
+	SafeBrowsingCacheSize uint `yaml:"safebrowsing_cache_size"` // (in bytes)
+	SafeSearchCacheSize   uint `yaml:"safesearch_cache_size"`   // (in bytes)
+	ParentalCacheSize     uint `yaml:"parental_cache_size"`     // (in bytes)
+	CacheTime             uint `yaml:"cache_time"`              // Element's TTL (in minutes)
 
 	Rewrites []RewriteEntry `yaml:"rewrites"`
 
@@ -172,9 +177,9 @@ func (r Reason) String() string {
 type dnsFilterContext struct {
 	stats             Stats
 	dialCache         gcache.Cache // "host" -> "IP" cache for safebrowsing and parental control servers
-	safebrowsingCache gcache.Cache
-	parentalCache     gcache.Cache
-	safeSearchCache   gcache.Cache
+	safebrowsingCache cache.Cache
+	parentalCache     cache.Cache
+	safeSearchCache   cache.Cache
 }
 
 var gctx dnsFilterContext // global dnsfilter context
@@ -352,39 +357,52 @@ func matchBlockedServicesRules(host string, svcs []ServiceEntry) Result {
 	return res
 }
 
-func setCacheResult(cache gcache.Cache, host string, res Result) {
-	err := cache.Set(host, res)
+/*
+expire byte[4]
+res Result
+*/
+func (d *Dnsfilter) setCacheResult(cache cache.Cache, host string, res Result) {
+	var buf bytes.Buffer
+
+	expire := uint(time.Now().Unix()) + d.Config.CacheTime*60
+	var exp []byte
+	exp = make([]byte, 4)
+	binary.BigEndian.PutUint32(exp, uint32(expire))
+	_, _ = buf.Write(exp)
+
+	enc := gob.NewEncoder(&buf)
+	err := enc.Encode(res)
 	if err != nil {
-		log.Debug("cache.Set: %s", err)
+		log.Error("gob.Encode(): %s", err)
 		return
 	}
+	_ = cache.Set([]byte(host), buf.Bytes())
 	log.Debug("Stored in cache %p: %s", cache, host)
 }
 
-func getCachedResult(cache gcache.Cache, host string) (result Result, isFound bool) {
-	isFound = false // not found yet
-
-	// get raw value
-	rawValue, err := cache.Get(host)
-	if err == gcache.KeyNotFoundError {
-		// not a real error, just not found
+func getCachedResult(cache cache.Cache, host string) (Result, bool) {
+	data := cache.Get([]byte(host))
+	if data == nil {
 		return Result{}, false
 	}
+
+	exp := int(binary.BigEndian.Uint32(data[:4]))
+	if exp <= int(time.Now().Unix()) {
+		cache.Del([]byte(host))
+		return Result{}, false
+	}
+
+	var buf bytes.Buffer
+	buf.Write(data[4:])
+	dec := gob.NewDecoder(&buf)
+	r := Result{}
+	err := dec.Decode(&r)
 	if err != nil {
-		// real error
+		log.Debug("gob.Decode(): %s", err)
 		return Result{}, false
 	}
 
-	// since it can be something else, validate that it belongs to proper type
-	cachedValue, ok := rawValue.(Result)
-	if !ok {
-		// this is not our type -- error
-		text := "SHOULD NOT HAPPEN: entry with invalid type was found in lookup cache"
-		log.Println(text)
-		return
-	}
-	isFound = ok
-	return cachedValue, isFound
+	return r, true
 }
 
 // for each dot, hash it and add it to string
@@ -445,7 +463,7 @@ func (d *Dnsfilter) checkSafeSearch(host string) (Result, error) {
 	res := Result{IsFiltered: true, Reason: FilteredSafeSearch}
 	if ip := net.ParseIP(safeHost); ip != nil {
 		res.IP = ip
-		setCacheResult(gctx.safeSearchCache, host, res)
+		d.setCacheResult(gctx.safeSearchCache, host, res)
 		return res, nil
 	}
 
@@ -468,7 +486,7 @@ func (d *Dnsfilter) checkSafeSearch(host string) (Result, error) {
 	}
 
 	// Cache result
-	setCacheResult(gctx.safeSearchCache, host, res)
+	d.setCacheResult(gctx.safeSearchCache, host, res)
 	return res, nil
 }
 
@@ -523,7 +541,7 @@ func (d *Dnsfilter) checkSafeBrowsing(host string) (Result, error) {
 	result, err := d.lookupCommon(host, &gctx.stats.Safebrowsing, true, format, handleBody)
 
 	if err == nil {
-		setCacheResult(gctx.safebrowsingCache, host, result)
+		d.setCacheResult(gctx.safebrowsingCache, host, result)
 	}
 
 	return result, err
@@ -589,7 +607,7 @@ func (d *Dnsfilter) checkParental(host string) (Result, error) {
 	result, err := d.lookupCommon(host, &gctx.stats.Parental, false, format, handleBody)
 
 	if err == nil {
-		setCacheResult(gctx.parentalCache, host, result)
+		d.setCacheResult(gctx.parentalCache, host, result)
 	}
 
 	return result, err
@@ -852,18 +870,30 @@ func (d *Dnsfilter) createCustomDialContext(resolverAddr string) dialFunctionTyp
 func New(c *Config, filters map[int]string) *Dnsfilter {
 
 	if c != nil {
+		cacheConf := cache.Config{
+			EnableLRU: true,
+		}
+
 		// initialize objects only once
+
 		if gctx.safebrowsingCache == nil {
-			gctx.safebrowsingCache = gcache.New(defaultCacheSize).LRU().Expiration(defaultCacheTime).Build()
+			cacheConf.MaxSize = c.SafeBrowsingCacheSize
+			gctx.safebrowsingCache = cache.New(cacheConf)
 		}
+
 		if gctx.safeSearchCache == nil {
-			gctx.safeSearchCache = gcache.New(defaultCacheSize).LRU().Expiration(defaultCacheTime).Build()
+			cacheConf.MaxSize = c.SafeSearchCacheSize
+			gctx.safeSearchCache = cache.New(cacheConf)
 		}
+
 		if gctx.parentalCache == nil {
-			gctx.parentalCache = gcache.New(defaultCacheSize).LRU().Expiration(defaultCacheTime).Build()
+			cacheConf.MaxSize = c.ParentalCacheSize
+			gctx.parentalCache = cache.New(cacheConf)
 		}
+
 		if len(c.ResolverAddress) != 0 && gctx.dialCache == nil {
-			gctx.dialCache = gcache.New(maxDialCacheSize).LRU().Expiration(defaultCacheTime).Build()
+			dur := time.Duration(c.CacheTime) * time.Minute
+			gctx.dialCache = gcache.New(maxDialCacheSize).LRU().Expiration(dur).Build()
 		}
 	}
 
