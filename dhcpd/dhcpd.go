@@ -129,6 +129,9 @@ func (s *Server) setConfig(config ServerConfig) error {
 	if err != nil {
 		return wrapErrPrint(err, "Failed to parse range end address %s", config.RangeEnd)
 	}
+	if dhcp4.IPRange(s.leaseStart, s.leaseStop) <= 0 {
+		return wrapErrPrint(err, "DHCP: Incorrect range_start/range_end values")
+	}
 
 	subnet, err := parseIPv4(config.SubnetMask)
 	if err != nil || !isValidSubnetMask(subnet) {
