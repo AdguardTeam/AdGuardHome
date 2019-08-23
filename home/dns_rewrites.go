@@ -14,7 +14,6 @@ type rewriteEntryJSON struct {
 }
 
 func handleRewriteList(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 
 	arr := []*rewriteEntryJSON{}
 
@@ -37,7 +36,6 @@ func handleRewriteList(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 
 	jsent := rewriteEntryJSON{}
 	err := json.NewDecoder(r.Body).Decode(&jsent)
@@ -66,7 +64,6 @@ func handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleRewriteDelete(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 
 	jsent := rewriteEntryJSON{}
 	err := json.NewDecoder(r.Body).Decode(&jsent)
@@ -101,7 +98,7 @@ func handleRewriteDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 func registerRewritesHandlers() {
-	http.HandleFunc("/control/rewrite/list", postInstall(optionalAuth(ensureGET(handleRewriteList))))
-	http.HandleFunc("/control/rewrite/add", postInstall(optionalAuth(ensurePOST(handleRewriteAdd))))
-	http.HandleFunc("/control/rewrite/delete", postInstall(optionalAuth(ensurePOST(handleRewriteDelete))))
+	httpRegister(http.MethodGet, "/control/rewrite/list", handleRewriteList)
+	httpRegister(http.MethodPost, "/control/rewrite/add", handleRewriteAdd)
+	httpRegister(http.MethodPost, "/control/rewrite/delete", handleRewriteDelete)
 }

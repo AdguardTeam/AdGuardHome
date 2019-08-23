@@ -20,7 +20,6 @@ type firstRunData struct {
 
 // Get initial installation settings
 func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	data := firstRunData{}
 	data.WebPort = 80
 	data.DNSPort = 53
@@ -65,7 +64,6 @@ type checkConfigResp struct {
 
 // Check if ports are available, respond with results
 func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	reqData := checkConfigReq{}
 	respData := checkConfigResp{}
 	err := json.NewDecoder(r.Body).Decode(&reqData)
@@ -190,7 +188,6 @@ func copyInstallSettings(dst *configuration, src *configuration) {
 
 // Apply new configuration, start DNS server, restart Web server
 func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	newSettings := applyConfigReq{}
 	err := json.NewDecoder(r.Body).Decode(&newSettings)
 	if err != nil {

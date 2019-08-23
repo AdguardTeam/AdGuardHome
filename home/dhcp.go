@@ -38,7 +38,6 @@ func convertLeases(inputLeases []dhcpd.Lease, includeExpires bool) []map[string]
 }
 
 func handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	leases := convertLeases(config.dhcpServer.Leases(), true)
 	staticLeases := convertLeases(config.dhcpServer.StaticLeases(), false)
 	status := map[string]interface{}{
@@ -67,7 +66,6 @@ type dhcpServerConfigJSON struct {
 }
 
 func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	newconfig := dhcpServerConfigJSON{}
 	err := json.NewDecoder(r.Body).Decode(&newconfig)
 	if err != nil {
@@ -116,7 +114,6 @@ func handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	response := map[string]interface{}{}
 
 	ifaces, err := getValidNetInterfaces()
@@ -181,7 +178,6 @@ func handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 // . Check if a static IP is configured for the network interface
 // Respond with results
 func handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		errorText := fmt.Sprintf("failed to read request body: %s", err)
@@ -366,7 +362,6 @@ func setStaticIP(ifaceName string) error {
 }
 
 func handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 
 	lj := leaseJSON{}
 	err := json.NewDecoder(r.Body).Decode(&lj)
@@ -397,7 +392,6 @@ func handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 
 	lj := leaseJSON{}
 	err := json.NewDecoder(r.Body).Decode(&lj)

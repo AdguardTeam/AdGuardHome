@@ -15,8 +15,6 @@ type accessListJSON struct {
 }
 
 func handleAccessList(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-
 	config.controlLock.Lock()
 	j := accessListJSON{
 		AllowedClients:    config.DNS.AllowedClients,
@@ -50,7 +48,6 @@ func checkIPCIDRArray(src []string) error {
 }
 
 func handleAccessSet(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
 
 	j := accessListJSON{}
 	err := json.NewDecoder(r.Body).Decode(&j)

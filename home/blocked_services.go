@@ -73,8 +73,6 @@ func ApplyBlockedServices(setts *dnsfilter.RequestFilteringSettings, list []stri
 }
 
 func handleBlockedServicesList(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-
 	config.RLock()
 	list := config.DNS.BlockedServices
 	config.RUnlock()
@@ -88,8 +86,6 @@ func handleBlockedServicesList(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleBlockedServicesSet(w http.ResponseWriter, r *http.Request) {
-	log.Tracef("%s %v", r.Method, r.URL)
-
 	list := []string{}
 	err := json.NewDecoder(r.Body).Decode(&list)
 	if err != nil {
@@ -114,6 +110,6 @@ func handleBlockedServicesSet(w http.ResponseWriter, r *http.Request) {
 
 // RegisterBlockedServicesHandlers - register HTTP handlers
 func RegisterBlockedServicesHandlers() {
-	http.HandleFunc("/control/blocked_services/list", postInstall(optionalAuth(ensureGET(handleBlockedServicesList))))
-	http.HandleFunc("/control/blocked_services/set", postInstall(optionalAuth(ensurePOST(handleBlockedServicesSet))))
+	httpRegister(http.MethodGet, "/control/blocked_services/list", handleBlockedServicesList)
+	httpRegister(http.MethodPost, "/control/blocked_services/set", handleBlockedServicesSet)
 }
