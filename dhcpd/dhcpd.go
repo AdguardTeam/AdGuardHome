@@ -550,11 +550,49 @@ func (s *Server) AddStaticLease(l Lease) error {
 	defer s.leasesLock.Unlock()
 
 	if s.findReservedHWaddr(l.IP) != nil {
-		return fmt.Errorf("IP is already used")
+		err := s.rmDynamicLeaseWithIP(l.IP)
+		if err != nil {
+			return err
+		}
 	}
 	s.leases = append(s.leases, &l)
 	s.reserveIP(l.IP, l.HWAddr)
 	s.dbStore()
+	return nil
+}
+
+// Remove a dynamic lease by IP address
+func (s *Server) rmDynamicLeaseWithIP(ip net.IP) error {
+	var newLeases []*Lease
+	for _, lease := range s.leases {
+		if bytes.Equal(lease.IP.To4(), ip) {
+			if lease.Expiry.Unix() == leaseExpireStatic {
+				return fmt.Errorf("Static lease with the same IP already exists")
+			}
+			continue
+		}
+		newLeases = append(newLeases, lease)
+	}
+	s.leases = newLeases
+	s.unreserveIP(ip)
+	return nil
+}
+
+// Remove a lease
+func (s *Server) rmLease(l Lease) error {
+	var newLeases []*Lease
+	for _, lease := range s.leases {
+		if bytes.Equal(lease.IP.To4(), l.IP) {
+			if !bytes.Equal(lease.HWAddr, l.HWAddr) ||
+				lease.Hostname != l.Hostname {
+				return fmt.Errorf("Lease not found")
+			}
+			continue
+		}
+		newLeases = append(newLeases, lease)
+	}
+	s.leases = newLeases
+	s.unreserveIP(l.IP)
 	return nil
 }
 
@@ -578,19 +616,10 @@ func (s *Server) RemoveStaticLease(l Lease) error {
 		return fmt.Errorf("Lease not found")
 	}
 
-	var newLeases []*Lease
-	for _, lease := range s.leases {
-		if bytes.Equal(lease.IP.To4(), l.IP) {
-			if !bytes.Equal(lease.HWAddr, l.HWAddr) ||
-				lease.Hostname != l.Hostname {
-				return fmt.Errorf("Lease not found")
-			}
-			continue
-		}
-		newLeases = append(newLeases, lease)
+	err := s.rmLease(l)
+	if err != nil {
+		return err
 	}
-	s.leases = newLeases
-	s.unreserveIP(l.IP)
 	s.dbStore()
 	return nil
 }
