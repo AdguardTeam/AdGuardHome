@@ -139,10 +139,10 @@ export const getWebAddress = (ip, port = '') => {
     const isStandardWebPort = port === STANDARD_WEB_PORT;
     let address = `http://${ip}`;
 
-    if (port) {
-        if (ip.includes(':') && !isStandardWebPort) {
+    if (port && !isStandardWebPort) {
+        if (ip.includes(':') && !ip.includes('[')) {
             address = `http://[${ip}]:${port}`;
-        } else if (!isStandardWebPort) {
+        } else {
             address = `http://${ip}:${port}`;
         }
     }
