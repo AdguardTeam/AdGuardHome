@@ -85,8 +85,16 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	log.Tracef("Downloading data from %s", versionCheckURL)
-	resp, err := config.client.Get(versionCheckURL)
+	var resp *http.Response
+	for i := 0; i != 3; i++ {
+		log.Tracef("Downloading data from %s", versionCheckURL)
+		resp, err = config.client.Get(versionCheckURL)
+		if err != nil && strings.HasSuffix(err.Error(), "i/o timeout") {
+			// This case may happen while we're restarting DNS server
+			continue
+		}
+		break
+	}
 	if err != nil {
 		httpError(w, http.StatusBadGateway, "Couldn't get version check json from %s: %T %s\n", versionCheckURL, err, err)
 		return
