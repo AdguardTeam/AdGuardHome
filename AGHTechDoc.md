@@ -42,6 +42,9 @@ Contents:
 	* API: Clear statistics data
 	* API: Set statistics parameters
 	* API: Get statistics parameters
+* Query logs
+	* API: Set querylog parameters
+	* API: Get querylog parameters
 
 
 ## First startup
@@ -974,5 +977,39 @@ Response:
 	200 OK
 
 	{
+		"interval": 1 | 7 | 30 | 90
+	}
+
+
+## Query logs
+
+### API: Set querylog parameters
+
+Request:
+
+	POST /control/querylog_config
+
+	{
+		"enabled": true | false
+		"interval": 1 | 7 | 30 | 90
+	}
+
+Response:
+
+	200 OK
+
+
+### API: Get querylog parameters
+
+Request:
+
+	GET /control/querylog_info
+
+Response:
+
+	200 OK
+
+	{
+		"enabled": true | false
 		"interval": 1 | 7 | 30 | 90
 	}

@@ -10,7 +10,6 @@ import (
 	"encoding/pem"
 	"math/big"
 	"net"
-	"os"
 	"sync"
 	"testing"
 	"time"
@@ -18,18 +17,15 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/miekg/dns"
-	"github.com/stretchr/testify/assert"
 )
 
 const (
 	tlsServerName     = "testdns.adguard.com"
-	dataDir           = "testData"
 	testMessagesCount = 10
 )
 
 func TestServer(t *testing.T) {
 	s := createTestServer(t)
-	defer removeDataDir(t)
 	err := s.Start(nil)
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
@@ -44,10 +40,6 @@ func TestServer(t *testing.T) {
 		t.Fatalf("Couldn't talk to server %s: %s", addr, err)
 	}
 	assertGoogleAResponse(t, reply)
-
-	// check query log and stats
-	log := s.GetQueryLog()
-	assert.Equal(t, 1, len(log), "Log size")
 
 	// message over TCP
 	req = createGoogleATestMessage()
@@ -59,10 +51,6 @@ func TestServer(t *testing.T) {
 	}
 	assertGoogleAResponse(t, reply)
 
-	// check query log and stats again
-	log = s.GetQueryLog()
-	assert.Equal(t, 2, len(log), "Log size")
-
 	err = s.Stop()
 	if err != nil {
 		t.Fatalf("DNS server failed to stop: %s", err)
@@ -72,7 +60,6 @@ func TestServer(t *testing.T) {
 func TestServerWithProtectionDisabled(t *testing.T) {
 	s := createTestServer(t)
 	s.conf.ProtectionEnabled = false
-	defer removeDataDir(t)
 	err := s.Start(nil)
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
@@ -88,10 +75,6 @@ func TestServerWithProtectionDisabled(t *testing.T) {
 	}
 	assertGoogleAResponse(t, reply)
 
-	// check query log and stats
-	log := s.GetQueryLog()
-	assert.Equal(t, 1, len(log), "Log size")
-
 	err = s.Stop()
 	if err != nil {
 		t.Fatalf("DNS server failed to stop: %s", err)
@@ -102,7 +85,6 @@ func TestDotServer(t *testing.T) {
 	// Prepare the proxy server
 	_, certPem, keyPem := createServerTLSConfig(t)
 	s := createTestServer(t)
-	defer removeDataDir(t)
 
 	s.conf.TLSConfig = TLSConfig{
 		TLSListenAddr:        &net.TCPAddr{Port: 0},
@@ -143,7 +125,6 @@ func TestDotServer(t *testing.T) {
 
 func TestServerRace(t *testing.T) {
 	s := createTestServer(t)
-	defer removeDataDir(t)
 	err := s.Start(nil)
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
@@ -168,7 +149,6 @@ func TestServerRace(t *testing.T) {
 func TestSafeSearch(t *testing.T) {
 	s := createTestServer(t)
 	s.conf.SafeSearchEnabled = true
-	defer removeDataDir(t)
 	err := s.Start(nil)
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
@@ -210,7 +190,6 @@ func TestSafeSearch(t *testing.T) {
 
 func TestInvalidRequest(t *testing.T) {
 	s := createTestServer(t)
-	defer removeDataDir(t)
 	err := s.Start(nil)
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
@@ -229,11 +208,6 @@ func TestInvalidRequest(t *testing.T) {
 		t.Fatalf("got a response to an invalid query")
 	}
 
-	// check query log and stats
-	// invalid requests aren't written to the query log
-	log := s.GetQueryLog()
-	assert.Equal(t, 0, len(log), "Log size")
-
 	err = s.Stop()
 	if err != nil {
 		t.Fatalf("DNS server failed to stop: %s", err)
@@ -242,7 +216,6 @@ func TestInvalidRequest(t *testing.T) {
 
 func TestBlockedRequest(t *testing.T) {
 	s := createTestServer(t)
-	defer removeDataDir(t)
 	err := s.Start(nil)
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
@@ -267,10 +240,6 @@ func TestBlockedRequest(t *testing.T) {
 		t.Fatalf("Wrong response: %s", reply.String())
 	}
 
-	// check query log and stats
-	log := s.GetQueryLog()
-	assert.Equal(t, 1, len(log), "Log size")
-
 	err = s.Stop()
 	if err != nil {
 		t.Fatalf("DNS server failed to stop: %s", err)
@@ -280,7 +249,6 @@ func TestBlockedRequest(t *testing.T) {
 func TestNullBlockedRequest(t *testing.T) {
 	s := createTestServer(t)
 	s.conf.FilteringConfig.BlockingMode = "null_ip"
-	defer removeDataDir(t)
 	err := s.Start(nil)
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
@@ -312,10 +280,6 @@ func TestNullBlockedRequest(t *testing.T) {
 		t.Fatalf("DNS server %s returned wrong answer type instead of A: %v", addr, reply.Answer[0])
 	}
 
-	// check query log and stats
-	log := s.GetQueryLog()
-	assert.Equal(t, 1, len(log), "Log size")
-
 	err = s.Stop()
 	if err != nil {
 		t.Fatalf("DNS server failed to stop: %s", err)
@@ -324,7 +288,6 @@ func TestNullBlockedRequest(t *testing.T) {
 
 func TestBlockedByHosts(t *testing.T) {
 	s := createTestServer(t)
-	defer removeDataDir(t)
 	err := s.Start(nil)
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
@@ -356,10 +319,6 @@ func TestBlockedByHosts(t *testing.T) {
 		t.Fatalf("DNS server %s returned wrong answer type instead of A: %v", addr, reply.Answer[0])
 	}
 
-	// check query log and stats
-	log := s.GetQueryLog()
-	assert.Equal(t, 1, len(log), "Log size")
-
 	err = s.Stop()
 	if err != nil {
 		t.Fatalf("DNS server failed to stop: %s", err)
@@ -368,7 +327,6 @@ func TestBlockedByHosts(t *testing.T) {
 
 func TestBlockedBySafeBrowsing(t *testing.T) {
 	s := createTestServer(t)
-	defer removeDataDir(t)
 	err := s.Start(nil)
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
@@ -411,10 +369,6 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 		t.Fatalf("DNS server %s returned wrong answer type instead of A: %v", addr, reply.Answer[0])
 	}
 
-	// check query log and stats
-	log := s.GetQueryLog()
-	assert.Equal(t, 1, len(log), "Log size")
-
 	err = s.Stop()
 	if err != nil {
 		t.Fatalf("DNS server failed to stop: %s", err)
@@ -422,7 +376,7 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 }
 
 func createTestServer(t *testing.T) *Server {
-	s := NewServer(createDataDir(t), nil)
+	s := NewServer(nil, nil)
 	s.conf.UDPListenAddr = &net.UDPAddr{Port: 0}
 	s.conf.TCPListenAddr = &net.TCPAddr{Port: 0}
 
@@ -487,21 +441,6 @@ func createServerTLSConfig(t *testing.T) (*tls.Config, []byte, []byte) {
 	}
 
 	return &tls.Config{Certificates: []tls.Certificate{cert}, ServerName: tlsServerName, MinVersion: tls.VersionTLS12}, certPem, keyPem
-}
-
-func createDataDir(t *testing.T) string {
-	err := os.MkdirAll(dataDir, 0755)
-	if err != nil {
-		t.Fatalf("Cannot create %s: %s", dataDir, err)
-	}
-	return dataDir
-}
-
-func removeDataDir(t *testing.T) {
-	err := os.RemoveAll(dataDir)
-	if err != nil {
-		t.Fatalf("Cannot remove %s: %s", dataDir, err)
-	}
 }
 
 func sendTestMessageAsync(t *testing.T, conn *dns.Conn, g *sync.WaitGroup) {
@@ -607,7 +546,6 @@ func TestIsBlockedIPAllowed(t *testing.T) {
 	s.conf.AllowedClients = []string{"1.1.1.1", "2.2.0.0/16"}
 
 	err := s.Start(nil)
-	defer removeDataDir(t)
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -631,7 +569,6 @@ func TestIsBlockedIPDisallowed(t *testing.T) {
 	s.conf.DisallowedClients = []string{"1.1.1.1", "2.2.0.0/16"}
 
 	err := s.Start(nil)
-	defer removeDataDir(t)
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -655,7 +592,6 @@ func TestIsBlockedIPBlockedDomain(t *testing.T) {
 	s.conf.BlockedHosts = []string{"host1", "host2"}
 
 	err := s.Start(nil)
-	defer removeDataDir(t)
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}

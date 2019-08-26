@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/querylog"
 	"github.com/AdguardTeam/AdGuardHome/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -40,7 +41,7 @@ const (
 type Server struct {
 	dnsProxy  *proxy.Proxy         // DNS proxy instance
 	dnsFilter *dnsfilter.Dnsfilter // DNS filter instance
-	queryLog  *queryLog            // Query log instance
+	queryLog  querylog.QueryLog    // Query log instance
 	stats     stats.Stats
 
 	AllowedClients         map[string]bool // IP addresses of whitelist clients
@@ -54,16 +55,11 @@ type Server struct {
 }
 
 // NewServer creates a new instance of the dnsforward.Server
-// baseDir is the base directory for query logs
 // Note: this function must be called only once
-func NewServer(baseDir string, stats stats.Stats) *Server {
-	s := &Server{
-		queryLog: newQueryLog(baseDir),
-	}
+func NewServer(stats stats.Stats, queryLog querylog.QueryLog) *Server {
+	s := &Server{}
 	s.stats = stats
-
-	log.Printf("Start DNS server periodic jobs")
-	go s.queryLog.periodicQueryLogRotate()
+	s.queryLog = queryLog
 	return s
 }
 
@@ -75,6 +71,7 @@ type FilteringConfig struct {
 	BlockingMode       string   `yaml:"blocking_mode"`        // mode how to answer filtered requests
 	BlockedResponseTTL uint32   `yaml:"blocked_response_ttl"` // if 0, then default is used (3600)
 	QueryLogEnabled    bool     `yaml:"querylog_enabled"`     // if true, query log is enabled
+	QueryLogInterval   uint32   `yaml:"querylog_interval"`    // time interval for query log (in days)
 	Ratelimit          int      `yaml:"ratelimit"`            // max number of requests per second from a given IP (0 to disable)
 	RatelimitWhitelist []string `yaml:"ratelimit_whitelist"`  // a list of whitelisted client IP addresses
 	RefuseAny          bool     `yaml:"refuse_any"`           // if true, refuse ANY requests
@@ -303,8 +300,7 @@ func (s *Server) stopInternal() error {
 		s.dnsFilter = nil
 	}
 
-	// flush remainder to file
-	return s.queryLog.flushLogBuffer(true)
+	return nil
 }
 
 // IsRunning returns true if the DNS server is running
@@ -341,13 +337,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.RLock()
 	s.dnsProxy.ServeHTTP(w, r)
 	s.RUnlock()
-}
-
-// GetQueryLog returns a map with the current query log ready to be converted to a JSON
-func (s *Server) GetQueryLog() []map[string]interface{} {
-	s.RLock()
-	defer s.RUnlock()
-	return s.queryLog.getQueryLog()
 }
 
 // Return TRUE if this client should be blocked
@@ -469,12 +458,12 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 	}
 
 	elapsed := time.Since(start)
-	if s.conf.QueryLogEnabled && shouldLog {
+	if s.conf.QueryLogEnabled && shouldLog && s.queryLog != nil {
 		upstreamAddr := ""
 		if d.Upstream != nil {
 			upstreamAddr = d.Upstream.Address()
 		}
-		_ = s.queryLog.logRequest(msg, d.Res, res, elapsed, d.Addr, upstreamAddr)
+		s.queryLog.Add(msg, d.Res, res, elapsed, d.Addr, upstreamAddr)
 	}
 
 	s.updateStats(d, elapsed, *res)
