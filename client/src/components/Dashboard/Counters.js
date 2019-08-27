@@ -25,7 +25,7 @@ const Counters = (props) => {
     const tooltipTitle =
         interval === 1
             ? t('number_of_dns_query_24_hours')
-            : t('number_of_dns_query_days', { value: interval });
+            : t('number_of_dns_query_days', { count: interval });
 
     return (
         <Card
@@ -47,9 +47,9 @@ const Counters = (props) => {
                     </tr>
                     <tr>
                         <td>
-                            <a href="#filters">
-                                <Trans>blocked_by</Trans>
-                            </a>
+                            <Trans components={[<a href="#filters" key="0">link</a>]}>
+                                blocked_by
+                            </Trans>
                             <Tooltip
                                 text={t('number_of_dns_query_blocked_24_hours')}
                                 type={tooltipType}

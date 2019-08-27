@@ -261,4 +261,4 @@ export const FILTERED_STATUS = {
     REWRITE: 'Rewrite',
 };
 
-export const STATS_INTERVALS = [1, 7, 30, 90];
+export const STATS_INTERVALS_DAYS = [1, 7, 30, 90];

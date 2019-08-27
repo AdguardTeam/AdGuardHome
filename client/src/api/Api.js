@@ -22,7 +22,6 @@ export default class Api {
     }
 
     // Global methods
-    GLOBAL_RESTART = { path: 'restart', method: 'POST' };
     GLOBAL_START = { path: 'start', method: 'POST' };
     GLOBAL_STATUS = { path: 'status', method: 'GET' };
     GLOBAL_STOP = { path: 'stop', method: 'POST' };
@@ -35,11 +34,6 @@ export default class Api {
     GLOBAL_ENABLE_PROTECTION = { path: 'enable_protection', method: 'POST' };
     GLOBAL_DISABLE_PROTECTION = { path: 'disable_protection', method: 'POST' };
     GLOBAL_UPDATE = { path: 'update', method: 'POST' };
-
-    restartGlobalFiltering() {
-        const { path, method } = this.GLOBAL_RESTART;
-        return this.makeRequest(path, method);
-    }
 
     startGlobalFiltering() {
         const { path, method } = this.GLOBAL_START;

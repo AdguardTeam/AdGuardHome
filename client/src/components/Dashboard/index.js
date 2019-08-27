@@ -51,7 +51,7 @@ class Dashboard extends Component {
         const subtitle =
             stats.interval === 1
                 ? t('for_last_24_hours')
-                : t('for_last_days', { value: stats.interval });
+                : t('for_last_days', { count: stats.interval });
 
         const refreshFullButton = (
             <button

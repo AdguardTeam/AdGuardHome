@@ -3,29 +3,9 @@ import PropTypes from 'prop-types';
 import { withNamespaces } from 'react-i18next';
 import ReactTable from 'react-table';
 
-import { CLIENT_ID } from '../../../helpers/constants';
 import Card from '../../ui/Card';
 
 class AutoClients extends Component {
-    getClient = (name, clients) => {
-        const client = clients.find(item => name === item.name);
-
-        if (client) {
-            const identifier = client.mac ? CLIENT_ID.MAC : CLIENT_ID.IP;
-
-            return {
-                identifier,
-                use_global_settings: true,
-                ...client,
-            };
-        }
-
-        return {
-            identifier: 'ip',
-            use_global_settings: true,
-        };
-    };
-
     getStats = (ip, stats) => {
         if (stats) {
             const statsForCurrentIP = stats.find(item => item.name === ip);

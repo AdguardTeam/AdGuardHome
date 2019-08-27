@@ -5,13 +5,13 @@ import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 
 import { renderRadioField, toNumber } from '../../../helpers/form';
-import { STATS_INTERVALS } from '../../../helpers/constants';
+import { STATS_INTERVALS_DAYS } from '../../../helpers/constants';
 
 const getIntervalFields = (processing, t, handleChange, toNumber) =>
-    STATS_INTERVALS.map((interval) => {
+    STATS_INTERVALS_DAYS.map((interval) => {
         const title = interval === 1
             ? t('interval_24_hour')
-            : t('interval_days', { value: interval });
+            : t('interval_days', { count: interval });
 
         return (
             <Field
