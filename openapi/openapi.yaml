@@ -236,6 +236,34 @@ paths:
                 200:
                     description: OK
 
+    /stats_info:
+        get:
+            tags:
+                - stats
+            operationId: statsInfo
+            summary: 'Get statistics parameters'
+            responses:
+                200:
+                    schema:
+                        $ref: "#/definitions/StatsConfig"
+
+    /stats_config:
+        post:
+            tags:
+                - stats
+            operationId: statsConfig
+            summary: "Set statistics parameters"
+            consumes:
+                - application/json
+            parameters:
+                - in: "body"
+                  name: "body"
+                  schema:
+                      $ref: "#/definitions/StatsConfig"
+            responses:
+                200:
+                    description: OK
+
     # --------------------------------------------------
     # TLS server methods
     # --------------------------------------------------
@@ -1114,6 +1142,14 @@ definitions:
                 type: "array"
                 items:
                     type: "integer"
+
+    StatsConfig:
+        type: "object"
+        description: "Statistics configuration"
+        properties:
+            interval:
+                type: "integer"
+                description: "Time period to keep data (1 | 7 | 30 | 90)"
 
     DhcpConfig:
         type: "object"
