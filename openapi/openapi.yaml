@@ -214,18 +214,6 @@ paths:
     # General statistics methods
     # --------------------------------------------------
 
-    /stats_top:
-        get:
-            tags:
-                - stats
-            operationId: statusTop
-            summary: 'Get DNS server top client, domain and blocked statistics'
-            responses:
-                200:
-                    description: OK
-                    schema:
-                        $ref: "#/definitions/StatsTop"
-
     /stats:
         get:
             tags:
@@ -234,45 +222,9 @@ paths:
             summary: 'Get DNS server statistics'
             responses:
                 200:
-                    description: 'Returns general statistics for the last 24 hours'
+                    description: 'Returns statistics data'
                     schema:
                         $ref: "#/definitions/Stats"
-
-    /stats_history:
-        get:
-            tags:
-                - stats
-            operationId: stats_history
-            summary: 'Get historical DNS server statistics for the last 24 hours'
-            parameters:
-                -
-                    name: start_time
-                    in: query
-                    type: string
-                    description: 'Start time in ISO8601 (example: `2018-05-04T17:55:33+00:00`)'
-                    required: true
-                -
-                    name: end_time
-                    in: query
-                    type: string
-                    description: 'End time in ISO8601 (example: `2018-05-04T17:55:33+00:00`)'
-                    required: true
-                -
-                    name: time_unit
-                    in: query
-                    type: string
-                    description: 'Time unit (`minutes` or `hours`)'
-                    required: true
-                    enum:
-                        - minutes
-                        - hours
-            responses:
-                501:
-                    description: 'Requested time window is outside of supported range. It will be supported later, but not now.'
-                200:
-                    description: 'Returns historical stats for the specified time interval.'
-                    schema:
-                        $ref: '#/definitions/StatsHistory'
 
     /stats_reset:
         post:
@@ -1103,28 +1055,29 @@ definitions:
                 type: "boolean"
     Stats:
         type: "object"
-        description: "General server stats for the last 24 hours"
-        required:
-            - "dns_queries"
-            - "blocked_filtering"
-            - "replaced_safebrowsing"
-            - "replaced_parental"
-            - "replaced_safesearch"
-            - "avg_processing_time"
+        description: "Server statistics data"
         properties:
-            dns_queries:
+            time_units:
+                type: "string"
+                description: "Time units (hours | days)"
+                example: "hours"
+            num_dns_queries:
                 type: "integer"
                 description: "Total number of DNS queries"
                 example: 123
-            blocked_filtering:
+            num_blocked_filtering:
                 type: "integer"
                 description: "Number of requests blocked by filtering rules"
                 example: 50
-            replaced_safebrowsing:
+            num_replaced_safebrowsing:
                 type: "integer"
-                description: "Number of requests blocked by the safebrowsing module"
+                description: "Number of requests blocked by safebrowsing module"
                 example: 5
-            replaced_parental:
+            num_replaced_safesearch:
+                type: "integer"
+                description: "Number of requests blocked by safesearch module"
+                example: 5
+            num_replaced_parental:
                 type: "integer"
                 description: "Number of blocked adult websites"
                 example: 15
@@ -1133,110 +1086,35 @@ definitions:
                 format: "float"
                 description: "Average time in milliseconds on processing a DNS"
                 example: 0.34
-    StatsTop:
-        type: "object"
-        description: "Server stats top charts"
-        required:
-            - "top_queried_domains"
-            - "top_clients"
-            - "top_blocked_domains"
-        properties:
             top_queried_domains:
                 type: "array"
                 items:
                     type: "object"
-                example:
-                    example.org: 12312
-                    example.com: 321
-                    example.net: 5555
             top_clients:
                 type: "array"
                 items:
                     type: "object"
-                example:
-                    127.0.0.1: 12312
-                    192.168.0.1: 13211
-                    192.168.0.3: 13211
             top_blocked_domains:
                 type: "array"
                 items:
                     type: "object"
-                example:
-                    example.org: 12312
-                    example.com: 321
-                    example.net: 5555
-    StatsHistory:
-        type: "object"
-        description: "Historical stats of the DNS server. Example below is for 5 minutes. Values are from oldest to newest."
-        required:
-            - "dns_queries"
-            - "blocked_filtering"
-            - "replaced_safebrowsing"
-            - "replaced_parental"
-            - "replaced_safesearch"
-            - "avg_processing_time"
-        properties:
             dns_queries:
                 type: "array"
                 items:
                     type: "integer"
-                example:
-                    - 1201
-                    - 1501
-                    - 1251
-                    - 1231
-                    - 120
             blocked_filtering:
                 type: "array"
                 items:
                     type: "integer"
-                example:
-                    - 421
-                    - 124
-                    - 5
-                    - 12
-                    - 43
             replaced_safebrowsing:
                 type: "array"
                 items:
                     type: "integer"
-                example:
-                    - 1
-                    - 0
-                    - 5
-                    - 0
-                    - 0
             replaced_parental:
                 type: "array"
                 items:
                     type: "integer"
-                example:
-                    - 120
-                    - 10
-                    - 5
-                    - 12
-                    - 1
-            replaced_safesearch:
-                type: "array"
-                items:
-                    type: "integer"
-                example:
-                    - 1
-                    - 0
-                    - 0
-                    - 0
-                    - 5
-            avg_processing_time:
-                type: "array"
-                items:
-                    type: "number"
-                    format: "float"
-                example:
-                    - 1.25
-                    - 5.12
-                    - 4.12
-                    - 123.12
-                    - 0.12
+
     DhcpConfig:
         type: "object"
         description: "Built-in DHCP server configuration"
