@@ -91,6 +91,7 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 		resp, err = config.client.Get(versionCheckURL)
 		if err != nil && strings.HasSuffix(err.Error(), "i/o timeout") {
 			// This case may happen while we're restarting DNS server
+			// https://github.com/AdguardTeam/AdGuardHome/issues/934
 			continue
 		}
 		break
