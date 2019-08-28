@@ -37,12 +37,15 @@ const Form = (props) => {
         <form onSubmit={handleSubmit}>
             <div className="row">
                 <div className="col-12">
-                    <label className="form__label" htmlFor="server_name">
+                    <label className="form__label form__label--with-desc" htmlFor="server_name">
                         <Trans>time_period</Trans>
                     </label>
+                    <div className="form__desc form__desc--top">
+                        <Trans>time_period_desc</Trans>
+                    </div>
                 </div>
                 <div className="col-12">
-                    <div className="form__group">
+                    <div className="form__group mt-2">
                         <div className="custom-controls-stacked">
                             {getIntervalFields(processing, t, handleChange, toNumber)}
                         </div>
