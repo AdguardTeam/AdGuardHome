@@ -353,5 +353,13 @@
     "blocked_services_global": "Use global blocked services",
     "blocked_service": "Blocked service",
     "block_all": "Block all",
-    "unblock_all": "Unblock all"
+    "unblock_all": "Unblock all",
+    "encryption_certificate_path": "Certificate path",
+    "encryption_certificate_path_notice": "To add a path to the certificate, clear the certificate chain textarea.",
+    "encryption_private_key_path": "Private key path",
+    "encryption_private_key_path_notice": "To add a path to the private key, clear the private key textarea.",
+    "encryption_certificates_source_path": "Set a certificates file path",
+    "encryption_certificates_source_content":"Paste the certificates contents",
+    "encryption_key_source_path": "Set a private key file",
+    "encryption_key_source_content": "Paste the private key contents"
 }

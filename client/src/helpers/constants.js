@@ -248,3 +248,8 @@ export const SERVICES = [
         name: 'TikTok',
     },
 ];
+
+export const ENCRYPTION_SOURCE = {
+    PATH: 'path',
+    CONTENT: 'content',
+};
