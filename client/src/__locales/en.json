@@ -370,7 +370,7 @@
     "interval_days": "{{count}} day",
     "interval_days_plural": "{{count}} days",
     "time_period": "Time period",
-    "time_period_desc": "If you decrease the interval value — some data will be lost",
+    "time_period_desc": "If you decrease the interval value, some data will be lost",
     "domain": "Domain",
     "answer": "Answer",
     "filter_added_successfully": "The filter has been successfully added"
