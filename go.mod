@@ -18,7 +18,8 @@ require (
 	github.com/miekg/dns v1.1.8
 	github.com/sparrc/go-ping v0.0.0-20181106165434-ef3ab45e41b0
 	github.com/stretchr/testify v1.4.0
-	go.etcd.io/bbolt v1.3.3 // indirect
+	go.etcd.io/bbolt v1.3.3
+	golang.org/x/crypto v0.0.0-20190605123033-f99c8df09eb5
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 	golang.org/x/sys v0.0.0-20190624142023-c5567b49c5d0
 	gopkg.in/yaml.v2 v2.2.2

@@ -51,6 +51,10 @@ func initDNSServer(baseDir string) {
 	config.queryLog = querylog.New(conf)
 	config.dnsServer = dnsforward.NewServer(config.stats, config.queryLog)
 
+	sessFilename := filepath.Join(config.ourWorkingDir, "data/sessions.db")
+	config.auth = InitAuth(sessFilename, config.Users)
+	config.Users = nil
+
 	initRDNS()
 	initFiltering()
 }
@@ -202,6 +206,6 @@ func stopDNSServer() error {
 
 	config.stats.Close()
 	config.queryLog.Close()
-
+	config.auth.Close()
 	return nil
 }

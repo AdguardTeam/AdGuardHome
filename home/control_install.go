@@ -183,8 +183,6 @@ func copyInstallSettings(dst *configuration, src *configuration) {
 	dst.BindPort = src.BindPort
 	dst.DNS.BindHost = src.DNS.BindHost
 	dst.DNS.Port = src.DNS.Port
-	dst.AuthName = src.AuthName
-	dst.AuthPass = src.AuthPass
 }
 
 // Apply new configuration, start DNS server, restart Web server
@@ -237,8 +235,6 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	config.BindPort = newSettings.Web.Port
 	config.DNS.BindHost = newSettings.DNS.IP
 	config.DNS.Port = newSettings.DNS.Port
-	config.AuthName = newSettings.Username
-	config.AuthPass = newSettings.Password
 
 	dnsBaseDir := filepath.Join(config.ourWorkingDir, dataDir)
 	initDNSServer(dnsBaseDir)
@@ -250,6 +246,10 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusInternalServerError, "Couldn't start DNS server: %s", err)
 		return
 	}
+
+	u := User{}
+	u.Name = newSettings.Username
+	config.auth.UserAdd(&u, newSettings.Password)
 
 	err = config.write()
 	if err != nil {

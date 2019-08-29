@@ -68,35 +68,6 @@ func ensureHandler(method string, handler func(http.ResponseWriter, *http.Reques
 	return &h
 }
 
-func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if config.AuthName == "" || config.AuthPass == "" {
-			handler(w, r)
-			return
-		}
-		user, pass, ok := r.BasicAuth()
-		if !ok || user != config.AuthName || pass != config.AuthPass {
-			w.Header().Set("WWW-Authenticate", `Basic realm="dnsfilter"`)
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte("Unauthorised.\n"))
-			return
-		}
-		handler(w, r)
-	}
-}
-
-type authHandler struct {
-	handler http.Handler
-}
-
-func (a *authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	optionalAuth(a.handler.ServeHTTP)(w, r)
-}
-
-func optionalAuthHandler(handler http.Handler) http.Handler {
-	return &authHandler{handler}
-}
-
 // -------------------
 // first run / install
 // -------------------
