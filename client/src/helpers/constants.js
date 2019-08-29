@@ -243,4 +243,8 @@ export const SERVICES = [
         id: 'mail_ru',
         name: 'mail.ru',
     },
+    {
+        id: 'tiktok',
+        name: 'TikTok',
+    },
 ];
