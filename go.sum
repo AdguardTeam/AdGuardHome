@@ -1,9 +1,9 @@
-github.com/AdguardTeam/dnsproxy v0.18.4 h1:UjqN83y7uTduPxSJ5Pg7aO92Fgs4MfDDIfjqaK2YujQ=
-github.com/AdguardTeam/dnsproxy v0.18.4/go.mod h1:R0YfjEUyGf7rsQ31gbw0GahraUjxCmH4dUqPEYVy81k=
+github.com/AdguardTeam/dnsproxy v0.19.1 h1:Xyv5qv9UCj2IVB++2YN/DxdwFBdt3lHjD0Mp/bEJS74=
+github.com/AdguardTeam/dnsproxy v0.19.1/go.mod h1:NaulY9i279jZwN8QBbvbZnn5HkrjBgJi4hbFY5nW+Kc=
 github.com/AdguardTeam/golibs v0.1.3 h1:hmapdTtMtIk3T8eQDwTOLdqZLGDKNKk9325uC8z12xg=
 github.com/AdguardTeam/golibs v0.1.3/go.mod h1:b0XkhgIcn2TxwX6C5AQMtpIFAgjPehNgxJErWkwA3ko=
-github.com/AdguardTeam/golibs v0.1.4 h1:zZirpC23mZkf9Upasn9nbQ+lqqjcXJnkWdXO80vTu7s=
-github.com/AdguardTeam/golibs v0.1.4/go.mod h1:b0XkhgIcn2TxwX6C5AQMtpIFAgjPehNgxJErWkwA3ko=
+github.com/AdguardTeam/golibs v0.2.1 h1:jGCnbM5UOUq/GrG+8eLN7Y+OTfEo5F/8L0wq3ur2h4E=
+github.com/AdguardTeam/golibs v0.2.1/go.mod h1:caAJ5knSHbR6vV6qfRDgAfXVia4hHgLqeztAY4UX0fw=
 github.com/AdguardTeam/urlfilter v0.5.0 h1:ATzs2Er0BMt7NbZnFJ4UEzt3uIV+rydbQCYqBXNRbJc=
 github.com/AdguardTeam/urlfilter v0.5.0/go.mod h1:6YehXZ8e0Hx2MvqeQWLFom6IkPinm04tNhO1CkwAxmg=
 github.com/NYTimes/gziphandler v1.1.1 h1:ZUDjpQae29j0ryrS0u/B8HZfJBtBQHjqw2rQ2cqUQ3I=
@@ -78,6 +78,8 @@ github.com/stretchr/testify v1.2.2 h1:bSDNvY7ZPG5RlJ8otE/7V6gMiyenm9RtJ7IUVIAoJ1
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0Q=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
+github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
+github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9 h1:mKdxBk7AujPs8kU4m80U72y/zjbZ3UcXC7dClwKbUI0=
 golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2 h1:VklqNMn3ovrHsnt90PveolxSbWFaJdECFbxSq0Mqo2M=
@@ -114,5 +116,4 @@ gopkg.in/asaskevich/govalidator.v4 v4.0.0-20160518190739-766470278477 h1:5xUJw+l
 gopkg.in/asaskevich/govalidator.v4 v4.0.0-20160518190739-766470278477/go.mod h1:QDV1vrFSrowdoOba0UM8VJPUZONT7dnfdLsM+GG53Z8=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
-gopkg.in/yaml.v2 v2.2.1 h1:mUhvW9EsL+naU5Q3cakzfE91YhliOondGd6ZrsDBHQE=
-gopkg.in/yaml.v2 v2.2.1/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
+gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
