@@ -28,6 +28,7 @@ export const normalizeLogs = logs => logs.map((log) => {
         filterId,
         rule,
         service_name,
+        status,
     } = log;
     const { host: domain, type } = question;
     const responsesArray = response ? response.map((response) => {
@@ -44,6 +45,7 @@ export const normalizeLogs = logs => logs.map((log) => {
         filterId,
         rule,
         serviceName: service_name,
+        status,
     };
 });
 
