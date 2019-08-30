@@ -59,3 +59,19 @@ export const getStats = () => async (dispatch) => {
         dispatch(getStatsFailure());
     }
 };
+
+export const resetStatsRequest = createAction('RESET_STATS_REQUEST');
+export const resetStatsFailure = createAction('RESET_STATS_FAILURE');
+export const resetStatsSuccess = createAction('RESET_STATS_SUCCESS');
+
+export const resetStats = () => async (dispatch) => {
+    dispatch(getStatsRequest());
+    try {
+        await apiClient.resetStats();
+        dispatch(addSuccessToast('statistics_cleared'));
+        dispatch(resetStatsSuccess());
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(resetStatsFailure());
+    }
+};

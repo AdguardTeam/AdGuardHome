@@ -496,6 +496,7 @@ export default class Api {
     GET_STATS = { path: 'stats', method: 'GET' };
     STATS_INFO = { path: 'stats_info', method: 'GET' };
     STATS_CONFIG = { path: 'stats_config', method: 'POST' };
+    STATS_RESET = { path: 'stats_reset', method: 'POST' };
 
     getStats() {
         const { path, method } = this.GET_STATS;
@@ -514,5 +515,10 @@ export default class Api {
             headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, config);
+    }
+
+    resetStats() {
+        const { path, method } = this.STATS_RESET;
+        return this.makeRequest(path, method);
     }
 }

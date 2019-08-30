@@ -38,10 +38,10 @@ const Form = (props) => {
             <div className="row">
                 <div className="col-12">
                     <label className="form__label form__label--with-desc" htmlFor="server_name">
-                        <Trans>time_period</Trans>
+                        <Trans>statistics_retention</Trans>
                     </label>
                     <div className="form__desc form__desc--top">
-                        <Trans>time_period_desc</Trans>
+                        <Trans>statistics_retention_desc</Trans>
                     </div>
                 </div>
                 <div className="col-12">

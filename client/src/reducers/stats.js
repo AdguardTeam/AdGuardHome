@@ -2,6 +2,22 @@ import { handleActions } from 'redux-actions';
 
 import * as actions from '../actions/stats';
 
+const defaultStats = {
+    dnsQueries: [],
+    blockedFiltering: [],
+    replacedParental: [],
+    replacedSafebrowsing: [],
+    topBlockedDomains: [],
+    topClients: [],
+    topQueriedDomains: [],
+    numBlockedFiltering: 0,
+    numDnsQueries: 0,
+    numReplacedParental: 0,
+    numReplacedSafebrowsing: 0,
+    numReplacedSafesearch: 0,
+    avgProcessingTime: 0,
+};
+
 const stats = handleActions(
     {
         [actions.getStatsConfigRequest]: state => ({ ...state, processingGetConfig: true }),
@@ -59,25 +75,22 @@ const stats = handleActions(
 
             return newState;
         },
+
+        [actions.resetStatsRequest]: state => ({ ...state, processingReset: true }),
+        [actions.resetStatsFailure]: state => ({ ...state, processingReset: false }),
+        [actions.resetStatsSuccess]: state => ({
+            ...state,
+            ...defaultStats,
+            processingReset: false,
+        }),
     },
     {
         processingGetConfig: false,
         processingSetConfig: false,
         processingStats: true,
+        processingReset: false,
         interval: 1,
-        dnsQueries: [],
-        blockedFiltering: [],
-        replacedParental: [],
-        replacedSafebrowsing: [],
-        topBlockedDomains: [],
-        topClients: [],
-        topQueriedDomains: [],
-        numBlockedFiltering: 0,
-        numDnsQueries: 0,
-        numReplacedParental: 0,
-        numReplacedSafebrowsing: 0,
-        numReplacedSafesearch: 0,
-        avgProcessingTime: 0,
+        ...defaultStats,
     },
 );
 

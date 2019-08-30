@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { withNamespaces } from 'react-i18next';
+import { withNamespaces, Trans } from 'react-i18next';
 import debounce from 'lodash/debounce';
 
 import { DEBOUNCE_TIMEOUT } from '../../../helpers/constants';
@@ -12,18 +12,21 @@ class StatsConfig extends Component {
         this.props.setStatsConfig(values);
     }, DEBOUNCE_TIMEOUT);
 
+    handleReset = () => {
+        const { t, resetStats } = this.props;
+        // eslint-disable-next-line no-alert
+        if (window.confirm(t('statistics_clear_confirm'))) {
+            resetStats();
+        }
+    };
+
     render() {
         const {
-            t,
-            interval,
-            processing,
+            t, interval, processing, processingReset,
         } = this.props;
 
         return (
-            <Card
-                title={t('stats_params')}
-                bodyType="card-body box-body--settings"
-            >
+            <Card title={t('statistics_logs')} bodyType="card-body box-body--settings">
                 <div className="form">
                     <Form
                         initialValues={{
@@ -33,6 +36,15 @@ class StatsConfig extends Component {
                         onChange={this.handleFormChange}
                         processing={processing}
                     />
+
+                    <button
+                        type="button"
+                        className="btn btn-outline-secondary btn-sm mt-3"
+                        onClick={this.handleReset}
+                        disabled={processingReset}
+                    >
+                        <Trans>statistics_clear</Trans>
+                    </button>
                 </div>
             </Card>
         );
@@ -42,7 +54,9 @@ class StatsConfig extends Component {
 StatsConfig.propTypes = {
     interval: PropTypes.number.isRequired,
     processing: PropTypes.bool.isRequired,
+    processingReset: PropTypes.bool.isRequired,
     setStatsConfig: PropTypes.func.isRequired,
+    resetStats: PropTypes.func.isRequired,
     t: PropTypes.func.isRequired,
 };
 

@@ -68,6 +68,7 @@ class Settings extends Component {
             services,
             setBlockedServices,
             setStatsConfig,
+            resetStats,
             stats,
             t,
         } = this.props;
@@ -89,7 +90,9 @@ class Settings extends Component {
                                 <StatsConfig
                                     interval={stats.interval}
                                     processing={stats.processingSetConfig}
+                                    processingReset={stats.processingReset}
                                     setStatsConfig={setStatsConfig}
+                                    resetStats={resetStats}
                                 />
                             </div>
                             <div className="col-md-12">
@@ -107,13 +110,13 @@ class Settings extends Component {
 }
 
 Settings.propTypes = {
-    initSettings: PropTypes.func,
-    settings: PropTypes.object,
-    settingsList: PropTypes.object,
-    toggleSetting: PropTypes.func,
-    getStatsConfig: PropTypes.func,
-    setStatsConfig: PropTypes.func,
-    t: PropTypes.func,
+    initSettings: PropTypes.func.isRequired,
+    settings: PropTypes.object.isRequired,
+    toggleSetting: PropTypes.func.isRequired,
+    getStatsConfig: PropTypes.func.isRequired,
+    setStatsConfig: PropTypes.func.isRequired,
+    resetStats: PropTypes.func.isRequired,
+    t: PropTypes.func.isRequired,
 };
 
 export default withNamespaces()(Settings);
