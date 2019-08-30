@@ -1478,6 +1478,12 @@ definitions:
             private_key:
                 type: "string"
                 description: "Base64 string with PEM-encoded private key"
+            certificate_path:
+                type: "string"
+                description: "Path to certificate file"
+            private_key_path:
+                type: "string"
+                description: "Path to private key file"
             # Below goes validation fields
             valid_cert:
                 type: "boolean"

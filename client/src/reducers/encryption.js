@@ -77,6 +77,8 @@ const encryption = handleActions({
     private_key: '',
     server_name: '',
     warning_validation: '',
+    certificate_path: '',
+    private_key_path: '',
 });
 
 export default encryption;

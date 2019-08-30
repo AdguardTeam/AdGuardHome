@@ -191,7 +191,7 @@ If you run into any problem or have a suggestion, head to [this page](https://gi
 
 If you want to help with AdGuard Home translations, please learn more about translating AdGuard products here: https://kb.adguard.com/en/general/adguard-translations
 
-Here is a link to AdGuard Home project: https://crowdin.com/project/adguard-applications
+Here is a link to AdGuard Home project: https://crowdin.com/project/adguard-applications/en#/adguard-home
 
 <a id="acknowledgments"></a>
 ## Acknowledgments

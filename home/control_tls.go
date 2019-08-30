@@ -14,6 +14,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strings"
@@ -22,6 +23,41 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/joomcode/errorx"
 )
+
+// Set certificate and private key data
+func tlsLoadConfig(tls *tlsConfig, status *tlsConfigStatus) bool {
+	tls.CertificateChainData = []byte(tls.CertificateChain)
+	tls.PrivateKeyData = []byte(tls.PrivateKey)
+
+	var err error
+	if tls.CertificatePath != "" {
+		if tls.CertificateChain != "" {
+			status.WarningValidation = "certificate data and file can't be set together"
+			return false
+		}
+		tls.CertificateChainData, err = ioutil.ReadFile(tls.CertificatePath)
+		if err != nil {
+			status.WarningValidation = err.Error()
+			return false
+		}
+		status.ValidCert = true
+	}
+
+	if tls.PrivateKeyPath != "" {
+		if tls.PrivateKey != "" {
+			status.WarningValidation = "private key data and file can't be set together"
+			return false
+		}
+		tls.PrivateKeyData, err = ioutil.ReadFile(tls.PrivateKeyPath)
+		if err != nil {
+			status.WarningValidation = err.Error()
+			return false
+		}
+		status.ValidKey = true
+	}
+
+	return true
+}
 
 // RegisterTLSHandlers registers HTTP handlers for TLS configuration
 func RegisterTLSHandlers() {
@@ -55,7 +91,12 @@ func handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	data.tlsConfigStatus = validateCertificates(data.CertificateChain, data.PrivateKey, data.ServerName)
+	status := tlsConfigStatus{}
+	if tlsLoadConfig(&data, &status) {
+		status = validateCertificates(string(data.CertificateChainData), string(data.PrivateKeyData), data.ServerName)
+	}
+	data.tlsConfigStatus = status
+
 	marshalTLS(w, data)
 }
 
@@ -80,8 +121,14 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	status := tlsConfigStatus{}
+	if !tlsLoadConfig(&data, &status) {
+		data.tlsConfigStatus = status
+		marshalTLS(w, data)
+		return
+	}
+	data.tlsConfigStatus = validateCertificates(string(data.CertificateChainData), string(data.PrivateKeyData), data.ServerName)
 	restartHTTPS := false
-	data.tlsConfigStatus = validateCertificates(data.CertificateChain, data.PrivateKey, data.ServerName)
 	if !reflect.DeepEqual(config.TLS.tlsConfigSettings, data.tlsConfigSettings) {
 		log.Printf("tls config settings have changed, will restart HTTPS server")
 		restartHTTPS = true
@@ -300,6 +347,9 @@ func unmarshalTLS(r *http.Request) (tlsConfig, error) {
 			return data, errorx.Decorate(err, "Failed to base64-decode certificate chain")
 		}
 		data.CertificateChain = string(certPEM)
+		if data.CertificatePath != "" {
+			return data, fmt.Errorf("certificate data and file can't be set together")
+		}
 	}
 
 	if data.PrivateKey != "" {
@@ -309,6 +359,9 @@ func unmarshalTLS(r *http.Request) (tlsConfig, error) {
 		}
 
 		data.PrivateKey = string(keyPEM)
+		if data.PrivateKeyPath != "" {
+			return data, fmt.Errorf("private key data and file can't be set together")
+		}
 	}
 
 	return data, nil

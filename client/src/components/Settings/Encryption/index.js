@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { withNamespaces } from 'react-i18next';
 import debounce from 'lodash/debounce';
 
-import { DEBOUNCE_TIMEOUT } from '../../../helpers/constants';
+import { DEBOUNCE_TIMEOUT, ENCRYPTION_SOURCE } from '../../../helpers/constants';
 import Form from './Form';
 import Card from '../../ui/Card';
 import PageTitle from '../../ui/PageTitle';
@@ -19,12 +19,44 @@ class Encryption extends Component {
     }
 
     handleFormSubmit = (values) => {
-        this.props.setTlsConfig(values);
+        const submitValues = this.getSubmitValues(values);
+        this.props.setTlsConfig(submitValues);
     };
 
     handleFormChange = debounce((values) => {
-        this.props.validateTlsConfig(values);
+        const submitValues = this.getSubmitValues(values);
+        this.props.validateTlsConfig(submitValues);
     }, DEBOUNCE_TIMEOUT);
+
+    getInitialValues = (data) => {
+        const { certificate_chain, private_key } = data;
+        const certificate_source = certificate_chain ? 'content' : 'path';
+        const key_source = private_key ? 'content' : 'path';
+
+        return {
+            ...data,
+            certificate_source,
+            key_source,
+        };
+    };
+
+    getSubmitValues = (values) => {
+        const { certificate_source, key_source, ...config } = values;
+
+        if (certificate_source === ENCRYPTION_SOURCE.PATH) {
+            config.certificate_chain = '';
+        } else {
+            config.certificate_path = '';
+        }
+
+        if (values.key_source === ENCRYPTION_SOURCE.PATH) {
+            config.private_key = '';
+        } else {
+            config.private_key_path = '';
+        }
+
+        return config;
+    };
 
     render() {
         const { encryption, t } = this.props;
@@ -36,7 +68,21 @@ class Encryption extends Component {
             port_dns_over_tls,
             certificate_chain,
             private_key,
+            certificate_path,
+            private_key_path,
         } = encryption;
+
+        const initialValues = this.getInitialValues({
+            enabled,
+            server_name,
+            force_https,
+            port_https,
+            port_dns_over_tls,
+            certificate_chain,
+            private_key,
+            certificate_path,
+            private_key_path,
+        });
 
         return (
             <div className="encryption">
@@ -49,15 +95,7 @@ class Encryption extends Component {
                         bodyType="card-body box-body--settings"
                     >
                         <Form
-                            initialValues={{
-                                enabled,
-                                server_name,
-                                force_https,
-                                port_https,
-                                port_dns_over_tls,
-                                certificate_chain,
-                                private_key,
-                            }}
+                            initialValues={initialValues}
                             onSubmit={this.handleFormSubmit}
                             onChange={this.handleFormChange}
                             setTlsConfig={this.props.setTlsConfig}
