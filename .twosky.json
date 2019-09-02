@@ -2,7 +2,7 @@
   {
     "project_id": "home",
     "base_locale": "en",
-    "localizable_files": "client/src/__locales/en.json",
+    "localizable_files": ["client/src/__locales/en.json"],
     "languages": {
       "en": "English",
       "es": "Español",
