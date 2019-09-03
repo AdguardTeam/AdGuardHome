@@ -2,7 +2,7 @@ import { createAction } from 'redux-actions';
 
 import Api from '../api/Api';
 import { addErrorToast, addSuccessToast } from './index';
-import { normalizeTopStats } from '../helpers/helpers';
+import { normalizeTopStats, secondsToMilliseconds } from '../helpers/helpers';
 
 const apiClient = new Api();
 
@@ -51,6 +51,7 @@ export const getStats = () => async (dispatch) => {
             top_blocked_domains: normalizeTopStats(stats.top_blocked_domains),
             top_clients: normalizeTopStats(stats.top_clients),
             top_queried_domains: normalizeTopStats(stats.top_queried_domains),
+            avg_processing_time: secondsToMilliseconds(stats.avg_processing_time),
         };
 
         dispatch(getStatsSuccess(normalizedStats));

@@ -102,7 +102,7 @@ const Counters = (props) => {
                         </td>
                         <td className="text-right">
                             <span className="text-muted">
-                                {avgProcessingTime ? `${round(avgProcessingTime, 2)} ms` : 0}
+                                {avgProcessingTime ? `${round(avgProcessingTime)} ms` : 0}
                             </span>
                         </td>
                     </tr>

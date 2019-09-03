@@ -233,3 +233,11 @@ export const sortClients = (clients) => {
 export const toggleAllServices = (services, change, isSelected) => {
     services.forEach(service => change(`blocked_services.${service.id}`, isSelected));
 };
+
+export const secondsToMilliseconds = (seconds) => {
+    if (seconds) {
+        return seconds * 1000;
+    }
+
+    return seconds;
+};
