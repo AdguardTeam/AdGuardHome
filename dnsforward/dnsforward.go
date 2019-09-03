@@ -100,6 +100,7 @@ type FilteringConfig struct {
 	// Per-client settings can override this configuration.
 	BlockedServices []string `yaml:"blocked_services"`
 
+	CacheSize        uint `yaml:"cache_size"` // DNS cache size (in bytes)
 	dnsfilter.Config `yaml:",inline"`
 }
 
@@ -203,6 +204,7 @@ func (s *Server) startInternal(config *ServerConfig) error {
 		RatelimitWhitelist:       s.conf.RatelimitWhitelist,
 		RefuseAny:                s.conf.RefuseAny,
 		CacheEnabled:             true,
+		CacheSizeBytes:           int(s.conf.CacheSize),
 		Upstreams:                s.conf.Upstreams,
 		DomainsReservedUpstreams: s.conf.DomainsReservedUpstreams,
 		BeforeRequestHandler:     s.beforeRequestHandler,
