@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
@@ -40,7 +41,7 @@ type Server struct {
 	dnsProxy  *proxy.Proxy         // DNS proxy instance
 	dnsFilter *dnsfilter.Dnsfilter // DNS filter instance
 	queryLog  *queryLog            // Query log instance
-	stats     *stats               // General server statistics
+	stats     stats.Stats
 
 	AllowedClients         map[string]bool // IP addresses of whitelist clients
 	DisallowedClients      map[string]bool // IP addresses of clients that should be blocked
@@ -55,22 +56,14 @@ type Server struct {
 // NewServer creates a new instance of the dnsforward.Server
 // baseDir is the base directory for query logs
 // Note: this function must be called only once
-func NewServer(baseDir string) *Server {
+func NewServer(baseDir string, stats stats.Stats) *Server {
 	s := &Server{
 		queryLog: newQueryLog(baseDir),
-		stats:    newStats(),
 	}
-
-	log.Tracef("Loading stats from querylog")
-	err := s.queryLog.fillStatsFromQueryLog(s.stats)
-	if err != nil {
-		log.Error("failed to load stats from querylog: %s", err)
-	}
+	s.stats = stats
 
 	log.Printf("Start DNS server periodic jobs")
 	go s.queryLog.periodicQueryLogRotate()
-	go s.queryLog.runningTop.periodicHourlyTopRotate()
-	go s.stats.statsRotator()
 	return s
 }
 
@@ -357,38 +350,6 @@ func (s *Server) GetQueryLog() []map[string]interface{} {
 	return s.queryLog.getQueryLog()
 }
 
-// GetStatsTop returns the current stop stats
-func (s *Server) GetStatsTop() *StatsTop {
-	s.RLock()
-	defer s.RUnlock()
-	return s.queryLog.runningTop.getStatsTop()
-}
-
-// PurgeStats purges current server stats
-func (s *Server) PurgeStats() {
-	s.Lock()
-	defer s.Unlock()
-	s.stats.purgeStats()
-}
-
-// GetAggregatedStats returns aggregated stats data for the 24 hours
-func (s *Server) GetAggregatedStats() map[string]interface{} {
-	s.RLock()
-	defer s.RUnlock()
-	return s.stats.getAggregatedStats()
-}
-
-// GetStatsHistory gets stats history aggregated by the specified time unit
-// timeUnit is either time.Second, time.Minute, time.Hour, or 24*time.Hour
-// start is start of the time range
-// end is end of the time range
-// returns nil if time unit is not supported
-func (s *Server) GetStatsHistory(timeUnit time.Duration, startTime time.Time, endTime time.Time) (map[string]interface{}, error) {
-	s.RLock()
-	defer s.RUnlock()
-	return s.stats.getStatsHistory(timeUnit, startTime, endTime)
-}
-
 // Return TRUE if this client should be blocked
 func (s *Server) isBlockedIP(ip string) bool {
 	if len(s.AllowedClients) != 0 || len(s.AllowedClientsIPNet) != 0 {
@@ -507,19 +468,59 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 		shouldLog = false
 	}
 
+	elapsed := time.Since(start)
 	if s.conf.QueryLogEnabled && shouldLog {
-		elapsed := time.Since(start)
 		upstreamAddr := ""
 		if d.Upstream != nil {
 			upstreamAddr = d.Upstream.Address()
 		}
-		entry := s.queryLog.logRequest(msg, d.Res, res, elapsed, d.Addr, upstreamAddr)
-		if entry != nil {
-			s.stats.incrementCounters(entry)
-		}
+		_ = s.queryLog.logRequest(msg, d.Res, res, elapsed, d.Addr, upstreamAddr)
 	}
 
+	s.updateStats(d, elapsed, *res)
+
 	return nil
+}
+
+func (s *Server) updateStats(d *proxy.DNSContext, elapsed time.Duration, res dnsfilter.Result) {
+	if s.stats == nil {
+		return
+	}
+
+	e := stats.Entry{}
+	e.Domain = strings.ToLower(d.Req.Question[0].Name)
+	e.Domain = e.Domain[:len(e.Domain)-1] // remove last "."
+	switch addr := d.Addr.(type) {
+	case *net.UDPAddr:
+		e.Client = addr.IP
+	case *net.TCPAddr:
+		e.Client = addr.IP
+	}
+	e.Time = uint(elapsed / 1000)
+	switch res.Reason {
+
+	case dnsfilter.NotFilteredNotFound:
+		fallthrough
+	case dnsfilter.NotFilteredWhiteList:
+		fallthrough
+	case dnsfilter.NotFilteredError:
+		e.Result = stats.RNotFiltered
+
+	case dnsfilter.FilteredSafeBrowsing:
+		e.Result = stats.RSafeBrowsing
+	case dnsfilter.FilteredParental:
+		e.Result = stats.RParental
+	case dnsfilter.FilteredSafeSearch:
+		e.Result = stats.RSafeSearch
+
+	case dnsfilter.FilteredBlackList:
+		fallthrough
+	case dnsfilter.FilteredInvalid:
+		fallthrough
+	case dnsfilter.FilteredBlockedService:
+		e.Result = stats.RFiltered
+	}
+	s.stats.Update(e)
 }
 
 // filterDNSRequest applies the dnsFilter and sets d.Res if the request was filtered

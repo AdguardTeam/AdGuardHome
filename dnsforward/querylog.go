@@ -25,8 +25,7 @@ const (
 
 // queryLog is a structure that writes and reads the DNS query log
 type queryLog struct {
-	logFile    string  // path to the log file
-	runningTop *dayTop // current top charts
+	logFile string // path to the log file
 
 	logBufferLock sync.RWMutex
 	logBuffer     []*logEntry
@@ -40,10 +39,8 @@ type queryLog struct {
 // newQueryLog creates a new instance of the query log
 func newQueryLog(baseDir string) *queryLog {
 	l := &queryLog{
-		logFile:    filepath.Join(baseDir, queryLogFileName),
-		runningTop: &dayTop{},
+		logFile: filepath.Join(baseDir, queryLogFileName),
 	}
-	l.runningTop.init()
 	return l
 }
 
@@ -111,13 +108,6 @@ func (l *queryLog) logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfil
 		l.queryLogCache = l.queryLogCache[toremove:]
 	}
 	l.queryLogLock.Unlock()
-
-	// add it to running top
-	err = l.runningTop.addEntry(&entry, question, now)
-	if err != nil {
-		log.Printf("Failed to add entry to running top: %s", err)
-		// don't do failure, just log
-	}
 
 	// if buffer needs to be flushed to disk, do it now
 	if needFlush {

@@ -4,33 +4,27 @@ import { ResponsiveLine } from '@nivo/line';
 
 import './Line.css';
 
-const Line = props => (
-    props.data &&
+const Line = ({ data, color }) => (
+    data &&
         <ResponsiveLine
-            data={props.data}
+            data={data}
             margin={{
                 top: 15,
                 right: 0,
                 bottom: 1,
-                left: 0,
+                left: 20,
             }}
             minY="auto"
             stacked={false}
             curve='linear'
-            axisBottom={{
-                tickSize: 0,
-                tickPadding: 10,
-            }}
-            axisLeft={{
-                tickSize: 0,
-                tickPadding: 10,
-            }}
+            axisBottom={null}
+            axisLeft={null}
             enableGridX={false}
             enableGridY={false}
             enableDots={false}
             enableArea={true}
             animate={false}
-            colorBy={() => (props.color)}
+            colorBy={() => (color)}
             tooltip={slice => (
                 <div>
                     {slice.data.map(d => (

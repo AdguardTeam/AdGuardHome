@@ -12,6 +12,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
+	"github.com/AdguardTeam/AdGuardHome/stats"
 	"github.com/AdguardTeam/golibs/file"
 	"github.com/AdguardTeam/golibs/log"
 	yaml "gopkg.in/yaml.v2"
@@ -68,6 +69,7 @@ type configuration struct {
 	controlLock      sync.Mutex
 	transport        *http.Transport
 	client           *http.Client
+	stats            stats.Stats
 
 	// cached version.json to avoid hammering github.io for each page reload
 	versionCheckJSON     []byte
@@ -106,6 +108,9 @@ type configuration struct {
 type dnsConfig struct {
 	BindHost string `yaml:"bind_host"`
 	Port     int    `yaml:"port"`
+
+	// time interval for statistics (in days)
+	StatsInterval uint `yaml:"statistics_interval"`
 
 	dnsforward.FilteringConfig `yaml:",inline"`
 
@@ -161,8 +166,9 @@ var config = configuration{
 	BindPort:          3000,
 	BindHost:          "0.0.0.0",
 	DNS: dnsConfig{
-		BindHost: "0.0.0.0",
-		Port:     53,
+		BindHost:      "0.0.0.0",
+		Port:          53,
+		StatsInterval: 1,
 		FilteringConfig: dnsforward.FilteringConfig{
 			ProtectionEnabled:  true,       // whether or not use any of dnsfilter features
 			FilteringEnabled:   true,       // whether or not use filter lists
@@ -262,6 +268,10 @@ func parseConfig() error {
 	if err != nil {
 		log.Error("Couldn't parse config file: %s", err)
 		return err
+	}
+
+	if !checkStatsInterval(config.DNS.StatsInterval) {
+		config.DNS.StatsInterval = 1
 	}
 
 	for _, cy := range config.Clients {

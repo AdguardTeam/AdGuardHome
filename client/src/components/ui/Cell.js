@@ -5,9 +5,7 @@ const Cell = props => (
     <div className="stats__row">
         <div className="stats__row-value mb-1">
             <strong>{props.value}</strong>
-            <small className="ml-3 text-muted">
-                {props.percent}%
-            </small>
+            <small className="ml-3 text-muted">{props.percent}%</small>
         </div>
         <div className="progress progress-xs">
             <div

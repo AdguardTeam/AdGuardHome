@@ -2,11 +2,12 @@ import dateParse from 'date-fns/parse';
 import dateFormat from 'date-fns/format';
 import subHours from 'date-fns/sub_hours';
 import addHours from 'date-fns/add_hours';
+import addDays from 'date-fns/add_days';
+import subDays from 'date-fns/sub_days';
 import round from 'lodash/round';
 import axios from 'axios';
 
 import {
-    STATS_NAMES,
     STANDARD_DNS_PORT,
     STANDARD_WEB_PORT,
     STANDARD_HTTPS_PORT,
@@ -49,29 +50,28 @@ export const normalizeLogs = logs => logs.map((log) => {
     };
 });
 
-export const normalizeHistory = history => Object.keys(history).map((key) => {
-    let id = STATS_NAMES[key];
-    if (!id) {
-        id = key.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
+export const normalizeHistory = (history, interval) => {
+    if (interval === 1 || interval === 7) {
+        const hoursAgo = subHours(Date.now(), 24 * interval);
+        return history.map((item, index) => ({
+            x: dateFormat(addHours(hoursAgo, index), 'D MMM HH:00'),
+            y: round(item, 2),
+        }));
     }
 
-    const dayAgo = subHours(Date.now(), 24);
+    const daysAgo = subDays(Date.now(), interval - 1);
+    return history.map((item, index) => ({
+        x: dateFormat(addDays(daysAgo, index), 'D MMM YYYY'),
+        y: round(item, 2),
+    }));
+};
 
-    const data = history[key].map((item, index) => {
-        const formatHour = dateFormat(addHours(dayAgo, index), 'ddd HH:00');
-        const roundValue = round(item, 2);
-
-        return {
-            x: formatHour,
-            y: roundValue,
-        };
-    });
-
-    return {
-        id,
-        data,
-    };
-});
+export const normalizeTopStats = stats => (
+    stats.map(item => ({
+        name: Object.keys(item)[0],
+        count: Object.values(item)[0],
+    }))
+);
 
 export const normalizeFilteringStatus = (filteringStatus) => {
     const { enabled, filters, user_rules: userRules } = filteringStatus;
@@ -232,4 +232,12 @@ export const sortClients = (clients) => {
 
 export const toggleAllServices = (services, change, isSelected) => {
     services.forEach(service => change(`blocked_services.${service.id}`, isSelected));
+};
+
+export const secondsToMilliseconds = (seconds) => {
+    if (seconds) {
+        return seconds * 1000;
+    }
+
+    return seconds;
 };

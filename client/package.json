@@ -6,7 +6,7 @@
     "build-dev": "NODE_ENV=development ./node_modules/.bin/webpack --config webpack.dev.js",
     "watch": "NODE_ENV=development ./node_modules/.bin/webpack --config webpack.dev.js --watch",
     "build-prod": "NODE_ENV=production ./node_modules/.bin/webpack --config webpack.prod.js",
-    "lint": "eslint frontend/"
+    "lint": "eslint client/"
   },
   "dependencies": {
     "@nivo/line": "^0.49.1",

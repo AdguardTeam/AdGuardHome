@@ -1,111 +1,78 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import { Trans, withNamespaces } from 'react-i18next';
+import { withNamespaces, Trans } from 'react-i18next';
 
-import Card from '../ui/Card';
-import Line from '../ui/Line';
+import StatsCard from './StatsCard';
+import { getPercent, normalizeHistory } from '../../helpers/helpers';
 
-import { getPercent } from '../../helpers/helpers';
-import { STATUS_COLORS } from '../../helpers/constants';
+const getNormalizedHistory = (data, interval, id) => [
+    { data: normalizeHistory(data, interval), id },
+];
 
-class Statistics extends Component {
-    render() {
-        const {
-            dnsQueries,
-            blockedFiltering,
-            replacedSafebrowsing,
-            replacedParental,
-        } = this.props;
-
-        const filteringData = [this.props.history[1]];
-        const queriesData = [this.props.history[2]];
-        const parentalData = [this.props.history[3]];
-        const safebrowsingData = [this.props.history[4]];
-
-        return (
-            <div className="row">
-                <div className="col-sm-6 col-lg-3">
-                    <Card type="card--full" bodyType="card-wrap">
-                        <div className="card-body-stats">
-                            <div className="card-value card-value-stats text-blue">
-                                {dnsQueries}
-                            </div>
-                            <div className="card-title-stats">
-                                <Trans>dns_query</Trans>
-                            </div>
-                        </div>
-                        <div className="card-chart-bg">
-                            <Line data={queriesData} color={STATUS_COLORS.blue}/>
-                        </div>
-                    </Card>
-                </div>
-                <div className="col-sm-6 col-lg-3">
-                    <Card type="card--full" bodyType="card-wrap">
-                        <div className="card-body-stats">
-                            <div className="card-value card-value-stats text-red">
-                                {blockedFiltering}
-                            </div>
-                            <div className="card-value card-value-percent text-red">
-                                {getPercent(dnsQueries, blockedFiltering)}
-                            </div>
-                            <div className="card-title-stats">
-                                <a href="#filters">
-                                    <Trans>blocked_by</Trans>
-                                </a>
-                            </div>
-                        </div>
-                        <div className="card-chart-bg">
-                            <Line data={filteringData} color={STATUS_COLORS.red}/>
-                        </div>
-                    </Card>
-                </div>
-                <div className="col-sm-6 col-lg-3">
-                    <Card type="card--full" bodyType="card-wrap">
-                        <div className="card-body-stats">
-                            <div className="card-value card-value-stats text-green">
-                                {replacedSafebrowsing}
-                            </div>
-                            <div className="card-value card-value-percent text-green">
-                                {getPercent(dnsQueries, replacedSafebrowsing)}
-                            </div>
-                            <div className="card-title-stats">
-                                <Trans>stats_malware_phishing</Trans>
-                            </div>
-                        </div>
-                        <div className="card-chart-bg">
-                            <Line data={safebrowsingData} color={STATUS_COLORS.green}/>
-                        </div>
-                    </Card>
-                </div>
-                <div className="col-sm-6 col-lg-3">
-                    <Card type="card--full" bodyType="card-wrap">
-                        <div className="card-body-stats">
-                            <div className="card-value card-value-stats text-yellow">
-                                {replacedParental}
-                            </div>
-                            <div className="card-value card-value-percent text-yellow">
-                                {getPercent(dnsQueries, replacedParental)}
-                            </div>
-                            <div className="card-title-stats">
-                                <Trans>stats_adult</Trans>
-                            </div>
-                        </div>
-                        <div className="card-chart-bg">
-                            <Line data={parentalData} color={STATUS_COLORS.yellow}/>
-                        </div>
-                    </Card>
-                </div>
-            </div>
-        );
-    }
-}
+const Statistics = ({
+    interval,
+    dnsQueries,
+    blockedFiltering,
+    replacedSafebrowsing,
+    replacedParental,
+    numDnsQueries,
+    numBlockedFiltering,
+    numReplacedSafebrowsing,
+    numReplacedParental,
+}) => (
+    <div className="row">
+        <div className="col-sm-6 col-lg-3">
+            <StatsCard
+                total={numDnsQueries}
+                lineData={getNormalizedHistory(dnsQueries, interval, 'dnsQuery')}
+                title={<Trans>dns_query</Trans>}
+                color="blue"
+            />
+        </div>
+        <div className="col-sm-6 col-lg-3">
+            <StatsCard
+                total={numBlockedFiltering}
+                lineData={getNormalizedHistory(blockedFiltering, interval, 'blockedFiltering')}
+                percent={getPercent(numDnsQueries, numBlockedFiltering)}
+                title={<Trans components={[<a href="#filters" key="0">link</a>]}>blocked_by</Trans>}
+                color="red"
+            />
+        </div>
+        <div className="col-sm-6 col-lg-3">
+            <StatsCard
+                total={numReplacedSafebrowsing}
+                lineData={getNormalizedHistory(
+                    replacedSafebrowsing,
+                    interval,
+                    'replacedSafebrowsing',
+                )}
+                percent={getPercent(numDnsQueries, numReplacedSafebrowsing)}
+                title={<Trans>stats_malware_phishing</Trans>}
+                color="green"
+            />
+        </div>
+        <div className="col-sm-6 col-lg-3">
+            <StatsCard
+                total={numReplacedParental}
+                lineData={getNormalizedHistory(replacedParental, interval, 'replacedParental')}
+                percent={getPercent(numDnsQueries, numReplacedParental)}
+                title={<Trans>stats_adult</Trans>}
+                color="yellow"
+            />
+        </div>
+    </div>
+);
 
 Statistics.propTypes = {
-    history: PropTypes.array.isRequired,
-    dnsQueries: PropTypes.number.isRequired,
-    blockedFiltering: PropTypes.number.isRequired,
-    replacedSafebrowsing: PropTypes.number.isRequired,
-    replacedParental: PropTypes.number.isRequired,
+    interval: PropTypes.number.isRequired,
+    dnsQueries: PropTypes.array.isRequired,
+    blockedFiltering: PropTypes.array.isRequired,
+    replacedSafebrowsing: PropTypes.array.isRequired,
+    replacedParental: PropTypes.array.isRequired,
+    numDnsQueries: PropTypes.number.isRequired,
+    numBlockedFiltering: PropTypes.number.isRequired,
+    numReplacedSafebrowsing: PropTypes.number.isRequired,
+    numReplacedParental: PropTypes.number.isRequired,
     refreshButton: PropTypes.node.isRequired,
 };
 

@@ -11,6 +11,7 @@ import clients from './clients';
 import access from './access';
 import rewrites from './rewrites';
 import services from './services';
+import stats from './stats';
 
 const settings = handleActions({
     [actions.initSettingsRequest]: state => ({ ...state, processing: true }),
@@ -90,27 +91,6 @@ const dashboard = handleActions({
     [actions.disableDnsFailure]: state => ({ ...state, processing: false }),
     [actions.disableDnsSuccess]: (state) => {
         const newState = { ...state, isCoreRunning: !state.isCoreRunning, processing: false };
-        return newState;
-    },
-
-    [actions.getStatsRequest]: state => ({ ...state, processingStats: true }),
-    [actions.getStatsFailure]: state => ({ ...state, processingStats: false }),
-    [actions.getStatsSuccess]: (state, { payload }) => {
-        const newState = { ...state, stats: payload, processingStats: false };
-        return newState;
-    },
-
-    [actions.getTopStatsRequest]: state => ({ ...state, processingTopStats: true }),
-    [actions.getTopStatsFailure]: state => ({ ...state, processingTopStats: false }),
-    [actions.getTopStatsSuccess]: (state, { payload }) => {
-        const newState = { ...state, topStats: payload, processingTopStats: false };
-        return newState;
-    },
-
-    [actions.getStatsHistoryRequest]: state => ({ ...state, processingStatsHistory: true }),
-    [actions.getStatsHistoryFailure]: state => ({ ...state, processingStatsHistory: false }),
-    [actions.getStatsHistorySuccess]: (state, { payload }) => {
-        const newState = { ...state, statsHistory: payload, processingStatsHistory: false };
         return newState;
     },
 
@@ -199,8 +179,6 @@ const dashboard = handleActions({
 }, {
     processing: true,
     isCoreRunning: false,
-    processingTopStats: true,
-    processingStats: true,
     logStatusProcessing: false,
     processingVersion: true,
     processingFiltering: true,
@@ -217,7 +195,6 @@ const dashboard = handleActions({
     dnsVersion: '',
     clients: [],
     autoClients: [],
-    topStats: [],
 });
 
 const queryLogs = handleActions({
@@ -230,7 +207,11 @@ const queryLogs = handleActions({
     [actions.downloadQueryLogRequest]: state => ({ ...state, logsDownloading: true }),
     [actions.downloadQueryLogFailure]: state => ({ ...state, logsDownloading: false }),
     [actions.downloadQueryLogSuccess]: state => ({ ...state, logsDownloading: false }),
-}, { getLogsProcessing: false, logsDownloading: false });
+}, {
+    getLogsProcessing: false,
+    logsDownloading: false,
+    logs: [],
+});
 
 const filtering = handleActions({
     [actions.setRulesRequest]: state => ({ ...state, processingRules: true }),
@@ -426,6 +407,7 @@ export default combineReducers({
     access,
     rewrites,
     services,
+    stats,
     loadingBar: loadingBarReducer,
     form: formReducer,
 });

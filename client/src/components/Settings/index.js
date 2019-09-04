@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { withNamespaces, Trans } from 'react-i18next';
 
 import Services from './Services';
+import StatsConfig from './StatsConfig';
 import Checkbox from '../ui/Checkbox';
 import Loading from '../ui/Loading';
 import PageTitle from '../ui/PageTitle';
@@ -37,6 +38,7 @@ class Settings extends Component {
     componentDidMount() {
         this.props.initSettings(this.settings);
         this.props.getBlockedServices();
+        this.props.getStatsConfig();
     }
 
     renderSettings = (settings) => {
@@ -62,7 +64,13 @@ class Settings extends Component {
 
     render() {
         const {
-            settings, services, setBlockedServices, t,
+            settings,
+            services,
+            setBlockedServices,
+            setStatsConfig,
+            resetStats,
+            stats,
+            t,
         } = this.props;
         return (
             <Fragment>
@@ -79,6 +87,15 @@ class Settings extends Component {
                                 </Card>
                             </div>
                             <div className="col-md-12">
+                                <StatsConfig
+                                    interval={stats.interval}
+                                    processing={stats.processingSetConfig}
+                                    processingReset={stats.processingReset}
+                                    setStatsConfig={setStatsConfig}
+                                    resetStats={resetStats}
+                                />
+                            </div>
+                            <div className="col-md-12">
                                 <Services
                                     services={services}
                                     setBlockedServices={setBlockedServices}
@@ -93,11 +110,13 @@ class Settings extends Component {
 }
 
 Settings.propTypes = {
-    initSettings: PropTypes.func,
-    settings: PropTypes.object,
-    settingsList: PropTypes.object,
-    toggleSetting: PropTypes.func,
-    t: PropTypes.func,
+    initSettings: PropTypes.func.isRequired,
+    settings: PropTypes.object.isRequired,
+    toggleSetting: PropTypes.func.isRequired,
+    getStatsConfig: PropTypes.func.isRequired,
+    setStatsConfig: PropTypes.func.isRequired,
+    resetStats: PropTypes.func.isRequired,
+    t: PropTypes.func.isRequired,
 };
 
 export default withNamespaces()(Settings);
