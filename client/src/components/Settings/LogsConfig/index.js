@@ -12,7 +12,7 @@ class LogsConfig extends Component {
         this.props.setLogsConfig(values);
     }, DEBOUNCE_TIMEOUT);
 
-    handleLogsClear = () => {
+    handleClear = () => {
         const { t, clearLogs } = this.props;
         // eslint-disable-next-line no-alert
         if (window.confirm(t('query_log_confirm_clear'))) {
@@ -29,7 +29,7 @@ class LogsConfig extends Component {
             <Card
                 title={t('query_log_configuration')}
                 bodyType="card-body box-body--settings"
-                id="logs_config"
+                id="logs-config"
             >
                 <div className="form">
                     <Form
@@ -45,7 +45,7 @@ class LogsConfig extends Component {
                     <button
                         type="button"
                         className="btn btn-outline-secondary btn-sm"
-                        onClick={this.handleLogsClear}
+                        onClick={this.handleClear}
                         disabled={processingClear}
                     >
                         <Trans>query_log_clear</Trans>

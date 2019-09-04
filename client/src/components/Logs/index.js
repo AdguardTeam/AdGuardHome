@@ -373,7 +373,7 @@ class Logs extends Component {
                     {enabled && isDataReady && this.renderLogs(queryLogs.logs)}
                     {!enabled && isDataReady && (
                         <div className="lead text-center py-6">
-                            <Trans components={[<Link to="/settings#logs_config" key="0">link</Link>]}>
+                            <Trans components={[<Link to="/settings#logs-config" key="0">link</Link>]}>
                                 query_log_disabled
                             </Trans>
                         </div>

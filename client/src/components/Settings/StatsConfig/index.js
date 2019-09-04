@@ -12,7 +12,7 @@ class StatsConfig extends Component {
         this.props.setStatsConfig(values);
     }, DEBOUNCE_TIMEOUT);
 
-    handleStatsReset = () => {
+    handleReset = () => {
         const { t, resetStats } = this.props;
         // eslint-disable-next-line no-alert
         if (window.confirm(t('statistics_clear_confirm'))) {
@@ -40,7 +40,7 @@ class StatsConfig extends Component {
                     <button
                         type="button"
                         className="btn btn-outline-secondary btn-sm"
-                        onClick={this.handleStatsReset}
+                        onClick={this.handleReset}
                         disabled={processingReset}
                     >
                         <Trans>statistics_clear</Trans>
