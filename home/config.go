@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
-	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/querylog"
 	"github.com/AdguardTeam/AdGuardHome/stats"
@@ -72,6 +71,7 @@ type configuration struct {
 	client           *http.Client
 	stats            stats.Stats
 	queryLog         querylog.QueryLog
+	filteringStarted bool
 
 	// cached version.json to avoid hammering github.io for each page reload
 	versionCheckJSON     []byte
@@ -172,16 +172,17 @@ var config = configuration{
 		Port:          53,
 		StatsInterval: 1,
 		FilteringConfig: dnsforward.FilteringConfig{
-			ProtectionEnabled:  true,       // whether or not use any of dnsfilter features
-			FilteringEnabled:   true,       // whether or not use filter lists
-			BlockingMode:       "nxdomain", // mode how to answer filtered requests
-			BlockedResponseTTL: 10,         // in seconds
-			QueryLogEnabled:    true,
-			QueryLogInterval:   1,
-			Ratelimit:          20,
-			RefuseAny:          true,
-			BootstrapDNS:       defaultBootstrap,
-			AllServers:         false,
+			ProtectionEnabled:          true, // whether or not use any of dnsfilter features
+			FilteringEnabled:           true, // whether or not use filter lists
+			FiltersUpdateIntervalHours: 24,
+			BlockingMode:               "nxdomain", // mode how to answer filtered requests
+			BlockedResponseTTL:         10,         // in seconds
+			QueryLogEnabled:            true,
+			QueryLogInterval:           1,
+			Ratelimit:                  20,
+			RefuseAny:                  true,
+			BootstrapDNS:               defaultBootstrap,
+			AllServers:                 false,
 		},
 		UpstreamDNS: defaultDNS,
 	},
@@ -190,12 +191,6 @@ var config = configuration{
 			PortHTTPS:      443,
 			PortDNSOverTLS: 853, // needs to be passed through to dnsproxy
 		},
-	},
-	Filters: []filter{
-		{Filter: dnsfilter.Filter{ID: 1}, Enabled: true, URL: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt", Name: "AdGuard Simplified Domain Names filter"},
-		{Filter: dnsfilter.Filter{ID: 2}, Enabled: false, URL: "https://adaway.org/hosts.txt", Name: "AdAway"},
-		{Filter: dnsfilter.Filter{ID: 3}, Enabled: false, URL: "https://hosts-file.net/ad_servers.txt", Name: "hpHosts - Ad and Tracking servers only"},
-		{Filter: dnsfilter.Filter{ID: 4}, Enabled: false, URL: "https://www.malwaredomainlist.com/hostslist/hosts.txt", Name: "MalwareDomainList.com Hosts List"},
 	},
 	DHCP: dhcpd.ServerConfig{
 		LeaseDuration: 86400,
@@ -226,6 +221,7 @@ func initConfig() {
 	config.DNS.SafeSearchCacheSize = 1 * 1024 * 1024
 	config.DNS.ParentalCacheSize = 1 * 1024 * 1024
 	config.DNS.CacheTime = 30
+	config.Filters = defaultFilters()
 }
 
 // getConfigFilename returns path to the current config file
@@ -276,6 +272,9 @@ func parseConfig() error {
 	if !checkStatsInterval(config.DNS.StatsInterval) {
 		config.DNS.StatsInterval = 1
 	}
+	if !checkFiltersUpdateIntervalHours(config.DNS.FiltersUpdateIntervalHours) {
+		config.DNS.FiltersUpdateIntervalHours = 24
+	}
 
 	if !checkQueryLogInterval(config.DNS.QueryLogInterval) {
 		config.DNS.QueryLogInterval = 1
@@ -307,11 +306,6 @@ func parseConfig() error {
 		log.Error("%s", status.WarningValidation)
 		return err
 	}
-
-	// Deduplicate filters
-	deduplicateFilters()
-
-	updateUniqueFilterID(config.Filters)
 
 	return nil
 }

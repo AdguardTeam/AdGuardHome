@@ -5,74 +5,57 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/asaskevich/govalidator"
 )
 
-func handleFilteringEnable(w http.ResponseWriter, r *http.Request) {
-	config.DNS.FilteringEnabled = true
-	httpUpdateConfigReloadDNSReturnOK(w, r)
+// IsValidURL - return TRUE if URL is valid
+func IsValidURL(rawurl string) bool {
+	url, err := url.ParseRequestURI(rawurl)
+	if err != nil {
+		return false //Couldn't even parse the rawurl
+	}
+	if len(url.Scheme) == 0 {
+		return false //No Scheme found
+	}
+	return true
 }
 
-func handleFilteringDisable(w http.ResponseWriter, r *http.Request) {
-	config.DNS.FilteringEnabled = false
-	httpUpdateConfigReloadDNSReturnOK(w, r)
-}
-
-func handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
-	data := map[string]interface{}{
-		"enabled": config.DNS.FilteringEnabled,
-	}
-
-	config.RLock()
-	data["filters"] = config.Filters
-	data["user_rules"] = config.UserRules
-	jsonVal, err := json.Marshal(data)
-	config.RUnlock()
-
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to marshal status json: %s", err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to write response json: %s", err)
-		return
-	}
+type filterAddJSON struct {
+	Name string `json:"name"`
+	URL  string `json:"url"`
 }
 
 func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
-	f := filter{}
-	err := json.NewDecoder(r.Body).Decode(&f)
+	fj := filterAddJSON{}
+	err := json.NewDecoder(r.Body).Decode(&fj)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Failed to parse request body json: %s", err)
 		return
 	}
 
-	if len(f.URL) == 0 {
-		http.Error(w, "URL parameter was not specified", http.StatusBadRequest)
-		return
-	}
-
-	if valid := govalidator.IsRequestURL(f.URL); !valid {
-		http.Error(w, "URL parameter is not valid request URL", http.StatusBadRequest)
+	if !IsValidURL(fj.URL) {
+		http.Error(w, "Invalid URL", http.StatusBadRequest)
 		return
 	}
 
 	// Check for duplicates
-	if filterExists(f.URL) {
-		httpError(w, http.StatusBadRequest, "Filter URL already added -- %s", f.URL)
+	if filterExists(fj.URL) {
+		httpError(w, http.StatusBadRequest, "Filter URL already added -- %s", fj.URL)
 		return
 	}
 
 	// Set necessary properties
+	f := filter{
+		Enabled: true,
+		URL:     fj.URL,
+		Name:    fj.Name,
+	}
 	f.ID = assignUniqueFilterID()
-	f.Enabled = true
 
 	// Download the filter contents
 	ok, err := f.update()
@@ -133,7 +116,7 @@ func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if valid := govalidator.IsRequestURL(req.URL); !valid {
+	if !IsValidURL(req.URL) {
 		http.Error(w, "URL parameter is not valid request URL", http.StatusBadRequest)
 		return
 	}
@@ -166,54 +149,27 @@ func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
-func handleFilteringEnableURL(w http.ResponseWriter, r *http.Request) {
-	parameters, err := parseParametersFromBody(r.Body)
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "failed to parse parameters from body: %s", err)
-		return
-	}
-
-	url, ok := parameters["url"]
-	if !ok {
-		http.Error(w, "URL parameter was not specified", http.StatusBadRequest)
-		return
-	}
-
-	if valid := govalidator.IsRequestURL(url); !valid {
-		http.Error(w, "URL parameter is not valid request URL", http.StatusBadRequest)
-		return
-	}
-
-	found := filterEnable(url, true)
-	if !found {
-		http.Error(w, "URL parameter was not previously added", http.StatusBadRequest)
-		return
-	}
-
-	httpUpdateConfigReloadDNSReturnOK(w, r)
+type filterURLJSON struct {
+	URL     string `json:"url"`
+	Enabled bool   `json:"enabled"`
 }
 
-func handleFilteringDisableURL(w http.ResponseWriter, r *http.Request) {
-	parameters, err := parseParametersFromBody(r.Body)
+func handleFilteringSetURL(w http.ResponseWriter, r *http.Request) {
+	fj := filterURLJSON{}
+	err := json.NewDecoder(r.Body).Decode(&fj)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "failed to parse parameters from body: %s", err)
+		httpError(w, http.StatusBadRequest, "json decode: %s", err)
 		return
 	}
 
-	url, ok := parameters["url"]
-	if !ok {
-		http.Error(w, "URL parameter was not specified", http.StatusBadRequest)
+	if !IsValidURL(fj.URL) {
+		http.Error(w, "invalid URL", http.StatusBadRequest)
 		return
 	}
 
-	if valid := govalidator.IsRequestURL(url); !valid {
-		http.Error(w, "URL parameter is not valid request URL", http.StatusBadRequest)
-		return
-	}
-
-	found := filterEnable(url, false)
+	found := filterEnable(fj.URL, fj.Enabled)
 	if !found {
-		http.Error(w, "URL parameter was not previously added", http.StatusBadRequest)
+		http.Error(w, "URL doesn't exist", http.StatusBadRequest)
 		return
 	}
 
@@ -234,4 +190,92 @@ func handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
 func handleFilteringRefresh(w http.ResponseWriter, r *http.Request) {
 	updated := refreshFiltersIfNecessary(true)
 	fmt.Fprintf(w, "OK %d filters updated\n", updated)
+}
+
+type filterJSON struct {
+	ID          int64  `json:"id"`
+	Enabled     bool   `json:"enabled"`
+	URL         string `json:"url"`
+	Name        string `json:"name"`
+	RulesCount  uint32 `json:"rules_count"`
+	LastUpdated string `json:"last_updated"`
+}
+
+type filteringConfig struct {
+	Enabled   bool         `json:"enabled"`
+	Interval  uint32       `json:"interval"` // in hours
+	Filters   []filterJSON `json:"filters"`
+	UserRules []string     `json:"user_rules"`
+}
+
+// Get filtering configuration
+func handleFilteringInfo(w http.ResponseWriter, r *http.Request) {
+	resp := filteringConfig{}
+	config.RLock()
+	resp.Enabled = config.DNS.FilteringEnabled
+	resp.Interval = config.DNS.FiltersUpdateIntervalHours
+	for _, f := range config.Filters {
+		fj := filterJSON{
+			ID:         f.ID,
+			Enabled:    f.Enabled,
+			URL:        f.URL,
+			Name:       f.Name,
+			RulesCount: uint32(f.RulesCount),
+		}
+
+		if f.LastUpdated.Second() != 0 {
+			fj.LastUpdated = f.LastUpdated.Format(time.RFC3339)
+		}
+
+		resp.Filters = append(resp.Filters, fj)
+	}
+	resp.UserRules = config.UserRules
+	config.RUnlock()
+
+	jsonVal, err := json.Marshal(resp)
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "json encode: %s", err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(jsonVal)
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "http write: %s", err)
+	}
+}
+
+// Set filtering configuration
+func handleFilteringConfig(w http.ResponseWriter, r *http.Request) {
+	req := filteringConfig{}
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "json decode: %s", err)
+		return
+	}
+
+	if !checkFiltersUpdateIntervalHours(req.Interval) {
+		httpError(w, http.StatusBadRequest, "Unsupported interval")
+		return
+	}
+
+	config.DNS.FilteringEnabled = req.Enabled
+	config.DNS.FiltersUpdateIntervalHours = req.Interval
+	httpUpdateConfigReloadDNSReturnOK(w, r)
+
+	returnOK(w)
+}
+
+// RegisterFilteringHandlers - register handlers
+func RegisterFilteringHandlers() {
+	httpRegister(http.MethodGet, "/control/filtering_info", handleFilteringInfo)
+	httpRegister(http.MethodPost, "/control/filtering_config", handleFilteringConfig)
+	httpRegister(http.MethodPost, "/control/filtering/add_url", handleFilteringAddURL)
+	httpRegister(http.MethodPost, "/control/filtering/remove_url", handleFilteringRemoveURL)
+	httpRegister(http.MethodPost, "/control/filtering/set_url", handleFilteringSetURL)
+	httpRegister(http.MethodPost, "/control/filtering/refresh", handleFilteringRefresh)
+	httpRegister(http.MethodPost, "/control/filtering/set_rules", handleFilteringSetRules)
+}
+
+func checkFiltersUpdateIntervalHours(i uint32) bool {
+	return i == 0 || i == 1 || i == 12 || i == 1*24 || i == 3*24 || i == 7*24
 }

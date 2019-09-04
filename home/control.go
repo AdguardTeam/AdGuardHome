@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -16,8 +15,6 @@ import (
 	"github.com/NYTimes/gziphandler"
 	"github.com/miekg/dns"
 )
-
-const updatePeriod = time.Hour * 24
 
 var protocols = []string{"tls://", "https://", "tcp://", "sdns://"}
 
@@ -547,15 +544,6 @@ func registerControlHandlers() {
 	httpRegister(http.MethodGet, "/control/i18n/current_language", handleI18nCurrentLanguage)
 	http.HandleFunc("/control/version.json", postInstall(optionalAuth(handleGetVersionJSON)))
 	httpRegister(http.MethodPost, "/control/update", handleUpdate)
-	httpRegister(http.MethodPost, "/control/filtering/enable", handleFilteringEnable)
-	httpRegister(http.MethodPost, "/control/filtering/disable", handleFilteringDisable)
-	httpRegister(http.MethodPost, "/control/filtering/add_url", handleFilteringAddURL)
-	httpRegister(http.MethodPost, "/control/filtering/remove_url", handleFilteringRemoveURL)
-	httpRegister(http.MethodPost, "/control/filtering/enable_url", handleFilteringEnableURL)
-	httpRegister(http.MethodPost, "/control/filtering/disable_url", handleFilteringDisableURL)
-	httpRegister(http.MethodPost, "/control/filtering/refresh", handleFilteringRefresh)
-	httpRegister(http.MethodGet, "/control/filtering/status", handleFilteringStatus)
-	httpRegister(http.MethodPost, "/control/filtering/set_rules", handleFilteringSetRules)
 	httpRegister(http.MethodPost, "/control/safebrowsing/enable", handleSafeBrowsingEnable)
 	httpRegister(http.MethodPost, "/control/safebrowsing/disable", handleSafeBrowsingDisable)
 	httpRegister(http.MethodGet, "/control/safebrowsing/status", handleSafeBrowsingStatus)
@@ -575,6 +563,7 @@ func registerControlHandlers() {
 	httpRegister(http.MethodGet, "/control/access/list", handleAccessList)
 	httpRegister(http.MethodPost, "/control/access/set", handleAccessSet)
 
+	RegisterFilteringHandlers()
 	RegisterTLSHandlers()
 	RegisterClientsHandlers()
 	registerRewritesHandlers()

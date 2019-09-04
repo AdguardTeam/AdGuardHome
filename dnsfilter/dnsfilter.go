@@ -114,9 +114,9 @@ type Dnsfilter struct {
 
 // Filter represents a filter list
 type Filter struct {
-	ID       int64  `json:"id"`         // auto-assigned when filter is added (see nextFilterID), json by default keeps ID uppercase but we need lowercase
-	Data     []byte `json:"-" yaml:"-"` // List of rules divided by '\n'
-	FilePath string `json:"-" yaml:"-"` // Path to a filtering rules file
+	ID       int64  // auto-assigned when filter is added (see nextFilterID)
+	Data     []byte `yaml:"-"` // List of rules divided by '\n'
+	FilePath string `yaml:"-"` // Path to a filtering rules file
 }
 
 //go:generate stringer -type=Reason

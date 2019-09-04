@@ -45,6 +45,11 @@ Contents:
 * Query logs
 	* API: Set querylog parameters
 	* API: Get querylog parameters
+* Filtering
+	* Filters update mechanism
+	* API: Get filtering parameters
+	* API: Set filtering parameters
+	* API: Set URL parameters
 
 
 ## Relations between subsystems
@@ -1019,3 +1024,76 @@ Response:
 		"enabled": true | false
 		"interval": 1 | 7 | 30 | 90
 	}
+
+
+## Filtering
+
+### Filters update mechanism
+
+Filters can be updated either manually by request from UI or automatically.
+Auto-update interval can be configured in UI.  If it is 0, auto-update is disabled.
+When the last modification date of filter files is older than auto-update interval, auto-update procedure is started.
+If an enabled filter file doesn't exist, it's downloaded on application startup.  This includes the case when installation wizard is completed and there are no filter files yet.
+When auto-update time comes, server starts the update procedure by downloading filter files.  After new filter files are in place, it restarts DNS filtering module with new rules.
+Only filters that are enabled by configuration can be updated.
+As a result of the update procedure, all enabled filter files are written to disk, refreshed (their last modification date is equal to the current time) and loaded.
+
+
+### API: Get filtering parameters
+
+Request:
+
+	GET /control/filtering_info
+
+Response:
+
+	200 OK
+
+	{
+		"enabled": true | false
+		"interval": 0 | 1 | 12 | 1*24 || 3*24 || 7*24
+		"filters":[
+			{
+			"id":1
+			"enabled":true,
+			"url":"https://...",
+			"name":"...",
+			"rules_count":1234,
+			"last_updated":"2019-09-04T18:29:30+00:00",
+			}
+			...
+		],
+		"user_rules":["...", ...]
+	}
+
+
+### API: Set filtering parameters
+
+Request:
+
+	POST /control/filtering_config
+
+	{
+		"enabled": true | false
+		"interval": 0 | 1 | 12 | 1*24 || 3*24 || 7*24
+	}
+
+Response:
+
+	200 OK
+
+
+### API: Set URL parameters
+
+Request:
+
+	POST /control/filtering/set_url
+
+	{
+		"url": "..."
+		"enabled": true | false
+	}
+
+Response:
+
+	200 OK

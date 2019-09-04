@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 
 	"github.com/AdguardTeam/golibs/log"
@@ -239,6 +240,9 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	config.AuthName = newSettings.Username
 	config.AuthPass = newSettings.Password
 
+	dnsBaseDir := filepath.Join(config.ourWorkingDir, dataDir)
+	initDNSServer(dnsBaseDir)
+
 	err = startDNSServer()
 	if err != nil {
 		config.firstRun = true
@@ -254,8 +258,6 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusInternalServerError, "Couldn't write config: %s", err)
 		return
 	}
-
-	go refreshFiltersIfNecessary(false)
 
 	// this needs to be done in a goroutine because Shutdown() is a blocking call, and it will block
 	// until all requests are finished, and _we_ are inside a request right now, so it will block indefinitely

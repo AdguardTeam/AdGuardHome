@@ -35,7 +35,7 @@ type queryLog struct {
 	lock  sync.RWMutex
 }
 
-// newQueryLog creates a new instance of the query log
+// create a new instance of the query log
 func newQueryLog(conf Config) *queryLog {
 	l := queryLog{}
 	l.logFile = filepath.Join(conf.BaseDir, queryLogFileName)
@@ -53,7 +53,6 @@ func (l *queryLog) Configure(conf Config) {
 	l.conf = conf
 }
 
-// Clear memory buffer and remove the file
 func (l *queryLog) Clear() {
 	l.fileFlushLock.Lock()
 	defer l.fileFlushLock.Unlock()
@@ -164,7 +163,6 @@ func (l *queryLog) Add(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Res
 	}
 }
 
-// getQueryLogJson returns a map with the current query log ready to be converted to a JSON
 func (l *queryLog) GetData() []map[string]interface{} {
 	l.lock.RLock()
 	values := make([]*logEntry, len(l.cache))
