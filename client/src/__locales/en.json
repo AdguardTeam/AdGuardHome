@@ -176,6 +176,8 @@
     "rule_added_to_custom_filtering_toast": "Rule added to the custom filtering rules",
     "query_log_disabled_toast": "Query log disabled",
     "query_log_enabled_toast": "Query log enabled",
+    "query_log_response_status": "Status: {{value}}",
+    "query_log_filtered": "Filtered by {{filter}}",
     "source_label": "Source",
     "found_in_known_domain_db": "Found in the known domains database.",
     "category_label": "Category",

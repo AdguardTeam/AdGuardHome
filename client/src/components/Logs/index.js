@@ -8,7 +8,7 @@ import { Trans, withNamespaces } from 'react-i18next';
 import { HashLink as Link } from 'react-router-hash-link';
 
 import { formatTime, getClientName } from '../../helpers/helpers';
-import { SERVICES } from '../../helpers/constants';
+import { SERVICES, FILTERED_STATUS } from '../../helpers/constants';
 import { getTrackerData } from '../../helpers/trackers/trackers';
 import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
@@ -18,6 +18,11 @@ import Popover from '../ui/Popover';
 import './Logs.css';
 
 const DOWNLOAD_LOG_FILENAME = 'dns-logs.txt';
+const FILTERED_REASON = 'Filtered';
+const RESPONSE_FILTER = {
+    ALL: 'all',
+    FILTERED: 'filtered',
+};
 
 class Logs extends Component {
     componentDidMount() {
@@ -38,10 +43,28 @@ class Logs extends Component {
         if (this.props.dashboard.queryLogEnabled) {
             this.props.getLogs();
         }
-    }
+    };
 
     renderTooltip = (isFiltered, rule, filter, service) =>
         isFiltered && <PopoverFiltered rule={rule} filter={filter} service={service} />;
+
+    renderResponseList = (response, status) => {
+        if (response.length > 0) {
+            const listItems = response.map((response, index) => (
+                <li key={index} title={response} className="logs__list-item">
+                    {response}
+                </li>
+            ));
+
+            return <ul className="list-unstyled">{listItems}</ul>;
+        }
+
+        return (
+            <div>
+                <Trans values={{ value: status }}>query_log_response_status</Trans>
+            </div>
+        );
+    };
 
     toggleBlocking = (type, domain) => {
         const { userRules } = this.props.filtering;
@@ -63,7 +86,7 @@ class Logs extends Component {
         }
 
         this.props.getFilteringStatus();
-    }
+    };
 
     renderBlockingButton(isFiltered, domain) {
         const buttonClass = isFiltered ? 'btn-outline-secondary' : 'btn-outline-danger';
@@ -84,228 +107,244 @@ class Logs extends Component {
         );
     }
 
+    checkFiltered = reason => reason.indexOf(FILTERED_REASON) === 0;
+
+    checkRewrite = reason => reason === FILTERED_STATUS.REWRITE;
+
+    checkWhiteList = reason => reason === FILTERED_STATUS.NOT_FILTERED_WHITE_LIST;
+
+    getTimeCell = ({ value }) => (
+        <div className="logs__row">
+            <span className="logs__text" title={value}>
+                {formatTime(value)}
+            </span>
+        </div>
+    );
+
+    getDomainCell = (row) => {
+        const response = row.value;
+        const trackerData = getTrackerData(response);
+
+        return (
+            <div className="logs__row" title={response}>
+                <div className="logs__text">{response}</div>
+                {trackerData && <Popover data={trackerData} />}
+            </div>
+        );
+    };
+
+    getResponseCell = ({ value: responses, original }) => {
+        const {
+            reason, filterId, rule, status,
+        } = original;
+        const { t, filtering } = this.props;
+        const { filters } = filtering;
+
+        const isFiltered = this.checkFiltered(reason);
+        const filterKey = reason.replace(FILTERED_REASON, '');
+        const parsedFilteredReason = t('query_log_filtered', { filter: filterKey });
+        const isRewrite = this.checkRewrite(reason);
+        const isWhiteList = this.checkWhiteList(reason);
+        const isBlockedService = reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
+        const currentService = SERVICES.find(service => service.id === original.serviceName);
+        const serviceName = currentService && currentService.name;
+        let filterName = '';
+
+        if (filterId === 0) {
+            filterName = t('custom_filter_rules');
+        } else {
+            const filterItem = Object.keys(filters).filter(key => filters[key].id === filterId)[0];
+
+            if (
+                typeof filterItem !== 'undefined' &&
+                typeof filters[filterItem] !== 'undefined'
+            ) {
+                filterName = filters[filterItem].name;
+            }
+
+            if (!filterName) {
+                filterName = t('unknown_filter', { filterId });
+            }
+        }
+
+        return (
+            <div className="logs__row logs__row--column">
+                <div className="logs__text-wrap">
+                    {(isFiltered || isBlockedService) && (
+                        <span className="logs__text" title={parsedFilteredReason}>
+                            {parsedFilteredReason}
+                        </span>
+                    )}
+                    {isBlockedService
+                        ? this.renderTooltip(isFiltered, '', '', serviceName)
+                        : this.renderTooltip(isFiltered, rule, filterName)}
+                    {isRewrite && (
+                        <strong>
+                            <Trans>rewrite_applied</Trans>
+                        </strong>
+                    )}
+                </div>
+                <div className="logs__list-wrap">
+                    {this.renderResponseList(responses, status)}
+                    {isWhiteList && this.renderTooltip(isWhiteList, rule, filterName)}
+                </div>
+            </div>
+        );
+    };
+
+    getClientCell = ({ original, value }) => {
+        const { dashboard } = this.props;
+        const { reason, domain } = original;
+        const isFiltered = this.checkFiltered(reason);
+        const isRewrite = this.checkRewrite(reason);
+        const clientName =
+            getClientName(dashboard.clients, value) || getClientName(dashboard.autoClients, value);
+        let client = value;
+
+        if (clientName) {
+            client = (
+                <span>
+                    {clientName} <small>({value})</small>
+                </span>
+            );
+        }
+
+        return (
+            <Fragment>
+                <div className="logs__row">{client}</div>
+                {isRewrite ? (
+                    <div className="logs__action">
+                        <Link to="/dns#rewrites" className="btn btn-sm btn-outline-primary">
+                            <Trans>configure</Trans>
+                        </Link>
+                    </div>
+                ) : (
+                    this.renderBlockingButton(isFiltered, domain)
+                )}
+            </Fragment>
+        );
+    };
+
     renderLogs(logs) {
-        const { t, dashboard } = this.props;
-        const columns = [{
-            Header: t('time_table_header'),
-            accessor: 'time',
-            maxWidth: 110,
-            filterable: false,
-            Cell: ({ value }) => (<div className="logs__row"><span className="logs__text" title={value}>{formatTime(value)}</span></div>),
-        }, {
-            Header: t('domain_name_table_header'),
-            accessor: 'domain',
-            Cell: (row) => {
-                const response = row.value;
-                const trackerData = getTrackerData(response);
-
-                return (
-                    <div className="logs__row" title={response}>
-                        <div className="logs__text">
-                            {response}
-                        </div>
-                        {trackerData && <Popover data={trackerData}/>}
-                    </div>
-                );
+        const { t } = this.props;
+        const columns = [
+            {
+                Header: t('time_table_header'),
+                accessor: 'time',
+                maxWidth: 90,
+                filterable: false,
+                Cell: this.getTimeCell,
             },
-        }, {
-            Header: t('type_table_header'),
-            accessor: 'type',
-            maxWidth: 60,
-        }, {
-            Header: t('response_table_header'),
-            accessor: 'response',
-            Cell: (row) => {
-                const responses = row.value;
-                const { reason } = row.original;
-                const isFiltered = row ? reason.indexOf('Filtered') === 0 : false;
-                const parsedFilteredReason = reason.replace('Filtered', 'Filtered by ');
-                const rule = row && row.original && row.original.rule;
-                const { filterId } = row.original;
-                const { filters } = this.props.filtering;
-                const isRewrite = reason && reason === 'Rewrite';
-                let filterName = '';
-
-                if (reason === 'FilteredBlackList' || reason === 'NotFilteredWhiteList') {
-                    if (filterId === 0) {
-                        filterName = t('custom_filter_rules');
-                    } else {
-                        const filterItem = Object.keys(filters)
-                            .filter(key => filters[key].id === filterId);
-
-                        if (typeof filterItem !== 'undefined' && typeof filters[filterItem] !== 'undefined') {
-                            filterName = filters[filterItem].name;
-                        }
-
-                        if (!filterName) {
-                            filterName = t('unknown_filter', { filterId });
-                        }
+            {
+                Header: t('domain_name_table_header'),
+                accessor: 'domain',
+                minWidth: 180,
+                Cell: this.getDomainCell,
+            },
+            {
+                Header: t('type_table_header'),
+                accessor: 'type',
+                maxWidth: 60,
+            },
+            {
+                Header: t('response_table_header'),
+                accessor: 'response',
+                minWidth: 250,
+                Cell: this.getResponseCell,
+                filterMethod: (filter, row) => {
+                    if (filter.value === RESPONSE_FILTER.FILTERED) {
+                        // eslint-disable-next-line no-underscore-dangle
+                        const { reason } = row._original;
+                        return (
+                            this.checkFiltered(reason) ||
+                            this.checkWhiteList(reason)
+                        );
                     }
-                }
-
-                if (reason === 'FilteredBlockedService') {
-                    const getService = SERVICES
-                        .find(service => service.id === row.original.serviceName);
-                    const serviceName = getService && getService.name;
-
-                    return (
-                        <div className="logs__row">
-                            <span className="logs__text" title={parsedFilteredReason}>
-                                {parsedFilteredReason}
-                            </span>
-                            {this.renderTooltip(isFiltered, '', '', serviceName)}
-                        </div>
-                    );
-                }
-
-                if (isFiltered) {
-                    return (
-                        <div className="logs__row">
-                            <span className="logs__text" title={parsedFilteredReason}>
-                                {parsedFilteredReason}
-                            </span>
-                            {this.renderTooltip(isFiltered, rule, filterName)}
-                        </div>
-                    );
-                }
-
-                if (responses.length > 0) {
-                    const liNodes = responses.map((response, index) =>
-                        (<li key={index} title={response}>{response}</li>));
-                    const isRenderTooltip = reason === 'NotFilteredWhiteList';
-
-                    return (
-                        <div className={`logs__row ${isRewrite && 'logs__row--column'}`}>
-                            {isRewrite && <strong><Trans>rewrite_applied</Trans></strong>}
-                            <ul className="list-unstyled">{liNodes}</ul>
-                            {this.renderTooltip(isRenderTooltip, rule, filterName)}
-                        </div>
-                    );
-                }
-                return (
-                    <div className={`logs__row ${isRewrite && 'logs__row--column'}`}>
-                        {isRewrite && <strong><Trans>rewrite_applied</Trans></strong>}
-                        <span><Trans>empty_response_status</Trans></span>
-                        {this.renderTooltip(isFiltered, rule, filterName)}
-                    </div>
-                );
+                    return true;
+                },
+                Filter: ({ filter, onChange }) => (
+                    <select
+                        className="form-control"
+                        onChange={event => onChange(event.target.value)}
+                        value={filter ? filter.value : RESPONSE_FILTER.ALL}
+                    >
+                        <option value={RESPONSE_FILTER.ALL}>
+                            <Trans>show_all_filter_type</Trans>
+                        </option>
+                        <option value={RESPONSE_FILTER.FILTERED}>
+                            <Trans>show_filtered_type</Trans>
+                        </option>
+                    </select>
+                ),
             },
-            filterMethod: (filter, row) => {
-                if (filter.value === 'filtered') {
-                    // eslint-disable-next-line no-underscore-dangle
-                    return row._original.reason.indexOf('Filtered') === 0 || row._original.reason === 'NotFilteredWhiteList';
-                }
-                return true;
+            {
+                Header: t('client_table_header'),
+                accessor: 'client',
+                maxWidth: 220,
+                minWidth: 220,
+                Cell: this.getClientCell,
             },
-            Filter: ({ filter, onChange }) =>
-                <select
-                    onChange={event => onChange(event.target.value)}
-                    className="form-control"
-                    value={filter ? filter.value : 'all'}
-                >
-                    <option value="all">{ t('show_all_filter_type') }</option>
-                    <option value="filtered">{ t('show_filtered_type') }</option>
-                </select>,
-        }, {
-            Header: t('client_table_header'),
-            accessor: 'client',
-            maxWidth: 250,
-            Cell: (row) => {
-                const { reason } = row.original;
-                const isFiltered = row ? reason.indexOf('Filtered') === 0 : false;
-                const isRewrite = reason && reason === 'Rewrite';
-                const clientName = getClientName(dashboard.clients, row.value)
-                    || getClientName(dashboard.autoClients, row.value);
-                let client;
-
-                if (clientName) {
-                    client = <span>{clientName} <small>({row.value})</small></span>;
-                } else {
-                    client = row.value;
-                }
-
-                if (isRewrite) {
-                    return (
-                        <Fragment>
-                            <div className="logs__row">
-                                {client}
-                            </div>
-                            <div className="logs__action">
-                                <Link to="/dns#rewrites" className="btn btn-sm btn-outline-primary">
-                                    <Trans>configure</Trans>
-                                </Link>
-                            </div>
-                        </Fragment>
-                    );
-                }
-
-                return (
-                    <Fragment>
-                        <div className="logs__row">
-                            {client}
-                        </div>
-                        {this.renderBlockingButton(isFiltered, row.original.domain)}
-                    </Fragment>
-                );
-            },
-        },
         ];
 
         if (logs) {
-            return (<ReactTable
-                className='logs__table'
-                filterable
-                data={logs}
-                columns={columns}
-                showPagination={true}
-                defaultPageSize={50}
-                minRows={7}
-                // Text
-                previousText={ t('previous_btn') }
-                nextText={ t('next_btn') }
-                loadingText={ t('loading_table_status') }
-                pageText={ t('page_table_footer_text') }
-                ofText={ t('of_table_footer_text') }
-                rowsText={ t('rows_table_footer_text') }
-                noDataText={ t('no_logs_found') }
-                defaultFilterMethod={(filter, row) => {
-                    const id = filter.pivotId || filter.id;
-                    return row[id] !== undefined ?
-                        String(row[id]).indexOf(filter.value) !== -1 : true;
-                }}
-                defaultSorted={[
-                    {
-                        id: 'time',
-                        desc: true,
-                    },
-                ]}
-                getTrProps={(_state, rowInfo) => {
-                    // highlight filtered requests
-                    if (!rowInfo) {
-                        return {};
-                    }
+            return (
+                <ReactTable
+                    className="logs__table"
+                    filterable
+                    data={logs}
+                    columns={columns}
+                    showPagination={true}
+                    defaultPageSize={50}
+                    minRows={7}
+                    previousText={t('previous_btn')}
+                    nextText={t('next_btn')}
+                    loadingText={t('loading_table_status')}
+                    pageText={t('page_table_footer_text')}
+                    ofText={t('of_table_footer_text')}
+                    rowsText={t('rows_table_footer_text')}
+                    noDataText={t('no_logs_found')}
+                    defaultFilterMethod={(filter, row) => {
+                        const id = filter.pivotId || filter.id;
+                        return row[id] !== undefined
+                            ? String(row[id]).indexOf(filter.value) !== -1
+                            : true;
+                    }}
+                    defaultSorted={[
+                        {
+                            id: 'time',
+                            desc: true,
+                        },
+                    ]}
+                    getTrProps={(_state, rowInfo) => {
+                        if (!rowInfo) {
+                            return {};
+                        }
 
-                    if (rowInfo.original.reason.indexOf('Filtered') === 0) {
-                        return {
-                            className: 'red',
-                        };
-                    } else if (rowInfo.original.reason === 'NotFilteredWhiteList') {
-                        return {
-                            className: 'green',
-                        };
-                    } else if (rowInfo.original.reason === 'Rewrite') {
-                        return {
-                            className: 'blue',
-                        };
-                    }
+                        const { reason } = rowInfo.original;
 
-                    return {
-                        className: '',
-                    };
-                }}
-                />);
+                        if (this.checkFiltered(reason)) {
+                            return {
+                                className: 'red',
+                            };
+                        } else if (this.checkWhiteList(reason)) {
+                            return {
+                                className: 'green',
+                            };
+                        } else if (this.checkRewrite(reason)) {
+                            return {
+                                className: 'blue',
+                            };
+                        }
+
+                        return {
+                            className: '',
+                        };
+                    }}
+                />
+            );
         }
-        return undefined;
+
+        return null;
     }
 
     handleDownloadButton = async (e) => {
@@ -325,17 +364,23 @@ class Logs extends Component {
                         type="submit"
                         onClick={() => this.props.toggleLogStatus(queryLogEnabled)}
                         disabled={logStatusProcessing}
-                    ><Trans>disabled_log_btn</Trans></button>
+                    >
+                        <Trans>disabled_log_btn</Trans>
+                    </button>
                     <button
                         className="btn btn-primary btn-sm mr-2"
                         type="submit"
                         onClick={this.handleDownloadButton}
-                    ><Trans>download_log_file_btn</Trans></button>
+                    >
+                        <Trans>download_log_file_btn</Trans>
+                    </button>
                     <button
                         className="btn btn-outline-primary btn-sm"
                         type="submit"
                         onClick={this.getLogs}
-                    ><Trans>refresh_btn</Trans></button>
+                    >
+                        <Trans>refresh_btn</Trans>
+                    </button>
                 </Fragment>
             );
         }
@@ -346,7 +391,9 @@ class Logs extends Component {
                 type="submit"
                 onClick={() => this.props.toggleLogStatus(queryLogEnabled)}
                 disabled={logStatusProcessing}
-            ><Trans>enabled_log_btn</Trans></button>
+            >
+                <Trans>enabled_log_btn</Trans>
+            </button>
         );
     }
 
@@ -355,24 +402,19 @@ class Logs extends Component {
         const { queryLogEnabled } = dashboard;
         return (
             <Fragment>
-                <PageTitle title={ t('query_log') } subtitle={ t('last_dns_queries') }>
+                <PageTitle title={t('query_log')} subtitle={t('last_dns_queries')}>
                     <div className="page-title__actions">
                         {this.renderButtons(queryLogEnabled, dashboard.logStatusProcessing)}
                     </div>
                 </PageTitle>
                 <Card>
-                    {
-                        queryLogEnabled
-                        && queryLogs.getLogsProcessing
-                        && dashboard.processingClients
-                        && <Loading />
-                    }
-                    {
-                        queryLogEnabled
-                        && !queryLogs.getLogsProcessing
-                        && !dashboard.processingClients
-                        && this.renderLogs(queryLogs.logs)
-                    }
+                    {queryLogEnabled &&
+                        queryLogs.getLogsProcessing &&
+                        dashboard.processingClients && <Loading />}
+                    {queryLogEnabled &&
+                        !queryLogs.getLogsProcessing &&
+                        !dashboard.processingClients &&
+                        this.renderLogs(queryLogs.logs)}
                 </Card>
             </Fragment>
         );
@@ -380,20 +422,17 @@ class Logs extends Component {
 }
 
 Logs.propTypes = {
-    getLogs: PropTypes.func,
-    queryLogs: PropTypes.object,
-    dashboard: PropTypes.object,
-    toggleLogStatus: PropTypes.func,
-    downloadQueryLog: PropTypes.func,
-    getFilteringStatus: PropTypes.func,
-    filtering: PropTypes.object,
-    userRules: PropTypes.string,
-    setRules: PropTypes.func,
-    addSuccessToast: PropTypes.func,
-    processingRules: PropTypes.bool,
-    logStatusProcessing: PropTypes.bool,
-    t: PropTypes.func,
+    getLogs: PropTypes.func.isRequired,
+    queryLogs: PropTypes.object.isRequired,
+    dashboard: PropTypes.object.isRequired,
+    toggleLogStatus: PropTypes.func.isRequired,
+    downloadQueryLog: PropTypes.func.isRequired,
+    getFilteringStatus: PropTypes.func.isRequired,
+    filtering: PropTypes.object.isRequired,
+    setRules: PropTypes.func.isRequired,
+    addSuccessToast: PropTypes.func.isRequired,
     getClients: PropTypes.func.isRequired,
+    t: PropTypes.func.isRequired,
 };
 
 export default withNamespaces()(Logs);

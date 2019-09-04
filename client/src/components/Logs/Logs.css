@@ -9,13 +9,12 @@
     justify-content: center;
 }
 
-.logs__row--overflow {
-    overflow: hidden;
+.logs__row--column {
+    align-items: flex-start;
+    flex-direction: column;
 }
 
-.logs__row--column {
-    flex-direction: column;
-    align-items: flex-start;
+.logs__row--overflow {
     overflow: hidden;
 }
 
@@ -102,4 +101,21 @@
 .logs__table .rt-thead.-filters select:focus {
     border-color: #1991eb;
     box-shadow: 0 0 0 2px rgba(70, 127, 207, 0.25);
+}
+
+.logs__text-wrap {
+    display: flex;
+    align-items: center;
+    max-width: 100%;
+}
+
+.logs__list-wrap {
+    display: flex;
+    max-width: 100%;
+}
+
+.logs__list-item {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 }

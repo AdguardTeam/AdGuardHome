@@ -253,3 +253,10 @@ export const ENCRYPTION_SOURCE = {
     PATH: 'path',
     CONTENT: 'content',
 };
+
+export const FILTERED_STATUS = {
+    FILTERED_BLACK_LIST: 'FilteredBlackList',
+    NOT_FILTERED_WHITE_LIST: 'NotFilteredWhiteList',
+    FILTERED_BLOCKED_SERVICE: 'FilteredBlockedService',
+    REWRITE: 'Rewrite',
+};
