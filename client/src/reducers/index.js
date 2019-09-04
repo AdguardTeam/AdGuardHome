@@ -12,6 +12,7 @@ import access from './access';
 import rewrites from './rewrites';
 import services from './services';
 import stats from './stats';
+import queryLogs from './queryLogs';
 
 const settings = handleActions({
     [actions.initSettingsRequest]: state => ({ ...state, processing: true }),
@@ -43,6 +44,7 @@ const settings = handleActions({
     processingTestUpstream: false,
     processingSetUpstream: false,
     processingDhcpStatus: false,
+    settingsList: {},
 });
 
 const dashboard = handleActions({
@@ -54,7 +56,6 @@ const dashboard = handleActions({
             running,
             dns_port: dnsPort,
             dns_addresses: dnsAddresses,
-            querylog_enabled: queryLogEnabled,
             upstream_dns: upstreamDns,
             bootstrap_dns: bootstrapDns,
             all_servers: allServers,
@@ -69,7 +70,6 @@ const dashboard = handleActions({
             dnsVersion: version,
             dnsPort,
             dnsAddresses,
-            queryLogEnabled,
             upstreamDns: upstreamDns.join('\n'),
             bootstrapDns: bootstrapDns.join('\n'),
             allServers,
@@ -92,13 +92,6 @@ const dashboard = handleActions({
     [actions.disableDnsSuccess]: (state) => {
         const newState = { ...state, isCoreRunning: !state.isCoreRunning, processing: false };
         return newState;
-    },
-
-    [actions.toggleLogStatusRequest]: state => ({ ...state, logStatusProcessing: true }),
-    [actions.toggleLogStatusFailure]: state => ({ ...state, logStatusProcessing: false }),
-    [actions.toggleLogStatusSuccess]: (state) => {
-        const { queryLogEnabled } = state;
-        return ({ ...state, queryLogEnabled: !queryLogEnabled, logStatusProcessing: false });
     },
 
     [actions.getVersionRequest]: state => ({ ...state, processingVersion: true }),
@@ -179,7 +172,6 @@ const dashboard = handleActions({
 }, {
     processing: true,
     isCoreRunning: false,
-    logStatusProcessing: false,
     processingVersion: true,
     processingFiltering: true,
     processingClients: true,
@@ -195,22 +187,6 @@ const dashboard = handleActions({
     dnsVersion: '',
     clients: [],
     autoClients: [],
-});
-
-const queryLogs = handleActions({
-    [actions.getLogsRequest]: state => ({ ...state, getLogsProcessing: true }),
-    [actions.getLogsFailure]: state => ({ ...state, getLogsProcessing: false }),
-    [actions.getLogsSuccess]: (state, { payload }) => {
-        const newState = { ...state, logs: payload, getLogsProcessing: false };
-        return newState;
-    },
-    [actions.downloadQueryLogRequest]: state => ({ ...state, logsDownloading: true }),
-    [actions.downloadQueryLogFailure]: state => ({ ...state, logsDownloading: false }),
-    [actions.downloadQueryLogSuccess]: state => ({ ...state, logsDownloading: false }),
-}, {
-    getLogsProcessing: false,
-    logsDownloading: false,
-    logs: [],
 });
 
 const filtering = handleActions({

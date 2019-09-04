@@ -1,9 +1,10 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
-import { withNamespaces, Trans } from 'react-i18next';
+import { withNamespaces } from 'react-i18next';
 
 import Services from './Services';
 import StatsConfig from './StatsConfig';
+import LogsConfig from './LogsConfig';
 import Checkbox from '../ui/Checkbox';
 import Loading from '../ui/Loading';
 import PageTitle from '../ui/PageTitle';
@@ -39,6 +40,7 @@ class Settings extends Component {
         this.props.initSettings(this.settings);
         this.props.getBlockedServices();
         this.props.getStatsConfig();
+        this.props.getLogsConfig();
     }
 
     renderSettings = (settings) => {
@@ -55,11 +57,7 @@ class Settings extends Component {
                 );
             });
         }
-        return (
-            <div>
-                <Trans>no_settings</Trans>
-            </div>
-        );
+        return '';
     };
 
     render() {
@@ -70,13 +68,23 @@ class Settings extends Component {
             setStatsConfig,
             resetStats,
             stats,
+            queryLogs,
+            setLogsConfig,
+            clearLogs,
             t,
         } = this.props;
+
+        const isDataReady =
+            !settings.processing &&
+            !services.processing &&
+            !stats.processingGetConfig &&
+            !queryLogs.processingGetConfig;
+
         return (
             <Fragment>
                 <PageTitle title={t('general_settings')} />
-                {settings.processing && <Loading />}
-                {!settings.processing && (
+                {!isDataReady && <Loading />}
+                {isDataReady && (
                     <div className="content">
                         <div className="row">
                             <div className="col-md-12">
@@ -93,6 +101,16 @@ class Settings extends Component {
                                     processingReset={stats.processingReset}
                                     setStatsConfig={setStatsConfig}
                                     resetStats={resetStats}
+                                />
+                            </div>
+                            <div className="col-md-12">
+                                <LogsConfig
+                                    enabled={queryLogs.enabled}
+                                    interval={queryLogs.interval}
+                                    processing={queryLogs.processingSetConfig}
+                                    processingClear={queryLogs.processingClear}
+                                    setLogsConfig={setLogsConfig}
+                                    clearLogs={clearLogs}
                                 />
                             </div>
                             <div className="col-md-12">

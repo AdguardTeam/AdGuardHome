@@ -4,11 +4,11 @@ import { Field, reduxForm } from 'redux-form';
 import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 
-import { renderRadioField, toNumber } from '../../../helpers/form';
-import { STATS_INTERVALS_DAYS } from '../../../helpers/constants';
+import { renderSelectField, renderRadioField, toNumber } from '../../../helpers/form';
+import { QUERY_LOG_INTERVALS_DAYS } from '../../../helpers/constants';
 
 const getIntervalFields = (processing, t, handleChange, toNumber) =>
-    STATS_INTERVALS_DAYS.map((interval) => {
+    QUERY_LOG_INTERVALS_DAYS.map((interval) => {
         const title =
             interval === 1 ? t('interval_24_hour') : t('interval_days', { count: interval });
 
@@ -36,15 +36,24 @@ const Form = (props) => {
         <form onSubmit={handleSubmit}>
             <div className="row">
                 <div className="col-12">
-                    <label className="form__label form__label--with-desc">
-                        <Trans>statistics_retention</Trans>
-                    </label>
-                    <div className="form__desc form__desc--top">
-                        <Trans>statistics_retention_desc</Trans>
+                    <div className="form__group form__group--settings">
+                        <Field
+                            name="enabled"
+                            type="checkbox"
+                            component={renderSelectField}
+                            placeholder={t('query_log_enable')}
+                            onChange={handleChange}
+                            disabled={processing}
+                        />
                     </div>
                 </div>
                 <div className="col-12">
-                    <div className="form__group form__group--settings mt-2">
+                    <label className="form__label">
+                        <Trans>query_log_retention</Trans>
+                    </label>
+                </div>
+                <div className="col-12">
+                    <div className="form__group form__group--settings">
                         <div className="custom-controls-stacked">
                             {getIntervalFields(processing, t, handleChange, toNumber)}
                         </div>
@@ -68,6 +77,6 @@ Form.propTypes = {
 export default flow([
     withNamespaces(),
     reduxForm({
-        form: 'statsConfigForm',
+        form: 'logConfigForm',
     }),
 ])(Form);
