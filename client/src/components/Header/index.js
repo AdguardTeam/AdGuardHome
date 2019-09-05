@@ -5,7 +5,6 @@ import classnames from 'classnames';
 import { Trans, withNamespaces } from 'react-i18next';
 
 import Menu from './Menu';
-import Version from './Version';
 import logo from '../ui/svg/logo.svg';
 import './Header.css';
 
@@ -23,7 +22,7 @@ class Header extends Component {
     };
 
     render() {
-        const { dashboard, getVersion, location } = this.props;
+        const { dashboard, location } = this.props;
         const { isMenuOpen } = this.state;
         const badgeClass = classnames({
             'badge dns-status': true,
@@ -33,21 +32,24 @@ class Header extends Component {
 
         return (
             <div className="header">
-                <div className="container">
-                    <div className="row align-items-center">
-                        <div className="header-toggler d-lg-none ml-2 ml-lg-0 collapsed" onClick={this.toggleMenuOpen}>
+                <div className="header__container">
+                    <div className="header__row">
+                        <div
+                            className="header-toggler d-lg-none ml-lg-0 collapsed"
+                            onClick={this.toggleMenuOpen}
+                        >
                             <span className="header-toggler-icon"></span>
                         </div>
-                        <div className="col col-lg-3">
+                        <div className="header__column">
                             <div className="d-flex align-items-center">
                                 <Link to="/" className="nav-link pl-0 pr-1">
                                     <img src={logo} alt="" className="header-brand-img" />
                                 </Link>
-                                {!dashboard.proccessing && dashboard.isCoreRunning &&
+                                {!dashboard.proccessing && dashboard.isCoreRunning && (
                                     <span className={badgeClass}>
                                         <Trans>{dashboard.protectionEnabled ? 'on' : 'off'}</Trans>
                                     </span>
-                                }
+                                )}
                             </div>
                         </div>
                         <Menu
@@ -56,14 +58,13 @@ class Header extends Component {
                             toggleMenuOpen={this.toggleMenuOpen}
                             closeMenu={this.closeMenu}
                         />
-                        {!dashboard.processing &&
-                            <div className="col col-sm-6 col-lg-3">
-                                <Version
-                                    { ...dashboard }
-                                    getVersion={getVersion}
-                                />
+                        <div className="header__column">
+                            <div className="header__right">
+                                <a href="/control/logout" className="btn btn-sm btn-outline-secondary">
+                                    <Trans>logout</Trans>
+                                </a>
                             </div>
-                        }
+                        </div>
                     </div>
                 </div>
             </div>
@@ -75,6 +76,7 @@ Header.propTypes = {
     dashboard: PropTypes.object.isRequired,
     location: PropTypes.object.isRequired,
     getVersion: PropTypes.func.isRequired,
+    t: PropTypes.func.isRequired,
 };
 
 export default withNamespaces()(Header);

@@ -10,8 +10,10 @@ const CopyPlugin = require('copy-webpack-plugin');
 const RESOURCES_PATH = path.resolve(__dirname);
 const ENTRY_REACT = path.resolve(RESOURCES_PATH, 'src/index.js');
 const ENTRY_INSTALL = path.resolve(RESOURCES_PATH, 'src/install/index.js');
+const ENTRY_LOGIN = path.resolve(RESOURCES_PATH, 'src/login/index.js');
 const HTML_PATH = path.resolve(RESOURCES_PATH, 'public/index.html');
 const HTML_INSTALL_PATH = path.resolve(RESOURCES_PATH, 'public/install.html');
+const HTML_LOGIN_PATH = path.resolve(RESOURCES_PATH, 'public/login.html');
 const FAVICON_PATH = path.resolve(RESOURCES_PATH, 'public/favicon.png');
 
 const PUBLIC_PATH = path.resolve(__dirname, '../build/static');
@@ -22,6 +24,7 @@ const config = {
     entry: {
         main: ENTRY_REACT,
         install: ENTRY_INSTALL,
+        login: ENTRY_LOGIN,
     },
     output: {
         path: PUBLIC_PATH,
@@ -115,6 +118,13 @@ const config = {
             chunks: ['install'],
             filename: 'install.html',
             template: HTML_INSTALL_PATH,
+        }),
+        new HtmlWebpackPlugin({
+            inject: true,
+            cache: false,
+            chunks: ['login'],
+            filename: 'login.html',
+            template: HTML_LOGIN_PATH,
         }),
         new ExtractTextPlugin({
             filename: '[name].[contenthash].css',

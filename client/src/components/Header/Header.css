@@ -29,6 +29,7 @@
 .nav-tabs .nav-link {
     width: 100%;
     border: 0;
+    padding: 20px 0;
 }
 
 .header {
@@ -68,48 +69,64 @@
     overflow: hidden;
 }
 
-.nav-version {
-    padding: 7px 0;
-    font-size: 0.80rem;
-    text-align: right;
-}
-
-.nav-version__value {
-    max-width: 110px;
-    font-weight: 600;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
-}
-
-@media screen and (min-width: 992px) {
-    .nav-version__value {
-        max-width: 100%;
-        overflow: visible;
-    }
-}
-
-.nav-version__link {
-    position: relative;
-    display: inline-block;
-    border-bottom: 1px dashed #495057;
-    cursor: pointer;
-}
-
-.nav-version__text {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-}
-
 .header-brand-img {
-    height: 32px;
+    height: 24px;
 }
 
 .nav-tabs .nav-item.show .nav-link {
     color: #66b574;
     background-color: #fff;
     border-bottom-color: #66b574;
+}
+
+.header__right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 100px;
+}
+
+.header__logout {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 25px;
+    height: 25px;
+    min-width: 25px;
+    padding: 2px;
+    margin-left: 10px;
+    color: #9aa0ac;
+}
+
+.header__logout:hover,
+.header__logout:focus {
+    color: #6e7687;
+}
+
+.header__logout-icon {
+    height: 100%;
+}
+
+.header__row {
+    display: flex;
+    align-items: center;
+}
+
+.header__container {
+    width: 100%;
+    max-width: 1200px;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.header__column:last-child {
+    margin-left: auto;
+}
+
+.nav-tabs {
+    margin: 0;
 }
 
 @media screen and (min-width: 992px) {
@@ -139,22 +156,36 @@
         box-shadow: none;
     }
 
-    .nav-version {
-        padding: 0;
-    }
-
     .nav-icon {
         display: none;
+    }
+
+    .header-brand-img {
+        height: 32px;
+    }
+
+    .header__logout {
+        width: 35px;
+        height: 35px;
+        padding: 5px;
+    }
+
+    .header__row {
+        justify-content: space-between;
+    }
+
+    .header__column:last-child {
+        margin-left: 0;
+    }
+
+    .nav-tabs {
+        margin: 0 -0.75rem;
     }
 }
 
 @media screen and (min-width: 1280px) {
     .nav-tabs .nav-link {
         font-size: 14px;
-    }
-
-    .nav-version {
-        font-size: 0.85rem;
     }
 
     .nav-icon {

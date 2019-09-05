@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import * as actionCreators from '../actions';
+import { getVersion } from '../actions';
 import Header from '../components/Header';
 
 const mapStateToProps = (state) => {
@@ -8,7 +8,11 @@ const mapStateToProps = (state) => {
     return props;
 };
 
+const mapDispatchToProps = {
+    getVersion,
+};
+
 export default connect(
     mapStateToProps,
-    actionCreators,
+    mapDispatchToProps,
 )(Header);

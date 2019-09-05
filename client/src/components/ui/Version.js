@@ -2,15 +2,17 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Trans, withNamespaces } from 'react-i18next';
 
+import './Version.css';
+
 const Version = (props) => {
     const {
-        dnsVersion, dnsAddresses, processingVersion, t,
+        dnsVersion, processingVersion, t,
     } = props;
 
     return (
-        <div className="nav-version">
-            <div className="nav-version__text">
-                <Trans>version</Trans>:&nbsp;<span className="nav-version__value" title={dnsVersion}>{dnsVersion}</span>
+        <div className="version">
+            <div className="version__text">
+                <Trans>version</Trans>:&nbsp;<span className="version__value" title={dnsVersion}>{dnsVersion}</span>
                 <button
                     type="button"
                     className="btn btn-icon btn-icon-sm btn-outline-primary btn-sm ml-2"
@@ -23,24 +25,12 @@ const Version = (props) => {
                     </svg>
                 </button>
             </div>
-            <div className="nav-version__link">
-                <div className="popover__trigger popover__trigger--address">
-                    <Trans>dns_addresses</Trans>
-                </div>
-                <div className="popover__body popover__body--address">
-                    <div className="popover__list">
-                        {dnsAddresses.map(ip => <li key={ip}>{ip}</li>)}
-                    </div>
-                </div>
-            </div>
         </div>
     );
 };
 
 Version.propTypes = {
     dnsVersion: PropTypes.string.isRequired,
-    dnsAddresses: PropTypes.array.isRequired,
-    dnsPort: PropTypes.number.isRequired,
     getVersion: PropTypes.func.isRequired,
     processingVersion: PropTypes.bool.isRequired,
     t: PropTypes.func.isRequired,

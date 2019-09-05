@@ -26,7 +26,7 @@ class Menu extends Component {
 
     render() {
         const menuClass = classnames({
-            'col-lg-6 mobile-menu': true,
+            'header__column mobile-menu': true,
             'mobile-menu--active': this.props.isMenuOpen,
         });
 
