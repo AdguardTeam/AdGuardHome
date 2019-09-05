@@ -1,10 +1,8 @@
 import { createAction } from 'redux-actions';
 
-import Api from '../api/Api';
+import apiClient from '../api/Api';
 import { addErrorToast, addSuccessToast } from './index';
 import { normalizeLogs } from '../helpers/helpers';
-
-const apiClient = new Api();
 
 export const getLogsRequest = createAction('GET_LOGS_REQUEST');
 export const getLogsFailure = createAction('GET_LOGS_FAILURE');

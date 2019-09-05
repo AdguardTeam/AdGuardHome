@@ -1,8 +1,6 @@
 import { createAction } from 'redux-actions';
-import Api from '../api/Api';
+import apiClient from '../api/Api';
 import { addErrorToast, addSuccessToast } from './index';
-
-const apiClient = new Api();
 
 export const nextStep = createAction('NEXT_STEP');
 export const prevStep = createAction('PREV_STEP');

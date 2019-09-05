@@ -7,9 +7,7 @@ import versionCompare from '../helpers/versionCompare';
 import { normalizeFilteringStatus, normalizeTextarea, sortClients } from '../helpers/helpers';
 import { SETTINGS_NAMES, CHECK_TIMEOUT } from '../helpers/constants';
 import { getTlsStatus } from './encryption';
-import Api from '../api/Api';
-
-const apiClient = new Api();
+import apiClient from '../api/Api';
 
 export const addErrorToast = createAction('ADD_ERROR_TOAST');
 export const addSuccessToast = createAction('ADD_SUCCESS_TOAST');

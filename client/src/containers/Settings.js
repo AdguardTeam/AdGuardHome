@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 import { initSettings, toggleSetting } from '../actions';
 import { getBlockedServices, setBlockedServices } from '../actions/services';
 import { getStatsConfig, setStatsConfig, resetStats } from '../actions/stats';
-import { toggleLogStatus, clearLogs, getLogsConfig, setLogsConfig } from '../actions/queryLogs';
+import { clearLogs, getLogsConfig, setLogsConfig } from '../actions/queryLogs';
 import Settings from '../components/Settings';
 
 const mapStateToProps = (state) => {
@@ -26,7 +26,6 @@ const mapDispatchToProps = {
     getStatsConfig,
     setStatsConfig,
     resetStats,
-    toggleLogStatus,
     clearLogs,
     getLogsConfig,
     setLogsConfig,

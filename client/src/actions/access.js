@@ -1,9 +1,7 @@
 import { createAction } from 'redux-actions';
-import Api from '../api/Api';
+import apiClient from '../api/Api';
 import { addErrorToast, addSuccessToast } from './index';
 import { normalizeTextarea } from '../helpers/helpers';
-
-const apiClient = new Api();
 
 export const getAccessListRequest = createAction('GET_ACCESS_LIST_REQUEST');
 export const getAccessListFailure = createAction('GET_ACCESS_LIST_FAILURE');

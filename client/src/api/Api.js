@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export default class Api {
+class Api {
     baseUrl = 'control';
 
     async makeRequest(path, method = 'POST', config) {
@@ -528,3 +528,6 @@ export default class Api {
         return this.makeRequest(path, method);
     }
 }
+
+const apiClient = new Api();
+export default apiClient;
