@@ -199,7 +199,7 @@
     "install_settings_dns_desc": "You will need to configure your devices or router to use the DNS server on the following addresses:",
     "install_settings_all_interfaces": "All interfaces",
     "install_auth_title": "Authentication",
-    "install_auth_desc": "It is highly recommended to configure password authentication to your AdGuard Home admin web interface. Even if it is accessible only in your local network, it is still important to have it protected from unrestricted access.",
+    "install_auth_desc": "It is highly recommended to configure password authentication to your AdGuard Home admin web interface. Even if it is accessible only in your local network, it is still important to to protect it from unrestricted access.",
     "install_auth_username": "Username",
     "install_auth_password": "Password",
     "install_auth_confirm": "Confirm password",
