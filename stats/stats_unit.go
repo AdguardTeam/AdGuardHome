@@ -62,7 +62,7 @@ type unitDB struct {
 	TimeAvg uint // usec
 }
 
-func createObject(filename string, limitDays int, unitID unitIDCallback) *statsCtx {
+func createObject(filename string, limitDays int, unitID unitIDCallback) (*statsCtx, error) {
 	s := statsCtx{}
 	s.limit = limitDays * 24
 	s.filename = filename
@@ -72,7 +72,7 @@ func createObject(filename string, limitDays int, unitID unitIDCallback) *statsC
 	}
 
 	if !s.dbOpen() {
-		return nil
+		return nil, fmt.Errorf("open database")
 	}
 
 	id := s.unitID()
@@ -116,7 +116,7 @@ func createObject(filename string, limitDays int, unitID unitIDCallback) *statsC
 	go s.periodicFlush()
 
 	log.Debug("Stats: initialized")
-	return &s
+	return &s, nil
 }
 
 func (s *statsCtx) dbOpen() bool {

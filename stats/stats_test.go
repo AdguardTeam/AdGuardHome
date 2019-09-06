@@ -26,7 +26,7 @@ func UIntArrayEquals(a []uint, b []uint) bool {
 }
 
 func TestStats(t *testing.T) {
-	s := New("./stats.db", 1, nil)
+	s, _ := New("./stats.db", 1, nil)
 
 	e := Entry{}
 
@@ -87,7 +87,7 @@ func TestLargeNumbers(t *testing.T) {
 	// log.SetLevel(log.DEBUG)
 	fn := "./stats.db"
 	os.Remove(fn)
-	s := New(fn, 1, newID)
+	s, _ := New(fn, 1, newID)
 	e := Entry{}
 
 	n := 1000 // number of distinct clients and domains every hour
