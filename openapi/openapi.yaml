@@ -438,34 +438,30 @@ paths:
     # Filtering status methods
     # --------------------------------------------------
 
-    /filtering/status:
+    /filtering_info:
         get:
             tags:
                 - filtering
-            operationId: filteringStatus
-            summary: 'Get status of rules-based filter'
+            operationId: filteringInfo
+            summary: 'Get filtering parameters'
             responses:
                 200:
                     description: OK
                     schema:
-                        $ref: "#/definitions/FilteringStatus"
+                        $ref: "#/definitions/FilterInfo"
 
-    /filtering/enable:
+    /filtering_config:
         post:
             tags:
                 - filtering
-            operationId: filteringEnable
-            summary: 'Enable filtering'
-            responses:
-                200:
-                    description: OK
-
-    /filtering/disable:
-        post:
-            tags:
-                - filtering
-            operationId: filteringDisable
-            summary: 'Disable filtering'
+            operationId: filteringConfig
+            summary: 'Set filtering parameters'
+            parameters:
+            - in: "body"
+              name: "body"
+              required: true
+              schema:
+                $ref: "#/definitions/FilterConfig"
             responses:
                 200:
                     description: OK
@@ -506,42 +502,19 @@ paths:
                 200:
                     description: OK
 
-    /filtering/enable_url:
+    /filtering/set_url:
         post:
             tags:
                 - filtering
-            operationId: filteringEnableURL
-            summary: 'Enable filter URL'
+            operationId: filteringSetURL
+            summary: 'Set URL parameters'
             consumes:
-            - text/plain
+            - application/json
             parameters:
-              - in: body
-                name: url
-                description: 'Previously added URL containing filtering rules'
-                required: true
+              - in: "body"
+                name: "body"
                 schema:
-                  type: string
-                  example: 'url=https://filters.adtidy.org/windows/filters/15.txt'
-            responses:
-                200:
-                    description: OK
-
-    /filtering/disable_url:
-        post:
-            tags:
-                - filtering
-            operationId: filteringDisableURL
-            summary: 'Disable filter URL'
-            consumes:
-            - text/plain
-            parameters:
-              - in: body
-                name: url
-                description: 'Previously added URL containing filtering rules'
-                required: true
-                schema:
-                    type: string
-                    example: 'url=https://filters.adtidy.org/windows/filters/15.txt'
+                  $ref: "#/definitions/FilterSetUrl"
             responses:
                 200:
                     description: OK
@@ -1051,7 +1024,7 @@ definitions:
             lastUpdated:
                 type: "string"
                 format: "date-time"
-                example: "2018-10-30T12:18:57.223101822+03:00"
+                example: "2018-10-30T12:18:57+03:00"
             name:
                 type: "string"
                 example: "AdGuard Simplified Domain Names filter"
@@ -1061,16 +1034,15 @@ definitions:
             url:
                 type: "string"
                 example: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"
-    FilteringStatus:
+
+    FilterInfo:
         type: "object"
         description: "Filtering settings"
-        required:
-            - "enabled"
-            - "filters"
-            - "user_rules"
         properties:
             enabled:
                 type: "boolean"
+            interval:
+                type: "integer"
             filters:
                 type: "array"
                 items:
@@ -1079,9 +1051,25 @@ definitions:
                 type: "array"
                 items:
                     type: "string"
-                example:
-                    - '||example.org^'
-                    - '||example.com^'
+
+    FilterConfig:
+        type: "object"
+        description: "Filtering settings"
+        properties:
+            enabled:
+                type: "boolean"
+            interval:
+                type: "integer"
+
+    FilterSetUrl:
+        type: "object"
+        description: "Filtering URL settings"
+        properties:
+            url:
+                type: "string"
+            enabled:
+                type: "boolean"
+
     GetVersionRequest:
         type: "object"
         description: "/version.json request data"
