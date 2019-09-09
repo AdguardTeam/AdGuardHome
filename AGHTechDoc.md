@@ -47,6 +47,12 @@ Contents:
 	* API: Get querylog parameters
 
 
+## Relations between subsystems
+
+![](agh-arch.png)
+
+
+
 ## First startup
 
 The first application startup is detected when there's no .yaml configuration file.
