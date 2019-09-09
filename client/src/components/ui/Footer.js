@@ -33,7 +33,7 @@ class Footer extends Component {
                             <a href={PRIVACY_POLICY_LINK} className="footer__link" target="_blank" rel="noopener noreferrer">
                                 <Trans>privacy_policy</Trans>
                             </a>
-                            <a href={`${REPOSITORY.URL}/issues/new`} className="btn btn-outline-primary btn-sm footer__link footer__link--report" target="_blank" rel="noopener noreferrer">
+                            <a href={REPOSITORY.ISSUES} className="btn btn-outline-primary btn-sm footer__link footer__link--report" target="_blank" rel="noopener noreferrer">
                                 <Trans>report_an_issue</Trans>
                             </a>
                         </div>

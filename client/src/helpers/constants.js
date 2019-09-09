@@ -24,6 +24,7 @@ export const REPOSITORY = {
     URL: 'https://github.com/AdguardTeam/AdGuardHome',
     TRACKERS_DB:
         'https://github.com/AdguardTeam/AdGuardHome/tree/master/client/src/helpers/trackers/adguard.json',
+    ISSUES: 'https://github.com/AdguardTeam/AdGuardHome/issues/new/choose',
 };
 
 export const PRIVACY_POLICY_LINK = 'https://adguard.com/privacy/home.html';
