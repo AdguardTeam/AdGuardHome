@@ -291,9 +291,15 @@ func serialize(u *unit) *unitDB {
 
 func deserialize(u *unit, udb *unitDB) {
 	u.nTotal = udb.NTotal
-	for _, it := range udb.NResult {
-		u.nResult = append(u.nResult, int(it))
+
+	n := len(udb.NResult)
+	if n < len(u.nResult) {
+		n = len(u.nResult) // n = min(len(udb.NResult), len(u.nResult))
 	}
+	for i := 1; i <= n; i++ {
+		u.nResult[i] = udb.NResult[i]
+	}
+
 	u.domains = convertArrayToMap(udb.Domains)
 	u.blockedDomains = convertArrayToMap(udb.BlockedDomains)
 	u.clients = convertArrayToMap(udb.Clients)
