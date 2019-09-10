@@ -9,7 +9,7 @@ import (
 )
 
 type statsConfig struct {
-	Interval uint `json:"interval"`
+	Interval uint32 `json:"interval"`
 }
 
 // Get stats configuration
@@ -89,6 +89,6 @@ func RegisterStatsHandlers() {
 	httpRegister(http.MethodGet, "/control/stats_info", handleStatsInfo)
 }
 
-func checkStatsInterval(i uint) bool {
+func checkStatsInterval(i uint32) bool {
 	return i == 1 || i == 7 || i == 30 || i == 90
 }

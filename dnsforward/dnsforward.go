@@ -496,7 +496,7 @@ func (s *Server) updateStats(d *proxy.DNSContext, elapsed time.Duration, res dns
 	case *net.TCPAddr:
 		e.Client = addr.IP
 	}
-	e.Time = uint(elapsed / 1000)
+	e.Time = uint32(elapsed / 1000)
 	switch res.Reason {
 
 	case dnsfilter.NotFilteredNotFound:

@@ -21,7 +21,7 @@ const (
 
 // statsCtx - global context
 type statsCtx struct {
-	limit    int            // maximum time we need to keep data for (in hours)
+	limit    uint32         // maximum time we need to keep data for (in hours)
 	filename string         // database file name
 	unitID   unitIDCallback // user function which returns the current unit ID
 	db       *bolt.DB
@@ -32,37 +32,37 @@ type statsCtx struct {
 
 // data for 1 time unit
 type unit struct {
-	id int // unit ID.  Default: absolute hour since Jan 1, 1970
+	id uint32 // unit ID.  Default: absolute hour since Jan 1, 1970
 
-	nTotal  int   // total requests
-	nResult []int // number of requests per one result
-	timeSum int   // sum of processing time of all requests (usec)
+	nTotal  uint64   // total requests
+	nResult []uint64 // number of requests per one result
+	timeSum uint64   // sum of processing time of all requests (usec)
 
 	// top:
-	domains        map[string]int // number of requests per domain
-	blockedDomains map[string]int // number of blocked requests per domain
-	clients        map[string]int // number of requests per client
+	domains        map[string]uint64 // number of requests per domain
+	blockedDomains map[string]uint64 // number of blocked requests per domain
+	clients        map[string]uint64 // number of requests per client
 }
 
 // name-count pair
 type countPair struct {
 	Name  string
-	Count uint
+	Count uint64
 }
 
 // structure for storing data in file
 type unitDB struct {
-	NTotal  uint
-	NResult []uint
+	NTotal  uint64
+	NResult []uint64
 
 	Domains        []countPair
 	BlockedDomains []countPair
 	Clients        []countPair
 
-	TimeAvg uint // usec
+	TimeAvg uint32 // usec
 }
 
-func createObject(filename string, limitDays int, unitID unitIDCallback) (*statsCtx, error) {
+func createObject(filename string, limitDays uint32, unitID unitIDCallback) (*statsCtx, error) {
 	s := statsCtx{}
 	s.limit = limitDays * 24
 	s.filename = filename
@@ -83,7 +83,7 @@ func createObject(filename string, limitDays int, unitID unitIDCallback) (*stats
 		firstID := id - s.limit - 1
 		unitDel := 0
 		forEachBkt := func(name []byte, b *bolt.Bucket) error {
-			id := btoi(name)
+			id := uint32(btoi(name))
 			if id < firstID {
 				err := tx.DeleteBucket(name)
 				if err != nil {
@@ -142,17 +142,17 @@ func (s *statsCtx) swapUnit(new *unit) *unit {
 }
 
 // Get unit ID for the current hour
-func newUnitID() int {
-	return int(time.Now().Unix() / (60 * 60))
+func newUnitID() uint32 {
+	return uint32(time.Now().Unix() / (60 * 60))
 }
 
 // Initialize a unit
-func (s *statsCtx) initUnit(u *unit, id int) {
+func (s *statsCtx) initUnit(u *unit, id uint32) {
 	u.id = id
-	u.nResult = make([]int, rLast)
-	u.domains = make(map[string]int)
-	u.blockedDomains = make(map[string]int)
-	u.clients = make(map[string]int)
+	u.nResult = make([]uint64, rLast)
+	u.domains = make(map[string]uint64)
+	u.blockedDomains = make(map[string]uint64)
+	u.clients = make(map[string]uint64)
 }
 
 // Open a DB transaction
@@ -182,20 +182,20 @@ func (s *statsCtx) commitTxn(tx *bolt.Tx) {
 }
 
 // Get unit name
-func unitName(id int) []byte {
-	return itob(id)
+func unitName(id uint32) []byte {
+	return itob(uint64(id))
 }
 
 // Convert integer to 8-byte array (big endian)
-func itob(v int) []byte {
+func itob(v uint64) []byte {
 	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, uint64(v))
+	binary.BigEndian.PutUint64(b, v)
 	return b
 }
 
 // Convert 8-byte array (big endian) to integer
-func btoi(b []byte) int {
-	return int(binary.BigEndian.Uint64(b))
+func btoi(b []byte) uint64 {
+	return binary.BigEndian.Uint64(b)
 }
 
 // Flush the current unit to DB and delete an old unit when a new hour is started
@@ -235,7 +235,7 @@ func (s *statsCtx) periodicFlush() {
 }
 
 // Delete unit's data from file
-func (s *statsCtx) deleteUnit(tx *bolt.Tx, id int) bool {
+func (s *statsCtx) deleteUnit(tx *bolt.Tx, id uint32) bool {
 	err := tx.DeleteBucket(unitName(id))
 	if err != nil {
 		log.Tracef("bolt DeleteBucket: %s", err)
@@ -245,12 +245,12 @@ func (s *statsCtx) deleteUnit(tx *bolt.Tx, id int) bool {
 	return true
 }
 
-func convertMapToArray(m map[string]int, max int) []countPair {
+func convertMapToArray(m map[string]uint64, max int) []countPair {
 	a := []countPair{}
 	for k, v := range m {
 		pair := countPair{}
 		pair.Name = k
-		pair.Count = uint(v)
+		pair.Count = v
 		a = append(a, pair)
 	}
 	less := func(i, j int) bool {
@@ -266,22 +266,22 @@ func convertMapToArray(m map[string]int, max int) []countPair {
 	return a[:max]
 }
 
-func convertArrayToMap(a []countPair) map[string]int {
-	m := map[string]int{}
+func convertArrayToMap(a []countPair) map[string]uint64 {
+	m := map[string]uint64{}
 	for _, it := range a {
-		m[it.Name] = int(it.Count)
+		m[it.Name] = it.Count
 	}
 	return m
 }
 
 func serialize(u *unit) *unitDB {
 	udb := unitDB{}
-	udb.NTotal = uint(u.nTotal)
+	udb.NTotal = u.nTotal
 	for _, it := range u.nResult {
-		udb.NResult = append(udb.NResult, uint(it))
+		udb.NResult = append(udb.NResult, it)
 	}
 	if u.nTotal != 0 {
-		udb.TimeAvg = uint(u.timeSum / u.nTotal)
+		udb.TimeAvg = uint32(u.timeSum / u.nTotal)
 	}
 	udb.Domains = convertMapToArray(u.domains, maxDomains)
 	udb.BlockedDomains = convertMapToArray(u.blockedDomains, maxDomains)
@@ -290,17 +290,17 @@ func serialize(u *unit) *unitDB {
 }
 
 func deserialize(u *unit, udb *unitDB) {
-	u.nTotal = int(udb.NTotal)
+	u.nTotal = udb.NTotal
 	for _, it := range udb.NResult {
 		u.nResult = append(u.nResult, int(it))
 	}
 	u.domains = convertArrayToMap(udb.Domains)
 	u.blockedDomains = convertArrayToMap(udb.BlockedDomains)
 	u.clients = convertArrayToMap(udb.Clients)
-	u.timeSum = int(udb.TimeAvg) * u.nTotal
+	u.timeSum = uint64(udb.TimeAvg) * u.nTotal
 }
 
-func (s *statsCtx) flushUnitToDB(tx *bolt.Tx, id int, udb *unitDB) bool {
+func (s *statsCtx) flushUnitToDB(tx *bolt.Tx, id uint32, udb *unitDB) bool {
 	log.Tracef("Flushing unit %d", id)
 
 	bkt, err := tx.CreateBucketIfNotExists(unitName(id))
@@ -326,7 +326,7 @@ func (s *statsCtx) flushUnitToDB(tx *bolt.Tx, id int, udb *unitDB) bool {
 	return true
 }
 
-func (s *statsCtx) loadUnitFromDB(tx *bolt.Tx, id int) *unitDB {
+func (s *statsCtx) loadUnitFromDB(tx *bolt.Tx, id uint32) *unitDB {
 	bkt := tx.Bucket(unitName(id))
 	if bkt == nil {
 		return nil
@@ -347,10 +347,10 @@ func (s *statsCtx) loadUnitFromDB(tx *bolt.Tx, id int) *unitDB {
 	return &udb
 }
 
-func convertTopArray(a []countPair) []map[string]uint {
-	m := []map[string]uint{}
+func convertTopArray(a []countPair) []map[string]uint64 {
+	m := []map[string]uint64{}
 	for _, it := range a {
-		ent := map[string]uint{}
+		ent := map[string]uint64{}
 		ent[it.Name] = it.Count
 		m = append(m, ent)
 	}
@@ -361,7 +361,7 @@ func (s *statsCtx) Configure(limit int) {
 	if limit < 0 {
 		return
 	}
-	s.limit = limit * 24
+	s.limit = uint32(limit) * 24
 	log.Debug("Stats: set limit: %d", limit)
 }
 
@@ -433,7 +433,7 @@ func (s *statsCtx) Update(e Entry) {
 	}
 
 	u.clients[client]++
-	u.timeSum += int(e.Time)
+	u.timeSum += uint64(e.Time)
 	u.nTotal++
 	s.unitLock.Unlock()
 }
@@ -481,7 +481,7 @@ func (s *statsCtx) GetData(timeUnit TimeUnit) map[string]interface{} {
 		u := s.loadUnitFromDB(tx, i)
 		if u == nil {
 			u = &unitDB{}
-			u.NResult = make([]uint, rLast)
+			u.NResult = make([]uint64, rLast)
 		}
 		units = append(units, u)
 	}
@@ -497,7 +497,7 @@ func (s *statsCtx) GetData(timeUnit TimeUnit) map[string]interface{} {
 	}
 	units = append(units, cu)
 
-	if len(units) != s.limit {
+	if len(units) != int(s.limit) {
 		log.Fatalf("len(units) != s.limit: %d %d", len(units), s.limit)
 	}
 
@@ -506,16 +506,16 @@ func (s *statsCtx) GetData(timeUnit TimeUnit) map[string]interface{} {
 	// 720 hours may span 31 days, so we skip data for the first day in this case
 	firstDayID := (firstID + 24 - 1) / 24 * 24 // align_ceil(24)
 
-	a := []uint{}
+	a := []uint64{}
 	if timeUnit == Hours {
 		for _, u := range units {
 			a = append(a, u.NTotal)
 		}
 	} else {
-		var sum uint
+		var sum uint64
 		id := firstDayID
 		nextDayID := firstDayID + 24
-		for i := firstDayID - firstID; i != len(units); i++ {
+		for i := firstDayID - firstID; int(i) != len(units); i++ {
 			sum += units[i].NTotal
 			if id == nextDayID {
 				a = append(a, sum)
@@ -527,22 +527,22 @@ func (s *statsCtx) GetData(timeUnit TimeUnit) map[string]interface{} {
 		if id < nextDayID {
 			a = append(a, sum)
 		}
-		if len(a) != s.limit/24 {
+		if len(a) != int(s.limit/24) {
 			log.Fatalf("len(a) != s.limit: %d %d", len(a), s.limit)
 		}
 	}
 	d["dns_queries"] = a
 
-	a = []uint{}
+	a = []uint64{}
 	if timeUnit == Hours {
 		for _, u := range units {
 			a = append(a, u.NResult[RFiltered])
 		}
 	} else {
-		var sum uint
+		var sum uint64
 		id := firstDayID
 		nextDayID := firstDayID + 24
-		for i := firstDayID - firstID; i != len(units); i++ {
+		for i := firstDayID - firstID; int(i) != len(units); i++ {
 			sum += units[i].NResult[RFiltered]
 			if id == nextDayID {
 				a = append(a, sum)
@@ -557,16 +557,16 @@ func (s *statsCtx) GetData(timeUnit TimeUnit) map[string]interface{} {
 	}
 	d["blocked_filtering"] = a
 
-	a = []uint{}
+	a = []uint64{}
 	if timeUnit == Hours {
 		for _, u := range units {
 			a = append(a, u.NResult[RSafeBrowsing])
 		}
 	} else {
-		var sum uint
+		var sum uint64
 		id := firstDayID
 		nextDayID := firstDayID + 24
-		for i := firstDayID - firstID; i != len(units); i++ {
+		for i := firstDayID - firstID; int(i) != len(units); i++ {
 			sum += units[i].NResult[RSafeBrowsing]
 			if id == nextDayID {
 				a = append(a, sum)
@@ -581,16 +581,16 @@ func (s *statsCtx) GetData(timeUnit TimeUnit) map[string]interface{} {
 	}
 	d["replaced_safebrowsing"] = a
 
-	a = []uint{}
+	a = []uint64{}
 	if timeUnit == Hours {
 		for _, u := range units {
 			a = append(a, u.NResult[RParental])
 		}
 	} else {
-		var sum uint
+		var sum uint64
 		id := firstDayID
 		nextDayID := firstDayID + 24
-		for i := firstDayID - firstID; i != len(units); i++ {
+		for i := firstDayID - firstID; int(i) != len(units); i++ {
 			sum += units[i].NResult[RParental]
 			if id == nextDayID {
 				a = append(a, sum)
@@ -607,28 +607,28 @@ func (s *statsCtx) GetData(timeUnit TimeUnit) map[string]interface{} {
 
 	// top counters:
 
-	m := map[string]int{}
+	m := map[string]uint64{}
 	for _, u := range units {
 		for _, it := range u.Domains {
-			m[it.Name] += int(it.Count)
+			m[it.Name] += it.Count
 		}
 	}
 	a2 := convertMapToArray(m, maxDomains)
 	d["top_queried_domains"] = convertTopArray(a2)
 
-	m = map[string]int{}
+	m = map[string]uint64{}
 	for _, u := range units {
 		for _, it := range u.BlockedDomains {
-			m[it.Name] += int(it.Count)
+			m[it.Name] += it.Count
 		}
 	}
 	a2 = convertMapToArray(m, maxDomains)
 	d["top_blocked_domains"] = convertTopArray(a2)
 
-	m = map[string]int{}
+	m = map[string]uint64{}
 	for _, u := range units {
 		for _, it := range u.Clients {
-			m[it.Name] += int(it.Count)
+			m[it.Name] += it.Count
 		}
 	}
 	a2 = convertMapToArray(m, maxClients)
@@ -637,8 +637,8 @@ func (s *statsCtx) GetData(timeUnit TimeUnit) map[string]interface{} {
 	// total counters:
 
 	sum := unitDB{}
+	sum.NResult = make([]uint64, rLast)
 	timeN := 0
-	sum.NResult = make([]uint, rLast)
 	for _, u := range units {
 		sum.NTotal += u.NTotal
 		sum.TimeAvg += u.TimeAvg
@@ -659,7 +659,7 @@ func (s *statsCtx) GetData(timeUnit TimeUnit) map[string]interface{} {
 
 	avgTime := float64(0)
 	if timeN != 0 {
-		avgTime = float64(sum.TimeAvg/uint(timeN)) / 1000000
+		avgTime = float64(sum.TimeAvg/uint32(timeN)) / 1000000
 	}
 	d["avg_processing_time"] = avgTime
 

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func UIntArrayEquals(a []uint, b []uint) bool {
+func UIntArrayEquals(a []uint64, b []uint64) bool {
 	if len(a) != len(b) {
 		return false
 	}
@@ -43,32 +43,32 @@ func TestStats(t *testing.T) {
 	s.Update(e)
 
 	d := s.GetData(Hours)
-	a := []uint{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2}
-	assert.True(t, UIntArrayEquals(d["dns_queries"].([]uint), a))
+	a := []uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2}
+	assert.True(t, UIntArrayEquals(d["dns_queries"].([]uint64), a))
 
-	a = []uint{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
-	assert.True(t, UIntArrayEquals(d["blocked_filtering"].([]uint), a))
+	a = []uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
+	assert.True(t, UIntArrayEquals(d["blocked_filtering"].([]uint64), a))
 
-	a = []uint{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	assert.True(t, UIntArrayEquals(d["replaced_safebrowsing"].([]uint), a))
+	a = []uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	assert.True(t, UIntArrayEquals(d["replaced_safebrowsing"].([]uint64), a))
 
-	a = []uint{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	assert.True(t, UIntArrayEquals(d["replaced_parental"].([]uint), a))
+	a = []uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	assert.True(t, UIntArrayEquals(d["replaced_parental"].([]uint64), a))
 
-	m := d["top_queried_domains"].([]map[string]uint)
+	m := d["top_queried_domains"].([]map[string]uint64)
 	assert.True(t, m[0]["domain"] == 1)
 
-	m = d["top_blocked_domains"].([]map[string]uint)
+	m = d["top_blocked_domains"].([]map[string]uint64)
 	assert.True(t, m[0]["domain"] == 1)
 
-	m = d["top_clients"].([]map[string]uint)
+	m = d["top_clients"].([]map[string]uint64)
 	assert.True(t, m[0]["127.0.0.1"] == 2)
 
-	assert.True(t, d["num_dns_queries"].(uint) == 2)
-	assert.True(t, d["num_blocked_filtering"].(uint) == 1)
-	assert.True(t, d["num_replaced_safebrowsing"].(uint) == 0)
-	assert.True(t, d["num_replaced_safesearch"].(uint) == 0)
-	assert.True(t, d["num_replaced_parental"].(uint) == 0)
+	assert.True(t, d["num_dns_queries"].(uint64) == 2)
+	assert.True(t, d["num_blocked_filtering"].(uint64) == 1)
+	assert.True(t, d["num_replaced_safebrowsing"].(uint64) == 0)
+	assert.True(t, d["num_replaced_safesearch"].(uint64) == 0)
+	assert.True(t, d["num_replaced_parental"].(uint64) == 0)
 	assert.True(t, d["avg_processing_time"].(float64) == 0.123456)
 
 	s.Clear()
@@ -79,9 +79,9 @@ func TestStats(t *testing.T) {
 func TestLargeNumbers(t *testing.T) {
 	var hour int32
 	hour = 1
-	newID := func() int {
+	newID := func() uint32 {
 		// use "atomic" to make Go race detector happy
-		return int(atomic.LoadInt32(&hour))
+		return uint32(atomic.LoadInt32(&hour))
 	}
 
 	// log.SetLevel(log.DEBUG)
@@ -108,7 +108,7 @@ func TestLargeNumbers(t *testing.T) {
 	}
 
 	d := s.GetData(Hours)
-	assert.True(t, d["num_dns_queries"].(uint) == uint(int(hour)*n))
+	assert.True(t, d["num_dns_queries"].(uint64) == uint64(int(hour)*n))
 
 	s.Close()
 	os.Remove(fn)

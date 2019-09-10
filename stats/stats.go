@@ -6,13 +6,13 @@ import (
 	"net"
 )
 
-type unitIDCallback func() int
+type unitIDCallback func() uint32
 
 // New - create object
 // filename: DB file name
 // limit: time limit (in days)
 // unitID: user function to get the current unit ID.  If nil, the current time hour is used.
-func New(filename string, limit int, unitID unitIDCallback) (Stats, error) {
+func New(filename string, limit uint32, unitID unitIDCallback) (Stats, error) {
 	return createObject(filename, limit, unitID)
 }
 
@@ -64,5 +64,5 @@ type Entry struct {
 	Domain string
 	Client net.IP
 	Result Result
-	Time   uint // processing time (msec)
+	Time   uint32 // processing time (msec)
 }
