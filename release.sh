@@ -36,7 +36,7 @@ mkdir -p $dst
 # Prepare releases
 CHANNEL=$channel GOOS=darwin GOARCH=amd64 f
 CHANNEL=$channel GOOS=linux GOARCH=amd64 f
-CHANNEL=$channel GOOS=linux GOARCH=386 f
+CHANNEL=$channel GOOS=linux GOARCH=386 GO386=387 f
 CHANNEL=$channel GOOS=linux GOARCH=arm GOARM=6 f
 CHANNEL=$channel GOOS=linux GOARCH=arm64 GOARM=6 f
 CHANNEL=$channel GOOS=windows GOARCH=amd64 f
