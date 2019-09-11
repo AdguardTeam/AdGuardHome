@@ -275,6 +275,17 @@ func refreshFiltersIfNecessary(force bool) int {
 	return updateCount
 }
 
+// Allows printable UTF-8 text with CR, LF, TAB characters
+func isPrintableText(data []byte) bool {
+	for _, c := range data {
+		if (c >= ' ' && c != 0x7f) || c == '\n' || c == '\r' || c == '\t' {
+			continue
+		}
+		return false
+	}
+	return true
+}
+
 // A helper function that parses filter contents and returns a number of rules and a filter name (if there's any)
 func parseFilterContents(contents []byte) (int, string) {
 	lines := strings.Split(string(contents), "\n")
@@ -322,12 +333,6 @@ func (filter *filter) update() (bool, error) {
 		return false, fmt.Errorf("got status code != 200: %d", resp.StatusCode)
 	}
 
-	contentType := strings.ToLower(resp.Header.Get("content-type"))
-	if !strings.HasPrefix(contentType, "text/plain") {
-		log.Printf("Non-text response %s from %s, skipping", contentType, filter.URL)
-		return false, fmt.Errorf("non-text response %s", contentType)
-	}
-
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("Couldn't fetch filter contents from URL %s, skipping: %s", filter.URL, err)
@@ -339,6 +344,16 @@ func (filter *filter) update() (bool, error) {
 	if filter.checksum == checksum {
 		log.Tracef("Filter #%d at URL %s hasn't changed, not updating it", filter.ID, filter.URL)
 		return false, nil
+	}
+
+	if !isPrintableText(body[:4096]) {
+		return false, fmt.Errorf("Data contains non-printable characters")
+	}
+
+	s := strings.ToLower(string(body[:4096]))
+	if strings.Index(s, "<html") >= 0 ||
+		strings.Index(s, "<!doctype") >= 0 {
+		return false, fmt.Errorf("Data is HTML, not plain text")
 	}
 
 	// Extract filter name and count number of rules
