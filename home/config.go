@@ -110,7 +110,7 @@ type dnsConfig struct {
 	Port     int    `yaml:"port"`
 
 	// time interval for statistics (in days)
-	StatsInterval uint `yaml:"statistics_interval"`
+	StatsInterval uint32 `yaml:"statistics_interval"`
 
 	dnsforward.FilteringConfig `yaml:",inline"`
 
