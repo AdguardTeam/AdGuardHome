@@ -246,6 +246,7 @@ paths:
                 200:
                     schema:
                         $ref: "#/definitions/StatsConfig"
+                    description: OK
 
     /stats_config:
         post:
