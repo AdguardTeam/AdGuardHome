@@ -1,8 +1,6 @@
 import { createAction } from 'redux-actions';
-import Api from '../api/Api';
+import apiClient from '../api/Api';
 import { addErrorToast, addSuccessToast } from './index';
-
-const apiClient = new Api();
 
 export const getBlockedServicesRequest = createAction('GET_BLOCKED_SERVICES_REQUEST');
 export const getBlockedServicesFailure = createAction('GET_BLOCKED_SERVICES_FAILURE');

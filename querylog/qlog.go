@@ -1,8 +1,9 @@
-package dnsforward
+package querylog
 
 import (
 	"fmt"
 	"net"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -15,16 +16,14 @@ import (
 )
 
 const (
-	logBufferCap           = 5000            // maximum capacity of logBuffer before it's flushed to disk
-	queryLogTimeLimit      = time.Hour * 24  // how far in the past we care about querylogs
-	queryLogRotationPeriod = time.Hour * 24  // rotate the log every 24 hours
-	queryLogFileName       = "querylog.json" // .gz added during compression
-	queryLogSize           = 5000            // maximum API response for /querylog
-	queryLogTopSize        = 500             // Keep in memory only top N values
+	logBufferCap     = 5000            // maximum capacity of logBuffer before it's flushed to disk
+	queryLogFileName = "querylog.json" // .gz added during compression
+	queryLogSize     = 5000            // maximum API response for /querylog
 )
 
 // queryLog is a structure that writes and reads the DNS query log
 type queryLog struct {
+	conf    Config
 	logFile string // path to the log file
 
 	logBufferLock sync.RWMutex
@@ -32,16 +31,53 @@ type queryLog struct {
 	fileFlushLock sync.Mutex // synchronize a file-flushing goroutine and main thread
 	flushPending  bool       // don't start another goroutine while the previous one is still running
 
-	queryLogCache []*logEntry
-	queryLogLock  sync.RWMutex
+	cache []*logEntry
+	lock  sync.RWMutex
 }
 
 // newQueryLog creates a new instance of the query log
-func newQueryLog(baseDir string) *queryLog {
-	l := &queryLog{
-		logFile: filepath.Join(baseDir, queryLogFileName),
+func newQueryLog(conf Config) *queryLog {
+	l := queryLog{}
+	l.logFile = filepath.Join(conf.BaseDir, queryLogFileName)
+	l.conf = conf
+	go l.periodicQueryLogRotate()
+	go l.fillFromFile()
+	return &l
+}
+
+func (l *queryLog) Close() {
+	_ = l.flushLogBuffer(true)
+}
+
+func (l *queryLog) Configure(conf Config) {
+	l.conf = conf
+}
+
+// Clear memory buffer and remove the file
+func (l *queryLog) Clear() {
+	l.fileFlushLock.Lock()
+	defer l.fileFlushLock.Unlock()
+
+	l.logBufferLock.Lock()
+	l.logBuffer = nil
+	l.flushPending = false
+	l.logBufferLock.Unlock()
+
+	l.lock.Lock()
+	l.cache = nil
+	l.lock.Unlock()
+
+	err := os.Remove(l.logFile + ".1")
+	if err != nil {
+		log.Error("file remove: %s: %s", l.logFile+".1", err)
 	}
-	return l
+
+	err = os.Remove(l.logFile)
+	if err != nil {
+		log.Error("file remove: %s: %s", l.logFile, err)
+	}
+
+	log.Debug("Query log: cleared")
 }
 
 type logEntry struct {
@@ -54,17 +90,28 @@ type logEntry struct {
 	Upstream string `json:",omitempty"` // if empty, means it was cached
 }
 
-func (l *queryLog) logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, elapsed time.Duration, addr net.Addr, upstream string) *logEntry {
+// getIPString is a helper function that extracts IP address from net.Addr
+func getIPString(addr net.Addr) string {
+	switch addr := addr.(type) {
+	case *net.UDPAddr:
+		return addr.IP.String()
+	case *net.TCPAddr:
+		return addr.IP.String()
+	}
+	return ""
+}
+
+func (l *queryLog) Add(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, elapsed time.Duration, addr net.Addr, upstream string) {
 	var q []byte
 	var a []byte
 	var err error
-	ip := GetIPString(addr)
+	ip := getIPString(addr)
 
 	if question != nil {
 		q, err = question.Pack()
 		if err != nil {
 			log.Printf("failed to pack question for querylog: %s", err)
-			return nil
+			return
 		}
 	}
 
@@ -72,7 +119,7 @@ func (l *queryLog) logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfil
 		a, err = answer.Pack()
 		if err != nil {
 			log.Printf("failed to pack answer for querylog: %s", err)
-			return nil
+			return
 		}
 	}
 
@@ -101,13 +148,13 @@ func (l *queryLog) logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfil
 		}
 	}
 	l.logBufferLock.Unlock()
-	l.queryLogLock.Lock()
-	l.queryLogCache = append(l.queryLogCache, &entry)
-	if len(l.queryLogCache) > queryLogSize {
-		toremove := len(l.queryLogCache) - queryLogSize
-		l.queryLogCache = l.queryLogCache[toremove:]
+	l.lock.Lock()
+	l.cache = append(l.cache, &entry)
+	if len(l.cache) > queryLogSize {
+		toremove := len(l.cache) - queryLogSize
+		l.cache = l.cache[toremove:]
 	}
-	l.queryLogLock.Unlock()
+	l.lock.Unlock()
 
 	// if buffer needs to be flushed to disk, do it now
 	if needFlush {
@@ -115,16 +162,14 @@ func (l *queryLog) logRequest(question *dns.Msg, answer *dns.Msg, result *dnsfil
 		// do it in separate goroutine -- we are stalling DNS response this whole time
 		go l.flushLogBuffer(false) // nolint
 	}
-
-	return &entry
 }
 
 // getQueryLogJson returns a map with the current query log ready to be converted to a JSON
-func (l *queryLog) getQueryLog() []map[string]interface{} {
-	l.queryLogLock.RLock()
-	values := make([]*logEntry, len(l.queryLogCache))
-	copy(values, l.queryLogCache)
-	l.queryLogLock.RUnlock()
+func (l *queryLog) GetData() []map[string]interface{} {
+	l.lock.RLock()
+	values := make([]*logEntry, len(l.cache))
+	copy(values, l.cache)
+	l.lock.RUnlock()
 
 	// reverse it so that newest is first
 	for left, right := 0, len(values)-1; left < right; left, right = left+1, right-1 {

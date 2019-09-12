@@ -1,10 +1,8 @@
 import { createAction } from 'redux-actions';
 import { t } from 'i18next';
-import Api from '../api/Api';
+import apiClient from '../api/Api';
 import { addErrorToast, addSuccessToast, getClients } from './index';
 import { CLIENT_ID } from '../helpers/constants';
-
-const apiClient = new Api();
 
 export const toggleClientModal = createAction('TOGGLE_CLIENT_MODAL');
 

@@ -191,21 +191,42 @@ paths:
                     description: OK
                     schema:
                         $ref: '#/definitions/QueryLog'
-    /querylog_enable:
-        post:
+
+    /querylog_info:
+        get:
             tags:
                 - log
-            operationId: querylogEnable
-            summary: 'Enable querylog'
+            operationId: queryLogInfo
+            summary: 'Get query log parameters'
             responses:
                 200:
                     description: OK
-    /querylog_disable:
+                    schema:
+                        $ref: "#/definitions/QueryLogConfig"
+
+    /querylog_config:
         post:
             tags:
                 - log
-            operationId: querylogDisable
-            summary: 'Disable filtering'
+            operationId: queryLogConfig
+            summary: "Set query log parameters"
+            consumes:
+                - application/json
+            parameters:
+                - in: "body"
+                  name: "body"
+                  schema:
+                      $ref: "#/definitions/QueryLogConfig"
+            responses:
+                200:
+                    description: OK
+
+    /querylog_clear:
+        post:
+            tags:
+                - log
+            operationId: querylogClear
+            summary: 'Clear query log'
             responses:
                 200:
                     description: OK
@@ -244,6 +265,7 @@ paths:
             summary: 'Get statistics parameters'
             responses:
                 200:
+                    description: OK
                     schema:
                         $ref: "#/definitions/StatsConfig"
                     description: OK
@@ -1360,6 +1382,18 @@ definitions:
         description: "Query log"
         items:
             $ref: "#/definitions/QueryLogItem"
+
+    QueryLogConfig:
+        type: "object"
+        description: "Query log configuration"
+        properties:
+            enabled:
+                type: "boolean"
+                description: "Is query log enabled"
+            interval:
+                type: "integer"
+                description: "Time period to keep data (1 | 7 | 30 | 90)"
+
     TlsConfig:
         type: "object"
         description: "TLS configuration settings and status"

@@ -7,29 +7,34 @@ import { DEBOUNCE_TIMEOUT } from '../../../helpers/constants';
 import Card from '../../ui/Card';
 import Form from './Form';
 
-class StatsConfig extends Component {
+class LogsConfig extends Component {
     handleFormChange = debounce((values) => {
-        this.props.setStatsConfig(values);
+        this.props.setLogsConfig(values);
     }, DEBOUNCE_TIMEOUT);
 
-    handleReset = () => {
-        const { t, resetStats } = this.props;
+    handleClear = () => {
+        const { t, clearLogs } = this.props;
         // eslint-disable-next-line no-alert
-        if (window.confirm(t('statistics_clear_confirm'))) {
-            resetStats();
+        if (window.confirm(t('query_log_confirm_clear'))) {
+            clearLogs();
         }
     };
 
     render() {
         const {
-            t, interval, processing, processingReset,
+            t, enabled, interval, processing, processingClear,
         } = this.props;
 
         return (
-            <Card title={t('statistics_configuration')} bodyType="card-body box-body--settings">
+            <Card
+                title={t('query_log_configuration')}
+                bodyType="card-body box-body--settings"
+                id="logs-config"
+            >
                 <div className="form">
                     <Form
                         initialValues={{
+                            enabled,
                             interval,
                         }}
                         onSubmit={this.handleFormChange}
@@ -40,10 +45,10 @@ class StatsConfig extends Component {
                     <button
                         type="button"
                         className="btn btn-outline-secondary btn-sm"
-                        onClick={this.handleReset}
-                        disabled={processingReset}
+                        onClick={this.handleClear}
+                        disabled={processingClear}
                     >
-                        <Trans>statistics_clear</Trans>
+                        <Trans>query_log_clear</Trans>
                     </button>
                 </div>
             </Card>
@@ -51,13 +56,14 @@ class StatsConfig extends Component {
     }
 }
 
-StatsConfig.propTypes = {
+LogsConfig.propTypes = {
     interval: PropTypes.number.isRequired,
+    enabled: PropTypes.bool.isRequired,
     processing: PropTypes.bool.isRequired,
-    processingReset: PropTypes.bool.isRequired,
-    setStatsConfig: PropTypes.func.isRequired,
-    resetStats: PropTypes.func.isRequired,
+    processingClear: PropTypes.bool.isRequired,
+    setLogsConfig: PropTypes.func.isRequired,
+    clearLogs: PropTypes.func.isRequired,
     t: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(StatsConfig);
+export default withNamespaces()(LogsConfig);

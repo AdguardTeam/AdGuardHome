@@ -4,12 +4,10 @@ import { showLoading, hideLoading } from 'react-redux-loading-bar';
 import axios from 'axios';
 
 import versionCompare from '../helpers/versionCompare';
-import { normalizeFilteringStatus, normalizeLogs, normalizeTextarea, sortClients } from '../helpers/helpers';
+import { normalizeFilteringStatus, normalizeTextarea, sortClients } from '../helpers/helpers';
 import { SETTINGS_NAMES, CHECK_TIMEOUT } from '../helpers/constants';
 import { getTlsStatus } from './encryption';
-import Api from '../api/Api';
-
-const apiClient = new Api();
+import apiClient from '../api/Api';
 
 export const addErrorToast = createAction('ADD_ERROR_TOAST');
 export const addSuccessToast = createAction('ADD_SUCCESS_TOAST');
@@ -292,52 +290,6 @@ export const disableDns = () => async (dispatch) => {
     }
 };
 
-export const getLogsRequest = createAction('GET_LOGS_REQUEST');
-export const getLogsFailure = createAction('GET_LOGS_FAILURE');
-export const getLogsSuccess = createAction('GET_LOGS_SUCCESS');
-
-export const getLogs = () => async (dispatch, getState) => {
-    dispatch(getLogsRequest());
-    const timer = setInterval(async () => {
-        const state = getState();
-        if (state.dashboard.isCoreRunning) {
-            clearInterval(timer);
-            try {
-                const logs = normalizeLogs(await apiClient.getQueryLog());
-                dispatch(getLogsSuccess(logs));
-            } catch (error) {
-                dispatch(addErrorToast({ error }));
-                dispatch(getLogsFailure(error));
-            }
-        }
-    }, 100);
-};
-
-export const toggleLogStatusRequest = createAction('TOGGLE_LOGS_REQUEST');
-export const toggleLogStatusFailure = createAction('TOGGLE_LOGS_FAILURE');
-export const toggleLogStatusSuccess = createAction('TOGGLE_LOGS_SUCCESS');
-
-export const toggleLogStatus = queryLogEnabled => async (dispatch) => {
-    dispatch(toggleLogStatusRequest());
-    let toggleMethod;
-    let successMessage;
-    if (queryLogEnabled) {
-        toggleMethod = apiClient.disableQueryLog.bind(apiClient);
-        successMessage = 'query_log_disabled_toast';
-    } else {
-        toggleMethod = apiClient.enableQueryLog.bind(apiClient);
-        successMessage = 'query_log_enabled_toast';
-    }
-    try {
-        await toggleMethod();
-        dispatch(addSuccessToast(successMessage));
-        dispatch(toggleLogStatusSuccess());
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
-        dispatch(toggleLogStatusFailure());
-    }
-};
-
 export const setRulesRequest = createAction('SET_RULES_REQUEST');
 export const setRulesFailure = createAction('SET_RULES_FAILURE');
 export const setRulesSuccess = createAction('SET_RULES_SUCCESS');
@@ -464,23 +416,6 @@ export const removeFilter = url => async (dispatch) => {
 };
 
 export const toggleFilteringModal = createAction('FILTERING_MODAL_TOGGLE');
-
-export const downloadQueryLogRequest = createAction('DOWNLOAD_QUERY_LOG_REQUEST');
-export const downloadQueryLogFailure = createAction('DOWNLOAD_QUERY_LOG_FAILURE');
-export const downloadQueryLogSuccess = createAction('DOWNLOAD_QUERY_LOG_SUCCESS');
-
-export const downloadQueryLog = () => async (dispatch) => {
-    let data;
-    dispatch(downloadQueryLogRequest());
-    try {
-        data = await apiClient.downloadQueryLog();
-        dispatch(downloadQueryLogSuccess());
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
-        dispatch(downloadQueryLogFailure());
-    }
-    return data;
-};
 
 export const handleUpstreamChange = createAction('HANDLE_UPSTREAM_CHANGE');
 export const setUpstreamRequest = createAction('SET_UPSTREAM_REQUEST');

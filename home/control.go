@@ -146,35 +146,6 @@ func handleProtectionDisable(w http.ResponseWriter, r *http.Request) {
 	httpUpdateConfigReloadDNSReturnOK(w, r)
 }
 
-// -----
-// stats
-// -----
-func handleQueryLogEnable(w http.ResponseWriter, r *http.Request) {
-	config.DNS.QueryLogEnabled = true
-	httpUpdateConfigReloadDNSReturnOK(w, r)
-}
-
-func handleQueryLogDisable(w http.ResponseWriter, r *http.Request) {
-	config.DNS.QueryLogEnabled = false
-	httpUpdateConfigReloadDNSReturnOK(w, r)
-}
-
-func handleQueryLog(w http.ResponseWriter, r *http.Request) {
-	data := config.dnsServer.GetQueryLog()
-
-	jsonVal, err := json.Marshal(data)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't marshal data into json: %s", err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to write response json: %s", err)
-	}
-}
-
 // -----------------------
 // upstreams configuration
 // -----------------------
@@ -570,9 +541,6 @@ func registerControlHandlers() {
 	httpRegister(http.MethodGet, "/control/status", handleStatus)
 	httpRegister(http.MethodPost, "/control/enable_protection", handleProtectionEnable)
 	httpRegister(http.MethodPost, "/control/disable_protection", handleProtectionDisable)
-	httpRegister(http.MethodGet, "/control/querylog", handleQueryLog)
-	httpRegister(http.MethodPost, "/control/querylog_enable", handleQueryLogEnable)
-	httpRegister(http.MethodPost, "/control/querylog_disable", handleQueryLogDisable)
 	httpRegister(http.MethodPost, "/control/set_upstreams_config", handleSetUpstreamConfig)
 	httpRegister(http.MethodPost, "/control/test_upstream_dns", handleTestUpstreamDNS)
 	httpRegister(http.MethodPost, "/control/i18n/change_language", handleI18nChangeLanguage)
@@ -611,6 +579,7 @@ func registerControlHandlers() {
 	RegisterClientsHandlers()
 	registerRewritesHandlers()
 	RegisterBlockedServicesHandlers()
+	RegisterQueryLogHandlers()
 	RegisterStatsHandlers()
 
 	http.HandleFunc("/dns-query", postInstall(handleDOH))

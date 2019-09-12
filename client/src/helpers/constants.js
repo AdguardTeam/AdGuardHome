@@ -263,3 +263,5 @@ export const FILTERED_STATUS = {
 };
 
 export const STATS_INTERVALS_DAYS = [1, 7, 30, 90];
+
+export const QUERY_LOG_INTERVALS_DAYS = [1, 7, 30, 90];

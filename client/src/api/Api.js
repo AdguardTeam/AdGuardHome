@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export default class Api {
+class Api {
     baseUrl = 'control';
 
     async makeRequest(path, method = 'POST', config) {
@@ -25,9 +25,6 @@ export default class Api {
     GLOBAL_START = { path: 'start', method: 'POST' };
     GLOBAL_STATUS = { path: 'status', method: 'GET' };
     GLOBAL_STOP = { path: 'stop', method: 'POST' };
-    GLOBAL_QUERY_LOG = { path: 'querylog', method: 'GET' };
-    GLOBAL_QUERY_LOG_ENABLE = { path: 'querylog_enable', method: 'POST' };
-    GLOBAL_QUERY_LOG_DISABLE = { path: 'querylog_disable', method: 'POST' };
     GLOBAL_SET_UPSTREAM_DNS = { path: 'set_upstreams_config', method: 'POST' };
     GLOBAL_TEST_UPSTREAM_DNS = { path: 'test_upstream_dns', method: 'POST' };
     GLOBAL_VERSION = { path: 'version.json', method: 'POST' };
@@ -47,27 +44,6 @@ export default class Api {
 
     getGlobalStatus() {
         const { path, method } = this.GLOBAL_STATUS;
-        return this.makeRequest(path, method);
-    }
-
-    getQueryLog() {
-        const { path, method } = this.GLOBAL_QUERY_LOG;
-        return this.makeRequest(path, method);
-    }
-
-    downloadQueryLog() {
-        const { path, method } = this.GLOBAL_QUERY_LOG;
-        const queryString = '?download=1';
-        return this.makeRequest(path + queryString, method);
-    }
-
-    enableQueryLog() {
-        const { path, method } = this.GLOBAL_QUERY_LOG_ENABLE;
-        return this.makeRequest(path, method);
-    }
-
-    disableQueryLog() {
-        const { path, method } = this.GLOBAL_QUERY_LOG_DISABLE;
         return this.makeRequest(path, method);
     }
 
@@ -521,4 +497,37 @@ export default class Api {
         const { path, method } = this.STATS_RESET;
         return this.makeRequest(path, method);
     }
+
+    // Query log
+    GET_QUERY_LOG = { path: 'querylog', method: 'GET' };
+    QUERY_LOG_CONFIG = { path: 'querylog_config', method: 'POST' };
+    QUERY_LOG_INFO = { path: 'querylog_info', method: 'GET' };
+    QUERY_LOG_CLEAR = { path: 'querylog_clear', method: 'POST' };
+
+    getQueryLog() {
+        const { path, method } = this.GET_QUERY_LOG;
+        return this.makeRequest(path, method);
+    }
+
+    getQueryLogInfo() {
+        const { path, method } = this.QUERY_LOG_INFO;
+        return this.makeRequest(path, method);
+    }
+
+    setQueryLogConfig(data) {
+        const { path, method } = this.QUERY_LOG_CONFIG;
+        const config = {
+            data,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, config);
+    }
+
+    clearQueryLog() {
+        const { path, method } = this.QUERY_LOG_CLEAR;
+        return this.makeRequest(path, method);
+    }
 }
+
+const apiClient = new Api();
+export default apiClient;

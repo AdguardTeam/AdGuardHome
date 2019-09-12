@@ -1,7 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import ReactTable from 'react-table';
-import { saveAs } from 'file-saver/FileSaver';
 import escapeRegExp from 'lodash/escapeRegExp';
 import endsWith from 'lodash/endsWith';
 import { Trans, withNamespaces } from 'react-i18next';
@@ -17,7 +16,6 @@ import PopoverFiltered from '../ui/PopoverFilter';
 import Popover from '../ui/Popover';
 import './Logs.css';
 
-const DOWNLOAD_LOG_FILENAME = 'dns-logs.txt';
 const FILTERED_REASON = 'Filtered';
 const RESPONSE_FILTER = {
     ALL: 'all',
@@ -29,18 +27,19 @@ class Logs extends Component {
         this.getLogs();
         this.props.getFilteringStatus();
         this.props.getClients();
+        this.props.getLogsConfig();
     }
 
     componentDidUpdate(prevProps) {
         // get logs when queryLog becomes enabled
-        if (this.props.dashboard.queryLogEnabled && !prevProps.dashboard.queryLogEnabled) {
+        if (this.props.queryLogs.enabled && !prevProps.queryLogs.enabled) {
             this.props.getLogs();
         }
     }
 
     getLogs = () => {
         // get logs on initialization if queryLogIsEnabled
-        if (this.props.dashboard.queryLogEnabled) {
+        if (this.props.queryLogs.enabled) {
             this.props.getLogs();
         }
     };
@@ -155,10 +154,7 @@ class Logs extends Component {
         } else {
             const filterItem = Object.keys(filters).filter(key => filters[key].id === filterId)[0];
 
-            if (
-                typeof filterItem !== 'undefined' &&
-                typeof filters[filterItem] !== 'undefined'
-            ) {
+            if (typeof filterItem !== 'undefined' && typeof filters[filterItem] !== 'undefined') {
                 filterName = filters[filterItem].name;
             }
 
@@ -255,10 +251,7 @@ class Logs extends Component {
                     if (filter.value === RESPONSE_FILTER.FILTERED) {
                         // eslint-disable-next-line no-underscore-dangle
                         const { reason } = row._original;
-                        return (
-                            this.checkFiltered(reason) ||
-                            this.checkWhiteList(reason)
-                        );
+                        return this.checkFiltered(reason) || this.checkWhiteList(reason);
                     }
                     return true;
                 },
@@ -347,74 +340,44 @@ class Logs extends Component {
         return null;
     }
 
-    handleDownloadButton = async (e) => {
-        e.preventDefault();
-        const data = await this.props.downloadQueryLog();
-        const jsonStr = JSON.stringify(data);
-        const dataBlob = new Blob([jsonStr], { type: 'text/plain;charset=utf-8' });
-        saveAs(dataBlob, DOWNLOAD_LOG_FILENAME);
-    };
-
-    renderButtons(queryLogEnabled, logStatusProcessing) {
-        if (queryLogEnabled) {
-            return (
-                <Fragment>
-                    <button
-                        className="btn btn-gray btn-sm mr-2"
-                        type="submit"
-                        onClick={() => this.props.toggleLogStatus(queryLogEnabled)}
-                        disabled={logStatusProcessing}
-                    >
-                        <Trans>disabled_log_btn</Trans>
-                    </button>
-                    <button
-                        className="btn btn-primary btn-sm mr-2"
-                        type="submit"
-                        onClick={this.handleDownloadButton}
-                    >
-                        <Trans>download_log_file_btn</Trans>
-                    </button>
-                    <button
-                        className="btn btn-outline-primary btn-sm"
-                        type="submit"
-                        onClick={this.getLogs}
-                    >
-                        <Trans>refresh_btn</Trans>
-                    </button>
-                </Fragment>
-            );
-        }
-
-        return (
-            <button
-                className="btn btn-success btn-sm mr-2"
-                type="submit"
-                onClick={() => this.props.toggleLogStatus(queryLogEnabled)}
-                disabled={logStatusProcessing}
-            >
-                <Trans>enabled_log_btn</Trans>
-            </button>
-        );
-    }
-
     render() {
         const { queryLogs, dashboard, t } = this.props;
-        const { queryLogEnabled } = dashboard;
+        const { enabled, processingGetLogs, processingGetConfig } = queryLogs;
+        const { processingClients } = dashboard;
+        const isDataReady =
+            !processingGetLogs && !processingGetConfig && !dashboard.processingClients;
+
+        const refreshButton = enabled ? (
+            <button
+                className="btn btn-icon btn-outline-primary btn-sm ml-3"
+                type="submit"
+                onClick={this.getLogs}
+            >
+                <svg className="icons">
+                    <use xlinkHref="#refresh" />
+                </svg>
+            </button>
+        ) : (
+            ''
+        );
+
         return (
             <Fragment>
                 <PageTitle title={t('query_log')} subtitle={t('last_dns_queries')}>
-                    <div className="page-title__actions">
-                        {this.renderButtons(queryLogEnabled, dashboard.logStatusProcessing)}
-                    </div>
+                    {refreshButton}
                 </PageTitle>
                 <Card>
-                    {queryLogEnabled &&
-                        queryLogs.getLogsProcessing &&
-                        dashboard.processingClients && <Loading />}
-                    {queryLogEnabled &&
-                        !queryLogs.getLogsProcessing &&
-                        !dashboard.processingClients &&
-                        this.renderLogs(queryLogs.logs)}
+                    {enabled && (processingGetLogs || processingClients || processingGetConfig) && (
+                        <Loading />
+                    )}
+                    {enabled && isDataReady && this.renderLogs(queryLogs.logs)}
+                    {!enabled && !processingGetConfig && (
+                        <div className="lead text-center py-6">
+                            <Trans components={[<Link to="/settings#logs-config" key="0">link</Link>]}>
+                                query_log_disabled
+                            </Trans>
+                        </div>
+                    )}
                 </Card>
             </Fragment>
         );
@@ -425,13 +388,12 @@ Logs.propTypes = {
     getLogs: PropTypes.func.isRequired,
     queryLogs: PropTypes.object.isRequired,
     dashboard: PropTypes.object.isRequired,
-    toggleLogStatus: PropTypes.func.isRequired,
-    downloadQueryLog: PropTypes.func.isRequired,
     getFilteringStatus: PropTypes.func.isRequired,
     filtering: PropTypes.object.isRequired,
     setRules: PropTypes.func.isRequired,
     addSuccessToast: PropTypes.func.isRequired,
     getClients: PropTypes.func.isRequired,
+    getLogsConfig: PropTypes.func.isRequired,
     t: PropTypes.func.isRequired,
 };
 
