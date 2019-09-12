@@ -21,13 +21,35 @@ var (
 	filterTitleRegexp = regexp.MustCompile(`^! Title: +(.*)$`)
 )
 
+func initFiltering() {
+	loadFilters()
+	deduplicateFilters()
+	updateUniqueFilterID(config.Filters)
+}
+
+func startRefreshFilters() {
+	go func() {
+		_ = refreshFiltersIfNecessary(false)
+	}()
+	go periodicallyRefreshFilters()
+}
+
+func defaultFilters() []filter {
+	return []filter{
+		{Filter: dnsfilter.Filter{ID: 1}, Enabled: true, URL: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt", Name: "AdGuard Simplified Domain Names filter"},
+		{Filter: dnsfilter.Filter{ID: 2}, Enabled: false, URL: "https://adaway.org/hosts.txt", Name: "AdAway"},
+		{Filter: dnsfilter.Filter{ID: 3}, Enabled: false, URL: "https://hosts-file.net/ad_servers.txt", Name: "hpHosts - Ad and Tracking servers only"},
+		{Filter: dnsfilter.Filter{ID: 4}, Enabled: false, URL: "https://www.malwaredomainlist.com/hostslist/hosts.txt", Name: "MalwareDomainList.com Hosts List"},
+	}
+}
+
 // field ordering is important -- yaml fields will mirror ordering from here
 type filter struct {
-	Enabled     bool      `json:"enabled"`
-	URL         string    `json:"url"`
-	Name        string    `json:"name" yaml:"name"`
-	RulesCount  int       `json:"rulesCount" yaml:"-"`
-	LastUpdated time.Time `json:"lastUpdated,omitempty" yaml:"-"`
+	Enabled     bool
+	URL         string
+	Name        string    `yaml:"name"`
+	RulesCount  int       `yaml:"-"`
+	LastUpdated time.Time `yaml:"-"`
 	checksum    uint32    // checksum of the file data
 
 	dnsfilter.Filter `yaml:",inline"`
@@ -119,8 +141,7 @@ func loadFilters() {
 
 		err := filter.load()
 		if err != nil {
-			// This is okay for the first start, the filter will be loaded later
-			log.Debug("Couldn't load filter %d contents due to %s", filter.ID, err)
+			log.Error("Couldn't load filter %d contents due to %s", filter.ID, err)
 		}
 	}
 }
@@ -159,7 +180,12 @@ func assignUniqueFilterID() int64 {
 
 // Sets up a timer that will be checking for filters updates periodically
 func periodicallyRefreshFilters() {
-	for range time.Tick(time.Minute) {
+	for {
+		time.Sleep(1 * time.Hour)
+		if config.DNS.FiltersUpdateIntervalHours == 0 {
+			continue
+		}
+
 		refreshFiltersIfNecessary(false)
 	}
 }
@@ -180,10 +206,7 @@ func refreshFiltersIfNecessary(force bool) int {
 	var updateFilters []filter
 	var updateFlags []bool // 'true' if filter data has changed
 
-	if config.firstRun {
-		return 0
-	}
-
+	now := time.Now()
 	config.RLock()
 	for i := range config.Filters {
 		f := &config.Filters[i] // otherwise we will be operating on a copy
@@ -192,7 +215,8 @@ func refreshFiltersIfNecessary(force bool) int {
 			continue
 		}
 
-		if !force && time.Since(f.LastUpdated) <= updatePeriod {
+		expireTime := f.LastUpdated.Unix() + int64(config.DNS.FiltersUpdateIntervalHours)*60*60
+		if !force && expireTime > now.Unix() {
 			continue
 		}
 
@@ -214,7 +238,7 @@ func refreshFiltersIfNecessary(force bool) int {
 			log.Printf("Failed to update filter %s: %s\n", uf.URL, err)
 			continue
 		}
-		uf.LastUpdated = time.Now()
+		uf.LastUpdated = now
 		if updated {
 			updateCount++
 		}

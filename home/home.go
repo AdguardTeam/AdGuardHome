@@ -135,22 +135,17 @@ func run(args options) {
 		config.BindPort = args.bindPort
 	}
 
-	loadFilters()
-
 	if !config.firstRun {
 		// Save the updated config
 		err := config.write()
 		if err != nil {
 			log.Fatal(err)
 		}
-	}
 
-	// Init the DNS server instance before registering HTTP handlers
-	dnsBaseDir := filepath.Join(config.ourWorkingDir, dataDir)
-	initDNSServer(dnsBaseDir)
+		dnsBaseDir := filepath.Join(config.ourWorkingDir, dataDir)
+		initDNSServer(dnsBaseDir)
 
-	if !config.firstRun {
-		err := startDNSServer()
+		err = startDNSServer()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -164,13 +159,6 @@ func run(args options) {
 	if len(args.pidFile) != 0 && writePIDFile(args.pidFile) {
 		config.pidFileName = args.pidFile
 	}
-
-	// Update filters we've just loaded right away, don't wait for periodic update timer
-	go func() {
-		refreshFiltersIfNecessary(false)
-	}()
-	// Schedule automatic filters updates
-	go periodicallyRefreshFilters()
 
 	// Initialize and run the admin Web interface
 	box := packr.NewBox("../build/static")

@@ -90,32 +90,19 @@ class Api {
     }
 
     // Filtering
-    FILTERING_STATUS = { path: 'filtering/status', method: 'GET' };
-    FILTERING_ENABLE = { path: 'filtering/enable', method: 'POST' };
-    FILTERING_DISABLE = { path: 'filtering/disable', method: 'POST' };
+    FILTERING_INFO = { path: 'filtering_info', method: 'GET' };
     FILTERING_ADD_FILTER = { path: 'filtering/add_url', method: 'POST' };
     FILTERING_REMOVE_FILTER = { path: 'filtering/remove_url', method: 'POST' };
     FILTERING_SET_RULES = { path: 'filtering/set_rules', method: 'POST' };
-    FILTERING_ENABLE_FILTER = { path: 'filtering/enable_url', method: 'POST' };
-    FILTERING_DISABLE_FILTER = { path: 'filtering/disable_url', method: 'POST' };
     FILTERING_REFRESH = { path: 'filtering/refresh', method: 'POST' };
+    FILTERING_SET_URL = { path: 'filtering/set_url', method: 'POST' };
+    FILTERING_CONFIG = { path: 'filtering_config', method: 'POST' };
 
     getFilteringStatus() {
-        const { path, method } = this.FILTERING_STATUS;
+        const { path, method } = this.FILTERING_INFO;
         return this.makeRequest(path, method);
     }
 
-    enableFiltering() {
-        const { path, method } = this.FILTERING_ENABLE;
-        return this.makeRequest(path, method);
-    }
-
-    disableFiltering() {
-        const { path, method } = this.FILTERING_DISABLE;
-        return this.makeRequest(path, method);
-    }
-
-    // TODO find out when to use force parameter
     refreshFilters() {
         const { path, method } = this.FILTERING_REFRESH;
         return this.makeRequest(path, method);
@@ -151,26 +138,22 @@ class Api {
         return this.makeRequest(path, method, parameters);
     }
 
-    enableFilter(url) {
-        const { path, method } = this.FILTERING_ENABLE_FILTER;
-        const parameter = 'url';
-        const requestBody = `${parameter}=${url}`;
-        const config = {
-            data: requestBody,
-            header: { 'Content-Type': 'text/plain' },
+    setFiltersConfig(config) {
+        const { path, method } = this.FILTERING_CONFIG;
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
         };
-        return this.makeRequest(path, method, config);
+        return this.makeRequest(path, method, parameters);
     }
 
-    disableFilter(url) {
-        const { path, method } = this.FILTERING_DISABLE_FILTER;
-        const parameter = 'url';
-        const requestBody = `${parameter}=${url}`;
-        const config = {
-            data: requestBody,
-            header: { 'Content-Type': 'text/plain' },
+    setFilterUrl(config) {
+        const { path, method } = this.FILTERING_SET_URL;
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
         };
-        return this.makeRequest(path, method, config);
+        return this.makeRequest(path, method, parameters);
     }
 
     // Parental

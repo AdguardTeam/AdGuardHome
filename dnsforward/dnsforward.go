@@ -66,8 +66,10 @@ func NewServer(stats stats.Stats, queryLog querylog.QueryLog) *Server {
 // FilteringConfig represents the DNS filtering configuration of AdGuard Home
 // The zero FilteringConfig is empty and ready for use.
 type FilteringConfig struct {
-	ProtectionEnabled  bool     `yaml:"protection_enabled"`   // whether or not use any of dnsfilter features
-	FilteringEnabled   bool     `yaml:"filtering_enabled"`    // whether or not use filter lists
+	ProtectionEnabled          bool   `yaml:"protection_enabled"`      // whether or not use any of dnsfilter features
+	FilteringEnabled           bool   `yaml:"filtering_enabled"`       // whether or not use filter lists
+	FiltersUpdateIntervalHours uint32 `yaml:"filters_update_interval"` // time period to update filters (in hours)
+
 	BlockingMode       string   `yaml:"blocking_mode"`        // mode how to answer filtered requests
 	BlockedResponseTTL uint32   `yaml:"blocked_response_ttl"` // if 0, then default is used (3600)
 	QueryLogEnabled    bool     `yaml:"querylog_enabled"`     // if true, query log is enabled

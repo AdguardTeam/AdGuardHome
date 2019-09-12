@@ -14,7 +14,7 @@ class Checkbox extends Component {
             t,
         } = this.props;
         return (
-            <div className="form__group">
+            <div className="form__group form__group--checkbox">
                 <label className="checkbox checkbox--settings">
                 <span className="checkbox__marker"/>
                 <input type="checkbox" className="checkbox__input" onChange={handleChange} checked={enabled}/>

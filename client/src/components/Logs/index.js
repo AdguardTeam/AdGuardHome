@@ -6,7 +6,7 @@ import endsWith from 'lodash/endsWith';
 import { Trans, withNamespaces } from 'react-i18next';
 import { HashLink as Link } from 'react-router-hash-link';
 
-import { formatTime, getClientName } from '../../helpers/helpers';
+import { formatTime, formatDateTime, getClientName } from '../../helpers/helpers';
 import { SERVICES, FILTERED_STATUS } from '../../helpers/constants';
 import { getTrackerData } from '../../helpers/trackers/trackers';
 import PageTitle from '../ui/PageTitle';
@@ -114,7 +114,7 @@ class Logs extends Component {
 
     getTimeCell = ({ value }) => (
         <div className="logs__row">
-            <span className="logs__text" title={value}>
+            <span className="logs__text" title={formatDateTime(value)}>
                 {formatTime(value)}
             </span>
         </div>
@@ -227,7 +227,7 @@ class Logs extends Component {
             {
                 Header: t('time_table_header'),
                 accessor: 'time',
-                maxWidth: 90,
+                maxWidth: 100,
                 filterable: false,
                 Cell: this.getTimeCell,
             },

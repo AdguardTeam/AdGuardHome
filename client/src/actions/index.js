@@ -1,10 +1,9 @@
 import { createAction } from 'redux-actions';
 import { t } from 'i18next';
-import { showLoading, hideLoading } from 'react-redux-loading-bar';
 import axios from 'axios';
 
 import versionCompare from '../helpers/versionCompare';
-import { normalizeFilteringStatus, normalizeTextarea, sortClients } from '../helpers/helpers';
+import { normalizeTextarea, sortClients } from '../helpers/helpers';
 import { SETTINGS_NAMES, CHECK_TIMEOUT } from '../helpers/constants';
 import { getTlsStatus } from './encryption';
 import apiClient from '../api/Api';
@@ -21,16 +20,6 @@ export const toggleSetting = (settingKey, status) => async (dispatch) => {
     let successMessage = '';
     try {
         switch (settingKey) {
-            case SETTINGS_NAMES.filtering:
-                if (status) {
-                    successMessage = 'disabled_filtering_toast';
-                    await apiClient.disableFiltering();
-                } else {
-                    successMessage = 'enabled_filtering_toast';
-                    await apiClient.enableFiltering();
-                }
-                dispatch(toggleSettingStatus({ settingKey }));
-                break;
             case SETTINGS_NAMES.safebrowsing:
                 if (status) {
                     successMessage = 'disabled_safe_browsing_toast';
@@ -77,18 +66,15 @@ export const initSettingsSuccess = createAction('SETTINGS_INIT_SUCCESS');
 export const initSettings = settingsList => async (dispatch) => {
     dispatch(initSettingsRequest());
     try {
-        const filteringStatus = await apiClient.getFilteringStatus();
         const safebrowsingStatus = await apiClient.getSafebrowsingStatus();
         const parentalStatus = await apiClient.getParentalStatus();
         const safesearchStatus = await apiClient.getSafesearchStatus();
         const {
-            filtering,
             safebrowsing,
             parental,
             safesearch,
         } = settingsList;
         const newSettingsList = {
-            filtering: { ...filtering, enabled: filteringStatus.enabled },
             safebrowsing: { ...safebrowsing, enabled: safebrowsingStatus.enabled },
             parental: { ...parental, enabled: parentalStatus.enabled },
             safesearch: { ...safesearch, enabled: safesearchStatus.enabled },
@@ -97,21 +83,6 @@ export const initSettings = settingsList => async (dispatch) => {
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(initSettingsFailure());
-    }
-};
-
-export const getFilteringRequest = createAction('GET_FILTERING_REQUEST');
-export const getFilteringFailure = createAction('GET_FILTERING_FAILURE');
-export const getFilteringSuccess = createAction('GET_FILTERING_SUCCESS');
-
-export const getFiltering = () => async (dispatch) => {
-    dispatch(getFilteringRequest());
-    try {
-        const filteringStatus = await apiClient.getFilteringStatus();
-        dispatch(getFilteringSuccess(filteringStatus.enabled));
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
-        dispatch(getFilteringFailure());
     }
 };
 
@@ -289,133 +260,6 @@ export const disableDns = () => async (dispatch) => {
         dispatch(addErrorToast({ error }));
     }
 };
-
-export const setRulesRequest = createAction('SET_RULES_REQUEST');
-export const setRulesFailure = createAction('SET_RULES_FAILURE');
-export const setRulesSuccess = createAction('SET_RULES_SUCCESS');
-
-export const setRules = rules => async (dispatch) => {
-    dispatch(setRulesRequest());
-    try {
-        const replacedLineEndings = rules
-            .replace(/^\n/g, '')
-            .replace(/\n\s*\n/g, '\n');
-        await apiClient.setRules(replacedLineEndings);
-        dispatch(addSuccessToast('updated_custom_filtering_toast'));
-        dispatch(setRulesSuccess());
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
-        dispatch(setRulesFailure());
-    }
-};
-
-export const getFilteringStatusRequest = createAction('GET_FILTERING_STATUS_REQUEST');
-export const getFilteringStatusFailure = createAction('GET_FILTERING_STATUS_FAILURE');
-export const getFilteringStatusSuccess = createAction('GET_FILTERING_STATUS_SUCCESS');
-
-export const getFilteringStatus = () => async (dispatch) => {
-    dispatch(getFilteringStatusRequest());
-    try {
-        const status = await apiClient.getFilteringStatus();
-        dispatch(getFilteringStatusSuccess({ status: normalizeFilteringStatus(status) }));
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
-        dispatch(getFilteringStatusFailure());
-    }
-};
-
-export const toggleFilterRequest = createAction('FILTER_ENABLE_REQUEST');
-export const toggleFilterFailure = createAction('FILTER_ENABLE_FAILURE');
-export const toggleFilterSuccess = createAction('FILTER_ENABLE_SUCCESS');
-
-export const toggleFilterStatus = url => async (dispatch, getState) => {
-    dispatch(toggleFilterRequest());
-    const state = getState();
-    const { filters } = state.filtering;
-    const filter = filters.filter(filter => filter.url === url)[0];
-    const { enabled } = filter;
-    let toggleStatusMethod;
-    if (enabled) {
-        toggleStatusMethod = apiClient.disableFilter.bind(apiClient);
-    } else {
-        toggleStatusMethod = apiClient.enableFilter.bind(apiClient);
-    }
-    try {
-        await toggleStatusMethod(url);
-        dispatch(toggleFilterSuccess(url));
-        dispatch(getFilteringStatus());
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
-        dispatch(toggleFilterFailure());
-    }
-};
-
-export const refreshFiltersRequest = createAction('FILTERING_REFRESH_REQUEST');
-export const refreshFiltersFailure = createAction('FILTERING_REFRESH_FAILURE');
-export const refreshFiltersSuccess = createAction('FILTERING_REFRESH_SUCCESS');
-
-export const refreshFilters = () => async (dispatch) => {
-    dispatch(refreshFiltersRequest());
-    dispatch(showLoading());
-    try {
-        const refreshText = await apiClient.refreshFilters();
-        dispatch(refreshFiltersSuccess());
-
-        if (refreshText.includes('OK')) {
-            if (refreshText.includes('OK 0')) {
-                dispatch(addSuccessToast('all_filters_up_to_date_toast'));
-            } else {
-                dispatch(addSuccessToast(refreshText.replace(/OK /g, '')));
-            }
-        } else {
-            dispatch(addErrorToast({ error: refreshText }));
-        }
-
-        dispatch(getFilteringStatus());
-        dispatch(hideLoading());
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
-        dispatch(refreshFiltersFailure());
-        dispatch(hideLoading());
-    }
-};
-
-export const handleRulesChange = createAction('HANDLE_RULES_CHANGE');
-
-export const addFilterRequest = createAction('ADD_FILTER_REQUEST');
-export const addFilterFailure = createAction('ADD_FILTER_FAILURE');
-export const addFilterSuccess = createAction('ADD_FILTER_SUCCESS');
-
-export const addFilter = (url, name) => async (dispatch) => {
-    dispatch(addFilterRequest());
-    try {
-        await apiClient.addFilter(url, name);
-        dispatch(addFilterSuccess(url));
-        dispatch(getFilteringStatus());
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
-        dispatch(addFilterFailure());
-    }
-};
-
-
-export const removeFilterRequest = createAction('ADD_FILTER_REQUEST');
-export const removeFilterFailure = createAction('ADD_FILTER_FAILURE');
-export const removeFilterSuccess = createAction('ADD_FILTER_SUCCESS');
-
-export const removeFilter = url => async (dispatch) => {
-    dispatch(removeFilterRequest());
-    try {
-        await apiClient.removeFilter(url);
-        dispatch(removeFilterSuccess(url));
-        dispatch(getFilteringStatus());
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
-        dispatch(removeFilterFailure());
-    }
-};
-
-export const toggleFilteringModal = createAction('FILTERING_MODAL_TOGGLE');
 
 export const handleUpstreamChange = createAction('HANDLE_UPSTREAM_CHANGE');
 export const setUpstreamRequest = createAction('SET_UPSTREAM_REQUEST');

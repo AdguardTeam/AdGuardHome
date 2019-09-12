@@ -32,28 +32,36 @@ export const renderRadioField = ({
 }) => (
     <Fragment>
         <label className="custom-control custom-radio custom-control-inline">
-            <input
-                {...input}
-                type="radio"
-                className="custom-control-input"
-                disabled={disabled}
-            />
+            <input {...input} type="radio" className="custom-control-input" disabled={disabled} />
             <span className="custom-control-label">{placeholder}</span>
         </label>
-        {!disabled && touched && (error && <span className="form__message form__message--error">{error}</span>)}
+        {!disabled &&
+            touched &&
+            (error && <span className="form__message form__message--error">{error}</span>)}
     </Fragment>
 );
 
 export const renderSelectField = ({
-    input, placeholder, disabled, meta: { touched, error },
+    input,
+    placeholder,
+    subtitle,
+    disabled,
+    modifier = 'checkbox--form',
+    meta: { touched, error },
 }) => (
     <Fragment>
-        <label className="checkbox checkbox--form">
+        <label className={`checkbox ${modifier}`}>
             <span className="checkbox__marker" />
             <input {...input} type="checkbox" className="checkbox__input" disabled={disabled} />
             <span className="checkbox__label">
                 <span className="checkbox__label-text checkbox__label-text--long">
                     <span className="checkbox__label-title">{placeholder}</span>
+                    {subtitle && (
+                        <span
+                            className="checkbox__label-subtitle"
+                            dangerouslySetInnerHTML={{ __html: subtitle }}
+                        />
+                    )}
                 </span>
             </span>
         </label>
@@ -64,7 +72,12 @@ export const renderSelectField = ({
 );
 
 export const renderServiceField = ({
-    input, placeholder, disabled, modifier, icon, meta: { touched, error },
+    input,
+    placeholder,
+    disabled,
+    modifier,
+    icon,
+    meta: { touched, error },
 }) => (
     <Fragment>
         <label className={`service custom-switch ${modifier}`}>
@@ -81,7 +94,9 @@ export const renderServiceField = ({
                 <use xlinkHref={`#${icon}`} />
             </svg>
         </label>
-        {!disabled && touched && (error && <span className="form__message form__message--error">{error}</span>)}
+        {!disabled &&
+            touched &&
+            (error && <span className="form__message form__message--error">{error}</span>)}
     </Fragment>
 );
 

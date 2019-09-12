@@ -1,5 +1,14 @@
 import { connect } from 'react-redux';
-import * as actionCreators from '../actions';
+import {
+    setRules,
+    getFilteringStatus,
+    addFilter,
+    removeFilter,
+    toggleFilterStatus,
+    toggleFilteringModal,
+    refreshFilters,
+    handleRulesChange,
+} from '../actions/filtering';
 import Filters from '../components/Filters';
 
 const mapStateToProps = (state) => {
@@ -8,7 +17,18 @@ const mapStateToProps = (state) => {
     return props;
 };
 
+const mapDispatchToProps = {
+    setRules,
+    getFilteringStatus,
+    addFilter,
+    removeFilter,
+    toggleFilterStatus,
+    toggleFilteringModal,
+    refreshFilters,
+    handleRulesChange,
+};
+
 export default connect(
     mapStateToProps,
-    actionCreators,
+    mapDispatchToProps,
 )(Filters);
