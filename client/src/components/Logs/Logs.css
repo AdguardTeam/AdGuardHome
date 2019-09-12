@@ -36,6 +36,10 @@
     overflow: hidden;
 }
 
+.logs__text--full {
+    width: 100%;
+}
+
 .logs__row .tooltip-custom {
     top: 0;
     margin-left: 0;

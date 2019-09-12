@@ -18,7 +18,7 @@
 }
 
 .checkbox--settings .checkbox__label-title {
-    margin-bottom: 5px;
+    margin-bottom: 2px;
     font-weight: 600;
 }
 
@@ -53,7 +53,7 @@
     background-position: center center;
     background-size: 12px 10px;
     border-radius: 3px;
-    transition: 0.3s ease box-shadow;
+    transition: 0.3s ease-in-out box-shadow, 0.3s ease-in-out opacity;
 }
 
 .checkbox__label .checkbox__label-text {
@@ -82,8 +82,11 @@
 }
 
 .checkbox__input:disabled + .checkbox__label {
-    opacity: 0.6;
     cursor: default;
+}
+
+.checkbox__input:disabled + .checkbox__label:before {
+    opacity: 0.6;
 }
 
 .checkbox__label-text {

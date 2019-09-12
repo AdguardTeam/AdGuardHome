@@ -6,6 +6,7 @@ import addDays from 'date-fns/add_days';
 import subDays from 'date-fns/sub_days';
 import round from 'lodash/round';
 import axios from 'axios';
+import i18n from 'i18next';
 
 import {
     STANDARD_DNS_PORT,
@@ -17,6 +18,21 @@ import {
 export const formatTime = (time) => {
     const parsedTime = dateParse(time);
     return dateFormat(parsedTime, 'HH:mm:ss');
+};
+
+export const formatDateTime = (dateTime) => {
+    const currentLanguage = i18n.languages[0] || 'en';
+    const parsedTime = dateParse(dateTime);
+    const options = {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: false,
+    };
+
+    return parsedTime.toLocaleString(currentLanguage, options);
 };
 
 export const normalizeLogs = logs => logs.map((log) => {
@@ -74,18 +90,38 @@ export const normalizeTopStats = stats => (
 );
 
 export const normalizeFilteringStatus = (filteringStatus) => {
-    const { enabled, filters, user_rules: userRules } = filteringStatus;
-    const newFilters = filters ? filters.map((filter) => {
-        const {
-            id, url, enabled, lastUpdated: lastUpdated = Date.now(), name = 'Default name', rulesCount: rulesCount = 0,
-        } = filter;
+    const {
+        enabled, filters, user_rules: userRules, interval,
+    } = filteringStatus;
+    const newFilters = filters
+        ? filters.map((filter) => {
+            const {
+                id,
+                url,
+                enabled,
+                last_updated,
+                name = 'Default name',
+                rules_count: rules_count = 0,
+            } = filter;
 
-        return {
-            id, url, enabled, lastUpdated: formatTime(lastUpdated), name, rulesCount,
-        };
-    }) : [];
+            return {
+                id,
+                url,
+                enabled,
+                lastUpdated: last_updated ? formatDateTime(last_updated) : '–',
+                name,
+                rulesCount: rules_count,
+            };
+        })
+        : [];
     const newUserRules = Array.isArray(userRules) ? userRules.join('\n') : '';
-    return { enabled, userRules: newUserRules, filters: newFilters };
+
+    return {
+        enabled,
+        userRules: newUserRules,
+        filters: newFilters,
+        interval,
+    };
 };
 
 export const getPercent = (amount, number) => {
@@ -241,3 +277,5 @@ export const secondsToMilliseconds = (seconds) => {
 
     return seconds;
 };
+
+export const normalizeRulesTextarea = text => text && text.replace(/^\n/g, '').replace(/\n\s*\n/g, '\n');

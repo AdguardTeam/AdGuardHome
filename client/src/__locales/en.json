@@ -378,5 +378,11 @@
     "statistics_retention_desc": "If you decrease the interval value, some data will be lost",
     "statistics_clear": " Clear statistics",
     "statistics_clear_confirm": "Are you sure you want to clear statistics?",
-    "statistics_cleared": "Statistics successfully cleared"
+    "statistics_cleared": "Statistics successfully cleared",
+    "interval_hours": "{{count}} hour",
+    "interval_hours_plural": "{{count}} hours",
+    "filters_configuration": "Filters configuration",
+    "filters_enable": "Enable filters",
+    "filters_interval": "Filters update interval",
+    "disabled": "Disabled"
 }

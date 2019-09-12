@@ -5,6 +5,7 @@ import { withNamespaces } from 'react-i18next';
 import Services from './Services';
 import StatsConfig from './StatsConfig';
 import LogsConfig from './LogsConfig';
+import FiltersConfig from './FiltersConfig';
 import Checkbox from '../ui/Checkbox';
 import Loading from '../ui/Loading';
 import PageTitle from '../ui/PageTitle';
@@ -14,11 +15,6 @@ import './Settings.css';
 
 class Settings extends Component {
     settings = {
-        filtering: {
-            enabled: false,
-            title: 'block_domain_use_filters_and_hosts',
-            subtitle: 'filters_block_toggle_hint',
-        },
         safebrowsing: {
             enabled: false,
             title: 'use_adguard_browsing_sec',
@@ -41,17 +37,20 @@ class Settings extends Component {
         this.props.getBlockedServices();
         this.props.getStatsConfig();
         this.props.getLogsConfig();
+        this.props.getFilteringStatus();
     }
 
     renderSettings = (settings) => {
-        if (Object.keys(settings).length > 0) {
-            return Object.keys(settings).map((key) => {
+        const settingsKeys = Object.keys(settings);
+
+        if (settingsKeys.length > 0) {
+            return settingsKeys.map((key) => {
                 const setting = settings[key];
                 const { enabled } = setting;
                 return (
                     <Checkbox
-                        key={key}
                         {...settings[key]}
+                        key={key}
                         handleChange={() => this.props.toggleSetting(key, enabled)}
                     />
                 );
@@ -71,6 +70,8 @@ class Settings extends Component {
             queryLogs,
             setLogsConfig,
             clearLogs,
+            filtering,
+            setFiltersConfig,
             t,
         } = this.props;
 
@@ -90,6 +91,12 @@ class Settings extends Component {
                             <div className="col-md-12">
                                 <Card bodyType="card-body box-body--settings">
                                     <div className="form">
+                                        <FiltersConfig
+                                            interval={filtering.interval}
+                                            enabled={filtering.enabled}
+                                            processing={filtering.processingSetConfig}
+                                            setFiltersConfig={setFiltersConfig}
+                                        />
                                         {this.renderSettings(settings.settingsList)}
                                     </div>
                                 </Card>
@@ -134,6 +141,8 @@ Settings.propTypes = {
     getStatsConfig: PropTypes.func.isRequired,
     setStatsConfig: PropTypes.func.isRequired,
     resetStats: PropTypes.func.isRequired,
+    setFiltersConfig: PropTypes.func.isRequired,
+    getFilteringStatus: PropTypes.func.isRequired,
     t: PropTypes.func.isRequired,
 };
 

@@ -33,27 +33,13 @@ class Modal extends Component {
         this.setState({ ...this.state, name });
     };
 
-    handleNext = () => {
-        this.props.addFilter(this.state.url, this.state.name);
-        setTimeout(() => {
-            if (this.props.isFilterAdded) {
-                this.closeModal();
-            }
-        }, 2000);
-    };
-
     closeModal = () => {
         this.props.toggleModal();
         this.setState({ ...this.state, ...initialState });
-    }
+    };
 
     render() {
-        const {
-            isOpen,
-            title,
-            inputDescription,
-            processingAddFilter,
-        } = this.props;
+        const { isOpen, processingAddFilter } = this.props;
         const { isUrlValid, url, name } = this.state;
         const inputUrlClass = classnames({
             'form-control mb-2': true,
@@ -64,28 +50,7 @@ class Modal extends Component {
             'form-control mb-2': true,
             'is-valid': name.length > 0,
         });
-
-        const renderBody = () => {
-            if (!this.props.isFilterAdded) {
-                return (
-                    <React.Fragment>
-                        <input type="text" className={inputNameClass} placeholder={this.props.t('enter_name_hint')} onChange={this.handleNameChange} />
-                        <input type="text" className={inputUrlClass} placeholder={this.props.t('enter_url_hint')} onChange={this.handleUrlChange} />
-                        {inputDescription &&
-                            <div className="description">
-                                {inputDescription}
-                            </div>}
-                    </React.Fragment>
-                );
-            }
-            return (
-                <div className="description">
-                    <Trans>filter_added_successfully</Trans>
-                </div>
-            );
-        };
-
-        const isValidForSubmit = !(url.length > 0 && isUrlValid && name.length > 0);
+        const isValidForSubmit = url.length > 0 && isUrlValid && name.length > 0;
 
         return (
             <ReactModal
@@ -96,35 +61,47 @@ class Modal extends Component {
             >
                 <div className="modal-content">
                     <div className="modal-header">
-                    <h4 className="modal-title">
-                        {title}
-                    </h4>
-                    <button type="button" className="close" onClick={this.closeModal}>
-                        <span className="sr-only">Close</span>
-                    </button>
+                        <h4 className="modal-title">
+                            <Trans>new_filter_btn</Trans>
+                        </h4>
+                        <button type="button" className="close" onClick={this.closeModal}>
+                            <span className="sr-only">Close</span>
+                        </button>
                     </div>
                     <div className="modal-body">
-                        {renderBody()}
-                    </div>
-                    {!this.props.isFilterAdded &&
-                        <div className="modal-footer">
-                            <button
-                                type="button"
-                                className="btn btn-secondary"
-                                onClick={this.closeModal}
-                            >
-                                <Trans>cancel_btn</Trans>
-                            </button>
-                            <button
-                                type="button"
-                                className="btn btn-success"
-                                onClick={this.handleNext}
-                                disabled={isValidForSubmit || processingAddFilter}
-                            >
-                                <Trans>add_filter_btn</Trans>
-                            </button>
+                        <input
+                            type="text"
+                            className={inputNameClass}
+                            placeholder={this.props.t('enter_name_hint')}
+                            onChange={this.handleNameChange}
+                        />
+                        <input
+                            type="text"
+                            className={inputUrlClass}
+                            placeholder={this.props.t('enter_url_hint')}
+                            onChange={this.handleUrlChange}
+                        />
+                        <div className="description">
+                            <Trans>enter_valid_filter_url</Trans>
                         </div>
-                    }
+                    </div>
+                    <div className="modal-footer">
+                        <button
+                            type="button"
+                            className="btn btn-secondary"
+                            onClick={this.closeModal}
+                        >
+                            <Trans>cancel_btn</Trans>
+                        </button>
+                        <button
+                            type="button"
+                            className="btn btn-success"
+                            onClick={() => this.props.addFilter(url, name)}
+                            disabled={!isValidForSubmit || processingAddFilter}
+                        >
+                            <Trans>add_filter_btn</Trans>
+                        </button>
+                    </div>
                 </div>
             </ReactModal>
         );
@@ -134,12 +111,10 @@ class Modal extends Component {
 Modal.propTypes = {
     toggleModal: PropTypes.func.isRequired,
     isOpen: PropTypes.bool.isRequired,
-    title: PropTypes.string.isRequired,
-    inputDescription: PropTypes.string,
     addFilter: PropTypes.func.isRequired,
-    isFilterAdded: PropTypes.bool,
-    processingAddFilter: PropTypes.bool,
-    t: PropTypes.func,
+    isFilterAdded: PropTypes.bool.isRequired,
+    processingAddFilter: PropTypes.bool.isRequired,
+    t: PropTypes.func.isRequired,
 };
 
 export default withNamespaces()(Modal);

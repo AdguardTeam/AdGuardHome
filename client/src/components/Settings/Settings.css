@@ -11,6 +11,17 @@
     margin-bottom: 20px;
 }
 
+.form__group--inner {
+    max-width: 300px;
+    margin-top: -10px;
+    margin-left: 40px;
+    font-size: 14px;
+}
+
+.form__group--checkbox {
+    margin-bottom: 25px;
+}
+
 .form__inline {
     display: flex;
     justify-content: flex-start;
@@ -107,5 +118,13 @@
 
 .custom-control-label,
 .custom-control-label:before {
+    transition: 0.3s ease-in-out background-color, 0.3s ease-in-out color;
+}
+
+.custom-select:disabled {
+    background-color: #f9f9f9;
+}
+
+.custom-select {
     transition: 0.3s ease-in-out background-color, 0.3s ease-in-out color;
 }

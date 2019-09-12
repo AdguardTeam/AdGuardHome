@@ -15,13 +15,13 @@ class UserRules extends Component {
     };
 
     render() {
-        const { t } = this.props;
+        const { t, userRules } = this.props;
         return (
             <Card title={t('custom_filter_rules')} subtitle={t('custom_filter_rules_hint')}>
                 <form onSubmit={this.handleSubmit}>
                     <textarea
                         className="form-control form-control--textarea-large"
-                        value={this.props.userRules}
+                        value={userRules}
                         onChange={this.handleChange}
                     />
                     <div className="card-actions">
@@ -79,10 +79,10 @@ class UserRules extends Component {
 }
 
 UserRules.propTypes = {
-    userRules: PropTypes.string,
-    handleRulesChange: PropTypes.func,
-    handleRulesSubmit: PropTypes.func,
-    t: PropTypes.func,
+    userRules: PropTypes.string.isRequired,
+    handleRulesChange: PropTypes.func.isRequired,
+    handleRulesSubmit: PropTypes.func.isRequired,
+    t: PropTypes.func.isRequired,
 };
 
 export default withNamespaces()(UserRules);

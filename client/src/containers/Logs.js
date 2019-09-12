@@ -1,5 +1,6 @@
 import { connect } from 'react-redux';
-import { getFilteringStatus, setRules, addSuccessToast, getClients } from '../actions';
+import { addSuccessToast, getClients } from '../actions';
+import { getFilteringStatus, setRules } from '../actions/filtering';
 import { getLogs, getLogsConfig } from '../actions/queryLogs';
 import Logs from '../components/Logs';
 
