@@ -53,10 +53,11 @@ type clientJSON struct {
 type clientSource uint
 
 const (
-	// Priority: etc/hosts > ARP > rDNS
+	// Priority: etc/hosts > DHCP > ARP > rDNS
 	ClientSourceRDNS      clientSource = 0 // from rDNS
-	ClientSourceARP       clientSource = 1 // from 'arp -a'
-	ClientSourceHostsFile clientSource = 2 // from /etc/hosts
+	ClientSourceDHCP      clientSource = 1 // from DHCP
+	ClientSourceARP       clientSource = 2 // from 'arp -a'
+	ClientSourceHostsFile clientSource = 3 // from /etc/hosts
 )
 
 // ClientHost information
@@ -89,6 +90,7 @@ func (clients *clientsContainer) periodicUpdate() {
 	for {
 		clients.addFromHostsFile()
 		clients.addFromSystemARP()
+		clients.addFromDHCP()
 		time.Sleep(clientsUpdatePeriod)
 	}
 }
@@ -369,6 +371,17 @@ func (clients *clientsContainer) addFromSystemARP() {
 	log.Info("Added %d client aliases from 'arp -a' command output", n)
 }
 
+// add clients from DHCP that have non-empty Hostname property
+func (clients *clientsContainer) addFromDHCP() {
+	leases := config.dhcpServer.Leases()
+	for _, l := range leases {
+		if len(l.Hostname) == 0 {
+			continue
+		}
+		config.clients.AddHost(l.IP.String(), l.Hostname, ClientSourceDHCP)
+	}
+}
+
 type clientHostJSON struct {
 	IP     string `json:"ip"`
 	Name   string `json:"name"`
@@ -417,6 +430,8 @@ func handleGetClients(w http.ResponseWriter, r *http.Request) {
 		}
 		cj.Source = "etc/hosts"
 		switch ch.Source {
+		case ClientSourceDHCP:
+			cj.Source = "DHCP"
 		case ClientSourceRDNS:
 			cj.Source = "rDNS"
 		case ClientSourceARP:
