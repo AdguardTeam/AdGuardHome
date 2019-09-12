@@ -419,6 +419,13 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 		s.conf.OnDNSRequest(d)
 	}
 
+	// disable Mozilla DoH
+	if (d.Req.Question[0].Qtype == dns.TypeA || d.Req.Question[0].Qtype == dns.TypeAAAA) &&
+		d.Req.Question[0].Name == "use-application-dns.net." {
+		d.Res = s.genNXDomain(d.Req)
+		return nil
+	}
+
 	// use dnsfilter before cache -- changed settings or filters would require cache invalidation otherwise
 	s.RLock()
 	// Synchronize access to s.dnsFilter so it won't be suddenly uninitialized while in use.
