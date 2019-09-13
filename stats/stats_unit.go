@@ -296,7 +296,7 @@ func deserialize(u *unit, udb *unitDB) {
 	if n < len(u.nResult) {
 		n = len(u.nResult) // n = min(len(udb.NResult), len(u.nResult))
 	}
-	for i := 1; i <= n; i++ {
+	for i := 1; i < n; i++ {
 		u.nResult[i] = udb.NResult[i]
 	}
 
