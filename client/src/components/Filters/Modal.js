@@ -21,11 +21,7 @@ class Modal extends Component {
 
     handleUrlChange = async (e) => {
         const { value: url } = e.currentTarget;
-        if (this.isUrlValid(url)) {
-            this.setState(...this.state, { url, isUrlValid: true });
-        } else {
-            this.setState(...this.state, { url, isUrlValid: false });
-        }
+        this.setState(...this.state, { url, isUrlValid: this.isUrlValid(url) });
     };
 
     handleNameChange = (e) => {
