@@ -63,6 +63,13 @@ func NewServer(stats stats.Stats, queryLog querylog.QueryLog) *Server {
 	return s
 }
 
+func (s *Server) Close() {
+	s.Lock()
+	s.stats = nil
+	s.queryLog = nil
+	s.Unlock()
+}
+
 // FilteringConfig represents the DNS filtering configuration of AdGuard Home
 // The zero FilteringConfig is empty and ready for use.
 type FilteringConfig struct {
@@ -467,6 +474,9 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 	}
 
 	elapsed := time.Since(start)
+	s.RLock()
+	// Synchronize access to s.queryLog and s.stats so they won't be suddenly uninitialized while in use.
+	// This can happen after proxy server has been stopped, but its workers haven't yet exited.
 	if s.conf.QueryLogEnabled && shouldLog && s.queryLog != nil {
 		upstreamAddr := ""
 		if d.Upstream != nil {
@@ -476,6 +486,7 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 	}
 
 	s.updateStats(d, elapsed, *res)
+	s.RUnlock()
 
 	return nil
 }
