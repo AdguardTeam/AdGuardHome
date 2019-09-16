@@ -575,7 +575,7 @@ func (s *Server) filterDNSRequest(d *proxy.DNSContext) (*dnsfilter.Result, error
 				resp.Answer = append(resp.Answer, a)
 
 			} else if req.Question[0].Qtype == dns.TypeAAAA {
-				a := s.genAAAAAnswer(req, res.IP)
+				a := s.genAAAAAnswer(req, ip)
 				a.Hdr.Name = dns.Fqdn(name)
 				resp.Answer = append(resp.Answer, a)
 			}
