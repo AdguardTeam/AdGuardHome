@@ -36,8 +36,11 @@ func initDNSServer(baseDir string) {
 		log.Fatalf("Cannot create DNS data dir at %s: %s", baseDir, err)
 	}
 
-	statsDBFilename := filepath.Join(baseDir, "stats.db")
-	config.stats, err = stats.New(statsDBFilename, config.DNS.StatsInterval, nil)
+	statsConf := stats.Config{
+		Filename:  filepath.Join(baseDir, "stats.db"),
+		LimitDays: config.DNS.StatsInterval,
+	}
+	config.stats, err = stats.New(statsConf)
 	if err != nil {
 		log.Fatal("Couldn't initialize statistics module")
 	}

@@ -26,7 +26,11 @@ func UIntArrayEquals(a []uint64, b []uint64) bool {
 }
 
 func TestStats(t *testing.T) {
-	s, _ := New("./stats.db", 1, nil)
+	conf := Config{
+		Filename:  "./stats.db",
+		LimitDays: 1,
+	}
+	s, _ := New(conf)
 
 	e := Entry{}
 
@@ -73,7 +77,7 @@ func TestStats(t *testing.T) {
 
 	s.Clear()
 	s.Close()
-	os.Remove("./stats.db")
+	os.Remove(conf.Filename)
 }
 
 func TestLargeNumbers(t *testing.T) {
@@ -85,9 +89,13 @@ func TestLargeNumbers(t *testing.T) {
 	}
 
 	// log.SetLevel(log.DEBUG)
-	fn := "./stats.db"
-	os.Remove(fn)
-	s, _ := New(fn, 1, newID)
+	conf := Config{
+		Filename:  "./stats.db",
+		LimitDays: 1,
+		UnitID:    newID,
+	}
+	os.Remove(conf.Filename)
+	s, _ := New(conf)
 	e := Entry{}
 
 	n := 1000 // number of distinct clients and domains every hour
@@ -111,5 +119,5 @@ func TestLargeNumbers(t *testing.T) {
 	assert.True(t, d["num_dns_queries"].(uint64) == uint64(int(hour)*n))
 
 	s.Close()
-	os.Remove(fn)
+	os.Remove(conf.Filename)
 }

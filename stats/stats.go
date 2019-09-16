@@ -8,12 +8,16 @@ import (
 
 type unitIDCallback func() uint32
 
+// Config - module configuration
+type Config struct {
+	Filename  string         // database file name
+	LimitDays uint32         // time limit (in days)
+	UnitID    unitIDCallback // user function to get the current unit ID.  If nil, the current time hour is used.
+}
+
 // New - create object
-// filename: DB file name
-// limit: time limit (in days)
-// unitID: user function to get the current unit ID.  If nil, the current time hour is used.
-func New(filename string, limit uint32, unitID unitIDCallback) (Stats, error) {
-	return createObject(filename, limit, unitID)
+func New(conf Config) (Stats, error) {
+	return createObject(conf)
 }
 
 // Stats - main interface
