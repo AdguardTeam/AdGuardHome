@@ -3,12 +3,81 @@ package home
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/querylog"
+	"github.com/miekg/dns"
 )
 
+type qlogFilterJSON struct {
+	Domain         string `json:"domain"`
+	Client         string `json:"client"`
+	QuestionType   string `json:"question_type"`
+	ResponseStatus string `json:"response_status"`
+}
+
+type queryLogRequest struct {
+	OlderThan string         `json:"older_than"`
+	Filter    qlogFilterJSON `json:"filter"`
+}
+
+// "value" -> value, return TRUE
+func getDoubleQuotesEnclosedValue(s *string) bool {
+	t := *s
+	if len(t) >= 2 && t[0] == '"' && t[len(t)-1] == '"' {
+		*s = t[1 : len(t)-1]
+		return true
+	}
+	return false
+}
+
 func handleQueryLog(w http.ResponseWriter, r *http.Request) {
-	data := config.queryLog.GetData()
+	req := queryLogRequest{}
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "json decode: %s", err)
+		return
+	}
+
+	params := querylog.GetDataParams{
+		Domain: req.Filter.Domain,
+		Client: req.Filter.Client,
+	}
+	if len(req.OlderThan) != 0 {
+		params.OlderThan, err = time.Parse(time.RFC3339Nano, req.OlderThan)
+		if err != nil {
+			httpError(w, http.StatusBadRequest, "invalid time stamp: %s", err)
+			return
+		}
+	}
+
+	if getDoubleQuotesEnclosedValue(&params.Domain) {
+		params.StrictMatchDomain = true
+	}
+	if getDoubleQuotesEnclosedValue(&params.Client) {
+		params.StrictMatchClient = true
+	}
+
+	if len(req.Filter.QuestionType) != 0 {
+		qtype, ok := dns.StringToType[req.Filter.QuestionType]
+		if !ok {
+			httpError(w, http.StatusBadRequest, "invalid question_type")
+			return
+		}
+		params.QuestionType = qtype
+	}
+
+	if len(req.Filter.ResponseStatus) != 0 {
+		switch req.Filter.ResponseStatus {
+		case "filtered":
+			params.ResponseStatus = querylog.ResponseStatusFiltered
+		default:
+			httpError(w, http.StatusBadRequest, "invalid response_status")
+			return
+		}
+	}
+
+	data := config.queryLog.GetData(params)
 
 	jsonVal, err := json.Marshal(data)
 	if err != nil {
@@ -84,7 +153,7 @@ func checkQueryLogInterval(i uint32) bool {
 
 // RegisterQueryLogHandlers - register handlers
 func RegisterQueryLogHandlers() {
-	httpRegister(http.MethodGet, "/control/querylog", handleQueryLog)
+	httpRegister("POST", "/control/querylog", handleQueryLog)
 	httpRegister(http.MethodGet, "/control/querylog_info", handleQueryLogInfo)
 	httpRegister(http.MethodPost, "/control/querylog_clear", handleQueryLogClear)
 	httpRegister(http.MethodPost, "/control/querylog_config", handleQueryLogConfig)
