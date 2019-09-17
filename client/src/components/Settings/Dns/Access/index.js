@@ -13,11 +13,7 @@ class Access extends Component {
     render() {
         const { t, access } = this.props;
 
-        const {
-            processing,
-            processingSet,
-            ...values
-        } = access;
+        const { processing, processingSet, ...values } = access;
 
         return (
             <Card
@@ -28,6 +24,7 @@ class Access extends Component {
                 <Form
                     initialValues={values}
                     onSubmit={this.handleFormSubmit}
+                    processingSet={processingSet}
                 />
             </Card>
         );

@@ -10,6 +10,7 @@ import Loading from '../../ui/Loading';
 
 class Dns extends Component {
     componentDidMount() {
+        this.props.getDnsSettings();
         this.props.getAccessList();
         this.props.getRewritesList();
     }
@@ -30,11 +31,16 @@ class Dns extends Component {
             toggleRewritesModal,
         } = this.props;
 
+        const isDataLoading =
+            dashboard.processingDnsSettings || access.processing || rewrites.processing;
+        const isDataReady =
+            !dashboard.processingDnsSettings && !access.processing && !rewrites.processing;
+
         return (
             <Fragment>
                 <PageTitle title={t('dns_settings')} />
-                {(dashboard.processing || access.processing) && <Loading />}
-                {!dashboard.processing && !access.processing && (
+                {isDataLoading && <Loading />}
+                {isDataReady && (
                     <Fragment>
                         <Upstream
                             upstreamDns={dashboard.upstreamDns}
@@ -73,6 +79,7 @@ Dns.propTypes = {
     addRewrite: PropTypes.func.isRequired,
     deleteRewrite: PropTypes.func.isRequired,
     toggleRewritesModal: PropTypes.func.isRequired,
+    getDnsSettings: PropTypes.func.isRequired,
     t: PropTypes.func.isRequired,
 };
 

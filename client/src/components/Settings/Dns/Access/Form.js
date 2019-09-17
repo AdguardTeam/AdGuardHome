@@ -5,7 +5,9 @@ import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 
 const Form = (props) => {
-    const { handleSubmit, submitting, invalid } = props;
+    const {
+        handleSubmit, submitting, invalid, processingSet,
+    } = props;
 
     return (
         <form onSubmit={handleSubmit}>
@@ -22,6 +24,7 @@ const Form = (props) => {
                     component="textarea"
                     type="text"
                     className="form-control form-control--textarea"
+                    disabled={processingSet}
                 />
             </div>
             <div className="form__group mb-5">
@@ -37,6 +40,7 @@ const Form = (props) => {
                     component="textarea"
                     type="text"
                     className="form-control form-control--textarea"
+                    disabled={processingSet}
                 />
             </div>
             <div className="form__group mb-5">
@@ -52,6 +56,7 @@ const Form = (props) => {
                     component="textarea"
                     type="text"
                     className="form-control form-control--textarea"
+                    disabled={processingSet}
                 />
             </div>
             <div className="card-actions">
@@ -59,7 +64,7 @@ const Form = (props) => {
                     <button
                         type="submit"
                         className="btn btn-success btn-standard"
-                        disabled={submitting || invalid}
+                        disabled={submitting || invalid || processingSet}
                     >
                         <Trans>save_config</Trans>
                     </button>
@@ -70,11 +75,12 @@ const Form = (props) => {
 };
 
 Form.propTypes = {
-    handleSubmit: PropTypes.func,
-    submitting: PropTypes.bool,
-    invalid: PropTypes.bool,
-    initialValues: PropTypes.object,
-    t: PropTypes.func,
+    handleSubmit: PropTypes.func.isRequired,
+    submitting: PropTypes.bool.isRequired,
+    invalid: PropTypes.bool.isRequired,
+    initialValues: PropTypes.object.isRequired,
+    processingSet: PropTypes.bool.isRequired,
+    t: PropTypes.func.isRequired,
 };
 
 export default flow([withNamespaces(), reduxForm({ form: 'accessForm' })])(Form);

@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import { handleUpstreamChange, setUpstream, testUpstream } from '../actions';
+import { handleUpstreamChange, setUpstream, testUpstream, getDnsSettings } from '../actions';
 import { getAccessList, setAccessList } from '../actions/access';
 import {
     getRewritesList,
@@ -32,6 +32,7 @@ const mapDispatchToProps = {
     addRewrite,
     deleteRewrite,
     toggleRewritesModal,
+    getDnsSettings,
 };
 
 export default connect(
