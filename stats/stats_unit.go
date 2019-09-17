@@ -21,10 +21,10 @@ const (
 
 // statsCtx - global context
 type statsCtx struct {
-	limit    uint32         // maximum time we need to keep data for (in hours)
-	filename string         // database file name
-	unitID   unitIDCallback // user function which returns the current unit ID
-	db       *bolt.DB
+	limit uint32 // maximum time we need to keep data for (in hours)
+	db    *bolt.DB
+
+	conf Config
 
 	unit     *unit      // the current unit
 	unitLock sync.Mutex // protect 'unit'
@@ -62,20 +62,19 @@ type unitDB struct {
 	TimeAvg uint32 // usec
 }
 
-func createObject(filename string, limitDays uint32, unitID unitIDCallback) (*statsCtx, error) {
+func createObject(conf Config) (*statsCtx, error) {
 	s := statsCtx{}
-	s.limit = limitDays * 24
-	s.filename = filename
-	s.unitID = newUnitID
-	if unitID != nil {
-		s.unitID = unitID
+	s.limit = conf.LimitDays * 24
+	s.conf = conf
+	if conf.UnitID == nil {
+		s.conf.UnitID = newUnitID
 	}
 
 	if !s.dbOpen() {
 		return nil, fmt.Errorf("open database")
 	}
 
-	id := s.unitID()
+	id := s.conf.UnitID()
 	tx := s.beginTxn(true)
 	var udb *unitDB
 	if tx != nil {
@@ -122,9 +121,9 @@ func createObject(filename string, limitDays uint32, unitID unitIDCallback) (*st
 func (s *statsCtx) dbOpen() bool {
 	var err error
 	log.Tracef("db.Open...")
-	s.db, err = bolt.Open(s.filename, 0644, nil)
+	s.db, err = bolt.Open(s.conf.Filename, 0644, nil)
 	if err != nil {
-		log.Error("Stats: open DB: %s: %s", s.filename, err)
+		log.Error("Stats: open DB: %s: %s", s.conf.Filename, err)
 		return false
 	}
 	log.Tracef("db.Open")
@@ -208,7 +207,7 @@ func (s *statsCtx) periodicFlush() {
 			break
 		}
 
-		id := s.unitID()
+		id := s.conf.UnitID()
 		if ptr.id == id {
 			time.Sleep(time.Second)
 			continue
@@ -406,10 +405,10 @@ func (s *statsCtx) Clear() {
 	}
 
 	u := unit{}
-	s.initUnit(&u, s.unitID())
+	s.initUnit(&u, s.conf.UnitID())
 	_ = s.swapUnit(&u)
 
-	err := os.Remove(s.filename)
+	err := os.Remove(s.conf.Filename)
 	if err != nil {
 		log.Error("os.Remove: %s", err)
 	}
@@ -481,7 +480,7 @@ func (s *statsCtx) GetData(timeUnit TimeUnit) map[string]interface{} {
 	}
 
 	units := []*unitDB{} //per-hour units
-	lastID := s.unitID()
+	lastID := s.conf.UnitID()
 	firstID := lastID - s.limit + 1
 	for i := firstID; i != lastID; i++ {
 		u := s.loadUnitFromDB(tx, i)
