@@ -227,7 +227,22 @@ export const getDnsStatus = () => async (dispatch) => {
         dispatch(getTlsStatus());
     } catch (error) {
         dispatch(addErrorToast({ error }));
-        dispatch(initSettingsFailure());
+        dispatch(dnsStatusFailure());
+    }
+};
+
+export const getDnsSettingsRequest = createAction('GET_DNS_SETTINGS_REQUEST');
+export const getDnsSettingsFailure = createAction('GET_DNS_SETTINGS_FAILURE');
+export const getDnsSettingsSuccess = createAction('GET_DNS_SETTINGS_SUCCESS');
+
+export const getDnsSettings = () => async (dispatch) => {
+    dispatch(getDnsSettingsRequest());
+    try {
+        const dnsStatus = await apiClient.getGlobalStatus();
+        dispatch(getDnsSettingsSuccess(dnsStatus));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(getDnsSettingsFailure());
     }
 };
 
@@ -279,7 +294,7 @@ export const setUpstream = config => async (dispatch) => {
 
         await apiClient.setUpstream(values);
         dispatch(addSuccessToast('updated_upstream_dns_toast'));
-        dispatch(setUpstreamSuccess());
+        dispatch(setUpstreamSuccess(config));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(setUpstreamFailure());

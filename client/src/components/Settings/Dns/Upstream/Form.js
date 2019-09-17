@@ -43,6 +43,7 @@ let Form = (props) => {
                             type="text"
                             className="form-control form-control--textarea"
                             placeholder={t('upstream_dns')}
+                            disabled={processingSetUpstream || processingTestUpstream}
                         />
                     </div>
                 </div>
@@ -53,6 +54,7 @@ let Form = (props) => {
                             type="checkbox"
                             component={renderSelectField}
                             placeholder={t('upstream_parallel')}
+                            disabled={processingSetUpstream}
                         />
                     </div>
                 </div>
@@ -62,7 +64,10 @@ let Form = (props) => {
                 </div>
                 <div className="col-12">
                     <div className="form__group">
-                        <label className="form__label form__label--with-desc" htmlFor="bootstrap_dns">
+                        <label
+                            className="form__label form__label--with-desc"
+                            htmlFor="bootstrap_dns"
+                        >
                             <Trans>bootstrap_dns</Trans>
                         </label>
                         <div className="form__desc form__desc--top">
@@ -73,8 +78,9 @@ let Form = (props) => {
                             name="bootstrap_dns"
                             component="textarea"
                             type="text"
-                            className="form-control"
+                            className="form-control form-control--textarea form-control--textarea-small"
                             placeholder={t('bootstrap_dns')}
+                            disabled={processingSetUpstream}
                         />
                     </div>
                 </div>
