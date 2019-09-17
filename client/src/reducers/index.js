@@ -2,7 +2,7 @@ import { combineReducers } from 'redux';
 import { handleActions } from 'redux-actions';
 import { loadingBarReducer } from 'react-redux-loading-bar';
 import { reducer as formReducer } from 'redux-form';
-import versionCompare from '../helpers/versionCompare';
+import { isVersionGreater } from '../helpers/helpers';
 
 import * as actions from '../actions';
 import toasts from './toasts';
@@ -108,7 +108,7 @@ const dashboard = handleActions(
         [actions.getVersionSuccess]: (state, { payload }) => {
             const currentVersion = state.dnsVersion === 'undefined' ? 0 : state.dnsVersion;
 
-            if (payload && versionCompare(currentVersion, payload.new_version) === -1) {
+            if (payload && isVersionGreater(currentVersion, payload.new_version)) {
                 const {
                     announcement_url: announcementUrl,
                     new_version: newVersion,

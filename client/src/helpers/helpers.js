@@ -7,6 +7,7 @@ import subDays from 'date-fns/sub_days';
 import round from 'lodash/round';
 import axios from 'axios';
 import i18n from 'i18next';
+import versionCompare from './versionCompare';
 
 import {
     STANDARD_DNS_PORT,
@@ -279,3 +280,7 @@ export const secondsToMilliseconds = (seconds) => {
 };
 
 export const normalizeRulesTextarea = text => text && text.replace(/^\n/g, '').replace(/\n\s*\n/g, '\n');
+
+export const isVersionGreater = (currentVersion, previousVersion) => (
+    versionCompare(currentVersion, previousVersion) === -1
+);

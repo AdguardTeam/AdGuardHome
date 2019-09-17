@@ -2,8 +2,7 @@ import { createAction } from 'redux-actions';
 import { t } from 'i18next';
 import axios from 'axios';
 
-import versionCompare from '../helpers/versionCompare';
-import { normalizeTextarea, sortClients } from '../helpers/helpers';
+import { normalizeTextarea, sortClients, isVersionGreater } from '../helpers/helpers';
 import { SETTINGS_NAMES, CHECK_TIMEOUT } from '../helpers/constants';
 import { getTlsStatus } from './encryption';
 import apiClient from '../api/Api';
@@ -125,7 +124,7 @@ export const getVersion = (recheck = false) => async (dispatch, getState) => {
             const { dnsVersion } = getState().dashboard;
             const currentVersion = dnsVersion === 'undefined' ? 0 : dnsVersion;
 
-            if (data && versionCompare(currentVersion, data.new_version) === -1) {
+            if (data && isVersionGreater(currentVersion, data.new_version)) {
                 dispatch(addSuccessToast('updates_checked'));
             } else {
                 dispatch(addSuccessToast('updates_version_equal'));
