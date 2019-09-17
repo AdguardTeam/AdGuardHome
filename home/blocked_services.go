@@ -35,7 +35,21 @@ var serviceRulesArray = []svc{
 	{"vk", []string{"||vk.com^"}},
 	{"steam", []string{"||steam.com^"}},
 	{"mail_ru", []string{"||mail.ru^"}},
-	{"tiktok", []string{"||tiktok.com^", "||snssdk.com^", "||amemv.com^", "||toutiao.com^", "||ixigua.com^", "||pstatp.com^", "||ixiguavideo.com^", "||toutiaocloud.com^", "||toutiaocloud.net^", "||bdurl.com^", "||bytecdn.cn^", "||byteimg.com^", "||ixigua.com^"}},
+	{"tiktok", []string{
+		"||tiktok.com^",
+		"||snssdk.com^",
+		"||amemv.com^",
+		"||toutiao.com^",
+		"||ixigua.com^",
+		"||pstatp.com^",
+		"||ixiguavideo.com^",
+		"||toutiaocloud.com^",
+		"||toutiaocloud.net^",
+		"||bdurl.com^",
+		"||bytecdn.cn^",
+		"||byteimg.com^",
+		"||ixigua.com^",
+	}},
 }
 
 // convert array to map

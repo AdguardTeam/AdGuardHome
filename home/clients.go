@@ -378,7 +378,7 @@ func (clients *clientsContainer) addFromDHCP() {
 		if len(l.Hostname) == 0 {
 			continue
 		}
-		config.clients.AddHost(l.IP.String(), l.Hostname, ClientSourceDHCP)
+		_, _ = config.clients.AddHost(l.IP.String(), l.Hostname, ClientSourceDHCP)
 	}
 }
 

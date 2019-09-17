@@ -90,7 +90,7 @@ func (a *Auth) loadSessions() {
 	}
 	_ = bkt.ForEach(forEach)
 	if removed != 0 {
-		tx.Commit()
+		_ = tx.Commit()
 	}
 	log.Debug("Auth: loaded %d sessions from DB (removed %d expired)", len(a.sessions), removed)
 }
@@ -321,6 +321,7 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 			if err == nil {
 				r := config.auth.CheckSession(cookie.Value)
 				if r == 0 {
+
 					ok = true
 				} else if r < 0 {
 					log.Debug("Auth: invalid cookie value: %s", cookie)
