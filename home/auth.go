@@ -90,7 +90,10 @@ func (a *Auth) loadSessions() {
 	}
 	_ = bkt.ForEach(forEach)
 	if removed != 0 {
-		_ = tx.Commit()
+		err = tx.Commit()
+		if err != nil {
+			log.Error("bolt.Commit(): %s", err)
+		}
 	}
 	log.Debug("Auth: loaded %d sessions from DB (removed %d expired)", len(a.sessions), removed)
 }
