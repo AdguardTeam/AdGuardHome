@@ -39,7 +39,7 @@ func initRDNS() {
 
 // Add IP address to the rDNS queue
 func beginAsyncRDNS(ip string) {
-	if config.clients.Exists(ip) {
+	if config.clients.Exists(ip, ClientSourceRDNS) {
 		return
 	}
 

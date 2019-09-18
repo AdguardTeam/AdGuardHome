@@ -1,6 +1,10 @@
 package home
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestClients(t *testing.T) {
 	var c Client
@@ -61,15 +65,9 @@ func TestClients(t *testing.T) {
 	}
 
 	// get
-	if clients.Exists("1.2.3.4") {
-		t.Fatalf("Exists")
-	}
-	if !clients.Exists("1.1.1.1") {
-		t.Fatalf("Exists #1")
-	}
-	if !clients.Exists("2.2.2.2") {
-		t.Fatalf("Exists #2")
-	}
+	assert.True(t, !clients.Exists("1.2.3.4", ClientSourceHostsFile))
+	assert.True(t, clients.Exists("1.1.1.1", ClientSourceHostsFile))
+	assert.True(t, clients.Exists("2.2.2.2", ClientSourceHostsFile))
 
 	// failed update - no such name
 	c.IP = "1.2.3.0"
@@ -100,9 +98,7 @@ func TestClients(t *testing.T) {
 	}
 
 	// get after update
-	if clients.Exists("1.1.1.1") || !clients.Exists("1.1.1.2") {
-		t.Fatalf("Exists - get after update")
-	}
+	assert.True(t, !(clients.Exists("1.1.1.1", ClientSourceHostsFile) || !clients.Exists("1.1.1.2", ClientSourceHostsFile)))
 
 	// failed remove - no such name
 	if clients.Del("client3") {
@@ -110,9 +106,7 @@ func TestClients(t *testing.T) {
 	}
 
 	// remove
-	if !clients.Del("client1") || clients.Exists("1.1.1.2") {
-		t.Fatalf("Del")
-	}
+	assert.True(t, !(!clients.Del("client1") || clients.Exists("1.1.1.2", ClientSourceHostsFile)))
 
 	// add host client
 	b, e = clients.AddHost("1.1.1.1", "host", ClientSourceARP)
@@ -139,7 +133,5 @@ func TestClients(t *testing.T) {
 	}
 
 	// get
-	if !clients.Exists("1.1.1.1") {
-		t.Fatalf("clientAddHost")
-	}
+	assert.True(t, clients.Exists("1.1.1.1", ClientSourceHostsFile))
 }

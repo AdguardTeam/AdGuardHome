@@ -31,6 +31,7 @@ type Client struct {
 	SafeSearchEnabled   bool
 	SafeBrowsingEnabled bool
 	ParentalEnabled     bool
+	WhoisInfo           [][]string // [[key,value], ...]
 
 	UseOwnBlockedServices bool // false: use global settings
 	BlockedServices       []string
@@ -46,29 +47,34 @@ type clientJSON struct {
 	SafeSearchEnabled   bool   `json:"safebrowsing_enabled"`
 	SafeBrowsingEnabled bool   `json:"safesearch_enabled"`
 
+	WhoisInfo map[string]interface{} `json:"whois_info"`
+
 	UseGlobalBlockedServices bool     `json:"use_global_blocked_services"`
 	BlockedServices          []string `json:"blocked_services"`
 }
 
 type clientSource uint
 
+// Client sources
 const (
-	// Priority: etc/hosts > DHCP > ARP > rDNS
-	ClientSourceRDNS      clientSource = 0 // from rDNS
-	ClientSourceDHCP      clientSource = 1 // from DHCP
-	ClientSourceARP       clientSource = 2 // from 'arp -a'
-	ClientSourceHostsFile clientSource = 3 // from /etc/hosts
+	// Priority: etc/hosts > DHCP > ARP > rDNS > WHOIS
+	ClientSourceWHOIS     clientSource = iota // from WHOIS
+	ClientSourceRDNS                          // from rDNS
+	ClientSourceDHCP                          // from DHCP
+	ClientSourceARP                           // from 'arp -a'
+	ClientSourceHostsFile                     // from /etc/hosts
 )
 
 // ClientHost information
 type ClientHost struct {
-	Host   string
-	Source clientSource
+	Host      string
+	Source    clientSource
+	WhoisInfo [][]string // [[key,value], ...]
 }
 
 type clientsContainer struct {
-	list    map[string]*Client
-	ipIndex map[string]*Client
+	list    map[string]*Client    // name -> client
+	ipIndex map[string]*Client    // IP -> client
 	ipHost  map[string]ClientHost // IP -> Hostname
 	lock    sync.Mutex
 }
@@ -101,7 +107,7 @@ func (clients *clientsContainer) GetList() map[string]*Client {
 }
 
 // Exists checks if client with this IP already exists
-func (clients *clientsContainer) Exists(ip string) bool {
+func (clients *clientsContainer) Exists(ip string, source clientSource) bool {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
@@ -110,8 +116,14 @@ func (clients *clientsContainer) Exists(ip string) bool {
 		return true
 	}
 
-	_, ok = clients.ipHost[ip]
-	return ok
+	ch, ok := clients.ipHost[ip]
+	if !ok {
+		return false
+	}
+	if source > ch.Source {
+		return false // we're going to overwrite this client's info with a stronger source
+	}
+	return true
 }
 
 // Find searches for a client by IP
@@ -266,6 +278,31 @@ func (clients *clientsContainer) Update(name string, c Client) error {
 	return nil
 }
 
+// SetWhoisInfo - associate WHOIS information with a client
+func (clients *clientsContainer) SetWhoisInfo(ip string, info [][]string) {
+	clients.lock.Lock()
+	defer clients.lock.Unlock()
+
+	c, ok := clients.ipIndex[ip]
+	if ok {
+		c.WhoisInfo = info
+		log.Debug("Clients: set WHOIS info for client %s: %v", c.Name, c.WhoisInfo)
+	}
+
+	ch, ok := clients.ipHost[ip]
+	if ok {
+		ch.WhoisInfo = info
+		log.Debug("Clients: set WHOIS info for auto-client %s: %v", ch.Host, ch.WhoisInfo)
+	}
+
+	ch = ClientHost{
+		Source: ClientSourceWHOIS,
+	}
+	ch.WhoisInfo = info
+	clients.ipHost[ip] = ch
+	log.Debug("Clients: set WHOIS info for auto-client with IP %s: %v", ip, ch.WhoisInfo)
+}
+
 // AddHost adds new IP -> Host pair
 // Use priority of the source (etc/hosts > ARP > rDNS)
 //  so we overwrite existing entries with an equal or higher priority
@@ -280,8 +317,9 @@ func (clients *clientsContainer) AddHost(ip, host string, source clientSource) (
 	}
 
 	clients.ipHost[ip] = ClientHost{
-		Host:   host,
-		Source: source,
+		Host:      host,
+		Source:    source,
+		WhoisInfo: c.WhoisInfo,
 	}
 	log.Tracef("'%s' -> '%s' [%d]", ip, host, len(clients.ipHost))
 	return true, nil
@@ -386,6 +424,8 @@ type clientHostJSON struct {
 	IP     string `json:"ip"`
 	Name   string `json:"name"`
 	Source string `json:"source"`
+
+	WhoisInfo map[string]interface{} `json:"whois_info"`
 }
 
 type clientListJSON struct {
@@ -421,6 +461,11 @@ func handleGetClients(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
+		cj.WhoisInfo = make(map[string]interface{})
+		for _, wi := range c.WhoisInfo {
+			cj.WhoisInfo[wi[0]] = wi[1]
+		}
+
 		data.Clients = append(data.Clients, cj)
 	}
 	for ip, ch := range config.clients.ipHost {
@@ -428,6 +473,7 @@ func handleGetClients(w http.ResponseWriter, r *http.Request) {
 			IP:   ip,
 			Name: ch.Host,
 		}
+
 		cj.Source = "etc/hosts"
 		switch ch.Source {
 		case ClientSourceDHCP:
@@ -436,7 +482,15 @@ func handleGetClients(w http.ResponseWriter, r *http.Request) {
 			cj.Source = "rDNS"
 		case ClientSourceARP:
 			cj.Source = "ARP"
+		case ClientSourceWHOIS:
+			cj.Source = "WHOIS"
 		}
+
+		cj.WhoisInfo = make(map[string]interface{})
+		for _, wi := range ch.WhoisInfo {
+			cj.WhoisInfo[wi[0]] = wi[1]
+		}
+
 		data.AutoClients = append(data.AutoClients, cj)
 	}
 	config.clients.lock.Unlock()
