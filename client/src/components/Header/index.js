@@ -61,7 +61,7 @@ class Header extends Component {
                         <div className="header__column">
                             <div className="header__right">
                                 <a href="/control/logout" className="btn btn-sm btn-outline-secondary">
-                                    <Trans>logout</Trans>
+                                    <Trans>sign_out</Trans>
                                 </a>
                             </div>
                         </div>
