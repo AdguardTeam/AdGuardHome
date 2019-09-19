@@ -1,3 +1,7 @@
+.footer {
+    padding: 1rem 0;
+}
+
 .footer__row {
     display: flex;
     align-items: center;
@@ -8,6 +12,12 @@
     margin-bottom: 15px;
 }
 
+.footer__column--links {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .footer__column--language {
     min-width: 220px;
     margin-bottom: 0;
@@ -16,7 +26,7 @@
 .footer__link {
     display: inline-block;
     vertical-align: middle;
-    margin-right: 15px;
+    margin-bottom: 8px;
 }
 
 .footer__link--report {
@@ -41,5 +51,13 @@
     .footer__column--language {
         min-width: initial;
         margin-left: auto;
+    }
+
+    .footer__column--links {
+        display: block;
+    }
+
+    .footer__link {
+        margin: 0 20px 0 0;
     }
 }

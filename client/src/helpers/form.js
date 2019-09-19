@@ -10,6 +10,7 @@ export const renderField = ({
     placeholder,
     type,
     disabled,
+    autoComplete,
     meta: { touched, error },
 }) => (
     <Fragment>
@@ -20,6 +21,7 @@ export const renderField = ({
             type={type}
             className={className}
             disabled={disabled}
+            autoComplete={autoComplete}
         />
         {!disabled &&
             touched &&

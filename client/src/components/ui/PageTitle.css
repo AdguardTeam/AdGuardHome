@@ -4,7 +4,13 @@
 }
 
 .page-title__actions {
-    display: inline-block;
-    vertical-align: baseline;
-    margin-left: 20px;
+    display: block;
+}
+
+@media screen and (min-width: 768px) {
+    .page-title__actions {
+        display: inline-block;
+        vertical-align: baseline;
+        margin-left: 20px;
+    }
 }

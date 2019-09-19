@@ -352,10 +352,17 @@
     "unblock_all": "Разблокировать все",
     "domain": "Домен",
     "answer": "Ответ",
+    "interval_24_hour": "24 часа",
     "interval_hours_0": "{{count}} час",
     "interval_hours_1": "{{count}} часа",
     "interval_hours_2": "{{count}} часов",
     "interval_days_0": "{{count}} день",
     "interval_days_1": "{{count}} дня",
-    "interval_days_2": "{{count}} дней"
+    "interval_days_2": "{{count}} дней",
+    "for_last_days_0": "за последний {{count}} день",
+    "for_last_days_1": "за последние {{count}} дня",
+    "for_last_days_2": "за последние {{count}} дней",
+    "number_of_dns_query_days_0": "Количество DNS-запросов за {{count}} день",
+    "number_of_dns_query_days_1": "Количество DNS-запросов за {{count}} дня",
+    "number_of_dns_query_days_2": "Количество DNS-запросов за {{count}} дней"
 }

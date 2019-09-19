@@ -570,6 +570,7 @@ func registerControlHandlers() {
 	RegisterBlockedServicesHandlers()
 	RegisterQueryLogHandlers()
 	RegisterStatsHandlers()
+	RegisterAuthHandlers()
 
 	http.HandleFunc("/dns-query", postInstall(handleDOH))
 }

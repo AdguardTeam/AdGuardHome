@@ -51,6 +51,10 @@ func initDNSServer(baseDir string) {
 	config.queryLog = querylog.New(conf)
 	config.dnsServer = dnsforward.NewServer(config.stats, config.queryLog)
 
+	sessFilename := filepath.Join(config.ourWorkingDir, "data/sessions.db")
+	config.auth = InitAuth(sessFilename, config.Users)
+	config.Users = nil
+
 	initRDNS()
 	initFiltering()
 }
@@ -200,8 +204,16 @@ func stopDNSServer() error {
 		return errorx.Decorate(err, "Couldn't stop forwarding DNS server")
 	}
 
-	config.stats.Close()
-	config.queryLog.Close()
+	// DNS forward module must be closed BEFORE stats or queryLog because it depends on them
+	config.dnsServer.Close()
 
+	config.stats.Close()
+	config.stats = nil
+
+	config.queryLog.Close()
+	config.queryLog = nil
+
+	config.auth.Close()
+	config.auth = nil
 	return nil
 }

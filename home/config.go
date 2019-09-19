@@ -65,13 +65,14 @@ type configuration struct {
 	runningAsService bool
 	disableUpdate    bool // If set, don't check for updates
 	appSignalChannel chan os.Signal
-	clients          clientsContainer
+	clients          clientsContainer // per-client-settings module
 	controlLock      sync.Mutex
 	transport        *http.Transport
 	client           *http.Client
-	stats            stats.Stats
-	queryLog         querylog.QueryLog
-	filteringStarted bool
+	stats            stats.Stats       // statistics module
+	queryLog         querylog.QueryLog // query log module
+	filteringStarted bool              // TRUE if filtering module is started
+	auth             *Auth             // HTTP authentication module
 
 	// cached version.json to avoid hammering github.io for each page reload
 	versionCheckJSON     []byte
@@ -85,8 +86,7 @@ type configuration struct {
 
 	BindHost     string `yaml:"bind_host"`     // BindHost is the IP address of the HTTP server to bind to
 	BindPort     int    `yaml:"bind_port"`     // BindPort is the port the HTTP server
-	AuthName     string `yaml:"auth_name"`     // AuthName is the basic auth username
-	AuthPass     string `yaml:"auth_pass"`     // AuthPass is the basic auth password
+	Users        []User `yaml:"users"`         // Users that can access HTTP server
 	Language     string `yaml:"language"`      // two-letter ISO 639-1 language code
 	RlimitNoFile uint   `yaml:"rlimit_nofile"` // Maximum number of opened fd's per process (0: default)
 
@@ -350,6 +350,10 @@ func (c *configuration) write() error {
 			BlockedServices:          cli.BlockedServices,
 		}
 		config.Clients = append(config.Clients, cy)
+	}
+
+	if config.auth != nil {
+		config.Users = config.auth.GetUsers()
 	}
 
 	configFile := config.getConfigFilename()

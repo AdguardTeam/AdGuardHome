@@ -932,6 +932,34 @@ paths:
                 500:
                     description: "Cannot start the DNS server"
 
+    /login:
+        post:
+            tags:
+                - global
+            operationId: login
+            summary: "Perform administrator log-in"
+            consumes:
+            - application/json
+            parameters:
+            - in: "body"
+              name: "body"
+              required: true
+              schema:
+                $ref: "#/definitions/Login"
+            responses:
+                200:
+                    description: OK
+
+    /logout:
+        get:
+            tags:
+                - global
+            operationId: logout
+            summary: "Perform administrator log-out"
+            responses:
+                302:
+                    description: OK
+
 definitions:
     ServerStatus:
         type: "object"
@@ -1674,3 +1702,13 @@ definitions:
                 type: "string"
                 description: "Basic auth password"
                 example: "password"
+    Login:
+        type: "object"
+        description: "Login request data"
+        properties:
+            username:
+                type: "string"
+                description: "User name"
+            password:
+                type: "string"
+                description: "Password"

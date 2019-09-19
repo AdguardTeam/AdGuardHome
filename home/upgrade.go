@@ -7,10 +7,11 @@ import (
 
 	"github.com/AdguardTeam/golibs/file"
 	"github.com/AdguardTeam/golibs/log"
+	"golang.org/x/crypto/bcrypt"
 	yaml "gopkg.in/yaml.v2"
 )
 
-const currentSchemaVersion = 4 // used for upgrading from old configs to new config
+const currentSchemaVersion = 5 // used for upgrading from old configs to new config
 
 // Performs necessary upgrade operations if needed
 func upgradeConfig() error {
@@ -72,6 +73,12 @@ func upgradeConfigSchema(oldVersion int, diskConfig *map[string]interface{}) err
 		fallthrough
 	case 3:
 		err := upgradeSchema3to4(diskConfig)
+		if err != nil {
+			return err
+		}
+		fallthrough
+	case 4:
+		err := upgradeSchema4to5(diskConfig)
 		if err != nil {
 			return err
 		}
@@ -211,5 +218,53 @@ func upgradeSchema3to4(diskConfig *map[string]interface{}) error {
 		return nil
 	}
 
+	return nil
+}
+
+// Replace "auth_name", "auth_pass" string settings with an array:
+// users:
+// - name: "..."
+//   password: "..."
+// ...
+func upgradeSchema4to5(diskConfig *map[string]interface{}) error {
+	log.Printf("%s(): called", _Func())
+
+	(*diskConfig)["schema_version"] = 5
+
+	name, ok := (*diskConfig)["auth_name"]
+	if !ok {
+		return nil
+	}
+	nameStr, ok := name.(string)
+	if !ok {
+		log.Fatal("Please use double quotes in your user name in \"auth_name\" and restart AdGuardHome")
+		return nil
+	}
+
+	pass, ok := (*diskConfig)["auth_pass"]
+	if !ok {
+		return nil
+	}
+	passStr, ok := pass.(string)
+	if !ok {
+		log.Fatal("Please use double quotes in your password in \"auth_pass\" and restart AdGuardHome")
+		return nil
+	}
+
+	if len(nameStr) == 0 {
+		return nil
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(passStr), bcrypt.DefaultCost)
+	if err != nil {
+		log.Fatalf("Can't use password \"%s\": bcrypt.GenerateFromPassword: %s", passStr, err)
+		return nil
+	}
+	u := User{
+		Name:         nameStr,
+		PasswordHash: string(hash),
+	}
+	users := []User{u}
+	(*diskConfig)["users"] = users
 	return nil
 }

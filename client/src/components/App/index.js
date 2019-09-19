@@ -64,7 +64,7 @@ class App extends Component {
     };
 
     render() {
-        const { dashboard, encryption } = this.props;
+        const { dashboard, encryption, getVersion } = this.props;
         const updateAvailable = dashboard.isCoreRunning && dashboard.isUpdateAvailable;
 
         return (
@@ -109,7 +109,12 @@ class App extends Component {
                             </Fragment>
                         )}
                     </div>
-                    <Footer />
+                    <Footer
+                        dnsVersion={dashboard.dnsVersion}
+                        dnsPort={dashboard.dnsPort}
+                        processingVersion={dashboard.processingVersion}
+                        getVersion={getVersion}
+                    />
                     <Toasts />
                     <Icons />
                 </Fragment>
@@ -127,6 +132,7 @@ App.propTypes = {
     error: PropTypes.string,
     changeLanguage: PropTypes.func,
     encryption: PropTypes.object,
+    getVersion: PropTypes.func,
 };
 
 export default withNamespaces()(App);

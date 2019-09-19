@@ -420,6 +420,7 @@ func (s *statsCtx) Clear() {
 
 func (s *statsCtx) Update(e Entry) {
 	if e.Result == 0 ||
+		e.Result >= rLast ||
 		len(e.Domain) == 0 ||
 		!(len(e.Client) == 4 || len(e.Client) == 16) {
 		return

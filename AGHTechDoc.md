@@ -50,6 +50,9 @@ Contents:
 	* API: Get filtering parameters
 	* API: Set filtering parameters
 	* API: Set URL parameters
+* Log-in page
+	* API: Log in
+	* API: Log out
 
 
 ## Relations between subsystems
@@ -1097,3 +1100,82 @@ Request:
 Response:
 
 	200 OK
+
+
+## Log-in page
+
+After user completes the steps of installation wizard, he must log in into dashboard using his name and password.  After user successfully logs in, he gets the Cookie which allows the server to authenticate him next time without password.  After the Cookie is expired, user needs to perform log-in operation again.  All requests without a proper Cookie get redirected to Log-In page with prompt for name and password.
+
+YAML configuration:
+
+	users:
+	- name: "..."
+	  password: "..." // bcrypt hash
+	...
+
+
+Session DB file:
+
+	session="..." expire=123456
+	...
+
+Session data is SHA(random()+name+password).
+Expiration time is UNIX time when cookie gets expired.
+
+Any request to server must come with Cookie header:
+
+	GET /...
+	Cookie: session=...
+
+If not authenticated, server sends a redirect response:
+
+	302 Found
+	Location: /login.html
+
+
+### Reset password
+
+There is no mechanism to reset the password.  Instead, the administrator must use `htpasswd` utility to generate a new hash:
+
+	htpasswd -B -n -b username password
+
+It will print `username:<HASH>` to the terminal.  `<HASH>` value may be used in AGH YAML configuration file as a value to `password` setting:
+
+	users:
+	- name: "..."
+	  password: <HASH>
+
+
+
+### API: Log in
+
+Perform a log-in operation for administrator.  Server generates a session for this name+password pair, stores it in file.  UI needs to perform all requests with this value inside Cookie HTTP header.
+
+Request:
+
+	POST /control/login
+
+	{
+		name: "..."
+		password: "..."
+	}
+
+Response:
+
+	200 OK
+	Set-Cookie: session=...; Expires=Wed, 09 Jun 2021 10:18:14 GMT; Path=/; HttpOnly
+
+
+### API: Log out
+
+Perform a log-out operation for administrator.  Server removes the session from its DB and sets an expired cookie value.
+
+Request:
+
+	GET /control/logout
+
+Response:
+
+	302 Found
+	Location: /login.html
+	Set-Cookie: session=...; Expires=Thu, 01 Jan 1970 00:00:00 GMT
