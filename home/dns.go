@@ -104,6 +104,7 @@ func generateServerConfig() (dnsforward.ServerConfig, error) {
 		FilteringConfig: config.DNS.FilteringConfig,
 		Filters:         filters,
 	}
+	newconfig.AsyncStartup = true
 	bindhost := config.DNS.BindHost
 	if config.DNS.BindHost == "0.0.0.0" {
 		bindhost = "127.0.0.1"
