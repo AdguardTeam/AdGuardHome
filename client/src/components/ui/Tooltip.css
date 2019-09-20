@@ -52,3 +52,23 @@
 .tooltip-custom--narrow:before {
     width: 220px;
 }
+
+.tooltip-custom--logs {
+    border-radius: 50%;
+    background-image: url("./svg/help-circle-gray.svg");
+    background-color: #fff;
+}
+
+.tooltip-custom--logs:before {
+    bottom: initial;
+    top: calc(100% + 10px);
+    right: -10px;
+    left: initial;
+    transform: none;
+}
+
+.tooltip-custom--logs:after {
+    top: 8px;
+    border-top: none;
+    border-bottom: 6px solid #585965;
+}

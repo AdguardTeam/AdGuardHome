@@ -482,14 +482,18 @@ class Api {
     }
 
     // Query log
-    GET_QUERY_LOG = { path: 'querylog', method: 'GET' };
+    GET_QUERY_LOG = { path: 'querylog', method: 'POST' };
     QUERY_LOG_CONFIG = { path: 'querylog_config', method: 'POST' };
     QUERY_LOG_INFO = { path: 'querylog_info', method: 'GET' };
     QUERY_LOG_CLEAR = { path: 'querylog_clear', method: 'POST' };
 
-    getQueryLog() {
+    getQueryLog(data) {
         const { path, method } = this.GET_QUERY_LOG;
-        return this.makeRequest(path, method);
+        const config = {
+            data,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, config);
     }
 
     getQueryLogInfo() {

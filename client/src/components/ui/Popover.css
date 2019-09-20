@@ -38,6 +38,7 @@
     position: absolute;
     bottom: calc(100% + 3px);
     left: 50%;
+    z-index: 1;
     min-width: 275px;
     padding: 10px 15px;
     font-size: 0.8rem;
