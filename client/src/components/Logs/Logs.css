@@ -40,6 +40,10 @@
     width: 100%;
 }
 
+.logs__text--wrap {
+    white-space: normal;
+}
+
 .logs__row .tooltip-custom {
     top: 0;
     margin-left: 0;

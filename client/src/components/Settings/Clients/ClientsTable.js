@@ -6,6 +6,8 @@ import ReactTable from 'react-table';
 import { MODAL_TYPE, CLIENT_ID } from '../../../helpers/constants';
 import Card from '../../ui/Card';
 import Modal from './Modal';
+import WrapCell from './WrapCell';
+import WhoisCell from './WhoisCell';
 
 class ClientsTable extends Component {
     handleFormAdd = (values) => {
@@ -32,14 +34,6 @@ class ClientsTable extends Component {
             this.handleFormAdd(config);
         }
     };
-
-    cellWrap = ({ value }) => (
-        <div className="logs__row logs__row--overflow">
-            <span className="logs__text" title={value}>
-                {value}
-            </span>
-        </div>
-    );
 
     getClient = (name, clients) => {
         const client = clients.find(item => name === item.name);
@@ -82,6 +76,7 @@ class ClientsTable extends Component {
         {
             Header: this.props.t('table_client'),
             accessor: 'ip',
+            minWidth: 150,
             Cell: (row) => {
                 if (row.original && row.original.mac) {
                     return (
@@ -107,11 +102,13 @@ class ClientsTable extends Component {
         {
             Header: this.props.t('table_name'),
             accessor: 'name',
-            Cell: this.cellWrap,
+            minWidth: 120,
+            Cell: WrapCell,
         },
         {
             Header: this.props.t('settings'),
             accessor: 'use_global_settings',
+            minWidth: 120,
             Cell: ({ value }) => {
                 const title = value ? (
                     <Trans>settings_global</Trans>
@@ -131,6 +128,7 @@ class ClientsTable extends Component {
         {
             Header: this.props.t('blocked_services'),
             accessor: 'blocked_services',
+            minWidth: 210,
             Cell: (row) => {
                 const { value, original } = row;
 
@@ -148,6 +146,12 @@ class ClientsTable extends Component {
                     </div>
                 );
             },
+        },
+        {
+            Header: this.props.t('whois'),
+            accessor: 'whois_info',
+            minWidth: 200,
+            Cell: WhoisCell,
         },
         {
             Header: this.props.t('requests_count'),
@@ -172,7 +176,7 @@ class ClientsTable extends Component {
         {
             Header: this.props.t('actions_table_header'),
             accessor: 'actions',
-            maxWidth: 150,
+            maxWidth: 100,
             Cell: (row) => {
                 const clientName = row.original.name;
                 const {
