@@ -506,7 +506,9 @@ func (s *Server) handleDHCP4Request(p dhcp4.Packet, options dhcp4.Options) dhcp4
 		return dhcp4.ReplyPacket(p, dhcp4.NAK, s.ipnet.IP, nil, 0, nil)
 	}
 
-	lease.Expiry = time.Now().Add(s.leaseTime)
+	if lease.Expiry.Unix() != leaseExpireStatic {
+		lease.Expiry = time.Now().Add(s.leaseTime)
+	}
 	log.Tracef("Replying with ACK.  IP: %s  HW: %s  Expire: %s",
 		lease.IP, lease.HWAddr, lease.Expiry)
 	opt := s.leaseOptions.SelectOrderOrAll(options[dhcp4.OptionParameterRequestList])
