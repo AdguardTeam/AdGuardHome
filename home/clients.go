@@ -287,12 +287,14 @@ func (clients *clientsContainer) SetWhoisInfo(ip string, info [][]string) {
 	if ok {
 		c.WhoisInfo = info
 		log.Debug("Clients: set WHOIS info for client %s: %v", c.Name, c.WhoisInfo)
+		return
 	}
 
 	ch, ok := clients.ipHost[ip]
 	if ok {
 		ch.WhoisInfo = info
 		log.Debug("Clients: set WHOIS info for auto-client %s: %v", ch.Host, ch.WhoisInfo)
+		return
 	}
 
 	ch = ClientHost{
