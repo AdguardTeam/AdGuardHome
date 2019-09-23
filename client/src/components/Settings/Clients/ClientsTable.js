@@ -128,7 +128,7 @@ class ClientsTable extends Component {
         {
             Header: this.props.t('blocked_services'),
             accessor: 'blocked_services',
-            minWidth: 210,
+            minWidth: 180,
             Cell: (row) => {
                 const { value, original } = row;
 
@@ -156,6 +156,7 @@ class ClientsTable extends Component {
         {
             Header: this.props.t('requests_count'),
             accessor: 'statistics',
+            minWidth: 120,
             Cell: (row) => {
                 const clientIP = row.original.ip;
                 const clientStats = clientIP && this.getStats(clientIP, this.props.topClients);

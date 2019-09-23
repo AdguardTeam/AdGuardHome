@@ -10,8 +10,9 @@
 }
 
 .logs__row--column {
-    align-items: flex-start;
     flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
 }
 
 .logs__row--overflow {
@@ -41,6 +42,7 @@
 }
 
 .logs__text--wrap {
+    line-height: 1.4;
     white-space: normal;
 }
 

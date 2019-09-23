@@ -6,9 +6,11 @@ import endsWith from 'lodash/endsWith';
 import { Trans, withNamespaces } from 'react-i18next';
 import { HashLink as Link } from 'react-router-hash-link';
 
-import { formatTime, formatDateTime, getClientName } from '../../helpers/helpers';
+import { formatTime, formatDateTime } from '../../helpers/helpers';
 import { SERVICES, FILTERED_STATUS } from '../../helpers/constants';
 import { getTrackerData } from '../../helpers/trackers/trackers';
+import { formatClientCell } from '../../helpers/formatClientCell';
+
 import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
 import Loading from '../ui/Loading';
@@ -190,24 +192,16 @@ class Logs extends Component {
 
     getClientCell = ({ original, value }) => {
         const { dashboard } = this.props;
+        const { clients, autoClients } = dashboard;
         const { reason, domain } = original;
         const isFiltered = this.checkFiltered(reason);
         const isRewrite = this.checkRewrite(reason);
-        const clientName =
-            getClientName(dashboard.clients, value) || getClientName(dashboard.autoClients, value);
-        let client = value;
-
-        if (clientName) {
-            client = (
-                <span>
-                    {clientName} <small>({value})</small>
-                </span>
-            );
-        }
 
         return (
             <Fragment>
-                <div className="logs__row">{client}</div>
+                <div className="logs__row logs__row--overflow logs__row--column">
+                    {formatClientCell(value, clients, autoClients)}
+                </div>
                 {isRewrite ? (
                     <div className="logs__action">
                         <Link to="/dns#rewrites" className="btn btn-sm btn-outline-primary">
@@ -273,8 +267,8 @@ class Logs extends Component {
             {
                 Header: t('client_table_header'),
                 accessor: 'client',
-                maxWidth: 220,
-                minWidth: 220,
+                maxWidth: 240,
+                minWidth: 240,
                 Cell: this.getClientCell,
             },
         ];
