@@ -6,8 +6,9 @@ import { Trans, withNamespaces } from 'react-i18next';
 import Card from '../ui/Card';
 import Cell from '../ui/Cell';
 
-import { getPercent, getClientName } from '../../helpers/helpers';
+import { getPercent } from '../../helpers/helpers';
 import { STATUS_COLORS } from '../../helpers/constants';
+import { formatClientCell } from '../../helpers/formatClientCell';
 
 const getClientsPercentColor = (percent) => {
     if (percent > 50) {
@@ -18,31 +19,6 @@ const getClientsPercentColor = (percent) => {
     return STATUS_COLORS.red;
 };
 
-const ipCell = (clients, autoClients) =>
-    function cell(row) {
-        let client;
-        const { value } = row;
-        const clientName = getClientName(clients, value) || getClientName(autoClients, value);
-
-        if (clientName) {
-            client = (
-                <span>
-                    {clientName} <small>({value})</small>
-                </span>
-            );
-        } else {
-            client = value;
-        }
-
-        return (
-            <div className="logs__row logs__row--overflow">
-                <span className="logs__text" title={value}>
-                    {client}
-                </span>
-            </div>
-        );
-    };
-
 const countCell = dnsQueries =>
     function cell(row) {
         const { value } = row;
@@ -50,6 +26,17 @@ const countCell = dnsQueries =>
         const percentColor = getClientsPercentColor(percent);
 
         return <Cell value={value} percent={percent} color={percentColor} />;
+    };
+
+const clientCell = (clients, autoClients) =>
+    function cell(row) {
+        const { value } = row;
+
+        return (
+            <div className="logs__row logs__row--overflow logs__row--column">
+                {formatClientCell(value, clients, autoClients)}
+            </div>
+        );
     };
 
 const Clients = ({
@@ -72,7 +59,7 @@ const Clients = ({
                     accessor: 'ip',
                     sortMethod: (a, b) =>
                         parseInt(a.replace(/\./g, ''), 10) - parseInt(b.replace(/\./g, ''), 10),
-                    Cell: ipCell(clients, autoClients),
+                    Cell: clientCell(clients, autoClients),
                 },
                 {
                     Header: <Trans>requests_count</Trans>,

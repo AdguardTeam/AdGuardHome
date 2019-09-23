@@ -5,26 +5,20 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"sync"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/querylog"
 	"github.com/AdguardTeam/AdGuardHome/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
-	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/joomcode/errorx"
 	"github.com/miekg/dns"
 )
 
 type dnsContext struct {
-	rdnsChannel chan string // pass data from DNS request handling thread to rDNS thread
-	// contains IP addresses of clients to be resolved by rDNS
-	// if IP address couldn't be resolved, it stays here forever to prevent further attempts to resolve the same IP
-	rdnsIP   map[string]bool
-	rdnsLock sync.Mutex        // synchronize access to rdnsIP
-	upstream upstream.Upstream // Upstream object for our own DNS server
+	rdns  *RDNS
+	whois *Whois
 }
 
 // initDNSServer creates an instance of the dnsforward.Server
@@ -55,12 +49,66 @@ func initDNSServer(baseDir string) {
 	config.auth = InitAuth(sessFilename, config.Users)
 	config.Users = nil
 
-	initRDNS()
+	config.dnsctx.rdns = InitRDNS(&config.clients)
+	config.dnsctx.whois = initWhois(&config.clients)
 	initFiltering()
 }
 
 func isRunning() bool {
 	return config.dnsServer != nil && config.dnsServer.IsRunning()
+}
+
+// Return TRUE if IP is within public Internet IP range
+func isPublicIP(ip net.IP) bool {
+	ip4 := ip.To4()
+	if ip4 != nil {
+		switch ip4[0] {
+		case 0:
+			return false //software
+		case 10:
+			return false //private network
+		case 127:
+			return false //loopback
+		case 169:
+			if ip4[1] == 254 {
+				return false //link-local
+			}
+		case 172:
+			if ip4[1] >= 16 && ip4[1] <= 31 {
+				return false //private network
+			}
+		case 192:
+			if (ip4[1] == 0 && ip4[2] == 0) || //private network
+				(ip4[1] == 0 && ip4[2] == 2) || //documentation
+				(ip4[1] == 88 && ip4[2] == 99) || //reserved
+				(ip4[1] == 168) { //private network
+				return false
+			}
+		case 198:
+			if (ip4[1] == 18 || ip4[2] == 19) || //private network
+				(ip4[1] == 51 || ip4[2] == 100) { //documentation
+				return false
+			}
+		case 203:
+			if ip4[1] == 0 && ip4[2] == 113 { //documentation
+				return false
+			}
+		case 224:
+			if ip4[1] == 0 && ip4[2] == 0 { //multicast
+				return false
+			}
+		case 255:
+			if ip4[1] == 255 && ip4[2] == 255 && ip4[3] == 255 { //subnet
+				return false
+			}
+		}
+	} else {
+		if ip.IsLoopback() || ip.IsLinkLocalMulticast() || ip.IsLinkLocalUnicast() {
+			return false
+		}
+	}
+
+	return true
 }
 
 func onDNSRequest(d *proxy.DNSContext) {
@@ -77,7 +125,10 @@ func onDNSRequest(d *proxy.DNSContext) {
 
 	ipAddr := net.ParseIP(ip)
 	if !ipAddr.IsLoopback() {
-		beginAsyncRDNS(ip)
+		config.dnsctx.rdns.Begin(ip)
+	}
+	if isPublicIP(ipAddr) {
+		config.dnsctx.whois.Begin(ip)
 	}
 }
 

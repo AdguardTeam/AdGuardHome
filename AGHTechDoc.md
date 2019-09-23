@@ -650,6 +650,10 @@ Response:
 			safesearch_enabled: false
 			use_global_blocked_services: true
 			blocked_services: [ "name1", ... ]
+			whois_info: {
+				key: "value"
+				...
+			}
 		}
 	]
 	auto_clients: [
@@ -657,9 +661,15 @@ Response:
 			name: "host"
 			ip: "..."
 			source: "etc/hosts" || "rDNS"
+			whois_info: {
+				key: "value"
+				...
+			}
 		}
 	]
 	}
+
+Supported keys for `whois_info`: orgname, country, city.
 
 
 ### Add client

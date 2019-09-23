@@ -4,6 +4,8 @@ import { withNamespaces } from 'react-i18next';
 import ReactTable from 'react-table';
 
 import Card from '../../ui/Card';
+import WhoisCell from './WhoisCell';
+import WrapCell from './WrapCell';
 
 class AutoClients extends Component {
     getStats = (ip, stats) => {
@@ -15,29 +17,26 @@ class AutoClients extends Component {
         return '';
     };
 
-    cellWrap = ({ value }) => (
-        <div className="logs__row logs__row--overflow">
-            <span className="logs__text" title={value}>
-                {value}
-            </span>
-        </div>
-    );
-
     columns = [
         {
             Header: this.props.t('table_client'),
             accessor: 'ip',
-            Cell: this.cellWrap,
+            Cell: WrapCell,
         },
         {
             Header: this.props.t('table_name'),
             accessor: 'name',
-            Cell: this.cellWrap,
+            Cell: WrapCell,
         },
         {
             Header: this.props.t('source_label'),
             accessor: 'source',
-            Cell: this.cellWrap,
+            Cell: WrapCell,
+        },
+        {
+            Header: this.props.t('whois'),
+            accessor: 'whois_info',
+            Cell: WhoisCell,
         },
         {
             Header: this.props.t('requests_count'),

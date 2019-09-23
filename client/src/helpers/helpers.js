@@ -245,9 +245,33 @@ export const redirectToCurrentProtocol = (values, httpPort = 80) => {
 
 export const normalizeTextarea = text => text && text.replace(/[;, ]/g, '\n').split('\n').filter(n => n);
 
-export const getClientName = (clients, ip) => {
+const formatWhois = (whois) => {
+    if (!whois) {
+        return '';
+    }
+
+    const keys = Object.keys(whois);
+    if (keys.length > 0) {
+        return (
+            keys.map(key => whois[key])
+        );
+    }
+
+    return '';
+};
+
+export const getClientInfo = (clients, ip) => {
     const client = clients.find(item => ip === item.ip);
-    return (client && client.name) || '';
+
+    if (!client) {
+        return '';
+    }
+
+    const { name, whois_info } = client;
+    const formattedWhois = formatWhois(whois_info);
+    const whois = formattedWhois && formattedWhois.length > 0 && formattedWhois.join(' | ');
+
+    return { name, whois };
 };
 
 export const sortClients = (clients) => {
