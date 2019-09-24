@@ -28,13 +28,13 @@ const countCell = dnsQueries =>
         return <Cell value={value} percent={percent} color={percentColor} />;
     };
 
-const clientCell = (clients, autoClients) =>
+const clientCell = (clients, autoClients, t) =>
     function cell(row) {
         const { value } = row;
 
         return (
             <div className="logs__row logs__row--overflow logs__row--column">
-                {formatClientCell(value, clients, autoClients)}
+                {formatClientCell(value, clients, autoClients, t)}
             </div>
         );
     };
@@ -59,11 +59,13 @@ const Clients = ({
                     accessor: 'ip',
                     sortMethod: (a, b) =>
                         parseInt(a.replace(/\./g, ''), 10) - parseInt(b.replace(/\./g, ''), 10),
-                    Cell: clientCell(clients, autoClients),
+                    Cell: clientCell(clients, autoClients, t),
                 },
                 {
                     Header: <Trans>requests_count</Trans>,
                     accessor: 'count',
+                    minWidth: 180,
+                    maxWidth: 200,
                     Cell: countCell(dnsQueries),
                 },
             ]}

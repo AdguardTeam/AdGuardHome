@@ -267,3 +267,10 @@ export const STATS_INTERVALS_DAYS = [1, 7, 30, 90];
 export const QUERY_LOG_INTERVALS_DAYS = [1, 7, 30, 90];
 
 export const FILTERS_INTERVALS_HOURS = [0, 1, 12, 24, 72, 168];
+
+export const WHOIS_ICONS = {
+    location: 'location',
+    orgname: 'network',
+    netname: 'network',
+    descr: '',
+};

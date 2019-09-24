@@ -1,32 +1,55 @@
 import React, { Fragment } from 'react';
-import { getClientInfo } from './helpers';
+import { getClientInfo, normalizeWhois } from './helpers';
+import { WHOIS_ICONS } from './constants';
 
-export const formatClientCell = (value, clients, autoClients) => {
+const getFormattedWhois = (whois, t) => {
+    const whoisInfo = normalizeWhois(whois);
+    return (
+        Object.keys(whoisInfo).map((key) => {
+            const icon = WHOIS_ICONS[key];
+            return (
+                <span className="logs__whois text-muted" key={key} title={t(key)}>
+                    {icon && (
+                        <Fragment>
+                            <svg className="logs__whois-icon icons">
+                                <use xlinkHref={`#${icon}`} />
+                            </svg>&nbsp;
+                        </Fragment>
+                    )}{whoisInfo[key]}
+                </span>
+            );
+        })
+    );
+};
+
+export const formatClientCell = (value, clients, autoClients, t) => {
     const clientInfo = getClientInfo(clients, value) || getClientInfo(autoClients, value);
     const { name, whois } = clientInfo;
+    let whoisContainer = '';
+    let nameContainer = value;
 
-    if (whois && name) {
-        return (
-            <Fragment>
-                <div className="logs__text logs__text--wrap" title={`${name} (${value})`}>
-                    {name} <small className="text-muted-dark">({value})</small>
-                </div>
-                <div className="logs__text logs__text--wrap" title={whois}>
-                    <small className="text-muted">{whois}</small>
-                </div>
-            </Fragment>
-        );
-    } else if (name) {
-        return (
+    if (name) {
+        nameContainer = (
             <span className="logs__text logs__text--wrap" title={`${name} (${value})`}>
                 {name} <small>({value})</small>
             </span>
         );
     }
 
+    if (whois) {
+        whoisContainer = (
+            <div className="logs__text logs__text--wrap mt-1">
+                {getFormattedWhois(whois, t)}
+            </div>
+        );
+    }
+
     return (
-        <span className="logs__text" title={value}>
-            {value}
+        <span className="logs__text">
+            <Fragment>
+                {nameContainer}
+                {whoisContainer}
+            </Fragment>
         </span>
     );
 };
