@@ -4,15 +4,27 @@ package stats
 
 import (
 	"net"
+	"net/http"
 )
 
 type unitIDCallback func() uint32
+
+// DiskConfig - configuration settings that are stored on disk
+type DiskConfig struct {
+	Interval uint32 `yaml:"statistics_interval"` // time interval for statistics (in days)
+}
 
 // Config - module configuration
 type Config struct {
 	Filename  string         // database file name
 	LimitDays uint32         // time limit (in days)
 	UnitID    unitIDCallback // user function to get the current unit ID.  If nil, the current time hour is used.
+
+	// Called when the configuration is changed by HTTP request
+	ConfigModified func()
+
+	// Register an HTTP handler
+	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request))
 }
 
 // New - create object
@@ -27,18 +39,11 @@ type Stats interface {
 	//  (can't be called in parallel with any other function of this interface).
 	Close()
 
-	// Set new configuration at runtime.
-	// limit: time limit (in days)
-	Configure(limit int)
-
-	// Reset counters and clear database
-	Clear()
-
 	// Update counters
 	Update(e Entry)
 
-	// Get data
-	GetData(timeUnit TimeUnit) map[string]interface{}
+	// WriteDiskConfig - write configuration
+	WriteDiskConfig(dc *DiskConfig)
 }
 
 // TimeUnit - time unit

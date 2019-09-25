@@ -30,7 +30,7 @@ func TestStats(t *testing.T) {
 		Filename:  "./stats.db",
 		LimitDays: 1,
 	}
-	s, _ := New(conf)
+	s, _ := createObject(conf)
 
 	e := Entry{}
 
@@ -46,7 +46,7 @@ func TestStats(t *testing.T) {
 	e.Time = 123456
 	s.Update(e)
 
-	d := s.GetData(Hours)
+	d := s.getData(Hours)
 	a := []uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2}
 	assert.True(t, UIntArrayEquals(d["dns_queries"].([]uint64), a))
 
@@ -75,7 +75,7 @@ func TestStats(t *testing.T) {
 	assert.True(t, d["num_replaced_parental"].(uint64) == 0)
 	assert.True(t, d["avg_processing_time"].(float64) == 0.123456)
 
-	s.Clear()
+	s.clear()
 	s.Close()
 	os.Remove(conf.Filename)
 }
@@ -95,7 +95,7 @@ func TestLargeNumbers(t *testing.T) {
 		UnitID:    newID,
 	}
 	os.Remove(conf.Filename)
-	s, _ := New(conf)
+	s, _ := createObject(conf)
 	e := Entry{}
 
 	n := 1000 // number of distinct clients and domains every hour
@@ -115,7 +115,7 @@ func TestLargeNumbers(t *testing.T) {
 		}
 	}
 
-	d := s.GetData(Hours)
+	d := s.getData(Hours)
 	assert.True(t, d["num_dns_queries"].(uint64) == uint64(int(hour)*n))
 
 	s.Close()

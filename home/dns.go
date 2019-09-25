@@ -21,6 +21,11 @@ type dnsContext struct {
 	whois *Whois
 }
 
+// Called by other modules when configuration is changed
+func onConfigModified() {
+	_ = config.write()
+}
+
 // initDNSServer creates an instance of the dnsforward.Server
 // Please note that we must do it even if we don't start it
 // so that we had access to the query log and the stats
@@ -31,8 +36,10 @@ func initDNSServer(baseDir string) {
 	}
 
 	statsConf := stats.Config{
-		Filename:  filepath.Join(baseDir, "stats.db"),
-		LimitDays: config.DNS.StatsInterval,
+		Filename:       filepath.Join(baseDir, "stats.db"),
+		LimitDays:      config.DNS.StatsInterval,
+		ConfigModified: onConfigModified,
+		HTTPRegister:   httpRegister,
 	}
 	config.stats, err = stats.New(statsConf)
 	if err != nil {

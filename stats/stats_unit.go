@@ -64,6 +64,9 @@ type unitDB struct {
 
 func createObject(conf Config) (*statsCtx, error) {
 	s := statsCtx{}
+	if !checkInterval(conf.LimitDays) {
+		conf.LimitDays = 1
+	}
 	s.limit = conf.LimitDays * 24
 	s.conf = conf
 	if conf.UnitID == nil {
@@ -112,10 +115,16 @@ func createObject(conf Config) (*statsCtx, error) {
 	}
 	s.unit = &u
 
+	s.initWeb()
+
 	go s.periodicFlush()
 
 	log.Debug("Stats: initialized")
 	return &s, nil
+}
+
+func checkInterval(days uint32) bool {
+	return days == 1 || days == 7 || days == 30 || days == 90
 }
 
 func (s *statsCtx) dbOpen() bool {
@@ -362,12 +371,13 @@ func convertTopArray(a []countPair) []map[string]uint64 {
 	return m
 }
 
-func (s *statsCtx) Configure(limit int) {
-	if limit < 0 {
-		return
-	}
-	s.limit = uint32(limit) * 24
-	log.Debug("Stats: set limit: %d", limit)
+func (s *statsCtx) setLimit(limitDays int) {
+	s.limit = uint32(limitDays) * 24
+	log.Debug("Stats: set limit: %d", limitDays)
+}
+
+func (s *statsCtx) WriteDiskConfig(dc *DiskConfig) {
+	dc.Interval = s.limit / 24
 }
 
 func (s *statsCtx) Close() {
@@ -391,7 +401,8 @@ func (s *statsCtx) Close() {
 	log.Debug("Stats: closed")
 }
 
-func (s *statsCtx) Clear() {
+// Reset counters and clear database
+func (s *statsCtx) clear() {
 	tx := s.beginTxn(true)
 	if tx != nil {
 		db := s.db
@@ -472,7 +483,7 @@ func (s *statsCtx) Update(e Entry) {
   These values are just the sum of data for all units.
 */
 // nolint (gocyclo)
-func (s *statsCtx) GetData(timeUnit TimeUnit) map[string]interface{} {
+func (s *statsCtx) getData(timeUnit TimeUnit) map[string]interface{} {
 	d := map[string]interface{}{}
 
 	tx := s.beginTxn(false)

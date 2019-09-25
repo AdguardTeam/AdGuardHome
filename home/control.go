@@ -569,14 +569,11 @@ func registerControlHandlers() {
 	registerRewritesHandlers()
 	RegisterBlockedServicesHandlers()
 	RegisterQueryLogHandlers()
-	RegisterStatsHandlers()
 	RegisterAuthHandlers()
 
 	http.HandleFunc("/dns-query", postInstall(handleDOH))
 }
 
-type httpHandlerType func(http.ResponseWriter, *http.Request)
-
-func httpRegister(method string, url string, handler httpHandlerType) {
+func httpRegister(method string, url string, handler func(http.ResponseWriter, *http.Request)) {
 	http.Handle(url, postInstallHandler(optionalAuthHandler(gziphandler.GzipHandler(ensureHandler(method, handler)))))
 }
