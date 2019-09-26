@@ -88,7 +88,7 @@ type FilteringConfig struct {
 	// Requests won't be filtered until dnsfilter is created.
 	// If "restart" command is received while we're creating an old dnsfilter object,
 	//  we delay creation of the new object until the old one is created.
-	AsyncStartup bool
+	AsyncStartup bool `yaml:"-"`
 
 	ProtectionEnabled          bool   `yaml:"protection_enabled"`      // whether or not use any of dnsfilter features
 	FilteringEnabled           bool   `yaml:"filtering_enabled"`       // whether or not use filter lists

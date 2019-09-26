@@ -269,9 +269,6 @@ func parseConfig() error {
 		return err
 	}
 
-	if !checkStatsInterval(config.DNS.StatsInterval) {
-		config.DNS.StatsInterval = 1
-	}
 	if !checkFiltersUpdateIntervalHours(config.DNS.FiltersUpdateIntervalHours) {
 		config.DNS.FiltersUpdateIntervalHours = 24
 	}
@@ -354,6 +351,12 @@ func (c *configuration) write() error {
 
 	if config.auth != nil {
 		config.Users = config.auth.GetUsers()
+	}
+
+	if config.stats != nil {
+		sdc := stats.DiskConfig{}
+		config.stats.WriteDiskConfig(&sdc)
+		config.DNS.StatsInterval = sdc.Interval
 	}
 
 	configFile := config.getConfigFilename()
