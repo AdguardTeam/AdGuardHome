@@ -318,3 +318,10 @@ export const DNS_RECORD_TYPES = [
     'TXT',
     'URI',
 ];
+
+export const DEFAULT_LOGS_FILTER = {
+    domain: '',
+    client: '',
+    question_type: '',
+    response_status: '',
+};

@@ -5,6 +5,7 @@ import { addErrorToast, addSuccessToast } from './index';
 import { normalizeLogs } from '../helpers/helpers';
 
 export const setLogsPagination = createAction('LOGS_PAGINATION');
+export const setLogsFilter = createAction('LOGS_FILTER');
 
 export const getLogsRequest = createAction('GET_LOGS_REQUEST');
 export const getLogsFailure = createAction('GET_LOGS_FAILURE');

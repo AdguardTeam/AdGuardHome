@@ -1,6 +1,7 @@
 import { handleActions } from 'redux-actions';
 
 import * as actions from '../actions/queryLogs';
+import { DEFAULT_LOGS_FILTER } from '../helpers/constants';
 
 const queryLogs = handleActions(
     {
@@ -19,11 +20,15 @@ const queryLogs = handleActions(
             };
         },
 
+        [actions.setLogsFilter]: (state, { payload }) => (
+            { ...state, filter: payload }
+        ),
+
         [actions.getLogsRequest]: state => ({ ...state, processingGetLogs: true }),
         [actions.getLogsFailure]: state => ({ ...state, processingGetLogs: false }),
         [actions.getLogsSuccess]: (state, { payload }) => {
             const {
-                logs, lastRowTime, page, pageSize, filtered, refreshLogs,
+                logs, lastRowTime, page, pageSize, filtered,
             } = payload;
             let logsWithOffset = state.allLogs.length > 0 ? state.allLogs : logs;
             let allLogs = logs;
@@ -31,9 +36,7 @@ const queryLogs = handleActions(
             if (lastRowTime) {
                 logsWithOffset = [...state.allLogs, ...logs];
                 allLogs = [...state.allLogs, ...logs];
-            }
-
-            if (filtered || refreshLogs) {
+            } else if (filtered) {
                 logsWithOffset = logs;
                 allLogs = logs;
             }
@@ -50,6 +53,7 @@ const queryLogs = handleActions(
                 total,
                 allLogs,
                 logs: logsSlice,
+                isEntireLog: logs.length < 1,
                 processingGetLogs: false,
             };
         },
@@ -86,10 +90,11 @@ const queryLogs = handleActions(
         logs: [],
         interval: 1,
         allLogs: [],
-        pages: 0,
-        offset: 0,
+        pages: 1,
         total: 0,
         enabled: true,
+        older_than: '',
+        filter: DEFAULT_LOGS_FILTER,
     },
 );
 

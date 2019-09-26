@@ -12,7 +12,7 @@ import {
     formatDateTime,
     isValidQuestionType,
 } from '../../helpers/helpers';
-import { SERVICES, FILTERED_STATUS, DEBOUNCE_TIMEOUT } from '../../helpers/constants';
+import { SERVICES, FILTERED_STATUS, DEBOUNCE_TIMEOUT, DEFAULT_LOGS_FILTER } from '../../helpers/constants';
 import { getTrackerData } from '../../helpers/trackers/trackers';
 import { formatClientCell } from '../../helpers/formatClientCell';
 
@@ -26,7 +26,7 @@ import './Logs.css';
 
 const TABLE_FIRST_PAGE = 0;
 const TABLE_DEFAULT_PAGE_SIZE = 50;
-const INITIAL_REQUEST_DATA = ['', {}, TABLE_FIRST_PAGE, TABLE_DEFAULT_PAGE_SIZE];
+const INITIAL_REQUEST_DATA = ['', DEFAULT_LOGS_FILTER, TABLE_FIRST_PAGE, TABLE_DEFAULT_PAGE_SIZE];
 const FILTERED_REASON = 'Filtered';
 const RESPONSE_FILTER = {
     ALL: 'all',
@@ -41,18 +41,16 @@ class Logs extends Component {
         this.props.getLogsConfig();
     }
 
-    getLogs = (lastRowTime, filter, page, pageSize) => {
+    getLogs = (lastRowTime, filter, page, pageSize, filtered) => {
         if (this.props.queryLogs.enabled) {
             this.props.getLogs({
-                lastRowTime, filter, page, pageSize,
+                lastRowTime, filter, page, pageSize, filtered,
             });
         }
     };
 
-    refreshLogs = (lastRowTime, filter, page, pageSize, refreshLogs = true) => {
-        this.props.getLogs({
-            lastRowTime, filter, page, pageSize, refreshLogs,
-        });
+    refreshLogs = () => {
+        window.location.reload();
     };
 
     handleLogsFiltering = debounce((lastRowTime, filter, page, pageSize, filtered) => {
@@ -265,24 +263,35 @@ class Logs extends Component {
     };
 
     fetchData = (state) => {
-        const {
-            filtered, pageSize, page, pages,
-        } = state;
-        const { allLogs } = this.props.queryLogs;
-        const isLastPage = pages && (page + 1 >= pages);
-        const isFiltersPresent = filtered.length > 0;
-        const filter = this.getFilters(filtered);
+        const { pageSize, page, pages } = state;
+        const { allLogs, filter } = this.props.queryLogs;
+        const isLastPage = page + 1 === pages;
 
-        if (isFiltersPresent) {
-            this.handleLogsFiltering('', filter, page, pageSize, true);
-        } else if (isLastPage) {
+        if (isLastPage) {
             const lastRow = allLogs[allLogs.length - 1];
             const lastRowTime = (lastRow && lastRow.time) || '';
-            this.getLogs(lastRowTime, filter, page, pageSize);
+            this.getLogs(lastRowTime, filter, page, pageSize, true);
         } else {
             this.props.setLogsPagination({ page, pageSize });
         }
     };
+
+    handleFilterChange = (filtered) => {
+        const filters = this.getFilters(filtered);
+        this.props.setLogsFilter(filters);
+        this.handleLogsFiltering('', filters, TABLE_FIRST_PAGE, TABLE_DEFAULT_PAGE_SIZE, true);
+    }
+
+    showTotalPagesCount = (pages) => {
+        const { total, isEntireLog } = this.props.queryLogs;
+        const showEllipsis = !isEntireLog && total >= 500;
+
+        return (
+            <span className="-totalPages">
+                {pages || 1}{showEllipsis && '…' }
+            </span>
+        );
+    }
 
     renderLogs() {
         const { queryLogs, dashboard, t } = this.props;
@@ -362,7 +371,7 @@ class Logs extends Component {
                 loading={isLoading}
                 showPageJump={false}
                 onFetchData={this.fetchData}
-                onPageChange={page => this.setState({ page })}
+                onFilteredChange={this.handleFilterChange}
                 className="logs__table"
                 showPagination={true}
                 defaultPageSize={TABLE_DEFAULT_PAGE_SIZE}
@@ -373,6 +382,7 @@ class Logs extends Component {
                 ofText={t('of_table_footer_text')}
                 rowsText={t('rows_table_footer_text')}
                 noDataText={t('no_logs_found')}
+                renderTotalPagesCount={this.showTotalPagesCount}
                 defaultFilterMethod={(filter, row) => {
                     const id = filter.pivotId || filter.id;
                     return row[id] !== undefined
@@ -422,7 +432,7 @@ class Logs extends Component {
             <button
                 type="button"
                 className="btn btn-icon btn-outline-primary btn-sm ml-3"
-                onClick={() => this.refreshLogs(...INITIAL_REQUEST_DATA)}
+                onClick={this.refreshLogs}
             >
                 <svg className="icons">
                     <use xlinkHref="#refresh" />
@@ -468,6 +478,7 @@ Logs.propTypes = {
     getClients: PropTypes.func.isRequired,
     getLogsConfig: PropTypes.func.isRequired,
     setLogsPagination: PropTypes.func.isRequired,
+    setLogsFilter: PropTypes.func.isRequired,
     t: PropTypes.func.isRequired,
 };
 
