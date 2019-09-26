@@ -3,6 +3,7 @@ package querylog
 import (
 	"net"
 	"testing"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/miekg/dns"
@@ -36,7 +37,10 @@ func TestQueryLog(t *testing.T) {
 	res := dnsfilter.Result{}
 	l.Add(&q, &a, &res, 0, nil, "upstream")
 
-	d := l.GetData()
+	params := GetDataParams{
+		OlderThan: time.Now(),
+	}
+	d := l.GetData(params)
 	m := d[0]
 	mq := m["question"].(map[string]interface{})
 	assert.True(t, mq["host"].(string) == "example.org")

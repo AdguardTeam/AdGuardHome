@@ -5,9 +5,14 @@ import escapeRegExp from 'lodash/escapeRegExp';
 import endsWith from 'lodash/endsWith';
 import { Trans, withNamespaces } from 'react-i18next';
 import { HashLink as Link } from 'react-router-hash-link';
+import debounce from 'lodash/debounce';
 
-import { formatTime, formatDateTime } from '../../helpers/helpers';
-import { SERVICES, FILTERED_STATUS } from '../../helpers/constants';
+import {
+    formatTime,
+    formatDateTime,
+    isValidQuestionType,
+} from '../../helpers/helpers';
+import { SERVICES, FILTERED_STATUS, DEBOUNCE_TIMEOUT, DEFAULT_LOGS_FILTER } from '../../helpers/constants';
 import { getTrackerData } from '../../helpers/trackers/trackers';
 import { formatClientCell } from '../../helpers/formatClientCell';
 
@@ -16,8 +21,12 @@ import Card from '../ui/Card';
 import Loading from '../ui/Loading';
 import PopoverFiltered from '../ui/PopoverFilter';
 import Popover from '../ui/Popover';
+import Tooltip from '../ui/Tooltip';
 import './Logs.css';
 
+const TABLE_FIRST_PAGE = 0;
+const TABLE_DEFAULT_PAGE_SIZE = 50;
+const INITIAL_REQUEST_DATA = ['', DEFAULT_LOGS_FILTER, TABLE_FIRST_PAGE, TABLE_DEFAULT_PAGE_SIZE];
 const FILTERED_REASON = 'Filtered';
 const RESPONSE_FILTER = {
     ALL: 'all',
@@ -26,25 +35,33 @@ const RESPONSE_FILTER = {
 
 class Logs extends Component {
     componentDidMount() {
-        this.getLogs();
+        this.getLogs(...INITIAL_REQUEST_DATA);
         this.props.getFilteringStatus();
         this.props.getClients();
         this.props.getLogsConfig();
     }
 
-    componentDidUpdate(prevProps) {
-        // get logs when queryLog becomes enabled
-        if (this.props.queryLogs.enabled && !prevProps.queryLogs.enabled) {
-            this.props.getLogs();
-        }
-    }
-
-    getLogs = () => {
-        // get logs on initialization if queryLogIsEnabled
+    getLogs = (lastRowTime, filter, page, pageSize, filtered) => {
         if (this.props.queryLogs.enabled) {
-            this.props.getLogs();
+            this.props.getLogs({
+                lastRowTime, filter, page, pageSize, filtered,
+            });
         }
     };
+
+    refreshLogs = () => {
+        window.location.reload();
+    };
+
+    handleLogsFiltering = debounce((lastRowTime, filter, page, pageSize, filtered) => {
+        this.props.getLogs({
+            lastRowTime,
+            filter,
+            page,
+            pageSize,
+            filtered,
+        });
+    }, DEBOUNCE_TIMEOUT);
 
     renderTooltip = (isFiltered, rule, filter, service) =>
         isFiltered && <PopoverFiltered rule={rule} filter={filter} service={service} />;
@@ -215,8 +232,75 @@ class Logs extends Component {
         );
     };
 
-    renderLogs(logs) {
-        const { t } = this.props;
+    getFilterInput = ({ filter, onChange }) => (
+        <Fragment>
+            <div className="logs__input-wrap">
+                <input
+                    type="text"
+                    className="form-control"
+                    onChange={event => onChange(event.target.value)}
+                    value={filter ? filter.value : ''}
+                />
+                <span className="logs__notice">
+                    <Tooltip text={this.props.t('query_log_strict_search')} type='tooltip-custom--logs' />
+                </span>
+            </div>
+        </Fragment>
+    );
+
+    getFilters = (filtered) => {
+        const filteredObj = filtered.reduce((acc, cur) => ({ ...acc, [cur.id]: cur.value }), {});
+        const {
+            domain, client, type, response,
+        } = filteredObj;
+
+        return {
+            domain: domain || '',
+            client: client || '',
+            question_type: isValidQuestionType(type) ? type.toUpperCase() : '',
+            response_status: response === RESPONSE_FILTER.FILTERED ? response : '',
+        };
+    };
+
+    fetchData = (state) => {
+        const { pageSize, page, pages } = state;
+        const { allLogs, filter } = this.props.queryLogs;
+        const isLastPage = page + 1 === pages;
+
+        if (isLastPage) {
+            const lastRow = allLogs[allLogs.length - 1];
+            const lastRowTime = (lastRow && lastRow.time) || '';
+            this.getLogs(lastRowTime, filter, page, pageSize, true);
+        } else {
+            this.props.setLogsPagination({ page, pageSize });
+        }
+    };
+
+    handleFilterChange = (filtered) => {
+        const filters = this.getFilters(filtered);
+        this.props.setLogsFilter(filters);
+        this.handleLogsFiltering('', filters, TABLE_FIRST_PAGE, TABLE_DEFAULT_PAGE_SIZE, true);
+    }
+
+    showTotalPagesCount = (pages) => {
+        const { total, isEntireLog } = this.props.queryLogs;
+        const showEllipsis = !isEntireLog && total >= 500;
+
+        return (
+            <span className="-totalPages">
+                {pages || 1}{showEllipsis && '…' }
+            </span>
+        );
+    }
+
+    renderLogs() {
+        const { queryLogs, dashboard, t } = this.props;
+        const { processingClients } = dashboard;
+        const {
+            processingGetLogs, processingGetConfig, logs, pages,
+        } = queryLogs;
+        const isLoading = processingGetLogs || processingClients || processingGetConfig;
+
         const columns = [
             {
                 Header: t('time_table_header'),
@@ -230,6 +314,7 @@ class Logs extends Component {
                 accessor: 'domain',
                 minWidth: 180,
                 Cell: this.getDomainCell,
+                Filter: this.getFilterInput,
             },
             {
                 Header: t('type_table_header'),
@@ -251,7 +336,7 @@ class Logs extends Component {
                 },
                 Filter: ({ filter, onChange }) => (
                     <select
-                        className="form-control"
+                        className="form-control custom-select"
                         onChange={event => onChange(event.target.value)}
                         value={filter ? filter.value : RESPONSE_FILTER.ALL}
                     >
@@ -270,82 +355,84 @@ class Logs extends Component {
                 maxWidth: 240,
                 minWidth: 240,
                 Cell: this.getClientCell,
+                Filter: this.getFilterInput,
             },
         ];
 
-        if (logs) {
-            return (
-                <ReactTable
-                    className="logs__table"
-                    filterable
-                    data={logs}
-                    columns={columns}
-                    showPagination={true}
-                    defaultPageSize={50}
-                    minRows={7}
-                    previousText={t('previous_btn')}
-                    nextText={t('next_btn')}
-                    loadingText={t('loading_table_status')}
-                    pageText={t('page_table_footer_text')}
-                    ofText={t('of_table_footer_text')}
-                    rowsText={t('rows_table_footer_text')}
-                    noDataText={t('no_logs_found')}
-                    defaultFilterMethod={(filter, row) => {
-                        const id = filter.pivotId || filter.id;
-                        return row[id] !== undefined
-                            ? String(row[id]).indexOf(filter.value) !== -1
-                            : true;
-                    }}
-                    defaultSorted={[
-                        {
-                            id: 'time',
-                            desc: true,
-                        },
-                    ]}
-                    getTrProps={(_state, rowInfo) => {
-                        if (!rowInfo) {
-                            return {};
-                        }
+        return (
+            <ReactTable
+                manual
+                filterable
+                minRows={5}
+                pages={pages}
+                columns={columns}
+                sortable={false}
+                data={logs || []}
+                loading={isLoading}
+                showPageJump={false}
+                onFetchData={this.fetchData}
+                onFilteredChange={this.handleFilterChange}
+                className="logs__table"
+                showPagination={true}
+                defaultPageSize={TABLE_DEFAULT_PAGE_SIZE}
+                previousText={t('previous_btn')}
+                nextText={t('next_btn')}
+                loadingText={t('loading_table_status')}
+                pageText={t('page_table_footer_text')}
+                ofText={t('of_table_footer_text')}
+                rowsText={t('rows_table_footer_text')}
+                noDataText={t('no_logs_found')}
+                renderTotalPagesCount={this.showTotalPagesCount}
+                defaultFilterMethod={(filter, row) => {
+                    const id = filter.pivotId || filter.id;
+                    return row[id] !== undefined
+                        ? String(row[id]).indexOf(filter.value) !== -1
+                        : true;
+                }}
+                defaultSorted={[
+                    {
+                        id: 'time',
+                        desc: true,
+                    },
+                ]}
+                getTrProps={(_state, rowInfo) => {
+                    if (!rowInfo) {
+                        return {};
+                    }
 
-                        const { reason } = rowInfo.original;
+                    const { reason } = rowInfo.original;
 
-                        if (this.checkFiltered(reason)) {
-                            return {
-                                className: 'red',
-                            };
-                        } else if (this.checkWhiteList(reason)) {
-                            return {
-                                className: 'green',
-                            };
-                        } else if (this.checkRewrite(reason)) {
-                            return {
-                                className: 'blue',
-                            };
-                        }
-
+                    if (this.checkFiltered(reason)) {
                         return {
-                            className: '',
+                            className: 'red',
                         };
-                    }}
-                />
-            );
-        }
+                    } else if (this.checkWhiteList(reason)) {
+                        return {
+                            className: 'green',
+                        };
+                    } else if (this.checkRewrite(reason)) {
+                        return {
+                            className: 'blue',
+                        };
+                    }
 
-        return null;
+                    return {
+                        className: '',
+                    };
+                }}
+            />
+        );
     }
 
     render() {
-        const { queryLogs, dashboard, t } = this.props;
-        const { enabled, processingGetLogs, processingGetConfig } = queryLogs;
-        const { processingClients } = dashboard;
-        const isDataReady =
-            !processingGetLogs && !processingGetConfig && !dashboard.processingClients;
+        const { queryLogs, t } = this.props;
+        const { enabled, processingGetConfig } = queryLogs;
 
         const refreshButton = enabled ? (
             <button
+                type="button"
                 className="btn btn-icon btn-outline-primary btn-sm ml-3"
-                type="submit"
-                onClick={this.getLogs}
+                onClick={this.refreshLogs}
             >
                 <svg className="icons">
                     <use xlinkHref="#refresh" />
@@ -357,22 +444,24 @@ class Logs extends Component {
 
         return (
             <Fragment>
-                <PageTitle title={t('query_log')} subtitle={t('last_dns_queries')}>
-                    {refreshButton}
-                </PageTitle>
-                <Card>
-                    {enabled && (processingGetLogs || processingClients || processingGetConfig) && (
-                        <Loading />
-                    )}
-                    {enabled && isDataReady && this.renderLogs(queryLogs.logs)}
-                    {!enabled && !processingGetConfig && (
+                <PageTitle title={t('query_log')}>{refreshButton}</PageTitle>
+                {enabled && processingGetConfig && <Loading />}
+                {enabled && !processingGetConfig && <Card>{this.renderLogs()}</Card>}
+                {!enabled && !processingGetConfig && (
+                    <Card>
                         <div className="lead text-center py-6">
-                            <Trans components={[<Link to="/settings#logs-config" key="0">link</Link>]}>
+                            <Trans
+                                components={[
+                                    <Link to="/settings#logs-config" key="0">
+                                        link
+                                    </Link>,
+                                ]}
+                            >
                                 query_log_disabled
                             </Trans>
                         </div>
-                    )}
-                </Card>
+                    </Card>
+                )}
             </Fragment>
         );
     }
@@ -388,6 +477,8 @@ Logs.propTypes = {
     addSuccessToast: PropTypes.func.isRequired,
     getClients: PropTypes.func.isRequired,
     getLogsConfig: PropTypes.func.isRequired,
+    setLogsPagination: PropTypes.func.isRequired,
+    setLogsFilter: PropTypes.func.isRequired,
     t: PropTypes.func.isRequired,
 };
 

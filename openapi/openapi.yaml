@@ -176,16 +176,16 @@ paths:
     # --------------------------------------------------
 
     /querylog:
-        get:
+        post:
             tags:
                 - log
             operationId: queryLog
             summary: 'Get DNS server query log'
             parameters:
-                - in: query
-                  name: download
-                  type: boolean
-                  description: 'If any value is set, make the browser download the query instead of displaying it by setting Content-Disposition header'
+            - in: "body"
+              name: "body"
+              schema:
+                $ref: '#/definitions/QueryLogRequest'
             responses:
                 200:
                     description: OK
@@ -1393,11 +1393,20 @@ definitions:
                 type: "string"
                 description: "DNS request processing start time"
                 example: "2018-11-26T00:02:41+03:00"
+
     QueryLog:
         type: "array"
         description: "Query log"
         items:
             $ref: "#/definitions/QueryLogItem"
+
+    QueryLogRequest:
+        type: "object"
+        description: "Query log request data"
+        properties:
+            offset:
+                type: "integer"
+                example: 1234
 
     QueryLogConfig:
         type: "object"

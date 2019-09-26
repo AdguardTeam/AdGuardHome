@@ -1,14 +1,61 @@
 import { handleActions } from 'redux-actions';
 
 import * as actions from '../actions/queryLogs';
+import { DEFAULT_LOGS_FILTER } from '../helpers/constants';
 
 const queryLogs = handleActions(
     {
+        [actions.setLogsPagination]: (state, { payload }) => {
+            const { page, pageSize } = payload;
+            const { allLogs } = state;
+            const rowsStart = pageSize * page;
+            const rowsEnd = (pageSize * page) + pageSize;
+            const logsSlice = allLogs.slice(rowsStart, rowsEnd);
+            const pages = Math.ceil(allLogs.length / pageSize);
+
+            return {
+                ...state,
+                pages,
+                logs: logsSlice,
+            };
+        },
+
+        [actions.setLogsFilter]: (state, { payload }) => (
+            { ...state, filter: payload }
+        ),
+
         [actions.getLogsRequest]: state => ({ ...state, processingGetLogs: true }),
         [actions.getLogsFailure]: state => ({ ...state, processingGetLogs: false }),
         [actions.getLogsSuccess]: (state, { payload }) => {
-            const newState = { ...state, logs: payload, processingGetLogs: false };
-            return newState;
+            const {
+                logs, lastRowTime, page, pageSize, filtered,
+            } = payload;
+            let logsWithOffset = state.allLogs.length > 0 ? state.allLogs : logs;
+            let allLogs = logs;
+
+            if (lastRowTime) {
+                logsWithOffset = [...state.allLogs, ...logs];
+                allLogs = [...state.allLogs, ...logs];
+            } else if (filtered) {
+                logsWithOffset = logs;
+                allLogs = logs;
+            }
+
+            const pages = Math.ceil(logsWithOffset.length / pageSize);
+            const total = logsWithOffset.length;
+            const rowsStart = pageSize * page;
+            const rowsEnd = (pageSize * page) + pageSize;
+            const logsSlice = logsWithOffset.slice(rowsStart, rowsEnd);
+
+            return {
+                ...state,
+                pages,
+                total,
+                allLogs,
+                logs: logsSlice,
+                isEntireLog: logs.length < 1,
+                processingGetLogs: false,
+            };
         },
 
         [actions.clearLogsRequest]: state => ({ ...state, processingClear: true }),
@@ -42,7 +89,12 @@ const queryLogs = handleActions(
         processingSetConfig: false,
         logs: [],
         interval: 1,
+        allLogs: [],
+        pages: 1,
+        total: 0,
         enabled: true,
+        older_than: '',
+        filter: DEFAULT_LOGS_FILTER,
     },
 );
 

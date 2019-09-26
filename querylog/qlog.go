@@ -18,7 +18,10 @@ import (
 const (
 	logBufferCap     = 5000            // maximum capacity of logBuffer before it's flushed to disk
 	queryLogFileName = "querylog.json" // .gz added during compression
-	queryLogSize     = 5000            // maximum API response for /querylog
+	getDataLimit     = 500             // GetData(): maximum log entries to return
+
+	// maximum data chunks to parse when filtering entries
+	maxFilteringChunks = 10
 )
 
 // queryLog is a structure that writes and reads the DNS query log
@@ -30,9 +33,6 @@ type queryLog struct {
 	logBuffer     []*logEntry
 	fileFlushLock sync.Mutex // synchronize a file-flushing goroutine and main thread
 	flushPending  bool       // don't start another goroutine while the previous one is still running
-
-	cache []*logEntry
-	lock  sync.RWMutex
 }
 
 // create a new instance of the query log
@@ -41,7 +41,6 @@ func newQueryLog(conf Config) *queryLog {
 	l.logFile = filepath.Join(conf.BaseDir, queryLogFileName)
 	l.conf = conf
 	go l.periodicQueryLogRotate()
-	go l.fillFromFile()
 	return &l
 }
 
@@ -61,10 +60,6 @@ func (l *queryLog) Clear() {
 	l.logBuffer = nil
 	l.flushPending = false
 	l.logBufferLock.Unlock()
-
-	l.lock.Lock()
-	l.cache = nil
-	l.lock.Unlock()
 
 	err := os.Remove(l.logFile + ".1")
 	if err != nil {
@@ -147,13 +142,6 @@ func (l *queryLog) Add(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Res
 		}
 	}
 	l.logBufferLock.Unlock()
-	l.lock.Lock()
-	l.cache = append(l.cache, &entry)
-	if len(l.cache) > queryLogSize {
-		toremove := len(l.cache) - queryLogSize
-		l.cache = l.cache[toremove:]
-	}
-	l.lock.Unlock()
 
 	// if buffer needs to be flushed to disk, do it now
 	if needFlush {
@@ -163,20 +151,143 @@ func (l *queryLog) Add(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Res
 	}
 }
 
-func (l *queryLog) GetData() []map[string]interface{} {
-	l.lock.RLock()
-	values := make([]*logEntry, len(l.cache))
-	copy(values, l.cache)
-	l.lock.RUnlock()
-
-	// reverse it so that newest is first
-	for left, right := 0, len(values)-1; left < right; left, right = left+1, right-1 {
-		values[left], values[right] = values[right], values[left]
+// Return TRUE if this entry is needed
+func isNeeded(entry *logEntry, params GetDataParams) bool {
+	if params.ResponseStatus != 0 {
+		if params.ResponseStatus == ResponseStatusFiltered && !entry.Result.IsFiltered {
+			return false
+		}
 	}
 
-	// iterate
+	if len(params.Domain) != 0 || params.QuestionType != 0 {
+		m := dns.Msg{}
+		_ = m.Unpack(entry.Question)
+
+		if params.QuestionType != 0 {
+			if m.Question[0].Qtype != params.QuestionType {
+				return false
+			}
+		}
+
+		if len(params.Domain) != 0 && params.StrictMatchDomain {
+			if m.Question[0].Name != params.Domain {
+				return false
+			}
+		} else if len(params.Domain) != 0 {
+			if strings.Index(m.Question[0].Name, params.Domain) == -1 {
+				return false
+			}
+		}
+	}
+
+	if len(params.Client) != 0 && params.StrictMatchClient {
+		if entry.IP != params.Client {
+			return false
+		}
+	} else if len(params.Client) != 0 {
+		if strings.Index(entry.IP, params.Client) == -1 {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (l *queryLog) readFromFile(params GetDataParams) ([]*logEntry, int) {
+	entries := []*logEntry{}
+	olderThan := params.OlderThan
+	totalChunks := 0
+	total := 0
+
+	r := l.OpenReader()
+	if r == nil {
+		return entries, 0
+	}
+	r.BeginRead(olderThan, getDataLimit)
+	for totalChunks < maxFilteringChunks {
+		first := true
+		newEntries := []*logEntry{}
+		for {
+			entry := r.Next()
+			if entry == nil {
+				break
+			}
+			total++
+
+			if first {
+				first = false
+				olderThan = entry.Time
+			}
+
+			if !isNeeded(entry, params) {
+				continue
+			}
+			if len(newEntries) == getDataLimit {
+				newEntries = newEntries[1:]
+			}
+			newEntries = append(newEntries, entry)
+		}
+
+		log.Debug("entries: +%d (%d)  older-than:%s", len(newEntries), len(entries), olderThan)
+
+		entries = append(newEntries, entries...)
+		if len(entries) > getDataLimit {
+			toremove := len(entries) - getDataLimit
+			entries = entries[toremove:]
+			break
+		}
+		if first || len(entries) == getDataLimit {
+			break
+		}
+		totalChunks++
+		r.BeginReadPrev(olderThan, getDataLimit)
+	}
+
+	r.Close()
+	return entries, total
+}
+
+func (l *queryLog) GetData(params GetDataParams) []map[string]interface{} {
 	var data = []map[string]interface{}{}
-	for _, entry := range values {
+
+	if len(params.Domain) != 0 && params.StrictMatchDomain {
+		params.Domain = params.Domain + "."
+	}
+
+	now := time.Now()
+	entries := []*logEntry{}
+	total := 0
+
+	// add from file
+	entries, total = l.readFromFile(params)
+
+	if params.OlderThan.IsZero() {
+		params.OlderThan = now
+	}
+
+	// add from memory buffer
+	l.logBufferLock.Lock()
+	total += len(l.logBuffer)
+	for _, entry := range l.logBuffer {
+
+		if !isNeeded(entry, params) {
+			continue
+		}
+
+		if entry.Time.UnixNano() >= params.OlderThan.UnixNano() {
+			break
+		}
+
+		if len(entries) == getDataLimit {
+			entries = entries[1:]
+		}
+		entries = append(entries, entry)
+	}
+	l.logBufferLock.Unlock()
+
+	// process the elements from latest to oldest
+	for i := len(entries) - 1; i >= 0; i-- {
+		entry := entries[i]
 		var q *dns.Msg
 		var a *dns.Msg
 
@@ -200,7 +311,7 @@ func (l *queryLog) GetData() []map[string]interface{} {
 		jsonEntry := map[string]interface{}{
 			"reason":    entry.Result.Reason.String(),
 			"elapsedMs": strconv.FormatFloat(entry.Elapsed.Seconds()*1000, 'f', -1, 64),
-			"time":      entry.Time.Format(time.RFC3339),
+			"time":      entry.Time.Format(time.RFC3339Nano),
 			"client":    entry.IP,
 		}
 		if q != nil {
@@ -231,6 +342,8 @@ func (l *queryLog) GetData() []map[string]interface{} {
 		data = append(data, jsonEntry)
 	}
 
+	log.Debug("QueryLog: prepared data (%d/%d) older than %s in %s",
+		len(entries), total, params.OlderThan, time.Since(now))
 	return data
 }
 

@@ -5,13 +5,13 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"sync"
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/go-test/deep"
-	"github.com/miekg/dns"
 )
 
 var (
@@ -19,6 +19,7 @@ var (
 )
 
 const enableGzip = false
+const maxEntrySize = 1000
 
 // flushLogBuffer flushes the current buffer to file and resets the current buffer
 func (l *queryLog) flushLogBuffer(fullFlush bool) error {
@@ -182,50 +183,232 @@ func (l *queryLog) periodicQueryLogRotate() {
 
 // Reader is the DB reader context
 type Reader struct {
-	f   *os.File
-	jd  *json.Decoder
-	now time.Time
-	ql  *queryLog
+	ql *queryLog
+
+	f         *os.File
+	jd        *json.Decoder
+	now       time.Time
+	validFrom int64 // UNIX time (ns)
+	olderThan int64 // UNIX time (ns)
 
 	files []string
 	ifile int
 
-	count uint64 // returned elements counter
+	limit        uint64
+	count        uint64 // counter for returned elements
+	latest       bool   // return the latest entries
+	filePrepared bool
+
+	searching     bool       // we're seaching for an entry with exact time stamp
+	fseeker       fileSeeker // file seeker object
+	fpos          uint64     // current file offset
+	nSeekRequests uint32     // number of Seek() requests made (finding a new line doesn't count)
 }
 
-// OpenReader locks the file and returns reader object or nil on error
+type fileSeeker struct {
+	target uint64 // target value
+
+	pos     uint64 // current offset, may be adjusted by user for increased accuracy
+	lastpos uint64 // the last offset returned
+	lo      uint64 // low boundary offset
+	hi      uint64 // high boundary offset
+}
+
+// OpenReader - return reader object
 func (l *queryLog) OpenReader() *Reader {
 	r := Reader{}
 	r.ql = l
 	r.now = time.Now()
-
+	r.validFrom = r.now.Unix() - int64(l.conf.Interval*60*60)
+	r.validFrom *= 1000000000
+	r.files = []string{
+		r.ql.logFile,
+		r.ql.logFile + ".1",
+	}
 	return &r
 }
 
-// Close closes the reader
+// Close - close the reader
 func (r *Reader) Close() {
 	elapsed := time.Since(r.now)
 	var perunit time.Duration
 	if r.count > 0 {
 		perunit = elapsed / time.Duration(r.count)
 	}
-	log.Debug("querylog: read %d entries in %v, %v/entry",
-		r.count, elapsed, perunit)
+	log.Debug("querylog: read %d entries in %v, %v/entry, seek-reqs:%d",
+		r.count, elapsed, perunit, r.nSeekRequests)
 
 	if r.f != nil {
 		r.f.Close()
 	}
 }
 
-// BeginRead starts reading
-func (r *Reader) BeginRead() {
-	r.files = []string{
-		r.ql.logFile,
-		r.ql.logFile + ".1",
+// BeginRead - start reading
+// olderThan: stop returning entries when an entry with this time is reached
+// count: minimum number of entries to return
+func (r *Reader) BeginRead(olderThan time.Time, count uint64) {
+	r.olderThan = olderThan.UnixNano()
+	r.latest = olderThan.IsZero()
+	r.limit = count
+	if r.latest {
+		r.olderThan = r.now.UnixNano()
 	}
+	r.filePrepared = false
+	r.searching = false
+	r.jd = nil
 }
 
-// Next returns the next entry or nil if reading is finished
+// BeginReadPrev - start reading the previous data chunk
+func (r *Reader) BeginReadPrev(olderThan time.Time, count uint64) {
+	r.olderThan = olderThan.UnixNano()
+	r.latest = olderThan.IsZero()
+	r.limit = count
+	if r.latest {
+		r.olderThan = r.now.UnixNano()
+	}
+
+	off := r.fpos - maxEntrySize*(r.limit+1)
+	if int64(off) < maxEntrySize {
+		off = 0
+	}
+	r.fpos = uint64(off)
+	log.Debug("QueryLog: seek: %x", off)
+	_, err := r.f.Seek(int64(off), io.SeekStart)
+	if err != nil {
+		log.Error("file.Seek: %s: %s", r.files[r.ifile], err)
+		return
+	}
+	r.nSeekRequests++
+
+	r.seekToNewLine()
+	r.fseeker.pos = r.fpos
+
+	r.filePrepared = true
+	r.searching = false
+	r.jd = nil
+}
+
+// Perform binary seek
+// Return 0: success;  1: seek reqiured;  -1: error
+func (fs *fileSeeker) seekBinary(cur uint64) int32 {
+	log.Debug("QueryLog: seek: tgt=%x cur=%x, %x: [%x..%x]", fs.target, cur, fs.pos, fs.lo, fs.hi)
+
+	off := uint64(0)
+	if fs.pos >= fs.lo && fs.pos < fs.hi {
+		if cur == fs.target {
+			return 0
+		} else if cur < fs.target {
+			fs.lo = fs.pos + 1
+		} else {
+			fs.hi = fs.pos
+		}
+		off = fs.lo + (fs.hi-fs.lo)/2
+	} else {
+		// we didn't find another entry from the last file offset: now return the boundary beginning
+		off = fs.lo
+	}
+
+	if off == fs.lastpos {
+		return -1
+	}
+
+	fs.lastpos = off
+	fs.pos = off
+	return 1
+}
+
+// Seek to a new line
+func (r *Reader) seekToNewLine() bool {
+	b := make([]byte, maxEntrySize*2)
+
+	_, err := r.f.Read(b)
+	if err != nil {
+		log.Error("QueryLog: file.Read: %s: %s", r.files[r.ifile], err)
+		return false
+	}
+
+	off := bytes.IndexByte(b, '\n') + 1
+	if off == 0 {
+		log.Error("QueryLog: Can't find a new line: %s", r.files[r.ifile])
+		return false
+	}
+
+	r.fpos += uint64(off)
+	log.Debug("QueryLog: seek: %x (+%d)", r.fpos, off)
+	_, err = r.f.Seek(int64(r.fpos), io.SeekStart)
+	if err != nil {
+		log.Error("QueryLog: file.Seek: %s: %s", r.files[r.ifile], err)
+		return false
+	}
+	return true
+}
+
+// Open a file
+func (r *Reader) openFile() bool {
+	var err error
+	fn := r.files[r.ifile]
+
+	r.f, err = os.Open(fn)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			log.Error("QueryLog: Failed to open file \"%s\": %s", fn, err)
+		}
+		return false
+	}
+	return true
+}
+
+// Seek to the needed position
+func (r *Reader) prepareRead() bool {
+	fn := r.files[r.ifile]
+
+	fi, err := r.f.Stat()
+	if err != nil {
+		log.Error("QueryLog: file.Stat: %s: %s", fn, err)
+		return false
+	}
+	fsize := uint64(fi.Size())
+
+	off := uint64(0)
+	if r.latest {
+		// read data from the end of file
+		off = fsize - maxEntrySize*(r.limit+1)
+		if int64(off) < maxEntrySize {
+			off = 0
+		}
+		r.fpos = uint64(off)
+		log.Debug("QueryLog: seek: %x", off)
+		_, err = r.f.Seek(int64(off), io.SeekStart)
+		if err != nil {
+			log.Error("QueryLog: file.Seek: %s: %s", fn, err)
+			return false
+		}
+	} else {
+		// start searching in file: we'll read the first chunk of data from the middle of file
+		r.searching = true
+		r.fseeker = fileSeeker{}
+		r.fseeker.target = uint64(r.olderThan)
+		r.fseeker.hi = fsize
+		rc := r.fseeker.seekBinary(0)
+		r.fpos = r.fseeker.pos
+		if rc == 1 {
+			_, err = r.f.Seek(int64(r.fpos), io.SeekStart)
+			if err != nil {
+				log.Error("QueryLog: file.Seek: %s: %s", fn, err)
+				return false
+			}
+		}
+	}
+	r.nSeekRequests++
+
+	if !r.seekToNewLine() {
+		return false
+	}
+	r.fseeker.pos = r.fpos
+	return true
+}
+
+// Next - return the next entry or nil if reading is finished
 func (r *Reader) Next() *logEntry { // nolint
 	var err error
 	for {
@@ -234,13 +417,17 @@ func (r *Reader) Next() *logEntry { // nolint
 			if r.ifile == len(r.files) {
 				return nil
 			}
-			fn := r.files[r.ifile]
-			r.f, err = os.Open(fn)
-			if err != nil {
-				log.Error("Failed to open file \"%s\": %s", fn, err)
+			if !r.openFile() {
 				r.ifile++
 				continue
 			}
+		}
+
+		if !r.filePrepared {
+			if !r.prepareRead() {
+				return nil
+			}
+			r.filePrepared = true
 		}
 
 		// open decoder if needed
@@ -251,20 +438,60 @@ func (r *Reader) Next() *logEntry { // nolint
 		// check if there's data
 		if !r.jd.More() {
 			r.jd = nil
-			r.f.Close()
-			r.f = nil
-			r.ifile++
-			continue
+			return nil
 		}
 
 		// read data
 		var entry logEntry
 		err = r.jd.Decode(&entry)
 		if err != nil {
-			log.Error("Failed to decode: %s", err)
-			// next entry can be fine, try more
+			log.Error("QueryLog: Failed to decode: %s", err)
+			r.jd = nil
+			return nil
+		}
+
+		t := entry.Time.UnixNano()
+		if r.searching {
+			r.jd = nil
+
+			rr := r.fseeker.seekBinary(uint64(t))
+			r.fpos = r.fseeker.pos
+			if rr < 0 {
+				log.Error("QueryLog: File seek error: can't find the target entry: %s", r.files[r.ifile])
+				return nil
+			} else if rr == 0 {
+				// We found the target entry.
+				// We'll start reading the previous chunk of data.
+				r.searching = false
+
+				off := r.fpos - (maxEntrySize * (r.limit + 1))
+				if int64(off) < maxEntrySize {
+					off = 0
+				}
+				r.fpos = off
+			}
+
+			_, err = r.f.Seek(int64(r.fpos), io.SeekStart)
+			if err != nil {
+				log.Error("QueryLog: file.Seek: %s: %s", r.files[r.ifile], err)
+				return nil
+			}
+			r.nSeekRequests++
+
+			if !r.seekToNewLine() {
+				return nil
+			}
+			r.fseeker.pos = r.fpos
 			continue
 		}
+
+		if t < r.validFrom {
+			continue
+		}
+		if t >= r.olderThan {
+			return nil
+		}
+
 		r.count++
 		return &entry
 	}
@@ -273,58 +500,4 @@ func (r *Reader) Next() *logEntry { // nolint
 // Total returns the total number of items
 func (r *Reader) Total() int {
 	return 0
-}
-
-// Fill cache from file
-func (l *queryLog) fillFromFile() {
-	now := time.Now()
-	validFrom := now.Unix() - int64(l.conf.Interval*60*60)
-	r := l.OpenReader()
-	if r == nil {
-		return
-	}
-
-	r.BeginRead()
-
-	for {
-		entry := r.Next()
-		if entry == nil {
-			break
-		}
-
-		if entry.Time.Unix() < validFrom {
-			continue
-		}
-
-		if len(entry.Question) == 0 {
-			log.Printf("entry question is absent, skipping")
-			continue
-		}
-
-		if entry.Time.After(now) {
-			log.Printf("t %v vs %v is in the future, ignoring", entry.Time, now)
-			continue
-		}
-
-		q := new(dns.Msg)
-		if err := q.Unpack(entry.Question); err != nil {
-			log.Printf("failed to unpack dns message question: %s", err)
-			continue
-		}
-
-		if len(q.Question) != 1 {
-			log.Printf("malformed dns message, has no questions, skipping")
-			continue
-		}
-
-		l.lock.Lock()
-		l.cache = append(l.cache, entry)
-		if len(l.cache) > queryLogSize {
-			toremove := len(l.cache) - queryLogSize
-			l.cache = l.cache[toremove:]
-		}
-		l.lock.Unlock()
-	}
-
-	r.Close()
 }

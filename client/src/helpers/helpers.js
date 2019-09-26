@@ -14,6 +14,7 @@ import {
     STANDARD_WEB_PORT,
     STANDARD_HTTPS_PORT,
     CHECK_TIMEOUT,
+    DNS_RECORD_TYPES,
 } from './constants';
 
 export const formatTime = (time) => {
@@ -318,3 +319,5 @@ export const normalizeWhois = (whois) => {
 
     return whois;
 };
+
+export const isValidQuestionType = type => type && DNS_RECORD_TYPES.includes(type.toUpperCase());

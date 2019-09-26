@@ -21,7 +21,7 @@ type QueryLog interface {
 	Add(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, elapsed time.Duration, addr net.Addr, upstream string)
 
 	// Get log entries
-	GetData() []map[string]interface{}
+	GetData(params GetDataParams) []map[string]interface{}
 
 	// Clear memory buffer and remove log files
 	Clear()
@@ -37,3 +37,23 @@ type Config struct {
 func New(conf Config) QueryLog {
 	return newQueryLog(conf)
 }
+
+// GetDataParams - parameters for GetData()
+type GetDataParams struct {
+	OlderThan         time.Time          // return entries that are older than this value
+	Domain            string             // filter by domain name in question
+	Client            string             // filter by client IP
+	QuestionType      uint16             // filter by question type
+	ResponseStatus    ResponseStatusType // filter by response status
+	StrictMatchDomain bool               // if Domain value must be matched strictly
+	StrictMatchClient bool               // if Client value must be matched strictly
+}
+
+// ResponseStatusType - response status
+type ResponseStatusType int32
+
+// Response status constants
+const (
+	ResponseStatusAll ResponseStatusType = iota + 1
+	ResponseStatusFiltered
+)

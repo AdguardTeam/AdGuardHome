@@ -4,15 +4,19 @@ import apiClient from '../api/Api';
 import { addErrorToast, addSuccessToast } from './index';
 import { normalizeLogs } from '../helpers/helpers';
 
+export const setLogsPagination = createAction('LOGS_PAGINATION');
+export const setLogsFilter = createAction('LOGS_FILTER');
+
 export const getLogsRequest = createAction('GET_LOGS_REQUEST');
 export const getLogsFailure = createAction('GET_LOGS_FAILURE');
 export const getLogsSuccess = createAction('GET_LOGS_SUCCESS');
 
-export const getLogs = () => async (dispatch) => {
+export const getLogs = config => async (dispatch) => {
     dispatch(getLogsRequest());
     try {
-        const logs = normalizeLogs(await apiClient.getQueryLog());
-        dispatch(getLogsSuccess(logs));
+        const { filter, lastRowTime: older_than } = config;
+        const logs = normalizeLogs(await apiClient.getQueryLog({ filter, older_than }));
+        dispatch(getLogsSuccess({ logs, ...config }));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(getLogsFailure(error));

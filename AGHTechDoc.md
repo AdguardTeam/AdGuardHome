@@ -43,6 +43,7 @@ Contents:
 	* API: Set statistics parameters
 	* API: Get statistics parameters
 * Query logs
+	* API: Get query log
 	* API: Set querylog parameters
 	* API: Get querylog parameters
 * Filtering
@@ -1006,6 +1007,92 @@ Response:
 
 
 ## Query logs
+
+When a new DNS request is received and processed, we store information about this event in "query log".  It is a file on disk in JSON format:
+
+	{
+	"Question":"...","
+	Answer":"...",
+	"Result":{
+		"IsFiltered":true,
+		"Reason":3,
+		"Rule":"...",
+		"FilterID":1
+		},
+	"Time":"...",
+	"Elapsed":12345,
+	"IP":"127.0.0.1"
+	}
+
+
+### Adding new data
+
+First, new data is stored in a memory region.  When this array is filled to a particular amount of entries (e.g. 5000), we flush this data to a file and clear the array.
+
+
+### Getting data
+
+When UI asks for data from query log (see "API: Get query log"), server reads the newest entries from memory array and the file.  The maximum number of items returned per one request is limited by configuration.
+
+
+### Removing old data
+
+We store data for a limited amount of time - the log file is automatically rotated.
+
+
+### API: Get query log
+
+Request:
+
+	POST /control/querylog
+
+	{
+	older_than: "2006-01-02T15:04:05.999999999Z07:00" // must be "" for the first request
+
+	filter:{
+		domain: "..."
+		client: "..."
+		question_type: "A" | "AAAA"
+		response_status: "" | "filtered"
+	}
+	}
+
+If `older_than` value is set, server returns the next chunk of entries that are older than this time stamp.  This setting is used for paging.  UI sets this value to `""` on the first request and gets the latest log entries.  To get the older entries, UI sets this value to the timestamp of the last (the oldest) entry from the previous response from Server.
+
+If "filter" settings are set, server returns only entries that match the specified request.
+
+For `filter.domain` and `filter.client` the server matches substrings by default: `adguard.com` matches `www.adguard.com`.  Strict matching can be enabled by enclosing the value in double quotes: `"adguard.com"` matches `adguard.com` but doesn't match `www.adguard.com`.
+
+Response:
+
+	[
+	{
+		"answer":[
+			{
+			"ttl":10,
+			"type":"AAAA",
+			"value":"::"
+			}
+			...
+		],
+		"client":"127.0.0.1",
+		"elapsedMs":"0.098403",
+		"filterId":1,
+		"question":{
+			"class":"IN",
+			"host":"doubleclick.net",
+			"type":"AAAA"
+		},
+		"reason":"FilteredBlackList",
+		"rule":"||doubleclick.net^",
+		"status":"NOERROR",
+		"time":"2006-01-02T15:04:05.999999999Z07:00"
+	}
+	...
+	]
+
+The most recent entries are at the top of list.
+
 
 ### API: Set querylog parameters
 
