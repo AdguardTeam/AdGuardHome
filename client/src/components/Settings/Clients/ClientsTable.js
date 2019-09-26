@@ -6,7 +6,8 @@ import ReactTable from 'react-table';
 import { MODAL_TYPE, CLIENT_ID } from '../../../helpers/constants';
 import Card from '../../ui/Card';
 import Modal from './Modal';
-import wrapCell from './wrapCell';
+import WrapCell from './WrapCell';
+
 import whoisCell from './whoisCell';
 
 class ClientsTable extends Component {
@@ -103,7 +104,7 @@ class ClientsTable extends Component {
             Header: this.props.t('table_name'),
             accessor: 'name',
             minWidth: 120,
-            Cell: wrapCell,
+            Cell: WrapCell,
         },
         {
             Header: this.props.t('settings'),

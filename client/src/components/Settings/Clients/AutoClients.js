@@ -4,8 +4,11 @@ import { withNamespaces } from 'react-i18next';
 import ReactTable from 'react-table';
 
 import Card from '../../ui/Card';
+import WrapCell from './WrapCell';
+
 import whoisCell from './whoisCell';
-import wrapCell from './wrapCell';
+
+const COLUMN_MIN_WIDTH = 200;
 
 class AutoClients extends Component {
     getStats = (ip, stats) => {
@@ -21,31 +24,31 @@ class AutoClients extends Component {
         {
             Header: this.props.t('table_client'),
             accessor: 'ip',
-            minWidth: 200,
-            Cell: wrapCell,
+            minWidth: COLUMN_MIN_WIDTH,
+            Cell: WrapCell,
         },
         {
             Header: this.props.t('table_name'),
             accessor: 'name',
-            minWidth: 200,
-            Cell: wrapCell,
+            minWidth: COLUMN_MIN_WIDTH,
+            Cell: WrapCell,
         },
         {
             Header: this.props.t('source_label'),
             accessor: 'source',
-            minWidth: 200,
-            Cell: wrapCell,
+            minWidth: COLUMN_MIN_WIDTH,
+            Cell: WrapCell,
         },
         {
             Header: this.props.t('whois'),
             accessor: 'whois_info',
-            minWidth: 200,
+            minWidth: COLUMN_MIN_WIDTH,
             Cell: whoisCell(this.props.t),
         },
         {
             Header: this.props.t('requests_count'),
             accessor: 'statistics',
-            minWidth: 200,
+            minWidth: COLUMN_MIN_WIDTH,
             Cell: (row) => {
                 const clientIP = row.original.ip;
                 const clientStats = clientIP && this.getStats(clientIP, this.props.topClients);

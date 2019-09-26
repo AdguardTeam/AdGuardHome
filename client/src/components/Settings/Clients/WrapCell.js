@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const wrapCell = ({ value }) => (
+const WrapCell = ({ value }) => (
     <div className="logs__row logs__row--overflow">
         <span className="logs__text" title={value}>
             {value || '–'}
@@ -9,8 +9,8 @@ const wrapCell = ({ value }) => (
     </div>
 );
 
-wrapCell.propTypes = {
+WrapCell.propTypes = {
     value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
-export default wrapCell;
+export default WrapCell;
