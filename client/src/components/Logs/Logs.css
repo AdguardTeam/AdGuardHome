@@ -129,3 +129,25 @@
     white-space: nowrap;
     overflow: hidden;
 }
+
+.logs__whois {
+    display: inline;
+}
+
+.logs__whois::after {
+    content: "|";
+    padding: 0 5px;
+}
+
+.logs__whois:last-child::after {
+    content: "";
+}
+
+.logs__whois-icon.icons {
+    position: relative;
+    top: -2px;
+    width: 16px;
+    height: 16px;
+    margin-right: 2px;
+    opacity: 0.6;
+}

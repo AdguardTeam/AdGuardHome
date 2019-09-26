@@ -10,10 +10,7 @@ const WrapCell = ({ value }) => (
 );
 
 WrapCell.propTypes = {
-    value: PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.number,
-    ]),
+    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default WrapCell;

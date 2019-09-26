@@ -8,6 +8,8 @@ import (
 	whois "github.com/likexian/whois-go"
 )
 
+const maxValueLength = 250
+
 // Whois - module context
 type Whois struct {
 	clients *clientsContainer
@@ -26,9 +28,19 @@ func initWhois(clients *clientsContainer) *Whois {
 	return &w
 }
 
+// If the value is too large - cut it and append "..."
+func trimValue(s string) string {
+	if len(s) <= maxValueLength {
+		return s
+	}
+	return s[:maxValueLength-3] + "..."
+}
+
 // Parse plain-text data from the response
 func whoisParse(data string) map[string]string {
 	m := map[string]string{}
+	descr := ""
+	netname := ""
 	lines := strings.Split(data, "\n")
 	for _, ln := range lines {
 		ln = strings.TrimSpace(ln)
@@ -45,14 +57,31 @@ func whoisParse(data string) map[string]string {
 		k = strings.ToLower(k)
 		v := strings.TrimSpace(kv[1])
 
-		if k == "orgname" || k == "org-name" {
-			m["orgname"] = v
-		} else if k == "city" {
-			m["city"] = v
-		} else if k == "country" {
-			m["country"] = v
+		switch k {
+		case "org-name":
+			m["orgname"] = trimValue(v)
+		case "orgname":
+			fallthrough
+		case "city":
+			fallthrough
+		case "country":
+			m[k] = trimValue(v)
+
+		case "descr":
+			descr = v
+		case "netname":
+			netname = v
 		}
 	}
+
+	// descr or netname -> orgname
+	_, ok := m["orgname"]
+	if !ok && len(descr) != 0 {
+		m["orgname"] = trimValue(descr)
+	} else if !ok && len(netname) != 0 {
+		m["orgname"] = trimValue(netname)
+	}
+
 	return m
 }
 

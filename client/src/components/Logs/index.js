@@ -191,7 +191,7 @@ class Logs extends Component {
     };
 
     getClientCell = ({ original, value }) => {
-        const { dashboard } = this.props;
+        const { dashboard, t } = this.props;
         const { clients, autoClients } = dashboard;
         const { reason, domain } = original;
         const isFiltered = this.checkFiltered(reason);
@@ -200,7 +200,7 @@ class Logs extends Component {
         return (
             <Fragment>
                 <div className="logs__row logs__row--overflow logs__row--column">
-                    {formatClientCell(value, clients, autoClients)}
+                    {formatClientCell(value, clients, autoClients, t)}
                 </div>
                 {isRewrite ? (
                     <div className="logs__action">

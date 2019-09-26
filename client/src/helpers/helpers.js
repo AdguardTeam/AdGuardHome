@@ -245,21 +245,6 @@ export const redirectToCurrentProtocol = (values, httpPort = 80) => {
 
 export const normalizeTextarea = text => text && text.replace(/[;, ]/g, '\n').split('\n').filter(n => n);
 
-const formatWhois = (whois) => {
-    if (!whois) {
-        return '';
-    }
-
-    const keys = Object.keys(whois);
-    if (keys.length > 0) {
-        return (
-            keys.map(key => whois[key])
-        );
-    }
-
-    return '';
-};
-
 export const getClientInfo = (clients, ip) => {
     const client = clients.find(item => ip === item.ip);
 
@@ -268,8 +253,7 @@ export const getClientInfo = (clients, ip) => {
     }
 
     const { name, whois_info } = client;
-    const formattedWhois = formatWhois(whois_info);
-    const whois = formattedWhois && formattedWhois.length > 0 && formattedWhois.join(' | ');
+    const whois = Object.keys(whois_info).length > 0 ? whois_info : '';
 
     return { name, whois };
 };
@@ -308,3 +292,29 @@ export const normalizeRulesTextarea = text => text && text.replace(/^\n/g, '').r
 export const isVersionGreater = (currentVersion, previousVersion) => (
     versionCompare(currentVersion, previousVersion) === -1
 );
+
+export const normalizeWhois = (whois) => {
+    if (Object.keys(whois).length > 0) {
+        const {
+            city, country, ...values
+        } = whois;
+        let location = (country && country) || '';
+
+        if (city && location) {
+            location = `${location}, ${city}`;
+        } else if (city) {
+            location = city;
+        }
+
+        if (location) {
+            return {
+                location,
+                ...values,
+            };
+        }
+
+        return { ...values };
+    }
+
+    return whois;
+};

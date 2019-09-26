@@ -7,7 +7,8 @@ import { MODAL_TYPE, CLIENT_ID } from '../../../helpers/constants';
 import Card from '../../ui/Card';
 import Modal from './Modal';
 import WrapCell from './WrapCell';
-import WhoisCell from './WhoisCell';
+
+import whoisCell from './whoisCell';
 
 class ClientsTable extends Component {
     handleFormAdd = (values) => {
@@ -138,11 +139,17 @@ class ClientsTable extends Component {
 
                 return (
                     <div className="logs__row logs__row--icons">
-                        {value && value.length > 0 ? value.map(service => (
-                            <svg className="service__icon service__icon--table" title={service} key={service}>
-                                <use xlinkHref={`#service_${service}`} />
-                            </svg>
-                        )) : '–'}
+                        {value && value.length > 0
+                            ? value.map(service => (
+                                  <svg
+                                      className="service__icon service__icon--table"
+                                      title={service}
+                                      key={service}
+                                  >
+                                      <use xlinkHref={`#service_${service}`} />
+                                  </svg>
+                            ))
+                            : '–'}
                     </div>
                 );
             },
@@ -151,7 +158,7 @@ class ClientsTable extends Component {
             Header: this.props.t('whois'),
             accessor: 'whois_info',
             minWidth: 200,
-            Cell: WhoisCell,
+            Cell: whoisCell(this.props.t),
         },
         {
             Header: this.props.t('requests_count'),

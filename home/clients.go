@@ -206,6 +206,12 @@ func (clients *clientsContainer) Add(c Client) (bool, error) {
 		}
 	}
 
+	ch, ok := clients.ipHost[c.IP]
+	if ok {
+		c.WhoisInfo = ch.WhoisInfo
+		delete(clients.ipHost, c.IP)
+	}
+
 	clients.list[c.Name] = &c
 	if len(c.IP) != 0 {
 		clients.ipIndex[c.IP] = &c
@@ -287,12 +293,14 @@ func (clients *clientsContainer) SetWhoisInfo(ip string, info [][]string) {
 	if ok {
 		c.WhoisInfo = info
 		log.Debug("Clients: set WHOIS info for client %s: %v", c.Name, c.WhoisInfo)
+		return
 	}
 
 	ch, ok := clients.ipHost[ip]
 	if ok {
 		ch.WhoisInfo = info
 		log.Debug("Clients: set WHOIS info for auto-client %s: %v", ch.Host, ch.WhoisInfo)
+		return
 	}
 
 	ch = ClientHost{
@@ -309,6 +317,12 @@ func (clients *clientsContainer) SetWhoisInfo(ip string, info [][]string) {
 func (clients *clientsContainer) AddHost(ip, host string, source clientSource) (bool, error) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
+
+	// check index
+	_, ok := clients.ipIndex[ip]
+	if ok {
+		return false, nil
+	}
 
 	// check index
 	c, ok := clients.ipHost[ip]
