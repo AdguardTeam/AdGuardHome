@@ -30,20 +30,6 @@ type logSettings struct {
 	Verbose bool   `yaml:"verbose"`  // If true, verbose logging is enabled
 }
 
-type clientObject struct {
-	Name                string `yaml:"name"`
-	IP                  string `yaml:"ip"`
-	MAC                 string `yaml:"mac"`
-	UseGlobalSettings   bool   `yaml:"use_global_settings"`
-	FilteringEnabled    bool   `yaml:"filtering_enabled"`
-	ParentalEnabled     bool   `yaml:"parental_enabled"`
-	SafeSearchEnabled   bool   `yaml:"safebrowsing_enabled"`
-	SafeBrowsingEnabled bool   `yaml:"safesearch_enabled"`
-
-	UseGlobalBlockedServices bool     `yaml:"use_global_blocked_services"`
-	BlockedServices          []string `yaml:"blocked_services"`
-}
-
 type HTTPSServer struct {
 	server     *http.Server
 	cond       *sync.Cond // reacts to config.TLS.Enabled, PortHTTPS, CertificateChain and PrivateKey
@@ -285,27 +271,6 @@ func parseConfig() error {
 		config.DNS.FiltersUpdateIntervalHours = 24
 	}
 
-	for _, cy := range config.Clients {
-		cli := Client{
-			Name:                cy.Name,
-			IP:                  cy.IP,
-			MAC:                 cy.MAC,
-			UseOwnSettings:      !cy.UseGlobalSettings,
-			FilteringEnabled:    cy.FilteringEnabled,
-			ParentalEnabled:     cy.ParentalEnabled,
-			SafeSearchEnabled:   cy.SafeSearchEnabled,
-			SafeBrowsingEnabled: cy.SafeBrowsingEnabled,
-
-			UseOwnBlockedServices: !cy.UseGlobalBlockedServices,
-			BlockedServices:       cy.BlockedServices,
-		}
-		_, err = config.clients.Add(cli)
-		if err != nil {
-			log.Tracef("clientAdd: %s", err)
-		}
-	}
-	config.Clients = nil
-
 	status := tlsConfigStatus{}
 	if !tlsLoadConfig(&config.TLS, &status) {
 		log.Error("%s", status.WarningValidation)
@@ -335,27 +300,7 @@ func (c *configuration) write() error {
 	c.Lock()
 	defer c.Unlock()
 
-	clientsList := config.clients.GetList()
-	for _, cli := range clientsList {
-		ip := cli.IP
-		if len(cli.MAC) != 0 {
-			ip = ""
-		}
-		cy := clientObject{
-			Name:                cli.Name,
-			IP:                  ip,
-			MAC:                 cli.MAC,
-			UseGlobalSettings:   !cli.UseOwnSettings,
-			FilteringEnabled:    cli.FilteringEnabled,
-			ParentalEnabled:     cli.ParentalEnabled,
-			SafeSearchEnabled:   cli.SafeSearchEnabled,
-			SafeBrowsingEnabled: cli.SafeBrowsingEnabled,
-
-			UseGlobalBlockedServices: !cli.UseOwnBlockedServices,
-			BlockedServices:          cli.BlockedServices,
-		}
-		config.Clients = append(config.Clients, cy)
-	}
+	config.clients.WriteDiskConfig(&config.Clients)
 
 	if config.auth != nil {
 		config.Users = config.auth.GetUsers()

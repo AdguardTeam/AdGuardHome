@@ -98,7 +98,6 @@ func run(args options) {
 	}()
 
 	initConfig()
-	config.clients.Init()
 	initServices()
 
 	if !config.firstRun {
@@ -118,6 +117,9 @@ func run(args options) {
 			os.Exit(0)
 		}
 	}
+
+	config.clients.Init(config.Clients)
+	config.Clients = nil
 
 	if (runtime.GOOS == "linux" || runtime.GOOS == "darwin") &&
 		config.RlimitNoFile != 0 {

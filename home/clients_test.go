@@ -12,11 +12,11 @@ func TestClients(t *testing.T) {
 	var b bool
 	clients := clientsContainer{}
 
-	clients.Init()
+	clients.Init(nil)
 
 	// add
 	c = Client{
-		IP:   "1.1.1.1",
+		IDs:  []string{"1.1.1.1", "aa:aa:aa:aa:aa:aa"},
 		Name: "client1",
 	}
 	b, e = clients.Add(c)
@@ -26,7 +26,7 @@ func TestClients(t *testing.T) {
 
 	// add #2
 	c = Client{
-		IP:   "2.2.2.2",
+		IDs:  []string{"2.2.2.2"},
 		Name: "client2",
 	}
 	b, e = clients.Add(c)
@@ -46,7 +46,7 @@ func TestClients(t *testing.T) {
 
 	// failed add - name in use
 	c = Client{
-		IP:   "1.2.3.5",
+		IDs:  []string{"1.2.3.5"},
 		Name: "client1",
 	}
 	b, _ = clients.Add(c)
@@ -56,7 +56,7 @@ func TestClients(t *testing.T) {
 
 	// failed add - ip in use
 	c = Client{
-		IP:   "2.2.2.2",
+		IDs:  []string{"2.2.2.2"},
 		Name: "client3",
 	}
 	b, e = clients.Add(c)
@@ -70,35 +70,45 @@ func TestClients(t *testing.T) {
 	assert.True(t, clients.Exists("2.2.2.2", ClientSourceHostsFile))
 
 	// failed update - no such name
-	c.IP = "1.2.3.0"
+	c.IDs = []string{"1.2.3.0"}
 	c.Name = "client3"
 	if clients.Update("client3", c) == nil {
 		t.Fatalf("Update")
 	}
 
 	// failed update - name in use
-	c.IP = "1.2.3.0"
+	c.IDs = []string{"1.2.3.0"}
 	c.Name = "client2"
 	if clients.Update("client1", c) == nil {
 		t.Fatalf("Update - name in use")
 	}
 
 	// failed update - ip in use
-	c.IP = "2.2.2.2"
+	c.IDs = []string{"2.2.2.2"}
 	c.Name = "client1"
 	if clients.Update("client1", c) == nil {
 		t.Fatalf("Update - ip in use")
 	}
 
 	// update
-	c.IP = "1.1.1.2"
+	c.IDs = []string{"1.1.1.2"}
 	c.Name = "client1"
 	if clients.Update("client1", c) != nil {
 		t.Fatalf("Update")
 	}
 
 	// get after update
-	assert.True(t, !(clients.Exists("1.1.1.1", ClientSourceHostsFile) || !clients.Exists("1.1.1.2", ClientSourceHostsFile)))
+	assert.True(t, !clients.Exists("1.1.1.1", ClientSourceHostsFile))
+	assert.True(t, clients.Exists("1.1.1.2", ClientSourceHostsFile))
+
+	// update - rename
+	c.IDs = []string{"1.1.1.2"}
+	c.Name = "client1-renamed"
+	c.UseOwnSettings = true
+	assert.True(t, clients.Update("client1", c) == nil)
+	c = Client{}
+	c, b = clients.Find("1.1.1.2")
+	assert.True(t, b && c.Name == "client1-renamed" && c.IDs[0] == "1.1.1.2" && c.UseOwnSettings)
 
 	// failed remove - no such name
 	if clients.Del("client3") {
@@ -106,7 +116,7 @@ func TestClients(t *testing.T) {
 	}
 
 	// remove
-	assert.True(t, !(!clients.Del("client1") || clients.Exists("1.1.1.2", ClientSourceHostsFile)))
+	assert.True(t, !(!clients.Del("client1-renamed") || clients.Exists("1.1.1.2", ClientSourceHostsFile)))
 
 	// add host client
 	b, e = clients.AddHost("1.1.1.1", "host", ClientSourceARP)
@@ -139,7 +149,7 @@ func TestClients(t *testing.T) {
 func TestClientsWhois(t *testing.T) {
 	var c Client
 	clients := clientsContainer{}
-	clients.Init()
+	clients.Init(nil)
 
 	whois := [][]string{{"orgname", "orgname-val"}, {"country", "country-val"}}
 	// set whois info on new client
@@ -153,11 +163,11 @@ func TestClientsWhois(t *testing.T) {
 
 	// set whois info on existing client
 	c = Client{
-		IP:   "1.1.1.2",
+		IDs:  []string{"1.1.1.2"},
 		Name: "client1",
 	}
 	_, _ = clients.Add(c)
 	clients.SetWhoisInfo("1.1.1.2", whois)
-	assert.True(t, clients.ipIndex["1.1.1.2"].WhoisInfo[0][1] == "orgname-val")
+	assert.True(t, clients.idIndex["1.1.1.2"].WhoisInfo[0][1] == "orgname-val")
 	_ = clients.Del("client1")
 }

@@ -684,6 +684,21 @@ func (s *Server) FindIPbyMAC(mac net.HardwareAddr) net.IP {
 	return nil
 }
 
+// FindMACbyIP - find a MAC address by IP address in the currently active DHCP leases
+func (s *Server) FindMACbyIP(ip net.IP) net.HardwareAddr {
+	now := time.Now().Unix()
+
+	s.leasesLock.RLock()
+	defer s.leasesLock.RUnlock()
+
+	for _, l := range s.leases {
+		if l.Expiry.Unix() > now && l.IP.Equal(ip) {
+			return l.HWAddr
+		}
+	}
+	return nil
+}
+
 // Reset internal state
 func (s *Server) reset() {
 	s.leasesLock.Lock()
