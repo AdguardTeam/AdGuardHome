@@ -1,16 +1,18 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { withNamespaces, Trans } from 'react-i18next';
-import debounce from 'lodash/debounce';
+import { withNamespaces } from 'react-i18next';
 
-import { DEBOUNCE_TIMEOUT } from '../../../helpers/constants';
 import Card from '../../ui/Card';
 import Form from './Form';
 
 class StatsConfig extends Component {
-    handleFormChange = debounce((values) => {
-        this.props.setStatsConfig(values);
-    }, DEBOUNCE_TIMEOUT);
+    handleFormSubmit = (values) => {
+        const { t } = this.props;
+        // eslint-disable-next-line no-alert
+        if (window.confirm(t('statistics_retention_confirm'))) {
+            this.props.setStatsConfig(values);
+        }
+    };
 
     handleReset = () => {
         const { t, resetStats } = this.props;
@@ -29,22 +31,12 @@ class StatsConfig extends Component {
             <Card title={t('statistics_configuration')} bodyType="card-body box-body--settings">
                 <div className="form">
                     <Form
-                        initialValues={{
-                            interval,
-                        }}
-                        onSubmit={this.handleFormChange}
-                        onChange={this.handleFormChange}
+                        initialValues={{ interval }}
+                        onSubmit={this.handleFormSubmit}
                         processing={processing}
+                        processingReset={processingReset}
+                        handleReset={this.handleReset}
                     />
-
-                    <button
-                        type="button"
-                        className="btn btn-outline-secondary btn-sm"
-                        onClick={this.handleReset}
-                        disabled={processingReset}
-                    >
-                        <Trans>statistics_clear</Trans>
-                    </button>
                 </div>
             </Card>
         );

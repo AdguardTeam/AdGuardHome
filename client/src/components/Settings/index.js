@@ -102,15 +102,6 @@ class Settings extends Component {
                                 </Card>
                             </div>
                             <div className="col-md-12">
-                                <StatsConfig
-                                    interval={stats.interval}
-                                    processing={stats.processingSetConfig}
-                                    processingReset={stats.processingReset}
-                                    setStatsConfig={setStatsConfig}
-                                    resetStats={resetStats}
-                                />
-                            </div>
-                            <div className="col-md-12">
                                 <LogsConfig
                                     enabled={queryLogs.enabled}
                                     interval={queryLogs.interval}
@@ -118,6 +109,15 @@ class Settings extends Component {
                                     processingClear={queryLogs.processingClear}
                                     setLogsConfig={setLogsConfig}
                                     clearLogs={clearLogs}
+                                />
+                            </div>
+                            <div className="col-md-12">
+                                <StatsConfig
+                                    interval={stats.interval}
+                                    processing={stats.processingSetConfig}
+                                    processingReset={stats.processingReset}
+                                    setStatsConfig={setStatsConfig}
+                                    resetStats={resetStats}
                                 />
                             </div>
                             <div className="col-md-12">

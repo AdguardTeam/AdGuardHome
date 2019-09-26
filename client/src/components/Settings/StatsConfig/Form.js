@@ -7,7 +7,7 @@ import flow from 'lodash/flow';
 import { renderRadioField, toNumber } from '../../../helpers/form';
 import { STATS_INTERVALS_DAYS } from '../../../helpers/constants';
 
-const getIntervalFields = (processing, t, handleChange, toNumber) =>
+const getIntervalFields = (processing, t, toNumber) =>
     STATS_INTERVALS_DAYS.map((interval) => {
         const title =
             interval === 1 ? t('interval_24_hour') : t('interval_days', { count: interval });
@@ -20,7 +20,6 @@ const getIntervalFields = (processing, t, handleChange, toNumber) =>
                 component={renderRadioField}
                 value={interval}
                 placeholder={title}
-                onChange={handleChange}
                 normalize={toNumber}
                 disabled={processing}
             />
@@ -29,27 +28,38 @@ const getIntervalFields = (processing, t, handleChange, toNumber) =>
 
 const Form = (props) => {
     const {
-        handleSubmit, handleChange, processing, t,
+        handleSubmit, processing, submitting, invalid, handleReset, processingReset, t,
     } = props;
 
     return (
         <form onSubmit={handleSubmit}>
-            <div className="row">
-                <div className="col-12">
-                    <label className="form__label form__label--with-desc">
-                        <Trans>statistics_retention</Trans>
-                    </label>
-                    <div className="form__desc form__desc--top">
-                        <Trans>statistics_retention_desc</Trans>
-                    </div>
+            <label className="form__label form__label--with-desc">
+                <Trans>statistics_retention</Trans>
+            </label>
+            <div className="form__desc form__desc--top">
+                <Trans>statistics_retention_desc</Trans>
+            </div>
+            <div className="form__group form__group--settings mt-2">
+                <div className="custom-controls-stacked">
+                    {getIntervalFields(processing, t, toNumber)}
                 </div>
-                <div className="col-12">
-                    <div className="form__group form__group--settings mt-2">
-                        <div className="custom-controls-stacked">
-                            {getIntervalFields(processing, t, handleChange, toNumber)}
-                        </div>
-                    </div>
-                </div>
+            </div>
+            <div className="mt-5">
+                <button
+                    type="submit"
+                    className="btn btn-success btn-standard btn-large"
+                    disabled={submitting || invalid || processing}
+                >
+                    <Trans>save_btn</Trans>
+                </button>
+                <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-standard ml-5"
+                    onClick={() => handleReset()}
+                    disabled={processingReset}
+                >
+                    <Trans>statistics_clear</Trans>
+                </button>
             </div>
         </form>
     );
@@ -57,11 +67,12 @@ const Form = (props) => {
 
 Form.propTypes = {
     handleSubmit: PropTypes.func.isRequired,
-    handleChange: PropTypes.func,
+    handleReset: PropTypes.func.isRequired,
     change: PropTypes.func.isRequired,
     submitting: PropTypes.bool.isRequired,
     invalid: PropTypes.bool.isRequired,
     processing: PropTypes.bool.isRequired,
+    processingReset: PropTypes.bool.isRequired,
     t: PropTypes.func.isRequired,
 };
 

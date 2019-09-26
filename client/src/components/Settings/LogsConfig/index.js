@@ -1,16 +1,24 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { withNamespaces, Trans } from 'react-i18next';
-import debounce from 'lodash/debounce';
+import { withNamespaces } from 'react-i18next';
 
-import { DEBOUNCE_TIMEOUT } from '../../../helpers/constants';
 import Card from '../../ui/Card';
 import Form from './Form';
 
 class LogsConfig extends Component {
-    handleFormChange = debounce((values) => {
-        this.props.setLogsConfig(values);
-    }, DEBOUNCE_TIMEOUT);
+    handleFormSubmit = (values) => {
+        const { t, interval: prevInterval } = this.props;
+        const { interval } = values;
+
+        if (interval !== prevInterval) {
+            // eslint-disable-next-line no-alert
+            if (window.confirm(t('query_log_retention_confirm'))) {
+                this.props.setLogsConfig(values);
+            }
+        } else {
+            this.props.setLogsConfig(values);
+        }
+    };
 
     handleClear = () => {
         const { t, clearLogs } = this.props;
@@ -37,19 +45,11 @@ class LogsConfig extends Component {
                             enabled,
                             interval,
                         }}
-                        onSubmit={this.handleFormChange}
-                        onChange={this.handleFormChange}
+                        onSubmit={this.handleFormSubmit}
                         processing={processing}
+                        processingClear={processingClear}
+                        handleClear={this.handleClear}
                     />
-
-                    <button
-                        type="button"
-                        className="btn btn-outline-secondary btn-sm"
-                        onClick={this.handleClear}
-                        disabled={processingClear}
-                    >
-                        <Trans>query_log_clear</Trans>
-                    </button>
                 </div>
             </Card>
         );
