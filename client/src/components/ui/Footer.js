@@ -32,7 +32,7 @@ class Footer extends Component {
                                 <div className="footer__column">
                                     <div className="footer__copyright">
                                         <Trans>copyright</Trans> &copy; {this.getYear()}{' '}
-                                        <a href="https://adguard.com/">AdGuard</a>
+                                        <a target="_blank" href="https://adguard.com/">AdGuard</a>
                                     </div>
                                 </div>
                             )}
@@ -85,7 +85,7 @@ class Footer extends Component {
                                 <div className="footer__column">
                                     <div className="footer__copyright">
                                         <Trans>copyright</Trans> &copy; {this.getYear()}{' '}
-                                        <a href="https://adguard.com/">AdGuard</a>
+                                        <a target="_blank" href="https://adguard.com/">AdGuard</a>
                                     </div>
                                 </div>
                                 <div className="footer__column footer__column--language">
