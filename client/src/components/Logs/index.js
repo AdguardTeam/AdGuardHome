@@ -265,7 +265,7 @@ class Logs extends Component {
     fetchData = (state) => {
         const { pageSize, page, pages } = state;
         const { allLogs, filter } = this.props.queryLogs;
-        const isLastPage = page + 1 === pages;
+        const isLastPage = pages && (page + 1 === pages);
 
         if (isLastPage) {
             const lastRow = allLogs[allLogs.length - 1];

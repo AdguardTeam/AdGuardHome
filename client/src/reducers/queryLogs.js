@@ -90,7 +90,7 @@ const queryLogs = handleActions(
         logs: [],
         interval: 1,
         allLogs: [],
-        pages: 1,
+        pages: 0,
         total: 0,
         enabled: true,
         older_than: '',
