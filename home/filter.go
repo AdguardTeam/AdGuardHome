@@ -370,11 +370,17 @@ func (filter *filter) update() (bool, error) {
 		return false, nil
 	}
 
-	if !isPrintableText(body[:4096]) {
+	var firstChunk []byte
+	if len(body) <= 4096 {
+		firstChunk = body
+	} else {
+		firstChunk = body[:4096]
+	}
+	if !isPrintableText(firstChunk) {
 		return false, fmt.Errorf("Data contains non-printable characters")
 	}
 
-	s := strings.ToLower(string(body[:4096]))
+	s := strings.ToLower(string(firstChunk))
 	if strings.Index(s, "<html") >= 0 ||
 		strings.Index(s, "<!doctype") >= 0 {
 		return false, fmt.Errorf("Data is HTML, not plain text")
