@@ -380,7 +380,6 @@ func createTestServer(t *testing.T) *Server {
 	s.conf.UDPListenAddr = &net.UDPAddr{Port: 0}
 	s.conf.TCPListenAddr = &net.TCPAddr{Port: 0}
 
-	s.conf.QueryLogEnabled = true
 	s.conf.FilteringConfig.FilteringEnabled = true
 	s.conf.FilteringConfig.ProtectionEnabled = true
 	s.conf.FilteringConfig.SafeBrowsingEnabled = true

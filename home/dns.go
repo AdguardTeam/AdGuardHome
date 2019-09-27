@@ -48,8 +48,11 @@ func initDNSServer() {
 		log.Fatal("Couldn't initialize statistics module")
 	}
 	conf := querylog.Config{
-		BaseDir:  baseDir,
-		Interval: config.DNS.QueryLogInterval * 24,
+		Enabled:        config.DNS.QueryLogEnabled,
+		BaseDir:        baseDir,
+		Interval:       config.DNS.QueryLogInterval,
+		ConfigModified: onConfigModified,
+		HTTPRegister:   httpRegister,
 	}
 	config.queryLog = querylog.New(conf)
 	config.dnsServer = dnsforward.NewServer(config.stats, config.queryLog)

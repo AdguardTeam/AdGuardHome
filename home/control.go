@@ -111,7 +111,6 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		"http_port":          config.BindPort,
 		"dns_port":           config.DNS.Port,
 		"protection_enabled": config.DNS.ProtectionEnabled,
-		"querylog_enabled":   config.DNS.QueryLogEnabled,
 		"running":            isRunning(),
 		"bootstrap_dns":      config.DNS.BootstrapDNS,
 		"upstream_dns":       config.DNS.UpstreamDNS,
@@ -568,7 +567,6 @@ func registerControlHandlers() {
 	RegisterClientsHandlers()
 	registerRewritesHandlers()
 	RegisterBlockedServicesHandlers()
-	RegisterQueryLogHandlers()
 	RegisterAuthHandlers()
 
 	http.HandleFunc("/dns-query", postInstall(handleDOH))
