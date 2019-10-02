@@ -29,7 +29,9 @@ func onConfigModified() {
 // initDNSServer creates an instance of the dnsforward.Server
 // Please note that we must do it even if we don't start it
 // so that we had access to the query log and the stats
-func initDNSServer(baseDir string) {
+func initDNSServer() {
+	baseDir := config.getDataDir()
+
 	err := os.MkdirAll(baseDir, 0755)
 	if err != nil {
 		log.Fatalf("Cannot create DNS data dir at %s: %s", baseDir, err)
@@ -52,7 +54,7 @@ func initDNSServer(baseDir string) {
 	config.queryLog = querylog.New(conf)
 	config.dnsServer = dnsforward.NewServer(config.stats, config.queryLog)
 
-	sessFilename := filepath.Join(config.ourWorkingDir, "data/sessions.db")
+	sessFilename := filepath.Join(baseDir, "sessions.db")
 	config.auth = InitAuth(sessFilename, config.Users)
 	config.Users = nil
 
@@ -65,6 +67,7 @@ func isRunning() bool {
 	return config.dnsServer != nil && config.dnsServer.IsRunning()
 }
 
+// nolint (gocyclo)
 // Return TRUE if IP is within public Internet IP range
 func isPublicIP(ip net.IP) bool {
 	ip4 := ip.To4()

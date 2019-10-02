@@ -3,6 +3,7 @@ package home
 import (
 	"encoding/hex"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -10,13 +11,17 @@ import (
 )
 
 func TestAuth(t *testing.T) {
-	fn := "./sessions.db"
+	config.ourWorkingDir = "."
+	fn := filepath.Join(config.getDataDir(), "sessions.db")
+
+	_ = os.RemoveAll(config.getDataDir())
+	defer func() { _ = os.RemoveAll(config.getDataDir()) }()
+
 	users := []User{
 		User{Name: "name", PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2"},
 	}
 
-	os.Remove(fn)
-	config.ourWorkingDir = "."
+	os.MkdirAll(config.getDataDir(), 0755)
 	a := InitAuth(fn, users)
 
 	assert.True(t, a.CheckSession("notfound") == -1)

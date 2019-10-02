@@ -38,6 +38,9 @@ linters:
     - gochecknoinits
     - prealloc
     - maligned
+    - godox
+    - funlen
+    - whitespace
     - goconst # disabled until it's possible to configure
   fast: true
 

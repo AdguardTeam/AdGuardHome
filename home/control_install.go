@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/http"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 
 	"github.com/AdguardTeam/golibs/log"
@@ -236,8 +235,7 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	config.DNS.BindHost = newSettings.DNS.IP
 	config.DNS.Port = newSettings.DNS.Port
 
-	dnsBaseDir := filepath.Join(config.ourWorkingDir, dataDir)
-	initDNSServer(dnsBaseDir)
+	initDNSServer()
 
 	err = startDNSServer()
 	if err != nil {
@@ -263,7 +261,7 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	// until all requests are finished, and _we_ are inside a request right now, so it will block indefinitely
 	if restartHTTP {
 		go func() {
-			config.httpServer.Shutdown(context.TODO())
+			_ = config.httpServer.Shutdown(context.TODO())
 		}()
 	}
 

@@ -12,6 +12,7 @@
 /querylog.json
 /querylog.json.1
 /a_main-packr.go
+coverage.txt
 
 # Test output
 dnsfilter/tests/top-1m.csv

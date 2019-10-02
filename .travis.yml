@@ -3,7 +3,6 @@ sudo: false
 
 go:
   - 1.12.x
-  - 1.x
 os:
   - linux
   - osx
@@ -11,6 +10,7 @@ os:
 before_install:
   - nvm install node
   - npm install -g npm
+  - curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.19.1
 
 install:
   - npm --prefix client install
@@ -22,13 +22,7 @@ cache:
     - $HOME/Library/Caches/go-build
 
 script:
-  - node -v
-  - npm -v
-  # Run tests
-  - go test -race -v -bench=. -coverprofile=coverage.txt -covermode=atomic ./...
-  # Make
-  - make build/static/index.html
-  - make
+  - /bin/bash ci.sh
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

@@ -239,6 +239,11 @@ func (c *configuration) getConfigFilename() string {
 	return configFile
 }
 
+// getDataDir returns path to the directory where we store databases and filters
+func (c *configuration) getDataDir() string {
+	return filepath.Join(c.ourWorkingDir, dataDir)
+}
+
 // getLogSettings reads logging settings from the config file.
 // we do it in a separate method in order to configure logger before the actual configuration is parsed and applied.
 func getLogSettings() logSettings {

@@ -142,8 +142,7 @@ func run(args options) {
 			log.Fatal(err)
 		}
 
-		dnsBaseDir := filepath.Join(config.ourWorkingDir, dataDir)
-		initDNSServer(dnsBaseDir)
+		initDNSServer()
 
 		err = startDNSServer()
 		if err != nil {
