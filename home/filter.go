@@ -448,7 +448,7 @@ func (filter *filter) unload() {
 
 // Path to the filter contents
 func (filter *filter) Path() string {
-	return filepath.Join(config.ourWorkingDir, dataDir, filterDir, strconv.FormatInt(filter.ID, 10)+".txt")
+	return filepath.Join(config.getDataDir(), filterDir, strconv.FormatInt(filter.ID, 10)+".txt")
 }
 
 // LastTimeUpdated returns the time when the filter was last time updated
