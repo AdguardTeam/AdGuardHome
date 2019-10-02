@@ -2,14 +2,16 @@
 set -e
 set -x
 
+echo "Starting AdGuard Home CI script"
+
+# Print the current directory contents
+ls -la
+
 # Check versions and current directory
 node -v
 npm -v
 go version
 golangci-lint --version
-
-# Print the current directory contents
-ls -la
 
 # Run linter
 golangci-lint run
@@ -30,3 +32,5 @@ else
     echo "Please make sure there are no changes"
     exit 1
 fi
+
+echo "AdGuard Home CI script finished successfully"
