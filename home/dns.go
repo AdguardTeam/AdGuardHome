@@ -65,6 +65,7 @@ func isRunning() bool {
 	return config.dnsServer != nil && config.dnsServer.IsRunning()
 }
 
+// nolint (gocyclo)
 // Return TRUE if IP is within public Internet IP range
 func isPublicIP(ip net.IP) bool {
 	ip4 := ip.To4()
