@@ -11,6 +11,7 @@ os:
 before_install:
   - nvm install node
   - npm install -g npm
+  - go install github.com/golangci/golangci-lint/cmd/golangci-lint
 
 install:
   - npm --prefix client install
@@ -22,13 +23,7 @@ cache:
     - $HOME/Library/Caches/go-build
 
 script:
-  - node -v
-  - npm -v
-  # Run tests
-  - go test -race -v -bench=. -coverprofile=coverage.txt -covermode=atomic ./...
-  # Make
-  - make build/static/index.html
-  - make
+  - /bin/bash ci.sh
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

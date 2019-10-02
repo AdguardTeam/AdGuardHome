@@ -271,7 +271,7 @@ func (r *Reader) BeginReadPrev(olderThan time.Time, count uint64) {
 	if int64(off) < maxEntrySize {
 		off = 0
 	}
-	r.fpos = uint64(off)
+	r.fpos = off
 	log.Debug("QueryLog: seek: %x", off)
 	_, err := r.f.Seek(int64(off), io.SeekStart)
 	if err != nil {
@@ -376,7 +376,7 @@ func (r *Reader) prepareRead() bool {
 		if int64(off) < maxEntrySize {
 			off = 0
 		}
-		r.fpos = uint64(off)
+		r.fpos = off
 		log.Debug("QueryLog: seek: %x", off)
 		_, err = r.f.Seek(int64(off), io.SeekStart)
 		if err != nil {
