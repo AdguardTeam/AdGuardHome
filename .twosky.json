@@ -4,17 +4,29 @@
     "base_locale": "en",
     "localizable_files": ["client/src/__locales/en.json"],
     "languages": {
+      "da": "Dansk",
+      "de": "Deutsch",
+      "nl": "Dutch",
       "en": "English",
       "es": "Español",
       "fr": "Français",
+      "id": "Indonesian",
+      "it": "Italiano",
+      "pl": "Polski",
       "pt-br": "Portuguese (BR)",
+      "pt-pt": "Portuguese (PT)",
+      "sk": "Slovenčina",
+      "sl": "Slovenščina",
       "sv": "Svenska",
       "vi": "Tiếng Việt",
+      "tr": "Türkçe",
+      "cs": "Český",
       "bg": "Български",
       "ru": "Русский",
       "ja": "日本語",
       "zh-tw": "正體中文",
-      "zh-cn": "简体中文"
+      "zh-cn": "简体中文",
+      "ko": "한국어"
     }
   }
 ]

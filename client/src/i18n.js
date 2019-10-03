@@ -14,6 +14,18 @@ import ptBR from './__locales/pt-br.json';
 import zhTW from './__locales/zh-tw.json';
 import bg from './__locales/bg.json';
 import zhCN from './__locales/zh-cn.json';
+import cs from './__locales/cs.json';
+import da from './__locales/da.json';
+import de from './__locales/de.json';
+import id from './__locales/id.json';
+import it from './__locales/it.json';
+import ko from './__locales/ko.json';
+import nl from './__locales/nl.json';
+import pl from './__locales/pl.json';
+import ptPT from './__locales/pt-pt.json';
+import sk from './__locales/sk.json';
+import sl from './__locales/sl.json';
+import tr from './__locales/tr.json';
 
 const resources = {
     en: {
@@ -48,6 +60,42 @@ const resources = {
     },
     'zh-CN': {
         translation: zhCN,
+    },
+    cs: {
+        translation: cs,
+    },
+    da: {
+        translation: da,
+    },
+    de: {
+        translation: de,
+    },
+    id: {
+        translation: id,
+    },
+    it: {
+        translation: it,
+    },
+    ko: {
+        translation: ko,
+    },
+    nl: {
+        translation: nl,
+    },
+    pl: {
+        translation: pl,
+    },
+    'pt-PT': {
+        translation: ptPT,
+    },
+    sk: {
+        translation: sk,
+    },
+    sl: {
+        translation: sl,
+    },
+    tr: {
+        translation: tr,
     },
 };
 
