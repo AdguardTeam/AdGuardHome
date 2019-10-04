@@ -233,6 +233,10 @@ export const SERVICES = [
         name: 'Steam',
     },
     {
+        id: 'epic_games',
+        name: 'Epic Games',
+    },
+    {
         id: 'ok',
         name: 'OK',
     },
