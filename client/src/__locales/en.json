@@ -363,7 +363,7 @@
     "encryption_certificate_path": "Certificate path",
     "encryption_private_key_path": "Private key path",
     "encryption_certificates_source_path": "Set a certificates file path",
-    "encryption_certificates_source_content":"Paste the certificates contents",
+    "encryption_certificates_source_content": "Paste the certificates contents",
     "encryption_key_source_path": "Set a private key file",
     "encryption_key_source_content": "Paste the private key contents",
     "stats_params": "Statistics configuration",

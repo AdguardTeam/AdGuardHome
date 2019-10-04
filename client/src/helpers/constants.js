@@ -31,6 +31,18 @@ export const PRIVACY_POLICY_LINK = 'https://adguard.com/privacy/home.html';
 
 export const LANGUAGES = [
     {
+        key: 'da',
+        name: 'Dansk',
+    },
+    {
+        key: 'de',
+        name: 'Deutsch',
+    },
+    {
+        key: 'nl',
+        name: 'Dutch',
+    },
+    {
         key: 'en',
         name: 'English',
     },
@@ -43,8 +55,32 @@ export const LANGUAGES = [
         name: 'Français',
     },
     {
+        key: 'id',
+        name: 'Indonesian',
+    },
+    {
+        key: 'it',
+        name: 'Italiano',
+    },
+    {
+        key: 'pl',
+        name: 'Polski',
+    },
+    {
         key: 'pt-br',
         name: 'Portuguese (BR)',
+    },
+    {
+        key: 'pt-pt',
+        name: 'Portuguese (PT)',
+    },
+    {
+        key: 'sk',
+        name: 'Slovenčina',
+    },
+    {
+        key: 'sl',
+        name: 'Slovenščina',
     },
     {
         key: 'sv',
@@ -53,6 +89,14 @@ export const LANGUAGES = [
     {
         key: 'vi',
         name: 'Tiếng Việt',
+    },
+    {
+        key: 'tr',
+        name: 'Türkçe',
+    },
+    {
+        key: 'cs',
+        name: 'Český',
     },
     {
         key: 'bg',
@@ -73,6 +117,10 @@ export const LANGUAGES = [
     {
         key: 'zh-cn',
         name: '简体中文',
+    },
+    {
+        key: 'ko',
+        name: '한국어',
     },
 ];
 
