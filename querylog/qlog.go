@@ -62,12 +62,12 @@ func (l *queryLog) Clear() {
 	l.logBufferLock.Unlock()
 
 	err := os.Remove(l.logFile + ".1")
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		log.Error("file remove: %s: %s", l.logFile+".1", err)
 	}
 
 	err = os.Remove(l.logFile)
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		log.Error("file remove: %s: %s", l.logFile, err)
 	}
 
