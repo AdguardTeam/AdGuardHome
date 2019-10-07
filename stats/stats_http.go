@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -24,9 +25,10 @@ func (s *statsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
 	if s.limit/24 > 7 {
 		units = Days
 	}
-	counter := log.StartTimer()
+
+	start := time.Now()
 	d := s.getData(units)
-	counter.LogElapsed("Stats: prepared data")
+	log.Debug("Stats: prepared data in %v", time.Since(start))
 
 	if d == nil {
 		httpError(r, w, http.StatusInternalServerError, "Couldn't get statistics data")
