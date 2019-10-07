@@ -697,3 +697,25 @@ func (s *statsCtx) getData(timeUnit TimeUnit) map[string]interface{} {
 
 	return d
 }
+
+func (s *statsCtx) GetTopClientsIP(limit uint) []string {
+	lastID := s.conf.UnitID()
+	units := s.loadUnits(lastID)
+	if units == nil {
+		return nil
+	}
+
+	// top clients
+	m := map[string]uint64{}
+	for _, u := range units {
+		for _, it := range u.Clients {
+			m[it.Name] += it.Count
+		}
+	}
+	a := convertMapToArray(m, int(limit))
+	d := []string{}
+	for _, it := range a {
+		d = append(d, it.Name)
+	}
+	return d
+}

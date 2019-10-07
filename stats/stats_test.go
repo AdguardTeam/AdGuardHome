@@ -75,6 +75,9 @@ func TestStats(t *testing.T) {
 	assert.True(t, d["num_replaced_parental"].(uint64) == 0)
 	assert.True(t, d["avg_processing_time"].(float64) == 0.123456)
 
+	topClients := s.GetTopClientsIP(2)
+	assert.True(t, topClients[0] == "127.0.0.1")
+
 	s.clear()
 	s.Close()
 	os.Remove(conf.Filename)
