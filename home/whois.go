@@ -75,7 +75,9 @@ func whoisParse(data string) map[string]string {
 			m[k] = trimValue(v)
 
 		case "descr":
-			descr = v
+			if len(descr) == 0 {
+				descr = v
+			}
 		case "netname":
 			netname = v
 
