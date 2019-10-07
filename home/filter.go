@@ -312,15 +312,14 @@ func isPrintableText(data []byte) bool {
 
 // A helper function that parses filter contents and returns a number of rules and a filter name (if there's any)
 func parseFilterContents(contents []byte) (int, string) {
-	lines := strings.Split(string(contents), "\n")
+	data := string(contents)
 	rulesCount := 0
 	name := ""
 	seenTitle := false
 
 	// Count lines in the filter
-	for _, line := range lines {
-
-		line = strings.TrimSpace(line)
+	for len(data) != 0 {
+		line := SplitNext(&data, '\n')
 		if len(line) == 0 {
 			continue
 		}
