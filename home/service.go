@@ -139,6 +139,10 @@ func configureService(c *service.Config) {
 	// POSIX
 	// Redirect StdErr & StdOut to files.
 	c.Option["LogOutput"] = true
+
+	// Add "After=" setting for systemd service file, because we must be started only after network is online
+	// Set "RestartSec" to 10
+	c.Option["SystemdScript"] = systemdScript
 }
 
 // cleanupService called on the service uninstall, cleans up additional files if needed
@@ -184,4 +188,31 @@ var launchdConfig = `<?xml version='1.0' encoding='UTF-8'?>
 <string>` + launchdStderrPath + `</string>
 </dict>
 </plist>
+`
+
+// Note: we should keep it in sync with the template from service_systemd_linux.go file
+const systemdScript = `[Unit]
+Description={{.Description}}
+ConditionFileIsExecutable={{.Path|cmdEscape}}
+After=syslog.target network-online.target
+
+[Service]
+StartLimitInterval=5
+StartLimitBurst=10
+ExecStart={{.Path|cmdEscape}}{{range .Arguments}} {{.|cmd}}{{end}}
+{{if .ChRoot}}RootDirectory={{.ChRoot|cmd}}{{end}}
+{{if .WorkingDirectory}}WorkingDirectory={{.WorkingDirectory|cmdEscape}}{{end}}
+{{if .UserName}}User={{.UserName}}{{end}}
+{{if .ReloadSignal}}ExecReload=/bin/kill -{{.ReloadSignal}} "$MAINPID"{{end}}
+{{if .PIDFile}}PIDFile={{.PIDFile|cmd}}{{end}}
+{{if and .LogOutput .HasOutputFileSupport -}}
+StandardOutput=file:/var/log/{{.Name}}.out
+StandardError=file:/var/log/{{.Name}}.err
+{{- end}}
+Restart=always
+RestartSec=10
+EnvironmentFile=-/etc/sysconfig/{{.Name}}
+
+[Install]
+WantedBy=multi-user.target
 `
