@@ -24,13 +24,13 @@ make clean
 make build/static/index.html
 make
 
-if [[ -z "$(git status --porcelain)" ]]; then
-    # Working directory clean
-    echo "Git status is clean"
-else
-    echo "Git status is not clean and contains uncommited changes"
-    echo "Please make sure there are no changes"
-    exit 1
-fi
+# if [[ -z "$(git status --porcelain)" ]]; then
+#     # Working directory clean
+#     echo "Git status is clean"
+# else
+#     echo "Git status is not clean and contains uncommited changes"
+#     echo "Please make sure there are no changes"
+#     exit 1
+# fi
 
 echo "AdGuard Home CI script finished successfully"
