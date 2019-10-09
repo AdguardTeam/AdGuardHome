@@ -124,3 +124,31 @@ func TestLargeNumbers(t *testing.T) {
 	s.Close()
 	os.Remove(conf.Filename)
 }
+
+// this code is a chunk copied from getData() that generates aggregate data per day
+func aggregateDataPerDay(firstID uint32) int {
+	firstDayID := (firstID + 24 - 1) / 24 * 24 // align_ceil(24)
+	a := []uint64{}
+	var sum uint64
+	id := firstDayID
+	nextDayID := firstDayID + 24
+	for i := firstDayID - firstID; int(i) != 720; i++ {
+		sum++
+		if id == nextDayID {
+			a = append(a, sum)
+			sum = 0
+			nextDayID += 24
+		}
+		id++
+	}
+	if id <= nextDayID {
+		a = append(a, sum)
+	}
+	return len(a)
+}
+func TestAggregateDataPerTimeUnit(t *testing.T) {
+	for i := 0; i != 25; i++ {
+		alen := aggregateDataPerDay(uint32(i))
+		assert.True(t, alen == 30, "i=%d", i)
+	}
+}
