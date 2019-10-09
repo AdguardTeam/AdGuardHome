@@ -108,7 +108,7 @@ func TestEtcHostsMatching(t *testing.T) {
 	filters := make(map[int]string)
 	filters[0] = text
 	d := NewForTest(nil, filters)
-	defer d.Destroy()
+	defer d.Close()
 
 	d.checkMatchIP(t, "google.com", addr, dns.TypeA)
 	d.checkMatchIP(t, "www.google.com", addr, dns.TypeA)
@@ -133,7 +133,7 @@ func TestSafeBrowsing(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s in %s", tc, _Func()), func(t *testing.T) {
 			d := NewForTest(&Config{SafeBrowsingEnabled: true}, nil)
-			defer d.Destroy()
+			defer d.Close()
 			gctx.stats.Safebrowsing.Requests = 0
 			d.checkMatch(t, "wmconvirus.narod.ru")
 			d.checkMatch(t, "wmconvirus.narod.ru")
@@ -158,7 +158,7 @@ func TestSafeBrowsing(t *testing.T) {
 
 func TestParallelSB(t *testing.T) {
 	d := NewForTest(&Config{SafeBrowsingEnabled: true}, nil)
-	defer d.Destroy()
+	defer d.Close()
 	t.Run("group", func(t *testing.T) {
 		for i := 0; i < 100; i++ {
 			t.Run(fmt.Sprintf("aaa%d", i), func(t *testing.T) {
@@ -175,7 +175,7 @@ func TestParallelSB(t *testing.T) {
 // the only way to verify that custom server option is working is to point it at a server that does serve safebrowsing
 func TestSafeBrowsingCustomServerFail(t *testing.T) {
 	d := NewForTest(&Config{SafeBrowsingEnabled: true}, nil)
-	defer d.Destroy()
+	defer d.Close()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// w.Write("Hello, client")
 		fmt.Fprintln(w, "Hello, client")
@@ -192,14 +192,14 @@ func TestSafeBrowsingCustomServerFail(t *testing.T) {
 
 func TestSafeSearch(t *testing.T) {
 	d := NewForTest(nil, nil)
-	defer d.Destroy()
+	defer d.Close()
 	_, ok := d.SafeSearchDomain("www.google.com")
 	if ok {
 		t.Errorf("Expected safesearch to error when disabled")
 	}
 
 	d = NewForTest(&Config{SafeSearchEnabled: true}, nil)
-	defer d.Destroy()
+	defer d.Close()
 	val, ok := d.SafeSearchDomain("www.google.com")
 	if !ok {
 		t.Errorf("Expected safesearch to find result for www.google.com")
@@ -211,7 +211,7 @@ func TestSafeSearch(t *testing.T) {
 
 func TestCheckHostSafeSearchYandex(t *testing.T) {
 	d := NewForTest(&Config{SafeSearchEnabled: true}, nil)
-	defer d.Destroy()
+	defer d.Close()
 
 	// Slice of yandex domains
 	yandex := []string{"yAndeX.ru", "YANdex.COM", "yandex.ua", "yandex.by", "yandex.kz", "www.yandex.com"}
@@ -231,7 +231,7 @@ func TestCheckHostSafeSearchYandex(t *testing.T) {
 
 func TestCheckHostSafeSearchGoogle(t *testing.T) {
 	d := NewForTest(&Config{SafeSearchEnabled: true}, nil)
-	defer d.Destroy()
+	defer d.Close()
 
 	// Slice of google domains
 	googleDomains := []string{"www.google.com", "www.google.im", "www.google.co.in", "www.google.iq", "www.google.is", "www.google.it", "www.google.je"}
@@ -251,7 +251,7 @@ func TestCheckHostSafeSearchGoogle(t *testing.T) {
 
 func TestSafeSearchCacheYandex(t *testing.T) {
 	d := NewForTest(nil, nil)
-	defer d.Destroy()
+	defer d.Close()
 	domain := "yandex.ru"
 
 	var result Result
@@ -267,7 +267,7 @@ func TestSafeSearchCacheYandex(t *testing.T) {
 	}
 
 	d = NewForTest(&Config{SafeSearchEnabled: true}, nil)
-	defer d.Destroy()
+	defer d.Close()
 
 	result, err = d.CheckHost(domain, dns.TypeA, &setts)
 	if err != nil {
@@ -293,7 +293,7 @@ func TestSafeSearchCacheYandex(t *testing.T) {
 
 func TestSafeSearchCacheGoogle(t *testing.T) {
 	d := NewForTest(nil, nil)
-	defer d.Destroy()
+	defer d.Close()
 	domain := "www.google.ru"
 	result, err := d.CheckHost(domain, dns.TypeA, &setts)
 	if err != nil {
@@ -304,7 +304,7 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 	}
 
 	d = NewForTest(&Config{SafeSearchEnabled: true}, nil)
-	defer d.Destroy()
+	defer d.Close()
 
 	// Let's lookup for safesearch domain
 	safeDomain, ok := d.SafeSearchDomain(domain)
@@ -352,7 +352,7 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 
 func TestParentalControl(t *testing.T) {
 	d := NewForTest(&Config{ParentalEnabled: true}, nil)
-	defer d.Destroy()
+	defer d.Close()
 	d.ParentalSensitivity = 3
 	d.checkMatch(t, "pornhub.com")
 	d.checkMatch(t, "pornhub.com")
@@ -435,7 +435,7 @@ func TestMatching(t *testing.T) {
 			filters := make(map[int]string)
 			filters[0] = test.rules
 			d := NewForTest(nil, filters)
-			defer d.Destroy()
+			defer d.Close()
 
 			ret, err := d.CheckHost(test.hostname, dns.TypeA, &setts)
 			if err != nil {
@@ -472,7 +472,7 @@ func TestClientSettings(t *testing.T) {
 	filters := make(map[int]string)
 	filters[0] = "||example.org^\n"
 	d := NewForTest(&Config{ParentalEnabled: true, SafeBrowsingEnabled: false}, filters)
-	defer d.Destroy()
+	defer d.Close()
 	d.ParentalSensitivity = 3
 
 	// no client settings:
@@ -529,7 +529,7 @@ func TestClientSettings(t *testing.T) {
 
 func BenchmarkSafeBrowsing(b *testing.B) {
 	d := NewForTest(&Config{SafeBrowsingEnabled: true}, nil)
-	defer d.Destroy()
+	defer d.Close()
 	for n := 0; n < b.N; n++ {
 		hostname := "wmconvirus.narod.ru"
 		ret, err := d.CheckHost(hostname, dns.TypeA, &setts)
@@ -544,7 +544,7 @@ func BenchmarkSafeBrowsing(b *testing.B) {
 
 func BenchmarkSafeBrowsingParallel(b *testing.B) {
 	d := NewForTest(&Config{SafeBrowsingEnabled: true}, nil)
-	defer d.Destroy()
+	defer d.Close()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			hostname := "wmconvirus.narod.ru"
@@ -561,7 +561,7 @@ func BenchmarkSafeBrowsingParallel(b *testing.B) {
 
 func BenchmarkSafeSearch(b *testing.B) {
 	d := NewForTest(&Config{SafeSearchEnabled: true}, nil)
-	defer d.Destroy()
+	defer d.Close()
 	for n := 0; n < b.N; n++ {
 		val, ok := d.SafeSearchDomain("www.google.com")
 		if !ok {
@@ -575,7 +575,7 @@ func BenchmarkSafeSearch(b *testing.B) {
 
 func BenchmarkSafeSearchParallel(b *testing.B) {
 	d := NewForTest(&Config{SafeSearchEnabled: true}, nil)
-	defer d.Destroy()
+	defer d.Close()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			val, ok := d.SafeSearchDomain("www.google.com")

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
+	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/querylog"
 	"github.com/AdguardTeam/AdGuardHome/stats"
@@ -71,7 +72,6 @@ type configuration struct {
 	client           *http.Client
 	stats            stats.Stats       // statistics module
 	queryLog         querylog.QueryLog // query log module
-	filteringStarted bool              // TRUE if filtering module is started
 	auth             *Auth             // HTTP authentication module
 
 	// cached version.json to avoid hammering github.io for each page reload
@@ -79,6 +79,7 @@ type configuration struct {
 	versionCheckLastTime time.Time
 
 	dnsctx      dnsContext
+	dnsFilter   *dnsfilter.Dnsfilter
 	dnsServer   *dnsforward.Server
 	dhcpServer  dhcpd.Server
 	httpServer  *http.Server
@@ -217,10 +218,10 @@ func initConfig() {
 	}
 
 	config.DNS.CacheSize = 4 * 1024 * 1024
-	config.DNS.SafeBrowsingCacheSize = 1 * 1024 * 1024
-	config.DNS.SafeSearchCacheSize = 1 * 1024 * 1024
-	config.DNS.ParentalCacheSize = 1 * 1024 * 1024
-	config.DNS.CacheTime = 30
+	config.DNS.DnsfilterConf.SafeBrowsingCacheSize = 1 * 1024 * 1024
+	config.DNS.DnsfilterConf.SafeSearchCacheSize = 1 * 1024 * 1024
+	config.DNS.DnsfilterConf.ParentalCacheSize = 1 * 1024 * 1024
+	config.DNS.DnsfilterConf.CacheTime = 30
 	config.Filters = defaultFilters()
 }
 
@@ -365,6 +366,12 @@ func (c *configuration) write() error {
 		config.queryLog.WriteDiskConfig(&dc)
 		config.DNS.QueryLogEnabled = dc.Enabled
 		config.DNS.QueryLogInterval = dc.Interval
+	}
+
+	if config.dnsFilter != nil {
+		c := dnsfilter.Config{}
+		config.dnsFilter.WriteDiskConfig(&c)
+		config.DNS.DnsfilterConf = c
 	}
 
 	configFile := config.getConfigFilename()

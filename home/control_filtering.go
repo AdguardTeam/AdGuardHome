@@ -86,17 +86,8 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = writeAllConfigs()
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't write config file: %s", err)
-		return
-	}
-
-	err = reconfigureDNSServer()
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't reconfigure the DNS server: %s", err)
-		return
-	}
+	onConfigModified()
+	enableFilters(true)
 
 	_, err = fmt.Fprintf(w, "OK %d rules\n", f.RulesCount)
 	if err != nil {
@@ -121,32 +112,28 @@ func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Stop DNS server:
-	//  we close urlfilter object which in turn closes file descriptors to filter files.
-	// Otherwise, Windows won't allow us to remove the file which is being currently used.
-	_ = config.dnsServer.Stop()
-
 	// go through each element and delete if url matches
 	config.Lock()
-	newFilters := config.Filters[:0]
+	newFilters := []filter{}
 	for _, filter := range config.Filters {
 		if filter.URL != req.URL {
 			newFilters = append(newFilters, filter)
 		} else {
-			// Remove the filter file
-			err := os.Remove(filter.Path())
-			if err != nil && !os.IsNotExist(err) {
-				config.Unlock()
-				httpError(w, http.StatusInternalServerError, "Couldn't remove the filter file: %s", err)
-				return
+			err := os.Rename(filter.Path(), filter.Path()+".old")
+			if err != nil {
+				log.Error("os.Rename: %s: %s", filter.Path(), err)
 			}
-			log.Debug("os.Remove(%s)", filter.Path())
 		}
 	}
 	// Update the configuration after removing filter files
 	config.Filters = newFilters
 	config.Unlock()
-	httpUpdateConfigReloadDNSReturnOK(w, r)
+
+	onConfigModified()
+	enableFilters(true)
+
+	// Note: the old files "filter.txt.old" aren't deleted - it's not really necessary,
+	//  but will require the additional code to run after enableFilters() is finished: i.e. complicated
 }
 
 type filterURLJSON struct {
@@ -173,7 +160,8 @@ func handleFilteringSetURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpUpdateConfigReloadDNSReturnOK(w, r)
+	onConfigModified()
+	enableFilters(true)
 }
 
 func handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
@@ -184,12 +172,13 @@ func handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
 	}
 
 	config.UserRules = strings.Split(string(body), "\n")
-	httpUpdateConfigReloadDNSReturnOK(w, r)
+	_ = writeAllConfigs()
+	enableFilters(true)
 }
 
 func handleFilteringRefresh(w http.ResponseWriter, r *http.Request) {
-	updated := refreshFiltersIfNecessary(true)
-	fmt.Fprintf(w, "OK %d filters updated\n", updated)
+	beginRefreshFilters()
+	fmt.Fprintf(w, "OK 0 filters updated\n")
 }
 
 type filterJSON struct {
@@ -260,9 +249,8 @@ func handleFilteringConfig(w http.ResponseWriter, r *http.Request) {
 
 	config.DNS.FilteringEnabled = req.Enabled
 	config.DNS.FiltersUpdateIntervalHours = req.Interval
-	httpUpdateConfigReloadDNSReturnOK(w, r)
-
-	returnOK(w)
+	onConfigModified()
+	enableFilters(true)
 }
 
 // RegisterFilteringHandlers - register handlers

@@ -55,7 +55,18 @@ func initDNSServer() {
 		HTTPRegister:   httpRegister,
 	}
 	config.queryLog = querylog.New(conf)
-	config.dnsServer = dnsforward.NewServer(config.stats, config.queryLog)
+
+	filterConf := config.DNS.DnsfilterConf
+	bindhost := config.DNS.BindHost
+	if config.DNS.BindHost == "0.0.0.0" {
+		bindhost = "127.0.0.1"
+	}
+	filterConf.ResolverAddress = fmt.Sprintf("%s:%d", bindhost, config.DNS.Port)
+	filterConf.ConfigModified = onConfigModified
+	filterConf.HTTPRegister = httpRegister
+	config.dnsFilter = dnsfilter.New(&filterConf, nil)
+
+	config.dnsServer = dnsforward.NewServer(config.dnsFilter, config.stats, config.queryLog)
 
 	sessFilename := filepath.Join(baseDir, "sessions.db")
 	config.auth = InitAuth(sessFilename, config.Users)
@@ -159,34 +170,11 @@ func onDNSRequest(d *proxy.DNSContext) {
 }
 
 func generateServerConfig() (dnsforward.ServerConfig, error) {
-	filters := []dnsfilter.Filter{}
-	userFilter := userFilter()
-	filters = append(filters, dnsfilter.Filter{
-		ID:   userFilter.ID,
-		Data: userFilter.Data,
-	})
-	for _, filter := range config.Filters {
-		if !filter.Enabled {
-			continue
-		}
-		filters = append(filters, dnsfilter.Filter{
-			ID:       filter.ID,
-			FilePath: filter.Path(),
-		})
-	}
-
 	newconfig := dnsforward.ServerConfig{
 		UDPListenAddr:   &net.UDPAddr{IP: net.ParseIP(config.DNS.BindHost), Port: config.DNS.Port},
 		TCPListenAddr:   &net.TCPAddr{IP: net.ParseIP(config.DNS.BindHost), Port: config.DNS.Port},
 		FilteringConfig: config.DNS.FilteringConfig,
-		Filters:         filters,
 	}
-	newconfig.AsyncStartup = true
-	bindhost := config.DNS.BindHost
-	if config.DNS.BindHost == "0.0.0.0" {
-		bindhost = "127.0.0.1"
-	}
-	newconfig.ResolverAddress = fmt.Sprintf("%s:%d", bindhost, config.DNS.Port)
 
 	if config.TLS.Enabled {
 		newconfig.TLSConfig = config.TLS.TLSConfig
@@ -242,18 +230,16 @@ func startDNSServer() error {
 		return fmt.Errorf("unable to start forwarding DNS server: Already running")
 	}
 
+	enableFilters(false)
+
 	newconfig, err := generateServerConfig()
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
 	}
+
 	err = config.dnsServer.Start(&newconfig)
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
-	}
-
-	if !config.filteringStarted {
-		config.filteringStarted = true
-		startRefreshFilters()
 	}
 
 	return nil
@@ -284,6 +270,9 @@ func stopDNSServer() error {
 
 	// DNS forward module must be closed BEFORE stats or queryLog because it depends on them
 	config.dnsServer.Close()
+
+	config.dnsFilter.Close()
+	config.dnsFilter = nil
 
 	config.stats.Close()
 	config.stats = nil

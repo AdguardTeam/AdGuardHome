@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -66,7 +67,7 @@ type Config struct {
 	UsePlainHTTP        bool   `yaml:"-"` // use plain HTTP for requests to parental and safe browsing servers
 	SafeSearchEnabled   bool   `yaml:"safesearch_enabled"`
 	SafeBrowsingEnabled bool   `yaml:"safebrowsing_enabled"`
-	ResolverAddress     string // DNS server address
+	ResolverAddress     string `yaml:"-"` // DNS server address
 
 	SafeBrowsingCacheSize uint `yaml:"safebrowsing_cache_size"` // (in bytes)
 	SafeSearchCacheSize   uint `yaml:"safesearch_cache_size"`   // (in bytes)
@@ -75,13 +76,11 @@ type Config struct {
 
 	Rewrites []RewriteEntry `yaml:"rewrites"`
 
-	// Filtering callback function
-	FilterHandler func(clientAddr string, settings *RequestFilteringSettings) `yaml:"-"`
-}
+	// Called when the configuration is changed by HTTP request
+	ConfigModified func() `yaml:"-"`
 
-type privateConfig struct {
-	parentalServer     string // access via methods
-	safeBrowsingServer string // access via methods
+	// Register an HTTP handler
+	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request)) `yaml:"-"`
 }
 
 // LookupStats store stats collected during safebrowsing or parental checks
@@ -99,17 +98,30 @@ type Stats struct {
 	Safesearch   LookupStats
 }
 
+// Parameters to pass to filters-initializer goroutine
+type filtersInitializerParams struct {
+	filters map[int]string
+}
+
 // Dnsfilter holds added rules and performs hostname matches against the rules
 type Dnsfilter struct {
 	rulesStorage    *urlfilter.RuleStorage
 	filteringEngine *urlfilter.DNSEngine
+	engineLock      sync.RWMutex
 
 	// HTTP lookups for safebrowsing and parental
 	client    http.Client     // handle for http client -- single instance as recommended by docs
 	transport *http.Transport // handle for http transport used by http client
 
-	Config // for direct access by library users, even a = assignment
-	privateConfig
+	parentalServer     string // access via methods
+	safeBrowsingServer string // access via methods
+
+	Config   // for direct access by library users, even a = assignment
+	confLock sync.RWMutex
+
+	// Channel for passing data to filters-initializer goroutine
+	filtersInitializerChan chan filtersInitializerParams
+	filtersInitializerLock sync.Mutex
 }
 
 // Filter represents a filter list
@@ -118,8 +130,6 @@ type Filter struct {
 	Data     []byte `yaml:"-"` // List of rules divided by '\n'
 	FilePath string `yaml:"-"` // Path to a filtering rules file
 }
-
-//go:generate stringer -type=Reason
 
 // Reason holds an enum detailing why it was filtered or not filtered
 type Reason int
@@ -153,25 +163,99 @@ const (
 	ReasonRewrite
 )
 
+var reasonNames = []string{
+	"NotFilteredNotFound",
+	"NotFilteredWhiteList",
+	"NotFilteredError",
+
+	"FilteredBlackList",
+	"FilteredSafeBrowsing",
+	"FilteredParental",
+	"FilteredInvalid",
+	"FilteredSafeSearch",
+	"FilteredBlockedService",
+
+	"Rewrite",
+}
+
 func (r Reason) String() string {
-	names := []string{
-		"NotFilteredNotFound",
-		"NotFilteredWhiteList",
-		"NotFilteredError",
-
-		"FilteredBlackList",
-		"FilteredSafeBrowsing",
-		"FilteredParental",
-		"FilteredInvalid",
-		"FilteredSafeSearch",
-		"FilteredBlockedService",
-
-		"Rewrite",
-	}
-	if uint(r) >= uint(len(names)) {
+	if uint(r) >= uint(len(reasonNames)) {
 		return ""
 	}
-	return names[r]
+	return reasonNames[r]
+}
+
+// GetConfig - get configuration
+func (d *Dnsfilter) GetConfig() RequestFilteringSettings {
+	c := RequestFilteringSettings{}
+	// d.confLock.RLock()
+	c.SafeSearchEnabled = d.Config.SafeSearchEnabled
+	c.SafeBrowsingEnabled = d.Config.SafeBrowsingEnabled
+	c.ParentalEnabled = d.Config.ParentalEnabled
+	// d.confLock.RUnlock()
+	return c
+}
+
+// WriteDiskConfig - write configuration
+func (d *Dnsfilter) WriteDiskConfig(c *Config) {
+	*c = d.Config
+}
+
+// SetFilters - set new filters (synchronously or asynchronously)
+// When filters are set asynchronously, the old filters continue working until the new filters are ready.
+//  In this case the caller must ensure that the old filter files are intact.
+func (d *Dnsfilter) SetFilters(filters map[int]string, async bool) error {
+	if async {
+		params := filtersInitializerParams{
+			filters: filters,
+		}
+
+		d.filtersInitializerLock.Lock() // prevent multiple writers from adding more than 1 task
+		// remove all pending tasks
+		stop := false
+		for !stop {
+			select {
+			case <-d.filtersInitializerChan:
+				//
+			default:
+				stop = true
+			}
+		}
+
+		d.filtersInitializerChan <- params
+		d.filtersInitializerLock.Unlock()
+		return nil
+	}
+
+	err := d.initFiltering(filters)
+	if err != nil {
+		log.Error("Can't initialize filtering subsystem: %s", err)
+		return err
+	}
+
+	return nil
+}
+
+// Starts initializing new filters by signal from channel
+func (d *Dnsfilter) filtersInitializer() {
+	for {
+		params := <-d.filtersInitializerChan
+		err := d.initFiltering(params.filters)
+		if err != nil {
+			log.Error("Can't initialize filtering subsystem: %s", err)
+			continue
+		}
+	}
+}
+
+// Close - close the object
+func (d *Dnsfilter) Close() {
+	if d != nil && d.transport != nil {
+		d.transport.CloseIdleConnections()
+	}
+	if d.rulesStorage != nil {
+		d.rulesStorage.Close()
+	}
 }
 
 type dnsFilterContext struct {
@@ -293,6 +377,9 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 //  . if found, return IP addresses
 func (d *Dnsfilter) processRewrites(host string, qtype uint16) Result {
 	var res Result
+
+	d.confLock.RLock()
+	defer d.confLock.RUnlock()
 
 	for _, r := range d.Rewrites {
 		if r.Domain != host {
@@ -704,17 +791,28 @@ func (d *Dnsfilter) initFiltering(filters map[int]string) error {
 		listArray = append(listArray, list)
 	}
 
-	var err error
-	d.rulesStorage, err = urlfilter.NewRuleStorage(listArray)
+	rulesStorage, err := urlfilter.NewRuleStorage(listArray)
 	if err != nil {
 		return fmt.Errorf("urlfilter.NewRuleStorage(): %s", err)
 	}
-	d.filteringEngine = urlfilter.NewDNSEngine(d.rulesStorage)
+	filteringEngine := urlfilter.NewDNSEngine(rulesStorage)
+
+	d.engineLock.Lock()
+	if d.rulesStorage != nil {
+		d.rulesStorage.Close()
+	}
+	d.rulesStorage = rulesStorage
+	d.filteringEngine = filteringEngine
+	d.engineLock.Unlock()
+	log.Debug("initialized filtering engine")
+
 	return nil
 }
 
 // matchHost is a low-level way to check only if hostname is filtered by rules, skipping expensive safebrowsing and parental lookups
 func (d *Dnsfilter) matchHost(host string, qtype uint16) (Result, error) {
+	d.engineLock.RLock()
+	defer d.engineLock.RUnlock()
 	if d.filteringEngine == nil {
 		return Result{}, nil
 	}
@@ -926,25 +1024,19 @@ func New(c *Config, filters map[int]string) *Dnsfilter {
 		err := d.initFiltering(filters)
 		if err != nil {
 			log.Error("Can't initialize filtering subsystem: %s", err)
-			d.Destroy()
+			d.Close()
 			return nil
 		}
 	}
 
+	d.filtersInitializerChan = make(chan filtersInitializerParams, 1)
+	go d.filtersInitializer()
+
+	if d.Config.HTTPRegister != nil { // for tests
+		d.registerSecurityHandlers()
+		d.registerRewritesHandlers()
+	}
 	return d
-}
-
-// Destroy is optional if you want to tidy up goroutines without waiting for them to die off
-// right now it closes idle HTTP connections if there are any
-func (d *Dnsfilter) Destroy() {
-	if d != nil && d.transport != nil {
-		d.transport.CloseIdleConnections()
-	}
-
-	if d.rulesStorage != nil {
-		d.rulesStorage.Close()
-		d.rulesStorage = nil
-	}
 }
 
 //

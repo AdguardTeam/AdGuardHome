@@ -377,142 +377,6 @@ func checkDNS(input string, bootstrap []string) error {
 	return nil
 }
 
-// ------------
-// safebrowsing
-// ------------
-
-func handleSafeBrowsingEnable(w http.ResponseWriter, r *http.Request) {
-	config.DNS.SafeBrowsingEnabled = true
-	httpUpdateConfigReloadDNSReturnOK(w, r)
-}
-
-func handleSafeBrowsingDisable(w http.ResponseWriter, r *http.Request) {
-	config.DNS.SafeBrowsingEnabled = false
-	httpUpdateConfigReloadDNSReturnOK(w, r)
-}
-
-func handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Request) {
-	data := map[string]interface{}{
-		"enabled": config.DNS.SafeBrowsingEnabled,
-	}
-	jsonVal, err := json.Marshal(data)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to marshal status json: %s", err)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to write response json: %s", err)
-		return
-	}
-}
-
-// --------
-// parental
-// --------
-func handleParentalEnable(w http.ResponseWriter, r *http.Request) {
-	parameters, err := parseParametersFromBody(r.Body)
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "failed to parse parameters from body: %s", err)
-		return
-	}
-
-	sensitivity, ok := parameters["sensitivity"]
-	if !ok {
-		http.Error(w, "Sensitivity parameter was not specified", 400)
-		return
-	}
-
-	switch sensitivity {
-	case "3":
-		break
-	case "EARLY_CHILDHOOD":
-		sensitivity = "3"
-	case "10":
-		break
-	case "YOUNG":
-		sensitivity = "10"
-	case "13":
-		break
-	case "TEEN":
-		sensitivity = "13"
-	case "17":
-		break
-	case "MATURE":
-		sensitivity = "17"
-	default:
-		http.Error(w, "Sensitivity must be set to valid value", 400)
-		return
-	}
-	i, err := strconv.Atoi(sensitivity)
-	if err != nil {
-		http.Error(w, "Sensitivity must be set to valid value", 400)
-		return
-	}
-	config.DNS.ParentalSensitivity = i
-	config.DNS.ParentalEnabled = true
-	httpUpdateConfigReloadDNSReturnOK(w, r)
-}
-
-func handleParentalDisable(w http.ResponseWriter, r *http.Request) {
-	config.DNS.ParentalEnabled = false
-	httpUpdateConfigReloadDNSReturnOK(w, r)
-}
-
-func handleParentalStatus(w http.ResponseWriter, r *http.Request) {
-	data := map[string]interface{}{
-		"enabled": config.DNS.ParentalEnabled,
-	}
-	if config.DNS.ParentalEnabled {
-		data["sensitivity"] = config.DNS.ParentalSensitivity
-	}
-	jsonVal, err := json.Marshal(data)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to marshal status json: %s", err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to write response json: %s", err)
-		return
-	}
-}
-
-// ------------
-// safebrowsing
-// ------------
-
-func handleSafeSearchEnable(w http.ResponseWriter, r *http.Request) {
-	config.DNS.SafeSearchEnabled = true
-	httpUpdateConfigReloadDNSReturnOK(w, r)
-}
-
-func handleSafeSearchDisable(w http.ResponseWriter, r *http.Request) {
-	config.DNS.SafeSearchEnabled = false
-	httpUpdateConfigReloadDNSReturnOK(w, r)
-}
-
-func handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
-	data := map[string]interface{}{
-		"enabled": config.DNS.SafeSearchEnabled,
-	}
-	jsonVal, err := json.Marshal(data)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to marshal status json: %s", err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to write response json: %s", err)
-		return
-	}
-}
-
 // --------------
 // DNS-over-HTTPS
 // --------------
@@ -543,15 +407,6 @@ func registerControlHandlers() {
 	httpRegister(http.MethodGet, "/control/i18n/current_language", handleI18nCurrentLanguage)
 	http.HandleFunc("/control/version.json", postInstall(optionalAuth(handleGetVersionJSON)))
 	httpRegister(http.MethodPost, "/control/update", handleUpdate)
-	httpRegister(http.MethodPost, "/control/safebrowsing/enable", handleSafeBrowsingEnable)
-	httpRegister(http.MethodPost, "/control/safebrowsing/disable", handleSafeBrowsingDisable)
-	httpRegister(http.MethodGet, "/control/safebrowsing/status", handleSafeBrowsingStatus)
-	httpRegister(http.MethodPost, "/control/parental/enable", handleParentalEnable)
-	httpRegister(http.MethodPost, "/control/parental/disable", handleParentalDisable)
-	httpRegister(http.MethodGet, "/control/parental/status", handleParentalStatus)
-	httpRegister(http.MethodPost, "/control/safesearch/enable", handleSafeSearchEnable)
-	httpRegister(http.MethodPost, "/control/safesearch/disable", handleSafeSearchDisable)
-	httpRegister(http.MethodGet, "/control/safesearch/status", handleSafeSearchStatus)
 	httpRegister(http.MethodGet, "/control/dhcp/status", handleDHCPStatus)
 	httpRegister(http.MethodGet, "/control/dhcp/interfaces", handleDHCPInterfaces)
 	httpRegister(http.MethodPost, "/control/dhcp/set_config", handleDHCPSetConfig)
@@ -565,7 +420,6 @@ func registerControlHandlers() {
 	RegisterFilteringHandlers()
 	RegisterTLSHandlers()
 	RegisterClientsHandlers()
-	registerRewritesHandlers()
 	RegisterBlockedServicesHandlers()
 	RegisterAuthHandlers()
 
