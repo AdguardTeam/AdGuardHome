@@ -377,3 +377,18 @@ func parseIPv4(s string) net.IP {
 
 	return ip.To4()
 }
+
+// SplitNext - split string by a byte and return the first chunk
+// Whitespace is trimmed
+func SplitNext(str *string, splitBy byte) string {
+	i := strings.IndexByte(*str, splitBy)
+	s := ""
+	if i != -1 {
+		s = (*str)[0:i]
+		*str = (*str)[i+1:]
+	} else {
+		s = *str
+		*str = ""
+	}
+	return strings.TrimSpace(s)
+}

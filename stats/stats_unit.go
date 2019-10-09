@@ -455,6 +455,41 @@ func (s *statsCtx) Update(e Entry) {
 	s.unitLock.Unlock()
 }
 
+func (s *statsCtx) loadUnits(lastID uint32) []*unitDB {
+	tx := s.beginTxn(false)
+	if tx == nil {
+		return nil
+	}
+
+	units := []*unitDB{} //per-hour units
+	firstID := lastID - s.limit + 1
+	for i := firstID; i != lastID; i++ {
+		u := s.loadUnitFromDB(tx, i)
+		if u == nil {
+			u = &unitDB{}
+			u.NResult = make([]uint64, rLast)
+		}
+		units = append(units, u)
+	}
+
+	_ = tx.Rollback()
+
+	s.unitLock.Lock()
+	cu := serialize(s.unit)
+	cuID := s.unit.id
+	s.unitLock.Unlock()
+	if cuID != lastID {
+		units = units[1:]
+	}
+	units = append(units, cu)
+
+	if len(units) != int(s.limit) {
+		log.Fatalf("len(units) != s.limit: %d %d", len(units), s.limit)
+	}
+
+	return units
+}
+
 /* Algorithm:
 . Prepare array of N units, where N is the value of "limit" configuration setting
  . Load data for the most recent units from file
@@ -486,36 +521,11 @@ func (s *statsCtx) Update(e Entry) {
 func (s *statsCtx) getData(timeUnit TimeUnit) map[string]interface{} {
 	d := map[string]interface{}{}
 
-	tx := s.beginTxn(false)
-	if tx == nil {
-		return nil
-	}
-
-	units := []*unitDB{} //per-hour units
 	lastID := s.conf.UnitID()
 	firstID := lastID - s.limit + 1
-	for i := firstID; i != lastID; i++ {
-		u := s.loadUnitFromDB(tx, i)
-		if u == nil {
-			u = &unitDB{}
-			u.NResult = make([]uint64, rLast)
-		}
-		units = append(units, u)
-	}
-
-	_ = tx.Rollback()
-
-	s.unitLock.Lock()
-	cu := serialize(s.unit)
-	cuID := s.unit.id
-	s.unitLock.Unlock()
-	if cuID != lastID {
-		units = units[1:]
-	}
-	units = append(units, cu)
-
-	if len(units) != int(s.limit) {
-		log.Fatalf("len(units) != s.limit: %d %d", len(units), s.limit)
+	units := s.loadUnits(lastID)
+	if units == nil {
+		return nil
 	}
 
 	// per time unit counters:
@@ -685,5 +695,27 @@ func (s *statsCtx) getData(timeUnit TimeUnit) map[string]interface{} {
 		d["time_units"] = "days"
 	}
 
+	return d
+}
+
+func (s *statsCtx) GetTopClientsIP(limit uint) []string {
+	lastID := s.conf.UnitID()
+	units := s.loadUnits(lastID)
+	if units == nil {
+		return nil
+	}
+
+	// top clients
+	m := map[string]uint64{}
+	for _, u := range units {
+		for _, it := range u.Clients {
+			m[it.Name] += it.Count
+		}
+	}
+	a := convertMapToArray(m, int(limit))
+	d := []string{}
+	for _, it := range a {
+		d = append(d, it.Name)
+	}
 	return d
 }

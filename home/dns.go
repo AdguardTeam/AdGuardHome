@@ -60,6 +60,19 @@ func initDNSServer() {
 
 	config.dnsctx.rdns = InitRDNS(&config.clients)
 	config.dnsctx.whois = initWhois(&config.clients)
+
+	const topClientsNumber = 30 // the number of clients to get
+	topClients := config.stats.GetTopClientsIP(topClientsNumber)
+	for _, ip := range topClients {
+		ipAddr := net.ParseIP(ip)
+		if !ipAddr.IsLoopback() {
+			config.dnsctx.rdns.Begin(ip)
+		}
+		if isPublicIP(ipAddr) {
+			config.dnsctx.whois.Begin(ip)
+		}
+	}
+
 	initFiltering()
 }
 

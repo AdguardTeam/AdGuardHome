@@ -42,6 +42,9 @@ type Stats interface {
 	// Update counters
 	Update(e Entry)
 
+	// Get IP addresses of the clients with the most number of requests
+	GetTopClientsIP(limit uint) []string
+
 	// WriteDiskConfig - write configuration
 	WriteDiskConfig(dc *DiskConfig)
 }
