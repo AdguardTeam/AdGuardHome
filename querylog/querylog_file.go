@@ -7,15 +7,10 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/go-test/deep"
-)
-
-var (
-	fileWriteLock sync.Mutex
 )
 
 const enableGzip = false
@@ -27,16 +22,16 @@ func (l *queryLog) flushLogBuffer(fullFlush bool) error {
 	defer l.fileFlushLock.Unlock()
 
 	// flush remainder to file
-	l.logBufferLock.Lock()
-	needFlush := len(l.logBuffer) >= logBufferCap
+	l.bufferLock.Lock()
+	needFlush := len(l.buffer) >= logBufferCap
 	if !needFlush && !fullFlush {
-		l.logBufferLock.Unlock()
+		l.bufferLock.Unlock()
 		return nil
 	}
-	flushBuffer := l.logBuffer
-	l.logBuffer = nil
+	flushBuffer := l.buffer
+	l.buffer = nil
 	l.flushPending = false
-	l.logBufferLock.Unlock()
+	l.bufferLock.Unlock()
 	err := l.flushToFile(flushBuffer)
 	if err != nil {
 		log.Error("Saving querylog to file failed: %s", err)
@@ -98,8 +93,8 @@ func (l *queryLog) flushToFile(buffer []*logEntry) error {
 		zb = b
 	}
 
-	fileWriteLock.Lock()
-	defer fileWriteLock.Unlock()
+	l.fileWriteLock.Lock()
+	defer l.fileWriteLock.Unlock()
 	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		log.Error("failed to create file \"%s\": %s", filename, err)
@@ -146,7 +141,7 @@ func checkBuffer(buffer []*logEntry, b bytes.Buffer) error {
 	return nil
 }
 
-func (l *queryLog) rotateQueryLog() error {
+func (l *queryLog) rotate() error {
 	from := l.logFile
 	to := l.logFile + ".1"
 
@@ -171,9 +166,9 @@ func (l *queryLog) rotateQueryLog() error {
 	return nil
 }
 
-func (l *queryLog) periodicQueryLogRotate() {
-	for range time.Tick(time.Duration(l.conf.Interval) * time.Hour) {
-		err := l.rotateQueryLog()
+func (l *queryLog) periodicRotate() {
+	for range time.Tick(time.Duration(l.conf.Interval) * 24 * time.Hour) {
+		err := l.rotate()
 		if err != nil {
 			log.Error("Failed to rotate querylog: %s", err)
 			// do nothing, continue rotating
@@ -219,7 +214,7 @@ func (l *queryLog) OpenReader() *Reader {
 	r := Reader{}
 	r.ql = l
 	r.now = time.Now()
-	r.validFrom = r.now.Unix() - int64(l.conf.Interval*60*60)
+	r.validFrom = r.now.Unix() - int64(l.conf.Interval*24*60*60)
 	r.validFrom *= 1000000000
 	r.files = []string{
 		r.ql.logFile,

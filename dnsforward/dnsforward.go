@@ -550,7 +550,7 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 	s.RLock()
 	// Synchronize access to s.queryLog and s.stats so they won't be suddenly uninitialized while in use.
 	// This can happen after proxy server has been stopped, but its workers haven't yet exited.
-	if s.conf.QueryLogEnabled && shouldLog && s.queryLog != nil {
+	if shouldLog && s.queryLog != nil {
 		upstreamAddr := ""
 		if d.Upstream != nil {
 			upstreamAddr = d.Upstream.Address()
