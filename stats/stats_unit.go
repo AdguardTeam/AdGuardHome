@@ -551,7 +551,7 @@ func (s *statsCtx) getData(timeUnit TimeUnit) map[string]interface{} {
 			}
 			id++
 		}
-		if id < nextDayID {
+		if id <= nextDayID {
 			a = append(a, sum)
 		}
 		if len(a) != int(s.limit/24) {
@@ -578,7 +578,7 @@ func (s *statsCtx) getData(timeUnit TimeUnit) map[string]interface{} {
 			}
 			id++
 		}
-		if id < nextDayID {
+		if id <= nextDayID {
 			a = append(a, sum)
 		}
 	}
@@ -602,7 +602,7 @@ func (s *statsCtx) getData(timeUnit TimeUnit) map[string]interface{} {
 			}
 			id++
 		}
-		if id < nextDayID {
+		if id <= nextDayID {
 			a = append(a, sum)
 		}
 	}
@@ -626,7 +626,7 @@ func (s *statsCtx) getData(timeUnit TimeUnit) map[string]interface{} {
 			}
 			id++
 		}
-		if id < nextDayID {
+		if id <= nextDayID {
 			a = append(a, sum)
 		}
 	}
