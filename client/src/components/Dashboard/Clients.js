@@ -72,6 +72,7 @@ const Clients = ({
             showPagination={false}
             noDataText={t('no_clients_found')}
             minRows={6}
+            defaultPageSize={100}
             className="-striped -highlight card-table-overflow"
         />
     </Card>
