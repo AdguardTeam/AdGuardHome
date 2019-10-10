@@ -38,7 +38,7 @@ export const formatClientCell = (value, clients, autoClients, t) => {
 
     if (whois) {
         whoisContainer = (
-            <div className="logs__text logs__text--wrap mt-1">
+            <div className="logs__text logs__text--wrap logs__text--whois">
                 {getFormattedWhois(whois, t)}
             </div>
         );
