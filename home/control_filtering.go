@@ -177,8 +177,14 @@ func handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleFilteringRefresh(w http.ResponseWriter, r *http.Request) {
-	beginRefreshFilters()
-	fmt.Fprintf(w, "OK 0 filters updated\n")
+	config.controlLock.Unlock()
+	nUpdated, err := refreshFilters()
+	config.controlLock.Lock()
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "%s", err)
+		return
+	}
+	fmt.Fprintf(w, "OK %d filters updated\n", nUpdated)
 }
 
 type filterJSON struct {
