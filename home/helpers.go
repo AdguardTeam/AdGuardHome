@@ -1,12 +1,10 @@
 package home
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -153,29 +151,6 @@ func (p *postInstallHandlerStruct) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 func postInstallHandler(handler http.Handler) http.Handler {
 	return &postInstallHandlerStruct{handler}
-}
-
-// -------------------------------------------------
-// helper functions for parsing parameters from body
-// -------------------------------------------------
-func parseParametersFromBody(r io.Reader) (map[string]string, error) {
-	parameters := map[string]string{}
-
-	scanner := bufio.NewScanner(r)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if len(line) == 0 {
-			// skip empty lines
-			continue
-		}
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
-			return parameters, errors.New("Got invalid request body")
-		}
-		parameters[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
-	}
-
-	return parameters, nil
 }
 
 // ------------------

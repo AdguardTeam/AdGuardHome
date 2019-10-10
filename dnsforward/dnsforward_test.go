@@ -148,7 +148,6 @@ func TestServerRace(t *testing.T) {
 
 func TestSafeSearch(t *testing.T) {
 	s := createTestServer(t)
-	s.conf.SafeSearchEnabled = true
 	err := s.Start(nil)
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
@@ -376,23 +375,24 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 }
 
 func createTestServer(t *testing.T) *Server {
-	s := NewServer(nil, nil)
+	rules := "||nxdomain.example.org^\n||null.example.org^\n127.0.0.1	host.example.org\n"
+	filters := map[int]string{}
+	filters[0] = rules
+	c := dnsfilter.Config{}
+	c.SafeBrowsingEnabled = true
+	c.SafeBrowsingCacheSize = 1000
+	c.SafeSearchEnabled = true
+	c.SafeSearchCacheSize = 1000
+	c.ParentalCacheSize = 1000
+	c.CacheTime = 30
+
+	f := dnsfilter.New(&c, filters)
+	s := NewServer(f, nil, nil)
 	s.conf.UDPListenAddr = &net.UDPAddr{Port: 0}
 	s.conf.TCPListenAddr = &net.TCPAddr{Port: 0}
 
 	s.conf.FilteringConfig.FilteringEnabled = true
 	s.conf.FilteringConfig.ProtectionEnabled = true
-	s.conf.FilteringConfig.SafeBrowsingEnabled = true
-	s.conf.Filters = make([]dnsfilter.Filter, 0)
-
-	s.conf.SafeBrowsingCacheSize = 1000
-	s.conf.SafeSearchCacheSize = 1000
-	s.conf.ParentalCacheSize = 1000
-	s.conf.CacheTime = 30
-
-	rules := "||nxdomain.example.org^\n||null.example.org^\n127.0.0.1	host.example.org\n"
-	filter := dnsfilter.Filter{ID: 0, Data: []byte(rules)}
-	s.conf.Filters = append(s.conf.Filters, filter)
 	return s
 }
 

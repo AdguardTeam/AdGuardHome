@@ -143,11 +143,12 @@ func run(args options) {
 		}
 
 		initDNSServer()
-
-		err = startDNSServer()
-		if err != nil {
-			log.Fatal(err)
-		}
+		go func() {
+			err = startDNSServer()
+			if err != nil {
+				log.Fatal(err)
+			}
+		}()
 
 		err = startDHCPServer()
 		if err != nil {

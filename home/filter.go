@@ -19,18 +19,13 @@ import (
 var (
 	nextFilterID      = time.Now().Unix() // semi-stable way to generate an unique ID
 	filterTitleRegexp = regexp.MustCompile(`^! Title: +(.*)$`)
+	forceRefresh      bool
 )
 
 func initFiltering() {
 	loadFilters()
 	deduplicateFilters()
 	updateUniqueFilterID(config.Filters)
-}
-
-func startRefreshFilters() {
-	go func() {
-		_ = refreshFiltersIfNecessary(false)
-	}()
 	go periodicallyRefreshFilters()
 }
 
@@ -180,14 +175,25 @@ func assignUniqueFilterID() int64 {
 
 // Sets up a timer that will be checking for filters updates periodically
 func periodicallyRefreshFilters() {
+	nextRefresh := int64(0)
 	for {
-		time.Sleep(1 * time.Hour)
-		if config.DNS.FiltersUpdateIntervalHours == 0 {
-			continue
+		if forceRefresh {
+			_ = refreshFiltersIfNecessary(true)
+			forceRefresh = false
 		}
 
-		refreshFiltersIfNecessary(false)
+		if config.DNS.FiltersUpdateIntervalHours != 0 && nextRefresh <= time.Now().Unix() {
+			_ = refreshFiltersIfNecessary(false)
+			nextRefresh = time.Now().Add(1 * time.Hour).Unix()
+		}
+		time.Sleep(1 * time.Second)
 	}
+}
+
+// Schedule the procedure to refresh filters
+func beginRefreshFilters() {
+	forceRefresh = true
+	log.Debug("Filters: schedule update")
 }
 
 // Checks filters updates if necessary
@@ -196,15 +202,15 @@ func periodicallyRefreshFilters() {
 // Algorithm:
 // . Get the list of filters to be updated
 // . For each filter run the download and checksum check operation
-// . Stop server
 // . For each filter:
 //  . If filter data hasn't changed, just set new update time on file
-//  . If filter data has changed, save it on disk
-//  . Apply changes to the current configuration
-// . Start server
+//  . If filter data has changed: rename the old file, store the new data on disk
+//  . Pass new filters to dnsfilter object
 func refreshFiltersIfNecessary(force bool) int {
 	var updateFilters []filter
 	var updateFlags []bool // 'true' if filter data has changed
+
+	log.Debug("Filters: updating...")
 
 	now := time.Now()
 	config.RLock()
@@ -229,7 +235,6 @@ func refreshFiltersIfNecessary(force bool) int {
 	}
 	config.RUnlock()
 
-	updateCount := 0
 	for i := range updateFilters {
 		uf := &updateFilters[i]
 		updated, err := uf.update()
@@ -239,24 +244,14 @@ func refreshFiltersIfNecessary(force bool) int {
 			continue
 		}
 		uf.LastUpdated = now
-		if updated {
-			updateCount++
-		}
 	}
 
-	stopped := false
-	if updateCount != 0 {
-		_ = config.dnsServer.Stop()
-		stopped = true
-	}
-
-	updateCount = 0
+	updateCount := 0
 	for i := range updateFilters {
 		uf := &updateFilters[i]
 		updated := updateFlags[i]
 		if updated {
-			// Saving it to the filters dir now
-			err := uf.save()
+			err := uf.saveAndBackupOld()
 			if err != nil {
 				log.Printf("Failed to save the updated filter %d: %s", uf.ID, err)
 				continue
@@ -290,12 +285,20 @@ func refreshFiltersIfNecessary(force bool) int {
 		config.Unlock()
 	}
 
-	if stopped {
-		err := reconfigureDNSServer()
-		if err != nil {
-			log.Error("cannot reconfigure DNS server with the new filters: %s", err)
+	if updateCount != 0 {
+		enableFilters(false)
+
+		for i := range updateFilters {
+			uf := &updateFilters[i]
+			updated := updateFlags[i]
+			if !updated {
+				continue
+			}
+			_ = os.Remove(uf.Path() + ".old")
 		}
 	}
+
+	log.Debug("Filters: update finished")
 	return updateCount
 }
 
@@ -413,6 +416,12 @@ func (filter *filter) save() error {
 	return err
 }
 
+func (filter *filter) saveAndBackupOld() error {
+	filterFilePath := filter.Path()
+	_ = os.Rename(filterFilePath, filterFilePath+".old")
+	return filter.save()
+}
+
 // loads filter contents from the file in dataDir
 func (filter *filter) load() error {
 	filterFilePath := filter.Path()
@@ -466,4 +475,24 @@ func (filter *filter) LastTimeUpdated() time.Time {
 
 	// filter file modified time
 	return s.ModTime()
+}
+
+func enableFilters(async bool) {
+	var filters map[int]string
+	if config.DNS.FilteringConfig.FilteringEnabled {
+		// convert array of filters
+		filters = make(map[int]string)
+
+		userFilter := userFilter()
+		filters[int(userFilter.ID)] = string(userFilter.Data)
+
+		for _, filter := range config.Filters {
+			if !filter.Enabled {
+				continue
+			}
+			filters[int(filter.ID)] = filter.Path()
+		}
+	}
+
+	_ = config.dnsFilter.SetFilters(filters, async)
 }
