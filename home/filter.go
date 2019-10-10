@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
@@ -19,7 +20,8 @@ import (
 var (
 	nextFilterID      = time.Now().Unix() // semi-stable way to generate an unique ID
 	filterTitleRegexp = regexp.MustCompile(`^! Title: +(.*)$`)
-	forceRefresh      bool
+	refreshStatus     uint32 // 0:none; 1:in progress
+	refreshLock       sync.Mutex
 )
 
 func initFiltering() {
@@ -175,25 +177,30 @@ func assignUniqueFilterID() int64 {
 
 // Sets up a timer that will be checking for filters updates periodically
 func periodicallyRefreshFilters() {
-	nextRefresh := int64(0)
 	for {
-		if forceRefresh {
-			_ = refreshFiltersIfNecessary(true)
-			forceRefresh = false
-		}
-
-		if config.DNS.FiltersUpdateIntervalHours != 0 && nextRefresh <= time.Now().Unix() {
+		if config.DNS.FiltersUpdateIntervalHours != 0 && refreshStatus != 0 {
+			refreshStatus = 1
+			refreshLock.Lock()
 			_ = refreshFiltersIfNecessary(false)
-			nextRefresh = time.Now().Add(1 * time.Hour).Unix()
+			refreshLock.Unlock()
+			refreshStatus = 0
 		}
-		time.Sleep(1 * time.Second)
+		time.Sleep(1 * time.Hour)
 	}
 }
 
-// Schedule the procedure to refresh filters
-func beginRefreshFilters() {
-	forceRefresh = true
-	log.Debug("Filters: schedule update")
+// Refresh filters
+func refreshFilters() (int, error) {
+	if refreshStatus != 0 { // we could use atomic cmpxchg here, but it's not really required
+		return 0, fmt.Errorf("Filters update procedure is already running")
+	}
+
+	refreshStatus = 1
+	refreshLock.Lock()
+	nUpdated := refreshFiltersIfNecessary(true)
+	refreshLock.Unlock()
+	refreshStatus = 0
+	return nUpdated, nil
 }
 
 // Checks filters updates if necessary
