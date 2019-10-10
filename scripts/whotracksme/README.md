@@ -10,3 +10,4 @@ node index.js
 ```
 
 You'll find the output in the `whotracksmedb.json` file.
+Move it to `client/src/helpers/trackers`.

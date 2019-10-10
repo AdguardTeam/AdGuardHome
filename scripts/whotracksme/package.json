@@ -10,6 +10,6 @@
   "license": "ISC",
   "dependencies": {
     "download-file-sync": "^1.0.4",
-    "sqlite3": "^4.0.2"
+    "sqlite3": "^4.1.0"
   }
 }
