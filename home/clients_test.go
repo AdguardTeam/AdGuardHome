@@ -135,3 +135,29 @@ func TestClients(t *testing.T) {
 	// get
 	assert.True(t, clients.Exists("1.1.1.1", ClientSourceHostsFile))
 }
+
+func TestClientsWhois(t *testing.T) {
+	var c Client
+	clients := clientsContainer{}
+	clients.Init()
+
+	whois := [][]string{{"orgname", "orgname-val"}, {"country", "country-val"}}
+	// set whois info on new client
+	clients.SetWhoisInfo("1.1.1.255", whois)
+	assert.True(t, clients.ipHost["1.1.1.255"].WhoisInfo[0][1] == "orgname-val")
+
+	// set whois info on existing auto-client
+	_, _ = clients.AddHost("1.1.1.1", "host", ClientSourceRDNS)
+	clients.SetWhoisInfo("1.1.1.1", whois)
+	assert.True(t, clients.ipHost["1.1.1.1"].WhoisInfo[0][1] == "orgname-val")
+
+	// set whois info on existing client
+	c = Client{
+		IP:   "1.1.1.2",
+		Name: "client1",
+	}
+	_, _ = clients.Add(c)
+	clients.SetWhoisInfo("1.1.1.2", whois)
+	assert.True(t, clients.ipIndex["1.1.1.2"].WhoisInfo[0][1] == "orgname-val")
+	_ = clients.Del("client1")
+}

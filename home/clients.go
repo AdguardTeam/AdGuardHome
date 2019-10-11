@@ -73,9 +73,9 @@ type ClientHost struct {
 }
 
 type clientsContainer struct {
-	list    map[string]*Client    // name -> client
-	ipIndex map[string]*Client    // IP -> client
-	ipHost  map[string]ClientHost // IP -> Hostname
+	list    map[string]*Client     // name -> client
+	ipIndex map[string]*Client     // IP -> client
+	ipHost  map[string]*ClientHost // IP -> Hostname
 	lock    sync.Mutex
 }
 
@@ -87,7 +87,7 @@ func (clients *clientsContainer) Init() {
 	}
 	clients.list = make(map[string]*Client)
 	clients.ipIndex = make(map[string]*Client)
-	clients.ipHost = make(map[string]ClientHost)
+	clients.ipHost = make(map[string]*ClientHost)
 
 	go clients.periodicUpdate()
 }
@@ -303,7 +303,7 @@ func (clients *clientsContainer) SetWhoisInfo(ip string, info [][]string) {
 		return
 	}
 
-	ch = ClientHost{
+	ch = &ClientHost{
 		Source: ClientSourceWHOIS,
 	}
 	ch.WhoisInfo = info
@@ -324,16 +324,18 @@ func (clients *clientsContainer) AddHost(ip, host string, source clientSource) (
 		return false, nil
 	}
 
-	// check index
-	c, ok := clients.ipHost[ip]
-	if ok && c.Source > source {
+	// check auto-clients index
+	ch, ok := clients.ipHost[ip]
+	if ok && ch.Source > source {
 		return false, nil
-	}
-
-	clients.ipHost[ip] = ClientHost{
-		Host:      host,
-		Source:    source,
-		WhoisInfo: c.WhoisInfo,
+	} else if ok {
+		ch.Source = source
+	} else {
+		ch = &ClientHost{
+			Host:   host,
+			Source: source,
+		}
+		clients.ipHost[ip] = ch
 	}
 	log.Tracef("'%s' -> '%s' [%d]", ip, host, len(clients.ipHost))
 	return true, nil
