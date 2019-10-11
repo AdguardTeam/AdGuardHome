@@ -224,19 +224,10 @@ func getSession(u *User) []byte {
 	return hash[:]
 }
 
-func handleLogin(w http.ResponseWriter, r *http.Request) {
-	req := loginJSON{}
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "json decode: %s", err)
-		return
-	}
-
+func httpCookie(req loginJSON) string {
 	u := config.auth.UserFind(req.Name, req.Password)
 	if len(u.Name) == 0 {
-		time.Sleep(1 * time.Second)
-		httpError(w, http.StatusBadRequest, "invalid login or password")
-		return
+		return ""
 	}
 
 	sess := getSession(&u)
@@ -250,8 +241,25 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	expireSess := uint32(now.Unix()) + expireTime*60*60
 	config.auth.storeSession(sess, expireSess)
 
-	s := fmt.Sprintf("session=%s; Path=/; HttpOnly; Expires=%s", hex.EncodeToString(sess), expstr)
-	w.Header().Set("Set-Cookie", s)
+	return fmt.Sprintf("session=%s; Path=/; HttpOnly; Expires=%s", hex.EncodeToString(sess), expstr)
+}
+
+func handleLogin(w http.ResponseWriter, r *http.Request) {
+	req := loginJSON{}
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "json decode: %s", err)
+		return
+	}
+
+	cookie := httpCookie(req)
+	if len(cookie) == 0 {
+		time.Sleep(1 * time.Second)
+		httpError(w, http.StatusBadRequest, "invalid login or password")
+		return
+	}
+
+	w.Header().Set("Set-Cookie", cookie)
 
 	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
 	w.Header().Set("Pragma", "no-cache")
@@ -324,7 +332,6 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 			if err == nil {
 				r := config.auth.CheckSession(cookie.Value)
 				if r == 0 {
-
 					ok = true
 				} else if r < 0 {
 					log.Debug("Auth: invalid cookie value: %s", cookie)
