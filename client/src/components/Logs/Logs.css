@@ -41,9 +41,18 @@
     width: 100%;
 }
 
-.logs__text--wrap {
+.logs__text--domain {
+    max-width: 285px;
+}
+
+.logs__text--wrap,
+.logs__text--whois {
     line-height: 1.4;
     white-space: normal;
+}
+
+.logs__text--whois {
+    line-height: 1.2;
 }
 
 .logs__row .tooltip-custom {
@@ -152,11 +161,13 @@
 
 .logs__whois {
     display: inline;
+    font-size: 12px;
 }
 
 .logs__whois::after {
     content: "|";
     padding: 0 5px;
+    opacity: 0.3;
 }
 
 .logs__whois:last-child::after {
@@ -166,8 +177,8 @@
 .logs__whois-icon.icons {
     position: relative;
     top: -2px;
-    width: 16px;
-    height: 16px;
-    margin-right: 2px;
-    opacity: 0.6;
+    width: 12px;
+    height: 12px;
+    margin-right: 1px;
+    opacity: 0.5;
 }
