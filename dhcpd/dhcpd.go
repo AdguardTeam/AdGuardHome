@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"net/http"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -45,6 +46,12 @@ type ServerConfig struct {
 	// IP conflict detector: time (ms) to wait for ICMP reply.
 	// 0: disable
 	ICMPTimeout uint `json:"icmp_timeout_msec" yaml:"icmp_timeout_msec"`
+
+	// Called when the configuration is changed by HTTP request
+	ConfigModified func() `json:"-" yaml:"-"`
+
+	// Register an HTTP handler
+	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request)) `json:"-" yaml:"-"`
 }
 
 // Server - the current state of the DHCP server
@@ -92,6 +99,9 @@ func (s *Server) CheckConfig(config ServerConfig) error {
 func Create(config ServerConfig) *Server {
 	s := Server{}
 	s.conf = config
+	if s.conf.HTTPRegister != nil {
+		s.registerHandlers()
+	}
 	return &s
 }
 
@@ -111,9 +121,6 @@ func (s *Server) WriteDiskConfig(c *ServerConfig) {
 }
 
 func (s *Server) setConfig(config ServerConfig) error {
-	s.conf = config
-	s.conf.DBFilePath = filepath.Join(config.WorkDir, dbFilename)
-
 	iface, err := net.InterfaceByName(config.InterfaceName)
 	if err != nil {
 		printInterfaces()
@@ -165,6 +172,12 @@ func (s *Server) setConfig(config ServerConfig) error {
 		dhcp4.OptionDomainNameServer: s.ipnet.IP,
 	}
 
+	oldconf := s.conf
+	s.conf = config
+	s.conf.WorkDir = oldconf.WorkDir
+	s.conf.HTTPRegister = oldconf.HTTPRegister
+	s.conf.ConfigModified = oldconf.ConfigModified
+	s.conf.DBFilePath = filepath.Join(config.WorkDir, dbFilename)
 	return nil
 }
 

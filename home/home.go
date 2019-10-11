@@ -119,6 +119,9 @@ func run(args options) {
 		}
 	}
 
+	config.DHCP.WorkDir = config.ourWorkingDir
+	config.DHCP.HTTPRegister = httpRegister
+	config.DHCP.ConfigModified = onConfigModified
 	config.dhcpServer = dhcpd.Create(config.DHCP)
 	config.clients.Init(config.Clients, config.dhcpServer)
 	config.Clients = nil

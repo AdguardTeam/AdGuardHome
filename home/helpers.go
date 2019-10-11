@@ -1,7 +1,6 @@
 package home
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -336,21 +335,6 @@ func _Func() string {
 	runtime.Callers(2, pc)
 	f := runtime.FuncForPC(pc[0])
 	return path.Base(f.Name())
-}
-
-// Parse input string and return IPv4 address
-func parseIPv4(s string) net.IP {
-	ip := net.ParseIP(s)
-	if ip == nil {
-		return nil
-	}
-
-	v4InV6Prefix := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff}
-	if !bytes.Equal(ip[0:12], v4InV6Prefix) {
-		return nil
-	}
-
-	return ip.To4()
 }
 
 // SplitNext - split string by a byte and return the first chunk
