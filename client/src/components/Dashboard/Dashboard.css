@@ -1,10 +1,11 @@
 .stats__table .popover__body {
-    left: 0;
+    left: -10px;
+    min-width: 270px;
     transform: none;
 }
 
 .stats__table .popover__body:after {
-    left: 13px;
+    left: 23px;
 }
 
 .stats__table .rt-tr-group:first-child .popover__body,

@@ -41,6 +41,10 @@
     width: 100%;
 }
 
+.logs__text--domain {
+    max-width: 285px;
+}
+
 .logs__text--wrap,
 .logs__text--whois {
     line-height: 1.4;
