@@ -39,13 +39,14 @@ type ServerConfig struct {
 	SubnetMask    string `json:"subnet_mask" yaml:"subnet_mask"`
 	RangeStart    string `json:"range_start" yaml:"range_start"`
 	RangeEnd      string `json:"range_end" yaml:"range_end"`
-	LeaseDuration uint   `json:"lease_duration" yaml:"lease_duration"` // in seconds
-	WorkDir       string `json:"-" yaml:"-"`
-	DBFilePath    string `json:"-" yaml:"-"` // path to DB file
+	LeaseDuration uint32 `json:"lease_duration" yaml:"lease_duration"` // in seconds
 
 	// IP conflict detector: time (ms) to wait for ICMP reply.
 	// 0: disable
-	ICMPTimeout uint `json:"icmp_timeout_msec" yaml:"icmp_timeout_msec"`
+	ICMPTimeout uint32 `json:"icmp_timeout_msec" yaml:"icmp_timeout_msec"`
+
+	WorkDir    string `json:"-" yaml:"-"`
+	DBFilePath string `json:"-" yaml:"-"` // path to DB file
 
 	// Called when the configuration is changed by HTTP request
 	ConfigModified func() `json:"-" yaml:"-"`

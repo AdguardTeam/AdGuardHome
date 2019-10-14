@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -451,6 +452,28 @@ func (s *Server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Requ
 	}
 }
 
+func (s *Server) handleReset(w http.ResponseWriter, r *http.Request) {
+	err := s.Stop()
+	if err != nil {
+		log.Error("DHCP: Stop: %s", err)
+	}
+
+	err = os.Remove(s.conf.DBFilePath)
+	if err != nil && !os.IsNotExist(err) {
+		log.Error("DHCP: os.Remove: %s: %s", s.conf.DBFilePath, err)
+	}
+
+	oldconf := s.conf
+	s.conf = ServerConfig{}
+	s.conf.LeaseDuration = 86400
+	s.conf.ICMPTimeout = 1000
+	s.conf.WorkDir = oldconf.WorkDir
+	s.conf.HTTPRegister = oldconf.HTTPRegister
+	s.conf.ConfigModified = oldconf.ConfigModified
+	s.conf.DBFilePath = oldconf.DBFilePath
+	s.conf.ConfigModified()
+}
+
 func (s *Server) registerHandlers() {
 	s.conf.HTTPRegister("GET", "/control/dhcp/status", s.handleDHCPStatus)
 	s.conf.HTTPRegister("GET", "/control/dhcp/interfaces", s.handleDHCPInterfaces)
@@ -458,4 +481,5 @@ func (s *Server) registerHandlers() {
 	s.conf.HTTPRegister("POST", "/control/dhcp/find_active_dhcp", s.handleDHCPFindActiveServer)
 	s.conf.HTTPRegister("POST", "/control/dhcp/add_static_lease", s.handleDHCPAddStaticLease)
 	s.conf.HTTPRegister("POST", "/control/dhcp/remove_static_lease", s.handleDHCPRemoveStaticLease)
+	s.conf.HTTPRegister("POST", "/control/dhcp/reset", s.handleReset)
 }
