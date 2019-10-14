@@ -141,7 +141,7 @@
     "example_comment": "! Hier steht ein Kommentar",
     "example_comment_meaning": "Nur ein Kommentar",
     "example_comment_hash": "# Auch ein Kommentar",
-    "example_regex_meaning": "Zugriff auf die Domains sperren, die dem <0>spezifizierten regulären Ausdruck</0> entsprechen.",
+    "example_regex_meaning": "Zugriff auf die Domains blockieren, die dem <0>spezifizierten regulären Ausdruck</0> entsprechen",
     "example_upstream_regular": "regulärer DNS (über UDP)",
     "example_upstream_dot": "verschlüsseltes <a href='https://en.wikipedia.org/wiki/DNS_over_TLS' target='_blank'>DNS-over-TLS</a>",
     "example_upstream_doh": "verschlüsseltes <a href='https://en.wikipedia.org/wiki/DNS_over_HTTPS' target='_blank'>DNS-over-HTTPS</a>",
@@ -398,5 +398,7 @@
     "location": "Ort",
     "orgname": "Name der Organisation",
     "netname": "Netzwerkname",
-    "descr": "Beschreibung"
+    "descr": "Beschreibung",
+    "whois": "Whois",
+    "filtering_rules_learn_more": "<0>Erfahren Sie mehr</0> über die Erstellung eigener Hosts-Blocklisten."
 }

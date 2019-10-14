@@ -132,7 +132,7 @@
     "example_comment": "! Hier komt een opmerking",
     "example_comment_meaning": "zomaar een opmerking",
     "example_comment_hash": "# Nog een opmerking",
-    "example_regex_meaning": "blokkeer de toegang tot de domeinen die overeenkomen met de <0> opgegeven reguliere expressie </0>",
+    "example_regex_meaning": "blokkeer de toegang tot de domeinen die overeenkomen met de opgegeven reguliere expressie",
     "example_upstream_regular": "standaard DNS (over UDP)",
     "example_upstream_dot": "versleutelde<a href='https://en.wikipedia.org/wiki/DNS_over_TLS' target='_blank'>DNS-over-TLS</a>",
     "example_upstream_doh": "versleutelde<a href='https://en.wikipedia.org/wiki/DNS_over_HTTPS' target='_blank'>DNS-over-HTTPS</a>",

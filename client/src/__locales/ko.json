@@ -141,7 +141,6 @@
     "example_comment": "! 여기는 주석이 올 수 있습니다",
     "example_comment_meaning": "말 그대로의 의미입니다",
     "example_comment_hash": "# 이것 또한 주석입니다",
-    "example_regex_meaning": "<0>특정 정규 표현식</0>에 맞는 도메인 접근을 차단합니다",
     "example_upstream_regular": "사용자 지정 DNS (UDP을 통한 접속)",
     "example_upstream_dot": "암호화 된 <0>DNS-over-TLS</0>",
     "example_upstream_doh": "암호화 된 <0>DNS-over-HTTPS</0>",
