@@ -18,16 +18,12 @@ func httpError(r *http.Request, w http.ResponseWriter, code int, format string, 
 	http.Error(w, text, code)
 }
 
-type filterJSON struct {
-	Domain         string `json:"domain"`
-	Client         string `json:"client"`
-	QuestionType   string `json:"question_type"`
-	ResponseStatus string `json:"response_status"`
-}
-
 type request struct {
-	OlderThan string     `json:"older_than"`
-	Filter    filterJSON `json:"filter"`
+	olderThan            string
+	filterDomain         string
+	filterClient         string
+	filterQuestionType   string
+	filterResponseStatus string
 }
 
 // "value" -> value, return TRUE
@@ -41,20 +37,22 @@ func getDoubleQuotesEnclosedValue(s *string) bool {
 }
 
 func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
+	var err error
 	req := request{}
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "json decode: %s", err)
-		return
-	}
+	q := r.URL.Query()
+	req.olderThan = q.Get("older_than")
+	req.filterDomain = q.Get("filter_domain")
+	req.filterClient = q.Get("filter_client")
+	req.filterQuestionType = q.Get("filter_question_type")
+	req.filterResponseStatus = q.Get("filter_response_status")
 
 	params := getDataParams{
-		Domain:         req.Filter.Domain,
-		Client:         req.Filter.Client,
+		Domain:         req.filterDomain,
+		Client:         req.filterClient,
 		ResponseStatus: responseStatusAll,
 	}
-	if len(req.OlderThan) != 0 {
-		params.OlderThan, err = time.Parse(time.RFC3339Nano, req.OlderThan)
+	if len(req.olderThan) != 0 {
+		params.OlderThan, err = time.Parse(time.RFC3339Nano, req.olderThan)
 		if err != nil {
 			httpError(r, w, http.StatusBadRequest, "invalid time stamp: %s", err)
 			return
@@ -68,8 +66,8 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 		params.StrictMatchClient = true
 	}
 
-	if len(req.Filter.QuestionType) != 0 {
-		qtype, ok := dns.StringToType[req.Filter.QuestionType]
+	if len(req.filterQuestionType) != 0 {
+		qtype, ok := dns.StringToType[req.filterQuestionType]
 		if !ok {
 			httpError(r, w, http.StatusBadRequest, "invalid question_type")
 			return
@@ -77,8 +75,8 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 		params.QuestionType = qtype
 	}
 
-	if len(req.Filter.ResponseStatus) != 0 {
-		switch req.Filter.ResponseStatus {
+	if len(req.filterResponseStatus) != 0 {
+		switch req.filterResponseStatus {
 		case "filtered":
 			params.ResponseStatus = responseStatusFiltered
 		default:
@@ -155,7 +153,7 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 
 // Register web handlers
 func (l *queryLog) initWeb() {
-	l.conf.HTTPRegister("POST", "/control/querylog", l.handleQueryLog)
+	l.conf.HTTPRegister("GET", "/control/querylog", l.handleQueryLog)
 	l.conf.HTTPRegister("GET", "/control/querylog_info", l.handleQueryLogInfo)
 	l.conf.HTTPRegister("POST", "/control/querylog_clear", l.handleQueryLogClear)
 	l.conf.HTTPRegister("POST", "/control/querylog_config", l.handleQueryLogConfig)

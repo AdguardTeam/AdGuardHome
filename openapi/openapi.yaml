@@ -176,16 +176,34 @@ paths:
     # --------------------------------------------------
 
     /querylog:
-        post:
+        get:
             tags:
                 - log
             operationId: queryLog
             summary: 'Get DNS server query log'
             parameters:
-            - in: "body"
-              name: "body"
-              schema:
-                $ref: '#/definitions/QueryLogRequest'
+                - name: older_than
+                  in: query
+                  type: string
+                - name: filter_domain
+                  in: query
+                  type: string
+                  description: "Filter by domain name"
+                - name: filter_client
+                  in: query
+                  type: string
+                  description: "Filter by client"
+                - name: filter_question_type
+                  in: query
+                  type: string
+                  description: "Filter by question type"
+                - name: filter_response_status
+                  in: query
+                  type: string
+                  description: "Filter by response status"
+                  enum:
+                    -
+                    - filtered
             responses:
                 200:
                     description: OK
@@ -438,19 +456,19 @@ paths:
     # Filtering status methods
     # --------------------------------------------------
 
-    /filtering_info:
+    /filtering/status:
         get:
             tags:
                 - filtering
-            operationId: filteringInfo
+            operationId: filteringStatus
             summary: 'Get filtering parameters'
             responses:
                 200:
                     description: OK
                     schema:
-                        $ref: "#/definitions/FilterInfo"
+                        $ref: "#/definitions/FilterStatus"
 
-    /filtering_config:
+    /filtering/config:
         post:
             tags:
                 - filtering
@@ -1063,7 +1081,7 @@ definitions:
                 type: "string"
                 example: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"
 
-    FilterInfo:
+    FilterStatus:
         type: "object"
         description: "Filtering settings"
         properties:
@@ -1399,14 +1417,6 @@ definitions:
         description: "Query log"
         items:
             $ref: "#/definitions/QueryLogItem"
-
-    QueryLogRequest:
-        type: "object"
-        description: "Query log request data"
-        properties:
-            offset:
-                type: "integer"
-                example: 1234
 
     QueryLogConfig:
         type: "object"
