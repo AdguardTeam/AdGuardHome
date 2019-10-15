@@ -1,3 +1,4 @@
+import 'url-polyfill';
 import dateParse from 'date-fns/parse';
 import dateFormat from 'date-fns/format';
 import subHours from 'date-fns/sub_hours';
@@ -321,3 +322,9 @@ export const normalizeWhois = (whois) => {
 };
 
 export const isValidQuestionType = type => type && DNS_RECORD_TYPES.includes(type.toUpperCase());
+
+export const getPathWithQueryString = (path, params) => {
+    const searchParams = new URLSearchParams(params);
+
+    return `${path}?${searchParams.toString()}`;
+};

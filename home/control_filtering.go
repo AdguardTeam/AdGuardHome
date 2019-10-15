@@ -204,7 +204,7 @@ type filteringConfig struct {
 }
 
 // Get filtering configuration
-func handleFilteringInfo(w http.ResponseWriter, r *http.Request) {
+func handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
 	resp := filteringConfig{}
 	config.RLock()
 	resp.Enabled = config.DNS.FilteringEnabled
@@ -261,8 +261,8 @@ func handleFilteringConfig(w http.ResponseWriter, r *http.Request) {
 
 // RegisterFilteringHandlers - register handlers
 func RegisterFilteringHandlers() {
-	httpRegister(http.MethodGet, "/control/filtering_info", handleFilteringInfo)
-	httpRegister(http.MethodPost, "/control/filtering_config", handleFilteringConfig)
+	httpRegister(http.MethodGet, "/control/filtering/status", handleFilteringStatus)
+	httpRegister(http.MethodPost, "/control/filtering/config", handleFilteringConfig)
 	httpRegister(http.MethodPost, "/control/filtering/add_url", handleFilteringAddURL)
 	httpRegister(http.MethodPost, "/control/filtering/remove_url", handleFilteringRemoveURL)
 	httpRegister(http.MethodPost, "/control/filtering/set_url", handleFilteringSetURL)

@@ -255,10 +255,10 @@ class Logs extends Component {
         } = filteredObj;
 
         return {
-            domain: domain || '',
-            client: client || '',
-            question_type: isValidQuestionType(type) ? type.toUpperCase() : '',
-            response_status: response === RESPONSE_FILTER.FILTERED ? response : '',
+            filter_domain: domain || '',
+            filter_client: client || '',
+            filter_question_type: isValidQuestionType(type) ? type.toUpperCase() : '',
+            filter_response_status: response === RESPONSE_FILTER.FILTERED ? response : '',
         };
     };
 

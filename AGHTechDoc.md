@@ -1044,20 +1044,14 @@ We store data for a limited amount of time - the log file is automatically rotat
 
 Request:
 
-	POST /control/querylog
+	GET /control/querylog
+	?older_than=2006-01-02T15:04:05.999999999Z07:00
+	&filter_domain=...
+	&filter_client=...
+	&filter_question_type=A | AAAA
+	&filter_response_status= | filtered
 
-	{
-	older_than: "2006-01-02T15:04:05.999999999Z07:00" // must be "" for the first request
-
-	filter:{
-		domain: "..."
-		client: "..."
-		question_type: "A" | "AAAA"
-		response_status: "" | "filtered"
-	}
-	}
-
-If `older_than` value is set, server returns the next chunk of entries that are older than this time stamp.  This setting is used for paging.  UI sets this value to `""` on the first request and gets the latest log entries.  To get the older entries, UI sets this value to the timestamp of the last (the oldest) entry from the previous response from Server.
+If `older_than` value is set, server returns the next chunk of entries that are older than this time stamp.  This setting is used for paging.  UI sets the empty value on the first request and gets the latest log entries.  To get the older entries, UI sets this value to the timestamp of the last (the oldest) entry from the previous response from Server.
 
 If "filter" settings are set, server returns only entries that match the specified request.
 
@@ -1143,7 +1137,7 @@ As a result of the update procedure, all enabled filter files are written to dis
 
 Request:
 
-	GET /control/filtering_info
+	GET /control/filtering/status
 
 Response:
 
@@ -1171,7 +1165,7 @@ Response:
 
 Request:
 
-	POST /control/filtering_config
+	POST /control/filtering/config
 
 	{
 		"enabled": true | false
