@@ -289,6 +289,16 @@ const dhcp = handleActions(
             return newState;
         },
 
+        [actions.resetDhcpRequest]: state => ({ ...state, processingReset: true }),
+        [actions.resetDhcpFailure]: state => ({ ...state, processingReset: false }),
+        [actions.resetDhcpSuccess]: state => ({
+            ...state,
+            processingReset: false,
+            config: {
+                enabled: false,
+            },
+        }),
+
         [actions.toggleLeaseModal]: (state) => {
             const newState = {
                 ...state,

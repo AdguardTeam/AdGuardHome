@@ -248,6 +248,7 @@ class Api {
     DHCP_INTERFACES = { path: 'dhcp/interfaces', method: 'GET' };
     DHCP_ADD_STATIC_LEASE = { path: 'dhcp/add_static_lease', method: 'POST' };
     DHCP_REMOVE_STATIC_LEASE = { path: 'dhcp/remove_static_lease', method: 'POST' };
+    DHCP_RESET = { path: 'dhcp/reset', method: 'POST' };
 
     getDhcpStatus() {
         const { path, method } = this.DHCP_STATUS;
@@ -293,6 +294,11 @@ class Api {
             headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
+    }
+
+    resetDhcp() {
+        const { path, method } = this.DHCP_RESET;
+        return this.makeRequest(path, method);
     }
 
     // Installation

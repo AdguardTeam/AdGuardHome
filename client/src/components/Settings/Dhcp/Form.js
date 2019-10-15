@@ -50,6 +50,23 @@ const renderInterfaceValues = (interfaceValues => (
     </ul>
 ));
 
+const clearFields = (change, resetDhcp, t) => {
+    const fields = {
+        interface_name: '',
+        gateway_ip: '',
+        subnet_mask: '',
+        range_start: '',
+        range_end: '',
+        lease_duration: 86400,
+    };
+
+    // eslint-disable-next-line no-alert
+    if (window.confirm(t('dhcp_reset'))) {
+        Object.keys(fields).forEach(field => change(field, fields[field]));
+        resetDhcp();
+    }
+};
+
 let Form = (props) => {
     const {
         t,
@@ -61,6 +78,8 @@ let Form = (props) => {
         interfaceValue,
         processingConfig,
         processingInterfaces,
+        resetDhcp,
+        change,
     } = props;
 
     return (
@@ -160,30 +179,41 @@ let Form = (props) => {
                 </div>
             </div>
 
-            <button
-                type="submit"
-                className="btn btn-success btn-standard"
-                disabled={submitting || invalid || processingConfig}
-            >
-                {t('save_config')}
-            </button>
+            <div className="btn-list">
+                <button
+                    type="submit"
+                    className="btn btn-success btn-standard"
+                    disabled={submitting || invalid || processingConfig}
+                >
+                    {t('save_config')}
+                </button>
+                <button
+                    type="button"
+                    className="btn btn-secondary btn-standart"
+                    disabled={submitting || processingConfig}
+                    onClick={() => clearFields(change, resetDhcp, t)}
+                >
+                    <Trans>reset_settings</Trans>
+                </button>
+            </div>
         </form>
     );
 };
 
 Form.propTypes = {
-    handleSubmit: PropTypes.func,
-    submitting: PropTypes.bool,
-    invalid: PropTypes.bool,
-    interfaces: PropTypes.object,
+    handleSubmit: PropTypes.func.isRequired,
+    submitting: PropTypes.bool.isRequired,
+    invalid: PropTypes.bool.isRequired,
+    interfaces: PropTypes.object.isRequired,
     interfaceValue: PropTypes.string,
-    initialValues: PropTypes.object,
-    processingConfig: PropTypes.bool,
-    processingInterfaces: PropTypes.bool,
-    enabled: PropTypes.bool,
-    t: PropTypes.func,
+    initialValues: PropTypes.object.isRequired,
+    processingConfig: PropTypes.bool.isRequired,
+    processingInterfaces: PropTypes.bool.isRequired,
+    enabled: PropTypes.bool.isRequired,
+    t: PropTypes.func.isRequired,
+    resetDhcp: PropTypes.func.isRequired,
+    change: PropTypes.func.isRequired,
 };
-
 
 const selector = formValueSelector('dhcpForm');
 

@@ -470,6 +470,22 @@ export const toggleDhcp = values => async (dispatch) => {
     }
 };
 
+export const resetDhcpRequest = createAction('RESET_DHCP_REQUEST');
+export const resetDhcpSuccess = createAction('RESET_DHCP_SUCCESS');
+export const resetDhcpFailure = createAction('RESET_DHCP_FAILURE');
+
+export const resetDhcp = () => async (dispatch) => {
+    dispatch(resetDhcpRequest());
+    try {
+        const status = await apiClient.resetDhcp();
+        dispatch(resetDhcpSuccess(status));
+        dispatch(addSuccessToast('dhcp_config_saved'));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(resetDhcpFailure());
+    }
+};
+
 export const toggleLeaseModal = createAction('TOGGLE_LEASE_MODAL');
 
 export const addStaticLeaseRequest = createAction('ADD_STATIC_LEASE_REQUEST');
