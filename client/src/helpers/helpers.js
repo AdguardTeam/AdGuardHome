@@ -323,7 +323,7 @@ export const normalizeWhois = (whois) => {
 
 export const isValidQuestionType = type => type && DNS_RECORD_TYPES.includes(type.toUpperCase());
 
-export const getPathWithQueryParams = (path, params) => {
+export const getPathWithQueryString = (path, params) => {
     const searchParams = new URLSearchParams(params);
 
     return `${path}?${searchParams.toString()}`;

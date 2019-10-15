@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import { getPathWithQueryParams } from '../helpers/helpers';
+import { getPathWithQueryString } from '../helpers/helpers';
 
 class Api {
     baseUrl = 'control';
@@ -491,7 +491,7 @@ class Api {
 
     getQueryLog(params) {
         const { path, method } = this.GET_QUERY_LOG;
-        const url = getPathWithQueryParams(path, params);
+        const url = getPathWithQueryString(path, params);
         return this.makeRequest(url, method);
     }
 
