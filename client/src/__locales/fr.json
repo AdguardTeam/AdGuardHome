@@ -113,7 +113,6 @@
     "example_comment": "! Voici comment ajouter une déscription",
     "example_comment_meaning": "commentaire",
     "example_comment_hash": "# Et comme ça aussi on peut laisser des commentaires",
-    "example_regex_meaning": "block access to the domains matching the specified regular expression",
     "example_upstream_regular": "DNS classique (au-dessus de UDP)",
     "example_upstream_dot": "<a href='https://en.wikipedia.org/wiki/DNS_over_TLS' target='_blank'>DNS-au-dessus-de-TLS</a> chiffré",
     "example_upstream_doh": "<a href='https://en.wikipedia.org/wiki/DNS_over_HTTPS' target='_blank'>DNS-au-dessus-de-HTTPS</a> chiffré",

@@ -135,7 +135,7 @@
     "example_comment": "! ここにはコメントが入ります",
     "example_comment_meaning": "ただのコメントです",
     "example_comment_hash": "# ここもコメントです",
-    "example_regex_meaning": "<0>指定の正規表現</0>に一致するドメインへのアクセスをブロックします",
+    "example_regex_meaning": "指定の正規表現に一致するドメインへのアクセスをブロックします",
     "example_upstream_regular": "通常のDNS（UDPでの問い合わせ）",
     "example_upstream_dot": "暗号化されている <a href='https://en.wikipedia.org/wiki/DNS_over_TLS' target='_blank'>DNS-over-TLS</a>",
     "example_upstream_doh": "暗号化されている <a href='https://en.wikipedia.org/wiki/DNS_over_HTTPS' target='_blank'>DNS-over-HTTPS</a>",
