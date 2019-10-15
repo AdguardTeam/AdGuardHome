@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+import { getPathWithQueryParams } from '../helpers/helpers';
+
 class Api {
     baseUrl = 'control';
 
@@ -90,16 +92,16 @@ class Api {
     }
 
     // Filtering
-    FILTERING_INFO = { path: 'filtering_info', method: 'GET' };
+    FILTERING_STATUS = { path: 'filtering/status', method: 'GET' };
     FILTERING_ADD_FILTER = { path: 'filtering/add_url', method: 'POST' };
     FILTERING_REMOVE_FILTER = { path: 'filtering/remove_url', method: 'POST' };
     FILTERING_SET_RULES = { path: 'filtering/set_rules', method: 'POST' };
     FILTERING_REFRESH = { path: 'filtering/refresh', method: 'POST' };
     FILTERING_SET_URL = { path: 'filtering/set_url', method: 'POST' };
-    FILTERING_CONFIG = { path: 'filtering_config', method: 'POST' };
+    FILTERING_CONFIG = { path: 'filtering/config', method: 'POST' };
 
     getFilteringStatus() {
-        const { path, method } = this.FILTERING_INFO;
+        const { path, method } = this.FILTERING_STATUS;
         return this.makeRequest(path, method);
     }
 
@@ -482,18 +484,15 @@ class Api {
     }
 
     // Query log
-    GET_QUERY_LOG = { path: 'querylog', method: 'POST' };
+    GET_QUERY_LOG = { path: 'querylog', method: 'GET' };
     QUERY_LOG_CONFIG = { path: 'querylog_config', method: 'POST' };
     QUERY_LOG_INFO = { path: 'querylog_info', method: 'GET' };
     QUERY_LOG_CLEAR = { path: 'querylog_clear', method: 'POST' };
 
-    getQueryLog(data) {
+    getQueryLog(params) {
         const { path, method } = this.GET_QUERY_LOG;
-        const config = {
-            data,
-            headers: { 'Content-Type': 'application/json' },
-        };
-        return this.makeRequest(path, method, config);
+        const url = getPathWithQueryParams(path, params);
+        return this.makeRequest(url, method);
     }
 
     getQueryLogInfo() {

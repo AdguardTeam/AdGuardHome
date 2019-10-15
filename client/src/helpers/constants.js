@@ -372,8 +372,8 @@ export const DNS_RECORD_TYPES = [
 ];
 
 export const DEFAULT_LOGS_FILTER = {
-    domain: '',
-    client: '',
-    question_type: '',
-    response_status: '',
+    filter_domain: '',
+    filter_client: '',
+    filter_question_type: '',
+    filter_response_status: '',
 };
