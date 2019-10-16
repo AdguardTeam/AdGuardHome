@@ -376,7 +376,7 @@ func (clients *clientsContainer) addFromHostsFile() {
 		}
 	}
 
-	log.Info("Added %d client aliases from %s", n, hostsFn)
+	log.Debug("Added %d client aliases from %s", n, hostsFn)
 }
 
 // Add IP -> Host pairs from the system's `arp -a` command output
@@ -422,18 +422,23 @@ func (clients *clientsContainer) addFromSystemARP() {
 		}
 	}
 
-	log.Info("Added %d client aliases from 'arp -a' command output", n)
+	log.Debug("Added %d client aliases from 'arp -a' command output", n)
 }
 
 // add clients from DHCP that have non-empty Hostname property
 func (clients *clientsContainer) addFromDHCP() {
 	leases := config.dhcpServer.Leases()
+	n := 0
 	for _, l := range leases {
 		if len(l.Hostname) == 0 {
 			continue
 		}
-		_, _ = config.clients.AddHost(l.IP.String(), l.Hostname, ClientSourceDHCP)
+		ok, _ := config.clients.AddHost(l.IP.String(), l.Hostname, ClientSourceDHCP)
+		if ok {
+			n++
+		}
 	}
+	log.Debug("Added %d client aliases from DHCP", n)
 }
 
 type clientHostJSON struct {
