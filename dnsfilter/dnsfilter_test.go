@@ -3,15 +3,11 @@ package dnsfilter
 import (
 	"fmt"
 	"net"
-	"net/http"
-	"net/http/httptest"
 	"path"
 	"runtime"
 	"testing"
-	"time"
 
 	"github.com/AdguardTeam/urlfilter"
-	"github.com/bluele/gcache"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,7 +19,6 @@ var setts RequestFilteringSettings
 // SAFE SEARCH
 // PARENTAL
 // FILTERING
-// CLIENTS SETTINGS
 // BENCHMARKS
 
 // HELPERS
@@ -126,34 +121,19 @@ func TestEtcHostsMatching(t *testing.T) {
 // SAFE BROWSING
 
 func TestSafeBrowsing(t *testing.T) {
-	testCases := []string{
-		"",
-		"sb.adtidy.org",
-	}
-	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("%s in %s", tc, _Func()), func(t *testing.T) {
-			d := NewForTest(&Config{SafeBrowsingEnabled: true}, nil)
-			defer d.Close()
-			gctx.stats.Safebrowsing.Requests = 0
-			d.checkMatch(t, "wmconvirus.narod.ru")
-			d.checkMatch(t, "wmconvirus.narod.ru")
-			if gctx.stats.Safebrowsing.Requests != 1 {
-				t.Errorf("Safebrowsing lookup positive cache is not working: %v", gctx.stats.Safebrowsing.Requests)
-			}
-			d.checkMatch(t, "WMconvirus.narod.ru")
-			if gctx.stats.Safebrowsing.Requests != 1 {
-				t.Errorf("Safebrowsing lookup positive cache is not working: %v", gctx.stats.Safebrowsing.Requests)
-			}
-			d.checkMatch(t, "test.wmconvirus.narod.ru")
-			d.checkMatchEmpty(t, "yandex.ru")
-			d.checkMatchEmpty(t, "pornhub.com")
-			l := gctx.stats.Safebrowsing.Requests
-			d.checkMatchEmpty(t, "pornhub.com")
-			if gctx.stats.Safebrowsing.Requests != l {
-				t.Errorf("Safebrowsing lookup negative cache is not working: %v", gctx.stats.Safebrowsing.Requests)
-			}
-		})
-	}
+	d := NewForTest(&Config{SafeBrowsingEnabled: true}, nil)
+	defer d.Close()
+	gctx.stats.Safebrowsing.Requests = 0
+	d.checkMatch(t, "wmconvirus.narod.ru")
+	d.checkMatch(t, "test.wmconvirus.narod.ru")
+	d.checkMatchEmpty(t, "yandex.ru")
+	d.checkMatchEmpty(t, "pornhub.com")
+
+	// test cached result
+	d.safeBrowsingServer = "127.0.0.1"
+	d.checkMatch(t, "wmconvirus.narod.ru")
+	d.checkMatchEmpty(t, "pornhub.com")
+	d.safeBrowsingServer = defaultSafebrowsingServer
 }
 
 func TestParallelSB(t *testing.T) {
@@ -172,33 +152,10 @@ func TestParallelSB(t *testing.T) {
 	})
 }
 
-// the only way to verify that custom server option is working is to point it at a server that does serve safebrowsing
-func TestSafeBrowsingCustomServerFail(t *testing.T) {
-	d := NewForTest(&Config{SafeBrowsingEnabled: true}, nil)
-	defer d.Close()
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// w.Write("Hello, client")
-		fmt.Fprintln(w, "Hello, client")
-	}))
-	defer ts.Close()
-	address := ts.Listener.Addr().String()
-
-	d.SetHTTPTimeout(time.Second * 5)
-	d.SetSafeBrowsingServer(address) // this will ensure that test fails
-	d.checkMatchEmpty(t, "wmconvirus.narod.ru")
-}
-
 // SAFE SEARCH
 
 func TestSafeSearch(t *testing.T) {
-	d := NewForTest(nil, nil)
-	defer d.Close()
-	_, ok := d.SafeSearchDomain("www.google.com")
-	if ok {
-		t.Errorf("Expected safesearch to error when disabled")
-	}
-
-	d = NewForTest(&Config{SafeSearchEnabled: true}, nil)
+	d := NewForTest(&Config{SafeSearchEnabled: true}, nil)
 	defer d.Close()
 	val, ok := d.SafeSearchDomain("www.google.com")
 	if !ok {
@@ -355,24 +312,16 @@ func TestParentalControl(t *testing.T) {
 	defer d.Close()
 	d.ParentalSensitivity = 3
 	d.checkMatch(t, "pornhub.com")
-	d.checkMatch(t, "pornhub.com")
-	if gctx.stats.Parental.Requests != 1 {
-		t.Errorf("Parental lookup positive cache is not working")
-	}
-	d.checkMatch(t, "PORNhub.com")
-	if gctx.stats.Parental.Requests != 1 {
-		t.Errorf("Parental lookup positive cache is not working")
-	}
 	d.checkMatch(t, "www.pornhub.com")
 	d.checkMatchEmpty(t, "www.yandex.ru")
 	d.checkMatchEmpty(t, "yandex.ru")
-	l := gctx.stats.Parental.Requests
-	d.checkMatchEmpty(t, "yandex.ru")
-	if gctx.stats.Parental.Requests != l {
-		t.Errorf("Parental lookup negative cache is not working")
-	}
-
 	d.checkMatchEmpty(t, "api.jquery.com")
+
+	// test cached result
+	d.parentalServer = "127.0.0.1"
+	d.checkMatch(t, "pornhub.com")
+	d.checkMatchEmpty(t, "yandex.ru")
+	d.parentalServer = defaultParentalServer
 }
 
 // FILTERING
@@ -587,18 +536,4 @@ func BenchmarkSafeSearchParallel(b *testing.B) {
 			}
 		}
 	})
-}
-
-func TestDnsfilterDialCache(t *testing.T) {
-	d := Dnsfilter{}
-	gctx.dialCache = gcache.New(1).LRU().Expiration(30 * time.Minute).Build()
-
-	d.shouldBeInDialCache("hostname")
-	if searchInDialCache("hostname") != "" {
-		t.Errorf("searchInDialCache")
-	}
-	addToDialCache("hostname", "1.1.1.1")
-	if searchInDialCache("hostname") != "1.1.1.1" {
-		t.Errorf("searchInDialCache")
-	}
 }
