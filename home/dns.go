@@ -230,6 +230,8 @@ func startDNSServer() error {
 		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
 	}
 
+	startFiltering()
+
 	const topClientsNumber = 100 // the number of clients to get
 	topClients := config.stats.GetTopClientsIP(topClientsNumber)
 	for _, ip := range topClients {
