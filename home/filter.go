@@ -28,6 +28,12 @@ func initFiltering() {
 	loadFilters()
 	deduplicateFilters()
 	updateUniqueFilterID(config.Filters)
+}
+
+func startFiltering() {
+	// Here we should start updating filters,
+	//  but currently we can't wake up the periodic task to do so.
+	// So for now we just start this periodic task from here.
 	go periodicallyRefreshFilters()
 }
 
@@ -178,7 +184,7 @@ func assignUniqueFilterID() int64 {
 // Sets up a timer that will be checking for filters updates periodically
 func periodicallyRefreshFilters() {
 	for {
-		if config.DNS.FiltersUpdateIntervalHours != 0 && refreshStatus != 0 {
+		if config.DNS.FiltersUpdateIntervalHours != 0 && refreshStatus == 0 {
 			refreshStatus = 1
 			refreshLock.Lock()
 			_ = refreshFiltersIfNecessary(false)
