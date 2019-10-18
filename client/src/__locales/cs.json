@@ -399,5 +399,6 @@
     "orgname": "Název organizace",
     "netname": "Název sítě",
     "descr": "Popis",
-    "whois": "Whois"
+    "whois": "Whois",
+    "filtering_rules_learn_more": "<0>Další informace</0> o vytváření vlastních seznamů zakázaných hostitelů."
 }

@@ -399,5 +399,6 @@
     "orgname": "組織名稱",
     "netname": "網路名稱",
     "descr": "說明",
-    "whois": "Whois"
+    "whois": "Whois",
+    "filtering_rules_learn_more": "<0>了解更多</0>有關創建您自己的主機（hosts）封鎖清單。"
 }

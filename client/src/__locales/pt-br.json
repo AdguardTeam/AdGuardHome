@@ -399,5 +399,6 @@
     "orgname": "Nome da organização",
     "netname": "Nome da rede",
     "descr": "Descrição",
-    "whois": "Whois"
+    "whois": "Whois",
+    "filtering_rules_learn_more": "<0>Saiba mais</0> sobre como criar as suas próprias listas negras de servidores."
 }

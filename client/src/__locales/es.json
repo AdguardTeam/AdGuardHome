@@ -141,7 +141,7 @@
     "example_comment": "! Aquí va un comentario",
     "example_comment_meaning": "solo un comentario",
     "example_comment_hash": "# También un comentario",
-    "example_regex_meaning": "bloquear el acceso a los dominios que coincidan con la expresión regular especificada",
+    "example_regex_meaning": "bloquea el acceso a los dominios que coincidan con la expresión regular especificada",
     "example_upstream_regular": "DNS regular (mediante UDP)",
     "example_upstream_dot": "cifrado <0>DNS mediante TLS</0>",
     "example_upstream_doh": "cifrado <0>DNS mediante HTTPS</0>",
@@ -399,5 +399,6 @@
     "orgname": "Nombre de la organización",
     "netname": "Nombre de la red",
     "descr": "Descripción",
-    "whois": "Whois"
+    "whois": "Whois",
+    "filtering_rules_learn_more": "<0>Más información</0> sobre cómo crear tus propias listas para bloqueo de hosts."
 }
