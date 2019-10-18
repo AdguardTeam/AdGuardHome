@@ -31,6 +31,10 @@ export const PRIVACY_POLICY_LINK = 'https://adguard.com/privacy/home.html';
 
 export const LANGUAGES = [
     {
+        key: 'en',
+        name: 'English',
+    },
+    {
         key: 'da',
         name: 'Dansk',
     },
@@ -41,10 +45,6 @@ export const LANGUAGES = [
     {
         key: 'nl',
         name: 'Dutch',
-    },
-    {
-        key: 'en',
-        name: 'English',
     },
     {
         key: 'es',
@@ -377,3 +377,5 @@ export const DEFAULT_LOGS_FILTER = {
     filter_question_type: '',
     filter_response_status: '',
 };
+
+export const DEFAULT_LANGUAGE = 'en';

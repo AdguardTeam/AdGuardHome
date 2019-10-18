@@ -141,6 +141,7 @@
     "example_comment": "! Tukaj je komentar",
     "example_comment_meaning": "samo komentar",
     "example_comment_hash": "# Tudi komentar",
+    "example_regex_meaning": "onemogoči dostop do domen, ki se ujemajo z <0>določenim regularnemim izrazom</0>",
     "example_upstream_regular": "redni DNS (nad UDP)",
     "example_upstream_dot": "šifriran <0>DNS-prek-TLS</0>",
     "example_upstream_doh": "šifriran <0>DNS-prek-HTTPS</0>",
@@ -398,5 +399,6 @@
     "orgname": "Ime organizacije",
     "netname": "Ime omrežja",
     "descr": "Opis",
-    "whois": "Whois"
+    "whois": "Whois",
+    "filtering_rules_learn_more": "<0>Več o tem</0>, o ustvarjanju lastnih Seznamov nedovoljenih gostiteljev."
 }
