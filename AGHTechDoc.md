@@ -54,6 +54,7 @@ Contents:
 * Log-in page
 	* API: Log in
 	* API: Log out
+	* API: Get current user info
 
 
 ## Relations between subsystems
@@ -1207,7 +1208,7 @@ YAML configuration:
 
 Session DB file:
 
-	session="..." expire=123456
+	session="..." user=name expire=123456
 	...
 
 Session data is SHA(random()+name+password).
@@ -1270,3 +1271,20 @@ Response:
 	302 Found
 	Location: /login.html
 	Set-Cookie: session=...; Expires=Thu, 01 Jan 1970 00:00:00 GMT
+
+
+### API: Get current user info
+
+Request:
+
+	GET /control/profile
+
+Response:
+
+	200 OK
+
+	{
+	"name":"..."
+	}
+
+If no client is configured then authentication is disabled and server sends an empty response.

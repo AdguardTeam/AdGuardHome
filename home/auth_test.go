@@ -28,6 +28,7 @@ func TestAuth(t *testing.T) {
 		User{Name: "name", PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2"},
 	}
 	a := InitAuth(fn, nil)
+	s := session{}
 
 	user := User{Name: "name"}
 	a.UserAdd(&user, "password")
@@ -38,12 +39,16 @@ func TestAuth(t *testing.T) {
 	sess := getSession(&users[0])
 	sessStr := hex.EncodeToString(sess)
 
+	now := time.Now().UTC().Unix()
 	// check expiration
-	a.storeSession(sess, uint32(time.Now().UTC().Unix()))
+	s.expire = uint32(now)
+	a.addSession(sess, &s)
 	assert.True(t, a.CheckSession(sessStr) == 1)
 
 	// add session with TTL = 2 sec
-	a.storeSession(sess, uint32(time.Now().UTC().Unix()+2))
+	s = session{}
+	s.expire = uint32(now + 2)
+	a.addSession(sess, &s)
 	assert.True(t, a.CheckSession(sessStr) == 0)
 
 	a.Close()
@@ -53,6 +58,9 @@ func TestAuth(t *testing.T) {
 
 	// the session is still alive
 	assert.True(t, a.CheckSession(sessStr) == 0)
+	// reset our expiration time because CheckSession() has just updated it
+	s.expire = uint32(now + 2)
+	a.storeSession(sess, &s)
 	a.Close()
 
 	u := a.UserFind("name", "password")

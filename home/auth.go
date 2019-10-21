@@ -20,10 +20,44 @@ import (
 const cookieTTL = 365 * 24 // in hours
 const expireTime = 30 * 24 // in hours
 
+type session struct {
+	userName string
+	expire   uint32 // expiration time (in seconds)
+}
+
+/*
+expire byte[4]
+name_len byte[2]
+name byte[]
+*/
+func (s *session) serialize() []byte {
+	var data []byte
+	data = make([]byte, 4+2+len(s.userName))
+	binary.BigEndian.PutUint32(data[0:4], s.expire)
+	binary.BigEndian.PutUint16(data[4:6], uint16(len(s.userName)))
+	copy(data[6:], []byte(s.userName))
+	return data
+}
+
+func (s *session) deserialize(data []byte) bool {
+	if len(data) < 4+2 {
+		return false
+	}
+	s.expire = binary.BigEndian.Uint32(data[0:4])
+	nameLen := binary.BigEndian.Uint16(data[4:6])
+	data = data[6:]
+
+	if len(data) < int(nameLen) {
+		return false
+	}
+	s.userName = string(data)
+	return true
+}
+
 // Auth - global object
 type Auth struct {
 	db       *bbolt.DB
-	sessions map[string]uint32 // session -> expiration time (in seconds)
+	sessions map[string]*session // session name -> session data
 	lock     sync.Mutex
 	users    []User
 }
@@ -37,7 +71,7 @@ type User struct {
 // InitAuth - create a global object
 func InitAuth(dbFilename string, users []User) *Auth {
 	a := Auth{}
-	a.sessions = make(map[string]uint32)
+	a.sessions = make(map[string]*session)
 	rand.Seed(time.Now().UTC().Unix())
 	var err error
 	a.db, err = bbolt.Open(dbFilename, 0644, nil)
@@ -56,6 +90,10 @@ func (a *Auth) Close() {
 	_ = a.db.Close()
 }
 
+func bucketName() []byte {
+	return []byte("sessions-2")
+}
+
 // load sessions from file, remove expired sessions
 func (a *Auth) loadSessions() {
 	tx, err := a.db.Begin(true)
@@ -67,16 +105,22 @@ func (a *Auth) loadSessions() {
 		_ = tx.Rollback()
 	}()
 
-	bkt := tx.Bucket([]byte("sessions"))
+	bkt := tx.Bucket(bucketName())
 	if bkt == nil {
 		return
 	}
 
 	removed := 0
+
+	if tx.Bucket([]byte("sessions")) != nil {
+		_ = tx.DeleteBucket([]byte("sessions"))
+		removed = 1
+	}
+
 	now := uint32(time.Now().UTC().Unix())
 	forEach := func(k, v []byte) error {
-		i := binary.BigEndian.Uint32(v)
-		if i <= now {
+		s := session{}
+		if !s.deserialize(v) || s.expire <= now {
 			err = bkt.Delete(k)
 			if err != nil {
 				log.Error("Auth: bbolt.Delete: %s", err)
@@ -85,7 +129,8 @@ func (a *Auth) loadSessions() {
 			}
 			return nil
 		}
-		a.sessions[hex.EncodeToString(k)] = i
+
+		a.sessions[hex.EncodeToString(k)] = &s
 		return nil
 	}
 	_ = bkt.ForEach(forEach)
@@ -99,11 +144,15 @@ func (a *Auth) loadSessions() {
 }
 
 // store session data in file
-func (a *Auth) storeSession(data []byte, expire uint32) {
+func (a *Auth) addSession(data []byte, s *session) {
 	a.lock.Lock()
-	a.sessions[hex.EncodeToString(data)] = expire
+	a.sessions[hex.EncodeToString(data)] = s
 	a.lock.Unlock()
+	a.storeSession(data, s)
+}
 
+// store session data in file
+func (a *Auth) storeSession(data []byte, s *session) {
 	tx, err := a.db.Begin(true)
 	if err != nil {
 		log.Error("Auth: bbolt.Begin: %s", err)
@@ -113,15 +162,12 @@ func (a *Auth) storeSession(data []byte, expire uint32) {
 		_ = tx.Rollback()
 	}()
 
-	bkt, err := tx.CreateBucketIfNotExists([]byte("sessions"))
+	bkt, err := tx.CreateBucketIfNotExists(bucketName())
 	if err != nil {
 		log.Error("Auth: bbolt.CreateBucketIfNotExists: %s", err)
 		return
 	}
-	var val []byte
-	val = make([]byte, 4)
-	binary.BigEndian.PutUint32(val, expire)
-	err = bkt.Put(data, val)
+	err = bkt.Put(data, s.serialize())
 	if err != nil {
 		log.Error("Auth: bbolt.Put: %s", err)
 		return
@@ -147,7 +193,7 @@ func (a *Auth) removeSession(sess []byte) {
 		_ = tx.Rollback()
 	}()
 
-	bkt := tx.Bucket([]byte("sessions"))
+	bkt := tx.Bucket(bucketName())
 	if bkt == nil {
 		log.Error("Auth: bbolt.Bucket")
 		return
@@ -174,12 +220,12 @@ func (a *Auth) CheckSession(sess string) int {
 	update := false
 
 	a.lock.Lock()
-	expire, ok := a.sessions[sess]
+	s, ok := a.sessions[sess]
 	if !ok {
 		a.lock.Unlock()
 		return -1
 	}
-	if expire <= now {
+	if s.expire <= now {
 		delete(a.sessions, sess)
 		key, _ := hex.DecodeString(sess)
 		a.removeSession(key)
@@ -188,17 +234,17 @@ func (a *Auth) CheckSession(sess string) int {
 	}
 
 	newExpire := now + expireTime*60*60
-	if expire/(24*60*60) != newExpire/(24*60*60) {
+	if s.expire/(24*60*60) != newExpire/(24*60*60) {
 		// update expiration time once a day
 		update = true
-		a.sessions[sess] = newExpire
+		s.expire = newExpire
 	}
 
 	a.lock.Unlock()
 
 	if update {
 		key, _ := hex.DecodeString(sess)
-		a.storeSession(key, expire)
+		a.storeSession(key, s)
 	}
 
 	return 0
@@ -238,8 +284,10 @@ func httpCookie(req loginJSON) string {
 	expstr = expstr[:len(expstr)-len("UTC")] // "UTC" -> "GMT"
 	expstr += "GMT"
 
-	expireSess := uint32(now.Unix()) + expireTime*60*60
-	config.auth.storeSession(sess, expireSess)
+	s := session{}
+	s.userName = u.Name
+	s.expire = uint32(now.Unix()) + expireTime*60*60
+	config.auth.addSession(sess, &s)
 
 	return fmt.Sprintf("session=%s; Path=/; HttpOnly; Expires=%s", hex.EncodeToString(sess), expstr)
 }
@@ -399,6 +447,34 @@ func (a *Auth) UserFind(login string, password string) User {
 			return u
 		}
 	}
+	return User{}
+}
+
+// GetCurrentUser - get the current user
+func (a *Auth) GetCurrentUser(r *http.Request) User {
+	cookie, err := r.Cookie("session")
+	if err != nil {
+		// there's no Cookie, check Basic authentication
+		user, pass, ok := r.BasicAuth()
+		if ok {
+			u := config.auth.UserFind(user, pass)
+			return u
+		}
+	}
+
+	a.lock.Lock()
+	s, ok := a.sessions[cookie.Value]
+	if !ok {
+		a.lock.Unlock()
+		return User{}
+	}
+	for _, u := range a.users {
+		if u.Name == s.userName {
+			a.lock.Unlock()
+			return u
+		}
+	}
+	a.lock.Unlock()
 	return User{}
 }
 
