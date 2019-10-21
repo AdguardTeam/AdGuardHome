@@ -95,16 +95,8 @@ func (s *statsCtx) initWeb() {
 		return
 	}
 
-	s.conf.HTTPRegister("GET", "/control/stats", func(w http.ResponseWriter, r *http.Request) {
-		s.handleStats(w, r)
-	})
-	s.conf.HTTPRegister("POST", "/control/stats_reset", func(w http.ResponseWriter, r *http.Request) {
-		s.handleStatsReset(w, r)
-	})
-	s.conf.HTTPRegister("POST", "/control/stats_config", func(w http.ResponseWriter, r *http.Request) {
-		s.handleStatsConfig(w, r)
-	})
-	s.conf.HTTPRegister("GET", "/control/stats_info", func(w http.ResponseWriter, r *http.Request) {
-		s.handleStatsInfo(w, r)
-	})
+	s.conf.HTTPRegister("GET", "/control/stats", s.handleStats)
+	s.conf.HTTPRegister("POST", "/control/stats_reset", s.handleStatsReset)
+	s.conf.HTTPRegister("POST", "/control/stats_config", s.handleStatsConfig)
+	s.conf.HTTPRegister("GET", "/control/stats_info", s.handleStatsInfo)
 }
