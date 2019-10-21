@@ -217,8 +217,12 @@ func refreshFilters() (int, error) {
 // . For each filter run the download and checksum check operation
 // . For each filter:
 //  . If filter data hasn't changed, just set new update time on file
-//  . If filter data has changed: rename the old file, store the new data on disk
-//  . Pass new filters to dnsfilter object
+//  . If filter data has changed:
+//    . rename the old file (1.txt -> 1.txt.old)
+//    . store the new data on disk (1.txt)
+//  . Pass new filters to dnsfilter object - it analyzes new data while the old filters are still active
+//  . dnsfilter activates new filters
+//  . Remove the old filter files (1.txt.old)
 func refreshFiltersIfNecessary(force bool) int {
 	var updateFilters []filter
 	var updateFlags []bool // 'true' if filter data has changed
@@ -431,7 +435,10 @@ func (filter *filter) save() error {
 
 func (filter *filter) saveAndBackupOld() error {
 	filterFilePath := filter.Path()
-	_ = os.Rename(filterFilePath, filterFilePath+".old")
+	err := os.Rename(filterFilePath, filterFilePath+".old")
+	if err != nil {
+		return err
+	}
 	return filter.save()
 }
 
