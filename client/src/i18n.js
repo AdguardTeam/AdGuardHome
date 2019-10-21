@@ -51,16 +51,16 @@ const resources = {
     sv: {
         translation: sv,
     },
-    'pt-BR': {
+    'pt-br': {
         translation: ptBR,
     },
-    'zh-TW': {
+    'zh-tw': {
         translation: zhTW,
     },
     bg: {
         translation: bg,
     },
-    'zh-CN': {
+    'zh-cn': {
         translation: zhCN,
     },
     cs: {
@@ -87,7 +87,7 @@ const resources = {
     pl: {
         translation: pl,
     },
-    'pt-PT': {
+    'pt-pt': {
         translation: ptPT,
     },
     sk: {
@@ -109,6 +109,7 @@ i18n
     .use(reactI18nextModule)
     .init({
         resources,
+        lowerCaseLng: true,
         fallbackLng: DEFAULT_LANGUAGE,
         keySeparator: false,
         nsSeparator: false,
@@ -119,10 +120,10 @@ i18n
         react: {
             wait: true,
         },
+    }, () => {
+        if (!availableLanguages.includes(i18n.language)) {
+            i18n.changeLanguage(DEFAULT_LANGUAGE);
+        }
     });
-
-if (!i18n.language.includes(availableLanguages)) {
-    i18n.changeLanguage(DEFAULT_LANGUAGE);
-}
 
 export default i18n;
