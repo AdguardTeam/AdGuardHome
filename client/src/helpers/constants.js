@@ -31,10 +31,6 @@ export const PRIVACY_POLICY_LINK = 'https://adguard.com/privacy/home.html';
 
 export const LANGUAGES = [
     {
-        key: 'en',
-        name: 'English',
-    },
-    {
         key: 'da',
         name: 'Dansk',
     },
@@ -45,6 +41,10 @@ export const LANGUAGES = [
     {
         key: 'nl',
         name: 'Dutch',
+    },
+    {
+        key: 'en',
+        name: 'English',
     },
     {
         key: 'es',
