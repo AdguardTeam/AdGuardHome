@@ -13,6 +13,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -772,18 +773,31 @@ func (d *Dnsfilter) initFiltering(filters map[int]string) error {
 			list = &urlfilter.StringRuleList{
 				ID:             0,
 				RulesText:      dataOrFilePath,
-				IgnoreCosmetic: false,
+				IgnoreCosmetic: true,
 			}
 
 		} else if !fileExists(dataOrFilePath) {
 			list = &urlfilter.StringRuleList{
 				ID:             id,
-				IgnoreCosmetic: false,
+				IgnoreCosmetic: true,
+			}
+
+		} else if runtime.GOOS == "windows" {
+			// On Windows we don't pass a file to urlfilter because
+			//  it's difficult to update this file while it's being used.
+			data, err := ioutil.ReadFile(dataOrFilePath)
+			if err != nil {
+				return fmt.Errorf("ioutil.ReadFile(): %s: %s", dataOrFilePath, err)
+			}
+			list = &urlfilter.StringRuleList{
+				ID:             id,
+				RulesText:      string(data),
+				IgnoreCosmetic: true,
 			}
 
 		} else {
 			var err error
-			list, err = urlfilter.NewFileRuleList(id, dataOrFilePath, false)
+			list, err = urlfilter.NewFileRuleList(id, dataOrFilePath, true)
 			if err != nil {
 				return fmt.Errorf("urlfilter.NewFileRuleList(): %s: %s", dataOrFilePath, err)
 			}
