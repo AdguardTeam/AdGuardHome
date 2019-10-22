@@ -1,13 +1,14 @@
 package home
 
 import (
+	"encoding/binary"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"strings"
-	"sync"
 	"time"
 
+	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -20,10 +21,13 @@ const (
 // Whois - module context
 type Whois struct {
 	clients     *clientsContainer
-	ips         map[string]bool
-	lock        sync.Mutex
 	ipChan      chan string
 	timeoutMsec uint
+
+	// Contains IP addresses of clients
+	// An active IP address is resolved once again after it expires.
+	// If IP address couldn't be resolved, it stays here for some time to prevent further attempts to resolve the same IP.
+	ipAddrs cache.Cache
 }
 
 // Create module context
@@ -31,7 +35,12 @@ func initWhois(clients *clientsContainer) *Whois {
 	w := Whois{}
 	w.timeoutMsec = 5000
 	w.clients = clients
-	w.ips = make(map[string]bool)
+
+	cconf := cache.Config{}
+	cconf.EnableLRU = true
+	cconf.MaxCount = 10000
+	w.ipAddrs = cache.New(cconf)
+
 	w.ipChan = make(chan string, 255)
 	go w.workerLoop()
 	return &w
@@ -186,14 +195,19 @@ func (w *Whois) process(ip string) [][]string {
 
 // Begin - begin requesting WHOIS info
 func (w *Whois) Begin(ip string) {
-	w.lock.Lock()
-	_, found := w.ips[ip]
-	if found {
-		w.lock.Unlock()
-		return
+	now := uint64(time.Now().Unix())
+	expire := w.ipAddrs.Get([]byte(ip))
+	if len(expire) != 0 {
+		exp := binary.BigEndian.Uint64(expire)
+		if exp > now {
+			return
+		}
+		// TTL expired
 	}
-	w.ips[ip] = true
-	w.lock.Unlock()
+	expire = make([]byte, 8)
+	const ttl = 12 * 60 * 60
+	binary.BigEndian.PutUint64(expire, now+ttl)
+	_ = w.ipAddrs.Set([]byte(ip), expire)
 
 	log.Debug("Whois: adding %s", ip)
 	select {
