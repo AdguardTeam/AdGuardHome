@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -302,6 +303,12 @@ func (s *Server) Reconfigure(config *ServerConfig) error {
 	if err != nil {
 		return errorx.Decorate(err, "could not reconfigure the server")
 	}
+
+	// On some Windows versions the UDP port we've just closed in proxy.Stop() doesn't get actually closed right away.
+	if runtime.GOOS == "windows" {
+		time.Sleep(1 * time.Second)
+	}
+
 	err = s.startInternal(config)
 	if err != nil {
 		return errorx.Decorate(err, "could not reconfigure the server")
