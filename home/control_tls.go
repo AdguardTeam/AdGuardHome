@@ -156,7 +156,7 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 }
 
 func verifyCertChain(data *tlsConfigStatus, certChain string, serverName string) error {
-	log.Tracef("got certificate: %s", certChain)
+	log.Tracef("TLS: got certificate: %d bytes", len(certChain))
 
 	// now do a more extended validation
 	var certs []*pem.Block    // PEM-encoded certificates
