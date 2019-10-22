@@ -13,7 +13,6 @@ import (
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/joomcode/errorx"
-	"github.com/miekg/dns"
 )
 
 type dnsContext struct {
@@ -137,11 +136,6 @@ func isPublicIP(ip net.IP) bool {
 }
 
 func onDNSRequest(d *proxy.DNSContext) {
-	qType := d.Req.Question[0].Qtype
-	if qType != dns.TypeA && qType != dns.TypeAAAA {
-		return
-	}
-
 	ip := dnsforward.GetIPString(d.Addr)
 	if ip == "" {
 		// This would be quite weird if we get here
