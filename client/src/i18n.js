@@ -3,6 +3,8 @@ import { reactI18nextModule } from 'react-i18next';
 import { initReactI18n } from 'react-i18next/hooks';
 import langDetect from 'i18next-browser-languagedetector';
 
+import { DEFAULT_LANGUAGE } from './helpers/constants';
+
 import vi from './__locales/vi.json';
 import en from './__locales/en.json';
 import ru from './__locales/ru.json';
@@ -49,16 +51,16 @@ const resources = {
     sv: {
         translation: sv,
     },
-    'pt-BR': {
+    'pt-br': {
         translation: ptBR,
     },
-    'zh-TW': {
+    'zh-tw': {
         translation: zhTW,
     },
     bg: {
         translation: bg,
     },
-    'zh-CN': {
+    'zh-cn': {
         translation: zhCN,
     },
     cs: {
@@ -85,7 +87,7 @@ const resources = {
     pl: {
         translation: pl,
     },
-    'pt-PT': {
+    'pt-pt': {
         translation: ptPT,
     },
     sk: {
@@ -99,22 +101,29 @@ const resources = {
     },
 };
 
+const availableLanguages = Object.keys(resources);
+
 i18n
     .use(langDetect)
     .use(initReactI18n)
-    .use(reactI18nextModule) // passes i18n down to react-i18next
+    .use(reactI18nextModule)
     .init({
         resources,
-        fallbackLng: 'en',
-        keySeparator: false, // we use content as keys
-        nsSeparator: false, // Fix character in content
-        returnEmptyString: false, // count empty value as invalid
+        lowerCaseLng: true,
+        fallbackLng: DEFAULT_LANGUAGE,
+        keySeparator: false,
+        nsSeparator: false,
+        returnEmptyString: false,
         interpolation: {
-            escapeValue: false, // not needed for react!!
+            escapeValue: false,
         },
         react: {
             wait: true,
         },
+    }, () => {
+        if (!availableLanguages.includes(i18n.language)) {
+            i18n.changeLanguage(DEFAULT_LANGUAGE);
+        }
     });
 
 export default i18n;
