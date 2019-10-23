@@ -213,6 +213,21 @@ export const getClients = () => async (dispatch) => {
     }
 };
 
+export const getProfileRequest = createAction('GET_PROFILE_REQUEST');
+export const getProfileFailure = createAction('GET_PROFILE_FAILURE');
+export const getProfileSuccess = createAction('GET_PROFILE_SUCCESS');
+
+export const getProfile = () => async (dispatch) => {
+    dispatch(getProfileRequest());
+    try {
+        const profile = await apiClient.getProfile();
+        dispatch(getProfileSuccess(profile));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(getProfileFailure());
+    }
+};
+
 export const dnsStatusRequest = createAction('DNS_STATUS_REQUEST');
 export const dnsStatusFailure = createAction('DNS_STATUS_FAILURE');
 export const dnsStatusSuccess = createAction('DNS_STATUS_SUCCESS');
@@ -224,6 +239,7 @@ export const getDnsStatus = () => async (dispatch) => {
         dispatch(dnsStatusSuccess(dnsStatus));
         dispatch(getVersion());
         dispatch(getTlsStatus());
+        dispatch(getProfile());
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(dnsStatusFailure());
