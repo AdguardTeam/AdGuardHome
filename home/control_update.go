@@ -59,7 +59,6 @@ type getVersionJSONRequest struct {
 func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 
 	if config.disableUpdate {
-		httpError(w, http.StatusInternalServerError, "New app version check is disabled by user")
 		return
 	}
 
