@@ -346,7 +346,7 @@ func (s *statsCtx) loadUnitFromDB(tx *bolt.Tx, id uint32) *unitDB {
 		return nil
 	}
 
-	log.Tracef("Loading unit %d", id)
+	// log.Tracef("Loading unit %d", id)
 
 	var buf bytes.Buffer
 	buf.Write(bkt.Get([]byte{0}))
