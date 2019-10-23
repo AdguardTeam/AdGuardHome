@@ -432,13 +432,16 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 
 		if res.Reason == dnsfilter.ReasonRewrite && len(res.CanonName) != 0 {
 			d.Req.Question[0] = originalQuestion
-			d.Res.Question[0] = originalQuestion
 
 			if len(d.Res.Answer) != 0 {
 				answer = append(answer, d.Res.Answer...) // host -> IP
 				d.Res.Answer = answer
 			}
 		}
+	}
+
+	if d.Res != nil {
+		d.Res.Compress = true // some devices require DNS message compression
 	}
 
 	shouldLog := true
