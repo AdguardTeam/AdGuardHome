@@ -436,7 +436,7 @@ func (filter *filter) save() error {
 func (filter *filter) saveAndBackupOld() error {
 	filterFilePath := filter.Path()
 	err := os.Rename(filterFilePath, filterFilePath+".old")
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
 	return filter.save()
