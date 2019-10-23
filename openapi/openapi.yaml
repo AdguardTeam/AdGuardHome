@@ -970,6 +970,18 @@ paths:
                 302:
                     description: OK
 
+    /profile:
+        get:
+            tags:
+                - global
+            operationId: getProfile
+            summary: ""
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/ProfileInfo"
+
 definitions:
     ServerStatus:
         type: "object"
@@ -1559,6 +1571,14 @@ definitions:
                 description: "Network interfaces dictionary (key is the interface name)"
                 additionalProperties:
                     $ref: "#/definitions/NetInterface"
+
+    ProfileInfo:
+        type: "object"
+        description: "Information about the current user"
+        properties:
+            name:
+                type: "string"
+
     Client:
         type: "object"
         description: "Client information"

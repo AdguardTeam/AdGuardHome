@@ -377,6 +377,23 @@ func checkDNS(input string, bootstrap []string) error {
 	return nil
 }
 
+type profileJSON struct {
+	Name string `json:"name"`
+}
+
+func handleGetProfile(w http.ResponseWriter, r *http.Request) {
+	pj := profileJSON{}
+	u := config.auth.GetCurrentUser(r)
+	pj.Name = u.Name
+
+	data, err := json.Marshal(pj)
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "json.Marshal: %s", err)
+		return
+	}
+	_, _ = w.Write(data)
+}
+
 // --------------
 // DNS-over-HTTPS
 // --------------
@@ -416,6 +433,7 @@ func registerControlHandlers() {
 
 	httpRegister(http.MethodGet, "/control/access/list", handleAccessList)
 	httpRegister(http.MethodPost, "/control/access/set", handleAccessSet)
+	httpRegister("GET", "/control/profile", handleGetProfile)
 
 	RegisterFilteringHandlers()
 	RegisterTLSHandlers()

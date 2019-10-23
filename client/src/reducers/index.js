@@ -189,6 +189,14 @@ const dashboard = handleActions(
                 processingDnsSettings: false,
             };
         },
+
+        [actions.getProfileRequest]: state => ({ ...state, processingProfile: true }),
+        [actions.getProfileFailure]: state => ({ ...state, processingProfile: false }),
+        [actions.getProfileSuccess]: (state, { payload }) => ({
+            ...state,
+            name: payload.name,
+            processingProfile: false,
+        }),
     },
     {
         processing: true,
@@ -198,6 +206,7 @@ const dashboard = handleActions(
         processingClients: true,
         processingUpdate: false,
         processingDnsSettings: true,
+        processingProfile: true,
         upstreamDns: '',
         bootstrapDns: '',
         allServers: false,
@@ -209,6 +218,7 @@ const dashboard = handleActions(
         dnsVersion: '',
         clients: [],
         autoClients: [],
+        name: '',
     },
 );
 

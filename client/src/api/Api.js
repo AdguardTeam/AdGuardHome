@@ -525,6 +525,14 @@ class Api {
         };
         return this.makeRequest(path, method, config);
     }
+
+    // Profile
+    GET_PROFILE = { path: 'profile', method: 'GET' };
+
+    getProfile() {
+        const { path, method } = this.GET_PROFILE;
+        return this.makeRequest(path, method);
+    }
 }
 
 const apiClient = new Api();
