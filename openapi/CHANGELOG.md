@@ -1,6 +1,23 @@
 # AdGuard Home API Change Log
 
 
+## v0.99.1: API changes
+
+### API: Get current user info: GET /control/profile
+
+Request:
+
+	GET /control/profile
+
+Response:
+
+	200 OK
+
+	{
+	"name":"..."
+	}
+
+
 ## v0.99: incompatible API changes
 
 * A note about web user authentication
