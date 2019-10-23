@@ -451,6 +451,16 @@ paths:
                 200:
                     description: OK
 
+    /dhcp/reset:
+        post:
+            tags:
+                - dhcp
+            operationId: dhcpReset
+            summary: "Reset DHCP configuration"
+            responses:
+                200:
+                    description: OK
+
     # --------------------------------------------------
     # Filtering status methods
     # --------------------------------------------------
