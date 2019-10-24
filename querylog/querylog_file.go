@@ -4,13 +4,17 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/miekg/dns"
 )
 
 const enableGzip = false
@@ -145,13 +149,15 @@ func (l *queryLog) periodicRotate() {
 
 // Reader is the DB reader context
 type Reader struct {
-	ql *queryLog
+	ql     *queryLog
+	search *getDataParams
 
 	f         *os.File
 	reader    *bufio.Reader // reads file line by line
 	now       time.Time
 	validFrom int64 // UNIX time (ns)
 	olderThan int64 // UNIX time (ns)
+	oldest    time.Time
 
 	files []string
 	ifile int
@@ -161,10 +167,12 @@ type Reader struct {
 	latest       bool   // return the latest entries
 	filePrepared bool
 
-	searching     bool       // we're seaching for an entry with exact time stamp
+	seeking       bool       // we're seaching for an entry with exact time stamp
 	fseeker       fileSeeker // file seeker object
 	fpos          uint64     // current file offset
 	nSeekRequests uint32     // number of Seek() requests made (finding a new line doesn't count)
+
+	timecnt uint64
 }
 
 type fileSeeker struct {
@@ -197,8 +205,8 @@ func (r *Reader) Close() {
 	if r.count > 0 {
 		perunit = elapsed / time.Duration(r.count)
 	}
-	log.Debug("querylog: read %d entries in %v, %v/entry, seek-reqs:%d",
-		r.count, elapsed, perunit, r.nSeekRequests)
+	log.Debug("querylog: read %d entries in %v, %v/entry, seek-reqs:%d  time:%dus (%d%%)",
+		r.count, elapsed, perunit, r.nSeekRequests, r.timecnt/1000, r.timecnt*100/uint64(elapsed.Nanoseconds()))
 
 	if r.f != nil {
 		r.f.Close()
@@ -208,25 +216,26 @@ func (r *Reader) Close() {
 // BeginRead - start reading
 // olderThan: stop returning entries when an entry with this time is reached
 // count: minimum number of entries to return
-func (r *Reader) BeginRead(olderThan time.Time, count uint64) {
+func (r *Reader) BeginRead(olderThan time.Time, count uint64, search *getDataParams) {
 	r.olderThan = olderThan.UnixNano()
 	r.latest = olderThan.IsZero()
+	r.oldest = time.Time{}
+	r.search = search
 	r.limit = count
 	if r.latest {
 		r.olderThan = r.now.UnixNano()
 	}
 	r.filePrepared = false
-	r.searching = false
+	r.seeking = false
 }
 
 // BeginReadPrev - start reading the previous data chunk
-func (r *Reader) BeginReadPrev(olderThan time.Time, count uint64) {
-	r.olderThan = olderThan.UnixNano()
-	r.latest = olderThan.IsZero()
+func (r *Reader) BeginReadPrev(count uint64) {
+	r.olderThan = r.oldest.UnixNano()
+	r.oldest = time.Time{}
+	r.latest = false
 	r.limit = count
-	if r.latest {
-		r.olderThan = r.now.UnixNano()
-	}
+	r.count = 0
 
 	off := r.fpos - maxEntrySize*(r.limit+1)
 	if int64(off) < maxEntrySize {
@@ -245,7 +254,7 @@ func (r *Reader) BeginReadPrev(olderThan time.Time, count uint64) {
 	r.fseeker.pos = r.fpos
 
 	r.filePrepared = true
-	r.searching = false
+	r.seeking = false
 }
 
 // Perform binary seek
@@ -335,7 +344,7 @@ func (r *Reader) prepareRead() bool {
 		}
 	} else {
 		// start searching in file: we'll read the first chunk of data from the middle of file
-		r.searching = true
+		r.seeking = true
 		r.fseeker = fileSeeker{}
 		r.fseeker.target = uint64(r.olderThan)
 		r.fseeker.hi = fsize
@@ -356,6 +365,226 @@ func (r *Reader) prepareRead() bool {
 	}
 	r.fseeker.pos = r.fpos
 	return true
+}
+
+// Get bool value from "key":bool
+func readJSONBool(s, name string) (bool, bool) {
+	i := strings.Index(s, "\""+name+"\":")
+	if i == -1 {
+		return false, false
+	}
+	start := i + 1 + len(name) + 2
+	b := false
+	if strings.HasPrefix(s[start:], "true") {
+		b = true
+	} else if !strings.HasPrefix(s[start:], "false") {
+		return false, false
+	}
+	return b, true
+}
+
+// Get value from "key":"value"
+func readJSONValue(s, name string) string {
+	i := strings.Index(s, "\""+name+"\":\"")
+	if i == -1 {
+		return ""
+	}
+	start := i + 1 + len(name) + 3
+	i = strings.IndexByte(s[start:], '"')
+	if i == -1 {
+		return ""
+	}
+	end := start + i
+	return s[start:end]
+}
+
+func (r *Reader) applySearch(str string) bool {
+	if r.search.ResponseStatus == responseStatusFiltered {
+		boolVal, ok := readJSONBool(str, "IsFiltered")
+		if !ok || !boolVal {
+			return false
+		}
+	}
+
+	if len(r.search.Domain) != 0 {
+		val := readJSONValue(str, "QH")
+		if len(val) == 0 {
+			return false
+		}
+
+		if (r.search.StrictMatchDomain && val != r.search.Domain) ||
+			(!r.search.StrictMatchDomain && strings.Index(val, r.search.Domain) == -1) {
+			return false
+		}
+	}
+
+	if len(r.search.QuestionType) != 0 {
+		val := readJSONValue(str, "QT")
+		if len(val) == 0 {
+			return false
+		}
+		if val != r.search.QuestionType {
+			return false
+		}
+	}
+
+	if len(r.search.Client) != 0 {
+		val := readJSONValue(str, "IP")
+		if len(val) == 0 {
+			log.Debug("QueryLog: failed to decode")
+			return false
+		}
+
+		if (r.search.StrictMatchClient && val != r.search.Client) ||
+			(!r.search.StrictMatchClient && strings.Index(val, r.search.Client) == -1) {
+			return false
+		}
+	}
+
+	return true
+}
+
+const (
+	jsonTErr = iota
+	jsonTObj
+	jsonTStr
+	jsonTNum
+	jsonTBool
+)
+
+// Parse JSON key-value pair
+//  e.g.: "key":VALUE where VALUE is "string", true|false (boolean), or 123.456 (number)
+// Note the limitations:
+//  . doesn't support whitespace
+//  . doesn't support "null"
+//  . doesn't validate boolean or number
+//  . no proper handling of {} braces
+//  . no handling of [] brackets
+// Return (key, value, type)
+func readJSON(ps *string) (string, string, int32) {
+	s := *ps
+	k := ""
+	v := ""
+	t := int32(jsonTErr)
+
+	q1 := strings.IndexByte(s, '"')
+	if q1 == -1 {
+		return k, v, t
+	}
+	q2 := strings.IndexByte(s[q1+1:], '"')
+	if q2 == -1 {
+		return k, v, t
+	}
+	k = s[q1+1 : q1+1+q2]
+	s = s[q1+1+q2+1:]
+
+	if len(s) < 2 || s[0] != ':' {
+		return k, v, t
+	}
+
+	if s[1] == '"' {
+		q2 = strings.IndexByte(s[2:], '"')
+		if q2 == -1 {
+			return k, v, t
+		}
+		v = s[2 : 2+q2]
+		t = jsonTStr
+		s = s[2+q2+1:]
+
+	} else if s[1] == '{' {
+		t = jsonTObj
+		s = s[1+1:]
+
+	} else {
+		sep := strings.IndexAny(s[1:], ",}")
+		if sep == -1 {
+			return k, v, t
+		}
+		v = s[1 : 1+sep]
+		if s[1] == 't' || s[1] == 'f' {
+			t = jsonTBool
+		} else if s[1] == '.' || (s[1] >= '0' && s[1] <= '9') {
+			t = jsonTNum
+		}
+		s = s[1+sep+1:]
+	}
+
+	*ps = s
+	return k, v, t
+}
+
+// nolint (gocyclo)
+func decode(ent *logEntry, str string) {
+	var b bool
+	var i int
+	var err error
+	for {
+		k, v, t := readJSON(&str)
+		if t == jsonTErr {
+			break
+		}
+		switch k {
+		case "IP":
+			ent.IP = v
+		case "T":
+			ent.Time, err = time.Parse(time.RFC3339, v)
+
+		case "QH":
+			ent.QHost = v
+		case "QT":
+			ent.QType = v
+		case "QC":
+			ent.QClass = v
+
+		case "Answer":
+			ent.Answer, err = base64.StdEncoding.DecodeString(v)
+
+		case "IsFiltered":
+			b, err = strconv.ParseBool(v)
+			ent.Result.IsFiltered = b
+		case "Rule":
+			ent.Result.Rule = v
+		case "FilterID":
+			i, err = strconv.Atoi(v)
+			ent.Result.FilterID = int64(i)
+		case "Reason":
+			i, err = strconv.Atoi(v)
+			ent.Result.Reason = dnsfilter.Reason(i)
+
+		case "Upstream":
+			ent.Upstream = v
+		case "Elapsed":
+			i, err = strconv.Atoi(v)
+			ent.Elapsed = time.Duration(i)
+
+		// pre-v0.99.3 compatibility:
+		case "Question":
+			var qstr []byte
+			qstr, err = base64.StdEncoding.DecodeString(v)
+			if err != nil {
+				break
+			}
+			q := new(dns.Msg)
+			err = q.Unpack(qstr)
+			if err != nil {
+				break
+			}
+			ent.QHost = q.Question[0].Name
+			if len(ent.QHost) == 0 {
+				break
+			}
+			ent.QHost = ent.QHost[:len(ent.QHost)-1]
+			ent.QType = dns.TypeToString[q.Question[0].Qtype]
+			ent.QClass = dns.ClassToString[q.Question[0].Qclass]
+		case "Time":
+			ent.Time, err = time.Parse(time.RFC3339, v)
+		}
+
+		if err != nil {
+			log.Debug("decode err: %s", err)
+			break
+		}
+	}
 }
 
 // Next - return the next entry or nil if reading is finished
@@ -379,24 +608,28 @@ func (r *Reader) Next() *logEntry { // nolint
 			r.filePrepared = true
 		}
 
-		// open decoder
 		b, err := r.reader.ReadBytes('\n')
 		if err != nil {
 			return nil
 		}
-		strReader := strings.NewReader(string(b))
-		jd := json.NewDecoder(strReader)
+		str := string(b)
 
-		// read data
-		var entry logEntry
-		err = jd.Decode(&entry)
-		if err != nil {
-			log.Debug("QueryLog: Failed to decode: %s", err)
+		val := readJSONValue(str, "T")
+		if len(val) == 0 {
+			val = readJSONValue(str, "Time")
+		}
+		if len(val) == 0 {
+			log.Debug("QueryLog: failed to decode")
 			continue
 		}
+		tm, err := time.Parse(time.RFC3339, val)
+		if err != nil {
+			log.Debug("QueryLog: failed to decode")
+			continue
+		}
+		t := tm.UnixNano()
 
-		t := entry.Time.UnixNano()
-		if r.searching {
+		if r.seeking {
 
 			r.reader = nil
 			rr := r.fseeker.seekBinary(uint64(t))
@@ -407,7 +640,7 @@ func (r *Reader) Next() *logEntry { // nolint
 			} else if rr == 0 {
 				// We found the target entry.
 				// We'll start reading the previous chunk of data.
-				r.searching = false
+				r.seeking = false
 
 				off := r.fpos - (maxEntrySize * (r.limit + 1))
 				if int64(off) < maxEntrySize {
@@ -430,19 +663,37 @@ func (r *Reader) Next() *logEntry { // nolint
 			continue
 		}
 
+		if r.oldest.IsZero() {
+			r.oldest = tm
+		}
+
 		if t < r.validFrom {
 			continue
 		}
 		if t >= r.olderThan {
 			return nil
 		}
-
 		r.count++
-		return &entry
+
+		if !r.applySearch(str) {
+			continue
+		}
+
+		st := time.Now()
+		var ent logEntry
+		decode(&ent, str)
+		r.timecnt += uint64(time.Now().Sub(st).Nanoseconds())
+
+		return &ent
 	}
 }
 
-// Total returns the total number of items
-func (r *Reader) Total() int {
-	return 0
+// Total returns the total number of processed items
+func (r *Reader) Total() uint64 {
+	return r.count
+}
+
+// Oldest returns the time of the oldest processed entry
+func (r *Reader) Oldest() time.Time {
+	return r.oldest
 }

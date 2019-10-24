@@ -67,12 +67,12 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(req.filterQuestionType) != 0 {
-		qtype, ok := dns.StringToType[req.filterQuestionType]
+		_, ok := dns.StringToType[req.filterQuestionType]
 		if !ok {
 			httpError(r, w, http.StatusBadRequest, "invalid question_type")
 			return
 		}
-		params.QuestionType = qtype
+		params.QuestionType = req.filterQuestionType
 	}
 
 	if len(req.filterResponseStatus) != 0 {
