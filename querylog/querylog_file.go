@@ -4,13 +4,11 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/go-test/deep"
 )
 
 const enableGzip = false
@@ -61,12 +59,7 @@ func (l *queryLog) flushToFile(buffer []*logEntry) error {
 	elapsed := time.Since(start)
 	log.Debug("%d elements serialized via json in %v: %d kB, %v/entry, %v/entry", len(buffer), elapsed, b.Len()/1024, float64(b.Len())/float64(len(buffer)), elapsed/time.Duration(len(buffer)))
 
-	err := checkBuffer(buffer, b)
-	if err != nil {
-		log.Error("failed to check buffer: %s", err)
-		return err
-	}
-
+	var err error
 	var zb bytes.Buffer
 	filename := l.logFile
 
@@ -109,34 +102,6 @@ func (l *queryLog) flushToFile(buffer []*logEntry) error {
 	}
 
 	log.Debug("ok \"%s\": %v bytes written", filename, n)
-
-	return nil
-}
-
-func checkBuffer(buffer []*logEntry, b bytes.Buffer) error {
-	l := len(buffer)
-	d := json.NewDecoder(&b)
-
-	i := 0
-	for d.More() {
-		entry := &logEntry{}
-		err := d.Decode(entry)
-		if err != nil {
-			log.Error("Failed to decode: %s", err)
-			return err
-		}
-		if diff := deep.Equal(entry, buffer[i]); diff != nil {
-			log.Error("decoded buffer differs: %s", diff)
-			return fmt.Errorf("decoded buffer differs: %s", diff)
-		}
-		i++
-	}
-	if i != l {
-		err := fmt.Errorf("check fail: %d vs %d entries", l, i)
-		log.Error("%v", err)
-		return err
-	}
-	log.Debug("check ok: %d entries", i)
 
 	return nil
 }
