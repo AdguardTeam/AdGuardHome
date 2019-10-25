@@ -460,6 +460,7 @@ func (a *Auth) GetCurrentUser(r *http.Request) User {
 			u := config.auth.UserFind(user, pass)
 			return u
 		}
+		return User{}
 	}
 
 	a.lock.Lock()
