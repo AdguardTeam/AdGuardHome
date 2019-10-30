@@ -3,6 +3,7 @@ package dnsforward
 import (
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"runtime"
@@ -50,6 +51,8 @@ type Server struct {
 	DisallowedClientsIPNet []net.IPNet     // CIDRs of clients that should be blocked
 	BlockedHosts           map[string]bool // hosts that should be blocked
 
+	webRegistered bool
+
 	sync.RWMutex
 	conf ServerConfig
 }
@@ -64,11 +67,19 @@ func NewServer(dnsFilter *dnsfilter.Dnsfilter, stats stats.Stats, queryLog query
 	return s
 }
 
+// Close - close object
 func (s *Server) Close() {
 	s.Lock()
 	s.dnsFilter = nil
 	s.stats = nil
 	s.queryLog = nil
+	s.Unlock()
+}
+
+// WriteDiskConfig - write configuration
+func (s *Server) WriteDiskConfig(c *FilteringConfig) {
+	s.Lock()
+	*c = s.conf.FilteringConfig
 	s.Unlock()
 }
 
@@ -78,14 +89,10 @@ type FilteringConfig struct {
 	// Filtering callback function
 	FilterHandler func(clientAddr string, settings *dnsfilter.RequestFilteringSettings) `yaml:"-"`
 
-	ProtectionEnabled          bool   `yaml:"protection_enabled"`      // whether or not use any of dnsfilter features
-	FilteringEnabled           bool   `yaml:"filtering_enabled"`       // whether or not use filter lists
-	FiltersUpdateIntervalHours uint32 `yaml:"filters_update_interval"` // time period to update filters (in hours)
+	ProtectionEnabled bool `yaml:"protection_enabled"` // whether or not use any of dnsfilter features
 
 	BlockingMode       string   `yaml:"blocking_mode"`        // mode how to answer filtered requests
 	BlockedResponseTTL uint32   `yaml:"blocked_response_ttl"` // if 0, then default is used (3600)
-	QueryLogEnabled    bool     `yaml:"querylog_enabled"`     // if true, query log is enabled
-	QueryLogInterval   uint32   `yaml:"querylog_interval"`    // time interval for query log (in days)
 	Ratelimit          int      `yaml:"ratelimit"`            // max number of requests per second from a given IP (0 to disable)
 	RatelimitWhitelist []string `yaml:"ratelimit_whitelist"`  // a list of whitelisted client IP addresses
 	RefuseAny          bool     `yaml:"refuse_any"`           // if true, refuse ANY requests
@@ -104,9 +111,8 @@ type FilteringConfig struct {
 	// Per-client settings can override this configuration.
 	BlockedServices []string `yaml:"blocked_services"`
 
-	CacheSize uint `yaml:"cache_size"` // DNS cache size (in bytes)
-
-	DnsfilterConf dnsfilter.Config `yaml:",inline"`
+	CacheSize   uint     `yaml:"cache_size"` // DNS cache size (in bytes)
+	UpstreamDNS []string `yaml:"upstream_dns"`
 }
 
 // TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
@@ -133,6 +139,12 @@ type ServerConfig struct {
 
 	FilteringConfig
 	TLSConfig
+
+	// Called when the configuration is changed by HTTP request
+	ConfigModified func()
+
+	// Register an HTTP handler
+	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request))
 }
 
 // if any of ServerConfig values are zero, then default values from below are used
@@ -198,6 +210,13 @@ func (s *Server) startInternal(config *ServerConfig) error {
 
 	if config != nil {
 		s.conf = *config
+		upstreamConfig, err := proxy.ParseUpstreamsConfig(s.conf.UpstreamDNS, s.conf.BootstrapDNS, DefaultTimeout)
+		if err != nil {
+			return fmt.Errorf("DNS: proxy.ParseUpstreamsConfig: %s", err)
+		}
+		s.conf.Upstreams = upstreamConfig.Upstreams
+		s.conf.DomainsReservedUpstreams = upstreamConfig.DomainReservedUpstreams
+
 	}
 	if len(s.conf.ParentalBlockHost) == 0 {
 		s.conf.ParentalBlockHost = parentalBlockHost
@@ -257,6 +276,11 @@ func (s *Server) startInternal(config *ServerConfig) error {
 		proxyConfig.Upstreams = defaultValues.Upstreams
 	}
 
+	if !s.webRegistered && s.conf.HTTPRegister != nil {
+		s.webRegistered = true
+		s.registerHandlers()
+	}
+
 	// Initialize and start the DNS proxy
 	s.dnsProxy = &proxy.Proxy{Config: proxyConfig}
 	return s.dnsProxy.Start()
@@ -293,7 +317,28 @@ func (s *Server) IsRunning() bool {
 	return isRunning
 }
 
-// Reconfigure applies the new configuration to the DNS server
+// Reconfigure2 - safely apply and write new configuration and restart
+func (s *Server) Reconfigure2(newconf FilteringConfig) error {
+	s.Lock()
+	s.conf.FilteringConfig = newconf
+	s.Unlock()
+	s.conf.ConfigModified()
+
+	s.Lock()
+	defer s.Unlock()
+	log.Print("Start reconfiguring the server")
+	err := s.stopInternal()
+	if err != nil {
+		return errorx.Decorate(err, "could not reconfigure the server")
+	}
+	err = s.startInternal(nil)
+	if err != nil {
+		return errorx.Decorate(err, "could not reconfigure the server")
+	}
+
+	return nil
+}
+
 func (s *Server) Reconfigure(config *ServerConfig) error {
 	s.Lock()
 	defer s.Unlock()

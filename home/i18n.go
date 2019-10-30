@@ -79,6 +79,6 @@ func handleI18nChangeLanguage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	config.Language = language
-
-	httpUpdateConfigReloadDNSReturnOK(w, r)
+	onConfigModified()
+	returnOK(w)
 }

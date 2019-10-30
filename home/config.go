@@ -105,9 +105,14 @@ type dnsConfig struct {
 	// time interval for statistics (in days)
 	StatsInterval uint32 `yaml:"statistics_interval"`
 
+	QueryLogEnabled  bool   `yaml:"querylog_enabled"`  // if true, query log is enabled
+	QueryLogInterval uint32 `yaml:"querylog_interval"` // time interval for query log (in days)
+
 	dnsforward.FilteringConfig `yaml:",inline"`
 
-	UpstreamDNS []string `yaml:"upstream_dns"`
+	FilteringEnabled           bool             `yaml:"filtering_enabled"`       // whether or not use filter lists
+	FiltersUpdateIntervalHours uint32           `yaml:"filters_update_interval"` // time period to update filters (in hours)
+	DnsfilterConf              dnsfilter.Config `yaml:",inline"`
 }
 
 var defaultDNS = []string{
@@ -159,23 +164,21 @@ var config = configuration{
 	BindPort:          3000,
 	BindHost:          "0.0.0.0",
 	DNS: dnsConfig{
-		BindHost:      "0.0.0.0",
-		Port:          53,
-		StatsInterval: 1,
+		BindHost:         "0.0.0.0",
+		Port:             53,
+		StatsInterval:    1,
+		QueryLogEnabled:  true,
+		QueryLogInterval: 1,
 		FilteringConfig: dnsforward.FilteringConfig{
-			ProtectionEnabled:          true, // whether or not use any of dnsfilter features
-			FilteringEnabled:           true, // whether or not use filter lists
-			FiltersUpdateIntervalHours: 24,
-			BlockingMode:               "nxdomain", // mode how to answer filtered requests
-			BlockedResponseTTL:         10,         // in seconds
-			QueryLogEnabled:            true,
-			QueryLogInterval:           1,
-			Ratelimit:                  20,
-			RefuseAny:                  true,
-			BootstrapDNS:               defaultBootstrap,
-			AllServers:                 false,
+			ProtectionEnabled:  true,       // whether or not use any of dnsfilter features
+			BlockingMode:       "nxdomain", // mode how to answer filtered requests
+			BlockedResponseTTL: 10,         // in seconds
+			Ratelimit:          20,
+			RefuseAny:          true,
+			AllServers:         false,
 		},
-		UpstreamDNS: defaultDNS,
+		FilteringEnabled:           true, // whether or not use filter lists
+		FiltersUpdateIntervalHours: 24,
 	},
 	TLS: tlsConfig{
 		tlsConfigSettings: tlsConfigSettings{
@@ -202,13 +205,13 @@ func initConfig() {
 
 	config.WebSessionTTLHours = 30 * 24
 
+	config.DNS.UpstreamDNS = defaultDNS
 	if runtime.GOARCH == "mips" || runtime.GOARCH == "mipsle" {
 		// Use plain DNS on MIPS, encryption is too slow
-		defaultDNS = []string{"1.1.1.1", "1.0.0.1"}
-		// also change the default config
-		config.DNS.UpstreamDNS = defaultDNS
+		config.DNS.UpstreamDNS = []string{"1.1.1.1", "1.0.0.1"}
 	}
 
+	config.DNS.BootstrapDNS = defaultBootstrap
 	config.DNS.CacheSize = 4 * 1024 * 1024
 	config.DNS.DnsfilterConf.SafeBrowsingCacheSize = 1 * 1024 * 1024
 	config.DNS.DnsfilterConf.SafeSearchCacheSize = 1 * 1024 * 1024
@@ -323,6 +326,12 @@ func (c *configuration) write() error {
 		c := dnsfilter.Config{}
 		config.dnsFilter.WriteDiskConfig(&c)
 		config.DNS.DnsfilterConf = c
+	}
+
+	if config.dnsServer != nil {
+		c := dnsforward.FilteringConfig{}
+		config.dnsServer.WriteDiskConfig(&c)
+		config.DNS.FilteringConfig = c
 	}
 
 	if config.dhcpServer != nil {

@@ -156,6 +156,9 @@ func generateServerConfig() (dnsforward.ServerConfig, error) {
 		UDPListenAddr:   &net.UDPAddr{IP: net.ParseIP(config.DNS.BindHost), Port: config.DNS.Port},
 		TCPListenAddr:   &net.TCPAddr{IP: net.ParseIP(config.DNS.BindHost), Port: config.DNS.Port},
 		FilteringConfig: config.DNS.FilteringConfig,
+		ConfigModified:  onConfigModified,
+		HTTPRegister:    httpRegister,
+		OnDNSRequest:    onDNSRequest,
 	}
 
 	if config.TLS.Enabled {
@@ -165,15 +168,7 @@ func generateServerConfig() (dnsforward.ServerConfig, error) {
 		}
 	}
 
-	upstreamConfig, err := proxy.ParseUpstreamsConfig(config.DNS.UpstreamDNS, config.DNS.BootstrapDNS, dnsforward.DefaultTimeout)
-	if err != nil {
-		return newconfig, fmt.Errorf("Couldn't get upstreams configuration cause: %s", err)
-	}
-	newconfig.Upstreams = upstreamConfig.Upstreams
-	newconfig.DomainsReservedUpstreams = upstreamConfig.DomainReservedUpstreams
-	newconfig.AllServers = config.DNS.AllServers
 	newconfig.FilterHandler = applyAdditionalFiltering
-	newconfig.OnDNSRequest = onDNSRequest
 	return newconfig, nil
 }
 
