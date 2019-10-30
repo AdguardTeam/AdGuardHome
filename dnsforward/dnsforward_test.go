@@ -16,6 +16,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/likexian/gokit/assert"
 	"github.com/miekg/dns"
 )
 
@@ -391,7 +392,6 @@ func createTestServer(t *testing.T) *Server {
 	s.conf.UDPListenAddr = &net.UDPAddr{Port: 0}
 	s.conf.TCPListenAddr = &net.TCPAddr{Port: 0}
 
-	s.conf.FilteringConfig.FilteringEnabled = true
 	s.conf.FilteringConfig.ProtectionEnabled = true
 	return s
 }
@@ -541,67 +541,106 @@ func publicKey(priv interface{}) interface{} {
 }
 
 func TestIsBlockedIPAllowed(t *testing.T) {
-	s := createTestServer(t)
-	s.conf.AllowedClients = []string{"1.1.1.1", "2.2.0.0/16"}
+	a := &accessCtx{}
+	assert.True(t, a.Init([]string{"1.1.1.1", "2.2.0.0/16"}, nil, nil) == nil)
 
-	err := s.Start(nil)
-	if err != nil {
-		t.Fatalf("Failed to start server: %s", err)
-	}
-
-	if s.isBlockedIP("1.1.1.1") {
-		t.Fatalf("isBlockedIP")
-	}
-	if !s.isBlockedIP("1.1.1.2") {
-		t.Fatalf("isBlockedIP")
-	}
-	if s.isBlockedIP("2.2.1.1") {
-		t.Fatalf("isBlockedIP")
-	}
-	if !s.isBlockedIP("2.3.1.1") {
-		t.Fatalf("isBlockedIP")
-	}
+	assert.True(t, !a.IsBlockedIP("1.1.1.1"))
+	assert.True(t, a.IsBlockedIP("1.1.1.2"))
+	assert.True(t, !a.IsBlockedIP("2.2.1.1"))
+	assert.True(t, a.IsBlockedIP("2.3.1.1"))
 }
 
 func TestIsBlockedIPDisallowed(t *testing.T) {
-	s := createTestServer(t)
-	s.conf.DisallowedClients = []string{"1.1.1.1", "2.2.0.0/16"}
+	a := &accessCtx{}
+	assert.True(t, a.Init(nil, []string{"1.1.1.1", "2.2.0.0/16"}, nil) == nil)
 
-	err := s.Start(nil)
-	if err != nil {
-		t.Fatalf("Failed to start server: %s", err)
-	}
-
-	if !s.isBlockedIP("1.1.1.1") {
-		t.Fatalf("isBlockedIP")
-	}
-	if s.isBlockedIP("1.1.1.2") {
-		t.Fatalf("isBlockedIP")
-	}
-	if !s.isBlockedIP("2.2.1.1") {
-		t.Fatalf("isBlockedIP")
-	}
-	if s.isBlockedIP("2.3.1.1") {
-		t.Fatalf("isBlockedIP")
-	}
+	assert.True(t, a.IsBlockedIP("1.1.1.1"))
+	assert.True(t, !a.IsBlockedIP("1.1.1.2"))
+	assert.True(t, a.IsBlockedIP("2.2.1.1"))
+	assert.True(t, !a.IsBlockedIP("2.3.1.1"))
 }
 
 func TestIsBlockedIPBlockedDomain(t *testing.T) {
-	s := createTestServer(t)
-	s.conf.BlockedHosts = []string{"host1", "host2"}
+	a := &accessCtx{}
+	assert.True(t, a.Init(nil, nil, []string{"host1", "host2"}) == nil)
 
-	err := s.Start(nil)
+	assert.True(t, a.IsBlockedDomain("host1"))
+	assert.True(t, a.IsBlockedDomain("host2"))
+	assert.True(t, !a.IsBlockedDomain("host3"))
+}
+
+func TestValidateUpstream(t *testing.T) {
+	invalidUpstreams := []string{"1.2.3.4.5",
+		"123.3.7m",
+		"htttps://google.com/dns-query",
+		"[/host.com]tls://dns.adguard.com",
+		"[host.ru]#",
+	}
+
+	validDefaultUpstreams := []string{"1.1.1.1",
+		"tls://1.1.1.1",
+		"https://dns.adguard.com/dns-query",
+		"sdns://AQMAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
+	}
+
+	validUpstreams := []string{"[/host.com/]1.1.1.1",
+		"[//]tls://1.1.1.1",
+		"[/www.host.com/]#",
+		"[/host.com/google.com/]8.8.8.8",
+		"[/host/]sdns://AQMAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
+	}
+	for _, u := range invalidUpstreams {
+		_, err := validateUpstream(u)
+		if err == nil {
+			t.Fatalf("upstream %s is invalid but it pass through validation", u)
+		}
+	}
+
+	for _, u := range validDefaultUpstreams {
+		defaultUpstream, err := validateUpstream(u)
+		if err != nil {
+			t.Fatalf("upstream %s is valid but it doen't pass through validation cause: %s", u, err)
+		}
+		if !defaultUpstream {
+			t.Fatalf("upstream %s is default one!", u)
+		}
+	}
+
+	for _, u := range validUpstreams {
+		defaultUpstream, err := validateUpstream(u)
+		if err != nil {
+			t.Fatalf("upstream %s is valid but it doen't pass through validation cause: %s", u, err)
+		}
+		if defaultUpstream {
+			t.Fatalf("upstream %s is default one!", u)
+		}
+	}
+}
+
+func TestValidateUpstreamsSet(t *testing.T) {
+	// Set of valid upstreams. There is no default upstream specified
+	upstreamsSet := []string{"[/host.com/]1.1.1.1",
+		"[//]tls://1.1.1.1",
+		"[/www.host.com/]#",
+		"[/host.com/google.com/]8.8.8.8",
+		"[/host/]sdns://AQMAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
+	}
+	err := validateUpstreams(upstreamsSet)
+	if err == nil {
+		t.Fatalf("there is no default upstream")
+	}
+
+	// Let's add default upstream
+	upstreamsSet = append(upstreamsSet, "8.8.8.8")
+	err = validateUpstreams(upstreamsSet)
 	if err != nil {
-		t.Fatalf("Failed to start server: %s", err)
+		t.Fatalf("upstreams set is valid, but doesn't pass through validation cause: %s", err)
 	}
 
-	if !s.isBlockedDomain("host1") {
-		t.Fatalf("isBlockedDomain")
-	}
-	if !s.isBlockedDomain("host2") {
-		t.Fatalf("isBlockedDomain")
-	}
-	if s.isBlockedDomain("host3") {
-		t.Fatalf("isBlockedDomain")
+	// Let's add invalid upstream
+	upstreamsSet = append(upstreamsSet, "dhcp://fake.dns")
+	err = validateUpstreams(upstreamsSet)
+	if err == nil {
+		t.Fatalf("there is an invalid upstream in set, but it pass through validation")
 	}
 }
