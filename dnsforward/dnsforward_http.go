@@ -283,4 +283,8 @@ func (s *Server) registerHandlers() {
 	s.conf.HTTPRegister("POST", "/control/disable_protection", s.handleProtectionDisable)
 	s.conf.HTTPRegister("POST", "/control/set_upstreams_config", s.handleSetUpstreamConfig)
 	s.conf.HTTPRegister("POST", "/control/test_upstream_dns", s.handleTestUpstreamDNS)
+
+	s.conf.HTTPRegister("GET", "/control/access/list", s.handleAccessList)
+	s.conf.HTTPRegister("POST", "/control/access/set", s.handleAccessSet)
+
 }
