@@ -29,6 +29,12 @@ const (
 	parentalBlockHost     = "family-block.dns.adguard.com"
 )
 
+var defaultDNS = []string{
+	"https://1.1.1.1/dns-query",
+	"https://1.0.0.1/dns-query",
+}
+var defaultBootstrap = []string{"1.1.1.1", "1.0.0.1"}
+
 // Server is the main way to start a DNS server.
 //
 // Example:
@@ -59,6 +65,11 @@ func NewServer(dnsFilter *dnsfilter.Dnsfilter, stats stats.Stats, queryLog query
 	s.dnsFilter = dnsFilter
 	s.stats = stats
 	s.queryLog = queryLog
+
+	if runtime.GOARCH == "mips" || runtime.GOARCH == "mipsle" {
+		// Use plain DNS on MIPS, encryption is too slow
+		defaultDNS = []string{"1.1.1.1", "1.0.0.1"}
+	}
 	return s
 }
 
@@ -149,19 +160,6 @@ var defaultValues = ServerConfig{
 	FilteringConfig: FilteringConfig{BlockedResponseTTL: 3600},
 }
 
-func init() {
-	defaultDNS := []string{"8.8.8.8:53", "8.8.4.4:53"}
-
-	defaultUpstreams := make([]upstream.Upstream, 0)
-	for _, addr := range defaultDNS {
-		u, err := upstream.AddressToUpstream(addr, upstream.Options{Timeout: DefaultTimeout})
-		if err == nil {
-			defaultUpstreams = append(defaultUpstreams, u)
-		}
-	}
-	defaultValues.Upstreams = defaultUpstreams
-}
-
 // Start starts the DNS server
 func (s *Server) Start(config *ServerConfig) error {
 	s.Lock()
@@ -177,19 +175,33 @@ func (s *Server) startInternal(config *ServerConfig) error {
 
 	if config != nil {
 		s.conf = *config
-		upstreamConfig, err := proxy.ParseUpstreamsConfig(s.conf.UpstreamDNS, s.conf.BootstrapDNS, DefaultTimeout)
-		if err != nil {
-			return fmt.Errorf("DNS: proxy.ParseUpstreamsConfig: %s", err)
-		}
-		s.conf.Upstreams = upstreamConfig.Upstreams
-		s.conf.DomainsReservedUpstreams = upstreamConfig.DomainReservedUpstreams
-
 	}
+
+	if len(s.conf.UpstreamDNS) == 0 {
+		s.conf.UpstreamDNS = defaultDNS
+	}
+	if len(s.conf.BootstrapDNS) == 0 {
+		s.conf.BootstrapDNS = defaultBootstrap
+	}
+
+	upstreamConfig, err := proxy.ParseUpstreamsConfig(s.conf.UpstreamDNS, s.conf.BootstrapDNS, DefaultTimeout)
+	if err != nil {
+		return fmt.Errorf("DNS: proxy.ParseUpstreamsConfig: %s", err)
+	}
+	s.conf.Upstreams = upstreamConfig.Upstreams
+	s.conf.DomainsReservedUpstreams = upstreamConfig.DomainReservedUpstreams
+
 	if len(s.conf.ParentalBlockHost) == 0 {
 		s.conf.ParentalBlockHost = parentalBlockHost
 	}
 	if len(s.conf.SafeBrowsingBlockHost) == 0 {
 		s.conf.SafeBrowsingBlockHost = safeBrowsingBlockHost
+	}
+	if s.conf.UDPListenAddr == nil {
+		s.conf.UDPListenAddr = defaultValues.UDPListenAddr
+	}
+	if s.conf.TCPListenAddr == nil {
+		s.conf.TCPListenAddr = defaultValues.TCPListenAddr
 	}
 
 	proxyConfig := proxy.Config{
@@ -208,7 +220,7 @@ func (s *Server) startInternal(config *ServerConfig) error {
 	}
 
 	s.access = &accessCtx{}
-	err := s.access.Init(s.conf.AllowedClients, s.conf.DisallowedClients, s.conf.BlockedHosts)
+	err = s.access.Init(s.conf.AllowedClients, s.conf.DisallowedClients, s.conf.BlockedHosts)
 	if err != nil {
 		return err
 	}
@@ -225,16 +237,8 @@ func (s *Server) startInternal(config *ServerConfig) error {
 		}
 	}
 
-	if proxyConfig.UDPListenAddr == nil {
-		proxyConfig.UDPListenAddr = defaultValues.UDPListenAddr
-	}
-
-	if proxyConfig.TCPListenAddr == nil {
-		proxyConfig.TCPListenAddr = defaultValues.TCPListenAddr
-	}
-
 	if len(proxyConfig.Upstreams) == 0 {
-		proxyConfig.Upstreams = defaultValues.Upstreams
+		log.Fatal("len(proxyConfig.Upstreams) == 0")
 	}
 
 	if !s.webRegistered && s.conf.HTTPRegister != nil {
@@ -300,6 +304,7 @@ func (s *Server) Reconfigure2(newconf FilteringConfig) error {
 	return nil
 }
 
+// Reconfigure applies the new configuration to the DNS server
 func (s *Server) Reconfigure(config *ServerConfig) error {
 	s.Lock()
 	defer s.Unlock()

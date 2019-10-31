@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 	"sync"
 	"time"
 
@@ -115,12 +114,6 @@ type dnsConfig struct {
 	DnsfilterConf              dnsfilter.Config `yaml:",inline"`
 }
 
-var defaultDNS = []string{
-	"https://1.1.1.1/dns-query",
-	"https://1.0.0.1/dns-query",
-}
-var defaultBootstrap = []string{"1.1.1.1", "1.0.0.1"}
-
 type tlsConfigSettings struct {
 	Enabled        bool   `yaml:"enabled" json:"enabled"`                               // Enabled is the encryption (DOT/DOH/HTTPS) status
 	ServerName     string `yaml:"server_name" json:"server_name,omitempty"`             // ServerName is the hostname of your HTTPS/TLS server
@@ -205,13 +198,6 @@ func initConfig() {
 
 	config.WebSessionTTLHours = 30 * 24
 
-	config.DNS.UpstreamDNS = defaultDNS
-	if runtime.GOARCH == "mips" || runtime.GOARCH == "mipsle" {
-		// Use plain DNS on MIPS, encryption is too slow
-		config.DNS.UpstreamDNS = []string{"1.1.1.1", "1.0.0.1"}
-	}
-
-	config.DNS.BootstrapDNS = defaultBootstrap
 	config.DNS.CacheSize = 4 * 1024 * 1024
 	config.DNS.DnsfilterConf.SafeBrowsingCacheSize = 1 * 1024 * 1024
 	config.DNS.DnsfilterConf.SafeSearchCacheSize = 1 * 1024 * 1024

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"runtime"
 	"strconv"
 	"strings"
 
@@ -14,12 +13,6 @@ import (
 	"github.com/AdguardTeam/golibs/utils"
 	"github.com/miekg/dns"
 )
-
-var defaultDNS = []string{
-	"https://1.1.1.1/dns-query",
-	"https://1.0.0.1/dns-query",
-}
-var defaultBootstrap = []string{"1.1.1.1", "1.0.0.1"}
 
 func httpError(r *http.Request, w http.ResponseWriter, code int, format string, args ...interface{}) {
 	text := fmt.Sprintf(format, args...)
@@ -58,14 +51,7 @@ func (s *Server) handleSetUpstreamConfig(w http.ResponseWriter, r *http.Request)
 	}
 
 	newconf := FilteringConfig{}
-	newconf.UpstreamDNS = defaultDNS
-	if runtime.GOARCH == "mips" || runtime.GOARCH == "mipsle" {
-		// Use plain DNS on MIPS, encryption is too slow
-		newconf.UpstreamDNS = []string{"1.1.1.1", "1.0.0.1"}
-	}
-	if len(req.Upstreams) != 0 {
-		newconf.UpstreamDNS = req.Upstreams
-	}
+	newconf.UpstreamDNS = req.Upstreams
 
 	// bootstrap servers are plain DNS only
 	for _, host := range req.BootstrapDNS {
@@ -74,10 +60,7 @@ func (s *Server) handleSetUpstreamConfig(w http.ResponseWriter, r *http.Request)
 			return
 		}
 	}
-	newconf.BootstrapDNS = defaultBootstrap
-	if len(req.BootstrapDNS) != 0 {
-		newconf.BootstrapDNS = req.BootstrapDNS
-	}
+	newconf.BootstrapDNS = req.BootstrapDNS
 
 	newconf.AllServers = req.AllServers
 	err = s.Reconfigure2(newconf)
