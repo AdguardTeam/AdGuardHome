@@ -20,10 +20,10 @@ type svc struct {
 // client/src/helpers/constants.js
 // client/src/components/ui/Icons.js
 var serviceRulesArray = []svc{
-	{"whatsapp", []string{"||whatsapp.net^"}},
-	{"facebook", []string{"||facebook.com^"}},
+	{"whatsapp", []string{"||whatsapp.net^", "||whatsapp.com^"}},
+	{"facebook", []string{"||facebook.com^", "||facebook.net^", "||fbcdn.net^"}},
 	{"twitter", []string{"||twitter.com^", "||t.co^", "||twimg.com^"}},
-	{"youtube", []string{"||youtube.com^", "||ytimg.com^", "||youtubei.googleapis.com^"}},
+	{"youtube", []string{"||youtube.com^", "||ytimg.com^", "||youtu.be^", "||youtubei.googleapis.com^"}},
 	{"messenger", []string{"||fb.com^", "||facebook.com^"}},
 	{"twitch", []string{"||twitch.tv^", "||ttvnw.net^"}},
 	{"netflix", []string{"||nflxext.com^", "||netflix.com^"}},
@@ -87,6 +87,7 @@ var serviceRulesArray = []svc{
 	}},
 	{"tiktok", []string{
 		"||tiktok.com^",
+		"||tiktokcdn.com^",
 		"||snssdk.com^",
 		"||amemv.com^",
 		"||toutiao.com^",
