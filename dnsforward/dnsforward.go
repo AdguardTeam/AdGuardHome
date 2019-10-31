@@ -30,10 +30,9 @@ const (
 )
 
 var defaultDNS = []string{
-	"https://1.1.1.1/dns-query",
-	"https://1.0.0.1/dns-query",
+	"https://dns.quad9.net/dns-query",
 }
-var defaultBootstrap = []string{"1.1.1.1", "1.0.0.1"}
+var defaultBootstrap = []string{"9.9.9.9", "149.112.112.112"}
 
 // Server is the main way to start a DNS server.
 //
@@ -68,7 +67,7 @@ func NewServer(dnsFilter *dnsfilter.Dnsfilter, stats stats.Stats, queryLog query
 
 	if runtime.GOARCH == "mips" || runtime.GOARCH == "mipsle" {
 		// Use plain DNS on MIPS, encryption is too slow
-		defaultDNS = []string{"1.1.1.1", "1.0.0.1"}
+		defaultDNS = defaultBootstrap
 	}
 	return s
 }
