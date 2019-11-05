@@ -286,6 +286,10 @@ export const SERVICES = [
         name: 'eBay',
     },
     {
+        id: 'origin',
+        name: 'Origin',
+    },
+    {
         id: 'steam',
         name: 'Steam',
     },
