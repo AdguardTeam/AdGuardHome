@@ -23,7 +23,7 @@ var serviceRulesArray = []svc{
 	{"whatsapp", []string{"||whatsapp.net^"}},
 	{"facebook", []string{"||facebook.com^"}},
 	{"twitter", []string{"||twitter.com^", "||t.co^", "||twimg.com^"}},
-	{"youtube", []string{"||youtube.com^", "||ytimg.com^"}},
+	{"youtube", []string{"||youtube.com^", "||ytimg.com^", "||googlevideo.com^"}},
 	{"messenger", []string{"||fb.com^", "||facebook.com^"}},
 	{"twitch", []string{"||twitch.tv^", "||ttvnw.net^"}},
 	{"netflix", []string{"||nflxext.com^", "||netflix.com^"}},
