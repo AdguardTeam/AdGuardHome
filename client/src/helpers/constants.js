@@ -277,6 +277,10 @@ export const SERVICES = [
         name: 'Skype',
     },
     {
+        id: 'origin',
+        name: 'Origin',
+    },
+    {
         id: 'steam',
         name: 'Steam',
     },
