@@ -33,6 +33,7 @@ var serviceRulesArray = []svc{
 	{"ok", []string{"||ok.ru^"}},
 	{"skype", []string{"||skype.com^"}},
 	{"vk", []string{"||vk.com^"}},
+	{"origin", []string{"||origin.com^", "||signin.ea.com^", "||accounts.ea.com^"}},
 	{"steam", []string{"||steam.com^"}},
 	{"epic_games", []string{"||epicgames.com^"}},
 	{"mail_ru", []string{"||mail.ru^"}},
