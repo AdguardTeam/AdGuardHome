@@ -234,6 +234,10 @@ export const SETTINGS_URLS = ['/encryption', '/dhcp', '/dns', '/settings', '/cli
 
 export const SERVICES = [
     {
+        id: 'amazon',
+        name: 'Amazon',
+    },
+    {
         id: 'facebook',
         name: 'Facebook',
     },
