@@ -39,6 +39,7 @@ var serviceRulesArray = []svc{
 	{"amazon", []string{
 		"||amazon.com^",
 		"||media-amazon.com^",
+		"||images-amazon.com^",
 		"||a2z.com^",
 		"||amazon.ae^",
 		"||amazon.ca^",
