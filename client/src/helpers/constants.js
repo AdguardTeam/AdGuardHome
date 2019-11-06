@@ -277,6 +277,10 @@ export const SERVICES = [
         name: 'Skype',
     },
     {
+        id: 'cloudflare',
+        name: 'Cloudflare',
+    },
+    {
         id: 'steam',
         name: 'Steam',
     },
