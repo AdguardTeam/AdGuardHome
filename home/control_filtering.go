@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/miekg/dns"
 )
 
 // IsValidURL - return TRUE if URL is valid
@@ -290,15 +292,58 @@ func handleFilteringConfig(w http.ResponseWriter, r *http.Request) {
 	enableFilters(true)
 }
 
+type checkHostResp struct {
+	Reason   string `json:"reason"`
+	FilterID int64  `json:"filter_id"`
+	Rule     string `json:"rule"`
+
+	// for FilteredBlockedService:
+	SvcName string `json:"service_name"`
+
+	// for ReasonRewrite:
+	CanonName string   `json:"cname"`    // CNAME value
+	IPList    []net.IP `json:"ip_addrs"` // list of IP addresses
+}
+
+func handleCheckHost(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	host := q.Get("name")
+
+	setts := Context.dnsFilter.GetConfig()
+	setts.FilteringEnabled = true
+	ApplyBlockedServices(&setts, config.DNS.BlockedServices)
+	result, err := Context.dnsFilter.CheckHost(host, dns.TypeA, &setts)
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "couldn't apply filtering: %s: %s", host, err)
+		return
+	}
+
+	resp := checkHostResp{}
+	resp.Reason = result.Reason.String()
+	resp.FilterID = result.FilterID
+	resp.Rule = result.Rule
+	resp.SvcName = result.ServiceName
+	resp.CanonName = result.CanonName
+	resp.IPList = result.IPList
+	js, err := json.Marshal(resp)
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "json encode: %s", err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(js)
+}
+
 // RegisterFilteringHandlers - register handlers
 func RegisterFilteringHandlers() {
-	httpRegister(http.MethodGet, "/control/filtering/status", handleFilteringStatus)
-	httpRegister(http.MethodPost, "/control/filtering/config", handleFilteringConfig)
-	httpRegister(http.MethodPost, "/control/filtering/add_url", handleFilteringAddURL)
-	httpRegister(http.MethodPost, "/control/filtering/remove_url", handleFilteringRemoveURL)
-	httpRegister(http.MethodPost, "/control/filtering/set_url", handleFilteringSetURL)
-	httpRegister(http.MethodPost, "/control/filtering/refresh", handleFilteringRefresh)
-	httpRegister(http.MethodPost, "/control/filtering/set_rules", handleFilteringSetRules)
+	httpRegister("GET", "/control/filtering/status", handleFilteringStatus)
+	httpRegister("POST", "/control/filtering/config", handleFilteringConfig)
+	httpRegister("POST", "/control/filtering/add_url", handleFilteringAddURL)
+	httpRegister("POST", "/control/filtering/remove_url", handleFilteringRemoveURL)
+	httpRegister("POST", "/control/filtering/set_url", handleFilteringSetURL)
+	httpRegister("POST", "/control/filtering/refresh", handleFilteringRefresh)
+	httpRegister("POST", "/control/filtering/set_rules", handleFilteringSetRules)
+	httpRegister("GET", "/control/filtering/check_host", handleCheckHost)
 }
 
 func checkFiltersUpdateIntervalHours(i uint32) bool {
