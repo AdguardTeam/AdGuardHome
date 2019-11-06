@@ -100,9 +100,14 @@ func (s *Server) CheckConfig(config ServerConfig) error {
 func Create(config ServerConfig) *Server {
 	s := Server{}
 	s.conf = config
+	s.conf.DBFilePath = filepath.Join(config.WorkDir, dbFilename)
 	if s.conf.HTTPRegister != nil {
 		s.registerHandlers()
 	}
+
+	// we can't delay database loading until DHCP server is started,
+	//  because we need static leases functionality available beforehand
+	s.dbLoad()
 	return &s
 }
 
@@ -112,7 +117,6 @@ func (s *Server) Init(config ServerConfig) error {
 	if err != nil {
 		return err
 	}
-	s.dbLoad()
 	return nil
 }
 
@@ -178,7 +182,7 @@ func (s *Server) setConfig(config ServerConfig) error {
 	s.conf.WorkDir = oldconf.WorkDir
 	s.conf.HTTPRegister = oldconf.HTTPRegister
 	s.conf.ConfigModified = oldconf.ConfigModified
-	s.conf.DBFilePath = filepath.Join(config.WorkDir, dbFilename)
+	s.conf.DBFilePath = oldconf.DBFilePath
 	return nil
 }
 
@@ -565,10 +569,6 @@ func (s *Server) handleDecline(p dhcp4.Packet, options dhcp4.Options) dhcp4.Pack
 
 // AddStaticLease adds a static lease (thread-safe)
 func (s *Server) AddStaticLease(l Lease) error {
-	if s.IPpool == nil {
-		return fmt.Errorf("DHCP server isn't started")
-	}
-
 	if len(l.IP) != 4 {
 		return fmt.Errorf("Invalid IP")
 	}
@@ -629,10 +629,6 @@ func (s *Server) rmLease(l Lease) error {
 
 // RemoveStaticLease removes a static lease (thread-safe)
 func (s *Server) RemoveStaticLease(l Lease) error {
-	if s.IPpool == nil {
-		return fmt.Errorf("DHCP server isn't started")
-	}
-
 	if len(l.IP) != 4 {
 		return fmt.Errorf("Invalid IP")
 	}
@@ -674,10 +670,6 @@ func (s *Server) Leases() []Lease {
 func (s *Server) StaticLeases() []Lease {
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
-
-	if s.IPpool == nil {
-		s.dbLoad()
-	}
 
 	var result []Lease
 	for _, lease := range s.leases {
