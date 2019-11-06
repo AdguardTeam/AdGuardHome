@@ -137,12 +137,18 @@ func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 }
 
 type filterURLJSON struct {
+	Name    string `json:"name"`
 	URL     string `json:"url"`
 	Enabled bool   `json:"enabled"`
 }
 
+type filterURLReq struct {
+	URL  string        `json:"url"`
+	Data filterURLJSON `json:"data"`
+}
+
 func handleFilteringSetURL(w http.ResponseWriter, r *http.Request) {
-	fj := filterURLJSON{}
+	fj := filterURLReq{}
 	err := json.NewDecoder(r.Body).Decode(&fj)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "json decode: %s", err)
@@ -154,14 +160,34 @@ func handleFilteringSetURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	found := filterEnable(fj.URL, fj.Enabled)
-	if !found {
+	f := filter{
+		Enabled: fj.Data.Enabled,
+		Name:    fj.Data.Name,
+		URL:     fj.Data.URL,
+	}
+	status := filterSetProperties(fj.URL, f)
+	if (status & statusFound) == 0 {
 		http.Error(w, "URL doesn't exist", http.StatusBadRequest)
+		return
+	}
+	if (status & statusURLExists) != 0 {
+		http.Error(w, "URL already exists", http.StatusBadRequest)
 		return
 	}
 
 	onConfigModified()
-	enableFilters(true)
+	if (status & statusURLChanged) != 0 {
+		if fj.Data.Enabled {
+			// download new filter and apply its rules
+			refreshStatus = 1
+			refreshLock.Lock()
+			_, _ = refreshFiltersIfNecessary(true)
+			refreshLock.Unlock()
+		}
+
+	} else if (status & statusEnabledChanged) != 0 {
+		enableFilters(true)
+	}
 }
 
 func handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
