@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
+	"github.com/AdguardTeam/AdGuardHome/dnsforward"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/utils"
 )
@@ -34,6 +35,8 @@ type Client struct {
 
 	UseOwnBlockedServices bool // false: use global settings
 	BlockedServices       []string
+
+	Upstreams []string // list of upstream servers to be used for the client's requests
 }
 
 type clientSource uint
@@ -96,6 +99,8 @@ type clientObject struct {
 
 	UseGlobalBlockedServices bool     `yaml:"use_global_blocked_services"`
 	BlockedServices          []string `yaml:"blocked_services"`
+
+	Upstreams []string `yaml:"upstreams"`
 }
 
 func (clients *clientsContainer) addFromConfig(objects []clientObject) {
@@ -111,6 +116,8 @@ func (clients *clientsContainer) addFromConfig(objects []clientObject) {
 
 			UseOwnBlockedServices: !cy.UseGlobalBlockedServices,
 			BlockedServices:       cy.BlockedServices,
+
+			Upstreams: cy.Upstreams,
 		}
 		_, err := clients.Add(cli)
 		if err != nil {
@@ -134,6 +141,8 @@ func (clients *clientsContainer) WriteDiskConfig(objects *[]clientObject) {
 
 			UseGlobalBlockedServices: !cli.UseOwnBlockedServices,
 			BlockedServices:          cli.BlockedServices,
+
+			Upstreams: cli.Upstreams,
 		}
 		*objects = append(*objects, cy)
 	}
@@ -268,6 +277,14 @@ func (c *Client) check() error {
 
 		return fmt.Errorf("Invalid ID: %s", id)
 	}
+
+	if len(c.Upstreams) != 0 {
+		err := dnsforward.ValidateUpstreams(c.Upstreams)
+		if err != nil {
+			return fmt.Errorf("Invalid upstream servers: %s", err)
+		}
+	}
+
 	return nil
 }
 
