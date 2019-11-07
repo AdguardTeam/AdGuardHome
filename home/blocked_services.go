@@ -36,6 +36,15 @@ var serviceRulesArray = []svc{
 	{"steam", []string{"||steam.com^"}},
 	{"epic_games", []string{"||epicgames.com^"}},
 	{"mail_ru", []string{"||mail.ru^"}},
+	{"cloudflare", []string{
+		"||cloudflare.com^",
+		"||cloudflare-dns.com^",
+		"||cloudflare.net^",
+		"||cloudflareinsights.com^",
+		"||cloudflarestream.com^",
+		"||cloudflarestatus.com^",
+		"||cloudflare.cn^",
+	}},
 	{"tiktok", []string{
 		"||tiktok.com^",
 		"||snssdk.com^",
