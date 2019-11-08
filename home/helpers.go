@@ -2,7 +2,6 @@ package home
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -13,7 +12,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
@@ -151,117 +149,6 @@ func postInstallHandler(handler http.Handler) http.Handler {
 	return &postInstallHandlerStruct{handler}
 }
 
-// ------------------
-// network interfaces
-// ------------------
-type netInterface struct {
-	Name         string   `json:"name"`
-	MTU          int      `json:"mtu"`
-	HardwareAddr string   `json:"hardware_address"`
-	Addresses    []string `json:"ip_addresses"`
-	Flags        string   `json:"flags"`
-}
-
-// getValidNetInterfaces returns interfaces that are eligible for DNS and/or DHCP
-// invalid interface is a ppp interface or the one that doesn't allow broadcasts
-func getValidNetInterfaces() ([]net.Interface, error) {
-	ifaces, err := net.Interfaces()
-	if err != nil {
-		return nil, fmt.Errorf("Couldn't get list of interfaces: %s", err)
-	}
-
-	netIfaces := []net.Interface{}
-
-	for i := range ifaces {
-		if ifaces[i].Flags&net.FlagPointToPoint != 0 {
-			// this interface is ppp, we're not interested in this one
-			continue
-		}
-
-		iface := ifaces[i]
-		netIfaces = append(netIfaces, iface)
-	}
-
-	return netIfaces, nil
-}
-
-// getValidNetInterfacesMap returns interfaces that are eligible for DNS and WEB only
-// we do not return link-local addresses here
-func getValidNetInterfacesForWeb() ([]netInterface, error) {
-	ifaces, err := getValidNetInterfaces()
-	if err != nil {
-		return nil, errorx.Decorate(err, "Couldn't get interfaces")
-	}
-	if len(ifaces) == 0 {
-		return nil, errors.New("couldn't find any legible interface")
-	}
-
-	var netInterfaces []netInterface
-
-	for _, iface := range ifaces {
-		addrs, e := iface.Addrs()
-		if e != nil {
-			return nil, errorx.Decorate(e, "Failed to get addresses for interface %s", iface.Name)
-		}
-
-		netIface := netInterface{
-			Name:         iface.Name,
-			MTU:          iface.MTU,
-			HardwareAddr: iface.HardwareAddr.String(),
-		}
-
-		if iface.Flags != 0 {
-			netIface.Flags = iface.Flags.String()
-		}
-
-		// we don't want link-local addresses in json, so skip them
-		for _, addr := range addrs {
-			ipnet, ok := addr.(*net.IPNet)
-			if !ok {
-				// not an IPNet, should not happen
-				return nil, fmt.Errorf("SHOULD NOT HAPPEN: got iface.Addrs() element %s that is not net.IPNet, it is %T", addr, addr)
-			}
-			// ignore link-local
-			if ipnet.IP.IsLinkLocalUnicast() {
-				continue
-			}
-			netIface.Addresses = append(netIface.Addresses, ipnet.IP.String())
-		}
-		if len(netIface.Addresses) != 0 {
-			netInterfaces = append(netInterfaces, netIface)
-		}
-	}
-
-	return netInterfaces, nil
-}
-
-// checkPortAvailable is not a cheap test to see if the port is bindable, because it's actually doing the bind momentarily
-func checkPortAvailable(host string, port int) error {
-	ln, err := net.Listen("tcp", net.JoinHostPort(host, strconv.Itoa(port)))
-	if err != nil {
-		return err
-	}
-	ln.Close()
-
-	// It seems that net.Listener.Close() doesn't close file descriptors right away.
-	// We wait for some time and hope that this fd will be closed.
-	time.Sleep(100 * time.Millisecond)
-	return nil
-}
-
-func checkPacketPortAvailable(host string, port int) error {
-	ln, err := net.ListenPacket("udp", net.JoinHostPort(host, strconv.Itoa(port)))
-	if err != nil {
-		return err
-	}
-	ln.Close()
-
-	// It seems that net.Listener.Close() doesn't close file descriptors right away.
-	// We wait for some time and hope that this fd will be closed.
-	time.Sleep(100 * time.Millisecond)
-	return err
-}
-
 // Connect to a remote server resolving hostname using our own DNS server
 func customDialContext(ctx context.Context, network, addr string) (net.Conn, error) {
 	log.Tracef("network:%v  addr:%v", network, addr)
@@ -301,31 +188,6 @@ func customDialContext(ctx context.Context, network, addr string) (net.Conn, err
 		return con, err
 	}
 	return nil, errorx.DecorateMany(fmt.Sprintf("couldn't dial to %s", addr), dialErrs...)
-}
-
-// check if error is "address already in use"
-func errorIsAddrInUse(err error) bool {
-	errOpError, ok := err.(*net.OpError)
-	if !ok {
-		return false
-	}
-
-	errSyscallError, ok := errOpError.Err.(*os.SyscallError)
-	if !ok {
-		return false
-	}
-
-	errErrno, ok := errSyscallError.Err.(syscall.Errno)
-	if !ok {
-		return false
-	}
-
-	if runtime.GOOS == "windows" {
-		const WSAEADDRINUSE = 10048
-		return errErrno == WSAEADDRINUSE
-	}
-
-	return errErrno == syscall.EADDRINUSE
 }
 
 // ---------------------
