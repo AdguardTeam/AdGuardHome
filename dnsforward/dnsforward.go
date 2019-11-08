@@ -113,10 +113,6 @@ type FilteringConfig struct {
 	ParentalBlockHost     string `yaml:"parental_block_host"`
 	SafeBrowsingBlockHost string `yaml:"safebrowsing_block_host"`
 
-	// Names of services to block (globally).
-	// Per-client settings can override this configuration.
-	BlockedServices []string `yaml:"blocked_services"`
-
 	CacheSize   uint     `yaml:"cache_size"` // DNS cache size (in bytes)
 	UpstreamDNS []string `yaml:"upstream_dns"`
 }
@@ -282,13 +278,8 @@ func (s *Server) IsRunning() bool {
 	return isRunning
 }
 
-// Reconfigure2 - safely apply and write new configuration and restart
-func (s *Server) Reconfigure2(newconf FilteringConfig) error {
-	s.Lock()
-	s.conf.FilteringConfig = newconf
-	s.Unlock()
-	s.conf.ConfigModified()
-
+// Restart - restart server
+func (s *Server) Restart() error {
 	s.Lock()
 	defer s.Unlock()
 	log.Print("Start reconfiguring the server")

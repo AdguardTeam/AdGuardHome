@@ -21,6 +21,9 @@ func returnOK(w http.ResponseWriter) {
 	}
 }
 
+func httpOK(r *http.Request, w http.ResponseWriter) {
+}
+
 func httpError(w http.ResponseWriter, code int, format string, args ...interface{}) {
 	text := fmt.Sprintf(format, args...)
 	log.Info(text)

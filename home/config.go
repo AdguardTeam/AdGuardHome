@@ -112,6 +112,10 @@ type dnsConfig struct {
 	FilteringEnabled           bool             `yaml:"filtering_enabled"`       // whether or not use filter lists
 	FiltersUpdateIntervalHours uint32           `yaml:"filters_update_interval"` // time period to update filters (in hours)
 	DnsfilterConf              dnsfilter.Config `yaml:",inline"`
+
+	// Names of services to block (globally).
+	// Per-client settings can override this configuration.
+	BlockedServices []string `yaml:"blocked_services"`
 }
 
 type tlsConfigSettings struct {

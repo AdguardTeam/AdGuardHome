@@ -63,7 +63,15 @@ func (s *Server) handleSetUpstreamConfig(w http.ResponseWriter, r *http.Request)
 	newconf.BootstrapDNS = req.BootstrapDNS
 
 	newconf.AllServers = req.AllServers
-	err = s.Reconfigure2(newconf)
+
+	s.Lock()
+	s.conf.UpstreamDNS = newconf.UpstreamDNS
+	s.conf.BootstrapDNS = newconf.BootstrapDNS
+	s.conf.AllServers = newconf.AllServers
+	s.Unlock()
+	s.conf.ConfigModified()
+
+	err = s.Restart()
 	if err != nil {
 		httpError(r, w, http.StatusInternalServerError, "%s", err)
 		return

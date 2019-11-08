@@ -64,7 +64,7 @@ func processIPCIDRArray(dst *map[string]bool, dstIPNet *[]net.IPNet, src []strin
 	return nil
 }
 
-// Return TRUE if this client should be blocked
+// IsBlockedIP - return TRUE if this client should be blocked
 func (a *accessCtx) IsBlockedIP(ip string) bool {
 	a.lock.Lock()
 	defer a.lock.Unlock()
@@ -104,7 +104,7 @@ func (a *accessCtx) IsBlockedIP(ip string) bool {
 	return false
 }
 
-// Return TRUE if this domain should be blocked
+// IsBlockedDomain - return TRUE if this domain should be blocked
 func (a *accessCtx) IsBlockedDomain(host string) bool {
 	a.lock.Lock()
 	_, ok := a.blockedHosts[host]
