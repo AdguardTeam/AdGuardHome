@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/jsonutil"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/utils"
 	"github.com/miekg/dns"
@@ -24,6 +25,8 @@ type dnsConfigJSON struct {
 	ProtectionEnabled bool   `json:"protection_enabled"`
 	RateLimit         uint32 `json:"ratelimit"`
 	BlockingMode      string `json:"blocking_mode"`
+	BlockingIPv4      string `json:"blocking_ipv4"`
+	BlockingIPv6      string `json:"blocking_ipv6"`
 }
 
 func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
@@ -31,6 +34,8 @@ func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	s.RLock()
 	resp.ProtectionEnabled = s.conf.ProtectionEnabled
 	resp.BlockingMode = s.conf.BlockingMode
+	resp.BlockingIPv4 = s.conf.BlockingIPv4
+	resp.BlockingIPv6 = s.conf.BlockingIPv6
 	resp.RateLimit = s.conf.Ratelimit
 	s.RUnlock()
 
@@ -43,27 +48,68 @@ func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(js)
 }
 
+func checkBlockingMode(req dnsConfigJSON) bool {
+	bm := req.BlockingMode
+	if !(bm == "nxdomain" || bm == "null_ip" || bm == "custom_ip") {
+		return false
+	}
+
+	if bm == "custom_ip" {
+		ip := net.ParseIP(req.BlockingIPv4)
+		if ip == nil || ip.To4() == nil {
+			return false
+		}
+
+		ip = net.ParseIP(req.BlockingIPv6)
+		if ip == nil {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	req := dnsConfigJSON{}
-	err := json.NewDecoder(r.Body).Decode(&req)
+	js, err := jsonutil.DecodeObject(&req, r.Body)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "json.Decode: %s", err)
 		return
 	}
 
-	if !(req.BlockingMode == "nxdomain" || req.BlockingMode == "null_ip") {
-		httpError(r, w, http.StatusBadRequest, "blocking_mode: value not supported")
+	if js.Exists("blocking_mode") && !checkBlockingMode(req) {
+		httpError(r, w, http.StatusBadRequest, "blocking_mode: incorrect value")
 		return
 	}
 
 	restart := false
 	s.Lock()
-	s.conf.ProtectionEnabled = req.ProtectionEnabled
-	s.conf.BlockingMode = req.BlockingMode
-	if s.conf.Ratelimit != req.RateLimit {
-		restart = true
+
+	if js.Exists("protection_enabled") {
+		s.conf.ProtectionEnabled = req.ProtectionEnabled
 	}
-	s.conf.Ratelimit = req.RateLimit
+
+	if js.Exists("blocking_mode") {
+		s.conf.BlockingMode = req.BlockingMode
+		if req.BlockingMode == "custom_ip" {
+			if js.Exists("blocking_ipv4") {
+				s.conf.BlockingIPv4 = req.BlockingIPv4
+				s.conf.BlockingIPAddrv4 = net.ParseIP(req.BlockingIPv4)
+			}
+			if js.Exists("blocking_ipv6") {
+				s.conf.BlockingIPv6 = req.BlockingIPv6
+				s.conf.BlockingIPAddrv6 = net.ParseIP(req.BlockingIPv6)
+			}
+		}
+	}
+
+	if js.Exists("ratelimit") {
+		if s.conf.Ratelimit != req.RateLimit {
+			restart = true
+		}
+		s.conf.Ratelimit = req.RateLimit
+	}
+
 	s.Unlock()
 	s.conf.ConfigModified()
 

@@ -819,7 +819,9 @@ Response:
 	{
 		"protection_enabled": true | false,
 		"ratelimit": 1234,
-		"blocking_mode": "nxdomain" | "null_ip",
+		"blocking_mode": "nxdomain" | "null_ip" | "custom_ip",
+		"blocking_ipv4": "1.2.3.4",
+		"blocking_ipv6": "1:2:3::4",
 	}
 
 
@@ -832,12 +834,16 @@ Request:
 	{
 		"protection_enabled": true | false,
 		"ratelimit": 1234,
-		"blocking_mode": "nxdomain" | "null_ip",
+		"blocking_mode": "nxdomain" | "null_ip" | "custom_ip",
+		"blocking_ipv4": "1.2.3.4",
+		"blocking_ipv6": "1:2:3::4",
 	}
 
 Response:
 
 	200 OK
+
+`blocking_ipv4` and `blocking_ipv6` values are active when `blocking_mode` is set to `custom_ip`.
 
 
 ## DNS access settings
