@@ -101,7 +101,7 @@ type FilteringConfig struct {
 
 	BlockingMode       string   `yaml:"blocking_mode"`        // mode how to answer filtered requests
 	BlockedResponseTTL uint32   `yaml:"blocked_response_ttl"` // if 0, then default is used (3600)
-	Ratelimit          int      `yaml:"ratelimit"`            // max number of requests per second from a given IP (0 to disable)
+	Ratelimit          uint32   `yaml:"ratelimit"`            // max number of requests per second from a given IP (0 to disable)
 	RatelimitWhitelist []string `yaml:"ratelimit_whitelist"`  // a list of whitelisted client IP addresses
 	RefuseAny          bool     `yaml:"refuse_any"`           // if true, refuse ANY requests
 	BootstrapDNS       []string `yaml:"bootstrap_dns"`        // a list of bootstrap DNS for DoH and DoT (plain DNS only)
@@ -214,7 +214,7 @@ func (s *Server) prepare(config *ServerConfig) error {
 	proxyConfig := proxy.Config{
 		UDPListenAddr:            s.conf.UDPListenAddr,
 		TCPListenAddr:            s.conf.TCPListenAddr,
-		Ratelimit:                s.conf.Ratelimit,
+		Ratelimit:                int(s.conf.Ratelimit),
 		RatelimitWhitelist:       s.conf.RatelimitWhitelist,
 		RefuseAny:                s.conf.RefuseAny,
 		CacheEnabled:             true,

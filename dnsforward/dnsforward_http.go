@@ -20,6 +20,62 @@ func httpError(r *http.Request, w http.ResponseWriter, code int, format string, 
 	http.Error(w, text, code)
 }
 
+type dnsConfigJSON struct {
+	ProtectionEnabled bool   `json:"protection_enabled"`
+	RateLimit         uint32 `json:"ratelimit"`
+	BlockingMode      string `json:"blocking_mode"`
+}
+
+func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
+	resp := dnsConfigJSON{}
+	s.RLock()
+	resp.ProtectionEnabled = s.conf.ProtectionEnabled
+	resp.BlockingMode = s.conf.BlockingMode
+	resp.RateLimit = s.conf.Ratelimit
+	s.RUnlock()
+
+	js, err := json.Marshal(resp)
+	if err != nil {
+		httpError(r, w, http.StatusInternalServerError, "json.Marshal: %s", err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(js)
+}
+
+func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
+	req := dnsConfigJSON{}
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		httpError(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+		return
+	}
+
+	if !(req.BlockingMode == "nxdomain" || req.BlockingMode == "null_ip") {
+		httpError(r, w, http.StatusBadRequest, "blocking_mode: value not supported")
+		return
+	}
+
+	restart := false
+	s.Lock()
+	s.conf.ProtectionEnabled = req.ProtectionEnabled
+	s.conf.BlockingMode = req.BlockingMode
+	if s.conf.Ratelimit != req.RateLimit {
+		restart = true
+	}
+	s.conf.Ratelimit = req.RateLimit
+	s.Unlock()
+	s.conf.ConfigModified()
+
+	if restart {
+		err = s.Restart()
+		if err != nil {
+			httpError(r, w, http.StatusInternalServerError, "%s", err)
+			return
+		}
+	}
+}
+
 func (s *Server) handleProtectionEnable(w http.ResponseWriter, r *http.Request) {
 	s.conf.ProtectionEnabled = true
 	s.conf.ConfigModified()
@@ -270,6 +326,8 @@ func checkDNS(input string, bootstrap []string) error {
 }
 
 func (s *Server) registerHandlers() {
+	s.conf.HTTPRegister("GET", "/control/dns_info", s.handleGetConfig)
+	s.conf.HTTPRegister("POST", "/control/dns_config", s.handleSetConfig)
 	s.conf.HTTPRegister("POST", "/control/enable_protection", s.handleProtectionEnable)
 	s.conf.HTTPRegister("POST", "/control/disable_protection", s.handleProtectionDisable)
 	s.conf.HTTPRegister("POST", "/control/set_upstreams_config", s.handleSetUpstreamConfig)
@@ -277,5 +335,4 @@ func (s *Server) registerHandlers() {
 
 	s.conf.HTTPRegister("GET", "/control/access/list", s.handleAccessList)
 	s.conf.HTTPRegister("POST", "/control/access/set", s.handleAccessSet)
-
 }
