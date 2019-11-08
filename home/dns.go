@@ -50,6 +50,7 @@ func initDNSServer() {
 		Enabled:        config.DNS.QueryLogEnabled,
 		BaseDir:        baseDir,
 		Interval:       config.DNS.QueryLogInterval,
+		MemSize:        config.DNS.QueryLogMemSize,
 		ConfigModified: onConfigModified,
 		HTTPRegister:   httpRegister,
 	}

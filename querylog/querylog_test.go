@@ -23,6 +23,7 @@ func TestQueryLog(t *testing.T) {
 	conf := Config{
 		Enabled:  true,
 		Interval: 1,
+		MemSize:  100,
 	}
 	conf.BaseDir = prepareTestDir()
 	defer func() { _ = os.RemoveAll(conf.BaseDir) }()

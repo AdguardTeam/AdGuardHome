@@ -13,6 +13,7 @@ import (
 type DiskConfig struct {
 	Enabled  bool
 	Interval uint32
+	MemSize  uint32
 }
 
 // QueryLog - main interface
@@ -32,6 +33,7 @@ type Config struct {
 	Enabled  bool
 	BaseDir  string // directory where log file is stored
 	Interval uint32 // interval to rotate logs (in days)
+	MemSize  uint32 // number of entries kept in memory before they are flushed to disk
 
 	// Called when the configuration is changed by HTTP request
 	ConfigModified func()
