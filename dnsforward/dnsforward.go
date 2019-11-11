@@ -132,6 +132,9 @@ type FilteringConfig struct {
 
 	EnableEDNSClientSubnet bool `yaml:"edns_client_subnet"` // Enable EDNS Client Subnet option
 
+	// Respond with an empty answer to all AAAA requests
+	AAAADisabled bool `yaml:"aaaa_disabled"`
+
 	AllowedClients    []string `yaml:"allowed_clients"`    // IP addresses of whitelist clients
 	DisallowedClients []string `yaml:"disallowed_clients"` // IP addresses of clients that should be blocked
 	BlockedHosts      []string `yaml:"blocked_hosts"`      // hosts that should be blocked
@@ -425,6 +428,11 @@ func (s *Server) beforeRequestHandler(p *proxy.Proxy, d *proxy.DNSContext) (bool
 // nolint (gocyclo)
 func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 	start := time.Now()
+
+	if s.conf.AAAADisabled && d.Req.Question[0].Qtype == dns.TypeAAAA {
+		_ = proxy.CheckDisabledAAAARequest(d, true)
+		return nil
+	}
 
 	if s.conf.OnDNSRequest != nil {
 		s.conf.OnDNSRequest(d)
