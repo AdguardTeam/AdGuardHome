@@ -26,7 +26,8 @@ const (
 
 // queryLog is a structure that writes and reads the DNS query log
 type queryLog struct {
-	conf    Config
+	conf    *Config
+	lock    sync.Mutex
 	logFile string // path to the log file
 
 	bufferLock    sync.RWMutex
@@ -40,7 +41,8 @@ type queryLog struct {
 func newQueryLog(conf Config) *queryLog {
 	l := queryLog{}
 	l.logFile = filepath.Join(conf.BaseDir, queryLogFileName)
-	l.conf = conf
+	l.conf = &Config{}
+	*l.conf = conf
 	if !checkInterval(l.conf.Interval) {
 		l.conf.Interval = 1
 	}
@@ -57,12 +59,6 @@ func (l *queryLog) Close() {
 
 func checkInterval(days uint32) bool {
 	return days == 1 || days == 7 || days == 30 || days == 90
-}
-
-// Set new configuration at runtime
-func (l *queryLog) configure(conf Config) {
-	l.conf.Enabled = conf.Enabled
-	l.conf.Interval = conf.Interval
 }
 
 func (l *queryLog) WriteDiskConfig(dc *DiskConfig) {

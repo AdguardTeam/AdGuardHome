@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/AdguardTeam/golibs/jsonutil"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
@@ -129,24 +130,29 @@ func (l *queryLog) handleQueryLogInfo(w http.ResponseWriter, r *http.Request) {
 
 // Set configuration
 func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) {
-
-	reqData := qlogConfig{}
-	err := json.NewDecoder(r.Body).Decode(&reqData)
+	d := qlogConfig{}
+	req, err := jsonutil.DecodeObject(&d, r.Body)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "json decode: %s", err)
+		httpError(r, w, http.StatusBadRequest, "%s", err)
 		return
 	}
 
-	if !checkInterval(reqData.Interval) {
+	if req.Exists("interval") && !checkInterval(d.Interval) {
 		httpError(r, w, http.StatusBadRequest, "Unsupported interval")
 		return
 	}
 
-	conf := Config{
-		Enabled:  reqData.Enabled,
-		Interval: reqData.Interval,
+	l.lock.Lock()
+	// copy data, modify it, then activate.  Other threads (readers) don't need to use this lock.
+	conf := *l.conf
+	if req.Exists("enabled") {
+		conf.Enabled = d.Enabled
 	}
-	l.configure(conf)
+	if req.Exists("interval") {
+		conf.Interval = d.Interval
+	}
+	l.conf = &conf
+	l.lock.Unlock()
 
 	l.conf.ConfigModified()
 }

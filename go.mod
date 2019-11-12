@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	github.com/AdguardTeam/dnsproxy v0.19.6
-	github.com/AdguardTeam/golibs v0.2.4
+	github.com/AdguardTeam/golibs v0.3.0
 	github.com/AdguardTeam/urlfilter v0.6.1
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/etcd-io/bbolt v1.3.3
