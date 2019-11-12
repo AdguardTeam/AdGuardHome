@@ -146,18 +146,21 @@ func (a *Auth) loadSessions() {
 
 // store session data in file
 func (a *Auth) addSession(data []byte, s *session) {
+	name := hex.EncodeToString(data)
 	a.lock.Lock()
-	a.sessions[hex.EncodeToString(data)] = s
+	a.sessions[name] = s
 	a.lock.Unlock()
-	a.storeSession(data, s)
+	if a.storeSession(data, s) {
+		log.Info("Auth: created session %s: expire=%d", name, s.expire)
+	}
 }
 
 // store session data in file
-func (a *Auth) storeSession(data []byte, s *session) {
+func (a *Auth) storeSession(data []byte, s *session) bool {
 	tx, err := a.db.Begin(true)
 	if err != nil {
 		log.Error("Auth: bbolt.Begin: %s", err)
-		return
+		return false
 	}
 	defer func() {
 		_ = tx.Rollback()
@@ -166,21 +169,20 @@ func (a *Auth) storeSession(data []byte, s *session) {
 	bkt, err := tx.CreateBucketIfNotExists(bucketName())
 	if err != nil {
 		log.Error("Auth: bbolt.CreateBucketIfNotExists: %s", err)
-		return
+		return false
 	}
 	err = bkt.Put(data, s.serialize())
 	if err != nil {
 		log.Error("Auth: bbolt.Put: %s", err)
-		return
+		return false
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		log.Error("Auth: bbolt.Commit: %s", err)
-		return
+		return false
 	}
-
-	log.Debug("Auth: stored session in DB")
+	return true
 }
 
 // remove session from file
@@ -245,7 +247,9 @@ func (a *Auth) CheckSession(sess string) int {
 
 	if update {
 		key, _ := hex.DecodeString(sess)
-		a.storeSession(key, s)
+		if a.storeSession(key, s) {
+			log.Debug("Auth: updated session %s: expire=%d", sess, s.expire)
+		}
 	}
 
 	return 0
@@ -303,8 +307,9 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	cookie := config.auth.httpCookie(req)
 	if len(cookie) == 0 {
+		log.Info("Auth: invalid user name or password: name='%s'", req.Name)
 		time.Sleep(1 * time.Second)
-		httpError(w, http.StatusBadRequest, "invalid login or password")
+		http.Error(w, "invalid user name or password", http.StatusBadRequest)
 		return
 	}
 
@@ -366,7 +371,7 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 					w.WriteHeader(http.StatusFound)
 					return
 				} else if r < 0 {
-					log.Debug("Auth: invalid cookie value: %s", cookie)
+					log.Info("Auth: invalid cookie value: %s", cookie)
 				}
 			}
 
@@ -383,7 +388,7 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 				if r == 0 {
 					ok = true
 				} else if r < 0 {
-					log.Debug("Auth: invalid cookie value: %s", cookie)
+					log.Info("Auth: invalid cookie value: %s", cookie)
 				}
 			} else {
 				// there's no Cookie, check Basic authentication
@@ -392,6 +397,8 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 					u := config.auth.UserFind(user, pass)
 					if len(u.Name) != 0 {
 						ok = true
+					} else {
+						log.Info("Auth: invalid Basic Authorization value")
 					}
 				}
 			}
