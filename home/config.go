@@ -91,6 +91,10 @@ type configuration struct {
 	Language     string `yaml:"language"`      // two-letter ISO 639-1 language code
 	RlimitNoFile uint   `yaml:"rlimit_nofile"` // Maximum number of opened fd's per process (0: default)
 
+	// TTL for a web session (in hours)
+	// An active session is automatically refreshed once a day.
+	WebSessionTTLHours uint32 `yaml:"web_session_ttl"`
+
 	DNS       dnsConfig          `yaml:"dns"`
 	TLS       tlsConfig          `yaml:"tls"`
 	Filters   []filter           `yaml:"filters"`
@@ -209,6 +213,8 @@ func initConfig() {
 		Timeout:   time.Minute * 5,
 		Transport: config.transport,
 	}
+
+	config.WebSessionTTLHours = 30 * 24
 
 	if runtime.GOARCH == "mips" || runtime.GOARCH == "mipsle" {
 		// Use plain DNS on MIPS, encryption is too slow

@@ -18,7 +18,6 @@ import (
 )
 
 const cookieTTL = 365 * 24 // in hours
-const expireTime = 30 * 24 // in hours
 
 type session struct {
 	userName string
@@ -56,10 +55,11 @@ func (s *session) deserialize(data []byte) bool {
 
 // Auth - global object
 type Auth struct {
-	db       *bbolt.DB
-	sessions map[string]*session // session name -> session data
-	lock     sync.Mutex
-	users    []User
+	db         *bbolt.DB
+	sessions   map[string]*session // session name -> session data
+	lock       sync.Mutex
+	users      []User
+	sessionTTL uint32 // in seconds
 }
 
 // User object
@@ -69,8 +69,9 @@ type User struct {
 }
 
 // InitAuth - create a global object
-func InitAuth(dbFilename string, users []User) *Auth {
+func InitAuth(dbFilename string, users []User, sessionTTL uint32) *Auth {
 	a := Auth{}
+	a.sessionTTL = sessionTTL
 	a.sessions = make(map[string]*session)
 	rand.Seed(time.Now().UTC().Unix())
 	var err error
@@ -233,7 +234,7 @@ func (a *Auth) CheckSession(sess string) int {
 		return 1
 	}
 
-	newExpire := now + expireTime*60*60
+	newExpire := now + a.sessionTTL
 	if s.expire/(24*60*60) != newExpire/(24*60*60) {
 		// update expiration time once a day
 		update = true
@@ -270,8 +271,8 @@ func getSession(u *User) []byte {
 	return hash[:]
 }
 
-func httpCookie(req loginJSON) string {
-	u := config.auth.UserFind(req.Name, req.Password)
+func (a *Auth) httpCookie(req loginJSON) string {
+	u := a.UserFind(req.Name, req.Password)
 	if len(u.Name) == 0 {
 		return ""
 	}
@@ -286,8 +287,8 @@ func httpCookie(req loginJSON) string {
 
 	s := session{}
 	s.userName = u.Name
-	s.expire = uint32(now.Unix()) + expireTime*60*60
-	config.auth.addSession(sess, &s)
+	s.expire = uint32(now.Unix()) + a.sessionTTL
+	a.addSession(sess, &s)
 
 	return fmt.Sprintf("session=%s; Path=/; HttpOnly; Expires=%s", hex.EncodeToString(sess), expstr)
 }
@@ -300,7 +301,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie := httpCookie(req)
+	cookie := config.auth.httpCookie(req)
 	if len(cookie) == 0 {
 		time.Sleep(1 * time.Second)
 		httpError(w, http.StatusBadRequest, "invalid login or password")
