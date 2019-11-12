@@ -47,6 +47,8 @@ var serviceRulesArray = []svc{
 		"||cloudflarebolt.com^",
 		"||cloudflarestatus.com^",
 		"||cloudflare.cn^",
+		"||one.one^",
+		"||warp.plus^",
 	}},
 	{"tiktok", []string{
 		"||tiktok.com^",
