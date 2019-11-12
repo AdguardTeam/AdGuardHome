@@ -222,6 +222,7 @@ let Form = (props) => {
                                     className="form-control mr-2"
                                     value="path"
                                     placeholder={t('encryption_certificates_source_path')}
+                                    disabled={!isEnabled}
                                 />
                                 <Field
                                     name="certificate_source"
@@ -230,6 +231,7 @@ let Form = (props) => {
                                     className="form-control mr-2"
                                     value="content"
                                     placeholder={t('encryption_certificates_source_content')}
+                                    disabled={!isEnabled}
                                 />
                             </div>
                         </div>
@@ -289,6 +291,7 @@ let Form = (props) => {
                                     className="form-control mr-2"
                                     value="path"
                                     placeholder={t('encryption_key_source_path')}
+                                    disabled={!isEnabled}
                                 />
                                 <Field
                                     name="key_source"
@@ -297,6 +300,7 @@ let Form = (props) => {
                                     className="form-control mr-2"
                                     value="content"
                                     placeholder={t('encryption_key_source_content')}
+                                    disabled={!isEnabled}
                                 />
                             </div>
                         </div>
