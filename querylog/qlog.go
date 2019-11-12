@@ -124,12 +124,14 @@ func (l *queryLog) Add(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Res
 	var err error
 	ip := getIPString(addr)
 
-	if question != nil {
-		q, err = question.Pack()
-		if err != nil {
-			log.Printf("failed to pack question for querylog: %s", err)
-			return
-		}
+	if question == nil {
+		return
+	}
+
+	q, err = question.Pack()
+	if err != nil {
+		log.Printf("failed to pack question for querylog: %s", err)
+		return
 	}
 
 	if answer != nil {
@@ -333,19 +335,23 @@ func (l *queryLog) getData(params getDataParams) []map[string]interface{} {
 		var q *dns.Msg
 		var a *dns.Msg
 
-		if len(entry.Question) > 0 {
-			q = new(dns.Msg)
-			if err := q.Unpack(entry.Question); err != nil {
-				// ignore, log and move on
-				log.Printf("Failed to unpack dns message question: %s", err)
-				q = nil
-			}
+		if len(entry.Question) == 0 {
+			continue
 		}
+		q = new(dns.Msg)
+		if err := q.Unpack(entry.Question); err != nil {
+			log.Tracef("q.Unpack(): %s", err)
+			continue
+		}
+		if len(q.Question) != 1 {
+			log.Tracef("len(q.Question) != 1")
+			continue
+		}
+
 		if len(entry.Answer) > 0 {
 			a = new(dns.Msg)
 			if err := a.Unpack(entry.Answer); err != nil {
-				// ignore, log and move on
-				log.Printf("Failed to unpack dns message question: %s", err)
+				log.Debug("Failed to unpack dns message answer: %s", err)
 				a = nil
 			}
 		}
@@ -356,12 +362,10 @@ func (l *queryLog) getData(params getDataParams) []map[string]interface{} {
 			"time":      entry.Time.Format(time.RFC3339Nano),
 			"client":    entry.IP,
 		}
-		if q != nil {
-			jsonEntry["question"] = map[string]interface{}{
-				"host":  strings.ToLower(strings.TrimSuffix(q.Question[0].Name, ".")),
-				"type":  dns.Type(q.Question[0].Qtype).String(),
-				"class": dns.Class(q.Question[0].Qclass).String(),
-			}
+		jsonEntry["question"] = map[string]interface{}{
+			"host":  strings.ToLower(strings.TrimSuffix(q.Question[0].Name, ".")),
+			"type":  dns.Type(q.Question[0].Qtype).String(),
+			"class": dns.Class(q.Question[0].Qclass).String(),
 		}
 
 		if a != nil {
