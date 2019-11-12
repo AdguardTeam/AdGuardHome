@@ -27,6 +27,7 @@ type dnsConfigJSON struct {
 	BlockingMode      string `json:"blocking_mode"`
 	BlockingIPv4      string `json:"blocking_ipv4"`
 	BlockingIPv6      string `json:"blocking_ipv6"`
+	EDNSCSEnabled     bool   `json:"edns_cs_enabled"`
 }
 
 func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
@@ -37,6 +38,7 @@ func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	resp.BlockingIPv4 = s.conf.BlockingIPv4
 	resp.BlockingIPv6 = s.conf.BlockingIPv6
 	resp.RateLimit = s.conf.Ratelimit
+	resp.EDNSCSEnabled = s.conf.EnableEDNSClientSubnet
 	s.RUnlock()
 
 	js, err := json.Marshal(resp)
@@ -108,6 +110,11 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 			restart = true
 		}
 		s.conf.Ratelimit = req.RateLimit
+	}
+
+	if js.Exists("edns_cs_enabled") {
+		s.conf.EnableEDNSClientSubnet = req.EDNSCSEnabled
+		restart = true
 	}
 
 	s.Unlock()

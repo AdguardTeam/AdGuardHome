@@ -112,6 +112,8 @@ type FilteringConfig struct {
 	BootstrapDNS       []string `yaml:"bootstrap_dns"`        // a list of bootstrap DNS for DoH and DoT (plain DNS only)
 	AllServers         bool     `yaml:"all_servers"`          // if true, parallel queries to all configured upstream servers are enabled
 
+	EnableEDNSClientSubnet bool `yaml:"edns_client_subnet"` // Enable EDNS Client Subnet option
+
 	AllowedClients    []string `yaml:"allowed_clients"`    // IP addresses of whitelist clients
 	DisallowedClients []string `yaml:"disallowed_clients"` // IP addresses of clients that should be blocked
 	BlockedHosts      []string `yaml:"blocked_hosts"`      // hosts that should be blocked
@@ -229,6 +231,7 @@ func (s *Server) prepare(config *ServerConfig) error {
 		BeforeRequestHandler:     s.beforeRequestHandler,
 		RequestHandler:           s.handleDNSRequest,
 		AllServers:               s.conf.AllServers,
+		EnableEDNSClientSubnet:   s.conf.EnableEDNSClientSubnet,
 	}
 
 	s.access = &accessCtx{}

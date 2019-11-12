@@ -1082,6 +1082,8 @@ definitions:
                 type: "string"
             blocking_ipv6:
                 type: "string"
+            edns_cs_enabled:
+                type: "boolean"
 
     UpstreamsConfig:
         type: "object"
