@@ -28,12 +28,12 @@ const queryLogs = handleActions(
         [actions.getLogsFailure]: state => ({ ...state, processingGetLogs: false }),
         [actions.getLogsSuccess]: (state, { payload }) => {
             const {
-                logs, lastRowTime, page, pageSize, filtered,
+                logs, oldest, older_than, page, pageSize, filtered,
             } = payload;
             let logsWithOffset = state.allLogs.length > 0 ? state.allLogs : logs;
             let allLogs = logs;
 
-            if (lastRowTime) {
+            if (older_than) {
                 logsWithOffset = [...state.allLogs, ...logs];
                 allLogs = [...state.allLogs, ...logs];
             } else if (filtered) {
@@ -49,6 +49,7 @@ const queryLogs = handleActions(
 
             return {
                 ...state,
+                oldest,
                 pages,
                 total,
                 allLogs,
@@ -93,7 +94,7 @@ const queryLogs = handleActions(
         pages: 0,
         total: 0,
         enabled: true,
-        older_than: '',
+        oldest: '',
         filter: DEFAULT_LOGS_FILTER,
     },
 );

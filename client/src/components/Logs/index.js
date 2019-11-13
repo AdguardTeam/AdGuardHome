@@ -41,10 +41,10 @@ class Logs extends Component {
         this.props.getLogsConfig();
     }
 
-    getLogs = (lastRowTime, filter, page, pageSize, filtered) => {
+    getLogs = (older_than, filter, page, pageSize, filtered) => {
         if (this.props.queryLogs.enabled) {
             this.props.getLogs({
-                lastRowTime, filter, page, pageSize, filtered,
+                older_than, filter, page, pageSize, filtered,
             });
         }
     };
@@ -53,9 +53,9 @@ class Logs extends Component {
         window.location.reload();
     };
 
-    handleLogsFiltering = debounce((lastRowTime, filter, page, pageSize, filtered) => {
+    handleLogsFiltering = debounce((older_than, filter, page, pageSize, filtered) => {
         this.props.getLogs({
-            lastRowTime,
+            older_than,
             filter,
             page,
             pageSize,
@@ -264,13 +264,11 @@ class Logs extends Component {
 
     fetchData = (state) => {
         const { pageSize, page, pages } = state;
-        const { allLogs, filter } = this.props.queryLogs;
+        const { filter, oldest } = this.props.queryLogs;
         const isLastPage = pages && (page + 1 === pages);
 
         if (isLastPage) {
-            const lastRow = allLogs[allLogs.length - 1];
-            const lastRowTime = (lastRow && lastRow.time) || '';
-            this.getLogs(lastRowTime, filter, page, pageSize, true);
+            this.getLogs(oldest, filter, page, pageSize, false);
         } else {
             this.props.setLogsPagination({ page, pageSize });
         }

@@ -14,9 +14,13 @@ export const getLogsSuccess = createAction('GET_LOGS_SUCCESS');
 export const getLogs = config => async (dispatch) => {
     dispatch(getLogsRequest());
     try {
-        const { filter, lastRowTime: older_than } = config;
-        const logs = normalizeLogs(await apiClient.getQueryLog({ ...filter, older_than }));
-        dispatch(getLogsSuccess({ logs, ...config }));
+        const { filter, older_than } = config;
+        const rawLogs = await apiClient.getQueryLog({ ...filter, older_than });
+        const { data, oldest } = rawLogs;
+        const logs = normalizeLogs(data);
+        dispatch(getLogsSuccess({
+            logs, oldest, filter, ...config,
+        }));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(getLogsFailure(error));
