@@ -25,7 +25,7 @@ import Tooltip from '../ui/Tooltip';
 import './Logs.css';
 
 const TABLE_FIRST_PAGE = 0;
-const TABLE_DEFAULT_PAGE_SIZE = 50;
+const TABLE_DEFAULT_PAGE_SIZE = 100;
 const INITIAL_REQUEST_DATA = ['', DEFAULT_LOGS_FILTER, TABLE_FIRST_PAGE, TABLE_DEFAULT_PAGE_SIZE];
 const FILTERED_REASON = 'Filtered';
 const RESPONSE_FILTER = {
@@ -367,20 +367,22 @@ class Logs extends Component {
                 sortable={false}
                 data={logs || []}
                 loading={isLoading}
+                showPagination={true}
                 showPageJump={false}
+                showPageSizeOptions={false}
                 onFetchData={this.fetchData}
                 onFilteredChange={this.handleFilterChange}
                 className="logs__table"
-                showPagination={true}
                 defaultPageSize={TABLE_DEFAULT_PAGE_SIZE}
                 previousText={t('previous_btn')}
                 nextText={t('next_btn')}
                 loadingText={t('loading_table_status')}
-                pageText={t('page_table_footer_text')}
-                ofText={t('of_table_footer_text')}
                 rowsText={t('rows_table_footer_text')}
                 noDataText={t('no_logs_found')}
-                renderTotalPagesCount={this.showTotalPagesCount}
+                pageText={''}
+                ofText={''}
+                renderCurrentPage={() => false}
+                renderTotalPagesCount={() => false}
                 defaultFilterMethod={(filter, row) => {
                     const id = filter.pivotId || filter.id;
                     return row[id] !== undefined
