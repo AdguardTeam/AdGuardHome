@@ -1,6 +1,46 @@
 # AdGuard Home API Change Log
 
 
+## v0.99.3: API changes
+
+### API: Get query log: GET /control/querylog
+
+The response data is now a JSON object, not an array.
+
+Response:
+
+	200 OK
+
+	{
+	"oldest":"2006-01-02T15:04:05.999999999Z07:00"
+	"data":[
+	{
+		"answer":[
+			{
+			"ttl":10,
+			"type":"AAAA",
+			"value":"::"
+			}
+			...
+		],
+		"client":"127.0.0.1",
+		"elapsedMs":"0.098403",
+		"filterId":1,
+		"question":{
+			"class":"IN",
+			"host":"doubleclick.net",
+			"type":"AAAA"
+		},
+		"reason":"FilteredBlackList",
+		"rule":"||doubleclick.net^",
+		"status":"NOERROR",
+		"time":"2006-01-02T15:04:05.999999999Z07:00"
+	}
+	...
+	]
+	}
+
+
 ## v0.99.1: API changes
 
 ### API: Get current user info: GET /control/profile
