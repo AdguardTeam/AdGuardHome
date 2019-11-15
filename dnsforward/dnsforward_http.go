@@ -122,16 +122,6 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) handleProtectionEnable(w http.ResponseWriter, r *http.Request) {
-	s.conf.ProtectionEnabled = true
-	s.conf.ConfigModified()
-}
-
-func (s *Server) handleProtectionDisable(w http.ResponseWriter, r *http.Request) {
-	s.conf.ProtectionEnabled = false
-	s.conf.ConfigModified()
-}
-
 type upstreamJSON struct {
 	Upstreams    []string `json:"upstream_dns"`  // Upstreams
 	BootstrapDNS []string `json:"bootstrap_dns"` // Bootstrap DNS
@@ -376,8 +366,6 @@ func checkDNS(input string, bootstrap []string) error {
 func (s *Server) registerHandlers() {
 	s.conf.HTTPRegister("GET", "/control/dns_info", s.handleGetConfig)
 	s.conf.HTTPRegister("POST", "/control/dns_config", s.handleSetConfig)
-	s.conf.HTTPRegister("POST", "/control/enable_protection", s.handleProtectionEnable)
-	s.conf.HTTPRegister("POST", "/control/disable_protection", s.handleProtectionDisable)
 	s.conf.HTTPRegister("POST", "/control/set_upstreams_config", s.handleSetUpstreamConfig)
 	s.conf.HTTPRegister("POST", "/control/test_upstream_dns", s.handleTestUpstreamDNS)
 

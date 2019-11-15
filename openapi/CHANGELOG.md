@@ -147,6 +147,30 @@ Response:
 	}
 
 
+### Set DNS general settings: POST /control/dns_config
+
+Replaces these API methods:
+
+	POST /control/enable_protection
+	POST /control/disable_protection
+
+Request:
+
+	POST /control/dns_config
+
+	{
+		"protection_enabled": true | false,
+		"ratelimit": 1234,
+		"blocking_mode": "nxdomain" | "null_ip" | "custom_ip",
+		"blocking_ipv4": "1.2.3.4",
+		"blocking_ipv6": "1:2:3::4",
+	}
+
+Response:
+
+	200 OK
+
+
 ## v0.99: incompatible API changes
 
 * A note about web user authentication

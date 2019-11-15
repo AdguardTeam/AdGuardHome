@@ -99,26 +99,6 @@ paths:
                 200:
                     description: OK
 
-    /enable_protection:
-        post:
-            tags:
-                - global
-            operationId: enableProtection
-            summary: "Enable protection (turns on dnsfilter module in coredns)"
-            responses:
-                200:
-                    description: OK
-
-    /disable_protection:
-        post:
-            tags:
-                - global
-            operationId: disableProtection
-            summary: "Disable protection (turns off filtering, sb, parental, safesearch temporarily by disabling dnsfilter module in coredns)"
-            responses:
-                200:
-                    description: OK
-
     /set_upstreams_config:
         post:
             tags:
