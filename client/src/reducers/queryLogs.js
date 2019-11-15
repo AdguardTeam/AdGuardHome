@@ -20,15 +20,43 @@ const queryLogs = handleActions(
             };
         },
 
-        [actions.setLogsFilter]: (state, { payload }) => (
-            { ...state, filter: payload }
-        ),
+        [actions.setLogsPage]: (state, { payload }) => ({
+            ...state,
+            page: payload,
+        }),
+
+        [actions.setLogsFilterRequest]: state => ({ ...state, processingGetLogs: true }),
+        [actions.setLogsFilterFailure]: state => ({ ...state, processingGetLogs: false }),
+        [actions.setLogsFilterSuccess]: (state, { payload }) => {
+            const { logs, oldest, filter } = payload;
+            const pageSize = 100;
+            const page = 0;
+
+            const pages = Math.ceil(logs.length / pageSize);
+            const total = logs.length;
+            const rowsStart = pageSize * page;
+            const rowsEnd = (pageSize * page) + pageSize;
+            const logsSlice = logs.slice(rowsStart, rowsEnd);
+            const isFiltered = Object.keys(filter).some(key => filter[key]);
+
+            return {
+                ...state,
+                oldest,
+                filter,
+                isFiltered,
+                pages,
+                total,
+                logs: logsSlice,
+                allLogs: logs,
+                processingGetLogs: false,
+            };
+        },
 
         [actions.getLogsRequest]: state => ({ ...state, processingGetLogs: true }),
         [actions.getLogsFailure]: state => ({ ...state, processingGetLogs: false }),
         [actions.getLogsSuccess]: (state, { payload }) => {
             const {
-                logs, oldest, older_than, page, pageSize, filtered,
+                logs, oldest, older_than, page, pageSize,
             } = payload;
             let logsWithOffset = state.allLogs.length > 0 ? state.allLogs : logs;
             let allLogs = logs;
@@ -36,9 +64,6 @@ const queryLogs = handleActions(
             if (older_than) {
                 logsWithOffset = [...state.allLogs, ...logs];
                 allLogs = [...state.allLogs, ...logs];
-            } else if (filtered) {
-                logsWithOffset = logs;
-                allLogs = logs;
             }
 
             const pages = Math.ceil(logsWithOffset.length / pageSize);
@@ -91,11 +116,13 @@ const queryLogs = handleActions(
         logs: [],
         interval: 1,
         allLogs: [],
+        page: 0,
         pages: 0,
         total: 0,
         enabled: true,
         oldest: '',
         filter: DEFAULT_LOGS_FILTER,
+        isFiltered: false,
     },
 );
 
