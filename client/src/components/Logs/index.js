@@ -10,7 +10,7 @@ import {
     formatTime,
     formatDateTime,
 } from '../../helpers/helpers';
-import { SERVICES, FILTERED_STATUS, DEFAULT_LOGS_FILTER, RESPONSE_FILTER, TABLE_DEFAULT_PAGE_SIZE } from '../../helpers/constants';
+import { SERVICES, FILTERED_STATUS, TABLE_DEFAULT_PAGE_SIZE } from '../../helpers/constants';
 import { getTrackerData } from '../../helpers/trackers/trackers';
 import { formatClientCell } from '../../helpers/formatClientCell';
 
@@ -23,7 +23,7 @@ import Popover from '../ui/Popover';
 import './Logs.css';
 
 const TABLE_FIRST_PAGE = 0;
-const INITIAL_REQUEST_DATA = ['', DEFAULT_LOGS_FILTER, TABLE_FIRST_PAGE, TABLE_DEFAULT_PAGE_SIZE];
+const INITIAL_REQUEST_DATA = ['', TABLE_FIRST_PAGE, TABLE_DEFAULT_PAGE_SIZE];
 const FILTERED_REASON = 'Filtered';
 
 class Logs extends Component {
@@ -35,10 +35,10 @@ class Logs extends Component {
         this.props.getLogsConfig();
     }
 
-    getLogs = (older_than, filter, page) => {
+    getLogs = (older_than, page) => {
         if (this.props.queryLogs.enabled) {
             this.props.getLogs({
-                older_than, filter, page, pageSize: TABLE_DEFAULT_PAGE_SIZE,
+                older_than, page, pageSize: TABLE_DEFAULT_PAGE_SIZE,
             });
         }
     };
@@ -218,16 +218,17 @@ class Logs extends Component {
 
     fetchData = (state) => {
         const { pages } = state;
-        const {
-            filter, oldest, page,
-        } = this.props.queryLogs;
+        const { oldest, page } = this.props.queryLogs;
         const isLastPage = pages && (page + 1 === pages);
 
         if (isLastPage) {
-            this.getLogs(oldest, filter, page);
-        } else {
-            this.props.setLogsPagination({ page, pageSize: TABLE_DEFAULT_PAGE_SIZE });
+            this.getLogs(oldest, page);
         }
+    };
+
+    changePage = (page) => {
+        this.props.setLogsPage(page);
+        this.props.setLogsPagination({ page, pageSize: TABLE_DEFAULT_PAGE_SIZE });
     };
 
     renderLogs() {
@@ -250,7 +251,6 @@ class Logs extends Component {
                 accessor: 'domain',
                 minWidth: 180,
                 Cell: this.getDomainCell,
-                Filter: this.getFilterInput,
             },
             {
                 Header: t('type_table_header'),
@@ -262,28 +262,6 @@ class Logs extends Component {
                 accessor: 'response',
                 minWidth: 250,
                 Cell: this.getResponseCell,
-                filterMethod: (filter, row) => {
-                    if (filter.value === RESPONSE_FILTER.FILTERED) {
-                        // eslint-disable-next-line no-underscore-dangle
-                        const { reason } = row._original;
-                        return this.checkFiltered(reason) || this.checkWhiteList(reason);
-                    }
-                    return true;
-                },
-                Filter: ({ filter, onChange }) => (
-                    <select
-                        className="form-control custom-select"
-                        onChange={event => onChange(event.target.value)}
-                        value={filter ? filter.value : RESPONSE_FILTER.ALL}
-                    >
-                        <option value={RESPONSE_FILTER.ALL}>
-                            <Trans>show_all_filter_type</Trans>
-                        </option>
-                        <option value={RESPONSE_FILTER.FILTERED}>
-                            <Trans>show_filtered_type</Trans>
-                        </option>
-                    </select>
-                ),
             },
             {
                 Header: t('client_table_header'),
@@ -291,7 +269,6 @@ class Logs extends Component {
                 maxWidth: 240,
                 minWidth: 240,
                 Cell: this.getClientCell,
-                Filter: this.getFilterInput,
             },
         ];
 
@@ -311,7 +288,7 @@ class Logs extends Component {
                 showPageJump={false}
                 showPageSizeOptions={false}
                 onFetchData={this.fetchData}
-                onPageChange={newPage => this.props.setLogsPage(newPage)}
+                onPageChange={this.changePage}
                 className="logs__table"
                 defaultPageSize={TABLE_DEFAULT_PAGE_SIZE}
                 previousText={t('previous_btn')}
@@ -365,7 +342,9 @@ class Logs extends Component {
 
     render() {
         const { queryLogs, t } = this.props;
-        const { enabled, processingGetConfig } = queryLogs;
+        const {
+            enabled, processingGetConfig, processingAdditionalLogs, processingGetLogs,
+        } = queryLogs;
 
         const refreshButton = enabled ? (
             <button
@@ -387,12 +366,12 @@ class Logs extends Component {
                 {enabled && processingGetConfig && <Loading />}
                 {enabled && !processingGetConfig && (
                     <Fragment>
-                        <Card>
-                            <Filters
-                                filter={queryLogs.filter}
-                                setLogsFilter={this.props.setLogsFilter}
-                            />
-                        </Card>
+                        <Filters
+                            filter={queryLogs.filter}
+                            processingGetLogs={processingGetLogs}
+                            processingAdditionalLogs={processingAdditionalLogs}
+                            setLogsFilter={this.props.setLogsFilter}
+                        />
                         <Card>{this.renderLogs()}</Card>
                     </Fragment>
                 )}

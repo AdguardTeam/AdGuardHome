@@ -107,12 +107,23 @@ const queryLogs = handleActions(
             ...payload,
             processingSetConfig: false,
         }),
+
+        [actions.getAdditionalLogsRequest]: state => ({
+            ...state, processingAdditionalLogs: true, processingGetLogs: true,
+        }),
+        [actions.getAdditionalLogsFailure]: state => ({
+            ...state, processingAdditionalLogs: false, processingGetLogs: false,
+        }),
+        [actions.getAdditionalLogsSuccess]: state => ({
+            ...state, processingAdditionalLogs: false, processingGetLogs: false,
+        }),
     },
     {
         processingGetLogs: true,
         processingClear: false,
         processingGetConfig: false,
         processingSetConfig: false,
+        processingAdditionalLogs: false,
         logs: [],
         interval: 1,
         allLogs: [],

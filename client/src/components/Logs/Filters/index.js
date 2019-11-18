@@ -1,24 +1,22 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import debounce from 'lodash/debounce';
+import classnames from 'classnames';
 
 import { DEBOUNCE_FILTER_TIMEOUT, RESPONSE_FILTER } from '../../../helpers/constants';
 import { isValidQuestionType } from '../../../helpers/helpers';
 import Form from './Form';
+import Card from '../../ui/Card';
 
 class Filters extends Component {
-    getFilters = (filtered) => {
-        const {
-            domain, client, type, response,
-        } = filtered;
-
-        return {
-            filter_domain: domain || '',
-            filter_client: client || '',
-            filter_question_type: isValidQuestionType(type) ? type.toUpperCase() : '',
-            filter_response_status: response === RESPONSE_FILTER.FILTERED ? response : '',
-        };
-    };
+    getFilters = ({
+        filter_domain, filter_question_type, filter_response_status, filter_client,
+    }) => ({
+        filter_domain: filter_domain || '',
+        filter_question_type: isValidQuestionType(filter_question_type) ? filter_question_type.toUpperCase() : '',
+        filter_response_status: filter_response_status === RESPONSE_FILTER.FILTERED ? filter_response_status : '',
+        filter_client: filter_client || '',
+    });
 
     handleFormChange = debounce((values) => {
         const filter = this.getFilters(values);
@@ -26,13 +24,20 @@ class Filters extends Component {
     }, DEBOUNCE_FILTER_TIMEOUT);
 
     render() {
-        const { filter } = this.props;
+        const { filter, processingAdditionalLogs } = this.props;
+
+        const cardBodyClass = classnames({
+            'card-body': true,
+            'card-body--loading': processingAdditionalLogs,
+        });
 
         return (
-            <Form
-                initialValues={filter}
-                onChange={this.handleFormChange}
-            />
+            <Card bodyType={cardBodyClass}>
+                <Form
+                    initialValues={filter}
+                    onChange={this.handleFormChange}
+                />
+            </Card>
         );
     }
 }
@@ -40,6 +45,8 @@ class Filters extends Component {
 Filters.propTypes = {
     filter: PropTypes.object.isRequired,
     setLogsFilter: PropTypes.func.isRequired,
+    processingGetLogs: PropTypes.bool.isRequired,
+    processingAdditionalLogs: PropTypes.bool.isRequired,
 };
 
 export default Filters;

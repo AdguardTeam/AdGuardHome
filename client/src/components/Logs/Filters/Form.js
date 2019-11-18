@@ -49,10 +49,10 @@ const Form = (props) => {
     return (
         <form onSubmit={handleChange}>
             <div className="row">
-                <div className="col-3">
+                <div className="col-6 col-sm-3 my-2">
                     <Field
-                        id="domain"
-                        name="domain"
+                        id="filter_domain"
+                        name="filter_domain"
                         component={renderFilterField}
                         type="text"
                         className="form-control"
@@ -61,10 +61,10 @@ const Form = (props) => {
                         onChange={handleChange}
                     />
                 </div>
-                <div className="col-3">
+                <div className="col-6 col-sm-3 my-2">
                     <Field
-                        id="type"
-                        name="type"
+                        id="filter_question_type"
+                        name="filter_question_type"
                         component={renderField}
                         type="text"
                         className="form-control"
@@ -72,9 +72,9 @@ const Form = (props) => {
                         onChange={handleChange}
                     />
                 </div>
-                <div className="col-3">
+                <div className="col-6 col-sm-3 my-2">
                     <Field
-                        name="response"
+                        name="filter_response_status"
                         component="select"
                         className="form-control custom-select"
                     >
@@ -86,10 +86,10 @@ const Form = (props) => {
                         </option>
                     </Field>
                 </div>
-                <div className="col-3">
+                <div className="col-6 col-sm-3 my-2">
                     <Field
-                        id="client"
-                        name="client"
+                        id="filter_client"
+                        name="filter_client"
                         component={renderFilterField}
                         type="text"
                         className="form-control"
