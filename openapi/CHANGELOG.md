@@ -1,6 +1,95 @@
 # AdGuard Home API Change Log
 
 
+## v0.100: API changes
+
+### API: Get list of clients: GET /control/clients
+
+* "ip" and "mac" fields are removed
+* "ids" and "ip_addrs" fields are added
+
+Response:
+
+	200 OK
+
+	{
+	clients: [
+		{
+			name: "client1"
+			ids: ["...", ...] // IP or MAC
+			ip_addrs: ["...", ...] // all IP addresses (set by user and resolved by MAC)
+			use_global_settings: true
+			filtering_enabled: false
+			parental_enabled: false
+			safebrowsing_enabled: false
+			safesearch_enabled: false
+			use_global_blocked_services: true
+			blocked_services: [ "name1", ... ]
+			whois_info: {
+				key: "value"
+				...
+			}
+		}
+	]
+	auto_clients: [
+		{
+			name: "host"
+			ip: "..."
+			source: "etc/hosts" || "rDNS"
+			whois_info: {
+				key: "value"
+				...
+			}
+		}
+	]
+	}
+
+### API: Add client: POST /control/clients/add
+
+* "ip" and "mac" fields are removed
+* "ids" field is added
+
+Request:
+
+	POST /control/clients/add
+
+	{
+		name: "client1"
+		ids: ["...", ...] // IP or MAC
+		use_global_settings: true
+		filtering_enabled: false
+		parental_enabled: false
+		safebrowsing_enabled: false
+		safesearch_enabled: false
+		use_global_blocked_services: true
+		blocked_services: [ "name1", ... ]
+	}
+
+### API: Update client: POST /control/clients/update
+
+* "ip" and "mac" fields are removed
+* "ids" field is added
+
+Request:
+
+	POST /control/clients/update
+
+	{
+		name: "client1"
+		data: {
+			name: "client1"
+			ids: ["...", ...] // IP or MAC
+			use_global_settings: true
+			filtering_enabled: false
+			parental_enabled: false
+			safebrowsing_enabled: false
+			safesearch_enabled: false
+			use_global_blocked_services: true
+			blocked_services: [ "name1", ... ]
+		}
+	}
+
+
 ## v0.99.3: API changes
 
 ### API: Get query log: GET /control/querylog
