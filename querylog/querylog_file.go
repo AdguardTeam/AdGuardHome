@@ -398,6 +398,7 @@ func readJSONValue(s, name string) string {
 	return s[start:end]
 }
 
+// nolint (gocyclo)
 func (r *Reader) applySearch(str string) bool {
 	if r.search.ResponseStatus == responseStatusFiltered {
 		boolVal, ok := readJSONBool(str, "IsFiltered")
