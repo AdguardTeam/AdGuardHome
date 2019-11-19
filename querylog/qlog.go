@@ -107,18 +107,7 @@ type logEntry struct {
 	Upstream string `json:",omitempty"` // if empty, means it was cached
 }
 
-// getIPString is a helper function that extracts IP address from net.Addr
-func getIPString(addr net.Addr) string {
-	switch addr := addr.(type) {
-	case *net.UDPAddr:
-		return addr.IP.String()
-	case *net.TCPAddr:
-		return addr.IP.String()
-	}
-	return ""
-}
-
-func (l *queryLog) Add(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, elapsed time.Duration, addr net.Addr, upstream string) {
+func (l *queryLog) Add(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, elapsed time.Duration, ip net.IP, upstream string) {
 	if !l.conf.Enabled {
 		return
 	}
@@ -130,7 +119,6 @@ func (l *queryLog) Add(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Res
 
 	var a []byte
 	var err error
-	ip := getIPString(addr)
 
 	if answer != nil {
 		a, err = answer.Pack()
@@ -146,7 +134,7 @@ func (l *queryLog) Add(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Res
 
 	now := time.Now()
 	entry := logEntry{
-		IP:   ip,
+		IP:   ip.String(),
 		Time: now,
 
 		Answer:   a,
