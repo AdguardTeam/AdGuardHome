@@ -398,6 +398,7 @@ func readJSONValue(s, name string) string {
 	return s[start:end]
 }
 
+// nolint (gocyclo)
 func (r *Reader) applySearch(str string) bool {
 	if r.search.ResponseStatus == responseStatusFiltered {
 		boolVal, ok := readJSONBool(str, "IsFiltered")
@@ -406,8 +407,26 @@ func (r *Reader) applySearch(str string) bool {
 		}
 	}
 
+	mq := dns.Msg{}
+
 	if len(r.search.Domain) != 0 {
 		val := readJSONValue(str, "QH")
+		if len(val) == 0 {
+			// pre-v0.99.3 compatibility
+			val = readJSONValue(str, "Question")
+			if len(val) == 0 {
+				return false
+			}
+			bval, err := base64.StdEncoding.DecodeString(val)
+			if err != nil {
+				return false
+			}
+			err = mq.Unpack(bval)
+			if err != nil {
+				return false
+			}
+			val = strings.TrimSuffix(mq.Question[0].Name, ".")
+		}
 		if len(val) == 0 {
 			return false
 		}
@@ -421,7 +440,26 @@ func (r *Reader) applySearch(str string) bool {
 	if len(r.search.QuestionType) != 0 {
 		val := readJSONValue(str, "QT")
 		if len(val) == 0 {
-			return false
+			// pre-v0.99.3 compatibility
+			if len(mq.Question) == 0 {
+				val = readJSONValue(str, "Question")
+				if len(val) == 0 {
+					return false
+				}
+				bval, err := base64.StdEncoding.DecodeString(val)
+				if err != nil {
+					return false
+				}
+				err = mq.Unpack(bval)
+				if err != nil {
+					return false
+				}
+			}
+			ok := false
+			val, ok = dns.TypeToString[mq.Question[0].Qtype]
+			if !ok {
+				return false
+			}
 		}
 		if val != r.search.QuestionType {
 			return false
