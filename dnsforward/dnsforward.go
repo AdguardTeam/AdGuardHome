@@ -462,12 +462,23 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 		if d.Upstream != nil {
 			upstreamAddr = d.Upstream.Address()
 		}
-		s.queryLog.Add(msg, d.Res, res, elapsed, d.Addr, upstreamAddr)
+		s.queryLog.Add(msg, d.Res, res, elapsed, getIP(d.Addr), upstreamAddr)
 	}
 
 	s.updateStats(d, elapsed, *res)
 	s.RUnlock()
 
+	return nil
+}
+
+// Get IP address from net.Addr
+func getIP(addr net.Addr) net.IP {
+	switch addr := addr.(type) {
+	case *net.UDPAddr:
+		return addr.IP
+	case *net.TCPAddr:
+		return addr.IP
+	}
 	return nil
 }
 

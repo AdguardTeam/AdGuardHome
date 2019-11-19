@@ -64,6 +64,7 @@
     top: calc(100% + 10px);
     right: -10px;
     left: initial;
+    width: 255px;
     transform: none;
 }
 
