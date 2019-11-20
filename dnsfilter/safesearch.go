@@ -213,4 +213,6 @@ var safeSearchDomains = map[string]string{
 	"youtubei.googleapis.com":  "restrictmoderate.youtube.com",
 	"youtube.googleapis.com":   "restrictmoderate.youtube.com",
 	"www.youtube-nocookie.com": "restrictmoderate.youtube.com",
+
+	"pixabay.com": "safesearch.pixabay.com",
 }
