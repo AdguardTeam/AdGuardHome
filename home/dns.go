@@ -68,7 +68,7 @@ func initDNSServer() {
 	config.dnsServer = dnsforward.NewServer(config.dnsFilter, config.stats, config.queryLog)
 
 	sessFilename := filepath.Join(baseDir, "sessions.db")
-	config.auth = InitAuth(sessFilename, config.Users)
+	config.auth = InitAuth(sessFilename, config.Users, config.WebSessionTTLHours*60*60)
 	config.Users = nil
 
 	config.dnsctx.rdns = InitRDNS(&config.clients)
