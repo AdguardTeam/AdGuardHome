@@ -278,6 +278,14 @@ export const SERVICES = [
         name: 'Skype',
     },
     {
+        id: 'amazon',
+        name: 'Amazon',
+    },
+    {
+        id: 'ebay',
+        name: 'eBay',
+    },
+    {
         id: 'steam',
         name: 'Steam',
     },
