@@ -7,9 +7,8 @@ require (
 	github.com/AdguardTeam/golibs v0.2.4
 	github.com/AdguardTeam/urlfilter v0.6.1
 	github.com/NYTimes/gziphandler v1.1.1
-	github.com/bluele/gcache v0.0.0-20190518031135-bc40bd653833
 	github.com/etcd-io/bbolt v1.3.3
-	github.com/go-test/deep v1.0.4
+	github.com/go-test/deep v1.0.4 // indirect
 	github.com/gobuffalo/packr v1.19.0
 	github.com/joomcode/errorx v1.0.0
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1 // indirect
