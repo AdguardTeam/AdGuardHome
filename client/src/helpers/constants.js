@@ -286,6 +286,10 @@ export const SERVICES = [
         name: 'Epic Games',
     },
     {
+        id: 'reddit',
+        name: 'Reddit',
+    },
+    {
         id: 'ok',
         name: 'OK',
     },
