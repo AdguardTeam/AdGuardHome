@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
-	"go.etcd.io/bbolt"
+	"github.com/etcd-io/bbolt"
 	"golang.org/x/crypto/bcrypt"
 )
 
