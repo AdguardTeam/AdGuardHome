@@ -21,7 +21,7 @@ type QueryLog interface {
 	Close()
 
 	// Add a log entry
-	Add(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, elapsed time.Duration, addr net.Addr, upstream string)
+	Add(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, elapsed time.Duration, ip net.IP, upstream string)
 
 	// WriteDiskConfig - write configuration
 	WriteDiskConfig(dc *DiskConfig)

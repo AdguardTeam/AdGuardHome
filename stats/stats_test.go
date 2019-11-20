@@ -6,7 +6,6 @@ import (
 	"os"
 	"sync/atomic"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -105,7 +104,6 @@ func TestLargeNumbers(t *testing.T) {
 	for h := 0; h != 12; h++ {
 		if h != 0 {
 			atomic.AddInt32(&hour, 1)
-			time.Sleep(1500 * time.Millisecond)
 		}
 		for i := 0; i != n; i++ {
 			e.Domain = fmt.Sprintf("domain%d", i)

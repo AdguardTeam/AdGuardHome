@@ -1012,17 +1012,20 @@ Response:
 When a new DNS request is received and processed, we store information about this event in "query log".  It is a file on disk in JSON format:
 
 	{
-	"Question":"...","
-	Answer":"...",
+	"IP":"127.0.0.1", // client IP
+	"T":"...", // response time
+	"QH":"...", // target host name without the last dot
+	"QT":"...", // question type
+	"QC":"...", // question class
+	"Answer":"...",
 	"Result":{
 		"IsFiltered":true,
 		"Reason":3,
 		"Rule":"...",
 		"FilterID":1
 		},
-	"Time":"...",
 	"Elapsed":12345,
-	"IP":"127.0.0.1"
+	"Upstream":"...",
 	}
 
 
@@ -1052,7 +1055,7 @@ Request:
 	&filter_question_type=A | AAAA
 	&filter_response_status= | filtered
 
-If `older_than` value is set, server returns the next chunk of entries that are older than this time stamp.  This setting is used for paging.  UI sets the empty value on the first request and gets the latest log entries.  To get the older entries, UI sets this value to the timestamp of the last (the oldest) entry from the previous response from Server.
+`older_than` setting is used for paging.  UI uses an empty value for `older_than` on the first request and gets the latest log entries.  To get the older entries, UI sets `older_than` to the `oldest` value from the server's response.
 
 If "filter" settings are set, server returns only entries that match the specified request.
 
@@ -1060,7 +1063,9 @@ For `filter.domain` and `filter.client` the server matches substrings by default
 
 Response:
 
-	[
+	{
+	"oldest":"2006-01-02T15:04:05.999999999Z07:00"
+	"data":[
 	{
 		"answer":[
 			{
@@ -1085,6 +1090,7 @@ Response:
 	}
 	...
 	]
+	}
 
 The most recent entries are at the top of list.
 

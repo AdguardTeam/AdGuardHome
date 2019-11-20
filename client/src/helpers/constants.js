@@ -141,6 +141,7 @@ export const STANDARD_HTTPS_PORT = 443;
 export const EMPTY_DATE = '0001-01-01T00:00:00Z';
 
 export const DEBOUNCE_TIMEOUT = 300;
+export const DEBOUNCE_FILTER_TIMEOUT = 500;
 export const CHECK_TIMEOUT = 1000;
 export const STOP_TIMEOUT = 10000;
 
@@ -277,8 +278,20 @@ export const SERVICES = [
         name: 'Skype',
     },
     {
+        id: 'amazon',
+        name: 'Amazon',
+    },
+    {
+        id: 'ebay',
+        name: 'eBay',
+    },
+    {
         id: 'cloudflare',
         name: 'Cloudflare',
+    },
+    {
+        id: 'origin',
+        name: 'Origin',
     },
     {
         id: 'steam',
@@ -287,6 +300,10 @@ export const SERVICES = [
     {
         id: 'epic_games',
         name: 'Epic Games',
+    },
+    {
+        id: 'reddit',
+        name: 'Reddit',
     },
     {
         id: 'ok',
@@ -383,3 +400,9 @@ export const DEFAULT_LOGS_FILTER = {
 };
 
 export const DEFAULT_LANGUAGE = 'en';
+
+export const TABLE_DEFAULT_PAGE_SIZE = 100;
+export const RESPONSE_FILTER = {
+    ALL: 'all',
+    FILTERED: 'filtered',
+};

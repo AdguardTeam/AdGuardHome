@@ -3,23 +3,97 @@ import { createAction } from 'redux-actions';
 import apiClient from '../api/Api';
 import { addErrorToast, addSuccessToast } from './index';
 import { normalizeLogs } from '../helpers/helpers';
+import { TABLE_DEFAULT_PAGE_SIZE } from '../helpers/constants';
+
+const getLogsWithParams = async (config) => {
+    const { older_than, filter, ...values } = config;
+    const rawLogs = await apiClient.getQueryLog({ ...filter, older_than });
+    const { data, oldest } = rawLogs;
+    const logs = normalizeLogs(data);
+
+    return {
+        logs, oldest, older_than, filter, ...values,
+    };
+};
+
+export const getAdditionalLogsRequest = createAction('GET_ADDITIONAL_LOGS_REQUEST');
+export const getAdditionalLogsFailure = createAction('GET_ADDITIONAL_LOGS_FAILURE');
+export const getAdditionalLogsSuccess = createAction('GET_ADDITIONAL_LOGS_SUCCESS');
+
+const checkFilteredLogs = async (data, filter, dispatch, total) => {
+    const { logs, oldest } = data;
+    const totalData = total || { logs };
+
+    const needToGetAdditionalLogs = (logs.length < TABLE_DEFAULT_PAGE_SIZE ||
+        totalData.logs.length < TABLE_DEFAULT_PAGE_SIZE) &&
+        oldest !== '';
+
+    if (needToGetAdditionalLogs) {
+        dispatch(getAdditionalLogsRequest());
+
+        try {
+            const additionalLogs = await getLogsWithParams({ older_than: oldest, filter });
+            if (additionalLogs.logs.length > 0) {
+                return await checkFilteredLogs(additionalLogs, filter, dispatch, {
+                    logs: [...totalData.logs, ...additionalLogs.logs],
+                    oldest: additionalLogs.oldest,
+                });
+            }
+            dispatch(getAdditionalLogsSuccess());
+            return totalData;
+        } catch (error) {
+            dispatch(addErrorToast({ error }));
+            dispatch(getAdditionalLogsFailure(error));
+        }
+    }
+
+    dispatch(getAdditionalLogsSuccess());
+    return totalData;
+};
 
 export const setLogsPagination = createAction('LOGS_PAGINATION');
-export const setLogsFilter = createAction('LOGS_FILTER');
+export const setLogsPage = createAction('SET_LOG_PAGE');
 
 export const getLogsRequest = createAction('GET_LOGS_REQUEST');
 export const getLogsFailure = createAction('GET_LOGS_FAILURE');
 export const getLogsSuccess = createAction('GET_LOGS_SUCCESS');
 
-export const getLogs = config => async (dispatch) => {
+export const getLogs = config => async (dispatch, getState) => {
     dispatch(getLogsRequest());
     try {
-        const { filter, lastRowTime: older_than } = config;
-        const logs = normalizeLogs(await apiClient.getQueryLog({ ...filter, older_than }));
-        dispatch(getLogsSuccess({ logs, ...config }));
+        const { isFiltered, filter, page } = getState().queryLogs;
+        const data = await getLogsWithParams({ ...config, filter });
+
+        if (isFiltered) {
+            const additionalData = await checkFilteredLogs(data, filter, dispatch);
+            const updatedData = additionalData.logs ? { ...data, ...additionalData } : data;
+            dispatch(getLogsSuccess(updatedData));
+            dispatch(setLogsPagination({ page, pageSize: TABLE_DEFAULT_PAGE_SIZE }));
+        } else {
+            dispatch(getLogsSuccess(data));
+        }
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(getLogsFailure(error));
+    }
+};
+
+export const setLogsFilterRequest = createAction('SET_LOGS_FILTER_REQUEST');
+export const setLogsFilterFailure = createAction('SET_LOGS_FILTER_FAILURE');
+export const setLogsFilterSuccess = createAction('SET_LOGS_FILTER_SUCCESS');
+
+export const setLogsFilter = filter => async (dispatch) => {
+    dispatch(setLogsFilterRequest());
+    try {
+        const data = await getLogsWithParams({ older_than: '', filter });
+        const additionalData = await checkFilteredLogs(data, filter, dispatch);
+        const updatedData = additionalData.logs ? { ...data, ...additionalData } : data;
+
+        dispatch(setLogsFilterSuccess({ ...updatedData, filter }));
+        dispatch(setLogsPage(0));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(setLogsFilterFailure(error));
     }
 };
 
