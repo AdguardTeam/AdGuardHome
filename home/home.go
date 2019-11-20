@@ -372,11 +372,13 @@ func cleanup() {
 
 // Stop HTTP server, possibly waiting for all active connections to be closed
 func stopHTTPServer() {
+	log.Info("Stopping HTTP server...")
 	config.httpsServer.shutdown = true
 	if config.httpsServer.server != nil {
 		config.httpsServer.server.Shutdown(context.TODO())
 	}
 	config.httpServer.Shutdown(context.TODO())
+	log.Info("Stopped HTTP server")
 }
 
 // This function is called before application exits
