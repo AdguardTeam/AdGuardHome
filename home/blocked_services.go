@@ -51,7 +51,7 @@ var serviceRulesArray = []svc{
 		"||cloudflare.cn^",
 		"||one.one^",
 		"||warp.plus^",
-  }},
+	}},
 	{"amazon", []string{
 		"||amazon.com^",
 		"||media-amazon.com^",
