@@ -205,7 +205,7 @@ func (w *Whois) Begin(ip string) {
 		// TTL expired
 	}
 	expire = make([]byte, 8)
-	const ttl = 12 * 60 * 60
+	const ttl = 1 * 60 * 60
 	binary.BigEndian.PutUint64(expire, now+ttl)
 	_ = w.ipAddrs.Set([]byte(ip), expire)
 

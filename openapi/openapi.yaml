@@ -2,7 +2,7 @@ swagger: '2.0'
 info:
     title: 'AdGuard Home'
     description: 'AdGuard Home REST API. Admin web interface is built on top of this REST API.'
-    version: '0.99'
+    version: '0.99.3'
 schemes:
     - http
 basePath: /control
@@ -1417,10 +1417,16 @@ definitions:
                 example: "2018-11-26T00:02:41+03:00"
 
     QueryLog:
-        type: "array"
+        type: "object"
         description: "Query log"
-        items:
-            $ref: "#/definitions/QueryLogItem"
+        properties:
+            oldest:
+                type: "string"
+                example: "2018-11-26T00:02:41+03:00"
+            data:
+                type: "array"
+                items:
+                    $ref: "#/definitions/QueryLogItem"
 
     QueryLogConfig:
         type: "object"
