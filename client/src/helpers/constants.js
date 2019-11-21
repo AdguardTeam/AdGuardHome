@@ -290,6 +290,10 @@ export const SERVICES = [
         name: 'Origin',
     },
     {
+        id: 'cloudflare',
+        name: 'Cloudflare',
+    },
+    {
         id: 'steam',
         name: 'Steam',
     },
