@@ -14,8 +14,8 @@
     <a href="https://twitter.com/AdGuard">Twitter</a> |
     <a href="https://t.me/adguard_en">Telegram</a>
     <br /><br />
-    <a href="https://travis-ci.org/AdguardTeam/AdGuardHome">
-      <img src="https://travis-ci.org/AdguardTeam/AdGuardHome.svg" alt="Build status" />
+    <a href="https://travis-ci.com/AdguardTeam/AdGuardHome">
+      <img src="https://travis-ci.com/AdguardTeam/AdGuardHome.svg" alt="Build status" />
     </a>
     <a href="https://codecov.io/github/AdguardTeam/AdGuardHome?branch=master">
       <img src="https://img.shields.io/codecov/c/github/AdguardTeam/AdGuardHome/master.svg" alt="Code Coverage" />
