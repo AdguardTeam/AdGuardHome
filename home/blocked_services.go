@@ -114,6 +114,8 @@ var serviceRulesArray = []svc{
 		"||bytecdn.cn^",
 		"||byteimg.com^",
 		"||ixigua.com^",
+		"||musemuse.cn^",
+		"||musical.ly^",
 	}},
 }
 
