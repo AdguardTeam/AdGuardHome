@@ -164,6 +164,15 @@ func (s *Server) Start(config *ServerConfig) error {
 
 // startInternal starts without locking
 func (s *Server) startInternal(config *ServerConfig) error {
+	err := s.prepare(config)
+	if err != nil {
+		return err
+	}
+	return s.dnsProxy.Start()
+}
+
+// Prepare the object
+func (s *Server) prepare(config *ServerConfig) error {
 	if s.dnsProxy != nil {
 		return errors.New("DNS server is already started")
 	}
@@ -243,7 +252,7 @@ func (s *Server) startInternal(config *ServerConfig) error {
 
 	// Initialize and start the DNS proxy
 	s.dnsProxy = &proxy.Proxy{Config: proxyConfig}
-	return s.dnsProxy.Start()
+	return nil
 }
 
 // Stop stops the DNS server
@@ -344,6 +353,7 @@ func (s *Server) beforeRequestHandler(p *proxy.Proxy, d *proxy.DNSContext) (bool
 }
 
 // handleDNSRequest filters the incoming DNS requests and writes them to the query log
+// nolint (gocyclo)
 func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 	start := time.Now()
 
@@ -372,6 +382,7 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 		return err
 	}
 
+	var origResp *dns.Msg
 	if d.Res == nil {
 		answer := []dns.RR{}
 		originalQuestion := d.Req.Question[0]
@@ -396,6 +407,18 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 				answer = append(answer, d.Res.Answer...) // host -> IP
 				d.Res.Answer = answer
 			}
+
+		} else if res.Reason != dnsfilter.NotFilteredWhiteList {
+			origResp2 := d.Res
+			res, err = s.filterResponse(d)
+			if err != nil {
+				return err
+			}
+			if res != nil {
+				origResp = origResp2 // matched by response
+			} else {
+				res = &dnsfilter.Result{}
+			}
 		}
 	}
 
@@ -416,11 +439,18 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 	// Synchronize access to s.queryLog and s.stats so they won't be suddenly uninitialized while in use.
 	// This can happen after proxy server has been stopped, but its workers haven't yet exited.
 	if shouldLog && s.queryLog != nil {
-		upstreamAddr := ""
-		if d.Upstream != nil {
-			upstreamAddr = d.Upstream.Address()
+		p := querylog.AddParams{
+			Question:   msg,
+			Answer:     d.Res,
+			OrigAnswer: origResp,
+			Result:     res,
+			Elapsed:    elapsed,
+			ClientIP:   getIP(d.Addr),
 		}
-		s.queryLog.Add(msg, d.Res, res, elapsed, getIP(d.Addr), upstreamAddr)
+		if d.Upstream != nil {
+			p.Upstream = d.Upstream.Address()
+		}
+		s.queryLog.Add(p)
 	}
 
 	s.updateStats(d, elapsed, *res)
@@ -536,6 +566,54 @@ func (s *Server) filterDNSRequest(d *proxy.DNSContext) (*dnsfilter.Result, error
 	}
 
 	return &res, err
+}
+
+// If response contains CNAME, A or AAAA records, we apply filtering to each canonical host name or IP address.
+// If this is a match, we set a new response in d.Res and return.
+func (s *Server) filterResponse(d *proxy.DNSContext) (*dnsfilter.Result, error) {
+	for _, a := range d.Res.Answer {
+		host := ""
+
+		switch v := a.(type) {
+		case *dns.CNAME:
+			log.Debug("DNSFwd: Checking CNAME %s for %s", v.Target, v.Hdr.Name)
+			host = strings.TrimSuffix(v.Target, ".")
+
+		case *dns.A:
+			host = v.A.String()
+			log.Debug("DNSFwd: Checking record A (%s) for %s", host, v.Hdr.Name)
+
+		case *dns.AAAA:
+			host = v.AAAA.String()
+			log.Debug("DNSFwd: Checking record AAAA (%s) for %s", host, v.Hdr.Name)
+
+		default:
+			continue
+		}
+
+		s.RLock()
+		// Synchronize access to s.dnsFilter so it won't be suddenly uninitialized while in use.
+		// This could happen after proxy server has been stopped, but its workers are not yet exited.
+		if !s.conf.ProtectionEnabled || s.dnsFilter == nil {
+			s.RUnlock()
+			continue
+		}
+		setts := dnsfilter.RequestFilteringSettings{}
+		setts.FilteringEnabled = true
+		res, err := s.dnsFilter.CheckHost(host, d.Req.Question[0].Qtype, &setts)
+		s.RUnlock()
+
+		if err != nil {
+			return nil, err
+
+		} else if res.IsFiltered {
+			d.Res = s.genDNSFilterMessage(d, &res)
+			log.Debug("DNSFwd: Matched %s by response: %s", d.Req.Question[0].Name, host)
+			return &res, nil
+		}
+	}
+
+	return nil, nil
 }
 
 // genDNSFilterMessage generates a DNS message corresponding to the filtering result

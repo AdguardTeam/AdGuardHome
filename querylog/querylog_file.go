@@ -574,6 +574,8 @@ func decode(ent *logEntry, str string) {
 
 		case "Answer":
 			ent.Answer, err = base64.StdEncoding.DecodeString(v)
+		case "OrigAnswer":
+			ent.OrigAnswer, err = base64.StdEncoding.DecodeString(v)
 
 		case "IsFiltered":
 			b, err = strconv.ParseBool(v)

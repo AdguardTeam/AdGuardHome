@@ -1064,11 +1064,12 @@ When a new DNS request is received and processed, we store information about thi
 	"QT":"...", // question type
 	"QC":"...", // question class
 	"Answer":"...",
+	"OrigAnswer":"...",
 	"Result":{
 		"IsFiltered":true,
 		"Reason":3,
 		"Rule":"...",
-		"FilterID":1
+		"FilterID":1,
 		},
 	"Elapsed":12345,
 	"Upstream":"...",
@@ -1121,6 +1122,13 @@ Response:
 			}
 			...
 		],
+		"original_answer":[ // Answer from upstream server (optional)
+			{
+			"type":"AAAA",
+			"value":"::"
+			}
+			...
+		],
 		"client":"127.0.0.1",
 		"elapsedMs":"0.098403",
 		"filterId":1,
@@ -1131,6 +1139,7 @@ Response:
 		},
 		"reason":"FilteredBlackList",
 		"rule":"||doubleclick.net^",
+		"service_name": "...", // set if reason=FilteredBlockedService
 		"status":"NOERROR",
 		"time":"2006-01-02T15:04:05.999999999Z07:00"
 	}
