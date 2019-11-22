@@ -431,7 +431,6 @@ func registerControlHandlers() {
 
 	RegisterFilteringHandlers()
 	RegisterTLSHandlers()
-	RegisterClientsHandlers()
 	RegisterBlockedServicesHandlers()
 	RegisterAuthHandlers()
 

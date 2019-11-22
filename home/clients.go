@@ -77,6 +77,8 @@ func (clients *clientsContainer) Init(objects []clientObject, dhcpServer *dhcpd.
 	clients.addFromConfig(objects)
 
 	go clients.periodicUpdate()
+
+	clients.registerWebHandlers()
 }
 
 type clientObject struct {
