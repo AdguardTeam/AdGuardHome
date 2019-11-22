@@ -88,6 +88,13 @@ func (s *Server) CheckConfig(config ServerConfig) error {
 	return tmpServer.setConfig(config)
 }
 
+// Create - create object
+func Create(config ServerConfig) *Server {
+	s := Server{}
+	s.conf = config
+	return &s
+}
+
 // Init checks the configuration and initializes the server
 func (s *Server) Init(config ServerConfig) error {
 	err := s.setConfig(config)
@@ -96,6 +103,11 @@ func (s *Server) Init(config ServerConfig) error {
 	}
 	s.dbLoad()
 	return nil
+}
+
+// WriteDiskConfig - write configuration
+func (s *Server) WriteDiskConfig(c *ServerConfig) {
+	*c = s.conf
 }
 
 func (s *Server) setConfig(config ServerConfig) error {

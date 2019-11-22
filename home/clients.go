@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/utils"
 )
@@ -59,17 +60,20 @@ type clientsContainer struct {
 	idIndex map[string]*Client     // IP -> client
 	ipHost  map[string]*ClientHost // IP -> Hostname
 	lock    sync.Mutex
+
+	dhcpServer *dhcpd.Server
 }
 
 // Init initializes clients container
 // Note: this function must be called only once
-func (clients *clientsContainer) Init(objects []clientObject) {
+func (clients *clientsContainer) Init(objects []clientObject, dhcpServer *dhcpd.Server) {
 	if clients.list != nil {
 		log.Fatal("clients.list != nil")
 	}
 	clients.list = make(map[string]*Client)
 	clients.idIndex = make(map[string]*Client)
 	clients.ipHost = make(map[string]*ClientHost)
+	clients.dhcpServer = dhcpServer
 	clients.addFromConfig(objects)
 
 	go clients.periodicUpdate()
@@ -190,7 +194,10 @@ func (clients *clientsContainer) Find(ip string) (Client, bool) {
 		}
 	}
 
-	macFound := config.dhcpServer.FindMACbyIP(ipAddr)
+	if clients.dhcpServer == nil {
+		return Client{}, false
+	}
+	macFound := clients.dhcpServer.FindMACbyIP(ipAddr)
 	if macFound == nil {
 		return Client{}, false
 	}
@@ -533,13 +540,16 @@ func (clients *clientsContainer) addFromSystemARP() {
 
 // add clients from DHCP that have non-empty Hostname property
 func (clients *clientsContainer) addFromDHCP() {
-	leases := config.dhcpServer.Leases()
+	if clients.dhcpServer == nil {
+		return
+	}
+	leases := clients.dhcpServer.Leases()
 	n := 0
 	for _, l := range leases {
 		if len(l.Hostname) == 0 {
 			continue
 		}
-		ok, _ := config.clients.AddHost(l.IP.String(), l.Hostname, ClientSourceDHCP)
+		ok, _ := clients.AddHost(l.IP.String(), l.Hostname, ClientSourceDHCP)
 		if ok {
 			n++
 		}
