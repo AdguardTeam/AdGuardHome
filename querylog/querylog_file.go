@@ -171,8 +171,6 @@ type Reader struct {
 	fseeker       fileSeeker // file seeker object
 	fpos          uint64     // current file offset
 	nSeekRequests uint32     // number of Seek() requests made (finding a new line doesn't count)
-
-	timecnt uint64
 }
 
 type fileSeeker struct {
@@ -205,8 +203,8 @@ func (r *Reader) Close() {
 	if r.count > 0 {
 		perunit = elapsed / time.Duration(r.count)
 	}
-	log.Debug("querylog: read %d entries in %v, %v/entry, seek-reqs:%d  time:%dus (%d%%)",
-		r.count, elapsed, perunit, r.nSeekRequests, r.timecnt/1000, r.timecnt*100/uint64(elapsed.Nanoseconds()))
+	log.Debug("querylog: read %d entries in %v, %v/entry, seek-reqs:%d",
+		r.count, elapsed, perunit, r.nSeekRequests)
 
 	if r.f != nil {
 		r.f.Close()
@@ -717,11 +715,8 @@ func (r *Reader) Next() *logEntry { // nolint
 			continue
 		}
 
-		st := time.Now()
 		var ent logEntry
 		decode(&ent, str)
-		r.timecnt += uint64(time.Now().Sub(st).Nanoseconds())
-
 		return &ent
 	}
 }
