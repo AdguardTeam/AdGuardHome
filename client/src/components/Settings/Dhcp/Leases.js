@@ -36,7 +36,8 @@ class Leases extends Component {
                         Cell: this.cellWrap,
                     },
                 ]}
-                showPagination={false}
+                pageSize={100}
+                showPagination={true}
                 noDataText={t('dhcp_leases_not_found')}
                 minRows={6}
                 className="-striped -highlight card-table-overflow"

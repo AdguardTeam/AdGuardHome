@@ -82,7 +82,8 @@ class StaticLeases extends Component {
                             },
                         },
                     ]}
-                    showPagination={false}
+                    pageSize={100}
+                    showPagination={true}
                     noDataText={t('dhcp_static_leases_not_found')}
                     className="-striped -highlight card-table-overflow"
                     minRows={6}
