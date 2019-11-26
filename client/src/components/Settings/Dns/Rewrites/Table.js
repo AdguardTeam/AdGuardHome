@@ -67,7 +67,7 @@ class Table extends Component {
                 nextText={t('next_btn')}
                 loadingText={t('loading_table_status')}
                 pageText={t('page_table_footer_text')}
-                ofText={t('of_table_footer_text')}
+                ofText="/"
                 rowsText={t('rows_table_footer_text')}
                 noDataText={t('rewrite_not_found')}
             />

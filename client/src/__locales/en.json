@@ -167,7 +167,6 @@
     "next_btn": "Next",
     "loading_table_status": "Loading...",
     "page_table_footer_text": "Page",
-    "of_table_footer_text": "of",
     "rows_table_footer_text": "rows",
     "updated_custom_filtering_toast": "Updated the custom filtering rules",
     "rule_removed_from_custom_filtering_toast": "Rule removed from the custom filtering rules",
