@@ -18,6 +18,7 @@ import (
 )
 
 const cookieTTL = 365 * 24 // in hours
+const sessionCookieName = "agh_session"
 
 type session struct {
 	userName string
@@ -294,7 +295,8 @@ func (a *Auth) httpCookie(req loginJSON) string {
 	s.expire = uint32(now.Unix()) + a.sessionTTL
 	a.addSession(sess, &s)
 
-	return fmt.Sprintf("session=%s; Path=/; HttpOnly; Expires=%s", hex.EncodeToString(sess), expstr)
+	return fmt.Sprintf("%s=%s; Path=/; HttpOnly; Expires=%s",
+		sessionCookieName, hex.EncodeToString(sess), expstr)
 }
 
 func handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -330,7 +332,8 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Location", "/login.html")
 
-	s := fmt.Sprintf("session=; Path=/; HttpOnly; Expires=Thu, 01 Jan 1970 00:00:00 GMT")
+	s := fmt.Sprintf("%s=; Path=/; HttpOnly; Expires=Thu, 01 Jan 1970 00:00:00 GMT",
+		sessionCookieName)
 	w.Header().Set("Set-Cookie", s)
 
 	w.WriteHeader(http.StatusFound)
@@ -350,7 +353,7 @@ func parseCookie(cookie string) string {
 		if len(kv) != 2 {
 			continue
 		}
-		if kv[0] == "session" {
+		if kv[0] == sessionCookieName {
 			return kv[1]
 		}
 	}
@@ -363,7 +366,7 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 		if r.URL.Path == "/login.html" {
 			// redirect to dashboard if already authenticated
 			authRequired := config.auth != nil && config.auth.AuthRequired()
-			cookie, err := r.Cookie("session")
+			cookie, err := r.Cookie(sessionCookieName)
 			if authRequired && err == nil {
 				r := config.auth.CheckSession(cookie.Value)
 				if r == 0 {
@@ -382,7 +385,7 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 		} else if config.auth != nil && config.auth.AuthRequired() {
 			// redirect to login page if not authenticated
 			ok := false
-			cookie, err := r.Cookie("session")
+			cookie, err := r.Cookie(sessionCookieName)
 			if err == nil {
 				r := config.auth.CheckSession(cookie.Value)
 				if r == 0 {
@@ -460,7 +463,7 @@ func (a *Auth) UserFind(login string, password string) User {
 
 // GetCurrentUser - get the current user
 func (a *Auth) GetCurrentUser(r *http.Request) User {
-	cookie, err := r.Cookie("session")
+	cookie, err := r.Cookie(sessionCookieName)
 	if err != nil {
 		// there's no Cookie, check Basic authentication
 		user, pass, ok := r.BasicAuth()
