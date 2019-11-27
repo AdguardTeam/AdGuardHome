@@ -402,6 +402,9 @@ export const DEFAULT_LOGS_FILTER = {
 export const DEFAULT_LANGUAGE = 'en';
 
 export const TABLE_DEFAULT_PAGE_SIZE = 100;
+
+export const SMALL_TABLE_DEFAULT_PAGE_SIZE = 20;
+
 export const RESPONSE_FILTER = {
     ALL: 'all',
     FILTERED: 'filtered',
