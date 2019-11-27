@@ -19,7 +19,6 @@
     "dhcp_leases_not_found": "DHCP 임대를 찾을 수 없음",
     "dhcp_config_saved": "저장된 DHCP 서버 구성",
     "form_error_required": "필수 필드",
-    "form_error_ip_format": "잘못된 IPv4 형식",
     "form_error_mac_format": "잘못된 MAC 형식",
     "form_error_positive": "0보다 커야 합니다",
     "dhcp_form_gateway_input": "게이트웨이 IP",
@@ -96,7 +95,6 @@
     "use_adguard_parental": "AdGuard 자녀 보호 웹 서비스 사용",
     "use_adguard_parental_hint": "AdGuard Home은 도메인에 성인 자료가 포함되어 있는지 확인합니다. 브라우징 보안 웹 서비스와 동일한 개인정보 보호 API를 사용함.",
     "enforce_safe_search": "세이프서치 강제",
-    "enforce_save_search_hint": "AdGuard Home은 다음과 같은 검색엔진(구글, 유투브, 빙, 덕덕고, 얀덱스)에서 안전검색이 가능합니다.",
     "no_servers_specified": "지정된 서버 없음",
     "general_settings": "일반 설정",
     "dns_settings": "DNS 설정",
@@ -399,5 +397,6 @@
     "orgname": "단체 이름",
     "netname": "네트워크 이름",
     "descr": "설명",
-    "whois": "후이즈"
+    "whois": "후이즈",
+    "filtering_rules_learn_more": "차단 리스트를 직접 호스트하는 법을 <0>알아보세요</0>."
 }
