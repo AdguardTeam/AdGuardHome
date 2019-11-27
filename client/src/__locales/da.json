@@ -19,7 +19,6 @@
     "dhcp_leases_not_found": "Ingen DHCP-leases fundet",
     "dhcp_config_saved": "Gemt DHCP-server konfiguration",
     "form_error_required": "Obligatorisk felt",
-    "form_error_ip_format": "Ugyldigt IPv4-format",
     "form_error_mac_format": "Ugyldigt MAC-format",
     "form_error_positive": "Skal være større end 0",
     "dhcp_form_gateway_input": "Gateway IP",
@@ -96,7 +95,6 @@
     "use_adguard_parental": "Brug AdGuards forældrekontrol",
     "use_adguard_parental_hint": "AdGuard Home vil kontrollere, om domænet indeholder voksenindhold. Den bruger den samme privatlivsvenlige API som browsing sikkerhedstjenesten.",
     "enforce_safe_search": "Håndhæv sikker søgning",
-    "enforce_save_search_hint": "AdGuard Home kan håndhæve sikker søgning i følgende søgemaskiner: Google, Youtube, Bing, DuckDuckGo og Yandex.",
     "no_servers_specified": "Ingen servere specificeret",
     "general_settings": "Generelle indstillinger",
     "dns_settings": "DNS-indstillinger",
@@ -399,5 +397,6 @@
     "orgname": "Organisationens navn",
     "netname": "Netværksnavn",
     "descr": "Beskrivelse",
-    "whois": "Whois"
+    "whois": "Whois",
+    "filtering_rules_learn_more": "<0>Lær mere</0> om at oprette dine egne værtsblokeringslister."
 }

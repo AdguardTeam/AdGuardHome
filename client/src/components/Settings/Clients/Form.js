@@ -7,7 +7,7 @@ import flow from 'lodash/flow';
 
 import Tabs from '../../ui/Tabs';
 import { toggleAllServices } from '../../../helpers/helpers';
-import { renderField, renderRadioField, renderSelectField, renderServiceField, ipv4, mac, required } from '../../../helpers/form';
+import { renderField, renderRadioField, renderSelectField, renderServiceField, ip, mac, required } from '../../../helpers/form';
 import { CLIENT_ID, SERVICES } from '../../../helpers/constants';
 import './Service.css';
 
@@ -88,7 +88,7 @@ let Form = (props) => {
                                         type="text"
                                         className="form-control"
                                         placeholder={t('form_enter_ip')}
-                                        validate={[ipv4, required]}
+                                        validate={[ip, required]}
                                     />
                                 </div>
                             )}

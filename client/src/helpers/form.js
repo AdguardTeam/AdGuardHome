@@ -111,6 +111,20 @@ export const required = (value) => {
 
 export const ipv4 = (value) => {
     if (value && !new RegExp(R_IPV4).test(value)) {
+        return <Trans>form_error_ip4_format</Trans>;
+    }
+    return false;
+};
+
+export const ipv6 = (value) => {
+    if (value && !new RegExp(R_IPV6).test(value)) {
+        return <Trans>form_error_ip6_format</Trans>;
+    }
+    return false;
+};
+
+export const ip = (value) => {
+    if (value && !new RegExp(R_IPV4).test(value) && !new RegExp(R_IPV6).test(value)) {
         return <Trans>form_error_ip_format</Trans>;
     }
     return false;
