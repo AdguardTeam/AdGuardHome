@@ -15,13 +15,15 @@ import (
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter"
+	"github.com/AdguardTeam/urlfilter/filterlist"
+	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 )
 
 // ServiceEntry - blocked service array element
 type ServiceEntry struct {
 	Name  string
-	Rules []*urlfilter.NetworkRule
+	Rules []*rules.NetworkRule
 }
 
 // RequestFilteringSettings is custom filtering settings
@@ -83,7 +85,7 @@ type filtersInitializerParams struct {
 
 // Dnsfilter holds added rules and performs hostname matches against the rules
 type Dnsfilter struct {
-	rulesStorage    *urlfilter.RuleStorage
+	rulesStorage    *filterlist.RuleStorage
 	filteringEngine *urlfilter.DNSEngine
 	engineLock      sync.RWMutex
 
@@ -391,7 +393,7 @@ func (d *Dnsfilter) processRewrites(host string, qtype uint16) Result {
 }
 
 func matchBlockedServicesRules(host string, svcs []ServiceEntry) Result {
-	req := urlfilter.NewRequestForHostname(host)
+	req := rules.NewRequestForHostname(host)
 	res := Result{}
 
 	for _, s := range svcs {
@@ -425,19 +427,19 @@ func fileExists(fn string) bool {
 
 // Initialize urlfilter objects
 func (d *Dnsfilter) initFiltering(filters map[int]string) error {
-	listArray := []urlfilter.RuleList{}
+	listArray := []filterlist.RuleList{}
 	for id, dataOrFilePath := range filters {
-		var list urlfilter.RuleList
+		var list filterlist.RuleList
 
 		if id == 0 {
-			list = &urlfilter.StringRuleList{
+			list = &filterlist.StringRuleList{
 				ID:             0,
 				RulesText:      dataOrFilePath,
 				IgnoreCosmetic: true,
 			}
 
 		} else if !fileExists(dataOrFilePath) {
-			list = &urlfilter.StringRuleList{
+			list = &filterlist.StringRuleList{
 				ID:             id,
 				IgnoreCosmetic: true,
 			}
@@ -449,7 +451,7 @@ func (d *Dnsfilter) initFiltering(filters map[int]string) error {
 			if err != nil {
 				return fmt.Errorf("ioutil.ReadFile(): %s: %s", dataOrFilePath, err)
 			}
-			list = &urlfilter.StringRuleList{
+			list = &filterlist.StringRuleList{
 				ID:             id,
 				RulesText:      string(data),
 				IgnoreCosmetic: true,
@@ -457,17 +459,17 @@ func (d *Dnsfilter) initFiltering(filters map[int]string) error {
 
 		} else {
 			var err error
-			list, err = urlfilter.NewFileRuleList(id, dataOrFilePath, true)
+			list, err = filterlist.NewFileRuleList(id, dataOrFilePath, true)
 			if err != nil {
-				return fmt.Errorf("urlfilter.NewFileRuleList(): %s: %s", dataOrFilePath, err)
+				return fmt.Errorf("filterlist.NewFileRuleList(): %s: %s", dataOrFilePath, err)
 			}
 		}
 		listArray = append(listArray, list)
 	}
 
-	rulesStorage, err := urlfilter.NewRuleStorage(listArray)
+	rulesStorage, err := filterlist.NewRuleStorage(listArray)
 	if err != nil {
-		return fmt.Errorf("urlfilter.NewRuleStorage(): %s", err)
+		return fmt.Errorf("filterlist.NewRuleStorage(): %s", err)
 	}
 	filteringEngine := urlfilter.NewDNSEngine(rulesStorage)
 
@@ -491,14 +493,14 @@ func (d *Dnsfilter) matchHost(host string, qtype uint16) (Result, error) {
 		return Result{}, nil
 	}
 
-	rules, ok := d.filteringEngine.Match(host)
+	frules, ok := d.filteringEngine.Match(host)
 	if !ok {
 		return Result{}, nil
 	}
 
-	log.Tracef("%d rules matched for host '%s'", len(rules), host)
+	log.Tracef("%d rules matched for host '%s'", len(frules), host)
 
-	for _, rule := range rules {
+	for _, rule := range frules {
 
 		log.Tracef("Found rule for host '%s': '%s'  list_id: %d",
 			host, rule.Text(), rule.GetFilterListID())
@@ -509,7 +511,7 @@ func (d *Dnsfilter) matchHost(host string, qtype uint16) (Result, error) {
 		res.FilterID = int64(rule.GetFilterListID())
 		res.Rule = rule.Text()
 
-		if netRule, ok := rule.(*urlfilter.NetworkRule); ok {
+		if netRule, ok := rule.(*rules.NetworkRule); ok {
 
 			if netRule.Whitelist {
 				res.Reason = NotFilteredWhiteList
@@ -517,7 +519,7 @@ func (d *Dnsfilter) matchHost(host string, qtype uint16) (Result, error) {
 			}
 			return res, nil
 
-		} else if hostRule, ok := rule.(*urlfilter.HostRule); ok {
+		} else if hostRule, ok := rule.(*rules.HostRule); ok {
 
 			if qtype == dns.TypeA && hostRule.IP.To4() != nil {
 				// either IPv4 or IPv4-mapped IPv6 address
