@@ -20,7 +20,6 @@ class Dashboard extends Component {
     getAllStats = () => {
         this.props.getStats();
         this.props.getStatsConfig();
-        this.props.getClients();
     };
 
     getToggleFilteringButton = () => {
@@ -44,7 +43,6 @@ class Dashboard extends Component {
         const { dashboard, stats, t } = this.props;
         const dashboardProcessing =
             dashboard.processing ||
-            dashboard.processingClients ||
             stats.processingStats ||
             stats.processingGetConfig;
 

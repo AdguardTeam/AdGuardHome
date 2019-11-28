@@ -8,6 +8,7 @@ import subDays from 'date-fns/sub_days';
 import round from 'lodash/round';
 import axios from 'axios';
 import i18n from 'i18next';
+import uniqBy from 'lodash/uniqBy';
 import versionCompare from './versionCompare';
 
 import {
@@ -90,6 +91,17 @@ export const normalizeTopStats = stats => (
         name: Object.keys(item)[0],
         count: Object.values(item)[0],
     }))
+);
+
+export const addClientInfo = (data, clients, param) => (
+    data.map((row) => {
+        const clientIp = row[param];
+        const info = clients.find(item => item[clientIp]) || '';
+        return {
+            ...row,
+            info: (info && info[clientIp]) || '',
+        };
+    })
 );
 
 export const normalizeFilteringStatus = (filteringStatus) => {
@@ -341,4 +353,14 @@ export const getPathWithQueryString = (path, params) => {
     const searchParams = new URLSearchParams(params);
 
     return `${path}?${searchParams.toString()}`;
+};
+
+export const getParamsForClientsSearch = (data, param) => {
+    const uniqueClients = uniqBy(data, param);
+    return uniqueClients
+        .reduce((acc, item, idx) => {
+            const key = `ip${idx}`;
+            acc[key] = item[param];
+            return acc;
+        }, {});
 };

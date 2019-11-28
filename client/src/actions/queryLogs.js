@@ -2,7 +2,7 @@ import { createAction } from 'redux-actions';
 
 import apiClient from '../api/Api';
 import { addErrorToast, addSuccessToast } from './index';
-import { normalizeLogs } from '../helpers/helpers';
+import { normalizeLogs, getParamsForClientsSearch, addClientInfo } from '../helpers/helpers';
 import { TABLE_DEFAULT_PAGE_SIZE } from '../helpers/constants';
 
 const getLogsWithParams = async (config) => {
@@ -10,9 +10,12 @@ const getLogsWithParams = async (config) => {
     const rawLogs = await apiClient.getQueryLog({ ...filter, older_than });
     const { data, oldest } = rawLogs;
     const logs = normalizeLogs(data);
+    const clientsParams = getParamsForClientsSearch(logs, 'client');
+    const clients = await apiClient.findClients(clientsParams);
+    const logsWithClientInfo = addClientInfo(logs, clients, 'client');
 
     return {
-        logs, oldest, older_than, filter, ...values,
+        logs: logsWithClientInfo, oldest, older_than, filter, ...values,
     };
 };
 
