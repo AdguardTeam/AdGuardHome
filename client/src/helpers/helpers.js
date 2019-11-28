@@ -248,6 +248,20 @@ export const redirectToCurrentProtocol = (values, httpPort = 80) => {
 export const normalizeTextarea = text => text && text.replace(/[;, ]/g, '\n').split('\n').filter(n => n);
 
 export const getClientInfo = (clients, ip) => {
+    const client = clients
+        .find(item => item.ip_addrs && item.ip_addrs.find(clientIp => clientIp === ip));
+
+    if (!client) {
+        return '';
+    }
+
+    const { name, whois_info } = client;
+    const whois = Object.keys(whois_info).length > 0 ? whois_info : '';
+
+    return { name, whois };
+};
+
+export const getAutoClientInfo = (clients, ip) => {
     const client = clients.find(item => ip === item.ip);
 
     if (!client) {

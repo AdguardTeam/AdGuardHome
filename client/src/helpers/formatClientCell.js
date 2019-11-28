@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { getClientInfo, normalizeWhois } from './helpers';
+import { getClientInfo, getAutoClientInfo, normalizeWhois } from './helpers';
 import { WHOIS_ICONS } from './constants';
 
 const getFormattedWhois = (whois, t) => {
@@ -23,7 +23,7 @@ const getFormattedWhois = (whois, t) => {
 };
 
 export const formatClientCell = (value, clients, autoClients, t) => {
-    const clientInfo = getClientInfo(clients, value) || getClientInfo(autoClients, value);
+    const clientInfo = getClientInfo(clients, value) || getAutoClientInfo(autoClients, value);
     const { name, whois } = clientInfo;
     let whoisContainer = '';
     let nameContainer = value;
