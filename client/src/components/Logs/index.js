@@ -134,9 +134,16 @@ class Logs extends Component {
         );
     };
 
+    normalizeResponse = response => (
+        response.map((response) => {
+            const { value, type, ttl } = response;
+            return `${type}: ${value} (ttl=${ttl})`;
+        })
+    );
+
     getResponseCell = ({ value: responses, original }) => {
         const {
-            reason, filterId, rule, status,
+            reason, filterId, rule, status, originalAnswer,
         } = original;
         const { t, filtering } = this.props;
         const { filters } = filtering;
@@ -149,6 +156,7 @@ class Logs extends Component {
         const isBlockedService = reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
         const currentService = SERVICES.find(service => service.id === original.serviceName);
         const serviceName = currentService && currentService.name;
+        const normalizedAnswer = originalAnswer && this.normalizeResponse(originalAnswer);
         let filterName = '';
 
         if (filterId === 0) {
@@ -168,7 +176,12 @@ class Logs extends Component {
         return (
             <div className="logs__row logs__row--column">
                 <div className="logs__text-wrap">
-                    {(isFiltered || isBlockedService) && (
+                    {originalAnswer && (
+                        <span className="logs__text">
+                            <Trans>blocked_by_response</Trans>
+                        </span>
+                    )}
+                    {!originalAnswer && (isFiltered || isBlockedService) && (
                         <span className="logs__text" title={parsedFilteredReason}>
                             {parsedFilteredReason}
                         </span>
@@ -183,7 +196,10 @@ class Logs extends Component {
                     )}
                 </div>
                 <div className="logs__list-wrap">
-                    {this.renderResponseList(responses, status)}
+                    {originalAnswer
+                        ? this.renderResponseList(normalizedAnswer, status)
+                        : this.renderResponseList(responses, status)
+                    }
                     {isWhiteList && this.renderTooltip(isWhiteList, rule, filterName)}
                 </div>
             </div>
