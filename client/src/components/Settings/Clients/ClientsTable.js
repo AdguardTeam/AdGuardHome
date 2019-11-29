@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Trans, withNamespaces } from 'react-i18next';
 import ReactTable from 'react-table';
 
-import { MODAL_TYPE, CLIENT_ID } from '../../../helpers/constants';
+import { MODAL_TYPE } from '../../../helpers/constants';
 import Card from '../../ui/Card';
 import Modal from './Modal';
 import WrapCell from './WrapCell';
@@ -40,10 +40,7 @@ class ClientsTable extends Component {
         const client = clients.find(item => name === item.name);
 
         if (client) {
-            const identifier = client.mac ? CLIENT_ID.MAC : CLIENT_ID.IP;
-
             return {
-                identifier,
                 use_global_settings: true,
                 use_global_blocked_services: true,
                 ...client,
@@ -51,7 +48,7 @@ class ClientsTable extends Component {
         }
 
         return {
-            identifier: CLIENT_ID.IP,
+            ids: [''],
             use_global_settings: true,
             use_global_blocked_services: true,
         };
@@ -76,28 +73,22 @@ class ClientsTable extends Component {
     columns = [
         {
             Header: this.props.t('table_client'),
-            accessor: 'ip',
+            accessor: 'ids',
             minWidth: 150,
             Cell: (row) => {
-                if (row.original && row.original.mac) {
-                    return (
-                        <div className="logs__row logs__row--overflow">
-                            <span className="logs__text" title={row.original.mac}>
-                                {row.original.mac} <em>(MAC)</em>
-                            </span>
-                        </div>
-                    );
-                } else if (row.value) {
-                    return (
-                        <div className="logs__row logs__row--overflow">
-                            <span className="logs__text" title={row.value}>
-                                {row.value} <em>(IP)</em>
-                            </span>
-                        </div>
-                    );
-                }
+                const { value } = row;
 
-                return '';
+                return (
+                    <div className="logs__row logs__row--overflow">
+                        <span className="logs__text">
+                            {value.map(address => (
+                                <div key={address} title={address}>
+                                    {address}
+                                </div>
+                            ))}
+                        </span>
+                    </div>
+                );
             },
         },
         {
@@ -119,9 +110,7 @@ class ClientsTable extends Component {
 
                 return (
                     <div className="logs__row logs__row--overflow">
-                        <div className="logs__text" title={title}>
-                            {title}
-                        </div>
+                        <div className="logs__text">{title}</div>
                     </div>
                 );
             },

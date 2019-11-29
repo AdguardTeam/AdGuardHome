@@ -98,7 +98,6 @@ func run(args options) {
 	}()
 
 	initConfig()
-	config.clients.Init()
 	initServices()
 
 	if !config.firstRun {
@@ -118,6 +117,9 @@ func run(args options) {
 			os.Exit(0)
 		}
 	}
+
+	config.clients.Init(config.Clients)
+	config.Clients = nil
 
 	if (runtime.GOOS == "linux" || runtime.GOOS == "darwin") &&
 		config.RlimitNoFile != 0 {
@@ -370,11 +372,13 @@ func cleanup() {
 
 // Stop HTTP server, possibly waiting for all active connections to be closed
 func stopHTTPServer() {
+	log.Info("Stopping HTTP server...")
 	config.httpsServer.shutdown = true
 	if config.httpsServer.server != nil {
 		config.httpsServer.server.Shutdown(context.TODO())
 	}
 	config.httpServer.Shutdown(context.TODO())
+	log.Info("Stopped HTTP server")
 }
 
 // This function is called before application exits

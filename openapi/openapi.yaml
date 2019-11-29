@@ -772,6 +772,22 @@ paths:
                 200:
                     description: OK
 
+    /clients/find:
+        get:
+            tags:
+                - clients
+            operationId: clientsFind
+            summary: 'Get information about selected clients by their IP address'
+            parameters:
+                - name: ip0
+                  in: query
+                  type: string
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/ClientsFindResponse"
+
 
     /blocked_services/list:
         get:
@@ -1589,16 +1605,15 @@ definitions:
         type: "object"
         description: "Client information"
         properties:
-            ip:
-                type: "string"
-                description: "IP address"
-                example: "127.0.0.1"
             name:
                 type: "string"
                 description: "Name"
                 example: "localhost"
-            mac:
-                type: "string"
+            ids:
+                type: "array"
+                description: "IP, CIDR or MAC address"
+                items:
+                    type: "string"
             use_global_settings:
                 type: "boolean"
             filtering_enabled:
@@ -1645,6 +1660,20 @@ definitions:
         properties:
             name:
                 type: "string"
+
+    ClientsFindResponse:
+        type: "array"
+        description: "Response to clients find operation"
+        items:
+            $ref: "#/definitions/ClientsFindEntry"
+
+    ClientsFindEntry:
+        type: "object"
+        properties:
+            "1.2.3.4":
+                items:
+                    $ref: "#/definitions/Client"
+
     Clients:
         type: "object"
         properties:

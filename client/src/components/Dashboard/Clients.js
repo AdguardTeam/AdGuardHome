@@ -28,19 +28,17 @@ const countCell = dnsQueries =>
         return <Cell value={value} percent={percent} color={percentColor} />;
     };
 
-const clientCell = (clients, autoClients, t) =>
+const clientCell = t =>
     function cell(row) {
-        const { value } = row;
-
         return (
             <div className="logs__row logs__row--overflow logs__row--column">
-                {formatClientCell(value, clients, autoClients, t)}
+                {formatClientCell(row, t)}
             </div>
         );
     };
 
 const Clients = ({
-    t, refreshButton, topClients, subtitle, clients, autoClients, dnsQueries,
+    t, refreshButton, topClients, subtitle, dnsQueries,
 }) => (
     <Card
         title={t('top_clients')}
@@ -49,9 +47,10 @@ const Clients = ({
         refresh={refreshButton}
     >
         <ReactTable
-            data={topClients.map(({ name: ip, count }) => ({
+            data={topClients.map(({ name: ip, count, info }) => ({
                 ip,
                 count,
+                info,
             }))}
             columns={[
                 {
@@ -59,7 +58,7 @@ const Clients = ({
                     accessor: 'ip',
                     sortMethod: (a, b) =>
                         parseInt(a.replace(/\./g, ''), 10) - parseInt(b.replace(/\./g, ''), 10),
-                    Cell: clientCell(clients, autoClients, t),
+                    Cell: clientCell(t),
                 },
                 {
                     Header: <Trans>requests_count</Trans>,

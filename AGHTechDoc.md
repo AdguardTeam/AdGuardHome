@@ -21,6 +21,7 @@ Contents:
 	* Add client
 	* Update client
 	* Delete client
+	* API: Find clients by IP
 * Enable DHCP server
 	* "Show DHCP status" command
 	* "Check DHCP" command
@@ -618,8 +619,6 @@ Notes:
 
 * `name`, `ip` and `mac` values are unique.
 
-* `ip` & `mac` values can't be set both at the same time.
-
 * If `mac` is set and DHCP server is enabled, IP is taken from DHCP lease table.
 
 * If `use_global_settings` is true, then DNS responses for this client are processed and filtered using global settings.
@@ -643,8 +642,7 @@ Response:
 	clients: [
 		{
 			name: "client1"
-			ip: "..."
-			mac: "..."
+			ids: ["...", ...] // IP, CIDR or MAC
 			use_global_settings: true
 			filtering_enabled: false
 			parental_enabled: false
@@ -682,8 +680,7 @@ Request:
 
 	{
 		name: "client1"
-		ip: "..."
-		mac: "..."
+		ids: ["...", ...] // IP, CIDR or MAC
 		use_global_settings: true
 		filtering_enabled: false
 		parental_enabled: false
@@ -712,8 +709,7 @@ Request:
 		name: "client1"
 		data: {
 			name: "client1"
-			ip: "..."
-			mac: "..."
+			ids: ["...", ...] // IP, CIDR or MAC
 			use_global_settings: true
 			filtering_enabled: false
 			parental_enabled: false
@@ -750,6 +746,41 @@ Response:
 Error response (Client not found):
 
 	400
+
+
+### API: Find clients by IP
+
+This method returns the list of clients (manual and auto-clients) matching the IP list.
+For auto-clients only `name`, `ids` and `whois_info` fields are set.  Other fields are empty.
+
+Request:
+
+	GET /control/clients/find?ip0=...&ip1=...&ip2=...
+
+Response:
+
+	200 OK
+
+	[
+	{
+		"1.2.3.4": {
+			name: "client1"
+			ids: ["...", ...] // IP, CIDR or MAC
+			use_global_settings: true
+			filtering_enabled: false
+			parental_enabled: false
+			safebrowsing_enabled: false
+			safesearch_enabled: false
+			use_global_blocked_services: true
+			blocked_services: [ "name1", ... ]
+			whois_info: {
+				key: "value"
+				...
+			}
+		}
+	}
+	...
+	]
 
 
 ## DNS access settings

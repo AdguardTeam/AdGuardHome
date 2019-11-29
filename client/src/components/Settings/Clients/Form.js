@@ -1,14 +1,20 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import { Field, reduxForm, formValueSelector } from 'redux-form';
+import { Field, FieldArray, reduxForm, formValueSelector } from 'redux-form';
 import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 
+import i18n from '../../../i18n';
 import Tabs from '../../ui/Tabs';
 import { toggleAllServices } from '../../../helpers/helpers';
-import { renderField, renderRadioField, renderSelectField, renderServiceField, ip, mac, required } from '../../../helpers/form';
-import { CLIENT_ID, SERVICES } from '../../../helpers/constants';
+import {
+    renderField,
+    renderGroupField,
+    renderSelectField,
+    renderServiceField,
+} from '../../../helpers/form';
+import { SERVICES } from '../../../helpers/constants';
 import './Service.css';
 
 const settingsCheckboxes = [
@@ -34,6 +40,67 @@ const settingsCheckboxes = [
     },
 ];
 
+const validate = (values) => {
+    const errors = {};
+    const { name, ids } = values;
+
+    if (!name || !name.length) {
+        errors.name = i18n.t('form_error_required');
+    }
+
+    if (ids && ids.length) {
+        const idArrayErrors = [];
+        ids.forEach((id, idx) => {
+            if (!id || !id.length) {
+                idArrayErrors[idx] = i18n.t('form_error_required');
+            }
+        });
+
+        if (idArrayErrors.length) {
+            errors.ids = idArrayErrors;
+        }
+    }
+
+    return errors;
+};
+
+const renderFields = (placeholder, buttonTitle) =>
+    function cell(row) {
+        const {
+            fields,
+            meta: { error },
+        } = row;
+
+        return (
+            <div className="form__group">
+                {fields.map((ip, index) => (
+                    <div key={index} className="mb-1">
+                        <Field
+                            name={ip}
+                            component={renderGroupField}
+                            type="text"
+                            className="form-control"
+                            placeholder={placeholder}
+                            isActionAvailable={index !== 0}
+                            removeField={() => fields.remove(index)}
+                        />
+                    </div>
+                ))}
+                <button
+                    type="button"
+                    className="btn btn-link btn-block btn-sm"
+                    onClick={() => fields.push()}
+                    title={buttonTitle}
+                >
+                    <svg className="icon icon--close">
+                        <use xlinkHref="#plus" />
+                    </svg>
+                </button>
+                {error && <div className="error">{error}</div>}
+            </div>
+        );
+    };
+
 let Form = (props) => {
     const {
         t,
@@ -42,92 +109,53 @@ let Form = (props) => {
         change,
         pristine,
         submitting,
-        clientIdentifier,
         useGlobalSettings,
         useGlobalServices,
         toggleClientModal,
         processingAdding,
         processingUpdating,
+        invalid,
     } = props;
 
     return (
         <form onSubmit={handleSubmit}>
             <div className="modal-body">
-                <div className="form__group">
-                    <div className="form__inline mb-2">
-                        <strong className="mr-3">
-                            <Trans>client_identifier</Trans>
-                        </strong>
-                        <div className="custom-controls-stacked">
-                            <Field
-                                name="identifier"
-                                component={renderRadioField}
-                                type="radio"
-                                className="form-control mr-2"
-                                value="ip"
-                                placeholder={t('ip_address')}
-                            />
-                            <Field
-                                name="identifier"
-                                component={renderRadioField}
-                                type="radio"
-                                className="form-control mr-2"
-                                value="mac"
-                                placeholder="MAC"
-                            />
+                <div className="form__group mb-0">
+                    <div className="form__group">
+                        <Field
+                            id="name"
+                            name="name"
+                            component={renderField}
+                            type="text"
+                            className="form-control"
+                            placeholder={t('form_client_name')}
+                        />
+                    </div>
+
+                    <div className="form__group">
+                        <div className="form__label">
+                            <strong className="mr-3">
+                                <Trans>client_identifier</Trans>
+                            </strong>
+                        </div>
+                        <div className="form__desc mt-0">
+                            <Trans
+                                components={[
+                                    <a href="#dhcp" key="0">
+                                        link
+                                    </a>,
+                                ]}
+                            >
+                                client_identifier_desc
+                            </Trans>
                         </div>
                     </div>
-                    <div className="row">
-                        <div className="col col-sm-6">
-                            {clientIdentifier === CLIENT_ID.IP && (
-                                <div className="form__group">
-                                    <Field
-                                        id="ip"
-                                        name="ip"
-                                        component={renderField}
-                                        type="text"
-                                        className="form-control"
-                                        placeholder={t('form_enter_ip')}
-                                        validate={[ip, required]}
-                                    />
-                                </div>
-                            )}
-                            {clientIdentifier === CLIENT_ID.MAC && (
-                                <div className="form__group">
-                                    <Field
-                                        id="mac"
-                                        name="mac"
-                                        component={renderField}
-                                        type="text"
-                                        className="form-control"
-                                        placeholder={t('form_enter_mac')}
-                                        validate={[mac, required]}
-                                    />
-                                </div>
-                            )}
-                        </div>
-                        <div className="col col-sm-6">
-                            <Field
-                                id="name"
-                                name="name"
-                                component={renderField}
-                                type="text"
-                                className="form-control"
-                                placeholder={t('form_client_name')}
-                                validate={[required]}
-                            />
-                        </div>
-                    </div>
-                    <div className="form__desc">
-                        <Trans
-                            components={[
-                                <a href="#dhcp" key="0">
-                                    link
-                                </a>,
-                            ]}
-                        >
-                            client_identifier_desc
-                        </Trans>
+
+                    <div className="form__group">
+                        <FieldArray
+                            name="ids"
+                            component={renderFields(t('form_enter_id'), t('form_add_id'))}
+                        />
                     </div>
                 </div>
 
@@ -140,7 +168,11 @@ let Form = (props) => {
                                     type="checkbox"
                                     component={renderSelectField}
                                     placeholder={t(setting.placeholder)}
-                                    disabled={setting.name !== 'use_global_settings' ? useGlobalSettings : false}
+                                    disabled={
+                                        setting.name !== 'use_global_settings'
+                                            ? useGlobalSettings
+                                            : false
+                                    }
                                 />
                             </div>
                         ))}
@@ -210,7 +242,13 @@ let Form = (props) => {
                     <button
                         type="submit"
                         className="btn btn-success btn-standard"
-                        disabled={submitting || pristine || processingAdding || processingUpdating}
+                        disabled={
+                            submitting ||
+                            invalid ||
+                            pristine ||
+                            processingAdding ||
+                            processingUpdating
+                        }
                     >
                         <Trans>save_btn</Trans>
                     </button>
@@ -227,22 +265,20 @@ Form.propTypes = {
     change: PropTypes.func.isRequired,
     submitting: PropTypes.bool.isRequired,
     toggleClientModal: PropTypes.func.isRequired,
-    clientIdentifier: PropTypes.string,
     useGlobalSettings: PropTypes.bool,
     useGlobalServices: PropTypes.bool,
     t: PropTypes.func.isRequired,
     processingAdding: PropTypes.bool.isRequired,
     processingUpdating: PropTypes.bool.isRequired,
+    invalid: PropTypes.bool.isRequired,
 };
 
 const selector = formValueSelector('clientForm');
 
 Form = connect((state) => {
-    const clientIdentifier = selector(state, 'identifier');
     const useGlobalSettings = selector(state, 'use_global_settings');
     const useGlobalServices = selector(state, 'use_global_blocked_services');
     return {
-        clientIdentifier,
         useGlobalSettings,
         useGlobalServices,
     };
@@ -253,5 +289,6 @@ export default flow([
     reduxForm({
         form: 'clientForm',
         enableReinitialize: true,
+        validate,
     }),
 ])(Form);

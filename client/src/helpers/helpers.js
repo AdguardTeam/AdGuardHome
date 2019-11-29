@@ -8,6 +8,7 @@ import subDays from 'date-fns/sub_days';
 import round from 'lodash/round';
 import axios from 'axios';
 import i18n from 'i18next';
+import uniqBy from 'lodash/uniqBy';
 import versionCompare from './versionCompare';
 
 import {
@@ -90,6 +91,17 @@ export const normalizeTopStats = stats => (
         name: Object.keys(item)[0],
         count: Object.values(item)[0],
     }))
+);
+
+export const addClientInfo = (data, clients, param) => (
+    data.map((row) => {
+        const clientIp = row[param];
+        const info = clients.find(item => item[clientIp]) || '';
+        return {
+            ...row,
+            info: (info && info[clientIp]) || '',
+        };
+    })
 );
 
 export const normalizeFilteringStatus = (filteringStatus) => {
@@ -248,6 +260,20 @@ export const redirectToCurrentProtocol = (values, httpPort = 80) => {
 export const normalizeTextarea = text => text && text.replace(/[;, ]/g, '\n').split('\n').filter(n => n);
 
 export const getClientInfo = (clients, ip) => {
+    const client = clients
+        .find(item => item.ip_addrs && item.ip_addrs.find(clientIp => clientIp === ip));
+
+    if (!client) {
+        return '';
+    }
+
+    const { name, whois_info } = client;
+    const whois = Object.keys(whois_info).length > 0 ? whois_info : '';
+
+    return { name, whois };
+};
+
+export const getAutoClientInfo = (clients, ip) => {
     const client = clients.find(item => ip === item.ip);
 
     if (!client) {
@@ -327,4 +353,14 @@ export const getPathWithQueryString = (path, params) => {
     const searchParams = new URLSearchParams(params);
 
     return `${path}?${searchParams.toString()}`;
+};
+
+export const getParamsForClientsSearch = (data, param) => {
+    const uniqueClients = uniqBy(data, param);
+    return uniqueClients
+        .reduce((acc, item, idx) => {
+            const key = `ip${idx}`;
+            acc[key] = item[param];
+            return acc;
+        }, {});
 };

@@ -29,6 +29,50 @@ export const renderField = ({
     </Fragment>
 );
 
+export const renderGroupField = ({
+    input,
+    id,
+    className,
+    placeholder,
+    type,
+    disabled,
+    autoComplete,
+    isActionAvailable,
+    removeField,
+    meta: { touched, error },
+}) => (
+    <Fragment>
+        <div className="input-group">
+            <input
+                {...input}
+                id={id}
+                placeholder={placeholder}
+                type={type}
+                className={className}
+                disabled={disabled}
+                autoComplete={autoComplete}
+            />
+            {isActionAvailable &&
+                <span className="input-group-append">
+                    <button
+                        type="button"
+                        className="btn btn-secondary btn-icon"
+                        onClick={removeField}
+                    >
+                        <svg className="icon icon--close">
+                            <use xlinkHref="#cross" />
+                        </svg>
+                    </button>
+                </span>
+            }
+        </div>
+
+        {!disabled &&
+            touched &&
+            (error && <span className="form__message form__message--error">{error}</span>)}
+    </Fragment>
+);
+
 export const renderRadioField = ({
     input, placeholder, disabled, meta: { touched, error },
 }) => (
@@ -102,6 +146,7 @@ export const renderServiceField = ({
     </Fragment>
 );
 
+// Validation functions
 export const required = (value) => {
     if (value || value === 0) {
         return false;

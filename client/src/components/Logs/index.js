@@ -31,7 +31,6 @@ class Logs extends Component {
         this.props.setLogsPage(TABLE_FIRST_PAGE);
         this.getLogs(...INITIAL_REQUEST_DATA);
         this.props.getFilteringStatus();
-        this.props.getClients();
         this.props.getLogsConfig();
     }
 
@@ -191,9 +190,9 @@ class Logs extends Component {
         );
     };
 
-    getClientCell = ({ original, value }) => {
-        const { dashboard, t } = this.props;
-        const { clients, autoClients } = dashboard;
+    getClientCell = (row) => {
+        const { original } = row;
+        const { t } = this.props;
         const { reason, domain } = original;
         const isFiltered = this.checkFiltered(reason);
         const isRewrite = this.checkRewrite(reason);
@@ -201,7 +200,7 @@ class Logs extends Component {
         return (
             <Fragment>
                 <div className="logs__row logs__row--overflow logs__row--column">
-                    {formatClientCell(value, clients, autoClients, t)}
+                    {formatClientCell(row, t)}
                 </div>
                 {isRewrite ? (
                     <div className="logs__action">
@@ -232,12 +231,11 @@ class Logs extends Component {
     };
 
     renderLogs() {
-        const { queryLogs, dashboard, t } = this.props;
-        const { processingClients } = dashboard;
+        const { queryLogs, t } = this.props;
         const {
             processingGetLogs, processingGetConfig, logs, pages, page,
         } = queryLogs;
-        const isLoading = processingGetLogs || processingClients || processingGetConfig;
+        const isLoading = processingGetLogs || processingGetConfig;
 
         const columns = [
             {

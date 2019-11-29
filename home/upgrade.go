@@ -11,7 +11,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-const currentSchemaVersion = 5 // used for upgrading from old configs to new config
+const currentSchemaVersion = 6 // used for upgrading from old configs to new config
 
 // Performs necessary upgrade operations if needed
 func upgradeConfig() error {
@@ -79,6 +79,12 @@ func upgradeConfigSchema(oldVersion int, diskConfig *map[string]interface{}) err
 		fallthrough
 	case 4:
 		err := upgradeSchema4to5(diskConfig)
+		if err != nil {
+			return err
+		}
+		fallthrough
+	case 5:
+		err := upgradeSchema5to6(diskConfig)
 		if err != nil {
 			return err
 		}
@@ -266,5 +272,74 @@ func upgradeSchema4to5(diskConfig *map[string]interface{}) error {
 	}
 	users := []User{u}
 	(*diskConfig)["users"] = users
+	return nil
+}
+
+// clients:
+// ...
+//   ip: 127.0.0.1
+//   mac: ...
+//
+// ->
+//
+// clients:
+// ...
+//   ids:
+//   - 127.0.0.1
+//   - ...
+func upgradeSchema5to6(diskConfig *map[string]interface{}) error {
+	log.Printf("%s(): called", _Func())
+
+	(*diskConfig)["schema_version"] = 6
+
+	clients, ok := (*diskConfig)["clients"]
+	if !ok {
+		return nil
+	}
+
+	switch arr := clients.(type) {
+	case []interface{}:
+
+		for i := range arr {
+
+			switch c := arr[i].(type) {
+
+			case map[interface{}]interface{}:
+				_ip, ok := c["ip"]
+				ids := []string{}
+				if ok {
+					ip, ok := _ip.(string)
+					if !ok {
+						log.Fatalf("client.ip is not a string: %v", _ip)
+						return nil
+					}
+					if len(ip) != 0 {
+						ids = append(ids, ip)
+					}
+				}
+
+				_mac, ok := c["mac"]
+				if ok {
+					mac, ok := _mac.(string)
+					if !ok {
+						log.Fatalf("client.mac is not a string: %v", _mac)
+						return nil
+					}
+					if len(mac) != 0 {
+						ids = append(ids, mac)
+					}
+				}
+
+				c["ids"] = ids
+
+			default:
+				continue
+			}
+		}
+
+	default:
+		return nil
+	}
+
 	return nil
 }

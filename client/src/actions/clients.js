@@ -2,7 +2,6 @@ import { createAction } from 'redux-actions';
 import { t } from 'i18next';
 import apiClient from '../api/Api';
 import { addErrorToast, addSuccessToast, getClients } from './index';
-import { CLIENT_ID } from '../helpers/constants';
 
 export const toggleClientModal = createAction('TOGGLE_CLIENT_MODAL');
 
@@ -13,18 +12,7 @@ export const addClientSuccess = createAction('ADD_CLIENT_SUCCESS');
 export const addClient = config => async (dispatch) => {
     dispatch(addClientRequest());
     try {
-        let data;
-        if (config.identifier === CLIENT_ID.MAC) {
-            const { ip, identifier, ...values } = config;
-
-            data = { ...values };
-        } else {
-            const { mac, identifier, ...values } = config;
-
-            data = { ...values };
-        }
-
-        await apiClient.addClient(data);
+        await apiClient.addClient(config);
         dispatch(addClientSuccess());
         dispatch(toggleClientModal());
         dispatch(addSuccessToast(t('client_added', { key: config.name })));
@@ -59,16 +47,7 @@ export const updateClientSuccess = createAction('UPDATE_CLIENT_SUCCESS');
 export const updateClient = (config, name) => async (dispatch) => {
     dispatch(updateClientRequest());
     try {
-        let data;
-        if (config.identifier === CLIENT_ID.MAC) {
-            const { ip, identifier, ...values } = config;
-
-            data = { name, data: { ...values } };
-        } else {
-            const { mac, identifier, ...values } = config;
-
-            data = { name, data: { ...values } };
-        }
+        const data = { name, data: { ...config } };
 
         await apiClient.updateClient(data);
         dispatch(updateClientSuccess());

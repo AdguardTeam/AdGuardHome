@@ -353,6 +353,7 @@ class Api {
 
     // Per-client settings
     GET_CLIENTS = { path: 'clients', method: 'GET' };
+    FIND_CLIENTS = { path: 'clients/find', method: 'GET' };
     ADD_CLIENT = { path: 'clients/add', method: 'POST' };
     DELETE_CLIENT = { path: 'clients/delete', method: 'POST' };
     UPDATE_CLIENT = { path: 'clients/update', method: 'POST' };
@@ -387,6 +388,12 @@ class Api {
             headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
+    }
+
+    findClients(params) {
+        const { path, method } = this.FIND_CLIENTS;
+        const url = getPathWithQueryString(path, params);
+        return this.makeRequest(url, method);
     }
 
     // DNS access settings
