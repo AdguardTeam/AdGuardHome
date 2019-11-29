@@ -11,6 +11,7 @@ func TestClients(t *testing.T) {
 	var e error
 	var b bool
 	clients := clientsContainer{}
+	clients.testing = true
 
 	clients.Init(nil, nil)
 
@@ -149,6 +150,7 @@ func TestClients(t *testing.T) {
 func TestClientsWhois(t *testing.T) {
 	var c Client
 	clients := clientsContainer{}
+	clients.testing = true
 	clients.Init(nil, nil)
 
 	whois := [][]string{{"orgname", "orgname-val"}, {"country", "country-val"}}

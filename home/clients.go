@@ -62,6 +62,8 @@ type clientsContainer struct {
 	lock    sync.Mutex
 
 	dhcpServer *dhcpd.Server
+
+	testing bool // if TRUE, this object is used for internal tests
 }
 
 // Init initializes clients container
@@ -76,9 +78,11 @@ func (clients *clientsContainer) Init(objects []clientObject, dhcpServer *dhcpd.
 	clients.dhcpServer = dhcpServer
 	clients.addFromConfig(objects)
 
-	go clients.periodicUpdate()
+	if !clients.testing {
+		go clients.periodicUpdate()
 
-	clients.registerWebHandlers()
+		clients.registerWebHandlers()
+	}
 }
 
 type clientObject struct {
