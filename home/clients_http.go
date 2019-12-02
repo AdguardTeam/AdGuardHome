@@ -168,8 +168,7 @@ func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.
 		return
 	}
 
-	_ = writeAllConfigsAndReloadDNS()
-	returnOK(w)
+	onConfigModified()
 }
 
 // Remove client
@@ -192,8 +191,7 @@ func (clients *clientsContainer) handleDelClient(w http.ResponseWriter, r *http.
 		return
 	}
 
-	_ = writeAllConfigsAndReloadDNS()
-	returnOK(w)
+	onConfigModified()
 }
 
 type updateJSON struct {
@@ -232,8 +230,7 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 		return
 	}
 
-	_ = writeAllConfigsAndReloadDNS()
-	returnOK(w)
+	onConfigModified()
 }
 
 // Get the list of clients by IP address list

@@ -172,7 +172,12 @@ func handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
 	}
 
 	config.UserRules = strings.Split(string(body), "\n")
-	_ = writeAllConfigs()
+	onConfigModified()
+	userFilter := userFilter()
+	err = userFilter.save()
+	if err != nil {
+		log.Error("Couldn't save the user filter: %s", err)
+	}
 	enableFilters(true)
 }
 
@@ -218,7 +223,7 @@ func handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
 			RulesCount: uint32(f.RulesCount),
 		}
 
-		if f.LastUpdated.Second() != 0 {
+		if !f.LastUpdated.IsZero() {
 			fj.LastUpdated = f.LastUpdated.Format(time.RFC3339)
 		}
 

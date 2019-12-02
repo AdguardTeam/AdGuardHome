@@ -3,6 +3,7 @@ package dnsforward
 import (
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"runtime"
@@ -28,6 +29,12 @@ const (
 	parentalBlockHost     = "family-block.dns.adguard.com"
 )
 
+var defaultDNS = []string{
+	"https://1.1.1.1/dns-query",
+	"https://1.0.0.1/dns-query",
+}
+var defaultBootstrap = []string{"1.1.1.1", "1.0.0.1"}
+
 // Server is the main way to start a DNS server.
 //
 // Example:
@@ -43,12 +50,9 @@ type Server struct {
 	dnsFilter *dnsfilter.Dnsfilter // DNS filter instance
 	queryLog  querylog.QueryLog    // Query log instance
 	stats     stats.Stats
+	access    *accessCtx
 
-	AllowedClients         map[string]bool // IP addresses of whitelist clients
-	DisallowedClients      map[string]bool // IP addresses of clients that should be blocked
-	AllowedClientsIPNet    []net.IPNet     // CIDRs of whitelist clients
-	DisallowedClientsIPNet []net.IPNet     // CIDRs of clients that should be blocked
-	BlockedHosts           map[string]bool // hosts that should be blocked
+	webRegistered bool
 
 	sync.RWMutex
 	conf ServerConfig
@@ -61,14 +65,27 @@ func NewServer(dnsFilter *dnsfilter.Dnsfilter, stats stats.Stats, queryLog query
 	s.dnsFilter = dnsFilter
 	s.stats = stats
 	s.queryLog = queryLog
+
+	if runtime.GOARCH == "mips" || runtime.GOARCH == "mipsle" {
+		// Use plain DNS on MIPS, encryption is too slow
+		defaultDNS = []string{"1.1.1.1", "1.0.0.1"}
+	}
 	return s
 }
 
+// Close - close object
 func (s *Server) Close() {
 	s.Lock()
 	s.dnsFilter = nil
 	s.stats = nil
 	s.queryLog = nil
+	s.Unlock()
+}
+
+// WriteDiskConfig - write configuration
+func (s *Server) WriteDiskConfig(c *FilteringConfig) {
+	s.Lock()
+	*c = s.conf.FilteringConfig
 	s.Unlock()
 }
 
@@ -78,14 +95,10 @@ type FilteringConfig struct {
 	// Filtering callback function
 	FilterHandler func(clientAddr string, settings *dnsfilter.RequestFilteringSettings) `yaml:"-"`
 
-	ProtectionEnabled          bool   `yaml:"protection_enabled"`      // whether or not use any of dnsfilter features
-	FilteringEnabled           bool   `yaml:"filtering_enabled"`       // whether or not use filter lists
-	FiltersUpdateIntervalHours uint32 `yaml:"filters_update_interval"` // time period to update filters (in hours)
+	ProtectionEnabled bool `yaml:"protection_enabled"` // whether or not use any of dnsfilter features
 
 	BlockingMode       string   `yaml:"blocking_mode"`        // mode how to answer filtered requests
 	BlockedResponseTTL uint32   `yaml:"blocked_response_ttl"` // if 0, then default is used (3600)
-	QueryLogEnabled    bool     `yaml:"querylog_enabled"`     // if true, query log is enabled
-	QueryLogInterval   uint32   `yaml:"querylog_interval"`    // time interval for query log (in days)
 	Ratelimit          int      `yaml:"ratelimit"`            // max number of requests per second from a given IP (0 to disable)
 	RatelimitWhitelist []string `yaml:"ratelimit_whitelist"`  // a list of whitelisted client IP addresses
 	RefuseAny          bool     `yaml:"refuse_any"`           // if true, refuse ANY requests
@@ -100,13 +113,8 @@ type FilteringConfig struct {
 	ParentalBlockHost     string `yaml:"parental_block_host"`
 	SafeBrowsingBlockHost string `yaml:"safebrowsing_block_host"`
 
-	// Names of services to block (globally).
-	// Per-client settings can override this configuration.
-	BlockedServices []string `yaml:"blocked_services"`
-
-	CacheSize uint `yaml:"cache_size"` // DNS cache size (in bytes)
-
-	DnsfilterConf dnsfilter.Config `yaml:",inline"`
+	CacheSize   uint     `yaml:"cache_size"` // DNS cache size (in bytes)
+	UpstreamDNS []string `yaml:"upstream_dns"`
 }
 
 // TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
@@ -133,6 +141,12 @@ type ServerConfig struct {
 
 	FilteringConfig
 	TLSConfig
+
+	// Called when the configuration is changed by HTTP request
+	ConfigModified func()
+
+	// Register an HTTP handler
+	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request))
 }
 
 // if any of ServerConfig values are zero, then default values from below are used
@@ -142,52 +156,11 @@ var defaultValues = ServerConfig{
 	FilteringConfig: FilteringConfig{BlockedResponseTTL: 3600},
 }
 
-func init() {
-	defaultDNS := []string{"8.8.8.8:53", "8.8.4.4:53"}
-
-	defaultUpstreams := make([]upstream.Upstream, 0)
-	for _, addr := range defaultDNS {
-		u, err := upstream.AddressToUpstream(addr, upstream.Options{Timeout: DefaultTimeout})
-		if err == nil {
-			defaultUpstreams = append(defaultUpstreams, u)
-		}
-	}
-	defaultValues.Upstreams = defaultUpstreams
-}
-
 // Start starts the DNS server
 func (s *Server) Start(config *ServerConfig) error {
 	s.Lock()
 	defer s.Unlock()
 	return s.startInternal(config)
-}
-
-func convertArrayToMap(dst *map[string]bool, src []string) {
-	*dst = make(map[string]bool)
-	for _, s := range src {
-		(*dst)[s] = true
-	}
-}
-
-// Split array of IP or CIDR into 2 containers for fast search
-func processIPCIDRArray(dst *map[string]bool, dstIPNet *[]net.IPNet, src []string) error {
-	*dst = make(map[string]bool)
-
-	for _, s := range src {
-		ip := net.ParseIP(s)
-		if ip != nil {
-			(*dst)[s] = true
-			continue
-		}
-
-		_, ipnet, err := net.ParseCIDR(s)
-		if err != nil {
-			return err
-		}
-		*dstIPNet = append(*dstIPNet, *ipnet)
-	}
-
-	return nil
 }
 
 // startInternal starts without locking
@@ -199,11 +172,32 @@ func (s *Server) startInternal(config *ServerConfig) error {
 	if config != nil {
 		s.conf = *config
 	}
+
+	if len(s.conf.UpstreamDNS) == 0 {
+		s.conf.UpstreamDNS = defaultDNS
+	}
+	if len(s.conf.BootstrapDNS) == 0 {
+		s.conf.BootstrapDNS = defaultBootstrap
+	}
+
+	upstreamConfig, err := proxy.ParseUpstreamsConfig(s.conf.UpstreamDNS, s.conf.BootstrapDNS, DefaultTimeout)
+	if err != nil {
+		return fmt.Errorf("DNS: proxy.ParseUpstreamsConfig: %s", err)
+	}
+	s.conf.Upstreams = upstreamConfig.Upstreams
+	s.conf.DomainsReservedUpstreams = upstreamConfig.DomainReservedUpstreams
+
 	if len(s.conf.ParentalBlockHost) == 0 {
 		s.conf.ParentalBlockHost = parentalBlockHost
 	}
 	if len(s.conf.SafeBrowsingBlockHost) == 0 {
 		s.conf.SafeBrowsingBlockHost = safeBrowsingBlockHost
+	}
+	if s.conf.UDPListenAddr == nil {
+		s.conf.UDPListenAddr = defaultValues.UDPListenAddr
+	}
+	if s.conf.TCPListenAddr == nil {
+		s.conf.TCPListenAddr = defaultValues.TCPListenAddr
 	}
 
 	proxyConfig := proxy.Config{
@@ -221,17 +215,11 @@ func (s *Server) startInternal(config *ServerConfig) error {
 		AllServers:               s.conf.AllServers,
 	}
 
-	err := processIPCIDRArray(&s.AllowedClients, &s.AllowedClientsIPNet, s.conf.AllowedClients)
+	s.access = &accessCtx{}
+	err = s.access.Init(s.conf.AllowedClients, s.conf.DisallowedClients, s.conf.BlockedHosts)
 	if err != nil {
 		return err
 	}
-
-	err = processIPCIDRArray(&s.DisallowedClients, &s.DisallowedClientsIPNet, s.conf.DisallowedClients)
-	if err != nil {
-		return err
-	}
-
-	convertArrayToMap(&s.BlockedHosts, s.conf.BlockedHosts)
 
 	if s.conf.TLSListenAddr != nil && len(s.conf.CertificateChainData) != 0 && len(s.conf.PrivateKeyData) != 0 {
 		proxyConfig.TLSListenAddr = s.conf.TLSListenAddr
@@ -245,16 +233,13 @@ func (s *Server) startInternal(config *ServerConfig) error {
 		}
 	}
 
-	if proxyConfig.UDPListenAddr == nil {
-		proxyConfig.UDPListenAddr = defaultValues.UDPListenAddr
-	}
-
-	if proxyConfig.TCPListenAddr == nil {
-		proxyConfig.TCPListenAddr = defaultValues.TCPListenAddr
-	}
-
 	if len(proxyConfig.Upstreams) == 0 {
-		proxyConfig.Upstreams = defaultValues.Upstreams
+		log.Fatal("len(proxyConfig.Upstreams) == 0")
+	}
+
+	if !s.webRegistered && s.conf.HTTPRegister != nil {
+		s.webRegistered = true
+		s.registerHandlers()
 	}
 
 	// Initialize and start the DNS proxy
@@ -293,6 +278,23 @@ func (s *Server) IsRunning() bool {
 	return isRunning
 }
 
+// Restart - restart server
+func (s *Server) Restart() error {
+	s.Lock()
+	defer s.Unlock()
+	log.Print("Start reconfiguring the server")
+	err := s.stopInternal()
+	if err != nil {
+		return errorx.Decorate(err, "could not reconfigure the server")
+	}
+	err = s.startInternal(nil)
+	if err != nil {
+		return errorx.Decorate(err, "could not reconfigure the server")
+	}
+
+	return nil
+}
+
 // Reconfigure applies the new configuration to the DNS server
 func (s *Server) Reconfigure(config *ServerConfig) error {
 	s.Lock()
@@ -324,59 +326,16 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.RUnlock()
 }
 
-// Return TRUE if this client should be blocked
-func (s *Server) isBlockedIP(ip string) bool {
-	if len(s.AllowedClients) != 0 || len(s.AllowedClientsIPNet) != 0 {
-		_, ok := s.AllowedClients[ip]
-		if ok {
-			return false
-		}
-
-		if len(s.AllowedClientsIPNet) != 0 {
-			ipAddr := net.ParseIP(ip)
-			for _, ipnet := range s.AllowedClientsIPNet {
-				if ipnet.Contains(ipAddr) {
-					return false
-				}
-			}
-		}
-
-		return true
-	}
-
-	_, ok := s.DisallowedClients[ip]
-	if ok {
-		return true
-	}
-
-	if len(s.DisallowedClientsIPNet) != 0 {
-		ipAddr := net.ParseIP(ip)
-		for _, ipnet := range s.DisallowedClientsIPNet {
-			if ipnet.Contains(ipAddr) {
-				return true
-			}
-		}
-	}
-
-	return false
-}
-
-// Return TRUE if this domain should be blocked
-func (s *Server) isBlockedDomain(host string) bool {
-	_, ok := s.BlockedHosts[host]
-	return ok
-}
-
 func (s *Server) beforeRequestHandler(p *proxy.Proxy, d *proxy.DNSContext) (bool, error) {
 	ip, _, _ := net.SplitHostPort(d.Addr.String())
-	if s.isBlockedIP(ip) {
+	if s.access.IsBlockedIP(ip) {
 		log.Tracef("Client IP %s is blocked by settings", ip)
 		return false, nil
 	}
 
 	if len(d.Req.Question) == 1 {
 		host := strings.TrimSuffix(d.Req.Question[0].Name, ".")
-		if s.isBlockedDomain(host) {
+		if s.access.IsBlockedDomain(host) {
 			log.Tracef("Domain %s is blocked by settings", host)
 			return false, nil
 		}

@@ -187,7 +187,7 @@ func handleBlockedServicesSet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	returnOK(w)
+	httpOK(r, w)
 }
 
 // RegisterBlockedServicesHandlers - register HTTP handlers

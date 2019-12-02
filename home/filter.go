@@ -499,7 +499,7 @@ func (filter *filter) LastTimeUpdated() time.Time {
 
 func enableFilters(async bool) {
 	var filters map[int]string
-	if config.DNS.FilteringConfig.FilteringEnabled {
+	if config.DNS.FilteringEnabled {
 		// convert array of filters
 		filters = make(map[int]string)
 
