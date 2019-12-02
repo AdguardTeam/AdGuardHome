@@ -28,6 +28,7 @@ Contents:
 	* "Enable DHCP" command
 	* Static IP check/set
 	* Add a static lease
+	* API: Reset DHCP configuration
 * DNS access settings
 	* List access settings
 	* Set access settings
@@ -537,6 +538,20 @@ Request:
 		"ip":"...",
 		"hostname":"..."
 	}
+
+Response:
+
+	200 OK
+
+
+### API: Reset DHCP configuration
+
+Clear all DHCP leases and configuration settings.
+DHCP server will be stopped if it's currently running.
+
+Request:
+
+	POST /control/dhcp/reset
 
 Response:
 

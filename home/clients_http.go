@@ -36,15 +36,15 @@ type clientListJSON struct {
 }
 
 // respond with information about configured clients
-func handleGetClients(w http.ResponseWriter, r *http.Request) {
+func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http.Request) {
 	data := clientListJSON{}
 
-	config.clients.lock.Lock()
-	for _, c := range config.clients.list {
+	clients.lock.Lock()
+	for _, c := range clients.list {
 		cj := clientToJSON(c)
 		data.Clients = append(data.Clients, cj)
 	}
-	for ip, ch := range config.clients.ipHost {
+	for ip, ch := range clients.ipHost {
 		cj := clientHostJSON{
 			IP:   ip,
 			Name: ch.Host,
@@ -69,7 +69,7 @@ func handleGetClients(w http.ResponseWriter, r *http.Request) {
 
 		data.AutoClients = append(data.AutoClients, cj)
 	}
-	config.clients.lock.Unlock()
+	clients.lock.Unlock()
 
 	w.Header().Set("Content-Type", "application/json")
 	e := json.NewEncoder(w).Encode(data)
@@ -139,7 +139,7 @@ func clientHostToJSON(ip string, ch ClientHost) clientHostJSONWithID {
 }
 
 // Add a new client
-func handleAddClient(w http.ResponseWriter, r *http.Request) {
+func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "failed to read request body: %s", err)
@@ -158,7 +158,7 @@ func handleAddClient(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
 	}
-	ok, err := config.clients.Add(*c)
+	ok, err := clients.Add(*c)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
@@ -173,7 +173,7 @@ func handleAddClient(w http.ResponseWriter, r *http.Request) {
 }
 
 // Remove client
-func handleDelClient(w http.ResponseWriter, r *http.Request) {
+func (clients *clientsContainer) handleDelClient(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "failed to read request body: %s", err)
@@ -187,7 +187,7 @@ func handleDelClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !config.clients.Del(cj.Name) {
+	if !clients.Del(cj.Name) {
 		httpError(w, http.StatusBadRequest, "Client not found")
 		return
 	}
@@ -202,7 +202,7 @@ type updateJSON struct {
 }
 
 // Update client's properties
-func handleUpdateClient(w http.ResponseWriter, r *http.Request) {
+func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "failed to read request body: %s", err)
@@ -226,7 +226,7 @@ func handleUpdateClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = config.clients.Update(dj.Name, *c)
+	err = clients.Update(dj.Name, *c)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
@@ -237,7 +237,7 @@ func handleUpdateClient(w http.ResponseWriter, r *http.Request) {
 }
 
 // Get the list of clients by IP address list
-func handleFindClient(w http.ResponseWriter, r *http.Request) {
+func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	data := []map[string]interface{}{}
 	for i := 0; ; i++ {
@@ -246,9 +246,9 @@ func handleFindClient(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		el := map[string]interface{}{}
-		c, ok := config.clients.Find(ip)
+		c, ok := clients.Find(ip)
 		if !ok {
-			ch, ok := config.clients.FindAutoClient(ip)
+			ch, ok := clients.FindAutoClient(ip)
 			if !ok {
 				continue // a client with this IP isn't found
 			}
@@ -277,10 +277,10 @@ func handleFindClient(w http.ResponseWriter, r *http.Request) {
 }
 
 // RegisterClientsHandlers registers HTTP handlers
-func RegisterClientsHandlers() {
-	httpRegister("GET", "/control/clients", handleGetClients)
-	httpRegister("POST", "/control/clients/add", handleAddClient)
-	httpRegister("POST", "/control/clients/delete", handleDelClient)
-	httpRegister("POST", "/control/clients/update", handleUpdateClient)
-	httpRegister("GET", "/control/clients/find", handleFindClient)
+func (clients *clientsContainer) registerWebHandlers() {
+	httpRegister("GET", "/control/clients", clients.handleGetClients)
+	httpRegister("POST", "/control/clients/add", clients.handleAddClient)
+	httpRegister("POST", "/control/clients/delete", clients.handleDelClient)
+	httpRegister("POST", "/control/clients/update", clients.handleUpdateClient)
+	httpRegister("GET", "/control/clients/find", clients.handleFindClient)
 }

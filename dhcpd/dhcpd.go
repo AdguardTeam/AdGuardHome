@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"net/http"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -38,13 +39,20 @@ type ServerConfig struct {
 	SubnetMask    string `json:"subnet_mask" yaml:"subnet_mask"`
 	RangeStart    string `json:"range_start" yaml:"range_start"`
 	RangeEnd      string `json:"range_end" yaml:"range_end"`
-	LeaseDuration uint   `json:"lease_duration" yaml:"lease_duration"` // in seconds
-	WorkDir       string `json:"-" yaml:"-"`
-	DBFilePath    string `json:"-" yaml:"-"` // path to DB file
+	LeaseDuration uint32 `json:"lease_duration" yaml:"lease_duration"` // in seconds
 
 	// IP conflict detector: time (ms) to wait for ICMP reply.
 	// 0: disable
-	ICMPTimeout uint `json:"icmp_timeout_msec" yaml:"icmp_timeout_msec"`
+	ICMPTimeout uint32 `json:"icmp_timeout_msec" yaml:"icmp_timeout_msec"`
+
+	WorkDir    string `json:"-" yaml:"-"`
+	DBFilePath string `json:"-" yaml:"-"` // path to DB file
+
+	// Called when the configuration is changed by HTTP request
+	ConfigModified func() `json:"-" yaml:"-"`
+
+	// Register an HTTP handler
+	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request)) `json:"-" yaml:"-"`
 }
 
 // Server - the current state of the DHCP server
@@ -88,6 +96,16 @@ func (s *Server) CheckConfig(config ServerConfig) error {
 	return tmpServer.setConfig(config)
 }
 
+// Create - create object
+func Create(config ServerConfig) *Server {
+	s := Server{}
+	s.conf = config
+	if s.conf.HTTPRegister != nil {
+		s.registerHandlers()
+	}
+	return &s
+}
+
 // Init checks the configuration and initializes the server
 func (s *Server) Init(config ServerConfig) error {
 	err := s.setConfig(config)
@@ -98,10 +116,12 @@ func (s *Server) Init(config ServerConfig) error {
 	return nil
 }
 
-func (s *Server) setConfig(config ServerConfig) error {
-	s.conf = config
-	s.conf.DBFilePath = filepath.Join(config.WorkDir, dbFilename)
+// WriteDiskConfig - write configuration
+func (s *Server) WriteDiskConfig(c *ServerConfig) {
+	*c = s.conf
+}
 
+func (s *Server) setConfig(config ServerConfig) error {
 	iface, err := net.InterfaceByName(config.InterfaceName)
 	if err != nil {
 		printInterfaces()
@@ -153,6 +173,12 @@ func (s *Server) setConfig(config ServerConfig) error {
 		dhcp4.OptionDomainNameServer: s.ipnet.IP,
 	}
 
+	oldconf := s.conf
+	s.conf = config
+	s.conf.WorkDir = oldconf.WorkDir
+	s.conf.HTTPRegister = oldconf.HTTPRegister
+	s.conf.ConfigModified = oldconf.ConfigModified
+	s.conf.DBFilePath = filepath.Join(config.WorkDir, dbFilename)
 	return nil
 }
 

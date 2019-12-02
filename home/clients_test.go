@@ -11,8 +11,9 @@ func TestClients(t *testing.T) {
 	var e error
 	var b bool
 	clients := clientsContainer{}
+	clients.testing = true
 
-	clients.Init(nil)
+	clients.Init(nil, nil)
 
 	// add
 	c = Client{
@@ -149,7 +150,8 @@ func TestClients(t *testing.T) {
 func TestClientsWhois(t *testing.T) {
 	var c Client
 	clients := clientsContainer{}
-	clients.Init(nil)
+	clients.testing = true
+	clients.Init(nil, nil)
 
 	whois := [][]string{{"orgname", "orgname-val"}, {"country", "country-val"}}
 	// set whois info on new client

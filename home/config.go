@@ -67,7 +67,7 @@ type configuration struct {
 	dnsctx      dnsContext
 	dnsFilter   *dnsfilter.Dnsfilter
 	dnsServer   *dnsforward.Server
-	dhcpServer  dhcpd.Server
+	dhcpServer  *dhcpd.Server
 	httpServer  *http.Server
 	httpsServer HTTPSServer
 
@@ -323,6 +323,12 @@ func (c *configuration) write() error {
 		c := dnsfilter.Config{}
 		config.dnsFilter.WriteDiskConfig(&c)
 		config.DNS.DnsfilterConf = c
+	}
+
+	if config.dhcpServer != nil {
+		c := dhcpd.ServerConfig{}
+		config.dhcpServer.WriteDiskConfig(&c)
+		config.DHCP = c
 	}
 
 	configFile := config.getConfigFilename()

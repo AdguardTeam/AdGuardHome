@@ -424,12 +424,6 @@ func registerControlHandlers() {
 	httpRegister(http.MethodGet, "/control/i18n/current_language", handleI18nCurrentLanguage)
 	http.HandleFunc("/control/version.json", postInstall(optionalAuth(handleGetVersionJSON)))
 	httpRegister(http.MethodPost, "/control/update", handleUpdate)
-	httpRegister(http.MethodGet, "/control/dhcp/status", handleDHCPStatus)
-	httpRegister(http.MethodGet, "/control/dhcp/interfaces", handleDHCPInterfaces)
-	httpRegister(http.MethodPost, "/control/dhcp/set_config", handleDHCPSetConfig)
-	httpRegister(http.MethodPost, "/control/dhcp/find_active_dhcp", handleDHCPFindActiveServer)
-	httpRegister(http.MethodPost, "/control/dhcp/add_static_lease", handleDHCPAddStaticLease)
-	httpRegister(http.MethodPost, "/control/dhcp/remove_static_lease", handleDHCPRemoveStaticLease)
 
 	httpRegister(http.MethodGet, "/control/access/list", handleAccessList)
 	httpRegister(http.MethodPost, "/control/access/set", handleAccessSet)
@@ -437,7 +431,6 @@ func registerControlHandlers() {
 
 	RegisterFilteringHandlers()
 	RegisterTLSHandlers()
-	RegisterClientsHandlers()
 	RegisterBlockedServicesHandlers()
 	RegisterAuthHandlers()
 
