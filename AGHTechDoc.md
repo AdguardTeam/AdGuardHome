@@ -61,7 +61,7 @@ Contents:
 
 ## Relations between subsystems
 
-![](agh-arch.png)
+![](doc/agh-arch.png)
 
 
 
@@ -1183,6 +1183,26 @@ Response:
 
 
 ## Filtering
+
+![](doc/agh-filtering.png)
+
+This is how DNS requests and responses are filtered by AGH:
+
+* 'dnsproxy' module receives DNS request from client and passes control to AGH
+* AGH applies filtering logic to the host name in DNS Question:
+	* process Rewrite rules
+	* match host name against filtering lists
+	* match host name against blocked services rules
+	* process SafeSearch rules
+	* request SafeBrowsing & ParentalControl services and process their response
+* If the handlers above create a successful result that can be immediately sent to a client, it's passed back to 'dnsproxy' module
+* Otherwise, AGH passes the DNS request to an upstream server via 'dnsproxy' module
+* After 'dnsproxy' module has received a response from an upstream server, it passes control back to AGH
+* If the filtering logic for DNS request returned a 'whitelist' flag, AGH passes the response to a client
+* Otherwise, AGH applies filtering logic to each DNS record in response:
+	* For CNAME records, the target name is matched against filtering lists (ignoring 'whitelist' rules)
+	* For A and AAAA records, the IP address is matched against filtering lists (ignoring 'whitelist' rules)
+
 
 ### Filters update mechanism
 
