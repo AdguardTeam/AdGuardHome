@@ -27,7 +27,7 @@ func (l *queryLog) flushLogBuffer(fullFlush bool) error {
 
 	// flush remainder to file
 	l.bufferLock.Lock()
-	needFlush := len(l.buffer) >= logBufferCap
+	needFlush := len(l.buffer) >= int(l.conf.MemSize)
 	if !needFlush && !fullFlush {
 		l.bufferLock.Unlock()
 		return nil

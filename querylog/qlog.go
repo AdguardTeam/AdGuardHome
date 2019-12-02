@@ -16,7 +16,6 @@ import (
 )
 
 const (
-	logBufferCap     = 5000            // maximum capacity of buffer before it's flushed to disk
 	queryLogFileName = "querylog.json" // .gz added during compression
 	getDataLimit     = 500             // GetData(): maximum log entries to return
 
@@ -147,7 +146,7 @@ func (l *queryLog) Add(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Res
 	l.buffer = append(l.buffer, &entry)
 	needFlush := false
 	if !l.flushPending {
-		needFlush = len(l.buffer) >= logBufferCap
+		needFlush = len(l.buffer) >= int(l.conf.MemSize)
 		if needFlush {
 			l.flushPending = true
 		}

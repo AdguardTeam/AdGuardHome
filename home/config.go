@@ -106,6 +106,7 @@ type dnsConfig struct {
 
 	QueryLogEnabled  bool   `yaml:"querylog_enabled"`  // if true, query log is enabled
 	QueryLogInterval uint32 `yaml:"querylog_interval"` // time interval for query log (in days)
+	QueryLogMemSize  uint32 `yaml:"querylog_memsize"`  // number of entries kept in memory before they are flushed to disk
 
 	dnsforward.FilteringConfig `yaml:",inline"`
 
@@ -161,11 +162,9 @@ var config = configuration{
 	BindPort:          3000,
 	BindHost:          "0.0.0.0",
 	DNS: dnsConfig{
-		BindHost:         "0.0.0.0",
-		Port:             53,
-		StatsInterval:    1,
-		QueryLogEnabled:  true,
-		QueryLogInterval: 1,
+		BindHost:      "0.0.0.0",
+		Port:          53,
+		StatsInterval: 1,
 		FilteringConfig: dnsforward.FilteringConfig{
 			ProtectionEnabled:  true,       // whether or not use any of dnsfilter features
 			BlockingMode:       "nxdomain", // mode how to answer filtered requests
@@ -201,6 +200,10 @@ func initConfig() {
 	}
 
 	config.WebSessionTTLHours = 30 * 24
+
+	config.DNS.QueryLogEnabled = true
+	config.DNS.QueryLogInterval = 90
+	config.DNS.QueryLogMemSize = 1000
 
 	config.DNS.CacheSize = 4 * 1024 * 1024
 	config.DNS.DnsfilterConf.SafeBrowsingCacheSize = 1 * 1024 * 1024
@@ -310,6 +313,7 @@ func (c *configuration) write() error {
 		config.queryLog.WriteDiskConfig(&dc)
 		config.DNS.QueryLogEnabled = dc.Enabled
 		config.DNS.QueryLogInterval = dc.Interval
+		config.DNS.QueryLogMemSize = dc.MemSize
 	}
 
 	if config.dnsFilter != nil {
