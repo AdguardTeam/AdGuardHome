@@ -1405,6 +1405,11 @@ definitions:
                 type: "array"
                 items:
                     $ref: "#/definitions/DnsAnswer"
+            original_answer:
+                type: "array"
+                description: "Answer from upstream server (optional)"
+                items:
+                    $ref: "#/definitions/DnsAnswer"
             client:
                 type: "string"
                 example: "192.168.0.1"
@@ -1433,6 +1438,10 @@ definitions:
                 - "FilteredParental"
                 - "FilteredInvalid"
                 - "FilteredSafeSearch"
+                - "FilteredBlockedService"
+            service_name:
+                type: "string"
+                description: "Set if reason=FilteredBlockedService"
             status:
                 type: "string"
                 description: "DNS response status"

@@ -16,6 +16,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
@@ -246,6 +247,142 @@ func TestBlockedRequest(t *testing.T) {
 	}
 }
 
+// testUpstream is a mock of real upstream.
+// specify fields with necessary values to simulate real upstream behaviour
+type testUpstream struct {
+	cn   map[string]string   // Map of [name]canonical_name
+	ipv4 map[string][]net.IP // Map of [name]IPv4
+	ipv6 map[string][]net.IP // Map of [name]IPv6
+}
+
+func (u *testUpstream) Exchange(m *dns.Msg) (*dns.Msg, error) {
+	resp := dns.Msg{}
+	resp.SetReply(m)
+	hasARecord := false
+	hasAAAARecord := false
+
+	reqType := m.Question[0].Qtype
+	name := m.Question[0].Name
+
+	// Let's check if we have any CNAME for given name
+	if cname, ok := u.cn[name]; ok {
+		cn := dns.CNAME{}
+		cn.Hdr.Name = name
+		cn.Hdr.Rrtype = dns.TypeCNAME
+		cn.Target = cname
+		resp.Answer = append(resp.Answer, &cn)
+	}
+
+	// Let's check if we can add some A records to the answer
+	if ipv4addr, ok := u.ipv4[name]; ok && reqType == dns.TypeA {
+		hasARecord = true
+		for _, ipv4 := range ipv4addr {
+			respA := dns.A{}
+			respA.Hdr.Rrtype = dns.TypeA
+			respA.Hdr.Name = name
+			respA.A = ipv4
+			resp.Answer = append(resp.Answer, &respA)
+		}
+	}
+
+	// Let's check if we can add some AAAA records to the answer
+	if u.ipv6 != nil {
+		if ipv6addr, ok := u.ipv6[name]; ok && reqType == dns.TypeAAAA {
+			hasAAAARecord = true
+			for _, ipv6 := range ipv6addr {
+				respAAAA := dns.A{}
+				respAAAA.Hdr.Rrtype = dns.TypeAAAA
+				respAAAA.Hdr.Name = name
+				respAAAA.A = ipv6
+				resp.Answer = append(resp.Answer, &respAAAA)
+			}
+		}
+	}
+
+	if len(resp.Answer) == 0 {
+		if hasARecord || hasAAAARecord {
+			// Set No Error RCode if there are some records for given Qname but we didn't apply them
+			resp.SetRcode(m, dns.RcodeSuccess)
+		} else {
+			// Set NXDomain RCode otherwise
+			resp.SetRcode(m, dns.RcodeNameError)
+		}
+	}
+
+	return &resp, nil
+}
+
+func (u *testUpstream) Address() string {
+	return "test"
+}
+
+func (s *Server) startWithUpstream(u upstream.Upstream) error {
+	s.Lock()
+	defer s.Unlock()
+	err := s.prepare(nil)
+	if err != nil {
+		return err
+	}
+	s.dnsProxy.Upstreams = []upstream.Upstream{u}
+	return s.dnsProxy.Start()
+}
+
+// testCNAMEs is a simple map of names and CNAMEs necessary for the testUpstream work
+var testCNAMEs = map[string]string{
+	"badhost.":               "null.example.org.",
+	"whitelist.example.org.": "null.example.org.",
+}
+
+// testIPv4 is a simple map of names and IPv4s necessary for the testUpstream work
+var testIPv4 = map[string][]net.IP{
+	"null.example.org.": {{1, 2, 3, 4}},
+	"example.org.":      {{127, 0, 0, 255}},
+}
+
+func TestBlockCNAME(t *testing.T) {
+	s := createTestServer(t)
+	testUpstm := &testUpstream{testCNAMEs, testIPv4, nil}
+	err := s.startWithUpstream(testUpstm)
+	assert.True(t, err == nil)
+	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
+
+	// 'badhost' has a canonical name 'null.example.org' which is blocked by filters:
+	// response is blocked
+	req := dns.Msg{}
+	req.Id = dns.Id()
+	req.Question = []dns.Question{
+		{Name: "badhost.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+	}
+	reply, err := dns.Exchange(&req, addr.String())
+	assert.True(t, err == nil)
+	assert.True(t, reply.Rcode == dns.RcodeNameError)
+
+	// 'whitelist.example.org' has a canonical name 'null.example.org' which is blocked by filters
+	//   but 'whitelist.example.org' is in a whitelist:
+	// response isn't blocked
+	req = dns.Msg{}
+	req.Id = dns.Id()
+	req.Question = []dns.Question{
+		{Name: "whitelist.example.org.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+	}
+	reply, err = dns.Exchange(&req, addr.String())
+	assert.True(t, err == nil)
+	assert.True(t, reply.Rcode == dns.RcodeSuccess)
+
+	// 'example.org' has a canonical name 'cname1' with IP 127.0.0.255 which is blocked by filters:
+	// response is blocked
+	req = dns.Msg{}
+	req.Id = dns.Id()
+	req.Question = []dns.Question{
+		{Name: "example.org.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+	}
+	reply, err = dns.Exchange(&req, addr.String())
+	assert.True(t, err == nil)
+	assert.True(t, reply.Rcode == dns.RcodeNameError)
+
+	_ = s.Stop()
+}
+
 func TestNullBlockedRequest(t *testing.T) {
 	s := createTestServer(t)
 	s.conf.FilteringConfig.BlockingMode = "null_ip"
@@ -376,7 +513,7 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 }
 
 func createTestServer(t *testing.T) *Server {
-	rules := "||nxdomain.example.org^\n||null.example.org^\n127.0.0.1	host.example.org\n"
+	rules := "||nxdomain.example.org^\n||null.example.org^\n127.0.0.1	host.example.org\n@@||whitelist.example.org^\n||127.0.0.255\n"
 	filters := map[int]string{}
 	filters[0] = rules
 	c := dnsfilter.Config{}

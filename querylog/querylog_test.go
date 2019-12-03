@@ -115,7 +115,14 @@ func addEntry(l *queryLog, host, answerStr, client string) {
 	answer.A = net.ParseIP(answerStr)
 	a.Answer = append(a.Answer, answer)
 	res := dnsfilter.Result{}
-	l.Add(&q, &a, &res, 0, net.ParseIP(client), "upstream")
+	params := AddParams{
+		Question: &q,
+		Answer:   &a,
+		Result:   &res,
+		ClientIP: net.ParseIP(client),
+		Upstream: "upstream",
+	}
+	l.Add(params)
 }
 
 func checkEntry(t *testing.T, m map[string]interface{}, host, answer, client string) bool {

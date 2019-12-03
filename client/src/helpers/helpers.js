@@ -50,6 +50,7 @@ export const normalizeLogs = logs => logs.map((log) => {
         rule,
         service_name,
         status,
+        original_answer,
     } = log;
     const { host: domain, type } = question;
     const responsesArray = response ? response.map((response) => {
@@ -65,8 +66,9 @@ export const normalizeLogs = logs => logs.map((log) => {
         client,
         filterId,
         rule,
-        serviceName: service_name,
         status,
+        serviceName: service_name,
+        originalAnswer: original_answer,
     };
 });
 

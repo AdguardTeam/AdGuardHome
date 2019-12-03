@@ -2,7 +2,6 @@ package querylog
 
 import (
 	"fmt"
-	"net"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -96,51 +95,59 @@ type logEntry struct {
 	QType  string `json:"QT"`
 	QClass string `json:"QC"`
 
-	Answer   []byte `json:",omitempty"` // sometimes empty answers happen like binerdunt.top or rev2.globalrootservers.net
+	Answer     []byte `json:",omitempty"` // sometimes empty answers happen like binerdunt.top or rev2.globalrootservers.net
+	OrigAnswer []byte `json:",omitempty"`
+
 	Result   dnsfilter.Result
 	Elapsed  time.Duration
 	Upstream string `json:",omitempty"` // if empty, means it was cached
 }
 
-func (l *queryLog) Add(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, elapsed time.Duration, ip net.IP, upstream string) {
+func (l *queryLog) Add(params AddParams) {
 	if !l.conf.Enabled {
 		return
 	}
 
-	if question == nil || len(question.Question) != 1 || len(question.Question[0].Name) == 0 ||
-		ip == nil {
+	if params.Question == nil || len(params.Question.Question) != 1 || len(params.Question.Question[0].Name) == 0 ||
+		params.ClientIP == nil {
 		return
 	}
 
-	var a []byte
-	var err error
-
-	if answer != nil {
-		a, err = answer.Pack()
-		if err != nil {
-			log.Printf("failed to pack answer for querylog: %s", err)
-			return
-		}
-	}
-
-	if result == nil {
-		result = &dnsfilter.Result{}
+	if params.Result == nil {
+		params.Result = &dnsfilter.Result{}
 	}
 
 	now := time.Now()
 	entry := logEntry{
-		IP:   ip.String(),
+		IP:   params.ClientIP.String(),
 		Time: now,
 
-		Answer:   a,
-		Result:   *result,
-		Elapsed:  elapsed,
-		Upstream: upstream,
+		Result:   *params.Result,
+		Elapsed:  params.Elapsed,
+		Upstream: params.Upstream,
 	}
-	q := question.Question[0]
+	q := params.Question.Question[0]
 	entry.QHost = strings.ToLower(q.Name[:len(q.Name)-1]) // remove the last dot
 	entry.QType = dns.Type(q.Qtype).String()
 	entry.QClass = dns.Class(q.Qclass).String()
+
+	if params.Answer != nil {
+		a, err := params.Answer.Pack()
+		if err != nil {
+			log.Info("Querylog: Answer.Pack(): %s", err)
+			return
+		}
+		entry.Answer = a
+	}
+
+	if params.OrigAnswer != nil {
+		a, err := params.OrigAnswer.Pack()
+		if err != nil {
+			log.Info("Querylog: OrigAnswer.Pack(): %s", err)
+			return
+		}
+		entry.OrigAnswer = a
+	}
 
 	l.bufferLock.Lock()
 	l.buffer = append(l.buffer, &entry)
@@ -333,6 +340,19 @@ func (l *queryLog) getData(params getDataParams) map[string]interface{} {
 		answers := answerToMap(a)
 		if answers != nil {
 			jsonEntry["answer"] = answers
+		}
+
+		if len(entry.OrigAnswer) != 0 {
+			a := new(dns.Msg)
+			err := a.Unpack(entry.OrigAnswer)
+			if err == nil {
+				answers = answerToMap(a)
+				if answers != nil {
+					jsonEntry["original_answer"] = answers
+				}
+			} else {
+				log.Debug("Querylog: a.Unpack(entry.OrigAnswer): %s: %s", err, string(entry.OrigAnswer))
+			}
 		}
 
 		data = append(data, jsonEntry)

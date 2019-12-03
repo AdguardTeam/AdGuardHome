@@ -61,7 +61,7 @@ Contents:
 
 ## Relations between subsystems
 
-![](agh-arch.png)
+![](doc/agh-arch.png)
 
 
 
@@ -1064,11 +1064,12 @@ When a new DNS request is received and processed, we store information about thi
 	"QT":"...", // question type
 	"QC":"...", // question class
 	"Answer":"...",
+	"OrigAnswer":"...",
 	"Result":{
 		"IsFiltered":true,
 		"Reason":3,
 		"Rule":"...",
-		"FilterID":1
+		"FilterID":1,
 		},
 	"Elapsed":12345,
 	"Upstream":"...",
@@ -1121,6 +1122,13 @@ Response:
 			}
 			...
 		],
+		"original_answer":[ // Answer from upstream server (optional)
+			{
+			"type":"AAAA",
+			"value":"::"
+			}
+			...
+		],
 		"client":"127.0.0.1",
 		"elapsedMs":"0.098403",
 		"filterId":1,
@@ -1131,6 +1139,7 @@ Response:
 		},
 		"reason":"FilteredBlackList",
 		"rule":"||doubleclick.net^",
+		"service_name": "...", // set if reason=FilteredBlockedService
 		"status":"NOERROR",
 		"time":"2006-01-02T15:04:05.999999999Z07:00"
 	}
@@ -1174,6 +1183,26 @@ Response:
 
 
 ## Filtering
+
+![](doc/agh-filtering.png)
+
+This is how DNS requests and responses are filtered by AGH:
+
+* 'dnsproxy' module receives DNS request from client and passes control to AGH
+* AGH applies filtering logic to the host name in DNS Question:
+	* process Rewrite rules
+	* match host name against filtering lists
+	* match host name against blocked services rules
+	* process SafeSearch rules
+	* request SafeBrowsing & ParentalControl services and process their response
+* If the handlers above create a successful result that can be immediately sent to a client, it's passed back to 'dnsproxy' module
+* Otherwise, AGH passes the DNS request to an upstream server via 'dnsproxy' module
+* After 'dnsproxy' module has received a response from an upstream server, it passes control back to AGH
+* If the filtering logic for DNS request returned a 'whitelist' flag, AGH passes the response to a client
+* Otherwise, AGH applies filtering logic to each DNS record in response:
+	* For CNAME records, the target name is matched against filtering lists (ignoring 'whitelist' rules)
+	* For A and AAAA records, the IP address is matched against filtering lists (ignoring 'whitelist' rules)
+
 
 ### Filters update mechanism
 
