@@ -6,10 +6,10 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/urlfilter"
+	"github.com/AdguardTeam/urlfilter/rules"
 )
 
-var serviceRules map[string][]*urlfilter.NetworkRule // service name -> filtering rules
+var serviceRules map[string][]*rules.NetworkRule // service name -> filtering rules
 
 type svc struct {
 	name  string
@@ -121,18 +121,18 @@ var serviceRulesArray = []svc{
 
 // convert array to map
 func initServices() {
-	serviceRules = make(map[string][]*urlfilter.NetworkRule)
+	serviceRules = make(map[string][]*rules.NetworkRule)
 	for _, s := range serviceRulesArray {
-		rules := []*urlfilter.NetworkRule{}
+		netRules := []*rules.NetworkRule{}
 		for _, text := range s.rules {
-			rule, err := urlfilter.NewNetworkRule(text, 0)
+			rule, err := rules.NewNetworkRule(text, 0)
 			if err != nil {
-				log.Error("urlfilter.NewNetworkRule: %s  rule: %s", err, text)
+				log.Error("rules.NewNetworkRule: %s  rule: %s", err, text)
 				continue
 			}
-			rules = append(rules, rule)
+			netRules = append(netRules, rule)
 		}
-		serviceRules[s.name] = rules
+		serviceRules[s.name] = netRules
 	}
 }
 

@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/AdguardTeam/urlfilter"
+	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
@@ -407,10 +407,10 @@ func applyClientSettings(setts *RequestFilteringSettings) {
 	setts.ParentalEnabled = false
 	setts.SafeBrowsingEnabled = true
 
-	rule, _ := urlfilter.NewNetworkRule("||facebook.com^", 0)
+	rule, _ := rules.NewNetworkRule("||facebook.com^", 0)
 	s := ServiceEntry{}
 	s.Name = "facebook"
-	s.Rules = []*urlfilter.NetworkRule{rule}
+	s.Rules = []*rules.NetworkRule{rule}
 	setts.ServicesRules = append(setts.ServicesRules, s)
 }
 
