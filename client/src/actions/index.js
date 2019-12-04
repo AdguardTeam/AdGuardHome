@@ -91,17 +91,9 @@ export const toggleProtectionSuccess = createAction('TOGGLE_PROTECTION_SUCCESS')
 
 export const toggleProtection = status => async (dispatch) => {
     dispatch(toggleProtectionRequest());
-    let successMessage = '';
-
     try {
-        if (status) {
-            successMessage = 'disabled_protection';
-            await apiClient.disableGlobalProtection();
-        } else {
-            successMessage = 'enabled_protection';
-            await apiClient.enableGlobalProtection();
-        }
-
+        const successMessage = status ? 'disabled_protection' : 'enabled_protection';
+        await apiClient.setDnsConfig({ protection_enabled: !status });
         dispatch(addSuccessToast(successMessage));
         dispatch(toggleProtectionSuccess());
     } catch (error) {

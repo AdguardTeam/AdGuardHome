@@ -6,6 +6,8 @@ import Services from './Services';
 import StatsConfig from './StatsConfig';
 import LogsConfig from './LogsConfig';
 import FiltersConfig from './FiltersConfig';
+import DnsConfig from './DnsConfig';
+
 import Checkbox from '../ui/Checkbox';
 import Loading from '../ui/Loading';
 import PageTitle from '../ui/PageTitle';
@@ -38,6 +40,7 @@ class Settings extends Component {
         this.props.getStatsConfig();
         this.props.getLogsConfig();
         this.props.getFilteringStatus();
+        this.props.getDnsConfig();
     }
 
     renderSettings = (settings) => {
@@ -68,10 +71,12 @@ class Settings extends Component {
             resetStats,
             stats,
             queryLogs,
+            dnsConfig,
             setLogsConfig,
             clearLogs,
             filtering,
             setFiltersConfig,
+            setDnsConfig,
             t,
         } = this.props;
 
@@ -100,6 +105,12 @@ class Settings extends Component {
                                         {this.renderSettings(settings.settingsList)}
                                     </div>
                                 </Card>
+                            </div>
+                            <div className="col-md-12">
+                                <DnsConfig
+                                    dnsConfig={dnsConfig}
+                                    setDnsConfig={setDnsConfig}
+                                />
                             </div>
                             <div className="col-md-12">
                                 <LogsConfig
@@ -143,6 +154,7 @@ Settings.propTypes = {
     resetStats: PropTypes.func.isRequired,
     setFiltersConfig: PropTypes.func.isRequired,
     getFilteringStatus: PropTypes.func.isRequired,
+    getDnsConfig: PropTypes.func.isRequired,
     t: PropTypes.func.isRequired,
 };
 
