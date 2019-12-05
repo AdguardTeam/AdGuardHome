@@ -5,8 +5,17 @@ import { Field, reduxForm, formValueSelector } from 'redux-form';
 import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 
-import { renderField, renderRadioField, required, ipv4, ipv6, isPositive, toNumber } from '../../../helpers/form';
-import { BLOCKING_MODES } from '../../../helpers/constants';
+import {
+    renderField,
+    renderRadioField,
+    renderSelectField,
+    required,
+    ipv4,
+    ipv6,
+    biggerOrEqualZero,
+    toNumber,
+} from '../../../../helpers/form';
+import { BLOCKING_MODES } from '../../../../helpers/constants';
 
 const getFields = (processing, t) => Object.values(BLOCKING_MODES).map(mode => (
     <Field
@@ -27,9 +36,12 @@ let Form = ({
         <div className="row">
             <div className="col-12 col-sm-6">
                 <div className="form__group form__group--settings">
-                    <label htmlFor="ratelimit">
+                    <label htmlFor="ratelimit" className="form__label form__label--with-desc">
                         <Trans>rate_limit</Trans>
-                        </label>
+                    </label>
+                    <div className="form__desc form__desc--top">
+                        <Trans>rate_limit_desc</Trans>
+                    </div>
                     <Field
                         name="ratelimit"
                         type="number"
@@ -37,15 +49,30 @@ let Form = ({
                         className="form-control"
                         placeholder={t('form_enter_rate_limit')}
                         normalize={toNumber}
-                        validate={[required, isPositive]}
+                        validate={[required, biggerOrEqualZero]}
                     />
                 </div>
             </div>
             <div className="col-12">
-                <div className="form__group form__group--settings mb-3">
-                    <label className="form__label">
+                <div className="form__group form__group--settings">
+                    <Field
+                        name="edns_cs_enabled"
+                        type="checkbox"
+                        component={renderSelectField}
+                        placeholder={t('edns_enable')}
+                        disabled={processing}
+                        subtitle={t('edns_cs_desc')}
+                    />
+                </div>
+            </div>
+            <div className="col-12">
+                <div className="form__group form__group--settings mb-4">
+                    <label className="form__label form__label--with-desc">
                         <Trans>blocking_mode</Trans>
                     </label>
+                    <div className="form__desc form__desc--top">
+                        <Trans components={[<div key="0">text</div>]}>blocking_mode_desc</Trans>
+                    </div>
                     <div className="custom-controls-stacked">
                         {getFields(processing, t)}
                     </div>
@@ -55,9 +82,12 @@ let Form = ({
                 <Fragment>
                     <div className="col-12 col-sm-6">
                         <div className="form__group form__group--settings">
-                            <label htmlFor="blocking_ipv4">
+                            <label htmlFor="blocking_ipv4" className="form__label form__label--with-desc">
                                 <Trans>blocking_ipv4</Trans>
                             </label>
+                            <div className="form__desc form__desc--top">
+                                <Trans>blocking_ipv4_desc</Trans>
+                            </div>
                             <Field
                                 name="blocking_ipv4"
                                 component={renderField}
@@ -69,9 +99,12 @@ let Form = ({
                     </div>
                     <div className="col-12 col-sm-6">
                         <div className="form__group form__group--settings">
-                            <label htmlFor="ip_address">
+                            <label htmlFor="ip_address" className="form__label form__label--with-desc">
                                 <Trans>blocking_ipv6</Trans>
                             </label>
+                            <div className="form__desc form__desc--top">
+                                <Trans>blocking_ipv6_desc</Trans>
+                            </div>
                             <Field
                                 name="blocking_ipv6"
                                 component={renderField}

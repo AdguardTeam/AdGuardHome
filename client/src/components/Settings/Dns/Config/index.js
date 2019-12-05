@@ -2,10 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { withNamespaces } from 'react-i18next';
 
-import Card from '../../ui/Card';
+import Card from '../../../ui/Card';
 import Form from './Form';
 
-const DnsConfig = ({ t, dnsConfig, setDnsConfig }) => {
+const Config = ({ t, dnsConfig, setDnsConfig }) => {
     const handleFormSubmit = (values) => {
         setDnsConfig(values);
     };
@@ -15,6 +15,7 @@ const DnsConfig = ({ t, dnsConfig, setDnsConfig }) => {
         ratelimit,
         blocking_ipv4,
         blocking_ipv6,
+        edns_cs_enabled,
         processingSetConfig,
     } = dnsConfig;
 
@@ -31,6 +32,7 @@ const DnsConfig = ({ t, dnsConfig, setDnsConfig }) => {
                         blocking_mode,
                         blocking_ipv4,
                         blocking_ipv6,
+                        edns_cs_enabled,
                     }}
                     onSubmit={handleFormSubmit}
                     processing={processingSetConfig}
@@ -40,10 +42,10 @@ const DnsConfig = ({ t, dnsConfig, setDnsConfig }) => {
     );
 };
 
-DnsConfig.propTypes = {
+Config.propTypes = {
     dnsConfig: PropTypes.object.isRequired,
     setDnsConfig: PropTypes.func.isRequired,
     t: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(DnsConfig);
+export default withNamespaces()(Config);

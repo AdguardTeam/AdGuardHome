@@ -7,17 +7,19 @@ import {
     deleteRewrite,
     toggleRewritesModal,
 } from '../actions/rewrites';
+import { getDnsConfig, setDnsConfig } from '../actions/dnsConfig';
 import Dns from '../components/Settings/Dns';
 
 const mapStateToProps = (state) => {
     const {
-        dashboard, settings, access, rewrites,
+        dashboard, settings, access, rewrites, dnsConfig,
     } = state;
     const props = {
         dashboard,
         settings,
         access,
         rewrites,
+        dnsConfig,
     };
     return props;
 };
@@ -33,6 +35,8 @@ const mapDispatchToProps = {
     deleteRewrite,
     toggleRewritesModal,
     getDnsSettings,
+    getDnsConfig,
+    setDnsConfig,
 };
 
 export default connect(
