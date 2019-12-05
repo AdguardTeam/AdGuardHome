@@ -22,6 +22,7 @@ import de from './__locales/de.json';
 import id from './__locales/id.json';
 import it from './__locales/it.json';
 import ko from './__locales/ko.json';
+import no from './__locales/no.json';
 import nl from './__locales/nl.json';
 import pl from './__locales/pl.json';
 import ptPT from './__locales/pt-pt.json';
@@ -80,6 +81,9 @@ const resources = {
     },
     ko: {
         translation: ko,
+    },
+    no: {
+        translation: no,
     },
     nl: {
         translation: nl,
