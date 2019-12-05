@@ -18,6 +18,8 @@
     "dhcp_leases_not_found": "Geen DHCP lease gevonden",
     "dhcp_config_saved": "DHCP server configuratie opgeslagen",
     "form_error_required": "Vereist veld",
+    "form_error_ip4_format": "Ongeldig IPv4 formaat",
+    "form_error_ip6_format": "Ongeldig IPv6 formaat",
     "form_error_mac_format": "Ongeldig MAC formaat.",
     "form_error_positive": "Moet groter zijn dan 0",
     "dhcp_form_gateway_input": "Gateway IP",

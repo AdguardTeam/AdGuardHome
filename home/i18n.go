@@ -30,6 +30,7 @@ var allowedLanguages = map[string]bool{
 	"id":    true,
 	"it":    true,
 	"ko":    true,
+	"no":    true,
 	"nl":    true,
 	"pl":    true,
 	"pt-pt": true,
