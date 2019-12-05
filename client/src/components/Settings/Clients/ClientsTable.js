@@ -4,6 +4,7 @@ import { Trans, withNamespaces } from 'react-i18next';
 import ReactTable from 'react-table';
 
 import { MODAL_TYPE } from '../../../helpers/constants';
+import { normalizeTextarea } from '../../../helpers/helpers';
 import Card from '../../ui/Card';
 import Modal from './Modal';
 import WrapCell from './WrapCell';
@@ -20,13 +21,20 @@ class ClientsTable extends Component {
     };
 
     handleSubmit = (values) => {
-        let config = values;
+        const config = values;
 
-        if (values && values.blocked_services) {
-            const blocked_services = Object
-                .keys(values.blocked_services)
-                .filter(service => values.blocked_services[service]);
-            config = { ...values, blocked_services };
+        if (values) {
+            if (values.blocked_services) {
+                config.blocked_services = Object
+                    .keys(values.blocked_services)
+                    .filter(service => values.blocked_services[service]);
+            }
+
+            if (values.upstreams && typeof values.upstreams === 'string') {
+                config.upstreams = normalizeTextarea(values.upstreams);
+            } else {
+                config.upstreams = [];
+            }
         }
 
         if (this.props.modalType === MODAL_TYPE.EDIT) {
@@ -40,10 +48,10 @@ class ClientsTable extends Component {
         const client = clients.find(item => name === item.name);
 
         if (client) {
+            const { upstreams, whois_info, ...values } = client;
             return {
-                use_global_settings: true,
-                use_global_blocked_services: true,
-                ...client,
+                upstreams: (upstreams && upstreams.join('\n')) || '',
+                ...values,
             };
         }
 
@@ -139,6 +147,24 @@ class ClientsTable extends Component {
                                   </svg>
                             ))
                             : '–'}
+                    </div>
+                );
+            },
+        },
+        {
+            Header: this.props.t('upstreams'),
+            accessor: 'upstreams',
+            minWidth: 120,
+            Cell: ({ value }) => {
+                const title = value && value.length > 0 ? (
+                    <Trans>settings_custom</Trans>
+                ) : (
+                    <Trans>settings_global</Trans>
+                );
+
+                return (
+                    <div className="logs__row logs__row--overflow">
+                        <div className="logs__text">{title}</div>
                     </div>
                 );
             },

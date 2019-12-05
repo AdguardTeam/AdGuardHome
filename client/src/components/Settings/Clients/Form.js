@@ -7,6 +7,7 @@ import flow from 'lodash/flow';
 
 import i18n from '../../../i18n';
 import Tabs from '../../ui/Tabs';
+import Examples from '../Dns/Upstream/Examples';
 import { toggleAllServices } from '../../../helpers/helpers';
 import {
     renderField,
@@ -222,6 +223,17 @@ let Form = (props) => {
                                 ))}
                             </div>
                         </div>
+                    </div>
+                    <div label="upstream" title={props.t('upstream_dns')}>
+                        <Field
+                            id="upstreams"
+                            name="upstreams"
+                            component="textarea"
+                            type="text"
+                            className="form-control form-control--textarea mb-5"
+                            placeholder={t('upstream_dns')}
+                        />
+                        <Examples />
                     </div>
                 </Tabs>
             </div>

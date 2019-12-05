@@ -170,7 +170,17 @@ func generateServerConfig() (dnsforward.ServerConfig, error) {
 	}
 
 	newconfig.FilterHandler = applyAdditionalFiltering
+	newconfig.GetUpstreamsByClient = getUpstreamsByClient
 	return newconfig, nil
+}
+
+func getUpstreamsByClient(clientAddr string) []string {
+	c, ok := config.clients.Find(clientAddr)
+	if !ok {
+		return []string{}
+	}
+	log.Debug("Using upstreams %v for client %s (IP: %s)", c.Upstreams, c.Name, clientAddr)
+	return c.Upstreams
 }
 
 // If a client has his own settings, apply them

@@ -44,7 +44,7 @@ func (s *Server) handleSetUpstreamConfig(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = validateUpstreams(req.Upstreams)
+	err = ValidateUpstreams(req.Upstreams)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "wrong upstreams specification: %s", err)
 		return
@@ -78,8 +78,8 @@ func (s *Server) handleSetUpstreamConfig(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-// validateUpstreams validates each upstream and returns an error if any upstream is invalid or if there are no default upstreams specified
-func validateUpstreams(upstreams []string) error {
+// ValidateUpstreams validates each upstream and returns an error if any upstream is invalid or if there are no default upstreams specified
+func ValidateUpstreams(upstreams []string) error {
 	var defaultUpstreamFound bool
 	for _, u := range upstreams {
 		d, err := validateUpstream(u)

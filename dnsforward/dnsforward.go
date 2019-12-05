@@ -94,6 +94,9 @@ type FilteringConfig struct {
 	// Filtering callback function
 	FilterHandler func(clientAddr string, settings *dnsfilter.RequestFilteringSettings) `yaml:"-"`
 
+	// This callback function returns the list of upstream servers for a client specified by IP address
+	GetUpstreamsByClient func(clientAddr string) []string `yaml:"-"`
+
 	ProtectionEnabled bool `yaml:"protection_enabled"` // whether or not use any of dnsfilter features
 
 	BlockingMode       string   `yaml:"blocking_mode"`        // mode how to answer filtered requests
@@ -391,6 +394,19 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 			answer = append(answer, s.genCNAMEAnswer(d.Req, res.CanonName))
 			// resolve canonical name, not the original host name
 			d.Req.Question[0].Name = dns.Fqdn(res.CanonName)
+		}
+
+		if d.Addr != nil && s.conf.GetUpstreamsByClient != nil {
+			clientIP, _, _ := net.SplitHostPort(d.Addr.String())
+			upstreams := s.conf.GetUpstreamsByClient(clientIP)
+			for _, us := range upstreams {
+				u, err := upstream.AddressToUpstream(us, upstream.Options{Timeout: 30 * time.Second})
+				if err != nil {
+					log.Error("upstream.AddressToUpstream: %s: %s", us, err)
+					continue
+				}
+				d.Upstreams = append(d.Upstreams, u)
+			}
 		}
 
 		// request was not filtered so let it be processed further

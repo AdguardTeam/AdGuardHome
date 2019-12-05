@@ -762,21 +762,21 @@ func TestValidateUpstreamsSet(t *testing.T) {
 		"[/host.com/google.com/]8.8.8.8",
 		"[/host/]sdns://AQMAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
 	}
-	err := validateUpstreams(upstreamsSet)
+	err := ValidateUpstreams(upstreamsSet)
 	if err == nil {
 		t.Fatalf("there is no default upstream")
 	}
 
 	// Let's add default upstream
 	upstreamsSet = append(upstreamsSet, "8.8.8.8")
-	err = validateUpstreams(upstreamsSet)
+	err = ValidateUpstreams(upstreamsSet)
 	if err != nil {
 		t.Fatalf("upstreams set is valid, but doesn't pass through validation cause: %s", err)
 	}
 
 	// Let's add invalid upstream
 	upstreamsSet = append(upstreamsSet, "dhcp://fake.dns")
-	err = validateUpstreams(upstreamsSet)
+	err = ValidateUpstreams(upstreamsSet)
 	if err == nil {
 		t.Fatalf("there is an invalid upstream in set, but it pass through validation")
 	}
