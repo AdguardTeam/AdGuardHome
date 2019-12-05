@@ -114,7 +114,7 @@ func (r *RDNS) resolve(ip string) string {
 		log.Debug("Error while making an rDNS lookup for %s: %s", ip, err)
 		return ""
 	}
-	if len(resp.Answer) != 1 {
+	if len(resp.Answer) == 0 {
 		log.Debug("No answer for rDNS lookup of %s", ip)
 		return ""
 	}
