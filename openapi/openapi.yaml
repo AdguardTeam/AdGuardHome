@@ -1649,6 +1649,10 @@ definitions:
                 type: "array"
                 items:
                     type: "string"
+            upstreams:
+                type: "array"
+                items:
+                    type: "string"
     ClientAuto:
         type: "object"
         description: "Auto-Client information"
