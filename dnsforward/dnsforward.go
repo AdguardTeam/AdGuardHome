@@ -99,13 +99,20 @@ type FilteringConfig struct {
 
 	ProtectionEnabled bool `yaml:"protection_enabled"` // whether or not use any of dnsfilter features
 
-	BlockingMode       string   `yaml:"blocking_mode"`        // mode how to answer filtered requests
+	BlockingMode     string `yaml:"blocking_mode"` // mode how to answer filtered requests
+	BlockingIPv4     string `yaml:"blocking_ipv4"` // IP address to be returned for a blocked A request
+	BlockingIPv6     string `yaml:"blocking_ipv6"` // IP address to be returned for a blocked AAAA request
+	BlockingIPAddrv4 net.IP `yaml:"-"`
+	BlockingIPAddrv6 net.IP `yaml:"-"`
+
 	BlockedResponseTTL uint32   `yaml:"blocked_response_ttl"` // if 0, then default is used (3600)
-	Ratelimit          int      `yaml:"ratelimit"`            // max number of requests per second from a given IP (0 to disable)
+	Ratelimit          uint32   `yaml:"ratelimit"`            // max number of requests per second from a given IP (0 to disable)
 	RatelimitWhitelist []string `yaml:"ratelimit_whitelist"`  // a list of whitelisted client IP addresses
 	RefuseAny          bool     `yaml:"refuse_any"`           // if true, refuse ANY requests
 	BootstrapDNS       []string `yaml:"bootstrap_dns"`        // a list of bootstrap DNS for DoH and DoT (plain DNS only)
 	AllServers         bool     `yaml:"all_servers"`          // if true, parallel queries to all configured upstream servers are enabled
+
+	EnableEDNSClientSubnet bool `yaml:"edns_client_subnet"` // Enable EDNS Client Subnet option
 
 	AllowedClients    []string `yaml:"allowed_clients"`    // IP addresses of whitelist clients
 	DisallowedClients []string `yaml:"disallowed_clients"` // IP addresses of clients that should be blocked
@@ -214,7 +221,7 @@ func (s *Server) prepare(config *ServerConfig) error {
 	proxyConfig := proxy.Config{
 		UDPListenAddr:            s.conf.UDPListenAddr,
 		TCPListenAddr:            s.conf.TCPListenAddr,
-		Ratelimit:                s.conf.Ratelimit,
+		Ratelimit:                int(s.conf.Ratelimit),
 		RatelimitWhitelist:       s.conf.RatelimitWhitelist,
 		RefuseAny:                s.conf.RefuseAny,
 		CacheEnabled:             true,
@@ -224,6 +231,7 @@ func (s *Server) prepare(config *ServerConfig) error {
 		BeforeRequestHandler:     s.beforeRequestHandler,
 		RequestHandler:           s.handleDNSRequest,
 		AllServers:               s.conf.AllServers,
+		EnableEDNSClientSubnet:   s.conf.EnableEDNSClientSubnet,
 	}
 
 	s.access = &accessCtx{}
@@ -656,6 +664,14 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 				return s.genARecord(m, []byte{0, 0, 0, 0})
 			case dns.TypeAAAA:
 				return s.genAAAARecord(m, net.IPv6zero)
+			}
+
+		} else if s.conf.BlockingMode == "custom_ip" {
+			switch m.Question[0].Qtype {
+			case dns.TypeA:
+				return s.genARecord(m, s.conf.BlockingIPAddrv4)
+			case dns.TypeAAAA:
+				return s.genAAAARecord(m, s.conf.BlockingIPAddrv6)
 			}
 		}
 

@@ -189,6 +189,13 @@ export const isPositive = (value) => {
     return false;
 };
 
+export const biggerOrEqualZero = (value) => {
+    if (value < 0) {
+        return <Trans>form_error_negative</Trans>;
+    }
+    return false;
+};
+
 export const port = (value) => {
     if ((value || value === 0) && (value < 80 || value > 65535)) {
         return <Trans>form_error_port_range</Trans>;

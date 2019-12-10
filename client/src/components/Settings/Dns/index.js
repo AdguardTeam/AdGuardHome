@@ -5,6 +5,7 @@ import { withNamespaces } from 'react-i18next';
 import Upstream from './Upstream';
 import Access from './Access';
 import Rewrites from './Rewrites';
+import Config from './Config';
 import PageTitle from '../../ui/PageTitle';
 import Loading from '../../ui/Loading';
 
@@ -13,6 +14,7 @@ class Dns extends Component {
         this.props.getDnsSettings();
         this.props.getAccessList();
         this.props.getRewritesList();
+        this.props.getDnsConfig();
     }
 
     render() {
@@ -29,12 +31,18 @@ class Dns extends Component {
             addRewrite,
             deleteRewrite,
             toggleRewritesModal,
+            dnsConfig,
+            setDnsConfig,
         } = this.props;
 
-        const isDataLoading =
-            dashboard.processingDnsSettings || access.processing || rewrites.processing;
-        const isDataReady =
-            !dashboard.processingDnsSettings && !access.processing && !rewrites.processing;
+        const isDataLoading = dashboard.processingDnsSettings
+            || access.processing
+            || rewrites.processing
+            || dnsConfig.processingGetConfig;
+        const isDataReady = !dashboard.processingDnsSettings
+            && !access.processing
+            && !rewrites.processing
+            && !dnsConfig.processingGetConfig;
 
         return (
             <Fragment>
@@ -42,6 +50,10 @@ class Dns extends Component {
                 {isDataLoading && <Loading />}
                 {isDataReady && (
                     <Fragment>
+                        <Config
+                            dnsConfig={dnsConfig}
+                            setDnsConfig={setDnsConfig}
+                        />
                         <Upstream
                             upstreamDns={dashboard.upstreamDns}
                             bootstrapDns={dashboard.bootstrapDns}
@@ -80,6 +92,9 @@ Dns.propTypes = {
     deleteRewrite: PropTypes.func.isRequired,
     toggleRewritesModal: PropTypes.func.isRequired,
     getDnsSettings: PropTypes.func.isRequired,
+    dnsConfig: PropTypes.object.isRequired,
+    setDnsConfig: PropTypes.func.isRequired,
+    getDnsConfig: PropTypes.func.isRequired,
     t: PropTypes.func.isRequired,
 };
 

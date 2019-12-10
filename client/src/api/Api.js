@@ -30,8 +30,6 @@ class Api {
     GLOBAL_SET_UPSTREAM_DNS = { path: 'set_upstreams_config', method: 'POST' };
     GLOBAL_TEST_UPSTREAM_DNS = { path: 'test_upstream_dns', method: 'POST' };
     GLOBAL_VERSION = { path: 'version.json', method: 'POST' };
-    GLOBAL_ENABLE_PROTECTION = { path: 'enable_protection', method: 'POST' };
-    GLOBAL_DISABLE_PROTECTION = { path: 'disable_protection', method: 'POST' };
     GLOBAL_UPDATE = { path: 'update', method: 'POST' };
 
     startGlobalFiltering() {
@@ -74,16 +72,6 @@ class Api {
             headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, config);
-    }
-
-    enableGlobalProtection() {
-        const { path, method } = this.GLOBAL_ENABLE_PROTECTION;
-        return this.makeRequest(path, method);
-    }
-
-    disableGlobalProtection() {
-        const { path, method } = this.GLOBAL_DISABLE_PROTECTION;
-        return this.makeRequest(path, method);
     }
 
     getUpdate() {
@@ -545,6 +533,24 @@ class Api {
     getProfile() {
         const { path, method } = this.GET_PROFILE;
         return this.makeRequest(path, method);
+    }
+
+    // DNS config
+    GET_DNS_CONFIG = { path: 'dns_info', method: 'GET' };
+    SET_DNS_CONFIG = { path: 'dns_config', method: 'POST' };
+
+    getDnsConfig() {
+        const { path, method } = this.GET_DNS_CONFIG;
+        return this.makeRequest(path, method);
+    }
+
+    setDnsConfig(data) {
+        const { path, method } = this.SET_DNS_CONFIG;
+        const config = {
+            data,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, config);
     }
 }
 

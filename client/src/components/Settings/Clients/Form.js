@@ -225,6 +225,11 @@ let Form = (props) => {
                         </div>
                     </div>
                     <div label="upstream" title={props.t('upstream_dns')}>
+                        <div className="form__desc mb-3">
+                            <Trans components={[<a href="#dns" key="0">link</a>]}>
+                                upstream_dns_client_desc
+                            </Trans>
+                        </div>
                         <Field
                             id="upstreams"
                             name="upstreams"

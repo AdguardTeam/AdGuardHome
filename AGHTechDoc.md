@@ -29,6 +29,9 @@ Contents:
 	* Static IP check/set
 	* Add a static lease
 	* API: Reset DHCP configuration
+* DNS general settings
+	* API: Get DNS general settings
+	* API: Set DNS general settings
 * DNS access settings
 	* List access settings
 	* Set access settings
@@ -799,6 +802,50 @@ Response:
 	}
 	...
 	]
+
+
+## DNS general settings
+
+### API: Get DNS general settings
+
+Request:
+
+	GET /control/dns_info
+
+Response:
+
+	200 OK
+
+	{
+		"protection_enabled": true | false,
+		"ratelimit": 1234,
+		"blocking_mode": "nxdomain" | "null_ip" | "custom_ip",
+		"blocking_ipv4": "1.2.3.4",
+		"blocking_ipv6": "1:2:3::4",
+		"edns_cs_enabled": true | false,
+	}
+
+
+### API: Set DNS general settings
+
+Request:
+
+	POST /control/dns_config
+
+	{
+		"protection_enabled": true | false,
+		"ratelimit": 1234,
+		"blocking_mode": "nxdomain" | "null_ip" | "custom_ip",
+		"blocking_ipv4": "1.2.3.4",
+		"blocking_ipv6": "1:2:3::4",
+		"edns_cs_enabled": true | false,
+	}
+
+Response:
+
+	200 OK
+
+`blocking_ipv4` and `blocking_ipv6` values are active when `blocking_mode` is set to `custom_ip`.
 
 
 ## DNS access settings

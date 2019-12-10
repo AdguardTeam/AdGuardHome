@@ -13,6 +13,7 @@ import rewrites from './rewrites';
 import services from './services';
 import stats from './stats';
 import queryLogs from './queryLogs';
+import dnsConfig from './dnsConfig';
 import filtering from './filtering';
 
 const settings = handleActions(
@@ -369,6 +370,7 @@ export default combineReducers({
     rewrites,
     services,
     stats,
+    dnsConfig,
     loadingBar: loadingBarReducer,
     form: formReducer,
 });

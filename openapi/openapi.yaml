@@ -70,22 +70,31 @@ paths:
                     schema:
                         $ref: "#/definitions/ServerStatus"
 
-    /enable_protection:
-        post:
+    /dns_info:
+        get:
             tags:
                 - global
-            operationId: enableProtection
-            summary: "Enable protection (turns on dnsfilter module in coredns)"
+            operationId: dnsInfo
+            summary: 'Get general DNS parameters'
             responses:
                 200:
                     description: OK
+                    schema:
+                        $ref: "#/definitions/DNSConfig"
 
-    /disable_protection:
+    /dns_config:
         post:
             tags:
                 - global
-            operationId: disableProtection
-            summary: "Disable protection (turns off filtering, sb, parental, safesearch temporarily by disabling dnsfilter module in coredns)"
+            operationId: dnsConfig
+            summary: "Set general DNS parameters"
+            consumes:
+                - application/json
+            parameters:
+                - in: "body"
+                  name: "body"
+                  schema:
+                      $ref: "#/definitions/DNSConfig"
             responses:
                 200:
                     description: OK
@@ -1054,6 +1063,28 @@ definitions:
             language:
                 type: "string"
                 example: "en"
+
+    DNSConfig:
+        type: "object"
+        description: "Query log configuration"
+        properties:
+            protection_enabled:
+                type: "boolean"
+            ratelimit:
+                type: "integer"
+            blocking_mode:
+                type: "string"
+                enum:
+                - "nxdomain"
+                - "null_ip"
+                - "custom_ip"
+            blocking_ipv4:
+                type: "string"
+            blocking_ipv6:
+                type: "string"
+            edns_cs_enabled:
+                type: "boolean"
+
     UpstreamsConfig:
         type: "object"
         description: "Upstreams configuration"
