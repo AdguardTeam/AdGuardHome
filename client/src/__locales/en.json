@@ -300,6 +300,8 @@
     "update_announcement": "AdGuard Home {{version}} is now available! <0>Click here</0> for more info.",
     "setup_guide": "Setup guide",
     "dns_addresses": "DNS addresses",
+    "dns_start": "DNS server is starting up",
+    "dns_status_error": "Error of getting DNS server status",
     "down": "Down",
     "fix": "Fix",
     "dns_providers": "Here is a <0>list of known DNS providers</0> to choose from.",
@@ -424,5 +426,6 @@
     "descr": "Description",
     "whois": "Whois",
     "filtering_rules_learn_more": "<0>Learn more</0> about creating your own hosts blocklists.",
-    "blocked_by_response": "Blocked by CNAME or IP in response"
+    "blocked_by_response": "Blocked by CNAME or IP in response",
+    "try_again": "Try again"
 }

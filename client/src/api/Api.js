@@ -24,23 +24,11 @@ class Api {
     }
 
     // Global methods
-    GLOBAL_START = { path: 'start', method: 'POST' };
     GLOBAL_STATUS = { path: 'status', method: 'GET' };
-    GLOBAL_STOP = { path: 'stop', method: 'POST' };
     GLOBAL_SET_UPSTREAM_DNS = { path: 'set_upstreams_config', method: 'POST' };
     GLOBAL_TEST_UPSTREAM_DNS = { path: 'test_upstream_dns', method: 'POST' };
     GLOBAL_VERSION = { path: 'version.json', method: 'POST' };
     GLOBAL_UPDATE = { path: 'update', method: 'POST' };
-
-    startGlobalFiltering() {
-        const { path, method } = this.GLOBAL_START;
-        return this.makeRequest(path, method);
-    }
-
-    stopGlobalFiltering() {
-        const { path, method } = this.GLOBAL_STOP;
-        return this.makeRequest(path, method);
-    }
 
     getGlobalStatus() {
         const { path, method } = this.GLOBAL_STATUS;

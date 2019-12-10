@@ -29,6 +29,7 @@ import UpdateOverlay from '../ui/UpdateOverlay';
 import EncryptionTopline from '../ui/EncryptionTopline';
 import Icons from '../ui/Icons';
 import i18n from '../../i18n';
+import Loading from '../ui/Loading';
 
 class App extends Component {
     componentDidMount() {
@@ -41,8 +42,8 @@ class App extends Component {
         }
     }
 
-    handleStatusChange = () => {
-        this.props.enableDns();
+    reloadPage = () => {
+        window.location.reload();
     };
 
     handleUpdate = () => {
@@ -88,10 +89,13 @@ class App extends Component {
                     <LoadingBar className="loading-bar" updateTime={1000} />
                     <Route component={Header} />
                     <div className="container container--wrap">
-                        {!dashboard.processing && !dashboard.isCoreRunning && (
+                        {dashboard.processing && !dashboard.isCoreRunning && (
                             <div className="row row-cards">
                                 <div className="col-lg-12">
-                                    <Status handleStatusChange={this.handleStatusChange} />
+                                    <Status reloadPage={this.reloadPage}
+                                            message="dns_start"
+                                    />
+                                    <Loading />
                                 </div>
                             </div>
                         )}

@@ -90,20 +90,6 @@ const dashboard = handleActions(
             return newState;
         },
 
-        [actions.enableDnsRequest]: state => ({ ...state, processing: true }),
-        [actions.enableDnsFailure]: state => ({ ...state, processing: false }),
-        [actions.enableDnsSuccess]: (state) => {
-            const newState = { ...state, isCoreRunning: !state.isCoreRunning, processing: false };
-            return newState;
-        },
-
-        [actions.disableDnsRequest]: state => ({ ...state, processing: true }),
-        [actions.disableDnsFailure]: state => ({ ...state, processing: false }),
-        [actions.disableDnsSuccess]: (state) => {
-            const newState = { ...state, isCoreRunning: !state.isCoreRunning, processing: false };
-            return newState;
-        },
-
         [actions.getVersionRequest]: state => ({ ...state, processingVersion: true }),
         [actions.getVersionFailure]: state => ({ ...state, processingVersion: false }),
         [actions.getVersionSuccess]: (state, { payload }) => {
