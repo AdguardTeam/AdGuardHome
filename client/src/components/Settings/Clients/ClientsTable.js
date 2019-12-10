@@ -62,10 +62,10 @@ class ClientsTable extends Component {
         };
     };
 
-    getStats = (ip, stats) => {
+    getStats = (ids, stats) => {
         if (stats) {
-            const statsForCurrentIP = stats.find(item => item.name === ip);
-            return statsForCurrentIP && statsForCurrentIP.count;
+            const currentStats = stats.find(item => ids.includes(item.name));
+            return currentStats && currentStats.count;
         }
 
         return '';
@@ -180,8 +180,8 @@ class ClientsTable extends Component {
             accessor: 'statistics',
             minWidth: 120,
             Cell: (row) => {
-                const clientIP = row.original.ip;
-                const clientStats = clientIP && this.getStats(clientIP, this.props.topClients);
+                const { ids } = row.original;
+                const clientStats = this.getStats(ids, this.props.topClients);
 
                 if (clientStats) {
                     return (
