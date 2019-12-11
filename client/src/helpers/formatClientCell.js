@@ -28,7 +28,7 @@ export const formatClientCell = (row, t) => {
     let nameContainer = value;
 
     if (info) {
-        const { name, whois } = info;
+        const { name, whois_info } = info;
 
         if (name) {
             nameContainer = (
@@ -38,10 +38,10 @@ export const formatClientCell = (row, t) => {
             );
         }
 
-        if (whois) {
+        if (whois_info) {
             whoisContainer = (
                 <div className="logs__text logs__text--wrap logs__text--whois">
-                    {getFormattedWhois(whois, t)}
+                    {getFormattedWhois(whois_info, t)}
                 </div>
             );
         }
