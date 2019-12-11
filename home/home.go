@@ -172,7 +172,7 @@ func run(args options) {
 			log.Fatalf("%s", err)
 		}
 		go func() {
-			err = startDNSServer()
+			err := startDNSServer()
 			if err != nil {
 				log.Fatal(err)
 			}

@@ -360,10 +360,9 @@ func (s *Server) Reconfigure(config *ServerConfig) error {
 		return errorx.Decorate(err, "could not reconfigure the server")
 	}
 
-	// On some Windows versions the UDP port we've just closed in proxy.Stop() doesn't get actually closed right away.
-	if runtime.GOOS == "windows" {
-		time.Sleep(1 * time.Second)
-	}
+	// It seems that net.Listener.Close() doesn't close file descriptors right away.
+	// We wait for some time and hope that this fd will be closed.
+	time.Sleep(100 * time.Millisecond)
 
 	err = s.Prepare(config)
 	if err != nil {

@@ -42,8 +42,6 @@ matrix:
       script:
         - node -v
         - npm -v
-        # Run tests just in case
-        - go test -race -v -bench=. ./...
         # Prepare releases
         - ./release.sh
         - ls -l dist
