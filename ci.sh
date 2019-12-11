@@ -16,13 +16,13 @@ golangci-lint --version
 # Run linter
 golangci-lint run
 
-# Run tests
-go test -race -v -bench=. -coverprofile=coverage.txt -covermode=atomic ./...
-
 # Make
 make clean
 make build/static/index.html
 make
+
+# Run tests
+go test -race -v -bench=. -coverprofile=coverage.txt -covermode=atomic ./...
 
 # if [[ -z "$(git status --porcelain)" ]]; then
 #     # Working directory clean

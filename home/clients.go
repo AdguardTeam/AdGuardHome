@@ -128,24 +128,30 @@ func (clients *clientsContainer) addFromConfig(objects []clientObject) {
 
 // WriteDiskConfig - write configuration
 func (clients *clientsContainer) WriteDiskConfig(objects *[]clientObject) {
-	clientsList := clients.GetList()
-	for _, cli := range clientsList {
+	clients.lock.Lock()
+	for _, cli := range clients.list {
 		cy := clientObject{
-			Name:                cli.Name,
-			IDs:                 cli.IDs,
-			UseGlobalSettings:   !cli.UseOwnSettings,
-			FilteringEnabled:    cli.FilteringEnabled,
-			ParentalEnabled:     cli.ParentalEnabled,
-			SafeSearchEnabled:   cli.SafeSearchEnabled,
-			SafeBrowsingEnabled: cli.SafeBrowsingEnabled,
-
+			Name:                     cli.Name,
+			UseGlobalSettings:        !cli.UseOwnSettings,
+			FilteringEnabled:         cli.FilteringEnabled,
+			ParentalEnabled:          cli.ParentalEnabled,
+			SafeSearchEnabled:        cli.SafeSearchEnabled,
+			SafeBrowsingEnabled:      cli.SafeBrowsingEnabled,
 			UseGlobalBlockedServices: !cli.UseOwnBlockedServices,
-			BlockedServices:          cli.BlockedServices,
-
-			Upstreams: cli.Upstreams,
 		}
+
+		cy.IDs = make([]string, len(cli.IDs))
+		copy(cy.IDs, cli.IDs)
+
+		cy.BlockedServices = make([]string, len(cli.BlockedServices))
+		copy(cy.BlockedServices, cli.BlockedServices)
+
+		cy.Upstreams = make([]string, len(cli.Upstreams))
+		copy(cy.Upstreams, cli.Upstreams)
+
 		*objects = append(*objects, cy)
 	}
+	clients.lock.Unlock()
 }
 
 func (clients *clientsContainer) periodicUpdate() {
@@ -155,11 +161,6 @@ func (clients *clientsContainer) periodicUpdate() {
 		clients.addFromDHCP()
 		time.Sleep(clientsUpdatePeriod)
 	}
-}
-
-// GetList returns the pointer to clients list
-func (clients *clientsContainer) GetList() map[string]*Client {
-	return clients.list
 }
 
 // Exists checks if client with this IP already exists

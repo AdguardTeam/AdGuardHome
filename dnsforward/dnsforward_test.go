@@ -28,7 +28,7 @@ const (
 
 func TestServer(t *testing.T) {
 	s := createTestServer(t)
-	err := s.Start(nil)
+	err := s.Start()
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -62,7 +62,7 @@ func TestServer(t *testing.T) {
 func TestServerWithProtectionDisabled(t *testing.T) {
 	s := createTestServer(t)
 	s.conf.ProtectionEnabled = false
-	err := s.Start(nil)
+	err := s.Start()
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -94,8 +94,9 @@ func TestDotServer(t *testing.T) {
 		PrivateKeyData:       keyPem,
 	}
 
+	_ = s.Prepare(nil)
 	// Starting the server
-	err := s.Start(nil)
+	err := s.Start()
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -127,7 +128,7 @@ func TestDotServer(t *testing.T) {
 
 func TestServerRace(t *testing.T) {
 	s := createTestServer(t)
-	err := s.Start(nil)
+	err := s.Start()
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -150,7 +151,7 @@ func TestServerRace(t *testing.T) {
 
 func TestSafeSearch(t *testing.T) {
 	s := createTestServer(t)
-	err := s.Start(nil)
+	err := s.Start()
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -191,7 +192,7 @@ func TestSafeSearch(t *testing.T) {
 
 func TestInvalidRequest(t *testing.T) {
 	s := createTestServer(t)
-	err := s.Start(nil)
+	err := s.Start()
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -217,7 +218,7 @@ func TestInvalidRequest(t *testing.T) {
 
 func TestBlockedRequest(t *testing.T) {
 	s := createTestServer(t)
-	err := s.Start(nil)
+	err := s.Start()
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -319,7 +320,7 @@ func (u *testUpstream) Address() string {
 func (s *Server) startWithUpstream(u upstream.Upstream) error {
 	s.Lock()
 	defer s.Unlock()
-	err := s.prepare(nil)
+	err := s.Prepare(nil)
 	if err != nil {
 		return err
 	}
@@ -386,7 +387,7 @@ func TestBlockCNAME(t *testing.T) {
 func TestNullBlockedRequest(t *testing.T) {
 	s := createTestServer(t)
 	s.conf.FilteringConfig.BlockingMode = "null_ip"
-	err := s.Start(nil)
+	err := s.Start()
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -425,7 +426,7 @@ func TestNullBlockedRequest(t *testing.T) {
 
 func TestBlockedByHosts(t *testing.T) {
 	s := createTestServer(t)
-	err := s.Start(nil)
+	err := s.Start()
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -464,7 +465,7 @@ func TestBlockedByHosts(t *testing.T) {
 
 func TestBlockedBySafeBrowsing(t *testing.T) {
 	s := createTestServer(t)
-	err := s.Start(nil)
+	err := s.Start()
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -530,6 +531,8 @@ func createTestServer(t *testing.T) *Server {
 	s.conf.TCPListenAddr = &net.TCPAddr{Port: 0}
 	s.conf.UpstreamDNS = []string{"8.8.8.8:53", "8.8.4.4:53"}
 	s.conf.FilteringConfig.ProtectionEnabled = true
+	err := s.Prepare(nil)
+	assert.True(t, err == nil)
 	return s
 }
 

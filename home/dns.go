@@ -15,11 +15,6 @@ import (
 	"github.com/joomcode/errorx"
 )
 
-type dnsContext struct {
-	rdns  *RDNS
-	whois *Whois
-}
-
 // Called by other modules when configuration is changed
 func onConfigModified() {
 	_ = config.write()
@@ -28,12 +23,12 @@ func onConfigModified() {
 // initDNSServer creates an instance of the dnsforward.Server
 // Please note that we must do it even if we don't start it
 // so that we had access to the query log and the stats
-func initDNSServer() {
+func initDNSServer() error {
 	baseDir := config.getDataDir()
 
 	err := os.MkdirAll(baseDir, 0755)
 	if err != nil {
-		log.Fatalf("Cannot create DNS data dir at %s: %s", baseDir, err)
+		return fmt.Errorf("Cannot create DNS data dir at %s: %s", baseDir, err)
 	}
 
 	statsConf := stats.Config{
@@ -42,9 +37,9 @@ func initDNSServer() {
 		ConfigModified: onConfigModified,
 		HTTPRegister:   httpRegister,
 	}
-	config.stats, err = stats.New(statsConf)
+	Context.stats, err = stats.New(statsConf)
 	if err != nil {
-		log.Fatal("Couldn't initialize statistics module")
+		return fmt.Errorf("Couldn't initialize statistics module")
 	}
 	conf := querylog.Config{
 		Enabled:        config.DNS.QueryLogEnabled,
@@ -54,7 +49,7 @@ func initDNSServer() {
 		ConfigModified: onConfigModified,
 		HTTPRegister:   httpRegister,
 	}
-	config.queryLog = querylog.New(conf)
+	Context.queryLog = querylog.New(conf)
 
 	filterConf := config.DNS.DnsfilterConf
 	bindhost := config.DNS.BindHost
@@ -64,22 +59,28 @@ func initDNSServer() {
 	filterConf.ResolverAddress = fmt.Sprintf("%s:%d", bindhost, config.DNS.Port)
 	filterConf.ConfigModified = onConfigModified
 	filterConf.HTTPRegister = httpRegister
-	config.dnsFilter = dnsfilter.New(&filterConf, nil)
+	Context.dnsFilter = dnsfilter.New(&filterConf, nil)
 
-	config.dnsServer = dnsforward.NewServer(config.dnsFilter, config.stats, config.queryLog)
+	Context.dnsServer = dnsforward.NewServer(Context.dnsFilter, Context.stats, Context.queryLog)
+	dnsConfig := generateServerConfig()
+	err = Context.dnsServer.Prepare(&dnsConfig)
+	if err != nil {
+		return fmt.Errorf("dnsServer.Prepare: %s", err)
+	}
 
 	sessFilename := filepath.Join(baseDir, "sessions.db")
 	config.auth = InitAuth(sessFilename, config.Users, config.WebSessionTTLHours*60*60)
 	config.Users = nil
 
-	config.dnsctx.rdns = InitRDNS(&config.clients)
-	config.dnsctx.whois = initWhois(&config.clients)
+	Context.rdns = InitRDNS(Context.dnsServer, &Context.clients)
+	Context.whois = initWhois(&Context.clients)
 
 	initFiltering()
+	return nil
 }
 
 func isRunning() bool {
-	return config.dnsServer != nil && config.dnsServer.IsRunning()
+	return Context.dnsServer != nil && Context.dnsServer.IsRunning()
 }
 
 // nolint (gocyclo)
@@ -145,14 +146,14 @@ func onDNSRequest(d *proxy.DNSContext) {
 
 	ipAddr := net.ParseIP(ip)
 	if !ipAddr.IsLoopback() {
-		config.dnsctx.rdns.Begin(ip)
+		Context.rdns.Begin(ip)
 	}
 	if isPublicIP(ipAddr) {
-		config.dnsctx.whois.Begin(ip)
+		Context.whois.Begin(ip)
 	}
 }
 
-func generateServerConfig() (dnsforward.ServerConfig, error) {
+func generateServerConfig() dnsforward.ServerConfig {
 	newconfig := dnsforward.ServerConfig{
 		UDPListenAddr:   &net.UDPAddr{IP: net.ParseIP(config.DNS.BindHost), Port: config.DNS.Port},
 		TCPListenAddr:   &net.TCPAddr{IP: net.ParseIP(config.DNS.BindHost), Port: config.DNS.Port},
@@ -171,11 +172,11 @@ func generateServerConfig() (dnsforward.ServerConfig, error) {
 
 	newconfig.FilterHandler = applyAdditionalFiltering
 	newconfig.GetUpstreamsByClient = getUpstreamsByClient
-	return newconfig, nil
+	return newconfig
 }
 
 func getUpstreamsByClient(clientAddr string) []string {
-	c, ok := config.clients.Find(clientAddr)
+	c, ok := Context.clients.Find(clientAddr)
 	if !ok {
 		return []string{}
 	}
@@ -192,7 +193,7 @@ func applyAdditionalFiltering(clientAddr string, setts *dnsfilter.RequestFilteri
 		return
 	}
 
-	c, ok := config.clients.Find(clientAddr)
+	c, ok := Context.clients.Find(clientAddr)
 	if !ok {
 		return
 	}
@@ -220,12 +221,7 @@ func startDNSServer() error {
 
 	enableFilters(false)
 
-	newconfig, err := generateServerConfig()
-	if err != nil {
-		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
-	}
-
-	err = config.dnsServer.Start(&newconfig)
+	err := Context.dnsServer.Start()
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
 	}
@@ -233,14 +229,14 @@ func startDNSServer() error {
 	startFiltering()
 
 	const topClientsNumber = 100 // the number of clients to get
-	topClients := config.stats.GetTopClientsIP(topClientsNumber)
+	topClients := Context.stats.GetTopClientsIP(topClientsNumber)
 	for _, ip := range topClients {
 		ipAddr := net.ParseIP(ip)
 		if !ipAddr.IsLoopback() {
-			config.dnsctx.rdns.Begin(ip)
+			Context.rdns.Begin(ip)
 		}
 		if isPublicIP(ipAddr) {
-			config.dnsctx.whois.Begin(ip)
+			Context.whois.Begin(ip)
 		}
 	}
 
@@ -248,11 +244,8 @@ func startDNSServer() error {
 }
 
 func reconfigureDNSServer() error {
-	newconfig, err := generateServerConfig()
-	if err != nil {
-		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
-	}
-	err = config.dnsServer.Reconfigure(&newconfig)
+	newconfig := generateServerConfig()
+	err := Context.dnsServer.Reconfigure(&newconfig)
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
 	}
@@ -261,26 +254,22 @@ func reconfigureDNSServer() error {
 }
 
 func stopDNSServer() error {
-	if !isRunning() {
-		return nil
-	}
-
-	err := config.dnsServer.Stop()
+	err := Context.dnsServer.Stop()
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't stop forwarding DNS server")
 	}
 
 	// DNS forward module must be closed BEFORE stats or queryLog because it depends on them
-	config.dnsServer.Close()
+	Context.dnsServer.Close()
 
-	config.dnsFilter.Close()
-	config.dnsFilter = nil
+	Context.dnsFilter.Close()
+	Context.dnsFilter = nil
 
-	config.stats.Close()
-	config.stats = nil
+	Context.stats.Close()
+	Context.stats = nil
 
-	config.queryLog.Close()
-	config.queryLog = nil
+	Context.queryLog.Close()
+	Context.queryLog = nil
 
 	config.auth.Close()
 	config.auth = nil

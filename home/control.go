@@ -93,8 +93,8 @@ func getDNSAddresses() []string {
 
 func handleStatus(w http.ResponseWriter, r *http.Request) {
 	c := dnsforward.FilteringConfig{}
-	if config.dnsServer != nil {
-		config.dnsServer.WriteDiskConfig(&c)
+	if Context.dnsServer != nil {
+		Context.dnsServer.WriteDiskConfig(&c)
 	}
 	data := map[string]interface{}{
 		"dns_addresses": getDNSAddresses(),
@@ -154,7 +154,7 @@ func handleDOH(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	config.dnsServer.ServeHTTP(w, r)
+	Context.dnsServer.ServeHTTP(w, r)
 }
 
 // ------------------------

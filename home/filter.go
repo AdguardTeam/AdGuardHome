@@ -514,5 +514,5 @@ func enableFilters(async bool) {
 		}
 	}
 
-	_ = config.dnsFilter.SetFilters(filters, async)
+	_ = Context.dnsFilter.SetFilters(filters, async)
 }

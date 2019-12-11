@@ -10,12 +10,12 @@ func startDHCPServer() error {
 		return nil
 	}
 
-	err := config.dhcpServer.Init(config.DHCP)
+	err := Context.dhcpServer.Init(config.DHCP)
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't init DHCP server")
 	}
 
-	err = config.dhcpServer.Start()
+	err = Context.dhcpServer.Start()
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start DHCP server")
 	}
@@ -27,7 +27,7 @@ func stopDHCPServer() error {
 		return nil
 	}
 
-	err := config.dhcpServer.Stop()
+	err := Context.dhcpServer.Stop()
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't stop DHCP server")
 	}

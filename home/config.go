@@ -29,6 +29,7 @@ type logSettings struct {
 	Verbose bool   `yaml:"verbose"`  // If true, verbose logging is enabled
 }
 
+// HTTPSServer - HTTPS Server
 type HTTPSServer struct {
 	server     *http.Server
 	cond       *sync.Cond // reacts to config.TLS.Enabled, PortHTTPS, CertificateChain and PrivateKey
@@ -51,24 +52,14 @@ type configuration struct {
 	runningAsService bool
 	disableUpdate    bool // If set, don't check for updates
 	appSignalChannel chan os.Signal
-	clients          clientsContainer // per-client-settings module
 	controlLock      sync.Mutex
 	transport        *http.Transport
 	client           *http.Client
-	stats            stats.Stats       // statistics module
-	queryLog         querylog.QueryLog // query log module
-	auth             *Auth             // HTTP authentication module
+	auth             *Auth // HTTP authentication module
 
 	// cached version.json to avoid hammering github.io for each page reload
 	versionCheckJSON     []byte
 	versionCheckLastTime time.Time
-
-	dnsctx      dnsContext
-	dnsFilter   *dnsfilter.Dnsfilter
-	dnsServer   *dnsforward.Server
-	dhcpServer  *dhcpd.Server
-	httpServer  *http.Server
-	httpsServer HTTPSServer
 
 	BindHost     string `yaml:"bind_host"`     // BindHost is the IP address of the HTTP server to bind to
 	BindPort     int    `yaml:"bind_port"`     // BindPort is the port the HTTP server
@@ -296,41 +287,41 @@ func (c *configuration) write() error {
 	c.Lock()
 	defer c.Unlock()
 
-	config.clients.WriteDiskConfig(&config.Clients)
+	Context.clients.WriteDiskConfig(&config.Clients)
 
 	if config.auth != nil {
 		config.Users = config.auth.GetUsers()
 	}
 
-	if config.stats != nil {
+	if Context.stats != nil {
 		sdc := stats.DiskConfig{}
-		config.stats.WriteDiskConfig(&sdc)
+		Context.stats.WriteDiskConfig(&sdc)
 		config.DNS.StatsInterval = sdc.Interval
 	}
 
-	if config.queryLog != nil {
+	if Context.queryLog != nil {
 		dc := querylog.DiskConfig{}
-		config.queryLog.WriteDiskConfig(&dc)
+		Context.queryLog.WriteDiskConfig(&dc)
 		config.DNS.QueryLogEnabled = dc.Enabled
 		config.DNS.QueryLogInterval = dc.Interval
 		config.DNS.QueryLogMemSize = dc.MemSize
 	}
 
-	if config.dnsFilter != nil {
+	if Context.dnsFilter != nil {
 		c := dnsfilter.Config{}
-		config.dnsFilter.WriteDiskConfig(&c)
+		Context.dnsFilter.WriteDiskConfig(&c)
 		config.DNS.DnsfilterConf = c
 	}
 
-	if config.dnsServer != nil {
+	if Context.dnsServer != nil {
 		c := dnsforward.FilteringConfig{}
-		config.dnsServer.WriteDiskConfig(&c)
+		Context.dnsServer.WriteDiskConfig(&c)
 		config.DNS.FilteringConfig = c
 	}
 
-	if config.dhcpServer != nil {
+	if Context.dhcpServer != nil {
 		c := dhcpd.ServerConfig{}
-		config.dhcpServer.WriteDiskConfig(&c)
+		Context.dhcpServer.WriteDiskConfig(&c)
 		config.DHCP = c
 	}
 

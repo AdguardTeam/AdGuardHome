@@ -21,10 +21,8 @@ const (
 
 // statsCtx - global context
 type statsCtx struct {
-	limit uint32 // maximum time we need to keep data for (in hours)
-	db    *bolt.DB
-
-	conf Config
+	db   *bolt.DB
+	conf *Config
 
 	unit     *unit      // the current unit
 	unitLock sync.Mutex // protect 'unit'
@@ -67,8 +65,9 @@ func createObject(conf Config) (*statsCtx, error) {
 	if !checkInterval(conf.LimitDays) {
 		conf.LimitDays = 1
 	}
-	s.limit = conf.LimitDays * 24
-	s.conf = conf
+	s.conf = &Config{}
+	*s.conf = conf
+	s.conf.limit = conf.LimitDays * 24
 	if conf.UnitID == nil {
 		s.conf.UnitID = newUnitID
 	}
@@ -82,7 +81,7 @@ func createObject(conf Config) (*statsCtx, error) {
 	var udb *unitDB
 	if tx != nil {
 		log.Tracef("Deleting old units...")
-		firstID := id - s.limit - 1
+		firstID := id - s.conf.limit - 1
 		unitDel := 0
 		forEachBkt := func(name []byte, b *bolt.Bucket) error {
 			id := uint32(btoi(name))
@@ -243,7 +242,7 @@ func (s *statsCtx) periodicFlush() {
 			continue
 		}
 		ok1 := s.flushUnitToDB(tx, u.id, udb)
-		ok2 := s.deleteUnit(tx, id-s.limit)
+		ok2 := s.deleteUnit(tx, id-s.conf.limit)
 		if ok1 || ok2 {
 			s.commitTxn(tx)
 		} else {
@@ -383,12 +382,14 @@ func convertTopArray(a []countPair) []map[string]uint64 {
 }
 
 func (s *statsCtx) setLimit(limitDays int) {
-	s.limit = uint32(limitDays) * 24
+	conf := *s.conf
+	conf.limit = uint32(limitDays) * 24
+	s.conf = &conf
 	log.Debug("Stats: set limit: %d", limitDays)
 }
 
 func (s *statsCtx) WriteDiskConfig(dc *DiskConfig) {
-	dc.Interval = s.limit / 24
+	dc.Interval = s.conf.limit / 24
 }
 
 func (s *statsCtx) Close() {
@@ -466,7 +467,7 @@ func (s *statsCtx) Update(e Entry) {
 	s.unitLock.Unlock()
 }
 
-func (s *statsCtx) loadUnits() ([]*unitDB, uint32) {
+func (s *statsCtx) loadUnits(limit uint32) ([]*unitDB, uint32) {
 	tx := s.beginTxn(false)
 	if tx == nil {
 		return nil, 0
@@ -478,7 +479,7 @@ func (s *statsCtx) loadUnits() ([]*unitDB, uint32) {
 	s.unitLock.Unlock()
 
 	units := []*unitDB{} //per-hour units
-	firstID := curID - s.limit + 1
+	firstID := curID - limit + 1
 	for i := firstID; i != curID; i++ {
 		u := s.loadUnitFromDB(tx, i)
 		if u == nil {
@@ -492,8 +493,8 @@ func (s *statsCtx) loadUnits() ([]*unitDB, uint32) {
 
 	units = append(units, curUnit)
 
-	if len(units) != int(s.limit) {
-		log.Fatalf("len(units) != s.limit: %d %d", len(units), s.limit)
+	if len(units) != int(limit) {
+		log.Fatalf("len(units) != limit: %d %d", len(units), limit)
 	}
 
 	return units, firstID
@@ -527,10 +528,16 @@ func (s *statsCtx) loadUnits() ([]*unitDB, uint32) {
   These values are just the sum of data for all units.
 */
 // nolint (gocyclo)
-func (s *statsCtx) getData(timeUnit TimeUnit) map[string]interface{} {
-	d := map[string]interface{}{}
+func (s *statsCtx) getData() map[string]interface{} {
+	limit := s.conf.limit
 
-	units, firstID := s.loadUnits()
+	d := map[string]interface{}{}
+	timeUnit := Hours
+	if limit/24 > 7 {
+		timeUnit = Days
+	}
+
+	units, firstID := s.loadUnits(limit)
 	if units == nil {
 		return nil
 	}
@@ -561,8 +568,8 @@ func (s *statsCtx) getData(timeUnit TimeUnit) map[string]interface{} {
 		if id <= nextDayID {
 			a = append(a, sum)
 		}
-		if len(a) != int(s.limit/24) {
-			log.Fatalf("len(a) != s.limit: %d %d", len(a), s.limit)
+		if len(a) != int(limit/24) {
+			log.Fatalf("len(a) != limit: %d %d", len(a), limit)
 		}
 	}
 	d["dns_queries"] = a
@@ -705,8 +712,8 @@ func (s *statsCtx) getData(timeUnit TimeUnit) map[string]interface{} {
 	return d
 }
 
-func (s *statsCtx) GetTopClientsIP(limit uint) []string {
-	units, _ := s.loadUnits()
+func (s *statsCtx) GetTopClientsIP(maxCount uint) []string {
+	units, _ := s.loadUnits(s.conf.limit)
 	if units == nil {
 		return nil
 	}
@@ -718,7 +725,7 @@ func (s *statsCtx) GetTopClientsIP(limit uint) []string {
 			m[it.Name] += it.Count
 		}
 	}
-	a := convertMapToArray(m, int(limit))
+	a := convertMapToArray(m, int(maxCount))
 	d := []string{}
 	for _, it := range a {
 		d = append(d, it.Name)

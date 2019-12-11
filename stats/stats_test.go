@@ -45,7 +45,7 @@ func TestStats(t *testing.T) {
 	e.Time = 123456
 	s.Update(e)
 
-	d := s.getData(Hours)
+	d := s.getData()
 	a := []uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2}
 	assert.True(t, UIntArrayEquals(d["dns_queries"].([]uint64), a))
 
@@ -116,7 +116,7 @@ func TestLargeNumbers(t *testing.T) {
 		}
 	}
 
-	d := s.getData(Hours)
+	d := s.getData()
 	assert.True(t, d["num_dns_queries"].(uint64) == uint64(int(hour)*n))
 
 	s.Close()

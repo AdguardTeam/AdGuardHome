@@ -80,7 +80,7 @@ func handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	// check if port is available
 	// BUT: if we are already using this port, no need
 	alreadyRunning := false
-	if config.httpsServer.server != nil {
+	if Context.httpsServer.server != nil {
 		alreadyRunning = true
 	}
 	if !alreadyRunning {
@@ -110,7 +110,7 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	// check if port is available
 	// BUT: if we are already using this port, no need
 	alreadyRunning := false
-	if config.httpsServer.server != nil {
+	if Context.httpsServer.server != nil {
 		alreadyRunning = true
 	}
 	if !alreadyRunning {
@@ -145,12 +145,12 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	if restartHTTPS {
 		go func() {
 			time.Sleep(time.Second) // TODO: could not find a way to reliably know that data was fully sent to client by https server, so we wait a bit to let response through before closing the server
-			config.httpsServer.cond.L.Lock()
-			config.httpsServer.cond.Broadcast()
-			if config.httpsServer.server != nil {
-				config.httpsServer.server.Shutdown(context.TODO())
+			Context.httpsServer.cond.L.Lock()
+			Context.httpsServer.cond.Broadcast()
+			if Context.httpsServer.server != nil {
+				Context.httpsServer.server.Shutdown(context.TODO())
 			}
-			config.httpsServer.cond.L.Unlock()
+			Context.httpsServer.cond.L.Unlock()
 		}()
 	}
 }

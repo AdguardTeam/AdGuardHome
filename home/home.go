@@ -21,6 +21,10 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
+	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/dnsforward"
+	"github.com/AdguardTeam/AdGuardHome/querylog"
+	"github.com/AdguardTeam/AdGuardHome/stats"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/NYTimes/gziphandler"
 	"github.com/gobuffalo/packr"
@@ -39,6 +43,23 @@ var (
 )
 
 const versionCheckPeriod = time.Hour * 8
+
+// Global context
+type homeContext struct {
+	clients     clientsContainer     // per-client-settings module
+	stats       stats.Stats          // statistics module
+	queryLog    querylog.QueryLog    // query log module
+	dnsServer   *dnsforward.Server   // DNS module
+	rdns        *RDNS                // rDNS module
+	whois       *Whois               // WHOIS module
+	dnsFilter   *dnsfilter.Dnsfilter // DNS filtering module
+	dhcpServer  *dhcpd.Server        // DHCP module
+	httpServer  *http.Server         // HTTP module
+	httpsServer HTTPSServer          // HTTPS module
+}
+
+// Context - a global context object
+var Context homeContext
 
 // Main is the entry point
 func Main(version string, channel string) {
@@ -122,8 +143,8 @@ func run(args options) {
 	config.DHCP.WorkDir = config.ourWorkingDir
 	config.DHCP.HTTPRegister = httpRegister
 	config.DHCP.ConfigModified = onConfigModified
-	config.dhcpServer = dhcpd.Create(config.DHCP)
-	config.clients.Init(config.Clients, config.dhcpServer)
+	Context.dhcpServer = dhcpd.Create(config.DHCP)
+	Context.clients.Init(config.Clients, Context.dhcpServer)
 	config.Clients = nil
 
 	if (runtime.GOOS == "linux" || runtime.GOOS == "darwin") &&
@@ -146,7 +167,10 @@ func run(args options) {
 			log.Fatal(err)
 		}
 
-		initDNSServer()
+		err = initDNSServer()
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
 		go func() {
 			err = startDNSServer()
 			if err != nil {
@@ -178,21 +202,21 @@ func run(args options) {
 		registerInstallHandlers()
 	}
 
-	config.httpsServer.cond = sync.NewCond(&config.httpsServer.Mutex)
+	Context.httpsServer.cond = sync.NewCond(&Context.httpsServer.Mutex)
 
 	// for https, we have a separate goroutine loop
 	go httpServerLoop()
 
 	// this loop is used as an ability to change listening host and/or port
-	for !config.httpsServer.shutdown {
+	for !Context.httpsServer.shutdown {
 		printHTTPAddresses("http")
 
 		// we need to have new instance, because after Shutdown() the Server is not usable
 		address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
-		config.httpServer = &http.Server{
+		Context.httpServer = &http.Server{
 			Addr: address,
 		}
-		err := config.httpServer.ListenAndServe()
+		err := Context.httpServer.ListenAndServe()
 		if err != http.ErrServerClosed {
 			cleanupAlways()
 			log.Fatal(err)
@@ -205,14 +229,14 @@ func run(args options) {
 }
 
 func httpServerLoop() {
-	for !config.httpsServer.shutdown {
-		config.httpsServer.cond.L.Lock()
+	for !Context.httpsServer.shutdown {
+		Context.httpsServer.cond.L.Lock()
 		// this mechanism doesn't let us through until all conditions are met
 		for config.TLS.Enabled == false ||
 			config.TLS.PortHTTPS == 0 ||
 			len(config.TLS.PrivateKeyData) == 0 ||
 			len(config.TLS.CertificateChainData) == 0 { // sleep until necessary data is supplied
-			config.httpsServer.cond.Wait()
+			Context.httpsServer.cond.Wait()
 		}
 		address := net.JoinHostPort(config.BindHost, strconv.Itoa(config.TLS.PortHTTPS))
 		// validate current TLS config and update warnings (it could have been loaded from file)
@@ -236,10 +260,10 @@ func httpServerLoop() {
 			cleanupAlways()
 			log.Fatal(err)
 		}
-		config.httpsServer.cond.L.Unlock()
+		Context.httpsServer.cond.L.Unlock()
 
 		// prepare HTTPS server
-		config.httpsServer.server = &http.Server{
+		Context.httpsServer.server = &http.Server{
 			Addr: address,
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{cert},
@@ -248,7 +272,7 @@ func httpServerLoop() {
 		}
 
 		printHTTPAddresses("https")
-		err = config.httpsServer.server.ListenAndServeTLS("", "")
+		err = Context.httpsServer.server.ListenAndServeTLS("", "")
 		if err != http.ErrServerClosed {
 			cleanupAlways()
 			log.Fatal(err)
@@ -326,11 +350,10 @@ func configureLogger(args options) {
 		ls.LogFile = args.logFile
 	}
 
-	level := log.INFO
+	// log.SetLevel(log.INFO) - default
 	if ls.Verbose {
-		level = log.DEBUG
+		log.SetLevel(log.DEBUG)
 	}
-	log.SetLevel(level)
 
 	if args.runningAsService && ls.LogFile == "" && runtime.GOOS == "windows" {
 		// When running as a Windows service, use eventlog by default if nothing else is configured
@@ -378,11 +401,11 @@ func cleanup() {
 // Stop HTTP server, possibly waiting for all active connections to be closed
 func stopHTTPServer() {
 	log.Info("Stopping HTTP server...")
-	config.httpsServer.shutdown = true
-	if config.httpsServer.server != nil {
-		config.httpsServer.server.Shutdown(context.TODO())
+	Context.httpsServer.shutdown = true
+	if Context.httpsServer.server != nil {
+		Context.httpsServer.server.Shutdown(context.TODO())
 	}
-	config.httpServer.Shutdown(context.TODO())
+	Context.httpServer.Shutdown(context.TODO())
 	log.Info("Stopped HTTP server")
 }
 

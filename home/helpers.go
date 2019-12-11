@@ -16,7 +16,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/joomcode/errorx"
 )
@@ -118,7 +117,7 @@ func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.Res
 			return
 		}
 		// enforce https?
-		if config.TLS.ForceHTTPS && r.TLS == nil && config.TLS.Enabled && config.TLS.PortHTTPS != 0 && config.httpsServer.server != nil {
+		if config.TLS.ForceHTTPS && r.TLS == nil && config.TLS.Enabled && config.TLS.PortHTTPS != 0 && Context.httpsServer.server != nil {
 			// yes, and we want host from host:port
 			host, _, err := net.SplitHostPort(r.Host)
 			if err != nil {
@@ -273,14 +272,8 @@ func customDialContext(ctx context.Context, network, addr string) (net.Conn, err
 		return con, err
 	}
 
-	bindhost := config.DNS.BindHost
-	if config.DNS.BindHost == "0.0.0.0" {
-		bindhost = "127.0.0.1"
-	}
-	resolverAddr := fmt.Sprintf("%s:%d", bindhost, config.DNS.Port)
-	r := upstream.NewResolver(resolverAddr, 30*time.Second)
-	addrs, e := r.LookupIPAddr(ctx, host)
-	log.Tracef("LookupIPAddr: %s: %v", host, addrs)
+	addrs, e := Context.dnsServer.Resolve(host)
+	log.Debug("dnsServer.Resolve: %s: %v", host, addrs)
 	if e != nil {
 		return nil, e
 	}

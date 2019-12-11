@@ -25,6 +25,8 @@ type Config struct {
 
 	// Register an HTTP handler
 	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request))
+
+	limit uint32 // maximum time we need to keep data for (in hours)
 }
 
 // New - create object

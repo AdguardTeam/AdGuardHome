@@ -235,13 +235,19 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	config.DNS.BindHost = newSettings.DNS.IP
 	config.DNS.Port = newSettings.DNS.Port
 
-	initDNSServer()
-
-	err = startDNSServer()
-	if err != nil {
+	err = initDNSServer()
+	var err2 error
+	if err == nil {
+		err2 = startDNSServer()
+	}
+	if err != nil || err2 != nil {
 		config.firstRun = true
 		copyInstallSettings(&config, &curConfig)
-		httpError(w, http.StatusInternalServerError, "Couldn't start DNS server: %s", err)
+		if err != nil {
+			httpError(w, http.StatusInternalServerError, "Couldn't initialize DNS server: %s", err)
+		} else {
+			httpError(w, http.StatusInternalServerError, "Couldn't start DNS server: %s", err2)
+		}
 		return
 	}
 
@@ -261,7 +267,7 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	// until all requests are finished, and _we_ are inside a request right now, so it will block indefinitely
 	if restartHTTP {
 		go func() {
-			_ = config.httpServer.Shutdown(context.TODO())
+			_ = Context.httpServer.Shutdown(context.TODO())
 		}()
 	}
 

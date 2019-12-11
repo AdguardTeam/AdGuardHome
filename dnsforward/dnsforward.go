@@ -2,7 +2,6 @@ package dnsforward
 
 import (
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -51,7 +50,12 @@ type Server struct {
 	stats     stats.Stats
 	access    *accessCtx
 
+	// DNS proxy instance for internal usage
+	// We don't Start() it and so no listen port is required.
+	internalProxy *proxy.Proxy
+
 	webRegistered bool
+	isRunning     bool
 
 	sync.RWMutex
 	conf ServerConfig
@@ -78,6 +82,7 @@ func (s *Server) Close() {
 	s.dnsFilter = nil
 	s.stats = nil
 	s.queryLog = nil
+	s.dnsProxy = nil
 	s.Unlock()
 }
 
@@ -165,28 +170,54 @@ var defaultValues = ServerConfig{
 	FilteringConfig: FilteringConfig{BlockedResponseTTL: 3600},
 }
 
+// Resolve - get IP addresses by host name from an upstream server.
+// No request/response filtering is performed.
+// Query log and Stats are not updated.
+// This method may be called before Start().
+func (s *Server) Resolve(host string) ([]net.IPAddr, error) {
+	s.RLock()
+	defer s.RUnlock()
+	return s.internalProxy.LookupIPAddr(host)
+}
+
+// Exchange - send DNS request to an upstream server and receive response
+// No request/response filtering is performed.
+// Query log and Stats are not updated.
+// This method may be called before Start().
+func (s *Server) Exchange(req *dns.Msg) (*dns.Msg, error) {
+	s.RLock()
+	defer s.RUnlock()
+
+	ctx := &proxy.DNSContext{
+		Proto:     "udp",
+		Req:       req,
+		StartTime: time.Now(),
+	}
+	err := s.internalProxy.Resolve(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return ctx.Res, nil
+}
+
 // Start starts the DNS server
-func (s *Server) Start(config *ServerConfig) error {
+func (s *Server) Start() error {
 	s.Lock()
 	defer s.Unlock()
-	return s.startInternal(config)
+	return s.startInternal()
 }
 
 // startInternal starts without locking
-func (s *Server) startInternal(config *ServerConfig) error {
-	err := s.prepare(config)
-	if err != nil {
-		return err
+func (s *Server) startInternal() error {
+	err := s.dnsProxy.Start()
+	if err == nil {
+		s.isRunning = true
 	}
-	return s.dnsProxy.Start()
+	return err
 }
 
 // Prepare the object
-func (s *Server) prepare(config *ServerConfig) error {
-	if s.dnsProxy != nil {
-		return errors.New("DNS server is already started")
-	}
-
+func (s *Server) Prepare(config *ServerConfig) error {
 	if config != nil {
 		s.conf = *config
 	}
@@ -234,6 +265,14 @@ func (s *Server) prepare(config *ServerConfig) error {
 		EnableEDNSClientSubnet:   s.conf.EnableEDNSClientSubnet,
 	}
 
+	intlProxyConfig := proxy.Config{
+		CacheEnabled:             true,
+		CacheSizeBytes:           4096,
+		Upstreams:                s.conf.Upstreams,
+		DomainsReservedUpstreams: s.conf.DomainsReservedUpstreams,
+	}
+	s.internalProxy = &proxy.Proxy{Config: intlProxyConfig}
+
 	s.access = &accessCtx{}
 	err = s.access.Init(s.conf.AllowedClients, s.conf.DisallowedClients, s.conf.BlockedHosts)
 	if err != nil {
@@ -277,24 +316,20 @@ func (s *Server) Stop() error {
 func (s *Server) stopInternal() error {
 	if s.dnsProxy != nil {
 		err := s.dnsProxy.Stop()
-		s.dnsProxy = nil
 		if err != nil {
 			return errorx.Decorate(err, "could not stop the DNS server properly")
 		}
 	}
 
+	s.isRunning = false
 	return nil
 }
 
 // IsRunning returns true if the DNS server is running
 func (s *Server) IsRunning() bool {
 	s.RLock()
-	isRunning := true
-	if s.dnsProxy == nil {
-		isRunning = false
-	}
-	s.RUnlock()
-	return isRunning
+	defer s.RUnlock()
+	return s.isRunning
 }
 
 // Restart - restart server
@@ -306,7 +341,7 @@ func (s *Server) Restart() error {
 	if err != nil {
 		return errorx.Decorate(err, "could not reconfigure the server")
 	}
-	err = s.startInternal(nil)
+	err = s.startInternal()
 	if err != nil {
 		return errorx.Decorate(err, "could not reconfigure the server")
 	}
@@ -330,7 +365,12 @@ func (s *Server) Reconfigure(config *ServerConfig) error {
 		time.Sleep(1 * time.Second)
 	}
 
-	err = s.startInternal(config)
+	err = s.Prepare(config)
+	if err != nil {
+		return errorx.Decorate(err, "could not reconfigure the server")
+	}
+
+	err = s.startInternal()
 	if err != nil {
 		return errorx.Decorate(err, "could not reconfigure the server")
 	}
