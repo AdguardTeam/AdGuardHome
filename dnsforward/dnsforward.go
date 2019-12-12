@@ -86,10 +86,23 @@ func (s *Server) Close() {
 	s.Unlock()
 }
 
+func stringArrayDup(a []string) []string {
+	a2 := make([]string, len(a))
+	copy(a2, a)
+	return a2
+}
+
 // WriteDiskConfig - write configuration
 func (s *Server) WriteDiskConfig(c *FilteringConfig) {
 	s.Lock()
-	*c = s.conf.FilteringConfig
+	sc := s.conf.FilteringConfig
+	*c = sc
+	c.RatelimitWhitelist = stringArrayDup(sc.RatelimitWhitelist)
+	c.BootstrapDNS = stringArrayDup(sc.BootstrapDNS)
+	c.AllowedClients = stringArrayDup(sc.AllowedClients)
+	c.DisallowedClients = stringArrayDup(sc.DisallowedClients)
+	c.BlockedHosts = stringArrayDup(sc.BlockedHosts)
+	c.UpstreamDNS = stringArrayDup(sc.UpstreamDNS)
 	s.Unlock()
 }
 
@@ -380,8 +393,11 @@ func (s *Server) Reconfigure(config *ServerConfig) error {
 // ServeHTTP is a HTTP handler method we use to provide DNS-over-HTTPS
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.RLock()
-	s.dnsProxy.ServeHTTP(w, r)
+	p := s.dnsProxy
 	s.RUnlock()
+	if p != nil { // an attempt to protect against race in case we're here after Close() was called
+		p.ServeHTTP(w, r)
+	}
 }
 
 func (s *Server) beforeRequestHandler(p *proxy.Proxy, d *proxy.DNSContext) (bool, error) {
