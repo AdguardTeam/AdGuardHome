@@ -86,10 +86,23 @@ func (s *Server) Close() {
 	s.Unlock()
 }
 
+func stringArrayDup(a []string) []string {
+	a2 := make([]string, len(a))
+	copy(a2, a)
+	return a2
+}
+
 // WriteDiskConfig - write configuration
 func (s *Server) WriteDiskConfig(c *FilteringConfig) {
 	s.Lock()
-	*c = s.conf.FilteringConfig
+	sc := s.conf.FilteringConfig
+	*c = sc
+	c.RatelimitWhitelist = stringArrayDup(sc.RatelimitWhitelist)
+	c.BootstrapDNS = stringArrayDup(sc.BootstrapDNS)
+	c.AllowedClients = stringArrayDup(sc.AllowedClients)
+	c.DisallowedClients = stringArrayDup(sc.DisallowedClients)
+	c.BlockedHosts = stringArrayDup(sc.BlockedHosts)
+	c.UpstreamDNS = stringArrayDup(sc.UpstreamDNS)
 	s.Unlock()
 }
 
