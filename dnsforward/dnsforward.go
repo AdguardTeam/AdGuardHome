@@ -380,8 +380,11 @@ func (s *Server) Reconfigure(config *ServerConfig) error {
 // ServeHTTP is a HTTP handler method we use to provide DNS-over-HTTPS
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.RLock()
-	s.dnsProxy.ServeHTTP(w, r)
+	p := s.dnsProxy
 	s.RUnlock()
+	if p != nil { // an attempt to protect against race in case we're here after Close() was called
+		p.ServeHTTP(w, r)
+	}
 }
 
 func (s *Server) beforeRequestHandler(p *proxy.Proxy, d *proxy.DNSContext) (bool, error) {
