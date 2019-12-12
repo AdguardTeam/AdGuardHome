@@ -283,6 +283,8 @@
     "update_announcement": "Zdaj je na voljo AdGuard Home {{version}}! <0>Klinite tukaj</0> za več informacij.",
     "setup_guide": "Navodila za nastavitev",
     "dns_addresses": "DNS naslovi",
+    "dns_start": "Zaganja se strežnik DNS",
+    "dns_status_error": "Napaka pri pridobivanju stanja strežnika DNS",
     "down": "Navzdol",
     "fix": "Popravi",
     "dns_providers": "Tukaj je  <0>seznam znanih ponudnikov DNS</0>, med katerimi lahko izbirate.",

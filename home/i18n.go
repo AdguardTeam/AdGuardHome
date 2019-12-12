@@ -37,6 +37,9 @@ var allowedLanguages = map[string]bool{
 	"sk":    true,
 	"sl":    true,
 	"tr":    true,
+	"sr-cs": true,
+	"hr":    true,
+	"fa":    true,
 }
 
 func isLanguageAllowed(language string) bool {
