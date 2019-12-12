@@ -4,7 +4,7 @@ import { Field, reduxForm } from 'redux-form';
 import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 
-import { renderField, required, domain, answer } from '../../../../helpers/form';
+import { renderInputField, required, domain, answer } from '../../../../helpers/form';
 
 const Form = (props) => {
     const {
@@ -24,7 +24,7 @@ const Form = (props) => {
                     <Field
                         id="domain"
                         name="domain"
-                        component={renderField}
+                        component={renderInputField}
                         type="text"
                         className="form-control"
                         placeholder={t('form_domain')}
@@ -35,7 +35,7 @@ const Form = (props) => {
                     <Field
                         id="answer"
                         name="answer"
-                        component={renderField}
+                        component={renderInputField}
                         type="text"
                         className="form-control"
                         placeholder={t('form_answer')}

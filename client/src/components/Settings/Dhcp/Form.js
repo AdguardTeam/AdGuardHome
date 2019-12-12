@@ -5,7 +5,7 @@ import { Field, reduxForm, formValueSelector } from 'redux-form';
 import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 
-import { renderField, required, ipv4, isPositive, toNumber } from '../../../helpers/form';
+import { renderInputField, required, ipv4, isPositive, toNumber } from '../../../helpers/form';
 
 const renderInterfaces = (interfaces => (
     Object.keys(interfaces).map((item) => {
@@ -116,8 +116,9 @@ let Form = (props) => {
                     <div className="form__group form__group--settings">
                         <label>{t('dhcp_form_gateway_input')}</label>
                         <Field
+                            id="gateway_ip"
                             name="gateway_ip"
-                            component={renderField}
+                            component={renderInputField}
                             type="text"
                             className="form-control"
                             placeholder={t('dhcp_form_gateway_input')}
@@ -127,8 +128,9 @@ let Form = (props) => {
                     <div className="form__group form__group--settings">
                         <label>{t('dhcp_form_subnet_input')}</label>
                         <Field
+                            id="subnet_mask"
                             name="subnet_mask"
-                            component={renderField}
+                            component={renderInputField}
                             type="text"
                             className="form-control"
                             placeholder={t('dhcp_form_subnet_input')}
@@ -144,8 +146,9 @@ let Form = (props) => {
                             </div>
                             <div className="col">
                                 <Field
+                                    id="range_start"
                                     name="range_start"
-                                    component={renderField}
+                                    component={renderInputField}
                                     type="text"
                                     className="form-control"
                                     placeholder={t('dhcp_form_range_start')}
@@ -154,8 +157,9 @@ let Form = (props) => {
                             </div>
                             <div className="col">
                                 <Field
+                                    id="range_end"
                                     name="range_end"
-                                    component={renderField}
+                                    component={renderInputField}
                                     type="text"
                                     className="form-control"
                                     placeholder={t('dhcp_form_range_end')}
@@ -168,7 +172,7 @@ let Form = (props) => {
                         <label>{t('dhcp_form_lease_title')}</label>
                         <Field
                             name="lease_duration"
-                            component={renderField}
+                            component={renderInputField}
                             type="number"
                             className="form-control"
                             placeholder={t('dhcp_form_lease_input')}

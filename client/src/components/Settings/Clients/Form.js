@@ -10,7 +10,9 @@ import Tabs from '../../ui/Tabs';
 import Examples from '../Dns/Upstream/Examples';
 import { toggleAllServices } from '../../../helpers/helpers';
 import {
-    renderField,
+    required,
+    clientId,
+    renderInputField,
     renderGroupField,
     renderSelectField,
     renderServiceField,
@@ -40,38 +42,30 @@ const settingsCheckboxes = [
         placeholder: 'enforce_safe_search',
     },
 ];
-
 const validate = (values) => {
     const errors = {};
     const { name, ids } = values;
-
-    if (!name || !name.length) {
-        errors.name = i18n.t('form_error_required');
-    }
+    errors.name = required(name);
 
     if (ids && ids.length) {
         const idArrayErrors = [];
         ids.forEach((id, idx) => {
-            if (!id || !id.length) {
-                idArrayErrors[idx] = i18n.t('form_error_required');
-            }
+            idArrayErrors[idx] = required(id) || clientId(id);
         });
 
         if (idArrayErrors.length) {
             errors.ids = idArrayErrors;
         }
     }
-
     return errors;
 };
 
-const renderFields = (placeholder, buttonTitle) =>
+
+const renderFieldsWrapper = (placeholder, buttonTitle) =>
     function cell(row) {
         const {
             fields,
-            meta: { error },
         } = row;
-
         return (
             <div className="form__group">
                 {fields.map((ip, index) => (
@@ -84,6 +78,7 @@ const renderFields = (placeholder, buttonTitle) =>
                             placeholder={placeholder}
                             isActionAvailable={index !== 0}
                             removeField={() => fields.remove(index)}
+                            normalize={data => data && data.trim()}
                         />
                     </div>
                 ))}
@@ -97,10 +92,12 @@ const renderFields = (placeholder, buttonTitle) =>
                         <use xlinkHref="#plus" />
                     </svg>
                 </button>
-                {error && <div className="error">{error}</div>}
             </div>
         );
     };
+
+// Should create function outside of component to prevent component re-renders
+const renderFields = renderFieldsWrapper(i18n.t('form_enter_id'), i18n.t('form_add_id'));
 
 let Form = (props) => {
     const {
@@ -126,10 +123,11 @@ let Form = (props) => {
                         <Field
                             id="name"
                             name="name"
-                            component={renderField}
+                            component={renderInputField}
                             type="text"
                             className="form-control"
                             placeholder={t('form_client_name')}
+                            normalize={data => data && data.trim()}
                         />
                     </div>
 
@@ -155,7 +153,7 @@ let Form = (props) => {
                     <div className="form__group">
                         <FieldArray
                             name="ids"
-                            component={renderFields(t('form_enter_id'), t('form_add_id'))}
+                            component={renderFields}
                         />
                     </div>
                 </div>

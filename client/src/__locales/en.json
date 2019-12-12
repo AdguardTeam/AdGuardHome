@@ -23,6 +23,7 @@
     "form_error_ip6_format": "Invalid IPv6 format",
     "form_error_ip_format": "Invalid IP format",
     "form_error_mac_format": "Invalid MAC format",
+    "form_error_client_id_format": "Invalid client ID format",
     "form_error_positive": "Must be greater than 0",
     "form_error_negative": "Must be equal to 0 or greater",
     "dhcp_form_gateway_input": "Gateway IP",

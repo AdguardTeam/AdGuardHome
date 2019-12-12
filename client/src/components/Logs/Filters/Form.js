@@ -4,7 +4,7 @@ import { Field, reduxForm } from 'redux-form';
 import { withNamespaces, Trans } from 'react-i18next';
 import flow from 'lodash/flow';
 
-import { renderField } from '../../../helpers/form';
+import { renderInputField } from '../../../helpers/form';
 import { RESPONSE_FILTER } from '../../../helpers/constants';
 import Tooltip from '../../ui/Tooltip';
 
@@ -65,7 +65,7 @@ const Form = (props) => {
                     <Field
                         id="filter_question_type"
                         name="filter_question_type"
-                        component={renderField}
+                        component={renderInputField}
                         type="text"
                         className="form-control"
                         placeholder={t('type_table_header')}
