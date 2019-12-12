@@ -62,9 +62,9 @@ class ClientsTable extends Component {
         };
     };
 
-    getStats = (ids, stats) => {
+    getStats = (name, stats) => {
         if (stats) {
-            const currentStats = stats.find(item => ids.includes(item.name));
+            const currentStats = stats.find(item => item.info && item.info.name === name);
             return currentStats && currentStats.count;
         }
 
@@ -180,8 +180,8 @@ class ClientsTable extends Component {
             accessor: 'statistics',
             minWidth: 120,
             Cell: (row) => {
-                const { ids } = row.original;
-                const clientStats = this.getStats(ids, this.props.topClients);
+                const { name } = row.original;
+                const clientStats = this.getStats(name, this.props.topClients);
 
                 if (clientStats) {
                     return (
