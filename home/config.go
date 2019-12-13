@@ -115,6 +115,7 @@ type tlsConfigSettings struct {
 	ServerName     string `yaml:"server_name" json:"server_name,omitempty"`             // ServerName is the hostname of your HTTPS/TLS server
 	ForceHTTPS     bool   `yaml:"force_https" json:"force_https,omitempty"`             // ForceHTTPS: if true, forces HTTP->HTTPS redirect
 	PortHTTPS      int    `yaml:"port_https" json:"port_https,omitempty"`               // HTTPS port. If 0, HTTPS will be disabled
+	AllowClearDOH  bool   `yaml:"allow_clear_doh" json:"allow_clear_doh"`               // Allow queries to http port for DOH Queries (for reverse proxying)
 	PortDNSOverTLS int    `yaml:"port_dns_over_tls" json:"port_dns_over_tls,omitempty"` // DNS-over-TLS port. If 0, DOT will be disabled
 
 	dnsforward.TLSConfig `yaml:",inline" json:",inline"`

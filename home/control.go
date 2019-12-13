@@ -144,7 +144,7 @@ func handleGetProfile(w http.ResponseWriter, r *http.Request) {
 // DNS-over-HTTPS
 // --------------
 func handleDOH(w http.ResponseWriter, r *http.Request) {
-	if r.TLS == nil {
+	if !config.TLS.AllowClearDOH && r.TLS == nil {
 		httpError(w, http.StatusNotFound, "Not Found")
 		return
 	}
