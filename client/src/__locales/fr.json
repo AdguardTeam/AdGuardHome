@@ -116,7 +116,7 @@
     "example_upstream_tcp": "DNS classique (au-dessus de TCP)",
     "all_filters_up_to_date_toast": "Tous les filtres sont mis à jour",
     "updated_upstream_dns_toast": "Les serveurs DNS upstream sont mis à jour",
-    "dns_test_ok_toast": "Les serveurs DNS spécifiés fonctionnent de manière incorrecte",
+    "dns_test_ok_toast": "Les serveurs DNS spécifiés fonctionnent de manière correcte",
     "dns_test_not_ok_toast": "Impossible d'utiliser le serveur \"{{key}}\": veuillez vérifier si le nom saisi est bien correct",
     "unblock_btn": "Débloquer",
     "block_btn": "Bloquer",
