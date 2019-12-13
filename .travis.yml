@@ -1,3 +1,4 @@
+if: repo = AdguardTeam/AdGuardHome
 language: go
 sudo: false
 
@@ -33,6 +34,7 @@ notifications:
 matrix:
   include:
     # Release build configuration
+    - if: repo = AdguardTeam/AdGuardHome
     - name: release
       go:
         - 1.13.x
@@ -61,7 +63,7 @@ matrix:
         skip_cleanup: true
 
     - name: docker
-      if: type != pull_request AND (branch = master OR tag IS present)
+      if: type != pull_request AND (branch = master OR tag IS present) AND repo = AdguardTeam/AdGuardHome
       go:
         - 1.13.x
       os:
