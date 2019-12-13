@@ -147,14 +147,16 @@ type FilteringConfig struct {
 // TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
 type TLSConfig struct {
 	TLSListenAddr    *net.TCPAddr `yaml:"-" json:"-"`
+	ServerName       string       `yaml:"server_name" json:"server_name,omitempty"`   // ServerName is the hostname of your HTTPS/TLS server
 	CertificateChain string       `yaml:"certificate_chain" json:"certificate_chain"` // PEM-encoded certificates chain
 	PrivateKey       string       `yaml:"private_key" json:"private_key"`             // PEM-encoded private key
 
 	CertificatePath string `yaml:"certificate_path" json:"certificate_path"` // certificate file name
 	PrivateKeyPath  string `yaml:"private_key_path" json:"private_key_path"` // private key file name
 
-	CertificateChainData []byte `yaml:"-" json:"-"`
-	PrivateKeyData       []byte `yaml:"-" json:"-"`
+	CertificateChainData []byte          `yaml:"-" json:"-"`
+	PrivateKeyData       []byte          `yaml:"-" json:"-"`
+	Cert                 tls.Certificate `yaml:"-" json:"-"`
 }
 
 // ServerConfig represents server configuration.
@@ -294,13 +296,13 @@ func (s *Server) Prepare(config *ServerConfig) error {
 
 	if s.conf.TLSListenAddr != nil && len(s.conf.CertificateChainData) != 0 && len(s.conf.PrivateKeyData) != 0 {
 		proxyConfig.TLSListenAddr = s.conf.TLSListenAddr
-		keypair, err := tls.X509KeyPair(s.conf.CertificateChainData, s.conf.PrivateKeyData)
+		s.conf.Cert, err = tls.X509KeyPair(s.conf.CertificateChainData, s.conf.PrivateKeyData)
 		if err != nil {
 			return errorx.Decorate(err, "Failed to parse TLS keypair")
 		}
 		proxyConfig.TLSConfig = &tls.Config{
-			Certificates: []tls.Certificate{keypair},
-			MinVersion:   tls.VersionTLS12,
+			GetCertificate: s.onGetCertificate,
+			MinVersion:     tls.VersionTLS12,
 		}
 	}
 
@@ -316,6 +318,16 @@ func (s *Server) Prepare(config *ServerConfig) error {
 	// Initialize and start the DNS proxy
 	s.dnsProxy = &proxy.Proxy{Config: proxyConfig}
 	return nil
+}
+
+// Called by 'tls' package when Client Hello is received
+// If the server name (from SNI) supplied by client is incorrect - we terminate the ongoing TLS handshake.
+func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	if len(s.conf.ServerName) != 0 && ch.ServerName != s.conf.ServerName {
+		log.Info("DNS: TLS: unknown SNI in Client Hello: %s", ch.ServerName)
+		return nil, fmt.Errorf("Invalid SNI")
+	}
+	return &s.conf.Cert, nil
 }
 
 // Stop stops the DNS server
