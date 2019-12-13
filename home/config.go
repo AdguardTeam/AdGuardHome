@@ -117,6 +117,9 @@ type tlsConfigSettings struct {
 	PortHTTPS      int    `yaml:"port_https" json:"port_https,omitempty"`               // HTTPS port. If 0, HTTPS will be disabled
 	PortDNSOverTLS int    `yaml:"port_dns_over_tls" json:"port_dns_over_tls,omitempty"` // DNS-over-TLS port. If 0, DOT will be disabled
 
+	// Allow DOH queries via unencrypted HTTP (e.g. for reverse proxying)
+	AllowUnencryptedDOH bool `yaml:"allow_unencrypted_doh" json:"allow_unencrypted_doh"`
+
 	dnsforward.TLSConfig `yaml:",inline" json:",inline"`
 }
 
