@@ -270,10 +270,6 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 		return Result{Reason: NotFilteredNotFound}, nil
 	}
 	host = strings.ToLower(host)
-	// prevent recursion
-	if host == d.parentalServer || host == d.safeBrowsingServer {
-		return Result{}, nil
-	}
 
 	var result Result
 	var err error

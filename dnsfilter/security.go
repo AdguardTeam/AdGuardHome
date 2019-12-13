@@ -26,6 +26,9 @@ import (
 	"golang.org/x/net/publicsuffix"
 )
 
+// Servers to use for resolution of SB/PC server name
+var bootstrapServers = []string{"176.103.130.130", "176.103.130.131"}
+
 const dnsTimeout = 3 * time.Second
 const defaultSafebrowsingServer = "https://dns-family.adguard.com/dns-query"
 const defaultParentalServer = "https://dns-family.adguard.com/dns-query"
@@ -36,13 +39,14 @@ func (d *Dnsfilter) initSecurityServices() error {
 	var err error
 	d.safeBrowsingServer = defaultSafebrowsingServer
 	d.parentalServer = defaultParentalServer
+	opts := upstream.Options{Timeout: dnsTimeout, Bootstrap: bootstrapServers}
 
-	d.parentalUpstream, err = upstream.AddressToUpstream(d.parentalServer, upstream.Options{Timeout: dnsTimeout})
+	d.parentalUpstream, err = upstream.AddressToUpstream(d.parentalServer, opts)
 	if err != nil {
 		return err
 	}
 
-	d.safeBrowsingUpstream, err = upstream.AddressToUpstream(d.safeBrowsingServer, upstream.Options{Timeout: dnsTimeout})
+	d.safeBrowsingUpstream, err = upstream.AddressToUpstream(d.safeBrowsingServer, opts)
 	if err != nil {
 		return err
 	}
