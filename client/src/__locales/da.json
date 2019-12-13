@@ -283,6 +283,8 @@
     "update_announcement": "AdGuard Home {{version}} er nu tilgængelig! <0>Kik her</0> for mere info.",
     "setup_guide": "Installationsvejledning",
     "dns_addresses": "DNS-adresser",
+    "dns_start": "DNS-server starter",
+    "dns_status_error": "Fejl ved at få DNS-serverstatus",
     "down": "Ned",
     "fix": "Reparer",
     "dns_providers": "Her er en <0>liste over kendte DNS-udbydere</ 0> at vælge imellem.",

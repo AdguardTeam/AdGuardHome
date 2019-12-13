@@ -259,6 +259,8 @@
     "update_announcement": "AdGuard Home{{version}} is nu beschikbaar! <0>klik hier</0> voor meer info.",
     "setup_guide": "Installatie gids",
     "dns_addresses": "DNS adressen",
+    "dns_start": "DNS server aan het opstarten",
+    "dns_status_error": "Fout bij het oproepen van de DNS server status",
     "down": "Uitgeschakeld",
     "fix": "Los op",
     "dns_providers": "hier is een <0>lijst of gekende DNS providers</0> waarvan je kan kiezen.",

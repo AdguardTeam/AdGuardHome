@@ -283,6 +283,8 @@
     "update_announcement": "AdGuard Home {{version}} je nyní k dispozici! <0>Klikněte zde<0> pro více informací.",
     "setup_guide": "Průvodce nastavením",
     "dns_addresses": "Adresy DNS",
+    "dns_start": "Spustí se server DNS",
+    "dns_status_error": "Chyba při získávání stavu DNS serveru",
     "down": "Dolů",
     "fix": "Opravit",
     "dns_providers": "Zde je <0>seznam známých poskytovatelů DNS</0>, z nichž si můžete vybrat.",

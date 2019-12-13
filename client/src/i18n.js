@@ -29,6 +29,9 @@ import ptPT from './__locales/pt-pt.json';
 import sk from './__locales/sk.json';
 import sl from './__locales/sl.json';
 import tr from './__locales/tr.json';
+import srCS from './__locales/sr-cs.json';
+import hr from './__locales/hr.json';
+import fa from './__locales/fa.json';
 
 const resources = {
     en: {
@@ -102,6 +105,15 @@ const resources = {
     },
     tr: {
         translation: tr,
+    },
+    'sr-cs': {
+        translation: srCS,
+    },
+    hr: {
+        translation: hr,
+    },
+    fa: {
+        translation: fa,
     },
 };
 

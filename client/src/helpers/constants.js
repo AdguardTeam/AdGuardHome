@@ -119,6 +119,22 @@ export const LANGUAGES = [
         name: '简体中文',
     },
     {
+        key: 'no',
+        name: 'Norsk',
+    },
+    {
+        key: 'sr-cs',
+        name: 'Srpski',
+    },
+    {
+        key: 'hr',
+        name: 'Hrvatski',
+    },
+    {
+        key: 'fa',
+        name: 'فارسی',
+    },
+    {
         key: 'ko',
         name: '한국어',
     },
