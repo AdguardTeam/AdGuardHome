@@ -70,6 +70,9 @@ func initDNSServer() error {
 
 	sessFilename := filepath.Join(baseDir, "sessions.db")
 	config.auth = InitAuth(sessFilename, config.Users, config.WebSessionTTLHours*60*60)
+	if config.auth == nil {
+		return fmt.Errorf("Couldn't initialize Auth module")
+	}
 	config.Users = nil
 
 	Context.rdns = InitRDNS(Context.dnsServer, &Context.clients)
@@ -254,6 +257,10 @@ func reconfigureDNSServer() error {
 }
 
 func stopDNSServer() error {
+	if !isRunning() {
+		return nil
+	}
+
 	err := Context.dnsServer.Stop()
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't stop forwarding DNS server")

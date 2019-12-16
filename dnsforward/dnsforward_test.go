@@ -424,6 +424,55 @@ func TestNullBlockedRequest(t *testing.T) {
 	}
 }
 
+func TestBlockedCustomIP(t *testing.T) {
+	rules := "||nxdomain.example.org^\n||null.example.org^\n127.0.0.1	host.example.org\n@@||whitelist.example.org^\n||127.0.0.255\n"
+	filters := map[int]string{}
+	filters[0] = rules
+	c := dnsfilter.Config{}
+
+	f := dnsfilter.New(&c, filters)
+	s := NewServer(f, nil, nil)
+	conf := ServerConfig{}
+	conf.UDPListenAddr = &net.UDPAddr{Port: 0}
+	conf.TCPListenAddr = &net.TCPAddr{Port: 0}
+	conf.ProtectionEnabled = true
+	conf.BlockingMode = "custom_ip"
+	conf.BlockingIPv4 = "bad IP"
+	conf.UpstreamDNS = []string{"8.8.8.8:53", "8.8.4.4:53"}
+	err := s.Prepare(&conf)
+	assert.True(t, err != nil) // invalid BlockingIPv4
+
+	conf.BlockingIPv4 = "0.0.0.1"
+	conf.BlockingIPv6 = "::1"
+	err = s.Prepare(&conf)
+	assert.True(t, err == nil)
+	err = s.Start()
+	assert.True(t, err == nil, "%s", err)
+
+	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
+
+	req := createTestMessageWithType("null.example.org.", dns.TypeA)
+	reply, err := dns.Exchange(req, addr.String())
+	assert.True(t, err == nil)
+	assert.True(t, len(reply.Answer) == 1)
+	a, ok := reply.Answer[0].(*dns.A)
+	assert.True(t, ok)
+	assert.True(t, a.A.String() == "0.0.0.1")
+
+	req = createTestMessageWithType("null.example.org.", dns.TypeAAAA)
+	reply, err = dns.Exchange(req, addr.String())
+	assert.True(t, err == nil)
+	assert.True(t, len(reply.Answer) == 1)
+	a6, ok := reply.Answer[0].(*dns.AAAA)
+	assert.True(t, ok)
+	assert.True(t, a6.AAAA.String() == "::1")
+
+	err = s.Stop()
+	if err != nil {
+		t.Fatalf("DNS server failed to stop: %s", err)
+	}
+}
+
 func TestBlockedByHosts(t *testing.T) {
 	s := createTestServer(t)
 	err := s.Start()
@@ -648,6 +697,16 @@ func createTestMessage(host string) *dns.Msg {
 	req.RecursionDesired = true
 	req.Question = []dns.Question{
 		{Name: host, Qtype: dns.TypeA, Qclass: dns.ClassINET},
+	}
+	return &req
+}
+
+func createTestMessageWithType(host string, qtype uint16) *dns.Msg {
+	req := dns.Msg{}
+	req.Id = dns.Id()
+	req.RecursionDesired = true
+	req.Question = []dns.Question{
+		{Name: host, Qtype: qtype, Qclass: dns.ClassINET},
 	}
 	return &req
 }
