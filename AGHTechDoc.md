@@ -202,9 +202,21 @@ If user clicks on "Fix" button, UI sends request to perform an automatic fix
 	"dns":{"port":53,"ip":"127.0.0.1","autofix":true},
 	}
 
-Deactivate (save backup as `resolved.conf.orig`) and stop DNSStubListener:
+Deactivate DNSStubListener and update DNS server address.  Create a new file: `/etc/systemd/resolved.conf.d/adguardhome.conf` (create a `/etc/systemd/resolved.conf.d` directory if necessary):
 
-	sed -r -i.orig 's/#?DNSStubListener=yes/DNSStubListener=no/g' /etc/systemd/resolved.conf
+	[Resolve]
+	DNS=127.0.0.1
+	DNSStubListener=no
+
+Specifying "127.0.0.1" as DNS server address is necessry because otherwise the nameserver will be "127.0.0.53" which doesn't work without DNSStubListener.
+
+Activate another resolv.conf file:
+
+	mv /etc/resolv.conf /etc/resolv.conf.backup
+	ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
+
+Stop DNSStubListener:
+
 	systemctl reload-or-restart systemd-resolved
 
 Server replies:

@@ -4,9 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strconv"
 
@@ -143,20 +146,34 @@ func checkDNSStubListener() bool {
 	return true
 }
 
+const resolvedConfPath = "/etc/systemd/resolved.conf.d/adguardhome.conf"
+const resolvedConfData = `[Resolve]
+DNS=127.0.0.1
+DNSStubListener=no
+`
+const resolvConfPath = "/etc/resolv.conf"
+
 // Deactivate DNSStubListener
 func disableDNSStubListener() error {
-	cmd := exec.Command("sed", "-r", "-i.orig", "s/#?DNSStubListener=yes/DNSStubListener=no/g", "/etc/systemd/resolved.conf")
-	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
-	_, err := cmd.Output()
+	dir := filepath.Dir(resolvedConfPath)
+	err := os.MkdirAll(dir, 0755)
 	if err != nil {
-		return err
-	}
-	if cmd.ProcessState.ExitCode() != 0 {
-		return fmt.Errorf("process %s exited with an error: %d",
-			cmd.Path, cmd.ProcessState.ExitCode())
+		return fmt.Errorf("os.MkdirAll: %s: %s", dir, err)
 	}
 
-	cmd = exec.Command("systemctl", "reload-or-restart", "systemd-resolved")
+	err = ioutil.WriteFile(resolvedConfPath, []byte(resolvedConfData), 0644)
+	if err != nil {
+		return fmt.Errorf("ioutil.WriteFile: %s: %s", resolvedConfPath, err)
+	}
+
+	_ = os.Rename(resolvConfPath, resolvConfPath+".backup")
+	err = os.Symlink("/run/systemd/resolve/resolv.conf", resolvConfPath)
+	if err != nil {
+		_ = os.Remove(resolvedConfPath) // remove the file we've just created
+		return fmt.Errorf("os.Symlink: %s: %s", resolvConfPath, err)
+	}
+
+	cmd := exec.Command("systemctl", "reload-or-restart", "systemd-resolved")
 	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
 	_, err = cmd.Output()
 	if err != nil {
