@@ -17,7 +17,7 @@ func TestClients(t *testing.T) {
 
 	// add
 	c = Client{
-		IDs:  []string{"1.1.1.1", "aa:aa:aa:aa:aa:aa"},
+		IDs:  []string{"1.1.1.1", "1:2:3::4", "aa:aa:aa:aa:aa:aa"},
 		Name: "client1",
 	}
 	b, e = clients.Add(c)
@@ -36,14 +36,13 @@ func TestClients(t *testing.T) {
 	}
 
 	c, b = clients.Find("1.1.1.1")
-	if !b || c.Name != "client1" {
-		t.Fatalf("Find #1")
-	}
+	assert.True(t, b && c.Name == "client1")
+
+	c, b = clients.Find("1:2:3::4")
+	assert.True(t, b && c.Name == "client1")
 
 	c, b = clients.Find("2.2.2.2")
-	if !b || c.Name != "client2" {
-		t.Fatalf("Find #2")
-	}
+	assert.True(t, b && c.Name == "client2")
 
 	// failed add - name in use
 	c = Client{

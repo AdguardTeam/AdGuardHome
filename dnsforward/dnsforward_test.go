@@ -784,3 +784,15 @@ func TestValidateUpstreamsSet(t *testing.T) {
 		t.Fatalf("there is an invalid upstream in set, but it pass through validation")
 	}
 }
+
+func TestIpFromAddr(t *testing.T) {
+	addr := net.UDPAddr{}
+	addr.IP = net.ParseIP("1:2:3::4")
+	addr.Port = 12345
+	addr.Zone = "eth0"
+	a := ipFromAddr(&addr)
+	assert.True(t, a == "1:2:3::4")
+
+	a = ipFromAddr(nil)
+	assert.True(t, a == "")
+}

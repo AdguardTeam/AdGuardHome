@@ -400,8 +400,21 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Get IP address from net.Addr object
+// Note: we can't use net.SplitHostPort(a.String()) because of IPv6 zone:
+// https://github.com/AdguardTeam/AdGuardHome/issues/1261
+func ipFromAddr(a net.Addr) string {
+	switch addr := a.(type) {
+	case *net.UDPAddr:
+		return addr.IP.String()
+	case *net.TCPAddr:
+		return addr.IP.String()
+	}
+	return ""
+}
+
 func (s *Server) beforeRequestHandler(p *proxy.Proxy, d *proxy.DNSContext) (bool, error) {
-	ip, _, _ := net.SplitHostPort(d.Addr.String())
+	ip := ipFromAddr(d.Addr)
 	if s.access.IsBlockedIP(ip) {
 		log.Tracef("Client IP %s is blocked by settings", ip)
 		return false, nil
@@ -460,7 +473,7 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 		}
 
 		if d.Addr != nil && s.conf.GetUpstreamsByClient != nil {
-			clientIP, _, _ := net.SplitHostPort(d.Addr.String())
+			clientIP := ipFromAddr(d.Addr)
 			upstreams := s.conf.GetUpstreamsByClient(clientIP)
 			for _, us := range upstreams {
 				u, err := upstream.AddressToUpstream(us, upstream.Options{Timeout: 30 * time.Second})
@@ -596,14 +609,10 @@ func (s *Server) filterDNSRequest(d *proxy.DNSContext) (*dnsfilter.Result, error
 		return &dnsfilter.Result{}, nil
 	}
 
-	clientAddr := ""
-	if d.Addr != nil {
-		clientAddr, _, _ = net.SplitHostPort(d.Addr.String())
-	}
-
 	setts := s.dnsFilter.GetConfig()
 	setts.FilteringEnabled = true
 	if s.conf.FilterHandler != nil {
+		clientAddr := ipFromAddr(d.Addr)
 		s.conf.FilterHandler(clientAddr, &setts)
 	}
 
