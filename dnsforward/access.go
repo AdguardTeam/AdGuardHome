@@ -119,13 +119,13 @@ type accessListJSON struct {
 }
 
 func (s *Server) handleAccessList(w http.ResponseWriter, r *http.Request) {
-	s.Lock()
+	s.RLock()
 	j := accessListJSON{
 		AllowedClients:    s.conf.AllowedClients,
 		DisallowedClients: s.conf.DisallowedClients,
 		BlockedHosts:      s.conf.BlockedHosts,
 	}
-	s.Unlock()
+	s.RUnlock()
 
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(j)
