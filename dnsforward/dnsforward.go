@@ -94,7 +94,7 @@ func stringArrayDup(a []string) []string {
 
 // WriteDiskConfig - write configuration
 func (s *Server) WriteDiskConfig(c *FilteringConfig) {
-	s.Lock()
+	s.RLock()
 	sc := s.conf.FilteringConfig
 	*c = sc
 	c.RatelimitWhitelist = stringArrayDup(sc.RatelimitWhitelist)
@@ -103,7 +103,7 @@ func (s *Server) WriteDiskConfig(c *FilteringConfig) {
 	c.DisallowedClients = stringArrayDup(sc.DisallowedClients)
 	c.BlockedHosts = stringArrayDup(sc.BlockedHosts)
 	c.UpstreamDNS = stringArrayDup(sc.UpstreamDNS)
-	s.Unlock()
+	s.RUnlock()
 }
 
 // FilteringConfig represents the DNS filtering configuration of AdGuard Home
