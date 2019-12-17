@@ -58,12 +58,13 @@ const settings = handleActions(
 
 const dashboard = handleActions(
     {
+        [actions.setDnsRunningStatus]: (state, { payload }) =>
+            ({ ...state, isCoreRunning: payload }),
         [actions.dnsStatusRequest]: state => ({ ...state, processing: true }),
         [actions.dnsStatusFailure]: state => ({ ...state, processing: false }),
         [actions.dnsStatusSuccess]: (state, { payload }) => {
             const {
                 version,
-                running,
                 dns_port: dnsPort,
                 dns_addresses: dnsAddresses,
                 upstream_dns: upstreamDns,
@@ -75,7 +76,7 @@ const dashboard = handleActions(
             } = payload;
             const newState = {
                 ...state,
-                isCoreRunning: running,
+                isCoreRunning: true,
                 processing: false,
                 dnsVersion: version,
                 dnsPort,
