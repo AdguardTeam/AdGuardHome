@@ -233,6 +233,7 @@ export const getProfile = () => async (dispatch) => {
 export const dnsStatusRequest = createAction('DNS_STATUS_REQUEST');
 export const dnsStatusFailure = createAction('DNS_STATUS_FAILURE');
 export const dnsStatusSuccess = createAction('DNS_STATUS_SUCCESS');
+export const setDnsRunningStatus = createAction('SET_DNS_RUNNING_STATUS');
 
 export const getDnsStatus = () => async (dispatch) => {
     dispatch(dnsStatusRequest());
@@ -242,15 +243,17 @@ export const getDnsStatus = () => async (dispatch) => {
         dispatch(dnsStatusFailure());
         window.location.reload(true);
     };
-
     const handleRequestSuccess = (response) => {
         const dnsStatus = response.data;
-        const runningStatus = dnsStatus && dnsStatus.running;
+        const { running } = dnsStatus;
+        const runningStatus = dnsStatus && running;
         if (runningStatus === true) {
             dispatch(dnsStatusSuccess(dnsStatus));
             dispatch(getVersion());
             dispatch(getTlsStatus());
             dispatch(getProfile());
+        } else {
+            dispatch(setDnsRunningStatus(running));
         }
     };
 
