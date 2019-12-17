@@ -245,8 +245,7 @@ export const getDnsStatus = () => async (dispatch) => {
 
     const handleRequestSuccess = (response) => {
         const dnsStatus = response.data;
-        const runningStatus = dnsStatus && dnsStatus.running;
-        if (runningStatus === true) {
+        if (dnsStatus) {
             dispatch(dnsStatusSuccess(dnsStatus));
             dispatch(getVersion());
             dispatch(getTlsStatus());
