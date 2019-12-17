@@ -187,7 +187,7 @@ const dashboard = handleActions(
     },
     {
         processing: true,
-        isCoreRunning: false,
+        isCoreRunning: true,
         processingVersion: true,
         processingFiltering: true,
         processingClients: true,

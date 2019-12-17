@@ -89,12 +89,13 @@ class App extends Component {
                     <LoadingBar className="loading-bar" updateTime={1000} />
                     <Route component={Header} />
                     <div className="container container--wrap">
-                        {dashboard.processing && !dashboard.isCoreRunning && (
+                        {dashboard.processing && <Loading />}
+                        {!dashboard.isCoreRunning && (
                             <div className="row row-cards">
                                 <div className="col-lg-12">
                                     <Status reloadPage={this.reloadPage}
                                             message="dns_start"
-                                    />
+                                        />
                                     <Loading />
                                 </div>
                             </div>
