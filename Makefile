@@ -14,7 +14,7 @@ all: build
 build: $(TARGET)
 
 client/node_modules: client/package.json client/package-lock.json
-	npm --prefix client install
+	npm --prefix client ci
 	touch client/node_modules
 
 $(STATIC): $(JSFILES) client/node_modules
