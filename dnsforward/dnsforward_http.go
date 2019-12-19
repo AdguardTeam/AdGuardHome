@@ -121,7 +121,7 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	s.conf.ConfigModified()
 
 	if restart {
-		err = s.Restart()
+		err = s.Reconfigure(nil)
 		if err != nil {
 			httpError(r, w, http.StatusInternalServerError, "%s", err)
 			return
@@ -172,7 +172,7 @@ func (s *Server) handleSetUpstreamConfig(w http.ResponseWriter, r *http.Request)
 	s.Unlock()
 	s.conf.ConfigModified()
 
-	err = s.Restart()
+	err = s.Reconfigure(nil)
 	if err != nil {
 		httpError(r, w, http.StatusInternalServerError, "%s", err)
 		return

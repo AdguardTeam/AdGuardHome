@@ -352,23 +352,6 @@ func (s *Server) IsRunning() bool {
 	return s.isRunning
 }
 
-// Restart - restart server
-func (s *Server) Restart() error {
-	s.Lock()
-	defer s.Unlock()
-	log.Print("Start reconfiguring the server")
-	err := s.stopInternal()
-	if err != nil {
-		return errorx.Decorate(err, "could not reconfigure the server")
-	}
-	err = s.startInternal()
-	if err != nil {
-		return errorx.Decorate(err, "could not reconfigure the server")
-	}
-
-	return nil
-}
-
 // Reconfigure applies the new configuration to the DNS server
 func (s *Server) Reconfigure(config *ServerConfig) error {
 	s.Lock()
