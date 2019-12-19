@@ -21,7 +21,6 @@
     "react": "^16.4.0",
     "react-click-outside": "^3.0.1",
     "react-dom": "^16.4.0",
-    "react-helmet": "^5.2.1",
     "react-i18next": "^8.2.0",
     "react-modal": "^3.4.5",
     "react-redux": "^5.0.7",
