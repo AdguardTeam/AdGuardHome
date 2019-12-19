@@ -302,7 +302,7 @@
     "setup_guide": "Setup guide",
     "dns_addresses": "DNS addresses",
     "dns_start": "DNS server is starting up",
-    "dns_status_error": "Error of getting DNS server status",
+    "dns_status_error": "Error checking the DNS server status",
     "down": "Down",
     "fix": "Fix",
     "dns_providers": "Here is a <0>list of known DNS providers</0> to choose from.",
@@ -372,7 +372,7 @@
     "rewrite_desc": "Allows to easily configure custom DNS response for a specific domain name.",
     "rewrite_applied": "Applied Rewrite rule",
     "dns_rewrites": "DNS rewrites",
-    "form_domain": "Enter domain",
+    "form_domain": "Enter domain name or wildcard",
     "form_answer": "Enter IP address or domain name",
     "form_error_domain_format": "Invalid domain format",
     "form_error_answer_format": "Invalid answer format",
@@ -428,5 +428,8 @@
     "whois": "Whois",
     "filtering_rules_learn_more": "<0>Learn more</0> about creating your own hosts blocklists.",
     "blocked_by_response": "Blocked by CNAME or IP in response",
-    "try_again": "Try again"
+    "try_again": "Try again",
+    "domain_desc": "Enter the domain name or wildcard you want to be rewritten.",
+    "example_rewrite_domain": "rewrite responses for this domain name only.",
+    "example_rewrite_wildcard": "rewrite responses for all <0>example.org</0> subdomains."
 }

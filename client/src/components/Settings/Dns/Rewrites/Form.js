@@ -20,6 +20,9 @@ const Form = (props) => {
     return (
         <form onSubmit={handleSubmit}>
             <div className="modal-body">
+                <div className="form__desc form__desc--top">
+                    <Trans>domain_desc</Trans>
+                </div>
                 <div className="form__group">
                     <Field
                         id="domain"
@@ -31,6 +34,22 @@ const Form = (props) => {
                         validate={[required, domain]}
                     />
                 </div>
+
+                <Trans>examples_title</Trans>:
+                <ol className="leading-loose">
+                    <li>
+                        <code>example.org</code> – <Trans>example_rewrite_domain</Trans>
+                    </li>
+                    <li>
+                        <code>*.example.org</code> –&nbsp;
+                        <span>
+                            <Trans components={[<code key="0">text</code>]}>
+                                example_rewrite_wildcard
+                            </Trans>
+                        </span>
+                    </li>
+                </ol>
+
                 <div className="form__group">
                     <Field
                         id="answer"
