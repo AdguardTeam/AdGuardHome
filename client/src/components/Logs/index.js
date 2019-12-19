@@ -5,6 +5,7 @@ import escapeRegExp from 'lodash/escapeRegExp';
 import endsWith from 'lodash/endsWith';
 import { Trans, withNamespaces } from 'react-i18next';
 import { HashLink as Link } from 'react-router-hash-link';
+import { Helmet } from 'react-helmet';
 
 import {
     formatTime,
@@ -376,6 +377,9 @@ class Logs extends Component {
 
         return (
             <Fragment>
+                <Helmet>
+                    <meta httpEquiv="x-dns-prefetch-control" content="off" />
+                </Helmet>
                 <PageTitle title={t('query_log')}>{refreshButton}</PageTitle>
                 {enabled && processingGetConfig && <Loading />}
                 {enabled && !processingGetConfig && (
