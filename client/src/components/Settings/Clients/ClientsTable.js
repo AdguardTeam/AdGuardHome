@@ -9,8 +9,6 @@ import Card from '../../ui/Card';
 import Modal from './Modal';
 import WrapCell from './WrapCell';
 
-import whoisCell from './whoisCell';
-
 class ClientsTable extends Component {
     handleFormAdd = (values) => {
         this.props.addClient(values);
@@ -168,12 +166,6 @@ class ClientsTable extends Component {
                     </div>
                 );
             },
-        },
-        {
-            Header: this.props.t('whois'),
-            accessor: 'whois_info',
-            minWidth: 200,
-            Cell: whoisCell(this.props.t),
         },
         {
             Header: this.props.t('requests_count'),
