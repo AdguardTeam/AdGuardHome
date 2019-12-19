@@ -14,7 +14,7 @@ before_install:
   - curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.19.1
 
 install:
-  - npm --prefix client install
+  - npm --prefix client ci
 
 cache:
   directories:
