@@ -2,6 +2,7 @@ package home
 
 import (
 	"context"
+	"encoding/base64"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -9,7 +10,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/dnsproxy/proxyutil"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -61,6 +64,7 @@ tls:
   force_https: false
   port_https: 443
   port_dns_over_tls: 853
+  allow_unencrypted_doh: true
   certificate_chain: ""
   private_key: ""
   certificate_path: ""
@@ -99,6 +103,7 @@ schema_version: 5
 // . Start AGH instance
 // . Check Web server
 // . Check DNS server
+// . Check DNS server with DOH
 // . Wait until the filters are downloaded
 // . Stop and cleanup
 func TestHome(t *testing.T) {
@@ -131,10 +136,32 @@ func TestHome(t *testing.T) {
 	assert.Truef(t, err == nil, "%s", err)
 	assert.Equal(t, 200, resp.StatusCode)
 
+	// test DNS over UDP
 	r := upstream.NewResolver("127.0.0.1:5354", 3*time.Second)
 	addrs, err := r.LookupIPAddr(context.TODO(), "static.adguard.com")
 	assert.Truef(t, err == nil, "%s", err)
 	haveIP := len(addrs) != 0
+	assert.True(t, haveIP)
+
+	// test DNS over HTTP without encryption
+	req := dns.Msg{}
+	req.Id = dns.Id()
+	req.RecursionDesired = true
+	req.Question = []dns.Question{{Name: "static.adguard.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET}}
+	buf, err := req.Pack()
+	assert.True(t, err == nil, "%s", err)
+	requestURL := "http://127.0.0.1:3000/dns-query?dns=" + base64.RawURLEncoding.EncodeToString(buf)
+	resp, err = http.DefaultClient.Get(requestURL)
+	assert.True(t, err == nil, "%s", err)
+	body, err := ioutil.ReadAll(resp.Body)
+	assert.True(t, err == nil, "%s", err)
+	assert.True(t, resp.StatusCode == http.StatusOK)
+	response := dns.Msg{}
+	err = response.Unpack(body)
+	assert.True(t, err == nil, "%s", err)
+	addrs = nil
+	proxyutil.AppendIPAddrs(&addrs, response.Answer)
+	haveIP = len(addrs) != 0
 	assert.True(t, haveIP)
 
 	for i := 1; ; i++ {
