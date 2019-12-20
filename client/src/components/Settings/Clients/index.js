@@ -33,7 +33,7 @@ class Clients extends Component {
                     <Fragment>
                         <ClientsTable
                             clients={dashboard.clients}
-                            topClients={stats.topClients}
+                            normalizedTopClients={stats.normalizedTopClients}
                             isModalOpen={clients.isModalOpen}
                             modalClientName={clients.modalClientName}
                             modalType={clients.modalType}
@@ -47,7 +47,7 @@ class Clients extends Component {
                         />
                         <AutoClients
                             autoClients={dashboard.autoClients}
-                            topClients={stats.topClients}
+                            normalizedTopClients={stats.normalizedTopClients}
                         />
                     </Fragment>
                 )}

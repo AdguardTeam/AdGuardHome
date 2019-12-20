@@ -1,4 +1,5 @@
 import { handleActions } from 'redux-actions';
+import { normalizeTopClients } from '../helpers/helpers';
 
 import * as actions from '../actions/stats';
 
@@ -64,6 +65,7 @@ const stats = handleActions(
                 replacedSafebrowsing,
                 topBlockedDomains,
                 topClients,
+                normalizedTopClients: normalizeTopClients(topClients),
                 topQueriedDomains,
                 numBlockedFiltering,
                 numDnsQueries,

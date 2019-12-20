@@ -62,15 +62,6 @@ class ClientsTable extends Component {
         };
     };
 
-    getStats = (name, stats) => {
-        if (stats) {
-            const currentStats = stats.find(item => item.info && item.info.name === name);
-            return currentStats && currentStats.count;
-        }
-
-        return '';
-    };
-
     handleDelete = (data) => {
         // eslint-disable-next-line no-alert
         if (window.confirm(this.props.t('client_confirm_delete', { key: data.name }))) {
@@ -138,13 +129,13 @@ class ClientsTable extends Component {
                     <div className="logs__row logs__row--icons">
                         {value && value.length > 0
                             ? value.map(service => (
-                                  <svg
-                                      className="service__icon service__icon--table"
-                                      title={service}
-                                      key={service}
-                                  >
-                                      <use xlinkHref={`#service_${service}`} />
-                                  </svg>
+                                <svg
+                                    className="service__icon service__icon--table"
+                                    title={service}
+                                    key={service}
+                                >
+                                    <use xlinkHref={`#service_${service}`} />
+                                </svg>
                             ))
                             : '–'}
                     </div>
@@ -177,11 +168,12 @@ class ClientsTable extends Component {
         },
         {
             Header: this.props.t('requests_count'),
-            accessor: 'statistics',
+            id: 'statistics',
+            accessor: row => this.props.normalizedTopClients[row.name] || 0,
+            sortMethod: (a, b) => b - a,
             minWidth: 120,
             Cell: (row) => {
-                const { name } = row.original;
-                const clientStats = this.getStats(name, this.props.topClients);
+                const { value: clientStats } = row;
 
                 if (clientStats) {
                     return (
@@ -265,6 +257,12 @@ class ClientsTable extends Component {
                     <ReactTable
                         data={clients || []}
                         columns={this.columns}
+                        defaultSorted={[
+                            {
+                                id: 'statistics',
+                                asc: true,
+                            },
+                        ]}
                         className="-striped -highlight card-table-overflow"
                         showPagination={true}
                         defaultPageSize={10}
@@ -304,7 +302,7 @@ class ClientsTable extends Component {
 ClientsTable.propTypes = {
     t: PropTypes.func.isRequired,
     clients: PropTypes.array.isRequired,
-    topClients: PropTypes.array.isRequired,
+    normalizedTopClients: PropTypes.object.isRequired,
     toggleClientModal: PropTypes.func.isRequired,
     deleteClient: PropTypes.func.isRequired,
     addClient: PropTypes.func.isRequired,
