@@ -5,19 +5,27 @@ import { addErrorToast, addSuccessToast } from './index';
 import { normalizeLogs, getParamsForClientsSearch, addClientInfo } from '../helpers/helpers';
 import { TABLE_DEFAULT_PAGE_SIZE } from '../helpers/constants';
 
-const getLogsWithParams = async (config) => {
-    const { older_than, filter, ...values } = config;
-    const rawLogs = await apiClient.getQueryLog({ ...filter, older_than });
-    const { data, oldest } = rawLogs;
-    const logs = normalizeLogs(data);
-    const clientsParams = getParamsForClientsSearch(logs, 'client');
-    const clients = await apiClient.findClients(clientsParams);
-    const logsWithClientInfo = addClientInfo(logs, clients, 'client');
+// Cache clients in closure
+const getLogsWithParamsWrapper = () => {
+    let clients = {};
+    return async (config) => {
+        const { older_than, filter, ...values } = config;
+        const rawLogs = await apiClient.getQueryLog({ ...filter, older_than });
+        const { data, oldest } = rawLogs;
+        const logs = normalizeLogs(data);
+        const clientsParams = getParamsForClientsSearch(logs, 'client');
+        if (!Object.values(clientsParams).every(client => client in clients)) {
+            clients = await apiClient.findClients(clientsParams);
+        }
+        const logsWithClientInfo = addClientInfo(logs, clients, 'client');
 
-    return {
-        logs: logsWithClientInfo, oldest, older_than, filter, ...values,
+        return {
+            logs: logsWithClientInfo, oldest, older_than, filter, ...values,
+        };
     };
 };
+
+const getLogsWithParams = getLogsWithParamsWrapper();
 
 export const getAdditionalLogsRequest = createAction('GET_ADDITIONAL_LOGS_REQUEST');
 export const getAdditionalLogsFailure = createAction('GET_ADDITIONAL_LOGS_FAILURE');

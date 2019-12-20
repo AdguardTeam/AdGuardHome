@@ -4,7 +4,7 @@ import { Field, reduxForm } from 'redux-form';
 import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 
-import { renderField, ipv4, mac, required } from '../../../../helpers/form';
+import { renderInputField, ipv4, mac, required } from '../../../../helpers/form';
 
 const Form = (props) => {
     const {
@@ -24,7 +24,7 @@ const Form = (props) => {
                     <Field
                         id="mac"
                         name="mac"
-                        component={renderField}
+                        component={renderInputField}
                         type="text"
                         className="form-control"
                         placeholder={t('form_enter_mac')}
@@ -35,7 +35,7 @@ const Form = (props) => {
                     <Field
                         id="ip"
                         name="ip"
-                        component={renderField}
+                        component={renderInputField}
                         type="text"
                         className="form-control"
                         placeholder={t('form_enter_ip')}
@@ -46,7 +46,7 @@ const Form = (props) => {
                     <Field
                         id="hostname"
                         name="hostname"
-                        component={renderField}
+                        component={renderInputField}
                         type="text"
                         className="form-control"
                         placeholder={t('form_enter_hostname')}

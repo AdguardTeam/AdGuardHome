@@ -7,9 +7,9 @@ import flow from 'lodash/flow';
 
 import Controls from './Controls';
 import AddressList from './AddressList';
-import renderField from './renderField';
 import { getInterfaceIp } from '../../helpers/helpers';
 import { ALL_INTERFACES_IP } from '../../helpers/constants';
+import { renderInputField } from '../../helpers/form';
 
 const required = (value) => {
     if (value || value === 0) {
@@ -133,7 +133,7 @@ class Settings extends Component {
                                 </label>
                                 <Field
                                     name="web.port"
-                                    component={renderField}
+                                    component={renderInputField}
                                     type="number"
                                     className="form-control"
                                     placeholder="80"
@@ -201,7 +201,7 @@ class Settings extends Component {
                                 </label>
                                 <Field
                                     name="dns.port"
-                                    component={renderField}
+                                    component={renderInputField}
                                     type="number"
                                     className="form-control"
                                     placeholder="80"
