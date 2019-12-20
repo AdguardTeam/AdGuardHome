@@ -263,9 +263,9 @@ export const normalizeTextarea = text => text && text.replace(/[;, ]/g, '\n').sp
 
 export const normalizeTopClients = clients => clients.reduce((accumulator, clientObj) => {
     const { name, count } = clientObj;
-    const idToCountMap = accumulator;
-    idToCountMap[name] = count;
-    return idToCountMap;
+    // eslint-disable-next-line no-param-reassign
+    accumulator[name] = count;
+    return accumulator;
 }, {});
 
 export const getClientInfo = (clients, ip) => {
