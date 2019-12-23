@@ -190,7 +190,7 @@ func TestClientsAddExistingHost(t *testing.T) {
 
 	// add a client
 	c = Client{
-		IDs:  []string{"1.1.1.1", "1:2:3::4", "aa:aa:aa:aa:aa:aa"},
+		IDs:  []string{"1.1.1.1", "1:2:3::4", "aa:aa:aa:aa:aa:aa", "2.2.2.0/24"},
 		Name: "client1",
 	}
 	ok, err := clients.Add(c)
@@ -219,6 +219,11 @@ func TestClientsAddExistingHost(t *testing.T) {
 
 	// try adding a duplicate IP which for a Mac-based client
 	ok, err = clients.AddHost(testIP, "test", ClientSourceRDNS)
+	assert.False(t, ok)
+	assert.Nil(t, err)
+
+	// don't allow duplicates by CIDR
+	ok, err = clients.AddHost("2.2.2.2", "test", ClientSourceRDNS)
 	assert.False(t, ok)
 	assert.Nil(t, err)
 }

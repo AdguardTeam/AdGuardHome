@@ -257,7 +257,6 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 			}
 			cj := clientHostToJSON(ip, ch)
 			el[ip] = cj
-
 		} else {
 			cj := clientToJSON(&c)
 			el[ip] = cj

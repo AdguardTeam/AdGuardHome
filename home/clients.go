@@ -445,6 +445,7 @@ func (clients *clientsContainer) SetWhoisInfo(ip string, info [][]string) {
 		return
 	}
 
+	// Create a ClientHost implicitly so that we don't do this check again
 	ch = &ClientHost{
 		Source: ClientSourceWHOIS,
 	}
@@ -525,7 +526,6 @@ func (clients *clientsContainer) addFromHostsFile() {
 // The command's output is:
 // HOST (IP) at MAC on IFACE
 func (clients *clientsContainer) addFromSystemARP() {
-
 	if runtime.GOOS == "windows" {
 		return
 	}
