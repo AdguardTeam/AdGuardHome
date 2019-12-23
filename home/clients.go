@@ -185,13 +185,18 @@ func (clients *clientsContainer) Exists(ip string, source clientSource) bool {
 
 // Find searches for a client by IP
 func (clients *clientsContainer) Find(ip string) (Client, bool) {
+	clients.lock.Lock()
+	defer clients.lock.Unlock()
+
+	return clients.findByIP(ip)
+}
+
+// Find searches for a client by IP (and does not lock anything)
+func (clients *clientsContainer) findByIP(ip string) (Client, bool) {
 	ipAddr := net.ParseIP(ip)
 	if ipAddr == nil {
 		return Client{}, false
 	}
-
-	clients.lock.Lock()
-	defer clients.lock.Unlock()
 
 	c, ok := clients.idIndex[ip]
 	if ok {
@@ -456,7 +461,7 @@ func (clients *clientsContainer) AddHost(ip, host string, source clientSource) (
 	defer clients.lock.Unlock()
 
 	// check existing clients first
-	_, ok := clients.Find(ip)
+	_, ok := clients.findByIP(ip)
 	if ok {
 		return false, nil
 	}
