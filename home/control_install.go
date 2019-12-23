@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"os/exec"
+	"runtime"
 	"strconv"
 
 	"github.com/AdguardTeam/golibs/log"
@@ -117,6 +118,10 @@ func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 
 // Check if DNSStubListener is active
 func checkDNSStubListener() bool {
+	if runtime.GOOS != "linux" {
+		return false
+	}
+
 	cmd := exec.Command("systemctl", "is-enabled", "systemd-resolved")
 	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
 	_, err := cmd.Output()

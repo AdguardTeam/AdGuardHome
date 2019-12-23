@@ -20,6 +20,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/isdelve"
+
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
@@ -284,7 +286,8 @@ func httpServerLoop() {
 //  and if not, ask and try to run as root
 func requireAdminRights() {
 	admin, _ := haveAdminRights()
-	if admin {
+	if //noinspection ALL
+	admin || isdelve.Enabled {
 		return
 	}
 
