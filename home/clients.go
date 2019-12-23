@@ -176,7 +176,7 @@ func (clients *clientsContainer) Exists(ip string, source clientSource) bool {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	_, ok := clients.idIndex[ip]
+	_, ok := clients.findByIP(ip)
 	if ok {
 		return true
 	}
@@ -484,10 +484,9 @@ func (clients *clientsContainer) SetWhoisInfo(ip string, info [][]string) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	c, ok := clients.idIndex[ip]
+	_, ok := clients.findByIP(ip)
 	if ok {
-		c.WhoisInfo = info
-		log.Debug("Clients: set WHOIS info for client %s: %v", c.Name, c.WhoisInfo)
+		log.Debug("Clients: client for %s is already created, ignore WHOIS info", ip)
 		return
 	}
 

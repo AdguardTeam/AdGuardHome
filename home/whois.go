@@ -16,6 +16,7 @@ const (
 	defaultServer  = "whois.arin.net"
 	defaultPort    = "43"
 	maxValueLength = 250
+	whoisTTL       = 1 * 60 * 60 // 1 hour
 )
 
 // Whois - module context
@@ -205,8 +206,7 @@ func (w *Whois) Begin(ip string) {
 		// TTL expired
 	}
 	expire = make([]byte, 8)
-	const ttl = 1 * 60 * 60
-	binary.BigEndian.PutUint64(expire, now+ttl)
+	binary.BigEndian.PutUint64(expire, now+whoisTTL)
 	_ = w.ipAddrs.Set([]byte(ip), expire)
 
 	log.Debug("Whois: adding %s", ip)
