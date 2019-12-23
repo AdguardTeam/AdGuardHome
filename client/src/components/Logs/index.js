@@ -9,6 +9,7 @@ import { HashLink as Link } from 'react-router-hash-link';
 import {
     formatTime,
     formatDateTime,
+    formatTodayDate,
 } from '../../helpers/helpers';
 import { SERVICES, FILTERED_STATUS, TABLE_DEFAULT_PAGE_SIZE } from '../../helpers/constants';
 import { getTrackerData } from '../../helpers/trackers/trackers';
@@ -115,11 +116,12 @@ class Logs extends Component {
     checkWhiteList = reason => reason === FILTERED_STATUS.NOT_FILTERED_WHITE_LIST;
 
     getTimeCell = ({ value }) => (
-        <div className="logs__row">
-            <span className="logs__text" title={formatDateTime(value)}>
-                {formatTime(value)}
-            </span>
-        </div>
+            <div className="logs__row">
+                    <span className="logs__text" title={formatDateTime(value)}>
+                        {formatTodayDate(value) === formatTodayDate(Date.now())
+                            ? formatTime(value) : formatDateTime(value)}
+                    </span>
+            </div>
     );
 
     getDomainCell = (row) => {
@@ -257,7 +259,7 @@ class Logs extends Component {
             {
                 Header: t('time_table_header'),
                 accessor: 'time',
-                maxWidth: 100,
+                minWidth: 105,
                 Cell: this.getTimeCell,
             },
             {

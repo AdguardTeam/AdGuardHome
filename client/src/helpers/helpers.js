@@ -39,6 +39,19 @@ export const formatDateTime = (dateTime) => {
     return parsedTime.toLocaleString(currentLanguage, options);
 };
 
+export const formatTodayDate = (dateTime) => {
+    const currentLanguage = i18n.languages[0] || 'en';
+    const parsedTime = dateParse(dateTime);
+    const options = {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour12: false,
+    };
+
+    return parsedTime.toLocaleString(currentLanguage, options);
+};
+
 export const normalizeLogs = logs => logs.map((log) => {
     const {
         time,
