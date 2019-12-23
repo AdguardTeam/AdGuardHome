@@ -242,6 +242,10 @@ func checkPortAvailable(host string, port int) error {
 		return err
 	}
 	ln.Close()
+
+	// It seems that net.Listener.Close() doesn't close file descriptors right away.
+	// We wait for some time and hope that this fd will be closed.
+	time.Sleep(100 * time.Millisecond)
 	return nil
 }
 
@@ -251,6 +255,10 @@ func checkPacketPortAvailable(host string, port int) error {
 		return err
 	}
 	ln.Close()
+
+	// It seems that net.Listener.Close() doesn't close file descriptors right away.
+	// We wait for some time and hope that this fd will be closed.
+	time.Sleep(100 * time.Millisecond)
 	return err
 }
 
