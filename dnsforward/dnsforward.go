@@ -113,7 +113,7 @@ type FilteringConfig struct {
 	FilterHandler func(clientAddr string, settings *dnsfilter.RequestFilteringSettings) `yaml:"-"`
 
 	// This callback function returns the list of upstream servers for a client specified by IP address
-	GetUpstreamsByClient func(clientAddr string) []string `yaml:"-"`
+	GetUpstreamsByClient func(clientAddr string) []upstream.Upstream `yaml:"-"`
 
 	ProtectionEnabled bool `yaml:"protection_enabled"` // whether or not use any of dnsfilter features
 
@@ -465,13 +465,9 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 		if d.Addr != nil && s.conf.GetUpstreamsByClient != nil {
 			clientIP := ipFromAddr(d.Addr)
 			upstreams := s.conf.GetUpstreamsByClient(clientIP)
-			for _, us := range upstreams {
-				u, err := upstream.AddressToUpstream(us, upstream.Options{Timeout: 30 * time.Second})
-				if err != nil {
-					log.Error("upstream.AddressToUpstream: %s: %s", us, err)
-					continue
-				}
-				d.Upstreams = append(d.Upstreams, u)
+			if len(upstreams) > 0 {
+				log.Debug("Using custom upstreams for %s", clientIP)
+				d.Upstreams = upstreams
 			}
 		}
 

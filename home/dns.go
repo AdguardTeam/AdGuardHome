@@ -11,6 +11,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/querylog"
 	"github.com/AdguardTeam/AdGuardHome/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/joomcode/errorx"
 )
@@ -178,18 +179,12 @@ func generateServerConfig() dnsforward.ServerConfig {
 	return newconfig
 }
 
-func getUpstreamsByClient(clientAddr string) []string {
-	c, ok := Context.clients.Find(clientAddr)
-	if !ok {
-		return []string{}
-	}
-	log.Debug("Using upstreams %v for client %s (IP: %s)", c.Upstreams, c.Name, clientAddr)
-	return c.Upstreams
+func getUpstreamsByClient(clientAddr string) []upstream.Upstream {
+	return Context.clients.FindUpstreams(clientAddr)
 }
 
 // If a client has his own settings, apply them
 func applyAdditionalFiltering(clientAddr string, setts *dnsfilter.RequestFilteringSettings) {
-
 	ApplyBlockedServices(setts, config.DNS.BlockedServices)
 
 	if len(clientAddr) == 0 {

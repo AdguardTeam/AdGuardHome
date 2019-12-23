@@ -14,6 +14,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
+	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/utils"
 )
@@ -62,8 +63,14 @@ type clientsContainer struct {
 	list    map[string]*Client     // name -> client
 	idIndex map[string]*Client     // IP -> client
 	ipHost  map[string]*ClientHost // IP -> Hostname
-	lock    sync.Mutex
 
+	// cache for Upstream instances that are used in the case
+	// when custom DNS servers are configured for a client
+	upstreamsCache map[string][]upstream.Upstream // name -> []Upstream
+
+	lock sync.Mutex
+
+	// dhcpServer is used for looking up clients IP addresses by MAC addresses
 	dhcpServer *dhcpd.Server
 
 	testing bool // if TRUE, this object is used for internal tests
@@ -78,6 +85,7 @@ func (clients *clientsContainer) Init(objects []clientObject, dhcpServer *dhcpd.
 	clients.list = make(map[string]*Client)
 	clients.idIndex = make(map[string]*Client)
 	clients.ipHost = make(map[string]*ClientHost)
+	clients.upstreamsCache = make(map[string][]upstream.Upstream)
 	clients.dhcpServer = dhcpServer
 	clients.addFromConfig(objects)
 
@@ -189,6 +197,45 @@ func (clients *clientsContainer) Find(ip string) (Client, bool) {
 	defer clients.lock.Unlock()
 
 	return clients.findByIP(ip)
+}
+
+// FindUpstreams looks for upstreams configured for the client
+// If no client found for this IP, or if no custom upstreams are configured,
+// this method returns nil
+func (clients *clientsContainer) FindUpstreams(ip string) []upstream.Upstream {
+	clients.lock.Lock()
+	defer clients.lock.Unlock()
+
+	c, ok := clients.findByIP(ip)
+	if !ok {
+		return nil
+	}
+
+	if len(c.Upstreams) == 0 {
+		return nil
+	}
+
+	upstreams, ok := clients.upstreamsCache[c.Name]
+	if ok {
+		return upstreams
+	}
+
+	for _, us := range c.Upstreams {
+		u, err := upstream.AddressToUpstream(us, upstream.Options{Timeout: dnsforward.DefaultTimeout})
+		if err != nil {
+			log.Error("upstream.AddressToUpstream: %s: %s", us, err)
+			continue
+		}
+		upstreams = append(upstreams, u)
+	}
+
+	if len(upstreams) == 0 {
+		clients.upstreamsCache[c.Name] = nil
+	} else {
+		clients.upstreamsCache[c.Name] = upstreams
+	}
+
+	return upstreams
 }
 
 // Find searches for a client by IP (and does not lock anything)
@@ -355,6 +402,9 @@ func (clients *clientsContainer) Del(name string) bool {
 	// update Name index
 	delete(clients.list, name)
 
+	// update upstreams cache
+	delete(clients.upstreamsCache, name)
+
 	// update ID index
 	for _, id := range c.IDs {
 		delete(clients.idIndex, id)
@@ -418,9 +468,12 @@ func (clients *clientsContainer) Update(name string, c Client) error {
 
 	// update Name index
 	if old.Name != c.Name {
-		delete(clients.list, old.Name)
 		clients.list[c.Name] = old
 	}
+
+	// update upstreams cache
+	delete(clients.upstreamsCache, name)
+	delete(clients.upstreamsCache, old.Name)
 
 	*old = c
 	return nil
