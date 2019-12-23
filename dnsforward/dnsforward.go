@@ -492,7 +492,7 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 
 		} else if res.Reason != dnsfilter.NotFilteredWhiteList {
 			origResp2 := d.Res
-			res, err = s.filterResponse(d)
+			res, err = s.filterDNSResponse(d)
 			if err != nil {
 				return err
 			}
@@ -652,7 +652,7 @@ func (s *Server) filterDNSRequest(d *proxy.DNSContext) (*dnsfilter.Result, error
 
 // If response contains CNAME, A or AAAA records, we apply filtering to each canonical host name or IP address.
 // If this is a match, we set a new response in d.Res and return.
-func (s *Server) filterResponse(d *proxy.DNSContext) (*dnsfilter.Result, error) {
+func (s *Server) filterDNSResponse(d *proxy.DNSContext) (*dnsfilter.Result, error) {
 	for _, a := range d.Res.Answer {
 		host := ""
 
@@ -681,7 +681,7 @@ func (s *Server) filterResponse(d *proxy.DNSContext) (*dnsfilter.Result, error) 
 			continue
 		}
 		setts := s.getClientRequestFilteringSettings(d)
-		res, err := s.dnsFilter.CheckHost(host, d.Req.Question[0].Qtype, setts)
+		res, err := s.dnsFilter.CheckHostRules(host, d.Req.Question[0].Qtype, setts)
 		s.RUnlock()
 
 		if err != nil {

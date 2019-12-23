@@ -263,7 +263,17 @@ func (r Reason) Matched() bool {
 	return r != NotFilteredNotFound
 }
 
-// CheckHost tries to match host against rules, then safebrowsing and parental if they are enabled
+// CheckHostRules tries to match the host against filtering rules only
+func (d *Dnsfilter) CheckHostRules(host string, qtype uint16, setts *RequestFilteringSettings) (Result, error) {
+	if !setts.FilteringEnabled {
+		return Result{}, nil
+	}
+
+	return d.matchHost(host, qtype)
+}
+
+// CheckHost tries to match the host against filtering rules,
+// then safebrowsing and parental if they are enabled
 func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFilteringSettings) (Result, error) {
 	// sometimes DNS clients will try to resolve ".", which is a request to get root servers
 	if host == "" {
