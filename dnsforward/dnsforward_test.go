@@ -384,6 +384,30 @@ func TestBlockCNAME(t *testing.T) {
 	_ = s.Stop()
 }
 
+func TestClientRulesForCNAMEMatching(t *testing.T) {
+	s := createTestServer(t)
+	testUpstm := &testUpstream{testCNAMEs, testIPv4, nil}
+	s.conf.FilterHandler = func(clientAddr string, settings *dnsfilter.RequestFilteringSettings) {
+		settings.FilteringEnabled = false
+	}
+	err := s.startWithUpstream(testUpstm)
+	assert.Nil(t, err)
+	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
+
+	// 'badhost' has a canonical name 'null.example.org' which is blocked by filters:
+	// response is blocked
+	req := dns.Msg{}
+	req.Id = dns.Id()
+	req.Question = []dns.Question{
+		{Name: "badhost.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+	}
+	// However, in our case it should not be blocked
+	// as filtering is disabled on the client level
+	reply, err := dns.Exchange(&req, addr.String())
+	assert.Nil(t, err)
+	assert.Equal(t, dns.RcodeSuccess, reply.Rcode)
+}
+
 func TestNullBlockedRequest(t *testing.T) {
 	s := createTestServer(t)
 	s.conf.FilteringConfig.BlockingMode = "null_ip"
@@ -563,7 +587,11 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 }
 
 func createTestServer(t *testing.T) *Server {
-	rules := "||nxdomain.example.org^\n||null.example.org^\n127.0.0.1	host.example.org\n@@||whitelist.example.org^\n||127.0.0.255\n"
+	rules := `||nxdomain.example.org
+||null.example.org^
+127.0.0.1	host.example.org
+@@||whitelist.example.org^
+||127.0.0.255`
 	filters := map[int]string{}
 	filters[0] = rules
 	c := dnsfilter.Config{}
