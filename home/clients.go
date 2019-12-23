@@ -455,8 +455,8 @@ func (clients *clientsContainer) AddHost(ip, host string, source clientSource) (
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	// check index
-	_, ok := clients.idIndex[ip]
+	// check existing clients first
+	_, ok := clients.Find(ip)
 	if ok {
 		return false, nil
 	}
