@@ -11,15 +11,6 @@ import whoisCell from './whoisCell';
 const COLUMN_MIN_WIDTH = 200;
 
 class AutoClients extends Component {
-    getStats = (ip, stats) => {
-        if (stats) {
-            const statsForCurrentIP = stats.find(item => item.name === ip);
-            return statsForCurrentIP && statsForCurrentIP.count;
-        }
-
-        return '';
-    };
-
     columns = [
         {
             Header: this.props.t('table_client'),
@@ -47,11 +38,12 @@ class AutoClients extends Component {
         },
         {
             Header: this.props.t('requests_count'),
-            accessor: 'statistics',
+            accessor: row => this.props.normalizedTopClients[row.ip] || 0,
+            sortMethod: (a, b) => b - a,
+            id: 'statistics',
             minWidth: COLUMN_MIN_WIDTH,
             Cell: (row) => {
-                const clientIP = row.original.ip;
-                const clientStats = clientIP && this.getStats(clientIP, this.props.topClients);
+                const { value: clientStats } = row;
 
                 if (clientStats) {
                     return (
@@ -80,6 +72,12 @@ class AutoClients extends Component {
                 <ReactTable
                     data={autoClients || []}
                     columns={this.columns}
+                    defaultSorted={[
+                        {
+                            id: 'statistics',
+                            asc: true,
+                        },
+                    ]}
                     className="-striped -highlight card-table-overflow"
                     showPagination={true}
                     defaultPageSize={10}
@@ -100,7 +98,7 @@ class AutoClients extends Component {
 AutoClients.propTypes = {
     t: PropTypes.func.isRequired,
     autoClients: PropTypes.array.isRequired,
-    topClients: PropTypes.array.isRequired,
+    normalizedTopClients: PropTypes.object.isRequired,
 };
 
 export default withNamespaces()(AutoClients);

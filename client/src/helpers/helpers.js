@@ -261,6 +261,13 @@ export const redirectToCurrentProtocol = (values, httpPort = 80) => {
 
 export const normalizeTextarea = text => text && text.replace(/[;, ]/g, '\n').split('\n').filter(n => n);
 
+export const normalizeTopClients = clients => clients.reduce((accumulator, clientObj) => {
+    const { name, count } = clientObj;
+    // eslint-disable-next-line no-param-reassign
+    accumulator[name] = count;
+    return accumulator;
+}, {});
+
 export const getClientInfo = (clients, ip) => {
     const client = clients
         .find(item => item.ip_addrs && item.ip_addrs.find(clientIp => clientIp === ip));
