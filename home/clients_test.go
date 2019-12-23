@@ -1,7 +1,12 @@
 package home
 
 import (
+	"net"
+	"os"
 	"testing"
+	"time"
+
+	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -171,4 +176,49 @@ func TestClientsWhois(t *testing.T) {
 	clients.SetWhoisInfo("1.1.1.2", whois)
 	assert.True(t, clients.idIndex["1.1.1.2"].WhoisInfo[0][1] == "orgname-val")
 	_ = clients.Del("client1")
+}
+
+func TestClientsAddExistingHost(t *testing.T) {
+	var c Client
+	clients := clientsContainer{}
+	clients.testing = true
+	clients.Init(nil, nil)
+
+	// some test variables
+	mac, _ := net.ParseMAC("aa:aa:aa:aa:aa:aa")
+	testIP := "1.2.3.4"
+
+	// add a client
+	c = Client{
+		IDs:  []string{"1.1.1.1", "1:2:3::4", "aa:aa:aa:aa:aa:aa"},
+		Name: "client1",
+	}
+	ok, err := clients.Add(c)
+	assert.True(t, ok)
+	assert.Nil(t, err)
+
+	// try adding a duplicate by IP
+	ok, err = clients.AddHost("1.1.1.1", "test", ClientSourceRDNS)
+	assert.False(t, ok)
+	assert.Nil(t, err)
+
+	// now some more complicated stuff
+	// first, init a DHCP server with a single static lease
+	config := dhcpd.ServerConfig{
+		DBFilePath: "leases.db",
+	}
+	defer func() { _ = os.Remove("leases.db") }()
+	clients.dhcpServer = dhcpd.Create(config)
+	err = clients.dhcpServer.AddStaticLease(dhcpd.Lease{
+		HWAddr:   mac,
+		IP:       net.ParseIP(testIP).To4(),
+		Hostname: "testhost",
+		Expiry:   time.Now().Add(time.Hour),
+	})
+	assert.Nil(t, err)
+
+	// try adding a duplicate IP which for a Mac-based client
+	ok, err = clients.AddHost(testIP, "test", ClientSourceRDNS)
+	assert.False(t, ok)
+	assert.Nil(t, err)
 }

@@ -23,6 +23,7 @@ func check(t *testing.T, result bool, msg string) {
 func TestDHCP(t *testing.T) {
 	var s = Server{}
 	s.conf.DBFilePath = dbFilename
+	defer func() { _ = os.Remove(dbFilename) }()
 	var p, p2 dhcp4.Packet
 	var hw net.HardwareAddr
 	var lease *Lease
@@ -185,7 +186,7 @@ func TestDB(t *testing.T) {
 	lease, _ = s.reserveLease(p)
 	lease.Expiry = time.Unix(4000000002, 0)
 
-	os.Remove("leases.db")
+	_ = os.Remove("leases.db")
 	s.dbStore()
 	s.reset()
 
@@ -198,7 +199,7 @@ func TestDB(t *testing.T) {
 	check(t, bytes.Equal(s.leases[1].IP, []byte{1, 1, 1, 2}), "leases[1].IP")
 	check(t, s.leases[1].Expiry.Unix() == 4000000002, "leases[1].Expiry")
 
-	os.Remove("leases.db")
+	_ = os.Remove("leases.db")
 }
 
 func TestIsValidSubnetMask(t *testing.T) {

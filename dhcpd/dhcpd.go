@@ -709,9 +709,17 @@ func (s *Server) FindMACbyIP(ip net.IP) net.HardwareAddr {
 	s.leasesLock.RLock()
 	defer s.leasesLock.RUnlock()
 
+	ip4 := ip.To4()
+	if ip4 == nil {
+		return nil
+	}
+
 	for _, l := range s.leases {
-		if l.Expiry.Unix() > now && l.IP.Equal(ip) {
-			return l.HWAddr
+		if l.IP.Equal(ip4) {
+			unix := l.Expiry.Unix()
+			if unix > now || unix == leaseExpireStatic {
+				return l.HWAddr
+			}
 		}
 	}
 	return nil
