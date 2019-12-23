@@ -593,22 +593,28 @@ func (s *Server) updateStats(d *proxy.DNSContext, elapsed time.Duration, res dns
 	s.stats.Update(e)
 }
 
-// filterDNSRequest applies the dnsFilter and sets d.Res if the request was filtered
-func (s *Server) filterDNSRequest(d *proxy.DNSContext) (*dnsfilter.Result, error) {
-	if !s.conf.ProtectionEnabled || s.dnsFilter == nil {
-		return &dnsfilter.Result{}, nil
-	}
-
+// getClientRequestFilteringSettings lookups client filtering settings
+// using the client's IP address from the DNSContext
+func (s *Server) getClientRequestFilteringSettings(d *proxy.DNSContext) *dnsfilter.RequestFilteringSettings {
 	setts := s.dnsFilter.GetConfig()
 	setts.FilteringEnabled = true
 	if s.conf.FilterHandler != nil {
 		clientAddr := ipFromAddr(d.Addr)
 		s.conf.FilterHandler(clientAddr, &setts)
 	}
+	return &setts
+}
 
+// filterDNSRequest applies the dnsFilter and sets d.Res if the request was filtered
+func (s *Server) filterDNSRequest(d *proxy.DNSContext) (*dnsfilter.Result, error) {
+	if !s.conf.ProtectionEnabled || s.dnsFilter == nil {
+		return &dnsfilter.Result{}, nil
+	}
+
+	setts := s.getClientRequestFilteringSettings(d)
 	req := d.Req
 	host := strings.TrimSuffix(req.Question[0].Name, ".")
-	res, err := s.dnsFilter.CheckHost(host, d.Req.Question[0].Qtype, &setts)
+	res, err := s.dnsFilter.CheckHost(host, d.Req.Question[0].Qtype, setts)
 	if err != nil {
 		// Return immediately if there's an error
 		return nil, errorx.Decorate(err, "dnsfilter failed to check host '%s'", host)
@@ -631,7 +637,6 @@ func (s *Server) filterDNSRequest(d *proxy.DNSContext) (*dnsfilter.Result, error
 				a := s.genAAnswer(req, ip)
 				a.Hdr.Name = dns.Fqdn(name)
 				resp.Answer = append(resp.Answer, a)
-
 			} else if req.Question[0].Qtype == dns.TypeAAAA {
 				a := s.genAAAAAnswer(req, ip)
 				a.Hdr.Name = dns.Fqdn(name)
@@ -675,9 +680,8 @@ func (s *Server) filterResponse(d *proxy.DNSContext) (*dnsfilter.Result, error) 
 			s.RUnlock()
 			continue
 		}
-		setts := dnsfilter.RequestFilteringSettings{}
-		setts.FilteringEnabled = true
-		res, err := s.dnsFilter.CheckHost(host, d.Req.Question[0].Qtype, &setts)
+		setts := s.getClientRequestFilteringSettings(d)
+		res, err := s.dnsFilter.CheckHost(host, d.Req.Question[0].Qtype, setts)
 		s.RUnlock()
 
 		if err != nil {
