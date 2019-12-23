@@ -474,6 +474,60 @@ func TestClientSettings(t *testing.T) {
 	assert.True(t, r.IsFiltered && r.Reason == FilteredBlockedService)
 }
 
+func TestRewrites(t *testing.T) {
+	d := Dnsfilter{}
+	// CNAME, A, AAAA
+	d.Rewrites = []RewriteEntry{
+		RewriteEntry{"somecname", "somehost.com"},
+		RewriteEntry{"somehost.com", "0.0.0.0"},
+
+		RewriteEntry{"host.com", "1.2.3.4"},
+		RewriteEntry{"host.com", "1.2.3.5"},
+		RewriteEntry{"host.com", "1:2:3::4"},
+		RewriteEntry{"www.host.com", "host.com"},
+	}
+	r := d.processRewrites("host2.com", dns.TypeA)
+	assert.Equal(t, NotFilteredNotFound, r.Reason)
+
+	r = d.processRewrites("www.host.com", dns.TypeA)
+	assert.Equal(t, ReasonRewrite, r.Reason)
+	assert.Equal(t, "host.com", r.CanonName)
+	assert.True(t, len(r.IPList) == 2)
+	assert.True(t, r.IPList[0].Equal(net.ParseIP("1.2.3.4")))
+	assert.True(t, r.IPList[1].Equal(net.ParseIP("1.2.3.5")))
+
+	r = d.processRewrites("www.host.com", dns.TypeAAAA)
+	assert.Equal(t, ReasonRewrite, r.Reason)
+	assert.True(t, len(r.IPList) == 1)
+	assert.True(t, r.IPList[0].Equal(net.ParseIP("1:2:3::4")))
+
+	// wildcard
+	d.Rewrites = []RewriteEntry{
+		RewriteEntry{"*.host.com", "1.2.3.5"},
+		RewriteEntry{"host.com", "1.2.3.4"},
+	}
+	r = d.processRewrites("host.com", dns.TypeA)
+	assert.Equal(t, ReasonRewrite, r.Reason)
+	assert.True(t, r.IPList[0].Equal(net.ParseIP("1.2.3.4")))
+
+	r = d.processRewrites("www.host.com", dns.TypeA)
+	assert.Equal(t, ReasonRewrite, r.Reason)
+	assert.True(t, r.IPList[0].Equal(net.ParseIP("1.2.3.5")))
+
+	r = d.processRewrites("www.host2.com", dns.TypeA)
+	assert.Equal(t, NotFilteredNotFound, r.Reason)
+
+	// wildcard + CNAME
+	d.Rewrites = []RewriteEntry{
+		RewriteEntry{"*.host.com", "host.com"},
+		RewriteEntry{"host.com", "1.2.3.4"},
+	}
+	r = d.processRewrites("www.host.com", dns.TypeA)
+	assert.Equal(t, ReasonRewrite, r.Reason)
+	assert.Equal(t, "host.com", r.CanonName)
+	assert.True(t, r.IPList[0].Equal(net.ParseIP("1.2.3.4")))
+}
+
 // BENCHMARKS
 
 func BenchmarkSafeBrowsing(b *testing.B) {

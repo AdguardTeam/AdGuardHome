@@ -6,7 +6,7 @@ import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 
 import {
-    renderField,
+    renderInputField,
     renderRadioField,
     renderSelectField,
     required,
@@ -45,7 +45,7 @@ let Form = ({
                     <Field
                         name="ratelimit"
                         type="number"
-                        component={renderField}
+                        component={renderInputField}
                         className="form-control"
                         placeholder={t('form_enter_rate_limit')}
                         normalize={toNumber}
@@ -90,7 +90,7 @@ let Form = ({
                             </div>
                             <Field
                                 name="blocking_ipv4"
-                                component={renderField}
+                                component={renderInputField}
                                 className="form-control"
                                 placeholder={t('form_enter_ip')}
                                 validate={[ipv4, required]}
@@ -107,7 +107,7 @@ let Form = ({
                             </div>
                             <Field
                                 name="blocking_ipv6"
-                                component={renderField}
+                                component={renderInputField}
                                 className="form-control"
                                 placeholder={t('form_enter_ip')}
                                 validate={[ipv6, required]}

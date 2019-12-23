@@ -916,6 +916,8 @@ Response:
 	...
 	]
 
+`domain` can be an exact host name (`www.host.com`) or a wildcard (`*.host.com`).
+
 
 ### API: Add a rewrite entry
 
