@@ -371,7 +371,6 @@
     "rewrite_desc": "Dozvoljava da jednostavno konfigurišete prilagođeni DNS odgovor za određeni domen.",
     "rewrite_applied": "Primenjeno pravilo prepisivanja",
     "dns_rewrites": "DNS prepisivanja",
-    "form_domain": "Unesite domen",
     "form_answer": "Unesite IP adresu ili domen",
     "form_error_domain_format": "Nevažeći format domena",
     "form_error_answer_format": "Nevažeći format odgovora",

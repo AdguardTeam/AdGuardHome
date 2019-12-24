@@ -330,7 +330,6 @@
     "rewrite_desc": "به آسانی اجازه پیکربندی پاسخ DNS دستی برای یک نام دامنه خاص را می دهد.",
     "rewrite_applied": "دستور بازنویسی اِعمال شد",
     "dns_rewrites": "بازنویسی های DNS",
-    "form_domain": "نام دامنه را وارد کنید",
     "form_answer": "نام دامنه یا آدرس آی پی را وارد کنید",
     "form_error_domain_format": "فرمت دامنه اشتباه است",
     "form_error_answer_format": "فرمت پاسخ اشتباه است",

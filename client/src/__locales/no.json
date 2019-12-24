@@ -345,7 +345,6 @@
     "rewrite_desc": "Lar deg enkelt konfigurere selvvalgte DNS-tilbakemeldinger for et spesifikt domenenavn.",
     "rewrite_applied": "Benyttet omdirigeringsregelen",
     "dns_rewrites": "DNS-omdirigeringer",
-    "form_domain": "Skriv inn domene",
     "form_answer": "Skriv inn IP-adresse eller domenenavn",
     "form_error_domain_format": "Ugyldig domeneformat",
     "form_error_answer_format": "Ugyldig svarformat",

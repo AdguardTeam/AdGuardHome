@@ -341,7 +341,6 @@
     "rewrite_desc": "Consente di configurare facilmente la risposta DNS personalizzata per un nome di dominio specifico.",
     "rewrite_applied": "Regola di riscrittura applicata",
     "dns_rewrites": "Riscrittura DNS",
-    "form_domain": "Inserisci il dominio",
     "form_answer": "Inserisci l'indirizzo IP o il nome del dominio",
     "form_error_domain_format": "Formato del dominio non valido",
     "form_error_answer_format": "Formato di risposta non valido",

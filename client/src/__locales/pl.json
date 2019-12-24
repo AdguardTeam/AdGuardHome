@@ -330,7 +330,6 @@
     "rewrite_desc": "Pozwala łatwo skonfigurować niestandardową odpowiedź DNS dla określonej nazwy domeny.",
     "rewrite_applied": "Przepisano regułę",
     "dns_rewrites": "Przepisywanie DNS",
-    "form_domain": "Wprowadź domenę",
     "form_answer": "Wpisz adres IP lub nazwę domeny",
     "form_error_domain_format": "Niepoprawny format domeny",
     "form_error_answer_format": "Nieprawidłowy format odpowiedzi",
