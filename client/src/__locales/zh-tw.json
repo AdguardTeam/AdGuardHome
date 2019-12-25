@@ -23,6 +23,7 @@
     "form_error_ip6_format": "無效的 IPv6 格式",
     "form_error_ip_format": "無效的 IP 格式",
     "form_error_mac_format": "無效的媒體存取控制（MAC）格式",
+    "form_error_client_id_format": "無效的用戶端 ID 格式",
     "form_error_positive": "必須大於 0",
     "form_error_negative": "必須等於 0 或更大",
     "dhcp_form_gateway_input": "閘道 IP",
@@ -371,6 +372,7 @@
     "rewrite_desc": "允許輕易地配置自訂的 DNS 回應供特定的域名。",
     "rewrite_applied": "已套用的改寫規則",
     "dns_rewrites": "DNS 改寫",
+    "form_domain": "輸入域名或萬用字元（wildcard）",
     "form_answer": "輸入 IP 位址或域名",
     "form_error_domain_format": "無效的網域格式",
     "form_error_answer_format": "無效的回應格式",
@@ -426,5 +428,8 @@
     "whois": "Whois",
     "filtering_rules_learn_more": "<0>了解更多</0>有關創建您自己的主機（hosts）封鎖清單。",
     "blocked_by_response": "被正規名稱（CNAME）或 IP 封鎖作為回應",
-    "try_again": "再次嘗試"
+    "try_again": "再次嘗試",
+    "domain_desc": "輸入您想要被改寫的域名或萬用字元（wildcard）。",
+    "example_rewrite_domain": "僅對於此域名改寫回應。",
+    "example_rewrite_wildcard": "對於所有的 <0>example.org</0> 子網域改寫回應。"
 }

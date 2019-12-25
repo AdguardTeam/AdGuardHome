@@ -23,6 +23,7 @@
     "form_error_ip6_format": "Ugyldigt IPv6-format",
     "form_error_ip_format": "Ugyldigt IP-format",
     "form_error_mac_format": "Ugyldigt MAC-format",
+    "form_error_client_id_format": "Ugyldigt klient-ID-format",
     "form_error_positive": "Skal være større end 0",
     "form_error_negative": "Skal være lig med 0 eller større",
     "dhcp_form_gateway_input": "Gateway IP",
@@ -371,6 +372,7 @@
     "rewrite_desc": "Gør det nemt at konfigurere det tilpassede DNS-svar for et specifikt domænenavn.",
     "rewrite_applied": "Anvendt Omskrivningsregel",
     "dns_rewrites": "DNS-omskrivninger",
+    "form_domain": "Indtast domænenavn eller wildcard",
     "form_answer": "Indtast IP-adresser eller domænenavne",
     "form_error_domain_format": "Ugyldigt domæneformat",
     "form_error_answer_format": "Ugyldigt svarformat",
@@ -426,5 +428,8 @@
     "whois": "Whois",
     "filtering_rules_learn_more": "<0>Lær mere</0> om at oprette dine egne værtsblokeringslister.",
     "blocked_by_response": "Blokeret af CNAME eller IP som svar",
-    "try_again": "Prøv igen"
+    "try_again": "Prøv igen",
+    "domain_desc": "Indtast det domænenavn eller wildcard, du ønsker skal omskrives.",
+    "example_rewrite_domain": "omskriv kun svar for dette domænenavn.",
+    "example_rewrite_wildcard": "omskriv svar for alle <0>example.org</0> subdomæner."
 }

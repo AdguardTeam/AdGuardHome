@@ -23,6 +23,7 @@
     "form_error_ip6_format": "Neveljaven format IPv6",
     "form_error_ip_format": "Neveljaven format IP",
     "form_error_mac_format": "Neveljaven MAC format",
+    "form_error_client_id_format": "Neveljaven format ID odjemalca",
     "form_error_positive": "Mora biti večja od 0",
     "form_error_negative": "Mora biti enako ali več kot 0",
     "dhcp_form_gateway_input": "IP prehoda",
@@ -426,5 +427,8 @@
     "whois": "Whois",
     "filtering_rules_learn_more": "<0>Več o tem</0>, o ustvarjanju lastnih Seznamov nedovoljenih gostiteljev.",
     "blocked_by_response": "Onemogočeno z CNAME ali IP v odgovoru",
-    "try_again": "Poskusi ponovno"
+    "try_again": "Poskusi ponovno",
+    "domain_desc": "Vnesite ime domene ali nadomestni znak, ki ga želite prepisati.",
+    "example_rewrite_domain": "prepiše odgovore samo za to ime domene.",
+    "example_rewrite_wildcard": "prepiše odgovore za vse poddomene <0>example.org</0>."
 }
