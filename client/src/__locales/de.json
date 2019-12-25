@@ -84,7 +84,7 @@
     "top_clients": "Top Clients",
     "no_clients_found": "Keine Clients gefunden",
     "general_statistics": "Allgemeine Statistiken",
-    "number_of_dns_query_days": "Anzahl der in den letzten {{count}}} Tagen verarbeiteten DNS-Anfragen",
+    "number_of_dns_query_days": "Anzahl der in den letzten {{count}} Tagen verarbeiteten DNS-Anfragen",
     "number_of_dns_query_days_plural": "Anzahl der DNS-Abfragen, die in den letzten {{count}}} Tagen verarbeitet wurden",
     "number_of_dns_query_24_hours": "Anzahl der in den letzten 24 Stunden durchgeführten DNS-Anfragen",
     "number_of_dns_query_blocked_24_hours": "Anzahl der durch Werbefilter und Host-Blocklisten geblockten DNS-Anfragen",
