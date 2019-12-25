@@ -23,6 +23,7 @@
     "form_error_ip6_format": "Nevažeći IPv6 format",
     "form_error_ip_format": "Nevažeći format IP adrese",
     "form_error_mac_format": "Nevažeći MAC format",
+    "form_error_client_id_format": "Nevažeći format ID-a klijenta",
     "form_error_positive": "Mora biti veće od 0",
     "form_error_negative": "Mora biti jednako ili veće od 0",
     "dhcp_form_gateway_input": "Gateway IP",
@@ -371,6 +372,7 @@
     "rewrite_desc": "Omogućuje jednostavno postavljanje prilagođenog DNS odgovora za određenu domenu.",
     "rewrite_applied": "Primijenjena pravila prijepisa",
     "dns_rewrites": "DNS prijepisi",
+    "form_domain": "Unesite naziv domene ili zamjenski znak",
     "form_answer": "Unesite IP adresu ili naziv domene",
     "form_error_domain_format": "Nevažeći format domene",
     "form_error_answer_format": "Nevažeći format odgovora",
@@ -426,5 +428,8 @@
     "whois": "Whois",
     "filtering_rules_learn_more": "<0>Saznajte više</0> o stvaranju vlastitog hosts popisa neželjenih.",
     "blocked_by_response": "Blokirano od strane CNAME-a ili IP-a u odgovoru",
-    "try_again": "Pokušajte ponovno"
+    "try_again": "Pokušajte ponovno",
+    "domain_desc": "Unesite naziv domene ili zamjenski znak koji želite prepisati.",
+    "example_rewrite_domain": "prepiši odgovore samo za ovaj naziv domene.",
+    "example_rewrite_wildcard": "prepiši odgovore za sve <0>example.org</0> poddomene."
 }
