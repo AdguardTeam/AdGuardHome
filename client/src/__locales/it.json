@@ -69,7 +69,7 @@
     "stats_adult": "Siti per adulti bloccati",
     "stats_query_domain": "Domini maggiormente richiesti",
     "for_last_24_hours": "nelle ultime 24 ore",
-    "for_last_days": "per gli ultimi {{value}} giorni",
+    "for_last_days": "per gli ultimi {{count}} giorni",
     "for_last_days_plural": "per gli ultimi {{count}} giorni",
     "no_domains_found": "Nessun dominio trovato",
     "requests_count": "Numero richieste",

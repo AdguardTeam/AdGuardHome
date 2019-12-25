@@ -23,6 +23,7 @@
     "form_error_ip6_format": "IPv6フォーマットではありません",
     "form_error_ip_format": "IPv4フォーマットではありません",
     "form_error_mac_format": "MACフォーマットではありません",
+    "form_error_client_id_format": "Client IDの形式が無効です",
     "form_error_positive": "0より大きい必要があります",
     "form_error_negative": "0以上である必要があります",
     "dhcp_form_gateway_input": "ゲートウェイIP",
@@ -427,5 +428,8 @@
     "whois": "Whois",
     "filtering_rules_learn_more": "独自のブラックリストの作成に関して<0>詳しく学習します</0>。",
     "blocked_by_response": "応答されたCNAMEかIPアドレスによるブロック",
-    "try_again": "再試行する"
+    "try_again": "再試行する",
+    "domain_desc": "DNSリライトしたいドメイン名やワイルドカードを入力してください。",
+    "example_rewrite_domain": "このドメイン名のみへのレスポンスをリライトする",
+    "example_rewrite_wildcard": "<0>example.org</0>のすべてのサブドメインへのレスポンスをリライトする"
 }

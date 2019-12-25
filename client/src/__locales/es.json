@@ -23,6 +23,7 @@
     "form_error_ip6_format": "Formato IPv6 no válido",
     "form_error_ip_format": "Formato IP no válido",
     "form_error_mac_format": "Formato MAC no válido",
+    "form_error_client_id_format": "Formato de ID de cliente no válido",
     "form_error_positive": "Debe ser mayor que 0",
     "form_error_negative": "Debe ser igual o mayor que 0",
     "dhcp_form_gateway_input": "IP de puerta de enlace",
@@ -140,7 +141,7 @@
     "custom_filter_rules": "Reglas de filtrado personalizado",
     "custom_filter_rules_hint": "Ingrese una regla por línea. Puede utilizar reglas de bloqueo o la sintaxis de los archivos hosts.",
     "examples_title": "Ejemplos",
-    "example_meaning_filter_block": "bloquea el acceso al dominio ejemplo.org\ny a todos sus subdominios",
+    "example_meaning_filter_block": "bloquea el acceso al dominio ejemplo.org y a todos sus subdominios",
     "example_meaning_filter_whitelist": "desbloquea el acceso al dominio ejemplo.org y a todos sus subdominios",
     "example_meaning_host_block": "AdGuard Home devolverá la dirección 127.0.0.1 para el dominio ejemplo.org (pero no para sus subdominios).",
     "example_comment": "! Aquí va un comentario",
@@ -371,6 +372,7 @@
     "rewrite_desc": "Permite configurar fácilmente la respuesta DNS personalizada para un nombre de dominio específico.",
     "rewrite_applied": "Regla de reescritura aplicada",
     "dns_rewrites": "Reescrituras DNS",
+    "form_domain": "Ingrese el nombre del dominio o comodín",
     "form_answer": "Ingrese la dirección IP o el nombre del dominio",
     "form_error_domain_format": "Formato de dominio no válido",
     "form_error_answer_format": "Formato de respuesta no válido",
@@ -426,5 +428,8 @@
     "whois": "Whois",
     "filtering_rules_learn_more": "<0>Más información</0> sobre cómo crear tus propias listas para bloqueo de hosts.",
     "blocked_by_response": "Bloqueado por CNAME o IP en respuesta",
-    "try_again": "Volver a intentar"
+    "try_again": "Volver a intentar",
+    "domain_desc": "Ingrese el nombre de dominio o comodín que desea reescribir.",
+    "example_rewrite_domain": "reescribe las respuestas solo para este nombre de dominio.",
+    "example_rewrite_wildcard": "reescribe las respuestas para todos los subdominios de <0>ejemplo.org</0>."
 }

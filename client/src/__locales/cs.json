@@ -23,6 +23,7 @@
     "form_error_ip6_format": "Neplatný formát IPv6",
     "form_error_ip_format": "Neplatný formát IP",
     "form_error_mac_format": "Neplatný formát MAC",
+    "form_error_client_id_format": "Neplatný formát ID klienta",
     "form_error_positive": "Musí být větší než 0",
     "form_error_negative": "Musí být rovno 0 nebo vyšší",
     "dhcp_form_gateway_input": "IP brána",
@@ -75,7 +76,7 @@
     "stats_adult": "Blokované stránky pro dospělé",
     "stats_query_domain": "Nejčastěji dotazované domény",
     "for_last_24_hours": "za posledních 24 hodin",
-    "for_last_days": "za posledních {{value}} dní",
+    "for_last_days": "za posledních {{count}} dní",
     "for_last_days_plural": "za posledních {{count}} dní",
     "no_domains_found": "Nenalezeny žádné domény",
     "requests_count": "Počet požadavků",
@@ -83,7 +84,7 @@
     "top_clients": "Nejčastější klienti",
     "no_clients_found": "Nenalezeny žádní klienti",
     "general_statistics": "Obecné statistiky",
-    "number_of_dns_query_days": "Počet DNS dotazů zpracovaných za posledních {{value}} dní",
+    "number_of_dns_query_days": "Počet DNS dotazů zpracovaných za posledních {{count}} dní",
     "number_of_dns_query_days_plural": "Počet DNS dotazů zpracovaných za posledních {{count}} dní",
     "number_of_dns_query_24_hours": "Počet DNS dotazů zpracovaných za posledních 24 hodin",
     "number_of_dns_query_blocked_24_hours": "Počet požadavků DNS zablokovaných filtrem reklam a seznamy blokování hostitelů",
@@ -371,6 +372,7 @@
     "rewrite_desc": "Umožňuje snadno nakonfigurovat vlastní DNS odezvy pro konkrétní název domény.",
     "rewrite_applied": "Aplikované pravidlo přesměrování",
     "dns_rewrites": "Přesměrování DNS",
+    "form_domain": "Zadejte doménu",
     "form_answer": "Zadejte IP adresu nebo název domény",
     "form_error_domain_format": "Neplatný formát domény",
     "form_error_answer_format": "Neplatný formát odpovědi",
@@ -426,5 +428,8 @@
     "whois": "Whois",
     "filtering_rules_learn_more": "<0>Další informace</0> o vytváření vlastních seznamů zakázaných hostitelů.",
     "blocked_by_response": "Zakázáno s odpovědí CNAME nebo IP",
-    "try_again": "Zkusit znovu"
+    "try_again": "Zkusit znovu",
+    "domain_desc": "Zadejte název domény nebo zástupný znak, který chcete přepsat.",
+    "example_rewrite_domain": "přepsat odezvy pouze pro tento název domény.",
+    "example_rewrite_wildcard": "přepsat odezvy pro všechny subdomény <0>example.org</0>."
 }
