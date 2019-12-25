@@ -7,6 +7,8 @@ github.com/AdguardTeam/golibs v0.3.0/go.mod h1:R3M+mAg3nWG4X4Hsag5eef/TckHFH12ZY
 github.com/AdguardTeam/gomitmproxy v0.1.2/go.mod h1:Mrt/3EfiXIYY2aZ7KsLuCUJzUARD/fWJ119IfzOB13M=
 github.com/AdguardTeam/urlfilter v0.7.0 h1:ffFLt4rA3GX8PJYGL3bGcT5bSxZlML5k6cKpSeN2UI8=
 github.com/AdguardTeam/urlfilter v0.7.0/go.mod h1:GHXPzEG59ezyff22lXSQ7dicj1kFZBrH5kmZ6EvQzfk=
+github.com/AdguardTeam/urlfilter v0.7.2 h1:0XyepkVAvY1eYtNKgDRCkookfaBmROvY6VE23ebPUNc=
+github.com/AdguardTeam/urlfilter v0.7.2/go.mod h1:GHXPzEG59ezyff22lXSQ7dicj1kFZBrH5kmZ6EvQzfk=
 github.com/NYTimes/gziphandler v1.1.1 h1:ZUDjpQae29j0ryrS0u/B8HZfJBtBQHjqw2rQ2cqUQ3I=
 github.com/NYTimes/gziphandler v1.1.1/go.mod h1:n/CVRwUEOgIxrgPvAQhUUr9oeUtvrhMomdKFjzJNB0c=
 github.com/StackExchange/wmi v0.0.0-20181212234831-e0a55b97c705 h1:UUppSQnhf4Yc6xGxSkoQpPhb7RVzuv5Nb1mwJ5VId9s=
