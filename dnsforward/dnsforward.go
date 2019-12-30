@@ -727,10 +727,6 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 	case dnsfilter.FilteredParental:
 		return s.genBlockedHost(m, s.conf.ParentalBlockHost, d)
 	default:
-		if result.IP != nil {
-			return s.genResponseWithIP(m, result.IP)
-		}
-
 		if s.conf.BlockingMode == "null_ip" {
 			switch m.Question[0].Qtype {
 			case dns.TypeA:
@@ -746,8 +742,14 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 			case dns.TypeAAAA:
 				return s.genAAAARecord(m, s.conf.BlockingIPAddrv6)
 			}
+
+		} else if s.conf.BlockingMode == "nxdomain" {
+			return s.genNXDomain(m)
 		}
 
+		if result.IP != nil {
+			return s.genResponseWithIP(m, result.IP)
+		}
 		return s.genNXDomain(m)
 	}
 }

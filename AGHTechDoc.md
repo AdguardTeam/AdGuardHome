@@ -831,7 +831,7 @@ Response:
 	{
 		"protection_enabled": true | false,
 		"ratelimit": 1234,
-		"blocking_mode": "nxdomain" | "null_ip" | "custom_ip",
+		"blocking_mode": "default" | "nxdomain" | "null_ip" | "custom_ip",
 		"blocking_ipv4": "1.2.3.4",
 		"blocking_ipv6": "1:2:3::4",
 		"edns_cs_enabled": true | false,
@@ -848,7 +848,7 @@ Request:
 	{
 		"protection_enabled": true | false,
 		"ratelimit": 1234,
-		"blocking_mode": "nxdomain" | "null_ip" | "custom_ip",
+		"blocking_mode": "default" | "nxdomain" | "null_ip" | "custom_ip",
 		"blocking_ipv4": "1.2.3.4",
 		"blocking_ipv6": "1:2:3::4",
 		"edns_cs_enabled": true | false,
@@ -858,6 +858,12 @@ Request:
 Response:
 
 	200 OK
+
+`blocking_mode`:
+* default: Respond with NXDOMAIN when blocked by Adblock-style rule;  respond with the IP address specified in the rule when blocked by /etc/hosts-style rule
+* NXDOMAIN: Respond with NXDOMAIN code
+* Null IP: Respond with zero IP address (0.0.0.0 for A; :: for AAAA)
+* Custom IP: Respond with a manually set IP address
 
 `blocking_ipv4` and `blocking_ipv6` values are active when `blocking_mode` is set to `custom_ip`.
 
