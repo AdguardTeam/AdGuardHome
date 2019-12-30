@@ -53,6 +53,7 @@ It operates as a DNS server that re-routes tracking domains to a "black hole," t
     * [Test unstable versions](#test-unstable-versions)
     * [Reporting issues](#reporting-issues)
     * [Help with translations](#translate)
+* [Projects that use AdGuardHome](#uses)
 * [Acknowledgments](#acknowledgments)
 
 <a id="getting-started"></a>
@@ -193,6 +194,15 @@ If you run into any problem or have a suggestion, head to [this page](https://gi
 If you want to help with AdGuard Home translations, please learn more about translating AdGuard products here: https://kb.adguard.com/en/general/adguard-translations
 
 Here is a link to AdGuard Home project: https://crowdin.com/project/adguard-applications/en#/adguard-home
+
+
+<a id="uses"></a>
+## Projects that use AdGuardHome
+
+* Python library (https://github.com/frenck/python-adguardhome)
+* Hass.io add-on (https://github.com/hassio-addons/addon-adguard-home)
+* OpenWrt LUCI app (https://github.com/rufengsuixing/luci-app-adguardhome)
+
 
 <a id="acknowledgments"></a>
 ## Acknowledgments
