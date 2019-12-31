@@ -3,7 +3,7 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.13
 
 require (
-	github.com/AdguardTeam/dnsproxy v0.23.5
+	github.com/AdguardTeam/dnsproxy v0.23.6
 	github.com/AdguardTeam/golibs v0.3.0
 	github.com/AdguardTeam/urlfilter v0.7.2
 	github.com/NYTimes/gziphandler v1.1.1
@@ -18,8 +18,8 @@ require (
 	github.com/sparrc/go-ping v0.0.0-20181106165434-ef3ab45e41b0
 	github.com/stretchr/testify v1.4.0
 	go.etcd.io/bbolt v1.3.3 // indirect
-	golang.org/x/crypto v0.0.0-20191219195013-becbf705a915
+	golang.org/x/crypto v0.0.0-20191227163750-53104e6ec876
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553
-	golang.org/x/sys v0.0.0-20191224085550-c709ea063b76
+	golang.org/x/sys v0.0.0-20191228213918-04cbcbbfeed8
 	gopkg.in/yaml.v2 v2.2.3
 )
