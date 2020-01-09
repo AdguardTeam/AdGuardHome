@@ -102,8 +102,8 @@ type clientObject struct {
 	UseGlobalSettings   bool     `yaml:"use_global_settings"`
 	FilteringEnabled    bool     `yaml:"filtering_enabled"`
 	ParentalEnabled     bool     `yaml:"parental_enabled"`
-	SafeSearchEnabled   bool     `yaml:"safebrowsing_enabled"`
-	SafeBrowsingEnabled bool     `yaml:"safesearch_enabled"`
+	SafeSearchEnabled   bool     `yaml:"safesearch_enabled"`
+	SafeBrowsingEnabled bool     `yaml:"safebrowsing_enabled"`
 
 	UseGlobalBlockedServices bool     `yaml:"use_global_blocked_services"`
 	BlockedServices          []string `yaml:"blocked_services"`
