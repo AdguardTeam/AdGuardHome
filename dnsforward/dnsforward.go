@@ -788,7 +788,8 @@ func (s *Server) genAAAAAnswer(req *dns.Msg, ip net.IP) *dns.AAAA {
 func (s *Server) genResponseWithIP(req *dns.Msg, ip net.IP) *dns.Msg {
 	if req.Question[0].Qtype == dns.TypeA && ip.To4() != nil {
 		return s.genARecord(req, ip.To4())
-	} else if req.Question[0].Qtype == dns.TypeAAAA && ip.To4() == nil {
+	} else if req.Question[0].Qtype == dns.TypeAAAA &&
+		len(ip) == net.IPv6len && ip.To4() == nil {
 		return s.genAAAARecord(req, ip)
 	}
 
