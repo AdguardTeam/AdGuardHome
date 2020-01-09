@@ -340,6 +340,22 @@ var testIPv4 = map[string][]net.IP{
 	"example.org.":      {{127, 0, 0, 255}},
 }
 
+func TestBlockCNAMEProtectionEnabled(t *testing.T) {
+	s := createTestServer(t)
+	testUpstm := &testUpstream{testCNAMEs, testIPv4, nil}
+	s.conf.ProtectionEnabled = false
+	err := s.startWithUpstream(testUpstm)
+	assert.True(t, err == nil)
+	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
+
+	// 'badhost' has a canonical name 'null.example.org' which is blocked by filters:
+	// but protection is disabled - response is NOT blocked
+	req := createTestMessage("badhost.")
+	reply, err := dns.Exchange(req, addr.String())
+	assert.True(t, err == nil)
+	assert.True(t, reply.Rcode == dns.RcodeSuccess)
+}
+
 func TestBlockCNAME(t *testing.T) {
 	s := createTestServer(t)
 	testUpstm := &testUpstream{testCNAMEs, testIPv4, nil}
