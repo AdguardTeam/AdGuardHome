@@ -23,6 +23,7 @@
     "form_error_ip6_format": "Formato de endereço IPv6 inválido",
     "form_error_ip_format": "Formato de endereço IPv inválido",
     "form_error_mac_format": "Formato do endereço MAC inválido",
+    "form_error_client_id_format": "Formato do ID de cliente inválido",
     "form_error_positive": "Deve ser maior que 0",
     "form_error_negative": "Deve ser igual ou superior a 0",
     "dhcp_form_gateway_input": "IP do gateway",
@@ -371,6 +372,7 @@
     "rewrite_desc": "Permite configurar uma resposta personalizada do DNS para um nome de domínio específico.",
     "rewrite_applied": "Regra de reescrita aplicada",
     "dns_rewrites": "Reescritas de DNS",
+    "form_domain": "Digite o nome do domínio ou wildcard",
     "form_answer": "Digite o endereço de IP ou nome de domínio",
     "form_error_domain_format": "Formato de domínio inválido",
     "form_error_answer_format": "Formato de resposta inválido",
@@ -426,5 +428,8 @@
     "whois": "Whois",
     "filtering_rules_learn_more": "<0>Saiba mais</0> sobre como criar as suas próprias listas negras de servidores.",
     "blocked_by_response": "Bloqueado por CNAME ou IP na resposta",
-    "try_again": "Tente novamente"
+    "try_again": "Tente novamente",
+    "domain_desc": "Digite o nome do domínio ou wildcard que pretende reescrever.",
+    "example_rewrite_domain": "reescrever respostas apenas para este nome de domínio.",
+    "example_rewrite_wildcard": "reescrever respostas para todos subdomínios <0>exemplo.org</0>."
 }
