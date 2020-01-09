@@ -168,14 +168,14 @@ func TestClientsWhois(t *testing.T) {
 	clients.SetWhoisInfo("1.1.1.1", whois)
 	assert.True(t, clients.ipHost["1.1.1.1"].WhoisInfo[0][1] == "orgname-val")
 
-	// Check that we cannot set whois info on existing client
+	// Check that we cannot set whois info on a manually-added client
 	c = Client{
 		IDs:  []string{"1.1.1.2"},
 		Name: "client1",
 	}
 	_, _ = clients.Add(c)
 	clients.SetWhoisInfo("1.1.1.2", whois)
-	assert.Nil(t, clients.idIndex["1.1.1.2"].WhoisInfo)
+	assert.True(t, clients.ipHost["1.1.1.2"] == nil)
 	_ = clients.Del("client1")
 }
 

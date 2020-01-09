@@ -32,7 +32,6 @@ type Client struct {
 	SafeSearchEnabled   bool
 	SafeBrowsingEnabled bool
 	ParentalEnabled     bool
-	WhoisInfo           [][]string // [[key,value], ...]
 
 	UseOwnBlockedServices bool // false: use global settings
 	BlockedServices       []string
@@ -363,17 +362,6 @@ func (clients *clientsContainer) Add(c Client) (bool, error) {
 		c2, ok := clients.idIndex[id]
 		if ok {
 			return false, fmt.Errorf("Another client uses the same ID (%s): %s", id, c2.Name)
-		}
-	}
-
-	// remove auto-clients with the same IP address, keeping WHOIS info if possible
-	for _, id := range c.IDs {
-		ch, ok := clients.ipHost[id]
-		if ok {
-			if len(c.WhoisInfo) == 0 {
-				c.WhoisInfo = ch.WhoisInfo
-			}
-			delete(clients.ipHost, id)
 		}
 	}
 
