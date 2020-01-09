@@ -179,7 +179,7 @@ func TestClientsWhois(t *testing.T) {
 	_ = clients.Del("client1")
 }
 
-func TestClientsAddExistingHost(t *testing.T) {
+func TestClientsAddExisting(t *testing.T) {
 	var c Client
 	clients := clientsContainer{}
 	clients.testing = true
@@ -198,9 +198,9 @@ func TestClientsAddExistingHost(t *testing.T) {
 	assert.True(t, ok)
 	assert.Nil(t, err)
 
-	// try adding a duplicate by IP
+	// add an auto-client with the same IP - it's allowed
 	ok, err = clients.AddHost("1.1.1.1", "test", ClientSourceRDNS)
-	assert.False(t, ok)
+	assert.True(t, ok)
 	assert.Nil(t, err)
 
 	// now some more complicated stuff
@@ -218,13 +218,21 @@ func TestClientsAddExistingHost(t *testing.T) {
 	})
 	assert.Nil(t, err)
 
-	// try adding a duplicate IP which for a Mac-based client
-	ok, err = clients.AddHost(testIP, "test", ClientSourceRDNS)
-	assert.False(t, ok)
+	// add a new client with the same IP as for a client with MAC
+	c = Client{
+		IDs:  []string{testIP},
+		Name: "client2",
+	}
+	ok, err = clients.Add(c)
+	assert.True(t, ok)
 	assert.Nil(t, err)
 
-	// don't allow duplicates by CIDR
-	ok, err = clients.AddHost("2.2.2.2", "test", ClientSourceRDNS)
-	assert.False(t, ok)
+	// add a new client with the IP from the client1's IP range
+	c = Client{
+		IDs:  []string{"2.2.2.2"},
+		Name: "client3",
+	}
+	ok, err = clients.Add(c)
+	assert.True(t, ok)
 	assert.Nil(t, err)
 }

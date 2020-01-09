@@ -494,12 +494,6 @@ func (clients *clientsContainer) AddHost(ip, host string, source clientSource) (
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	// check existing clients first
-	_, ok := clients.findByIP(ip)
-	if ok {
-		return false, nil
-	}
-
 	// check auto-clients index
 	ch, ok := clients.ipHost[ip]
 	if ok && ch.Source > source {
