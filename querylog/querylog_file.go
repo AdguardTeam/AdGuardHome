@@ -561,7 +561,9 @@ func decode(ent *logEntry, str string) {
 		}
 		switch k {
 		case "IP":
-			ent.IP = v
+			if len(ent.IP) == 0 {
+				ent.IP = v
+			}
 		case "T":
 			ent.Time, err = time.Parse(time.RFC3339, v)
 
