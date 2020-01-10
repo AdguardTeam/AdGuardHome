@@ -365,35 +365,23 @@ func TestBlockCNAME(t *testing.T) {
 
 	// 'badhost' has a canonical name 'null.example.org' which is blocked by filters:
 	// response is blocked
-	req := dns.Msg{}
-	req.Id = dns.Id()
-	req.Question = []dns.Question{
-		{Name: "badhost.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
-	}
-	reply, err := dns.Exchange(&req, addr.String())
+	req := createTestMessage("badhost.")
+	reply, err := dns.Exchange(req, addr.String())
 	assert.True(t, err == nil)
 	assert.True(t, reply.Rcode == dns.RcodeNameError)
 
 	// 'whitelist.example.org' has a canonical name 'null.example.org' which is blocked by filters
 	//   but 'whitelist.example.org' is in a whitelist:
 	// response isn't blocked
-	req = dns.Msg{}
-	req.Id = dns.Id()
-	req.Question = []dns.Question{
-		{Name: "whitelist.example.org.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
-	}
-	reply, err = dns.Exchange(&req, addr.String())
+	req = createTestMessage("whitelist.example.org.")
+	reply, err = dns.Exchange(req, addr.String())
 	assert.True(t, err == nil)
 	assert.True(t, reply.Rcode == dns.RcodeSuccess)
 
 	// 'example.org' has a canonical name 'cname1' with IP 127.0.0.255 which is blocked by filters:
 	// response is blocked
-	req = dns.Msg{}
-	req.Id = dns.Id()
-	req.Question = []dns.Question{
-		{Name: "example.org.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
-	}
-	reply, err = dns.Exchange(&req, addr.String())
+	req = createTestMessage("example.org.")
+	reply, err = dns.Exchange(req, addr.String())
 	assert.True(t, err == nil)
 	assert.True(t, reply.Rcode == dns.RcodeNameError)
 
