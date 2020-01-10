@@ -16,8 +16,6 @@ type clientJSON struct {
 	SafeSearchEnabled   bool     `json:"safesearch_enabled"`
 	SafeBrowsingEnabled bool     `json:"safebrowsing_enabled"`
 
-	WhoisInfo map[string]interface{} `json:"whois_info"`
-
 	UseGlobalBlockedServices bool     `json:"use_global_blocked_services"`
 	BlockedServices          []string `json:"blocked_services"`
 
@@ -115,11 +113,6 @@ func clientToJSON(c *Client) clientJSON {
 		BlockedServices:          c.BlockedServices,
 
 		Upstreams: c.Upstreams,
-	}
-
-	cj.WhoisInfo = make(map[string]interface{})
-	for _, wi := range c.WhoisInfo {
-		cj.WhoisInfo[wi[0]] = wi[1]
 	}
 	return cj
 }
