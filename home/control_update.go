@@ -148,6 +148,15 @@ type updateInfo struct {
 	newBinName       string // Full path to the new executable file
 }
 
+// Return TRUE if file exists
+func fileExists(fn string) bool {
+	_, err := os.Stat(fn)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 // Fill in updateInfo object
 func getUpdateInfo(jsonData []byte) (*updateInfo, error) {
 	var u updateInfo
@@ -190,6 +199,9 @@ func getUpdateInfo(jsonData []byte) (*updateInfo, error) {
 		binName = "AdGuardHome.exe"
 	}
 	u.curBinName = filepath.Join(workDir, binName)
+	if !fileExists(u.curBinName) {
+		return nil, fmt.Errorf("Executable file %s doesn't exist", u.curBinName)
+	}
 	u.bkpBinName = filepath.Join(u.backupDir, binName)
 	u.newBinName = filepath.Join(u.updateDir, "AdGuardHome", binName)
 	if strings.HasSuffix(pkgFileName, ".zip") {
