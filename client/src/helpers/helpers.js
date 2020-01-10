@@ -373,3 +373,19 @@ export const getParamsForClientsSearch = (data, param) => {
             return acc;
         }, {});
 };
+
+/**
+ * Creates onBlur handler that can normalize input if normalization function is specified
+ *
+ * @param {Object} event
+ * @param {Object} event.target
+ * @param {string} event.target.value
+ * @param {Object} input
+ * @param {function} input.onBlur
+ * @param {function} [normalizeOnBlur]
+ * @returns {function}
+ */
+export const createOnBlurHandler = (event, input, normalizeOnBlur) => (
+    normalizeOnBlur
+        ? input.onBlur(normalizeOnBlur(event.target.value))
+        : input.onBlur());

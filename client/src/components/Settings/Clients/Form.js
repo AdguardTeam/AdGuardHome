@@ -78,7 +78,7 @@ const renderFieldsWrapper = (placeholder, buttonTitle) =>
                             placeholder={placeholder}
                             isActionAvailable={index !== 0}
                             removeField={() => fields.remove(index)}
-                            normalize={data => data && data.trim()}
+                            normalizeOnBlur={data => data.trim()}
                         />
                     </div>
                 ))}
@@ -127,7 +127,7 @@ let Form = (props) => {
                             type="text"
                             className="form-control"
                             placeholder={t('form_client_name')}
-                            normalize={data => data && data.trim()}
+                            normalizeOnBlur={data => data.trim()}
                         />
                     </div>
 
