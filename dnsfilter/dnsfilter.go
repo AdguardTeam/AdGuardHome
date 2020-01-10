@@ -1,7 +1,6 @@
 package dnsfilter
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -538,24 +537,15 @@ func (d *Dnsfilter) matchHost(host string, qtype uint16) (Result, error) {
 
 		} else if hostRule, ok := rule.(*rules.HostRule); ok {
 
+			res.IP = net.IP{}
 			if qtype == dns.TypeA && hostRule.IP.To4() != nil {
 				// either IPv4 or IPv4-mapped IPv6 address
 				res.IP = hostRule.IP.To4()
-				return res, nil
 
-			} else if qtype == dns.TypeAAAA {
-				ip4 := hostRule.IP.To4()
-				if ip4 == nil {
-					res.IP = hostRule.IP
-					return res, nil
-				}
-				if bytes.Equal(ip4, []byte{0, 0, 0, 0}) {
-					// send IP="::" response for a rule "0.0.0.0 blockdomain"
-					res.IP = net.IPv6zero
-					return res, nil
-				}
+			} else if qtype == dns.TypeAAAA && hostRule.IP.To4() == nil {
+				res.IP = hostRule.IP
 			}
-			continue
+			return res, nil
 
 		} else {
 			log.Tracef("Rule type is unsupported: '%s'  list_id: %d",
