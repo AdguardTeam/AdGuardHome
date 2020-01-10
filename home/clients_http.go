@@ -13,8 +13,8 @@ type clientJSON struct {
 	UseGlobalSettings   bool     `json:"use_global_settings"`
 	FilteringEnabled    bool     `json:"filtering_enabled"`
 	ParentalEnabled     bool     `json:"parental_enabled"`
-	SafeSearchEnabled   bool     `json:"safebrowsing_enabled"`
-	SafeBrowsingEnabled bool     `json:"safesearch_enabled"`
+	SafeSearchEnabled   bool     `json:"safesearch_enabled"`
+	SafeBrowsingEnabled bool     `json:"safebrowsing_enabled"`
 
 	WhoisInfo map[string]interface{} `json:"whois_info"`
 
