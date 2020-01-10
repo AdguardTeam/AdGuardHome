@@ -468,12 +468,16 @@ func (clients *clientsContainer) Update(name string, c Client) error {
 
 	// update Name index
 	if old.Name != c.Name {
+		delete(clients.list, old.Name)
 		clients.list[c.Name] = old
 	}
 
 	// update upstreams cache
-	delete(clients.upstreamsCache, name)
-	delete(clients.upstreamsCache, old.Name)
+	if old.Name != c.Name {
+		delete(clients.upstreamsCache, old.Name)
+	} else {
+		delete(clients.upstreamsCache, c.Name)
+	}
 
 	*old = c
 	return nil

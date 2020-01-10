@@ -114,6 +114,7 @@ func TestClients(t *testing.T) {
 	c = Client{}
 	c, b = clients.Find("1.1.1.2")
 	assert.True(t, b && c.Name == "client1-renamed" && c.IDs[0] == "1.1.1.2" && c.UseOwnSettings)
+	assert.True(t, clients.list["client1"] == nil)
 
 	// failed remove - no such name
 	if clients.Del("client3") {
