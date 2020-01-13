@@ -261,11 +261,26 @@ export const redirectToCurrentProtocol = (values, httpPort = 80) => {
 
 export const normalizeTextarea = text => text && text.replace(/[;, ]/g, '\n').split('\n').filter(n => n);
 
-export const normalizeTopClients = clients => clients.reduce((accumulator, clientObj) => {
-    const { name, count } = clientObj;
+/**
+ * Normalizes the topClients array
+ *
+ * @param {Object[]} topClients
+ * @param {string} topClients.name
+ * @param {number} topClients.count
+ * @param {Object} topClients.info
+ * @param {string} topClients.info.name
+ * @returns {Object} normalizedTopClients
+ * @returns {Object.<string, number>} normalizedTopClients.auto - auto clients
+ * @returns {Object.<string, number>} normalizedTopClients.configured - configured clients
+ */
+
+export const normalizeTopClients = topClients => topClients.reduce((nameToCountMap, clientObj) => {
+    const { name, count, info: { name: infoName } } = clientObj;
     // eslint-disable-next-line no-param-reassign
-    accumulator[name] = count;
-    return accumulator;
+    nameToCountMap.auto = { ...nameToCountMap.auto, [name]: count };
+    // eslint-disable-next-line no-param-reassign
+    nameToCountMap.configured = { ...nameToCountMap.configured, [infoName]: count };
+    return nameToCountMap;
 }, {});
 
 export const getClientInfo = (clients, ip) => {

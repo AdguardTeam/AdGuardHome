@@ -40,6 +40,7 @@ class ClientsTable extends Component {
         } else {
             this.handleFormAdd(config);
         }
+        this.props.getStats();
     };
 
     getClient = (name, clients) => {
@@ -64,6 +65,7 @@ class ClientsTable extends Component {
         // eslint-disable-next-line no-alert
         if (window.confirm(this.props.t('client_confirm_delete', { key: data.name }))) {
             this.props.deleteClient(data);
+            this.props.getStats();
         }
     };
 
@@ -161,7 +163,7 @@ class ClientsTable extends Component {
         {
             Header: this.props.t('requests_count'),
             id: 'statistics',
-            accessor: row => this.props.normalizedTopClients[row.name] || 0,
+            accessor: row => this.props.normalizedTopClients.configured[row.name] || 0,
             sortMethod: (a, b) => b - a,
             minWidth: 120,
             Cell: (row) => {
@@ -305,6 +307,7 @@ ClientsTable.propTypes = {
     processingAdding: PropTypes.bool.isRequired,
     processingDeleting: PropTypes.bool.isRequired,
     processingUpdating: PropTypes.bool.isRequired,
+    getStats: PropTypes.func.isRequired,
 };
 
 export default withNamespaces()(ClientsTable);
