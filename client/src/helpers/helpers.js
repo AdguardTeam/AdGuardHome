@@ -277,11 +277,11 @@ export const normalizeTextarea = text => text && text.replace(/[;, ]/g, '\n').sp
 export const normalizeTopClients = topClients => topClients.reduce((nameToCountMap, clientObj) => {
     const { name, count, info: { name: infoName } } = clientObj;
     // eslint-disable-next-line no-param-reassign
-    nameToCountMap.auto = { ...nameToCountMap.auto, [name]: count };
+    nameToCountMap.auto[name] = count;
     // eslint-disable-next-line no-param-reassign
-    nameToCountMap.configured = { ...nameToCountMap.configured, [infoName]: count };
+    nameToCountMap.configured[infoName] = count;
     return nameToCountMap;
-}, {});
+}, { auto: {}, configured: {} });
 
 export const getClientInfo = (clients, ip) => {
     const client = clients
