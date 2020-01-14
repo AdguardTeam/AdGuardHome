@@ -44,7 +44,7 @@ const checkFilteredLogs = async (data, filter, dispatch, total) => {
 
         try {
             const additionalLogs = await getLogsWithParams({ older_than: oldest, filter });
-            if (additionalLogs.logs.length > 0) {
+            if (additionalLogs.oldest.length > 0) {
                 return await checkFilteredLogs(additionalLogs, filter, dispatch, {
                     logs: [...totalData.logs, ...additionalLogs.logs],
                     oldest: additionalLogs.oldest,
