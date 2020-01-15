@@ -38,7 +38,7 @@ class AutoClients extends Component {
         },
         {
             Header: this.props.t('requests_count'),
-            accessor: row => this.props.normalizedTopClients[row.ip] || 0,
+            accessor: row => this.props.normalizedTopClients.auto[row.ip] || 0,
             sortMethod: (a, b) => b - a,
             id: 'statistics',
             minWidth: COLUMN_MIN_WIDTH,

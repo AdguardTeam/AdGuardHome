@@ -23,6 +23,7 @@ class Clients extends Component {
             updateClient,
             deleteClient,
             toggleClientModal,
+            getStats,
         } = this.props;
 
         return (
@@ -44,6 +45,7 @@ class Clients extends Component {
                             processingAdding={clients.processingAdding}
                             processingDeleting={clients.processingDeleting}
                             processingUpdating={clients.processingUpdating}
+                            getStats={getStats}
                         />
                         <AutoClients
                             autoClients={dashboard.autoClients}
