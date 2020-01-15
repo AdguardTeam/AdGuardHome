@@ -42,6 +42,7 @@ var (
 	versionString   string
 	updateChannel   string
 	versionCheckURL string
+	ARMVersion      string
 )
 
 const versionCheckPeriod = time.Hour * 8
@@ -64,10 +65,11 @@ type homeContext struct {
 var Context homeContext
 
 // Main is the entry point
-func Main(version string, channel string) {
+func Main(version string, channel string, armVer string) {
 	// Init update-related global variables
 	versionString = version
 	updateChannel = channel
+	ARMVersion = armVer
 	versionCheckURL = "https://static.adguard.com/adguardhome/" + updateChannel + "/version.json"
 
 	// config can be specified, which reads options from there, but other command line flags have to override config values

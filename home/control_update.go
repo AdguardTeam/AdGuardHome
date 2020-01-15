@@ -42,7 +42,11 @@ func getVersionResp(data []byte) []byte {
 		return []byte{}
 	}
 
-	_, ok := versionJSON[fmt.Sprintf("download_%s_%s", runtime.GOOS, runtime.GOARCH)]
+	dloadName := fmt.Sprintf("download_%s_%s", runtime.GOOS, runtime.GOARCH)
+	if runtime.GOARCH == "arm" && ARMVersion != "6" {
+		dloadName = fmt.Sprintf("download_%s_%sv%s", runtime.GOOS, runtime.GOARCH, ARMVersion)
+	}
+	_, ok := versionJSON[dloadName]
 	if ok && ret["new_version"] != versionString && versionString >= selfUpdateMinVersion {
 		ret["can_autoupdate"] = true
 	}
