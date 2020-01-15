@@ -183,15 +183,30 @@ func assignUniqueFilterID() int64 {
 
 // Sets up a timer that will be checking for filters updates periodically
 func periodicallyRefreshFilters() {
+	const maxInterval = 1 * 60 * 60
+	intval := 5 // use a dynamically increasing time interval
+	nUpdated := 0
 	for {
+		isNetworkErr := false
 		if config.DNS.FiltersUpdateIntervalHours != 0 && refreshStatus == 0 {
 			refreshStatus = 1
 			refreshLock.Lock()
-			_ = refreshFiltersIfNecessary(false)
+			nUpdated, isNetworkErr = refreshFiltersIfNecessary(false)
 			refreshLock.Unlock()
 			refreshStatus = 0
+			if nUpdated != 0 {
+				intval = maxInterval
+			}
 		}
-		time.Sleep(1 * time.Hour)
+
+		if isNetworkErr {
+			intval *= 2
+			if intval > maxInterval {
+				intval = maxInterval
+			}
+		}
+
+		time.Sleep(time.Duration(intval) * time.Second)
 	}
 }
 
@@ -203,7 +218,7 @@ func refreshFilters() (int, error) {
 
 	refreshStatus = 1
 	refreshLock.Lock()
-	nUpdated := refreshFiltersIfNecessary(true)
+	nUpdated, _ := refreshFiltersIfNecessary(true)
 	refreshLock.Unlock()
 	refreshStatus = 0
 	return nUpdated, nil
@@ -223,7 +238,10 @@ func refreshFilters() (int, error) {
 //  . Pass new filters to dnsfilter object - it analyzes new data while the old filters are still active
 //  . dnsfilter activates new filters
 //  . Remove the old filter files (1.txt.old)
-func refreshFiltersIfNecessary(force bool) int {
+//
+// Return the number of updated filters
+// Return TRUE - there was a network error and nothing could be updated
+func refreshFiltersIfNecessary(force bool) (int, bool) {
 	var updateFilters []filter
 	var updateFlags []bool // 'true' if filter data has changed
 
@@ -252,15 +270,21 @@ func refreshFiltersIfNecessary(force bool) int {
 	}
 	config.RUnlock()
 
+	nfail := 0
 	for i := range updateFilters {
 		uf := &updateFilters[i]
 		updated, err := uf.update()
 		updateFlags = append(updateFlags, updated)
 		if err != nil {
+			nfail++
 			log.Printf("Failed to update filter %s: %s\n", uf.URL, err)
 			continue
 		}
 		uf.LastUpdated = now
+	}
+
+	if nfail == len(updateFilters) {
+		return 0, true
 	}
 
 	updateCount := 0
@@ -316,7 +340,7 @@ func refreshFiltersIfNecessary(force bool) int {
 	}
 
 	log.Debug("Filters: update finished")
-	return updateCount
+	return updateCount, false
 }
 
 // Allows printable UTF-8 text with CR, LF, TAB characters
