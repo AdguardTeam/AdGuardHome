@@ -8,6 +8,29 @@ import { Trans, withNamespaces } from 'react-i18next';
 import { SETTINGS_URLS } from '../../helpers/constants';
 import Dropdown from '../ui/Dropdown';
 
+const MENU_ITEMS = [
+    {
+        route: '', exact: true, xlinkHref: 'dashboard', text: 'dashboard', order: 0,
+    },
+    {
+        route: 'filters', xlinkHref: 'filters', text: 'filters', order: 2,
+    },
+    {
+        route: 'logs', xlinkHref: 'log', text: 'query_log', order: 3,
+    },
+    {
+        route: 'guide', xlinkHref: 'setup', text: 'setup_guide', order: 4,
+    },
+];
+
+const DROPDOWN_ITEMS = [
+    { route: 'settings', text: 'general_settings' },
+    { route: 'dns', text: 'dns_settings' },
+    { route: 'encryption', text: 'encryption_settings' },
+    { route: 'clients', text: 'client_settings' },
+    { route: 'dhcp', text: 'dhcp_settings' },
+];
+
 class Menu extends Component {
     handleClickOutside = () => {
         this.props.closeMenu();
@@ -36,70 +59,31 @@ class Menu extends Component {
             <Fragment>
                 <div className={menuClass}>
                     <ul className="nav nav-tabs border-0 flex-column flex-lg-row flex-nowrap">
-                        <li className="nav-item border-bottom d-lg-none" onClick={this.toggleMenu}>
-                            <div className="nav-link nav-link--back">
-                                <svg className="nav-icon">
-                                    <use xlinkHref="#back" />
-                                </svg>
-                                <Trans>back</Trans>
-                            </div>
-                        </li>
-                        <li className="nav-item">
-                            <NavLink to="/" exact={true} className="nav-link">
-                                <svg className="nav-icon">
-                                    <use xlinkHref="#dashboard" />
-                                </svg>
-                                <Trans>dashboard</Trans>
-                            </NavLink>
-                        </li>
+                        {MENU_ITEMS.map(({
+                            route, text, exact, xlinkHref, order,
+                        }) => (
+                            <li className={`nav-item order-${order}`} key={text} onClick={this.toggleMenu}>
+                                <NavLink to={`/${route}`} exact={exact || false} className="nav-link">
+                                    <svg className="nav-icon">
+                                        <use xlinkHref={`#${xlinkHref}`} />
+                                    </svg>
+                                    <Trans>{text}</Trans>
+                                </NavLink>
+                            </li>
+                        ))}
                         <Dropdown
                             label={this.props.t('settings')}
-                            baseClassName="dropdown nav-item"
+                            baseClassName="dropdown nav-item order-1"
                             controlClassName={dropdownControlClass}
                             icon="settings"
                         >
-                            <Fragment>
-                                <NavLink to="/settings" className="dropdown-item">
-                                    <Trans>general_settings</Trans>
+                            {DROPDOWN_ITEMS.map(({ route, text }) => (
+                                <NavLink to={`/${route}`} className="dropdown-item" key={text}
+                                         onClick={this.toggleMenu}>
+                                    <Trans>{text}</Trans>
                                 </NavLink>
-                                <NavLink to="/dns" className="dropdown-item">
-                                    <Trans>dns_settings</Trans>
-                                </NavLink>
-                                <NavLink to="/encryption" className="dropdown-item">
-                                    <Trans>encryption_settings</Trans>
-                                </NavLink>
-                                <NavLink to="/clients" className="dropdown-item">
-                                    <Trans>client_settings</Trans>
-                                </NavLink>
-                                <NavLink to="/dhcp" className="dropdown-item">
-                                    <Trans>dhcp_settings</Trans>
-                                </NavLink>
-                            </Fragment>
+                            ))}
                         </Dropdown>
-                        <li className="nav-item">
-                            <NavLink to="/filters" className="nav-link">
-                                <svg className="nav-icon">
-                                    <use xlinkHref="#filters" />
-                                </svg>
-                                <Trans>filters</Trans>
-                            </NavLink>
-                        </li>
-                        <li className="nav-item">
-                            <NavLink to="/logs" className="nav-link">
-                                <svg className="nav-icon">
-                                    <use xlinkHref="#log" />
-                                </svg>
-                                <Trans>query_log</Trans>
-                            </NavLink>
-                        </li>
-                        <li className="nav-item">
-                            <NavLink to="/guide" className="nav-link">
-                                <svg className="nav-icon">
-                                    <use xlinkHref="#setup" />
-                                </svg>
-                                <Trans>setup_guide</Trans>
-                            </NavLink>
-                        </li>
                     </ul>
                 </div>
             </Fragment>
