@@ -2,12 +2,15 @@ import React, { Fragment } from 'react';
 import { Trans } from 'react-i18next';
 import PropTypes from 'prop-types';
 import { R_IPV4, R_MAC, R_HOST, R_IPV6, R_CIDR, UNSAFE_PORTS } from '../helpers/constants';
+import { createOnBlurHandler } from './helpers';
 
 export const renderField = (props, elementType) => {
     const {
-        input, id, className, placeholder, type, disabled,
+        input, id, className, placeholder, type, disabled, normalizeOnBlur,
         autoComplete, meta: { touched, error },
     } = props;
+
+    const onBlur = event => createOnBlurHandler(event, input, normalizeOnBlur);
 
     const element = React.createElement(elementType, {
         ...input,
@@ -17,6 +20,7 @@ export const renderField = (props, elementType) => {
         autoComplete,
         disabled,
         type,
+        onBlur,
     });
     return (
         <Fragment>
@@ -35,6 +39,7 @@ renderField.propTypes = {
     type: PropTypes.string,
     disabled: PropTypes.bool,
     autoComplete: PropTypes.bool,
+    normalizeOnBlur: PropTypes.func,
 };
 
 export const renderTextareaField = props => renderField(props, 'textarea');
@@ -52,37 +57,43 @@ export const renderGroupField = ({
     isActionAvailable,
     removeField,
     meta: { touched, error },
-}) => (
-    <Fragment>
-        <div className="input-group">
-            <input
-                {...input}
-                id={id}
-                placeholder={placeholder}
-                type={type}
-                className={className}
-                disabled={disabled}
-                autoComplete={autoComplete}
-            />
-            {isActionAvailable &&
-            <span className="input-group-append">
-                    <button
-                        type="button"
-                        className="btn btn-secondary btn-icon"
-                        onClick={removeField}
-                    >
-                        <svg className="icon icon--close">
-                            <use xlinkHref="#cross" />
-                        </svg>
-                    </button>
-                </span>
-            }
-        </div>
-        {!disabled &&
-        touched &&
-        (error && <span className="form__message form__message--error">{error}</span>)}
-    </Fragment>
-);
+    normalizeOnBlur,
+}) => {
+    const onBlur = event => createOnBlurHandler(event, input, normalizeOnBlur);
+
+    return (
+        <Fragment>
+            <div className="input-group">
+                <input
+                    {...input}
+                    id={id}
+                    placeholder={placeholder}
+                    type={type}
+                    className={className}
+                    disabled={disabled}
+                    autoComplete={autoComplete}
+                    onBlur={onBlur}
+                />
+                {isActionAvailable &&
+                <span className="input-group-append">
+                        <button
+                            type="button"
+                            className="btn btn-secondary btn-icon"
+                            onClick={removeField}
+                        >
+                            <svg className="icon icon--close">
+                                <use xlinkHref="#cross" />
+                            </svg>
+                        </button>
+                    </span>
+                }
+            </div>
+            {!disabled &&
+            touched &&
+            (error && <span className="form__message form__message--error">{error}</span>)}
+        </Fragment>
+    );
+};
 
 export const renderRadioField = ({
     input, placeholder, disabled, meta: { touched, error },
