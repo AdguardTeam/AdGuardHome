@@ -823,6 +823,7 @@ Response:
 		"blocking_ipv4": "1.2.3.4",
 		"blocking_ipv6": "1:2:3::4",
 		"edns_cs_enabled": true | false,
+		"disable_ipv6": true | false,
 	}
 
 
@@ -839,6 +840,7 @@ Request:
 		"blocking_ipv4": "1.2.3.4",
 		"blocking_ipv6": "1:2:3::4",
 		"edns_cs_enabled": true | false,
+		"disable_ipv6": true | false,
 	}
 
 Response:

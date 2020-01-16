@@ -66,6 +66,18 @@ let Form = ({
                 </div>
             </div>
             <div className="col-12">
+                <div className="form__group form__group--settings">
+                    <Field
+                        name="disable_ipv6"
+                        type="checkbox"
+                        component={renderSelectField}
+                        placeholder={t('disable_ipv6')}
+                        disabled={processing}
+                        subtitle={t('disable_ipv6_desc')}
+                    />
+                </div>
+            </div>
+            <div className="col-12">
                 <div className="form__group form__group--settings mb-4">
                     <label className="form__label form__label--with-desc">
                         <Trans>blocking_mode</Trans>

@@ -431,5 +431,7 @@
     "try_again": "Try again",
     "domain_desc": "Enter the domain name or wildcard you want to be rewritten.",
     "example_rewrite_domain": "rewrite responses for this domain name only.",
-    "example_rewrite_wildcard": "rewrite responses for all <0>example.org</0> subdomains."
+    "example_rewrite_wildcard": "rewrite responses for all <0>example.org</0> subdomains.",
+    "disable_ipv6": "Disable IPv6",
+    "disable_ipv6_desc": "If this feature is enabled, all DNS queries for IPv6 addresses (type AAAA) will be dropped."
 }
