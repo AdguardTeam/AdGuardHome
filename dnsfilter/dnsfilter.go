@@ -34,15 +34,8 @@ type RequestFilteringSettings struct {
 	ServicesRules       []ServiceEntry
 }
 
-// RewriteEntry is a rewrite array element
-type RewriteEntry struct {
-	Domain string `yaml:"domain"`
-	Answer string `yaml:"answer"` // IP address or canonical name
-}
-
 // Config allows you to configure DNS filtering with New() or just change variables directly.
 type Config struct {
-	ParentalSensitivity int    `yaml:"parental_sensitivity"` // must be either 3, 10, 13 or 17
 	ParentalEnabled     bool   `yaml:"parental_enabled"`
 	SafeSearchEnabled   bool   `yaml:"safesearch_enabled"`
 	SafeBrowsingEnabled bool   `yaml:"safebrowsing_enabled"`
@@ -175,7 +168,10 @@ func (d *Dnsfilter) GetConfig() RequestFilteringSettings {
 
 // WriteDiskConfig - write configuration
 func (d *Dnsfilter) WriteDiskConfig(c *Config) {
+	d.confLock.Lock()
 	*c = d.Config
+	c.Rewrites = rewriteArrayDup(d.Config.Rewrites)
+	d.confLock.Unlock()
 }
 
 // SetFilters - set new filters (synchronously or asynchronously)
@@ -343,17 +339,11 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 	return Result{}, nil
 }
 
-// Return TRUE of host name matches a wildcard pattern
-func matchDomainWildcard(host, wildcard string) bool {
-	return len(wildcard) >= 2 &&
-		wildcard[0] == '*' && wildcard[1] == '.' &&
-		strings.HasSuffix(host, wildcard[1:])
-}
-
 // Process rewrites table
-// . Find CNAME for a domain name
+// . Find CNAME for a domain name (exact match or by wildcard)
 //  . if found, set domain name to canonical name
-// . Find A or AAAA record for a domain name
+//  . repeat for the new domain name (Note: we return only the last CNAME)
+// . Find A or AAAA record for a domain name (exact match or by wildcard)
 //  . if found, return IP addresses
 func (d *Dnsfilter) processRewrites(host string, qtype uint16) Result {
 	var res Result
@@ -361,48 +351,31 @@ func (d *Dnsfilter) processRewrites(host string, qtype uint16) Result {
 	d.confLock.RLock()
 	defer d.confLock.RUnlock()
 
-	for _, r := range d.Rewrites {
-		if r.Domain != host {
-			if !matchDomainWildcard(host, r.Domain) {
-				continue
-			}
-		}
-
-		ip := net.ParseIP(r.Answer)
-		if ip == nil {
-			log.Debug("Rewrite: CNAME for %s is %s", host, r.Answer)
-			host = r.Answer
-			res.CanonName = r.Answer
-			res.Reason = ReasonRewrite
-			break
-		}
-	}
-
-	for _, r := range d.Rewrites {
-		if r.Domain != host {
-			if !matchDomainWildcard(host, r.Domain) {
-				continue
-			}
-		}
-
-		ip := net.ParseIP(r.Answer)
-		if ip == nil {
-			continue
-		}
-		ip4 := ip.To4()
-
-		if qtype == dns.TypeA && ip4 != nil {
-			res.IPList = append(res.IPList, ip4)
-			log.Debug("Rewrite: A for %s is %s", host, ip4)
-
-		} else if qtype == dns.TypeAAAA && ip4 == nil {
-			res.IPList = append(res.IPList, ip)
-			log.Debug("Rewrite: AAAA for %s is %s", host, ip)
-		}
-	}
-
-	if len(res.IPList) != 0 {
+	rr := findRewrites(d.Rewrites, host)
+	if len(rr) != 0 {
 		res.Reason = ReasonRewrite
+	}
+
+	cnames := map[string]bool{}
+	origHost := host
+	for len(rr) != 0 && rr[0].Type == dns.TypeCNAME {
+		log.Debug("Rewrite: CNAME for %s is %s", host, rr[0].Answer)
+		host = rr[0].Answer
+		_, ok := cnames[host]
+		if ok {
+			log.Info("Rewrite: breaking CNAME redirection loop: %s.  Question: %s", host, origHost)
+			return res
+		}
+		cnames[host] = false
+		res.CanonName = rr[0].Answer
+		rr = findRewrites(d.Rewrites, host)
+	}
+
+	for _, r := range rr {
+		if r.Type != dns.TypeCNAME && r.Type == qtype {
+			res.IPList = append(res.IPList, r.IP)
+			log.Debug("Rewrite: A/AAAA for %s is %s", host, r.IP)
+		}
 	}
 
 	return res
@@ -592,6 +565,7 @@ func New(c *Config, filters map[int]string) *Dnsfilter {
 
 	if c != nil {
 		d.Config = *c
+		d.prepareRewrites()
 	}
 
 	if filters != nil {

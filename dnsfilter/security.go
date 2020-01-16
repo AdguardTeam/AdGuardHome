@@ -3,19 +3,15 @@
 package dnsfilter
 
 import (
-	"bufio"
 	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/gob"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -325,66 +321,7 @@ func (d *Dnsfilter) handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-func parseParametersFromBody(r io.Reader) (map[string]string, error) {
-	parameters := map[string]string{}
-
-	scanner := bufio.NewScanner(r)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if len(line) == 0 {
-			// skip empty lines
-			continue
-		}
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
-			return parameters, errors.New("Got invalid request body")
-		}
-		parameters[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
-	}
-
-	return parameters, nil
-}
-
 func (d *Dnsfilter) handleParentalEnable(w http.ResponseWriter, r *http.Request) {
-	parameters, err := parseParametersFromBody(r.Body)
-	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "failed to parse parameters from body: %s", err)
-		return
-	}
-
-	sensitivity, ok := parameters["sensitivity"]
-	if !ok {
-		http.Error(w, "Sensitivity parameter was not specified", 400)
-		return
-	}
-
-	switch sensitivity {
-	case "3":
-		break
-	case "EARLY_CHILDHOOD":
-		sensitivity = "3"
-	case "10":
-		break
-	case "YOUNG":
-		sensitivity = "10"
-	case "13":
-		break
-	case "TEEN":
-		sensitivity = "13"
-	case "17":
-		break
-	case "MATURE":
-		sensitivity = "17"
-	default:
-		http.Error(w, "Sensitivity must be set to valid value", 400)
-		return
-	}
-	i, err := strconv.Atoi(sensitivity)
-	if err != nil {
-		http.Error(w, "Sensitivity must be set to valid value", 400)
-		return
-	}
-	d.Config.ParentalSensitivity = i
 	d.Config.ParentalEnabled = true
 	d.Config.ConfigModified()
 }
@@ -397,9 +334,6 @@ func (d *Dnsfilter) handleParentalDisable(w http.ResponseWriter, r *http.Request
 func (d *Dnsfilter) handleParentalStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"enabled": d.Config.ParentalEnabled,
-	}
-	if d.Config.ParentalEnabled {
-		data["sensitivity"] = d.Config.ParentalSensitivity
 	}
 	jsonVal, err := json.Marshal(data)
 	if err != nil {

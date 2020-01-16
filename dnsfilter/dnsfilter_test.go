@@ -317,7 +317,6 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 func TestParentalControl(t *testing.T) {
 	d := NewForTest(&Config{ParentalEnabled: true}, nil)
 	defer d.Close()
-	d.ParentalSensitivity = 3
 	d.checkMatch(t, "pornhub.com")
 	d.checkMatch(t, "www.pornhub.com")
 	d.checkMatchEmpty(t, "www.yandex.ru")
@@ -429,7 +428,6 @@ func TestClientSettings(t *testing.T) {
 	filters[0] = "||example.org^\n"
 	d := NewForTest(&Config{ParentalEnabled: true, SafeBrowsingEnabled: false}, filters)
 	defer d.Close()
-	d.ParentalSensitivity = 3
 
 	// no client settings:
 
@@ -485,14 +483,15 @@ func TestRewrites(t *testing.T) {
 	d := Dnsfilter{}
 	// CNAME, A, AAAA
 	d.Rewrites = []RewriteEntry{
-		RewriteEntry{"somecname", "somehost.com"},
-		RewriteEntry{"somehost.com", "0.0.0.0"},
+		RewriteEntry{"somecname", "somehost.com", 0, nil},
+		RewriteEntry{"somehost.com", "0.0.0.0", 0, nil},
 
-		RewriteEntry{"host.com", "1.2.3.4"},
-		RewriteEntry{"host.com", "1.2.3.5"},
-		RewriteEntry{"host.com", "1:2:3::4"},
-		RewriteEntry{"www.host.com", "host.com"},
+		RewriteEntry{"host.com", "1.2.3.4", 0, nil},
+		RewriteEntry{"host.com", "1.2.3.5", 0, nil},
+		RewriteEntry{"host.com", "1:2:3::4", 0, nil},
+		RewriteEntry{"www.host.com", "host.com", 0, nil},
 	}
+	d.prepareRewrites()
 	r := d.processRewrites("host2.com", dns.TypeA)
 	assert.Equal(t, NotFilteredNotFound, r.Reason)
 
@@ -510,9 +509,10 @@ func TestRewrites(t *testing.T) {
 
 	// wildcard
 	d.Rewrites = []RewriteEntry{
-		RewriteEntry{"*.host.com", "1.2.3.5"},
-		RewriteEntry{"host.com", "1.2.3.4"},
+		RewriteEntry{"host.com", "1.2.3.4", 0, nil},
+		RewriteEntry{"*.host.com", "1.2.3.5", 0, nil},
 	}
+	d.prepareRewrites()
 	r = d.processRewrites("host.com", dns.TypeA)
 	assert.Equal(t, ReasonRewrite, r.Reason)
 	assert.True(t, r.IPList[0].Equal(net.ParseIP("1.2.3.4")))
@@ -524,14 +524,52 @@ func TestRewrites(t *testing.T) {
 	r = d.processRewrites("www.host2.com", dns.TypeA)
 	assert.Equal(t, NotFilteredNotFound, r.Reason)
 
+	// override a wildcard
+	d.Rewrites = []RewriteEntry{
+		RewriteEntry{"a.host.com", "1.2.3.4", 0, nil},
+		RewriteEntry{"*.host.com", "1.2.3.5", 0, nil},
+	}
+	d.prepareRewrites()
+	r = d.processRewrites("a.host.com", dns.TypeA)
+	assert.Equal(t, ReasonRewrite, r.Reason)
+	assert.True(t, len(r.IPList) == 1)
+	assert.True(t, r.IPList[0].Equal(net.ParseIP("1.2.3.4")))
+
 	// wildcard + CNAME
 	d.Rewrites = []RewriteEntry{
-		RewriteEntry{"*.host.com", "host.com"},
-		RewriteEntry{"host.com", "1.2.3.4"},
+		RewriteEntry{"host.com", "1.2.3.4", 0, nil},
+		RewriteEntry{"*.host.com", "host.com", 0, nil},
 	}
+	d.prepareRewrites()
 	r = d.processRewrites("www.host.com", dns.TypeA)
 	assert.Equal(t, ReasonRewrite, r.Reason)
 	assert.Equal(t, "host.com", r.CanonName)
+	assert.True(t, r.IPList[0].Equal(net.ParseIP("1.2.3.4")))
+
+	// 2 CNAMEs
+	d.Rewrites = []RewriteEntry{
+		RewriteEntry{"b.host.com", "a.host.com", 0, nil},
+		RewriteEntry{"a.host.com", "host.com", 0, nil},
+		RewriteEntry{"host.com", "1.2.3.4", 0, nil},
+	}
+	d.prepareRewrites()
+	r = d.processRewrites("b.host.com", dns.TypeA)
+	assert.Equal(t, ReasonRewrite, r.Reason)
+	assert.Equal(t, "host.com", r.CanonName)
+	assert.True(t, len(r.IPList) == 1)
+	assert.True(t, r.IPList[0].Equal(net.ParseIP("1.2.3.4")))
+
+	// 2 CNAMEs + wildcard
+	d.Rewrites = []RewriteEntry{
+		RewriteEntry{"b.host.com", "a.host.com", 0, nil},
+		RewriteEntry{"a.host.com", "x.somehost.com", 0, nil},
+		RewriteEntry{"*.somehost.com", "1.2.3.4", 0, nil},
+	}
+	d.prepareRewrites()
+	r = d.processRewrites("b.host.com", dns.TypeA)
+	assert.Equal(t, ReasonRewrite, r.Reason)
+	assert.Equal(t, "x.somehost.com", r.CanonName)
+	assert.True(t, len(r.IPList) == 1)
 	assert.True(t, r.IPList[0].Equal(net.ParseIP("1.2.3.4")))
 }
 
