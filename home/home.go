@@ -473,6 +473,10 @@ func loadOptions() options {
 		{"check-config", "", "Check configuration and exit", nil, func() { o.checkConfig = true }},
 		{"no-check-update", "", "Don't check for updates", nil, func() { o.disableUpdate = true }},
 		{"verbose", "v", "Enable verbose output", nil, func() { o.verbose = true }},
+		{"version", "", "Show the version and exit", nil, func() {
+			fmt.Printf("AdGuardHome %s\n", versionString)
+			os.Exit(0)
+		}},
 		{"help", "", "Print this help", nil, func() {
 			printHelp()
 			os.Exit(64)
