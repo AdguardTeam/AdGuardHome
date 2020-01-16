@@ -213,18 +213,31 @@ class Settings extends Component {
                         </div>
                         <div className="col-12">
                             {dnsStatus &&
-                                <div className="setup__error text-danger">
-                                    {dnsStatus}
-                                    {isDnsFixAvailable &&
-                                        <button
-                                            type="button"
-                                            className="btn btn-secondary btn-sm ml-2"
-                                            onClick={() => handleAutofix('dns', dnsIp, dnsPort)}
-                                        >
-                                            <Trans>fix</Trans>
-                                        </button>
-                                    }
-                                </div>
+                                <Fragment>
+                                    <div className="setup__error text-danger">
+                                        {dnsStatus}
+                                        {isDnsFixAvailable &&
+                                            <button
+                                                type="button"
+                                                className="btn btn-secondary btn-sm ml-2"
+                                                onClick={() => handleAutofix('dns', dnsIp, dnsPort)}
+                                            >
+                                                <Trans>fix</Trans>
+                                            </button>
+                                        }
+                                    </div>
+                                    <div className="text-muted mb-2">
+                                        <p className="mb-1">
+                                            <Trans>autofix_warning_text</Trans>
+                                        </p>
+                                        <Trans components={[<li key="0">text</li>]}>
+                                            autofix_warning_list
+                                        </Trans>
+                                        <p className="mb-1">
+                                            <Trans>autofix_warning_result</Trans>
+                                        </p>
+                                    </div>
+                                </Fragment>
                             }
                         </div>
                     </div>
