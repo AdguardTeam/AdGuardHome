@@ -18,6 +18,8 @@ type DiskConfig struct {
 
 // QueryLog - main interface
 type QueryLog interface {
+	Start()
+
 	// Close query log object
 	Close()
 

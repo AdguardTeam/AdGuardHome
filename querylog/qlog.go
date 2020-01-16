@@ -44,11 +44,14 @@ func newQueryLog(conf Config) *queryLog {
 	if !checkInterval(l.conf.Interval) {
 		l.conf.Interval = 1
 	}
+	return &l
+}
+
+func (l *queryLog) Start() {
 	if l.conf.HTTPRegister != nil {
 		l.initWeb()
 	}
 	go l.periodicRotate()
-	return &l
 }
 
 func (l *queryLog) Close() {

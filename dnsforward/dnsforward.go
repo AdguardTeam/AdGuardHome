@@ -33,6 +33,8 @@ var defaultDNS = []string{
 }
 var defaultBootstrap = []string{"9.9.9.9", "149.112.112.112"}
 
+var webRegistered bool
+
 // Server is the main way to start a DNS server.
 //
 // Example:
@@ -54,8 +56,7 @@ type Server struct {
 	// We don't Start() it and so no listen port is required.
 	internalProxy *proxy.Proxy
 
-	webRegistered bool
-	isRunning     bool
+	isRunning bool
 
 	sync.RWMutex
 	conf ServerConfig
@@ -318,8 +319,8 @@ func (s *Server) Prepare(config *ServerConfig) error {
 		log.Fatal("len(proxyConfig.Upstreams) == 0")
 	}
 
-	if !s.webRegistered && s.conf.HTTPRegister != nil {
-		s.webRegistered = true
+	if !webRegistered && s.conf.HTTPRegister != nil {
+		webRegistered = true
 		s.registerHandlers()
 	}
 

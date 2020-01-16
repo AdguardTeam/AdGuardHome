@@ -66,12 +66,14 @@ func initDNSServer() error {
 	dnsConfig := generateServerConfig()
 	err = Context.dnsServer.Prepare(&dnsConfig)
 	if err != nil {
+		closeDNSServer()
 		return fmt.Errorf("dnsServer.Prepare: %s", err)
 	}
 
 	sessFilename := filepath.Join(baseDir, "sessions.db")
 	config.auth = InitAuth(sessFilename, config.Users, config.WebSessionTTLHours*60*60)
 	if config.auth == nil {
+		closeDNSServer()
 		return fmt.Errorf("Couldn't initialize Auth module")
 	}
 	config.Users = nil
@@ -224,7 +226,10 @@ func startDNSServer() error {
 		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
 	}
 
+	Context.dnsFilter.Start()
 	startFiltering()
+	Context.stats.Start()
+	Context.queryLog.Start()
 
 	const topClientsNumber = 100 // the number of clients to get
 	topClients := Context.stats.GetTopClientsIP(topClientsNumber)
@@ -261,19 +266,36 @@ func stopDNSServer() error {
 		return errorx.Decorate(err, "Couldn't stop forwarding DNS server")
 	}
 
-	// DNS forward module must be closed BEFORE stats or queryLog because it depends on them
-	Context.dnsServer.Close()
-
-	Context.dnsFilter.Close()
-	Context.dnsFilter = nil
-
-	Context.stats.Close()
-	Context.stats = nil
-
-	Context.queryLog.Close()
-	Context.queryLog = nil
-
-	config.auth.Close()
-	config.auth = nil
+	closeDNSServer()
 	return nil
+}
+
+func closeDNSServer() {
+	// DNS forward module must be closed BEFORE stats or queryLog because it depends on them
+	if Context.dnsServer != nil {
+		Context.dnsServer.Close()
+		Context.dnsServer = nil
+	}
+
+	if Context.dnsFilter != nil {
+		Context.dnsFilter.Close()
+		Context.dnsFilter = nil
+	}
+
+	if Context.stats != nil {
+		Context.stats.Close()
+		Context.stats = nil
+	}
+
+	if Context.queryLog != nil {
+		Context.queryLog.Close()
+		Context.queryLog = nil
+	}
+
+	if config.auth != nil {
+		config.auth.Close()
+		config.auth = nil
+	}
+
+	log.Debug("Closed all DNS modules")
 }

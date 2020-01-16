@@ -36,6 +36,8 @@ func New(conf Config) (Stats, error) {
 
 // Stats - main interface
 type Stats interface {
+	Start()
+
 	// Close object.
 	// This function is not thread safe
 	//  (can't be called in parallel with any other function of this interface).

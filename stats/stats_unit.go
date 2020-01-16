@@ -114,12 +114,13 @@ func createObject(conf Config) (*statsCtx, error) {
 	}
 	s.unit = &u
 
-	s.initWeb()
-
-	go s.periodicFlush()
-
 	log.Debug("Stats: initialized")
 	return &s, nil
+}
+
+func (s *statsCtx) Start() {
+	s.initWeb()
+	go s.periodicFlush()
 }
 
 func checkInterval(days uint32) bool {

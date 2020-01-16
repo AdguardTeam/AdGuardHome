@@ -244,6 +244,9 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	var err2 error
 	if err == nil {
 		err2 = startDNSServer()
+		if err2 != nil {
+			closeDNSServer()
+		}
 	}
 	if err != nil || err2 != nil {
 		config.firstRun = true
