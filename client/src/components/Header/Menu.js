@@ -12,6 +12,9 @@ const MENU_ITEMS = [
     {
         route: '', exact: true, xlinkHref: 'dashboard', text: 'dashboard', order: 0,
     },
+
+    // Settings dropdown should have visual order 1
+
     {
         route: 'filters', xlinkHref: 'filters', text: 'filters', order: 2,
     },
