@@ -1,7 +1,9 @@
 package home
 
 import (
+	"fmt"
 	"os"
+	"os/exec"
 	"runtime"
 	"syscall"
 
@@ -39,6 +41,47 @@ func (p *program) Stop(s service.Service) error {
 	return nil
 }
 
+func runCommand(command string, arguments ...string) (int, string, error) {
+	cmd := exec.Command(command, arguments...)
+	out, err := cmd.Output()
+	if err != nil {
+		return 1, "", fmt.Errorf("exec.Command(%s) failed: %s", command, err)
+	}
+
+	return cmd.ProcessState.ExitCode(), string(out), nil
+}
+
+// Check the service's status
+// Note: on OpenWrt 'service' utility may not exist - we use our service script directly in this case.
+func svcStatus(s service.Service) (service.Status, error) {
+	status, err := s.Status()
+	if err != nil && service.Platform() == "unix-systemv" {
+		confPath := "/etc/init.d/" + serviceName
+		code, _, err := runCommand("sh", "-c", confPath+" status")
+		if err != nil {
+			return service.StatusStopped, nil
+		}
+		if code != 0 {
+			return service.StatusStopped, nil
+		}
+		return service.StatusRunning, nil
+	}
+	return status, err
+}
+
+// Perform an action on the service
+// Note: on OpenWrt 'service' utility may not exist - we use our service script directly in this case.
+func svcAction(s service.Service, action string) error {
+	err := service.Control(s, action)
+	if err != nil && service.Platform() == "unix-systemv" &&
+		(action == "start" || action == "stop" || action == "restart") {
+		confPath := "/etc/init.d/" + serviceName
+		_, _, err := runCommand("sh", "-c", confPath+" "+action)
+		return err
+	}
+	return err
+}
+
 // handleServiceControlAction one of the possible control actions:
 // install -- installs a service/daemon
 // uninstall -- uninstalls it
@@ -71,7 +114,7 @@ func handleServiceControlAction(action string) {
 	}
 
 	if action == "status" {
-		status, errSt := s.Status()
+		status, errSt := svcStatus(s)
 		if errSt != nil {
 			log.Fatalf("failed to get service status: %s", errSt)
 		}
@@ -94,18 +137,23 @@ func handleServiceControlAction(action string) {
 			// In case of Windows and Linux when a running service is being uninstalled,
 			// it is just marked for deletion but not stopped
 			// So we explicitly stop it here
-			_ = s.Stop()
+			_ = svcAction(s, "stop")
 		}
 
-		err = service.Control(s, action)
+		err = svcAction(s, action)
 		if err != nil {
 			log.Fatal(err)
 		}
 		log.Printf("Action %s has been done successfully on %s", action, service.ChosenSystem().String())
 
 		if action == "install" {
+			err := afterInstall()
+			if err != nil {
+				log.Fatal(err)
+			}
+
 			// Start automatically after install
-			err = service.Control(s, "start")
+			err = svcAction(s, "start")
 			if err != nil {
 				log.Fatalf("Failed to start the service: %s", err)
 			}
@@ -140,9 +188,23 @@ func configureService(c *service.Config) {
 	// Redirect StdErr & StdOut to files.
 	c.Option["LogOutput"] = true
 
-	// Add "After=" setting for systemd service file, because we must be started only after network is online
-	// Set "RestartSec" to 10
+	// Use modified service file templates
 	c.Option["SystemdScript"] = systemdScript
+	c.Option["SysvScript"] = sysvScript
+}
+
+// On SysV systems supported by kardianos/service package, there must be multiple /etc/rc{N}.d directories.
+// On OpenWrt, however, there is only /etc/rc.d - we handle this case ourselves.
+//  We also use relative path, because this is how all other service files are set up.
+func afterInstall() error {
+	if service.Platform() == "unix-systemv" && fileExists("/etc/rc.d") {
+		confPath := "../init.d/" + serviceName
+		err := os.Symlink(confPath, "/etc/rc.d/S99"+serviceName)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // cleanupService called on the service uninstall, cleans up additional files if needed
@@ -156,6 +218,14 @@ func cleanupService() {
 		err = os.Remove(launchdStderrPath)
 		if err != nil && !os.IsNotExist(err) {
 			log.Printf("cannot remove %s", launchdStderrPath)
+		}
+	}
+
+	if service.Platform() == "unix-systemv" {
+		fn := "/etc/rc.d/S99" + serviceName
+		err := os.Remove(fn)
+		if err != nil && !os.IsNotExist(err) {
+			log.Printf("os.Remove: %s: %s", fn, err)
 		}
 	}
 }
@@ -191,6 +261,8 @@ var launchdConfig = `<?xml version='1.0' encoding='UTF-8'?>
 `
 
 // Note: we should keep it in sync with the template from service_systemd_linux.go file
+// Add "After=" setting for systemd service file, because we must be started only after network is online
+// Set "RestartSec" to 10
 const systemdScript = `[Unit]
 Description={{.Description}}
 ConditionFileIsExecutable={{.Path|cmdEscape}}
@@ -215,4 +287,104 @@ EnvironmentFile=-/etc/sysconfig/{{.Name}}
 
 [Install]
 WantedBy=multi-user.target
+`
+
+// Note: we should keep it in sync with the template from service_sysv_linux.go file
+// Use "ps | grep -v grep | grep $(get_pid)" because "ps PID" may not work on OpenWrt
+const sysvScript = `#!/bin/sh
+# For RedHat and cousins:
+# chkconfig: - 99 01
+# description: {{.Description}}
+# processname: {{.Path}}
+
+### BEGIN INIT INFO
+# Provides:          {{.Path}}
+# Required-Start:
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: {{.DisplayName}}
+# Description:       {{.Description}}
+### END INIT INFO
+
+cmd="{{.Path}}{{range .Arguments}} {{.|cmd}}{{end}}"
+
+name=$(basename $(readlink -f $0))
+pid_file="/var/run/$name.pid"
+stdout_log="/var/log/$name.log"
+stderr_log="/var/log/$name.err"
+
+[ -e /etc/sysconfig/$name ] && . /etc/sysconfig/$name
+
+get_pid() {
+    cat "$pid_file"
+}
+
+is_running() {
+    [ -f "$pid_file" ] && ps | grep -v grep | grep $(get_pid) > /dev/null 2>&1
+}
+
+case "$1" in
+    start)
+        if is_running; then
+            echo "Already started"
+        else
+            echo "Starting $name"
+            {{if .WorkingDirectory}}cd '{{.WorkingDirectory}}'{{end}}
+            $cmd >> "$stdout_log" 2>> "$stderr_log" &
+            echo $! > "$pid_file"
+            if ! is_running; then
+                echo "Unable to start, see $stdout_log and $stderr_log"
+                exit 1
+            fi
+        fi
+    ;;
+    stop)
+        if is_running; then
+            echo -n "Stopping $name.."
+            kill $(get_pid)
+            for i in $(seq 1 10)
+            do
+                if ! is_running; then
+                    break
+                fi
+                echo -n "."
+                sleep 1
+            done
+            echo
+            if is_running; then
+                echo "Not stopped; may still be shutting down or shutdown may have failed"
+                exit 1
+            else
+                echo "Stopped"
+                if [ -f "$pid_file" ]; then
+                    rm "$pid_file"
+                fi
+            fi
+        else
+            echo "Not running"
+        fi
+    ;;
+    restart)
+        $0 stop
+        if is_running; then
+            echo "Unable to stop, will not attempt to start"
+            exit 1
+        fi
+        $0 start
+    ;;
+    status)
+        if is_running; then
+            echo "Running"
+        else
+            echo "Stopped"
+            exit 1
+        fi
+    ;;
+    *)
+    echo "Usage: $0 {start|stop|restart|status}"
+    exit 1
+    ;;
+esac
+exit 0
 `
