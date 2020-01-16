@@ -190,7 +190,6 @@ const dashboard = handleActions(
         processing: true,
         isCoreRunning: true,
         processingVersion: true,
-        processingFiltering: true,
         processingClients: true,
         processingUpdate: false,
         processingDnsSettings: true,
