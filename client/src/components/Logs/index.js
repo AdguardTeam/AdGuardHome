@@ -116,12 +116,12 @@ class Logs extends Component {
     checkWhiteList = reason => reason === FILTERED_STATUS.NOT_FILTERED_WHITE_LIST;
 
     getTimeCell = ({ value }) => (
-            <div className="logs__row">
+        <div className="logs__row">
                     <span className="logs__text" title={formatDateTime(value)}>
                         {formatTodayDate(value) === formatTodayDate(Date.now())
                             ? formatTime(value) : formatDateTime(value)}
                     </span>
-            </div>
+        </div>
     );
 
     getDomainCell = (row) => {
