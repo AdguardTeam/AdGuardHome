@@ -161,7 +161,7 @@ var config = configuration{
 		StatsInterval: 1,
 		FilteringConfig: dnsforward.FilteringConfig{
 			ProtectionEnabled:  true,      // whether or not use any of dnsfilter features
-			BlockingMode:       "null_ip", // mode how to answer filtered requests
+			BlockingMode:       "default", // mode how to answer filtered requests
 			BlockedResponseTTL: 10,        // in seconds
 			Ratelimit:          20,
 			RefuseAny:          true,
