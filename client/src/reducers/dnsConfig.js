@@ -39,7 +39,7 @@ const dnsConfig = handleActions(
     {
         processingGetConfig: false,
         processingSetConfig: false,
-        blocking_mode: BLOCKING_MODES.nxdomain,
+        blocking_mode: BLOCKING_MODES.default,
         ratelimit: 20,
         blocking_ipv4: DEFAULT_BLOCKING_IPV4,
         blocking_ipv6: DEFAULT_BLOCKING_IPV6,

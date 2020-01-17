@@ -83,7 +83,11 @@ let Form = ({
                         <Trans>blocking_mode</Trans>
                     </label>
                     <div className="form__desc form__desc--top">
-                        <Trans components={[<div key="0">text</div>]}>blocking_mode_desc</Trans>
+                        {Object.values(BLOCKING_MODES).map(mode => (
+                            <li key={mode}>
+                                <Trans >{`blocking_mode_${mode}`}</Trans>
+                            </li>
+                        ))}
                     </div>
                     <div className="custom-controls-stacked">
                         {getFields(processing, t)}
