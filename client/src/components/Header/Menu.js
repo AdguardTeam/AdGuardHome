@@ -13,6 +13,10 @@ class Menu extends Component {
         this.props.closeMenu();
     };
 
+    handleClickNavigationLink = () => {
+        this.props.closeMenu();
+    }
+
     toggleMenu = () => {
         this.props.toggleMenuOpen();
     };
@@ -45,7 +49,7 @@ class Menu extends Component {
                             </div>
                         </li>
                         <li className="nav-item">
-                            <NavLink to="/" exact={true} className="nav-link">
+                            <NavLink to="/" exact={true} className="nav-link" onClick={this.handleClickNavigationLink}>
                                 <svg className="nav-icon">
                                     <use xlinkHref="#dashboard" />
                                 </svg>
@@ -59,25 +63,25 @@ class Menu extends Component {
                             icon="settings"
                         >
                             <Fragment>
-                                <NavLink to="/settings" className="dropdown-item">
+                                <NavLink to="/settings" className="dropdown-item" onClick={this.handleClickNavigationLink}>
                                     <Trans>general_settings</Trans>
                                 </NavLink>
                                 <NavLink to="/dns" className="dropdown-item">
                                     <Trans>dns_settings</Trans>
                                 </NavLink>
-                                <NavLink to="/encryption" className="dropdown-item">
+                                <NavLink to="/encryption" className="dropdown-item" onClick={this.handleClickNavigationLink}>
                                     <Trans>encryption_settings</Trans>
                                 </NavLink>
-                                <NavLink to="/clients" className="dropdown-item">
+                                <NavLink to="/clients" className="dropdown-item" onClick={this.handleClickNavigationLink}>
                                     <Trans>client_settings</Trans>
                                 </NavLink>
-                                <NavLink to="/dhcp" className="dropdown-item">
+                                <NavLink to="/dhcp" className="dropdown-item" onClick={this.handleClickNavigationLink}>
                                     <Trans>dhcp_settings</Trans>
                                 </NavLink>
                             </Fragment>
                         </Dropdown>
                         <li className="nav-item">
-                            <NavLink to="/filters" className="nav-link">
+                            <NavLink to="/filters" className="nav-link" onClick={this.handleClickNavigationLink}>
                                 <svg className="nav-icon">
                                     <use xlinkHref="#filters" />
                                 </svg>
@@ -85,7 +89,7 @@ class Menu extends Component {
                             </NavLink>
                         </li>
                         <li className="nav-item">
-                            <NavLink to="/logs" className="nav-link">
+                            <NavLink to="/logs" className="nav-link" onClick={this.handleClickNavigationLink}>
                                 <svg className="nav-icon">
                                     <use xlinkHref="#log" />
                                 </svg>
@@ -93,7 +97,7 @@ class Menu extends Component {
                             </NavLink>
                         </li>
                         <li className="nav-item">
-                            <NavLink to="/guide" className="nav-link">
+                            <NavLink to="/guide" className="nav-link" onClick={this.handleClickNavigationLink}>
                                 <svg className="nav-icon">
                                     <use xlinkHref="#setup" />
                                 </svg>
