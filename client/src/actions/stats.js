@@ -39,37 +39,29 @@ export const getStatsRequest = createAction('GET_STATS_REQUEST');
 export const getStatsFailure = createAction('GET_STATS_FAILURE');
 export const getStatsSuccess = createAction('GET_STATS_SUCCESS');
 
-// Cache clients in closure
-const getStatsWrapper = () => {
-    let clients = {};
-    return () => async (dispatch) => {
-        dispatch(getStatsRequest());
-        try {
-            const stats = await apiClient.getStats();
-            const normalizedTopClients = normalizeTopStats(stats.top_clients);
-            const clientsParams = getParamsForClientsSearch(normalizedTopClients, 'name');
-            if (!Object.values(clientsParams).every(client => client in clients)) {
-                clients = await apiClient.findClients(clientsParams);
-            }
-            const topClientsWithInfo = addClientInfo(normalizedTopClients, clients, 'name');
+export const getStats = () => async (dispatch) => {
+    dispatch(getStatsRequest());
+    try {
+        const stats = await apiClient.getStats();
+        const normalizedTopClients = normalizeTopStats(stats.top_clients);
+        const clientsParams = getParamsForClientsSearch(normalizedTopClients, 'name');
+        const clients = await apiClient.findClients(clientsParams);
+        const topClientsWithInfo = addClientInfo(normalizedTopClients, clients, 'name');
 
-            const normalizedStats = {
-                ...stats,
-                top_blocked_domains: normalizeTopStats(stats.top_blocked_domains),
-                top_clients: topClientsWithInfo,
-                top_queried_domains: normalizeTopStats(stats.top_queried_domains),
-                avg_processing_time: secondsToMilliseconds(stats.avg_processing_time),
-            };
+        const normalizedStats = {
+            ...stats,
+            top_blocked_domains: normalizeTopStats(stats.top_blocked_domains),
+            top_clients: topClientsWithInfo,
+            top_queried_domains: normalizeTopStats(stats.top_queried_domains),
+            avg_processing_time: secondsToMilliseconds(stats.avg_processing_time),
+        };
 
-            dispatch(getStatsSuccess(normalizedStats));
-        } catch (error) {
-            dispatch(addErrorToast({ error }));
-            dispatch(getStatsFailure());
-        }
-    };
+        dispatch(getStatsSuccess(normalizedStats));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(getStatsFailure());
+    }
 };
-
-export const getStats = getStatsWrapper();
 
 export const resetStatsRequest = createAction('RESET_STATS_REQUEST');
 export const resetStatsFailure = createAction('RESET_STATS_FAILURE');
