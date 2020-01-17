@@ -5,6 +5,7 @@ import subHours from 'date-fns/sub_hours';
 import addHours from 'date-fns/add_hours';
 import addDays from 'date-fns/add_days';
 import subDays from 'date-fns/sub_days';
+import isSameDay from 'date-fns/is_same_day';
 import round from 'lodash/round';
 import axios from 'axios';
 import i18n from 'i18next';
@@ -48,21 +49,10 @@ export const formatDateTime = (dateTime) => {
 };
 
 /**
- * @param string The date to format
- * @returns string Returns the date in the format DD/MM/YYYY
+ * @param string
+ * @returns boolean
  */
-export const formatTodayDate = (dateTime) => {
-    const currentLanguage = i18n.languages[0] || 'en';
-    const parsedTime = dateParse(dateTime);
-    const options = {
-        year: 'numeric',
-        month: 'numeric',
-        day: 'numeric',
-        hour12: false,
-    };
-
-    return parsedTime.toLocaleString(currentLanguage, options);
-};
+export const isToday = date => isSameDay(new Date(date), new Date());
 
 export const normalizeLogs = logs => logs.map((log) => {
     const {
