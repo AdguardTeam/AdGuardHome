@@ -38,7 +38,7 @@ class Header extends Component {
                             className="header-toggler d-lg-none ml-lg-0 collapsed"
                             onClick={this.toggleMenuOpen}
                         >
-                            <span className="header-toggler-icon"></span>
+                            <span className="header-toggler-icon" />
                         </div>
                         <div className="header__column">
                             <div className="d-flex align-items-center">
@@ -61,9 +61,9 @@ class Header extends Component {
                         <div className="header__column">
                             <div className="header__right">
                                 {!dashboard.processingProfile && dashboard.name &&
-                                    <a href="/control/logout" className="btn btn-sm btn-outline-secondary">
-                                        <Trans>sign_out</Trans>
-                                    </a>
+                                <a href="/control/logout" className="btn btn-sm btn-outline-secondary">
+                                    <Trans>sign_out</Trans>
+                                </a>
                                 }
                             </div>
                         </div>
