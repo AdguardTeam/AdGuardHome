@@ -54,7 +54,7 @@ func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 
 func checkBlockingMode(req dnsConfigJSON) bool {
 	bm := req.BlockingMode
-	if !(bm == "nxdomain" || bm == "null_ip" || bm == "custom_ip") {
+	if !(bm == "default" || bm == "nxdomain" || bm == "null_ip" || bm == "custom_ip") {
 		return false
 	}
 

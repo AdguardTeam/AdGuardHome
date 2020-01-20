@@ -359,6 +359,7 @@ export const QUERY_LOG_INTERVALS_DAYS = [1, 7, 30, 90];
 export const FILTERS_INTERVALS_HOURS = [0, 1, 12, 24, 72, 168];
 
 export const BLOCKING_MODES = {
+    default: 'default',
     nxdomain: 'nxdomain',
     null_ip: 'null_ip',
     custom_ip: 'custom_ip',
