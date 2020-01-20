@@ -78,15 +78,33 @@ export const toggleFilterRequest = createAction('FILTER_TOGGLE_REQUEST');
 export const toggleFilterFailure = createAction('FILTER_TOGGLE_FAILURE');
 export const toggleFilterSuccess = createAction('FILTER_TOGGLE_SUCCESS');
 
-export const toggleFilterStatus = (url, enabled) => async (dispatch) => {
+export const toggleFilterStatus = (url, data) => async (dispatch) => {
     dispatch(toggleFilterRequest());
     try {
-        await apiClient.setFilterUrl({ url, enabled: !enabled });
+        await apiClient.setFilterUrl({ url, data });
         dispatch(toggleFilterSuccess(url));
         dispatch(getFilteringStatus());
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(toggleFilterFailure());
+    }
+};
+
+export const editFilterRequest = createAction('EDIT_FILTER_REQUEST');
+export const editFilterFailure = createAction('EDIT_FILTER_FAILURE');
+export const editFilterSuccess = createAction('EDIT_FILTER_SUCCESS');
+
+export const editFilter = (url, data) => async (dispatch) => {
+    dispatch(editFilterRequest());
+    try {
+        await apiClient.setFilterUrl({ url, data });
+        dispatch(editFilterSuccess(url));
+        dispatch(toggleFilteringModal());
+        dispatch(addSuccessToast('filter_updated'));
+        dispatch(getFilteringStatus());
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(editFilterFailure());
     }
 };
 

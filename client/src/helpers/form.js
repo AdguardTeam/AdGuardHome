@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react';
 import { Trans } from 'react-i18next';
 import PropTypes from 'prop-types';
-import { R_IPV4, R_MAC, R_HOST, R_IPV6, R_CIDR, UNSAFE_PORTS } from '../helpers/constants';
+import { R_IPV4, R_MAC, R_HOST, R_IPV6, R_CIDR, UNSAFE_PORTS, R_URL_REQUIRES_PROTOCOL } from '../helpers/constants';
 import { createOnBlurHandler } from './helpers';
 
 export const renderField = (props, elementType) => {
@@ -266,6 +266,13 @@ export const domain = (value) => {
 export const answer = (value) => {
     if (value && (!R_IPV4.test(value) && !R_IPV6.test(value) && !R_HOST.test(value))) {
         return <Trans>form_error_answer_format</Trans>;
+    }
+    return undefined;
+};
+
+export const isValidUrl = (value) => {
+    if (value && !R_URL_REQUIRES_PROTOCOL.test(value)) {
+        return <Trans>form_error_url_format</Trans>;
     }
     return undefined;
 };

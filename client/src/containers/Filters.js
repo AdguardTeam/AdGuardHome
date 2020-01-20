@@ -8,6 +8,7 @@ import {
     toggleFilteringModal,
     refreshFilters,
     handleRulesChange,
+    editFilter,
 } from '../actions/filtering';
 import Filters from '../components/Filters';
 
@@ -26,6 +27,7 @@ const mapDispatchToProps = {
     toggleFilteringModal,
     refreshFilters,
     handleRulesChange,
+    editFilter,
 };
 
 export default connect(
