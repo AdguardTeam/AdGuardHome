@@ -9,6 +9,7 @@ import { HashLink as Link } from 'react-router-hash-link';
 import {
     formatTime,
     formatDateTime,
+    isToday,
 } from '../../helpers/helpers';
 import { SERVICES, FILTERED_STATUS, TABLE_DEFAULT_PAGE_SIZE } from '../../helpers/constants';
 import { getTrackerData } from '../../helpers/trackers/trackers';
@@ -116,9 +117,9 @@ class Logs extends Component {
 
     getTimeCell = ({ value }) => (
         <div className="logs__row">
-            <span className="logs__text" title={formatDateTime(value)}>
-                {formatTime(value)}
-            </span>
+                    <span className="logs__text" title={formatDateTime(value)}>
+                        {isToday(value) ? formatTime(value) : formatDateTime(value)}
+                    </span>
         </div>
     );
 
@@ -257,7 +258,7 @@ class Logs extends Component {
             {
                 Header: t('time_table_header'),
                 accessor: 'time',
-                maxWidth: 100,
+                minWidth: 105,
                 Cell: this.getTimeCell,
             },
             {

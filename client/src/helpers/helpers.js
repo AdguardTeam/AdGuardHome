@@ -5,6 +5,7 @@ import subHours from 'date-fns/sub_hours';
 import addHours from 'date-fns/add_hours';
 import addDays from 'date-fns/add_days';
 import subDays from 'date-fns/sub_days';
+import isSameDay from 'date-fns/is_same_day';
 import round from 'lodash/round';
 import axios from 'axios';
 import i18n from 'i18next';
@@ -19,11 +20,19 @@ import {
     DNS_RECORD_TYPES,
 } from './constants';
 
+/**
+ * @param string The time to format
+ * @returns string Returns the time in the format HH:mm:ss
+ */
 export const formatTime = (time) => {
     const parsedTime = dateParse(time);
     return dateFormat(parsedTime, 'HH:mm:ss');
 };
 
+/**
+ * @param string The date to format
+ * @returns string Returns the date and time in the format DD/MM/YYYY, HH:mm
+ */
 export const formatDateTime = (dateTime) => {
     const currentLanguage = i18n.languages[0] || 'en';
     const parsedTime = dateParse(dateTime);
@@ -38,6 +47,12 @@ export const formatDateTime = (dateTime) => {
 
     return parsedTime.toLocaleString(currentLanguage, options);
 };
+
+/**
+ * @param string
+ * @returns boolean
+ */
+export const isToday = date => isSameDay(new Date(date), new Date());
 
 export const normalizeLogs = logs => logs.map((log) => {
     const {
