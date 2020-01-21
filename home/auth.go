@@ -406,8 +406,13 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 				}
 			}
 			if !ok {
-				w.Header().Set("Location", "/login.html")
-				w.WriteHeader(http.StatusFound)
+				if r.URL.Path == "/" || r.URL.Path == "/index.html" {
+					w.Header().Set("Location", "/login.html")
+					w.WriteHeader(http.StatusFound)
+				} else {
+					w.WriteHeader(http.StatusForbidden)
+					_, _ = w.Write([]byte("Forbidden"))
+				}
 				return
 			}
 		}
