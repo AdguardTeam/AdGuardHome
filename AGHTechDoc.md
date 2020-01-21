@@ -1338,8 +1338,12 @@ Request:
 	POST /control/filtering/set_url
 
 	{
+	"url": "..."
+	"data": {
+		"name": "..."
 		"url": "..."
 		"enabled": true | false
+	}
 	}
 
 Response:

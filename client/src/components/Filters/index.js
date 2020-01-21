@@ -9,6 +9,8 @@ import CellWrap from '../ui/CellWrap';
 import UserRules from './UserRules';
 import Modal from './Modal';
 
+import { MODAL_TYPE } from '../../helpers/constants';
+
 class Filters extends Component {
     componentDidMount() {
         this.props.getFilteringStatus();
@@ -22,15 +24,29 @@ class Filters extends Component {
         this.props.setRules(this.props.filtering.userRules);
     };
 
+    handleSubmit = (values) => {
+        const { name, url } = values;
+        const { filtering } = this.props;
+
+        if (filtering.modalType === MODAL_TYPE.EDIT) {
+            const data = { ...values };
+            this.props.editFilter(filtering.modalFilterUrl, data);
+        } else {
+            this.props.addFilter(url, name);
+        }
+    }
+
     renderCheckbox = ({ original }) => {
         const { processingConfigFilter } = this.props.filtering;
-        const { url, enabled } = original;
+        const { url, name, enabled } = original;
+        const data = { name, url, enabled: !enabled };
+
         return (
             <label className="checkbox">
                 <input
                     type="checkbox"
                     className="checkbox__input"
-                    onChange={() => this.props.toggleFilterStatus(url, enabled)}
+                    onChange={() => this.props.toggleFilterStatus(url, data)}
                     checked={enabled}
                     disabled={processingConfigFilter}
                 />
@@ -44,6 +60,17 @@ class Filters extends Component {
         if (window.confirm(this.props.t('filter_confirm_delete'))) {
             this.props.removeFilter({ url });
         }
+    };
+
+    getFilter = (url, filters) => {
+        const filter = filters.find(item => url === item.url);
+
+        if (filter) {
+            const { enabled, name, url } = filter;
+            return { enabled, name, url };
+        }
+
+        return { name: '', url: '' };
     };
 
     columns = [
@@ -94,21 +121,43 @@ class Filters extends Component {
         {
             Header: <Trans>actions_table_header</Trans>,
             accessor: 'url',
-            Cell: ({ value }) => (
-                <button
-                    type="button"
-                    className="btn btn-icon btn-outline-secondary btn-sm"
-                    onClick={() => this.handleDelete(value)}
-                    title={this.props.t('delete_table_action')}
-                >
-                    <svg className="icons">
-                        <use xlinkHref="#delete" />
-                    </svg>
-                </button>
-            ),
             className: 'text-center',
-            width: 80,
+            width: 100,
             sortable: false,
+            Cell: (row) => {
+                const { value } = row;
+                const { t, toggleFilteringModal } = this.props;
+
+                return (
+                    <div className="logs__row logs__row--center">
+                        <button
+                            type="button"
+                            className="btn btn-icon btn-outline-primary btn-sm mr-2"
+                            title={t('edit_table_action')}
+                            onClick={() =>
+                                toggleFilteringModal({
+                                    type: MODAL_TYPE.EDIT,
+                                    url: value,
+                                })
+                            }
+                        >
+                            <svg className="icons">
+                                <use xlinkHref="#edit" />
+                            </svg>
+                        </button>
+                        <button
+                            type="button"
+                            className="btn btn-icon btn-outline-secondary btn-sm"
+                            onClick={() => this.handleDelete(value)}
+                            title={this.props.t('delete_table_action')}
+                        >
+                            <svg className="icons">
+                                <use xlinkHref="#delete" />
+                            </svg>
+                        </button>
+                    </div>
+                );
+            },
         },
     ];
 
@@ -124,8 +173,13 @@ class Filters extends Component {
             processingRefreshFilters,
             processingRemoveFilter,
             processingAddFilter,
+            processingConfigFilter,
             processingFilters,
+            modalType,
+            modalFilterUrl,
         } = filtering;
+
+        const currentFilterData = this.getFilter(modalFilterUrl, filters);
 
         return (
             <Fragment>
@@ -161,7 +215,9 @@ class Filters extends Component {
                                     <button
                                         className="btn btn-success btn-standard mr-2"
                                         type="submit"
-                                        onClick={toggleFilteringModal}
+                                        onClick={() =>
+                                            toggleFilteringModal({ type: MODAL_TYPE.ADD })
+                                        }
                                     >
                                         <Trans>add_filter_btn</Trans>
                                     </button>
@@ -191,6 +247,10 @@ class Filters extends Component {
                     addFilter={addFilter}
                     isFilterAdded={isFilterAdded}
                     processingAddFilter={processingAddFilter}
+                    processingConfigFilter={processingConfigFilter}
+                    handleSubmit={this.handleSubmit}
+                    modalType={modalType}
+                    currentFilterData={currentFilterData}
                 />
             </Fragment>
         );
@@ -210,6 +270,7 @@ Filters.propTypes = {
         processingRefreshFilters: PropTypes.bool.isRequired,
         processingConfigFilter: PropTypes.bool.isRequired,
         processingRemoveFilter: PropTypes.bool.isRequired,
+        modalType: PropTypes.string.isRequired,
     }),
     removeFilter: PropTypes.func.isRequired,
     toggleFilterStatus: PropTypes.func.isRequired,
@@ -217,6 +278,7 @@ Filters.propTypes = {
     toggleFilteringModal: PropTypes.func.isRequired,
     handleRulesChange: PropTypes.func.isRequired,
     refreshFilters: PropTypes.func.isRequired,
+    editFilter: PropTypes.func.isRequired,
     t: PropTypes.func.isRequired,
 };
 
