@@ -114,6 +114,7 @@ func TestHome(t *testing.T) {
 	assert.True(t, ioutil.WriteFile(fn, []byte(yamlConf), 0644) == nil)
 	fn, _ = filepath.Abs(fn)
 
+	config = configuration{} // the global variable is dirty because of the previous tests run
 	args := options{}
 	args.configFilename = fn
 	args.workDir = dir

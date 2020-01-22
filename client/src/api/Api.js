@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 import { getPathWithQueryString } from '../helpers/helpers';
+import { R_PATH_LAST_PART } from '../helpers/constants';
 
 class Api {
     baseUrl = 'control';
@@ -17,6 +18,12 @@ class Api {
             console.error(error);
             const errorPath = `${this.baseUrl}/${path}`;
             if (error.response) {
+                if (error.response.status === 403) {
+                    const loginPageUrl = window.location.href.replace(R_PATH_LAST_PART, '/login.html');
+                    window.location.replace(loginPageUrl);
+                    return false;
+                }
+
                 throw new Error(`${errorPath} | ${error.response.data} | ${error.response.status}`);
             }
             throw new Error(`${errorPath} | ${error.message ? error.message : error}`);

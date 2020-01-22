@@ -1353,7 +1353,9 @@ Response:
 
 ## Log-in page
 
-After user completes the steps of installation wizard, he must log in into dashboard using his name and password.  After user successfully logs in, he gets the Cookie which allows the server to authenticate him next time without password.  After the Cookie is expired, user needs to perform log-in operation again.  All requests without a proper Cookie get redirected to Log-In page with prompt for name and password.
+After user completes the steps of installation wizard, he must log in into dashboard using his name and password.  After user successfully logs in, he gets the Cookie which allows the server to authenticate him next time without password.  After the Cookie is expired, user needs to perform log-in operation again.
+
+Requests to / or /index.html without a proper Cookie get redirected to Log-In page with prompt for name and password.  The server responds with 403 to all other requests (including all API methods) without a proper Cookie.
 
 YAML configuration:
 
