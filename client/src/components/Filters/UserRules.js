@@ -26,7 +26,7 @@ class UserRules extends Component {
                     />
                     <div className="card-actions">
                         <button
-                            className="btn btn-success btn-standard"
+                            className="btn btn-success btn-standard btn-large"
                             type="submit"
                             onClick={this.handleSubmit}
                         >

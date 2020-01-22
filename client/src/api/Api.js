@@ -82,6 +82,7 @@ class Api {
     FILTERING_REFRESH = { path: 'filtering/refresh', method: 'POST' };
     FILTERING_SET_URL = { path: 'filtering/set_url', method: 'POST' };
     FILTERING_CONFIG = { path: 'filtering/config', method: 'POST' };
+    FILTERING_CHECK_HOST = { path: 'filtering/check_host', method: 'GET' };
 
     getFilteringStatus() {
         const { path, method } = this.FILTERING_STATUS;
@@ -139,6 +140,12 @@ class Api {
             headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
+    }
+
+    checkHost(params) {
+        const { path, method } = this.FILTERING_CHECK_HOST;
+        const url = getPathWithQueryString(path, params);
+        return this.makeRequest(url, method);
     }
 
     // Parental
