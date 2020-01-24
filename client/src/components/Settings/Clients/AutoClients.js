@@ -4,7 +4,7 @@ import { withNamespaces } from 'react-i18next';
 import ReactTable from 'react-table';
 
 import Card from '../../ui/Card';
-import WrapCell from './WrapCell';
+import CellWrap from '../../ui/CellWrap';
 
 import whoisCell from './whoisCell';
 
@@ -16,19 +16,19 @@ class AutoClients extends Component {
             Header: this.props.t('table_client'),
             accessor: 'ip',
             minWidth: COLUMN_MIN_WIDTH,
-            Cell: WrapCell,
+            Cell: CellWrap,
         },
         {
             Header: this.props.t('table_name'),
             accessor: 'name',
             minWidth: COLUMN_MIN_WIDTH,
-            Cell: WrapCell,
+            Cell: CellWrap,
         },
         {
             Header: this.props.t('source_label'),
             accessor: 'source',
             minWidth: COLUMN_MIN_WIDTH,
-            Cell: WrapCell,
+            Cell: CellWrap,
         },
         {
             Header: this.props.t('whois'),

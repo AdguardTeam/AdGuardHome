@@ -434,3 +434,19 @@ export const RESPONSE_FILTER = {
     ALL: 'all',
     FILTERED: 'filtered',
 };
+
+export const DEFAULT_TIME_FORMAT = 'HH:mm:ss';
+
+export const DEFAULT_DATE_FORMAT_OPTIONS = {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: false,
+};
+
+export const DETAILED_DATE_FORMAT_OPTIONS = {
+    ...DEFAULT_DATE_FORMAT_OPTIONS,
+    month: 'long',
+};

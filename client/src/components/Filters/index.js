@@ -8,6 +8,7 @@ import Card from '../ui/Card';
 import CellWrap from '../ui/CellWrap';
 import UserRules from './UserRules';
 import Modal from './Modal';
+import { formatDetailedDateTime } from '../../helpers/helpers';
 
 import { MODAL_TYPE } from '../../helpers/constants';
 
@@ -61,6 +62,8 @@ class Filters extends Component {
             this.props.removeFilter({ url });
         }
     };
+
+    getDateCell = row => CellWrap(row, formatDetailedDateTime);
 
     getFilter = (url, filters) => {
         const filter = filters.find(item => url === item.url);
@@ -116,7 +119,7 @@ class Filters extends Component {
             accessor: 'lastUpdated',
             className: 'text-center',
             minWidth: 150,
-            Cell: CellWrap,
+            Cell: this.getDateCell,
         },
         {
             Header: <Trans>actions_table_header</Trans>,

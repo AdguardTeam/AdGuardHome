@@ -7,7 +7,7 @@ import { MODAL_TYPE } from '../../../helpers/constants';
 import { normalizeTextarea } from '../../../helpers/helpers';
 import Card from '../../ui/Card';
 import Modal from './Modal';
-import WrapCell from './WrapCell';
+import CellWrap from '../../ui/CellWrap';
 
 class ClientsTable extends Component {
     handleFormAdd = (values) => {
@@ -94,7 +94,7 @@ class ClientsTable extends Component {
             Header: this.props.t('table_name'),
             accessor: 'name',
             minWidth: 120,
-            Cell: WrapCell,
+            Cell: CellWrap,
         },
         {
             Header: this.props.t('settings'),
@@ -166,21 +166,7 @@ class ClientsTable extends Component {
             accessor: row => this.props.normalizedTopClients.configured[row.name] || 0,
             sortMethod: (a, b) => b - a,
             minWidth: 120,
-            Cell: (row) => {
-                const { value: clientStats } = row;
-
-                if (clientStats) {
-                    return (
-                        <div className="logs__row">
-                            <div className="logs__text" title={clientStats}>
-                                {clientStats}
-                            </div>
-                        </div>
-                    );
-                }
-
-                return '–';
-            },
+            Cell: CellWrap,
         },
         {
             Header: this.props.t('actions_table_header'),

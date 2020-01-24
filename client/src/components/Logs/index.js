@@ -22,6 +22,7 @@ import Loading from '../ui/Loading';
 import PopoverFiltered from '../ui/PopoverFilter';
 import Popover from '../ui/Popover';
 import './Logs.css';
+import CellWrap from '../ui/CellWrap';
 
 const TABLE_FIRST_PAGE = 0;
 const INITIAL_REQUEST_DATA = ['', TABLE_FIRST_PAGE, TABLE_DEFAULT_PAGE_SIZE];
@@ -115,12 +116,11 @@ class Logs extends Component {
 
     checkWhiteList = reason => reason === FILTERED_STATUS.NOT_FILTERED_WHITE_LIST;
 
-    getTimeCell = ({ value }) => (
-        <div className="logs__row">
-                    <span className="logs__text" title={formatDateTime(value)}>
-                        {isToday(value) ? formatTime(value) : formatDateTime(value)}
-                    </span>
-        </div>
+
+    getDateCell = row => CellWrap(
+        row,
+        (isToday(row.value) ? formatTime : formatDateTime),
+        formatDateTime,
     );
 
     getDomainCell = (row) => {
@@ -259,7 +259,7 @@ class Logs extends Component {
                 Header: t('time_table_header'),
                 accessor: 'time',
                 minWidth: 105,
-                Cell: this.getTimeCell,
+                Cell: this.getDateCell,
             },
             {
                 Header: t('domain_name_table_header'),
