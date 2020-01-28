@@ -220,16 +220,15 @@ func assignUniqueFilterID() int64 {
 func periodicallyRefreshFilters() {
 	const maxInterval = 1 * 60 * 60
 	intval := 5 // use a dynamically increasing time interval
-	nUpdated := 0
 	for {
 		isNetworkErr := false
 		if config.DNS.FiltersUpdateIntervalHours != 0 && refreshStatus == 0 {
 			refreshStatus = 1
 			refreshLock.Lock()
-			nUpdated, isNetworkErr = refreshFiltersIfNecessary(false)
+			_, isNetworkErr = refreshFiltersIfNecessary(false)
 			refreshLock.Unlock()
 			refreshStatus = 0
-			if nUpdated != 0 {
+			if !isNetworkErr {
 				intval = maxInterval
 			}
 		}
@@ -304,6 +303,10 @@ func refreshFiltersIfNecessary(force bool) (int, bool) {
 		updateFilters = append(updateFilters, uf)
 	}
 	config.RUnlock()
+
+	if len(updateFilters) == 0 {
+		return 0, false
+	}
 
 	nfail := 0
 	for i := range updateFilters {

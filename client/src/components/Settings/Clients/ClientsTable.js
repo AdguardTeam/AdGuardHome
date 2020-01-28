@@ -33,6 +33,10 @@ class ClientsTable extends Component {
             } else {
                 config.upstreams = [];
             }
+
+            if (values.tags) {
+                config.tags = values.tags.map(tag => tag.value);
+            }
         }
 
         if (this.props.modalType === MODAL_TYPE.EDIT) {
@@ -40,22 +44,29 @@ class ClientsTable extends Component {
         } else {
             this.handleFormAdd(config);
         }
-        this.props.getStats();
     };
+
+    getOptionsWithLabels = options => (
+        options.map(option => ({ value: option, label: option }))
+    );
 
     getClient = (name, clients) => {
         const client = clients.find(item => name === item.name);
 
         if (client) {
-            const { upstreams, whois_info, ...values } = client;
+            const {
+                upstreams, tags, whois_info, ...values
+            } = client;
             return {
                 upstreams: (upstreams && upstreams.join('\n')) || '',
+                tags: (tags && this.getOptionsWithLabels(tags)) || [],
                 ...values,
             };
         }
 
         return {
             ids: [''],
+            tags: [],
             use_global_settings: true,
             use_global_blocked_services: true,
         };
@@ -161,6 +172,30 @@ class ClientsTable extends Component {
             },
         },
         {
+            Header: this.props.t('tags_title'),
+            accessor: 'tags',
+            minWidth: 140,
+            Cell: (row) => {
+                const { value } = row;
+
+                if (!value || value.length < 1) {
+                    return '–';
+                }
+
+                return (
+                    <div className="logs__row logs__row--overflow">
+                        <span className="logs__text">
+                            {value.map(tag => (
+                                <div key={tag} title={tag} className="small">
+                                    {tag}
+                                </div>
+                            ))}
+                        </span>
+                    </div>
+                );
+            },
+        },
+        {
             Header: this.props.t('requests_count'),
             id: 'statistics',
             accessor: row => this.props.normalizedTopClients.configured[row.name] || 0,
@@ -223,9 +258,11 @@ class ClientsTable extends Component {
             toggleClientModal,
             processingAdding,
             processingUpdating,
+            supportedTags,
         } = this.props;
 
         const currentClientData = this.getClient(modalClientName, clients);
+        const tagsOptions = this.getOptionsWithLabels(supportedTags);
 
         return (
             <Card
@@ -272,6 +309,7 @@ class ClientsTable extends Component {
                         handleSubmit={this.handleSubmit}
                         processingAdding={processingAdding}
                         processingUpdating={processingUpdating}
+                        tagsOptions={tagsOptions}
                     />
                 </Fragment>
             </Card>
@@ -294,6 +332,7 @@ ClientsTable.propTypes = {
     processingDeleting: PropTypes.bool.isRequired,
     processingUpdating: PropTypes.bool.isRequired,
     getStats: PropTypes.func.isRequired,
+    supportedTags: PropTypes.array.isRequired,
 };
 
 export default withNamespaces()(ClientsTable);

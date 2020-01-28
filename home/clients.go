@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -26,6 +27,7 @@ const (
 // Client information
 type Client struct {
 	IDs                 []string
+	Tags                []string
 	Name                string
 	UseOwnSettings      bool // false: use global settings
 	FilteringEnabled    bool
@@ -69,6 +71,8 @@ type clientsContainer struct {
 	ipHost  map[string]*ClientHost // IP -> Hostname
 	lock    sync.Mutex
 
+	allTags map[string]bool
+
 	// dhcpServer is used for looking up clients IP addresses by MAC addresses
 	dhcpServer *dhcpd.Server
 
@@ -84,6 +88,12 @@ func (clients *clientsContainer) Init(objects []clientObject, dhcpServer *dhcpd.
 	clients.list = make(map[string]*Client)
 	clients.idIndex = make(map[string]*Client)
 	clients.ipHost = make(map[string]*ClientHost)
+
+	clients.allTags = make(map[string]bool)
+	for _, t := range clientTags {
+		clients.allTags[t] = false
+	}
+
 	clients.dhcpServer = dhcpServer
 	clients.addFromConfig(objects)
 
@@ -96,6 +106,7 @@ func (clients *clientsContainer) Init(objects []clientObject, dhcpServer *dhcpd.
 
 type clientObject struct {
 	Name                string   `yaml:"name"`
+	Tags                []string `yaml:"tags"`
 	IDs                 []string `yaml:"ids"`
 	UseGlobalSettings   bool     `yaml:"use_global_settings"`
 	FilteringEnabled    bool     `yaml:"filtering_enabled"`
@@ -107,6 +118,11 @@ type clientObject struct {
 	BlockedServices          []string `yaml:"blocked_services"`
 
 	Upstreams []string `yaml:"upstreams"`
+}
+
+func (clients *clientsContainer) tagKnown(tag string) bool {
+	_, ok := clients.allTags[tag]
+	return ok
 }
 
 func (clients *clientsContainer) addFromConfig(objects []clientObject) {
@@ -125,6 +141,16 @@ func (clients *clientsContainer) addFromConfig(objects []clientObject) {
 
 			Upstreams: cy.Upstreams,
 		}
+
+		for _, t := range cy.Tags {
+			if !clients.tagKnown(t) {
+				log.Debug("Clients: skipping unknown tag '%s'", t)
+				continue
+			}
+			cli.Tags = append(cli.Tags, t)
+		}
+		sort.Strings(cli.Tags)
+
 		_, err := clients.Add(cli)
 		if err != nil {
 			log.Tracef("clientAdd: %s", err)
@@ -146,14 +172,10 @@ func (clients *clientsContainer) WriteDiskConfig(objects *[]clientObject) {
 			UseGlobalBlockedServices: !cli.UseOwnBlockedServices,
 		}
 
-		cy.IDs = make([]string, len(cli.IDs))
-		copy(cy.IDs, cli.IDs)
-
-		cy.BlockedServices = make([]string, len(cli.BlockedServices))
-		copy(cy.BlockedServices, cli.BlockedServices)
-
-		cy.Upstreams = make([]string, len(cli.Upstreams))
-		copy(cy.Upstreams, cli.Upstreams)
+		cy.Tags = stringArrayDup(cli.Tags)
+		cy.IDs = stringArrayDup(cli.IDs)
+		cy.BlockedServices = stringArrayDup(cli.BlockedServices)
+		cy.Upstreams = stringArrayDup(cli.Upstreams)
 
 		*objects = append(*objects, cy)
 	}
@@ -189,12 +211,26 @@ func (clients *clientsContainer) Exists(ip string, source clientSource) bool {
 	return true
 }
 
+func stringArrayDup(a []string) []string {
+	a2 := make([]string, len(a))
+	copy(a2, a)
+	return a2
+}
+
 // Find searches for a client by IP
 func (clients *clientsContainer) Find(ip string) (Client, bool) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	return clients.findByIP(ip)
+	c, ok := clients.findByIP(ip)
+	if !ok {
+		return Client{}, false
+	}
+	c.IDs = stringArrayDup(c.IDs)
+	c.Tags = stringArrayDup(c.Tags)
+	c.BlockedServices = stringArrayDup(c.BlockedServices)
+	c.Upstreams = stringArrayDup(c.Upstreams)
+	return c, true
 }
 
 func upstreamArrayCopy(a []upstream.Upstream) []upstream.Upstream {
@@ -297,7 +333,7 @@ func (clients *clientsContainer) FindAutoClient(ip string) (ClientHost, bool) {
 }
 
 // Check if Client object's fields are correct
-func (c *Client) check() error {
+func (clients *clientsContainer) check(c *Client) error {
 	if len(c.Name) == 0 {
 		return fmt.Errorf("Invalid Name")
 	}
@@ -326,6 +362,13 @@ func (c *Client) check() error {
 		return fmt.Errorf("Invalid ID: %s", id)
 	}
 
+	for _, t := range c.Tags {
+		if !clients.tagKnown(t) {
+			return fmt.Errorf("Invalid tag: %s", t)
+		}
+	}
+	sort.Strings(c.Tags)
+
 	if len(c.Upstreams) != 0 {
 		err := dnsforward.ValidateUpstreams(c.Upstreams)
 		if err != nil {
@@ -339,7 +382,7 @@ func (c *Client) check() error {
 // Add a new client object
 // Return true: success;  false: client exists.
 func (clients *clientsContainer) Add(c Client) (bool, error) {
-	e := c.check()
+	e := clients.check(&c)
 	if e != nil {
 		return false, e
 	}
@@ -408,7 +451,7 @@ func arraysEqual(a, b []string) bool {
 
 // Update a client
 func (clients *clientsContainer) Update(name string, c Client) error {
-	err := c.check()
+	err := clients.check(&c)
 	if err != nil {
 		return err
 	}

@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { Field, FieldArray, reduxForm, formValueSelector } from 'redux-form';
 import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
+import Select from 'react-select';
 
 import i18n from '../../../i18n';
 import Tabs from '../../ui/Tabs';
@@ -99,6 +100,23 @@ const renderFieldsWrapper = (placeholder, buttonTitle) =>
 // Should create function outside of component to prevent component re-renders
 const renderFields = renderFieldsWrapper(i18n.t('form_enter_id'), i18n.t('form_add_id'));
 
+const renderMultiselect = (props) => {
+    const { input, placeholder, options } = props;
+
+    return (
+        <Select
+            {...input}
+            options={options}
+            className="basic-multi-select"
+            classNamePrefix="select"
+            onChange={value => input.onChange(value)}
+            onBlur={() => input.onBlur(input.value)}
+            placeholder={placeholder}
+            isMulti
+        />
+    );
+};
+
 let Form = (props) => {
     const {
         t,
@@ -113,6 +131,7 @@ let Form = (props) => {
         processingAdding,
         processingUpdating,
         invalid,
+        tagsOptions,
     } = props;
 
     return (
@@ -128,6 +147,27 @@ let Form = (props) => {
                             className="form-control"
                             placeholder={t('form_client_name')}
                             normalizeOnBlur={data => data.trim()}
+                        />
+                    </div>
+
+                    <div className="form__group mb-4">
+                        <div className="form__label">
+                            <strong className="mr-3">
+                                <Trans>tags_title</Trans>
+                            </strong>
+                        </div>
+                        <div className="form__desc mt-0 mb-2">
+                            <Trans components={[
+                                <a href="https://github.com/AdguardTeam/AdGuardHome/wiki/Hosts-Blocklists#ctag" key="0">link</a>,
+                            ]}>
+                                tags_desc
+                            </Trans>
+                        </div>
+                        <Field
+                            name="tags"
+                            component={renderMultiselect}
+                            placeholder={t('form_select_tags')}
+                            options={tagsOptions}
                         />
                     </div>
 
@@ -286,6 +326,7 @@ Form.propTypes = {
     processingAdding: PropTypes.bool.isRequired,
     processingUpdating: PropTypes.bool.isRequired,
     invalid: PropTypes.bool.isRequired,
+    tagsOptions: PropTypes.array.isRequired,
 };
 
 const selector = formValueSelector('clientForm');

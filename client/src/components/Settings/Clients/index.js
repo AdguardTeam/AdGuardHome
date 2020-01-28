@@ -46,6 +46,7 @@ class Clients extends Component {
                             processingDeleting={clients.processingDeleting}
                             processingUpdating={clients.processingUpdating}
                             getStats={getStats}
+                            supportedTags={dashboard.supportedTags}
                         />
                         <AutoClients
                             autoClients={dashboard.autoClients}

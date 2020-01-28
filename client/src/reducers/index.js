@@ -153,8 +153,7 @@ const dashboard = handleActions(
         [actions.getClientsSuccess]: (state, { payload }) => {
             const newState = {
                 ...state,
-                clients: payload.clients,
-                autoClients: payload.autoClients,
+                ...payload,
                 processingClients: false,
             };
             return newState;
@@ -205,6 +204,7 @@ const dashboard = handleActions(
         dnsVersion: '',
         clients: [],
         autoClients: [],
+        supportedTags: [],
         name: '',
     },
 );

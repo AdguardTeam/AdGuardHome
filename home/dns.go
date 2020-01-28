@@ -204,6 +204,8 @@ func applyAdditionalFiltering(clientAddr string, setts *dnsfilter.RequestFilteri
 		ApplyBlockedServices(setts, c.BlockedServices)
 	}
 
+	setts.ClientTags = c.Tags
+
 	if !c.UseOwnSettings {
 		return
 	}

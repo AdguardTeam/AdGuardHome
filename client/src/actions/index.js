@@ -208,6 +208,7 @@ export const getClients = () => async (dispatch) => {
         dispatch(getClientsSuccess({
             clients: sortedClients || [],
             autoClients: sortedAutoClients || [],
+            supportedTags: data.supported_tags || [],
         }));
     } catch (error) {
         dispatch(addErrorToast({ error }));
