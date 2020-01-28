@@ -131,7 +131,7 @@ You will need:
  * [go](https://golang.org/dl/) v1.13 or later.
  * [node.js](https://nodejs.org/en/download/) v10 or later.
 
-You can either install it via the provided links or use [brew.sh](https://brew.sh/) if you're on Mac:
+You can either install them via the provided links or use [brew.sh](https://brew.sh/) if you're on Mac:
 
 ```bash
 brew install go node
