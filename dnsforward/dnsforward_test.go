@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"math/big"
 	"net"
+	"sort"
 	"sync"
 	"testing"
 	"time"
@@ -886,4 +887,16 @@ func TestIpFromAddr(t *testing.T) {
 
 	a = ipFromAddr(nil)
 	assert.True(t, a == "")
+}
+
+func TestMatchDNSName(t *testing.T) {
+	dnsNames := []string{"host1", "*.host2", "1.2.3.4"}
+	sort.Strings(dnsNames)
+	assert.True(t, matchDNSName(dnsNames, "host1"))
+	assert.True(t, matchDNSName(dnsNames, "a.host2"))
+	assert.True(t, matchDNSName(dnsNames, "b.a.host2"))
+	assert.True(t, matchDNSName(dnsNames, "1.2.3.4"))
+	assert.True(t, !matchDNSName(dnsNames, "host2"))
+	assert.True(t, !matchDNSName(dnsNames, ""))
+	assert.True(t, !matchDNSName(dnsNames, "*.host2"))
 }
