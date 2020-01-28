@@ -21,6 +21,5 @@ var clientTags = []string{
 
 	"user_admin",
 	"user_child",
-	"user_other",
 	"user_regular",
 }
