@@ -27,6 +27,7 @@
     "react-redux-loading-bar": "^4.0.7",
     "react-router-dom": "^4.2.2",
     "react-router-hash-link": "^1.2.2",
+    "react-select": "^3.0.8",
     "react-table": "^6.10.3",
     "react-transition-group": "^2.4.0",
     "redux": "^4.0.0",
