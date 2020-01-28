@@ -9,6 +9,7 @@ import (
 
 type clientJSON struct {
 	IDs                 []string `json:"ids"`
+	Tags                []string `json:"tags"`
 	Name                string   `json:"name"`
 	UseGlobalSettings   bool     `json:"use_global_settings"`
 	FilteringEnabled    bool     `json:"filtering_enabled"`
@@ -33,6 +34,7 @@ type clientHostJSON struct {
 type clientListJSON struct {
 	Clients     []clientJSON     `json:"clients"`
 	AutoClients []clientHostJSON `json:"auto_clients"`
+	Tags        []string         `json:"supported_tags"`
 }
 
 // respond with information about configured clients
@@ -71,6 +73,8 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 	}
 	clients.lock.Unlock()
 
+	data.Tags = clientTags
+
 	w.Header().Set("Content-Type", "application/json")
 	e := json.NewEncoder(w).Encode(data)
 	if e != nil {
@@ -84,6 +88,7 @@ func jsonToClient(cj clientJSON) (*Client, error) {
 	c := Client{
 		Name:                cj.Name,
 		IDs:                 cj.IDs,
+		Tags:                cj.Tags,
 		UseOwnSettings:      !cj.UseGlobalSettings,
 		FilteringEnabled:    cj.FilteringEnabled,
 		ParentalEnabled:     cj.ParentalEnabled,
@@ -103,6 +108,7 @@ func clientToJSON(c *Client) clientJSON {
 	cj := clientJSON{
 		Name:                c.Name,
 		IDs:                 c.IDs,
+		Tags:                c.Tags,
 		UseGlobalSettings:   !c.UseOwnSettings,
 		FilteringEnabled:    c.FilteringEnabled,
 		ParentalEnabled:     c.ParentalEnabled,

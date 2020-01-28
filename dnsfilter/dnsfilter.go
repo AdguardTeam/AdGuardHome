@@ -31,6 +31,7 @@ type RequestFilteringSettings struct {
 	SafeSearchEnabled   bool
 	SafeBrowsingEnabled bool
 	ParentalEnabled     bool
+	ClientTags          []string
 	ServicesRules       []ServiceEntry
 }
 
@@ -264,7 +265,7 @@ func (d *Dnsfilter) CheckHostRules(host string, qtype uint16, setts *RequestFilt
 		return Result{}, nil
 	}
 
-	return d.matchHost(host, qtype)
+	return d.matchHost(host, qtype, setts.ClientTags)
 }
 
 // CheckHost tries to match the host against filtering rules,
@@ -286,7 +287,7 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 
 	// try filter lists first
 	if setts.FilteringEnabled {
-		result, err = d.matchHost(host, qtype)
+		result, err = d.matchHost(host, qtype, setts.ClientTags)
 		if err != nil {
 			return result, err
 		}
@@ -475,14 +476,14 @@ func (d *Dnsfilter) initFiltering(filters map[int]string) error {
 }
 
 // matchHost is a low-level way to check only if hostname is filtered by rules, skipping expensive safebrowsing and parental lookups
-func (d *Dnsfilter) matchHost(host string, qtype uint16) (Result, error) {
+func (d *Dnsfilter) matchHost(host string, qtype uint16, ctags []string) (Result, error) {
 	d.engineLock.RLock()
 	defer d.engineLock.RUnlock()
 	if d.filteringEngine == nil {
 		return Result{}, nil
 	}
 
-	frules, ok := d.filteringEngine.Match(host)
+	frules, ok := d.filteringEngine.Match(host, ctags)
 	if !ok {
 		return Result{}, nil
 	}

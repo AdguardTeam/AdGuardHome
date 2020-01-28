@@ -673,6 +673,7 @@ Response:
 		{
 			name: "client1"
 			ids: ["...", ...] // IP, CIDR or MAC
+			tags: ["...", ...]
 			use_global_settings: true
 			filtering_enabled: false
 			parental_enabled: false
@@ -698,6 +699,7 @@ Response:
 			}
 		}
 	]
+	supported_tags: ["...", ...]
 	}
 
 Supported keys for `whois_info`: orgname, country, city.
@@ -712,6 +714,7 @@ Request:
 	{
 		name: "client1"
 		ids: ["...", ...] // IP, CIDR or MAC
+		tags: ["...", ...]
 		use_global_settings: true
 		filtering_enabled: false
 		parental_enabled: false
@@ -742,6 +745,7 @@ Request:
 		data: {
 			name: "client1"
 			ids: ["...", ...] // IP, CIDR or MAC
+			tags: ["...", ...]
 			use_global_settings: true
 			filtering_enabled: false
 			parental_enabled: false
