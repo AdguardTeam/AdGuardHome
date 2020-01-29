@@ -11,7 +11,7 @@ import {
     formatDateTime,
     isToday,
 } from '../../helpers/helpers';
-import { SERVICES, FILTERED_STATUS, TABLE_DEFAULT_PAGE_SIZE } from '../../helpers/constants';
+import { SERVICES, FILTERED_STATUS, TABLE_DEFAULT_PAGE_SIZE, CUSTOM_FILTERING_RULES_ID } from '../../helpers/constants';
 import { getTrackerData } from '../../helpers/trackers/trackers';
 import { formatClientCell } from '../../helpers/formatClientCell';
 
@@ -116,6 +116,9 @@ class Logs extends Component {
 
     checkWhiteList = reason => reason === FILTERED_STATUS.NOT_FILTERED_WHITE_LIST;
 
+    checkBlackList = reason => reason === FILTERED_STATUS.FILTERED_BLACK_LIST;
+
+    checkBlockedService = reason => reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
 
     getDateCell = row => CellWrap(
         row,
@@ -142,6 +145,25 @@ class Logs extends Component {
         })
     );
 
+    getFilterName = (filters, filterId, t) => {
+        if (filterId === CUSTOM_FILTERING_RULES_ID) {
+            return t('custom_filter_rules');
+        }
+
+        const filter = filters.find(filter => filter.id === filterId);
+        let filterName = '';
+
+        if (filter) {
+            filterName = filter.name;
+        }
+
+        if (!filterName) {
+            filterName = t('unknown_filter', { filterId });
+        }
+
+        return filterName;
+    }
+
     getResponseCell = ({ value: responses, original }) => {
         const {
             reason, filterId, rule, status, originalAnswer,
@@ -150,41 +172,48 @@ class Logs extends Component {
         const { filters } = filtering;
 
         const isFiltered = this.checkFiltered(reason);
-        const filterKey = reason.replace(FILTERED_REASON, '');
-        const parsedFilteredReason = t('query_log_filtered', { filter: filterKey });
+        const isBlackList = this.checkBlackList(reason);
         const isRewrite = this.checkRewrite(reason);
         const isWhiteList = this.checkWhiteList(reason);
-        const isBlockedService = reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
+        const isBlockedService = this.checkBlockedService(reason);
+        const isBlockedCnameIp = originalAnswer;
+
+        const filterKey = reason.replace(FILTERED_REASON, '');
+        const parsedFilteredReason = t('query_log_filtered', { filter: filterKey });
         const currentService = SERVICES.find(service => service.id === original.serviceName);
         const serviceName = currentService && currentService.name;
-        const normalizedAnswer = originalAnswer && this.normalizeResponse(originalAnswer);
-        let filterName = '';
+        const filterName = this.getFilterName(filters, filterId, t);
 
-        if (filterId === 0) {
-            filterName = t('custom_filter_rules');
-        } else {
-            const filterItem = Object.keys(filters).filter(key => filters[key].id === filterId)[0];
+        if (isBlockedCnameIp) {
+            const normalizedAnswer = this.normalizeResponse(originalAnswer);
 
-            if (typeof filterItem !== 'undefined' && typeof filters[filterItem] !== 'undefined') {
-                filterName = filters[filterItem].name;
-            }
-
-            if (!filterName) {
-                filterName = t('unknown_filter', { filterId });
-            }
+            return (
+                <div className="logs__row logs__row--column">
+                    <div className="logs__text-wrap">
+                        <span className="logs__text">
+                            <Trans>blocked_by_response</Trans>
+                        </span>
+                    </div>
+                    <div className="logs__list-wrap">
+                        {this.renderResponseList(normalizedAnswer, status)}
+                    </div>
+                </div>
+            );
         }
 
         return (
             <div className="logs__row logs__row--column">
                 <div className="logs__text-wrap">
-                    {originalAnswer && (
-                        <span className="logs__text">
-                            <Trans>blocked_by_response</Trans>
-                        </span>
-                    )}
-                    {!originalAnswer && (isFiltered || isBlockedService) && (
+                    {(isFiltered || isBlockedService) && !isBlackList && (
                         <span className="logs__text" title={parsedFilteredReason}>
                             {parsedFilteredReason}
+                        </span>
+                    )}
+                    {isBlackList && (
+                        <span className="logs__text">
+                            <Trans values={{ filter: filterName }}>
+                                query_log_filtered
+                            </Trans>
                         </span>
                     )}
                     {isBlockedService
@@ -197,10 +226,7 @@ class Logs extends Component {
                     )}
                 </div>
                 <div className="logs__list-wrap">
-                    {originalAnswer
-                        ? this.renderResponseList(normalizedAnswer, status)
-                        : this.renderResponseList(responses, status)
-                    }
+                    {this.renderResponseList(responses, status)}
                     {isWhiteList && this.renderTooltip(isWhiteList, rule, filterName)}
                 </div>
             </div>

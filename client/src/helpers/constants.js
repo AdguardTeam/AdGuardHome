@@ -450,3 +450,5 @@ export const DETAILED_DATE_FORMAT_OPTIONS = {
     ...DEFAULT_DATE_FORMAT_OPTIONS,
     month: 'long',
 };
+
+export const CUSTOM_FILTERING_RULES_ID = 0;
