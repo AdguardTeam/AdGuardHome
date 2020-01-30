@@ -33,7 +33,8 @@ class Setup extends Component {
     }
 
     handleFormSubmit = (values) => {
-        this.props.setAllSettings(values);
+        const { staticIp, ...config } = values;
+        this.props.setAllSettings(config);
     };
 
     handleFormChange = debounce((values) => {
