@@ -446,5 +446,17 @@
     "autofix_warning_result": "As a result all DNS requests from your system will be processed by AdGuardHome by default.",
     "tags_title": "Tags",
     "tags_desc": "You can select the tags that correspond to the client. Tags can be included in the filtering rules and allow you to apply them more accurately. <0>Learn more</0>",
-    "form_select_tags": "Select client tags"
+    "form_select_tags": "Select client tags",
+    "check_title": "Check the filtering",
+    "check_desc": "Check if the host name is filtered",
+    "check": "Check",
+    "form_enter_host": "Enter a host name",
+    "filtered_custom_rules": "Filtered by Custom filtering rules",
+    "host_whitelisted": "The host is whitelisted",
+    "check_ip": "IP addresses: {{ip}}",
+    "check_cname": "CNAME: {{cname}}",
+    "check_reason": "Reason: {{reason}}",
+    "check_rule": "Rule: {{rule}}",
+    "check_service": "Service name: {{service}}",
+    "check_not_found": "Doesn't exist in any filter"
 }

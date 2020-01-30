@@ -56,6 +56,7 @@ Contents:
 	* API: Get filtering parameters
 	* API: Set filtering parameters
 	* API: Set URL parameters
+	* API: Domain Check
 * Log-in page
 	* API: Log in
 	* API: Log out
@@ -1353,6 +1354,30 @@ Request:
 Response:
 
 	200 OK
+
+
+### API: Domain Check
+
+Check if host name is filtered.
+
+Request:
+
+	GET /control/filtering/check_host?name=hostname
+
+Response:
+
+	200 OK
+
+	{
+	"reason":"FilteredBlackList",
+	"filter_id":1,
+	"rule":"||doubleclick.net^",
+	"service_name": "...", // set if reason=FilteredBlockedService
+
+	// if reason=ReasonRewrite:
+	"cname": "...",
+	"ip_addrs": ["1.2.3.4", ...],
+	}
 
 
 ## Log-in page

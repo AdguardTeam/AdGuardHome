@@ -22,6 +22,8 @@ import {
     DEFAULT_DATE_FORMAT_OPTIONS,
     DETAILED_DATE_FORMAT_OPTIONS,
     DEFAULT_LANGUAGE,
+    FILTERED_STATUS,
+    FILTERED,
 } from './constants';
 
 /**
@@ -418,3 +420,9 @@ export const createOnBlurHandler = (event, input, normalizeOnBlur) => (
     normalizeOnBlur
         ? input.onBlur(normalizeOnBlur(event.target.value))
         : input.onBlur());
+
+export const checkFiltered = reason => reason.indexOf(FILTERED) === 0;
+export const checkRewrite = reason => reason === FILTERED_STATUS.REWRITE;
+export const checkBlackList = reason => reason === FILTERED_STATUS.FILTERED_BLACK_LIST;
+export const checkWhiteList = reason => reason === FILTERED_STATUS.NOT_FILTERED_WHITE_LIST;
+export const checkNotFilteredNotFound = reason => reason === FILTERED_STATUS.NOT_FILTERED_NOT_FOUND;

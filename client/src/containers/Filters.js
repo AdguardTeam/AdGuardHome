@@ -9,6 +9,7 @@ import {
     refreshFilters,
     handleRulesChange,
     editFilter,
+    checkHost,
 } from '../actions/filtering';
 import Filters from '../components/Filters';
 
@@ -28,6 +29,7 @@ const mapDispatchToProps = {
     refreshFilters,
     handleRulesChange,
     editFilter,
+    checkHost,
 };
 
 export default connect(

@@ -8,8 +8,9 @@ import Card from '../ui/Card';
 import CellWrap from '../ui/CellWrap';
 import UserRules from './UserRules';
 import Modal from './Modal';
-import { formatDetailedDateTime } from '../../helpers/helpers';
+import Check from './Check';
 
+import { formatDetailedDateTime } from '../../helpers/helpers';
 import { MODAL_TYPE } from '../../helpers/constants';
 
 class Filters extends Component {
@@ -75,6 +76,10 @@ class Filters extends Component {
 
         return { name: '', url: '' };
     };
+
+    handleCheck = (values) => {
+        this.props.checkHost(values);
+    }
 
     columns = [
         {
@@ -180,6 +185,8 @@ class Filters extends Component {
             processingFilters,
             modalType,
             modalFilterUrl,
+            processingCheck,
+            check,
         } = filtering;
 
         const currentFilterData = this.getFilter(modalFilterUrl, filters);
@@ -216,7 +223,7 @@ class Filters extends Component {
                                 />
                                 <div className="card-actions">
                                     <button
-                                        className="btn btn-success btn-standard mr-2"
+                                        className="btn btn-success btn-standard mr-2 btn-large"
                                         type="submit"
                                         onClick={() =>
                                             toggleFilteringModal({ type: MODAL_TYPE.ADD })
@@ -240,6 +247,14 @@ class Filters extends Component {
                                 userRules={userRules}
                                 handleRulesChange={this.handleRulesChange}
                                 handleRulesSubmit={this.handleRulesSubmit}
+                            />
+                        </div>
+                        <div className="col-md-12">
+                            <Check
+                                filters={filters}
+                                check={check}
+                                onSubmit={this.handleCheck}
+                                processing={processingCheck}
                             />
                         </div>
                     </div>
@@ -274,6 +289,7 @@ Filters.propTypes = {
         processingConfigFilter: PropTypes.bool.isRequired,
         processingRemoveFilter: PropTypes.bool.isRequired,
         modalType: PropTypes.string.isRequired,
+        processingCheck: PropTypes.bool.isRequired,
     }),
     removeFilter: PropTypes.func.isRequired,
     toggleFilterStatus: PropTypes.func.isRequired,
@@ -282,6 +298,7 @@ Filters.propTypes = {
     handleRulesChange: PropTypes.func.isRequired,
     refreshFilters: PropTypes.func.isRequired,
     editFilter: PropTypes.func.isRequired,
+    checkHost: PropTypes.func.isRequired,
     t: PropTypes.func.isRequired,
 };
 

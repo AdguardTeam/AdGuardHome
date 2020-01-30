@@ -349,9 +349,13 @@ export const ENCRYPTION_SOURCE = {
 export const FILTERED_STATUS = {
     FILTERED_BLACK_LIST: 'FilteredBlackList',
     NOT_FILTERED_WHITE_LIST: 'NotFilteredWhiteList',
+    NOT_FILTERED_NOT_FOUND: 'NotFilteredNotFound',
     FILTERED_BLOCKED_SERVICE: 'FilteredBlockedService',
     REWRITE: 'Rewrite',
 };
+
+export const FILTERED = 'Filtered';
+export const NOT_FILTERED = 'NotFiltered';
 
 export const STATS_INTERVALS_DAYS = [1, 7, 30, 90];
 
