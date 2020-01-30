@@ -1,5 +1,5 @@
 {
-    "timeUpdated": "2020-01-30T08:50:36.021Z",
+    "timeUpdated": "2020-01-30T15:39:59.447Z",
     "categories": {
         "0": "audio_video_player",
         "1": "comments",
@@ -19,12 +19,12 @@
         "163": {
             "name": "163",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.163.com/"
         },
         "1000mercis": {
             "name": "1000mercis",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.1000mercis.com/"
         },
         "161media": {
             "name": "Platform161",
@@ -54,7 +54,7 @@
         "1tag": {
             "name": "1tag",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.dentsuaegisnetwork.com/"
         },
         "1und1": {
             "name": "1&1 Internet",
@@ -69,7 +69,7 @@
         "24log": {
             "name": "24log",
             "categoryId": 6,
-            "url": null
+            "url": "http://24log.ru/"
         },
         "24smi": {
             "name": "24СМИ",
@@ -149,7 +149,7 @@
         "8digits": {
             "name": "8digits",
             "categoryId": 6,
-            "url": null
+            "url": "http://8digits.com/"
         },
         "94j7afz2nr.xyz": {
             "name": "94j7afz2nr.xyz",
@@ -234,7 +234,7 @@
         "acloudimages": {
             "name": "Acloudimages",
             "categoryId": 4,
-            "url": null
+            "url": "http://adsterra.com"
         },
         "acpm.fr": {
             "name": "ACPM",
@@ -284,7 +284,7 @@
         "active_campaign": {
             "name": "Active Campaign",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.activecampaign.com"
         },
         "active_performance": {
             "name": "Active Performance",
@@ -304,7 +304,7 @@
         "acxiom": {
             "name": "Acxiom",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.acxiom.com/"
         },
         "ad-blocker.org": {
             "name": "ad-blocker.org",
@@ -314,7 +314,7 @@
         "ad-center": {
             "name": "Ad-Center",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.ad-center.com"
         },
         "ad-delivery.net": {
             "name": "ad-delivery.net",
@@ -334,7 +334,7 @@
         "ad2click": {
             "name": "Ad2Click",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.ad2click.com/"
         },
         "ad2games": {
             "name": "ad2games",
@@ -379,7 +379,7 @@
         "adality_gmbh": {
             "name": "adality GmbH",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.arvato.com/"
         },
         "adalliance.io": {
             "name": "Ad Alliance",
@@ -414,7 +414,7 @@
         "adasia_holdings": {
             "name": "AdAsia Holdings",
             "categoryId": 4,
-            "url": null
+            "url": "https://adasiaholdings.com/"
         },
         "adbetclickin.pink": {
             "name": "adbetnet",
@@ -469,7 +469,7 @@
         "adchakra": {
             "name": "AdChakra",
             "categoryId": 6,
-            "url": null
+            "url": "http://adchakra.com/"
         },
         "adchina": {
             "name": "AdChina",
@@ -489,7 +489,7 @@
         "adclerks": {
             "name": "Adclerks",
             "categoryId": 4,
-            "url": null
+            "url": "https://adclerks.com/"
         },
         "adclickmedia": {
             "name": "AdClickMedia",
@@ -499,7 +499,7 @@
         "adclickzone": {
             "name": "AdClickZone",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.adclickzone.com/"
         },
         "adcloud": {
             "name": "adcloud",
@@ -564,7 +564,7 @@
         "addvalue": {
             "name": "Addvalue",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.addvalue.de/en/"
         },
         "addyon": {
             "name": "AddyON",
@@ -574,7 +574,7 @@
         "add_to_calendar": {
             "name": "Add To Calendar",
             "categoryId": 2,
-            "url": null
+            "url": "http://addtocalendar.com/"
         },
         "adeasy": {
             "name": "AdEasy",
@@ -584,7 +584,7 @@
         "adelphic": {
             "name": "Adelphic",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.adelphic.com/"
         },
         "adengage": {
             "name": "AdEngage",
@@ -644,7 +644,7 @@
         "adfront": {
             "name": "AdFront",
             "categoryId": 4,
-            "url": null
+            "url": "http://buysellads.com/"
         },
         "adfrontiers": {
             "name": "AdFrontiers",
@@ -679,7 +679,7 @@
         "adglue": {
             "name": "Adglue",
             "categoryId": 4,
-            "url": null
+            "url": "http://admans.de/de.html"
         },
         "adgoal": {
             "name": "adgoal",
@@ -695,6 +695,11 @@
             "name": "ADGoto",
             "categoryId": 4,
             "url": "http://adgoto.com/"
+        },
+        "adguard": {
+            "name": "Adguard",
+            "categoryId": 12,
+            "url": "https://adguard.com/"
         },
         "adhands": {
             "name": "AdHands",
@@ -724,7 +729,7 @@
         "adikteev": {
             "name": "Adikteev",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.adikteev.com/"
         },
         "adimpact": {
             "name": "Adimpact",
@@ -749,7 +754,7 @@
         "adjs": {
             "name": "ADJS",
             "categoryId": 4,
-            "url": null
+            "url": "https://github.com/widgital/adjs"
         },
         "adjug": {
             "name": "AdJug",
@@ -804,12 +809,12 @@
         "adless": {
             "name": "Adless",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.adless.io/"
         },
         "adlive_header_bidding": {
             "name": "Adlive Header Bidding",
             "categoryId": 4,
-            "url": null
+            "url": "http://adlive.io/"
         },
         "adloox": {
             "name": "Adloox",
@@ -834,7 +839,7 @@
         "adman_media": {
             "name": "ADman Media",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.admanmedia.com/"
         },
         "admaster": {
             "name": "AdMaster",
@@ -849,12 +854,12 @@
         "admatic": {
             "name": "Admatic",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.admatic.com.tr/#1page"
         },
         "admatrix": {
             "name": "Admatrix",
             "categoryId": 4,
-            "url": null
+            "url": "https://admatrix.jp/login#block01"
         },
         "admax": {
             "name": "Admax",
@@ -894,7 +899,7 @@
         "admeo": {
             "name": "Admeo",
             "categoryId": 4,
-            "url": null
+            "url": "http://admeo.ru/"
         },
         "admeta": {
             "name": "Admeta",
@@ -949,7 +954,7 @@
         "adnegah": {
             "name": "Adnegah",
             "categoryId": 4,
-            "url": null
+            "url": "https://adnegah.net/"
         },
         "adnet": {
             "name": "Adnet",
@@ -979,7 +984,7 @@
         "adnexio": {
             "name": "AdNexio",
             "categoryId": 4,
-            "url": null
+            "url": "http://adnexio.com/"
         },
         "adnium.com": {
             "name": "Adnium",
@@ -994,12 +999,12 @@
         "adnow": {
             "name": "Adnow",
             "categoryId": 4,
-            "url": null
+            "url": "http://adnow.com/"
         },
         "adnymics": {
             "name": "Adnymics",
             "categoryId": 4,
-            "url": null
+            "url": "http://adnymics.com/en/"
         },
         "adobe_audience_manager": {
             "name": "Adobe Audience Manager",
@@ -1024,7 +1029,7 @@
         "adobe_test_and_target": {
             "name": "Adobe Test & Target",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.adobe.com/"
         },
         "adocean": {
             "name": "AdOcean",
@@ -1064,7 +1069,7 @@
         "adoric": {
             "name": "Adoric",
             "categoryId": 6,
-            "url": null
+            "url": "https://adoric.com/"
         },
         "adorika": {
             "name": "Adorika",
@@ -1074,7 +1079,7 @@
         "adosia": {
             "name": "Adosia",
             "categoryId": 4,
-            "url": null
+            "url": "https://adosia.com"
         },
         "adotmob.com": {
             "name": "Adotmob",
@@ -1094,7 +1099,7 @@
         "adpartner": {
             "name": "adpartner",
             "categoryId": 4,
-            "url": null
+            "url": "http://adpartner.pro/"
         },
         "adpeeps": {
             "name": "Ad Peeps",
@@ -1134,7 +1139,7 @@
         "adpulse": {
             "name": "AdPulse",
             "categoryId": 4,
-            "url": null
+            "url": "http://adpulse.ir/"
         },
         "adpv": {
             "name": "Adpv",
@@ -1174,12 +1179,12 @@
         "adroll_pixel": {
             "name": "AdRoll Pixel",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.adroll.com/"
         },
         "adroll_roundtrip": {
             "name": "AdRoll Roundtrip",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.adroll.com/"
         },
         "adrom": {
             "name": "adRom",
@@ -1194,7 +1199,7 @@
         "adrunnr": {
             "name": "AdRunnr",
             "categoryId": 4,
-            "url": null
+            "url": "https://adrunnr.com/"
         },
         "adsame": {
             "name": "Adsame",
@@ -1249,7 +1254,7 @@
         "adskeeper": {
             "name": "AdsKeeper",
             "categoryId": 4,
-            "url": null
+            "url": "http://adskeeper.co.uk/"
         },
         "adskom": {
             "name": "ADSKOM",
@@ -1279,7 +1284,7 @@
         "adspyglass": {
             "name": "AdSpyglass",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.adspyglass.com/"
         },
         "adstage": {
             "name": "AdStage",
@@ -1289,7 +1294,7 @@
         "adstanding": {
             "name": "AdStanding",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.adstanding.com/en/"
         },
         "adstars": {
             "name": "Adstars",
@@ -1389,7 +1394,7 @@
         "adtrue": {
             "name": "Adtrue",
             "categoryId": 4,
-            "url": null
+            "url": "http://adtrue.com/"
         },
         "adtrustmedia": {
             "name": "AdTrustMedia",
@@ -1399,7 +1404,7 @@
         "adtube": {
             "name": "AdTube",
             "categoryId": 4,
-            "url": null
+            "url": "http://adtube.ir/"
         },
         "adultadworld": {
             "name": "AdultAdWorld",
@@ -1424,7 +1429,7 @@
         "advalo": {
             "name": "Advalo",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.advalo.com"
         },
         "advanced_hosters": {
             "name": "Advanced Hosters",
@@ -1434,12 +1439,12 @@
         "advark": {
             "name": "Advark",
             "categoryId": 4,
-            "url": null
+            "url": "https://advarkads.com/"
         },
         "adventori": {
             "name": "ADventori",
             "categoryId": 8,
-            "url": null
+            "url": "https://www.adventori.com/"
         },
         "adverline": {
             "name": "Adverline",
@@ -1689,7 +1694,7 @@
         "afftrack": {
             "name": "Afftrack",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.afftrack.com/"
         },
         "afgr2.com": {
             "name": "afgr2.com",
@@ -1699,12 +1704,12 @@
         "afilio": {
             "name": "Afilio",
             "categoryId": 6,
-            "url": null
+            "url": "http://afilio.com.br/"
         },
         "afs_analystics": {
             "name": "AFS Analystics",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.afsanalytics.com/"
         },
         "aftonbladet_ads": {
             "name": "Aftonbladet Ads",
@@ -1764,7 +1769,7 @@
         "airpush": {
             "name": "Airpush",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.airpush.com/"
         },
         "ai_media_group": {
             "name": "Ai Media Group",
@@ -1784,7 +1789,7 @@
         "akane": {
             "name": "AkaNe",
             "categoryId": 4,
-            "url": null
+            "url": "http://akane-ad.com/"
         },
         "akanoo": {
             "name": "Akanoo",
@@ -1799,7 +1804,7 @@
         "albacross": {
             "name": "Albacross",
             "categoryId": 4,
-            "url": null
+            "url": "https://albacross.com"
         },
         "aldi-international.com": {
             "name": "aldi-international.com",
@@ -1839,7 +1844,7 @@
         "alibaba.com": {
             "name": "Alibaba",
             "categoryId": 8,
-            "url": null
+            "url": "http://www.alibaba.com/"
         },
         "alipay.com": {
             "name": "Alipay",
@@ -1859,7 +1864,7 @@
         "allin": {
             "name": "Allin",
             "categoryId": 6,
-            "url": null
+            "url": "http://allin.com.br/"
         },
         "allo-pages.fr": {
             "name": "Allo-Pages",
@@ -1884,7 +1889,7 @@
         "alooma": {
             "name": "Alooma",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.alooma.com/"
         },
         "altitude_digital": {
             "name": "Altitude Digital",
@@ -1929,7 +1934,7 @@
         "amazon_mobile_ads": {
             "name": "Amazon Mobile Ads",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.amazon.com/"
         },
         "amazon_payments": {
             "name": "Amazon Payments",
@@ -1994,7 +1999,7 @@
         "ancora": {
             "name": "Ancora",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.ancoramediasolutions.com/"
         },
         "anetwork": {
             "name": "Anetwork",
@@ -2019,7 +2024,7 @@
         "answers_cloud_service": {
             "name": "Answers Cloud Service",
             "categoryId": 1,
-            "url": null
+            "url": "http://www.answers.com/"
         },
         "ants": {
             "name": "Ants",
@@ -2034,7 +2039,7 @@
         "anyclip": {
             "name": "AnyClip",
             "categoryId": 0,
-            "url": null
+            "url": "https://anyclip.com"
         },
         "aol_be_on": {
             "name": "AOL Be On",
@@ -2044,12 +2049,12 @@
         "aol_cdn": {
             "name": "AOL CDN",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.verizon.com/"
         },
         "aol_images_cdn": {
             "name": "AOL Images CDN",
             "categoryId": 5,
-            "url": null
+            "url": "https://www.verizon.com/"
         },
         "apa.at": {
             "name": "Apa",
@@ -2084,7 +2089,7 @@
         "appier": {
             "name": "Appier",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.appier.com/en/index.html"
         },
         "apple": {
             "name": "Apple",
@@ -2099,7 +2104,7 @@
         "applovin": {
             "name": "AppLovin",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.applovin.com"
         },
         "appmetrx": {
             "name": "AppMetrx",
@@ -2149,7 +2154,7 @@
         "artimedia": {
             "name": "Artimedia",
             "categoryId": 4,
-            "url": null
+            "url": "http://arti-media.net/en/"
         },
         "artlebedev.ru": {
             "name": "Art.Lebedev",
@@ -2164,7 +2169,7 @@
         "arvato_canvas_fp": {
             "name": "Arvato Canvas FP",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.arvato.com/"
         },
         "asambeauty.com": {
             "name": "asambeauty.com",
@@ -2179,12 +2184,12 @@
         "aspnetcdn": {
             "name": "Microsoft Ajax CDN",
             "categoryId": 9,
-            "url": null
+            "url": "https://www.microsoft.com/"
         },
         "astronomer": {
             "name": "Astronomer",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.astronomer.io"
         },
         "atedra": {
             "name": "Atedra",
@@ -2289,7 +2294,7 @@
         "augur": {
             "name": "Augur",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.augur.io/"
         },
         "aumago": {
             "name": "Aumago",
@@ -2309,7 +2314,7 @@
         "australia.gov": {
             "name": "Australia.gov",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.australia.gov.au/"
         },
         "auth0": {
             "name": "Auth0 Inc.",
@@ -2319,7 +2324,7 @@
         "autoid": {
             "name": "AutoID",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.autoid.com/"
         },
         "autonomy": {
             "name": "Autonomy",
@@ -2339,7 +2344,7 @@
         "autoscout24.com": {
             "name": "Autoscout24",
             "categoryId": 8,
-            "url": null
+            "url": "http://www.scout24.com/"
         },
         "avail": {
             "name": "Avail",
@@ -2359,7 +2364,7 @@
         "avant_metrics": {
             "name": "Avant Metrics",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.avantlink.com/"
         },
         "avazu_network": {
             "name": "Avazu Network",
@@ -2379,7 +2384,7 @@
         "avocet": {
             "name": "Avocet",
             "categoryId": 8,
-            "url": null
+            "url": "https://avocet.io/"
         },
         "aweber": {
             "name": "AWeber",
@@ -2399,12 +2404,12 @@
         "azadify": {
             "name": "Azadify",
             "categoryId": 4,
-            "url": null
+            "url": "http://azadify.com/engage/index.php"
         },
         "azureedge.net": {
             "name": "Azure CDN",
             "categoryId": 9,
-            "url": null
+            "url": "https://www.microsoft.com/"
         },
         "b2bcontext": {
             "name": "B2BContext",
@@ -2459,7 +2464,7 @@
         "bankrate": {
             "name": "Bankrate",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.bankrate.com/"
         },
         "bannerflow.com": {
             "name": "Bannerflow",
@@ -2474,7 +2479,7 @@
         "bannersnack": {
             "name": "Bannersnack",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.bannersnack.com/"
         },
         "banner_connect": {
             "name": "Banner Connect",
@@ -2509,7 +2514,7 @@
         "bauer_media": {
             "name": "Bauer Media",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.bauermedia.com"
         },
         "baur.de": {
             "name": "baur.de",
@@ -2534,7 +2539,7 @@
         "bd4travel": {
             "name": "bd4travel",
             "categoryId": 4,
-            "url": null
+            "url": "https://bd4travel.com/"
         },
         "beachfront": {
             "name": "Beachfront Media",
@@ -2574,7 +2579,7 @@
         "beeswax": {
             "name": "Beeswax",
             "categoryId": 4,
-            "url": null
+            "url": "http://beeswax.com/"
         },
         "beezup": {
             "name": "BeezUP",
@@ -2599,7 +2604,7 @@
         "belco": {
             "name": "Belco",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.belco.io/"
         },
         "belstat": {
             "name": "BelStat",
@@ -2614,7 +2619,7 @@
         "bench_platform": {
             "name": "Bench Platform",
             "categoryId": 4,
-            "url": null
+            "url": "https://benchplatform.com"
         },
         "betterttv": {
             "name": "BetterTTV",
@@ -2629,7 +2634,7 @@
         "be_opinion": {
             "name": "Be Opinion",
             "categoryId": 2,
-            "url": null
+            "url": "http://beopinion.com/"
         },
         "bid.run": {
             "name": "Bid Run",
@@ -2639,7 +2644,7 @@
         "bidswitch": {
             "name": "Bidswitch",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.iponweb.com/"
         },
         "bidtellect": {
             "name": "Bidtellect",
@@ -2684,12 +2689,12 @@
         "bilgin_pro": {
             "name": "Bilgin Pro",
             "categoryId": 4,
-            "url": null
+            "url": "http://bilgin.pro/"
         },
         "bilin": {
             "name": "Bilin",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.bilintechnology.com/"
         },
         "bing_ads": {
             "name": "Bing Ads",
@@ -2699,7 +2704,7 @@
         "bing_maps": {
             "name": "Bing Maps",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.microsoft.com/"
         },
         "binlayer": {
             "name": "BinLayer",
@@ -2709,7 +2714,7 @@
         "binotel": {
             "name": "Binotel",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.binotel.ua/"
         },
         "bisnode": {
             "name": "Bisnode",
@@ -2734,12 +2739,12 @@
         "bizcn": {
             "name": "Bizcn",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.bizcn.com/"
         },
         "blackdragon": {
             "name": "BlackDragon",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.jd.com/"
         },
         "blau.de": {
             "name": "Blau",
@@ -2794,17 +2799,17 @@
         "blogimg.jp": {
             "name": "blogimg.jp",
             "categoryId": 9,
-            "url": null
+            "url": "https://line.me/"
         },
         "blogsmithmedia.com": {
             "name": "blogsmithmedia.com",
             "categoryId": 8,
-            "url": null
+            "url": "https://www.verizon.com/"
         },
         "blogspot_com": {
             "name": "blogspot.com",
             "categoryId": 8,
-            "url": null
+            "url": "http://www.google.com"
         },
         "bloomreach": {
             "name": "BloomReach",
@@ -2859,7 +2864,7 @@
         "blue_seed": {
             "name": "Blue Seed",
             "categoryId": 4,
-            "url": null
+            "url": "http://blueseed.tv/#/en/platform"
         },
         "bodelen.com": {
             "name": "bodelen.com",
@@ -2869,7 +2874,7 @@
         "bold": {
             "name": "Bold",
             "categoryId": 4,
-            "url": null
+            "url": "https://boldcommerce.com/"
         },
         "boldchat": {
             "name": "Boldchat",
@@ -2889,7 +2894,7 @@
         "bombora": {
             "name": "Bombora",
             "categoryId": 6,
-            "url": null
+            "url": "http://bombora.com/"
         },
         "bongacams.com": {
             "name": "bongacams.com",
@@ -2914,12 +2919,12 @@
         "booster_video": {
             "name": "Booster Video",
             "categoryId": 0,
-            "url": null
+            "url": "https://boostervideo.ru/"
         },
         "boost_box": {
             "name": "Boost Box",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.boostbox.com.br/"
         },
         "bootstrap": {
             "name": "Bootstrap CDN",
@@ -2934,7 +2939,7 @@
         "botscanner": {
             "name": "BotScanner",
             "categoryId": 6,
-            "url": null
+            "url": "http://botscanner.com"
         },
         "boudja.com": {
             "name": "boudja.com",
@@ -3034,7 +3039,7 @@
         "brightcove_player": {
             "name": "Brightcove Player",
             "categoryId": 0,
-            "url": null
+            "url": "http://www.brightcove.com/en/"
         },
         "brightedge": {
             "name": "BrightEdge",
@@ -3044,7 +3049,7 @@
         "brightfunnel": {
             "name": "BrightFunnel",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.brightfunnel.com/"
         },
         "brightonclick.com": {
             "name": "brightonclick.com",
@@ -3139,17 +3144,17 @@
         "bunchbox": {
             "name": "Bunchbox",
             "categoryId": 6,
-            "url": null
+            "url": "https://app.bunchbox.co/login"
         },
         "burda": {
             "name": "BurdaForward",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.hubert-burda-media.com/"
         },
         "burda_digital_systems": {
             "name": "Burda Digital Systems",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.hubert-burda-media.com/"
         },
         "burst_media": {
             "name": "Burst Media",
@@ -3199,7 +3204,7 @@
         "c1_exchange": {
             "name": "C1 Exchange",
             "categoryId": 4,
-            "url": null
+            "url": "http://c1exchange.com/"
         },
         "c3_metrics": {
             "name": "C3 Metrics",
@@ -3234,7 +3239,7 @@
         "callibri": {
             "name": "Callibri",
             "categoryId": 4,
-            "url": null
+            "url": "https://callibri.ru/"
         },
         "callrail": {
             "name": "CallRail",
@@ -3244,12 +3249,12 @@
         "calltracking": {
             "name": "Calltracking",
             "categoryId": 2,
-            "url": null
+            "url": "https://calltracking.ru"
         },
         "call_page": {
             "name": "Call Page",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.callpage.io/"
         },
         "caltat.com": {
             "name": "Caltat",
@@ -3269,12 +3274,12 @@
         "campus_explorer": {
             "name": "Campus Explorer",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.campusexplorer.com/"
         },
         "canddi": {
             "name": "CANDDI",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.canddi.com/"
         },
         "canvas": {
             "name": "Canvas",
@@ -3294,17 +3299,17 @@
         "capture_media": {
             "name": "Capture Media",
             "categoryId": 4,
-            "url": null
+            "url": "http://capturemedia.ch/"
         },
         "capturly": {
             "name": "Capturly",
             "categoryId": 6,
-            "url": null
+            "url": "http://capturly.com/"
         },
         "carambola": {
             "name": "Carambola",
             "categoryId": 4,
-            "url": null
+            "url": "http://carambo.la/"
         },
         "carbonads": {
             "name": "Carbon Ads",
@@ -3319,7 +3324,7 @@
         "carrot_quest": {
             "name": "Carrot Quest",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.carrotquest.io/"
         },
         "cartstack": {
             "name": "CartStack",
@@ -3334,7 +3339,7 @@
         "castle": {
             "name": "Castle",
             "categoryId": 2,
-            "url": null
+            "url": "https://castle.io"
         },
         "catchpoint": {
             "name": "Catchpoint",
@@ -3419,7 +3424,7 @@
         "celebrus": {
             "name": "Celebrus",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.celebrus.com/"
         },
         "celtra": {
             "name": "Celtra",
@@ -3429,7 +3434,7 @@
         "cendyn": {
             "name": "Cendyn",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.cendyn.com/"
         },
         "centraltag": {
             "name": "CentralTag",
@@ -3444,7 +3449,7 @@
         "cerberus_speed-trap": {
             "name": "Cerberus Speed-Trap",
             "categoryId": 6,
-            "url": null
+            "url": "http://cerberusip.com/"
         },
         "certainsource": {
             "name": "CertainSource",
@@ -3464,7 +3469,7 @@
         "chameleon": {
             "name": "Chameleon",
             "categoryId": 4,
-            "url": null
+            "url": "http://chameleon.ad/"
         },
         "chango": {
             "name": "Chango",
@@ -3504,7 +3509,7 @@
         "chaser": {
             "name": "Chaser",
             "categoryId": 2,
-            "url": null
+            "url": "http://chaser.ru/"
         },
         "chatango": {
             "name": "Chatango",
@@ -3514,7 +3519,7 @@
         "chatra": {
             "name": "Chatra",
             "categoryId": 2,
-            "url": null
+            "url": "https://chatra.io"
         },
         "chaturbate.com": {
             "name": "chaturbate.com",
@@ -3529,7 +3534,7 @@
         "chat_beacon": {
             "name": "Chat Beacon",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.chatbeacon.io/"
         },
         "checkmystats": {
             "name": "CheckMyStats",
@@ -3549,7 +3554,7 @@
         "chin_media": {
             "name": "Chin Media",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.chinmedia.vn/#"
         },
         "chitika": {
             "name": "Chitika",
@@ -3574,7 +3579,7 @@
         "circulate": {
             "name": "Circulate",
             "categoryId": 6,
-            "url": null
+            "url": "http://circulate.com/"
         },
         "cityads": {
             "name": "CityAds",
@@ -3584,7 +3589,7 @@
         "city_spark": {
             "name": "City Spark",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.cityspark.com/"
         },
         "ciuvo.com": {
             "name": "ciuvo.com",
@@ -3594,7 +3599,7 @@
         "civey_widgets": {
             "name": "Civey Widgets",
             "categoryId": 2,
-            "url": null
+            "url": "https://civey.com/"
         },
         "civicscience.com": {
             "name": "CivicScience",
@@ -3604,7 +3609,7 @@
         "ciwebgroup": {
             "name": "CIWebGroup",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.ciwebgroup.com/"
         },
         "clcknads.pro": {
             "name": "clcknads.pro",
@@ -3634,12 +3639,12 @@
         "clerk.io": {
             "name": "Clerk.io",
             "categoryId": 4,
-            "url": null
+            "url": "https://clerk.io/"
         },
         "cleversite": {
             "name": "Cleversite",
             "categoryId": 2,
-            "url": null
+            "url": "http://cleversite.ru/"
         },
         "clever_push": {
             "name": "Clever Push",
@@ -3649,12 +3654,12 @@
         "clever_tap": {
             "name": "CleverTap",
             "categoryId": 6,
-            "url": null
+            "url": "https://clevertap.com/"
         },
         "click360": {
             "name": "Click360",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.click360.io/"
         },
         "clickaider": {
             "name": "ClickAider",
@@ -3679,7 +3684,7 @@
         "clickcease": {
             "name": "ClickCease",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.clickcease.com/"
         },
         "clickcertain": {
             "name": "ClickCertain",
@@ -3759,7 +3764,7 @@
         "clicks_thru_networks": {
             "name": "Clicks Thru Networks",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.clicksthrunetwork.com/"
         },
         "clicktale": {
             "name": "ClickTale",
@@ -3784,7 +3789,7 @@
         "clickyab": {
             "name": "Clickyab",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.clickyab.com/"
         },
         "click_and_chat": {
             "name": "Click and Chat",
@@ -3794,7 +3799,7 @@
         "click_back": {
             "name": "Click Back",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.clickback.com/"
         },
         "clicmanager": {
             "name": "ClicManager",
@@ -3889,7 +3894,7 @@
         "cogocast": {
             "name": "CogoCast",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.cogocast.com"
         },
         "coinhive": {
             "name": "Coinhive",
@@ -3904,12 +3909,12 @@
         "coin_have": {
             "name": "Coin Have",
             "categoryId": 4,
-            "url": null
+            "url": "https://coin-have.com/"
         },
         "coin_traffic": {
             "name": "Coin Traffic",
             "categoryId": 2,
-            "url": null
+            "url": "https://cointraffic.io/"
         },
         "coll1onf.com": {
             "name": "coll1onf.com",
@@ -3929,7 +3934,7 @@
         "columbia_online": {
             "name": "Columbia Online",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.colombiaonline.com/"
         },
         "combotag": {
             "name": "ComboTag",
@@ -3939,7 +3944,7 @@
         "comcast_technology_solutions": {
             "name": "Comcast Technology Solutions",
             "categoryId": 0,
-            "url": null
+            "url": "https://www.comcasttechnologysolutions.com/"
         },
         "comm100": {
             "name": "Comm100",
@@ -4029,12 +4034,12 @@
         "connectad": {
             "name": "ConnectAd",
             "categoryId": 4,
-            "url": null
+            "url": "https://connectad.io/"
         },
         "connecto": {
             "name": "Connecto",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.connecto.io/"
         },
         "connexity": {
             "name": "Connexity",
@@ -4104,12 +4109,12 @@
         "contentwrx": {
             "name": "Contentwrx",
             "categoryId": 6,
-            "url": null
+            "url": "http://contentwrx.com/"
         },
         "content_insights": {
             "name": "Content Insights",
             "categoryId": 6,
-            "url": null
+            "url": "https://contentinsights.com/"
         },
         "context": {
             "name": "C|ON|TEXT",
@@ -4129,7 +4134,7 @@
         "contribusource": {
             "name": "Contribusource",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.contribusource.com/"
         },
         "convergetrack": {
             "name": "ConvergeTrack",
@@ -4144,7 +4149,7 @@
         "conversio": {
             "name": "Conversio",
             "categoryId": 6,
-            "url": null
+            "url": "https://conversio.com/"
         },
         "conversionruler": {
             "name": "ConversionRuler",
@@ -4174,12 +4179,12 @@
         "convert": {
             "name": "Convert",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.convert.com/"
         },
         "convertfox": {
             "name": "ConvertFox",
             "categoryId": 2,
-            "url": null
+            "url": "https://convertfox.com/"
         },
         "convertro": {
             "name": "Convertro",
@@ -4204,7 +4209,7 @@
         "cookie_consent": {
             "name": "Cookie Consent",
             "categoryId": 5,
-            "url": null
+            "url": "https://silktide.com/"
         },
         "cookie_script": {
             "name": "Cookie Script",
@@ -4319,7 +4324,7 @@
         "crisp": {
             "name": "Crisp",
             "categoryId": 2,
-            "url": null
+            "url": "https://crisp.chat/"
         },
         "criteo": {
             "name": "Criteo",
@@ -4329,12 +4334,12 @@
         "crm4d": {
             "name": "CRM4D",
             "categoryId": 6,
-            "url": null
+            "url": "https://crm4d.com/"
         },
         "crossengage": {
             "name": "CrossEngage",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.crossengage.io/"
         },
         "crosspixel": {
             "name": "Cross Pixel",
@@ -4374,12 +4379,12 @@
         "crownpeak": {
             "name": "Crownpeak",
             "categoryId": 5,
-            "url": null
+            "url": "https://www.crownpeak.com/"
         },
         "cryptoloot_miner": {
             "name": "CryptoLoot Miner",
             "categoryId": 4,
-            "url": null
+            "url": "https://crypto-loot.com/"
         },
         "ctnetwork": {
             "name": "CTnetwork",
@@ -4394,7 +4399,7 @@
         "cubed": {
             "name": "Cubed",
             "categoryId": 6,
-            "url": null
+            "url": "http://withcubed.com/"
         },
         "cuelinks": {
             "name": "CueLinks",
@@ -4404,7 +4409,7 @@
         "cup_interactive": {
             "name": "Cup Interactive",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.cupinteractive.com/"
         },
         "curse.com": {
             "name": "Curse",
@@ -4424,7 +4429,7 @@
         "customerly": {
             "name": "Customerly",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.customerly.io/"
         },
         "cxense": {
             "name": "cXense",
@@ -4459,7 +4464,7 @@
         "dailymotion": {
             "name": "Dailymotion",
             "categoryId": 8,
-            "url": null
+            "url": "https://vivendi.com/"
         },
         "dailymotion_advertising": {
             "name": "Dailymotion Advertising",
@@ -4494,7 +4499,7 @@
         "datacoral": {
             "name": "Datacoral",
             "categoryId": 4,
-            "url": null
+            "url": "https://datacoral.com/"
         },
         "datacrushers": {
             "name": "Datacrushers",
@@ -4534,7 +4539,7 @@
         "datawrkz": {
             "name": "Datawrkz",
             "categoryId": 4,
-            "url": null
+            "url": "http://datawrkz.com/"
         },
         "dataxpand": {
             "name": "Dataxpand",
@@ -4589,17 +4594,17 @@
         "deadline_funnel": {
             "name": "Deadline Funnel",
             "categoryId": 6,
-            "url": null
+            "url": "https://deadlinefunnel.com/"
         },
         "dealer.com": {
             "name": "Dealer.com",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.dealer.com/"
         },
         "decibel_insight": {
             "name": "Decibel Insight",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.decibelinsight.com/"
         },
         "dedicated_media": {
             "name": "Dedicated Media",
@@ -4609,7 +4614,7 @@
         "deep.bi": {
             "name": "Deep.BI",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.deep.bi/#"
         },
         "deepintent.com": {
             "name": "DeepIntent",
@@ -4644,7 +4649,7 @@
         "deluxe": {
             "name": "Deluxe",
             "categoryId": 6,
-            "url": null
+            "url": "https://ww.deluxe.com/"
         },
         "delve_networks": {
             "name": "Delve Networks",
@@ -4689,7 +4694,7 @@
         "de_persgroep": {
             "name": "De Persgroep",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.persgroep.nl"
         },
         "dgm": {
             "name": "dgm",
@@ -4699,7 +4704,7 @@
         "dialogtech": {
             "name": "Dialogtech",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.dialogtech.com/"
         },
         "dianomi": {
             "name": "Dianomi",
@@ -4734,12 +4739,12 @@
         "digidip": {
             "name": "Digidip",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.digidip.net/"
         },
         "digiglitz": {
             "name": "Digiglitz",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.digiglitz.com/"
         },
         "digilant": {
             "name": "Digilant",
@@ -4784,7 +4789,7 @@
         "digiteka": {
             "name": "Digiteka",
             "categoryId": 4,
-            "url": null
+            "url": "http://digiteka.com/"
         },
         "digitrust": {
             "name": "DigiTrust",
@@ -4864,7 +4869,7 @@
         "divvit": {
             "name": "Divvit",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.divvit.com/"
         },
         "dm2": {
             "name": "DM2",
@@ -4879,7 +4884,7 @@
         "dmm": {
             "name": "DMM",
             "categoryId": 3,
-            "url": null
+            "url": "http://www.dmm.co.jp"
         },
         "dmwd": {
             "name": "DMWD",
@@ -4889,7 +4894,7 @@
         "dockvine": {
             "name": "dockvine",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.dockvine.com"
         },
         "docler": {
             "name": "Docler",
@@ -4899,7 +4904,7 @@
         "dogannet": {
             "name": "Dogannet",
             "categoryId": 4,
-            "url": null
+            "url": "http://s.dogannet.tv/"
         },
         "domodomain": {
             "name": "DomoDomain",
@@ -4919,7 +4924,7 @@
         "doorbell.io": {
             "name": "Doorbell.io",
             "categoryId": 5,
-            "url": null
+            "url": "https://doorbell.io/"
         },
         "dotandmedia": {
             "name": "DotAndMedia",
@@ -4954,17 +4959,17 @@
         "doubleclick_ad_buyer": {
             "name": "DoubleClick Ad Exchange-Buyer",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.google.com"
         },
         "doubleclick_bid_manager": {
             "name": "DoubleClick Bid Manager",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.google.com"
         },
         "doubleclick_floodlight": {
             "name": "DoubleClick Floodlight",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.google.com"
         },
         "doubleclick_spotlight": {
             "name": "DoubleClick Spotlight",
@@ -4974,7 +4979,7 @@
         "doubleclick_video_stats": {
             "name": "Doubleclick Video Stats",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.google.com"
         },
         "doublepimp": {
             "name": "DoublePimp",
@@ -5004,7 +5009,7 @@
         "drift": {
             "name": "Drift",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.drift.com/"
         },
         "drip": {
             "name": "Drip",
@@ -5039,12 +5044,12 @@
         "dudamobile": {
             "name": "DudaMobile",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.dudamobile.com/"
         },
         "dun_and_bradstreet": {
             "name": "Dun and Bradstreet",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.dnb.com/#"
         },
         "dwstat.cn": {
             "name": "dwstat.cn",
@@ -5074,7 +5079,7 @@
         "dynamic_yield": {
             "name": "Dynamic Yield",
             "categoryId": 5,
-            "url": null
+            "url": "https://www.dynamicyield.com/"
         },
         "dynamic_yield_analytics": {
             "name": "Dynamic Yield Analytics",
@@ -5119,12 +5124,12 @@
         "earnify": {
             "name": "Earnify",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.earnify.com/"
         },
         "earnify_tracker": {
             "name": "Earnify Tracker",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.earnify.com/"
         },
         "easyads": {
             "name": "EasyAds",
@@ -5149,7 +5154,7 @@
         "ebay_partner_network": {
             "name": "eBay Partner Network",
             "categoryId": 4,
-            "url": null
+            "url": "https://partnernetwork.ebay.com/"
         },
         "ebuzzing": {
             "name": "eBuzzing",
@@ -5199,7 +5204,7 @@
         "egain_analytics": {
             "name": "eGain Analytics",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.egain.com/"
         },
         "ehi-siegel_de": {
             "name": "ehi-siegel.de",
@@ -5219,12 +5224,12 @@
         "elastic_ad": {
             "name": "Elastic Ad",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.elasticad.com"
         },
         "elastic_beanstalk": {
             "name": "Elastic Beanstalk",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.amazon.com/"
         },
         "elicit": {
             "name": "elicit",
@@ -5254,7 +5259,7 @@
         "emarketeer": {
             "name": "emarketeer",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.emarketeer.com/"
         },
         "embed.ly": {
             "name": "Embedly",
@@ -5269,7 +5274,7 @@
         "emetriq": {
             "name": "emetriq",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.emetriq.com"
         },
         "emma": {
             "name": "Emma",
@@ -5304,12 +5309,12 @@
         "engageya_widget": {
             "name": "Engageya Widget",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.engageya.com/home/"
         },
         "engage_sciences": {
             "name": "Engage Sciences",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.engagesciences.com/"
         },
         "engagio": {
             "name": "Engagio",
@@ -5349,7 +5354,7 @@
         "envybox": {
             "name": "Envybox",
             "categoryId": 2,
-            "url": null
+            "url": "https://envybox.io/"
         },
         "eperflex": {
             "name": "Eperflex",
@@ -5429,7 +5434,7 @@
         "etag": {
             "name": "etag",
             "categoryId": 4,
-            "url": null
+            "url": "http://etagdigital.com.br/"
         },
         "etahub.com": {
             "name": "etahub.com",
@@ -5454,7 +5459,7 @@
         "etp": {
             "name": "ETP",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.etpgroup.com"
         },
         "etracker": {
             "name": "etracker",
@@ -5469,7 +5474,7 @@
         "etsystatic": {
             "name": "Etsy CDN",
             "categoryId": 9,
-            "url": ""
+            "url": "https://www.etsy.com/"
         },
         "eulerian": {
             "name": "Eulerian",
@@ -5484,7 +5489,7 @@
         "europecash": {
             "name": "Europecash",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.europacash.com/"
         },
         "euroweb_counter": {
             "name": "Euroweb Counter",
@@ -5499,7 +5504,7 @@
         "everstring": {
             "name": "Everstring",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.everstring.com/"
         },
         "everyday_health": {
             "name": "Everyday Health",
@@ -5514,12 +5519,12 @@
         "evidon_ad_notice": {
             "name": "Evidon Ad Notice",
             "categoryId": 5,
-            "url": null
+            "url": "https://www.evidon.com/"
         },
         "evidon_notice": {
             "name": "Evidon Site Notice",
             "categoryId": 5,
-            "url": null
+            "url": "https://www.evidon.com/"
         },
         "evisit_analyst": {
             "name": "eVisit Analyst",
@@ -5579,12 +5584,12 @@
         "expose_box": {
             "name": "Expose Box",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.exposebox.com/"
         },
         "expose_box_widgets": {
             "name": "Expose Box Widgets",
             "categoryId": 2,
-            "url": null
+            "url": "http://www.exposebox.com/"
         },
         "express.co.uk": {
             "name": "express.co.uk",
@@ -5594,7 +5599,7 @@
         "expressvpn": {
             "name": "ExpressVPN",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.expressvpn.com/"
         },
         "extreme_tracker": {
             "name": "eXTReMe Tracker",
@@ -5619,7 +5624,7 @@
         "eye_newton": {
             "name": "Eye Newton",
             "categoryId": 2,
-            "url": null
+            "url": "http://eyenewton.ru/"
         },
         "ezakus": {
             "name": "Ezakus",
@@ -5639,7 +5644,7 @@
         "facebook_beacon": {
             "name": "Facebook Beacon",
             "categoryId": 7,
-            "url": null
+            "url": "https://www.facebook.com/"
         },
         "facebook_cdn": {
             "name": "Facebook CDN",
@@ -5654,7 +5659,7 @@
         "facebook_conversion_tracking": {
             "name": "Facebook Conversion Tracking",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.facebook.com/"
         },
         "facebook_custom_audience": {
             "name": "Facebook Custom Audience",
@@ -5669,7 +5674,7 @@
         "facebook_impressions": {
             "name": "Facebook Impressions",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.facebook.com/"
         },
         "facebook_social_plugins": {
             "name": "Facebook Social Plugins",
@@ -5759,7 +5764,7 @@
         "feefo": {
             "name": "Feefo",
             "categoryId": 2,
-            "url": null
+            "url": "http://www.feefo.com/web/en/us/"
         },
         "fidelity_media": {
             "name": "Fidelity Media",
@@ -5774,7 +5779,7 @@
         "filament.io": {
             "name": "Filament.io",
             "categoryId": 4,
-            "url": null
+            "url": "http://sharethis.com/"
         },
         "fileserve": {
             "name": "FileServe",
@@ -5784,7 +5789,7 @@
         "financeads": {
             "name": "FinanceADs",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.financeads.net/"
         },
         "financial_content": {
             "name": "Financial Content",
@@ -5809,12 +5814,12 @@
         "first_impression": {
             "name": "First Impression",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.firstimpression.io"
         },
         "fit_analytics": {
             "name": "Fit Analytics",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.fitanalytics.com/"
         },
         "fivetran": {
             "name": "Fivetran",
@@ -5869,7 +5874,7 @@
         "flixmedia": {
             "name": "Flixmedia",
             "categoryId": 8,
-            "url": null
+            "url": "https://flixmedia.eu"
         },
         "flocktory.com": {
             "name": "Flocktory",
@@ -5879,7 +5884,7 @@
         "flowplayer": {
             "name": "Flowplayer",
             "categoryId": 4,
-            "url": null
+            "url": "https://flowplayer.org/"
         },
         "fluct": {
             "name": "Fluct",
@@ -5889,7 +5894,7 @@
         "fluent": {
             "name": "Fluent",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.fluentco.com/"
         },
         "fluid": {
             "name": "Fluid",
@@ -5934,7 +5939,7 @@
         "fonbet": {
             "name": "Fonbet",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.fonbet.ru"
         },
         "fonecta": {
             "name": "Fonecta",
@@ -5959,7 +5964,7 @@
         "footprintdns.com": {
             "name": "Footprint DNS",
             "categoryId": 11,
-            "url": null
+            "url": "https://www.microsoft.com/"
         },
         "forcetrac": {
             "name": "ForceTrac",
@@ -5979,7 +5984,7 @@
         "formisimo": {
             "name": "Formisimo",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.formisimo.com/"
         },
         "forter": {
             "name": "Forter",
@@ -6004,12 +6009,12 @@
         "foxnews_static": {
             "name": "Fox News CDN",
             "categoryId": 9,
-            "url": ""
+            "url": "http://www.foxnews.com/"
         },
         "foxpush": {
             "name": "FoxPush",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.foxpush.com/"
         },
         "foxydeal_com": {
             "name": "foxydeal.com",
@@ -6064,7 +6069,7 @@
         "fresh8": {
             "name": "Fresh8",
             "categoryId": 6,
-            "url": null
+            "url": "http://fresh8gaming.com/"
         },
         "freshdesk": {
             "name": "Freshdesk",
@@ -6079,7 +6084,7 @@
         "friendbuy": {
             "name": "FriendBuy",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.friendbuy.com"
         },
         "friendfeed": {
             "name": "FriendFeed",
@@ -6109,17 +6114,17 @@
         "fuelx": {
             "name": "FuelX",
             "categoryId": 4,
-            "url": null
+            "url": "http://fuelx.com/"
         },
         "fullstory": {
             "name": "FullStory",
             "categoryId": 6,
-            "url": null
+            "url": "http://fullstory.com"
         },
         "funnelytics": {
             "name": "Funnelytics",
             "categoryId": 6,
-            "url": null
+            "url": "https://funnelytics.io/"
         },
         "fyber": {
             "name": "Fyber",
@@ -6159,7 +6164,7 @@
         "ga_audiences": {
             "name": "GA Audiences",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.google.com"
         },
         "gb-world": {
             "name": "GB-World",
@@ -6179,7 +6184,7 @@
         "geeen": {
             "name": "Geeen",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.geeen.co.jp/"
         },
         "gemius": {
             "name": "Gemius",
@@ -6219,7 +6224,7 @@
         "geolify": {
             "name": "Geolify",
             "categoryId": 4,
-            "url": null
+            "url": "http://geolify.com/"
         },
         "geoplugin": {
             "name": "geoPlugin",
@@ -6279,12 +6284,12 @@
         "get_response": {
             "name": "Get Response",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.getresponse.com/?marketing_gv=v2"
         },
         "get_site_control": {
             "name": "Get Site Control",
             "categoryId": 4,
-            "url": null
+            "url": "https://getsitecontrol.com/"
         },
         "gfk": {
             "name": "GfK",
@@ -6309,32 +6314,32 @@
         "giga": {
             "name": "Giga",
             "categoryId": 4,
-            "url": null
+            "url": "https://gigaonclick.com"
         },
         "gigya": {
             "name": "Gigya",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.sap.com/index.html"
         },
         "gigya_beacon": {
             "name": "Gigya Beacon",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.sap.com/index.html"
         },
         "gigya_socialize": {
             "name": "Gigya Socialize",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.sap.com/index.html"
         },
         "gigya_toolbar": {
             "name": "Gigya Toolbar",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.sap.com/index.html"
         },
         "giosg": {
             "name": "Giosg",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.giosg.com/"
         },
         "giphy.com": {
             "name": "Giphy",
@@ -6349,12 +6354,12 @@
         "github": {
             "name": "GitHub",
             "categoryId": 2,
-            "url": null
+            "url": "https://github.com/"
         },
         "github_apps": {
             "name": "GitHub Apps",
             "categoryId": 2,
-            "url": null
+            "url": "https://github.com/"
         },
         "github_pages": {
             "name": "Github Pages",
@@ -6374,7 +6379,7 @@
         "glad_cube": {
             "name": "Glad Cube",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.glad-cube.com/"
         },
         "glganltcs.space": {
             "name": "glganltcs.space",
@@ -6414,7 +6419,7 @@
         "gmo": {
             "name": "GMO",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.gmo.media/"
         },
         "gmx_net": {
             "name": "gmx.net",
@@ -6424,7 +6429,7 @@
         "gm_delivery": {
             "name": "GM Delivery",
             "categoryId": 4,
-            "url": null
+            "url": "http://a.gmdelivery.com/"
         },
         "go.com": {
             "name": "go.com",
@@ -6484,12 +6489,12 @@
         "google_adservices": {
             "name": "Google AdServices",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.google.com"
         },
         "google_ads_measurement": {
             "name": "Google Ads Measurement",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.google.com"
         },
         "google_adwords_conversion": {
             "name": "Google AdWords Conversion",
@@ -6499,7 +6504,7 @@
         "google_adwords_user_lists": {
             "name": "Google Adwords User Lists",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.google.com"
         },
         "google_analytics": {
             "name": "Google Analytics",
@@ -6509,7 +6514,7 @@
         "google_appspot": {
             "name": "Google Appspot",
             "categoryId": 10,
-            "url": null
+            "url": "http://www.google.com"
         },
         "google_custom_search": {
             "name": "Google Custom Search Ads",
@@ -6529,7 +6534,7 @@
         "google_ima": {
             "name": "Google IMA",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.google.com"
         },
         "google_photos": {
             "name": "Google Photos",
@@ -6539,7 +6544,7 @@
         "google_pingback": {
             "name": "Google Pingback",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.google.com"
         },
         "google_plus": {
             "name": "Google+ Platform",
@@ -6549,7 +6554,7 @@
         "google_publisher_tags": {
             "name": "Google Publisher Tags",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.google.com"
         },
         "google_remarketing": {
             "name": "Google Dynamic Remarketing",
@@ -6559,7 +6564,7 @@
         "google_safeframe": {
             "name": "Google Safeframe",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.google.com"
         },
         "google_servers": {
             "name": "Google Servers",
@@ -6569,12 +6574,12 @@
         "google_shopping_reviews": {
             "name": "Google Shopping Reviews",
             "categoryId": 2,
-            "url": null
+            "url": "http://www.google.com"
         },
         "google_syndication": {
             "name": "Google Syndication",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.google.com"
         },
         "google_tag_manager": {
             "name": "Google Tag Manager",
@@ -6589,17 +6594,17 @@
         "google_travel_adds": {
             "name": "Google Travel Adds",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.google.com"
         },
         "google_trusted_stores": {
             "name": "Google Trusted Stores",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.google.com"
         },
         "google_users": {
             "name": "Google User Content",
             "categoryId": 9,
-            "url": null
+            "url": "http://www.google.com"
         },
         "google_website_optimizer": {
             "name": "Google Website Optimizer",
@@ -6659,7 +6664,7 @@
         "graph_comment": {
             "name": "Graph Comment",
             "categoryId": 5,
-            "url": null
+            "url": "https://graphcomment.com/en/"
         },
         "gravatar": {
             "name": "Gravatar",
@@ -6669,7 +6674,7 @@
         "gravitec": {
             "name": "Gravitec",
             "categoryId": 6,
-            "url": null
+            "url": "https://gravitec.net/"
         },
         "gravity_insights": {
             "name": "Gravity Insights",
@@ -6729,7 +6734,7 @@
         "gstatic": {
             "name": "Google Static",
             "categoryId": 9,
-            "url": null
+            "url": "http://www.google.com"
         },
         "gtop": {
             "name": "GTop",
@@ -6739,7 +6744,7 @@
         "gugaboo": {
             "name": "Gugaboo",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.gubagoo.com/"
         },
         "guj.de": {
             "name": "Gruner + Jahr",
@@ -6789,7 +6794,7 @@
         "happy_fox_chat": {
             "name": "Happy Fox Chat",
             "categoryId": 2,
-            "url": null
+            "url": "https://happyfoxchat.com/"
         },
         "harren_media": {
             "name": "Harren Media",
@@ -6799,12 +6804,12 @@
         "hatchbuck": {
             "name": "Hatchbuck",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.hatchbuck.com/"
         },
         "head_hunter": {
             "name": "Head Hunter",
             "categoryId": 6,
-            "url": null
+            "url": "https://hh.ru/"
         },
         "healte.de": {
             "name": "healte.de",
@@ -6849,7 +6854,7 @@
         "heureka-widget": {
             "name": "Heureka-Widget",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.heurekashopping.cz/"
         },
         "heybubble": {
             "name": "HeyBubble",
@@ -6879,7 +6884,7 @@
         "highwinds": {
             "name": "Highwinds",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.highwinds.com/"
         },
         "hiiir": {
             "name": "Hiiir",
@@ -6939,7 +6944,7 @@
         "hola_player": {
             "name": "Hola Player",
             "categoryId": 0,
-            "url": null
+            "url": "https://holacdn.com/"
         },
         "homeaway": {
             "name": "HomeAway",
@@ -7039,7 +7044,7 @@
         "hucksterbot": {
             "name": "HucksterBot",
             "categoryId": 4,
-            "url": null
+            "url": "http://hucksterbot.ru/"
         },
         "hupso": {
             "name": "Hupso",
@@ -7169,12 +7174,12 @@
         "idio": {
             "name": "Idio",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.idio.ai/"
         },
         "id_services": {
             "name": "ID Services",
             "categoryId": 6,
-            "url": null
+            "url": "https://id.services/"
         },
         "ie8eamus.com": {
             "name": "ie8eamus.com",
@@ -7194,7 +7199,7 @@
         "ignitionone": {
             "name": "IgnitionOne",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.ignitionone.com/"
         },
         "igodigital": {
             "name": "iGoDigital",
@@ -7259,12 +7264,12 @@
         "immanalytics": {
             "name": "Immanalytics",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.roku.com/"
         },
         "immobilienscout24_de": {
             "name": "immobilienscout24.de",
             "categoryId": 8,
-            "url": null
+            "url": "http://www.scout24.com/"
         },
         "imonomy": {
             "name": "imonomy",
@@ -7329,7 +7334,7 @@
         "infinite_analytics": {
             "name": "Infinite Analytics",
             "categoryId": 6,
-            "url": null
+            "url": "http://infiniteanalytics.com/products/"
         },
         "infinity_tracking": {
             "name": "Infinity Tracking",
@@ -7409,12 +7414,12 @@
         "instagram_com": {
             "name": "Instagram",
             "categoryId": 8,
-            "url": null
+            "url": "https://www.facebook.com/"
         },
         "instant_check_mate": {
             "name": "Instant Check Mate",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.instantcheckmate.com/"
         },
         "instart_logic": {
             "name": "Instart Logic",
@@ -7424,12 +7429,12 @@
         "insticator": {
             "name": "Insticator",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.insticator.com/landingpage"
         },
         "instinctive": {
             "name": "Instinctive",
             "categoryId": 4,
-            "url": null
+            "url": "https://instinctive.io/ "
         },
         "integral_ad_science": {
             "name": "Integral Ad Science",
@@ -7464,7 +7469,7 @@
         "intent_iq": {
             "name": "Intent IQ",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.intentiq.com/"
         },
         "intent_media": {
             "name": "Intent",
@@ -7529,7 +7534,7 @@
         "intimate_merger": {
             "name": "Intimate Merger",
             "categoryId": 6,
-            "url": null
+            "url": "https://corp.intimatemerger.com/"
         },
         "investingchannel": {
             "name": "Investing Channel",
@@ -7549,7 +7554,7 @@
         "invodo": {
             "name": "Invodo",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.invodo.com/"
         },
         "iogous": {
             "name": "iogous",
@@ -7569,7 +7574,7 @@
         "iovation": {
             "name": "iovation",
             "categoryId": 5,
-            "url": null
+            "url": "http://www.iovation.com/"
         },
         "ip-label": {
             "name": "ip-label",
@@ -7589,7 +7594,7 @@
         "ipg_mediabrands": {
             "name": "IPG Mediabrands",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.ipgmediabrands.com/"
         },
         "ipify": {
             "name": "ipify",
@@ -7599,7 +7604,7 @@
         "ipinfo": {
             "name": "Ipinfo",
             "categoryId": 2,
-            "url": null
+            "url": "https://ipinfo.io/"
         },
         "iplogger": {
             "name": "IPLogger",
@@ -7679,7 +7684,7 @@
         "ixi_digital": {
             "name": "IXI Digital",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.equifax.com/home/en_us"
         },
         "ixquick.com": {
             "name": "ixquick",
@@ -7689,7 +7694,7 @@
         "izooto": {
             "name": "iZooto",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.izooto.com/"
         },
         "j-list_affiliate_program": {
             "name": "J-List Affiliate Program",
@@ -7699,7 +7704,7 @@
         "jaco": {
             "name": "Jaco",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.walkme.com/"
         },
         "janrain": {
             "name": "Janrain",
@@ -7709,17 +7714,17 @@
         "jeeng": {
             "name": "Jeeng",
             "categoryId": 4,
-            "url": null
+            "url": "https://jeeng.com/"
         },
         "jeeng_widgets": {
             "name": "Jeeng Widgets",
             "categoryId": 4,
-            "url": null
+            "url": "https://jeeng.com/"
         },
         "jetlore": {
             "name": "Jetlore",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.jetlore.com/"
         },
         "jetpack": {
             "name": "Jetpack",
@@ -7764,7 +7769,7 @@
         "jobs_2_careers": {
             "name": "Jobs 2 Careers",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.jobs2careers.com/"
         },
         "joinhoney": {
             "name": "Honey",
@@ -7789,7 +7794,7 @@
         "jse_coin": {
             "name": "JSE Coin",
             "categoryId": 4,
-            "url": null
+            "url": "https://jsecoin.com/"
         },
         "jsuol.com.br": {
             "name": "jsuol.com.br",
@@ -7819,12 +7824,12 @@
         "jumplead": {
             "name": "Jumplead",
             "categoryId": 6,
-            "url": null
+            "url": "https://jumplead.com/"
         },
         "jumpstart_tagging_solutions": {
             "name": "Jumpstart Tagging Solutions",
             "categoryId": 6,
-            "url": null
+            "url": " http://www.hearst.com/"
         },
         "jumptap": {
             "name": "Jumptap",
@@ -7839,7 +7844,7 @@
         "just_answer": {
             "name": "Just Answer",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.justanswer.com/"
         },
         "just_premium": {
             "name": "Just Premium",
@@ -7884,7 +7889,7 @@
         "kalooga_widget": {
             "name": "Kalooga Widget",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.kalooga.com/"
         },
         "kaltura": {
             "name": "Kaltura",
@@ -7929,7 +7934,7 @@
         "katchup": {
             "name": "Katchup",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.katchup.fr/"
         },
         "kauli": {
             "name": "Kauli",
@@ -7964,7 +7969,7 @@
         "keytiles": {
             "name": "Keytiles",
             "categoryId": 6,
-            "url": null
+            "url": "http://keytiles.com/"
         },
         "keywee": {
             "name": "Keywee",
@@ -7989,7 +7994,7 @@
         "kickfactory": {
             "name": "Kickfactory",
             "categoryId": 4,
-            "url": null
+            "url": "https://kickfactory.com/"
         },
         "kickfire": {
             "name": "Kickfire",
@@ -7999,7 +8004,7 @@
         "king.com": {
             "name": "King.com",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.king.com/"
         },
         "king_com": {
             "name": "King.com",
@@ -8029,7 +8034,7 @@
         "kixer": {
             "name": "Kixer",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.kixer.com"
         },
         "klarna.com": {
             "name": "Klarna",
@@ -8039,7 +8044,7 @@
         "klaviyo": {
             "name": "Klaviyo",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.klaviyo.com/"
         },
         "klikki": {
             "name": "Klikki",
@@ -8054,17 +8059,17 @@
         "kmeleo": {
             "name": "Kméléo",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.6peo.com/"
         },
         "knoopstat": {
             "name": "Knoopstat",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.knoopstat.nl"
         },
         "knotch": {
             "name": "Knotch",
             "categoryId": 2,
-            "url": null
+            "url": "http://knotch.it"
         },
         "komoona": {
             "name": "Komoona",
@@ -8079,7 +8084,7 @@
         "kontextr": {
             "name": "Kontextr",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.kontextr.com/"
         },
         "kontextua": {
             "name": "Kontextua",
@@ -8094,7 +8099,7 @@
         "kortx": {
             "name": "Kortx",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.kortx.io/"
         },
         "krux_digital": {
             "name": "Krux Digital",
@@ -8114,7 +8119,7 @@
         "kyto": {
             "name": "Kyto",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.kyto.com/"
         },
         "ladsp.com": {
             "name": "Logicad",
@@ -8139,7 +8144,7 @@
         "launch_darkly": {
             "name": "Launch Darkly",
             "categoryId": 5,
-            "url": null
+            "url": "https://launchdarkly.com/index.html"
         },
         "layer-ad.org": {
             "name": "Layer-ADS.net",
@@ -8149,7 +8154,7 @@
         "lazada": {
             "name": "Lazada",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.lazada.com/"
         },
         "lcx_digital": {
             "name": "LCX Digital",
@@ -8159,7 +8164,7 @@
         "leadback": {
             "name": "Leadback",
             "categoryId": 6,
-            "url": null
+            "url": "http://leadback.ru/?utm_source=leadback_widget&utm_medium=eas-balt.ru&utm_campaign=self_ad"
         },
         "leaddyno": {
             "name": "LeadDyno",
@@ -8174,7 +8179,7 @@
         "leadgenic": {
             "name": "LeadGENIC",
             "categoryId": 4,
-            "url": null
+            "url": "https://leadgenic.com/"
         },
         "leadhit": {
             "name": "LeadHit",
@@ -8184,17 +8189,17 @@
         "leadin": {
             "name": "Leadin",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.hubspot.com/"
         },
         "leading_reports": {
             "name": "Leading Reports",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.leadingreports.de/"
         },
         "leadinspector": {
             "name": "LeadInspector",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.leadinspector.de/"
         },
         "leadlander": {
             "name": "LeadLander",
@@ -8209,17 +8214,17 @@
         "leadpages": {
             "name": "Leadpages",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.leadpages.net/"
         },
         "leadplace": {
             "name": "LeadPlace",
             "categoryId": 6,
-            "url": null
+            "url": "https://temelio.com"
         },
         "leadscoreapp": {
             "name": "LeadScoreApp",
             "categoryId": 2,
-            "url": null
+            "url": "http://leadscoreapp.com"
         },
         "leadsius": {
             "name": "Leadsius",
@@ -8239,7 +8244,7 @@
         "lead_liaison": {
             "name": "Lead Liaison",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.leadliaison.com"
         },
         "leiki": {
             "name": "Leiki",
@@ -8269,12 +8274,12 @@
         "letv": {
             "name": "LeTV",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.le.com/"
         },
         "let_reach": {
             "name": "Let Reach",
             "categoryId": 2,
-            "url": null
+            "url": "https://letreach.com/"
         },
         "level3_communications": {
             "name": "Level 3 Communications, Inc.",
@@ -8304,7 +8309,7 @@
         "limk": {
             "name": "Limk",
             "categoryId": 4,
-            "url": null
+            "url": "https://limk.com/"
         },
         "linezing": {
             "name": "LineZing",
@@ -8334,12 +8339,12 @@
         "linkedin_ads": {
             "name": "LinkedIn Ads",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.microsoft.com/"
         },
         "linkedin_analytics": {
             "name": "LinkedIn Analytics",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.microsoft.com/"
         },
         "linkedin_marketing_solutions": {
             "name": "LinkedIn Marketing Solutions",
@@ -8354,7 +8359,7 @@
         "linker": {
             "name": "Linker",
             "categoryId": 6,
-            "url": null
+            "url": "http://linker.hr/"
         },
         "linkprice": {
             "name": "LinkPrice",
@@ -8389,7 +8394,7 @@
         "linkup": {
             "name": "LinkUp",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.linkup.com/"
         },
         "linkwise": {
             "name": "Linkwise",
@@ -8429,7 +8434,7 @@
         "live800": {
             "name": "Live800",
             "categoryId": 2,
-            "url": null
+            "url": "http://live800.com"
         },
         "liveadexchanger.com": {
             "name": "liveadexchanger.com",
@@ -8489,7 +8494,7 @@
         "livestream": {
             "name": "Livestream",
             "categoryId": 0,
-            "url": null
+            "url": "http://vimeo.com/"
         },
         "livetex.ru": {
             "name": "LiveTex",
@@ -8499,22 +8504,22 @@
         "live_agent": {
             "name": "Live Agent",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.ladesk.com/"
         },
         "live_help_now": {
             "name": "Live Help Now",
             "categoryId": 2,
-            "url": null
+            "url": "http://www.livehelpnow.net/"
         },
         "live_intent": {
             "name": "Live Intent",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.liveintent.com/"
         },
         "live_journal": {
             "name": "Live Journal",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.livejournal.com/"
         },
         "lkqd": {
             "name": "LKQD",
@@ -8544,7 +8549,7 @@
         "lockerdome": {
             "name": "LockerDome",
             "categoryId": 7,
-            "url": null
+            "url": "https://lockerdome.com"
         },
         "lockerz_share": {
             "name": "AddToAny",
@@ -8554,7 +8559,7 @@
         "logan_media": {
             "name": "Logan Media",
             "categoryId": 6,
-            "url": null
+            "url": "http://loganmedia.mobi/"
         },
         "logdna": {
             "name": "LogDNA",
@@ -8584,7 +8589,7 @@
         "longtail_video_analytics": {
             "name": "JW Player Analytics",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.jwplayer.com/"
         },
         "loomia": {
             "name": "Loomia",
@@ -8594,7 +8599,7 @@
         "loop11": {
             "name": "Loop11",
             "categoryId": 6,
-            "url": null
+            "url": "https://360i.com/"
         },
         "loopfuse_oneview": {
             "name": "LoopFuse OneView",
@@ -8614,7 +8619,7 @@
         "lucid": {
             "name": "Lucid",
             "categoryId": 4,
-            "url": null
+            "url": "https://luc.id/"
         },
         "lucid_media": {
             "name": "Lucid Media",
@@ -8689,7 +8694,7 @@
         "mads": {
             "name": "MADS",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.mads.com/"
         },
         "mad_ads_media": {
             "name": "Mad Ads Media",
@@ -8729,7 +8734,7 @@
         "mail.ru_counter": {
             "name": "Mail.Ru Counter",
             "categoryId": 2,
-            "url": null
+            "url": "https://corp.megafon.com/"
         },
         "mail.ru_group": {
             "name": "Mail.Ru Group",
@@ -8744,7 +8749,7 @@
         "mailchimp_tracking": {
             "name": "MailChimp Tracking",
             "categoryId": 4,
-            "url": null
+            "url": "http://mailchimp.com/"
         },
         "mailerlite.com": {
             "name": "Mailerlite",
@@ -8764,7 +8769,7 @@
         "makazi": {
             "name": "Makazi",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.makazi.com/en/"
         },
         "makeappdev.xyz": {
             "name": "makeappdev.xyz",
@@ -8779,12 +8784,12 @@
         "mango": {
             "name": "Mango",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.mango-office.ru/"
         },
         "manycontacts": {
             "name": "ManyContacts",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.manycontacts.com/"
         },
         "mapandroute.de": {
             "name": "Map and Route",
@@ -8824,7 +8829,7 @@
         "marketing_automation": {
             "name": "Marketing Automation",
             "categoryId": 4,
-            "url": null
+            "url": "https://en.frodx.com"
         },
         "marketo": {
             "name": "Marketo",
@@ -8834,7 +8839,7 @@
         "market_thunder": {
             "name": "Market Thunder",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.makethunder.com/"
         },
         "markmonitor": {
             "name": "MarkMonitor",
@@ -8864,7 +8869,7 @@
         "maru-edu": {
             "name": "Maru-EDU",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.maruedr.com"
         },
         "marvellous_machine": {
             "name": "Marvellous Machine",
@@ -8884,12 +8889,12 @@
         "matelso": {
             "name": "Matelso",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.matelso.de"
         },
         "mather_analytics": {
             "name": "Mather Analytics",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.mathereconomics.com/"
         },
         "mathjax.org": {
             "name": "MathJax",
@@ -8899,7 +8904,7 @@
         "matiro": {
             "name": "Matiro",
             "categoryId": 6,
-            "url": null
+            "url": " http://matiro.com/"
         },
         "matomo": {
             "name": "Matomo",
@@ -8959,7 +8964,7 @@
         "mcabi": {
             "name": "mCabi",
             "categoryId": 4,
-            "url": null
+            "url": "https://mcabi.mcloudglobal.com/#"
         },
         "mcafee_secure": {
             "name": "McAfee Secure",
@@ -8994,7 +8999,7 @@
         "mediaad": {
             "name": "MediaAd",
             "categoryId": 4,
-            "url": null
+            "url": "https://mediaad.org"
         },
         "mediadesk": {
             "name": "MediaDesk",
@@ -9029,7 +9034,7 @@
         "mediametrics": {
             "name": "Mediametrics",
             "categoryId": 7,
-            "url": null
+            "url": "http://mediametrics.ru"
         },
         "median": {
             "name": "Median",
@@ -9044,7 +9049,7 @@
         "mediapost_communications": {
             "name": "Mediapost Communications",
             "categoryId": 6,
-            "url": null
+            "url": "https://vrm.mediapostcommunication.net/"
         },
         "mediarithmics.com": {
             "name": "Mediarithmics",
@@ -9084,7 +9089,7 @@
         "media_impact": {
             "name": "Media Impact",
             "categoryId": 4,
-            "url": null
+            "url": "https://mediaimpact.de/index.html"
         },
         "media_innovation_group": {
             "name": "Xaxis",
@@ -9094,12 +9099,12 @@
         "media_today": {
             "name": "Media Today",
             "categoryId": 4,
-            "url": null
+            "url": " http://mediatoday.ru/"
         },
         "medigo": {
             "name": "Medigo",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.mediego.com/en/"
         },
         "medley": {
             "name": "Medley",
@@ -9134,7 +9139,7 @@
         "melissa": {
             "name": "Melissa",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.melissa.com/"
         },
         "melt": {
             "name": "Melt",
@@ -9174,7 +9179,7 @@
         "merkle_research": {
             "name": "Merkle Research",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.dentsuaegisnetwork.com/"
         },
         "merkle_rkg": {
             "name": "Merkle RKG",
@@ -9229,12 +9234,12 @@
         "microsoft_adcenter_conversion": {
             "name": "Microsoft adCenter Conversion",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.microsoft.com/"
         },
         "microsoft_analytics": {
             "name": "Microsoft Analytics",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.microsoft.com/"
         },
         "mindset_media": {
             "name": "Mindset Media",
@@ -9259,17 +9264,17 @@
         "mints_app": {
             "name": "Mints App",
             "categoryId": 2,
-            "url": null
+            "url": "https://mintsapp.io/"
         },
         "minute.ly": {
             "name": "minute.ly",
             "categoryId": 0,
-            "url": null
+            "url": "http://minute.ly/"
         },
         "minute.ly_video": {
             "name": "minute.ly video",
             "categoryId": 0,
-            "url": null
+            "url": "http://minute.ly/"
         },
         "mirando": {
             "name": "Mirando",
@@ -9299,12 +9304,12 @@
         "mixpo": {
             "name": "Mixpo",
             "categoryId": 4,
-            "url": null
+            "url": "http://dynamicvideoad.mixpo.com/"
         },
         "mluvii": {
             "name": "Mluvii",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.mluvii.com"
         },
         "mncdn.com": {
             "name": "MediaNova CDN",
@@ -9339,7 +9344,7 @@
         "mochapp": {
             "name": "MoChapp",
             "categoryId": 2,
-            "url": null
+            "url": "http://www.mochapp.com/"
         },
         "modernus": {
             "name": "Modernus",
@@ -9349,7 +9354,7 @@
         "modern_impact": {
             "name": "Modern Impact",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.modernimpact.com/"
         },
         "modulepush.com": {
             "name": "modulepush.com",
@@ -9384,7 +9389,7 @@
         "moneytizer": {
             "name": "Moneytizer",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.themoneytizer.com/"
         },
         "mongoose_metrics": {
             "name": "Mongoose Metrics",
@@ -9414,7 +9419,7 @@
         "monsido": {
             "name": "Monsido",
             "categoryId": 6,
-            "url": null
+            "url": "https://monsido.com/"
         },
         "monster_advertising": {
             "name": "Monster Advertising",
@@ -9424,7 +9429,7 @@
         "mooxar": {
             "name": "Mooxar",
             "categoryId": 4,
-            "url": ""
+            "url": "http://mooxar.com/"
         },
         "mopinion.com": {
             "name": "Mopinion",
@@ -9444,7 +9449,7 @@
         "more_communication": {
             "name": "More Communication",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.more-com.co.jp/"
         },
         "motigo_webstats": {
             "name": "Motigo Webstats",
@@ -9494,12 +9499,12 @@
         "mozoo": {
             "name": "MoZoo",
             "categoryId": 4,
-            "url": null
+            "url": "http://mozoo.com/"
         },
         "mrp": {
             "name": "MRP",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.mrpfd.com/"
         },
         "mrpdata": {
             "name": "MRP",
@@ -9514,12 +9519,12 @@
         "msn": {
             "name": "Microsoft Network",
             "categoryId": 8,
-            "url": null
+            "url": "https://www.microsoft.com/"
         },
         "muscula": {
             "name": "Muscula",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.universe-surf.de/"
         },
         "mux_inc": {
             "name": "Mux",
@@ -9539,7 +9544,7 @@
         "mycdn.me": {
             "name": "Mail.Ru CDN",
             "categoryId": 9,
-            "url": null
+            "url": "https://corp.megafon.com/"
         },
         "mycliplister.com": {
             "name": "Cliplister",
@@ -9604,12 +9609,12 @@
         "narando": {
             "name": "Narando",
             "categoryId": 0,
-            "url": null
+            "url": "https://narando.com/"
         },
         "narrativ": {
             "name": "Narrativ",
             "categoryId": 4,
-            "url": null
+            "url": "https://narrativ.com/"
         },
         "narrative_io": {
             "name": "Narrative",
@@ -9619,7 +9624,7 @@
         "natimatica": {
             "name": "Natimatica",
             "categoryId": 4,
-            "url": null
+            "url": "http://natimatica.com/"
         },
         "nativeads.com": {
             "name": "native ads",
@@ -9629,7 +9634,7 @@
         "nativeroll": {
             "name": "Nativeroll",
             "categoryId": 0,
-            "url": null
+            "url": "http://nativeroll.tv/"
         },
         "nativo": {
             "name": "Nativo",
@@ -9649,7 +9654,7 @@
         "naver_search": {
             "name": "Naver Search",
             "categoryId": 2,
-            "url": null
+            "url": "http://www.naver.com/"
         },
         "nbc_news": {
             "name": "NBC News",
@@ -9784,7 +9789,7 @@
         "newscgp.com": {
             "name": "News Connect",
             "categoryId": 4,
-            "url": null
+            "url": "https://newscorp.com/"
         },
         "newsmax": {
             "name": "Newsmax",
@@ -9849,17 +9854,17 @@
         "next_user": {
             "name": "Next User",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.nextuser.com/"
         },
         "neytiv": {
             "name": "Neytiv",
             "categoryId": 6,
-            "url": null
+            "url": "http://neytiv.com/"
         },
         "ngage_inc.": {
             "name": "NGage INC.",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.nginx.com/"
         },
         "nice264.com": {
             "name": "Nice264",
@@ -9899,7 +9904,7 @@
         "noddus": {
             "name": "Noddus",
             "categoryId": 4,
-            "url": null
+            "url": "  https://www.enterprise.noddus.com/"
         },
         "nolix": {
             "name": "Nolix",
@@ -9929,7 +9934,7 @@
         "notifyfox": {
             "name": "Notifyfox",
             "categoryId": 6,
-            "url": null
+            "url": "https://notifyfox.com/"
         },
         "now_interact": {
             "name": "Now Interact",
@@ -9984,7 +9989,7 @@
         "numbers.md": {
             "name": "Numbers.md",
             "categoryId": 6,
-            "url": null
+            "url": "https://numbers.md/"
         },
         "numerator": {
             "name": "Numerator",
@@ -10009,7 +10014,7 @@
         "ny_times_tagx": {
             "name": "NY Times TagX",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.nytimes.com/"
         },
         "o12zs3u2n.com": {
             "name": "o12zs3u2n.com",
@@ -10054,22 +10059,22 @@
         "octavius": {
             "name": "Octavius",
             "categoryId": 4,
-            "url": null
+            "url": "http://octavius.rocks/"
         },
         "office.com": {
             "name": "office.com",
             "categoryId": 8,
-            "url": null
+            "url": "https://www.microsoft.com/"
         },
         "office.net": {
             "name": "office.net",
             "categoryId": 8,
-            "url": null
+            "url": "https://www.microsoft.com/"
         },
         "office365.com": {
             "name": "office365.com",
             "categoryId": 8,
-            "url": null
+            "url": "https://www.microsoft.com/"
         },
         "oghub.io": {
             "name": "OG Hub",
@@ -10144,7 +10149,7 @@
         "oneall": {
             "name": "Oneall",
             "categoryId": 7,
-            "url": null
+            "url": "http://www.oneall.com/"
         },
         "onefeed": {
             "name": "Onefeed",
@@ -10189,7 +10194,7 @@
         "onthe.io": {
             "name": "OnThe.io",
             "categoryId": 6,
-            "url": null
+            "url": "https://t.onthe.io/media"
         },
         "ontraport_autopilot": {
             "name": "Ontraport Autopilot",
@@ -10204,7 +10209,7 @@
         "ooyala_analytics": {
             "name": "Ooyala Analytics",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.telstraglobal.com/"
         },
         "openload": {
             "name": "Openload",
@@ -10239,12 +10244,12 @@
         "open_adstream": {
             "name": "Open Adstream",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.appnexus.com/en"
         },
         "open_share_count": {
             "name": "Open Share Count",
             "categoryId": 4,
-            "url": null
+            "url": "http://opensharecount.com/"
         },
         "operative_media": {
             "name": "Operative Media",
@@ -10264,7 +10269,7 @@
         "oplytic": {
             "name": "Oplytic",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.oplytic.com"
         },
         "opta.net": {
             "name": "Opta",
@@ -10289,7 +10294,7 @@
         "optimatic": {
             "name": "Optimatic",
             "categoryId": 0,
-            "url": null
+            "url": "http://www.optimatic.com/"
         },
         "optimax_media_delivery": {
             "name": "Optimax Media Delivery",
@@ -10309,22 +10314,22 @@
         "optimizely_error_log": {
             "name": "Optimizely Error Log",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.optimizely.com/"
         },
         "optimizely_geo_targeting": {
             "name": "Optimizely Geographical Targeting",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.optimizely.com/"
         },
         "optimizely_logging": {
             "name": "Optimizely Logging",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.optimizely.com/"
         },
         "optimonk": {
             "name": "Optimonk",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.optimonk.com/"
         },
         "optinmonster": {
             "name": "OptInMonster",
@@ -10354,7 +10359,7 @@
         "oracle_rightnow": {
             "name": "Oracle RightNow",
             "categoryId": 8,
-            "url": null
+            "url": "http://www.oracle.com/"
         },
         "orange": {
             "name": "Orange",
@@ -10384,12 +10389,12 @@
         "order_groove": {
             "name": "Order Groove",
             "categoryId": 4,
-            "url": null
+            "url": "http://ordergroove.com/"
         },
         "orel_site": {
             "name": "Orel Site",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.orelsite.ru/"
         },
         "otclick": {
             "name": "otClick",
@@ -10419,32 +10424,32 @@
         "outbrain_amplify": {
             "name": "Outbrain Amplify",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.outbrain.com/"
         },
         "outbrain_analytics": {
             "name": "Outbrain Analytics",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.outbrain.com/"
         },
         "outbrain_logger": {
             "name": "Outbrain Logger",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.outbrain.com/"
         },
         "outbrain_pixel": {
             "name": "Outbrain Pixel",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.outbrain.com/"
         },
         "outbrain_utilities": {
             "name": "Outbrain Utilities",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.outbrain.com/"
         },
         "outbrain_widgets": {
             "name": "Outbrain Widgets",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.outbrain.com/"
         },
         "overheat.it": {
             "name": "overheat",
@@ -10544,7 +10549,7 @@
         "paykickstart": {
             "name": "PayKickstart",
             "categoryId": 6,
-            "url": null
+            "url": "https://paykickstart.com/"
         },
         "paypal": {
             "name": "PayPal",
@@ -10589,7 +10594,7 @@
         "pepsia": {
             "name": "Pepsia",
             "categoryId": 6,
-            "url": null
+            "url": "http://pepsia.com/en/"
         },
         "perfdrive.com": {
             "name": "perfdrive.com",
@@ -10649,7 +10654,7 @@
         "persio": {
             "name": "Persio",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.pers.io/"
         },
         "personyze": {
             "name": "Personyze",
@@ -10699,12 +10704,12 @@
         "pinterest_conversion_tracker": {
             "name": "Pinterest Conversion Tracker",
             "categoryId": 6,
-            "url": null
+            "url": "http://pinterest.com/"
         },
         "pipz": {
             "name": "Pipz",
             "categoryId": 4,
-            "url": null
+            "url": "https://pipz.com/br/"
         },
         "piwik": {
             "name": "Piwik Pro",
@@ -10714,12 +10719,12 @@
         "pixalate": {
             "name": "Pixalate",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.pixalate.com/"
         },
         "pixel_union": {
             "name": "Pixel Union",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.pixelunion.net/"
         },
         "pixfuture": {
             "name": "PixFuture",
@@ -10749,7 +10754,7 @@
         "plan.net_experience_cloud": {
             "name": "Plan.net Experience Cloud",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.serviceplan.com/"
         },
         "platform360": {
             "name": "Platform360",
@@ -10774,12 +10779,12 @@
         "plenty_of_fish": {
             "name": "Plenty Of Fish",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.pof.com/"
         },
         "plex_metrics": {
             "name": "Plex Metrics",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.plex.tv/"
         },
         "plista": {
             "name": "Plista",
@@ -10799,7 +10804,7 @@
         "plutusads": {
             "name": "Plutusads",
             "categoryId": 4,
-            "url": null
+            "url": "http://plutusads.com"
         },
         "pmddby.com": {
             "name": "pmddby.com",
@@ -10829,7 +10834,7 @@
         "pointific": {
             "name": "Pointific",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.pontiflex.com/"
         },
         "pointroll": {
             "name": "PointRoll",
@@ -10874,7 +10879,7 @@
         "popcorn_metrics": {
             "name": "Popcorn Metrics",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.popcornmetrics.com/"
         },
         "popin.cc": {
             "name": "popIn",
@@ -10884,7 +10889,7 @@
         "popmyads": {
             "name": "PopMyAds",
             "categoryId": 4,
-            "url": null
+            "url": "http://popmyads.com/"
         },
         "poponclick": {
             "name": "PopOnClick",
@@ -10904,12 +10909,12 @@
         "pornwave": {
             "name": "Pornwave",
             "categoryId": 3,
-            "url": null
+            "url": "http://pornwave.com"
         },
         "porta_brazil": {
             "name": "Porta Brazil",
             "categoryId": 4,
-            "url": null
+            "url": "http://brasil.gov.br/"
         },
         "post_affiliate_pro": {
             "name": "Post Affiliate Pro",
@@ -10934,7 +10939,7 @@
         "pozvonim": {
             "name": "Pozvonim",
             "categoryId": 4,
-            "url": null
+            "url": "https://pozvonim.com/"
         },
         "prebid": {
             "name": "Prebid",
@@ -10974,7 +10979,7 @@
         "pricespider": {
             "name": "Pricespider",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.pricespider.com/"
         },
         "prismamediadigital.com": {
             "name": "Prisma Media Digital",
@@ -10994,12 +10999,12 @@
         "productsup": {
             "name": "ProductsUp",
             "categoryId": 4,
-            "url": null
+            "url": "https://productsup.io/"
         },
         "profiliad": {
             "name": "Profiliad",
             "categoryId": 6,
-            "url": null
+            "url": "http://profiliad.com/"
         },
         "profitshare": {
             "name": "Profitshare",
@@ -11009,7 +11014,7 @@
         "proformics": {
             "name": "Proformics",
             "categoryId": 6,
-            "url": null
+            "url": "http://proformics.com/"
         },
         "programattik": {
             "name": "Programattik",
@@ -11029,7 +11034,7 @@
         "propel_marketing": {
             "name": "Propel Marketing",
             "categoryId": 4,
-            "url": null
+            "url": "http://propelmarketing.com/"
         },
         "propermedia": {
             "name": "Proper Media",
@@ -11039,7 +11044,7 @@
         "props": {
             "name": "Props",
             "categoryId": 4,
-            "url": null
+            "url": "http://props.id/"
         },
         "propvideo_net": {
             "name": "propvideo.net",
@@ -11059,7 +11064,7 @@
         "prostor": {
             "name": "Prostor",
             "categoryId": 4,
-            "url": null
+            "url": "http://prostor-lite.ru/"
         },
         "provide_support": {
             "name": "Provide Support",
@@ -11189,7 +11194,7 @@
         "pureprofile": {
             "name": "Pureprofile",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.pureprofile.com/us/"
         },
         "pure_chat": {
             "name": "Pure Chat",
@@ -11199,7 +11204,7 @@
         "purlive": {
             "name": "PurLive",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.purlive.com/"
         },
         "puserving.com": {
             "name": "puserving.com",
@@ -11219,12 +11224,12 @@
         "pushbullet": {
             "name": "Pushbullet",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.pushbullet.com/"
         },
         "pushcrew": {
             "name": "Pushcrew",
             "categoryId": 2,
-            "url": null
+            "url": "https://pushcrew.com/"
         },
         "pusher.com": {
             "name": "Pusher",
@@ -11239,7 +11244,7 @@
         "pushnews": {
             "name": "Pushnews",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.pushnews.eu/"
         },
         "pushno.com": {
             "name": "pushno.com",
@@ -11259,7 +11264,7 @@
         "push_engage": {
             "name": "Push Engage",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.pushengage.com/"
         },
         "pvclouds.com": {
             "name": "pvclouds.com",
@@ -11284,12 +11289,12 @@
         "qeado": {
             "name": "Qeado",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.qeado.com/"
         },
         "qihoo_360": {
             "name": "Qihoo 360",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.360totalsecurity.com/en/"
         },
         "qq.com": {
             "name": "qq.com",
@@ -11324,7 +11329,7 @@
         "quantcount": {
             "name": "Quantcount",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.quantcast.com"
         },
         "quantum_metric": {
             "name": "Quantum Metric",
@@ -11409,7 +11414,7 @@
         "raisenow": {
             "name": "RaiseNow",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.raisenow.com/de"
         },
         "rakuten_display": {
             "name": "Rakuten Display",
@@ -11424,7 +11429,7 @@
         "rakuten_widget": {
             "name": "Rakuten Widget",
             "categoryId": 4,
-            "url": null
+            "url": "http://global.rakuten.com/corp/"
         },
         "rambler": {
             "name": "Rambler",
@@ -11434,17 +11439,17 @@
         "rambler_count": {
             "name": "Rambler Count",
             "categoryId": 2,
-            "url": null
+            "url": "http://www.rambler.ru/"
         },
         "rambler_widget": {
             "name": "Rambler Widget",
             "categoryId": 2,
-            "url": null
+            "url": "http://www.rambler.ru/"
         },
         "rapidspike": {
             "name": "RapidSpike",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.rapidspike.com"
         },
         "rawgit": {
             "name": "RawGit",
@@ -11454,7 +11459,7 @@
         "raygun": {
             "name": "Raygun",
             "categoryId": 4,
-            "url": null
+            "url": "https://raygun.com/"
         },
         "rbc_counter": {
             "name": "RBC Counter",
@@ -11469,7 +11474,7 @@
         "rd_station": {
             "name": "RD Station",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.rdstation.com/en/"
         },
         "reachforce": {
             "name": "ReachForce",
@@ -11529,7 +11534,7 @@
         "realytics": {
             "name": "Realytics",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.realytics.io/"
         },
         "realytics.io": {
             "name": "realytics.io",
@@ -11539,7 +11544,7 @@
         "rebel_mouse": {
             "name": "Rebel Mouse",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.rebelmouse.com/"
         },
         "recettes.net": {
             "name": "Recettes.net",
@@ -11549,7 +11554,7 @@
         "recopick": {
             "name": "RecoPick",
             "categoryId": 4,
-            "url": null
+            "url": "https://recopick.com/"
         },
         "recreativ": {
             "name": "Recreativ",
@@ -11604,7 +11609,7 @@
         "red_ventures": {
             "name": "Red Ventures",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.redventures.com/"
         },
         "reed_business_information": {
             "name": "Reed Business Information",
@@ -11644,7 +11649,7 @@
         "reflektion": {
             "name": "Reflektion",
             "categoryId": 4,
-            "url": null
+            "url": "http://"
         },
         "reformal": {
             "name": "Reformal",
@@ -11679,7 +11684,7 @@
         "rekmob": {
             "name": "Rekmob",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.rekmob.com/"
         },
         "relap": {
             "name": "Relap",
@@ -11694,7 +11699,7 @@
         "relestar": {
             "name": "Relestar",
             "categoryId": 6,
-            "url": null
+            "url": "https://relestar.com/"
         },
         "relevant4.com": {
             "name": "relevant4 GmbH",
@@ -11769,17 +11774,17 @@
         "retargeting.cl": {
             "name": "Retargeting.cl",
             "categoryId": 4,
-            "url": null
+            "url": "http://retargeting.cl/"
         },
         "retarget_app": {
             "name": "Retarget App",
             "categoryId": 4,
-            "url": null
+            "url": "https://retargetapp.com/"
         },
         "retention_science": {
             "name": "Retention Science",
             "categoryId": 4,
-            "url": null
+            "url": "http://retentionscience.com/"
         },
         "reuters_media": {
             "name": "Reuters media",
@@ -11794,7 +11799,7 @@
         "revenue": {
             "name": "Revenue",
             "categoryId": 4,
-            "url": null
+            "url": "https://revenue.com/"
         },
         "revenuehits": {
             "name": "RevenueHits",
@@ -11844,7 +11849,7 @@
         "rhythmone_beacon": {
             "name": "Rhythmone Beacon",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.rhythmone.com/"
         },
         "ria.ru": {
             "name": "ria.ru",
@@ -11899,7 +11904,7 @@
         "rocket.ia": {
             "name": "Rocket.ia",
             "categoryId": 4,
-            "url": null
+            "url": "https://rocket.la/"
         },
         "rocket_fuel": {
             "name": "Rocket Fuel",
@@ -11909,7 +11914,7 @@
         "roistat": {
             "name": "Roistat",
             "categoryId": 6,
-            "url": null
+            "url": "https://roistat.com"
         },
         "roi_trax": {
             "name": "ROI trax",
@@ -11994,12 +11999,12 @@
         "ruhrgebiet": {
             "name": "Ruhrgebiet",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.ruhrgebiet-onlineservices.de/"
         },
         "rummycircle": {
             "name": "RummyCircle",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.rummycircle.com/"
         },
         "run": {
             "name": "RUN",
@@ -12014,7 +12019,7 @@
         "rune": {
             "name": "Rune",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.secretrune.com/"
         },
         "runmewivel.com": {
             "name": "runmewivel.com",
@@ -12024,7 +12029,7 @@
         "rythmxchange": {
             "name": "Rythmxchange",
             "categoryId": 0,
-            "url": null
+            "url": "https://www.rhythmone.com/"
         },
         "r_advertising": {
             "name": "R-Advertising",
@@ -12044,7 +12049,7 @@
         "sabavision": {
             "name": "SabaVision",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.sabavision.com/en/"
         },
         "sagemetrics": {
             "name": "SageMetrics",
@@ -12089,17 +12094,17 @@
         "salesviewer": {
             "name": "SalesViewer",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.salesviewer.com/"
         },
         "sales_feed": {
             "name": "Sales Feed",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.salesfeed.com/"
         },
         "sales_mango": {
             "name": "Sales Mango",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.salesmanago.pl/welcome.htm?language=en"
         },
         "samba.tv": {
             "name": "Samba TV",
@@ -12114,7 +12119,7 @@
         "sape.ru": {
             "name": "Sape",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.sape.ru/en"
         },
         "sapo_ads": {
             "name": "SAPO Ads",
@@ -12164,7 +12169,7 @@
         "scene7.com": {
             "name": "Adobe Dynamic Media (Scene7)",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.adobe.com/"
         },
         "schibsted": {
             "name": "Schibsted Media Group",
@@ -12204,7 +12209,7 @@
         "scripps_analytics": {
             "name": "Scripps Analytics",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.scrippsnetworksinteractive.com/"
         },
         "scroll": {
             "name": "Scroll",
@@ -12309,7 +12314,7 @@
         "sendinblue": {
             "name": "sendinblue",
             "categoryId": 4,
-            "url": null
+            "url": "https://fr.sendinblue.com/"
         },
         "sendpulse.com": {
             "name": "SendPulse",
@@ -12319,17 +12324,17 @@
         "sendsay": {
             "name": "Sendsay",
             "categoryId": 2,
-            "url": null
+            "url": "https://sendsay.ru"
         },
         "sense_digital": {
             "name": "Sense Digital",
             "categoryId": 6,
-            "url": null
+            "url": "http://sensedigital.in/"
         },
         "sensors_data": {
             "name": "Sensors Data",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.sensorsdata.cn/"
         },
         "sentifi.com": {
             "name": "Sentifi",
@@ -12354,7 +12359,7 @@
         "sessionly": {
             "name": "Sessionly",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.sessionly.io/"
         },
         "sevenone_media": {
             "name": "SevenOne Media",
@@ -12384,7 +12389,7 @@
         "seznam": {
             "name": "Seznam",
             "categoryId": 6,
-            "url": null
+            "url": "https://onas.seznam.cz/cz/"
         },
         "shareaholic": {
             "name": "Shareaholic",
@@ -12419,7 +12424,7 @@
         "sharpspring": {
             "name": "Sharpspring",
             "categoryId": 6,
-            "url": null
+            "url": "https://sharpspring.com/"
         },
         "sheego.de": {
             "name": "sheego.de",
@@ -12429,7 +12434,7 @@
         "sheerid": {
             "name": "SheerID",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.sheerid.com/"
         },
         "shinystat": {
             "name": "ShinyStat",
@@ -12464,12 +12469,12 @@
         "shopper_approved": {
             "name": "Shopper Approved",
             "categoryId": 2,
-            "url": null
+            "url": "http://www.shopperapproved.com"
         },
         "shopping_com": {
             "name": "Shopping.com",
             "categoryId": 4,
-            "url": null
+            "url": "https://partnernetwork.ebay.com/"
         },
         "shopping_flux": {
             "name": "Shopping Flux",
@@ -12494,7 +12499,7 @@
         "shop_target": {
             "name": "Shop Target",
             "categoryId": 4,
-            "url": null
+            "url": "http://shoptarget.com.br/"
         },
         "shortnews": {
             "name": "ShortNews.de",
@@ -12504,7 +12509,7 @@
         "shrink": {
             "name": "Shrink",
             "categoryId": 2,
-            "url": null
+            "url": "http://shink.in/"
         },
         "shutterstock": {
             "name": "Shutterstock",
@@ -12534,7 +12539,7 @@
         "signifyd": {
             "name": "Signifyd",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.signifyd.com/"
         },
         "silverpop": {
             "name": "Silverpop",
@@ -12564,7 +12569,7 @@
         "sina": {
             "name": "Sina",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.sina.com/"
         },
         "sina_cdn": {
             "name": "Sina CDN",
@@ -12579,7 +12584,7 @@
         "sirdata": {
             "name": "Sirdata",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.sirdata.com/home/"
         },
         "site24x7": {
             "name": "Site24x7",
@@ -12609,7 +12614,7 @@
         "siteimprove_analytics": {
             "name": "SiteImprove Analytics",
             "categoryId": 6,
-            "url": null
+            "url": "http://siteimprove.com"
         },
         "sitelabweb.com": {
             "name": "sitelabweb.com",
@@ -12639,12 +12644,12 @@
         "site_booster": {
             "name": "Site Booster",
             "categoryId": 7,
-            "url": null
+            "url": "https://sitebooster.com/"
         },
         "site_stratos": {
             "name": "Site Stratos",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.infocube.co.jp/"
         },
         "sixt-neuwagen.de": {
             "name": "sixt-neuwagen.de",
@@ -12674,7 +12679,7 @@
         "skroutz": {
             "name": "Skroutz",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.skroutz.gr/"
         },
         "skyglue": {
             "name": "SkyGlue",
@@ -12704,7 +12709,7 @@
         "sleeknote": {
             "name": "Sleeknote",
             "categoryId": 2,
-            "url": null
+            "url": "https://sleeknote.com/"
         },
         "slice_factory": {
             "name": "Slice Factory",
@@ -12714,7 +12719,7 @@
         "slimcutmedia": {
             "name": "SlimCutMedia",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.slimcutmedia.com/"
         },
         "slingpic": {
             "name": "Slingpic",
@@ -12754,7 +12759,7 @@
         "smartclip": {
             "name": "SmartClip",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.smartclip.com/"
         },
         "smartcontext": {
             "name": "SmartContext",
@@ -12764,7 +12769,7 @@
         "smarterclick": {
             "name": "Smarterclick",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.smarterclick.co.uk/"
         },
         "smartertrack": {
             "name": "SmarterTrack",
@@ -12789,7 +12794,7 @@
         "smartlook": {
             "name": "Smartlook",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.smartlook.com/"
         },
         "smartstream.tv": {
             "name": "SmartStream.TV",
@@ -12799,7 +12804,7 @@
         "smartsupp_chat": {
             "name": "Smartsupp Chat",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.smartsupp.com/"
         },
         "smart_adserver": {
             "name": "SMART AdServer",
@@ -12809,7 +12814,7 @@
         "smart_call": {
             "name": "Smart Call",
             "categoryId": 2,
-            "url": null
+            "url": "https://smartcall.kz/"
         },
         "smart_content": {
             "name": "Smart Content",
@@ -12829,7 +12834,7 @@
         "smart_selling": {
             "name": "Smart Selling",
             "categoryId": 2,
-            "url": null
+            "url": "https://smartselling.cz/"
         },
         "smi2.ru": {
             "name": "smi2.ru",
@@ -12839,7 +12844,7 @@
         "smooch": {
             "name": "Smooch",
             "categoryId": 2,
-            "url": null
+            "url": "https://smooch.io/"
         },
         "smowtion": {
             "name": "Smowtion",
@@ -12849,7 +12854,7 @@
         "smx_ventures": {
             "name": "SMX Ventures",
             "categoryId": 6,
-            "url": null
+            "url": "http://smxeventures.com/"
         },
         "smyte": {
             "name": "Smyte",
@@ -12859,12 +12864,12 @@
         "snacktv": {
             "name": "SnackTV",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.verizon.com/"
         },
         "snacktv_player": {
             "name": "SnackTV-Player",
             "categoryId": 0,
-            "url": null
+            "url": "https://www.verizon.com/"
         },
         "snap": {
             "name": "Snap",
@@ -12889,7 +12894,7 @@
         "snoobi": {
             "name": "Snoobi",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.snoobi.eu/"
         },
         "snoobi_analytics": {
             "name": "Snoobi Analytics",
@@ -12899,7 +12904,7 @@
         "snowplow": {
             "name": "Snowplow",
             "categoryId": 6,
-            "url": null
+            "url": "http://snowplowanalytics.com/"
         },
         "soasta_mpulse": {
             "name": "SOASTA mPulse",
@@ -12914,7 +12919,7 @@
         "socialbeat": {
             "name": "socialbeat",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.socialbeat.it/"
         },
         "socialrms": {
             "name": "SocialRMS",
@@ -12969,7 +12974,7 @@
         "solidopinion": {
             "name": "SolidOpinion",
             "categoryId": 2,
-            "url": null
+            "url": "https://solidopinion.com/"
         },
         "solve_media": {
             "name": "Solve Media",
@@ -13084,17 +13089,17 @@
         "spheremall": {
             "name": "SphereMall",
             "categoryId": 6,
-            "url": null
+            "url": "https://spheremall.com"
         },
         "sphereup": {
             "name": "SphereUp",
             "categoryId": 2,
-            "url": null
+            "url": "http://zoomd.com/"
         },
         "spicy": {
             "name": "Spicy",
             "categoryId": 4,
-            "url": null
+            "url": "http://sspicy.ru/#main"
         },
         "spider.ad": {
             "name": "Spider.Ad",
@@ -13104,7 +13109,7 @@
         "spider_ads": {
             "name": "Spider Ads",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.spiderads.eu/"
         },
         "spinnakr": {
             "name": "Spinnakr",
@@ -13139,7 +13144,7 @@
         "spoteffect": {
             "name": "Spoteffect",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.spoteffects.com/home/"
         },
         "spotify": {
             "name": "Spotify",
@@ -13174,17 +13179,17 @@
         "springserve": {
             "name": "SpringServe",
             "categoryId": 4,
-            "url": null
+            "url": "http://springserve.com/"
         },
         "sprinklr": {
             "name": "Sprinklr",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.sprinklr.com/"
         },
         "sputnik": {
             "name": "Sputnik",
             "categoryId": 6,
-            "url": null
+            "url": "https://cnt.sputnik.ru/"
         },
         "squadata": {
             "name": "Squadata",
@@ -13219,7 +13224,7 @@
         "stackadapt": {
             "name": "StackAdapt",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.stackadapt.com/"
         },
         "stackpathdns.com": {
             "name": "StackPath",
@@ -13304,12 +13309,12 @@
         "stetic": {
             "name": "Stetic",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.stetic.com/"
         },
         "stickyads": {
             "name": "StickyAds",
             "categoryId": 4,
-            "url": null
+            "url": "http://corporate.comcast.com/"
         },
         "stocktwits": {
             "name": "StockTwits",
@@ -13334,7 +13339,7 @@
         "strava": {
             "name": "Strava",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.strava.com/"
         },
         "streak": {
             "name": "Streak",
@@ -13369,7 +13374,7 @@
         "stroer_digital_media": {
             "name": "Stroer Digital Media",
             "categoryId": 4,
-            "url": null
+            "url": " http://www.stroeer.de/"
         },
         "strossle": {
             "name": "Strossle",
@@ -13434,7 +13439,7 @@
         "supplyframe": {
             "name": "SupplyFrame",
             "categoryId": 4,
-            "url": null
+            "url": "https://supplyframe.com/"
         },
         "surf_by_surfingbird": {
             "name": "Surf by Surfingbird",
@@ -13444,12 +13449,12 @@
         "survata": {
             "name": "Survata",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.survata.com/"
         },
         "sweettooth": {
             "name": "Sweettooth",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.sweettoothrewards.com/"
         },
         "swiftype": {
             "name": "Swiftype",
@@ -13474,17 +13479,17 @@
         "sykes": {
             "name": "Sykes",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.sykescottages.co.uk/"
         },
         "symantec": {
             "name": "Symantec (Norton Secured Seal)",
             "categoryId": 5,
-            "url": null
+            "url": "https://www.symantec.com/page.jsp?id=ssl-resources&tabID=3#"
         },
         "symphony_talent": {
             "name": "Symphony Talent",
             "categoryId": 2,
-            "url": null
+            "url": "http://www.symphonytalent.com/"
         },
         "synacor": {
             "name": "Synacor",
@@ -13529,7 +13534,7 @@
         "tagcade": {
             "name": "Tagcade",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.pubvantage.com/"
         },
         "taggify": {
             "name": "Taggify",
@@ -13589,27 +13594,27 @@
         "tarafdari": {
             "name": "Tarafdari",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.tarafdari.com/"
         },
         "target_2_sell": {
             "name": "Target 2 Sell",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.target2sell.com/en/"
         },
         "target_circle": {
             "name": "Target Circle",
             "categoryId": 6,
-            "url": null
+            "url": "http://targetcircle.com"
         },
         "target_fuel": {
             "name": "Target Fuel",
             "categoryId": 6,
-            "url": null
+            "url": "http://targetfuel.com/"
         },
         "tawk": {
             "name": "Tawk",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.tawk.to/"
         },
         "tbn.ru": {
             "name": "TBN.ru",
@@ -13739,17 +13744,17 @@
         "tidio": {
             "name": "Tidio",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.tidio.com/"
         },
         "tiller": {
             "name": "Tiller",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.tiller.com/"
         },
         "timezondb": {
             "name": "TimezonDB",
             "categoryId": 4,
-            "url": null
+            "url": "https://timezonedb.com/"
         },
         "tinypass": {
             "name": "Piano",
@@ -13809,7 +13814,7 @@
         "top_mail": {
             "name": "Top Mail",
             "categoryId": 6,
-            "url": null
+            "url": "https://corp.megafon.com/"
         },
         "torbit": {
             "name": "Torbit",
@@ -13879,7 +13884,7 @@
         "track_duck": {
             "name": "Track Duck",
             "categoryId": 6,
-            "url": null
+            "url": "https://trackduck.com/"
         },
         "tradedesk": {
             "name": "TradeDesk",
@@ -13939,7 +13944,7 @@
         "traffic_fuel": {
             "name": "Traffic Fuel",
             "categoryId": 4,
-            "url": null
+            "url": "https://trafficfuel.com/"
         },
         "traffic_revenue": {
             "name": "Traffic Revenue",
@@ -13949,7 +13954,7 @@
         "traffic_stars": {
             "name": "Traffic Stars",
             "categoryId": 3,
-            "url": null
+            "url": "https://trafficstars.com/#index_page"
         },
         "traffiliate": {
             "name": "Traffiliate",
@@ -13969,12 +13974,12 @@
         "transmatic": {
             "name": "Transmatic",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.transmatico.com/en/"
         },
         "travel_audience": {
             "name": "Travel Audience",
             "categoryId": 6,
-            "url": null
+            "url": "https://travelaudience.com/"
         },
         "trbo": {
             "name": "trbo",
@@ -13989,7 +13994,7 @@
         "tremor_video": {
             "name": "Tremor Video",
             "categoryId": 0,
-            "url": null
+            "url": "http://www.tremorvideo.com/en"
         },
         "trendcounter": {
             "name": "trendcounter",
@@ -13999,7 +14004,7 @@
         "trendemon": {
             "name": "TrenDemon",
             "categoryId": 6,
-            "url": null
+            "url": "http://trendemon.com"
         },
         "tribal_fusion": {
             "name": "Tribal Fusion",
@@ -14009,27 +14014,27 @@
         "tribal_fusion_notice": {
             "name": "Tribal Fusion Notice",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.exponential.com/"
         },
         "triblio": {
             "name": "Triblio",
             "categoryId": 6,
-            "url": null
+            "url": "https://triblio.com/"
         },
         "triggerbee": {
             "name": "Triggerbee",
             "categoryId": 2,
-            "url": null
+            "url": "https://triggerbee.com/"
         },
         "trigger_mail_marketing": {
             "name": "Trigger Mail Marketing",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.triggeremailmarketing.com/"
         },
         "tripadvisor": {
             "name": "TripAdvisor",
             "categoryId": 8,
-            "url": null
+            "url": "http://iac.com/"
         },
         "triplelift": {
             "name": "TripleLift",
@@ -14039,7 +14044,7 @@
         "triptease": {
             "name": "Triptease",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.triptease.com"
         },
         "triton_digital": {
             "name": "Triton Digital",
@@ -14074,7 +14079,7 @@
         "true_fit": {
             "name": "True Fit",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.truefit.com/"
         },
         "trumba": {
             "name": "Trumba",
@@ -14089,7 +14094,7 @@
         "trustarc": {
             "name": "TrustArc",
             "categoryId": 5,
-            "url": null
+            "url": "http://www.trustarc.com/"
         },
         "trusted_shops": {
             "name": "Trusted Shops",
@@ -14104,7 +14109,7 @@
         "truste_consent": {
             "name": "Truste Consent",
             "categoryId": 5,
-            "url": null
+            "url": "http://www.trustarc.com/"
         },
         "truste_notice": {
             "name": "TRUSTe Notice",
@@ -14124,7 +14129,7 @@
         "trustpilot": {
             "name": "Trustpilot",
             "categoryId": 2,
-            "url": null
+            "url": "http://www.trustpilot.com"
         },
         "trustwave.com": {
             "name": "Trustwave",
@@ -14149,7 +14154,7 @@
         "tumblr_analytics": {
             "name": "Tumblr Analytics",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.verizon.com/"
         },
         "tumblr_buttons": {
             "name": "Tumblr Buttons",
@@ -14159,17 +14164,17 @@
         "tumblr_dashboard": {
             "name": "Tumblr Dashboard",
             "categoryId": 7,
-            "url": null
+            "url": "https://www.verizon.com/"
         },
         "tune_in": {
             "name": "Tune In",
             "categoryId": 0,
-            "url": null
+            "url": "http://tunein.com/"
         },
         "turbo": {
             "name": "Turbo",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.turboadv.com/"
         },
         "turner": {
             "name": "Turner",
@@ -14219,7 +14224,7 @@
         "twine": {
             "name": "Twine",
             "categoryId": 6,
-            "url": null
+            "url": "http://twinedigital.com/"
         },
         "twitch.tv": {
             "name": "Twitch",
@@ -14254,17 +14259,17 @@
         "twitter_badge": {
             "name": "Twitter Badge",
             "categoryId": 7,
-            "url": null
+            "url": "https://twitter.com/"
         },
         "twitter_button": {
             "name": "Twitter Button",
             "categoryId": 7,
-            "url": null
+            "url": "https://twitter.com/"
         },
         "twitter_conversion_tracking": {
             "name": "Twitter Conversion Tracking",
             "categoryId": 4,
-            "url": null
+            "url": "https://twitter.com/"
         },
         "twitter_for_business": {
             "name": "Twitter for Business",
@@ -14344,7 +14349,7 @@
         "uliza": {
             "name": "Uliza",
             "categoryId": 4,
-            "url": null
+            "url": "http://uliza.jp/index.html"
         },
         "umbel": {
             "name": "Umbel",
@@ -14369,7 +14374,7 @@
         "unbxd": {
             "name": "UNBXD",
             "categoryId": 6,
-            "url": null
+            "url": "http://unbxd.com/"
         },
         "under-box.com": {
             "name": "under-box.com",
@@ -14414,12 +14419,12 @@
         "united_internet_media_gmbh": {
             "name": "United Internet Media GmbH",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.united-internet.de/"
         },
         "univide": {
             "name": "Univide",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.oracle.com/"
         },
         "unpkg.com": {
             "name": "unpkg",
@@ -14434,7 +14439,7 @@
         "untriel_finger_printing": {
             "name": "Untriel Finger Printing",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.untriel.nl/"
         },
         "upland_clickability_beacon": {
             "name": "Upland Clickability Beacon",
@@ -14459,12 +14464,12 @@
         "upsight": {
             "name": "Upsight",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.upsight.com/"
         },
         "uptain": {
             "name": "Uptain",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.uptain.de/en/regaining-lost-customers/"
         },
         "uptolike.com": {
             "name": "Uptolike",
@@ -14489,7 +14494,7 @@
         "usability_tools": {
             "name": "Usability Tools",
             "categoryId": 6,
-            "url": null
+            "url": "http://usabilitytools.com/"
         },
         "usabilla": {
             "name": "Usabilla",
@@ -14534,7 +14539,7 @@
         "userreplay": {
             "name": "UserReplay",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.userreplay.com/"
         },
         "userreport": {
             "name": "UserReport",
@@ -14564,7 +14569,7 @@
         "usocial": {
             "name": "Usocial",
             "categoryId": 7,
-            "url": null
+            "url": "https://usocial.pro/en"
         },
         "utarget": {
             "name": "uTarget",
@@ -14604,7 +14609,7 @@
         "valueclick_media": {
             "name": "ValueClick Media",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.conversantmedia.eu/"
         },
         "valuecommerce": {
             "name": "ValueCommerce",
@@ -14629,7 +14634,7 @@
         "vcita": {
             "name": "Vcita",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.vcita.com/"
         },
         "vcommission": {
             "name": "vCommission",
@@ -14669,7 +14674,7 @@
         "venyoo": {
             "name": "Venyoo",
             "categoryId": 2,
-            "url": null
+            "url": "http://venyoo.ru/"
         },
         "veoxa": {
             "name": "Veoxa",
@@ -14794,17 +14799,17 @@
         "video_desk": {
             "name": "Video Desk",
             "categoryId": 0,
-            "url": null
+            "url": "https://www.videodesk.com/"
         },
         "video_potok": {
             "name": "Video Potok",
             "categoryId": 0,
-            "url": null
+            "url": "http://videopotok.pro/"
         },
         "vidgyor": {
             "name": "Vidgyor",
             "categoryId": 0,
-            "url": null
+            "url": "http://vidgyor.com/"
         },
         "vidible": {
             "name": "Vidible",
@@ -14814,7 +14819,7 @@
         "vidora": {
             "name": "Vidora",
             "categoryId": 0,
-            "url": null
+            "url": "https://www.vidora.com/"
         },
         "vietad": {
             "name": "VietAd",
@@ -14834,7 +14839,7 @@
         "vimeo": {
             "name": "Vimeo",
             "categoryId": 0,
-            "url": null
+            "url": "http://vimeo.com/"
         },
         "vindico_group": {
             "name": "Vindico Group",
@@ -14864,7 +14869,7 @@
         "viral_loops": {
             "name": "Viral Loops",
             "categoryId": 2,
-            "url": null
+            "url": "https://viral-loops.com/"
         },
         "virgul": {
             "name": "Virgul",
@@ -14874,7 +14879,7 @@
         "virool_player": {
             "name": "Virool Player",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.virool.com/"
         },
         "virtusize": {
             "name": "Virtusize",
@@ -14889,7 +14894,7 @@
         "vision_critical": {
             "name": "Vision Critical",
             "categoryId": 6,
-            "url": null
+            "url": "http://visioncritical.com/"
         },
         "visitortrack": {
             "name": "VisitorTrack",
@@ -14909,7 +14914,7 @@
         "visscore": {
             "name": "VisScore",
             "categoryId": 4,
-            "url": null
+            "url": "http://withcubed.com/"
         },
         "visualdna": {
             "name": "VisualDNA",
@@ -14929,7 +14934,7 @@
         "visual_iq": {
             "name": "Visual IQ",
             "categoryId": 6,
-            "url": null
+            "url": "http://visualiq.com/"
         },
         "visual_revenue": {
             "name": "Visual Revenue",
@@ -14994,7 +14999,7 @@
         "volusion_chat": {
             "name": "Volusion Chat",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.volusion.com/"
         },
         "voluum": {
             "name": "Voluum",
@@ -15019,17 +15024,17 @@
         "voxus": {
             "name": "Voxus",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.voxus.tv/"
         },
         "vpon": {
             "name": "VPON",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.vpon.com/en/"
         },
         "vpscash": {
             "name": "VPSCash",
             "categoryId": 4,
-            "url": null
+            "url": "http://vpscash.nl/home"
         },
         "vtracy.de": {
             "name": "vtracy.de",
@@ -15039,12 +15044,12 @@
         "vuukle": {
             "name": "Vuukle",
             "categoryId": 6,
-            "url": null
+            "url": "http://vuukle.com/"
         },
         "vzaar": {
             "name": "Vzaar",
             "categoryId": 0,
-            "url": null
+            "url": "http://vzaar.com/"
         },
         "w3counter": {
             "name": "W3Counter",
@@ -15084,12 +15089,12 @@
         "wanelo": {
             "name": "Wanelo",
             "categoryId": 2,
-            "url": null
+            "url": "https://wanelo.com/"
         },
         "warp.ly": {
             "name": "Warp.ly",
             "categoryId": 6,
-            "url": null
+            "url": "https://warp.ly/"
         },
         "way2traffic": {
             "name": "Way2traffic",
@@ -15144,7 +15149,7 @@
         "webcollage": {
             "name": "Webcollage",
             "categoryId": 2,
-            "url": null
+            "url": "http://www.webcollage.com/"
         },
         "webedia": {
             "name": "Webedia",
@@ -15184,7 +15189,7 @@
         "webmecanik": {
             "name": "Webmecanik",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.webmecanik.com/en/"
         },
         "weborama": {
             "name": "Weborama",
@@ -15224,7 +15229,7 @@
         "webtrekk_cc": {
             "name": "Webtrek Control Cookie",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.webtrekk.com/en/home/"
         },
         "webtrends": {
             "name": "Webtrends",
@@ -15259,7 +15264,7 @@
         "wedcs": {
             "name": "WEDCS",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.microsoft.com/"
         },
         "weebly_ads": {
             "name": "Weebly Ads",
@@ -15284,7 +15289,7 @@
         "whatbroadcast": {
             "name": "Whatbroadcast",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.whatsbroadcast.com/"
         },
         "whos.amung.us": {
             "name": "Whos.amung.us",
@@ -15299,7 +15304,7 @@
         "wibbitz": {
             "name": "Wibbitz",
             "categoryId": 0,
-            "url": null
+            "url": "http://www.wibbitz.com/"
         },
         "wibiya_toolbar": {
             "name": "Wibiya Toolbar",
@@ -15339,7 +15344,7 @@
         "wigzo": {
             "name": "Wigzo",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.wigzo.com/"
         },
         "wikia-services.com": {
             "name": "Wikia Services",
@@ -15354,7 +15359,7 @@
         "wikia_cdn": {
             "name": "Wikia CDN",
             "categoryId": 9,
-            "url": null
+            "url": " http://www.wikia.com/fandom"
         },
         "wikimedia.org": {
             "name": "WikiMedia",
@@ -15364,7 +15369,7 @@
         "winaffiliates": {
             "name": "Winaffiliates",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.winaffiliates.com/"
         },
         "wipmania": {
             "name": "WIPmania",
@@ -15374,7 +15379,7 @@
         "wiqhit": {
             "name": "WiQhit",
             "categoryId": 6,
-            "url": null
+            "url": "https://wiqhit.com/nl/"
         },
         "wirecard": {
             "name": "Wirecard",
@@ -15389,7 +15394,7 @@
         "wirtualna_polska": {
             "name": "Wirtualna Polska",
             "categoryId": 4,
-            "url": null
+            "url": "http://reklama.wp.pl/"
         },
         "wisepops": {
             "name": "WisePops",
@@ -15399,12 +15404,12 @@
         "wishpond": {
             "name": "Wishpond",
             "categoryId": 2,
-            "url": null
+            "url": "http://wishpond.com"
         },
         "wistia": {
             "name": "Wistia",
             "categoryId": 6,
-            "url": null
+            "url": "http://wistia.com/"
         },
         "wix.com": {
             "name": "Wix",
@@ -15414,7 +15419,7 @@
         "wixab": {
             "name": "Wixab",
             "categoryId": 6,
-            "url": null
+            "url": "http://wixab.com/en/"
         },
         "wixmp": {
             "name": "Wix Media Platform",
@@ -15484,7 +15489,7 @@
         "wwwpromoter": {
             "name": "WWWPromoter",
             "categoryId": 4,
-            "url": null
+            "url": "http://wwwpromoter.com/"
         },
         "wykop": {
             "name": "Wykop",
@@ -15504,12 +15509,12 @@
         "x-lift": {
             "name": "X-lift",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.x-lift.jp/"
         },
         "xapads": {
             "name": "Xapads",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.xapads.com/"
         },
         "xen-media.com": {
             "name": "xen-media.com",
@@ -15529,12 +15534,12 @@
         "xing": {
             "name": "Xing",
             "categoryId": 6,
-            "url": null
+            "url": "http://www.xing.com/"
         },
         "xmediaclicks": {
             "name": "XmediaClicks",
             "categoryId": 3,
-            "url": null
+            "url": "http://exoclick.com/"
         },
         "xnxx_cdn": {
             "name": "xnxx CDN",
@@ -15614,22 +15619,22 @@
         "yahoo_dot_tag": {
             "name": "Yahoo! DOT tag",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.verizon.com/"
         },
         "yahoo_japan": {
             "name": "Yahoo! Japan",
             "categoryId": 8,
-            "url": null
+            "url": "https://www.yahoo.co.jp/"
         },
         "yahoo_retargetting": {
             "name": "Yahoo! Retargetting",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.yahoo.co.jp/"
         },
         "yandex": {
             "name": "Yandex",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.yandex.com/"
         },
         "yandex.api": {
             "name": "Yandex.API",
@@ -15639,7 +15644,7 @@
         "yandex_adexchange": {
             "name": "Yandex AdExchange",
             "categoryId": 4,
-            "url": null
+            "url": "https://www.yandex.com/"
         },
         "yandex_advisor": {
             "name": "Yandex.Advisor",
@@ -15659,7 +15664,7 @@
         "yandex_passport": {
             "name": "Yandex Passport",
             "categoryId": 2,
-            "url": null
+            "url": "https://www.yandex.com/"
         },
         "yapfiles.ru": {
             "name": "yapfiles.ru",
@@ -15679,12 +15684,12 @@
         "ycontent": {
             "name": "Ycontent",
             "categoryId": 0,
-            "url": null
+            "url": "http://ycontent.com.br/"
         },
         "yektanet": {
             "name": "Yektanet",
             "categoryId": 4,
-            "url": null
+            "url": "https://yektanet.com/"
         },
         "yengo": {
             "name": "Yengo",
@@ -15694,7 +15699,7 @@
         "yesmail": {
             "name": "Yesmail",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.yesmail.com/"
         },
         "yesup_advertising": {
             "name": "YesUp Advertising",
@@ -15739,7 +15744,7 @@
         "yieldr_air": {
             "name": "Yieldr Air",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.yieldr.com/"
         },
         "yieldsquare": {
             "name": "YieldSquare",
@@ -15749,7 +15754,7 @@
         "yle": {
             "name": "YLE",
             "categoryId": 6,
-            "url": null
+            "url": "http://yle.fi/"
         },
         "yllixmedia": {
             "name": "YllixMedia",
@@ -15779,7 +15784,7 @@
         "yomedia": {
             "name": "Yomedia",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.pinetech.vn/"
         },
         "yoochoose.net": {
             "name": "YOOCHOOSE",
@@ -15799,17 +15804,17 @@
         "yottly": {
             "name": "Yottly",
             "categoryId": 4,
-            "url": null
+            "url": "https://yottly.com/"
         },
         "youcanbookme": {
             "name": "YouCanBookMe",
             "categoryId": 2,
-            "url": null
+            "url": "https://youcanbook.me/"
         },
         "youku": {
             "name": "Youku",
             "categoryId": 0,
-            "url": null
+            "url": "http://www.youku.com/"
         },
         "youporn": {
             "name": "YouPorn",
@@ -15824,7 +15829,7 @@
         "youtube_subscription": {
             "name": "YouTube Subscription",
             "categoryId": 2,
-            "url": null
+            "url": "http://www.google.com"
         },
         "yo_button": {
             "name": "Yo Button",
@@ -15839,7 +15844,7 @@
         "ysance": {
             "name": "YSance",
             "categoryId": 4,
-            "url": null
+            "url": "http://www.ysance.com/en/index.html"
         },
         "yume": {
             "name": "YuMe",
@@ -15859,12 +15864,12 @@
         "zadarma": {
             "name": "Zadarma",
             "categoryId": 2,
-            "url": null
+            "url": "https://zadarma.com/"
         },
         "zalando_de": {
             "name": "zalando.de",
             "categoryId": 8,
-            "url": null
+            "url": "https://zalando.de/"
         },
         "zalo": {
             "name": "Zalo",
@@ -15909,7 +15914,7 @@
         "zencoder": {
             "name": "Zencoder",
             "categoryId": 0,
-            "url": null
+            "url": "https://zencoder.com/en/"
         },
         "zendesk": {
             "name": "Zendesk",
@@ -15944,7 +15949,7 @@
         "zift_solutions": {
             "name": "Zift Solutions",
             "categoryId": 6,
-            "url": null
+            "url": "https://ziftsolutions.com/"
         },
         "zimbio.com": {
             "name": "Zimbio",
@@ -15974,7 +15979,7 @@
         "zoho": {
             "name": "Zoho",
             "categoryId": 6,
-            "url": null
+            "url": "https://www.zohocorp.com/index.html"
         },
         "zononi.com": {
             "name": "zononi.com",
@@ -16196,6 +16201,7 @@
         "smartredirect.de": "adgoal",
         "adgorithms.com": "adgorithms",
         "adgoto.com": "adgoto",
+        "adguard.com": "adguard",
         "adhands.ru": "adhands",
         "adhese.be": "adhese",
         "adhese.com": "adhese",

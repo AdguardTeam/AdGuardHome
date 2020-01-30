@@ -44,16 +44,36 @@ async function runScript() {
             whotracksme.categories[row.id] = row.name;
         });
 
+        const companies = {};
+        db.each("SELECT * FROM companies", function (err, row) {
+            if (err) {
+                console.error(err);
+                return;
+            }
+
+            companies[row.id] = {
+                "id": row.id,
+                "name": row.name,
+                "website_url": row.website_url
+            };
+        });
+
         db.each("SELECT * FROM trackers", function (err, row) {
             if (err) {
                 console.error(err);
                 return;
             }
 
+            const company = companies[row.company_id];
+            let url = row.website_url;
+            if (!url && company) {
+                url = company.website_url;
+            }
+
             whotracksme.trackers[row.id] = {
                 "name": row.name,
                 "categoryId": row.category_id,
-                "url": row.website_url
+                "url": url,
             };
         });
 
