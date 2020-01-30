@@ -37,8 +37,9 @@ class Setup extends Component {
     };
 
     handleFormChange = debounce((values) => {
-        if (values && values.web.port && values.dns.port) {
-            this.props.checkConfig(values);
+        const { web, dns } = values;
+        if (values && web.port && dns.port) {
+            this.props.checkConfig({ web, dns, set_static_ip: false });
         }
     }, DEBOUNCE_TIMEOUT);
 
