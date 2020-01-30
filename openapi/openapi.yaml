@@ -2,7 +2,7 @@ swagger: '2.0'
 info:
     title: 'AdGuard Home'
     description: 'AdGuard Home REST API. Admin web interface is built on top of this REST API.'
-    version: '0.99.3'
+    version: '0.101'
 schemes:
     - http
 basePath: /control
@@ -594,6 +594,22 @@ paths:
                 200:
                     description: OK
 
+    /filtering/check_host:
+        get:
+            tags:
+                - filtering
+            operationId: filteringCheckHost
+            summary: 'Check if host name is filtered'
+            parameters:
+                - name: name
+                  in: query
+                  type: string
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/FilterCheckHostResponse"
+
     # --------------------------------------------------
     # Safebrowsing methods
     # --------------------------------------------------
@@ -1178,6 +1194,42 @@ definitions:
             enabled:
                 type: "boolean"
 
+    FilterCheckHostResponse:
+        type: "object"
+        description: "Check Host Result"
+        properties:
+            reason:
+                type: "string"
+                description: "DNS filter status"
+                enum:
+                - "NotFilteredNotFound"
+                - "NotFilteredWhiteList"
+                - "NotFilteredError"
+                - "FilteredBlackList"
+                - "FilteredSafeBrowsing"
+                - "FilteredParental"
+                - "FilteredInvalid"
+                - "FilteredSafeSearch"
+                - "FilteredBlockedService"
+                - "ReasonRewrite"
+            filter_id:
+                type: "integer"
+            rule:
+                type: "string"
+                example: "||example.org^"
+                description: "Filtering rule applied to the request (if any)"
+            service_name:
+                type: "string"
+                description: "Set if reason=FilteredBlockedService"
+            cname:
+                type: "string"
+                description: "Set if reason=ReasonRewrite"
+            ip_addrs:
+                type: "array"
+                items:
+                    type: "string"
+                description: "Set if reason=ReasonRewrite"
+
     GetVersionRequest:
         type: "object"
         description: "/version.json request data"
@@ -1471,6 +1523,7 @@ definitions:
                 - "FilteredInvalid"
                 - "FilteredSafeSearch"
                 - "FilteredBlockedService"
+                - "ReasonRewrite"
             service_name:
                 type: "string"
                 description: "Set if reason=FilteredBlockedService"
