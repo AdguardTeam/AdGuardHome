@@ -1,5 +1,5 @@
 {
-    "timeUpdated": "2019-10-10T12:58:37.555Z",
+    "timeUpdated": "2020-01-30T08:50:36.021Z",
     "categories": {
         "0": "audio_video_player",
         "1": "comments",
@@ -125,6 +125,11 @@
             "name": "5min Media",
             "categoryId": 0,
             "url": "http://www.5min.com/"
+        },
+        "6sense": {
+            "name": "6Sense",
+            "categoryId": 6,
+            "url": "http://home.grepdata.com"
         },
         "77tracking": {
             "name": "77Tracking",
@@ -286,6 +291,11 @@
             "categoryId": 4,
             "url": "http://www.active-performance.de/"
         },
+        "acton": {
+            "name": "Act-On Beacon",
+            "categoryId": 4,
+            "url": "http://www.actonsoftware.com/"
+        },
         "acuity_ads": {
             "name": "Acuity Ads",
             "categoryId": 4,
@@ -446,6 +456,11 @@
             "categoryId": 4,
             "url": "http://www.adbull.com/"
         },
+        "adbutler": {
+            "name": "AdButler",
+            "categoryId": 4,
+            "url": "https://www.adbutler.com/d"
+        },
         "adcash": {
             "name": "Adcash",
             "categoryId": 4,
@@ -490,6 +505,11 @@
             "name": "adcloud",
             "categoryId": 4,
             "url": "https://ad-cloud.jp"
+        },
+        "adcolony": {
+            "name": "AdColony",
+            "categoryId": 4,
+            "url": "thttp://www.admarvel.com/"
         },
         "adconion": {
             "name": "Adconion",
@@ -951,11 +971,6 @@
             "categoryId": 11,
             "url": null
         },
-        "adnet_(medyanet)": {
-            "name": "Adnet (MedyaNet)",
-            "categoryId": 4,
-            "url": "http://www.medyanet.com.tr/"
-        },
         "adnet_media": {
             "name": "Adnet Media",
             "categoryId": 4,
@@ -1081,6 +1096,11 @@
             "categoryId": 4,
             "url": null
         },
+        "adpeeps": {
+            "name": "Ad Peeps",
+            "categoryId": 4,
+            "url": "http://www.adpeeps.com/"
+        },
         "adperfect": {
             "name": "AdPerfect",
             "categoryId": 4,
@@ -1165,6 +1185,11 @@
             "name": "adRom",
             "categoryId": 4,
             "url": "http://www.adrom.net/"
+        },
+        "adru.net": {
+            "name": "adru.net",
+            "categoryId": 4,
+            "url": "http://adru.net/"
         },
         "adrunnr": {
             "name": "AdRunnr",
@@ -1406,10 +1431,10 @@
             "categoryId": 9,
             "url": "https://advancedhosters.com/"
         },
-        "advanced_tracker": {
-            "name": "Advanced Tracker",
-            "categoryId": 6,
-            "url": "http://www.lovesdata.com/"
+        "advark": {
+            "name": "Advark",
+            "categoryId": 4,
+            "url": null
         },
         "adventori": {
             "name": "ADventori",
@@ -1505,11 +1530,6 @@
             "name": "adworxs.net",
             "categoryId": 4,
             "url": "http://www.adworxs.net/?lang=en"
-        },
-        "adx": {
-            "name": "AdX",
-            "categoryId": 4,
-            "url": null
         },
         "adxion": {
             "name": "adXion",
@@ -1730,6 +1750,11 @@
             "name": "Airbnb",
             "categoryId": 6,
             "url": "https://affiliate.withairbnb.com/"
+        },
+        "airbrake": {
+            "name": "Airbrake",
+            "categoryId": 4,
+            "url": "https://airbrake.io/"
         },
         "airpr.com": {
             "name": "AirPR",
@@ -2004,7 +2029,7 @@
         "anvato": {
             "name": "Anvato",
             "categoryId": 0,
-            "url": null
+            "url": "https://www.anvato.com/"
         },
         "anyclip": {
             "name": "AnyClip",
@@ -2364,11 +2389,6 @@
         "awin": {
             "name": "AWIN",
             "categoryId": 4,
-            "url": "http://www.affiliatewindow.com/"
-        },
-        "awin1.com": {
-            "name": "Awin1",
-            "categoryId": 4,
             "url": "https://www.awin.com"
         },
         "axill": {
@@ -2460,6 +2480,11 @@
             "name": "Banner Connect",
             "categoryId": 4,
             "url": "http://www.bannerconnect.net/"
+        },
+        "barilliance": {
+            "name": "Barilliance",
+            "categoryId": 4,
+            "url": "http://www.barilliance.com/"
         },
         "barometer": {
             "name": "Barometer",
@@ -2941,10 +2966,15 @@
             "categoryId": 4,
             "url": "http://www.brainient.com/"
         },
+        "brainsins": {
+            "name": "BrainSINS",
+            "categoryId": 4,
+            "url": "http://www.brainsins.com/"
+        },
         "branch_metrics": {
             "name": "Branch",
             "categoryId": 4,
-            "url": null
+            "url": "https://branch.io/"
         },
         "brandmetrics.com": {
             "name": "Brandmetrics.com",
@@ -3025,6 +3055,11 @@
             "name": "BrightRoll",
             "categoryId": 4,
             "url": "http://www.brightroll.com/"
+        },
+        "brilig": {
+            "name": "Brilig",
+            "categoryId": 4,
+            "url": "http://www.brilig.com/"
         },
         "brillen.de": {
             "name": "brillen.de",
@@ -3120,6 +3155,11 @@
             "name": "Burst Media",
             "categoryId": 4,
             "url": "http://www.burstmedia.com/"
+        },
+        "burt": {
+            "name": "Burt",
+            "categoryId": 4,
+            "url": "http://www.burtcorp.com/"
         },
         "businessonline_analytics": {
             "name": "BusinessOnLine Analytics",
@@ -4016,7 +4056,12 @@
             "categoryId": 4,
             "url": "http://consumable.com/index.html"
         },
-        "contact_at_once!": {
+        "contactme": {
+            "name": "ContactMe",
+            "categoryId": 4,
+            "url": "http://www.contactme.com"
+        },
+        "contact_at_once": {
             "name": "Contact At Once!",
             "categoryId": 2,
             "url": "http://www.contactatonce.com/"
@@ -4065,6 +4110,11 @@
             "name": "Content Insights",
             "categoryId": 6,
             "url": null
+        },
+        "context": {
+            "name": "C|ON|TEXT",
+            "categoryId": 4,
+            "url": "http://c-on-text.com"
         },
         "context.ad": {
             "name": "Context.ad",
@@ -4155,6 +4205,11 @@
             "name": "Cookie Consent",
             "categoryId": 5,
             "url": null
+        },
+        "cookie_script": {
+            "name": "Cookie Script",
+            "categoryId": 6,
+            "url": "https://cookie-script.com/"
         },
         "cooliris": {
             "name": "Cooliris",
@@ -4391,11 +4446,6 @@
             "categoryId": 4,
             "url": "http://www.cygnus.com/"
         },
-        "c|on|text": {
-            "name": "C|ON|TEXT",
-            "categoryId": 4,
-            "url": "http://c-on-text.com"
-        },
         "da-ads.com": {
             "name": "da-ads.com",
             "categoryId": 4,
@@ -4445,6 +4495,11 @@
             "name": "Datacoral",
             "categoryId": 4,
             "url": null
+        },
+        "datacrushers": {
+            "name": "Datacrushers",
+            "categoryId": 6,
+            "url": "https://www.datacrushers.com/"
         },
         "datadome": {
             "name": "DataDome",
@@ -4502,9 +4557,9 @@
             "url": "http://datonics.com/"
         },
         "datran": {
-            "name": "Datran",
+            "name": "Pulsepoint",
             "categoryId": 4,
-            "url": "http://www.datran.com"
+            "url": "https://www.pulsepoint.com/"
         },
         "davebestdeals.com": {
             "name": "davebestdeals.com",
@@ -4533,6 +4588,11 @@
         },
         "deadline_funnel": {
             "name": "Deadline Funnel",
+            "categoryId": 6,
+            "url": null
+        },
+        "dealer.com": {
+            "name": "Dealer.com",
             "categoryId": 6,
             "url": null
         },
@@ -4953,7 +5013,7 @@
         },
         "dropbox.com": {
             "name": "Dropbox",
-            "categoryId": 3,
+            "categoryId": 2,
             "url": "https://www.dropbox.com/"
         },
         "dsnr_media_group": {
@@ -5366,6 +5426,11 @@
             "categoryId": 6,
             "url": "http://www.mediametrie-estat.com/"
         },
+        "etag": {
+            "name": "etag",
+            "categoryId": 4,
+            "url": null
+        },
         "etahub.com": {
             "name": "etahub.com",
             "categoryId": 11,
@@ -5415,6 +5480,11 @@
             "name": "Euroads",
             "categoryId": 4,
             "url": "http://euroads.com/en/"
+        },
+        "europecash": {
+            "name": "Europecash",
+            "categoryId": 4,
+            "url": null
         },
         "euroweb_counter": {
             "name": "Euroweb Counter",
@@ -6001,6 +6071,11 @@
             "categoryId": 2,
             "url": "http://www.freshdesk.com"
         },
+        "freshplum": {
+            "name": "Freshplum",
+            "categoryId": 4,
+            "url": "https://freshplum.com/"
+        },
         "friendbuy": {
             "name": "FriendBuy",
             "categoryId": 6,
@@ -6015,6 +6090,11 @@
             "name": "FriendFinder Network",
             "categoryId": 3,
             "url": "http://www.ffn.com/"
+        },
+        "frosmo_optimizer": {
+            "name": "Frosmo Optimizer",
+            "categoryId": 4,
+            "url": "http://frosmo.com/"
         },
         "fruitflan": {
             "name": "FruitFlan",
@@ -6185,6 +6265,11 @@
             "name": "GetMyAd",
             "categoryId": 4,
             "url": "http://yottos.com"
+        },
+        "getsatisfaction": {
+            "name": "GetSatisfaction",
+            "categoryId": 1,
+            "url": "http://getsatisfaction.com/"
         },
         "gettyimages": {
             "name": "Getty Images",
@@ -6526,10 +6611,20 @@
             "categoryId": 2,
             "url": "http://www.google.com"
         },
+        "goooal": {
+            "name": "Goooal",
+            "categoryId": 6,
+            "url": "http://mailchimp.com/"
+        },
         "gorilla_nation": {
             "name": "Gorilla Nation",
             "categoryId": 4,
             "url": "http://www.gorillanationmedia.com"
+        },
+        "gosquared": {
+            "name": "GoSquared",
+            "categoryId": 6,
+            "url": "http://www.gosquared.com/livestats/"
         },
         "gostats": {
             "name": "GoStats",
@@ -6831,6 +6926,11 @@
             "categoryId": 4,
             "url": "https://www.hivedx.com/"
         },
+        "hiveworks": {
+            "name": "Hive Networks",
+            "categoryId": 4,
+            "url": "https://hiveworkscomics.com/"
+        },
         "hoholikik.club": {
             "name": "hoholikik.club",
             "categoryId": 12,
@@ -6845,6 +6945,11 @@
             "name": "HomeAway",
             "categoryId": 8,
             "url": null
+        },
+        "honeybadger": {
+            "name": "Honeybadger",
+            "categoryId": 6,
+            "url": "https://www.honeybadger.io/"
         },
         "hooklogic": {
             "name": "HookLogic",
@@ -6955,6 +7060,11 @@
             "name": "HyperComments",
             "categoryId": 1,
             "url": "http://www.hypercomments.com/"
+        },
+        "hype_exchange": {
+            "name": "Hype Exchange",
+            "categoryId": 4,
+            "url": "http://www.hypeexchange.com/"
         },
         "hyves_widgets": {
             "name": "Hyves Widgets",
@@ -7121,6 +7231,11 @@
             "categoryId": 4,
             "url": "http://www.imad.co.kr/"
         },
+        "image_advantage": {
+            "name": "Image Advantage",
+            "categoryId": 4,
+            "url": "http://www.worthathousandwords.com/"
+        },
         "image_space_media": {
             "name": "Image Space Media",
             "categoryId": 4,
@@ -7154,7 +7269,7 @@
         "imonomy": {
             "name": "imonomy",
             "categoryId": 6,
-            "url": null
+            "url": "http://imonomy.com/"
         },
         "impact_radius": {
             "name": "Impact Radius",
@@ -7656,6 +7771,11 @@
             "categoryId": 8,
             "url": "https://www.joinhoney.com/"
         },
+        "jornaya": {
+            "name": "Jornaya",
+            "categoryId": 6,
+            "url": "http://leadid.com/"
+        },
         "jquery": {
             "name": "jQuery",
             "categoryId": 9,
@@ -7789,7 +7909,7 @@
         "kantar_media": {
             "name": "Kantar Media",
             "categoryId": 4,
-            "url": "http://kantarmediana.com/"
+            "url": "https://www.kantarmedia.com/"
         },
         "kargo": {
             "name": "Kargo",
@@ -8726,7 +8846,7 @@
             "categoryId": 4,
             "url": "http://www.marktest.com/"
         },
-        "mark_&_mini": {
+        "mark_+_mini": {
             "name": "Mark & Mini",
             "categoryId": 4,
             "url": "http://www.markandmini.com/index.cfm"
@@ -8780,6 +8900,11 @@
             "name": "Matiro",
             "categoryId": 6,
             "url": null
+        },
+        "matomo": {
+            "name": "Matomo",
+            "categoryId": 6,
+            "url": "https://matomo.org/s"
         },
         "matomy_market": {
             "name": "Matomy Market",
@@ -9295,6 +9420,11 @@
             "name": "Monster Advertising",
             "categoryId": 4,
             "url": "http://www.monster.com/"
+        },
+        "mooxar": {
+            "name": "Mooxar",
+            "categoryId": 4,
+            "url": ""
         },
         "mopinion.com": {
             "name": "Mopinion",
@@ -9901,6 +10031,11 @@
             "categoryId": 8,
             "url": "https://www.oath.com/"
         },
+        "observer": {
+            "name": "Observer",
+            "categoryId": 4,
+            "url": "http://www.observerapp.com"
+        },
         "ocioso": {
             "name": "Ocioso",
             "categoryId": 7,
@@ -10085,6 +10220,11 @@
             "name": "Opentracker",
             "categoryId": 6,
             "url": "http://www.opentracker.net/"
+        },
+        "openwebanalytics": {
+            "name": "Open Web Analytics",
+            "categoryId": 6,
+            "url": "http://www.openwebanalytics.com/"
         },
         "openx": {
             "name": "OpenX",
@@ -10521,6 +10661,11 @@
             "categoryId": 2,
             "url": "https://www.liftigniter.com/"
         },
+        "pheedo": {
+            "name": "Pheedo",
+            "categoryId": 4,
+            "url": "http://pheedo.com/"
+        },
         "phonalytics": {
             "name": "Phonalytics",
             "categoryId": 2,
@@ -10562,7 +10707,7 @@
             "url": null
         },
         "piwik": {
-            "name": "Piwik",
+            "name": "Piwik Pro",
             "categoryId": 6,
             "url": "http://piwik.org/"
         },
@@ -10590,6 +10735,11 @@
             "name": "pizzaandads.com",
             "categoryId": 11,
             "url": null
+        },
+        "placester": {
+            "name": "Placester",
+            "categoryId": 4,
+            "url": "https://placester.com/"
         },
         "pladform.ru": {
             "name": "Pladform",
@@ -10806,7 +10956,7 @@
             "categoryId": 4,
             "url": "http://www.premonix.com/"
         },
-        "press+": {
+        "press": {
             "name": "Press+",
             "categoryId": 4,
             "url": "http://www.mypressplus.com/"
@@ -10830,11 +10980,6 @@
             "name": "Prisma Media Digital",
             "categoryId": 4,
             "url": "http://www.pmdrecrute.com/"
-        },
-        "prisma_media_digital": {
-            "name": "Prisma Media Digital",
-            "categoryId": 4,
-            "url": "http://www.prisma-presse.com/index.php?prisma_media_digital"
         },
         "privy.com": {
             "name": "Privy",
@@ -10890,6 +11035,11 @@
             "name": "Proper Media",
             "categoryId": 4,
             "url": "https://proper.io/"
+        },
+        "props": {
+            "name": "Props",
+            "categoryId": 4,
+            "url": null
         },
         "propvideo_net": {
             "name": "propvideo.net",
@@ -11181,11 +11331,6 @@
             "categoryId": 6,
             "url": "https://www.quantummetric.com/"
         },
-        "quartic": {
-            "name": "Quartic",
-            "categoryId": 6,
-            "url": "http://www.quarticon.com/"
-        },
         "quartic.pl": {
             "name": "Quartic",
             "categoryId": 6,
@@ -11318,11 +11463,6 @@
         },
         "rcs.it": {
             "name": "RCS",
-            "categoryId": 8,
-            "url": "http://www.rcsmediagroup.it/"
-        },
-        "rcs_mediagroup": {
-            "name": "RCS MediaGroup",
             "categoryId": 4,
             "url": "http://www.rcsmediagroup.it/"
         },
@@ -11330,6 +11470,11 @@
             "name": "RD Station",
             "categoryId": 6,
             "url": null
+        },
+        "reachforce": {
+            "name": "ReachForce",
+            "categoryId": 6,
+            "url": "http://www.reachforce.com/"
         },
         "reachjunction": {
             "name": "ReachJunction",
@@ -11363,7 +11508,7 @@
         },
         "readspeaker.com": {
             "name": "ReadSpeaker",
-            "categoryId": 3,
+            "categoryId": 2,
             "url": "https://www.readspeaker.com/"
         },
         "realclick": {
@@ -11479,7 +11624,12 @@
         "refericon": {
             "name": "Refericon",
             "categoryId": 4,
-            "url": null
+            "url": "https://refericon.pl/#"
+        },
+        "referlocal": {
+            "name": "ReferLocal",
+            "categoryId": 4,
+            "url": "http://referlocal.com/"
         },
         "refersion": {
             "name": "Refersion",
@@ -11491,6 +11641,11 @@
             "categoryId": 4,
             "url": "http://www.refinedlabs.com"
         },
+        "reflektion": {
+            "name": "Reflektion",
+            "categoryId": 4,
+            "url": null
+        },
         "reformal": {
             "name": "Reformal",
             "categoryId": 2,
@@ -11500,6 +11655,11 @@
             "name": "Reinvigorate",
             "categoryId": 6,
             "url": "http://www.reinvigorate.net/"
+        },
+        "rekko": {
+            "name": "Rekko",
+            "categoryId": 4,
+            "url": "http://convert.us/"
         },
         "reklamport": {
             "name": "Reklamport",
@@ -11616,6 +11776,11 @@
             "categoryId": 4,
             "url": null
         },
+        "retention_science": {
+            "name": "Retention Science",
+            "categoryId": 4,
+            "url": null
+        },
         "reuters_media": {
             "name": "Reuters media",
             "categoryId": 9,
@@ -11650,6 +11815,11 @@
             "name": "Reve Marketing",
             "categoryId": 4,
             "url": "http://tellafriend.socialtwist.com/"
+        },
+        "revive_adserver": {
+            "name": "Revive Adserver",
+            "categoryId": 4,
+            "url": "https://www.revive-adserver.com/"
         },
         "revolver_maps": {
             "name": "Revolver Maps",
@@ -11715,11 +11885,6 @@
             "name": "Ro2.biz",
             "categoryId": 4,
             "url": "http://ro2.biz/index.php?r=adikku"
-        },
-        "roadrunner_sports": {
-            "name": "Roadrunner Sports",
-            "categoryId": 6,
-            "url": null
         },
         "roblox": {
             "name": "Roblox",
@@ -11955,6 +12120,11 @@
             "name": "SAPO Ads",
             "categoryId": 4,
             "url": "http://www.sapo.pt/"
+        },
+        "sap_crm": {
+            "name": "SAP CRM",
+            "categoryId": 6,
+            "url": "https://www.sap.com/products/crm.html"
         },
         "sap_sales_cloud": {
             "name": "SAP Sales Cloud",
@@ -12346,6 +12516,11 @@
             "categoryId": 11,
             "url": null
         },
+        "sidecar": {
+            "name": "Sidecar",
+            "categoryId": 6,
+            "url": "http://hello.getsidecar.com/"
+        },
         "sift_science": {
             "name": "Sift Science",
             "categoryId": 6,
@@ -12658,7 +12833,7 @@
         },
         "smi2.ru": {
             "name": "smi2.ru",
-            "categoryId": 5,
+            "categoryId": 6,
             "url": "https://smi2.net/"
         },
         "smooch": {
@@ -12704,7 +12879,7 @@
         "snap_engage": {
             "name": "Snap Engage",
             "categoryId": 2,
-            "url": null
+            "url": "https://snapengage.com/"
         },
         "snigelweb": {
             "name": "SnigelWeb, Inc.",
@@ -12724,11 +12899,6 @@
         "snowplow": {
             "name": "Snowplow",
             "categoryId": 6,
-            "url": null
-        },
-        "soasta": {
-            "name": "Soasta",
-            "categoryId": 4,
             "url": null
         },
         "soasta_mpulse": {
@@ -13173,7 +13343,7 @@
         },
         "streamrail.com": {
             "name": "StreamRail",
-            "categoryId": 0,
+            "categoryId": 4,
             "url": "https://www.streamrail.com/"
         },
         "stride": {
@@ -13316,15 +13486,10 @@
             "categoryId": 2,
             "url": null
         },
-        "synacor_(formerly_technorati)": {
-            "name": "Synacor (Formerly Technorati)",
+        "synacor": {
+            "name": "Synacor",
             "categoryId": 4,
-            "url": "http://technorati.com/widgets/blogwidgets"
-        },
-        "synacor_(formerly_technorati_media)": {
-            "name": "Synacor (Formerly Technorati Media)",
-            "categoryId": 4,
-            "url": "http://technoratimedia.com/"
+            "url": "https://www.synacor.com/"
         },
         "syncapse": {
             "name": "Syncapse",
@@ -13382,7 +13547,7 @@
             "url": "http://www.tagman.com/"
         },
         "tag_commander": {
-            "name": "Commanders Act (formerly Tag Commander)",
+            "name": "Commanders Act",
             "categoryId": 5,
             "url": "https://www.commandersact.com/en/"
         },
@@ -13465,6 +13630,11 @@
             "name": "Teads",
             "categoryId": 4,
             "url": "http://teads.tv/"
+        },
+        "tealeaf": {
+            "name": "Tealeaf",
+            "categoryId": 6,
+            "url": "https://www.ibm.com/digital-marketing"
         },
         "tealium": {
             "name": "Tealium",
@@ -13569,6 +13739,11 @@
         "tidio": {
             "name": "Tidio",
             "categoryId": 2,
+            "url": null
+        },
+        "tiller": {
+            "name": "Tiller",
+            "categoryId": 4,
             "url": null
         },
         "timezondb": {
@@ -13680,6 +13855,11 @@
             "name": "TraceMyIP",
             "categoryId": 4,
             "url": "http://www.tracemyip.org/"
+        },
+        "traceview": {
+            "name": "TraceView",
+            "categoryId": 6,
+            "url": "http://www.appneta.com/"
         },
         "trackjs": {
             "name": "TrackJS",
@@ -13913,8 +14093,8 @@
         },
         "trusted_shops": {
             "name": "Trusted Shops",
-            "categoryId": 6,
-            "url": null
+            "categoryId": 5,
+            "url": "http://www.trustedshops.com/"
         },
         "trustev": {
             "name": "Trustev",
@@ -14181,6 +14361,16 @@
             "categoryId": 4,
             "url": "http://www.unanimis.co.uk/"
         },
+        "unbounce": {
+            "name": "Unbounce",
+            "categoryId": 6,
+            "url": "http://unbounce.com/"
+        },
+        "unbxd": {
+            "name": "UNBXD",
+            "categoryId": 6,
+            "url": null
+        },
         "under-box.com": {
             "name": "under-box.com",
             "categoryId": 12,
@@ -14336,6 +14526,11 @@
             "categoryId": 2,
             "url": "https://www.userlike.com/"
         },
+        "userpulse": {
+            "name": "UserPulse",
+            "categoryId": 2,
+            "url": "http://www.userpulse.com/"
+        },
         "userreplay": {
             "name": "UserReplay",
             "categoryId": 6,
@@ -14350,6 +14545,11 @@
             "name": "UserRules",
             "categoryId": 2,
             "url": "http://www.userrules.com/"
+        },
+        "usersnap": {
+            "name": "Usersnap",
+            "categoryId": 2,
+            "url": "http://usersnap.com/"
         },
         "uservoice": {
             "name": "UserVoice",
@@ -14481,6 +14681,11 @@
             "categoryId": 1,
             "url": "https://www.vergic.com/"
         },
+        "vero": {
+            "name": "Vero",
+            "categoryId": 4,
+            "url": "http://www.getvero.com/"
+        },
         "verticalresponse": {
             "name": "VerticalResponse",
             "categoryId": 4,
@@ -14566,6 +14771,11 @@
             "categoryId": 4,
             "url": "https://videologygroup.com/"
         },
+        "videonow": {
+            "name": "VideoNow",
+            "categoryId": 4,
+            "url": "https://videonow.ru/"
+        },
         "videoplayerhub.com": {
             "name": "videoplayerhub.com",
             "categoryId": 11,
@@ -14588,6 +14798,11 @@
         },
         "video_potok": {
             "name": "Video Potok",
+            "categoryId": 0,
+            "url": null
+        },
+        "vidgyor": {
+            "name": "Vidgyor",
             "categoryId": 0,
             "url": null
         },
@@ -14800,6 +15015,11 @@
             "name": "Vox",
             "categoryId": 2,
             "url": "https://www.voxmedia.com/"
+        },
+        "voxus": {
+            "name": "Voxus",
+            "categoryId": 4,
+            "url": null
         },
         "vpon": {
             "name": "VPON",
@@ -15271,15 +15491,10 @@
             "categoryId": 7,
             "url": "http://www.wykop.pl"
         },
-        "wysistat": {
+        "wysistat.com": {
             "name": "WysiStat",
             "categoryId": 6,
-            "url": "http://www.wysistat.com/"
-        },
-        "wysistat.com": {
-            "name": "Wysistat",
-            "categoryId": 6,
-            "url": "http://wysistat.net/"
+            "url": "https://www.wysistat.net/"
         },
         "wywy.com": {
             "name": "wywy",
@@ -15366,10 +15581,10 @@
             "categoryId": 6,
             "url": "https://yahoo.com"
         },
-        "yahoo!_commerce_central": {
-            "name": "Yahoo! Commerce Central",
+        "yahoo!_overture": {
+            "name": "Yahoo! Overture",
             "categoryId": 4,
-            "url": "http://lexity.com/"
+            "url": "http://searchmarketing.yahoo.com"
         },
         "yahoo!_small_business": {
             "name": "Yahoo! Small Business",
@@ -15385,6 +15600,16 @@
             "name": "Yahoo! Ad Manager Plus",
             "categoryId": 4,
             "url": "https://developer.yahoo.com/analytics/"
+        },
+        "yahoo_analytics": {
+            "name": "Yahoo! Analytics",
+            "categoryId": 6,
+            "url": "http://web.analytics.yahoo.com/"
+        },
+        "yahoo_commerce_central": {
+            "name": "Yahoo! Commerce Central",
+            "categoryId": 4,
+            "url": "http://lexity.com/"
         },
         "yahoo_dot_tag": {
             "name": "Yahoo! DOT tag",
@@ -15806,6 +16031,8 @@
         "d3aa0ztdn3oibi.cloudfront.net": "500friends",
         "51.la": "51.la",
         "5min.com": "5min_media",
+        "d1lm7kd3bd3yo9.cloudfront.net": "6sense",
+        "grepdata.com": "6sense",
         "77tracking.com": "77tracking",
         "7tv.de": "7tv.de",
         "888media.net": "888media",
@@ -15843,6 +16070,7 @@
         "trackcmp.net": "active_campaign",
         "active-srv02.de": "active_performance",
         "active-tracking.de": "active_performance",
+        "actonsoftware.com": "acton",
         "acuityplatform.com": "acuity_ads",
         "acxiom-online.com": "acxiom",
         "acxiom.com": "acxiom",
@@ -15905,6 +16133,7 @@
         "adbrn.com": "adbrain",
         "adbrite.com": "adbrite",
         "adbull.com": "adbull",
+        "adbutler.com": "adbutler",
         "adcash.com": "adcash",
         "vuroll.in": "adchakra",
         "acs86.com": "adchina",
@@ -15917,6 +16146,8 @@
         "adclickmedia.com": "adclickmedia",
         "adclickzone.go2cloud.org": "adclickzone",
         "ad-cloud.jp": "adcloud",
+        "admarvel.s3.amazonaws.com": "adcolony",
+        "ads.admarvel.com": "adcolony",
         "adrdgt.com": "adconion",
         "amgdgt.com": "adconion",
         "adcrowd.com": "adcrowd",
@@ -15937,8 +16168,7 @@
         "addtocalendar.com": "add_to_calendar",
         "adeasy.ru": "adeasy",
         "ipredictive.com": "adelphic",
-        "adcode.adengage.com": "adengage",
-        "conv.adengage.com": "adengage",
+        "adengage.com": "adengage",
         "adespresso.com": "adespresso",
         "adexcite.com": "adexcite",
         "adextent.com": "adextent",
@@ -16023,8 +16253,7 @@
         "adizio.com": "admedo_com",
         "admedo.com": "admedo_com",
         "admeira.ch": "admeira.ch",
-        "js.admeld.com": "admeld",
-        "tag.admeld.com": "admeld",
+        "admeld.com": "admeld",
         "admeo.ru": "admeo",
         "admaym.com": "admeta",
         "atemda.com": "admeta",
@@ -16042,15 +16271,12 @@
         "dmmotion.com": "admotion",
         "nspmotion.com": "admotion",
         "admulti.com": "admulti",
-        "native.adnegah.net": "adnegah",
-        "s.adnegah.net": "adnegah",
+        "adnegah.net": "adnegah",
         "adnet.vn": "adnet",
         "adnet.biz": "adnet.de",
         "adnet.de": "adnet.de",
         "ad.adnetwork.net": "adnetwork.net",
         "adnetworkperformance.com": "adnetworkperformance.com",
-        "adnet.com.tr": "adnet_(medyanet)",
-        "medyanetads.com": "adnet_(medyanet)",
         "adclick.lt": "adnet_media",
         "adnet.lt": "adnet_media",
         "adserver.adnexio.com": "adnexio",
@@ -16093,6 +16319,7 @@
         "adparlor.com": "adparlor",
         "adparlour.com": "adparlor",
         "a4p.adpartner.pro": "adpartner",
+        "adpeepshosted.com": "adpeeps",
         "adperfect.com": "adperfect",
         "adperium.com": "adperium",
         "adpilot.at": "adpilot",
@@ -16113,6 +16340,7 @@
         "adroll.com": "adroll",
         "adrom.net": "adrom",
         "txt.eu": "adrom",
+        "adru.net": "adru.net",
         "adrunnr.com": "adrunnr",
         "adsame.com": "adsame",
         "adsbookie.com": "adsbookie",
@@ -16142,8 +16370,7 @@
         "adswizz.com": "adswizz",
         "adtaily.com": "adtaily",
         "adtaily.pl": "adtaily",
-        "static-trackers.adtarget.me": "adtarget.me",
-        "trackers.adtarget.me": "adtarget.me",
+        "adtarget.me": "adtarget.me",
         "adtech.de": "adtech",
         "adtechus.com": "adtech",
         "adtegrity.net": "adtegrity",
@@ -16177,7 +16404,7 @@
         "dqfw2hlp4tfww.cloudfront.net": "advalo",
         "ahcdn.com": "advanced_hosters",
         "pix-cdn.org": "advanced_hosters",
-        "advancedtracker.appspot.com": "advanced_tracker",
+        "s3.advarkads.com": "advark",
         "adventori.com": "adventori",
         "adnext.fr": "adverline",
         "adverline.com": "adverline",
@@ -16206,7 +16433,6 @@
         "ads.adwitserver.com": "adwit",
         "adworx.at": "adworx.at",
         "adworxs.net": "adworxs.net",
-        "nytimes.com": "adx",
         "adxion.com": "adxion",
         "adxpansion.com": "adxpansion",
         "ads.adxpose.com": "adxpose",
@@ -16259,6 +16485,7 @@
         "aim4media.com": "aim4media",
         "muscache.com": "airbnb",
         "musthird.com": "airbnb",
+        "airbrake.io": "airbrake",
         "airpr.com": "airpr.com",
         "ab.airpush.com": "airpush",
         "aimediagroup.com": "ai_media_group",
@@ -16281,7 +16508,7 @@
         "alexametrics.com": "alexa_metrics",
         "d31qbv1cthcecs.cloudfront.net": "alexa_metrics",
         "d5nxst8fruw4z.cloudfront.net": "alexa_metrics",
-        "xslt.alexa.com": "alexa_traffic_rank",
+        "alexa.com": "alexa_traffic_rank",
         "algolia.com": "algolia.net",
         "algolia.net": "algolia.net",
         "algovid.com": "algovid.com",
@@ -16441,9 +16668,9 @@
         "adspdbl.com": "avid_media",
         "avocet.io": "avocet",
         "aweber.com": "aweber",
+        "awin.com": "awin",
         "awin1.com": "awin",
         "perfb.com": "awin",
-        "awin.com": "awin1.com",
         "ad.globe7.com": "axill",
         "azadify.com": "azadify",
         "azureedge.net": "azureedge.net",
@@ -16465,6 +16692,7 @@
         "bannerplay.com": "bannerplay",
         "cdn.bannersnack.com": "bannersnack",
         "bannerconnect.net": "banner_connect",
+        "dn3y71tq7jf07.cloudfront.net": "barilliance",
         "getbarometer.s3.amazonaws.com": "barometer",
         "basilic.io": "basilic.io",
         "batanga.com": "batanga_network",
@@ -16498,15 +16726,13 @@
         "betterttv.net": "betterttv",
         "betweendigital.com": "betweendigital.com",
         "intencysrv.com": "betweendigital.com",
-        "t.beopinion.com": "be_opinion",
-        "widget.beopinion.com": "be_opinion",
+        "beopinion.com": "be_opinion",
         "bid.run": "bid.run",
         "bidswitch.net": "bidswitch",
         "exe.bid": "bidswitch",
         "bttrack.com": "bidtellect",
         "bidtheatre.com": "bidtheatre",
-        "bdv.bidvertiser.com": "bidvertiser",
-        "srv.bidvertiser.com": "bidvertiser",
+        "bidvertiser.com": "bidvertiser",
         "bigcommerce.com": "bigcommerce.com",
         "bigmir.net": "bigmir.net",
         "bigpoint-payment.com": "bigpoint",
@@ -16593,6 +16819,8 @@
         "boxever.com": "boxever",
         "j.clickdensity.com": "box_uk",
         "brainient.com": "brainient",
+        "brainsins.com": "brainsins",
+        "d2xkqxdy6ewr93.cloudfront.net": "brainsins",
         "app.link": "branch_metrics",
         "branch.io": "branch_metrics",
         "brandmetrics.com": "brandmetrics.com",
@@ -16605,7 +16833,6 @@
         "branica.com": "branica",
         "appboycdn.com": "braze",
         "brealtime.com": "brealtime",
-        "ads.bridgetrack.com": "bridgetrack",
         "bridgetrack.com": "bridgetrack",
         "brightcove.com": "brightcove",
         "brightcove.net": "brightcove_player",
@@ -16613,6 +16840,7 @@
         "munchkin.brightfunnel.com": "brightfunnel",
         "brightonclick.com": "brightonclick.com",
         "btrll.com": "brightroll",
+        "p.brilig.com": "brilig",
         "brillen.de": "brillen.de",
         "broadstreetads.com": "broadstreet",
         "bm23.com": "bronto",
@@ -16635,14 +16863,16 @@
         "bstatic.de": "burda_digital_systems",
         "burstbeacon.com": "burst_media",
         "burstnet.com": "burst_media",
+        "burt.io": "burt",
+        "d3q6px0y2suh5n.cloudfront.net": "burt",
+        "rich-agent.s3.amazonaws.com": "burt",
+        "richmetrics.com": "burt",
         "stats.businessol.com": "businessonline_analytics",
         "buysellads.com": "buysellads",
         "servedby-buysellads.com": "buysellads",
         "buzzadexchange.com": "buzzadexchange.com",
         "buzzador.com": "buzzador",
-        "buzzbox.buzzfeed.com": "buzzfeed",
-        "ct.buzzfeed.com": "buzzfeed",
-        "pglb.buzzfed.com": "buzzfeed",
+        "buzzfed.com": "buzzfeed",
         "bwbx.io": "bwbx.io",
         "bypass.jp": "bypass",
         "c1exchange.com": "c1_exchange",
@@ -16657,14 +16887,12 @@
         "callibri.ru": "callibri",
         "callrail.com": "callrail",
         "calltracking.ru": "calltracking",
-        "api.callpage.io": "call_page",
-        "cdn-widget.callpage.io": "call_page",
+        "callpage.io": "call_page",
         "caltat.com": "caltat.com",
         "cam-content.com": "cam-content.com",
         "camakaroda.com": "camakaroda.com",
         "s.edkay.com": "campus_explorer",
-        "cdns.canddi.com": "canddi",
-        "i.canddi.com": "canddi",
+        "canddi.com": "canddi",
         "canvas.net": "canvas",
         "canvasnetwork.com": "canvas",
         "du11hjcvx0uqb.cloudfront.net": "canvas",
@@ -16760,8 +16988,7 @@
         "wzrkt.com": "clever_tap",
         "script.click360.io": "click360",
         "hit.clickaider.com": "clickaider",
-        "cbtb.clickbank.net": "clickbank",
-        "hop.clickbank.net": "clickbank",
+        "clickbank.net": "clickbank",
         "cbproads.com": "clickbank_proads",
         "adtoll.com": "clickbooth",
         "clickbooth.com": "clickbooth",
@@ -16771,12 +16998,10 @@
         "remarketstats.com": "clickcertain",
         "clickdesk.com": "clickdesk",
         "analytics.clickdimensions.com": "clickdimensions",
-        "beacon.clickequations.net": "clickequations",
-        "js.clickequations.net": "clickequations",
+        "clickequations.net": "clickequations",
         "clickexperts.net": "clickexperts",
         "doublemax.net": "clickforce",
-        "ca.clickinc.com": "clickinc",
-        "impression.clickinc.com": "clickinc",
+        "clickinc.com": "clickinc",
         "clickintext.net": "clickintext",
         "clickky.biz": "clickky",
         "9nl.be": "clickmeter",
@@ -16804,8 +17029,7 @@
         "clickwinks.com": "clickwinks",
         "getclicky.com": "clicky",
         "staticstuff.net": "clicky",
-        "a.clickyab.com": "clickyab",
-        "static.clickyab.com": "clickyab",
+        "clickyab.com": "clickyab",
         "clickandchat.com": "click_and_chat",
         "software.clickback.com": "click_back",
         "clicmanager.fr": "clicmanager",
@@ -16818,8 +17042,7 @@
         "cloudflare.net": "cloudflare",
         "cloudimg.io": "cloudimage.io",
         "cloudinary.com": "cloudinary",
-        "ad.clovenetwork.com": "clove_network",
-        "ads.clovenetwork.com": "clove_network",
+        "clovenetwork.com": "clove_network",
         "clustrmaps.com": "clustrmaps",
         "cnbc.com": "cnbc",
         "cnetcontent.com": "cnetcontent.com",
@@ -16830,8 +17053,8 @@
         "client.cobrowser.net": "cobrowser",
         "codeonclick.com": "codeonclick.com",
         "cogocast.net": "cogocast",
-        "gpush.cogocast.net": "cogocast",
         "authedmine.com": "coinhive",
+        "coin-hive.com": "coinhive",
         "coinhive.com": "coinhive",
         "coinurl.com": "coinurl",
         "coin-have.com": "coin_have",
@@ -16870,10 +17093,9 @@
         "zqtk.net": "comscore",
         "conative.de": "conative.de",
         "condenast.com": "condenastdigital.com",
-        "api.conduit.com": "conduit",
-        "apps.conduit.com": "conduit",
         "conduit-banners.com": "conduit",
         "conduit-data.com": "conduit",
+        "conduit.com": "conduit",
         "confirmit.com": "confirmit",
         "congstar.de": "congstar.de",
         "connatix.com": "connatix.com",
@@ -16884,7 +17106,9 @@
         "connextra.com": "connextra",
         "rs6.net": "constant_contact",
         "serverbid.com": "consumable",
-        "contactatonce.com": "contact_at_once!",
+        "d1uwd25yvxu96k.cloudfront.net": "contactme",
+        "static.contactme.com": "contactme",
+        "contactatonce.com": "contact_at_once",
         "adrolays.de": "contact_impact",
         "c-i.as": "contact_impact",
         "df-srv.de": "contact_impact",
@@ -16898,6 +17122,7 @@
         "d1aug3dv5magti.cloudfront.net": "contentwrx",
         "d39se0h2uvfakd.cloudfront.net": "contentwrx",
         "ingestion.contentinsights.com": "content_insights",
+        "c-on-text.com": "context",
         "intext.contextad.pl": "context.ad",
         "continum.net": "continum_net",
         "s2.contribusourcesyndication.com": "contribusource",
@@ -16919,6 +17144,7 @@
         "cookiebot.com": "cookiebot",
         "cookieq.com": "cookieq",
         "cookieconsent.silktide.com": "cookie_consent",
+        "cookie-script.com": "cookie_script",
         "lite.piclens.com": "cooliris",
         "copacet.com": "copacet",
         "raasnet.com": "coreaudience",
@@ -16945,9 +17171,8 @@
         "crimsonhexagon.com": "crimsonhexagon_com",
         "hexagon-analytics.com": "crimsonhexagon_com",
         "ctnsnet.com": "crimtan",
-        "client.crisp.chat": "crisp",
-        "client.crisp.im": "crisp",
-        "settings.crisp.chat": "crisp",
+        "crisp.chat": "crisp",
+        "crisp.im": "crisp",
         "criteo.com": "criteo",
         "criteo.net": "criteo",
         "p.crm4d.com": "crm4d",
@@ -16978,7 +17203,6 @@
         "cxo.name": "cxo.name",
         "cyberwing.co.jp": "cyber_wing",
         "cygnus.com": "cygnus",
-        "c-on-text.com": "c|on|text",
         "da-ads.com": "da-ads.com",
         "dailymail.co.uk": "dailymail.co.uk",
         "dailymotion.com": "dailymotion",
@@ -16992,6 +17216,8 @@
         "tags.dashboardad.net": "dashboard_ad",
         "datacaciques.com": "datacaciques.com",
         "datacoral.com": "datacoral",
+        "abandonaid.com": "datacrushers",
+        "datacrushers.com": "datacrushers",
         "datadome.co": "datadome",
         "optimahub.com": "datalicious_datacollector",
         "supert.ag": "datalicious_supertag",
@@ -17015,6 +17241,10 @@
         "stormcontainertag.com": "dc_stormiq",
         "stormiq.com": "dc_stormiq",
         "deadlinefunnel.com": "deadline_funnel",
+        "cc2.dealer.com": "dealer.com",
+        "d9lq0o81skkdj.cloudfront.net": "dealer.com",
+        "esm1.net": "dealer.com",
+        "static.dealer.com": "dealer.com",
         "decibelinsight.net": "decibel_insight",
         "ads.dedicatedmedia.com": "dedicated_media",
         "api.deep.bi": "deep.bi",
@@ -17048,7 +17278,6 @@
         "track.did-it.com": "didit_maestro",
         "privacy-center.org": "didomi",
         "digg.com": "digg_widget",
-        "widgets.digg.com": "digg_widget",
         "digicert.com": "digicert_trust_seal",
         "digidip.net": "digidip",
         "digiglitzmarketing.go2cloud.org": "digiglitz",
@@ -17059,6 +17288,8 @@
         "cookiereports.com": "digital_control_room",
         "adtag.cc": "digital_nomads",
         "adready.com": "digital_remedy",
+        "adreadytractions.com": "digital_remedy",
+        "cpxinteractive.com": "digital_remedy",
         "directtrack.com": "digital_river",
         "onenetworkdirect.net": "digital_river",
         "track.digitalriver.com": "digital_river",
@@ -17229,6 +17460,7 @@
         "esprit.de": "esprit.de",
         "cybermonitor.com": "estat",
         "estat.com": "estat",
+        "teste-s3-maycon.s3.amazonaws.com": "etag",
         "etahub.com": "etahub.com",
         "etargetnet.com": "etarget",
         "ethn.io": "ethnio",
@@ -17245,6 +17477,7 @@
         "euroads.dk": "euroads",
         "euroads.fi": "euroads",
         "euroads.no": "euroads",
+        "newpromo.europacash.com": "europecash",
         "tracker.euroweb.net": "euroweb_counter",
         "apptegic.com": "evergage.com",
         "evergage.com": "evergage.com",
@@ -17352,12 +17585,11 @@
         "special.matchtv.ru": "fonbet",
         "kavijaseuranta.fi": "fonecta",
         "fontawesome.com": "fontawesome_com",
-        "ads.foodieblogroll.com": "foodie_blogroll",
-        "widget.foodieblogroll.com": "foodie_blogroll",
-        "img.footprintlive.com": "footprint",
-        "script.footprintlive.com": "footprint",
+        "foodieblogroll.com": "foodie_blogroll",
+        "footprintlive.com": "footprint",
         "footprintdns.com": "footprintdns.com",
         "forcetrac.com": "forcetrac",
+        "fqsecure.com": "forensiq",
         "fqtag.com": "forensiq",
         "securepaths.com": "forensiq",
         "4seeresults.com": "foresee",
@@ -17370,7 +17602,6 @@
         "fncstatic.com": "foxnews_static",
         "cdn.foxpush.net": "foxpush",
         "foxpush.com": "foxpush",
-        "js.foxpush.com": "foxpush",
         "foxydeal.com": "foxydeal_com",
         "fimserve.com": "fox_audience_network",
         "yabidos.com": "fraudlogix",
@@ -17394,8 +17625,8 @@
         "heimdall.fresh8.co": "fresh8",
         "d36mpcpuzc4ztk.cloudfront.net": "freshdesk",
         "freshdesk.com": "freshdesk",
-        "cdn1.friendbuy.com": "friendbuy",
-        "ws.friendbuy.com": "friendbuy",
+        "freshplum.com": "freshplum",
+        "friendbuy.com": "friendbuy",
         "friendfeed.com": "friendfeed",
         "adultfriendfinder.com": "friendfinder_network",
         "amigos.com": "friendfinder_network",
@@ -17406,6 +17637,9 @@
         "nostringsattached.com": "friendfinder_network",
         "pop6.com": "friendfinder_network",
         "streamray.com": "friendfinder_network",
+        "inpref.com": "frosmo_optimizer",
+        "inpref.s3-external-3.amazonaws.com": "frosmo_optimizer",
+        "inpref.s3.amazonaws.com": "frosmo_optimizer",
         "adflan.com": "fruitflan",
         "fruitflan.com": "fruitflan",
         "fstrk.net": "fstrk.net",
@@ -17430,7 +17664,6 @@
         "genesismedia.com": "genesis",
         "gssprt.jp": "geniee",
         "rsvpgenius.com": "genius",
-        "api.genoo.com": "genoo",
         "genoo.com": "genoo",
         "js.geoads.com": "geoads",
         "geolify.com": "geolify",
@@ -17442,8 +17675,8 @@
         "widgets.getglue.com": "getglue",
         "adhigh.net": "getintent",
         "static.getkudos.me": "getkudos",
-        "cdn.yottos.com": "getmyad",
         "yottos.com": "getmyad",
+        "gsfn.us": "getsatisfaction",
         "gettyimages.com": "gettyimages",
         "app.getresponse.com": "get_response",
         "getsitecontrol.com": "get_site_control",
@@ -17452,6 +17685,7 @@
         "videostat.com": "giantmedia",
         "a.giantrealm.com": "giant_realm",
         "gigaonclick.com": "giga",
+        "analytics.gigyahosting1.com": "gigya",
         "gigcount.com": "gigya",
         "gigya.com": "gigya",
         "service.giosg.com": "giosg",
@@ -17539,8 +17773,12 @@
         "googlecommerce.com": "google_trusted_stores",
         "googleusercontent.com": "google_users",
         "gmodules.com": "google_widgets",
+        "gooal.herokuapp.com": "goooal",
+        "gooo.al": "goooal",
         "cdn.triggertag.gorillanation.com": "gorilla_nation",
         "evolvemediametrics.com": "gorilla_nation",
+        "d1l6p2sc9645hc.cloudfront.net": "gosquared",
+        "gosquared.com": "gosquared",
         "gostats.com": "gostats",
         "govmetric.com": "govmetric",
         "servmetric.com": "govmetric",
@@ -17582,8 +17820,7 @@
         "h12-media.net": "h12_ads",
         "hnbutton.appspot.com": "hacker_news_button",
         "haendlerbund.de": "haendlerbund.de",
-        "hat.halogennetwork.com": "halogen_network",
-        "publishers.halogennetwork.com": "halogen_network",
+        "halogennetwork.com": "halogen_network",
         "d1l7z5ofrj6ab8.cloudfront.net": "happy_fox_chat",
         "ad.harrenmedianetwork.com": "harren_media",
         "ads.networkhm.com": "harren_media",
@@ -17619,9 +17856,11 @@
         "hitsniffer.com": "hitsniffer",
         "hittail.com": "hittail",
         "hivedx.com": "hivedx.com",
+        "ads.thehiveworks.com": "hiveworks",
         "hoholikik.club": "hoholikik.club",
         "h-cdn.com": "hola_player",
         "homeaway.com": "homeaway",
+        "honeybadger.io": "honeybadger",
         "hlserve.com": "hooklogic",
         "apiae.hopscore.com": "hop-cube",
         "hotdogsandads.com": "hotdogsandads.com",
@@ -17647,12 +17886,11 @@
         "hubvisor.io": "hubvisor.io",
         "files.hucksterbot.com": "hucksterbot",
         "hupso.com": "hupso",
-        "static.hupso.com": "hupso",
         "hurra.com": "hurra_tracker",
         "hybrid.ai": "hybrid.ai",
         "targetix.net": "hybrid.ai",
-        "w.hypercomments.com": "hypercomments",
-        "widget.hypercomments.com": "hypercomments",
+        "hypercomments.com": "hypercomments",
+        "hypeads.org": "hype_exchange",
         "hyves.nl": "hyves_widgets",
         "hyvyd.com": "hyvyd",
         "ib-ibi.com": "i-behavior",
@@ -17691,6 +17929,7 @@
         "iias.eu": "iias.eu",
         "ijento.com": "ijento",
         "adv.imadrep.co.kr": "imad",
+        "worthathousandwords.com": "image_advantage",
         "picadmedia.com": "image_space_media",
         "imgix.net": "imgix.net",
         "imgur.com": "imgur",
@@ -17746,7 +17985,6 @@
         "instagram.com": "instagram_com",
         "tcgtrkr.com": "instant_check_mate",
         "sdad.guru": "instart_logic",
-        "embed.insticator.com": "insticator",
         "insticator.com": "insticator",
         "load.instinctiveads.com": "instinctive",
         "adsafeprotected.com": "integral_ad_science",
@@ -17768,13 +18006,12 @@
         "intermundomedia.com": "intermundo_media",
         "voice2page.com": "internetaudioads",
         "ibpxl.com": "internetbrands",
-        "static.ibsrv.net": "internetbrands",
+        "ibsrv.net": "internetbrands",
         "bbelements.com": "internet_billboard",
         "goadservices.com": "internet_billboard",
         "ibillboard.com": "internet_billboard",
         "mediainter.net": "internet_billboard",
-        "hs.interpolls.com": "interpolls",
-        "sw.interpolls.com": "interpolls",
+        "interpolls.com": "interpolls",
         "ps7894.com": "interyield",
         "intilery-analytics.com": "intilery",
         "im-apps.net": "intimate_merger",
@@ -17818,10 +18055,10 @@
         "ixquick.com": "ixquick.com",
         "cdn.izooto.com": "izooto",
         "jlist.com": "j-list_affiliate_program",
-        "recorder-assets.getjaco.com": "jaco",
+        "getjaco.com": "jaco",
         "janrainbackplane.com": "janrain",
         "rpxnow.com": "janrain",
-        "sdk.jeeng.com": "jeeng",
+        "jeeng.com": "jeeng",
         "api.jeeng.com": "jeeng_widgets",
         "jetlore.com": "jetlore",
         "pixel.wp.com": "jetpack",
@@ -17837,6 +18074,8 @@
         "jivox.com": "jivox",
         "jobs2careers.com": "jobs_2_careers",
         "joinhoney.com": "joinhoney",
+        "create.leadid.com": "jornaya",
+        "d1tprjo2w7krrh.cloudfront.net": "jornaya",
         "cdnjquery.com": "jquery",
         "jquery.com": "jquery",
         "jsdelivr.net": "jsdelivr",
@@ -18072,9 +18311,7 @@
         "analytics.livestream.com": "livestream",
         "livetex.ru": "livetex.ru",
         "ladesk.com": "live_agent",
-        "developer.livehelpnow.net": "live_help_now",
         "livehelpnow.net": "live_help_now",
-        "www.livehelpnow.net": "live_help_now",
         "liadm.com": "live_intent",
         "l-stat.livejournal.net": "live_journal",
         "lkqd.net": "lkqd",
@@ -18162,7 +18399,7 @@
         "caanalytics.com": "markmonitor",
         "mmstat.com": "markmonitor",
         "netscope.data.marktest.pt": "marktest",
-        "markandmini.com": "mark_&_mini",
+        "markandmini.com": "mark_+_mini",
         "marshadow.io": "marshadow.io",
         "martiniadnetwork.com": "martini_media",
         "edigitalsurvey.com": "maru-edu",
@@ -18173,6 +18410,8 @@
         "matheranalytics.com": "mather_analytics",
         "mathjax.org": "mathjax.org",
         "nzaza.com": "matiro",
+        "matomo.cloud": "matomo",
+        "matomo.org": "matomo",
         "adsmarket.com": "matomy_market",
         "m2pub.com": "matomy_market",
         "mb01.com": "maxbounty",
@@ -18221,7 +18460,9 @@
         "idntfy.ru": "media_today",
         "mediego.com": "medigo",
         "medleyads.com": "medley",
+        "adnet.com.tr": "medyanet",
         "e-kolay.net": "medyanet",
+        "medyanetads.com": "medyanet",
         "cim.meebo.com": "meebo_bar",
         "meetrics.net": "meetrics",
         "mxcdn.net": "meetrics",
@@ -18283,7 +18524,6 @@
         "mirtesen.ru": "mirtesen.ru",
         "misterbell.com": "mister_bell",
         "mixi.jp": "mixi",
-        "plugins.mixi.jp": "mixi",
         "mixpanel.com": "mixpanel",
         "mxpnl.com": "mixpanel",
         "mxpnl.net": "mixpanel",
@@ -18302,8 +18542,7 @@
         "intelligentpixel.modernimpact.com": "modern_impact",
         "modulepush.com": "modulepush.com",
         "mogointeractive.com": "mogo_interactive",
-        "analytics.mpn.mokonocdn.com": "mokono_analytics",
-        "mpn-analytics.mokonocdn.com": "mokono_analytics",
+        "mokonocdn.com": "mokono_analytics",
         "devappgrant.space": "monero_miner",
         "monetate.net": "monetate",
         "monetize-me.com": "monetize_me",
@@ -18315,6 +18554,7 @@
         "fonts.com": "monotype_imaging",
         "cdn.monsido.com": "monsido",
         "monster.com": "monster_advertising",
+        "mooxar.com": "mooxar",
         "mopinion.com": "mopinion.com",
         "mopub.com": "mopub",
         "moras.jp": "moreads",
@@ -18335,11 +18575,6 @@
         "mrpdata.com": "mrpdata",
         "mrpdata.net": "mrpdata",
         "mrskincash.com": "mrskincash",
-        "ads.msn.com": "msn",
-        "ads1.msn.com": "msn",
-        "adsyndication.msn.com": "msn",
-        "col.stc.s-msn.com": "msn",
-        "flex.msn.com": "msn",
         "msn.com": "msn",
         "s-msn.com": "msn",
         "musculahq.appspot.com": "muscula",
@@ -18405,8 +18640,7 @@
         "nsaudience.pl": "netsprint_audience",
         "nwidget.networkedblogs.com": "networkedblogs",
         "netavenir.com": "net_avenir",
-        "ad.netcommunities.com": "net_communities",
-        "ads.netcommunities.com": "net_communities",
+        "netcommunities.com": "net_communities",
         "visibility-stats.com": "net_visibility",
         "adadvisor.net": "neustar_adadvisor",
         "newscgp.com": "newscgp.com",
@@ -18429,8 +18663,7 @@
         "d1d8vn0fpluuz7.cloudfront.net": "neytiv",
         "ads.ngageinc.com": "ngage_inc.",
         "nice264.com": "nice264.com",
-        "us2widget.nimblecommerce.com": "nimblecommerce",
-        "us3widget.nimblecommerce.com": "nimblecommerce",
+        "nimblecommerce.com": "nimblecommerce",
         "cho-chin.com": "ninja_access_analysis",
         "donburako.com": "ninja_access_analysis",
         "hishaku.com": "ninja_access_analysis",
@@ -18461,10 +18694,12 @@
         "nyacampwk.com": "nyacampwk.com",
         "nyetm2mkch.com": "nyetm2mkch.com",
         "nyt.com": "nyt.com",
+        "nytimes.com": "nyt.com",
         "o12zs3u2n.com": "o12zs3u2n.com",
         "o2.pl": "o2.pl",
         "o2online.de": "o2online.de",
         "oath.com": "oath_inc",
+        "observerapp.com": "observer",
         "ocioso.com.br": "ocioso",
         "oclasrv.com": "oclasrv.com",
         "octapi.net": "octapi.net",
@@ -18514,7 +18749,10 @@
         "oloadcdn.net": "openload",
         "openload.co": "openload",
         "openstat.net": "openstat",
+        "spylog.com": "openstat",
+        "spylog.ru": "openstat",
         "opentracker.net": "opentracker",
+        "openwebanalytics.com": "openwebanalytics",
         "odnxs.net": "openx",
         "openx.net": "openx",
         "openx.org": "openx",
@@ -18612,7 +18850,7 @@
         "prfct.co": "perfect_audience",
         "perfectmarket.com": "perfect_market",
         "analytics.performable.com": "performable",
-        "ibsrv.net": "performancing_metrics",
+        "performancing.com": "performancing_metrics",
         "performax.cz": "performax",
         "performgroup.com": "perform_group",
         "perimeterx.net": "perimeterx.net",
@@ -18622,6 +18860,7 @@
         "code.pers.io": "persio",
         "counter.personyze.com": "personyze",
         "petametrics.com": "petametrics",
+        "ads.pheedo.com": "pheedo",
         "app.phonalytics.com": "phonalytics",
         "d2bgg7rjywcwsy.cloudfront.net": "phunware",
         "piguiqproxy.com": "piguiqproxy.com",
@@ -18630,14 +18869,16 @@
         "pinimg.com": "pinterest",
         "pinterest.com": "pinterest",
         "app.pipz.io": "pipz",
-        "piwik.bayreuth.de": "piwik",
-        "xs4all.piwik.pro": "piwik",
+        "piwik.org": "piwik",
+        "piwik.pro": "piwik",
         "adrta.com": "pixalate",
         "app.pixelpop.co": "pixel_union",
         "pixfuture.net": "pixfuture",
         "vast1.pixfuture.com": "pixfuture",
         "piximedia.com": "piximedia",
         "pizzaandads.com": "pizzaandads_com",
+        "ads.placester.net": "placester",
+        "d3uemyw1e5n0jw.cloudfront.net": "placester",
         "pladform.com": "pladform.ru",
         "tag.bi.serviceplan.com": "plan.net_experience_cloud",
         "pfrm.co": "platform360",
@@ -18660,6 +18901,8 @@
         "pointroll.com": "pointroll",
         "poirreleast.club": "poirreleast.club",
         "mediavoice.com": "polar.me",
+        "polar.me": "polar.me",
+        "polarmobile.com": "polar.me",
         "polldaddy.com": "polldaddy",
         "polyad.net": "polyad",
         "polyfill.io": "polyfill.io",
@@ -18684,18 +18927,17 @@
         "powr.io": "powr.io",
         "api.pozvonim.com": "pozvonim",
         "prebid.org": "prebid",
-        "geo.precisionclick.com": "precisionclick",
-        "servedby.precisionclick.com": "precisionclick",
+        "precisionclick.com": "precisionclick",
         "adserver.com.br": "predicta",
         "predicta.net": "predicta",
         "prnx.net": "premonix",
-        "ppjol.com": "press+",
-        "ppjol.net": "press+",
+        "ppjol.com": "press",
+        "ppjol.net": "press",
         "api.pressly.com": "pressly",
         "pricegrabber.com": "pricegrabber",
         "cdn.pricespider.com": "pricespider",
         "pmdrecrute.com": "prismamediadigital.com",
-        "prismamediadigital.com": "prisma_media_digital",
+        "prismamediadigital.com": "prismamediadigital.com",
         "privy.com": "privy.com",
         "pswec.com": "proclivity",
         "lib.productsup.io": "productsup",
@@ -18710,15 +18952,14 @@
         "onclkds.com": "propeller_ads",
         "propellerads.com": "propeller_ads",
         "propellerpops.com": "propeller_ads",
-        "calls.propelmarketing.com": "propel_marketing",
-        "responsive.propelmarketing.com": "propel_marketing",
+        "propelmarketing.com": "propel_marketing",
         "proper.io": "propermedia",
+        "st-a.props.id": "props",
         "propvideo.net": "propvideo_net",
         "tr.prospecteye.com": "prospecteye",
         "prosperent.com": "prosperent",
         "prostor-lite.ru": "prostor",
-        "image.providesupport.com": "provide_support",
-        "secure.providesupport.com": "provide_support",
+        "providesupport.com": "provide_support",
         "proximic.com": "proximic",
         "proxistore.com": "proxistore.com",
         "pscp.tv": "pscp.tv",
@@ -18739,8 +18980,7 @@
         "puboclic.com": "puboclic",
         "pulpix.com": "pulpix.com",
         "tentaculos.net": "pulpo_media",
-        "content.pulse360.com": "pulse360",
-        "track.pulse360.com": "pulse360",
+        "pulse360.com": "pulse360",
         "contextweb.com": "pulsepoint",
         "pulsepoint.com": "pulsepoint",
         "pulseinsights.com": "pulse_insights",
@@ -18779,8 +19019,7 @@
         "quantserve.com": "quantcast",
         "quantcount.com": "quantcount",
         "quantummetric.com": "quantum_metric",
-        "qjs.quartic.pl": "quartic",
-        "rec.quartic.pl": "quartic",
+        "quartic.pl": "quartic.pl",
         "quarticon.com": "quartic.pl",
         "d3c3cq33003psk.cloudfront.net": "qubit",
         "qubit.com": "qubit",
@@ -18814,10 +19053,11 @@
         "rawgit.com": "rawgit",
         "raygun.io": "raygun",
         "count.rbc.ru": "rbc_counter",
+        "rcs.it": "rcs.it",
         "rcsmediagroup.it": "rcs.it",
-        "ads.rcs.it": "rcs_mediagroup",
-        "bt.rcs.it": "rcs_mediagroup",
         "d335luupugsy2.cloudfront.net": "rd_station",
+        "d12ulf131zb0yj.cloudfront.net": "reachforce",
+        "reachforce.com": "reachforce",
         "reachjunction.com": "reachjunction",
         "cdn.rlets.com": "reachlocal",
         "reachlocal.com": "reachlocal",
@@ -18847,13 +19087,11 @@
         "reddit.com": "reddit",
         "redditmedia.com": "reddit",
         "redditstatic.com": "reddit",
-        "data.redhelper.ru": "redhelper",
-        "web.redhelper.ru": "redhelper",
+        "redhelper.ru": "redhelper",
         "pixelinteractivemedia.com": "redlotus",
         "triggit.com": "redlotus",
         "grt01.com": "redtram",
         "grt02.com": "redtram",
-        "js.goods.redtram.com": "redtram",
         "redtram.com": "redtram",
         "rdtcdn.com": "redtube.com",
         "redtube.com": "redtube.com",
@@ -18864,11 +19102,16 @@
         "reedbusiness.net": "reed_business_information",
         "reembed.com": "reembed.com",
         "reevoo.com": "reevoo.com",
-        "app.refericon.pl": "refericon",
+        "refericon.pl": "refericon",
+        "ads.referlocal.com": "referlocal",
         "refersion.com": "refersion",
         "refinedads.com": "refined_labs",
+        "product.reflektion.com": "reflektion",
         "reformal.ru": "reformal",
         "reinvigorate.net": "reinvigorate",
+        "convertglobal.com": "rekko",
+        "convertglobal.s3.amazonaws.com": "rekko",
+        "dnhgz729v27ca.cloudfront.net": "rekko",
         "ad.reklamport.com": "reklamport",
         "delivery.reklamz.com": "reklamz",
         "reklamstore.com": "reklam_store",
@@ -18897,6 +19140,8 @@
         "retargeter.com": "retargeter_beacon",
         "retargeting.cl": "retargeting.cl",
         "shopify.retargetapp.com": "retarget_app",
+        "d1stxfv94hrhia.cloudfront.net": "retention_science",
+        "waves.retentionscience.com": "retention_science",
         "reutersmedia.net": "reuters_media",
         "revcontent.com": "revcontent",
         "revenue.com": "revenue",
@@ -18908,6 +19153,7 @@
         "clksite.com": "revenue_hits",
         "imageshack.host": "revenue_hits",
         "socialtwist.com": "reve_marketing",
+        "revive-adserver.com": "revive_adserver",
         "revolvermaps.com": "revolver_maps",
         "cts.tradepub.com": "revresponse",
         "revresponse.com": "revresponse",
@@ -18924,7 +19170,6 @@
         "riskfield.com": "riskfield.com",
         "rncdn3.com": "rncdn3.com",
         "ro2.biz": "ro2.biz",
-        "d3m83gvgzupli.cloudfront.net": "roadrunner_sports",
         "rbxcdn.com": "roblox",
         "getrockerbox.com": "rockerbox",
         "rocket.la": "rocket.ia",
@@ -18987,6 +19232,11 @@
         "sanoma.fi": "sanoma.fi",
         "sape.ru": "sape.ru",
         "js.sl.pt": "sapo_ads",
+        "d13im3ek7neeqp.cloudfront.net": "sap_crm",
+        "d28ethi6slcjbm.cloudfront.net": "sap_crm",
+        "d2uevgmgh16uk4.cloudfront.net": "sap_crm",
+        "d3m83gvgzupli.cloudfront.net": "sap_crm",
+        "saas.seewhy.com": "sap_crm",
         "leadforce1.com": "sap_sales_cloud",
         "vlog.leadformix.com": "sap_sales_cloud",
         "sap-xm.org": "sap_xm",
@@ -19041,6 +19291,8 @@
         "track.sensedigital.in": "sense_digital",
         "static.sensorsdata.cn": "sensors_data",
         "sentifi.com": "sentifi.com",
+        "d3nslu0hdya83q.cloudfront.net": "sentry",
+        "getsentry.com": "sentry",
         "ravenjs.com": "sentry",
         "sentry.io": "sentry",
         "sepyra.com": "sepyra",
@@ -19087,6 +19339,8 @@
         "shink.in": "shrink",
         "shutterstock.com": "shutterstock",
         "siblesectiveal.club": "siblesectiveal.club",
+        "d3v27wwd40f0xu.cloudfront.net": "sidecar",
+        "getsidecar.com": "sidecar",
         "dtlilztwypawv.cloudfront.net": "sift_science",
         "siftscience.com": "sift_science",
         "btstatic.com": "signal",
@@ -19113,8 +19367,7 @@
         "sddan.com": "sirdata",
         "site24x7rum.com": "site24x7",
         "site24x7rum.eu": "site24x7",
-        "a.siteapps.com": "siteapps",
-        "ae.siteapps.com": "siteapps",
+        "siteapps.com": "siteapps",
         "sitebro.com": "sitebro",
         "sitebro.com.tw": "sitebro",
         "sitebro.net": "sitebro",
@@ -19147,8 +19400,7 @@
         "slashdot.org": "slashdot_widget",
         "sleeknotestaticcontent.sleeknote.com": "sleeknote",
         "builder.extensionfactory.com": "slice_factory",
-        "sb.freeskreen.com": "slimcutmedia",
-        "static.freeskreen.com": "slimcutmedia",
+        "freeskreen.com": "slimcutmedia",
         "slingpic.com": "slingpic",
         "resultspage.com": "sli_systems",
         "smaato.net": "smaato",
@@ -19180,13 +19432,13 @@
         "tracking.smartselling.cz": "smart_selling",
         "smi2.net": "smi2.ru",
         "smi2.ru": "smi2.ru",
+        "stat.media": "smi2.ru",
         "cdn.smooch.io": "smooch",
         "smowtion.com": "smowtion",
         "smxindia.in": "smx_ventures",
         "smyte.com": "smyte",
         "snacktv.de": "snacktv",
-        "shots.snap.com": "snap",
-        "spa.snap.com": "snap",
+        "snap.com": "snap",
         "sc-static.net": "snapchat",
         "snapchat.com": "snapchat",
         "snapengage.com": "snap_engage",
@@ -19198,9 +19450,9 @@
         "dc8xl0ndzn2cb.cloudfront.net": "snowplow",
         "playwire.com": "snowplow",
         "snplow.net": "snowplow",
-        "tiaa-cref.org": "soasta",
         "go-mpulse.net": "soasta_mpulse",
         "mpstat.us": "soasta_mpulse",
+        "tiaa-cref.org": "soasta_mpulse",
         "sociablelabs.com": "sociable_labs",
         "duu8lzqdm8tsz.cloudfront.net": "socialbeat",
         "ratevoice.com": "socialrms",
@@ -19213,8 +19465,7 @@
         "sojern.com": "sojern",
         "sokrati.com": "sokrati",
         "solads.media": "solads.media",
-        "api.solidopinion.com": "solidopinion",
-        "stats.solidopinion.com": "solidopinion",
+        "solidopinion.com": "solidopinion",
         "pixel.solvemedia.com": "solve_media",
         "soma2.de": "soma_2",
         "mobileadtrading.com": "somoaudience",
@@ -19234,8 +19485,6 @@
         "rts.sparkstudios.com": "spark_studios",
         "speakpipe.com": "speakpipe",
         "adviva.net": "specific_media",
-        "leads.specificmedia.com": "specific_media",
-        "smp.specificmedia.com": "specific_media",
         "specificclick.net": "specific_media",
         "specificmedia.com": "specific_media",
         "spectate.com": "spectate",
@@ -19271,8 +19520,7 @@
         "springserve.com": "springserve",
         "pixel.sprinklr.com": "sprinklr",
         "stat.sputnik.ru": "sputnik",
-        "asset.email-match.com": "squadata",
-        "atout.email-match.com": "squadata",
+        "email-match.com": "squadata",
         "squarespace.com": "squarespace.com",
         "srvtrck.com": "srvtrck.com",
         "srvvtrk.com": "srvvtrk.com",
@@ -19308,8 +19556,7 @@
         "mailfoogae.appspot.com": "streak",
         "streamrail.com": "streamrail.com",
         "streamrail.net": "streamrail.com",
-        "cdn.stridespark.com": "stride",
-        "tracking.stridespark.com": "stride",
+        "stridespark.com": "stride",
         "stripcdn.com": "stripchat.com",
         "stripchat.com": "stripchat.com",
         "stripe.com": "stripe.com",
@@ -19337,8 +19584,7 @@
         "supercounters.com": "supercounters",
         "superfastcdn.com": "superfastcdn.com",
         "socdm.com": "supership",
-        "ads.supplyframe.com": "supplyframe",
-        "analytics.supplyframe.com": "supplyframe",
+        "supplyframe.com": "supplyframe",
         "surfingbird.ru": "surf_by_surfingbird",
         "px.surveywall-api.survata.com": "survata",
         "cdn.sweettooth.io": "sweettooth",
@@ -19355,8 +19601,8 @@
         "seal.verisign.com": "symantec",
         "symantec.com": "symantec",
         "d.hodes.com": "symphony_talent",
-        "technorati.com": "synacor_(formerly_technorati)",
-        "technoratimedia.com": "synacor_(formerly_technorati_media)",
+        "technorati.com": "synacor",
+        "technoratimedia.com": "synacor",
         "cn.clickable.net": "syncapse",
         "synergy-e.com": "synergy-e",
         "sdp-campaign.de": "t-mobile",
@@ -19372,7 +19618,6 @@
         "taboolasyndication.com": "taboola",
         "tacoda.net": "tacoda",
         "tags.tagcade.com": "tagcade",
-        "code.taggify.net": "taggify",
         "taggify.net": "taggify",
         "taggyad.jp": "taggy",
         "levexis.com": "tagman",
@@ -19395,6 +19640,7 @@
         "tchibo.de": "tchibo_de",
         "tdsrmbl.net": "tdsrmbl_net",
         "teads.tv": "teads",
+        "tealeaf.ibmcloud.com": "tealeaf",
         "tealium.com": "tealium",
         "tealium.hs.llnwd.net": "tealium",
         "tealiumiq.com": "tealium",
@@ -19426,6 +19672,7 @@
         "tidbit.co.in": "tidbit",
         "code.tidio.co": "tidio",
         "widget-v4.tidiochat.com": "tidio",
+        "optimized.by.tiller.co": "tiller",
         "vip.timezonedb.com": "timezondb",
         "npttech.com": "tinypass",
         "tinypass.com": "tinypass",
@@ -19445,8 +19692,7 @@
         "srv.clickfuse.com": "tonefuse",
         "toplist.cz": "toplist.cz",
         "toponclick.com": "toponclick_com",
-        "cdn.topsy.com": "topsy",
-        "otter.topsy.com": "topsy",
+        "topsy.com": "topsy",
         "insight.torbit.com": "torbit",
         "toro-tags.com": "toro",
         "toroadvertising.com": "toro",
@@ -19461,6 +19707,8 @@
         "tracc.it": "tracc.it",
         "ipnoid.com": "tracemyip",
         "tracemyip.org": "tracemyip",
+        "d2gfdmu30u15x7.cloudfront.net": "traceview",
+        "tracelytics.com": "traceview",
         "d2zah9y47r7bi2.cloudfront.net": "trackjs",
         "dl1d2m8ri9v3j.cloudfront.net": "trackjs",
         "trackjs.com": "trackjs",
@@ -19490,7 +19738,9 @@
         "travelaudience.com": "travel_audience",
         "trbo.com": "trbo",
         "treasuredata.com": "treasuredata",
+        "scanscout.com": "tremor_video",
         "tremorhub.com": "tremor_video",
+        "tremormedia.com": "tremor_video",
         "tremorvideo.com": "tremor_video",
         "videohub.tv": "tremor_video",
         "s.tcimg.com": "trendcounter",
@@ -19498,7 +19748,6 @@
         "trendemon.com": "trendemon",
         "exponential.com": "tribal_fusion",
         "tribalfusion.com": "tribal_fusion",
-        "p0.tribl.io": "triblio",
         "tribl.io": "triblio",
         "t.myvisitors.se": "triggerbee",
         "api.temails.com": "trigger_mail_marketing",
@@ -19519,11 +19768,9 @@
         "tru.am": "trueanthem",
         "adlegend.com": "trueffect",
         "addoer.com": "truehits.net",
-        "banner.truehits.net": "truehits.net",
-        "poll.truehits.net": "truehits.net",
         "truehits.in.th": "truehits.net",
-        "kat-cdns.truefitcorp.com": "true_fit",
-        "und-cdns.truefitcorp.com": "true_fit",
+        "truehits.net": "truehits.net",
+        "truefitcorp.com": "true_fit",
         "trumba.com": "trumba",
         "truoptik.com": "truoptik",
         "trustarc.com": "trustarc",
@@ -19553,7 +19800,6 @@
         "tvsquared.com": "tvsquared.com",
         "tweetboard.com": "tweetboard",
         "tweetmeme.com": "tweetmeme",
-        "zulu.tweetmeme.com": "tweetmeme",
         "c4tw.net": "twenga",
         "twiago.com": "twiago",
         "twinedigital.go2cloud.org": "twine",
@@ -19579,6 +19825,7 @@
         "typekit.net": "typekit_by_adobe",
         "typepad.com": "typepad_stats",
         "typography.com": "typography.com",
+        "tyroodirect.com": "tyroo",
         "tyroodr.com": "tyroo",
         "tzetze.it": "tzetze",
         "ubersetzung-app.com": "ubersetzung-app.com",
@@ -19590,6 +19837,10 @@
         "api.umbel.com": "umbel",
         "umebiggestern.club": "umebiggestern.club",
         "unanimis.co.uk": "unanimis",
+        "d3pkntwtp2ukl5.cloudfront.net": "unbounce",
+        "t.unbounce.com": "unbounce",
+        "d21gpk1vhmjuf5.cloudfront.net": "unbxd",
+        "tracker.unbxdapi.com": "unbxd",
         "under-box.com": "under-box.com",
         "undercomputer.com": "undercomputer.com",
         "udmserve.net": "underdog_media",
@@ -19628,10 +19879,15 @@
         "dq4irj27fs462.cloudfront.net": "userlike.com",
         "userlike-cdn-widgets.s3-eu-west-1.amazonaws.com": "userlike.com",
         "userlike.com": "userlike.com",
+        "contactusplus.com": "userpulse",
+        "user-pulse.appspot.com": "userpulse",
+        "userpulse.com": "userpulse",
         "userreplay.net": "userreplay",
         "sdsbucket.s3.amazonaws.com": "userreport",
         "userreport.com": "userreport",
         "dtkm4pd19nw6z.cloudfront.net": "userrules",
+        "api.usersnap.com": "usersnap",
+        "d3mvnvhjmkxpjz.cloudfront.net": "usersnap",
         "uservoice.com": "uservoice",
         "userzoom.com": "userzoom.com",
         "usocial.pro": "usocial",
@@ -19649,7 +19905,6 @@
         "valuedopinions.co.uk": "valued_opinions",
         "buzzparadise.com": "vanksen",
         "vmmpxl.com": "varick_media_management",
-        "impress.vcita.com": "vcita",
         "vcita.com": "vcita",
         "tracking.vcommission.com": "vcommission",
         "vdopia.com": "vdopia",
@@ -19662,17 +19917,16 @@
         "api.venyoo.ru": "venyoo",
         "veoxa.com": "veoxa",
         "vergic.com": "vergic.com",
+        "d3qxef4rp70elm.cloudfront.net": "vero",
+        "getvero.com": "vero",
         "cts.vresp.com": "verticalresponse",
         "verticalscope.com": "verticalscope",
-        "scripts.verticalacuity.com": "vertical_acuity",
-        "tm.verticalacuity.com": "vertical_acuity",
+        "verticalacuity.com": "vertical_acuity",
         "roi.vertical-leap.co.uk": "vertical_leap",
         "ads.vertoz.com": "vertoz",
         "banner.vrtzads.com": "vertoz",
         "veruta.com": "veruta",
-        "adcel.vrvm.com": "verve_mobile",
-        "c.vrvm.com": "verve_mobile",
-        "go.vrvm.com": "verve_mobile",
+        "vrvm.com": "verve_mobile",
         "veinteractive.com": "ve_interactive",
         "vgwort.de": "vg_wort",
         "digitaltarget.ru": "vi",
@@ -19684,11 +19938,13 @@
         "vidazoo.com": "vidazoo.com",
         "videoadex.com": "videoadex.com",
         "tidaltv.com": "videology",
+        "videonow.ru": "videonow",
         "videoplayerhub.com": "videoplayerhub.com",
         "videoplaza.tv": "videoplaza",
         "kweb.videostep.com": "videostep",
         "module-videodesk.com": "video_desk",
         "vidtok.ru": "video_potok",
+        "content.vidgyor.com": "vidgyor",
         "vidible.tv": "vidible",
         "assets.vidora.com": "vidora",
         "vietad.vn": "vietad",
@@ -19742,6 +19998,8 @@
         "vooxe.com": "vooxe.com",
         "vorwerk.de": "vorwerk.de",
         "vox-cdn.com": "vox",
+        "embed.voxus.tv": "voxus",
+        "voxus-targeting-voxusmidia.netdna-ssl.com": "voxus",
         "c-dsp.vpadn.com": "vpon",
         "tools.vpscash.nl": "vpscash",
         "vtracy.de": "vtracy.de",
@@ -19768,8 +20026,7 @@
         "tr.webantenna.info": "webantenna",
         "webclicks24.com": "webclicks24_com",
         "webclose.net": "webclose.net",
-        "content.webcollage.net": "webcollage",
-        "media.webcollage.net": "webcollage",
+        "webcollage.net": "webcollage",
         "goutee.top": "webedia",
         "mediaathay.org.uk": "webedia",
         "wbdx.fr": "webedia",
@@ -19805,8 +20062,7 @@
         "webtrends.com": "webtrends",
         "webtrendslive.com": "webtrends",
         "rd.clickshift.com": "webtrends_ads",
-        "beta.web-visor.com": "webvisor",
-        "c1.web-visor.com": "webvisor",
+        "web-visor.com": "webvisor",
         "ssl.webserviceaward.com": "web_service_award",
         "webtraxs.com": "web_traxs",
         "wipe.de": "web_wipe_analytics",
@@ -19840,6 +20096,7 @@
         "col1.wiqhit.com": "wiqhit",
         "wirecard.com": "wirecard",
         "wirecard.de": "wirecard",
+        "leadlab.click": "wiredminds",
         "wiredminds.com": "wiredminds",
         "wiredminds.de": "wiredminds",
         "adtotal.pl": "wirtualna_polska",
@@ -19869,7 +20126,7 @@
         "wwwpromoter.com": "wwwpromoter",
         "imgwykop.pl": "wykop",
         "wykop.pl": "wykop",
-        "wysistat.com": "wysistat",
+        "wysistat.com": "wysistat.com",
         "wysistat.net": "wysistat.com",
         "wywy.com": "wywy.com",
         "wywyuserservice.com": "wywy.com",
@@ -19898,13 +20155,16 @@
         "yahoo.com": "yahoo",
         "yahooapis.com": "yahoo",
         "yimg.com": "yahoo",
-        "np.lexity.com": "yahoo!_commerce_central",
+        "ov.yahoo.co.jp": "yahoo!_overture",
+        "overture.com": "yahoo!_overture",
         "luminate.com": "yahoo!_small_business",
         "pixazza.com": "yahoo!_small_business",
         "ads.yahoo.com": "yahoo_ad_exchange",
         "yads.yahoo.com": "yahoo_ad_exchange",
         "yieldmanager.com": "yahoo_ad_exchange",
         "pr-bh.ybp.yahoo.com": "yahoo_ad_manager",
+        "analytics.yahoo.com": "yahoo_analytics",
+        "np.lexity.com": "yahoo_commerce_central",
         "storage-yahoo.jp": "yahoo_japan",
         "yahoo.co.jp": "yahoo_japan",
         "yahooapis.jp": "yahoo_japan",

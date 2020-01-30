@@ -17,6 +17,21 @@
         "101": "mobile_analytics"
     },
     "trackers": {
+        "akamai_technologies": {
+            "name": "Akamai Technologies",
+            "categoryId": 9,
+            "url": "https://www.akamai.com/"
+        },
+        "apple": {
+            "name": "Apple",
+            "categoryId": 8,
+            "url": "https://www.apple.com/"
+        },
+        "apple_ads": {
+            "name": "Apple Search Ads",
+            "categoryId": 4,
+            "url": "https://searchads.apple.com/"
+        },
         "facebook_audience": {
             "name": "Facebook Audience Network",
             "categoryId": 4,
@@ -62,13 +77,36 @@
             "categoryId": 101,
             "url": "https://branch.io/"
         },
-        "adocean": {
-            "name": "Gemius Adocean",
+        "markmonitor": {
+            "name": "MarkMonitor",
             "categoryId": 4,
-            "url": "https://adocean-global.com/"
+            "url": "https://www.markmonitor.com/"
+        },
+        "appcenter": {
+            "name": "Microsoft App Center",
+            "categoryId": 5,
+            "url": "https://appcenter.ms/"
+        },
+        "unity_ads": {
+            "name": "Unity Ads",
+            "categoryId": 4,
+            "url": "https://unity.com/solutions/mobile-business/monetize-your-game"
+        },
+        "azure": {
+            "name": "Microsoft Azure",
+            "categoryId": 10,
+            "url": "https://azure.microsoft.com/"
         }
     },
     "trackerDomains": {
+        "akadns.net": "akamai_technologies",
+        "akamaiedge.net": "akamai_technologies",
+        "apple.com": "apple",
+        "apple-dns.net": "apple",
+        "aaplimg.com": "apple",
+        "icloud.com": "apple",
+        "mzstatic.com": "apple",
+        "iadsdk.apple.com": "apple_ads",
         "graph.facebook.com": "facebook_audience",
         "crashlytics.com": "crashlytics",
         "flurry.com": "flurry",
@@ -78,6 +116,9 @@
         "appmetrica.yandex.com": "yandex_appmetrica",
         "adjust.com": "adjust",
         "mobileapptracking.com": "branch",
-        "adocean.cz": "adocean"
+        "edgecastcdn.net": "markmonitor",
+        "appcenter.ms": "appcenter",
+        "unityads.unity3d.com": "unity_ads",
+        "azure.com": "azure"
     }
 }
