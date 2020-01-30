@@ -60,6 +60,12 @@ class Setup extends Component {
         }
     };
 
+    handleStaticIp = () => {
+        this.props.checkConfig({
+            set_static_ip: true,
+        });
+    };
+
     openDashboard = (ip, port) => {
         let address = getWebAddress(ip, port);
 
@@ -96,6 +102,7 @@ class Setup extends Component {
                         onChange={this.handleFormChange}
                         validateForm={this.handleFormChange}
                         handleAutofix={this.handleAutofix}
+                        handleStaticIp={this.handleStaticIp}
                     />
                 );
             case 3:
@@ -117,6 +124,7 @@ class Setup extends Component {
             step,
             web,
             dns,
+            staticIp,
             interfaces,
         } = this.props.install;
 
@@ -128,7 +136,7 @@ class Setup extends Component {
                         <div className="setup">
                             <div className="setup__container">
                                 <img src={logo} className="setup__logo" alt="logo" />
-                                {this.renderPage(step, { web, dns }, interfaces)}
+                                {this.renderPage(step, { web, dns, staticIp }, interfaces)}
                                 <Progress step={step} />
                             </div>
                         </div>

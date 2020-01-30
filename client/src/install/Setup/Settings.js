@@ -7,25 +7,17 @@ import flow from 'lodash/flow';
 
 import Controls from './Controls';
 import AddressList from './AddressList';
+import Accordion from '../../components/ui/Accordion';
+
 import { getInterfaceIp } from '../../helpers/helpers';
 import { ALL_INTERFACES_IP } from '../../helpers/constants';
-import { renderInputField } from '../../helpers/form';
+import { renderInputField, required, validInstallPort, toNumber } from '../../helpers/form';
 
-const required = (value) => {
-    if (value || value === 0) {
-        return false;
-    }
-    return <Trans>form_error_required</Trans>;
+const STATIC_STATUS = {
+    ENABLED: 'yes',
+    DISABLED: 'no',
+    ERROR: 'error',
 };
-
-const port = (value) => {
-    if (value < 1 || value > 65535) {
-        return <Trans>form_error_port</Trans>;
-    }
-    return false;
-};
-
-const toNumber = value => value && parseInt(value, 10);
 
 const renderInterfaces = (interfaces => (
     Object.keys(interfaces).map((item) => {
@@ -79,11 +71,54 @@ class Settings extends Component {
         });
     }
 
+    getStaticIpMessage = (staticIp, handleStaticIp) => {
+        const { static: status, ip, error } = staticIp;
+
+        if (!status || status === STATIC_STATUS.ENABLED) {
+            return '';
+        }
+
+        return (
+            <div className="col-12">
+                <Fragment>
+                    <div className="text-danger">
+                        {status === STATIC_STATUS.DISABLED && (
+                            <Fragment>
+                                <Trans values={{ ip }}>
+                                    install_static_configure
+                                </Trans>
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary btn-sm ml-2"
+                                    onClick={() => handleStaticIp()}
+                                >
+                                    <Trans>set_static_ip</Trans>
+                                </button>
+                            </Fragment>
+                        )}
+                        {status === STATIC_STATUS.ERROR && (
+                            <Fragment>
+                                <Trans>install_static_error</Trans>
+                                <div className="mt-2 mb-2">
+                                    <Accordion label={this.props.t('error_details')}>
+                                        <span>{error}</span>
+                                    </Accordion>
+                                </div>
+                            </Fragment>
+                        )}
+                        <hr className="divider divider--small" />
+                    </div>
+                </Fragment>
+            </div>
+        );
+    };
+
     render() {
         const {
             handleSubmit,
             handleChange,
             handleAutofix,
+            handleStaticIp,
             webIp,
             webPort,
             dnsIp,
@@ -100,6 +135,7 @@ class Settings extends Component {
             status: dnsStatus,
             can_autofix: isDnsFixAvailable,
         } = config.dns;
+        const { staticIp } = config;
 
         return (
             <form className="setup__step" onSubmit={handleSubmit}>
@@ -137,7 +173,7 @@ class Settings extends Component {
                                     type="number"
                                     className="form-control"
                                     placeholder="80"
-                                    validate={[port, required]}
+                                    validate={[validInstallPort, required]}
                                     normalize={toNumber}
                                     onChange={handleChange}
                                 />
@@ -205,12 +241,13 @@ class Settings extends Component {
                                     type="number"
                                     className="form-control"
                                     placeholder="80"
-                                    validate={[port, required]}
+                                    validate={[validInstallPort, required]}
                                     normalize={toNumber}
                                     onChange={handleChange}
                                 />
                             </div>
                         </div>
+                        {this.getStaticIpMessage(staticIp, handleStaticIp)}
                         <div className="col-12">
                             {dnsStatus &&
                                 <Fragment>
@@ -237,6 +274,7 @@ class Settings extends Component {
                                             <Trans>autofix_warning_result</Trans>
                                         </p>
                                     </div>
+                                    <hr className="divider--small" />
                                 </Fragment>
                             }
                         </div>
@@ -278,6 +316,8 @@ Settings.propTypes = {
     interfaces: PropTypes.object.isRequired,
     invalid: PropTypes.bool.isRequired,
     initialValues: PropTypes.object,
+    t: PropTypes.func.isRequired,
+    handleStaticIp: PropTypes.func.isRequired,
 };
 
 const selector = formValueSelector('install');

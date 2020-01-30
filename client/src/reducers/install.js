@@ -32,9 +32,10 @@ const install = handleActions({
     [actions.checkConfigSuccess]: (state, { payload }) => {
         const web = { ...state.web, ...payload.web };
         const dns = { ...state.dns, ...payload.dns };
+        const staticIp = { ...state.staticIp, ...payload.static_ip };
 
         const newState = {
-            ...state, web, dns, processingCheck: false,
+            ...state, web, dns, staticIp, processingCheck: false,
         };
         return newState;
     },
@@ -54,6 +55,11 @@ const install = handleActions({
         port: 53,
         status: '',
         can_autofix: false,
+    },
+    staticIp: {
+        static: '',
+        ip: '',
+        error: '',
     },
     interfaces: {},
 });
