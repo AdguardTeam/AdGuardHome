@@ -56,9 +56,9 @@ const queryLogs = handleActions(
         [actions.getLogsFailure]: state => ({ ...state, processingGetLogs: false }),
         [actions.getLogsSuccess]: (state, { payload }) => {
             const {
-                logs, oldest, older_than, page, pageSize,
+                logs, oldest, older_than, page, pageSize, initial,
             } = payload;
-            let logsWithOffset = state.allLogs.length > 0 ? state.allLogs : logs;
+            let logsWithOffset = state.allLogs.length > 0 && !initial ? state.allLogs : logs;
             let allLogs = logs;
 
             if (older_than) {
