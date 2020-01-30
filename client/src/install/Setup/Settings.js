@@ -192,6 +192,7 @@ class Settings extends Component {
                                             <Trans>fix</Trans>
                                         </button>
                                     }
+                                    <hr className="divider--small" />
                                 </div>
                             }
                         </div>
