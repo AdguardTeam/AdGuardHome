@@ -100,6 +100,9 @@ func (clients *clientsContainer) Init(objects []clientObject, dhcpServer *dhcpd.
 	if !clients.testing {
 		go clients.periodicUpdate()
 
+		clients.addFromDHCP()
+		clients.dhcpServer.SetOnLeaseChanged(clients.onDHCPLeaseChanged)
+
 		clients.registerWebHandlers()
 	}
 }
@@ -186,8 +189,16 @@ func (clients *clientsContainer) periodicUpdate() {
 	for {
 		clients.addFromHostsFile()
 		clients.addFromSystemARP()
-		clients.addFromDHCP()
 		time.Sleep(clientsUpdatePeriod)
+	}
+}
+
+func (clients *clientsContainer) onDHCPLeaseChanged(flags int) {
+	switch flags {
+	case dhcpd.LeaseChangedAdded,
+		dhcpd.LeaseChangedAddedStatic,
+		dhcpd.LeaseChangedRemovedStatic:
+		clients.addFromDHCP()
 	}
 }
 
@@ -412,7 +423,7 @@ func (clients *clientsContainer) Add(c Client) (bool, error) {
 		clients.idIndex[id] = &c
 	}
 
-	log.Tracef("'%s': ID:%v [%d]", c.Name, c.IDs, len(clients.list))
+	log.Debug("Clients: added '%s': ID:%v [%d]", c.Name, c.IDs, len(clients.list))
 	return true, nil
 }
 
@@ -535,8 +546,12 @@ func (clients *clientsContainer) SetWhoisInfo(ip string, info [][]string) {
 //  so we overwrite existing entries with an equal or higher priority
 func (clients *clientsContainer) AddHost(ip, host string, source clientSource) (bool, error) {
 	clients.lock.Lock()
-	defer clients.lock.Unlock()
+	b, e := clients.addHost(ip, host, source)
+	clients.lock.Unlock()
+	return b, e
+}
 
+func (clients *clientsContainer) addHost(ip, host string, source clientSource) (bool, error) {
 	// check auto-clients index
 	ch, ok := clients.ipHost[ip]
 	if ok && ch.Source > source {
@@ -550,8 +565,21 @@ func (clients *clientsContainer) AddHost(ip, host string, source clientSource) (
 		}
 		clients.ipHost[ip] = ch
 	}
-	log.Tracef("'%s' -> '%s' [%d]", ip, host, len(clients.ipHost))
+	log.Debug("Clients: added '%s' -> '%s' [%d]", ip, host, len(clients.ipHost))
 	return true, nil
+}
+
+// Remove all entries that match the specified source
+func (clients *clientsContainer) rmHosts(source clientSource) int {
+	n := 0
+	for k, v := range clients.ipHost {
+		if v.Source == source {
+			delete(clients.ipHost, k)
+			n++
+		}
+	}
+	log.Debug("Clients: removed %d client aliases", n)
+	return n
 }
 
 // Parse system 'hosts' file and fill clients array
@@ -567,6 +595,10 @@ func (clients *clientsContainer) addFromHostsFile() {
 		return
 	}
 
+	clients.lock.Lock()
+	defer clients.lock.Unlock()
+	_ = clients.rmHosts(ClientSourceHostsFile)
+
 	lines := strings.Split(string(d), "\n")
 	n := 0
 	for _, ln := range lines {
@@ -580,7 +612,7 @@ func (clients *clientsContainer) addFromHostsFile() {
 			continue
 		}
 
-		ok, e := clients.AddHost(fields[0], fields[1], ClientSourceHostsFile)
+		ok, e := clients.addHost(fields[0], fields[1], ClientSourceHostsFile)
 		if e != nil {
 			log.Tracef("%s", e)
 		}
@@ -589,7 +621,7 @@ func (clients *clientsContainer) addFromHostsFile() {
 		}
 	}
 
-	log.Debug("Added %d client aliases from %s", n, hostsFn)
+	log.Debug("Clients: added %d client aliases from %s", n, hostsFn)
 }
 
 // Add IP -> Host pairs from the system's `arp -a` command output
@@ -609,6 +641,10 @@ func (clients *clientsContainer) addFromSystemARP() {
 		return
 	}
 
+	clients.lock.Lock()
+	defer clients.lock.Unlock()
+	_ = clients.rmHosts(ClientSourceARP)
+
 	n := 0
 	lines := strings.Split(string(data), "\n")
 	for _, ln := range lines {
@@ -625,7 +661,7 @@ func (clients *clientsContainer) addFromSystemARP() {
 			continue
 		}
 
-		ok, e := clients.AddHost(ip, host, ClientSourceARP)
+		ok, e := clients.addHost(ip, host, ClientSourceARP)
 		if e != nil {
 			log.Tracef("%s", e)
 		}
@@ -634,24 +670,30 @@ func (clients *clientsContainer) addFromSystemARP() {
 		}
 	}
 
-	log.Debug("Added %d client aliases from 'arp -a' command output", n)
+	log.Debug("Clients: added %d client aliases from 'arp -a' command output", n)
 }
 
-// add clients from DHCP that have non-empty Hostname property
+// Add clients from DHCP that have non-empty Hostname property
 func (clients *clientsContainer) addFromDHCP() {
 	if clients.dhcpServer == nil {
 		return
 	}
-	leases := clients.dhcpServer.Leases()
+
+	clients.lock.Lock()
+	defer clients.lock.Unlock()
+
+	_ = clients.rmHosts(ClientSourceDHCP)
+
+	leases := clients.dhcpServer.Leases(dhcpd.LeasesAll)
 	n := 0
 	for _, l := range leases {
 		if len(l.Hostname) == 0 {
 			continue
 		}
-		ok, _ := clients.AddHost(l.IP.String(), l.Hostname, ClientSourceDHCP)
+		ok, _ := clients.addHost(l.IP.String(), l.Hostname, ClientSourceDHCP)
 		if ok {
 			n++
 		}
 	}
-	log.Debug("Added %d client aliases from DHCP", n)
+	log.Debug("Clients: added %d client aliases from DHCP", n)
 }

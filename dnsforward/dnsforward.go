@@ -685,6 +685,7 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 		processFilteringBeforeRequest,
 		processUpstream,
 		processFilteringAfterResponse,
+		processQueryLogsAndStats,
 	}
 	for _, process := range mods {
 		r := process(ctx)
@@ -699,8 +700,6 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 	if d.Res != nil {
 		d.Res.Compress = true // some devices require DNS message compression
 	}
-
-	_ = processQueryLogsAndStats(ctx)
 	return nil
 }
 

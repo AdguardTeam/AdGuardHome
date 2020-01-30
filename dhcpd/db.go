@@ -23,6 +23,14 @@ type leaseJSON struct {
 	Expiry   int64  `json:"exp"`
 }
 
+func normalizeIP(ip net.IP) net.IP {
+	ip4 := ip.To4()
+	if ip4 != nil {
+		return ip4
+	}
+	return ip
+}
+
 // Safe version of dhcp4.IPInRange()
 func ipInRange(start, stop, ip net.IP) bool {
 	if len(start) != len(stop) ||
@@ -56,6 +64,7 @@ func (s *Server) dbLoad() {
 
 	numLeases := len(obj)
 	for i := range obj {
+		obj[i].IP = normalizeIP(obj[i].IP)
 
 		if obj[i].Expiry != leaseExpireStatic &&
 			!ipInRange(s.leaseStart, s.leaseStop, obj[i].IP) {

@@ -130,7 +130,7 @@ func testStaticLeases(t *testing.T, s *Server) {
 	err = s.AddStaticLease(l)
 	check(t, err == nil, "AddStaticLease")
 
-	ll := s.StaticLeases()
+	ll := s.Leases(LeasesStatic)
 	check(t, len(ll) != 0 && bytes.Equal(ll[0].IP, []byte{1, 1, 1, 1}), "StaticLeases")
 
 	err = s.RemoveStaticLease(l)

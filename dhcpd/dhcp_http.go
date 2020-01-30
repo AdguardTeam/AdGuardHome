@@ -43,8 +43,8 @@ func convertLeases(inputLeases []Lease, includeExpires bool) []map[string]string
 }
 
 func (s *Server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
-	leases := convertLeases(s.Leases(), true)
-	staticLeases := convertLeases(s.StaticLeases(), false)
+	leases := convertLeases(s.Leases(LeasesDynamic), true)
+	staticLeases := convertLeases(s.Leases(LeasesStatic), false)
 	status := map[string]interface{}{
 		"config":        s.conf,
 		"leases":        leases,
