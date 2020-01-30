@@ -122,6 +122,17 @@ export const addClientInfo = (data, clients, param) => (
     })
 );
 
+export const addClientStatus = (data, disallowedClients, param) => (
+    data.map((row) => {
+        const clientIp = row[param];
+        const blocked = !!(disallowedClients && disallowedClients.includes(clientIp));
+        return {
+            ...row,
+            blocked,
+        };
+    })
+);
+
 export const normalizeFilteringStatus = (filteringStatus) => {
     const {
         enabled, filters, user_rules: userRules, interval,
@@ -275,7 +286,13 @@ export const redirectToCurrentProtocol = (values, httpPort = 80) => {
     }
 };
 
-export const normalizeTextarea = text => text && text.replace(/[;, ]/g, '\n').split('\n').filter(n => n);
+export const normalizeTextarea = (text) => {
+    if (!text) {
+        return [];
+    }
+
+    return text.replace(/[;, ]/g, '\n').split('\n').filter(n => n);
+};
 
 /**
  * Normalizes the topClients array

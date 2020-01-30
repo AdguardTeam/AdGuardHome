@@ -456,3 +456,8 @@ export const DETAILED_DATE_FORMAT_OPTIONS = {
 };
 
 export const CUSTOM_FILTERING_RULES_ID = 0;
+
+export const ACTION = {
+    block: 'block',
+    unblock: 'unblock',
+};

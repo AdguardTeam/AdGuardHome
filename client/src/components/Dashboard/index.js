@@ -10,6 +10,7 @@ import BlockedDomains from './BlockedDomains';
 
 import PageTitle from '../ui/PageTitle';
 import Loading from '../ui/Loading';
+import { ACTION } from '../../helpers/constants';
 import './Dashboard.css';
 
 class Dashboard extends Component {
@@ -39,9 +40,20 @@ class Dashboard extends Component {
         );
     };
 
+    toggleClientStatus = (type, ip) => {
+        const confirmMessage = type === ACTION.block ? 'client_confirm_block' : 'client_confirm_unblock';
+
+        if (window.confirm(this.props.t(confirmMessage, { ip }))) {
+            this.props.toggleClientBlock(type, ip);
+        }
+    };
+
     render() {
-        const { dashboard, stats, t } = this.props;
-        const statsProcessing = stats.processingStats || stats.processingGetConfig;
+        const {
+            dashboard, stats, access, t,
+        } = this.props;
+        const statsProcessing = stats.processingStats
+            || stats.processingGetConfig;
 
         const subtitle =
             stats.interval === 1
@@ -116,6 +128,8 @@ class Dashboard extends Component {
                                 clients={dashboard.clients}
                                 autoClients={dashboard.autoClients}
                                 refreshButton={refreshButton}
+                                toggleClientStatus={this.toggleClientStatus}
+                                processingAccessSet={access.processingSet}
                             />
                         </div>
                         <div className="col-lg-6">
@@ -146,11 +160,14 @@ class Dashboard extends Component {
 Dashboard.propTypes = {
     dashboard: PropTypes.object.isRequired,
     stats: PropTypes.object.isRequired,
+    access: PropTypes.object.isRequired,
     getStats: PropTypes.func.isRequired,
     getStatsConfig: PropTypes.func.isRequired,
     toggleProtection: PropTypes.func.isRequired,
     getClients: PropTypes.func.isRequired,
     t: PropTypes.func.isRequired,
+    toggleClientBlock: PropTypes.func.isRequired,
+    getAccessList: PropTypes.func.isRequired,
 };
 
 export default withNamespaces()(Dashboard);
