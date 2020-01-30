@@ -464,6 +464,6 @@
     "client_blocked": "Client \"{{ip}}\" successfully blocked",
     "client_unblocked": "Client \"{{ip}}\" successfully unblocked",
     "set_static_ip": "Set static IP address",
-    "install_static_error": "We failed to determine if this network interface is configured using static IP address. Please set a static IP address manually.",
-    "install_static_configure": "We have detected that a dynamic IP address is used — {{ip}}. We suggest that you set this IP as static."
+    "install_static_error": "We failed to determine if this network interface is configured by using static IP address. Please set a static IP address manually.",
+    "install_static_configure": "We have detected that a dynamic IP address is used — {{ip}}. We suggest you to set this IP address as static."
 }
