@@ -31,6 +31,10 @@ const access = handleActions(
             };
             return newState;
         },
+
+        [actions.toggleClientBlockRequest]: state => ({ ...state, processingSet: true }),
+        [actions.toggleClientBlockFailure]: state => ({ ...state, processingSet: false }),
+        [actions.toggleClientBlockSuccess]: state => ({ ...state, processingSet: false }),
     },
     {
         processing: true,

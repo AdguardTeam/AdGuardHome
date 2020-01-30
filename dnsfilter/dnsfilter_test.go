@@ -98,7 +98,13 @@ func (d *Dnsfilter) checkMatchEmpty(t *testing.T, hostname string) {
 func TestEtcHostsMatching(t *testing.T) {
 	addr := "216.239.38.120"
 	addr6 := "::1"
-	text := fmt.Sprintf("   %s  google.com www.google.com   # enforce google's safesearch   \n%s  ipv6.com\n0.0.0.0 block.com\n",
+	text := fmt.Sprintf(`  %s  google.com www.google.com   # enforce google's safesearch
+%s  ipv6.com
+0.0.0.0 block.com
+0.0.0.1 host2
+0.0.0.2 host2
+::1 host2
+`,
 		addr, addr6)
 	filters := make(map[int]string)
 	filters[0] = text
@@ -116,6 +122,7 @@ func TestEtcHostsMatching(t *testing.T) {
 	// ...but empty IPv6
 	ret, err := d.CheckHost("block.com", dns.TypeAAAA, &setts)
 	assert.True(t, err == nil && ret.IsFiltered && ret.IP != nil && len(ret.IP) == 0)
+	assert.True(t, ret.Rule == "0.0.0.0 block.com")
 
 	// IPv6
 	d.checkMatchIP(t, "ipv6.com", addr6, dns.TypeAAAA)
@@ -123,6 +130,16 @@ func TestEtcHostsMatching(t *testing.T) {
 	// ...but empty IPv4
 	ret, err = d.CheckHost("ipv6.com", dns.TypeA, &setts)
 	assert.True(t, err == nil && ret.IsFiltered && ret.IP != nil && len(ret.IP) == 0)
+
+	// 2 IPv4 (return only the first one)
+	ret, err = d.CheckHost("host2", dns.TypeA, &setts)
+	assert.True(t, err == nil && ret.IsFiltered)
+	assert.True(t, ret.IP != nil && ret.IP.Equal(net.ParseIP("0.0.0.1")))
+
+	// ...and 1 IPv6 address
+	ret, err = d.CheckHost("host2", dns.TypeAAAA, &setts)
+	assert.True(t, err == nil && ret.IsFiltered)
+	assert.True(t, ret.IP != nil && ret.IP.Equal(net.ParseIP("::1")))
 }
 
 // SAFE BROWSING

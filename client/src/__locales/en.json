@@ -458,5 +458,9 @@
     "check_reason": "Reason: {{reason}}",
     "check_rule": "Rule: {{rule}}",
     "check_service": "Service name: {{service}}",
-    "check_not_found": "Doesn't exist in any filter"
+    "check_not_found": "Doesn't exist in any filter",
+    "client_confirm_block": "Are you sure you want to block the client \"{{ip}}\"?",
+    "client_confirm_unblock": "Are you sure you want to unblock the client \"{{ip}}\"?",
+    "client_blocked": "Client \"{{ip}}\" successfully blocked",
+    "client_unblocked": "Client \"{{ip}}\" successfully unblocked"
 }

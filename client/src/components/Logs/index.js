@@ -25,7 +25,8 @@ import './Logs.css';
 import CellWrap from '../ui/CellWrap';
 
 const TABLE_FIRST_PAGE = 0;
-const INITIAL_REQUEST_DATA = ['', TABLE_FIRST_PAGE, TABLE_DEFAULT_PAGE_SIZE];
+const INITIAL_REQUEST = true;
+const INITIAL_REQUEST_DATA = ['', TABLE_FIRST_PAGE, INITIAL_REQUEST];
 const FILTERED_REASON = 'Filtered';
 
 class Logs extends Component {
@@ -36,10 +37,10 @@ class Logs extends Component {
         this.props.getLogsConfig();
     }
 
-    getLogs = (older_than, page) => {
+    getLogs = (older_than, page, initial) => {
         if (this.props.queryLogs.enabled) {
             this.props.getLogs({
-                older_than, page, pageSize: TABLE_DEFAULT_PAGE_SIZE,
+                older_than, page, pageSize: TABLE_DEFAULT_PAGE_SIZE, initial,
             });
         }
     };
