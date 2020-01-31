@@ -51,7 +51,6 @@ func getValidNetInterfaces() ([]net.Interface, error) {
 
 // getValidNetInterfacesMap returns interfaces that are eligible for DNS and WEB only
 // we do not return link-local addresses here
-// nolint:dupl
 func getValidNetInterfacesForWeb() ([]netInterface, error) {
 	ifaces, err := getValidNetInterfaces()
 	if err != nil {

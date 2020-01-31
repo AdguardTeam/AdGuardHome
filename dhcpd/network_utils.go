@@ -11,7 +11,6 @@ import (
 
 	"github.com/AdguardTeam/golibs/file"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/joomcode/errorx"
 )
 
 type netInterface struct {
@@ -43,57 +42,6 @@ func getValidNetInterfaces() ([]net.Interface, error) {
 	}
 
 	return netIfaces, nil
-}
-
-// getValidNetInterfacesMap returns interfaces that are eligible for DNS and WEB only
-// we do not return link-local addresses here
-// nolint:dupl
-func getValidNetInterfacesForWeb() ([]netInterface, error) {
-	ifaces, err := getValidNetInterfaces()
-	if err != nil {
-		return nil, errorx.Decorate(err, "Couldn't get interfaces")
-	}
-	if len(ifaces) == 0 {
-		return nil, errors.New("couldn't find any legible interface")
-	}
-
-	var netInterfaces []netInterface
-
-	for _, iface := range ifaces {
-		addrs, e := iface.Addrs()
-		if e != nil {
-			return nil, errorx.Decorate(e, "Failed to get addresses for interface %s", iface.Name)
-		}
-
-		netIface := netInterface{
-			Name:         iface.Name,
-			MTU:          iface.MTU,
-			HardwareAddr: iface.HardwareAddr.String(),
-		}
-
-		if iface.Flags != 0 {
-			netIface.Flags = iface.Flags.String()
-		}
-
-		// we don't want link-local addresses in json, so skip them
-		for _, addr := range addrs {
-			ipnet, ok := addr.(*net.IPNet)
-			if !ok {
-				// not an IPNet, should not happen
-				return nil, fmt.Errorf("got iface.Addrs() element %s that is not net.IPNet, it is %T", addr, addr)
-			}
-			// ignore link-local
-			if ipnet.IP.IsLinkLocalUnicast() {
-				continue
-			}
-			netIface.Addresses = append(netIface.Addresses, ipnet.IP.String())
-		}
-		if len(netIface.Addresses) != 0 {
-			netInterfaces = append(netInterfaces, netIface)
-		}
-	}
-
-	return netInterfaces, nil
 }
 
 // Check if network interface has a static IP configured
