@@ -15,6 +15,7 @@
     "date-fns": "^1.29.0",
     "i18next": "^12.0.0",
     "i18next-browser-languagedetector": "^2.2.3",
+    "i18next-xhr-backend": "^3.2.2",
     "lodash": "^4.17.15",
     "nanoid": "^1.2.3",
     "prop-types": "^15.7.2",
