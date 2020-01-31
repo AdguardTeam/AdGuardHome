@@ -13,14 +13,6 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
-type netInterface struct {
-	Name         string
-	MTU          int
-	HardwareAddr string
-	Addresses    []string
-	Flags        string
-}
-
 // getValidNetInterfaces returns interfaces that are eligible for DNS and/or DHCP
 // invalid interface is a ppp interface or the one that doesn't allow broadcasts
 func getValidNetInterfaces() ([]net.Interface, error) {
