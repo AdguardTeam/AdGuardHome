@@ -5,13 +5,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
-	"os"
 	"os/exec"
 	"runtime"
-	"strconv"
 	"strings"
-	"syscall"
-	"time"
 
 	"github.com/AdguardTeam/golibs/file"
 	"github.com/AdguardTeam/golibs/log"
@@ -174,24 +170,6 @@ func getFullIP(ifaceName string) string {
 	return fields[3]
 }
 
-// Get interface name by its IP address.
-func getInterfaceByIP(ip string) string {
-	ifaces, err := getValidNetInterfacesForWeb()
-	if err != nil {
-		return ""
-	}
-
-	for _, iface := range ifaces {
-		for _, addr := range iface.Addresses {
-			if ip == addr {
-				return iface.Name
-			}
-		}
-	}
-
-	return ""
-}
-
 // Get gateway IP address
 func getGatewayIP(ifaceName string) string {
 	cmd := exec.Command("ip", "route", "show", "dev", ifaceName)
@@ -262,56 +240,4 @@ func setStaticIPDhcpcdConf(ifaceName, ip, gatewayIP, dnsIP string) string {
 	body = append(body, []byte(add)...)
 
 	return string(body)
-}
-
-// checkPortAvailable is not a cheap test to see if the port is bindable, because it's actually doing the bind momentarily
-func checkPortAvailable(host string, port int) error {
-	ln, err := net.Listen("tcp", net.JoinHostPort(host, strconv.Itoa(port)))
-	if err != nil {
-		return err
-	}
-	ln.Close()
-
-	// It seems that net.Listener.Close() doesn't close file descriptors right away.
-	// We wait for some time and hope that this fd will be closed.
-	time.Sleep(100 * time.Millisecond)
-	return nil
-}
-
-func checkPacketPortAvailable(host string, port int) error {
-	ln, err := net.ListenPacket("udp", net.JoinHostPort(host, strconv.Itoa(port)))
-	if err != nil {
-		return err
-	}
-	ln.Close()
-
-	// It seems that net.Listener.Close() doesn't close file descriptors right away.
-	// We wait for some time and hope that this fd will be closed.
-	time.Sleep(100 * time.Millisecond)
-	return err
-}
-
-// check if error is "address already in use"
-func errorIsAddrInUse(err error) bool {
-	errOpError, ok := err.(*net.OpError)
-	if !ok {
-		return false
-	}
-
-	errSyscallError, ok := errOpError.Err.(*os.SyscallError)
-	if !ok {
-		return false
-	}
-
-	errErrno, ok := errSyscallError.Err.(syscall.Errno)
-	if !ok {
-		return false
-	}
-
-	if runtime.GOOS == "windows" {
-		const WSAEADDRINUSE = 10048
-		return errErrno == WSAEADDRINUSE
-	}
-
-	return errErrno == syscall.EADDRINUSE
 }
