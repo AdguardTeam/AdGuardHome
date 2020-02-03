@@ -696,11 +696,6 @@
             "categoryId": 4,
             "url": "http://adgoto.com/"
         },
-        "adguard": {
-            "name": "Adguard",
-            "categoryId": 12,
-            "url": "https://adguard.com/"
-        },
         "adhands": {
             "name": "AdHands",
             "categoryId": 4,
@@ -16201,7 +16196,6 @@
         "smartredirect.de": "adgoal",
         "adgorithms.com": "adgorithms",
         "adgoto.com": "adgoto",
-        "adguard.com": "adguard",
         "adhands.ru": "adhands",
         "adhese.be": "adhese",
         "adhese.com": "adhese",

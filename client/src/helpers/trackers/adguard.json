@@ -96,6 +96,11 @@
             "name": "Microsoft Azure",
             "categoryId": 10,
             "url": "https://azure.microsoft.com/"
+        },
+        "button": {
+            "name": "Button",
+            "categoryId": 4,
+            "url": "https://www.usebutton.com/"
         }
     },
     "trackerDomains": {
@@ -119,6 +124,7 @@
         "edgecastcdn.net": "markmonitor",
         "appcenter.ms": "appcenter",
         "unityads.unity3d.com": "unity_ads",
-        "azure.com": "azure"
+        "azure.com": "azure",
+        "bttn.io": "button"
     }
 }
