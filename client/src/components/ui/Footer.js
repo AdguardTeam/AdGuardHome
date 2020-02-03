@@ -1,7 +1,9 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { Trans, withNamespaces } from 'react-i18next';
-import { REPOSITORY, LANGUAGES, PRIVACY_POLICY_LINK } from '../../helpers/constants';
+
+import { REPOSITORY, PRIVACY_POLICY_LINK } from '../../helpers/constants';
+import { LANGUAGES } from '../../helpers/twosky';
 import i18n from '../../i18n';
 
 import Version from './Version';
@@ -68,9 +70,9 @@ class Footer extends Component {
                                     value={i18n.language}
                                     onChange={this.changeLanguage}
                                 >
-                                    {LANGUAGES.map(language => (
-                                        <option key={language.key} value={language.key}>
-                                            {language.name}
+                                    {Object.keys(LANGUAGES).map(lang => (
+                                        <option key={lang} value={lang}>
+                                            {LANGUAGES[lang]}
                                         </option>
                                     ))}
                                 </select>

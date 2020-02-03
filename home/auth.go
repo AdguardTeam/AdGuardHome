@@ -379,7 +379,8 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 			}
 
 		} else if r.URL.Path == "/favicon.png" ||
-			strings.HasPrefix(r.URL.Path, "/login.") {
+			strings.HasPrefix(r.URL.Path, "/login.") ||
+			strings.HasPrefix(r.URL.Path, "/__locales/") {
 			// process as usual
 
 		} else if config.auth != nil && config.auth.AuthRequired() {

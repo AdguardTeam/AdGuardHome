@@ -111,8 +111,9 @@ func preInstallHandler(handler http.Handler) http.Handler {
 func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if config.firstRun &&
-			!strings.HasPrefix(r.URL.Path, "/install.") &&
-			r.URL.Path != "/favicon.png" {
+			!(strings.HasPrefix(r.URL.Path, "/install.") ||
+				strings.HasPrefix(r.URL.Path, "/__locales/") ||
+				r.URL.Path == "/favicon.png") {
 			http.Redirect(w, r, "/install.html", http.StatusSeeOther) // should not be cacheable
 			return
 		}

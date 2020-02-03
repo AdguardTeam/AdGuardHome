@@ -15,6 +15,7 @@ const HTML_PATH = path.resolve(RESOURCES_PATH, 'public/index.html');
 const HTML_INSTALL_PATH = path.resolve(RESOURCES_PATH, 'public/install.html');
 const HTML_LOGIN_PATH = path.resolve(RESOURCES_PATH, 'public/login.html');
 const FAVICON_PATH = path.resolve(RESOURCES_PATH, 'public/favicon.png');
+const LOCALES_PATH = path.resolve(RESOURCES_PATH, 'src/__locales/*.json');
 
 const PUBLIC_PATH = path.resolve(__dirname, '../build/static');
 
@@ -32,6 +33,10 @@ const config = {
     },
     resolve: {
         modules: ['node_modules'],
+        alias: {
+            MainRoot: path.resolve(__dirname, '../'),
+            ClientRoot: path.resolve(__dirname, './src'),
+        },
     },
     module: {
         rules: [
@@ -101,7 +106,7 @@ const config = {
         new webpack.DefinePlugin({
             'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
         }),
-        new CleanWebpackPlugin(['*.*'], {
+        new CleanWebpackPlugin(['**/*.*'], {
             root: PUBLIC_PATH,
             verbose: false,
             dry: false,
@@ -131,6 +136,13 @@ const config = {
         }),
         new CopyPlugin([
             { from: FAVICON_PATH, to: PUBLIC_PATH },
+        ]),
+        new CopyPlugin([
+            {
+                from: LOCALES_PATH,
+                to: PUBLIC_PATH,
+                context: 'src/',
+            },
         ]),
     ],
 };
