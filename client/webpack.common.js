@@ -15,7 +15,6 @@ const HTML_PATH = path.resolve(RESOURCES_PATH, 'public/index.html');
 const HTML_INSTALL_PATH = path.resolve(RESOURCES_PATH, 'public/install.html');
 const HTML_LOGIN_PATH = path.resolve(RESOURCES_PATH, 'public/login.html');
 const FAVICON_PATH = path.resolve(RESOURCES_PATH, 'public/favicon.png');
-const LOCALES_PATH = path.resolve(RESOURCES_PATH, 'src/__locales/*.json');
 
 const PUBLIC_PATH = path.resolve(__dirname, '../build/static');
 
@@ -136,13 +135,6 @@ const config = {
         }),
         new CopyPlugin([
             { from: FAVICON_PATH, to: PUBLIC_PATH },
-        ]),
-        new CopyPlugin([
-            {
-                from: LOCALES_PATH,
-                to: PUBLIC_PATH,
-                context: 'src/',
-            },
         ]),
     ],
 };
