@@ -34,7 +34,21 @@ const access = handleActions(
 
         [actions.toggleClientBlockRequest]: state => ({ ...state, processingSet: true }),
         [actions.toggleClientBlockFailure]: state => ({ ...state, processingSet: false }),
-        [actions.toggleClientBlockSuccess]: state => ({ ...state, processingSet: false }),
+        [actions.toggleClientBlockSuccess]: (state, { payload }) => {
+            const {
+                allowed_clients,
+                disallowed_clients,
+                blocked_hosts,
+            } = payload;
+            const newState = {
+                ...state,
+                allowed_clients: (allowed_clients && allowed_clients.join('\n')) || '',
+                disallowed_clients: (disallowed_clients && disallowed_clients.join('\n')) || '',
+                blocked_hosts: (blocked_hosts && blocked_hosts.join('\n')) || '',
+                processingSet: false,
+            };
+            return newState;
+        },
     },
     {
         processing: true,
