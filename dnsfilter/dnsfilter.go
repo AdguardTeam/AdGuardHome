@@ -225,7 +225,7 @@ func (d *Dnsfilter) filtersInitializer() {
 // Close - close the object
 func (d *Dnsfilter) Close() {
 	if d.rulesStorage != nil {
-		d.rulesStorage.Close()
+		_ = d.rulesStorage.Close()
 	}
 }
 
