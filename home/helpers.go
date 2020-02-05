@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -242,7 +243,7 @@ func checkPortAvailable(host string, port int) error {
 	if err != nil {
 		return err
 	}
-	ln.Close()
+	_ = ln.Close()
 
 	// It seems that net.Listener.Close() doesn't close file descriptors right away.
 	// We wait for some time and hope that this fd will be closed.
@@ -255,7 +256,7 @@ func checkPacketPortAvailable(host string, port int) error {
 	if err != nil {
 		return err
 	}
-	ln.Close()
+	_ = ln.Close()
 
 	// It seems that net.Listener.Close() doesn't close file descriptors right away.
 	// We wait for some time and hope that this fd will be closed.
@@ -327,6 +328,30 @@ func errorIsAddrInUse(err error) bool {
 	}
 
 	return errErrno == syscall.EADDRINUSE
+}
+
+// ---------------------
+// general helpers
+// ---------------------
+
+// fileExists returns TRUE if file exists
+func fileExists(fn string) bool {
+	_, err := os.Stat(fn)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+// runCommand runs shell command
+func runCommand(command string, arguments ...string) (int, string, error) {
+	cmd := exec.Command(command, arguments...)
+	out, err := cmd.Output()
+	if err != nil {
+		return 1, "", fmt.Errorf("exec.Command(%s) failed: %s", command, err)
+	}
+
+	return cmd.ProcessState.ExitCode(), string(out), nil
 }
 
 // ---------------------

@@ -1,10 +1,10 @@
 package home
 
 import (
-	"fmt"
+	"io/ioutil"
 	"os"
-	"os/exec"
 	"runtime"
+	"strings"
 	"syscall"
 
 	"github.com/AdguardTeam/golibs/log"
@@ -41,23 +41,12 @@ func (p *program) Stop(s service.Service) error {
 	return nil
 }
 
-func runCommand(command string, arguments ...string) (int, string, error) {
-	cmd := exec.Command(command, arguments...)
-	out, err := cmd.Output()
-	if err != nil {
-		return 1, "", fmt.Errorf("exec.Command(%s) failed: %s", command, err)
-	}
-
-	return cmd.ProcessState.ExitCode(), string(out), nil
-}
-
 // Check the service's status
 // Note: on OpenWrt 'service' utility may not exist - we use our service script directly in this case.
 func svcStatus(s service.Service) (service.Status, error) {
 	status, err := s.Status()
 	if err != nil && service.Platform() == "unix-systemv" {
-		confPath := "/etc/init.d/" + serviceName
-		code, _, err := runCommand("sh", "-c", confPath+" status")
+		code, err := runInitdCommand("status")
 		if err != nil {
 			return service.StatusStopped, nil
 		}
@@ -75,8 +64,7 @@ func svcAction(s service.Service, action string) error {
 	err := service.Control(s, action)
 	if err != nil && service.Platform() == "unix-systemv" &&
 		(action == "start" || action == "stop" || action == "restart") {
-		confPath := "/etc/init.d/" + serviceName
-		_, _, err := runCommand("sh", "-c", confPath+" "+action)
+		_, err := runInitdCommand(action)
 		return err
 	}
 	return err
@@ -114,61 +102,100 @@ func handleServiceControlAction(action string) {
 	}
 
 	if action == "status" {
-		status, errSt := svcStatus(s)
-		if errSt != nil {
-			log.Fatalf("failed to get service status: %s", errSt)
-		}
-
-		switch status {
-		case service.StatusUnknown:
-			log.Printf("Service status is unknown")
-		case service.StatusStopped:
-			log.Printf("Service is stopped")
-		case service.StatusRunning:
-			log.Printf("Service is running")
-		}
+		handleServiceStatusCommand(s)
 	} else if action == "run" {
 		err = s.Run()
 		if err != nil {
 			log.Fatalf("Failed to run service: %s", err)
 		}
+	} else if action == "install" {
+		handleServiceInstallCommand(s)
+	} else if action == "uninstall" {
+		handleServiceUninstallCommand(s)
 	} else {
-		if action == "uninstall" {
-			// In case of Windows and Linux when a running service is being uninstalled,
-			// it is just marked for deletion but not stopped
-			// So we explicitly stop it here
-			_ = svcAction(s, "stop")
-		}
-
 		err = svcAction(s, action)
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Printf("Action %s has been done successfully on %s", action, service.ChosenSystem().String())
+	}
 
-		if action == "install" {
-			err := afterInstall()
-			if err != nil {
-				log.Fatal(err)
-			}
+	log.Printf("Action %s has been done successfully on %s", action, service.ChosenSystem().String())
+}
 
-			// Start automatically after install
-			err = svcAction(s, "start")
-			if err != nil {
-				log.Fatalf("Failed to start the service: %s", err)
-			}
-			log.Printf("Service has been started")
+// handleServiceStatusCommand handles service "status" command
+func handleServiceStatusCommand(s service.Service) {
+	status, errSt := svcStatus(s)
+	if errSt != nil {
+		log.Fatalf("failed to get service status: %s", errSt)
+	}
 
-			if detectFirstRun() {
-				log.Printf(`Almost ready!
+	switch status {
+	case service.StatusUnknown:
+		log.Printf("Service status is unknown")
+	case service.StatusStopped:
+		log.Printf("Service is stopped")
+	case service.StatusRunning:
+		log.Printf("Service is running")
+	}
+}
+
+// handleServiceStatusCommand handles service "install" command
+func handleServiceInstallCommand(s service.Service) {
+	err := svcAction(s, "install")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if isOpenWrt() {
+		// On OpenWrt it is important to run enable after the service installation
+		// Otherwise, the service won't start on the system startup
+		_, err := runInitdCommand("enable")
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	// Start automatically after install
+	err = svcAction(s, "start")
+	if err != nil {
+		log.Fatalf("Failed to start the service: %s", err)
+	}
+	log.Printf("Service has been started")
+
+	if detectFirstRun() {
+		log.Printf(`Almost ready!
 AdGuard Home is successfully installed and will automatically start on boot.
 There are a few more things that must be configured before you can use it.
 Click on the link below and follow the Installation Wizard steps to finish setup.`)
-				printHTTPAddresses("http")
-			}
+		printHTTPAddresses("http")
+	}
+}
 
-		} else if action == "uninstall" {
-			cleanupService()
+// handleServiceStatusCommand handles service "uninstall" command
+func handleServiceUninstallCommand(s service.Service) {
+	if isOpenWrt() {
+		// On OpenWrt it is important to run disable command first
+		// as it will remove the symlink
+		_, err := runInitdCommand("disable")
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	err := svcAction(s, "uninstall")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if runtime.GOOS == "darwin" {
+		// Removing log files on cleanup and ignore errors
+		err := os.Remove(launchdStdoutPath)
+		if err != nil && !os.IsNotExist(err) {
+			log.Printf("cannot remove %s", launchdStdoutPath)
+		}
+		err = os.Remove(launchdStderrPath)
+		if err != nil && !os.IsNotExist(err) {
+			log.Printf("cannot remove %s", launchdStderrPath)
 		}
 	}
 }
@@ -191,43 +218,33 @@ func configureService(c *service.Config) {
 	// Use modified service file templates
 	c.Option["SystemdScript"] = systemdScript
 	c.Option["SysvScript"] = sysvScript
+
+	// On OpenWrt we're using a different type of sysvScript
+	if isOpenWrt() {
+		c.Option["SysvScript"] = openWrtScript
+	}
 }
 
-// On SysV systems supported by kardianos/service package, there must be multiple /etc/rc{N}.d directories.
-// On OpenWrt, however, there is only /etc/rc.d - we handle this case ourselves.
-//  We also use relative path, because this is how all other service files are set up.
-func afterInstall() error {
-	if service.Platform() == "unix-systemv" && fileExists("/etc/rc.d") {
-		confPath := "../init.d/" + serviceName
-		err := os.Symlink(confPath, "/etc/rc.d/S99"+serviceName)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+// runInitdCommand runs init.d service command
+// returns command code or error if any
+func runInitdCommand(action string) (int, error) {
+	confPath := "/etc/init.d/" + serviceName
+	code, _, err := runCommand("sh", "-c", confPath+" "+action)
+	return code, err
 }
 
-// cleanupService called on the service uninstall, cleans up additional files if needed
-func cleanupService() {
-	if runtime.GOOS == "darwin" {
-		// Removing log files on cleanup and ignore errors
-		err := os.Remove(launchdStdoutPath)
-		if err != nil && !os.IsNotExist(err) {
-			log.Printf("cannot remove %s", launchdStdoutPath)
-		}
-		err = os.Remove(launchdStderrPath)
-		if err != nil && !os.IsNotExist(err) {
-			log.Printf("cannot remove %s", launchdStderrPath)
-		}
+// isOpenWrt checks if OS is OpenWRT
+func isOpenWrt() bool {
+	if runtime.GOOS != "linux" {
+		return false
 	}
 
-	if service.Platform() == "unix-systemv" {
-		fn := "/etc/rc.d/S99" + serviceName
-		err := os.Remove(fn)
-		if err != nil && !os.IsNotExist(err) {
-			log.Printf("os.Remove: %s: %s", fn, err)
-		}
+	body, err := ioutil.ReadFile("/etc/os-release")
+	if err != nil {
+		return false
 	}
+
+	return strings.Contains(string(body), "OpenWrt")
 }
 
 // Basically the same template as the one defined in github.com/kardianos/service
@@ -387,4 +404,56 @@ case "$1" in
     ;;
 esac
 exit 0
+`
+
+// OpenWrt procd init script
+// https://github.com/AdguardTeam/AdGuardHome/issues/1386
+const openWrtScript = `#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+
+START=95
+STOP=01
+
+cmd="{{.Path}}{{range .Arguments}} {{.|cmd}}{{end}}"
+name="{{.Name}}"
+pid_file="/var/run/${name}.pid"
+
+start_service() {
+    echo "Starting ${name}"
+
+    procd_open_instance
+    procd_set_param command ${cmd}
+    procd_set_param respawn             # respawn automatically if something died
+    procd_set_param stdout 1            # forward stdout of the command to logd
+    procd_set_param stderr 1            # same for stderr
+    procd_set_param pidfile ${pid_file} # write a pid file on instance start and remove it on stop
+
+    procd_close_instance
+    echo "${name} has been started"
+}
+
+stop_service() {
+    echo "Stopping ${name}"
+}
+
+EXTRA_COMMANDS="status"
+EXTRA_HELP="        status  Print the service status"
+
+get_pid() {
+    cat "${pid_file}"
+}
+
+is_running() {
+    [ -f "${pid_file}" ] && ps | grep -v grep | grep $(get_pid) >/dev/null 2>&1
+}
+
+status() {
+    if is_running; then
+        echo "Running"
+    else
+        echo "Stopped"
+        exit 1
+    fi
+}
 `
