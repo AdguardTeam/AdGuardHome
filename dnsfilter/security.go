@@ -127,8 +127,8 @@ func (d *Dnsfilter) checkSafeSearch(host string) (Result, error) {
 	res := Result{IsFiltered: true, Reason: FilteredSafeSearch}
 	if ip := net.ParseIP(safeHost); ip != nil {
 		res.IP = ip
-		len := d.setCacheResult(gctx.safeSearchCache, host, res)
-		log.Debug("SafeSearch: stored in cache: %s (%d bytes)", host, len)
+		valLen := d.setCacheResult(gctx.safeSearchCache, host, res)
+		log.Debug("SafeSearch: stored in cache: %s (%d bytes)", host, valLen)
 		return res, nil
 	}
 
@@ -151,8 +151,8 @@ func (d *Dnsfilter) checkSafeSearch(host string) (Result, error) {
 	}
 
 	// Cache result
-	len := d.setCacheResult(gctx.safeSearchCache, host, res)
-	log.Debug("SafeSearch: stored in cache: %s (%d bytes)", host, len)
+	valLen := d.setCacheResult(gctx.safeSearchCache, host, res)
+	log.Debug("SafeSearch: stored in cache: %s (%d bytes)", host, valLen)
 	return res, nil
 }
 
@@ -243,8 +243,8 @@ func (d *Dnsfilter) checkSafeBrowsing(host string) (Result, error) {
 		result.Rule = "adguard-malware-shavar"
 	}
 
-	len := d.setCacheResult(gctx.safebrowsingCache, host, result)
-	log.Debug("SafeBrowsing: stored in cache: %s (%d bytes)", host, len)
+	valLen := d.setCacheResult(gctx.safebrowsingCache, host, result)
+	log.Debug("SafeBrowsing: stored in cache: %s (%d bytes)", host, valLen)
 	return result, nil
 }
 
@@ -283,8 +283,8 @@ func (d *Dnsfilter) checkParental(host string) (Result, error) {
 		result.Rule = "parental CATEGORY_BLACKLISTED"
 	}
 
-	len := d.setCacheResult(gctx.parentalCache, host, result)
-	log.Debug("Parental: stored in cache: %s (%d bytes)", host, len)
+	valLen := d.setCacheResult(gctx.parentalCache, host, result)
+	log.Debug("Parental: stored in cache: %s (%d bytes)", host, valLen)
 	return result, err
 }
 

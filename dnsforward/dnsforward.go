@@ -883,7 +883,16 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 	case dnsfilter.FilteredParental:
 		return s.genBlockedHost(m, s.conf.ParentalBlockHost, d)
 	default:
+		// If the query was filtered by "Safe search", dnsfilter also must return
+		// the IP address that must be used in response.
+		// In this case regardless of the filtering method, we should return it
+		if result.Reason == dnsfilter.FilteredSafeSearch && result.IP != nil {
+			return s.genResponseWithIP(m, result.IP)
+		}
+
 		if s.conf.BlockingMode == "null_ip" {
+			// it means that we should return 0.0.0.0 or :: for any blocked request
+
 			switch m.Question[0].Qtype {
 			case dns.TypeA:
 				return s.genARecord(m, []byte{0, 0, 0, 0})
@@ -892,6 +901,8 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 			}
 
 		} else if s.conf.BlockingMode == "custom_ip" {
+			// means that we should return custom IP for any blocked request
+
 			switch m.Question[0].Qtype {
 			case dns.TypeA:
 				return s.genARecord(m, s.conf.BlockingIPAddrv4)
@@ -900,9 +911,14 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 			}
 
 		} else if s.conf.BlockingMode == "nxdomain" {
+			// means that we should return NXDOMAIN for any blocked request
+
 			return s.genNXDomain(m)
 		}
 
+		// Default blocking mode
+		// If there's an IP specified in the rule, return it
+		// If there is no IP, return NXDOMAIN
 		if result.IP != nil {
 			return s.genResponseWithIP(m, result.IP)
 		}
