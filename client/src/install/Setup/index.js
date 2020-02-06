@@ -22,10 +22,10 @@ import Progress from './Progress';
 
 import Toasts from '../../components/Toasts';
 import Footer from '../../components/ui/Footer';
-import logo from '../../components/ui/svg/logo.svg';
+import logo from '../../components/ui/svg/logo-dark-ui.svg';
 
 import './Setup.css';
-import '../../components/ui/Tabler.css';
+import '../../components/ui/Tabler-Dark.css';
 
 class Setup extends Component {
     componentDidMount() {

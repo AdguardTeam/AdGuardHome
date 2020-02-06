@@ -5,7 +5,7 @@ import classnames from 'classnames';
 import { Trans, withNamespaces } from 'react-i18next';
 
 import Menu from './Menu';
-import logo from '../ui/svg/logo.svg';
+import logo from '../ui/svg/logo-dark-ui.svg';
 import './Header.css';
 
 class Header extends Component {

@@ -11,7 +11,7 @@ import Footer from '../../components/ui/Footer';
 import Form from './Form';
 
 import './Login.css';
-import '../../components/ui/Tabler.css';
+import '../../components/ui/Tabler-Dark.css';
 
 class Login extends Component {
     state = {

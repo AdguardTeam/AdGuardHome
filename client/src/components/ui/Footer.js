@@ -1,8 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { Trans, withNamespaces } from 'react-i18next';
-
-import { REPOSITORY, PRIVACY_POLICY_LINK } from '../../helpers/constants';
 import { LANGUAGES } from '../../helpers/twosky';
 import i18n from '../../i18n';
 
@@ -38,45 +36,21 @@ class Footer extends Component {
                                     </div>
                                 </div>
                             )}
-                            <div className="footer__column footer__column--links">
-                                <a
-                                    href={REPOSITORY.URL}
-                                    className="footer__link"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    <Trans>homepage</Trans>
-                                </a>
-                                <a
-                                    href={PRIVACY_POLICY_LINK}
-                                    className="footer__link"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    <Trans>privacy_policy</Trans>
-                                </a>
-                                <a
-                                    href={REPOSITORY.ISSUES}
-                                    className="btn btn-outline-primary btn-sm footer__link footer__link--report"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    <Trans>report_an_issue</Trans>
-                                </a>
-                            </div>
-                            <div className="footer__column footer__column--language">
-                                <select
-                                    className="form-control select select--language"
-                                    value={i18n.language}
-                                    onChange={this.changeLanguage}
-                                >
-                                    {Object.keys(LANGUAGES).map(lang => (
-                                        <option key={lang} value={lang}>
-                                            {LANGUAGES[lang]}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                            {!dnsVersion && (
+                                <div className="footer__column footer__column--language">
+                                    <select
+                                        className="form-control select select--language"
+                                        value={i18n.language}
+                                        onChange={this.changeLanguage}
+                                    >
+                                        {Object.keys(LANGUAGES).map(lang => (
+                                            <option key={lang} value={lang}>
+                                                {LANGUAGES[lang]}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </footer>
@@ -89,6 +63,19 @@ class Footer extends Component {
                                         <Trans>copyright</Trans> &copy; {this.getYear()}{' '}
                                         <a target="_blank" rel="noopener noreferrer" href="https://adguard.com/">AdGuard</a>
                                     </div>
+                                </div>
+                                <div className="footer__column">
+                                    <select
+                                        className="form-control select select--language"
+                                        value={i18n.language}
+                                        onChange={this.changeLanguage}
+                                    >
+                                        {Object.keys(LANGUAGES).map(lang => (
+                                            <option key={lang} value={lang}>
+                                                {LANGUAGES[lang]}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className="footer__column footer__column--language">
                                     <Version

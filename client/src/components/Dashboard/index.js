@@ -27,7 +27,7 @@ class Dashboard extends Component {
     getToggleFilteringButton = () => {
         const { protectionEnabled, processingProtection } = this.props.dashboard;
         const buttonText = protectionEnabled ? 'disable_protection' : 'enable_protection';
-        const buttonClass = protectionEnabled ? 'btn-gray' : 'btn-success';
+        const buttonClass = protectionEnabled ? 'btn-outline-danger' : 'btn-success';
 
         return (
             <button
