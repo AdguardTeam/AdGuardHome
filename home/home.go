@@ -101,7 +101,11 @@ func run(args options) {
 	configureLogger(args)
 
 	// print the first message after logger is configured
-	log.Printf("AdGuard Home, version %s, channel %s\n", versionString, updateChannel)
+	msg := "AdGuard Home, version %s, channel %s\n, arch %s %s"
+	if ARMVersion != "" {
+		msg = msg + " v" + ARMVersion
+	}
+	log.Printf(msg, versionString, updateChannel, runtime.GOOS, runtime.GOARCH, ARMVersion)
 	log.Debug("Current working directory is %s", config.ourWorkingDir)
 	if args.runningAsService {
 		log.Info("AdGuard Home is running as a service")

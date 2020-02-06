@@ -42,8 +42,10 @@ func getVersionResp(data []byte) []byte {
 		return []byte{}
 	}
 
+	// the key is download_linux_arm or download_linux_arm64 for regular ARM versions
 	dloadName := fmt.Sprintf("download_%s_%s", runtime.GOOS, runtime.GOARCH)
-	if runtime.GOARCH == "arm" && ARMVersion != "6" {
+	if runtime.GOARCH == "arm" && ARMVersion == "5" {
+		// the key is download_linux_armv5 for ARMv5
 		dloadName = fmt.Sprintf("download_%s_%sv%s", runtime.GOOS, runtime.GOARCH, ARMVersion)
 	}
 	_, ok := versionJSON[dloadName]
