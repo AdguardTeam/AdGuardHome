@@ -7,7 +7,6 @@ import flow from 'lodash/flow';
 
 import Controls from './Controls';
 import AddressList from './AddressList';
-import Accordion from '../../components/ui/Accordion';
 
 import { getInterfaceIp } from '../../helpers/helpers';
 import { ALL_INTERFACES_IP } from '../../helpers/constants';
@@ -72,44 +71,41 @@ class Settings extends Component {
     }
 
     getStaticIpMessage = (staticIp, handleStaticIp) => {
-        const { static: status, ip, error } = staticIp;
+        const { static: status, ip } = staticIp;
 
-        if (!status || status === STATIC_STATUS.ENABLED) {
+        if (!status) {
             return '';
         }
 
         return (
-            <div className="col-12">
-                <Fragment>
+            <Fragment>
+                {status === STATIC_STATUS.DISABLED && (
+                    <Fragment>
+                        <Trans values={{ ip }} components={[<strong key="0">text</strong>]}>
+                            install_static_configure
+                        </Trans>
+                        <button
+                            type="button"
+                            className="btn btn-secondary btn-sm ml-2"
+                            onClick={() => handleStaticIp()}
+                        >
+                            <Trans>set_static_ip</Trans>
+                        </button>
+                    </Fragment>
+                )}
+                {status === STATIC_STATUS.ERROR && (
                     <div className="text-danger">
-                        {status === STATIC_STATUS.DISABLED && (
-                            <Fragment>
-                                <Trans values={{ ip }}>
-                                    install_static_configure
-                                </Trans>
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary btn-sm ml-2"
-                                    onClick={() => handleStaticIp()}
-                                >
-                                    <Trans>set_static_ip</Trans>
-                                </button>
-                            </Fragment>
-                        )}
-                        {status === STATIC_STATUS.ERROR && (
-                            <Fragment>
-                                <Trans>install_static_error</Trans>
-                                <div className="mt-2 mb-2">
-                                    <Accordion label={this.props.t('error_details')}>
-                                        <span>{error}</span>
-                                    </Accordion>
-                                </div>
-                            </Fragment>
-                        )}
-                        <hr className="divider divider--small" />
+                        <Trans>install_static_error</Trans>
                     </div>
-                </Fragment>
-            </div>
+                )}
+                {status === STATIC_STATUS.ENABLED && (
+                    <div className="text-success">
+                        <Trans>
+                            install_static_ok
+                        </Trans>
+                    </div>
+                )}
+            </Fragment>
         );
     };
 
@@ -208,6 +204,7 @@ class Settings extends Component {
                         </div>
                     </div>
                 </div>
+
                 <div className="setup__group">
                     <div className="setup__subtitle">
                         <Trans>install_settings_dns</Trans>
@@ -248,7 +245,6 @@ class Settings extends Component {
                                 />
                             </div>
                         </div>
-                        {this.getStaticIpMessage(staticIp, handleStaticIp)}
                         <div className="col-12">
                             {dnsStatus &&
                                 <Fragment>
@@ -292,6 +288,19 @@ class Settings extends Component {
                         </div>
                     </div>
                 </div>
+
+                <div className="setup__group">
+                    <div className="setup__subtitle">
+                        <Trans>static_ip</Trans>
+                    </div>
+
+                    <div className="mb-2">
+                        <Trans>static_ip_desc</Trans>
+                    </div>
+
+                    {this.getStaticIpMessage(staticIp, handleStaticIp)}
+                </div>
+
                 <Controls invalid={invalid} />
             </form>
         );
