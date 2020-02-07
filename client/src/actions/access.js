@@ -3,7 +3,6 @@ import { t } from 'i18next';
 
 import apiClient from '../api/Api';
 import { addErrorToast, addSuccessToast } from './index';
-import { getStats, getStatsConfig } from './stats';
 import { normalizeTextarea } from '../helpers/helpers';
 import { ACTION } from '../helpers/constants';
 
@@ -50,11 +49,13 @@ export const toggleClientBlockRequest = createAction('TOGGLE_CLIENT_BLOCK_REQUES
 export const toggleClientBlockFailure = createAction('TOGGLE_CLIENT_BLOCK_FAILURE');
 export const toggleClientBlockSuccess = createAction('TOGGLE_CLIENT_BLOCK_SUCCESS');
 
-export const toggleClientBlock = (type, ip) => async (dispatch, getState) => {
+export const toggleClientBlock = (type, ip) => async (dispatch) => {
     dispatch(toggleClientBlockRequest());
     try {
-        const { allowed_clients, disallowed_clients, blocked_hosts } = getState().access;
-        let updatedDisallowedClients = normalizeTextarea(disallowed_clients);
+        const {
+            allowed_clients, disallowed_clients, blocked_hosts,
+        } = await apiClient.getAccessList();
+        let updatedDisallowedClients = disallowed_clients;
 
         if (type === ACTION.unblock && updatedDisallowedClients.includes(ip)) {
             updatedDisallowedClients = updatedDisallowedClients.filter(client => client !== ip);
@@ -63,23 +64,19 @@ export const toggleClientBlock = (type, ip) => async (dispatch, getState) => {
         }
 
         const values = {
-            allowed_clients: normalizeTextarea(allowed_clients),
-            blocked_hosts: normalizeTextarea(blocked_hosts),
+            allowed_clients,
+            blocked_hosts,
             disallowed_clients: updatedDisallowedClients,
         };
 
         await apiClient.setAccessList(values);
-        dispatch(toggleClientBlockSuccess());
+        dispatch(toggleClientBlockSuccess(values));
 
         if (type === ACTION.unblock) {
             dispatch(addSuccessToast(t('client_unblocked', { ip })));
         } else if (type === ACTION.block) {
             dispatch(addSuccessToast(t('client_blocked', { ip })));
         }
-
-        dispatch(getStats());
-        dispatch(getStatsConfig());
-        dispatch(getAccessList());
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(toggleClientBlockFailure());

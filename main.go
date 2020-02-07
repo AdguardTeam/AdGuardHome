@@ -12,7 +12,7 @@ var version = "undefined"
 // channel can be set via ldflags
 var channel = "release"
 
-// ARM version number.  Set via linker flags.
+// GOARM value - set via ldflags
 var goarm = ""
 
 func main() {

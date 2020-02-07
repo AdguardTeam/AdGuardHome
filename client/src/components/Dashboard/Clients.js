@@ -57,10 +57,12 @@ const renderBlockingButton = (blocked, ip, handleClick, processing) => {
     );
 };
 
-const clientCell = (t, toggleClientStatus, processing) =>
+const isBlockedClient = (clients, ip) => !!(clients && clients.includes(ip));
+
+const clientCell = (t, toggleClientStatus, processing, disallowedClients) =>
     function cell(row) {
-        const { original, value } = row;
-        const { blocked } = original;
+        const { value } = row;
+        const blocked = isBlockedClient(disallowedClients, value);
 
         return (
             <Fragment>
@@ -80,6 +82,7 @@ const Clients = ({
     dnsQueries,
     toggleClientStatus,
     processingAccessSet,
+    disallowedClients,
 }) => (
     <Card
         title={t('top_clients')}
@@ -102,7 +105,7 @@ const Clients = ({
                     accessor: 'ip',
                     sortMethod: (a, b) =>
                         parseInt(a.replace(/\./g, ''), 10) - parseInt(b.replace(/\./g, ''), 10),
-                    Cell: clientCell(t, toggleClientStatus, processingAccessSet),
+                    Cell: clientCell(t, toggleClientStatus, processingAccessSet, disallowedClients),
                 },
                 {
                     Header: <Trans>requests_count</Trans>,
@@ -122,9 +125,9 @@ const Clients = ({
                     return {};
                 }
 
-                const { blocked } = rowInfo.original;
+                const { ip } = rowInfo.original;
 
-                if (blocked) {
+                if (isBlockedClient(disallowedClients, ip)) {
                     return {
                         className: 'red',
                     };
@@ -148,6 +151,7 @@ Clients.propTypes = {
     t: PropTypes.func.isRequired,
     toggleClientStatus: PropTypes.func.isRequired,
     processingAccessSet: PropTypes.bool.isRequired,
+    disallowedClients: PropTypes.string.isRequired,
 };
 
 export default withNamespaces()(Clients);

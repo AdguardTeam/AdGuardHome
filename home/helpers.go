@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -188,6 +189,30 @@ func customDialContext(ctx context.Context, network, addr string) (net.Conn, err
 		return con, err
 	}
 	return nil, errorx.DecorateMany(fmt.Sprintf("couldn't dial to %s", addr), dialErrs...)
+}
+
+// ---------------------
+// general helpers
+// ---------------------
+
+// fileExists returns TRUE if file exists
+func fileExists(fn string) bool {
+	_, err := os.Stat(fn)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+// runCommand runs shell command
+func runCommand(command string, arguments ...string) (int, string, error) {
+	cmd := exec.Command(command, arguments...)
+	out, err := cmd.Output()
+	if err != nil {
+		return 1, "", fmt.Errorf("exec.Command(%s) failed: %s", command, err)
+	}
+
+	return cmd.ProcessState.ExitCode(), string(out), nil
 }
 
 // ---------------------

@@ -19,6 +19,7 @@ class Dashboard extends Component {
     }
 
     getAllStats = () => {
+        this.props.getAccessList();
         this.props.getStats();
         this.props.getStatsConfig();
     };
@@ -53,7 +54,8 @@ class Dashboard extends Component {
             dashboard, stats, access, t,
         } = this.props;
         const statsProcessing = stats.processingStats
-            || stats.processingGetConfig;
+            || stats.processingGetConfig
+            || access.processing;
 
         const subtitle =
             stats.interval === 1
@@ -130,6 +132,7 @@ class Dashboard extends Component {
                                 refreshButton={refreshButton}
                                 toggleClientStatus={this.toggleClientStatus}
                                 processingAccessSet={access.processingSet}
+                                disallowedClients={access.disallowed_clients}
                             />
                         </div>
                         <div className="col-lg-6">

@@ -3,7 +3,7 @@ import { reactI18nextModule } from 'react-i18next';
 import { initReactI18n } from 'react-i18next/hooks';
 import langDetect from 'i18next-browser-languagedetector';
 
-import { DEFAULT_LANGUAGE } from './helpers/constants';
+import { LANGUAGES, BASE_LOCALE } from './helpers/twosky';
 
 import vi from './__locales/vi.json';
 import en from './__locales/en.json';
@@ -117,7 +117,7 @@ const resources = {
     },
 };
 
-const availableLanguages = Object.keys(resources);
+const availableLanguages = Object.keys(LANGUAGES);
 
 i18n
     .use(langDetect)
@@ -126,7 +126,7 @@ i18n
     .init({
         resources,
         lowerCaseLng: true,
-        fallbackLng: DEFAULT_LANGUAGE,
+        fallbackLng: BASE_LOCALE,
         keySeparator: false,
         nsSeparator: false,
         returnEmptyString: false,
@@ -136,9 +136,10 @@ i18n
         react: {
             wait: true,
         },
+        whitelist: availableLanguages,
     }, () => {
         if (!availableLanguages.includes(i18n.language)) {
-            i18n.changeLanguage(DEFAULT_LANGUAGE);
+            i18n.changeLanguage(BASE_LOCALE);
         }
     });
 
