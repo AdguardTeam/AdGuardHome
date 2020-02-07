@@ -81,12 +81,14 @@ class Settings extends Component {
             <Fragment>
                 {status === STATIC_STATUS.DISABLED && (
                     <Fragment>
-                        <Trans values={{ ip }} components={[<strong key="0">text</strong>]}>
-                            install_static_configure
-                        </Trans>
+                        <div className="mb-2">
+                            <Trans values={{ ip }} components={[<strong key="0">text</strong>]}>
+                                install_static_configure
+                            </Trans>
+                        </div>
                         <button
                             type="button"
-                            className="btn btn-secondary btn-sm ml-2"
+                            className="btn btn-outline-primary btn-sm"
                             onClick={() => handleStaticIp()}
                         >
                             <Trans>set_static_ip</Trans>
