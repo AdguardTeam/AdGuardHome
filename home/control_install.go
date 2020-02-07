@@ -178,7 +178,7 @@ func checkDNSStubListener() bool {
 	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
 	_, err := cmd.Output()
 	if err != nil || cmd.ProcessState.ExitCode() != 0 {
-		log.Error("command %s has failed: %v code:%d",
+		log.Info("command %s has failed: %v code:%d",
 			cmd.Path, err, cmd.ProcessState.ExitCode())
 		return false
 	}
@@ -187,7 +187,7 @@ func checkDNSStubListener() bool {
 	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
 	_, err = cmd.Output()
 	if err != nil || cmd.ProcessState.ExitCode() != 0 {
-		log.Error("command %s has failed: %v code:%d",
+		log.Info("command %s has failed: %v code:%d",
 			cmd.Path, err, cmd.ProcessState.ExitCode())
 		return false
 	}
