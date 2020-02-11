@@ -14,48 +14,68 @@
 
 ## Installation
 
-You could either clone this branch or apply the patch to your working branch
+Follow any of the below method and then deploy the binary
 
-* Clone the repository
+* #### Method: Docker ([iganesh/adguardhome/tags](https://hub.docker.com/r/iganesh/adguardhome/tags))
 
-```
-git clone https://github.com/iganeshk/AdGuardHome
-cd AdGuardHome
-```
+    ```
+    # only edge builds at the moment
+    docker pull iganesh/adguardhome:latest
+    docker run --name adguardhome \
+    -v /my/own/workdir:/opt/adguardhome/work \
+    -v /my/own/confdir:/opt/adguardhome/conf \
+    -p 53:53/tcp \
+    -p 53:53/udp \
+    -p 67:67/udp \
+    -p 68:68/tcp \
+    -p 68:68/udp \
+    -p 80:80/tcp \
+    -p 443:443/tcp \
+    -p 853:853/tcp \
+    -p 3000:3000/tcp \
+    -d iganesh/adguardhome
+    ```
 
-OR
+* #### Method: Cloning the Repository
 
-* Apply the patchfile
+    ```
+    git clone https://github.com/iganeshk/AdGuardHome
+    cd AdGuardHome
+    # comment out target builds which aren't required in the release.sh script
+    ./release.sh
+    ```
 
-```
-wget https://raw.githubusercontent.com/iganeshk/AdGuardHome/dev-assets/dark-mustard-theme.patch
-git checkout master/your-branch
-git apply dark-mustard-theme.patch
-```
+* #### Method: Applying the patch
 
-* Build the project
+    ```
+    wget https://raw.githubusercontent.com/iganeshk/AdGuardHome/dev-assets/dark-mustard-theme.patch
+    git checkout master/your-branch
+    git apply dark-mustard-theme.patch
+    # comment out target builds which aren't required in the release.sh script
+    ./release.sh
+    ```
 
-```
-# comment out target builds which aren't required in the release.sh script
-./release.sh
-```
+* #### Method: Downloading the latest release
 
-* Deploy the binary
+    [https://github.com/iganeshk/AdGuardHome/releases](https://github.com/iganeshk/AdGuardHome/releases)
 
-```
-# stop the Adguard Service
-service AdGuardHome stop
 
-cd /path/to/AdguardHome
-# copy/wget the target build
-# extract the newly built project binary (use the appropriate tarbet build)
-tar -xvf AdGuardHome_linux_amd64.tar.gz --strip-components=1 -C .
+* #### Deploy the binary (if built from source/downloaded latest release)
 
-# run the Adguard Service again
-service AdguardHome start
+    ```
+    # stop the Adguard Service
+    service AdGuardHome stop
 
-# savor the darkness across the clients
-```
+    cd /path/to/AdguardHome
+    # copy/wget the target build
+    # extract the newly built project binary (use the appropriate tarbet build)
+    tar -xvf AdGuardHome_linux_amd64.tar.gz --strip-components=1 -C .
+
+    # run the Adguard Service again
+    service AdguardHome start
+
+    # savor the darkness across the clients
+    ```
 
 ## Screenshots
 

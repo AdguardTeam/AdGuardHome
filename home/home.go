@@ -334,7 +334,7 @@ func writePIDFile(fn string) bool {
 // initWorkingDir initializes the ourWorkingDir
 // if no command-line arguments specified, we use the directory where our binary file is located
 func initWorkingDir(args options) {
-	exec, err := os.Executable()
+	execPath, err := os.Executable()
 	if err != nil {
 		panic(err)
 	}
@@ -343,7 +343,7 @@ func initWorkingDir(args options) {
 		// If there is a custom config file, use it's directory as our working dir
 		config.ourWorkingDir = args.workDir
 	} else {
-		config.ourWorkingDir = filepath.Dir(exec)
+		config.ourWorkingDir = filepath.Dir(execPath)
 	}
 }
 
@@ -412,16 +412,16 @@ func stopHTTPServer() {
 	log.Info("Stopping HTTP server...")
 	Context.httpsServer.shutdown = true
 	if Context.httpsServer.server != nil {
-		Context.httpsServer.server.Shutdown(context.TODO())
+		_ = Context.httpsServer.server.Shutdown(context.TODO())
 	}
-	Context.httpServer.Shutdown(context.TODO())
+	_ = Context.httpServer.Shutdown(context.TODO())
 	log.Info("Stopped HTTP server")
 }
 
 // This function is called before application exits
 func cleanupAlways() {
 	if len(config.pidFileName) != 0 {
-		os.Remove(config.pidFileName)
+		_ = os.Remove(config.pidFileName)
 	}
 	log.Info("Stopped")
 }
