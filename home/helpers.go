@@ -32,8 +32,8 @@ func ensure(method string, handler func(http.ResponseWriter, *http.Request)) fun
 		}
 
 		if method == "POST" || method == "PUT" || method == "DELETE" {
-			config.controlLock.Lock()
-			defer config.controlLock.Unlock()
+			Context.controlLock.Lock()
+			defer Context.controlLock.Unlock()
 		}
 
 		handler(w, r)
@@ -67,9 +67,9 @@ func ensureHandler(method string, handler func(http.ResponseWriter, *http.Reques
 // first run / install
 // -------------------
 func detectFirstRun() bool {
-	configfile := config.ourConfigFilename
+	configfile := Context.configFilename
 	if !filepath.IsAbs(configfile) {
-		configfile = filepath.Join(config.ourWorkingDir, config.ourConfigFilename)
+		configfile = filepath.Join(Context.workDir, Context.configFilename)
 	}
 	_, err := os.Stat(configfile)
 	if !os.IsNotExist(err) {
@@ -82,7 +82,7 @@ func detectFirstRun() bool {
 // preInstall lets the handler run only if firstRun is true, no redirects
 func preInstall(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !config.firstRun {
+		if !Context.firstRun {
 			// if it's not first run, don't let users access it (for example /install.html when configuration is done)
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
@@ -109,7 +109,7 @@ func preInstallHandler(handler http.Handler) http.Handler {
 // it also enforces HTTPS if it is enabled and configured
 func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if config.firstRun &&
+		if Context.firstRun &&
 			!strings.HasPrefix(r.URL.Path, "/install.") &&
 			r.URL.Path != "/favicon.png" {
 			http.Redirect(w, r, "/install.html", http.StatusSeeOther) // should not be cacheable

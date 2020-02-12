@@ -49,6 +49,9 @@ const versionCheckPeriod = time.Hour * 8
 
 // Global context
 type homeContext struct {
+	// Modules
+	// --
+
 	clients     clientsContainer     // per-client-settings module
 	stats       stats.Stats          // statistics module
 	queryLog    querylog.QueryLog    // query log module
@@ -57,8 +60,29 @@ type homeContext struct {
 	whois       *Whois               // WHOIS module
 	dnsFilter   *dnsfilter.Dnsfilter // DNS filtering module
 	dhcpServer  *dhcpd.Server        // DHCP module
+	auth        *Auth                // HTTP authentication module
 	httpServer  *http.Server         // HTTP module
 	httpsServer HTTPSServer          // HTTPS module
+
+	// Runtime properties
+	// --
+
+	configFilename   string // Config filename (can be overridden via the command line arguments)
+	workDir          string // Location of our directory, used to protect against CWD being somewhere else
+	firstRun         bool   // if set to true, don't run any services except HTTP web inteface, and serve only first-run html
+	pidFileName      string // PID file name.  Empty if no PID file was created.
+	disableUpdate    bool   // If set, don't check for updates
+	controlLock      sync.Mutex
+	transport        *http.Transport
+	client           *http.Client
+	appSignalChannel chan os.Signal // Channel for receiving OS signals by the console app
+	// runningAsService flag is set to true when options are passed from the service runner
+	runningAsService bool
+}
+
+// getDataDir returns path to the directory where we store databases and filters
+func (c *homeContext) getDataDir() string {
+	return filepath.Join(c.workDir, dataDir)
 }
 
 // Context - a global context object
@@ -81,17 +105,38 @@ func Main(version string, channel string, armVer string) {
 		return
 	}
 
+	Context.appSignalChannel = make(chan os.Signal)
+	signal.Notify(Context.appSignalChannel, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
+	go func() {
+		<-Context.appSignalChannel
+		cleanup()
+		cleanupAlways()
+		os.Exit(0)
+	}()
+
 	// run the protection
 	run(args)
 }
 
 // run initializes configuration and runs the AdGuard Home
-// run is a blocking method and it won't exit until the service is stopped!
+// run is a blocking method!
 // nolint
 func run(args options) {
 	// config file path can be overridden by command-line arguments:
 	if args.configFilename != "" {
-		config.ourConfigFilename = args.configFilename
+		Context.configFilename = args.configFilename
+	} else {
+		// Default config file name
+		Context.configFilename = "AdGuardHome.yaml"
+	}
+
+	// Init some of the Context fields right away
+	Context.transport = &http.Transport{
+		DialContext: customDialContext,
+	}
+	Context.client = &http.Client{
+		Timeout:   time.Minute * 5,
+		Transport: Context.transport,
 	}
 
 	// configure working dir and config path
@@ -106,31 +151,22 @@ func run(args options) {
 		msg = msg + " v" + ARMVersion
 	}
 	log.Printf(msg, versionString, updateChannel, runtime.GOOS, runtime.GOARCH, ARMVersion)
-	log.Debug("Current working directory is %s", config.ourWorkingDir)
+	log.Debug("Current working directory is %s", Context.workDir)
 	if args.runningAsService {
 		log.Info("AdGuard Home is running as a service")
 	}
-	config.runningAsService = args.runningAsService
-	config.disableUpdate = args.disableUpdate
+	Context.runningAsService = args.runningAsService
+	Context.disableUpdate = args.disableUpdate
 
-	config.firstRun = detectFirstRun()
-	if config.firstRun {
+	Context.firstRun = detectFirstRun()
+	if Context.firstRun {
 		requireAdminRights()
 	}
-
-	config.appSignalChannel = make(chan os.Signal)
-	signal.Notify(config.appSignalChannel, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
-	go func() {
-		<-config.appSignalChannel
-		cleanup()
-		cleanupAlways()
-		os.Exit(0)
-	}()
 
 	initConfig()
 	initServices()
 
-	if !config.firstRun {
+	if !Context.firstRun {
 		// Do the upgrade if necessary
 		err := upgradeConfig()
 		if err != nil {
@@ -148,7 +184,7 @@ func run(args options) {
 		}
 	}
 
-	config.DHCP.WorkDir = config.ourWorkingDir
+	config.DHCP.WorkDir = Context.workDir
 	config.DHCP.HTTPRegister = httpRegister
 	config.DHCP.ConfigModified = onConfigModified
 	Context.dhcpServer = dhcpd.Create(config.DHCP)
@@ -168,7 +204,7 @@ func run(args options) {
 		config.BindPort = args.bindPort
 	}
 
-	if !config.firstRun {
+	if !Context.firstRun {
 		// Save the updated config
 		err := config.write()
 		if err != nil {
@@ -193,7 +229,7 @@ func run(args options) {
 	}
 
 	if len(args.pidFile) != 0 && writePIDFile(args.pidFile) {
-		config.pidFileName = args.pidFile
+		Context.pidFileName = args.pidFile
 	}
 
 	// Initialize and run the admin Web interface
@@ -204,7 +240,7 @@ func run(args options) {
 	registerControlHandlers()
 
 	// add handlers for /install paths, we only need them when we're not configured yet
-	if config.firstRun {
+	if Context.firstRun {
 		log.Info("This is the first launch of AdGuard Home, redirecting everything to /install.html ")
 		http.Handle("/install.html", preInstallHandler(http.FileServer(box)))
 		registerInstallHandlers()
@@ -331,19 +367,19 @@ func writePIDFile(fn string) bool {
 	return true
 }
 
-// initWorkingDir initializes the ourWorkingDir
+// initWorkingDir initializes the workDir
 // if no command-line arguments specified, we use the directory where our binary file is located
 func initWorkingDir(args options) {
-	exec, err := os.Executable()
+	execPath, err := os.Executable()
 	if err != nil {
 		panic(err)
 	}
 
 	if args.workDir != "" {
 		// If there is a custom config file, use it's directory as our working dir
-		config.ourWorkingDir = args.workDir
+		Context.workDir = args.workDir
 	} else {
-		config.ourWorkingDir = filepath.Dir(exec)
+		Context.workDir = filepath.Dir(execPath)
 	}
 }
 
@@ -381,7 +417,7 @@ func configureLogger(args options) {
 			log.Fatalf("cannot initialize syslog: %s", err)
 		}
 	} else {
-		logFilePath := filepath.Join(config.ourWorkingDir, ls.LogFile)
+		logFilePath := filepath.Join(Context.workDir, ls.LogFile)
 		if filepath.IsAbs(ls.LogFile) {
 			logFilePath = ls.LogFile
 		}
@@ -420,8 +456,8 @@ func stopHTTPServer() {
 
 // This function is called before application exits
 func cleanupAlways() {
-	if len(config.pidFileName) != 0 {
-		os.Remove(config.pidFileName)
+	if len(Context.pidFileName) != 0 {
+		_ = os.Remove(Context.pidFileName)
 	}
 	log.Info("Stopped")
 }

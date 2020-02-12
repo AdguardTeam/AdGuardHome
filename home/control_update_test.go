@@ -10,7 +10,7 @@ import (
 func TestDoUpdate(t *testing.T) {
 
 	config.DNS.Port = 0
-	config.ourWorkingDir = "..." // set absolute path
+	Context.workDir = "..." // set absolute path
 	newver := "v0.96"
 
 	data := `{
@@ -35,15 +35,15 @@ func TestDoUpdate(t *testing.T) {
 
 	u := updateInfo{
 		pkgURL:           "https://github.com/AdguardTeam/AdGuardHome/releases/download/" + newver + "/AdGuardHome_linux_amd64.tar.gz",
-		pkgName:          config.ourWorkingDir + "/agh-update-" + newver + "/AdGuardHome_linux_amd64.tar.gz",
+		pkgName:          Context.workDir + "/agh-update-" + newver + "/AdGuardHome_linux_amd64.tar.gz",
 		newVer:           newver,
-		updateDir:        config.ourWorkingDir + "/agh-update-" + newver,
-		backupDir:        config.ourWorkingDir + "/agh-backup",
-		configName:       config.ourWorkingDir + "/AdGuardHome.yaml",
-		updateConfigName: config.ourWorkingDir + "/agh-update-" + newver + "/AdGuardHome/AdGuardHome.yaml",
-		curBinName:       config.ourWorkingDir + "/AdGuardHome",
-		bkpBinName:       config.ourWorkingDir + "/agh-backup/AdGuardHome",
-		newBinName:       config.ourWorkingDir + "/agh-update-" + newver + "/AdGuardHome/AdGuardHome",
+		updateDir:        Context.workDir + "/agh-update-" + newver,
+		backupDir:        Context.workDir + "/agh-backup",
+		configName:       Context.workDir + "/AdGuardHome.yaml",
+		updateConfigName: Context.workDir + "/agh-update-" + newver + "/AdGuardHome/AdGuardHome.yaml",
+		curBinName:       Context.workDir + "/AdGuardHome",
+		bkpBinName:       Context.workDir + "/agh-backup/AdGuardHome",
+		newBinName:       Context.workDir + "/agh-update-" + newver + "/AdGuardHome/AdGuardHome",
 	}
 
 	if uu.pkgURL != u.pkgURL ||

@@ -10,7 +10,7 @@ import (
 )
 
 func TestFilters(t *testing.T) {
-	config.client = &http.Client{
+	Context.client = &http.Client{
 		Timeout: time.Minute * 5,
 	}
 

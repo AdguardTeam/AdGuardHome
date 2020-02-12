@@ -25,7 +25,7 @@ func onConfigModified() {
 // Please note that we must do it even if we don't start it
 // so that we had access to the query log and the stats
 func initDNSServer() error {
-	baseDir := config.getDataDir()
+	baseDir := Context.getDataDir()
 
 	err := os.MkdirAll(baseDir, 0755)
 	if err != nil {
@@ -71,8 +71,8 @@ func initDNSServer() error {
 	}
 
 	sessFilename := filepath.Join(baseDir, "sessions.db")
-	config.auth = InitAuth(sessFilename, config.Users, config.WebSessionTTLHours*60*60)
-	if config.auth == nil {
+	Context.auth = InitAuth(sessFilename, config.Users, config.WebSessionTTLHours*60*60)
+	if Context.auth == nil {
 		closeDNSServer()
 		return fmt.Errorf("Couldn't initialize Auth module")
 	}
@@ -294,9 +294,9 @@ func closeDNSServer() {
 		Context.queryLog = nil
 	}
 
-	if config.auth != nil {
-		config.auth.Close()
-		config.auth = nil
+	if Context.auth != nil {
+		Context.auth.Close()
+		Context.auth = nil
 	}
 
 	log.Debug("Closed all DNS modules")

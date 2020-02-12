@@ -424,7 +424,7 @@ func parseFilterContents(contents []byte) (int, string) {
 func (filter *filter) update() (bool, error) {
 	log.Tracef("Downloading update for filter %d from %s", filter.ID, filter.URL)
 
-	resp, err := config.client.Get(filter.URL)
+	resp, err := Context.client.Get(filter.URL)
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}
@@ -538,7 +538,7 @@ func (filter *filter) unload() {
 
 // Path to the filter contents
 func (filter *filter) Path() string {
-	return filepath.Join(config.getDataDir(), filterDir, strconv.FormatInt(filter.ID, 10)+".txt")
+	return filepath.Join(Context.getDataDir(), filterDir, strconv.FormatInt(filter.ID, 10)+".txt")
 }
 
 // LastTimeUpdated returns the time when the filter was last time updated

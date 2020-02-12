@@ -302,7 +302,7 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	var curConfig configuration
 	copyInstallSettings(&curConfig, &config)
 
-	config.firstRun = false
+	Context.firstRun = false
 	config.BindHost = newSettings.Web.IP
 	config.BindPort = newSettings.Web.Port
 	config.DNS.BindHost = newSettings.DNS.IP
@@ -317,7 +317,7 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if err != nil || err2 != nil {
-		config.firstRun = true
+		Context.firstRun = true
 		copyInstallSettings(&config, &curConfig)
 		if err != nil {
 			httpError(w, http.StatusInternalServerError, "Couldn't initialize DNS server: %s", err)
@@ -329,11 +329,11 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 
 	u := User{}
 	u.Name = newSettings.Username
-	config.auth.UserAdd(&u, newSettings.Password)
+	Context.auth.UserAdd(&u, newSettings.Password)
 
 	err = config.write()
 	if err != nil {
-		config.firstRun = true
+		Context.firstRun = true
 		copyInstallSettings(&config, &curConfig)
 		httpError(w, http.StatusInternalServerError, "Couldn't write config: %s", err)
 		return

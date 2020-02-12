@@ -44,19 +44,6 @@ type configuration struct {
 	// It's reset after config is parsed
 	fileData []byte
 
-	ourConfigFilename string // Config filename (can be overridden via the command line arguments)
-	ourWorkingDir     string // Location of our directory, used to protect against CWD being somewhere else
-	firstRun          bool   // if set to true, don't run any services except HTTP web inteface, and serve only first-run html
-	pidFileName       string // PID file name.  Empty if no PID file was created.
-	// runningAsService flag is set to true when options are passed from the service runner
-	runningAsService bool
-	disableUpdate    bool // If set, don't check for updates
-	appSignalChannel chan os.Signal
-	controlLock      sync.Mutex
-	transport        *http.Transport
-	client           *http.Client
-	auth             *Auth // HTTP authentication module
-
 	// cached version.json to avoid hammering github.io for each page reload
 	versionCheckJSON     []byte
 	versionCheckLastTime time.Time
@@ -152,9 +139,8 @@ type tlsConfig struct {
 
 // initialize to default values, will be changed later when reading config or parsing command line
 var config = configuration{
-	ourConfigFilename: "AdGuardHome.yaml",
-	BindPort:          3000,
-	BindHost:          "0.0.0.0",
+	BindPort: 3000,
+	BindHost: "0.0.0.0",
 	DNS: dnsConfig{
 		BindHost:      "0.0.0.0",
 		Port:          53,
@@ -185,14 +171,6 @@ var config = configuration{
 
 // initConfig initializes default configuration for the current OS&ARCH
 func initConfig() {
-	config.transport = &http.Transport{
-		DialContext: customDialContext,
-	}
-	config.client = &http.Client{
-		Timeout:   time.Minute * 5,
-		Transport: config.transport,
-	}
-
 	config.WebSessionTTLHours = 30 * 24
 
 	config.DNS.QueryLogEnabled = true
@@ -209,22 +187,17 @@ func initConfig() {
 
 // getConfigFilename returns path to the current config file
 func (c *configuration) getConfigFilename() string {
-	configFile, err := filepath.EvalSymlinks(config.ourConfigFilename)
+	configFile, err := filepath.EvalSymlinks(Context.configFilename)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			log.Error("unexpected error while config file path evaluation: %s", err)
 		}
-		configFile = config.ourConfigFilename
+		configFile = Context.configFilename
 	}
 	if !filepath.IsAbs(configFile) {
-		configFile = filepath.Join(config.ourWorkingDir, configFile)
+		configFile = filepath.Join(Context.workDir, configFile)
 	}
 	return configFile
-}
-
-// getDataDir returns path to the directory where we store databases and filters
-func (c *configuration) getDataDir() string {
-	return filepath.Join(c.ourWorkingDir, dataDir)
 }
 
 // getLogSettings reads logging settings from the config file.
@@ -292,8 +265,8 @@ func (c *configuration) write() error {
 
 	Context.clients.WriteDiskConfig(&config.Clients)
 
-	if config.auth != nil {
-		config.Users = config.auth.GetUsers()
+	if Context.auth != nil {
+		config.Users = Context.auth.GetUsers()
 	}
 
 	if Context.stats != nil {

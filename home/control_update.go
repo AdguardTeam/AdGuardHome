@@ -64,7 +64,7 @@ type getVersionJSONRequest struct {
 // Get the latest available version from the Internet
 func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 
-	if config.disableUpdate {
+	if Context.disableUpdate {
 		return
 	}
 
@@ -77,10 +77,10 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 
 	now := time.Now()
 	if !req.RecheckNow {
-		config.controlLock.Lock()
+		Context.controlLock.Lock()
 		cached := now.Sub(config.versionCheckLastTime) <= versionCheckPeriod && len(config.versionCheckJSON) != 0
 		data := config.versionCheckJSON
-		config.controlLock.Unlock()
+		Context.controlLock.Unlock()
 
 		if cached {
 			log.Tracef("Returning cached data")
@@ -93,7 +93,7 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	var resp *http.Response
 	for i := 0; i != 3; i++ {
 		log.Tracef("Downloading data from %s", versionCheckURL)
-		resp, err = config.client.Get(versionCheckURL)
+		resp, err = Context.client.Get(versionCheckURL)
 		if err != nil && strings.HasSuffix(err.Error(), "i/o timeout") {
 			// This case may happen while we're restarting DNS server
 			// https://github.com/AdguardTeam/AdGuardHome/issues/934
@@ -116,10 +116,10 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	config.controlLock.Lock()
+	Context.controlLock.Lock()
 	config.versionCheckLastTime = now
 	config.versionCheckJSON = body
-	config.controlLock.Unlock()
+	Context.controlLock.Unlock()
 
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(getVersionResp(body))
@@ -158,7 +158,7 @@ type updateInfo struct {
 func getUpdateInfo(jsonData []byte) (*updateInfo, error) {
 	var u updateInfo
 
-	workDir := config.ourWorkingDir
+	workDir := Context.workDir
 
 	versionJSON := make(map[string]interface{})
 	err := json.Unmarshal(jsonData, &versionJSON)
@@ -365,7 +365,7 @@ func copySupportingFiles(files []string, srcdir, dstdir string, useSrcNameOnly, 
 
 // Download package file and save it to disk
 func getPackageFile(u *updateInfo) error {
-	resp, err := config.client.Get(u.pkgURL)
+	resp, err := Context.client.Get(u.pkgURL)
 	if err != nil {
 		return fmt.Errorf("HTTP request failed: %s", err)
 	}
@@ -436,17 +436,17 @@ func doUpdate(u *updateInfo) error {
 	}
 
 	// ./README.md -> backup/README.md
-	err = copySupportingFiles(files, config.ourWorkingDir, u.backupDir, true, true)
+	err = copySupportingFiles(files, Context.workDir, u.backupDir, true, true)
 	if err != nil {
 		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %s",
-			config.ourWorkingDir, u.backupDir, err)
+			Context.workDir, u.backupDir, err)
 	}
 
 	// update/[AdGuardHome/]README.md -> ./README.md
-	err = copySupportingFiles(files, u.updateDir, config.ourWorkingDir, false, true)
+	err = copySupportingFiles(files, u.updateDir, Context.workDir, false, true)
 	if err != nil {
 		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %s",
-			u.updateDir, config.ourWorkingDir, err)
+			u.updateDir, Context.workDir, err)
 	}
 
 	log.Tracef("Renaming: %s -> %s", u.curBinName, u.bkpBinName)
@@ -478,8 +478,7 @@ func finishUpdate(u *updateInfo) {
 	cleanupAlways()
 
 	if runtime.GOOS == "windows" {
-
-		if config.runningAsService {
+		if Context.runningAsService {
 			// Note:
 			// we can't restart the service via "kardianos/service" package - it kills the process first
 			// we can't start a new instance - Windows doesn't allow it

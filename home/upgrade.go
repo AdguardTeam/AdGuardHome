@@ -116,7 +116,7 @@ func upgradeConfigSchema(oldVersion int, diskConfig *map[string]interface{}) err
 func upgradeSchema0to1(diskConfig *map[string]interface{}) error {
 	log.Printf("%s(): called", _Func())
 
-	dnsFilterPath := filepath.Join(config.ourWorkingDir, "dnsfilter.txt")
+	dnsFilterPath := filepath.Join(Context.workDir, "dnsfilter.txt")
 	if _, err := os.Stat(dnsFilterPath); !os.IsNotExist(err) {
 		log.Printf("Deleting %s as we don't need it anymore", dnsFilterPath)
 		err = os.Remove(dnsFilterPath)
@@ -137,7 +137,7 @@ func upgradeSchema0to1(diskConfig *map[string]interface{}) error {
 func upgradeSchema1to2(diskConfig *map[string]interface{}) error {
 	log.Printf("%s(): called", _Func())
 
-	coreFilePath := filepath.Join(config.ourWorkingDir, "Corefile")
+	coreFilePath := filepath.Join(Context.workDir, "Corefile")
 	if _, err := os.Stat(coreFilePath); !os.IsNotExist(err) {
 		log.Printf("Deleting %s as we don't need it anymore", coreFilePath)
 		err = os.Remove(coreFilePath)

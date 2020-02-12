@@ -120,16 +120,18 @@ func TestHome(t *testing.T) {
 	args.workDir = dir
 	go run(args)
 
+	for i := 0; i < 5; i++ {
+		// Waiting until the DNS server is up and running
+		if !isRunning() {
+			time.Sleep(1 * time.Second)
+		}
+	}
+
 	var err error
 	var resp *http.Response
 	h := http.Client{}
-	for i := 0; i != 5; i++ {
-		resp, err = h.Get("http://127.0.0.1:3000/")
-		if err == nil && resp.StatusCode != 404 {
-			break
-		}
-		time.Sleep(1 * time.Second)
-	}
+
+	resp, err = h.Get("http://127.0.0.1:3000/")
 	assert.Truef(t, err == nil, "%s", err)
 	assert.Equal(t, 200, resp.StatusCode)
 
@@ -140,7 +142,7 @@ func TestHome(t *testing.T) {
 	// test DNS over UDP
 	r := upstream.NewResolver("127.0.0.1:5354", 3*time.Second)
 	addrs, err := r.LookupIPAddr(context.TODO(), "static.adguard.com")
-	assert.Truef(t, err == nil, "%s", err)
+	assert.Nil(t, err)
 	haveIP := len(addrs) != 0
 	assert.True(t, haveIP)
 
@@ -159,7 +161,7 @@ func TestHome(t *testing.T) {
 	assert.True(t, resp.StatusCode == http.StatusOK)
 	response := dns.Msg{}
 	err = response.Unpack(body)
-	assert.True(t, err == nil, "%s", err)
+	assert.Nil(t, err)
 	addrs = nil
 	proxyutil.AppendIPAddrs(&addrs, response.Answer)
 	haveIP = len(addrs) != 0

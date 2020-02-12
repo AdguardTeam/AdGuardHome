@@ -34,10 +34,10 @@ func (p *program) Start(s service.Service) error {
 // Stop stops the program
 func (p *program) Stop(s service.Service) error {
 	// Stop should not block. Return with a few seconds.
-	if config.appSignalChannel == nil {
+	if Context.appSignalChannel == nil {
 		os.Exit(0)
 	}
-	config.appSignalChannel <- syscall.SIGINT
+	Context.appSignalChannel <- syscall.SIGINT
 	return nil
 }
 
