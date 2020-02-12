@@ -107,6 +107,9 @@ schema_version: 5
 // . Wait until the filters are downloaded
 // . Stop and cleanup
 func TestHome(t *testing.T) {
+	// Reinit context
+	Context = homeContext{}
+
 	dir := prepareTestDir()
 	defer func() { _ = os.RemoveAll(dir) }()
 	fn := filepath.Join(dir, "AdGuardHome.yaml")
@@ -120,18 +123,16 @@ func TestHome(t *testing.T) {
 	args.workDir = dir
 	go run(args)
 
-	for i := 0; i < 5; i++ {
-		// Waiting until the DNS server is up and running
-		if !isRunning() {
-			time.Sleep(1 * time.Second)
-		}
-	}
-
 	var err error
 	var resp *http.Response
 	h := http.Client{}
-
-	resp, err = h.Get("http://127.0.0.1:3000/")
+	for i := 0; i != 50; i++ {
+		resp, err = h.Get("http://127.0.0.1:3000/")
+		if err == nil && resp.StatusCode != 404 {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
 	assert.Truef(t, err == nil, "%s", err)
 	assert.Equal(t, 200, resp.StatusCode)
 
@@ -161,7 +162,7 @@ func TestHome(t *testing.T) {
 	assert.True(t, resp.StatusCode == http.StatusOK)
 	response := dns.Msg{}
 	err = response.Unpack(body)
-	assert.Nil(t, err)
+	assert.True(t, err == nil, "%s", err)
 	addrs = nil
 	proxyutil.AppendIPAddrs(&addrs, response.Answer)
 	haveIP = len(addrs) != 0
