@@ -93,10 +93,9 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 	s.conf.ConfigModified()
 
 	if newconfig.Enabled {
-
-		staticIP, err := hasStaticIP(newconfig.InterfaceName)
+		staticIP, err := HasStaticIP(newconfig.InterfaceName)
 		if !staticIP && err == nil {
-			err = setStaticIP(newconfig.InterfaceName)
+			err = SetStaticIP(newconfig.InterfaceName)
 			if err != nil {
 				httpError(r, w, http.StatusInternalServerError, "Failed to configure static IP: %s", err)
 				return
@@ -122,7 +121,7 @@ type netInterfaceJSON struct {
 func (s *Server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{}
 
-	ifaces, err := getValidNetInterfaces()
+	ifaces, err := GetValidNetInterfaces()
 	if err != nil {
 		httpError(r, w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
 		return
@@ -213,14 +212,14 @@ func (s *Server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 	othSrv["found"] = foundVal
 
 	staticIP := map[string]interface{}{}
-	isStaticIP, err := hasStaticIP(interfaceName)
+	isStaticIP, err := HasStaticIP(interfaceName)
 	staticIPStatus := "yes"
 	if err != nil {
 		staticIPStatus = "error"
 		staticIP["error"] = err.Error()
 	} else if !isStaticIP {
 		staticIPStatus = "no"
-		staticIP["ip"] = getFullIP(interfaceName)
+		staticIP["ip"] = GetFullIP(interfaceName)
 	}
 	staticIP["static"] = staticIPStatus
 

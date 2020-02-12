@@ -13,6 +13,8 @@ import (
 	"runtime"
 	"strconv"
 
+	"github.com/AdguardTeam/AdGuardHome/dhcpd"
+
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -141,19 +143,19 @@ func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 				respData.StaticIP.Error = fmt.Sprintf("Couldn't find network interface by IP %s", reqData.DNS.IP)
 
 			} else if reqData.DNS.SetStaticIP {
-				err = setStaticIP(interfaceName)
+				err = dhcpd.SetStaticIP(interfaceName)
 				staticIPStatus = "error"
 				respData.StaticIP.Error = err.Error()
 
 			} else {
 				// check if we have a static IP
-				isStaticIP, err := hasStaticIP(interfaceName)
+				isStaticIP, err := dhcpd.HasStaticIP(interfaceName)
 				if err != nil {
 					staticIPStatus = "error"
 					respData.StaticIP.Error = err.Error()
 				} else if !isStaticIP {
 					staticIPStatus = "no"
-					respData.StaticIP.IP = getFullIP(interfaceName)
+					respData.StaticIP.IP = dhcpd.GetFullIP(interfaceName)
 				}
 			}
 			respData.StaticIP.Static = staticIPStatus

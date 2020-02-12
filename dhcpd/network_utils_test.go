@@ -1,4 +1,4 @@
-package home
+package dhcpd
 
 import (
 	"testing"

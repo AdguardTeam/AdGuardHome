@@ -10,12 +10,13 @@ import (
 	"strings"
 
 	"github.com/AdguardTeam/golibs/file"
+
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// getValidNetInterfaces returns interfaces that are eligible for DNS and/or DHCP
+// GetValidNetInterfaces returns interfaces that are eligible for DNS and/or DHCP
 // invalid interface is a ppp interface or the one that doesn't allow broadcasts
-func getValidNetInterfaces() ([]net.Interface, error) {
+func GetValidNetInterfaces() ([]net.Interface, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		return nil, fmt.Errorf("Couldn't get list of interfaces: %s", err)
@@ -38,22 +39,76 @@ func getValidNetInterfaces() ([]net.Interface, error) {
 
 // Check if network interface has a static IP configured
 // Supports: Raspbian.
-func hasStaticIP(ifaceName string) (bool, error) {
-	if runtime.GOOS == "windows" {
-		return false, errors.New("Can't detect static IP: not supported on Windows")
+func HasStaticIP(ifaceName string) (bool, error) {
+	if runtime.GOOS == "linux" {
+		body, err := ioutil.ReadFile("/etc/dhcpcd.conf")
+		if err != nil {
+			return false, err
+		}
+
+		return hasStaticIPDhcpcdConf(string(body), ifaceName), nil
 	}
+
+	if runtime.GOOS == "darwin" {
+		return hasStaticIPDarwin(ifaceName)
+	}
+
+	return false, fmt.Errorf("Cannot check if IP is static: not supported on %s", runtime.GOOS)
+}
+
+// Get IP address with netmask
+func GetFullIP(ifaceName string) string {
+	cmd := exec.Command("ip", "-oneline", "-family", "inet", "address", "show", ifaceName)
+	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
+	d, err := cmd.Output()
+	if err != nil || cmd.ProcessState.ExitCode() != 0 {
+		return ""
+	}
+
+	fields := strings.Fields(string(d))
+	if len(fields) < 4 {
+		return ""
+	}
+	_, _, err = net.ParseCIDR(fields[3])
+	if err != nil {
+		return ""
+	}
+
+	return fields[3]
+}
+
+// Set a static IP for network interface
+// Supports: Raspbian.
+func SetStaticIP(ifaceName string) error {
+	ip := GetFullIP(ifaceName)
+	if len(ip) == 0 {
+		return errors.New("Can't get IP address")
+	}
+
+	ip4, _, err := net.ParseCIDR(ip)
+	if err != nil {
+		return err
+	}
+	gatewayIP := getGatewayIP(ifaceName)
+	add := setStaticIPDhcpcdConf(ifaceName, ip, gatewayIP, ip4.String())
 
 	body, err := ioutil.ReadFile("/etc/dhcpcd.conf")
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	return hasStaticIPDhcpcdConf(string(body), ifaceName), nil
+	body = append(body, []byte(add)...)
+	err = file.SafeWrite("/etc/dhcpcd.conf", body)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // for dhcpcd.conf
-func hasStaticIPDhcpcdConf(data, ifaceName string) bool {
-	lines := strings.Split(data, "\n")
+func hasStaticIPDhcpcdConf(dhcpConf, ifaceName string) bool {
+	lines := strings.Split(dhcpConf, "\n")
 	nameLine := fmt.Sprintf("interface %s", ifaceName)
 	withinInterfaceCtx := false
 
@@ -90,27 +145,6 @@ func hasStaticIPDhcpcdConf(data, ifaceName string) bool {
 	return false
 }
 
-// Get IP address with netmask
-func getFullIP(ifaceName string) string {
-	cmd := exec.Command("ip", "-oneline", "-family", "inet", "address", "show", ifaceName)
-	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
-	d, err := cmd.Output()
-	if err != nil || cmd.ProcessState.ExitCode() != 0 {
-		return ""
-	}
-
-	fields := strings.Fields(string(d))
-	if len(fields) < 4 {
-		return ""
-	}
-	_, _, err = net.ParseCIDR(fields[3])
-	if err != nil {
-		return ""
-	}
-
-	return fields[3]
-}
-
 // Get gateway IP address
 func getGatewayIP(ifaceName string) string {
 	cmd := exec.Command("ip", "route", "show", "dev", ifaceName)
@@ -131,35 +165,6 @@ func getGatewayIP(ifaceName string) string {
 	}
 
 	return fields[2]
-}
-
-// Set a static IP for network interface
-// Supports: Raspbian.
-func setStaticIP(ifaceName string) error {
-	ip := getFullIP(ifaceName)
-	if len(ip) == 0 {
-		return errors.New("Can't get IP address")
-	}
-
-	ip4, _, err := net.ParseCIDR(ip)
-	if err != nil {
-		return err
-	}
-	gatewayIP := getGatewayIP(ifaceName)
-	add := setStaticIPDhcpcdConf(ifaceName, ip, gatewayIP, ip4.String())
-
-	body, err := ioutil.ReadFile("/etc/dhcpcd.conf")
-	if err != nil {
-		return err
-	}
-
-	body = append(body, []byte(add)...)
-	err = file.SafeWrite("/etc/dhcpcd.conf", body)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // for dhcpcd.conf
