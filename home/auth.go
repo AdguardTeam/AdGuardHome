@@ -152,7 +152,7 @@ func (a *Auth) addSession(data []byte, s *session) {
 	a.sessions[name] = s
 	a.lock.Unlock()
 	if a.storeSession(data, s) {
-		log.Info("Auth: created session %s: expire=%d", name, s.expire)
+		log.Debug("Auth: created session %s: expire=%d", name, s.expire)
 	}
 }
 
