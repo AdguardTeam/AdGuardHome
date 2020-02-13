@@ -55,7 +55,7 @@ export const toggleClientBlock = (type, ip) => async (dispatch) => {
         const {
             allowed_clients, disallowed_clients, blocked_hosts,
         } = await apiClient.getAccessList();
-        let updatedDisallowedClients = disallowed_clients;
+        let updatedDisallowedClients = disallowed_clients || [];
 
         if (type === ACTION.unblock && updatedDisallowedClients.includes(ip)) {
             updatedDisallowedClients = updatedDisallowedClients.filter(client => client !== ip);
