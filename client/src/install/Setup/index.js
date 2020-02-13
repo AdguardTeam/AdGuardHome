@@ -44,28 +44,8 @@ class Setup extends Component {
         }
     }, DEBOUNCE_TIMEOUT);
 
-    handleAutofix = (type, ip, port) => {
-        const data = {
-            ip,
-            port,
-            autofix: true,
-        };
-
-        if (type === 'web') {
-            this.props.checkConfig({
-                web: { ...data },
-            });
-        } else {
-            this.props.checkConfig({
-                dns: { ...data },
-            });
-        }
-    };
-
-    handleStaticIp = () => {
-        this.props.checkConfig({
-            set_static_ip: true,
-        });
+    handleFix = (web, dns, set_static_ip) => {
+        this.props.checkConfig({ web, dns, set_static_ip });
     };
 
     openDashboard = (ip, port) => {
@@ -103,8 +83,7 @@ class Setup extends Component {
                         onSubmit={this.nextStep}
                         onChange={this.handleFormChange}
                         validateForm={this.handleFormChange}
-                        handleAutofix={this.handleAutofix}
-                        handleStaticIp={this.handleStaticIp}
+                        handleFix={this.handleFix}
                     />
                 );
             case 3:

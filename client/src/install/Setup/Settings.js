@@ -70,7 +70,7 @@ class Settings extends Component {
         });
     }
 
-    getStaticIpMessage = (staticIp, handleStaticIp) => {
+    getStaticIpMessage = (staticIp) => {
         const { static: status, ip } = staticIp;
 
         if (!status) {
@@ -89,7 +89,7 @@ class Settings extends Component {
                         <button
                             type="button"
                             className="btn btn-outline-primary btn-sm"
-                            onClick={() => handleStaticIp()}
+                            onClick={this.handleStaticIp}
                         >
                             <Trans>set_static_ip</Trans>
                         </button>
@@ -111,12 +111,48 @@ class Settings extends Component {
         );
     };
 
+    handleAutofix = (type) => {
+        const {
+            webIp,
+            webPort,
+            dnsIp,
+            dnsPort,
+            handleFix,
+        } = this.props;
+
+        const web = { ip: webIp, port: webPort, autofix: false };
+        const dns = { ip: dnsIp, port: dnsPort, autofix: false };
+        const set_static_ip = false;
+
+        if (type === 'web') {
+            web.autofix = true;
+        } else {
+            dns.autofix = true;
+        }
+
+        handleFix(web, dns, set_static_ip);
+    };
+
+    handleStaticIp = () => {
+        const {
+            webIp,
+            webPort,
+            dnsIp,
+            dnsPort,
+            handleFix,
+        } = this.props;
+
+        const web = { ip: webIp, port: webPort, autofix: false };
+        const dns = { ip: dnsIp, port: dnsPort, autofix: false };
+        const set_static_ip = true;
+
+        handleFix(web, dns, set_static_ip);
+    };
+
     render() {
         const {
             handleSubmit,
             handleChange,
-            handleAutofix,
-            handleStaticIp,
             webIp,
             webPort,
             dnsIp,
@@ -185,7 +221,7 @@ class Settings extends Component {
                                         <button
                                             type="button"
                                             className="btn btn-secondary btn-sm ml-2"
-                                            onClick={() => handleAutofix('web', webIp, webPort)}
+                                            onClick={() => this.handleAutofix('web')}
                                         >
                                             <Trans>fix</Trans>
                                         </button>
@@ -256,7 +292,7 @@ class Settings extends Component {
                                             <button
                                                 type="button"
                                                 className="btn btn-secondary btn-sm ml-2"
-                                                onClick={() => handleAutofix('dns', dnsIp, dnsPort)}
+                                                onClick={() => this.handleAutofix('dns')}
                                             >
                                                 <Trans>fix</Trans>
                                             </button>
@@ -300,7 +336,7 @@ class Settings extends Component {
                         <Trans>static_ip_desc</Trans>
                     </div>
 
-                    {this.getStaticIpMessage(staticIp, handleStaticIp)}
+                    {this.getStaticIpMessage(staticIp)}
                 </div>
 
                 <Controls invalid={invalid} />
@@ -312,7 +348,7 @@ class Settings extends Component {
 Settings.propTypes = {
     handleSubmit: PropTypes.func.isRequired,
     handleChange: PropTypes.func,
-    handleAutofix: PropTypes.func,
+    handleFix: PropTypes.func.isRequired,
     validateForm: PropTypes.func,
     webIp: PropTypes.string.isRequired,
     dnsIp: PropTypes.string.isRequired,
@@ -329,7 +365,6 @@ Settings.propTypes = {
     invalid: PropTypes.bool.isRequired,
     initialValues: PropTypes.object,
     t: PropTypes.func.isRequired,
-    handleStaticIp: PropTypes.func.isRequired,
 };
 
 const selector = formValueSelector('install');
