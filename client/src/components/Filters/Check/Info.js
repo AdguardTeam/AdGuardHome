@@ -2,7 +2,17 @@ import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { withNamespaces } from 'react-i18next';
 
-import { checkFiltered, checkRewrite, checkBlackList, checkNotFilteredNotFound, checkWhiteList } from '../../../helpers/helpers';
+import {
+    checkFiltered,
+    checkRewrite,
+    checkBlackList,
+    checkNotFilteredNotFound,
+    checkWhiteList,
+    checkSafeSearch,
+    checkSafeBrowsing,
+    checkParental,
+} from '../../../helpers/helpers';
+import { FILTERED } from '../../../helpers/constants';
 
 const getFilterName = (id, filters, t) => {
     if (id === 0) {
@@ -18,7 +28,7 @@ const getFilterName = (id, filters, t) => {
     return '';
 };
 
-const getTitle = (reason, filterName, t) => {
+const getTitle = (reason, filterName, t, onlyFiltered) => {
     if (checkNotFilteredNotFound(reason)) {
         return t('check_not_found');
     }
@@ -41,6 +51,16 @@ const getTitle = (reason, filterName, t) => {
                     {filterName}
                 </div>
             </Fragment>
+        );
+    }
+
+    if (onlyFiltered) {
+        const filterKey = reason.replace(FILTERED, '');
+
+        return (
+            <div>
+                {t('query_log_filtered', { filter: filterKey })}
+            </div>
         );
     }
 
@@ -80,8 +100,23 @@ const Info = ({
     t,
 }) => {
     const filterName = getFilterName(filter_id, filters, t);
-    const title = getTitle(reason, filterName, t);
+    const onlyFiltered = checkSafeSearch(reason)
+        || checkSafeBrowsing(reason)
+        || checkParental(reason);
+    const title = getTitle(reason, filterName, t, onlyFiltered);
     const color = getColor(reason);
+
+    if (onlyFiltered) {
+        return (
+            <div className={`card mb-0 p-3 ${color}`}>
+                <div>
+                    <strong>{hostname}</strong>
+                </div>
+
+                <div>{title}</div>
+            </div>
+        );
+    }
 
     return (
         <div className={`card mb-0 p-3 ${color}`}>

@@ -10,8 +10,13 @@ import {
     formatTime,
     formatDateTime,
     isToday,
+    checkFiltered,
+    checkRewrite,
+    checkWhiteList,
+    checkBlackList,
+    checkBlockedService,
 } from '../../helpers/helpers';
-import { SERVICES, FILTERED_STATUS, TABLE_DEFAULT_PAGE_SIZE, CUSTOM_FILTERING_RULES_ID } from '../../helpers/constants';
+import { SERVICES, TABLE_DEFAULT_PAGE_SIZE, CUSTOM_FILTERING_RULES_ID, FILTERED } from '../../helpers/constants';
 import { getTrackerData } from '../../helpers/trackers/trackers';
 import { formatClientCell } from '../../helpers/formatClientCell';
 
@@ -27,7 +32,6 @@ import CellWrap from '../ui/CellWrap';
 const TABLE_FIRST_PAGE = 0;
 const INITIAL_REQUEST = true;
 const INITIAL_REQUEST_DATA = ['', TABLE_FIRST_PAGE, INITIAL_REQUEST];
-const FILTERED_REASON = 'Filtered';
 
 class Logs extends Component {
     componentDidMount() {
@@ -111,16 +115,6 @@ class Logs extends Component {
         );
     }
 
-    checkFiltered = reason => reason.indexOf(FILTERED_REASON) === 0;
-
-    checkRewrite = reason => reason === FILTERED_STATUS.REWRITE;
-
-    checkWhiteList = reason => reason === FILTERED_STATUS.NOT_FILTERED_WHITE_LIST;
-
-    checkBlackList = reason => reason === FILTERED_STATUS.FILTERED_BLACK_LIST;
-
-    checkBlockedService = reason => reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
-
     getDateCell = row => CellWrap(
         row,
         (isToday(row.value) ? formatTime : formatDateTime),
@@ -172,14 +166,14 @@ class Logs extends Component {
         const { t, filtering } = this.props;
         const { filters } = filtering;
 
-        const isFiltered = this.checkFiltered(reason);
-        const isBlackList = this.checkBlackList(reason);
-        const isRewrite = this.checkRewrite(reason);
-        const isWhiteList = this.checkWhiteList(reason);
-        const isBlockedService = this.checkBlockedService(reason);
+        const isFiltered = checkFiltered(reason);
+        const isBlackList = checkBlackList(reason);
+        const isRewrite = checkRewrite(reason);
+        const isWhiteList = checkWhiteList(reason);
+        const isBlockedService = checkBlockedService(reason);
         const isBlockedCnameIp = originalAnswer;
 
-        const filterKey = reason.replace(FILTERED_REASON, '');
+        const filterKey = reason.replace(FILTERED, '');
         const parsedFilteredReason = t('query_log_filtered', { filter: filterKey });
         const currentService = SERVICES.find(service => service.id === original.serviceName);
         const serviceName = currentService && currentService.name;
@@ -238,8 +232,8 @@ class Logs extends Component {
         const { original } = row;
         const { t } = this.props;
         const { reason, domain } = original;
-        const isFiltered = this.checkFiltered(reason);
-        const isRewrite = this.checkRewrite(reason);
+        const isFiltered = checkFiltered(reason);
+        const isRewrite = checkRewrite(reason);
 
         return (
             <Fragment>
@@ -360,15 +354,15 @@ class Logs extends Component {
 
                     const { reason } = rowInfo.original;
 
-                    if (this.checkFiltered(reason)) {
+                    if (checkFiltered(reason)) {
                         return {
                             className: 'red',
                         };
-                    } else if (this.checkWhiteList(reason)) {
+                    } else if (checkWhiteList(reason)) {
                         return {
                             className: 'green',
                         };
-                    } else if (this.checkRewrite(reason)) {
+                    } else if (checkRewrite(reason)) {
                         return {
                             className: 'blue',
                         };
