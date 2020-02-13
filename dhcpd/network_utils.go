@@ -43,8 +43,7 @@ func SetStaticIP(ifaceName string) error {
 	}
 
 	if runtime.GOOS == "darwin" {
-		return fmt.Errorf("cannot do that")
-		// return setStaticIPDarwin(ifaceName)
+		return setStaticIPDarwin(ifaceName)
 	}
 
 	return fmt.Errorf("Cannot set static IP on %s", runtime.GOOS)
@@ -190,7 +189,7 @@ func setStaticIPDarwin(ifaceName string) error {
 	}
 
 	args := make([]string, 0)
-	args = append(args, "-setdnsservers")
+	args = append(args, "-setdnsservers", portInfo.name)
 	args = append(args, dnsAddrs...)
 
 	// Setting DNS servers is necessary when configuring a static IP

@@ -67,14 +67,14 @@ func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 }
 
 type checkConfigReqEnt struct {
-	Port        int    `json:"port"`
-	IP          string `json:"ip"`
-	Autofix     bool   `json:"autofix"`
-	SetStaticIP bool   `json:"set_static_ip"`
+	Port    int    `json:"port"`
+	IP      string `json:"ip"`
+	Autofix bool   `json:"autofix"`
 }
 type checkConfigReq struct {
-	Web checkConfigReqEnt `json:"web"`
-	DNS checkConfigReqEnt `json:"dns"`
+	Web         checkConfigReqEnt `json:"web"`
+	DNS         checkConfigReqEnt `json:"dns"`
+	SetStaticIP bool              `json:"set_static_ip"`
 }
 
 type checkConfigRespEnt struct {
@@ -135,28 +135,7 @@ func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			respData.DNS.Status = fmt.Sprintf("%v", err)
 		} else {
-			interfaceName := util.GetInterfaceByIP(reqData.DNS.IP)
-			staticIPStatus := "yes"
-
-			if len(interfaceName) == 0 {
-				staticIPStatus = "error"
-				respData.StaticIP.Error = fmt.Sprintf("Couldn't find network interface by IP %s", reqData.DNS.IP)
-			} else if reqData.DNS.SetStaticIP {
-				err = dhcpd.SetStaticIP(interfaceName)
-				staticIPStatus = "error"
-				respData.StaticIP.Error = err.Error()
-			} else {
-				// check if we have a static IP
-				isStaticIP, err := dhcpd.HasStaticIP(interfaceName)
-				if err != nil {
-					staticIPStatus = "error"
-					respData.StaticIP.Error = err.Error()
-				} else if !isStaticIP {
-					staticIPStatus = "no"
-					respData.StaticIP.IP = util.GetSubnet(interfaceName)
-				}
-			}
-			respData.StaticIP.Static = staticIPStatus
+			respData.StaticIP = handleStaticIP(reqData.DNS.IP, reqData.SetStaticIP)
 		}
 	}
 
@@ -166,6 +145,46 @@ func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusInternalServerError, "Unable to marshal JSON: %s", err)
 		return
 	}
+}
+
+// handleStaticIP - handles static IP request
+// It either checks if we have a static IP
+// Or if set=true, it tries to set it
+func handleStaticIP(ip string, set bool) staticIPJSON {
+	resp := staticIPJSON{}
+
+	interfaceName := util.GetInterfaceByIP(ip)
+	resp.Static = "no"
+
+	if len(interfaceName) == 0 {
+		resp.Static = "error"
+		resp.Error = fmt.Sprintf("Couldn't find network interface by IP %s", ip)
+		return resp
+	}
+
+	if set {
+		// Try to set static IP for the specified interface
+		err := dhcpd.SetStaticIP(interfaceName)
+		if err != nil {
+			resp.Static = "error"
+			resp.Error = err.Error()
+			return resp
+		}
+	}
+
+	// Fallthrough here even if we set static IP
+	// Check if we have a static IP and return the details
+	isStaticIP, err := dhcpd.HasStaticIP(interfaceName)
+	if err != nil {
+		resp.Static = "error"
+		resp.Error = err.Error()
+	} else {
+		if isStaticIP {
+			resp.Static = "yes"
+		}
+		resp.IP = util.GetSubnet(interfaceName)
+	}
+	return resp
 }
 
 // Check if DNSStubListener is active
