@@ -36,6 +36,8 @@ class ClientsTable extends Component {
 
             if (values.tags) {
                 config.tags = values.tags.map(tag => tag.value);
+            } else {
+                config.tags = [];
             }
         }
 
