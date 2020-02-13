@@ -89,7 +89,7 @@ class Settings extends Component {
                         <button
                             type="button"
                             className="btn btn-outline-primary btn-sm"
-                            onClick={this.handleStaticIp}
+                            onClick={() => this.handleStaticIp(ip)}
                         >
                             <Trans>set_static_ip</Trans>
                         </button>
@@ -133,7 +133,7 @@ class Settings extends Component {
         handleFix(web, dns, set_static_ip);
     };
 
-    handleStaticIp = () => {
+    handleStaticIp = (ip) => {
         const {
             webIp,
             webPort,
@@ -146,7 +146,9 @@ class Settings extends Component {
         const dns = { ip: dnsIp, port: dnsPort, autofix: false };
         const set_static_ip = true;
 
-        handleFix(web, dns, set_static_ip);
+        if (window.confirm(this.props.t('confirm_static_ip', { ip }))) {
+            handleFix(web, dns, set_static_ip);
+        }
     };
 
     render() {

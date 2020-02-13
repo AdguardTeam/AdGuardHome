@@ -468,5 +468,6 @@
     "set_static_ip": "Set a static IP address",
     "install_static_ok": "Good news! The static IP address is already configured",
     "install_static_error": "AdGuard Home cannot configure it automatically for your OS. Please look for an instruction on how to do this manually",
-    "install_static_configure": "We have detected that a dynamic IP address is used — <0>{{ip}}</0>. Do you want to use it as your static address?"
+    "install_static_configure": "We have detected that a dynamic IP address is used — <0>{{ip}}</0>. Do you want to use it as your static address?",
+    "confirm_static_ip": "AdGuard Home will configure {{ip}} to be your static IP address. Do you want to proceed?"
 }
