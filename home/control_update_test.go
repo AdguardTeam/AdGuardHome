@@ -8,7 +8,6 @@ import (
 )
 
 func TestDoUpdate(t *testing.T) {
-
 	config.DNS.Port = 0
 	Context.workDir = "..." // set absolute path
 	newver := "v0.96"

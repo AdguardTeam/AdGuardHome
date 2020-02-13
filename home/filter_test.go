@@ -10,6 +10,11 @@ import (
 )
 
 func TestFilters(t *testing.T) {
+	dir := prepareTestDir()
+	defer func() { _ = os.RemoveAll(dir) }()
+
+	Context = homeContext{}
+	Context.workDir = dir
 	Context.client = &http.Client{
 		Timeout: time.Minute * 5,
 	}
@@ -33,5 +38,5 @@ func TestFilters(t *testing.T) {
 	assert.True(t, err == nil)
 
 	f.unload()
-	os.Remove(f.Path())
+	_ = os.Remove(f.Path())
 }

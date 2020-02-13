@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/util"
 	"github.com/AdguardTeam/golibs/file"
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -401,7 +402,7 @@ func parseFilterContents(contents []byte) (int, string) {
 
 	// Count lines in the filter
 	for len(data) != 0 {
-		line := SplitNext(&data, '\n')
+		line := util.SplitNext(&data, '\n')
 		if len(line) == 0 {
 			continue
 		}

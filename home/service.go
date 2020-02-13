@@ -7,6 +7,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/AdguardTeam/AdGuardHome/util"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/kardianos/service"
 )
@@ -229,7 +230,7 @@ func configureService(c *service.Config) {
 // returns command code or error if any
 func runInitdCommand(action string) (int, error) {
 	confPath := "/etc/init.d/" + serviceName
-	code, _, err := runCommand("sh", "-c", confPath+" "+action)
+	code, _, err := util.RunCommand("sh", "-c", confPath+" "+action)
 	return code, err
 }
 

@@ -1,14 +1,14 @@
 // +build !windows,!nacl,!plan9
 
-package home
+package util
 
 import (
 	"log"
 	"log/syslog"
 )
 
-// configureSyslog reroutes standard logger output to syslog
-func configureSyslog() error {
+// ConfigureSyslog reroutes standard logger output to syslog
+func ConfigureSyslog(serviceName string) error {
 	w, err := syslog.New(syslog.LOG_NOTICE|syslog.LOG_USER, serviceName)
 	if err != nil {
 		return err

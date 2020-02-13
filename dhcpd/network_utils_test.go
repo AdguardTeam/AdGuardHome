@@ -46,7 +46,7 @@ static routers=192.168.0.1
 static domain_name_servers=192.168.0.2
 
 `
-	s := setStaticIPDhcpcdConf("wlan0", "192.168.0.2/24", "192.168.0.1", "192.168.0.2")
+	s := updateStaticIPDhcpcdConf("wlan0", "192.168.0.2/24", "192.168.0.1", "192.168.0.2")
 	assert.Equal(t, dhcpcdConf, s)
 
 	// without gateway
@@ -56,6 +56,6 @@ static ip_address=192.168.0.2/24
 static domain_name_servers=192.168.0.2
 
 `
-	s = setStaticIPDhcpcdConf("wlan0", "192.168.0.2/24", "", "192.168.0.2")
+	s = updateStaticIPDhcpcdConf("wlan0", "192.168.0.2/24", "", "192.168.0.2")
 	assert.Equal(t, dhcpcdConf, s)
 }

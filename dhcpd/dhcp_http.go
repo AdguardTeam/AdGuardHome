@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/util"
+
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -121,7 +123,7 @@ type netInterfaceJSON struct {
 func (s *Server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{}
 
-	ifaces, err := GetValidNetInterfaces()
+	ifaces, err := util.GetValidNetInterfaces()
 	if err != nil {
 		httpError(r, w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
 		return
@@ -219,7 +221,7 @@ func (s *Server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 		staticIP["error"] = err.Error()
 	} else if !isStaticIP {
 		staticIPStatus = "no"
-		staticIP["ip"] = GetFullIP(interfaceName)
+		staticIP["ip"] = util.GetSubnet(interfaceName)
 	}
 	staticIP["static"] = staticIPStatus
 

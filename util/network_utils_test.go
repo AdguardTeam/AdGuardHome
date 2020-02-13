@@ -1,14 +1,12 @@
-package home
+package util
 
 import (
+	"log"
 	"testing"
-
-	"github.com/AdguardTeam/golibs/log"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestGetValidNetInterfacesForWeb(t *testing.T) {
-	ifaces, err := getValidNetInterfacesForWeb()
+	ifaces, err := GetValidNetInterfacesForWeb()
 	if err != nil {
 		t.Fatalf("Cannot get net interfaces: %s", err)
 	}
@@ -23,11 +21,4 @@ func TestGetValidNetInterfacesForWeb(t *testing.T) {
 
 		log.Printf("%v", iface)
 	}
-}
-
-func TestSplitNext(t *testing.T) {
-	s := " a,b , c "
-	assert.True(t, SplitNext(&s, ',') == "a")
-	assert.True(t, SplitNext(&s, ',') == "b")
-	assert.True(t, SplitNext(&s, ',') == "c" && len(s) == 0)
 }

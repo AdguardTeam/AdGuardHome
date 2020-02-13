@@ -1,12 +1,12 @@
-package home
+package util
 
 import "golang.org/x/sys/windows"
 
 // Set user-specified limit of how many fd's we can use
-func setRlimit(val uint) {
+func SetRlimit(val uint) {
 }
 
-func haveAdminRights() (bool, error) {
+func HaveAdminRights() (bool, error) {
 	var token windows.Token
 	h, _ := windows.GetCurrentProcess()
 	err := windows.OpenProcessToken(h, windows.TOKEN_QUERY, &token)

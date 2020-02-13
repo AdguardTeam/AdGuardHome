@@ -20,6 +20,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/util"
+
+	"github.com/joomcode/errorx"
+
 	"github.com/AdguardTeam/AdGuardHome/isdelve"
 
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
@@ -193,7 +197,7 @@ func run(args options) {
 
 	if (runtime.GOOS == "linux" || runtime.GOOS == "darwin") &&
 		config.RlimitNoFile != 0 {
-		setRlimit(config.RlimitNoFile)
+		util.SetRlimit(config.RlimitNoFile)
 	}
 
 	// override bind host/port from the console
@@ -327,7 +331,7 @@ func httpServerLoop() {
 // Check if the current user has root (administrator) rights
 //  and if not, ask and try to run as root
 func requireAdminRights() {
-	admin, _ := haveAdminRights()
+	admin, _ := util.HaveAdminRights()
 	if //noinspection ALL
 	admin || isdelve.Enabled {
 		return
@@ -412,7 +416,7 @@ func configureLogger(args options) {
 
 	if ls.LogFile == configSyslog {
 		// Use syslog where it is possible and eventlog on Windows
-		err := configureSyslog()
+		err := util.ConfigureSyslog(serviceName)
 		if err != nil {
 			log.Fatalf("cannot initialize syslog: %s", err)
 		}
@@ -448,9 +452,9 @@ func stopHTTPServer() {
 	log.Info("Stopping HTTP server...")
 	Context.httpsServer.shutdown = true
 	if Context.httpsServer.server != nil {
-		Context.httpsServer.server.Shutdown(context.TODO())
+		_ = Context.httpsServer.server.Shutdown(context.TODO())
 	}
-	Context.httpServer.Shutdown(context.TODO())
+	_ = Context.httpServer.Shutdown(context.TODO())
 	log.Info("Stopped HTTP server")
 }
 
@@ -580,7 +584,7 @@ func printHTTPAddresses(proto string) {
 		}
 	} else if config.BindHost == "0.0.0.0" {
 		log.Println("AdGuard Home is available on the following addresses:")
-		ifaces, err := getValidNetInterfacesForWeb()
+		ifaces, err := util.GetValidNetInterfacesForWeb()
 		if err != nil {
 			// That's weird, but we'll ignore it
 			address = net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
@@ -596,4 +600,61 @@ func printHTTPAddresses(proto string) {
 		address = net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
 		log.Printf("Go to %s://%s", proto, address)
 	}
+}
+
+// -------------------
+// first run / install
+// -------------------
+func detectFirstRun() bool {
+	configfile := Context.configFilename
+	if !filepath.IsAbs(configfile) {
+		configfile = filepath.Join(Context.workDir, Context.configFilename)
+	}
+	_, err := os.Stat(configfile)
+	if !os.IsNotExist(err) {
+		// do nothing, file exists
+		return false
+	}
+	return true
+}
+
+// Connect to a remote server resolving hostname using our own DNS server
+func customDialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	log.Tracef("network:%v  addr:%v", network, addr)
+
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return nil, err
+	}
+
+	dialer := &net.Dialer{
+		Timeout: time.Minute * 5,
+	}
+
+	if net.ParseIP(host) != nil || config.DNS.Port == 0 {
+		con, err := dialer.DialContext(ctx, network, addr)
+		return con, err
+	}
+
+	addrs, e := Context.dnsServer.Resolve(host)
+	log.Debug("dnsServer.Resolve: %s: %v", host, addrs)
+	if e != nil {
+		return nil, e
+	}
+
+	if len(addrs) == 0 {
+		return nil, fmt.Errorf("couldn't lookup host: %s", host)
+	}
+
+	var dialErrs []error
+	for _, a := range addrs {
+		addr = net.JoinHostPort(a.String(), port)
+		con, err := dialer.DialContext(ctx, network, addr)
+		if err != nil {
+			dialErrs = append(dialErrs, err)
+			continue
+		}
+		return con, err
+	}
+	return nil, errorx.DecorateMany(fmt.Sprintf("couldn't dial to %s", addr), dialErrs...)
 }

@@ -1,4 +1,4 @@
-package home
+package util
 
 import (
 	"errors"
@@ -10,23 +10,48 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/dhcpd"
+	"github.com/AdguardTeam/golibs/log"
 
 	"github.com/joomcode/errorx"
 )
 
-type netInterface struct {
-	Name         string
-	MTU          int
-	HardwareAddr string
-	Addresses    []string
-	Flags        string
+// NetInterface represents a list of network interfaces
+type NetInterface struct {
+	Name         string   // Network interface name
+	MTU          int      // MTU
+	HardwareAddr string   // Hardware address
+	Addresses    []string // Array with the network interface addresses
+	Subnets      []string // Array with CIDR addresses of this network interface
+	Flags        string   // Network interface flags (up, broadcast, etc)
+}
+
+// GetValidNetInterfaces returns interfaces that are eligible for DNS and/or DHCP
+// invalid interface is a ppp interface or the one that doesn't allow broadcasts
+func GetValidNetInterfaces() ([]net.Interface, error) {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return nil, fmt.Errorf("Couldn't get list of interfaces: %s", err)
+	}
+
+	netIfaces := []net.Interface{}
+
+	for i := range ifaces {
+		if ifaces[i].Flags&net.FlagPointToPoint != 0 {
+			// this interface is ppp, we're not interested in this one
+			continue
+		}
+
+		iface := ifaces[i]
+		netIfaces = append(netIfaces, iface)
+	}
+
+	return netIfaces, nil
 }
 
 // getValidNetInterfacesMap returns interfaces that are eligible for DNS and WEB only
 // we do not return link-local addresses here
-func getValidNetInterfacesForWeb() ([]netInterface, error) {
-	ifaces, err := dhcpd.GetValidNetInterfaces()
+func GetValidNetInterfacesForWeb() ([]NetInterface, error) {
+	ifaces, err := GetValidNetInterfaces()
 	if err != nil {
 		return nil, errorx.Decorate(err, "Couldn't get interfaces")
 	}
@@ -34,7 +59,7 @@ func getValidNetInterfacesForWeb() ([]netInterface, error) {
 		return nil, errors.New("couldn't find any legible interface")
 	}
 
-	var netInterfaces []netInterface
+	var netInterfaces []NetInterface
 
 	for _, iface := range ifaces {
 		addrs, e := iface.Addrs()
@@ -42,7 +67,7 @@ func getValidNetInterfacesForWeb() ([]netInterface, error) {
 			return nil, errorx.Decorate(e, "Failed to get addresses for interface %s", iface.Name)
 		}
 
-		netIface := netInterface{
+		netIface := NetInterface{
 			Name:         iface.Name,
 			MTU:          iface.MTU,
 			HardwareAddr: iface.HardwareAddr.String(),
@@ -52,19 +77,26 @@ func getValidNetInterfacesForWeb() ([]netInterface, error) {
 			netIface.Flags = iface.Flags.String()
 		}
 
-		// we don't want link-local addresses in json, so skip them
+		// Collect network interface addresses
 		for _, addr := range addrs {
-			ipnet, ok := addr.(*net.IPNet)
+			ipNet, ok := addr.(*net.IPNet)
 			if !ok {
 				// not an IPNet, should not happen
 				return nil, fmt.Errorf("got iface.Addrs() element %s that is not net.IPNet, it is %T", addr, addr)
 			}
 			// ignore link-local
-			if ipnet.IP.IsLinkLocalUnicast() {
+			if ipNet.IP.IsLinkLocalUnicast() {
 				continue
 			}
-			netIface.Addresses = append(netIface.Addresses, ipnet.IP.String())
+			// ignore IPv6
+			if ipNet.IP.To4() == nil {
+				continue
+			}
+			netIface.Addresses = append(netIface.Addresses, ipNet.IP.String())
+			netIface.Subnets = append(netIface.Subnets, ipNet.String())
 		}
+
+		// Discard interfaces with no addresses
 		if len(netIface.Addresses) != 0 {
 			netInterfaces = append(netInterfaces, netIface)
 		}
@@ -74,8 +106,8 @@ func getValidNetInterfacesForWeb() ([]netInterface, error) {
 }
 
 // Get interface name by its IP address.
-func getInterfaceByIP(ip string) string {
-	ifaces, err := getValidNetInterfacesForWeb()
+func GetInterfaceByIP(ip string) string {
+	ifaces, err := GetValidNetInterfacesForWeb()
 	if err != nil {
 		return ""
 	}
@@ -91,8 +123,26 @@ func getInterfaceByIP(ip string) string {
 	return ""
 }
 
+// Get IP address with netmask for the specified interface
+// Returns an empty string if it fails to find it
+func GetSubnet(ifaceName string) string {
+	netIfaces, err := GetValidNetInterfacesForWeb()
+	if err != nil {
+		log.Error("Could not get network interfaces info: %v", err)
+		return ""
+	}
+
+	for _, netIface := range netIfaces {
+		if netIface.Name == ifaceName && len(netIface.Subnets) > 0 {
+			return netIface.Subnets[0]
+		}
+	}
+
+	return ""
+}
+
 // checkPortAvailable is not a cheap test to see if the port is bindable, because it's actually doing the bind momentarily
-func checkPortAvailable(host string, port int) error {
+func CheckPortAvailable(host string, port int) error {
 	ln, err := net.Listen("tcp", net.JoinHostPort(host, strconv.Itoa(port)))
 	if err != nil {
 		return err
@@ -105,7 +155,7 @@ func checkPortAvailable(host string, port int) error {
 	return nil
 }
 
-func checkPacketPortAvailable(host string, port int) error {
+func CheckPacketPortAvailable(host string, port int) error {
 	ln, err := net.ListenPacket("udp", net.JoinHostPort(host, strconv.Itoa(port)))
 	if err != nil {
 		return err
@@ -119,7 +169,7 @@ func checkPacketPortAvailable(host string, port int) error {
 }
 
 // check if error is "address already in use"
-func errorIsAddrInUse(err error) bool {
+func ErrorIsAddrInUse(err error) bool {
 	errOpError, ok := err.(*net.OpError)
 	if !ok {
 		return false

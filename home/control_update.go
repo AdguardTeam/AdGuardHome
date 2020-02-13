@@ -17,6 +17,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/util"
+
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -196,7 +198,7 @@ func getUpdateInfo(jsonData []byte) (*updateInfo, error) {
 		binName = "AdGuardHome.exe"
 	}
 	u.curBinName = filepath.Join(workDir, binName)
-	if !fileExists(u.curBinName) {
+	if !util.FileExists(u.curBinName) {
 		return nil, fmt.Errorf("Executable file %s doesn't exist", u.curBinName)
 	}
 	u.bkpBinName = filepath.Join(u.backupDir, binName)

@@ -13,6 +13,8 @@ import (
 	"runtime"
 	"strconv"
 
+	"github.com/AdguardTeam/AdGuardHome/util"
+
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 
 	"github.com/AdguardTeam/golibs/log"
@@ -38,7 +40,7 @@ func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 	data.WebPort = 80
 	data.DNSPort = 53
 
-	ifaces, err := getValidNetInterfacesForWeb()
+	ifaces, err := util.GetValidNetInterfacesForWeb()
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
 		return
@@ -101,16 +103,16 @@ func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if reqData.Web.Port != 0 && reqData.Web.Port != config.BindPort {
-		err = checkPortAvailable(reqData.Web.IP, reqData.Web.Port)
+		err = util.CheckPortAvailable(reqData.Web.IP, reqData.Web.Port)
 		if err != nil {
 			respData.Web.Status = fmt.Sprintf("%v", err)
 		}
 	}
 
 	if reqData.DNS.Port != 0 {
-		err = checkPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+		err = util.CheckPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
 
-		if errorIsAddrInUse(err) {
+		if util.ErrorIsAddrInUse(err) {
 			canAutofix := checkDNSStubListener()
 			if canAutofix && reqData.DNS.Autofix {
 
@@ -119,7 +121,7 @@ func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 					log.Error("Couldn't disable DNSStubListener: %s", err)
 				}
 
-				err = checkPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+				err = util.CheckPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
 				canAutofix = false
 			}
 
@@ -127,26 +129,22 @@ func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err == nil {
-			err = checkPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+			err = util.CheckPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
 		}
 
 		if err != nil {
 			respData.DNS.Status = fmt.Sprintf("%v", err)
-
 		} else {
-
-			interfaceName := getInterfaceByIP(reqData.DNS.IP)
+			interfaceName := util.GetInterfaceByIP(reqData.DNS.IP)
 			staticIPStatus := "yes"
 
 			if len(interfaceName) == 0 {
 				staticIPStatus = "error"
 				respData.StaticIP.Error = fmt.Sprintf("Couldn't find network interface by IP %s", reqData.DNS.IP)
-
 			} else if reqData.DNS.SetStaticIP {
 				err = dhcpd.SetStaticIP(interfaceName)
 				staticIPStatus = "error"
 				respData.StaticIP.Error = err.Error()
-
 			} else {
 				// check if we have a static IP
 				isStaticIP, err := dhcpd.HasStaticIP(interfaceName)
@@ -155,7 +153,7 @@ func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 					respData.StaticIP.Error = err.Error()
 				} else if !isStaticIP {
 					staticIPStatus = "no"
-					respData.StaticIP.IP = dhcpd.GetFullIP(interfaceName)
+					respData.StaticIP.IP = util.GetSubnet(interfaceName)
 				}
 			}
 			respData.StaticIP.Static = staticIPStatus
@@ -279,7 +277,7 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 
 	// validate that hosts and ports are bindable
 	if restartHTTP {
-		err = checkPortAvailable(newSettings.Web.IP, newSettings.Web.Port)
+		err = util.CheckPortAvailable(newSettings.Web.IP, newSettings.Web.Port)
 		if err != nil {
 			httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s",
 				net.JoinHostPort(newSettings.Web.IP, strconv.Itoa(newSettings.Web.Port)), err)
@@ -287,13 +285,13 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = checkPacketPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
+	err = util.CheckPacketPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
 	}
 
-	err = checkPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
+	err = util.CheckPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
