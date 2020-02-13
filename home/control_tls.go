@@ -20,6 +20,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/util"
+
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/joomcode/errorx"
 )
@@ -84,7 +86,7 @@ func handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 		alreadyRunning = true
 	}
 	if !alreadyRunning {
-		err = checkPortAvailable(config.BindHost, data.PortHTTPS)
+		err = util.CheckPortAvailable(config.BindHost, data.PortHTTPS)
 		if err != nil {
 			httpError(w, http.StatusBadRequest, "port %d is not available, cannot enable HTTPS on it", data.PortHTTPS)
 			return
@@ -114,7 +116,7 @@ func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		alreadyRunning = true
 	}
 	if !alreadyRunning {
-		err = checkPortAvailable(config.BindHost, data.PortHTTPS)
+		err = util.CheckPortAvailable(config.BindHost, data.PortHTTPS)
 		if err != nil {
 			httpError(w, http.StatusBadRequest, "port %d is not available, cannot enable HTTPS on it", data.PortHTTPS)
 			return

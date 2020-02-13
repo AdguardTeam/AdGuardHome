@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/util"
 	"github.com/AdguardTeam/golibs/file"
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -401,7 +402,7 @@ func parseFilterContents(contents []byte) (int, string) {
 
 	// Count lines in the filter
 	for len(data) != 0 {
-		line := SplitNext(&data, '\n')
+		line := util.SplitNext(&data, '\n')
 		if len(line) == 0 {
 			continue
 		}
@@ -424,7 +425,7 @@ func parseFilterContents(contents []byte) (int, string) {
 func (filter *filter) update() (bool, error) {
 	log.Tracef("Downloading update for filter %d from %s", filter.ID, filter.URL)
 
-	resp, err := config.client.Get(filter.URL)
+	resp, err := Context.client.Get(filter.URL)
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}
@@ -538,7 +539,7 @@ func (filter *filter) unload() {
 
 // Path to the filter contents
 func (filter *filter) Path() string {
-	return filepath.Join(config.getDataDir(), filterDir, strconv.FormatInt(filter.ID, 10)+".txt")
+	return filepath.Join(Context.getDataDir(), filterDir, strconv.FormatInt(filter.ID, 10)+".txt")
 }
 
 // LastTimeUpdated returns the time when the filter was last time updated

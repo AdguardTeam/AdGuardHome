@@ -7,25 +7,16 @@ import flow from 'lodash/flow';
 
 import Controls from './Controls';
 import AddressList from './AddressList';
+
 import { getInterfaceIp } from '../../helpers/helpers';
 import { ALL_INTERFACES_IP } from '../../helpers/constants';
-import { renderInputField } from '../../helpers/form';
+import { renderInputField, required, validInstallPort, toNumber } from '../../helpers/form';
 
-const required = (value) => {
-    if (value || value === 0) {
-        return false;
-    }
-    return <Trans>form_error_required</Trans>;
+const STATIC_STATUS = {
+    ENABLED: 'yes',
+    DISABLED: 'no',
+    ERROR: 'error',
 };
-
-const port = (value) => {
-    if (value < 1 || value > 65535) {
-        return <Trans>form_error_port</Trans>;
-    }
-    return false;
-};
-
-const toNumber = value => value && parseInt(value, 10);
 
 const renderInterfaces = (interfaces => (
     Object.keys(interfaces).map((item) => {
@@ -79,11 +70,91 @@ class Settings extends Component {
         });
     }
 
+    getStaticIpMessage = (staticIp) => {
+        const { static: status, ip } = staticIp;
+
+        if (!status) {
+            return '';
+        }
+
+        return (
+            <Fragment>
+                {status === STATIC_STATUS.DISABLED && (
+                    <Fragment>
+                        <div className="mb-2">
+                            <Trans values={{ ip }} components={[<strong key="0">text</strong>]}>
+                                install_static_configure
+                            </Trans>
+                        </div>
+                        <button
+                            type="button"
+                            className="btn btn-outline-primary btn-sm"
+                            onClick={() => this.handleStaticIp(ip)}
+                        >
+                            <Trans>set_static_ip</Trans>
+                        </button>
+                    </Fragment>
+                )}
+                {status === STATIC_STATUS.ERROR && (
+                    <div className="text-danger">
+                        <Trans>install_static_error</Trans>
+                    </div>
+                )}
+                {status === STATIC_STATUS.ENABLED && (
+                    <div className="text-success">
+                        <Trans>
+                            install_static_ok
+                        </Trans>
+                    </div>
+                )}
+            </Fragment>
+        );
+    };
+
+    handleAutofix = (type) => {
+        const {
+            webIp,
+            webPort,
+            dnsIp,
+            dnsPort,
+            handleFix,
+        } = this.props;
+
+        const web = { ip: webIp, port: webPort, autofix: false };
+        const dns = { ip: dnsIp, port: dnsPort, autofix: false };
+        const set_static_ip = false;
+
+        if (type === 'web') {
+            web.autofix = true;
+        } else {
+            dns.autofix = true;
+        }
+
+        handleFix(web, dns, set_static_ip);
+    };
+
+    handleStaticIp = (ip) => {
+        const {
+            webIp,
+            webPort,
+            dnsIp,
+            dnsPort,
+            handleFix,
+        } = this.props;
+
+        const web = { ip: webIp, port: webPort, autofix: false };
+        const dns = { ip: dnsIp, port: dnsPort, autofix: false };
+        const set_static_ip = true;
+
+        if (window.confirm(this.props.t('confirm_static_ip', { ip }))) {
+            handleFix(web, dns, set_static_ip);
+        }
+    };
+
     render() {
         const {
             handleSubmit,
             handleChange,
-            handleAutofix,
             webIp,
             webPort,
             dnsIp,
@@ -100,6 +171,7 @@ class Settings extends Component {
             status: dnsStatus,
             can_autofix: isDnsFixAvailable,
         } = config.dns;
+        const { staticIp } = config;
 
         return (
             <form className="setup__step" onSubmit={handleSubmit}>
@@ -137,7 +209,7 @@ class Settings extends Component {
                                     type="number"
                                     className="form-control"
                                     placeholder="80"
-                                    validate={[port, required]}
+                                    validate={[validInstallPort, required]}
                                     normalize={toNumber}
                                     onChange={handleChange}
                                 />
@@ -151,11 +223,12 @@ class Settings extends Component {
                                         <button
                                             type="button"
                                             className="btn btn-secondary btn-sm ml-2"
-                                            onClick={() => handleAutofix('web', webIp, webPort)}
+                                            onClick={() => this.handleAutofix('web')}
                                         >
                                             <Trans>fix</Trans>
                                         </button>
                                     }
+                                    <hr className="divider--small" />
                                 </div>
                             }
                         </div>
@@ -171,6 +244,7 @@ class Settings extends Component {
                         </div>
                     </div>
                 </div>
+
                 <div className="setup__group">
                     <div className="setup__subtitle">
                         <Trans>install_settings_dns</Trans>
@@ -205,7 +279,7 @@ class Settings extends Component {
                                     type="number"
                                     className="form-control"
                                     placeholder="80"
-                                    validate={[port, required]}
+                                    validate={[validInstallPort, required]}
                                     normalize={toNumber}
                                     onChange={handleChange}
                                 />
@@ -220,7 +294,7 @@ class Settings extends Component {
                                             <button
                                                 type="button"
                                                 className="btn btn-secondary btn-sm ml-2"
-                                                onClick={() => handleAutofix('dns', dnsIp, dnsPort)}
+                                                onClick={() => this.handleAutofix('dns')}
                                             >
                                                 <Trans>fix</Trans>
                                             </button>
@@ -237,6 +311,7 @@ class Settings extends Component {
                                             <Trans>autofix_warning_result</Trans>
                                         </p>
                                     </div>
+                                    <hr className="divider--small" />
                                 </Fragment>
                             }
                         </div>
@@ -253,6 +328,19 @@ class Settings extends Component {
                         </div>
                     </div>
                 </div>
+
+                <div className="setup__group">
+                    <div className="setup__subtitle">
+                        <Trans>static_ip</Trans>
+                    </div>
+
+                    <div className="mb-2">
+                        <Trans>static_ip_desc</Trans>
+                    </div>
+
+                    {this.getStaticIpMessage(staticIp)}
+                </div>
+
                 <Controls invalid={invalid} />
             </form>
         );
@@ -262,7 +350,7 @@ class Settings extends Component {
 Settings.propTypes = {
     handleSubmit: PropTypes.func.isRequired,
     handleChange: PropTypes.func,
-    handleAutofix: PropTypes.func,
+    handleFix: PropTypes.func.isRequired,
     validateForm: PropTypes.func,
     webIp: PropTypes.string.isRequired,
     dnsIp: PropTypes.string.isRequired,
@@ -278,6 +366,7 @@ Settings.propTypes = {
     interfaces: PropTypes.object.isRequired,
     invalid: PropTypes.bool.isRequired,
     initialValues: PropTypes.object,
+    t: PropTypes.func.isRequired,
 };
 
 const selector = formValueSelector('install');

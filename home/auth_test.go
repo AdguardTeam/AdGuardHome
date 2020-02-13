@@ -100,7 +100,7 @@ func TestAuthHTTP(t *testing.T) {
 	users := []User{
 		User{Name: "name", PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2"},
 	}
-	config.auth = InitAuth(fn, users, 60)
+	Context.auth = InitAuth(fn, users, 60)
 
 	handlerCalled := false
 	handler := func(w http.ResponseWriter, r *http.Request) {
@@ -129,7 +129,7 @@ func TestAuthHTTP(t *testing.T) {
 	assert.True(t, handlerCalled)
 
 	// perform login
-	cookie := config.auth.httpCookie(loginJSON{Name: "name", Password: "password"})
+	cookie := Context.auth.httpCookie(loginJSON{Name: "name", Password: "password"})
 	assert.True(t, cookie != "")
 
 	// get /
@@ -173,5 +173,5 @@ func TestAuthHTTP(t *testing.T) {
 	assert.True(t, handlerCalled)
 	r.Header.Del("Cookie")
 
-	config.auth.Close()
+	Context.auth.Close()
 }

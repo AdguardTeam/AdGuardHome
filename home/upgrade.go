@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/AdguardTeam/AdGuardHome/util"
+
 	"github.com/AdguardTeam/golibs/file"
 	"github.com/AdguardTeam/golibs/log"
 	"golang.org/x/crypto/bcrypt"
@@ -114,9 +116,9 @@ func upgradeConfigSchema(oldVersion int, diskConfig *map[string]interface{}) err
 // The first schema upgrade:
 // No more "dnsfilter.txt", filters are now kept in data/filters/
 func upgradeSchema0to1(diskConfig *map[string]interface{}) error {
-	log.Printf("%s(): called", _Func())
+	log.Printf("%s(): called", util.FuncName())
 
-	dnsFilterPath := filepath.Join(config.ourWorkingDir, "dnsfilter.txt")
+	dnsFilterPath := filepath.Join(Context.workDir, "dnsfilter.txt")
 	if _, err := os.Stat(dnsFilterPath); !os.IsNotExist(err) {
 		log.Printf("Deleting %s as we don't need it anymore", dnsFilterPath)
 		err = os.Remove(dnsFilterPath)
@@ -135,9 +137,9 @@ func upgradeSchema0to1(diskConfig *map[string]interface{}) error {
 // coredns is now dns in config
 // delete 'Corefile', since we don't use that anymore
 func upgradeSchema1to2(diskConfig *map[string]interface{}) error {
-	log.Printf("%s(): called", _Func())
+	log.Printf("%s(): called", util.FuncName())
 
-	coreFilePath := filepath.Join(config.ourWorkingDir, "Corefile")
+	coreFilePath := filepath.Join(Context.workDir, "Corefile")
 	if _, err := os.Stat(coreFilePath); !os.IsNotExist(err) {
 		log.Printf("Deleting %s as we don't need it anymore", coreFilePath)
 		err = os.Remove(coreFilePath)
@@ -159,7 +161,7 @@ func upgradeSchema1to2(diskConfig *map[string]interface{}) error {
 // Third schema upgrade:
 // Bootstrap DNS becomes an array
 func upgradeSchema2to3(diskConfig *map[string]interface{}) error {
-	log.Printf("%s(): called", _Func())
+	log.Printf("%s(): called", util.FuncName())
 
 	// Let's read dns configuration from diskConfig
 	dnsConfig, ok := (*diskConfig)["dns"]
@@ -196,7 +198,7 @@ func upgradeSchema2to3(diskConfig *map[string]interface{}) error {
 
 // Add use_global_blocked_services=true setting for existing "clients" array
 func upgradeSchema3to4(diskConfig *map[string]interface{}) error {
-	log.Printf("%s(): called", _Func())
+	log.Printf("%s(): called", util.FuncName())
 
 	(*diskConfig)["schema_version"] = 4
 
@@ -233,7 +235,7 @@ func upgradeSchema3to4(diskConfig *map[string]interface{}) error {
 //   password: "..."
 // ...
 func upgradeSchema4to5(diskConfig *map[string]interface{}) error {
-	log.Printf("%s(): called", _Func())
+	log.Printf("%s(): called", util.FuncName())
 
 	(*diskConfig)["schema_version"] = 5
 
@@ -288,7 +290,7 @@ func upgradeSchema4to5(diskConfig *map[string]interface{}) error {
 //   - 127.0.0.1
 //   - ...
 func upgradeSchema5to6(diskConfig *map[string]interface{}) error {
-	log.Printf("%s(): called", _Func())
+	log.Printf("%s(): called", util.FuncName())
 
 	(*diskConfig)["schema_version"] = 6
 

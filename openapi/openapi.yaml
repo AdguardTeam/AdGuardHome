@@ -1831,6 +1831,9 @@ definitions:
                 $ref: "#/definitions/CheckConfigRequestInfo"
             web:
                 $ref: "#/definitions/CheckConfigRequestInfo"
+            set_static_ip:
+                type: "boolean"
+                example: false
     CheckConfigRequestInfo:
         type: "object"
         properties:
@@ -1851,6 +1854,8 @@ definitions:
                 $ref: "#/definitions/CheckConfigResponseInfo"
             web:
                 $ref: "#/definitions/CheckConfigResponseInfo"
+            static_ip:
+                $ref: "#/definitions/CheckConfigStaticIpInfo"
     CheckConfigResponseInfo:
         type: "object"
         properties:
@@ -1860,6 +1865,23 @@ definitions:
             can_autofix:
                 type: "boolean"
                 example: false
+    CheckConfigStaticIpInfo:
+        type: "object"
+        properties:
+            static:
+                type: "string"
+                example: "no"
+                description: "Can be: yes, no, error"
+            ip:
+                type: "string"
+                example: "192.168.1.1"
+                description: "Current dynamic IP address. Set if static=no"
+            error:
+                type: "string"
+                example: ""
+                description: "Error text. Set if static=error"
+
+
     InitialConfiguration:
         type: "object"
         description: "AdGuard Home initial configuration (for the first-install wizard)"

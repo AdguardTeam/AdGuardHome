@@ -210,9 +210,9 @@ func handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleFilteringRefresh(w http.ResponseWriter, r *http.Request) {
-	config.controlLock.Unlock()
+	Context.controlLock.Unlock()
 	nUpdated, err := refreshFilters()
-	config.controlLock.Lock()
+	Context.controlLock.Lock()
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "%s", err)
 		return

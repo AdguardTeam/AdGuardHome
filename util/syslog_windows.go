@@ -1,4 +1,4 @@
-package home
+package util
 
 import (
 	"log"
@@ -17,7 +17,7 @@ func (w *eventLogWriter) Write(b []byte) (int, error) {
 	return len(b), w.el.Info(1, string(b))
 }
 
-func configureSyslog() error {
+func ConfigureSyslog(serviceName string) error {
 	// Note that the eventlog src is the same as the service name
 	// Otherwise, we will get "the description for event id cannot be found" warning in every log record
 

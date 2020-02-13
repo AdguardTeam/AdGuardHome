@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/util"
+
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -61,7 +63,7 @@ func whoisParse(data string) map[string]string {
 	descr := ""
 	netname := ""
 	for len(data) != 0 {
-		ln := SplitNext(&data, '\n')
+		ln := util.SplitNext(&data, '\n')
 		if len(ln) == 0 || ln[0] == '#' || ln[0] == '%' {
 			continue
 		}

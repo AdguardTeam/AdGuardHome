@@ -119,3 +119,8 @@
 .setup__error {
     margin: -5px 0 5px;
 }
+
+.divider--small {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}

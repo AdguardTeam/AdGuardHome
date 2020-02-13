@@ -13,6 +13,10 @@ import (
 	"runtime"
 	"strconv"
 
+	"github.com/AdguardTeam/AdGuardHome/util"
+
+	"github.com/AdguardTeam/AdGuardHome/dhcpd"
+
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -22,13 +26,21 @@ type firstRunData struct {
 	Interfaces map[string]interface{} `json:"interfaces"`
 }
 
+type netInterfaceJSON struct {
+	Name         string   `json:"name"`
+	MTU          int      `json:"mtu"`
+	HardwareAddr string   `json:"hardware_address"`
+	Addresses    []string `json:"ip_addresses"`
+	Flags        string   `json:"flags"`
+}
+
 // Get initial installation settings
 func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 	data := firstRunData{}
 	data.WebPort = 80
 	data.DNSPort = 53
 
-	ifaces, err := getValidNetInterfacesForWeb()
+	ifaces, err := util.GetValidNetInterfacesForWeb()
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
 		return
@@ -36,7 +48,14 @@ func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 
 	data.Interfaces = make(map[string]interface{})
 	for _, iface := range ifaces {
-		data.Interfaces[iface.Name] = iface
+		ifaceJSON := netInterfaceJSON{
+			Name:         iface.Name,
+			MTU:          iface.MTU,
+			HardwareAddr: iface.HardwareAddr,
+			Addresses:    iface.Addresses,
+			Flags:        iface.Flags,
+		}
+		data.Interfaces[iface.Name] = ifaceJSON
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -53,17 +72,24 @@ type checkConfigReqEnt struct {
 	Autofix bool   `json:"autofix"`
 }
 type checkConfigReq struct {
-	Web checkConfigReqEnt `json:"web"`
-	DNS checkConfigReqEnt `json:"dns"`
+	Web         checkConfigReqEnt `json:"web"`
+	DNS         checkConfigReqEnt `json:"dns"`
+	SetStaticIP bool              `json:"set_static_ip"`
 }
 
 type checkConfigRespEnt struct {
 	Status     string `json:"status"`
 	CanAutofix bool   `json:"can_autofix"`
 }
+type staticIPJSON struct {
+	Static string `json:"static"`
+	IP     string `json:"ip"`
+	Error  string `json:"error"`
+}
 type checkConfigResp struct {
-	Web checkConfigRespEnt `json:"web"`
-	DNS checkConfigRespEnt `json:"dns"`
+	Web      checkConfigRespEnt `json:"web"`
+	DNS      checkConfigRespEnt `json:"dns"`
+	StaticIP staticIPJSON       `json:"static_ip"`
 }
 
 // Check if ports are available, respond with results
@@ -77,16 +103,16 @@ func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if reqData.Web.Port != 0 && reqData.Web.Port != config.BindPort {
-		err = checkPortAvailable(reqData.Web.IP, reqData.Web.Port)
+		err = util.CheckPortAvailable(reqData.Web.IP, reqData.Web.Port)
 		if err != nil {
 			respData.Web.Status = fmt.Sprintf("%v", err)
 		}
 	}
 
 	if reqData.DNS.Port != 0 {
-		err = checkPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+		err = util.CheckPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
 
-		if errorIsAddrInUse(err) {
+		if util.ErrorIsAddrInUse(err) {
 			canAutofix := checkDNSStubListener()
 			if canAutofix && reqData.DNS.Autofix {
 
@@ -95,7 +121,7 @@ func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 					log.Error("Couldn't disable DNSStubListener: %s", err)
 				}
 
-				err = checkPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+				err = util.CheckPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
 				canAutofix = false
 			}
 
@@ -103,11 +129,13 @@ func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err == nil {
-			err = checkPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+			err = util.CheckPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
 		}
 
 		if err != nil {
 			respData.DNS.Status = fmt.Sprintf("%v", err)
+		} else {
+			respData.StaticIP = handleStaticIP(reqData.DNS.IP, reqData.SetStaticIP)
 		}
 	}
 
@@ -117,6 +145,46 @@ func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusInternalServerError, "Unable to marshal JSON: %s", err)
 		return
 	}
+}
+
+// handleStaticIP - handles static IP request
+// It either checks if we have a static IP
+// Or if set=true, it tries to set it
+func handleStaticIP(ip string, set bool) staticIPJSON {
+	resp := staticIPJSON{}
+
+	interfaceName := util.GetInterfaceByIP(ip)
+	resp.Static = "no"
+
+	if len(interfaceName) == 0 {
+		resp.Static = "error"
+		resp.Error = fmt.Sprintf("Couldn't find network interface by IP %s", ip)
+		return resp
+	}
+
+	if set {
+		// Try to set static IP for the specified interface
+		err := dhcpd.SetStaticIP(interfaceName)
+		if err != nil {
+			resp.Static = "error"
+			resp.Error = err.Error()
+			return resp
+		}
+	}
+
+	// Fallthrough here even if we set static IP
+	// Check if we have a static IP and return the details
+	isStaticIP, err := dhcpd.HasStaticIP(interfaceName)
+	if err != nil {
+		resp.Static = "error"
+		resp.Error = err.Error()
+	} else {
+		if isStaticIP {
+			resp.Static = "yes"
+		}
+		resp.IP = util.GetSubnet(interfaceName)
+	}
+	return resp
 }
 
 // Check if DNSStubListener is active
@@ -129,7 +197,7 @@ func checkDNSStubListener() bool {
 	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
 	_, err := cmd.Output()
 	if err != nil || cmd.ProcessState.ExitCode() != 0 {
-		log.Error("command %s has failed: %v code:%d",
+		log.Info("command %s has failed: %v code:%d",
 			cmd.Path, err, cmd.ProcessState.ExitCode())
 		return false
 	}
@@ -138,7 +206,7 @@ func checkDNSStubListener() bool {
 	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
 	_, err = cmd.Output()
 	if err != nil || cmd.ProcessState.ExitCode() != 0 {
-		log.Error("command %s has failed: %v code:%d",
+		log.Info("command %s has failed: %v code:%d",
 			cmd.Path, err, cmd.ProcessState.ExitCode())
 		return false
 	}
@@ -228,7 +296,7 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 
 	// validate that hosts and ports are bindable
 	if restartHTTP {
-		err = checkPortAvailable(newSettings.Web.IP, newSettings.Web.Port)
+		err = util.CheckPortAvailable(newSettings.Web.IP, newSettings.Web.Port)
 		if err != nil {
 			httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s",
 				net.JoinHostPort(newSettings.Web.IP, strconv.Itoa(newSettings.Web.Port)), err)
@@ -236,13 +304,13 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = checkPacketPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
+	err = util.CheckPacketPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
 	}
 
-	err = checkPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
+	err = util.CheckPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
@@ -251,7 +319,7 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	var curConfig configuration
 	copyInstallSettings(&curConfig, &config)
 
-	config.firstRun = false
+	Context.firstRun = false
 	config.BindHost = newSettings.Web.IP
 	config.BindPort = newSettings.Web.Port
 	config.DNS.BindHost = newSettings.DNS.IP
@@ -266,7 +334,7 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if err != nil || err2 != nil {
-		config.firstRun = true
+		Context.firstRun = true
 		copyInstallSettings(&config, &curConfig)
 		if err != nil {
 			httpError(w, http.StatusInternalServerError, "Couldn't initialize DNS server: %s", err)
@@ -278,11 +346,11 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 
 	u := User{}
 	u.Name = newSettings.Username
-	config.auth.UserAdd(&u, newSettings.Password)
+	Context.auth.UserAdd(&u, newSettings.Password)
 
 	err = config.write()
 	if err != nil {
-		config.firstRun = true
+		Context.firstRun = true
 		copyInstallSettings(&config, &curConfig)
 		httpError(w, http.StatusInternalServerError, "Couldn't write config: %s", err)
 		return

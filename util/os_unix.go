@@ -1,6 +1,6 @@
-// +build freebsd
+// +build aix darwin dragonfly linux netbsd openbsd solaris
 
-package home
+package util
 
 import (
 	"os"
@@ -11,10 +11,10 @@ import (
 
 // Set user-specified limit of how many fd's we can use
 // https://github.com/AdguardTeam/AdGuardHome/issues/659
-func setRlimit(val uint) {
+func SetRlimit(val uint) {
 	var rlim syscall.Rlimit
-	rlim.Max = int64(val)
-	rlim.Cur = int64(val)
+	rlim.Max = uint64(val)
+	rlim.Cur = uint64(val)
 	err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rlim)
 	if err != nil {
 		log.Error("Setrlimit() failed: %v", err)
@@ -22,6 +22,6 @@ func setRlimit(val uint) {
 }
 
 // Check if the current user has root (administrator) rights
-func haveAdminRights() (bool, error) {
+func HaveAdminRights() (bool, error) {
 	return os.Getuid() == 0, nil
 }

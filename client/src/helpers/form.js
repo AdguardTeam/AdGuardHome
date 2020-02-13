@@ -240,6 +240,13 @@ export const port = (value) => {
     return undefined;
 };
 
+export const validInstallPort = (value) => {
+    if (value < 1 || value > 65535) {
+        return <Trans>form_error_port</Trans>;
+    }
+    return undefined;
+};
+
 export const portTLS = (value) => {
     if (value === 0) {
         return undefined;

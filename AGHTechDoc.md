@@ -138,9 +138,12 @@ Request:
 	{
 	"web":{"port":80,"ip":"192.168.11.33"},
 	"dns":{"port":53,"ip":"127.0.0.1","autofix":false},
+	"set_static_ip": true | false
 	}
 
 Server should check whether a port is available only in case it itself isn't already listening on that port.
+
+If `set_static_ip` is `true`, Server attempts to set a static IP for the network interface chosen by `dns.ip` setting.  If the operation is successful, `static_ip.static` setting will be `yes`.  If it fails, `static_ip.static` setting will be set to `error` and `static_ip.error` will contain the error message.
 
 Server replies on success:
 
@@ -149,7 +152,14 @@ Server replies on success:
 	{
 	"web":{"status":""},
 	"dns":{"status":""},
+	"static_ip": {
+		"static": "yes|no|error",
+		"ip": "<Current dynamic IP address>", // set if static=no
+		"error": "..." // set if static=error
 	}
+	}
+
+If `static_ip.static` is `no`, Server has detected that the system uses a dynamic address and it can  automatically set a static address if `set_static_ip` in request is `true`.  See section `Static IP check/set` for detailed process.
 
 Server replies on error:
 
@@ -172,7 +182,11 @@ Request:
 	POST /control/install/check_config
 
 	{
-	"dns":{"port":53,"ip":"127.0.0.1","autofix":false}
+	"dns":{
+		"port":53,
+		"ip":"127.0.0.1",
+		"autofix":false
+	}
 	}
 
 Check if DNSStubListener is enabled:
@@ -499,13 +513,7 @@ which will print:
 	default via 192.168.0.1 proto dhcp metric 100
 
 
-#### Phase 2
-
-This method only works on Raspbian.
-
-On Ubuntu DHCP for a network interface can't be disabled via `dhcpcd.conf`.  This must be configured in `/etc/netplan/01-netcfg.yaml`.
-
-Fedora doesn't use `dhcpcd.conf` configuration at all.
+#### Phase 2 (Raspbian)
 
 Step 1.
 
@@ -524,6 +532,44 @@ Step 2.
 If we would set a different IP address, we'd need to replace the IP address for the current network configuration.  But currently this step isn't necessary.
 
 	ip addr replace dev eth0 192.168.0.1/24
+
+
+#### Phase 2 (Ubuntu)
+
+`/etc/netplan/01-netcfg.yaml` or `/etc/netplan/01-network-manager-all.yaml`
+
+This configuration example has a static IP set for `enp0s3` interface:
+
+	network:
+		version: 2
+		renderer: networkd
+		ethernets:
+			enp0s3:
+				dhcp4: no
+				addresses: [192.168.0.2/24]
+				gateway: 192.168.0.1
+				nameservers:
+					addresses: [192.168.0.1,8.8.8.8]
+
+For dynamic configuration `dhcp4: yes` is set.
+
+Make a backup copy to `/etc/netplan/01-netcfg.yaml.backup`.
+
+Apply:
+
+	netplan apply
+
+Restart network:
+
+	systemctl restart networking
+
+or:
+
+	systemctl restart network-manager
+
+or:
+
+	systemctl restart system-networkd
 
 
 ### Add a static lease

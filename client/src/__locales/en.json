@@ -458,9 +458,16 @@
     "check_reason": "Reason: {{reason}}",
     "check_rule": "Rule: {{rule}}",
     "check_service": "Service name: {{service}}",
-    "check_not_found": "Doesn't exist in any filter",
+    "check_not_found": "Not found in your filter lists",
     "client_confirm_block": "Are you sure you want to block the client \"{{ip}}\"?",
     "client_confirm_unblock": "Are you sure you want to unblock the client \"{{ip}}\"?",
     "client_blocked": "Client \"{{ip}}\" successfully blocked",
-    "client_unblocked": "Client \"{{ip}}\" successfully unblocked"
+    "client_unblocked": "Client \"{{ip}}\" successfully unblocked",
+    "static_ip": "Static IP Address",
+    "static_ip_desc": "AdGuard Home is a server so it needs a static IP address to function properly. Otherwise, at some point, your router may assign a different IP address to this device.",
+    "set_static_ip": "Set a static IP address",
+    "install_static_ok": "Good news! The static IP address is already configured",
+    "install_static_error": "AdGuard Home cannot configure it automatically for this network interface. Please look for an instruction on how to do this manually.",
+    "install_static_configure": "We have detected that a dynamic IP address is used — <0>{{ip}}</0>. Do you want to use it as your static address?",
+    "confirm_static_ip": "AdGuard Home will configure {{ip}} to be your static IP address. Do you want to proceed?"
 }

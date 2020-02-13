@@ -152,7 +152,7 @@ func (a *Auth) addSession(data []byte, s *session) {
 	a.sessions[name] = s
 	a.lock.Unlock()
 	if a.storeSession(data, s) {
-		log.Info("Auth: created session %s: expire=%d", name, s.expire)
+		log.Debug("Auth: created session %s: expire=%d", name, s.expire)
 	}
 }
 
@@ -307,7 +307,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie := config.auth.httpCookie(req)
+	cookie := Context.auth.httpCookie(req)
 	if len(cookie) == 0 {
 		log.Info("Auth: invalid user name or password: name='%s'", req.Name)
 		time.Sleep(1 * time.Second)
@@ -328,7 +328,7 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 	cookie := r.Header.Get("Cookie")
 	sess := parseCookie(cookie)
 
-	config.auth.RemoveSession(sess)
+	Context.auth.RemoveSession(sess)
 
 	w.Header().Set("Location", "/login.html")
 
@@ -365,10 +365,10 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 
 		if r.URL.Path == "/login.html" {
 			// redirect to dashboard if already authenticated
-			authRequired := config.auth != nil && config.auth.AuthRequired()
+			authRequired := Context.auth != nil && Context.auth.AuthRequired()
 			cookie, err := r.Cookie(sessionCookieName)
 			if authRequired && err == nil {
-				r := config.auth.CheckSession(cookie.Value)
+				r := Context.auth.CheckSession(cookie.Value)
 				if r == 0 {
 					w.Header().Set("Location", "/")
 					w.WriteHeader(http.StatusFound)
@@ -383,12 +383,12 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 			strings.HasPrefix(r.URL.Path, "/__locales/") {
 			// process as usual
 
-		} else if config.auth != nil && config.auth.AuthRequired() {
+		} else if Context.auth != nil && Context.auth.AuthRequired() {
 			// redirect to login page if not authenticated
 			ok := false
 			cookie, err := r.Cookie(sessionCookieName)
 			if err == nil {
-				r := config.auth.CheckSession(cookie.Value)
+				r := Context.auth.CheckSession(cookie.Value)
 				if r == 0 {
 					ok = true
 				} else if r < 0 {
@@ -398,7 +398,7 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 				// there's no Cookie, check Basic authentication
 				user, pass, ok2 := r.BasicAuth()
 				if ok2 {
-					u := config.auth.UserFind(user, pass)
+					u := Context.auth.UserFind(user, pass)
 					if len(u.Name) != 0 {
 						ok = true
 					} else {
@@ -474,7 +474,7 @@ func (a *Auth) GetCurrentUser(r *http.Request) User {
 		// there's no Cookie, check Basic authentication
 		user, pass, ok := r.BasicAuth()
 		if ok {
-			u := config.auth.UserFind(user, pass)
+			u := Context.auth.UserFind(user, pass)
 			return u
 		}
 		return User{}
