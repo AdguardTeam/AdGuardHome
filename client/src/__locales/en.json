@@ -466,7 +466,7 @@
     "static_ip": "Static IP Address",
     "static_ip_desc": "AdGuard Home is a server so it needs a static IP address to function properly. Otherwise, at some point, your router may assign a different IP address to this device.",
     "set_static_ip": "Set a static IP address",
-    "install_static_ok": "Good news, Static IP already configured",
+    "install_static_ok": "Good news! The static IP address is already configured",
     "install_static_error": "AdGuard Home cannot configure it automatically for your OS. Please look for an instruction on how to do this manually",
-    "install_static_configure": "We have detected that a dynamic IP address is used — <0>{{ip}}</0>. Do you want to use your it as a static address?"
+    "install_static_configure": "We have detected that a dynamic IP address is used — <0>{{ip}}</0>. Do you want to use it as your static address?"
 }
