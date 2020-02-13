@@ -241,6 +241,9 @@ export const FILTERED_STATUS = {
     NOT_FILTERED_NOT_FOUND: 'NotFilteredNotFound',
     FILTERED_BLOCKED_SERVICE: 'FilteredBlockedService',
     REWRITE: 'Rewrite',
+    FILTERED_SAFE_SEARCH: 'FilteredSafeSearch',
+    FILTERED_SAFE_BROWSING: 'FilteredSafeBrowsing',
+    FILTERED_PARENTAL: 'FilteredParental',
 };
 
 export const FILTERED = 'Filtered';

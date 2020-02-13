@@ -432,3 +432,7 @@ export const checkRewrite = reason => reason === FILTERED_STATUS.REWRITE;
 export const checkBlackList = reason => reason === FILTERED_STATUS.FILTERED_BLACK_LIST;
 export const checkWhiteList = reason => reason === FILTERED_STATUS.NOT_FILTERED_WHITE_LIST;
 export const checkNotFilteredNotFound = reason => reason === FILTERED_STATUS.NOT_FILTERED_NOT_FOUND;
+export const checkSafeSearch = reason => reason === FILTERED_STATUS.FILTERED_SAFE_SEARCH;
+export const checkSafeBrowsing = reason => reason === FILTERED_STATUS.FILTERED_SAFE_BROWSING;
+export const checkParental = reason => reason === FILTERED_STATUS.FILTERED_PARENTAL;
+export const checkBlockedService = reason => reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
