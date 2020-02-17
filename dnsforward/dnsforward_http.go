@@ -28,6 +28,7 @@ type dnsConfigJSON struct {
 	BlockingIPv4      string `json:"blocking_ipv4"`
 	BlockingIPv6      string `json:"blocking_ipv6"`
 	EDNSCSEnabled     bool   `json:"edns_cs_enabled"`
+	DNSSECEnabled     bool   `json:"dnssec_enabled"`
 	DisableIPv6       bool   `json:"disable_ipv6"`
 }
 
@@ -40,6 +41,7 @@ func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	resp.BlockingIPv6 = s.conf.BlockingIPv6
 	resp.RateLimit = s.conf.Ratelimit
 	resp.EDNSCSEnabled = s.conf.EnableEDNSClientSubnet
+	resp.DNSSECEnabled = s.conf.EnableDNSSEC
 	resp.DisableIPv6 = s.conf.AAAADisabled
 	s.RUnlock()
 
@@ -117,6 +119,10 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	if js.Exists("edns_cs_enabled") {
 		s.conf.EnableEDNSClientSubnet = req.EDNSCSEnabled
 		restart = true
+	}
+
+	if js.Exists("dnssec_enabled") {
+		s.conf.EnableDNSSEC = req.DNSSECEnabled
 	}
 
 	if js.Exists("disable_ipv6") {

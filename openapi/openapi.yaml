@@ -1110,6 +1110,8 @@ definitions:
                 type: "string"
             edns_cs_enabled:
                 type: "boolean"
+            dnssec_enabled:
+                type: "boolean"
 
     UpstreamsConfig:
         type: "object"
@@ -1517,6 +1519,8 @@ definitions:
                 description: "Answer from upstream server (optional)"
                 items:
                     $ref: "#/definitions/DnsAnswer"
+            answer_dnssec:
+                type: "boolean"
             client:
                 type: "string"
                 example: "192.168.0.1"

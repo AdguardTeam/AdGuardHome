@@ -286,7 +286,15 @@ func logEntryToJSONEntry(entry *logEntry) map[string]interface{} {
 
 	if msg != nil {
 		jsonEntry["status"] = dns.RcodeToString[msg.Rcode]
+
+		opt := msg.IsEdns0()
+		dnssecOk := false
+		if opt != nil {
+			dnssecOk = opt.Do()
+		}
+		jsonEntry["answer_dnssec"] = dnssecOk
 	}
+
 	if len(entry.Result.Rule) > 0 {
 		jsonEntry["rule"] = entry.Result.Rule
 		jsonEntry["filterId"] = entry.Result.FilterID
