@@ -3,7 +3,6 @@ package home
 import (
 	"fmt"
 	"net"
-	"os"
 	"path/filepath"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
@@ -25,12 +24,8 @@ func onConfigModified() {
 // Please note that we must do it even if we don't start it
 // so that we had access to the query log and the stats
 func initDNSServer() error {
+	var err error
 	baseDir := Context.getDataDir()
-
-	err := os.MkdirAll(baseDir, 0755)
-	if err != nil {
-		return fmt.Errorf("Cannot create DNS data dir at %s: %s", baseDir, err)
-	}
 
 	statsConf := stats.Config{
 		Filename:       filepath.Join(baseDir, "stats.db"),
@@ -69,14 +64,6 @@ func initDNSServer() error {
 		closeDNSServer()
 		return fmt.Errorf("dnsServer.Prepare: %s", err)
 	}
-
-	sessFilename := filepath.Join(baseDir, "sessions.db")
-	Context.auth = InitAuth(sessFilename, config.Users, config.WebSessionTTLHours*60*60)
-	if Context.auth == nil {
-		closeDNSServer()
-		return fmt.Errorf("Couldn't initialize Auth module")
-	}
-	config.Users = nil
 
 	Context.rdns = InitRDNS(Context.dnsServer, &Context.clients)
 	Context.whois = initWhois(&Context.clients)
@@ -224,6 +211,8 @@ func startDNSServer() error {
 
 	enableFilters(false)
 
+	Context.clients.Start()
+
 	err := Context.dnsServer.Start()
 	if err != nil {
 		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
@@ -293,11 +282,6 @@ func closeDNSServer() {
 	if Context.queryLog != nil {
 		Context.queryLog.Close()
 		Context.queryLog = nil
-	}
-
-	if Context.auth != nil {
-		Context.auth.Close()
-		Context.auth = nil
 	}
 
 	Context.filters.Close()

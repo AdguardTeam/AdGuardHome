@@ -24,6 +24,8 @@ const (
 	clientsUpdatePeriod = 1 * time.Hour
 )
 
+var webHandlersRegistered = false
+
 // Client information
 type Client struct {
 	IDs                 []string
@@ -98,13 +100,21 @@ func (clients *clientsContainer) Init(objects []clientObject, dhcpServer *dhcpd.
 	clients.addFromConfig(objects)
 
 	if !clients.testing {
-		go clients.periodicUpdate()
-
 		clients.addFromDHCP()
 		clients.dhcpServer.SetOnLeaseChanged(clients.onDHCPLeaseChanged)
-
-		clients.registerWebHandlers()
 	}
+}
+
+// Start - start the module
+func (clients *clientsContainer) Start() {
+	if !clients.testing {
+		if !webHandlersRegistered {
+			webHandlersRegistered = true
+			clients.registerWebHandlers()
+		}
+		go clients.periodicUpdate()
+	}
+
 }
 
 // Reload - reload auto-clients

@@ -227,6 +227,9 @@ func run(args options) {
 	if args.bindPort != 0 {
 		config.BindPort = args.bindPort
 	}
+	if len(args.pidFile) != 0 && writePIDFile(args.pidFile) {
+		Context.pidFileName = args.pidFile
+	}
 
 	if !Context.firstRun {
 		// Save the updated config
@@ -234,8 +237,20 @@ func run(args options) {
 		if err != nil {
 			log.Fatal(err)
 		}
+	}
 
-		err = initDNSServer()
+	err := os.MkdirAll(Context.getDataDir(), 0755)
+	if err != nil {
+		log.Fatalf("Cannot create DNS data dir at %s: %s", Context.getDataDir(), err)
+	}
+
+	err = initWeb()
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+
+	if !Context.firstRun {
+		err := initDNSServer()
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
@@ -252,26 +267,41 @@ func run(args options) {
 		}
 	}
 
-	if len(args.pidFile) != 0 && writePIDFile(args.pidFile) {
-		Context.pidFileName = args.pidFile
+	startWeb()
+
+	// wait indefinitely for other go-routines to complete their job
+	select {}
+}
+
+// Initialize Web modules
+func initWeb() error {
+	sessFilename := filepath.Join(Context.getDataDir(), "sessions.db")
+	Context.auth = InitAuth(sessFilename, config.Users, config.WebSessionTTLHours*60*60)
+	if Context.auth == nil {
+		return fmt.Errorf("Couldn't initialize Auth module")
 	}
+	config.Users = nil
 
 	// Initialize and run the admin Web interface
 	box := packr.NewBox("../build/static")
 
 	// if not configured, redirect / to /install.html, otherwise redirect /install.html to /
 	http.Handle("/", postInstallHandler(optionalAuthHandler(gziphandler.GzipHandler(http.FileServer(box)))))
-	registerControlHandlers()
 
 	// add handlers for /install paths, we only need them when we're not configured yet
 	if Context.firstRun {
 		log.Info("This is the first launch of AdGuard Home, redirecting everything to /install.html ")
 		http.Handle("/install.html", preInstallHandler(http.FileServer(box)))
 		registerInstallHandlers()
+	} else {
+		registerControlHandlers()
 	}
 
 	Context.httpsServer.cond = sync.NewCond(&Context.httpsServer.Mutex)
+	return nil
+}
 
+func startWeb() {
 	// for https, we have a separate goroutine loop
 	go httpServerLoop()
 
@@ -291,9 +321,6 @@ func run(args options) {
 		}
 		// We use ErrServerClosed as a sign that we need to rebind on new address, so go back to the start of the loop
 	}
-
-	// wait indefinitely for other go-routines to complete their job
-	select {}
 }
 
 func httpServerLoop() {
@@ -458,6 +485,8 @@ func configureLogger(args options) {
 func cleanup() {
 	log.Info("Stopping AdGuard Home")
 
+	stopHTTPServer()
+
 	err := stopDNSServer()
 	if err != nil {
 		log.Error("Couldn't stop DNS server: %s", err)
@@ -475,7 +504,15 @@ func stopHTTPServer() {
 	if Context.httpsServer.server != nil {
 		_ = Context.httpsServer.server.Shutdown(context.TODO())
 	}
-	_ = Context.httpServer.Shutdown(context.TODO())
+	if Context.httpServer != nil {
+		_ = Context.httpServer.Shutdown(context.TODO())
+	}
+
+	if Context.auth != nil {
+		Context.auth.Close()
+		Context.auth = nil
+	}
+
 	log.Info("Stopped HTTP server")
 }
 

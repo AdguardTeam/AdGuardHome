@@ -258,12 +258,14 @@ func preInstallHandler(handler http.Handler) http.Handler {
 // it also enforces HTTPS if it is enabled and configured
 func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+
 		if Context.firstRun &&
 			!strings.HasPrefix(r.URL.Path, "/install.") &&
 			r.URL.Path != "/favicon.png" {
-			http.Redirect(w, r, "/install.html", http.StatusSeeOther) // should not be cacheable
+			http.Redirect(w, r, "/install.html", http.StatusFound)
 			return
 		}
+
 		// enforce https?
 		if config.TLS.ForceHTTPS && r.TLS == nil && config.TLS.Enabled && config.TLS.PortHTTPS != 0 && Context.httpsServer.server != nil {
 			// yes, and we want host from host:port
@@ -282,6 +284,7 @@ func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.Res
 			http.Redirect(w, r, newURL.String(), http.StatusTemporaryRedirect)
 			return
 		}
+
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		handler(w, r)
 	}
