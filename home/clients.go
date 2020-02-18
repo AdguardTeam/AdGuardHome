@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
+	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
@@ -161,7 +162,7 @@ func (clients *clientsContainer) addFromConfig(objects []clientObject) {
 		}
 
 		for _, s := range cy.BlockedServices {
-			if !blockedSvcKnown(s) {
+			if !dnsfilter.BlockedSvcKnown(s) {
 				log.Debug("Clients: skipping unknown blocked-service '%s'", s)
 				continue
 			}

@@ -9,9 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AdguardTeam/AdGuardHome/util"
-
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
+	"github.com/AdguardTeam/AdGuardHome/util"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/NYTimes/gziphandler"
 )
@@ -174,7 +173,6 @@ func registerControlHandlers() {
 	httpRegister("GET", "/control/profile", handleGetProfile)
 
 	RegisterTLSHandlers()
-	RegisterBlockedServicesHandlers()
 	RegisterAuthHandlers()
 
 	http.HandleFunc("/dns-query", postInstall(handleDOH))

@@ -95,10 +95,6 @@ type dnsConfig struct {
 	FilteringEnabled           bool             `yaml:"filtering_enabled"`       // whether or not use filter lists
 	FiltersUpdateIntervalHours uint32           `yaml:"filters_update_interval"` // time period to update filters (in hours)
 	DnsfilterConf              dnsfilter.Config `yaml:",inline"`
-
-	// Names of services to block (globally).
-	// Per-client settings can override this configuration.
-	BlockedServices []string `yaml:"blocked_services"`
 }
 
 type tlsConfigSettings struct {
@@ -233,16 +229,6 @@ func parseConfig() error {
 		log.Error("Couldn't parse config file: %s", err)
 		return err
 	}
-
-	bsvcs := []string{}
-	for _, s := range config.DNS.BlockedServices {
-		if !blockedSvcKnown(s) {
-			log.Debug("skipping unknown blocked-service '%s'", s)
-			continue
-		}
-		bsvcs = append(bsvcs, s)
-	}
-	config.DNS.BlockedServices = bsvcs
 
 	if !checkFiltersUpdateIntervalHours(config.DNS.FiltersUpdateIntervalHours) {
 		config.DNS.FiltersUpdateIntervalHours = 24

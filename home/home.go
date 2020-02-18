@@ -172,7 +172,6 @@ func run(args options) {
 	}
 
 	initConfig()
-	initServices()
 
 	Context.tlsRoots = util.LoadSystemRootCAs()
 	Context.transport = &http.Transport{
