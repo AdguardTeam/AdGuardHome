@@ -45,6 +45,7 @@ const dnsConfig = handleActions(
         blocking_ipv6: DEFAULT_BLOCKING_IPV6,
         edns_cs_enabled: false,
         disable_ipv6: false,
+        dnssec_enabled: false,
     },
 );
 

@@ -16,6 +16,7 @@ const Config = ({ t, dnsConfig, setDnsConfig }) => {
         blocking_ipv4,
         blocking_ipv6,
         edns_cs_enabled,
+        dnssec_enabled,
         disable_ipv6,
         processingSetConfig,
     } = dnsConfig;
@@ -35,6 +36,7 @@ const Config = ({ t, dnsConfig, setDnsConfig }) => {
                         blocking_ipv6,
                         edns_cs_enabled,
                         disable_ipv6,
+                        dnssec_enabled,
                     }}
                     onSubmit={handleFormSubmit}
                     processing={processingSetConfig}

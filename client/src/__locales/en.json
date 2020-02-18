@@ -479,5 +479,7 @@
     "install_static_configure": "We have detected that a dynamic IP address is used — <0>{{ip}}</0>. Do you want to use it as your static address?",
     "confirm_static_ip": "AdGuard Home will configure {{ip}} to be your static IP address. Do you want to proceed?",
     "list_updated": "{{count}} list updated",
-    "list_updated_plural": "{{count}} lists updated"
+    "list_updated_plural": "{{count}} lists updated",
+    "dnssec_enable": "Enable DNSSEC",
+    "dnssec_enable_desc": "Set DNSSEC flag in the outcoming DNS queries and check the result (DNSSEC-enabled resolver is required)"
 }

@@ -68,6 +68,18 @@ let Form = ({
             <div className="col-12">
                 <div className="form__group form__group--settings">
                     <Field
+                        name="dnssec_enabled"
+                        type="checkbox"
+                        component={renderSelectField}
+                        placeholder={t('dnssec_enable')}
+                        disabled={processing}
+                        subtitle={t('dnssec_enable_desc')}
+                    />
+                </div>
+            </div>
+            <div className="col-12">
+                <div className="form__group form__group--settings">
+                    <Field
                         name="disable_ipv6"
                         type="checkbox"
                         component={renderSelectField}
