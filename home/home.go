@@ -528,7 +528,7 @@ func loadOptions() options {
 			}
 			o.bindPort = v
 		}, nil},
-		{"service", "s", "Service control action: status, install, uninstall, start, stop, restart", func(value string) {
+		{"service", "s", "Service control action: status, install, uninstall, start, stop, restart, reload (configuration)", func(value string) {
 			o.serviceControlAction = value
 		}, nil},
 		{"logfile", "l", "Path to log file. If empty: write to stdout; if 'syslog': write to system log", func(value string) {

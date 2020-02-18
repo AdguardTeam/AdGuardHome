@@ -25,3 +25,8 @@ func SetRlimit(val uint) {
 func HaveAdminRights() (bool, error) {
 	return os.Getuid() == 0, nil
 }
+
+// SendProcessSignal - send signal to a process
+func SendProcessSignal(pid int, sig syscall.Signal) error {
+	return syscall.Kill(pid, sig)
+}
