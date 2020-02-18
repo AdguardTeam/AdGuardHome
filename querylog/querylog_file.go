@@ -18,6 +18,8 @@ import (
 )
 
 const enableGzip = false
+
+// TODO: Check this when we append a new line -- we don't want to have a line longer than this
 const maxEntrySize = 1000
 
 // flushLogBuffer flushes the current buffer to file and resets the current buffer
