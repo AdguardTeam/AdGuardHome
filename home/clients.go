@@ -107,6 +107,12 @@ func (clients *clientsContainer) Init(objects []clientObject, dhcpServer *dhcpd.
 	}
 }
 
+// Reload - reload auto-clients
+func (clients *clientsContainer) Reload() {
+	clients.addFromHostsFile()
+	clients.addFromSystemARP()
+}
+
 type clientObject struct {
 	Name                string   `yaml:"name"`
 	Tags                []string `yaml:"tags"`
@@ -194,8 +200,7 @@ func (clients *clientsContainer) WriteDiskConfig(objects *[]clientObject) {
 
 func (clients *clientsContainer) periodicUpdate() {
 	for {
-		clients.addFromHostsFile()
-		clients.addFromSystemARP()
+		clients.Reload()
 		time.Sleep(clientsUpdatePeriod)
 	}
 }

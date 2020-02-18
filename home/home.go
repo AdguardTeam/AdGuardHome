@@ -116,10 +116,19 @@ func Main(version string, channel string, armVer string) {
 	Context.appSignalChannel = make(chan os.Signal)
 	signal.Notify(Context.appSignalChannel, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 	go func() {
-		<-Context.appSignalChannel
-		cleanup()
-		cleanupAlways()
-		os.Exit(0)
+		for {
+			sig := <-Context.appSignalChannel
+			log.Info("Received signal '%s'", sig)
+			switch sig {
+			case syscall.SIGHUP:
+				Context.clients.Reload()
+
+			default:
+				cleanup()
+				cleanupAlways()
+				os.Exit(0)
+			}
+		}
 	}()
 
 	// run the protection
