@@ -26,9 +26,6 @@ func returnOK(w http.ResponseWriter) {
 	}
 }
 
-func httpOK(r *http.Request, w http.ResponseWriter) {
-}
-
 func httpError(w http.ResponseWriter, code int, format string, args ...interface{}) {
 	text := fmt.Sprintf(format, args...)
 	log.Info(text)
@@ -38,15 +35,6 @@ func httpError(w http.ResponseWriter, code int, format string, args ...interface
 // ---------------
 // dns run control
 // ---------------
-func writeAllConfigsAndReloadDNS() error {
-	err := writeAllConfigs()
-	if err != nil {
-		log.Error("Couldn't write all configs: %s", err)
-		return err
-	}
-	return reconfigureDNSServer()
-}
-
 func addDNSAddress(dnsAddresses *[]string, addr string) {
 	if config.DNS.Port != 53 {
 		addr = fmt.Sprintf("%s:%d", addr, config.DNS.Port)
@@ -143,23 +131,6 @@ func handleGetProfile(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(data)
 }
 
-// --------------
-// DNS-over-HTTPS
-// --------------
-func handleDOH(w http.ResponseWriter, r *http.Request) {
-	if !config.TLS.AllowUnencryptedDOH && r.TLS == nil {
-		httpError(w, http.StatusNotFound, "Not Found")
-		return
-	}
-
-	if !isRunning() {
-		httpError(w, http.StatusInternalServerError, "DNS server is not running")
-		return
-	}
-
-	Context.dnsServer.ServeHTTP(w, r)
-}
-
 // ------------------------
 // registration of handlers
 // ------------------------
@@ -171,8 +142,6 @@ func registerControlHandlers() {
 	httpRegister(http.MethodPost, "/control/update", handleUpdate)
 
 	httpRegister("GET", "/control/profile", handleGetProfile)
-
-	RegisterTLSHandlers()
 	RegisterAuthHandlers()
 
 	http.HandleFunc("/dns-query", postInstall(handleDOH))
@@ -265,7 +234,7 @@ func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.Res
 		}
 
 		// enforce https?
-		if config.TLS.ForceHTTPS && r.TLS == nil && config.TLS.Enabled && config.TLS.PortHTTPS != 0 && Context.web.httpsServer.server != nil {
+		if r.TLS == nil && Context.web.forceHTTPS && Context.web.httpsServer.server != nil {
 			// yes, and we want host from host:port
 			host, _, err := net.SplitHostPort(r.Host)
 			if err != nil {
@@ -275,7 +244,7 @@ func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.Res
 			// construct new URL to redirect to
 			newURL := url.URL{
 				Scheme:   "https",
-				Host:     net.JoinHostPort(host, strconv.Itoa(config.TLS.PortHTTPS)),
+				Host:     net.JoinHostPort(host, strconv.Itoa(Context.web.portHTTPS)),
 				Path:     r.URL.Path,
 				RawQuery: r.URL.RawQuery,
 			}

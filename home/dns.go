@@ -156,11 +156,17 @@ func generateServerConfig() dnsforward.ServerConfig {
 		OnDNSRequest:    onDNSRequest,
 	}
 
-	if config.TLS.Enabled {
-		newconfig.TLSConfig = config.TLS.TLSConfig
-		if config.TLS.PortDNSOverTLS != 0 {
-			newconfig.TLSListenAddr = &net.TCPAddr{IP: net.ParseIP(config.DNS.BindHost), Port: config.TLS.PortDNSOverTLS}
+	tlsConf := tlsConfigSettings{}
+	Context.tls.WriteDiskConfig(&tlsConf)
+	if tlsConf.Enabled {
+		newconfig.TLSConfig = tlsConf.TLSConfig
+		if tlsConf.PortDNSOverTLS != 0 {
+			newconfig.TLSListenAddr = &net.TCPAddr{
+				IP:   net.ParseIP(config.DNS.BindHost),
+				Port: tlsConf.PortDNSOverTLS,
+			}
 		}
+		newconfig.TLSAllowUnencryptedDOH = tlsConf.AllowUnencryptedDOH
 	}
 	newconfig.TLSv12Roots = Context.tlsRoots
 

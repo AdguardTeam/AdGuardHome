@@ -65,8 +65,9 @@ type homeContext struct {
 	dnsFilter  *dnsfilter.Dnsfilter // DNS filtering module
 	dhcpServer *dhcpd.Server        // DHCP module
 	auth       *Auth                // HTTP authentication module
-	filters    Filtering
-	web        *Web
+	filters    Filtering            // DNS filtering module
+	web        *Web                 // Web (HTTP, HTTPS) module
+	tls        *TLSMod              // TLS module
 
 	// Runtime properties
 	// --
@@ -119,6 +120,7 @@ func Main(version string, channel string, armVer string) {
 			switch sig {
 			case syscall.SIGHUP:
 				Context.clients.Reload()
+				Context.tls.Reload()
 
 			default:
 				cleanup()
@@ -247,11 +249,15 @@ func run(args options) {
 	}
 	config.Users = nil
 
+	Context.tls = tlsCreate(config.TLS)
+	if Context.tls == nil {
+		log.Fatalf("Can't initialize TLS module")
+	}
+
 	webConf := WebConfig{
 		firstRun: Context.firstRun,
 		BindHost: config.BindHost,
 		BindPort: config.BindPort,
-		TLS:      config.TLS,
 	}
 	Context.web = CreateWeb(&webConf)
 	if Context.web == nil {
@@ -263,6 +269,8 @@ func run(args options) {
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
+		Context.tls.Start()
+
 		go func() {
 			err := startDNSServer()
 			if err != nil {
@@ -280,6 +288,23 @@ func run(args options) {
 
 	// wait indefinitely for other go-routines to complete their job
 	select {}
+}
+
+// StartMods - initialize and start DNS after installation
+func StartMods() error {
+	err := initDNSServer()
+	if err != nil {
+		return err
+	}
+
+	Context.tls.Start()
+
+	err = startDNSServer()
+	if err != nil {
+		closeDNSServer()
+		return err
+	}
+	return nil
 }
 
 // Check if the current user has root (administrator) rights
@@ -408,6 +433,11 @@ func cleanup() {
 	if err != nil {
 		log.Error("Couldn't stop DHCP server: %s", err)
 	}
+
+	if Context.tls != nil {
+		Context.tls.Close()
+		Context.tls = nil
+	}
 }
 
 // This function is called before application exits
@@ -528,11 +558,13 @@ func loadOptions() options {
 func printHTTPAddresses(proto string) {
 	var address string
 
-	if proto == "https" && config.TLS.ServerName != "" {
-		if config.TLS.PortHTTPS == 443 {
-			log.Printf("Go to https://%s", config.TLS.ServerName)
+	tlsConf := tlsConfigSettings{}
+	Context.tls.WriteDiskConfig(&tlsConf)
+	if proto == "https" && tlsConf.ServerName != "" {
+		if tlsConf.PortHTTPS == 443 {
+			log.Printf("Go to https://%s", tlsConf.ServerName)
 		} else {
-			log.Printf("Go to https://%s:%d", config.TLS.ServerName, config.TLS.PortHTTPS)
+			log.Printf("Go to https://%s:%d", tlsConf.ServerName, tlsConf.PortHTTPS)
 		}
 	} else if config.BindHost == "0.0.0.0" {
 		log.Println("AdGuard Home is available on the following addresses:")

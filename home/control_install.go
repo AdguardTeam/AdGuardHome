@@ -35,7 +35,7 @@ type netInterfaceJSON struct {
 }
 
 // Get initial installation settings
-func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
+func (web *Web) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 	data := firstRunData{}
 	data.WebPort = 80
 	data.DNSPort = 53
@@ -93,7 +93,7 @@ type checkConfigResp struct {
 }
 
 // Check if ports are available, respond with results
-func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
+func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 	reqData := checkConfigReq{}
 	respData := checkConfigResp{}
 	err := json.NewDecoder(r.Body).Decode(&reqData)
@@ -275,7 +275,7 @@ func copyInstallSettings(dst *configuration, src *configuration) {
 }
 
 // Apply new configuration, start DNS server, restart Web server
-func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
+func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	newSettings := applyConfigReq{}
 	err := json.NewDecoder(r.Body).Decode(&newSettings)
 	if err != nil {
@@ -325,22 +325,11 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	config.DNS.BindHost = newSettings.DNS.IP
 	config.DNS.Port = newSettings.DNS.Port
 
-	err = initDNSServer()
-	var err2 error
-	if err == nil {
-		err2 = startDNSServer()
-		if err2 != nil {
-			closeDNSServer()
-		}
-	}
-	if err != nil || err2 != nil {
+	err = StartMods()
+	if err != nil {
 		Context.firstRun = true
 		copyInstallSettings(&config, &curConfig)
-		if err != nil {
-			httpError(w, http.StatusInternalServerError, "Couldn't initialize DNS server: %s", err)
-		} else {
-			httpError(w, http.StatusInternalServerError, "Couldn't start DNS server: %s", err2)
-		}
+		httpError(w, http.StatusInternalServerError, "%s", err)
 		return
 	}
 
@@ -369,8 +358,8 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	returnOK(w)
 }
 
-func registerInstallHandlers() {
-	http.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(handleInstallGetAddresses)))
-	http.HandleFunc("/control/install/check_config", preInstall(ensurePOST(handleInstallCheckConfig)))
-	http.HandleFunc("/control/install/configure", preInstall(ensurePOST(handleInstallConfigure)))
+func (web *Web) registerInstallHandlers() {
+	http.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(web.handleInstallGetAddresses)))
+	http.HandleFunc("/control/install/check_config", preInstall(ensurePOST(web.handleInstallCheckConfig)))
+	http.HandleFunc("/control/install/configure", preInstall(ensurePOST(web.handleInstallConfigure)))
 }
