@@ -2,7 +2,6 @@ package home
 
 import (
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 	"sync"
@@ -27,14 +26,6 @@ const (
 type logSettings struct {
 	LogFile string `yaml:"log_file"` // Path to the log file. If empty, write to stdout. If "syslog", writes to syslog
 	Verbose bool   `yaml:"verbose"`  // If true, verbose logging is enabled
-}
-
-// HTTPSServer - HTTPS Server
-type HTTPSServer struct {
-	server     *http.Server
-	cond       *sync.Cond // reacts to config.TLS.Enabled, PortHTTPS, CertificateChain and PrivateKey
-	sync.Mutex            // protects config.TLS
-	shutdown   bool       // if TRUE, don't restart the server
 }
 
 // configuration is loaded from YAML
