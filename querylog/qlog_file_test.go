@@ -100,7 +100,7 @@ func TestQLogFileSeekLargeFile(t *testing.T) {
 
 	// CASE 6: Seek non-existent (too high)
 	ts, _ := time.Parse(time.RFC3339, "2100-01-02T15:04:05Z07:00")
-	_, err = q.Seek(uint64(ts.UnixNano()))
+	_, err = q.Seek(ts.UnixNano())
 	assert.NotNil(t, err)
 }
 
@@ -136,7 +136,7 @@ func TestQLogFileSeekSmallFile(t *testing.T) {
 
 	// CASE 6: Seek non-existent (too high)
 	ts, _ := time.Parse(time.RFC3339, "2100-01-02T15:04:05Z07:00")
-	_, err = q.Seek(uint64(ts.UnixNano()))
+	_, err = q.Seek(ts.UnixNano())
 	assert.NotNil(t, err)
 }
 

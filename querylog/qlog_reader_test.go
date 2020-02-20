@@ -122,7 +122,7 @@ func TestQLogReaderSeek(t *testing.T) {
 
 	// CASE 6: Seek non-existent (too high)
 	ts, _ := time.Parse(time.RFC3339, "2100-01-02T15:04:05Z07:00")
-	err = r.Seek(uint64(ts.UnixNano()))
+	err = r.Seek(ts.UnixNano())
 	assert.NotNil(t, err)
 }
 

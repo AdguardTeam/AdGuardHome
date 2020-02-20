@@ -62,7 +62,7 @@ func NewQLogFile(path string) (*QLogFile, error) {
 // It returns the position of the the line with the timestamp we were looking for
 // so that when we call "ReadNext" this line was returned.
 // If we could not find it, it returns 0 and ErrSeekNotFound
-func (q *QLogFile) Seek(timestamp uint64) (int64, error) {
+func (q *QLogFile) Seek(timestamp int64) (int64, error) {
 	q.lock.Lock()
 	defer q.lock.Unlock()
 
@@ -305,7 +305,7 @@ func (q *QLogFile) readProbeLine(position int64) (string, int64, error) {
 }
 
 // readQLogTimestamp reads the timestamp field from the query log line
-func readQLogTimestamp(str string) uint64 {
+func readQLogTimestamp(str string) int64 {
 	val := readJSONValue(str, "T")
 	if len(val) == 0 {
 		val = readJSONValue(str, "Time")
@@ -320,5 +320,5 @@ func readQLogTimestamp(str string) uint64 {
 		log.Error("Couldn't parse timestamp: %s", val)
 		return 0
 	}
-	return uint64(tm.UnixNano())
+	return tm.UnixNano()
 }

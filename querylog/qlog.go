@@ -171,82 +171,6 @@ func (l *queryLog) Add(params AddParams) {
 	}
 }
 
-// Return TRUE if this entry is needed
-func isNeeded(entry *logEntry, params getDataParams) bool {
-	if params.ResponseStatus == responseStatusFiltered && !entry.Result.IsFiltered {
-		return false
-	}
-
-	if len(params.QuestionType) != 0 {
-		if entry.QType != params.QuestionType {
-			return false
-		}
-	}
-
-	if len(params.Domain) != 0 {
-		if (params.StrictMatchDomain && entry.QHost != params.Domain) ||
-			(!params.StrictMatchDomain && strings.Index(entry.QHost, params.Domain) == -1) {
-			return false
-		}
-	}
-
-	if len(params.Client) != 0 {
-		if (params.StrictMatchClient && entry.IP != params.Client) ||
-			(!params.StrictMatchClient && strings.Index(entry.IP, params.Client) == -1) {
-			return false
-		}
-	}
-
-	return true
-}
-
-func (l *queryLog) readFromFile(params getDataParams) ([]*logEntry, time.Time, int) {
-	entries := []*logEntry{}
-	oldest := time.Time{}
-
-	r := l.OpenReader()
-	if r == nil {
-		return entries, time.Time{}, 0
-	}
-	r.BeginRead(params.OlderThan, getDataLimit, &params)
-	total := uint64(0)
-	for total <= maxSearchEntries {
-		newEntries := []*logEntry{}
-		for {
-			entry := r.Next()
-			if entry == nil {
-				break
-			}
-
-			if !isNeeded(entry, params) {
-				continue
-			}
-			if len(newEntries) == getDataLimit {
-				newEntries = newEntries[1:]
-			}
-			newEntries = append(newEntries, entry)
-		}
-
-		log.Debug("entries: +%d (%d) [%d]", len(newEntries), len(entries), r.Total())
-
-		entries = append(newEntries, entries...)
-		if len(entries) > getDataLimit {
-			toremove := len(entries) - getDataLimit
-			entries = entries[toremove:]
-			break
-		}
-		if r.Total() == 0 || len(entries) == getDataLimit {
-			break
-		}
-		total += r.Total()
-		oldest = r.Oldest()
-		r.BeginReadPrev(getDataLimit)
-	}
-
-	r.Close()
-	return entries, oldest, int(total)
-}
-
 // Parameters for getData()
 type getDataParams struct {
 	OlderThan         time.Time          // return entries that are older than this value
@@ -267,17 +191,12 @@ const (
 	responseStatusFiltered
 )
 
-// Get log entries
+// Gets log entries
 func (l *queryLog) getData(params getDataParams) map[string]interface{} {
-	var data = []map[string]interface{}{}
-
-	var oldest time.Time
 	now := time.Now()
-	entries := []*logEntry{}
-	total := 0
 
 	// add from file
-	entries, oldest, total = l.readFromFile(params)
+	fileEntries, oldest, total := l.searchFiles(params)
 
 	if params.OlderThan.IsZero() {
 		params.OlderThan = now
@@ -286,9 +205,9 @@ func (l *queryLog) getData(params getDataParams) map[string]interface{} {
 	// add from memory buffer
 	l.bufferLock.Lock()
 	total += len(l.buffer)
+	memoryEntries := make([]*logEntry, 0)
 	for _, entry := range l.buffer {
-
-		if !isNeeded(entry, params) {
+		if !matchesGetDataParams(entry, params) {
 			continue
 		}
 
@@ -296,68 +215,24 @@ func (l *queryLog) getData(params getDataParams) map[string]interface{} {
 			break
 		}
 
-		if len(entries) == getDataLimit {
-			entries = entries[1:]
-		}
-		entries = append(entries, entry)
+		memoryEntries = append(memoryEntries, entry)
 	}
 	l.bufferLock.Unlock()
 
-	// process the elements from latest to oldest
-	for i := len(entries) - 1; i >= 0; i-- {
+	// now let's get a unified collection
+	entries := append(memoryEntries, fileEntries...)
+	if len(entries) > getDataLimit {
+		// remove extra records
+		entries = entries[(len(entries) - getDataLimit):]
+	}
+
+	// init the response object
+	var data = []map[string]interface{}{}
+
+	// the elements order is already reversed (from newer to older)
+	for i := 0; i < len(entries); i++ {
 		entry := entries[i]
-		var a *dns.Msg
-
-		if len(entry.Answer) > 0 {
-			a = new(dns.Msg)
-			if err := a.Unpack(entry.Answer); err != nil {
-				log.Debug("Failed to unpack dns message answer: %s: %s", err, string(entry.Answer))
-				a = nil
-			}
-		}
-
-		jsonEntry := map[string]interface{}{
-			"reason":    entry.Result.Reason.String(),
-			"elapsedMs": strconv.FormatFloat(entry.Elapsed.Seconds()*1000, 'f', -1, 64),
-			"time":      entry.Time.Format(time.RFC3339Nano),
-			"client":    entry.IP,
-		}
-		jsonEntry["question"] = map[string]interface{}{
-			"host":  entry.QHost,
-			"type":  entry.QType,
-			"class": entry.QClass,
-		}
-
-		if a != nil {
-			jsonEntry["status"] = dns.RcodeToString[a.Rcode]
-		}
-		if len(entry.Result.Rule) > 0 {
-			jsonEntry["rule"] = entry.Result.Rule
-			jsonEntry["filterId"] = entry.Result.FilterID
-		}
-
-		if len(entry.Result.ServiceName) != 0 {
-			jsonEntry["service_name"] = entry.Result.ServiceName
-		}
-
-		answers := answerToMap(a)
-		if answers != nil {
-			jsonEntry["answer"] = answers
-		}
-
-		if len(entry.OrigAnswer) != 0 {
-			a := new(dns.Msg)
-			err := a.Unpack(entry.OrigAnswer)
-			if err == nil {
-				answers = answerToMap(a)
-				if answers != nil {
-					jsonEntry["original_answer"] = answers
-				}
-			} else {
-				log.Debug("Querylog: a.Unpack(entry.OrigAnswer): %s: %s", err, string(entry.OrigAnswer))
-			}
-		}
-
+		jsonEntry := logEntryToJSONEntry(entry)
 		data = append(data, jsonEntry)
 	}
 
@@ -374,6 +249,62 @@ func (l *queryLog) getData(params getDataParams) map[string]interface{} {
 	}
 	result["data"] = data
 	return result
+}
+
+func logEntryToJSONEntry(entry *logEntry) map[string]interface{} {
+	var msg *dns.Msg
+
+	if len(entry.Answer) > 0 {
+		msg = new(dns.Msg)
+		if err := msg.Unpack(entry.Answer); err != nil {
+			log.Debug("Failed to unpack dns message answer: %s: %s", err, string(entry.Answer))
+			msg = nil
+		}
+	}
+
+	jsonEntry := map[string]interface{}{
+		"reason":    entry.Result.Reason.String(),
+		"elapsedMs": strconv.FormatFloat(entry.Elapsed.Seconds()*1000, 'f', -1, 64),
+		"time":      entry.Time.Format(time.RFC3339Nano),
+		"client":    entry.IP,
+	}
+	jsonEntry["question"] = map[string]interface{}{
+		"host":  entry.QHost,
+		"type":  entry.QType,
+		"class": entry.QClass,
+	}
+
+	if msg != nil {
+		jsonEntry["status"] = dns.RcodeToString[msg.Rcode]
+	}
+	if len(entry.Result.Rule) > 0 {
+		jsonEntry["rule"] = entry.Result.Rule
+		jsonEntry["filterId"] = entry.Result.FilterID
+	}
+
+	if len(entry.Result.ServiceName) != 0 {
+		jsonEntry["service_name"] = entry.Result.ServiceName
+	}
+
+	answers := answerToMap(msg)
+	if answers != nil {
+		jsonEntry["answer"] = answers
+	}
+
+	if len(entry.OrigAnswer) != 0 {
+		a := new(dns.Msg)
+		err := a.Unpack(entry.OrigAnswer)
+		if err == nil {
+			answers = answerToMap(a)
+			if answers != nil {
+				jsonEntry["original_answer"] = answers
+			}
+		} else {
+			log.Debug("Querylog: msg.Unpack(entry.OrigAnswer): %s: %s", err, string(entry.OrigAnswer))
+		}
+	}
+
+	return jsonEntry
 }
 
 func answerToMap(a *dns.Msg) []map[string]interface{} {

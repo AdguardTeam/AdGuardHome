@@ -30,14 +30,17 @@ func TestQueryLog(t *testing.T) {
 	l := newQueryLog(conf)
 
 	// add disk entries
-	addEntry(l, "example.org", "1.2.3.4", "0.1.2.3")
-	addEntry(l, "example.org", "1.2.3.4", "0.1.2.3")
-
+	addEntry(l, "example.org", "1.1.1.1", "2.2.2.1")
+	// write to disk (first file)
+	_ = l.flushLogBuffer(true)
+	// start writing to the second file
+	_ = l.rotate()
+	// add disk entries
+	addEntry(l, "example.org", "1.1.1.2", "2.2.2.2")
 	// write to disk
-	l.flushLogBuffer(true)
-
+	_ = l.flushLogBuffer(true)
 	// add memory entries
-	addEntry(l, "test.example.org", "2.2.3.4", "0.1.2.4")
+	addEntry(l, "test.example.org", "1.1.1.3", "2.2.2.3")
 
 	// get all entries
 	params := getDataParams{
@@ -45,9 +48,10 @@ func TestQueryLog(t *testing.T) {
 	}
 	d := l.getData(params)
 	mdata := d["data"].([]map[string]interface{})
-	assert.True(t, len(mdata) == 2)
-	assert.True(t, checkEntry(t, mdata[0], "test.example.org", "2.2.3.4", "0.1.2.4"))
-	assert.True(t, checkEntry(t, mdata[1], "example.org", "1.2.3.4", "0.1.2.3"))
+	assert.Equal(t, 3, len(mdata))
+	assert.True(t, checkEntry(t, mdata[0], "test.example.org", "1.1.1.3", "2.2.2.3"))
+	assert.True(t, checkEntry(t, mdata[1], "example.org", "1.1.1.2", "2.2.2.2"))
+	assert.True(t, checkEntry(t, mdata[2], "example.org", "1.1.1.1", "2.2.2.1"))
 
 	// search by domain (strict)
 	params = getDataParams{
@@ -58,9 +62,9 @@ func TestQueryLog(t *testing.T) {
 	d = l.getData(params)
 	mdata = d["data"].([]map[string]interface{})
 	assert.True(t, len(mdata) == 1)
-	assert.True(t, checkEntry(t, mdata[0], "test.example.org", "2.2.3.4", "0.1.2.4"))
+	assert.True(t, checkEntry(t, mdata[0], "test.example.org", "1.1.1.3", "2.2.2.3"))
 
-	// search by domain
+	// search by domain (not strict)
 	params = getDataParams{
 		OlderThan:         time.Time{},
 		Domain:            "example.org",
@@ -68,32 +72,34 @@ func TestQueryLog(t *testing.T) {
 	}
 	d = l.getData(params)
 	mdata = d["data"].([]map[string]interface{})
-	assert.True(t, len(mdata) == 2)
-	assert.True(t, checkEntry(t, mdata[0], "test.example.org", "2.2.3.4", "0.1.2.4"))
-	assert.True(t, checkEntry(t, mdata[1], "example.org", "1.2.3.4", "0.1.2.3"))
+	assert.Equal(t, 3, len(mdata))
+	assert.True(t, checkEntry(t, mdata[0], "test.example.org", "1.1.1.3", "2.2.2.3"))
+	assert.True(t, checkEntry(t, mdata[1], "example.org", "1.1.1.2", "2.2.2.2"))
+	assert.True(t, checkEntry(t, mdata[2], "example.org", "1.1.1.1", "2.2.2.1"))
 
 	// search by client IP (strict)
 	params = getDataParams{
 		OlderThan:         time.Time{},
-		Client:            "0.1.2.3",
+		Client:            "2.2.2.2",
 		StrictMatchClient: true,
 	}
 	d = l.getData(params)
 	mdata = d["data"].([]map[string]interface{})
-	assert.True(t, len(mdata) == 1)
-	assert.True(t, checkEntry(t, mdata[0], "example.org", "1.2.3.4", "0.1.2.3"))
+	assert.Equal(t, 1, len(mdata))
+	assert.True(t, checkEntry(t, mdata[0], "example.org", "1.1.1.2", "2.2.2.2"))
 
-	// search by client IP
+	// search by client IP (part of)
 	params = getDataParams{
 		OlderThan:         time.Time{},
-		Client:            "0.1.2",
+		Client:            "2.2.2",
 		StrictMatchClient: false,
 	}
 	d = l.getData(params)
 	mdata = d["data"].([]map[string]interface{})
-	assert.True(t, len(mdata) == 2)
-	assert.True(t, checkEntry(t, mdata[0], "test.example.org", "2.2.3.4", "0.1.2.4"))
-	assert.True(t, checkEntry(t, mdata[1], "example.org", "1.2.3.4", "0.1.2.3"))
+	assert.Equal(t, 3, len(mdata))
+	assert.True(t, checkEntry(t, mdata[0], "test.example.org", "1.1.1.3", "2.2.2.3"))
+	assert.True(t, checkEntry(t, mdata[1], "example.org", "1.1.1.2", "2.2.2.2"))
+	assert.True(t, checkEntry(t, mdata[2], "example.org", "1.1.1.1", "2.2.2.1"))
 }
 
 func addEntry(l *queryLog, host, answerStr, client string) {
@@ -129,11 +135,11 @@ func checkEntry(t *testing.T, m map[string]interface{}, host, answer, client str
 	mq := m["question"].(map[string]interface{})
 	ma := m["answer"].([]map[string]interface{})
 	ma0 := ma[0]
-	if !assert.True(t, mq["host"].(string) == host) ||
-		!assert.True(t, mq["class"].(string) == "IN") ||
-		!assert.True(t, mq["type"].(string) == "A") ||
-		!assert.True(t, ma0["value"].(string) == answer) ||
-		!assert.True(t, m["client"].(string) == client) {
+	if !assert.Equal(t, host, mq["host"].(string)) ||
+		!assert.Equal(t, "IN", mq["class"].(string)) ||
+		!assert.Equal(t, "A", mq["type"].(string)) ||
+		!assert.Equal(t, answer, ma0["value"].(string)) ||
+		!assert.Equal(t, client, m["client"].(string)) {
 		return false
 	}
 	return true

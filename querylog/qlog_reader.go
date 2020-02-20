@@ -48,7 +48,7 @@ func NewQLogReader(files []string) (*QLogReader, error) {
 //
 // Returns nil if the record is successfully found.
 // Returns an error if for some reason we could not find a record with the specified timestamp.
-func (r *QLogReader) Seek(timestamp uint64) error {
+func (r *QLogReader) Seek(timestamp int64) error {
 	for i := len(r.qFiles) - 1; i >= 0; i-- {
 		q := r.qFiles[i]
 		_, err := q.Seek(timestamp)
