@@ -14,15 +14,157 @@ import (
 )
 
 func TestQLogFileEmpty(t *testing.T) {
-	// TODO: test empty file
+	testDir := prepareTestDir()
+	defer func() { _ = os.RemoveAll(testDir) }()
+	testFile := prepareTestFile(testDir, 0)
+
+	// create the new QLogFile instance
+	q, err := NewQLogFile(testFile)
+	assert.Nil(t, err)
+	assert.NotNil(t, q)
+
+	// seek to the start
+	pos, err := q.SeekStart()
+	assert.Nil(t, err)
+	assert.Equal(t, int64(0), pos)
+
+	// try reading anyway
+	line, err := q.ReadNext()
+	assert.Equal(t, io.EOF, err)
+	assert.Equal(t, "", line)
 }
 
 func TestQLogFileLarge(t *testing.T) {
-	// TODO: test reading large file
+	// should be large enough
+	count := 50000
+
+	testDir := prepareTestDir()
+	defer func() { _ = os.RemoveAll(testDir) }()
+	testFile := prepareTestFile(testDir, count)
+
+	// create the new QLogFile instance
+	q, err := NewQLogFile(testFile)
+	assert.Nil(t, err)
+	assert.NotNil(t, q)
+
+	// seek to the start
+	pos, err := q.SeekStart()
+	assert.Nil(t, err)
+	assert.NotEqual(t, int64(0), pos)
+
+	read := 0
+	var line string
+	for err == nil {
+		line, err = q.ReadNext()
+		if err == nil {
+			assert.True(t, len(line) > 0)
+			read += 1
+		}
+	}
+
+	assert.Equal(t, count, read)
+	assert.Equal(t, io.EOF, err)
 }
 
-func TestQLogFileSeek(t *testing.T) {
-	// TODO: test seek method on a small file
+func TestQLogFileSeekLargeFile(t *testing.T) {
+	// more or less big file
+	count := 10000
+
+	testDir := prepareTestDir()
+	defer func() { _ = os.RemoveAll(testDir) }()
+	testFile := prepareTestFile(testDir, count)
+
+	// create the new QLogFile instance
+	q, err := NewQLogFile(testFile)
+	assert.Nil(t, err)
+	assert.NotNil(t, q)
+
+	// CASE 1: NOT TOO OLD LINE
+	testSeekLine(t, q, 300)
+
+	// CASE 2: OLD LINE
+	testSeekLine(t, q, count-300)
+
+	// CASE 3: FIRST LINE
+	testSeekLine(t, q, 0)
+
+	// CASE 4: LAST LINE
+	testSeekLine(t, q, count)
+
+	// CASE 5: Seek non-existent (too low)
+	_, err = q.Seek(123)
+	assert.NotNil(t, err)
+
+	// CASE 6: Seek non-existent (too high)
+	ts, _ := time.Parse(time.RFC3339, "2100-01-02T15:04:05Z07:00")
+	_, err = q.Seek(uint64(ts.UnixNano()))
+	assert.NotNil(t, err)
+}
+
+func TestQLogFileSeekSmallFile(t *testing.T) {
+	// more or less big file
+	count := 10
+
+	testDir := prepareTestDir()
+	defer func() { _ = os.RemoveAll(testDir) }()
+	testFile := prepareTestFile(testDir, count)
+
+	// create the new QLogFile instance
+	q, err := NewQLogFile(testFile)
+	assert.Nil(t, err)
+	assert.NotNil(t, q)
+
+	// CASE 1: NOT TOO OLD LINE
+	testSeekLine(t, q, 2)
+
+	// CASE 2: OLD LINE
+	testSeekLine(t, q, count-2)
+
+	// CASE 3: FIRST LINE
+	testSeekLine(t, q, 0)
+
+	// CASE 4: LAST LINE
+	testSeekLine(t, q, count)
+
+	// CASE 5: Seek non-existent (too low)
+	_, err = q.Seek(123)
+	assert.NotNil(t, err)
+
+	// CASE 6: Seek non-existent (too high)
+	ts, _ := time.Parse(time.RFC3339, "2100-01-02T15:04:05Z07:00")
+	_, err = q.Seek(uint64(ts.UnixNano()))
+	assert.NotNil(t, err)
+}
+
+func testSeekLine(t *testing.T, q *QLogFile, lineNumber int) {
+	line, err := getQLogLine(q, lineNumber)
+	assert.Nil(t, err)
+	ts := q.readTimestamp(line)
+	assert.NotEqual(t, uint64(0), ts)
+
+	// try seeking to that line now
+	pos, err := q.Seek(ts)
+	assert.Nil(t, err)
+	assert.NotEqual(t, int64(0), pos)
+
+	testLine, err := q.ReadNext()
+	assert.Nil(t, err)
+	assert.Equal(t, line, testLine)
+}
+
+func getQLogLine(q *QLogFile, lineNumber int) (string, error) {
+	_, err := q.SeekStart()
+	if err != nil {
+		return "", err
+	}
+
+	for i := 1; i < lineNumber; i++ {
+		_, err := q.ReadNext()
+		if err != nil {
+			return "", err
+		}
+	}
+	return q.ReadNext()
 }
 
 // Check adding and loading (with filtering) entries from disk and memory
