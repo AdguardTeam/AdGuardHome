@@ -22,6 +22,7 @@ func TestQLogFileEmpty(t *testing.T) {
 	q, err := NewQLogFile(testFile)
 	assert.Nil(t, err)
 	assert.NotNil(t, q)
+	defer q.Close()
 
 	// seek to the start
 	pos, err := q.SeekStart()
@@ -46,6 +47,7 @@ func TestQLogFileLarge(t *testing.T) {
 	q, err := NewQLogFile(testFile)
 	assert.Nil(t, err)
 	assert.NotNil(t, q)
+	defer q.Close()
 
 	// seek to the start
 	pos, err := q.SeekStart()
@@ -78,18 +80,19 @@ func TestQLogFileSeekLargeFile(t *testing.T) {
 	q, err := NewQLogFile(testFile)
 	assert.Nil(t, err)
 	assert.NotNil(t, q)
+	defer q.Close()
 
 	// CASE 1: NOT TOO OLD LINE
-	testSeekLine(t, q, 300)
+	testSeekLineQLogFile(t, q, 300)
 
 	// CASE 2: OLD LINE
-	testSeekLine(t, q, count-300)
+	testSeekLineQLogFile(t, q, count-300)
 
 	// CASE 3: FIRST LINE
-	testSeekLine(t, q, 0)
+	testSeekLineQLogFile(t, q, 0)
 
 	// CASE 4: LAST LINE
-	testSeekLine(t, q, count)
+	testSeekLineQLogFile(t, q, count)
 
 	// CASE 5: Seek non-existent (too low)
 	_, err = q.Seek(123)
@@ -113,18 +116,19 @@ func TestQLogFileSeekSmallFile(t *testing.T) {
 	q, err := NewQLogFile(testFile)
 	assert.Nil(t, err)
 	assert.NotNil(t, q)
+	defer q.Close()
 
 	// CASE 1: NOT TOO OLD LINE
-	testSeekLine(t, q, 2)
+	testSeekLineQLogFile(t, q, 2)
 
 	// CASE 2: OLD LINE
-	testSeekLine(t, q, count-2)
+	testSeekLineQLogFile(t, q, count-2)
 
 	// CASE 3: FIRST LINE
-	testSeekLine(t, q, 0)
+	testSeekLineQLogFile(t, q, 0)
 
 	// CASE 4: LAST LINE
-	testSeekLine(t, q, count)
+	testSeekLineQLogFile(t, q, count)
 
 	// CASE 5: Seek non-existent (too low)
 	_, err = q.Seek(123)
@@ -136,10 +140,10 @@ func TestQLogFileSeekSmallFile(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
-func testSeekLine(t *testing.T, q *QLogFile, lineNumber int) {
-	line, err := getQLogLine(q, lineNumber)
+func testSeekLineQLogFile(t *testing.T, q *QLogFile, lineNumber int) {
+	line, err := getQLogFileLine(q, lineNumber)
 	assert.Nil(t, err)
-	ts := q.readTimestamp(line)
+	ts := readQLogTimestamp(line)
 	assert.NotEqual(t, uint64(0), ts)
 
 	// try seeking to that line now
@@ -152,7 +156,7 @@ func testSeekLine(t *testing.T, q *QLogFile, lineNumber int) {
 	assert.Equal(t, line, testLine)
 }
 
-func getQLogLine(q *QLogFile, lineNumber int) (string, error) {
+func getQLogFileLine(q *QLogFile, lineNumber int) (string, error) {
 	_, err := q.SeekStart()
 	if err != nil {
 		return "", err
@@ -177,6 +181,7 @@ func TestQLogFile(t *testing.T) {
 	q, err := NewQLogFile(testFile)
 	assert.Nil(t, err)
 	assert.NotNil(t, q)
+	defer q.Close()
 
 	// seek to the start
 	pos, err := q.SeekStart()
@@ -206,27 +211,37 @@ func TestQLogFile(t *testing.T) {
 
 // prepareTestFile - prepares a test query log file with the specified number of lines
 func prepareTestFile(dir string, linesCount int) string {
+	return prepareTestFiles(dir, 1, linesCount)[0]
+}
+
+// prepareTestFiles - prepares several test query log files
+// each of them -- with the specified linesCount
+func prepareTestFiles(dir string, filesCount, linesCount int) []string {
 	format := `{"IP":"${IP}","T":"${TIMESTAMP}","QH":"example.org","QT":"A","QC":"IN","Answer":"AAAAAAABAAEAAAAAB2V4YW1wbGUDb3JnAAABAAEHZXhhbXBsZQNvcmcAAAEAAQAAAAAABAECAwQ=","Result":{},"Elapsed":0,"Upstream":"upstream"}`
 
 	lineTime, _ := time.Parse(time.RFC3339Nano, "2020-02-18T22:36:35.920973+03:00")
 	lineIP := uint32(0)
 
-	f, _ := ioutil.TempFile(dir, "*.txt")
+	files := make([]string, 0)
+	for j := 0; j < filesCount; j++ {
+		f, _ := ioutil.TempFile(dir, "*.txt")
+		files = append(files, f.Name())
 
-	for i := 0; i < linesCount; i++ {
-		lineIP += 1
-		lineTime = lineTime.Add(time.Second)
+		for i := 0; i < linesCount; i++ {
+			lineIP += 1
+			lineTime = lineTime.Add(time.Second)
 
-		ip := make(net.IP, 4)
-		binary.BigEndian.PutUint32(ip, lineIP)
+			ip := make(net.IP, 4)
+			binary.BigEndian.PutUint32(ip, lineIP)
 
-		line := format
-		line = strings.ReplaceAll(line, "${IP}", ip.String())
-		line = strings.ReplaceAll(line, "${TIMESTAMP}", lineTime.Format(time.RFC3339Nano))
+			line := format
+			line = strings.ReplaceAll(line, "${IP}", ip.String())
+			line = strings.ReplaceAll(line, "${TIMESTAMP}", lineTime.Format(time.RFC3339Nano))
 
-		_, _ = f.WriteString(line)
-		_, _ = f.WriteString("\n")
+			_, _ = f.WriteString(line)
+			_, _ = f.WriteString("\n")
+		}
 	}
 
-	return f.Name()
+	return files
 }

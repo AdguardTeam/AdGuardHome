@@ -3,7 +3,6 @@ package querylog
 import (
 	"bufio"
 	"bytes"
-	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
 	"io"
@@ -16,8 +15,6 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
-
-const enableGzip = false
 
 // TODO: Check this when we append a new line -- we don't want to have a line longer than this
 const maxEntrySize = 1000
@@ -70,29 +67,7 @@ func (l *queryLog) flushToFile(buffer []*logEntry) error {
 	var err error
 	var zb bytes.Buffer
 	filename := l.logFile
-
-	// gzip enabled?
-	if enableGzip {
-		filename += ".gz"
-
-		zw := gzip.NewWriter(&zb)
-		zw.Name = l.logFile
-		zw.ModTime = time.Now()
-
-		_, err = zw.Write(b.Bytes())
-		if err != nil {
-			log.Error("Couldn't compress to gzip: %s", err)
-			zw.Close()
-			return err
-		}
-
-		if err = zw.Close(); err != nil {
-			log.Error("Couldn't close gzip writer: %s", err)
-			return err
-		}
-	} else {
-		zb = b
-	}
+	zb = b
 
 	l.fileWriteLock.Lock()
 	defer l.fileWriteLock.Unlock()
@@ -118,11 +93,6 @@ func (l *queryLog) rotate() error {
 	from := l.logFile
 	to := l.logFile + ".1"
 
-	if enableGzip {
-		from = l.logFile + ".gz"
-		to = l.logFile + ".gz.1"
-	}
-
 	if _, err := os.Stat(from); os.IsNotExist(err) {
 		// do nothing, file doesn't exist
 		return nil
@@ -135,7 +105,6 @@ func (l *queryLog) rotate() error {
 	}
 
 	log.Debug("Rotated from %s to %s successfully", from, to)
-
 	return nil
 }
 
