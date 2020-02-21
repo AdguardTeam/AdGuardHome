@@ -59,10 +59,12 @@ func NewQLogFile(path string) (*QLogFile, error) {
 // it shifts seek position to 3/4 of the file. Otherwise, to 1/4 of the file.
 // 5. It performs the search again, every time the search scope is narrowed twice.
 //
-// It returns the position of the the line with the timestamp we were looking for
+// Returns:
+// * It returns the position of the the line with the timestamp we were looking for
 // so that when we call "ReadNext" this line was returned.
-// If we could not find it, it returns 0 and ErrSeekNotFound
-func (q *QLogFile) Seek(timestamp int64) (int64, error) {
+// * Depth of the search (how many times we compared timestamps).
+// * If we could not find it, it returns ErrSeekNotFound
+func (q *QLogFile) Seek(timestamp int64) (int64, int, error) {
 	q.lock.Lock()
 	defer q.lock.Unlock()
 
@@ -72,7 +74,7 @@ func (q *QLogFile) Seek(timestamp int64) (int64, error) {
 	// First of all, check the file size
 	fileInfo, err := q.file.Stat()
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
 
 	// Define the search scope
@@ -91,14 +93,14 @@ func (q *QLogFile) Seek(timestamp int64) (int64, error) {
 		// Get the line at the specified position
 		line, lineIdx, err = q.readProbeLine(probe)
 		if err != nil {
-			return 0, err
+			return 0, depth, err
 		}
 
 		// Get the timestamp from the query log record
 		ts := readQLogTimestamp(line)
 
 		if ts == 0 {
-			return 0, ErrSeekNotFound
+			return 0, depth, ErrSeekNotFound
 		}
 
 		if ts == timestamp {
@@ -109,8 +111,11 @@ func (q *QLogFile) Seek(timestamp int64) (int64, error) {
 		if lastProbeLineIdx == lineIdx {
 			// If we're testing the same line twice then most likely
 			// the scope is too narrow and we won't find anything anymore
-			return 0, ErrSeekNotFound
+			return 0, depth, ErrSeekNotFound
 		}
+
+		// Save the last found idx
+		lastProbeLineIdx = lineIdx
 
 		// Narrow the scope and repeat the search
 		if ts > timestamp {
@@ -128,12 +133,12 @@ func (q *QLogFile) Seek(timestamp int64) (int64, error) {
 		depth++
 		if depth >= 100 {
 			log.Error("Seek depth is too high, aborting. File %s, ts %v", q.file.Name(), timestamp)
-			return 0, ErrSeekNotFound
+			return 0, depth, ErrSeekNotFound
 		}
 	}
 
 	q.position = lineIdx + int64(len(line))
-	return q.position, nil
+	return q.position, depth, nil
 }
 
 // SeekStart changes the current position to the end of the file

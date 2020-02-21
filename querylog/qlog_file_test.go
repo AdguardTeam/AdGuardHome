@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"io"
 	"io/ioutil"
+	"math"
 	"net"
 	"os"
 	"strings"
@@ -95,13 +96,23 @@ func TestQLogFileSeekLargeFile(t *testing.T) {
 	testSeekLineQLogFile(t, q, count)
 
 	// CASE 5: Seek non-existent (too low)
-	_, err = q.Seek(123)
+	_, _, err = q.Seek(123)
 	assert.NotNil(t, err)
 
 	// CASE 6: Seek non-existent (too high)
 	ts, _ := time.Parse(time.RFC3339, "2100-01-02T15:04:05Z07:00")
-	_, err = q.Seek(ts.UnixNano())
+	_, _, err = q.Seek(ts.UnixNano())
 	assert.NotNil(t, err)
+
+	// CASE 7: "Almost" found
+	line, err := getQLogFileLine(q, count/2)
+	assert.Nil(t, err)
+	// ALMOST the record we need
+	timestamp := readQLogTimestamp(line) - 1
+	assert.NotEqual(t, uint64(0), timestamp)
+	_, depth, err := q.Seek(timestamp)
+	assert.NotNil(t, err)
+	assert.True(t, depth <= int(math.Log2(float64(count))+3))
 }
 
 func TestQLogFileSeekSmallFile(t *testing.T) {
@@ -131,13 +142,23 @@ func TestQLogFileSeekSmallFile(t *testing.T) {
 	testSeekLineQLogFile(t, q, count)
 
 	// CASE 5: Seek non-existent (too low)
-	_, err = q.Seek(123)
+	_, _, err = q.Seek(123)
 	assert.NotNil(t, err)
 
 	// CASE 6: Seek non-existent (too high)
 	ts, _ := time.Parse(time.RFC3339, "2100-01-02T15:04:05Z07:00")
-	_, err = q.Seek(ts.UnixNano())
+	_, _, err = q.Seek(ts.UnixNano())
 	assert.NotNil(t, err)
+
+	// CASE 7: "Almost" found
+	line, err := getQLogFileLine(q, count/2)
+	assert.Nil(t, err)
+	// ALMOST the record we need
+	timestamp := readQLogTimestamp(line) - 1
+	assert.NotEqual(t, uint64(0), timestamp)
+	_, depth, err := q.Seek(timestamp)
+	assert.NotNil(t, err)
+	assert.True(t, depth <= int(math.Log2(float64(count))+3))
 }
 
 func testSeekLineQLogFile(t *testing.T, q *QLogFile, lineNumber int) {
@@ -147,7 +168,7 @@ func testSeekLineQLogFile(t *testing.T, q *QLogFile, lineNumber int) {
 	assert.NotEqual(t, uint64(0), ts)
 
 	// try seeking to that line now
-	pos, err := q.Seek(ts)
+	pos, _, err := q.Seek(ts)
 	assert.Nil(t, err)
 	assert.NotEqual(t, int64(0), pos)
 

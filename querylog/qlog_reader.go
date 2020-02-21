@@ -51,7 +51,7 @@ func NewQLogReader(files []string) (*QLogReader, error) {
 func (r *QLogReader) Seek(timestamp int64) error {
 	for i := len(r.qFiles) - 1; i >= 0; i-- {
 		q := r.qFiles[i]
-		_, err := q.Seek(timestamp)
+		_, _, err := q.Seek(timestamp)
 		if err == nil {
 			// Our search is finished, we found the element we were looking for
 			// Update currentFile only, position is already set properly in the QLogFile
