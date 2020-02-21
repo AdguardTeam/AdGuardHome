@@ -9,9 +9,6 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// TODO: Check this when we append a new line -- we don't want to have a line longer than this
-const maxEntrySize = 1024
-
 // flushLogBuffer flushes the current buffer to file and resets the current buffer
 func (l *queryLog) flushLogBuffer(fullFlush bool) error {
 	l.fileFlushLock.Lock()

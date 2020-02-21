@@ -15,7 +15,11 @@ import (
 // if we failed to find the desired record
 var ErrSeekNotFound = errors.New("Seek not found the record")
 
-const bufferSize = 256 * 1024 // 256 KB is the buffer size
+// TODO: Find a way to grow buffer instead of relying on this value when reading strings
+const maxEntrySize = 16 * 1024
+
+// buffer should be enough for at least this number of entries
+const bufferSize = 100 * maxEntrySize
 
 // QLogFile represents a single query log file
 // It allows reading from the file in the reverse order

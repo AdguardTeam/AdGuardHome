@@ -208,14 +208,17 @@ func (l *queryLog) getData(params getDataParams) map[string]interface{} {
 	memoryEntries := make([]*logEntry, 0)
 
 	// go through the buffer in the reverse order
+	// from NEWER to OLDER
 	for i := len(l.buffer) - 1; i >= 0; i-- {
 		entry := l.buffer[i]
-		if !matchesGetDataParams(entry, params) {
+
+		if entry.Time.UnixNano() >= params.OlderThan.UnixNano() {
+			// Ignore entries newer than what was requested
 			continue
 		}
 
-		if entry.Time.UnixNano() >= params.OlderThan.UnixNano() {
-			break
+		if !matchesGetDataParams(entry, params) {
+			continue
 		}
 
 		memoryEntries = append(memoryEntries, entry)
