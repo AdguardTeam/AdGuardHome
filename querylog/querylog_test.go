@@ -41,6 +41,7 @@ func TestQueryLog(t *testing.T) {
 	_ = l.flushLogBuffer(true)
 	// add memory entries
 	addEntry(l, "test.example.org", "1.1.1.3", "2.2.2.3")
+	addEntry(l, "example.com", "1.1.1.4", "2.2.2.4")
 
 	// get all entries
 	params := getDataParams{
@@ -48,10 +49,11 @@ func TestQueryLog(t *testing.T) {
 	}
 	d := l.getData(params)
 	mdata := d["data"].([]map[string]interface{})
-	assert.Equal(t, 3, len(mdata))
-	assert.True(t, checkEntry(t, mdata[0], "test.example.org", "1.1.1.3", "2.2.2.3"))
-	assert.True(t, checkEntry(t, mdata[1], "example.org", "1.1.1.2", "2.2.2.2"))
-	assert.True(t, checkEntry(t, mdata[2], "example.org", "1.1.1.1", "2.2.2.1"))
+	assert.Equal(t, 4, len(mdata))
+	assert.True(t, checkEntry(t, mdata[0], "example.com", "1.1.1.4", "2.2.2.4"))
+	assert.True(t, checkEntry(t, mdata[1], "test.example.org", "1.1.1.3", "2.2.2.3"))
+	assert.True(t, checkEntry(t, mdata[2], "example.org", "1.1.1.2", "2.2.2.2"))
+	assert.True(t, checkEntry(t, mdata[3], "example.org", "1.1.1.1", "2.2.2.1"))
 
 	// search by domain (strict)
 	params = getDataParams{
@@ -96,10 +98,11 @@ func TestQueryLog(t *testing.T) {
 	}
 	d = l.getData(params)
 	mdata = d["data"].([]map[string]interface{})
-	assert.Equal(t, 3, len(mdata))
-	assert.True(t, checkEntry(t, mdata[0], "test.example.org", "1.1.1.3", "2.2.2.3"))
-	assert.True(t, checkEntry(t, mdata[1], "example.org", "1.1.1.2", "2.2.2.2"))
-	assert.True(t, checkEntry(t, mdata[2], "example.org", "1.1.1.1", "2.2.2.1"))
+	assert.Equal(t, 4, len(mdata))
+	assert.True(t, checkEntry(t, mdata[0], "example.com", "1.1.1.4", "2.2.2.4"))
+	assert.True(t, checkEntry(t, mdata[1], "test.example.org", "1.1.1.3", "2.2.2.3"))
+	assert.True(t, checkEntry(t, mdata[2], "example.org", "1.1.1.2", "2.2.2.2"))
+	assert.True(t, checkEntry(t, mdata[3], "example.org", "1.1.1.1", "2.2.2.1"))
 }
 
 func addEntry(l *queryLog, host, answerStr, client string) {

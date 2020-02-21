@@ -206,7 +206,10 @@ func (l *queryLog) getData(params getDataParams) map[string]interface{} {
 	l.bufferLock.Lock()
 	total += len(l.buffer)
 	memoryEntries := make([]*logEntry, 0)
-	for _, entry := range l.buffer {
+
+	// go through the buffer in the reverse order
+	for i := len(l.buffer) - 1; i >= 0; i-- {
+		entry := l.buffer[i]
 		if !matchesGetDataParams(entry, params) {
 			continue
 		}
