@@ -100,6 +100,7 @@ const filtering = handleActions(
         processingCheck: false,
         isFilterAdded: false,
         filters: [],
+        whitelistFilters: [],
         userRules: '',
         interval: 24,
         enabled: true,

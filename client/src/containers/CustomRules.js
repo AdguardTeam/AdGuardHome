@@ -2,16 +2,10 @@ import { connect } from 'react-redux';
 import {
     setRules,
     getFilteringStatus,
-    addFilter,
-    removeFilter,
-    toggleFilterStatus,
-    toggleFilteringModal,
-    refreshFilters,
     handleRulesChange,
-    editFilter,
     checkHost,
 } from '../actions/filtering';
-import Filters from '../components/Filters';
+import CustomRules from '../components/Filters/CustomRules';
 
 const mapStateToProps = (state) => {
     const { filtering } = state;
@@ -22,17 +16,11 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = {
     setRules,
     getFilteringStatus,
-    addFilter,
-    removeFilter,
-    toggleFilterStatus,
-    toggleFilteringModal,
-    refreshFilters,
     handleRulesChange,
-    editFilter,
     checkHost,
 };
 
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(Filters);
+)(CustomRules);

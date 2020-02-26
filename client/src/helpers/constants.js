@@ -137,7 +137,26 @@ export const CLIENT_ID = {
     IP: 'ip',
 };
 
-export const SETTINGS_URLS = ['/encryption', '/dhcp', '/dns', '/settings', '/clients'];
+export const MENU_URLS = {
+    root: '/',
+    logs: '/logs',
+    guide: '/guide',
+};
+
+export const SETTINGS_URLS = {
+    encryption: '/encryption',
+    dhcp: '/dhcp',
+    dns: '/dns',
+    settings: '/settings',
+    clients: '/clients',
+};
+
+export const FILTERS_URLS = {
+    dns_blocklists: '/filters',
+    dns_allowlists: '/dns_allowlists',
+    dns_rewrites: '/dns_rewrites',
+    custom_rules: '/custom_rules',
+};
 
 export const SERVICES = [
     {

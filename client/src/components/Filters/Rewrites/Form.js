@@ -4,7 +4,7 @@ import { Field, reduxForm } from 'redux-form';
 import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 
-import { renderInputField, required, domain, answer } from '../../../../helpers/form';
+import { renderInputField, required, domain, answer } from '../../../helpers/form';
 
 const Form = (props) => {
     const {

@@ -42,7 +42,7 @@ func _Func() string {
 	return path.Base(f.Name())
 }
 
-func NewForTest(c *Config, filters map[int]string) *Dnsfilter {
+func NewForTest(c *Config, filters []Filter) *Dnsfilter {
 	setts = RequestFilteringSettings{}
 	setts.FilteringEnabled = true
 	if c != nil {
@@ -106,8 +106,9 @@ func TestEtcHostsMatching(t *testing.T) {
 ::1 host2
 `,
 		addr, addr6)
-	filters := make(map[int]string)
-	filters[0] = text
+	filters := []Filter{Filter{
+		ID: 0, Data: []byte(text),
+	}}
 	d := NewForTest(nil, filters)
 	defer d.Close()
 
@@ -404,8 +405,9 @@ var tests = []struct {
 func TestMatching(t *testing.T) {
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%s-%s", test.testname, test.hostname), func(t *testing.T) {
-			filters := make(map[int]string)
-			filters[0] = test.rules
+			filters := []Filter{Filter{
+				ID: 0, Data: []byte(test.rules),
+			}}
 			d := NewForTest(nil, filters)
 			defer d.Close()
 
@@ -421,6 +423,38 @@ func TestMatching(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestWhitelist(t *testing.T) {
+	rules := `||host1^
+||host2^
+`
+	filters := []Filter{Filter{
+		ID: 0, Data: []byte(rules),
+	}}
+
+	whiteRules := `||host1^
+||host3^
+`
+	whiteFilters := []Filter{Filter{
+		ID: 0, Data: []byte(whiteRules),
+	}}
+	d := NewForTest(nil, filters)
+	d.SetFilters(filters, whiteFilters, false)
+	defer d.Close()
+
+	// matched by white filter
+	ret, err := d.CheckHost("host1", dns.TypeA, &setts)
+	assert.True(t, err == nil)
+	assert.True(t, !ret.IsFiltered && ret.Reason == NotFilteredWhiteList)
+	assert.True(t, ret.Rule == "||host1^")
+
+	// not matched by white filter, but matched by block filter
+	ret, err = d.CheckHost("host2", dns.TypeA, &setts)
+	assert.True(t, err == nil)
+	assert.True(t, ret.IsFiltered && ret.Reason == FilteredBlackList)
+	assert.True(t, ret.Rule == "||host2^")
+
 }
 
 // CLIENT SETTINGS
@@ -441,8 +475,9 @@ func applyClientSettings(setts *RequestFilteringSettings) {
 //  then apply per-client settings and check behaviour once again
 func TestClientSettings(t *testing.T) {
 	var r Result
-	filters := make(map[int]string)
-	filters[0] = "||example.org^\n"
+	filters := []Filter{Filter{
+		ID: 0, Data: []byte("||example.org^\n"),
+	}}
 	d := NewForTest(&Config{ParentalEnabled: true, SafeBrowsingEnabled: false}, filters)
 	defer d.Close()
 

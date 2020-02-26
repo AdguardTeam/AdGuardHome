@@ -28,8 +28,9 @@ func IsValidURL(rawurl string) bool {
 }
 
 type filterAddJSON struct {
-	Name string `json:"name"`
-	URL  string `json:"url"`
+	Name      string `json:"name"`
+	URL       string `json:"url"`
+	Whitelist bool   `json:"whitelist"`
 }
 
 func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
@@ -56,6 +57,7 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 		Enabled: true,
 		URL:     fj.URL,
 		Name:    fj.Name,
+		white:   fj.Whitelist,
 	}
 	f.ID = assignUniqueFilterID()
 
@@ -82,7 +84,6 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// URL is deemed valid, append it to filters, update config, write new filter file and tell dns to reload it
-	// TODO: since we directly feed filters in-memory, revisit if writing configs is always necessary
 	if !filterAdd(f) {
 		httpError(w, http.StatusBadRequest, "Filter URL already added -- %s", f.URL)
 		return
@@ -100,7 +101,8 @@ func handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 
 	type request struct {
-		URL string `json:"url"`
+		URL       string `json:"url"`
+		Whitelist bool   `json:"whitelist"`
 	}
 	req := request{}
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -117,7 +119,11 @@ func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 	// go through each element and delete if url matches
 	config.Lock()
 	newFilters := []filter{}
-	for _, filter := range config.Filters {
+	filters := &config.Filters
+	if req.Whitelist {
+		filters = &config.WhitelistFilters
+	}
+	for _, filter := range *filters {
 		if filter.URL != req.URL {
 			newFilters = append(newFilters, filter)
 		} else {
@@ -128,7 +134,7 @@ func handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// Update the configuration after removing filter files
-	config.Filters = newFilters
+	*filters = newFilters
 	config.Unlock()
 
 	onConfigModified()
@@ -145,8 +151,9 @@ type filterURLJSON struct {
 }
 
 type filterURLReq struct {
-	URL  string        `json:"url"`
-	Data filterURLJSON `json:"data"`
+	URL       string        `json:"url"`
+	Whitelist bool          `json:"whitelist"`
+	Data      filterURLJSON `json:"data"`
 }
 
 func handleFilteringSetURL(w http.ResponseWriter, r *http.Request) {
@@ -167,7 +174,7 @@ func handleFilteringSetURL(w http.ResponseWriter, r *http.Request) {
 		Name:    fj.Data.Name,
 		URL:     fj.Data.URL,
 	}
-	status := filterSetProperties(fj.URL, f)
+	status := filterSetProperties(fj.URL, f, fj.Whitelist)
 	if (status & statusFound) == 0 {
 		http.Error(w, "URL doesn't exist", http.StatusBadRequest)
 		return
@@ -210,14 +217,27 @@ func handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleFilteringRefresh(w http.ResponseWriter, r *http.Request) {
+	type Resp struct {
+		Updated int `json:"updated"`
+	}
+	resp := Resp{}
+	var err error
+
 	Context.controlLock.Unlock()
-	nUpdated, err := refreshFilters()
+	resp.Updated, err = refreshFilters()
 	Context.controlLock.Lock()
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "%s", err)
 		return
 	}
-	fmt.Fprintf(w, "OK %d filters updated\n", nUpdated)
+
+	js, err := json.Marshal(resp)
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "json encode: %s", err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(js)
 }
 
 type filterJSON struct {
@@ -230,10 +250,27 @@ type filterJSON struct {
 }
 
 type filteringConfig struct {
-	Enabled   bool         `json:"enabled"`
-	Interval  uint32       `json:"interval"` // in hours
-	Filters   []filterJSON `json:"filters"`
-	UserRules []string     `json:"user_rules"`
+	Enabled          bool         `json:"enabled"`
+	Interval         uint32       `json:"interval"` // in hours
+	Filters          []filterJSON `json:"filters"`
+	WhitelistFilters []filterJSON `json:"whitelist_filters"`
+	UserRules        []string     `json:"user_rules"`
+}
+
+func filterToJSON(f filter) filterJSON {
+	fj := filterJSON{
+		ID:         f.ID,
+		Enabled:    f.Enabled,
+		URL:        f.URL,
+		Name:       f.Name,
+		RulesCount: uint32(f.RulesCount),
+	}
+
+	if !f.LastUpdated.IsZero() {
+		fj.LastUpdated = f.LastUpdated.Format(time.RFC3339)
+	}
+
+	return fj
 }
 
 // Get filtering configuration
@@ -243,19 +280,12 @@ func handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
 	resp.Enabled = config.DNS.FilteringEnabled
 	resp.Interval = config.DNS.FiltersUpdateIntervalHours
 	for _, f := range config.Filters {
-		fj := filterJSON{
-			ID:         f.ID,
-			Enabled:    f.Enabled,
-			URL:        f.URL,
-			Name:       f.Name,
-			RulesCount: uint32(f.RulesCount),
-		}
-
-		if !f.LastUpdated.IsZero() {
-			fj.LastUpdated = f.LastUpdated.Format(time.RFC3339)
-		}
-
+		fj := filterToJSON(f)
 		resp.Filters = append(resp.Filters, fj)
+	}
+	for _, f := range config.WhitelistFilters {
+		fj := filterToJSON(f)
+		resp.WhitelistFilters = append(resp.WhitelistFilters, fj)
 	}
 	resp.UserRules = config.UserRules
 	config.RUnlock()

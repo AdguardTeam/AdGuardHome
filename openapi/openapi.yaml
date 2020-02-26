@@ -572,7 +572,9 @@ paths:
                 If you ever find yourself using `force` to make something work that otherwise wont, this is a bug and report it accordingly.
             responses:
                 200:
-                    description: OK with how many filters were actually updated
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/FilterRefreshResponse"
 
     /filtering/set_rules:
         post:
@@ -1229,6 +1231,13 @@ definitions:
                 items:
                     type: "string"
                 description: "Set if reason=ReasonRewrite"
+
+    FilterRefreshResponse:
+        type: "object"
+        description: "/filtering/refresh response data"
+        properties:
+            updated:
+                type: "integer"
 
     GetVersionRequest:
         type: "object"

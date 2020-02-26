@@ -140,12 +140,13 @@ class Logs extends Component {
         })
     );
 
-    getFilterName = (filters, filterId, t) => {
+    getFilterName = (filters, whitelistFilters, filterId, t) => {
         if (filterId === CUSTOM_FILTERING_RULES_ID) {
             return t('custom_filter_rules');
         }
 
-        const filter = filters.find(filter => filter.id === filterId);
+        const filter = filters.find(filter => filter.id === filterId)
+            || whitelistFilters.find(filter => filter.id === filterId);
         let filterName = '';
 
         if (filter) {
@@ -164,7 +165,7 @@ class Logs extends Component {
             reason, filterId, rule, status, originalAnswer,
         } = original;
         const { t, filtering } = this.props;
-        const { filters } = filtering;
+        const { filters, whitelistFilters } = filtering;
 
         const isFiltered = checkFiltered(reason);
         const isBlackList = checkBlackList(reason);
@@ -177,7 +178,7 @@ class Logs extends Component {
         const parsedFilteredReason = t('query_log_filtered', { filter: filterKey });
         const currentService = SERVICES.find(service => service.id === original.serviceName);
         const serviceName = currentService && currentService.name;
-        const filterName = this.getFilterName(filters, filterId, t);
+        const filterName = this.getFilterName(filters, whitelistFilters, filterId, t);
 
         if (isBlockedCnameIp) {
             const normalizedAnswer = this.normalizeResponse(originalAnswer);
@@ -188,6 +189,7 @@ class Logs extends Component {
                         <span className="logs__text">
                             <Trans>blocked_by_response</Trans>
                         </span>
+                        {this.renderTooltip(isFiltered, rule, filterName)}
                     </div>
                     <div className="logs__list-wrap">
                         {this.renderResponseList(normalizedAnswer, status)}
@@ -242,7 +244,7 @@ class Logs extends Component {
                 </div>
                 {isRewrite ? (
                     <div className="logs__action">
-                        <Link to="/dns#rewrites" className="btn btn-sm btn-outline-primary">
+                        <Link to="/dns_rewrites" className="btn btn-sm btn-outline-primary">
                             <Trans>configure</Trans>
                         </Link>
                     </div>

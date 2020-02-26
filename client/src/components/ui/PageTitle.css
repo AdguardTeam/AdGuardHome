@@ -1,6 +1,15 @@
+.page-header {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
 .page-subtitle {
-    margin-left: 0.7rem;
+    margin-left: 0;
     font-size: 0.9rem;
+}
+
+.page-title {
+    line-height: 2.2rem;
 }
 
 .page-title__actions {

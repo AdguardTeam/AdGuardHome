@@ -17,6 +17,7 @@ const Check = (props) => {
         processing,
         check,
         filters,
+        whitelistFilters,
     } = props;
 
     const {
@@ -62,6 +63,7 @@ const Check = (props) => {
                                 <hr/>
                                 <Info
                                     filters={filters}
+                                    whitelistFilters={whitelistFilters}
                                     hostname={hostname}
                                     reason={reason}
                                     filter_id={filter_id}
@@ -87,6 +89,7 @@ Check.propTypes = {
     processing: PropTypes.bool.isRequired,
     check: PropTypes.object.isRequired,
     filters: PropTypes.array.isRequired,
+    whitelistFilters: PropTypes.array.isRequired,
 };
 
 export default flow([

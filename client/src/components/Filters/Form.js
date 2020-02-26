@@ -13,6 +13,7 @@ const Form = (props) => {
         handleSubmit,
         processingAddFilter,
         processingConfigFilter,
+        whitelist,
     } = props;
 
     return (
@@ -41,7 +42,11 @@ const Form = (props) => {
                     />
                 </div>
                 <div className="form__description">
-                    <Trans>enter_valid_filter_url</Trans>
+                    {whitelist ? (
+                        <Trans>enter_valid_allowlist</Trans>
+                    ) : (
+                        <Trans>enter_valid_blocklist</Trans>
+                    )}
                 </div>
             </div>
             <div className="modal-footer">
@@ -70,6 +75,7 @@ Form.propTypes = {
     handleSubmit: PropTypes.func.isRequired,
     processingAddFilter: PropTypes.bool.isRequired,
     processingConfigFilter: PropTypes.bool.isRequired,
+    whitelist: PropTypes.bool,
 };
 
 export default flow([

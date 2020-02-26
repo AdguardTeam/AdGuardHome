@@ -28,7 +28,7 @@ class PopoverFilter extends Component {
                         )}
                         {filter && (
                             <div className="popover__list-item popover__list-item--nowrap">
-                                <Trans>filter_label</Trans>: <strong>{filter}</strong>
+                                <Trans>list_label</Trans>: <strong>{filter}</strong>
                             </div>
                         )}
                         {service && (

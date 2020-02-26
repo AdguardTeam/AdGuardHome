@@ -14,12 +14,13 @@ import {
 } from '../../../helpers/helpers';
 import { FILTERED } from '../../../helpers/constants';
 
-const getFilterName = (id, filters, t) => {
+const getFilterName = (id, filters, whitelistFilters, t) => {
     if (id === 0) {
         return t('filtered_custom_rules');
     }
 
-    const filter = filters.find(filter => filter.id === id);
+    const filter = filters.find(filter => filter.id === id)
+        || whitelistFilters.find(filter => filter.id === id);
 
     if (filter && filter.name) {
         return t('query_log_filtered', { filter: filter.name });
@@ -43,14 +44,9 @@ const getTitle = (reason, filterName, t, onlyFiltered) => {
 
     if (checkWhiteList(reason)) {
         return (
-            <Fragment>
-                <div>
-                    {t('host_whitelisted')}
-                </div>
-                <div>
-                    {filterName}
-                </div>
-            </Fragment>
+            <div>
+                {filterName}
+            </div>
         );
     }
 
@@ -90,6 +86,7 @@ const getColor = (reason) => {
 
 const Info = ({
     filters,
+    whitelistFilters,
     hostname,
     reason,
     filter_id,
@@ -99,7 +96,7 @@ const Info = ({
     ip_addrs,
     t,
 }) => {
-    const filterName = getFilterName(filter_id, filters, t);
+    const filterName = getFilterName(filter_id, filters, whitelistFilters, t);
     const onlyFiltered = checkSafeSearch(reason)
         || checkSafeBrowsing(reason)
         || checkParental(reason);
@@ -149,6 +146,7 @@ const Info = ({
 
 Info.propTypes = {
     filters: PropTypes.array.isRequired,
+    whitelistFilters: PropTypes.array.isRequired,
     hostname: PropTypes.string.isRequired,
     reason: PropTypes.string.isRequired,
     filter_id: PropTypes.number,

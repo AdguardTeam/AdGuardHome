@@ -73,14 +73,17 @@ type Stats struct {
 
 // Parameters to pass to filters-initializer goroutine
 type filtersInitializerParams struct {
-	filters map[int]string
+	allowFilters []Filter
+	blockFilters []Filter
 }
 
 // Dnsfilter holds added rules and performs hostname matches against the rules
 type Dnsfilter struct {
-	rulesStorage    *filterlist.RuleStorage
-	filteringEngine *urlfilter.DNSEngine
-	engineLock      sync.RWMutex
+	rulesStorage         *filterlist.RuleStorage
+	filteringEngine      *urlfilter.DNSEngine
+	rulesStorageWhite    *filterlist.RuleStorage
+	filteringEngineWhite *urlfilter.DNSEngine
+	engineLock           sync.RWMutex
 
 	parentalServer       string // access via methods
 	safeBrowsingServer   string // access via methods
@@ -178,10 +181,11 @@ func (d *Dnsfilter) WriteDiskConfig(c *Config) {
 // SetFilters - set new filters (synchronously or asynchronously)
 // When filters are set asynchronously, the old filters continue working until the new filters are ready.
 //  In this case the caller must ensure that the old filter files are intact.
-func (d *Dnsfilter) SetFilters(filters map[int]string, async bool) error {
+func (d *Dnsfilter) SetFilters(blockFilters []Filter, allowFilters []Filter, async bool) error {
 	if async {
 		params := filtersInitializerParams{
-			filters: filters,
+			allowFilters: allowFilters,
+			blockFilters: blockFilters,
 		}
 
 		d.filtersInitializerLock.Lock() // prevent multiple writers from adding more than 1 task
@@ -201,7 +205,7 @@ func (d *Dnsfilter) SetFilters(filters map[int]string, async bool) error {
 		return nil
 	}
 
-	err := d.initFiltering(filters)
+	err := d.initFiltering(allowFilters, blockFilters)
 	if err != nil {
 		log.Error("Can't initialize filtering subsystem: %s", err)
 		return err
@@ -214,7 +218,7 @@ func (d *Dnsfilter) SetFilters(filters map[int]string, async bool) error {
 func (d *Dnsfilter) filtersInitializer() {
 	for {
 		params := <-d.filtersInitializerChan
-		err := d.initFiltering(params.filters)
+		err := d.initFiltering(params.allowFilters, params.blockFilters)
 		if err != nil {
 			log.Error("Can't initialize filtering subsystem: %s", err)
 			continue
@@ -224,8 +228,15 @@ func (d *Dnsfilter) filtersInitializer() {
 
 // Close - close the object
 func (d *Dnsfilter) Close() {
+	d.reset()
+}
+
+func (d *Dnsfilter) reset() {
 	if d.rulesStorage != nil {
 		_ = d.rulesStorage.Close()
+	}
+	if d.rulesStorageWhite != nil {
+		d.rulesStorageWhite.Close()
 	}
 }
 
@@ -415,43 +426,42 @@ func fileExists(fn string) bool {
 	return true
 }
 
-// Initialize urlfilter objects
-func (d *Dnsfilter) initFiltering(filters map[int]string) error {
+func createFilteringEngine(filters []Filter) (*filterlist.RuleStorage, *urlfilter.DNSEngine, error) {
 	listArray := []filterlist.RuleList{}
-	for id, dataOrFilePath := range filters {
+	for _, f := range filters {
 		var list filterlist.RuleList
 
-		if id == 0 {
+		if f.ID == 0 {
 			list = &filterlist.StringRuleList{
 				ID:             0,
-				RulesText:      dataOrFilePath,
+				RulesText:      string(f.Data),
 				IgnoreCosmetic: true,
 			}
 
-		} else if !fileExists(dataOrFilePath) {
+		} else if !fileExists(f.FilePath) {
 			list = &filterlist.StringRuleList{
-				ID:             id,
+				ID:             int(f.ID),
 				IgnoreCosmetic: true,
 			}
 
 		} else if runtime.GOOS == "windows" {
 			// On Windows we don't pass a file to urlfilter because
 			//  it's difficult to update this file while it's being used.
-			data, err := ioutil.ReadFile(dataOrFilePath)
+			data, err := ioutil.ReadFile(f.FilePath)
 			if err != nil {
-				return fmt.Errorf("ioutil.ReadFile(): %s: %s", dataOrFilePath, err)
+				return nil, nil, fmt.Errorf("ioutil.ReadFile(): %s: %s", f.FilePath, err)
 			}
 			list = &filterlist.StringRuleList{
-				ID:             id,
+				ID:             int(f.ID),
 				RulesText:      string(data),
 				IgnoreCosmetic: true,
 			}
 
 		} else {
 			var err error
-			list, err = filterlist.NewFileRuleList(id, dataOrFilePath, true)
+			list, err = filterlist.NewFileRuleList(int(f.ID), f.FilePath, true)
 			if err != nil {
-				return fmt.Errorf("filterlist.NewFileRuleList(): %s: %s", dataOrFilePath, err)
+				return nil, nil, fmt.Errorf("filterlist.NewFileRuleList(): %s: %s", f.FilePath, err)
 			}
 		}
 		listArray = append(listArray, list)
@@ -459,16 +469,28 @@ func (d *Dnsfilter) initFiltering(filters map[int]string) error {
 
 	rulesStorage, err := filterlist.NewRuleStorage(listArray)
 	if err != nil {
-		return fmt.Errorf("filterlist.NewRuleStorage(): %s", err)
+		return nil, nil, fmt.Errorf("filterlist.NewRuleStorage(): %s", err)
 	}
 	filteringEngine := urlfilter.NewDNSEngine(rulesStorage)
+	return rulesStorage, filteringEngine, nil
+}
 
+// Initialize urlfilter objects
+func (d *Dnsfilter) initFiltering(allowFilters, blockFilters []Filter) error {
 	d.engineLock.Lock()
-	if d.rulesStorage != nil {
-		d.rulesStorage.Close()
+	d.reset()
+	rulesStorage, filteringEngine, err := createFilteringEngine(blockFilters)
+	if err != nil {
+		return err
+	}
+	rulesStorageWhite, filteringEngineWhite, err := createFilteringEngine(allowFilters)
+	if err != nil {
+		return err
 	}
 	d.rulesStorage = rulesStorage
 	d.filteringEngine = filteringEngine
+	d.rulesStorageWhite = rulesStorageWhite
+	d.filteringEngineWhite = filteringEngineWhite
 	d.engineLock.Unlock()
 	log.Debug("initialized filtering engine")
 
@@ -481,6 +503,26 @@ func (d *Dnsfilter) matchHost(host string, qtype uint16, ctags []string) (Result
 	// Keep in mind that this lock must be held no just when calling Match()
 	//  but also while using the rules returned by it.
 	defer d.engineLock.RUnlock()
+
+	if d.filteringEngineWhite != nil {
+		rr, ok := d.filteringEngineWhite.Match(host, ctags)
+		if ok {
+			var rule rules.Rule
+			if rr.NetworkRule != nil {
+				rule = rr.NetworkRule
+			} else if rr.HostRulesV4 != nil {
+				rule = rr.HostRulesV4[0]
+			} else if rr.HostRulesV6 != nil {
+				rule = rr.HostRulesV6[0]
+			}
+
+			log.Debug("Filtering: found whitelist rule for host '%s': '%s'  list_id: %d",
+				host, rule.Text(), rule.GetFilterListID())
+			res := makeResult(rule, NotFilteredWhiteList)
+			return res, nil
+		}
+	}
+
 	if d.filteringEngine == nil {
 		return Result{}, nil
 	}
@@ -493,37 +535,28 @@ func (d *Dnsfilter) matchHost(host string, qtype uint16, ctags []string) (Result
 	if rr.NetworkRule != nil {
 		log.Debug("Filtering: found rule for host '%s': '%s'  list_id: %d",
 			host, rr.NetworkRule.Text(), rr.NetworkRule.GetFilterListID())
-		res := Result{}
-		res.FilterID = int64(rr.NetworkRule.GetFilterListID())
-		res.Rule = rr.NetworkRule.Text()
-
-		res.Reason = FilteredBlackList
-		res.IsFiltered = true
+		reason := FilteredBlackList
 		if rr.NetworkRule.Whitelist {
-			res.Reason = NotFilteredWhiteList
-			res.IsFiltered = false
+			reason = NotFilteredWhiteList
 		}
+		res := makeResult(rr.NetworkRule, reason)
 		return res, nil
 	}
 
 	if qtype == dns.TypeA && rr.HostRulesV4 != nil {
 		rule := rr.HostRulesV4[0] // note that we process only 1 matched rule
-		res := Result{}
-		res.FilterID = int64(rule.GetFilterListID())
-		res.Rule = rule.Text()
-		res.Reason = FilteredBlackList
-		res.IsFiltered = true
+		log.Debug("Filtering: found rule for host '%s': '%s'  list_id: %d",
+			host, rule.Text(), rule.GetFilterListID())
+		res := makeResult(rule, FilteredBlackList)
 		res.IP = rule.IP.To4()
 		return res, nil
 	}
 
 	if qtype == dns.TypeAAAA && rr.HostRulesV6 != nil {
 		rule := rr.HostRulesV6[0] // note that we process only 1 matched rule
-		res := Result{}
-		res.FilterID = int64(rule.GetFilterListID())
-		res.Rule = rule.Text()
-		res.Reason = FilteredBlackList
-		res.IsFiltered = true
+		log.Debug("Filtering: found rule for host '%s': '%s'  list_id: %d",
+			host, rule.Text(), rule.GetFilterListID())
+		res := makeResult(rule, FilteredBlackList)
 		res.IP = rule.IP
 		return res, nil
 	}
@@ -531,17 +564,15 @@ func (d *Dnsfilter) matchHost(host string, qtype uint16, ctags []string) (Result
 	if rr.HostRulesV4 != nil || rr.HostRulesV6 != nil {
 		// Question Type doesn't match the host rules
 		// Return the first matched host rule, but without an IP address
-		res := Result{}
-		res.Reason = FilteredBlackList
-		res.IsFiltered = true
 		var rule rules.Rule
 		if rr.HostRulesV4 != nil {
 			rule = rr.HostRulesV4[0]
 		} else if rr.HostRulesV6 != nil {
 			rule = rr.HostRulesV6[0]
 		}
-		res.FilterID = int64(rule.GetFilterListID())
-		res.Rule = rule.Text()
+		log.Debug("Filtering: found rule for host '%s': '%s'  list_id: %d",
+			host, rule.Text(), rule.GetFilterListID())
+		res := makeResult(rule, FilteredBlackList)
 		res.IP = net.IP{}
 		return res, nil
 	}
@@ -549,8 +580,20 @@ func (d *Dnsfilter) matchHost(host string, qtype uint16, ctags []string) (Result
 	return Result{}, nil
 }
 
+// Construct Result object
+func makeResult(rule rules.Rule, reason Reason) Result {
+	res := Result{}
+	res.FilterID = int64(rule.GetFilterListID())
+	res.Rule = rule.Text()
+	res.Reason = reason
+	if reason == FilteredBlackList {
+		res.IsFiltered = true
+	}
+	return res
+}
+
 // New creates properly initialized DNS Filter that is ready to be used
-func New(c *Config, filters map[int]string) *Dnsfilter {
+func New(c *Config, blockFilters []Filter) *Dnsfilter {
 
 	if c != nil {
 		cacheConf := cache.Config{
@@ -588,8 +631,8 @@ func New(c *Config, filters map[int]string) *Dnsfilter {
 		d.prepareRewrites()
 	}
 
-	if filters != nil {
-		err := d.initFiltering(filters)
+	if blockFilters != nil {
+		err := d.initFiltering(nil, blockFilters)
 		if err != nil {
 			log.Error("Can't initialize filtering subsystem: %s", err)
 			d.Close()

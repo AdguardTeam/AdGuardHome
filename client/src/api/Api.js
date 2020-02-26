@@ -94,15 +94,14 @@ class Api {
         return this.makeRequest(path, method);
     }
 
-    addFilter(url, name) {
+    addFilter(config) {
         const { path, method } = this.FILTERING_ADD_FILTER;
-        const config = {
-            data: {
-                name,
-                url,
-            },
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
         };
-        return this.makeRequest(path, method, config);
+
+        return this.makeRequest(path, method, parameters);
     }
 
     removeFilter(config) {

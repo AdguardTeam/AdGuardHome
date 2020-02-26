@@ -55,7 +55,10 @@ Contents:
 	* Filters update mechanism
 	* API: Get filtering parameters
 	* API: Set filtering parameters
+	* API: Refresh filters
+	* API: Add Filter
 	* API: Set URL parameters
+	* API: Delete URL
 	* API: Domain Check
 * Log-in page
 	* API: Log in
@@ -1362,8 +1365,22 @@ Response:
 			}
 			...
 		],
+		"whitelist_filters":[
+			{
+			"id":1
+			"enabled":true,
+			"url":"https://...",
+			"name":"...",
+			"rules_count":1234,
+			"last_updated":"2019-09-04T18:29:30+00:00",
+			}
+			...
+		],
 		"user_rules":["...", ...]
 	}
+
+For both arrays `filters` and `whitelist_filters` there are unique values: id, url.
+ID for each filter is assigned by Server - it's used for file names.
 
 
 ### API: Set filtering parameters
@@ -1382,6 +1399,38 @@ Response:
 	200 OK
 
 
+### API: Refresh filters
+
+Request:
+
+	POST /control/filtering/refresh
+
+Response:
+
+	200 OK
+
+	{
+		"updated": 123 // number of filters updated
+	}
+
+
+### API: Add Filter
+
+Request:
+
+	POST /control/filtering/add_url
+
+	{
+		"name": "..."
+		"url": "..."
+		"whitelist": true
+	}
+
+Response:
+
+	200 OK
+
+
 ### API: Set URL parameters
 
 Request:
@@ -1390,11 +1439,28 @@ Request:
 
 	{
 	"url": "..."
+	"whitelist": true
 	"data": {
 		"name": "..."
 		"url": "..."
 		"enabled": true | false
 	}
+	}
+
+Response:
+
+	200 OK
+
+
+### API: Delete URL
+
+Request:
+
+	POST /control/filtering/remove_url
+
+	{
+	"url": "..."
+	"whitelist": true
 	}
 
 Response:

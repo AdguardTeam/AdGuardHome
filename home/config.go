@@ -58,11 +58,14 @@ type configuration struct {
 	// An active session is automatically refreshed once a day.
 	WebSessionTTLHours uint32 `yaml:"web_session_ttl"`
 
-	DNS       dnsConfig          `yaml:"dns"`
-	TLS       tlsConfig          `yaml:"tls"`
-	Filters   []filter           `yaml:"filters"`
-	UserRules []string           `yaml:"user_rules"`
-	DHCP      dhcpd.ServerConfig `yaml:"dhcp"`
+	DNS dnsConfig `yaml:"dns"`
+	TLS tlsConfig `yaml:"tls"`
+
+	Filters          []filter `yaml:"filters"`
+	WhitelistFilters []filter `yaml:"whitelist_filters"`
+	UserRules        []string `yaml:"user_rules"`
+
+	DHCP dhcpd.ServerConfig `yaml:"dhcp"`
 
 	// Note: this array is filled only before file read/write and then it's cleared
 	Clients []clientObject `yaml:"clients"`

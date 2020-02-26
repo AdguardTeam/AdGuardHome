@@ -455,8 +455,9 @@ func TestNullBlockedRequest(t *testing.T) {
 
 func TestBlockedCustomIP(t *testing.T) {
 	rules := "||nxdomain.example.org^\n||null.example.org^\n127.0.0.1	host.example.org\n@@||whitelist.example.org^\n||127.0.0.255\n"
-	filters := map[int]string{}
-	filters[0] = rules
+	filters := []dnsfilter.Filter{dnsfilter.Filter{
+		ID: 0, Data: []byte(rules),
+	}}
 	c := dnsfilter.Config{}
 
 	f := dnsfilter.New(&c, filters)
@@ -597,8 +598,9 @@ func createTestServer(t *testing.T) *Server {
 127.0.0.1	host.example.org
 @@||whitelist.example.org^
 ||127.0.0.255`
-	filters := map[int]string{}
-	filters[0] = rules
+	filters := []dnsfilter.Filter{dnsfilter.Filter{
+		ID: 0, Data: []byte(rules),
+	}}
 	c := dnsfilter.Config{}
 	c.SafeBrowsingEnabled = true
 	c.SafeBrowsingCacheSize = 1000

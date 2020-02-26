@@ -122,37 +122,39 @@ export const addClientInfo = (data, clients, param) => (
     })
 );
 
+export const normalizeFilters = filters => (
+    filters ? filters.map((filter) => {
+        const {
+            id,
+            url,
+            enabled,
+            last_updated,
+            name = 'Default name',
+            rules_count: rules_count = 0,
+        } = filter;
+
+        return {
+            id,
+            url,
+            enabled,
+            lastUpdated: last_updated,
+            name,
+            rulesCount: rules_count,
+        };
+    }) : []
+);
+
 export const normalizeFilteringStatus = (filteringStatus) => {
     const {
-        enabled, filters, user_rules: userRules, interval,
+        enabled, filters, user_rules: userRules, interval, whitelist_filters,
     } = filteringStatus;
-    const newFilters = filters
-        ? filters.map((filter) => {
-            const {
-                id,
-                url,
-                enabled,
-                last_updated,
-                name = 'Default name',
-                rules_count: rules_count = 0,
-            } = filter;
-
-            return {
-                id,
-                url,
-                enabled,
-                lastUpdated: last_updated,
-                name,
-                rulesCount: rules_count,
-            };
-        })
-        : [];
     const newUserRules = Array.isArray(userRules) ? userRules.join('\n') : '';
 
     return {
         enabled,
         userRules: newUserRules,
-        filters: newFilters,
+        filters: normalizeFilters(filters),
+        whitelistFilters: normalizeFilters(whitelist_filters),
         interval,
     };
 };
@@ -436,3 +438,14 @@ export const checkSafeSearch = reason => reason === FILTERED_STATUS.FILTERED_SAF
 export const checkSafeBrowsing = reason => reason === FILTERED_STATUS.FILTERED_SAFE_BROWSING;
 export const checkParental = reason => reason === FILTERED_STATUS.FILTERED_PARENTAL;
 export const checkBlockedService = reason => reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
+
+export const getCurrentFilter = (url, filters) => {
+    const filter = filters && filters.find(item => url === item.url);
+
+    if (filter) {
+        const { enabled, name, url } = filter;
+        return { enabled, name, url };
+    }
+
+    return { name: '', url: '' };
+};

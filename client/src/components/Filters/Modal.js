@@ -22,7 +22,20 @@ class Modal extends Component {
             handleSubmit,
             modalType,
             currentFilterData,
+            whitelist,
         } = this.props;
+
+        const newListTitle = whitelist ? (
+            <Trans>new_allowlist</Trans>
+        ) : (
+            <Trans>new_blocklist</Trans>
+        );
+
+        const editListTitle = whitelist ? (
+            <Trans>edit_allowlist</Trans>
+        ) : (
+            <Trans>edit_blocklist</Trans>
+        );
 
         return (
             <ReactModal
@@ -35,9 +48,9 @@ class Modal extends Component {
                     <div className="modal-header">
                         <h4 className="modal-title">
                             {modalType === MODAL_TYPE.EDIT ? (
-                                <Trans>edit_filter_title</Trans>
+                                editListTitle
                             ) : (
-                                <Trans>new_filter_btn</Trans>
+                                newListTitle
                             )}
                         </h4>
                         <button type="button" className="close" onClick={this.closeModal}>
@@ -50,6 +63,7 @@ class Modal extends Component {
                         processingAddFilter={processingAddFilter}
                         processingConfigFilter={processingConfigFilter}
                         closeModal={this.closeModal}
+                        whitelist={whitelist}
                     />
                 </div>
             </ReactModal>
@@ -68,6 +82,7 @@ Modal.propTypes = {
     modalType: PropTypes.string.isRequired,
     currentFilterData: PropTypes.object.isRequired,
     t: PropTypes.func.isRequired,
+    whitelist: PropTypes.bool,
 };
 
 export default withNamespaces()(Modal);

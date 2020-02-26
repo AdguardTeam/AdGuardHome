@@ -3,28 +3,36 @@ import PropTypes from 'prop-types';
 
 import './Card.css';
 
-const Card = props => (
-    <div className={props.type ? `card ${props.type}` : 'card'} id={props.id ? props.id : ''}>
-        {props.title &&
-        <div className="card-header with-border">
-            <div className="card-inner">
-                <div className="card-title">
-                    {props.title}
+const Card = ({
+    type, id, title, subtitle, refresh, bodyType, children,
+}) => (
+    <div className={type ? `card ${type}` : 'card'} id={id || ''}>
+        {(title || subtitle) && (
+            <div className="card-header with-border">
+                <div className="card-inner">
+                    {title && (
+                        <div className="card-title">
+                            {title}
+                        </div>
+                    )}
+
+                    {subtitle && (
+                        <div
+                            className="card-subtitle"
+                            dangerouslySetInnerHTML={{ __html: subtitle }}
+                        />
+                    )}
                 </div>
 
-                {props.subtitle &&
-                    <div className="card-subtitle" dangerouslySetInnerHTML={{ __html: props.subtitle }} />
-                }
+                {refresh && (
+                    <div className="card-options">
+                        {refresh}
+                    </div>
+                )}
             </div>
-
-            {props.refresh &&
-                <div className="card-options">
-                    {props.refresh}
-                </div>
-            }
-        </div>}
-        <div className={props.bodyType ? props.bodyType : 'card-body'}>
-            {props.children}
+        )}
+        <div className={bodyType || 'card-body'}>
+            {children}
         </div>
     </div>
 );
