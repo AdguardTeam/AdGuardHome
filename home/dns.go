@@ -9,6 +9,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/querylog"
 	"github.com/AdguardTeam/AdGuardHome/stats"
+	"github.com/AdguardTeam/AdGuardHome/util"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
@@ -166,13 +167,55 @@ func generateServerConfig() dnsforward.ServerConfig {
 				Port: tlsConf.PortDNSOverTLS,
 			}
 		}
-		newconfig.TLSAllowUnencryptedDOH = tlsConf.AllowUnencryptedDOH
 	}
 	newconfig.TLSv12Roots = Context.tlsRoots
+	newconfig.TLSAllowUnencryptedDOH = tlsConf.AllowUnencryptedDOH
 
 	newconfig.FilterHandler = applyAdditionalFiltering
 	newconfig.GetUpstreamsByClient = getUpstreamsByClient
 	return newconfig
+}
+
+// Get the list of DNS addresses the server is listening on
+func getDNSAddresses() []string {
+	dnsAddresses := []string{}
+
+	if config.DNS.BindHost == "0.0.0.0" {
+		ifaces, e := util.GetValidNetInterfacesForWeb()
+		if e != nil {
+			log.Error("Couldn't get network interfaces: %v", e)
+			return []string{}
+		}
+
+		for _, iface := range ifaces {
+			for _, addr := range iface.Addresses {
+				addDNSAddress(&dnsAddresses, addr)
+			}
+		}
+	} else {
+		addDNSAddress(&dnsAddresses, config.DNS.BindHost)
+	}
+
+	tlsConf := tlsConfigSettings{}
+	Context.tls.WriteDiskConfig(&tlsConf)
+	if tlsConf.Enabled && len(tlsConf.ServerName) != 0 {
+
+		if tlsConf.PortHTTPS != 0 {
+			addr := tlsConf.ServerName
+			if tlsConf.PortHTTPS != 443 {
+				addr = fmt.Sprintf("%s:%d", addr, tlsConf.PortHTTPS)
+			}
+			addr = fmt.Sprintf("https://%s/dns-query", addr)
+			dnsAddresses = append(dnsAddresses, addr)
+		}
+
+		if tlsConf.PortDNSOverTLS != 0 {
+			addr := fmt.Sprintf("tls://%s:%d", tlsConf.ServerName, tlsConf.PortDNSOverTLS)
+			dnsAddresses = append(dnsAddresses, addr)
+		}
+	}
+
+	return dnsAddresses
 }
 
 func getUpstreamsByClient(clientAddr string) []upstream.Upstream {

@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
-	"github.com/AdguardTeam/AdGuardHome/util"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/NYTimes/gziphandler"
 )
@@ -40,46 +39,6 @@ func addDNSAddress(dnsAddresses *[]string, addr string) {
 		addr = fmt.Sprintf("%s:%d", addr, config.DNS.Port)
 	}
 	*dnsAddresses = append(*dnsAddresses, addr)
-}
-
-// Get the list of DNS addresses the server is listening on
-func getDNSAddresses() []string {
-	dnsAddresses := []string{}
-
-	if config.DNS.BindHost == "0.0.0.0" {
-		ifaces, e := util.GetValidNetInterfacesForWeb()
-		if e != nil {
-			log.Error("Couldn't get network interfaces: %v", e)
-			return []string{}
-		}
-
-		for _, iface := range ifaces {
-			for _, addr := range iface.Addresses {
-				addDNSAddress(&dnsAddresses, addr)
-			}
-		}
-	} else {
-		addDNSAddress(&dnsAddresses, config.DNS.BindHost)
-	}
-
-	if config.TLS.Enabled && len(config.TLS.ServerName) != 0 {
-
-		if config.TLS.PortHTTPS != 0 {
-			addr := config.TLS.ServerName
-			if config.TLS.PortHTTPS != 443 {
-				addr = fmt.Sprintf("%s:%d", addr, config.TLS.PortHTTPS)
-			}
-			addr = fmt.Sprintf("https://%s/dns-query", addr)
-			dnsAddresses = append(dnsAddresses, addr)
-		}
-
-		if config.TLS.PortDNSOverTLS != 0 {
-			addr := fmt.Sprintf("tls://%s:%d", config.TLS.ServerName, config.TLS.PortDNSOverTLS)
-			dnsAddresses = append(dnsAddresses, addr)
-		}
-	}
-
-	return dnsAddresses
 }
 
 func handleStatus(w http.ResponseWriter, r *http.Request) {
@@ -143,11 +102,15 @@ func registerControlHandlers() {
 
 	httpRegister("GET", "/control/profile", handleGetProfile)
 	RegisterAuthHandlers()
-
-	http.HandleFunc("/dns-query", postInstall(handleDOH))
 }
 
 func httpRegister(method string, url string, handler func(http.ResponseWriter, *http.Request)) {
+	if len(method) == 0 {
+		// "/dns-query" handler doesn't need auth, gzip and isn't restricted by 1 HTTP method
+		http.HandleFunc(url, postInstall(handler))
+		return
+	}
+
 	http.Handle(url, postInstallHandler(optionalAuthHandler(gziphandler.GzipHandler(ensureHandler(method, handler)))))
 }
 
