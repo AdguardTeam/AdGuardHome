@@ -231,6 +231,13 @@ func (l *queryLog) getData(params getDataParams) map[string]interface{} {
 		// remove extra records
 		entries = entries[(len(entries) - getDataLimit):]
 	}
+	if len(entries) == getDataLimit {
+		// change the "oldest" value here.
+		// we cannot use the "oldest" we got from "searchFiles" anymore
+		// because after adding in-memory records and removing extra records
+		// the situation has changed
+		oldest = entries[len(entries)-1].Time
+	}
 
 	// init the response object
 	var data = []map[string]interface{}{}
@@ -246,9 +253,6 @@ func (l *queryLog) getData(params getDataParams) map[string]interface{} {
 		len(entries), total, params.OlderThan, time.Since(now))
 
 	var result = map[string]interface{}{}
-	if len(entries) == getDataLimit {
-		oldest = entries[0].Time
-	}
 	result["oldest"] = ""
 	if !oldest.IsZero() {
 		result["oldest"] = oldest.Format(time.RFC3339Nano)

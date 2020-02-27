@@ -36,10 +36,16 @@ func (l *queryLog) searchFiles(params getDataParams) ([]*logEntry, time.Time, in
 		err = r.SeekStart()
 	} else {
 		err = r.Seek(params.OlderThan.UnixNano())
+		if err == nil {
+			// Read to the next record right away
+			// The one that was specified in the "oldest" param is not needed,
+			// we need only the one next to it
+			_, err = r.ReadNext()
+		}
 	}
 
 	if err != nil {
-		log.Error("Failed to Seek(): %v", err)
+		log.Debug("Cannot Seek() to %v: %v", params.OlderThan, err)
 		return entries, oldest, 0
 	}
 
@@ -54,12 +60,16 @@ func (l *queryLog) searchFiles(params getDataParams) ([]*logEntry, time.Time, in
 			break
 		}
 
-		if entry != nil {
-			entries = append(entries, entry)
-		}
-
 		oldestNano = ts
 		total++
+
+		if entry != nil {
+			entries = append(entries, entry)
+			if len(entries) == getDataLimit {
+				// Do not read more than "getDataLimit" records at once
+				break
+			}
+		}
 	}
 
 	oldest = time.Unix(0, oldestNano)
