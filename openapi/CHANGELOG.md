@@ -1,6 +1,21 @@
 # AdGuard Home API Change Log
 
 
+## v0.101: API changes
+
+### API: Refresh filters: POST /control/filtering/refresh
+
+* Added "whitelist" boolean parameter
+
+Request:
+
+	POST /control/filtering/refresh
+
+	{
+		"whitelist": true
+	}
+
+
 ## v0.100: API changes
 
 ### API: Get list of clients: GET /control/clients
