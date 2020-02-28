@@ -185,17 +185,9 @@ func handleFilteringSetURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	onConfigModified()
-	if (status & statusURLChanged) != 0 {
-		if fj.Data.Enabled {
-			// download new filter and apply its rules
-			refreshStatus = 1
-			refreshLock.Lock()
-			_, _ = refreshFiltersIfNecessary(true)
-			refreshLock.Unlock()
-		}
-
-	} else if (status & statusEnabledChanged) != 0 {
-		enableFilters(true)
+	if (status&(statusURLChanged|statusEnabledChanged)) != 0 && fj.Data.Enabled {
+		// download new filter and apply its rules
+		_, _ = refreshFilters(fj.Whitelist, true)
 	}
 }
 
@@ -217,14 +209,24 @@ func handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleFilteringRefresh(w http.ResponseWriter, r *http.Request) {
+	type Req struct {
+		White bool `json:"whitelist"`
+	}
 	type Resp struct {
 		Updated int `json:"updated"`
 	}
 	resp := Resp{}
 	var err error
 
+	req := Req{}
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "json decode: %s", err)
+		return
+	}
+
 	Context.controlLock.Unlock()
-	resp.Updated, err = refreshFilters()
+	resp.Updated, err = refreshFilters(req.White, false)
 	Context.controlLock.Lock()
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "%s", err)

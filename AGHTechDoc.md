@@ -1405,6 +1405,10 @@ Request:
 
 	POST /control/filtering/refresh
 
+	{
+		"whitelist": true
+	}
+
 Response:
 
 	200 OK

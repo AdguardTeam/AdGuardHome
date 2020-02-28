@@ -237,7 +237,7 @@ func periodicallyRefreshFilters() {
 		isNetworkErr := false
 		if config.DNS.FiltersUpdateIntervalHours != 0 && atomic.CompareAndSwapUint32(&refreshStatus, 0, 1) {
 			refreshLock.Lock()
-			_, isNetworkErr = refreshFiltersIfNecessary(false)
+			_, isNetworkErr = refreshFiltersIfNecessary(FilterRefreshBlocklists | FilterRefreshAllowlists)
 			refreshLock.Unlock()
 			refreshStatus = 0
 			if !isNetworkErr {
@@ -257,45 +257,33 @@ func periodicallyRefreshFilters() {
 }
 
 // Refresh filters
-func refreshFilters() (int, error) {
-	if !atomic.CompareAndSwapUint32(&refreshStatus, 0, 1) {
+// important:
+//  TRUE: ignore the fact that we're currently updating the filters
+func refreshFilters(whitelist bool, important bool) (int, error) {
+	set := atomic.CompareAndSwapUint32(&refreshStatus, 0, 1)
+	if !important && !set {
 		return 0, fmt.Errorf("Filters update procedure is already running")
 	}
 
 	refreshLock.Lock()
-	nUpdated, _ := refreshFiltersIfNecessary(true)
+	flags := FilterRefreshBlocklists
+	if whitelist {
+		flags = FilterRefreshAllowlists
+	}
+	nUpdated, _ := refreshFiltersIfNecessary(flags | FilterRefreshForce)
 	refreshLock.Unlock()
 	refreshStatus = 0
 	return nUpdated, nil
 }
 
-// Checks filters updates if necessary
-// If force is true, it ignores the filter.LastUpdated field value
-//
-// Algorithm:
-// . Get the list of filters to be updated
-// . For each filter run the download and checksum check operation
-// . For each filter:
-//  . If filter data hasn't changed, just set new update time on file
-//  . If filter data has changed:
-//    . rename the old file (1.txt -> 1.txt.old)
-//    . store the new data on disk (1.txt)
-//  . Pass new filters to dnsfilter object - it analyzes new data while the old filters are still active
-//  . dnsfilter activates new filters
-//  . Remove the old filter files (1.txt.old)
-//
-// Return the number of updated filters
-// Return TRUE - there was a network error and nothing could be updated
-func refreshFiltersIfNecessary(force bool) (int, bool) {
+func refreshFiltersArray(filters *[]filter, force bool) (int, []filter, []bool, bool) {
 	var updateFilters []filter
 	var updateFlags []bool // 'true' if filter data has changed
 
-	log.Debug("Filters: updating...")
-
 	now := time.Now()
 	config.RLock()
-	for i := range config.Filters {
-		f := &config.Filters[i] // otherwise we will be operating on a copy
+	for i := range *filters {
+		f := &(*filters)[i] // otherwise we will be operating on a copy
 
 		if !f.Enabled {
 			continue
@@ -316,7 +304,7 @@ func refreshFiltersIfNecessary(force bool) (int, bool) {
 	config.RUnlock()
 
 	if len(updateFilters) == 0 {
-		return 0, false
+		return 0, nil, nil, false
 	}
 
 	nfail := 0
@@ -333,7 +321,7 @@ func refreshFiltersIfNecessary(force bool) (int, bool) {
 	}
 
 	if nfail == len(updateFilters) {
-		return 0, true
+		return 0, nil, nil, true
 	}
 
 	updateCount := 0
@@ -354,8 +342,8 @@ func refreshFiltersIfNecessary(force bool) (int, bool) {
 		}
 
 		config.Lock()
-		for k := range config.Filters {
-			f := &config.Filters[k]
+		for k := range *filters {
+			f := &(*filters)[k]
 			if f.ID != uf.ID || f.URL != uf.URL {
 				continue
 			}
@@ -373,6 +361,61 @@ func refreshFiltersIfNecessary(force bool) (int, bool) {
 			updateCount++
 		}
 		config.Unlock()
+	}
+
+	return updateCount, updateFilters, updateFlags, false
+}
+
+const (
+	FilterRefreshForce      = 1 // ignore last file modification date
+	FilterRefreshAllowlists = 2 // update allow-lists
+	FilterRefreshBlocklists = 4 // update block-lists
+)
+
+// Checks filters updates if necessary
+// If force is true, it ignores the filter.LastUpdated field value
+// flags: FilterRefresh*
+//
+// Algorithm:
+// . Get the list of filters to be updated
+// . For each filter run the download and checksum check operation
+// . For each filter:
+//  . If filter data hasn't changed, just set new update time on file
+//  . If filter data has changed:
+//    . rename the old file (1.txt -> 1.txt.old)
+//    . store the new data on disk (1.txt)
+//  . Pass new filters to dnsfilter object - it analyzes new data while the old filters are still active
+//  . dnsfilter activates new filters
+//  . Remove the old filter files (1.txt.old)
+//
+// Return the number of updated filters
+// Return TRUE - there was a network error and nothing could be updated
+func refreshFiltersIfNecessary(flags int) (int, bool) {
+	log.Debug("Filters: updating...")
+
+	updateCount := 0
+	var updateFilters []filter
+	var updateFlags []bool
+	netError := false
+	netErrorW := false
+	force := false
+	if (flags & FilterRefreshForce) != 0 {
+		force = true
+	}
+	if (flags & FilterRefreshBlocklists) != 0 {
+		updateCount, updateFilters, updateFlags, netError = refreshFiltersArray(&config.Filters, force)
+	}
+	if (flags & FilterRefreshAllowlists) != 0 {
+		updateCountW := 0
+		var updateFiltersW []filter
+		var updateFlagsW []bool
+		updateCountW, updateFiltersW, updateFlagsW, netErrorW = refreshFiltersArray(&config.WhitelistFilters, force)
+		updateCount += updateCountW
+		updateFilters = append(updateFilters, updateFiltersW...)
+		updateFlags = append(updateFlags, updateFlagsW...)
+	}
+	if netError && netErrorW {
+		return 0, true
 	}
 
 	if updateCount != 0 {
