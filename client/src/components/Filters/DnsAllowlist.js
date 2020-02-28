@@ -40,11 +40,14 @@ class DnsAllowlist extends Component {
         this.props.toggleFilterStatus(url, data, whitelist);
     };
 
+    handleRefresh = () => {
+        this.props.refreshFilters({ whitelist: true });
+    };
+
     render() {
         const {
             t,
             toggleFilteringModal,
-            refreshFilters,
             addFilter,
             toggleFilterStatus,
             filtering: {
@@ -89,7 +92,7 @@ class DnsAllowlist extends Component {
                                 />
                                 <Actions
                                     handleAdd={() => toggleFilteringModal({ type: MODAL_TYPE.ADD })}
-                                    handleRefresh={refreshFilters}
+                                    handleRefresh={this.handleRefresh}
                                     processingRefreshFilters={processingRefreshFilters}
                                     whitelist={whitelist}
                                 />

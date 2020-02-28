@@ -89,9 +89,14 @@ class Api {
         return this.makeRequest(path, method);
     }
 
-    refreshFilters() {
+    refreshFilters(config) {
         const { path, method } = this.FILTERING_REFRESH;
-        return this.makeRequest(path, method);
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
+        };
+
+        return this.makeRequest(path, method, parameters);
     }
 
     addFilter(config) {

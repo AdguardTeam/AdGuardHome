@@ -113,11 +113,11 @@ export const refreshFiltersRequest = createAction('FILTERING_REFRESH_REQUEST');
 export const refreshFiltersFailure = createAction('FILTERING_REFRESH_FAILURE');
 export const refreshFiltersSuccess = createAction('FILTERING_REFRESH_SUCCESS');
 
-export const refreshFilters = () => async (dispatch) => {
+export const refreshFilters = config => async (dispatch) => {
     dispatch(refreshFiltersRequest());
     dispatch(showLoading());
     try {
-        const data = await apiClient.refreshFilters();
+        const data = await apiClient.refreshFilters(config);
         const { updated } = data;
         dispatch(refreshFiltersSuccess());
 

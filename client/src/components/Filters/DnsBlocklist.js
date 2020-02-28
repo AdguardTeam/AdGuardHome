@@ -37,11 +37,14 @@ class DnsBlocklist extends Component {
         this.props.toggleFilterStatus(url, data);
     };
 
+    handleRefresh = () => {
+        this.props.refreshFilters({ whitelist: false });
+    };
+
     render() {
         const {
             t,
             toggleFilteringModal,
-            refreshFilters,
             addFilter,
             filtering: {
                 filters,
@@ -82,7 +85,7 @@ class DnsBlocklist extends Component {
                                 />
                                 <Actions
                                     handleAdd={() => toggleFilteringModal({ type: MODAL_TYPE.ADD })}
-                                    handleRefresh={refreshFilters}
+                                    handleRefresh={this.handleRefresh}
                                     processingRefreshFilters={processingRefreshFilters}
                                 />
                             </Card>
