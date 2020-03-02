@@ -135,6 +135,12 @@ func initServices() {
 	}
 }
 
+// Return TRUE if a blocked service name is known
+func blockedSvcKnown(s string) bool {
+	_, ok := serviceRules[s]
+	return ok
+}
+
 // ApplyBlockedServices - set blocked services settings for this DNS request
 func ApplyBlockedServices(setts *dnsfilter.RequestFilteringSettings, list []string) {
 	setts.ServicesRules = []dnsfilter.ServiceEntry{}
