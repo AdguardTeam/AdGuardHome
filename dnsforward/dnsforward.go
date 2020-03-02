@@ -791,11 +791,12 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 		}
 
 		for _, ip := range res.IPList {
-			if req.Question[0].Qtype == dns.TypeA {
-				a := s.genAAnswer(req, ip)
+			ip4 := ip.To4()
+			if req.Question[0].Qtype == dns.TypeA && ip4 != nil {
+				a := s.genAAnswer(req, ip4)
 				a.Hdr.Name = dns.Fqdn(name)
 				resp.Answer = append(resp.Answer, a)
-			} else if req.Question[0].Qtype == dns.TypeAAAA {
+			} else if req.Question[0].Qtype == dns.TypeAAAA && ip4 == nil {
 				a := s.genAAAAAnswer(req, ip)
 				a.Hdr.Name = dns.Fqdn(name)
 				resp.Answer = append(resp.Answer, a)
