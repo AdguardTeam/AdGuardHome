@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/gob"
 	"fmt"
+	"net"
 	"os"
 	"sort"
 	"sync"
@@ -442,6 +443,25 @@ func (s *statsCtx) clear() {
 	log.Debug("Stats: cleared")
 }
 
+// Get Client IP address
+func (s *statsCtx) getClientIP(clientIP string) string {
+	if s.conf.AnonymizeClientIP {
+		ip := net.ParseIP(clientIP)
+		if ip != nil {
+			ip4 := ip.To4()
+			const AnonymizeClientIP4Mask = 24
+			const AnonymizeClientIP6Mask = 112
+			if ip4 != nil {
+				clientIP = ip4.Mask(net.CIDRMask(AnonymizeClientIP4Mask, 32)).String()
+			} else {
+				clientIP = ip.Mask(net.CIDRMask(AnonymizeClientIP6Mask, 128)).String()
+			}
+		}
+	}
+
+	return clientIP
+}
+
 func (s *statsCtx) Update(e Entry) {
 	if e.Result == 0 ||
 		e.Result >= rLast ||
@@ -449,7 +469,7 @@ func (s *statsCtx) Update(e Entry) {
 		!(len(e.Client) == 4 || len(e.Client) == 16) {
 		return
 	}
-	client := e.Client.String()
+	client := s.getClientIP(e.Client.String())
 
 	s.unitLock.Lock()
 	u := s.unit

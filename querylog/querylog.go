@@ -11,9 +11,10 @@ import (
 
 // DiskConfig - configuration settings that are stored on disk
 type DiskConfig struct {
-	Enabled  bool
-	Interval uint32
-	MemSize  uint32
+	Enabled           bool
+	Interval          uint32
+	MemSize           uint32
+	AnonymizeClientIP bool
 }
 
 // QueryLog - main interface
@@ -32,10 +33,11 @@ type QueryLog interface {
 
 // Config - configuration object
 type Config struct {
-	Enabled  bool
-	BaseDir  string // directory where log file is stored
-	Interval uint32 // interval to rotate logs (in days)
-	MemSize  uint32 // number of entries kept in memory before they are flushed to disk
+	Enabled           bool
+	BaseDir           string // directory where log file is stored
+	Interval          uint32 // interval to rotate logs (in days)
+	MemSize           uint32 // number of entries kept in memory before they are flushed to disk
+	AnonymizeClientIP bool   // anonymize clients' IP addresses
 
 	// Called when the configuration is changed by HTTP request
 	ConfigModified func()

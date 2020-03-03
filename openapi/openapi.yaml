@@ -1585,6 +1585,9 @@ definitions:
             interval:
                 type: "integer"
                 description: "Time period to keep data (1 | 7 | 30 | 90)"
+            anonymize_client_ip:
+                type: "boolean"
+                description: "Anonymize clients' IP addresses"
 
     TlsConfig:
         type: "object"
