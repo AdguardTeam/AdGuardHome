@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -78,6 +79,7 @@ type homeContext struct {
 	pidFileName      string // PID file name.  Empty if no PID file was created.
 	disableUpdate    bool   // If set, don't check for updates
 	controlLock      sync.Mutex
+	tlsRoots         *x509.CertPool // list of root CAs for TLSv1.2
 	transport        *http.Transport
 	client           *http.Client
 	appSignalChannel chan os.Signal // Channel for receiving OS signals by the console app
@@ -135,16 +137,6 @@ func run(args options) {
 		Context.configFilename = "AdGuardHome.yaml"
 	}
 
-	// Init some of the Context fields right away
-	Context.transport = &http.Transport{
-		DialContext: customDialContext,
-		Proxy:       getHTTPProxy,
-	}
-	Context.client = &http.Client{
-		Timeout:   time.Minute * 5,
-		Transport: Context.transport,
-	}
-
 	// configure working dir and config path
 	initWorkingDir(args)
 
@@ -171,6 +163,19 @@ func run(args options) {
 
 	initConfig()
 	initServices()
+
+	Context.tlsRoots = util.LoadSystemRootCAs()
+	Context.transport = &http.Transport{
+		DialContext: customDialContext,
+		Proxy:       getHTTPProxy,
+		TLSClientConfig: &tls.Config{
+			RootCAs: Context.tlsRoots,
+		},
+	}
+	Context.client = &http.Client{
+		Timeout:   time.Minute * 5,
+		Transport: Context.transport,
+	}
 
 	if !Context.firstRun {
 		// Do the upgrade if necessary
@@ -321,6 +326,7 @@ func httpServerLoop() {
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{cert},
 				MinVersion:   tls.VersionTLS12,
+				RootCAs:      Context.tlsRoots,
 			},
 		}
 
