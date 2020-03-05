@@ -32,9 +32,9 @@ const (
 )
 
 var defaultDNS = []string{
-	"https://dns.quad9.net/dns-query",
+	"https://dns10.quad9.net/dns-query",
 }
-var defaultBootstrap = []string{"9.9.9.9", "149.112.112.112"}
+var defaultBootstrap = []string{"9.9.9.10", "149.112.112.10", "2620:fe::10", "2620:fe::fe:10"}
 
 var webRegistered bool
 

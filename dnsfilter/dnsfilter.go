@@ -228,6 +228,8 @@ func (d *Dnsfilter) filtersInitializer() {
 
 // Close - close the object
 func (d *Dnsfilter) Close() {
+	d.engineLock.Lock()
+	defer d.engineLock.Unlock()
 	d.reset()
 }
 
@@ -478,6 +480,7 @@ func createFilteringEngine(filters []Filter) (*filterlist.RuleStorage, *urlfilte
 // Initialize urlfilter objects
 func (d *Dnsfilter) initFiltering(allowFilters, blockFilters []Filter) error {
 	d.engineLock.Lock()
+	defer d.engineLock.Unlock()
 	d.reset()
 	rulesStorage, filteringEngine, err := createFilteringEngine(blockFilters)
 	if err != nil {
@@ -491,7 +494,6 @@ func (d *Dnsfilter) initFiltering(allowFilters, blockFilters []Filter) error {
 	d.filteringEngine = filteringEngine
 	d.rulesStorageWhite = rulesStorageWhite
 	d.filteringEngineWhite = filteringEngineWhite
-	d.engineLock.Unlock()
 	log.Debug("initialized filtering engine")
 
 	return nil
