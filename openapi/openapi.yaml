@@ -507,7 +507,7 @@ paths:
             tags:
                 - filtering
             operationId: filteringAddURL
-            summary: 'Add filter URL'
+            summary: 'Add filter URL or an absolute file path'
             consumes:
             - application/json
             parameters:
@@ -1495,7 +1495,7 @@ definitions:
             name:
                 type: "string"
             url:
-                description: "URL containing filtering rules"
+                description: "URL or an absolute path to the file containing filtering rules"
                 type: "string"
                 example: "https://filters.adtidy.org/windows/filters/15.txt"
     RemoveUrlRequest:
