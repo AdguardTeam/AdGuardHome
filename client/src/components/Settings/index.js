@@ -106,6 +106,7 @@ class Settings extends Component {
                                 <LogsConfig
                                     enabled={queryLogs.enabled}
                                     interval={queryLogs.interval}
+                                    anonymize_client_ip={queryLogs.anonymize_client_ip}
                                     processing={queryLogs.processingSetConfig}
                                     processingClear={queryLogs.processingClear}
                                     setLogsConfig={setLogsConfig}

@@ -134,6 +134,7 @@ const queryLogs = handleActions(
         oldest: '',
         filter: DEFAULT_LOGS_FILTER,
         isFiltered: false,
+        anonymize_client_ip: false,
     },
 );
 
