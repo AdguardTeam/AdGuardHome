@@ -78,6 +78,7 @@ const (
 	statusEnabledChanged = 2
 	statusURLChanged     = 4
 	statusURLExists      = 8
+	statusUpdateRequired = 0x10
 )
 
 // Update properties for a filter specified by its URL
@@ -103,13 +104,15 @@ func filterSetProperties(url string, newf filter, whitelist bool) int {
 		f.Name = newf.Name
 
 		if f.URL != newf.URL {
-			r |= statusURLChanged
+			r |= statusURLChanged | statusUpdateRequired
 			if filterExistsNoLock(newf.URL) {
 				return statusURLExists
 			}
 			f.URL = newf.URL
 			f.unload()
 			f.LastUpdated = time.Time{}
+			f.checksum = 0
+			f.RulesCount = 0
 		}
 
 		if f.Enabled != newf.Enabled {
@@ -121,8 +124,10 @@ func filterSetProperties(url string, newf filter, whitelist bool) int {
 					if e != nil {
 						// This isn't a fatal error,
 						//  because it may occur when someone removes the file from disk.
-						// In this case the periodic update task will try to download the file.
 						f.LastUpdated = time.Time{}
+						f.checksum = 0
+						f.RulesCount = 0
+						r |= statusUpdateRequired
 					}
 				}
 			} else {
@@ -257,20 +262,17 @@ func periodicallyRefreshFilters() {
 }
 
 // Refresh filters
+// flags: FilterRefresh*
 // important:
 //  TRUE: ignore the fact that we're currently updating the filters
-func refreshFilters(whitelist bool, important bool) (int, error) {
+func refreshFilters(flags int, important bool) (int, error) {
 	set := atomic.CompareAndSwapUint32(&refreshStatus, 0, 1)
 	if !important && !set {
 		return 0, fmt.Errorf("Filters update procedure is already running")
 	}
 
 	refreshLock.Lock()
-	flags := FilterRefreshBlocklists
-	if whitelist {
-		flags = FilterRefreshAllowlists
-	}
-	nUpdated, _ := refreshFiltersIfNecessary(flags | FilterRefreshForce)
+	nUpdated, _ := refreshFiltersIfNecessary(flags)
 	refreshLock.Unlock()
 	refreshStatus = 0
 	return nUpdated, nil
