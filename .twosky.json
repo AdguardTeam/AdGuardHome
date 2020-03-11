@@ -17,6 +17,7 @@
       "pl": "Polski",
       "pt-br": "Portuguese (BR)",
       "pt-pt": "Portuguese (PT)",
+      "ro": "Română",
       "sk": "Slovenčina",
       "sl": "Slovenščina",
       "sr-cs": "Srpski",
@@ -30,7 +31,8 @@
       "ja": "日本語",
       "zh-tw": "正體中文",
       "zh-cn": "简体中文",
-      "ko": "한국어"
+      "ko": "한국어",
+      "th": "ภาษาไทย"
     }
   }
 ]

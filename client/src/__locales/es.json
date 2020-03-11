@@ -69,7 +69,7 @@
     "enabled_protection": "Protección habilitada",
     "disable_protection": "Deshabilitar protección",
     "disabled_protection": "Protección deshabilitada",
-    "refresh_statics": "Restablecer estadísticas",
+    "refresh_statics": "Actualizar estadísticas",
     "dns_query": "Consultas DNS",
     "blocked_by": "<0>Bloqueado por filtros</0>",
     "stats_malware_phishing": "Malware/phishing bloqueado",
