@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -137,6 +138,7 @@ func run(args options) {
 	// Init some of the Context fields right away
 	Context.transport = &http.Transport{
 		DialContext: customDialContext,
+		Proxy:       getHTTPProxy,
 	}
 	Context.client = &http.Client{
 		Timeout:   time.Minute * 5,
@@ -657,4 +659,11 @@ func customDialContext(ctx context.Context, network, addr string) (net.Conn, err
 		return con, err
 	}
 	return nil, errorx.DecorateMany(fmt.Sprintf("couldn't dial to %s", addr), dialErrs...)
+}
+
+func getHTTPProxy(req *http.Request) (*url.URL, error) {
+	if len(config.ProxyURL) == 0 {
+		return nil, nil
+	}
+	return url.Parse(config.ProxyURL)
 }
