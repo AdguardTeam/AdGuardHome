@@ -6,6 +6,7 @@
 ### API: Refresh filters: POST /control/filtering/refresh
 
 * Added "whitelist" boolean parameter
+* Response is in JSON format
 
 Request:
 
@@ -13,6 +14,14 @@ Request:
 
 	{
 		"whitelist": true
+	}
+
+Response:
+
+	200 OK
+
+	{
+		"updated": 123 // number of filters updated
 	}
 
 
