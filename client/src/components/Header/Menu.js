@@ -45,8 +45,8 @@ class Menu extends Component {
         this.props.closeMenu();
     };
 
-    toggleMenu = () => {
-        this.props.toggleMenuOpen();
+    closeMenu = () => {
+        this.props.closeMenu();
     };
 
     getActiveClassForDropdown = (URLS) => {
@@ -64,7 +64,7 @@ class Menu extends Component {
             key={route}
             exact={exact || false}
             className={`order-${order} ${className}`}
-            onClick={this.toggleMenu}
+            onClick={this.closeMenu}
         >
             {icon && (
                 <svg className="nav-icon">
@@ -106,7 +106,7 @@ class Menu extends Component {
                             <li
                                 className={`nav-item order-${item.order}`}
                                 key={item.text}
-                                onClick={this.toggleMenu}
+                                onClick={this.closeMenu}
                             >
                                 {this.getNavLink({ ...item, className: 'nav-link' })}
                             </li>
@@ -135,7 +135,6 @@ class Menu extends Component {
 Menu.propTypes = {
     isMenuOpen: PropTypes.bool,
     closeMenu: PropTypes.func,
-    toggleMenuOpen: PropTypes.func,
     location: PropTypes.object,
     t: PropTypes.func,
 };
