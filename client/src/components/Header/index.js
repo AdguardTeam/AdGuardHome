@@ -55,7 +55,6 @@ class Header extends Component {
                         <Menu
                             location={location}
                             isMenuOpen={isMenuOpen}
-                            toggleMenuOpen={this.toggleMenuOpen}
                             closeMenu={this.closeMenu}
                         />
                         <div className="header__column">
