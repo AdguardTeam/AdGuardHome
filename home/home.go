@@ -192,6 +192,9 @@ func run(args options) {
 	config.DHCP.HTTPRegister = httpRegister
 	config.DHCP.ConfigModified = onConfigModified
 	Context.dhcpServer = dhcpd.Create(config.DHCP)
+	if Context.dhcpServer == nil {
+		os.Exit(1)
+	}
 	Context.clients.Init(config.Clients, Context.dhcpServer)
 	config.Clients = nil
 
