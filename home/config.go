@@ -51,6 +51,7 @@ type configuration struct {
 	BindHost     string `yaml:"bind_host"`     // BindHost is the IP address of the HTTP server to bind to
 	BindPort     int    `yaml:"bind_port"`     // BindPort is the port the HTTP server
 	Users        []User `yaml:"users"`         // Users that can access HTTP server
+	ProxyURL     string `yaml:"http_proxy"`    // Proxy address for our HTTP client
 	Language     string `yaml:"language"`      // two-letter ISO 639-1 language code
 	RlimitNoFile uint   `yaml:"rlimit_nofile"` // Maximum number of opened fd's per process (0: default)
 
