@@ -234,6 +234,16 @@ func parseConfig() error {
 		return err
 	}
 
+	bsvcs := []string{}
+	for _, s := range config.DNS.BlockedServices {
+		if !blockedSvcKnown(s) {
+			log.Debug("skipping unknown blocked-service '%s'", s)
+			continue
+		}
+		bsvcs = append(bsvcs, s)
+	}
+	config.DNS.BlockedServices = bsvcs
+
 	if !checkFiltersUpdateIntervalHours(config.DNS.FiltersUpdateIntervalHours) {
 		config.DNS.FiltersUpdateIntervalHours = 24
 	}

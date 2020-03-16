@@ -21,10 +21,9 @@ type svc struct {
 // client/src/components/ui/Icons.js
 var serviceRulesArray = []svc{
 	{"whatsapp", []string{"||whatsapp.net^", "||whatsapp.com^"}},
-	{"facebook", []string{"||facebook.com^", "||facebook.net^", "||fbcdn.net^", "||fb.me^", "||fb.com^", "||fbsbx.com^"}},
+	{"facebook", []string{"||facebook.com^", "||facebook.net^", "||fbcdn.net^", "||fb.me^", "||fb.com^", "||fbsbx.com^", "||messenger.com^"}},
 	{"twitter", []string{"||twitter.com^", "||t.co^", "||twimg.com^"}},
 	{"youtube", []string{"||youtube.com^", "||ytimg.com^", "||youtu.be^", "||googlevideo.com^", "||youtubei.googleapis.com^"}},
-	{"messenger", []string{"||fb.com^", "||facebook.com^", "||messenger.com^"}},
 	{"twitch", []string{"||twitch.tv^", "||ttvnw.net^"}},
 	{"netflix", []string{"||nflxext.com^", "||netflix.com^"}},
 	{"instagram", []string{"||instagram.com^", "||cdninstagram.com^"}},
@@ -134,6 +133,12 @@ func initServices() {
 		}
 		serviceRules[s.name] = netRules
 	}
+}
+
+// Return TRUE if a blocked service name is known
+func blockedSvcKnown(s string) bool {
+	_, ok := serviceRules[s]
+	return ok
 }
 
 // ApplyBlockedServices - set blocked services settings for this DNS request

@@ -140,9 +140,16 @@ func (clients *clientsContainer) addFromConfig(objects []clientObject) {
 			SafeBrowsingEnabled: cy.SafeBrowsingEnabled,
 
 			UseOwnBlockedServices: !cy.UseGlobalBlockedServices,
-			BlockedServices:       cy.BlockedServices,
 
 			Upstreams: cy.Upstreams,
+		}
+
+		for _, s := range cy.BlockedServices {
+			if !blockedSvcKnown(s) {
+				log.Debug("Clients: skipping unknown blocked-service '%s'", s)
+				continue
+			}
+			cli.BlockedServices = append(cli.BlockedServices, s)
 		}
 
 		for _, t := range cy.Tags {

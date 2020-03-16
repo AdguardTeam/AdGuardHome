@@ -188,10 +188,6 @@ export const SERVICES = [
         name: 'Snapchat',
     },
     {
-        id: 'messenger',
-        name: 'Messenger',
-    },
-    {
         id: 'twitch',
         name: 'Twitch',
     },
