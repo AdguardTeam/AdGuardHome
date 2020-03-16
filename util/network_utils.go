@@ -88,10 +88,6 @@ func GetValidNetInterfacesForWeb() ([]NetInterface, error) {
 			if ipNet.IP.IsLinkLocalUnicast() {
 				continue
 			}
-			// ignore IPv6
-			if ipNet.IP.To4() == nil {
-				continue
-			}
 			netIface.Addresses = append(netIface.Addresses, ipNet.IP.String())
 			netIface.Subnets = append(netIface.Subnets, ipNet.String())
 		}
