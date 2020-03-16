@@ -112,6 +112,7 @@ func TestHome(t *testing.T) {
 
 	dir := prepareTestDir()
 	defer func() { _ = os.RemoveAll(dir) }()
+	_ = os.MkdirAll(filepath.Join(Context.getDataDir(), filterDir), 0755)
 	fn := filepath.Join(dir, "AdGuardHome.yaml")
 
 	assert.True(t, ioutil.WriteFile(fn, []byte(yamlConf), 0644) == nil)
