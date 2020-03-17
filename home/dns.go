@@ -3,13 +3,13 @@ package home
 import (
 	"fmt"
 	"net"
-	"os"
 	"path/filepath"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/querylog"
 	"github.com/AdguardTeam/AdGuardHome/stats"
+	"github.com/AdguardTeam/AdGuardHome/util"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
@@ -25,12 +25,8 @@ func onConfigModified() {
 // Please note that we must do it even if we don't start it
 // so that we had access to the query log and the stats
 func initDNSServer() error {
+	var err error
 	baseDir := Context.getDataDir()
-
-	err := os.MkdirAll(baseDir, 0755)
-	if err != nil {
-		return fmt.Errorf("Cannot create DNS data dir at %s: %s", baseDir, err)
-	}
 
 	statsConf := stats.Config{
 		Filename:       filepath.Join(baseDir, "stats.db"),
@@ -69,14 +65,6 @@ func initDNSServer() error {
 		closeDNSServer()
 		return fmt.Errorf("dnsServer.Prepare: %s", err)
 	}
-
-	sessFilename := filepath.Join(baseDir, "sessions.db")
-	Context.auth = InitAuth(sessFilename, config.Users, config.WebSessionTTLHours*60*60)
-	if Context.auth == nil {
-		closeDNSServer()
-		return fmt.Errorf("Couldn't initialize Auth module")
-	}
-	config.Users = nil
 
 	Context.rdns = InitRDNS(Context.dnsServer, &Context.clients)
 	Context.whois = initWhois(&Context.clients)
@@ -169,17 +157,65 @@ func generateServerConfig() dnsforward.ServerConfig {
 		OnDNSRequest:    onDNSRequest,
 	}
 
-	if config.TLS.Enabled {
-		newconfig.TLSConfig = config.TLS.TLSConfig
-		if config.TLS.PortDNSOverTLS != 0 {
-			newconfig.TLSListenAddr = &net.TCPAddr{IP: net.ParseIP(config.DNS.BindHost), Port: config.TLS.PortDNSOverTLS}
+	tlsConf := tlsConfigSettings{}
+	Context.tls.WriteDiskConfig(&tlsConf)
+	if tlsConf.Enabled {
+		newconfig.TLSConfig = tlsConf.TLSConfig
+		if tlsConf.PortDNSOverTLS != 0 {
+			newconfig.TLSListenAddr = &net.TCPAddr{
+				IP:   net.ParseIP(config.DNS.BindHost),
+				Port: tlsConf.PortDNSOverTLS,
+			}
 		}
 	}
 	newconfig.TLSv12Roots = Context.tlsRoots
+	newconfig.TLSAllowUnencryptedDOH = tlsConf.AllowUnencryptedDOH
 
 	newconfig.FilterHandler = applyAdditionalFiltering
 	newconfig.GetUpstreamsByClient = getUpstreamsByClient
 	return newconfig
+}
+
+// Get the list of DNS addresses the server is listening on
+func getDNSAddresses() []string {
+	dnsAddresses := []string{}
+
+	if config.DNS.BindHost == "0.0.0.0" {
+		ifaces, e := util.GetValidNetInterfacesForWeb()
+		if e != nil {
+			log.Error("Couldn't get network interfaces: %v", e)
+			return []string{}
+		}
+
+		for _, iface := range ifaces {
+			for _, addr := range iface.Addresses {
+				addDNSAddress(&dnsAddresses, addr)
+			}
+		}
+	} else {
+		addDNSAddress(&dnsAddresses, config.DNS.BindHost)
+	}
+
+	tlsConf := tlsConfigSettings{}
+	Context.tls.WriteDiskConfig(&tlsConf)
+	if tlsConf.Enabled && len(tlsConf.ServerName) != 0 {
+
+		if tlsConf.PortHTTPS != 0 {
+			addr := tlsConf.ServerName
+			if tlsConf.PortHTTPS != 443 {
+				addr = fmt.Sprintf("%s:%d", addr, tlsConf.PortHTTPS)
+			}
+			addr = fmt.Sprintf("https://%s/dns-query", addr)
+			dnsAddresses = append(dnsAddresses, addr)
+		}
+
+		if tlsConf.PortDNSOverTLS != 0 {
+			addr := fmt.Sprintf("tls://%s:%d", tlsConf.ServerName, tlsConf.PortDNSOverTLS)
+			dnsAddresses = append(dnsAddresses, addr)
+		}
+	}
+
+	return dnsAddresses
 }
 
 func getUpstreamsByClient(clientAddr string) []upstream.Upstream {
@@ -188,7 +224,7 @@ func getUpstreamsByClient(clientAddr string) []upstream.Upstream {
 
 // If a client has his own settings, apply them
 func applyAdditionalFiltering(clientAddr string, setts *dnsfilter.RequestFilteringSettings) {
-	ApplyBlockedServices(setts, config.DNS.BlockedServices)
+	Context.dnsFilter.ApplyBlockedServices(setts, nil, true)
 
 	if len(clientAddr) == 0 {
 		return
@@ -202,7 +238,7 @@ func applyAdditionalFiltering(clientAddr string, setts *dnsfilter.RequestFilteri
 	log.Debug("Using settings for client with IP %s", clientAddr)
 
 	if c.UseOwnBlockedServices {
-		ApplyBlockedServices(setts, c.BlockedServices)
+		Context.dnsFilter.ApplyBlockedServices(setts, c.BlockedServices, false)
 	}
 
 	setts.ClientTags = c.Tags
@@ -223,6 +259,8 @@ func startDNSServer() error {
 	}
 
 	enableFilters(false)
+
+	Context.clients.Start()
 
 	err := Context.dnsServer.Start()
 	if err != nil {
@@ -293,11 +331,6 @@ func closeDNSServer() {
 	if Context.queryLog != nil {
 		Context.queryLog.Close()
 		Context.queryLog = nil
-	}
-
-	if Context.auth != nil {
-		Context.auth.Close()
-		Context.auth = nil
 	}
 
 	Context.filters.Close()

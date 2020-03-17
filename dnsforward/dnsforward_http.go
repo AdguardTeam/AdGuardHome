@@ -376,6 +376,20 @@ func checkDNS(input string, bootstrap []string) error {
 	return nil
 }
 
+func (s *Server) handleDOH(w http.ResponseWriter, r *http.Request) {
+	if !s.conf.TLSAllowUnencryptedDOH && r.TLS == nil {
+		httpError(r, w, http.StatusNotFound, "Not Found")
+		return
+	}
+
+	if !s.IsRunning() {
+		httpError(r, w, http.StatusInternalServerError, "DNS server is not running")
+		return
+	}
+
+	s.ServeHTTP(w, r)
+}
+
 func (s *Server) registerHandlers() {
 	s.conf.HTTPRegister("GET", "/control/dns_info", s.handleGetConfig)
 	s.conf.HTTPRegister("POST", "/control/dns_config", s.handleSetConfig)
@@ -384,4 +398,6 @@ func (s *Server) registerHandlers() {
 
 	s.conf.HTTPRegister("GET", "/control/access/list", s.handleAccessList)
 	s.conf.HTTPRegister("POST", "/control/access/set", s.handleAccessSet)
+
+	s.conf.HTTPRegister("", "/dns-query", s.handleDOH)
 }

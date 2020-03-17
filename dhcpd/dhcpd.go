@@ -18,6 +18,8 @@ import (
 const defaultDiscoverTime = time.Second * 3
 const leaseExpireStatic = 1
 
+var webHandlersRegistered = false
+
 // Lease contains the necessary information about a DHCP lease
 // field ordering is important -- yaml fields will mirror ordering from here
 type Lease struct {
@@ -121,9 +123,6 @@ func Create(config ServerConfig) *Server {
 			return nil
 		}
 	}
-	if s.conf.HTTPRegister != nil {
-		s.registerHandlers()
-	}
 
 	// we can't delay database loading until DHCP server is started,
 	//  because we need static leases functionality available beforehand
@@ -220,6 +219,11 @@ func (s *Server) setConfig(config ServerConfig) error {
 
 // Start will listen on port 67 and serve DHCP requests.
 func (s *Server) Start() error {
+
+	if !webHandlersRegistered && s.conf.HTTPRegister != nil {
+		webHandlersRegistered = true
+		s.registerHandlers()
+	}
 
 	// TODO: don't close if interface and addresses are the same
 	if s.conn != nil {

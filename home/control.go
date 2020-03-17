@@ -9,8 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AdguardTeam/AdGuardHome/util"
-
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/NYTimes/gziphandler"
@@ -27,9 +25,6 @@ func returnOK(w http.ResponseWriter) {
 	}
 }
 
-func httpOK(r *http.Request, w http.ResponseWriter) {
-}
-
 func httpError(w http.ResponseWriter, code int, format string, args ...interface{}) {
 	text := fmt.Sprintf(format, args...)
 	log.Info(text)
@@ -39,60 +34,11 @@ func httpError(w http.ResponseWriter, code int, format string, args ...interface
 // ---------------
 // dns run control
 // ---------------
-func writeAllConfigsAndReloadDNS() error {
-	err := writeAllConfigs()
-	if err != nil {
-		log.Error("Couldn't write all configs: %s", err)
-		return err
-	}
-	return reconfigureDNSServer()
-}
-
 func addDNSAddress(dnsAddresses *[]string, addr string) {
 	if config.DNS.Port != 53 {
 		addr = fmt.Sprintf("%s:%d", addr, config.DNS.Port)
 	}
 	*dnsAddresses = append(*dnsAddresses, addr)
-}
-
-// Get the list of DNS addresses the server is listening on
-func getDNSAddresses() []string {
-	dnsAddresses := []string{}
-
-	if config.DNS.BindHost == "0.0.0.0" {
-		ifaces, e := util.GetValidNetInterfacesForWeb()
-		if e != nil {
-			log.Error("Couldn't get network interfaces: %v", e)
-			return []string{}
-		}
-
-		for _, iface := range ifaces {
-			for _, addr := range iface.Addresses {
-				addDNSAddress(&dnsAddresses, addr)
-			}
-		}
-	} else {
-		addDNSAddress(&dnsAddresses, config.DNS.BindHost)
-	}
-
-	if config.TLS.Enabled && len(config.TLS.ServerName) != 0 {
-
-		if config.TLS.PortHTTPS != 0 {
-			addr := config.TLS.ServerName
-			if config.TLS.PortHTTPS != 443 {
-				addr = fmt.Sprintf("%s:%d", addr, config.TLS.PortHTTPS)
-			}
-			addr = fmt.Sprintf("https://%s/dns-query", addr)
-			dnsAddresses = append(dnsAddresses, addr)
-		}
-
-		if config.TLS.PortDNSOverTLS != 0 {
-			addr := fmt.Sprintf("tls://%s:%d", config.TLS.ServerName, config.TLS.PortDNSOverTLS)
-			dnsAddresses = append(dnsAddresses, addr)
-		}
-	}
-
-	return dnsAddresses
 }
 
 func handleStatus(w http.ResponseWriter, r *http.Request) {
@@ -144,23 +90,6 @@ func handleGetProfile(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(data)
 }
 
-// --------------
-// DNS-over-HTTPS
-// --------------
-func handleDOH(w http.ResponseWriter, r *http.Request) {
-	if !config.TLS.AllowUnencryptedDOH && r.TLS == nil {
-		httpError(w, http.StatusNotFound, "Not Found")
-		return
-	}
-
-	if !isRunning() {
-		httpError(w, http.StatusInternalServerError, "DNS server is not running")
-		return
-	}
-
-	Context.dnsServer.ServeHTTP(w, r)
-}
-
 // ------------------------
 // registration of handlers
 // ------------------------
@@ -172,15 +101,16 @@ func registerControlHandlers() {
 	httpRegister(http.MethodPost, "/control/update", handleUpdate)
 
 	httpRegister("GET", "/control/profile", handleGetProfile)
-
-	RegisterTLSHandlers()
-	RegisterBlockedServicesHandlers()
 	RegisterAuthHandlers()
-
-	http.HandleFunc("/dns-query", postInstall(handleDOH))
 }
 
 func httpRegister(method string, url string, handler func(http.ResponseWriter, *http.Request)) {
+	if len(method) == 0 {
+		// "/dns-query" handler doesn't need auth, gzip and isn't restricted by 1 HTTP method
+		http.HandleFunc(url, postInstall(handler))
+		return
+	}
+
 	http.Handle(url, postInstallHandler(optionalAuthHandler(gziphandler.GzipHandler(ensureHandler(method, handler)))))
 }
 
@@ -258,14 +188,16 @@ func preInstallHandler(handler http.Handler) http.Handler {
 // it also enforces HTTPS if it is enabled and configured
 func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+
 		if Context.firstRun &&
 			!strings.HasPrefix(r.URL.Path, "/install.") &&
 			r.URL.Path != "/favicon.png" {
-			http.Redirect(w, r, "/install.html", http.StatusSeeOther) // should not be cacheable
+			http.Redirect(w, r, "/install.html", http.StatusFound)
 			return
 		}
+
 		// enforce https?
-		if config.TLS.ForceHTTPS && r.TLS == nil && config.TLS.Enabled && config.TLS.PortHTTPS != 0 && Context.httpsServer.server != nil {
+		if r.TLS == nil && Context.web.forceHTTPS && Context.web.httpsServer.server != nil {
 			// yes, and we want host from host:port
 			host, _, err := net.SplitHostPort(r.Host)
 			if err != nil {
@@ -275,13 +207,14 @@ func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.Res
 			// construct new URL to redirect to
 			newURL := url.URL{
 				Scheme:   "https",
-				Host:     net.JoinHostPort(host, strconv.Itoa(config.TLS.PortHTTPS)),
+				Host:     net.JoinHostPort(host, strconv.Itoa(Context.web.portHTTPS)),
 				Path:     r.URL.Path,
 				RawQuery: r.URL.RawQuery,
 			}
 			http.Redirect(w, r, newURL.String(), http.StatusTemporaryRedirect)
 			return
 		}
+
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		handler(w, r)
 	}

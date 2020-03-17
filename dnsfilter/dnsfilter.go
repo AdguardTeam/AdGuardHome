@@ -49,6 +49,10 @@ type Config struct {
 
 	Rewrites []RewriteEntry `yaml:"rewrites"`
 
+	// Names of services to block (globally).
+	// Per-client settings can override this configuration.
+	BlockedServices []string `yaml:"blocked_services"`
+
 	// Called when the configuration is changed by HTTP request
 	ConfigModified func() `yaml:"-"`
 
@@ -175,6 +179,7 @@ func (d *Dnsfilter) WriteDiskConfig(c *Config) {
 	d.confLock.Lock()
 	*c = d.Config
 	c.Rewrites = rewriteArrayDup(d.Config.Rewrites)
+	// BlockedServices
 	d.confLock.Unlock()
 }
 
@@ -633,6 +638,18 @@ func New(c *Config, blockFilters []Filter) *Dnsfilter {
 		d.prepareRewrites()
 	}
 
+	bsvcs := []string{}
+	for _, s := range d.BlockedServices {
+		if !BlockedSvcKnown(s) {
+			log.Debug("skipping unknown blocked-service '%s'", s)
+			continue
+		}
+		bsvcs = append(bsvcs, s)
+	}
+	d.BlockedServices = bsvcs
+
+	initBlockedServices()
+
 	if blockFilters != nil {
 		err := d.initFiltering(nil, blockFilters)
 		if err != nil {
@@ -655,6 +672,7 @@ func (d *Dnsfilter) Start() {
 	if d.Config.HTTPRegister != nil { // for tests
 		d.registerSecurityHandlers()
 		d.registerRewritesHandlers()
+		d.registerBlockedServicesHandlers()
 	}
 }
 

@@ -179,6 +179,7 @@ type ServerConfig struct {
 
 	FilteringConfig
 	TLSConfig
+	TLSAllowUnencryptedDOH bool
 
 	TLSv12Roots *x509.CertPool // list of root CAs for TLSv1.2
 

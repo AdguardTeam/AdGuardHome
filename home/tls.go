@@ -1,9 +1,6 @@
-// Control: TLS configuring handlers
-
 package home
 
 import (
-	"context"
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/rsa"
@@ -16,18 +13,125 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
-
-	"github.com/AdguardTeam/AdGuardHome/util"
 
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/joomcode/errorx"
 )
 
+var tlsWebHandlersRegistered = false
+
+// TLSMod - TLS module object
+type TLSMod struct {
+	certLastMod time.Time // last modification time of the certificate file
+	conf        tlsConfigSettings
+	confLock    sync.Mutex
+	status      tlsConfigStatus
+}
+
+// Create TLS module
+func tlsCreate(conf tlsConfigSettings) *TLSMod {
+	t := &TLSMod{}
+	t.conf = conf
+	if t.conf.Enabled {
+		if !t.load() {
+			return nil
+		}
+		t.setCertFileTime()
+	}
+	return t
+}
+
+func (t *TLSMod) load() bool {
+	if !tlsLoadConfig(&t.conf, &t.status) {
+		return false
+	}
+
+	// validate current TLS config and update warnings (it could have been loaded from file)
+	data := validateCertificates(string(t.conf.CertificateChainData), string(t.conf.PrivateKeyData), t.conf.ServerName)
+	if !data.ValidPair {
+		log.Error(data.WarningValidation)
+		return false
+	}
+	t.status = data
+	return true
+}
+
+// Close - close module
+func (t *TLSMod) Close() {
+}
+
+// WriteDiskConfig - write config
+func (t *TLSMod) WriteDiskConfig(conf *tlsConfigSettings) {
+	t.confLock.Lock()
+	*conf = t.conf
+	t.confLock.Unlock()
+}
+
+func (t *TLSMod) setCertFileTime() {
+	if len(t.conf.CertificatePath) == 0 {
+		return
+	}
+	fi, err := os.Stat(t.conf.CertificatePath)
+	if err != nil {
+		log.Error("TLS: %s", err)
+		return
+	}
+	t.certLastMod = fi.ModTime().UTC()
+}
+
+// Start - start the module
+func (t *TLSMod) Start() {
+	if !tlsWebHandlersRegistered {
+		tlsWebHandlersRegistered = true
+		t.registerWebHandlers()
+	}
+
+	t.confLock.Lock()
+	tlsConf := t.conf
+	t.confLock.Unlock()
+	Context.web.TLSConfigChanged(tlsConf)
+}
+
+// Reload - reload certificate file
+func (t *TLSMod) Reload() {
+	t.confLock.Lock()
+	tlsConf := t.conf
+	t.confLock.Unlock()
+
+	if !tlsConf.Enabled || len(tlsConf.CertificatePath) == 0 {
+		return
+	}
+	fi, err := os.Stat(tlsConf.CertificatePath)
+	if err != nil {
+		log.Error("TLS: %s", err)
+		return
+	}
+	if fi.ModTime().UTC().Equal(t.certLastMod) {
+		log.Debug("TLS: certificate file isn't modified")
+		return
+	}
+	log.Debug("TLS: certificate file is modified")
+
+	t.confLock.Lock()
+	r := t.load()
+	t.confLock.Unlock()
+	if !r {
+		return
+	}
+
+	t.certLastMod = fi.ModTime().UTC()
+
+	_ = reconfigureDNSServer()
+	Context.web.TLSConfigChanged(tlsConf)
+}
+
 // Set certificate and private key data
-func tlsLoadConfig(tls *tlsConfig, status *tlsConfigStatus) bool {
+func tlsLoadConfig(tls *tlsConfigSettings, status *tlsConfigStatus) bool {
 	tls.CertificateChainData = []byte(tls.CertificateChain)
 	tls.PrivateKeyData = []byte(tls.PrivateKey)
 
@@ -61,98 +165,115 @@ func tlsLoadConfig(tls *tlsConfig, status *tlsConfigStatus) bool {
 	return true
 }
 
-// RegisterTLSHandlers registers HTTP handlers for TLS configuration
-func RegisterTLSHandlers() {
-	httpRegister(http.MethodGet, "/control/tls/status", handleTLSStatus)
-	httpRegister(http.MethodPost, "/control/tls/configure", handleTLSConfigure)
-	httpRegister(http.MethodPost, "/control/tls/validate", handleTLSValidate)
+type tlsConfigStatus struct {
+	ValidCert  bool      `json:"valid_cert"`           // ValidCert is true if the specified certificates chain is a valid chain of X509 certificates
+	ValidChain bool      `json:"valid_chain"`          // ValidChain is true if the specified certificates chain is verified and issued by a known CA
+	Subject    string    `json:"subject,omitempty"`    // Subject is the subject of the first certificate in the chain
+	Issuer     string    `json:"issuer,omitempty"`     // Issuer is the issuer of the first certificate in the chain
+	NotBefore  time.Time `json:"not_before,omitempty"` // NotBefore is the NotBefore field of the first certificate in the chain
+	NotAfter   time.Time `json:"not_after,omitempty"`  // NotAfter is the NotAfter field of the first certificate in the chain
+	DNSNames   []string  `json:"dns_names"`            // DNSNames is the value of SubjectAltNames field of the first certificate in the chain
+
+	// key status
+	ValidKey bool   `json:"valid_key"`          // ValidKey is true if the key is a valid private key
+	KeyType  string `json:"key_type,omitempty"` // KeyType is one of RSA or ECDSA
+
+	// is usable? set by validator
+	ValidPair bool `json:"valid_pair"` // ValidPair is true if both certificate and private key are correct
+
+	// warnings
+	WarningValidation string `json:"warning_validation,omitempty"` // WarningValidation is a validation warning message with the issue description
 }
 
-func handleTLSStatus(w http.ResponseWriter, r *http.Request) {
-	marshalTLS(w, config.TLS)
+// field ordering is important -- yaml fields will mirror ordering from here
+type tlsConfig struct {
+	tlsConfigSettings `json:",inline"`
+	tlsConfigStatus   `json:",inline"`
 }
 
-func handleTLSValidate(w http.ResponseWriter, r *http.Request) {
-	data, err := unmarshalTLS(r)
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
-		return
+func (t *TLSMod) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
+	t.confLock.Lock()
+	data := tlsConfig{
+		tlsConfigSettings: t.conf,
+		tlsConfigStatus:   t.status,
 	}
-
-	// check if port is available
-	// BUT: if we are already using this port, no need
-	alreadyRunning := false
-	if Context.httpsServer.server != nil {
-		alreadyRunning = true
-	}
-	if !alreadyRunning {
-		err = util.CheckPortAvailable(config.BindHost, data.PortHTTPS)
-		if err != nil {
-			httpError(w, http.StatusBadRequest, "port %d is not available, cannot enable HTTPS on it", data.PortHTTPS)
-			return
-		}
-	}
-
-	status := tlsConfigStatus{}
-	if tlsLoadConfig(&data, &status) {
-		status = validateCertificates(string(data.CertificateChainData), string(data.PrivateKeyData), data.ServerName)
-	}
-	data.tlsConfigStatus = status
-
+	t.confLock.Unlock()
 	marshalTLS(w, data)
 }
 
-func handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
+func (t *TLSMod) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
+	setts, err := unmarshalTLS(r)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
+		return
+	}
+
+	if !WebCheckPortAvailable(setts.PortHTTPS) {
+		httpError(w, http.StatusBadRequest, "port %d is not available, cannot enable HTTPS on it", setts.PortHTTPS)
+		return
+	}
+
+	status := tlsConfigStatus{}
+	if tlsLoadConfig(&setts, &status) {
+		status = validateCertificates(string(setts.CertificateChainData), string(setts.PrivateKeyData), setts.ServerName)
+	}
+
+	data := tlsConfig{
+		tlsConfigSettings: setts,
+		tlsConfigStatus:   status,
+	}
+	marshalTLS(w, data)
+}
+
+func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	data, err := unmarshalTLS(r)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
 		return
 	}
 
-	// check if port is available
-	// BUT: if we are already using this port, no need
-	alreadyRunning := false
-	if Context.httpsServer.server != nil {
-		alreadyRunning = true
-	}
-	if !alreadyRunning {
-		err = util.CheckPortAvailable(config.BindHost, data.PortHTTPS)
-		if err != nil {
-			httpError(w, http.StatusBadRequest, "port %d is not available, cannot enable HTTPS on it", data.PortHTTPS)
-			return
-		}
+	if !WebCheckPortAvailable(data.PortHTTPS) {
+		httpError(w, http.StatusBadRequest, "port %d is not available, cannot enable HTTPS on it", data.PortHTTPS)
+		return
 	}
 
 	status := tlsConfigStatus{}
 	if !tlsLoadConfig(&data, &status) {
-		data.tlsConfigStatus = status
-		marshalTLS(w, data)
+		data2 := tlsConfig{
+			tlsConfigSettings: data,
+			tlsConfigStatus:   t.status,
+		}
+		marshalTLS(w, data2)
 		return
 	}
-	data.tlsConfigStatus = validateCertificates(string(data.CertificateChainData), string(data.PrivateKeyData), data.ServerName)
+	status = validateCertificates(string(data.CertificateChainData), string(data.PrivateKeyData), data.ServerName)
 	restartHTTPS := false
-	if !reflect.DeepEqual(config.TLS.tlsConfigSettings, data.tlsConfigSettings) {
+	t.confLock.Lock()
+	if !reflect.DeepEqual(t.conf, data) {
 		log.Printf("tls config settings have changed, will restart HTTPS server")
 		restartHTTPS = true
 	}
-	config.TLS = data
-	err = writeAllConfigsAndReloadDNS()
+	t.conf = data
+	t.status = status
+	t.confLock.Unlock()
+	t.setCertFileTime()
+	onConfigModified()
+	err = reconfigureDNSServer()
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't write config file: %s", err)
+		httpError(w, http.StatusInternalServerError, "%s", err)
 		return
 	}
-	marshalTLS(w, data)
+	data2 := tlsConfig{
+		tlsConfigSettings: data,
+		tlsConfigStatus:   t.status,
+	}
+	marshalTLS(w, data2)
 	// this needs to be done in a goroutine because Shutdown() is a blocking call, and it will block
 	// until all requests are finished, and _we_ are inside a request right now, so it will block indefinitely
 	if restartHTTPS {
 		go func() {
 			time.Sleep(time.Second) // TODO: could not find a way to reliably know that data was fully sent to client by https server, so we wait a bit to let response through before closing the server
-			Context.httpsServer.cond.L.Lock()
-			Context.httpsServer.cond.Broadcast()
-			if Context.httpsServer.server != nil {
-				Context.httpsServer.server.Shutdown(context.TODO())
-			}
-			Context.httpsServer.cond.L.Unlock()
+			Context.web.TLSConfigChanged(data)
 		}()
 	}
 }
@@ -337,8 +458,8 @@ func parsePrivateKey(der []byte) (crypto.PrivateKey, string, error) {
 }
 
 // unmarshalTLS handles base64-encoded certificates transparently
-func unmarshalTLS(r *http.Request) (tlsConfig, error) {
-	data := tlsConfig{}
+func unmarshalTLS(r *http.Request) (tlsConfigSettings, error) {
+	data := tlsConfigSettings{}
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		return data, errorx.Decorate(err, "Failed to parse new TLS config json")
@@ -388,4 +509,11 @@ func marshalTLS(w http.ResponseWriter, data tlsConfig) {
 		httpError(w, http.StatusInternalServerError, "Failed to marshal json with TLS status: %s", err)
 		return
 	}
+}
+
+// registerWebHandlers registers HTTP handlers for TLS configuration
+func (t *TLSMod) registerWebHandlers() {
+	httpRegister("GET", "/control/tls/status", t.handleTLSStatus)
+	httpRegister("POST", "/control/tls/configure", t.handleTLSConfigure)
+	httpRegister("POST", "/control/tls/validate", t.handleTLSValidate)
 }

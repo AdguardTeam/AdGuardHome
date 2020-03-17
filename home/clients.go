@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
+	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/dnsforward"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
@@ -23,6 +24,8 @@ import (
 const (
 	clientsUpdatePeriod = 1 * time.Hour
 )
+
+var webHandlersRegistered = false
 
 // Client information
 type Client struct {
@@ -98,13 +101,27 @@ func (clients *clientsContainer) Init(objects []clientObject, dhcpServer *dhcpd.
 	clients.addFromConfig(objects)
 
 	if !clients.testing {
-		go clients.periodicUpdate()
-
 		clients.addFromDHCP()
 		clients.dhcpServer.SetOnLeaseChanged(clients.onDHCPLeaseChanged)
-
-		clients.registerWebHandlers()
 	}
+}
+
+// Start - start the module
+func (clients *clientsContainer) Start() {
+	if !clients.testing {
+		if !webHandlersRegistered {
+			webHandlersRegistered = true
+			clients.registerWebHandlers()
+		}
+		go clients.periodicUpdate()
+	}
+
+}
+
+// Reload - reload auto-clients
+func (clients *clientsContainer) Reload() {
+	clients.addFromHostsFile()
+	clients.addFromSystemARP()
 }
 
 type clientObject struct {
@@ -145,7 +162,7 @@ func (clients *clientsContainer) addFromConfig(objects []clientObject) {
 		}
 
 		for _, s := range cy.BlockedServices {
-			if !blockedSvcKnown(s) {
+			if !dnsfilter.BlockedSvcKnown(s) {
 				log.Debug("Clients: skipping unknown blocked-service '%s'", s)
 				continue
 			}
@@ -194,8 +211,7 @@ func (clients *clientsContainer) WriteDiskConfig(objects *[]clientObject) {
 
 func (clients *clientsContainer) periodicUpdate() {
 	for {
-		clients.addFromHostsFile()
-		clients.addFromSystemARP()
+		clients.Reload()
 		time.Sleep(clientsUpdatePeriod)
 	}
 }

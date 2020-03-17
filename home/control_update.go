@@ -476,7 +476,6 @@ func doUpdate(u *updateInfo) error {
 func finishUpdate(u *updateInfo) {
 	log.Info("Stopping all tasks")
 	cleanup()
-	stopHTTPServer()
 	cleanupAlways()
 
 	if runtime.GOOS == "windows" {
