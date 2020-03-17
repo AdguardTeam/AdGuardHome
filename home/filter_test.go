@@ -12,29 +12,27 @@ import (
 func TestFilters(t *testing.T) {
 	dir := prepareTestDir()
 	defer func() { _ = os.RemoveAll(dir) }()
-
 	Context = homeContext{}
 	Context.workDir = dir
 	Context.client = &http.Client{
-		Timeout: time.Minute * 5,
+		Timeout: 5 * time.Second,
 	}
+	Context.filters.Init()
 
 	f := filter{
 		URL: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
 	}
 
 	// download
-	ok, err := f.update()
-	assert.True(t, ok && err == nil)
+	ok, err := Context.filters.update(&f)
+	assert.Equal(t, nil, err)
+	assert.True(t, ok)
 
 	// refresh
-	ok, err = f.update()
+	ok, err = Context.filters.update(&f)
 	assert.True(t, !ok && err == nil)
 
-	err = f.save()
-	assert.True(t, err == nil)
-
-	err = f.load()
+	err = Context.filters.load(&f)
 	assert.True(t, err == nil)
 
 	f.unload()

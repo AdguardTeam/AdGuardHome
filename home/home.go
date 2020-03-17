@@ -69,6 +69,7 @@ type homeContext struct {
 	auth        *Auth                // HTTP authentication module
 	httpServer  *http.Server         // HTTP module
 	httpsServer HTTPSServer          // HTTPS module
+	filters     Filtering
 
 	// Runtime properties
 	// --

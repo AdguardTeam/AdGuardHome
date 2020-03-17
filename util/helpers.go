@@ -9,10 +9,6 @@ import (
 	"strings"
 )
 
-// ---------------------
-// general helpers
-// ---------------------
-
 // fileExists returns TRUE if file exists
 func FileExists(fn string) bool {
 	_, err := os.Stat(fn)
@@ -33,9 +29,6 @@ func RunCommand(command string, arguments ...string) (int, string, error) {
 	return cmd.ProcessState.ExitCode(), string(out), nil
 }
 
-// ---------------------
-// debug logging helpers
-// ---------------------
 func FuncName() string {
 	pc := make([]uintptr, 10) // at least 1 entry needed
 	runtime.Callers(2, pc)
@@ -56,4 +49,12 @@ func SplitNext(str *string, splitBy byte) string {
 		*str = ""
 	}
 	return strings.TrimSpace(s)
+}
+
+// MinInt - return the minimum value
+func MinInt(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }

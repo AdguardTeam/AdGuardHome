@@ -173,7 +173,6 @@ func registerControlHandlers() {
 
 	httpRegister("GET", "/control/profile", handleGetProfile)
 
-	RegisterFilteringHandlers()
 	RegisterTLSHandlers()
 	RegisterBlockedServicesHandlers()
 	RegisterAuthHandlers()

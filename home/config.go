@@ -339,12 +339,5 @@ func writeAllConfigs() error {
 		return err
 	}
 
-	userFilter := userFilter()
-	err = userFilter.save()
-	if err != nil {
-		log.Error("Couldn't save the user filter: %s", err)
-		return err
-	}
-
 	return nil
 }
