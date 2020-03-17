@@ -175,6 +175,7 @@ func generateServerConfig() dnsforward.ServerConfig {
 			newconfig.TLSListenAddr = &net.TCPAddr{IP: net.ParseIP(config.DNS.BindHost), Port: config.TLS.PortDNSOverTLS}
 		}
 	}
+	newconfig.TLSv12Roots = Context.tlsRoots
 
 	newconfig.FilterHandler = applyAdditionalFiltering
 	newconfig.GetUpstreamsByClient = getUpstreamsByClient

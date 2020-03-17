@@ -180,6 +180,8 @@ type ServerConfig struct {
 	FilteringConfig
 	TLSConfig
 
+	TLSv12Roots *x509.CertPool // list of root CAs for TLSv1.2
+
 	// Called when the configuration is changed by HTTP request
 	ConfigModified func()
 
@@ -338,6 +340,7 @@ func (s *Server) Prepare(config *ServerConfig) error {
 			MinVersion:     tls.VersionTLS12,
 		}
 	}
+	upstream.RootCAs = s.conf.TLSv12Roots
 
 	if len(proxyConfig.Upstreams) == 0 {
 		log.Fatal("len(proxyConfig.Upstreams) == 0")
