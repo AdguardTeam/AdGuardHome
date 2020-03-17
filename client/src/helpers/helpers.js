@@ -449,3 +449,12 @@ export const getCurrentFilter = (url, filters) => {
 
     return { name: '', url: '' };
 };
+
+/**
+ * @param number Number to format
+ * @returns string Returns a string with a language-sensitive representation of this number
+ */
+export const formatNumber = (num) => {
+    const currentLanguage = i18n.languages[0] || DEFAULT_LANGUAGE;
+    return num.toLocaleString(currentLanguage);
+};
