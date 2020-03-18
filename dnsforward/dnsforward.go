@@ -136,6 +136,8 @@ type FilteringConfig struct {
 
 	EnableEDNSClientSubnet bool `yaml:"edns_client_subnet"` // Enable EDNS Client Subnet option
 
+	EnableDNSSEC bool `yaml:"enable_dnssec"` // Set DNSSEC flag in outcoming DNS request
+
 	// Respond with an empty answer to all AAAA requests
 	AAAADisabled bool `yaml:"aaaa_disabled"`
 
@@ -512,6 +514,7 @@ type dnsContext struct {
 	err                  error        // error returned from the module
 	protectionEnabled    bool         // filtering is enabled, dnsfilter object is ready
 	responseFromUpstream bool         // response is received from upstream servers
+	origReqDNSSEC        bool         // DNSSEC flag in the original request from user
 }
 
 const (
@@ -588,6 +591,18 @@ func processUpstream(ctx *dnsContext) int {
 		}
 	}
 
+	if s.conf.EnableDNSSEC {
+		opt := d.Req.IsEdns0()
+		if opt == nil {
+			log.Debug("DNS: Adding OPT record with DNSSEC flag")
+			d.Req.SetEdns0(4096, true)
+		} else if !opt.Do() {
+			opt.SetDo(true)
+		} else {
+			ctx.origReqDNSSEC = true
+		}
+	}
+
 	// request was not filtered so let it be processed further
 	err := s.dnsProxy.Resolve(d)
 	if err != nil {
@@ -599,16 +614,56 @@ func processUpstream(ctx *dnsContext) int {
 	return resultDone
 }
 
+// Process DNSSEC after response from upstream server
+func processDNSSECAfterResponse(ctx *dnsContext) int {
+	d := ctx.proxyCtx
+
+	if !ctx.responseFromUpstream || // don't process response if it's not from upstream servers
+		!ctx.srv.conf.EnableDNSSEC {
+		return resultDone
+	}
+
+	optResp := d.Res.IsEdns0()
+	if !ctx.origReqDNSSEC && optResp != nil && optResp.Do() {
+		return resultDone
+	}
+
+	// Remove RRSIG records from response
+	//  because there is no DO flag in the original request from client,
+	//  but we have EnableDNSSEC set, so we have set DO flag ourselves,
+	//  and now we have to clean up the DNS records our client didn't ask for.
+
+	answers := []dns.RR{}
+	for _, a := range d.Res.Answer {
+		switch a.(type) {
+		case *dns.RRSIG:
+			log.Debug("Removing RRSIG record from response: %v", a)
+		default:
+			answers = append(answers, a)
+		}
+	}
+	d.Res.Answer = answers
+
+	answers = []dns.RR{}
+	for _, a := range d.Res.Ns {
+		switch a.(type) {
+		case *dns.RRSIG:
+			log.Debug("Removing RRSIG record from response: %v", a)
+		default:
+			answers = append(answers, a)
+		}
+	}
+	d.Res.Ns = answers
+
+	return resultDone
+}
+
 // Apply filtering logic after we have received response from upstream servers
 func processFilteringAfterResponse(ctx *dnsContext) int {
 	s := ctx.srv
 	d := ctx.proxyCtx
 	res := ctx.result
 	var err error
-
-	if !ctx.responseFromUpstream {
-		return resultDone // don't process response if it's not from upstream servers
-	}
 
 	if res.Reason == dnsfilter.ReasonRewrite && len(res.CanonName) != 0 {
 		d.Req.Question[0] = ctx.origQuestion
@@ -688,14 +743,19 @@ func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
 		processInitial,
 		processFilteringBeforeRequest,
 		processUpstream,
+		processDNSSECAfterResponse,
 		processFilteringAfterResponse,
 		processQueryLogsAndStats,
 	}
 	for _, process := range mods {
 		r := process(ctx)
 		switch r {
+		case resultDone:
+			// continue: call the next filter
+
 		case resultFinish:
 			return nil
+
 		case resultError:
 			return ctx.err
 		}
