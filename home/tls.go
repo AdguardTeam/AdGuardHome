@@ -253,7 +253,18 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		log.Printf("tls config settings have changed, will restart HTTPS server")
 		restartHTTPS = true
 	}
-	t.conf = data
+	// Note: don't do just `t.conf = data` because we must preserve all other members of t.conf
+	t.conf.Enabled = data.Enabled
+	t.conf.ServerName = data.ServerName
+	t.conf.ForceHTTPS = data.ForceHTTPS
+	t.conf.PortHTTPS = data.PortHTTPS
+	t.conf.PortDNSOverTLS = data.PortDNSOverTLS
+	t.conf.CertificateChain = data.CertificateChain
+	t.conf.CertificatePath = data.CertificatePath
+	t.conf.CertificateChainData = data.CertificateChainData
+	t.conf.PrivateKey = data.PrivateKey
+	t.conf.PrivateKeyPath = data.PrivateKeyPath
+	t.conf.PrivateKeyData = data.PrivateKeyData
 	t.status = status
 	t.confLock.Unlock()
 	t.setCertFileTime()
