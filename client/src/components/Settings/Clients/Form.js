@@ -112,6 +112,7 @@ const renderMultiselect = (props) => {
             onChange={value => input.onChange(value)}
             onBlur={() => input.onBlur(input.value)}
             placeholder={placeholder}
+            blurInputOnSelect={false}
             isMulti
         />
     );
