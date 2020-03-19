@@ -65,6 +65,7 @@ func checkInterval(days uint32) bool {
 func (l *queryLog) WriteDiskConfig(dc *DiskConfig) {
 	dc.Enabled = l.conf.Enabled
 	dc.Interval = l.conf.Interval
+	dc.MemSize = l.conf.MemSize
 }
 
 // Clear memory buffer and remove log files
