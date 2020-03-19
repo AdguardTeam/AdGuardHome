@@ -12,6 +12,7 @@ import {
     isToday,
     checkFiltered,
     checkRewrite,
+    checkRewriteHosts,
     checkWhiteList,
     checkBlackList,
     checkBlockedService,
@@ -170,6 +171,7 @@ class Logs extends Component {
         const isFiltered = checkFiltered(reason);
         const isBlackList = checkBlackList(reason);
         const isRewrite = checkRewrite(reason);
+        const isRewriteAuto = checkRewriteHosts(reason);
         const isWhiteList = checkWhiteList(reason);
         const isBlockedService = checkBlockedService(reason);
         const isBlockedCnameIp = originalAnswer;
@@ -221,6 +223,13 @@ class Logs extends Component {
                             <Trans>rewrite_applied</Trans>
                         </strong>
                     )}
+                    {isRewriteAuto && (
+                        <span className="logs__text">
+                            <strong>
+                                <Trans>rewrite_hosts_applied</Trans>
+                            </strong>
+                        </span>
+                    )}
                 </div>
                 <div className="logs__list-wrap">
                     {this.renderResponseList(responses, status)}
@@ -236,6 +245,15 @@ class Logs extends Component {
         const { reason, domain } = original;
         const isFiltered = checkFiltered(reason);
         const isRewrite = checkRewrite(reason);
+        const isAutoRewrite = checkRewriteHosts(reason);
+
+        if (isAutoRewrite) {
+            return (
+                <div className="logs__row logs__row--overflow logs__row--column">
+                    {formatClientCell(row, t)}
+                </div>
+            );
+        }
 
         return (
             <Fragment>
@@ -364,7 +382,7 @@ class Logs extends Component {
                         return {
                             className: 'green',
                         };
-                    } else if (checkRewrite(reason)) {
+                    } else if (checkRewrite(reason) || checkRewriteHosts(reason)) {
                         return {
                             className: 'blue',
                         };

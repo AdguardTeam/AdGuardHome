@@ -431,6 +431,7 @@ export const createOnBlurHandler = (event, input, normalizeOnBlur) => (
 
 export const checkFiltered = reason => reason.indexOf(FILTERED) === 0;
 export const checkRewrite = reason => reason === FILTERED_STATUS.REWRITE;
+export const checkRewriteHosts = reason => reason === FILTERED_STATUS.REWRITE_HOSTS;
 export const checkBlackList = reason => reason === FILTERED_STATUS.FILTERED_BLACK_LIST;
 export const checkWhiteList = reason => reason === FILTERED_STATUS.NOT_FILTERED_WHITE_LIST;
 export const checkNotFilteredNotFound = reason => reason === FILTERED_STATUS.NOT_FILTERED_NOT_FOUND;

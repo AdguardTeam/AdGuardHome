@@ -5,6 +5,7 @@ import { withNamespaces } from 'react-i18next';
 import {
     checkFiltered,
     checkRewrite,
+    checkRewriteHosts,
     checkBlackList,
     checkNotFilteredNotFound,
     checkWhiteList,
@@ -36,6 +37,10 @@ const getTitle = (reason, filterName, t, onlyFiltered) => {
 
     if (checkRewrite(reason)) {
         return t('rewrite_applied');
+    }
+
+    if (checkRewriteHosts(reason)) {
+        return t('rewrite_hosts_applied');
     }
 
     if (checkBlackList(reason)) {
@@ -75,7 +80,7 @@ const getTitle = (reason, filterName, t, onlyFiltered) => {
 const getColor = (reason) => {
     if (checkFiltered(reason)) {
         return 'red';
-    } else if (checkRewrite(reason)) {
+    } else if (checkRewrite(reason) || checkRewriteHosts(reason)) {
         return 'blue';
     } else if (checkWhiteList(reason)) {
         return 'green';
