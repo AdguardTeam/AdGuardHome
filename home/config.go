@@ -77,9 +77,9 @@ type dnsConfig struct {
 	// time interval for statistics (in days)
 	StatsInterval uint32 `yaml:"statistics_interval"`
 
-	QueryLogEnabled  bool   `yaml:"querylog_enabled"`  // if true, query log is enabled
-	QueryLogInterval uint32 `yaml:"querylog_interval"` // time interval for query log (in days)
-	QueryLogMemSize  uint32 `yaml:"querylog_memsize"`  // number of entries kept in memory before they are flushed to disk
+	QueryLogEnabled  bool   `yaml:"querylog_enabled"`     // if true, query log is enabled
+	QueryLogInterval uint32 `yaml:"querylog_interval"`    // time interval for query log (in days)
+	QueryLogMemSize  uint32 `yaml:"querylog_size_memory"` // number of entries kept in memory before they are flushed to disk
 
 	dnsforward.FilteringConfig `yaml:",inline"`
 

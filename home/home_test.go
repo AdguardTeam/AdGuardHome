@@ -28,7 +28,7 @@ dns:
   statistics_interval: 90
   querylog_enabled: true
   querylog_interval: 90
-  querylog_memsize: 0
+  querylog_size_memory: 0
   protection_enabled: true
   blocking_mode: null_ip
   blocked_response_ttl: 0
