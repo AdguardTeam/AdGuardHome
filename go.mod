@@ -8,6 +8,7 @@ require (
 	github.com/AdguardTeam/urlfilter v0.9.1
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/etcd-io/bbolt v1.3.3
+	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-test/deep v1.0.4 // indirect
 	github.com/gobuffalo/packr v1.19.0
 	github.com/joomcode/errorx v1.0.0

@@ -56,6 +56,7 @@ func initDNSServer() error {
 		bindhost = "127.0.0.1"
 	}
 	filterConf.ResolverAddress = fmt.Sprintf("%s:%d", bindhost, config.DNS.Port)
+	filterConf.AutoHosts = &Context.autoHosts
 	filterConf.ConfigModified = onConfigModified
 	filterConf.HTTPRegister = httpRegister
 	Context.dnsFilter = dnsfilter.New(&filterConf, nil)

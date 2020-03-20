@@ -68,6 +68,7 @@ type homeContext struct {
 	filters    Filtering            // DNS filtering module
 	web        *Web                 // Web (HTTP, HTTPS) module
 	tls        *TLSMod              // TLS module
+	autoHosts  util.AutoHosts       // IP-hostname pairs taken from system configuration (e.g. /etc/hosts) files
 
 	// Runtime properties
 	// --
@@ -210,7 +211,8 @@ func run(args options) {
 	if Context.dhcpServer == nil {
 		os.Exit(1)
 	}
-	Context.clients.Init(config.Clients, Context.dhcpServer)
+	Context.autoHosts.Init("")
+	Context.clients.Init(config.Clients, Context.dhcpServer, &Context.autoHosts)
 	config.Clients = nil
 
 	if (runtime.GOOS == "linux" || runtime.GOOS == "darwin") &&
@@ -270,6 +272,7 @@ func run(args options) {
 			log.Fatalf("%s", err)
 		}
 		Context.tls.Start()
+		Context.autoHosts.Start()
 
 		go func() {
 			err := startDNSServer()
@@ -433,6 +436,8 @@ func cleanup() {
 	if err != nil {
 		log.Error("Couldn't stop DHCP server: %s", err)
 	}
+
+	Context.autoHosts.Close()
 
 	if Context.tls != nil {
 		Context.tls.Close()

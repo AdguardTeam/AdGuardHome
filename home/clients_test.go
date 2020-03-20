@@ -18,7 +18,7 @@ func TestClients(t *testing.T) {
 	clients := clientsContainer{}
 	clients.testing = true
 
-	clients.Init(nil, nil)
+	clients.Init(nil, nil, nil)
 
 	// add
 	c = Client{
@@ -156,7 +156,7 @@ func TestClientsWhois(t *testing.T) {
 	var c Client
 	clients := clientsContainer{}
 	clients.testing = true
-	clients.Init(nil, nil)
+	clients.Init(nil, nil, nil)
 
 	whois := [][]string{{"orgname", "orgname-val"}, {"country", "country-val"}}
 	// set whois info on new client
@@ -183,7 +183,7 @@ func TestClientsAddExisting(t *testing.T) {
 	var c Client
 	clients := clientsContainer{}
 	clients.testing = true
-	clients.Init(nil, nil)
+	clients.Init(nil, nil, nil)
 
 	// some test variables
 	mac, _ := net.ParseMAC("aa:aa:aa:aa:aa:aa")

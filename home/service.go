@@ -196,7 +196,7 @@ func handleServiceInstallCommand(s service.Service) {
 		log.Fatal(err)
 	}
 
-	if isOpenWrt() {
+	if util.IsOpenWrt() {
 		// On OpenWrt it is important to run enable after the service installation
 		// Otherwise, the service won't start on the system startup
 		_, err := runInitdCommand("enable")
@@ -223,7 +223,7 @@ Click on the link below and follow the Installation Wizard steps to finish setup
 
 // handleServiceStatusCommand handles service "uninstall" command
 func handleServiceUninstallCommand(s service.Service) {
-	if isOpenWrt() {
+	if util.IsOpenWrt() {
 		// On OpenWrt it is important to run disable command first
 		// as it will remove the symlink
 		_, err := runInitdCommand("disable")
@@ -270,7 +270,7 @@ func configureService(c *service.Config) {
 	c.Option["SysvScript"] = sysvScript
 
 	// On OpenWrt we're using a different type of sysvScript
-	if isOpenWrt() {
+	if util.IsOpenWrt() {
 		c.Option["SysvScript"] = openWrtScript
 	}
 }
@@ -281,20 +281,6 @@ func runInitdCommand(action string) (int, error) {
 	confPath := "/etc/init.d/" + serviceName
 	code, _, err := util.RunCommand("sh", "-c", confPath+" "+action)
 	return code, err
-}
-
-// isOpenWrt checks if OS is OpenWRT
-func isOpenWrt() bool {
-	if runtime.GOOS != "linux" {
-		return false
-	}
-
-	body, err := ioutil.ReadFile("/etc/os-release")
-	if err != nil {
-		return false
-	}
-
-	return strings.Contains(string(body), "OpenWrt")
 }
 
 // Basically the same template as the one defined in github.com/kardianos/service

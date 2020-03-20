@@ -665,7 +665,11 @@ func processFilteringAfterResponse(ctx *dnsContext) int {
 	res := ctx.result
 	var err error
 
-	if res.Reason == dnsfilter.ReasonRewrite && len(res.CanonName) != 0 {
+	switch res.Reason {
+	case dnsfilter.ReasonRewrite:
+		if len(res.CanonName) == 0 {
+			break
+		}
 		d.Req.Question[0] = ctx.origQuestion
 		d.Res.Question[0] = ctx.origQuestion
 
@@ -676,7 +680,14 @@ func processFilteringAfterResponse(ctx *dnsContext) int {
 			d.Res.Answer = answer
 		}
 
-	} else if res.Reason != dnsfilter.NotFilteredWhiteList && ctx.protectionEnabled {
+	case dnsfilter.RewriteEtcHosts:
+	case dnsfilter.NotFilteredWhiteList:
+		// nothing
+
+	default:
+		if !ctx.protectionEnabled {
+			break
+		}
 		origResp2 := d.Res
 		ctx.result, err = s.filterDNSResponse(ctx)
 		if err != nil {
@@ -845,7 +856,8 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 		// log.Tracef("Host %s is filtered, reason - '%s', matched rule: '%s'", host, res.Reason, res.Rule)
 		d.Res = s.genDNSFilterMessage(d, &res)
 
-	} else if res.Reason == dnsfilter.ReasonRewrite && len(res.IPList) != 0 {
+	} else if (res.Reason == dnsfilter.ReasonRewrite || res.Reason == dnsfilter.RewriteEtcHosts) &&
+		len(res.IPList) != 0 {
 		resp := s.makeResponse(req)
 
 		name := host

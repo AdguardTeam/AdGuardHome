@@ -3,6 +3,7 @@ package dnsfilter
 import (
 	"fmt"
 	"net"
+	"os"
 	"path"
 	"runtime"
 	"testing"
@@ -619,6 +620,13 @@ func TestRewrites(t *testing.T) {
 	assert.Equal(t, "x.somehost.com", r.CanonName)
 	assert.True(t, len(r.IPList) == 1)
 	assert.True(t, r.IPList[0].Equal(net.ParseIP("1.2.3.4")))
+}
+
+func prepareTestDir() string {
+	const dir = "./agh-test"
+	_ = os.RemoveAll(dir)
+	_ = os.MkdirAll(dir, 0755)
+	return dir
 }
 
 // BENCHMARKS
