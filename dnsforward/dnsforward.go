@@ -149,7 +149,9 @@ type FilteringConfig struct {
 	ParentalBlockHost     string `yaml:"parental_block_host"`
 	SafeBrowsingBlockHost string `yaml:"safebrowsing_block_host"`
 
-	CacheSize   uint     `yaml:"cache_size"` // DNS cache size (in bytes)
+	CacheSize   uint32   `yaml:"cache_size"`    // DNS cache size (in bytes)
+	CacheMinTTL uint32   `yaml:"cache_ttl_min"` // override TTL value (minimum) received from upstream server
+	CacheMaxTTL uint32   `yaml:"cache_ttl_max"` // override TTL value (maximum) received from upstream server
 	UpstreamDNS []string `yaml:"upstream_dns"`
 }
 
@@ -294,6 +296,8 @@ func (s *Server) Prepare(config *ServerConfig) error {
 		RefuseAny:                s.conf.RefuseAny,
 		CacheEnabled:             true,
 		CacheSizeBytes:           int(s.conf.CacheSize),
+		CacheMinTTL:              s.conf.CacheMinTTL,
+		CacheMaxTTL:              s.conf.CacheMaxTTL,
 		Upstreams:                s.conf.Upstreams,
 		DomainsReservedUpstreams: s.conf.DomainsReservedUpstreams,
 		BeforeRequestHandler:     s.beforeRequestHandler,
