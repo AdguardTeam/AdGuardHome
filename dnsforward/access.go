@@ -2,11 +2,15 @@ package dnsforward
 
 import (
 	"encoding/json"
+	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/urlfilter"
+	"github.com/AdguardTeam/urlfilter/filterlist"
 )
 
 type accessCtx struct {
@@ -18,7 +22,7 @@ type accessCtx struct {
 	allowedClientsIPNet    []net.IPNet // CIDRs of whitelist clients
 	disallowedClientsIPNet []net.IPNet // CIDRs of clients that should be blocked
 
-	blockedHosts map[string]bool // hosts that should be blocked
+	blockedHostsEngine *urlfilter.DNSEngine // finds hosts that should be blocked
 }
 
 func (a *accessCtx) Init(allowedClients, disallowedClients, blockedHosts []string) error {
@@ -32,15 +36,26 @@ func (a *accessCtx) Init(allowedClients, disallowedClients, blockedHosts []strin
 		return err
 	}
 
-	convertArrayToMap(&a.blockedHosts, blockedHosts)
-	return nil
-}
-
-func convertArrayToMap(dst *map[string]bool, src []string) {
-	*dst = make(map[string]bool)
-	for _, s := range src {
-		(*dst)[s] = true
+	buf := strings.Builder{}
+	for _, s := range blockedHosts {
+		buf.WriteString(s)
+		buf.WriteString("\n")
 	}
+
+	listArray := []filterlist.RuleList{}
+	list := &filterlist.StringRuleList{
+		ID:             int(0),
+		RulesText:      buf.String(),
+		IgnoreCosmetic: true,
+	}
+	listArray = append(listArray, list)
+	rulesStorage, err := filterlist.NewRuleStorage(listArray)
+	if err != nil {
+		return fmt.Errorf("filterlist.NewRuleStorage(): %s", err)
+	}
+	a.blockedHostsEngine = urlfilter.NewDNSEngine(rulesStorage)
+
+	return nil
 }
 
 // Split array of IP or CIDR into 2 containers for fast search
@@ -107,7 +122,7 @@ func (a *accessCtx) IsBlockedIP(ip string) bool {
 // IsBlockedDomain - return TRUE if this domain should be blocked
 func (a *accessCtx) IsBlockedDomain(host string) bool {
 	a.lock.Lock()
-	_, ok := a.blockedHosts[host]
+	_, ok := a.blockedHostsEngine.Match(host, nil)
 	a.lock.Unlock()
 	return ok
 }

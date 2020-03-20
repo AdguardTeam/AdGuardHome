@@ -946,7 +946,7 @@ Response:
 	{
 		allowed_clients: ["127.0.0.1", ...]
 		disallowed_clients: ["127.0.0.1", ...]
-		blocked_hosts: ["host.com", ...]
+		blocked_hosts: ["host.com", ...] // host name or a wildcard
 	}
 
 

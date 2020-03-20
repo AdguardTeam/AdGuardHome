@@ -796,11 +796,26 @@ func TestIsBlockedIPDisallowed(t *testing.T) {
 
 func TestIsBlockedIPBlockedDomain(t *testing.T) {
 	a := &accessCtx{}
-	assert.True(t, a.Init(nil, nil, []string{"host1", "host2"}) == nil)
+	assert.True(t, a.Init(nil, nil, []string{"host1",
+		"host2",
+		"*.host.com",
+		"||host3.com^",
+	}) == nil)
 
+	// match by "host2.com"
 	assert.True(t, a.IsBlockedDomain("host1"))
 	assert.True(t, a.IsBlockedDomain("host2"))
 	assert.True(t, !a.IsBlockedDomain("host3"))
+
+	// match by wildcard "*.host.com"
+	assert.True(t, !a.IsBlockedDomain("host.com"))
+	assert.True(t, a.IsBlockedDomain("asdf.host.com"))
+	assert.True(t, a.IsBlockedDomain("qwer.asdf.host.com"))
+	assert.True(t, !a.IsBlockedDomain("asdf.zhost.com"))
+
+	// match by wildcard "||host3.com^"
+	assert.True(t, a.IsBlockedDomain("host3.com"))
+	assert.True(t, a.IsBlockedDomain("asdf.host3.com"))
 }
 
 func TestValidateUpstream(t *testing.T) {
