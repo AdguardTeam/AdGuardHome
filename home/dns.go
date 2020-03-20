@@ -29,22 +29,24 @@ func initDNSServer() error {
 	baseDir := Context.getDataDir()
 
 	statsConf := stats.Config{
-		Filename:       filepath.Join(baseDir, "stats.db"),
-		LimitDays:      config.DNS.StatsInterval,
-		ConfigModified: onConfigModified,
-		HTTPRegister:   httpRegister,
+		Filename:          filepath.Join(baseDir, "stats.db"),
+		LimitDays:         config.DNS.StatsInterval,
+		AnonymizeClientIP: config.DNS.AnonymizeClientIP,
+		ConfigModified:    onConfigModified,
+		HTTPRegister:      httpRegister,
 	}
 	Context.stats, err = stats.New(statsConf)
 	if err != nil {
 		return fmt.Errorf("Couldn't initialize statistics module")
 	}
 	conf := querylog.Config{
-		Enabled:        config.DNS.QueryLogEnabled,
-		BaseDir:        baseDir,
-		Interval:       config.DNS.QueryLogInterval,
-		MemSize:        config.DNS.QueryLogMemSize,
-		ConfigModified: onConfigModified,
-		HTTPRegister:   httpRegister,
+		Enabled:           config.DNS.QueryLogEnabled,
+		BaseDir:           baseDir,
+		Interval:          config.DNS.QueryLogInterval,
+		MemSize:           config.DNS.QueryLogMemSize,
+		AnonymizeClientIP: config.DNS.AnonymizeClientIP,
+		ConfigModified:    onConfigModified,
+		HTTPRegister:      httpRegister,
 	}
 	Context.queryLog = querylog.New(conf)
 

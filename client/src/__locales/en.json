@@ -199,6 +199,8 @@
     "query_log_disabled": "The query log is disabled and can be configured in the <0>settings</0>",
     "query_log_strict_search": "Use double quotes for strict search",
     "query_log_retention_confirm": "Are you sure you want to change query log retention? If you decrease the interval value, some data will be lost",
+    "anonymize_client_ip": "Anonymize client IP",
+    "anonymize_client_ip_desc": "Don't save the full IP address of the client in logs and statistics",
     "dns_config": "DNS server configuration",
     "blocking_mode": "Blocking mode",
     "default": "Default",
