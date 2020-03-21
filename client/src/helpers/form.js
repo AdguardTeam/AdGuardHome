@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react';
 import { Trans } from 'react-i18next';
 import PropTypes from 'prop-types';
-import { R_IPV4, R_MAC, R_HOST, R_IPV6, R_CIDR, UNSAFE_PORTS, R_URL_REQUIRES_PROTOCOL } from '../helpers/constants';
+import { R_IPV4, R_MAC, R_HOST, R_IPV6, R_CIDR, R_CIDR_IPV6, UNSAFE_PORTS, R_URL_REQUIRES_PROTOCOL } from '../helpers/constants';
 import { createOnBlurHandler } from './helpers';
 
 export const renderField = (props, elementType) => {
@@ -191,8 +191,13 @@ export const clientId = (value) => {
         return undefined;
     }
     const formattedValue = value ? value.trim() : value;
-    if (formattedValue && !(R_IPV4.test(formattedValue) || R_IPV6.test(formattedValue)
-        || R_MAC.test(formattedValue) || R_CIDR.test(formattedValue))) {
+    if (formattedValue && !(
+        R_IPV4.test(formattedValue)
+        || R_IPV6.test(formattedValue)
+        || R_MAC.test(formattedValue)
+        || R_CIDR.test(formattedValue)
+        || R_CIDR_IPV6.test(formattedValue)
+    )) {
         return <Trans>form_error_client_id_format</Trans>;
     }
     return undefined;
