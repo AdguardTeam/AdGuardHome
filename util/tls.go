@@ -1,12 +1,14 @@
 package util
 
 import (
+	"crypto/tls"
 	"crypto/x509"
 	"io/ioutil"
 	"os"
 	"runtime"
 
 	"github.com/AdguardTeam/golibs/log"
+	"golang.org/x/sys/cpu"
 )
 
 // LoadSystemRootCAs - load root CAs from the system
@@ -44,4 +46,52 @@ func LoadSystemRootCAs() *x509.CertPool {
 		}
 	}
 	return nil
+}
+
+// InitTLSCiphers - the same as initDefaultCipherSuites() from src/crypto/tls/common.go
+//  but with the difference that we don't use so many other default ciphers.
+func InitTLSCiphers() []uint16 {
+	var ciphers []uint16
+
+	// Check the cpu flags for each platform that has optimized GCM implementations.
+	// Worst case, these variables will just all be false.
+	var (
+		hasGCMAsmAMD64 = cpu.X86.HasAES && cpu.X86.HasPCLMULQDQ
+		hasGCMAsmARM64 = cpu.ARM64.HasAES && cpu.ARM64.HasPMULL
+		// Keep in sync with crypto/aes/cipher_s390x.go.
+		hasGCMAsmS390X = cpu.S390X.HasAES && cpu.S390X.HasAESCBC && cpu.S390X.HasAESCTR && (cpu.S390X.HasGHASH || cpu.S390X.HasAESGCM)
+
+		hasGCMAsm = hasGCMAsmAMD64 || hasGCMAsmARM64 || hasGCMAsmS390X
+	)
+
+	if hasGCMAsm {
+		// If AES-GCM hardware is provided then prioritise AES-GCM
+		// cipher suites.
+		ciphers = []uint16{
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+		}
+	} else {
+		// Without AES-GCM hardware, we put the ChaCha20-Poly1305
+		// cipher suites first.
+		ciphers = []uint16{
+			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+		}
+	}
+
+	otherCiphers := []uint16{
+		tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
+	}
+	ciphers = append(ciphers, otherCiphers...)
+	return ciphers
 }

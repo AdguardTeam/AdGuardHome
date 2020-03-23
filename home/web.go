@@ -176,6 +176,7 @@ func (w *Web) httpServerLoop() {
 				Certificates: []tls.Certificate{w.httpsServer.cert},
 				MinVersion:   tls.VersionTLS12,
 				RootCAs:      Context.tlsRoots,
+				CipherSuites: Context.tlsCiphers,
 			},
 		}
 

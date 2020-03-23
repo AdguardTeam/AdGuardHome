@@ -80,6 +80,7 @@ type homeContext struct {
 	disableUpdate    bool   // If set, don't check for updates
 	controlLock      sync.Mutex
 	tlsRoots         *x509.CertPool // list of root CAs for TLSv1.2
+	tlsCiphers       []uint16       // list of TLS ciphers to use
 	transport        *http.Transport
 	client           *http.Client
 	appSignalChannel chan os.Signal // Channel for receiving OS signals by the console app
@@ -174,6 +175,7 @@ func run(args options) {
 	initConfig()
 
 	Context.tlsRoots = util.LoadSystemRootCAs()
+	Context.tlsCiphers = util.InitTLSCiphers()
 	Context.transport = &http.Transport{
 		DialContext: customDialContext,
 		Proxy:       getHTTPProxy,

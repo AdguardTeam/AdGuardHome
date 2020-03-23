@@ -186,6 +186,7 @@ type ServerConfig struct {
 	TLSAllowUnencryptedDOH bool
 
 	TLSv12Roots *x509.CertPool // list of root CAs for TLSv1.2
+	TLSCiphers  []uint16       // list of TLS ciphers to use
 
 	// Called when the configuration is changed by HTTP request
 	ConfigModified func()
@@ -348,6 +349,7 @@ func (s *Server) Prepare(config *ServerConfig) error {
 		}
 	}
 	upstream.RootCAs = s.conf.TLSv12Roots
+	upstream.CipherSuites = s.conf.TLSCiphers
 
 	if len(proxyConfig.Upstreams) == 0 {
 		log.Fatal("len(proxyConfig.Upstreams) == 0")
