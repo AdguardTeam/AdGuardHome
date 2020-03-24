@@ -225,11 +225,15 @@ func (a *AutoHosts) update() {
 }
 
 // Process - get the list of IP addresses for the hostname
+// Return nil if not found
 func (a *AutoHosts) Process(host string) []net.IP {
+	var ipsCopy []net.IP
 	a.lock.Lock()
 	ips, _ := a.table[host]
-	ipsCopy := make([]net.IP, len(ips))
-	copy(ipsCopy, ips)
+	if len(ips) != 0 {
+		ipsCopy = make([]net.IP, len(ips))
+		copy(ipsCopy, ips)
+	}
 	a.lock.Unlock()
 	return ipsCopy
 }

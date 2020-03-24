@@ -686,12 +686,12 @@ func processFilteringAfterResponse(ctx *dnsContext) int {
 			d.Res.Answer = answer
 		}
 
-	case dnsfilter.RewriteEtcHosts:
 	case dnsfilter.NotFilteredWhiteList:
 		// nothing
 
 	default:
-		if !ctx.protectionEnabled {
+		if !ctx.protectionEnabled || // filters are disabled: there's nothing to check for
+			!ctx.responseFromUpstream { // only check response if it's from an upstream server
 			break
 		}
 		origResp2 := d.Res
@@ -817,6 +817,10 @@ func (s *Server) updateStats(d *proxy.DNSContext, elapsed time.Duration, res dns
 	case dnsfilter.NotFilteredWhiteList:
 		fallthrough
 	case dnsfilter.NotFilteredError:
+		fallthrough
+	case dnsfilter.ReasonRewrite:
+		fallthrough
+	case dnsfilter.RewriteEtcHosts:
 		e.Result = stats.RNotFiltered
 
 	case dnsfilter.FilteredSafeBrowsing:
