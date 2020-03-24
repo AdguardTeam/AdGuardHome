@@ -37,7 +37,7 @@ func TestAutoHosts(t *testing.T) {
 	ips := ah.Process("localhost")
 	assert.True(t, ips[0].Equal(net.ParseIP("127.0.0.1")))
 	ips = ah.Process("newhost")
-	assert.True(t, len(ips) == 0)
+	assert.True(t, ips == nil)
 
 	table := ah.List()
 	ips, _ = table["host"]
