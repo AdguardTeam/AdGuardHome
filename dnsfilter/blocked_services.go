@@ -50,7 +50,7 @@ var serviceRulesArray = []svc{
 		"||one.one^",
 		"||warp.plus^",
 		"||1.1.1.1^",
-		"||dns4torpnlfs2ifuz2s2yf3fc7rdmsbhm6rw75euj35pac6ap25zgqad.onion^"
+		"||dns4torpnlfs2ifuz2s2yf3fc7rdmsbhm6rw75euj35pac6ap25zgqad.onion^",
 	}},
 	{"amazon", []string{
 		"||amazon.com^",
@@ -116,7 +116,7 @@ var serviceRulesArray = []svc{
 		"||ixigua.com^",
 		"||muscdn.com^",
 		"||bytedance.map.fastly.net^",
-		"||douyin.com^"
+		"||douyin.com^",
 	}},
 }
 
