@@ -20,19 +20,19 @@ type svc struct {
 // client/src/components/ui/Icons.js
 var serviceRulesArray = []svc{
 	{"whatsapp", []string{"||whatsapp.net^", "||whatsapp.com^"}},
-	{"facebook", []string{"||facebook.com^", "||facebook.net^", "||fbcdn.net^", "||fb.me^", "||fb.com^", "||fbsbx.com^", "||messenger.com^"}},
+	{"facebook", []string{"||facebook.com^", "||facebook.net^", "||fbcdn.net^", "||fb.me^", "||fb.com^", "||fbsbx.com^", "||messenger.com^", "||facebookcorewwwi.onion^", "||fbcdn.com^"}},
 	{"twitter", []string{"||twitter.com^", "||t.co^", "||twimg.com^"}},
-	{"youtube", []string{"||youtube.com^", "||ytimg.com^", "||youtu.be^", "||googlevideo.com^", "||youtubei.googleapis.com^"}},
+	{"youtube", []string{"||youtube.com^", "||ytimg.com^", "||youtu.be^", "||googlevideo.com^", "||youtubei.googleapis.com^", "||youtube-nocookie.com^"}},
 	{"twitch", []string{"||twitch.tv^", "||ttvnw.net^"}},
 	{"netflix", []string{"||nflxext.com^", "||netflix.com^"}},
 	{"instagram", []string{"||instagram.com^", "||cdninstagram.com^"}},
 	{"snapchat", []string{"||snapchat.com^", "||sc-cdn.net^", "||impala-media-production.s3.amazonaws.com^"}},
-	{"discord", []string{"||discord.gg^", "||discordapp.net^", "||discordapp.com^"}},
+	{"discord", []string{"||discord.gg^", "||discordapp.net^", "||discordapp.com^", "||discord.media^"}},
 	{"ok", []string{"||ok.ru^"}},
 	{"skype", []string{"||skype.com^"}},
 	{"vk", []string{"||vk.com^"}},
 	{"origin", []string{"||origin.com^", "||signin.ea.com^", "||accounts.ea.com^"}},
-	{"steam", []string{"||steam.com^"}},
+	{"steam", []string{"||steam.com^", "||steampowered.com^"}},
 	{"epic_games", []string{"||epicgames.com^"}},
 	{"reddit", []string{"||reddit.com^", "||redditstatic.com^", "||redditmedia.com^", "||redd.it^"}},
 	{"mail_ru", []string{"||mail.ru^"}},
@@ -49,6 +49,8 @@ var serviceRulesArray = []svc{
 		"||cloudflare.cn^",
 		"||one.one^",
 		"||warp.plus^",
+		"||1.1.1.1^",
+		"||dns4torpnlfs2ifuz2s2yf3fc7rdmsbhm6rw75euj35pac6ap25zgqad.onion^"
 	}},
 	{"amazon", []string{
 		"||amazon.com^",
@@ -114,6 +116,7 @@ var serviceRulesArray = []svc{
 		"||ixigua.com^",
 		"||muscdn.com^",
 		"||bytedance.map.fastly.net^",
+		"||douyin.com^"
 	}},
 }
 
