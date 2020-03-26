@@ -226,3 +226,5 @@ This software wouldn't have been possible without:
 You might have seen that [CoreDNS](https://coredns.io) was mentioned here before — we've stopped using it in AdGuardHome. While we still use it on our servers for [AdGuard DNS](https://adguard.com/adguard-dns/overview.html) service, it seemed like an overkill for Home as it impeded with Home features that we plan to implement.
 
 For a full list of all node.js packages in use, please take a look at [client/package.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/package.json) file.
+
+For info on which exact domains that are blocked by the *Blocked services* function, it can be found at [dnsfilter/blocked_services.go](https://github.com/AdguardTeam/AdGuardHome/blob/master/dnsfilter/blocked_services.go)
