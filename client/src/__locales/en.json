@@ -113,7 +113,7 @@
     "encryption_settings": "Encryption settings",
     "dhcp_settings": "DHCP settings",
     "upstream_dns": "Upstream DNS servers",
-    "upstream_dns_hint": "If you keep this field empty, AdGuard Home will use <a href='https://adguard.com/en/adguard-dns/overview.html' target='_blank'>AdGuard DNS</a> as an upstream.",
+    "upstream_dns_hint": "If you keep this field empty, AdGuard Home will use <a href='https://dns.adguard.com' target='_blank'>AdGuard DNS</a> as an upstream.",
     "test_upstream_btn": "Test upstreams",
     "upstreams": "Upstreams",
     "apply_btn": "Apply",
