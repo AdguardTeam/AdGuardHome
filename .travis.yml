@@ -1,8 +1,9 @@
+if: repo = AdguardTeam/AdGuardHome
 language: go
 sudo: false
 
 go:
-  - 1.12.x
+  - 1.13.x
 os:
   - linux
   - osx
@@ -13,7 +14,7 @@ before_install:
   - curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.19.1
 
 install:
-  - npm --prefix client install
+  - npm --prefix client ci
 
 cache:
   directories:
@@ -33,17 +34,16 @@ notifications:
 matrix:
   include:
     # Release build configuration
+    - if: repo = AdguardTeam/AdGuardHome
     - name: release
       go:
-        - 1.12.x
+        - 1.13.x
       os:
         - linux
 
       script:
         - node -v
         - npm -v
-        # Run tests just in case
-        - go test -race -v -bench=. ./...
         # Prepare releases
         - ./release.sh
         - ls -l dist
@@ -61,9 +61,9 @@ matrix:
         skip_cleanup: true
 
     - name: docker
-      if: type != pull_request AND (branch = master OR tag IS present)
+      if: type != pull_request AND (branch = master OR tag IS present) AND repo = AdguardTeam/AdGuardHome
       go:
-        - 1.12.x
+        - 1.13.x
       os:
         - linux
       services:

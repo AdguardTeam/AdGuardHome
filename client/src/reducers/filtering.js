@@ -37,7 +37,17 @@ const filtering = handleActions(
             isFilterAdded: true,
         }),
 
-        [actions.toggleFilteringModal]: (state) => {
+        [actions.toggleFilteringModal]: (state, { payload }) => {
+            if (payload) {
+                const newState = {
+                    ...state,
+                    isModalOpen: !state.isModalOpen,
+                    isFilterAdded: false,
+                    modalType: payload.type || '',
+                    modalFilterUrl: payload.url || '',
+                };
+                return newState;
+            }
             const newState = {
                 ...state,
                 isModalOpen: !state.isModalOpen,
@@ -49,6 +59,10 @@ const filtering = handleActions(
         [actions.toggleFilterRequest]: state => ({ ...state, processingConfigFilter: true }),
         [actions.toggleFilterFailure]: state => ({ ...state, processingConfigFilter: false }),
         [actions.toggleFilterSuccess]: state => ({ ...state, processingConfigFilter: false }),
+
+        [actions.editFilterRequest]: state => ({ ...state, processingConfigFilter: true }),
+        [actions.editFilterFailure]: state => ({ ...state, processingConfigFilter: false }),
+        [actions.editFilterSuccess]: state => ({ ...state, processingConfigFilter: false }),
 
         [actions.refreshFiltersRequest]: state => ({ ...state, processingRefreshFilters: true }),
         [actions.refreshFiltersFailure]: state => ({ ...state, processingRefreshFilters: false }),
@@ -65,6 +79,14 @@ const filtering = handleActions(
             ...payload,
             processingSetConfig: false,
         }),
+
+        [actions.checkHostRequest]: state => ({ ...state, processingCheck: true }),
+        [actions.checkHostFailure]: state => ({ ...state, processingCheck: false }),
+        [actions.checkHostSuccess]: (state, { payload }) => ({
+            ...state,
+            check: payload,
+            processingCheck: false,
+        }),
     },
     {
         isModalOpen: false,
@@ -75,11 +97,16 @@ const filtering = handleActions(
         processingConfigFilter: false,
         processingRemoveFilter: false,
         processingSetConfig: false,
+        processingCheck: false,
         isFilterAdded: false,
         filters: [],
+        whitelistFilters: [],
         userRules: '',
         interval: 24,
         enabled: true,
+        modalType: '',
+        modalFilterUrl: '',
+        check: {},
     },
 );
 

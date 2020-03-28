@@ -21,13 +21,8 @@ func httpError(r *http.Request, w http.ResponseWriter, code int, format string, 
 
 // Return data
 func (s *statsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
-	units := Hours
-	if s.limit/24 > 7 {
-		units = Days
-	}
-
 	start := time.Now()
-	d := s.getData(units)
+	d := s.getData()
 	log.Debug("Stats: prepared data in %v", time.Since(start))
 
 	if d == nil {
@@ -52,7 +47,7 @@ type config struct {
 // Get configuration
 func (s *statsCtx) handleStatsInfo(w http.ResponseWriter, r *http.Request) {
 	resp := config{}
-	resp.IntervalDays = s.limit / 24
+	resp.IntervalDays = s.conf.limit / 24
 
 	data, err := json.Marshal(resp)
 	if err != nil {

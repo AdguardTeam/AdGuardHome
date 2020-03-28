@@ -5,9 +5,11 @@ import subHours from 'date-fns/sub_hours';
 import addHours from 'date-fns/add_hours';
 import addDays from 'date-fns/add_days';
 import subDays from 'date-fns/sub_days';
+import isSameDay from 'date-fns/is_same_day';
 import round from 'lodash/round';
 import axios from 'axios';
 import i18n from 'i18next';
+import uniqBy from 'lodash/uniqBy';
 import versionCompare from './versionCompare';
 
 import {
@@ -16,27 +18,42 @@ import {
     STANDARD_HTTPS_PORT,
     CHECK_TIMEOUT,
     DNS_RECORD_TYPES,
+    DEFAULT_TIME_FORMAT,
+    DEFAULT_DATE_FORMAT_OPTIONS,
+    DETAILED_DATE_FORMAT_OPTIONS,
+    DEFAULT_LANGUAGE,
+    FILTERED_STATUS,
+    FILTERED,
 } from './constants';
 
+/**
+ * @param string The time to format
+ * @returns string Returns the time in the format HH:mm:ss
+ */
 export const formatTime = (time) => {
     const parsedTime = dateParse(time);
-    return dateFormat(parsedTime, 'HH:mm:ss');
+    return dateFormat(parsedTime, DEFAULT_TIME_FORMAT);
 };
 
-export const formatDateTime = (dateTime) => {
-    const currentLanguage = i18n.languages[0] || 'en';
+/**
+ * @param string The date to format
+ * @returns string Returns the date and time in the format DD/MM/YYYY, HH:mm
+ */
+export const formatDateTime = (dateTime, options = DEFAULT_DATE_FORMAT_OPTIONS) => {
+    const currentLanguage = i18n.languages[0] || DEFAULT_LANGUAGE;
     const parsedTime = dateParse(dateTime);
-    const options = {
-        year: 'numeric',
-        month: 'numeric',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: false,
-    };
 
     return parsedTime.toLocaleString(currentLanguage, options);
 };
+
+export const formatDetailedDateTime = dateTime =>
+    formatDateTime(dateTime, DETAILED_DATE_FORMAT_OPTIONS);
+
+/**
+ * @param string
+ * @returns boolean
+ */
+export const isToday = date => isSameDay(new Date(date), new Date());
 
 export const normalizeLogs = logs => logs.map((log) => {
     const {
@@ -49,6 +66,7 @@ export const normalizeLogs = logs => logs.map((log) => {
         rule,
         service_name,
         status,
+        original_answer,
     } = log;
     const { host: domain, type } = question;
     const responsesArray = response ? response.map((response) => {
@@ -64,8 +82,9 @@ export const normalizeLogs = logs => logs.map((log) => {
         client,
         filterId,
         rule,
-        serviceName: service_name,
         status,
+        serviceName: service_name,
+        originalAnswer: original_answer,
     };
 });
 
@@ -92,37 +111,50 @@ export const normalizeTopStats = stats => (
     }))
 );
 
+export const addClientInfo = (data, clients, param) => (
+    data.map((row) => {
+        const clientIp = row[param];
+        const info = clients.find(item => item[clientIp]) || '';
+        return {
+            ...row,
+            info: (info && info[clientIp]) || '',
+        };
+    })
+);
+
+export const normalizeFilters = filters => (
+    filters ? filters.map((filter) => {
+        const {
+            id,
+            url,
+            enabled,
+            last_updated,
+            name = 'Default name',
+            rules_count: rules_count = 0,
+        } = filter;
+
+        return {
+            id,
+            url,
+            enabled,
+            lastUpdated: last_updated,
+            name,
+            rulesCount: rules_count,
+        };
+    }) : []
+);
+
 export const normalizeFilteringStatus = (filteringStatus) => {
     const {
-        enabled, filters, user_rules: userRules, interval,
+        enabled, filters, user_rules: userRules, interval, whitelist_filters,
     } = filteringStatus;
-    const newFilters = filters
-        ? filters.map((filter) => {
-            const {
-                id,
-                url,
-                enabled,
-                last_updated,
-                name = 'Default name',
-                rules_count: rules_count = 0,
-            } = filter;
-
-            return {
-                id,
-                url,
-                enabled,
-                lastUpdated: last_updated ? formatDateTime(last_updated) : '–',
-                name,
-                rulesCount: rules_count,
-            };
-        })
-        : [];
     const newUserRules = Array.isArray(userRules) ? userRules.join('\n') : '';
 
     return {
         enabled,
         userRules: newUserRules,
-        filters: newFilters,
+        filters: normalizeFilters(filters),
+        whitelistFilters: normalizeFilters(whitelist_filters),
         interval,
     };
 };
@@ -245,9 +277,51 @@ export const redirectToCurrentProtocol = (values, httpPort = 80) => {
     }
 };
 
-export const normalizeTextarea = text => text && text.replace(/[;, ]/g, '\n').split('\n').filter(n => n);
+export const normalizeTextarea = (text) => {
+    if (!text) {
+        return [];
+    }
+
+    return text.replace(/[;, ]/g, '\n').split('\n').filter(n => n);
+};
+
+/**
+ * Normalizes the topClients array
+ *
+ * @param {Object[]} topClients
+ * @param {string} topClients.name
+ * @param {number} topClients.count
+ * @param {Object} topClients.info
+ * @param {string} topClients.info.name
+ * @returns {Object} normalizedTopClients
+ * @returns {Object.<string, number>} normalizedTopClients.auto - auto clients
+ * @returns {Object.<string, number>} normalizedTopClients.configured - configured clients
+ */
+
+export const normalizeTopClients = topClients => topClients.reduce((nameToCountMap, clientObj) => {
+    const { name, count, info: { name: infoName } } = clientObj;
+    // eslint-disable-next-line no-param-reassign
+    nameToCountMap.auto[name] = count;
+    // eslint-disable-next-line no-param-reassign
+    nameToCountMap.configured[infoName] = count;
+    return nameToCountMap;
+}, { auto: {}, configured: {} });
 
 export const getClientInfo = (clients, ip) => {
+    const client = clients
+        .find(item => item.ip_addrs && item.ip_addrs.find(clientIp => clientIp === ip));
+
+    if (!client) {
+        return '';
+    }
+
+    const { name, whois_info } = client;
+    const whois = Object.keys(whois_info).length > 0 ? whois_info : '';
+
+    return { name, whois };
+};
+
+export const getAutoClientInfo = (clients, ip) => {
     const client = clients.find(item => ip === item.ip);
 
     if (!client) {
@@ -327,4 +401,60 @@ export const getPathWithQueryString = (path, params) => {
     const searchParams = new URLSearchParams(params);
 
     return `${path}?${searchParams.toString()}`;
+};
+
+export const getParamsForClientsSearch = (data, param) => {
+    const uniqueClients = uniqBy(data, param);
+    return uniqueClients
+        .reduce((acc, item, idx) => {
+            const key = `ip${idx}`;
+            acc[key] = item[param];
+            return acc;
+        }, {});
+};
+
+/**
+ * Creates onBlur handler that can normalize input if normalization function is specified
+ *
+ * @param {Object} event
+ * @param {Object} event.target
+ * @param {string} event.target.value
+ * @param {Object} input
+ * @param {function} input.onBlur
+ * @param {function} [normalizeOnBlur]
+ * @returns {function}
+ */
+export const createOnBlurHandler = (event, input, normalizeOnBlur) => (
+    normalizeOnBlur
+        ? input.onBlur(normalizeOnBlur(event.target.value))
+        : input.onBlur());
+
+export const checkFiltered = reason => reason.indexOf(FILTERED) === 0;
+export const checkRewrite = reason => reason === FILTERED_STATUS.REWRITE;
+export const checkBlackList = reason => reason === FILTERED_STATUS.FILTERED_BLACK_LIST;
+export const checkWhiteList = reason => reason === FILTERED_STATUS.NOT_FILTERED_WHITE_LIST;
+export const checkNotFilteredNotFound = reason => reason === FILTERED_STATUS.NOT_FILTERED_NOT_FOUND;
+export const checkSafeSearch = reason => reason === FILTERED_STATUS.FILTERED_SAFE_SEARCH;
+export const checkSafeBrowsing = reason => reason === FILTERED_STATUS.FILTERED_SAFE_BROWSING;
+export const checkParental = reason => reason === FILTERED_STATUS.FILTERED_PARENTAL;
+export const checkBlockedService = reason => reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
+
+export const getCurrentFilter = (url, filters) => {
+    const filter = filters && filters.find(item => url === item.url);
+
+    if (filter) {
+        const { enabled, name, url } = filter;
+        return { enabled, name, url };
+    }
+
+    return { name: '', url: '' };
+};
+
+/**
+ * @param number Number to format
+ * @returns string Returns a string with a language-sensitive representation of this number
+ */
+export const formatNumber = (num) => {
+    const currentLanguage = i18n.languages[0] || DEFAULT_LANGUAGE;
+    return num.toLocaleString(currentLanguage);
 };

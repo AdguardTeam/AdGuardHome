@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 import { getPathWithQueryString } from '../helpers/helpers';
+import { R_PATH_LAST_PART } from '../helpers/constants';
 
 class Api {
     baseUrl = 'control';
@@ -17,6 +18,12 @@ class Api {
             console.error(error);
             const errorPath = `${this.baseUrl}/${path}`;
             if (error.response) {
+                if (error.response.status === 403) {
+                    const loginPageUrl = window.location.href.replace(R_PATH_LAST_PART, '/login.html');
+                    window.location.replace(loginPageUrl);
+                    return false;
+                }
+
                 throw new Error(`${errorPath} | ${error.response.data} | ${error.response.status}`);
             }
             throw new Error(`${errorPath} | ${error.message ? error.message : error}`);
@@ -24,25 +31,11 @@ class Api {
     }
 
     // Global methods
-    GLOBAL_START = { path: 'start', method: 'POST' };
     GLOBAL_STATUS = { path: 'status', method: 'GET' };
-    GLOBAL_STOP = { path: 'stop', method: 'POST' };
     GLOBAL_SET_UPSTREAM_DNS = { path: 'set_upstreams_config', method: 'POST' };
     GLOBAL_TEST_UPSTREAM_DNS = { path: 'test_upstream_dns', method: 'POST' };
     GLOBAL_VERSION = { path: 'version.json', method: 'POST' };
-    GLOBAL_ENABLE_PROTECTION = { path: 'enable_protection', method: 'POST' };
-    GLOBAL_DISABLE_PROTECTION = { path: 'disable_protection', method: 'POST' };
     GLOBAL_UPDATE = { path: 'update', method: 'POST' };
-
-    startGlobalFiltering() {
-        const { path, method } = this.GLOBAL_START;
-        return this.makeRequest(path, method);
-    }
-
-    stopGlobalFiltering() {
-        const { path, method } = this.GLOBAL_STOP;
-        return this.makeRequest(path, method);
-    }
 
     getGlobalStatus() {
         const { path, method } = this.GLOBAL_STATUS;
@@ -76,16 +69,6 @@ class Api {
         return this.makeRequest(path, method, config);
     }
 
-    enableGlobalProtection() {
-        const { path, method } = this.GLOBAL_ENABLE_PROTECTION;
-        return this.makeRequest(path, method);
-    }
-
-    disableGlobalProtection() {
-        const { path, method } = this.GLOBAL_DISABLE_PROTECTION;
-        return this.makeRequest(path, method);
-    }
-
     getUpdate() {
         const { path, method } = this.GLOBAL_UPDATE;
         return this.makeRequest(path, method);
@@ -99,26 +82,31 @@ class Api {
     FILTERING_REFRESH = { path: 'filtering/refresh', method: 'POST' };
     FILTERING_SET_URL = { path: 'filtering/set_url', method: 'POST' };
     FILTERING_CONFIG = { path: 'filtering/config', method: 'POST' };
+    FILTERING_CHECK_HOST = { path: 'filtering/check_host', method: 'GET' };
 
     getFilteringStatus() {
         const { path, method } = this.FILTERING_STATUS;
         return this.makeRequest(path, method);
     }
 
-    refreshFilters() {
+    refreshFilters(config) {
         const { path, method } = this.FILTERING_REFRESH;
-        return this.makeRequest(path, method);
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
+        };
+
+        return this.makeRequest(path, method, parameters);
     }
 
-    addFilter(url, name) {
+    addFilter(config) {
         const { path, method } = this.FILTERING_ADD_FILTER;
-        const config = {
-            data: {
-                name,
-                url,
-            },
+        const parameters = {
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
         };
-        return this.makeRequest(path, method, config);
+
+        return this.makeRequest(path, method, parameters);
     }
 
     removeFilter(config) {
@@ -156,6 +144,12 @@ class Api {
             headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
+    }
+
+    checkHost(params) {
+        const { path, method } = this.FILTERING_CHECK_HOST;
+        const url = getPathWithQueryString(path, params);
+        return this.makeRequest(url, method);
     }
 
     // Parental
@@ -248,6 +242,7 @@ class Api {
     DHCP_INTERFACES = { path: 'dhcp/interfaces', method: 'GET' };
     DHCP_ADD_STATIC_LEASE = { path: 'dhcp/add_static_lease', method: 'POST' };
     DHCP_REMOVE_STATIC_LEASE = { path: 'dhcp/remove_static_lease', method: 'POST' };
+    DHCP_RESET = { path: 'dhcp/reset', method: 'POST' };
 
     getDhcpStatus() {
         const { path, method } = this.DHCP_STATUS;
@@ -293,6 +288,11 @@ class Api {
             headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
+    }
+
+    resetDhcp() {
+        const { path, method } = this.DHCP_RESET;
+        return this.makeRequest(path, method);
     }
 
     // Installation
@@ -353,6 +353,7 @@ class Api {
 
     // Per-client settings
     GET_CLIENTS = { path: 'clients', method: 'GET' };
+    FIND_CLIENTS = { path: 'clients/find', method: 'GET' };
     ADD_CLIENT = { path: 'clients/add', method: 'POST' };
     DELETE_CLIENT = { path: 'clients/delete', method: 'POST' };
     UPDATE_CLIENT = { path: 'clients/update', method: 'POST' };
@@ -387,6 +388,12 @@ class Api {
             headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
+    }
+
+    findClients(params) {
+        const { path, method } = this.FIND_CLIENTS;
+        const url = getPathWithQueryString(path, params);
+        return this.makeRequest(url, method);
     }
 
     // DNS access settings
@@ -532,6 +539,24 @@ class Api {
     getProfile() {
         const { path, method } = this.GET_PROFILE;
         return this.makeRequest(path, method);
+    }
+
+    // DNS config
+    GET_DNS_CONFIG = { path: 'dns_info', method: 'GET' };
+    SET_DNS_CONFIG = { path: 'dns_config', method: 'POST' };
+
+    getDnsConfig() {
+        const { path, method } = this.GET_DNS_CONFIG;
+        return this.makeRequest(path, method);
+    }
+
+    setDnsConfig(data) {
+        const { path, method } = this.SET_DNS_CONFIG;
+        const config = {
+            data,
+            headers: { 'Content-Type': 'application/json' },
+        };
+        return this.makeRequest(path, method, config);
     }
 }
 

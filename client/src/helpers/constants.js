@@ -1,8 +1,10 @@
 export const R_URL_REQUIRES_PROTOCOL = /^https?:\/\/[^/\s]+(\/.*)?$/;
-export const R_HOST = /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])$/;
-export const R_IPV4 = /^(?:(?:^|\.)(?:2(?:5[0-5]|[0-4]\d)|1?\d?\d)){4}$/g;
-export const R_IPV6 = /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/g;
-export const R_MAC = /^((([a-fA-F0-9][a-fA-F0-9]+[-]){5}|([a-fA-F0-9][a-fA-F0-9]+[:]){5})([a-fA-F0-9][a-fA-F0-9])$)|(^([a-fA-F0-9][a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]+[.]){2}([a-fA-F0-9][a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]))$/g;
+export const R_HOST = /^(\*\.)?([\w-]+\.)+[\w-]+$/;
+export const R_IPV4 = /^(?:(?:^|\.)(?:2(?:5[0-5]|[0-4]\d)|1?\d?\d)){4}$/;
+export const R_IPV6 = /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
+export const R_CIDR = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$/;
+export const R_MAC = /^((([a-fA-F0-9][a-fA-F0-9]+[-]){5}|([a-fA-F0-9][a-fA-F0-9]+[:]){5})([a-fA-F0-9][a-fA-F0-9])$)|(^([a-fA-F0-9][a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]+[.]){2}([a-fA-F0-9][a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]))$/;
+export const R_PATH_LAST_PART = /\/[^/]*$/;
 
 export const STATS_NAMES = {
     avg_processing_time: 'average_processing_time',
@@ -29,101 +31,6 @@ export const REPOSITORY = {
 
 export const PRIVACY_POLICY_LINK = 'https://adguard.com/privacy/home.html';
 
-export const LANGUAGES = [
-    {
-        key: 'da',
-        name: 'Dansk',
-    },
-    {
-        key: 'de',
-        name: 'Deutsch',
-    },
-    {
-        key: 'nl',
-        name: 'Dutch',
-    },
-    {
-        key: 'en',
-        name: 'English',
-    },
-    {
-        key: 'es',
-        name: 'Español',
-    },
-    {
-        key: 'fr',
-        name: 'Français',
-    },
-    {
-        key: 'id',
-        name: 'Indonesian',
-    },
-    {
-        key: 'it',
-        name: 'Italiano',
-    },
-    {
-        key: 'pl',
-        name: 'Polski',
-    },
-    {
-        key: 'pt-br',
-        name: 'Portuguese (BR)',
-    },
-    {
-        key: 'pt-pt',
-        name: 'Portuguese (PT)',
-    },
-    {
-        key: 'sk',
-        name: 'Slovenčina',
-    },
-    {
-        key: 'sl',
-        name: 'Slovenščina',
-    },
-    {
-        key: 'sv',
-        name: 'Svenska',
-    },
-    {
-        key: 'vi',
-        name: 'Tiếng Việt',
-    },
-    {
-        key: 'tr',
-        name: 'Türkçe',
-    },
-    {
-        key: 'cs',
-        name: 'Český',
-    },
-    {
-        key: 'bg',
-        name: 'Български',
-    },
-    {
-        key: 'ru',
-        name: 'Русский',
-    },
-    {
-        key: 'ja',
-        name: '日本語',
-    },
-    {
-        key: 'zh-tw',
-        name: '正體中文',
-    },
-    {
-        key: 'zh-cn',
-        name: '简体中文',
-    },
-    {
-        key: 'ko',
-        name: '한국어',
-    },
-];
-
 export const INSTALL_FIRST_STEP = 1;
 export const INSTALL_TOTAL_STEPS = 5;
 
@@ -141,6 +48,7 @@ export const STANDARD_HTTPS_PORT = 443;
 export const EMPTY_DATE = '0001-01-01T00:00:00Z';
 
 export const DEBOUNCE_TIMEOUT = 300;
+export const DEBOUNCE_FILTER_TIMEOUT = 500;
 export const CHECK_TIMEOUT = 1000;
 export const STOP_TIMEOUT = 10000;
 
@@ -229,7 +137,26 @@ export const CLIENT_ID = {
     IP: 'ip',
 };
 
-export const SETTINGS_URLS = ['/encryption', '/dhcp', '/dns', '/settings', '/clients'];
+export const MENU_URLS = {
+    root: '/',
+    logs: '/logs',
+    guide: '/guide',
+};
+
+export const SETTINGS_URLS = {
+    encryption: '/encryption',
+    dhcp: '/dhcp',
+    dns: '/dns',
+    settings: '/settings',
+    clients: '/clients',
+};
+
+export const FILTERS_URLS = {
+    dns_blocklists: '/filters',
+    dns_allowlists: '/dns_allowlists',
+    dns_rewrites: '/dns_rewrites',
+    custom_rules: '/custom_rules',
+};
 
 export const SERVICES = [
     {
@@ -261,10 +188,6 @@ export const SERVICES = [
         name: 'Snapchat',
     },
     {
-        id: 'messenger',
-        name: 'Messenger',
-    },
-    {
         id: 'twitch',
         name: 'Twitch',
     },
@@ -277,12 +200,32 @@ export const SERVICES = [
         name: 'Skype',
     },
     {
+        id: 'amazon',
+        name: 'Amazon',
+    },
+    {
+        id: 'ebay',
+        name: 'eBay',
+    },
+    {
+        id: 'origin',
+        name: 'Origin',
+    },
+    {
+        id: 'cloudflare',
+        name: 'Cloudflare',
+    },
+    {
         id: 'steam',
         name: 'Steam',
     },
     {
         id: 'epic_games',
         name: 'Epic Games',
+    },
+    {
+        id: 'reddit',
+        name: 'Reddit',
     },
     {
         id: 'ok',
@@ -310,15 +253,29 @@ export const ENCRYPTION_SOURCE = {
 export const FILTERED_STATUS = {
     FILTERED_BLACK_LIST: 'FilteredBlackList',
     NOT_FILTERED_WHITE_LIST: 'NotFilteredWhiteList',
+    NOT_FILTERED_NOT_FOUND: 'NotFilteredNotFound',
     FILTERED_BLOCKED_SERVICE: 'FilteredBlockedService',
     REWRITE: 'Rewrite',
+    FILTERED_SAFE_SEARCH: 'FilteredSafeSearch',
+    FILTERED_SAFE_BROWSING: 'FilteredSafeBrowsing',
+    FILTERED_PARENTAL: 'FilteredParental',
 };
+
+export const FILTERED = 'Filtered';
+export const NOT_FILTERED = 'NotFiltered';
 
 export const STATS_INTERVALS_DAYS = [1, 7, 30, 90];
 
 export const QUERY_LOG_INTERVALS_DAYS = [1, 7, 30, 90];
 
 export const FILTERS_INTERVALS_HOURS = [0, 1, 12, 24, 72, 168];
+
+export const BLOCKING_MODES = {
+    default: 'default',
+    nxdomain: 'nxdomain',
+    null_ip: 'null_ip',
+    custom_ip: 'custom_ip',
+};
 
 export const WHOIS_ICONS = {
     location: 'location',
@@ -379,3 +336,35 @@ export const DEFAULT_LOGS_FILTER = {
 };
 
 export const DEFAULT_LANGUAGE = 'en';
+
+export const TABLE_DEFAULT_PAGE_SIZE = 100;
+
+export const SMALL_TABLE_DEFAULT_PAGE_SIZE = 20;
+
+export const RESPONSE_FILTER = {
+    ALL: 'all',
+    FILTERED: 'filtered',
+};
+
+export const DEFAULT_TIME_FORMAT = 'HH:mm:ss';
+
+export const DEFAULT_DATE_FORMAT_OPTIONS = {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: false,
+};
+
+export const DETAILED_DATE_FORMAT_OPTIONS = {
+    ...DEFAULT_DATE_FORMAT_OPTIONS,
+    month: 'long',
+};
+
+export const CUSTOM_FILTERING_RULES_ID = 0;
+
+export const ACTION = {
+    block: 'block',
+    unblock: 'unblock',
+};

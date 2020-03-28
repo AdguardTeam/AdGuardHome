@@ -16,15 +16,18 @@ type DiskConfig struct {
 
 // Config - module configuration
 type Config struct {
-	Filename  string         // database file name
-	LimitDays uint32         // time limit (in days)
-	UnitID    unitIDCallback // user function to get the current unit ID.  If nil, the current time hour is used.
+	Filename          string         // database file name
+	LimitDays         uint32         // time limit (in days)
+	UnitID            unitIDCallback // user function to get the current unit ID.  If nil, the current time hour is used.
+	AnonymizeClientIP bool           // anonymize clients' IP addresses
 
 	// Called when the configuration is changed by HTTP request
 	ConfigModified func()
 
 	// Register an HTTP handler
 	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request))
+
+	limit uint32 // maximum time we need to keep data for (in hours)
 }
 
 // New - create object
@@ -34,6 +37,8 @@ func New(conf Config) (Stats, error) {
 
 // Stats - main interface
 type Stats interface {
+	Start()
+
 	// Close object.
 	// This function is not thread safe
 	//  (can't be called in parallel with any other function of this interface).

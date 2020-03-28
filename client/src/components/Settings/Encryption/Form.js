@@ -6,7 +6,7 @@ import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 
 import {
-    renderField,
+    renderInputField,
     renderSelectField,
     renderRadioField,
     toNumber,
@@ -117,7 +117,7 @@ let Form = (props) => {
                         <Field
                             id="server_name"
                             name="server_name"
-                            component={renderField}
+                            component={renderInputField}
                             type="text"
                             className="form-control"
                             placeholder={t('encryption_server_enter')}
@@ -154,7 +154,7 @@ let Form = (props) => {
                         <Field
                             id="port_https"
                             name="port_https"
-                            component={renderField}
+                            component={renderInputField}
                             type="number"
                             className="form-control"
                             placeholder={t('encryption_https')}
@@ -176,7 +176,7 @@ let Form = (props) => {
                         <Field
                             id="port_dns_over_tls"
                             name="port_dns_over_tls"
-                            component={renderField}
+                            component={renderInputField}
                             type="number"
                             className="form-control"
                             placeholder={t('encryption_dot')}
@@ -222,6 +222,7 @@ let Form = (props) => {
                                     className="form-control mr-2"
                                     value="path"
                                     placeholder={t('encryption_certificates_source_path')}
+                                    disabled={!isEnabled}
                                 />
                                 <Field
                                     name="certificate_source"
@@ -230,6 +231,7 @@ let Form = (props) => {
                                     className="form-control mr-2"
                                     value="content"
                                     placeholder={t('encryption_certificates_source_content')}
+                                    disabled={!isEnabled}
                                 />
                             </div>
                         </div>
@@ -250,7 +252,7 @@ let Form = (props) => {
                             <Field
                                 id="certificate_path"
                                 name="certificate_path"
-                                component={renderField}
+                                component={renderInputField}
                                 type="text"
                                 className="form-control"
                                 placeholder={t('encryption_certificate_path')}
@@ -289,6 +291,7 @@ let Form = (props) => {
                                     className="form-control mr-2"
                                     value="path"
                                     placeholder={t('encryption_key_source_path')}
+                                    disabled={!isEnabled}
                                 />
                                 <Field
                                     name="key_source"
@@ -297,6 +300,7 @@ let Form = (props) => {
                                     className="form-control mr-2"
                                     value="content"
                                     placeholder={t('encryption_key_source_content')}
+                                    disabled={!isEnabled}
                                 />
                             </div>
                         </div>
@@ -317,7 +321,7 @@ let Form = (props) => {
                             <Field
                                 id="private_key_path"
                                 name="private_key_path"
-                                component={renderField}
+                                component={renderInputField}
                                 type="text"
                                 className="form-control"
                                 placeholder={t('encryption_private_key_path')}

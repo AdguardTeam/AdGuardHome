@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/AdguardTeam/golibs/jsonutil"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
@@ -67,12 +68,12 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(req.filterQuestionType) != 0 {
-		qtype, ok := dns.StringToType[req.filterQuestionType]
+		_, ok := dns.StringToType[req.filterQuestionType]
 		if !ok {
 			httpError(r, w, http.StatusBadRequest, "invalid question_type")
 			return
 		}
-		params.QuestionType = qtype
+		params.QuestionType = req.filterQuestionType
 	}
 
 	if len(req.filterResponseStatus) != 0 {
@@ -105,8 +106,9 @@ func (l *queryLog) handleQueryLogClear(w http.ResponseWriter, r *http.Request) {
 }
 
 type qlogConfig struct {
-	Enabled  bool   `json:"enabled"`
-	Interval uint32 `json:"interval"`
+	Enabled           bool   `json:"enabled"`
+	Interval          uint32 `json:"interval"`
+	AnonymizeClientIP bool   `json:"anonymize_client_ip"`
 }
 
 // Get configuration
@@ -114,6 +116,7 @@ func (l *queryLog) handleQueryLogInfo(w http.ResponseWriter, r *http.Request) {
 	resp := qlogConfig{}
 	resp.Enabled = l.conf.Enabled
 	resp.Interval = l.conf.Interval
+	resp.AnonymizeClientIP = l.conf.AnonymizeClientIP
 
 	jsonVal, err := json.Marshal(resp)
 	if err != nil {
@@ -129,24 +132,32 @@ func (l *queryLog) handleQueryLogInfo(w http.ResponseWriter, r *http.Request) {
 
 // Set configuration
 func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) {
-
-	reqData := qlogConfig{}
-	err := json.NewDecoder(r.Body).Decode(&reqData)
+	d := qlogConfig{}
+	req, err := jsonutil.DecodeObject(&d, r.Body)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "json decode: %s", err)
+		httpError(r, w, http.StatusBadRequest, "%s", err)
 		return
 	}
 
-	if !checkInterval(reqData.Interval) {
+	if req.Exists("interval") && !checkInterval(d.Interval) {
 		httpError(r, w, http.StatusBadRequest, "Unsupported interval")
 		return
 	}
 
-	conf := Config{
-		Enabled:  reqData.Enabled,
-		Interval: reqData.Interval,
+	l.lock.Lock()
+	// copy data, modify it, then activate.  Other threads (readers) don't need to use this lock.
+	conf := *l.conf
+	if req.Exists("enabled") {
+		conf.Enabled = d.Enabled
 	}
-	l.configure(conf)
+	if req.Exists("interval") {
+		conf.Interval = d.Interval
+	}
+	if req.Exists("anonymize_client_ip") {
+		conf.AnonymizeClientIP = d.AnonymizeClientIP
+	}
+	l.conf = &conf
+	l.lock.Unlock()
 
 	l.conf.ConfigModified()
 }

@@ -58,7 +58,7 @@ const BlockedDomains = ({
                 noDataText={t('no_domains_found')}
                 minRows={6}
                 defaultPageSize={100}
-                className="-striped -highlight card-table-overflow stats__table"
+                className="-highlight card-table-overflow stats__table"
             />
         </Card>
     );

@@ -1,18 +1,20 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const Cell = props => (
+import { formatNumber } from '../../helpers/helpers';
+
+const Cell = ({ value, percent, color }) => (
     <div className="stats__row">
         <div className="stats__row-value mb-1">
-            <strong>{props.value}</strong>
-            <small className="ml-3 text-muted">{props.percent}%</small>
+            <strong>{formatNumber(value)}</strong>
+            <small className="ml-3 text-muted">{percent}%</small>
         </div>
         <div className="progress progress-xs">
             <div
                 className="progress-bar"
                 style={{
-                    width: `${props.percent}%`,
-                    backgroundColor: props.color,
+                    width: `${percent}%`,
+                    backgroundColor: color,
                 }}
             />
         </div>

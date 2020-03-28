@@ -2,7 +2,7 @@
     height: 45px;
     padding: 0 32px 2px 33px;
     outline: 0;
-    border-color: rgba(0, 40, 100, 0.12);
+    border-color: rgba(69, 79, 94, 0.12);
     background-image: url("./svg/globe.svg"), url("./svg/chevron-down.svg");
     background-repeat: no-repeat, no-repeat;
     background-position: left 11px center, right 9px center;
@@ -13,4 +13,27 @@
 
 .select--language::-ms-expand {
     opacity: 0;
+}
+
+.basic-multi-select .select__control {
+    border: 1px solid rgba(0, 40, 100, 0.12);
+    border-radius: 3px;
+}
+
+.basic-multi-select .select__control:hover {
+    border: 1px solid rgba(0, 40, 100, 0.12);
+}
+
+.basic-multi-select .select__control--is-focused,
+.basic-multi-select .select__control--is-focused:hover {
+    border-color: #1991eb;
+    box-shadow: 0 0 0 2px rgba(70, 127, 207, 0.25);
+}
+
+.basic-multi-select .select__placeholder {
+    color: #adb5bd;
+}
+
+.basic-multi-select .select__menu {
+    z-index: 3;
 }

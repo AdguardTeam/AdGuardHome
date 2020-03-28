@@ -6,6 +6,7 @@ import Services from './Services';
 import StatsConfig from './StatsConfig';
 import LogsConfig from './LogsConfig';
 import FiltersConfig from './FiltersConfig';
+
 import Checkbox from '../ui/Checkbox';
 import Loading from '../ui/Loading';
 import PageTitle from '../ui/PageTitle';
@@ -105,6 +106,7 @@ class Settings extends Component {
                                 <LogsConfig
                                     enabled={queryLogs.enabled}
                                     interval={queryLogs.interval}
+                                    anonymize_client_ip={queryLogs.anonymize_client_ip}
                                     processing={queryLogs.processingSetConfig}
                                     processingClear={queryLogs.processingClear}
                                     setLogsConfig={setLogsConfig}

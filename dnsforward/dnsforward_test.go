@@ -10,13 +10,16 @@ import (
 	"encoding/pem"
 	"math/big"
 	"net"
+	"sort"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/miekg/dns"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -26,7 +29,7 @@ const (
 
 func TestServer(t *testing.T) {
 	s := createTestServer(t)
-	err := s.Start(nil)
+	err := s.Start()
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -60,7 +63,7 @@ func TestServer(t *testing.T) {
 func TestServerWithProtectionDisabled(t *testing.T) {
 	s := createTestServer(t)
 	s.conf.ProtectionEnabled = false
-	err := s.Start(nil)
+	err := s.Start()
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -92,8 +95,9 @@ func TestDotServer(t *testing.T) {
 		PrivateKeyData:       keyPem,
 	}
 
+	_ = s.Prepare(nil)
 	// Starting the server
-	err := s.Start(nil)
+	err := s.Start()
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -125,7 +129,7 @@ func TestDotServer(t *testing.T) {
 
 func TestServerRace(t *testing.T) {
 	s := createTestServer(t)
-	err := s.Start(nil)
+	err := s.Start()
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -148,7 +152,7 @@ func TestServerRace(t *testing.T) {
 
 func TestSafeSearch(t *testing.T) {
 	s := createTestServer(t)
-	err := s.Start(nil)
+	err := s.Start()
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -189,7 +193,7 @@ func TestSafeSearch(t *testing.T) {
 
 func TestInvalidRequest(t *testing.T) {
 	s := createTestServer(t)
-	err := s.Start(nil)
+	err := s.Start()
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -215,7 +219,7 @@ func TestInvalidRequest(t *testing.T) {
 
 func TestBlockedRequest(t *testing.T) {
 	s := createTestServer(t)
-	err := s.Start(nil)
+	err := s.Start()
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -245,10 +249,174 @@ func TestBlockedRequest(t *testing.T) {
 	}
 }
 
+// testUpstream is a mock of real upstream.
+// specify fields with necessary values to simulate real upstream behaviour
+type testUpstream struct {
+	cn   map[string]string   // Map of [name]canonical_name
+	ipv4 map[string][]net.IP // Map of [name]IPv4
+	ipv6 map[string][]net.IP // Map of [name]IPv6
+}
+
+func (u *testUpstream) Exchange(m *dns.Msg) (*dns.Msg, error) {
+	resp := dns.Msg{}
+	resp.SetReply(m)
+	hasARecord := false
+	hasAAAARecord := false
+
+	reqType := m.Question[0].Qtype
+	name := m.Question[0].Name
+
+	// Let's check if we have any CNAME for given name
+	if cname, ok := u.cn[name]; ok {
+		cn := dns.CNAME{}
+		cn.Hdr.Name = name
+		cn.Hdr.Rrtype = dns.TypeCNAME
+		cn.Target = cname
+		resp.Answer = append(resp.Answer, &cn)
+	}
+
+	// Let's check if we can add some A records to the answer
+	if ipv4addr, ok := u.ipv4[name]; ok && reqType == dns.TypeA {
+		hasARecord = true
+		for _, ipv4 := range ipv4addr {
+			respA := dns.A{}
+			respA.Hdr.Rrtype = dns.TypeA
+			respA.Hdr.Name = name
+			respA.A = ipv4
+			resp.Answer = append(resp.Answer, &respA)
+		}
+	}
+
+	// Let's check if we can add some AAAA records to the answer
+	if u.ipv6 != nil {
+		if ipv6addr, ok := u.ipv6[name]; ok && reqType == dns.TypeAAAA {
+			hasAAAARecord = true
+			for _, ipv6 := range ipv6addr {
+				respAAAA := dns.A{}
+				respAAAA.Hdr.Rrtype = dns.TypeAAAA
+				respAAAA.Hdr.Name = name
+				respAAAA.A = ipv6
+				resp.Answer = append(resp.Answer, &respAAAA)
+			}
+		}
+	}
+
+	if len(resp.Answer) == 0 {
+		if hasARecord || hasAAAARecord {
+			// Set No Error RCode if there are some records for given Qname but we didn't apply them
+			resp.SetRcode(m, dns.RcodeSuccess)
+		} else {
+			// Set NXDomain RCode otherwise
+			resp.SetRcode(m, dns.RcodeNameError)
+		}
+	}
+
+	return &resp, nil
+}
+
+func (u *testUpstream) Address() string {
+	return "test"
+}
+
+func (s *Server) startWithUpstream(u upstream.Upstream) error {
+	s.Lock()
+	defer s.Unlock()
+	err := s.Prepare(nil)
+	if err != nil {
+		return err
+	}
+	s.dnsProxy.Upstreams = []upstream.Upstream{u}
+	return s.dnsProxy.Start()
+}
+
+// testCNAMEs is a simple map of names and CNAMEs necessary for the testUpstream work
+var testCNAMEs = map[string]string{
+	"badhost.":               "null.example.org.",
+	"whitelist.example.org.": "null.example.org.",
+}
+
+// testIPv4 is a simple map of names and IPv4s necessary for the testUpstream work
+var testIPv4 = map[string][]net.IP{
+	"null.example.org.": {{1, 2, 3, 4}},
+	"example.org.":      {{127, 0, 0, 255}},
+}
+
+func TestBlockCNAMEProtectionEnabled(t *testing.T) {
+	s := createTestServer(t)
+	testUpstm := &testUpstream{testCNAMEs, testIPv4, nil}
+	s.conf.ProtectionEnabled = false
+	err := s.startWithUpstream(testUpstm)
+	assert.True(t, err == nil)
+	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
+
+	// 'badhost' has a canonical name 'null.example.org' which is blocked by filters:
+	// but protection is disabled - response is NOT blocked
+	req := createTestMessage("badhost.")
+	reply, err := dns.Exchange(req, addr.String())
+	assert.True(t, err == nil)
+	assert.True(t, reply.Rcode == dns.RcodeSuccess)
+}
+
+func TestBlockCNAME(t *testing.T) {
+	s := createTestServer(t)
+	testUpstm := &testUpstream{testCNAMEs, testIPv4, nil}
+	err := s.startWithUpstream(testUpstm)
+	assert.True(t, err == nil)
+	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
+
+	// 'badhost' has a canonical name 'null.example.org' which is blocked by filters:
+	// response is blocked
+	req := createTestMessage("badhost.")
+	reply, err := dns.Exchange(req, addr.String())
+	assert.True(t, err == nil)
+	assert.True(t, reply.Rcode == dns.RcodeNameError)
+
+	// 'whitelist.example.org' has a canonical name 'null.example.org' which is blocked by filters
+	//   but 'whitelist.example.org' is in a whitelist:
+	// response isn't blocked
+	req = createTestMessage("whitelist.example.org.")
+	reply, err = dns.Exchange(req, addr.String())
+	assert.True(t, err == nil)
+	assert.True(t, reply.Rcode == dns.RcodeSuccess)
+
+	// 'example.org' has a canonical name 'cname1' with IP 127.0.0.255 which is blocked by filters:
+	// response is blocked
+	req = createTestMessage("example.org.")
+	reply, err = dns.Exchange(req, addr.String())
+	assert.True(t, err == nil)
+	assert.True(t, reply.Rcode == dns.RcodeNameError)
+
+	_ = s.Stop()
+}
+
+func TestClientRulesForCNAMEMatching(t *testing.T) {
+	s := createTestServer(t)
+	testUpstm := &testUpstream{testCNAMEs, testIPv4, nil}
+	s.conf.FilterHandler = func(clientAddr string, settings *dnsfilter.RequestFilteringSettings) {
+		settings.FilteringEnabled = false
+	}
+	err := s.startWithUpstream(testUpstm)
+	assert.Nil(t, err)
+	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
+
+	// 'badhost' has a canonical name 'null.example.org' which is blocked by filters:
+	// response is blocked
+	req := dns.Msg{}
+	req.Id = dns.Id()
+	req.Question = []dns.Question{
+		{Name: "badhost.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+	}
+	// However, in our case it should not be blocked
+	// as filtering is disabled on the client level
+	reply, err := dns.Exchange(&req, addr.String())
+	assert.Nil(t, err)
+	assert.Equal(t, dns.RcodeSuccess, reply.Rcode)
+}
+
 func TestNullBlockedRequest(t *testing.T) {
 	s := createTestServer(t)
 	s.conf.FilteringConfig.BlockingMode = "null_ip"
-	err := s.Start(nil)
+	err := s.Start()
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -285,9 +453,59 @@ func TestNullBlockedRequest(t *testing.T) {
 	}
 }
 
+func TestBlockedCustomIP(t *testing.T) {
+	rules := "||nxdomain.example.org^\n||null.example.org^\n127.0.0.1	host.example.org\n@@||whitelist.example.org^\n||127.0.0.255\n"
+	filters := []dnsfilter.Filter{dnsfilter.Filter{
+		ID: 0, Data: []byte(rules),
+	}}
+	c := dnsfilter.Config{}
+
+	f := dnsfilter.New(&c, filters)
+	s := NewServer(f, nil, nil)
+	conf := ServerConfig{}
+	conf.UDPListenAddr = &net.UDPAddr{Port: 0}
+	conf.TCPListenAddr = &net.TCPAddr{Port: 0}
+	conf.ProtectionEnabled = true
+	conf.BlockingMode = "custom_ip"
+	conf.BlockingIPv4 = "bad IP"
+	conf.UpstreamDNS = []string{"8.8.8.8:53", "8.8.4.4:53"}
+	err := s.Prepare(&conf)
+	assert.True(t, err != nil) // invalid BlockingIPv4
+
+	conf.BlockingIPv4 = "0.0.0.1"
+	conf.BlockingIPv6 = "::1"
+	err = s.Prepare(&conf)
+	assert.True(t, err == nil)
+	err = s.Start()
+	assert.True(t, err == nil, "%s", err)
+
+	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
+
+	req := createTestMessageWithType("null.example.org.", dns.TypeA)
+	reply, err := dns.Exchange(req, addr.String())
+	assert.True(t, err == nil)
+	assert.True(t, len(reply.Answer) == 1)
+	a, ok := reply.Answer[0].(*dns.A)
+	assert.True(t, ok)
+	assert.True(t, a.A.String() == "0.0.0.1")
+
+	req = createTestMessageWithType("null.example.org.", dns.TypeAAAA)
+	reply, err = dns.Exchange(req, addr.String())
+	assert.True(t, err == nil)
+	assert.True(t, len(reply.Answer) == 1)
+	a6, ok := reply.Answer[0].(*dns.AAAA)
+	assert.True(t, ok)
+	assert.True(t, a6.AAAA.String() == "::1")
+
+	err = s.Stop()
+	if err != nil {
+		t.Fatalf("DNS server failed to stop: %s", err)
+	}
+}
+
 func TestBlockedByHosts(t *testing.T) {
 	s := createTestServer(t)
-	err := s.Start(nil)
+	err := s.Start()
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -326,7 +544,7 @@ func TestBlockedByHosts(t *testing.T) {
 
 func TestBlockedBySafeBrowsing(t *testing.T) {
 	s := createTestServer(t)
-	err := s.Start(nil)
+	err := s.Start()
 	if err != nil {
 		t.Fatalf("Failed to start server: %s", err)
 	}
@@ -375,9 +593,14 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 }
 
 func createTestServer(t *testing.T) *Server {
-	rules := "||nxdomain.example.org^\n||null.example.org^\n127.0.0.1	host.example.org\n"
-	filters := map[int]string{}
-	filters[0] = rules
+	rules := `||nxdomain.example.org
+||null.example.org^
+127.0.0.1	host.example.org
+@@||whitelist.example.org^
+||127.0.0.255`
+	filters := []dnsfilter.Filter{dnsfilter.Filter{
+		ID: 0, Data: []byte(rules),
+	}}
 	c := dnsfilter.Config{}
 	c.SafeBrowsingEnabled = true
 	c.SafeBrowsingCacheSize = 1000
@@ -390,9 +613,10 @@ func createTestServer(t *testing.T) *Server {
 	s := NewServer(f, nil, nil)
 	s.conf.UDPListenAddr = &net.UDPAddr{Port: 0}
 	s.conf.TCPListenAddr = &net.TCPAddr{Port: 0}
-
-	s.conf.FilteringConfig.FilteringEnabled = true
+	s.conf.UpstreamDNS = []string{"8.8.8.8:53", "8.8.4.4:53"}
 	s.conf.FilteringConfig.ProtectionEnabled = true
+	err := s.Prepare(nil)
+	assert.True(t, err == nil)
 	return s
 }
 
@@ -512,6 +736,16 @@ func createTestMessage(host string) *dns.Msg {
 	return &req
 }
 
+func createTestMessageWithType(host string, qtype uint16) *dns.Msg {
+	req := dns.Msg{}
+	req.Id = dns.Id()
+	req.RecursionDesired = true
+	req.Question = []dns.Question{
+		{Name: host, Qtype: qtype, Qclass: dns.ClassINET},
+	}
+	return &req
+}
+
 func assertGoogleAResponse(t *testing.T, reply *dns.Msg) {
 	assertResponse(t, reply, "8.8.8.8")
 }
@@ -541,67 +775,145 @@ func publicKey(priv interface{}) interface{} {
 }
 
 func TestIsBlockedIPAllowed(t *testing.T) {
-	s := createTestServer(t)
-	s.conf.AllowedClients = []string{"1.1.1.1", "2.2.0.0/16"}
+	a := &accessCtx{}
+	assert.True(t, a.Init([]string{"1.1.1.1", "2.2.0.0/16"}, nil, nil) == nil)
 
-	err := s.Start(nil)
-	if err != nil {
-		t.Fatalf("Failed to start server: %s", err)
-	}
-
-	if s.isBlockedIP("1.1.1.1") {
-		t.Fatalf("isBlockedIP")
-	}
-	if !s.isBlockedIP("1.1.1.2") {
-		t.Fatalf("isBlockedIP")
-	}
-	if s.isBlockedIP("2.2.1.1") {
-		t.Fatalf("isBlockedIP")
-	}
-	if !s.isBlockedIP("2.3.1.1") {
-		t.Fatalf("isBlockedIP")
-	}
+	assert.True(t, !a.IsBlockedIP("1.1.1.1"))
+	assert.True(t, a.IsBlockedIP("1.1.1.2"))
+	assert.True(t, !a.IsBlockedIP("2.2.1.1"))
+	assert.True(t, a.IsBlockedIP("2.3.1.1"))
 }
 
 func TestIsBlockedIPDisallowed(t *testing.T) {
-	s := createTestServer(t)
-	s.conf.DisallowedClients = []string{"1.1.1.1", "2.2.0.0/16"}
+	a := &accessCtx{}
+	assert.True(t, a.Init(nil, []string{"1.1.1.1", "2.2.0.0/16"}, nil) == nil)
 
-	err := s.Start(nil)
-	if err != nil {
-		t.Fatalf("Failed to start server: %s", err)
-	}
-
-	if !s.isBlockedIP("1.1.1.1") {
-		t.Fatalf("isBlockedIP")
-	}
-	if s.isBlockedIP("1.1.1.2") {
-		t.Fatalf("isBlockedIP")
-	}
-	if !s.isBlockedIP("2.2.1.1") {
-		t.Fatalf("isBlockedIP")
-	}
-	if s.isBlockedIP("2.3.1.1") {
-		t.Fatalf("isBlockedIP")
-	}
+	assert.True(t, a.IsBlockedIP("1.1.1.1"))
+	assert.True(t, !a.IsBlockedIP("1.1.1.2"))
+	assert.True(t, a.IsBlockedIP("2.2.1.1"))
+	assert.True(t, !a.IsBlockedIP("2.3.1.1"))
 }
 
 func TestIsBlockedIPBlockedDomain(t *testing.T) {
-	s := createTestServer(t)
-	s.conf.BlockedHosts = []string{"host1", "host2"}
+	a := &accessCtx{}
+	assert.True(t, a.Init(nil, nil, []string{"host1",
+		"host2",
+		"*.host.com",
+		"||host3.com^",
+	}) == nil)
 
-	err := s.Start(nil)
+	// match by "host2.com"
+	assert.True(t, a.IsBlockedDomain("host1"))
+	assert.True(t, a.IsBlockedDomain("host2"))
+	assert.True(t, !a.IsBlockedDomain("host3"))
+
+	// match by wildcard "*.host.com"
+	assert.True(t, !a.IsBlockedDomain("host.com"))
+	assert.True(t, a.IsBlockedDomain("asdf.host.com"))
+	assert.True(t, a.IsBlockedDomain("qwer.asdf.host.com"))
+	assert.True(t, !a.IsBlockedDomain("asdf.zhost.com"))
+
+	// match by wildcard "||host3.com^"
+	assert.True(t, a.IsBlockedDomain("host3.com"))
+	assert.True(t, a.IsBlockedDomain("asdf.host3.com"))
+}
+
+func TestValidateUpstream(t *testing.T) {
+	invalidUpstreams := []string{"1.2.3.4.5",
+		"123.3.7m",
+		"htttps://google.com/dns-query",
+		"[/host.com]tls://dns.adguard.com",
+		"[host.ru]#",
+	}
+
+	validDefaultUpstreams := []string{"1.1.1.1",
+		"tls://1.1.1.1",
+		"https://dns.adguard.com/dns-query",
+		"sdns://AQMAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
+	}
+
+	validUpstreams := []string{"[/host.com/]1.1.1.1",
+		"[//]tls://1.1.1.1",
+		"[/www.host.com/]#",
+		"[/host.com/google.com/]8.8.8.8",
+		"[/host/]sdns://AQMAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
+	}
+	for _, u := range invalidUpstreams {
+		_, err := validateUpstream(u)
+		if err == nil {
+			t.Fatalf("upstream %s is invalid but it pass through validation", u)
+		}
+	}
+
+	for _, u := range validDefaultUpstreams {
+		defaultUpstream, err := validateUpstream(u)
+		if err != nil {
+			t.Fatalf("upstream %s is valid but it doen't pass through validation cause: %s", u, err)
+		}
+		if !defaultUpstream {
+			t.Fatalf("upstream %s is default one!", u)
+		}
+	}
+
+	for _, u := range validUpstreams {
+		defaultUpstream, err := validateUpstream(u)
+		if err != nil {
+			t.Fatalf("upstream %s is valid but it doen't pass through validation cause: %s", u, err)
+		}
+		if defaultUpstream {
+			t.Fatalf("upstream %s is default one!", u)
+		}
+	}
+}
+
+func TestValidateUpstreamsSet(t *testing.T) {
+	// Set of valid upstreams. There is no default upstream specified
+	upstreamsSet := []string{"[/host.com/]1.1.1.1",
+		"[//]tls://1.1.1.1",
+		"[/www.host.com/]#",
+		"[/host.com/google.com/]8.8.8.8",
+		"[/host/]sdns://AQMAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
+	}
+	err := ValidateUpstreams(upstreamsSet)
+	if err == nil {
+		t.Fatalf("there is no default upstream")
+	}
+
+	// Let's add default upstream
+	upstreamsSet = append(upstreamsSet, "8.8.8.8")
+	err = ValidateUpstreams(upstreamsSet)
 	if err != nil {
-		t.Fatalf("Failed to start server: %s", err)
+		t.Fatalf("upstreams set is valid, but doesn't pass through validation cause: %s", err)
 	}
 
-	if !s.isBlockedDomain("host1") {
-		t.Fatalf("isBlockedDomain")
+	// Let's add invalid upstream
+	upstreamsSet = append(upstreamsSet, "dhcp://fake.dns")
+	err = ValidateUpstreams(upstreamsSet)
+	if err == nil {
+		t.Fatalf("there is an invalid upstream in set, but it pass through validation")
 	}
-	if !s.isBlockedDomain("host2") {
-		t.Fatalf("isBlockedDomain")
-	}
-	if s.isBlockedDomain("host3") {
-		t.Fatalf("isBlockedDomain")
-	}
+}
+
+func TestIpFromAddr(t *testing.T) {
+	addr := net.UDPAddr{}
+	addr.IP = net.ParseIP("1:2:3::4")
+	addr.Port = 12345
+	addr.Zone = "eth0"
+	a := ipFromAddr(&addr)
+	assert.True(t, a == "1:2:3::4")
+
+	a = ipFromAddr(nil)
+	assert.True(t, a == "")
+}
+
+func TestMatchDNSName(t *testing.T) {
+	dnsNames := []string{"host1", "*.host2", "1.2.3.4"}
+	sort.Strings(dnsNames)
+	assert.True(t, matchDNSName(dnsNames, "host1"))
+	assert.True(t, matchDNSName(dnsNames, "a.host2"))
+	assert.True(t, matchDNSName(dnsNames, "b.a.host2"))
+	assert.True(t, matchDNSName(dnsNames, "1.2.3.4"))
+	assert.True(t, !matchDNSName(dnsNames, "host2"))
+	assert.True(t, !matchDNSName(dnsNames, ""))
+	assert.True(t, !matchDNSName(dnsNames, "*.host2"))
 }

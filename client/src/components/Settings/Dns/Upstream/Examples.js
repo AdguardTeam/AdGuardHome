@@ -23,10 +23,10 @@ const Examples = props => (
         <Trans>examples_title</Trans>:
         <ol className="leading-loose">
             <li>
-                <code>1.1.1.1</code> - {props.t('example_upstream_regular')}
+                <code>9.9.9.9</code> - {props.t('example_upstream_regular')}
             </li>
             <li>
-                <code>tls://1dot1dot1dot1.cloudflare-dns.com</code> –&nbsp;
+                <code>tls://dns.quad9.net</code> –&nbsp;
                 <span>
                     <Trans
                         components={[
@@ -45,7 +45,7 @@ const Examples = props => (
                 </span>
             </li>
             <li>
-                <code>https://cloudflare-dns.com/dns-query</code> –&nbsp;
+                <code>https://dns.quad9.net/dns-query</code> –&nbsp;
                 <span>
                     <Trans
                         components={[
@@ -64,7 +64,7 @@ const Examples = props => (
                 </span>
             </li>
             <li>
-                <code>tcp://1.1.1.1</code> – <Trans>example_upstream_tcp</Trans>
+                <code>tcp://9.9.9.9</code> – <Trans>example_upstream_tcp</Trans>
             </li>
             <li>
                 <code>sdns://...</code> –&nbsp;
@@ -102,7 +102,7 @@ const Examples = props => (
                 </span>
             </li>
             <li>
-                <code>[/example.local/]1.1.1.1</code> –&nbsp;
+                <code>[/example.local/]9.9.9.9</code> –&nbsp;
                 <span>
                     <Trans
                         components={[

@@ -13,6 +13,7 @@ import rewrites from './rewrites';
 import services from './services';
 import stats from './stats';
 import queryLogs from './queryLogs';
+import dnsConfig from './dnsConfig';
 import filtering from './filtering';
 
 const settings = handleActions(
@@ -57,12 +58,13 @@ const settings = handleActions(
 
 const dashboard = handleActions(
     {
+        [actions.setDnsRunningStatus]: (state, { payload }) =>
+            ({ ...state, isCoreRunning: payload }),
         [actions.dnsStatusRequest]: state => ({ ...state, processing: true }),
         [actions.dnsStatusFailure]: state => ({ ...state, processing: false }),
         [actions.dnsStatusSuccess]: (state, { payload }) => {
             const {
                 version,
-                running,
                 dns_port: dnsPort,
                 dns_addresses: dnsAddresses,
                 upstream_dns: upstreamDns,
@@ -74,7 +76,7 @@ const dashboard = handleActions(
             } = payload;
             const newState = {
                 ...state,
-                isCoreRunning: running,
+                isCoreRunning: true,
                 processing: false,
                 dnsVersion: version,
                 dnsPort,
@@ -86,20 +88,6 @@ const dashboard = handleActions(
                 language,
                 httpPort,
             };
-            return newState;
-        },
-
-        [actions.enableDnsRequest]: state => ({ ...state, processing: true }),
-        [actions.enableDnsFailure]: state => ({ ...state, processing: false }),
-        [actions.enableDnsSuccess]: (state) => {
-            const newState = { ...state, isCoreRunning: !state.isCoreRunning, processing: false };
-            return newState;
-        },
-
-        [actions.disableDnsRequest]: state => ({ ...state, processing: true }),
-        [actions.disableDnsFailure]: state => ({ ...state, processing: false }),
-        [actions.disableDnsSuccess]: (state) => {
-            const newState = { ...state, isCoreRunning: !state.isCoreRunning, processing: false };
             return newState;
         },
 
@@ -165,8 +153,7 @@ const dashboard = handleActions(
         [actions.getClientsSuccess]: (state, { payload }) => {
             const newState = {
                 ...state,
-                clients: payload.clients,
-                autoClients: payload.autoClients,
+                ...payload,
                 processingClients: false,
             };
             return newState;
@@ -200,9 +187,8 @@ const dashboard = handleActions(
     },
     {
         processing: true,
-        isCoreRunning: false,
+        isCoreRunning: true,
         processingVersion: true,
-        processingFiltering: true,
         processingClients: true,
         processingUpdate: false,
         processingDnsSettings: true,
@@ -218,6 +204,7 @@ const dashboard = handleActions(
         dnsVersion: '',
         clients: [],
         autoClients: [],
+        supportedTags: [],
         name: '',
     },
 );
@@ -289,6 +276,16 @@ const dhcp = handleActions(
             return newState;
         },
 
+        [actions.resetDhcpRequest]: state => ({ ...state, processingReset: true }),
+        [actions.resetDhcpFailure]: state => ({ ...state, processingReset: false }),
+        [actions.resetDhcpSuccess]: state => ({
+            ...state,
+            processingReset: false,
+            config: {
+                enabled: false,
+            },
+        }),
+
         [actions.toggleLeaseModal]: (state) => {
             const newState = {
                 ...state,
@@ -359,6 +356,7 @@ export default combineReducers({
     rewrites,
     services,
     stats,
+    dnsConfig,
     loadingBar: loadingBarReducer,
     form: formReducer,
 });

@@ -5,46 +5,46 @@ import escapeRegExp from 'lodash/escapeRegExp';
 import endsWith from 'lodash/endsWith';
 import { Trans, withNamespaces } from 'react-i18next';
 import { HashLink as Link } from 'react-router-hash-link';
-import debounce from 'lodash/debounce';
 
 import {
     formatTime,
     formatDateTime,
-    isValidQuestionType,
+    isToday,
+    checkFiltered,
+    checkRewrite,
+    checkWhiteList,
+    checkBlackList,
+    checkBlockedService,
 } from '../../helpers/helpers';
-import { SERVICES, FILTERED_STATUS, DEBOUNCE_TIMEOUT, DEFAULT_LOGS_FILTER } from '../../helpers/constants';
+import { SERVICES, TABLE_DEFAULT_PAGE_SIZE, CUSTOM_FILTERING_RULES_ID, FILTERED } from '../../helpers/constants';
 import { getTrackerData } from '../../helpers/trackers/trackers';
 import { formatClientCell } from '../../helpers/formatClientCell';
 
+import Filters from './Filters';
 import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
 import Loading from '../ui/Loading';
 import PopoverFiltered from '../ui/PopoverFilter';
 import Popover from '../ui/Popover';
-import Tooltip from '../ui/Tooltip';
 import './Logs.css';
+import CellWrap from '../ui/CellWrap';
 
 const TABLE_FIRST_PAGE = 0;
-const TABLE_DEFAULT_PAGE_SIZE = 50;
-const INITIAL_REQUEST_DATA = ['', DEFAULT_LOGS_FILTER, TABLE_FIRST_PAGE, TABLE_DEFAULT_PAGE_SIZE];
-const FILTERED_REASON = 'Filtered';
-const RESPONSE_FILTER = {
-    ALL: 'all',
-    FILTERED: 'filtered',
-};
+const INITIAL_REQUEST = true;
+const INITIAL_REQUEST_DATA = ['', TABLE_FIRST_PAGE, INITIAL_REQUEST];
 
 class Logs extends Component {
     componentDidMount() {
+        this.props.setLogsPage(TABLE_FIRST_PAGE);
         this.getLogs(...INITIAL_REQUEST_DATA);
         this.props.getFilteringStatus();
-        this.props.getClients();
         this.props.getLogsConfig();
     }
 
-    getLogs = (lastRowTime, filter, page, pageSize, filtered) => {
+    getLogs = (older_than, page, initial) => {
         if (this.props.queryLogs.enabled) {
             this.props.getLogs({
-                lastRowTime, filter, page, pageSize, filtered,
+                older_than, page, pageSize: TABLE_DEFAULT_PAGE_SIZE, initial,
             });
         }
     };
@@ -52,16 +52,6 @@ class Logs extends Component {
     refreshLogs = () => {
         window.location.reload();
     };
-
-    handleLogsFiltering = debounce((lastRowTime, filter, page, pageSize, filtered) => {
-        this.props.getLogs({
-            lastRowTime,
-            filter,
-            page,
-            pageSize,
-            filtered,
-        });
-    }, DEBOUNCE_TIMEOUT);
 
     renderTooltip = (isFiltered, rule, filter, service) =>
         isFiltered && <PopoverFiltered rule={rule} filter={filter} service={service} />;
@@ -125,18 +115,10 @@ class Logs extends Component {
         );
     }
 
-    checkFiltered = reason => reason.indexOf(FILTERED_REASON) === 0;
-
-    checkRewrite = reason => reason === FILTERED_STATUS.REWRITE;
-
-    checkWhiteList = reason => reason === FILTERED_STATUS.NOT_FILTERED_WHITE_LIST;
-
-    getTimeCell = ({ value }) => (
-        <div className="logs__row">
-            <span className="logs__text" title={formatDateTime(value)}>
-                {formatTime(value)}
-            </span>
-        </div>
+    getDateCell = row => CellWrap(
+        row,
+        (isToday(row.value) ? formatTime : formatDateTime),
+        formatDateTime,
     );
 
     getDomainCell = (row) => {
@@ -151,43 +133,84 @@ class Logs extends Component {
         );
     };
 
-    getResponseCell = ({ value: responses, original }) => {
-        const {
-            reason, filterId, rule, status,
-        } = original;
-        const { t, filtering } = this.props;
-        const { filters } = filtering;
+    normalizeResponse = response => (
+        response.map((response) => {
+            const { value, type, ttl } = response;
+            return `${type}: ${value} (ttl=${ttl})`;
+        })
+    );
 
-        const isFiltered = this.checkFiltered(reason);
-        const filterKey = reason.replace(FILTERED_REASON, '');
-        const parsedFilteredReason = t('query_log_filtered', { filter: filterKey });
-        const isRewrite = this.checkRewrite(reason);
-        const isWhiteList = this.checkWhiteList(reason);
-        const isBlockedService = reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
-        const currentService = SERVICES.find(service => service.id === original.serviceName);
-        const serviceName = currentService && currentService.name;
+    getFilterName = (filters, whitelistFilters, filterId, t) => {
+        if (filterId === CUSTOM_FILTERING_RULES_ID) {
+            return t('custom_filter_rules');
+        }
+
+        const filter = filters.find(filter => filter.id === filterId)
+            || whitelistFilters.find(filter => filter.id === filterId);
         let filterName = '';
 
-        if (filterId === 0) {
-            filterName = t('custom_filter_rules');
-        } else {
-            const filterItem = Object.keys(filters).filter(key => filters[key].id === filterId)[0];
+        if (filter) {
+            filterName = filter.name;
+        }
 
-            if (typeof filterItem !== 'undefined' && typeof filters[filterItem] !== 'undefined') {
-                filterName = filters[filterItem].name;
-            }
+        if (!filterName) {
+            filterName = t('unknown_filter', { filterId });
+        }
 
-            if (!filterName) {
-                filterName = t('unknown_filter', { filterId });
-            }
+        return filterName;
+    }
+
+    getResponseCell = ({ value: responses, original }) => {
+        const {
+            reason, filterId, rule, status, originalAnswer,
+        } = original;
+        const { t, filtering } = this.props;
+        const { filters, whitelistFilters } = filtering;
+
+        const isFiltered = checkFiltered(reason);
+        const isBlackList = checkBlackList(reason);
+        const isRewrite = checkRewrite(reason);
+        const isWhiteList = checkWhiteList(reason);
+        const isBlockedService = checkBlockedService(reason);
+        const isBlockedCnameIp = originalAnswer;
+
+        const filterKey = reason.replace(FILTERED, '');
+        const parsedFilteredReason = t('query_log_filtered', { filter: filterKey });
+        const currentService = SERVICES.find(service => service.id === original.serviceName);
+        const serviceName = currentService && currentService.name;
+        const filterName = this.getFilterName(filters, whitelistFilters, filterId, t);
+
+        if (isBlockedCnameIp) {
+            const normalizedAnswer = this.normalizeResponse(originalAnswer);
+
+            return (
+                <div className="logs__row logs__row--column">
+                    <div className="logs__text-wrap">
+                        <span className="logs__text">
+                            <Trans>blocked_by_response</Trans>
+                        </span>
+                        {this.renderTooltip(isFiltered, rule, filterName)}
+                    </div>
+                    <div className="logs__list-wrap">
+                        {this.renderResponseList(normalizedAnswer, status)}
+                    </div>
+                </div>
+            );
         }
 
         return (
             <div className="logs__row logs__row--column">
                 <div className="logs__text-wrap">
-                    {(isFiltered || isBlockedService) && (
+                    {(isFiltered || isBlockedService) && !isBlackList && (
                         <span className="logs__text" title={parsedFilteredReason}>
                             {parsedFilteredReason}
+                        </span>
+                    )}
+                    {isBlackList && (
+                        <span className="logs__text">
+                            <Trans values={{ filter: filterName }}>
+                                query_log_filtered
+                            </Trans>
                         </span>
                     )}
                     {isBlockedService
@@ -207,21 +230,21 @@ class Logs extends Component {
         );
     };
 
-    getClientCell = ({ original, value }) => {
-        const { dashboard, t } = this.props;
-        const { clients, autoClients } = dashboard;
+    getClientCell = (row) => {
+        const { original } = row;
+        const { t } = this.props;
         const { reason, domain } = original;
-        const isFiltered = this.checkFiltered(reason);
-        const isRewrite = this.checkRewrite(reason);
+        const isFiltered = checkFiltered(reason);
+        const isRewrite = checkRewrite(reason);
 
         return (
             <Fragment>
                 <div className="logs__row logs__row--overflow logs__row--column">
-                    {formatClientCell(value, clients, autoClients, t)}
+                    {formatClientCell(row, t)}
                 </div>
                 {isRewrite ? (
                     <div className="logs__action">
-                        <Link to="/dns#rewrites" className="btn btn-sm btn-outline-primary">
+                        <Link to="/dns_rewrites" className="btn btn-sm btn-outline-primary">
                             <Trans>configure</Trans>
                         </Link>
                     </div>
@@ -232,89 +255,40 @@ class Logs extends Component {
         );
     };
 
-    getFilterInput = ({ filter, onChange }) => (
-        <Fragment>
-            <div className="logs__input-wrap">
-                <input
-                    type="text"
-                    className="form-control"
-                    onChange={event => onChange(event.target.value)}
-                    value={filter ? filter.value : ''}
-                />
-                <span className="logs__notice">
-                    <Tooltip text={this.props.t('query_log_strict_search')} type='tooltip-custom--logs' />
-                </span>
-            </div>
-        </Fragment>
-    );
-
-    getFilters = (filtered) => {
-        const filteredObj = filtered.reduce((acc, cur) => ({ ...acc, [cur.id]: cur.value }), {});
-        const {
-            domain, client, type, response,
-        } = filteredObj;
-
-        return {
-            filter_domain: domain || '',
-            filter_client: client || '',
-            filter_question_type: isValidQuestionType(type) ? type.toUpperCase() : '',
-            filter_response_status: response === RESPONSE_FILTER.FILTERED ? response : '',
-        };
-    };
-
     fetchData = (state) => {
-        const { pageSize, page, pages } = state;
-        const { allLogs, filter } = this.props.queryLogs;
+        const { pages } = state;
+        const { oldest, page } = this.props.queryLogs;
         const isLastPage = pages && (page + 1 === pages);
 
         if (isLastPage) {
-            const lastRow = allLogs[allLogs.length - 1];
-            const lastRowTime = (lastRow && lastRow.time) || '';
-            this.getLogs(lastRowTime, filter, page, pageSize, true);
-        } else {
-            this.props.setLogsPagination({ page, pageSize });
+            this.getLogs(oldest, page);
         }
     };
 
-    handleFilterChange = (filtered) => {
-        const filters = this.getFilters(filtered);
-        this.props.setLogsFilter(filters);
-        this.handleLogsFiltering('', filters, TABLE_FIRST_PAGE, TABLE_DEFAULT_PAGE_SIZE, true);
-    }
-
-    showTotalPagesCount = (pages) => {
-        const { total, isEntireLog } = this.props.queryLogs;
-        const showEllipsis = !isEntireLog && total >= 500;
-
-        return (
-            <span className="-totalPages">
-                {pages || 1}{showEllipsis && '…' }
-            </span>
-        );
-    }
+    changePage = (page) => {
+        this.props.setLogsPage(page);
+        this.props.setLogsPagination({ page, pageSize: TABLE_DEFAULT_PAGE_SIZE });
+    };
 
     renderLogs() {
-        const { queryLogs, dashboard, t } = this.props;
-        const { processingClients } = dashboard;
+        const { queryLogs, t } = this.props;
         const {
-            processingGetLogs, processingGetConfig, logs, pages,
+            processingGetLogs, processingGetConfig, logs, pages, page,
         } = queryLogs;
-        const isLoading = processingGetLogs || processingClients || processingGetConfig;
+        const isLoading = processingGetLogs || processingGetConfig;
 
         const columns = [
             {
                 Header: t('time_table_header'),
                 accessor: 'time',
-                maxWidth: 100,
-                filterable: false,
-                Cell: this.getTimeCell,
+                minWidth: 105,
+                Cell: this.getDateCell,
             },
             {
                 Header: t('domain_name_table_header'),
                 accessor: 'domain',
                 minWidth: 180,
                 Cell: this.getDomainCell,
-                Filter: this.getFilterInput,
             },
             {
                 Header: t('type_table_header'),
@@ -326,28 +300,6 @@ class Logs extends Component {
                 accessor: 'response',
                 minWidth: 250,
                 Cell: this.getResponseCell,
-                filterMethod: (filter, row) => {
-                    if (filter.value === RESPONSE_FILTER.FILTERED) {
-                        // eslint-disable-next-line no-underscore-dangle
-                        const { reason } = row._original;
-                        return this.checkFiltered(reason) || this.checkWhiteList(reason);
-                    }
-                    return true;
-                },
-                Filter: ({ filter, onChange }) => (
-                    <select
-                        className="form-control custom-select"
-                        onChange={event => onChange(event.target.value)}
-                        value={filter ? filter.value : RESPONSE_FILTER.ALL}
-                    >
-                        <option value={RESPONSE_FILTER.ALL}>
-                            <Trans>show_all_filter_type</Trans>
-                        </option>
-                        <option value={RESPONSE_FILTER.FILTERED}>
-                            <Trans>show_filtered_type</Trans>
-                        </option>
-                    </select>
-                ),
             },
             {
                 Header: t('client_table_header'),
@@ -355,34 +307,36 @@ class Logs extends Component {
                 maxWidth: 240,
                 minWidth: 240,
                 Cell: this.getClientCell,
-                Filter: this.getFilterInput,
             },
         ];
 
         return (
             <ReactTable
                 manual
-                filterable
                 minRows={5}
+                page={page}
                 pages={pages}
                 columns={columns}
+                filterable={false}
                 sortable={false}
                 data={logs || []}
                 loading={isLoading}
-                showPageJump={false}
-                onFetchData={this.fetchData}
-                onFilteredChange={this.handleFilterChange}
-                className="logs__table"
                 showPagination={true}
+                showPaginationTop={true}
+                showPageJump={false}
+                showPageSizeOptions={false}
+                onFetchData={this.fetchData}
+                onPageChange={this.changePage}
+                className="logs__table"
                 defaultPageSize={TABLE_DEFAULT_PAGE_SIZE}
                 previousText={t('previous_btn')}
                 nextText={t('next_btn')}
                 loadingText={t('loading_table_status')}
-                pageText={t('page_table_footer_text')}
-                ofText={t('of_table_footer_text')}
                 rowsText={t('rows_table_footer_text')}
                 noDataText={t('no_logs_found')}
-                renderTotalPagesCount={this.showTotalPagesCount}
+                pageText={''}
+                ofText={''}
+                renderTotalPagesCount={() => false}
                 defaultFilterMethod={(filter, row) => {
                     const id = filter.pivotId || filter.id;
                     return row[id] !== undefined
@@ -402,15 +356,15 @@ class Logs extends Component {
 
                     const { reason } = rowInfo.original;
 
-                    if (this.checkFiltered(reason)) {
+                    if (checkFiltered(reason)) {
                         return {
                             className: 'red',
                         };
-                    } else if (this.checkWhiteList(reason)) {
+                    } else if (checkWhiteList(reason)) {
                         return {
                             className: 'green',
                         };
-                    } else if (this.checkRewrite(reason)) {
+                    } else if (checkRewrite(reason)) {
                         return {
                             className: 'blue',
                         };
@@ -426,7 +380,9 @@ class Logs extends Component {
 
     render() {
         const { queryLogs, t } = this.props;
-        const { enabled, processingGetConfig } = queryLogs;
+        const {
+            enabled, processingGetConfig, processingAdditionalLogs, processingGetLogs,
+        } = queryLogs;
 
         const refreshButton = enabled ? (
             <button
@@ -446,7 +402,17 @@ class Logs extends Component {
             <Fragment>
                 <PageTitle title={t('query_log')}>{refreshButton}</PageTitle>
                 {enabled && processingGetConfig && <Loading />}
-                {enabled && !processingGetConfig && <Card>{this.renderLogs()}</Card>}
+                {enabled && !processingGetConfig && (
+                    <Fragment>
+                        <Filters
+                            filter={queryLogs.filter}
+                            processingGetLogs={processingGetLogs}
+                            processingAdditionalLogs={processingAdditionalLogs}
+                            setLogsFilter={this.props.setLogsFilter}
+                        />
+                        <Card>{this.renderLogs()}</Card>
+                    </Fragment>
+                )}
                 {!enabled && !processingGetConfig && (
                     <Card>
                         <div className="lead text-center py-6">
@@ -479,6 +445,7 @@ Logs.propTypes = {
     getLogsConfig: PropTypes.func.isRequired,
     setLogsPagination: PropTypes.func.isRequired,
     setLogsFilter: PropTypes.func.isRequired,
+    setLogsPage: PropTypes.func.isRequired,
     t: PropTypes.func.isRequired,
 };
 

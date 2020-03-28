@@ -13,12 +13,12 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
-	"go.etcd.io/bbolt"
+	"github.com/etcd-io/bbolt"
 	"golang.org/x/crypto/bcrypt"
 )
 
 const cookieTTL = 365 * 24 // in hours
-const expireTime = 30 * 24 // in hours
+const sessionCookieName = "agh_session"
 
 type session struct {
 	userName string
@@ -56,10 +56,11 @@ func (s *session) deserialize(data []byte) bool {
 
 // Auth - global object
 type Auth struct {
-	db       *bbolt.DB
-	sessions map[string]*session // session name -> session data
-	lock     sync.Mutex
-	users    []User
+	db         *bbolt.DB
+	sessions   map[string]*session // session name -> session data
+	lock       sync.Mutex
+	users      []User
+	sessionTTL uint32 // in seconds
 }
 
 // User object
@@ -69,8 +70,9 @@ type User struct {
 }
 
 // InitAuth - create a global object
-func InitAuth(dbFilename string, users []User) *Auth {
+func InitAuth(dbFilename string, users []User, sessionTTL uint32) *Auth {
 	a := Auth{}
+	a.sessionTTL = sessionTTL
 	a.sessions = make(map[string]*session)
 	rand.Seed(time.Now().UTC().Unix())
 	var err error
@@ -145,18 +147,21 @@ func (a *Auth) loadSessions() {
 
 // store session data in file
 func (a *Auth) addSession(data []byte, s *session) {
+	name := hex.EncodeToString(data)
 	a.lock.Lock()
-	a.sessions[hex.EncodeToString(data)] = s
+	a.sessions[name] = s
 	a.lock.Unlock()
-	a.storeSession(data, s)
+	if a.storeSession(data, s) {
+		log.Debug("Auth: created session %s: expire=%d", name, s.expire)
+	}
 }
 
 // store session data in file
-func (a *Auth) storeSession(data []byte, s *session) {
+func (a *Auth) storeSession(data []byte, s *session) bool {
 	tx, err := a.db.Begin(true)
 	if err != nil {
 		log.Error("Auth: bbolt.Begin: %s", err)
-		return
+		return false
 	}
 	defer func() {
 		_ = tx.Rollback()
@@ -165,21 +170,20 @@ func (a *Auth) storeSession(data []byte, s *session) {
 	bkt, err := tx.CreateBucketIfNotExists(bucketName())
 	if err != nil {
 		log.Error("Auth: bbolt.CreateBucketIfNotExists: %s", err)
-		return
+		return false
 	}
 	err = bkt.Put(data, s.serialize())
 	if err != nil {
 		log.Error("Auth: bbolt.Put: %s", err)
-		return
+		return false
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		log.Error("Auth: bbolt.Commit: %s", err)
-		return
+		return false
 	}
-
-	log.Debug("Auth: stored session in DB")
+	return true
 }
 
 // remove session from file
@@ -233,7 +237,7 @@ func (a *Auth) CheckSession(sess string) int {
 		return 1
 	}
 
-	newExpire := now + expireTime*60*60
+	newExpire := now + a.sessionTTL
 	if s.expire/(24*60*60) != newExpire/(24*60*60) {
 		// update expiration time once a day
 		update = true
@@ -244,7 +248,9 @@ func (a *Auth) CheckSession(sess string) int {
 
 	if update {
 		key, _ := hex.DecodeString(sess)
-		a.storeSession(key, s)
+		if a.storeSession(key, s) {
+			log.Debug("Auth: updated session %s: expire=%d", sess, s.expire)
+		}
 	}
 
 	return 0
@@ -270,8 +276,8 @@ func getSession(u *User) []byte {
 	return hash[:]
 }
 
-func httpCookie(req loginJSON) string {
-	u := config.auth.UserFind(req.Name, req.Password)
+func (a *Auth) httpCookie(req loginJSON) string {
+	u := a.UserFind(req.Name, req.Password)
 	if len(u.Name) == 0 {
 		return ""
 	}
@@ -286,10 +292,11 @@ func httpCookie(req loginJSON) string {
 
 	s := session{}
 	s.userName = u.Name
-	s.expire = uint32(now.Unix()) + expireTime*60*60
-	config.auth.addSession(sess, &s)
+	s.expire = uint32(now.Unix()) + a.sessionTTL
+	a.addSession(sess, &s)
 
-	return fmt.Sprintf("session=%s; Path=/; HttpOnly; Expires=%s", hex.EncodeToString(sess), expstr)
+	return fmt.Sprintf("%s=%s; Path=/; HttpOnly; Expires=%s",
+		sessionCookieName, hex.EncodeToString(sess), expstr)
 }
 
 func handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -300,10 +307,11 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie := httpCookie(req)
+	cookie := Context.auth.httpCookie(req)
 	if len(cookie) == 0 {
+		log.Info("Auth: invalid user name or password: name='%s'", req.Name)
 		time.Sleep(1 * time.Second)
-		httpError(w, http.StatusBadRequest, "invalid login or password")
+		http.Error(w, "invalid user name or password", http.StatusBadRequest)
 		return
 	}
 
@@ -320,11 +328,12 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 	cookie := r.Header.Get("Cookie")
 	sess := parseCookie(cookie)
 
-	config.auth.RemoveSession(sess)
+	Context.auth.RemoveSession(sess)
 
 	w.Header().Set("Location", "/login.html")
 
-	s := fmt.Sprintf("session=; Path=/; HttpOnly; Expires=Thu, 01 Jan 1970 00:00:00 GMT")
+	s := fmt.Sprintf("%s=; Path=/; HttpOnly; Expires=Thu, 01 Jan 1970 00:00:00 GMT",
+		sessionCookieName)
 	w.Header().Set("Set-Cookie", s)
 
 	w.WriteHeader(http.StatusFound)
@@ -344,7 +353,7 @@ func parseCookie(cookie string) string {
 		if len(kv) != 2 {
 			continue
 		}
-		if kv[0] == "session" {
+		if kv[0] == sessionCookieName {
 			return kv[1]
 		}
 	}
@@ -356,47 +365,55 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 
 		if r.URL.Path == "/login.html" {
 			// redirect to dashboard if already authenticated
-			authRequired := config.auth != nil && config.auth.AuthRequired()
-			cookie, err := r.Cookie("session")
+			authRequired := Context.auth != nil && Context.auth.AuthRequired()
+			cookie, err := r.Cookie(sessionCookieName)
 			if authRequired && err == nil {
-				r := config.auth.CheckSession(cookie.Value)
+				r := Context.auth.CheckSession(cookie.Value)
 				if r == 0 {
 					w.Header().Set("Location", "/")
 					w.WriteHeader(http.StatusFound)
 					return
 				} else if r < 0 {
-					log.Debug("Auth: invalid cookie value: %s", cookie)
+					log.Info("Auth: invalid cookie value: %s", cookie)
 				}
 			}
 
 		} else if r.URL.Path == "/favicon.png" ||
-			strings.HasPrefix(r.URL.Path, "/login.") {
+			strings.HasPrefix(r.URL.Path, "/login.") ||
+			strings.HasPrefix(r.URL.Path, "/__locales/") {
 			// process as usual
 
-		} else if config.auth != nil && config.auth.AuthRequired() {
+		} else if Context.auth != nil && Context.auth.AuthRequired() {
 			// redirect to login page if not authenticated
 			ok := false
-			cookie, err := r.Cookie("session")
+			cookie, err := r.Cookie(sessionCookieName)
 			if err == nil {
-				r := config.auth.CheckSession(cookie.Value)
+				r := Context.auth.CheckSession(cookie.Value)
 				if r == 0 {
 					ok = true
 				} else if r < 0 {
-					log.Debug("Auth: invalid cookie value: %s", cookie)
+					log.Info("Auth: invalid cookie value: %s", cookie)
 				}
 			} else {
 				// there's no Cookie, check Basic authentication
 				user, pass, ok2 := r.BasicAuth()
 				if ok2 {
-					u := config.auth.UserFind(user, pass)
+					u := Context.auth.UserFind(user, pass)
 					if len(u.Name) != 0 {
 						ok = true
+					} else {
+						log.Info("Auth: invalid Basic Authorization value")
 					}
 				}
 			}
 			if !ok {
-				w.Header().Set("Location", "/login.html")
-				w.WriteHeader(http.StatusFound)
+				if r.URL.Path == "/" || r.URL.Path == "/index.html" {
+					w.Header().Set("Location", "/login.html")
+					w.WriteHeader(http.StatusFound)
+				} else {
+					w.WriteHeader(http.StatusForbidden)
+					_, _ = w.Write([]byte("Forbidden"))
+				}
 				return
 			}
 		}
@@ -452,12 +469,12 @@ func (a *Auth) UserFind(login string, password string) User {
 
 // GetCurrentUser - get the current user
 func (a *Auth) GetCurrentUser(r *http.Request) User {
-	cookie, err := r.Cookie("session")
+	cookie, err := r.Cookie(sessionCookieName)
 	if err != nil {
 		// there's no Cookie, check Basic authentication
 		user, pass, ok := r.BasicAuth()
 		if ok {
-			u := config.auth.UserFind(user, pass)
+			u := Context.auth.UserFind(user, pass)
 			return u
 		}
 		return User{}

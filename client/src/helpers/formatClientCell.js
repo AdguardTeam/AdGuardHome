@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { getClientInfo, normalizeWhois } from './helpers';
+import { normalizeWhois } from './helpers';
 import { WHOIS_ICONS } from './constants';
 
 const getFormattedWhois = (whois, t) => {
@@ -22,26 +22,29 @@ const getFormattedWhois = (whois, t) => {
     );
 };
 
-export const formatClientCell = (value, clients, autoClients, t) => {
-    const clientInfo = getClientInfo(clients, value) || getClientInfo(autoClients, value);
-    const { name, whois } = clientInfo;
+export const formatClientCell = (row, t) => {
+    const { value, original: { info } } = row;
     let whoisContainer = '';
     let nameContainer = value;
 
-    if (name) {
-        nameContainer = (
-            <span className="logs__text logs__text--wrap" title={`${name} (${value})`}>
-                {name} <small>({value})</small>
-            </span>
-        );
-    }
+    if (info) {
+        const { name, whois_info } = info;
 
-    if (whois) {
-        whoisContainer = (
-            <div className="logs__text logs__text--wrap logs__text--whois">
-                {getFormattedWhois(whois, t)}
-            </div>
-        );
+        if (name) {
+            nameContainer = (
+                <span className="logs__text logs__text--wrap" title={`${name} (${value})`}>
+                    {name} <small>({value})</small>
+                </span>
+            );
+        }
+
+        if (whois_info) {
+            whoisContainer = (
+                <div className="logs__text logs__text--wrap logs__text--whois">
+                    {getFormattedWhois(whois_info, t)}
+                </div>
+            );
+        }
     }
 
     return (

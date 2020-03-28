@@ -2,10 +2,8 @@ package home
 
 import (
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 	"sync"
 	"time"
 
@@ -30,27 +28,6 @@ type logSettings struct {
 	Verbose bool   `yaml:"verbose"`  // If true, verbose logging is enabled
 }
 
-type clientObject struct {
-	Name                string `yaml:"name"`
-	IP                  string `yaml:"ip"`
-	MAC                 string `yaml:"mac"`
-	UseGlobalSettings   bool   `yaml:"use_global_settings"`
-	FilteringEnabled    bool   `yaml:"filtering_enabled"`
-	ParentalEnabled     bool   `yaml:"parental_enabled"`
-	SafeSearchEnabled   bool   `yaml:"safebrowsing_enabled"`
-	SafeBrowsingEnabled bool   `yaml:"safesearch_enabled"`
-
-	UseGlobalBlockedServices bool     `yaml:"use_global_blocked_services"`
-	BlockedServices          []string `yaml:"blocked_services"`
-}
-
-type HTTPSServer struct {
-	server     *http.Server
-	cond       *sync.Cond // reacts to config.TLS.Enabled, PortHTTPS, CertificateChain and PrivateKey
-	sync.Mutex            // protects config.TLS
-	shutdown   bool       // if TRUE, don't restart the server
-}
-
 // configuration is loaded from YAML
 // field ordering is important -- yaml fields will mirror ordering from here
 type configuration struct {
@@ -58,44 +35,29 @@ type configuration struct {
 	// It's reset after config is parsed
 	fileData []byte
 
-	ourConfigFilename string // Config filename (can be overridden via the command line arguments)
-	ourWorkingDir     string // Location of our directory, used to protect against CWD being somewhere else
-	firstRun          bool   // if set to true, don't run any services except HTTP web inteface, and serve only first-run html
-	pidFileName       string // PID file name.  Empty if no PID file was created.
-	// runningAsService flag is set to true when options are passed from the service runner
-	runningAsService bool
-	disableUpdate    bool // If set, don't check for updates
-	appSignalChannel chan os.Signal
-	clients          clientsContainer // per-client-settings module
-	controlLock      sync.Mutex
-	transport        *http.Transport
-	client           *http.Client
-	stats            stats.Stats       // statistics module
-	queryLog         querylog.QueryLog // query log module
-	auth             *Auth             // HTTP authentication module
-
 	// cached version.json to avoid hammering github.io for each page reload
 	versionCheckJSON     []byte
 	versionCheckLastTime time.Time
 
-	dnsctx      dnsContext
-	dnsFilter   *dnsfilter.Dnsfilter
-	dnsServer   *dnsforward.Server
-	dhcpServer  dhcpd.Server
-	httpServer  *http.Server
-	httpsServer HTTPSServer
-
 	BindHost     string `yaml:"bind_host"`     // BindHost is the IP address of the HTTP server to bind to
 	BindPort     int    `yaml:"bind_port"`     // BindPort is the port the HTTP server
 	Users        []User `yaml:"users"`         // Users that can access HTTP server
+	ProxyURL     string `yaml:"http_proxy"`    // Proxy address for our HTTP client
 	Language     string `yaml:"language"`      // two-letter ISO 639-1 language code
 	RlimitNoFile uint   `yaml:"rlimit_nofile"` // Maximum number of opened fd's per process (0: default)
 
-	DNS       dnsConfig          `yaml:"dns"`
-	TLS       tlsConfig          `yaml:"tls"`
-	Filters   []filter           `yaml:"filters"`
-	UserRules []string           `yaml:"user_rules"`
-	DHCP      dhcpd.ServerConfig `yaml:"dhcp"`
+	// TTL for a web session (in hours)
+	// An active session is automatically refreshed once a day.
+	WebSessionTTLHours uint32 `yaml:"web_session_ttl"`
+
+	DNS dnsConfig         `yaml:"dns"`
+	TLS tlsConfigSettings `yaml:"tls"`
+
+	Filters          []filter `yaml:"filters"`
+	WhitelistFilters []filter `yaml:"whitelist_filters"`
+	UserRules        []string `yaml:"user_rules"`
+
+	DHCP dhcpd.ServerConfig `yaml:"dhcp"`
 
 	// Note: this array is filled only before file read/write and then it's cleared
 	Clients []clientObject `yaml:"clients"`
@@ -115,16 +77,17 @@ type dnsConfig struct {
 	// time interval for statistics (in days)
 	StatsInterval uint32 `yaml:"statistics_interval"`
 
+	QueryLogEnabled   bool   `yaml:"querylog_enabled"`     // if true, query log is enabled
+	QueryLogInterval  uint32 `yaml:"querylog_interval"`    // time interval for query log (in days)
+	QueryLogMemSize   uint32 `yaml:"querylog_size_memory"` // number of entries kept in memory before they are flushed to disk
+	AnonymizeClientIP bool   `yaml:"anonymize_client_ip"`  // anonymize clients' IP addresses in logs and stats
+
 	dnsforward.FilteringConfig `yaml:",inline"`
 
-	UpstreamDNS []string `yaml:"upstream_dns"`
+	FilteringEnabled           bool             `yaml:"filtering_enabled"`       // whether or not use filter lists
+	FiltersUpdateIntervalHours uint32           `yaml:"filters_update_interval"` // time period to update filters (in hours)
+	DnsfilterConf              dnsfilter.Config `yaml:",inline"`
 }
-
-var defaultDNS = []string{
-	"https://1.1.1.1/dns-query",
-	"https://1.0.0.1/dns-query",
-}
-var defaultBootstrap = []string{"1.1.1.1", "1.0.0.1"}
 
 type tlsConfigSettings struct {
 	Enabled        bool   `yaml:"enabled" json:"enabled"`                               // Enabled is the encryption (DOT/DOH/HTTPS) status
@@ -133,65 +96,34 @@ type tlsConfigSettings struct {
 	PortHTTPS      int    `yaml:"port_https" json:"port_https,omitempty"`               // HTTPS port. If 0, HTTPS will be disabled
 	PortDNSOverTLS int    `yaml:"port_dns_over_tls" json:"port_dns_over_tls,omitempty"` // DNS-over-TLS port. If 0, DOT will be disabled
 
+	// Allow DOH queries via unencrypted HTTP (e.g. for reverse proxying)
+	AllowUnencryptedDOH bool `yaml:"allow_unencrypted_doh" json:"allow_unencrypted_doh"`
+
 	dnsforward.TLSConfig `yaml:",inline" json:",inline"`
-}
-
-// field ordering is not important -- these are for API and are recalculated on each run
-type tlsConfigStatus struct {
-	ValidCert  bool      `yaml:"-" json:"valid_cert"`           // ValidCert is true if the specified certificates chain is a valid chain of X509 certificates
-	ValidChain bool      `yaml:"-" json:"valid_chain"`          // ValidChain is true if the specified certificates chain is verified and issued by a known CA
-	Subject    string    `yaml:"-" json:"subject,omitempty"`    // Subject is the subject of the first certificate in the chain
-	Issuer     string    `yaml:"-" json:"issuer,omitempty"`     // Issuer is the issuer of the first certificate in the chain
-	NotBefore  time.Time `yaml:"-" json:"not_before,omitempty"` // NotBefore is the NotBefore field of the first certificate in the chain
-	NotAfter   time.Time `yaml:"-" json:"not_after,omitempty"`  // NotAfter is the NotAfter field of the first certificate in the chain
-	DNSNames   []string  `yaml:"-" json:"dns_names"`            // DNSNames is the value of SubjectAltNames field of the first certificate in the chain
-
-	// key status
-	ValidKey bool   `yaml:"-" json:"valid_key"`          // ValidKey is true if the key is a valid private key
-	KeyType  string `yaml:"-" json:"key_type,omitempty"` // KeyType is one of RSA or ECDSA
-
-	// is usable? set by validator
-	ValidPair bool `yaml:"-" json:"valid_pair"` // ValidPair is true if both certificate and private key are correct
-
-	// warnings
-	WarningValidation string `yaml:"-" json:"warning_validation,omitempty"` // WarningValidation is a validation warning message with the issue description
-}
-
-// field ordering is important -- yaml fields will mirror ordering from here
-type tlsConfig struct {
-	tlsConfigSettings `yaml:",inline" json:",inline"`
-	tlsConfigStatus   `yaml:"-" json:",inline"`
 }
 
 // initialize to default values, will be changed later when reading config or parsing command line
 var config = configuration{
-	ourConfigFilename: "AdGuardHome.yaml",
-	BindPort:          3000,
-	BindHost:          "0.0.0.0",
+	BindPort: 3000,
+	BindHost: "0.0.0.0",
 	DNS: dnsConfig{
 		BindHost:      "0.0.0.0",
 		Port:          53,
 		StatsInterval: 1,
 		FilteringConfig: dnsforward.FilteringConfig{
-			ProtectionEnabled:          true, // whether or not use any of dnsfilter features
-			FilteringEnabled:           true, // whether or not use filter lists
-			FiltersUpdateIntervalHours: 24,
-			BlockingMode:               "nxdomain", // mode how to answer filtered requests
-			BlockedResponseTTL:         10,         // in seconds
-			QueryLogEnabled:            true,
-			QueryLogInterval:           1,
-			Ratelimit:                  20,
-			RefuseAny:                  true,
-			BootstrapDNS:               defaultBootstrap,
-			AllServers:                 false,
+			ProtectionEnabled:  true,      // whether or not use any of dnsfilter features
+			BlockingMode:       "default", // mode how to answer filtered requests
+			BlockedResponseTTL: 10,        // in seconds
+			Ratelimit:          20,
+			RefuseAny:          true,
+			AllServers:         false,
 		},
-		UpstreamDNS: defaultDNS,
+		FilteringEnabled:           true, // whether or not use filter lists
+		FiltersUpdateIntervalHours: 24,
 	},
-	TLS: tlsConfig{
-		tlsConfigSettings: tlsConfigSettings{
-			PortHTTPS:      443,
-			PortDNSOverTLS: 853, // needs to be passed through to dnsproxy
-		},
+	TLS: tlsConfigSettings{
+		PortHTTPS:      443,
+		PortDNSOverTLS: 853, // needs to be passed through to dnsproxy
 	},
 	DHCP: dhcpd.ServerConfig{
 		LeaseDuration: 86400,
@@ -202,20 +134,11 @@ var config = configuration{
 
 // initConfig initializes default configuration for the current OS&ARCH
 func initConfig() {
-	config.transport = &http.Transport{
-		DialContext: customDialContext,
-	}
-	config.client = &http.Client{
-		Timeout:   time.Minute * 5,
-		Transport: config.transport,
-	}
+	config.WebSessionTTLHours = 30 * 24
 
-	if runtime.GOARCH == "mips" || runtime.GOARCH == "mipsle" {
-		// Use plain DNS on MIPS, encryption is too slow
-		defaultDNS = []string{"1.1.1.1", "1.0.0.1"}
-		// also change the default config
-		config.DNS.UpstreamDNS = defaultDNS
-	}
+	config.DNS.QueryLogEnabled = true
+	config.DNS.QueryLogInterval = 90
+	config.DNS.QueryLogMemSize = 1000
 
 	config.DNS.CacheSize = 4 * 1024 * 1024
 	config.DNS.DnsfilterConf.SafeBrowsingCacheSize = 1 * 1024 * 1024
@@ -227,22 +150,17 @@ func initConfig() {
 
 // getConfigFilename returns path to the current config file
 func (c *configuration) getConfigFilename() string {
-	configFile, err := filepath.EvalSymlinks(config.ourConfigFilename)
+	configFile, err := filepath.EvalSymlinks(Context.configFilename)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			log.Error("unexpected error while config file path evaluation: %s", err)
 		}
-		configFile = config.ourConfigFilename
+		configFile = Context.configFilename
 	}
 	if !filepath.IsAbs(configFile) {
-		configFile = filepath.Join(config.ourWorkingDir, configFile)
+		configFile = filepath.Join(Context.workDir, configFile)
 	}
 	return configFile
-}
-
-// getDataDir returns path to the directory where we store databases and filters
-func (c *configuration) getDataDir() string {
-	return filepath.Join(c.ourWorkingDir, dataDir)
 }
 
 // getLogSettings reads logging settings from the config file.
@@ -279,33 +197,6 @@ func parseConfig() error {
 		config.DNS.FiltersUpdateIntervalHours = 24
 	}
 
-	for _, cy := range config.Clients {
-		cli := Client{
-			Name:                cy.Name,
-			IP:                  cy.IP,
-			MAC:                 cy.MAC,
-			UseOwnSettings:      !cy.UseGlobalSettings,
-			FilteringEnabled:    cy.FilteringEnabled,
-			ParentalEnabled:     cy.ParentalEnabled,
-			SafeSearchEnabled:   cy.SafeSearchEnabled,
-			SafeBrowsingEnabled: cy.SafeBrowsingEnabled,
-
-			UseOwnBlockedServices: !cy.UseGlobalBlockedServices,
-			BlockedServices:       cy.BlockedServices,
-		}
-		_, err = config.clients.Add(cli)
-		if err != nil {
-			log.Tracef("clientAdd: %s", err)
-		}
-	}
-	config.Clients = nil
-
-	status := tlsConfigStatus{}
-	if !tlsLoadConfig(&config.TLS, &status) {
-		log.Error("%s", status.WarningValidation)
-		return err
-	}
-
 	return nil
 }
 
@@ -329,49 +220,48 @@ func (c *configuration) write() error {
 	c.Lock()
 	defer c.Unlock()
 
-	clientsList := config.clients.GetList()
-	for _, cli := range clientsList {
-		ip := cli.IP
-		if len(cli.MAC) != 0 {
-			ip = ""
-		}
-		cy := clientObject{
-			Name:                cli.Name,
-			IP:                  ip,
-			MAC:                 cli.MAC,
-			UseGlobalSettings:   !cli.UseOwnSettings,
-			FilteringEnabled:    cli.FilteringEnabled,
-			ParentalEnabled:     cli.ParentalEnabled,
-			SafeSearchEnabled:   cli.SafeSearchEnabled,
-			SafeBrowsingEnabled: cli.SafeBrowsingEnabled,
+	Context.clients.WriteDiskConfig(&config.Clients)
 
-			UseGlobalBlockedServices: !cli.UseOwnBlockedServices,
-			BlockedServices:          cli.BlockedServices,
-		}
-		config.Clients = append(config.Clients, cy)
+	if Context.auth != nil {
+		config.Users = Context.auth.GetUsers()
+	}
+	if Context.tls != nil {
+		tlsConf := tlsConfigSettings{}
+		Context.tls.WriteDiskConfig(&tlsConf)
+		config.TLS = tlsConf
 	}
 
-	if config.auth != nil {
-		config.Users = config.auth.GetUsers()
-	}
-
-	if config.stats != nil {
+	if Context.stats != nil {
 		sdc := stats.DiskConfig{}
-		config.stats.WriteDiskConfig(&sdc)
+		Context.stats.WriteDiskConfig(&sdc)
 		config.DNS.StatsInterval = sdc.Interval
 	}
 
-	if config.queryLog != nil {
+	if Context.queryLog != nil {
 		dc := querylog.DiskConfig{}
-		config.queryLog.WriteDiskConfig(&dc)
+		Context.queryLog.WriteDiskConfig(&dc)
 		config.DNS.QueryLogEnabled = dc.Enabled
 		config.DNS.QueryLogInterval = dc.Interval
+		config.DNS.QueryLogMemSize = dc.MemSize
+		config.DNS.AnonymizeClientIP = dc.AnonymizeClientIP
 	}
 
-	if config.dnsFilter != nil {
+	if Context.dnsFilter != nil {
 		c := dnsfilter.Config{}
-		config.dnsFilter.WriteDiskConfig(&c)
+		Context.dnsFilter.WriteDiskConfig(&c)
 		config.DNS.DnsfilterConf = c
+	}
+
+	if Context.dnsServer != nil {
+		c := dnsforward.FilteringConfig{}
+		Context.dnsServer.WriteDiskConfig(&c)
+		config.DNS.FilteringConfig = c
+	}
+
+	if Context.dhcpServer != nil {
+		c := dhcpd.ServerConfig{}
+		Context.dhcpServer.WriteDiskConfig(&c)
+		config.DHCP = c
 	}
 
 	configFile := config.getConfigFilename()
@@ -385,23 +275,6 @@ func (c *configuration) write() error {
 	err = file.SafeWrite(configFile, yamlText)
 	if err != nil {
 		log.Error("Couldn't save YAML config: %s", err)
-		return err
-	}
-
-	return nil
-}
-
-func writeAllConfigs() error {
-	err := config.write()
-	if err != nil {
-		log.Error("Couldn't write config: %s", err)
-		return err
-	}
-
-	userFilter := userFilter()
-	err = userFilter.save()
-	if err != nil {
-		log.Error("Couldn't save the user filter: %s", err)
 		return err
 	}
 

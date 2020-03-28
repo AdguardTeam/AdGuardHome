@@ -32,6 +32,10 @@ const config = {
     },
     resolve: {
         modules: ['node_modules'],
+        alias: {
+            MainRoot: path.resolve(__dirname, '../'),
+            ClientRoot: path.resolve(__dirname, './src'),
+        },
     },
     module: {
         rules: [
@@ -101,7 +105,7 @@ const config = {
         new webpack.DefinePlugin({
             'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
         }),
-        new CleanWebpackPlugin(['*.*'], {
+        new CleanWebpackPlugin(['**/*.*'], {
             root: PUBLIC_PATH,
             verbose: false,
             dry: false,

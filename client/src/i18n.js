@@ -3,7 +3,7 @@ import { reactI18nextModule } from 'react-i18next';
 import { initReactI18n } from 'react-i18next/hooks';
 import langDetect from 'i18next-browser-languagedetector';
 
-import { DEFAULT_LANGUAGE } from './helpers/constants';
+import { LANGUAGES, BASE_LOCALE } from './helpers/twosky';
 
 import vi from './__locales/vi.json';
 import en from './__locales/en.json';
@@ -22,12 +22,18 @@ import de from './__locales/de.json';
 import id from './__locales/id.json';
 import it from './__locales/it.json';
 import ko from './__locales/ko.json';
+import no from './__locales/no.json';
 import nl from './__locales/nl.json';
 import pl from './__locales/pl.json';
 import ptPT from './__locales/pt-pt.json';
 import sk from './__locales/sk.json';
 import sl from './__locales/sl.json';
 import tr from './__locales/tr.json';
+import srCS from './__locales/sr-cs.json';
+import hr from './__locales/hr.json';
+import fa from './__locales/fa.json';
+import th from './__locales/th.json';
+import ro from './__locales/ro.json';
 
 const resources = {
     en: {
@@ -81,6 +87,9 @@ const resources = {
     ko: {
         translation: ko,
     },
+    no: {
+        translation: no,
+    },
     nl: {
         translation: nl,
     },
@@ -99,9 +108,24 @@ const resources = {
     tr: {
         translation: tr,
     },
+    'sr-cs': {
+        translation: srCS,
+    },
+    hr: {
+        translation: hr,
+    },
+    fa: {
+        translation: fa,
+    },
+    th: {
+        translation: th,
+    },
+    ro: {
+        translation: ro,
+    },
 };
 
-const availableLanguages = Object.keys(resources);
+const availableLanguages = Object.keys(LANGUAGES);
 
 i18n
     .use(langDetect)
@@ -110,7 +134,7 @@ i18n
     .init({
         resources,
         lowerCaseLng: true,
-        fallbackLng: DEFAULT_LANGUAGE,
+        fallbackLng: BASE_LOCALE,
         keySeparator: false,
         nsSeparator: false,
         returnEmptyString: false,
@@ -120,9 +144,10 @@ i18n
         react: {
             wait: true,
         },
+        whitelist: availableLanguages,
     }, () => {
         if (!availableLanguages.includes(i18n.language)) {
-            i18n.changeLanguage(DEFAULT_LANGUAGE);
+            i18n.changeLanguage(BASE_LOCALE);
         }
     });
 

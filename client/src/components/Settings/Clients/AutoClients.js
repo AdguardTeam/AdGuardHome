@@ -4,40 +4,31 @@ import { withNamespaces } from 'react-i18next';
 import ReactTable from 'react-table';
 
 import Card from '../../ui/Card';
-import WrapCell from './WrapCell';
+import CellWrap from '../../ui/CellWrap';
 
 import whoisCell from './whoisCell';
 
 const COLUMN_MIN_WIDTH = 200;
 
 class AutoClients extends Component {
-    getStats = (ip, stats) => {
-        if (stats) {
-            const statsForCurrentIP = stats.find(item => item.name === ip);
-            return statsForCurrentIP && statsForCurrentIP.count;
-        }
-
-        return '';
-    };
-
     columns = [
         {
             Header: this.props.t('table_client'),
             accessor: 'ip',
             minWidth: COLUMN_MIN_WIDTH,
-            Cell: WrapCell,
+            Cell: CellWrap,
         },
         {
             Header: this.props.t('table_name'),
             accessor: 'name',
             minWidth: COLUMN_MIN_WIDTH,
-            Cell: WrapCell,
+            Cell: CellWrap,
         },
         {
             Header: this.props.t('source_label'),
             accessor: 'source',
             minWidth: COLUMN_MIN_WIDTH,
-            Cell: WrapCell,
+            Cell: CellWrap,
         },
         {
             Header: this.props.t('whois'),
@@ -47,11 +38,12 @@ class AutoClients extends Component {
         },
         {
             Header: this.props.t('requests_count'),
-            accessor: 'statistics',
+            accessor: row => this.props.normalizedTopClients.auto[row.ip] || 0,
+            sortMethod: (a, b) => b - a,
+            id: 'statistics',
             minWidth: COLUMN_MIN_WIDTH,
             Cell: (row) => {
-                const clientIP = row.original.ip;
-                const clientStats = clientIP && this.getStats(clientIP, this.props.topClients);
+                const { value: clientStats } = row;
 
                 if (clientStats) {
                     return (
@@ -80,6 +72,12 @@ class AutoClients extends Component {
                 <ReactTable
                     data={autoClients || []}
                     columns={this.columns}
+                    defaultSorted={[
+                        {
+                            id: 'statistics',
+                            asc: true,
+                        },
+                    ]}
                     className="-striped -highlight card-table-overflow"
                     showPagination={true}
                     defaultPageSize={10}
@@ -88,7 +86,7 @@ class AutoClients extends Component {
                     nextText={t('next_btn')}
                     loadingText={t('loading_table_status')}
                     pageText={t('page_table_footer_text')}
-                    ofText={t('of_table_footer_text')}
+                    ofText="/"
                     rowsText={t('rows_table_footer_text')}
                     noDataText={t('clients_not_found')}
                 />
@@ -100,7 +98,7 @@ class AutoClients extends Component {
 AutoClients.propTypes = {
     t: PropTypes.func.isRequired,
     autoClients: PropTypes.array.isRequired,
-    topClients: PropTypes.array.isRequired,
+    normalizedTopClients: PropTypes.object.isRequired,
 };
 
 export default withNamespaces()(AutoClients);

@@ -38,14 +38,14 @@ class Header extends Component {
                             className="header-toggler d-lg-none ml-lg-0 collapsed"
                             onClick={this.toggleMenuOpen}
                         >
-                            <span className="header-toggler-icon"></span>
+                            <span className="header-toggler-icon" />
                         </div>
                         <div className="header__column">
                             <div className="d-flex align-items-center">
                                 <Link to="/" className="nav-link pl-0 pr-1">
                                     <img src={logo} alt="" className="header-brand-img" />
                                 </Link>
-                                {!dashboard.proccessing && dashboard.isCoreRunning && (
+                                {!dashboard.processing && dashboard.isCoreRunning && (
                                     <span className={badgeClass}>
                                         <Trans>{dashboard.protectionEnabled ? 'on' : 'off'}</Trans>
                                     </span>
@@ -55,13 +55,12 @@ class Header extends Component {
                         <Menu
                             location={location}
                             isMenuOpen={isMenuOpen}
-                            toggleMenuOpen={this.toggleMenuOpen}
                             closeMenu={this.closeMenu}
                         />
                         <div className="header__column">
                             <div className="header__right">
                                 {!dashboard.processingProfile && dashboard.name &&
-                                    <a href="/control/logout" className="btn btn-sm btn-outline-secondary">
+                                    <a href="control/logout" className="btn btn-sm btn-outline-secondary">
                                         <Trans>sign_out</Trans>
                                     </a>
                                 }

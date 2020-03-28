@@ -33,31 +33,19 @@ class Setup extends Component {
     }
 
     handleFormSubmit = (values) => {
-        this.props.setAllSettings(values);
+        const { staticIp, ...config } = values;
+        this.props.setAllSettings(config);
     };
 
     handleFormChange = debounce((values) => {
-        if (values && values.web.port && values.dns.port) {
-            this.props.checkConfig(values);
+        const { web, dns } = values;
+        if (values && web.port && dns.port) {
+            this.props.checkConfig({ web, dns, set_static_ip: false });
         }
     }, DEBOUNCE_TIMEOUT);
 
-    handleAutofix = (type, ip, port) => {
-        const data = {
-            ip,
-            port,
-            autofix: true,
-        };
-
-        if (type === 'web') {
-            this.props.checkConfig({
-                web: { ...data },
-            });
-        } else {
-            this.props.checkConfig({
-                dns: { ...data },
-            });
-        }
+    handleFix = (web, dns, set_static_ip) => {
+        this.props.checkConfig({ web, dns, set_static_ip });
     };
 
     openDashboard = (ip, port) => {
@@ -95,7 +83,7 @@ class Setup extends Component {
                         onSubmit={this.nextStep}
                         onChange={this.handleFormChange}
                         validateForm={this.handleFormChange}
-                        handleAutofix={this.handleAutofix}
+                        handleFix={this.handleFix}
                     />
                 );
             case 3:
@@ -117,6 +105,7 @@ class Setup extends Component {
             step,
             web,
             dns,
+            staticIp,
             interfaces,
         } = this.props.install;
 
@@ -128,7 +117,7 @@ class Setup extends Component {
                         <div className="setup">
                             <div className="setup__container">
                                 <img src={logo} className="setup__logo" alt="logo" />
-                                {this.renderPage(step, { web, dns }, interfaces)}
+                                {this.renderPage(step, { web, dns, staticIp }, interfaces)}
                                 <Progress step={step} />
                             </div>
                         </div>

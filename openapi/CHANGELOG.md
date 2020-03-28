@@ -1,6 +1,159 @@
 # AdGuard Home API Change Log
 
 
+## v0.101: API changes
+
+### API: Refresh filters: POST /control/filtering/refresh
+
+* Added "whitelist" boolean parameter
+* Response is in JSON format
+
+Request:
+
+	POST /control/filtering/refresh
+
+	{
+		"whitelist": true
+	}
+
+Response:
+
+	200 OK
+
+	{
+		"updated": 123 // number of filters updated
+	}
+
+
+## v0.100: API changes
+
+### API: Get list of clients: GET /control/clients
+
+* "ip" and "mac" fields are removed
+* "ids" and "ip_addrs" fields are added
+
+Response:
+
+	200 OK
+
+	{
+	clients: [
+		{
+			name: "client1"
+			ids: ["...", ...] // IP or MAC
+			ip_addrs: ["...", ...] // all IP addresses (set by user and resolved by MAC)
+			use_global_settings: true
+			filtering_enabled: false
+			parental_enabled: false
+			safebrowsing_enabled: false
+			safesearch_enabled: false
+			use_global_blocked_services: true
+			blocked_services: [ "name1", ... ]
+			whois_info: {
+				key: "value"
+				...
+			}
+		}
+	]
+	auto_clients: [
+		{
+			name: "host"
+			ip: "..."
+			source: "etc/hosts" || "rDNS"
+			whois_info: {
+				key: "value"
+				...
+			}
+		}
+	]
+	}
+
+### API: Add client: POST /control/clients/add
+
+* "ip" and "mac" fields are removed
+* "ids" field is added
+
+Request:
+
+	POST /control/clients/add
+
+	{
+		name: "client1"
+		ids: ["...", ...] // IP or MAC
+		use_global_settings: true
+		filtering_enabled: false
+		parental_enabled: false
+		safebrowsing_enabled: false
+		safesearch_enabled: false
+		use_global_blocked_services: true
+		blocked_services: [ "name1", ... ]
+	}
+
+### API: Update client: POST /control/clients/update
+
+* "ip" and "mac" fields are removed
+* "ids" field is added
+
+Request:
+
+	POST /control/clients/update
+
+	{
+		name: "client1"
+		data: {
+			name: "client1"
+			ids: ["...", ...] // IP or MAC
+			use_global_settings: true
+			filtering_enabled: false
+			parental_enabled: false
+			safebrowsing_enabled: false
+			safesearch_enabled: false
+			use_global_blocked_services: true
+			blocked_services: [ "name1", ... ]
+		}
+	}
+
+
+## v0.99.3: API changes
+
+### API: Get query log: GET /control/querylog
+
+The response data is now a JSON object, not an array.
+
+Response:
+
+	200 OK
+
+	{
+	"oldest":"2006-01-02T15:04:05.999999999Z07:00"
+	"data":[
+	{
+		"answer":[
+			{
+			"ttl":10,
+			"type":"AAAA",
+			"value":"::"
+			}
+			...
+		],
+		"client":"127.0.0.1",
+		"elapsedMs":"0.098403",
+		"filterId":1,
+		"question":{
+			"class":"IN",
+			"host":"doubleclick.net",
+			"type":"AAAA"
+		},
+		"reason":"FilteredBlackList",
+		"rule":"||doubleclick.net^",
+		"status":"NOERROR",
+		"time":"2006-01-02T15:04:05.999999999Z07:00"
+	}
+	...
+	]
+	}
+
+
 ## v0.99.1: API changes
 
 ### API: Get current user info: GET /control/profile
@@ -16,6 +169,30 @@ Response:
 	{
 	"name":"..."
 	}
+
+
+### Set DNS general settings: POST /control/dns_config
+
+Replaces these API methods:
+
+	POST /control/enable_protection
+	POST /control/disable_protection
+
+Request:
+
+	POST /control/dns_config
+
+	{
+		"protection_enabled": true | false,
+		"ratelimit": 1234,
+		"blocking_mode": "nxdomain" | "null_ip" | "custom_ip",
+		"blocking_ipv4": "1.2.3.4",
+		"blocking_ipv6": "1:2:3::4",
+	}
+
+Response:
+
+	200 OK
 
 
 ## v0.99: incompatible API changes

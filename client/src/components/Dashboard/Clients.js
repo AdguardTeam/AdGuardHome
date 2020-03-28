@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import ReactTable from 'react-table';
 import PropTypes from 'prop-types';
 import { Trans, withNamespaces } from 'react-i18next';
@@ -28,19 +28,61 @@ const countCell = dnsQueries =>
         return <Cell value={value} percent={percent} color={percentColor} />;
     };
 
-const clientCell = (clients, autoClients, t) =>
+const renderBlockingButton = (blocked, ip, handleClick, processing) => {
+    let buttonProps = {
+        className: 'btn-outline-danger',
+        text: 'block_btn',
+        type: 'block',
+    };
+
+    if (blocked) {
+        buttonProps = {
+            className: 'btn-outline-secondary',
+            text: 'unblock_btn',
+            type: 'unblock',
+        };
+    }
+
+    return (
+        <div className="table__action">
+            <button
+                type="button"
+                className={`btn btn-sm ${buttonProps.className}`}
+                onClick={() => handleClick(buttonProps.type, ip)}
+                disabled={processing}
+            >
+                <Trans>{buttonProps.text}</Trans>
+            </button>
+        </div>
+    );
+};
+
+const isBlockedClient = (clients, ip) => !!(clients && clients.includes(ip));
+
+const clientCell = (t, toggleClientStatus, processing, disallowedClients) =>
     function cell(row) {
         const { value } = row;
+        const blocked = isBlockedClient(disallowedClients, value);
 
         return (
-            <div className="logs__row logs__row--overflow logs__row--column">
-                {formatClientCell(value, clients, autoClients, t)}
-            </div>
+            <Fragment>
+                <div className="logs__row logs__row--overflow logs__row--column">
+                    {formatClientCell(row, t)}
+                </div>
+                {renderBlockingButton(blocked, value, toggleClientStatus, processing)}
+            </Fragment>
         );
     };
 
 const Clients = ({
-    t, refreshButton, topClients, subtitle, clients, autoClients, dnsQueries,
+    t,
+    refreshButton,
+    topClients,
+    subtitle,
+    dnsQueries,
+    toggleClientStatus,
+    processingAccessSet,
+    disallowedClients,
 }) => (
     <Card
         title={t('top_clients')}
@@ -49,9 +91,13 @@ const Clients = ({
         refresh={refreshButton}
     >
         <ReactTable
-            data={topClients.map(({ name: ip, count }) => ({
+            data={topClients.map(({
+                name: ip, count, info, blocked,
+            }) => ({
                 ip,
                 count,
+                info,
+                blocked,
             }))}
             columns={[
                 {
@@ -59,7 +105,7 @@ const Clients = ({
                     accessor: 'ip',
                     sortMethod: (a, b) =>
                         parseInt(a.replace(/\./g, ''), 10) - parseInt(b.replace(/\./g, ''), 10),
-                    Cell: clientCell(clients, autoClients, t),
+                    Cell: clientCell(t, toggleClientStatus, processingAccessSet, disallowedClients),
                 },
                 {
                     Header: <Trans>requests_count</Trans>,
@@ -73,7 +119,24 @@ const Clients = ({
             noDataText={t('no_clients_found')}
             minRows={6}
             defaultPageSize={100}
-            className="-striped -highlight card-table-overflow"
+            className="-highlight card-table-overflow clients__table"
+            getTrProps={(_state, rowInfo) => {
+                if (!rowInfo) {
+                    return {};
+                }
+
+                const { ip } = rowInfo.original;
+
+                if (isBlockedClient(disallowedClients, ip)) {
+                    return {
+                        className: 'red',
+                    };
+                }
+
+                return {
+                    className: '',
+                };
+            }}
         />
     </Card>
 );
@@ -86,6 +149,9 @@ Clients.propTypes = {
     autoClients: PropTypes.array.isRequired,
     subtitle: PropTypes.string.isRequired,
     t: PropTypes.func.isRequired,
+    toggleClientStatus: PropTypes.func.isRequired,
+    processingAccessSet: PropTypes.bool.isRequired,
+    disallowedClients: PropTypes.string.isRequired,
 };
 
 export default withNamespaces()(Clients);

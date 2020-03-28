@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/krolaw/dhcp4"
+	"github.com/stretchr/testify/assert"
 )
 
 func check(t *testing.T, result bool, msg string) {
@@ -22,6 +23,7 @@ func check(t *testing.T, result bool, msg string) {
 func TestDHCP(t *testing.T) {
 	var s = Server{}
 	s.conf.DBFilePath = dbFilename
+	defer func() { _ = os.Remove(dbFilename) }()
 	var p, p2 dhcp4.Packet
 	var hw net.HardwareAddr
 	var lease *Lease
@@ -128,7 +130,7 @@ func testStaticLeases(t *testing.T, s *Server) {
 	err = s.AddStaticLease(l)
 	check(t, err == nil, "AddStaticLease")
 
-	ll := s.StaticLeases()
+	ll := s.Leases(LeasesStatic)
 	check(t, len(ll) != 0 && bytes.Equal(ll[0].IP, []byte{1, 1, 1, 1}), "StaticLeases")
 
 	err = s.RemoveStaticLease(l)
@@ -184,7 +186,7 @@ func TestDB(t *testing.T) {
 	lease, _ = s.reserveLease(p)
 	lease.Expiry = time.Unix(4000000002, 0)
 
-	os.Remove("leases.db")
+	_ = os.Remove("leases.db")
 	s.dbStore()
 	s.reset()
 
@@ -197,7 +199,7 @@ func TestDB(t *testing.T) {
 	check(t, bytes.Equal(s.leases[1].IP, []byte{1, 1, 1, 2}), "leases[1].IP")
 	check(t, s.leases[1].Expiry.Unix() == 4000000002, "leases[1].Expiry")
 
-	os.Remove("leases.db")
+	_ = os.Remove("leases.db")
 }
 
 func TestIsValidSubnetMask(t *testing.T) {
@@ -210,4 +212,33 @@ func TestIsValidSubnetMask(t *testing.T) {
 	if isValidSubnetMask([]byte{0, 255, 255, 255}) {
 		t.Fatalf("isValidSubnetMask([]byte{255,255,253,0})")
 	}
+}
+
+func TestNormalizeLeases(t *testing.T) {
+	dynLeases := []*Lease{}
+	staticLeases := []*Lease{}
+	leases := []*Lease{}
+
+	lease := &Lease{}
+	lease.HWAddr = []byte{1, 2, 3, 4}
+	dynLeases = append(dynLeases, lease)
+	lease = new(Lease)
+	lease.HWAddr = []byte{1, 2, 3, 5}
+	dynLeases = append(dynLeases, lease)
+
+	lease = new(Lease)
+	lease.HWAddr = []byte{1, 2, 3, 4}
+	lease.IP = []byte{0, 2, 3, 4}
+	staticLeases = append(staticLeases, lease)
+	lease = new(Lease)
+	lease.HWAddr = []byte{2, 2, 3, 4}
+	staticLeases = append(staticLeases, lease)
+
+	leases = normalizeLeases(staticLeases, dynLeases)
+
+	assert.True(t, len(leases) == 3)
+	assert.True(t, bytes.Equal(leases[0].HWAddr, []byte{1, 2, 3, 4}))
+	assert.True(t, bytes.Equal(leases[0].IP, []byte{0, 2, 3, 4}))
+	assert.True(t, bytes.Equal(leases[1].HWAddr, []byte{2, 2, 3, 4}))
+	assert.True(t, bytes.Equal(leases[2].HWAddr, []byte{1, 2, 3, 5}))
 }

@@ -3,12 +3,11 @@ import PropTypes from 'prop-types';
 import { Trans, withNamespaces } from 'react-i18next';
 import ReactTable from 'react-table';
 
-import { MODAL_TYPE, CLIENT_ID } from '../../../helpers/constants';
+import { MODAL_TYPE } from '../../../helpers/constants';
+import { normalizeTextarea } from '../../../helpers/helpers';
 import Card from '../../ui/Card';
 import Modal from './Modal';
-import WrapCell from './WrapCell';
-
-import whoisCell from './whoisCell';
+import CellWrap from '../../ui/CellWrap';
 
 class ClientsTable extends Component {
     handleFormAdd = (values) => {
@@ -20,13 +19,26 @@ class ClientsTable extends Component {
     };
 
     handleSubmit = (values) => {
-        let config = values;
+        const config = values;
 
-        if (values && values.blocked_services) {
-            const blocked_services = Object
-                .keys(values.blocked_services)
-                .filter(service => values.blocked_services[service]);
-            config = { ...values, blocked_services };
+        if (values) {
+            if (values.blocked_services) {
+                config.blocked_services = Object
+                    .keys(values.blocked_services)
+                    .filter(service => values.blocked_services[service]);
+            }
+
+            if (values.upstreams && typeof values.upstreams === 'string') {
+                config.upstreams = normalizeTextarea(values.upstreams);
+            } else {
+                config.upstreams = [];
+            }
+
+            if (values.tags) {
+                config.tags = values.tags.map(tag => tag.value);
+            } else {
+                config.tags = [];
+            }
         }
 
         if (this.props.modalType === MODAL_TYPE.EDIT) {
@@ -36,75 +48,66 @@ class ClientsTable extends Component {
         }
     };
 
+    getOptionsWithLabels = options => (
+        options.map(option => ({ value: option, label: option }))
+    );
+
     getClient = (name, clients) => {
         const client = clients.find(item => name === item.name);
 
         if (client) {
-            const identifier = client.mac ? CLIENT_ID.MAC : CLIENT_ID.IP;
-
+            const {
+                upstreams, tags, whois_info, ...values
+            } = client;
             return {
-                identifier,
-                use_global_settings: true,
-                use_global_blocked_services: true,
-                ...client,
+                upstreams: (upstreams && upstreams.join('\n')) || '',
+                tags: (tags && this.getOptionsWithLabels(tags)) || [],
+                ...values,
             };
         }
 
         return {
-            identifier: CLIENT_ID.IP,
+            ids: [''],
+            tags: [],
             use_global_settings: true,
             use_global_blocked_services: true,
         };
-    };
-
-    getStats = (ip, stats) => {
-        if (stats) {
-            const statsForCurrentIP = stats.find(item => item.name === ip);
-            return statsForCurrentIP && statsForCurrentIP.count;
-        }
-
-        return '';
     };
 
     handleDelete = (data) => {
         // eslint-disable-next-line no-alert
         if (window.confirm(this.props.t('client_confirm_delete', { key: data.name }))) {
             this.props.deleteClient(data);
+            this.props.getStats();
         }
     };
 
     columns = [
         {
             Header: this.props.t('table_client'),
-            accessor: 'ip',
+            accessor: 'ids',
             minWidth: 150,
             Cell: (row) => {
-                if (row.original && row.original.mac) {
-                    return (
-                        <div className="logs__row logs__row--overflow">
-                            <span className="logs__text" title={row.original.mac}>
-                                {row.original.mac} <em>(MAC)</em>
-                            </span>
-                        </div>
-                    );
-                } else if (row.value) {
-                    return (
-                        <div className="logs__row logs__row--overflow">
-                            <span className="logs__text" title={row.value}>
-                                {row.value} <em>(IP)</em>
-                            </span>
-                        </div>
-                    );
-                }
+                const { value } = row;
 
-                return '';
+                return (
+                    <div className="logs__row logs__row--overflow">
+                        <span className="logs__text">
+                            {value.map(address => (
+                                <div key={address} title={address}>
+                                    {address}
+                                </div>
+                            ))}
+                        </span>
+                    </div>
+                );
             },
         },
         {
             Header: this.props.t('table_name'),
             accessor: 'name',
             minWidth: 120,
-            Cell: WrapCell,
+            Cell: CellWrap,
         },
         {
             Header: this.props.t('settings'),
@@ -119,9 +122,7 @@ class ClientsTable extends Component {
 
                 return (
                     <div className="logs__row logs__row--overflow">
-                        <div className="logs__text" title={title}>
-                            {title}
-                        </div>
+                        <div className="logs__text">{title}</div>
                     </div>
                 );
             },
@@ -141,13 +142,13 @@ class ClientsTable extends Component {
                     <div className="logs__row logs__row--icons">
                         {value && value.length > 0
                             ? value.map(service => (
-                                  <svg
-                                      className="service__icon service__icon--table"
-                                      title={service}
-                                      key={service}
-                                  >
-                                      <use xlinkHref={`#service_${service}`} />
-                                  </svg>
+                                <svg
+                                    className="service__icon service__icon--table"
+                                    title={service}
+                                    key={service}
+                                >
+                                    <use xlinkHref={`#service_${service}`} />
+                                </svg>
                             ))
                             : '–'}
                     </div>
@@ -155,31 +156,54 @@ class ClientsTable extends Component {
             },
         },
         {
-            Header: this.props.t('whois'),
-            accessor: 'whois_info',
-            minWidth: 200,
-            Cell: whoisCell(this.props.t),
+            Header: this.props.t('upstreams'),
+            accessor: 'upstreams',
+            minWidth: 120,
+            Cell: ({ value }) => {
+                const title = value && value.length > 0 ? (
+                    <Trans>settings_custom</Trans>
+                ) : (
+                    <Trans>settings_global</Trans>
+                );
+
+                return (
+                    <div className="logs__row logs__row--overflow">
+                        <div className="logs__text">{title}</div>
+                    </div>
+                );
+            },
+        },
+        {
+            Header: this.props.t('tags_title'),
+            accessor: 'tags',
+            minWidth: 140,
+            Cell: (row) => {
+                const { value } = row;
+
+                if (!value || value.length < 1) {
+                    return '–';
+                }
+
+                return (
+                    <div className="logs__row logs__row--overflow">
+                        <span className="logs__text">
+                            {value.map(tag => (
+                                <div key={tag} title={tag} className="small">
+                                    {tag}
+                                </div>
+                            ))}
+                        </span>
+                    </div>
+                );
+            },
         },
         {
             Header: this.props.t('requests_count'),
-            accessor: 'statistics',
+            id: 'statistics',
+            accessor: row => this.props.normalizedTopClients.configured[row.name] || 0,
+            sortMethod: (a, b) => b - a,
             minWidth: 120,
-            Cell: (row) => {
-                const clientIP = row.original.ip;
-                const clientStats = clientIP && this.getStats(clientIP, this.props.topClients);
-
-                if (clientStats) {
-                    return (
-                        <div className="logs__row">
-                            <div className="logs__text" title={clientStats}>
-                                {clientStats}
-                            </div>
-                        </div>
-                    );
-                }
-
-                return '–';
-            },
+            Cell: CellWrap,
         },
         {
             Header: this.props.t('actions_table_header'),
@@ -236,9 +260,11 @@ class ClientsTable extends Component {
             toggleClientModal,
             processingAdding,
             processingUpdating,
+            supportedTags,
         } = this.props;
 
         const currentClientData = this.getClient(modalClientName, clients);
+        const tagsOptions = this.getOptionsWithLabels(supportedTags);
 
         return (
             <Card
@@ -250,6 +276,12 @@ class ClientsTable extends Component {
                     <ReactTable
                         data={clients || []}
                         columns={this.columns}
+                        defaultSorted={[
+                            {
+                                id: 'statistics',
+                                asc: true,
+                            },
+                        ]}
                         className="-striped -highlight card-table-overflow"
                         showPagination={true}
                         defaultPageSize={10}
@@ -258,7 +290,7 @@ class ClientsTable extends Component {
                         nextText={t('next_btn')}
                         loadingText={t('loading_table_status')}
                         pageText={t('page_table_footer_text')}
-                        ofText={t('of_table_footer_text')}
+                        ofText="/"
                         rowsText={t('rows_table_footer_text')}
                         noDataText={t('clients_not_found')}
                     />
@@ -279,6 +311,7 @@ class ClientsTable extends Component {
                         handleSubmit={this.handleSubmit}
                         processingAdding={processingAdding}
                         processingUpdating={processingUpdating}
+                        tagsOptions={tagsOptions}
                     />
                 </Fragment>
             </Card>
@@ -289,7 +322,7 @@ class ClientsTable extends Component {
 ClientsTable.propTypes = {
     t: PropTypes.func.isRequired,
     clients: PropTypes.array.isRequired,
-    topClients: PropTypes.array.isRequired,
+    normalizedTopClients: PropTypes.object.isRequired,
     toggleClientModal: PropTypes.func.isRequired,
     deleteClient: PropTypes.func.isRequired,
     addClient: PropTypes.func.isRequired,
@@ -300,6 +333,8 @@ ClientsTable.propTypes = {
     processingAdding: PropTypes.bool.isRequired,
     processingDeleting: PropTypes.bool.isRequired,
     processingUpdating: PropTypes.bool.isRequired,
+    getStats: PropTypes.func.isRequired,
+    supportedTags: PropTypes.array.isRequired,
 };
 
 export default withNamespaces()(ClientsTable);

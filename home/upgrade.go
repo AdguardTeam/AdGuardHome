@@ -5,13 +5,15 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/AdguardTeam/AdGuardHome/util"
+
 	"github.com/AdguardTeam/golibs/file"
 	"github.com/AdguardTeam/golibs/log"
 	"golang.org/x/crypto/bcrypt"
 	yaml "gopkg.in/yaml.v2"
 )
 
-const currentSchemaVersion = 5 // used for upgrading from old configs to new config
+const currentSchemaVersion = 6 // used for upgrading from old configs to new config
 
 // Performs necessary upgrade operations if needed
 func upgradeConfig() error {
@@ -82,6 +84,12 @@ func upgradeConfigSchema(oldVersion int, diskConfig *map[string]interface{}) err
 		if err != nil {
 			return err
 		}
+		fallthrough
+	case 5:
+		err := upgradeSchema5to6(diskConfig)
+		if err != nil {
+			return err
+		}
 	default:
 		err := fmt.Errorf("configuration file contains unknown schema_version, abort")
 		log.Println(err)
@@ -108,9 +116,9 @@ func upgradeConfigSchema(oldVersion int, diskConfig *map[string]interface{}) err
 // The first schema upgrade:
 // No more "dnsfilter.txt", filters are now kept in data/filters/
 func upgradeSchema0to1(diskConfig *map[string]interface{}) error {
-	log.Printf("%s(): called", _Func())
+	log.Printf("%s(): called", util.FuncName())
 
-	dnsFilterPath := filepath.Join(config.ourWorkingDir, "dnsfilter.txt")
+	dnsFilterPath := filepath.Join(Context.workDir, "dnsfilter.txt")
 	if _, err := os.Stat(dnsFilterPath); !os.IsNotExist(err) {
 		log.Printf("Deleting %s as we don't need it anymore", dnsFilterPath)
 		err = os.Remove(dnsFilterPath)
@@ -129,9 +137,9 @@ func upgradeSchema0to1(diskConfig *map[string]interface{}) error {
 // coredns is now dns in config
 // delete 'Corefile', since we don't use that anymore
 func upgradeSchema1to2(diskConfig *map[string]interface{}) error {
-	log.Printf("%s(): called", _Func())
+	log.Printf("%s(): called", util.FuncName())
 
-	coreFilePath := filepath.Join(config.ourWorkingDir, "Corefile")
+	coreFilePath := filepath.Join(Context.workDir, "Corefile")
 	if _, err := os.Stat(coreFilePath); !os.IsNotExist(err) {
 		log.Printf("Deleting %s as we don't need it anymore", coreFilePath)
 		err = os.Remove(coreFilePath)
@@ -153,7 +161,7 @@ func upgradeSchema1to2(diskConfig *map[string]interface{}) error {
 // Third schema upgrade:
 // Bootstrap DNS becomes an array
 func upgradeSchema2to3(diskConfig *map[string]interface{}) error {
-	log.Printf("%s(): called", _Func())
+	log.Printf("%s(): called", util.FuncName())
 
 	// Let's read dns configuration from diskConfig
 	dnsConfig, ok := (*diskConfig)["dns"]
@@ -190,7 +198,7 @@ func upgradeSchema2to3(diskConfig *map[string]interface{}) error {
 
 // Add use_global_blocked_services=true setting for existing "clients" array
 func upgradeSchema3to4(diskConfig *map[string]interface{}) error {
-	log.Printf("%s(): called", _Func())
+	log.Printf("%s(): called", util.FuncName())
 
 	(*diskConfig)["schema_version"] = 4
 
@@ -227,7 +235,7 @@ func upgradeSchema3to4(diskConfig *map[string]interface{}) error {
 //   password: "..."
 // ...
 func upgradeSchema4to5(diskConfig *map[string]interface{}) error {
-	log.Printf("%s(): called", _Func())
+	log.Printf("%s(): called", util.FuncName())
 
 	(*diskConfig)["schema_version"] = 5
 
@@ -266,5 +274,74 @@ func upgradeSchema4to5(diskConfig *map[string]interface{}) error {
 	}
 	users := []User{u}
 	(*diskConfig)["users"] = users
+	return nil
+}
+
+// clients:
+// ...
+//   ip: 127.0.0.1
+//   mac: ...
+//
+// ->
+//
+// clients:
+// ...
+//   ids:
+//   - 127.0.0.1
+//   - ...
+func upgradeSchema5to6(diskConfig *map[string]interface{}) error {
+	log.Printf("%s(): called", util.FuncName())
+
+	(*diskConfig)["schema_version"] = 6
+
+	clients, ok := (*diskConfig)["clients"]
+	if !ok {
+		return nil
+	}
+
+	switch arr := clients.(type) {
+	case []interface{}:
+
+		for i := range arr {
+
+			switch c := arr[i].(type) {
+
+			case map[interface{}]interface{}:
+				_ip, ok := c["ip"]
+				ids := []string{}
+				if ok {
+					ip, ok := _ip.(string)
+					if !ok {
+						log.Fatalf("client.ip is not a string: %v", _ip)
+						return nil
+					}
+					if len(ip) != 0 {
+						ids = append(ids, ip)
+					}
+				}
+
+				_mac, ok := c["mac"]
+				if ok {
+					mac, ok := _mac.(string)
+					if !ok {
+						log.Fatalf("client.mac is not a string: %v", _mac)
+						return nil
+					}
+					if len(mac) != 0 {
+						ids = append(ids, mac)
+					}
+				}
+
+				c["ids"] = ids
+
+			default:
+				continue
+			}
+		}
+
+	default:
+		return nil
+	}
+
 	return nil
 }

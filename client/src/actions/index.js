@@ -91,17 +91,9 @@ export const toggleProtectionSuccess = createAction('TOGGLE_PROTECTION_SUCCESS')
 
 export const toggleProtection = status => async (dispatch) => {
     dispatch(toggleProtectionRequest());
-    let successMessage = '';
-
     try {
-        if (status) {
-            successMessage = 'disabled_protection';
-            await apiClient.disableGlobalProtection();
-        } else {
-            successMessage = 'enabled_protection';
-            await apiClient.enableGlobalProtection();
-        }
-
+        const successMessage = status ? 'disabled_protection' : 'enabled_protection';
+        await apiClient.setDnsConfig({ protection_enabled: !status });
         dispatch(addSuccessToast(successMessage));
         dispatch(toggleProtectionSuccess());
     } catch (error) {
@@ -140,55 +132,65 @@ export const getUpdateRequest = createAction('GET_UPDATE_REQUEST');
 export const getUpdateFailure = createAction('GET_UPDATE_FAILURE');
 export const getUpdateSuccess = createAction('GET_UPDATE_SUCCESS');
 
+const checkStatus = async (handleRequestSuccess, handleRequestError, attempts = 60) => {
+    let timeout;
+
+    if (attempts === 0) {
+        handleRequestError();
+    }
+
+    const rmTimeout = t => t && clearTimeout(t);
+
+    try {
+        const response = await axios.get('control/status');
+        rmTimeout(timeout);
+        if (response && response.status === 200) {
+            handleRequestSuccess(response);
+            if (response.data.running === false) {
+                timeout = setTimeout(
+                    checkStatus,
+                    CHECK_TIMEOUT,
+                    handleRequestSuccess,
+                    handleRequestError,
+                    attempts - 1,
+                );
+            }
+        }
+    } catch (error) {
+        rmTimeout(timeout);
+        timeout = setTimeout(
+            checkStatus,
+            CHECK_TIMEOUT,
+            handleRequestSuccess,
+            handleRequestError,
+            attempts - 1,
+        );
+    }
+};
+
 export const getUpdate = () => async (dispatch, getState) => {
     const { dnsVersion } = getState().dashboard;
 
     dispatch(getUpdateRequest());
-    try {
-        await apiClient.getUpdate();
-
-        const checkUpdate = async (attempts) => {
-            let count = attempts || 1;
-            let timeout;
-
-            if (count > 60) {
-                dispatch(addNoticeToast({ error: 'update_failed' }));
-                dispatch(getUpdateFailure());
-                return false;
-            }
-
-            const rmTimeout = t => t && clearTimeout(t);
-            const setRecursiveTimeout = (time, ...args) => setTimeout(
-                checkUpdate,
-                time,
-                ...args,
-            );
-
-            axios.get('control/status')
-                .then((response) => {
-                    rmTimeout(timeout);
-                    if (response && response.status === 200) {
-                        const responseVersion = response.data && response.data.version;
-
-                        if (dnsVersion !== responseVersion) {
-                            dispatch(getUpdateSuccess());
-                            window.location.reload(true);
-                        }
-                    }
-                    timeout = setRecursiveTimeout(CHECK_TIMEOUT, count += 1);
-                })
-                .catch(() => {
-                    rmTimeout(timeout);
-                    timeout = setRecursiveTimeout(CHECK_TIMEOUT, count += 1);
-                });
-
-            return false;
-        };
-
-        checkUpdate();
-    } catch (error) {
+    const handleRequestError = () => {
         dispatch(addNoticeToast({ error: 'update_failed' }));
         dispatch(getUpdateFailure());
+    };
+
+    const handleRequestSuccess = (response) => {
+        const responseVersion = response.data && response.data.version;
+
+        if (dnsVersion !== responseVersion) {
+            dispatch(getUpdateSuccess());
+            window.location.reload(true);
+        }
+    };
+
+    try {
+        await apiClient.getUpdate();
+        checkStatus(handleRequestSuccess, handleRequestError);
+    } catch (error) {
+        handleRequestError();
     }
 };
 
@@ -206,6 +208,7 @@ export const getClients = () => async (dispatch) => {
         dispatch(getClientsSuccess({
             clients: sortedClients || [],
             autoClients: sortedAutoClients || [],
+            supportedTags: data.supported_tags || [],
         }));
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -231,18 +234,34 @@ export const getProfile = () => async (dispatch) => {
 export const dnsStatusRequest = createAction('DNS_STATUS_REQUEST');
 export const dnsStatusFailure = createAction('DNS_STATUS_FAILURE');
 export const dnsStatusSuccess = createAction('DNS_STATUS_SUCCESS');
+export const setDnsRunningStatus = createAction('SET_DNS_RUNNING_STATUS');
 
 export const getDnsStatus = () => async (dispatch) => {
     dispatch(dnsStatusRequest());
-    try {
-        const dnsStatus = await apiClient.getGlobalStatus();
-        dispatch(dnsStatusSuccess(dnsStatus));
-        dispatch(getVersion());
-        dispatch(getTlsStatus());
-        dispatch(getProfile());
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
+
+    const handleRequestError = () => {
+        dispatch(addErrorToast({ error: 'dns_status_error' }));
         dispatch(dnsStatusFailure());
+        window.location.reload(true);
+    };
+    const handleRequestSuccess = (response) => {
+        const dnsStatus = response.data;
+        const { running } = dnsStatus;
+        const runningStatus = dnsStatus && running;
+        if (runningStatus === true) {
+            dispatch(dnsStatusSuccess(dnsStatus));
+            dispatch(getVersion());
+            dispatch(getTlsStatus());
+            dispatch(getProfile());
+        } else {
+            dispatch(setDnsRunningStatus(running));
+        }
+    };
+
+    try {
+        checkStatus(handleRequestSuccess, handleRequestError);
+    } catch (error) {
+        handleRequestError(error);
     }
 };
 
@@ -261,36 +280,6 @@ export const getDnsSettings = () => async (dispatch) => {
     }
 };
 
-export const enableDnsRequest = createAction('ENABLE_DNS_REQUEST');
-export const enableDnsFailure = createAction('ENABLE_DNS_FAILURE');
-export const enableDnsSuccess = createAction('ENABLE_DNS_SUCCESS');
-
-export const enableDns = () => async (dispatch) => {
-    dispatch(enableDnsRequest());
-    try {
-        await apiClient.startGlobalFiltering();
-        dispatch(enableDnsSuccess());
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
-        dispatch(enableDnsFailure());
-    }
-};
-
-export const disableDnsRequest = createAction('DISABLE_DNS_REQUEST');
-export const disableDnsFailure = createAction('DISABLE_DNS_FAILURE');
-export const disableDnsSuccess = createAction('DISABLE_DNS_SUCCESS');
-
-export const disableDns = () => async (dispatch) => {
-    dispatch(disableDnsRequest());
-    try {
-        await apiClient.stopGlobalFiltering();
-        dispatch(disableDnsSuccess());
-    } catch (error) {
-        dispatch(disableDnsFailure(error));
-        dispatch(addErrorToast({ error }));
-    }
-};
-
 export const handleUpstreamChange = createAction('HANDLE_UPSTREAM_CHANGE');
 export const setUpstreamRequest = createAction('SET_UPSTREAM_REQUEST');
 export const setUpstreamFailure = createAction('SET_UPSTREAM_FAILURE');
@@ -300,12 +289,8 @@ export const setUpstream = config => async (dispatch) => {
     dispatch(setUpstreamRequest());
     try {
         const values = { ...config };
-        values.bootstrap_dns = (
-            values.bootstrap_dns && normalizeTextarea(values.bootstrap_dns)
-        ) || [];
-        values.upstream_dns = (
-            values.upstream_dns && normalizeTextarea(values.upstream_dns)
-        ) || [];
+        values.bootstrap_dns = normalizeTextarea(values.bootstrap_dns);
+        values.upstream_dns = normalizeTextarea(values.upstream_dns);
 
         await apiClient.setUpstream(values);
         dispatch(addSuccessToast('updated_upstream_dns_toast'));
@@ -324,12 +309,8 @@ export const testUpstream = config => async (dispatch) => {
     dispatch(testUpstreamRequest());
     try {
         const values = { ...config };
-        values.bootstrap_dns = (
-            values.bootstrap_dns && normalizeTextarea(values.bootstrap_dns)
-        ) || [];
-        values.upstream_dns = (
-            values.upstream_dns && normalizeTextarea(values.upstream_dns)
-        ) || [];
+        values.bootstrap_dns = normalizeTextarea(values.bootstrap_dns);
+        values.upstream_dns = normalizeTextarea(values.upstream_dns);
 
         const upstreamResponse = await apiClient.testUpstream(values);
         const testMessages = Object.keys(upstreamResponse).map((key) => {
@@ -467,6 +448,22 @@ export const toggleDhcp = values => async (dispatch) => {
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(toggleDhcpFailure());
+    }
+};
+
+export const resetDhcpRequest = createAction('RESET_DHCP_REQUEST');
+export const resetDhcpSuccess = createAction('RESET_DHCP_SUCCESS');
+export const resetDhcpFailure = createAction('RESET_DHCP_FAILURE');
+
+export const resetDhcp = () => async (dispatch) => {
+    dispatch(resetDhcpRequest());
+    try {
+        const status = await apiClient.resetDhcp();
+        dispatch(resetDhcpSuccess(status));
+        dispatch(addSuccessToast('dhcp_config_saved'));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(resetDhcpFailure());
     }
 };
 

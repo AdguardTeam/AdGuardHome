@@ -8,6 +8,7 @@ import {
     toggleLeaseModal,
     addStaticLease,
     removeStaticLease,
+    resetDhcp,
 } from '../actions';
 import Dhcp from '../components/Settings/Dhcp';
 
@@ -28,6 +29,7 @@ const mapDispatchToProps = {
     toggleLeaseModal,
     addStaticLease,
     removeStaticLease,
+    resetDhcp,
 };
 
 export default connect(

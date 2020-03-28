@@ -23,6 +23,14 @@ type leaseJSON struct {
 	Expiry   int64  `json:"exp"`
 }
 
+func normalizeIP(ip net.IP) net.IP {
+	ip4 := ip.To4()
+	if ip4 != nil {
+		return ip4
+	}
+	return ip
+}
+
 // Safe version of dhcp4.IPInRange()
 func ipInRange(start, stop, ip net.IP) bool {
 	if len(start) != len(stop) ||
@@ -36,6 +44,8 @@ func ipInRange(start, stop, ip net.IP) bool {
 func (s *Server) dbLoad() {
 	s.leases = nil
 	s.IPpool = make(map[[4]byte]net.HardwareAddr)
+	dynLeases := []*Lease{}
+	staticLeases := []*Lease{}
 
 	data, err := ioutil.ReadFile(s.conf.DBFilePath)
 	if err != nil {
@@ -54,6 +64,7 @@ func (s *Server) dbLoad() {
 
 	numLeases := len(obj)
 	for i := range obj {
+		obj[i].IP = normalizeIP(obj[i].IP)
 
 		if obj[i].Expiry != leaseExpireStatic &&
 			!ipInRange(s.leaseStart, s.leaseStop, obj[i].IP) {
@@ -69,11 +80,47 @@ func (s *Server) dbLoad() {
 			Expiry:   time.Unix(obj[i].Expiry, 0),
 		}
 
-		s.leases = append(s.leases, &lease)
+		if obj[i].Expiry == leaseExpireStatic {
+			staticLeases = append(staticLeases, &lease)
+		} else {
+			dynLeases = append(dynLeases, &lease)
+		}
+	}
 
+	s.leases = normalizeLeases(staticLeases, dynLeases)
+
+	for _, lease := range s.leases {
 		s.reserveIP(lease.IP, lease.HWAddr)
 	}
-	log.Info("DHCP: loaded %d leases from DB", numLeases)
+
+	log.Info("DHCP: loaded %d (%d) leases from DB", len(s.leases), numLeases)
+}
+
+// Skip duplicate leases
+// Static leases have a priority over dynamic leases
+func normalizeLeases(staticLeases, dynLeases []*Lease) []*Lease {
+	leases := []*Lease{}
+	index := map[string]int{}
+
+	for i, lease := range staticLeases {
+		_, ok := index[lease.HWAddr.String()]
+		if ok {
+			continue // skip the lease with the same HW address
+		}
+		index[lease.HWAddr.String()] = i
+		leases = append(leases, lease)
+	}
+
+	for i, lease := range dynLeases {
+		_, ok := index[lease.HWAddr.String()]
+		if ok {
+			continue // skip the lease with the same HW address
+		}
+		index[lease.HWAddr.String()] = i
+		leases = append(leases, lease)
+	}
+
+	return leases
 }
 
 // Store lease table in DB

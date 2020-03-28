@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/gob"
 	"fmt"
+	"net"
 	"os"
 	"sort"
 	"sync"
@@ -21,10 +22,8 @@ const (
 
 // statsCtx - global context
 type statsCtx struct {
-	limit uint32 // maximum time we need to keep data for (in hours)
-	db    *bolt.DB
-
-	conf Config
+	db   *bolt.DB
+	conf *Config
 
 	unit     *unit      // the current unit
 	unitLock sync.Mutex // protect 'unit'
@@ -67,8 +66,9 @@ func createObject(conf Config) (*statsCtx, error) {
 	if !checkInterval(conf.LimitDays) {
 		conf.LimitDays = 1
 	}
-	s.limit = conf.LimitDays * 24
-	s.conf = conf
+	s.conf = &Config{}
+	*s.conf = conf
+	s.conf.limit = conf.LimitDays * 24
 	if conf.UnitID == nil {
 		s.conf.UnitID = newUnitID
 	}
@@ -82,7 +82,7 @@ func createObject(conf Config) (*statsCtx, error) {
 	var udb *unitDB
 	if tx != nil {
 		log.Tracef("Deleting old units...")
-		firstID := id - s.limit - 1
+		firstID := id - s.conf.limit - 1
 		unitDel := 0
 		forEachBkt := func(name []byte, b *bolt.Bucket) error {
 			id := uint32(btoi(name))
@@ -115,12 +115,13 @@ func createObject(conf Config) (*statsCtx, error) {
 	}
 	s.unit = &u
 
-	s.initWeb()
-
-	go s.periodicFlush()
-
 	log.Debug("Stats: initialized")
 	return &s, nil
+}
+
+func (s *statsCtx) Start() {
+	s.initWeb()
+	go s.periodicFlush()
 }
 
 func checkInterval(days uint32) bool {
@@ -133,6 +134,9 @@ func (s *statsCtx) dbOpen() bool {
 	s.db, err = bolt.Open(s.conf.Filename, 0644, nil)
 	if err != nil {
 		log.Error("Stats: open DB: %s: %s", s.conf.Filename, err)
+		if err.Error() == "invalid argument" {
+			log.Error("AdGuard Home cannot be initialized due to an incompatible file system.\nPlease read the explanation here: https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#limitations")
+		}
 		return false
 	}
 	log.Tracef("db.Open")
@@ -207,6 +211,13 @@ func btoi(b []byte) uint64 {
 }
 
 // Flush the current unit to DB and delete an old unit when a new hour is started
+// If a unit must be flushed:
+// . lock DB
+// . atomically set a new empty unit as the current one and get the old unit
+//   This is important to do it inside DB lock, so the reader won't get inconsistent results.
+// . write the unit to DB
+// . remove the stale unit from DB
+// . unlock DB
 func (s *statsCtx) periodicFlush() {
 	for {
 		s.unitLock.Lock()
@@ -222,17 +233,18 @@ func (s *statsCtx) periodicFlush() {
 			continue
 		}
 
+		tx := s.beginTxn(true)
+
 		nu := unit{}
 		s.initUnit(&nu, id)
 		u := s.swapUnit(&nu)
 		udb := serialize(u)
 
-		tx := s.beginTxn(true)
 		if tx == nil {
 			continue
 		}
 		ok1 := s.flushUnitToDB(tx, u.id, udb)
-		ok2 := s.deleteUnit(tx, id-s.limit)
+		ok2 := s.deleteUnit(tx, id-s.conf.limit)
 		if ok1 || ok2 {
 			s.commitTxn(tx)
 		} else {
@@ -372,12 +384,14 @@ func convertTopArray(a []countPair) []map[string]uint64 {
 }
 
 func (s *statsCtx) setLimit(limitDays int) {
-	s.limit = uint32(limitDays) * 24
+	conf := *s.conf
+	conf.limit = uint32(limitDays) * 24
+	s.conf = &conf
 	log.Debug("Stats: set limit: %d", limitDays)
 }
 
 func (s *statsCtx) WriteDiskConfig(dc *DiskConfig) {
-	dc.Interval = s.limit / 24
+	dc.Interval = s.conf.limit / 24
 }
 
 func (s *statsCtx) Close() {
@@ -429,6 +443,25 @@ func (s *statsCtx) clear() {
 	log.Debug("Stats: cleared")
 }
 
+// Get Client IP address
+func (s *statsCtx) getClientIP(clientIP string) string {
+	if s.conf.AnonymizeClientIP {
+		ip := net.ParseIP(clientIP)
+		if ip != nil {
+			ip4 := ip.To4()
+			const AnonymizeClientIP4Mask = 24
+			const AnonymizeClientIP6Mask = 112
+			if ip4 != nil {
+				clientIP = ip4.Mask(net.CIDRMask(AnonymizeClientIP4Mask, 32)).String()
+			} else {
+				clientIP = ip.Mask(net.CIDRMask(AnonymizeClientIP6Mask, 128)).String()
+			}
+		}
+	}
+
+	return clientIP
+}
+
 func (s *statsCtx) Update(e Entry) {
 	if e.Result == 0 ||
 		e.Result >= rLast ||
@@ -436,7 +469,7 @@ func (s *statsCtx) Update(e Entry) {
 		!(len(e.Client) == 4 || len(e.Client) == 16) {
 		return
 	}
-	client := e.Client.String()
+	client := s.getClientIP(e.Client.String())
 
 	s.unitLock.Lock()
 	u := s.unit
@@ -455,15 +488,20 @@ func (s *statsCtx) Update(e Entry) {
 	s.unitLock.Unlock()
 }
 
-func (s *statsCtx) loadUnits(lastID uint32) []*unitDB {
+func (s *statsCtx) loadUnits(limit uint32) ([]*unitDB, uint32) {
 	tx := s.beginTxn(false)
 	if tx == nil {
-		return nil
+		return nil, 0
 	}
 
+	s.unitLock.Lock()
+	curUnit := serialize(s.unit)
+	curID := s.unit.id
+	s.unitLock.Unlock()
+
 	units := []*unitDB{} //per-hour units
-	firstID := lastID - s.limit + 1
-	for i := firstID; i != lastID; i++ {
+	firstID := curID - limit + 1
+	for i := firstID; i != curID; i++ {
 		u := s.loadUnitFromDB(tx, i)
 		if u == nil {
 			u = &unitDB{}
@@ -474,20 +512,13 @@ func (s *statsCtx) loadUnits(lastID uint32) []*unitDB {
 
 	_ = tx.Rollback()
 
-	s.unitLock.Lock()
-	cu := serialize(s.unit)
-	cuID := s.unit.id
-	s.unitLock.Unlock()
-	if cuID != lastID {
-		units = units[1:]
-	}
-	units = append(units, cu)
+	units = append(units, curUnit)
 
-	if len(units) != int(s.limit) {
-		log.Fatalf("len(units) != s.limit: %d %d", len(units), s.limit)
+	if len(units) != int(limit) {
+		log.Fatalf("len(units) != limit: %d %d", len(units), limit)
 	}
 
-	return units
+	return units, firstID
 }
 
 /* Algorithm:
@@ -518,12 +549,16 @@ func (s *statsCtx) loadUnits(lastID uint32) []*unitDB {
   These values are just the sum of data for all units.
 */
 // nolint (gocyclo)
-func (s *statsCtx) getData(timeUnit TimeUnit) map[string]interface{} {
-	d := map[string]interface{}{}
+func (s *statsCtx) getData() map[string]interface{} {
+	limit := s.conf.limit
 
-	lastID := s.conf.UnitID()
-	firstID := lastID - s.limit + 1
-	units := s.loadUnits(lastID)
+	d := map[string]interface{}{}
+	timeUnit := Hours
+	if limit/24 > 7 {
+		timeUnit = Days
+	}
+
+	units, firstID := s.loadUnits(limit)
 	if units == nil {
 		return nil
 	}
@@ -554,8 +589,8 @@ func (s *statsCtx) getData(timeUnit TimeUnit) map[string]interface{} {
 		if id <= nextDayID {
 			a = append(a, sum)
 		}
-		if len(a) != int(s.limit/24) {
-			log.Fatalf("len(a) != s.limit: %d %d", len(a), s.limit)
+		if len(a) != int(limit/24) {
+			log.Fatalf("len(a) != limit: %d %d", len(a), limit)
 		}
 	}
 	d["dns_queries"] = a
@@ -698,9 +733,8 @@ func (s *statsCtx) getData(timeUnit TimeUnit) map[string]interface{} {
 	return d
 }
 
-func (s *statsCtx) GetTopClientsIP(limit uint) []string {
-	lastID := s.conf.UnitID()
-	units := s.loadUnits(lastID)
+func (s *statsCtx) GetTopClientsIP(maxCount uint) []string {
+	units, _ := s.loadUnits(s.conf.limit)
 	if units == nil {
 		return nil
 	}
@@ -712,7 +746,7 @@ func (s *statsCtx) GetTopClientsIP(limit uint) []string {
 			m[it.Name] += it.Count
 		}
 	}
-	a := convertMapToArray(m, int(limit))
+	a := convertMapToArray(m, int(maxCount))
 	d := []string{}
 	for _, it := range a {
 		d = append(d, it.Name)

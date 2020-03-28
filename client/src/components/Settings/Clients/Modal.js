@@ -33,6 +33,7 @@ const Modal = (props) => {
         toggleClientModal,
         processingAdding,
         processingUpdating,
+        tagsOptions,
     } = props;
     const initialData = getInitialData(currentClientData);
 
@@ -62,6 +63,7 @@ const Modal = (props) => {
                     toggleClientModal={toggleClientModal}
                     processingAdding={processingAdding}
                     processingUpdating={processingUpdating}
+                    tagsOptions={tagsOptions}
                 />
             </div>
         </ReactModal>
@@ -76,6 +78,7 @@ Modal.propTypes = {
     toggleClientModal: PropTypes.func.isRequired,
     processingAdding: PropTypes.bool.isRequired,
     processingUpdating: PropTypes.bool.isRequired,
+    tagsOptions: PropTypes.array.isRequired,
 };
 
 export default withNamespaces()(Modal);

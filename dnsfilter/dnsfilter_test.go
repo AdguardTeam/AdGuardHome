@@ -3,15 +3,12 @@ package dnsfilter
 import (
 	"fmt"
 	"net"
-	"net/http"
-	"net/http/httptest"
+	"os"
 	"path"
 	"runtime"
 	"testing"
-	"time"
 
-	"github.com/AdguardTeam/urlfilter"
-	"github.com/bluele/gcache"
+	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,7 +20,6 @@ var setts RequestFilteringSettings
 // SAFE SEARCH
 // PARENTAL
 // FILTERING
-// CLIENTS SETTINGS
 // BENCHMARKS
 
 // HELPERS
@@ -47,7 +43,7 @@ func _Func() string {
 	return path.Base(f.Name())
 }
 
-func NewForTest(c *Config, filters map[int]string) *Dnsfilter {
+func NewForTest(c *Config, filters []Filter) *Dnsfilter {
 	setts = RequestFilteringSettings{}
 	setts.FilteringEnabled = true
 	if c != nil {
@@ -103,10 +99,17 @@ func (d *Dnsfilter) checkMatchEmpty(t *testing.T, hostname string) {
 func TestEtcHostsMatching(t *testing.T) {
 	addr := "216.239.38.120"
 	addr6 := "::1"
-	text := fmt.Sprintf("   %s  google.com www.google.com   # enforce google's safesearch   \n%s  google.com\n0.0.0.0 block.com\n",
+	text := fmt.Sprintf(`  %s  google.com www.google.com   # enforce google's safesearch
+%s  ipv6.com
+0.0.0.0 block.com
+0.0.0.1 host2
+0.0.0.2 host2
+::1 host2
+`,
 		addr, addr6)
-	filters := make(map[int]string)
-	filters[0] = text
+	filters := []Filter{Filter{
+		ID: 0, Data: []byte(text),
+	}}
 	d := NewForTest(nil, filters)
 	defer d.Close()
 
@@ -115,45 +118,48 @@ func TestEtcHostsMatching(t *testing.T) {
 	d.checkMatchEmpty(t, "subdomain.google.com")
 	d.checkMatchEmpty(t, "example.org")
 
-	// IPv6 address
-	d.checkMatchIP(t, "google.com", addr6, dns.TypeAAAA)
-
-	// block both IPv4 and IPv6
+	// IPv4
 	d.checkMatchIP(t, "block.com", "0.0.0.0", dns.TypeA)
-	d.checkMatchIP(t, "block.com", "::", dns.TypeAAAA)
+
+	// ...but empty IPv6
+	ret, err := d.CheckHost("block.com", dns.TypeAAAA, &setts)
+	assert.True(t, err == nil && ret.IsFiltered && ret.IP != nil && len(ret.IP) == 0)
+	assert.True(t, ret.Rule == "0.0.0.0 block.com")
+
+	// IPv6
+	d.checkMatchIP(t, "ipv6.com", addr6, dns.TypeAAAA)
+
+	// ...but empty IPv4
+	ret, err = d.CheckHost("ipv6.com", dns.TypeA, &setts)
+	assert.True(t, err == nil && ret.IsFiltered && ret.IP != nil && len(ret.IP) == 0)
+
+	// 2 IPv4 (return only the first one)
+	ret, err = d.CheckHost("host2", dns.TypeA, &setts)
+	assert.True(t, err == nil && ret.IsFiltered)
+	assert.True(t, ret.IP != nil && ret.IP.Equal(net.ParseIP("0.0.0.1")))
+
+	// ...and 1 IPv6 address
+	ret, err = d.CheckHost("host2", dns.TypeAAAA, &setts)
+	assert.True(t, err == nil && ret.IsFiltered)
+	assert.True(t, ret.IP != nil && ret.IP.Equal(net.ParseIP("::1")))
 }
 
 // SAFE BROWSING
 
 func TestSafeBrowsing(t *testing.T) {
-	testCases := []string{
-		"",
-		"sb.adtidy.org",
-	}
-	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("%s in %s", tc, _Func()), func(t *testing.T) {
-			d := NewForTest(&Config{SafeBrowsingEnabled: true}, nil)
-			defer d.Close()
-			gctx.stats.Safebrowsing.Requests = 0
-			d.checkMatch(t, "wmconvirus.narod.ru")
-			d.checkMatch(t, "wmconvirus.narod.ru")
-			if gctx.stats.Safebrowsing.Requests != 1 {
-				t.Errorf("Safebrowsing lookup positive cache is not working: %v", gctx.stats.Safebrowsing.Requests)
-			}
-			d.checkMatch(t, "WMconvirus.narod.ru")
-			if gctx.stats.Safebrowsing.Requests != 1 {
-				t.Errorf("Safebrowsing lookup positive cache is not working: %v", gctx.stats.Safebrowsing.Requests)
-			}
-			d.checkMatch(t, "test.wmconvirus.narod.ru")
-			d.checkMatchEmpty(t, "yandex.ru")
-			d.checkMatchEmpty(t, "pornhub.com")
-			l := gctx.stats.Safebrowsing.Requests
-			d.checkMatchEmpty(t, "pornhub.com")
-			if gctx.stats.Safebrowsing.Requests != l {
-				t.Errorf("Safebrowsing lookup negative cache is not working: %v", gctx.stats.Safebrowsing.Requests)
-			}
-		})
-	}
+	d := NewForTest(&Config{SafeBrowsingEnabled: true}, nil)
+	defer d.Close()
+	gctx.stats.Safebrowsing.Requests = 0
+	d.checkMatch(t, "wmconvirus.narod.ru")
+	d.checkMatch(t, "test.wmconvirus.narod.ru")
+	d.checkMatchEmpty(t, "yandex.ru")
+	d.checkMatchEmpty(t, "pornhub.com")
+
+	// test cached result
+	d.safeBrowsingServer = "127.0.0.1"
+	d.checkMatch(t, "wmconvirus.narod.ru")
+	d.checkMatchEmpty(t, "pornhub.com")
+	d.safeBrowsingServer = defaultSafebrowsingServer
 }
 
 func TestParallelSB(t *testing.T) {
@@ -172,33 +178,10 @@ func TestParallelSB(t *testing.T) {
 	})
 }
 
-// the only way to verify that custom server option is working is to point it at a server that does serve safebrowsing
-func TestSafeBrowsingCustomServerFail(t *testing.T) {
-	d := NewForTest(&Config{SafeBrowsingEnabled: true}, nil)
-	defer d.Close()
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// w.Write("Hello, client")
-		fmt.Fprintln(w, "Hello, client")
-	}))
-	defer ts.Close()
-	address := ts.Listener.Addr().String()
-
-	d.SetHTTPTimeout(time.Second * 5)
-	d.SetSafeBrowsingServer(address) // this will ensure that test fails
-	d.checkMatchEmpty(t, "wmconvirus.narod.ru")
-}
-
 // SAFE SEARCH
 
 func TestSafeSearch(t *testing.T) {
-	d := NewForTest(nil, nil)
-	defer d.Close()
-	_, ok := d.SafeSearchDomain("www.google.com")
-	if ok {
-		t.Errorf("Expected safesearch to error when disabled")
-	}
-
-	d = NewForTest(&Config{SafeSearchEnabled: true}, nil)
+	d := NewForTest(&Config{SafeSearchEnabled: true}, nil)
 	defer d.Close()
 	val, ok := d.SafeSearchDomain("www.google.com")
 	if !ok {
@@ -353,26 +336,17 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 func TestParentalControl(t *testing.T) {
 	d := NewForTest(&Config{ParentalEnabled: true}, nil)
 	defer d.Close()
-	d.ParentalSensitivity = 3
 	d.checkMatch(t, "pornhub.com")
-	d.checkMatch(t, "pornhub.com")
-	if gctx.stats.Parental.Requests != 1 {
-		t.Errorf("Parental lookup positive cache is not working")
-	}
-	d.checkMatch(t, "PORNhub.com")
-	if gctx.stats.Parental.Requests != 1 {
-		t.Errorf("Parental lookup positive cache is not working")
-	}
 	d.checkMatch(t, "www.pornhub.com")
 	d.checkMatchEmpty(t, "www.yandex.ru")
 	d.checkMatchEmpty(t, "yandex.ru")
-	l := gctx.stats.Parental.Requests
-	d.checkMatchEmpty(t, "yandex.ru")
-	if gctx.stats.Parental.Requests != l {
-		t.Errorf("Parental lookup negative cache is not working")
-	}
-
 	d.checkMatchEmpty(t, "api.jquery.com")
+
+	// test cached result
+	d.parentalServer = "127.0.0.1"
+	d.checkMatch(t, "pornhub.com")
+	d.checkMatchEmpty(t, "yandex.ru")
+	d.parentalServer = defaultParentalServer
 }
 
 // FILTERING
@@ -432,8 +406,9 @@ var tests = []struct {
 func TestMatching(t *testing.T) {
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%s-%s", test.testname, test.hostname), func(t *testing.T) {
-			filters := make(map[int]string)
-			filters[0] = test.rules
+			filters := []Filter{Filter{
+				ID: 0, Data: []byte(test.rules),
+			}}
 			d := NewForTest(nil, filters)
 			defer d.Close()
 
@@ -451,6 +426,38 @@ func TestMatching(t *testing.T) {
 	}
 }
 
+func TestWhitelist(t *testing.T) {
+	rules := `||host1^
+||host2^
+`
+	filters := []Filter{Filter{
+		ID: 0, Data: []byte(rules),
+	}}
+
+	whiteRules := `||host1^
+||host3^
+`
+	whiteFilters := []Filter{Filter{
+		ID: 0, Data: []byte(whiteRules),
+	}}
+	d := NewForTest(nil, filters)
+	d.SetFilters(filters, whiteFilters, false)
+	defer d.Close()
+
+	// matched by white filter
+	ret, err := d.CheckHost("host1", dns.TypeA, &setts)
+	assert.True(t, err == nil)
+	assert.True(t, !ret.IsFiltered && ret.Reason == NotFilteredWhiteList)
+	assert.True(t, ret.Rule == "||host1^")
+
+	// not matched by white filter, but matched by block filter
+	ret, err = d.CheckHost("host2", dns.TypeA, &setts)
+	assert.True(t, err == nil)
+	assert.True(t, ret.IsFiltered && ret.Reason == FilteredBlackList)
+	assert.True(t, ret.Rule == "||host2^")
+
+}
+
 // CLIENT SETTINGS
 
 func applyClientSettings(setts *RequestFilteringSettings) {
@@ -458,10 +465,10 @@ func applyClientSettings(setts *RequestFilteringSettings) {
 	setts.ParentalEnabled = false
 	setts.SafeBrowsingEnabled = true
 
-	rule, _ := urlfilter.NewNetworkRule("||facebook.com^", 0)
+	rule, _ := rules.NewNetworkRule("||facebook.com^", 0)
 	s := ServiceEntry{}
 	s.Name = "facebook"
-	s.Rules = []*urlfilter.NetworkRule{rule}
+	s.Rules = []*rules.NetworkRule{rule}
 	setts.ServicesRules = append(setts.ServicesRules, s)
 }
 
@@ -469,11 +476,11 @@ func applyClientSettings(setts *RequestFilteringSettings) {
 //  then apply per-client settings and check behaviour once again
 func TestClientSettings(t *testing.T) {
 	var r Result
-	filters := make(map[int]string)
-	filters[0] = "||example.org^\n"
+	filters := []Filter{Filter{
+		ID: 0, Data: []byte("||example.org^\n"),
+	}}
 	d := NewForTest(&Config{ParentalEnabled: true, SafeBrowsingEnabled: false}, filters)
 	defer d.Close()
-	d.ParentalSensitivity = 3
 
 	// no client settings:
 
@@ -523,6 +530,103 @@ func TestClientSettings(t *testing.T) {
 	// blocked by additional rules
 	r, _ = d.CheckHost("facebook.com", dns.TypeA, &setts)
 	assert.True(t, r.IsFiltered && r.Reason == FilteredBlockedService)
+}
+
+func TestRewrites(t *testing.T) {
+	d := Dnsfilter{}
+	// CNAME, A, AAAA
+	d.Rewrites = []RewriteEntry{
+		RewriteEntry{"somecname", "somehost.com", 0, nil},
+		RewriteEntry{"somehost.com", "0.0.0.0", 0, nil},
+
+		RewriteEntry{"host.com", "1.2.3.4", 0, nil},
+		RewriteEntry{"host.com", "1.2.3.5", 0, nil},
+		RewriteEntry{"host.com", "1:2:3::4", 0, nil},
+		RewriteEntry{"www.host.com", "host.com", 0, nil},
+	}
+	d.prepareRewrites()
+	r := d.processRewrites("host2.com")
+	assert.Equal(t, NotFilteredNotFound, r.Reason)
+
+	r = d.processRewrites("www.host.com")
+	assert.Equal(t, ReasonRewrite, r.Reason)
+	assert.Equal(t, "host.com", r.CanonName)
+	assert.True(t, len(r.IPList) == 3)
+	assert.True(t, r.IPList[0].Equal(net.ParseIP("1.2.3.4")))
+	assert.True(t, r.IPList[1].Equal(net.ParseIP("1.2.3.5")))
+	assert.True(t, r.IPList[2].Equal(net.ParseIP("1:2:3::4")))
+
+	// wildcard
+	d.Rewrites = []RewriteEntry{
+		RewriteEntry{"host.com", "1.2.3.4", 0, nil},
+		RewriteEntry{"*.host.com", "1.2.3.5", 0, nil},
+	}
+	d.prepareRewrites()
+	r = d.processRewrites("host.com")
+	assert.Equal(t, ReasonRewrite, r.Reason)
+	assert.True(t, r.IPList[0].Equal(net.ParseIP("1.2.3.4")))
+
+	r = d.processRewrites("www.host.com")
+	assert.Equal(t, ReasonRewrite, r.Reason)
+	assert.True(t, r.IPList[0].Equal(net.ParseIP("1.2.3.5")))
+
+	r = d.processRewrites("www.host2.com")
+	assert.Equal(t, NotFilteredNotFound, r.Reason)
+
+	// override a wildcard
+	d.Rewrites = []RewriteEntry{
+		RewriteEntry{"a.host.com", "1.2.3.4", 0, nil},
+		RewriteEntry{"*.host.com", "1.2.3.5", 0, nil},
+	}
+	d.prepareRewrites()
+	r = d.processRewrites("a.host.com")
+	assert.Equal(t, ReasonRewrite, r.Reason)
+	assert.True(t, len(r.IPList) == 1)
+	assert.True(t, r.IPList[0].Equal(net.ParseIP("1.2.3.4")))
+
+	// wildcard + CNAME
+	d.Rewrites = []RewriteEntry{
+		RewriteEntry{"host.com", "1.2.3.4", 0, nil},
+		RewriteEntry{"*.host.com", "host.com", 0, nil},
+	}
+	d.prepareRewrites()
+	r = d.processRewrites("www.host.com")
+	assert.Equal(t, ReasonRewrite, r.Reason)
+	assert.Equal(t, "host.com", r.CanonName)
+	assert.True(t, r.IPList[0].Equal(net.ParseIP("1.2.3.4")))
+
+	// 2 CNAMEs
+	d.Rewrites = []RewriteEntry{
+		RewriteEntry{"b.host.com", "a.host.com", 0, nil},
+		RewriteEntry{"a.host.com", "host.com", 0, nil},
+		RewriteEntry{"host.com", "1.2.3.4", 0, nil},
+	}
+	d.prepareRewrites()
+	r = d.processRewrites("b.host.com")
+	assert.Equal(t, ReasonRewrite, r.Reason)
+	assert.Equal(t, "host.com", r.CanonName)
+	assert.True(t, len(r.IPList) == 1)
+	assert.True(t, r.IPList[0].Equal(net.ParseIP("1.2.3.4")))
+
+	// 2 CNAMEs + wildcard
+	d.Rewrites = []RewriteEntry{
+		RewriteEntry{"b.host.com", "a.host.com", 0, nil},
+		RewriteEntry{"a.host.com", "x.somehost.com", 0, nil},
+		RewriteEntry{"*.somehost.com", "1.2.3.4", 0, nil},
+	}
+	d.prepareRewrites()
+	r = d.processRewrites("b.host.com")
+	assert.Equal(t, ReasonRewrite, r.Reason)
+	assert.Equal(t, "x.somehost.com", r.CanonName)
+	assert.True(t, len(r.IPList) == 1)
+	assert.True(t, r.IPList[0].Equal(net.ParseIP("1.2.3.4")))
+}
+
+func prepareTestDir() string {
+	const dir = "./agh-test"
+	_ = os.RemoveAll(dir)
+	_ = os.MkdirAll(dir, 0755)
+	return dir
 }
 
 // BENCHMARKS
@@ -587,18 +691,4 @@ func BenchmarkSafeSearchParallel(b *testing.B) {
 			}
 		}
 	})
-}
-
-func TestDnsfilterDialCache(t *testing.T) {
-	d := Dnsfilter{}
-	gctx.dialCache = gcache.New(1).LRU().Expiration(30 * time.Minute).Build()
-
-	d.shouldBeInDialCache("hostname")
-	if searchInDialCache("hostname") != "" {
-		t.Errorf("searchInDialCache")
-	}
-	addToDialCache("hostname", "1.1.1.1")
-	if searchInDialCache("hostname") != "1.1.1.1" {
-		t.Errorf("searchInDialCache")
-	}
 }

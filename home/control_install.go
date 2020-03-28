@@ -4,10 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strconv"
+
+	"github.com/AdguardTeam/AdGuardHome/util"
+
+	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -18,13 +26,21 @@ type firstRunData struct {
 	Interfaces map[string]interface{} `json:"interfaces"`
 }
 
+type netInterfaceJSON struct {
+	Name         string   `json:"name"`
+	MTU          int      `json:"mtu"`
+	HardwareAddr string   `json:"hardware_address"`
+	Addresses    []string `json:"ip_addresses"`
+	Flags        string   `json:"flags"`
+}
+
 // Get initial installation settings
-func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
+func (web *Web) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 	data := firstRunData{}
 	data.WebPort = 80
 	data.DNSPort = 53
 
-	ifaces, err := getValidNetInterfacesForWeb()
+	ifaces, err := util.GetValidNetInterfacesForWeb()
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
 		return
@@ -32,7 +48,14 @@ func handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 
 	data.Interfaces = make(map[string]interface{})
 	for _, iface := range ifaces {
-		data.Interfaces[iface.Name] = iface
+		ifaceJSON := netInterfaceJSON{
+			Name:         iface.Name,
+			MTU:          iface.MTU,
+			HardwareAddr: iface.HardwareAddr,
+			Addresses:    iface.Addresses,
+			Flags:        iface.Flags,
+		}
+		data.Interfaces[iface.Name] = ifaceJSON
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -49,21 +72,28 @@ type checkConfigReqEnt struct {
 	Autofix bool   `json:"autofix"`
 }
 type checkConfigReq struct {
-	Web checkConfigReqEnt `json:"web"`
-	DNS checkConfigReqEnt `json:"dns"`
+	Web         checkConfigReqEnt `json:"web"`
+	DNS         checkConfigReqEnt `json:"dns"`
+	SetStaticIP bool              `json:"set_static_ip"`
 }
 
 type checkConfigRespEnt struct {
 	Status     string `json:"status"`
 	CanAutofix bool   `json:"can_autofix"`
 }
+type staticIPJSON struct {
+	Static string `json:"static"`
+	IP     string `json:"ip"`
+	Error  string `json:"error"`
+}
 type checkConfigResp struct {
-	Web checkConfigRespEnt `json:"web"`
-	DNS checkConfigRespEnt `json:"dns"`
+	Web      checkConfigRespEnt `json:"web"`
+	DNS      checkConfigRespEnt `json:"dns"`
+	StaticIP staticIPJSON       `json:"static_ip"`
 }
 
 // Check if ports are available, respond with results
-func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
+func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 	reqData := checkConfigReq{}
 	respData := checkConfigResp{}
 	err := json.NewDecoder(r.Body).Decode(&reqData)
@@ -73,16 +103,16 @@ func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if reqData.Web.Port != 0 && reqData.Web.Port != config.BindPort {
-		err = checkPortAvailable(reqData.Web.IP, reqData.Web.Port)
+		err = util.CheckPortAvailable(reqData.Web.IP, reqData.Web.Port)
 		if err != nil {
 			respData.Web.Status = fmt.Sprintf("%v", err)
 		}
 	}
 
 	if reqData.DNS.Port != 0 {
-		err = checkPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+		err = util.CheckPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
 
-		if errorIsAddrInUse(err) {
+		if util.ErrorIsAddrInUse(err) {
 			canAutofix := checkDNSStubListener()
 			if canAutofix && reqData.DNS.Autofix {
 
@@ -91,7 +121,7 @@ func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 					log.Error("Couldn't disable DNSStubListener: %s", err)
 				}
 
-				err = checkPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+				err = util.CheckPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
 				canAutofix = false
 			}
 
@@ -99,11 +129,13 @@ func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err == nil {
-			err = checkPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+			err = util.CheckPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
 		}
 
 		if err != nil {
 			respData.DNS.Status = fmt.Sprintf("%v", err)
+		} else {
+			respData.StaticIP = handleStaticIP(reqData.DNS.IP, reqData.SetStaticIP)
 		}
 	}
 
@@ -115,13 +147,57 @@ func handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// handleStaticIP - handles static IP request
+// It either checks if we have a static IP
+// Or if set=true, it tries to set it
+func handleStaticIP(ip string, set bool) staticIPJSON {
+	resp := staticIPJSON{}
+
+	interfaceName := util.GetInterfaceByIP(ip)
+	resp.Static = "no"
+
+	if len(interfaceName) == 0 {
+		resp.Static = "error"
+		resp.Error = fmt.Sprintf("Couldn't find network interface by IP %s", ip)
+		return resp
+	}
+
+	if set {
+		// Try to set static IP for the specified interface
+		err := dhcpd.SetStaticIP(interfaceName)
+		if err != nil {
+			resp.Static = "error"
+			resp.Error = err.Error()
+			return resp
+		}
+	}
+
+	// Fallthrough here even if we set static IP
+	// Check if we have a static IP and return the details
+	isStaticIP, err := dhcpd.HasStaticIP(interfaceName)
+	if err != nil {
+		resp.Static = "error"
+		resp.Error = err.Error()
+	} else {
+		if isStaticIP {
+			resp.Static = "yes"
+		}
+		resp.IP = util.GetSubnet(interfaceName)
+	}
+	return resp
+}
+
 // Check if DNSStubListener is active
 func checkDNSStubListener() bool {
+	if runtime.GOOS != "linux" {
+		return false
+	}
+
 	cmd := exec.Command("systemctl", "is-enabled", "systemd-resolved")
 	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
 	_, err := cmd.Output()
 	if err != nil || cmd.ProcessState.ExitCode() != 0 {
-		log.Error("command %s has failed: %v code:%d",
+		log.Info("command %s has failed: %v code:%d",
 			cmd.Path, err, cmd.ProcessState.ExitCode())
 		return false
 	}
@@ -130,7 +206,7 @@ func checkDNSStubListener() bool {
 	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
 	_, err = cmd.Output()
 	if err != nil || cmd.ProcessState.ExitCode() != 0 {
-		log.Error("command %s has failed: %v code:%d",
+		log.Info("command %s has failed: %v code:%d",
 			cmd.Path, err, cmd.ProcessState.ExitCode())
 		return false
 	}
@@ -138,20 +214,34 @@ func checkDNSStubListener() bool {
 	return true
 }
 
+const resolvedConfPath = "/etc/systemd/resolved.conf.d/adguardhome.conf"
+const resolvedConfData = `[Resolve]
+DNS=127.0.0.1
+DNSStubListener=no
+`
+const resolvConfPath = "/etc/resolv.conf"
+
 // Deactivate DNSStubListener
 func disableDNSStubListener() error {
-	cmd := exec.Command("sed", "-r", "-i.orig", "s/#?DNSStubListener=yes/DNSStubListener=no/g", "/etc/systemd/resolved.conf")
-	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
-	_, err := cmd.Output()
+	dir := filepath.Dir(resolvedConfPath)
+	err := os.MkdirAll(dir, 0755)
 	if err != nil {
-		return err
-	}
-	if cmd.ProcessState.ExitCode() != 0 {
-		return fmt.Errorf("process %s exited with an error: %d",
-			cmd.Path, cmd.ProcessState.ExitCode())
+		return fmt.Errorf("os.MkdirAll: %s: %s", dir, err)
 	}
 
-	cmd = exec.Command("systemctl", "reload-or-restart", "systemd-resolved")
+	err = ioutil.WriteFile(resolvedConfPath, []byte(resolvedConfData), 0644)
+	if err != nil {
+		return fmt.Errorf("ioutil.WriteFile: %s: %s", resolvedConfPath, err)
+	}
+
+	_ = os.Rename(resolvConfPath, resolvConfPath+".backup")
+	err = os.Symlink("/run/systemd/resolve/resolv.conf", resolvConfPath)
+	if err != nil {
+		_ = os.Remove(resolvedConfPath) // remove the file we've just created
+		return fmt.Errorf("os.Symlink: %s: %s", resolvConfPath, err)
+	}
+
+	cmd := exec.Command("systemctl", "reload-or-restart", "systemd-resolved")
 	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
 	_, err = cmd.Output()
 	if err != nil {
@@ -185,7 +275,7 @@ func copyInstallSettings(dst *configuration, src *configuration) {
 }
 
 // Apply new configuration, start DNS server, restart Web server
-func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
+func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	newSettings := applyConfigReq{}
 	err := json.NewDecoder(r.Body).Decode(&newSettings)
 	if err != nil {
@@ -206,7 +296,7 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 
 	// validate that hosts and ports are bindable
 	if restartHTTP {
-		err = checkPortAvailable(newSettings.Web.IP, newSettings.Web.Port)
+		err = util.CheckPortAvailable(newSettings.Web.IP, newSettings.Web.Port)
 		if err != nil {
 			httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s",
 				net.JoinHostPort(newSettings.Web.IP, strconv.Itoa(newSettings.Web.Port)), err)
@@ -214,13 +304,13 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = checkPacketPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
+	err = util.CheckPacketPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
 	}
 
-	err = checkPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
+	err = util.CheckPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
@@ -229,47 +319,47 @@ func handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	var curConfig configuration
 	copyInstallSettings(&curConfig, &config)
 
-	config.firstRun = false
+	Context.firstRun = false
 	config.BindHost = newSettings.Web.IP
 	config.BindPort = newSettings.Web.Port
 	config.DNS.BindHost = newSettings.DNS.IP
 	config.DNS.Port = newSettings.DNS.Port
 
-	initDNSServer()
-
-	err = startDNSServer()
+	err = StartMods()
 	if err != nil {
-		config.firstRun = true
+		Context.firstRun = true
 		copyInstallSettings(&config, &curConfig)
-		httpError(w, http.StatusInternalServerError, "Couldn't start DNS server: %s", err)
+		httpError(w, http.StatusInternalServerError, "%s", err)
 		return
 	}
 
 	u := User{}
 	u.Name = newSettings.Username
-	config.auth.UserAdd(&u, newSettings.Password)
+	Context.auth.UserAdd(&u, newSettings.Password)
 
 	err = config.write()
 	if err != nil {
-		config.firstRun = true
+		Context.firstRun = true
 		copyInstallSettings(&config, &curConfig)
 		httpError(w, http.StatusInternalServerError, "Couldn't write config: %s", err)
 		return
 	}
 
+	registerControlHandlers()
+
 	// this needs to be done in a goroutine because Shutdown() is a blocking call, and it will block
 	// until all requests are finished, and _we_ are inside a request right now, so it will block indefinitely
 	if restartHTTP {
 		go func() {
-			_ = config.httpServer.Shutdown(context.TODO())
+			_ = Context.web.httpServer.Shutdown(context.TODO())
 		}()
 	}
 
 	returnOK(w)
 }
 
-func registerInstallHandlers() {
-	http.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(handleInstallGetAddresses)))
-	http.HandleFunc("/control/install/check_config", preInstall(ensurePOST(handleInstallCheckConfig)))
-	http.HandleFunc("/control/install/configure", preInstall(ensurePOST(handleInstallConfigure)))
+func (web *Web) registerInstallHandlers() {
+	http.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(web.handleInstallGetAddresses)))
+	http.HandleFunc("/control/install/check_config", preInstall(ensurePOST(web.handleInstallCheckConfig)))
+	http.HandleFunc("/control/install/configure", preInstall(ensurePOST(web.handleInstallConfigure)))
 }

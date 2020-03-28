@@ -12,7 +12,11 @@ import './index.css';
 import Header from '../../containers/Header';
 import Dashboard from '../../containers/Dashboard';
 import Settings from '../../containers/Settings';
-import Filters from '../../containers/Filters';
+
+import CustomRules from '../../containers/CustomRules';
+import DnsBlocklist from '../../containers/DnsBlocklist';
+import DnsAllowlist from '../../containers/DnsAllowlist';
+import DnsRewrites from '../../containers/DnsRewrites';
 
 import Dns from '../../containers/Dns';
 import Encryption from '../../containers/Encryption';
@@ -29,6 +33,7 @@ import UpdateOverlay from '../ui/UpdateOverlay';
 import EncryptionTopline from '../ui/EncryptionTopline';
 import Icons from '../ui/Icons';
 import i18n from '../../i18n';
+import Loading from '../ui/Loading';
 
 class App extends Component {
     componentDidMount() {
@@ -41,8 +46,8 @@ class App extends Component {
         }
     }
 
-    handleStatusChange = () => {
-        this.props.enableDns();
+    reloadPage = () => {
+        window.location.reload();
     };
 
     handleUpdate = () => {
@@ -88,10 +93,14 @@ class App extends Component {
                     <LoadingBar className="loading-bar" updateTime={1000} />
                     <Route component={Header} />
                     <div className="container container--wrap">
-                        {!dashboard.processing && !dashboard.isCoreRunning && (
+                        {dashboard.processing && <Loading />}
+                        {!dashboard.isCoreRunning && (
                             <div className="row row-cards">
                                 <div className="col-lg-12">
-                                    <Status handleStatusChange={this.handleStatusChange} />
+                                    <Status reloadPage={this.reloadPage}
+                                            message="dns_start"
+                                        />
+                                    <Loading />
                                 </div>
                             </div>
                         )}
@@ -103,7 +112,10 @@ class App extends Component {
                                 <Route path="/encryption" component={Encryption} />
                                 <Route path="/dhcp" component={Dhcp} />
                                 <Route path="/clients" component={Clients} />
-                                <Route path="/filters" component={Filters} />
+                                <Route path="/filters" component={DnsBlocklist} />
+                                <Route path="/dns_allowlists" component={DnsAllowlist} />
+                                <Route path="/dns_rewrites" component={DnsRewrites} />
+                                <Route path="/custom_rules" component={CustomRules} />
                                 <Route path="/logs" component={Logs} />
                                 <Route path="/guide" component={SetupGuide} />
                             </Fragment>

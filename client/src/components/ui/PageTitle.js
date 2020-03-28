@@ -7,9 +7,13 @@ const PageTitle = props => (
     <div className="page-header">
         <h1 className="page-title">
             {props.title}
-            {props.subtitle && <span className="page-subtitle">{props.subtitle}</span>}
             {props.children}
         </h1>
+        {props.subtitle && (
+            <div className="page-subtitle">
+                {props.subtitle}
+            </div>
+        )}
     </div>
 );
 

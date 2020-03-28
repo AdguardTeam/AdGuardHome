@@ -21,12 +21,17 @@ Contents:
 	* Add client
 	* Update client
 	* Delete client
+	* API: Find clients by IP
 * Enable DHCP server
 	* "Show DHCP status" command
 	* "Check DHCP" command
 	* "Enable DHCP" command
 	* Static IP check/set
 	* Add a static lease
+	* API: Reset DHCP configuration
+* DNS general settings
+	* API: Get DNS general settings
+	* API: Set DNS general settings
 * DNS access settings
 	* List access settings
 	* Set access settings
@@ -50,7 +55,11 @@ Contents:
 	* Filters update mechanism
 	* API: Get filtering parameters
 	* API: Set filtering parameters
+	* API: Refresh filters
+	* API: Add Filter
 	* API: Set URL parameters
+	* API: Delete URL
+	* API: Domain Check
 * Log-in page
 	* API: Log in
 	* API: Log out
@@ -59,8 +68,7 @@ Contents:
 
 ## Relations between subsystems
 
-![](agh-arch.png)
-
+![](doc/agh-arch.png)
 
 
 ## First startup
@@ -132,9 +140,12 @@ Request:
 	{
 	"web":{"port":80,"ip":"192.168.11.33"},
 	"dns":{"port":53,"ip":"127.0.0.1","autofix":false},
+	"set_static_ip": true | false
 	}
 
 Server should check whether a port is available only in case it itself isn't already listening on that port.
+
+If `set_static_ip` is `true`, Server attempts to set a static IP for the network interface chosen by `dns.ip` setting.  If the operation is successful, `static_ip.static` setting will be `yes`.  If it fails, `static_ip.static` setting will be set to `error` and `static_ip.error` will contain the error message.
 
 Server replies on success:
 
@@ -143,7 +154,14 @@ Server replies on success:
 	{
 	"web":{"status":""},
 	"dns":{"status":""},
+	"static_ip": {
+		"static": "yes|no|error",
+		"ip": "<Current dynamic IP address>", // set if static=no
+		"error": "..." // set if static=error
 	}
+	}
+
+If `static_ip.static` is `no`, Server has detected that the system uses a dynamic address and it can  automatically set a static address if `set_static_ip` in request is `true`.  See section `Static IP check/set` for detailed process.
 
 Server replies on error:
 
@@ -166,7 +184,11 @@ Request:
 	POST /control/install/check_config
 
 	{
-	"dns":{"port":53,"ip":"127.0.0.1","autofix":false}
+	"dns":{
+		"port":53,
+		"ip":"127.0.0.1",
+		"autofix":false
+	}
 	}
 
 Check if DNSStubListener is enabled:
@@ -197,9 +219,21 @@ If user clicks on "Fix" button, UI sends request to perform an automatic fix
 	"dns":{"port":53,"ip":"127.0.0.1","autofix":true},
 	}
 
-Deactivate (save backup as `resolved.conf.orig`) and stop DNSStubListener:
+Deactivate DNSStubListener and update DNS server address.  Create a new file: `/etc/systemd/resolved.conf.d/adguardhome.conf` (create a `/etc/systemd/resolved.conf.d` directory if necessary):
 
-	sed -r -i.orig 's/#?DNSStubListener=yes/DNSStubListener=no/g' /etc/systemd/resolved.conf
+	[Resolve]
+	DNS=127.0.0.1
+	DNSStubListener=no
+
+Specifying "127.0.0.1" as DNS server address is necessry because otherwise the nameserver will be "127.0.0.53" which doesn't work without DNSStubListener.
+
+Activate another resolv.conf file:
+
+	mv /etc/resolv.conf /etc/resolv.conf.backup
+	ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
+
+Stop DNSStubListener:
+
 	systemctl reload-or-restart systemd-resolved
 
 Server replies:
@@ -481,13 +515,7 @@ which will print:
 	default via 192.168.0.1 proto dhcp metric 100
 
 
-#### Phase 2
-
-This method only works on Raspbian.
-
-On Ubuntu DHCP for a network interface can't be disabled via `dhcpcd.conf`.  This must be configured in `/etc/netplan/01-netcfg.yaml`.
-
-Fedora doesn't use `dhcpcd.conf` configuration at all.
+#### Phase 2 (Raspbian)
 
 Step 1.
 
@@ -506,6 +534,44 @@ Step 2.
 If we would set a different IP address, we'd need to replace the IP address for the current network configuration.  But currently this step isn't necessary.
 
 	ip addr replace dev eth0 192.168.0.1/24
+
+
+#### Phase 2 (Ubuntu)
+
+`/etc/netplan/01-netcfg.yaml` or `/etc/netplan/01-network-manager-all.yaml`
+
+This configuration example has a static IP set for `enp0s3` interface:
+
+	network:
+		version: 2
+		renderer: networkd
+		ethernets:
+			enp0s3:
+				dhcp4: no
+				addresses: [192.168.0.2/24]
+				gateway: 192.168.0.1
+				nameservers:
+					addresses: [192.168.0.1,8.8.8.8]
+
+For dynamic configuration `dhcp4: yes` is set.
+
+Make a backup copy to `/etc/netplan/01-netcfg.yaml.backup`.
+
+Apply:
+
+	netplan apply
+
+Restart network:
+
+	systemctl restart networking
+
+or:
+
+	systemctl restart network-manager
+
+or:
+
+	systemctl restart system-networkd
 
 
 ### Add a static lease
@@ -536,6 +602,20 @@ Request:
 		"ip":"...",
 		"hostname":"..."
 	}
+
+Response:
+
+	200 OK
+
+
+### API: Reset DHCP configuration
+
+Clear all DHCP leases and configuration settings.
+DHCP server will be stopped if it's currently running.
+
+Request:
+
+	POST /control/dhcp/reset
 
 Response:
 
@@ -618,8 +698,6 @@ Notes:
 
 * `name`, `ip` and `mac` values are unique.
 
-* `ip` & `mac` values can't be set both at the same time.
-
 * If `mac` is set and DHCP server is enabled, IP is taken from DHCP lease table.
 
 * If `use_global_settings` is true, then DNS responses for this client are processed and filtered using global settings.
@@ -643,8 +721,8 @@ Response:
 	clients: [
 		{
 			name: "client1"
-			ip: "..."
-			mac: "..."
+			ids: ["...", ...] // IP, CIDR or MAC
+			tags: ["...", ...]
 			use_global_settings: true
 			filtering_enabled: false
 			parental_enabled: false
@@ -656,6 +734,7 @@ Response:
 				key: "value"
 				...
 			}
+			upstreams: ["upstream1", ...]
 		}
 	]
 	auto_clients: [
@@ -669,6 +748,7 @@ Response:
 			}
 		}
 	]
+	supported_tags: ["...", ...]
 	}
 
 Supported keys for `whois_info`: orgname, country, city.
@@ -682,8 +762,8 @@ Request:
 
 	{
 		name: "client1"
-		ip: "..."
-		mac: "..."
+		ids: ["...", ...] // IP, CIDR or MAC
+		tags: ["...", ...]
 		use_global_settings: true
 		filtering_enabled: false
 		parental_enabled: false
@@ -691,6 +771,7 @@ Request:
 		safesearch_enabled: false
 		use_global_blocked_services: true
 		blocked_services: [ "name1", ... ]
+		upstreams: ["upstream1", ...]
 	}
 
 Response:
@@ -712,8 +793,8 @@ Request:
 		name: "client1"
 		data: {
 			name: "client1"
-			ip: "..."
-			mac: "..."
+			ids: ["...", ...] // IP, CIDR or MAC
+			tags: ["...", ...]
 			use_global_settings: true
 			filtering_enabled: false
 			parental_enabled: false
@@ -721,6 +802,7 @@ Request:
 			safesearch_enabled: false
 			use_global_blocked_services: true
 			blocked_services: [ "name1", ... ]
+			upstreams: ["upstream1", ...]
 		}
 	}
 
@@ -752,6 +834,95 @@ Error response (Client not found):
 	400
 
 
+### API: Find clients by IP
+
+This method returns the list of clients (manual and auto-clients) matching the IP list.
+For auto-clients only `name`, `ids` and `whois_info` fields are set.  Other fields are empty.
+
+Request:
+
+	GET /control/clients/find?ip0=...&ip1=...&ip2=...
+
+Response:
+
+	200 OK
+
+	[
+	{
+		"1.2.3.4": {
+			name: "client1"
+			ids: ["...", ...] // IP, CIDR or MAC
+			use_global_settings: true
+			filtering_enabled: false
+			parental_enabled: false
+			safebrowsing_enabled: false
+			safesearch_enabled: false
+			use_global_blocked_services: true
+			blocked_services: [ "name1", ... ]
+			whois_info: {
+				key: "value"
+				...
+			}
+		}
+	}
+	...
+	]
+
+
+## DNS general settings
+
+### API: Get DNS general settings
+
+Request:
+
+	GET /control/dns_info
+
+Response:
+
+	200 OK
+
+	{
+		"protection_enabled": true | false,
+		"ratelimit": 1234,
+		"blocking_mode": "default" | "nxdomain" | "null_ip" | "custom_ip",
+		"blocking_ipv4": "1.2.3.4",
+		"blocking_ipv6": "1:2:3::4",
+		"edns_cs_enabled": true | false,
+		"dnssec_enabled": true | false
+		"disable_ipv6": true | false,
+	}
+
+
+### API: Set DNS general settings
+
+Request:
+
+	POST /control/dns_config
+
+	{
+		"protection_enabled": true | false,
+		"ratelimit": 1234,
+		"blocking_mode": "default" | "nxdomain" | "null_ip" | "custom_ip",
+		"blocking_ipv4": "1.2.3.4",
+		"blocking_ipv6": "1:2:3::4",
+		"edns_cs_enabled": true | false,
+		"dnssec_enabled": true | false
+		"disable_ipv6": true | false,
+	}
+
+Response:
+
+	200 OK
+
+`blocking_mode`:
+* default: Respond with NXDOMAIN when blocked by Adblock-style rule;  respond with the IP address specified in the rule when blocked by /etc/hosts-style rule
+* NXDOMAIN: Respond with NXDOMAIN code
+* Null IP: Respond with zero IP address (0.0.0.0 for A; :: for AAAA)
+* Custom IP: Respond with a manually set IP address
+
+`blocking_ipv4` and `blocking_ipv6` values are active when `blocking_mode` is set to `custom_ip`.
+
+
 ## DNS access settings
 
 There are low-level settings that can block undesired DNS requests.  "Blocking" means not responding to request.
@@ -775,7 +946,7 @@ Response:
 	{
 		allowed_clients: ["127.0.0.1", ...]
 		disallowed_clients: ["127.0.0.1", ...]
-		blocked_hosts: ["host.com", ...]
+		blocked_hosts: ["host.com", ...] // host name or a wildcard
 	}
 
 
@@ -819,6 +990,8 @@ Response:
 	}
 	...
 	]
+
+`domain` can be an exact host name (`www.host.com`) or a wildcard (`*.host.com`).
 
 
 ### API: Add a rewrite entry
@@ -1012,17 +1185,21 @@ Response:
 When a new DNS request is received and processed, we store information about this event in "query log".  It is a file on disk in JSON format:
 
 	{
-	"Question":"...","
-	Answer":"...",
+	"IP":"127.0.0.1", // client IP
+	"T":"...", // response time
+	"QH":"...", // target host name without the last dot
+	"QT":"...", // question type
+	"QC":"...", // question class
+	"Answer":"...",
+	"OrigAnswer":"...",
 	"Result":{
 		"IsFiltered":true,
 		"Reason":3,
 		"Rule":"...",
-		"FilterID":1
+		"FilterID":1,
 		},
-	"Time":"...",
 	"Elapsed":12345,
-	"IP":"127.0.0.1"
+	"Upstream":"...",
 	}
 
 
@@ -1052,7 +1229,7 @@ Request:
 	&filter_question_type=A | AAAA
 	&filter_response_status= | filtered
 
-If `older_than` value is set, server returns the next chunk of entries that are older than this time stamp.  This setting is used for paging.  UI sets the empty value on the first request and gets the latest log entries.  To get the older entries, UI sets this value to the timestamp of the last (the oldest) entry from the previous response from Server.
+`older_than` setting is used for paging.  UI uses an empty value for `older_than` on the first request and gets the latest log entries.  To get the older entries, UI sets `older_than` to the `oldest` value from the server's response.
 
 If "filter" settings are set, server returns only entries that match the specified request.
 
@@ -1060,7 +1237,9 @@ For `filter.domain` and `filter.client` the server matches substrings by default
 
 Response:
 
-	[
+	{
+	"oldest":"2006-01-02T15:04:05.999999999Z07:00"
+	"data":[
 	{
 		"answer":[
 			{
@@ -1070,6 +1249,14 @@ Response:
 			}
 			...
 		],
+		"original_answer":[ // Answer from upstream server (optional)
+			{
+			"type":"AAAA",
+			"value":"::"
+			}
+			...
+		],
+		"answer_dnssec": true,
 		"client":"127.0.0.1",
 		"elapsedMs":"0.098403",
 		"filterId":1,
@@ -1080,11 +1267,13 @@ Response:
 		},
 		"reason":"FilteredBlackList",
 		"rule":"||doubleclick.net^",
+		"service_name": "...", // set if reason=FilteredBlockedService
 		"status":"NOERROR",
 		"time":"2006-01-02T15:04:05.999999999Z07:00"
 	}
 	...
 	]
+	}
 
 The most recent entries are at the top of list.
 
@@ -1098,11 +1287,21 @@ Request:
 	{
 		"enabled": true | false
 		"interval": 1 | 7 | 30 | 90
+		"anonymize_client_ip": true | false // anonymize clients' IP addresses
 	}
 
 Response:
 
 	200 OK
+
+`anonymize_client_ip`:
+1. New log entries written to a log file will contain modified client IP addresses.  Note that there's no way to obtain the full IP address later for these entries.
+2. `GET /control/querylog` response data will contain modified client IP addresses (masked /24 or /112).
+3. Searching by client IP won't work for the previously stored entries.
+
+How `anonymize_client_ip` affects Stats:
+1. After AGH restart, new stats entries will contain modified client IP addresses.
+2. Existing entries are not affected.
 
 
 ### API: Get querylog parameters
@@ -1118,10 +1317,31 @@ Response:
 	{
 		"enabled": true | false
 		"interval": 1 | 7 | 30 | 90
+		"anonymize_client_ip": true | false
 	}
 
 
 ## Filtering
+
+![](doc/agh-filtering.png)
+
+This is how DNS requests and responses are filtered by AGH:
+
+* 'dnsproxy' module receives DNS request from client and passes control to AGH
+* AGH applies filtering logic to the host name in DNS Question:
+	* process Rewrite rules
+	* match host name against filtering lists
+	* match host name against blocked services rules
+	* process SafeSearch rules
+	* request SafeBrowsing & ParentalControl services and process their response
+* If the handlers above create a successful result that can be immediately sent to a client, it's passed back to 'dnsproxy' module
+* Otherwise, AGH passes the DNS request to an upstream server via 'dnsproxy' module
+* After 'dnsproxy' module has received a response from an upstream server, it passes control back to AGH
+* If the filtering logic for DNS request returned a 'whitelist' flag, AGH passes the response to a client
+* Otherwise, AGH applies filtering logic to each DNS record in response:
+	* For CNAME records, the target name is matched against filtering lists (ignoring 'whitelist' rules)
+	* For A and AAAA records, the IP address is matched against filtering lists (ignoring 'whitelist' rules)
+
 
 ### Filters update mechanism
 
@@ -1158,8 +1378,22 @@ Response:
 			}
 			...
 		],
+		"whitelist_filters":[
+			{
+			"id":1
+			"enabled":true,
+			"url":"https://...",
+			"name":"...",
+			"rules_count":1234,
+			"last_updated":"2019-09-04T18:29:30+00:00",
+			}
+			...
+		],
 		"user_rules":["...", ...]
 	}
+
+For both arrays `filters` and `whitelist_filters` there are unique values: id, url.
+ID for each filter is assigned by Server - it's used for file names.
 
 
 ### API: Set filtering parameters
@@ -1178,15 +1412,35 @@ Response:
 	200 OK
 
 
-### API: Set URL parameters
+### API: Refresh filters
 
 Request:
 
-	POST /control/filtering/set_url
+	POST /control/filtering/refresh
 
 	{
+		"whitelist": true
+	}
+
+Response:
+
+	200 OK
+
+	{
+		"updated": 123 // number of filters updated
+	}
+
+
+### API: Add Filter
+
+Request:
+
+	POST /control/filtering/add_url
+
+	{
+		"name": "..."
 		"url": "..."
-		"enabled": true | false
+		"whitelist": true
 	}
 
 Response:
@@ -1194,9 +1448,72 @@ Response:
 	200 OK
 
 
+### API: Set URL parameters
+
+Request:
+
+	POST /control/filtering/set_url
+
+	{
+	"url": "..."
+	"whitelist": true
+	"data": {
+		"name": "..."
+		"url": "..."
+		"enabled": true | false
+	}
+	}
+
+Response:
+
+	200 OK
+
+
+### API: Delete URL
+
+Request:
+
+	POST /control/filtering/remove_url
+
+	{
+	"url": "..."
+	"whitelist": true
+	}
+
+Response:
+
+	200 OK
+
+
+### API: Domain Check
+
+Check if host name is filtered.
+
+Request:
+
+	GET /control/filtering/check_host?name=hostname
+
+Response:
+
+	200 OK
+
+	{
+	"reason":"FilteredBlackList",
+	"filter_id":1,
+	"rule":"||doubleclick.net^",
+	"service_name": "...", // set if reason=FilteredBlockedService
+
+	// if reason=ReasonRewrite:
+	"cname": "...",
+	"ip_addrs": ["1.2.3.4", ...],
+	}
+
+
 ## Log-in page
 
-After user completes the steps of installation wizard, he must log in into dashboard using his name and password.  After user successfully logs in, he gets the Cookie which allows the server to authenticate him next time without password.  After the Cookie is expired, user needs to perform log-in operation again.  All requests without a proper Cookie get redirected to Log-In page with prompt for name and password.
+After user completes the steps of installation wizard, he must log in into dashboard using his name and password.  After user successfully logs in, he gets the Cookie which allows the server to authenticate him next time without password.  After the Cookie is expired, user needs to perform log-in operation again.
+
+Requests to / or /index.html without a proper Cookie get redirected to Log-In page with prompt for name and password.  The server responds with 403 to all other requests (including all API methods) without a proper Cookie.
 
 YAML configuration:
 

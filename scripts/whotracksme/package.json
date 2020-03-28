@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "download-file-sync": "^1.0.4",
+    "axios": "^0.19.2",
     "sqlite3": "^4.1.0"
   }
 }

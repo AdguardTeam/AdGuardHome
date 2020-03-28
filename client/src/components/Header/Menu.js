@@ -5,101 +5,126 @@ import enhanceWithClickOutside from 'react-click-outside';
 import classnames from 'classnames';
 import { Trans, withNamespaces } from 'react-i18next';
 
-import { SETTINGS_URLS } from '../../helpers/constants';
+import { SETTINGS_URLS, FILTERS_URLS, MENU_URLS } from '../../helpers/constants';
 import Dropdown from '../ui/Dropdown';
+
+const MENU_ITEMS = [
+    {
+        route: MENU_URLS.root, exact: true, icon: 'dashboard', text: 'dashboard', order: 0,
+    },
+
+    // Settings dropdown should have visual order 1
+
+    // Filters dropdown should have visual order 2
+
+    {
+        route: MENU_URLS.logs, icon: 'log', text: 'query_log', order: 3,
+    },
+    {
+        route: MENU_URLS.guide, icon: 'setup', text: 'setup_guide', order: 4,
+    },
+];
+
+const SETTINGS_ITEMS = [
+    { route: SETTINGS_URLS.settings, text: 'general_settings' },
+    { route: SETTINGS_URLS.dns, text: 'dns_settings' },
+    { route: SETTINGS_URLS.encryption, text: 'encryption_settings' },
+    { route: SETTINGS_URLS.clients, text: 'client_settings' },
+    { route: SETTINGS_URLS.dhcp, text: 'dhcp_settings' },
+];
+
+const FILTERS_ITEMS = [
+    { route: FILTERS_URLS.dns_blocklists, text: 'dns_blocklists' },
+    { route: FILTERS_URLS.dns_allowlists, text: 'dns_allowlists' },
+    { route: FILTERS_URLS.dns_rewrites, text: 'dns_rewrites' },
+    { route: FILTERS_URLS.custom_rules, text: 'custom_filtering_rules' },
+];
 
 class Menu extends Component {
     handleClickOutside = () => {
         this.props.closeMenu();
     };
 
-    toggleMenu = () => {
-        this.props.toggleMenuOpen();
+    closeMenu = () => {
+        this.props.closeMenu();
     };
 
-    getActiveClassForSettings = () => {
+    getActiveClassForDropdown = (URLS) => {
         const { pathname } = this.props.location;
-        const isSettingsPage = SETTINGS_URLS.some(item => item === pathname);
+        const isActivePage = Object.values(URLS).some(item => item === pathname);
 
-        return isSettingsPage ? 'active' : '';
+        return isActivePage ? 'active' : '';
     };
+
+    getNavLink = ({
+        route, exact, text, order, className, icon,
+    }) => (
+        <NavLink
+            to={route}
+            key={route}
+            exact={exact || false}
+            className={`order-${order} ${className}`}
+            onClick={this.closeMenu}
+        >
+            {icon && (
+                <svg className="nav-icon">
+                    <use xlinkHref={`#${icon}`} />
+                </svg>
+            )}
+            <Trans>{text}</Trans>
+        </NavLink>
+    );
+
+    getDropdown = ({
+        label, order, URLS, icon, ITEMS,
+    }) =>
+        (
+            <Dropdown
+                label={this.props.t(label)}
+                baseClassName={`dropdown nav-item order-${order}`}
+                controlClassName={`nav-link ${this.getActiveClassForDropdown(URLS)}`}
+                icon={icon}>
+                {ITEMS.map(item => (
+                    this.getNavLink({
+                        ...item,
+                        order,
+                        className: 'dropdown-item',
+                    })))}
+            </Dropdown>
+        );
 
     render() {
         const menuClass = classnames({
             'header__column mobile-menu': true,
             'mobile-menu--active': this.props.isMenuOpen,
         });
-
-        const dropdownControlClass = `nav-link ${this.getActiveClassForSettings()}`;
-
         return (
             <Fragment>
                 <div className={menuClass}>
                     <ul className="nav nav-tabs border-0 flex-column flex-lg-row flex-nowrap">
-                        <li className="nav-item border-bottom d-lg-none" onClick={this.toggleMenu}>
-                            <div className="nav-link nav-link--back">
-                                <svg className="nav-icon">
-                                    <use xlinkHref="#back" />
-                                </svg>
-                                <Trans>back</Trans>
-                            </div>
-                        </li>
-                        <li className="nav-item">
-                            <NavLink to="/" exact={true} className="nav-link">
-                                <svg className="nav-icon">
-                                    <use xlinkHref="#dashboard" />
-                                </svg>
-                                <Trans>dashboard</Trans>
-                            </NavLink>
-                        </li>
-                        <Dropdown
-                            label={this.props.t('settings')}
-                            baseClassName="dropdown nav-item"
-                            controlClassName={dropdownControlClass}
-                            icon="settings"
-                        >
-                            <Fragment>
-                                <NavLink to="/settings" className="dropdown-item">
-                                    <Trans>general_settings</Trans>
-                                </NavLink>
-                                <NavLink to="/dns" className="dropdown-item">
-                                    <Trans>dns_settings</Trans>
-                                </NavLink>
-                                <NavLink to="/encryption" className="dropdown-item">
-                                    <Trans>encryption_settings</Trans>
-                                </NavLink>
-                                <NavLink to="/clients" className="dropdown-item">
-                                    <Trans>client_settings</Trans>
-                                </NavLink>
-                                <NavLink to="/dhcp" className="dropdown-item">
-                                    <Trans>dhcp_settings</Trans>
-                                </NavLink>
-                            </Fragment>
-                        </Dropdown>
-                        <li className="nav-item">
-                            <NavLink to="/filters" className="nav-link">
-                                <svg className="nav-icon">
-                                    <use xlinkHref="#filters" />
-                                </svg>
-                                <Trans>filters</Trans>
-                            </NavLink>
-                        </li>
-                        <li className="nav-item">
-                            <NavLink to="/logs" className="nav-link">
-                                <svg className="nav-icon">
-                                    <use xlinkHref="#log" />
-                                </svg>
-                                <Trans>query_log</Trans>
-                            </NavLink>
-                        </li>
-                        <li className="nav-item">
-                            <NavLink to="/guide" className="nav-link">
-                                <svg className="nav-icon">
-                                    <use xlinkHref="#setup" />
-                                </svg>
-                                <Trans>setup_guide</Trans>
-                            </NavLink>
-                        </li>
+                        {MENU_ITEMS.map(item => (
+                            <li
+                                className={`nav-item order-${item.order}`}
+                                key={item.text}
+                                onClick={this.closeMenu}
+                            >
+                                {this.getNavLink({ ...item, className: 'nav-link' })}
+                            </li>
+                        ))}
+                        {this.getDropdown({
+                            order: 1,
+                            label: 'settings',
+                            icon: 'settings',
+                            URLS: SETTINGS_URLS,
+                            ITEMS: SETTINGS_ITEMS,
+                        })}
+                        {this.getDropdown({
+                            order: 2,
+                            label: 'filters',
+                            icon: 'filters',
+                            URLS: FILTERS_URLS,
+                            ITEMS: FILTERS_ITEMS,
+                        })}
                     </ul>
                 </div>
             </Fragment>
@@ -110,7 +135,6 @@ class Menu extends Component {
 Menu.propTypes = {
     isMenuOpen: PropTypes.bool,
     closeMenu: PropTypes.func,
-    toggleMenuOpen: PropTypes.func,
     location: PropTypes.object,
     t: PropTypes.func,
 };

@@ -16,17 +16,17 @@ import (
 )
 
 const (
-	logBufferCap     = 5000            // maximum capacity of buffer before it's flushed to disk
 	queryLogFileName = "querylog.json" // .gz added during compression
 	getDataLimit     = 500             // GetData(): maximum log entries to return
 
-	// maximum data chunks to parse when filtering entries
-	maxFilteringChunks = 10
+	// maximum entries to parse when searching
+	maxSearchEntries = 50000
 )
 
 // queryLog is a structure that writes and reads the DNS query log
 type queryLog struct {
-	conf    Config
+	conf    *Config
+	lock    sync.Mutex
 	logFile string // path to the log file
 
 	bufferLock    sync.RWMutex
@@ -40,15 +40,19 @@ type queryLog struct {
 func newQueryLog(conf Config) *queryLog {
 	l := queryLog{}
 	l.logFile = filepath.Join(conf.BaseDir, queryLogFileName)
-	l.conf = conf
+	l.conf = &Config{}
+	*l.conf = conf
 	if !checkInterval(l.conf.Interval) {
 		l.conf.Interval = 1
 	}
+	return &l
+}
+
+func (l *queryLog) Start() {
 	if l.conf.HTTPRegister != nil {
 		l.initWeb()
 	}
 	go l.periodicRotate()
-	return &l
 }
 
 func (l *queryLog) Close() {
@@ -59,15 +63,11 @@ func checkInterval(days uint32) bool {
 	return days == 1 || days == 7 || days == 30 || days == 90
 }
 
-// Set new configuration at runtime
-func (l *queryLog) configure(conf Config) {
-	l.conf.Enabled = conf.Enabled
-	l.conf.Interval = conf.Interval
-}
-
 func (l *queryLog) WriteDiskConfig(dc *DiskConfig) {
 	dc.Enabled = l.conf.Enabled
 	dc.Interval = l.conf.Interval
+	dc.MemSize = l.conf.MemSize
+	dc.AnonymizeClientIP = l.conf.AnonymizeClientIP
 }
 
 // Clear memory buffer and remove log files
@@ -94,72 +94,72 @@ func (l *queryLog) clear() {
 }
 
 type logEntry struct {
-	Question []byte
-	Answer   []byte `json:",omitempty"` // sometimes empty answers happen like binerdunt.top or rev2.globalrootservers.net
+	IP   string    `json:"IP"`
+	Time time.Time `json:"T"`
+
+	QHost  string `json:"QH"`
+	QType  string `json:"QT"`
+	QClass string `json:"QC"`
+
+	Answer     []byte `json:",omitempty"` // sometimes empty answers happen like binerdunt.top or rev2.globalrootservers.net
+	OrigAnswer []byte `json:",omitempty"`
+
 	Result   dnsfilter.Result
-	Time     time.Time
 	Elapsed  time.Duration
-	IP       string
 	Upstream string `json:",omitempty"` // if empty, means it was cached
 }
 
-// getIPString is a helper function that extracts IP address from net.Addr
-func getIPString(addr net.Addr) string {
-	switch addr := addr.(type) {
-	case *net.UDPAddr:
-		return addr.IP.String()
-	case *net.TCPAddr:
-		return addr.IP.String()
-	}
-	return ""
-}
-
-func (l *queryLog) Add(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Result, elapsed time.Duration, addr net.Addr, upstream string) {
+func (l *queryLog) Add(params AddParams) {
 	if !l.conf.Enabled {
 		return
 	}
 
-	var q []byte
-	var a []byte
-	var err error
-	ip := getIPString(addr)
-
-	if question != nil {
-		q, err = question.Pack()
-		if err != nil {
-			log.Printf("failed to pack question for querylog: %s", err)
-			return
-		}
+	if params.Question == nil || len(params.Question.Question) != 1 || len(params.Question.Question[0].Name) == 0 ||
+		params.ClientIP == nil {
+		return
 	}
 
-	if answer != nil {
-		a, err = answer.Pack()
-		if err != nil {
-			log.Printf("failed to pack answer for querylog: %s", err)
-			return
-		}
-	}
-
-	if result == nil {
-		result = &dnsfilter.Result{}
+	if params.Result == nil {
+		params.Result = &dnsfilter.Result{}
 	}
 
 	now := time.Now()
 	entry := logEntry{
-		Question: q,
-		Answer:   a,
-		Result:   *result,
-		Time:     now,
-		Elapsed:  elapsed,
-		IP:       ip,
-		Upstream: upstream,
+		IP:   l.getClientIP(params.ClientIP.String()),
+		Time: now,
+
+		Result:   *params.Result,
+		Elapsed:  params.Elapsed,
+		Upstream: params.Upstream,
+	}
+	q := params.Question.Question[0]
+	entry.QHost = strings.ToLower(q.Name[:len(q.Name)-1]) // remove the last dot
+	entry.QType = dns.Type(q.Qtype).String()
+	entry.QClass = dns.Class(q.Qclass).String()
+
+	if params.Answer != nil {
+		a, err := params.Answer.Pack()
+		if err != nil {
+			log.Info("Querylog: Answer.Pack(): %s", err)
+			return
+		}
+		entry.Answer = a
+	}
+
+	if params.OrigAnswer != nil {
+		a, err := params.OrigAnswer.Pack()
+		if err != nil {
+			log.Info("Querylog: OrigAnswer.Pack(): %s", err)
+			return
+		}
+		entry.OrigAnswer = a
 	}
 
 	l.bufferLock.Lock()
 	l.buffer = append(l.buffer, &entry)
 	needFlush := false
 	if !l.flushPending {
-		needFlush = len(l.buffer) >= logBufferCap
+		needFlush = len(l.buffer) >= int(l.conf.MemSize)
 		if needFlush {
 			l.flushPending = true
 		}
@@ -174,106 +174,12 @@ func (l *queryLog) Add(question *dns.Msg, answer *dns.Msg, result *dnsfilter.Res
 	}
 }
 
-// Return TRUE if this entry is needed
-func isNeeded(entry *logEntry, params getDataParams) bool {
-	if params.ResponseStatus == responseStatusFiltered && !entry.Result.IsFiltered {
-		return false
-	}
-
-	if len(params.Domain) != 0 || params.QuestionType != 0 {
-		m := dns.Msg{}
-		_ = m.Unpack(entry.Question)
-
-		if params.QuestionType != 0 {
-			if m.Question[0].Qtype != params.QuestionType {
-				return false
-			}
-		}
-
-		if len(params.Domain) != 0 && params.StrictMatchDomain {
-			if m.Question[0].Name != params.Domain {
-				return false
-			}
-		} else if len(params.Domain) != 0 {
-			if strings.Index(m.Question[0].Name, params.Domain) == -1 {
-				return false
-			}
-		}
-	}
-
-	if len(params.Client) != 0 && params.StrictMatchClient {
-		if entry.IP != params.Client {
-			return false
-		}
-	} else if len(params.Client) != 0 {
-		if strings.Index(entry.IP, params.Client) == -1 {
-			return false
-		}
-	}
-
-	return true
-}
-
-func (l *queryLog) readFromFile(params getDataParams) ([]*logEntry, int) {
-	entries := []*logEntry{}
-	olderThan := params.OlderThan
-	totalChunks := 0
-	total := 0
-
-	r := l.OpenReader()
-	if r == nil {
-		return entries, 0
-	}
-	r.BeginRead(olderThan, getDataLimit)
-	for totalChunks < maxFilteringChunks {
-		first := true
-		newEntries := []*logEntry{}
-		for {
-			entry := r.Next()
-			if entry == nil {
-				break
-			}
-			total++
-
-			if first {
-				first = false
-				olderThan = entry.Time
-			}
-
-			if !isNeeded(entry, params) {
-				continue
-			}
-			if len(newEntries) == getDataLimit {
-				newEntries = newEntries[1:]
-			}
-			newEntries = append(newEntries, entry)
-		}
-
-		log.Debug("entries: +%d (%d)  older-than:%s", len(newEntries), len(entries), olderThan)
-
-		entries = append(newEntries, entries...)
-		if len(entries) > getDataLimit {
-			toremove := len(entries) - getDataLimit
-			entries = entries[toremove:]
-			break
-		}
-		if first || len(entries) == getDataLimit {
-			break
-		}
-		totalChunks++
-		r.BeginReadPrev(olderThan, getDataLimit)
-	}
-
-	r.Close()
-	return entries, total
-}
-
 // Parameters for getData()
 type getDataParams struct {
 	OlderThan         time.Time          // return entries that are older than this value
 	Domain            string             // filter by domain name in question
 	Client            string             // filter by client IP
-	QuestionType      uint16             // filter by question type
+	QuestionType      string             // filter by question type
 	ResponseStatus    responseStatusType // filter by response status
 	StrictMatchDomain bool               // if Domain value must be matched strictly
 	StrictMatchClient bool               // if Client value must be matched strictly
@@ -288,20 +194,16 @@ const (
 	responseStatusFiltered
 )
 
-// Get log entries
-func (l *queryLog) getData(params getDataParams) []map[string]interface{} {
-	var data = []map[string]interface{}{}
+// Gets log entries
+func (l *queryLog) getData(params getDataParams) map[string]interface{} {
+	now := time.Now()
 
-	if len(params.Domain) != 0 && params.StrictMatchDomain {
-		params.Domain = params.Domain + "."
+	if len(params.Client) != 0 && l.conf.AnonymizeClientIP {
+		params.Client = l.getClientIP(params.Client)
 	}
 
-	now := time.Now()
-	entries := []*logEntry{}
-	total := 0
-
 	// add from file
-	entries, total = l.readFromFile(params)
+	fileEntries, oldest, total := l.searchFiles(params)
 
 	if params.OlderThan.IsZero() {
 		params.OlderThan = now
@@ -310,83 +212,143 @@ func (l *queryLog) getData(params getDataParams) []map[string]interface{} {
 	// add from memory buffer
 	l.bufferLock.Lock()
 	total += len(l.buffer)
-	for _, entry := range l.buffer {
+	memoryEntries := make([]*logEntry, 0)
 
-		if !isNeeded(entry, params) {
+	// go through the buffer in the reverse order
+	// from NEWER to OLDER
+	for i := len(l.buffer) - 1; i >= 0; i-- {
+		entry := l.buffer[i]
+
+		if entry.Time.UnixNano() >= params.OlderThan.UnixNano() {
+			// Ignore entries newer than what was requested
 			continue
 		}
 
-		if entry.Time.UnixNano() >= params.OlderThan.UnixNano() {
-			break
+		if !matchesGetDataParams(entry, params) {
+			continue
 		}
 
-		if len(entries) == getDataLimit {
-			entries = entries[1:]
-		}
-		entries = append(entries, entry)
+		memoryEntries = append(memoryEntries, entry)
 	}
 	l.bufferLock.Unlock()
 
-	// process the elements from latest to oldest
-	for i := len(entries) - 1; i >= 0; i-- {
+	// now let's get a unified collection
+	entries := append(memoryEntries, fileEntries...)
+	if len(entries) > getDataLimit {
+		// remove extra records
+		entries = entries[(len(entries) - getDataLimit):]
+	}
+	if len(entries) == getDataLimit {
+		// change the "oldest" value here.
+		// we cannot use the "oldest" we got from "searchFiles" anymore
+		// because after adding in-memory records and removing extra records
+		// the situation has changed
+		oldest = entries[len(entries)-1].Time
+	}
+
+	// init the response object
+	var data = []map[string]interface{}{}
+
+	// the elements order is already reversed (from newer to older)
+	for i := 0; i < len(entries); i++ {
 		entry := entries[i]
-		var q *dns.Msg
-		var a *dns.Msg
-
-		if len(entry.Question) > 0 {
-			q = new(dns.Msg)
-			if err := q.Unpack(entry.Question); err != nil {
-				// ignore, log and move on
-				log.Printf("Failed to unpack dns message question: %s", err)
-				q = nil
-			}
-		}
-		if len(entry.Answer) > 0 {
-			a = new(dns.Msg)
-			if err := a.Unpack(entry.Answer); err != nil {
-				// ignore, log and move on
-				log.Printf("Failed to unpack dns message question: %s", err)
-				a = nil
-			}
-		}
-
-		jsonEntry := map[string]interface{}{
-			"reason":    entry.Result.Reason.String(),
-			"elapsedMs": strconv.FormatFloat(entry.Elapsed.Seconds()*1000, 'f', -1, 64),
-			"time":      entry.Time.Format(time.RFC3339Nano),
-			"client":    entry.IP,
-		}
-		if q != nil {
-			jsonEntry["question"] = map[string]interface{}{
-				"host":  strings.ToLower(strings.TrimSuffix(q.Question[0].Name, ".")),
-				"type":  dns.Type(q.Question[0].Qtype).String(),
-				"class": dns.Class(q.Question[0].Qclass).String(),
-			}
-		}
-
-		if a != nil {
-			jsonEntry["status"] = dns.RcodeToString[a.Rcode]
-		}
-		if len(entry.Result.Rule) > 0 {
-			jsonEntry["rule"] = entry.Result.Rule
-			jsonEntry["filterId"] = entry.Result.FilterID
-		}
-
-		if len(entry.Result.ServiceName) != 0 {
-			jsonEntry["service_name"] = entry.Result.ServiceName
-		}
-
-		answers := answerToMap(a)
-		if answers != nil {
-			jsonEntry["answer"] = answers
-		}
-
+		jsonEntry := l.logEntryToJSONEntry(entry)
 		data = append(data, jsonEntry)
 	}
 
 	log.Debug("QueryLog: prepared data (%d/%d) older than %s in %s",
 		len(entries), total, params.OlderThan, time.Since(now))
-	return data
+
+	var result = map[string]interface{}{}
+	result["oldest"] = ""
+	if !oldest.IsZero() {
+		result["oldest"] = oldest.Format(time.RFC3339Nano)
+	}
+	result["data"] = data
+	return result
+}
+
+// Get Client IP address
+func (l *queryLog) getClientIP(clientIP string) string {
+	if l.conf.AnonymizeClientIP {
+		ip := net.ParseIP(clientIP)
+		if ip != nil {
+			ip4 := ip.To4()
+			const AnonymizeClientIP4Mask = 24
+			const AnonymizeClientIP6Mask = 112
+			if ip4 != nil {
+				clientIP = ip4.Mask(net.CIDRMask(AnonymizeClientIP4Mask, 32)).String()
+			} else {
+				clientIP = ip.Mask(net.CIDRMask(AnonymizeClientIP6Mask, 128)).String()
+			}
+		}
+	}
+
+	return clientIP
+}
+
+func (l *queryLog) logEntryToJSONEntry(entry *logEntry) map[string]interface{} {
+	var msg *dns.Msg
+
+	if len(entry.Answer) > 0 {
+		msg = new(dns.Msg)
+		if err := msg.Unpack(entry.Answer); err != nil {
+			log.Debug("Failed to unpack dns message answer: %s: %s", err, string(entry.Answer))
+			msg = nil
+		}
+	}
+
+	jsonEntry := map[string]interface{}{
+		"reason":    entry.Result.Reason.String(),
+		"elapsedMs": strconv.FormatFloat(entry.Elapsed.Seconds()*1000, 'f', -1, 64),
+		"time":      entry.Time.Format(time.RFC3339Nano),
+		"client":    l.getClientIP(entry.IP),
+	}
+	jsonEntry["question"] = map[string]interface{}{
+		"host":  entry.QHost,
+		"type":  entry.QType,
+		"class": entry.QClass,
+	}
+
+	if msg != nil {
+		jsonEntry["status"] = dns.RcodeToString[msg.Rcode]
+
+		opt := msg.IsEdns0()
+		dnssecOk := false
+		if opt != nil {
+			dnssecOk = opt.Do()
+		}
+		jsonEntry["answer_dnssec"] = dnssecOk
+	}
+
+	if len(entry.Result.Rule) > 0 {
+		jsonEntry["rule"] = entry.Result.Rule
+		jsonEntry["filterId"] = entry.Result.FilterID
+	}
+
+	if len(entry.Result.ServiceName) != 0 {
+		jsonEntry["service_name"] = entry.Result.ServiceName
+	}
+
+	answers := answerToMap(msg)
+	if answers != nil {
+		jsonEntry["answer"] = answers
+	}
+
+	if len(entry.OrigAnswer) != 0 {
+		a := new(dns.Msg)
+		err := a.Unpack(entry.OrigAnswer)
+		if err == nil {
+			answers = answerToMap(a)
+			if answers != nil {
+				jsonEntry["original_answer"] = answers
+			}
+		} else {
+			log.Debug("Querylog: msg.Unpack(entry.OrigAnswer): %s: %s", err, string(entry.OrigAnswer))
+		}
+	}
+
+	return jsonEntry
 }
 
 func answerToMap(a *dns.Msg) []map[string]interface{} {
@@ -404,9 +366,9 @@ func answerToMap(a *dns.Msg) []map[string]interface{} {
 		// try most common record types
 		switch v := k.(type) {
 		case *dns.A:
-			answer["value"] = v.A
+			answer["value"] = v.A.String()
 		case *dns.AAAA:
-			answer["value"] = v.AAAA
+			answer["value"] = v.AAAA.String()
 		case *dns.MX:
 			answer["value"] = fmt.Sprintf("%v %v", v.Preference, v.Mx)
 		case *dns.CNAME:

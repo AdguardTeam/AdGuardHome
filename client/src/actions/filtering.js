@@ -1,5 +1,6 @@
 import { createAction } from 'redux-actions';
 import { showLoading, hideLoading } from 'react-redux-loading-bar';
+import { t } from 'i18next';
 
 import { normalizeFilteringStatus, normalizeRulesTextarea } from '../helpers/helpers';
 import { addErrorToast, addSuccessToast } from './index';
@@ -44,10 +45,10 @@ export const addFilterRequest = createAction('ADD_FILTER_REQUEST');
 export const addFilterFailure = createAction('ADD_FILTER_FAILURE');
 export const addFilterSuccess = createAction('ADD_FILTER_SUCCESS');
 
-export const addFilter = (url, name) => async (dispatch) => {
+export const addFilter = (url, name, whitelist = false) => async (dispatch) => {
     dispatch(addFilterRequest());
     try {
-        await apiClient.addFilter(url, name);
+        await apiClient.addFilter({ url, name, whitelist });
         dispatch(addFilterSuccess(url));
         dispatch(toggleFilteringModal());
         dispatch(addSuccessToast('filter_added_successfully'));
@@ -62,10 +63,10 @@ export const removeFilterRequest = createAction('REMOVE_FILTER_REQUEST');
 export const removeFilterFailure = createAction('REMOVE_FILTER_FAILURE');
 export const removeFilterSuccess = createAction('REMOVE_FILTER_SUCCESS');
 
-export const removeFilter = url => async (dispatch) => {
+export const removeFilter = (url, whitelist = false) => async (dispatch) => {
     dispatch(removeFilterRequest());
     try {
-        await apiClient.removeFilter(url);
+        await apiClient.removeFilter({ url, whitelist });
         dispatch(removeFilterSuccess(url));
         dispatch(getFilteringStatus());
     } catch (error) {
@@ -78,10 +79,10 @@ export const toggleFilterRequest = createAction('FILTER_TOGGLE_REQUEST');
 export const toggleFilterFailure = createAction('FILTER_TOGGLE_FAILURE');
 export const toggleFilterSuccess = createAction('FILTER_TOGGLE_SUCCESS');
 
-export const toggleFilterStatus = (url, enabled) => async (dispatch) => {
+export const toggleFilterStatus = (url, data, whitelist = false) => async (dispatch) => {
     dispatch(toggleFilterRequest());
     try {
-        await apiClient.setFilterUrl({ url, enabled: !enabled });
+        await apiClient.setFilterUrl({ url, data, whitelist });
         dispatch(toggleFilterSuccess(url));
         dispatch(getFilteringStatus());
     } catch (error) {
@@ -90,25 +91,40 @@ export const toggleFilterStatus = (url, enabled) => async (dispatch) => {
     }
 };
 
+export const editFilterRequest = createAction('EDIT_FILTER_REQUEST');
+export const editFilterFailure = createAction('EDIT_FILTER_FAILURE');
+export const editFilterSuccess = createAction('EDIT_FILTER_SUCCESS');
+
+export const editFilter = (url, data, whitelist = false) => async (dispatch) => {
+    dispatch(editFilterRequest());
+    try {
+        await apiClient.setFilterUrl({ url, data, whitelist });
+        dispatch(editFilterSuccess(url));
+        dispatch(toggleFilteringModal());
+        dispatch(addSuccessToast('filter_updated'));
+        dispatch(getFilteringStatus());
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(editFilterFailure());
+    }
+};
+
 export const refreshFiltersRequest = createAction('FILTERING_REFRESH_REQUEST');
 export const refreshFiltersFailure = createAction('FILTERING_REFRESH_FAILURE');
 export const refreshFiltersSuccess = createAction('FILTERING_REFRESH_SUCCESS');
 
-export const refreshFilters = () => async (dispatch) => {
+export const refreshFilters = config => async (dispatch) => {
     dispatch(refreshFiltersRequest());
     dispatch(showLoading());
     try {
-        const refreshText = await apiClient.refreshFilters();
+        const data = await apiClient.refreshFilters(config);
+        const { updated } = data;
         dispatch(refreshFiltersSuccess());
 
-        if (refreshText.includes('OK')) {
-            if (refreshText.includes('OK 0')) {
-                dispatch(addSuccessToast('all_filters_up_to_date_toast'));
-            } else {
-                dispatch(addSuccessToast(refreshText.replace(/OK /g, '')));
-            }
+        if (updated > 0) {
+            dispatch(addSuccessToast(t('list_updated', { count: updated })));
         } else {
-            dispatch(addErrorToast({ error: refreshText }));
+            dispatch(addSuccessToast('all_lists_up_to_date_toast'));
         }
 
         dispatch(getFilteringStatus());
@@ -141,5 +157,25 @@ export const setFiltersConfig = config => async (dispatch, getState) => {
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(setFiltersConfigFailure());
+    }
+};
+
+export const checkHostRequest = createAction('CHECK_HOST_REQUEST');
+export const checkHostFailure = createAction('CHECK_HOST_FAILURE');
+export const checkHostSuccess = createAction('CHECK_HOST_SUCCESS');
+
+export const checkHost = host => async (dispatch) => {
+    dispatch(checkHostRequest());
+    try {
+        const data = await apiClient.checkHost(host);
+        const [hostname] = Object.values(host);
+
+        dispatch(checkHostSuccess({
+            hostname,
+            ...data,
+        }));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(checkHostFailure());
     }
 };

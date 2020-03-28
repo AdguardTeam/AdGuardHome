@@ -14,8 +14,8 @@
     <a href="https://twitter.com/AdGuard">Twitter</a> |
     <a href="https://t.me/adguard_en">Telegram</a>
     <br /><br />
-    <a href="https://travis-ci.org/AdguardTeam/AdGuardHome">
-      <img src="https://travis-ci.org/AdguardTeam/AdGuardHome.svg" alt="Build status" />
+    <a href="https://travis-ci.com/AdguardTeam/AdGuardHome">
+      <img src="https://travis-ci.com/AdguardTeam/AdGuardHome.svg" alt="Build status" />
     </a>
     <a href="https://codecov.io/github/AdguardTeam/AdGuardHome?branch=master">
       <img src="https://img.shields.io/codecov/c/github/AdguardTeam/AdGuardHome/master.svg" alt="Code Coverage" />
@@ -53,6 +53,7 @@ It operates as a DNS server that re-routes tracking domains to a "black hole," t
     * [Test unstable versions](#test-unstable-versions)
     * [Reporting issues](#reporting-issues)
     * [Help with translations](#translate)
+* [Projects that use AdGuardHome](#uses)
 * [Acknowledgments](#acknowledgments)
 
 <a id="getting-started"></a>
@@ -118,7 +119,7 @@ AdGuard Home provides a lot of features out-of-the-box with no need to install a
 
 It depends.
 
-"DNS sinkholing" is capable of blocking a big percentage of ads, but it lacks flexibility and power of traditional ad blockers. You can get a good impression about the difference between these methods by reading [this article](https://adguard.com/en/blog/adguard-vs-adaway-dns66/). It compares AdGuard for Android (a traditional ad blocker) to hosts-level ad blockers (which are almost identical to DNS-based blockers in their capabilities). However, this level of protection is enough for some users.
+"DNS sinkholing" is capable of blocking a big percentage of ads, but it lacks flexibility and power of traditional ad blockers. You can get a good impression about the difference between these methods by reading [this article](https://adguard.com/en/blog/adguard-vs-adaway-dns66/). It compares AdGuard for Android (a traditional ad blocker) to hosts-level ad blockers (which are almost identical to DNS-based blockers in their capabilities). However, this level of protection is enough for some users. Additionally, using a DNS-based blocker can help to block ads, tracking and analytics requests on other types of devices, such as SmartTVs, smart speakers or other kinds of IoT devices (on which you can't install tradtional ad blockers).
 
 <a id="how-to-build"></a>
 ## How to build from source
@@ -127,10 +128,10 @@ It depends.
 
 You will need:
 
- * [go](https://golang.org/dl/) v1.12 or later.
+ * [go](https://golang.org/dl/) v1.13 or later.
  * [node.js](https://nodejs.org/en/download/) v10 or later.
 
-You can either install it via the provided links or use [brew.sh](https://brew.sh/) if you're on Mac:
+You can either install them via the provided links or use [brew.sh](https://brew.sh/) if you're on Mac:
 
 ```bash
 brew install go node
@@ -170,14 +171,15 @@ or you can use the Docker image from the `edge` tag, which is synced with the re
 
 * [Docker Hub](https://hub.docker.com/r/adguard/adguardhome)
 * Beta builds
-    * [Rapsberry Pi (32-bit ARM)](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_arm.tar.gz)
+    * [Raspberry Pi (32-bit ARMv6)](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_arm.tar.gz)
     * [MacOS](https://static.adguard.com/adguardhome/beta/AdGuardHome_MacOS.zip)
     * [Windows 64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_Windows_amd64.zip)
     * [Windows 32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_Windows_386.zip)
     * [Linux 64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_amd64.tar.gz)
     * [Linux 32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_386.tar.gz)
     * [FreeBSD 64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_amd64.tar.gz)
-    * [64-bit ARM](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_arm64.tar.gz)
+    * [Linux 64-bit ARM](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_arm64.tar.gz)
+    * [Linux 32-bit ARMv5](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv5.tar.gz)
     * [MIPS](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mips.tar.gz)
     * [MIPSLE](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mipsle.tar.gz)
 
@@ -192,6 +194,15 @@ If you run into any problem or have a suggestion, head to [this page](https://gi
 If you want to help with AdGuard Home translations, please learn more about translating AdGuard products here: https://kb.adguard.com/en/general/adguard-translations
 
 Here is a link to AdGuard Home project: https://crowdin.com/project/adguard-applications/en#/adguard-home
+
+
+<a id="uses"></a>
+## Projects that use AdGuardHome
+
+* Python library (https://github.com/frenck/python-adguardhome)
+* Hass.io add-on (https://github.com/hassio-addons/addon-adguard-home)
+* OpenWrt LUCI app (https://github.com/rufengsuixing/luci-app-adguardhome)
+
 
 <a id="acknowledgments"></a>
 ## Acknowledgments

@@ -2,7 +2,7 @@ swagger: '2.0'
 info:
     title: 'AdGuard Home'
     description: 'AdGuard Home REST API. Admin web interface is built on top of this REST API.'
-    version: '0.99'
+    version: '0.101'
 schemes:
     - http
 basePath: /control
@@ -70,22 +70,31 @@ paths:
                     schema:
                         $ref: "#/definitions/ServerStatus"
 
-    /enable_protection:
-        post:
+    /dns_info:
+        get:
             tags:
                 - global
-            operationId: enableProtection
-            summary: "Enable protection (turns on dnsfilter module in coredns)"
+            operationId: dnsInfo
+            summary: 'Get general DNS parameters'
             responses:
                 200:
                     description: OK
+                    schema:
+                        $ref: "#/definitions/DNSConfig"
 
-    /disable_protection:
+    /dns_config:
         post:
             tags:
                 - global
-            operationId: disableProtection
-            summary: "Disable protection (turns off filtering, sb, parental, safesearch temporarily by disabling dnsfilter module in coredns)"
+            operationId: dnsConfig
+            summary: "Set general DNS parameters"
+            consumes:
+                - application/json
+            parameters:
+                - in: "body"
+                  name: "body"
+                  schema:
+                      $ref: "#/definitions/DNSConfig"
             responses:
                 200:
                     description: OK
@@ -451,6 +460,16 @@ paths:
                 200:
                     description: OK
 
+    /dhcp/reset:
+        post:
+            tags:
+                - dhcp
+            operationId: dhcpReset
+            summary: "Reset DHCP configuration"
+            responses:
+                200:
+                    description: OK
+
     # --------------------------------------------------
     # Filtering status methods
     # --------------------------------------------------
@@ -551,9 +570,18 @@ paths:
                 This should work as intended, a `force` parameter is offered as last-resort attempt to make filter lists fresh.
 
                 If you ever find yourself using `force` to make something work that otherwise wont, this is a bug and report it accordingly.
+            consumes:
+            - application/json
+            parameters:
+              - in: "body"
+                name: "body"
+                schema:
+                  $ref: "#/definitions/FilterRefreshRequest"
             responses:
                 200:
-                    description: OK with how many filters were actually updated
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/FilterRefreshResponse"
 
     /filtering/set_rules:
         post:
@@ -574,6 +602,22 @@ paths:
             responses:
                 200:
                     description: OK
+
+    /filtering/check_host:
+        get:
+            tags:
+                - filtering
+            operationId: filteringCheckHost
+            summary: 'Check if host name is filtered'
+            parameters:
+                - name: name
+                  in: query
+                  type: string
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/FilterCheckHostResponse"
 
     # --------------------------------------------------
     # Safebrowsing methods
@@ -771,6 +815,22 @@ paths:
             responses:
                 200:
                     description: OK
+
+    /clients/find:
+        get:
+            tags:
+                - clients
+            operationId: clientsFind
+            summary: 'Get information about selected clients by their IP address'
+            parameters:
+                - name: ip0
+                  in: query
+                  type: string
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/ClientsFindResponse"
 
 
     /blocked_services/list:
@@ -1028,6 +1088,31 @@ definitions:
             language:
                 type: "string"
                 example: "en"
+
+    DNSConfig:
+        type: "object"
+        description: "Query log configuration"
+        properties:
+            protection_enabled:
+                type: "boolean"
+            ratelimit:
+                type: "integer"
+            blocking_mode:
+                type: "string"
+                enum:
+                - "default"
+                - "nxdomain"
+                - "null_ip"
+                - "custom_ip"
+            blocking_ipv4:
+                type: "string"
+            blocking_ipv6:
+                type: "string"
+            edns_cs_enabled:
+                type: "boolean"
+            dnssec_enabled:
+                type: "boolean"
+
     UpstreamsConfig:
         type: "object"
         description: "Upstreams configuration"
@@ -1119,6 +1204,56 @@ definitions:
                 type: "string"
             enabled:
                 type: "boolean"
+
+    FilterRefreshRequest:
+        type: "object"
+        description: "Refresh Filters request data"
+        properties:
+            whitelist:
+                type: "boolean"
+
+    FilterCheckHostResponse:
+        type: "object"
+        description: "Check Host Result"
+        properties:
+            reason:
+                type: "string"
+                description: "DNS filter status"
+                enum:
+                - "NotFilteredNotFound"
+                - "NotFilteredWhiteList"
+                - "NotFilteredError"
+                - "FilteredBlackList"
+                - "FilteredSafeBrowsing"
+                - "FilteredParental"
+                - "FilteredInvalid"
+                - "FilteredSafeSearch"
+                - "FilteredBlockedService"
+                - "ReasonRewrite"
+            filter_id:
+                type: "integer"
+            rule:
+                type: "string"
+                example: "||example.org^"
+                description: "Filtering rule applied to the request (if any)"
+            service_name:
+                type: "string"
+                description: "Set if reason=FilteredBlockedService"
+            cname:
+                type: "string"
+                description: "Set if reason=ReasonRewrite"
+            ip_addrs:
+                type: "array"
+                items:
+                    type: "string"
+                description: "Set if reason=ReasonRewrite"
+
+    FilterRefreshResponse:
+        type: "object"
+        description: "/filtering/refresh response data"
+        properties:
+            updated:
+                type: "integer"
 
     GetVersionRequest:
         type: "object"
@@ -1379,6 +1514,13 @@ definitions:
                 type: "array"
                 items:
                     $ref: "#/definitions/DnsAnswer"
+            original_answer:
+                type: "array"
+                description: "Answer from upstream server (optional)"
+                items:
+                    $ref: "#/definitions/DnsAnswer"
+            answer_dnssec:
+                type: "boolean"
             client:
                 type: "string"
                 example: "192.168.0.1"
@@ -1407,6 +1549,11 @@ definitions:
                 - "FilteredParental"
                 - "FilteredInvalid"
                 - "FilteredSafeSearch"
+                - "FilteredBlockedService"
+                - "ReasonRewrite"
+            service_name:
+                type: "string"
+                description: "Set if reason=FilteredBlockedService"
             status:
                 type: "string"
                 description: "DNS response status"
@@ -1417,10 +1564,16 @@ definitions:
                 example: "2018-11-26T00:02:41+03:00"
 
     QueryLog:
-        type: "array"
+        type: "object"
         description: "Query log"
-        items:
-            $ref: "#/definitions/QueryLogItem"
+        properties:
+            oldest:
+                type: "string"
+                example: "2018-11-26T00:02:41+03:00"
+            data:
+                type: "array"
+                items:
+                    $ref: "#/definitions/QueryLogItem"
 
     QueryLogConfig:
         type: "object"
@@ -1432,6 +1585,9 @@ definitions:
             interval:
                 type: "integer"
                 description: "Time period to keep data (1 | 7 | 30 | 90)"
+            anonymize_client_ip:
+                type: "boolean"
+                description: "Anonymize clients' IP addresses"
 
     TlsConfig:
         type: "object"
@@ -1583,16 +1739,15 @@ definitions:
         type: "object"
         description: "Client information"
         properties:
-            ip:
-                type: "string"
-                description: "IP address"
-                example: "127.0.0.1"
             name:
                 type: "string"
                 description: "Name"
                 example: "localhost"
-            mac:
-                type: "string"
+            ids:
+                type: "array"
+                description: "IP, CIDR or MAC address"
+                items:
+                    type: "string"
             use_global_settings:
                 type: "boolean"
             filtering_enabled:
@@ -1606,6 +1761,10 @@ definitions:
             use_global_blocked_services:
                 type: "boolean"
             blocked_services:
+                type: "array"
+                items:
+                    type: "string"
+            upstreams:
                 type: "array"
                 items:
                     type: "string"
@@ -1639,6 +1798,20 @@ definitions:
         properties:
             name:
                 type: "string"
+
+    ClientsFindResponse:
+        type: "array"
+        description: "Response to clients find operation"
+        items:
+            $ref: "#/definitions/ClientsFindEntry"
+
+    ClientsFindEntry:
+        type: "object"
+        properties:
+            "1.2.3.4":
+                items:
+                    $ref: "#/definitions/Client"
+
     Clients:
         type: "object"
         properties:
@@ -1688,6 +1861,9 @@ definitions:
                 $ref: "#/definitions/CheckConfigRequestInfo"
             web:
                 $ref: "#/definitions/CheckConfigRequestInfo"
+            set_static_ip:
+                type: "boolean"
+                example: false
     CheckConfigRequestInfo:
         type: "object"
         properties:
@@ -1708,6 +1884,8 @@ definitions:
                 $ref: "#/definitions/CheckConfigResponseInfo"
             web:
                 $ref: "#/definitions/CheckConfigResponseInfo"
+            static_ip:
+                $ref: "#/definitions/CheckConfigStaticIpInfo"
     CheckConfigResponseInfo:
         type: "object"
         properties:
@@ -1717,6 +1895,23 @@ definitions:
             can_autofix:
                 type: "boolean"
                 example: false
+    CheckConfigStaticIpInfo:
+        type: "object"
+        properties:
+            static:
+                type: "string"
+                example: "no"
+                description: "Can be: yes, no, error"
+            ip:
+                type: "string"
+                example: "192.168.1.1"
+                description: "Current dynamic IP address. Set if static=no"
+            error:
+                type: "string"
+                example: ""
+                description: "Error text. Set if static=error"
+
+
     InitialConfiguration:
         type: "object"
         description: "AdGuard Home initial configuration (for the first-install wizard)"

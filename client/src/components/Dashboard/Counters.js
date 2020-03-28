@@ -5,6 +5,7 @@ import round from 'lodash/round';
 
 import Card from '../ui/Card';
 import Tooltip from '../ui/Tooltip';
+import { formatNumber } from '../../helpers/helpers';
 
 const tooltipType = 'tooltip-custom--narrow';
 
@@ -42,7 +43,9 @@ const Counters = (props) => {
                             <Tooltip text={tooltipTitle} type={tooltipType} />
                         </td>
                         <td className="text-right">
-                            <span className="text-muted">{dnsQueries}</span>
+                            <span className="text-muted">
+                                {formatNumber(dnsQueries)}
+                            </span>
                         </td>
                     </tr>
                     <tr>
@@ -56,7 +59,9 @@ const Counters = (props) => {
                             />
                         </td>
                         <td className="text-right">
-                            <span className="text-muted">{blockedFiltering}</span>
+                            <span className="text-muted">
+                                {formatNumber(blockedFiltering)}
+                            </span>
                         </td>
                     </tr>
                     <tr>
@@ -68,7 +73,9 @@ const Counters = (props) => {
                             />
                         </td>
                         <td className="text-right">
-                            <span className="text-muted">{replacedSafebrowsing}</span>
+                            <span className="text-muted">
+                                {formatNumber(replacedSafebrowsing)}
+                            </span>
                         </td>
                     </tr>
                     <tr>
@@ -80,7 +87,9 @@ const Counters = (props) => {
                             />
                         </td>
                         <td className="text-right">
-                            <span className="text-muted">{replacedParental}</span>
+                            <span className="text-muted">
+                                {formatNumber(replacedParental)}
+                            </span>
                         </td>
                     </tr>
                     <tr>
@@ -92,7 +101,9 @@ const Counters = (props) => {
                             />
                         </td>
                         <td className="text-right">
-                            <span className="text-muted">{replacedSafesearch}</span>
+                            <span className="text-muted">
+                                {formatNumber(replacedSafesearch)}
+                            </span>
                         </td>
                     </tr>
                     <tr>

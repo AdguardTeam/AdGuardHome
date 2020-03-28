@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import ReactTable from 'react-table';
 import { Trans, withNamespaces } from 'react-i18next';
+import { SMALL_TABLE_DEFAULT_PAGE_SIZE } from '../../../helpers/constants';
 
 class Leases extends Component {
     cellWrap = ({ value }) => (
@@ -36,7 +37,9 @@ class Leases extends Component {
                         Cell: this.cellWrap,
                     },
                 ]}
-                showPagination={false}
+                pageSize={SMALL_TABLE_DEFAULT_PAGE_SIZE}
+                showPageSizeOptions={false}
+                showPagination={leases.length > SMALL_TABLE_DEFAULT_PAGE_SIZE}
                 noDataText={t('dhcp_leases_not_found')}
                 minRows={6}
                 className="-striped -highlight card-table-overflow"

@@ -154,7 +154,15 @@ class Dhcp extends Component {
     };
 
     render() {
-        const { t, dhcp } = this.props;
+        const {
+            t,
+            dhcp,
+            resetDhcp,
+            findActiveDhcp,
+            addStaticLease,
+            removeStaticLease,
+            toggleLeaseModal,
+        } = this.props;
         const statusButtonClass = classnames({
             'btn btn-primary btn-standard': true,
             'btn btn-primary btn-standard btn-loading': dhcp.processingStatus,
@@ -184,6 +192,7 @@ class Dhcp extends Component {
                                         processingConfig={dhcp.processingConfig}
                                         processingInterfaces={dhcp.processingInterfaces}
                                         enabled={enabled}
+                                        resetDhcp={resetDhcp}
                                     />
                                     <hr />
                                     <div className="card-actions mb-3">
@@ -191,9 +200,7 @@ class Dhcp extends Component {
                                         <button
                                             type="button"
                                             className={statusButtonClass}
-                                            onClick={() =>
-                                                this.props.findActiveDhcp(interface_name)
-                                            }
+                                            onClick={() => findActiveDhcp(interface_name)}
                                             disabled={
                                                 enabled || !interface_name || dhcp.processingConfig
                                             }
@@ -212,46 +219,44 @@ class Dhcp extends Component {
                             </div>
                         </Card>
                         {dhcp.config.enabled && (
-                            <Fragment>
-                                <Card
-                                    title={t('dhcp_leases')}
-                                    bodyType="card-body box-body--settings"
-                                >
-                                    <div className="row">
-                                        <div className="col">
-                                            <Leases leases={dhcp.leases} />
-                                        </div>
+                            <Card
+                                title={t('dhcp_leases')}
+                                bodyType="card-body box-body--settings"
+                            >
+                                <div className="row">
+                                    <div className="col">
+                                        <Leases leases={dhcp.leases} />
                                     </div>
-                                </Card>
-                                <Card
-                                    title={t('dhcp_static_leases')}
-                                    bodyType="card-body box-body--settings"
-                                >
-                                    <div className="row">
-                                        <div className="col-12">
-                                            <StaticLeases
-                                                staticLeases={dhcp.staticLeases}
-                                                isModalOpen={dhcp.isModalOpen}
-                                                addStaticLease={this.props.addStaticLease}
-                                                removeStaticLease={this.props.removeStaticLease}
-                                                toggleLeaseModal={this.props.toggleLeaseModal}
-                                                processingAdding={dhcp.processingAdding}
-                                                processingDeleting={dhcp.processingDeleting}
-                                            />
-                                        </div>
-                                        <div className="col-12">
-                                            <button
-                                                type="button"
-                                                className="btn btn-success btn-standard mt-3"
-                                                onClick={() => this.props.toggleLeaseModal()}
-                                            >
-                                                <Trans>dhcp_add_static_lease</Trans>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </Card>
-                            </Fragment>
+                                </div>
+                            </Card>
                         )}
+                        <Card
+                            title={t('dhcp_static_leases')}
+                            bodyType="card-body box-body--settings"
+                        >
+                            <div className="row">
+                                <div className="col-12">
+                                    <StaticLeases
+                                        staticLeases={dhcp.staticLeases}
+                                        isModalOpen={dhcp.isModalOpen}
+                                        addStaticLease={addStaticLease}
+                                        removeStaticLease={removeStaticLease}
+                                        toggleLeaseModal={toggleLeaseModal}
+                                        processingAdding={dhcp.processingAdding}
+                                        processingDeleting={dhcp.processingDeleting}
+                                    />
+                                </div>
+                                <div className="col-12">
+                                    <button
+                                        type="button"
+                                        className="btn btn-success btn-standard mt-3"
+                                        onClick={() => toggleLeaseModal()}
+                                    >
+                                        <Trans>dhcp_add_static_lease</Trans>
+                                    </button>
+                                </div>
+                            </div>
+                        </Card>
                     </Fragment>
                 )}
             </Fragment>
@@ -260,16 +265,17 @@ class Dhcp extends Component {
 }
 
 Dhcp.propTypes = {
-    dhcp: PropTypes.object,
-    toggleDhcp: PropTypes.func,
-    getDhcpStatus: PropTypes.func,
-    setDhcpConfig: PropTypes.func,
-    findActiveDhcp: PropTypes.func,
-    addStaticLease: PropTypes.func,
-    removeStaticLease: PropTypes.func,
-    toggleLeaseModal: PropTypes.func,
-    getDhcpInterfaces: PropTypes.func,
-    t: PropTypes.func,
+    dhcp: PropTypes.object.isRequired,
+    toggleDhcp: PropTypes.func.isRequired,
+    getDhcpStatus: PropTypes.func.isRequired,
+    setDhcpConfig: PropTypes.func.isRequired,
+    findActiveDhcp: PropTypes.func.isRequired,
+    addStaticLease: PropTypes.func.isRequired,
+    removeStaticLease: PropTypes.func.isRequired,
+    toggleLeaseModal: PropTypes.func.isRequired,
+    getDhcpInterfaces: PropTypes.func.isRequired,
+    t: PropTypes.func.isRequired,
+    resetDhcp: PropTypes.func.isRequired,
 };
 
 export default withNamespaces()(Dhcp);

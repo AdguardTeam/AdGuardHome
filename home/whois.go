@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/util"
+
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -16,6 +18,7 @@ const (
 	defaultServer  = "whois.arin.net"
 	defaultPort    = "43"
 	maxValueLength = 250
+	whoisTTL       = 1 * 60 * 60 // 1 hour
 )
 
 // Whois - module context
@@ -60,7 +63,7 @@ func whoisParse(data string) map[string]string {
 	descr := ""
 	netname := ""
 	for len(data) != 0 {
-		ln := SplitNext(&data, '\n')
+		ln := util.SplitNext(&data, '\n')
 		if len(ln) == 0 || ln[0] == '#' || ln[0] == '%' {
 			continue
 		}
@@ -205,8 +208,7 @@ func (w *Whois) Begin(ip string) {
 		// TTL expired
 	}
 	expire = make([]byte, 8)
-	const ttl = 12 * 60 * 60
-	binary.BigEndian.PutUint64(expire, now+ttl)
+	binary.BigEndian.PutUint64(expire, now+whoisTTL)
 	_ = w.ipAddrs.Set([]byte(ip), expire)
 
 	log.Debug("Whois: adding %s", ip)

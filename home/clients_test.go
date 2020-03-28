@@ -1,7 +1,12 @@
 package home
 
 import (
+	"net"
+	"os"
 	"testing"
+	"time"
+
+	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -11,12 +16,13 @@ func TestClients(t *testing.T) {
 	var e error
 	var b bool
 	clients := clientsContainer{}
+	clients.testing = true
 
-	clients.Init()
+	clients.Init(nil, nil, nil)
 
 	// add
 	c = Client{
-		IP:   "1.1.1.1",
+		IDs:  []string{"1.1.1.1", "1:2:3::4", "aa:aa:aa:aa:aa:aa"},
 		Name: "client1",
 	}
 	b, e = clients.Add(c)
@@ -26,7 +32,7 @@ func TestClients(t *testing.T) {
 
 	// add #2
 	c = Client{
-		IP:   "2.2.2.2",
+		IDs:  []string{"2.2.2.2"},
 		Name: "client2",
 	}
 	b, e = clients.Add(c)
@@ -35,18 +41,17 @@ func TestClients(t *testing.T) {
 	}
 
 	c, b = clients.Find("1.1.1.1")
-	if !b || c.Name != "client1" {
-		t.Fatalf("Find #1")
-	}
+	assert.True(t, b && c.Name == "client1")
+
+	c, b = clients.Find("1:2:3::4")
+	assert.True(t, b && c.Name == "client1")
 
 	c, b = clients.Find("2.2.2.2")
-	if !b || c.Name != "client2" {
-		t.Fatalf("Find #2")
-	}
+	assert.True(t, b && c.Name == "client2")
 
 	// failed add - name in use
 	c = Client{
-		IP:   "1.2.3.5",
+		IDs:  []string{"1.2.3.5"},
 		Name: "client1",
 	}
 	b, _ = clients.Add(c)
@@ -56,7 +61,7 @@ func TestClients(t *testing.T) {
 
 	// failed add - ip in use
 	c = Client{
-		IP:   "2.2.2.2",
+		IDs:  []string{"2.2.2.2"},
 		Name: "client3",
 	}
 	b, e = clients.Add(c)
@@ -70,35 +75,46 @@ func TestClients(t *testing.T) {
 	assert.True(t, clients.Exists("2.2.2.2", ClientSourceHostsFile))
 
 	// failed update - no such name
-	c.IP = "1.2.3.0"
+	c.IDs = []string{"1.2.3.0"}
 	c.Name = "client3"
 	if clients.Update("client3", c) == nil {
 		t.Fatalf("Update")
 	}
 
 	// failed update - name in use
-	c.IP = "1.2.3.0"
+	c.IDs = []string{"1.2.3.0"}
 	c.Name = "client2"
 	if clients.Update("client1", c) == nil {
 		t.Fatalf("Update - name in use")
 	}
 
 	// failed update - ip in use
-	c.IP = "2.2.2.2"
+	c.IDs = []string{"2.2.2.2"}
 	c.Name = "client1"
 	if clients.Update("client1", c) == nil {
 		t.Fatalf("Update - ip in use")
 	}
 
 	// update
-	c.IP = "1.1.1.2"
+	c.IDs = []string{"1.1.1.2"}
 	c.Name = "client1"
 	if clients.Update("client1", c) != nil {
 		t.Fatalf("Update")
 	}
 
 	// get after update
-	assert.True(t, !(clients.Exists("1.1.1.1", ClientSourceHostsFile) || !clients.Exists("1.1.1.2", ClientSourceHostsFile)))
+	assert.True(t, !clients.Exists("1.1.1.1", ClientSourceHostsFile))
+	assert.True(t, clients.Exists("1.1.1.2", ClientSourceHostsFile))
+
+	// update - rename
+	c.IDs = []string{"1.1.1.2"}
+	c.Name = "client1-renamed"
+	c.UseOwnSettings = true
+	assert.True(t, clients.Update("client1", c) == nil)
+	c = Client{}
+	c, b = clients.Find("1.1.1.2")
+	assert.True(t, b && c.Name == "client1-renamed" && c.IDs[0] == "1.1.1.2" && c.UseOwnSettings)
+	assert.True(t, clients.list["client1"] == nil)
 
 	// failed remove - no such name
 	if clients.Del("client3") {
@@ -106,7 +122,7 @@ func TestClients(t *testing.T) {
 	}
 
 	// remove
-	assert.True(t, !(!clients.Del("client1") || clients.Exists("1.1.1.2", ClientSourceHostsFile)))
+	assert.True(t, !(!clients.Del("client1-renamed") || clients.Exists("1.1.1.2", ClientSourceHostsFile)))
 
 	// add host client
 	b, e = clients.AddHost("1.1.1.1", "host", ClientSourceARP)
@@ -139,7 +155,8 @@ func TestClients(t *testing.T) {
 func TestClientsWhois(t *testing.T) {
 	var c Client
 	clients := clientsContainer{}
-	clients.Init()
+	clients.testing = true
+	clients.Init(nil, nil, nil)
 
 	whois := [][]string{{"orgname", "orgname-val"}, {"country", "country-val"}}
 	// set whois info on new client
@@ -151,13 +168,71 @@ func TestClientsWhois(t *testing.T) {
 	clients.SetWhoisInfo("1.1.1.1", whois)
 	assert.True(t, clients.ipHost["1.1.1.1"].WhoisInfo[0][1] == "orgname-val")
 
-	// set whois info on existing client
+	// Check that we cannot set whois info on a manually-added client
 	c = Client{
-		IP:   "1.1.1.2",
+		IDs:  []string{"1.1.1.2"},
 		Name: "client1",
 	}
 	_, _ = clients.Add(c)
 	clients.SetWhoisInfo("1.1.1.2", whois)
-	assert.True(t, clients.ipIndex["1.1.1.2"].WhoisInfo[0][1] == "orgname-val")
+	assert.True(t, clients.ipHost["1.1.1.2"] == nil)
 	_ = clients.Del("client1")
+}
+
+func TestClientsAddExisting(t *testing.T) {
+	var c Client
+	clients := clientsContainer{}
+	clients.testing = true
+	clients.Init(nil, nil, nil)
+
+	// some test variables
+	mac, _ := net.ParseMAC("aa:aa:aa:aa:aa:aa")
+	testIP := "1.2.3.4"
+
+	// add a client
+	c = Client{
+		IDs:  []string{"1.1.1.1", "1:2:3::4", "aa:aa:aa:aa:aa:aa", "2.2.2.0/24"},
+		Name: "client1",
+	}
+	ok, err := clients.Add(c)
+	assert.True(t, ok)
+	assert.Nil(t, err)
+
+	// add an auto-client with the same IP - it's allowed
+	ok, err = clients.AddHost("1.1.1.1", "test", ClientSourceRDNS)
+	assert.True(t, ok)
+	assert.Nil(t, err)
+
+	// now some more complicated stuff
+	// first, init a DHCP server with a single static lease
+	config := dhcpd.ServerConfig{
+		DBFilePath: "leases.db",
+	}
+	defer func() { _ = os.Remove("leases.db") }()
+	clients.dhcpServer = dhcpd.Create(config)
+	err = clients.dhcpServer.AddStaticLease(dhcpd.Lease{
+		HWAddr:   mac,
+		IP:       net.ParseIP(testIP).To4(),
+		Hostname: "testhost",
+		Expiry:   time.Now().Add(time.Hour),
+	})
+	assert.Nil(t, err)
+
+	// add a new client with the same IP as for a client with MAC
+	c = Client{
+		IDs:  []string{testIP},
+		Name: "client2",
+	}
+	ok, err = clients.Add(c)
+	assert.True(t, ok)
+	assert.Nil(t, err)
+
+	// add a new client with the IP from the client1's IP range
+	c = Client{
+		IDs:  []string{"2.2.2.2"},
+		Name: "client3",
+	}
+	ok, err = clients.Add(c)
+	assert.True(t, ok)
+	assert.Nil(t, err)
 }

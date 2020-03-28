@@ -1,11 +1,12 @@
 import { connect } from 'react-redux';
 import { toggleProtection, getClients } from '../actions';
 import { getStats, getStatsConfig, setStatsConfig } from '../actions/stats';
+import { toggleClientBlock, getAccessList } from '../actions/access';
 import Dashboard from '../components/Dashboard';
 
 const mapStateToProps = (state) => {
-    const { dashboard, stats } = state;
-    const props = { dashboard, stats };
+    const { dashboard, stats, access } = state;
+    const props = { dashboard, stats, access };
     return props;
 };
 
@@ -15,6 +16,8 @@ const mapDispatchToProps = {
     getStats,
     getStatsConfig,
     setStatsConfig,
+    toggleClientBlock,
+    getAccessList,
 };
 
 export default connect(

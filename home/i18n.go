@@ -30,12 +30,18 @@ var allowedLanguages = map[string]bool{
 	"id":    true,
 	"it":    true,
 	"ko":    true,
+	"no":    true,
 	"nl":    true,
 	"pl":    true,
 	"pt-pt": true,
 	"sk":    true,
 	"sl":    true,
 	"tr":    true,
+	"sr-cs": true,
+	"hr":    true,
+	"fa":    true,
+	"th":    true,
+	"ro":    true,
 }
 
 func isLanguageAllowed(language string) bool {
@@ -79,6 +85,6 @@ func handleI18nChangeLanguage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	config.Language = language
-
-	httpUpdateConfigReloadDNSReturnOK(w, r)
+	onConfigModified()
+	returnOK(w)
 }

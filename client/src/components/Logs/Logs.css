@@ -61,9 +61,10 @@
     margin-right: 5px;
 }
 
-.logs__action {
+.logs__action,
+.table__action {
     position: absolute;
-    top: 10px;
+    top: 11px;
     right: 15px;
     background-color: #fff;
     border-radius: 4px;
@@ -72,11 +73,13 @@
     opacity: 0;
 }
 
-.logs__table .rt-td {
+.logs__table .rt-td,
+.clients__table .rt-td {
     position: relative;
 }
 
-.logs__table .rt-tr:hover .logs__action {
+.logs__table .rt-tr:hover .logs__action,
+.clients__table .rt-tr:hover .table__action {
     visibility: visible;
     opacity: 1;
 }

@@ -4,7 +4,7 @@ import { Field, reduxForm } from 'redux-form';
 import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 
-import { renderField, required } from '../../helpers/form';
+import { renderInputField, required } from '../../helpers/form';
 
 const Form = (props) => {
     const {
@@ -19,10 +19,11 @@ const Form = (props) => {
                         <Trans>username_label</Trans>
                     </label>
                     <Field
+                        id="username1"
                         name="username"
                         type="text"
                         className="form-control"
-                        component={renderField}
+                        component={renderInputField}
                         placeholder={t('username_placeholder')}
                         autoComplete="username"
                         disabled={processing}
@@ -38,7 +39,7 @@ const Form = (props) => {
                         name="password"
                         type="password"
                         className="form-control"
-                        component={renderField}
+                        component={renderInputField}
                         placeholder={t('password_placeholder')}
                         autoComplete="current-password"
                         disabled={processing}

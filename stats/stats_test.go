@@ -6,7 +6,6 @@ import (
 	"os"
 	"sync/atomic"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -46,7 +45,7 @@ func TestStats(t *testing.T) {
 	e.Time = 123456
 	s.Update(e)
 
-	d := s.getData(Hours)
+	d := s.getData()
 	a := []uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2}
 	assert.True(t, UIntArrayEquals(d["dns_queries"].([]uint64), a))
 
@@ -105,7 +104,6 @@ func TestLargeNumbers(t *testing.T) {
 	for h := 0; h != 12; h++ {
 		if h != 0 {
 			atomic.AddInt32(&hour, 1)
-			time.Sleep(1500 * time.Millisecond)
 		}
 		for i := 0; i != n; i++ {
 			e.Domain = fmt.Sprintf("domain%d", i)
@@ -118,7 +116,7 @@ func TestLargeNumbers(t *testing.T) {
 		}
 	}
 
-	d := s.getData(Hours)
+	d := s.getData()
 	assert.True(t, d["num_dns_queries"].(uint64) == uint64(int(hour)*n))
 
 	s.Close()
