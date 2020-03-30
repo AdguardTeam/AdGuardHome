@@ -20,9 +20,26 @@ type svc struct {
 // client/src/components/ui/Icons.js
 var serviceRulesArray = []svc{
 	{"whatsapp", []string{"||whatsapp.net^", "||whatsapp.com^"}},
-	{"facebook", []string{"||facebook.com^", "||facebook.net^", "||fbcdn.net^", "||fb.me^", "||fb.com^", "||fbsbx.com^", "||messenger.com^", "||facebookcorewwwi.onion^", "||fbcdn.com^"}},
+	{"facebook", []string{
+		"||facebook.com^",
+		"||facebook.net^",
+		"||fbcdn.net^",
+		"||fb.me^",
+		"||fb.com^",
+		"||fbsbx.com^",
+		"||messenger.com^",
+		"||facebookcorewwwi.onion^",
+		"||fbcdn.com^",
+	}},
 	{"twitter", []string{"||twitter.com^", "||t.co^", "||twimg.com^"}},
-	{"youtube", []string{"||youtube.com^", "||ytimg.com^", "||youtu.be^", "||googlevideo.com^", "||youtubei.googleapis.com^", "||youtube-nocookie.com^"}},
+	{"youtube", []string{
+		"||youtube.com^",
+	        "||ytimg.com^",
+		"||youtu.be^",
+		"||googlevideo.com^",
+		"||youtubei.googleapis.com^",
+		"||youtube-nocookie.com^",
+	}},
 	{"twitch", []string{"||twitch.tv^", "||ttvnw.net^"}},
 	{"netflix", []string{"||nflxext.com^", "||netflix.com^"}},
 	{"instagram", []string{"||instagram.com^", "||cdninstagram.com^"}},
