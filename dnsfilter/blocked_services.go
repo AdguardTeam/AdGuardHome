@@ -34,7 +34,7 @@ var serviceRulesArray = []svc{
 	{"twitter", []string{"||twitter.com^", "||t.co^", "||twimg.com^"}},
 	{"youtube", []string{
 		"||youtube.com^",
-	        "||ytimg.com^",
+		"||ytimg.com^",
 		"||youtu.be^",
 		"||googlevideo.com^",
 		"||youtubei.googleapis.com^",
