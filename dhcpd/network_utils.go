@@ -33,7 +33,7 @@ func HasStaticIP(ifaceName string) (bool, error) {
 		return hasStaticIPDarwin(ifaceName)
 	}
 
-	return false, fmt.Errorf("Cannot check if IP is static: not supported on %s", runtime.GOOS)
+	return false, fmt.Errorf("cannot check if IP is static: not supported on %s", runtime.GOOS)
 }
 
 // Set a static IP for the specified network interface
@@ -46,7 +46,7 @@ func SetStaticIP(ifaceName string) error {
 		return setStaticIPDarwin(ifaceName)
 	}
 
-	return fmt.Errorf("Cannot set static IP on %s", runtime.GOOS)
+	return fmt.Errorf("cannot set static IP on %s", runtime.GOOS)
 }
 
 // for dhcpcd.conf
@@ -114,7 +114,7 @@ func getGatewayIP(ifaceName string) string {
 func setStaticIPDhcpdConf(ifaceName string) error {
 	ip := util.GetSubnet(ifaceName)
 	if len(ip) == 0 {
-		return errors.New("Can't get IP address")
+		return errors.New("can't get IP address")
 	}
 
 	ip4, _, err := net.ParseCIDR(ip)
@@ -198,7 +198,7 @@ func setStaticIPDarwin(ifaceName string) error {
 		return err
 	}
 	if code != 0 {
-		return fmt.Errorf("Failed to set DNS servers, code=%d", code)
+		return fmt.Errorf("failed to set DNS servers, code=%d", code)
 	}
 
 	// Actually configures hardware port to have static IP
@@ -208,7 +208,7 @@ func setStaticIPDarwin(ifaceName string) error {
 		return err
 	}
 	if code != 0 {
-		return fmt.Errorf("Failed to set DNS servers, code=%d", code)
+		return fmt.Errorf("failed to set DNS servers, code=%d", code)
 	}
 
 	return nil
@@ -220,7 +220,7 @@ func getCurrentHardwarePortInfo(ifaceName string) (hardwarePortInfo, error) {
 	m := getNetworkSetupHardwareReports()
 	hardwarePort, ok := m[ifaceName]
 	if !ok {
-		return hardwarePortInfo{}, fmt.Errorf("Could not find hardware port for %s", ifaceName)
+		return hardwarePortInfo{}, fmt.Errorf("could not find hardware port for %s", ifaceName)
 	}
 
 	return getHardwarePortInfo(hardwarePort)
@@ -274,7 +274,7 @@ func getHardwarePortInfo(hardwarePort string) (hardwarePortInfo, error) {
 
 	match := re.FindStringSubmatch(out)
 	if len(match) == 0 {
-		return h, errors.New("Could not find hardware port info")
+		return h, errors.New("could not find hardware port info")
 	}
 
 	h.name = hardwarePort
@@ -300,7 +300,7 @@ func getEtcResolvConfServers() ([]string, error) {
 
 	matches := re.FindAllStringSubmatch(string(body), -1)
 	if len(matches) == 0 {
-		return nil, errors.New("Found no DNS servers in /etc/resolv.conf")
+		return nil, errors.New("found no DNS servers in /etc/resolv.conf")
 	}
 
 	addrs := make([]string, 0)

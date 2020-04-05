@@ -29,19 +29,26 @@ linters-settings:
     line-length: 200
 
 linters:
-  enable-all: true
-  disable:
-    - interfacer
-    - gocritic
-    - scopelint
-    - gochecknoglobals
-    - gochecknoinits
-    - prealloc
-    - maligned
-    - godox
-    - funlen
-    - whitespace
-    - goconst # disabled until it's possible to configure
+  enable:
+    - deadcode
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - structcheck
+    - unused
+    - varcheck
+    - bodyclose
+    - depguard
+    - dupl
+    - gocyclo
+    - goimports
+    - golint
+    - gosec
+    - misspell
+    - stylecheck
+    - unconvert
+  disable-all: true
   fast: true
 
 issues:
@@ -58,3 +65,5 @@ issues:
     - Error return value of ..*.Shutdown.
     # goconst
     - string .forcesafesearch.google.com. has 3 occurrences
+    # gosec: Subprocess launched with function call as argument or cmd arguments
+    - G204

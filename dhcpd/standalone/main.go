@@ -80,7 +80,7 @@ func main() {
 		panic(err)
 	}
 	log.Printf("Now serving DHCP")
-	signalChannel := make(chan os.Signal)
+	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM)
 	<-signalChannel
 

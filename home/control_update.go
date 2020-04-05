@@ -112,6 +112,9 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i != 3; i++ {
 		log.Tracef("Downloading data from %s", versionCheckURL)
 		resp, err = Context.client.Get(versionCheckURL)
+		if resp != nil && resp.Body != nil {
+			defer resp.Body.Close()
+		}
 		if err != nil && strings.HasSuffix(err.Error(), "i/o timeout") {
 			// This case may happen while we're restarting DNS server
 			// https://github.com/AdguardTeam/AdGuardHome/issues/934
@@ -122,9 +125,6 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		httpError(w, http.StatusBadGateway, "Couldn't get version check json from %s: %T %s\n", versionCheckURL, err, err)
 		return
-	}
-	if resp != nil && resp.Body != nil {
-		defer resp.Body.Close()
 	}
 
 	// read the body entirely
@@ -187,11 +187,11 @@ func getUpdateInfo(jsonData []byte) (*updateInfo, error) {
 	u.pkgURL = versionJSON[fmt.Sprintf("download_%s_%s", runtime.GOOS, runtime.GOARCH)].(string)
 	u.newVer = versionJSON["version"].(string)
 	if len(u.pkgURL) == 0 || len(u.newVer) == 0 {
-		return nil, fmt.Errorf("Invalid JSON")
+		return nil, fmt.Errorf("invalid JSON")
 	}
 
 	if u.newVer == versionString {
-		return nil, fmt.Errorf("No need to update")
+		return nil, fmt.Errorf("no need to update")
 	}
 
 	u.updateDir = filepath.Join(workDir, fmt.Sprintf("agh-update-%s", u.newVer))
@@ -199,7 +199,7 @@ func getUpdateInfo(jsonData []byte) (*updateInfo, error) {
 
 	_, pkgFileName := filepath.Split(u.pkgURL)
 	if len(pkgFileName) == 0 {
-		return nil, fmt.Errorf("Invalid JSON")
+		return nil, fmt.Errorf("invalid JSON")
 	}
 	u.pkgName = filepath.Join(u.updateDir, pkgFileName)
 
@@ -215,7 +215,7 @@ func getUpdateInfo(jsonData []byte) (*updateInfo, error) {
 	}
 	u.curBinName = filepath.Join(workDir, binName)
 	if !util.FileExists(u.curBinName) {
-		return nil, fmt.Errorf("Executable file %s doesn't exist", u.curBinName)
+		return nil, fmt.Errorf("executable file %s doesn't exist", u.curBinName)
 	}
 	u.bkpBinName = filepath.Join(u.backupDir, binName)
 	u.newBinName = filepath.Join(u.updateDir, "AdGuardHome", binName)
@@ -432,7 +432,7 @@ func doUpdate(u *updateInfo) error {
 			return fmt.Errorf("targzFileUnpack() failed: %s", err)
 		}
 	} else {
-		return fmt.Errorf("Unknown package extension")
+		return fmt.Errorf("unknown package extension")
 	}
 
 	log.Tracef("Checking configuration")
@@ -517,9 +517,7 @@ func finishUpdate(u *updateInfo) {
 			log.Fatalf("exec.Command() failed: %s", err)
 		}
 		os.Exit(0)
-
 	} else {
-
 		log.Info("Restarting: %v", os.Args)
 		err := syscall.Exec(u.curBinName, os.Args, os.Environ())
 		if err != nil {

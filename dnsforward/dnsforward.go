@@ -407,7 +407,7 @@ func matchDNSName(dnsNames []string, sni string) bool {
 func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	if s.conf.StrictSNICheck && !matchDNSName(s.conf.dnsNames, ch.ServerName) {
 		log.Info("DNS: TLS: unknown SNI in Client Hello: %s", ch.ServerName)
-		return nil, fmt.Errorf("Invalid SNI")
+		return nil, fmt.Errorf("invalid SNI")
 	}
 	return &s.conf.cert, nil
 }
