@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
-	bolt "github.com/etcd-io/bbolt"
+	bolt "go.etcd.io/bbolt"
 )
 
 const (

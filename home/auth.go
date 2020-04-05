@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/etcd-io/bbolt"
+	"go.etcd.io/bbolt"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -374,7 +374,7 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 					w.WriteHeader(http.StatusFound)
 					return
 				} else if r < 0 {
-					log.Info("Auth: invalid cookie value: %s", cookie)
+					log.Debug("Auth: invalid cookie value: %s", cookie)
 				}
 			}
 
@@ -392,7 +392,7 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 				if r == 0 {
 					ok = true
 				} else if r < 0 {
-					log.Info("Auth: invalid cookie value: %s", cookie)
+					log.Debug("Auth: invalid cookie value: %s", cookie)
 				}
 			} else {
 				// there's no Cookie, check Basic authentication

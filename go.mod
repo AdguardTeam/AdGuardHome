@@ -1,27 +1,24 @@
 module github.com/AdguardTeam/AdGuardHome
 
-go 1.13
+go 1.14
 
 require (
-	github.com/AdguardTeam/dnsproxy v0.24.0
-	github.com/AdguardTeam/golibs v0.3.0
+	github.com/AdguardTeam/dnsproxy v0.25.0
+	github.com/AdguardTeam/golibs v0.4.0
 	github.com/AdguardTeam/urlfilter v0.9.1
 	github.com/NYTimes/gziphandler v1.1.1
-	github.com/etcd-io/bbolt v1.3.3
-	github.com/fsnotify/fsnotify v1.4.9
-	github.com/go-test/deep v1.0.4 // indirect
-	github.com/gobuffalo/packr v1.19.0
-	github.com/joomcode/errorx v1.0.0
-	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1 // indirect
-	github.com/kardianos/service v0.0.0-20181115005516-4c239ee84e7b
+	github.com/fsnotify/fsnotify v1.4.7
+	github.com/gobuffalo/packr v1.30.1
+	github.com/joomcode/errorx v1.0.1
+	github.com/kardianos/service v1.0.0
 	github.com/krolaw/dhcp4 v0.0.0-20180925202202-7cead472c414
-	github.com/miekg/dns v1.1.26
-	github.com/pkg/errors v0.8.1
+	github.com/miekg/dns v1.1.29
+	github.com/pkg/errors v0.9.1
 	github.com/sparrc/go-ping v0.0.0-20190613174326-4e5b6552494c
-	github.com/stretchr/testify v1.4.0
-	go.etcd.io/bbolt v1.3.3 // indirect
-	golang.org/x/crypto v0.0.0-20191227163750-53104e6ec876
-	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553
-	golang.org/x/sys v0.0.0-20191228213918-04cbcbbfeed8
-	gopkg.in/yaml.v2 v2.2.3
+	github.com/stretchr/testify v1.5.1
+	go.etcd.io/bbolt v1.3.4
+	golang.org/x/crypto v0.0.0-20200403201458-baeed622b8d8
+	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e
+	golang.org/x/sys v0.0.0-20200331124033-c3d80250170d
+	gopkg.in/yaml.v2 v2.2.8
 )
