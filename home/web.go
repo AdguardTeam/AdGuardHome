@@ -81,11 +81,11 @@ func WebCheckPortAvailable(port int) bool {
 }
 
 // TLSConfigChanged - called when TLS configuration has changed
-func (w *Web) TLSConfigChanged(tlsConf tlsConfigSettings) {
+func (web *Web) TLSConfigChanged(tlsConf tlsConfigSettings) {
 	log.Debug("Web: applying new TLS configuration")
-	w.conf.PortHTTPS = tlsConf.PortHTTPS
-	w.forceHTTPS = (tlsConf.ForceHTTPS && tlsConf.Enabled && tlsConf.PortHTTPS != 0)
-	w.portHTTPS = tlsConf.PortHTTPS
+	web.conf.PortHTTPS = tlsConf.PortHTTPS
+	web.forceHTTPS = (tlsConf.ForceHTTPS && tlsConf.Enabled && tlsConf.PortHTTPS != 0)
+	web.portHTTPS = tlsConf.PortHTTPS
 
 	enabled := tlsConf.Enabled &&
 		tlsConf.PortHTTPS != 0 &&
@@ -100,31 +100,31 @@ func (w *Web) TLSConfigChanged(tlsConf tlsConfigSettings) {
 		}
 	}
 
-	w.httpsServer.cond.L.Lock()
-	if w.httpsServer.server != nil {
-		w.httpsServer.server.Shutdown(context.TODO())
+	web.httpsServer.cond.L.Lock()
+	if web.httpsServer.server != nil {
+		_ = web.httpsServer.server.Shutdown(context.TODO())
 	}
-	w.httpsServer.enabled = enabled
-	w.httpsServer.cert = cert
-	w.httpsServer.cond.Broadcast()
-	w.httpsServer.cond.L.Unlock()
+	web.httpsServer.enabled = enabled
+	web.httpsServer.cert = cert
+	web.httpsServer.cond.Broadcast()
+	web.httpsServer.cond.L.Unlock()
 }
 
 // Start - start serving HTTP requests
-func (w *Web) Start() {
+func (web *Web) Start() {
 	// for https, we have a separate goroutine loop
-	go w.httpServerLoop()
+	go web.httpServerLoop()
 
 	// this loop is used as an ability to change listening host and/or port
-	for !w.httpsServer.shutdown {
+	for !web.httpsServer.shutdown {
 		printHTTPAddresses("http")
 
 		// we need to have new instance, because after Shutdown() the Server is not usable
-		address := net.JoinHostPort(w.conf.BindHost, strconv.Itoa(w.conf.BindPort))
-		w.httpServer = &http.Server{
+		address := net.JoinHostPort(web.conf.BindHost, strconv.Itoa(web.conf.BindPort))
+		web.httpServer = &http.Server{
 			Addr: address,
 		}
-		err := w.httpServer.ListenAndServe()
+		err := web.httpServer.ListenAndServe()
 		if err != http.ErrServerClosed {
 			cleanupAlways()
 			log.Fatal(err)
@@ -134,46 +134,46 @@ func (w *Web) Start() {
 }
 
 // Close - stop HTTP server, possibly waiting for all active connections to be closed
-func (w *Web) Close() {
+func (web *Web) Close() {
 	log.Info("Stopping HTTP server...")
-	w.httpsServer.cond.L.Lock()
-	w.httpsServer.shutdown = true
-	w.httpsServer.cond.L.Unlock()
-	if w.httpsServer.server != nil {
-		_ = w.httpsServer.server.Shutdown(context.TODO())
+	web.httpsServer.cond.L.Lock()
+	web.httpsServer.shutdown = true
+	web.httpsServer.cond.L.Unlock()
+	if web.httpsServer.server != nil {
+		_ = web.httpsServer.server.Shutdown(context.TODO())
 	}
-	if w.httpServer != nil {
-		_ = w.httpServer.Shutdown(context.TODO())
+	if web.httpServer != nil {
+		_ = web.httpServer.Shutdown(context.TODO())
 	}
 
 	log.Info("Stopped HTTP server")
 }
 
-func (w *Web) httpServerLoop() {
+func (web *Web) httpServerLoop() {
 	for {
-		w.httpsServer.cond.L.Lock()
-		if w.httpsServer.shutdown {
-			w.httpsServer.cond.L.Unlock()
+		web.httpsServer.cond.L.Lock()
+		if web.httpsServer.shutdown {
+			web.httpsServer.cond.L.Unlock()
 			break
 		}
 
 		// this mechanism doesn't let us through until all conditions are met
-		for !w.httpsServer.enabled { // sleep until necessary data is supplied
-			w.httpsServer.cond.Wait()
-			if w.httpsServer.shutdown {
-				w.httpsServer.cond.L.Unlock()
+		for !web.httpsServer.enabled { // sleep until necessary data is supplied
+			web.httpsServer.cond.Wait()
+			if web.httpsServer.shutdown {
+				web.httpsServer.cond.L.Unlock()
 				return
 			}
 		}
 
-		w.httpsServer.cond.L.Unlock()
+		web.httpsServer.cond.L.Unlock()
 
 		// prepare HTTPS server
-		address := net.JoinHostPort(w.conf.BindHost, strconv.Itoa(w.conf.PortHTTPS))
-		w.httpsServer.server = &http.Server{
+		address := net.JoinHostPort(web.conf.BindHost, strconv.Itoa(web.conf.PortHTTPS))
+		web.httpsServer.server = &http.Server{
 			Addr: address,
 			TLSConfig: &tls.Config{
-				Certificates: []tls.Certificate{w.httpsServer.cert},
+				Certificates: []tls.Certificate{web.httpsServer.cert},
 				MinVersion:   tls.VersionTLS12,
 				RootCAs:      Context.tlsRoots,
 				CipherSuites: Context.tlsCiphers,
@@ -181,7 +181,7 @@ func (w *Web) httpServerLoop() {
 		}
 
 		printHTTPAddresses("https")
-		err := w.httpsServer.server.ListenAndServeTLS("", "")
+		err := web.httpsServer.server.ListenAndServeTLS("", "")
 		if err != http.ErrServerClosed {
 			cleanupAlways()
 			log.Fatal(err)

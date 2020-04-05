@@ -30,7 +30,7 @@ type NetInterface struct {
 func GetValidNetInterfaces() ([]net.Interface, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
-		return nil, fmt.Errorf("Couldn't get list of interfaces: %s", err)
+		return nil, fmt.Errorf("couldn't get list of interfaces: %s", err)
 	}
 
 	netIfaces := []net.Interface{}

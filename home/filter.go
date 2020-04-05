@@ -290,7 +290,7 @@ func (f *Filtering) periodicallyRefreshFilters() {
 func (f *Filtering) refreshFilters(flags int, important bool) (int, error) {
 	set := atomic.CompareAndSwapUint32(&f.refreshStatus, 0, 1)
 	if !important && !set {
-		return 0, fmt.Errorf("Filters update procedure is already running")
+		return 0, fmt.Errorf("filters update procedure is already running")
 	}
 
 	f.refreshLock.Lock()
@@ -550,13 +550,13 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 
 			if firstChunkLen == len(firstChunk) || err == io.EOF {
 				if !isPrintableText(firstChunk) {
-					return false, fmt.Errorf("Data contains non-printable characters")
+					return false, fmt.Errorf("data contains non-printable characters")
 				}
 
 				s := strings.ToLower(string(firstChunk))
 				if strings.Index(s, "<html") >= 0 ||
 					strings.Index(s, "<!doctype") >= 0 {
-					return false, fmt.Errorf("Data is HTML, not plain text")
+					return false, fmt.Errorf("data is HTML, not plain text")
 				}
 
 				htmlTest = false

@@ -37,7 +37,7 @@ func initDNSServer() error {
 	}
 	Context.stats, err = stats.New(statsConf)
 	if err != nil {
-		return fmt.Errorf("Couldn't initialize statistics module")
+		return fmt.Errorf("couldn't initialize statistics module")
 	}
 	conf := querylog.Config{
 		Enabled:           config.DNS.QueryLogEnabled,

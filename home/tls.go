@@ -306,6 +306,8 @@ func verifyCertChain(data *tlsConfigStatus, certChain string, serverName string)
 		if decoded.Type == "CERTIFICATE" {
 			certs = append(certs, decoded)
 		} else {
+			// ignore "this result of append is never used" warning
+			// nolint
 			skippedBytes = append(skippedBytes, decoded.Type)
 		}
 	}
@@ -387,6 +389,8 @@ func validatePkey(data *tlsConfigStatus, pkey string) error {
 			key = decoded
 			break
 		} else {
+			// ignore "this result of append is never used"
+			// nolint
 			skippedBytes = append(skippedBytes, decoded.Type)
 		}
 	}

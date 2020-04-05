@@ -65,3 +65,5 @@ issues:
     - Error return value of ..*.Shutdown.
     # goconst
     - string .forcesafesearch.google.com. has 3 occurrences
+    # gosec: Subprocess launched with function call as argument or cmd arguments
+    - G204

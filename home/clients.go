@@ -375,7 +375,7 @@ func (clients *clientsContainer) FindAutoClient(ip string) (ClientHost, bool) {
 // Check if Client object's fields are correct
 func (clients *clientsContainer) check(c *Client) error {
 	if len(c.Name) == 0 {
-		return fmt.Errorf("Invalid Name")
+		return fmt.Errorf("invalid Name")
 	}
 
 	if len(c.IDs) == 0 {
@@ -399,12 +399,12 @@ func (clients *clientsContainer) check(c *Client) error {
 			continue
 		}
 
-		return fmt.Errorf("Invalid ID: %s", id)
+		return fmt.Errorf("invalid ID: %s", id)
 	}
 
 	for _, t := range c.Tags {
 		if !clients.tagKnown(t) {
-			return fmt.Errorf("Invalid tag: %s", t)
+			return fmt.Errorf("invalid tag: %s", t)
 		}
 	}
 	sort.Strings(c.Tags)
@@ -412,7 +412,7 @@ func (clients *clientsContainer) check(c *Client) error {
 	if len(c.Upstreams) != 0 {
 		err := dnsforward.ValidateUpstreams(c.Upstreams)
 		if err != nil {
-			return fmt.Errorf("Invalid upstream servers: %s", err)
+			return fmt.Errorf("invalid upstream servers: %s", err)
 		}
 	}
 
@@ -440,7 +440,7 @@ func (clients *clientsContainer) Add(c Client) (bool, error) {
 	for _, id := range c.IDs {
 		c2, ok := clients.idIndex[id]
 		if ok {
-			return false, fmt.Errorf("Another client uses the same ID (%s): %s", id, c2.Name)
+			return false, fmt.Errorf("another client uses the same ID (%s): %s", id, c2.Name)
 		}
 	}
 
@@ -501,14 +501,14 @@ func (clients *clientsContainer) Update(name string, c Client) error {
 
 	old, ok := clients.list[name]
 	if !ok {
-		return fmt.Errorf("Client not found")
+		return fmt.Errorf("client not found")
 	}
 
 	// check Name index
 	if old.Name != c.Name {
 		_, ok = clients.list[c.Name]
 		if ok {
-			return fmt.Errorf("Client already exists")
+			return fmt.Errorf("client already exists")
 		}
 	}
 
@@ -517,7 +517,7 @@ func (clients *clientsContainer) Update(name string, c Client) error {
 		for _, id := range c.IDs {
 			c2, ok := clients.idIndex[id]
 			if ok && c2 != old {
-				return fmt.Errorf("Another client uses the same ID (%s): %s", id, c2.Name)
+				return fmt.Errorf("another client uses the same ID (%s): %s", id, c2.Name)
 			}
 		}
 
