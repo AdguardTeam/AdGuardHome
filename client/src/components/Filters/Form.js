@@ -4,7 +4,7 @@ import { Field, reduxForm } from 'redux-form';
 import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 
-import { renderInputField, required, isValidUrl } from '../../helpers/form';
+import { renderInputField, required, isValidPath } from '../../helpers/form';
 
 const Form = (props) => {
     const {
@@ -37,8 +37,8 @@ const Form = (props) => {
                         type="text"
                         component={renderInputField}
                         className="form-control"
-                        placeholder={t('enter_url_hint')}
-                        validate={[required, isValidUrl]}
+                        placeholder={t('enter_url_or_path_hint')}
+                        validate={[required, isValidPath]}
                     />
                 </div>
                 <div className="form__description">
