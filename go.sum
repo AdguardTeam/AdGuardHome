@@ -4,6 +4,8 @@ github.com/AdguardTeam/golibs v0.2.4 h1:GUssokegKxKF13K67Pgl0ZGwqHjNN6X7sep5ik6O
 github.com/AdguardTeam/golibs v0.2.4/go.mod h1:R3M+mAg3nWG4X4Hsag5eef/TckHFH12ZYhK7AzJc8+U=
 github.com/AdguardTeam/golibs v0.4.0 h1:4VX6LoOqFe9p9Gf55BeD8BvJD6M6RDYmgEiHrENE9KU=
 github.com/AdguardTeam/golibs v0.4.0/go.mod h1:skKsDKIBB7kkFflLJBpfGX+G8QFTx0WKUzB6TIgtUj4=
+github.com/AdguardTeam/golibs v0.4.2 h1:7M28oTZFoFwNmp8eGPb3ImmYbxGaJLyQXeIFVHjME0o=
+github.com/AdguardTeam/golibs v0.4.2/go.mod h1:skKsDKIBB7kkFflLJBpfGX+G8QFTx0WKUzB6TIgtUj4=
 github.com/AdguardTeam/gomitmproxy v0.1.2/go.mod h1:Mrt/3EfiXIYY2aZ7KsLuCUJzUARD/fWJ119IfzOB13M=
 github.com/AdguardTeam/urlfilter v0.9.1 h1:H0q1xig3mZjIEDH0/o2U/ezydwKGwxtQ56hz6LKPN2M=
 github.com/AdguardTeam/urlfilter v0.9.1/go.mod h1:GHXPzEG59ezyff22lXSQ7dicj1kFZBrH5kmZ6EvQzfk=
