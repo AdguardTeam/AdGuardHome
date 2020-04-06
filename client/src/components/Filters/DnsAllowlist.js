@@ -64,7 +64,8 @@ class DnsAllowlist extends Component {
             },
         } = this.props;
         const currentFilterData = getCurrentFilter(modalFilterUrl, whitelistFilters);
-        const loading = processingFilters
+        const loading = processingConfigFilter
+            || processingFilters
             || processingAddFilter
             || processingRemoveFilter
             || processingRefreshFilters;

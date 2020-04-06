@@ -60,7 +60,8 @@ class DnsBlocklist extends Component {
             },
         } = this.props;
         const currentFilterData = getCurrentFilter(modalFilterUrl, filters);
-        const loading = processingFilters
+        const loading = processingConfigFilter
+            || processingFilters
             || processingAddFilter
             || processingRemoveFilter
             || processingRefreshFilters;
