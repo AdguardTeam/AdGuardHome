@@ -124,6 +124,11 @@ func Create(config ServerConfig) *Server {
 		}
 	}
 
+	if !webHandlersRegistered && s.conf.HTTPRegister != nil {
+		webHandlersRegistered = true
+		s.registerHandlers()
+	}
+
 	// we can't delay database loading until DHCP server is started,
 	//  because we need static leases functionality available beforehand
 	s.dbLoad()
@@ -219,12 +224,6 @@ func (s *Server) setConfig(config ServerConfig) error {
 
 // Start will listen on port 67 and serve DHCP requests.
 func (s *Server) Start() error {
-
-	if !webHandlersRegistered && s.conf.HTTPRegister != nil {
-		webHandlersRegistered = true
-		s.registerHandlers()
-	}
-
 	// TODO: don't close if interface and addresses are the same
 	if s.conn != nil {
 		s.closeConn()
