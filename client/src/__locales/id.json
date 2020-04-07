@@ -71,7 +71,7 @@
     "disabled_protection": "Perlindungan dimatikan",
     "refresh_statics": "Segarkan statistik",
     "dns_query": "Kueri DNS",
-    "blocked_by": "Diblokir oleh",
+    "blocked_by": "<0>Diblokir oleh</0>",
     "stats_malware_phishing": "Malware/phishing diblokir",
     "stats_adult": "Situs dewasa diblokir",
     "stats_query_domain": "Kueri domain teratas",

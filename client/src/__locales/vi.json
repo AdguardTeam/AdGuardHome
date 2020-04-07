@@ -71,7 +71,7 @@
     "disabled_protection": "Đã tắt bảo vệ",
     "refresh_statics": "Làm mới thống kê",
     "dns_query": "Truy vấn DNS",
-    "blocked_by": "Chặn bởi Bộ lọc",
+    "blocked_by": "<0>Chặn bởi Bộ lọc</0>",
     "stats_malware_phishing": "Mã độc/lừa đảo đã chặn",
     "stats_adult": "Website người lớn đã chặn",
     "stats_query_domain": "Tên miền truy vấn nhiều",

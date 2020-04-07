@@ -71,7 +71,7 @@
     "disabled_protection": "Ochrana vypnutá",
     "refresh_statics": "Obnoviť štatistiku",
     "dns_query": "DNS dopyty",
-    "blocked_by": "<0>Blokované filtrami<0>",
+    "blocked_by": "<0>Blokované filtrami</0>",
     "stats_malware_phishing": "Blokovaný škodlivý kód/pokus o podvod",
     "stats_adult": "Blokovaná stránka pre dospelých",
     "stats_query_domain": "Najčastejšie dopytované domény",

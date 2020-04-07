@@ -71,7 +71,7 @@
     "disabled_protection": "حفاظت غير فعال شده",
     "refresh_statics": "تازه سازی آمار",
     "dns_query": "جستار DNS",
-    "blocked_by": "مسدود شده با",
+    "blocked_by": "<0/>مسدود شده با<0>",
     "stats_malware_phishing": "بدافزار/فیشینگ مسدود شده است",
     "stats_adult": "وبسایت غیراخلاقی مسدود شده است",
     "stats_query_domain": "دامنه جستار بالا",

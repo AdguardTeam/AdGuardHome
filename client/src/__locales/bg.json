@@ -47,7 +47,7 @@
     "disabled_protection": "Защитата е забранена",
     "refresh_statics": "Обнови статистиката",
     "dns_query": "DNS запитвания",
-    "blocked_by": "Блокирани от",
+    "blocked_by": "<0>Блокирани от</0>",
     "stats_malware_phishing": "вируси/атаки",
     "stats_adult": "сайтове за възрастни",
     "stats_query_domain": "Най-отваряни страници",

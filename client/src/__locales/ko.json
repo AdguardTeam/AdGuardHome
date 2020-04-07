@@ -71,7 +71,7 @@
     "disabled_protection": "보호 비활성화됨",
     "refresh_statics": "통계 새로 고침",
     "dns_query": "DNS 쿼리",
-    "blocked_by": "필터에 의해 차단됨",
+    "blocked_by": "<0>필터에 의해 차단됨</0>",
     "stats_malware_phishing": "차단된 멀웨어/피싱",
     "stats_adult": "차단된 성인 웹사이트",
     "stats_query_domain": "쿼리 도메인",

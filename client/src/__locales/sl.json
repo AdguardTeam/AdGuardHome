@@ -71,7 +71,7 @@
     "disabled_protection": "Zaščita je onemogočena",
     "refresh_statics": "Osveži statistiko",
     "dns_query": "Poizvedbe DNS",
-    "blocked_by": "Onemogočeno s filtri",
+    "blocked_by": "<0>Onemogočeno s filtri</0>",
     "stats_malware_phishing": "Onemogočeno zlonamernih programov/lažnih predstavljanj",
     "stats_adult": "Onemogočeno spletnih strani za odrasle",
     "stats_query_domain": "Najbolj poizvedovane domene",
