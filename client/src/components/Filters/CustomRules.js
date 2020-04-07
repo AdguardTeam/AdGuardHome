@@ -32,7 +32,7 @@ class CustomRules extends Component {
 
     handleCheck = (values) => {
         this.props.checkHost(values);
-    }
+    };
 
     render() {
         const {

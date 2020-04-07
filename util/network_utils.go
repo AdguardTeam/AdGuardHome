@@ -36,11 +36,6 @@ func GetValidNetInterfaces() ([]net.Interface, error) {
 	netIfaces := []net.Interface{}
 
 	for i := range ifaces {
-		if ifaces[i].Flags&net.FlagPointToPoint != 0 {
-			// this interface is ppp, we're not interested in this one
-			continue
-		}
-
 		iface := ifaces[i]
 		netIfaces = append(netIfaces, iface)
 	}
@@ -48,7 +43,7 @@ func GetValidNetInterfaces() ([]net.Interface, error) {
 	return netIfaces, nil
 }
 
-// getValidNetInterfacesMap returns interfaces that are eligible for DNS and WEB only
+// GetValidNetInterfacesForWeb returns interfaces that are eligible for DNS and WEB only
 // we do not return link-local addresses here
 func GetValidNetInterfacesForWeb() ([]NetInterface, error) {
 	ifaces, err := GetValidNetInterfaces()
@@ -101,7 +96,7 @@ func GetValidNetInterfacesForWeb() ([]NetInterface, error) {
 	return netInterfaces, nil
 }
 
-// Get interface name by its IP address.
+// GetInterfaceByIP - Get interface name by its IP address.
 func GetInterfaceByIP(ip string) string {
 	ifaces, err := GetValidNetInterfacesForWeb()
 	if err != nil {
@@ -119,7 +114,7 @@ func GetInterfaceByIP(ip string) string {
 	return ""
 }
 
-// Get IP address with netmask for the specified interface
+// GetSubnet - Get IP address with netmask for the specified interface
 // Returns an empty string if it fails to find it
 func GetSubnet(ifaceName string) string {
 	netIfaces, err := GetValidNetInterfacesForWeb()
@@ -137,7 +132,7 @@ func GetSubnet(ifaceName string) string {
 	return ""
 }
 
-// checkPortAvailable is not a cheap test to see if the port is bindable, because it's actually doing the bind momentarily
+// CheckPortAvailable - check if TCP port is available
 func CheckPortAvailable(host string, port int) error {
 	ln, err := net.Listen("tcp", net.JoinHostPort(host, strconv.Itoa(port)))
 	if err != nil {
@@ -151,6 +146,7 @@ func CheckPortAvailable(host string, port int) error {
 	return nil
 }
 
+// CheckPacketPortAvailable - check if UDP port is available
 func CheckPacketPortAvailable(host string, port int) error {
 	ln, err := net.ListenPacket("udp", net.JoinHostPort(host, strconv.Itoa(port)))
 	if err != nil {
@@ -164,7 +160,7 @@ func CheckPacketPortAvailable(host string, port int) error {
 	return err
 }
 
-// check if error is "address already in use"
+// ErrorIsAddrInUse - check if error is "address already in use"
 func ErrorIsAddrInUse(err error) bool {
 	errOpError, ok := err.(*net.OpError)
 	if !ok {
