@@ -24,12 +24,6 @@ var (
 	nextFilterID = time.Now().Unix() // semi-stable way to generate an unique ID
 )
 
-// type FilteringConf struct {
-// 	BlockLists []filter
-// 	AllowLists []filter
-// 	UserRules []string
-// }
-
 // Filtering - module object
 type Filtering struct {
 	// conf FilteringConf
@@ -447,8 +441,9 @@ func (f *Filtering) refreshFiltersIfNecessary(flags int) (int, bool) {
 }
 
 // Allows printable UTF-8 text with CR, LF, TAB characters
-func isPrintableText(data []byte) bool {
-	for _, c := range data {
+func isPrintableText(data []byte, len int) bool {
+	for i := 0; i < len; i++ {
+		c := data[i]
 		if (c >= ' ' && c != 0x7f) || c == '\n' || c == '\r' || c == '\t' {
 			continue
 		}
@@ -549,7 +544,7 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 			firstChunkLen += copied
 
 			if firstChunkLen == len(firstChunk) || err == io.EOF {
-				if !isPrintableText(firstChunk) {
+				if !isPrintableText(firstChunk, firstChunkLen) {
 					return false, fmt.Errorf("data contains non-printable characters")
 				}
 
