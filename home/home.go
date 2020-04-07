@@ -566,7 +566,9 @@ func printHTTPAddresses(proto string) {
 	var address string
 
 	tlsConf := tlsConfigSettings{}
-	Context.tls.WriteDiskConfig(&tlsConf)
+	if Context.tls != nil {
+		Context.tls.WriteDiskConfig(&tlsConf)
+	}
 	if proto == "https" && tlsConf.ServerName != "" {
 		if tlsConf.PortHTTPS == 443 {
 			log.Printf("Go to https://%s", tlsConf.ServerName)
