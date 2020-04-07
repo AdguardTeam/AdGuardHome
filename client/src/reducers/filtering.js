@@ -13,7 +13,11 @@ const filtering = handleActions(
             return { ...state, userRules };
         },
 
-        [actions.getFilteringStatusRequest]: state => ({ ...state, processingFilters: true }),
+        [actions.getFilteringStatusRequest]: state => ({
+            ...state,
+            processingFilters: true,
+            check: {},
+        }),
         [actions.getFilteringStatusFailure]: state => ({ ...state, processingFilters: false }),
         [actions.getFilteringStatusSuccess]: (state, { payload }) => ({
             ...state,
