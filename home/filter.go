@@ -508,14 +508,14 @@ func (f *Filtering) update(filter *filter) (bool, error) {
 func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 	log.Tracef("Downloading update for filter %d from %s", filter.ID, filter.URL)
 
-	tmpfile, err := ioutil.TempFile(filepath.Join(Context.getDataDir(), filterDir), "")
+	tmpFile, err := ioutil.TempFile(filepath.Join(Context.getDataDir(), filterDir), "")
 	if err != nil {
 		return false, err
 	}
 	defer func() {
-		if tmpfile != nil {
-			_ = tmpfile.Close()
-			_ = os.Remove(tmpfile.Name())
+		if tmpFile != nil {
+			_ = tmpFile.Close()
+			_ = os.Remove(tmpFile.Name())
 		}
 	}()
 
@@ -564,7 +564,7 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 			}
 		}
 
-		_, err2 := tmpfile.Write(buf[:n])
+		_, err2 := tmpFile.Write(buf[:n])
 		if err2 != nil {
 			return false, err2
 		}
@@ -579,8 +579,8 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 	}
 
 	// Extract filter name and count number of rules
-	_, _ = tmpfile.Seek(0, io.SeekStart)
-	rulesCount, checksum, filterName := f.parseFilterContents(tmpfile)
+	_, _ = tmpFile.Seek(0, io.SeekStart)
+	rulesCount, checksum, filterName := f.parseFilterContents(tmpFile)
 	// Check if the filter has been really changed
 	if filter.checksum == checksum {
 		log.Tracef("Filter #%d at URL %s hasn't changed, not updating it", filter.ID, filter.URL)
@@ -596,12 +596,14 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 	filter.checksum = checksum
 	filterFilePath := filter.Path()
 	log.Printf("Saving filter %d contents to: %s", filter.ID, filterFilePath)
-	err = os.Rename(tmpfile.Name(), filterFilePath)
+
+	// Closing the file before renaming it is necessary on Windows
+	_ = tmpFile.Close()
+	err = os.Rename(tmpFile.Name(), filterFilePath)
 	if err != nil {
 		return false, err
 	}
-	tmpfile.Close()
-	tmpfile = nil
+	tmpFile = nil
 
 	return true, nil
 }
