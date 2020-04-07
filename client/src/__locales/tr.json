@@ -71,7 +71,7 @@
     "disabled_protection": "Koruma durduruldu",
     "refresh_statics": "İstatistikleri yenile",
     "dns_query": "DNS Sorguları",
-    "blocked_by": "Filtreler tarafından engellendi",
+    "blocked_by": "<0>Filtreler tarafından engellendi</0>",
     "stats_malware_phishing": "Zararlı yazılım/kimlik hırsızlığı engellendi",
     "stats_adult": "Yetişkin içerikli site engellendi",
     "stats_query_domain": "En fazla sorgulanan alan adları",
