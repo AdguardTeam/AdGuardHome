@@ -345,6 +345,10 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	web.conf.firstRun = false
+	web.conf.BindHost = newSettings.Web.IP
+	web.conf.BindPort = newSettings.Web.Port
+
 	registerControlHandlers()
 
 	// this needs to be done in a goroutine because Shutdown() is a blocking call, and it will block
