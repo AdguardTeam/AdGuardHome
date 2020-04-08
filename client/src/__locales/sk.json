@@ -358,6 +358,7 @@
     "access_allowed_desc": "Zoznam CIDR alebo IP adries. Ak je nakonfigurovaný, AdGuard Home akceptuje len dopyty z týchto IP adries",
     "access_disallowed_title": "Nepovolení klienti",
     "access_disallowed_desc": "Zoznam CIDR alebo IP adries. Ak je nakonfigurovaný, AdGuard Home bude ignorovať dopyty z týchto IP adries",
+    "access_blocked_title": "Blokované domény",
     "access_blocked_desc": "Nezamieňajte si to s filtrami. Domovská stránka AdGuard zruší DNS dopyty obsahujúce tieto domény. Tu môžete zadať presné názvy domén, zástupné znaky a pravidlá URL adries, napr. 'example.org', '*.example.org' alebo '|| example.org ^'.",
     "access_settings_saved": "Nastavenia prístupu úspešne uložené",
     "updates_checked": "Aktualizácie úspešne skontrolované",
