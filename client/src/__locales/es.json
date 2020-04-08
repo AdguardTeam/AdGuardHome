@@ -199,6 +199,8 @@
     "query_log_disabled": "El registro de consultas está deshabilitado y se puede configurar en la <0>configuración</0>",
     "query_log_strict_search": "Usar comillas dobles para una búsqueda estricta",
     "query_log_retention_confirm": "¿Está seguro de que desea cambiar la retención del registro de consultas? Si disminuye el valor del intervalo, se perderán algunos datos",
+    "anonymize_client_ip": "Anonimizar IP del cliente",
+    "anonymize_client_ip_desc": "No guarda la dirección IP completa del cliente en registros y estadísticas",
     "dns_config": "Configuración del servidor DNS",
     "blocking_mode": "Modo de bloqueo",
     "default": "Predeterminado",
@@ -479,5 +481,7 @@
     "install_static_configure": "Hemos detectado que utiliza una dirección IP dinámica: <0>{{ip}}</0>. ¿Deseas usarla como tu dirección estática?",
     "confirm_static_ip": "AdGuard Home configurará {{ip}} para ser tu dirección IP estática. ¿Desea continuar?",
     "list_updated": "{{count}} lista actualizada",
-    "list_updated_plural": "{{count}} listas actualizadas"
+    "list_updated_plural": "{{count}} listas actualizadas",
+    "dnssec_enable": "Habilitar DNSSEC",
+    "dnssec_enable_desc": "Establece el indicador DNSSEC en las consultas DNS salientes y comprueba el resultado (se requiere un resolutor habilitado para DNSSEC)"
 }

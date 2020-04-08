@@ -199,6 +199,8 @@
     "query_log_disabled": "Zapisnik upita je onemogućen i može se postaviti u <0>postavkama</0>",
     "query_log_strict_search": "Koristite dvostruke navodnike za strogo pretraživanje",
     "query_log_retention_confirm": "Jeste li sigurni da želite promijeniti zadržavanje zapisnika upita? Ako smanjite vrijednost intervala, neki će podaci biti izgubljeni",
+    "anonymize_client_ip": "Anonimiraj IP klijenta",
+    "anonymize_client_ip_desc": "Ne spremajte cijelu IP adresu klijenta u zapisnike i statistike",
     "dns_config": "DNS postavke poslužitelja",
     "blocking_mode": "Način blokiranja",
     "default": "Zadano",
@@ -479,5 +481,7 @@
     "install_static_configure": "Otkrili smo da se koristi dinamička IP adresa - <0>{{ip}}</0>. Želite li je koristiti kao svoju statičku adresu?",
     "confirm_static_ip": "AdGuard Home će postaviti {{ip}} kao vašu statičku IP adresu. Želiš li nastaviti?",
     "list_updated": "{{count}} popis ažuriran",
-    "list_updated_plural": "{{count}} popisa ažurirana"
+    "list_updated_plural": "{{count}} popisa ažurirana",
+    "dnssec_enable": "Omogući DNSSEC",
+    "dnssec_enable_desc": "Omogućite DNSSEC u izlaznim DNS upitima i provjerite rezultat (potreban je resolver s omogućenim DNSSEC-om)"
 }

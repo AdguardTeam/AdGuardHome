@@ -199,6 +199,8 @@
     "query_log_disabled": "Dziennik zapytań jest wyłączony i można go skonfigurować w <0>ustawieniach</0>",
     "query_log_strict_search": "Używaj podwójnych cudzysłowów do ścisłego wyszukiwania",
     "query_log_retention_confirm": "Czy na pewno chcesz zmienić sposób przechowywania dziennika zapytań? Jeśli zmniejszysz wartość interwału, niektóre dane zostaną utracone",
+    "anonymize_client_ip": "Anonimizuj adres IP klienta",
+    "anonymize_client_ip_desc": "Nie zapisuj pełnego adresu IP w dziennikach i statystykach",
     "dns_config": "Konfiguracja serwera DNS",
     "blocking_mode": "Tryb blokowania",
     "default": "Domyślny",
@@ -479,5 +481,7 @@
     "install_static_configure": "Wykryliśmy, że używany jest dynamiczny adres IP — <0>{{ip}}</0>. Czy chcesz użyć go jako adresu statycznego?",
     "confirm_static_ip": "AdGuard Home skonfiguruje {{ip}} aby był Twoim statycznym adresem IP. Czy chcesz kontynuować?",
     "list_updated": "{{count}} lista zaktualizowana",
-    "list_updated_plural": "{{count}} list zaktualizowanych"
+    "list_updated_plural": "{{count}} list zaktualizowanych",
+    "dnssec_enable": "Włącz DNSSEC",
+    "dnssec_enable_desc": "Ustaw flagę DNSSEC w wychodzących zapytaniach DNS i sprawdź wynik (wymagany jest resolver z obsługą zabezpieczania DNSSEC)"
 }

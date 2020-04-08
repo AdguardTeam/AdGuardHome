@@ -199,6 +199,8 @@
     "query_log_disabled": "Protokol dopytov je vypnutý a možno ho nakonfigurovať v <0>nastaveniach</0>",
     "query_log_strict_search": "Na prísne vyhľadávanie použite dvojité úvodzovky",
     "query_log_retention_confirm": "Naozaj chcete zmeniť uchovávanie denníku dopytov? Ak znížite hodnotu intervalu, niektoré údaje sa stratia",
+    "anonymize_client_ip": "Anonymizujte IP klienta",
+    "anonymize_client_ip_desc": "Neukladať úplnú IP adresu klienta do protokolov a štatistík",
     "dns_config": "Konfigurácia DNS servera",
     "blocking_mode": "Spôsob blokovania",
     "default": "Predvolené",
@@ -356,8 +358,7 @@
     "access_allowed_desc": "Zoznam CIDR alebo IP adries. Ak je nakonfigurovaný, AdGuard Home akceptuje len dopyty z týchto IP adries",
     "access_disallowed_title": "Nepovolení klienti",
     "access_disallowed_desc": "Zoznam CIDR alebo IP adries. Ak je nakonfigurovaný, AdGuard Home bude ignorovať dopyty z týchto IP adries",
-    "access_blocked_title": "Blokované domény",
-    "access_blocked_desc": "Nezamieňajte si to s filtrami. Domovská stránka služby AdGuard bude ignorovať dopyt DNS na tieto domény v rámci spracovania dopytu.",
+    "access_blocked_desc": "Nezamieňajte si to s filtrami. Domovská stránka AdGuard zruší DNS dopyty obsahujúce tieto domény. Tu môžete zadať presné názvy domén, zástupné znaky a pravidlá URL adries, napr. 'example.org', '*.example.org' alebo '|| example.org ^'.",
     "access_settings_saved": "Nastavenia prístupu úspešne uložené",
     "updates_checked": "Aktualizácie úspešne skontrolované",
     "updates_version_equal": "AdGuard Home je aktuálny",
@@ -479,5 +480,7 @@
     "install_static_configure": "Zistili sme, že sa používa dynamická IP adresa — <0>{{ip}}</0>. Chcete ju použiť ako svoju statickú adresu?",
     "confirm_static_ip": "AdGuard Home nakonfiguruje {{ip}} ako statickú IP adresu. Chcete pokračovať?",
     "list_updated": "{{count}} zoznam aktualizovaný",
-    "list_updated_plural": "{{count}} zoznamov aktualizovaných"
+    "list_updated_plural": "{{count}} zoznamov aktualizovaných",
+    "dnssec_enable": "Zapnúť DNSSEC",
+    "dnssec_enable_desc": "Nastavte príznak DNSSEC v nasledujúcich DNS dopytoch a skontrolujte výsledok (je potrebný prekladač so zapnutým DNSSEC)"
 }
