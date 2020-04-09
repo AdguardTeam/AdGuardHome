@@ -164,11 +164,17 @@ export const checkHostRequest = createAction('CHECK_HOST_REQUEST');
 export const checkHostFailure = createAction('CHECK_HOST_FAILURE');
 export const checkHostSuccess = createAction('CHECK_HOST_SUCCESS');
 
+/**
+ *
+ * @param {object} host
+ * @param {string} host.name
+ * @returns {undefined}
+ */
 export const checkHost = host => async (dispatch) => {
     dispatch(checkHostRequest());
     try {
         const data = await apiClient.checkHost(host);
-        const [hostname] = Object.values(host);
+        const { name: hostname } = host;
 
         dispatch(checkHostSuccess({
             hostname,
