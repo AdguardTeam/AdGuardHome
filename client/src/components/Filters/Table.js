@@ -2,11 +2,10 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import ReactTable from 'react-table';
 import { withNamespaces, Trans } from 'react-i18next';
-
 import CellWrap from '../ui/CellWrap';
-
 import { MODAL_TYPE } from '../../helpers/constants';
 import { formatDetailedDateTime } from '../../helpers/helpers';
+import { isValidAbsolutePath } from '../../helpers/form';
 
 class Table extends Component {
     getDateCell = row => CellWrap(row, formatDetailedDateTime);
@@ -50,14 +49,15 @@ class Table extends Component {
             minWidth: 200,
             Cell: ({ value }) => (
                 <div className="logs__row logs__row--overflow">
-                    <a
-                        href={value}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="link logs__text"
-                    >
-                        {value}
-                    </a>
+                    {isValidAbsolutePath(value) ? value :
+                        <a
+                            href={value}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="link logs__text"
+                        >
+                            {value}
+                        </a>}
                 </div>
             ),
         },
