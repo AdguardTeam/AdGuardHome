@@ -69,7 +69,7 @@ func defaultFilters() []filter {
 // field ordering is important -- yaml fields will mirror ordering from here
 type filter struct {
 	Enabled     bool
-	URL         string
+	URL         string    // URL or a file path
 	Name        string    `yaml:"name"`
 	RulesCount  int       `yaml:"-"`
 	LastUpdated time.Time `yaml:"-"`
@@ -500,6 +500,7 @@ func (f *Filtering) update(filter *filter) (bool, error) {
 	return b, err
 }
 
+// nolint(gocyclo)
 func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 	log.Tracef("Downloading update for filter %d from %s", filter.ID, filter.URL)
 
@@ -514,18 +515,29 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 		}
 	}()
 
-	resp, err := Context.client.Get(filter.URL)
-	if resp != nil && resp.Body != nil {
-		defer resp.Body.Close()
-	}
-	if err != nil {
-		log.Printf("Couldn't request filter from URL %s, skipping: %s", filter.URL, err)
-		return false, err
-	}
+	var reader io.Reader
+	if filepath.IsAbs(filter.URL) {
+		f, err := os.Open(filter.URL)
+		if err != nil {
+			return false, fmt.Errorf("open file: %s", err)
+		}
+		defer f.Close()
+		reader = f
+	} else {
+		resp, err := Context.client.Get(filter.URL)
+		if resp != nil && resp.Body != nil {
+			defer resp.Body.Close()
+		}
+		if err != nil {
+			log.Printf("Couldn't request filter from URL %s, skipping: %s", filter.URL, err)
+			return false, err
+		}
 
-	if resp.StatusCode != 200 {
-		log.Printf("Got status code %d from URL %s, skipping", resp.StatusCode, filter.URL)
-		return false, fmt.Errorf("got status code != 200: %d", resp.StatusCode)
+		if resp.StatusCode != 200 {
+			log.Printf("Got status code %d from URL %s, skipping", resp.StatusCode, filter.URL)
+			return false, fmt.Errorf("got status code != 200: %d", resp.StatusCode)
+		}
+		reader = resp.Body
 	}
 
 	htmlTest := true
@@ -534,7 +546,7 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 	buf := make([]byte, 64*1024)
 	total := 0
 	for {
-		n, err := resp.Body.Read(buf)
+		n, err := reader.Read(buf)
 		total += n
 
 		if htmlTest {
