@@ -2,6 +2,10 @@
     "name": "translations",
     "version": "0.1.0",
     "private": true,
+    "scripts": {
+        "locales:download": "TWOSKY_URI=https://twosky.adtidy.org/api/v1 TWOSKY_PROJECT_ID=home node download.js",
+        "locales:upload": "TWOSKY_URI=https://twosky.adtidy.org/api/v1 TWOSKY_PROJECT_ID=home node upload.js"
+    },
     "dependencies": {
         "request": "^2.88.0",
         "request-promise": "^4.2.2"

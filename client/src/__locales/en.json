@@ -445,7 +445,7 @@
     "netname": "Network name",
     "descr": "Description",
     "whois": "Whois",
-    "filtering_rules_learn_more": "<0>Learn more</0> about creating your own hosts blocklists.",
+    "filtering_rules_learn_more": "<0>Learn more</0> about creating your own hosts lists.",
     "blocked_by_response": "Blocked by CNAME or IP in response",
     "try_again": "Try again",
     "domain_desc": "Enter the domain name or wildcard you want to be rewritten.",

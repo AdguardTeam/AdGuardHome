@@ -71,7 +71,7 @@
     "disabled_protection": "Protezione disabilitata",
     "refresh_statics": "Aggiorna statistiche",
     "dns_query": "Query DNS",
-    "blocked_by": "Bloccato dai Filtri",
+    "blocked_by": "<0>Bloccato dai Filtri</0>",
     "stats_malware_phishing": "Malware/phishing bloccati",
     "stats_adult": "Siti per adulti bloccati",
     "stats_query_domain": "Domini maggiormente richiesti",

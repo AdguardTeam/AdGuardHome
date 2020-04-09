@@ -71,7 +71,7 @@
     "disabled_protection": "Zaščita je onemogočena",
     "refresh_statics": "Osveži statistiko",
     "dns_query": "Poizvedbe DNS",
-    "blocked_by": "Onemogočeno s filtri",
+    "blocked_by": "<0>Onemogočeno s filtri</0>",
     "stats_malware_phishing": "Onemogočeno zlonamernih programov/lažnih predstavljanj",
     "stats_adult": "Onemogočeno spletnih strani za odrasle",
     "stats_query_domain": "Najbolj poizvedovane domene",
@@ -199,6 +199,8 @@
     "query_log_disabled": "Dnevnik poizvedb je onemogočen in ga je mogoče konfigurirati v <0>nastavitvah</0>",
     "query_log_strict_search": "Za strogo iskanje uporabite dvojne narekovaje",
     "query_log_retention_confirm": "Ali ste prepričani, da želite spremeniti zadrževanje dnevnika poizvedb? Če zmanjšate vrednost intervala, bodo nekateri podatki izgubljeni",
+    "anonymize_client_ip": "Anonimiziraj odjemalca IP",
+    "anonymize_client_ip_desc": "Ne shrani celotnega naslova IP odjemalca v dnevnikih in statistiki",
     "dns_config": "Konfiguracija strežnika DNS",
     "blocking_mode": "Način zaviranja",
     "default": "Privzeto",
@@ -479,5 +481,7 @@
     "install_static_configure": "Zaznali smo, da je uporabljen dinamičen IP naslov — <0>{{ip}}</0>. Ali ga želite uporabiti kot svoj statičen naslov?",
     "confirm_static_ip": "AdGuard Home bo konfiguriral {{ip}}, da bo postal vas statičen IP naslov. Ali želite nadaljevati?",
     "list_updated": "{{count}} posodobljen seznam",
-    "list_updated_plural": "{{count}} posodobljenih seznamov"
+    "list_updated_plural": "{{count}} posodobljenih seznamov",
+    "dnssec_enable": "Omogoči DNSSEC",
+    "dnssec_enable_desc": "V odhodnih poizvedbah DNS nastavite zastavico DNSSEC in preverite rezultat (zahtevan je omogočen reševalnik DNSSEC)"
 }
