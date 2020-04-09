@@ -20,6 +20,7 @@ func check(t *testing.T, result bool, msg string) {
 // Tests performed:
 // . Handle Discover message (lease reserve)
 // . Handle Request message (lease commit)
+// . Static leases
 func TestDHCP(t *testing.T) {
 	var s = Server{}
 	s.conf.DBFilePath = dbFilename
@@ -117,6 +118,7 @@ func TestDHCP(t *testing.T) {
 
 	s.reset()
 	testStaticLeases(t, &s)
+	testStaticLeaseReplaceByMAC(t, &s)
 
 	s.reset()
 	misc(t, &s)
@@ -126,15 +128,46 @@ func testStaticLeases(t *testing.T, s *Server) {
 	var err error
 	var l Lease
 	l.IP = []byte{1, 1, 1, 1}
+
+	l.HWAddr = []byte{1, 2, 3, 4, 5, 6}
+	s.leases = append(s.leases, &l)
+
+	// replace dynamic lease with a static (same IP)
 	l.HWAddr = []byte{2, 2, 3, 4, 5, 6}
 	err = s.AddStaticLease(l)
 	check(t, err == nil, "AddStaticLease")
 
-	ll := s.Leases(LeasesStatic)
-	check(t, len(ll) != 0 && bytes.Equal(ll[0].IP, []byte{1, 1, 1, 1}), "StaticLeases")
+	ll := s.Leases(LeasesAll)
+	assert.True(t, len(ll) == 1)
+	assert.True(t, bytes.Equal(ll[0].IP, []byte{1, 1, 1, 1}))
+	assert.True(t, bytes.Equal(ll[0].HWAddr, []byte{2, 2, 3, 4, 5, 6}))
+	assert.True(t, ll[0].Expiry.Unix() == leaseExpireStatic)
 
 	err = s.RemoveStaticLease(l)
-	check(t, err == nil, "RemoveStaticLease")
+	assert.True(t, err == nil)
+
+	ll = s.Leases(LeasesAll)
+	assert.True(t, len(ll) == 0)
+}
+
+func testStaticLeaseReplaceByMAC(t *testing.T, s *Server) {
+	var err error
+	var l Lease
+	l.HWAddr = []byte{1, 2, 3, 4, 5, 6}
+
+	l.IP = []byte{1, 1, 1, 1}
+	l.Expiry = time.Now().Add(time.Hour)
+	s.leases = append(s.leases, &l)
+
+	// replace dynamic lease with a static (same MAC)
+	l.IP = []byte{2, 1, 1, 1}
+	err = s.AddStaticLease(l)
+	assert.True(t, err == nil)
+
+	ll := s.Leases(LeasesAll)
+	assert.True(t, len(ll) == 1)
+	assert.True(t, bytes.Equal(ll[0].IP, []byte{2, 1, 1, 1}))
+	assert.True(t, bytes.Equal(ll[0].HWAddr, []byte{1, 2, 3, 4, 5, 6}))
 }
 
 // Small tests that don't require a static server's state

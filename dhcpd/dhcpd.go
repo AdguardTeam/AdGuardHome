@@ -623,6 +623,12 @@ func (s *Server) AddStaticLease(l Lease) error {
 			s.leasesLock.Unlock()
 			return err
 		}
+	} else {
+		err := s.rmDynamicLeaseWithMAC(l.HWAddr)
+		if err != nil {
+			s.leasesLock.Unlock()
+			return err
+		}
 	}
 	s.leases = append(s.leases, &l)
 	s.reserveIP(l.IP, l.HWAddr)
@@ -646,6 +652,23 @@ func (s *Server) rmDynamicLeaseWithIP(ip net.IP) error {
 	}
 	s.leases = newLeases
 	s.unreserveIP(ip)
+	return nil
+}
+
+// Remove a dynamic lease by IP address
+func (s *Server) rmDynamicLeaseWithMAC(mac net.HardwareAddr) error {
+	var newLeases []*Lease
+	for _, lease := range s.leases {
+		if bytes.Equal(lease.HWAddr, mac) {
+			if lease.Expiry.Unix() == leaseExpireStatic {
+				return fmt.Errorf("static lease with the same IP already exists")
+			}
+			s.unreserveIP(lease.IP)
+			continue
+		}
+		newLeases = append(newLeases, lease)
+	}
+	s.leases = newLeases
 	return nil
 }
 
