@@ -19,7 +19,7 @@ before_install:
         ;;
       windows)
         # Using NVS for managing Node.js versions on Windows
-        NVS_HOME="C:\ProgramData"
+        NVS_HOME="C:\ProgramData\nvs"
         git clone --single-branch https://github.com/jasongin/nvs $NVS_HOME
         source $NVS_HOME/nvs.sh
         nvs add latest
