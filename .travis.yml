@@ -18,9 +18,12 @@ before_install:
         curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.23.8
         ;;
       windows)
-        choco install nvm
-        nvm install node
-        npm install -g npm
+        # Using NVS for managing Node.js versions on Windows
+        NVS_HOME="C:\ProgramData"
+        git clone --single-branch https://github.com/jasongin/nvs $NVS_HOME
+        source $NVS_HOME/nvs.sh
+        nvs add latest
+        nvs use latest
         ;;
     esac
 
@@ -28,9 +31,14 @@ install:
   - |-
     case $TRAVIS_OS_NAME in
       linux | osx)
+        node --version
+        npm --version
         npm --prefix client ci
         ;;
       windows)
+        node --version
+        npm --version
+        nvs --version
         npm --prefix client ci
         ;;
     esac
