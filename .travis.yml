@@ -7,14 +7,31 @@ go:
 os:
   - linux
   - osx
+  - windows
 
 before_install:
-  - nvm install node
-  - npm install -g npm
-  - curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.23.8
+  - |-
+    case $TRAVIS_OS_NAME in
+      linux | osx)
+        nvm install node
+        npm install -g npm
+        curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.23.8
+        ;;
+      windows)
+        choco install node
+        ;;
+    esac
 
 install:
-  - npm --prefix client ci
+  - |-
+    case $TRAVIS_OS_NAME in
+      linux | osx)
+        npm --prefix client ci
+        ;;
+      windows)
+        npm --prefix client ci
+        ;;
+    esac
 
 cache:
   directories:
@@ -23,10 +40,23 @@ cache:
     - $HOME/Library/Caches/go-build
 
 script:
-  - /bin/bash ci.sh
+  - |-
+    case $TRAVIS_OS_NAME in
+      linux | osx)
+        /bin/bash ci.sh
+        ;;
+      windows)
+        go test -race -v -bench=. -coverprofile=coverage.txt -covermode=atomic ./...
+        ;;
+    esac
 
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  - |-
+    case $TRAVIS_OS_NAME in
+      linux)
+        bash <(curl -s https://codecov.io/bash)
+        ;;
+    esac
 
 notifications:
   slack: performix:yXTihlSzsLFSZiqbXMNzvTSX
@@ -60,6 +90,8 @@ matrix:
         file_glob: true
         skip_cleanup: true
 
+    # Docker build configuration
+    - if: repo = AdguardTeam/AdGuardHome
     - name: docker
       if: type != pull_request AND (branch = master OR tag IS present) AND repo = AdguardTeam/AdGuardHome
       go:
