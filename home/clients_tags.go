@@ -4,6 +4,7 @@ var clientTags = []string{
 	"device_audio",
 	"device_camera",
 	"device_gameconsole",
+	"device_iot",
 	"device_laptop",
 	"device_nas", // Network-attached Storage
 	"device_other",
