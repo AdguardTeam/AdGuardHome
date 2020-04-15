@@ -23,7 +23,7 @@ type AutoHosts struct {
 	hostsFn    string              // path to the main hosts-file
 	hostsDirs  []string            // paths to OS-specific directories with hosts-files
 	watcher    *fsnotify.Watcher   // file and directory watcher object
-	updateChan chan bool           // signal for 'update' goroutine
+	updateChan chan bool           // signal for 'updateLoop' goroutine
 
 	onChanged onChangedT // notification to other modules
 }
@@ -68,20 +68,22 @@ func (a *AutoHosts) Init(hostsFn string) {
 
 // Start - start module
 func (a *AutoHosts) Start() {
-	go a.update()
+	log.Debug("Start AutoHosts module")
+
+	go a.updateLoop()
 	a.updateChan <- true
 
 	go a.watcherLoop()
 
 	err := a.watcher.Add(a.hostsFn)
 	if err != nil {
-		log.Error("AutoHosts: %s", err)
+		log.Error("Error while initializing watcher for a file %s: %s", a.hostsFn, err)
 	}
 
 	for _, dir := range a.hostsDirs {
 		err = a.watcher.Add(dir)
 		if err != nil {
-			log.Error("AutoHosts: %s", err)
+			log.Error("Error while initializing watcher for a directory %s: %s", dir, err)
 		}
 	}
 }
@@ -89,7 +91,8 @@ func (a *AutoHosts) Start() {
 // Close - close module
 func (a *AutoHosts) Close() {
 	a.updateChan <- false
-	a.watcher.Close()
+	close(a.updateChan)
+	_ = a.watcher.Close()
 }
 
 // Read IP-hostname pairs from file
@@ -174,7 +177,7 @@ func (a *AutoHosts) watcherLoop() {
 				log.Debug("AutoHosts: modified: %s", event.Name)
 				select {
 				case a.updateChan <- true:
-					// sent a signal to 'update' goroutine
+					// sent a signal to 'updateLoop' goroutine
 				default:
 					// queue is full
 				}
@@ -189,39 +192,46 @@ func (a *AutoHosts) watcherLoop() {
 	}
 }
 
-// Read static hosts from system files
-func (a *AutoHosts) update() {
+// updateLoop - read static hosts from system files
+func (a *AutoHosts) updateLoop() {
 	for {
 		select {
 		case ok := <-a.updateChan:
 			if !ok {
+				log.Debug("Finished AutoHosts update loop")
 				return
 			}
 
-			table := make(map[string][]net.IP)
-
-			a.load(table, a.hostsFn)
-
-			for _, dir := range a.hostsDirs {
-				fis, err := ioutil.ReadDir(dir)
-				if err != nil {
-					if !os.IsNotExist(err) {
-						log.Error("AutoHosts: Opening directory: %s: %s", dir, err)
-					}
-					continue
-				}
-
-				for _, fi := range fis {
-					a.load(table, dir+"/"+fi.Name())
-				}
-			}
-
-			a.lock.Lock()
-			a.table = table
-			a.lock.Unlock()
-			a.notify()
+			a.updateHosts()
 		}
 	}
+}
+
+// updateHosts - loads system hosts
+func (a *AutoHosts) updateHosts() {
+	table := make(map[string][]net.IP)
+
+	a.load(table, a.hostsFn)
+
+	for _, dir := range a.hostsDirs {
+		fis, err := ioutil.ReadDir(dir)
+		if err != nil {
+			if !os.IsNotExist(err) {
+				log.Error("AutoHosts: Opening directory: %s: %s", dir, err)
+			}
+			continue
+		}
+
+		for _, fi := range fis {
+			a.load(table, dir+"/"+fi.Name())
+		}
+	}
+
+	a.lock.Lock()
+	a.table = table
+	a.lock.Unlock()
+
+	a.notify()
 }
 
 // Process - get the list of IP addresses for the hostname
