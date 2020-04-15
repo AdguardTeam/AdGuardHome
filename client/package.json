@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build-dev": "NODE_ENV=development ./node_modules/.bin/webpack --config webpack.dev.js",
-    "watch": "NODE_ENV=development ./node_modules/.bin/webpack --config webpack.dev.js --watch",
-    "build-prod": "NODE_ENV=production ./node_modules/.bin/webpack --config webpack.prod.js",
+    "build-dev": "cross-env NODE_ENV=development webpack --config webpack.dev.js",
+    "watch": "cross-env NODE_ENV=development webpack --config webpack.dev.js --watch",
+    "build-prod": "cross-env NODE_ENV=production webpack --config webpack.prod.js",
     "lint": "eslint client/"
   },
   "dependencies": {
@@ -49,6 +49,7 @@
     "clean-webpack-plugin": "^0.1.19",
     "compression-webpack-plugin": "^1.1.11",
     "copy-webpack-plugin": "^4.6.0",
+    "cross-env": "^7.0.2",
     "css-loader": "^2.1.1",
     "eslint": "^4.19.1",
     "eslint-config-airbnb-base": "^12.1.0",
@@ -70,11 +71,11 @@
     "style-loader": "^0.21.0",
     "stylelint": "^9.10.1",
     "stylelint-webpack-plugin": "0.10.4",
+    "svg-url-loader": "^2.3.2",
     "uglifyjs-webpack-plugin": "^1.2.7",
     "url-loader": "^1.0.1",
     "webpack": "3.8.1",
     "webpack-dev-server": "^3.1.14",
-    "webpack-merge": "^4.1.3",
-    "svg-url-loader": "^2.3.2"
+    "webpack-merge": "^4.1.3"
   }
 }
