@@ -42,6 +42,8 @@ type Web struct {
 
 // CreateWeb - create module
 func CreateWeb(conf *WebConfig) *Web {
+	log.Info("Initialize web module")
+
 	w := Web{}
 	w.conf = conf
 

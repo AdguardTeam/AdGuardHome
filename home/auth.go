@@ -71,6 +71,8 @@ type User struct {
 
 // InitAuth - create a global object
 func InitAuth(dbFilename string, users []User, sessionTTL uint32) *Auth {
+	log.Info("Initializing auth module: %s", dbFilename)
+
 	a := Auth{}
 	a.sessionTTL = sessionTTL
 	a.sessions = make(map[string]*session)
@@ -83,7 +85,7 @@ func InitAuth(dbFilename string, users []User, sessionTTL uint32) *Auth {
 	}
 	a.loadSessions()
 	a.users = users
-	log.Debug("Auth: initialized.  users:%d  sessions:%d", len(a.users), len(a.sessions))
+	log.Info("Auth: initialized.  users:%d  sessions:%d", len(a.users), len(a.sessions))
 	return &a
 }
 
