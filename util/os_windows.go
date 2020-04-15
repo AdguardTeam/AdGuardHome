@@ -13,7 +13,7 @@ func SetRlimit(val uint) {
 
 func HaveAdminRights() (bool, error) {
 	var token windows.Token
-	h, _ := windows.GetCurrentProcess()
+	h := windows.CurrentProcess()
 	err := windows.OpenProcessToken(h, windows.TOKEN_QUERY, &token)
 	if err != nil {
 		return false, err

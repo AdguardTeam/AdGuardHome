@@ -7,14 +7,41 @@ go:
 os:
   - linux
   - osx
+  - windows
 
 before_install:
-  - nvm install node
-  - npm install -g npm
-  - curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.23.8
+  - |-
+    case $TRAVIS_OS_NAME in
+      linux | osx)
+        nvm install node
+        npm install -g npm
+        curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.23.8
+        ;;
+      windows)
+        # Using NVS for managing Node.js versions on Windows
+        NVS_HOME="C:\ProgramData\nvs"
+        git clone --single-branch https://github.com/jasongin/nvs $NVS_HOME
+        source $NVS_HOME/nvs.sh
+        nvs add latest
+        nvs use latest
+        ;;
+    esac
 
 install:
-  - npm --prefix client ci
+  - |-
+    case $TRAVIS_OS_NAME in
+      linux | osx)
+        node --version
+        npm --version
+        npm --prefix client ci
+        ;;
+      windows)
+        node --version
+        npm --version
+        nvs --version
+        npm --prefix client ci
+        ;;
+    esac
 
 cache:
   directories:
@@ -23,10 +50,24 @@ cache:
     - $HOME/Library/Caches/go-build
 
 script:
-  - /bin/bash ci.sh
+  - |-
+    case $TRAVIS_OS_NAME in
+      linux | osx)
+        /bin/bash ci.sh
+        ;;
+      windows)
+        npm --prefix client run build-prod
+        go test -race -v -bench=. -coverprofile=coverage.txt -covermode=atomic ./...
+        ;;
+    esac
 
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  - |-
+    case $TRAVIS_OS_NAME in
+      linux)
+        bash <(curl -s https://codecov.io/bash)
+        ;;
+    esac
 
 notifications:
   slack: performix:yXTihlSzsLFSZiqbXMNzvTSX
@@ -60,6 +101,8 @@ matrix:
         file_glob: true
         skip_cleanup: true
 
+    # Docker build configuration
+    - if: repo = AdguardTeam/AdGuardHome
     - name: docker
       if: type != pull_request AND (branch = master OR tag IS present) AND repo = AdguardTeam/AdGuardHome
       go:

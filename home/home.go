@@ -43,10 +43,10 @@ const (
 
 // Update-related variables
 var (
-	versionString   string
-	updateChannel   string
-	versionCheckURL string
-	ARMVersion      string
+	versionString   = "dev"
+	updateChannel   = "none"
+	versionCheckURL = ""
+	ARMVersion      = ""
 )
 
 const versionCheckPeriod = time.Hour * 8
@@ -155,11 +155,11 @@ func run(args options) {
 	configureLogger(args)
 
 	// print the first message after logger is configured
-	msg := "AdGuard Home, version %s, channel %s\n, arch %s %s"
+	msg := "AdGuard Home, version %s, channel %s, arch %s %s"
 	if ARMVersion != "" {
 		msg = msg + " v" + ARMVersion
 	}
-	log.Printf(msg, versionString, updateChannel, runtime.GOOS, runtime.GOARCH, ARMVersion)
+	log.Printf(msg, versionString, updateChannel, runtime.GOOS, runtime.GOARCH)
 	log.Debug("Current working directory is %s", Context.workDir)
 	if args.runningAsService {
 		log.Info("AdGuard Home is running as a service")
@@ -169,6 +169,7 @@ func run(args options) {
 
 	Context.firstRun = detectFirstRun()
 	if Context.firstRun {
+		log.Info("This is the first time AdGuard Home is launched")
 		requireAdminRights()
 	}
 
@@ -197,6 +198,7 @@ func run(args options) {
 
 		err = parseConfig()
 		if err != nil {
+			log.Error("Failed to parse configuration, exiting")
 			os.Exit(1)
 		}
 
@@ -211,6 +213,7 @@ func run(args options) {
 	config.DHCP.ConfigModified = onConfigModified
 	Context.dhcpServer = dhcpd.Create(config.DHCP)
 	if Context.dhcpServer == nil {
+		log.Error("Failed to initialize DHCP server, exiting")
 		os.Exit(1)
 	}
 	Context.autoHosts.Init("")

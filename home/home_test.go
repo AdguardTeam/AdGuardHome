@@ -107,14 +107,14 @@ schema_version: 5
 // . Wait until the filters are downloaded
 // . Stop and cleanup
 func TestHome(t *testing.T) {
-	// Reinit context
+	// Init new context
 	Context = homeContext{}
 
 	dir := prepareTestDir()
 	defer func() { _ = os.RemoveAll(dir) }()
-	_ = os.MkdirAll(filepath.Join(Context.getDataDir(), filterDir), 0755)
 	fn := filepath.Join(dir, "AdGuardHome.yaml")
 
+	// Prepare the test config
 	assert.True(t, ioutil.WriteFile(fn, []byte(yamlConf), 0644) == nil)
 	fn, _ = filepath.Abs(fn)
 
@@ -135,11 +135,11 @@ func TestHome(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 	}
 	assert.Truef(t, err == nil, "%s", err)
-	assert.Equal(t, 200, resp.StatusCode)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	resp, err = h.Get("http://127.0.0.1:3000/control/status")
 	assert.Truef(t, err == nil, "%s", err)
-	assert.Equal(t, 200, resp.StatusCode)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// test DNS over UDP
 	r := upstream.NewResolver("127.0.0.1:5354", 3*time.Second)

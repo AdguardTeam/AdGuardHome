@@ -206,7 +206,9 @@ func (l *queryLog) getData(params getDataParams) map[string]interface{} {
 	fileEntries, oldest, total := l.searchFiles(params)
 
 	if params.OlderThan.IsZero() {
-		params.OlderThan = now
+		// In case if the timer is not precise (for instance, on Windows)
+		// We really want to get all records including those added just before the call
+		params.OlderThan = now.Add(time.Millisecond)
 	}
 
 	// add from memory buffer
