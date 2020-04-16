@@ -1329,7 +1329,10 @@ This is how DNS requests and responses are filtered by AGH:
 
 * 'dnsproxy' module receives DNS request from client and passes control to AGH
 * AGH applies filtering logic to the host name in DNS Question:
-	* process Rewrite rules
+	* process Rewrite rules.
+		Can set CNAME and a list of IP addresses.
+	* process /etc/hosts entries.
+		Can set a list of IP addresses or a hostname (for PTR requests).
 	* match host name against filtering lists
 	* match host name against blocked services rules
 	* process SafeSearch rules

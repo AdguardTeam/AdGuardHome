@@ -273,8 +273,13 @@ type Result struct {
 	FilterID   int64  `json:",omitempty"` // Filter ID the rule belongs to
 
 	// for ReasonRewrite:
-	CanonName string   `json:",omitempty"` // CNAME value
-	IPList    []net.IP `json:",omitempty"` // list of IP addresses
+	CanonName string `json:",omitempty"` // CNAME value
+
+	// for RewriteEtcHosts:
+	ReverseHost string `json:",omitempty"`
+
+	// for ReasonRewrite & RewriteEtcHosts:
+	IPList []net.IP `json:",omitempty"` // list of IP addresses
 
 	// for FilteredBlockedService:
 	ServiceName string `json:",omitempty"` // Name of the blocked service
@@ -312,10 +317,17 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 	}
 
 	if d.Config.AutoHosts != nil {
-		ips := d.Config.AutoHosts.Process(host)
+		ips := d.Config.AutoHosts.Process(host, qtype)
 		if ips != nil {
 			result.Reason = RewriteEtcHosts
 			result.IPList = ips
+			return result, nil
+		}
+
+		revHost := d.Config.AutoHosts.ProcessReverse(host, qtype)
+		if len(revHost) != 0 {
+			result.Reason = RewriteEtcHosts
+			result.ReverseHost = revHost + "."
 			return result, nil
 		}
 	}

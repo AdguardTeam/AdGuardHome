@@ -810,23 +810,16 @@ func (s *Server) updateStats(d *proxy.DNSContext, elapsed time.Duration, res dns
 		e.Client = addr.IP
 	}
 	e.Time = uint32(elapsed / 1000)
-	switch res.Reason {
+	e.Result = stats.RNotFiltered
 
-	case dnsfilter.NotFilteredNotFound:
-		fallthrough
-	case dnsfilter.NotFilteredWhiteList:
-		fallthrough
-	case dnsfilter.NotFilteredError:
-		fallthrough
-	case dnsfilter.ReasonRewrite:
-		fallthrough
-	case dnsfilter.RewriteEtcHosts:
-		e.Result = stats.RNotFiltered
+	switch res.Reason {
 
 	case dnsfilter.FilteredSafeBrowsing:
 		e.Result = stats.RSafeBrowsing
+
 	case dnsfilter.FilteredParental:
 		e.Result = stats.RParental
+
 	case dnsfilter.FilteredSafeSearch:
 		e.Result = stats.RSafeSearch
 
@@ -837,6 +830,7 @@ func (s *Server) updateStats(d *proxy.DNSContext, elapsed time.Duration, res dns
 	case dnsfilter.FilteredBlockedService:
 		e.Result = stats.RFiltered
 	}
+
 	s.stats.Update(e)
 }
 
@@ -895,6 +889,20 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 		ctx.origQuestion = d.Req.Question[0]
 		// resolve canonical name, not the original host name
 		d.Req.Question[0].Name = dns.Fqdn(res.CanonName)
+
+	} else if res.Reason == dnsfilter.RewriteEtcHosts && len(res.ReverseHost) != 0 {
+
+		resp := s.makeResponse(req)
+		ptr := &dns.PTR{}
+		ptr.Hdr = dns.RR_Header{
+			Name:   req.Question[0].Name,
+			Rrtype: dns.TypePTR,
+			Ttl:    s.conf.BlockedResponseTTL,
+			Class:  dns.ClassINET,
+		}
+		ptr.Ptr = res.ReverseHost
+		resp.Answer = append(resp.Answer, ptr)
+		d.Res = resp
 	}
 
 	return &res, err
