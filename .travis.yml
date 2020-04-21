@@ -86,7 +86,7 @@ matrix:
         - node -v
         - npm -v
         # Prepare releases
-        - ./release.sh
+        - ./build_release.sh
         - ls -l dist
 
       deploy:
