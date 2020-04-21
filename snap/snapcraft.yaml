@@ -31,7 +31,3 @@ apps:
     daemon: simple
     stop-command: AdGuardHome -s stop 
     restart-condition: always
-  status:
-    command: AdGuardHome -s status 
-  restart:
-    command: AdGuardHome -s restart 
