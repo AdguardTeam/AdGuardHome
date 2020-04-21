@@ -118,4 +118,18 @@ matrix:
         - docker login -u="$DOCKER_USER" -p="$DOCKER_PASSWORD"
         - ./build_docker.sh
       after_script:
-        - docker images    
+        - docker images
+
+    # Snapcraft build configuration
+    - if: repo = AdguardTeam/AdGuardHome
+    - name: snapcraft
+      # if: type != pull_request AND (branch = master OR tag IS present) AND repo = AdguardTeam/AdGuardHome
+      if: branch = snapcraft
+      go:
+        - 1.14.x
+      os:
+        - linux
+      services:
+        - docker
+      script:
+        - ./build_snap.sh
