@@ -133,3 +133,6 @@ matrix:
         - docker
       script:
         - ./build_snap.sh
+      after_failure:
+        # replace snap name
+        - cat adguardhometest_*.txt
