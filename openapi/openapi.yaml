@@ -2,7 +2,7 @@ swagger: '2.0'
 info:
     title: 'AdGuard Home'
     description: 'AdGuard Home REST API. Admin web interface is built on top of this REST API.'
-    version: '0.101'
+    version: '0.102'
 schemes:
     - http
 basePath: /control
@@ -95,25 +95,6 @@ paths:
                   name: "body"
                   schema:
                       $ref: "#/definitions/DNSConfig"
-            responses:
-                200:
-                    description: OK
-
-    /set_upstreams_config:
-        post:
-            tags:
-                - global
-            operationId: setUpstreamsConfig
-            summary: "Updates the current upstreams configuration"
-            consumes:
-                - application/json
-            parameters:
-                - in: "body"
-                  name: "body"
-                  description: "Upstreams configuration JSON"
-                  required: true
-                  schema:
-                      $ref: "#/definitions/UpstreamsConfig"
             responses:
                 200:
                     description: OK
@@ -1072,16 +1053,6 @@ definitions:
                 type: "boolean"
             running:
                 type: "boolean"
-            bootstrap_dns:
-                type: "string"
-                example: "8.8.8.8:53"
-            upstream_dns:
-                type: "array"
-                items:
-                    type: "string"
-                example:
-                  - "tls://1.1.1.1"
-                  - "tls://1.0.0.1"
             version:
                 type: "string"
                 example: "0.1"
@@ -1093,6 +1064,22 @@ definitions:
         type: "object"
         description: "Query log configuration"
         properties:
+            bootstrap_dns:
+                type: "array"
+                description: 'Bootstrap servers, port is optional after colon. Empty value will reset it to default values'
+                items:
+                    type: "string"
+                example:
+                    - "8.8.8.8:53"
+                    - "1.1.1.1:53"
+            upstream_dns:
+                type: "array"
+                description: 'Upstream servers, port is optional after colon. Empty value will reset it to default values'
+                items:
+                    type: "string"
+                example:
+                    - "tls://1.1.1.1"
+                    - "tls://1.0.0.1"
             protection_enabled:
                 type: "boolean"
             ratelimit:
@@ -1112,6 +1099,11 @@ definitions:
                 type: "boolean"
             dnssec_enabled:
                 type: "boolean"
+            fastest_addr:
+                type: "boolean"
+            parallel_requests:
+                type: "boolean"
+                description: "If true, parallel queries to all configured upstream servers are enabled"
 
     UpstreamsConfig:
         type: "object"
@@ -1119,7 +1111,6 @@ definitions:
         required:
             - "bootstrap_dns"
             - "upstream_dns"
-            - "all_servers"
         properties:
             bootstrap_dns:
                 type: "array"
@@ -1137,9 +1128,7 @@ definitions:
                 example:
                     - "tls://1.1.1.1"
                     - "tls://1.0.0.1"
-            all_servers:
-                type: "boolean"
-                description: "If true, parallel queries to all configured upstream servers are enabled"
+
     Filter:
         type: "object"
         description: "Filter subscription info"

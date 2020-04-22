@@ -141,6 +141,8 @@ type FilteringConfig struct {
 	// Respond with an empty answer to all AAAA requests
 	AAAADisabled bool `yaml:"aaaa_disabled"`
 
+	FastestAddrAlgo bool `yaml:"fastest_addr"` // use Fastest Address algorithm
+
 	AllowedClients    []string `yaml:"allowed_clients"`    // IP addresses of whitelist clients
 	DisallowedClients []string `yaml:"disallowed_clients"` // IP addresses of clients that should be blocked
 	BlockedHosts      []string `yaml:"blocked_hosts"`      // hosts that should be blocked
@@ -305,6 +307,7 @@ func (s *Server) Prepare(config *ServerConfig) error {
 		RequestHandler:           s.handleDNSRequest,
 		AllServers:               s.conf.AllServers,
 		EnableEDNSClientSubnet:   s.conf.EnableEDNSClientSubnet,
+		FindFastestAddr:          s.conf.FastestAddrAlgo,
 	}
 
 	intlProxyConfig := proxy.Config{
