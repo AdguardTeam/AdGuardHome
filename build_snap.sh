@@ -57,13 +57,13 @@ EOF
 #######################################
 
 function prepare() {
-    if [ -z ${LAUNCHPAD_KEY} ] || [ -z ${LAUNCHPAD_ACCESS_TOKEN} ] || [ -z ${LAUNCHPAD_ACCESS_SECRET} ]; then
+    if [ -z "${LAUNCHPAD_KEY}" ] || [ -z "${LAUNCHPAD_ACCESS_TOKEN}" ] || [ -z "${LAUNCHPAD_ACCESS_SECRET}" ]; then
         echo "Launchpad oauth tokens are not set, exiting"
         usage
         exit 1
     fi
 
-    if [ -z ${SNAPCRAFT_MACAROON} ] || [ -z ${SNAPCRAFT_UBUNTU_DISCHARGE} ] || [ -z ${SNAPCRAFT_EMAIL} ]; then
+    if [ -z "${SNAPCRAFT_MACAROON}" ] || [ -z "${SNAPCRAFT_UBUNTU_DISCHARGE}" ] || [ -z "${SNAPCRAFT_EMAIL}" ]; then
         echo "Snapcraft auth params are not set, exiting"
         usage
         exit 1
