@@ -8,13 +8,10 @@ BUILDER_IMAGE="adguard/snapcraft:1.0"
 SNAPCRAFT_TMPL="packaging/snap/snapcraft.yaml"
 SNAP_NAME="adguardhometest"
 LAUNCHPAD_CREDENTIALS_DIR=".local/share/snapcraft/provider/launchpad"
-VERSION=`git describe --abbrev=4 --dirty --always --tags`
 
-if [[ "${TRAVIS_BRANCH}" == "master" ]]
-then
-  CHANNEL="edge"
-else
-  CHANNEL="release"
+if [[ -z ${VERSION} ]]; then
+    VERSION=`git describe --abbrev=4 --dirty --always --tags`
+    echo "VERSION env variable is not set, getting it from git: ${VERSION}"
 fi
 
 # If bash is interactive, set `-it` parameter for docker run
@@ -60,6 +57,18 @@ EOF
 #######################################
 
 function prepare() {
+    if [ -z ${LAUNCHPAD_KEY} ] || [ -z ${LAUNCHPAD_ACCESS_TOKEN} ] || [ -z ${LAUNCHPAD_ACCESS_SECRET} ]; then
+        echo "Launchpad oauth tokens are not set, exiting"
+        usage
+        exit 1
+    fi
+
+    if [ -z ${SNAPCRAFT_MACAROON} ] || [ -z ${SNAPCRAFT_UBUNTU_DISCHARGE} ] || [ -z ${SNAPCRAFT_EMAIL} ]; then
+        echo "Snapcraft auth params are not set, exiting"
+        usage
+        exit 1
+    fi
+
     # Launchpad oauth tokens data is necessary to run snapcraft remote-build
     #
     # Here's an instruction on how to generate launchpad OAuth tokens:
@@ -101,6 +110,9 @@ build_snap() {
     # remove the credentials - we don't need them anymore
     rm -rf ~/${LAUNCHPAD_CREDENTIALS_DIR}
 
+    # remove version from the file name
+    rename_snap_file
+
     # cleanup credentials
     cleanup
 }
@@ -115,8 +127,25 @@ build_snap_docker() {
         ${BUILDER_IMAGE} \
         snapcraft remote-build --build-on=${ARCH} --launchpad-accept-public-upload
 
+    # remove version from the file name
+    rename_snap_file
+
     # cleanup credentials
     cleanup
+}
+
+rename_snap_file() {
+    # In order to make working with snaps easier later on
+    # we remove version from the file name
+
+    # Check that the snap file exists
+    snapFile="${SNAP_NAME}_${VERSION}_${ARCH}.snap"
+    if [ ! -f ${snapFile} ]; then
+       echo "Snap file ${snapFile} not found!"
+       exit 1
+    fi
+
+    mv -f ${snapFile} "${SNAP_NAME}_${ARCH}.snap"
 }
 
 publish_snap() {
@@ -124,7 +153,7 @@ publish_snap() {
     prepare
 
     # Check that the snap file exists
-    snapFile="${SNAP_NAME}_${VERSION}_${ARCH}.snap"
+    snapFile="${SNAP_NAME}_${ARCH}.snap"
     if [ ! -f ${snapFile} ]; then
        echo "Snap file ${snapFile} not found!"
        exit 1
@@ -145,7 +174,7 @@ publish_snap_docker() {
     prepare
 
     # Check that the snap file exists
-    snapFile="${SNAP_NAME}_${VERSION}_${ARCH}.snap"
+    snapFile="${SNAP_NAME}_${ARCH}.snap"
     if [ ! -f ${snapFile} ]; then
        echo "Snap file ${snapFile} not found!"
        exit 1
