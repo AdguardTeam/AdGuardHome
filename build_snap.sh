@@ -224,7 +224,7 @@ publish_docker() {
         exit 1
     fi
     CHANNEL="${1}"
-    if [ "$CHANNEL" != "release" ] && [ "$CHANNEL" != "beta" ]; then
+    if [ "$CHANNEL" != "stable" ] && [ "$CHANNEL" != "beta" ]; then
         echo "$CHANNEL is an invalid value for the update channel!"
         exit 1
     fi
@@ -241,7 +241,7 @@ publish() {
         exit 1
     fi
     CHANNEL="${1}"
-    if [ "$CHANNEL" != "release" ] && [ "$CHANNEL" != "beta" ]; then
+    if [ "$CHANNEL" != "stable" ] && [ "$CHANNEL" != "beta" ]; then
         echo "$CHANNEL is an invalid value for the update channel!"
         exit 1
     fi
