@@ -83,6 +83,7 @@
 
 .checkbox__input:disabled + .checkbox__label {
     cursor: default;
+    color: var(--gray);
 }
 
 .checkbox__input:disabled + .checkbox__label:before {
