@@ -195,17 +195,27 @@ publish_snap_docker() {
 #######################################
 
 build() {
-    ARCH=i386 build_snap
-    ARCH=arm64 build_snap
-    ARCH=armhf build_snap
-    ARCH=amd64 build_snap
+    if [[ -n "$1" ]]; then
+        echo "ARCH is set to $1"
+        ARCH=$1 build_snap
+    else
+        ARCH=i386 build_snap
+        ARCH=arm64 build_snap
+        ARCH=armhf build_snap
+        ARCH=amd64 build_snap
+    fi
 }
 
 build_docker() {
-    ARCH=i386 build_snap_docker
-    ARCH=arm64 build_snap_docker
-    ARCH=armhf build_snap_docker
-    ARCH=amd64 build_snap_docker
+    if [[ -n "$1" ]]; then
+        echo "ARCH is set to $1"
+        ARCH=$1 build_snap_docker
+    else
+        ARCH=i386 build_snap_docker
+        ARCH=arm64 build_snap_docker
+        ARCH=armhf build_snap_docker
+        ARCH=amd64 build_snap_docker
+    fi
 }
 
 publish_docker() {
@@ -257,8 +267,8 @@ if [[ -z $1 || $1 == "--help" || $1 == "-h" ]]; then
 fi
 
 case "$1" in
-"build-docker") build_docker ;;
-"build") build ;;
+"build-docker") build_docker $2 ;;
+"build") build $2 ;;
 "publish-docker-beta") publish_docker beta ;;
 "publish-docker-release") publish_docker stable ;;
 "publish-beta") publish beta ;;
