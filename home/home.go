@@ -242,6 +242,16 @@ func run(args options) {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		if config.DebugPProf {
+			mux := http.NewServeMux()
+			util.PProfRegisterWebHandlers(mux)
+			go func() {
+				log.Info("pprof: listening on localhost:6060")
+				err := http.ListenAndServe("localhost:6060", mux)
+				log.Error("Error while running the pprof server: %s", err)
+			}()
+		}
 	}
 
 	err := os.MkdirAll(Context.getDataDir(), 0755)

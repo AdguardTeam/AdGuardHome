@@ -45,6 +45,7 @@ type configuration struct {
 	ProxyURL     string `yaml:"http_proxy"`    // Proxy address for our HTTP client
 	Language     string `yaml:"language"`      // two-letter ISO 639-1 language code
 	RlimitNoFile uint   `yaml:"rlimit_nofile"` // Maximum number of opened fd's per process (0: default)
+	DebugPProf   bool   `yaml:"debug_pprof"`   // Enable pprof HTTP server on port 6060
 
 	// TTL for a web session (in hours)
 	// An active session is automatically refreshed once a day.
