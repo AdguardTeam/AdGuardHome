@@ -16,6 +16,12 @@ else
   CHANNEL="release"
 fi
 
+# If bash is interactive, set `-it` parameter for docker run
+INTERACTIVE=""
+if [ -t 0 ] ; then
+    INTERACTIVE="-it"
+fi
+
 # Launchpad oauth tokens data is necessary to run snapcraft remote-build
 #
 # Here's an instruction on how to generate launchpad OAuth tokens:
@@ -42,7 +48,8 @@ sed -i.bak 's/dev_version/'"${VERSION}"'/g' ./snapcraft.yaml
 
 build_snap() {
     # Run the build
-    docker run -it -v $(pwd):/build \
+    docker run ${INTERACTIVE} --rm  \
+        -v $(pwd):/build \
         -v $(pwd)/launchpad_credentials:/root/.local/share/snapcraft/provider/launchpad/credentials:ro \
         ${BUILDER_IMAGE} \
         snapcraft remote-build --build-on=${ARCH} --launchpad-accept-public-upload
@@ -57,7 +64,8 @@ publish_snap() {
     fi
 
     # Login and publish the snap
-    docker run -it -v $(pwd):/build \
+    docker run ${INTERACTIVE} --rm \
+        -v $(pwd):/build \
         ${BUILDER_IMAGE} \
         sh -c "snapcraft login --with=/build/snapcraft_login && snapcraft push --release=${CHANNEL} /build/${snapFile}"
 }
