@@ -260,9 +260,10 @@ case "$1" in
 "build-docker") build_docker ;;
 "build") build ;;
 "publish-docker-beta") publish_docker beta ;;
-"publish-docker-release") publish_docker release ;;
+"publish-docker-release") publish_docker stable ;;
 "publish-beta") publish beta ;;
-"publish-release") publish release ;;
+"publish-release") publish stable ;;
+"prepare") prepare ;;
 "cleanup") cleanup ;;
 *) usage ;;
 esac
