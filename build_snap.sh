@@ -6,7 +6,7 @@ set -x
 
 BUILDER_IMAGE="adguard/snapcraft:1.0"
 SNAPCRAFT_TMPL="packaging/snap/snapcraft.yaml"
-SNAP_NAME="adguardhometest"
+SNAP_NAME="adguard-home"
 LAUNCHPAD_CREDENTIALS_DIR=".local/share/snapcraft/provider/launchpad"
 
 if [[ -z ${VERSION} ]]; then

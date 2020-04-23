@@ -1,4 +1,4 @@
-name: adguardhometest
+name: adguard-home
 base: core18
 version: 'dev_version'
 summary: Network-wide ads & trackers blocking DNS server
