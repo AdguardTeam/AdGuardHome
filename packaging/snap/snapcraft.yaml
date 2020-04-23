@@ -26,7 +26,7 @@ parts:
       cp AdGuardHome ${SNAPCRAFT_PART_INSTALL}/
 apps:
   adguard-home:
-    command: AdGuardHome -c ${SNAP_COMMON}/AdGuardHome.yaml -w ${SNAP_DATA} --no-check-update
+    command: AdGuardHome -w ${SNAP_DATA} --no-check-update
     plugs: [ network-bind ]
     daemon: simple
     restart-condition: always
