@@ -33,13 +33,13 @@ class Dns extends Component {
                 {isDataLoading ?
                     <Loading /> :
                     <Fragment>
-                        <Config
-                            dnsConfig={dnsConfig}
-                            setDnsConfig={setDnsConfig}
-                        />
                         <Upstream
                             processingTestUpstream={settings.processingTestUpstream}
                             testUpstream={testUpstream}
+                            dnsConfig={dnsConfig}
+                            setDnsConfig={setDnsConfig}
+                        />
+                        <Config
                             dnsConfig={dnsConfig}
                             setDnsConfig={setDnsConfig}
                         />
