@@ -22,5 +22,4 @@ dnsfilter/tests/dnsfilter.TestLotsOfRules*.pprof
 *.snap
 launchpad_credentials
 snapcraft_login
-snapcraft.yaml
 snapcraft.yaml.bak

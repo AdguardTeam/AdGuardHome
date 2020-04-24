@@ -257,6 +257,7 @@ cleanup() {
     rm -f snapcraft.yaml
     rm -f snapcraft.yaml.bak
     rm -f snapcraft_login
+    git checkout snapcraft.yaml
 }
 
 #######################################
