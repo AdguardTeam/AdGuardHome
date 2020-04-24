@@ -17,6 +17,9 @@ description: |
 grade: stable
 confinement: strict
 
+architectures:
+  - build-on: [ amd64, i386, arm64, armhf ]
+
 parts:
   adguard-home:
     plugin: make
