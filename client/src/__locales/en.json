@@ -257,6 +257,7 @@
     "install_devices_router_list_1": "Open the preferences for your router. Usually, you can access it from your browser via a URL (like http://192.168.0.1/ or http://192.168.1.1/). You may be asked to enter the password. If you don't remember it, you can often reset the password by pressing a button on the router itself. Some routers require a specific application, which in that case should be already installed on your computer/phone.",
     "install_devices_router_list_2": "Find the DHCP/DNS settings. Look for the DNS letters next to a field which allows two or three sets of numbers, each broken into four groups of one to three digits.",
     "install_devices_router_list_3": "Enter your AdGuard Home server addresses there.",
+    "install_devices_router_list_4": "You can't set a custom DNS server on some types of routers. In this case it may help if you set up AdGuard Home as a DHCP server. Otherwise, you should search for the manual on how to customize DNS servers for your particular router model.",
     "install_devices_windows_list_1": "Open Control Panel through Start menu or Windows search.",
     "install_devices_windows_list_2": "Go to Network and Internet category and then to Network and Sharing Center.",
     "install_devices_windows_list_3": "On the left side of the screen find Change adapter settings and click on it.",
