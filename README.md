@@ -29,6 +29,9 @@
     <a href="https://github.com/AdguardTeam/AdGuardHome/releases">
         <img src="https://img.shields.io/github/release/AdguardTeam/AdGuardHome/all.svg" alt="Latest release" />
     </a>
+    <a href="https://snapcraft.io/adguard-home">
+        <img alt="adguard-home" src="https://snapcraft.io/adguard-home/badge.svg" />
+    </a>
 </p>
 
 <br />
@@ -59,7 +62,9 @@ It operates as a DNS server that re-routes tracking domains to a "black hole," t
 <a id="getting-started"></a>
 ## Getting Started
 
-Please read the [Getting Started](https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started) article on our Wiki to learn how to install AdGuard Home, and how to configure your devices to use it.
+Please read the **[Getting Started](https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started)** article on our Wiki to learn how to install AdGuard Home, and how to configure your devices to use it.
+
+If you're running **Linux**, there's a secure and easy way to install AdGuard Home - you can get it from the [Snap Store](https://snapcraft.io/adguard-home).
 
 Alternatively, you can use our [official Docker image](https://hub.docker.com/r/adguard/adguardhome). 
 
@@ -69,6 +74,7 @@ Alternatively, you can use our [official Docker image](https://hub.docker.com/r/
 * [AdGuard Home as a DNS-over-HTTPS or DNS-over-TLS server](https://github.com/AdguardTeam/AdGuardHome/wiki/Encryption)
 * [How to install and run AdGuard Home on Raspberry Pi](https://github.com/AdguardTeam/AdGuardHome/wiki/Raspberry-Pi)
 * [How to install and run AdGuard Home on a Virtual Private Server](https://github.com/AdguardTeam/AdGuardHome/wiki/VPS)
+* [How to write your own hosts blocklists properly](https://github.com/AdguardTeam/AdGuardHome/wiki/Hosts-Blocklists)
 
 ### API
 
