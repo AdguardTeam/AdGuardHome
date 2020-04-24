@@ -171,11 +171,12 @@ You are welcome to fork this repository, make your changes and submit a pull req
 <a id="test-unstable-versions"></a>
 ### Test unstable versions
 
-There are two options how you can install an unstable version.
-You can either install a beta version of AdGuard Home which we update periodically,
-or you can use the Docker image from the `edge` tag, which is synced with the repo master branch.
+There are three options how you can install an unstable version.
 
-* [Docker Hub](https://hub.docker.com/r/adguard/adguardhome)
+1. You can either install a beta version of AdGuard Home which we update periodically.
+2. You can use the Docker image from the `edge` tag, which is synced with the repo master branch.
+3. You can install AdGuard Home from `beta` or `edge` channels on the Snap Store.
+
 * Beta builds
     * [Raspberry Pi (32-bit ARMv6)](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_arm.tar.gz)
     * [MacOS](https://static.adguard.com/adguardhome/beta/AdGuardHome_MacOS.zip)
@@ -188,6 +189,8 @@ or you can use the Docker image from the `edge` tag, which is synced with the re
     * [Linux 32-bit ARMv5](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv5.tar.gz)
     * [MIPS](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mips.tar.gz)
     * [MIPSLE](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mipsle.tar.gz)
+* [Docker Hub](https://hub.docker.com/r/adguard/adguardhome)
+* [Snap Store](https://snapcraft.io/adguard-home)
 
 <a id="reporting-issues"></a>
 ### Report issues
