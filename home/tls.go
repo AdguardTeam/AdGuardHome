@@ -279,11 +279,14 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		tlsConfigStatus:   t.status,
 	}
 	marshalTLS(w, data2)
+	if f, ok := w.(http.Flusher); ok {
+		f.Flush()
+	}
+
 	// this needs to be done in a goroutine because Shutdown() is a blocking call, and it will block
 	// until all requests are finished, and _we_ are inside a request right now, so it will block indefinitely
 	if restartHTTPS {
 		go func() {
-			time.Sleep(time.Second) // TODO: could not find a way to reliably know that data was fully sent to client by https server, so we wait a bit to let response through before closing the server
 			Context.web.TLSConfigChanged(data)
 		}()
 	}

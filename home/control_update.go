@@ -548,7 +548,9 @@ func handleUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	returnOK(w)
+	if f, ok := w.(http.Flusher); ok {
+		f.Flush()
+	}
 
-	time.Sleep(time.Second) // wait (hopefully) until response is sent (not sure whether it's really necessary)
 	go finishUpdate(u)
 }
