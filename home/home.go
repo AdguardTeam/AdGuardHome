@@ -208,6 +208,11 @@ func run(args options) {
 		}
 	}
 
+	// 'clients' module uses 'dnsfilter' module's static data (dnsfilter.BlockedSvcKnown()),
+	//  so we have to initialize dnsfilter's static data first,
+	//  but also avoid relying on automatic Go init() function
+	dnsfilter.InitModule()
+
 	config.DHCP.WorkDir = Context.workDir
 	config.DHCP.HTTPRegister = httpRegister
 	config.DHCP.ConfigModified = onConfigModified

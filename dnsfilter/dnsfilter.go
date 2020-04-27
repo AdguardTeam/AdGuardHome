@@ -628,6 +628,11 @@ func makeResult(rule rules.Rule, reason Reason) Result {
 	return res
 }
 
+// InitModule() - manually initialize blocked services map
+func InitModule() {
+	initBlockedServices()
+}
+
 // New creates properly initialized DNS Filter that is ready to be used
 func New(c *Config, blockFilters []Filter) *Dnsfilter {
 
@@ -676,8 +681,6 @@ func New(c *Config, blockFilters []Filter) *Dnsfilter {
 		bsvcs = append(bsvcs, s)
 	}
 	d.BlockedServices = bsvcs
-
-	initBlockedServices()
 
 	if blockFilters != nil {
 		err := d.initFiltering(nil, blockFilters)
