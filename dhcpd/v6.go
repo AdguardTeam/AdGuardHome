@@ -114,6 +114,5 @@ func (s *Server) v6Start() error {
 		log.Fatal(err)
 	}
 
-	server.Serve()
-	return nil
+	return server.Serve()
 }
