@@ -47,6 +47,8 @@ type ServerConfig struct {
 	// 0: disable
 	ICMPTimeout uint32 `json:"icmp_timeout_msec" yaml:"icmp_timeout_msec"`
 
+	EnableV6 bool `yaml:"enable_v6"`
+
 	WorkDir    string `json:"-" yaml:"-"`
 	DBFilePath string `json:"-" yaml:"-"` // path to DB file
 
@@ -88,6 +90,9 @@ type Server struct {
 
 	// IP address pool -- if entry is in the pool, then it's attached to a lease
 	IPpool map[[4]byte]net.HardwareAddr
+
+	v6Leases     []*Lease
+	v6LeasesLock sync.RWMutex
 
 	conf ServerConfig
 
@@ -254,6 +259,13 @@ func (s *Server) Start() error {
 		s.running = false
 		s.cond.Signal()
 	}()
+
+	if s.conf.EnableV6 {
+		err := s.v6Start()
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

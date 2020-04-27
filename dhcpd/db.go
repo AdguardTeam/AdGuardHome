@@ -46,6 +46,7 @@ func (s *Server) dbLoad() {
 	s.IPpool = make(map[[4]byte]net.HardwareAddr)
 	dynLeases := []*Lease{}
 	staticLeases := []*Lease{}
+	v6StaticLeases := []*Lease{}
 
 	data, err := ioutil.ReadFile(s.conf.DBFilePath)
 	if err != nil {
@@ -66,7 +67,13 @@ func (s *Server) dbLoad() {
 	for i := range obj {
 		obj[i].IP = normalizeIP(obj[i].IP)
 
+		if !(len(obj[i].IP) == 4 || len(obj[i].IP) == 16) {
+			log.Info("DHCP: invalid IP: %s", obj[i].IP)
+			continue
+		}
+
 		if obj[i].Expiry != leaseExpireStatic &&
+			len(obj[i].IP) == 4 &&
 			!ipInRange(s.leaseStart, s.leaseStop, obj[i].IP) {
 
 			log.Tracef("Skipping a lease with IP %v: not within current IP range", obj[i].IP)
@@ -80,7 +87,10 @@ func (s *Server) dbLoad() {
 			Expiry:   time.Unix(obj[i].Expiry, 0),
 		}
 
-		if obj[i].Expiry == leaseExpireStatic {
+		if len(obj[i].IP) == 16 {
+			v6StaticLeases = append(v6StaticLeases, &lease)
+
+		} else if obj[i].Expiry == leaseExpireStatic {
 			staticLeases = append(staticLeases, &lease)
 		} else {
 			dynLeases = append(dynLeases, &lease)
@@ -93,7 +103,10 @@ func (s *Server) dbLoad() {
 		s.reserveIP(lease.IP, lease.HWAddr)
 	}
 
-	log.Info("DHCP: loaded %d (%d) leases from DB", len(s.leases), numLeases)
+	s.v6Leases = normalizeLeases(v6StaticLeases, []*Lease{})
+
+	log.Info("DHCP: loaded leases v4:%d  v6:%d  total-read:%d from DB",
+		len(s.leases), len(s.v6Leases), numLeases)
 }
 
 // Skip duplicate leases
@@ -136,6 +149,19 @@ func (s *Server) dbStore() {
 			IP:       s.leases[i].IP,
 			Hostname: s.leases[i].Hostname,
 			Expiry:   s.leases[i].Expiry.Unix(),
+		}
+		leases = append(leases, lease)
+	}
+
+	for _, l := range s.v6Leases {
+		if l.Expiry.Unix() == 0 {
+			continue
+		}
+		lease := leaseJSON{
+			HWAddr:   l.HWAddr,
+			IP:       l.IP,
+			Hostname: l.Hostname,
+			Expiry:   l.Expiry.Unix(),
 		}
 		leases = append(leases, lease)
 	}

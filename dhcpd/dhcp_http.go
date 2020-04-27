@@ -246,13 +246,38 @@ func (s *Server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	ip, _ := parseIPv4(lj.IP)
+	ip := net.ParseIP(lj.IP)
+	if ip != nil && ip.To16() != nil {
+		mac, err := net.ParseMAC(lj.HWAddr)
+		if err != nil {
+			httpError(r, w, http.StatusBadRequest, "invalid MAC")
+			return
+		}
+
+		lease := Lease{
+			IP:     ip,
+			HWAddr: mac,
+		}
+
+		err = s.v6AddStaticLease(lease)
+		if err != nil {
+			httpError(r, w, http.StatusBadRequest, "%s", err)
+			return
+		}
+		return
+	}
+
+	ip, _ = parseIPv4(lj.IP)
 	if ip == nil {
 		httpError(r, w, http.StatusBadRequest, "invalid IP")
 		return
 	}
 
-	mac, _ := net.ParseMAC(lj.HWAddr)
+	mac, err := net.ParseMAC(lj.HWAddr)
+	if err != nil {
+		httpError(r, w, http.StatusBadRequest, "invalid MAC")
+		return
+	}
 
 	lease := Lease{
 		IP:       ip,
