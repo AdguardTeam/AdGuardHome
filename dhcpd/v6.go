@@ -9,6 +9,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/insomniacslk/dhcp/dhcpv6"
 	"github.com/insomniacslk/dhcp/dhcpv6/server6"
+	"github.com/insomniacslk/dhcp/iana"
 )
 
 const valIAID = "ADGH"
@@ -57,7 +58,7 @@ func (s *Server) v6RmLease(l Lease) error {
 	}
 
 	if len(newLeases) == len(s.v6Leases) {
-		return fmt.Errorf("Lease not found")
+		return fmt.Errorf("Lease not found: %s", l.IP)
 	}
 
 	s.v6Leases = newLeases
@@ -109,6 +110,13 @@ func (s *Server) v6Process(req dhcpv6.DHCPv6, resp dhcpv6.DHCPv6) {
 		return
 	}
 
+	osid := dhcpv6.OptServerID(dhcpv6.Duid{
+		Type:          dhcpv6.DUID_LLT,
+		HwType:        iana.HWTypeEthernet,
+		LinkLayerAddr: []byte{1, 2, 3, 4, 5, 6},
+	})
+	resp.AddOption(osid)
+
 	oia := &dhcpv6.OptIANA{}
 	copy(oia.IaId[:], []byte(valIAID))
 	oia.Options = dhcpv6.IdentityOptions{Options: []dhcpv6.Option{
@@ -125,6 +133,13 @@ func (s *Server) v6PacketHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 	msg, err := req.GetInnerMessage()
 	if err != nil {
 		log.Error("DHCPv6: %s", err)
+		return
+	}
+
+	log.Debug("DHCPv6: received: %s", req.Summary())
+
+	if msg.GetOneOption(dhcpv6.OptionClientID) == nil {
+		log.Error("DHCPv6: no ClientID option in request")
 		return
 	}
 
@@ -157,6 +172,8 @@ func (s *Server) v6PacketHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 
 	s.v6Process(req, resp)
 
+	log.Debug("DHCPv6: sending: %s", resp.Summary())
+
 	_, err = conn.WriteTo(resp.ToBytes(), peer)
 	if err != nil {
 		log.Error("DHCPv6: conn.Write to %s failed: %s", peer, err)
@@ -169,7 +186,7 @@ func (s *Server) v6Start(iface net.Interface) error {
 		IP:   net.ParseIP("::"),
 		Port: dhcpv6.DefaultServerPort,
 	}
-	server, err := server6.NewServer("", laddr, s.v6PacketHandler, server6.WithDebugLogger())
+	server, err := server6.NewServer(iface.Name, laddr, s.v6PacketHandler, server6.WithDebugLogger())
 	if err != nil {
 		return err
 	}
