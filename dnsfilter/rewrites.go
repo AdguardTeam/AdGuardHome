@@ -42,7 +42,10 @@ func (a rewritesArray) Len() int { return len(a) }
 
 func (a rewritesArray) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 
-// Priority: CNAME, A/AAAA;  exact, wildcard.
+// Priority:
+//  . CNAME > A/AAAA;
+//  . exact > wildcard;
+//  . higher level wildcard > lower level wildcard
 func (a rewritesArray) Less(i, j int) bool {
 	if a[i].Type == dns.TypeCNAME && a[j].Type != dns.TypeCNAME {
 		return false
@@ -50,13 +53,18 @@ func (a rewritesArray) Less(i, j int) bool {
 		return true
 	}
 
-	if isWildcard(a[i].Domain) && !isWildcard(a[j].Domain) {
-		return false
-	} else if !isWildcard(a[i].Domain) && isWildcard(a[j].Domain) {
-		return true
+	if isWildcard(a[i].Domain) {
+		if !isWildcard(a[j].Domain) {
+			return false
+		}
+	} else {
+		if isWildcard(a[j].Domain) {
+			return true
+		}
 	}
 
-	return i < j
+	// both are wildcards
+	return len(a[i].Domain) > len(a[j].Domain)
 }
 
 // Prepare entry for use
@@ -86,6 +94,7 @@ func (d *Dnsfilter) prepareRewrites() {
 // Get the list of matched rewrite entries.
 // Priority: CNAME, A/AAAA;  exact, wildcard.
 // If matched exactly, don't return wildcard entries.
+// If matched by several wildcards, select the more specific one
 func findRewrites(a []RewriteEntry, host string) []RewriteEntry {
 	rr := rewritesArray{}
 	for _, r := range a {
@@ -111,7 +120,10 @@ func findRewrites(a []RewriteEntry, host string) []RewriteEntry {
 				break
 			}
 		}
+	} else {
+		rr = rr[:1]
 	}
+
 	return rr
 }
 
