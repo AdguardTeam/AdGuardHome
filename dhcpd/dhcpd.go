@@ -239,29 +239,31 @@ func (s *Server) Start() error {
 		return wrapErrPrint(err, "Couldn't find interface by name %s", s.conf.InterfaceName)
 	}
 
-	c, err := newFilterConn(*iface, ":67") // it has to be bound to 0.0.0.0:67, otherwise it won't see DHCP discover/request packets
-	if err != nil {
-		return wrapErrPrint(err, "Couldn't start listening socket on 0.0.0.0:67")
-	}
-	log.Info("DHCP: listening on 0.0.0.0:67")
-
-	s.conn = c
-	s.cond = sync.NewCond(&s.mutex)
-
-	s.running = true
-	go func() {
-		// operate on c instead of c.conn because c.conn can change over time
-		err := dhcp4.Serve(c, s)
-		if err != nil && !s.stopping {
-			log.Printf("dhcp4.Serve() returned with error: %s", err)
+	if false {
+		c, err := newFilterConn(*iface, ":67") // it has to be bound to 0.0.0.0:67, otherwise it won't see DHCP discover/request packets
+		if err != nil {
+			return wrapErrPrint(err, "Couldn't start listening socket on 0.0.0.0:67")
 		}
-		_ = c.Close() // in case Serve() exits for other reason than listening socket closure
-		s.running = false
-		s.cond.Signal()
-	}()
+		log.Info("DHCP: listening on 0.0.0.0:67")
+
+		s.conn = c
+		s.cond = sync.NewCond(&s.mutex)
+
+		s.running = true
+		go func() {
+			// operate on c instead of c.conn because c.conn can change over time
+			err := dhcp4.Serve(c, s)
+			if err != nil && !s.stopping {
+				log.Printf("dhcp4.Serve() returned with error: %s", err)
+			}
+			_ = c.Close() // in case Serve() exits for other reason than listening socket closure
+			s.running = false
+			s.cond.Signal()
+		}()
+	}
 
 	if s.conf.EnableV6 {
-		err := s.v6Start()
+		err := s.v6Start(*iface)
 		if err != nil {
 			return err
 		}
@@ -748,6 +750,9 @@ func (s *Server) Leases(flags int) []Lease {
 		}
 	}
 	s.leasesLock.RUnlock()
+
+	v6leases := s.v6GetLeases(flags)
+	result = append(result, v6leases...)
 
 	return result
 }

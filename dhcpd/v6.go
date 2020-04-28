@@ -13,7 +13,26 @@ import (
 
 const valIAID = "ADGH"
 
+func (s *Server) v6GetLeases(flags int) []Lease {
+	var result []Lease
+	s.v6LeasesLock.Lock()
+	for _, lease := range s.v6Leases {
+		if (flags&LeasesStatic) != 0 && lease.Expiry.Unix() == leaseExpireStatic {
+			result = append(result, *lease)
+		}
+	}
+	s.v6LeasesLock.Unlock()
+	return result
+}
+
 func (s *Server) v6AddStaticLease(l Lease) error {
+	if len(l.IP) != 16 {
+		return fmt.Errorf("invalid IP")
+	}
+	if len(l.HWAddr) != 6 {
+		return fmt.Errorf("invalid MAC")
+	}
+
 	l.Expiry = time.Unix(leaseExpireStatic, 0)
 
 	s.v6LeasesLock.Lock()
@@ -21,6 +40,47 @@ func (s *Server) v6AddStaticLease(l Lease) error {
 	s.dbStore()
 	s.v6LeasesLock.Unlock()
 	// s.notify(LeaseChangedAddedStatic)
+	return nil
+}
+
+// Remove a lease
+func (s *Server) v6RmLease(l Lease) error {
+	var newLeases []*Lease
+	for _, lease := range s.v6Leases {
+		if net.IP.Equal(lease.IP, l.IP) {
+			if !bytes.Equal(lease.HWAddr, l.HWAddr) {
+				return fmt.Errorf("Lease not found")
+			}
+			continue
+		}
+		newLeases = append(newLeases, lease)
+	}
+
+	if len(newLeases) == len(s.v6Leases) {
+		return fmt.Errorf("Lease not found")
+	}
+
+	s.v6Leases = newLeases
+	return nil
+}
+
+func (s *Server) v6RemoveStaticLease(l Lease) error {
+	if len(l.IP) != 16 {
+		return fmt.Errorf("invalid IP")
+	}
+	if len(l.HWAddr) != 6 {
+		return fmt.Errorf("invalid MAC")
+	}
+
+	s.v6LeasesLock.Lock()
+	err := s.v6RmLease(l)
+	if err != nil {
+		s.v6LeasesLock.Unlock()
+		return err
+	}
+	s.dbStore()
+	s.v6LeasesLock.Unlock()
+	// s.notify(LeaseChangedRemovedStatic)
 	return nil
 }
 
@@ -104,15 +164,19 @@ func (s *Server) v6PacketHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 	}
 }
 
-func (s *Server) v6Start() error {
+func (s *Server) v6Start(iface net.Interface) error {
 	laddr := &net.UDPAddr{
-		IP:   net.ParseIP("::1"),
+		IP:   net.ParseIP("::"),
 		Port: dhcpv6.DefaultServerPort,
 	}
 	server, err := server6.NewServer("", laddr, s.v6PacketHandler, server6.WithDebugLogger())
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	return server.Serve()
+	go func() {
+		err = server.Serve()
+		log.Error("DHCPv6: %s", err)
+	}()
+	return nil
 }
