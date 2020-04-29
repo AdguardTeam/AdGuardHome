@@ -259,7 +259,7 @@ func (s *Server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request
 			HWAddr: mac,
 		}
 
-		err = s.v6AddStaticLease(lease)
+		err = s.srv6.AddStaticLease(lease)
 		if err != nil {
 			httpError(r, w, http.StatusBadRequest, "%s", err)
 			return
@@ -313,7 +313,7 @@ func (s *Server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Requ
 			HWAddr: mac,
 		}
 
-		err = s.v6RemoveStaticLease(lease)
+		err = s.srv6.RemoveStaticLease(lease)
 		if err != nil {
 			httpError(r, w, http.StatusBadRequest, "%s", err)
 			return

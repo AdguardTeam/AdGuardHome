@@ -47,7 +47,7 @@ type ServerConfig struct {
 	// 0: disable
 	ICMPTimeout uint32 `json:"icmp_timeout_msec" yaml:"icmp_timeout_msec"`
 
-	EnableV6 bool `yaml:"enable_v6"`
+	Conf6 V6ServerConf `yaml:"dhcpv6"`
 
 	WorkDir    string `json:"-" yaml:"-"`
 	DBFilePath string `json:"-" yaml:"-"` // path to DB file
@@ -91,8 +91,7 @@ type Server struct {
 	// IP address pool -- if entry is in the pool, then it's attached to a lease
 	IPpool map[[4]byte]net.HardwareAddr
 
-	v6Leases     []*Lease
-	v6LeasesLock sync.RWMutex
+	srv6 *V6Server
 
 	conf ServerConfig
 
@@ -133,6 +132,8 @@ func Create(config ServerConfig) *Server {
 		webHandlersRegistered = true
 		s.registerHandlers()
 	}
+
+	s.srv6 = v6Create(config.Conf6)
 
 	// we can't delay database loading until DHCP server is started,
 	//  because we need static leases functionality available beforehand
@@ -262,8 +263,8 @@ func (s *Server) Start() error {
 		}()
 	}
 
-	if s.conf.EnableV6 {
-		err := s.v6Start(*iface)
+	if s.conf.Conf6.Enabled {
+		err := s.srv6.Start(*iface)
 		if err != nil {
 			return err
 		}
@@ -751,7 +752,7 @@ func (s *Server) Leases(flags int) []Lease {
 	}
 	s.leasesLock.RUnlock()
 
-	v6leases := s.v6GetLeases(flags)
+	v6leases := s.srv6.GetLeases(flags)
 	result = append(result, v6leases...)
 
 	return result

@@ -103,10 +103,10 @@ func (s *Server) dbLoad() {
 		s.reserveIP(lease.IP, lease.HWAddr)
 	}
 
-	s.v6Leases = normalizeLeases(v6StaticLeases, []*Lease{})
+	s.srv6.leases = normalizeLeases(v6StaticLeases, []*Lease{})
 
 	log.Info("DHCP: loaded leases v4:%d  v6:%d  total-read:%d from DB",
-		len(s.leases), len(s.v6Leases), numLeases)
+		len(s.leases), len(s.srv6.leases), numLeases)
 }
 
 // Skip duplicate leases
@@ -153,7 +153,7 @@ func (s *Server) dbStore() {
 		leases = append(leases, lease)
 	}
 
-	for _, l := range s.v6Leases {
+	for _, l := range s.srv6.leases {
 		if l.Expiry.Unix() == 0 {
 			continue
 		}
