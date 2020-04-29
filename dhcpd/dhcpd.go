@@ -134,6 +134,9 @@ func Create(config ServerConfig) *Server {
 	}
 
 	s.srv6 = v6Create(config.Conf6)
+	if s.srv6 == nil {
+		return nil
+	}
 
 	// we can't delay database loading until DHCP server is started,
 	//  because we need static leases functionality available beforehand
@@ -165,6 +168,7 @@ func (s *Server) notify(flags int) {
 // WriteDiskConfig - write configuration
 func (s *Server) WriteDiskConfig(c *ServerConfig) {
 	*c = s.conf
+	s.srv6.WriteDiskConfig(&c.Conf6)
 }
 
 func (s *Server) setConfig(config ServerConfig) error {

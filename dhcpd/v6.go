@@ -30,7 +30,16 @@ type V6ServerConf struct {
 	Enabled       bool   `yaml:"enabled"`
 	RangeStart    string `yaml:"range_start"`
 	LeaseDuration uint32 `yaml:"lease_duration"` // in seconds
-	leaseTime     time.Duration
+
+	ipStart    net.IP
+	leaseTime  time.Duration
+	dnsIPAddrs []net.IP // IPv6 addresses to return to DHCP clients as DNS server addresses
+	sid        dhcpv6.Duid
+}
+
+// WriteDiskConfig - write configuration
+func (s *V6Server) WriteDiskConfig(c *V6ServerConf) {
+	*c = s.conf
 }
 
 // GetLeases - get current leases
@@ -142,12 +151,7 @@ func (s *V6Server) v6Process(req dhcpv6.DHCPv6, resp dhcpv6.DHCPv6) {
 		return
 	}
 
-	osid := dhcpv6.OptServerID(dhcpv6.Duid{
-		Type:          dhcpv6.DUID_LLT,
-		HwType:        iana.HWTypeEthernet,
-		LinkLayerAddr: []byte{1, 2, 3, 4, 5, 6},
-	})
-	resp.AddOption(osid)
+	resp.AddOption(dhcpv6.OptServerID(s.conf.sid))
 
 	oia := &dhcpv6.OptIANA{}
 	copy(oia.IaId[:], []byte(valIAID))
@@ -159,6 +163,11 @@ func (s *V6Server) v6Process(req dhcpv6.DHCPv6, resp dhcpv6.DHCPv6) {
 		},
 	}}
 	resp.AddOption(oia)
+
+	msg, _ := req.GetInnerMessage()
+	if msg.IsOptionRequested(dhcpv6.OptionDNSRecursiveNameServer) {
+		resp.UpdateOption(dhcpv6.OptDNS(s.conf.dnsIPAddrs...))
+	}
 }
 
 func (s *V6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.DHCPv6) {
@@ -173,6 +182,34 @@ func (s *V6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 	if msg.GetOneOption(dhcpv6.OptionClientID) == nil {
 		log.Error("DHCPv6: no ClientID option in request")
 		return
+	}
+
+	// ServerID policy
+	sid := msg.Options.ServerID()
+	switch msg.Type() {
+	case dhcpv6.MessageTypeSolicit,
+		dhcpv6.MessageTypeConfirm,
+		dhcpv6.MessageTypeRebind:
+
+		if sid != nil {
+			log.Debug("DHCPv6: drop packet: ServerID option in message %s", msg.Type().String)
+			return
+		}
+
+	case dhcpv6.MessageTypeRequest,
+		dhcpv6.MessageTypeRenew,
+		dhcpv6.MessageTypeRelease,
+		dhcpv6.MessageTypeDecline:
+
+		if sid == nil {
+			log.Debug("DHCPv6: drop packet: no ServerID option in message %s", msg.Type().String)
+			return
+		}
+		if !sid.Equal(s.conf.sid) {
+			log.Debug("DHCPv6: drop packet: mismatched ServerID option in message %s: %s",
+				msg.Type().String, sid.String())
+			return
+		}
 	}
 
 	var resp dhcpv6.DHCPv6
@@ -213,8 +250,41 @@ func (s *V6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 	}
 }
 
+func getIfaceIPv6(iface net.Interface) []net.IP {
+	addrs, err := iface.Addrs()
+	if err != nil {
+		return nil
+	}
+
+	var res []net.IP
+	for _, a := range addrs {
+		ipnet, ok := a.(*net.IPNet)
+		if !ok {
+			continue
+		}
+		if ipnet.IP.To4() == nil {
+			res = append(res, ipnet.IP)
+		}
+	}
+	return res
+}
+
 // Start - start server
 func (s *V6Server) Start(iface net.Interface) error {
+	s.conf.dnsIPAddrs = getIfaceIPv6(iface)
+	if len(s.conf.dnsIPAddrs) == 0 {
+		return fmt.Errorf("DHCPv6: no IPv6 address for interface %s", iface.Name)
+	}
+
+	if len(iface.HardwareAddr) != 6 {
+		return fmt.Errorf("DHCPv6: invalid MAC %s", iface.HardwareAddr)
+	}
+	s.conf.sid = dhcpv6.Duid{
+		Type:          dhcpv6.DUID_LLT,
+		HwType:        iana.HWTypeEthernet,
+		LinkLayerAddr: iface.HardwareAddr,
+	}
+
 	laddr := &net.UDPAddr{
 		IP:   net.ParseIP("::"),
 		Port: dhcpv6.DefaultServerPort,
@@ -235,8 +305,19 @@ func v6Create(conf V6ServerConf) *V6Server {
 	s := &V6Server{}
 	s.conf = conf
 
+	if !conf.Enabled {
+		return s
+	}
+
+	s.conf.ipStart = net.ParseIP(conf.RangeStart)
+	if s.conf.ipStart == nil {
+		log.Error("DHCPv6: invalid range-start IP: %s", conf.RangeStart)
+		return nil
+	}
+
 	if conf.LeaseDuration == 0 {
 		s.conf.leaseTime = time.Hour * 2
+		s.conf.LeaseDuration = uint32(s.conf.leaseTime.Seconds())
 	} else {
 		s.conf.leaseTime = time.Second * time.Duration(conf.LeaseDuration)
 	}
