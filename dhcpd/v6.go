@@ -151,8 +151,6 @@ func (s *V6Server) v6Process(req dhcpv6.DHCPv6, resp dhcpv6.DHCPv6) {
 		return
 	}
 
-	resp.AddOption(dhcpv6.OptServerID(s.conf.sid))
-
 	oia := &dhcpv6.OptIANA{}
 	copy(oia.IaId[:], []byte(valIAID))
 	oia.Options = dhcpv6.IdentityOptions{Options: []dhcpv6.Option{
@@ -170,6 +168,18 @@ func (s *V6Server) v6Process(req dhcpv6.DHCPv6, resp dhcpv6.DHCPv6) {
 	}
 }
 
+// 1.
+// fe80::* (client) --(Solicit + ClientID+IANA())-> ff02::1:2
+// server -(Advertise + ClientID+ServerID+IANA(IAAddress)> fe80::*
+// fe80::* --(Request + ClientID+ServerID+IANA(IAAddress))-> ff02::1:2
+// server -(Reply + ClientID+ServerID+IANA(IAAddress)+DNS)> fe80::*
+//
+// 2.
+// fe80::* --(Confirm|Renew|Rebind + ClientID+IANA(IAAddress))-> ff02::1:2
+// server -(Reply + ClientID+ServerID+IANA(IAAddress)+DNS)> fe80::*
+//
+// 3.
+// fe80::* --(Release + ClientID+ServerID+IANA(IAAddress))-> ff02::1:2
 func (s *V6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.DHCPv6) {
 	msg, err := req.GetInnerMessage()
 	if err != nil {
@@ -231,13 +241,16 @@ func (s *V6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 		resp, err = dhcpv6.NewReplyFromMessage(msg)
 
 	default:
-		err = fmt.Errorf("message type %d not supported", msg.Type())
+		log.Error("DHCPv6: message type %d not supported", msg.Type())
+		return
 	}
 
 	if err != nil {
 		log.Error("DHCPv6: %s", err)
 		return
 	}
+
+	resp.AddOption(dhcpv6.OptServerID(s.conf.sid))
 
 	s.v6Process(req, resp)
 
