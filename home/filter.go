@@ -468,12 +468,11 @@ func (f *Filtering) parseFilterContents(file io.Reader) (int, uint32, string) {
 		checksum = crc32.Update(checksum, crc32.IEEETable, []byte(line))
 
 		line = strings.TrimSpace(line)
-		isComment := strings.HasPrefix(line, "#") || strings.HasPrefix(line, "!")
-		if len(line) == 0 || isComment {
+		if len(line) == 0 {
 			continue
 		}
 
-		if line[0] == '!' {
+		if line[0] == '!' || line[0] == '#' {
 			m := f.filterTitleRegexp.FindAllStringSubmatch(line, -1)
 			if len(m) > 0 && len(m[0]) >= 2 && !seenTitle {
 				name = m[0][1]
