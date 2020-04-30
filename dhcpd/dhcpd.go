@@ -764,8 +764,10 @@ func (s *Server) Leases(flags int) []Lease {
 	}
 	s.leasesLock.RUnlock()
 
-	v6leases := s.srv6.GetLeases(flags)
-	result = append(result, v6leases...)
+	if s.srv6 != nil {
+		v6leases := s.srv6.GetLeases(flags)
+		result = append(result, v6leases...)
+	}
 
 	return result
 }
