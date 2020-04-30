@@ -182,7 +182,7 @@ func (s *V6Server) checkSID(msg *dhcpv6.Message) error {
 	return nil
 }
 
-func (s *V6Server) process(msg *dhcpv6.Message, req dhcpv6.DHCPv6, resp dhcpv6.DHCPv6) {
+func (s *V6Server) process(msg *dhcpv6.Message, req dhcpv6.DHCPv6, resp dhcpv6.DHCPv6) bool {
 	switch msg.Type() {
 	case dhcpv6.MessageTypeSolicit,
 		dhcpv6.MessageTypeRequest,
@@ -192,19 +192,19 @@ func (s *V6Server) process(msg *dhcpv6.Message, req dhcpv6.DHCPv6, resp dhcpv6.D
 		// break
 
 	default:
-		return
+		return false
 	}
 
 	mac, err := dhcpv6.ExtractMAC(req)
 	if err != nil {
 		log.Debug("DHCPv6: dhcpv6.ExtractMAC: %s", err)
-		return
+		return false
 	}
 
 	lease := s.findLease(mac)
 	if lease == nil {
 		log.Debug("DHCPv6: no lease for: %s", mac)
-		return
+		return false
 	}
 
 	switch msg.Type() {
@@ -215,20 +215,20 @@ func (s *V6Server) process(msg *dhcpv6.Message, req dhcpv6.DHCPv6, resp dhcpv6.D
 		oia := msg.Options.OneIANA()
 		if oia == nil {
 			log.Debug("DHCPv6: no IANA option in %s", msg.Type().String())
-			return
+			return false
 		}
 		if !bytes.Equal(oia.IaId[:], []byte(valueIAID)) {
 			log.Debug("DHCPv6: invalid IANA.ID value in %s", msg.Type().String())
-			return
+			return false
 		}
 		oiaAddr := oia.Options.OneAddress()
 		if oiaAddr == nil {
 			log.Debug("DHCPv6: no IANA.Addr option in %s", msg.Type().String())
-			return
+			return false
 		}
 		if !oiaAddr.IPv6Addr.Equal(lease.IP) {
 			log.Debug("DHCPv6: invalid IANA.Addr option in %s", msg.Type().String())
-			return
+			return false
 		}
 	}
 
@@ -245,6 +245,7 @@ func (s *V6Server) process(msg *dhcpv6.Message, req dhcpv6.DHCPv6, resp dhcpv6.D
 	if msg.IsOptionRequested(dhcpv6.OptionDNSRecursiveNameServer) {
 		resp.UpdateOption(dhcpv6.OptDNS(s.conf.dnsIPAddrs...))
 	}
+	return true
 }
 
 // 1.
@@ -310,7 +311,7 @@ func (s *V6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 
 	resp.AddOption(dhcpv6.OptServerID(s.conf.sid))
 
-	s.process(msg, req, resp)
+	_ = s.process(msg, req, resp)
 
 	log.Debug("DHCPv6: sending: %s", resp.Summary())
 
