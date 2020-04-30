@@ -28,6 +28,9 @@ func TestV6StaticLease(t *testing.T) {
 	l.HWAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:aa")
 	assert.True(t, s.AddStaticLease(l) == nil)
 
+	// try to add static lease - fail
+	assert.True(t, s.AddStaticLease(l) != nil)
+
 	// check
 	ls = s.GetLeases(LeasesStatic)
 	assert.Equal(t, 1, len(ls))

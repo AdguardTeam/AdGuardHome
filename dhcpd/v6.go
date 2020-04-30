@@ -13,7 +13,7 @@ import (
 	"github.com/insomniacslk/dhcp/iana"
 )
 
-const valIAID = "ADGH"
+const valueIAID = "ADGH" // value for IANA.ID
 
 // V6Server - DHCPv6 server
 type V6Server struct {
@@ -102,6 +102,12 @@ func (s *V6Server) RemoveStaticLease(l Lease) error {
 
 // Add a lease
 func (s *V6Server) addLease(l Lease) error {
+	for _, it := range s.leases {
+		if net.IP.Equal(it.IP, l.IP) ||
+			bytes.Equal(it.HWAddr, l.HWAddr) {
+			return fmt.Errorf("Lease already exists")
+		}
+	}
 	s.leases = append(s.leases, &l)
 	return nil
 }
@@ -139,7 +145,56 @@ func (s *V6Server) findLease(mac net.HardwareAddr) *Lease {
 	return nil
 }
 
-func (s *V6Server) v6Process(req dhcpv6.DHCPv6, resp dhcpv6.DHCPv6) {
+func (s *V6Server) checkCID(msg *dhcpv6.Message) error {
+	if msg.Options.ClientID() == nil {
+		return fmt.Errorf("DHCPv6: no ClientID option in request")
+	}
+	return nil
+}
+
+// ServerID policy
+func (s *V6Server) checkSID(msg *dhcpv6.Message) error {
+	sid := msg.Options.ServerID()
+
+	switch msg.Type() {
+	case dhcpv6.MessageTypeSolicit,
+		dhcpv6.MessageTypeConfirm,
+		dhcpv6.MessageTypeRebind:
+
+		if sid != nil {
+			return fmt.Errorf("DHCPv6: drop packet: ServerID option in message %s", msg.Type().String())
+		}
+
+	case dhcpv6.MessageTypeRequest,
+		dhcpv6.MessageTypeRenew,
+		dhcpv6.MessageTypeRelease,
+		dhcpv6.MessageTypeDecline:
+
+		if sid == nil {
+			return fmt.Errorf("DHCPv6: drop packet: no ServerID option in message %s", msg.Type().String())
+		}
+		if !sid.Equal(s.conf.sid) {
+			return fmt.Errorf("DHCPv6: drop packet: mismatched ServerID option in message %s: %s",
+				msg.Type().String(), sid.String())
+		}
+	}
+
+	return nil
+}
+
+func (s *V6Server) process(msg *dhcpv6.Message, req dhcpv6.DHCPv6, resp dhcpv6.DHCPv6) {
+	switch msg.Type() {
+	case dhcpv6.MessageTypeSolicit,
+		dhcpv6.MessageTypeRequest,
+		dhcpv6.MessageTypeConfirm,
+		dhcpv6.MessageTypeRenew,
+		dhcpv6.MessageTypeRebind:
+		// break
+
+	default:
+		return
+	}
+
 	mac, err := dhcpv6.ExtractMAC(req)
 	if err != nil {
 		log.Debug("DHCPv6: dhcpv6.ExtractMAC: %s", err)
@@ -152,18 +207,41 @@ func (s *V6Server) v6Process(req dhcpv6.DHCPv6, resp dhcpv6.DHCPv6) {
 		return
 	}
 
+	switch msg.Type() {
+	case dhcpv6.MessageTypeRequest,
+		dhcpv6.MessageTypeConfirm,
+		dhcpv6.MessageTypeRenew,
+		dhcpv6.MessageTypeRebind:
+		oia := msg.Options.OneIANA()
+		if oia == nil {
+			log.Debug("DHCPv6: no IANA option in %s", msg.Type().String())
+			return
+		}
+		if !bytes.Equal(oia.IaId[:], []byte(valueIAID)) {
+			log.Debug("DHCPv6: invalid IANA.ID value in %s", msg.Type().String())
+			return
+		}
+		oiaAddr := oia.Options.OneAddress()
+		if oiaAddr == nil {
+			log.Debug("DHCPv6: no IANA.Addr option in %s", msg.Type().String())
+			return
+		}
+		if !oiaAddr.IPv6Addr.Equal(lease.IP) {
+			log.Debug("DHCPv6: invalid IANA.Addr option in %s", msg.Type().String())
+			return
+		}
+	}
+
 	oia := &dhcpv6.OptIANA{}
-	copy(oia.IaId[:], []byte(valIAID))
-	oia.Options = dhcpv6.IdentityOptions{Options: []dhcpv6.Option{
-		&dhcpv6.OptIAAddress{
-			IPv6Addr:          lease.IP,
-			PreferredLifetime: s.conf.leaseTime,
-			ValidLifetime:     s.conf.leaseTime,
-		},
-	}}
+	copy(oia.IaId[:], []byte(valueIAID))
+	oiaAddr := &dhcpv6.OptIAAddress{
+		IPv6Addr:          lease.IP,
+		PreferredLifetime: s.conf.leaseTime,
+		ValidLifetime:     s.conf.leaseTime,
+	}
+	oia.Options = dhcpv6.IdentityOptions{Options: []dhcpv6.Option{oiaAddr}}
 	resp.AddOption(oia)
 
-	msg, _ := req.GetInnerMessage()
 	if msg.IsOptionRequested(dhcpv6.OptionDNSRecursiveNameServer) {
 		resp.UpdateOption(dhcpv6.OptDNS(s.conf.dnsIPAddrs...))
 	}
@@ -190,48 +268,27 @@ func (s *V6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 
 	log.Debug("DHCPv6: received: %s", req.Summary())
 
-	if msg.GetOneOption(dhcpv6.OptionClientID) == nil {
-		log.Error("DHCPv6: no ClientID option in request")
+	err = s.checkCID(msg)
+	if err != nil {
+		log.Debug("%s", err)
 		return
 	}
 
-	// ServerID policy
-	sid := msg.Options.ServerID()
-	switch msg.Type() {
-	case dhcpv6.MessageTypeSolicit,
-		dhcpv6.MessageTypeConfirm,
-		dhcpv6.MessageTypeRebind:
-
-		if sid != nil {
-			log.Debug("DHCPv6: drop packet: ServerID option in message %s", msg.Type().String())
-			return
-		}
-
-	case dhcpv6.MessageTypeRequest,
-		dhcpv6.MessageTypeRenew,
-		dhcpv6.MessageTypeRelease,
-		dhcpv6.MessageTypeDecline:
-
-		if sid == nil {
-			log.Debug("DHCPv6: drop packet: no ServerID option in message %s", msg.Type().String())
-			return
-		}
-		if !sid.Equal(s.conf.sid) {
-			log.Debug("DHCPv6: drop packet: mismatched ServerID option in message %s: %s",
-				msg.Type().String(), sid.String())
-			return
-		}
+	err = s.checkSID(msg)
+	if err != nil {
+		log.Debug("%s", err)
+		return
 	}
 
 	var resp dhcpv6.DHCPv6
 
 	switch msg.Type() {
 	case dhcpv6.MessageTypeSolicit:
-		if msg.GetOneOption(dhcpv6.OptionRapidCommit) != nil {
-			resp, err = dhcpv6.NewReplyFromMessage(msg)
-		} else {
+		if msg.GetOneOption(dhcpv6.OptionRapidCommit) == nil {
 			resp, err = dhcpv6.NewAdvertiseFromSolicit(msg)
+			break
 		}
+		fallthrough
 
 	case dhcpv6.MessageTypeRequest,
 		dhcpv6.MessageTypeConfirm,
@@ -253,7 +310,7 @@ func (s *V6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 
 	resp.AddOption(dhcpv6.OptServerID(s.conf.sid))
 
-	s.v6Process(req, resp)
+	s.process(msg, req, resp)
 
 	log.Debug("DHCPv6: sending: %s", resp.Summary())
 
