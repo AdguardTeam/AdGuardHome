@@ -314,18 +314,30 @@ func (s *V6Server) Start(iface net.Interface) error {
 	return nil
 }
 
-func v6Create(conf V6ServerConf) *V6Server {
+// Stop - stop server
+func (s *V6Server) Stop() {
+	if s.srv == nil {
+		return
+	}
+
+	err := s.srv.Close()
+	if err != nil {
+		log.Error("DHCPv6: srv.Close: %s", err)
+	}
+	// now server.Serve() will return
+}
+
+func v6Create(conf V6ServerConf) (*V6Server, error) {
 	s := &V6Server{}
 	s.conf = conf
 
 	if !conf.Enabled {
-		return s
+		return s, nil
 	}
 
 	s.conf.ipStart = net.ParseIP(conf.RangeStart)
 	if s.conf.ipStart == nil {
-		log.Error("DHCPv6: invalid range-start IP: %s", conf.RangeStart)
-		return nil
+		return nil, fmt.Errorf("DHCPv6: invalid range-start IP: %s", conf.RangeStart)
 	}
 
 	if conf.LeaseDuration == 0 {
@@ -335,5 +347,5 @@ func v6Create(conf V6ServerConf) *V6Server {
 		s.conf.leaseTime = time.Second * time.Duration(conf.LeaseDuration)
 	}
 
-	return s
+	return s, nil
 }

@@ -47,7 +47,7 @@ type ServerConfig struct {
 	// 0: disable
 	ICMPTimeout uint32 `json:"icmp_timeout_msec" yaml:"icmp_timeout_msec"`
 
-	Conf6 V6ServerConf `yaml:"dhcpv6"`
+	Conf6 V6ServerConf `json:"-" yaml:"dhcpv6"`
 
 	WorkDir    string `json:"-" yaml:"-"`
 	DBFilePath string `json:"-" yaml:"-"` // path to DB file
@@ -133,8 +133,10 @@ func Create(config ServerConfig) *Server {
 		s.registerHandlers()
 	}
 
-	s.srv6 = v6Create(config.Conf6)
+	var err error
+	s.srv6, err = v6Create(config.Conf6)
 	if s.srv6 == nil {
+		log.Error("%s", err)
 		return nil
 	}
 
@@ -279,6 +281,8 @@ func (s *Server) Start() error {
 
 // Stop closes the listening UDP socket
 func (s *Server) Stop() error {
+	s.srv6.Stop()
+
 	if s.conn == nil {
 		// nothing to do, return silently
 		return nil
