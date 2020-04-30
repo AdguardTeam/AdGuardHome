@@ -40,11 +40,34 @@ func convertLeases(inputLeases []Lease, includeExpires bool) []map[string]string
 	return leases
 }
 
+type v6ServerConfJSON struct {
+	Enabled       bool   `json:"enabled"`
+	RangeStart    string `json:"range_start"`
+	LeaseDuration uint32 `json:"lease_duration"`
+}
+
+func v6ServerConfToJSON(c V6ServerConf) v6ServerConfJSON {
+	return v6ServerConfJSON{
+		Enabled:       c.Enabled,
+		RangeStart:    c.RangeStart,
+		LeaseDuration: c.LeaseDuration,
+	}
+}
+
+func v6JSONToServerConf(c v6ServerConfJSON) V6ServerConf {
+	return V6ServerConf{
+		Enabled:       c.Enabled,
+		RangeStart:    c.RangeStart,
+		LeaseDuration: c.LeaseDuration,
+	}
+}
+
 func (s *Server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	leases := convertLeases(s.Leases(LeasesDynamic), true)
 	staticLeases := convertLeases(s.Leases(LeasesStatic), false)
 	status := map[string]interface{}{
 		"config":        s.conf,
+		"config_v6":     v6ServerConfToJSON(s.conf.Conf6),
 		"leases":        leases,
 		"static_leases": staticLeases,
 	}
@@ -65,7 +88,7 @@ type staticLeaseJSON struct {
 
 type dhcpServerConfigJSON struct {
 	ServerConfig `json:",inline"`
-	StaticLeases []staticLeaseJSON `json:"static_leases"`
+	V6           v6ServerConfJSON `json:"v6"`
 }
 
 func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
@@ -92,6 +115,14 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		httpError(r, w, http.StatusBadRequest, "Invalid DHCP configuration: %s", err)
 		return
 	}
+
+	s6, err := v6Create(v6JSONToServerConf(newconfig.V6))
+	if s6 == nil {
+		httpError(r, w, http.StatusBadRequest, "Invalid DHCPv6 configuration: %s", err)
+		return
+	}
+	s.srv6 = s6
+
 	s.conf.ConfigModified()
 
 	if newconfig.Enabled {

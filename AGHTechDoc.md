@@ -405,6 +405,11 @@ Response:
 			"lease_duration":60,
 			"icmp_timeout_msec":0
 		},
+		"config_v6":{
+			"enabled":false,
+			"range_start":"...",
+			"lease_duration":60,
+		}
 		"leases":[
 			{"ip":"...","mac":"...","hostname":"...","expires":"..."}
 			...
@@ -463,14 +468,21 @@ Request:
 	POST /control/dhcp/set_config
 
 	{
-		"enabled":true,
-		"interface_name":"vboxnet0",
-		"gateway_ip":"192.169.56.1",
-		"subnet_mask":"255.255.255.0",
-		"range_start":"192.169.56.3",
-		"range_end":"192.169.56.3",
+	"enabled":true,
+	"interface_name":"vboxnet0",
+
+	"gateway_ip":"192.169.56.1",
+	"subnet_mask":"255.255.255.0",
+	"range_start":"192.169.56.100",
+	"range_end":"192.169.56.200",
+	"lease_duration":60,
+	"icmp_timeout_msec":0,
+
+	"v6":{
+		"enabled":false,
+		"range_start":"...",
 		"lease_duration":60,
-		"icmp_timeout_msec":0
+	}
 	}
 
 Response:

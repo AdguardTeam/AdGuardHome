@@ -269,11 +269,9 @@ func (s *Server) Start() error {
 		}()
 	}
 
-	if s.conf.Conf6.Enabled {
-		err := s.srv6.Start(*iface)
-		if err != nil {
-			return err
-		}
+	err = s.srv6.Start(*iface)
+	if err != nil {
+		return err
 	}
 
 	return nil

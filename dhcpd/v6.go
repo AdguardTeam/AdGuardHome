@@ -284,6 +284,11 @@ func getIfaceIPv6(iface net.Interface) []net.IP {
 
 // Start - start server
 func (s *V6Server) Start(iface net.Interface) error {
+	if !s.conf.Enabled {
+		return nil
+	}
+
+	log.Debug("DHCPv6: starting...")
 	s.conf.dnsIPAddrs = getIfaceIPv6(iface)
 	if len(s.conf.dnsIPAddrs) == 0 {
 		return fmt.Errorf("DHCPv6: no IPv6 address for interface %s", iface.Name)
