@@ -17,7 +17,6 @@ const valIAID = "ADGH"
 
 // V6Server - DHCPv6 server
 type V6Server struct {
-	db         *Server // for dbStore()
 	srv        *server6.Server
 	leases     []*Lease
 	leasesLock sync.Mutex
