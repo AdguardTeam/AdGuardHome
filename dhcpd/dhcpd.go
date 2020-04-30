@@ -234,39 +234,45 @@ func (s *Server) setConfig(config ServerConfig) error {
 	return nil
 }
 
-// Start will listen on port 67 and serve DHCP requests.
-func (s *Server) Start() error {
+func (s *Server) start4(iface net.Interface) error {
 	// TODO: don't close if interface and addresses are the same
 	if s.conn != nil {
 		_ = s.closeConn()
 	}
 
+	c, err := newFilterConn(iface, ":67") // it has to be bound to 0.0.0.0:67, otherwise it won't see DHCP discover/request packets
+	if err != nil {
+		return wrapErrPrint(err, "Couldn't start listening socket on 0.0.0.0:67")
+	}
+	log.Info("DHCP: listening on 0.0.0.0:67")
+
+	s.conn = c
+	s.cond = sync.NewCond(&s.mutex)
+
+	s.running = true
+	go func() {
+		// operate on c instead of c.conn because c.conn can change over time
+		err := dhcp4.Serve(c, s)
+		if err != nil && !s.stopping {
+			log.Printf("dhcp4.Serve() returned with error: %s", err)
+		}
+		_ = c.Close() // in case Serve() exits for other reason than listening socket closure
+		s.running = false
+		s.cond.Signal()
+	}()
+	return nil
+}
+
+// Start will listen on port 67 and serve DHCP requests.
+func (s *Server) Start() error {
 	iface, err := net.InterfaceByName(s.conf.InterfaceName)
 	if err != nil {
 		return wrapErrPrint(err, "Couldn't find interface by name %s", s.conf.InterfaceName)
 	}
 
-	if false {
-		c, err := newFilterConn(*iface, ":67") // it has to be bound to 0.0.0.0:67, otherwise it won't see DHCP discover/request packets
-		if err != nil {
-			return wrapErrPrint(err, "Couldn't start listening socket on 0.0.0.0:67")
-		}
-		log.Info("DHCP: listening on 0.0.0.0:67")
-
-		s.conn = c
-		s.cond = sync.NewCond(&s.mutex)
-
-		s.running = true
-		go func() {
-			// operate on c instead of c.conn because c.conn can change over time
-			err := dhcp4.Serve(c, s)
-			if err != nil && !s.stopping {
-				log.Printf("dhcp4.Serve() returned with error: %s", err)
-			}
-			_ = c.Close() // in case Serve() exits for other reason than listening socket closure
-			s.running = false
-			s.cond.Signal()
-		}()
+	err = s.start4(*iface)
+	if err != nil {
+		return err
 	}
 
 	err = s.srv6.Start(*iface)
