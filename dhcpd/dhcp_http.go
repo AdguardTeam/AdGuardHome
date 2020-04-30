@@ -116,7 +116,9 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s6, err := v6Create(v6JSONToServerConf(newconfig.V6))
+	v6conf := v6JSONToServerConf(newconfig.V6)
+	v6conf.notify = s.conf.Conf6.notify
+	s6, err := v6Create(v6conf)
 	if s6 == nil {
 		httpError(r, w, http.StatusBadRequest, "Invalid DHCPv6 configuration: %s", err)
 		return

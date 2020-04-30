@@ -17,7 +17,7 @@ const valIAID = "ADGH"
 
 // V6Server - DHCPv6 server
 type V6Server struct {
-	s4         *Server // for dbStore()
+	db         *Server // for dbStore()
 	srv        *server6.Server
 	leases     []*Lease
 	leasesLock sync.Mutex
@@ -35,6 +35,8 @@ type V6ServerConf struct {
 	leaseTime  time.Duration
 	dnsIPAddrs []net.IP // IPv6 addresses to return to DHCP clients as DNS server addresses
 	sid        dhcpv6.Duid
+
+	notify func(uint32)
 }
 
 // WriteDiskConfig - write configuration
@@ -72,7 +74,7 @@ func (s *V6Server) AddStaticLease(l Lease) error {
 		s.leasesLock.Unlock()
 		return err
 	}
-	s.s4.dbStore()
+	s.conf.notify(LeaseChangedAddedStatic)
 	s.leasesLock.Unlock()
 	// s.notify(LeaseChangedAddedStatic)
 	return nil
@@ -93,7 +95,7 @@ func (s *V6Server) RemoveStaticLease(l Lease) error {
 		s.leasesLock.Unlock()
 		return err
 	}
-	s.s4.dbStore()
+	s.conf.notify(LeaseChangedRemovedStatic)
 	s.leasesLock.Unlock()
 	// s.notify(LeaseChangedRemovedStatic)
 	return nil

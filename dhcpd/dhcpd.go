@@ -119,6 +119,7 @@ func (s *Server) CheckConfig(config ServerConfig) error {
 func Create(config ServerConfig) *Server {
 	s := Server{}
 	s.conf = config
+	s.conf.Conf6.notify = s.notify6
 	s.conf.DBFilePath = filepath.Join(config.WorkDir, dbFilename)
 	if s.conf.Enabled {
 		err := s.setConfig(config)
@@ -144,6 +145,10 @@ func Create(config ServerConfig) *Server {
 	//  because we need static leases functionality available beforehand
 	s.dbLoad()
 	return &s
+}
+
+func (s *Server) notify6(flags uint32) {
+	s.dbStore()
 }
 
 // Init checks the configuration and initializes the server
