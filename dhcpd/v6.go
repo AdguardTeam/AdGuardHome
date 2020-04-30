@@ -202,7 +202,7 @@ func (s *V6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 		dhcpv6.MessageTypeRebind:
 
 		if sid != nil {
-			log.Debug("DHCPv6: drop packet: ServerID option in message %s", msg.Type().String)
+			log.Debug("DHCPv6: drop packet: ServerID option in message %s", msg.Type().String())
 			return
 		}
 
@@ -212,12 +212,12 @@ func (s *V6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 		dhcpv6.MessageTypeDecline:
 
 		if sid == nil {
-			log.Debug("DHCPv6: drop packet: no ServerID option in message %s", msg.Type().String)
+			log.Debug("DHCPv6: drop packet: no ServerID option in message %s", msg.Type().String())
 			return
 		}
 		if !sid.Equal(s.conf.sid) {
 			log.Debug("DHCPv6: drop packet: mismatched ServerID option in message %s: %s",
-				msg.Type().String, sid.String())
+				msg.Type().String(), sid.String())
 			return
 		}
 	}
