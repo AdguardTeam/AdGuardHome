@@ -468,7 +468,8 @@ func (f *Filtering) parseFilterContents(file io.Reader) (int, uint32, string) {
 		checksum = crc32.Update(checksum, crc32.IEEETable, []byte(line))
 
 		line = strings.TrimSpace(line)
-		if len(line) == 0 {
+		isComment := strings.HasPrefix(line, "#")
+		if len(line) == 0 || isComment {
 			continue
 		}
 
