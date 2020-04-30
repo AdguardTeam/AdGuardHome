@@ -478,6 +478,8 @@ func (f *Filtering) parseFilterContents(file io.Reader) (int, uint32, string) {
 				name = m[0][1]
 				seenTitle = true
 			}
+		} else if line[0] == '#' {
+			continue
 		} else {
 			rulesCount++
 		}
