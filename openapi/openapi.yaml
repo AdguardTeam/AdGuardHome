@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
     title: AdGuard Home
     description: AdGuard Home REST API. Admin web interface is built on top of this REST API.
-    version: "0.101"
+    version: "0.102"
     contact:
         name: "AdGuard Home"
         url: "https://github.com/AdguardTeam/AdGuardHome"
@@ -74,22 +74,6 @@ paths:
                     application/json:
                         schema:
                             $ref: "#/components/schemas/DNSConfig"
-            responses:
-                "200":
-                    description: OK
-    /set_upstreams_config:
-        post:
-            tags:
-                - global
-            operationId: setUpstreamsConfig
-            summary: Updates the current upstreams configuration
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: "#/components/schemas/UpstreamsConfig"
-                description: Upstreams configuration JSON
-                required: true
             responses:
                 "200":
                     description: OK
@@ -531,7 +515,7 @@ paths:
             parameters:
                 - name: name
                   in: query
-                  description: Host name
+                  description: Filter by host name
                   schema:
                       type: string
             responses:
@@ -725,8 +709,8 @@ paths:
             summary: Get information about selected clients by their IP address
             parameters:
                 - name: ip0
-                  description: IP
                   in: query
+                  description: Filter by IP address
                   schema:
                       type: string
             responses:
@@ -975,16 +959,6 @@ components:
                     type: boolean
                 running:
                     type: boolean
-                bootstrap_dns:
-                    type: string
-                    example: 8.8.8.8:53
-                upstream_dns:
-                    type: array
-                    items:
-                        type: string
-                    example:
-                        - tls://1.1.1.1
-                        - tls://1.0.0.1
                 version:
                     type: string
                     example: "0.1"
@@ -994,33 +968,6 @@ components:
         DNSConfig:
             type: object
             description: Query log configuration
-            properties:
-                protection_enabled:
-                    type: boolean
-                ratelimit:
-                    type: integer
-                blocking_mode:
-                    type: string
-                    enum:
-                        - default
-                        - nxdomain
-                        - null_ip
-                        - custom_ip
-                blocking_ipv4:
-                    type: string
-                blocking_ipv6:
-                    type: string
-                edns_cs_enabled:
-                    type: boolean
-                dnssec_enabled:
-                    type: boolean
-        UpstreamsConfig:
-            type: object
-            description: Upstreams configuration
-            required:
-                - bootstrap_dns
-                - upstream_dns
-                - all_servers
             properties:
                 bootstrap_dns:
                     type: array
@@ -1040,10 +987,56 @@ components:
                     example:
                         - tls://1.1.1.1
                         - tls://1.0.0.1
-                all_servers:
+                protection_enabled:
+                    type: boolean
+                ratelimit:
+                    type: integer
+                blocking_mode:
+                    type: string
+                    enum:
+                        - default
+                        - nxdomain
+                        - null_ip
+                        - custom_ip
+                blocking_ipv4:
+                    type: string
+                blocking_ipv6:
+                    type: string
+                edns_cs_enabled:
+                    type: boolean
+                dnssec_enabled:
+                    type: boolean
+                fastest_addr:
+                    type: boolean
+                parallel_requests:
                     type: boolean
                     description: If true, parallel queries to all configured upstream servers are
                         enabled
+        UpstreamsConfig:
+            type: object
+            description: Upstreams configuration
+            required:
+                - bootstrap_dns
+                - upstream_dns
+            properties:
+                bootstrap_dns:
+                    type: array
+                    description: Bootstrap servers, port is optional after colon. Empty value will
+                        reset it to default values
+                    items:
+                        type: string
+                    example:
+                        - 8.8.8.8:53
+                        - 1.1.1.1:53
+                upstream_dns:
+                    type: array
+                    description: Upstream servers, port is optional after colon. Empty value will
+                        reset it to default values
+                    items:
+                        type: string
+                    example:
+                        - tls://1.1.1.1
+                        - tls://1.0.0.1
         Filter:
             type: object
             description: Filter subscription info
