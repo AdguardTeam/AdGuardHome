@@ -34,6 +34,9 @@ const Guide = (props) => {
                             <li>
                                 <Trans>install_devices_router_list_3</Trans>
                             </li>
+                            <li>
+                                <Trans>install_devices_router_list_4</Trans>
+                            </li>
                         </ol>
                     </div>
                 </div>

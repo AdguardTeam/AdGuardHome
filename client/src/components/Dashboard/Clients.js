@@ -119,7 +119,7 @@ const Clients = ({
             noDataText={t('no_clients_found')}
             minRows={6}
             defaultPageSize={100}
-            className="-highlight card-table-overflow clients__table"
+            className="-highlight card-table-overflow--limited clients__table"
             getTrProps={(_state, rowInfo) => {
                 if (!rowInfo) {
                     return {};

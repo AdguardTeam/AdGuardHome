@@ -117,29 +117,30 @@ export const renderSelectField = ({
     placeholder,
     subtitle,
     disabled,
+    onClick,
     modifier = 'checkbox--form',
     meta: { touched, error },
 }) => (
-    <Fragment>
-        <label className={`checkbox ${modifier}`}>
-            <span className="checkbox__marker" />
-            <input {...input} type="checkbox" className="checkbox__input" disabled={disabled} />
-            <span className="checkbox__label">
-                <span className="checkbox__label-text checkbox__label-text--long">
-                    <span className="checkbox__label-title">{placeholder}</span>
-                    {subtitle && (
-                        <span
-                            className="checkbox__label-subtitle"
-                            dangerouslySetInnerHTML={{ __html: subtitle }}
-                        />
-                    )}
+        <Fragment>
+            <label className={`checkbox ${modifier}`} onClick={onClick}>
+                <span className="checkbox__marker" />
+                <input {...input} type="checkbox" className="checkbox__input" disabled={disabled} />
+                <span className="checkbox__label">
+                    <span className="checkbox__label-text checkbox__label-text--long">
+                        <span className="checkbox__label-title">{placeholder}</span>
+                        {subtitle && (
+                            <span
+                                className="checkbox__label-subtitle"
+                                dangerouslySetInnerHTML={{ __html: subtitle }}
+                            />
+                        )}
+                    </span>
                 </span>
-            </span>
-        </label>
-        {!disabled &&
-        touched &&
-        (error && <span className="form__message form__message--error">{error}</span>)}
-    </Fragment>
+            </label>
+            {!disabled &&
+            touched &&
+            (error && <span className="form__message form__message--error">{error}</span>)}
+        </Fragment>
 );
 
 export const renderServiceField = ({

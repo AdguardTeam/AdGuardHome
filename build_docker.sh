@@ -4,7 +4,7 @@ set -eE
 set -o pipefail
 set -x
 
-DOCKERFILE="Dockerfile.travis"
+DOCKERFILE="packaging/docker/Dockerfile.hub"
 IMAGE_NAME="adguard/adguardhome"
 
 if [[ "${TRAVIS_BRANCH}" == "master" ]]

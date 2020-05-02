@@ -35,14 +35,6 @@ const settings = handleActions(
             const newSettingsList = { ...settingsList, [settingKey]: newSetting };
             return { ...state, settingsList: newSettingsList };
         },
-        [actions.setUpstreamRequest]: state => ({ ...state, processingSetUpstream: true }),
-        [actions.setUpstreamFailure]: state => ({ ...state, processingSetUpstream: false }),
-        [actions.setUpstreamSuccess]: (state, { payload }) => ({
-            ...state,
-            ...payload,
-            processingSetUpstream: false,
-        }),
-
         [actions.testUpstreamRequest]: state => ({ ...state, processingTestUpstream: true }),
         [actions.testUpstreamFailure]: state => ({ ...state, processingTestUpstream: false }),
         [actions.testUpstreamSuccess]: state => ({ ...state, processingTestUpstream: false }),
@@ -50,7 +42,6 @@ const settings = handleActions(
     {
         processing: true,
         processingTestUpstream: false,
-        processingSetUpstream: false,
         processingDhcpStatus: false,
         settingsList: {},
     },
@@ -67,12 +58,9 @@ const dashboard = handleActions(
                 version,
                 dns_port: dnsPort,
                 dns_addresses: dnsAddresses,
-                upstream_dns: upstreamDns,
-                bootstrap_dns: bootstrapDns,
-                all_servers: allServers,
                 protection_enabled: protectionEnabled,
-                language,
                 http_port: httpPort,
+                language,
             } = payload;
             const newState = {
                 ...state,
@@ -81,9 +69,6 @@ const dashboard = handleActions(
                 dnsVersion: version,
                 dnsPort,
                 dnsAddresses,
-                upstreamDns: (upstreamDns && upstreamDns.join('\n')) || '',
-                bootstrapDns: (bootstrapDns && bootstrapDns.join('\n')) || '',
-                allServers,
                 protectionEnabled,
                 language,
                 httpPort,
@@ -138,11 +123,6 @@ const dashboard = handleActions(
             return newState;
         },
 
-        [actions.handleUpstreamChange]: (state, { payload }) => {
-            const { upstreamDns } = payload;
-            return { ...state, upstreamDns };
-        },
-
         [actions.getLanguageSuccess]: (state, { payload }) => {
             const newState = { ...state, language: payload };
             return newState;
@@ -159,24 +139,6 @@ const dashboard = handleActions(
             return newState;
         },
 
-        [actions.getDnsSettingsRequest]: state => ({ ...state, processingDnsSettings: true }),
-        [actions.getDnsSettingsFailure]: state => ({ ...state, processingDnsSettings: false }),
-        [actions.getDnsSettingsSuccess]: (state, { payload }) => {
-            const {
-                upstream_dns: upstreamDns,
-                bootstrap_dns: bootstrapDns,
-                all_servers: allServers,
-            } = payload;
-
-            return {
-                ...state,
-                allServers,
-                upstreamDns: (upstreamDns && upstreamDns.join('\n')) || '',
-                bootstrapDns: (bootstrapDns && bootstrapDns.join('\n')) || '',
-                processingDnsSettings: false,
-            };
-        },
-
         [actions.getProfileRequest]: state => ({ ...state, processingProfile: true }),
         [actions.getProfileFailure]: state => ({ ...state, processingProfile: false }),
         [actions.getProfileSuccess]: (state, { payload }) => ({
@@ -191,11 +153,7 @@ const dashboard = handleActions(
         processingVersion: true,
         processingClients: true,
         processingUpdate: false,
-        processingDnsSettings: true,
         processingProfile: true,
-        upstreamDns: '',
-        bootstrapDns: '',
-        allServers: false,
         protectionEnabled: false,
         processingProtection: false,
         httpPort: 80,

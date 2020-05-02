@@ -238,7 +238,7 @@ func (l *queryLog) getData(params getDataParams) map[string]interface{} {
 	entries := append(memoryEntries, fileEntries...)
 	if len(entries) > getDataLimit {
 		// remove extra records
-		entries = entries[(len(entries) - getDataLimit):]
+		entries = entries[:getDataLimit]
 	}
 	if len(entries) == getDataLimit {
 		// change the "oldest" value here.

@@ -1,0 +1,41 @@
+# Note that this snapcraft.yaml file is used for automatic Edge channel builds ONLY!
+# We use packaging/snap/snapcraft.yaml for beta and release builds
+# Check out build_snap.sh for more details
+name: adguard-home
+base: core18
+version: 'edge'
+summary: Network-wide ads & trackers blocking DNS server
+description: |
+  AdGuard Home is a network-wide software for blocking ads & tracking. After
+  you set it up, it'll cover ALL your home devices, and you don't need any
+  client-side software for that.
+
+  It operates as a DNS server that re-routes tracking domains to a "black hole,"
+  thus preventing your devices from connecting to those servers. It's based
+  on software we use for our public AdGuard DNS servers -- both share a lot
+  of common code.
+grade: stable
+confinement: strict
+
+architectures:
+  - build-on: amd64
+  - build-on: armhf
+  - build-on: i386
+  - build-on: arm64
+
+parts:
+  adguard-home:
+    plugin: make
+    source: .
+    build-snaps: [ node/13/stable, go ]
+    build-packages: [ git, build-essential ]
+    override-build: |
+      make clean
+      make
+      cp AdGuardHome ${SNAPCRAFT_PART_INSTALL}/
+apps:
+  adguard-home:
+    command: AdGuardHome -w ${SNAP_DATA} --no-check-update
+    plugs: [ network-bind ]
+    daemon: simple
+    restart-condition: always

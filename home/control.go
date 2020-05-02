@@ -55,9 +55,6 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		"language":      config.Language,
 
 		"protection_enabled": c.ProtectionEnabled,
-		"bootstrap_dns":      c.BootstrapDNS,
-		"upstream_dns":       c.UpstreamDNS,
-		"all_servers":        c.AllServers,
 	}
 
 	jsonVal, err := json.Marshal(data)

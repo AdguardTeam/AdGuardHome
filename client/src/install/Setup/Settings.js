@@ -217,19 +217,19 @@ class Settings extends Component {
                         </div>
                         <div className="col-12">
                             {webStatus &&
-                                <div className="setup__error text-danger">
-                                    {webStatus}
-                                    {isWebFixAvailable &&
-                                        <button
-                                            type="button"
-                                            className="btn btn-secondary btn-sm ml-2"
-                                            onClick={() => this.handleAutofix('web')}
-                                        >
-                                            <Trans>fix</Trans>
-                                        </button>
-                                    }
-                                    <hr className="divider--small" />
-                                </div>
+                            <div className="setup__error text-danger">
+                                {webStatus}
+                                {isWebFixAvailable &&
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary btn-sm ml-2"
+                                    onClick={() => this.handleAutofix('web')}
+                                >
+                                    <Trans>fix</Trans>
+                                </button>
+                                }
+                                <hr className="divider--small" />
+                            </div>
                             }
                         </div>
                     </div>
@@ -287,32 +287,33 @@ class Settings extends Component {
                         </div>
                         <div className="col-12">
                             {dnsStatus &&
-                                <Fragment>
-                                    <div className="setup__error text-danger">
-                                        {dnsStatus}
-                                        {isDnsFixAvailable &&
-                                            <button
-                                                type="button"
-                                                className="btn btn-secondary btn-sm ml-2"
-                                                onClick={() => this.handleAutofix('dns')}
-                                            >
-                                                <Trans>fix</Trans>
-                                            </button>
-                                        }
-                                    </div>
-                                    <div className="text-muted mb-2">
-                                        <p className="mb-1">
-                                            <Trans>autofix_warning_text</Trans>
-                                        </p>
-                                        <Trans components={[<li key="0">text</li>]}>
-                                            autofix_warning_list
-                                        </Trans>
-                                        <p className="mb-1">
-                                            <Trans>autofix_warning_result</Trans>
-                                        </p>
-                                    </div>
-                                    <hr className="divider--small" />
-                                </Fragment>
+                            <Fragment>
+                                <div className="setup__error text-danger">
+                                    {dnsStatus}
+                                    {isDnsFixAvailable &&
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary btn-sm ml-2"
+                                        onClick={() => this.handleAutofix('dns')}
+                                    >
+                                        <Trans>fix</Trans>
+                                    </button>
+                                    }
+                                </div>
+                                {isDnsFixAvailable &&
+                                <div className="text-muted mb-2">
+                                    <p className="mb-1">
+                                        <Trans>autofix_warning_text</Trans>
+                                    </p>
+                                    <Trans components={[<li key="0">text</li>]}>
+                                        autofix_warning_list
+                                    </Trans>
+                                    <p className="mb-1">
+                                        <Trans>autofix_warning_result</Trans>
+                                    </p>
+                                </div>}
+                                <hr className="divider--small" />
+                            </Fragment>
                             }
                         </div>
                     </div>

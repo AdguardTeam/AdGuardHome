@@ -15,6 +15,8 @@ const dnsConfig = handleActions(
             const {
                 blocking_ipv4,
                 blocking_ipv6,
+                upstream_dns,
+                bootstrap_dns,
                 ...values
             } = payload;
 
@@ -23,6 +25,8 @@ const dnsConfig = handleActions(
                 ...values,
                 blocking_ipv4: blocking_ipv4 || DEFAULT_BLOCKING_IPV4,
                 blocking_ipv6: blocking_ipv6 || DEFAULT_BLOCKING_IPV6,
+                upstream_dns: (upstream_dns && upstream_dns.join('\n')) || '',
+                bootstrap_dns: (bootstrap_dns && bootstrap_dns.join('\n')) || '',
                 processingGetConfig: false,
             };
         },
