@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/event"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -85,6 +86,6 @@ func handleI18nChangeLanguage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	config.Language = language
-	onConfigModified()
+	onConfigModified(event.I18N)
 	returnOK(w)
 }

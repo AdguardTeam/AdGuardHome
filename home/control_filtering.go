@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/event"
 	"github.com/AdguardTeam/AdGuardHome/util"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
@@ -85,7 +86,7 @@ func (f *Filtering) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	onConfigModified()
+	onConfigModified(event.Filter)
 	enableFilters(true)
 
 	_, err = fmt.Fprintf(w, "OK %d rules\n", filt.RulesCount)
@@ -128,7 +129,7 @@ func (f *Filtering) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Requ
 	*filters = newFilters
 	config.Unlock()
 
-	onConfigModified()
+	onConfigModified(event.Filter)
 	enableFilters(true)
 
 	// Note: the old files "filter.txt.old" aren't deleted - it's not really necessary,
@@ -175,7 +176,7 @@ func (f *Filtering) handleFilteringSetURL(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	onConfigModified()
+	onConfigModified(event.Filter)
 	restart := false
 	if (status & statusEnabledChanged) != 0 {
 		// we must add or remove filter rules
@@ -208,7 +209,7 @@ func (f *Filtering) handleFilteringSetRules(w http.ResponseWriter, r *http.Reque
 	}
 
 	config.UserRules = strings.Split(string(body), "\n")
-	onConfigModified()
+	onConfigModified(event.FilterRule)
 	enableFilters(true)
 }
 
@@ -328,7 +329,7 @@ func (f *Filtering) handleFilteringConfig(w http.ResponseWriter, r *http.Request
 
 	config.DNS.FilteringEnabled = req.Enabled
 	config.DNS.FiltersUpdateIntervalHours = req.Interval
-	onConfigModified()
+	onConfigModified(event.Filter)
 	enableFilters(true)
 }
 

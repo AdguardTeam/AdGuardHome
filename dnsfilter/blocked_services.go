@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/AdguardTeam/AdGuardHome/event"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
 )
@@ -233,7 +234,7 @@ func (d *Dnsfilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Requ
 
 	log.Debug("Updated blocked services list: %d", len(list))
 
-	d.ConfigModified()
+	d.ConfigModified(event.BlockedServices)
 }
 
 // registerBlockedServicesHandlers - register HTTP handlers

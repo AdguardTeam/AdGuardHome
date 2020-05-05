@@ -69,6 +69,16 @@ func MinInt(a, b int) int {
 	return b
 }
 
+// ContainsString checks if str is found in []string
+func ContainsString(slice []string, str string) int {
+	for i, val := range slice {
+		if str == val {
+			return i
+		}
+	}
+	return -1
+}
+
 // IsOpenWrt checks if OS is OpenWRT
 func IsOpenWrt() bool {
 	if runtime.GOOS != "linux" {

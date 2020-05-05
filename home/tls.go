@@ -19,6 +19,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/event"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/joomcode/errorx"
 )
@@ -268,7 +269,7 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	t.status = status
 	t.confLock.Unlock()
 	t.setCertFileTime()
-	onConfigModified()
+	onConfigModified(event.TLS)
 	err = reconfigureDNSServer()
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "%s", err)

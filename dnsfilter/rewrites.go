@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/event"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
@@ -180,7 +181,7 @@ func (d *Dnsfilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 	log.Debug("Rewrites: added element: %s -> %s [%d]",
 		ent.Domain, ent.Answer, len(d.Config.Rewrites))
 
-	d.Config.ConfigModified()
+	d.Config.ConfigModified(event.DNSRewrite)
 }
 
 func (d *Dnsfilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) {
@@ -208,7 +209,7 @@ func (d *Dnsfilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) 
 	d.Config.Rewrites = arr
 	d.confLock.Unlock()
 
-	d.Config.ConfigModified()
+	d.Config.ConfigModified(event.DNSRewrite)
 }
 
 func (d *Dnsfilter) registerRewritesHandlers() {

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/AdguardTeam/AdGuardHome/event"
 )
 
 type clientJSON struct {
@@ -173,7 +175,7 @@ func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.
 		return
 	}
 
-	onConfigModified()
+	onConfigModified(event.Client)
 }
 
 // Remove client
@@ -196,7 +198,7 @@ func (clients *clientsContainer) handleDelClient(w http.ResponseWriter, r *http.
 		return
 	}
 
-	onConfigModified()
+	onConfigModified(event.Client)
 }
 
 type updateJSON struct {
@@ -235,7 +237,7 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 		return
 	}
 
-	onConfigModified()
+	onConfigModified(event.Client)
 }
 
 // Get the list of clients by IP address list

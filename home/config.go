@@ -60,6 +60,8 @@ type configuration struct {
 
 	DHCP dhcpd.ServerConfig `yaml:"dhcp"`
 
+	Webhooks []Webhook `yaml:"webhooks"`
+
 	// Note: this array is filled only before file read/write and then it's cleared
 	Clients []clientObject `yaml:"clients"`
 

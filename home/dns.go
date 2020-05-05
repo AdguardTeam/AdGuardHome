@@ -17,7 +17,8 @@ import (
 )
 
 // Called by other modules when configuration is changed
-func onConfigModified() {
+func onConfigModified(e string) {
+	go webhookHandleEvent(e)
 	_ = config.write()
 }
 

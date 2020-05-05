@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/AdguardTeam/AdGuardHome/event"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
@@ -196,7 +197,7 @@ func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {
 	s.conf.BlockedHosts = j.BlockedHosts
 	s.access = a
 	s.Unlock()
-	s.conf.ConfigModified()
+	s.conf.ConfigModified(event.DNSAccess)
 
 	log.Debug("Access: updated lists: %d, %d, %d",
 		len(j.AllowedClients), len(j.DisallowedClients), len(j.BlockedHosts))

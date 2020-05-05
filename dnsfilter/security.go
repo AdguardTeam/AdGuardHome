@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/event"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
@@ -296,12 +297,12 @@ func httpError(r *http.Request, w http.ResponseWriter, code int, format string, 
 
 func (d *Dnsfilter) handleSafeBrowsingEnable(w http.ResponseWriter, r *http.Request) {
 	d.Config.SafeBrowsingEnabled = true
-	d.Config.ConfigModified()
+	d.Config.ConfigModified(event.DNSSafeBrowsing)
 }
 
 func (d *Dnsfilter) handleSafeBrowsingDisable(w http.ResponseWriter, r *http.Request) {
 	d.Config.SafeBrowsingEnabled = false
-	d.Config.ConfigModified()
+	d.Config.ConfigModified(event.DNSSafeBrowsing)
 }
 
 func (d *Dnsfilter) handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Request) {
@@ -323,12 +324,12 @@ func (d *Dnsfilter) handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Requ
 
 func (d *Dnsfilter) handleParentalEnable(w http.ResponseWriter, r *http.Request) {
 	d.Config.ParentalEnabled = true
-	d.Config.ConfigModified()
+	d.Config.ConfigModified(event.DNSParental)
 }
 
 func (d *Dnsfilter) handleParentalDisable(w http.ResponseWriter, r *http.Request) {
 	d.Config.ParentalEnabled = false
-	d.Config.ConfigModified()
+	d.Config.ConfigModified(event.DNSParental)
 }
 
 func (d *Dnsfilter) handleParentalStatus(w http.ResponseWriter, r *http.Request) {
@@ -351,12 +352,12 @@ func (d *Dnsfilter) handleParentalStatus(w http.ResponseWriter, r *http.Request)
 
 func (d *Dnsfilter) handleSafeSearchEnable(w http.ResponseWriter, r *http.Request) {
 	d.Config.SafeSearchEnabled = true
-	d.Config.ConfigModified()
+	d.Config.ConfigModified(event.DNSSafeSearch)
 }
 
 func (d *Dnsfilter) handleSafeSearchDisable(w http.ResponseWriter, r *http.Request) {
 	d.Config.SafeSearchEnabled = false
-	d.Config.ConfigModified()
+	d.Config.ConfigModified(event.DNSSafeSearch)
 }
 
 func (d *Dnsfilter) handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {

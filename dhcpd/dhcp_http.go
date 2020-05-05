@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/event"
 	"github.com/AdguardTeam/AdGuardHome/util"
 
 	"github.com/AdguardTeam/golibs/log"
@@ -92,7 +93,7 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		httpError(r, w, http.StatusBadRequest, "Invalid DHCP configuration: %s", err)
 		return
 	}
-	s.conf.ConfigModified()
+	s.conf.ConfigModified(event.DHCP)
 
 	if newconfig.Enabled {
 		staticIP, err := HasStaticIP(newconfig.InterfaceName)
@@ -314,7 +315,7 @@ func (s *Server) handleReset(w http.ResponseWriter, r *http.Request) {
 	s.conf.HTTPRegister = oldconf.HTTPRegister
 	s.conf.ConfigModified = oldconf.ConfigModified
 	s.conf.DBFilePath = oldconf.DBFilePath
-	s.conf.ConfigModified()
+	s.conf.ConfigModified(event.DHCP)
 }
 
 func (s *Server) registerHandlers() {

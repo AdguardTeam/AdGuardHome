@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/event"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/jsonutil"
 	"github.com/AdguardTeam/golibs/log"
@@ -178,7 +179,7 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.Unlock()
-	s.conf.ConfigModified()
+	s.conf.ConfigModified(event.DNSConfig)
 
 	if restart {
 		err = s.Reconfigure(nil)

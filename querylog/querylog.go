@@ -40,7 +40,7 @@ type Config struct {
 	AnonymizeClientIP bool   // anonymize clients' IP addresses
 
 	// Called when the configuration is changed by HTTP request
-	ConfigModified func()
+	ConfigModified func(string)
 
 	// Register an HTTP handler
 	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request))

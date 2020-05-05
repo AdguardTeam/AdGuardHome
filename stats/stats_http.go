@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/event"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -76,7 +77,7 @@ func (s *statsCtx) handleStatsConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.setLimit(int(reqData.IntervalDays))
-	s.conf.ConfigModified()
+	s.conf.ConfigModified(event.Stats)
 }
 
 // Reset data

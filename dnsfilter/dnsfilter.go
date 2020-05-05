@@ -58,7 +58,7 @@ type Config struct {
 	AutoHosts *util.AutoHosts `yaml:"-"`
 
 	// Called when the configuration is changed by HTTP request
-	ConfigModified func() `yaml:"-"`
+	ConfigModified func(string) `yaml:"-"`
 
 	// Register an HTTP handler
 	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request)) `yaml:"-"`

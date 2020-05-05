@@ -51,7 +51,7 @@ type ServerConfig struct {
 	DBFilePath string `json:"-" yaml:"-"` // path to DB file
 
 	// Called when the configuration is changed by HTTP request
-	ConfigModified func() `json:"-" yaml:"-"`
+	ConfigModified func(string) `json:"-" yaml:"-"`
 
 	// Register an HTTP handler
 	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request)) `json:"-" yaml:"-"`

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/event"
 	"github.com/AdguardTeam/golibs/jsonutil"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
@@ -159,7 +160,7 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 	l.conf = &conf
 	l.lock.Unlock()
 
-	l.conf.ConfigModified()
+	l.conf.ConfigModified(event.QueryLog)
 }
 
 // Register web handlers
