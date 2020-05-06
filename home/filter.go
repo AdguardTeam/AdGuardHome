@@ -472,12 +472,14 @@ func (f *Filtering) parseFilterContents(file io.Reader) (int, uint32, string) {
 			continue
 		}
 
-		if line[0] == '!' || line[0] == '#' {
+		if line[0] == '!' {
 			m := f.filterTitleRegexp.FindAllStringSubmatch(line, -1)
 			if len(m) > 0 && len(m[0]) >= 2 && !seenTitle {
 				name = m[0][1]
 				seenTitle = true
 			}
+		} else if line[0] == '#' {
+			continue			
 		} else {
 			rulesCount++
 		}
