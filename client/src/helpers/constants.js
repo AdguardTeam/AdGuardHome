@@ -189,6 +189,10 @@ export const SERVICES = [
         name: 'Netflix',
     },
     {
+        id: 'disneyplus',
+        name: 'Disney Plus',
+    },
+    {
         id: 'snapchat',
         name: 'Snapchat',
     },

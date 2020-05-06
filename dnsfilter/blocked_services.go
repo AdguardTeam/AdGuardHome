@@ -43,6 +43,7 @@ var serviceRulesArray = []svc{
 	}},
 	{"twitch", []string{"||twitch.tv^", "||ttvnw.net^", "||jtvnw.net^", "||twitchcdn.net^"}},
 	{"netflix", []string{"||nflxext.com^", "||netflix.com^", "||nflximg.net^", "||nflxvideo.net^"}},
+	{"disneyplus", []string{"||disney-plus.net^", "||disneyplus.com^", "||disneyplus.com.ssl.sc.omtrdc.net^", "||dssott.com^"}},
 	{"instagram", []string{"||instagram.com^", "||cdninstagram.com^"}},
 	{"snapchat", []string{
 		"||snapchat.com^",
