@@ -59,12 +59,6 @@ type FilteringConfig struct {
 	AllServers   bool     `yaml:"all_servers"`   // if true, parallel queries to all configured upstream servers are enabled
 	FastestAddr  bool     `yaml:"fastest_addr"`  // use Fastest Address algorithm
 
-	// ECS settings
-	// --
-
-	EnableEDNSClientSubnet bool `yaml:"edns_client_subnet"` // Enable EDNS Client Subnet option
-	EnableDNSSEC           bool `yaml:"enable_dnssec"`      // Set DNSSEC flag in outcoming DNS request
-
 	// Access settings
 	// --
 
@@ -82,8 +76,10 @@ type FilteringConfig struct {
 	// Other settings
 	// --
 
-	BogusNXDomain []string `yaml:"bogus_nxdomain"` // transform responses with these IP addresses to NXDOMAIN
-	AAAADisabled  bool     `yaml:"aaaa_disabled"`  // Respond with an empty answer to all AAAA requests
+	BogusNXDomain          []string `yaml:"bogus_nxdomain"`     // transform responses with these IP addresses to NXDOMAIN
+	AAAADisabled           bool     `yaml:"aaaa_disabled"`      // Respond with an empty answer to all AAAA requests
+	EnableDNSSEC           bool     `yaml:"enable_dnssec"`      // Set DNSSEC flag in outcoming DNS request
+	EnableEDNSClientSubnet bool     `yaml:"edns_client_subnet"` // Enable EDNS Client Subnet option
 }
 
 // TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
