@@ -52,7 +52,7 @@ var serviceRulesArray = []svc{
 		"||snapads.com^",
 		"||impala-media-production.s3.amazonaws.com^",
 	}},
-	{"discord", []string{"||discord.gg^", "||discordapp.net^", "||discordapp.com^", "||discord.media^"}},
+	{"discord", []string{"||discord.gg^", "||discordapp.net^", "||discordapp.com^", "||discord.com^", "||discord.media^"}},
 	{"ok", []string{"||ok.ru^"}},
 	{"skype", []string{"||skype.com^", "||skypeassets.com^"}},
 	{"vk", []string{"||vk.com^", "||userapi.com^", "||vk-cdn.net^", "||vkuservideo.net^"}},
