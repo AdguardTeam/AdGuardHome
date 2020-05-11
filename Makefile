@@ -32,7 +32,7 @@ $(TARGET): $(STATIC) *.go home/*.go dhcpd/*.go dnsfilter/*.go dnsforward/*.go
 docker:
 	docker build -t "$(DOCKER_IMAGE_DEV_NAME)" -f "$(DOCKERFILE)" .
 	@echo Now you can run the docker image:
-	@echo docker run --name "$(DOCKER_IMAGE_DEV_NAME)" -p 53:53/tcp -p 53:53/udp -p 3000:3000/tcp $(DOCKER_IMAGE_DEV_NAME)
+	@echo docker run --name "$(DOCKER_IMAGE_DEV_NAME)" -p 53:53/tcp -p 53:53/udp -p 80:80/tcp -p 443:443/tcp -p 853:853/tcp -p 3000:3000/tcp $(DOCKER_IMAGE_DEV_NAME)
 
 clean:
 	$(MAKE) cleanfast
