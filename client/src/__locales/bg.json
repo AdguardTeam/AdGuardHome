@@ -97,7 +97,6 @@
     "filters_and_hosts_hint": "AdGuard Home разбира adblock и host синтаксис.",
     "cancel_btn": "Откажи",
     "enter_name_hint": "Въведи име",
-    "enter_url_hint": "Въведи URL",
     "custom_filter_rules": "Местни правила за филтриране",
     "custom_filter_rules_hint": "Въвеждайте всяко правило на нов ред. Може да използвате adblock или hosts файлов синтаксис.",
     "examples_title": "Примери",
