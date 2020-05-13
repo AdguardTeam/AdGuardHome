@@ -31,7 +31,7 @@ const (
 )
 
 // handleDNSRequest filters the incoming DNS requests and writes them to the query log
-func (s *Server) handleDNSRequest(p *proxy.Proxy, d *proxy.DNSContext) error {
+func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 	ctx := &dnsContext{srv: s, proxyCtx: d}
 	ctx.result = &dnsfilter.Result{}
 	ctx.startTime = time.Now()
@@ -124,12 +124,12 @@ func processUpstream(ctx *dnsContext) int {
 		return resultDone // response is already set - nothing to do
 	}
 
-	if d.Addr != nil && s.conf.GetUpstreamsByClient != nil {
+	if d.Addr != nil && s.conf.GetCustomUpstreamByClient != nil {
 		clientIP := ipFromAddr(d.Addr)
-		upstreams := s.conf.GetUpstreamsByClient(clientIP)
-		if len(upstreams) > 0 {
+		upstreamsConf := s.conf.GetCustomUpstreamByClient(clientIP)
+		if upstreamsConf != nil {
 			log.Debug("Using custom upstreams for %s", clientIP)
-			d.Upstreams = upstreams
+			d.CustomUpstreamConfig = upstreamsConf
 		}
 	}
 

@@ -11,7 +11,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/stats"
 	"github.com/AdguardTeam/AdGuardHome/util"
 	"github.com/AdguardTeam/dnsproxy/proxy"
-	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/joomcode/errorx"
 )
@@ -176,7 +175,7 @@ func generateServerConfig() dnsforward.ServerConfig {
 	newconfig.TLSAllowUnencryptedDOH = tlsConf.AllowUnencryptedDOH
 
 	newconfig.FilterHandler = applyAdditionalFiltering
-	newconfig.GetUpstreamsByClient = getUpstreamsByClient
+	newconfig.GetCustomUpstreamByClient = Context.clients.FindUpstreams
 	return newconfig
 }
 
@@ -220,10 +219,6 @@ func getDNSAddresses() []string {
 	}
 
 	return dnsAddresses
-}
-
-func getUpstreamsByClient(clientAddr string) []upstream.Upstream {
-	return Context.clients.FindUpstreams(clientAddr)
 }
 
 // If a client has his own settings, apply them
