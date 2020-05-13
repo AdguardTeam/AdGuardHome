@@ -17,7 +17,7 @@ const getInputFields = (parallel_requests_selected, fastest_addr_selected) => [{
     name: 'upstream_dns',
     type: 'text',
     component: 'textarea',
-    className: 'form-control form-control--textarea',
+    className: 'form-control form-control--textarea font-monospace',
     placeholder: 'upstream_dns',
 },
 {
@@ -96,7 +96,7 @@ let Form = (props) => {
                         name="bootstrap_dns"
                         component="textarea"
                         type="text"
-                        className="form-control form-control--textarea form-control--textarea-small"
+                        className="form-control form-control--textarea form-control--textarea-small font-monospace"
                         placeholder={t('bootstrap_dns')}
                         disabled={processingSetConfig}
                     />

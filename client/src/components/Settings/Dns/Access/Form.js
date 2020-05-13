@@ -5,61 +5,58 @@ import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 import { renderTextareaField } from '../../../../helpers/form';
 
+const fields = [
+    {
+        id: 'allowed_clients',
+        title: 'access_allowed_title',
+        subtitle: 'access_allowed_desc',
+    },
+    {
+        id: 'disallowed_clients',
+        title: 'access_disallowed_title',
+        subtitle: 'access_disallowed_desc',
+    },
+    {
+        id: 'blocked_hosts',
+        title: 'access_blocked_title',
+        subtitle: 'access_blocked_desc',
+    },
+];
+
 const Form = (props) => {
     const {
         handleSubmit, submitting, invalid, processingSet,
     } = props;
 
+    const renderField = ({
+        id, title, subtitle, disabled = processingSet,
+    }) => <div key={id} className="form__group mb-5">
+        <label className="form__label form__label--with-desc" htmlFor={id}>
+            <Trans>{title}</Trans>
+        </label>
+        <div className="form__desc form__desc--top">
+            <Trans>{subtitle}</Trans>
+        </div>
+        <Field
+            id={id}
+            name={id}
+            component={renderTextareaField}
+            type="text"
+            className="form-control form-control--textarea font-monospace"
+            disabled={disabled}
+        />
+    </div>;
+
+    renderField.propTypes = {
+        id: PropTypes.string,
+        title: PropTypes.string,
+        subtitle: PropTypes.string,
+        disabled: PropTypes.bool,
+    };
+
     return (
         <form onSubmit={handleSubmit}>
-            <div className="form__group mb-5">
-                <label className="form__label form__label--with-desc" htmlFor="allowed_clients">
-                    <Trans>access_allowed_title</Trans>
-                </label>
-                <div className="form__desc form__desc--top">
-                    <Trans>access_allowed_desc</Trans>
-                </div>
-                <Field
-                    id="allowed_clients"
-                    name="allowed_clients"
-                    component={renderTextareaField}
-                    type="text"
-                    className="form-control form-control--textarea"
-                    disabled={processingSet}
-                />
-            </div>
-            <div className="form__group mb-5">
-                <label className="form__label form__label--with-desc" htmlFor="disallowed_clients">
-                    <Trans>access_disallowed_title</Trans>
-                </label>
-                <div className="form__desc form__desc--top">
-                    <Trans>access_disallowed_desc</Trans>
-                </div>
-                <Field
-                    id="disallowed_clients"
-                    name="disallowed_clients"
-                    component={renderTextareaField}
-                    type="text"
-                    className="form-control form-control--textarea"
-                    disabled={processingSet}
-                />
-            </div>
-            <div className="form__group mb-5">
-                <label className="form__label form__label--with-desc" htmlFor="blocked_hosts">
-                    <Trans>access_blocked_title</Trans>
-                </label>
-                <div className="form__desc form__desc--top">
-                    <Trans>access_blocked_desc</Trans>
-                </div>
-                <Field
-                    id="blocked_hosts"
-                    name="blocked_hosts"
-                    component={renderTextareaField}
-                    type="text"
-                    className="form-control form-control--textarea"
-                    disabled={processingSet}
-                />
-            </div>
+            {fields.map(renderField)}
             <div className="card-actions">
                 <div className="btn-list">
                     <button
