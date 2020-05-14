@@ -380,7 +380,7 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 				}
 			}
 
-		} else if strings.HasPrefix(r.URL.Path,"/assets/") ||
+		} else if strings.HasPrefix(r.URL.Path, "/assets/") ||
 			strings.HasPrefix(r.URL.Path, "/login.") ||
 			strings.HasPrefix(r.URL.Path, "/__locales/") {
 			// process as usual
