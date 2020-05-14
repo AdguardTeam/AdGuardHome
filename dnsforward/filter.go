@@ -10,7 +10,7 @@ import (
 	"github.com/miekg/dns"
 )
 
-func (s *Server) beforeRequestHandler(p *proxy.Proxy, d *proxy.DNSContext) (bool, error) {
+func (s *Server) beforeRequestHandler(_ *proxy.Proxy, d *proxy.DNSContext) (bool, error) {
 	ip := ipFromAddr(d.Addr)
 	if s.access.IsBlockedIP(ip) {
 		log.Tracef("Client IP %s is blocked by settings", ip)

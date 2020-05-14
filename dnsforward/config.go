@@ -26,8 +26,9 @@ type FilteringConfig struct {
 	// Filtering callback function
 	FilterHandler func(clientAddr string, settings *dnsfilter.RequestFilteringSettings) `yaml:"-"`
 
-	// This callback function returns the list of upstream servers for a client specified by IP address
-	GetUpstreamsByClient func(clientAddr string) []upstream.Upstream `yaml:"-"`
+	// GetCustomUpstreamByClient - a callback function that returns upstreams configuration
+	// based on the client IP address. Returns nil if there are no custom upstreams for the client
+	GetCustomUpstreamByClient func(clientAddr string) *proxy.UpstreamConfig `yaml:"-"`
 
 	// Protection configuration
 	// --
@@ -102,11 +103,10 @@ type TLSConfig struct {
 // ServerConfig represents server configuration.
 // The zero ServerConfig is empty and ready for use.
 type ServerConfig struct {
-	UDPListenAddr            *net.UDPAddr                   // UDP listen address
-	TCPListenAddr            *net.TCPAddr                   // TCP listen address
-	Upstreams                []upstream.Upstream            // Configured upstreams
-	DomainsReservedUpstreams map[string][]upstream.Upstream // Map of domains and lists of configured upstreams
-	OnDNSRequest             func(d *proxy.DNSContext)
+	UDPListenAddr  *net.UDPAddr          // UDP listen address
+	TCPListenAddr  *net.TCPAddr          // TCP listen address
+	UpstreamConfig *proxy.UpstreamConfig // Upstream DNS servers config
+	OnDNSRequest   func(d *proxy.DNSContext)
 
 	FilteringConfig
 	TLSConfig
@@ -132,22 +132,21 @@ var defaultValues = ServerConfig{
 // createProxyConfig creates and validates configuration for the main proxy
 func (s *Server) createProxyConfig() (proxy.Config, error) {
 	proxyConfig := proxy.Config{
-		UDPListenAddr:            s.conf.UDPListenAddr,
-		TCPListenAddr:            s.conf.TCPListenAddr,
-		Ratelimit:                int(s.conf.Ratelimit),
-		RatelimitWhitelist:       s.conf.RatelimitWhitelist,
-		RefuseAny:                s.conf.RefuseAny,
-		CacheEnabled:             true,
-		CacheSizeBytes:           int(s.conf.CacheSize),
-		CacheMinTTL:              s.conf.CacheMinTTL,
-		CacheMaxTTL:              s.conf.CacheMaxTTL,
-		Upstreams:                s.conf.Upstreams,
-		DomainsReservedUpstreams: s.conf.DomainsReservedUpstreams,
-		BeforeRequestHandler:     s.beforeRequestHandler,
-		RequestHandler:           s.handleDNSRequest,
-		AllServers:               s.conf.AllServers,
-		EnableEDNSClientSubnet:   s.conf.EnableEDNSClientSubnet,
-		FindFastestAddr:          s.conf.FastestAddr,
+		UDPListenAddr:          s.conf.UDPListenAddr,
+		TCPListenAddr:          s.conf.TCPListenAddr,
+		Ratelimit:              int(s.conf.Ratelimit),
+		RatelimitWhitelist:     s.conf.RatelimitWhitelist,
+		RefuseAny:              s.conf.RefuseAny,
+		CacheEnabled:           true,
+		CacheSizeBytes:         int(s.conf.CacheSize),
+		CacheMinTTL:            s.conf.CacheMinTTL,
+		CacheMaxTTL:            s.conf.CacheMaxTTL,
+		UpstreamConfig:         s.conf.UpstreamConfig,
+		BeforeRequestHandler:   s.beforeRequestHandler,
+		RequestHandler:         s.handleDNSRequest,
+		AllServers:             s.conf.AllServers,
+		EnableEDNSClientSubnet: s.conf.EnableEDNSClientSubnet,
+		FindFastestAddr:        s.conf.FastestAddr,
 	}
 
 	if len(s.conf.BogusNXDomain) > 0 {
@@ -168,7 +167,7 @@ func (s *Server) createProxyConfig() (proxy.Config, error) {
 	}
 
 	// Validate proxy config
-	if len(proxyConfig.Upstreams) == 0 {
+	if proxyConfig.UpstreamConfig == nil || len(proxyConfig.UpstreamConfig.Upstreams) == 0 {
 		return proxyConfig, errors.New("no upstream servers configured")
 	}
 
@@ -204,18 +203,16 @@ func (s *Server) prepareUpstreamSettings() error {
 	if err != nil {
 		return fmt.Errorf("DNS: proxy.ParseUpstreamsConfig: %s", err)
 	}
-	s.conf.Upstreams = upstreamConfig.Upstreams
-	s.conf.DomainsReservedUpstreams = upstreamConfig.DomainReservedUpstreams
+	s.conf.UpstreamConfig = &upstreamConfig
 	return nil
 }
 
 // prepareIntlProxy - initializes DNS proxy that we use for internal DNS queries
 func (s *Server) prepareIntlProxy() {
 	intlProxyConfig := proxy.Config{
-		CacheEnabled:             true,
-		CacheSizeBytes:           4096,
-		Upstreams:                s.conf.Upstreams,
-		DomainsReservedUpstreams: s.conf.DomainsReservedUpstreams,
+		CacheEnabled:   true,
+		CacheSizeBytes: 4096,
+		UpstreamConfig: s.conf.UpstreamConfig,
 	}
 	s.internalProxy = &proxy.Proxy{Config: intlProxyConfig}
 }

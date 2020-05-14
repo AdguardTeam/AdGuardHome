@@ -70,3 +70,7 @@ issues:
     - G108
     # gosec: Subprocess launched with function call as argument or cmd arguments
     - G204
+    # gosec: Potential DoS vulnerability via decompression bomb
+    - G110
+    # gosec: Expect WriteFile permissions to be 0600 or less
+    - G306
