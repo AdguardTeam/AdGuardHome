@@ -14,9 +14,10 @@ const ENTRY_LOGIN = path.resolve(RESOURCES_PATH, 'src/login/index.js');
 const HTML_PATH = path.resolve(RESOURCES_PATH, 'public/index.html');
 const HTML_INSTALL_PATH = path.resolve(RESOURCES_PATH, 'public/install.html');
 const HTML_LOGIN_PATH = path.resolve(RESOURCES_PATH, 'public/login.html');
-const FAVICON_PATH = path.resolve(RESOURCES_PATH, 'public/favicon.png');
+const ASSETS_PATH = path.resolve(RESOURCES_PATH, 'public/assets');
 
 const PUBLIC_PATH = path.resolve(__dirname, '../build/static');
+const PUBLIC_ASSETS_PATH = path.resolve(PUBLIC_PATH, 'assets');
 
 const config = {
     target: 'web',
@@ -134,7 +135,7 @@ const config = {
             filename: '[name].[contenthash].css',
         }),
         new CopyPlugin([
-            { from: FAVICON_PATH, to: PUBLIC_PATH },
+            { from: ASSETS_PATH, to: PUBLIC_ASSETS_PATH },
         ]),
     ],
 };
