@@ -282,8 +282,8 @@ case "$1" in
 "build") build $2 ;;
 "publish-docker-beta") publish_docker beta $2 ;;
 "publish-docker-release") publish_docker stable $2 ;;
-"publish-beta") publish beta ;;
-"publish-release") publish stable ;;
+"publish-beta") publish beta $2 ;;
+"publish-release") publish stable $2 ;;
 "prepare") prepare ;;
 "cleanup") cleanup ;;
 *) usage ;;
