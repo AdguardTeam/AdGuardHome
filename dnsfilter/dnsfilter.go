@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"sync"
 
@@ -528,6 +529,9 @@ func (d *Dnsfilter) initFiltering(allowFilters, blockFilters []Filter) error {
 	d.filteringEngine = filteringEngine
 	d.rulesStorageWhite = rulesStorageWhite
 	d.filteringEngineWhite = filteringEngineWhite
+
+	// Make sure that the OS reclaims memory as soon as possible
+	debug.FreeOSMemory()
 	log.Debug("initialized filtering engine")
 
 	return nil

@@ -51,7 +51,7 @@ func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	resp.EDNSCSEnabled = s.conf.EnableEDNSClientSubnet
 	resp.DNSSECEnabled = s.conf.EnableDNSSEC
 	resp.DisableIPv6 = s.conf.AAAADisabled
-	resp.FastestAddr = s.conf.FastestAddrAlgo
+	resp.FastestAddr = s.conf.FastestAddr
 	resp.ParallelRequests = s.conf.AllServers
 	s.RUnlock()
 
@@ -170,7 +170,7 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if js.Exists("fastest_addr") {
-		s.conf.FastestAddrAlgo = req.FastestAddr
+		s.conf.FastestAddr = req.FastestAddr
 	}
 
 	if js.Exists("parallel_requests") {
@@ -343,8 +343,8 @@ func checkDNS(input string, bootstrap []string) error {
 		return fmt.Errorf("wrong upstream format: %s", err)
 	}
 
-	// No need to check this entrance
-	if input == "#" && !defaultUpstream {
+	// No need to check this DNS server
+	if input == "#" || !defaultUpstream {
 		return nil
 	}
 
