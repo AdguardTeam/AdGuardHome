@@ -165,37 +165,39 @@ func processDNSSECAfterResponse(ctx *dnsContext) int {
 		return resultDone
 	}
 
-	optResp := d.Res.IsEdns0()
-	if !ctx.origReqDNSSEC && optResp != nil && optResp.Do() {
-		return resultDone
-	}
-
-	// Remove RRSIG records from response
-	//  because there is no DO flag in the original request from client,
-	//  but we have EnableDNSSEC set, so we have set DO flag ourselves,
-	//  and now we have to clean up the DNS records our client didn't ask for.
-
-	answers := []dns.RR{}
-	for _, a := range d.Res.Answer {
-		switch a.(type) {
-		case *dns.RRSIG:
-			log.Debug("Removing RRSIG record from response: %v", a)
-		default:
-			answers = append(answers, a)
+	if !ctx.origReqDNSSEC {
+		optResp := d.Res.IsEdns0()
+		if optResp != nil && !optResp.Do() {
+			return resultDone
 		}
-	}
-	d.Res.Answer = answers
 
-	answers = []dns.RR{}
-	for _, a := range d.Res.Ns {
-		switch a.(type) {
-		case *dns.RRSIG:
-			log.Debug("Removing RRSIG record from response: %v", a)
-		default:
-			answers = append(answers, a)
+		// Remove RRSIG records from response
+		// because there is no DO flag in the original request from client,
+		// but we have EnableDNSSEC set, so we have set DO flag ourselves,
+		// and now we have to clean up the DNS records our client didn't ask for.
+
+		answers := []dns.RR{}
+		for _, a := range d.Res.Answer {
+			switch a.(type) {
+			case *dns.RRSIG:
+				log.Debug("Removing RRSIG record from response: %v", a)
+			default:
+				answers = append(answers, a)
+			}
 		}
+		d.Res.Answer = answers
+
+		answers = []dns.RR{}
+		for _, a := range d.Res.Ns {
+			switch a.(type) {
+			case *dns.RRSIG:
+				log.Debug("Removing RRSIG record from response: %v", a)
+			default:
+				answers = append(answers, a)
+			}
+		}
+		d.Res.Ns = answers
 	}
-	d.Res.Ns = answers
 
 	return resultDone
 }
