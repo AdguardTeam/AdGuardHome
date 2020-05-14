@@ -387,6 +387,8 @@
     "rewrite_not_found": "DNS書き換え情報はありません",
     "rewrite_confirm_delete": "\"{{key}}\" のためのDNS書き換え情報を削除してもよろしいですか？",
     "rewrite_desc": "特定のドメイン名に対するDNS応答を簡単にカスタマイズすることを可能にします。",
+    "rewrite_applied": "書き換えルールを適用済み",
+    "rewrite_hosts_applied": "hostsファイルのルールによって書き換え済み",
     "dns_rewrites": "DNS書き換え",
     "form_domain": "ドメイン名を入力してください",
     "form_answer": "IPアドレスかドメイン名を入力",
@@ -443,6 +445,7 @@
     "netname": "ネットワーク名",
     "descr": "説明",
     "whois": "Whois",
+    "filtering_rules_learn_more": "独自ホストリストの作成についての<0>詳細はこちら</0>。",
     "blocked_by_response": "応答されたCNAMEかIPアドレスによるブロック",
     "try_again": "再試行する",
     "domain_desc": "DNSリライトしたいドメイン名やワイルドカードを入力してください。",
@@ -450,6 +453,8 @@
     "example_rewrite_wildcard": "<0>example.org</0>のすべてのサブドメインへのレスポンスをリライトする",
     "disable_ipv6": "IPv6を無効にする",
     "disable_ipv6_desc": "チェックすると、IPv6アドレス（タイプAAAA）のすべてのDNSクエリは破棄されます。",
+    "fastest_addr": "最速のIPアドレス",
+    "fastest_addr_desc": "すべてのDNSサーバーを照会し、全応答の中で最速のIPアドレスを返します",
     "autofix_warning_text": "\"改善\"をクリックすると、AdGuardHomeはAdGuardHome DNSサーバを使用するようにシステムを構成します。",
     "autofix_warning_list": "次のタスクを実行します：<0>システムDNSStubListenerを非アクティブ化します</0> <0>DNSサーバのアドレスを127.0.0.1に設定します</0> <0>/etc/resolv.confのシンボリックリンクの対象を/run/systemd/resolve/resolv.confに置換します</0> <0>DNSStubListenerを停止します（systemd-resolvedサービスをリロードします）</0>",
     "autofix_warning_result": "その結果、システムからのすべてのDNS要求は、デフォルトでAdGuardHomeによって処理されます。",
@@ -480,5 +485,6 @@
     "install_static_configure": "動的IPアドレスが使用されていることを検出しました— <0>{{ip}}</0>。静的アドレスとして使用しますか？",
     "confirm_static_ip": "AdGuard Homeは、{{ip}}を静的IPアドレスとして設定します。よろしいですか？",
     "list_updated": "{{count}}個のリストが更新されました",
-    "list_updated_plural": "{{count}}個のリストが更新されました"
+    "list_updated_plural": "{{count}}個のリストが更新されました",
+    "dnssec_enable": "DNSSECを有効にする"
 }

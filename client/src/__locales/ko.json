@@ -1,5 +1,7 @@
 {
     "client_settings": "클라이언트 설정",
+    "example_upstream_reserved": "<0>특정 도메인에 대한</0> DNS 업스트림을 지정할 수 있습니다.",
+    "upstream_parallel": "쿼리 처리 속도를 높이려면 모든 업스트림 서버에서 동시에 병렬 쿼리를 사용해주세요.",
     "parallel_requests": "병렬 처리 요청",
     "bootstrap_dns": "부트스트랩 DNS 서버",
     "bootstrap_dns_desc": "부트스트랩 DNS 서버는 업스트림으로 지정한 DoH/DoT 서버의 IP 주소를 확인하는 데 사용합니다.",
@@ -255,6 +257,7 @@
     "install_devices_router_list_1": "라우터의 환경 설정을 여세요. 환경 설정은 다음의 주소(http://192.168.0.1/ 혹은 http://192.168.1.1/)를 통해 브라우저로 접근 가능합니다. 비밀번호를 입력해야할 수 있습니다. 비밀번호를 잊었다면 대개 라우터 기기에 있는 버튼을 눌러 비밀번호를 초기화할 수 있습니다. 어떤 라우터들은 당신의 컴퓨터/핸드폰에 설치할 수 있는 특정 어플리케이션을 필요로합니다.",
     "install_devices_router_list_2": "각각 1~3자리 숫자의 네 그룹으로 분할된 두 세트의 숫자를 허용하는 필드 옆에 있는 DNS 문자를 찾으세요.",
     "install_devices_router_list_3": "AdGuard Home 서버 주소를 입력하세요",
+    "install_devices_router_list_4": "일부 라우터는 DNS서버의 커스텀 설정이 불가합니다. 간혹 AdGuard Home을 DHCP서버로 이용하여 문제를 해결하는 경우가 있지만 문제가 지속될 경우 사용하시는 라우터 모델의 매뉴얼을 참고하시어 DNS서버 커스텀 설정 방법을 직접 살펴보셔야 합니다.",
     "install_devices_windows_list_1": "시작 메뉴 또는 윈도우 검색을 통해 제어판을 여세요",
     "install_devices_windows_list_2": "네트워크 및 인터넷 카테고리로 이동한 다음 네트워크 및 공유 센터로 이동하세요.",
     "install_devices_windows_list_3": "화면 왼쪽에서 어댑터 설정 변경을 찾아 클릭하세요.",
@@ -386,6 +389,8 @@
     "rewrite_not_found": "DNS 변경 정보를 찾을 수 없습니다",
     "rewrite_confirm_delete": "\"{{key}}\"에 대한 DNS 변경 정보를 삭제하시겠습니까?",
     "rewrite_desc": "특정 도메인 이름에 대한 사용자 지정 DNS 응답을 쉽게 구성할 수 있습니다.",
+    "rewrite_applied": "리디렉션 규칙이 적용됩니다",
+    "rewrite_hosts_applied": "호스트 파일 규칙에 따라 재작성",
     "dns_rewrites": "DNS 변경",
     "form_domain": "도메인 이름 또는 와일드카드를 입력합니다",
     "form_answer": "IP 주소 또는 도메인 이름을 입력하세요",
@@ -451,6 +456,7 @@
     "disable_ipv6": "IPv6 비활성화",
     "disable_ipv6_desc": "이 기능이 활성화되면 IPv6 (타입 AAAA) 의 모든 DNS 쿼리가 드랍됩니다.",
     "fastest_addr": "가장 빠른 IP 주소",
+    "fastest_addr_desc": "반응이 가장 빠른 IP주소를 가진 DNS서버에 쿼리를 수행합니다.",
     "autofix_warning_text": "\"Fix\"를 클릭한다면 AdGuard Home은 시스템이 AdGuard Home의 DNS 서버를 사용하도록 설정합니다.",
     "autofix_warning_list": "다음 작업을 진행합니다: <0>DNSStubListener 시스템 비활성화</0> <0>DNS 서버 주소를 127.0.0.1로 설정</0> <0>/etc/resolv.conf의 심볼릭 링크 타겟을 /run/systemd/resolve/resolv.conf로 변경</0> <0>DNSStubListener 중지 (systemd-resolved 서비스 새로고침)</0>",
     "autofix_warning_result": "결과적으로 시스템의 모든 DNS 요청은 기본적으로 AdGuard Home에 의해 처리됩니다.",
@@ -482,5 +488,6 @@
     "confirm_static_ip": "AdGuard Home이 {{ip}}를 고정 IP 주소로 설정하려고 합니다. 계속하시겠습니까?",
     "list_updated": "{{count}} 리스트 업데이트됨",
     "list_updated_plural": "{{count}} 리스트 업데이트됨",
-    "dnssec_enable": "DNSSEC 활성화"
+    "dnssec_enable": "DNSSEC 활성화",
+    "dnssec_enable_desc": "발신 DNS 쿼리에서 DNSSEC 플래그를 설정하고 결과를 확인합니다 (DNSSEC-enabled resolver 필수)"
 }
