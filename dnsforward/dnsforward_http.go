@@ -343,8 +343,8 @@ func checkDNS(input string, bootstrap []string) error {
 		return fmt.Errorf("wrong upstream format: %s", err)
 	}
 
-	// No need to check this entrance
-	if input == "#" && !defaultUpstream {
+	// No need to check this DNS server
+	if input == "#" || !defaultUpstream {
 		return nil
 	}
 
