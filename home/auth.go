@@ -381,6 +381,8 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 			}
 
 		} else if r.URL.Path == "/favicon.png" ||
+			r.URL.Path == "/safari-pinned-tab.svg" ||
+			strings.HasPrefix(r.URL.Path, "/apple-touch-icon") ||
 			strings.HasPrefix(r.URL.Path, "/login.") ||
 			strings.HasPrefix(r.URL.Path, "/__locales/") {
 			// process as usual
