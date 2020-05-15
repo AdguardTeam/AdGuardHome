@@ -589,28 +589,34 @@ func printHTTPAddresses(proto string) {
 	if Context.tls != nil {
 		Context.tls.WriteDiskConfig(&tlsConf)
 	}
+
+	port := strconv.Itoa(config.BindPort)
+	if proto == "https" {
+		port = strconv.Itoa(tlsConf.PortHTTPS)
+	}
+
 	if proto == "https" && tlsConf.ServerName != "" {
 		if tlsConf.PortHTTPS == 443 {
 			log.Printf("Go to https://%s", tlsConf.ServerName)
 		} else {
-			log.Printf("Go to https://%s:%d", tlsConf.ServerName, tlsConf.PortHTTPS)
+			log.Printf("Go to https://%s:%s", tlsConf.ServerName, port)
 		}
 	} else if config.BindHost == "0.0.0.0" {
 		log.Println("AdGuard Home is available on the following addresses:")
 		ifaces, err := util.GetValidNetInterfacesForWeb()
 		if err != nil {
 			// That's weird, but we'll ignore it
-			address = net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
+			address = net.JoinHostPort(config.BindHost, port)
 			log.Printf("Go to %s://%s", proto, address)
 			return
 		}
 
 		for _, iface := range ifaces {
-			address = net.JoinHostPort(iface.Addresses[0], strconv.Itoa(config.BindPort))
+			address = net.JoinHostPort(iface.Addresses[0], port)
 			log.Printf("Go to %s://%s", proto, address)
 		}
 	} else {
-		address = net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
+		address = net.JoinHostPort(config.BindHost, port)
 		log.Printf("Go to %s://%s", proto, address)
 	}
 }

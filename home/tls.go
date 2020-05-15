@@ -39,7 +39,14 @@ func tlsCreate(conf tlsConfigSettings) *TLSMod {
 	t.conf = conf
 	if t.conf.Enabled {
 		if !t.load() {
-			return nil
+			// Something is not valid - return an empty TLS config
+			return &TLSMod{conf: tlsConfigSettings{
+				Enabled:             conf.Enabled,
+				ServerName:          conf.ServerName,
+				PortHTTPS:           conf.PortHTTPS,
+				PortDNSOverTLS:      conf.PortDNSOverTLS,
+				AllowUnencryptedDOH: conf.AllowUnencryptedDOH,
+			}}
 		}
 		t.setCertFileTime()
 	}
@@ -55,7 +62,7 @@ func (t *TLSMod) load() bool {
 	// validate current TLS config and update warnings (it could have been loaded from file)
 	data := validateCertificates(string(t.conf.CertificateChainData), string(t.conf.PrivateKeyData), t.conf.ServerName)
 	if !data.ValidPair {
-		log.Error(data.WarningValidation)
+		log.Error("failed to validate certificate: %s", data.WarningValidation)
 		return false
 	}
 	t.status = data

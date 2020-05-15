@@ -85,10 +85,11 @@ type FilteringConfig struct {
 
 // TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
 type TLSConfig struct {
-	TLSListenAddr    *net.TCPAddr `yaml:"-" json:"-"`
-	StrictSNICheck   bool         `yaml:"strict_sni_check" json:"-"`                  // Reject connection if the client uses server name (in SNI) that doesn't match the certificate
-	CertificateChain string       `yaml:"certificate_chain" json:"certificate_chain"` // PEM-encoded certificates chain
-	PrivateKey       string       `yaml:"private_key" json:"private_key"`             // PEM-encoded private key
+	TLSListenAddr  *net.TCPAddr `yaml:"-" json:"-"`
+	StrictSNICheck bool         `yaml:"strict_sni_check" json:"-"` // Reject connection if the client uses server name (in SNI) that doesn't match the certificate
+
+	CertificateChain string `yaml:"certificate_chain" json:"certificate_chain"` // PEM-encoded certificates chain
+	PrivateKey       string `yaml:"private_key" json:"private_key"`             // PEM-encoded private key
 
 	CertificatePath string `yaml:"certificate_path" json:"certificate_path"` // certificate file name
 	PrivateKeyPath  string `yaml:"private_key_path" json:"private_key_path"` // private key file name
