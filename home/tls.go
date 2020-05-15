@@ -48,6 +48,7 @@ func tlsCreate(conf tlsConfigSettings) *TLSMod {
 
 func (t *TLSMod) load() bool {
 	if !tlsLoadConfig(&t.conf, &t.status) {
+		log.Error("failed to load TLS config: %s", t.status.WarningValidation)
 		return false
 	}
 
@@ -191,7 +192,7 @@ type tlsConfig struct {
 	tlsConfigStatus   `json:",inline"`
 }
 
-func (t *TLSMod) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
+func (t *TLSMod) handleTLSStatus(w http.ResponseWriter, _ *http.Request) {
 	t.confLock.Lock()
 	data := tlsConfig{
 		tlsConfigSettings: t.conf,
