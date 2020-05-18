@@ -154,14 +154,21 @@ func (a *AutoHosts) load(table map[string][]net.IP, tableRev map[string]string, 
 			return
 		}
 		line = strings.TrimSpace(line)
+		if len(line) == 0 || line[0] == '#' {
+			continue
+		}
 
-		ip := SplitNext(&line, ' ')
-		ipAddr := net.ParseIP(ip)
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			continue
+		}
+
+		ipAddr := net.ParseIP(fields[0])
 		if ipAddr == nil {
 			continue
 		}
-		for {
-			host := SplitNext(&line, ' ')
+		for i := 1; i != len(fields); i++ {
+			host := fields[i]
 			if len(host) == 0 {
 				break
 			}
