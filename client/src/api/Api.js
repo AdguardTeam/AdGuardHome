@@ -32,7 +32,6 @@ class Api {
 
     // Global methods
     GLOBAL_STATUS = { path: 'status', method: 'GET' };
-    GLOBAL_SET_UPSTREAM_DNS = { path: 'set_upstreams_config', method: 'POST' };
     GLOBAL_TEST_UPSTREAM_DNS = { path: 'test_upstream_dns', method: 'POST' };
     GLOBAL_VERSION = { path: 'version.json', method: 'POST' };
     GLOBAL_UPDATE = { path: 'update', method: 'POST' };
@@ -40,15 +39,6 @@ class Api {
     getGlobalStatus() {
         const { path, method } = this.GLOBAL_STATUS;
         return this.makeRequest(path, method);
-    }
-
-    setUpstream(url) {
-        const { path, method } = this.GLOBAL_SET_UPSTREAM_DNS;
-        const config = {
-            data: url,
-            headers: { 'Content-Type': 'application/json' },
-        };
-        return this.makeRequest(path, method, config);
     }
 
     testUpstream(servers) {

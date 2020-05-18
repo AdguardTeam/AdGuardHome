@@ -1,6 +1,70 @@
 # AdGuard Home API Change Log
 
 
+## v0.102: API changes
+
+### API: Get general status: GET /control/status
+
+* Removed "upstream_dns", "bootstrap_dns", "all_servers" parameters
+
+### API: Get DNS general settings: GET /control/dns_info
+
+* Added "parallel_requests", "upstream_dns", "bootstrap_dns" parameters
+
+Request:
+
+	GET /control/dns_info
+
+Response:
+
+	200 OK
+
+	{
+		"upstream_dns": ["tls://...", ...],
+		"bootstrap_dns": ["1.2.3.4", ...],
+
+		"protection_enabled": true | false,
+		"ratelimit": 1234,
+		"blocking_mode": "default" | "nxdomain" | "null_ip" | "custom_ip",
+		"blocking_ipv4": "1.2.3.4",
+		"blocking_ipv6": "1:2:3::4",
+		"edns_cs_enabled": true | false,
+		"dnssec_enabled": true | false
+		"disable_ipv6": true | false,
+		"fastest_addr": true | false, // use Fastest Address algorithm
+		"parallel_requests": true | false, // send DNS requests to all upstream servers at once
+	}
+
+### API: Set DNS general settings: POST /control/dns_config
+
+* Added "parallel_requests", "upstream_dns", "bootstrap_dns" parameters
+* removed /control/set_upstreams_config method
+
+Request:
+
+	POST /control/dns_config
+
+	{
+		"upstream_dns": ["tls://...", ...],
+		"bootstrap_dns": ["1.2.3.4", ...],
+
+		"protection_enabled": true | false,
+		"ratelimit": 1234,
+		"blocking_mode": "default" | "nxdomain" | "null_ip" | "custom_ip",
+		"blocking_ipv4": "1.2.3.4",
+		"blocking_ipv6": "1:2:3::4",
+		"edns_cs_enabled": true | false,
+		"dnssec_enabled": true | false
+		"disable_ipv6": true | false,
+		"fastest_addr": true | false, // use Fastest Address algorithm
+		"parallel_requests": true | false, // send DNS requests to all upstream servers at once
+	}
+
+Response:
+
+	200 OK
+
+
 ## v0.101: API changes
 
 ### API: Refresh filters: POST /control/filtering/refresh

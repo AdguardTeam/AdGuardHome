@@ -130,7 +130,6 @@
     "filters_and_hosts_hint": "AdGuard Home เข้าใจกฎปิดกั้นโฆษณาพื้นฐานและโฮสต์ไฟล์ไวยากรณ์",
     "cancel_btn": "ยกเลิก",
     "enter_name_hint": "ป้อนชื่อ",
-    "enter_url_hint": "ป้อน URL",
     "check_updates_btn": "ตรวจสอบการปรับปรุง",
     "custom_filter_rules": "กฎการกรองที่กำหนดเอง",
     "custom_filter_rules_hint": "ป้อนหนึ่งกฎในหนึ่งบรรทัด คุณสามารถใช้กฎปิดกั้นโฆษณาหรือโฮสต์ไฟล์ไวยากรณ์",

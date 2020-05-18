@@ -208,6 +208,11 @@ func run(args options) {
 		}
 	}
 
+	// 'clients' module uses 'dnsfilter' module's static data (dnsfilter.BlockedSvcKnown()),
+	//  so we have to initialize dnsfilter's static data first,
+	//  but also avoid relying on automatic Go init() function
+	dnsfilter.InitModule()
+
 	config.DHCP.WorkDir = Context.workDir
 	config.DHCP.HTTPRegister = httpRegister
 	config.DHCP.ConfigModified = onConfigModified
@@ -241,6 +246,16 @@ func run(args options) {
 		err := config.write()
 		if err != nil {
 			log.Fatal(err)
+		}
+
+		if config.DebugPProf {
+			mux := http.NewServeMux()
+			util.PProfRegisterWebHandlers(mux)
+			go func() {
+				log.Info("pprof: listening on localhost:6060")
+				err := http.ListenAndServe("localhost:6060", mux)
+				log.Error("Error while running the pprof server: %s", err)
+			}()
 		}
 	}
 
@@ -321,6 +336,8 @@ func requireAdminRights() {
 	admin, _ := util.HaveAdminRights()
 	if //noinspection ALL
 	admin || isdelve.Enabled {
+		// Don't forget that for this to work you need to add "delve" tag explicitly
+		// https://stackoverflow.com/questions/47879070/how-can-i-see-if-the-goland-debugger-is-running-in-the-program
 		return
 	}
 
@@ -572,28 +589,34 @@ func printHTTPAddresses(proto string) {
 	if Context.tls != nil {
 		Context.tls.WriteDiskConfig(&tlsConf)
 	}
+
+	port := strconv.Itoa(config.BindPort)
+	if proto == "https" {
+		port = strconv.Itoa(tlsConf.PortHTTPS)
+	}
+
 	if proto == "https" && tlsConf.ServerName != "" {
 		if tlsConf.PortHTTPS == 443 {
 			log.Printf("Go to https://%s", tlsConf.ServerName)
 		} else {
-			log.Printf("Go to https://%s:%d", tlsConf.ServerName, tlsConf.PortHTTPS)
+			log.Printf("Go to https://%s:%s", tlsConf.ServerName, port)
 		}
 	} else if config.BindHost == "0.0.0.0" {
 		log.Println("AdGuard Home is available on the following addresses:")
 		ifaces, err := util.GetValidNetInterfacesForWeb()
 		if err != nil {
 			// That's weird, but we'll ignore it
-			address = net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
+			address = net.JoinHostPort(config.BindHost, port)
 			log.Printf("Go to %s://%s", proto, address)
 			return
 		}
 
 		for _, iface := range ifaces {
-			address = net.JoinHostPort(iface.Addresses[0], strconv.Itoa(config.BindPort))
+			address = net.JoinHostPort(iface.Addresses[0], port)
 			log.Printf("Go to %s://%s", proto, address)
 		}
 	} else {
-		address = net.JoinHostPort(config.BindHost, strconv.Itoa(config.BindPort))
+		address = net.JoinHostPort(config.BindHost, port)
 		log.Printf("Go to %s://%s", proto, address)
 	}
 }

@@ -380,11 +380,10 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 				}
 			}
 
-		} else if r.URL.Path == "/favicon.png" ||
-			strings.HasPrefix(r.URL.Path, "/login.") ||
-			strings.HasPrefix(r.URL.Path, "/__locales/") {
+		} else if strings.HasPrefix(r.URL.Path, "/assets/") ||
+			strings.HasPrefix(r.URL.Path, "/login.") {
 			// process as usual
-
+			// no additional auth requirements
 		} else if Context.auth != nil && Context.auth.AuthRequired() {
 			// redirect to login page if not authenticated
 			ok := false

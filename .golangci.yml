@@ -13,6 +13,7 @@ run:
   skip-files:
     - ".*generated.*"
     - dnsfilter/rule_to_regexp.go
+    - util/pprof.go
     - ".*_test.go"
 
 
@@ -65,5 +66,11 @@ issues:
     - Error return value of ..*.Shutdown.
     # goconst
     - string .forcesafesearch.google.com. has 3 occurrences
+    # gosec: Profiling endpoint is automatically exposed on /debug/pprof
+    - G108
     # gosec: Subprocess launched with function call as argument or cmd arguments
     - G204
+    # gosec: Potential DoS vulnerability via decompression bomb
+    - G110
+    # gosec: Expect WriteFile permissions to be 0600 or less
+    - G306

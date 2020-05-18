@@ -244,6 +244,7 @@ export const getDnsStatus = () => async (dispatch) => {
         dispatch(dnsStatusFailure());
         window.location.reload(true);
     };
+
     const handleRequestSuccess = (response) => {
         const dnsStatus = response.data;
         const { running } = dnsStatus;
@@ -262,42 +263,6 @@ export const getDnsStatus = () => async (dispatch) => {
         checkStatus(handleRequestSuccess, handleRequestError);
     } catch (error) {
         handleRequestError(error);
-    }
-};
-
-export const getDnsSettingsRequest = createAction('GET_DNS_SETTINGS_REQUEST');
-export const getDnsSettingsFailure = createAction('GET_DNS_SETTINGS_FAILURE');
-export const getDnsSettingsSuccess = createAction('GET_DNS_SETTINGS_SUCCESS');
-
-export const getDnsSettings = () => async (dispatch) => {
-    dispatch(getDnsSettingsRequest());
-    try {
-        const dnsStatus = await apiClient.getGlobalStatus();
-        dispatch(getDnsSettingsSuccess(dnsStatus));
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
-        dispatch(getDnsSettingsFailure());
-    }
-};
-
-export const handleUpstreamChange = createAction('HANDLE_UPSTREAM_CHANGE');
-export const setUpstreamRequest = createAction('SET_UPSTREAM_REQUEST');
-export const setUpstreamFailure = createAction('SET_UPSTREAM_FAILURE');
-export const setUpstreamSuccess = createAction('SET_UPSTREAM_SUCCESS');
-
-export const setUpstream = config => async (dispatch) => {
-    dispatch(setUpstreamRequest());
-    try {
-        const values = { ...config };
-        values.bootstrap_dns = normalizeTextarea(values.bootstrap_dns);
-        values.upstream_dns = normalizeTextarea(values.upstream_dns);
-
-        await apiClient.setUpstream(values);
-        dispatch(addSuccessToast('updated_upstream_dns_toast'));
-        dispatch(setUpstreamSuccess(config));
-    } catch (error) {
-        dispatch(addErrorToast({ error }));
-        dispatch(setUpstreamFailure());
     }
 };
 

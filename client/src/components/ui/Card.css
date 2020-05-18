@@ -11,6 +11,11 @@
 
 .card-table-overflow {
     overflow-y: auto;
+    max-height: 100%;
+}
+
+.card-table-overflow--limited {
+    overflow-y: auto;
     max-height: 280px;
 }
 

@@ -882,6 +882,9 @@ Response:
 	200 OK
 
 	{
+		"upstream_dns": ["tls://...", ...],
+		"bootstrap_dns": ["1.2.3.4", ...],
+
 		"protection_enabled": true | false,
 		"ratelimit": 1234,
 		"blocking_mode": "default" | "nxdomain" | "null_ip" | "custom_ip",
@@ -890,6 +893,8 @@ Response:
 		"edns_cs_enabled": true | false,
 		"dnssec_enabled": true | false
 		"disable_ipv6": true | false,
+		"fastest_addr": true | false, // use Fastest Address algorithm
+		"parallel_requests": true | false, // send DNS requests to all upstream servers at once
 	}
 
 
@@ -900,6 +905,9 @@ Request:
 	POST /control/dns_config
 
 	{
+		"upstream_dns": ["tls://...", ...],
+		"bootstrap_dns": ["1.2.3.4", ...],
+
 		"protection_enabled": true | false,
 		"ratelimit": 1234,
 		"blocking_mode": "default" | "nxdomain" | "null_ip" | "custom_ip",
@@ -908,6 +916,8 @@ Request:
 		"edns_cs_enabled": true | false,
 		"dnssec_enabled": true | false
 		"disable_ipv6": true | false,
+		"fastest_addr": true | false, // use Fastest Address algorithm
+		"parallel_requests": true | false, // send DNS requests to all upstream servers at once
 	}
 
 Response:

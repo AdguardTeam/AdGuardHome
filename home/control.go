@@ -55,9 +55,6 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		"language":      config.Language,
 
 		"protection_enabled": c.ProtectionEnabled,
-		"bootstrap_dns":      c.BootstrapDNS,
-		"upstream_dns":       c.UpstreamDNS,
-		"all_servers":        c.AllServers,
 	}
 
 	jsonVal, err := json.Marshal(data)
@@ -191,7 +188,7 @@ func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.Res
 
 		if Context.firstRun &&
 			!strings.HasPrefix(r.URL.Path, "/install.") &&
-			r.URL.Path != "/favicon.png" {
+			!strings.HasPrefix(r.URL.Path, "/assets/") {
 			http.Redirect(w, r, "/install.html", http.StatusFound)
 			return
 		}

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"sync"
 
@@ -528,6 +529,9 @@ func (d *Dnsfilter) initFiltering(allowFilters, blockFilters []Filter) error {
 	d.filteringEngine = filteringEngine
 	d.rulesStorageWhite = rulesStorageWhite
 	d.filteringEngineWhite = filteringEngineWhite
+
+	// Make sure that the OS reclaims memory as soon as possible
+	debug.FreeOSMemory()
 	log.Debug("initialized filtering engine")
 
 	return nil
@@ -628,6 +632,11 @@ func makeResult(rule rules.Rule, reason Reason) Result {
 	return res
 }
 
+// InitModule() - manually initialize blocked services map
+func InitModule() {
+	initBlockedServices()
+}
+
 // New creates properly initialized DNS Filter that is ready to be used
 func New(c *Config, blockFilters []Filter) *Dnsfilter {
 
@@ -676,8 +685,6 @@ func New(c *Config, blockFilters []Filter) *Dnsfilter {
 		bsvcs = append(bsvcs, s)
 	}
 	d.BlockedServices = bsvcs
-
-	initBlockedServices()
 
 	if blockFilters != nil {
 		err := d.initFiltering(nil, blockFilters)

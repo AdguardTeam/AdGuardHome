@@ -124,7 +124,6 @@
     "filters_and_hosts_hint": "AdGuard tillämpar grundläggande annonsblockeringsregler och värdfiltersyntaxer",
     "cancel_btn": "Avbryt",
     "enter_name_hint": "Skriv in namn",
-    "enter_url_hint": "Skriv in URL",
     "check_updates_btn": "Sök efter uppdateringar",
     "custom_filter_rules": "Egna filterregler",
     "custom_filter_rules_hint": "Skriv en regel per rad. Du kan använda antingen annonsblockeringsregler eller värdfilssyntax.",

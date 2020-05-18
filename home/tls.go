@@ -39,7 +39,14 @@ func tlsCreate(conf tlsConfigSettings) *TLSMod {
 	t.conf = conf
 	if t.conf.Enabled {
 		if !t.load() {
-			return nil
+			// Something is not valid - return an empty TLS config
+			return &TLSMod{conf: tlsConfigSettings{
+				Enabled:             conf.Enabled,
+				ServerName:          conf.ServerName,
+				PortHTTPS:           conf.PortHTTPS,
+				PortDNSOverTLS:      conf.PortDNSOverTLS,
+				AllowUnencryptedDOH: conf.AllowUnencryptedDOH,
+			}}
 		}
 		t.setCertFileTime()
 	}
@@ -48,13 +55,14 @@ func tlsCreate(conf tlsConfigSettings) *TLSMod {
 
 func (t *TLSMod) load() bool {
 	if !tlsLoadConfig(&t.conf, &t.status) {
+		log.Error("failed to load TLS config: %s", t.status.WarningValidation)
 		return false
 	}
 
 	// validate current TLS config and update warnings (it could have been loaded from file)
 	data := validateCertificates(string(t.conf.CertificateChainData), string(t.conf.PrivateKeyData), t.conf.ServerName)
 	if !data.ValidPair {
-		log.Error(data.WarningValidation)
+		log.Error("failed to validate certificate: %s", data.WarningValidation)
 		return false
 	}
 	t.status = data
@@ -191,7 +199,7 @@ type tlsConfig struct {
 	tlsConfigStatus   `json:",inline"`
 }
 
-func (t *TLSMod) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
+func (t *TLSMod) handleTLSStatus(w http.ResponseWriter, _ *http.Request) {
 	t.confLock.Lock()
 	data := tlsConfig{
 		tlsConfigSettings: t.conf,
@@ -279,11 +287,14 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		tlsConfigStatus:   t.status,
 	}
 	marshalTLS(w, data2)
+	if f, ok := w.(http.Flusher); ok {
+		f.Flush()
+	}
+
 	// this needs to be done in a goroutine because Shutdown() is a blocking call, and it will block
 	// until all requests are finished, and _we_ are inside a request right now, so it will block indefinitely
 	if restartHTTPS {
 		go func() {
-			time.Sleep(time.Second) // TODO: could not find a way to reliably know that data was fully sent to client by https server, so we wait a bit to let response through before closing the server
 			Context.web.TLSConfigChanged(data)
 		}()
 	}

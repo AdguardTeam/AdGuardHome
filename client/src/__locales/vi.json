@@ -129,7 +129,6 @@
     "filters_and_hosts_hint": "AdGuard home hiểu các quy tắc chặn quảng cáo đơn giản và cú pháp file hosts",
     "cancel_btn": "Huỷ",
     "enter_name_hint": "Nhập tên",
-    "enter_url_hint": "Nhập URL",
     "check_updates_btn": "Kiểm tra cập nhật",
     "custom_filter_rules": "Quy tắc lọc tuỳ chỉnh",
     "custom_filter_rules_hint": "Nhập mỗi quy tắc 1 dòng. Có thể sử dụng quy tắc chặn quảng cáo hoặc cú pháp file host",
@@ -180,6 +179,8 @@
     "query_log_disabled": "Nhật ký truy vấn bị vô hiệu hóa và có thể được định cấu hình trong <0>cài đặt</ 0>",
     "query_log_strict_search": "Sử dụng dấu ngoặc kép để tìm kiếm nghiêm ngặt",
     "query_log_retention_confirm": "Bạn có chắc chắn muốn thay đổi lưu giữ nhật ký truy vấn? Nếu bạn giảm giá trị khoảng, một số dữ liệu sẽ bị mất",
+    "anonymize_client_ip": "Ẩn danh IP khách",
+    "anonymize_client_ip_desc": "Không lưu địa chỉ IP đầy đủ của khách hàng trong nhật ký và thống kê",
     "dns_config": "Thiết lập máy chủ DNS",
     "blocking_mode": "Chế độ chặn",
     "nxdomain": "NXDOMAIN",
@@ -410,5 +411,7 @@
     "whois": "Whois",
     "filtering_rules_learn_more": "<0>Tìm hiểu thêm</0> về việc tạo danh sách chặn máy chủ của riêng bạn.",
     "blocked_by_response": "Chặn bởi CNAME hoặc địa IP ở phản hồi",
-    "try_again": "Hãy thử lại"
+    "try_again": "Hãy thử lại",
+    "dnssec_enable": "Bật DNSSEC",
+    "dnssec_enable_desc": "Cắm mốc DNSSEC trong các truy vấn DNS sắp tới và kiểm tra kết quả (buộc phải có trình sửa lỗi hỗ trợ DNSSEC)"
 }

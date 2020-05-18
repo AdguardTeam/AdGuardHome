@@ -26,8 +26,18 @@
     <a href="https://golangci.com/r/github.com/AdguardTeam/AdGuardHome">
       <img src="https://golangci.com/badges/github.com/AdguardTeam/AdGuardHome.svg" alt="GolangCI" />
     </a>
+    <br />
     <a href="https://github.com/AdguardTeam/AdGuardHome/releases">
         <img src="https://img.shields.io/github/release/AdguardTeam/AdGuardHome/all.svg" alt="Latest release" />
+    </a>
+    <a href="https://snapcraft.io/adguard-home">
+        <img alt="adguard-home" src="https://snapcraft.io/adguard-home/badge.svg" />
+    </a>
+    <a href="https://hub.docker.com/r/adguard/adguardhome">
+        <img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/adguard/adguardhome.svg?maxAge=604800" />
+    </a>
+    <a href="https://hub.docker.com/r/adguard/adguardhome">
+        <img alt="Docker Stars" src="https://img.shields.io/docker/stars/adguard/adguardhome.svg?maxAge=604800" />
     </a>
 </p>
 
@@ -59,7 +69,9 @@ It operates as a DNS server that re-routes tracking domains to a "black hole," t
 <a id="getting-started"></a>
 ## Getting Started
 
-Please read the [Getting Started](https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started) article on our Wiki to learn how to install AdGuard Home, and how to configure your devices to use it.
+Please read the **[Getting Started](https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started)** article on our Wiki to learn how to install AdGuard Home, and how to configure your devices to use it.
+
+If you're running **Linux**, there's a secure and easy way to install AdGuard Home - you can get it from the [Snap Store](https://snapcraft.io/adguard-home).
 
 Alternatively, you can use our [official Docker image](https://hub.docker.com/r/adguard/adguardhome). 
 
@@ -69,6 +81,7 @@ Alternatively, you can use our [official Docker image](https://hub.docker.com/r/
 * [AdGuard Home as a DNS-over-HTTPS or DNS-over-TLS server](https://github.com/AdguardTeam/AdGuardHome/wiki/Encryption)
 * [How to install and run AdGuard Home on Raspberry Pi](https://github.com/AdguardTeam/AdGuardHome/wiki/Raspberry-Pi)
 * [How to install and run AdGuard Home on a Virtual Private Server](https://github.com/AdguardTeam/AdGuardHome/wiki/VPS)
+* [How to write your own hosts blocklists properly](https://github.com/AdguardTeam/AdGuardHome/wiki/Hosts-Blocklists)
 
 ### API
 
@@ -165,11 +178,12 @@ You are welcome to fork this repository, make your changes and submit a pull req
 <a id="test-unstable-versions"></a>
 ### Test unstable versions
 
-There are two options how you can install an unstable version.
-You can either install a beta version of AdGuard Home which we update periodically,
-or you can use the Docker image from the `edge` tag, which is synced with the repo master branch.
+There are three options how you can install an unstable version.
 
-* [Docker Hub](https://hub.docker.com/r/adguard/adguardhome)
+1. You can either install a beta version of AdGuard Home which we update periodically.
+2. You can use the Docker image from the `edge` tag, which is synced with the repo master branch.
+3. You can install AdGuard Home from `beta` or `edge` channels on the Snap Store.
+
 * Beta builds
     * [Raspberry Pi (32-bit ARMv6)](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_arm.tar.gz)
     * [MacOS](https://static.adguard.com/adguardhome/beta/AdGuardHome_MacOS.zip)
@@ -182,6 +196,8 @@ or you can use the Docker image from the `edge` tag, which is synced with the re
     * [Linux 32-bit ARMv5](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv5.tar.gz)
     * [MIPS](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mips.tar.gz)
     * [MIPSLE](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mipsle.tar.gz)
+* [Docker Hub](https://hub.docker.com/r/adguard/adguardhome)
+* [Snap Store](https://snapcraft.io/adguard-home)
 
 <a id="reporting-issues"></a>
 ### Report issues

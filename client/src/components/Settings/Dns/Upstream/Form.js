@@ -6,21 +6,50 @@ import { Trans, withNamespaces } from 'react-i18next';
 import flow from 'lodash/flow';
 import classnames from 'classnames';
 
-import { renderSelectField } from '../../../../helpers/form';
 import Examples from './Examples';
+import { renderSelectField } from '../../../../helpers/form';
+
+const getInputFields = (parallel_requests_selected, fastest_addr_selected) => [{
+    // eslint-disable-next-line react/display-name
+    getTitle: () => <label className="form__label" htmlFor="upstream_dns">
+        <Trans>upstream_dns</Trans>
+    </label>,
+    name: 'upstream_dns',
+    type: 'text',
+    component: 'textarea',
+    className: 'form-control form-control--textarea font-monospace',
+    placeholder: 'upstream_dns',
+},
+{
+    name: 'parallel_requests',
+    placeholder: 'parallel_requests',
+    component: renderSelectField,
+    type: 'checkbox',
+    subtitle: 'upstream_parallel',
+    disabled: fastest_addr_selected,
+},
+{
+    name: 'fastest_addr',
+    placeholder: 'fastest_addr',
+    component: renderSelectField,
+    type: 'checkbox',
+    subtitle: 'fastest_addr_desc',
+    disabled: parallel_requests_selected,
+}];
 
 let Form = (props) => {
     const {
         t,
         handleSubmit,
         testUpstream,
-        upstreamDns,
-        bootstrapDns,
-        allServers,
         submitting,
         invalid,
-        processingSetUpstream,
+        processingSetConfig,
         processingTestUpstream,
+        fastest_addr,
+        parallel_requests,
+        upstream_dns,
+        bootstrap_dns,
     } = props;
 
     const testButtonClass = classnames({
@@ -28,61 +57,49 @@ let Form = (props) => {
         'btn btn-primary btn-standard mr-2 btn-loading': processingTestUpstream,
     });
 
+    const INPUT_FIELDS = getInputFields(parallel_requests, fastest_addr);
+
     return (
         <form onSubmit={handleSubmit}>
             <div className="row">
-                <div className="col-12">
-                    <div className="form__group form__group--settings">
-                        <label className="form__label" htmlFor="upstream_dns">
-                            <Trans>upstream_dns</Trans>
-                        </label>
-                        <Field
-                            id="upstream_dns"
-                            name="upstream_dns"
-                            component="textarea"
-                            type="text"
-                            className="form-control form-control--textarea"
-                            placeholder={t('upstream_dns')}
-                            disabled={processingSetUpstream || processingTestUpstream}
-                        />
-                    </div>
-                </div>
-                <div className="col-12">
-                    <div className="form__group form__group--settings">
-                        <Field
-                            name="all_servers"
-                            type="checkbox"
-                            component={renderSelectField}
-                            placeholder={t('upstream_parallel')}
-                            disabled={processingSetUpstream}
-                        />
-                    </div>
-                </div>
+                {INPUT_FIELDS.map(({
+                    name, component, type, className, placeholder, getTitle, subtitle, disabled,
+                }) => <div className="col-12 mb-4" key={name}>
+                    {typeof getTitle === 'function' && getTitle()}
+                    <Field
+                        id={name}
+                        name={name}
+                        component={component}
+                        type={type}
+                        className={className}
+                        placeholder={t(placeholder)}
+                        subtitle={t(subtitle)}
+                        disabled={processingSetConfig || processingTestUpstream || disabled}
+                    />
+                </div>)}
                 <div className="col-12">
                     <Examples />
                     <hr />
                 </div>
-                <div className="col-12">
-                    <div className="form__group">
-                        <label
-                            className="form__label form__label--with-desc"
-                            htmlFor="bootstrap_dns"
-                        >
-                            <Trans>bootstrap_dns</Trans>
-                        </label>
-                        <div className="form__desc form__desc--top">
-                            <Trans>bootstrap_dns_desc</Trans>
-                        </div>
-                        <Field
-                            id="bootstrap_dns"
-                            name="bootstrap_dns"
-                            component="textarea"
-                            type="text"
-                            className="form-control form-control--textarea form-control--textarea-small"
-                            placeholder={t('bootstrap_dns')}
-                            disabled={processingSetUpstream}
-                        />
+                <div className="col-12 mb-4">
+                    <label
+                        className="form__label form__label--with-desc"
+                        htmlFor="bootstrap_dns"
+                    >
+                        <Trans>bootstrap_dns</Trans>
+                    </label>
+                    <div className="form__desc form__desc--top">
+                        <Trans>bootstrap_dns_desc</Trans>
                     </div>
+                    <Field
+                        id="bootstrap_dns"
+                        name="bootstrap_dns"
+                        component="textarea"
+                        type="text"
+                        className="form-control form-control--textarea form-control--textarea-small font-monospace"
+                        placeholder={t('bootstrap_dns')}
+                        disabled={processingSetConfig}
+                    />
                 </div>
             </div>
             <div className="card-actions">
@@ -92,12 +109,11 @@ let Form = (props) => {
                         className={testButtonClass}
                         onClick={() =>
                             testUpstream({
-                                upstream_dns: upstreamDns,
-                                bootstrap_dns: bootstrapDns,
-                                all_servers: allServers,
+                                upstream_dns,
+                                bootstrap_dns,
                             })
                         }
-                        disabled={!upstreamDns || processingTestUpstream}
+                        disabled={!upstream_dns || processingTestUpstream}
                     >
                         <Trans>test_upstream_btn</Trans>
                     </button>
@@ -105,7 +121,7 @@ let Form = (props) => {
                         type="submit"
                         className="btn btn-success btn-standard"
                         disabled={
-                            submitting || invalid || processingSetUpstream || processingTestUpstream
+                            submitting || invalid || processingSetConfig || processingTestUpstream
                         }
                     >
                         <Trans>apply_btn</Trans>
@@ -122,24 +138,28 @@ Form.propTypes = {
     submitting: PropTypes.bool,
     invalid: PropTypes.bool,
     initialValues: PropTypes.object,
-    upstreamDns: PropTypes.string,
-    bootstrapDns: PropTypes.string,
-    allServers: PropTypes.bool,
+    upstream_dns: PropTypes.string,
+    bootstrap_dns: PropTypes.string,
+    fastest_addr: PropTypes.bool,
+    parallel_requests: PropTypes.bool,
     processingTestUpstream: PropTypes.bool,
-    processingSetUpstream: PropTypes.bool,
+    processingSetConfig: PropTypes.bool,
     t: PropTypes.func,
 };
 
 const selector = formValueSelector('upstreamForm');
 
 Form = connect((state) => {
-    const upstreamDns = selector(state, 'upstream_dns');
-    const bootstrapDns = selector(state, 'bootstrap_dns');
-    const allServers = selector(state, 'all_servers');
+    const upstream_dns = selector(state, 'upstream_dns');
+    const bootstrap_dns = selector(state, 'bootstrap_dns');
+    const fastest_addr = selector(state, 'fastest_addr');
+    const parallel_requests = selector(state, 'parallel_requests');
+
     return {
-        upstreamDns,
-        bootstrapDns,
-        allServers,
+        upstream_dns,
+        bootstrap_dns,
+        fastest_addr,
+        parallel_requests,
     };
 })(Form);
 

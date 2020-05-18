@@ -7,7 +7,7 @@ import Card from '../../../ui/Card';
 
 class Upstream extends Component {
     handleSubmit = (values) => {
-        this.props.setUpstream(values);
+        this.props.setDnsConfig(values);
     };
 
     handleTest = (values) => {
@@ -17,11 +17,14 @@ class Upstream extends Component {
     render() {
         const {
             t,
-            upstreamDns: upstream_dns,
-            bootstrapDns: bootstrap_dns,
-            allServers: all_servers,
-            processingSetUpstream,
             processingTestUpstream,
+            dnsConfig: {
+                upstream_dns,
+                bootstrap_dns,
+                fastest_addr,
+                parallel_requests,
+                processingSetConfig,
+            },
         } = this.props;
 
         return (
@@ -36,12 +39,13 @@ class Upstream extends Component {
                             initialValues={{
                                 upstream_dns,
                                 bootstrap_dns,
-                                all_servers,
+                                fastest_addr,
+                                parallel_requests,
                             }}
                             testUpstream={this.handleTest}
                             onSubmit={this.handleSubmit}
                             processingTestUpstream={processingTestUpstream}
-                            processingSetUpstream={processingSetUpstream}
+                            processingSetConfig={processingSetConfig}
                         />
                     </div>
                 </div>
@@ -51,14 +55,11 @@ class Upstream extends Component {
 }
 
 Upstream.propTypes = {
-    upstreamDns: PropTypes.string,
-    bootstrapDns: PropTypes.string,
-    allServers: PropTypes.bool,
-    setUpstream: PropTypes.func.isRequired,
     testUpstream: PropTypes.func.isRequired,
-    processingSetUpstream: PropTypes.bool.isRequired,
     processingTestUpstream: PropTypes.bool.isRequired,
     t: PropTypes.func.isRequired,
+    dnsConfig: PropTypes.object.isRequired,
+    setDnsConfig: PropTypes.func.isRequired,
 };
 
 export default withNamespaces()(Upstream);

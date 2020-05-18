@@ -130,7 +130,6 @@
     "filters_and_hosts_hint": "O AdGuard Home entende regras básicas de bloqueio de anúncios e a sintaxe de arquivos de hosts.",
     "cancel_btn": "Cancelar",
     "enter_name_hint": "Insira o nome",
-    "enter_url_hint": "Insira URL",
     "check_updates_btn": "Verificar actualizações",
     "custom_filter_rules": "Regras de filtragem personalizadas",
     "custom_filter_rules_hint": "Insira uma regra por linha. Pode usar regras de bloqueio de anúncios ou a sintaxe de arquivos de hosts.",

@@ -86,7 +86,7 @@ matrix:
         - node -v
         - npm -v
         # Prepare releases
-        - ./release.sh
+        - ./build_release.sh
         - ls -l dist
 
       deploy:
@@ -118,4 +118,4 @@ matrix:
         - docker login -u="$DOCKER_USER" -p="$DOCKER_PASSWORD"
         - ./build_docker.sh
       after_script:
-        - docker images    
+        - docker images

@@ -54,7 +54,7 @@ class CustomRules extends Component {
                 >
                     <form onSubmit={this.handleSubmit}>
                         <textarea
-                            className="form-control form-control--textarea-large"
+                            className="form-control form-control--textarea-large font-monospace"
                             value={userRules}
                             onChange={this.handleChange}
                         />

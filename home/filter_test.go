@@ -14,6 +14,7 @@ import (
 func testStartFilterListener() net.Listener {
 	http.HandleFunc("/filters/1.txt", func(w http.ResponseWriter, r *http.Request) {
 		content := `||example.org^$third-party
+# Inline comment example
 ||example.com^$third-party
 0.0.0.0 example.com
 `
