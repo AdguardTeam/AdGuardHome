@@ -147,6 +147,7 @@ func Create(config ServerConfig) *Server {
 	return &s
 }
 
+// v6 server calls this function after DB is updated
 func (s *Server) notify6(flags uint32) {
 	s.dbStore()
 }
