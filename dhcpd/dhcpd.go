@@ -47,6 +47,7 @@ type ServerConfig struct {
 	// 0: disable
 	ICMPTimeout uint32 `json:"icmp_timeout_msec" yaml:"icmp_timeout_msec"`
 
+	Conf4 V4ServerConf `json:"-" yaml:"dhcpv4"`
 	Conf6 V6ServerConf `json:"-" yaml:"dhcpv6"`
 
 	WorkDir    string `json:"-" yaml:"-"`
@@ -88,9 +89,7 @@ type Server struct {
 	leaseTime    time.Duration // parsed from config LeaseDuration
 	leaseOptions dhcp4.Options // parsed from config GatewayIP and SubnetMask
 
-	// IP address pool -- if entry is in the pool, then it's attached to a lease
-	IPpool map[[4]byte]net.HardwareAddr
-
+	srv4 *V4Server
 	srv6 *V6Server
 
 	conf ServerConfig
@@ -135,6 +134,12 @@ func Create(config ServerConfig) *Server {
 	}
 
 	var err error
+	s.srv4, err = v4Create(config.Conf4)
+	if s.srv4 == nil {
+		log.Error("%s", err)
+		return nil
+	}
+
 	s.srv6, err = v6Create(config.Conf6)
 	if s.srv6 == nil {
 		log.Error("%s", err)
@@ -240,35 +245,6 @@ func (s *Server) setConfig(config ServerConfig) error {
 	return nil
 }
 
-func (s *Server) start4(iface net.Interface) error {
-	// TODO: don't close if interface and addresses are the same
-	if s.conn != nil {
-		_ = s.closeConn()
-	}
-
-	c, err := newFilterConn(iface, ":67") // it has to be bound to 0.0.0.0:67, otherwise it won't see DHCP discover/request packets
-	if err != nil {
-		return wrapErrPrint(err, "Couldn't start listening socket on 0.0.0.0:67")
-	}
-	log.Info("DHCP: listening on 0.0.0.0:67")
-
-	s.conn = c
-	s.cond = sync.NewCond(&s.mutex)
-
-	s.running = true
-	go func() {
-		// operate on c instead of c.conn because c.conn can change over time
-		err := dhcp4.Serve(c, s)
-		if err != nil && !s.stopping {
-			log.Printf("dhcp4.Serve() returned with error: %s", err)
-		}
-		_ = c.Close() // in case Serve() exits for other reason than listening socket closure
-		s.running = false
-		s.cond.Signal()
-	}()
-	return nil
-}
-
 // Start will listen on port 67 and serve DHCP requests.
 func (s *Server) Start() error {
 	iface, err := net.InterfaceByName(s.conf.InterfaceName)
@@ -276,7 +252,7 @@ func (s *Server) Start() error {
 		return wrapErrPrint(err, "Couldn't find interface by name %s", s.conf.InterfaceName)
 	}
 
-	err = s.start4(*iface)
+	err = s.srv4.Start(*iface)
 	if err != nil {
 		return err
 	}
@@ -291,9 +267,10 @@ func (s *Server) Start() error {
 
 // Stop closes the listening UDP socket
 func (s *Server) Stop() error {
+	s.srv4.Stop()
 	s.srv6.Stop()
 
-	if s.conn == nil {
+	/* if s.conn == nil {
 		// nothing to do, return silently
 		return nil
 	}
@@ -311,7 +288,7 @@ func (s *Server) Stop() error {
 	for s.running {
 		s.cond.Wait()
 	}
-	s.mutex.Unlock()
+	s.mutex.Unlock() */
 	return nil
 }
 
@@ -825,8 +802,6 @@ func (s *Server) FindMACbyIP(ip net.IP) net.HardwareAddr {
 
 // Reset internal state
 func (s *Server) reset() {
-	s.leasesLock.Lock()
-	s.leases = nil
-	s.IPpool = make(map[[4]byte]net.HardwareAddr)
-	s.leasesLock.Unlock()
+	s.srv4.Reset()
+	s.srv6.Reset()
 }

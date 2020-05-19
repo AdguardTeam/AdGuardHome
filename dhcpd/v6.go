@@ -466,6 +466,13 @@ func (s *V6Server) Start(iface net.Interface) error {
 	return nil
 }
 
+// Reset - stop server
+func (s *V6Server) Reset() {
+	s.leasesLock.Lock()
+	s.leases = nil
+	s.leasesLock.Unlock()
+}
+
 // Stop - stop server
 func (s *V6Server) Stop() {
 	if s.srv == nil {
