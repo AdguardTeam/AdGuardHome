@@ -25,12 +25,12 @@ func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 	}
 
 	// get ipv4 address of an interface
-	ifaceIPNet := getIfaceIPv4(iface)
-	if ifaceIPNet == nil {
+	ifaceIPNet := getIfaceIPv4(*iface)
+	if len(ifaceIPNet) == 0 {
 		return false, fmt.Errorf("Couldn't find IPv4 address of interface %s %+v", ifaceName, iface)
 	}
 
-	srcIP := ifaceIPNet.IP
+	srcIP := ifaceIPNet[0]
 	src := net.JoinHostPort(srcIP.String(), "68")
 	dst := "255.255.255.255:67"
 

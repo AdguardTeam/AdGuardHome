@@ -11,7 +11,6 @@ import (
 
 	"github.com/AdguardTeam/golibs/file"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/krolaw/dhcp4"
 )
 
 const dbFilename = "leases.db"
@@ -31,22 +30,12 @@ func normalizeIP(ip net.IP) net.IP {
 	return ip
 }
 
-// Safe version of dhcp4.IPInRange()
-func ipInRange(start, stop, ip net.IP) bool {
-	if len(start) != len(stop) ||
-		len(start) != len(ip) {
-		return false
-	}
-	return dhcp4.IPInRange(start, stop, ip)
-}
-
 // Load lease table from DB
 func (s *Server) dbLoad() {
-	s.leases = nil
-	s.IPpool = make(map[[4]byte]net.HardwareAddr)
 	dynLeases := []*Lease{}
 	staticLeases := []*Lease{}
 	v6StaticLeases := []*Lease{}
+	v6DynLeases := []*Lease{}
 
 	data, err := ioutil.ReadFile(s.conf.DBFilePath)
 	if err != nil {
@@ -72,14 +61,6 @@ func (s *Server) dbLoad() {
 			continue
 		}
 
-		if obj[i].Expiry != leaseExpireStatic &&
-			len(obj[i].IP) == 4 &&
-			!ipInRange(s.leaseStart, s.leaseStop, obj[i].IP) {
-
-			log.Tracef("Skipping a lease with IP %v: not within current IP range", obj[i].IP)
-			continue
-		}
-
 		lease := Lease{
 			HWAddr:   obj[i].HWAddr,
 			IP:       obj[i].IP,
@@ -88,28 +69,31 @@ func (s *Server) dbLoad() {
 		}
 
 		if len(obj[i].IP) == 16 {
-			v6StaticLeases = append(v6StaticLeases, &lease)
+			if obj[i].Expiry == leaseExpireStatic {
+				v6StaticLeases = append(v6StaticLeases, &lease)
+			} else {
+				v6DynLeases = append(v6DynLeases, &lease)
+			}
 
-		} else if obj[i].Expiry == leaseExpireStatic {
-			staticLeases = append(staticLeases, &lease)
 		} else {
-			dynLeases = append(dynLeases, &lease)
+			if obj[i].Expiry == leaseExpireStatic {
+				staticLeases = append(staticLeases, &lease)
+			} else {
+				dynLeases = append(dynLeases, &lease)
+			}
 		}
 	}
 
-	s.leases = normalizeLeases(staticLeases, dynLeases)
+	leases4 := normalizeLeases(staticLeases, dynLeases)
+	s.srv4.ResetLeases(leases4)
 
-	for _, lease := range s.leases {
-		s.reserveIP(lease.IP, lease.HWAddr)
-	}
-
-	v6StaticLeases = normalizeLeases(v6StaticLeases, []*Lease{})
+	leases6 := normalizeLeases(v6StaticLeases, v6DynLeases)
 	if s.srv6 != nil {
-		s.srv6.leases = v6StaticLeases
+		s.srv6.ResetLeases(leases6)
 	}
 
 	log.Info("DHCP: loaded leases v4:%d  v6:%d  total-read:%d from DB",
-		len(s.leases), len(v6StaticLeases), numLeases)
+		len(leases4), len(leases6), numLeases)
 }
 
 // Skip duplicate leases
@@ -143,15 +127,15 @@ func normalizeLeases(staticLeases, dynLeases []*Lease) []*Lease {
 func (s *Server) dbStore() {
 	var leases []leaseJSON
 
-	for i := range s.leases {
-		if s.leases[i].Expiry.Unix() == 0 {
+	for _, l := range s.srv4.leases {
+		if l.Expiry.Unix() == 0 {
 			continue
 		}
 		lease := leaseJSON{
-			HWAddr:   s.leases[i].HWAddr,
-			IP:       s.leases[i].IP,
-			Hostname: s.leases[i].Hostname,
-			Expiry:   s.leases[i].Expiry.Unix(),
+			HWAddr:   l.HWAddr,
+			IP:       l.IP,
+			Hostname: l.Hostname,
+			Expiry:   l.Expiry.Unix(),
 		}
 		leases = append(leases, lease)
 	}

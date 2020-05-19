@@ -17,34 +17,6 @@ func isTimeout(err error) bool {
 	return operr.Timeout()
 }
 
-// return first IPv4 address of an interface, if there is any
-func getIfaceIPv4(iface *net.Interface) *net.IPNet {
-	ifaceAddrs, err := iface.Addrs()
-	if err != nil {
-		panic(err)
-	}
-
-	for _, addr := range ifaceAddrs {
-		ipnet, ok := addr.(*net.IPNet)
-		if !ok {
-			// not an IPNet, should not happen
-			log.Fatalf("SHOULD NOT HAPPEN: got iface.Addrs() element %s that is not net.IPNet", addr)
-		}
-
-		if ipnet.IP.To4() == nil {
-			log.Tracef("Got IP that is not IPv4: %v", ipnet.IP)
-			continue
-		}
-
-		log.Tracef("Got IP that is IPv4: %v", ipnet.IP)
-		return &net.IPNet{
-			IP:   ipnet.IP.To4(),
-			Mask: ipnet.Mask,
-		}
-	}
-	return nil
-}
-
 func wrapErrPrint(err error, message string, args ...interface{}) error {
 	var errx error
 	if err == nil {

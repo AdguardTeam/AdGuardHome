@@ -27,6 +27,7 @@ type V6Server struct {
 // V6ServerConf - server configuration
 type V6ServerConf struct {
 	Enabled       bool   `yaml:"enabled"`
+	InterfaceName string `yaml:"interface_name"`
 	RangeStart    string `yaml:"range_start"`
 	LeaseDuration uint32 `yaml:"lease_duration"` // in seconds
 
@@ -41,6 +42,15 @@ type V6ServerConf struct {
 // WriteDiskConfig - write configuration
 func (s *V6Server) WriteDiskConfig(c *V6ServerConf) {
 	*c = s.conf
+}
+
+// ResetLeases - reset leases
+func (s *V6Server) ResetLeases(ll []*Lease) {
+	s.leases = nil
+	for _, l := range ll {
+		// TODO
+		s.leases = append(s.leases, l)
+	}
 }
 
 // GetLeases - get current leases
@@ -64,6 +74,29 @@ func (s *V6Server) GetLeases(flags int) []Lease {
 	return result
 }
 
+// FindMACbyIP6 - find a MAC address by IP address in the currently active DHCP leases
+func (s *V6Server) FindMACbyIP6(ip net.IP) net.HardwareAddr {
+	now := time.Now().Unix()
+
+	s.leasesLock.Lock()
+	defer s.leasesLock.Unlock()
+
+	ip4 := ip.To4()
+	if ip4 == nil {
+		return nil
+	}
+
+	for _, l := range s.leases {
+		if l.IP.Equal(ip4) {
+			unix := l.Expiry.Unix()
+			if unix > now || unix == leaseExpireStatic {
+				return l.HWAddr
+			}
+		}
+	}
+	return nil
+}
+
 // AddStaticLease - add a static lease
 func (s *V6Server) AddStaticLease(l Lease) error {
 	if len(l.IP) != 16 {
@@ -81,9 +114,9 @@ func (s *V6Server) AddStaticLease(l Lease) error {
 		s.leasesLock.Unlock()
 		return err
 	}
-	s.conf.notify(LeaseChangedAddedStatic)
+	s.conf.notify(LeaseChangedDBStore)
 	s.leasesLock.Unlock()
-	// s.notify(LeaseChangedAddedStatic)
+	s.conf.notify(LeaseChangedAddedStatic)
 	return nil
 }
 
@@ -102,9 +135,9 @@ func (s *V6Server) RemoveStaticLease(l Lease) error {
 		s.leasesLock.Unlock()
 		return err
 	}
-	s.conf.notify(LeaseChangedRemovedStatic)
+	s.conf.notify(LeaseChangedDBStore)
 	s.leasesLock.Unlock()
-	// s.notify(LeaseChangedRemovedStatic)
+	s.conf.notify(LeaseChangedRemovedStatic)
 	return nil
 }
 
@@ -265,8 +298,9 @@ func (s *V6Server) commitLease(msg *dhcpv6.Message, lease *Lease) time.Duration 
 			lease.Expiry = time.Now().Add(s.conf.leaseTime)
 
 			s.leasesLock.Lock()
-			s.conf.notify(LeaseChangedAdded)
+			s.conf.notify(LeaseChangedDBStore)
 			s.leasesLock.Unlock()
+			s.conf.notify(LeaseChangedAdded)
 		}
 	}
 	return lifetime
@@ -430,13 +464,18 @@ func getIfaceIPv6(iface net.Interface) []net.IP {
 }
 
 // Start - start server
-func (s *V6Server) Start(iface net.Interface) error {
+func (s *V6Server) Start() error {
+	iface, err := net.InterfaceByName(s.conf.InterfaceName)
+	if err != nil {
+		return wrapErrPrint(err, "Couldn't find interface by name %s", s.conf.InterfaceName)
+	}
+
 	if !s.conf.Enabled {
 		return nil
 	}
 
 	log.Debug("DHCPv6: starting...")
-	s.conf.dnsIPAddrs = getIfaceIPv6(iface)
+	s.conf.dnsIPAddrs = getIfaceIPv6(*iface)
 	if len(s.conf.dnsIPAddrs) == 0 {
 		return fmt.Errorf("DHCPv6: no IPv6 address for interface %s", iface.Name)
 	}
@@ -501,7 +540,7 @@ func v6Create(conf V6ServerConf) (*V6Server, error) {
 	}
 
 	if conf.LeaseDuration == 0 {
-		s.conf.leaseTime = time.Hour * 2
+		s.conf.leaseTime = time.Hour * 24
 		s.conf.LeaseDuration = uint32(s.conf.leaseTime.Seconds())
 	} else {
 		s.conf.leaseTime = time.Second * time.Duration(conf.LeaseDuration)

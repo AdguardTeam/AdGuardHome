@@ -66,7 +66,7 @@ func (s *Server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	leases := convertLeases(s.Leases(LeasesDynamic), true)
 	staticLeases := convertLeases(s.Leases(LeasesStatic), false)
 	status := map[string]interface{}{
-		"config":        s.conf,
+		"config":        s.conf.Conf4,
 		"config_v6":     v6ServerConfToJSON(s.conf.Conf6),
 		"leases":        leases,
 		"static_leases": staticLeases,
@@ -87,7 +87,7 @@ type staticLeaseJSON struct {
 }
 
 type dhcpServerConfigJSON struct {
-	ServerConfig `json:",inline"`
+	V4ServerConf `json:",inline"`
 	V6           v6ServerConfJSON `json:"v6"`
 }
 
@@ -99,18 +99,20 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.CheckConfig(newconfig.ServerConfig)
-	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "Invalid DHCP configuration: %s", err)
-		return
-	}
+	// err = s.CheckConfig(newconfig.ServerConfig)
+	// if err != nil {
+	// 	httpError(r, w, http.StatusBadRequest, "Invalid DHCP configuration: %s", err)
+	// 	return
+	// }
 
 	err = s.Stop()
 	if err != nil {
 		log.Error("failed to stop the DHCP server: %s", err)
 	}
 
-	err = s.Init(newconfig.ServerConfig)
+	v4conf := newconfig.V4ServerConf
+	v4conf.notify = s.conf.Conf4.notify
+	s4, err := v4Create(v4conf)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "Invalid DHCP configuration: %s", err)
 		return
@@ -123,6 +125,8 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		httpError(r, w, http.StatusBadRequest, "Invalid DHCPv6 configuration: %s", err)
 		return
 	}
+
+	s.srv4 = s4
 	s.srv6 = s6
 
 	s.conf.ConfigModified()
@@ -317,7 +321,7 @@ func (s *Server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request
 		HWAddr:   mac,
 		Hostname: lj.Hostname,
 	}
-	err = s.AddStaticLease(lease)
+	err = s.srv4.AddStaticLease(lease)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "%s", err)
 		return
@@ -367,7 +371,7 @@ func (s *Server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Requ
 		HWAddr:   mac,
 		Hostname: lj.Hostname,
 	}
-	err = s.RemoveStaticLease(lease)
+	err = s.srv4.RemoveStaticLease(lease)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "%s", err)
 		return
@@ -387,12 +391,12 @@ func (s *Server) handleReset(w http.ResponseWriter, r *http.Request) {
 
 	oldconf := s.conf
 	s.conf = ServerConfig{}
-	s.conf.LeaseDuration = 86400
-	s.conf.ICMPTimeout = 1000
+
 	s.conf.WorkDir = oldconf.WorkDir
 	s.conf.HTTPRegister = oldconf.HTTPRegister
 	s.conf.ConfigModified = oldconf.ConfigModified
 	s.conf.DBFilePath = oldconf.DBFilePath
+
 	s.conf.ConfigModified()
 }
 
