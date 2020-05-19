@@ -326,6 +326,8 @@ func (s *V6Server) process(msg *dhcpv6.Message, req dhcpv6.DHCPv6, resp dhcpv6.D
 		return false
 	}
 
+	// lock
+
 	lease := s.findLease(mac)
 	if lease == nil {
 		log.Debug("DHCPv6: no lease for: %s", mac)
@@ -345,7 +347,7 @@ func (s *V6Server) process(msg *dhcpv6.Message, req dhcpv6.DHCPv6, resp dhcpv6.D
 
 	err = s.checkIA(msg, lease)
 	if err != nil {
-		log.Debug("DHCPv6: %s", mac)
+		log.Debug("DHCPv6: %s", err)
 		return false
 	}
 

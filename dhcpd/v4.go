@@ -42,6 +42,8 @@ type V4ServerConf struct {
 	ipStop     net.IP
 	leaseTime  time.Duration
 	dnsIPAddrs []net.IP // IPv4 addresses to return to DHCP clients as DNS server addresses
+	routerIP   net.IP
+	subnetMask net.IPMask
 
 	notify func(uint32)
 }
@@ -293,7 +295,98 @@ func (s *V4Server) addrAvailable(target net.IP) bool {
 	return true
 }
 
-func (s *V4Server) packetHandler(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv4) {
+func (s *V4Server) findLease(mac net.HardwareAddr) *Lease {
+	return nil
+}
+
+func (s *V4Server) reserveLease(mac net.HardwareAddr) *Lease {
+	return nil
+}
+
+func (s *V4Server) commitLease(req *dhcpv4.DHCPv4, lease *Lease) time.Duration {
+	return 0
+}
+
+func (s *V4Server) checkIA(req *dhcpv4.DHCPv4, lease *Lease) error {
+	// req.GetOneOption(dhcpv4.OptionServerIdentifier)
+	return nil
+}
+
+// Find a lease associated with MAC and prepare response
+func (s *V4Server) process(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) bool {
+	mac := req.ClientHWAddr
+
+	// lock
+
+	lease := s.findLease(mac)
+	if lease == nil {
+		log.Debug("DHCPv6: no lease for: %s", mac)
+
+		switch req.MessageType() {
+
+		case dhcpv4.MessageTypeDiscover:
+			lease = s.reserveLease(mac)
+			if lease == nil {
+				return false
+			}
+
+		default:
+			return false
+		}
+	}
+
+	err := s.checkIA(req, lease)
+	if err != nil {
+		log.Debug("DHCPv4: %s", err)
+
+		// return NAK
+
+		return false
+	}
+
+	lifetime := s.commitLease(req, lease)
+	resp.UpdateOption(dhcpv4.OptIPAddressLeaseTime(lifetime))
+
+	// resp.UpdateOption(dhcpv4.OptRequestedIPAddress(x))
+	resp.UpdateOption(dhcpv4.OptServerIdentifier(x))
+	resp.UpdateOption(dhcpv4.OptDNS(s.conf.dnsIPAddrs...))
+	resp.UpdateOption(dhcpv4.OptRouter(s.conf.routerIP))
+	resp.UpdateOption(dhcpv4.OptSubnetMask(s.conf.subnetMask))
+	return true
+}
+
+// client -> Discover -> server
+// client <- Reply <- server
+// client -> Request -> server
+// client <- Reply <- server
+func (s *V4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4.DHCPv4) {
+	log.Debug("DHCPv4: received message: %s", req.Summary())
+
+	switch req.MessageType() {
+	case dhcpv4.MessageTypeDiscover,
+		dhcpv4.MessageTypeRequest:
+		//
+
+	default:
+		log.Debug("DHCPv4: unsupported message type %d", req.MessageType())
+		return
+	}
+
+	resp, err := dhcpv4.NewReplyFromRequest(req)
+	if err != nil {
+		log.Debug("DHCPv4: dhcpv4.New: %s", err)
+		return
+	}
+
+	_ = s.process(req, resp)
+
+	log.Debug("DHCPv4: sending: %s", resp.Summary())
+
+	_, err = conn.WriteTo(resp.ToBytes(), peer)
+	if err != nil {
+		log.Error("DHCPv4: conn.Write to %s failed: %s", peer, err)
+		return
+	}
 }
 
 // Get IPv4 address list
@@ -378,6 +471,9 @@ func v4Create(conf V4ServerConf) (*V4Server, error) {
 	if !conf.Enabled {
 		return s, nil
 	}
+
+	s.conf.routerIP = x
+	s.conf.subnetMask = x
 
 	// s.conf.ipStart = net.ParseIP(conf.RangeStart)
 	// if s.conf.ipStart == nil {
