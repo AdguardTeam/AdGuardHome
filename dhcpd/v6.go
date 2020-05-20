@@ -467,6 +467,10 @@ func getIfaceIPv6(iface net.Interface) []net.IP {
 
 // Start - start server
 func (s *V6Server) Start() error {
+	if !s.conf.Enabled {
+		return nil
+	}
+
 	iface, err := net.InterfaceByName(s.conf.InterfaceName)
 	if err != nil {
 		return wrapErrPrint(err, "Couldn't find interface by name %s", s.conf.InterfaceName)

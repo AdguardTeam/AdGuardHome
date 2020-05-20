@@ -126,10 +126,6 @@ var config = configuration{
 		PortHTTPS:      443,
 		PortDNSOverTLS: 853, // needs to be passed through to dnsproxy
 	},
-	DHCP: dhcpd.ServerConfig{
-		LeaseDuration: 86400,
-		ICMPTimeout:   1000,
-	},
 	SchemaVersion: currentSchemaVersion,
 }
 

@@ -296,7 +296,7 @@ func run(args options) {
 			}
 		}()
 
-		err = startDHCPServer()
+		err = Context.dhcpServer.Start()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -447,7 +447,7 @@ func cleanup() {
 	if err != nil {
 		log.Error("Couldn't stop DNS server: %s", err)
 	}
-	err = stopDHCPServer()
+	err = Context.dhcpServer.Stop()
 	if err != nil {
 		log.Error("Couldn't stop DHCP server: %s", err)
 	}

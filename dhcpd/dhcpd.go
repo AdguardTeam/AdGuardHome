@@ -97,8 +97,8 @@ func (s *Server) CheckConfig(config ServerConfig) error {
 // Create - create object
 func Create(config ServerConfig) *Server {
 	s := Server{}
-	s.conf.Conf4.notify = s.onNotify
-	s.conf.Conf6.notify = s.onNotify
+	config.Conf4.notify = s.onNotify
+	config.Conf6.notify = s.onNotify
 	s.conf.DBFilePath = filepath.Join(config.WorkDir, dbFilename)
 
 	if !webHandlersRegistered && s.conf.HTTPRegister != nil {
@@ -133,11 +133,6 @@ func (s *Server) onNotify(flags uint32) {
 	}
 
 	s.notify(int(flags))
-}
-
-// Init checks the configuration and initializes the server
-func (s *Server) Init(config ServerConfig) error {
-	return nil
 }
 
 // SetOnLeaseChanged - set callback
