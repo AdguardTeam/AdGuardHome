@@ -282,12 +282,15 @@ func (s *V4Server) findLease(mac net.HardwareAddr) *Lease {
 
 // Get next free IP
 func (s *V4Server) findFreeIP() net.IP {
-	for i := s.conf.ipStart[3]; i != s.conf.ipEnd[3]; i++ {
+	for i := s.conf.ipStart[3]; ; i++ {
 		if s.ipAddrs[i] == 0 {
 			ip := make([]byte, 4)
 			copy(ip, s.conf.ipStart)
 			ip[3] = i
 			return ip
+		}
+		if i == s.conf.ipEnd[3] {
+			break
 		}
 	}
 	return nil
@@ -329,7 +332,6 @@ func (s *V4Server) reserveLease(mac net.HardwareAddr) *Lease {
 func (s *V4Server) process(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) int {
 
 	var lease *Lease
-
 	mac := req.ClientHWAddr
 	if len(mac) != 6 {
 		log.Debug("DHCPv4: Invalid ClientHWAddr")
@@ -337,6 +339,8 @@ func (s *V4Server) process(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) int {
 	}
 	hostname := req.Options.Get(dhcpv4.OptionHostName)
 	reqIP := req.Options.Get(dhcpv4.OptionRequestedIPAddress)
+
+	resp.UpdateOption(dhcpv4.OptServerIdentifier(s.conf.dnsIPAddrs[0]))
 
 	switch req.MessageType() {
 
@@ -472,7 +476,6 @@ func (s *V4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 		log.Debug("DHCPv4: dhcpv4.New: %s", err)
 		return
 	}
-	resp.UpdateOption(dhcpv4.OptServerIdentifier(s.conf.dnsIPAddrs[0]))
 
 	r := s.process(req, resp)
 	if r < 0 {

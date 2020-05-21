@@ -9,14 +9,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func notify(flags uint32) {
+func notify6(flags uint32) {
 }
 
-func TestV6StaticLease(t *testing.T) {
+func TestV6StaticLeaseAddRemove(t *testing.T) {
 	conf := V6ServerConf{
 		Enabled:    true,
 		RangeStart: "2001::1",
-		notify:     notify,
+		notify:     notify6,
 	}
 	s, err := v6Create(conf)
 	assert.True(t, err == nil)
@@ -53,15 +53,61 @@ func TestV6StaticLease(t *testing.T) {
 	// check
 	ls = s.GetLeases(LeasesStatic)
 	assert.Equal(t, 0, len(ls))
+}
 
-	s.Stop()
+func TestV6StaticLeaseAddReplaceDynamic(t *testing.T) {
+	conf := V6ServerConf{
+		Enabled:    true,
+		RangeStart: "2001::1",
+		notify:     notify6,
+	}
+	s, err := v6Create(conf)
+	assert.True(t, err == nil)
+
+	// add dynamic lease
+	ld := Lease{}
+	ld.IP = net.ParseIP("2001::1")
+	ld.HWAddr, _ = net.ParseMAC("11:aa:aa:aa:aa:aa")
+	s.addLease(&ld)
+
+	// add dynamic lease
+	{
+		ld := Lease{}
+		ld.IP = net.ParseIP("2001::2")
+		ld.HWAddr, _ = net.ParseMAC("22:aa:aa:aa:aa:aa")
+		s.addLease(&ld)
+	}
+
+	// add static lease with the same IP
+	l := Lease{}
+	l.IP = net.ParseIP("2001::1")
+	l.HWAddr, _ = net.ParseMAC("33:aa:aa:aa:aa:aa")
+	assert.True(t, s.AddStaticLease(l) == nil)
+
+	// add static lease with the same MAC
+	l = Lease{}
+	l.IP = net.ParseIP("2001::3")
+	l.HWAddr, _ = net.ParseMAC("22:aa:aa:aa:aa:aa")
+	assert.True(t, s.AddStaticLease(l) == nil)
+
+	// check
+	ls := s.GetLeases(LeasesStatic)
+	assert.Equal(t, 2, len(ls))
+
+	assert.Equal(t, "2001::1", ls[0].IP.String())
+	assert.Equal(t, "33:aa:aa:aa:aa:aa", ls[0].HWAddr.String())
+	assert.True(t, ls[0].Expiry.Unix() == leaseExpireStatic)
+
+	assert.Equal(t, "2001::3", ls[1].IP.String())
+	assert.Equal(t, "22:aa:aa:aa:aa:aa", ls[1].HWAddr.String())
+	assert.True(t, ls[1].Expiry.Unix() == leaseExpireStatic)
 }
 
 func TestV6GetLease(t *testing.T) {
 	conf := V6ServerConf{
 		Enabled:    true,
 		RangeStart: "2001::1",
-		notify:     notify,
+		notify:     notify6,
 	}
 	s, err := v6Create(conf)
 	assert.True(t, err == nil)
@@ -122,7 +168,7 @@ func TestV6GetDynamicLease(t *testing.T) {
 	conf := V6ServerConf{
 		Enabled:    true,
 		RangeStart: "2001::2",
-		notify:     notify,
+		notify:     notify6,
 	}
 	s, err := v6Create(conf)
 	assert.True(t, err == nil)

@@ -18,8 +18,9 @@ const valueIAID = "ADGH" // value for IANA.ID
 // V6Server - DHCPv6 server
 type V6Server struct {
 	srv        *server6.Server
-	leases     []*Lease
 	leasesLock sync.Mutex
+	leases     []*Lease
+	ipAddrs    [256]byte
 
 	conf V6ServerConf
 }
@@ -97,6 +98,46 @@ func (s *V6Server) FindMACbyIP6(ip net.IP) net.HardwareAddr {
 	return nil
 }
 
+// Remove (swap) lease by index
+func (s *V6Server) leaseRemoveSwapByIndex(i int) {
+	s.ipAddrs[s.leases[i].IP[15]] = 0
+	log.Debug("DHCPv6: removed lease %s", s.leases[i].HWAddr)
+
+	n := len(s.leases)
+	if i != n-1 {
+		s.leases[i] = s.leases[n-1] // swap with the last element
+	}
+	s.leases = s.leases[:n-1]
+}
+
+// Remove a dynamic lease with the same properties
+// Return error if a static lease is found
+func (s *V6Server) rmDynamicLease(lease Lease) error {
+	for i := 0; i < len(s.leases); i++ {
+		l := s.leases[i]
+
+		if bytes.Equal(l.HWAddr, lease.HWAddr) {
+
+			if l.Expiry.Unix() == leaseExpireStatic {
+				return fmt.Errorf("static lease already exists")
+			}
+
+			s.leaseRemoveSwapByIndex(i)
+			l = s.leases[i]
+		}
+
+		if bytes.Equal(l.IP, lease.IP) {
+
+			if l.Expiry.Unix() == leaseExpireStatic {
+				return fmt.Errorf("static lease already exists")
+			}
+
+			s.leaseRemoveSwapByIndex(i)
+		}
+	}
+	return nil
+}
+
 // AddStaticLease - add a static lease
 func (s *V6Server) AddStaticLease(l Lease) error {
 	if len(l.IP) != 16 {
@@ -109,13 +150,15 @@ func (s *V6Server) AddStaticLease(l Lease) error {
 	l.Expiry = time.Unix(leaseExpireStatic, 0)
 
 	s.leasesLock.Lock()
-	err := s.addLease(l)
+	err := s.rmDynamicLease(l)
 	if err != nil {
 		s.leasesLock.Unlock()
 		return err
 	}
+	s.addLease(&l)
 	s.conf.notify(LeaseChangedDBStore)
 	s.leasesLock.Unlock()
+
 	s.conf.notify(LeaseChangedAddedStatic)
 	return nil
 }
@@ -142,36 +185,28 @@ func (s *V6Server) RemoveStaticLease(l Lease) error {
 }
 
 // Add a lease
-func (s *V6Server) addLease(l Lease) error {
-	for _, it := range s.leases {
-		if net.IP.Equal(it.IP, l.IP) ||
-			bytes.Equal(it.HWAddr, l.HWAddr) {
-			return fmt.Errorf("Lease already exists")
-		}
-	}
-	s.leases = append(s.leases, &l)
-	return nil
+func (s *V6Server) addLease(l *Lease) {
+	s.leases = append(s.leases, l)
+	s.ipAddrs[l.IP[15]] = 1
+	log.Debug("DHCPv6: added lease %s <-> %s", l.IP, l.HWAddr)
 }
 
-// Remove a lease
-func (s *V6Server) rmLease(l Lease) error {
-	var newLeases []*Lease
-	for _, lease := range s.leases {
-		if net.IP.Equal(lease.IP, l.IP) {
-			if !bytes.Equal(lease.HWAddr, l.HWAddr) {
+// Remove a lease with the same properies
+func (s *V6Server) rmLease(lease Lease) error {
+	for i, l := range s.leases {
+		if bytes.Equal(l.IP, lease.IP) {
+
+			if !bytes.Equal(l.HWAddr, lease.HWAddr) ||
+				l.Hostname != lease.Hostname {
+
 				return fmt.Errorf("Lease not found")
 			}
-			continue
+
+			s.leaseRemoveSwapByIndex(i)
+			return nil
 		}
-		newLeases = append(newLeases, lease)
 	}
-
-	if len(newLeases) == len(s.leases) {
-		return fmt.Errorf("Lease not found: %s", l.IP)
-	}
-
-	s.leases = newLeases
-	return nil
+	return fmt.Errorf("lease not found")
 }
 
 // Find lease by MAC
@@ -187,26 +222,55 @@ func (s *V6Server) findLease(mac net.HardwareAddr) *Lease {
 	return nil
 }
 
+// Find an expired lease and return its index or -1
+func (s *V6Server) findExpiredLease() int {
+	now := time.Now().Unix()
+	for i, lease := range s.leases {
+		if lease.Expiry.Unix() != leaseExpireStatic &&
+			lease.Expiry.Unix() <= now {
+			return i
+		}
+	}
+	return -1
+}
+
+// Get next free IP
+func (s *V6Server) findFreeIP() net.IP {
+	for i := s.conf.ipStart[15]; ; i++ {
+		if s.ipAddrs[i] == 0 {
+			ip := make([]byte, 16)
+			copy(ip, s.conf.ipStart)
+			ip[15] = i
+			return ip
+		}
+		if i == 0xff {
+			break
+		}
+	}
+	return nil
+}
+
 // Reserve lease for MAC
 func (s *V6Server) reserveLease(mac net.HardwareAddr) *Lease {
 	l := Lease{}
 	l.HWAddr = make([]byte, 6)
 	copy(l.HWAddr, mac)
-	l.IP = make([]byte, 16)
 
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
 
 	copy(l.IP, s.conf.ipStart)
-	if s.conf.ipStart[15] == 0xff {
-		return nil
+	l.IP = s.findFreeIP()
+	if l.IP == nil {
+		i := s.findExpiredLease()
+		if i < 0 {
+			return nil
+		}
+		copy(s.leases[i].HWAddr, mac)
+		return s.leases[i]
 	}
-	s.conf.ipStart[15]++
 
-	err := s.addLease(l)
-	if err != nil {
-		return nil
-	}
+	s.addLease(&l)
 	return &l
 }
 
