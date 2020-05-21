@@ -211,6 +211,9 @@ func processFilteringAfterResponse(ctx *dnsContext) int {
 
 	switch res.Reason {
 	case dnsfilter.ReasonRewrite:
+		if d.Res != nil {
+			break // response is already prepared
+		}
 		if len(res.CanonName) == 0 {
 			break
 		}
