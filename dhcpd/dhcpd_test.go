@@ -16,6 +16,9 @@ func check(t *testing.T, result bool, msg string) {
 	}
 }
 
+func testNotify(flags uint32) {
+}
+
 // Leases database store/load
 func TestDB(t *testing.T) {
 	var err error
@@ -28,7 +31,7 @@ func TestDB(t *testing.T) {
 		RangeEnd:   "192.168.10.200",
 		GatewayIP:  "192.168.10.1",
 		SubnetMask: "255.255.255.0",
-		notify:     notify4,
+		notify:     testNotify,
 	}
 	s.srv4, err = v4Create(conf)
 	assert.True(t, err == nil)
