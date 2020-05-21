@@ -50,7 +50,7 @@ func TestDB(t *testing.T) {
 
 	_ = os.Remove("leases.db")
 	s.dbStore()
-	s.reset()
+	s.srv4.Reset()
 
 	s.dbLoad()
 

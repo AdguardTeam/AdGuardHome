@@ -75,8 +75,13 @@ func (s *V6Server) GetLeases(flags int) []Lease {
 	return result
 }
 
-// FindMACbyIP6 - find a MAC address by IP address in the currently active DHCP leases
-func (s *V6Server) FindMACbyIP6(ip net.IP) net.HardwareAddr {
+// GetLeasesRef - get leases
+func (s *V6Server) GetLeasesRef() []*Lease {
+	return s.leases
+}
+
+// FindMACbyIP - find a MAC address by IP address in the currently active DHCP leases
+func (s *V6Server) FindMACbyIP(ip net.IP) net.HardwareAddr {
 	now := time.Now().Unix()
 
 	s.leasesLock.Lock()
@@ -126,7 +131,7 @@ func (s *V6Server) rmDynamicLease(lease Lease) error {
 			l = s.leases[i]
 		}
 
-		if bytes.Equal(l.IP, lease.IP) {
+		if net.IP.Equal(l.IP, lease.IP) {
 
 			if l.Expiry.Unix() == leaseExpireStatic {
 				return fmt.Errorf("static lease already exists")
@@ -191,10 +196,10 @@ func (s *V6Server) addLease(l *Lease) {
 	log.Debug("DHCPv6: added lease %s <-> %s", l.IP, l.HWAddr)
 }
 
-// Remove a lease with the same properies
+// Remove a lease with the same properties
 func (s *V6Server) rmLease(lease Lease) error {
 	for i, l := range s.leases {
-		if bytes.Equal(l.IP, lease.IP) {
+		if net.IP.Equal(l.IP, lease.IP) {
 
 			if !bytes.Equal(l.HWAddr, lease.HWAddr) ||
 				l.Hostname != lease.Hostname {

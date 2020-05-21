@@ -127,7 +127,8 @@ func normalizeLeases(staticLeases, dynLeases []*Lease) []*Lease {
 func (s *Server) dbStore() {
 	var leases []leaseJSON
 
-	for _, l := range s.srv4.leases {
+	leases4 := s.srv4.GetLeasesRef()
+	for _, l := range leases4 {
 		if l.Expiry.Unix() == 0 {
 			continue
 		}
@@ -141,7 +142,8 @@ func (s *Server) dbStore() {
 	}
 
 	if s.srv6 != nil {
-		for _, l := range s.srv6.leases {
+		leases6 := s.srv6.GetLeasesRef()
+		for _, l := range leases6 {
 			if l.Expiry.Unix() == 0 {
 				continue
 			}
