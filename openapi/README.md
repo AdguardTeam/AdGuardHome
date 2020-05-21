@@ -12,6 +12,9 @@ The easiest way would be to use [Swagger Editor](http://editor.swagger.io/) and 
 2. `yarn start`
 3. Open `http://localhost:4000/`
 
+### Changelog
+
+[Here](CHANGELOG.md) we keep track of all non-compatible changes that are being made.
 
 ### Authentication
 
