@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { withNamespaces } from 'react-i18next';
+import { withTranslation } from 'react-i18next';
 
 import Form from './Form';
 import Card from '../../ui/Card';
@@ -12,7 +12,7 @@ class Services extends Component {
         if (values && values.blocked_services) {
             const blocked_services = Object
                 .keys(values.blocked_services)
-                .filter(service => values.blocked_services[service]);
+                .filter((service) => values.blocked_services[service]);
             config = blocked_services;
         }
 
@@ -66,4 +66,4 @@ Services.propTypes = {
     setBlockedServices: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(Services);
+export default withTranslation()(Services);

@@ -3,8 +3,8 @@ import { handleActions } from 'redux-actions';
 import * as actions from '../actions/encryption';
 
 const encryption = handleActions({
-    [actions.getTlsStatusRequest]: state => ({ ...state, processing: true }),
-    [actions.getTlsStatusFailure]: state => ({ ...state, processing: false }),
+    [actions.getTlsStatusRequest]: (state) => ({ ...state, processing: true }),
+    [actions.getTlsStatusFailure]: (state) => ({ ...state, processing: false }),
     [actions.getTlsStatusSuccess]: (state, { payload }) => {
         const newState = {
             ...state,
@@ -14,8 +14,8 @@ const encryption = handleActions({
         return newState;
     },
 
-    [actions.setTlsConfigRequest]: state => ({ ...state, processingConfig: true }),
-    [actions.setTlsConfigFailure]: state => ({ ...state, processingConfig: false }),
+    [actions.setTlsConfigRequest]: (state) => ({ ...state, processingConfig: true }),
+    [actions.setTlsConfigFailure]: (state) => ({ ...state, processingConfig: false }),
     [actions.setTlsConfigSuccess]: (state, { payload }) => {
         const newState = {
             ...state,
@@ -25,8 +25,8 @@ const encryption = handleActions({
         return newState;
     },
 
-    [actions.validateTlsConfigRequest]: state => ({ ...state, processingValidate: true }),
-    [actions.validateTlsConfigFailure]: state => ({ ...state, processingValidate: false }),
+    [actions.validateTlsConfigRequest]: (state) => ({ ...state, processingValidate: true }),
+    [actions.validateTlsConfigFailure]: (state) => ({ ...state, processingValidate: false }),
     [actions.validateTlsConfigSuccess]: (state, { payload }) => {
         const {
             issuer = '',

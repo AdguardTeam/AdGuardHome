@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react';
 import ReactTable from 'react-table';
 import PropTypes from 'prop-types';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 
 import Card from '../ui/Card';
 import Cell from '../ui/Cell';
@@ -13,20 +13,19 @@ import { formatClientCell } from '../../helpers/formatClientCell';
 const getClientsPercentColor = (percent) => {
     if (percent > 50) {
         return STATUS_COLORS.green;
-    } else if (percent > 10) {
+    } if (percent > 10) {
         return STATUS_COLORS.yellow;
     }
     return STATUS_COLORS.red;
 };
 
-const countCell = dnsQueries =>
-    function cell(row) {
-        const { value } = row;
-        const percent = getPercent(dnsQueries, value);
-        const percentColor = getClientsPercentColor(percent);
+const countCell = (dnsQueries) => function cell(row) {
+    const { value } = row;
+    const percent = getPercent(dnsQueries, value);
+    const percentColor = getClientsPercentColor(percent);
 
-        return <Cell value={value} percent={percent} color={percentColor} />;
-    };
+    return <Cell value={value} percent={percent} color={percentColor} />;
+};
 
 const renderBlockingButton = (blocked, ip, handleClick, processing) => {
     let buttonProps = {
@@ -59,20 +58,19 @@ const renderBlockingButton = (blocked, ip, handleClick, processing) => {
 
 const isBlockedClient = (clients, ip) => !!(clients && clients.includes(ip));
 
-const clientCell = (t, toggleClientStatus, processing, disallowedClients) =>
-    function cell(row) {
-        const { value } = row;
-        const blocked = isBlockedClient(disallowedClients, value);
+const clientCell = (t, toggleClientStatus, processing, disallowedClients) => function cell(row) {
+    const { value } = row;
+    const blocked = isBlockedClient(disallowedClients, value);
 
-        return (
+    return (
             <Fragment>
                 <div className="logs__row logs__row--overflow logs__row--column">
                     {formatClientCell(row, t)}
                 </div>
                 {renderBlockingButton(blocked, value, toggleClientStatus, processing)}
             </Fragment>
-        );
-    };
+    );
+};
 
 const Clients = ({
     t,
@@ -103,8 +101,7 @@ const Clients = ({
                 {
                     Header: 'IP',
                     accessor: 'ip',
-                    sortMethod: (a, b) =>
-                        parseInt(a.replace(/\./g, ''), 10) - parseInt(b.replace(/\./g, ''), 10),
+                    sortMethod: (a, b) => parseInt(a.replace(/\./g, ''), 10) - parseInt(b.replace(/\./g, ''), 10),
                     Cell: clientCell(t, toggleClientStatus, processingAccessSet, disallowedClients),
                 },
                 {
@@ -154,4 +151,4 @@ Clients.propTypes = {
     disallowedClients: PropTypes.string.isRequired,
 };
 
-export default withNamespaces()(Clients);
+export default withTranslation()(Clients);

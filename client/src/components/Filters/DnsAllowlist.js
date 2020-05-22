@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
-import { withNamespaces } from 'react-i18next';
+import { withTranslation } from 'react-i18next';
 
 import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
@@ -131,4 +131,4 @@ DnsAllowlist.propTypes = {
     t: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(DnsAllowlist);
+export default withTranslation()(DnsAllowlist);

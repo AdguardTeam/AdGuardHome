@@ -1,6 +1,6 @@
 import { createAction } from 'redux-actions';
 import apiClient from '../api/Api';
-import { addErrorToast, addSuccessToast } from './index';
+import { addErrorToast, addSuccessToast } from './toasts';
 
 export const getBlockedServicesRequest = createAction('GET_BLOCKED_SERVICES_REQUEST');
 export const getBlockedServicesFailure = createAction('GET_BLOCKED_SERVICES_FAILURE');
@@ -21,7 +21,7 @@ export const setBlockedServicesRequest = createAction('SET_BLOCKED_SERVICES_REQU
 export const setBlockedServicesFailure = createAction('SET_BLOCKED_SERVICES_FAILURE');
 export const setBlockedServicesSuccess = createAction('SET_BLOCKED_SERVICES_SUCCESS');
 
-export const setBlockedServices = values => async (dispatch) => {
+export const setBlockedServices = (values) => async (dispatch) => {
     dispatch(setBlockedServicesRequest());
     try {
         await apiClient.setBlockedServices(values);

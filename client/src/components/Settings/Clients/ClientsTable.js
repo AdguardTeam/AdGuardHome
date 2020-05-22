@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import ReactTable from 'react-table';
 
 import { MODAL_TYPE } from '../../../helpers/constants';
@@ -25,7 +25,7 @@ class ClientsTable extends Component {
             if (values.blocked_services) {
                 config.blocked_services = Object
                     .keys(values.blocked_services)
-                    .filter(service => values.blocked_services[service]);
+                    .filter((service) => values.blocked_services[service]);
             }
 
             if (values.upstreams && typeof values.upstreams === 'string') {
@@ -35,7 +35,7 @@ class ClientsTable extends Component {
             }
 
             if (values.tags) {
-                config.tags = values.tags.map(tag => tag.value);
+                config.tags = values.tags.map((tag) => tag.value);
             } else {
                 config.tags = [];
             }
@@ -48,12 +48,12 @@ class ClientsTable extends Component {
         }
     };
 
-    getOptionsWithLabels = options => (
-        options.map(option => ({ value: option, label: option }))
+    getOptionsWithLabels = (options) => (
+        options.map((option) => ({ value: option, label: option }))
     );
 
     getClient = (name, clients) => {
-        const client = clients.find(item => name === item.name);
+        const client = clients.find((item) => name === item.name);
 
         if (client) {
             const {
@@ -93,7 +93,7 @@ class ClientsTable extends Component {
                 return (
                     <div className="logs__row logs__row--overflow">
                         <span className="logs__text">
-                            {value.map(address => (
+                            {value.map((address) => (
                                 <div key={address} title={address}>
                                     {address}
                                 </div>
@@ -141,7 +141,7 @@ class ClientsTable extends Component {
                 return (
                     <div className="logs__row logs__row--icons">
                         {value && value.length > 0
-                            ? value.map(service => (
+                            ? value.map((service) => (
                                 <svg
                                     className="service__icon service__icon--table"
                                     title={service}
@@ -187,7 +187,7 @@ class ClientsTable extends Component {
                 return (
                     <div className="logs__row logs__row--overflow">
                         <span className="logs__text">
-                            {value.map(tag => (
+                            {value.map((tag) => (
                                 <div key={tag} title={tag} className="small">
                                     {tag}
                                 </div>
@@ -200,7 +200,7 @@ class ClientsTable extends Component {
         {
             Header: this.props.t('requests_count'),
             id: 'statistics',
-            accessor: row => this.props.normalizedTopClients.configured[row.name] || 0,
+            accessor: (row) => this.props.normalizedTopClients.configured[row.name] || 0,
             sortMethod: (a, b) => b - a,
             minWidth: 120,
             Cell: CellWrap,
@@ -220,11 +220,10 @@ class ClientsTable extends Component {
                         <button
                             type="button"
                             className="btn btn-icon btn-outline-primary btn-sm mr-2"
-                            onClick={() =>
-                                toggleClientModal({
-                                    type: MODAL_TYPE.EDIT,
-                                    name: clientName,
-                                })
+                            onClick={() => toggleClientModal({
+                                type: MODAL_TYPE.EDIT,
+                                name: clientName,
+                            })
                             }
                             disabled={processingUpdating}
                             title={t('edit_table_action')}
@@ -337,4 +336,4 @@ ClientsTable.propTypes = {
     supportedTags: PropTypes.array.isRequired,
 };
 
-export default withNamespaces()(ClientsTable);
+export default withTranslation()(ClientsTable);

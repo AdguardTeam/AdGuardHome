@@ -74,7 +74,7 @@ export const getSourceData = (trackerData) => {
             name: 'Whotracks.me',
             url: `https://whotracks.me/trackers/${trackerData.id}.html`,
         };
-    } else if (trackerData.source === sources.ADGUARD) {
+    } if (trackerData.source === sources.ADGUARD) {
         return {
             name: 'AdGuard',
             url: REPOSITORY.TRACKERS_DB,

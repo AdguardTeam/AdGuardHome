@@ -1,12 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 
 import { INSTALL_TOTAL_STEPS } from '../../helpers/constants';
 
-const getProgressPercent = step => (step / INSTALL_TOTAL_STEPS) * 100;
+const getProgressPercent = (step) => (step / INSTALL_TOTAL_STEPS) * 100;
 
-const Progress = props => (
+const Progress = (props) => (
     <div className="setup__progress">
         <Trans>install_step</Trans> {props.step}/{INSTALL_TOTAL_STEPS}
         <div className="setup__progress-wrap">
@@ -22,4 +22,4 @@ Progress.propTypes = {
     step: PropTypes.number.isRequired,
 };
 
-export default withNamespaces()(Progress);
+export default withTranslation()(Progress);

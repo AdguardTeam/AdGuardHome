@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import ReactModal from 'react-modal';
 
 import { MODAL_TYPE } from '../../../helpers/constants';
@@ -81,4 +81,4 @@ Modal.propTypes = {
     tagsOptions: PropTypes.array.isRequired,
 };
 
-export default withNamespaces()(Modal);
+export default withTranslation()(Modal);

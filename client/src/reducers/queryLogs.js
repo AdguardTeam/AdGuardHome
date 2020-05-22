@@ -25,8 +25,8 @@ const queryLogs = handleActions(
             page: payload,
         }),
 
-        [actions.setLogsFilterRequest]: state => ({ ...state, processingGetLogs: true }),
-        [actions.setLogsFilterFailure]: state => ({ ...state, processingGetLogs: false }),
+        [actions.setLogsFilterRequest]: (state) => ({ ...state, processingGetLogs: true }),
+        [actions.setLogsFilterFailure]: (state) => ({ ...state, processingGetLogs: false }),
         [actions.setLogsFilterSuccess]: (state, { payload }) => {
             const { logs, oldest, filter } = payload;
             const pageSize = 100;
@@ -37,7 +37,7 @@ const queryLogs = handleActions(
             const rowsStart = pageSize * page;
             const rowsEnd = (pageSize * page) + pageSize;
             const logsSlice = logs.slice(rowsStart, rowsEnd);
-            const isFiltered = Object.keys(filter).some(key => filter[key]);
+            const isFiltered = Object.keys(filter).some((key) => filter[key]);
 
             return {
                 ...state,
@@ -52,8 +52,8 @@ const queryLogs = handleActions(
             };
         },
 
-        [actions.getLogsRequest]: state => ({ ...state, processingGetLogs: true }),
-        [actions.getLogsFailure]: state => ({ ...state, processingGetLogs: false }),
+        [actions.getLogsRequest]: (state) => ({ ...state, processingGetLogs: true }),
+        [actions.getLogsFailure]: (state) => ({ ...state, processingGetLogs: false }),
         [actions.getLogsSuccess]: (state, { payload }) => {
             const {
                 logs, oldest, older_than, page, pageSize, initial,
@@ -84,37 +84,37 @@ const queryLogs = handleActions(
             };
         },
 
-        [actions.clearLogsRequest]: state => ({ ...state, processingClear: true }),
-        [actions.clearLogsFailure]: state => ({ ...state, processingClear: false }),
-        [actions.clearLogsSuccess]: state => ({
+        [actions.clearLogsRequest]: (state) => ({ ...state, processingClear: true }),
+        [actions.clearLogsFailure]: (state) => ({ ...state, processingClear: false }),
+        [actions.clearLogsSuccess]: (state) => ({
             ...state,
             logs: [],
             processingClear: false,
         }),
 
-        [actions.getLogsConfigRequest]: state => ({ ...state, processingGetConfig: true }),
-        [actions.getLogsConfigFailure]: state => ({ ...state, processingGetConfig: false }),
+        [actions.getLogsConfigRequest]: (state) => ({ ...state, processingGetConfig: true }),
+        [actions.getLogsConfigFailure]: (state) => ({ ...state, processingGetConfig: false }),
         [actions.getLogsConfigSuccess]: (state, { payload }) => ({
             ...state,
             ...payload,
             processingGetConfig: false,
         }),
 
-        [actions.setLogsConfigRequest]: state => ({ ...state, processingSetConfig: true }),
-        [actions.setLogsConfigFailure]: state => ({ ...state, processingSetConfig: false }),
+        [actions.setLogsConfigRequest]: (state) => ({ ...state, processingSetConfig: true }),
+        [actions.setLogsConfigFailure]: (state) => ({ ...state, processingSetConfig: false }),
         [actions.setLogsConfigSuccess]: (state, { payload }) => ({
             ...state,
             ...payload,
             processingSetConfig: false,
         }),
 
-        [actions.getAdditionalLogsRequest]: state => ({
+        [actions.getAdditionalLogsRequest]: (state) => ({
             ...state, processingAdditionalLogs: true, processingGetLogs: true,
         }),
-        [actions.getAdditionalLogsFailure]: state => ({
+        [actions.getAdditionalLogsFailure]: (state) => ({
             ...state, processingAdditionalLogs: false, processingGetLogs: false,
         }),
-        [actions.getAdditionalLogsSuccess]: state => ({
+        [actions.getAdditionalLogsSuccess]: (state) => ({
             ...state, processingAdditionalLogs: false, processingGetLogs: false,
         }),
     },

@@ -1,5 +1,5 @@
 :root {
-    font-family-monospace: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+    --font-family-monospace: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
 }
 
 body {

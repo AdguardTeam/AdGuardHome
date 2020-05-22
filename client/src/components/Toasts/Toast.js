@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 
 class Toast extends Component {
     componentDidMount() {
@@ -49,4 +49,4 @@ Toast.propTypes = {
     removeToast: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(Toast);
+export default withTranslation()(Toast);

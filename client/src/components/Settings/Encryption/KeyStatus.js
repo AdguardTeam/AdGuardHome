@@ -1,6 +1,6 @@
 import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
-import { withNamespaces, Trans } from 'react-i18next';
+import { withTranslation, Trans } from 'react-i18next';
 
 const KeyStatus = ({ validKey, keyType }) => (
     <Fragment>
@@ -28,4 +28,4 @@ KeyStatus.propTypes = {
     keyType: PropTypes.string.isRequired,
 };
 
-export default withNamespaces()(KeyStatus);
+export default withTranslation()(KeyStatus);

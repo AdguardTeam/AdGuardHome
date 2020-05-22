@@ -1,8 +1,10 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import { Field, FieldArray, reduxForm, formValueSelector } from 'redux-form';
-import { Trans, withNamespaces } from 'react-i18next';
+import {
+    Field, FieldArray, reduxForm, formValueSelector,
+} from 'redux-form';
+import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 import Select from 'react-select';
 
@@ -62,40 +64,39 @@ const validate = (values) => {
 };
 
 
-const renderFieldsWrapper = (placeholder, buttonTitle) =>
-    function cell(row) {
-        const {
-            fields,
-        } = row;
-        return (
-            <div className="form__group">
-                {fields.map((ip, index) => (
-                    <div key={index} className="mb-1">
-                        <Field
-                            name={ip}
-                            component={renderGroupField}
-                            type="text"
-                            className="form-control"
-                            placeholder={placeholder}
-                            isActionAvailable={index !== 0}
-                            removeField={() => fields.remove(index)}
-                            normalizeOnBlur={data => data.trim()}
-                        />
-                    </div>
-                ))}
-                <button
-                    type="button"
-                    className="btn btn-link btn-block btn-sm"
-                    onClick={() => fields.push()}
-                    title={buttonTitle}
-                >
-                    <svg className="icon icon--close">
-                        <use xlinkHref="#plus" />
-                    </svg>
-                </button>
-            </div>
-        );
-    };
+const renderFieldsWrapper = (placeholder, buttonTitle) => function cell(row) {
+    const {
+        fields,
+    } = row;
+    return (
+        <div className="form__group">
+            {fields.map((ip, index) => (
+                <div key={index} className="mb-1">
+                    <Field
+                        name={ip}
+                        component={renderGroupField}
+                        type="text"
+                        className="form-control"
+                        placeholder={placeholder}
+                        isActionAvailable={index !== 0}
+                        removeField={() => fields.remove(index)}
+                        normalizeOnBlur={(data) => data.trim()}
+                    />
+                </div>
+            ))}
+            <button
+                type="button"
+                className="btn btn-link btn-block btn-sm"
+                onClick={() => fields.push()}
+                title={buttonTitle}
+            >
+                <svg className="icon icon--close">
+                    <use xlinkHref="#plus" />
+                </svg>
+            </button>
+        </div>
+    );
+};
 
 // Should create function outside of component to prevent component re-renders
 const renderFields = renderFieldsWrapper(i18n.t('form_enter_id'), i18n.t('form_add_id'));
@@ -109,13 +110,19 @@ const renderMultiselect = (props) => {
             options={options}
             className="basic-multi-select"
             classNamePrefix="select"
-            onChange={value => input.onChange(value)}
+            onChange={(value) => input.onChange(value)}
             onBlur={() => input.onBlur(input.value)}
             placeholder={placeholder}
             blurInputOnSelect={false}
             isMulti
         />
     );
+};
+
+renderMultiselect.propTypes = {
+    input: PropTypes.object.isRequired,
+    placeholder: PropTypes.string,
+    options: PropTypes.object,
 };
 
 let Form = (props) => {
@@ -147,7 +154,7 @@ let Form = (props) => {
                             type="text"
                             className="form-control"
                             placeholder={t('form_client_name')}
-                            normalizeOnBlur={data => data.trim()}
+                            normalizeOnBlur={(data) => data.trim()}
                         />
                     </div>
 
@@ -159,7 +166,8 @@ let Form = (props) => {
                         </div>
                         <div className="form__desc mt-0 mb-2">
                             <Trans components={[
-                                <a href="https://github.com/AdguardTeam/AdGuardHome/wiki/Hosts-Blocklists#ctag" key="0">link</a>,
+                                <a href="https://github.com/AdguardTeam/AdGuardHome/wiki/Hosts-Blocklists#ctag"
+                                   key="0">link</a>,
                             ]}>
                                 tags_desc
                             </Trans>
@@ -201,7 +209,7 @@ let Form = (props) => {
 
                 <Tabs controlClass="form">
                     <div label="settings" title={props.t('main_settings')}>
-                        {settingsCheckboxes.map(setting => (
+                        {settingsCheckboxes.map((setting) => (
                             <div className="form__group" key={setting.name}>
                                 <Field
                                     name={setting.name}
@@ -249,7 +257,7 @@ let Form = (props) => {
                                 </div>
                             </div>
                             <div className="services">
-                                {SERVICES.map(service => (
+                                {SERVICES.map((service) => (
                                     <Field
                                         key={service.id}
                                         icon={`service_${service.id}`}
@@ -299,11 +307,11 @@ let Form = (props) => {
                         type="submit"
                         className="btn btn-success btn-standard"
                         disabled={
-                            submitting ||
-                            invalid ||
-                            pristine ||
-                            processingAdding ||
-                            processingUpdating
+                            submitting
+                            || invalid
+                            || pristine
+                            || processingAdding
+                            || processingUpdating
                         }
                     >
                         <Trans>save_btn</Trans>
@@ -342,7 +350,7 @@ Form = connect((state) => {
 })(Form);
 
 export default flow([
-    withNamespaces(),
+    withTranslation(),
     reduxForm({
         form: 'clientForm',
         enableReinitialize: true,

@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
-import { withNamespaces } from 'react-i18next';
+import { withTranslation } from 'react-i18next';
 
 import Upstream from './Upstream';
 import Access from './Access';
@@ -30,9 +30,9 @@ class Dns extends Component {
         return (
             <Fragment>
                 <PageTitle title={t('dns_settings')} />
-                {isDataLoading ?
-                    <Loading /> :
-                    <Fragment>
+                {isDataLoading
+                    ? <Loading />
+                    : <Fragment>
                         <Upstream
                             processingTestUpstream={settings.processingTestUpstream}
                             testUpstream={testUpstream}
@@ -62,4 +62,4 @@ Dns.propTypes = {
     t: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(Dns);
+export default withTranslation()(Dns);

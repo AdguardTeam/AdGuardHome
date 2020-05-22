@@ -2,14 +2,14 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { reduxForm, formValueSelector } from 'redux-form';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 
 import Guide from '../../components/ui/Guide';
 import Controls from './Controls';
 import AddressList from './AddressList';
 
-let Devices = props => (
+let Devices = (props) => (
     <div className="setup__step">
         <div className="setup__group">
             <div className="setup__subtitle">
@@ -54,7 +54,7 @@ Devices = connect((state) => {
 })(Devices);
 
 export default flow([
-    withNamespaces(),
+    withTranslation(),
     reduxForm({
         form: 'install',
         destroyOnUnmount: false,

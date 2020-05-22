@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { withNamespaces, Trans } from 'react-i18next';
+import { withTranslation, Trans } from 'react-i18next';
 
-import Card from '../ui/Card';
+import Card from './Card';
 
 const Status = ({ message, buttonMessage, reloadPage }) => (
     <div className="status">
@@ -10,8 +10,8 @@ const Status = ({ message, buttonMessage, reloadPage }) => (
             <div className="h4 font-weight-light mb-4">
                 <Trans>{message}</Trans>
             </div>
-            {buttonMessage &&
-            <button className="btn btn-success" onClick={reloadPage}>
+            {buttonMessage
+            && <button className="btn btn-success" onClick={reloadPage}>
                 <Trans>{buttonMessage}</Trans>
             </button>}
         </Card>
@@ -24,4 +24,4 @@ Status.propTypes = {
     reloadPage: PropTypes.func,
 };
 
-export default withNamespaces()(Status);
+export default withTranslation()(Status);

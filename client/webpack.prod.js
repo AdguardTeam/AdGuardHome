@@ -1,5 +1,4 @@
 const StyleLintPlugin = require('stylelint-webpack-plugin');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const merge = require('webpack-merge');
 const common = require('./webpack.common.js');
 
@@ -20,6 +19,5 @@ module.exports = merge(common, {
         new StyleLintPlugin({
             files: '**/*.css',
         }),
-        new UglifyJsPlugin(),
     ],
 });

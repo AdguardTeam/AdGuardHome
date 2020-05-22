@@ -4,8 +4,8 @@ import * as actions from '../actions/access';
 
 const access = handleActions(
     {
-        [actions.getAccessListRequest]: state => ({ ...state, processing: true }),
-        [actions.getAccessListFailure]: state => ({ ...state, processing: false }),
+        [actions.getAccessListRequest]: (state) => ({ ...state, processing: true }),
+        [actions.getAccessListFailure]: (state) => ({ ...state, processing: false }),
         [actions.getAccessListSuccess]: (state, { payload }) => {
             const {
                 allowed_clients,
@@ -22,8 +22,8 @@ const access = handleActions(
             return newState;
         },
 
-        [actions.setAccessListRequest]: state => ({ ...state, processingSet: true }),
-        [actions.setAccessListFailure]: state => ({ ...state, processingSet: false }),
+        [actions.setAccessListRequest]: (state) => ({ ...state, processingSet: true }),
+        [actions.setAccessListFailure]: (state) => ({ ...state, processingSet: false }),
         [actions.setAccessListSuccess]: (state) => {
             const newState = {
                 ...state,
@@ -32,8 +32,8 @@ const access = handleActions(
             return newState;
         },
 
-        [actions.toggleClientBlockRequest]: state => ({ ...state, processingSet: true }),
-        [actions.toggleClientBlockFailure]: state => ({ ...state, processingSet: false }),
+        [actions.toggleClientBlockRequest]: (state) => ({ ...state, processingSet: true }),
+        [actions.toggleClientBlockFailure]: (state) => ({ ...state, processingSet: false }),
         [actions.toggleClientBlockSuccess]: (state, { payload }) => {
             const {
                 allowed_clients,

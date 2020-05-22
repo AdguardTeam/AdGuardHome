@@ -1,15 +1,14 @@
 import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 
-import Tabs from '../ui/Tabs';
-import Icons from '../ui/Icons';
+import Tabs from './Tabs';
+import Icons from './Icons';
 
 const Guide = (props) => {
     const { dnsAddresses } = props;
-    const tlsAddress = (dnsAddresses && dnsAddresses.filter(item => item.includes('tls://'))) || '';
-    const httpsAddress =
-        (dnsAddresses && dnsAddresses.filter(item => item.includes('https://'))) || '';
+    const tlsAddress = (dnsAddresses && dnsAddresses.filter((item) => item.includes('tls://'))) || '';
+    const httpsAddress = (dnsAddresses && dnsAddresses.filter((item) => item.includes('https://'))) || '';
     const showDnsPrivacyNotice = httpsAddress.length < 1 && tlsAddress.length < 1;
 
     return (
@@ -373,4 +372,4 @@ Guide.propTypes = {
     t: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(Guide);
+export default withTranslation()(Guide);

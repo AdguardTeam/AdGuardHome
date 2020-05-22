@@ -2,16 +2,18 @@ import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Field, reduxForm, formValueSelector } from 'redux-form';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 
-import { renderInputField, required, ipv4, isPositive, toNumber } from '../../../helpers/form';
+import {
+    renderInputField, required, ipv4, isPositive, toNumber,
+} from '../../../helpers/form';
 
-const renderInterfaces = (interfaces => (
+const renderInterfaces = ((interfaces) => (
     Object.keys(interfaces).map((item) => {
         const option = interfaces[item];
         const { name } = option;
-        const onlyIPv6 = option.ip_addresses.every(ip => ip.includes(':'));
+        const onlyIPv6 = option.ip_addresses.every((ip) => ip.includes(':'));
         let interfaceIP = option.ip_addresses[0];
 
         if (!onlyIPv6) {
@@ -30,7 +32,7 @@ const renderInterfaces = (interfaces => (
     })
 ));
 
-const renderInterfaceValues = (interfaceValues => (
+const renderInterfaceValues = ((interfaceValues) => (
     <ul className="list-unstyled mt-1 mb-0">
         <li>
             <span className="interface__title">MTU: </span>
@@ -44,7 +46,7 @@ const renderInterfaceValues = (interfaceValues => (
             <span className="interface__title"><Trans>dhcp_ip_addresses</Trans>: </span>
             {
                 interfaceValues.ip_addresses
-                    .map(ip => <span key={ip} className="interface__ip">{ip}</span>)
+                    .map((ip) => <span key={ip} className="interface__ip">{ip}</span>)
             }
         </li>
     </ul>
@@ -62,7 +64,7 @@ const clearFields = (change, resetDhcp, t) => {
 
     // eslint-disable-next-line no-alert
     if (window.confirm(t('dhcp_reset'))) {
-        Object.keys(fields).forEach(field => change(field, fields[field]));
+        Object.keys(fields).forEach((field) => change(field, fields[field]));
         resetDhcp();
     }
 };
@@ -84,8 +86,8 @@ let Form = (props) => {
 
     return (
         <form onSubmit={handleSubmit}>
-            {!processingInterfaces && interfaces &&
-                <div className="row">
+            {!processingInterfaces && interfaces
+                && <div className="row">
                     <div className="col-sm-12 col-md-6">
                         <div className="form__group form__group--settings">
                             <label>{t('dhcp_interface_select')}</label>
@@ -102,10 +104,10 @@ let Form = (props) => {
                             </Field>
                         </div>
                     </div>
-                    {interfaceValue &&
-                        <div className="col-sm-12 col-md-6">
-                            {interfaces[interfaceValue] &&
-                                renderInterfaceValues(interfaces[interfaceValue])}
+                    {interfaceValue
+                        && <div className="col-sm-12 col-md-6">
+                            {interfaces[interfaceValue]
+                                && renderInterfaceValues(interfaces[interfaceValue])}
                         </div>
                     }
                 </div>
@@ -229,6 +231,6 @@ Form = connect((state) => {
 })(Form);
 
 export default flow([
-    withNamespaces(),
+    withTranslation(),
     reduxForm({ form: 'dhcpForm' }),
 ])(Form);
