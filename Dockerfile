@@ -1,0 +1,91 @@
+# syntax=docker/dockerfile:experimental
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.14-alpine as builder
+
+ARG BUILD_DATE
+ARG VCS_REF
+ARG VERSION=dev
+ARG CHANNEL=none
+
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+RUN printf "I am running on ${BUILDPLATFORM:-linux/amd64}, building for ${TARGETPLATFORM:-linux/amd64}\n$(uname -a)\n" \
+  && $(case ${TARGETPLATFORM:-linux/amd64} in \
+      "linux/amd64")   echo "GOOS=linux GOARCH=amd64" > /tmp/.env                       ;; \
+      "linux/arm/v6")  echo "GOOS=linux GOARCH=arm GOARM=6" > /tmp/.env                 ;; \
+      "linux/arm/v7")  echo "GOOS=linux GOARCH=arm GOARM=7" > /tmp/.env                 ;; \
+      "linux/arm64")   echo "GOOS=linux GOARCH=arm64" > /tmp/.env                       ;; \
+      "linux/386")     echo "GOOS=linux GOARCH=386" > /tmp/.env                         ;; \
+      "linux/ppc64le") echo "GOOS=linux GOARCH=ppc64le" > /tmp/.env                     ;; \
+      "linux/s390x")   echo "GOOS=linux GOARCH=s390x" > /tmp/.env                       ;; \
+      *)               echo "TARGETPLATFORM ${TARGETPLATFORM} not found..." && exit 1   ;; \
+    esac) \
+  && cat /tmp/.env
+RUN env $(cat /tmp/.env | xargs) go env
+
+RUN apk --update --no-cache add \
+    build-base \
+    gcc \
+    git \
+    make \
+    npm \
+  && rm -rf /tmp/* /var/cache/apk/*
+
+WORKDIR /app
+
+ENV GO111MODULE="on" \
+  GOPROXY="https://goproxy.io" \
+  GOCACHE="/tmp"
+
+WORKDIR /app
+
+COPY go.mod .
+COPY go.sum .
+RUN env $(cat /tmp/.env | xargs) go mod download
+
+COPY . ./
+
+RUN npm --prefix client ci \
+  && npm --prefix client run build-prod
+
+RUN go generate ./... \
+  && env $(cat /tmp/.env | xargs) go build -ldflags="-s -w -X main.version=${VERSION} -X main.channel=${CHANNEL} -X main.goarm=${GOARM}"
+
+FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:latest
+
+ARG BUILD_DATE
+ARG VCS_REF
+ARG VERSION
+ARG CHANNEL
+
+LABEL maintainer="AdGuard Team <devteam@adguard.com>" \
+  org.opencontainers.image.created=$BUILD_DATE \
+  org.opencontainers.image.url="https://adguard.com/adguard-home.html" \
+  org.opencontainers.image.source="https://github.com/AdguardTeam/AdGuardHome" \
+  org.opencontainers.image.version=$VERSION \
+  org.opencontainers.image.revision=$VCS_REF \
+  org.opencontainers.image.vendor="AdGuard" \
+  org.opencontainers.image.title="AdGuard Home" \
+  org.opencontainers.image.description="Network-wide ads & trackers blocking DNS server" \
+  org.opencontainers.image.licenses="GPL-3.0"
+
+RUN apk --update --no-cache add \
+    ca-certificates \
+    libcap \
+    libressl \
+    tzdata \
+  && rm -rf /tmp/* /var/cache/apk/*
+
+COPY --from=builder --chown=nobody:nogroup /app/AdGuardHome /opt/adguardhome/AdGuardHome
+COPY --from=builder --chown=nobody:nogroup /usr/local/go/lib/time/zoneinfo.zip /usr/local/go/lib/time/zoneinfo.zip
+
+RUN /opt/adguardhome/AdGuardHome --version \
+  && mkdir -p /opt/adguardhome/conf /opt/adguardhome/work \
+  && chown -R nobody: /opt/adguardhome \
+  && setcap 'cap_net_bind_service=+eip' /opt/adguardhome/AdGuardHome
+
+EXPOSE 53/tcp 53/udp 67/udp 68/udp 80/tcp 443/tcp 853/tcp 3000/tcp
+WORKDIR /opt/adguardhome/work
+VOLUME ["/opt/adguardhome/conf", "/opt/adguardhome/work"]
+
+ENTRYPOINT ["/opt/adguardhome/AdGuardHome"]
+CMD ["-h", "0.0.0.0", "-c", "/opt/adguardhome/conf/AdGuardHome.yaml", "-w", "/opt/adguardhome/work", "--no-check-update"]

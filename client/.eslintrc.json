@@ -54,6 +54,7 @@
         "no-console": ["warn", { "allow": ["warn", "error"] }],
         "import/no-extraneous-dependencies": ["error", { "devDependencies": true }],
         "import/prefer-default-export": "off",
-        "no-alert": "off"
+        "no-alert": "off",
+        "linebreak-style": 0
     }
 }

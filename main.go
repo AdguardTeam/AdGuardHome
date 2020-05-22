@@ -1,3 +1,6 @@
+//go:generate go install -v github.com/gobuffalo/packr/packr
+//go:generate packr clean
+//go:generate packr -z
 package main
 
 import (

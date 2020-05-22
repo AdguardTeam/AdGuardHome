@@ -1,0 +1,44 @@
+name: gosum
+
+on:
+  push:
+    branches:
+      - 'master'
+    paths:
+      - '.github/workflows/gosum.yml'
+      - 'go.mod'
+      - 'go.sum'
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.13
+      -
+        name: Tidy
+        run: |
+          rm -f go.sum
+          go mod tidy
+      -
+        name: Set up Git
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name GitHub
+          git config user.email noreply@github.com
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+      -
+        name: Commit and push changes
+        run: |
+          git add .
+          if output=$(git status --porcelain) && [ ! -z "$output" ]; then
+            git commit --author "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>" --message "Fix go modules"
+            git push
+          fi
