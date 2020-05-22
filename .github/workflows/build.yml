@@ -56,7 +56,6 @@ jobs:
         name: Run node build-prod
         shell: bash
         run: |
-          env|sort
           npm --prefix client ci
           npm --prefix client run build-prod
       -
@@ -168,7 +167,7 @@ jobs:
 
   docker:
     runs-on: ubuntu-latest
-    needs: app
+    needs: test
     steps:
       -
         name: Prepare
