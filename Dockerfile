@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:experimental
+FROM --platform=${BUILDPLATFORM:-linux/amd64} tonistiigi/xx:golang AS xgo
 FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.14-alpine as builder
 
 ARG BUILD_DATE
@@ -6,49 +6,30 @@ ARG VCS_REF
 ARG VERSION=dev
 ARG CHANNEL=none
 
+ENV CGO_ENABLED 0
+ENV GO111MODULE on
+ENV GOPROXY https://goproxy.io
+COPY --from=xgo / /
+
 ARG TARGETPLATFORM
-ARG BUILDPLATFORM
-RUN printf "I am running on ${BUILDPLATFORM:-linux/amd64}, building for ${TARGETPLATFORM:-linux/amd64}\n$(uname -a)\n" \
-  && $(case ${TARGETPLATFORM:-linux/amd64} in \
-      "linux/amd64")   echo "GOOS=linux GOARCH=amd64" > /tmp/.env                       ;; \
-      "linux/arm/v6")  echo "GOOS=linux GOARCH=arm GOARM=6" > /tmp/.env                 ;; \
-      "linux/arm/v7")  echo "GOOS=linux GOARCH=arm GOARM=7" > /tmp/.env                 ;; \
-      "linux/arm64")   echo "GOOS=linux GOARCH=arm64" > /tmp/.env                       ;; \
-      "linux/386")     echo "GOOS=linux GOARCH=386" > /tmp/.env                         ;; \
-      "linux/ppc64le") echo "GOOS=linux GOARCH=ppc64le" > /tmp/.env                     ;; \
-      "linux/s390x")   echo "GOOS=linux GOARCH=s390x" > /tmp/.env                       ;; \
-      *)               echo "TARGETPLATFORM ${TARGETPLATFORM} not found..." && exit 1   ;; \
-    esac) \
-  && cat /tmp/.env
-RUN env $(cat /tmp/.env | xargs) go env
+RUN go env
 
 RUN apk --update --no-cache add \
     build-base \
     gcc \
     git \
-    make \
     npm \
   && rm -rf /tmp/* /var/cache/apk/*
 
 WORKDIR /app
 
-ENV GO111MODULE="on" \
-  GOPROXY="https://goproxy.io" \
-  GOCACHE="/tmp"
-
-WORKDIR /app
-
 COPY go.mod .
 COPY go.sum .
-RUN env $(cat /tmp/.env | xargs) go mod download
+RUN go mod download
 
 COPY . ./
-
-RUN npm --prefix client ci \
-  && npm --prefix client run build-prod
-
-RUN go generate ./... \
-  && env $(cat /tmp/.env | xargs) go build -ldflags="-s -w -X main.version=${VERSION} -X main.channel=${CHANNEL} -X main.goarm=${GOARM}"
+RUN npm --prefix client ci && npm --prefix client run build-prod
+RUN go generate ./... && go build -ldflags="-s -w -X main.version=${VERSION} -X main.channel=${CHANNEL} -X main.goarm=${GOARM}"
 
 FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:latest
 
