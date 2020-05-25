@@ -219,4 +219,5 @@ func TestV6GetDynamicLease(t *testing.T) {
 	assert.True(t, !ip6InRange(net.ParseIP("2001::2"), net.ParseIP("2001::1")))
 	assert.True(t, !ip6InRange(net.ParseIP("2001::2"), net.ParseIP("2002::2")))
 	assert.True(t, ip6InRange(net.ParseIP("2001::2"), net.ParseIP("2001::2")))
+	assert.True(t, ip6InRange(net.ParseIP("2001::2"), net.ParseIP("2001::3")))
 }
