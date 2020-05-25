@@ -64,21 +64,22 @@ func v4ServerConfToJSON(c V4ServerConf) v4ServerConfJSON {
 	}
 }
 
-func v4JSONToServerConf(c v4ServerConfJSON) V4ServerConf {
+func v4JSONToServerConf(j v4ServerConfJSON) V4ServerConf {
 	return V4ServerConf{
-		Enabled:       c.Enabled,
-		InterfaceName: c.InterfaceName,
-		GatewayIP:     c.GatewayIP,
-		SubnetMask:    c.SubnetMask,
-		RangeStart:    c.RangeStart,
-		RangeEnd:      c.RangeEnd,
-		LeaseDuration: c.LeaseDuration,
-		ICMPTimeout:   c.ICMPTimeout,
+		Enabled:       j.Enabled,
+		InterfaceName: j.InterfaceName,
+		GatewayIP:     j.GatewayIP,
+		SubnetMask:    j.SubnetMask,
+		RangeStart:    j.RangeStart,
+		RangeEnd:      j.RangeEnd,
+		LeaseDuration: j.LeaseDuration,
+		ICMPTimeout:   j.ICMPTimeout,
 	}
 }
 
 type v6ServerConfJSON struct {
 	Enabled       bool   `json:"enabled"`
+	InterfaceName string `json:"interface_name"`
 	RangeStart    string `json:"range_start"`
 	LeaseDuration uint32 `json:"lease_duration"`
 }
@@ -86,25 +87,34 @@ type v6ServerConfJSON struct {
 func v6ServerConfToJSON(c V6ServerConf) v6ServerConfJSON {
 	return v6ServerConfJSON{
 		Enabled:       c.Enabled,
+		InterfaceName: c.InterfaceName,
 		RangeStart:    c.RangeStart,
 		LeaseDuration: c.LeaseDuration,
 	}
 }
 
-func v6JSONToServerConf(c v6ServerConfJSON) V6ServerConf {
+func v6JSONToServerConf(j v6ServerConfJSON) V6ServerConf {
 	return V6ServerConf{
-		Enabled:       c.Enabled,
-		RangeStart:    c.RangeStart,
-		LeaseDuration: c.LeaseDuration,
+		Enabled:       j.Enabled,
+		InterfaceName: j.InterfaceName,
+		RangeStart:    j.RangeStart,
+		LeaseDuration: j.LeaseDuration,
 	}
 }
 
 func (s *Server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	leases := convertLeases(s.Leases(LeasesDynamic), true)
 	staticLeases := convertLeases(s.Leases(LeasesStatic), false)
+
+	v4conf := V4ServerConf{}
+	s.srv4.WriteDiskConfig4(&v4conf)
+
+	v6conf := V6ServerConf{}
+	s.srv6.WriteDiskConfig6(&v6conf)
+
 	status := map[string]interface{}{
-		"v4":            v4ServerConfToJSON(s.conf.Conf4),
-		"v6":            v6ServerConfToJSON(s.conf.Conf6),
+		"v4":            v4ServerConfToJSON(v4conf),
+		"v6":            v6ServerConfToJSON(v6conf),
 		"leases":        leases,
 		"static_leases": staticLeases,
 	}
@@ -136,31 +146,25 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// err = s.CheckConfig(newconfig.ServerConfig)
-	// if err != nil {
-	// 	httpError(r, w, http.StatusBadRequest, "Invalid DHCP configuration: %s", err)
-	// 	return
-	// }
-
-	err = s.Stop()
-	if err != nil {
-		log.Error("failed to stop the DHCP server: %s", err)
-	}
-
 	v4conf := v4JSONToServerConf(newconfig.V4)
-	v4conf.notify = s.conf.Conf4.notify
+	v4conf.notify = s.onNotify
 	s4, err := v4Create(v4conf)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "Invalid DHCP configuration: %s", err)
+		httpError(r, w, http.StatusBadRequest, "Invalid DHCPv4 configuration: %s", err)
 		return
 	}
 
 	v6conf := v6JSONToServerConf(newconfig.V6)
-	v6conf.notify = s.conf.Conf6.notify
+	v6conf.notify = s.onNotify
 	s6, err := v6Create(v6conf)
 	if s6 == nil {
 		httpError(r, w, http.StatusBadRequest, "Invalid DHCPv6 configuration: %s", err)
 		return
+	}
+
+	err = s.Stop()
+	if err != nil {
+		log.Error("failed to stop the DHCP server: %s", err)
 	}
 
 	s.srv4 = s4
@@ -177,12 +181,12 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+	}
 
-		err = s.Start()
-		if err != nil {
-			httpError(r, w, http.StatusBadRequest, "Failed to start DHCP server: %s", err)
-			return
-		}
+	err = s.Start()
+	if err != nil {
+		httpError(r, w, http.StatusBadRequest, "Failed to start DHCP server: %s", err)
+		return
 	}
 }
 

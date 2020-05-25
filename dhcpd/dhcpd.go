@@ -72,8 +72,6 @@ func (s *Server) CheckConfig(config ServerConfig) error {
 // Create - create object
 func Create(config ServerConfig) *Server {
 	s := Server{}
-	config.Conf4.notify = s.onNotify
-	config.Conf6.notify = s.onNotify
 	s.conf.HTTPRegister = config.HTTPRegister
 	s.conf.ConfigModified = config.ConfigModified
 	s.conf.DBFilePath = filepath.Join(config.WorkDir, dbFilename)
@@ -84,12 +82,14 @@ func Create(config ServerConfig) *Server {
 	}
 
 	var err error
+	config.Conf4.notify = s.onNotify
 	s.srv4, err = v4Create(config.Conf4)
 	if err != nil {
 		log.Error("%s", err)
 		return nil
 	}
 
+	config.Conf6.notify = s.onNotify
 	s.srv6, err = v6Create(config.Conf6)
 	if err != nil {
 		log.Error("%s", err)

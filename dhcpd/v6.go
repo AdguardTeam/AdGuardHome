@@ -60,7 +60,7 @@ func (s *v6Server) ResetLeases(ll []*Lease) {
 			continue
 		}
 
-		s.leases = append(s.leases, l)
+		s.addLease(l)
 	}
 }
 
@@ -578,23 +578,16 @@ func (s *v6Server) Start() error {
 		IP:   net.ParseIP("::"),
 		Port: dhcpv6.DefaultServerPort,
 	}
-	server, err := server6.NewServer(iface.Name, laddr, s.packetHandler, server6.WithDebugLogger())
+	s.srv, err = server6.NewServer(iface.Name, laddr, s.packetHandler, server6.WithDebugLogger())
 	if err != nil {
 		return err
 	}
 
 	go func() {
-		err = server.Serve()
+		err = s.srv.Serve()
 		log.Error("DHCPv6: %s", err)
 	}()
 	return nil
-}
-
-// Reset - stop server
-func (s *v6Server) Reset() {
-	s.leasesLock.Lock()
-	s.leases = nil
-	s.leasesLock.Unlock()
 }
 
 // Stop - stop server
@@ -603,11 +596,20 @@ func (s *v6Server) Stop() {
 		return
 	}
 
+	log.Debug("DHCPv6: stopping")
 	err := s.srv.Close()
 	if err != nil {
 		log.Error("DHCPv6: srv.Close: %s", err)
 	}
 	// now server.Serve() will return
+	s.srv = nil
+}
+
+// Reset - stop server
+func (s *v6Server) Reset() {
+	s.leasesLock.Lock()
+	s.leases = nil
+	s.leasesLock.Unlock()
 }
 
 // Create DHCPv6 server

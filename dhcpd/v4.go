@@ -376,11 +376,8 @@ func (s *v4Server) processRequest(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) (*Lea
 	reqIP := req.Options.Get(dhcpv4.OptionRequestedIPAddress)
 
 	sid := req.Options.Get(dhcpv4.OptionServerIdentifier)
-	if len(sid) == 0 {
-		log.Debug("DHCPv4: No OptionServerIdentifier in Request message for %s", mac)
-		return nil, false
-	}
-	if !bytes.Equal(sid, s.conf.dnsIPAddrs[0]) {
+	if len(sid) != 0 &&
+		!bytes.Equal(sid, s.conf.dnsIPAddrs[0]) {
 		log.Debug("DHCPv4: Bad OptionServerIdentifier in Request message for %s", mac)
 		return nil, false
 	}
@@ -535,7 +532,7 @@ func (s *v4Server) Start() error {
 		IP:   net.ParseIP("0.0.0.0"),
 		Port: dhcpv4.ServerPort,
 	}
-	server, err := server4.NewServer(iface.Name, laddr, s.packetHandler, server4.WithDebugLogger())
+	s.srv, err = server4.NewServer(iface.Name, laddr, s.packetHandler, server4.WithDebugLogger())
 	if err != nil {
 		return err
 	}
@@ -543,18 +540,11 @@ func (s *v4Server) Start() error {
 	log.Info("DHCPv4: listening")
 
 	go func() {
-		err = server.Serve()
+		err = s.srv.Serve()
 		log.Error("DHCPv4: %s", err)
 	}()
 
 	return nil
-}
-
-// Reset - stop server
-func (s *v4Server) Reset() {
-	s.leasesLock.Lock()
-	s.leases = nil
-	s.leasesLock.Unlock()
 }
 
 // Stop - stop server
@@ -563,11 +553,20 @@ func (s *v4Server) Stop() {
 		return
 	}
 
+	log.Debug("DHCPv4: stopping")
 	err := s.srv.Close()
 	if err != nil {
 		log.Error("DHCPv4: srv.Close: %s", err)
 	}
-	// now server.Serve() will return
+	// now s.srv.Serve() will return
+	s.srv = nil
+}
+
+// Reset - stop server
+func (s *v4Server) Reset() {
+	s.leasesLock.Lock()
+	s.leases = nil
+	s.leasesLock.Unlock()
 }
 
 // Create DHCPv4 server
@@ -599,6 +598,7 @@ func v4Create(conf V4ServerConf) (DHCPServer, error) {
 	if s.conf.ipStart[0] == 0 {
 		return nil, fmt.Errorf("DHCPv4: invalid range start IP")
 	}
+
 	s.conf.ipEnd, err = parseIPv4(conf.RangeEnd)
 	if s.conf.ipEnd == nil {
 		return nil, fmt.Errorf("DHCPv4: %s", err)
