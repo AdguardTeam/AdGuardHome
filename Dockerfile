@@ -9,9 +9,11 @@ ARG CHANNEL=none
 ENV CGO_ENABLED 0
 ENV GO111MODULE on
 ENV GOPROXY https://goproxy.io
-COPY --from=xgo / /
 
 ARG TARGETPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
+COPY --from=xgo / /
 RUN go env
 
 RUN apk --update --no-cache add \
@@ -29,7 +31,8 @@ RUN go mod download
 
 COPY . ./
 RUN npm --prefix client ci && npm --prefix client run build-prod
-RUN go generate ./... && go build -ldflags="-s -w -X main.version=${VERSION} -X main.channel=${CHANNEL} -X main.goarm=${GOARM}"
+RUN PATH=${GOPATH}/bin/${TARGETOS}_${TARGETARCH}:${PATH} go generate ./...
+RUN go build -ldflags="-s -w -X main.version=${VERSION} -X main.channel=${CHANNEL} -X main.goarm=${GOARM}"
 
 FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:latest
 
