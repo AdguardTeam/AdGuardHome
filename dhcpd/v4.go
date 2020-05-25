@@ -1,3 +1,5 @@
+// +build aix darwin dragonfly freebsd linux netbsd openbsd solaris
+
 package dhcpd
 
 import (
@@ -14,8 +16,8 @@ import (
 	"github.com/sparrc/go-ping"
 )
 
-// V4Server - DHCPv4 server
-type V4Server struct {
+// v4Server - DHCPv4 server
+type v4Server struct {
 	srv        *server4.Server
 	leasesLock sync.Mutex
 	leases     []*Lease
@@ -24,37 +26,20 @@ type V4Server struct {
 	conf V4ServerConf
 }
 
-// V4ServerConf - server configuration
-type V4ServerConf struct {
-	Enabled       bool   `json:"enabled" yaml:"enabled"`
-	InterfaceName string `json:"interface_name" yaml:"interface_name"` // eth0, en0 and so on
-	GatewayIP     string `json:"gateway_ip" yaml:"gateway_ip"`
-	SubnetMask    string `json:"subnet_mask" yaml:"subnet_mask"`
-	RangeStart    string `json:"range_start" yaml:"range_start"`
-	RangeEnd      string `json:"range_end" yaml:"range_end"`
-	LeaseDuration uint32 `json:"lease_duration" yaml:"lease_duration"` // in seconds
-
-	// IP conflict detector: time (ms) to wait for ICMP reply.
-	// 0: disable
-	ICMPTimeout uint32 `json:"icmp_timeout_msec" yaml:"icmp_timeout_msec"`
-
-	ipStart    net.IP
-	ipEnd      net.IP
-	leaseTime  time.Duration
-	dnsIPAddrs []net.IP // IPv4 addresses to return to DHCP clients as DNS server addresses
-	routerIP   net.IP
-	subnetMask net.IPMask
-
-	notify func(uint32)
+// WriteDiskConfig4 - write configuration
+func (s *v4Server) WriteDiskConfig4(c *V4ServerConf) {
+	*c = s.conf
 }
 
-// WriteDiskConfig - write configuration
-func (s *V4Server) WriteDiskConfig(c *V4ServerConf) {
-	*c = s.conf
+// WriteDiskConfig6 - write configuration
+func (s *v4Server) WriteDiskConfig6(c *V6ServerConf) {
 }
 
 // Return TRUE if IP address is within range [start..stop]
 func ipInRange(start net.IP, stop net.IP, ip net.IP) bool {
+	if len(start) != 4 || len(stop) != 4 {
+		return false
+	}
 	from := binary.BigEndian.Uint32(start)
 	to := binary.BigEndian.Uint32(stop)
 	check := binary.BigEndian.Uint32(ip)
@@ -62,7 +47,7 @@ func ipInRange(start net.IP, stop net.IP, ip net.IP) bool {
 }
 
 // ResetLeases - reset leases
-func (s *V4Server) ResetLeases(leases []*Lease) {
+func (s *v4Server) ResetLeases(leases []*Lease) {
 	s.leases = nil
 
 	for _, l := range leases {
@@ -79,12 +64,12 @@ func (s *V4Server) ResetLeases(leases []*Lease) {
 }
 
 // GetLeasesRef - get leases
-func (s *V4Server) GetLeasesRef() []*Lease {
+func (s *v4Server) GetLeasesRef() []*Lease {
 	return s.leases
 }
 
 // GetLeases returns the list of current DHCP leases (thread-safe)
-func (s *V4Server) GetLeases(flags int) []Lease {
+func (s *v4Server) GetLeases(flags int) []Lease {
 	var result []Lease
 	now := time.Now().Unix()
 
@@ -101,7 +86,7 @@ func (s *V4Server) GetLeases(flags int) []Lease {
 }
 
 // FindMACbyIP - find a MAC address by IP address in the currently active DHCP leases
-func (s *V4Server) FindMACbyIP(ip net.IP) net.HardwareAddr {
+func (s *v4Server) FindMACbyIP(ip net.IP) net.HardwareAddr {
 	now := time.Now().Unix()
 
 	s.leasesLock.Lock()
@@ -124,7 +109,7 @@ func (s *V4Server) FindMACbyIP(ip net.IP) net.HardwareAddr {
 }
 
 // Add the specified IP to the black list for a time period
-func (s *V4Server) blacklistLease(lease *Lease) {
+func (s *v4Server) blacklistLease(lease *Lease) {
 	hw := make(net.HardwareAddr, 6)
 	lease.HWAddr = hw
 	lease.Hostname = ""
@@ -132,7 +117,7 @@ func (s *V4Server) blacklistLease(lease *Lease) {
 }
 
 // Remove (swap) lease by index
-func (s *V4Server) leaseRemoveSwapByIndex(i int) {
+func (s *v4Server) leaseRemoveSwapByIndex(i int) {
 	s.ipAddrs[s.leases[i].IP[3]] = 0
 	log.Debug("DHCPv4: removed lease %s", s.leases[i].HWAddr)
 
@@ -145,7 +130,7 @@ func (s *V4Server) leaseRemoveSwapByIndex(i int) {
 
 // Remove a dynamic lease with the same properties
 // Return error if a static lease is found
-func (s *V4Server) rmDynamicLease(lease Lease) error {
+func (s *v4Server) rmDynamicLease(lease Lease) error {
 	for i := 0; i < len(s.leases); i++ {
 		l := s.leases[i]
 
@@ -172,14 +157,14 @@ func (s *V4Server) rmDynamicLease(lease Lease) error {
 }
 
 // Add a lease
-func (s *V4Server) addLease(l *Lease) {
+func (s *v4Server) addLease(l *Lease) {
 	s.leases = append(s.leases, l)
 	s.ipAddrs[l.IP[3]] = 1
 	log.Debug("DHCPv4: added lease %s <-> %s", l.IP, l.HWAddr)
 }
 
 // Remove a lease with the same properties
-func (s *V4Server) rmLease(lease Lease) error {
+func (s *v4Server) rmLease(lease Lease) error {
 	for i, l := range s.leases {
 		if net.IP.Equal(l.IP, lease.IP) {
 
@@ -197,7 +182,7 @@ func (s *V4Server) rmLease(lease Lease) error {
 }
 
 // AddStaticLease adds a static lease (thread-safe)
-func (s *V4Server) AddStaticLease(lease Lease) error {
+func (s *v4Server) AddStaticLease(lease Lease) error {
 	if len(lease.IP) != 4 {
 		return fmt.Errorf("invalid IP")
 	}
@@ -221,7 +206,7 @@ func (s *V4Server) AddStaticLease(lease Lease) error {
 }
 
 // RemoveStaticLease removes a static lease (thread-safe)
-func (s *V4Server) RemoveStaticLease(l Lease) error {
+func (s *v4Server) RemoveStaticLease(l Lease) error {
 	if len(l.IP) != 4 {
 		return fmt.Errorf("invalid IP")
 	}
@@ -244,7 +229,7 @@ func (s *V4Server) RemoveStaticLease(l Lease) error {
 
 // Send ICMP to the specified machine
 // Return TRUE if it doesn't reply, which probably means that the IP is available
-func (s *V4Server) addrAvailable(target net.IP) bool {
+func (s *v4Server) addrAvailable(target net.IP) bool {
 
 	if s.conf.ICMPTimeout == 0 {
 		return true
@@ -276,7 +261,7 @@ func (s *V4Server) addrAvailable(target net.IP) bool {
 }
 
 // Find lease by MAC
-func (s *V4Server) findLease(mac net.HardwareAddr) *Lease {
+func (s *v4Server) findLease(mac net.HardwareAddr) *Lease {
 	for i := range s.leases {
 		if bytes.Equal(mac, s.leases[i].HWAddr) {
 			return s.leases[i]
@@ -286,7 +271,7 @@ func (s *V4Server) findLease(mac net.HardwareAddr) *Lease {
 }
 
 // Get next free IP
-func (s *V4Server) findFreeIP() net.IP {
+func (s *v4Server) findFreeIP() net.IP {
 	for i := s.conf.ipStart[3]; ; i++ {
 		if s.ipAddrs[i] == 0 {
 			ip := make([]byte, 4)
@@ -302,7 +287,7 @@ func (s *V4Server) findFreeIP() net.IP {
 }
 
 // Find an expired lease and return its index or -1
-func (s *V4Server) findExpiredLease() int {
+func (s *v4Server) findExpiredLease() int {
 	now := time.Now().Unix()
 	for i, lease := range s.leases {
 		if lease.Expiry.Unix() != leaseExpireStatic &&
@@ -314,7 +299,7 @@ func (s *V4Server) findExpiredLease() int {
 }
 
 // Reserve lease for MAC
-func (s *V4Server) reserveLease(mac net.HardwareAddr) *Lease {
+func (s *v4Server) reserveLease(mac net.HardwareAddr) *Lease {
 	l := Lease{}
 	l.HWAddr = make([]byte, 6)
 	copy(l.HWAddr, mac)
@@ -334,7 +319,7 @@ func (s *V4Server) reserveLease(mac net.HardwareAddr) *Lease {
 }
 
 // Process Discover request and return lease
-func (s *V4Server) processDiscover(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) *Lease {
+func (s *v4Server) processDiscover(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) *Lease {
 	mac := req.ClientHWAddr
 
 	s.leasesLock.Lock()
@@ -384,7 +369,7 @@ func (s *V4Server) processDiscover(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) *Lea
 
 // Process Request request and return lease
 // Return false if we don't need to reply
-func (s *V4Server) processRequest(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) (*Lease, bool) {
+func (s *v4Server) processRequest(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) (*Lease, bool) {
 	var lease *Lease
 	mac := req.ClientHWAddr
 	hostname := req.Options.Get(dhcpv4.OptionHostName)
@@ -450,7 +435,7 @@ func (s *V4Server) processRequest(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) (*Lea
 // Return 1: OK
 // Return 0: error; reply with Nak
 // Return -1: error; don't reply
-func (s *V4Server) process(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) int {
+func (s *v4Server) process(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) int {
 
 	var lease *Lease
 
@@ -489,7 +474,7 @@ func (s *V4Server) process(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) int {
 // client(255.255.255.255:68) <- (Reply:YourIP,ClientMAC,Offer,ServerID,SubnetMask,LeaseTime) <- server(<IP>:67)
 // client(0.0.0.0:68) -> (Request:ClientMAC,Request,ClientID,ReqIP,HostName,ServerID,ParamReqList) -> server(255.255.255.255:67)
 // client(255.255.255.255:68) <- (Reply:YourIP,ClientMAC,ACK,ServerID,SubnetMask,LeaseTime) <- server(<IP>:67)
-func (s *V4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4.DHCPv4) {
+func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4.DHCPv4) {
 	log.Debug("DHCPv4: received message: %s", req.Summary())
 
 	switch req.MessageType() {
@@ -529,28 +514,8 @@ func (s *V4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 	}
 }
 
-// Get IPv4 address list
-func getIfaceIPv4(iface net.Interface) []net.IP {
-	addrs, err := iface.Addrs()
-	if err != nil {
-		return nil
-	}
-
-	var res []net.IP
-	for _, a := range addrs {
-		ipnet, ok := a.(*net.IPNet)
-		if !ok {
-			continue
-		}
-		if ipnet.IP.To4() != nil {
-			res = append(res, ipnet.IP.To4())
-		}
-	}
-	return res
-}
-
 // Start - start server
-func (s *V4Server) Start() error {
+func (s *v4Server) Start() error {
 	if !s.conf.Enabled {
 		return nil
 	}
@@ -586,14 +551,14 @@ func (s *V4Server) Start() error {
 }
 
 // Reset - stop server
-func (s *V4Server) Reset() {
+func (s *v4Server) Reset() {
 	s.leasesLock.Lock()
 	s.leases = nil
 	s.leasesLock.Unlock()
 }
 
 // Stop - stop server
-func (s *V4Server) Stop() {
+func (s *v4Server) Stop() {
 	if s.srv == nil {
 		return
 	}
@@ -605,9 +570,9 @@ func (s *V4Server) Stop() {
 	// now server.Serve() will return
 }
 
-// Create DHCPv6 server
-func v4Create(conf V4ServerConf) (*V4Server, error) {
-	s := &V4Server{}
+// Create DHCPv4 server
+func v4Create(conf V4ServerConf) (DHCPServer, error) {
+	s := &v4Server{}
 	s.conf = conf
 
 	if !conf.Enabled {

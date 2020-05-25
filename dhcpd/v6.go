@@ -1,3 +1,5 @@
+// +build aix darwin dragonfly freebsd linux netbsd openbsd solaris
+
 package dhcpd
 
 import (
@@ -15,38 +17,28 @@ import (
 
 const valueIAID = "ADGH" // value for IANA.ID
 
-// V6Server - DHCPv6 server
-type V6Server struct {
+// v6Server - DHCPv6 server
+type v6Server struct {
 	srv        *server6.Server
 	leasesLock sync.Mutex
 	leases     []*Lease
 	ipAddrs    [256]byte
+	sid        dhcpv6.Duid
 
 	conf V6ServerConf
 }
 
-// V6ServerConf - server configuration
-type V6ServerConf struct {
-	Enabled       bool   `yaml:"enabled"`
-	InterfaceName string `yaml:"interface_name"`
-	RangeStart    string `yaml:"range_start"`
-	LeaseDuration uint32 `yaml:"lease_duration"` // in seconds
-
-	ipStart    net.IP
-	leaseTime  time.Duration
-	dnsIPAddrs []net.IP // IPv6 addresses to return to DHCP clients as DNS server addresses
-	sid        dhcpv6.Duid
-
-	notify func(uint32)
+// WriteDiskConfig4 - write configuration
+func (s *v6Server) WriteDiskConfig4(c *V4ServerConf) {
 }
 
-// WriteDiskConfig - write configuration
-func (s *V6Server) WriteDiskConfig(c *V6ServerConf) {
+// WriteDiskConfig6 - write configuration
+func (s *v6Server) WriteDiskConfig6(c *V6ServerConf) {
 	*c = s.conf
 }
 
 // ResetLeases - reset leases
-func (s *V6Server) ResetLeases(ll []*Lease) {
+func (s *v6Server) ResetLeases(ll []*Lease) {
 	s.leases = nil
 	for _, l := range ll {
 		// TODO
@@ -55,7 +47,7 @@ func (s *V6Server) ResetLeases(ll []*Lease) {
 }
 
 // GetLeases - get current leases
-func (s *V6Server) GetLeases(flags int) []Lease {
+func (s *v6Server) GetLeases(flags int) []Lease {
 	var result []Lease
 	s.leasesLock.Lock()
 	for _, lease := range s.leases {
@@ -76,12 +68,12 @@ func (s *V6Server) GetLeases(flags int) []Lease {
 }
 
 // GetLeasesRef - get leases
-func (s *V6Server) GetLeasesRef() []*Lease {
+func (s *v6Server) GetLeasesRef() []*Lease {
 	return s.leases
 }
 
 // FindMACbyIP - find a MAC address by IP address in the currently active DHCP leases
-func (s *V6Server) FindMACbyIP(ip net.IP) net.HardwareAddr {
+func (s *v6Server) FindMACbyIP(ip net.IP) net.HardwareAddr {
 	now := time.Now().Unix()
 
 	s.leasesLock.Lock()
@@ -104,7 +96,7 @@ func (s *V6Server) FindMACbyIP(ip net.IP) net.HardwareAddr {
 }
 
 // Remove (swap) lease by index
-func (s *V6Server) leaseRemoveSwapByIndex(i int) {
+func (s *v6Server) leaseRemoveSwapByIndex(i int) {
 	s.ipAddrs[s.leases[i].IP[15]] = 0
 	log.Debug("DHCPv6: removed lease %s", s.leases[i].HWAddr)
 
@@ -117,7 +109,7 @@ func (s *V6Server) leaseRemoveSwapByIndex(i int) {
 
 // Remove a dynamic lease with the same properties
 // Return error if a static lease is found
-func (s *V6Server) rmDynamicLease(lease Lease) error {
+func (s *v6Server) rmDynamicLease(lease Lease) error {
 	for i := 0; i < len(s.leases); i++ {
 		l := s.leases[i]
 
@@ -144,7 +136,7 @@ func (s *V6Server) rmDynamicLease(lease Lease) error {
 }
 
 // AddStaticLease - add a static lease
-func (s *V6Server) AddStaticLease(l Lease) error {
+func (s *v6Server) AddStaticLease(l Lease) error {
 	if len(l.IP) != 16 {
 		return fmt.Errorf("invalid IP")
 	}
@@ -169,7 +161,7 @@ func (s *V6Server) AddStaticLease(l Lease) error {
 }
 
 // RemoveStaticLease - remove a static lease
-func (s *V6Server) RemoveStaticLease(l Lease) error {
+func (s *v6Server) RemoveStaticLease(l Lease) error {
 	if len(l.IP) != 16 {
 		return fmt.Errorf("invalid IP")
 	}
@@ -190,14 +182,14 @@ func (s *V6Server) RemoveStaticLease(l Lease) error {
 }
 
 // Add a lease
-func (s *V6Server) addLease(l *Lease) {
+func (s *v6Server) addLease(l *Lease) {
 	s.leases = append(s.leases, l)
 	s.ipAddrs[l.IP[15]] = 1
 	log.Debug("DHCPv6: added lease %s <-> %s", l.IP, l.HWAddr)
 }
 
 // Remove a lease with the same properties
-func (s *V6Server) rmLease(lease Lease) error {
+func (s *v6Server) rmLease(lease Lease) error {
 	for i, l := range s.leases {
 		if net.IP.Equal(l.IP, lease.IP) {
 
@@ -215,7 +207,7 @@ func (s *V6Server) rmLease(lease Lease) error {
 }
 
 // Find lease by MAC
-func (s *V6Server) findLease(mac net.HardwareAddr) *Lease {
+func (s *v6Server) findLease(mac net.HardwareAddr) *Lease {
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
 
@@ -228,7 +220,7 @@ func (s *V6Server) findLease(mac net.HardwareAddr) *Lease {
 }
 
 // Find an expired lease and return its index or -1
-func (s *V6Server) findExpiredLease() int {
+func (s *v6Server) findExpiredLease() int {
 	now := time.Now().Unix()
 	for i, lease := range s.leases {
 		if lease.Expiry.Unix() != leaseExpireStatic &&
@@ -240,7 +232,7 @@ func (s *V6Server) findExpiredLease() int {
 }
 
 // Get next free IP
-func (s *V6Server) findFreeIP() net.IP {
+func (s *v6Server) findFreeIP() net.IP {
 	for i := s.conf.ipStart[15]; ; i++ {
 		if s.ipAddrs[i] == 0 {
 			ip := make([]byte, 16)
@@ -256,7 +248,7 @@ func (s *V6Server) findFreeIP() net.IP {
 }
 
 // Reserve lease for MAC
-func (s *V6Server) reserveLease(mac net.HardwareAddr) *Lease {
+func (s *v6Server) reserveLease(mac net.HardwareAddr) *Lease {
 	l := Lease{}
 	l.HWAddr = make([]byte, 6)
 	copy(l.HWAddr, mac)
@@ -280,7 +272,7 @@ func (s *V6Server) reserveLease(mac net.HardwareAddr) *Lease {
 }
 
 // Check Client ID
-func (s *V6Server) checkCID(msg *dhcpv6.Message) error {
+func (s *v6Server) checkCID(msg *dhcpv6.Message) error {
 	if msg.Options.ClientID() == nil {
 		return fmt.Errorf("DHCPv6: no ClientID option in request")
 	}
@@ -288,7 +280,7 @@ func (s *V6Server) checkCID(msg *dhcpv6.Message) error {
 }
 
 // Check ServerID policy
-func (s *V6Server) checkSID(msg *dhcpv6.Message) error {
+func (s *v6Server) checkSID(msg *dhcpv6.Message) error {
 	sid := msg.Options.ServerID()
 
 	switch msg.Type() {
@@ -308,7 +300,7 @@ func (s *V6Server) checkSID(msg *dhcpv6.Message) error {
 		if sid == nil {
 			return fmt.Errorf("DHCPv6: drop packet: no ServerID option in message %s", msg.Type().String())
 		}
-		if !sid.Equal(s.conf.sid) {
+		if !sid.Equal(s.sid) {
 			return fmt.Errorf("DHCPv6: drop packet: mismatched ServerID option in message %s: %s",
 				msg.Type().String(), sid.String())
 		}
@@ -319,7 +311,7 @@ func (s *V6Server) checkSID(msg *dhcpv6.Message) error {
 
 // . IAID must be equal to this server's ID
 // . IAAddress must be equal to the lease's IP
-func (s *V6Server) checkIA(msg *dhcpv6.Message, lease *Lease) error {
+func (s *v6Server) checkIA(msg *dhcpv6.Message, lease *Lease) error {
 	switch msg.Type() {
 	case dhcpv6.MessageTypeRequest,
 		dhcpv6.MessageTypeConfirm,
@@ -348,7 +340,7 @@ func (s *V6Server) checkIA(msg *dhcpv6.Message, lease *Lease) error {
 }
 
 // Store lease in DB (if necessary) and return lease life time
-func (s *V6Server) commitLease(msg *dhcpv6.Message, lease *Lease) time.Duration {
+func (s *v6Server) commitLease(msg *dhcpv6.Message, lease *Lease) time.Duration {
 	lifetime := s.conf.leaseTime
 
 	switch msg.Type() {
@@ -376,7 +368,7 @@ func (s *V6Server) commitLease(msg *dhcpv6.Message, lease *Lease) time.Duration 
 }
 
 // Find a lease associated with MAC and prepare response
-func (s *V6Server) process(msg *dhcpv6.Message, req dhcpv6.DHCPv6, resp dhcpv6.DHCPv6) bool {
+func (s *v6Server) process(msg *dhcpv6.Message, req dhcpv6.DHCPv6, resp dhcpv6.DHCPv6) bool {
 	switch msg.Type() {
 	case dhcpv6.MessageTypeSolicit,
 		dhcpv6.MessageTypeRequest,
@@ -452,7 +444,7 @@ func (s *V6Server) process(msg *dhcpv6.Message, req dhcpv6.DHCPv6, resp dhcpv6.D
 //
 // 3.
 // fe80::* --(Release + ClientID+ServerID+IANA(IAAddress))-> ff02::1:2
-func (s *V6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.DHCPv6) {
+func (s *v6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.DHCPv6) {
 	msg, err := req.GetInnerMessage()
 	if err != nil {
 		log.Error("DHCPv6: %s", err)
@@ -501,7 +493,7 @@ func (s *V6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 		return
 	}
 
-	resp.AddOption(dhcpv6.OptServerID(s.conf.sid))
+	resp.AddOption(dhcpv6.OptServerID(s.sid))
 
 	_ = s.process(msg, req, resp)
 
@@ -535,7 +527,7 @@ func getIfaceIPv6(iface net.Interface) []net.IP {
 }
 
 // Start - start server
-func (s *V6Server) Start() error {
+func (s *v6Server) Start() error {
 	if !s.conf.Enabled {
 		return nil
 	}
@@ -558,7 +550,7 @@ func (s *V6Server) Start() error {
 	if len(iface.HardwareAddr) != 6 {
 		return fmt.Errorf("DHCPv6: invalid MAC %s", iface.HardwareAddr)
 	}
-	s.conf.sid = dhcpv6.Duid{
+	s.sid = dhcpv6.Duid{
 		Type:          dhcpv6.DUID_LLT,
 		HwType:        iana.HWTypeEthernet,
 		LinkLayerAddr: iface.HardwareAddr,
@@ -581,14 +573,14 @@ func (s *V6Server) Start() error {
 }
 
 // Reset - stop server
-func (s *V6Server) Reset() {
+func (s *v6Server) Reset() {
 	s.leasesLock.Lock()
 	s.leases = nil
 	s.leasesLock.Unlock()
 }
 
 // Stop - stop server
-func (s *V6Server) Stop() {
+func (s *v6Server) Stop() {
 	if s.srv == nil {
 		return
 	}
@@ -601,8 +593,8 @@ func (s *V6Server) Stop() {
 }
 
 // Create DHCPv6 server
-func v6Create(conf V6ServerConf) (*V6Server, error) {
-	s := &V6Server{}
+func v6Create(conf V6ServerConf) (DHCPServer, error) {
+	s := &v6Server{}
 	s.conf = conf
 
 	if !conf.Enabled {

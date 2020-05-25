@@ -56,8 +56,8 @@ const (
 
 // Server - the current state of the DHCP server
 type Server struct {
-	srv4 *V4Server
-	srv6 *V6Server
+	srv4 DHCPServer
+	srv6 DHCPServer
 
 	conf ServerConfig
 
@@ -75,6 +75,8 @@ func Create(config ServerConfig) *Server {
 	s := Server{}
 	config.Conf4.notify = s.onNotify
 	config.Conf6.notify = s.onNotify
+	s.conf.HTTPRegister = config.HTTPRegister
+	s.conf.ConfigModified = config.ConfigModified
 	s.conf.DBFilePath = filepath.Join(config.WorkDir, dbFilename)
 
 	if !webHandlersRegistered && s.conf.HTTPRegister != nil {
@@ -84,13 +86,13 @@ func Create(config ServerConfig) *Server {
 
 	var err error
 	s.srv4, err = v4Create(config.Conf4)
-	if s.srv4 == nil {
+	if err != nil {
 		log.Error("%s", err)
 		return nil
 	}
 
 	s.srv6, err = v6Create(config.Conf6)
-	if s.srv6 == nil {
+	if err != nil {
 		log.Error("%s", err)
 		return nil
 	}
@@ -125,8 +127,8 @@ func (s *Server) notify(flags int) {
 
 // WriteDiskConfig - write configuration
 func (s *Server) WriteDiskConfig(c *ServerConfig) {
-	s.srv4.WriteDiskConfig(&c.Conf4)
-	s.srv6.WriteDiskConfig(&c.Conf6)
+	s.srv4.WriteDiskConfig4(&c.Conf4)
+	s.srv6.WriteDiskConfig6(&c.Conf6)
 }
 
 // Start will listen on port 67 and serve DHCP requests.
@@ -168,11 +170,6 @@ func (s *Server) Leases(flags int) []Lease {
 	}
 
 	return result
-}
-
-// AddStaticLease adds a static lease (thread-safe)
-func (s *Server) AddStaticLease(lease Lease) error {
-	return s.srv4.AddStaticLease(lease)
 }
 
 // FindMACbyIP - find a MAC address by IP address in the currently active DHCP leases
