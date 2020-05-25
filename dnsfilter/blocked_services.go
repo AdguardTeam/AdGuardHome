@@ -157,6 +157,7 @@ var serviceRulesArray = []svc{
 		"||muscdn.com^",
 		"||bytedance.map.fastly.net^",
 		"||douyin.com^",
+		"||tiktokv.com^",
 	}},
 }
 
