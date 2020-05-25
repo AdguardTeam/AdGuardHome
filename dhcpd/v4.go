@@ -36,7 +36,7 @@ func (s *v4Server) WriteDiskConfig6(c *V6ServerConf) {
 }
 
 // Return TRUE if IP address is within range [start..stop]
-func ipInRange(start net.IP, stop net.IP, ip net.IP) bool {
+func ip4InRange(start net.IP, stop net.IP, ip net.IP) bool {
 	if len(start) != 4 || len(stop) != 4 {
 		return false
 	}
@@ -53,7 +53,7 @@ func (s *v4Server) ResetLeases(leases []*Lease) {
 	for _, l := range leases {
 
 		if l.Expiry.Unix() != leaseExpireStatic &&
-			!ipInRange(s.conf.ipStart, s.conf.ipEnd, l.IP) {
+			!ip4InRange(s.conf.ipStart, s.conf.ipEnd, l.IP) {
 
 			log.Debug("DHCPv4: skipping a lease with IP %v: not within current IP range", l.IP)
 			continue

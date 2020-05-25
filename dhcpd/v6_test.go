@@ -61,7 +61,8 @@ func TestV6StaticLeaseAddReplaceDynamic(t *testing.T) {
 		RangeStart: "2001::1",
 		notify:     notify6,
 	}
-	s, err := v6Create(conf)
+	sIface, err := v6Create(conf)
+	s := sIface.(*v6Server)
 	assert.True(t, err == nil)
 
 	// add dynamic lease
@@ -109,14 +110,15 @@ func TestV6GetLease(t *testing.T) {
 		RangeStart: "2001::1",
 		notify:     notify6,
 	}
-	s, err := v6Create(conf)
+	sIface, err := v6Create(conf)
+	s := sIface.(*v6Server)
 	assert.True(t, err == nil)
 	s.conf.dnsIPAddrs = []net.IP{net.ParseIP("2000::1")}
-	s.conf.sid = dhcpv6.Duid{
+	s.sid = dhcpv6.Duid{
 		Type:   dhcpv6.DUID_LLT,
 		HwType: iana.HWTypeEthernet,
 	}
-	s.conf.sid.LinkLayerAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:aa")
+	s.sid.LinkLayerAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:aa")
 
 	l := Lease{}
 	l.IP = net.ParseIP("2001::1")
@@ -129,7 +131,7 @@ func TestV6GetLease(t *testing.T) {
 	msg, _ := req.GetInnerMessage()
 	resp, _ := dhcpv6.NewAdvertiseFromSolicit(msg)
 	assert.True(t, s.process(msg, req, resp))
-	resp.AddOption(dhcpv6.OptServerID(s.conf.sid))
+	resp.AddOption(dhcpv6.OptServerID(s.sid))
 
 	// check "Advertise"
 	assert.Equal(t, dhcpv6.MessageTypeAdvertise, resp.Type())
@@ -160,8 +162,6 @@ func TestV6GetLease(t *testing.T) {
 	assert.Equal(t, 1, len(ls))
 	assert.Equal(t, "2001::1", ls[0].IP.String())
 	assert.Equal(t, "aa:aa:aa:aa:aa:aa", ls[0].HWAddr.String())
-
-	s.Stop()
 }
 
 func TestV6GetDynamicLease(t *testing.T) {
@@ -170,14 +170,15 @@ func TestV6GetDynamicLease(t *testing.T) {
 		RangeStart: "2001::2",
 		notify:     notify6,
 	}
-	s, err := v6Create(conf)
+	sIface, err := v6Create(conf)
+	s := sIface.(*v6Server)
 	assert.True(t, err == nil)
 	s.conf.dnsIPAddrs = []net.IP{net.ParseIP("2000::1")}
-	s.conf.sid = dhcpv6.Duid{
+	s.sid = dhcpv6.Duid{
 		Type:   dhcpv6.DUID_LLT,
 		HwType: iana.HWTypeEthernet,
 	}
-	s.conf.sid.LinkLayerAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:aa")
+	s.sid.LinkLayerAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:aa")
 
 	// "Solicit"
 	mac, _ := net.ParseMAC("aa:aa:aa:aa:aa:aa")
@@ -185,7 +186,7 @@ func TestV6GetDynamicLease(t *testing.T) {
 	msg, _ := req.GetInnerMessage()
 	resp, _ := dhcpv6.NewAdvertiseFromSolicit(msg)
 	assert.True(t, s.process(msg, req, resp))
-	resp.AddOption(dhcpv6.OptServerID(s.conf.sid))
+	resp.AddOption(dhcpv6.OptServerID(s.sid))
 
 	// check "Advertise"
 	assert.Equal(t, dhcpv6.MessageTypeAdvertise, resp.Type())
@@ -215,5 +216,7 @@ func TestV6GetDynamicLease(t *testing.T) {
 	assert.Equal(t, "2001::2", ls[0].IP.String())
 	assert.Equal(t, "aa:aa:aa:aa:aa:aa", ls[0].HWAddr.String())
 
-	s.Stop()
+	assert.True(t, !ip6InRange(net.ParseIP("2001::2"), net.ParseIP("2001::1")))
+	assert.True(t, !ip6InRange(net.ParseIP("2001::2"), net.ParseIP("2002::2")))
+	assert.True(t, ip6InRange(net.ParseIP("2001::2"), net.ParseIP("2001::2")))
 }

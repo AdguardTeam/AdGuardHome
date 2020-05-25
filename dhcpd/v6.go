@@ -37,11 +37,29 @@ func (s *v6Server) WriteDiskConfig6(c *V6ServerConf) {
 	*c = s.conf
 }
 
+// Return TRUE if IP address is within range [start..0xff]
+func ip6InRange(start net.IP, ip net.IP) bool {
+	if len(start) != 16 {
+		return false
+	}
+	if !bytes.Equal(start[:15], ip[:15]) {
+		return false
+	}
+	return start[15] <= ip[15]
+}
+
 // ResetLeases - reset leases
 func (s *v6Server) ResetLeases(ll []*Lease) {
 	s.leases = nil
 	for _, l := range ll {
-		// TODO
+
+		if l.Expiry.Unix() != leaseExpireStatic &&
+			!ip6InRange(s.conf.ipStart, l.IP) {
+
+			log.Debug("DHCPv6: skipping a lease with IP %v: not within current IP range", l.IP)
+			continue
+		}
+
 		s.leases = append(s.leases, l)
 	}
 }

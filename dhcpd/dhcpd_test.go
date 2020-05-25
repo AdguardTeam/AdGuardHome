@@ -44,7 +44,7 @@ func TestDB(t *testing.T) {
 	l.HWAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:aa")
 	exp1 := time.Now().Add(time.Hour)
 	l.Expiry = exp1
-	s.srv4.addLease(&l)
+	s.srv4.(*v4Server).addLease(&l)
 
 	l2 := Lease{}
 	l2.IP = net.ParseIP("192.168.10.101").To4()

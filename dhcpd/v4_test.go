@@ -66,7 +66,8 @@ func TestV4StaticLeaseAddReplaceDynamic(t *testing.T) {
 		SubnetMask: "255.255.255.0",
 		notify:     notify4,
 	}
-	s, err := v4Create(conf)
+	sIface, err := v4Create(conf)
+	s := sIface.(*v4Server)
 	assert.True(t, err == nil)
 
 	// add dynamic lease
@@ -117,7 +118,8 @@ func TestV4StaticLeaseGet(t *testing.T) {
 		SubnetMask: "255.255.255.0",
 		notify:     notify4,
 	}
-	s, err := v4Create(conf)
+	sIface, err := v4Create(conf)
+	s := sIface.(*v4Server)
 	assert.True(t, err == nil)
 	s.conf.dnsIPAddrs = []net.IP{net.ParseIP("192.168.10.1").To4()}
 
@@ -164,8 +166,6 @@ func TestV4StaticLeaseGet(t *testing.T) {
 	assert.Equal(t, 1, len(ls))
 	assert.Equal(t, "192.168.10.150", ls[0].IP.String())
 	assert.Equal(t, "aa:aa:aa:aa:aa:aa", ls[0].HWAddr.String())
-
-	s.Stop()
 }
 
 func TestV4DynamicLeaseGet(t *testing.T) {
@@ -177,7 +177,8 @@ func TestV4DynamicLeaseGet(t *testing.T) {
 		SubnetMask: "255.255.255.0",
 		notify:     notify4,
 	}
-	s, err := v4Create(conf)
+	sIface, err := v4Create(conf)
+	s := sIface.(*v4Server)
 	assert.True(t, err == nil)
 	s.conf.dnsIPAddrs = []net.IP{net.ParseIP("192.168.10.1").To4()}
 
@@ -220,5 +221,10 @@ func TestV4DynamicLeaseGet(t *testing.T) {
 	assert.Equal(t, "192.168.10.100", ls[0].IP.String())
 	assert.Equal(t, "aa:aa:aa:aa:aa:aa", ls[0].HWAddr.String())
 
-	s.Stop()
+	start := net.ParseIP("192.168.10.100").To4()
+	stop := net.ParseIP("192.168.10.200").To4()
+	assert.True(t, !ip4InRange(start, stop, net.ParseIP("192.168.10.99").To4()))
+	assert.True(t, !ip4InRange(start, stop, net.ParseIP("192.168.11.100").To4()))
+	assert.True(t, !ip4InRange(start, stop, net.ParseIP("192.168.11.201").To4()))
+	assert.True(t, ip4InRange(start, stop, net.ParseIP("192.168.10.100").To4()))
 }
