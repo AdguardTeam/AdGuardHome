@@ -15,9 +15,8 @@ const leaseExpireStatic = 1
 var webHandlersRegistered = false
 
 // Lease contains the necessary information about a DHCP lease
-// field ordering is important -- yaml fields will mirror ordering from here
 type Lease struct {
-	HWAddr   net.HardwareAddr `json:"mac" yaml:"hwaddr"`
+	HWAddr   net.HardwareAddr `json:"mac"`
 	IP       net.IP           `json:"ip"`
 	Hostname string           `json:"hostname"`
 
@@ -29,17 +28,17 @@ type Lease struct {
 // ServerConfig - DHCP server configuration
 // field ordering is important -- yaml fields will mirror ordering from here
 type ServerConfig struct {
-	Conf4 V4ServerConf `json:"-" yaml:"dhcpv4"`
-	Conf6 V6ServerConf `json:"-" yaml:"dhcpv6"`
+	Conf4 V4ServerConf `yaml:"dhcpv4"`
+	Conf6 V6ServerConf `yaml:"dhcpv6"`
 
-	WorkDir    string `json:"-" yaml:"-"`
-	DBFilePath string `json:"-" yaml:"-"` // path to DB file
+	WorkDir    string `yaml:"-"`
+	DBFilePath string `yaml:"-"` // path to DB file
 
 	// Called when the configuration is changed by HTTP request
-	ConfigModified func() `json:"-" yaml:"-"`
+	ConfigModified func() `yaml:"-"`
 
 	// Register an HTTP handler
-	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request)) `json:"-" yaml:"-"`
+	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request)) `yaml:"-"`
 }
 
 type onLeaseChangedT func(flags int)

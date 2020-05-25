@@ -13,7 +13,6 @@ require (
 	github.com/insomniacslk/dhcp v0.0.0-20200420235442-ed3125c2efe7
 	github.com/joomcode/errorx v1.0.1
 	github.com/kardianos/service v1.0.0
-	github.com/krolaw/dhcp4 v0.0.0-20180925202202-7cead472c414
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7 // indirect
 	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065 // indirect
 	github.com/miekg/dns v1.1.29
