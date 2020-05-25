@@ -598,7 +598,7 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 
 	log.Printf("Filter %d has been updated: %d bytes, %d rules",
 		filter.ID, total, rulesCount)
-	if filterName != "" {
+	if len(filter.Name) == 0 {
 		filter.Name = filterName
 	}
 	filter.RulesCount = rulesCount
