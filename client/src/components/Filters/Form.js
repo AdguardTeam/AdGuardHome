@@ -19,18 +19,18 @@ const Form = (props) => {
     return (
         <form onSubmit={handleSubmit}>
             <div className="modal-body">
-                <div className="form__group">
-                    <Field
-                        id="name"
-                        name="name"
-                        type="text"
-                        component={renderInputField}
-                        className="form-control"
-                        placeholder={t('enter_name_hint')}
-                        validate={[required]}
-                        normalizeOnBlur={(data) => data.trim()}
-                    />
-                </div>
+            <div className="form__group">
+                <Field
+                    id="name"
+                    name="name"
+                    type="text"
+                    component={renderInputField}
+                    className="form-control"
+                    placeholder={t('enter_name_hint')}
+                    validate={[required]}
+                    normalizeOnBlur={(data) => data.trim()}
+                />
+            </div>
                 <div className="form__group">
                     <Field
                         id="url"

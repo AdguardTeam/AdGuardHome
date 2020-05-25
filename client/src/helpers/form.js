@@ -119,11 +119,19 @@ renderGroupField.propTypes = {
 };
 
 export const renderRadioField = ({
-    input, placeholder, disabled, meta: { touched, error },
+    input,
+    placeholder,
+    subtitle,
+    disabled,
+    meta: { touched, error },
 }) => <Fragment>
-    <label className="custom-control custom-radio custom-control-inline">
+    <label className="custom-control custom-radio">
         <input {...input} type="radio" className="custom-control-input" disabled={disabled} />
         <span className="custom-control-label">{placeholder}</span>
+        {subtitle && <span
+            className="checkbox__label-subtitle"
+            dangerouslySetInnerHTML={{ __html: subtitle }}
+        />}
     </label>
     {!disabled
     && touched
@@ -133,6 +141,7 @@ export const renderRadioField = ({
 renderRadioField.propTypes = {
     input: PropTypes.object.isRequired,
     placeholder: PropTypes.string,
+    subtitle: PropTypes.string,
     disabled: PropTypes.bool,
     meta: PropTypes.shape({
         touched: PropTypes.bool,
@@ -155,12 +164,10 @@ export const renderSelectField = ({
         <span className="checkbox__label">
                     <span className="checkbox__label-text checkbox__label-text--long">
                         <span className="checkbox__label-title">{placeholder}</span>
-                        {subtitle && (
-                            <span
-                                className="checkbox__label-subtitle"
-                                dangerouslySetInnerHTML={{ __html: subtitle }}
-                            />
-                        )}
+                        {subtitle && <span
+                            className="checkbox__label-subtitle"
+                            dangerouslySetInnerHTML={{ __html: subtitle }}
+                        />}
                     </span>
                 </span>
     </label>

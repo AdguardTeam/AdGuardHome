@@ -374,3 +374,8 @@ export const ACTION = {
     block: 'block',
     unblock: 'unblock',
 };
+
+export const DNS_REQUEST_OPTIONS = {
+    PARALLEL_REQUESTS: 'parallel_requests',
+    FASTEST_ADDR: 'fastest_addr',
+};

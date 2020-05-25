@@ -5,11 +5,13 @@ import { Field, reduxForm, formValueSelector } from 'redux-form';
 import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 import classnames from 'classnames';
+import { nanoid } from 'nanoid';
 
 import Examples from './Examples';
-import { renderSelectField } from '../../../../helpers/form';
+import { renderRadioField } from '../../../../helpers/form';
+import { DNS_REQUEST_OPTIONS } from '../../../../helpers/constants';
 
-const getInputFields = (parallel_requests_selected, fastest_addr_selected) => [{
+const getInputFields = () => [{
     // eslint-disable-next-line react/display-name
     getTitle: () => <label className="form__label" htmlFor="upstream_dns">
         <Trans>upstream_dns</Trans>
@@ -21,20 +23,20 @@ const getInputFields = (parallel_requests_selected, fastest_addr_selected) => [{
     placeholder: 'upstream_dns',
 },
 {
-    name: 'parallel_requests',
-    placeholder: 'parallel_requests',
-    component: renderSelectField,
-    type: 'checkbox',
+    name: 'dnsRequestOption',
+    type: 'radio',
+    value: DNS_REQUEST_OPTIONS.PARALLEL_REQUESTS,
+    component: renderRadioField,
     subtitle: 'upstream_parallel',
-    disabled: fastest_addr_selected,
+    placeholder: 'parallel_requests',
 },
 {
-    name: 'fastest_addr',
-    placeholder: 'fastest_addr',
-    component: renderSelectField,
-    type: 'checkbox',
+    name: 'dnsRequestOption',
+    type: 'radio',
+    value: DNS_REQUEST_OPTIONS.FASTEST_ADDR,
+    component: renderRadioField,
     subtitle: 'fastest_addr_desc',
-    disabled: parallel_requests_selected,
+    placeholder: 'fastest_addr',
 }];
 
 let Form = (props) => {
@@ -46,8 +48,6 @@ let Form = (props) => {
         invalid,
         processingSetConfig,
         processingTestUpstream,
-        fastest_addr,
-        parallel_requests,
         upstream_dns,
         bootstrap_dns,
     } = props;
@@ -57,78 +57,77 @@ let Form = (props) => {
         'btn btn-primary btn-standard mr-2 btn-loading': processingTestUpstream,
     });
 
-    const INPUT_FIELDS = getInputFields(parallel_requests, fastest_addr);
+    const INPUT_FIELDS = getInputFields();
 
-    return (
-        <form onSubmit={handleSubmit}>
-            <div className="row">
-                {INPUT_FIELDS.map(({
-                    name, component, type, className, placeholder, getTitle, subtitle, disabled,
-                }) => <div className="col-12 mb-4" key={name}>
-                    {typeof getTitle === 'function' && getTitle()}
-                    <Field
-                        id={name}
-                        name={name}
-                        component={component}
-                        type={type}
-                        className={className}
-                        placeholder={t(placeholder)}
-                        subtitle={t(subtitle)}
-                        disabled={processingSetConfig || processingTestUpstream || disabled}
-                    />
-                </div>)}
-                <div className="col-12">
-                    <Examples />
-                    <hr />
-                </div>
-                <div className="col-12 mb-4">
-                    <label
-                        className="form__label form__label--with-desc"
-                        htmlFor="bootstrap_dns"
-                    >
-                        <Trans>bootstrap_dns</Trans>
-                    </label>
-                    <div className="form__desc form__desc--top">
-                        <Trans>bootstrap_dns_desc</Trans>
-                    </div>
-                    <Field
-                        id="bootstrap_dns"
-                        name="bootstrap_dns"
-                        component="textarea"
-                        type="text"
-                        className="form-control form-control--textarea form-control--textarea-small font-monospace"
-                        placeholder={t('bootstrap_dns')}
-                        disabled={processingSetConfig}
-                    />
-                </div>
+    return <form onSubmit={handleSubmit}>
+        <div className="row">
+            {INPUT_FIELDS.map(({
+                name, component, type, className, placeholder, getTitle, subtitle, disabled, value,
+            }) => <div className="col-12 mb-4" key={nanoid()}>
+                {typeof getTitle === 'function' && getTitle()}
+                <Field
+                    id={name}
+                    value={value}
+                    name={name}
+                    component={component}
+                    type={type}
+                    className={className}
+                    placeholder={t(placeholder)}
+                    subtitle={t(subtitle)}
+                    disabled={processingSetConfig || processingTestUpstream || disabled}
+                />
+            </div>)}
+            <div className="col-12">
+                <Examples />
+                <hr />
             </div>
-            <div className="card-actions">
-                <div className="btn-list">
-                    <button
-                        type="button"
-                        className={testButtonClass}
-                        onClick={() => testUpstream({
-                            upstream_dns,
-                            bootstrap_dns,
-                        })
-                        }
-                        disabled={!upstream_dns || processingTestUpstream}
-                    >
-                        <Trans>test_upstream_btn</Trans>
-                    </button>
-                    <button
-                        type="submit"
-                        className="btn btn-success btn-standard"
-                        disabled={
-                            submitting || invalid || processingSetConfig || processingTestUpstream
-                        }
-                    >
-                        <Trans>apply_btn</Trans>
-                    </button>
+            <div className="col-12 mb-4">
+                <label
+                    className="form__label form__label--with-desc"
+                    htmlFor="bootstrap_dns"
+                >
+                    <Trans>bootstrap_dns</Trans>
+                </label>
+                <div className="form__desc form__desc--top">
+                    <Trans>bootstrap_dns_desc</Trans>
                 </div>
+                <Field
+                    id="bootstrap_dns"
+                    name="bootstrap_dns"
+                    component="textarea"
+                    type="text"
+                    className="form-control form-control--textarea form-control--textarea-small font-monospace"
+                    placeholder={t('bootstrap_dns')}
+                    disabled={processingSetConfig}
+                />
             </div>
-        </form>
-    );
+        </div>
+        <div className="card-actions">
+            <div className="btn-list">
+                <button
+                    type="button"
+                    className={testButtonClass}
+                    onClick={() => testUpstream({
+                        upstream_dns,
+                        bootstrap_dns,
+                    })
+                    }
+                    disabled={!upstream_dns || processingTestUpstream}
+                >
+                    <Trans>test_upstream_btn</Trans>
+                </button>
+                <button
+                    type="submit"
+                    className="btn btn-success btn-standard"
+                    disabled={
+                        submitting || invalid || processingSetConfig || processingTestUpstream
+                    }
+                >
+                    <Trans>apply_btn</Trans>
+                </button>
+            </div>
+        </div>
+    </form>;
 };
 
 Form.propTypes = {
@@ -139,8 +138,6 @@ Form.propTypes = {
     initialValues: PropTypes.object,
     upstream_dns: PropTypes.string,
     bootstrap_dns: PropTypes.string,
-    fastest_addr: PropTypes.bool,
-    parallel_requests: PropTypes.bool,
     processingTestUpstream: PropTypes.bool,
     processingSetConfig: PropTypes.bool,
     t: PropTypes.func,
@@ -151,14 +148,10 @@ const selector = formValueSelector('upstreamForm');
 Form = connect((state) => {
     const upstream_dns = selector(state, 'upstream_dns');
     const bootstrap_dns = selector(state, 'bootstrap_dns');
-    const fastest_addr = selector(state, 'fastest_addr');
-    const parallel_requests = selector(state, 'parallel_requests');
 
     return {
         upstream_dns,
         bootstrap_dns,
-        fastest_addr,
-        parallel_requests,
     };
 })(Form);
 
