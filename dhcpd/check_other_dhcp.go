@@ -1,3 +1,5 @@
+// +build aix darwin dragonfly freebsd linux netbsd openbsd solaris
+
 package dhcpd
 
 import (
@@ -15,7 +17,6 @@ import (
 
 // CheckIfOtherDHCPServersPresent sends a DHCP request to the specified network interface,
 // and waits for a response for a period defined by defaultDiscoverTime
-// nolint
 func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 	iface, err := net.InterfaceByName(ifaceName)
 	if err != nil {
@@ -25,7 +26,7 @@ func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 	// get ipv4 address of an interface
 	ifaceIPNet := getIfaceIPv4(*iface)
 	if len(ifaceIPNet) == 0 {
-		return false, fmt.Errorf("Couldn't find IPv4 address of interface %s %+v", ifaceName, iface)
+		return false, fmt.Errorf("couldn't find IPv4 address of interface %s %+v", ifaceName, iface)
 	}
 
 	srcIP := ifaceIPNet[0]
@@ -35,6 +36,9 @@ func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 	hostname, _ := os.Hostname()
 
 	req, err := dhcpv4.NewDiscovery(iface.HardwareAddr)
+	if err != nil {
+		return false, fmt.Errorf("dhcpv4.NewDiscovery: %s", err)
+	}
 	req.Options.Update(dhcpv4.OptClientIdentifier(iface.HardwareAddr))
 	req.Options.Update(dhcpv4.OptHostName(hostname))
 
