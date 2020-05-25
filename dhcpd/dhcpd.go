@@ -178,3 +178,8 @@ func (s *Server) FindMACbyIP(ip net.IP) net.HardwareAddr {
 	}
 	return s.srv6.FindMACbyIP(ip)
 }
+
+// AddStaticLease - add static v4 lease
+func (s *Server) AddStaticLease(lease Lease) error {
+	return s.srv4.AddStaticLease(lease)
+}
