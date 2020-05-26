@@ -125,3 +125,43 @@ func TestRewritesLevels(t *testing.T) {
 	assert.Equal(t, 1, len(r.IPList))
 	assert.Equal(t, "3.3.3.3", r.IPList[0].String())
 }
+
+func TestRewritesException(t *testing.T) {
+	d := Dnsfilter{}
+	// wildcard; exception for a sub-domain
+	d.Rewrites = []RewriteEntry{
+		RewriteEntry{"*.host.com", "2.2.2.2", 0, nil},
+		RewriteEntry{"sub.host.com", "sub.host.com", 0, nil},
+	}
+	d.prepareRewrites()
+
+	// match sub-domain
+	r := d.processRewrites("my.host.com")
+	assert.Equal(t, ReasonRewrite, r.Reason)
+	assert.Equal(t, 1, len(r.IPList))
+	assert.Equal(t, "2.2.2.2", r.IPList[0].String())
+
+	// match sub-domain, but handle exception
+	r = d.processRewrites("sub.host.com")
+	assert.Equal(t, NotFilteredNotFound, r.Reason)
+}
+
+func TestRewritesExceptionWC(t *testing.T) {
+	d := Dnsfilter{}
+	// wildcard; exception for a sub-wildcard
+	d.Rewrites = []RewriteEntry{
+		RewriteEntry{"*.host.com", "2.2.2.2", 0, nil},
+		RewriteEntry{"*.sub.host.com", "*.sub.host.com", 0, nil},
+	}
+	d.prepareRewrites()
+
+	// match sub-domain
+	r := d.processRewrites("my.host.com")
+	assert.Equal(t, ReasonRewrite, r.Reason)
+	assert.Equal(t, 1, len(r.IPList))
+	assert.Equal(t, "2.2.2.2", r.IPList[0].String())
+
+	// match sub-domain, but handle exception
+	r = d.processRewrites("my.sub.host.com")
+	assert.Equal(t, NotFilteredNotFound, r.Reason)
+}
