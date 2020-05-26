@@ -10,6 +10,16 @@ import (
 	"strings"
 )
 
+// ContainsString checks if "v" is in the array "arr"
+func ContainsString(arr []string, v string) bool {
+	for _, i := range arr {
+		if i == v {
+			return true
+		}
+	}
+	return false
+}
+
 // fileExists returns TRUE if file exists
 func FileExists(fn string) bool {
 	_, err := os.Stat(fn)
