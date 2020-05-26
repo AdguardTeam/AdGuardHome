@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	clientsUpdatePeriod = 1 * time.Hour
+	clientsUpdatePeriod = 10 * time.Minute
 )
 
 var webHandlersRegistered = false
