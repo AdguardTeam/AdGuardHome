@@ -66,12 +66,12 @@ jobs:
           go generate ./...
       -
         name: Golangci-lint
+        if: matrix.os != 'windows-latest'
         shell: bash
         run: |
           curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.23.8
           golangci-lint --version
-          # TODO: Fix lint for Windows platform
-          #golangci-lint run
+          golangci-lint run
       -
         name: Go test
         run: |
