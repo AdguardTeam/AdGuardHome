@@ -4,12 +4,29 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strconv"
 	"time"
+
+	"github.com/AdguardTeam/AdGuardHome/util"
 
 	"github.com/AdguardTeam/golibs/jsonutil"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/miekg/dns"
 )
+
+type qlogConfig struct {
+	Enabled           bool   `json:"enabled"`
+	Interval          uint32 `json:"interval"`
+	AnonymizeClientIP bool   `json:"anonymize_client_ip"`
+}
+
+// Register web handlers
+func (l *queryLog) initWeb() {
+	l.conf.HTTPRegister("GET", "/control/querylog", l.handleQueryLog)
+	l.conf.HTTPRegister("GET", "/control/querylog_info", l.handleQueryLogInfo)
+	l.conf.HTTPRegister("POST", "/control/querylog_clear", l.handleQueryLogClear)
+	l.conf.HTTPRegister("POST", "/control/querylog_config", l.handleQueryLogConfig)
+}
 
 func httpError(r *http.Request, w http.ResponseWriter, code int, format string, args ...interface{}) {
 	text := fmt.Sprintf(format, args...)
@@ -19,74 +36,18 @@ func httpError(r *http.Request, w http.ResponseWriter, code int, format string, 
 	http.Error(w, text, code)
 }
 
-type request struct {
-	olderThan            string
-	filterDomain         string
-	filterClient         string
-	filterQuestionType   string
-	filterResponseStatus string
-}
-
-// "value" -> value, return TRUE
-func getDoubleQuotesEnclosedValue(s *string) bool {
-	t := *s
-	if len(t) >= 2 && t[0] == '"' && t[len(t)-1] == '"' {
-		*s = t[1 : len(t)-1]
-		return true
-	}
-	return false
-}
-
 func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
-	var err error
-	req := request{}
-	q := r.URL.Query()
-	req.olderThan = q.Get("older_than")
-	req.filterDomain = q.Get("filter_domain")
-	req.filterClient = q.Get("filter_client")
-	req.filterQuestionType = q.Get("filter_question_type")
-	req.filterResponseStatus = q.Get("filter_response_status")
-
-	params := getDataParams{
-		Domain:         req.filterDomain,
-		Client:         req.filterClient,
-		ResponseStatus: responseStatusAll,
-	}
-	if len(req.olderThan) != 0 {
-		params.OlderThan, err = time.Parse(time.RFC3339Nano, req.olderThan)
-		if err != nil {
-			httpError(r, w, http.StatusBadRequest, "invalid time stamp: %s", err)
-			return
-		}
+	params, err := l.parseSearchParams(r)
+	if err != nil {
+		httpError(r, w, http.StatusBadRequest, "failed to parse params: %s", err)
+		return
 	}
 
-	if getDoubleQuotesEnclosedValue(&params.Domain) {
-		params.StrictMatchDomain = true
-	}
-	if getDoubleQuotesEnclosedValue(&params.Client) {
-		params.StrictMatchClient = true
-	}
+	// search for the log entries
+	entries, oldest := l.search(params)
 
-	if len(req.filterQuestionType) != 0 {
-		_, ok := dns.StringToType[req.filterQuestionType]
-		if !ok {
-			httpError(r, w, http.StatusBadRequest, "invalid question_type")
-			return
-		}
-		params.QuestionType = req.filterQuestionType
-	}
-
-	if len(req.filterResponseStatus) != 0 {
-		switch req.filterResponseStatus {
-		case "filtered":
-			params.ResponseStatus = responseStatusFiltered
-		default:
-			httpError(r, w, http.StatusBadRequest, "invalid response_status")
-			return
-		}
-	}
-
-	data := l.getData(params)
+	// convert log entries to JSON
+	var data = l.entriesToJSON(entries, oldest)
 
 	jsonVal, err := json.Marshal(data)
 	if err != nil {
@@ -101,14 +62,8 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (l *queryLog) handleQueryLogClear(w http.ResponseWriter, r *http.Request) {
+func (l *queryLog) handleQueryLogClear(_ http.ResponseWriter, _ *http.Request) {
 	l.clear()
-}
-
-type qlogConfig struct {
-	Enabled           bool   `json:"enabled"`
-	Interval          uint32 `json:"interval"`
-	AnonymizeClientIP bool   `json:"anonymize_client_ip"`
 }
 
 // Get configuration
@@ -162,10 +117,85 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 	l.conf.ConfigModified()
 }
 
-// Register web handlers
-func (l *queryLog) initWeb() {
-	l.conf.HTTPRegister("GET", "/control/querylog", l.handleQueryLog)
-	l.conf.HTTPRegister("GET", "/control/querylog_info", l.handleQueryLogInfo)
-	l.conf.HTTPRegister("POST", "/control/querylog_clear", l.handleQueryLogClear)
-	l.conf.HTTPRegister("POST", "/control/querylog_config", l.handleQueryLogConfig)
+// "value" -> value, return TRUE
+func getDoubleQuotesEnclosedValue(s *string) bool {
+	t := *s
+	if len(t) >= 2 && t[0] == '"' && t[len(t)-1] == '"' {
+		*s = t[1 : len(t)-1]
+		return true
+	}
+	return false
+}
+
+// parseSearchCriteria - parses "searchCriteria" from the specified query parameter
+func (l *queryLog) parseSearchCriteria(q url.Values, name string, ct criteriaType) (bool, searchCriteria, error) {
+	val := q.Get(name)
+	if len(val) == 0 {
+		return false, searchCriteria{}, nil
+	}
+
+	c := searchCriteria{
+		criteriaType: ct,
+		value:        val,
+	}
+	if getDoubleQuotesEnclosedValue(&c.value) {
+		c.strict = true
+	}
+
+	if ct == ctClient && l.conf.AnonymizeClientIP {
+		c.value = l.getClientIP(c.value)
+	}
+
+	if ct == ctFilteringStatus && !util.ContainsString(filteringStatusValues, c.value) {
+		return false, c, fmt.Errorf("invalid value %s", c.value)
+	}
+
+	return true, c, nil
+}
+
+// parseSearchParams - parses "searchParams" from the HTTP request's query string
+func (l *queryLog) parseSearchParams(r *http.Request) (*searchParams, error) {
+	p := newSearchParams()
+
+	var err error
+	q := r.URL.Query()
+	olderThan := q.Get("older_than")
+	if len(olderThan) != 0 {
+		p.olderThan, err = time.Parse(time.RFC3339Nano, olderThan)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if limit, err := strconv.ParseInt(q.Get("limit"), 10, 64); err == nil {
+		p.limit = int(limit)
+
+		// If limit or offset are specified explicitly, we should change the default behavior
+		// and scan all log records until we found enough log entries
+		p.maxFileScanEntries = 0
+	}
+	if offset, err := strconv.ParseInt(q.Get("offset"), 10, 64); err == nil {
+		p.offset = int(offset)
+		p.maxFileScanEntries = 0
+	}
+
+	paramNames := map[string]criteriaType{
+		"filter_domain":          ctDomain,
+		"filter_client":          ctClient,
+		"filter_question_type":   ctQuestionType,
+		"filter_response_status": ctFilteringStatus,
+	}
+
+	for k, v := range paramNames {
+		ok, c, err := l.parseSearchCriteria(q, k, v)
+		if err != nil {
+			return nil, err
+		}
+
+		if ok {
+			p.searchCriteria = append(p.searchCriteria, c)
+		}
+	}
+
+	return p, nil
 }

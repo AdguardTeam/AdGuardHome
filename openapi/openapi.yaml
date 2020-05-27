@@ -143,13 +143,26 @@ paths:
             tags:
                 - log
             operationId: queryLog
-            summary: Get DNS server query log
+            summary: Get DNS server query log.
             parameters:
                 - name: older_than
                   in: query
                   description: Filter by older than
                   schema:
                       type: string
+                - name: offset
+                  in: query
+                  description:
+                    Specify the ranking number of the first item on the page.
+                    Even though it is possible to use "offset" and "older_than",
+                    we recommend choosing one of them and sticking to it.
+                  schema:
+                      type: integer
+                - name: limit
+                  in: query
+                  description: Limit the number of records to be returned
+                  schema:
+                      type: integer
                 - name: filter_domain
                   in: query
                   description: Filter by domain name
