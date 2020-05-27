@@ -126,6 +126,7 @@ class App extends Component {
                         dnsPort={dashboard.dnsPort}
                         processingVersion={dashboard.processingVersion}
                         getVersion={getVersion}
+                        checkUpdateFlag={dashboard.checkUpdateFlag}
                     />
                     <Toasts />
                     <Icons />
