@@ -78,10 +78,11 @@ type dnsConfig struct {
 	// time interval for statistics (in days)
 	StatsInterval uint32 `yaml:"statistics_interval"`
 
-	QueryLogEnabled   bool   `yaml:"querylog_enabled"`     // if true, query log is enabled
-	QueryLogInterval  uint32 `yaml:"querylog_interval"`    // time interval for query log (in days)
-	QueryLogMemSize   uint32 `yaml:"querylog_size_memory"` // number of entries kept in memory before they are flushed to disk
-	AnonymizeClientIP bool   `yaml:"anonymize_client_ip"`  // anonymize clients' IP addresses in logs and stats
+	QueryLogEnabled     bool   `yaml:"querylog_enabled"`      // if true, query log is enabled
+	QueryLogFileEnabled bool   `yaml:"querylog_file_enabled"` // if true, query log will be written to a file
+	QueryLogInterval    uint32 `yaml:"querylog_interval"`     // time interval for query log (in days)
+	QueryLogMemSize     uint32 `yaml:"querylog_size_memory"`  // number of entries kept in memory before they are flushed to disk
+	AnonymizeClientIP   bool   `yaml:"anonymize_client_ip"`   // anonymize clients' IP addresses in logs and stats
 
 	dnsforward.FilteringConfig `yaml:",inline"`
 
@@ -138,6 +139,7 @@ func initConfig() {
 	config.WebSessionTTLHours = 30 * 24
 
 	config.DNS.QueryLogEnabled = true
+	config.DNS.QueryLogFileEnabled = true
 	config.DNS.QueryLogInterval = 90
 	config.DNS.QueryLogMemSize = 1000
 
@@ -239,9 +241,10 @@ func (c *configuration) write() error {
 	}
 
 	if Context.queryLog != nil {
-		dc := querylog.DiskConfig{}
+		dc := querylog.Config{}
 		Context.queryLog.WriteDiskConfig(&dc)
 		config.DNS.QueryLogEnabled = dc.Enabled
+		config.DNS.QueryLogFileEnabled = dc.FileEnabled
 		config.DNS.QueryLogInterval = dc.Interval
 		config.DNS.QueryLogMemSize = dc.MemSize
 		config.DNS.AnonymizeClientIP = dc.AnonymizeClientIP

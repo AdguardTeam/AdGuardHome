@@ -40,6 +40,7 @@ func initDNSServer() error {
 	}
 	conf := querylog.Config{
 		Enabled:           config.DNS.QueryLogEnabled,
+		FileEnabled:       config.DNS.QueryLogFileEnabled,
 		BaseDir:           baseDir,
 		Interval:          config.DNS.QueryLogInterval,
 		MemSize:           config.DNS.QueryLogMemSize,

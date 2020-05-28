@@ -9,14 +9,6 @@ import (
 	"github.com/miekg/dns"
 )
 
-// DiskConfig - configuration settings that are stored on disk
-type DiskConfig struct {
-	Enabled           bool
-	Interval          uint32
-	MemSize           uint32
-	AnonymizeClientIP bool
-}
-
 // QueryLog - main interface
 type QueryLog interface {
 	Start()
@@ -28,12 +20,13 @@ type QueryLog interface {
 	Add(params AddParams)
 
 	// WriteDiskConfig - write configuration
-	WriteDiskConfig(dc *DiskConfig)
+	WriteDiskConfig(c *Config)
 }
 
 // Config - configuration object
 type Config struct {
-	Enabled           bool
+	Enabled           bool   // enable the module
+	FileEnabled       bool   // write logs to file
 	BaseDir           string // directory where log file is stored
 	Interval          uint32 // interval to rotate logs (in days)
 	MemSize           uint32 // number of entries kept in memory before they are flushed to disk

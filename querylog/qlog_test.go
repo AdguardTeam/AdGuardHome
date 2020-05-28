@@ -22,9 +22,10 @@ func prepareTestDir() string {
 // Check adding and loading (with filtering) entries from disk and memory
 func TestQueryLog(t *testing.T) {
 	conf := Config{
-		Enabled:  true,
-		Interval: 1,
-		MemSize:  100,
+		Enabled:     true,
+		FileEnabled: true,
+		Interval:    1,
+		MemSize:     100,
 	}
 	conf.BaseDir = prepareTestDir()
 	defer func() { _ = os.RemoveAll(conf.BaseDir) }()
@@ -158,9 +159,10 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 
 func TestQueryLogMaxFileScanEntries(t *testing.T) {
 	conf := Config{
-		Enabled:  true,
-		Interval: 1,
-		MemSize:  100,
+		Enabled:     true,
+		FileEnabled: true,
+		Interval:    1,
+		MemSize:     100,
 	}
 	conf.BaseDir = prepareTestDir()
 	defer func() { _ = os.RemoveAll(conf.BaseDir) }()
@@ -181,6 +183,29 @@ func TestQueryLogMaxFileScanEntries(t *testing.T) {
 	params.maxFileScanEntries = 0 // disable the limit
 	entries, _ = l.search(params)
 	assert.Equal(t, 10, len(entries))
+}
+
+func TestQueryLogFileDisabled(t *testing.T) {
+	conf := Config{
+		Enabled:     true,
+		FileEnabled: false,
+		Interval:    1,
+		MemSize:     2,
+	}
+	conf.BaseDir = prepareTestDir()
+	defer func() { _ = os.RemoveAll(conf.BaseDir) }()
+	l := newQueryLog(conf)
+
+	addEntry(l, "example1.org", "1.1.1.1", "2.2.2.1")
+	addEntry(l, "example2.org", "1.1.1.1", "2.2.2.1")
+	addEntry(l, "example3.org", "1.1.1.1", "2.2.2.1")
+	// the oldest entry is now removed from mem buffer
+
+	params := newSearchParams()
+	ll, _ := l.search(params)
+	assert.Equal(t, 2, len(ll))
+	assert.Equal(t, "example3.org", ll[0].QHost)
+	assert.Equal(t, "example2.org", ll[1].QHost)
 }
 
 func addEntry(l *queryLog, host, answerStr, client string) {
