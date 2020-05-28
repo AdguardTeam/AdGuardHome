@@ -9,9 +9,7 @@ import (
 type criteriaType int
 
 const (
-	ctDomain          criteriaType = iota // domain name
-	ctClient                              // client IP address
-	ctQuestionType                        // question type
+	ctDomainOrClient  criteriaType = iota // domain name or client IP address
 	ctFilteringStatus                     // filtering status
 )
 
@@ -25,6 +23,7 @@ const (
 	filteringStatusWhitelisted         = "whitelisted"          // whitelisted
 	filteringStatusRewritten           = "rewritten"            // all kinds of rewrites
 	filteringStatusSafeSearch          = "safe_search"          // enforced safe search
+	filteringStatusProcessed           = "processed"            // not blocked, not white-listed entries
 )
 
 // filteringStatusValues -- array with all possible filteringStatus values
@@ -32,6 +31,7 @@ var filteringStatusValues = []string{
 	filteringStatusAll, filteringStatusFiltered, filteringStatusBlocked,
 	filteringStatusBlockedSafebrowsing, filteringStatusBlockedParental,
 	filteringStatusWhitelisted, filteringStatusRewritten, filteringStatusSafeSearch,
+	filteringStatusProcessed,
 }
 
 // searchCriteria - every search request may contain a list of different search criteria
@@ -48,12 +48,9 @@ func (c *searchCriteria) quickMatch(line string) bool {
 	// note that we do this only for a limited set of criteria
 
 	switch c.criteriaType {
-	case ctDomain:
-		return c.quickMatchJSONValue(line, "QH")
-	case ctClient:
-		return c.quickMatchJSONValue(line, "IP")
-	case ctQuestionType:
-		return c.quickMatchJSONValue(line, "QT")
+	case ctDomainOrClient:
+		return c.quickMatchJSONValue(line, "QH") ||
+			c.quickMatchJSONValue(line, "IP")
 	default:
 		return true
 	}
@@ -80,29 +77,23 @@ func (c *searchCriteria) quickMatchJSONValue(line string, propertyName string) b
 // nolint (gocyclo)
 func (c *searchCriteria) match(entry *logEntry) bool {
 	switch c.criteriaType {
-	case ctDomain:
+	case ctDomainOrClient:
 		if c.strict && entry.QHost == c.value {
 			return true
 		}
 		if !c.strict && strings.Contains(entry.QHost, c.value) {
 			return true
 		}
-		return false
-	case ctClient:
+
 		if c.strict && entry.IP == c.value {
 			return true
 		}
 		if !c.strict && strings.Contains(entry.IP, c.value) {
 			return true
 		}
+
 		return false
-	case ctQuestionType:
-		if c.strict && entry.QType == c.value {
-			return true
-		}
-		if !c.strict && strings.Contains(entry.QType, c.value) {
-			return true
-		}
+
 	case ctFilteringStatus:
 		res := entry.Result
 
@@ -127,12 +118,15 @@ func (c *searchCriteria) match(entry *logEntry) bool {
 					res.Reason == dnsfilter.RewriteEtcHosts)
 		case filteringStatusSafeSearch:
 			return res.IsFiltered && res.Reason == dnsfilter.FilteredSafeSearch
+
+		case filteringStatusProcessed:
+			return !(res.Reason == dnsfilter.FilteredBlackList ||
+				res.Reason == dnsfilter.FilteredBlockedService ||
+				res.Reason == dnsfilter.NotFilteredWhiteList)
+
 		default:
 			return false
 		}
-
-	default:
-		return false
 	}
 
 	return false
