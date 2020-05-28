@@ -53,7 +53,7 @@ func TestDB(t *testing.T) {
 
 	_ = os.Remove("leases.db")
 	s.dbStore()
-	s.srv4.Reset()
+	s.srv4.ResetLeases(nil)
 
 	s.dbLoad()
 

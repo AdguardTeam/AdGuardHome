@@ -606,13 +606,6 @@ func (s *v6Server) Stop() {
 	s.srv = nil
 }
 
-// Reset - stop server
-func (s *v6Server) Reset() {
-	s.leasesLock.Lock()
-	s.leases = nil
-	s.leasesLock.Unlock()
-}
-
 // Create DHCPv6 server
 func v6Create(conf V6ServerConf) (DHCPServer, error) {
 	s := &v6Server{}

@@ -562,13 +562,6 @@ func (s *v4Server) Stop() {
 	s.srv = nil
 }
 
-// Reset - stop server
-func (s *v4Server) Reset() {
-	s.leasesLock.Lock()
-	s.leases = nil
-	s.leasesLock.Unlock()
-}
-
 // Create DHCPv4 server
 func v4Create(conf V4ServerConf) (DHCPServer, error) {
 	s := &v4Server{}

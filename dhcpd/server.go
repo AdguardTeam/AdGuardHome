@@ -7,42 +7,52 @@ import (
 
 // DHCPServer - DHCP server interface
 type DHCPServer interface {
+	// ResetLeases - reset leases
 	ResetLeases(leases []*Lease)
+	// GetLeases - get leases
 	GetLeases(flags int) []Lease
+	// GetLeasesRef - get reference to leases array
 	GetLeasesRef() []*Lease
+	// AddStaticLease - add a static lease
 	AddStaticLease(lease Lease) error
+	// RemoveStaticLease - remove a static lease
 	RemoveStaticLease(l Lease) error
+	// FindMACbyIP - find a MAC address by IP address in the currently active DHCP leases
 	FindMACbyIP(ip net.IP) net.HardwareAddr
 
+	// WriteDiskConfig4 - copy disk configuration
 	WriteDiskConfig4(c *V4ServerConf)
+	// WriteDiskConfig6 - copy disk configuration
 	WriteDiskConfig6(c *V6ServerConf)
 
+	// Start - start server
 	Start() error
+	// Stop - stop server
 	Stop()
-	Reset()
 }
 
 // V4ServerConf - server configuration
 type V4ServerConf struct {
 	Enabled       bool   `yaml:"enabled"`
-	InterfaceName string `yaml:"interface_name"` // eth0, en0 and so on
+	InterfaceName string `yaml:"interface_name"`
 	GatewayIP     string `yaml:"gateway_ip"`
 	SubnetMask    string `yaml:"subnet_mask"`
 	RangeStart    string `yaml:"range_start"`
 	RangeEnd      string `yaml:"range_end"`
 	LeaseDuration uint32 `yaml:"lease_duration"` // in seconds
 
-	// IP conflict detector: time (ms) to wait for ICMP reply.
+	// IP conflict detector: time (ms) to wait for ICMP reply
 	// 0: disable
 	ICMPTimeout uint32 `yaml:"icmp_timeout_msec"`
 
-	ipStart    net.IP
-	ipEnd      net.IP
-	leaseTime  time.Duration
-	dnsIPAddrs []net.IP // IPv4 addresses to return to DHCP clients as DNS server addresses
-	routerIP   net.IP
-	subnetMask net.IPMask
+	ipStart    net.IP        // starting IP address for dynamic leases
+	ipEnd      net.IP        // ending IP address for dynamic leases
+	leaseTime  time.Duration // the time during which a dynamic lease is considered valid
+	dnsIPAddrs []net.IP      // IPv4 addresses to return to DHCP clients as DNS server addresses
+	routerIP   net.IP        // value for Option Router
+	subnetMask net.IPMask    // value for Option SubnetMask
 
+	// Server calls this function when leases data changes
 	notify func(uint32)
 }
 
@@ -53,9 +63,10 @@ type V6ServerConf struct {
 	RangeStart    string `yaml:"range_start"`
 	LeaseDuration uint32 `yaml:"lease_duration"` // in seconds
 
-	ipStart    net.IP
-	leaseTime  time.Duration
-	dnsIPAddrs []net.IP // IPv6 addresses to return to DHCP clients as DNS server addresses
+	ipStart    net.IP        // starting IP address for dynamic leases
+	leaseTime  time.Duration // the time during which a dynamic lease is considered valid
+	dnsIPAddrs []net.IP      // IPv6 addresses to return to DHCP clients as DNS server addresses
 
+	// Server calls this function when leases data changes
 	notify func(uint32)
 }
