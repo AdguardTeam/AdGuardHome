@@ -1049,6 +1049,8 @@ definitions:
                 maximum: 65535
             protection_enabled:
                 type: "boolean"
+            dhcp_available:
+                type: "boolean"
             querylog_enabled:
                 type: "boolean"
             running:

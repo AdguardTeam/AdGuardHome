@@ -388,6 +388,7 @@ Response:
 	"language":"en",
 	"protection_enabled":true,
 	"running":true,
+	"dhcp_available":true,
 	"version":"undefined"
 	}
 
