@@ -385,6 +385,11 @@ func checkDNS(input string, bootstrap []string) error {
 	return nil
 }
 
+// Control flow:
+// web
+//  -> dnsforward.handleDOH -> dnsforward.ServeHTTP
+//  -> proxy.ServeHTTP -> proxy.handleDNSRequest
+//  -> dnsforward.handleDNSRequest
 func (s *Server) handleDOH(w http.ResponseWriter, r *http.Request) {
 	if !s.conf.TLSAllowUnencryptedDOH && r.TLS == nil {
 		httpError(r, w, http.StatusNotFound, "Not Found")
