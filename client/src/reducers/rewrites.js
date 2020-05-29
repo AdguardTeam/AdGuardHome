@@ -20,7 +20,7 @@ const rewrites = handleActions(
         [actions.addRewriteSuccess]: (state, { payload }) => {
             const newState = {
                 ...state,
-                list: [...state.list, ...payload],
+                list: [...state.list, payload],
                 processingAdd: false,
             };
             return newState;
