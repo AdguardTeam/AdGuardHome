@@ -5,7 +5,6 @@ import { Field, reduxForm, formValueSelector } from 'redux-form';
 import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 import classnames from 'classnames';
-import { nanoid } from 'nanoid';
 
 import Examples from './Examples';
 import { renderRadioField } from '../../../../helpers/form';
@@ -63,7 +62,7 @@ let Form = (props) => {
         <div className="row">
             {INPUT_FIELDS.map(({
                 name, component, type, className, placeholder, getTitle, subtitle, disabled, value,
-            }) => <div className="col-12 mb-4" key={nanoid()}>
+            }) => <div className="col-12 mb-4" key={placeholder}>
                 {typeof getTitle === 'function' && getTitle()}
                 <Field
                     id={name}
