@@ -1276,7 +1276,7 @@ Response:
 		"upstream":"...", // Upstream URL starting with tcp://, tls://, https://, or with an IP address
 		"answer_dnssec": true,
 		"client":"127.0.0.1",
-		"client_proto": "" (plain) | "doh",
+		"client_proto": "" (plain) | "doh" | "dot",
 		"elapsedMs":"0.098403",
 		"filterId":1,
 		"question":{

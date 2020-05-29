@@ -40,8 +40,10 @@ func processQueryLogsAndStats(ctx *dnsContext) int {
 			ClientIP:   getIP(d.Addr),
 		}
 
-		if d.HTTPRequest != nil {
+		if d.Proto == "https" {
 			p.ClientProto = "doh"
+		} else if d.Proto == "tls" {
+			p.ClientProto = "dot"
 		}
 
 		if d.Upstream != nil {

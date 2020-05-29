@@ -48,7 +48,7 @@ type AddParams struct {
 	Elapsed     time.Duration     // Time spent for processing the request
 	ClientIP    net.IP
 	Upstream    string // Upstream server URL
-	ClientProto string // Protocol for the client connection: "" (plain), "doh"
+	ClientProto string // Protocol for the client connection: "" (plain), "doh", "dot"
 }
 
 // New - create a new instance of the query log

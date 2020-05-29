@@ -1422,7 +1422,10 @@ components:
                     type: string
                     example: 192.168.0.1
                 client_proto:
-                    type: string
+                    enum:
+                        - dot
+                        - doh
+                        - ""
                 elapsedMs:
                     type: string
                     example: "54.023928"
