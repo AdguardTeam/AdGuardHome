@@ -1421,6 +1421,8 @@ components:
                 client:
                     type: string
                     example: 192.168.0.1
+                client_proto:
+                    type: string
                 elapsedMs:
                     type: string
                     example: "54.023928"
