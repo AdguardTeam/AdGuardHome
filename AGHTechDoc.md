@@ -12,6 +12,7 @@ Contents:
 * Updating
 	* Get version command
 	* Update command
+* API: Get global status
 * TLS
 	* API: Get TLS configuration
 	* API: Set TLS configuration
@@ -368,6 +369,27 @@ Error response:
 	500
 
 UI shows error message "Auto-update has failed"
+
+
+## API: Get global status
+
+Request:
+
+	GET /control/status
+
+Response:
+
+	200 OK
+
+	{
+	"dns_addresses":["..."],
+	"dns_port":53,
+	"http_port":3000,
+	"language":"en",
+	"protection_enabled":true,
+	"running":true,
+	"version":"undefined"
+	}
 
 
 ## Enable DHCP server
