@@ -38,6 +38,8 @@ type logEntry struct {
 	QType  string `json:"QT"`
 	QClass string `json:"QC"`
 
+	ClientProto string `json:"CP"` // "" or "doh"
+
 	Answer     []byte `json:",omitempty"` // sometimes empty answers happen like binerdunt.top or rev2.globalrootservers.net
 	OrigAnswer []byte `json:",omitempty"`
 
@@ -119,9 +121,10 @@ func (l *queryLog) Add(params AddParams) {
 		IP:   l.getClientIP(params.ClientIP.String()),
 		Time: now,
 
-		Result:   *params.Result,
-		Elapsed:  params.Elapsed,
-		Upstream: params.Upstream,
+		Result:      *params.Result,
+		Elapsed:     params.Elapsed,
+		Upstream:    params.Upstream,
+		ClientProto: params.ClientProto,
 	}
 	q := params.Question.Question[0]
 	entry.QHost = strings.ToLower(q.Name[:len(q.Name)-1]) // remove the last dot

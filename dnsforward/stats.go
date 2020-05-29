@@ -39,6 +39,11 @@ func processQueryLogsAndStats(ctx *dnsContext) int {
 			Elapsed:    elapsed,
 			ClientIP:   getIP(d.Addr),
 		}
+
+		if d.HTTPRequest != nil {
+			p.ClientProto = "doh"
+		}
+
 		if d.Upstream != nil {
 			p.Upstream = d.Upstream.Address()
 		}

@@ -1200,6 +1200,7 @@ When a new DNS request is received and processed, we store information about thi
 	"QH":"...", // target host name without the last dot
 	"QT":"...", // question type
 	"QC":"...", // question class
+	"CP":"" | "doh", // client connection protocol
 	"Answer":"base64 data",
 	"OrigAnswer":"base64 data",
 	"Result":{
@@ -1275,6 +1276,7 @@ Response:
 		"upstream":"...", // Upstream URL starting with tcp://, tls://, https://, or with an IP address
 		"answer_dnssec": true,
 		"client":"127.0.0.1",
+		"client_proto": "" (plain) | "doh",
 		"elapsedMs":"0.098403",
 		"filterId":1,
 		"question":{
