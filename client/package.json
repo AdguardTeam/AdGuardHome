@@ -6,7 +6,9 @@
         "build-dev": "cross-env BUILD_ENV=dev webpack --config webpack.dev.js",
         "watch": "cross-env BUILD_ENV=dev webpack --config webpack.dev.js --watch",
         "build-prod": "cross-env BUILD_ENV=prod webpack --config webpack.prod.js",
-        "lint": "eslint src"
+        "lint": "eslint src",
+        "test": "jest",
+        "test:watch": "jest --watch"
     },
     "dependencies": {
         "@nivo/line": "^0.49.1",
@@ -15,6 +17,7 @@
         "date-fns": "^1.29.0",
         "i18next": "^19.4.4",
         "i18next-browser-languagedetector": "^4.2.0",
+        "ipaddr.js": "^1.9.1",
         "lodash": "^4.17.15",
         "nanoid": "^3.1.9",
         "prop-types": "^15.7.2",
@@ -60,6 +63,7 @@
         "eslint-plugin-react-hooks": "^2.5.0",
         "file-loader": "6.0.0",
         "html-webpack-plugin": "^4.3.0",
+        "jest": "^26.0.1",
         "mini-css-extract-plugin": "^0.9.0",
         "path": "^0.12.7",
         "postcss-flexbugs-fixes": "4.2.1",

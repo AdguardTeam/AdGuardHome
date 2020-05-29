@@ -1,3 +1,4 @@
+/* eslint-disable no-bitwise */
 import 'url-polyfill';
 import dateParse from 'date-fns/parse';
 import dateFormat from 'date-fns/format';
@@ -10,6 +11,7 @@ import round from 'lodash/round';
 import axios from 'axios';
 import i18n from 'i18next';
 import uniqBy from 'lodash/uniqBy';
+import ipaddr from 'ipaddr.js';
 import versionCompare from './versionCompare';
 
 import {
@@ -24,6 +26,7 @@ import {
     DEFAULT_LANGUAGE,
     FILTERED_STATUS,
     FILTERED,
+    IP_MATCH_LIST_STATUS,
 } from './constants';
 
 /**
@@ -167,7 +170,10 @@ export const getPercent = (amount, number) => {
     return 0;
 };
 
-export const captitalizeWords = (text) => text.split(/[ -_]/g).map((str) => str.charAt(0).toUpperCase() + str.substr(1)).join(' ');
+export const captitalizeWords = (text) => text.split(/[ -_]/g)
+    .map((str) => str.charAt(0)
+        .toUpperCase() + str.substr(1))
+    .join(' ');
 
 export const getInterfaceIp = (option) => {
     const onlyIPv6 = option.ip_addresses.every((ip) => ip.includes(':'));
@@ -187,9 +193,10 @@ export const getInterfaceIp = (option) => {
 export const getIpList = (interfaces) => {
     let list = [];
 
-    Object.keys(interfaces).forEach((item) => {
-        list = [...list, ...interfaces[item].ip_addresses];
-    });
+    Object.keys(interfaces)
+        .forEach((item) => {
+            list = [...list, ...interfaces[item].ip_addresses];
+        });
 
     return list.sort();
 };
@@ -283,7 +290,9 @@ export const normalizeTextarea = (text) => {
         return [];
     }
 
-    return text.replace(/[;, ]/g, '\n').split('\n').filter((n) => n);
+    return text.replace(/[;, ]/g, '\n')
+        .split('\n')
+        .filter((n) => n);
 };
 
 /**
@@ -307,7 +316,10 @@ export const normalizeTopClients = (topClients) => topClients.reduce(
         // eslint-disable-next-line no-param-reassign
         nameToCountMap.configured[infoName] = count;
         return nameToCountMap;
-    }, { auto: {}, configured: {} },
+    }, {
+        auto: {},
+        configured: {},
+    },
 );
 
 export const getClientInfo = (clients, ip) => {
@@ -321,7 +333,10 @@ export const getClientInfo = (clients, ip) => {
     const { name, whois_info } = client;
     const whois = Object.keys(whois_info).length > 0 ? whois_info : '';
 
-    return { name, whois };
+    return {
+        name,
+        whois,
+    };
 };
 
 export const getAutoClientInfo = (clients, ip) => {
@@ -334,7 +349,10 @@ export const getAutoClientInfo = (clients, ip) => {
     const { name, whois_info } = client;
     const whois = Object.keys(whois_info).length > 0 ? whois_info : '';
 
-    return { name, whois };
+    return {
+        name,
+        whois,
+    };
 };
 
 export const sortClients = (clients) => {
@@ -344,7 +362,8 @@ export const sortClients = (clients) => {
 
         if (nameA > nameB) {
             return 1;
-        } if (nameA < nameB) {
+        }
+        if (nameA < nameB) {
             return -1;
         }
 
@@ -366,7 +385,8 @@ export const secondsToMilliseconds = (seconds) => {
     return seconds;
 };
 
-export const normalizeRulesTextarea = (text) => text && text.replace(/^\n/g, '').replace(/\n\s*\n/g, '\n');
+export const normalizeRulesTextarea = (text) => text && text.replace(/^\n/g, '')
+    .replace(/\n\s*\n/g, '\n');
 
 export const isVersionGreater = (currentVersion, previousVersion) => (
     versionCompare(currentVersion, previousVersion) === -1
@@ -449,10 +469,17 @@ export const getCurrentFilter = (url, filters) => {
 
     if (filter) {
         const { enabled, name, url } = filter;
-        return { enabled, name, url };
+        return {
+            enabled,
+            name,
+            url,
+        };
     }
 
-    return { name: '', url: '' };
+    return {
+        name: '',
+        url: '',
+    };
 };
 
 /**
@@ -462,4 +489,60 @@ export const getCurrentFilter = (url, filters) => {
 export const formatNumber = (num) => {
     const currentLanguage = i18n.languages[0] || DEFAULT_LANGUAGE;
     return num.toLocaleString(currentLanguage);
+};
+
+export const normalizeMultiline = (multiline) => `${normalizeTextarea(multiline)
+    .map((line) => line.trim())
+    .join('\n')}\n`;
+
+
+/**
+ * @param parsedIp {object} ipaddr.js IPv4 or IPv6 object
+ * @param cidr {array} ipaddr.js CIDR array
+ * @returns {boolean}
+ */
+export const isIpMatchCidr = (parsedIp, parsedCidr) => {
+    try {
+        const cidrIpVersion = parsedCidr[0].kind();
+        const ipVersion = parsedIp.kind();
+
+        return ipVersion === cidrIpVersion && parsedIp.match(parsedCidr);
+    } catch (e) {
+        return false;
+    }
+};
+
+/**
+ * @param ip {string}
+ * @param list {string}
+ * @returns {'EXACT' | 'CIDR' | 'NOT_FOND'}
+ */
+export const getIpMatchListStatus = (ip, list) => {
+    if (!ip || !list) {
+        return IP_MATCH_LIST_STATUS.NOT_FOUND;
+    }
+
+    const listArr = list.trim()
+        .split('\n');
+
+    try {
+        for (let i = 0; i < listArr.length; i += 1) {
+            const listItem = listArr[i];
+
+            const parsedIp = ipaddr.parse(ip);
+            const isItemAnIp = ipaddr.isValid(listItem);
+            const parsedItem = isItemAnIp ? ipaddr.parse(listItem) : ipaddr.parseCIDR(listItem);
+
+            if (isItemAnIp && parsedIp.toString() === parsedItem.toString()) {
+                return IP_MATCH_LIST_STATUS.EXACT;
+            }
+
+            if (!isItemAnIp && isIpMatchCidr(parsedIp, parsedItem)) {
+                return IP_MATCH_LIST_STATUS.CIDR;
+            }
+        }
+        return IP_MATCH_LIST_STATUS.NOT_FOUND;
+    } catch (e) {
+        return IP_MATCH_LIST_STATUS.NOT_FOUND;
+    }
 };

@@ -379,3 +379,9 @@ export const DNS_REQUEST_OPTIONS = {
     PARALLEL_REQUESTS: 'parallel_requests',
     FASTEST_ADDR: 'fastest_addr',
 };
+
+export const IP_MATCH_LIST_STATUS = {
+    NOT_FOUND: 'NOT_FOUND', // not found in the list
+    EXACT: 'EXACT', // found exact match (ip === ip)
+    CIDR: 'CIDR', // the ip is in the specified CIDR range
+};

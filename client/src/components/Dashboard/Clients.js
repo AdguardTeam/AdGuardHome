@@ -6,14 +6,15 @@ import { Trans, withTranslation } from 'react-i18next';
 import Card from '../ui/Card';
 import Cell from '../ui/Cell';
 
-import { getPercent } from '../../helpers/helpers';
-import { STATUS_COLORS } from '../../helpers/constants';
+import { getPercent, getIpMatchListStatus } from '../../helpers/helpers';
+import { IP_MATCH_LIST_STATUS, STATUS_COLORS } from '../../helpers/constants';
 import { formatClientCell } from '../../helpers/formatClientCell';
 
 const getClientsPercentColor = (percent) => {
     if (percent > 50) {
         return STATUS_COLORS.green;
-    } if (percent > 10) {
+    }
+    if (percent > 10) {
         return STATUS_COLORS.yellow;
     }
     return STATUS_COLORS.red;
@@ -27,20 +28,18 @@ const countCell = (dnsQueries) => function cell(row) {
     return <Cell value={value} percent={percent} color={percentColor} />;
 };
 
-const renderBlockingButton = (blocked, ip, handleClick, processing) => {
-    let buttonProps = {
-        className: 'btn-outline-danger',
-        text: 'block_btn',
-        type: 'block',
-    };
-
-    if (blocked) {
-        buttonProps = {
+const renderBlockingButton = (ipMatchListStatus, ip, handleClick, processing) => {
+    const buttonProps = ipMatchListStatus === IP_MATCH_LIST_STATUS.NOT_FOUND
+        ? {
+            className: 'btn-outline-danger',
+            text: 'block_btn',
+            type: 'block',
+        }
+        : {
             className: 'btn-outline-secondary',
             text: 'unblock_btn',
             type: 'unblock',
         };
-    }
 
     return (
         <div className="table__action">
@@ -56,19 +55,18 @@ const renderBlockingButton = (blocked, ip, handleClick, processing) => {
     );
 };
 
-const isBlockedClient = (clients, ip) => !!(clients && clients.includes(ip));
-
 const clientCell = (t, toggleClientStatus, processing, disallowedClients) => function cell(row) {
     const { value } = row;
-    const blocked = isBlockedClient(disallowedClients, value);
+    const ipMatchListStatus = getIpMatchListStatus(value, disallowedClients);
 
     return (
-            <Fragment>
-                <div className="logs__row logs__row--overflow logs__row--column">
-                    {formatClientCell(row, t)}
-                </div>
-                {renderBlockingButton(blocked, value, toggleClientStatus, processing)}
-            </Fragment>
+        <Fragment>
+            <div className="logs__row logs__row--overflow logs__row--column">
+                {formatClientCell(row, t)}
+            </div>
+            {ipMatchListStatus !== IP_MATCH_LIST_STATUS.CIDR
+            && renderBlockingButton(ipMatchListStatus, value, toggleClientStatus, processing)}
+        </Fragment>
     );
 };
 
@@ -124,15 +122,8 @@ const Clients = ({
 
                 const { ip } = rowInfo.original;
 
-                if (isBlockedClient(disallowedClients, ip)) {
-                    return {
-                        className: 'red',
-                    };
-                }
-
-                return {
-                    className: '',
-                };
+                return getIpMatchListStatus(ip, disallowedClients)
+                === IP_MATCH_LIST_STATUS.NOT_FOUND ? {} : { className: 'red' };
             }}
         />
     </Card>
