@@ -556,14 +556,11 @@ func (s *v6Server) Start() error {
 		return wrapErrPrint(err, "Couldn't find interface by name %s", s.conf.InterfaceName)
 	}
 
-	if !s.conf.Enabled {
-		return nil
-	}
-
 	log.Debug("DHCPv6: starting...")
 	s.conf.dnsIPAddrs = getIfaceIPv6(*iface)
 	if len(s.conf.dnsIPAddrs) == 0 {
-		return fmt.Errorf("DHCPv6: no IPv6 address for interface %s", iface.Name)
+		log.Debug("DHCPv6: no IPv6 address for interface %s", iface.Name)
+		return nil
 	}
 
 	if len(iface.HardwareAddr) != 6 {
@@ -586,7 +583,7 @@ func (s *v6Server) Start() error {
 
 	go func() {
 		err = s.srv.Serve()
-		log.Error("DHCPv6: %s", err)
+		log.Debug("DHCPv6: srv.Serve: %s", err)
 	}()
 	return nil
 }

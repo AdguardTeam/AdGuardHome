@@ -395,9 +395,9 @@ Response:
 	200 OK
 
 	{
+		"enabled":false,
+		"interface_name":"...",
 		"v4":{
-			"enabled":false,
-			"interface_name":"...",
 			"gateway_ip":"...",
 			"subnet_mask":"...",
 			"range_start":"...",
@@ -406,7 +406,6 @@ Response:
 			"icmp_timeout_msec":0
 		},
 		"v6":{
-			"enabled":false,
 			"range_start":"...",
 			"lease_duration":60,
 		}

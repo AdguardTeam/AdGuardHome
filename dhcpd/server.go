@@ -33,8 +33,8 @@ type DHCPServer interface {
 
 // V4ServerConf - server configuration
 type V4ServerConf struct {
-	Enabled       bool   `yaml:"enabled"`
-	InterfaceName string `yaml:"interface_name"`
+	Enabled       bool   `yaml:"-"`
+	InterfaceName string `yaml:"-"`
 	GatewayIP     string `yaml:"gateway_ip"`
 	SubnetMask    string `yaml:"subnet_mask"`
 	RangeStart    string `yaml:"range_start"`
@@ -58,8 +58,8 @@ type V4ServerConf struct {
 
 // V6ServerConf - server configuration
 type V6ServerConf struct {
-	Enabled       bool   `yaml:"enabled"`
-	InterfaceName string `yaml:"interface_name"`
+	Enabled       bool   `yaml:"-"`
+	InterfaceName string `yaml:"-"`
 	RangeStart    string `yaml:"range_start"`
 	LeaseDuration uint32 `yaml:"lease_duration"` // in seconds
 

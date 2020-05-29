@@ -28,6 +28,9 @@ type Lease struct {
 // ServerConfig - DHCP server configuration
 // field ordering is important -- yaml fields will mirror ordering from here
 type ServerConfig struct {
+	Enabled       bool   `yaml:"enabled"`
+	InterfaceName string `yaml:"interface_name"`
+
 	Conf4 V4ServerConf `yaml:"dhcpv4"`
 	Conf6 V6ServerConf `yaml:"dhcpv6"`
 
@@ -72,6 +75,8 @@ func (s *Server) CheckConfig(config ServerConfig) error {
 // Create - create object
 func Create(config ServerConfig) *Server {
 	s := Server{}
+	s.conf.Enabled = config.Enabled
+	s.conf.InterfaceName = config.InterfaceName
 	s.conf.HTTPRegister = config.HTTPRegister
 	s.conf.ConfigModified = config.ConfigModified
 	s.conf.DBFilePath = filepath.Join(config.WorkDir, dbFilename)
@@ -82,6 +87,8 @@ func Create(config ServerConfig) *Server {
 	}
 
 	var err error
+	config.Conf4.Enabled = s.conf.Enabled
+	config.Conf4.InterfaceName = s.conf.InterfaceName
 	config.Conf4.notify = s.onNotify
 	s.srv4, err = v4Create(config.Conf4)
 	if err != nil {
@@ -89,6 +96,8 @@ func Create(config ServerConfig) *Server {
 		return nil
 	}
 
+	config.Conf6.Enabled = s.conf.Enabled
+	config.Conf6.InterfaceName = s.conf.InterfaceName
 	config.Conf6.notify = s.onNotify
 	s.srv6, err = v6Create(config.Conf6)
 	if err != nil {
@@ -126,6 +135,8 @@ func (s *Server) notify(flags int) {
 
 // WriteDiskConfig - write configuration
 func (s *Server) WriteDiskConfig(c *ServerConfig) {
+	c.Enabled = s.conf.Enabled
+	c.InterfaceName = s.conf.InterfaceName
 	s.srv4.WriteDiskConfig4(&c.Conf4)
 	s.srv6.WriteDiskConfig6(&c.Conf6)
 }

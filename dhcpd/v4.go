@@ -525,7 +525,8 @@ func (s *v4Server) Start() error {
 	log.Debug("DHCPv4: starting...")
 	s.conf.dnsIPAddrs = getIfaceIPv4(*iface)
 	if len(s.conf.dnsIPAddrs) == 0 {
-		return fmt.Errorf("DHCPv4: no IPv4 address for interface %s", iface.Name)
+		log.Debug("DHCPv4: no IPv6 address for interface %s", iface.Name)
+		return nil
 	}
 
 	laddr := &net.UDPAddr{
@@ -541,9 +542,8 @@ func (s *v4Server) Start() error {
 
 	go func() {
 		err = s.srv.Serve()
-		log.Error("DHCPv4: %s", err)
+		log.Debug("DHCPv4: srv.Serve: %s", err)
 	}()
-
 	return nil
 }
 
