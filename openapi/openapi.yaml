@@ -1002,6 +1002,8 @@ components:
                         - tls://1.0.0.1
                 protection_enabled:
                     type: boolean
+                dhcp_available:
+                    type: boolean
                 ratelimit:
                     type: integer
                 blocking_mode:
