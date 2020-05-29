@@ -92,8 +92,10 @@ class Settings extends Component {
                                 <Card bodyType="card-body box-body--settings">
                                     <div className="form">
                                         <FiltersConfig
-                                            interval={filtering.interval}
-                                            enabled={filtering.enabled}
+                                            initialValues={{
+                                                interval: filtering.interval,
+                                                enabled: filtering.enabled,
+                                            }}
                                             processing={filtering.processingSetConfig}
                                             setFiltersConfig={setFiltersConfig}
                                         />

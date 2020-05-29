@@ -61,7 +61,6 @@ const Form = (props) => {
                         <label className="form__label">
                             <Trans>filters_interval</Trans>
                         </label>
-
                         {getIntervalSelect(processing, t, handleChange, toNumber)}
                     </div>
                 </div>

@@ -483,6 +483,19 @@ export const getCurrentFilter = (url, filters) => {
 };
 
 /**
+ * @param {object} initialValues
+ * @param {object} values
+ * @returns {object} Returns different values of objects
+ */
+export const getObjDiff = (initialValues, values) => Object.entries(values)
+    .reduce((acc, [key, value]) => {
+        if (value !== initialValues[key]) {
+            acc[key] = value;
+        }
+        return acc;
+    }, {});
+
+/**
  * @param number Number to format
  * @returns string Returns a string with a language-sensitive representation of this number
  */
