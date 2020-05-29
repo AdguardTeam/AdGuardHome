@@ -3,6 +3,7 @@ package home
 import (
 	"context"
 	"crypto/tls"
+	golog "log"
 	"net"
 	"net/http"
 	"strconv"
@@ -38,6 +39,17 @@ type Web struct {
 	portHTTPS   int
 	httpServer  *http.Server // HTTP module
 	httpsServer HTTPSServer  // HTTPS module
+	errLogger   *golog.Logger
+}
+
+// Proxy between Go's "log" and "golibs/log"
+type logWriter struct {
+}
+
+// HTTP server calls this function to log an error
+func (w *logWriter) Write(p []byte) (int, error) {
+	log.Debug("Web: %s", string(p))
+	return 0, nil
 }
 
 // CreateWeb - create module
@@ -46,6 +58,9 @@ func CreateWeb(conf *WebConfig) *Web {
 
 	w := Web{}
 	w.conf = conf
+
+	lw := logWriter{}
+	w.errLogger = golog.New(&lw, "", 0)
 
 	// Initialize and run the admin Web interface
 	box := packr.NewBox("../build/static")
@@ -115,7 +130,7 @@ func (web *Web) TLSConfigChanged(tlsConf tlsConfigSettings) {
 // Start - start serving HTTP requests
 func (web *Web) Start() {
 	// for https, we have a separate goroutine loop
-	go web.httpServerLoop()
+	go web.tlsServerLoop()
 
 	// this loop is used as an ability to change listening host and/or port
 	for !web.httpsServer.shutdown {
@@ -124,7 +139,8 @@ func (web *Web) Start() {
 		// we need to have new instance, because after Shutdown() the Server is not usable
 		address := net.JoinHostPort(web.conf.BindHost, strconv.Itoa(web.conf.BindPort))
 		web.httpServer = &http.Server{
-			Addr: address,
+			ErrorLog: web.errLogger,
+			Addr:     address,
 		}
 		err := web.httpServer.ListenAndServe()
 		if err != http.ErrServerClosed {
@@ -151,7 +167,7 @@ func (web *Web) Close() {
 	log.Info("Stopped HTTP server")
 }
 
-func (web *Web) httpServerLoop() {
+func (web *Web) tlsServerLoop() {
 	for {
 		web.httpsServer.cond.L.Lock()
 		if web.httpsServer.shutdown {
@@ -173,7 +189,8 @@ func (web *Web) httpServerLoop() {
 		// prepare HTTPS server
 		address := net.JoinHostPort(web.conf.BindHost, strconv.Itoa(web.conf.PortHTTPS))
 		web.httpsServer.server = &http.Server{
-			Addr: address,
+			ErrorLog: web.errLogger,
+			Addr:     address,
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{web.httpsServer.cert},
 				MinVersion:   tls.VersionTLS12,

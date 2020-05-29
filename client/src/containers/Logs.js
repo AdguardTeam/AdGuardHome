@@ -1,8 +1,11 @@
 import { connect } from 'react-redux';
-import { addSuccessToast, getClients } from '../actions';
+import { getClients } from '../actions';
 import { getFilteringStatus, setRules } from '../actions/filtering';
-import { getLogs, getLogsConfig, setLogsPagination, setLogsFilter, setLogsPage } from '../actions/queryLogs';
+import {
+    getLogs, getLogsConfig, setLogsPagination, setLogsFilter, setLogsPage,
+} from '../actions/queryLogs';
 import Logs from '../components/Logs';
+import { addSuccessToast } from '../actions/toasts';
 
 const mapStateToProps = (state) => {
     const { queryLogs, dashboard, filtering } = state;

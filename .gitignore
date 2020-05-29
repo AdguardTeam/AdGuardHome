@@ -23,3 +23,6 @@ dnsfilter/tests/dnsfilter.TestLotsOfRules*.pprof
 launchpad_credentials
 snapcraft_login
 snapcraft.yaml.bak
+
+# IntelliJ IDEA project files
+*.iml

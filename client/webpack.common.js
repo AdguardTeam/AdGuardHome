@@ -1,11 +1,10 @@
 const path = require('path');
 const autoprefixer = require('autoprefixer');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
-const webpack = require('webpack');
 const flexBugsFixes = require('postcss-flexbugs-fixes');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const RESOURCES_PATH = path.resolve(__dirname);
 const ENTRY_REACT = path.resolve(RESOURCES_PATH, 'src/index.js');
@@ -14,11 +13,20 @@ const ENTRY_LOGIN = path.resolve(RESOURCES_PATH, 'src/login/index.js');
 const HTML_PATH = path.resolve(RESOURCES_PATH, 'public/index.html');
 const HTML_INSTALL_PATH = path.resolve(RESOURCES_PATH, 'public/install.html');
 const HTML_LOGIN_PATH = path.resolve(RESOURCES_PATH, 'public/login.html');
-const FAVICON_PATH = path.resolve(RESOURCES_PATH, 'public/favicon.png');
+const ASSETS_PATH = path.resolve(RESOURCES_PATH, 'public/assets');
 
 const PUBLIC_PATH = path.resolve(__dirname, '../build/static');
+const PUBLIC_ASSETS_PATH = path.resolve(PUBLIC_PATH, 'assets');
+
+const BUILD_ENVS = {
+    dev: 'development',
+    prod: 'production',
+};
+
+const BUILD_ENV = BUILD_ENVS[process.env.BUILD_ENV];
 
 const config = {
+    mode: BUILD_ENV,
     target: 'web',
     context: RESOURCES_PATH,
     entry: {
@@ -40,10 +48,11 @@ const config = {
     module: {
         rules: [
             {
-                test: /\.css$/,
-                use: ExtractTextPlugin.extract({
-                    fallback: 'style-loader',
-                    use: [{
+                test: /\.css$/i,
+                use: [
+                    'style-loader',
+                    MiniCssExtractPlugin.loader,
+                    {
                         loader: 'css-loader',
                         options: {
                             importLoaders: 1,
@@ -56,19 +65,12 @@ const config = {
                             plugins: () => [
                                 flexBugsFixes,
                                 autoprefixer({
-                                    browsers: [
-                                        '>1%',
-                                        'last 4 versions',
-                                        'Firefox ESR',
-                                        'not ie < 9',
-                                    ],
                                     flexbox: 'no-2009',
                                 }),
                             ],
                         },
                     },
-                    ],
-                }),
+                ],
             },
             {
                 test: /\.js$/,
@@ -77,14 +79,6 @@ const config = {
                     loader: 'babel-loader',
                     options: {
                         cacheDirectory: true,
-                        presets: [
-                            ['env', {
-                                modules: false,
-                            }],
-                            'react',
-                            'stage-2',
-                        ],
-                        plugins: ['transform-runtime', 'transform-object-rest-spread'],
                     },
                 },
             },
@@ -102,10 +96,7 @@ const config = {
         ],
     },
     plugins: [
-        new webpack.DefinePlugin({
-            'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
-        }),
-        new CleanWebpackPlugin(['**/*.*'], {
+        new CleanWebpackPlugin({
             root: PUBLIC_PATH,
             verbose: false,
             dry: false,
@@ -130,12 +121,17 @@ const config = {
             filename: 'login.html',
             template: HTML_LOGIN_PATH,
         }),
-        new ExtractTextPlugin({
+        new MiniCssExtractPlugin({
             filename: '[name].[contenthash].css',
         }),
-        new CopyPlugin([
-            { from: FAVICON_PATH, to: PUBLIC_PATH },
-        ]),
+        new CopyPlugin({
+            patterns: [
+                {
+                    from: ASSETS_PATH,
+                    to: PUBLIC_ASSETS_PATH,
+                },
+            ],
+        }),
     ],
 };
 

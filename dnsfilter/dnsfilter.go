@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"sync"
 
@@ -389,6 +390,7 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 
 // Process rewrites table
 // . Find CNAME for a domain name (exact match or by wildcard)
+//  . if found and CNAME equals to domain name - this is an exception;  exit
 //  . if found, set domain name to canonical name
 //  . repeat for the new domain name (Note: we return only the last CNAME)
 // . Find A or AAAA record for a domain name (exact match or by wildcard)
@@ -408,6 +410,12 @@ func (d *Dnsfilter) processRewrites(host string) Result {
 	origHost := host
 	for len(rr) != 0 && rr[0].Type == dns.TypeCNAME {
 		log.Debug("Rewrite: CNAME for %s is %s", host, rr[0].Answer)
+
+		if host == rr[0].Answer { // "host == CNAME" is an exception
+			res.Reason = 0
+			return res
+		}
+
 		host = rr[0].Answer
 		_, ok := cnames[host]
 		if ok {
@@ -528,6 +536,9 @@ func (d *Dnsfilter) initFiltering(allowFilters, blockFilters []Filter) error {
 	d.filteringEngine = filteringEngine
 	d.rulesStorageWhite = rulesStorageWhite
 	d.filteringEngineWhite = filteringEngineWhite
+
+	// Make sure that the OS reclaims memory as soon as possible
+	debug.FreeOSMemory()
 	log.Debug("initialized filtering engine")
 
 	return nil
@@ -628,6 +639,11 @@ func makeResult(rule rules.Rule, reason Reason) Result {
 	return res
 }
 
+// InitModule() - manually initialize blocked services map
+func InitModule() {
+	initBlockedServices()
+}
+
 // New creates properly initialized DNS Filter that is ready to be used
 func New(c *Config, blockFilters []Filter) *Dnsfilter {
 
@@ -676,8 +692,6 @@ func New(c *Config, blockFilters []Filter) *Dnsfilter {
 		bsvcs = append(bsvcs, s)
 	}
 	d.BlockedServices = bsvcs
-
-	initBlockedServices()
 
 	if blockFilters != nil {
 		err := d.initFiltering(nil, blockFilters)

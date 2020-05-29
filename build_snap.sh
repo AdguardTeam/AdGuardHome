@@ -10,13 +10,13 @@ SNAP_NAME="adguard-home"
 LAUNCHPAD_CREDENTIALS_DIR=".local/share/snapcraft/provider/launchpad"
 
 if [[ -z ${VERSION} ]]; then
-    VERSION=`git describe --abbrev=4 --dirty --always --tags`
+    VERSION=$(git describe --abbrev=4 --dirty --always --tags)
     echo "VERSION env variable is not set, getting it from git: ${VERSION}"
 fi
 
 # If bash is interactive, set `-it` parameter for docker run
 INTERACTIVE=""
-if [ -t 0 ] ; then
+if [ -t 0 ]; then
     INTERACTIVE="-it"
 fi
 
@@ -80,14 +80,14 @@ function prepare() {
     consumer_secret =
     access_token = ${LAUNCHPAD_ACCESS_TOKEN}
     access_secret = ${LAUNCHPAD_ACCESS_SECRET}
-    " > launchpad_credentials
+    " >launchpad_credentials
 
     # Snapcraft login data
     # It can be exported using snapcraft export-login command
     echo "[login.ubuntu.com]
     macaroon = ${SNAPCRAFT_MACAROON}
     unbound_discharge = ${SNAPCRAFT_UBUNTU_DISCHARGE}
-    email = ${SNAPCRAFT_EMAIL}" > snapcraft_login
+    email = ${SNAPCRAFT_EMAIL}" >snapcraft_login
 
     # Prepare the snap configuration
     cp ${SNAPCRAFT_TMPL} ./snapcraft.yaml
@@ -121,7 +121,7 @@ build_snap_docker() {
     # prepare credentials
     prepare
 
-    docker run ${INTERACTIVE} --rm  \
+    docker run ${INTERACTIVE} --rm \
         -v $(pwd):/build \
         -v $(pwd)/launchpad_credentials:/root/${LAUNCHPAD_CREDENTIALS_DIR}/credentials:ro \
         ${BUILDER_IMAGE} \
@@ -141,8 +141,8 @@ rename_snap_file() {
     # Check that the snap file exists
     snapFile="${SNAP_NAME}_${VERSION}_${ARCH}.snap"
     if [ ! -f ${snapFile} ]; then
-       echo "Snap file ${snapFile} not found!"
-       exit 1
+        echo "Snap file ${snapFile} not found!"
+        exit 1
     fi
 
     mv -f ${snapFile} "${SNAP_NAME}_${ARCH}.snap"
@@ -155,8 +155,8 @@ publish_snap() {
     # Check that the snap file exists
     snapFile="${SNAP_NAME}_${ARCH}.snap"
     if [ ! -f ${snapFile} ]; then
-       echo "Snap file ${snapFile} not found!"
-       exit 1
+        echo "Snap file ${snapFile} not found!"
+        exit 1
     fi
 
     # Login if necessary
@@ -176,8 +176,8 @@ publish_snap_docker() {
     # Check that the snap file exists
     snapFile="${SNAP_NAME}_${ARCH}.snap"
     if [ ! -f ${snapFile} ]; then
-       echo "Snap file ${snapFile} not found!"
-       exit 1
+        echo "Snap file ${snapFile} not found!"
+        exit 1
     fi
 
     # Login and publish the snap
@@ -229,10 +229,15 @@ publish_docker() {
         exit 1
     fi
 
-    ARCH=i386 publish_snap_docker
-    ARCH=arm64 publish_snap_docker
-    ARCH=armhf publish_snap_docker
-    ARCH=amd64 publish_snap_docker
+    if [[ -n "$2" ]]; then
+        echo "ARCH is set to $2"
+        ARCH=$2 publish_snap_docker
+    else
+        ARCH=i386 publish_snap_docker
+        ARCH=arm64 publish_snap_docker
+        ARCH=armhf publish_snap_docker
+        ARCH=amd64 publish_snap_docker
+    fi
 }
 
 publish() {
@@ -246,10 +251,15 @@ publish() {
         exit 1
     fi
 
-    ARCH=i386 publish_snap
-    ARCH=arm64 publish_snap
-    ARCH=armhf publish_snap
-    ARCH=amd64 publish_snap
+    if [[ -n "$2" ]]; then
+        echo "ARCH is set to $2"
+        ARCH=$2 publish_snap
+    else
+        ARCH=i386 publish_snap
+        ARCH=arm64 publish_snap
+        ARCH=armhf publish_snap
+        ARCH=amd64 publish_snap
+    fi
 }
 
 cleanup() {
@@ -270,10 +280,10 @@ fi
 case "$1" in
 "build-docker") build_docker $2 ;;
 "build") build $2 ;;
-"publish-docker-beta") publish_docker beta ;;
-"publish-docker-release") publish_docker stable ;;
-"publish-beta") publish beta ;;
-"publish-release") publish stable ;;
+"publish-docker-beta") publish_docker beta $2 ;;
+"publish-docker-release") publish_docker stable $2 ;;
+"publish-beta") publish beta $2 ;;
+"publish-release") publish stable $2 ;;
 "prepare") prepare ;;
 "cleanup") cleanup ;;
 *) usage ;;

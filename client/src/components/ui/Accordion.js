@@ -6,10 +6,10 @@ import './Accordion.css';
 class Accordion extends Component {
     state = {
         isOpen: false,
-    }
+    };
 
     handleClick = () => {
-        this.setState(prevState => ({ isOpen: !prevState.isOpen }));
+        this.setState((prevState) => ({ isOpen: !prevState.isOpen }));
     };
 
     render() {

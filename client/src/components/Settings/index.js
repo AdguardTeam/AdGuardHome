@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
-import { withNamespaces } from 'react-i18next';
+import { withTranslation } from 'react-i18next';
 
 import Services from './Services';
 import StatsConfig from './StatsConfig';
@@ -76,11 +76,10 @@ class Settings extends Component {
             t,
         } = this.props;
 
-        const isDataReady =
-            !settings.processing &&
-            !services.processing &&
-            !stats.processingGetConfig &&
-            !queryLogs.processingGetConfig;
+        const isDataReady = !settings.processing
+            && !services.processing
+            && !stats.processingGetConfig
+            && !queryLogs.processingGetConfig;
 
         return (
             <Fragment>
@@ -146,6 +145,33 @@ Settings.propTypes = {
     setFiltersConfig: PropTypes.func.isRequired,
     getFilteringStatus: PropTypes.func.isRequired,
     t: PropTypes.func.isRequired,
+    getBlockedServices: PropTypes.func,
+    getLogsConfig: PropTypes.func,
+    setBlockedServices: PropTypes.func,
+    setLogsConfig: PropTypes.func,
+    clearLogs: PropTypes.func,
+    services: PropTypes.shape({
+        processing: PropTypes.bool,
+    }),
+    stats: PropTypes.shape({
+        processingGetConfig: PropTypes.bool,
+        interval: PropTypes.number,
+        processingSetConfig: PropTypes.bool,
+        processingReset: PropTypes.bool,
+    }),
+    queryLogs: PropTypes.shape({
+        enabled: PropTypes.bool,
+        interval: PropTypes.number,
+        anonymize_client_ip: PropTypes.bool,
+        processingSetConfig: PropTypes.bool,
+        processingClear: PropTypes.bool,
+        processingGetConfig: PropTypes.bool,
+    }),
+    filtering: PropTypes.shape({
+        interval: PropTypes.number,
+        enabled: PropTypes.bool,
+        processingSetConfig: PropTypes.bool,
+    }),
 };
 
-export default withNamespaces()(Settings);
+export default withTranslation()(Settings);

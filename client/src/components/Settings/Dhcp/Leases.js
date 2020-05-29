@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import ReactTable from 'react-table';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import { SMALL_TABLE_DEFAULT_PAGE_SIZE } from '../../../helpers/constants';
 
 class Leases extends Component {
@@ -53,4 +53,4 @@ Leases.propTypes = {
     t: PropTypes.func,
 };
 
-export default withNamespaces()(Leases);
+export default withTranslation()(Leases);

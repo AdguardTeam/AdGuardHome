@@ -461,25 +461,28 @@ func (f *Filtering) parseFilterContents(file io.Reader) (int, uint32, string) {
 
 	for {
 		line, err := r.ReadString('\n')
-		if err != nil {
-			break
-		}
-
 		checksum = crc32.Update(checksum, crc32.IEEETable, []byte(line))
 
 		line = strings.TrimSpace(line)
 		if len(line) == 0 {
-			continue
-		}
+			//
 
-		if line[0] == '!' {
+		} else if line[0] == '!' {
 			m := f.filterTitleRegexp.FindAllStringSubmatch(line, -1)
 			if len(m) > 0 && len(m[0]) >= 2 && !seenTitle {
 				name = m[0][1]
 				seenTitle = true
 			}
+
+		} else if line[0] == '#' {
+			//
+
 		} else {
 			rulesCount++
+		}
+
+		if err != nil {
+			break
 		}
 	}
 
@@ -595,7 +598,7 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 
 	log.Printf("Filter %d has been updated: %d bytes, %d rules",
 		filter.ID, total, rulesCount)
-	if filterName != "" {
+	if len(filter.Name) == 0 {
 		filter.Name = filterName
 	}
 	filter.RulesCount = rulesCount

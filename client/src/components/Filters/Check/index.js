@@ -1,6 +1,6 @@
 import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import { Field, reduxForm } from 'redux-form';
 import flow from 'lodash/flow';
 import Card from '../../ui/Card';
@@ -51,7 +51,7 @@ const Check = (props) => {
                                 <button
                                     className="btn btn-success btn-standard btn-large"
                                     type="submit"
-                                    onClick={this.handleSubmit}
+                                    onClick={handleSubmit}
                                     disabled={pristine || invalid || processing}
                                 >
                                     <Trans>check</Trans>
@@ -93,6 +93,6 @@ Check.propTypes = {
 };
 
 export default flow([
-    withNamespaces(),
+    withTranslation(),
     reduxForm({ form: 'domainCheckForm' }),
 ])(Check);

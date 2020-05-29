@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import ReactModal from 'react-modal';
 
 import Form from './Form';
@@ -46,4 +46,4 @@ Modal.propTypes = {
     processingAdding: PropTypes.bool.isRequired,
 };
 
-export default withNamespaces()(Modal);
+export default withTranslation()(Modal);

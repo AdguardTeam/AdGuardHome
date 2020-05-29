@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 
 import Menu from './Menu';
 import logo from '../ui/svg/logo.svg';
@@ -14,7 +14,7 @@ class Header extends Component {
     };
 
     toggleMenuOpen = () => {
-        this.setState(prevState => ({ isMenuOpen: !prevState.isMenuOpen }));
+        this.setState((prevState) => ({ isMenuOpen: !prevState.isMenuOpen }));
     };
 
     closeMenu = () => {
@@ -59,8 +59,8 @@ class Header extends Component {
                         />
                         <div className="header__column">
                             <div className="header__right">
-                                {!dashboard.processingProfile && dashboard.name &&
-                                    <a href="control/logout" className="btn btn-sm btn-outline-secondary">
+                                {!dashboard.processingProfile && dashboard.name
+                                    && <a href="control/logout" className="btn btn-sm btn-outline-secondary">
                                         <Trans>sign_out</Trans>
                                     </a>
                                 }
@@ -80,4 +80,4 @@ Header.propTypes = {
     t: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(Header);
+export default withTranslation()(Header);

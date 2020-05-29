@@ -187,7 +187,7 @@ a {
     color: #467fcf;
     text-decoration: none;
     background-color: transparent;
-    -webkit-text-decoration-skip: objects;
+    -webkittext-decoration-skip-ink: objects
 }
 
 a:hover {
@@ -9863,8 +9863,8 @@ body *:hover::-webkit-scrollbar-thumb {
 }
 
 a {
-    -webkit-text-decoration-skip: ink;
-    text-decoration-skip: ink;
+    -webkit-text-decoration-skip: auto;
+    text-decoration-skip-ink: auto
 }
 
 h1 a,

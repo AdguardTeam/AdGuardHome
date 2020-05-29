@@ -1,8 +1,8 @@
 import { createAction } from 'redux-actions';
 
 import apiClient from '../api/Api';
-import { addErrorToast, addSuccessToast } from './index';
 import { normalizeTextarea } from '../helpers/helpers';
+import { addErrorToast, addSuccessToast } from './toasts';
 
 export const getDnsConfigRequest = createAction('GET_DNS_CONFIG_REQUEST');
 export const getDnsConfigFailure = createAction('GET_DNS_CONFIG_FAILURE');
@@ -23,7 +23,7 @@ export const setDnsConfigRequest = createAction('SET_DNS_CONFIG_REQUEST');
 export const setDnsConfigFailure = createAction('SET_DNS_CONFIG_FAILURE');
 export const setDnsConfigSuccess = createAction('SET_DNS_CONFIG_SUCCESS');
 
-export const setDnsConfig = config => async (dispatch) => {
+export const setDnsConfig = (config) => async (dispatch) => {
     dispatch(setDnsConfigRequest());
     try {
         const data = { ...config };

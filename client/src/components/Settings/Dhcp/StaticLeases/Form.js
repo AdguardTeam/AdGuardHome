@@ -1,10 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Field, reduxForm } from 'redux-form';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 
-import { renderInputField, ipv4, mac, required } from '../../../../helpers/form';
+import {
+    renderInputField, ipv4, mac, required,
+} from '../../../../helpers/form';
 
 const Form = (props) => {
     const {
@@ -91,6 +93,6 @@ Form.propTypes = {
 };
 
 export default flow([
-    withNamespaces(),
+    withTranslation(),
     reduxForm({ form: 'leaseForm' }),
 ])(Form);

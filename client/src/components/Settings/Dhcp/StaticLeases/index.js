@@ -1,7 +1,7 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import ReactTable from 'react-table';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import { SMALL_TABLE_DEFAULT_PAGE_SIZE } from '../../../../helpers/constants';
 
 import Modal from './Modal';
@@ -70,8 +70,7 @@ class StaticLeases extends Component {
                                             className="btn btn-icon btn-outline-secondary btn-sm"
                                             title={t('delete_table_action')}
                                             disabled={processingDeleting}
-                                            onClick={() =>
-                                                this.handleDelete(ip, mac, hostname)
+                                            onClick={() => this.handleDelete(ip, mac, hostname)
                                             }
                                         >
                                             <svg className="icons">
@@ -112,4 +111,4 @@ StaticLeases.propTypes = {
     t: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(StaticLeases);
+export default withTranslation()(StaticLeases);

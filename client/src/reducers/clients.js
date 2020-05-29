@@ -3,8 +3,8 @@ import { handleActions } from 'redux-actions';
 import * as actions from '../actions/clients';
 
 const clients = handleActions({
-    [actions.addClientRequest]: state => ({ ...state, processingAdding: true }),
-    [actions.addClientFailure]: state => ({ ...state, processingAdding: false }),
+    [actions.addClientRequest]: (state) => ({ ...state, processingAdding: true }),
+    [actions.addClientFailure]: (state) => ({ ...state, processingAdding: false }),
     [actions.addClientSuccess]: (state) => {
         const newState = {
             ...state,
@@ -13,8 +13,8 @@ const clients = handleActions({
         return newState;
     },
 
-    [actions.deleteClientRequest]: state => ({ ...state, processingDeleting: true }),
-    [actions.deleteClientFailure]: state => ({ ...state, processingDeleting: false }),
+    [actions.deleteClientRequest]: (state) => ({ ...state, processingDeleting: true }),
+    [actions.deleteClientFailure]: (state) => ({ ...state, processingDeleting: false }),
     [actions.deleteClientSuccess]: (state) => {
         const newState = {
             ...state,
@@ -23,8 +23,8 @@ const clients = handleActions({
         return newState;
     },
 
-    [actions.updateClientRequest]: state => ({ ...state, processingUpdating: true }),
-    [actions.updateClientFailure]: state => ({ ...state, processingUpdating: false }),
+    [actions.updateClientRequest]: (state) => ({ ...state, processingUpdating: true }),
+    [actions.updateClientFailure]: (state) => ({ ...state, processingUpdating: false }),
     [actions.updateClientSuccess]: (state) => {
         const newState = {
             ...state,

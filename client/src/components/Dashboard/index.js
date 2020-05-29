@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 
 import Statistics from './Statistics';
 import Counters from './Counters';
@@ -57,10 +57,9 @@ class Dashboard extends Component {
             || stats.processingGetConfig
             || access.processing;
 
-        const subtitle =
-            stats.interval === 1
-                ? t('for_last_24_hours')
-                : t('for_last_days', { count: stats.interval });
+        const subtitle = stats.interval === 1
+            ? t('for_last_24_hours')
+            : t('for_last_days', { count: stats.interval });
 
         const refreshFullButton = (
             <button
@@ -173,4 +172,4 @@ Dashboard.propTypes = {
     getAccessList: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(Dashboard);
+export default withTranslation()(Dashboard);

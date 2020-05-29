@@ -77,8 +77,7 @@ class Controls extends Component {
                     <button
                         type="button"
                         className="btn btn-success btn-lg setup__button"
-                        onClick={() =>
-                            this.props.openDashboard(ip, port)}
+                        onClick={() => this.props.openDashboard(ip, port)}
                     >
                         <Trans>open_dashboard</Trans>
                     </button>

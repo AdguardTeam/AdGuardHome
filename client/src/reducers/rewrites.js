@@ -4,8 +4,8 @@ import * as actions from '../actions/rewrites';
 
 const rewrites = handleActions(
     {
-        [actions.getRewritesListRequest]: state => ({ ...state, processing: true }),
-        [actions.getRewritesListFailure]: state => ({ ...state, processing: false }),
+        [actions.getRewritesListRequest]: (state) => ({ ...state, processing: true }),
+        [actions.getRewritesListFailure]: (state) => ({ ...state, processing: false }),
         [actions.getRewritesListSuccess]: (state, { payload }) => {
             const newState = {
                 ...state,
@@ -15,8 +15,8 @@ const rewrites = handleActions(
             return newState;
         },
 
-        [actions.addRewriteRequest]: state => ({ ...state, processingAdd: true }),
-        [actions.addRewriteFailure]: state => ({ ...state, processingAdd: false }),
+        [actions.addRewriteRequest]: (state) => ({ ...state, processingAdd: true }),
+        [actions.addRewriteFailure]: (state) => ({ ...state, processingAdd: false }),
         [actions.addRewriteSuccess]: (state, { payload }) => {
             const newState = {
                 ...state,
@@ -26,9 +26,9 @@ const rewrites = handleActions(
             return newState;
         },
 
-        [actions.deleteRewriteRequest]: state => ({ ...state, processingDelete: true }),
-        [actions.deleteRewriteFailure]: state => ({ ...state, processingDelete: false }),
-        [actions.deleteRewriteSuccess]: state => ({ ...state, processingDelete: false }),
+        [actions.deleteRewriteRequest]: (state) => ({ ...state, processingDelete: true }),
+        [actions.deleteRewriteFailure]: (state) => ({ ...state, processingDelete: false }),
+        [actions.deleteRewriteSuccess]: (state) => ({ ...state, processingDelete: false }),
 
         [actions.toggleRewritesModal]: (state) => {
             const newState = {

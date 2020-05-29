@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import ReactModal from 'react-modal';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 
 import { MODAL_TYPE } from '../../helpers/constants';
 import Form from './Form';
@@ -85,4 +85,4 @@ Modal.propTypes = {
     whitelist: PropTypes.bool,
 };
 
-export default withNamespaces()(Modal);
+export default withTranslation()(Modal);

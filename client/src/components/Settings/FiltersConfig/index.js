@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { withNamespaces } from 'react-i18next';
+import { withTranslation } from 'react-i18next';
 import debounce from 'lodash/debounce';
 
 import { DEBOUNCE_TIMEOUT } from '../../../helpers/constants';
@@ -33,4 +33,4 @@ FiltersConfig.propTypes = {
     t: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(FiltersConfig);
+export default withTranslation()(FiltersConfig);
