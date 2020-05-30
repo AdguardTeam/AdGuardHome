@@ -40,6 +40,7 @@ var serviceRulesArray = []svc{
 		"||googlevideo.com^",
 		"||youtubei.googleapis.com^",
 		"||youtube-nocookie.com^",
+		"||youtube",
 	}},
 	{"twitch", []string{"||twitch.tv^", "||ttvnw.net^", "||jtvnw.net^", "||twitchcdn.net^"}},
 	{"netflix", []string{"||nflxext.com^", "||netflix.com^", "||nflximg.net^", "||nflxvideo.net^"}},
@@ -110,6 +111,7 @@ var serviceRulesArray = []svc{
 		"||amazon.com.mx^",
 		"||amazon.co.uk^",
 		"||createspace.com^",
+		"||aws",
 	}},
 	{"ebay", []string{
 		"||ebay.com^",
