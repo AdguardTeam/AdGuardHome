@@ -211,12 +211,11 @@ func processFilteringAfterResponse(ctx *dnsContext) int {
 
 	switch res.Reason {
 	case dnsfilter.ReasonRewrite:
-		if d.Res != nil {
-			break // response is already prepared
-		}
-		if len(res.CanonName) == 0 {
+		if len(ctx.origQuestion.Name) == 0 {
+			// origQuestion is set in case we get only CNAME without IP from rewrites table
 			break
 		}
+
 		d.Req.Question[0] = ctx.origQuestion
 		d.Res.Question[0] = ctx.origQuestion
 
