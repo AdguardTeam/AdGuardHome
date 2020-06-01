@@ -646,16 +646,25 @@ Response:
 ### API: Reset DHCP configuration
 
 Clear all DHCP leases and configuration settings.
-DHCP server will be stopped if it's currently running.
 
 Request:
 
 	POST /control/dhcp/reset
 
+	{
+		"what": "all" | "leases"
+	}
+
 Response:
 
 	200 OK
 
+`what`:
+* all:
+	Clear all DHCP leases and configuration settings.
+	DHCP server will be stopped if it's currently running.
+* leases:
+	Clear all DHCP leases
 
 ## TLS
 

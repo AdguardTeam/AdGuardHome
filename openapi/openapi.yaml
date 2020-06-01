@@ -397,6 +397,11 @@ paths:
                 - dhcp
             operationId: dhcpReset
             summary: Reset DHCP configuration
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/DhcpResetRequest"
             responses:
                 "200":
                     description: OK
@@ -1366,6 +1371,11 @@ components:
                     type: string
                     description: Set if static=no
                     example: ""
+        DhcpResetRequest:
+            type: object
+            properties:
+                what:
+                    type: string
         DnsAnswer:
             type: object
             description: DNS answer section
