@@ -142,7 +142,6 @@ var config = configuration{
 		LogMaxBackups: 0,
 		LogMaxSize:    100,
 		LogMaxAge:     0,
-		Verbose:       true,
 	},
 	SchemaVersion: currentSchemaVersion,
 }
