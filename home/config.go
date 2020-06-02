@@ -140,7 +140,7 @@ var config = configuration{
 		LogCompress:   false,
 		LogLocalTime:  false,
 		LogMaxBackups: 0,
-		LogMaxSize:    1,
+		LogMaxSize:    100,
 		LogMaxAge:     0,
 		Verbose:       true,
 	},
