@@ -7,8 +7,8 @@ import toasts from './toasts';
 import { INSTALL_FIRST_STEP } from '../helpers/constants';
 
 const install = handleActions({
-    [actions.getDefaultAddressesRequest]: state => ({ ...state, processingDefault: true }),
-    [actions.getDefaultAddressesFailure]: state => ({ ...state, processingDefault: false }),
+    [actions.getDefaultAddressesRequest]: (state) => ({ ...state, processingDefault: true }),
+    [actions.getDefaultAddressesFailure]: (state) => ({ ...state, processingDefault: false }),
     [actions.getDefaultAddressesSuccess]: (state, { payload }) => {
         const { interfaces } = payload;
         const web = { ...state.web, port: payload.web_port };
@@ -20,15 +20,15 @@ const install = handleActions({
         return newState;
     },
 
-    [actions.nextStep]: state => ({ ...state, step: state.step + 1 }),
-    [actions.prevStep]: state => ({ ...state, step: state.step - 1 }),
+    [actions.nextStep]: (state) => ({ ...state, step: state.step + 1 }),
+    [actions.prevStep]: (state) => ({ ...state, step: state.step - 1 }),
 
-    [actions.setAllSettingsRequest]: state => ({ ...state, processingSubmit: true }),
-    [actions.setAllSettingsFailure]: state => ({ ...state, processingSubmit: false }),
-    [actions.setAllSettingsSuccess]: state => ({ ...state, processingSubmit: false }),
+    [actions.setAllSettingsRequest]: (state) => ({ ...state, processingSubmit: true }),
+    [actions.setAllSettingsFailure]: (state) => ({ ...state, processingSubmit: false }),
+    [actions.setAllSettingsSuccess]: (state) => ({ ...state, processingSubmit: false }),
 
-    [actions.checkConfigRequest]: state => ({ ...state, processingCheck: true }),
-    [actions.checkConfigFailure]: state => ({ ...state, processingCheck: false }),
+    [actions.checkConfigRequest]: (state) => ({ ...state, processingCheck: true }),
+    [actions.checkConfigFailure]: (state) => ({ ...state, processingCheck: false }),
     [actions.checkConfigSuccess]: (state, { payload }) => {
         const web = { ...state.web, ...payload.web };
         const dns = { ...state.dns, ...payload.dns };

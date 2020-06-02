@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import './PageTitle.css';
 
-const PageTitle = props => (
+const PageTitle = (props) => (
     <div className="page-header">
         <h1 className="page-title">
             {props.title}

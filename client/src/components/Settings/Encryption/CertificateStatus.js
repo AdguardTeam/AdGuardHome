@@ -1,6 +1,6 @@
 import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
-import { withNamespaces, Trans } from 'react-i18next';
+import { withTranslation, Trans } from 'react-i18next';
 import format from 'date-fns/format';
 
 import { EMPTY_DATE } from '../../../helpers/constants';
@@ -68,4 +68,4 @@ CertificateStatus.propTypes = {
     dnsNames: PropTypes.string,
 };
 
-export default withNamespaces()(CertificateStatus);
+export default withTranslation()(CertificateStatus);

@@ -6,8 +6,8 @@ import * as actions from '../actions/login';
 import toasts from './toasts';
 
 const login = handleActions({
-    [actions.processLoginRequest]: state => ({ ...state, processingLogin: true }),
-    [actions.processLoginFailure]: state => ({ ...state, processingLogin: false }),
+    [actions.processLoginRequest]: (state) => ({ ...state, processingLogin: true }),
+    [actions.processLoginFailure]: (state) => ({ ...state, processingLogin: false }),
     [actions.processLoginSuccess]: (state, { payload }) => ({
         ...state, ...payload, processingLogin: false,
     }),

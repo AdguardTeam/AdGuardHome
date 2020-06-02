@@ -112,8 +112,8 @@ class Setup extends Component {
         return (
             <Fragment>
                 {processingDefault && <Loading />}
-                {!processingDefault &&
-                    <Fragment>
+                {!processingDefault
+                    && <Fragment>
                         <div className="setup">
                             <div className="setup__container">
                                 <img src={logo} className="setup__logo" alt="logo" />

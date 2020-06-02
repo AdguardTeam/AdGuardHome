@@ -1,7 +1,8 @@
 import { createAction } from 'redux-actions';
-import { t } from 'i18next';
+import i18next from 'i18next';
 import apiClient from '../api/Api';
-import { addErrorToast, addSuccessToast, getClients } from './index';
+import { getClients } from './index';
+import { addErrorToast, addSuccessToast } from './toasts';
 
 export const toggleClientModal = createAction('TOGGLE_CLIENT_MODAL');
 
@@ -9,13 +10,13 @@ export const addClientRequest = createAction('ADD_CLIENT_REQUEST');
 export const addClientFailure = createAction('ADD_CLIENT_FAILURE');
 export const addClientSuccess = createAction('ADD_CLIENT_SUCCESS');
 
-export const addClient = config => async (dispatch) => {
+export const addClient = (config) => async (dispatch) => {
     dispatch(addClientRequest());
     try {
         await apiClient.addClient(config);
         dispatch(addClientSuccess());
         dispatch(toggleClientModal());
-        dispatch(addSuccessToast(t('client_added', { key: config.name })));
+        dispatch(addSuccessToast(i18next.t('client_added', { key: config.name })));
         dispatch(getClients());
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -27,12 +28,12 @@ export const deleteClientRequest = createAction('DELETE_CLIENT_REQUEST');
 export const deleteClientFailure = createAction('DELETE_CLIENT_FAILURE');
 export const deleteClientSuccess = createAction('DELETE_CLIENT_SUCCESS');
 
-export const deleteClient = config => async (dispatch) => {
+export const deleteClient = (config) => async (dispatch) => {
     dispatch(deleteClientRequest());
     try {
         await apiClient.deleteClient(config);
         dispatch(deleteClientSuccess());
-        dispatch(addSuccessToast(t('client_deleted', { key: config.name })));
+        dispatch(addSuccessToast(i18next.t('client_deleted', { key: config.name })));
         dispatch(getClients());
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -52,7 +53,7 @@ export const updateClient = (config, name) => async (dispatch) => {
         await apiClient.updateClient(data);
         dispatch(updateClientSuccess());
         dispatch(toggleClientModal());
-        dispatch(addSuccessToast(t('client_updated', { key: name })));
+        dispatch(addSuccessToast(i18next.t('client_updated', { key: name })));
         dispatch(getClients());
     } catch (error) {
         dispatch(addErrorToast({ error }));

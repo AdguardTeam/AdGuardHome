@@ -1,7 +1,7 @@
 import React, { Component, Fragment } from 'react';
 import { HashRouter, Route } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { withNamespaces } from 'react-i18next';
+import { withTranslation } from 'react-i18next';
 import LoadingBar from 'react-redux-loading-bar';
 
 import 'react-table/react-table.css';
@@ -126,6 +126,7 @@ class App extends Component {
                         dnsPort={dashboard.dnsPort}
                         processingVersion={dashboard.processingVersion}
                         getVersion={getVersion}
+                        checkUpdateFlag={dashboard.checkUpdateFlag}
                     />
                     <Toasts />
                     <Icons />
@@ -147,4 +148,4 @@ App.propTypes = {
     getVersion: PropTypes.func,
 };
 
-export default withNamespaces()(App);
+export default withTranslation()(App);

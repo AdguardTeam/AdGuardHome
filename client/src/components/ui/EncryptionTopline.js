@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import isAfter from 'date-fns/is_after';
 import addDays from 'date-fns/add_days';
 
@@ -23,7 +23,7 @@ const EncryptionTopline = (props) => {
                 </Trans>
             </Topline>
         );
-    } else if (isAboutExpire) {
+    } if (isAboutExpire) {
         return (
             <Topline type="warning">
                 <Trans components={[<a href="#encryption" key="0">link</a>]}>
@@ -40,4 +40,4 @@ EncryptionTopline.propTypes = {
     notAfter: PropTypes.string.isRequired,
 };
 
-export default withNamespaces()(EncryptionTopline);
+export default withTranslation()(EncryptionTopline);

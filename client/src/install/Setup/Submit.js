@@ -2,12 +2,12 @@ import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { reduxForm, formValueSelector } from 'redux-form';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 
 import Controls from './Controls';
 
-let Submit = props => (
+let Submit = (props) => (
     <div className="setup__step">
         <div className="setup__group">
             <h1 className="setup__title">
@@ -48,7 +48,7 @@ Submit = connect((state) => {
 
 
 export default flow([
-    withNamespaces(),
+    withTranslation(),
     reduxForm({
         form: 'install',
         destroyOnUnmount: false,

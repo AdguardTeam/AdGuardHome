@@ -1,9 +1,9 @@
 import { createAction } from 'redux-actions';
 
 import apiClient from '../api/Api';
-import { addErrorToast, addSuccessToast } from './index';
 import { normalizeLogs, getParamsForClientsSearch, addClientInfo } from '../helpers/helpers';
 import { TABLE_DEFAULT_PAGE_SIZE } from '../helpers/constants';
+import { addErrorToast, addSuccessToast } from './toasts';
 
 const getLogsWithParams = async (config) => {
     const { older_than, filter, ...values } = config;
@@ -27,9 +27,9 @@ const checkFilteredLogs = async (data, filter, dispatch, total) => {
     const { logs, oldest } = data;
     const totalData = total || { logs };
 
-    const needToGetAdditionalLogs = (logs.length < TABLE_DEFAULT_PAGE_SIZE ||
-        totalData.logs.length < TABLE_DEFAULT_PAGE_SIZE) &&
-        oldest !== '';
+    const needToGetAdditionalLogs = (logs.length < TABLE_DEFAULT_PAGE_SIZE
+        || totalData.logs.length < TABLE_DEFAULT_PAGE_SIZE)
+        && oldest !== '';
 
     if (needToGetAdditionalLogs) {
         dispatch(getAdditionalLogsRequest());
@@ -61,7 +61,7 @@ export const getLogsRequest = createAction('GET_LOGS_REQUEST');
 export const getLogsFailure = createAction('GET_LOGS_FAILURE');
 export const getLogsSuccess = createAction('GET_LOGS_SUCCESS');
 
-export const getLogs = config => async (dispatch, getState) => {
+export const getLogs = (config) => async (dispatch, getState) => {
     dispatch(getLogsRequest());
     try {
         const { isFiltered, filter, page } = getState().queryLogs;
@@ -85,7 +85,7 @@ export const setLogsFilterRequest = createAction('SET_LOGS_FILTER_REQUEST');
 export const setLogsFilterFailure = createAction('SET_LOGS_FILTER_FAILURE');
 export const setLogsFilterSuccess = createAction('SET_LOGS_FILTER_SUCCESS');
 
-export const setLogsFilter = filter => async (dispatch) => {
+export const setLogsFilter = (filter) => async (dispatch) => {
     dispatch(setLogsFilterRequest());
     try {
         const data = await getLogsWithParams({ older_than: '', filter });
@@ -135,7 +135,7 @@ export const setLogsConfigRequest = createAction('SET_LOGS_CONFIG_REQUEST');
 export const setLogsConfigFailure = createAction('SET_LOGS_CONFIG_FAILURE');
 export const setLogsConfigSuccess = createAction('SET_LOGS_CONFIG_SUCCESS');
 
-export const setLogsConfig = config => async (dispatch) => {
+export const setLogsConfig = (config) => async (dispatch) => {
     dispatch(setLogsConfigRequest());
     try {
         await apiClient.setQueryLogConfig(config);

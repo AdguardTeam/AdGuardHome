@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
-import { withNamespaces } from 'react-i18next';
+import { withTranslation } from 'react-i18next';
 import enhanceWithClickOutside from 'react-click-outside';
 
 import './Dropdown.css';
@@ -12,7 +12,7 @@ class Dropdown extends Component {
     };
 
     toggleDropdown = () => {
-        this.setState(prevState => ({ isOpen: !prevState.isOpen }));
+        this.setState((prevState) => ({ isOpen: !prevState.isOpen }));
     };
 
     hideDropdown = () => {
@@ -86,4 +86,4 @@ Dropdown.propTypes = {
     icon: PropTypes.string,
 };
 
-export default withNamespaces()(enhanceWithClickOutside(Dropdown));
+export default withTranslation()(enhanceWithClickOutside(Dropdown));

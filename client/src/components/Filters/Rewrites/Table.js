@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import ReactTable from 'react-table';
-import { withNamespaces } from 'react-i18next';
+import { withTranslation } from 'react-i18next';
 
 class Table extends Component {
     cellWrap = ({ value }) => (
@@ -27,16 +27,15 @@ class Table extends Component {
             Header: this.props.t('actions_table_header'),
             accessor: 'actions',
             maxWidth: 100,
-            Cell: value => (
+            Cell: (value) => (
                 <div className="logs__row logs__row--center">
                     <button
                         type="button"
                         className="btn btn-icon btn-outline-secondary btn-sm"
-                        onClick={() =>
-                            this.props.handleDelete({
-                                answer: value.row.answer,
-                                domain: value.row.domain,
-                            })
+                        onClick={() => this.props.handleDelete({
+                            answer: value.row.answer,
+                            domain: value.row.domain,
+                        })
                         }
                         title={this.props.t('delete_table_action')}
                     >
@@ -84,4 +83,4 @@ Table.propTypes = {
     handleDelete: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(Table);
+export default withTranslation()(Table);

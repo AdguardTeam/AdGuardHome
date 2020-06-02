@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Field, reduxForm } from 'redux-form';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 
 import { toggleAllServices } from '../../../helpers/helpers';
@@ -44,7 +44,7 @@ const Form = (props) => {
                     </div>
                 </div>
                 <div className="services">
-                    {SERVICES.map(service => (
+                    {SERVICES.map((service) => (
                         <Field
                             key={service.id}
                             icon={`service_${service.id}`}
@@ -82,7 +82,7 @@ Form.propTypes = {
 };
 
 export default flow([
-    withNamespaces(),
+    withTranslation(),
     reduxForm({
         form: 'servicesForm',
         enableReinitialize: true,

@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import flow from 'lodash/flow';
-import { withNamespaces, Trans } from 'react-i18next';
+import { withTranslation, Trans } from 'react-i18next';
 
 import * as actionCreators from '../../actions/login';
 import logo from '../../components/ui/svg/logo.svg';
@@ -23,7 +23,7 @@ class Login extends Component {
     };
 
     toggleText = () => {
-        this.setState(prevState => ({
+        this.setState((prevState) => ({
             isForgotPasswordVisible: !prevState.isForgotPasswordVisible,
         }));
     };
@@ -82,7 +82,7 @@ Login.propTypes = {
 const mapStateToProps = ({ login, toasts }) => ({ login, toasts });
 
 export default flow([
-    withNamespaces(),
+    withTranslation(),
     connect(
         mapStateToProps,
         actionCreators,

@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactTable from 'react-table';
 import PropTypes from 'prop-types';
-import { withNamespaces, Trans } from 'react-i18next';
+import { withTranslation, Trans } from 'react-i18next';
 
 import Card from '../ui/Card';
 import Cell from '../ui/Cell';
@@ -10,13 +10,12 @@ import DomainCell from './DomainCell';
 import { getPercent } from '../../helpers/helpers';
 import { STATUS_COLORS } from '../../helpers/constants';
 
-const CountCell = totalBlocked =>
-    function cell(row) {
-        const { value } = row;
-        const percent = getPercent(totalBlocked, value);
+const CountCell = (totalBlocked) => function cell(row) {
+    const { value } = row;
+    const percent = getPercent(totalBlocked, value);
 
-        return <Cell value={value} percent={percent} color={STATUS_COLORS.red} />;
-    };
+    return <Cell value={value} percent={percent} color={STATUS_COLORS.red} />;
+};
 
 const BlockedDomains = ({
     t,
@@ -74,4 +73,4 @@ BlockedDomains.propTypes = {
     t: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(BlockedDomains);
+export default withTranslation()(BlockedDomains);

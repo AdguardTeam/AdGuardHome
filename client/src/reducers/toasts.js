@@ -1,7 +1,10 @@
 import { handleActions } from 'redux-actions';
-import nanoid from 'nanoid';
+import { nanoid } from 'nanoid';
 
-import { addErrorToast, addSuccessToast, addNoticeToast, removeToast } from '../actions';
+import {
+    addErrorToast, addNoticeToast, addSuccessToast,
+} from '../actions/toasts';
+import { removeToast } from '../actions';
 
 const toasts = handleActions({
     [addErrorToast]: (state, { payload }) => {
@@ -35,7 +38,7 @@ const toasts = handleActions({
         return newState;
     },
     [removeToast]: (state, { payload }) => {
-        const filtered = state.notices.filter(notice => notice.id !== payload);
+        const filtered = state.notices.filter((notice) => notice.id !== payload);
         const newState = { ...state, notices: filtered };
         return newState;
     },

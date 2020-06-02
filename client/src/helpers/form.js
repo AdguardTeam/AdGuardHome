@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import {
     R_IPV4, R_MAC, R_HOST, R_IPV6, R_CIDR, R_CIDR_IPV6,
     UNSAFE_PORTS, R_URL_REQUIRES_PROTOCOL, R_WIN_ABSOLUTE_PATH, R_UNIX_ABSOLUTE_PATH,
-} from '../helpers/constants';
+} from './constants';
 import { createOnBlurHandler } from './helpers';
 
 export const renderField = (props, elementType) => {
@@ -13,7 +13,7 @@ export const renderField = (props, elementType) => {
         autoComplete, meta: { touched, error },
     } = props;
 
-    const onBlur = event => createOnBlurHandler(event, input, normalizeOnBlur);
+    const onBlur = (event) => createOnBlurHandler(event, input, normalizeOnBlur);
 
     const element = React.createElement(elementType, {
         ...input,
@@ -28,7 +28,8 @@ export const renderField = (props, elementType) => {
     return (
         <Fragment>
             {element}
-            {!disabled && touched && (error && <span className="form__message form__message--error">{error}</span>)}
+            {!disabled && touched && error
+            && <span className="form__message form__message--error">{error}</span>}
         </Fragment>
     );
 };
@@ -36,18 +37,21 @@ export const renderField = (props, elementType) => {
 renderField.propTypes = {
     id: PropTypes.string.isRequired,
     input: PropTypes.object.isRequired,
-    meta: PropTypes.object.isRequired,
     className: PropTypes.string,
     placeholder: PropTypes.string,
     type: PropTypes.string,
     disabled: PropTypes.bool,
     autoComplete: PropTypes.bool,
     normalizeOnBlur: PropTypes.func,
+    meta: PropTypes.shape({
+        touched: PropTypes.bool,
+        error: PropTypes.object,
+    }).isRequired,
 };
 
-export const renderTextareaField = props => renderField(props, 'textarea');
+export const renderTextareaField = (props) => renderField(props, 'textarea');
 
-export const renderInputField = props => renderField(props, 'input');
+export const renderInputField = (props) => renderField(props, 'input');
 
 export const renderGroupField = ({
     input,
@@ -62,7 +66,7 @@ export const renderGroupField = ({
     meta: { touched, error },
     normalizeOnBlur,
 }) => {
-    const onBlur = event => createOnBlurHandler(event, input, normalizeOnBlur);
+    const onBlur = (event) => createOnBlurHandler(event, input, normalizeOnBlur);
 
     return (
         <Fragment>
@@ -77,8 +81,8 @@ export const renderGroupField = ({
                     autoComplete={autoComplete}
                     onBlur={onBlur}
                 />
-                {isActionAvailable &&
-                <span className="input-group-append">
+                {isActionAvailable
+                && <span className="input-group-append">
                         <button
                             type="button"
                             className="btn btn-secondary btn-icon"
@@ -91,26 +95,59 @@ export const renderGroupField = ({
                     </span>
                 }
             </div>
-            {!disabled &&
-            touched &&
-            (error && <span className="form__message form__message--error">{error}</span>)}
+            {!disabled && touched && error
+            && <span className="form__message form__message--error">{error}</span>}
         </Fragment>
     );
 };
 
+renderGroupField.propTypes = {
+    input: PropTypes.object.isRequired,
+    id: PropTypes.string.isRequired,
+    className: PropTypes.string,
+    placeholder: PropTypes.string,
+    type: PropTypes.string,
+    disabled: PropTypes.bool,
+    autoComplete: PropTypes.bool,
+    isActionAvailable: PropTypes.bool,
+    removeField: PropTypes.func,
+    meta: PropTypes.shape({
+        touched: PropTypes.bool,
+        error: PropTypes.object,
+    }).isRequired,
+    normalizeOnBlur: PropTypes.func,
+};
+
 export const renderRadioField = ({
-    input, placeholder, disabled, meta: { touched, error },
-}) => (
-    <Fragment>
-        <label className="custom-control custom-radio custom-control-inline">
-            <input {...input} type="radio" className="custom-control-input" disabled={disabled} />
-            <span className="custom-control-label">{placeholder}</span>
-        </label>
-        {!disabled &&
-        touched &&
-        (error && <span className="form__message form__message--error">{error}</span>)}
-    </Fragment>
-);
+    input,
+    placeholder,
+    subtitle,
+    disabled,
+    meta: { touched, error },
+}) => <Fragment>
+    <label className="custom-control custom-radio">
+        <input {...input} type="radio" className="custom-control-input" disabled={disabled} />
+        <span className="custom-control-label">{placeholder}</span>
+        {subtitle && <span
+            className="checkbox__label-subtitle"
+            dangerouslySetInnerHTML={{ __html: subtitle }}
+        />}
+    </label>
+    {!disabled
+    && touched
+    && (error && <span className="form__message form__message--error">{error}</span>)}
+</Fragment>;
+
+renderRadioField.propTypes = {
+    input: PropTypes.object.isRequired,
+    placeholder: PropTypes.string,
+    subtitle: PropTypes.string,
+    disabled: PropTypes.bool,
+    meta: PropTypes.shape({
+        touched: PropTypes.bool,
+        error: PropTypes.object,
+    }).isRequired,
+};
 
 export const renderSelectField = ({
     input,
@@ -120,28 +157,37 @@ export const renderSelectField = ({
     onClick,
     modifier = 'checkbox--form',
     meta: { touched, error },
-}) => (
-        <Fragment>
-            <label className={`checkbox ${modifier}`} onClick={onClick}>
-                <span className="checkbox__marker" />
-                <input {...input} type="checkbox" className="checkbox__input" disabled={disabled} />
-                <span className="checkbox__label">
+}) => <Fragment>
+    <label className={`checkbox ${modifier}`} onClick={onClick}>
+        <span className="checkbox__marker" />
+        <input {...input} type="checkbox" className="checkbox__input" disabled={disabled} />
+        <span className="checkbox__label">
                     <span className="checkbox__label-text checkbox__label-text--long">
                         <span className="checkbox__label-title">{placeholder}</span>
-                        {subtitle && (
-                            <span
-                                className="checkbox__label-subtitle"
-                                dangerouslySetInnerHTML={{ __html: subtitle }}
-                            />
-                        )}
+                        {subtitle && <span
+                            className="checkbox__label-subtitle"
+                            dangerouslySetInnerHTML={{ __html: subtitle }}
+                        />}
                     </span>
                 </span>
-            </label>
-            {!disabled &&
-            touched &&
-            (error && <span className="form__message form__message--error">{error}</span>)}
-        </Fragment>
-);
+    </label>
+    {!disabled
+    && touched
+    && (error && <span className="form__message form__message--error">{error}</span>)}
+</Fragment>;
+
+renderSelectField.propTypes = {
+    input: PropTypes.object.isRequired,
+    placeholder: PropTypes.string,
+    subtitle: PropTypes.string,
+    disabled: PropTypes.bool,
+    onClick: PropTypes.func,
+    modifier: PropTypes.string,
+    meta: PropTypes.shape({
+        touched: PropTypes.bool,
+        error: PropTypes.object,
+    }).isRequired,
+};
 
 export const renderServiceField = ({
     input,
@@ -150,27 +196,36 @@ export const renderServiceField = ({
     modifier,
     icon,
     meta: { touched, error },
-}) => (
-    <Fragment>
-        <label className={`service custom-switch ${modifier}`}>
-            <input
-                {...input}
-                type="checkbox"
-                className="custom-switch-input"
-                value={placeholder.toLowerCase()}
-                disabled={disabled}
-            />
-            <span className="service__switch custom-switch-indicator"></span>
-            <span className="service__text">{placeholder}</span>
-            <svg className="service__icon">
-                <use xlinkHref={`#${icon}`} />
-            </svg>
-        </label>
-        {!disabled &&
-        touched &&
-        (error && <span className="form__message form__message--error">{error}</span>)}
-    </Fragment>
-);
+}) => <Fragment>
+    <label className={`service custom-switch ${modifier}`}>
+        <input
+            {...input}
+            type="checkbox"
+            className="custom-switch-input"
+            value={placeholder.toLowerCase()}
+            disabled={disabled}
+        />
+        <span className="service__switch custom-switch-indicator"></span>
+        <span className="service__text">{placeholder}</span>
+        <svg className="service__icon">
+            <use xlinkHref={`#${icon}`} />
+        </svg>
+    </label>
+    {!disabled && touched && error
+    && <span className="form__message form__message--error">{error}</span>}
+</Fragment>;
+
+renderServiceField.propTypes = {
+    input: PropTypes.object.isRequired,
+    placeholder: PropTypes.string,
+    disabled: PropTypes.bool,
+    modifier: PropTypes.string,
+    icon: PropTypes.string,
+    meta: PropTypes.shape({
+        touched: PropTypes.bool,
+        error: PropTypes.object,
+    }).isRequired,
+};
 
 // Validation functions
 // If the value is valid, the validation function should return undefined.
@@ -259,7 +314,8 @@ export const validInstallPort = (value) => {
 export const portTLS = (value) => {
     if (value === 0) {
         return undefined;
-    } else if (value && (value < 80 || value > 65535)) {
+    }
+    if (value && (value < 80 || value > 65535)) {
         return <Trans>form_error_port_range</Trans>;
     }
     return undefined;
@@ -293,7 +349,7 @@ export const isValidUrl = (value) => {
     return undefined;
 };
 
-export const isValidAbsolutePath = value => R_WIN_ABSOLUTE_PATH.test(value)
+export const isValidAbsolutePath = (value) => R_WIN_ABSOLUTE_PATH.test(value)
     || R_UNIX_ABSOLUTE_PATH.test(value);
 
 export const isValidPath = (value) => {
@@ -303,4 +359,4 @@ export const isValidPath = (value) => {
     return undefined;
 };
 
-export const toNumber = value => value && parseInt(value, 10);
+export const toNumber = (value) => value && parseInt(value, 10);

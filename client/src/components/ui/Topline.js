@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import './Topline.css';
 
-const Topline = props => (
+const Topline = (props) => (
     <div className={`alert alert-${props.type} topline`}>
         <div className="container">
             {props.children}

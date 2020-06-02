@@ -390,6 +390,7 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 
 // Process rewrites table
 // . Find CNAME for a domain name (exact match or by wildcard)
+//  . if found and CNAME equals to domain name - this is an exception;  exit
 //  . if found, set domain name to canonical name
 //  . repeat for the new domain name (Note: we return only the last CNAME)
 // . Find A or AAAA record for a domain name (exact match or by wildcard)
@@ -409,6 +410,12 @@ func (d *Dnsfilter) processRewrites(host string) Result {
 	origHost := host
 	for len(rr) != 0 && rr[0].Type == dns.TypeCNAME {
 		log.Debug("Rewrite: CNAME for %s is %s", host, rr[0].Answer)
+
+		if host == rr[0].Answer { // "host == CNAME" is an exception
+			res.Reason = 0
+			return res
+		}
+
 		host = rr[0].Answer
 		_, ok := cnames[host]
 		if ok {

@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { withNamespaces, Trans } from 'react-i18next';
+import { withTranslation, Trans } from 'react-i18next';
 
 import StatsCard from './StatsCard';
 import { getPercent, normalizeHistory } from '../../helpers/helpers';
@@ -76,4 +76,4 @@ Statistics.propTypes = {
     refreshButton: PropTypes.node.isRequired,
 };
 
-export default withNamespaces()(Statistics);
+export default withTranslation()(Statistics);

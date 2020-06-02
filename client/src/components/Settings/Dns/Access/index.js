@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { withNamespaces } from 'react-i18next';
+import { withTranslation } from 'react-i18next';
 
 import Form from './Form';
 import Card from '../../../ui/Card';
@@ -37,4 +37,4 @@ Access.propTypes = {
     t: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(Access);
+export default withTranslation()(Access);
