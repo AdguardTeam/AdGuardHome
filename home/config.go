@@ -24,8 +24,13 @@ const (
 
 // logSettings
 type logSettings struct {
-	LogFile string `yaml:"log_file"` // Path to the log file. If empty, write to stdout. If "syslog", writes to syslog
-	Verbose bool   `yaml:"verbose"`  // If true, verbose logging is enabled
+	LogCompress   bool   `yaml:"log_compress"`    // Compress determines if the rotated log files should be compressed using gzip (default: false)
+	LogLocalTime  bool   `yaml:"log_localtime"`   // If the time used for formatting the timestamps in is the computer's local time (default: false [UTC])
+	LogMaxBackups int    `yaml:"log_max_backups"` // Maximum number of old log files to retain (MaxAge may still cause them to get deleted)
+	LogMaxSize    int    `yaml:"log_max_size"`    // Maximum size in megabytes of the log file before it gets rotated (default 100 MB)
+	LogMaxAge     int    `yaml:"log_max_age"`     // MaxAge is the maximum number of days to retain old log files
+	LogFile       string `yaml:"log_file"`        // Path to the log file. If empty, write to stdout. If "syslog", writes to syslog
+	Verbose       bool   `yaml:"verbose"`         // If true, verbose logging is enabled
 }
 
 // configuration is loaded from YAML
@@ -130,6 +135,13 @@ var config = configuration{
 	DHCP: dhcpd.ServerConfig{
 		LeaseDuration: 86400,
 		ICMPTimeout:   1000,
+	},
+	logSettings: logSettings{
+		LogCompress:   false,
+		LogLocalTime:  false,
+		LogMaxBackups: 0,
+		LogMaxSize:    100,
+		LogMaxAge:     0,
 	},
 	SchemaVersion: currentSchemaVersion,
 }
