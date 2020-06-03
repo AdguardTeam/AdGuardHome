@@ -16,7 +16,7 @@ func (l *queryLog) getClientIP(clientIP string) string {
 		ip := net.ParseIP(clientIP)
 		if ip != nil {
 			ip4 := ip.To4()
-			const AnonymizeClientIP4Mask = 24
+			const AnonymizeClientIP4Mask = 16
 			const AnonymizeClientIP6Mask = 112
 			if ip4 != nil {
 				clientIP = ip4.Mask(net.CIDRMask(AnonymizeClientIP4Mask, 32)).String()
