@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
 	"io/ioutil"
 	"net"
@@ -35,6 +34,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/querylog"
 	"github.com/AdguardTeam/AdGuardHome/stats"
 	"github.com/AdguardTeam/golibs/log"
+
+	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
 const (
