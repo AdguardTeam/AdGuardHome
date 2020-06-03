@@ -316,7 +316,7 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 	var result Result
 	var err error
 
-	result = d.processRewrites(host)
+	result = d.processRewrites(host, qtype)
 	if result.Reason == ReasonRewrite {
 		return result, nil
 	}
@@ -398,8 +398,8 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 //  . if found, set domain name to canonical name
 //  . repeat for the new domain name (Note: we return only the last CNAME)
 // . Find A or AAAA record for a domain name (exact match or by wildcard)
-//  . if found, return IP addresses (both IPv4 and IPv6)
-func (d *Dnsfilter) processRewrites(host string) Result {
+//  . if found, set IP addresses (IPv4 or IPv6 depending on qtype) in Result.IPList array
+func (d *Dnsfilter) processRewrites(host string, qtype uint16) Result {
 	var res Result
 
 	d.confLock.RLock()
@@ -432,7 +432,14 @@ func (d *Dnsfilter) processRewrites(host string) Result {
 	}
 
 	for _, r := range rr {
-		if r.Type != dns.TypeCNAME {
+		if (r.Type == dns.TypeA && qtype == dns.TypeA) ||
+			(r.Type == dns.TypeAAAA && qtype == dns.TypeAAAA) {
+
+			if r.IP == nil { // IP exception
+				res.Reason = 0
+				return res
+			}
+
 			res.IPList = append(res.IPList, r.IP)
 			log.Debug("Rewrite: A/AAAA for %s is %s", host, r.IP)
 		}
