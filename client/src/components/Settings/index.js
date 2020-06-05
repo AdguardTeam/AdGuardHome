@@ -2,7 +2,6 @@ import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { withTranslation } from 'react-i18next';
 
-import Services from './Services';
 import StatsConfig from './StatsConfig';
 import LogsConfig from './LogsConfig';
 import FiltersConfig from './FiltersConfig';
@@ -35,7 +34,6 @@ class Settings extends Component {
 
     componentDidMount() {
         this.props.initSettings(this.settings);
-        this.props.getBlockedServices();
         this.props.getStatsConfig();
         this.props.getLogsConfig();
         this.props.getFilteringStatus();
@@ -63,8 +61,6 @@ class Settings extends Component {
     render() {
         const {
             settings,
-            services,
-            setBlockedServices,
             setStatsConfig,
             resetStats,
             stats,
@@ -77,7 +73,6 @@ class Settings extends Component {
         } = this.props;
 
         const isDataReady = !settings.processing
-            && !services.processing
             && !stats.processingGetConfig
             && !queryLogs.processingGetConfig;
 
@@ -123,12 +118,6 @@ class Settings extends Component {
                                     resetStats={resetStats}
                                 />
                             </div>
-                            <div className="col-md-12">
-                                <Services
-                                    services={services}
-                                    setBlockedServices={setBlockedServices}
-                                />
-                            </div>
                         </div>
                     </div>
                 )}
@@ -147,14 +136,9 @@ Settings.propTypes = {
     setFiltersConfig: PropTypes.func.isRequired,
     getFilteringStatus: PropTypes.func.isRequired,
     t: PropTypes.func.isRequired,
-    getBlockedServices: PropTypes.func,
     getLogsConfig: PropTypes.func,
-    setBlockedServices: PropTypes.func,
     setLogsConfig: PropTypes.func,
     clearLogs: PropTypes.func,
-    services: PropTypes.shape({
-        processing: PropTypes.bool,
-    }),
     stats: PropTypes.shape({
         processingGetConfig: PropTypes.bool,
         interval: PropTypes.number,

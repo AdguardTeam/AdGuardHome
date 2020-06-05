@@ -161,6 +161,7 @@ export const FILTERS_URLS = {
     dns_allowlists: '/dns_allowlists',
     dns_rewrites: '/dns_rewrites',
     custom_rules: '/custom_rules',
+    blocked_services: '/blocked_services',
 };
 
 export const SERVICES = [

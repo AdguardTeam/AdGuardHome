@@ -38,6 +38,7 @@ const FILTERS_ITEMS = [
     { route: FILTERS_URLS.dns_allowlists, text: 'dns_allowlists' },
     { route: FILTERS_URLS.dns_rewrites, text: 'dns_rewrites' },
     { route: FILTERS_URLS.custom_rules, text: 'custom_filtering_rules' },
+    { route: FILTERS_URLS.blocked_services, text: 'blocked_services' },
 ];
 
 class Menu extends Component {

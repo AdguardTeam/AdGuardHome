@@ -34,6 +34,8 @@ import EncryptionTopline from '../ui/EncryptionTopline';
 import Icons from '../ui/Icons';
 import i18n from '../../i18n';
 import Loading from '../ui/Loading';
+import { FILTERS_URLS, MENU_URLS, SETTINGS_URLS } from '../../helpers/constants';
+import Services from '../Filters/Services';
 
 class App extends Component {
     componentDidMount() {
@@ -99,26 +101,29 @@ class App extends Component {
                                 <div className="col-lg-12">
                                     <Status reloadPage={this.reloadPage}
                                             message="dns_start"
-                                        />
+                                    />
                                     <Loading />
                                 </div>
                             </div>
                         )}
                         {!dashboard.processing && dashboard.isCoreRunning && (
-                            <Fragment>
-                                <Route path="/" exact component={Dashboard} />
-                                <Route path="/settings" component={Settings} />
-                                <Route path="/dns" component={Dns} />
-                                <Route path="/encryption" component={Encryption} />
-                                <Route path="/dhcp" component={Dhcp} />
-                                <Route path="/clients" component={Clients} />
-                                <Route path="/filters" component={DnsBlocklist} />
-                                <Route path="/dns_allowlists" component={DnsAllowlist} />
-                                <Route path="/dns_rewrites" component={DnsRewrites} />
-                                <Route path="/custom_rules" component={CustomRules} />
-                                <Route path="/logs" component={Logs} />
-                                <Route path="/guide" component={SetupGuide} />
-                            </Fragment>
+                            <>
+                                <Route path={MENU_URLS.root} exact component={Dashboard} />
+                                <Route path={MENU_URLS.logs} component={Logs} />
+                                <Route path={MENU_URLS.guide} component={SetupGuide} />
+                                <Route path={SETTINGS_URLS.settings} component={Settings} />
+                                <Route path={SETTINGS_URLS.dns} component={Dns} />
+                                <Route path={SETTINGS_URLS.encryption} component={Encryption} />
+                                <Route path={SETTINGS_URLS.dhcp} component={Dhcp} />
+                                <Route path={SETTINGS_URLS.clients} component={Clients} />
+                                <Route path={FILTERS_URLS.dns_blocklists}
+                                       component={DnsBlocklist} />
+                                <Route path={FILTERS_URLS.dns_allowlists}
+                                       component={DnsAllowlist} />
+                                <Route path={FILTERS_URLS.dns_rewrites} component={DnsRewrites} />
+                                <Route path={FILTERS_URLS.custom_rules} component={CustomRules} />
+                                <Route path={FILTERS_URLS.blocked_services} component={Services} />
+                            </>
                         )}
                     </div>
                     <Footer
