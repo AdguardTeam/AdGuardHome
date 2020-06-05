@@ -30,8 +30,8 @@ import {
 } from './constants';
 
 /**
- * @param string The time to format
- * @returns string Returns the time in the format HH:mm:ss
+ * @param time {string} The time to format
+ * @returns {string} Returns the time in the format HH:mm:ss
  */
 export const formatTime = (time) => {
     const parsedTime = dateParse(time);
@@ -39,23 +39,30 @@ export const formatTime = (time) => {
 };
 
 /**
- * @param string The date to format
- * @returns string Returns the date and time in the format DD/MM/YYYY, HH:mm
+ * @param dateTime {string} The date to format
+ * @param [options] {object} Date.prototype.toLocaleString([locales[, options]]) options argument
+ * @returns {string} Returns the date and time in the specified format
  */
 export const formatDateTime = (dateTime, options = DEFAULT_DATE_FORMAT_OPTIONS) => {
-    const currentLanguage = i18n.languages[0] || DEFAULT_LANGUAGE;
-    const parsedTime = dateParse(dateTime);
+    const { language } = navigator;
+    const currentLanguage = (language.slice(0, 2) === 'en' || !language) ? 'en-GB' : language;
+
+    const parsedTime = new Date(dateTime);
 
     return parsedTime.toLocaleString(currentLanguage, options);
 };
 
+/**
+ * @param dateTime {string} The date to format
+ * @returns {string} Returns the date and time in the format with the full month name
+ */
 export const formatDetailedDateTime = (dateTime) => formatDateTime(
     dateTime, DETAILED_DATE_FORMAT_OPTIONS,
 );
 
 /**
- * @param string
- * @returns boolean
+ * @param date {string}
+ * @returns {boolean}
  */
 export const isToday = (date) => isSameDay(new Date(date), new Date());
 
@@ -307,15 +314,12 @@ export const normalizeTextarea = (text) => {
  * @returns {Object.<string, number>} normalizedTopClients.auto - auto clients
  * @returns {Object.<string, number>} normalizedTopClients.configured - configured clients
  */
-
 export const normalizeTopClients = (topClients) => topClients.reduce(
-    (nameToCountMap, clientObj) => {
+    (acc, clientObj) => {
         const { name, count, info: { name: infoName } } = clientObj;
-        // eslint-disable-next-line no-param-reassign
-        nameToCountMap.auto[name] = count;
-        // eslint-disable-next-line no-param-reassign
-        nameToCountMap.configured[infoName] = count;
-        return nameToCountMap;
+        acc.auto[name] = count;
+        acc.configured[infoName] = count;
+        return acc;
     }, {
         auto: {},
         configured: {},
@@ -483,8 +487,8 @@ export const getCurrentFilter = (url, filters) => {
 };
 
 /**
- * @param {object} initialValues
- * @param {object} values
+ * @param initialValues {object}
+ * @param values {object}
  * @returns {object} Returns different values of objects
  */
 export const getObjDiff = (initialValues, values) => Object.entries(values)
@@ -496,8 +500,8 @@ export const getObjDiff = (initialValues, values) => Object.entries(values)
     }, {});
 
 /**
- * @param number Number to format
- * @returns string Returns a string with a language-sensitive representation of this number
+ * @param num {number} to format
+ * @returns {string} Returns a string with a language-sensitive representation of this number
  */
 export const formatNumber = (num) => {
     const currentLanguage = i18n.languages[0] || DEFAULT_LANGUAGE;
@@ -507,7 +511,6 @@ export const formatNumber = (num) => {
 export const normalizeMultiline = (multiline) => `${normalizeTextarea(multiline)
     .map((line) => line.trim())
     .join('\n')}\n`;
-
 
 /**
  * @param parsedIp {object} ipaddr.js IPv4 or IPv6 object
