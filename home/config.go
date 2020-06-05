@@ -141,7 +141,7 @@ var config = configuration{
 		LogLocalTime:  false,
 		LogMaxBackups: 0,
 		LogMaxSize:    100,
-		LogMaxAge:     0,
+		LogMaxAge:     3,
 	},
 	SchemaVersion: currentSchemaVersion,
 }
