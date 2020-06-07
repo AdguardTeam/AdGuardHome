@@ -38,17 +38,22 @@ jobs:
           node-version: 13
       -
         name: Set up Go modules cache
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
       -
-        name: Set up node_modules cache
-        uses: actions/cache@v1
+        name: Get npm cache directory
+        id: npm-cache
+        run: |
+          echo "::set-output name=dir::$(npm config get cache)"
+      -
+        name: Set up npm cache
+        uses: actions/cache@v2
         with:
-          path: client/node_modules
+          path: ${{ steps.npm-cache.outputs.dir }}
           key: ${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
@@ -113,17 +118,22 @@ jobs:
           node-version: 13
       -
         name: Set up Go modules cache
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
       -
+        name: Get npm cache directory
+        id: npm-cache
+        run: |
+          echo "::set-output name=dir::$(npm config get cache)"
+      -
         name: Set up node_modules cache
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
-          path: client/node_modules
+          path: ${{ steps.npm-cache.outputs.dir }}
           key: ${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
