@@ -145,9 +145,14 @@ func (s *Server) createProxyConfig() (proxy.Config, error) {
 		UpstreamConfig:         s.conf.UpstreamConfig,
 		BeforeRequestHandler:   s.beforeRequestHandler,
 		RequestHandler:         s.handleDNSRequest,
-		AllServers:             s.conf.AllServers,
 		EnableEDNSClientSubnet: s.conf.EnableEDNSClientSubnet,
-		FindFastestAddr:        s.conf.FastestAddr,
+	}
+
+	proxyConfig.UpstreamMode = proxy.UModeLoadBalance
+	if s.conf.AllServers {
+		proxyConfig.UpstreamMode = proxy.UModeParallel
+	} else if s.conf.FastestAddr {
+		proxyConfig.UpstreamMode = proxy.UModeFastestAddr
 	}
 
 	if len(s.conf.BogusNXDomain) > 0 {

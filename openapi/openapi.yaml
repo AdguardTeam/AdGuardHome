@@ -1019,12 +1019,11 @@ components:
                     type: boolean
                 dnssec_enabled:
                     type: boolean
-                fastest_addr:
-                    type: boolean
-                parallel_requests:
-                    type: boolean
-                    description: If true, parallel queries to all configured upstream servers are
-                        enabled
+                upstream_mode:
+                    enum:
+                        - ""
+                        - parallel
+                        - fastest_addr
         UpstreamsConfig:
             type: object
             description: Upstreams configuration

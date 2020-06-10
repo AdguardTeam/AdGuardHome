@@ -33,8 +33,7 @@ type dnsConfigJSON struct {
 	EDNSCSEnabled     bool   `json:"edns_cs_enabled"`
 	DNSSECEnabled     bool   `json:"dnssec_enabled"`
 	DisableIPv6       bool   `json:"disable_ipv6"`
-	FastestAddr       bool   `json:"fastest_addr"`
-	ParallelRequests  bool   `json:"parallel_requests"`
+	UpstreamMode      string `json:"upstream_mode"`
 }
 
 func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
@@ -51,8 +50,11 @@ func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	resp.EDNSCSEnabled = s.conf.EnableEDNSClientSubnet
 	resp.DNSSECEnabled = s.conf.EnableDNSSEC
 	resp.DisableIPv6 = s.conf.AAAADisabled
-	resp.FastestAddr = s.conf.FastestAddr
-	resp.ParallelRequests = s.conf.AllServers
+	if s.conf.FastestAddr {
+		resp.UpstreamMode = "fastest_addr"
+	} else if s.conf.AllServers {
+		resp.UpstreamMode = "parallel"
+	}
 	s.RUnlock()
 
 	js, err := json.Marshal(resp)
@@ -118,6 +120,12 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if js.Exists("upstream_mode") &&
+		!(req.UpstreamMode == "" || req.UpstreamMode == "fastest_addr" || req.UpstreamMode == "parallel") {
+		httpError(r, w, http.StatusBadRequest, "upstream_mode: incorrect value")
+		return
+	}
+
 	restart := false
 	s.Lock()
 
@@ -169,12 +177,19 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 		s.conf.AAAADisabled = req.DisableIPv6
 	}
 
-	if js.Exists("fastest_addr") {
-		s.conf.FastestAddr = req.FastestAddr
-	}
+	if js.Exists("upstream_mode") {
+		s.conf.FastestAddr = false
+		s.conf.AllServers = false
+		switch req.UpstreamMode {
+		case "":
+			//
 
-	if js.Exists("parallel_requests") {
-		s.conf.AllServers = req.ParallelRequests
+		case "parallel":
+			s.conf.AllServers = true
+
+		case "fastest_addr":
+			s.conf.FastestAddr = true
+		}
 	}
 
 	s.Unlock()
