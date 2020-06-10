@@ -7,6 +7,7 @@ import flow from 'lodash/flow';
 import {
     renderInputField, required, domain, answer,
 } from '../../../helpers/form';
+import { FORM_NAME } from '../../../helpers/constants';
 
 const Form = (props) => {
     const {
@@ -104,7 +105,7 @@ Form.propTypes = {
 export default flow([
     withTranslation(),
     reduxForm({
-        form: 'rewritesForm',
+        form: FORM_NAME.REWRITES,
         enableReinitialize: true,
     }),
 ])(Form);

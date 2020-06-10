@@ -8,6 +8,7 @@ import flow from 'lodash/flow';
 import {
     renderInputField, required, ipv4, isPositive, toNumber,
 } from '../../../helpers/form';
+import { FORM_NAME } from '../../../helpers/constants';
 
 const renderInterfaces = ((interfaces) => (
     Object.keys(interfaces).map((item) => {
@@ -221,7 +222,7 @@ Form.propTypes = {
     change: PropTypes.func.isRequired,
 };
 
-const selector = formValueSelector('dhcpForm');
+const selector = formValueSelector(FORM_NAME.DHCP);
 
 Form = connect((state) => {
     const interfaceValue = selector(state, 'interface_name');
@@ -232,5 +233,5 @@ Form = connect((state) => {
 
 export default flow([
     withTranslation(),
-    reduxForm({ form: 'dhcpForm' }),
+    reduxForm({ form: FORM_NAME.DHCP }),
 ])(Form);

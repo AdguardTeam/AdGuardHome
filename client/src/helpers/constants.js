@@ -377,12 +377,33 @@ export const ACTION = {
 };
 
 export const DNS_REQUEST_OPTIONS = {
-    PARALLEL_REQUESTS: 'parallel_requests',
+    PARALLEL: 'parallel',
     FASTEST_ADDR: 'fastest_addr',
+    LOAD_BALANCING: '',
 };
 
 export const IP_MATCH_LIST_STATUS = {
     NOT_FOUND: 'NOT_FOUND', // not found in the list
-    EXACT: 'EXACT', // found exact match (ip === ip)
+    EXACT: 'EXACT', // found exact match (including the match of short and long forms)
     CIDR: 'CIDR', // the ip is in the specified CIDR range
+};
+
+export const FORM_NAME = {
+    UPSTREAM: 'upstream',
+    DOMAIN_CHECK: 'domainCheck',
+    FILTER: 'filter',
+    REWRITES: 'rewrites',
+    LOGS_FILTER: 'logsFilter',
+    CLIENT: 'client',
+    DHCP: 'dhcp',
+    LEASE: 'lease',
+    ACCESS: 'access',
+    BLOCKING_MODE: 'blockingMode',
+    ENCRYPTION: 'encryption',
+    FILTER_CONFIG: 'filterConfig',
+    LOG_CONFIG: 'logConfig',
+    SERVICES: 'services',
+    STATS_CONFIG: 'statsConfig',
+    INSTALL: 'install',
+    LOGIN: 'login',
 };

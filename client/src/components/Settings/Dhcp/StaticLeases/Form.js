@@ -7,6 +7,7 @@ import flow from 'lodash/flow';
 import {
     renderInputField, ipv4, mac, required,
 } from '../../../../helpers/form';
+import { FORM_NAME } from '../../../../helpers/constants';
 
 const Form = (props) => {
     const {
@@ -94,5 +95,5 @@ Form.propTypes = {
 
 export default flow([
     withTranslation(),
-    reduxForm({ form: 'leaseForm' }),
+    reduxForm({ form: FORM_NAME.LEASE }),
 ])(Form);

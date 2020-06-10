@@ -7,6 +7,7 @@ import flow from 'lodash/flow';
 import i18n from '../../i18n';
 import Controls from './Controls';
 import { renderInputField } from '../../helpers/form';
+import { FORM_NAME } from '../../helpers/constants';
 
 const required = (value) => {
     if (value || value === 0) {
@@ -100,7 +101,7 @@ Auth.propTypes = {
 export default flow([
     withTranslation(),
     reduxForm({
-        form: 'install',
+        form: FORM_NAME.INSTALL,
         destroyOnUnmount: false,
         forceUnregisterOnUnmount: true,
         validate,

@@ -7,6 +7,7 @@ import Card from '../../ui/Card';
 
 import { renderInputField } from '../../../helpers/form';
 import Info from './Info';
+import { FORM_NAME } from '../../../helpers/constants';
 
 const Check = (props) => {
     const {
@@ -60,7 +61,7 @@ const Check = (props) => {
                         </div>
                         {check.hostname && (
                             <Fragment>
-                                <hr/>
+                                <hr />
                                 <Info
                                     filters={filters}
                                     whitelistFilters={whitelistFilters}
@@ -94,5 +95,5 @@ Check.propTypes = {
 
 export default flow([
     withTranslation(),
-    reduxForm({ form: 'domainCheckForm' }),
+    reduxForm({ form: FORM_NAME.DOMAIN_CHECK }),
 ])(Check);

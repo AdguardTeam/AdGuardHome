@@ -5,6 +5,7 @@ import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 
 import { renderInputField, required } from '../../helpers/form';
+import { FORM_NAME } from '../../helpers/constants';
 
 const Form = (props) => {
     const {
@@ -70,7 +71,5 @@ Form.propTypes = {
 
 export default flow([
     withTranslation(),
-    reduxForm({
-        form: 'loginForm',
-    }),
+    reduxForm({ form: FORM_NAME.LOGIN }),
 ])(Form);

@@ -9,7 +9,7 @@ import Controls from './Controls';
 import AddressList from './AddressList';
 
 import { getInterfaceIp } from '../../helpers/helpers';
-import { ALL_INTERFACES_IP } from '../../helpers/constants';
+import { ALL_INTERFACES_IP, FORM_NAME } from '../../helpers/constants';
 import {
     renderInputField, required, validInstallPort, toNumber,
 } from '../../helpers/form';
@@ -373,7 +373,7 @@ Settings.propTypes = {
     t: PropTypes.func.isRequired,
 };
 
-const selector = formValueSelector('install');
+const selector = formValueSelector(FORM_NAME.INSTALL);
 
 const SettingsForm = connect((state) => {
     const webIp = selector(state, 'web.ip');
@@ -392,7 +392,7 @@ const SettingsForm = connect((state) => {
 export default flow([
     withTranslation(),
     reduxForm({
-        form: 'install',
+        form: FORM_NAME.INSTALL,
         destroyOnUnmount: false,
         forceUnregisterOnUnmount: true,
     }),

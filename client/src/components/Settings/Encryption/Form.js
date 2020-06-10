@@ -17,6 +17,7 @@ import {
 import i18n from '../../../i18n';
 import KeyStatus from './KeyStatus';
 import CertificateStatus from './CertificateStatus';
+import { FORM_NAME } from '../../../helpers/constants';
 
 const validate = (values) => {
     const errors = {};
@@ -394,7 +395,7 @@ Form.propTypes = {
     privateKeySource: PropTypes.string,
 };
 
-const selector = formValueSelector('encryptionForm');
+const selector = formValueSelector(FORM_NAME.ENCRYPTION);
 
 Form = connect((state) => {
     const isEnabled = selector(state, 'enabled');
@@ -418,7 +419,7 @@ Form = connect((state) => {
 export default flow([
     withTranslation(),
     reduxForm({
-        form: 'encryptionForm',
+        form: FORM_NAME.ENCRYPTION,
         validate,
     }),
 ])(Form);

@@ -5,6 +5,7 @@ import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 
 import { renderInputField, required, isValidPath } from '../../helpers/form';
+import { FORM_NAME } from '../../helpers/constants';
 
 const Form = (props) => {
     const {
@@ -19,18 +20,18 @@ const Form = (props) => {
     return (
         <form onSubmit={handleSubmit}>
             <div className="modal-body">
-            <div className="form__group">
-                <Field
-                    id="name"
-                    name="name"
-                    type="text"
-                    component={renderInputField}
-                    className="form-control"
-                    placeholder={t('enter_name_hint')}
-                    validate={[required]}
-                    normalizeOnBlur={(data) => data.trim()}
-                />
-            </div>
+                <div className="form__group">
+                    <Field
+                        id="name"
+                        name="name"
+                        type="text"
+                        component={renderInputField}
+                        className="form-control"
+                        placeholder={t('enter_name_hint')}
+                        validate={[required]}
+                        normalizeOnBlur={(data) => data.trim()}
+                    />
+                </div>
                 <div className="form__group">
                     <Field
                         id="url"
@@ -79,7 +80,5 @@ Form.propTypes = {
 
 export default flow([
     withTranslation(),
-    reduxForm({
-        form: 'filterForm',
-    }),
+    reduxForm({ form: FORM_NAME.FILTER }),
 ])(Form);

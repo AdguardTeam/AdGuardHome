@@ -20,7 +20,7 @@ import {
     renderSelectField,
     renderServiceField,
 } from '../../../helpers/form';
-import { SERVICES } from '../../../helpers/constants';
+import { FORM_NAME, SERVICES } from '../../../helpers/constants';
 import './Service.css';
 
 const settingsCheckboxes = [
@@ -338,7 +338,7 @@ Form.propTypes = {
     tagsOptions: PropTypes.array.isRequired,
 };
 
-const selector = formValueSelector('clientForm');
+const selector = formValueSelector(FORM_NAME.CLIENT);
 
 Form = connect((state) => {
     const useGlobalSettings = selector(state, 'use_global_settings');
@@ -352,7 +352,7 @@ Form = connect((state) => {
 export default flow([
     withTranslation(),
     reduxForm({
-        form: 'clientForm',
+        form: FORM_NAME.CLIENT,
         enableReinitialize: true,
         validate,
     }),
