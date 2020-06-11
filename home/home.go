@@ -110,11 +110,6 @@ func Main(version string, channel string, armVer string) {
 	// therefore, we must do it manually instead of using a lib
 	args := loadOptions()
 
-	if args.serviceControlAction != "" {
-		handleServiceControlAction(args.serviceControlAction)
-		return
-	}
-
 	Context.appSignalChannel = make(chan os.Signal)
 	signal.Notify(Context.appSignalChannel, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 	go func() {
@@ -133,6 +128,11 @@ func Main(version string, channel string, armVer string) {
 			}
 		}
 	}()
+
+	if args.serviceControlAction != "" {
+		handleServiceControlAction(args.serviceControlAction)
+		return
+	}
 
 	// run the protection
 	run(args)
