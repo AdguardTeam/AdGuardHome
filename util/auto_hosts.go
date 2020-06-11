@@ -371,11 +371,11 @@ func (a *AutoHosts) ProcessReverse(addr string, qtype uint16) string {
 	return host
 }
 
-// List - get the hosts table.  Thread-safe.
-func (a *AutoHosts) List() map[string][]net.IP {
-	table := make(map[string][]net.IP)
+// List - get "IP -> hostname" table.  Thread-safe.
+func (a *AutoHosts) List() map[string]string {
+	table := make(map[string]string)
 	a.lock.Lock()
-	for k, v := range a.table {
+	for k, v := range a.tableReverse {
 		table[k] = v
 	}
 	a.lock.Unlock()

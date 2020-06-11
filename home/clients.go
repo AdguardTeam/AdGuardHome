@@ -612,15 +612,13 @@ func (clients *clientsContainer) addFromHostsFile() {
 	_ = clients.rmHosts(ClientSourceHostsFile)
 
 	n := 0
-	for ip, names := range hosts {
-		for _, name := range names {
-			ok, err := clients.addHost(ip, name.String(), ClientSourceHostsFile)
-			if err != nil {
-				log.Debug("Clients: %s", err)
-			}
-			if ok {
-				n++
-			}
+	for ip, name := range hosts {
+		ok, err := clients.addHost(ip, name, ClientSourceHostsFile)
+		if err != nil {
+			log.Debug("Clients: %s", err)
+		}
+		if ok {
+			n++
 		}
 	}
 

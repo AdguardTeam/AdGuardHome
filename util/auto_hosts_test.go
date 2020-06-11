@@ -49,10 +49,9 @@ func TestAutoHostsResolution(t *testing.T) {
 
 	// Test hosts file
 	table := ah.List()
-	ips, _ = table["host"]
-	assert.NotNil(t, ips)
-	assert.Equal(t, 1, len(ips))
-	assert.Equal(t, "127.0.0.1", ips[0].String())
+	name, ok := table["127.0.0.1"]
+	assert.True(t, ok)
+	assert.Equal(t, "host", name)
 
 	// Test PTR
 	a, _ := dns.ReverseAddr("127.0.0.1")
