@@ -103,7 +103,7 @@ export const renderGroupField = ({
 
 renderGroupField.propTypes = {
     input: PropTypes.object.isRequired,
-    id: PropTypes.string.isRequired,
+    id: PropTypes.string,
     className: PropTypes.string,
     placeholder: PropTypes.string,
     type: PropTypes.string,
