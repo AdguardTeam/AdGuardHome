@@ -169,16 +169,51 @@ func (d *Dnsfilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ent := RewriteEntry{
+	entAdd := RewriteEntry{
 		Domain: jsent.Domain,
 		Answer: jsent.Answer,
 	}
-	ent.prepare()
+	entAdd.prepare()
+	for _, ent := range d.Config.Rewrites {
+		if entAdd.Domain == ent.Domain {
+			httpError(r, w, http.StatusBadRequest, "Domain already exists")
+			return
+		}
+	}
 	d.confLock.Lock()
-	d.Config.Rewrites = append(d.Config.Rewrites, ent)
+	d.Config.Rewrites = append(d.Config.Rewrites, entAdd)
 	d.confLock.Unlock()
 	log.Debug("Rewrites: added element: %s -> %s [%d]",
-		ent.Domain, ent.Answer, len(d.Config.Rewrites))
+		entAdd.Domain, entAdd.Answer, len(d.Config.Rewrites))
+
+	d.Config.ConfigModified()
+}
+
+func (d *Dnsfilter) handleRewriteUpdate(w http.ResponseWriter, r *http.Request) {
+
+	jsent := rewriteEntryJSON{}
+	err := json.NewDecoder(r.Body).Decode(&jsent)
+	if err != nil {
+		httpError(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+		return
+	}
+
+	entUpdate := RewriteEntry{
+		Domain: jsent.Domain,
+		Answer: jsent.Answer,
+	}
+	entUpdate.prepare()
+	arr := []RewriteEntry{}
+	d.confLock.Lock()
+	for _, ent := range d.Config.Rewrites {
+		if entUpdate.Domain == ent.Domain {
+			log.Debug("Rewrites: updated element: %s -> %s to: %s -> %s", ent.Domain, ent.Answer, entUpdate.Domain, entUpdate.Answer)
+			ent.Answer = entUpdate.Answer
+		}
+		arr = append(arr, ent)
+	}
+	d.Config.Rewrites = arr
+	d.confLock.Unlock()
 
 	d.Config.ConfigModified()
 }
@@ -214,5 +249,6 @@ func (d *Dnsfilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) 
 func (d *Dnsfilter) registerRewritesHandlers() {
 	d.Config.HTTPRegister("GET", "/control/rewrite/list", d.handleRewriteList)
 	d.Config.HTTPRegister("POST", "/control/rewrite/add", d.handleRewriteAdd)
+	d.Config.HTTPRegister("POST", "/control/rewrite/update", d.handleRewriteUpdate)
 	d.Config.HTTPRegister("POST", "/control/rewrite/delete", d.handleRewriteDelete)
 }
