@@ -1236,7 +1236,7 @@ Request:
 	GET /control/querylog
 	?older_than=2006-01-02T15:04:05.999999999Z07:00
 	&search=...
-	&response_status=""|blocked|whitelisted|processed
+	&response_status="..."
 
 `older_than` setting is used for paging.  UI uses an empty value for `older_than` on the first request and gets the latest log entries.  To get the older entries, UI sets `older_than` to the `oldest` value from the server's response.
 
@@ -1248,9 +1248,15 @@ The server matches substrings by default: e.g. `adguard.com` matches `www.adguar
 Strict matching can be enabled by enclosing the value in double quotes: e.g. `"adguard.com"` matches `adguard.com` but doesn't match `www.adguard.com`.
 
 `response_status`:
-* blocked: only blocked entries
-* whitelisted: only white-listed entries
-* processed: all not blocked, not white-listed entries
+* all
+* filtered             - all kinds of filtering
+* blocked              - blocked or blocked service
+* blocked_safebrowsing - blocked by safebrowsing
+* blocked_parental     - blocked by parental control
+* whitelisted          - whitelisted
+* rewritten            - all kinds of rewrites
+* safe_search          - enforced safe search
+* processed            - not blocked, not white-listed entries
 
 Response:
 
