@@ -121,10 +121,10 @@ AdGuard Home provides a lot of features out-of-the-box with no need to install a
 | Encrypted DNS upstream servers (DNS-over-HTTPS, DNS-over-TLS, DNSCrypt) | ✅            | ❌ (requires additional software)                       |
 | Cross-platform                                                          | ✅            | ❌ (not natively, only via Docker)                      |
 | Running as a DNS-over-HTTPS or DNS-over-TLS server                      | ✅            | ❌ (requires additional software)                       |
-| Blocking phishing and malware domains                                   | ✅            | ❌                                                      |
+| Blocking phishing and malware domains                                   | ✅            | ❌ (requires non-default blocklists)                    |
 | Parental control (blocking adult domains)                               | ✅            | ❌                                                      |
 | Force Safe search on search engines                                     | ✅            | ❌                                                      |
-| Per-client (device) configuration                                       | ✅            | ❌                                                      |
+| Per-client (device) configuration                                       | ✅            | ✅                                                      |
 | Access settings (choose who can use AGH DNS)                            | ✅            | ❌                                                      |
 
 <a id="comparison-adblock"></a>
