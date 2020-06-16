@@ -101,7 +101,10 @@ func (c *searchCriteria) match(entry *logEntry) bool {
 		case filteringStatusAll:
 			return true
 		case filteringStatusFiltered:
-			return res.IsFiltered
+			return res.IsFiltered ||
+				res.Reason == dnsfilter.NotFilteredWhiteList ||
+				res.Reason == dnsfilter.ReasonRewrite ||
+				res.Reason == dnsfilter.RewriteEtcHosts
 		case filteringStatusBlocked:
 			return res.IsFiltered &&
 				(res.Reason == dnsfilter.FilteredBlackList ||
@@ -111,11 +114,10 @@ func (c *searchCriteria) match(entry *logEntry) bool {
 		case filteringStatusBlockedSafebrowsing:
 			return res.IsFiltered && res.Reason == dnsfilter.FilteredSafeBrowsing
 		case filteringStatusWhitelisted:
-			return res.IsFiltered && res.Reason == dnsfilter.NotFilteredWhiteList
+			return res.Reason == dnsfilter.NotFilteredWhiteList
 		case filteringStatusRewritten:
-			return res.IsFiltered &&
-				(res.Reason == dnsfilter.ReasonRewrite ||
-					res.Reason == dnsfilter.RewriteEtcHosts)
+			return (res.Reason == dnsfilter.ReasonRewrite ||
+				res.Reason == dnsfilter.RewriteEtcHosts)
 		case filteringStatusSafeSearch:
 			return res.IsFiltered && res.Reason == dnsfilter.FilteredSafeSearch
 
