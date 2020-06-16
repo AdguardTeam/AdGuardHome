@@ -1302,6 +1302,8 @@ Response:
 
 The most recent entries are at the top of list.
 
+If there are no more older entries, `"oldest":""` is returned.
+
 
 ### API: Set querylog parameters
 
