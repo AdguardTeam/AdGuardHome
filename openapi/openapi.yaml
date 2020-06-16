@@ -174,9 +174,14 @@ paths:
                   schema:
                       type: string
                       enum:
-                          - ""
+                          - all
+                          - filtered
                           - blocked
+                          - blocked_safebrowsing
+                          - blocked_parental
                           - whitelisted
+                          - rewritten
+                          - safe_search
                           - processed
             responses:
                 "200":
