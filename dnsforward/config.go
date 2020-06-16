@@ -138,14 +138,17 @@ func (s *Server) createProxyConfig() (proxy.Config, error) {
 		Ratelimit:              int(s.conf.Ratelimit),
 		RatelimitWhitelist:     s.conf.RatelimitWhitelist,
 		RefuseAny:              s.conf.RefuseAny,
-		CacheEnabled:           true,
-		CacheSizeBytes:         int(s.conf.CacheSize),
 		CacheMinTTL:            s.conf.CacheMinTTL,
 		CacheMaxTTL:            s.conf.CacheMaxTTL,
 		UpstreamConfig:         s.conf.UpstreamConfig,
 		BeforeRequestHandler:   s.beforeRequestHandler,
 		RequestHandler:         s.handleDNSRequest,
 		EnableEDNSClientSubnet: s.conf.EnableEDNSClientSubnet,
+	}
+
+	if s.conf.CacheSize != 0 {
+		proxyConfig.CacheEnabled = true
+		proxyConfig.CacheSizeBytes = int(s.conf.CacheSize)
 	}
 
 	proxyConfig.UpstreamMode = proxy.UModeLoadBalance
