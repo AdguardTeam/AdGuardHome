@@ -1,7 +1,7 @@
 import { handleActions } from 'redux-actions';
 
 import * as actions from '../actions/queryLogs';
-import { DEFAULT_LOGS_FILTER } from '../helpers/constants';
+import { DEFAULT_LOGS_FILTER, TABLE_DEFAULT_PAGE_SIZE } from '../helpers/constants';
 
 const queryLogs = handleActions(
     {
@@ -27,15 +27,20 @@ const queryLogs = handleActions(
 
         [actions.setLogsFilterRequest]: (state) => ({ ...state, processingGetLogs: true }),
         [actions.setLogsFilterFailure]: (state) => ({ ...state, processingGetLogs: false }),
+        [actions.toggleDetailedLogs]: (state, { payload }) => ({
+            ...state,
+            isDetailed: payload,
+        }),
+
         [actions.setLogsFilterSuccess]: (state, { payload }) => {
             const { logs, oldest, filter } = payload;
-            const pageSize = 100;
+            const pageSize = TABLE_DEFAULT_PAGE_SIZE;
             const page = 0;
 
             const pages = Math.ceil(logs.length / pageSize);
             const total = logs.length;
             const rowsStart = pageSize * page;
-            const rowsEnd = (pageSize * page) + pageSize;
+            const rowsEnd = rowsStart + pageSize;
             const logsSlice = logs.slice(rowsStart, rowsEnd);
             const isFiltered = Object.keys(filter).some((key) => filter[key]);
 
@@ -135,6 +140,7 @@ const queryLogs = handleActions(
         filter: DEFAULT_LOGS_FILTER,
         isFiltered: false,
         anonymize_client_ip: false,
+        isDetailed: true,
     },
 );
 

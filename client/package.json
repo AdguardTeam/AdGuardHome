@@ -7,6 +7,7 @@
         "watch": "cross-env BUILD_ENV=dev webpack --config webpack.dev.js --watch",
         "build-prod": "cross-env BUILD_ENV=prod webpack --config webpack.prod.js",
         "lint": "eslint src",
+        "lint:fix": "eslint src --fix",
         "test": "jest",
         "test:watch": "jest --watch"
     },
@@ -32,6 +33,7 @@
         "react-router-hash-link": "^1.2.2",
         "react-select": "^3.1.0",
         "react-table": "^6.11.4",
+        "react-tooltip": "^4.2.6",
         "react-transition-group": "^4.4.1",
         "redux": "^4.0.5",
         "redux-actions": "^2.6.5",

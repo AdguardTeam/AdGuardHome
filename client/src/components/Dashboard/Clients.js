@@ -32,17 +32,17 @@ const renderBlockingButton = (ipMatchListStatus, ip, handleClick, processing) =>
     const buttonProps = ipMatchListStatus === IP_MATCH_LIST_STATUS.NOT_FOUND
         ? {
             className: 'btn-outline-danger',
-            text: 'block_btn',
+            text: 'block',
             type: 'block',
         }
         : {
             className: 'btn-outline-secondary',
-            text: 'unblock_btn',
+            text: 'unblock',
             type: 'unblock',
         };
 
     return (
-        <div className="table__action">
+        <div className="table__action button__action">
             <button
                 type="button"
                 className={`btn btn-sm ${buttonProps.className}`}

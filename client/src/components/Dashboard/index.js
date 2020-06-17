@@ -10,7 +10,7 @@ import BlockedDomains from './BlockedDomains';
 
 import PageTitle from '../ui/PageTitle';
 import Loading from '../ui/Loading';
-import { ACTION } from '../../helpers/constants';
+import { BLOCK_ACTIONS } from '../../helpers/constants';
 import './Dashboard.css';
 
 class Dashboard extends Component {
@@ -42,7 +42,7 @@ class Dashboard extends Component {
     };
 
     toggleClientStatus = (type, ip) => {
-        const confirmMessage = type === ACTION.block ? 'client_confirm_block' : 'client_confirm_unblock';
+        const confirmMessage = type === BLOCK_ACTIONS.BLOCK ? 'client_confirm_block' : 'client_confirm_unblock';
 
         if (window.confirm(this.props.t(confirmMessage, { ip }))) {
             this.props.toggleClientBlock(type, ip);

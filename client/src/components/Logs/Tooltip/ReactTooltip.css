@@ -1,0 +1,129 @@
+.custom-tooltip {
+    padding: 1rem 1.5rem 1.25rem 1.5rem;
+    font-size: 16px !important;
+    box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 4px !important;
+    pointer-events: auto !important;
+}
+
+/*crutch, may cause problems https://github.com/wwayne/react-tooltip/issues/204*/
+@media (hover: none) {
+    .custom-tooltip {
+        position: absolute !important;
+        top: 4rem !important;
+    }
+}
+
+.white-space--nowrap {
+    white-space: nowrap !important;
+}
+
+.white-space--normal {
+    white-space: normal !important;
+}
+
+.word-break--break-all {
+    word-break: break-all !important;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, min-content);
+    grid-row-gap: 0.5rem;
+    grid-column-gap: 1rem;
+}
+
+.grid--limited {
+    grid-template-columns: repeat(2, minmax(0, min-content));
+}
+
+.grid--gap-bg {
+    grid-column-gap: 1.5rem;
+}
+
+.grid--title {
+    font-weight: bold;
+}
+
+.grid--title:not(:first-child) {
+    padding-top: 1rem;
+}
+
+@media (max-width: 767.98px) {
+    .grid {
+        grid-template-columns: 35% 55%;
+    }
+
+    .grid * {
+        grid-column: 1 / -1;
+    }
+
+    .grid > :nth-child(even) {
+        margin: -0.5rem 0 0;
+    }
+
+    .grid > .key__time_table_header, .grid > .key__data, .grid > .key__encryption_status, .grid > .key__elapsed {
+        grid-column: 1 / span 1;
+    }
+
+    .grid > .value__time_table_header, .grid > .value__data, .grid > .value__encryption_status, .grid > .value__elapsed {
+        grid-column: 2 / span 1;
+        margin: 0 !important;
+    }
+
+    .grid .key-colon, .grid .title--border {
+        font-weight: bold;
+    }
+
+    .custom-tooltip {
+        overflow-y: scroll;
+    }
+}
+
+.grid .key-colon:nth-child(odd)::after {
+    content: ':';
+}
+
+.grid__one-row {
+    grid-template-columns: 15rem;
+}
+
+.grid__flow-column {
+    grid-auto-flow: column;
+}
+
+.custom-tooltip.show {
+    opacity: 1 !important;
+}
+
+.custom-tooltip:hover {
+    opacity: 1 !important;
+}
+
+.grid-content > * {
+    justify-content: space-between !important;
+    width: 100% !important;
+    overflow: hidden;
+    -o-text-overflow: ellipsis;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.title--border {
+    padding-top: 2rem;
+}
+
+.title--border:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    border-top: 0.5px solid var(--gray-d8) !important;
+    width: 100%;
+    margin-top: -1rem;
+}
+
+.icon-cross {
+    position: absolute;
+    right: 0.5rem;
+    top: 0.5rem;
+}

@@ -91,7 +91,7 @@ class ClientsTable extends Component {
                 const { value } = row;
 
                 return (
-                    <div className="logs__row logs__row--overflow">
+                    <div className="logs__row o-hidden">
                         <span className="logs__text">
                             {value.map((address) => (
                                 <div key={address} title={address}>
@@ -121,7 +121,7 @@ class ClientsTable extends Component {
                 );
 
                 return (
-                    <div className="logs__row logs__row--overflow">
+                    <div className="logs__row o-hidden">
                         <div className="logs__text">{title}</div>
                     </div>
                 );
@@ -167,7 +167,7 @@ class ClientsTable extends Component {
                 );
 
                 return (
-                    <div className="logs__row logs__row--overflow">
+                    <div className="logs__row o-hidden">
                         <div className="logs__text">{title}</div>
                     </div>
                 );
@@ -185,7 +185,7 @@ class ClientsTable extends Component {
                 }
 
                 return (
-                    <div className="logs__row logs__row--overflow">
+                    <div className="logs__row o-hidden">
                         <span className="logs__text">
                             {value.map((tag) => (
                                 <div key={tag} title={tag} className="small">
@@ -282,16 +282,26 @@ class ClientsTable extends Component {
                             },
                         ]}
                         className="-striped -highlight card-table-overflow"
-                        showPagination={true}
+                        showPagination
                         defaultPageSize={10}
                         minRows={5}
-                        previousText={t('previous_btn')}
-                        nextText={t('next_btn')}
+                        showPageSizeOptions={false}
+                        showPageJump={false}
+                        renderTotalPagesCount={() => false}
+                        previousText={
+                            <svg className="icons icon--small icon--gray w-100 h-100">
+                                <use xlinkHref="#arrow-left" />
+                            </svg>}
+                        nextText={
+                            <svg className="icons icon--small icon--gray w-100 h-100">
+                                <use xlinkHref="#arrow-right" />
+                            </svg>}
                         loadingText={t('loading_table_status')}
-                        pageText={t('page_table_footer_text')}
-                        ofText="/"
+                        pageText=''
+                        ofText=''
                         rowsText={t('rows_table_footer_text')}
                         noDataText={t('clients_not_found')}
+                        getPaginationProps={() => ({ className: 'custom-pagination' })}
                     />
                     <button
                         type="button"

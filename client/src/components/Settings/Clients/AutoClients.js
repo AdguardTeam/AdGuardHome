@@ -79,16 +79,26 @@ class AutoClients extends Component {
                         },
                     ]}
                     className="-striped -highlight card-table-overflow"
-                    showPagination={true}
+                    showPagination
                     defaultPageSize={10}
                     minRows={5}
-                    previousText={t('previous_btn')}
-                    nextText={t('next_btn')}
+                    showPageSizeOptions={false}
+                    showPageJump={false}
+                    renderTotalPagesCount={() => false}
+                    previousText={
+                        <svg className="icons icon--small icon--gray w-100 h-100">
+                            <use xlinkHref="#arrow-left" />
+                        </svg>}
+                    nextText={
+                        <svg className="icons icon--small icon--gray w-100 h-100">
+                            <use xlinkHref="#arrow-right" />
+                        </svg>}
                     loadingText={t('loading_table_status')}
-                    pageText={t('page_table_footer_text')}
-                    ofText="/"
+                    pageText=''
+                    ofText=''
                     rowsText={t('rows_table_footer_text')}
                     noDataText={t('clients_not_found')}
+                    getPaginationProps={() => ({ className: 'custom-pagination' })}
                 />
             </Card>
         );

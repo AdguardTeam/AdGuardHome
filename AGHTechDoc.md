@@ -1236,7 +1236,7 @@ Request:
 	&search=...
 	&response_status="..."
 
-`older_than` setting is used for paging.  UI uses an empty value for `older_than` on the first request and gets the latest log entries.  To get the older entries, UI sets `older_than` to the `oldest` value from the server's response.
+`older_than` setting is used for paging.  UI uses an empty value for `older_than` on the first request and gets the latest log entries. To get the older entries, UI sets `older_than` to the `oldest` value from the server's response.
 
 If search settings are set, server returns only entries that match the specified request.
 

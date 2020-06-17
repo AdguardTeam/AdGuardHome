@@ -4,7 +4,19 @@
     height: 100%;
 }
 
-.icon--close {
-    width: 24px;
-    height: 24px;
+.icon--small {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.icon--gray {
+    color: var(--gray-a5);
+}
+
+.icon--disabled {
+    color: var(--gray-d8);
+}
+
+.icon--active {
+    color: #66b574;
 }

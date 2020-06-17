@@ -3,15 +3,15 @@ import PropTypes from 'prop-types';
 
 import './PageTitle.css';
 
-const PageTitle = (props) => (
+const PageTitle = ({ title, subtitle, children }) => (
     <div className="page-header">
         <h1 className="page-title">
-            {props.title}
-            {props.children}
+            {title}
+            {children}
         </h1>
-        {props.subtitle && (
+        {subtitle && (
             <div className="page-subtitle">
-                {props.subtitle}
+                {subtitle}
             </div>
         )}
     </div>

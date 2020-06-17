@@ -55,7 +55,8 @@ export const EMPTY_DATE = '0001-01-01T00:00:00Z';
 export const DEBOUNCE_TIMEOUT = 300;
 export const DEBOUNCE_FILTER_TIMEOUT = 500;
 export const CHECK_TIMEOUT = 1000;
-export const STOP_TIMEOUT = 10000;
+export const SUCCESS_TOAST_TIMEOUT = 5000;
+export const FAILURE_TOAST_TIMEOUT = 30000;
 
 export const UNSAFE_PORTS = [
     1,
@@ -256,18 +257,6 @@ export const ENCRYPTION_SOURCE = {
     CONTENT: 'content',
 };
 
-export const FILTERED_STATUS = {
-    FILTERED_BLACK_LIST: 'FilteredBlackList',
-    NOT_FILTERED_WHITE_LIST: 'NotFilteredWhiteList',
-    NOT_FILTERED_NOT_FOUND: 'NotFilteredNotFound',
-    FILTERED_BLOCKED_SERVICE: 'FilteredBlockedService',
-    REWRITE: 'Rewrite',
-    REWRITE_HOSTS: 'RewriteEtcHosts',
-    FILTERED_SAFE_SEARCH: 'FilteredSafeSearch',
-    FILTERED_SAFE_BROWSING: 'FilteredSafeBrowsing',
-    FILTERED_PARENTAL: 'FilteredParental',
-};
-
 export const FILTERED = 'Filtered';
 export const NOT_FILTERED = 'NotFiltered';
 
@@ -336,24 +325,123 @@ export const DNS_RECORD_TYPES = [
 ];
 
 export const DEFAULT_LOGS_FILTER = {
-    filter_domain: '',
-    filter_client: '',
-    filter_question_type: '',
-    filter_response_status: '',
+    search: '',
+    response_status: '',
 };
 
 export const DEFAULT_LANGUAGE = 'en';
 
-export const TABLE_DEFAULT_PAGE_SIZE = 100;
+export const TABLE_DEFAULT_PAGE_SIZE = 50;
 
-export const SMALL_TABLE_DEFAULT_PAGE_SIZE = 20;
+export const TABLE_FIRST_PAGE = 0;
+
+export const LEASES_TABLE_DEFAULT_PAGE_SIZE = 20;
+
+export const FILTERED_STATUS = {
+    FILTERED_BLACK_LIST: 'FilteredBlackList',
+    NOT_FILTERED_WHITE_LIST: 'NotFilteredWhiteList',
+    NOT_FILTERED_NOT_FOUND: 'NotFilteredNotFound',
+    FILTERED_BLOCKED_SERVICE: 'FilteredBlockedService',
+    REWRITE: 'Rewrite',
+    REWRITE_HOSTS: 'RewriteEtcHosts',
+    FILTERED_SAFE_SEARCH: 'FilteredSafeSearch',
+    FILTERED_SAFE_BROWSING: 'FilteredSafeBrowsing',
+    FILTERED_PARENTAL: 'FilteredParental',
+};
 
 export const RESPONSE_FILTER = {
-    ALL: 'all',
-    FILTERED: 'filtered',
+    ALL: {
+        query: 'all',
+        label: 'show_all_responses',
+    },
+    FILTERED: {
+        query: 'filtered',
+        label: 'filtered',
+    },
+    PROCESSED: {
+        query: 'processed',
+        label: 'show_processed_responses',
+    },
+    SPACE: {
+        query: 'all',
+        label: '',
+        disabled: true,
+    },
+    BLOCKED: {
+        query: 'blocked',
+        label: 'show_blocked_responses',
+    },
+    BLOCKED_THREATS: {
+        query: 'blocked_safebrowsing',
+        label: 'blocked_threats',
+    },
+    BLOCKED_ADULT_WEBSITES: {
+        query: 'blocked_parental',
+        label: 'blocked_adult_websites',
+    },
+    ALLOWED: {
+        query: 'whitelisted',
+        label: 'allowed',
+    },
+    REWRITTEN: {
+        query: 'rewritten',
+        label: 'rewritten',
+    },
+    SAFE_SEARCH: {
+        query: 'safe_search',
+        label: 'safe_search',
+    },
+};
+
+export const FILTERED_STATUS_TO_META_MAP = {
+    [FILTERED_STATUS.NOT_FILTERED_WHITE_LIST]: {
+        label: RESPONSE_FILTER.ALLOWED.label,
+        color: 'green',
+    },
+    [FILTERED_STATUS.NOT_FILTERED_NOT_FOUND]: {
+        label: RESPONSE_FILTER.PROCESSED.label,
+        color: 'white',
+    },
+    [FILTERED_STATUS.FILTERED_BLOCKED_SERVICE]: {
+        label: RESPONSE_FILTER.BLOCKED.label,
+        color: 'red',
+    },
+    [FILTERED_STATUS.FILTERED_SAFE_SEARCH]: {
+        label: RESPONSE_FILTER.SAFE_SEARCH.label,
+        color: 'yellow',
+    },
+    [FILTERED_STATUS.FILTERED_BLACK_LIST]: {
+        label: RESPONSE_FILTER.BLOCKED.label,
+        color: 'red',
+    },
+    [FILTERED_STATUS.REWRITE]: {
+        label: RESPONSE_FILTER.REWRITTEN.label,
+        color: 'blue',
+    },
+    [FILTERED_STATUS.REWRITE_HOSTS]: {
+        label: RESPONSE_FILTER.REWRITTEN.label,
+        color: 'blue',
+    },
+    [FILTERED_STATUS.FILTERED_SAFE_BROWSING]: {
+        label: RESPONSE_FILTER.BLOCKED_THREATS.label,
+        color: 'yellow',
+    },
+    [FILTERED_STATUS.FILTERED_PARENTAL]: {
+        label: RESPONSE_FILTER.BLOCKED_ADULT_WEBSITES.label,
+        color: 'yellow',
+    },
 };
 
 export const DEFAULT_TIME_FORMAT = 'HH:mm:ss';
+
+export const LONG_TIME_FORMAT = 'HH:mm:ss.SSS';
+
+export const DEFAULT_SHORT_DATE_FORMAT_OPTIONS = {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour12: false,
+};
 
 export const DEFAULT_DATE_FORMAT_OPTIONS = {
     year: 'numeric',
@@ -371,9 +459,15 @@ export const DETAILED_DATE_FORMAT_OPTIONS = {
 
 export const CUSTOM_FILTERING_RULES_ID = 0;
 
-export const ACTION = {
-    block: 'block',
-    unblock: 'unblock',
+export const BLOCK_ACTIONS = {
+    BLOCK: 'block',
+    UNBLOCK: 'unblock',
+};
+
+export const SCHEME_TO_PROTOCOL_MAP = {
+    doh: 'dns_over_https',
+    dot: 'dns_over_tls',
+    '': 'plain_dns',
 };
 
 export const DNS_REQUEST_OPTIONS = {
@@ -407,3 +501,7 @@ export const FORM_NAME = {
     INSTALL: 'install',
     LOGIN: 'login',
 };
+
+export const smallScreenSize = 767;
+
+export const touchMediaQuery = '(hover: none)';

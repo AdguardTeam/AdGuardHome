@@ -170,9 +170,10 @@
     "updated_upstream_dns_toast": "上游 DNS 已更新",
     "dns_test_ok_toast": "指定的 DNS 服务器现已正常运行",
     "dns_test_not_ok_toast": "服务器 \"{{key}}\"：无法使用，请检查你输入的是否正确",
-    "unblock_btn": "放行",
-    "block_btn": "拦截",
+    "unblock": "放行",
+    "block": "拦截",
     "time_table_header": "时间",
+    "date": "日起",
     "domain_name_table_header": "域名",
     "type_table_header": "类型",
     "response_table_header": "响应",
@@ -488,5 +489,10 @@
     "list_updated": "{{count}} 列表已更新",
     "list_updated_plural": "{{count}} 条列表已更新",
     "dnssec_enable": "启用DNSSEC",
-    "dnssec_enable_desc": "在发出DNS查询中设置DNSSEC标志并检查结果(需要启用DNSSEC的解析器)"
+    "dnssec_enable_desc": "在发出DNS查询中设置DNSSEC标志并检查结果(需要启用DNSSEC的解析器)",
+    "show_blocked_responses": "已拦截",
+    "blocked_safebrowsing": "安全浏览阻止项目",
+    "blocked_adult_websites": "拦截的成人网站",
+    "blocked_threats": "拦截的威胁",
+    "blocklist": "拦截列表"
 }

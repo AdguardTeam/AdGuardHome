@@ -1,4 +1,3 @@
-/* eslint-disable no-bitwise */
 import 'url-polyfill';
 import dateParse from 'date-fns/parse';
 import dateFormat from 'date-fns/format';
@@ -13,29 +12,30 @@ import i18n from 'i18next';
 import uniqBy from 'lodash/uniqBy';
 import ipaddr from 'ipaddr.js';
 import versionCompare from './versionCompare';
+import { getTrackerData } from './trackers/trackers';
 
 import {
-    STANDARD_DNS_PORT,
-    STANDARD_WEB_PORT,
-    STANDARD_HTTPS_PORT,
     CHECK_TIMEOUT,
-    DNS_RECORD_TYPES,
-    DEFAULT_TIME_FORMAT,
     DEFAULT_DATE_FORMAT_OPTIONS,
-    DETAILED_DATE_FORMAT_OPTIONS,
     DEFAULT_LANGUAGE,
-    FILTERED_STATUS,
+    DEFAULT_TIME_FORMAT,
+    DETAILED_DATE_FORMAT_OPTIONS,
+    DNS_RECORD_TYPES,
     FILTERED,
+    FILTERED_STATUS,
     IP_MATCH_LIST_STATUS,
+    STANDARD_DNS_PORT,
+    STANDARD_HTTPS_PORT,
+    STANDARD_WEB_PORT,
 } from './constants';
 
 /**
  * @param time {string} The time to format
  * @returns {string} Returns the time in the format HH:mm:ss
  */
-export const formatTime = (time) => {
+export const formatTime = (time, options = DEFAULT_TIME_FORMAT) => {
     const parsedTime = dateParse(time);
-    return dateFormat(parsedTime, DEFAULT_TIME_FORMAT);
+    return dateFormat(parsedTime, options);
 };
 
 /**
@@ -68,34 +68,48 @@ export const isToday = (date) => isSameDay(new Date(date), new Date());
 
 export const normalizeLogs = (logs) => logs.map((log) => {
     const {
-        time,
-        question,
-        answer: response,
-        reason,
+        answer,
+        answer_dnssec,
         client,
+        client_proto,
+        elapsedMs,
+        question,
+        reason,
+        status,
+        time,
         filterId,
         rule,
         service_name,
-        status,
         original_answer,
+        upstream,
     } = log;
+
     const { host: domain, type } = question;
-    const responsesArray = response ? response.map((response) => {
+
+    const response = answer ? answer.map((response) => {
         const { value, type, ttl } = response;
         return `${type}: ${value} (ttl=${ttl})`;
     }) : [];
+
+    const tracker = getTrackerData(domain);
+
     return {
         time,
         domain,
         type,
-        response: responsesArray,
+        response,
         reason,
         client,
+        client_proto,
         filterId,
         rule,
         status,
         serviceName: service_name,
         originalAnswer: original_answer,
+        tracker,
+        answer_dnssec,
+        elapsedMs,
+        upstream,
     };
 });
 
@@ -561,4 +575,16 @@ export const getIpMatchListStatus = (ip, list) => {
     } catch (e) {
         return IP_MATCH_LIST_STATUS.NOT_FOUND;
     }
+};
+
+
+/**
+ * @param {string} elapsedMs
+ * @param {function} t translate
+ * @returns {string}
+ */
+export const formatElapsedMs = (elapsedMs, t) => {
+    const formattedElapsedMs = parseInt(elapsedMs, 10) || parseFloat(elapsedMs)
+        .toFixed(2);
+    return `${formattedElapsedMs} ${t('milliseconds_abbreviation')}`;
 };

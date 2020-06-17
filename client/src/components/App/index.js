@@ -94,7 +94,7 @@ class App extends Component {
                     )}
                     <LoadingBar className="loading-bar" updateTime={1000} />
                     <Route component={Header} />
-                    <div className="container container--wrap">
+                    <div className="container container--wrap pb-5">
                         {dashboard.processing && <Loading />}
                         {!dashboard.isCoreRunning && (
                             <div className="row row-cards">

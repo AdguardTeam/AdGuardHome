@@ -5,37 +5,40 @@ import { WHOIS_ICONS } from './constants';
 const getFormattedWhois = (whois, t) => {
     const whoisInfo = normalizeWhois(whois);
     return (
-        Object.keys(whoisInfo).map((key) => {
-            const icon = WHOIS_ICONS[key];
-            return (
-                <span className="logs__whois text-muted" key={key} title={t(key)}>
+        Object.keys(whoisInfo)
+            .map((key) => {
+                const icon = WHOIS_ICONS[key];
+                return (
+                    <span className="logs__whois text-muted" key={key} title={t(key)}>
                     {icon && (
                         <Fragment>
                             <svg className="logs__whois-icon icons">
                                 <use xlinkHref={`#${icon}`} />
-                            </svg>&nbsp;
+                            </svg>
+                            &nbsp;
                         </Fragment>
                     )}{whoisInfo[key]}
                 </span>
-            );
-        })
+                );
+            })
     );
 };
 
-export const formatClientCell = (row, t) => {
-    const { value, original: { info } } = row;
+export const formatClientCell = (row, t, isDetailed = false) => {
+    const { info, client } = row.original;
     let whoisContainer = '';
-    let nameContainer = value;
+    let nameContainer = client;
 
     if (info) {
         const { name, whois_info } = info;
 
         if (name) {
-            nameContainer = (
-                <span className="logs__text logs__text--wrap" title={`${name} (${value})`}>
-                    {name} <small>({value})</small>
-                </span>
-            );
+            nameContainer = isDetailed ? <small title={client}>{client}</small>
+                : <div className="logs__text logs__text--nowrap"
+                       title={`${name} (${client})`}>
+                    {name}
+                    <small>{`(${client})`}</small>
+                </div>;
         }
 
         if (whois_info) {
@@ -48,11 +51,11 @@ export const formatClientCell = (row, t) => {
     }
 
     return (
-        <span className="logs__text">
-            <Fragment>
+        <div className="logs__text" title={client}>
+            <>
                 {nameContainer}
                 {whoisContainer}
-            </Fragment>
-        </span>
+            </>
+        </div>
     );
 };

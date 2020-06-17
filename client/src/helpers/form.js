@@ -85,10 +85,10 @@ export const renderGroupField = ({
                 && <span className="input-group-append">
                         <button
                             type="button"
-                            className="btn btn-secondary btn-icon"
+                            className="btn btn-secondary btn-icon btn-icon--green"
                             onClick={removeField}
                         >
-                            <svg className="icon icon--close">
+                            <svg className="icon icon--small">
                                 <use xlinkHref="#cross" />
                             </svg>
                         </button>
