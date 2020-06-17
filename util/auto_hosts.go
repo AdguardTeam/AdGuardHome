@@ -172,8 +172,18 @@ func (a *AutoHosts) load(table map[string][]net.IP, tableRev map[string]string, 
 			if len(host) == 0 {
 				break
 			}
+			sharp := strings.IndexByte(host, '#')
+			if sharp == 0 {
+				break // skip the rest of the line after #
+			} else if sharp > 0 {
+				host = host[:sharp]
+			}
+
 			a.updateTable(table, host, ipAddr)
 			a.updateTableRev(tableRev, host, ipAddr)
+			if sharp >= 0 {
+				break // skip the rest of the line after #
+			}
 		}
 	}
 }
