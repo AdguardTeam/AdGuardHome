@@ -236,7 +236,7 @@
     border: 0;
     border-radius: 8px;
     min-height: 42rem;
-    max-width: 71rem;
+    max-width: 100%;
 }
 
 .logs__table--detailed {
