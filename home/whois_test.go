@@ -27,9 +27,9 @@ func TestWhois(t *testing.T) {
 
 	w := Whois{timeoutMsec: 5000}
 	resp, err := w.queryAll("8.8.8.8")
-	assert.True(t, err == nil)
+	assert.Nil(t, err)
 	m := whoisParse(resp)
-	assert.True(t, m["orgname"] == "Google LLC")
-	assert.True(t, m["country"] == "US")
-	assert.True(t, m["city"] == "Mountain View")
+	assert.Equal(t, "Google LLC", m["orgname"])
+	assert.Equal(t, "US", m["country"])
+	assert.Equal(t, "Mountain View", m["city"])
 }

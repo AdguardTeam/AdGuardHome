@@ -63,10 +63,11 @@ func (l *queryLog) logEntryToJSONEntry(entry *logEntry) map[string]interface{} {
 	}
 
 	jsonEntry := map[string]interface{}{
-		"reason":    entry.Result.Reason.String(),
-		"elapsedMs": strconv.FormatFloat(entry.Elapsed.Seconds()*1000, 'f', -1, 64),
-		"time":      entry.Time.Format(time.RFC3339Nano),
-		"client":    l.getClientIP(entry.IP),
+		"reason":       entry.Result.Reason.String(),
+		"elapsedMs":    strconv.FormatFloat(entry.Elapsed.Seconds()*1000, 'f', -1, 64),
+		"time":         entry.Time.Format(time.RFC3339Nano),
+		"client":       l.getClientIP(entry.IP),
+		"client_proto": entry.ClientProto,
 	}
 	jsonEntry["question"] = map[string]interface{}{
 		"host":  entry.QHost,
@@ -111,6 +112,8 @@ func (l *queryLog) logEntryToJSONEntry(entry *logEntry) map[string]interface{} {
 			log.Debug("Querylog: msg.Unpack(entry.OrigAnswer): %s: %s", err, string(entry.OrigAnswer))
 		}
 	}
+
+	jsonEntry["upstream"] = entry.Upstream
 
 	return jsonEntry
 }

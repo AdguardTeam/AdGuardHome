@@ -1198,8 +1198,9 @@ When a new DNS request is received and processed, we store information about thi
 	"QH":"...", // target host name without the last dot
 	"QT":"...", // question type
 	"QC":"...", // question class
-	"Answer":"...",
-	"OrigAnswer":"...",
+	"CP":"" | "doh", // client connection protocol
+	"Answer":"base64 data",
+	"OrigAnswer":"base64 data",
 	"Result":{
 		"IsFiltered":true,
 		"Reason":3,
@@ -1232,16 +1233,28 @@ Request:
 
 	GET /control/querylog
 	?older_than=2006-01-02T15:04:05.999999999Z07:00
-	&filter_domain=...
-	&filter_client=...
-	&filter_question_type=A | AAAA
-	&filter_response_status= | filtered
+	&search=...
+	&response_status="..."
 
 `older_than` setting is used for paging.  UI uses an empty value for `older_than` on the first request and gets the latest log entries.  To get the older entries, UI sets `older_than` to the `oldest` value from the server's response.
 
-If "filter" settings are set, server returns only entries that match the specified request.
+If search settings are set, server returns only entries that match the specified request.
 
-For `filter.domain` and `filter.client` the server matches substrings by default: `adguard.com` matches `www.adguard.com`.  Strict matching can be enabled by enclosing the value in double quotes: `"adguard.com"` matches `adguard.com` but doesn't match `www.adguard.com`.
+`search`:
+match by domain name or client IP address.
+The server matches substrings by default: e.g. `adguard.com` matches `www.adguard.com`.
+Strict matching can be enabled by enclosing the value in double quotes: e.g. `"adguard.com"` matches `adguard.com` but doesn't match `www.adguard.com`.
+
+`response_status`:
+* all
+* filtered             - all kinds of filtering
+* blocked              - blocked or blocked service
+* blocked_safebrowsing - blocked by safebrowsing
+* blocked_parental     - blocked by parental control
+* whitelisted          - whitelisted
+* rewritten            - all kinds of rewrites
+* safe_search          - enforced safe search
+* processed            - not blocked, not white-listed entries
 
 Response:
 
@@ -1264,8 +1277,10 @@ Response:
 			}
 			...
 		],
+		"upstream":"...", // Upstream URL starting with tcp://, tls://, https://, or with an IP address
 		"answer_dnssec": true,
 		"client":"127.0.0.1",
+		"client_proto": "" (plain) | "doh" | "dot",
 		"elapsedMs":"0.098403",
 		"filterId":1,
 		"question":{
@@ -1284,6 +1299,8 @@ Response:
 	}
 
 The most recent entries are at the top of list.
+
+If there are no more older entries, `"oldest":""` is returned.
 
 
 ### API: Set querylog parameters
