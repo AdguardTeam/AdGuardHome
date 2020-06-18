@@ -5,6 +5,7 @@ import { Trans } from 'react-i18next';
 import classNames from 'classnames';
 import './Tooltip.css';
 import 'react-popper-tooltip/dist/styles.css';
+import { HIDE_TOOLTIP_DELAY } from '../../../helpers/constants';
 
 const getHintElement = ({
     className,
@@ -22,7 +23,7 @@ const getHintElement = ({
             <Trans>{item || '—'}</Trans>
         </div>,
     ),
-}) => <TooltipTrigger placement={placement} trigger="click" tooltip={
+}) => <TooltipTrigger placement={placement} trigger="hover" delayHide={HIDE_TOOLTIP_DELAY} tooltip={
         ({
             tooltipRef,
             getTooltipProps,
@@ -54,7 +55,6 @@ getHintElement.propTypes = {
     placement: PropTypes.string,
     canShowTooltip: PropTypes.string,
     xlinkHref: PropTypes.string,
-    scrollHide: PropTypes.bool,
     content: PropTypes.oneOfType([
         PropTypes.string,
         PropTypes.array,

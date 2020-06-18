@@ -6,6 +6,8 @@
     pointer-events: auto !important;
     background-color: var(--white);
     z-index: 102;
+    overflow-y: scroll;
+    max-height: 100%;
 }
 
 .white-space--nowrap {
@@ -64,10 +66,6 @@
 
     .grid .key-colon, .grid .title--border {
         font-weight: bold;
-    }
-
-    .tooltip__container  {
-        overflow-y: scroll;
     }
 }
 
