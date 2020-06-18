@@ -5,6 +5,7 @@
 }
 
 .logs__row {
+    position: relative;
     display: flex;
     min-height: 26px;
     overflow: hidden;
@@ -104,7 +105,7 @@
 
 .logs__action {
     position: absolute;
-    top: 1rem !important;
+    top: 0;
     right: 1rem;
 }
 
@@ -112,10 +113,10 @@
     top: 5px;
 }
 
-/*.logs__table .rt-td,
+.logs__table .rt-td,
 .clients__table .rt-td {
     position: relative;
-}*/
+}
 
 .logs__table .rt-thead, .logs__table .rt-tbody {
     min-width: 100% !important;

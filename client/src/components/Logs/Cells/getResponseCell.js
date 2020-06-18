@@ -48,7 +48,7 @@ const getResponseCell = (row, filtering, t, isDetailed) => {
 
         return <div>{responseArr.map((response) => {
             const className = classNames('white-space--nowrap', {
-                'white-space--normal': response.length > 100,
+                'overflow-break': response.length > 100,
             });
 
             return <div key={response} className={className}>{`${response}\n`}</div>;
@@ -109,11 +109,10 @@ const getResponseCell = (row, filtering, t, isDetailed) => {
                 columnClass: 'grid grid--limited',
                 tooltipClass: 'px-5 pb-5 pt-4 mw-75 custom-tooltip__response-details',
                 contentItemClass: 'text-truncate key-colon o-hidden',
-                dataTip: true,
                 xlinkHref: 'question',
                 title: 'response_details',
                 content: fields,
-                place: 'bottom',
+                placement: 'bottom',
             })}
             <div className="text-truncate">
                 <div className="text-truncate" title={statusLabel}>{statusLabel}</div>

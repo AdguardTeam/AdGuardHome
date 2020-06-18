@@ -75,12 +75,11 @@ const getClientCell = ({
                 className: hintClass,
                 columnClass: 'grid grid--limited',
                 tooltipClass: 'px-5 pb-5 pt-4 mw-75',
-                dataTip: true,
                 xlinkHref: 'question',
                 contentItemClass: 'text-truncate key-colon',
                 title: 'client_details',
                 content: processedData,
-                place: 'bottom',
+                placement: 'bottom',
             })}
             <div
                 className={nameClass}>
