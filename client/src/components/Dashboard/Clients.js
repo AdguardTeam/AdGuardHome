@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React from 'react';
 import ReactTable from 'react-table';
 import PropTypes from 'prop-types';
 import { Trans, withTranslation } from 'react-i18next';
@@ -60,13 +60,13 @@ const clientCell = (t, toggleClientStatus, processing, disallowedClients) => fun
     const ipMatchListStatus = getIpMatchListStatus(value, disallowedClients);
 
     return (
-        <Fragment>
+        <>
             <div className="logs__row logs__row--overflow logs__row--column">
                 {formatClientCell(row, t)}
             </div>
             {ipMatchListStatus !== IP_MATCH_LIST_STATUS.CIDR
             && renderBlockingButton(ipMatchListStatus, value, toggleClientStatus, processing)}
-        </Fragment>
+        </>
     );
 };
 

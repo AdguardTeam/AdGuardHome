@@ -5,7 +5,6 @@
 }
 
 .logs__row {
-    position: relative;
     display: flex;
     min-height: 26px;
     overflow: hidden;
@@ -105,7 +104,7 @@
 
 .logs__action {
     position: absolute;
-    top: 0;
+    top: 1rem !important;
     right: 1rem;
 }
 
@@ -113,10 +112,10 @@
     top: 5px;
 }
 
-.logs__table .rt-td,
+/*.logs__table .rt-td,
 .clients__table .rt-td {
     position: relative;
-}
+}*/
 
 .logs__table .rt-thead, .logs__table .rt-tbody {
     min-width: 100% !important;
@@ -556,21 +555,4 @@
 
 .loading__text {
     transform: translateY(3rem);
-}
-
-/*reset position to make absolute position of tooltip on tablets, may cause problems https://github.com/wwayne/react-tooltip/issues/204*/
-@media (hover: none) {
-    .logs__action {
-        top: 1rem !important;
-        right: 1rem;
-    }
-
-    .logs__table .rt-td,
-    .clients__table .rt-td {
-        position: initial;
-    }
-
-    .logs__row {
-        position: initial;
-    }
 }

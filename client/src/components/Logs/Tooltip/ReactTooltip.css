@@ -4,14 +4,9 @@
     box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.2);
     border-radius: 4px !important;
     pointer-events: auto !important;
-}
-
-/*crutch, may cause problems https://github.com/wwayne/react-tooltip/issues/204*/
-@media (hover: none) {
-    .custom-tooltip {
-        position: absolute !important;
-        top: 4rem !important;
-    }
+    /*may cause problems https://github.com/wwayne/react-tooltip/issues/204*/
+    position: absolute !important;
+    top: 4rem !important;
 }
 
 .white-space--nowrap {

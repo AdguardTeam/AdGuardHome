@@ -19,13 +19,16 @@ const getHintElement = ({
 }) => {
     const id = 'id';
 
-    const [isHovered, hover] = useState(false);
+    const [isTooltipOpen, setTooltipOpen] = useState(false);
 
-    const openTooltip = () => hover(true);
-    const closeTooltip = () => hover(false);
+    const closeTooltip = () => setTooltipOpen(false);
 
-    return <div onMouseEnter={openTooltip}
-                onMouseLeave={closeTooltip}>
+    const openTooltip = () => {
+        window.document.addEventListener('click', closeTooltip);
+        setTooltipOpen(true);
+    };
+    // TODO: close previous tooltip on new tooltip open
+    return <div onMouseEnter={openTooltip}>
         <div data-tip={dataTip}
              data-for={dataTip ? id : undefined}
              data-event={trigger}
@@ -34,7 +37,7 @@ const getHintElement = ({
                 <use xlinkHref={`#${xlinkHref}`} />
             </svg>}
         </div>
-        {isHovered && dataTip
+        {isTooltipOpen && dataTip
         && <CustomTooltip
             className={tooltipClass}
             id={id}

@@ -3,10 +3,9 @@ import PropTypes from 'prop-types';
 import ReactTooltip from 'react-tooltip';
 import classNames from 'classnames';
 import './ReactTooltip.css';
-import { touchMediaQuery } from '../../../helpers/constants';
 
 const Tooltip = ({
-    id, children, className = '', place = 'right', trigger = 'hover', overridePosition, scrollHide = true,
+    id, children, className = '', place = 'right', overridePosition, scrollHide = false,
 }) => {
     const tooltipClassName = classNames('custom-tooltip', className);
 
@@ -20,9 +19,8 @@ const Tooltip = ({
             backgroundColor="#fff"
             arrowColor="transparent"
             textColor="#4d4d4d"
-            delayHide={300}
-            scrollHide={window.matchMedia(touchMediaQuery).matches ? false : scrollHide}
-            trigger={trigger}
+            delayHide={30000}
+            scrollHide={scrollHide}
             overridePosition={overridePosition}
             globalEventOff="click touchend"
             clickable

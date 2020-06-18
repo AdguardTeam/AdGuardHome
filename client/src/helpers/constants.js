@@ -503,5 +503,3 @@ export const FORM_NAME = {
 };
 
 export const smallScreenSize = 767;
-
-export const touchMediaQuery = '(hover: none)';
