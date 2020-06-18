@@ -1213,15 +1213,15 @@ components:
                 top_queried_domains:
                     type: array
                     items:
-                        type: object
+                        $ref: "#/components/schemas/TopArrayEntry"
                 top_clients:
                     type: array
                     items:
-                        type: object
+                        $ref: "#/components/schemas/TopArrayEntry"
                 top_blocked_domains:
                     type: array
                     items:
-                        type: object
+                        $ref: "#/components/schemas/TopArrayEntry"
                 dns_queries:
                     type: array
                     items:
@@ -1238,6 +1238,12 @@ components:
                     type: array
                     items:
                         type: integer
+        TopArrayEntry:
+            type: object
+            description: Represent the number of hits per key (domain or client IP)
+            properties:
+                domain_or_ip:
+                    type: integer
         StatsConfig:
             type: object
             description: Statistics configuration
