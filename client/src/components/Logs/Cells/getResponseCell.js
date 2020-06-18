@@ -48,7 +48,7 @@ const getResponseCell = (row, filtering, t, isDetailed) => {
 
         return <div>{responseArr.map((response) => {
             const className = classNames('white-space--nowrap', {
-                'white-space--normal': response.length > 100,
+                'overflow-break': response.length > 100,
             });
 
             return <div key={response} className={className}>{`${response}\n`}</div>;
@@ -65,6 +65,13 @@ const getResponseCell = (row, filtering, t, isDetailed) => {
             response_table_header: renderResponses(response),
         },
         [FILTERED_STATUS.FILTERED_BLOCKED_SERVICE]: {
+            domain,
+            encryption_status: boldStatusLabel,
+            filter,
+            rule_label: rule,
+            response_code: status,
+        },
+        [FILTERED_STATUS.NOT_FILTERED_WHITE_LIST]: {
             domain,
             encryption_status: boldStatusLabel,
             filter,
@@ -102,11 +109,10 @@ const getResponseCell = (row, filtering, t, isDetailed) => {
                 columnClass: 'grid grid--limited',
                 tooltipClass: 'px-5 pb-5 pt-4 mw-75 custom-tooltip__response-details',
                 contentItemClass: 'text-truncate key-colon o-hidden',
-                dataTip: true,
                 xlinkHref: 'question',
                 title: 'response_details',
                 content: fields,
-                place: 'bottom',
+                placement: 'bottom',
             })}
             <div className="text-truncate">
                 <div className="text-truncate" title={statusLabel}>{statusLabel}</div>

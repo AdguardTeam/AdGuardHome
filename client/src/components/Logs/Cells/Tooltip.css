@@ -1,29 +1,22 @@
-.custom-tooltip {
+.tooltip__container {
     padding: 1rem 1.5rem 1.25rem 1.5rem;
     font-size: 16px !important;
     box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.2);
     border-radius: 4px !important;
     pointer-events: auto !important;
-}
-
-/*crutch, may cause problems https://github.com/wwayne/react-tooltip/issues/204*/
-@media (hover: none) {
-    .custom-tooltip {
-        position: absolute !important;
-        top: 4rem !important;
-    }
+    background-color: var(--white);
+    z-index: 102;
+    overflow-y: scroll;
+    max-height: 100%;
 }
 
 .white-space--nowrap {
     white-space: nowrap !important;
 }
 
-.white-space--normal {
+.overflow-break {
     white-space: normal !important;
-}
-
-.word-break--break-all {
-    word-break: break-all !important;
+    overflow-wrap: break-word;
 }
 
 .grid {
@@ -74,10 +67,6 @@
     .grid .key-colon, .grid .title--border {
         font-weight: bold;
     }
-
-    .custom-tooltip {
-        overflow-y: scroll;
-    }
 }
 
 .grid .key-colon:nth-child(odd)::after {
@@ -90,14 +79,6 @@
 
 .grid__flow-column {
     grid-auto-flow: column;
-}
-
-.custom-tooltip.show {
-    opacity: 1 !important;
-}
-
-.custom-tooltip:hover {
-    opacity: 1 !important;
 }
 
 .grid-content > * {

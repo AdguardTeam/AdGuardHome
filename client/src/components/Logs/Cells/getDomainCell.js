@@ -37,11 +37,11 @@ const getDomainCell = (props) => {
     const dnssecHint = getHintElement({
         className: lockIconClass,
         tooltipClass: 'py-4 px-5 pb-45',
-        dataTip: answer_dnssec,
+        canShowTooltip: answer_dnssec,
         xlinkHref: 'lock',
         columnClass: 'w-100',
         content: 'validated_with_dnssec',
-        place: 'bottom',
+        placement: 'bottom',
     });
 
     const protocol = t(SCHEME_TO_PROTOCOL_MAP[client_proto]) || '';
@@ -64,7 +64,7 @@ const getDomainCell = (props) => {
     const renderGrid = (content, idx) => {
         const preparedContent = typeof content === 'string' ? t(content) : content;
         const className = classNames('text-truncate key-colon o-hidden', {
-            'word-break--break-all white-space--normal': preparedContent.length > 100,
+            'overflow-break': preparedContent.length > 100,
         });
         return <div key={idx} className={className}>{preparedContent}</div>;
     };
@@ -81,7 +81,6 @@ const getDomainCell = (props) => {
     const trackerHint = getHintElement({
         className: privacyIconClass,
         tooltipClass: 'pt-4 pb-5 px-5 mw-75',
-        dataTip: true,
         xlinkHref: 'privacy',
         contentItemClass: 'key-colon',
         renderContent,

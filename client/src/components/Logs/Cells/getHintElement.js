@@ -1,55 +1,50 @@
-import React, { useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import CustomTooltip from '../Tooltip/CustomTooltip';
+import TooltipTrigger from 'react-popper-tooltip';
+import { Trans } from 'react-i18next';
+import classNames from 'classnames';
+import './Tooltip.css';
+import 'react-popper-tooltip/dist/styles.css';
+import { HIDE_TOOLTIP_DELAY } from '../../../helpers/constants';
 
 const getHintElement = ({
     className,
     contentItemClass,
     columnClass,
-    dataTip,
+    canShowTooltip = true,
     xlinkHref,
-    content,
     title,
-    place,
+    placement,
     tooltipClass,
-    trigger,
-    overridePosition,
-    scrollHide,
-    renderContent,
-}) => {
-    const id = 'id';
-
-    const [isHovered, hover] = useState(false);
-
-    const openTooltip = () => hover(true);
-    const closeTooltip = () => hover(false);
-
-    return <div onMouseEnter={openTooltip}
-                onMouseLeave={closeTooltip}>
-        <div data-tip={dataTip}
-             data-for={dataTip ? id : undefined}
-             data-event={trigger}
+    content,
+    renderContent = React.Children.map(
+        content,
+        (item, idx) => <div key={idx} className={contentItemClass}>
+            <Trans>{item || '—'}</Trans>
+        </div>,
+    ),
+}) => <TooltipTrigger placement={placement} trigger="hover" delayHide={HIDE_TOOLTIP_DELAY} tooltip={
+        ({
+            tooltipRef,
+            getTooltipProps,
+        }) => <div {...getTooltipProps({
+            ref: tooltipRef,
+            className: classNames('tooltip__container', tooltipClass, { 'd-none': !canShowTooltip }),
+        })}
         >
+            {title && <div className="pb-4 h-25 grid-content font-weight-bold">
+                <Trans>{title}</Trans>
+            </div>}
+            <div className={classNames(columnClass)}>{renderContent}</div>
+        </div>
+    }>{({
+        getTriggerProps, triggerRef,
+    }) => <span {...getTriggerProps({ ref: triggerRef })}>
             {xlinkHref && <svg className={className}>
                 <use xlinkHref={`#${xlinkHref}`} />
             </svg>}
-        </div>
-        {isHovered && dataTip
-        && <CustomTooltip
-            className={tooltipClass}
-            id={id}
-            columnClass={columnClass}
-            contentItemClass={contentItemClass}
-            title={title}
-            place={place}
-            content={content}
-            trigger={trigger}
-            overridePosition={overridePosition}
-            scrollHide={scrollHide}
-            renderContent={renderContent}
-        />}
-    </div>;
-};
+  </span>}
+    </TooltipTrigger>;
 
 getHintElement.propTypes = {
     className: PropTypes.string,
@@ -57,15 +52,9 @@ getHintElement.propTypes = {
     columnClass: PropTypes.string,
     tooltipClass: PropTypes.string,
     title: PropTypes.string,
-    place: PropTypes.string,
-    dataTip: PropTypes.string,
+    placement: PropTypes.string,
+    canShowTooltip: PropTypes.string,
     xlinkHref: PropTypes.string,
-    overridePosition: PropTypes.func,
-    scrollHide: PropTypes.bool,
-    trigger: PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.arrayOf(PropTypes.string),
-    ]),
     content: PropTypes.oneOfType([
         PropTypes.string,
         PropTypes.array,
