@@ -76,17 +76,19 @@ func (a *AutoHosts) Start() {
 	go a.updateLoop()
 	a.updateChan <- true
 
-	go a.watcherLoop()
+	if a.watcher != nil {
+		go a.watcherLoop()
 
-	err := a.watcher.Add(a.hostsFn)
-	if err != nil {
-		log.Error("Error while initializing watcher for a file %s: %s", a.hostsFn, err)
-	}
-
-	for _, dir := range a.hostsDirs {
-		err = a.watcher.Add(dir)
+		err := a.watcher.Add(a.hostsFn)
 		if err != nil {
-			log.Error("Error while initializing watcher for a directory %s: %s", dir, err)
+			log.Error("Error while initializing watcher for a file %s: %s", a.hostsFn, err)
+		}
+
+		for _, dir := range a.hostsDirs {
+			err = a.watcher.Add(dir)
+			if err != nil {
+				log.Error("Error while initializing watcher for a directory %s: %s", dir, err)
+			}
 		}
 	}
 }
@@ -95,7 +97,9 @@ func (a *AutoHosts) Start() {
 func (a *AutoHosts) Close() {
 	a.updateChan <- false
 	close(a.updateChan)
-	_ = a.watcher.Close()
+	if a.watcher != nil {
+		_ = a.watcher.Close()
+	}
 }
 
 // update table

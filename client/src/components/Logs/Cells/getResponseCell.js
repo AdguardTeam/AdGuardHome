@@ -82,6 +82,13 @@ const getResponseCell = (row, filtering, t, isDetailed) => {
             rule_label: rule,
             response_code: status,
         },
+        [FILTERED_STATUS.NOT_FILTERED_WHITE_LIST]: {
+            domain,
+            encryption_status: boldStatusLabel,
+            filter,
+            rule_label: rule,
+            response_code: status,
+        },
         [FILTERED_STATUS.FILTERED_SAFE_SEARCH]: {
             domain,
             encryption_status: boldStatusLabel,
