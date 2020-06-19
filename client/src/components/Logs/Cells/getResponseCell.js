@@ -67,6 +67,8 @@ const getResponseCell = (row, filtering, t, isDetailed) => {
         [FILTERED_STATUS.FILTERED_BLOCKED_SERVICE]: {
             domain,
             encryption_status: boldStatusLabel,
+            install_settings_dns: upstream,
+            elapsed: formattedElapsedMs,
             filter,
             rule_label: rule,
             response_code: status,
@@ -74,6 +76,8 @@ const getResponseCell = (row, filtering, t, isDetailed) => {
         [FILTERED_STATUS.NOT_FILTERED_WHITE_LIST]: {
             domain,
             encryption_status: boldStatusLabel,
+            install_settings_dns: upstream,
+            elapsed: formattedElapsedMs,
             filter,
             rule_label: rule,
             response_code: status,
