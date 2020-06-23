@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/querylog"
 	"github.com/AdguardTeam/AdGuardHome/stats"
@@ -43,11 +44,15 @@ var webRegistered bool
 //
 // The zero Server is empty and ready for use.
 type Server struct {
-	dnsProxy  *proxy.Proxy         // DNS proxy instance
-	dnsFilter *dnsfilter.Dnsfilter // DNS filter instance
-	queryLog  querylog.QueryLog    // Query log instance
-	stats     stats.Stats
-	access    *accessCtx
+	dnsProxy   *proxy.Proxy         // DNS proxy instance
+	dnsFilter  *dnsfilter.Dnsfilter // DNS filter instance
+	dhcpServer *dhcpd.Server        // DHCP server instance (optional)
+	queryLog   querylog.QueryLog    // Query log instance
+	stats      stats.Stats
+	access     *accessCtx
+
+	tablePTR     map[string]string // "IP -> hostname" table for reverse lookup
+	tablePTRLock sync.Mutex
 
 	// DNS proxy instance for internal usage
 	// We don't Start() it and so no listen port is required.
@@ -59,13 +64,27 @@ type Server struct {
 	conf ServerConfig
 }
 
+// DNSCreateParams - parameters for NewServer()
+type DNSCreateParams struct {
+	DNSFilter  *dnsfilter.Dnsfilter
+	Stats      stats.Stats
+	QueryLog   querylog.QueryLog
+	DHCPServer *dhcpd.Server
+}
+
 // NewServer creates a new instance of the dnsforward.Server
 // Note: this function must be called only once
-func NewServer(dnsFilter *dnsfilter.Dnsfilter, stats stats.Stats, queryLog querylog.QueryLog) *Server {
+func NewServer(p DNSCreateParams) *Server {
 	s := &Server{}
-	s.dnsFilter = dnsFilter
-	s.stats = stats
-	s.queryLog = queryLog
+	s.dnsFilter = p.DNSFilter
+	s.stats = p.Stats
+	s.queryLog = p.QueryLog
+	s.dhcpServer = p.DHCPServer
+
+	if s.dhcpServer != nil {
+		s.dhcpServer.SetOnLeaseChanged(s.onDHCPLeaseChanged)
+		s.onDHCPLeaseChanged(dhcpd.LeaseChangedAdded)
+	}
 
 	if runtime.GOARCH == "mips" || runtime.GOARCH == "mipsle" {
 		// Use plain DNS on MIPS, encryption is too slow

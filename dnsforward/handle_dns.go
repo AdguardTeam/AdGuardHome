@@ -1,9 +1,12 @@
 package dnsforward
 
 import (
+	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/util"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
@@ -39,6 +42,7 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 	type modProcessFunc func(ctx *dnsContext) int
 	mods := []modProcessFunc{
 		processInitial,
+		processInternalIPAddrs,
 		processFilteringBeforeRequest,
 		processUpstream,
 		processDNSSECAfterResponse,
@@ -88,10 +92,81 @@ func processInitial(ctx *dnsContext) int {
 	return resultDone
 }
 
+func (s *Server) onDHCPLeaseChanged(flags int) {
+	switch flags {
+	case dhcpd.LeaseChangedAdded,
+		dhcpd.LeaseChangedAddedStatic,
+		dhcpd.LeaseChangedRemovedStatic:
+		//
+	default:
+		return
+	}
+
+	m := make(map[string]string)
+	ll := s.dhcpServer.Leases(dhcpd.LeasesAll)
+	for _, l := range ll {
+		if len(l.Hostname) == 0 {
+			continue
+		}
+		m[l.IP.String()] = l.Hostname
+	}
+	log.Debug("DNS: added %d PTR entries from DHCP", len(m))
+	s.tablePTRLock.Lock()
+	s.tablePTR = m
+	s.tablePTRLock.Unlock()
+}
+
+// Respond to PTR requests if the target IP address is leased by our DHCP server
+func processInternalIPAddrs(ctx *dnsContext) int {
+	s := ctx.srv
+	req := ctx.proxyCtx.Req
+	if req.Question[0].Qtype != dns.TypePTR {
+		return resultDone
+	}
+
+	arpa := req.Question[0].Name
+	arpa = strings.TrimSuffix(arpa, ".")
+	arpa = strings.ToLower(arpa)
+	ip := util.DNSUnreverseAddr(arpa)
+	if ip == nil {
+		return resultDone
+	}
+
+	s.tablePTRLock.Lock()
+	if s.tablePTR == nil {
+		s.tablePTRLock.Unlock()
+		return resultDone
+	}
+	host, ok := s.tablePTR[ip.String()]
+	s.tablePTRLock.Unlock()
+	if !ok {
+		return resultDone
+	}
+
+	log.Debug("DNS: reverse-lookup: %s -> %s", arpa, host)
+
+	resp := s.makeResponse(req)
+	ptr := &dns.PTR{}
+	ptr.Hdr = dns.RR_Header{
+		Name:   req.Question[0].Name,
+		Rrtype: dns.TypePTR,
+		Ttl:    s.conf.BlockedResponseTTL,
+		Class:  dns.ClassINET,
+	}
+	ptr.Ptr = host + "."
+	resp.Answer = append(resp.Answer, ptr)
+	ctx.proxyCtx.Res = resp
+	return resultDone
+}
+
 // Apply filtering logic
 func processFilteringBeforeRequest(ctx *dnsContext) int {
 	s := ctx.srv
 	d := ctx.proxyCtx
+
+	if d.Res != nil {
+		return resultDone // response is already set - nothing to do
+	}
 
 	s.RLock()
 	// Synchronize access to s.dnsFilter so it won't be suddenly uninitialized while in use.

@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -496,7 +497,7 @@ func TestBlockedCustomIP(t *testing.T) {
 	c := dnsfilter.Config{}
 
 	f := dnsfilter.New(&c, filters)
-	s := NewServer(f, nil, nil)
+	s := NewServer(DNSCreateParams{DNSFilter: f})
 	conf := ServerConfig{}
 	conf.UDPListenAddr = &net.UDPAddr{Port: 0}
 	conf.TCPListenAddr = &net.TCPAddr{Port: 0}
@@ -648,7 +649,7 @@ func TestRewrite(t *testing.T) {
 	}
 
 	f := dnsfilter.New(&c, nil)
-	s := NewServer(f, nil, nil)
+	s := NewServer(DNSCreateParams{DNSFilter: f})
 	conf := ServerConfig{}
 	conf.UDPListenAddr = &net.UDPAddr{Port: 0}
 	conf.TCPListenAddr = &net.TCPAddr{Port: 0}
@@ -705,7 +706,7 @@ func createTestServer(t *testing.T) *Server {
 	c.CacheTime = 30
 
 	f := dnsfilter.New(&c, filters)
-	s := NewServer(f, nil, nil)
+	s := NewServer(DNSCreateParams{DNSFilter: f})
 	s.conf.UDPListenAddr = &net.UDPAddr{Port: 0}
 	s.conf.TCPListenAddr = &net.TCPAddr{Port: 0}
 	s.conf.UpstreamDNS = []string{"8.8.8.8:53", "8.8.4.4:53"}
@@ -1011,4 +1012,40 @@ func TestMatchDNSName(t *testing.T) {
 	assert.True(t, !matchDNSName(dnsNames, "host2"))
 	assert.True(t, !matchDNSName(dnsNames, ""))
 	assert.True(t, !matchDNSName(dnsNames, "*.host2"))
+}
+
+func TestPTRResponse(t *testing.T) {
+	dhcp := &dhcpd.Server{}
+	dhcp.IPpool = make(map[[4]byte]net.HardwareAddr)
+
+	c := dnsfilter.Config{}
+	f := dnsfilter.New(&c, nil)
+	s := NewServer(DNSCreateParams{DNSFilter: f, DHCPServer: dhcp})
+	s.conf.UDPListenAddr = &net.UDPAddr{Port: 0}
+	s.conf.TCPListenAddr = &net.TCPAddr{Port: 0}
+	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
+	s.conf.FilteringConfig.ProtectionEnabled = true
+	err := s.Prepare(nil)
+	assert.True(t, err == nil)
+	assert.Nil(t, s.Start())
+
+	l := dhcpd.Lease{}
+	l.IP = net.ParseIP("127.0.0.1").To4()
+	l.HWAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:aa")
+	l.Hostname = "localhost"
+	dhcp.AddStaticLease(l)
+
+	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
+	req := createTestMessage("1.0.0.127.in-addr.arpa.")
+	req.Question[0].Qtype = dns.TypePTR
+
+	resp, err := dns.Exchange(req, addr.String())
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(resp.Answer))
+	assert.Equal(t, dns.TypePTR, resp.Answer[0].Header().Rrtype)
+	assert.Equal(t, "1.0.0.127.in-addr.arpa.", resp.Answer[0].Header().Name)
+	ptr := resp.Answer[0].(*dns.PTR)
+	assert.Equal(t, "localhost.", ptr.Ptr)
+
+	s.Close()
 }

@@ -9,7 +9,7 @@ import (
 
 func prepareTestDNSServer() error {
 	config.DNS.Port = 1234
-	Context.dnsServer = dnsforward.NewServer(nil, nil, nil)
+	Context.dnsServer = dnsforward.NewServer(dnsforward.DNSCreateParams{})
 	conf := &dnsforward.ServerConfig{}
 	conf.UpstreamDNS = []string{"8.8.8.8"}
 	return Context.dnsServer.Prepare(conf)
