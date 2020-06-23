@@ -328,8 +328,7 @@ func StartMods() error {
 	return nil
 }
 
-// Check if the current user has root (administrator) rights
-//  and if not, ask and try to run as root
+// Check if the current user permissions are enough to run AdGuard Home
 func checkPermissions() {
 	log.Info("Checking if AdGuard Home has necessary permissions")
 
