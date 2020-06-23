@@ -157,6 +157,7 @@ func (d *Dnsfilter) checkSafeSearch(host string) (Result, error) {
 }
 
 // for each dot, hash it and add it to string
+// The maximum is 4 components: "a.b.c.d"
 func hostnameToHashParam(host string) (string, map[string]bool) {
 	var hashparam bytes.Buffer
 	hashes := map[string]bool{}
@@ -166,6 +167,18 @@ func hostnameToHashParam(host string) (string, map[string]bool) {
 		tld = ""
 	}
 	curhost := host
+
+	nDots := 0
+	for i := len(curhost) - 1; i >= 0; i-- {
+		if curhost[i] == '.' {
+			nDots++
+			if nDots == 4 {
+				curhost = curhost[i+1:] // "xxx.a.b.c.d" -> "a.b.c.d"
+				break
+			}
+		}
+	}
+
 	for {
 		if curhost == "" {
 			// we've reached end of string
