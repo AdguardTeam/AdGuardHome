@@ -1,23 +1,19 @@
 package home
 
 import (
-	"bufio"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"runtime"
 	"strconv"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -172,7 +168,7 @@ func run(args options) {
 	Context.firstRun = detectFirstRun()
 	if Context.firstRun {
 		log.Info("This is the first time AdGuard Home is launched")
-		requireAdminRights()
+		checkPermissions()
 	}
 
 	initConfig()
@@ -334,36 +330,54 @@ func StartMods() error {
 
 // Check if the current user has root (administrator) rights
 //  and if not, ask and try to run as root
-func requireAdminRights() {
-	admin, _ := util.HaveAdminRights()
-	if //noinspection ALL
-	admin || isdelve.Enabled {
-		// Don't forget that for this to work you need to add "delve" tag explicitly
-		// https://stackoverflow.com/questions/47879070/how-can-i-see-if-the-goland-debugger-is-running-in-the-program
+func checkPermissions() {
+	log.Info("Checking if AdGuard Home has necessary permissions")
+
+	if runtime.GOOS == "windows" {
+		// On Windows we need to have admin rights to run properly
+
+		admin, _ := util.HaveAdminRights()
+		if //noinspection ALL
+		admin || isdelve.Enabled {
+			// Don't forget that for this to work you need to add "delve" tag explicitly
+			// https://stackoverflow.com/questions/47879070/how-can-i-see-if-the-goland-debugger-is-running-in-the-program
+			return
+		}
+
+		log.Fatal("This is the first launch of AdGuard Home. You must run it as Administrator.")
+	}
+
+	// We should check if AdGuard Home is able to bind to port 53
+	ok, err := util.CanBindPort(53)
+
+	if ok {
+		log.Info("AdGuard Home can bind to port 53")
 		return
 	}
 
-	if runtime.GOOS == "windows" {
-		log.Fatal("This is the first launch of AdGuard Home. You must run it as Administrator.")
+	if opErr, ok := err.(*net.OpError); ok {
+		if sysErr, ok := opErr.Err.(*os.SyscallError); ok {
+			if errno, ok := sysErr.Err.(syscall.Errno); ok && errno == syscall.EACCES {
+				msg := `Permission check failed.
 
-	} else {
-		log.Error("This is the first launch of AdGuard Home. You must run it as root.")
+AdGuard Home is not allowed to bind to privileged ports (for instance, port 53).
+Please note, that this is crucial for a server to be able to use privileged ports.
 
-		_, _ = io.WriteString(os.Stdout, "Do you want to start AdGuard Home as root user? [y/n] ")
-		stdin := bufio.NewReader(os.Stdin)
-		buf, _ := stdin.ReadString('\n')
-		buf = strings.TrimSpace(buf)
-		if buf != "y" {
-			os.Exit(1)
+You have two options:
+1. Run AdGuard Home with root privileges
+2. On Linux you can grant the CAP_NET_BIND_SERVICE capability:
+https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#running-without-superuser`
+
+				log.Fatal(msg)
+			}
 		}
-
-		cmd := exec.Command("sudo", os.Args...)
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		_ = cmd.Run()
-		os.Exit(1)
 	}
+
+	msg := fmt.Sprintf(`AdGuard failed to bind to port 53 due to %v
+
+Please note, that this is crucial for a DNS server to be able to use that port.`, err)
+
+	log.Info(msg)
 }
 
 // Write PID to a file
