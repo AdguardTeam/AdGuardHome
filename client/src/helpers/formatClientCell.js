@@ -36,7 +36,9 @@ export const formatClientCell = (row, t, isDetailed = false) => {
             nameContainer = isDetailed
                 ? <small title={value}>{value}</small>
                 : <div className="logs__text logs__text--nowrap" title={`${name} (${value})`}>
-                    {name}<small>{`(${value})`}</small>
+                    {name}
+                    {' '}
+                    <small>{`(${value})`}</small>
                 </div>;
         }
 
