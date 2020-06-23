@@ -235,6 +235,7 @@ func applyAdditionalFiltering(clientAddr string, setts *dnsfilter.RequestFilteri
 	if len(clientAddr) == 0 {
 		return
 	}
+	setts.ClientIP = clientAddr
 
 	c, ok := Context.clients.Find(clientAddr)
 	if !ok {
@@ -247,6 +248,7 @@ func applyAdditionalFiltering(clientAddr string, setts *dnsfilter.RequestFilteri
 		Context.dnsFilter.ApplyBlockedServices(setts, c.BlockedServices, false)
 	}
 
+	setts.ClientName = c.Name
 	setts.ClientTags = c.Tags
 
 	if !c.UseOwnSettings {

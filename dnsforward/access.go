@@ -122,7 +122,7 @@ func (a *accessCtx) IsBlockedIP(ip string) bool {
 // IsBlockedDomain - return TRUE if this domain should be blocked
 func (a *accessCtx) IsBlockedDomain(host string) bool {
 	a.lock.Lock()
-	_, ok := a.blockedHostsEngine.Match(host, nil)
+	_, ok := a.blockedHostsEngine.Match(host)
 	a.lock.Unlock()
 	return ok
 }
