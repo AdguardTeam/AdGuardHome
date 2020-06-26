@@ -24,6 +24,9 @@ architectures:
   - build-on: arm64
 
 parts:
+  web-launcher:
+    plugin: dump
+    source: snap/local
   adguard-home:
     plugin: make
     source: .
@@ -39,3 +42,6 @@ apps:
     plugs: [ network-bind ]
     daemon: simple
     restart-condition: always
+  adguard-home-web:
+    command: adguard-home-web.sh
+    plugs: [desktop]

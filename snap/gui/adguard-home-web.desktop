@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=AdGuard Home
+Comment=Network-wide ads & trackers blocking DNS server
+Exec=adguard-home.adguard-home-web
+Icon=${SNAP}/meta/gui/adguard-home-web.png
+Terminal=false
