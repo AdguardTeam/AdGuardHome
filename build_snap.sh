@@ -122,7 +122,6 @@ build_snap_docker() {
     prepare
 
     docker run ${INTERACTIVE} --rm \
-        --dns 8.8.8.8 \
         -v $(pwd):/build \
         -v $(pwd)/launchpad_credentials:/root/${LAUNCHPAD_CREDENTIALS_DIR}/credentials:ro \
         ${BUILDER_IMAGE} \
@@ -183,7 +182,6 @@ publish_snap_docker() {
 
     # Login and publish the snap
     docker run ${INTERACTIVE} --rm \
-        --dns 8.8.8.8 \
         -v $(pwd):/build \
         ${BUILDER_IMAGE} \
         sh -c "snapcraft login --with=/build/snapcraft_login && snapcraft push --release=${CHANNEL} /build/${snapFile}"
