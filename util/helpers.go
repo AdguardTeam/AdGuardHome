@@ -92,3 +92,12 @@ func IsOpenWrt() bool {
 
 	return strings.Contains(string(body), "OpenWrt")
 }
+
+// IsFreeBSD checks if OS is FreeBSD
+func IsFreeBSD() bool {
+	if runtime.GOOS == "freebsd" {
+		return true
+	}
+
+	return false
+}
