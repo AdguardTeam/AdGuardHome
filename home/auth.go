@@ -80,7 +80,10 @@ func InitAuth(dbFilename string, users []User, sessionTTL uint32) *Auth {
 	var err error
 	a.db, err = bbolt.Open(dbFilename, 0644, nil)
 	if err != nil {
-		log.Error("Auth: bbolt.Open: %s", err)
+		log.Error("Auth: open DB: %s: %s", dbFilename, err)
+		if err.Error() == "invalid argument" {
+			log.Error("AdGuard Home cannot be initialized due to an incompatible file system.\nPlease read the explanation here: https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#limitations")
+		}
 		return nil
 	}
 	a.loadSessions()
