@@ -645,8 +645,10 @@ func printHTTPAddresses(proto string) {
 		}
 
 		for _, iface := range ifaces {
-			address = net.JoinHostPort(iface.Addresses[0], port)
-			log.Printf("Go to %s://%s", proto, address)
+			for _, addr := range iface.Addresses {
+				address = net.JoinHostPort(addr, strconv.Itoa(config.BindPort))
+				log.Printf("Go to %s://%s", proto, address)
+			}
 		}
 	} else {
 		address = net.JoinHostPort(config.BindHost, port)
