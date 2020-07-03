@@ -59,7 +59,7 @@ func TestQueryLog(t *testing.T) {
 	params.searchCriteria = append(params.searchCriteria, searchCriteria{
 		criteriaType: ctDomainOrClient,
 		strict:       true,
-		value:        "test.example.org",
+		value:        "TEST.example.org",
 	})
 	entries, _ = l.search(params)
 	assert.Equal(t, 1, len(entries))
@@ -70,7 +70,7 @@ func TestQueryLog(t *testing.T) {
 	params.searchCriteria = append(params.searchCriteria, searchCriteria{
 		criteriaType: ctDomainOrClient,
 		strict:       false,
-		value:        "example.org",
+		value:        "example.ORG",
 	})
 	entries, _ = l.search(params)
 	assert.Equal(t, 3, len(entries))
