@@ -3,9 +3,9 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.14
 
 require (
-	github.com/AdguardTeam/dnsproxy v0.29.0
+	github.com/AdguardTeam/dnsproxy v0.29.1
 	github.com/AdguardTeam/golibs v0.4.2
-	github.com/AdguardTeam/urlfilter v0.10.1
+	github.com/AdguardTeam/urlfilter v0.11.0
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/gobuffalo/packr v1.30.1

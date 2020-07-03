@@ -142,10 +142,6 @@ func (l *queryLog) parseSearchCriteria(q url.Values, name string, ct criteriaTyp
 		c.strict = true
 	}
 
-	if ct == ctClient && l.conf.AnonymizeClientIP {
-		c.value = l.getClientIP(c.value)
-	}
-
 	if ct == ctFilteringStatus && !util.ContainsString(filteringStatusValues, c.value) {
 		return false, c, fmt.Errorf("invalid value %s", c.value)
 	}
@@ -180,10 +176,8 @@ func (l *queryLog) parseSearchParams(r *http.Request) (*searchParams, error) {
 	}
 
 	paramNames := map[string]criteriaType{
-		"filter_domain":          ctDomain,
-		"filter_client":          ctClient,
-		"filter_question_type":   ctQuestionType,
-		"filter_response_status": ctFilteringStatus,
+		"search":          ctDomainOrClient,
+		"response_status": ctFilteringStatus,
 	}
 
 	for k, v := range paramNames {

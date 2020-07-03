@@ -37,6 +37,9 @@ func decodeLogEntry(ent *logEntry, str string) {
 		case "QC":
 			ent.QClass = v
 
+		case "CP":
+			ent.ClientProto = v
+
 		case "Answer":
 			ent.Answer, err = base64.StdEncoding.DecodeString(v)
 		case "OrigAnswer":

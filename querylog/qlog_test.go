@@ -57,9 +57,9 @@ func TestQueryLog(t *testing.T) {
 	// search by domain (strict)
 	params = newSearchParams()
 	params.searchCriteria = append(params.searchCriteria, searchCriteria{
-		criteriaType: ctDomain,
+		criteriaType: ctDomainOrClient,
 		strict:       true,
-		value:        "test.example.org",
+		value:        "TEST.example.org",
 	})
 	entries, _ = l.search(params)
 	assert.Equal(t, 1, len(entries))
@@ -68,9 +68,9 @@ func TestQueryLog(t *testing.T) {
 	// search by domain (not strict)
 	params = newSearchParams()
 	params.searchCriteria = append(params.searchCriteria, searchCriteria{
-		criteriaType: ctDomain,
+		criteriaType: ctDomainOrClient,
 		strict:       false,
-		value:        "example.org",
+		value:        "example.ORG",
 	})
 	entries, _ = l.search(params)
 	assert.Equal(t, 3, len(entries))
@@ -81,7 +81,7 @@ func TestQueryLog(t *testing.T) {
 	// search by client IP (strict)
 	params = newSearchParams()
 	params.searchCriteria = append(params.searchCriteria, searchCriteria{
-		criteriaType: ctClient,
+		criteriaType: ctDomainOrClient,
 		strict:       true,
 		value:        "2.2.2.2",
 	})
@@ -92,7 +92,7 @@ func TestQueryLog(t *testing.T) {
 	// search by client IP (part of)
 	params = newSearchParams()
 	params.searchCriteria = append(params.searchCriteria, searchCriteria{
-		criteriaType: ctClient,
+		criteriaType: ctDomainOrClient,
 		strict:       false,
 		value:        "2.2.2",
 	})

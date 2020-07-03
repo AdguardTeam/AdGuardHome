@@ -129,7 +129,9 @@ func (l *queryLog) searchFiles(params *searchParams) ([]*logEntry, time.Time, in
 		}
 	}
 
-	oldest = time.Unix(0, oldestNano)
+	if oldestNano != 0 {
+		oldest = time.Unix(0, oldestNano)
+	}
 	return entries, oldest, total
 }
 

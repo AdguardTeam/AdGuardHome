@@ -53,7 +53,7 @@
     "query_log": "Förfrågningslogg",
     "faq": "FAQ",
     "version": "version",
-    "address": "adress",
+    "address": "Adress",
     "on": "PÅ",
     "off": "AV",
     "copyright": "Copyright",
@@ -143,9 +143,10 @@
     "updated_upstream_dns_toast": "Uppdaterade uppströms-dns-servrar",
     "dns_test_ok_toast": "Angivna DNS servrar fungerar korrekt",
     "dns_test_not_ok_toast": "Server \"{{key}}\": kunde inte användas. Var snäll och kolla att du skrivit in rätt",
-    "unblock_btn": "Avblockera",
-    "block_btn": "Blockera",
+    "unblock": "Avblockera",
+    "block": "Blockera",
     "time_table_header": "Tid",
+    "date": "Datum",
     "domain_name_table_header": "Domännamn",
     "type_table_header": "Typ",
     "response_table_header": "Svar",
@@ -356,5 +357,8 @@
     "netname": "Nätverksnamn",
     "descr": "Beskrivning",
     "whois": "Whois",
-    "filtering_rules_learn_more": "<0>Mer info</0> om att skapa dina egna blockeringslistor för värdar."
+    "filtering_rules_learn_more": "<0>Mer info</0> om att skapa dina egna blockeringslistor för värdar.",
+    "show_blocked_responses": "Blockerade",
+    "blocked_adult_websites": "Blockerade vuxensajter",
+    "blocked_threats": "Blockerade hot"
 }

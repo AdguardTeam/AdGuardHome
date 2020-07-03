@@ -61,7 +61,13 @@ func initDNSServer() error {
 	filterConf.HTTPRegister = httpRegister
 	Context.dnsFilter = dnsfilter.New(&filterConf, nil)
 
-	Context.dnsServer = dnsforward.NewServer(Context.dnsFilter, Context.stats, Context.queryLog)
+	p := dnsforward.DNSCreateParams{
+		DNSFilter:  Context.dnsFilter,
+		Stats:      Context.stats,
+		QueryLog:   Context.queryLog,
+		DHCPServer: Context.dhcpServer,
+	}
+	Context.dnsServer = dnsforward.NewServer(p)
 	dnsConfig := generateServerConfig()
 	err = Context.dnsServer.Prepare(&dnsConfig)
 	if err != nil {
@@ -229,6 +235,7 @@ func applyAdditionalFiltering(clientAddr string, setts *dnsfilter.RequestFilteri
 	if len(clientAddr) == 0 {
 		return
 	}
+	setts.ClientIP = clientAddr
 
 	c, ok := Context.clients.Find(clientAddr)
 	if !ok {
@@ -241,6 +248,7 @@ func applyAdditionalFiltering(clientAddr string, setts *dnsfilter.RequestFilteri
 		Context.dnsFilter.ApplyBlockedServices(setts, c.BlockedServices, false)
 	}
 
+	setts.ClientName = c.Name
 	setts.ClientTags = c.Tags
 
 	if !c.UseOwnSettings {

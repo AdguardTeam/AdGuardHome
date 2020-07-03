@@ -9,7 +9,7 @@ const CellWrap = ({ value }, formatValue, formatTitle = formatValue) => {
     const cellTitle = typeof formatTitle === 'function' ? formatTitle(value) : value;
 
     return (
-        <div className="logs__row logs__row--overflow">
+        <div className="logs__row o-hidden">
             <span className="logs__text logs__text--full" title={cellTitle}>
                 {cellValue}
             </span>

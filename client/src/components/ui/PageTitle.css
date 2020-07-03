@@ -3,13 +3,32 @@
     align-items: flex-start;
 }
 
+.page-header--logs {
+    flex-direction: row;
+    align-items: flex-end;
+    margin: 2rem 0 3rem;
+}
+
+@media (max-width: 991px) {
+    .page-header--logs {
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .page-header--logs .page-title {
+        padding-bottom: 2.5rem;;
+    }
+}
+
 .page-subtitle {
     margin-left: 0;
     font-size: 0.9rem;
 }
 
-.page-title {
-    line-height: 2.2rem;
+.page-title--large {
+    font-size: 36px;
+    line-height: 46px;
 }
 
 .page-title__actions {

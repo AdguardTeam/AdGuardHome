@@ -112,6 +112,11 @@
     justify-content: center;
     width: 30px;
     height: 30px;
+    background-color: transparent;
+}
+
+.btn-icon--green {
+    color: var(--green);
 }
 
 .btn-icon-sm {

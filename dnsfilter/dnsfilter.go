@@ -33,8 +33,12 @@ type RequestFilteringSettings struct {
 	SafeSearchEnabled   bool
 	SafeBrowsingEnabled bool
 	ParentalEnabled     bool
-	ClientTags          []string
-	ServicesRules       []ServiceEntry
+
+	ClientName string
+	ClientIP   string
+	ClientTags []string
+
+	ServicesRules []ServiceEntry
 }
 
 // Config allows you to configure DNS filtering with New() or just change variables directly.
@@ -297,7 +301,7 @@ func (d *Dnsfilter) CheckHostRules(host string, qtype uint16, setts *RequestFilt
 		return Result{}, nil
 	}
 
-	return d.matchHost(host, qtype, setts.ClientTags)
+	return d.matchHost(host, qtype, *setts)
 }
 
 // CheckHost tries to match the host against filtering rules,
@@ -335,7 +339,7 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 
 	// try filter lists first
 	if setts.FilteringEnabled {
-		result, err = d.matchHost(host, qtype, setts.ClientTags)
+		result, err = d.matchHost(host, qtype, *setts)
 		if err != nil {
 			return result, err
 		}
@@ -545,14 +549,20 @@ func (d *Dnsfilter) initFiltering(allowFilters, blockFilters []Filter) error {
 }
 
 // matchHost is a low-level way to check only if hostname is filtered by rules, skipping expensive safebrowsing and parental lookups
-func (d *Dnsfilter) matchHost(host string, qtype uint16, ctags []string) (Result, error) {
+func (d *Dnsfilter) matchHost(host string, qtype uint16, setts RequestFilteringSettings) (Result, error) {
 	d.engineLock.RLock()
 	// Keep in mind that this lock must be held no just when calling Match()
 	//  but also while using the rules returned by it.
 	defer d.engineLock.RUnlock()
 
+	ureq := urlfilter.DNSRequest{}
+	ureq.Hostname = host
+	ureq.ClientIP = setts.ClientIP
+	ureq.ClientName = setts.ClientName
+	ureq.SortedClientTags = setts.ClientTags
+
 	if d.filteringEngineWhite != nil {
-		rr, ok := d.filteringEngineWhite.Match(host, ctags)
+		rr, ok := d.filteringEngineWhite.MatchRequest(ureq)
 		if ok {
 			var rule rules.Rule
 			if rr.NetworkRule != nil {
@@ -574,7 +584,7 @@ func (d *Dnsfilter) matchHost(host string, qtype uint16, ctags []string) (Result
 		return Result{}, nil
 	}
 
-	rr, ok := d.filteringEngine.Match(host, ctags)
+	rr, ok := d.filteringEngine.MatchRequest(ureq)
 	if !ok {
 		return Result{}, nil
 	}

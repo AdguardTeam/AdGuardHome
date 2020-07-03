@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React from 'react';
 import ReactTable from 'react-table';
 import PropTypes from 'prop-types';
 import { Trans, withTranslation } from 'react-i18next';
@@ -32,17 +32,17 @@ const renderBlockingButton = (ipMatchListStatus, ip, handleClick, processing) =>
     const buttonProps = ipMatchListStatus === IP_MATCH_LIST_STATUS.NOT_FOUND
         ? {
             className: 'btn-outline-danger',
-            text: 'block_btn',
+            text: 'block',
             type: 'block',
         }
         : {
             className: 'btn-outline-secondary',
-            text: 'unblock_btn',
+            text: 'unblock',
             type: 'unblock',
         };
 
     return (
-        <div className="table__action">
+        <div className="table__action button__action">
             <button
                 type="button"
                 className={`btn btn-sm ${buttonProps.className}`}
@@ -60,13 +60,13 @@ const clientCell = (t, toggleClientStatus, processing, disallowedClients) => fun
     const ipMatchListStatus = getIpMatchListStatus(value, disallowedClients);
 
     return (
-        <Fragment>
+        <>
             <div className="logs__row logs__row--overflow logs__row--column">
                 {formatClientCell(row, t)}
             </div>
             {ipMatchListStatus !== IP_MATCH_LIST_STATUS.CIDR
             && renderBlockingButton(ipMatchListStatus, value, toggleClientStatus, processing)}
-        </Fragment>
+        </>
     );
 };
 

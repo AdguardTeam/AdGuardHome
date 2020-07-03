@@ -7,6 +7,7 @@
         "watch": "cross-env BUILD_ENV=dev webpack --config webpack.dev.js --watch",
         "build-prod": "cross-env BUILD_ENV=prod webpack --config webpack.prod.js",
         "lint": "eslint src",
+        "lint:fix": "eslint src --fix",
         "test": "jest",
         "test:watch": "jest --watch"
     },
@@ -26,6 +27,7 @@
         "react-dom": "^16.13.1",
         "react-i18next": "^11.4.0",
         "react-modal": "^3.11.2",
+        "react-popper-tooltip": "^2.11.1",
         "react-redux": "^7.2.0",
         "react-redux-loading-bar": "^4.6.0",
         "react-router-dom": "^5.2.0",

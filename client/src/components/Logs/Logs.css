@@ -1,8 +1,19 @@
+:root {
+    --gray-4d: #4D4D4D;
+    --gray-8: #888;
+    --danger: #DF3812;
+}
+
 .logs__row {
     position: relative;
     display: flex;
-    align-items: center;
     min-height: 26px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-table .logs__row {
+    overflow: visible;
 }
 
 .logs__row--center {
@@ -13,10 +24,6 @@
     flex-direction: column;
     align-items: flex-start;
     justify-content: center;
-}
-
-.logs__row--overflow {
-    overflow: hidden;
 }
 
 .logs__row--icons {
@@ -35,6 +42,15 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
+    font-size: 1rem;
+    font-family: var(--font-family-sans-serif);
+    color: var(--gray-4d);
+    letter-spacing: 0;
+    line-height: 1.5rem;
+}
+
+.logs__text--bold {
+    font-weight: bold;
 }
 
 .logs__text--full {
@@ -51,6 +67,11 @@
     white-space: normal;
 }
 
+.logs__text--nowrap {
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
 .logs__text--whois {
     line-height: 1.2;
 }
@@ -61,11 +82,18 @@
     margin-right: 5px;
 }
 
-.logs__action,
-.table__action {
-    position: absolute;
-    top: 11px;
-    right: 15px;
+.tooltip__option {
+    height: 2.5rem !important;
+    width: 10.5rem;
+    padding: 0.3125rem 1.5rem 0.6875rem;
+}
+
+.tooltip__option:hover {
+    background-color: var(--gray-f3);
+    cursor: pointer;
+}
+
+.button__action {
     background-color: #fff;
     border-radius: 4px;
     transition: opacity 0.2s ease, visibility 0.2s ease;
@@ -73,9 +101,29 @@
     opacity: 0;
 }
 
+.table__action {
+    position: absolute;
+    top: 11px;
+    right: 15px;
+}
+
+.logs__action {
+    position: absolute;
+    top: 0;
+    right: 1rem;
+}
+
+.logs__action--detailed {
+    top: 5px;
+}
+
 .logs__table .rt-td,
 .clients__table .rt-td {
     position: relative;
+}
+
+.logs__table .rt-thead, .logs__table .rt-tbody {
+    min-width: 100% !important;
 }
 
 .logs__table .rt-tr:hover .logs__action,
@@ -152,14 +200,14 @@
 }
 
 .logs__notice {
-    position: absolute;
+    position: relative;
     z-index: 1;
-    top: 8px;
-    right: 10px;
-    margin-top: 3px;
-    font-size: 12px;
+    top: 0.5rem;
+    right: 2rem;
+    margin-top: 0.1875rem;
+    font-size: 0.75rem;
     text-align: left;
-    color: #a5a5a5;
+    color: var(--gray-a5);
 }
 
 .logs__whois {
@@ -184,4 +232,332 @@
     height: 12px;
     margin-right: 1px;
     opacity: 0.5;
+}
+
+/* New logs */
+.logs__table {
+    background-color: #fff;
+    border: 0;
+    border-radius: 8px;
+    min-height: 42rem;
+    max-width: 100%;
+}
+
+.logs__table--detailed {
+    min-height: 50rem;
+}
+
+.logs__table .rt-thead.-header {
+    box-shadow: none;
+    font-weight: bold;
+}
+
+.logs__table .rt-thead .rt-th {
+    padding: 0.9375rem 0.9375rem 0.875rem 0;
+    text-align: left;
+    border-right: 0;
+}
+
+.logs__table .rt-tbody .rt-td {
+    padding: 1rem 1rem 0.5rem 0;
+    border-right: 0;
+}
+
+.logs__table .rt-thead .rt-th:last-child,
+.logs__table .rt-tbody .rt-td:last-child {
+    padding-right: 0;
+}
+
+.logs__table .rt-tbody .rt-tr-group {
+    border-bottom: 0;
+}
+
+.logs__table .rt-tr {
+    position: relative;
+    padding: 0 24px;
+}
+
+.logs__table .rt-tr {
+    position: relative;
+    padding: 0 1.5rem;
+}
+
+.logs__table .rt-tr-group:not(:first-child) .rt-tr:before {
+    content: "";
+    position: absolute;
+    left: 1.5rem;
+    right: 1.5rem;
+    top: 0;
+    width: calc(100% - 3rem);
+    height: 2px;
+    background-color: rgba(216, 216, 216, 0.23);
+}
+
+.logs__table .rt-tr-group:last-child .rt-tr:after,
+.logs__table .rt-thead .rt-tr:after {
+    display: none;
+}
+
+.logs__time {
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.detailed-info {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: #888888;
+}
+
+.icon--selected {
+    background-color: var(--gray-f3);
+    border: solid 1px var(--gray-d8);
+    border-radius: 4px;
+}
+
+/* Hide 3 and 4 column on mobile */
+.logs__table .rt-thead .rt-th:nth-child(3),
+.logs__table .rt-thead .rt-th:nth-child(4),
+.logs__table .rt-tbody .rt-td:nth-child(3),
+.logs__table .rt-tbody .rt-td:nth-child(4) {
+    display: none;
+}
+
+@media screen and (min-width: 768px) {
+    .logs__table .rt-thead .rt-th:nth-child(3),
+    .logs__table .rt-thead .rt-th:nth-child(4),
+    .logs__table .rt-tbody .rt-td:nth-child(3),
+    .logs__table .rt-tbody .rt-td:nth-child(4) {
+        display: block;
+    }
+}
+
+.text-pre {
+    white-space: pre-wrap !important;
+    overflow-wrap: break-word;
+    overflow: visible;
+}
+
+.custom-pagination {
+    width: 11.875rem !important;
+    background-color: transparent;
+    box-shadow: none !important;
+    border: none !important;
+    align-items: center !important;
+}
+
+.custom-pagination--padding {
+    padding: 2.5rem 0 2.5rem !important;
+}
+
+.custom-pagination .-btn {
+    --side-size: 2rem;
+    background-color: transparent !important;
+    border: 1px solid var(--gray-d8) !important;
+    border-radius: 4px !important;
+    width: var(--side-size) !important;
+    height: var(--side-size) !important;
+}
+
+.custom-pagination .-btn:enabled:hover {
+    background-color: var(--gray-f3) !important;
+}
+
+.custom-pagination .-previous {
+    flex: 0 1 !important;
+}
+
+.custom-pagination .-next {
+    flex: 0 1 !important;
+}
+
+.custom-pagination .-btn {
+    display: flex !important;
+}
+
+.-pageInfo {
+    --side-size: 2rem;
+    font-variant-numeric: tabular-nums !important;
+    background-color: transparent !important;
+    border: 1px solid var(--gray-d8) !important;
+    border-radius: 4px !important;
+    width: var(--side-size) !important;
+    height: var(--side-size) !important;
+    margin: 0 !important;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+}
+
+.pagination-bottom {
+    justify-content: center !important;
+    display: flex !important;
+}
+
+.-center:before {
+    content: '...';
+    transform: translateY(-0.25rem);
+    margin: auto;
+}
+
+.-center:after {
+    content: '...';
+    transform: translateY(-0.25rem);
+    margin: auto;
+}
+
+.icon--detailed-info {
+    position: absolute;
+    right: 0;
+    top: 0.5rem;
+}
+
+.icon--light-gray {
+    color: var(--gray-8);
+}
+
+.link--green {
+    color: var(--green79);
+}
+
+.row--detailed {
+    height: 4.9rem
+}
+
+.w-90 {
+    max-width: 90% !important;
+}
+
+.h-85 {
+    height: 85% !important;
+}
+
+.pt-45 {
+    padding-top: 1.25rem !important;
+}
+
+.pb-45 {
+    padding-bottom: 1.25rem !important;
+}
+
+.py-45 {
+    padding-top: 1.25rem !important;
+    padding-bottom: 1.25rem !important;
+}
+
+.mh-100 {
+    max-height: 100% !important;
+}
+
+.cursor--pointer {
+    cursor: pointer;
+}
+
+.custom-select__arrow--left {
+    background: #fff url('./chevron-down.svg') no-repeat left 0.2rem center;
+    background-size: 1.5rem;
+}
+
+.custom-select--logs {
+    padding: 0.5rem 0.75rem 0.5rem 1.75rem !important;
+}
+
+.bg--danger {
+    color: var(--danger);
+}
+
+.ml-small {
+    margin-left: 3.3125rem;
+}
+
+.form-control--search {
+    width: 39.125rem;
+    box-shadow: 0 1px 0 #ddd;
+    padding: 0 2.5rem;
+    height: 2.25rem;
+}
+
+.form-control--transparent {
+    border: 0 solid transparent !important;
+    background-color: transparent !important;
+}
+
+.input-group-search {
+    background-color: transparent;
+    position: relative;
+    left: 2rem;
+    top: 0.4rem;
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.form-control--container {
+    max-width: 100%;
+}
+
+@media (max-width: 1279.98px) {
+    .form-control--search {
+        max-width: 30.125rem;
+    }
+
+    .form-control--container {
+        max-width: 70%;
+    }
+
+    .form-control--search {
+        max-width: 50%;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .form-control--search {
+        max-width: 40%;
+    }
+
+    .form-control--container {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .rt-tr .logs__row .logs__text {
+        max-width: calc(100% - 1.5rem);
+    }
+
+    .ml-small {
+        margin-left: 1.5rem;
+    }
+}
+
+@media (max-width: 575px) {
+    .logs__table .rt-tr {
+        height: 3.125rem;
+    }
+
+    .logs__table .rt-tbody .rt-td {
+        padding: 0.625rem 1rem 0.875rem 0;
+    }
+
+    .logs__table {
+        min-height: 42rem;
+    }
+}
+
+@media (max-width: 500px) {
+    .form-control--search {
+        max-width: 85%;
+    }
+
+    .field__select {
+        margin-top: 1.5rem;
+    }
+}
+
+.loading__container > .-loading-inner {
+    top: 10rem !important;
+    bottom: initial !important;
+}
+
+.loading__text {
+    transform: translateY(3rem);
 }
