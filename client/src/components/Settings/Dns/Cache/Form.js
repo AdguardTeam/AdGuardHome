@@ -3,31 +3,26 @@ import PropTypes from 'prop-types';
 import { Field, reduxForm } from 'redux-form';
 import { Trans, useTranslation } from 'react-i18next';
 import { shallowEqual, useSelector } from 'react-redux';
-import {
-    biggerOrEqualZero,
-    maxValue,
-    renderInputField,
-    required,
-    toNumber,
-} from '../../../../helpers/form';
-import { FORM_NAME } from '../../../../helpers/constants';
+import { renderInputField, toNumber } from '../../../../helpers/form';
+import { validateBiggerOrEqualZeroValue, getMaxValueValidator, validateRequiredValue } from '../../../../helpers/validators';
+import { FORM_NAME, SECONDS_IN_HOUR } from '../../../../helpers/constants';
 
-const maxValue3600 = maxValue(3600);
+const validateMaxValue3600 = getMaxValueValidator(SECONDS_IN_HOUR);
 
-const getInputFields = ({ required, maxValue3600 }) => [{
+const getInputFields = ({ validateRequiredValue, validateMaxValue3600 }) => [{
     name: 'cache_size',
     title: 'cache_size',
     description: 'cache_size_desc',
     placeholder: 'enter_cache_size',
-    validate: required,
+    validate: validateRequiredValue,
 },
 {
     name: 'cache_ttl_min',
     title: 'cache_ttl_min_override',
     description: 'cache_ttl_min_override_desc',
     placeholder: 'enter_cache_ttl_min_override',
-    max: 3600,
-    validate: maxValue3600,
+    max: SECONDS_IN_HOUR,
+    validate: validateMaxValue3600,
 },
 {
     name: 'cache_ttl_max',
@@ -49,8 +44,8 @@ const Form = ({
     const minExceedsMax = cache_ttl_min > cache_ttl_max;
 
     const INPUTS_FIELDS = getInputFields({
-        required,
-        maxValue3600,
+        validateRequiredValue,
+        validateMaxValue3600,
     });
 
     return <form onSubmit={handleSubmit}>
@@ -71,7 +66,7 @@ const Form = ({
                             disabled={processingSetConfig}
                             normalize={toNumber}
                             className="form-control"
-                            validate={[biggerOrEqualZero].concat(validate || [])}
+                            validate={[validateBiggerOrEqualZeroValue].concat(validate || [])}
                             min={0}
                             max={max}
                         />

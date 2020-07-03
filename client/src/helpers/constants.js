@@ -505,3 +505,5 @@ export const FORM_NAME = {
 };
 
 export const smallScreenSize = 767;
+
+export const SECONDS_IN_HOUR = 60 * 60;

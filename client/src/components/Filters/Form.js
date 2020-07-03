@@ -3,8 +3,8 @@ import PropTypes from 'prop-types';
 import { Field, reduxForm } from 'redux-form';
 import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
-
-import { renderInputField, required, isValidPath } from '../../helpers/form';
+import { renderInputField } from '../../helpers/form';
+import { validatePath, validateRequiredValue } from '../../helpers/validators';
 import { FORM_NAME } from '../../helpers/constants';
 
 const Form = (props) => {
@@ -28,7 +28,7 @@ const Form = (props) => {
                         component={renderInputField}
                         className="form-control"
                         placeholder={t('enter_name_hint')}
-                        validate={[required]}
+                        validate={[validateRequiredValue]}
                         normalizeOnBlur={(data) => data.trim()}
                     />
                 </div>
@@ -40,7 +40,7 @@ const Form = (props) => {
                         component={renderInputField}
                         className="form-control"
                         placeholder={t('enter_url_or_path_hint')}
-                        validate={[required, isValidPath]}
+                        validate={[validateRequiredValue, validatePath]}
                         normalizeOnBlur={(data) => data.trim()}
                     />
                 </div>

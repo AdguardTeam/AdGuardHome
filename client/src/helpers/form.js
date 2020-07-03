@@ -1,12 +1,7 @@
 import React, { Fragment } from 'react';
-import { Trans } from 'react-i18next';
 import PropTypes from 'prop-types';
-import i18next from 'i18next';
-import {
-    R_IPV4, R_MAC, R_HOST, R_IPV6, R_CIDR, R_CIDR_IPV6,
-    UNSAFE_PORTS, R_URL_REQUIRES_PROTOCOL, R_WIN_ABSOLUTE_PATH, R_UNIX_ABSOLUTE_PATH,
-} from './constants';
 import { createOnBlurHandler } from './helpers';
+import { R_UNIX_ABSOLUTE_PATH, R_WIN_ABSOLUTE_PATH } from './constants';
 
 export const renderField = (props, elementType) => {
     const {
@@ -234,138 +229,15 @@ renderServiceField.propTypes = {
     }).isRequired,
 };
 
-// Validation functions
-// If the value is valid, the validation function should return undefined.
-// https://redux-form.com/6.6.3/examples/fieldlevelvalidation/
-export const required = (value) => {
-    const formattedValue = typeof value === 'string' ? value.trim() : value;
-    if (formattedValue || formattedValue === 0 || (formattedValue && formattedValue.length !== 0)) {
-        return undefined;
-    }
-    return <Trans>form_error_required</Trans>;
-};
+/**
+ * @param value {string}
+ * @returns {*|number}
+ */
+export const toNumber = (value) => value && parseInt(value, 10);
 
-export const maxValue = (maximum) => (value) => (value && value > maximum ? i18next.t('value_not_larger_than', { maximum }) : undefined);
-
-export const ipv4 = (value) => {
-    if (value && !R_IPV4.test(value)) {
-        return <Trans>form_error_ip4_format</Trans>;
-    }
-    return undefined;
-};
-
-export const clientId = (value) => {
-    if (!value) {
-        return undefined;
-    }
-    const formattedValue = value ? value.trim() : value;
-    if (formattedValue && !(
-        R_IPV4.test(formattedValue)
-        || R_IPV6.test(formattedValue)
-        || R_MAC.test(formattedValue)
-        || R_CIDR.test(formattedValue)
-        || R_CIDR_IPV6.test(formattedValue)
-    )) {
-        return <Trans>form_error_client_id_format</Trans>;
-    }
-    return undefined;
-};
-
-export const ipv6 = (value) => {
-    if (value && !R_IPV6.test(value)) {
-        return <Trans>form_error_ip6_format</Trans>;
-    }
-    return undefined;
-};
-
-export const ip = (value) => {
-    if (value && !R_IPV4.test(value) && !R_IPV6.test(value)) {
-        return <Trans>form_error_ip_format</Trans>;
-    }
-    return undefined;
-};
-
-export const mac = (value) => {
-    if (value && !R_MAC.test(value)) {
-        return <Trans>form_error_mac_format</Trans>;
-    }
-    return undefined;
-};
-
-export const isPositive = (value) => {
-    if ((value || value === 0) && value <= 0) {
-        return <Trans>form_error_positive</Trans>;
-    }
-    return undefined;
-};
-
-export const biggerOrEqualZero = (value) => {
-    if (value < 0) {
-        return <Trans>form_error_negative</Trans>;
-    }
-    return false;
-};
-
-export const port = (value) => {
-    if ((value || value === 0) && (value < 80 || value > 65535)) {
-        return <Trans>form_error_port_range</Trans>;
-    }
-    return undefined;
-};
-
-export const validInstallPort = (value) => {
-    if (value < 1 || value > 65535) {
-        return <Trans>form_error_port</Trans>;
-    }
-    return undefined;
-};
-
-export const portTLS = (value) => {
-    if (value === 0) {
-        return undefined;
-    }
-    if (value && (value < 80 || value > 65535)) {
-        return <Trans>form_error_port_range</Trans>;
-    }
-    return undefined;
-};
-
-export const isSafePort = (value) => {
-    if (UNSAFE_PORTS.includes(value)) {
-        return <Trans>form_error_port_unsafe</Trans>;
-    }
-    return undefined;
-};
-
-export const domain = (value) => {
-    if (value && !R_HOST.test(value)) {
-        return <Trans>form_error_domain_format</Trans>;
-    }
-    return undefined;
-};
-
-export const answer = (value) => {
-    if (value && (!R_IPV4.test(value) && !R_IPV6.test(value) && !R_HOST.test(value))) {
-        return <Trans>form_error_answer_format</Trans>;
-    }
-    return undefined;
-};
-
-export const isValidUrl = (value) => {
-    if (value && !R_URL_REQUIRES_PROTOCOL.test(value)) {
-        return <Trans>form_error_url_format</Trans>;
-    }
-    return undefined;
-};
-
+/**
+ * @param value {string}
+ * @returns {boolean}
+ */
 export const isValidAbsolutePath = (value) => R_WIN_ABSOLUTE_PATH.test(value)
     || R_UNIX_ABSOLUTE_PATH.test(value);
-
-export const isValidPath = (value) => {
-    if (value && !isValidAbsolutePath(value) && !R_URL_REQUIRES_PROTOCOL.test(value)) {
-        return <Trans>form_error_url_or_path_format</Trans>;
-    }
-    return undefined;
-};
-
-export const toNumber = (value) => value && parseInt(value, 10);
