@@ -29,9 +29,9 @@ const renderInterfaces = ((interfaces) => (
             flags,
         } = option;
 
-        if (option && ip_addresses && ip_addresses.length > 0) {
+        if (option && ip_addresses?.length > 0) {
             const ip = getInterfaceIp(option);
-            const isDown = flags && flags.includes('down');
+            const isDown = flags?.includes('down');
 
             if (isDown) {
                 return (

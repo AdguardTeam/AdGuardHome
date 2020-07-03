@@ -12,12 +12,12 @@ import Loading from '../ui/Loading';
 import Filters from './Filters';
 import Table from './Table';
 import Disabled from './Disabled';
-import './Logs.css';
 import { getFilteringStatus } from '../../actions/filtering';
 import { getClients } from '../../actions';
 import { getDnsConfig } from '../../actions/dnsConfig';
 import { getLogsConfig } from '../../actions/queryLogs';
 import { addSuccessToast } from '../../actions/toasts';
+import './Logs.css';
 
 const INITIAL_REQUEST = true;
 const INITIAL_REQUEST_DATA = ['', TABLE_FIRST_PAGE, INITIAL_REQUEST];

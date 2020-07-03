@@ -199,17 +199,6 @@
     position: relative;
 }
 
-.logs__notice {
-    position: relative;
-    z-index: 1;
-    top: 0.5rem;
-    right: 2rem;
-    margin-top: 0.1875rem;
-    font-size: 0.75rem;
-    text-align: left;
-    color: var(--gray-a5);
-}
-
 .logs__whois {
     display: inline;
     font-size: 12px;
@@ -485,10 +474,22 @@
 .input-group-search {
     background-color: transparent;
     position: relative;
-    left: 2rem;
-    top: 0.4rem;
     width: 1.5rem;
     height: 1.5rem;
+    top: 0.4rem;
+}
+
+.input-group-search__icon--magnifier {
+    left: 2rem;
+}
+
+.input-group-search__icon--cross {
+    left: -4.5rem;
+    cursor: pointer;
+}
+
+.input-group-search__icon--tooltip {
+    left: -4rem;
 }
 
 .form-control--container {

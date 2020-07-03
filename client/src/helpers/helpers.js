@@ -142,7 +142,7 @@ export const addClientInfo = (data, clients, param) => (
         const info = clients.find((item) => item[clientIp]) || '';
         return {
             ...row,
-            info: (info && info[clientIp]) || '',
+            info: info?.[clientIp] ?? '',
         };
     })
 );
@@ -342,7 +342,7 @@ export const normalizeTopClients = (topClients) => topClients.reduce(
 
 export const getClientInfo = (clients, ip) => {
     const client = clients
-        .find((item) => item.ip_addrs && item.ip_addrs.find((clientIp) => clientIp === ip));
+        .find((item) => item.ip_addrs?.find((clientIp) => clientIp === ip));
 
     if (!client) {
         return '';
@@ -403,7 +403,7 @@ export const secondsToMilliseconds = (seconds) => {
     return seconds;
 };
 
-export const normalizeRulesTextarea = (text) => text && text.replace(/^\n/g, '')
+export const normalizeRulesTextarea = (text) => text?.replace(/^\n/g, '')
     .replace(/\n\s*\n/g, '\n');
 
 export const isVersionGreater = (currentVersion, previousVersion) => (
@@ -415,7 +415,7 @@ export const normalizeWhois = (whois) => {
         const {
             city, country, ...values
         } = whois;
-        let location = (country && country) || '';
+        let location = country || '';
 
         if (city && location) {
             location = `${location}, ${city}`;
@@ -483,7 +483,7 @@ export const checkParental = (reason) => reason === FILTERED_STATUS.FILTERED_PAR
 export const checkBlockedService = (reason) => reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
 
 export const getCurrentFilter = (url, filters) => {
-    const filter = filters && filters.find((item) => url === item.url);
+    const filter = filters?.find((item) => url === item.url);
 
     if (filter) {
         const { enabled, name, url } = filter;

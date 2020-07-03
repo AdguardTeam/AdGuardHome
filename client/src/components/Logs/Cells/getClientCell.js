@@ -11,23 +11,20 @@ const getClientCell = ({
     row, t, isDetailed, toggleBlocking, autoClients, processingRules,
 }) => {
     const {
-        reason, client, domain, info: { name },
+        reason, client, domain, info: { name, whois_info },
     } = row.original;
 
     const autoClient = autoClients.find((autoClient) => autoClient.name === client);
-    const country = autoClient && autoClient.whois_info && autoClient.whois_info.country;
-    const city = autoClient && autoClient.whois_info && autoClient.whois_info.city;
-    const network = autoClient && autoClient.whois_info && autoClient.whois_info.orgname;
-    const source = autoClient && autoClient.source;
+    const source = autoClient?.source;
 
     const id = nanoid();
 
     const data = {
         address: client,
         name,
-        country,
-        city,
-        network,
+        country: whois_info?.country,
+        city: whois_info?.city,
+        network: whois_info?.orgname,
         source_label: source,
     };
 

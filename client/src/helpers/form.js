@@ -173,7 +173,7 @@ export const renderSelectField = ({
     </label>
     {!disabled
     && touched
-    && (error && <span className="form__message form__message--error">{error}</span>)}
+    && error && <span className="form__message form__message--error">{error}</span>}
 </Fragment>;
 
 renderSelectField.propTypes = {
@@ -232,7 +232,7 @@ renderServiceField.propTypes = {
 // https://redux-form.com/6.6.3/examples/fieldlevelvalidation/
 export const required = (value) => {
     const formattedValue = typeof value === 'string' ? value.trim() : value;
-    if (formattedValue || formattedValue === 0 || (formattedValue && formattedValue.length !== 0)) {
+    if (formattedValue || formattedValue === 0 || formattedValue?.length !== 0) {
         return undefined;
     }
     return <Trans>form_error_required</Trans>;
