@@ -46,7 +46,7 @@ const Form = (props) => {
             type="text"
             className="form-control form-control--textarea font-monospace"
             disabled={disabled}
-            normalizeOnBlur={normalizeMultiline}
+            normalizeOnBlur={id === 'disallowed_clients' ? normalizeMultiline : undefined}
         />
     </div>;
 
