@@ -127,10 +127,6 @@ var config = configuration{
 		PortHTTPS:      443,
 		PortDNSOverTLS: 853, // needs to be passed through to dnsproxy
 	},
-	DHCP: dhcpd.ServerConfig{
-		LeaseDuration: 86400,
-		ICMPTimeout:   1000,
-	},
 	logSettings: logSettings{
 		LogCompress:   false,
 		LogLocalTime:  false,
@@ -156,6 +152,10 @@ func initConfig() {
 	config.DNS.DnsfilterConf.ParentalCacheSize = 1 * 1024 * 1024
 	config.DNS.DnsfilterConf.CacheTime = 30
 	config.Filters = defaultFilters()
+
+	config.DHCP.Conf4.LeaseDuration = 86400
+	config.DHCP.Conf4.ICMPTimeout = 1000
+	config.DHCP.Conf6.LeaseDuration = 86400
 }
 
 // getConfigFilename returns path to the current config file

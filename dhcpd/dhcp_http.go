@@ -40,13 +40,70 @@ func convertLeases(inputLeases []Lease, includeExpires bool) []map[string]string
 	return leases
 }
 
+type v4ServerConfJSON struct {
+	GatewayIP     string `json:"gateway_ip"`
+	SubnetMask    string `json:"subnet_mask"`
+	RangeStart    string `json:"range_start"`
+	RangeEnd      string `json:"range_end"`
+	LeaseDuration uint32 `json:"lease_duration"`
+}
+
+func v4ServerConfToJSON(c V4ServerConf) v4ServerConfJSON {
+	return v4ServerConfJSON{
+		GatewayIP:     c.GatewayIP,
+		SubnetMask:    c.SubnetMask,
+		RangeStart:    c.RangeStart,
+		RangeEnd:      c.RangeEnd,
+		LeaseDuration: c.LeaseDuration,
+	}
+}
+
+func v4JSONToServerConf(j v4ServerConfJSON) V4ServerConf {
+	return V4ServerConf{
+		GatewayIP:     j.GatewayIP,
+		SubnetMask:    j.SubnetMask,
+		RangeStart:    j.RangeStart,
+		RangeEnd:      j.RangeEnd,
+		LeaseDuration: j.LeaseDuration,
+	}
+}
+
+type v6ServerConfJSON struct {
+	RangeStart    string `json:"range_start"`
+	LeaseDuration uint32 `json:"lease_duration"`
+}
+
+func v6ServerConfToJSON(c V6ServerConf) v6ServerConfJSON {
+	return v6ServerConfJSON{
+		RangeStart:    c.RangeStart,
+		LeaseDuration: c.LeaseDuration,
+	}
+}
+
+func v6JSONToServerConf(j v6ServerConfJSON) V6ServerConf {
+	return V6ServerConf{
+		RangeStart:    j.RangeStart,
+		LeaseDuration: j.LeaseDuration,
+	}
+}
+
 func (s *Server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	leases := convertLeases(s.Leases(LeasesDynamic), true)
 	staticLeases := convertLeases(s.Leases(LeasesStatic), false)
+
+	v4conf := V4ServerConf{}
+	s.srv4.WriteDiskConfig4(&v4conf)
+
+	v6conf := V6ServerConf{}
+	s.srv6.WriteDiskConfig6(&v6conf)
+
 	status := map[string]interface{}{
-		"config":        s.conf,
-		"leases":        leases,
-		"static_leases": staticLeases,
+		"enabled":        s.conf.Enabled,
+		"interface_name": s.conf.InterfaceName,
+		"v4":             v4ServerConfToJSON(v4conf),
+		"v6":             v6ServerConfToJSON(v6conf),
+		"leases":         leases,
+		"static_leases":  staticLeases,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -64,8 +121,10 @@ type staticLeaseJSON struct {
 }
 
 type dhcpServerConfigJSON struct {
-	ServerConfig `json:",inline"`
-	StaticLeases []staticLeaseJSON `json:"static_leases"`
+	Enabled       bool             `json:"enabled"`
+	InterfaceName string           `json:"interface_name"`
+	V4            v4ServerConfJSON `json:"v4"`
+	V6            v6ServerConfJSON `json:"v6"`
 }
 
 func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
@@ -76,22 +135,49 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.CheckConfig(newconfig.ServerConfig)
+	v4conf := v4JSONToServerConf(newconfig.V4)
+	v4conf.Enabled = newconfig.Enabled
+	if len(v4conf.RangeStart) == 0 {
+		v4conf.Enabled = false
+	}
+	v4conf.InterfaceName = newconfig.InterfaceName
+
+	c4 := V4ServerConf{}
+	s.srv4.WriteDiskConfig4(&c4)
+	v4conf.notify = c4.notify
+	v4conf.ICMPTimeout = c4.ICMPTimeout
+
+	s4, err := v4Create(v4conf)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "Invalid DHCP configuration: %s", err)
+		httpError(r, w, http.StatusBadRequest, "Invalid DHCPv4 configuration: %s", err)
 		return
 	}
 
-	err = s.Stop()
-	if err != nil {
-		log.Error("failed to stop the DHCP server: %s", err)
+	v6conf := v6JSONToServerConf(newconfig.V6)
+	v6conf.Enabled = newconfig.Enabled
+	if len(v6conf.RangeStart) == 0 {
+		v6conf.Enabled = false
 	}
-
-	err = s.Init(newconfig.ServerConfig)
-	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "Invalid DHCP configuration: %s", err)
+	v6conf.InterfaceName = newconfig.InterfaceName
+	v6conf.notify = s.onNotify
+	s6, err := v6Create(v6conf)
+	if s6 == nil {
+		httpError(r, w, http.StatusBadRequest, "Invalid DHCPv6 configuration: %s", err)
 		return
 	}
+
+	if newconfig.Enabled && !v4conf.Enabled && !v6conf.Enabled {
+		httpError(r, w, http.StatusBadRequest, "DHCPv4 or DHCPv6 configuration must be complete")
+		return
+	}
+
+	s.Stop()
+
+	s.conf.Enabled = newconfig.Enabled
+	s.conf.InterfaceName = newconfig.InterfaceName
+	s.srv4 = s4
+	s.srv6 = s6
+
 	s.conf.ConfigModified()
 
 	if newconfig.Enabled {
@@ -246,20 +332,45 @@ func (s *Server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	ip, _ := parseIPv4(lj.IP)
+	ip := net.ParseIP(lj.IP)
+	if ip != nil && ip.To4() == nil {
+		mac, err := net.ParseMAC(lj.HWAddr)
+		if err != nil {
+			httpError(r, w, http.StatusBadRequest, "invalid MAC")
+			return
+		}
+
+		lease := Lease{
+			IP:     ip,
+			HWAddr: mac,
+		}
+
+		err = s.srv6.AddStaticLease(lease)
+		if err != nil {
+			httpError(r, w, http.StatusBadRequest, "%s", err)
+			return
+		}
+		return
+	}
+
+	ip, _ = parseIPv4(lj.IP)
 	if ip == nil {
 		httpError(r, w, http.StatusBadRequest, "invalid IP")
 		return
 	}
 
-	mac, _ := net.ParseMAC(lj.HWAddr)
+	mac, err := net.ParseMAC(lj.HWAddr)
+	if err != nil {
+		httpError(r, w, http.StatusBadRequest, "invalid MAC")
+		return
+	}
 
 	lease := Lease{
 		IP:       ip,
 		HWAddr:   mac,
 		Hostname: lj.Hostname,
 	}
-	err = s.AddStaticLease(lease)
+	err = s.srv4.AddStaticLease(lease)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "%s", err)
 		return
@@ -275,7 +386,28 @@ func (s *Server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	ip, _ := parseIPv4(lj.IP)
+	ip := net.ParseIP(lj.IP)
+	if ip != nil && ip.To4() == nil {
+		mac, err := net.ParseMAC(lj.HWAddr)
+		if err != nil {
+			httpError(r, w, http.StatusBadRequest, "invalid MAC")
+			return
+		}
+
+		lease := Lease{
+			IP:     ip,
+			HWAddr: mac,
+		}
+
+		err = s.srv6.RemoveStaticLease(lease)
+		if err != nil {
+			httpError(r, w, http.StatusBadRequest, "%s", err)
+			return
+		}
+		return
+	}
+
+	ip, _ = parseIPv4(lj.IP)
 	if ip == nil {
 		httpError(r, w, http.StatusBadRequest, "invalid IP")
 		return
@@ -288,7 +420,7 @@ func (s *Server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Requ
 		HWAddr:   mac,
 		Hostname: lj.Hostname,
 	}
-	err = s.RemoveStaticLease(lease)
+	err = s.srv4.RemoveStaticLease(lease)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "%s", err)
 		return
@@ -296,24 +428,29 @@ func (s *Server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Requ
 }
 
 func (s *Server) handleReset(w http.ResponseWriter, r *http.Request) {
-	err := s.Stop()
-	if err != nil {
-		log.Error("DHCP: Stop: %s", err)
-	}
+	s.Stop()
 
-	err = os.Remove(s.conf.DBFilePath)
+	err := os.Remove(s.conf.DBFilePath)
 	if err != nil && !os.IsNotExist(err) {
 		log.Error("DHCP: os.Remove: %s: %s", s.conf.DBFilePath, err)
 	}
 
 	oldconf := s.conf
 	s.conf = ServerConfig{}
-	s.conf.LeaseDuration = 86400
-	s.conf.ICMPTimeout = 1000
 	s.conf.WorkDir = oldconf.WorkDir
 	s.conf.HTTPRegister = oldconf.HTTPRegister
 	s.conf.ConfigModified = oldconf.ConfigModified
 	s.conf.DBFilePath = oldconf.DBFilePath
+
+	v4conf := V4ServerConf{}
+	v4conf.ICMPTimeout = 1000
+	v4conf.notify = s.onNotify
+	s.srv4, _ = v4Create(v4conf)
+
+	v6conf := V6ServerConf{}
+	v6conf.notify = s.onNotify
+	s.srv6, _ = v6Create(v6conf)
+
 	s.conf.ConfigModified()
 }
 
