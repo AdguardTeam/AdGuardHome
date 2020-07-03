@@ -175,7 +175,7 @@ export const renderSelectField = ({
     </label>
     {!disabled
     && touched
-    && (error && <span className="form__message form__message--error">{error}</span>)}
+    && error && <span className="form__message form__message--error">{error}</span>}
 </Fragment>;
 
 renderSelectField.propTypes = {

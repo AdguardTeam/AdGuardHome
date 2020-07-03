@@ -33,7 +33,8 @@ const Filters = ({ filter, refreshLogs, setIsLoading }) => {
                 responseStatusClass="d-sm-block"
                 initialValues={filter}
                 onSubmit={onSubmit}
-            />
+                setIsLoading={setIsLoading}
+        />
         </div>
     );
 };

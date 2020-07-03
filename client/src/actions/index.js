@@ -149,7 +149,7 @@ const checkStatus = async (handleRequestSuccess, handleRequestError, attempts = 
     try {
         const response = await axios.get('control/status');
         rmTimeout(timeout);
-        if (response && response.status === 200) {
+        if (response?.status === 200) {
             handleRequestSuccess(response);
             if (response.data.running === false) {
                 timeout = setTimeout(
@@ -183,7 +183,7 @@ export const getUpdate = () => async (dispatch, getState) => {
     };
 
     const handleRequestSuccess = (response) => {
-        const responseVersion = response.data && response.data.version;
+        const responseVersion = response.data?.version;
 
         if (dnsVersion !== responseVersion) {
             dispatch(getUpdateSuccess());

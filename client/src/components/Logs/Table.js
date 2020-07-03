@@ -180,6 +180,7 @@ const Table = (props) => {
             minWidth: 123,
             maxHeight: 60,
             headerClassName: 'logs__text',
+            className: 'pb-0',
         },
     ];
 
@@ -279,20 +280,15 @@ const Table = (props) => {
 
                         const hasTracker = !!tracker;
 
-                        const autoClient = autoClients.find(
-                            (autoClient) => autoClient.name === client,
-                        );
+                        const autoClient = autoClients
+                            .find((autoClient) => autoClient.name === client);
 
-                        const country = autoClient && autoClient.whois_info
-                            && autoClient.whois_info.country;
+                        const { whois_info } = info;
+                        const country = whois_info?.country;
+                        const city = whois_info?.city;
+                        const network = whois_info?.orgname;
 
-                        const network = autoClient && autoClient.whois_info
-                            && autoClient.whois_info.orgname;
-
-                        const city = autoClient && autoClient.whois_info
-                            && autoClient.whois_info.city;
-
-                        const source = autoClient && autoClient.source;
+                        const source = autoClient?.source;
 
                         const formattedElapsedMs = formatElapsedMs(elapsedMs, t);
                         const isFiltered = checkFiltered(reason);
@@ -302,8 +298,7 @@ const Table = (props) => {
                             toggleBlocking(buttonType, domain);
                         };
 
-                        const status = t((FILTERED_STATUS_TO_META_MAP[reason]
-                            && FILTERED_STATUS_TO_META_MAP[reason].label) || reason);
+                        const status = t(FILTERED_STATUS_TO_META_MAP[reason]?.label || reason);
                         const statusBlocked = <div className="bg--danger">{status}</div>;
 
                         const protocol = t(SCHEME_TO_PROTOCOL_MAP[client_proto]) || '';
@@ -318,7 +313,7 @@ const Table = (props) => {
                             type_table_header: type,
                             protocol,
                             known_tracker: hasTracker && 'title',
-                            table_name: hasTracker && tracker.name,
+                            table_name: tracker?.name,
                             category_label: hasTracker && captitalizeWords(tracker.category),
                             tracker_source: hasTracker && sourceData
                                 && <a href={sourceData.url} target="_blank" rel="noopener noreferrer"
@@ -326,17 +321,17 @@ const Table = (props) => {
                             response_details: 'title',
                             install_settings_dns: upstream,
                             elapsed: formattedElapsedMs,
-                            response_table_header: response && response.join('\n'),
+                            response_table_header: response?.join('\n'),
                             client_details: 'title',
                             ip_address: client,
-                            name: info && info.name,
+                            name: info?.name,
                             country,
                             city,
                             network,
                             source_label: source,
                             validated_with_dnssec: dnssec_enabled ? Boolean(answer_dnssec) : false,
                             [buttonType]: <div onClick={onToggleBlock}
-                                               className="title--border bg--danger">{t(buttonType)}</div>,
+                                               className="title--border bg--danger text-center">{t(buttonType)}</div>,
                         };
 
                         const detailedDataBlocked = {
@@ -347,7 +342,7 @@ const Table = (props) => {
                             type_table_header: type,
                             protocol,
                             known_tracker: 'title',
-                            table_name: hasTracker && tracker.name,
+                            table_name: tracker?.name,
                             category_label: hasTracker && captitalizeWords(tracker.category),
                             source_label: hasTracker && sourceData
                                 && <a href={sourceData.url} target="_blank" rel="noopener noreferrer"
@@ -355,9 +350,9 @@ const Table = (props) => {
                             response_details: 'title',
                             install_settings_dns: upstream,
                             elapsed: formattedElapsedMs,
-                            response_table_header: response && response.join('\n'),
+                            response_table_header: response?.join('\n'),
                             [buttonType]: <div onClick={onToggleBlock}
-                                               className="title--border">{t(buttonType)}</div>,
+                                               className="title--border text-center">{t(buttonType)}</div>,
                         };
 
                         const detailedDataCurrent = isFiltered ? detailedDataBlocked : detailedData;

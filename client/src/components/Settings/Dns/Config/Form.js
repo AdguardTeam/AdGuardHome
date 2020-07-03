@@ -4,7 +4,6 @@ import { connect } from 'react-redux';
 import { Field, reduxForm, formValueSelector } from 'redux-form';
 import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
-
 import {
     renderInputField,
     renderRadioField,
@@ -12,7 +11,10 @@ import {
     toNumber,
 } from '../../../../helpers/form';
 import {
-    validateBiggerOrEqualZeroValue, validateIpv4, validateIpv6, validateRequiredValue,
+    validateBiggerOrEqualZeroValue,
+    validateIpv4,
+    validateIpv6,
+    validateRequiredValue,
 } from '../../../../helpers/validators';
 import { BLOCKING_MODES, FORM_NAME } from '../../../../helpers/constants';
 

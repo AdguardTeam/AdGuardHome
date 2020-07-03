@@ -1,10 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Field, reduxForm } from 'redux-form';
 import { useTranslation } from 'react-i18next';
 import debounce from 'lodash/debounce';
-import { DEBOUNCE_FILTER_TIMEOUT, FORM_NAME, RESPONSE_FILTER } from '../../../helpers/constants';
+import { useDispatch } from 'react-redux';
+import classNames from 'classnames';
+import {
+    DEBOUNCE_FILTER_TIMEOUT,
+    DEFAULT_LOGS_FILTER,
+    FORM_NAME,
+    RESPONSE_FILTER,
+} from '../../../helpers/constants';
 import Tooltip from '../../ui/Tooltip';
+import { setLogsFilter } from '../../../actions/queryLogs';
 
 const renderFilterField = ({
     input,
@@ -16,8 +24,9 @@ const renderFilterField = ({
     autoComplete,
     tooltip,
     meta: { touched, error },
+    onClearInputClick,
 }) => <>
-    <div className="input-group-search">
+    <div className="input-group-search input-group-search__icon--magnifier">
         <svg className="icons icon--small icon--gray">
             <use xlinkHref="#magnifier" />
         </svg>
@@ -31,9 +40,15 @@ const renderFilterField = ({
         disabled={disabled}
         autoComplete={autoComplete}
         aria-label={placeholder} />
-    <span className="logs__notice">
-                <Tooltip text={tooltip} type='tooltip-custom--logs' />
-            </span>
+    <div
+        className={classNames('input-group-search input-group-search__icon--cross', { invisible: input.value.length < 1 })}>
+        <svg className="icons icon--smallest icon--gray" onClick={onClearInputClick}>
+            <use xlinkHref="#cross" />
+        </svg>
+    </div>
+    <span className="input-group-search input-group-search__icon--tooltip">
+        <Tooltip text={tooltip} type='tooltip-custom--logs' />
+    </span>
     {!disabled
     && touched
     && (error && <span className="form__message form__message--error">{error}</span>)}
@@ -42,6 +57,7 @@ const renderFilterField = ({
 renderFilterField.propTypes = {
     input: PropTypes.object.isRequired,
     id: PropTypes.string.isRequired,
+    onClearInputClick: PropTypes.func.isRequired,
     className: PropTypes.string,
     placeholder: PropTypes.string,
     type: PropTypes.string,
@@ -59,12 +75,28 @@ const Form = (props) => {
         className = '',
         responseStatusClass,
         submit,
+        reset,
+        setIsLoading,
     } = props;
 
-    const [t] = useTranslation();
+    const { t } = useTranslation();
+    const dispatch = useDispatch();
 
     const debouncedSubmit = debounce(submit, DEBOUNCE_FILTER_TIMEOUT);
     const zeroDelaySubmit = () => setTimeout(submit, 0);
+
+    const clearInput = async () => {
+        await dispatch(setLogsFilter(DEFAULT_LOGS_FILTER));
+        await reset();
+    };
+
+    const onInputClear = async () => {
+        setIsLoading(true);
+        await clearInput();
+        setIsLoading(false);
+    };
+
+    useEffect(() => clearInput, []);
 
     return (
         <form className="d-flex flex-wrap form-control--container"
@@ -79,16 +111,17 @@ const Form = (props) => {
                 name="search"
                 component={renderFilterField}
                 type="text"
-                className={`form-control--search form-control--transparent ${className}`}
+                className={classNames('form-control--search form-control--transparent', className)}
                 placeholder={t('domain_or_client')}
                 tooltip={t('query_log_strict_search')}
                 onChange={debouncedSubmit}
+                onClearInputClick={onInputClear}
             />
             <div className="field__select">
                 <Field
                     name="response_status"
                     component="select"
-                    className={`form-control custom-select custom-select--logs custom-select__arrow--left ml-small form-control--transparent ${responseStatusClass}`}
+                    className={classNames('form-control custom-select custom-select--logs custom-select__arrow--left ml-small form-control--transparent', responseStatusClass)}
                     onChange={zeroDelaySubmit}
                 >
                     {Object.values(RESPONSE_FILTER)
@@ -107,6 +140,8 @@ Form.propTypes = {
     className: PropTypes.string,
     responseStatusClass: PropTypes.string,
     submit: PropTypes.func.isRequired,
+    reset: PropTypes.func.isRequired,
+    setIsLoading: PropTypes.func.isRequired,
 };
 
 export default reduxForm({
