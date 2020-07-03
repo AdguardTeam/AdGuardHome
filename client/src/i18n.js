@@ -33,6 +33,7 @@ import hr from './__locales/hr.json';
 import fa from './__locales/fa.json';
 import th from './__locales/th.json';
 import ro from './__locales/ro.json';
+import { setHtmlLangAttr } from './helpers/helpers';
 
 const resources = {
     en: {
@@ -143,10 +144,12 @@ i18n
             wait: true,
         },
         whitelist: availableLanguages,
-    }, () => {
+    },
+    () => {
         if (!availableLanguages.includes(i18n.language)) {
             i18n.changeLanguage(BASE_LOCALE);
         }
+        setHtmlLangAttr(i18n.language);
     });
 
 export default i18n;

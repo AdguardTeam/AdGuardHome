@@ -70,9 +70,18 @@ export const initSettings = (settingsList) => async (dispatch) => {
             safesearch,
         } = settingsList;
         const newSettingsList = {
-            safebrowsing: { ...safebrowsing, enabled: safebrowsingStatus.enabled },
-            parental: { ...parental, enabled: parentalStatus.enabled },
-            safesearch: { ...safesearch, enabled: safesearchStatus.enabled },
+            safebrowsing: {
+                ...safebrowsing,
+                enabled: safebrowsingStatus.enabled,
+            },
+            parental: {
+                ...parental,
+                enabled: parentalStatus.enabled,
+            },
+            safesearch: {
+                ...safesearch,
+                enabled: safesearchStatus.enabled,
+            },
         };
         dispatch(initSettingsSuccess({ settingsList: newSettingsList }));
     } catch (error) {
@@ -274,13 +283,14 @@ export const testUpstream = (config) => async (dispatch) => {
         values.upstream_dns = normalizeTextarea(values.upstream_dns);
 
         const upstreamResponse = await apiClient.testUpstream(values);
-        const testMessages = Object.keys(upstreamResponse).map((key) => {
-            const message = upstreamResponse[key];
-            if (message !== 'OK') {
-                dispatch(addErrorToast({ error: i18next.t('dns_test_not_ok_toast', { key }) }));
-            }
-            return message;
-        });
+        const testMessages = Object.keys(upstreamResponse)
+            .map((key) => {
+                const message = upstreamResponse[key];
+                if (message !== 'OK') {
+                    dispatch(addErrorToast({ error: i18next.t('dns_test_not_ok_toast', { key }) }));
+                }
+                return message;
+            });
 
         if (testMessages.every((message) => message === 'OK')) {
             dispatch(addSuccessToast('dns_test_ok_toast'));
@@ -393,11 +403,17 @@ export const toggleDhcpSuccess = createAction('TOGGLE_DHCP_SUCCESS');
 
 export const toggleDhcp = (values) => async (dispatch) => {
     dispatch(toggleDhcpRequest());
-    let config = { ...values, enabled: false };
+    let config = {
+        ...values,
+        enabled: false,
+    };
     let successMessage = 'disabled_dhcp';
 
     if (!values.enabled) {
-        config = { ...values, enabled: true };
+        config = {
+            ...values,
+            enabled: true,
+        };
         successMessage = 'enabled_dhcp';
         dispatch(findActiveDhcp(values.interface_name));
     }

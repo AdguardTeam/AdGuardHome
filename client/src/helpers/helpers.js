@@ -588,3 +588,10 @@ export const formatElapsedMs = (elapsedMs, t) => {
         .toFixed(2);
     return `${formattedElapsedMs} ${t('milliseconds_abbreviation')}`;
 };
+
+/**
+ * @param language {string}
+ */
+export const setHtmlLangAttr = (language) => {
+    window.document.documentElement.lang = language;
+};

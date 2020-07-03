@@ -36,6 +36,7 @@ import i18n from '../../i18n';
 import Loading from '../ui/Loading';
 import { FILTERS_URLS, MENU_URLS, SETTINGS_URLS } from '../../helpers/constants';
 import Services from '../Filters/Services';
+import { setHtmlLangAttr } from '../../helpers/helpers';
 
 class App extends Component {
     componentDidMount() {
@@ -62,6 +63,7 @@ class App extends Component {
         if (!processing) {
             if (language) {
                 i18n.changeLanguage(language);
+                setHtmlLangAttr(language);
             }
         }
 
