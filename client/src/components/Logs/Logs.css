@@ -12,6 +12,10 @@
     text-overflow: ellipsis;
 }
 
+.card-table .logs__row {
+    overflow: visible;
+}
+
 .logs__row--center {
     justify-content: center;
 }
