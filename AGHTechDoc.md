@@ -894,6 +894,9 @@ Response:
 		"dnssec_enabled": true | false
 		"disable_ipv6": true | false,
 		"upstream_mode": "" | "parallel" | "fastest_addr"
+		"cache_size": 1234, // in bytes
+		"cache_ttl_min": 1234, // in seconds
+		"cache_ttl_max": 1234, // in seconds
 	}
 
 
@@ -916,6 +919,9 @@ Request:
 		"dnssec_enabled": true | false
 		"disable_ipv6": true | false,
 		"upstream_mode": "" | "parallel" | "fastest_addr"
+		"cache_size": 1234, // in bytes
+		"cache_ttl_min": 1234, // in seconds
+		"cache_ttl_max": 1234, // in seconds
 	}
 
 Response:

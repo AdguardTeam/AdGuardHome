@@ -1016,6 +1016,12 @@ components:
                     type: boolean
                 dnssec_enabled:
                     type: boolean
+                cache_size:
+                    type: integer
+                cache_ttl_min:
+                    type: integer
+                cache_ttl_max:
+                    type: integer
                 upstream_mode:
                     enum:
                         - ""
