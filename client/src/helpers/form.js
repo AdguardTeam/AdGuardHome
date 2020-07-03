@@ -1,6 +1,7 @@
 import React, { Fragment } from 'react';
 import { Trans } from 'react-i18next';
 import PropTypes from 'prop-types';
+import i18next from 'i18next';
 import {
     R_IPV4, R_MAC, R_HOST, R_IPV6, R_CIDR, R_CIDR_IPV6,
     UNSAFE_PORTS, R_URL_REQUIRES_PROTOCOL, R_WIN_ABSOLUTE_PATH, R_UNIX_ABSOLUTE_PATH,
@@ -10,7 +11,7 @@ import { createOnBlurHandler } from './helpers';
 export const renderField = (props, elementType) => {
     const {
         input, id, className, placeholder, type, disabled, normalizeOnBlur,
-        autoComplete, meta: { touched, error },
+        autoComplete, meta: { touched, error }, min, max, step,
     } = props;
 
     const onBlur = (event) => createOnBlurHandler(event, input, normalizeOnBlur);
@@ -23,14 +24,17 @@ export const renderField = (props, elementType) => {
         autoComplete,
         disabled,
         type,
+        min,
+        max,
+        step,
         onBlur,
     });
     return (
-        <Fragment>
+        <>
             {element}
             {!disabled && touched && error
             && <span className="form__message form__message--error">{error}</span>}
-        </Fragment>
+        </>
     );
 };
 
@@ -43,6 +47,9 @@ renderField.propTypes = {
     disabled: PropTypes.bool,
     autoComplete: PropTypes.bool,
     normalizeOnBlur: PropTypes.func,
+    min: PropTypes.number,
+    max: PropTypes.number,
+    step: PropTypes.number,
     meta: PropTypes.shape({
         touched: PropTypes.bool,
         error: PropTypes.object,
@@ -237,6 +244,8 @@ export const required = (value) => {
     }
     return <Trans>form_error_required</Trans>;
 };
+
+export const maxValue = (maximum) => (value) => (value && value > maximum ? i18next.t('value_not_larger_than', { maximum }) : undefined);
 
 export const ipv4 = (value) => {
     if (value && !R_IPV4.test(value)) {

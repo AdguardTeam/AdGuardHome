@@ -406,4 +406,5 @@ export const FORM_NAME = {
     STATS_CONFIG: 'statsConfig',
     INSTALL: 'install',
     LOGIN: 'login',
+    CACHE: 'cache',
 };

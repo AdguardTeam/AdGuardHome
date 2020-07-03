@@ -562,3 +562,15 @@ export const getIpMatchListStatus = (ip, list) => {
         return IP_MATCH_LIST_STATUS.NOT_FOUND;
     }
 };
+
+/**
+ * @param values {object}
+ * @returns {object}
+ */
+export const selectCompletedFields = (values) => Object.entries(values)
+    .reduce((acc, [key, value]) => {
+        if (value || value === 0) {
+            acc[key] = value;
+        }
+        return acc;
+    }, {});

@@ -7,9 +7,10 @@ import Access from './Access';
 import Config from './Config';
 import PageTitle from '../../ui/PageTitle';
 import Loading from '../../ui/Loading';
+import CacheConfig from './Cache';
 
 const Dns = (props) => {
-    const [t] = useTranslation();
+    const { t } = useTranslation();
 
     useEffect(() => {
         props.getAccessList();
@@ -37,6 +38,10 @@ const Dns = (props) => {
                         dnsConfig={dnsConfig}
                     />
                     <Config
+                        dnsConfig={dnsConfig}
+                        setDnsConfig={setDnsConfig}
+                    />
+                    <CacheConfig
                         dnsConfig={dnsConfig}
                         setDnsConfig={setDnsConfig}
                     />
