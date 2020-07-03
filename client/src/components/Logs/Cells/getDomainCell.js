@@ -7,7 +7,8 @@ import {
     LONG_TIME_FORMAT,
     SCHEME_TO_PROTOCOL_MAP,
 } from '../../../helpers/constants';
-import { formatDateTime, formatTime } from '../../../helpers/helpers';
+import { captitalizeWords, formatDateTime, formatTime } from '../../../helpers/helpers';
+import { getSourceData } from '../../../helpers/trackers/trackers';
 
 const getDomainCell = (props) => {
     const {
@@ -19,8 +20,6 @@ const getDomainCell = (props) => {
     } = row.original;
 
     const hasTracker = !!tracker;
-
-    const source = tracker && tracker.sourceData && tracker.sourceData.name;
 
     const lockIconClass = classNames('icons', 'icon--small', 'd-none', 'd-sm-block', 'cursor--pointer', {
         'icon--active': answer_dnssec,
@@ -55,10 +54,14 @@ const getDomainCell = (props) => {
         protocol,
     };
 
+    const sourceData = getSourceData(tracker);
+
     const knownTrackerDataObj = {
         name_table_header: tracker && tracker.name,
-        category_label: tracker && tracker.category,
-        source_label: source && <a href={`//${source}`} className="link--green">{source}</a>,
+        category_label: tracker && captitalizeWords(tracker.category),
+        source_label: sourceData
+            && <a href={sourceData.url} target="_blank" rel="noopener noreferrer"
+                  className="link--green">{sourceData.name}</a>,
     };
 
     const renderGrid = (content, idx) => {
@@ -71,7 +74,8 @@ const getDomainCell = (props) => {
 
     const getGrid = (contentObj, title, className) => [
         <div key={title} className={classNames('pb-2 grid--title', className)}>{t(title)}</div>,
-        <div key={`${title}-1`} className="grid grid--limited">{React.Children.map(Object.entries(contentObj), renderGrid)}</div>,
+        <div key={`${title}-1`}
+             className="grid grid--limited">{React.Children.map(Object.entries(contentObj), renderGrid)}</div>,
     ];
 
     const requestDetails = getGrid(requestDetailsObj, 'request_details');
