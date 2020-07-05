@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { withNamespaces } from 'react-i18next';
+import { withTranslation } from 'react-i18next';
 import ReactTable from 'react-table';
 
 import Card from '../../ui/Card';
@@ -38,7 +38,7 @@ class AutoClients extends Component {
         },
         {
             Header: this.props.t('requests_count'),
-            accessor: row => this.props.normalizedTopClients.auto[row.ip] || 0,
+            accessor: (row) => this.props.normalizedTopClients.auto[row.ip] || 0,
             sortMethod: (a, b) => b - a,
             id: 'statistics',
             minWidth: COLUMN_MIN_WIDTH,
@@ -79,16 +79,26 @@ class AutoClients extends Component {
                         },
                     ]}
                     className="-striped -highlight card-table-overflow"
-                    showPagination={true}
+                    showPagination
                     defaultPageSize={10}
                     minRows={5}
-                    previousText={t('previous_btn')}
-                    nextText={t('next_btn')}
+                    showPageSizeOptions={false}
+                    showPageJump={false}
+                    renderTotalPagesCount={() => false}
+                    previousText={
+                        <svg className="icons icon--small icon--gray w-100 h-100">
+                            <use xlinkHref="#arrow-left" />
+                        </svg>}
+                    nextText={
+                        <svg className="icons icon--small icon--gray w-100 h-100">
+                            <use xlinkHref="#arrow-right" />
+                        </svg>}
                     loadingText={t('loading_table_status')}
-                    pageText={t('page_table_footer_text')}
-                    ofText="/"
+                    pageText=''
+                    ofText=''
                     rowsText={t('rows_table_footer_text')}
                     noDataText={t('clients_not_found')}
+                    getPaginationProps={() => ({ className: 'custom-pagination' })}
                 />
             </Card>
         );
@@ -101,4 +111,4 @@ AutoClients.propTypes = {
     normalizedTopClients: PropTypes.object.isRequired,
 };
 
-export default withNamespaces()(AutoClients);
+export default withTranslation()(AutoClients);

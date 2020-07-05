@@ -1,16 +1,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Field, reduxForm } from 'redux-form';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 
 import { renderSelectField, toNumber } from '../../../helpers/form';
-import { FILTERS_INTERVALS_HOURS } from '../../../helpers/constants';
+import { FILTERS_INTERVALS_HOURS, FORM_NAME } from '../../../helpers/constants';
 
 const getTitleForInterval = (interval, t) => {
     if (interval === 0) {
         return t('disabled');
-    } else if (interval === 72 || interval === 168) {
+    }
+    if (interval === 72 || interval === 168) {
         return t('interval_days', { count: interval / 24 });
     }
 
@@ -26,7 +27,7 @@ const getIntervalSelect = (processing, t, handleChange, toNumber) => (
         normalize={toNumber}
         disabled={processing}
     >
-        {FILTERS_INTERVALS_HOURS.map(interval => (
+        {FILTERS_INTERVALS_HOURS.map((interval) => (
             <option value={interval} key={interval}>
                 {getTitleForInterval(interval, t)}
             </option>
@@ -61,7 +62,6 @@ const Form = (props) => {
                         <label className="form__label">
                             <Trans>filters_interval</Trans>
                         </label>
-
                         {getIntervalSelect(processing, t, handleChange, toNumber)}
                     </div>
                 </div>
@@ -81,8 +81,6 @@ Form.propTypes = {
 };
 
 export default flow([
-    withNamespaces(),
-    reduxForm({
-        form: 'filterConfigForm',
-    }),
+    withTranslation(),
+    reduxForm({ form: FORM_NAME.FILTER_CONFIG }),
 ])(Form);

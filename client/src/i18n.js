@@ -1,6 +1,5 @@
 import i18n from 'i18next';
-import { reactI18nextModule } from 'react-i18next';
-import { initReactI18n } from 'react-i18next/hooks';
+import { initReactI18next } from 'react-i18next';
 import langDetect from 'i18next-browser-languagedetector';
 
 import { LANGUAGES, BASE_LOCALE } from './helpers/twosky';
@@ -34,6 +33,7 @@ import hr from './__locales/hr.json';
 import fa from './__locales/fa.json';
 import th from './__locales/th.json';
 import ro from './__locales/ro.json';
+import { setHtmlLangAttr } from './helpers/helpers';
 
 const resources = {
     en: {
@@ -129,8 +129,7 @@ const availableLanguages = Object.keys(LANGUAGES);
 
 i18n
     .use(langDetect)
-    .use(initReactI18n)
-    .use(reactI18nextModule)
+    .use(initReactI18next)
     .init({
         resources,
         lowerCaseLng: true,
@@ -145,10 +144,12 @@ i18n
             wait: true,
         },
         whitelist: availableLanguages,
-    }, () => {
+    },
+    () => {
         if (!availableLanguages.includes(i18n.language)) {
             i18n.changeLanguage(BASE_LOCALE);
         }
+        setHtmlLangAttr(i18n.language);
     });
 
 export default i18n;

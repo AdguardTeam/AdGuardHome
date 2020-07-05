@@ -58,7 +58,7 @@
     "query_log": "Dnevnik zahteva",
     "faq": "ČPP",
     "version": "Verzija",
-    "address": "adresa",
+    "address": "Adresa",
     "on": "Uključeno",
     "off": "Isključeno",
     "copyright": "Autorska prava",
@@ -167,9 +167,10 @@
     "updated_upstream_dns_toast": "Ažurirani upstream DNS serveri",
     "dns_test_ok_toast": "Dati DNS serveri rade ispravno",
     "dns_test_not_ok_toast": "Server \"{{key}}\": se ne može koristiti. Proverite da li ste ga ispravno uneli",
-    "unblock_btn": "Odblokiraj",
-    "block_btn": "Blokiraj",
+    "unblock": "Odblokiraj",
+    "block": "Blokiraj",
     "time_table_header": "Vreme",
+    "date": "Datum",
     "domain_name_table_header": "Ime domena",
     "type_table_header": "Vrsta",
     "response_table_header": "Odgovor",
@@ -478,5 +479,8 @@
     "install_static_configure": "Otkrili smo da se koristi dinamička IP adresa — <0>{{ip}}</0>. Želite li da je koristite kao vašu statičku adresu?",
     "confirm_static_ip": "AdGuard Home će konfigurisati {{ip}} da bude vaša statička IP adresa. Želite li da nastavite?",
     "list_updated": "{{count}} lista ažurirana",
-    "list_updated_plural": "{{count}} lista ažurirano"
+    "list_updated_plural": "{{count}} lista ažurirano",
+    "show_blocked_responses": "Blokirano",
+    "blocked_adult_websites": "Blokiraj sajtove za odrasle",
+    "blocked_threats": "Blokiranih pretnji"
 }

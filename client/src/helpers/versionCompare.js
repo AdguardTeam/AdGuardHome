@@ -2,7 +2,7 @@
 * Project: tiny-version-compare https://github.com/bfred-it/tiny-version-compare
 * License (MIT) https://github.com/bfred-it/tiny-version-compare/blob/master/LICENSE
 */
-const split = v => String(v).replace(/^[vr]/, '') // Drop initial 'v' or 'r'
+const split = (v) => String(v).replace(/^[vr]/, '') // Drop initial 'v' or 'r'
     .replace(/([a-z]+)/gi, '.$1.') // Sort each word separately
     .replace(/[-.]+/g, '.') // Consider dashes as separators (+ trim multiple separators)
     .split('.');

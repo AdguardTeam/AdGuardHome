@@ -1,10 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Field, reduxForm } from 'redux-form';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 
 import { renderInputField, required, isValidPath } from '../../helpers/form';
+import { FORM_NAME } from '../../helpers/constants';
 
 const Form = (props) => {
     const {
@@ -28,7 +29,7 @@ const Form = (props) => {
                         className="form-control"
                         placeholder={t('enter_name_hint')}
                         validate={[required]}
-                        normalizeOnBlur={data => data.trim()}
+                        normalizeOnBlur={(data) => data.trim()}
                     />
                 </div>
                 <div className="form__group">
@@ -40,15 +41,12 @@ const Form = (props) => {
                         className="form-control"
                         placeholder={t('enter_url_or_path_hint')}
                         validate={[required, isValidPath]}
-                        normalizeOnBlur={data => data.trim()}
+                        normalizeOnBlur={(data) => data.trim()}
                     />
                 </div>
                 <div className="form__description">
-                    {whitelist ? (
-                        <Trans>enter_valid_allowlist</Trans>
-                    ) : (
-                        <Trans>enter_valid_blocklist</Trans>
-                    )}
+                    {whitelist ? <Trans>enter_valid_allowlist</Trans>
+                        : <Trans>enter_valid_blocklist</Trans>}
                 </div>
             </div>
             <div className="modal-footer">
@@ -81,8 +79,6 @@ Form.propTypes = {
 };
 
 export default flow([
-    withNamespaces(),
-    reduxForm({
-        form: 'filterForm',
-    }),
+    withTranslation(),
+    reduxForm({ form: FORM_NAME.FILTER }),
 ])(Form);

@@ -18,8 +18,8 @@ import filtering from './filtering';
 
 const settings = handleActions(
     {
-        [actions.initSettingsRequest]: state => ({ ...state, processing: true }),
-        [actions.initSettingsFailure]: state => ({ ...state, processing: false }),
+        [actions.initSettingsRequest]: (state) => ({ ...state, processing: true }),
+        [actions.initSettingsFailure]: (state) => ({ ...state, processing: false }),
         [actions.initSettingsSuccess]: (state, { payload }) => {
             const { settingsList } = payload;
             const newState = { ...state, settingsList, processing: false };
@@ -35,9 +35,9 @@ const settings = handleActions(
             const newSettingsList = { ...settingsList, [settingKey]: newSetting };
             return { ...state, settingsList: newSettingsList };
         },
-        [actions.testUpstreamRequest]: state => ({ ...state, processingTestUpstream: true }),
-        [actions.testUpstreamFailure]: state => ({ ...state, processingTestUpstream: false }),
-        [actions.testUpstreamSuccess]: state => ({ ...state, processingTestUpstream: false }),
+        [actions.testUpstreamRequest]: (state) => ({ ...state, processingTestUpstream: true }),
+        [actions.testUpstreamFailure]: (state) => ({ ...state, processingTestUpstream: false }),
+        [actions.testUpstreamSuccess]: (state) => ({ ...state, processingTestUpstream: false }),
     },
     {
         processing: true,
@@ -49,10 +49,11 @@ const settings = handleActions(
 
 const dashboard = handleActions(
     {
-        [actions.setDnsRunningStatus]: (state, { payload }) =>
-            ({ ...state, isCoreRunning: payload }),
-        [actions.dnsStatusRequest]: state => ({ ...state, processing: true }),
-        [actions.dnsStatusFailure]: state => ({ ...state, processing: false }),
+        [actions.setDnsRunningStatus]: (state, { payload }) => (
+            { ...state, isCoreRunning: payload }
+        ),
+        [actions.dnsStatusRequest]: (state) => ({ ...state, processing: true }),
+        [actions.dnsStatusFailure]: (state) => ({ ...state, processing: false }),
         [actions.dnsStatusSuccess]: (state, { payload }) => {
             const {
                 version,
@@ -76,8 +77,8 @@ const dashboard = handleActions(
             return newState;
         },
 
-        [actions.getVersionRequest]: state => ({ ...state, processingVersion: true }),
-        [actions.getVersionFailure]: state => ({ ...state, processingVersion: false }),
+        [actions.getVersionRequest]: (state) => ({ ...state, processingVersion: true }),
+        [actions.getVersionFailure]: (state) => ({ ...state, processingVersion: false }),
         [actions.getVersionSuccess]: (state, { payload }) => {
             const currentVersion = state.dnsVersion === 'undefined' ? 0 : state.dnsVersion;
 
@@ -95,6 +96,7 @@ const dashboard = handleActions(
                     canAutoUpdate,
                     isUpdateAvailable: true,
                     processingVersion: false,
+                    checkUpdateFlag: !!payload,
                 };
                 return newState;
             }
@@ -105,15 +107,15 @@ const dashboard = handleActions(
             };
         },
 
-        [actions.getUpdateRequest]: state => ({ ...state, processingUpdate: true }),
-        [actions.getUpdateFailure]: state => ({ ...state, processingUpdate: false }),
+        [actions.getUpdateRequest]: (state) => ({ ...state, processingUpdate: true }),
+        [actions.getUpdateFailure]: (state) => ({ ...state, processingUpdate: false }),
         [actions.getUpdateSuccess]: (state) => {
             const newState = { ...state, processingUpdate: false };
             return newState;
         },
 
-        [actions.toggleProtectionRequest]: state => ({ ...state, processingProtection: true }),
-        [actions.toggleProtectionFailure]: state => ({ ...state, processingProtection: false }),
+        [actions.toggleProtectionRequest]: (state) => ({ ...state, processingProtection: true }),
+        [actions.toggleProtectionFailure]: (state) => ({ ...state, processingProtection: false }),
         [actions.toggleProtectionSuccess]: (state) => {
             const newState = {
                 ...state,
@@ -128,8 +130,8 @@ const dashboard = handleActions(
             return newState;
         },
 
-        [actions.getClientsRequest]: state => ({ ...state, processingClients: true }),
-        [actions.getClientsFailure]: state => ({ ...state, processingClients: false }),
+        [actions.getClientsRequest]: (state) => ({ ...state, processingClients: true }),
+        [actions.getClientsFailure]: (state) => ({ ...state, processingClients: false }),
         [actions.getClientsSuccess]: (state, { payload }) => {
             const newState = {
                 ...state,
@@ -139,8 +141,8 @@ const dashboard = handleActions(
             return newState;
         },
 
-        [actions.getProfileRequest]: state => ({ ...state, processingProfile: true }),
-        [actions.getProfileFailure]: state => ({ ...state, processingProfile: false }),
+        [actions.getProfileRequest]: (state) => ({ ...state, processingProfile: true }),
+        [actions.getProfileFailure]: (state) => ({ ...state, processingProfile: false }),
         [actions.getProfileSuccess]: (state, { payload }) => ({
             ...state,
             name: payload.name,
@@ -164,13 +166,14 @@ const dashboard = handleActions(
         autoClients: [],
         supportedTags: [],
         name: '',
+        checkUpdateFlag: false,
     },
 );
 
 const dhcp = handleActions(
     {
-        [actions.getDhcpStatusRequest]: state => ({ ...state, processing: true }),
-        [actions.getDhcpStatusFailure]: state => ({ ...state, processing: false }),
+        [actions.getDhcpStatusRequest]: (state) => ({ ...state, processing: true }),
+        [actions.getDhcpStatusFailure]: (state) => ({ ...state, processing: false }),
         [actions.getDhcpStatusSuccess]: (state, { payload }) => {
             const { static_leases: staticLeases, ...values } = payload;
 
@@ -184,8 +187,8 @@ const dhcp = handleActions(
             return newState;
         },
 
-        [actions.getDhcpInterfacesRequest]: state => ({ ...state, processingInterfaces: true }),
-        [actions.getDhcpInterfacesFailure]: state => ({ ...state, processingInterfaces: false }),
+        [actions.getDhcpInterfacesRequest]: (state) => ({ ...state, processingInterfaces: true }),
+        [actions.getDhcpInterfacesFailure]: (state) => ({ ...state, processingInterfaces: false }),
         [actions.getDhcpInterfacesSuccess]: (state, { payload }) => {
             const newState = {
                 ...state,
@@ -195,8 +198,8 @@ const dhcp = handleActions(
             return newState;
         },
 
-        [actions.findActiveDhcpRequest]: state => ({ ...state, processingStatus: true }),
-        [actions.findActiveDhcpFailure]: state => ({ ...state, processingStatus: false }),
+        [actions.findActiveDhcpRequest]: (state) => ({ ...state, processingStatus: true }),
+        [actions.findActiveDhcpFailure]: (state) => ({ ...state, processingStatus: false }),
         [actions.findActiveDhcpSuccess]: (state, { payload }) => {
             const { other_server: otherServer, static_ip: staticIP } = payload;
 
@@ -211,8 +214,8 @@ const dhcp = handleActions(
             return newState;
         },
 
-        [actions.toggleDhcpRequest]: state => ({ ...state, processingDhcp: true }),
-        [actions.toggleDhcpFailure]: state => ({ ...state, processingDhcp: false }),
+        [actions.toggleDhcpRequest]: (state) => ({ ...state, processingDhcp: true }),
+        [actions.toggleDhcpFailure]: (state) => ({ ...state, processingDhcp: false }),
         [actions.toggleDhcpSuccess]: (state) => {
             const { config } = state;
             const newConfig = { ...config, enabled: !config.enabled };
@@ -225,8 +228,8 @@ const dhcp = handleActions(
             return newState;
         },
 
-        [actions.setDhcpConfigRequest]: state => ({ ...state, processingConfig: true }),
-        [actions.setDhcpConfigFailure]: state => ({ ...state, processingConfig: false }),
+        [actions.setDhcpConfigRequest]: (state) => ({ ...state, processingConfig: true }),
+        [actions.setDhcpConfigFailure]: (state) => ({ ...state, processingConfig: false }),
         [actions.setDhcpConfigSuccess]: (state, { payload }) => {
             const { config } = state;
             const newConfig = { ...config, ...payload };
@@ -234,9 +237,9 @@ const dhcp = handleActions(
             return newState;
         },
 
-        [actions.resetDhcpRequest]: state => ({ ...state, processingReset: true }),
-        [actions.resetDhcpFailure]: state => ({ ...state, processingReset: false }),
-        [actions.resetDhcpSuccess]: state => ({
+        [actions.resetDhcpRequest]: (state) => ({ ...state, processingReset: true }),
+        [actions.resetDhcpFailure]: (state) => ({ ...state, processingReset: false }),
+        [actions.resetDhcpSuccess]: (state) => ({
             ...state,
             processingReset: false,
             config: {
@@ -252,8 +255,8 @@ const dhcp = handleActions(
             return newState;
         },
 
-        [actions.addStaticLeaseRequest]: state => ({ ...state, processingAdding: true }),
-        [actions.addStaticLeaseFailure]: state => ({ ...state, processingAdding: false }),
+        [actions.addStaticLeaseRequest]: (state) => ({ ...state, processingAdding: true }),
+        [actions.addStaticLeaseFailure]: (state) => ({ ...state, processingAdding: false }),
         [actions.addStaticLeaseSuccess]: (state, { payload }) => {
             const { ip, mac, hostname } = payload;
             const newLease = {
@@ -270,11 +273,11 @@ const dhcp = handleActions(
             return newState;
         },
 
-        [actions.removeStaticLeaseRequest]: state => ({ ...state, processingDeleting: true }),
-        [actions.removeStaticLeaseFailure]: state => ({ ...state, processingDeleting: false }),
+        [actions.removeStaticLeaseRequest]: (state) => ({ ...state, processingDeleting: true }),
+        [actions.removeStaticLeaseFailure]: (state) => ({ ...state, processingDeleting: false }),
         [actions.removeStaticLeaseSuccess]: (state, { payload }) => {
             const leaseToRemove = payload.ip;
-            const leases = state.staticLeases.filter(item => item.ip !== leaseToRemove);
+            const leases = state.staticLeases.filter((item) => item.ip !== leaseToRemove);
             const newState = {
                 ...state,
                 staticLeases: leases,

@@ -1,12 +1,13 @@
 import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import { Field, reduxForm } from 'redux-form';
 import flow from 'lodash/flow';
 import Card from '../../ui/Card';
 
 import { renderInputField } from '../../../helpers/form';
 import Info from './Info';
+import { FORM_NAME } from '../../../helpers/constants';
 
 const Check = (props) => {
     const {
@@ -51,7 +52,7 @@ const Check = (props) => {
                                 <button
                                     className="btn btn-success btn-standard btn-large"
                                     type="submit"
-                                    onClick={this.handleSubmit}
+                                    onClick={handleSubmit}
                                     disabled={pristine || invalid || processing}
                                 >
                                     <Trans>check</Trans>
@@ -60,7 +61,7 @@ const Check = (props) => {
                         </div>
                         {check.hostname && (
                             <Fragment>
-                                <hr/>
+                                <hr />
                                 <Info
                                     filters={filters}
                                     whitelistFilters={whitelistFilters}
@@ -93,6 +94,6 @@ Check.propTypes = {
 };
 
 export default flow([
-    withNamespaces(),
-    reduxForm({ form: 'domainCheckForm' }),
+    withTranslation(),
+    reduxForm({ form: FORM_NAME.DOMAIN_CHECK }),
 ])(Check);

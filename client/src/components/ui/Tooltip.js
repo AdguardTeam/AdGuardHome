@@ -3,9 +3,8 @@ import PropTypes from 'prop-types';
 
 import './Tooltip.css';
 
-const Tooltip = props => (
-    <div data-tooltip={props.text} className={`tooltip-custom ${props.type || ''}`}></div>
-);
+const Tooltip = ({ text, type = '' }) => <div data-tooltip={text}
+                                              className={`tooltip-custom ml-1 ${type}`} />;
 
 Tooltip.propTypes = {
     text: PropTypes.string.isRequired,

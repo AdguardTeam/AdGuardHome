@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 
 import Card from '../ui/Card';
 import PageTitle from '../ui/PageTitle';
@@ -92,4 +92,4 @@ CustomRules.propTypes = {
     t: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(CustomRules);
+export default withTranslation()(CustomRules);

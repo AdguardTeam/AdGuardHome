@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import enhanceWithClickOutside from 'react-click-outside';
 import classnames from 'classnames';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 
 import { SETTINGS_URLS, FILTERS_URLS, MENU_URLS } from '../../helpers/constants';
 import Dropdown from '../ui/Dropdown';
@@ -37,6 +37,7 @@ const FILTERS_ITEMS = [
     { route: FILTERS_URLS.dns_blocklists, text: 'dns_blocklists' },
     { route: FILTERS_URLS.dns_allowlists, text: 'dns_allowlists' },
     { route: FILTERS_URLS.dns_rewrites, text: 'dns_rewrites' },
+    { route: FILTERS_URLS.blocked_services, text: 'blocked_services' },
     { route: FILTERS_URLS.custom_rules, text: 'custom_filtering_rules' },
 ];
 
@@ -51,7 +52,7 @@ class Menu extends Component {
 
     getActiveClassForDropdown = (URLS) => {
         const { pathname } = this.props.location;
-        const isActivePage = Object.values(URLS).some(item => item === pathname);
+        const isActivePage = Object.values(URLS).some((item) => item === pathname);
 
         return isActivePage ? 'active' : '';
     };
@@ -77,21 +78,20 @@ class Menu extends Component {
 
     getDropdown = ({
         label, order, URLS, icon, ITEMS,
-    }) =>
-        (
+    }) => (
             <Dropdown
                 label={this.props.t(label)}
                 baseClassName={`dropdown nav-item order-${order}`}
                 controlClassName={`nav-link ${this.getActiveClassForDropdown(URLS)}`}
                 icon={icon}>
-                {ITEMS.map(item => (
+                {ITEMS.map((item) => (
                     this.getNavLink({
                         ...item,
                         order,
                         className: 'dropdown-item',
                     })))}
             </Dropdown>
-        );
+    );
 
     render() {
         const menuClass = classnames({
@@ -102,7 +102,7 @@ class Menu extends Component {
             <Fragment>
                 <div className={menuClass}>
                     <ul className="nav nav-tabs border-0 flex-column flex-lg-row flex-nowrap">
-                        {MENU_ITEMS.map(item => (
+                        {MENU_ITEMS.map((item) => (
                             <li
                                 className={`nav-item order-${item.order}`}
                                 key={item.text}
@@ -139,4 +139,4 @@ Menu.propTypes = {
     t: PropTypes.func,
 };
 
-export default withNamespaces()(enhanceWithClickOutside(Menu));
+export default withTranslation()(enhanceWithClickOutside(Menu));

@@ -1,5 +1,12 @@
 # AdGuard Home API Change Log
 
+## v0.103: API changes
+
+### API: Get querylog: GET /control/querylog
+
+* Added optional "offset" and "limit" parameters
+
+We are still using "older_than" approach in AdGuard Home UI, but we realize that it's easier to use offset/limit so here is this option now.
 
 ## v0.102: API changes
 

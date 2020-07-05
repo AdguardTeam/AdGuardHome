@@ -1,14 +1,14 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import ReactTable from 'react-table';
-import { Trans, withNamespaces } from 'react-i18next';
-import { SMALL_TABLE_DEFAULT_PAGE_SIZE } from '../../../../helpers/constants';
+import { Trans, withTranslation } from 'react-i18next';
+import { LEASES_TABLE_DEFAULT_PAGE_SIZE } from '../../../../helpers/constants';
 
 import Modal from './Modal';
 
 class StaticLeases extends Component {
     cellWrap = ({ value }) => (
-        <div className="logs__row logs__row--overflow">
+        <div className="logs__row o-hidden">
             <span className="logs__text" title={value}>
                 {value}
             </span>
@@ -67,11 +67,10 @@ class StaticLeases extends Component {
                                     <div className="logs__row logs__row--center">
                                         <button
                                             type="button"
-                                            className="btn btn-icon btn-outline-secondary btn-sm"
+                                            className="btn btn-icon btn-icon--green btn-outline-secondary btn-sm"
                                             title={t('delete_table_action')}
                                             disabled={processingDeleting}
-                                            onClick={() =>
-                                                this.handleDelete(ip, mac, hostname)
+                                            onClick={() => this.handleDelete(ip, mac, hostname)
                                             }
                                         >
                                             <svg className="icons">
@@ -83,9 +82,9 @@ class StaticLeases extends Component {
                             },
                         },
                     ]}
-                    pageSize={SMALL_TABLE_DEFAULT_PAGE_SIZE}
+                    pageSize={LEASES_TABLE_DEFAULT_PAGE_SIZE}
                     showPageSizeOptions={false}
-                    showPagination={staticLeases.length > SMALL_TABLE_DEFAULT_PAGE_SIZE}
+                    showPagination={staticLeases.length > LEASES_TABLE_DEFAULT_PAGE_SIZE}
                     noDataText={t('dhcp_static_leases_not_found')}
                     className="-striped -highlight card-table-overflow"
                     minRows={6}
@@ -112,4 +111,4 @@ StaticLeases.propTypes = {
     t: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(StaticLeases);
+export default withTranslation()(StaticLeases);

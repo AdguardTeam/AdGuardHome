@@ -1,6 +1,6 @@
 import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
-import { withNamespaces } from 'react-i18next';
+import { withTranslation } from 'react-i18next';
 
 import {
     checkFiltered,
@@ -20,8 +20,8 @@ const getFilterName = (id, filters, whitelistFilters, t) => {
         return t('filtered_custom_rules');
     }
 
-    const filter = filters.find(filter => filter.id === id)
-        || whitelistFilters.find(filter => filter.id === id);
+    const filter = filters.find((filter) => filter.id === id)
+        || whitelistFilters.find((filter) => filter.id === id);
 
     if (filter && filter.name) {
         return t('query_log_filtered', { filter: filter.name });
@@ -80,9 +80,9 @@ const getTitle = (reason, filterName, t, onlyFiltered) => {
 const getColor = (reason) => {
     if (checkFiltered(reason)) {
         return 'red';
-    } else if (checkRewrite(reason) || checkRewriteHosts(reason)) {
+    } if (checkRewrite(reason) || checkRewriteHosts(reason)) {
         return 'blue';
-    } else if (checkWhiteList(reason)) {
+    } if (checkWhiteList(reason)) {
         return 'green';
     }
 
@@ -162,4 +162,4 @@ Info.propTypes = {
     t: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(Info);
+export default withTranslation()(Info);

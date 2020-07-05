@@ -1,26 +1,24 @@
 package home
 
 import (
-	"bufio"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"runtime"
 	"strconv"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
+
+	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/AdguardTeam/AdGuardHome/util"
 
@@ -108,11 +106,6 @@ func Main(version string, channel string, armVer string) {
 	// therefore, we must do it manually instead of using a lib
 	args := loadOptions()
 
-	if args.serviceControlAction != "" {
-		handleServiceControlAction(args.serviceControlAction)
-		return
-	}
-
 	Context.appSignalChannel = make(chan os.Signal)
 	signal.Notify(Context.appSignalChannel, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 	go func() {
@@ -131,6 +124,11 @@ func Main(version string, channel string, armVer string) {
 			}
 		}
 	}()
+
+	if args.serviceControlAction != "" {
+		handleServiceControlAction(args.serviceControlAction)
+		return
+	}
 
 	// run the protection
 	run(args)
@@ -170,7 +168,7 @@ func run(args options) {
 	Context.firstRun = detectFirstRun()
 	if Context.firstRun {
 		log.Info("This is the first time AdGuard Home is launched")
-		requireAdminRights()
+		checkPermissions()
 	}
 
 	initConfig()
@@ -265,6 +263,7 @@ func run(args options) {
 	}
 
 	sessFilename := filepath.Join(Context.getDataDir(), "sessions.db")
+	GLMode = args.glinetMode
 	Context.auth = InitAuth(sessFilename, config.Users, config.WebSessionTTLHours*60*60)
 	if Context.auth == nil {
 		log.Fatalf("Couldn't initialize Auth module")
@@ -330,38 +329,55 @@ func StartMods() error {
 	return nil
 }
 
-// Check if the current user has root (administrator) rights
-//  and if not, ask and try to run as root
-func requireAdminRights() {
-	admin, _ := util.HaveAdminRights()
-	if //noinspection ALL
-	admin || isdelve.Enabled {
-		// Don't forget that for this to work you need to add "delve" tag explicitly
-		// https://stackoverflow.com/questions/47879070/how-can-i-see-if-the-goland-debugger-is-running-in-the-program
+// Check if the current user permissions are enough to run AdGuard Home
+func checkPermissions() {
+	log.Info("Checking if AdGuard Home has necessary permissions")
+
+	if runtime.GOOS == "windows" {
+		// On Windows we need to have admin rights to run properly
+
+		admin, _ := util.HaveAdminRights()
+		if //noinspection ALL
+		admin || isdelve.Enabled {
+			// Don't forget that for this to work you need to add "delve" tag explicitly
+			// https://stackoverflow.com/questions/47879070/how-can-i-see-if-the-goland-debugger-is-running-in-the-program
+			return
+		}
+
+		log.Fatal("This is the first launch of AdGuard Home. You must run it as Administrator.")
+	}
+
+	// We should check if AdGuard Home is able to bind to port 53
+	ok, err := util.CanBindPort(53)
+
+	if ok {
+		log.Info("AdGuard Home can bind to port 53")
 		return
 	}
 
-	if runtime.GOOS == "windows" {
-		log.Fatal("This is the first launch of AdGuard Home. You must run it as Administrator.")
+	if opErr, ok := err.(*net.OpError); ok {
+		if sysErr, ok := opErr.Err.(*os.SyscallError); ok {
+			if errno, ok := sysErr.Err.(syscall.Errno); ok && errno == syscall.EACCES {
+				msg := `Permission check failed.
 
-	} else {
-		log.Error("This is the first launch of AdGuard Home. You must run it as root.")
+AdGuard Home is not allowed to bind to privileged ports (for instance, port 53).
+Please note, that this is crucial for a server to be able to use privileged ports.
 
-		_, _ = io.WriteString(os.Stdout, "Do you want to start AdGuard Home as root user? [y/n] ")
-		stdin := bufio.NewReader(os.Stdin)
-		buf, _ := stdin.ReadString('\n')
-		buf = strings.TrimSpace(buf)
-		if buf != "y" {
-			os.Exit(1)
+You have two options:
+1. Run AdGuard Home with root privileges
+2. On Linux you can grant the CAP_NET_BIND_SERVICE capability:
+https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#running-without-superuser`
+
+				log.Fatal(msg)
+			}
 		}
-
-		cmd := exec.Command("sudo", os.Args...)
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		_ = cmd.Run()
-		os.Exit(1)
 	}
+
+	msg := fmt.Sprintf(`AdGuard failed to bind to port 53 due to %v
+
+Please note, that this is crucial for a DNS server to be able to use that port.`, err)
+
+	log.Info(msg)
 }
 
 // Write PID to a file
@@ -396,12 +412,21 @@ func configureLogger(args options) {
 	ls := getLogSettings()
 
 	// command-line arguments can override config settings
-	if args.verbose {
+	if args.verbose || config.Verbose {
 		ls.Verbose = true
 	}
 	if args.logFile != "" {
 		ls.LogFile = args.logFile
+	} else if config.LogFile != "" {
+		ls.LogFile = config.LogFile
 	}
+
+	// Handle default log settings overrides
+	ls.LogCompress = config.LogCompress
+	ls.LogLocalTime = config.LogLocalTime
+	ls.LogMaxBackups = config.LogMaxBackups
+	ls.LogMaxSize = config.LogMaxSize
+	ls.LogMaxAge = config.LogMaxAge
 
 	// log.SetLevel(log.INFO) - default
 	if ls.Verbose {
@@ -414,6 +439,7 @@ func configureLogger(args options) {
 		ls.LogFile = configSyslog
 	}
 
+	// logs are written to stdout (default)
 	if ls.LogFile == "" {
 		return
 	}
@@ -430,11 +456,19 @@ func configureLogger(args options) {
 			logFilePath = ls.LogFile
 		}
 
-		file, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		_, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
 			log.Fatalf("cannot create a log file: %s", err)
 		}
-		log.SetOutput(file)
+
+		log.SetOutput(&lumberjack.Logger{
+			Filename:   logFilePath,
+			Compress:   ls.LogCompress, // disabled by default
+			LocalTime:  ls.LogLocalTime,
+			MaxBackups: ls.LogMaxBackups,
+			MaxSize:    ls.LogMaxSize, // megabytes
+			MaxAge:     ls.LogMaxAge,  //days
+		})
 	}
 }
 
@@ -492,6 +526,8 @@ type options struct {
 
 	// runningAsService flag is set to true when options are passed from the service runner
 	runningAsService bool
+
+	glinetMode bool // Activate GL-Inet mode
 }
 
 // loadOptions reads command line arguments and initializes configuration
@@ -526,6 +562,7 @@ func loadOptions() options {
 		{"check-config", "", "Check configuration and exit", nil, func() { o.checkConfig = true }},
 		{"no-check-update", "", "Don't check for updates", nil, func() { o.disableUpdate = true }},
 		{"verbose", "v", "Enable verbose output", nil, func() { o.verbose = true }},
+		{"glinet", "", "Run in GL-Inet compatibility mode", nil, func() { o.glinetMode = true }},
 		{"version", "", "Show the version and exit", nil, func() {
 			fmt.Printf("AdGuardHome %s\n", versionString)
 			os.Exit(0)
@@ -612,8 +649,10 @@ func printHTTPAddresses(proto string) {
 		}
 
 		for _, iface := range ifaces {
-			address = net.JoinHostPort(iface.Addresses[0], port)
-			log.Printf("Go to %s://%s", proto, address)
+			for _, addr := range iface.Addresses {
+				address = net.JoinHostPort(addr, strconv.Itoa(config.BindPort))
+				log.Printf("Go to %s://%s", proto, address)
+			}
 		}
 	} else {
 		address = net.JoinHostPort(config.BindHost, port)

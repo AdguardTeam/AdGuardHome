@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 
 import Statistics from './Statistics';
 import Counters from './Counters';
@@ -10,7 +10,7 @@ import BlockedDomains from './BlockedDomains';
 
 import PageTitle from '../ui/PageTitle';
 import Loading from '../ui/Loading';
-import { ACTION } from '../../helpers/constants';
+import { BLOCK_ACTIONS } from '../../helpers/constants';
 import './Dashboard.css';
 
 class Dashboard extends Component {
@@ -42,7 +42,7 @@ class Dashboard extends Component {
     };
 
     toggleClientStatus = (type, ip) => {
-        const confirmMessage = type === ACTION.block ? 'client_confirm_block' : 'client_confirm_unblock';
+        const confirmMessage = type === BLOCK_ACTIONS.BLOCK ? 'client_confirm_block' : 'client_confirm_unblock';
 
         if (window.confirm(this.props.t(confirmMessage, { ip }))) {
             this.props.toggleClientBlock(type, ip);
@@ -57,10 +57,9 @@ class Dashboard extends Component {
             || stats.processingGetConfig
             || access.processing;
 
-        const subtitle =
-            stats.interval === 1
-                ? t('for_last_24_hours')
-                : t('for_last_days', { count: stats.interval });
+        const subtitle = stats.interval === 1
+            ? t('for_last_24_hours')
+            : t('for_last_days', { count: stats.interval });
 
         const refreshFullButton = (
             <button
@@ -173,4 +172,4 @@ Dashboard.propTypes = {
     getAccessList: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(Dashboard);
+export default withTranslation()(Dashboard);

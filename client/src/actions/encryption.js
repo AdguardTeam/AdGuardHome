@@ -1,7 +1,7 @@
 import { createAction } from 'redux-actions';
 import apiClient from '../api/Api';
-import { addErrorToast, addSuccessToast } from './index';
 import { redirectToCurrentProtocol } from '../helpers/helpers';
+import { addErrorToast, addSuccessToast } from './toasts';
 
 export const getTlsStatusRequest = createAction('GET_TLS_STATUS_REQUEST');
 export const getTlsStatusFailure = createAction('GET_TLS_STATUS_FAILURE');
@@ -25,7 +25,7 @@ export const setTlsConfigRequest = createAction('SET_TLS_CONFIG_REQUEST');
 export const setTlsConfigFailure = createAction('SET_TLS_CONFIG_FAILURE');
 export const setTlsConfigSuccess = createAction('SET_TLS_CONFIG_SUCCESS');
 
-export const setTlsConfig = config => async (dispatch, getState) => {
+export const setTlsConfig = (config) => async (dispatch, getState) => {
     dispatch(setTlsConfigRequest());
     try {
         const { httpPort } = getState().dashboard;
@@ -51,7 +51,7 @@ export const validateTlsConfigRequest = createAction('VALIDATE_TLS_CONFIG_REQUES
 export const validateTlsConfigFailure = createAction('VALIDATE_TLS_CONFIG_FAILURE');
 export const validateTlsConfigSuccess = createAction('VALIDATE_TLS_CONFIG_SUCCESS');
 
-export const validateTlsConfig = config => async (dispatch) => {
+export const validateTlsConfig = (config) => async (dispatch) => {
     dispatch(validateTlsConfigRequest());
     try {
         const values = { ...config };

@@ -1,6 +1,6 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { withNamespaces } from 'react-i18next';
+import { withTranslation } from 'react-i18next';
 
 import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
@@ -72,7 +72,7 @@ class DnsAllowlist extends Component {
         const whitelist = true;
 
         return (
-            <Fragment>
+            <>
                 <PageTitle
                     title={t('dns_allowlists')}
                     subtitle={t('dns_allowlists_desc')}
@@ -113,7 +113,7 @@ class DnsAllowlist extends Component {
                     currentFilterData={currentFilterData}
                     whitelist={whitelist}
                 />
-            </Fragment>
+            </>
         );
     }
 }
@@ -131,4 +131,4 @@ DnsAllowlist.propTypes = {
     t: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(DnsAllowlist);
+export default withTranslation()(DnsAllowlist);

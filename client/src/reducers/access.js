@@ -4,8 +4,8 @@ import * as actions from '../actions/access';
 
 const access = handleActions(
     {
-        [actions.getAccessListRequest]: state => ({ ...state, processing: true }),
-        [actions.getAccessListFailure]: state => ({ ...state, processing: false }),
+        [actions.getAccessListRequest]: (state) => ({ ...state, processing: true }),
+        [actions.getAccessListFailure]: (state) => ({ ...state, processing: false }),
         [actions.getAccessListSuccess]: (state, { payload }) => {
             const {
                 allowed_clients,
@@ -14,16 +14,16 @@ const access = handleActions(
             } = payload;
             const newState = {
                 ...state,
-                allowed_clients: (allowed_clients && allowed_clients.join('\n')) || '',
-                disallowed_clients: (disallowed_clients && disallowed_clients.join('\n')) || '',
-                blocked_hosts: (blocked_hosts && blocked_hosts.join('\n')) || '',
+                allowed_clients: allowed_clients?.join('\n') || '',
+                disallowed_clients: disallowed_clients?.join('\n') || '',
+                blocked_hosts: blocked_hosts?.join('\n') || '',
                 processing: false,
             };
             return newState;
         },
 
-        [actions.setAccessListRequest]: state => ({ ...state, processingSet: true }),
-        [actions.setAccessListFailure]: state => ({ ...state, processingSet: false }),
+        [actions.setAccessListRequest]: (state) => ({ ...state, processingSet: true }),
+        [actions.setAccessListFailure]: (state) => ({ ...state, processingSet: false }),
         [actions.setAccessListSuccess]: (state) => {
             const newState = {
                 ...state,
@@ -32,8 +32,8 @@ const access = handleActions(
             return newState;
         },
 
-        [actions.toggleClientBlockRequest]: state => ({ ...state, processingSet: true }),
-        [actions.toggleClientBlockFailure]: state => ({ ...state, processingSet: false }),
+        [actions.toggleClientBlockRequest]: (state) => ({ ...state, processingSet: true }),
+        [actions.toggleClientBlockFailure]: (state) => ({ ...state, processingSet: false }),
         [actions.toggleClientBlockSuccess]: (state, { payload }) => {
             const {
                 allowed_clients,
@@ -42,9 +42,9 @@ const access = handleActions(
             } = payload;
             const newState = {
                 ...state,
-                allowed_clients: (allowed_clients && allowed_clients.join('\n')) || '',
-                disallowed_clients: (disallowed_clients && disallowed_clients.join('\n')) || '',
-                blocked_hosts: (blocked_hosts && blocked_hosts.join('\n')) || '',
+                allowed_clients: allowed_clients?.join('\n') || '',
+                disallowed_clients: disallowed_clients?.join('\n') || '',
+                blocked_hosts: blocked_hosts?.join('\n') || '',
                 processingSet: false,
             };
             return newState;

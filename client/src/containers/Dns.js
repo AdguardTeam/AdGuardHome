@@ -1,5 +1,4 @@
 import { connect } from 'react-redux';
-import { testUpstream } from '../actions';
 import { getAccessList, setAccessList } from '../actions/access';
 import {
     getRewritesList,
@@ -25,7 +24,6 @@ const mapStateToProps = (state) => {
 };
 
 const mapDispatchToProps = {
-    testUpstream,
     getAccessList,
     setAccessList,
     getRewritesList,

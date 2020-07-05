@@ -7,21 +7,21 @@ import Toast from './Toast';
 
 import './Toast.css';
 
-const Toasts = props => (
-    <TransitionGroup className="toasts">
-        {props.toasts.notices && props.toasts.notices.map((toast) => {
-            const { id } = toast;
-            return (
-                <CSSTransition
-                    key={id}
-                    timeout={500}
-                    classNames="toast"
-                >
-                    <Toast removeToast={props.removeToast} {...toast} />
-                </CSSTransition>
-            );
-        })}
-    </TransitionGroup>
+const Toasts = (props) => (
+        <TransitionGroup className="toasts">
+            {props.toasts.notices?.map((toast) => {
+                const { id } = toast;
+                return (
+                    <CSSTransition
+                        key={id}
+                        timeout={500}
+                        classNames="toast"
+                    >
+                        <Toast removeToast={props.removeToast} {...toast} />
+                    </CSSTransition>
+                );
+            })}
+        </TransitionGroup>
 );
 
 Toasts.propTypes = {
@@ -39,4 +39,3 @@ export default connect(
     mapStateToProps,
     actionCreators,
 )(Toasts);
-

@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactTable from 'react-table';
 import PropTypes from 'prop-types';
-import { withNamespaces, Trans } from 'react-i18next';
+import { withTranslation, Trans } from 'react-i18next';
 
 import Card from '../ui/Card';
 import Cell from '../ui/Cell';
@@ -13,20 +13,19 @@ import { getPercent } from '../../helpers/helpers';
 const getQueriedPercentColor = (percent) => {
     if (percent > 10) {
         return STATUS_COLORS.red;
-    } else if (percent > 5) {
+    } if (percent > 5) {
         return STATUS_COLORS.yellow;
     }
     return STATUS_COLORS.green;
 };
 
-const countCell = dnsQueries =>
-    function cell(row) {
-        const { value } = row;
-        const percent = getPercent(dnsQueries, value);
-        const percentColor = getQueriedPercentColor(percent);
+const countCell = (dnsQueries) => function cell(row) {
+    const { value } = row;
+    const percent = getPercent(dnsQueries, value);
+    const percentColor = getQueriedPercentColor(percent);
 
-        return <Cell value={value} percent={percent} color={percentColor} />;
-    };
+    return <Cell value={value} percent={percent} color={percentColor} />;
+};
 
 const QueriedDomains = ({
     t, refreshButton, topQueriedDomains, subtitle, dnsQueries,
@@ -72,4 +71,4 @@ QueriedDomains.propTypes = {
     t: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(QueriedDomains);
+export default withTranslation()(QueriedDomains);

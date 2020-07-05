@@ -6,6 +6,13 @@
     width: 345px;
 }
 
+@media (max-width: 425px) {
+    .toasts {
+        right: 0;
+        width: 100%;
+    }
+}
+
 .toast {
     display: flex;
     align-items: flex-start;

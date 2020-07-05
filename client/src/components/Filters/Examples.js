@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { withNamespaces, Trans } from 'react-i18next';
+import { withTranslation, Trans } from 'react-i18next';
 
 const Examples = () => (
     <Fragment>
@@ -51,4 +51,4 @@ const Examples = () => (
     </Fragment>
 );
 
-export default withNamespaces()(Examples);
+export default withTranslation()(Examples);

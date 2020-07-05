@@ -1,12 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Field, reduxForm } from 'redux-form';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 
 import { toggleAllServices } from '../../../helpers/helpers';
 import { renderServiceField } from '../../../helpers/form';
-import { SERVICES } from '../../../helpers/constants';
+import { FORM_NAME, SERVICES } from '../../../helpers/constants';
 
 const Form = (props) => {
     const {
@@ -44,7 +44,7 @@ const Form = (props) => {
                     </div>
                 </div>
                 <div className="services">
-                    {SERVICES.map(service => (
+                    {SERVICES.map((service) => (
                         <Field
                             key={service.id}
                             icon={`service_${service.id}`}
@@ -82,9 +82,9 @@ Form.propTypes = {
 };
 
 export default flow([
-    withNamespaces(),
+    withTranslation(),
     reduxForm({
-        form: 'servicesForm',
+        form: FORM_NAME.SERVICES,
         enableReinitialize: true,
     }),
 ])(Form);

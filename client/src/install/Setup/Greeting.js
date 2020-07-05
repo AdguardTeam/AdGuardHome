@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import Controls from './Controls';
 
 const Greeting = () => (
@@ -16,4 +16,4 @@ const Greeting = () => (
     </div>
 );
 
-export default withNamespaces()(Greeting);
+export default withTranslation()(Greeting);

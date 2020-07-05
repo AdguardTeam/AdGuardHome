@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { withNamespaces, Trans } from 'react-i18next';
+import { withTranslation, Trans } from 'react-i18next';
 
 const Actions = ({
     handleAdd, handleRefresh, processingRefreshFilters, whitelist,
@@ -35,5 +35,4 @@ Actions.propTypes = {
     whitelist: PropTypes.bool,
 };
 
-export default withNamespaces()(Actions);
-
+export default withTranslation()(Actions);

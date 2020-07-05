@@ -1,5 +1,10 @@
 :root {
-    font-family-monospace: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+    --yellow-pale: rgba(247, 181, 0, 0.1);
+    --green79: #67B279;
+    --gray-a5: #a5a5a5;
+    --gray-d8: #d8d8d8;
+    --gray-f3: #F3F3F3;
+    --font-family-monospace: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
 }
 
 body {
@@ -22,6 +27,16 @@ body {
     }
 }
 
+@media screen and (max-width: 992px) {
+    .container {
+        padding: 0 !important;
+    }
+
+    .container--wrap {
+        min-height: calc(100vh);
+    }
+}
+
 .loading-bar {
     position: fixed;
     top: 0;
@@ -31,10 +46,17 @@ body {
     background: linear-gradient(45deg, rgba(99, 125, 120, 1) 0%, rgba(88, 177, 101, 1) 100%);
 }
 
-.hidden {
-    display: none;
+@media (max-width: 575px) {
+    .container {
+        padding-right: 0;
+        padding-left: 0;
+    }
 }
 
 .font-monospace {
     font-family: var(--font-family-monospace);
+}
+
+.mw-75 {
+    max-width: 75% !important;
 }

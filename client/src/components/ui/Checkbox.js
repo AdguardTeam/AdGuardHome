@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { withNamespaces } from 'react-i18next';
+import { withTranslation } from 'react-i18next';
 
 import './Checkbox.css';
 
@@ -38,4 +38,4 @@ Checkbox.propTypes = {
     t: PropTypes.func,
 };
 
-export default withNamespaces()(Checkbox);
+export default withTranslation()(Checkbox);

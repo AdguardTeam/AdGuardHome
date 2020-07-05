@@ -1,16 +1,12 @@
 import { createAction } from 'redux-actions';
-import { t } from 'i18next';
+import i18next from 'i18next';
 import axios from 'axios';
 
-import { normalizeTextarea, sortClients, isVersionGreater } from '../helpers/helpers';
-import { SETTINGS_NAMES, CHECK_TIMEOUT } from '../helpers/constants';
+import { isVersionGreater, normalizeTextarea, sortClients } from '../helpers/helpers';
+import { CHECK_TIMEOUT, SETTINGS_NAMES } from '../helpers/constants';
 import { getTlsStatus } from './encryption';
 import apiClient from '../api/Api';
-
-export const addErrorToast = createAction('ADD_ERROR_TOAST');
-export const addSuccessToast = createAction('ADD_SUCCESS_TOAST');
-export const addNoticeToast = createAction('ADD_NOTICE_TOAST');
-export const removeToast = createAction('REMOVE_TOAST');
+import { addErrorToast, addNoticeToast, addSuccessToast } from './toasts';
 
 export const toggleSettingStatus = createAction('SETTING_STATUS_TOGGLE');
 export const showSettingsFailure = createAction('SETTINGS_FAILURE_SHOW');
@@ -62,7 +58,7 @@ export const initSettingsRequest = createAction('SETTINGS_INIT_REQUEST');
 export const initSettingsFailure = createAction('SETTINGS_INIT_FAILURE');
 export const initSettingsSuccess = createAction('SETTINGS_INIT_SUCCESS');
 
-export const initSettings = settingsList => async (dispatch) => {
+export const initSettings = (settingsList) => async (dispatch) => {
     dispatch(initSettingsRequest());
     try {
         const safebrowsingStatus = await apiClient.getSafebrowsingStatus();
@@ -74,9 +70,18 @@ export const initSettings = settingsList => async (dispatch) => {
             safesearch,
         } = settingsList;
         const newSettingsList = {
-            safebrowsing: { ...safebrowsing, enabled: safebrowsingStatus.enabled },
-            parental: { ...parental, enabled: parentalStatus.enabled },
-            safesearch: { ...safesearch, enabled: safesearchStatus.enabled },
+            safebrowsing: {
+                ...safebrowsing,
+                enabled: safebrowsingStatus.enabled,
+            },
+            parental: {
+                ...parental,
+                enabled: parentalStatus.enabled,
+            },
+            safesearch: {
+                ...safesearch,
+                enabled: safesearchStatus.enabled,
+            },
         };
         dispatch(initSettingsSuccess({ settingsList: newSettingsList }));
     } catch (error) {
@@ -89,7 +94,7 @@ export const toggleProtectionRequest = createAction('TOGGLE_PROTECTION_REQUEST')
 export const toggleProtectionFailure = createAction('TOGGLE_PROTECTION_FAILURE');
 export const toggleProtectionSuccess = createAction('TOGGLE_PROTECTION_SUCCESS');
 
-export const toggleProtection = status => async (dispatch) => {
+export const toggleProtection = (status) => async (dispatch) => {
     dispatch(toggleProtectionRequest());
     try {
         const successMessage = status ? 'disabled_protection' : 'enabled_protection';
@@ -139,12 +144,12 @@ const checkStatus = async (handleRequestSuccess, handleRequestError, attempts = 
         handleRequestError();
     }
 
-    const rmTimeout = t => t && clearTimeout(t);
+    const rmTimeout = (t) => t && clearTimeout(t);
 
     try {
         const response = await axios.get('control/status');
         rmTimeout(timeout);
-        if (response && response.status === 200) {
+        if (response?.status === 200) {
             handleRequestSuccess(response);
             if (response.data.running === false) {
                 timeout = setTimeout(
@@ -178,7 +183,7 @@ export const getUpdate = () => async (dispatch, getState) => {
     };
 
     const handleRequestSuccess = (response) => {
-        const responseVersion = response.data && response.data.version;
+        const responseVersion = response.data?.version;
 
         if (dnsVersion !== responseVersion) {
             dispatch(getUpdateSuccess());
@@ -270,7 +275,7 @@ export const testUpstreamRequest = createAction('TEST_UPSTREAM_REQUEST');
 export const testUpstreamFailure = createAction('TEST_UPSTREAM_FAILURE');
 export const testUpstreamSuccess = createAction('TEST_UPSTREAM_SUCCESS');
 
-export const testUpstream = config => async (dispatch) => {
+export const testUpstream = (config) => async (dispatch) => {
     dispatch(testUpstreamRequest());
     try {
         const values = { ...config };
@@ -278,15 +283,16 @@ export const testUpstream = config => async (dispatch) => {
         values.upstream_dns = normalizeTextarea(values.upstream_dns);
 
         const upstreamResponse = await apiClient.testUpstream(values);
-        const testMessages = Object.keys(upstreamResponse).map((key) => {
-            const message = upstreamResponse[key];
-            if (message !== 'OK') {
-                dispatch(addErrorToast({ error: t('dns_test_not_ok_toast', { key }) }));
-            }
-            return message;
-        });
+        const testMessages = Object.keys(upstreamResponse)
+            .map((key) => {
+                const message = upstreamResponse[key];
+                if (message !== 'OK') {
+                    dispatch(addErrorToast({ error: i18next.t('dns_test_not_ok_toast', { key }) }));
+                }
+                return message;
+            });
 
-        if (testMessages.every(message => message === 'OK')) {
+        if (testMessages.every((message) => message === 'OK')) {
             dispatch(addSuccessToast('dns_test_ok_toast'));
         }
 
@@ -301,7 +307,7 @@ export const changeLanguageRequest = createAction('CHANGE_LANGUAGE_REQUEST');
 export const changeLanguageFailure = createAction('CHANGE_LANGUAGE_FAILURE');
 export const changeLanguageSuccess = createAction('CHANGE_LANGUAGE_SUCCESS');
 
-export const changeLanguage = lang => async (dispatch) => {
+export const changeLanguage = (lang) => async (dispatch) => {
     dispatch(changeLanguageRequest());
     try {
         await apiClient.changeLanguage(lang);
@@ -361,7 +367,7 @@ export const findActiveDhcpRequest = createAction('FIND_ACTIVE_DHCP_REQUEST');
 export const findActiveDhcpSuccess = createAction('FIND_ACTIVE_DHCP_SUCCESS');
 export const findActiveDhcpFailure = createAction('FIND_ACTIVE_DHCP_FAILURE');
 
-export const findActiveDhcp = name => async (dispatch) => {
+export const findActiveDhcp = (name) => async (dispatch) => {
     dispatch(findActiveDhcpRequest());
     try {
         const activeDhcp = await apiClient.findActiveDhcp(name);
@@ -376,7 +382,7 @@ export const setDhcpConfigRequest = createAction('SET_DHCP_CONFIG_REQUEST');
 export const setDhcpConfigSuccess = createAction('SET_DHCP_CONFIG_SUCCESS');
 export const setDhcpConfigFailure = createAction('SET_DHCP_CONFIG_FAILURE');
 
-export const setDhcpConfig = values => async (dispatch, getState) => {
+export const setDhcpConfig = (values) => async (dispatch, getState) => {
     const { config } = getState().dhcp;
     const updatedConfig = { ...config, ...values };
     dispatch(setDhcpConfigRequest());
@@ -395,13 +401,19 @@ export const toggleDhcpRequest = createAction('TOGGLE_DHCP_REQUEST');
 export const toggleDhcpFailure = createAction('TOGGLE_DHCP_FAILURE');
 export const toggleDhcpSuccess = createAction('TOGGLE_DHCP_SUCCESS');
 
-export const toggleDhcp = values => async (dispatch) => {
+export const toggleDhcp = (values) => async (dispatch) => {
     dispatch(toggleDhcpRequest());
-    let config = { ...values, enabled: false };
+    let config = {
+        ...values,
+        enabled: false,
+    };
     let successMessage = 'disabled_dhcp';
 
     if (!values.enabled) {
-        config = { ...values, enabled: true };
+        config = {
+            ...values,
+            enabled: true,
+        };
         successMessage = 'enabled_dhcp';
         dispatch(findActiveDhcp(values.interface_name));
     }
@@ -438,13 +450,13 @@ export const addStaticLeaseRequest = createAction('ADD_STATIC_LEASE_REQUEST');
 export const addStaticLeaseFailure = createAction('ADD_STATIC_LEASE_FAILURE');
 export const addStaticLeaseSuccess = createAction('ADD_STATIC_LEASE_SUCCESS');
 
-export const addStaticLease = config => async (dispatch) => {
+export const addStaticLease = (config) => async (dispatch) => {
     dispatch(addStaticLeaseRequest());
     try {
         const name = config.hostname || config.ip;
         await apiClient.addStaticLease(config);
         dispatch(addStaticLeaseSuccess(config));
-        dispatch(addSuccessToast(t('dhcp_lease_added', { key: name })));
+        dispatch(addSuccessToast(i18next.t('dhcp_lease_added', { key: name })));
         dispatch(toggleLeaseModal());
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -456,15 +468,17 @@ export const removeStaticLeaseRequest = createAction('REMOVE_STATIC_LEASE_REQUES
 export const removeStaticLeaseFailure = createAction('REMOVE_STATIC_LEASE_FAILURE');
 export const removeStaticLeaseSuccess = createAction('REMOVE_STATIC_LEASE_SUCCESS');
 
-export const removeStaticLease = config => async (dispatch) => {
+export const removeStaticLease = (config) => async (dispatch) => {
     dispatch(removeStaticLeaseRequest());
     try {
         const name = config.hostname || config.ip;
         await apiClient.removeStaticLease(config);
         dispatch(removeStaticLeaseSuccess(config));
-        dispatch(addSuccessToast(t('dhcp_lease_deleted', { key: name })));
+        dispatch(addSuccessToast(i18next.t('dhcp_lease_deleted', { key: name })));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(removeStaticLeaseFailure());
     }
 };
+
+export const removeToast = createAction('REMOVE_TOAST');

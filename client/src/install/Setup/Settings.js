@@ -2,15 +2,17 @@ import React, { Component, Fragment } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Field, reduxForm, formValueSelector } from 'redux-form';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 
 import Controls from './Controls';
 import AddressList from './AddressList';
 
 import { getInterfaceIp } from '../../helpers/helpers';
-import { ALL_INTERFACES_IP } from '../../helpers/constants';
-import { renderInputField, required, validInstallPort, toNumber } from '../../helpers/form';
+import { ALL_INTERFACES_IP, FORM_NAME } from '../../helpers/constants';
+import {
+    renderInputField, required, validInstallPort, toNumber,
+} from '../../helpers/form';
 
 const STATIC_STATUS = {
     ENABLED: 'yes',
@@ -18,7 +20,7 @@ const STATIC_STATUS = {
     ERROR: 'error',
 };
 
-const renderInterfaces = (interfaces => (
+const renderInterfaces = ((interfaces) => (
     Object.keys(interfaces).map((item) => {
         const option = interfaces[item];
         const {
@@ -27,9 +29,9 @@ const renderInterfaces = (interfaces => (
             flags,
         } = option;
 
-        if (option && ip_addresses && ip_addresses.length > 0) {
+        if (option && ip_addresses?.length > 0) {
             const ip = getInterfaceIp(option);
-            const isDown = flags && flags.includes('down');
+            const isDown = flags?.includes('down');
 
             if (isDown) {
                 return (
@@ -162,6 +164,7 @@ class Settings extends Component {
             interfaces,
             invalid,
             config,
+            t,
         } = this.props;
         const {
             status: webStatus,
@@ -192,7 +195,7 @@ class Settings extends Component {
                                     onChange={handleChange}
                                 >
                                     <option value={ALL_INTERFACES_IP}>
-                                        <Trans>install_settings_all_interfaces</Trans>
+                                        {t('install_settings_all_interfaces')}
                                     </option>
                                     {renderInterfaces(interfaces)}
                                 </Field>
@@ -216,11 +219,11 @@ class Settings extends Component {
                             </div>
                         </div>
                         <div className="col-12">
-                            {webStatus &&
-                            <div className="setup__error text-danger">
+                            {webStatus
+                            && <div className="setup__error text-danger">
                                 {webStatus}
-                                {isWebFixAvailable &&
-                                <button
+                                {isWebFixAvailable
+                                && <button
                                     type="button"
                                     className="btn btn-secondary btn-sm ml-2"
                                     onClick={() => this.handleAutofix('web')}
@@ -262,7 +265,7 @@ class Settings extends Component {
                                     onChange={handleChange}
                                 >
                                     <option value={ALL_INTERFACES_IP}>
-                                        <Trans>install_settings_all_interfaces</Trans>
+                                        {t('install_settings_all_interfaces')}
                                     </option>
                                     {renderInterfaces(interfaces)}
                                 </Field>
@@ -286,12 +289,12 @@ class Settings extends Component {
                             </div>
                         </div>
                         <div className="col-12">
-                            {dnsStatus &&
-                            <Fragment>
+                            {dnsStatus
+                            && <Fragment>
                                 <div className="setup__error text-danger">
                                     {dnsStatus}
-                                    {isDnsFixAvailable &&
-                                    <button
+                                    {isDnsFixAvailable
+                                    && <button
                                         type="button"
                                         className="btn btn-secondary btn-sm ml-2"
                                         onClick={() => this.handleAutofix('dns')}
@@ -300,8 +303,8 @@ class Settings extends Component {
                                     </button>
                                     }
                                 </div>
-                                {isDnsFixAvailable &&
-                                <div className="text-muted mb-2">
+                                {isDnsFixAvailable
+                                && <div className="text-muted mb-2">
                                     <p className="mb-1">
                                         <Trans>autofix_warning_text</Trans>
                                     </p>
@@ -370,7 +373,7 @@ Settings.propTypes = {
     t: PropTypes.func.isRequired,
 };
 
-const selector = formValueSelector('install');
+const selector = formValueSelector(FORM_NAME.INSTALL);
 
 const SettingsForm = connect((state) => {
     const webIp = selector(state, 'web.ip');
@@ -387,9 +390,9 @@ const SettingsForm = connect((state) => {
 })(Settings);
 
 export default flow([
-    withNamespaces(),
+    withTranslation(),
     reduxForm({
-        form: 'install',
+        form: FORM_NAME.INSTALL,
         destroyOnUnmount: false,
         forceUnregisterOnUnmount: true,
     }),

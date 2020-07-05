@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import round from 'lodash/round';
 
 import Card from '../ui/Card';
@@ -23,10 +23,9 @@ const Counters = (props) => {
         avgProcessingTime,
     } = props;
 
-    const tooltipTitle =
-        interval === 1
-            ? t('number_of_dns_query_24_hours')
-            : t('number_of_dns_query_days', { count: interval });
+    const tooltipTitle = interval === 1
+        ? t('number_of_dns_query_24_hours')
+        : t('number_of_dns_query_days', { count: interval });
 
     return (
         <Card
@@ -136,4 +135,4 @@ Counters.propTypes = {
     t: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(Counters);
+export default withTranslation()(Counters);

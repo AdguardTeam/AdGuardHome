@@ -10,81 +10,106 @@ import round from 'lodash/round';
 import axios from 'axios';
 import i18n from 'i18next';
 import uniqBy from 'lodash/uniqBy';
+import ipaddr from 'ipaddr.js';
 import versionCompare from './versionCompare';
+import { getTrackerData } from './trackers/trackers';
 
 import {
-    STANDARD_DNS_PORT,
-    STANDARD_WEB_PORT,
-    STANDARD_HTTPS_PORT,
     CHECK_TIMEOUT,
-    DNS_RECORD_TYPES,
-    DEFAULT_TIME_FORMAT,
     DEFAULT_DATE_FORMAT_OPTIONS,
-    DETAILED_DATE_FORMAT_OPTIONS,
     DEFAULT_LANGUAGE,
-    FILTERED_STATUS,
+    DEFAULT_TIME_FORMAT,
+    DETAILED_DATE_FORMAT_OPTIONS,
+    DNS_RECORD_TYPES,
     FILTERED,
+    FILTERED_STATUS,
+    IP_MATCH_LIST_STATUS,
+    STANDARD_DNS_PORT,
+    STANDARD_HTTPS_PORT,
+    STANDARD_WEB_PORT,
 } from './constants';
 
 /**
- * @param string The time to format
- * @returns string Returns the time in the format HH:mm:ss
+ * @param time {string} The time to format
+ * @returns {string} Returns the time in the format HH:mm:ss
  */
-export const formatTime = (time) => {
+export const formatTime = (time, options = DEFAULT_TIME_FORMAT) => {
     const parsedTime = dateParse(time);
-    return dateFormat(parsedTime, DEFAULT_TIME_FORMAT);
+    return dateFormat(parsedTime, options);
 };
 
 /**
- * @param string The date to format
- * @returns string Returns the date and time in the format DD/MM/YYYY, HH:mm
+ * @param dateTime {string} The date to format
+ * @param [options] {object} Date.prototype.toLocaleString([locales[, options]]) options argument
+ * @returns {string} Returns the date and time in the specified format
  */
 export const formatDateTime = (dateTime, options = DEFAULT_DATE_FORMAT_OPTIONS) => {
-    const currentLanguage = i18n.languages[0] || DEFAULT_LANGUAGE;
-    const parsedTime = dateParse(dateTime);
+    const { language } = navigator;
+    const currentLanguage = (language.slice(0, 2) === 'en' || !language) ? 'en-GB' : language;
+
+    const parsedTime = new Date(dateTime);
 
     return parsedTime.toLocaleString(currentLanguage, options);
 };
 
-export const formatDetailedDateTime = dateTime =>
-    formatDateTime(dateTime, DETAILED_DATE_FORMAT_OPTIONS);
+/**
+ * @param dateTime {string} The date to format
+ * @returns {string} Returns the date and time in the format with the full month name
+ */
+export const formatDetailedDateTime = (dateTime) => formatDateTime(
+    dateTime, DETAILED_DATE_FORMAT_OPTIONS,
+);
 
 /**
- * @param string
- * @returns boolean
+ * @param date {string}
+ * @returns {boolean}
  */
-export const isToday = date => isSameDay(new Date(date), new Date());
+export const isToday = (date) => isSameDay(new Date(date), new Date());
 
-export const normalizeLogs = logs => logs.map((log) => {
+export const normalizeLogs = (logs) => logs.map((log) => {
     const {
-        time,
-        question,
-        answer: response,
-        reason,
+        answer,
+        answer_dnssec,
         client,
+        client_proto,
+        elapsedMs,
+        question,
+        reason,
+        status,
+        time,
         filterId,
         rule,
         service_name,
-        status,
         original_answer,
+        upstream,
     } = log;
+
     const { host: domain, type } = question;
-    const responsesArray = response ? response.map((response) => {
+
+    const response = answer ? answer.map((response) => {
         const { value, type, ttl } = response;
         return `${type}: ${value} (ttl=${ttl})`;
     }) : [];
+
+    const tracker = getTrackerData(domain);
+
     return {
         time,
         domain,
         type,
-        response: responsesArray,
+        response,
         reason,
         client,
+        client_proto,
         filterId,
         rule,
         status,
         serviceName: service_name,
         originalAnswer: original_answer,
+        tracker,
+        answer_dnssec,
+        elapsedMs,
+        upstream,
     };
 });
 
@@ -104,8 +129,8 @@ export const normalizeHistory = (history, interval) => {
     }));
 };
 
-export const normalizeTopStats = stats => (
-    stats.map(item => ({
+export const normalizeTopStats = (stats) => (
+    stats.map((item) => ({
         name: Object.keys(item)[0],
         count: Object.values(item)[0],
     }))
@@ -114,15 +139,15 @@ export const normalizeTopStats = stats => (
 export const addClientInfo = (data, clients, param) => (
     data.map((row) => {
         const clientIp = row[param];
-        const info = clients.find(item => item[clientIp]) || '';
+        const info = clients.find((item) => item[clientIp]) || '';
         return {
             ...row,
-            info: (info && info[clientIp]) || '',
+            info: info?.[clientIp] ?? '',
         };
     })
 );
 
-export const normalizeFilters = filters => (
+export const normalizeFilters = (filters) => (
     filters ? filters.map((filter) => {
         const {
             id,
@@ -130,7 +155,7 @@ export const normalizeFilters = filters => (
             enabled,
             last_updated,
             name = 'Default name',
-            rules_count: rules_count = 0,
+            rules_count = 0,
         } = filter;
 
         return {
@@ -166,10 +191,13 @@ export const getPercent = (amount, number) => {
     return 0;
 };
 
-export const captitalizeWords = text => text.split(/[ -_]/g).map(str => str.charAt(0).toUpperCase() + str.substr(1)).join(' ');
+export const captitalizeWords = (text) => text.split(/[ -_]/g)
+    .map((str) => str.charAt(0)
+        .toUpperCase() + str.substr(1))
+    .join(' ');
 
 export const getInterfaceIp = (option) => {
-    const onlyIPv6 = option.ip_addresses.every(ip => ip.includes(':'));
+    const onlyIPv6 = option.ip_addresses.every((ip) => ip.includes(':'));
     let interfaceIP = option.ip_addresses[0];
 
     if (!onlyIPv6) {
@@ -186,9 +214,10 @@ export const getInterfaceIp = (option) => {
 export const getIpList = (interfaces) => {
     let list = [];
 
-    Object.keys(interfaces).forEach((item) => {
-        list = [...list, ...interfaces[item].ip_addresses];
-    });
+    Object.keys(interfaces)
+        .forEach((item) => {
+            list = [...list, ...interfaces[item].ip_addresses];
+        });
 
     return list.sort();
 };
@@ -231,7 +260,7 @@ export const checkRedirect = (url, attempts) => {
         return false;
     }
 
-    const rmTimeout = t => t && clearTimeout(t);
+    const rmTimeout = (t) => t && clearTimeout(t);
     const setRecursiveTimeout = (time, ...args) => setTimeout(
         checkRedirect,
         time,
@@ -282,7 +311,9 @@ export const normalizeTextarea = (text) => {
         return [];
     }
 
-    return text.replace(/[;, ]/g, '\n').split('\n').filter(n => n);
+    return text.replace(/[;, ]/g, '\n')
+        .split('\n')
+        .filter((n) => n);
 };
 
 /**
@@ -297,19 +328,21 @@ export const normalizeTextarea = (text) => {
  * @returns {Object.<string, number>} normalizedTopClients.auto - auto clients
  * @returns {Object.<string, number>} normalizedTopClients.configured - configured clients
  */
-
-export const normalizeTopClients = topClients => topClients.reduce((nameToCountMap, clientObj) => {
-    const { name, count, info: { name: infoName } } = clientObj;
-    // eslint-disable-next-line no-param-reassign
-    nameToCountMap.auto[name] = count;
-    // eslint-disable-next-line no-param-reassign
-    nameToCountMap.configured[infoName] = count;
-    return nameToCountMap;
-}, { auto: {}, configured: {} });
+export const normalizeTopClients = (topClients) => topClients.reduce(
+    (acc, clientObj) => {
+        const { name, count, info: { name: infoName } } = clientObj;
+        acc.auto[name] = count;
+        acc.configured[infoName] = count;
+        return acc;
+    }, {
+        auto: {},
+        configured: {},
+    },
+);
 
 export const getClientInfo = (clients, ip) => {
     const client = clients
-        .find(item => item.ip_addrs && item.ip_addrs.find(clientIp => clientIp === ip));
+        .find((item) => item.ip_addrs?.find((clientIp) => clientIp === ip));
 
     if (!client) {
         return '';
@@ -318,11 +351,14 @@ export const getClientInfo = (clients, ip) => {
     const { name, whois_info } = client;
     const whois = Object.keys(whois_info).length > 0 ? whois_info : '';
 
-    return { name, whois };
+    return {
+        name,
+        whois,
+    };
 };
 
 export const getAutoClientInfo = (clients, ip) => {
-    const client = clients.find(item => ip === item.ip);
+    const client = clients.find((item) => ip === item.ip);
 
     if (!client) {
         return '';
@@ -331,7 +367,10 @@ export const getAutoClientInfo = (clients, ip) => {
     const { name, whois_info } = client;
     const whois = Object.keys(whois_info).length > 0 ? whois_info : '';
 
-    return { name, whois };
+    return {
+        name,
+        whois,
+    };
 };
 
 export const sortClients = (clients) => {
@@ -341,7 +380,8 @@ export const sortClients = (clients) => {
 
         if (nameA > nameB) {
             return 1;
-        } else if (nameA < nameB) {
+        }
+        if (nameA < nameB) {
             return -1;
         }
 
@@ -352,7 +392,7 @@ export const sortClients = (clients) => {
 };
 
 export const toggleAllServices = (services, change, isSelected) => {
-    services.forEach(service => change(`blocked_services.${service.id}`, isSelected));
+    services.forEach((service) => change(`blocked_services.${service.id}`, isSelected));
 };
 
 export const secondsToMilliseconds = (seconds) => {
@@ -363,7 +403,8 @@ export const secondsToMilliseconds = (seconds) => {
     return seconds;
 };
 
-export const normalizeRulesTextarea = text => text && text.replace(/^\n/g, '').replace(/\n\s*\n/g, '\n');
+export const normalizeRulesTextarea = (text) => text?.replace(/^\n/g, '')
+    .replace(/\n\s*\n/g, '\n');
 
 export const isVersionGreater = (currentVersion, previousVersion) => (
     versionCompare(currentVersion, previousVersion) === -1
@@ -374,7 +415,7 @@ export const normalizeWhois = (whois) => {
         const {
             city, country, ...values
         } = whois;
-        let location = (country && country) || '';
+        let location = country || '';
 
         if (city && location) {
             location = `${location}, ${city}`;
@@ -395,7 +436,7 @@ export const normalizeWhois = (whois) => {
     return whois;
 };
 
-export const isValidQuestionType = type => type && DNS_RECORD_TYPES.includes(type.toUpperCase());
+export const isValidQuestionType = (type) => type && DNS_RECORD_TYPES.includes(type.toUpperCase());
 
 export const getPathWithQueryString = (path, params) => {
     const searchParams = new URLSearchParams(params);
@@ -429,33 +470,128 @@ export const createOnBlurHandler = (event, input, normalizeOnBlur) => (
         ? input.onBlur(normalizeOnBlur(event.target.value))
         : input.onBlur());
 
-export const checkFiltered = reason => reason.indexOf(FILTERED) === 0;
-export const checkRewrite = reason => reason === FILTERED_STATUS.REWRITE;
-export const checkRewriteHosts = reason => reason === FILTERED_STATUS.REWRITE_HOSTS;
-export const checkBlackList = reason => reason === FILTERED_STATUS.FILTERED_BLACK_LIST;
-export const checkWhiteList = reason => reason === FILTERED_STATUS.NOT_FILTERED_WHITE_LIST;
-export const checkNotFilteredNotFound = reason => reason === FILTERED_STATUS.NOT_FILTERED_NOT_FOUND;
-export const checkSafeSearch = reason => reason === FILTERED_STATUS.FILTERED_SAFE_SEARCH;
-export const checkSafeBrowsing = reason => reason === FILTERED_STATUS.FILTERED_SAFE_BROWSING;
-export const checkParental = reason => reason === FILTERED_STATUS.FILTERED_PARENTAL;
-export const checkBlockedService = reason => reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
+export const checkFiltered = (reason) => reason.indexOf(FILTERED) === 0;
+export const checkRewrite = (reason) => reason === FILTERED_STATUS.REWRITE;
+export const checkRewriteHosts = (reason) => reason === FILTERED_STATUS.REWRITE_HOSTS;
+export const checkBlackList = (reason) => reason === FILTERED_STATUS.FILTERED_BLACK_LIST;
+export const checkWhiteList = (reason) => reason === FILTERED_STATUS.NOT_FILTERED_WHITE_LIST;
+// eslint-disable-next-line max-len
+export const checkNotFilteredNotFound = (reason) => reason === FILTERED_STATUS.NOT_FILTERED_NOT_FOUND;
+export const checkSafeSearch = (reason) => reason === FILTERED_STATUS.FILTERED_SAFE_SEARCH;
+export const checkSafeBrowsing = (reason) => reason === FILTERED_STATUS.FILTERED_SAFE_BROWSING;
+export const checkParental = (reason) => reason === FILTERED_STATUS.FILTERED_PARENTAL;
+export const checkBlockedService = (reason) => reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
 
 export const getCurrentFilter = (url, filters) => {
-    const filter = filters && filters.find(item => url === item.url);
+    const filter = filters?.find((item) => url === item.url);
 
     if (filter) {
         const { enabled, name, url } = filter;
-        return { enabled, name, url };
+        return {
+            enabled,
+            name,
+            url,
+        };
     }
 
-    return { name: '', url: '' };
+    return {
+        name: '',
+        url: '',
+    };
 };
 
 /**
- * @param number Number to format
- * @returns string Returns a string with a language-sensitive representation of this number
+ * @param initialValues {object}
+ * @param values {object}
+ * @returns {object} Returns different values of objects
+ */
+export const getObjDiff = (initialValues, values) => Object.entries(values)
+    .reduce((acc, [key, value]) => {
+        if (value !== initialValues[key]) {
+            acc[key] = value;
+        }
+        return acc;
+    }, {});
+
+/**
+ * @param num {number} to format
+ * @returns {string} Returns a string with a language-sensitive representation of this number
  */
 export const formatNumber = (num) => {
     const currentLanguage = i18n.languages[0] || DEFAULT_LANGUAGE;
     return num.toLocaleString(currentLanguage);
+};
+
+export const normalizeMultiline = (multiline) => `${normalizeTextarea(multiline)
+    .map((line) => line.trim())
+    .join('\n')}\n`;
+
+/**
+ * @param parsedIp {object} ipaddr.js IPv4 or IPv6 object
+ * @param cidr {array} ipaddr.js CIDR array
+ * @returns {boolean}
+ */
+export const isIpMatchCidr = (parsedIp, parsedCidr) => {
+    try {
+        const cidrIpVersion = parsedCidr[0].kind();
+        const ipVersion = parsedIp.kind();
+
+        return ipVersion === cidrIpVersion && parsedIp.match(parsedCidr);
+    } catch (e) {
+        return false;
+    }
+};
+
+/**
+ * @param ip {string}
+ * @param list {string}
+ * @returns {'EXACT' | 'CIDR' | 'NOT_FOND'}
+ */
+export const getIpMatchListStatus = (ip, list) => {
+    if (!ip || !list) {
+        return IP_MATCH_LIST_STATUS.NOT_FOUND;
+    }
+
+    const listArr = list.trim()
+        .split('\n');
+
+    try {
+        for (let i = 0; i < listArr.length; i += 1) {
+            const listItem = listArr[i];
+
+            const parsedIp = ipaddr.parse(ip);
+            const isItemAnIp = ipaddr.isValid(listItem);
+            const parsedItem = isItemAnIp ? ipaddr.parse(listItem) : ipaddr.parseCIDR(listItem);
+
+            if (isItemAnIp && parsedIp.toString() === parsedItem.toString()) {
+                return IP_MATCH_LIST_STATUS.EXACT;
+            }
+
+            if (!isItemAnIp && isIpMatchCidr(parsedIp, parsedItem)) {
+                return IP_MATCH_LIST_STATUS.CIDR;
+            }
+        }
+        return IP_MATCH_LIST_STATUS.NOT_FOUND;
+    } catch (e) {
+        return IP_MATCH_LIST_STATUS.NOT_FOUND;
+    }
+};
+
+
+/**
+ * @param {string} elapsedMs
+ * @param {function} t translate
+ * @returns {string}
+ */
+export const formatElapsedMs = (elapsedMs, t) => {
+    const formattedElapsedMs = parseInt(elapsedMs, 10) || parseFloat(elapsedMs)
+        .toFixed(2);
+    return `${formattedElapsedMs} ${t('milliseconds_abbreviation')}`;
+};
+
+/**
+ * @param language {string}
+ */
+export const setHtmlLangAttr = (language) => {
+    window.document.documentElement.lang = language;
 };
