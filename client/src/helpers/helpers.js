@@ -595,3 +595,15 @@ export const formatElapsedMs = (elapsedMs, t) => {
 export const setHtmlLangAttr = (language) => {
     window.document.documentElement.lang = language;
 };
+
+/**
+ * @param values {object}
+ * @returns {object}
+ */
+export const selectCompletedFields = (values) => Object.entries(values)
+    .reduce((acc, [key, value]) => {
+        if (value || value === 0) {
+            acc[key] = value;
+        }
+        return acc;
+    }, {});

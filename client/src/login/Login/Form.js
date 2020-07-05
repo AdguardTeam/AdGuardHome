@@ -3,8 +3,8 @@ import PropTypes from 'prop-types';
 import { Field, reduxForm } from 'redux-form';
 import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
-
-import { renderInputField, required } from '../../helpers/form';
+import { renderInputField } from '../../helpers/form';
+import { validateRequiredValue } from '../../helpers/validators';
 import { FORM_NAME } from '../../helpers/constants';
 
 const Form = (props) => {
@@ -28,7 +28,7 @@ const Form = (props) => {
                         placeholder={t('username_placeholder')}
                         autoComplete="username"
                         disabled={processing}
-                        validate={[required]}
+                        validate={[validateRequiredValue]}
                     />
                 </div>
                 <div className="form__group form__group--settings">
@@ -44,7 +44,7 @@ const Form = (props) => {
                         placeholder={t('password_placeholder')}
                         autoComplete="current-password"
                         disabled={processing}
-                        validate={[required]}
+                        validate={[validateRequiredValue]}
                     />
                 </div>
                 <div className="form-footer">

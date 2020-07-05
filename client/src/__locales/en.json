@@ -223,6 +223,8 @@
     "anonymize_client_ip": "Anonymize client IP",
     "anonymize_client_ip_desc": "Don't save the full IP address of the client in logs and statistics",
     "dns_config": "DNS server configuration",
+    "dns_cache_config": "DNS cache configuration",
+    "dns_cache_config_desc": "Here you can configure DNS cache",
     "blocking_mode": "Blocking mode",
     "default": "Default",
     "nxdomain": "NXDOMAIN",
@@ -529,5 +531,17 @@
     "rewritten": "Rewritten",
     "safe_search": "Safe search",
     "blocklist": "Blocklist",
-    "milliseconds_abbreviation": "ms"
+    "milliseconds_abbreviation": "ms",
+    "dnssec_enable_desc": "Set DNSSEC flag in the outcoming DNS queries and check the result (DNSSEC-enabled resolver is required)",
+    "cache_size": "Cache size",
+    "cache_size_desc": "DNS cache size (in bytes)",
+    "cache_ttl_min_override": "Override minimum TTL",
+    "cache_ttl_max_override": "Override maximum TTL",
+    "enter_cache_size": "Enter cache size",
+    "enter_cache_ttl_min_override": "Enter minimum TTL",
+    "enter_cache_ttl_max_override": "Enter maximum TTL",
+    "cache_ttl_min_override_desc": "Override TTL value (minimum) received from upstream server. This value can't larger than 3600 (1 hour)",
+    "cache_ttl_max_override_desc": "Override TTL value (maximum) received from upstream server",
+    "min_exceeds_max_value": "Minimum value exceeds maximum value",
+    "value_not_larger_than": "Value can't be larger than {{maximum}}"
 }
