@@ -10,6 +10,7 @@ DOCKER_IMAGE_NAME ?= adguard/adguardhome
 DOCKER_PLATFORMS=linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/386,linux/ppc64le,linux/s390x
 DOCKER_OUTPUT ?= type=image,push=false
 DOCKER_TAGS ?= --tag $(DOCKER_IMAGE_NAME):$(VERSION)
+BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 
 # See release and snapshot targets
 DIST_DIR=dist
@@ -31,6 +32,7 @@ build: client
 	go mod download
 	go generate ./...
 	CGO_ENABLED=0 go build -ldflags="-s -w -X main.version=$(VERSION) -X main.channel=$(CHANNEL) -X main.goarm=$(GOARM)"
+	PATH=$(GOPATH)/bin:$(PATH) packr clean
 
 client:
 	npm --prefix client ci
@@ -43,7 +45,7 @@ docker:
 	--build-arg VERSION=$(VERSION) \
 	--build-arg CHANNEL=$(CHANNEL) \
 	--build-arg VCS_REF=$(COMMIT) \
-	--build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
+	--build-arg BUILD_DATE=$(BUILD_DATE) \
 	$(DOCKER_TAGS) \
 	--output "$(DOCKER_OUTPUT)" \
 	-t "$(DOCKER_IMAGE_NAME)" -f ./Dockerfile .
@@ -52,12 +54,14 @@ docker:
 	@echo docker run --name "$(DOCKER_IMAGE_NAME)" -p 53:53/tcp -p 53:53/udp -p 80:80/tcp -p 443:443/tcp -p 853:853/tcp -p 3000:3000/tcp $(DOCKER_IMAGE_NAME)
 
 snapshot:
-	#CHANNEL=$(CHANNEL) goreleaser release --rm-dist --skip-publish --snapshot
+	CHANNEL=$(CHANNEL) goreleaser release --rm-dist --skip-publish --snapshot
 	$(call write_version_file,$(SNAPSHOT_VERSION))
+	PATH=$(GOPATH)/bin:$(PATH) packr clean
 
 release:
 	CHANNEL=$(CHANNEL) goreleaser release --rm-dist --skip-publish
 	$(call write_version_file,$(TAG))
+	PATH=$(GOPATH)/bin:$(PATH) packr clean
 
 snapshot-docker:
 	docker run \
@@ -87,6 +91,8 @@ clean:
 	rm -rf $(DIST_DIR)
 	# client deps
 	rm -rf client/node_modules
+	# packr-generated files
+	PATH=$(GOPATH)/bin:$(PATH) packr clean
 
 define write_version_file
 	$(eval version := $(1))
