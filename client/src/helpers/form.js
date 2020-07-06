@@ -158,25 +158,28 @@ export const renderSelectField = ({
     disabled,
     onClick,
     modifier = 'checkbox--form',
+    checked,
     meta: { touched, error },
-}) => <Fragment>
+}) => <>
     <label className={`checkbox ${modifier}`} onClick={onClick}>
         <span className="checkbox__marker" />
-        <input {...input} type="checkbox" className="checkbox__input" disabled={disabled} />
+        <input {...input} type="checkbox" className="checkbox__input" disabled={disabled} checked={input.checked || checked}/>
         <span className="checkbox__label">
-                    <span className="checkbox__label-text checkbox__label-text--long">
-                        <span className="checkbox__label-title">{placeholder}</span>
-                        {subtitle && <span
-                            className="checkbox__label-subtitle"
-                            dangerouslySetInnerHTML={{ __html: subtitle }}
-                        />}
+                        <span className="checkbox__label-text checkbox__label-text--long">
+                            <span className="checkbox__label-title">{placeholder}</span>
+                            {subtitle
+                            && <span
+                                className="checkbox__label-subtitle"
+                                dangerouslySetInnerHTML={{ __html: subtitle }}
+
+                            />}
+                        </span>
                     </span>
-                </span>
     </label>
     {!disabled
     && touched
     && error && <span className="form__message form__message--error">{error}</span>}
-</Fragment>;
+</>;
 
 renderSelectField.propTypes = {
     input: PropTypes.object.isRequired,
@@ -185,6 +188,7 @@ renderSelectField.propTypes = {
     disabled: PropTypes.bool,
     onClick: PropTypes.func,
     modifier: PropTypes.string,
+    checked: PropTypes.bool,
     meta: PropTypes.shape({
         touched: PropTypes.bool,
         error: PropTypes.object,

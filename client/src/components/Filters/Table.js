@@ -92,7 +92,7 @@ class Table extends Component {
                             className="btn btn-icon btn-outline-primary btn-sm mr-2"
                             title={t('edit_table_action')}
                             onClick={() => toggleFilteringModal({
-                                type: MODAL_TYPE.EDIT,
+                                type: MODAL_TYPE.EDIT_FILTERS,
                                 url: value,
                             })
                             }

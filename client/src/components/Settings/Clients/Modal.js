@@ -47,7 +47,7 @@ const Modal = (props) => {
             <div className="modal-content">
                 <div className="modal-header">
                     <h4 className="modal-title">
-                        {modalType === MODAL_TYPE.EDIT ? (
+                        {modalType === MODAL_TYPE.EDIT_FILTERS ? (
                             <Trans>client_edit</Trans>
                         ) : (
                             <Trans>client_new</Trans>

@@ -41,7 +41,7 @@ class ClientsTable extends Component {
             }
         }
 
-        if (this.props.modalType === MODAL_TYPE.EDIT) {
+        if (this.props.modalType === MODAL_TYPE.EDIT_FILTERS) {
             this.handleFormUpdate(config, this.props.modalClientName);
         } else {
             this.handleFormAdd(config);
@@ -221,7 +221,7 @@ class ClientsTable extends Component {
                             type="button"
                             className="btn btn-icon btn-outline-primary btn-sm mr-2"
                             onClick={() => toggleClientModal({
-                                type: MODAL_TYPE.EDIT,
+                                type: MODAL_TYPE.EDIT_FILTERS,
                                 name: clientName,
                             })
                             }
@@ -306,7 +306,7 @@ class ClientsTable extends Component {
                     <button
                         type="button"
                         className="btn btn-success btn-standard mt-3"
-                        onClick={() => toggleClientModal(MODAL_TYPE.ADD)}
+                        onClick={() => toggleClientModal(MODAL_TYPE.ADD_FILTERS)}
                         disabled={processingAdding}
                     >
                         <Trans>client_add</Trans>

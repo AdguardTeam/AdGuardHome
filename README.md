@@ -63,6 +63,7 @@ It operates as a DNS server that re-routes tracking domains to a "black hole," t
     * [Test unstable versions](#test-unstable-versions)
     * [Reporting issues](#reporting-issues)
     * [Help with translations](#translate)
+    * [Other](#help-other)
 * [Projects that use AdGuardHome](#uses)
 * [Acknowledgments](#acknowledgments)
 
@@ -224,6 +225,15 @@ If you want to help with AdGuard Home translations, please learn more about tran
 
 Here is a link to AdGuard Home project: https://crowdin.com/project/adguard-applications/en#/adguard-home
 
+<a id="help-other"></a>
+### Other
+
+Here's what you can also do to contribute:
+
+1. [Look for issues](https://github.com/AdguardTeam/AdGuardHome/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22+) marked as "help wanted".
+2. Actualize the list of *Blocked services*. It it can be found in [dnsfilter/blocked_services.go](https://github.com/AdguardTeam/AdGuardHome/blob/master/dnsfilter/blocked_services.go).
+3. Actualize the list of known *trackers*. It it can be found in [client/src/helpers/trackers/adguard.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/src/helpers/trackers/adguard.json).
+4. Actualize the list of vetted *blocklists*. It it can be found in [client/src/helpers/filters/filters.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/src/helpers/filters/filters.json).
 
 <a id="uses"></a>
 ## Projects that use AdGuardHome
@@ -255,5 +265,3 @@ This software wouldn't have been possible without:
 You might have seen that [CoreDNS](https://coredns.io) was mentioned here before — we've stopped using it in AdGuardHome. While we still use it on our servers for [AdGuard DNS](https://adguard.com/adguard-dns/overview.html) service, it seemed like an overkill for Home as it impeded with Home features that we plan to implement.
 
 For a full list of all node.js packages in use, please take a look at [client/package.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/package.json) file.
-
-For info on which exact domains that are blocked by the *Blocked services* function, it can be found at [dnsfilter/blocked_services.go](https://github.com/AdguardTeam/AdGuardHome/blob/master/dnsfilter/blocked_services.go)

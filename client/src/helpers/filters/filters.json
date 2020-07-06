@@ -1,0 +1,154 @@
+{
+    "categories": {
+        "general": {
+            "name": "filter_category_general",
+            "description": "filter_category_general_desc"
+        },
+        "security": {
+            "name": "filter_category_security",
+            "description": "filter_category_security_desc"
+        },
+        "regional": {
+            "name": "filter_category_regional",
+            "description": "filter_category_regional_desc"
+        },
+        "other": {
+            "name": "filter_category_other",
+            "description": "filter_category_other_desc"
+        }
+    },
+    "filters": {
+        "adguard-dns-filter": {
+            "name": "AdGuard DNS filter",
+            "categoryId": "general",
+            "homepage": "https://github.com/AdguardTeam/AdGuardSDNSFilter",
+            "source": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"
+        },
+        "adaway-default-blocklist": {
+            "name": "AdAway default blocklist",
+            "categoryId": "general",
+            "homepage": "https://github.com/AdAway/adaway.github.io/",
+            "source": "https://raw.githubusercontent.com/AdAway/adaway.github.io/master/hosts.txt"
+        },
+        "peter-lowe-list": {
+            "name": "Peter Lowe's List",
+            "categoryId": "general",
+            "homepage": "https://pgl.yoyo.org/adservers/",
+            "source": "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=adblockplus&showintro=1&mimetype=plaintext"
+        },
+        "dan-pollock-list": {
+            "name": "Dan Pollock's List",
+            "categoryId": "general",
+            "homepage": "https://someonewhocares.org/",
+            "source": "https://someonewhocares.org/hosts/zero/hosts"
+        },
+        "game-console-adblock-list": {
+            "name": "Game Console Adblock List",
+            "categoryId": "general",
+            "homepage": "https://github.com/DandelionSprout/adfilt",
+            "source": "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/GameConsoleAdblockList.txt"
+        },
+        "perflyst-dandelion-sprout-smart-tv-blocklist-for-adguard-home": {
+            "name": "Perflyst and Dandelion Sprout's Smart-TV Blocklist",
+            "categoryId": "general",
+            "homepage": "https://github.com/Perflyst/PiHoleBlocklist",
+            "source": "https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV-AGH.txt"
+        },
+        "malwaredomainlist-com-hosts-list": {
+            "name": "MalwareDomainList.com Hosts List",
+            "categoryId": "security",
+            "homepage": "https://www.malwaredomainlist.com/",
+            "source": "https://www.malwaredomainlist.com/hostslist/hosts.txt"
+        },
+        "spam404": {
+            "name": "Spam404",
+            "categoryId": "security",
+            "homepage": "https://github.com/Spam404/lists",
+            "source": "https://raw.githubusercontent.com/Spam404/lists/master/main-blacklist.txt"
+        },
+        "nocoin-filter-list": {
+            "name": "NoCoin Filter List",
+            "categoryId": "security",
+            "homepage": "https://github.com/hoshsadiq/adblock-nocoin-list/",
+            "source": "https://raw.githubusercontent.com/hoshsadiq/adblock-nocoin-list/master/nocoin.txt"
+        },
+        "the-big-list-of-hacked-malware-web-sites": {
+            "name": "The Big List of Hacked Malware Web Sites",
+            "categoryId": "security",
+            "homepage": "https://github.com/hoshsadiq/adblock-nocoin-list/",
+            "source": "https://raw.githubusercontent.com/mitchellkrogza/The-Big-List-of-Hacked-Malware-Web-Sites/master/hacked-domains.list"
+        },
+        "scam-blocklist-by-durable-napkin": {
+            "name": "Scam Blocklist by DurableNapkin",
+            "categoryId": "security",
+            "homepage": "https://github.com/durablenapkin/scamblocklist",
+            "source": "https://raw.githubusercontent.com/durablenapkin/scamblocklist/master/adguard.txt"
+        },
+        "NOR-dandelion-sprouts-nordiske-filtre": {
+            "name": "NOR: Dandelion Sprouts nordiske filtre",
+            "categoryId": "regional",
+            "homepage": "https://github.com/DandelionSprout/adfilt",
+            "source": "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/NorwegianExperimentalList%20alternate%20versions/NordicFiltersAdGuardHome.txt"
+        },
+        "TUR-nurcan-turk-ad-list": {
+            "name": "TUR: nurcan Türk ad-list",
+            "categoryId": "regional",
+            "homepage": "https://github.com/DandelionSprout/adfilt",
+            "source": "https://raw.githubusercontent.com/xorcan/hosts/master/xhosts.txt"
+        },
+        "POL-polish-filters-for-pihole": {
+            "name": "POL: Polish filters for Pi hole",
+            "categoryId": "regional",
+            "homepage": "https://www.certyficate.it/",
+            "source": "https://raw.githubusercontent.com/MajkiIT/polish-ads-filter/master/polish-pihole-filters/hostfile.txt"
+        },
+        "KOR-youslist": {
+            "name": "KOR: YousList",
+            "categoryId": "regional",
+            "homepage": "https://github.com/yous/YousList",
+            "source": "https://raw.githubusercontent.com/yous/YousList/master/hosts.txt"
+        },
+        "VNM-abpvn-list": {
+            "name": "VNM: ABPVN List",
+            "categoryId": "regional",
+            "homepage": "http://abpvn.com/",
+            "source": "https://abpvn.com/android/abpvn.txt"
+        },
+        "SWE-frellwit-swedish-hosts-file": {
+            "name": "SWE: Frellwit's Swedish Hosts File",
+            "categoryId": "regional",
+            "homepage": "https://github.com/lassekongo83/Frellwits-filter-lists/",
+            "source": "https://raw.githubusercontent.com/lassekongo83/Frellwits-filter-lists/master/Frellwits-Swedish-Hosts-File.txt"
+        },
+        "ITA-filtri-dns": {
+            "name": "ITA: Filtri-DNS",
+            "categoryId": "regional",
+            "homepage": "https://filtri-dns.ga/",
+            "source": "https://filtri-dns.ga/filtri.txt"
+        },
+        "JPN-280blocker": {
+            "name": "JPN: 280blocker adblock domain lists",
+            "categoryId": "regional",
+            "homepage": "https://280blocker.net/",
+            "source": "https://280blocker.net/files/280blocker_domain.txt"
+        },
+        "IRN-unwanted-iranian-domains": {
+            "name": "IRN: Unwanted Iranian domains",
+            "categoryId": "regional",
+            "homepage": "https://github.com/DRSDavidSoft/additional-hosts",
+            "source": "https://raw.githubusercontent.com/DRSDavidSoft/additional-hosts/master/domains/blacklist/unwanted-iranian.txt"
+        },
+        "MKD-macedonian-pi-hole-blocklist": {
+            "name": "MKD: Macedonian Pi-hole Blocklist",
+            "categoryId": "regional",
+            "homepage": "https://github.com/cchevy/macedonian-pi-hole-blocklist",
+            "source": "https://raw.githubusercontent.com/cchevy/macedonian-pi-hole-blocklist/master/hosts.txt"
+        },
+        "BarbBlock": {
+            "name": "BarbBlock",
+            "categoryId": "other",
+            "homepage": "https://ssl.bblck.me/",
+            "source": "https://ssl.bblck.me/blacklists/ublock-origin.txt"
+        }
+    }
+}

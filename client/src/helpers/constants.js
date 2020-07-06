@@ -58,6 +58,7 @@ export const CHECK_TIMEOUT = 1000;
 export const SUCCESS_TOAST_TIMEOUT = 5000;
 export const FAILURE_TOAST_TIMEOUT = 30000;
 export const HIDE_TOOLTIP_DELAY = 300;
+export const MODAL_OPEN_TIMEOUT = 150;
 
 export const UNSAFE_PORTS = [
     1,
@@ -135,8 +136,10 @@ export const DHCP_STATUS_RESPONSE = {
 };
 
 export const MODAL_TYPE = {
-    ADD: 'add',
-    EDIT: 'edit',
+    SELECT_MODAL_TYPE: 'SELECT_MODAL_TYPE',
+    ADD_FILTERS: 'ADD_FILTERS',
+    EDIT_FILTERS: 'EDIT_FILTERS',
+    CHOOSE_FILTERING_LIST: 'CHOOSE_FILTERING_LIST',
 };
 
 export const CLIENT_ID = {
