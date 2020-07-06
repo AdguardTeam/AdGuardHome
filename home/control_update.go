@@ -18,61 +18,20 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/util"
-
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// Convert version.json data to our JSON response
-func getVersionResp(data []byte) []byte {
-	versionJSON := make(map[string]interface{})
-	err := json.Unmarshal(data, &versionJSON)
-	if err != nil {
-		log.Error("version.json: %s", err)
-		return []byte{}
-	}
-
-	ret := make(map[string]interface{})
-	ret["can_autoupdate"] = false
-
-	var ok1, ok2, ok3 bool
-	ret["new_version"], ok1 = versionJSON["version"].(string)
-	ret["announcement"], ok2 = versionJSON["announcement"].(string)
-	ret["announcement_url"], ok3 = versionJSON["announcement_url"].(string)
-	selfUpdateMinVersion, ok4 := versionJSON["selfupdate_min_version"].(string)
-	if !ok1 || !ok2 || !ok3 || !ok4 {
-		log.Error("version.json: invalid data")
-		return []byte{}
-	}
-
-	// the key is download_linux_arm or download_linux_arm64 for regular ARM versions
-	dloadName := fmt.Sprintf("download_%s_%s", runtime.GOOS, runtime.GOARCH)
-	if runtime.GOARCH == "arm" && ARMVersion == "5" {
-		// the key is download_linux_armv5 for ARMv5
-		dloadName = fmt.Sprintf("download_%s_%sv%s", runtime.GOOS, runtime.GOARCH, ARMVersion)
-	}
-	_, ok := versionJSON[dloadName]
-	if ok && ret["new_version"] != versionString && versionString >= selfUpdateMinVersion {
-		canUpdate := true
-
-		tlsConf := tlsConfigSettings{}
-		Context.tls.WriteDiskConfig(&tlsConf)
-
-		if runtime.GOOS != "windows" &&
-			((tlsConf.Enabled && (tlsConf.PortHTTPS < 1024 || tlsConf.PortDNSOverTLS < 1024)) ||
-				config.BindPort < 1024 ||
-				config.DNS.Port < 1024) {
-			// On UNIX, if we're running under a regular user,
-			//  but with CAP_NET_BIND_SERVICE set on a binary file,
-			//  and we're listening on ports <1024,
-			//  we won't be able to restart after we replace the binary file,
-			//  because we'll lose CAP_NET_BIND_SERVICE capability.
-			canUpdate, _ = util.HaveAdminRights()
-		}
-		ret["can_autoupdate"] = canUpdate
-	}
-
-	d, _ := json.Marshal(ret)
-	return d
+type updateInfo struct {
+	pkgURL           string // URL for the new package
+	pkgName          string // Full path to package file
+	newVer           string // New version string
+	updateDir        string // Full path to the directory containing unpacked files from the new package
+	backupDir        string // Full path to backup directory
+	configName       string // Full path to the current configuration file
+	updateConfigName string // Full path to the configuration file to check by the new binary
+	curBinName       string // Full path to the current executable file
+	bkpBinName       string // Full path to the current executable file in backup directory
+	newBinName       string // Full path to the new executable file
 }
 
 type getVersionJSONRequest struct {
@@ -81,7 +40,6 @@ type getVersionJSONRequest struct {
 
 // Get the latest available version from the Internet
 func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
-
 	if Context.disableUpdate {
 		return
 	}
@@ -103,7 +61,7 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 		if cached {
 			log.Tracef("Returning cached data")
 			w.Header().Set("Content-Type", "application/json")
-			w.Write(getVersionResp(data))
+			_, _ = w.Write(getVersionResp(data))
 			return
 		}
 	}
@@ -146,6 +104,80 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Perform an update procedure to the latest available version
+func handleUpdate(w http.ResponseWriter, r *http.Request) {
+	if len(config.versionCheckJSON) == 0 {
+		httpError(w, http.StatusBadRequest, "/update request isn't allowed now")
+		return
+	}
+
+	u, err := getUpdateInfo(config.versionCheckJSON)
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "%s", err)
+		return
+	}
+
+	err = doUpdate(u)
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "%s", err)
+		return
+	}
+
+	returnOK(w)
+	if f, ok := w.(http.Flusher); ok {
+		f.Flush()
+	}
+
+	go finishUpdate(u)
+}
+
+// Convert version.json data to our JSON response
+func getVersionResp(data []byte) []byte {
+	versionJSON := make(map[string]interface{})
+	err := json.Unmarshal(data, &versionJSON)
+	if err != nil {
+		log.Error("version.json: %s", err)
+		return []byte{}
+	}
+
+	ret := make(map[string]interface{})
+	ret["can_autoupdate"] = false
+
+	var ok1, ok2, ok3 bool
+	ret["new_version"], ok1 = versionJSON["version"].(string)
+	ret["announcement"], ok2 = versionJSON["announcement"].(string)
+	ret["announcement_url"], ok3 = versionJSON["announcement_url"].(string)
+	selfUpdateMinVersion, ok4 := versionJSON["selfupdate_min_version"].(string)
+	if !ok1 || !ok2 || !ok3 || !ok4 {
+		log.Error("version.json: invalid data")
+		return []byte{}
+	}
+
+	_, ok := getDownloadUrl(versionJSON)
+	if ok && ret["new_version"] != versionString && versionString >= selfUpdateMinVersion {
+		canUpdate := true
+
+		tlsConf := tlsConfigSettings{}
+		Context.tls.WriteDiskConfig(&tlsConf)
+
+		if runtime.GOOS != "windows" &&
+			((tlsConf.Enabled && (tlsConf.PortHTTPS < 1024 || tlsConf.PortDNSOverTLS < 1024)) ||
+				config.BindPort < 1024 ||
+				config.DNS.Port < 1024) {
+			// On UNIX, if we're running under a regular user,
+			//  but with CAP_NET_BIND_SERVICE set on a binary file,
+			//  and we're listening on ports <1024,
+			//  we won't be able to restart after we replace the binary file,
+			//  because we'll lose CAP_NET_BIND_SERVICE capability.
+			canUpdate, _ = util.HaveAdminRights()
+		}
+		ret["can_autoupdate"] = canUpdate
+	}
+
+	d, _ := json.Marshal(ret)
+	return d
+}
+
 // Copy file on disk
 func copyFile(src, dst string) error {
 	d, e := ioutil.ReadFile(src)
@@ -157,19 +189,6 @@ func copyFile(src, dst string) error {
 		return e
 	}
 	return nil
-}
-
-type updateInfo struct {
-	pkgURL           string // URL for the new package
-	pkgName          string // Full path to package file
-	newVer           string // New version string
-	updateDir        string // Full path to the directory containing unpacked files from the new package
-	backupDir        string // Full path to backup directory
-	configName       string // Full path to the current configuration file
-	updateConfigName string // Full path to the configuration file to check by the new binary
-	curBinName       string // Full path to the current executable file
-	bkpBinName       string // Full path to the current executable file in backup directory
-	newBinName       string // Full path to the new executable file
 }
 
 // Fill in updateInfo object
@@ -184,7 +203,12 @@ func getUpdateInfo(jsonData []byte) (*updateInfo, error) {
 		return nil, fmt.Errorf("JSON parse: %s", err)
 	}
 
-	u.pkgURL = versionJSON[fmt.Sprintf("download_%s_%s", runtime.GOOS, runtime.GOARCH)].(string)
+	pkgURL, ok := getDownloadUrl(versionJSON)
+	if !ok {
+		return nil, fmt.Errorf("failed to get download URL")
+	}
+
+	u.pkgURL = pkgURL
 	u.newVer = versionJSON["version"].(string)
 	if len(u.pkgURL) == 0 || len(u.newVer) == 0 {
 		return nil, fmt.Errorf("invalid JSON")
@@ -224,6 +248,33 @@ func getUpdateInfo(jsonData []byte) (*updateInfo, error) {
 	}
 
 	return &u, nil
+}
+
+// getDownloadUrl - gets download URL for the current GOOS/GOARCH
+// returns
+func getDownloadUrl(json map[string]interface{}) (string, bool) {
+	var key string
+
+	if runtime.GOARCH == "arm" && ARMVersion != "" {
+		// the key is:
+		// download_linux_armv5 for ARMv5
+		// download_linux_armv6 for ARMv6
+		// download_linux_armv7 for ARMv7
+		key = fmt.Sprintf("download_%s_%sv%s", runtime.GOOS, runtime.GOARCH, ARMVersion)
+	}
+
+	u, ok := json[key]
+	if !ok {
+		// the key is download_linux_arm or download_linux_arm64 for regular ARM versions
+		key = fmt.Sprintf("download_%s_%s", runtime.GOOS, runtime.GOARCH)
+		u, ok = json[key]
+	}
+
+	if !ok {
+		return "", false
+	}
+
+	return u.(string), true
 }
 
 // Unpack all files from .zip file to the specified directory
@@ -525,32 +576,4 @@ func finishUpdate(u *updateInfo) {
 		}
 		// Unreachable code
 	}
-}
-
-// Perform an update procedure to the latest available version
-func handleUpdate(w http.ResponseWriter, r *http.Request) {
-
-	if len(config.versionCheckJSON) == 0 {
-		httpError(w, http.StatusBadRequest, "/update request isn't allowed now")
-		return
-	}
-
-	u, err := getUpdateInfo(config.versionCheckJSON)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "%s", err)
-		return
-	}
-
-	err = doUpdate(u)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "%s", err)
-		return
-	}
-
-	returnOK(w)
-	if f, ok := w.(http.Flusher); ok {
-		f.Flush()
-	}
-
-	go finishUpdate(u)
 }

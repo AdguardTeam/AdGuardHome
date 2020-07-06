@@ -109,16 +109,34 @@ define write_version_file
 	echo "  \"version\": \"v$(version)\"," >> $(DIST_DIR)/version.json
 	echo "  \"announcement\": \"AdGuard Home $(version) is now available!\"," >> $(DIST_DIR)/version.json
 	echo "  \"announcement_url\": \"https://github.com/AdguardTeam/AdGuardHome/releases\"," >> $(DIST_DIR)/version.json
+
+	# Windows builds
 	echo "  \"download_windows_amd64\": \"$(BASE_URL)/AdGuardHome_windows_amd64.zip\"," >> $(DIST_DIR)/version.json
 	echo "  \"download_windows_386\": \"$(BASE_URL)/AdGuardHome_windows_386.zip\"," >> $(DIST_DIR)/version.json
+
+	# MacOS builds
+	echo "  \"download_darwin_386\": \"$(BASE_URL)/AdGuardHome_darwin_386.zip\"," >> $(DIST_DIR)/version.json
 	echo "  \"download_darwin_amd64\": \"$(BASE_URL)/AdGuardHome_darwin_amd64.zip\"," >> $(DIST_DIR)/version.json
+
+	# Linux
 	echo "  \"download_linux_amd64\": \"$(BASE_URL)/AdGuardHome_linux_amd64.tar.gz\"," >> $(DIST_DIR)/version.json
 	echo "  \"download_linux_386\": \"$(BASE_URL)/AdGuardHome_linux_386.tar.gz\"," >> $(DIST_DIR)/version.json
-	echo "  \"download_linux_arm\": \"$(BASE_URL)/AdGuardHome_linux_arm.tar.gz\"," >> $(DIST_DIR)/version.json
+
+	# Linux, all kinds of ARM
+	echo "  \"download_linux_arm\": \"$(BASE_URL)/AdGuardHome_linux_armv6.tar.gz\"," >> $(DIST_DIR)/version.json
 	echo "  \"download_linux_armv5\": \"$(BASE_URL)/AdGuardHome_linux_armv5.tar.gz\"," >> $(DIST_DIR)/version.json
+	echo "  \"download_linux_armv6\": \"$(BASE_URL)/AdGuardHome_linux_armv6.tar.gz\"," >> $(DIST_DIR)/version.json
+	echo "  \"download_linux_armv7\": \"$(BASE_URL)/AdGuardHome_linux_armv7.tar.gz\"," >> $(DIST_DIR)/version.json
 	echo "  \"download_linux_arm64\": \"$(BASE_URL)/AdGuardHome_linux_arm64.tar.gz\"," >> $(DIST_DIR)/version.json
-	echo "  \"download_linux_mips\": \"$(BASE_URL)/AdGuardHome_linux_mips.tar.gz\"," >> $(DIST_DIR)/version.json
-	echo "  \"download_linux_mipsle\": \"$(BASE_URL)/AdGuardHome_linux_mipsle.tar.gz\"," >> $(DIST_DIR)/version.json
+
+	# Linux, MIPS
+	echo "  \"download_linux_mips\": \"$(BASE_URL)/AdGuardHome_linux_mips_softfloat.tar.gz\"," >> $(DIST_DIR)/version.json
+	echo "  \"download_linux_mipsle\": \"$(BASE_URL)/AdGuardHome_linux_mipsle_softfloat.tar.gz\"," >> $(DIST_DIR)/version.json
+	echo "  \"download_linux_mips64\": \"$(BASE_URL)/AdGuardHome_linux_mips64_softfloat.tar.gz\"," >> $(DIST_DIR)/version.json
+	echo "  \"download_linux_mips64le\": \"$(BASE_URL)/AdGuardHome_linux_mips64le_softfloat.tar.gz\"," >> $(DIST_DIR)/version.json
+
+	# FreeBSD
+	echo "  \"download_freebsd_386\": \"$(BASE_URL)/AdGuardHome_freebsd_386.tar.gz\"," >> $(DIST_DIR)/version.json
 	echo "  \"download_freebsd_amd64\": \"$(BASE_URL)/AdGuardHome_freebsd_amd64.tar.gz\"," >> $(DIST_DIR)/version.json
 	echo "  \"selfupdate_min_version\": \"v0.0\"" >> $(DIST_DIR)/version.json
 	echo "}" >> $(DIST_DIR)/version.json
