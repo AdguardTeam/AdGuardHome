@@ -12,6 +12,7 @@ import {
     FILTERED_STATUS_TO_META_MAP,
     TABLE_DEFAULT_PAGE_SIZE,
     SCHEME_TO_PROTOCOL_MAP,
+    CUSTOM_FILTERING_RULES_ID,
 } from '../../helpers/constants';
 import getDateCell from './Cells/getDateCell';
 import getDomainCell from './Cells/getDomainCell';
@@ -85,6 +86,27 @@ const Table = (props) => {
         getFilteringStatus();
     };
 
+    const getFilterName = (filters, whitelistFilters, filterId, t) => {
+        if (filterId === CUSTOM_FILTERING_RULES_ID) {
+            return t('custom_filter_rules');
+        }
+
+        const filter = filters.find((filter) => filter.id === filterId)
+            || whitelistFilters.find((filter) => filter.id === filterId);
+        let filterName = '';
+
+        if (filter) {
+            filterName = filter.name;
+        }
+
+        if (!filterName) {
+            filterName = t('unknown_filter', { filterId });
+        }
+
+        return filterName;
+    };
+
+
     const columns = [
         {
             Header: t('time_table_header'),
@@ -125,6 +147,7 @@ const Table = (props) => {
                 filtering,
                 t,
                 isDetailed,
+                getFilterName,
             ),
             minWidth: 150,
             maxHeight: 60,
@@ -276,6 +299,7 @@ const Table = (props) => {
                             upstream,
                             type,
                             client_proto,
+                            filterId,
                         } = rowInfo.original;
 
                         const hasTracker = !!tracker;
@@ -334,6 +358,10 @@ const Table = (props) => {
                                                className="title--border bg--danger text-center">{t(buttonType)}</div>,
                         };
 
+                        const { filters, whitelistFilters } = filtering;
+
+                        const filter = getFilterName(filters, whitelistFilters, filterId, t);
+
                         const detailedDataBlocked = {
                             time_table_header: formatTime(time, LONG_TIME_FORMAT),
                             date: formatDateTime(time, DEFAULT_SHORT_DATE_FORMAT_OPTIONS),
@@ -346,10 +374,11 @@ const Table = (props) => {
                             category_label: hasTracker && captitalizeWords(tracker.category),
                             source_label: hasTracker && sourceData
                                 && <a href={sourceData.url} target="_blank" rel="noopener noreferrer"
-                                      className="link--green">{sourceData.name}</a>,
+                                   className="link--green">{sourceData.name}</a>,
                             response_details: 'title',
                             install_settings_dns: upstream,
                             elapsed: formattedElapsedMs,
+                            filter,
                             response_table_header: response?.join('\n'),
                             [buttonType]: <div onClick={onToggleBlock}
                                                className="title--border text-center">{t(buttonType)}</div>,

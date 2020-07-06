@@ -2,33 +2,12 @@ import React from 'react';
 import classNames from 'classnames';
 import { formatElapsedMs } from '../../../helpers/helpers';
 import {
-    CUSTOM_FILTERING_RULES_ID,
     FILTERED_STATUS,
     FILTERED_STATUS_TO_META_MAP,
 } from '../../../helpers/constants';
 import getHintElement from './getHintElement';
 
-const getFilterName = (filters, whitelistFilters, filterId, t) => {
-    if (filterId === CUSTOM_FILTERING_RULES_ID) {
-        return t('custom_filter_rules');
-    }
-
-    const filter = filters.find((filter) => filter.id === filterId)
-        || whitelistFilters.find((filter) => filter.id === filterId);
-    let filterName = '';
-
-    if (filter) {
-        filterName = filter.name;
-    }
-
-    if (!filterName) {
-        filterName = t('unknown_filter', { filterId });
-    }
-
-    return filterName;
-};
-
-const getResponseCell = (row, filtering, t, isDetailed) => {
+const getResponseCell = (row, filtering, t, isDetailed, getFilterName) => {
     const {
         reason, filterId, rule, status, upstream, elapsedMs, domain, response,
     } = row.original;
@@ -98,6 +77,7 @@ const getResponseCell = (row, filtering, t, isDetailed) => {
         [FILTERED_STATUS.FILTERED_BLACK_LIST]: {
             domain,
             encryption_status: boldStatusLabel,
+            filter,
             install_settings_dns: upstream,
             elapsed: formattedElapsedMs,
             response_code: status,
