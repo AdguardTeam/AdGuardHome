@@ -986,6 +986,110 @@ Response:
 This section allows the administrator to easily configure custom DNS response for a specific domain name.
 A, AAAA and CNAME records are supported.
 
+Syntax:
+
+	key -> value
+
+where `key` is a host name or a wild card that matches Question in DNS request
+and `value` is either:
+* IPv4 address: use this IP in A response
+* IPv6 address: use this IP in AAAA response
+* canonical name: add CNAME record
+* "<key>": CNAME exception - pass request to upstream
+* "A": A exception - pass A request to upstream
+* "AAAA": AAAA exception - pass AAAA request to upstream
+
+
+#### Example: A record
+
+	host.com -> 1.2.3.4
+
+Response:
+
+	A:
+		A = 1.2.3.4
+	AAAA:
+		<empty>
+
+#### Example: AAAA record
+
+	host.com -> ::1
+
+Response:
+
+	A:
+		<empty>
+	AAAA:
+		AAAA = ::1
+
+#### Example: CNAME record
+
+	sub.host.com -> host.com
+
+Response:
+
+	A:
+		CNAME = host.com
+		A = <IPv4 address of host.com>
+	AAAA:
+		CNAME = host.com
+		AAAA = <IPv6 address of host.com>
+
+#### Example: CNAME+A records
+
+	sub.host.com -> host.com
+	host.com -> 1.2.3.4
+
+Response:
+
+	A:
+		CNAME = host.com
+		A = 1.2.3.4
+	AAAA:
+		CNAME = host.com
+
+#### Example: Wildcard CNAME+A record with CNAME exception
+
+	*.host.com -> 1.2.3.4
+	pass.host.com -> pass.host.com
+
+Response to `my.host.com`:
+
+	A:
+		A = 1.2.3.4
+	AAAA:
+		<empty>
+
+Response to `pass.host.com`:
+
+	A:
+		A = <IPv4 address of pass.host.com>
+	AAAA:
+		AAAA = <IPv6 address of pass.host.com>
+
+#### Example: A record with AAAA exception
+
+	host.com -> 1.2.3.4
+	host.com -> AAAA
+
+Response:
+
+	A:
+		A = 1.2.3.4
+	AAAA:
+		AAAA = <IPv6 address of host.com>
+
+#### Example: pass A only
+
+	host.com -> A
+
+Response:
+
+	A:
+		A = <IPv4 address of host.com>
+	AAAA:
+		<empty>
+
 
 ### API: List rewrite entries
 
