@@ -29,6 +29,7 @@ var serviceRulesArray = []svc{
 		"||fbsbx.TLD^",
 		"||discoverapp.TLD^",
 		"||freebasics.TLD^",
+		"||freebasic.TLD^",
 		"||internet.org^",
 		"||messenger.TLD^",
 		"||m.me^",
