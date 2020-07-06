@@ -1,0 +1,85 @@
+env:
+  - GO111MODULE=on
+  - GOPROXY=https://goproxy.io
+
+before:
+  hooks:
+    - go mod download
+    - go generate ./...
+
+builds:
+  -
+    main: ./main.go
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.channel={{.Env.CHANNEL}} -X main.goarm={{.Env.GOARM}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+      - freebsd
+      - windows
+    goarch:
+      - 386
+      - amd64
+      - arm
+      - arm64
+      - mips
+      - mipsle
+      - mips64
+      - mips64le
+    goarm:
+      - 5
+      - 6
+    gomips:
+      - softfloat
+    ignore:
+      - goos: freebsd
+        goarch: arm
+      - goos: freebsd
+        goarch: arm64
+      - goos: freebsd
+        goarch: mips
+      - goos: freebsd
+        goarch: mipsle
+
+archives:
+  -
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    wrap_in_directory: "AdGuardHome"
+    format_overrides:
+      - goos: windows
+        format: zip
+      - goos: darwin
+        format: zip
+    files:
+      - LICENSE.txt
+      - README.md
+
+snapcrafts:
+  -
+    name: adguard-home
+    base: core18
+    name_template: '{{ .ProjectName }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    summary: Network-wide ads & trackers blocking DNS server
+    description: |
+      AdGuard Home is a network-wide software for blocking ads & tracking. After
+      you set it up, it'll cover ALL your home devices, and you don't need any
+      client-side software for that.
+
+      It operates as a DNS server that re-routes tracking domains to a "black hole,"
+      thus preventing your devices from connecting to those servers. It's based
+      on software we use for our public AdGuard DNS servers -- both share a lot
+      of common code.
+    grade: stable
+    confinement: strict
+    publish: false
+    license: GPL-3.0
+    apps:
+      adguard-home:
+        args: -w ${SNAP_DATA} --no-check-update
+        plugs: [ network-bind ]
+        daemon: simple
+
+checksum:
+  name_template: 'checksums.txt'
