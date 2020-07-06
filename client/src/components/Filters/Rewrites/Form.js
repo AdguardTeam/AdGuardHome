@@ -63,7 +63,14 @@ const Form = (props) => {
                     />
                 </div>
             </div>
-
+            <ul>{['rewrite_ip_address',
+                'rewrite_domain_name',
+                'rewrite_A',
+                'rewrite_AAAA']
+                .map((str) => <li key={str}>
+                    <Trans components={[<code key="0">text</code>]}>{str}</Trans>
+                </li>)
+            }</ul>
             <div className="modal-footer">
                 <div className="btn-list">
                     <button
