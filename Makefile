@@ -7,7 +7,7 @@ TARGET=AdGuardHome
 
 # Docker target parameters
 DOCKER_IMAGE_NAME ?= adguard/adguardhome
-DOCKER_PLATFORMS=linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/386,linux/ppc64le,linux/s390x
+DOCKER_PLATFORMS=linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/386,linux/ppc64le
 DOCKER_OUTPUT ?= type=image,push=false
 DOCKER_TAGS ?= --tag $(DOCKER_IMAGE_NAME):$(VERSION)
 BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
