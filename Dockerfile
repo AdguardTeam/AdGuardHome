@@ -10,9 +10,6 @@ ENV CGO_ENABLED 0
 ENV GO111MODULE on
 ENV GOPROXY https://goproxy.io
 
-ARG TARGETPLATFORM
-ARG TARGETOS
-ARG TARGETARCH
 COPY --from=xgo / /
 RUN go env
 
@@ -25,13 +22,19 @@ RUN apk --update --no-cache add \
 
 WORKDIR /app
 
-COPY go.mod .
-COPY go.sum .
-RUN go mod download
-
 COPY . ./
+
+# Prepare the client code
 RUN npm --prefix client ci && npm --prefix client run build-prod
-RUN PATH=${GOPATH}/bin/${TARGETOS}_${TARGETARCH}:${PATH} go generate ./...
+
+# Download go dependencies
+RUN go mod download
+RUN go generate ./...
+
+# It's important to place TARGET* arguments here to avoid running npm and go mod download for every platform
+ARG TARGETPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
 RUN go build -ldflags="-s -w -X main.version=${VERSION} -X main.channel=${CHANNEL} -X main.goarm=${GOARM}"
 
 FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:latest
