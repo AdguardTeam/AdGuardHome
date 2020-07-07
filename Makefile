@@ -18,9 +18,9 @@ DIST_DIR=dist
 # Version and channel (see build and version targets)
 TAG_NAME=$(shell git describe --abbrev=0)
 # remove leading "v"
-TAG=$(TAG_NAME:v%=%)
+RELEASE_VERSION=$(TAG_NAME:v%=%)
 COMMIT=$(shell git rev-parse --short HEAD)
-SNAPSHOT_VERSION=$(TAG)-SNAPSHOT-$(COMMIT)
+SNAPSHOT_VERSION=$(RELEASE_VERSION)-SNAPSHOT-$(COMMIT)
 VERSION=$(SNAPSHOT_VERSION)
 CHANNEL ?= release
 BASE_URL="https://static.adguard.com/adguardhome/$(CHANNEL)"
@@ -54,13 +54,15 @@ docker:
 	@echo docker run --name "$(DOCKER_IMAGE_NAME)" -p 53:53/tcp -p 53:53/udp -p 80:80/tcp -p 443:443/tcp -p 853:853/tcp -p 3000:3000/tcp $(DOCKER_IMAGE_NAME)
 
 snapshot:
+	@echo Starting snapshot build: version $(SNAPSHOT_VERSION), channel $(CHANNEL)
 	CHANNEL=$(CHANNEL) goreleaser release --rm-dist --skip-publish --snapshot
 	$(call write_version_file,$(SNAPSHOT_VERSION))
 	PATH=$(GOPATH)/bin:$(PATH) packr clean
 
 release:
+	@echo Starting release build: version $(RELEASE_VERSION), channel $(CHANNEL)
 	CHANNEL=$(CHANNEL) goreleaser release --rm-dist --skip-publish
-	$(call write_version_file,$(TAG))
+	$(call write_version_file,$(RELEASE_VERSION))
 	PATH=$(GOPATH)/bin:$(PATH) packr clean
 
 snapshot-docker:

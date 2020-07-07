@@ -31,7 +31,7 @@ RUN go mod download
 
 COPY . ./
 RUN npm --prefix client ci && npm --prefix client run build-prod
-RUN go generate ./...
+RUN PATH=${GOPATH}/bin/${TARGETOS}_${TARGETARCH}:${PATH} go generate ./...
 RUN go build -ldflags="-s -w -X main.version=${VERSION} -X main.channel=${CHANNEL} -X main.goarm=${GOARM}"
 
 FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:latest
