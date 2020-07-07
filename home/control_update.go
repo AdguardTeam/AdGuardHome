@@ -153,7 +153,7 @@ func getVersionResp(data []byte) []byte {
 		return []byte{}
 	}
 
-	_, ok := getDownloadUrl(versionJSON)
+	_, ok := getDownloadURL(versionJSON)
 	if ok && ret["new_version"] != versionString && versionString >= selfUpdateMinVersion {
 		canUpdate := true
 
@@ -203,7 +203,7 @@ func getUpdateInfo(jsonData []byte) (*updateInfo, error) {
 		return nil, fmt.Errorf("JSON parse: %s", err)
 	}
 
-	pkgURL, ok := getDownloadUrl(versionJSON)
+	pkgURL, ok := getDownloadURL(versionJSON)
 	if !ok {
 		return nil, fmt.Errorf("failed to get download URL")
 	}
@@ -250,9 +250,9 @@ func getUpdateInfo(jsonData []byte) (*updateInfo, error) {
 	return &u, nil
 }
 
-// getDownloadUrl - gets download URL for the current GOOS/GOARCH
+// getDownloadURL - gets download URL for the current GOOS/GOARCH
 // returns
-func getDownloadUrl(json map[string]interface{}) (string, bool) {
+func getDownloadURL(json map[string]interface{}) (string, bool) {
 	var key string
 
 	if runtime.GOARCH == "arm" && ARMVersion != "" {
