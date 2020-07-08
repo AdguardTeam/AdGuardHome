@@ -10,9 +10,6 @@ ENV CGO_ENABLED 0
 ENV GO111MODULE on
 ENV GOPROXY https://goproxy.io
 
-ARG TARGETPLATFORM
-ARG TARGETOS
-ARG TARGETARCH
 COPY --from=xgo / /
 RUN go env
 
@@ -24,14 +21,15 @@ RUN apk --update --no-cache add \
   && rm -rf /tmp/* /var/cache/apk/*
 
 WORKDIR /app
-
-COPY go.mod .
-COPY go.sum .
-RUN go mod download
-
 COPY . ./
+
 RUN npm --prefix client ci && npm --prefix client run build-prod
-RUN echo "Go generate on ${TARGETOS}/${TARGETARCH}" && go generate ./...
+RUN go mod download
+RUN go generate ./...
+
+ARG TARGETPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
 RUN go build -ldflags="-s -w -X main.version=${VERSION} -X main.channel=${CHANNEL} -X main.goarm=${GOARM}"
 
 FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:latest
