@@ -30,6 +30,8 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       -
         name: Set up Go
         uses: actions/setup-go@v2
@@ -82,16 +84,8 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v2
-      -
-        name: Prepare
-        id: prepare
-        run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            echo ::set-output name=tag_name::${GITHUB_REF#refs/tags/}
-            echo ::set-output name=channel::release
-          else
-            echo ::set-output name=channel::none
-          fi
+        with:
+          fetch-depth: 0
       -
         name: Set up Go
         uses: actions/setup-go@v2
@@ -173,6 +167,8 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       -
         name: Docker Buildx (build)
         run: |
