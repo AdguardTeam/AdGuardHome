@@ -144,6 +144,12 @@
             "homepage": "https://github.com/cchevy/macedonian-pi-hole-blocklist",
             "source": "https://raw.githubusercontent.com/cchevy/macedonian-pi-hole-blocklist/master/hosts.txt"
         },
+        "CHN-anti-ad" : {
+            "name": "CHN: anti-AD",
+            "categoryId": "regional",
+            "homepage": "https://github.com/privacy-protection-tools/anti-AD",
+            "source": "https://gitee.com/privacy-protection-tools/anti-ad/raw/master/easylist.txt"
+        },
         "BarbBlock": {
             "name": "BarbBlock",
             "categoryId": "other",
