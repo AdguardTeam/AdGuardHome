@@ -150,16 +150,10 @@ Is there a chance to handle this in the future? DNS will never be enough to do t
 
 ### Prerequisites
 
-You will need:
+You will need this to build AdGuard Home:
 
  * [go](https://golang.org/dl/) v1.14 or later.
  * [node.js](https://nodejs.org/en/download/) v10 or later.
-
-You can either install them via the provided links or use [brew.sh](https://brew.sh/) if you're on Mac:
-
-```bash
-brew install go node
-```
 
 ### Building
 
@@ -171,13 +165,21 @@ cd AdGuardHome
 make
 ```
 
-#### goreleaser
+Check the [`Makefile`](https://github.com/AdguardTeam/AdGuardHome/blob/master/Makefile) to learn about other commands.
 
-* Run `make snapshot` or `make release` to build all AdGuard distrs.
+#### Preparing release
+
+You'll need this to prepare a release build:
+
+* [goreleaser](https://goreleaser.com/)
+* [snapcraft](https://snapcraft.io/)
+
+Run `make snapshot` or `make release` to build all AdGuard distrs.
 
 #### Docker image
 
-* Run `make docker` to build the Docker image.
+* Run `make docker` to build the Docker image locally.
+* Run `make docker-multi-arch` to build the multi-arch Docker image (the one that we publish to Docker Hub).
 
 ### Resources that we update periodically
 

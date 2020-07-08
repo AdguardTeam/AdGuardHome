@@ -26,3 +26,21 @@ jobs:
 
           # Optional: show only new issues if it's a pull request. The default value is `false`.
           # only-new-issues: true
+
+  notify:
+    needs: golangci
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Conclusion
+        uses: technote-space/workflow-conclusion-action@v1
+      -
+        name: Send Slack notif
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ env.WORKFLOW_CONCLUSION }}
+          fields: repo,message,commit,author
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

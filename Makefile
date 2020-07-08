@@ -152,13 +152,13 @@ docker-multi-arch:
 	@echo If the image was pushed to the registry, you can now run it:
 	@echo docker run --name "adguard-home" -p 53:53/tcp -p 53:53/udp -p 80:80/tcp -p 443:443/tcp -p 853:853/tcp -p 3000:3000/tcp $(DOCKER_IMAGE_NAME)
 
-snapshot:
+snapshot: dependencies client
 	@echo Starting snapshot build: version $(VERSION), channel $(CHANNEL)
 	CHANNEL=$(CHANNEL) goreleaser release --rm-dist --skip-publish --snapshot
 	$(call write_version_file,$(VERSION))
 	PATH=$(GOPATH)/bin:$(PATH) packr clean
 
-release:
+release: dependencies client
 	@echo Starting release build: version $(VERSION), channel $(CHANNEL)
 	CHANNEL=$(CHANNEL) goreleaser release --rm-dist --skip-publish
 	$(call write_version_file,$(VERSION))
