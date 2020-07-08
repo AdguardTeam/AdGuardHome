@@ -70,7 +70,7 @@ jobs:
       -
         name: Upload coverage
         uses: codecov/codecov-action@v1
-        if: success()
+        if: success() && matrix.os == 'ubuntu-latest'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.txt
@@ -96,12 +96,12 @@ jobs:
         name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.14
+          go-version: ${{ env.GO_VERSION }}
       -
         name: Set up Node
         uses: actions/setup-node@v1
         with:
-          node-version: 13
+          node-version: ${{ env.NODE_VERSION }}
       -
         name: Set up Go modules cache
         uses: actions/cache@v2
@@ -128,38 +128,13 @@ jobs:
         run: |
           sudo apt-get -yq --no-install-suggests --no-install-recommends install snapcraft
       -
-        name: Run node build-prod
+        name: Set up GoReleaser
         run: |
-          npm --prefix client ci
-          npm --prefix client run build-prod
+          curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh
       -
-        name: Snapcraft Login
-        if: success() && startsWith(github.ref, 'refs/tags/v')
-        env:
-          SNAPCRAFT_LOGIN: ${{ secrets.SNAPCRAFT_LOGIN }}
+        name: Run snapshot build
         run: |
-          snapcraft login --with <(echo "$SNAPCRAFT_LOGIN")
-      -
-        name: GoReleaser
-        uses: goreleaser/goreleaser-action@v2
-        with:
-          version: latest
-          args: release --parallelism 2
-        env:
-          CHANNEL: ${{ steps.prepare.outputs.channel }}
-      -
-        name: GitHub Release
-        uses: softprops/action-gh-release@v1
-        if: success() && startsWith(github.ref, 'refs/tags/v')
-        with:
-          draft: true
-          files: |
-            dist/checksums.txt
-            dist/*.tar.gz
-            dist/*.zip
-          name: AdGuard Home ${{ steps.prepare.outputs.tag_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          make snapshot
 
   docker:
     runs-on: ubuntu-latest
@@ -225,6 +200,8 @@ jobs:
         if: always() && startsWith(github.ref, 'refs/tags/v')
         run: |
           rm -f ${HOME}/.docker/config.json
+
+
 
   notify:
     needs: [app, docker]
