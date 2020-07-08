@@ -1,87 +1,128 @@
-NATIVE_GOOS = $(shell unset GOOS; go env GOOS)
-NATIVE_GOARCH = $(shell unset GOARCH; go env GOARCH)
+#
+# Available targets
+#
+# * build -- builds AdGuardHome for the current platform
+# * client -- builds client-side code of AdGuard Home
+# * client-watch -- builds client-side code of AdGuard Home and watches for changes there
+# * docker -- builds a docker image for the current platform
+# * clean -- clean everything created by previous builds
+# * lint -- run all linters
+# * test -- run all unit-tests
+# * dependencies -- installs dependencies (go and npm modules)
+# * ci -- installs dependencies, runs linters and tests, intended to be used by CI/CD
+#
+# Building releases:
+#
+# * release -- builds release version of AdGuard Home. CHANNEL must be specified (release or beta).
+# * snapshot -- builds snapshot version of AdGuard Home. Use with CHANNEL=edge.
+# * docker-multi-arch -- builds a multi-arch image. If you want it to be pushed to docker hub,
+# 	you must specify:
+#     * DOCKER_IMAGE_NAME - adguard/adguard-home
+#     * DOCKER_OUTPUT - type=image,name=adguard/adguard-home,push=true
+
 GOPATH := $(shell go env GOPATH)
 PWD := $(shell pwd)
-
 TARGET=AdGuardHome
-
-# Docker target parameters
-DOCKER_IMAGE_NAME ?= adguard/adguardhome
-DOCKER_PLATFORMS=linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/386,linux/ppc64le
-DOCKER_OUTPUT ?= type=image,push=false
-DOCKER_TAGS ?= --tag $(DOCKER_IMAGE_NAME):$(VERSION)
-BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
+BASE_URL="https://static.adguard.com/adguardhome/$(CHANNEL)"
 
 # See release and snapshot targets
 DIST_DIR=dist
 
-# Version and channel (see build and version targets)
-TAG_NAME=$(shell git describe --abbrev=0)
-# remove leading "v"
-RELEASE_VERSION=$(TAG_NAME:v%=%)
-COMMIT=$(shell git rev-parse --short HEAD)
-SNAPSHOT_VERSION=$(RELEASE_VERSION)-SNAPSHOT-$(COMMIT)
-VERSION=$(SNAPSHOT_VERSION)
-CHANNEL ?= release
-BASE_URL="https://static.adguard.com/adguardhome/$(CHANNEL)"
+# Update channel. Can be release, beta or edge. Uses edge by default.
+CHANNEL ?= edge
 
-.PHONY: all build client docker release version clean
+# Validate channel
+ifneq ($(CHANNEL),relese)
+ifneq ($(CHANNEL),beta)
+ifneq ($(CHANNEL),edge)
+$(error CHANNEL value is not valid. Valid values are release,beta or edge)
+endif
+endif
+endif
+
+# Version properties
+COMMIT=$(shell git rev-parse --short HEAD)
+TAG_NAME=$(shell git describe --abbrev=0)
+
+# Remove leading "v" from the tag name
+RELEASE_VERSION=$(TAG_NAME:v%=%)
+SNAPSHOT_VERSION=$(RELEASE_VERSION)-SNAPSHOT-$(COMMIT)
+
+# Set proper version
+VERSION=
+ifeq ($(TAG_NAME),$(shell git describe --abbrev=4))
+	VERSION=$(RELEASE_VERSION)
+else
+	VERSION=$(SNAPSHOT_VERSION)
+endif
+
+# Docker target parameters
+DOCKER_IMAGE_NAME ?= adguardhome-dev
+DOCKER_PLATFORMS=linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/386,linux/ppc64le
+DOCKER_OUTPUT ?= type=image,name=$(DOCKER_IMAGE_NAME),push=false
+BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
+
+# Docker tags (can be redefined)
+DOCKER_TAGS ?=
+ifndef DOCKER_TAGS
+	ifeq ($(CHANNEL),release)
+		DOCKER_TAGS := $(DOCKER_TAGS) --tag $(DOCKER_IMAGE_NAME):latest
+	endif
+	ifeq ($(CHANNEL),beta)
+		DOCKER_TAGS := $(DOCKER_TAGS) --tag $(DOCKER_IMAGE_NAME):beta
+	endif
+	ifeq ($(CHANNEL),edge)
+		DOCKER_TAGS := $(DOCKER_TAGS) --tag $(DOCKER_IMAGE_NAME):edge
+	endif
+endif
+
+# Validate docker build arguments
+ifndef DOCKER_IMAGE_NAME
+$(error DOCKER_IMAGE_NAME value is not set)
+endif
+
+.PHONY: all build client client-watch docker lint test dependencies clean release snapshot docker-multi-arch
 all: build
 
-build: client
-	go mod download
+build: dependencies client
 	go generate ./...
 	CGO_ENABLED=0 go build -ldflags="-s -w -X main.version=$(VERSION) -X main.channel=$(CHANNEL) -X main.goarm=$(GOARM)"
 	PATH=$(GOPATH)/bin:$(PATH) packr clean
 
 client:
-	npm --prefix client ci
 	npm --prefix client run build-prod
+
+client-watch:
+	npm --prefix client run watch
 
 docker:
 	DOCKER_CLI_EXPERIMENTAL=enabled \
 	docker buildx build \
-	--platform $(DOCKER_PLATFORMS) \
 	--build-arg VERSION=$(VERSION) \
 	--build-arg CHANNEL=$(CHANNEL) \
 	--build-arg VCS_REF=$(COMMIT) \
 	--build-arg BUILD_DATE=$(BUILD_DATE) \
 	$(DOCKER_TAGS) \
-	--output "$(DOCKER_OUTPUT)" \
+	--load \
 	-t "$(DOCKER_IMAGE_NAME)" -f ./Dockerfile .
 
 	@echo Now you can run the docker image:
-	@echo docker run --name "$(DOCKER_IMAGE_NAME)" -p 53:53/tcp -p 53:53/udp -p 80:80/tcp -p 443:443/tcp -p 853:853/tcp -p 3000:3000/tcp $(DOCKER_IMAGE_NAME)
+	@echo docker run --name "adguard-home" -p 53:53/tcp -p 53:53/udp -p 80:80/tcp -p 443:443/tcp -p 853:853/tcp -p 3000:3000/tcp $(DOCKER_IMAGE_NAME)
 
-snapshot:
-	@echo Starting snapshot build: version $(SNAPSHOT_VERSION), channel $(CHANNEL)
-	CHANNEL=$(CHANNEL) goreleaser release --rm-dist --skip-publish --snapshot
-	$(call write_version_file,$(SNAPSHOT_VERSION))
-	PATH=$(GOPATH)/bin:$(PATH) packr clean
+lint:
+	@echo Running linters
+	golangci-lint run ./...
+	npm --prefix client run lint
 
-release:
-	@echo Starting release build: version $(RELEASE_VERSION), channel $(CHANNEL)
-	CHANNEL=$(CHANNEL) goreleaser release --rm-dist --skip-publish
-	$(call write_version_file,$(RELEASE_VERSION))
-	PATH=$(GOPATH)/bin:$(PATH) packr clean
+test:
+	@echo Running unit-tests
+	go test -race -v -bench=. -coverprofile=coverage.txt -covermode=atomic ./...
 
-snapshot-docker:
-	docker run \
-		  	-it \
-			--rm \
-			-v $(PWD):/build \
-		   	-e CHANNEL=$(CHANNEL) \
-			golang-ubuntu \
-			make snapshot
+ci: dependencies lint test
 
-release-docker:
-	docker run \
-			-it \
-			--rm \
-			-v $(PWD):/build \
-			-e CHANNEL=$(CHANNEL) \
-			golang-ubuntu \
-			make release
+dependencies:
+	npm --prefix client ci
+	go mod download
 
 clean:
 	# make build output
@@ -94,6 +135,33 @@ clean:
 	# client deps
 	rm -rf client/node_modules
 	# packr-generated files
+	PATH=$(GOPATH)/bin:$(PATH) packr clean
+
+docker-multi-arch:
+	DOCKER_CLI_EXPERIMENTAL=enabled \
+	docker buildx build \
+	--platform $(DOCKER_PLATFORMS) \
+	--build-arg VERSION=$(VERSION) \
+	--build-arg CHANNEL=$(CHANNEL) \
+	--build-arg VCS_REF=$(COMMIT) \
+	--build-arg BUILD_DATE=$(BUILD_DATE) \
+	$(DOCKER_TAGS) \
+	--output "$(DOCKER_OUTPUT)" \
+	-t "$(DOCKER_IMAGE_NAME):$(VERSION)" -f ./Dockerfile .
+
+	@echo If the image was pushed to the registry, you can now run it:
+	@echo docker run --name "adguard-home" -p 53:53/tcp -p 53:53/udp -p 80:80/tcp -p 443:443/tcp -p 853:853/tcp -p 3000:3000/tcp $(DOCKER_IMAGE_NAME)
+
+snapshot:
+	@echo Starting snapshot build: version $(VERSION), channel $(CHANNEL)
+	CHANNEL=$(CHANNEL) goreleaser release --rm-dist --skip-publish --snapshot
+	$(call write_version_file,$(VERSION))
+	PATH=$(GOPATH)/bin:$(PATH) packr clean
+
+release:
+	@echo Starting release build: version $(VERSION), channel $(CHANNEL)
+	CHANNEL=$(CHANNEL) goreleaser release --rm-dist --skip-publish
+	$(call write_version_file,$(VERSION))
 	PATH=$(GOPATH)/bin:$(PATH) packr clean
 
 define write_version_file

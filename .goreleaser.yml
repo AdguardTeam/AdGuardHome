@@ -87,7 +87,6 @@ snapcrafts:
         args: -w ${SNAP_DATA} --no-check-update
         plugs: [ network-bind ]
         daemon: simple
-        restart-condition: always
 
 checksum:
   name_template: 'checksums.txt'

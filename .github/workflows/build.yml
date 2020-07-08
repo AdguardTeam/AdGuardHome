@@ -1,9 +1,13 @@
 name: build
 
+env:
+  GO_VERSION: 1.14
+  NODE_VERSION: 13
+
 on:
   push:
     branches:
-      - master
+      - *
     tags:
       - v*
   pull_request:
@@ -30,12 +34,13 @@ jobs:
         name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.14
+          go-version: ${{ env.GO_VERSION }}
+
       -
         name: Set up Node
         uses: actions/setup-node@v1
         with:
-          node-version: 13
+          node-version: ${{ env.NODE_VERSION }}
       -
         name: Set up Go modules cache
         uses: actions/cache@v2
@@ -58,29 +63,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
       -
-        name: Run node build-prod
+        name: Run make ci
         shell: bash
         run: |
-          npm --prefix client ci
-          npm --prefix client run build-prod
-      -
-        name: Download modules and generate
-        shell: bash
-        run: |
-          go mod download
-          go generate ./...
-      -
-        name: Golangci-lint
-        if: matrix.os != 'windows-latest'
-        shell: bash
-        run: |
-          curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.23.8
-          golangci-lint --version
-          golangci-lint run
-      -
-        name: Go test
-        run: |
-          go test -race -v -bench=. -coverprofile=coverage.txt -covermode=atomic ./...
+          make ci
       -
         name: Upload coverage
         uses: codecov/codecov-action@v1
