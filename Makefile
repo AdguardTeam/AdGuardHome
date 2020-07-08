@@ -118,7 +118,7 @@ test:
 	@echo Running unit-tests
 	go test -race -v -bench=. -coverprofile=coverage.txt -covermode=atomic ./...
 
-ci: client test
+ci: dependencies client test
 
 dependencies:
 	npm --prefix client ci
