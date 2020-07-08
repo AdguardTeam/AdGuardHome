@@ -124,7 +124,7 @@ jobs:
       -
         name: Set up GoReleaser
         run: |
-          curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | BINDIR="${GOPATH}/bin" sh
+          curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | BINDIR="$(go env GOPATH)/bin" sh
       -
         name: Run snapshot build
         run: |
