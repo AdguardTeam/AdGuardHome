@@ -16,12 +16,14 @@ module.exports = {
     ],
     "scopes": [
         "",
+        "ui",
         "global",
         "dnsfilter",
         "home",
         "dnsforward",
         "dhcpd",
-        "documentation"
+        "querylog",
+        "documentation",
     ],
     "types": {
         "+": {

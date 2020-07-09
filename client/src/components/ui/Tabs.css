@@ -37,7 +37,6 @@
 }
 
 .tab__control--active {
-    font-weight: 700;
     color: #4a4a4a;
     opacity: 1;
 }

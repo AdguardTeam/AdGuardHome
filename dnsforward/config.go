@@ -138,16 +138,24 @@ func (s *Server) createProxyConfig() (proxy.Config, error) {
 		Ratelimit:              int(s.conf.Ratelimit),
 		RatelimitWhitelist:     s.conf.RatelimitWhitelist,
 		RefuseAny:              s.conf.RefuseAny,
-		CacheEnabled:           true,
-		CacheSizeBytes:         int(s.conf.CacheSize),
 		CacheMinTTL:            s.conf.CacheMinTTL,
 		CacheMaxTTL:            s.conf.CacheMaxTTL,
 		UpstreamConfig:         s.conf.UpstreamConfig,
 		BeforeRequestHandler:   s.beforeRequestHandler,
 		RequestHandler:         s.handleDNSRequest,
-		AllServers:             s.conf.AllServers,
 		EnableEDNSClientSubnet: s.conf.EnableEDNSClientSubnet,
-		FindFastestAddr:        s.conf.FastestAddr,
+	}
+
+	if s.conf.CacheSize != 0 {
+		proxyConfig.CacheEnabled = true
+		proxyConfig.CacheSizeBytes = int(s.conf.CacheSize)
+	}
+
+	proxyConfig.UpstreamMode = proxy.UModeLoadBalance
+	if s.conf.AllServers {
+		proxyConfig.UpstreamMode = proxy.UModeParallel
+	} else if s.conf.FastestAddr {
+		proxyConfig.UpstreamMode = proxy.UModeFastestAddr
 	}
 
 	if len(s.conf.BogusNXDomain) > 0 {

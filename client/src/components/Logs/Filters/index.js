@@ -1,52 +1,49 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import debounce from 'lodash/debounce';
-import classnames from 'classnames';
-
-import { DEBOUNCE_FILTER_TIMEOUT, RESPONSE_FILTER } from '../../../helpers/constants';
-import { isValidQuestionType } from '../../../helpers/helpers';
+import { Trans } from 'react-i18next';
+import { useDispatch } from 'react-redux';
 import Form from './Form';
-import Card from '../../ui/Card';
+import { setLogsFilter } from '../../../actions/queryLogs';
 
-class Filters extends Component {
-    getFilters = ({
-        filter_domain, filter_question_type, filter_response_status, filter_client,
-    }) => ({
-        filter_domain: filter_domain || '',
-        filter_question_type: isValidQuestionType(filter_question_type) ? filter_question_type.toUpperCase() : '',
-        filter_response_status: filter_response_status === RESPONSE_FILTER.FILTERED ? filter_response_status : '',
-        filter_client: filter_client || '',
-    });
+const Filters = ({ filter, refreshLogs, setIsLoading }) => {
+    const dispatch = useDispatch();
 
-    handleFormChange = debounce((values) => {
-        const filter = this.getFilters(values);
-        this.props.setLogsFilter(filter);
-    }, DEBOUNCE_FILTER_TIMEOUT);
+    const onSubmit = async (values) => {
+        setIsLoading(true);
+        await dispatch(setLogsFilter(values));
+        setIsLoading(false);
+    };
 
-    render() {
-        const { filter, processingAdditionalLogs } = this.props;
+    return (
+        <div className="page-header page-header--logs">
+            <h1 className="page-title page-title--large">
+                <Trans>query_log</Trans>
+                <button
+                    type="button"
+                    className="btn btn-icon--green ml-3 bg-transparent"
+                    onClick={refreshLogs}
+                >
+                    <svg className="icons icon--small">
+                        <use xlinkHref="#update" />
+                    </svg>
+                </button>
 
-        const cardBodyClass = classnames({
-            'card-body': true,
-            'card-body--loading': processingAdditionalLogs,
-        });
-
-        return (
-            <Card bodyType={cardBodyClass}>
-                <Form
-                    initialValues={filter}
-                    onChange={this.handleFormChange}
-                />
-            </Card>
-        );
-    }
-}
+            </h1>
+            <Form
+                responseStatusClass="d-sm-block"
+                initialValues={filter}
+                onSubmit={onSubmit}
+                setIsLoading={setIsLoading}
+        />
+        </div>
+    );
+};
 
 Filters.propTypes = {
     filter: PropTypes.object.isRequired,
-    setLogsFilter: PropTypes.func.isRequired,
+    refreshLogs: PropTypes.func.isRequired,
     processingGetLogs: PropTypes.bool.isRequired,
-    processingAdditionalLogs: PropTypes.bool.isRequired,
+    setIsLoading: PropTypes.func.isRequired,
 };
 
 export default Filters;

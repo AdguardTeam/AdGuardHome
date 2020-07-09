@@ -1,15 +1,22 @@
 import { connect } from 'react-redux';
-import { getClients } from '../actions';
 import { getFilteringStatus, setRules } from '../actions/filtering';
 import {
-    getLogs, getLogsConfig, setLogsPagination, setLogsFilter, setLogsPage,
+    getLogs, setLogsPagination, setLogsFilter, setLogsPage, toggleDetailedLogs,
 } from '../actions/queryLogs';
 import Logs from '../components/Logs';
 import { addSuccessToast } from '../actions/toasts';
 
 const mapStateToProps = (state) => {
-    const { queryLogs, dashboard, filtering } = state;
-    const props = { queryLogs, dashboard, filtering };
+    const {
+        queryLogs, dashboard, filtering, dnsConfig,
+    } = state;
+
+    const props = {
+        queryLogs,
+        dashboard,
+        filtering,
+        dnsConfig,
+    };
     return props;
 };
 
@@ -18,11 +25,10 @@ const mapDispatchToProps = {
     getFilteringStatus,
     setRules,
     addSuccessToast,
-    getClients,
-    getLogsConfig,
     setLogsPagination,
     setLogsFilter,
     setLogsPage,
+    toggleDetailedLogs,
 };
 
 export default connect(

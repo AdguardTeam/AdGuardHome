@@ -9,14 +9,6 @@ import (
 	"github.com/miekg/dns"
 )
 
-// DiskConfig - configuration settings that are stored on disk
-type DiskConfig struct {
-	Enabled           bool
-	Interval          uint32
-	MemSize           uint32
-	AnonymizeClientIP bool
-}
-
 // QueryLog - main interface
 type QueryLog interface {
 	Start()
@@ -28,12 +20,13 @@ type QueryLog interface {
 	Add(params AddParams)
 
 	// WriteDiskConfig - write configuration
-	WriteDiskConfig(dc *DiskConfig)
+	WriteDiskConfig(c *Config)
 }
 
 // Config - configuration object
 type Config struct {
-	Enabled           bool
+	Enabled           bool   // enable the module
+	FileEnabled       bool   // write logs to file
 	BaseDir           string // directory where log file is stored
 	Interval          uint32 // interval to rotate logs (in days)
 	MemSize           uint32 // number of entries kept in memory before they are flushed to disk
@@ -48,13 +41,14 @@ type Config struct {
 
 // AddParams - parameters for Add()
 type AddParams struct {
-	Question   *dns.Msg
-	Answer     *dns.Msg          // The response we sent to the client (optional)
-	OrigAnswer *dns.Msg          // The response from an upstream server (optional)
-	Result     *dnsfilter.Result // Filtering result (optional)
-	Elapsed    time.Duration     // Time spent for processing the request
-	ClientIP   net.IP
-	Upstream   string
+	Question    *dns.Msg
+	Answer      *dns.Msg          // The response we sent to the client (optional)
+	OrigAnswer  *dns.Msg          // The response from an upstream server (optional)
+	Result      *dnsfilter.Result // Filtering result (optional)
+	Elapsed     time.Duration     // Time spent for processing the request
+	ClientIP    net.IP
+	Upstream    string // Upstream server URL
+	ClientProto string // Protocol for the client connection: "" (plain), "doh", "dot"
 }
 
 // New - create a new instance of the query log

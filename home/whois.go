@@ -1,6 +1,7 @@
 package home
 
 import (
+	"context"
 	"encoding/binary"
 	"fmt"
 	"io/ioutil"
@@ -120,7 +121,7 @@ func (w *Whois) query(target string, serverAddr string) (string, error) {
 	if addr == "whois.arin.net" {
 		target = "n + " + target
 	}
-	conn, err := net.DialTimeout("tcp", serverAddr, time.Duration(w.timeoutMsec)*time.Millisecond)
+	conn, err := customDialContext(context.TODO(), "tcp", serverAddr)
 	if err != nil {
 		return "", err
 	}

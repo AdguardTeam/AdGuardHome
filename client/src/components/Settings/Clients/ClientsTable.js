@@ -41,7 +41,7 @@ class ClientsTable extends Component {
             }
         }
 
-        if (this.props.modalType === MODAL_TYPE.EDIT) {
+        if (this.props.modalType === MODAL_TYPE.EDIT_FILTERS) {
             this.handleFormUpdate(config, this.props.modalClientName);
         } else {
             this.handleFormAdd(config);
@@ -91,7 +91,7 @@ class ClientsTable extends Component {
                 const { value } = row;
 
                 return (
-                    <div className="logs__row logs__row--overflow">
+                    <div className="logs__row o-hidden">
                         <span className="logs__text">
                             {value.map((address) => (
                                 <div key={address} title={address}>
@@ -121,7 +121,7 @@ class ClientsTable extends Component {
                 );
 
                 return (
-                    <div className="logs__row logs__row--overflow">
+                    <div className="logs__row o-hidden">
                         <div className="logs__text">{title}</div>
                     </div>
                 );
@@ -167,7 +167,7 @@ class ClientsTable extends Component {
                 );
 
                 return (
-                    <div className="logs__row logs__row--overflow">
+                    <div className="logs__row o-hidden">
                         <div className="logs__text">{title}</div>
                     </div>
                 );
@@ -185,7 +185,7 @@ class ClientsTable extends Component {
                 }
 
                 return (
-                    <div className="logs__row logs__row--overflow">
+                    <div className="logs__row o-hidden">
                         <span className="logs__text">
                             {value.map((tag) => (
                                 <div key={tag} title={tag} className="small">
@@ -221,7 +221,7 @@ class ClientsTable extends Component {
                             type="button"
                             className="btn btn-icon btn-outline-primary btn-sm mr-2"
                             onClick={() => toggleClientModal({
-                                type: MODAL_TYPE.EDIT,
+                                type: MODAL_TYPE.EDIT_FILTERS,
                                 name: clientName,
                             })
                             }
@@ -282,21 +282,31 @@ class ClientsTable extends Component {
                             },
                         ]}
                         className="-striped -highlight card-table-overflow"
-                        showPagination={true}
+                        showPagination
                         defaultPageSize={10}
                         minRows={5}
-                        previousText={t('previous_btn')}
-                        nextText={t('next_btn')}
+                        showPageSizeOptions={false}
+                        showPageJump={false}
+                        renderTotalPagesCount={() => false}
+                        previousText={
+                            <svg className="icons icon--small icon--gray w-100 h-100">
+                                <use xlinkHref="#arrow-left" />
+                            </svg>}
+                        nextText={
+                            <svg className="icons icon--small icon--gray w-100 h-100">
+                                <use xlinkHref="#arrow-right" />
+                            </svg>}
                         loadingText={t('loading_table_status')}
-                        pageText={t('page_table_footer_text')}
-                        ofText="/"
+                        pageText=''
+                        ofText=''
                         rowsText={t('rows_table_footer_text')}
                         noDataText={t('clients_not_found')}
+                        getPaginationProps={() => ({ className: 'custom-pagination' })}
                     />
                     <button
                         type="button"
                         className="btn btn-success btn-standard mt-3"
-                        onClick={() => toggleClientModal(MODAL_TYPE.ADD)}
+                        onClick={() => toggleClientModal(MODAL_TYPE.ADD_FILTERS)}
                         disabled={processingAdding}
                     >
                         <Trans>client_add</Trans>

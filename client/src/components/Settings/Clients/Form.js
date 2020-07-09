@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import {
@@ -13,14 +13,13 @@ import Tabs from '../../ui/Tabs';
 import Examples from '../Dns/Upstream/Examples';
 import { toggleAllServices } from '../../../helpers/helpers';
 import {
-    required,
-    clientId,
     renderInputField,
     renderGroupField,
     renderSelectField,
     renderServiceField,
 } from '../../../helpers/form';
-import { SERVICES } from '../../../helpers/constants';
+import { validateClientId, validateRequiredValue } from '../../../helpers/validators';
+import { FORM_NAME, SERVICES } from '../../../helpers/constants';
 import './Service.css';
 
 const settingsCheckboxes = [
@@ -48,12 +47,12 @@ const settingsCheckboxes = [
 const validate = (values) => {
     const errors = {};
     const { name, ids } = values;
-    errors.name = required(name);
+    errors.name = validateRequiredValue(name);
 
     if (ids && ids.length) {
         const idArrayErrors = [];
         ids.forEach((id, idx) => {
-            idArrayErrors[idx] = required(id) || clientId(id);
+            idArrayErrors[idx] = validateRequiredValue(id) || validateClientId(id);
         });
 
         if (idArrayErrors.length) {
@@ -62,7 +61,6 @@ const validate = (values) => {
     }
     return errors;
 };
-
 
 const renderFieldsWrapper = (placeholder, buttonTitle) => function cell(row) {
     const {
@@ -90,7 +88,7 @@ const renderFieldsWrapper = (placeholder, buttonTitle) => function cell(row) {
                 onClick={() => fields.push()}
                 title={buttonTitle}
             >
-                <svg className="icon icon--close">
+                <svg className="icon icon--small">
                     <use xlinkHref="#plus" />
                 </svg>
             </button>
@@ -122,7 +120,7 @@ const renderMultiselect = (props) => {
 renderMultiselect.propTypes = {
     input: PropTypes.object.isRequired,
     placeholder: PropTypes.string,
-    options: PropTypes.object,
+    options: PropTypes.array,
 };
 
 let Form = (props) => {
@@ -141,6 +139,101 @@ let Form = (props) => {
         invalid,
         tagsOptions,
     } = props;
+
+    const [activeTabLabel, setActiveTabLabel] = useState('settings');
+
+    const tabs = {
+        settings: {
+            title: 'settings',
+            component: <div label="settings" title={props.t('main_settings')}>
+                {settingsCheckboxes.map((setting) => (
+                    <div className="form__group" key={setting.name}>
+                        <Field
+                            name={setting.name}
+                            type="checkbox"
+                            component={renderSelectField}
+                            placeholder={t(setting.placeholder)}
+                            disabled={
+                                setting.name !== 'use_global_settings'
+                                    ? useGlobalSettings
+                                    : false
+                            }
+                        />
+                    </div>
+                ))}
+            </div>,
+        },
+        block_services: {
+            title: 'block_services',
+            component: <div label="services" title={props.t('block_services')}>
+                <div className="form__group">
+                    <Field
+                        name="use_global_blocked_services"
+                        type="checkbox"
+                        component={renderServiceField}
+                        placeholder={t('blocked_services_global')}
+                        modifier="service--global"
+                    />
+                    <div className="row mb-4">
+                        <div className="col-6">
+                            <button
+                                type="button"
+                                className="btn btn-secondary btn-block"
+                                disabled={useGlobalServices}
+                                onClick={() => toggleAllServices(SERVICES, change, true)}
+                            >
+                                <Trans>block_all</Trans>
+                            </button>
+                        </div>
+                        <div className="col-6">
+                            <button
+                                type="button"
+                                className="btn btn-secondary btn-block"
+                                disabled={useGlobalServices}
+                                onClick={() => toggleAllServices(SERVICES, change, false)}
+                            >
+                                <Trans>unblock_all</Trans>
+                            </button>
+                        </div>
+                    </div>
+                    <div className="services">
+                        {SERVICES.map((service) => (
+                            <Field
+                                key={service.id}
+                                icon={`service_${service.id}`}
+                                name={`blocked_services.${service.id}`}
+                                type="checkbox"
+                                component={renderServiceField}
+                                placeholder={service.name}
+                                disabled={useGlobalServices}
+                            />
+                        ))}
+                    </div>
+                </div>
+            </div>,
+        },
+        upstream_dns: {
+            title: 'upstream_dns',
+            component: <div label="upstream" title={props.t('upstream_dns')}>
+                <div className="form__desc mb-3">
+                    <Trans components={[<a href="#dns" key="0">link</a>]}>
+                        upstream_dns_client_desc
+                    </Trans>
+                </div>
+                <Field
+                    id="upstreams"
+                    name="upstreams"
+                    component="textarea"
+                    type="text"
+                    className="form-control form-control--textarea mb-5"
+                    placeholder={t('upstream_dns')}
+                />
+                <Examples />
+            </div>,
+        },
+    };
+
+    const activeTab = tabs[activeTabLabel].component;
 
     return (
         <form onSubmit={handleSubmit}>
@@ -207,86 +300,9 @@ let Form = (props) => {
                     </div>
                 </div>
 
-                <Tabs controlClass="form">
-                    <div label="settings" title={props.t('main_settings')}>
-                        {settingsCheckboxes.map((setting) => (
-                            <div className="form__group" key={setting.name}>
-                                <Field
-                                    name={setting.name}
-                                    type="checkbox"
-                                    component={renderSelectField}
-                                    placeholder={t(setting.placeholder)}
-                                    disabled={
-                                        setting.name !== 'use_global_settings'
-                                            ? useGlobalSettings
-                                            : false
-                                    }
-                                />
-                            </div>
-                        ))}
-                    </div>
-                    <div label="services" title={props.t('block_services')}>
-                        <div className="form__group">
-                            <Field
-                                name="use_global_blocked_services"
-                                type="checkbox"
-                                component={renderServiceField}
-                                placeholder={t('blocked_services_global')}
-                                modifier="service--global"
-                            />
-                            <div className="row mb-4">
-                                <div className="col-6">
-                                    <button
-                                        type="button"
-                                        className="btn btn-secondary btn-block"
-                                        disabled={useGlobalServices}
-                                        onClick={() => toggleAllServices(SERVICES, change, true)}
-                                    >
-                                        <Trans>block_all</Trans>
-                                    </button>
-                                </div>
-                                <div className="col-6">
-                                    <button
-                                        type="button"
-                                        className="btn btn-secondary btn-block"
-                                        disabled={useGlobalServices}
-                                        onClick={() => toggleAllServices(SERVICES, change, false)}
-                                    >
-                                        <Trans>unblock_all</Trans>
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="services">
-                                {SERVICES.map((service) => (
-                                    <Field
-                                        key={service.id}
-                                        icon={`service_${service.id}`}
-                                        name={`blocked_services.${service.id}`}
-                                        type="checkbox"
-                                        component={renderServiceField}
-                                        placeholder={service.name}
-                                        disabled={useGlobalServices}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                    <div label="upstream" title={props.t('upstream_dns')}>
-                        <div className="form__desc mb-3">
-                            <Trans components={[<a href="#dns" key="0">link</a>]}>
-                                upstream_dns_client_desc
-                            </Trans>
-                        </div>
-                        <Field
-                            id="upstreams"
-                            name="upstreams"
-                            component="textarea"
-                            type="text"
-                            className="form-control form-control--textarea mb-5"
-                            placeholder={t('upstream_dns')}
-                        />
-                        <Examples />
-                    </div>
+                <Tabs controlClass="form" tabs={tabs} activeTabLabel={activeTabLabel}
+                      setActiveTabLabel={setActiveTabLabel}>
+                    {activeTab}
                 </Tabs>
             </div>
 
@@ -338,7 +354,7 @@ Form.propTypes = {
     tagsOptions: PropTypes.array.isRequired,
 };
 
-const selector = formValueSelector('clientForm');
+const selector = formValueSelector(FORM_NAME.CLIENT);
 
 Form = connect((state) => {
     const useGlobalSettings = selector(state, 'use_global_settings');
@@ -352,7 +368,7 @@ Form = connect((state) => {
 export default flow([
     withTranslation(),
     reduxForm({
-        form: 'clientForm',
+        form: FORM_NAME.CLIENT,
         enableReinitialize: true,
         validate,
     }),

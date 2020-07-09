@@ -96,6 +96,7 @@ const dashboard = handleActions(
                     canAutoUpdate,
                     isUpdateAvailable: true,
                     processingVersion: false,
+                    checkUpdateFlag: !!payload,
                 };
                 return newState;
             }
@@ -165,6 +166,7 @@ const dashboard = handleActions(
         autoClients: [],
         supportedTags: [],
         name: '',
+        checkUpdateFlag: false,
     },
 );
 

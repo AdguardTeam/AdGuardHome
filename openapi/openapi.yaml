@@ -143,36 +143,46 @@ paths:
             tags:
                 - log
             operationId: queryLog
-            summary: Get DNS server query log
+            summary: Get DNS server query log.
             parameters:
                 - name: older_than
                   in: query
                   description: Filter by older than
                   schema:
                       type: string
-                - name: filter_domain
+                - name: offset
                   in: query
-                  description: Filter by domain name
+                  description:
+                    Specify the ranking number of the first item on the page.
+                    Even though it is possible to use "offset" and "older_than",
+                    we recommend choosing one of them and sticking to it.
+                  schema:
+                      type: integer
+                - name: limit
+                  in: query
+                  description: Limit the number of records to be returned
+                  schema:
+                      type: integer
+                - name: search
+                  in: query
+                  description: Filter by domain name or client IP
                   schema:
                       type: string
-                - name: filter_client
-                  in: query
-                  description: Filter by client
-                  schema:
-                      type: string
-                - name: filter_question_type
-                  in: query
-                  description: Filter by question type
-                  schema:
-                      type: string
-                - name: filter_response_status
+                - name: response_status
                   in: query
                   description: Filter by response status
                   schema:
                       type: string
                       enum:
-                          - null
+                          - all
                           - filtered
+                          - blocked
+                          - blocked_safebrowsing
+                          - blocked_parental
+                          - whitelisted
+                          - rewritten
+                          - safe_search
+                          - processed
             responses:
                 "200":
                     description: OK
@@ -1006,12 +1016,17 @@ components:
                     type: boolean
                 dnssec_enabled:
                     type: boolean
-                fastest_addr:
-                    type: boolean
-                parallel_requests:
-                    type: boolean
-                    description: If true, parallel queries to all configured upstream servers are
-                        enabled
+                cache_size:
+                    type: integer
+                cache_ttl_min:
+                    type: integer
+                cache_ttl_max:
+                    type: integer
+                upstream_mode:
+                    enum:
+                        - ""
+                        - parallel
+                        - fastest_addr
         UpstreamsConfig:
             type: object
             description: Upstreams configuration
@@ -1204,15 +1219,15 @@ components:
                 top_queried_domains:
                     type: array
                     items:
-                        type: object
+                        $ref: "#/components/schemas/TopArrayEntry"
                 top_clients:
                     type: array
                     items:
-                        type: object
+                        $ref: "#/components/schemas/TopArrayEntry"
                 top_blocked_domains:
                     type: array
                     items:
-                        type: object
+                        $ref: "#/components/schemas/TopArrayEntry"
                 dns_queries:
                     type: array
                     items:
@@ -1229,6 +1244,12 @@ components:
                     type: array
                     items:
                         type: integer
+        TopArrayEntry:
+            type: object
+            description: Represent the number of hits per key (domain or client IP)
+            properties:
+                domain_or_ip:
+                    type: integer
         StatsConfig:
             type: object
             description: Statistics configuration
@@ -1408,11 +1429,19 @@ components:
                     description: Answer from upstream server (optional)
                     items:
                         $ref: "#/components/schemas/DnsAnswer"
+                upstream:
+                    type: string
+                    description: Upstream URL starting with tcp://, tls://, https://, or with an IP address
                 answer_dnssec:
                     type: boolean
                 client:
                     type: string
                     example: 192.168.0.1
+                client_proto:
+                    enum:
+                        - dot
+                        - doh
+                        - ""
                 elapsedMs:
                     type: string
                     example: "54.023928"

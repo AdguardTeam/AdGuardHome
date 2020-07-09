@@ -80,7 +80,10 @@ func InitAuth(dbFilename string, users []User, sessionTTL uint32) *Auth {
 	var err error
 	a.db, err = bbolt.Open(dbFilename, 0644, nil)
 	if err != nil {
-		log.Error("Auth: bbolt.Open: %s", err)
+		log.Error("Auth: open DB: %s: %s", dbFilename, err)
+		if err.Error() == "invalid argument" {
+			log.Error("AdGuard Home cannot be initialized due to an incompatible file system.\nPlease read the explanation here: https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#limitations")
+		}
 		return nil
 	}
 	a.loadSessions()
@@ -362,6 +365,7 @@ func parseCookie(cookie string) string {
 	return ""
 }
 
+// nolint(gocyclo)
 func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -388,7 +392,11 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 			// redirect to login page if not authenticated
 			ok := false
 			cookie, err := r.Cookie(sessionCookieName)
-			if err == nil {
+
+			if glProcessCookie(r) {
+				log.Debug("Auth: authentification was handled by GL-Inet submodule")
+
+			} else if err == nil {
 				r := Context.auth.CheckSession(cookie.Value)
 				if r == 0 {
 					ok = true
@@ -409,8 +417,13 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 			}
 			if !ok {
 				if r.URL.Path == "/" || r.URL.Path == "/index.html" {
-					w.Header().Set("Location", "/login.html")
-					w.WriteHeader(http.StatusFound)
+					if glProcessRedirect(w, r) {
+						log.Debug("Auth: redirected to login page by GL-Inet submodule")
+
+					} else {
+						w.Header().Set("Location", "/login.html")
+						w.WriteHeader(http.StatusFound)
+					}
 				} else {
 					w.WriteHeader(http.StatusForbidden)
 					_, _ = w.Write([]byte("Forbidden"))
@@ -507,6 +520,10 @@ func (a *Auth) GetUsers() []User {
 
 // AuthRequired - if authentication is required
 func (a *Auth) AuthRequired() bool {
+	if GLMode {
+		return true
+	}
+
 	a.lock.Lock()
 	r := (len(a.users) != 0)
 	a.lock.Unlock()

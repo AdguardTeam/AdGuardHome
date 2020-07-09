@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { withTranslation } from 'react-i18next';
 
@@ -21,7 +21,7 @@ class DnsAllowlist extends Component {
         const { filtering } = this.props;
         const whitelist = true;
 
-        if (filtering.modalType === MODAL_TYPE.EDIT) {
+        if (filtering.modalType === MODAL_TYPE.EDIT_FILTERS) {
             this.props.editFilter(filtering.modalFilterUrl, values, whitelist);
         } else {
             this.props.addFilter(url, name, whitelist);
@@ -42,6 +42,10 @@ class DnsAllowlist extends Component {
 
     handleRefresh = () => {
         this.props.refreshFilters({ whitelist: true });
+    };
+
+    openAddFiltersModal = () => {
+        this.props.toggleFilteringModal({ type: MODAL_TYPE.ADD_FILTERS });
     };
 
     render() {
@@ -72,7 +76,7 @@ class DnsAllowlist extends Component {
         const whitelist = true;
 
         return (
-            <Fragment>
+            <>
                 <PageTitle
                     title={t('dns_allowlists')}
                     subtitle={t('dns_allowlists_desc')}
@@ -92,7 +96,7 @@ class DnsAllowlist extends Component {
                                     whitelist={whitelist}
                                 />
                                 <Actions
-                                    handleAdd={() => toggleFilteringModal({ type: MODAL_TYPE.ADD })}
+                                    handleAdd={this.openAddFiltersModal}
                                     handleRefresh={this.handleRefresh}
                                     processingRefreshFilters={processingRefreshFilters}
                                     whitelist={whitelist}
@@ -102,8 +106,9 @@ class DnsAllowlist extends Component {
                     </div>
                 </div>
                 <Modal
+                    filters={whitelistFilters}
                     isOpen={isModalOpen}
-                    toggleModal={toggleFilteringModal}
+                    toggleFilteringModal={toggleFilteringModal}
                     addFilter={addFilter}
                     isFilterAdded={isFilterAdded}
                     processingAddFilter={processingAddFilter}
@@ -113,7 +118,7 @@ class DnsAllowlist extends Component {
                     currentFilterData={currentFilterData}
                     whitelist={whitelist}
                 />
-            </Fragment>
+            </>
         );
     }
 }

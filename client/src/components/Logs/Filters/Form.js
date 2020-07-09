@@ -1,12 +1,18 @@
-import React, { Fragment } from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Field, reduxForm } from 'redux-form';
-import { withTranslation } from 'react-i18next';
-import flow from 'lodash/flow';
-
-import { renderInputField } from '../../../helpers/form';
-import { RESPONSE_FILTER } from '../../../helpers/constants';
+import { useTranslation } from 'react-i18next';
+import debounce from 'lodash/debounce';
+import { useDispatch } from 'react-redux';
+import classNames from 'classnames';
+import {
+    DEBOUNCE_FILTER_TIMEOUT,
+    DEFAULT_LOGS_FILTER,
+    FORM_NAME,
+    RESPONSE_FILTER,
+} from '../../../helpers/constants';
 import Tooltip from '../../ui/Tooltip';
+import { setLogsFilter } from '../../../actions/queryLogs';
 
 const renderFilterField = ({
     input,
@@ -18,29 +24,40 @@ const renderFilterField = ({
     autoComplete,
     tooltip,
     meta: { touched, error },
-}) => <Fragment>
-    <div className="logs__input-wrap">
-        <input
-            {...input}
-            id={id}
-            placeholder={placeholder}
-            type={type}
-            className={className}
-            disabled={disabled}
-            autoComplete={autoComplete}
-        />
-        <span className="logs__notice">
-                <Tooltip text={tooltip} type='tooltip-custom--logs' />
-            </span>
-        {!disabled
-        && touched
-        && (error && <span className="form__message form__message--error">{error}</span>)}
+    onClearInputClick,
+}) => <>
+    <div className="input-group-search input-group-search__icon--magnifier">
+        <svg className="icons icon--small icon--gray">
+            <use xlinkHref="#magnifier" />
+        </svg>
     </div>
-</Fragment>;
+    <input
+        {...input}
+        id={id}
+        placeholder={placeholder}
+        type={type}
+        className={className}
+        disabled={disabled}
+        autoComplete={autoComplete}
+        aria-label={placeholder} />
+    <div
+        className={classNames('input-group-search input-group-search__icon--cross', { invisible: input.value.length < 1 })}>
+        <svg className="icons icon--smallest icon--gray" onClick={onClearInputClick}>
+            <use xlinkHref="#cross" />
+        </svg>
+    </div>
+    <span className="input-group-search input-group-search__icon--tooltip">
+        <Tooltip text={tooltip} type='tooltip-custom--logs' />
+    </span>
+    {!disabled
+    && touched
+    && (error && <span className="form__message form__message--error">{error}</span>)}
+</>;
 
 renderFilterField.propTypes = {
     input: PropTypes.object.isRequired,
     id: PropTypes.string.isRequired,
+    onClearInputClick: PropTypes.func.isRequired,
     className: PropTypes.string,
     placeholder: PropTypes.string,
     type: PropTypes.string,
@@ -55,62 +72,64 @@ renderFilterField.propTypes = {
 
 const Form = (props) => {
     const {
-        t,
-        handleChange,
+        className = '',
+        responseStatusClass,
+        submit,
+        reset,
+        setIsLoading,
     } = props;
 
+    const { t } = useTranslation();
+    const dispatch = useDispatch();
+
+    const debouncedSubmit = debounce(submit, DEBOUNCE_FILTER_TIMEOUT);
+    const zeroDelaySubmit = () => setTimeout(submit, 0);
+
+    const clearInput = async () => {
+        await dispatch(setLogsFilter(DEFAULT_LOGS_FILTER));
+        await reset();
+    };
+
+    const onInputClear = async () => {
+        setIsLoading(true);
+        await clearInput();
+        setIsLoading(false);
+    };
+
+    useEffect(() => clearInput, []);
+
     return (
-        <form onSubmit={handleChange}>
-            <div className="row">
-                <div className="col-6 col-sm-3 my-2">
-                    <Field
-                        id="filter_domain"
-                        name="filter_domain"
-                        component={renderFilterField}
-                        type="text"
-                        className="form-control"
-                        placeholder={t('domain_name_table_header')}
-                        tooltip={t('query_log_strict_search')}
-                        onChange={handleChange}
-                    />
-                </div>
-                <div className="col-6 col-sm-3 my-2">
-                    <Field
-                        id="filter_question_type"
-                        name="filter_question_type"
-                        component={renderInputField}
-                        type="text"
-                        className="form-control"
-                        placeholder={t('type_table_header')}
-                        onChange={handleChange}
-                    />
-                </div>
-                <div className="col-6 col-sm-3 my-2">
-                    <Field
-                        name="filter_response_status"
-                        component="select"
-                        className="form-control custom-select"
-                    >
-                        <option value={RESPONSE_FILTER.ALL}>
-                            {t('show_all_filter_type')}
-                        </option>
-                        <option value={RESPONSE_FILTER.FILTERED}>
-                            {t('show_filtered_type')}
-                        </option>
-                    </Field>
-                </div>
-                <div className="col-6 col-sm-3 my-2">
-                    <Field
-                        id="filter_client"
-                        name="filter_client"
-                        component={renderFilterField}
-                        type="text"
-                        className="form-control"
-                        placeholder={t('client_table_header')}
-                        tooltip={t('query_log_strict_search')}
-                        onChange={handleChange}
-                    />
-                </div>
+        <form className="d-flex flex-wrap form-control--container"
+              onSubmit={(e) => {
+                  e.preventDefault();
+                  zeroDelaySubmit();
+                  debouncedSubmit.cancel();
+              }}
+        >
+            <Field
+                id="search"
+                name="search"
+                component={renderFilterField}
+                type="text"
+                className={classNames('form-control--search form-control--transparent', className)}
+                placeholder={t('domain_or_client')}
+                tooltip={t('query_log_strict_search')}
+                onChange={debouncedSubmit}
+                onClearInputClick={onInputClear}
+            />
+            <div className="field__select">
+                <Field
+                    name="response_status"
+                    component="select"
+                    className={classNames('form-control custom-select custom-select--logs custom-select__arrow--left ml-small form-control--transparent', responseStatusClass)}
+                    onChange={zeroDelaySubmit}
+                >
+                    {Object.values(RESPONSE_FILTER)
+                        .map(({
+                            query, label, disabled,
+                        }) => <option key={label} value={query}
+                                      disabled={disabled}>{t(label)}</option>)}
+                </Field>
             </div>
         </form>
     );
@@ -118,12 +137,13 @@ const Form = (props) => {
 
 Form.propTypes = {
     handleChange: PropTypes.func,
-    t: PropTypes.func.isRequired,
+    className: PropTypes.string,
+    responseStatusClass: PropTypes.string,
+    submit: PropTypes.func.isRequired,
+    reset: PropTypes.func.isRequired,
+    setIsLoading: PropTypes.func.isRequired,
 };
 
-export default flow([
-    withTranslation(),
-    reduxForm({
-        form: 'logsFilterForm',
-    }),
-])(Form);
+export default reduxForm({
+    form: FORM_NAME.LOGS_FILTER,
+})(Form);

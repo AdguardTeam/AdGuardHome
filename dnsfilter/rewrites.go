@@ -43,14 +43,14 @@ func (a rewritesArray) Len() int { return len(a) }
 func (a rewritesArray) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 
 // Priority:
-//  . CNAME > A/AAAA;
-//  . exact > wildcard;
-//  . higher level wildcard > lower level wildcard
+//  . CNAME < A/AAAA;
+//  . exact < wildcard;
+//  . higher level wildcard < lower level wildcard
 func (a rewritesArray) Less(i, j int) bool {
 	if a[i].Type == dns.TypeCNAME && a[j].Type != dns.TypeCNAME {
-		return false
-	} else if a[i].Type != dns.TypeCNAME && a[j].Type == dns.TypeCNAME {
 		return true
+	} else if a[i].Type != dns.TypeCNAME && a[j].Type == dns.TypeCNAME {
+		return false
 	}
 
 	if isWildcard(a[i].Domain) {
@@ -69,6 +69,16 @@ func (a rewritesArray) Less(i, j int) bool {
 
 // Prepare entry for use
 func (r *RewriteEntry) prepare() {
+	if r.Answer == "AAAA" {
+		r.IP = nil
+		r.Type = dns.TypeAAAA
+		return
+	} else if r.Answer == "A" {
+		r.IP = nil
+		r.Type = dns.TypeA
+		return
+	}
+
 	ip := net.ParseIP(r.Answer)
 	if ip == nil {
 		r.Type = dns.TypeCNAME

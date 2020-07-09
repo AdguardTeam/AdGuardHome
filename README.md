@@ -63,6 +63,7 @@ It operates as a DNS server that re-routes tracking domains to a "black hole," t
     * [Test unstable versions](#test-unstable-versions)
     * [Reporting issues](#reporting-issues)
     * [Help with translations](#translate)
+    * [Other](#help-other)
 * [Projects that use AdGuardHome](#uses)
 * [Acknowledgments](#acknowledgments)
 
@@ -121,10 +122,10 @@ AdGuard Home provides a lot of features out-of-the-box with no need to install a
 | Encrypted DNS upstream servers (DNS-over-HTTPS, DNS-over-TLS, DNSCrypt) | ✅            | ❌ (requires additional software)                       |
 | Cross-platform                                                          | ✅            | ❌ (not natively, only via Docker)                      |
 | Running as a DNS-over-HTTPS or DNS-over-TLS server                      | ✅            | ❌ (requires additional software)                       |
-| Blocking phishing and malware domains                                   | ✅            | ❌                                                      |
+| Blocking phishing and malware domains                                   | ✅            | ❌ (requires non-default blocklists)                    |
 | Parental control (blocking adult domains)                               | ✅            | ❌                                                      |
 | Force Safe search on search engines                                     | ✅            | ❌                                                      |
-| Per-client (device) configuration                                       | ✅            | ❌                                                      |
+| Per-client (device) configuration                                       | ✅            | ✅                                                      |
 | Access settings (choose who can use AGH DNS)                            | ✅            | ❌                                                      |
 
 <a id="comparison-adblock"></a>
@@ -132,7 +133,20 @@ AdGuard Home provides a lot of features out-of-the-box with no need to install a
 
 It depends.
 
-"DNS sinkholing" is capable of blocking a big percentage of ads, but it lacks flexibility and power of traditional ad blockers. You can get a good impression about the difference between these methods by reading [this article](https://adguard.com/en/blog/adguard-vs-adaway-dns66/). It compares AdGuard for Android (a traditional ad blocker) to hosts-level ad blockers (which are almost identical to DNS-based blockers in their capabilities). However, this level of protection is enough for some users. Additionally, using a DNS-based blocker can help to block ads, tracking and analytics requests on other types of devices, such as SmartTVs, smart speakers or other kinds of IoT devices (on which you can't install tradtional ad blockers).
+"DNS sinkholing" is capable of blocking a big percentage of ads, but it lacks flexibility and power of traditional ad blockers. You can get a good impression about the difference between these methods by reading [this article](https://adguard.com/en/blog/adguard-vs-adaway-dns66/). It compares AdGuard for Android (a traditional ad blocker) to hosts-level ad blockers (which are almost identical to DNS-based blockers in their capabilities).
+
+However, this level of protection is enough for some users. Additionally, using a DNS-based blocker can help to block ads, tracking and analytics requests on other types of devices, such as SmartTVs, smart speakers or other kinds of IoT devices (on which you can't install tradtional ad blockers).
+
+**Known limitations**
+
+Here are some examples of what cannot be blocked by a DNS-level blocker:
+
+* YouTube, Twitch ads
+* Facebook, Twitter, Instagram sponsored posts
+
+Essentially, any advertising that shares a domain with content cannot be blocked by a DNS-level blocker.
+
+Is there a chance to handle this in the future? DNS will never be enough to do this. Our only option is to use a content blocking proxy like what we do in the standalone AdGuard applications. We're [going to bring](https://github.com/AdguardTeam/AdGuardHome/issues/1228) this feature support to AdGuard Home in the future. Unfortunately, even in this case, there still will be cases when this won't be enough or would require quite complicated configuration.
 
 <a id="how-to-build"></a>
 ## How to build from source
@@ -211,6 +225,15 @@ If you want to help with AdGuard Home translations, please learn more about tran
 
 Here is a link to AdGuard Home project: https://crowdin.com/project/adguard-applications/en#/adguard-home
 
+<a id="help-other"></a>
+### Other
+
+Here's what you can also do to contribute:
+
+1. [Look for issues](https://github.com/AdguardTeam/AdGuardHome/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22+) marked as "help wanted".
+2. Actualize the list of *Blocked services*. It it can be found in [dnsfilter/blocked_services.go](https://github.com/AdguardTeam/AdGuardHome/blob/master/dnsfilter/blocked_services.go).
+3. Actualize the list of known *trackers*. It it can be found in [client/src/helpers/trackers/adguard.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/src/helpers/trackers/adguard.json).
+4. Actualize the list of vetted *blocklists*. It it can be found in [client/src/helpers/filters/filters.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/src/helpers/filters/filters.json).
 
 <a id="uses"></a>
 ## Projects that use AdGuardHome
@@ -242,5 +265,3 @@ This software wouldn't have been possible without:
 You might have seen that [CoreDNS](https://coredns.io) was mentioned here before — we've stopped using it in AdGuardHome. While we still use it on our servers for [AdGuard DNS](https://adguard.com/adguard-dns/overview.html) service, it seemed like an overkill for Home as it impeded with Home features that we plan to implement.
 
 For a full list of all node.js packages in use, please take a look at [client/package.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/package.json) file.
-
-For info on which exact domains that are blocked by the *Blocked services* function, it can be found at [dnsfilter/blocked_services.go](https://github.com/AdguardTeam/AdGuardHome/blob/master/dnsfilter/blocked_services.go)

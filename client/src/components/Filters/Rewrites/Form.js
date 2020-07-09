@@ -3,10 +3,9 @@ import PropTypes from 'prop-types';
 import { Field, reduxForm } from 'redux-form';
 import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
-
-import {
-    renderInputField, required, domain, answer,
-} from '../../../helpers/form';
+import { renderInputField } from '../../../helpers/form';
+import { validateAnswer, validateDomain, validateRequiredValue } from '../../../helpers/validators';
+import { FORM_NAME } from '../../../helpers/constants';
 
 const Form = (props) => {
     const {
@@ -33,7 +32,7 @@ const Form = (props) => {
                         type="text"
                         className="form-control"
                         placeholder={t('form_domain')}
-                        validate={[required, domain]}
+                        validate={[validateRequiredValue, validateDomain]}
                     />
                 </div>
 
@@ -60,11 +59,18 @@ const Form = (props) => {
                         type="text"
                         className="form-control"
                         placeholder={t('form_answer')}
-                        validate={[required, answer]}
+                        validate={[validateRequiredValue, validateAnswer]}
                     />
                 </div>
             </div>
-
+            <ul>{['rewrite_ip_address',
+                'rewrite_domain_name',
+                'rewrite_A',
+                'rewrite_AAAA']
+                .map((str) => <li key={str}>
+                    <Trans components={[<code key="0">text</code>]}>{str}</Trans>
+                </li>)
+            }</ul>
             <div className="modal-footer">
                 <div className="btn-list">
                     <button
@@ -104,7 +110,7 @@ Form.propTypes = {
 export default flow([
     withTranslation(),
     reduxForm({
-        form: 'rewritesForm',
+        form: FORM_NAME.REWRITES,
         enableReinitialize: true,
     }),
 ])(Form);

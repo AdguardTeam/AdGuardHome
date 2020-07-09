@@ -11,6 +11,10 @@ import (
 
 // flushLogBuffer flushes the current buffer to file and resets the current buffer
 func (l *queryLog) flushLogBuffer(fullFlush bool) error {
+	if !l.conf.FileEnabled {
+		return nil
+	}
+
 	l.fileFlushLock.Lock()
 	defer l.fileFlushLock.Unlock()
 

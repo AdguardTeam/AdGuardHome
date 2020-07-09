@@ -6,7 +6,7 @@ import flow from 'lodash/flow';
 
 import { toggleAllServices } from '../../../helpers/helpers';
 import { renderServiceField } from '../../../helpers/form';
-import { SERVICES } from '../../../helpers/constants';
+import { FORM_NAME, SERVICES } from '../../../helpers/constants';
 
 const Form = (props) => {
     const {
@@ -84,7 +84,7 @@ Form.propTypes = {
 export default flow([
     withTranslation(),
     reduxForm({
-        form: 'servicesForm',
+        form: FORM_NAME.SERVICES,
         enableReinitialize: true,
     }),
 ])(Form);

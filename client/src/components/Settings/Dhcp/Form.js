@@ -4,10 +4,9 @@ import PropTypes from 'prop-types';
 import { Field, reduxForm, formValueSelector } from 'redux-form';
 import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
-
-import {
-    renderInputField, required, ipv4, isPositive, toNumber,
-} from '../../../helpers/form';
+import { renderInputField, toNumber } from '../../../helpers/form';
+import { FORM_NAME } from '../../../helpers/constants';
+import { validateIpv4, validateIsPositiveValue, validateRequiredValue } from '../../../helpers/validators';
 
 const renderInterfaces = ((interfaces) => (
     Object.keys(interfaces).map((item) => {
@@ -95,7 +94,7 @@ let Form = (props) => {
                                 name="interface_name"
                                 component="select"
                                 className="form-control custom-select"
-                                validate={[required]}
+                                validate={[validateRequiredValue]}
                             >
                                 <option value="" disabled={enabled}>
                                     {t('dhcp_interface_select')}
@@ -124,7 +123,7 @@ let Form = (props) => {
                             type="text"
                             className="form-control"
                             placeholder={t('dhcp_form_gateway_input')}
-                            validate={[ipv4, required]}
+                            validate={[validateIpv4, validateRequiredValue]}
                         />
                     </div>
                     <div className="form__group form__group--settings">
@@ -136,7 +135,7 @@ let Form = (props) => {
                             type="text"
                             className="form-control"
                             placeholder={t('dhcp_form_subnet_input')}
-                            validate={[ipv4, required]}
+                            validate={[validateIpv4, validateRequiredValue]}
                         />
                     </div>
                 </div>
@@ -154,7 +153,7 @@ let Form = (props) => {
                                     type="text"
                                     className="form-control"
                                     placeholder={t('dhcp_form_range_start')}
-                                    validate={[ipv4, required]}
+                                    validate={[validateIpv4, validateRequiredValue]}
                                 />
                             </div>
                             <div className="col">
@@ -165,7 +164,7 @@ let Form = (props) => {
                                     type="text"
                                     className="form-control"
                                     placeholder={t('dhcp_form_range_end')}
-                                    validate={[ipv4, required]}
+                                    validate={[validateIpv4, validateRequiredValue]}
                                 />
                             </div>
                         </div>
@@ -178,7 +177,7 @@ let Form = (props) => {
                             type="number"
                             className="form-control"
                             placeholder={t('dhcp_form_lease_input')}
-                            validate={[required, isPositive]}
+                            validate={[validateRequiredValue, validateIsPositiveValue]}
                             normalize={toNumber}
                         />
                     </div>
@@ -221,7 +220,7 @@ Form.propTypes = {
     change: PropTypes.func.isRequired,
 };
 
-const selector = formValueSelector('dhcpForm');
+const selector = formValueSelector(FORM_NAME.DHCP);
 
 Form = connect((state) => {
     const interfaceValue = selector(state, 'interface_name');
@@ -232,5 +231,5 @@ Form = connect((state) => {
 
 export default flow([
     withTranslation(),
-    reduxForm({ form: 'dhcpForm' }),
+    reduxForm({ form: FORM_NAME.DHCP }),
 ])(Form);

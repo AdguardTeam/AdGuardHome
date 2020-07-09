@@ -9,10 +9,9 @@ import Controls from './Controls';
 import AddressList from './AddressList';
 
 import { getInterfaceIp } from '../../helpers/helpers';
-import { ALL_INTERFACES_IP } from '../../helpers/constants';
-import {
-    renderInputField, required, validInstallPort, toNumber,
-} from '../../helpers/form';
+import { ALL_INTERFACES_IP, FORM_NAME } from '../../helpers/constants';
+import { renderInputField, toNumber } from '../../helpers/form';
+import { validateRequiredValue, validateInstallPort } from '../../helpers/validators';
 
 const STATIC_STATUS = {
     ENABLED: 'yes',
@@ -29,9 +28,9 @@ const renderInterfaces = ((interfaces) => (
             flags,
         } = option;
 
-        if (option && ip_addresses && ip_addresses.length > 0) {
+        if (option && ip_addresses?.length > 0) {
             const ip = getInterfaceIp(option);
-            const isDown = flags && flags.includes('down');
+            const isDown = flags?.includes('down');
 
             if (isDown) {
                 return (
@@ -212,7 +211,7 @@ class Settings extends Component {
                                     type="number"
                                     className="form-control"
                                     placeholder="80"
-                                    validate={[validInstallPort, required]}
+                                    validate={[validateInstallPort, validateRequiredValue]}
                                     normalize={toNumber}
                                     onChange={handleChange}
                                 />
@@ -282,7 +281,7 @@ class Settings extends Component {
                                     type="number"
                                     className="form-control"
                                     placeholder="80"
-                                    validate={[validInstallPort, required]}
+                                    validate={[validateInstallPort, validateRequiredValue]}
                                     normalize={toNumber}
                                     onChange={handleChange}
                                 />
@@ -373,7 +372,7 @@ Settings.propTypes = {
     t: PropTypes.func.isRequired,
 };
 
-const selector = formValueSelector('install');
+const selector = formValueSelector(FORM_NAME.INSTALL);
 
 const SettingsForm = connect((state) => {
     const webIp = selector(state, 'web.ip');
@@ -392,7 +391,7 @@ const SettingsForm = connect((state) => {
 export default flow([
     withTranslation(),
     reduxForm({
-        form: 'install',
+        form: FORM_NAME.INSTALL,
         destroyOnUnmount: false,
         forceUnregisterOnUnmount: true,
     }),

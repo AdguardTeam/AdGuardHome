@@ -4,6 +4,8 @@ import { Field, reduxForm } from 'redux-form';
 import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 import { renderTextareaField } from '../../../../helpers/form';
+import { normalizeMultiline } from '../../../../helpers/helpers';
+import { FORM_NAME } from '../../../../helpers/constants';
 
 const fields = [
     {
@@ -44,6 +46,7 @@ const Form = (props) => {
             type="text"
             className="form-control form-control--textarea font-monospace"
             disabled={disabled}
+            normalizeOnBlur={id === 'disallowed_clients' ? normalizeMultiline : undefined}
         />
     </div>;
 
@@ -82,4 +85,4 @@ Form.propTypes = {
     textarea: PropTypes.bool,
 };
 
-export default flow([withTranslation(), reduxForm({ form: 'accessForm' })])(Form);
+export default flow([withTranslation(), reduxForm({ form: FORM_NAME.ACCESS })])(Form);

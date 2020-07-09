@@ -6,14 +6,18 @@ import './Version.css';
 
 const Version = (props) => {
     const {
-        dnsVersion, processingVersion, t,
+        dnsVersion, processingVersion, t, checkUpdateFlag,
     } = props;
 
     return (
         <div className="version">
             <div className="version__text">
-                <Trans>version</Trans>:&nbsp;<span className="version__value" title={dnsVersion}>{dnsVersion}</span>
-                <button
+                {dnsVersion
+                && <>
+                    <Trans>version</Trans>:&nbsp;
+                    <span className="version__value" title={dnsVersion}>{dnsVersion}</span>
+                </>}
+                {checkUpdateFlag && <button
                     type="button"
                     className="btn btn-icon btn-icon-sm btn-outline-primary btn-sm ml-2"
                     onClick={() => props.getVersion(true)}
@@ -23,16 +27,17 @@ const Version = (props) => {
                     <svg className="icons">
                         <use xlinkHref="#refresh" />
                     </svg>
-                </button>
+                </button>}
             </div>
         </div>
     );
 };
 
 Version.propTypes = {
-    dnsVersion: PropTypes.string.isRequired,
-    getVersion: PropTypes.func.isRequired,
-    processingVersion: PropTypes.bool.isRequired,
+    dnsVersion: PropTypes.string,
+    getVersion: PropTypes.func,
+    processingVersion: PropTypes.bool,
+    checkUpdateFlag: PropTypes.bool,
     t: PropTypes.func.isRequired,
 };
 

@@ -5,22 +5,22 @@ import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 
 import { renderRadioField, toNumber } from '../../../helpers/form';
-import { STATS_INTERVALS_DAYS } from '../../../helpers/constants';
+import { FORM_NAME, STATS_INTERVALS_DAYS } from '../../../helpers/constants';
 
 const getIntervalFields = (processing, t, toNumber) => STATS_INTERVALS_DAYS.map((interval) => {
     const title = interval === 1 ? t('interval_24_hour') : t('interval_days', { count: interval });
 
     return (
-            <Field
-                key={interval}
-                name="interval"
-                type="radio"
-                component={renderRadioField}
-                value={interval}
-                placeholder={title}
-                normalize={toNumber}
-                disabled={processing}
-            />
+        <Field
+            key={interval}
+            name="interval"
+            type="radio"
+            component={renderRadioField}
+            value={interval}
+            placeholder={title}
+            normalize={toNumber}
+            disabled={processing}
+        />
     );
 });
 
@@ -76,7 +76,5 @@ Form.propTypes = {
 
 export default flow([
     withTranslation(),
-    reduxForm({
-        form: 'statsConfigForm',
-    }),
+    reduxForm({ form: FORM_NAME.STATS_CONFIG }),
 ])(Form);
