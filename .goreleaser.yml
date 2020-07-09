@@ -24,22 +24,36 @@ builds:
       - amd64
       - arm
       - arm64
+      - mips
+      - mipsle
+      - mips64
+      - mips64le
     goarm:
+      - 5
       - 6
       - 7
+    gomips:
+      - softfloat
     ignore:
       - goos: freebsd
-        goarch: arm
+        goarch: mips
       - goos: freebsd
-        goarch: arm64
+        goarch: mipsle
 
 archives:
   -
-    replacements:
-      386: i386
-      amd64: x86_64
+    # Archive name template.
+    # Defaults:
+    # - if format is `tar.gz`, `tar.xz`, `gz` or `zip`:
+    #   - `{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}`
+    # - if format is `binary`:
+    #   - `{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}`
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
+    wrap_in_directory: "AdGuardHome"
     format_overrides:
       - goos: windows
+        format: zip
+      - goos: darwin
         format: zip
     files:
       - LICENSE.txt
@@ -62,7 +76,7 @@ snapcrafts:
       of common code.
     grade: stable
     confinement: strict
-    publish: true
+    publish: false
     license: GPL-3.0
     apps:
       adguard-home:

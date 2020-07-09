@@ -1,9 +1,13 @@
 name: build
 
+env:
+  GO_VERSION: 1.14
+  NODE_VERSION: 13
+
 on:
   push:
     branches:
-      - master
+      - '*'
     tags:
       - v*
   pull_request:
@@ -26,16 +30,19 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       -
         name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.14
+          go-version: ${{ env.GO_VERSION }}
+
       -
         name: Set up Node
         uses: actions/setup-node@v1
         with:
-          node-version: 13
+          node-version: ${{ env.NODE_VERSION }}
       -
         name: Set up Go modules cache
         uses: actions/cache@v2
@@ -58,33 +65,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
       -
-        name: Run node build-prod
+        name: Run make ci
         shell: bash
         run: |
-          npm --prefix client ci
-          npm --prefix client run build-prod
-      -
-        name: Download modules and generate
-        shell: bash
-        run: |
-          go mod download
-          go generate ./...
-      -
-        name: Golangci-lint
-        if: matrix.os != 'windows-latest'
-        shell: bash
-        run: |
-          curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.23.8
-          golangci-lint --version
-          golangci-lint run
-      -
-        name: Go test
-        run: |
-          go test -race -v -bench=. -coverprofile=coverage.txt -covermode=atomic ./...
+          make ci
       -
         name: Upload coverage
         uses: codecov/codecov-action@v1
-        if: success()
+        if: success() && matrix.os == 'ubuntu-latest'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.txt
@@ -96,26 +84,18 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v2
-      -
-        name: Prepare
-        id: prepare
-        run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            echo ::set-output name=tag_name::${GITHUB_REF#refs/tags/}
-            echo ::set-output name=channel::release
-          else
-            echo ::set-output name=channel::none
-          fi
+        with:
+          fetch-depth: 0
       -
         name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.14
+          go-version: ${{ env.GO_VERSION }}
       -
         name: Set up Node
         uses: actions/setup-node@v1
         with:
-          node-version: 13
+          node-version: ${{ env.NODE_VERSION }}
       -
         name: Set up Go modules cache
         uses: actions/cache@v2
@@ -142,98 +122,30 @@ jobs:
         run: |
           sudo apt-get -yq --no-install-suggests --no-install-recommends install snapcraft
       -
-        name: Run node build-prod
+        name: Set up GoReleaser
         run: |
-          npm --prefix client ci
-          npm --prefix client run build-prod
+          curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | BINDIR="$(go env GOPATH)/bin" sh
       -
-        name: Snapcraft Login
-        if: success() && startsWith(github.ref, 'refs/tags/v')
-        env:
-          SNAPCRAFT_LOGIN: ${{ secrets.SNAPCRAFT_LOGIN }}
+        name: Run snapshot build
         run: |
-          snapcraft login --with <(echo "$SNAPCRAFT_LOGIN")
-      -
-        name: GoReleaser
-        uses: goreleaser/goreleaser-action@v2
-        with:
-          version: latest
-          args: release --parallelism 2
-        env:
-          CHANNEL: ${{ steps.prepare.outputs.channel }}
-      -
-        name: GitHub Release
-        uses: softprops/action-gh-release@v1
-        if: success() && startsWith(github.ref, 'refs/tags/v')
-        with:
-          draft: true
-          files: |
-            dist/checksums.txt
-            dist/*.tar.gz
-            dist/*.zip
-          name: AdGuard Home ${{ steps.prepare.outputs.tag_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          make snapshot
 
   docker:
     runs-on: ubuntu-latest
     needs: test
     steps:
       -
-        name: Prepare
-        id: prepare
-        run: |
-          DOCKER_IMAGE=adguard/adguardhome
-          DOCKER_PLATFORMS=linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/386,linux/ppc64le
-          VERSION=edge
-          CHANNEL=none
-
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/v}
-            CHANNEL=release
-          fi
-          TAGS="--tag ${DOCKER_IMAGE}:${VERSION}"
-          if [[ $VERSION =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-            TAGS="$TAGS --tag ${DOCKER_IMAGE}:latest"
-          fi
-
-          echo ::set-output name=docker_image::${DOCKER_IMAGE}
-          echo ::set-output name=version::${VERSION}
-          echo ::set-output name=channel::${CHANNEL}
-          echo ::set-output name=buildx_args::--platform ${DOCKER_PLATFORMS} \
-            --build-arg VERSION=${VERSION} \
-            --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
-            --build-arg VCS_REF=${GITHUB_SHA::8} \
-            ${TAGS} \
-            --file Dockerfile .
-      -
         name: Set up Docker Buildx
         uses: crazy-max/ghaction-docker-buildx@v1
       -
         name: Checkout
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       -
         name: Docker Buildx (build)
         run: |
-          docker buildx build --output "type=image,push=false" ${{ steps.prepare.outputs.buildx_args }}
-      -
-        name: Docker Login
-        if: success() && startsWith(github.ref, 'refs/tags/v')
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-        run: |
-          echo "${DOCKER_PASSWORD}" | docker login --username "${DOCKER_USERNAME}" --password-stdin
-      -
-        name: Docker Buildx (push)
-        if: success() && startsWith(github.ref, 'refs/tags/v')
-        run: |
-          docker buildx build --output "type=image,push=true" ${{ steps.prepare.outputs.buildx_args }}
-      -
-        name: Docker Check Manifest
-        if: always() && startsWith(github.ref, 'refs/tags/v')
-        run: |
-          docker run --rm mplatform/mquery ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}
+          make docker-multi-arch
       -
         name: Clear
         if: always() && startsWith(github.ref, 'refs/tags/v')
@@ -242,7 +154,8 @@ jobs:
 
   notify:
     needs: [app, docker]
-    if: always()
+    # Secrets are not passed to workflows that are triggered by a pull request from a fork
+    if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     steps:
       -

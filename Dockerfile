@@ -4,7 +4,7 @@ FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.14-alpine as builder
 ARG BUILD_DATE
 ARG VCS_REF
 ARG VERSION=dev
-ARG CHANNEL=none
+ARG CHANNEL=release
 
 ENV CGO_ENABLED 0
 ENV GO111MODULE on
@@ -21,12 +21,17 @@ RUN apk --update --no-cache add \
   && rm -rf /tmp/* /var/cache/apk/*
 
 WORKDIR /app
+
 COPY . ./
 
+# Prepare the client code
 RUN npm --prefix client ci && npm --prefix client run build-prod
+
+# Download go dependencies
 RUN go mod download
 RUN go generate ./...
 
+# It's important to place TARGET* arguments here to avoid running npm and go mod download for every platform
 ARG TARGETPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
