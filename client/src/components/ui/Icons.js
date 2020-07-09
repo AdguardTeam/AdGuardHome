@@ -335,6 +335,15 @@ const Icons = () => (
                       fillRule="evenodd" strokeLinecap="round" />
             </svg>
         </symbol>
+
+        <symbol id="info" viewBox="0 0 24 24" fill="currentColor"
+                strokeLinecap="round" strokeLinejoin="round" strokeWidth="2">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+                <path
+                    d="M64 1C29.3 1 1 29.3 1 64s28.3 63 63 63 63-28.3 63-63S98.7 1 64 1zm0 118C33.7 119 9 94.3 9 64S33.7 9 64 9s55 24.7 55 55-24.7 55-55 55z" />
+                <path d="M60 54.5h8v40h-8zM60 35.5h8v8h-8z" />
+            </svg>
+        </symbol>
     </svg>
 );
 

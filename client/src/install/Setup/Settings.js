@@ -10,9 +10,8 @@ import AddressList from './AddressList';
 
 import { getInterfaceIp } from '../../helpers/helpers';
 import { ALL_INTERFACES_IP, FORM_NAME } from '../../helpers/constants';
-import {
-    renderInputField, required, validInstallPort, toNumber,
-} from '../../helpers/form';
+import { renderInputField, toNumber } from '../../helpers/form';
+import { validateRequiredValue, validateInstallPort } from '../../helpers/validators';
 
 const STATIC_STATUS = {
     ENABLED: 'yes',
@@ -29,9 +28,9 @@ const renderInterfaces = ((interfaces) => (
             flags,
         } = option;
 
-        if (option && ip_addresses && ip_addresses.length > 0) {
+        if (option && ip_addresses?.length > 0) {
             const ip = getInterfaceIp(option);
-            const isDown = flags && flags.includes('down');
+            const isDown = flags?.includes('down');
 
             if (isDown) {
                 return (
@@ -212,7 +211,7 @@ class Settings extends Component {
                                     type="number"
                                     className="form-control"
                                     placeholder="80"
-                                    validate={[validInstallPort, required]}
+                                    validate={[validateInstallPort, validateRequiredValue]}
                                     normalize={toNumber}
                                     onChange={handleChange}
                                 />
@@ -282,7 +281,7 @@ class Settings extends Component {
                                     type="number"
                                     className="form-control"
                                     placeholder="80"
-                                    validate={[validInstallPort, required]}
+                                    validate={[validateInstallPort, validateRequiredValue]}
                                     normalize={toNumber}
                                     onChange={handleChange}
                                 />

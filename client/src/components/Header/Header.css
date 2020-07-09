@@ -160,6 +160,10 @@
         display: none;
     }
 
+    .nav-icon--gray {
+        color: #9aa0ac;
+    }
+
     .header-brand-img {
         height: 32px;
     }

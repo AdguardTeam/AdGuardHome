@@ -1,17 +1,51 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import ReactModal from 'react-modal';
-import { Trans, withTranslation } from 'react-i18next';
+import { withTranslation } from 'react-i18next';
 
 import { MODAL_TYPE } from '../../helpers/constants';
 import Form from './Form';
 import '../ui/Modal.css';
+import { getMap } from '../../helpers/helpers';
 
 ReactModal.setAppElement('#root');
 
+const MODAL_TYPE_TO_TITLE_TYPE_MAP = {
+    [MODAL_TYPE.EDIT_FILTERS]: 'edit',
+    [MODAL_TYPE.ADD_FILTERS]: 'new',
+    [MODAL_TYPE.SELECT_MODAL_TYPE]: 'new',
+    [MODAL_TYPE.CHOOSE_FILTERING_LIST]: 'choose',
+};
+
+/**
+ * @param modalType {'EDIT_FILTERS' | 'ADD_FILTERS' | 'CHOOSE_FILTERING_LIST'}
+ * @param whitelist {boolean}
+ * @returns {'new_allowlist' | 'edit_allowlist' | 'choose_allowlist' |
+ *           'new_blocklist' | 'edit_blocklist' | 'choose_blocklist' | null}
+ */
+const getTitle = (modalType, whitelist) => {
+    const titleType = MODAL_TYPE_TO_TITLE_TYPE_MAP[modalType];
+    if (!titleType) {
+        return null;
+    }
+    return `${titleType}_${whitelist ? 'allowlist' : 'blocklist'}`;
+};
+
+const getSelectedValues = (filters, catalogSourcesToIdMap) => filters.reduce((acc, { url }) => {
+    if (Object.prototype.hasOwnProperty.call(catalogSourcesToIdMap, url)) {
+        const fieldId = `filter${catalogSourcesToIdMap[url]}`;
+        acc.selectedFilterIds[fieldId] = true;
+        acc.selectedSources[url] = true;
+    }
+    return acc;
+}, {
+    selectedFilterIds: {},
+    selectedSources: {},
+});
+
 class Modal extends Component {
     closeModal = () => {
-        this.props.toggleModal();
+        this.props.toggleFilteringModal();
     };
 
     render() {
@@ -23,19 +57,30 @@ class Modal extends Component {
             modalType,
             currentFilterData,
             whitelist,
+            toggleFilteringModal,
+            filters,
+            t,
+            filtersCatalog,
         } = this.props;
 
-        const newListTitle = whitelist ? (
-            <Trans>new_allowlist</Trans>
-        ) : (
-            <Trans>new_blocklist</Trans>
-        );
+        let initialValues;
+        let selectedSources;
+        switch (modalType) {
+            case MODAL_TYPE.EDIT_FILTERS:
+                initialValues = currentFilterData;
+                break;
+            case MODAL_TYPE.CHOOSE_FILTERING_LIST: {
+                const catalogSourcesToIdMap = getMap(Object.values(filtersCatalog.filters), 'source', 'id');
 
-        const editListTitle = whitelist ? (
-            <Trans>edit_allowlist</Trans>
-        ) : (
-            <Trans>edit_blocklist</Trans>
-        );
+                const selectedValues = getSelectedValues(filters, catalogSourcesToIdMap);
+                initialValues = selectedValues.selectedFilterIds;
+                selectedSources = selectedValues.selectedSources;
+                break;
+            }
+            default:
+        }
+
+        const title = t(getTitle(modalType, whitelist));
 
         return (
             <ReactModal
@@ -46,24 +91,22 @@ class Modal extends Component {
             >
                 <div className="modal-content">
                     <div className="modal-header">
-                        <h4 className="modal-title">
-                            {modalType === MODAL_TYPE.EDIT ? (
-                                editListTitle
-                            ) : (
-                                newListTitle
-                            )}
-                        </h4>
+                        {title && <h4 className="modal-title">{title}</h4>}
                         <button type="button" className="close" onClick={this.closeModal}>
                             <span className="sr-only">Close</span>
                         </button>
                     </div>
                     <Form
-                        initialValues={{ ...currentFilterData }}
+                        selectedSources={selectedSources}
+                        initialValues={initialValues}
+                        filtersCatalog={filtersCatalog}
+                        modalType={modalType}
                         onSubmit={handleSubmit}
                         processingAddFilter={processingAddFilter}
                         processingConfigFilter={processingConfigFilter}
                         closeModal={this.closeModal}
                         whitelist={whitelist}
+                        toggleFilteringModal={toggleFilteringModal}
                     />
                 </div>
             </ReactModal>
@@ -72,7 +115,7 @@ class Modal extends Component {
 }
 
 Modal.propTypes = {
-    toggleModal: PropTypes.func.isRequired,
+    toggleFilteringModal: PropTypes.func.isRequired,
     isOpen: PropTypes.bool.isRequired,
     addFilter: PropTypes.func.isRequired,
     isFilterAdded: PropTypes.bool.isRequired,
@@ -83,6 +126,8 @@ Modal.propTypes = {
     currentFilterData: PropTypes.object.isRequired,
     t: PropTypes.func.isRequired,
     whitelist: PropTypes.bool,
+    filters: PropTypes.array.isRequired,
+    filtersCatalog: PropTypes.object,
 };
 
 export default withTranslation()(Modal);

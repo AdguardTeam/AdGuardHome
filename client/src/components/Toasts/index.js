@@ -9,7 +9,7 @@ import './Toast.css';
 
 const Toasts = (props) => (
         <TransitionGroup className="toasts">
-            {props.toasts.notices && props.toasts.notices.map((toast) => {
+            {props.toasts.notices?.map((toast) => {
                 const { id } = toast;
                 return (
                     <CSSTransition

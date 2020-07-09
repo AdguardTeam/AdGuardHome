@@ -53,6 +53,15 @@ body {
     }
 }
 
+.modal-body--medium {
+    max-height: 20rem;
+    overflow-y: scroll;
+}
+
+.modal-body__item:not(:first-child) {
+    padding-top: 1.5rem;
+}
+
 .font-monospace {
     font-family: var(--font-family-monospace);
 }
