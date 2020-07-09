@@ -17,7 +17,7 @@ const getInitialDataForServices = (initial) => (initial ? initial.reduce(
 const Services = () => {
     const [t] = useTranslation();
     const dispatch = useDispatch();
-    const services = useSelector((store) => store && store.services);
+    const services = useSelector((store) => store?.services);
 
     useEffect(() => {
         dispatch(getBlockedServices());

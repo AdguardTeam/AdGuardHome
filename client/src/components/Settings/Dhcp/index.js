@@ -32,7 +32,7 @@ class Dhcp extends Component {
         const {
             config, check, processingDhcp, processingConfig,
         } = this.props.dhcp;
-        const otherDhcpFound = check && check.otherServer
+        const otherDhcpFound = check?.otherServer
             && check.otherServer.found === DHCP_STATUS_RESPONSE.YES;
         const filledConfig = Object.keys(config).every((key) => {
             if (key === 'enabled' || key === 'icmp_timeout_msec') {

@@ -57,8 +57,8 @@ const getDomainCell = (props) => {
     const sourceData = getSourceData(tracker);
 
     const knownTrackerDataObj = {
-        name_table_header: tracker && tracker.name,
-        category_label: tracker && captitalizeWords(tracker.category),
+        name_table_header: tracker?.name,
+        category_label: hasTracker && captitalizeWords(tracker.category),
         source_label: sourceData
             && <a href={sourceData.url} target="_blank" rel="noopener noreferrer"
                   className="link--green">{sourceData.name}</a>,

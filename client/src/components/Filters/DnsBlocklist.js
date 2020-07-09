@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { withTranslation } from 'react-i18next';
 
@@ -6,24 +6,47 @@ import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
 import Modal from './Modal';
 import Actions from './Actions';
-import Table from './Table';
 
+import Table from './Table';
 import { MODAL_TYPE } from '../../helpers/constants';
-import { getCurrentFilter } from '../../helpers/helpers';
+
+import {
+    getCurrentFilter,
+    getObjDiff,
+} from '../../helpers/helpers';
+
+const filtersCatalog = require('../../helpers/filters/filters.json');
 
 class DnsBlocklist extends Component {
     componentDidMount() {
         this.props.getFilteringStatus();
     }
 
-    handleSubmit = (values) => {
-        const { name, url } = values;
-        const { filtering } = this.props;
+    handleSubmit = (values, _, { initialValues }) => {
+        const { filtering: { modalFilterUrl, modalType } } = this.props;
 
-        if (filtering.modalType === MODAL_TYPE.EDIT) {
-            this.props.editFilter(filtering.modalFilterUrl, values);
-        } else {
-            this.props.addFilter(url, name);
+        switch (modalType) {
+            case MODAL_TYPE.EDIT_FILTERS:
+                this.props.editFilter(modalFilterUrl, values);
+                break;
+            case MODAL_TYPE.ADD_FILTERS: {
+                const { name, url } = values;
+                this.props.addFilter(url, name);
+                break;
+            }
+            case MODAL_TYPE.CHOOSE_FILTERING_LIST: {
+                const changedValues = getObjDiff(initialValues, values);
+
+                Object.keys(changedValues)
+                    .forEach((fieldName) => {
+                        // filterId is actually in the field name
+                        const { source, name } = filtersCatalog.filters[fieldName];
+                        this.props.addFilter(source, name);
+                    });
+                break;
+            }
+            default:
+                break;
         }
     };
 
@@ -39,6 +62,10 @@ class DnsBlocklist extends Component {
 
     handleRefresh = () => {
         this.props.refreshFilters({ whitelist: false });
+    };
+
+    openSelectTypeModal = () => {
+        this.props.toggleFilteringModal({ type: MODAL_TYPE.SELECT_MODAL_TYPE });
     };
 
     render() {
@@ -67,7 +94,7 @@ class DnsBlocklist extends Component {
             || processingRefreshFilters;
 
         return (
-            <Fragment>
+            <>
                 <PageTitle
                     title={t('dns_blocklists')}
                     subtitle={t('dns_blocklists_desc')}
@@ -85,7 +112,7 @@ class DnsBlocklist extends Component {
                                     toggleFilter={this.toggleFilter}
                                 />
                                 <Actions
-                                    handleAdd={() => toggleFilteringModal({ type: MODAL_TYPE.ADD })}
+                                    handleAdd={this.openSelectTypeModal}
                                     handleRefresh={this.handleRefresh}
                                     processingRefreshFilters={processingRefreshFilters}
                                 />
@@ -94,8 +121,10 @@ class DnsBlocklist extends Component {
                     </div>
                 </div>
                 <Modal
+                    filtersCatalog={filtersCatalog}
+                    filters={filters}
                     isOpen={isModalOpen}
-                    toggleModal={toggleFilteringModal}
+                    toggleFilteringModal={toggleFilteringModal}
                     addFilter={addFilter}
                     isFilterAdded={isFilterAdded}
                     processingAddFilter={processingAddFilter}
@@ -104,7 +133,7 @@ class DnsBlocklist extends Component {
                     modalType={modalType}
                     currentFilterData={currentFilterData}
                 />
-            </Fragment>
+            </>
         );
     }
 }

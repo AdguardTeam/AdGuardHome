@@ -120,7 +120,7 @@ const renderDnsPrivacyList = ({ title, list }) => <div className="tab__paragraph
     <strong><Trans>{title}</Trans></strong>
     <ul>{list.map(({ label, components }) => <li key={label}>
         <Trans
-            components={components && components.map((props) => {
+            components={components?.map((props) => {
                 if (React.isValidElement(props)) {
                     return props;
                 }
@@ -198,7 +198,7 @@ const getTabs = ({
         // eslint-disable-next-line react/display-name
         getTitle: () => <div label="dns_privacy" title={t('dns_privacy')}>
             <div className="tab__text">
-                {tlsAddress && tlsAddress.length > 0 && (
+                {tlsAddress?.length > 0 && (
                     <div className="tab__paragraph">
                         <Trans
                             values={{ address: tlsAddress[0] }}
@@ -211,7 +211,7 @@ const getTabs = ({
                         </Trans>
                     </div>
                 )}
-                {httpsAddress && httpsAddress.length > 0 && (
+                {httpsAddress?.length > 0 && (
                     <div className="tab__paragraph">
                         <Trans
                             values={{ address: httpsAddress[0] }}

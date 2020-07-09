@@ -4,17 +4,18 @@ import { connect } from 'react-redux';
 import { Field, reduxForm, formValueSelector } from 'redux-form';
 import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
-
 import {
     renderInputField,
     renderRadioField,
     renderSelectField,
-    required,
-    ipv4,
-    ipv6,
-    biggerOrEqualZero,
     toNumber,
 } from '../../../../helpers/form';
+import {
+    validateBiggerOrEqualZeroValue,
+    validateIpv4,
+    validateIpv6,
+    validateRequiredValue,
+} from '../../../../helpers/validators';
 import { BLOCKING_MODES, FORM_NAME } from '../../../../helpers/constants';
 
 const checkboxes = [{
@@ -36,12 +37,12 @@ const checkboxes = [{
 const customIps = [{
     description: 'blocking_ipv4_desc',
     name: 'blocking_ipv4',
-    validateIp: ipv4,
+    validateIp: validateIpv4,
 },
 {
     description: 'blocking_ipv6_desc',
     name: 'blocking_ipv6',
-    validateIp: ipv6,
+    validateIp: validateIpv6,
 }];
 
 const getFields = (processing, t) => Object.values(BLOCKING_MODES)
@@ -77,7 +78,7 @@ let Form = ({
                     className="form-control"
                     placeholder={t('form_enter_rate_limit')}
                     normalize={toNumber}
-                    validate={[required, biggerOrEqualZero]}
+                    validate={[validateRequiredValue, validateBiggerOrEqualZeroValue]}
                 />
             </div>
         </div>
@@ -130,7 +131,7 @@ let Form = ({
                             component={renderInputField}
                             className="form-control"
                             placeholder={t('form_enter_ip')}
-                            validate={[validateIp, required]}
+                            validate={[validateIp, validateRequiredValue]}
                         />
                     </div>
                 </div>)}
