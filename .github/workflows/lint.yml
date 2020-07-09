@@ -29,7 +29,8 @@ jobs:
 
   notify:
     needs: [golangci,eslint]
-    if: always()
+    # Secrets are not passed to workflows that are triggered by a pull request from a fork
+    if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     steps:
       -
