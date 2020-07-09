@@ -36,10 +36,6 @@ builds:
       - softfloat
     ignore:
       - goos: freebsd
-        goarch: arm
-      - goos: freebsd
-        goarch: arm64
-      - goos: freebsd
         goarch: mips
       - goos: freebsd
         goarch: mipsle

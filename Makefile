@@ -179,6 +179,7 @@ define write_version_file
 	echo "  \"version\": \"v$(version)\"," >> $(DIST_DIR)/version.json
 	echo "  \"announcement\": \"AdGuard Home $(version) is now available!\"," >> $(DIST_DIR)/version.json
 	echo "  \"announcement_url\": \"https://github.com/AdguardTeam/AdGuardHome/releases\"," >> $(DIST_DIR)/version.json
+	echo "  \"selfupdate_min_version\": \"v0.0\"," >> $(DIST_DIR)/version.json
 
 	# Windows builds
 	echo "  \"download_windows_amd64\": \"$(BASE_URL)/AdGuardHome_windows_amd64.zip\"," >> $(DIST_DIR)/version.json
@@ -208,6 +209,14 @@ define write_version_file
 	# FreeBSD
 	echo "  \"download_freebsd_386\": \"$(BASE_URL)/AdGuardHome_freebsd_386.tar.gz\"," >> $(DIST_DIR)/version.json
 	echo "  \"download_freebsd_amd64\": \"$(BASE_URL)/AdGuardHome_freebsd_amd64.tar.gz\"," >> $(DIST_DIR)/version.json
-	echo "  \"selfupdate_min_version\": \"v0.0\"" >> $(DIST_DIR)/version.json
+
+	# FreeBSD, all kinds of ARM
+	echo "  \"download_freebsd_arm\": \"$(BASE_URL)/AdGuardHome_freebsd_armv6.tar.gz\"," >> $(DIST_DIR)/version.json
+	echo "  \"download_freebsd_armv5\": \"$(BASE_URL)/AdGuardHome_freebsd_armv5.tar.gz\"," >> $(DIST_DIR)/version.json
+	echo "  \"download_freebsd_armv6\": \"$(BASE_URL)/AdGuardHome_freebsd_armv6.tar.gz\"," >> $(DIST_DIR)/version.json
+	echo "  \"download_freebsd_armv7\": \"$(BASE_URL)/AdGuardHome_freebsd_armv7.tar.gz\"," >> $(DIST_DIR)/version.json
+	echo "  \"download_freebsd_arm64\": \"$(BASE_URL)/AdGuardHome_freebsd_arm64.tar.gz\"" >> $(DIST_DIR)/version.json
+
+	# Finish
 	echo "}" >> $(DIST_DIR)/version.json
 endef
