@@ -128,7 +128,7 @@ jobs:
       -
         name: Run snapshot build
         run: |
-          make snapshot
+          make release
 
   docker:
     runs-on: ubuntu-latest
