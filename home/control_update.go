@@ -45,10 +45,13 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req := getVersionJSONRequest{}
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "JSON parse: %s", err)
-		return
+	var err error
+	if r.ContentLength != 0 {
+		err = json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
+			httpError(w, http.StatusBadRequest, "JSON parse: %s", err)
+			return
+		}
 	}
 
 	now := time.Now()
