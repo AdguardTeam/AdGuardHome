@@ -137,7 +137,7 @@ clean:
 	# client deps
 	rm -rf client/node_modules
 	# packr-generated files
-	which packr && PATH=$(GOPATH)/bin:$(PATH) packr clean
+	PATH=$(GOPATH)/bin:$(PATH) packr clean || true
 
 docker-multi-arch:
 	DOCKER_CLI_EXPERIMENTAL=enabled \
