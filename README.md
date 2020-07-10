@@ -174,7 +174,11 @@ You'll need this to prepare a release build:
 * [goreleaser](https://goreleaser.com/)
 * [snapcraft](https://snapcraft.io/)
 
-Run `make snapshot` or `make release` to build all AdGuard distrs.
+Commands:
+
+* `make release` - builds a snapshot build (CHANNEL=edge)
+* `CHANNEL=beta make release` - builds beta version, tag is mandatory.
+* `CHANNEL=release make release` - builds release version, tag is mandatory.
 
 #### Docker image
 

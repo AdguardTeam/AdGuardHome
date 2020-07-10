@@ -13,8 +13,7 @@
 #
 # Building releases:
 #
-# * release -- builds release version of AdGuard Home. CHANNEL must be specified (release or beta).
-# * snapshot -- builds snapshot version of AdGuard Home. Use with CHANNEL=edge.
+# * release -- builds AdGuard Home distros. CHANNEL must be specified (edge, release or beta).
 # * docker-multi-arch -- builds a multi-arch image. If you want it to be pushed to docker hub,
 # 	you must specify:
 #     * DOCKER_IMAGE_NAME - adguard/adguard-home
@@ -25,7 +24,7 @@ PWD := $(shell pwd)
 TARGET=AdGuardHome
 BASE_URL="https://static.adguard.com/adguardhome/$(CHANNEL)"
 
-# See release and snapshot targets
+# See release target
 DIST_DIR=dist
 
 # Update channel. Can be release, beta or edge. Uses edge by default.
@@ -38,6 +37,13 @@ ifneq ($(CHANNEL),edge)
 $(error CHANNEL value is not valid. Valid values are release,beta or edge)
 endif
 endif
+endif
+
+# goreleaser command depends on the $CHANNEL
+GORELEASER_COMMAND=goreleaser release --rm-dist --skip-publish --snapshot
+ifneq ($(CHANNEL),edge)
+	# If this is not an "edge" build, use normal release command
+	GORELEASER_COMMAND=goreleaser release --rm-dist --skip-publish
 endif
 
 # Version properties
@@ -82,7 +88,7 @@ ifndef DOCKER_IMAGE_NAME
 $(error DOCKER_IMAGE_NAME value is not set)
 endif
 
-.PHONY: all build client client-watch docker lint test dependencies clean release snapshot docker-multi-arch
+.PHONY: all build client client-watch docker lint test dependencies clean release docker-multi-arch
 all: build
 
 build: dependencies client
@@ -156,15 +162,9 @@ docker-multi-arch:
 	@echo If the image was pushed to the registry, you can now run it:
 	@echo docker run --name "adguard-home" -p 53:53/tcp -p 53:53/udp -p 80:80/tcp -p 443:443/tcp -p 853:853/tcp -p 3000:3000/tcp $(DOCKER_IMAGE_NAME)
 
-snapshot: dependencies client
-	@echo Starting snapshot build: version $(VERSION), channel $(CHANNEL)
-	CHANNEL=$(CHANNEL) goreleaser release --rm-dist --skip-publish --snapshot
-	$(call write_version_file,$(VERSION))
-	PATH=$(GOPATH)/bin:$(PATH) packr clean
-
 release: dependencies client
 	@echo Starting release build: version $(VERSION), channel $(CHANNEL)
-	CHANNEL=$(CHANNEL) goreleaser release --rm-dist --skip-publish
+	CHANNEL=$(CHANNEL) $(GORELEASER_COMMAND)
 	$(call write_version_file,$(VERSION))
 	PATH=$(GOPATH)/bin:$(PATH) packr clean
 
@@ -190,8 +190,8 @@ define write_version_file
 	echo "  \"download_windows_386\": \"$(BASE_URL)/AdGuardHome_windows_386.zip\"," >> $(DIST_DIR)/version.json
 
 	# MacOS builds
-	echo "  \"download_darwin_386\": \"$(BASE_URL)/AdGuardHome_darwin_386.zip\"," >> $(DIST_DIR)/version.json
 	echo "  \"download_darwin_amd64\": \"$(BASE_URL)/AdGuardHome_darwin_amd64.zip\"," >> $(DIST_DIR)/version.json
+	echo "  \"download_darwin_386\": \"$(BASE_URL)/AdGuardHome_darwin_386.zip\"," >> $(DIST_DIR)/version.json
 
 	# Linux
 	echo "  \"download_linux_amd64\": \"$(BASE_URL)/AdGuardHome_linux_amd64.tar.gz\"," >> $(DIST_DIR)/version.json
