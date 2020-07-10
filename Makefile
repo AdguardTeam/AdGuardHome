@@ -43,9 +43,7 @@ endif
 # Version properties
 COMMIT=$(shell git rev-parse --short HEAD)
 TAG_NAME=$(shell git describe --abbrev=0)
-
-# Remove leading "v" from the tag name
-RELEASE_VERSION=$(TAG_NAME:v%=%)
+RELEASE_VERSION=$(TAG_NAME)
 SNAPSHOT_VERSION=$(RELEASE_VERSION)-SNAPSHOT-$(COMMIT)
 
 # Set proper version
@@ -72,7 +70,8 @@ ifndef DOCKER_TAGS
 		DOCKER_TAGS := $(DOCKER_TAGS) --tag $(DOCKER_IMAGE_NAME):beta
 	endif
 	ifeq ($(CHANNEL),edge)
-		DOCKER_TAGS := $(DOCKER_TAGS) --tag $(DOCKER_IMAGE_NAME):edge
+		# Overwrite the "version" tag when we push to the edge channel
+		DOCKER_TAGS := --tag $(DOCKER_IMAGE_NAME):edge
 	endif
 endif
 
@@ -171,12 +170,12 @@ define write_version_file
 
 	# Variables for CI
 	rm -f $(DIST_DIR)/version.txt
-	echo "version=v$(version)" > $(DIST_DIR)/version.txt
+	echo "version=$(version)" > $(DIST_DIR)/version.txt
 
 	# Prepare the version.json file
 	rm -f $(DIST_DIR)/version.json
 	echo "{" >> $(DIST_DIR)/version.json
-	echo "  \"version\": \"v$(version)\"," >> $(DIST_DIR)/version.json
+	echo "  \"version\": \"$(version)\"," >> $(DIST_DIR)/version.json
 	echo "  \"announcement\": \"AdGuard Home $(version) is now available!\"," >> $(DIST_DIR)/version.json
 	echo "  \"announcement_url\": \"https://github.com/AdguardTeam/AdGuardHome/releases\"," >> $(DIST_DIR)/version.json
 	echo "  \"selfupdate_min_version\": \"v0.0\"," >> $(DIST_DIR)/version.json

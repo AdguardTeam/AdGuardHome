@@ -181,6 +181,14 @@ Run `make snapshot` or `make release` to build all AdGuard distrs.
 * Run `make docker` to build the Docker image locally.
 * Run `make docker-multi-arch` to build the multi-arch Docker image (the one that we publish to Docker Hub).
 
+Please note, that we're using [Docker Buildx](https://docs.docker.com/buildx/working-with-buildx/) to build our official image.
+
+You may need to prepare before using these builds:
+
+* (Linux-only) Install Qemu: `docker run --rm --privileged multiarch/qemu-user-static --reset -p yes --credential yes`
+* Prepare builder: `docker buildx create --name buildx-builder --driver docker-container --use`
+
+
 ### Resources that we update periodically
 
 * `scripts/translations`

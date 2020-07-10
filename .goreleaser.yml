@@ -1,3 +1,5 @@
+project_name: AdGuardHome
+
 env:
   - GO111MODULE=on
   - GOPROXY=https://goproxy.io
@@ -80,7 +82,7 @@ snapcrafts:
     license: GPL-3.0
     apps:
       adguard-home:
-        args: -w ${SNAP_DATA} --no-check-update
+        command: AdGuardHome -w $SNAP_DATA --no-check-update
         plugs: [ network-bind ]
         daemon: simple
 
