@@ -56,6 +56,7 @@ endif
 
 # Docker target parameters
 DOCKER_IMAGE_NAME ?= adguardhome-dev
+DOCKER_IMAGE_FULL_NAME = $(DOCKER_IMAGE_NAME):$(VERSION)
 DOCKER_PLATFORMS=linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/386,linux/ppc64le
 DOCKER_OUTPUT ?= type=image,name=$(DOCKER_IMAGE_NAME),push=false
 BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
@@ -64,14 +65,15 @@ BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 DOCKER_TAGS ?=
 ifndef DOCKER_TAGS
 	ifeq ($(CHANNEL),release)
-		DOCKER_TAGS := $(DOCKER_TAGS) --tag $(DOCKER_IMAGE_NAME):latest
+		DOCKER_TAGS := --tag $(DOCKER_IMAGE_NAME):latest
 	endif
 	ifeq ($(CHANNEL),beta)
-		DOCKER_TAGS := $(DOCKER_TAGS) --tag $(DOCKER_IMAGE_NAME):beta
+		DOCKER_TAGS := --tag $(DOCKER_IMAGE_NAME):beta
 	endif
 	ifeq ($(CHANNEL),edge)
-		# Overwrite the "version" tag when we push to the edge channel
-		DOCKER_TAGS := --tag $(DOCKER_IMAGE_NAME):edge
+		# Don't set the version tag when pushing to "edge"
+		DOCKER_IMAGE_FULL_NAME := $(DOCKER_IMAGE_NAME):edge
+		# DOCKER_TAGS := --tag $(DOCKER_IMAGE_NAME):edge
 	endif
 endif
 
@@ -149,7 +151,7 @@ docker-multi-arch:
 	--build-arg BUILD_DATE=$(BUILD_DATE) \
 	$(DOCKER_TAGS) \
 	--output "$(DOCKER_OUTPUT)" \
-	-t "$(DOCKER_IMAGE_NAME):$(VERSION)" -f ./Dockerfile .
+	-t "$(DOCKER_IMAGE_FULL_NAME)" -f ./Dockerfile .
 
 	@echo If the image was pushed to the registry, you can now run it:
 	@echo docker run --name "adguard-home" -p 53:53/tcp -p 53:53/udp -p 80:80/tcp -p 443:443/tcp -p 853:853/tcp -p 3000:3000/tcp $(DOCKER_IMAGE_NAME)
