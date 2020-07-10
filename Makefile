@@ -127,6 +127,9 @@ clean:
 	# make build output
 	rm -f AdGuardHome
 	rm -f AdGuardHome.exe
+	# tests output
+	rm -rf data
+	rm coverage.txt
 	# static build output
 	rm -rf build
 	# dist folder
@@ -134,7 +137,7 @@ clean:
 	# client deps
 	rm -rf client/node_modules
 	# packr-generated files
-	PATH=$(GOPATH)/bin:$(PATH) packr clean
+	command -v packr && PATH=$(GOPATH)/bin:$(PATH) packr clean
 
 docker-multi-arch:
 	DOCKER_CLI_EXPERIMENTAL=enabled \
