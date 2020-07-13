@@ -10,7 +10,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/gobuffalo/packr v1.30.1
 	github.com/joomcode/errorx v1.0.1
-	github.com/kardianos/service v1.0.0
+	github.com/kardianos/service v1.1.0
 	github.com/krolaw/dhcp4 v0.0.0-20180925202202-7cead472c414
 	github.com/miekg/dns v1.1.29
 	github.com/pkg/errors v0.9.1
