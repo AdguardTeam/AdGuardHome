@@ -12,7 +12,7 @@ import {
     FILTERED_STATUS_TO_META_MAP,
     TABLE_DEFAULT_PAGE_SIZE,
     SCHEME_TO_PROTOCOL_MAP,
-    CUSTOM_FILTERING_RULES_ID,
+    CUSTOM_FILTERING_RULES_ID, FILTERED_STATUS,
 } from '../../helpers/constants';
 import getDateCell from './Cells/getDateCell';
 import getDomainCell from './Cells/getDomainCell';
@@ -300,6 +300,8 @@ const Table = (props) => {
                             type,
                             client_proto,
                             filterId,
+                            rule,
+                            originalResponse,
                         } = rowInfo.original;
 
                         const hasTracker = !!tracker;
@@ -317,12 +319,16 @@ const Table = (props) => {
                         const formattedElapsedMs = formatElapsedMs(elapsedMs, t);
                         const isFiltered = checkFiltered(reason);
 
+                        const isBlocked = reason === FILTERED_STATUS.FILTERED_BLACK_LIST
+                            || reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
+
                         const buttonType = isFiltered ? BLOCK_ACTIONS.UNBLOCK : BLOCK_ACTIONS.BLOCK;
                         const onToggleBlock = () => {
                             toggleBlocking(buttonType, domain);
                         };
 
-                        const status = t(FILTERED_STATUS_TO_META_MAP[reason]?.label || reason);
+                        const isBlockedByResponse = originalResponse.length > 0 && isBlocked;
+                        const status = t(isBlockedByResponse ? 'blocked_by_cname_or_ip' : FILTERED_STATUS_TO_META_MAP[reason]?.label || reason);
                         const statusBlocked = <div className="bg--danger">{status}</div>;
 
                         const protocol = t(SCHEME_TO_PROTOCOL_MAP[client_proto]) || '';
@@ -379,12 +385,14 @@ const Table = (props) => {
                             install_settings_dns: upstream,
                             elapsed: formattedElapsedMs,
                             filter,
+                            rule_label: rule,
                             response_table_header: response?.join('\n'),
+                            original_response: originalResponse?.join('\n'),
                             [buttonType]: <div onClick={onToggleBlock}
                                                className="title--border text-center">{t(buttonType)}</div>,
                         };
 
-                        const detailedDataCurrent = isFiltered ? detailedDataBlocked : detailedData;
+                        const detailedDataCurrent = isBlocked ? detailedDataBlocked : detailedData;
 
                         setDetailedDataCurrent(detailedDataCurrent);
                         setButtonType(buttonType);

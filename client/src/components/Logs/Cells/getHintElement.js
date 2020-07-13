@@ -6,6 +6,7 @@ import classNames from 'classnames';
 import './Tooltip.css';
 import 'react-popper-tooltip/dist/styles.css';
 import { HIDE_TOOLTIP_DELAY } from '../../../helpers/constants';
+import { processContent } from '../../../helpers/helpers';
 
 const getHintElement = ({
     className,
@@ -17,34 +18,34 @@ const getHintElement = ({
     placement,
     tooltipClass,
     content,
-    renderContent = React.Children.map(
-        content,
+    renderContent = content ? React.Children.map(
+        processContent(content),
         (item, idx) => <div key={idx} className={contentItemClass}>
             <Trans>{item || '—'}</Trans>
         </div>,
-    ),
+    ) : null,
 }) => <TooltipTrigger placement={placement} trigger="hover" delayHide={HIDE_TOOLTIP_DELAY} tooltip={
-        ({
-            tooltipRef,
-            getTooltipProps,
-        }) => <div {...getTooltipProps({
-            ref: tooltipRef,
-            className: classNames('tooltip__container', tooltipClass, { 'd-none': !canShowTooltip }),
-        })}
-        >
-            {title && <div className="pb-4 h-25 grid-content font-weight-bold">
-                <Trans>{title}</Trans>
-            </div>}
-            <div className={classNames(columnClass)}>{renderContent}</div>
-        </div>
-    }>{({
-        getTriggerProps, triggerRef,
-    }) => <span {...getTriggerProps({ ref: triggerRef })}>
+    ({
+        tooltipRef,
+        getTooltipProps,
+    }) => <div {...getTooltipProps({
+        ref: tooltipRef,
+        className: classNames('tooltip__container', tooltipClass, { 'd-none': !canShowTooltip }),
+    })}
+    >
+        {title && <div className="pb-4 h-25 grid-content font-weight-bold">
+            <Trans>{title}</Trans>
+        </div>}
+        <div className={classNames(columnClass)}>{renderContent}</div>
+    </div>
+}>{({
+    getTriggerProps, triggerRef,
+}) => <span {...getTriggerProps({ ref: triggerRef })}>
             {xlinkHref && <svg className={className}>
                 <use xlinkHref={`#${xlinkHref}`} />
             </svg>}
   </span>}
-    </TooltipTrigger>;
+</TooltipTrigger>;
 
 getHintElement.propTypes = {
     className: PropTypes.string,

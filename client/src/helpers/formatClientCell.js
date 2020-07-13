@@ -52,7 +52,7 @@ export const formatClientCell = (row, t, isDetailed = false) => {
     }
 
     return (
-        <div className="logs__text" title={value}>
+        <div className="logs__text mw-100" title={value}>
             <>
                 {nameContainer}
                 {whoisContainer}

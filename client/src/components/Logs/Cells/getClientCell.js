@@ -68,7 +68,7 @@ const getClientCell = ({
 
     return (
         <div className="logs__row o-hidden h-100">
-            {processedData && getHintElement({
+            {getHintElement({
                 className: hintClass,
                 columnClass: 'grid grid--limited',
                 tooltipClass: 'px-5 pb-5 pt-4 mw-75',

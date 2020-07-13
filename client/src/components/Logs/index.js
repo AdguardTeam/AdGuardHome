@@ -24,6 +24,10 @@ const INITIAL_REQUEST_DATA = ['', TABLE_FIRST_PAGE, INITIAL_REQUEST];
 
 export const processContent = (data, buttonType) => Object.entries(data)
     .map(([key, value]) => {
+        if (!value) {
+            return null;
+        }
+
         const isTitle = value === 'title';
         const isButton = key === buttonType;
         const isBoolean = typeof value === 'boolean';

@@ -33,16 +33,6 @@ const getDomainCell = (props) => {
         'my-3': isDetailed,
     });
 
-    const dnssecHint = getHintElement({
-        className: lockIconClass,
-        tooltipClass: 'py-4 px-5 pb-45',
-        canShowTooltip: answer_dnssec,
-        xlinkHref: 'lock',
-        columnClass: 'w-100',
-        content: 'validated_with_dnssec',
-        placement: 'bottom',
-    });
-
     const protocol = t(SCHEME_TO_PROTOCOL_MAP[client_proto]) || '';
     const ip = type ? `${t('type_table_header')}: ${type}` : '';
 
@@ -100,7 +90,15 @@ const getDomainCell = (props) => {
 
     return (
         <div className="logs__row o-hidden">
-            {dnssec_enabled && dnssecHint}
+            {dnssec_enabled && getHintElement({
+                className: lockIconClass,
+                tooltipClass: 'py-4 px-5 pb-45',
+                canShowTooltip: answer_dnssec,
+                xlinkHref: 'lock',
+                columnClass: 'w-100',
+                content: 'validated_with_dnssec',
+                placement: 'bottom',
+            })}
             {trackerHint}
             <div className={valueClass}>
                 <div className="text-truncate" title={domain}>{domain}</div>

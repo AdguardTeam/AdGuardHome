@@ -9,18 +9,24 @@ import getHintElement from './getHintElement';
 
 const getResponseCell = (row, filtering, t, isDetailed, getFilterName) => {
     const {
-        reason, filterId, rule, status, upstream, elapsedMs, domain, response,
+        reason, filterId, rule, status, upstream, elapsedMs,
+        domain, response, originalResponse,
     } = row.original;
 
     const { filters, whitelistFilters } = filtering;
     const formattedElapsedMs = formatElapsedMs(elapsedMs, t);
 
-    const statusLabel = t(FILTERED_STATUS_TO_META_MAP[reason]?.label || reason);
+    const isBlocked = reason === FILTERED_STATUS.FILTERED_BLACK_LIST
+        || reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
+
+    const isBlockedByResponse = originalResponse.length > 0 && isBlocked;
+
+    const statusLabel = t(isBlockedByResponse ? 'blocked_by_cname_or_ip' : FILTERED_STATUS_TO_META_MAP[reason]?.label || reason);
     const boldStatusLabel = <span className="font-weight-bold">{statusLabel}</span>;
     const filter = getFilterName(filters, whitelistFilters, filterId, t);
 
     const renderResponses = (responseArr) => {
-        if (responseArr.length === 0) {
+        if (responseArr?.length === 0) {
             return '';
         }
 
@@ -50,6 +56,7 @@ const getResponseCell = (row, filtering, t, isDetailed, getFilterName) => {
             filter,
             rule_label: rule,
             response_code: status,
+            original_response: renderResponses(originalResponse),
         },
         [FILTERED_STATUS.NOT_FILTERED_WHITE_LIST]: {
             domain,
@@ -78,9 +85,11 @@ const getResponseCell = (row, filtering, t, isDetailed, getFilterName) => {
             domain,
             encryption_status: boldStatusLabel,
             filter,
+            rule_label: rule,
             install_settings_dns: upstream,
             elapsed: formattedElapsedMs,
             response_code: status,
+            original_response: renderResponses(originalResponse),
         },
     };
 
@@ -88,13 +97,11 @@ const getResponseCell = (row, filtering, t, isDetailed, getFilterName) => {
         ? Object.entries(FILTERED_STATUS_TO_FIELDS_MAP[reason])
         : Object.entries(FILTERED_STATUS_TO_FIELDS_MAP.NotFilteredNotFound);
 
-    const detailedInfo = reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE
-    || reason === FILTERED_STATUS.FILTERED_BLACK_LIST
-        ? filter : formattedElapsedMs;
+    const detailedInfo = isBlocked ? filter : formattedElapsedMs;
 
     return (
         <div className="logs__row">
-            {fields && getHintElement({
+            {getHintElement({
                 className: classNames('icons mr-4 icon--small cursor--pointer icon--light-gray', { 'my-3': isDetailed }),
                 columnClass: 'grid grid--limited',
                 tooltipClass: 'px-5 pb-5 pt-4 mw-75 custom-tooltip__response-details',
@@ -107,7 +114,8 @@ const getResponseCell = (row, filtering, t, isDetailed, getFilterName) => {
             <div className="text-truncate">
                 <div className="text-truncate" title={statusLabel}>{statusLabel}</div>
                 {isDetailed && <div
-                    className="detailed-info d-none d-sm-block pt-1 text-truncate" title={detailedInfo}>{detailedInfo}</div>}
+                    className="detailed-info d-none d-sm-block pt-1 text-truncate"
+                    title={detailedInfo}>{detailedInfo}</div>}
             </div>
         </div>
     );

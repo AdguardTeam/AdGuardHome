@@ -480,6 +480,7 @@
     "whois": "Whois",
     "filtering_rules_learn_more": "<0>Learn more</0> about creating your own hosts lists.",
     "blocked_by_response": "Blocked by CNAME or IP in response",
+    "blocked_by_cname_or_ip": "Blocked by CNAME or IP",
     "try_again": "Try again",
     "domain_desc": "Enter the domain name or wildcard you want to be rewritten.",
     "example_rewrite_domain": "rewrite responses for this domain name only.",
@@ -560,5 +561,6 @@
     "filter_category_general_desc": "Lists that block tracking and advertising on most of the devices",
     "filter_category_security_desc": "Lists that specialize on blocking malware, phishing or scam domains",
     "filter_category_regional_desc": "Lists that focus on regional ads and tracking servers",
-    "filter_category_other_desc": "Other blocklists"
+    "filter_category_other_desc": "Other blocklists",
+    "original_response": "Original response"
 }

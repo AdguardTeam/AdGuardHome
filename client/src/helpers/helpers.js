@@ -86,18 +86,16 @@ export const normalizeLogs = (logs) => logs.map((log) => {
 
     const { host: domain, type } = question;
 
-    const response = answer ? answer.map((response) => {
+    const processResponse = (data) => (data ? data.map((response) => {
         const { value, type, ttl } = response;
         return `${type}: ${value} (ttl=${ttl})`;
-    }) : [];
-
-    const tracker = getTrackerData(domain);
+    }) : []);
 
     return {
         time,
         domain,
         type,
-        response,
+        response: processResponse(answer),
         reason,
         client,
         client_proto,
@@ -106,7 +104,8 @@ export const normalizeLogs = (logs) => logs.map((log) => {
         status,
         serviceName: service_name,
         originalAnswer: original_answer,
-        tracker,
+        originalResponse: processResponse(original_answer),
+        tracker: getTrackerData(domain),
         answer_dnssec,
         elapsedMs,
         upstream,
@@ -618,3 +617,8 @@ export const selectCompletedFields = (values) => Object.entries(values)
         }
         return acc;
     }, {});
+
+
+export const processContent = (content) => (Array.isArray(content)
+    ? content.filter(([, value]) => value)
+        .flat() : content);
