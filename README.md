@@ -14,9 +14,6 @@
     <a href="https://twitter.com/AdGuard">Twitter</a> |
     <a href="https://t.me/adguard_en">Telegram</a>
     <br /><br />
-    <a href="https://travis-ci.com/AdguardTeam/AdGuardHome">
-      <img src="https://travis-ci.com/AdguardTeam/AdGuardHome.svg" alt="Build status" />
-    </a>
     <a href="https://codecov.io/github/AdguardTeam/AdGuardHome?branch=master">
       <img src="https://img.shields.io/codecov/c/github/AdguardTeam/AdGuardHome/master.svg" alt="Code Coverage" />
     </a>
@@ -153,16 +150,10 @@ Is there a chance to handle this in the future? DNS will never be enough to do t
 
 ### Prerequisites
 
-You will need:
+You will need this to build AdGuard Home:
 
  * [go](https://golang.org/dl/) v1.14 or later.
  * [node.js](https://nodejs.org/en/download/) v10 or later.
-
-You can either install them via the provided links or use [brew.sh](https://brew.sh/) if you're on Mac:
-
-```bash
-brew install go node
-```
 
 ### Building
 
@@ -174,15 +165,38 @@ cd AdGuardHome
 make
 ```
 
-#### (For devs) Upload translations
-```
-node upload.js
-```
+Check the [`Makefile`](https://github.com/AdguardTeam/AdGuardHome/blob/master/Makefile) to learn about other commands.
 
-#### (For devs) Download translations
-```
-node download.js
-```
+#### Preparing release
+
+You'll need this to prepare a release build:
+
+* [goreleaser](https://goreleaser.com/)
+* [snapcraft](https://snapcraft.io/)
+
+Commands:
+
+* `make release` - builds a snapshot build (CHANNEL=edge)
+* `CHANNEL=beta make release` - builds beta version, tag is mandatory.
+* `CHANNEL=release make release` - builds release version, tag is mandatory.
+
+#### Docker image
+
+* Run `make docker` to build the Docker image locally.
+* Run `make docker-multi-arch` to build the multi-arch Docker image (the one that we publish to Docker Hub).
+
+Please note, that we're using [Docker Buildx](https://docs.docker.com/buildx/working-with-buildx/) to build our official image.
+
+You may need to prepare before using these builds:
+
+* (Linux-only) Install Qemu: `docker run --rm --privileged multiarch/qemu-user-static --reset -p yes --credential yes`
+* Prepare builder: `docker buildx create --name buildx-builder --driver docker-container --use`
+
+
+### Resources that we update periodically
+
+* `scripts/translations`
+* `scripts/whotracksme`
 
 <a id="contributing"></a>
 ## Contributing
@@ -192,26 +206,41 @@ You are welcome to fork this repository, make your changes and submit a pull req
 <a id="test-unstable-versions"></a>
 ### Test unstable versions
 
+There are two update channels that you can use:
+
+* `beta` - beta version of AdGuard Home. More or less stable versions.
+* `edge` - the newest version of AdGuard Home. New updates are pushed to this channel daily and it is the closest to the master branch you can get.
+
+There are three options how you can install an unstable version:
+
+1. [Snap Store](https://snapcraft.io/adguard-home) -- look for "beta" and "edge" channels there.
+2. [Docker Hub](https://hub.docker.com/r/adguard/adguardhome) -- look for "beta" and "edge" tags there.
+3. Standalone builds. Look for the available builds below.
+
 There are three options how you can install an unstable version.
 
 1. You can either install a beta version of AdGuard Home which we update periodically.
 2. You can use the Docker image from the `edge` tag, which is synced with the repo master branch.
 3. You can install AdGuard Home from `beta` or `edge` channels on the Snap Store.
 
-* Beta builds
-    * [Raspberry Pi (32-bit ARMv6)](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_arm.tar.gz)
-    * [MacOS](https://static.adguard.com/adguardhome/beta/AdGuardHome_MacOS.zip)
-    * [Windows 64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_Windows_amd64.zip)
-    * [Windows 32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_Windows_386.zip)
-    * [Linux 64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_amd64.tar.gz)
-    * [Linux 32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_386.tar.gz)
-    * [FreeBSD 64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_amd64.tar.gz)
-    * [Linux 64-bit ARM](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_arm64.tar.gz)
-    * [Linux 32-bit ARMv5](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv5.tar.gz)
-    * [MIPS](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mips.tar.gz)
-    * [MIPSLE](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mipsle.tar.gz)
-* [Docker Hub](https://hub.docker.com/r/adguard/adguardhome)
-* [Snap Store](https://snapcraft.io/adguard-home)
+* Beta channel builds
+    * Linux: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_amd64.tar.gz), [32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_386.tar.gz)
+    * Linux ARM: [32-bit ARMv6](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv6.tar.gz) (recommended for Rapsberry Pi), [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_arm64.tar.gz), [32-bit ARMv5](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv5.tar.gz), [32-bit ARMv7](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv7.tar.gz)
+    * Linux MIPS: [32-bit MIPS](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mips_softfloat.tar.gz), [32-bit MIPSLE](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mipsle_softfloat.tar.gz), [64-bit MIPS](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mips64_softfloat.tar.gz), [64-bit MIPSLE](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mips64le_softfloat.tar.gz)
+    * Windows: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_windows_amd64.zip), [32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_windows_386.zip)
+    * MacOS: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_darwin_amd64.zip), [32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_darwin_386.zip)
+    * FreeBSD: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_amd64.tar.gz), [32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_386.tar.gz)
+    * FreeBSD ARM: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_arm64.tar.gz), [32-bit ARMv5](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_armv5.tar.gz), [32-bit ARMv6](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_armv6.tar.gz), [32-bit ARMv7](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_armv7.tar.gz)
+
+* Edge channel builds
+    * Linux: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_amd64.tar.gz), [32-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_386.tar.gz)
+    * Linux ARM: [32-bit ARMv6](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_armv6.tar.gz) (recommended for Rapsberry Pi), [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_arm64.tar.gz), [32-bit ARMv5](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_armv5.tar.gz), [32-bit ARMv7](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_armv7.tar.gz)
+    * Linux MIPS: [32-bit MIPS](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_mips_softfloat.tar.gz), [32-bit MIPSLE](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_mipsle_softfloat.tar.gz), [64-bit MIPS](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_mips64_softfloat.tar.gz), [64-bit MIPSLE](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_mips64le_softfloat.tar.gz)
+    * Windows: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_windows_amd64.zip), [32-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_windows_386.zip)
+    * MacOS: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_darwin_amd64.zip), [32-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_darwin_386.zip)
+    * FreeBSD: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_amd64.tar.gz), [32-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_386.tar.gz)
+    * FreeBSD ARM: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_arm64.tar.gz), [32-bit ARMv5](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_armv5.tar.gz), [32-bit ARMv6](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_armv6.tar.gz), [32-bit ARMv7](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_armv7.tar.gz)
+
 
 <a id="reporting-issues"></a>
 ### Report issues

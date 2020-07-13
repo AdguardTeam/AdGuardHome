@@ -134,6 +134,15 @@ func Main(version string, channel string, armVer string) {
 	run(args)
 }
 
+// version - returns the current version string
+func version() string {
+	msg := "AdGuard Home, version %s, channel %s, arch %s %s"
+	if ARMVersion != "" {
+		msg = msg + " v" + ARMVersion
+	}
+	return fmt.Sprintf(msg, versionString, updateChannel, runtime.GOOS, runtime.GOARCH)
+}
+
 // run initializes configuration and runs the AdGuard Home
 // run is a blocking method!
 // nolint
@@ -153,11 +162,7 @@ func run(args options) {
 	configureLogger(args)
 
 	// print the first message after logger is configured
-	msg := "AdGuard Home, version %s, channel %s, arch %s %s"
-	if ARMVersion != "" {
-		msg = msg + " v" + ARMVersion
-	}
-	log.Printf(msg, versionString, updateChannel, runtime.GOOS, runtime.GOARCH)
+	log.Println(version())
 	log.Debug("Current working directory is %s", Context.workDir)
 	if args.runningAsService {
 		log.Info("AdGuard Home is running as a service")
@@ -564,7 +569,7 @@ func loadOptions() options {
 		{"verbose", "v", "Enable verbose output", nil, func() { o.verbose = true }},
 		{"glinet", "", "Run in GL-Inet compatibility mode", nil, func() { o.glinetMode = true }},
 		{"version", "", "Show the version and exit", nil, func() {
-			fmt.Printf("AdGuardHome %s\n", versionString)
+			fmt.Println(version())
 			os.Exit(0)
 		}},
 		{"help", "", "Print this help", nil, func() {

@@ -15,6 +15,9 @@ run:
     - dnsfilter/rule_to_regexp.go
     - util/pprof.go
     - ".*_test.go"
+    - client/.*
+    - build/.*
+    - dist/.*
 
 
 # all available settings of specific linters
