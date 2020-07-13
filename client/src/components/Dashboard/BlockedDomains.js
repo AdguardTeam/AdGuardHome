@@ -14,7 +14,11 @@ const CountCell = (totalBlocked) => function cell(row) {
     const { value } = row;
     const percent = getPercent(totalBlocked, value);
 
-    return <Cell value={value} percent={percent} color={STATUS_COLORS.red} />;
+    return <Cell value={value}
+                 percent={percent}
+                 color={STATUS_COLORS.red}
+                 search={row.original.domain}
+    />;
 };
 
 const BlockedDomains = ({

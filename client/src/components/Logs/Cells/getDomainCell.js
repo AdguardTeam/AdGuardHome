@@ -21,13 +21,13 @@ const getDomainCell = (props) => {
 
     const hasTracker = !!tracker;
 
-    const lockIconClass = classNames('icons', 'icon--small', 'd-none', 'd-sm-block', 'cursor--pointer', {
+    const lockIconClass = classNames('icons icon--small d-none d-sm-block cursor--pointer', {
         'icon--active': answer_dnssec,
         'icon--disabled': !answer_dnssec,
         'my-3': isDetailed,
     });
 
-    const privacyIconClass = classNames('icons', 'mx-2', 'icon--small', 'd-none', 'd-sm-block', 'cursor--pointer', {
+    const privacyIconClass = classNames('icons mx-2 icon--small d-none d-sm-block cursor--pointer', {
         'icon--active': hasTracker,
         'icon--disabled': !hasTracker,
         'my-3': isDetailed,
@@ -56,7 +56,7 @@ const getDomainCell = (props) => {
 
     const renderGrid = (content, idx) => {
         const preparedContent = typeof content === 'string' ? t(content) : content;
-        const className = classNames('text-truncate key-colon o-hidden', {
+        const className = classNames('text-truncate o-hidden', {
             'overflow-break': preparedContent.length > 100,
         });
         return <div key={idx} className={className}>{preparedContent}</div>;

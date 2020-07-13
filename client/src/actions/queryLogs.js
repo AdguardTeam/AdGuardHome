@@ -2,12 +2,19 @@ import { createAction } from 'redux-actions';
 
 import apiClient from '../api/Api';
 import { normalizeLogs, getParamsForClientsSearch, addClientInfo } from '../helpers/helpers';
-import { TABLE_DEFAULT_PAGE_SIZE, TABLE_FIRST_PAGE } from '../helpers/constants';
+import {
+    DEFAULT_LOGS_FILTER,
+    TABLE_DEFAULT_PAGE_SIZE,
+    TABLE_FIRST_PAGE,
+} from '../helpers/constants';
 import { addErrorToast, addSuccessToast } from './toasts';
 
 const getLogsWithParams = async (config) => {
     const { older_than, filter, ...values } = config;
-    const rawLogs = await apiClient.getQueryLog({ ...filter, older_than });
+    const rawLogs = await apiClient.getQueryLog({
+        ...filter,
+        older_than,
+    });
     const { data, oldest } = rawLogs;
     let logs = normalizeLogs(data);
     const clientsParams = getParamsForClientsSearch(logs, 'client');
@@ -18,7 +25,11 @@ const getLogsWithParams = async (config) => {
     }
 
     return {
-        logs, oldest, older_than, filter, ...values,
+        logs,
+        oldest,
+        older_than,
+        filter,
+        ...values,
     };
 };
 
@@ -38,7 +49,10 @@ const checkFilteredLogs = async (data, filter, dispatch, total) => {
         dispatch(getAdditionalLogsRequest());
 
         try {
-            const additionalLogs = await getLogsWithParams({ older_than: oldest, filter });
+            const additionalLogs = await getLogsWithParams({
+                older_than: oldest,
+                filter,
+            });
             if (additionalLogs.oldest.length > 0) {
                 return await checkFilteredLogs(additionalLogs, filter, dispatch, {
                     logs: [...totalData.logs, ...additionalLogs.logs],
@@ -69,13 +83,19 @@ export const getLogs = (config) => async (dispatch, getState) => {
     dispatch(getLogsRequest());
     try {
         const { isFiltered, filter, page } = getState().queryLogs;
-        const data = await getLogsWithParams({ ...config, filter });
+        const data = await getLogsWithParams({
+            ...config,
+            filter,
+        });
 
         if (isFiltered) {
             const additionalData = await checkFilteredLogs(data, filter, dispatch);
             const updatedData = additionalData.logs ? { ...data, ...additionalData } : data;
             dispatch(getLogsSuccess(updatedData));
-            dispatch(setLogsPagination({ page, pageSize: TABLE_DEFAULT_PAGE_SIZE }));
+            dispatch(setLogsPagination({
+                page,
+                pageSize: TABLE_DEFAULT_PAGE_SIZE,
+            }));
         } else {
             dispatch(getLogsSuccess(data));
         }
@@ -86,22 +106,46 @@ export const getLogs = (config) => async (dispatch, getState) => {
 };
 
 export const setLogsFilterRequest = createAction('SET_LOGS_FILTER_REQUEST');
-export const setLogsFilterFailure = createAction('SET_LOGS_FILTER_FAILURE');
-export const setLogsFilterSuccess = createAction('SET_LOGS_FILTER_SUCCESS');
 
-export const setLogsFilter = (filter) => async (dispatch) => {
-    dispatch(setLogsFilterRequest());
+/**
+ *
+ * @param filter
+ * @param {string} filter.search
+ * @param {string} filter.response_status query field of RESPONSE_FILTER object
+ * @returns function
+ */
+export const setLogsFilter = (filter) => setLogsFilterRequest(filter);
+
+export const setFilteredLogsRequest = createAction('SET_FILTERED_LOGS_REQUEST');
+export const setFilteredLogsFailure = createAction('SET_FILTERED_LOGS_FAILURE');
+export const setFilteredLogsSuccess = createAction('SET_FILTERED_LOGS_SUCCESS');
+
+export const setFilteredLogs = (filter) => async (dispatch) => {
+    dispatch(setFilteredLogsRequest());
     try {
-        const data = await getLogsWithParams({ older_than: '', filter });
+        const data = await getLogsWithParams({
+            older_than: '',
+            filter,
+        });
         const additionalData = await checkFilteredLogs(data, filter, dispatch);
         const updatedData = additionalData.logs ? { ...data, ...additionalData } : data;
 
-        dispatch(setLogsFilterSuccess({ ...updatedData, filter }));
+        dispatch(setFilteredLogsSuccess({
+            ...updatedData,
+            filter,
+        }));
         dispatch(setLogsPage(TABLE_FIRST_PAGE));
     } catch (error) {
         dispatch(addErrorToast({ error }));
-        dispatch(setLogsFilterFailure(error));
+        dispatch(setFilteredLogsFailure(error));
     }
+};
+
+export const resetFilteredLogs = () => setFilteredLogs(DEFAULT_LOGS_FILTER);
+
+export const refreshFilteredLogs = () => async (dispatch, getState) => {
+    const { filter } = getState().queryLogs;
+    await dispatch(setFilteredLogs(filter));
 };
 
 export const clearLogsRequest = createAction('CLEAR_LOGS_REQUEST');

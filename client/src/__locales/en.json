@@ -562,5 +562,6 @@
     "filter_category_security_desc": "Lists that specialize on blocking malware, phishing or scam domains",
     "filter_category_regional_desc": "Lists that focus on regional ads and tracking servers",
     "filter_category_other_desc": "Other blocklists",
-    "original_response": "Original response"
+    "original_response": "Original response",
+    "click_to_view_queries": "Click to view queries"
 }

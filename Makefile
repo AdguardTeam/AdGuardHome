@@ -92,7 +92,7 @@ endif
 all: build
 
 build: dependencies client
-	go generate ./...
+	PATH=$(GOPATH)/bin:$(PATH) go generate ./...
 	CGO_ENABLED=0 go build -ldflags="-s -w -X main.version=$(VERSION) -X main.channel=$(CHANNEL) -X main.goarm=$(GOARM)"
 	PATH=$(GOPATH)/bin:$(PATH) packr clean
 

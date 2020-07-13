@@ -49,7 +49,7 @@ const Table = (props) => {
         isLoading,
     } = props;
 
-    const [t] = useTranslation();
+    const { t } = useTranslation();
 
     const toggleBlocking = (type, domain) => {
         const {
@@ -239,7 +239,7 @@ const Table = (props) => {
             sortable={false}
             resizable={false}
             data={logs || []}
-            loading={isLoading}
+            loading={isLoading || processingGetLogs}
             showPageJump={false}
             showPageSizeOptions={false}
             onPageChange={changePage}

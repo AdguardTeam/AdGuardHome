@@ -8,6 +8,7 @@ import { normalizeTextarea } from '../../../helpers/helpers';
 import Card from '../../ui/Card';
 import Modal from './Modal';
 import CellWrap from '../../ui/CellWrap';
+import LogsSearchLink from '../../ui/LogsSearchLink';
 
 class ClientsTable extends Component {
     handleFormAdd = (values) => {
@@ -49,7 +50,10 @@ class ClientsTable extends Component {
     };
 
     getOptionsWithLabels = (options) => (
-        options.map((option) => ({ value: option, label: option }))
+        options.map((option) => ({
+            value: option,
+            label: option,
+        }))
     );
 
     getClient = (name, clients) => {
@@ -203,7 +207,15 @@ class ClientsTable extends Component {
             accessor: (row) => this.props.normalizedTopClients.configured[row.name] || 0,
             sortMethod: (a, b) => b - a,
             minWidth: 120,
-            Cell: CellWrap,
+            Cell: (row) => {
+                const content = CellWrap(row);
+
+                if (!row.value) {
+                    return content;
+                }
+
+                return <LogsSearchLink search={row.original.ids[0]}>{content}</LogsSearchLink>;
+            },
         },
         {
             Header: this.props.t('actions_table_header'),
@@ -311,7 +323,6 @@ class ClientsTable extends Component {
                     >
                         <Trans>client_add</Trans>
                     </button>
-
                     <Modal
                         isModalOpen={isModalOpen}
                         modalType={modalType}

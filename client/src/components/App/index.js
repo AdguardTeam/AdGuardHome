@@ -36,7 +36,7 @@ import i18n from '../../i18n';
 import Loading from '../ui/Loading';
 import { FILTERS_URLS, MENU_URLS, SETTINGS_URLS } from '../../helpers/constants';
 import Services from '../Filters/Services';
-import { setHtmlLangAttr } from '../../helpers/helpers';
+import { getLogsUrlParams, setHtmlLangAttr } from '../../helpers/helpers';
 
 class App extends Component {
     componentDidMount() {
@@ -111,7 +111,9 @@ class App extends Component {
                         {!dashboard.processing && dashboard.isCoreRunning && (
                             <>
                                 <Route path={MENU_URLS.root} exact component={Dashboard} />
-                                <Route path={MENU_URLS.logs} component={Logs} />
+                                <Route
+                                    path={[`${MENU_URLS.logs}${getLogsUrlParams(':search?', ':response_status?')}`, MENU_URLS.logs]}
+                                    component={Logs} />
                                 <Route path={MENU_URLS.guide} component={SetupGuide} />
                                 <Route path={SETTINGS_URLS.settings} component={Settings} />
                                 <Route path={SETTINGS_URLS.dns} component={Dns} />

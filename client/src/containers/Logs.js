@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import { getFilteringStatus, setRules } from '../actions/filtering';
 import {
-    getLogs, setLogsPagination, setLogsFilter, setLogsPage, toggleDetailedLogs,
+    getLogs, setLogsPagination, setLogsPage, toggleDetailedLogs,
 } from '../actions/queryLogs';
 import Logs from '../components/Logs';
 import { addSuccessToast } from '../actions/toasts';
@@ -26,7 +26,6 @@ const mapDispatchToProps = {
     setRules,
     addSuccessToast,
     setLogsPagination,
-    setLogsFilter,
     setLogsPage,
     toggleDetailedLogs,
 };

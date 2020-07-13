@@ -11,6 +11,7 @@ import axios from 'axios';
 import i18n from 'i18next';
 import uniqBy from 'lodash/uniqBy';
 import ipaddr from 'ipaddr.js';
+import queryString from 'query-string';
 import versionCompare from './versionCompare';
 import { getTrackerData } from './trackers/trackers';
 
@@ -617,6 +618,16 @@ export const selectCompletedFields = (values) => Object.entries(values)
         }
         return acc;
     }, {});
+
+/**
+ * @param {string} search
+ * @param {string} [response_status]
+ * @returns {string}
+ */
+export const getLogsUrlParams = (search, response_status) => `?${queryString.stringify({
+    search,
+    response_status,
+})}`;
 
 
 export const processContent = (content) => (Array.isArray(content)

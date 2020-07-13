@@ -1,20 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Trans } from 'react-i18next';
-import { useDispatch } from 'react-redux';
 import Form from './Form';
-import { setLogsFilter } from '../../../actions/queryLogs';
 
-const Filters = ({ filter, refreshLogs, setIsLoading }) => {
-    const dispatch = useDispatch();
-
-    const onSubmit = async (values) => {
-        setIsLoading(true);
-        await dispatch(setLogsFilter(values));
-        setIsLoading(false);
-    };
-
-    return (
+const Filters = ({ filter, refreshLogs, setIsLoading }) => (
         <div className="page-header page-header--logs">
             <h1 className="page-title page-title--large">
                 <Trans>query_log</Trans>
@@ -27,17 +16,14 @@ const Filters = ({ filter, refreshLogs, setIsLoading }) => {
                         <use xlinkHref="#update" />
                     </svg>
                 </button>
-
             </h1>
             <Form
                 responseStatusClass="d-sm-block"
                 initialValues={filter}
-                onSubmit={onSubmit}
                 setIsLoading={setIsLoading}
-        />
+            />
         </div>
-    );
-};
+);
 
 Filters.propTypes = {
     filter: PropTypes.object.isRequired,
