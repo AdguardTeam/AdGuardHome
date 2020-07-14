@@ -344,7 +344,7 @@ Response:
 
 If `can_autoupdate` is true, then the server can automatically upgrade to a new version.
 
-Response when auto-update is disabled by command-line aragument:
+Response when auto-update is disabled by command-line argument:
 
 	200 OK
 
