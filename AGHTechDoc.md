@@ -344,9 +344,13 @@ Response:
 
 If `can_autoupdate` is true, then the server can automatically upgrade to a new version.
 
-Response with empty body:
+Response when auto-update is disabled by command-line argument:
 
 	200 OK
+
+	{
+		"disabled":true
+	}
 
 It means that update check is disabled by user.  UI should do nothing.
 

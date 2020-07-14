@@ -82,7 +82,7 @@ const dashboard = handleActions(
         [actions.getVersionSuccess]: (state, { payload }) => {
             const currentVersion = state.dnsVersion === 'undefined' ? 0 : state.dnsVersion;
 
-            if (payload && isVersionGreater(currentVersion, payload.new_version)) {
+            if (!payload.disabled && isVersionGreater(currentVersion, payload.new_version)) {
                 const {
                     announcement_url: announcementUrl,
                     new_version: newVersion,
@@ -96,7 +96,7 @@ const dashboard = handleActions(
                     canAutoUpdate,
                     isUpdateAvailable: true,
                     processingVersion: false,
-                    checkUpdateFlag: !!payload,
+                    checkUpdateFlag: !payload.disabled,
                 };
                 return newState;
             }
@@ -104,6 +104,7 @@ const dashboard = handleActions(
             return {
                 ...state,
                 processingVersion: false,
+                checkUpdateFlag: !payload.disabled,
             };
         },
 
