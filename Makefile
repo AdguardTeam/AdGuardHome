@@ -31,7 +31,7 @@ DIST_DIR=dist
 CHANNEL ?= edge
 
 # Validate channel
-ifneq ($(CHANNEL),relese)
+ifneq ($(CHANNEL),release)
 ifneq ($(CHANNEL),beta)
 ifneq ($(CHANNEL),edge)
 $(error CHANNEL value is not valid. Valid values are release,beta or edge)
