@@ -318,7 +318,8 @@ export const splitByNewLine = (text) => text.split('\n')
  * @returns {string}
  */
 export const trimMultilineString = (text) => splitByNewLine(text)
-    .map((line) => line.trim()).join('\n');
+    .map((line) => line.trim())
+    .join('\n');
 
 /**
  * @param {string} text
@@ -635,7 +636,6 @@ export const getLogsUrlParams = (search, response_status) => `?${queryString.str
     search,
     response_status,
 })}`;
-
 
 export const processContent = (content) => (Array.isArray(content)
     ? content.filter(([, value]) => value)

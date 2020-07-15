@@ -9,7 +9,7 @@ const DomainCell = ({ value }) => {
 
     return (
         <div className="logs__row">
-            <div className="logs__text logs__text--domain" title={value}>
+            <div className="logs__text" title={value}>
                 {value}
             </div>
             {trackerData && <Popover data={trackerData} />}

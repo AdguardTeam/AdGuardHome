@@ -2,14 +2,14 @@ import React from 'react';
 import { normalizeWhois } from './helpers';
 import { WHOIS_ICONS } from './constants';
 
-const getFormattedWhois = (whois, t) => {
+const getFormattedWhois = (whois) => {
     const whoisInfo = normalizeWhois(whois);
     return (
         Object.keys(whoisInfo)
             .map((key) => {
                 const icon = WHOIS_ICONS[key];
                 return (
-                    <span className="logs__whois text-muted" key={key} title={t(key)}>
+                    <span className="logs__whois text-muted " key={key} title={whoisInfo[key]}>
                     {icon && (
                         <>
                             <svg className="logs__whois-icon icons">
@@ -24,7 +24,7 @@ const getFormattedWhois = (whois, t) => {
     );
 };
 
-export const formatClientCell = (row, t, isDetailed = false) => {
+export const formatClientCell = (row, isDetailed = false) => {
     const { value, original: { info } } = row;
     let whoisContainer = '';
     let nameContainer = value;
@@ -33,7 +33,7 @@ export const formatClientCell = (row, t, isDetailed = false) => {
         const { name, whois_info } = info;
 
         if (name) {
-            nameContainer = isDetailed
+            nameContainer = !whois_info && isDetailed
                 ? <small title={value}>{value}</small>
                 : <div className="logs__text logs__text--nowrap" title={`${name} (${value})`}>
                     {name}
@@ -42,10 +42,10 @@ export const formatClientCell = (row, t, isDetailed = false) => {
                 </div>;
         }
 
-        if (whois_info) {
+        if (whois_info && isDetailed) {
             whoisContainer = (
                 <div className="logs__text logs__text--wrap logs__text--whois">
-                    {getFormattedWhois(whois_info, t)}
+                    {getFormattedWhois(whois_info)}
                 </div>
             );
         }

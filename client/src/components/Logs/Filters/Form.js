@@ -144,18 +144,20 @@ const Form = (props) => {
                   e.preventDefault();
               }}
         >
-            <Field
-                id={FORM_NAMES.search}
-                name={FORM_NAMES.search}
-                component={renderFilterField}
-                type="text"
-                className={classNames('form-control--search form-control--transparent', className)}
-                placeholder={t('domain_or_client')}
-                tooltip={t('query_log_strict_search')}
-                onClearInputClick={onInputClear}
-                onKeyDown={onEnterPress}
-                normalizeOnBlur={normalizeOnBlur}
-            />
+            <div className="field__search">
+                <Field
+                    id={FORM_NAMES.search}
+                    name={FORM_NAMES.search}
+                    component={renderFilterField}
+                    type="text"
+                    className={classNames('form-control--search form-control--transparent', className)}
+                    placeholder={t('domain_or_client')}
+                    tooltip={t('query_log_strict_search')}
+                    onClearInputClick={onInputClear}
+                    onKeyDown={onEnterPress}
+                    normalizeOnBlur={normalizeOnBlur}
+                />
+            </div>
             <div className="field__select">
                 <Field
                     name={FORM_NAMES.response_status}

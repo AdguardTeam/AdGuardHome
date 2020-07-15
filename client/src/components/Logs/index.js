@@ -5,6 +5,7 @@ import Modal from 'react-modal';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import queryString from 'query-string';
+import classNames from 'classnames';
 import {
     BLOCK_ACTIONS,
     TABLE_DEFAULT_PAGE_SIZE,
@@ -27,7 +28,7 @@ import {
 import { addSuccessToast } from '../../actions/toasts';
 import './Logs.css';
 
-export const processContent = (data, buttonType) => Object.entries(data)
+const processContent = (data, buttonType) => Object.entries(data)
     .map(([key, value]) => {
         if (!value) {
             return null;
@@ -49,7 +50,9 @@ export const processContent = (data, buttonType) => Object.entries(data)
 
         return isHidden ? null : <Fragment key={key}>
             <div
-                className={`key__${key} ${keyClass} ${(isBoolean && value === true) ? 'font-weight-bold' : ''}`}>
+                className={classNames(`key__${key}`, keyClass, {
+                    'font-weight-bold': isBoolean && value === true,
+                })}>
                 <Trans>{isButton ? value : key}</Trans>
             </div>
             <div className={`value__${key} text-pre text-truncate`}>
@@ -133,7 +136,16 @@ const Logs = (props) => {
     };
 
     useEffect(() => {
-        mediaQuery.addEventListener('change', mediaQueryHandler);
+        try {
+            mediaQuery.addEventListener('change', mediaQueryHandler);
+        } catch (e1) {
+            try {
+                // Safari 13.1 do not support mediaQuery.addEventListener('change', handler)
+                mediaQuery.addListener(mediaQueryHandler);
+            } catch (e2) {
+                console.error(e2);
+            }
+        }
 
         (async () => {
             setIsLoading(true);
@@ -153,7 +165,16 @@ const Logs = (props) => {
         })();
 
         return () => {
-            mediaQuery.removeEventListener('change', mediaQueryHandler);
+            try {
+                mediaQuery.removeEventListener('change', mediaQueryHandler);
+            } catch (e1) {
+                try {
+                    mediaQuery.removeListener(mediaQueryHandler);
+                } catch (e2) {
+                    console.error(e2);
+                }
+            }
+
             dispatch(resetFilteredLogs());
         };
     }, []);

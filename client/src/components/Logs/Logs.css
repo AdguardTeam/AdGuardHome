@@ -13,7 +13,8 @@
 }
 
 .card-table .logs__row {
-    overflow: visible;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .logs__row--center {
@@ -55,10 +56,6 @@
 
 .logs__text--full {
     width: 100%;
-}
-
-.logs__text--domain {
-    max-width: 285px;
 }
 
 .logs__text--wrap,
@@ -202,6 +199,7 @@
 .logs__whois {
     display: inline;
     font-size: 12px;
+    white-space: nowrap;
 }
 
 .logs__whois::after {
@@ -455,15 +453,11 @@
     color: var(--danger);
 }
 
-.ml-small {
-    margin-left: 3.3125rem;
-}
-
 .form-control--search {
-    width: 39.125rem;
     box-shadow: 0 1px 0 #ddd;
     padding: 0 2.5rem;
     height: 2.25rem;
+    flex-grow: 1;
 }
 
 .form-control--transparent {
@@ -493,31 +487,12 @@
 }
 
 .form-control--container {
-    max-width: 100%;
+    flex: auto;
 }
 
-@media (max-width: 1279.98px) {
-    .form-control--search {
-        max-width: 30.125rem;
-    }
-
-    .form-control--container {
-        max-width: 70%;
-    }
-
-    .form-control--search {
-        max-width: 50%;
-    }
-}
-
-@media (max-width: 991.98px) {
-    .form-control--search {
-        max-width: 40%;
-    }
-
-    .form-control--container {
-        max-width: 100%;
-    }
+.field__search {
+    display: flex;
+    flex-grow: 1;
 }
 
 @media (max-width: 767.98px) {
@@ -527,6 +502,19 @@
 
     .ml-small {
         margin-left: 1.5rem;
+    }
+
+    .form-control--container {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .form-control--search {
+        width: 100%;
+    }
+
+    .field__select {
+        margin-top: 1.5rem;
     }
 }
 
@@ -541,16 +529,6 @@
 
     .logs__table {
         min-height: 42rem;
-    }
-}
-
-@media (max-width: 500px) {
-    .form-control--search {
-        max-width: 85%;
-    }
-
-    .field__select {
-        margin-top: 1.5rem;
     }
 }
 
