@@ -88,8 +88,11 @@ ifndef DOCKER_IMAGE_NAME
 $(error DOCKER_IMAGE_NAME value is not set)
 endif
 
-.PHONY: all build client client-watch docker lint test dependencies clean release docker-multi-arch
+.PHONY: all build client client-watch docker lint lint-js lint-go test dependencies clean release docker-multi-arch
 all: build
+
+init:
+	git config core.hooksPath .githooks
 
 build: dependencies client
 	PATH=$(GOPATH)/bin:$(PATH) go generate ./...
@@ -116,10 +119,15 @@ docker:
 	@echo Now you can run the docker image:
 	@echo docker run --name "adguard-home" -p 53:53/tcp -p 53:53/udp -p 80:80/tcp -p 443:443/tcp -p 853:853/tcp -p 3000:3000/tcp $(DOCKER_IMAGE_NAME)
 
-lint:
-	@echo Running linters
-	golangci-lint run ./...
+lint: lint-js lint-go
+
+lint-js:
+	@echo Running js linter
 	npm --prefix client run lint
+
+lint-go:
+	@echo Running go linter
+	golangci-lint run
 
 test:
 	@echo Running unit-tests

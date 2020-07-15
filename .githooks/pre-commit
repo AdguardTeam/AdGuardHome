@@ -1,0 +1,12 @@
+#!/bin/bash
+set -e;
+git diff --cached --name-only | grep -q '.js$' && make lint-js;
+
+found=0
+git diff --cached --name-only | grep -q '.go$' && found=1
+if [ $found == 1 ]; then
+	make lint-go || exit 1
+	go test ./... || exit 1
+fi
+
+exit 0;
