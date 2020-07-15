@@ -306,15 +306,26 @@ export const redirectToCurrentProtocol = (values, httpPort = 80) => {
     }
 };
 
-export const normalizeTextarea = (text) => {
-    if (!text) {
-        return [];
-    }
+/**
+ * @param {string} text
+ * @returns []string
+ */
+export const splitByNewLine = (text) => text.split('\n')
+    .filter((n) => n.trim());
 
-    return text.replace(/[;, ]/g, '\n')
-        .split('\n')
-        .filter((n) => n);
-};
+/**
+ * @param {string} text
+ * @returns {string}
+ */
+export const trimMultilineString = (text) => splitByNewLine(text)
+    .map((line) => line.trim()).join('\n');
+
+/**
+ * @param {string} text
+ * @returns {string}
+ */
+export const removeEmptyLines = (text) => splitByNewLine(text)
+    .join('\n');
 
 /**
  * Normalizes the topClients array
@@ -532,10 +543,6 @@ export const getMap = (arr, key, value) => arr.reduce((acc, curr) => {
     acc[curr[key]] = curr[value];
     return acc;
 }, {});
-
-export const normalizeMultiline = (multiline) => `${normalizeTextarea(multiline)
-    .map((line) => line.trim())
-    .join('\n')}\n`;
 
 /**
  * @param parsedIp {object} ipaddr.js IPv4 or IPv6 object

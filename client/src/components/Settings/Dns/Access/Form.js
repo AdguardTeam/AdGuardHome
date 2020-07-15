@@ -4,7 +4,10 @@ import { Field, reduxForm } from 'redux-form';
 import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 import { renderTextareaField } from '../../../../helpers/form';
-import { normalizeMultiline } from '../../../../helpers/helpers';
+import {
+    trimMultilineString,
+    removeEmptyLines,
+} from '../../../../helpers/helpers';
 import { FORM_NAME } from '../../../../helpers/constants';
 
 const fields = [
@@ -12,16 +15,19 @@ const fields = [
         id: 'allowed_clients',
         title: 'access_allowed_title',
         subtitle: 'access_allowed_desc',
+        normalizeOnBlur: removeEmptyLines,
     },
     {
         id: 'disallowed_clients',
         title: 'access_disallowed_title',
         subtitle: 'access_disallowed_desc',
+        normalizeOnBlur: trimMultilineString,
     },
     {
         id: 'blocked_hosts',
         title: 'access_blocked_title',
         subtitle: 'access_blocked_desc',
+        normalizeOnBlur: removeEmptyLines,
     },
 ];
 
@@ -31,7 +37,7 @@ const Form = (props) => {
     } = props;
 
     const renderField = ({
-        id, title, subtitle, disabled = processingSet,
+        id, title, subtitle, disabled = processingSet, normalizeOnBlur,
     }) => <div key={id} className="form__group mb-5">
         <label className="form__label form__label--with-desc" htmlFor={id}>
             <Trans>{title}</Trans>
@@ -46,7 +52,7 @@ const Form = (props) => {
             type="text"
             className="form-control form-control--textarea font-monospace"
             disabled={disabled}
-            normalizeOnBlur={id === 'disallowed_clients' ? normalizeMultiline : undefined}
+            normalizeOnBlur={normalizeOnBlur}
         />
     </div>;
 
@@ -55,6 +61,7 @@ const Form = (props) => {
         title: PropTypes.string,
         subtitle: PropTypes.string,
         disabled: PropTypes.bool,
+        normalizeOnBlur: PropTypes.func,
     };
 
     return (

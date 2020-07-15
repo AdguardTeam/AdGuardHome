@@ -4,7 +4,7 @@ import { Trans, withTranslation } from 'react-i18next';
 import ReactTable from 'react-table';
 
 import { MODAL_TYPE } from '../../../helpers/constants';
-import { normalizeTextarea } from '../../../helpers/helpers';
+import { splitByNewLine } from '../../../helpers/helpers';
 import Card from '../../ui/Card';
 import Modal from './Modal';
 import CellWrap from '../../ui/CellWrap';
@@ -30,7 +30,7 @@ class ClientsTable extends Component {
             }
 
             if (values.upstreams && typeof values.upstreams === 'string') {
-                config.upstreams = normalizeTextarea(values.upstreams);
+                config.upstreams = splitByNewLine(values.upstreams);
             } else {
                 config.upstreams = [];
             }
