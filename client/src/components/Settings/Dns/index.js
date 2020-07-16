@@ -45,7 +45,10 @@ const Dns = (props) => {
                         dnsConfig={dnsConfig}
                         setDnsConfig={setDnsConfig}
                     />
-                    <Access access={access} setAccessList={setAccessList} />
+                    <Access
+                        access={access}
+                        setAccessList={setAccessList}
+                    />
                 </>}
         </>
     );

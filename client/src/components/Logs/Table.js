@@ -25,7 +25,7 @@ import {
     formatDateTime,
     formatElapsedMs,
     formatTime,
-
+    processContent,
 } from '../../helpers/helpers';
 import Loading from '../ui/Loading';
 import { getSourceData } from '../../helpers/trackers/trackers';
@@ -302,6 +302,7 @@ const Table = (props) => {
                             filterId,
                             rule,
                             originalResponse,
+                            status,
                         } = rowInfo.original;
 
                         const hasTracker = !!tracker;
@@ -328,17 +329,20 @@ const Table = (props) => {
                         };
 
                         const isBlockedByResponse = originalResponse.length > 0 && isBlocked;
-                        const status = t(isBlockedByResponse ? 'blocked_by_cname_or_ip' : FILTERED_STATUS_TO_META_MAP[reason]?.label || reason);
-                        const statusBlocked = <div className="bg--danger">{status}</div>;
+                        const requestStatus = t(isBlockedByResponse ? 'blocked_by_cname_or_ip' : FILTERED_STATUS_TO_META_MAP[reason]?.label || reason);
 
                         const protocol = t(SCHEME_TO_PROTOCOL_MAP[client_proto]) || '';
 
                         const sourceData = getSourceData(tracker);
 
+                        const { filters, whitelistFilters } = filtering;
+                        const filter = getFilterName(filters, whitelistFilters, filterId, t);
+
                         const detailedData = {
                             time_table_header: formatTime(time, LONG_TIME_FORMAT),
                             date: formatDateTime(time, DEFAULT_SHORT_DATE_FORMAT_OPTIONS),
-                            encryption_status: status,
+                            encryption_status: isBlocked
+                                ? <div className="bg--danger">{requestStatus}</div> : requestStatus,
                             domain,
                             type_table_header: type,
                             protocol,
@@ -346,12 +350,19 @@ const Table = (props) => {
                             table_name: tracker?.name,
                             category_label: hasTracker && captitalizeWords(tracker.category),
                             tracker_source: hasTracker && sourceData
-                                && <a href={sourceData.url} target="_blank" rel="noopener noreferrer"
-                                   className="link--green">{sourceData.name}</a>,
+                                && <a
+                                    href={sourceData.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="link--green">{sourceData.name}
+                                </a>,
                             response_details: 'title',
                             install_settings_dns: upstream,
                             elapsed: formattedElapsedMs,
+                            filter: isBlocked ? filter : null,
+                            rule_label: rule,
                             response_table_header: response?.join('\n'),
+                            response_code: status,
                             client_details: 'title',
                             ip_address: client,
                             name: info?.name,
@@ -360,41 +371,14 @@ const Table = (props) => {
                             network,
                             source_label: source,
                             validated_with_dnssec: dnssec_enabled ? Boolean(answer_dnssec) : false,
-                            [buttonType]: <div onClick={onToggleBlock}
-                                               className="title--border bg--danger text-center">{t(buttonType)}</div>,
-                        };
-
-                        const { filters, whitelistFilters } = filtering;
-
-                        const filter = getFilterName(filters, whitelistFilters, filterId, t);
-
-                        const detailedDataBlocked = {
-                            time_table_header: formatTime(time, LONG_TIME_FORMAT),
-                            date: formatDateTime(time, DEFAULT_SHORT_DATE_FORMAT_OPTIONS),
-                            encryption_status: statusBlocked,
-                            domain,
-                            type_table_header: type,
-                            protocol,
-                            known_tracker: 'title',
-                            table_name: tracker?.name,
-                            category_label: hasTracker && captitalizeWords(tracker.category),
-                            source_label: hasTracker && sourceData
-                                && <a href={sourceData.url} target="_blank" rel="noopener noreferrer"
-                                   className="link--green">{sourceData.name}</a>,
-                            response_details: 'title',
-                            install_settings_dns: upstream,
-                            elapsed: formattedElapsedMs,
-                            filter,
-                            rule_label: rule,
-                            response_table_header: response?.join('\n'),
                             original_response: originalResponse?.join('\n'),
                             [buttonType]: <div onClick={onToggleBlock}
-                                               className="title--border text-center">{t(buttonType)}</div>,
+                                               className={classNames('title--border text-center', {
+                                                   'bg--danger': isBlocked,
+                                               })}>{t(buttonType)}</div>,
                         };
 
-                        const detailedDataCurrent = isBlocked ? detailedDataBlocked : detailedData;
-
-                        setDetailedDataCurrent(detailedDataCurrent);
+                        setDetailedDataCurrent(processContent(detailedData));
                         setButtonType(buttonType);
                         setModalOpened(true);
                     }

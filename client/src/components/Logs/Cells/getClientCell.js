@@ -33,7 +33,7 @@ const getClientCell = ({
     const isFiltered = checkFiltered(reason);
 
     const nameClass = classNames('w-90 o-hidden d-flex flex-column', {
-        'mt-2': isDetailed && !name,
+        'mt-2': isDetailed && !name && !whois_info,
         'white-space--nowrap': isDetailed,
     });
 
@@ -80,9 +80,9 @@ const getClientCell = ({
             })}
             <div
                 className={nameClass}>
-                <div data-tip={true} data-for={id}>{formatClientCell(row, t, isDetailed)}</div>
+                <div data-tip={true} data-for={id}>{formatClientCell(row, isDetailed)}</div>
                 {isDetailed && name
-                && <div className="detailed-info d-none d-sm-block logs__text"
+                && !whois_info && <div className="detailed-info d-none d-sm-block logs__text"
                         title={name}>{name}</div>}
             </div>
             {renderBlockingButton(isFiltered, domain)}

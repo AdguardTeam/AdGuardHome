@@ -9,8 +9,7 @@ import getHintElement from './getHintElement';
 
 const getResponseCell = (row, filtering, t, isDetailed, getFilterName) => {
     const {
-        reason, filterId, rule, status, upstream, elapsedMs,
-        domain, response, originalResponse,
+        reason, filterId, rule, status, upstream, elapsedMs, response, originalResponse,
     } = row.original;
 
     const { filters, whitelistFilters } = filtering;
@@ -41,7 +40,6 @@ const getResponseCell = (row, filtering, t, isDetailed, getFilterName) => {
 
     const FILTERED_STATUS_TO_FIELDS_MAP = {
         [FILTERED_STATUS.NOT_FILTERED_NOT_FOUND]: {
-            domain,
             encryption_status: boldStatusLabel,
             install_settings_dns: upstream,
             elapsed: formattedElapsedMs,
@@ -49,7 +47,6 @@ const getResponseCell = (row, filtering, t, isDetailed, getFilterName) => {
             response_table_header: renderResponses(response),
         },
         [FILTERED_STATUS.FILTERED_BLOCKED_SERVICE]: {
-            domain,
             encryption_status: boldStatusLabel,
             install_settings_dns: upstream,
             elapsed: formattedElapsedMs,
@@ -59,7 +56,6 @@ const getResponseCell = (row, filtering, t, isDetailed, getFilterName) => {
             original_response: renderResponses(originalResponse),
         },
         [FILTERED_STATUS.NOT_FILTERED_WHITE_LIST]: {
-            domain,
             encryption_status: boldStatusLabel,
             install_settings_dns: upstream,
             elapsed: formattedElapsedMs,
@@ -68,21 +64,19 @@ const getResponseCell = (row, filtering, t, isDetailed, getFilterName) => {
             response_code: status,
         },
         [FILTERED_STATUS.NOT_FILTERED_WHITE_LIST]: {
-            domain,
             encryption_status: boldStatusLabel,
             filter,
             rule_label: rule,
             response_code: status,
         },
         [FILTERED_STATUS.FILTERED_SAFE_SEARCH]: {
-            domain,
             encryption_status: boldStatusLabel,
             install_settings_dns: upstream,
             elapsed: formattedElapsedMs,
             response_code: status,
+            response_table_header: renderResponses(response),
         },
         [FILTERED_STATUS.FILTERED_BLACK_LIST]: {
-            domain,
             encryption_status: boldStatusLabel,
             filter,
             rule_label: rule,
@@ -93,7 +87,7 @@ const getResponseCell = (row, filtering, t, isDetailed, getFilterName) => {
         },
     };
 
-    const fields = FILTERED_STATUS_TO_FIELDS_MAP[reason]
+    const content = FILTERED_STATUS_TO_FIELDS_MAP[reason]
         ? Object.entries(FILTERED_STATUS_TO_FIELDS_MAP[reason])
         : Object.entries(FILTERED_STATUS_TO_FIELDS_MAP.NotFilteredNotFound);
 
@@ -108,7 +102,7 @@ const getResponseCell = (row, filtering, t, isDetailed, getFilterName) => {
                 contentItemClass: 'text-truncate key-colon o-hidden',
                 xlinkHref: 'question',
                 title: 'response_details',
-                content: fields,
+                content,
                 placement: 'bottom',
             })}
             <div className="text-truncate">

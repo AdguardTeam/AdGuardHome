@@ -150,11 +150,14 @@ Is there a chance to handle this in the future? DNS will never be enough to do t
 
 ### Prerequisites
 
+Run `make init` to prepare the development environment.
+
 You will need this to build AdGuard Home:
 
  * [go](https://golang.org/dl/) v1.14 or later.
  * [node.js](https://nodejs.org/en/download/) v10 or later.
-
+ * [golangci-lint](https://github.com/golangci/golangci-lint)
+ 
 ### Building
 
 Open Terminal and execute these commands:

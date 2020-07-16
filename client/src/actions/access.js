@@ -2,9 +2,9 @@ import { createAction } from 'redux-actions';
 import i18next from 'i18next';
 
 import apiClient from '../api/Api';
-import { normalizeTextarea } from '../helpers/helpers';
 import { addErrorToast, addSuccessToast } from './toasts';
 import { BLOCK_ACTIONS } from '../helpers/constants';
+import { splitByNewLine } from '../helpers/helpers';
 
 export const getAccessListRequest = createAction('GET_ACCESS_LIST_REQUEST');
 export const getAccessListFailure = createAction('GET_ACCESS_LIST_FAILURE');
@@ -31,9 +31,9 @@ export const setAccessList = (config) => async (dispatch) => {
         const { allowed_clients, disallowed_clients, blocked_hosts } = config;
 
         const values = {
-            allowed_clients: normalizeTextarea(allowed_clients),
-            disallowed_clients: normalizeTextarea(disallowed_clients),
-            blocked_hosts: normalizeTextarea(blocked_hosts),
+            allowed_clients: splitByNewLine(allowed_clients),
+            disallowed_clients: splitByNewLine(disallowed_clients),
+            blocked_hosts: splitByNewLine(blocked_hosts),
         };
 
         await apiClient.setAccessList(values);

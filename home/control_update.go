@@ -41,6 +41,10 @@ type getVersionJSONRequest struct {
 // Get the latest available version from the Internet
 func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	if Context.disableUpdate {
+		resp := make(map[string]interface{})
+		resp["disabled"] = true
+		d, _ := json.Marshal(resp)
+		_, _ = w.Write(d)
 		return
 	}
 
