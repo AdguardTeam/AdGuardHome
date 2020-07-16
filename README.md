@@ -167,6 +167,14 @@ make
 
 Check the [`Makefile`](https://github.com/AdguardTeam/AdGuardHome/blob/master/Makefile) to learn about other commands.
 
+**Building for a different platform.** You can build AdGuard for any OS/ARCH just like any other Golang project.
+In order to do this, specify `GOOS` and `GOARCH` env variables before running make.
+
+For example:
+```
+GOOS=linux GOARCH=arm64 make
+```
+
 #### Preparing release
 
 You'll need this to prepare a release build:
