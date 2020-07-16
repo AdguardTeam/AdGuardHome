@@ -19,7 +19,7 @@
         "i18next": "^19.4.4",
         "i18next-browser-languagedetector": "^4.2.0",
         "ipaddr.js": "^1.9.1",
-        "lodash": "^4.17.15",
+        "lodash": "^4.17.19",
         "nanoid": "^3.1.9",
         "prop-types": "^15.7.2",
         "query-string": "^6.13.1",
