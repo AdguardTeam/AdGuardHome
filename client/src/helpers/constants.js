@@ -356,7 +356,7 @@ export const FILTERED_STATUS = {
 export const RESPONSE_FILTER = {
     ALL: {
         query: 'all',
-        label: 'show_all_responses',
+        label: 'all_queries',
     },
     FILTERED: {
         query: 'filtered',

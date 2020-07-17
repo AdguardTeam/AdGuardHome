@@ -529,7 +529,7 @@
     "dnssec_enable": "Enable DNSSEC",
     "dnssec_enable_desc": "Set DNSSEC flag in the outcoming DNS queries and check the result (DNSSEC-enabled resolver is required)",
     "validated_with_dnssec": "Validated with DNSSEC",
-    "show_all_responses": "All responses",
+    "all_queries": "All queries",
     "show_blocked_responses": "Blocked",
     "show_whitelisted_responses": "Whitelisted",
     "show_processed_responses": "Processed",
