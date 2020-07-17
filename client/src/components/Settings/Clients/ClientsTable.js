@@ -301,11 +301,11 @@ class ClientsTable extends Component {
                         showPageJump={false}
                         renderTotalPagesCount={() => false}
                         previousText={
-                            <svg className="icons icon--small icon--gray w-100 h-100">
+                            <svg className="icons icon--24 icon--gray w-100 h-100">
                                 <use xlinkHref="#arrow-left" />
                             </svg>}
                         nextText={
-                            <svg className="icons icon--small icon--gray w-100 h-100">
+                            <svg className="icons icon--24 icon--gray w-100 h-100">
                                 <use xlinkHref="#arrow-right" />
                             </svg>}
                         loadingText={t('loading_table_status')}

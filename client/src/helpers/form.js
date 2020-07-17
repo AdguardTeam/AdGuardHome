@@ -90,7 +90,7 @@ export const renderGroupField = ({
                             className="btn btn-secondary btn-icon btn-icon--green"
                             onClick={removeField}
                         >
-                            <svg className="icon icon--small">
+                            <svg className="icon icon--24">
                                 <use xlinkHref="#cross" />
                             </svg>
                         </button>

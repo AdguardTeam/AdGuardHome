@@ -5,7 +5,7 @@ import {
     FILTERED_STATUS,
     FILTERED_STATUS_TO_META_MAP,
 } from '../../../helpers/constants';
-import getHintElement from './getHintElement';
+import getIconTooltip from './getIconTooltip';
 
 const getResponseCell = (row, filtering, t, isDetailed, getFilterName) => {
     const {
@@ -95,8 +95,8 @@ const getResponseCell = (row, filtering, t, isDetailed, getFilterName) => {
 
     return (
         <div className="logs__row">
-            {getHintElement({
-                className: classNames('icons mr-4 icon--small cursor--pointer icon--light-gray', { 'my-3': isDetailed }),
+            {getIconTooltip({
+                className: classNames('icons mr-4 icon--24 icon--lightgray', { 'my-3': isDetailed }),
                 columnClass: 'grid grid--limited',
                 tooltipClass: 'px-5 pb-5 pt-4 mw-75 custom-tooltip__response-details',
                 contentItemClass: 'text-truncate key-colon o-hidden',

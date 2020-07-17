@@ -245,7 +245,7 @@ const Logs = (props) => {
                            }}
                     >
                         <svg
-                            className="icon icon--small icon-cross d-block d-md-none cursor--pointer"
+                            className="icon icon--24 icon-cross d-block d-md-none cursor--pointer"
                             onClick={closeModal}>
                             <use xlinkHref="#cross" />
                         </svg>

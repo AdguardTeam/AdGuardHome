@@ -1,6 +1,6 @@
 .nav-tabs .nav-link.active {
-    border-color: #66b574;
-    color: #66b574;
+    border-color: var(--green-74);
+    color: var(--green-74);
     background: transparent;
 }
 
@@ -18,7 +18,7 @@
 
 .nav-tabs .nav-link.active .nav-icon,
 .nav-tabs .nav-item.show .nav-icon {
-    stroke: #66b574;
+    stroke: var(--green-74);
 }
 
 .nav-tabs .nav-link.active:hover .nav-icon,
@@ -74,9 +74,9 @@
 }
 
 .nav-tabs .nav-item.show .nav-link {
-    color: #66b574;
+    color: var(--green-74);
     background-color: #fff;
-    border-bottom-color: #66b574;
+    border-bottom-color: var(--green-74);
 }
 
 .header__right {

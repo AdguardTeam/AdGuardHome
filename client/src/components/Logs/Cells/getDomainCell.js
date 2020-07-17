@@ -1,7 +1,7 @@
 import React from 'react';
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
-import getHintElement from './getHintElement';
+import getIconTooltip from './getIconTooltip';
 import {
     DEFAULT_SHORT_DATE_FORMAT_OPTIONS,
     LONG_TIME_FORMAT,
@@ -21,14 +21,14 @@ const getDomainCell = (props) => {
 
     const hasTracker = !!tracker;
 
-    const lockIconClass = classNames('icons icon--small d-none d-sm-block cursor--pointer', {
-        'icon--active': answer_dnssec,
+    const lockIconClass = classNames('icons icon--24 d-none d-sm-block', {
+        'icon--green': answer_dnssec,
         'icon--disabled': !answer_dnssec,
         'my-3': isDetailed,
     });
 
-    const privacyIconClass = classNames('icons mx-2 icon--small d-none d-sm-block cursor--pointer', {
-        'icon--active': hasTracker,
+    const privacyIconClass = classNames('icons mx-2 icon--24 d-none d-sm-block', {
+        'icon--green': hasTracker,
         'icon--disabled': !hasTracker,
         'my-3': isDetailed,
     });
@@ -72,7 +72,7 @@ const getDomainCell = (props) => {
 
     const renderContent = hasTracker ? requestDetails.concat(getGrid(knownTrackerDataObj, 'known_tracker', 'pt-4')) : requestDetails;
 
-    const trackerHint = getHintElement({
+    const trackerHint = getIconTooltip({
         className: privacyIconClass,
         tooltipClass: 'pt-4 pb-5 px-5 mw-75',
         xlinkHref: 'privacy',
@@ -90,7 +90,7 @@ const getDomainCell = (props) => {
 
     return (
         <div className="logs__row o-hidden">
-            {dnssec_enabled && getHintElement({
+            {dnssec_enabled && getIconTooltip({
                 className: lockIconClass,
                 tooltipClass: 'py-4 px-5 pb-45',
                 canShowTooltip: answer_dnssec,

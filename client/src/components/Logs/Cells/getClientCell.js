@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid';
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import { formatClientCell } from '../../../helpers/formatClientCell';
-import getHintElement from './getHintElement';
+import getIconTooltip from './getIconTooltip';
 import { checkFiltered } from '../../../helpers/helpers';
 import { BLOCK_ACTIONS } from '../../../helpers/constants';
 
@@ -37,7 +37,7 @@ const getClientCell = ({
         'white-space--nowrap': isDetailed,
     });
 
-    const hintClass = classNames('icons mr-4 icon--small cursor--pointer icon--light-gray', {
+    const hintClass = classNames('icons mr-4 icon--24 icon--lightgray', {
         'my-3': isDetailed,
     });
 
@@ -68,7 +68,7 @@ const getClientCell = ({
 
     return (
         <div className="logs__row o-hidden h-100">
-            {getHintElement({
+            {getIconTooltip({
                 className: hintClass,
                 columnClass: 'grid grid--limited',
                 tooltipClass: 'px-5 pb-5 pt-4 mw-75',

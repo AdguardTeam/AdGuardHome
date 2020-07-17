@@ -4,10 +4,10 @@ import { Trans, useTranslation } from 'react-i18next';
 import round from 'lodash/round';
 import { shallowEqual, useSelector } from 'react-redux';
 import Card from '../ui/Card';
-import IconTooltip from '../ui/IconTooltip';
 import { formatNumber } from '../../helpers/helpers';
 import LogsSearchLink from '../ui/LogsSearchLink';
 import { RESPONSE_FILTER } from '../../helpers/constants';
+import Tooltip from '../ui/Tooltip';
 
 const Row = ({
     label, count, response_status, tooltipTitle, translationComponents,
@@ -19,7 +19,12 @@ const Row = ({
     return <tr key={label}>
         <td>
             <Trans components={translationComponents}>{label}</Trans>
-            <IconTooltip text={tooltipTitle} type="tooltip-custom--narrow" />
+            <Tooltip content={tooltipTitle} placement="top"
+                     className="tooltip-container tooltip-custom--narrow text-center">
+                <svg className="icons icon--20 icon--lightgray ml-1">
+                    <use xlinkHref="#question" />
+                </svg>
+            </Tooltip>
         </td>
         <td className="text-right"><strong>{content}</strong></td>
     </tr>;

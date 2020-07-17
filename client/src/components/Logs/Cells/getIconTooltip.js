@@ -1,14 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import TooltipTrigger from 'react-popper-tooltip';
 import { Trans } from 'react-i18next';
 import classNames from 'classnames';
-import './Tooltip.css';
-import 'react-popper-tooltip/dist/styles.css';
-import { HIDE_TOOLTIP_DELAY } from '../../../helpers/constants';
 import { processContent } from '../../../helpers/helpers';
+import Tooltip from '../../ui/Tooltip';
+import 'react-popper-tooltip/dist/styles.css';
+import './IconTooltip.css';
 
-const getHintElement = ({
+const getIconTooltip = ({
     className,
     contentItemClass,
     columnClass,
@@ -24,30 +23,27 @@ const getHintElement = ({
             <Trans>{item || '—'}</Trans>
         </div>,
     ) : null,
-}) => <TooltipTrigger placement={placement} trigger="hover" delayHide={HIDE_TOOLTIP_DELAY} tooltip={
-    ({
-        tooltipRef,
-        getTooltipProps,
-    }) => <div {...getTooltipProps({
-        ref: tooltipRef,
-        className: classNames('tooltip__container', tooltipClass, { 'd-none': !canShowTooltip }),
-    })}
-    >
-        {title && <div className="pb-4 h-25 grid-content font-weight-bold">
-            <Trans>{title}</Trans>
-        </div>}
+}) => {
+    const tooltipContent = <>
+        {title
+        && <div className="pb-4 h-25 grid-content font-weight-bold"><Trans>{title}</Trans></div>}
         <div className={classNames(columnClass)}>{renderContent}</div>
-    </div>
-}>{({
-    getTriggerProps, triggerRef,
-}) => <span {...getTriggerProps({ ref: triggerRef })}>
-            {xlinkHref && <svg className={className}>
-                <use xlinkHref={`#${xlinkHref}`} />
-            </svg>}
-  </span>}
-</TooltipTrigger>;
+    </>;
 
-getHintElement.propTypes = {
+    const tooltipClassName = classNames('tooltip-custom__container', tooltipClass, { 'd-none': !canShowTooltip });
+
+    return <Tooltip
+        className={tooltipClassName}
+        content={tooltipContent}
+        placement={placement}
+    >
+        {xlinkHref && <svg className={className}>
+            <use xlinkHref={`#${xlinkHref}`} />
+        </svg>}
+    </Tooltip>;
+};
+
+getIconTooltip.propTypes = {
     className: PropTypes.string,
     contentItemClass: PropTypes.string,
     columnClass: PropTypes.string,
@@ -63,4 +59,4 @@ getHintElement.propTypes = {
     renderContent: PropTypes.arrayOf(PropTypes.element),
 };
 
-export default getHintElement;
+export default getIconTooltip;

@@ -399,10 +399,6 @@
     top: 0.5rem;
 }
 
-.icon--light-gray {
-    color: var(--gray-8);
-}
-
 .link--green {
     color: var(--green79);
 }

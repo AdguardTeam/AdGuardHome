@@ -154,27 +154,23 @@ const Table = (props) => {
             headerClassName: 'logs__text',
         },
         {
-            Header: () => {
-                const plainSelected = classNames('cursor--pointer', {
-                    'icon--selected': !isDetailed,
-                });
-
-                const detailedSelected = classNames('cursor--pointer', {
-                    'icon--selected': isDetailed,
-                });
-
+            Header: function Header() {
                 return <div className="d-flex justify-content-between">
                     {t('client_table_header')}
                     {<span>
                         <svg
-                            className={`icons icon--small icon--active mr-2 cursor--pointer ${plainSelected}`}
+                            className={classNames('icons icon--24 icon--green mr-2 cursor--pointer', {
+                                'icon--selected': !isDetailed,
+                            })}
                             onClick={() => toggleDetailedLogs(false)}
                         >
                             <title><Trans>compact</Trans></title>
                             <use xlinkHref='#list' />
                         </svg>
                     <svg
-                        className={`icons icon--small icon--active cursor--pointer ${detailedSelected}`}
+                        className={classNames('icons icon--24 icon--green cursor--pointer', {
+                            'icon--selected': isDetailed,
+                        })}
                         onClick={() => toggleDetailedLogs(true)}
                     >
                         <title><Trans>default</Trans></title>
@@ -261,12 +257,12 @@ const Table = (props) => {
             getPaginationProps={() => ({ className: 'custom-pagination custom-pagination--padding' })}
             getTbodyProps={() => ({ className: 'd-block' })}
             previousText={
-                <svg className="icons icon--small icon--gray w-100 h-100 cursor--pointer">
+                <svg className="icons icon--24 icon--gray w-100 h-100 cursor--pointer">
                     <title><Trans>previous_btn</Trans></title>
                     <use xlinkHref="#arrow-left" />
                 </svg>}
             nextText={
-                <svg className="icons icon--small icon--gray w-100 h-100 cursor--pointer">
+                <svg className="icons icon--24 icon--gray w-100 h-100 cursor--pointer">
                     <title><Trans>next_btn</Trans></title>
                     <use xlinkHref="#arrow-right" />
                 </svg>}

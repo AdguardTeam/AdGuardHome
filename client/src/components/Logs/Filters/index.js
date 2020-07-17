@@ -12,7 +12,7 @@ const Filters = ({ filter, refreshLogs, setIsLoading }) => (
                     className="btn btn-icon--green ml-3 bg-transparent"
                     onClick={refreshLogs}
                 >
-                    <svg className="icons icon--small">
+                    <svg className="icons icon--24">
                         <use xlinkHref="#update" />
                     </svg>
                 </button>

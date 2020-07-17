@@ -12,10 +12,10 @@ import {
     RESPONSE_FILTER,
     RESPONSE_FILTER_QUERIES,
 } from '../../../helpers/constants';
-import IconTooltip from '../../ui/IconTooltip';
 import { setLogsFilter } from '../../../actions/queryLogs';
 import useDebounce from '../../../helpers/useDebounce';
 import { createOnBlurHandler, getLogsUrlParams } from '../../../helpers/helpers';
+import Tooltip from '../../ui/Tooltip';
 
 const renderFilterField = ({
     input,
@@ -35,7 +35,7 @@ const renderFilterField = ({
 
     return <>
         <div className="input-group-search input-group-search__icon--magnifier">
-            <svg className="icons icon--small icon--gray">
+            <svg className="icons icon--24 icon--gray">
                 <use xlinkHref="#magnifier" />
             </svg>
         </div>
@@ -53,12 +53,16 @@ const renderFilterField = ({
         />
         <div
             className={classNames('input-group-search input-group-search__icon--cross', { invisible: input.value.length < 1 })}>
-            <svg className="icons icon--smallest icon--gray" onClick={onClearInputClick}>
+            <svg className="icons icon--20 icon--gray" onClick={onClearInputClick}>
                 <use xlinkHref="#cross" />
             </svg>
         </div>
         <span className="input-group-search input-group-search__icon--tooltip">
-        <IconTooltip text={tooltip} type='tooltip-custom--logs' />
+            <Tooltip content={tooltip} className="tooltip-container">
+                <svg className="icons icon--20 icon--gray">
+                    <use xlinkHref="#question" />
+                </svg>
+            </Tooltip>
     </span>
         {!disabled
         && touched

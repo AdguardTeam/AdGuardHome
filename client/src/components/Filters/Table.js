@@ -139,11 +139,11 @@ class Table extends Component {
                 noDataText={whitelist ? t('no_whitelist_added') : t('no_blocklist_added')}
                 getPaginationProps={() => ({ className: 'custom-pagination' })}
                 previousText={
-                    <svg className="icons icon--small icon--gray w-100 h-100">
+                    <svg className="icons icon--24 icon--gray w-100 h-100">
                         <use xlinkHref="#arrow-left" />
                     </svg>}
                 nextText={
-                    <svg className="icons icon--small icon--gray w-100 h-100">
+                    <svg className="icons icon--24 icon--gray w-100 h-100">
                         <use xlinkHref="#arrow-right" />
                     </svg>}
             />

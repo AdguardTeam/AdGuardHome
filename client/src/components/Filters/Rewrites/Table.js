@@ -63,11 +63,11 @@ class Table extends Component {
                 defaultPageSize={10}
                 minRows={5}
                 previousText={
-                    <svg className="icons icon--small icon--gray">
+                    <svg className="icons icon--24 icon--gray">
                         <use xlinkHref="#arrow-left" />
                     </svg>}
                 nextText={
-                    <svg className="icons icon--small icon--gray">
+                    <svg className="icons icon--24 icon--gray">
                         <use xlinkHref="#arrow-right" />
                     </svg>}
                 loadingText={t('loading_table_status')}
