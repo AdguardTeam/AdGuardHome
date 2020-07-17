@@ -10,8 +10,7 @@ before:
     - go generate ./...
 
 builds:
-  -
-    main: ./main.go
+  - main: ./main.go
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.channel={{.Env.CHANNEL}} -X main.goarm={{.Env.GOARM}}
     env:
@@ -43,8 +42,7 @@ builds:
         goarch: mipsle
 
 archives:
-  -
-    # Archive name template.
+  - # Archive name template.
     # Defaults:
     # - if format is `tar.gz`, `tar.xz`, `gz` or `zip`:
     #   - `{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}`
@@ -62,8 +60,7 @@ archives:
       - README.md
 
 snapcrafts:
-  -
-    name: adguard-home
+  - name: adguard-home
     base: core18
     name_template: '{{ .ProjectName }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
     summary: Network-wide ads & trackers blocking DNS server
@@ -80,11 +77,24 @@ snapcrafts:
     confinement: strict
     publish: false
     license: GPL-3.0
+    extra_files:
+      - source: scripts/snap/local/adguard-home-web.sh
+        destination: adguard-home-web.sh
+        mode: 0755
+      - source: scripts/snap/gui/adguard-home-web.desktop
+        destination: meta/gui/adguard-home-web.desktop
+        mode: 0644
+      - source: scripts/snap/gui/adguard-home-web.png
+        destination: meta/gui/adguard-home-web.png
+        mode: 0644
     apps:
       adguard-home:
         command: AdGuardHome -w $SNAP_DATA --no-check-update
         plugs: [ network-bind ]
         daemon: simple
+      adguard-home-web:
+        command: adguard-home-web.sh
+        plugs: [ desktop ]
 
 checksum:
   name_template: 'checksums.txt'
