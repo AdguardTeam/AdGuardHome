@@ -563,5 +563,6 @@
     "filter_category_regional_desc": "Lists that focus on regional ads and tracking servers",
     "filter_category_other_desc": "Other blocklists",
     "original_response": "Original response",
-    "click_to_view_queries": "Click to view queries"
+    "click_to_view_queries": "Click to view queries",
+    "port_53_faq_link": "Port 53 is often occupied by \"DNSStubListener\" or \"systemd-resolved\" services. Please read <0>this instruction</0> on how to resolve this."
 }

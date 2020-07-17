@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Field, reduxForm, formValueSelector } from 'redux-form';
@@ -9,7 +9,9 @@ import Controls from './Controls';
 import AddressList from './AddressList';
 
 import { getInterfaceIp } from '../../helpers/helpers';
-import { ALL_INTERFACES_IP, FORM_NAME } from '../../helpers/constants';
+import {
+    ALL_INTERFACES_IP, FORM_NAME, ADDRESS_IN_USE_TEXT, PORT_53_FAQ_LINK, UBUNTU_SYSTEM_PORT,
+} from '../../helpers/constants';
 import { renderInputField, toNumber } from '../../helpers/form';
 import { validateRequiredValue, validateInstallPort } from '../../helpers/validators';
 
@@ -20,37 +22,38 @@ const STATIC_STATUS = {
 };
 
 const renderInterfaces = ((interfaces) => (
-    Object.keys(interfaces).map((item) => {
-        const option = interfaces[item];
-        const {
-            name,
-            ip_addresses,
-            flags,
-        } = option;
+    Object.keys(interfaces)
+        .map((item) => {
+            const option = interfaces[item];
+            const {
+                name,
+                ip_addresses,
+                flags,
+            } = option;
 
-        if (option && ip_addresses?.length > 0) {
-            const ip = getInterfaceIp(option);
-            const isDown = flags?.includes('down');
+            if (option && ip_addresses?.length > 0) {
+                const ip = getInterfaceIp(option);
+                const isDown = flags?.includes('down');
 
-            if (isDown) {
+                if (isDown) {
+                    return (
+                        <option value={ip} key={name} disabled>
+                            <>
+                                {name} - {ip} (<Trans>down</Trans>)
+                            </>
+                        </option>
+                    );
+                }
+
                 return (
-                    <option value={ip} key={name} disabled>
-                        <Fragment>
-                            {name} - {ip} (<Trans>down</Trans>)
-                        </Fragment>
+                    <option value={ip} key={name}>
+                        {name} - {ip}
                     </option>
                 );
             }
 
-            return (
-                <option value={ip} key={name}>
-                    {name} - {ip}
-                </option>
-            );
-        }
-
-        return false;
-    })
+            return false;
+        })
 ));
 
 class Settings extends Component {
@@ -79,9 +82,9 @@ class Settings extends Component {
         }
 
         return (
-            <Fragment>
+            <>
                 {status === STATIC_STATUS.DISABLED && (
-                    <Fragment>
+                    <>
                         <div className="mb-2">
                             <Trans values={{ ip }} components={[<strong key="0">text</strong>]}>
                                 install_static_configure
@@ -94,7 +97,7 @@ class Settings extends Component {
                         >
                             <Trans>set_static_ip</Trans>
                         </button>
-                    </Fragment>
+                    </>
                 )}
                 {status === STATIC_STATUS.ERROR && (
                     <div className="text-danger">
@@ -108,7 +111,7 @@ class Settings extends Component {
                         </Trans>
                     </div>
                 )}
-            </Fragment>
+            </>
         );
     };
 
@@ -121,8 +124,16 @@ class Settings extends Component {
             handleFix,
         } = this.props;
 
-        const web = { ip: webIp, port: webPort, autofix: false };
-        const dns = { ip: dnsIp, port: dnsPort, autofix: false };
+        const web = {
+            ip: webIp,
+            port: webPort,
+            autofix: false,
+        };
+        const dns = {
+            ip: dnsIp,
+            port: dnsPort,
+            autofix: false,
+        };
         const set_static_ip = false;
 
         if (type === 'web') {
@@ -143,8 +154,16 @@ class Settings extends Component {
             handleFix,
         } = this.props;
 
-        const web = { ip: webIp, port: webPort, autofix: false };
-        const dns = { ip: dnsIp, port: dnsPort, autofix: false };
+        const web = {
+            ip: webIp,
+            port: webPort,
+            autofix: false,
+        };
+        const dns = {
+            ip: dnsIp,
+            port: dnsPort,
+            autofix: false,
+        };
         const set_static_ip = true;
 
         if (window.confirm(this.props.t('confirm_static_ip', { ip }))) {
@@ -228,11 +247,9 @@ class Settings extends Component {
                                     onClick={() => this.handleAutofix('web')}
                                 >
                                     <Trans>fix</Trans>
-                                </button>
-                                }
-                                <hr className="divider--small" />
-                            </div>
-                            }
+                                </button>}
+                            </div>}
+                            <hr className="divider--small" />
                         </div>
                     </div>
                     <div className="setup__desc">
@@ -289,7 +306,7 @@ class Settings extends Component {
                         </div>
                         <div className="col-12">
                             {dnsStatus
-                            && <Fragment>
+                            && <>
                                 <div className="setup__error text-danger">
                                     {dnsStatus}
                                     {isDnsFixAvailable
@@ -314,9 +331,14 @@ class Settings extends Component {
                                         <Trans>autofix_warning_result</Trans>
                                     </p>
                                 </div>}
-                                <hr className="divider--small" />
-                            </Fragment>
-                            }
+                            </>}
+                            {dnsPort === UBUNTU_SYSTEM_PORT && !isDnsFixAvailable
+                            && dnsStatus.includes(ADDRESS_IN_USE_TEXT)
+                            && <Trans
+                                components={[<a href={PORT_53_FAQ_LINK} key="0">link</a>]}>
+                                port_53_faq_link
+                            </Trans>}
+                            <hr className="divider--small" />
                         </div>
                     </div>
                     <div className="setup__desc">
