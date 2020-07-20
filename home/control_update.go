@@ -244,6 +244,8 @@ func getUpdateInfo(jsonData []byte) (*updateInfo, error) {
 	if runtime.GOOS == "windows" {
 		binName = "AdGuardHome.exe"
 	}
+
+	// TODO: This is a mistake, work dir can be different
 	u.curBinName = filepath.Join(workDir, binName)
 	if !util.FileExists(u.curBinName) {
 		return nil, fmt.Errorf("executable file %s doesn't exist", u.curBinName)
