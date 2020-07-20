@@ -562,5 +562,6 @@
     "filter_category_regional_desc": "专注于区域广告和跟踪服务器的列表",
     "filter_category_other_desc": "其他阻止列表",
     "original_response": "原始响应",
-    "click_to_view_queries": "点击查看查询"
+    "click_to_view_queries": "点击查看查询",
+    "port_53_faq_link": "53端口常被DNSStubListener或systemdn解析的服务占用。请阅读<0>这份关于如何解决这一问题的说明</0>"
 }

@@ -542,7 +542,6 @@
     "safe_search": "Safe search",
     "blocklist": "Blocklist",
     "milliseconds_abbreviation": "ms",
-    "dnssec_enable_desc": "Set DNSSEC flag in the outcoming DNS queries and check the result (DNSSEC-enabled resolver is required)",
     "cache_size": "Cache size",
     "cache_size_desc": "DNS cache size (in bytes)",
     "cache_ttl_min_override": "Override minimum TTL",

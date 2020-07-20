@@ -562,5 +562,6 @@
     "filter_category_regional_desc": "Lister, der fokuserer på regionale annoncer og tracking-servere",
     "filter_category_other_desc": "Andre blokeringslister",
     "original_response": "Oprindeligt svar",
-    "click_to_view_queries": "Klik for at se forespørgsler"
+    "click_to_view_queries": "Klik for at se forespørgsler",
+    "port_53_faq_link": "Port 53 optages ofte af \"DNSStubListener\" eller \"systemd-resolved\" tjenester. Læs <0>denne instruktion</0> om, hvordan du løser dette."
 }

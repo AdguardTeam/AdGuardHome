@@ -562,5 +562,6 @@
     "filter_category_regional_desc": "專注於區域性的廣告和追蹤伺服器之清單",
     "filter_category_other_desc": "其它的封鎖清單",
     "original_response": "原始的回應",
-    "click_to_view_queries": "點擊以檢視查詢"
+    "click_to_view_queries": "點擊以檢視查詢",
+    "port_53_faq_link": "連接埠 53 常被 \"DNSStubListener\" 或 \"systemd-resolved\" 服務佔用。請閱讀有關如何解決這個的<0>用法說明</0>。"
 }

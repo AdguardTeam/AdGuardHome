@@ -354,8 +354,8 @@
     "fix": "Corregir",
     "dns_providers": "Aquí hay una <0>lista de proveedores DNS</0> conocidos para elegir.",
     "update_now": "Actualizar ahora",
-    "update_failed": "Error en la actualización automática. Por favor <a href='https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#update'>siga los pasos</a> para actualizar manualmente.",
-    "processing_update": "Por favor espere, AdGuard Home se está actualizando",
+    "update_failed": "Error en la actualización automática. Por favor <a href='https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#update'>sigue los pasos</a> para actualizar manualmente.",
+    "processing_update": "Por favor espera, AdGuard Home se está actualizando",
     "clients_title": "Clientes",
     "clients_desc": "Configurar dispositivos conectados con AdGuard Home",
     "settings_global": "Global",
@@ -562,5 +562,6 @@
     "filter_category_regional_desc": "Listas que se centran en anuncios regionales y servidores de rastreo",
     "filter_category_other_desc": "Otras listas de bloqueo",
     "original_response": "Respuesta original",
-    "click_to_view_queries": "Clic para ver las consultas"
+    "click_to_view_queries": "Clic para ver las consultas",
+    "port_53_faq_link": "El puerto 53 suele estar ocupado por los servicios \"DNSStubListener\" o \"systemd-resolved\". Por favor lee <0>esta instrucción</0> sobre cómo resolver esto."
 }

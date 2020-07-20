@@ -562,5 +562,6 @@
     "filter_category_regional_desc": "Popisi koji se fokusiraju na regionalne oglase i poslužitelje za praćenje",
     "filter_category_other_desc": "Ostali popisi blokiranih",
     "original_response": "Originalni odgovor",
-    "click_to_view_queries": "Kliknite za pregled upita"
+    "click_to_view_queries": "Kliknite za pregled upita",
+    "port_53_faq_link": "Port 53 često zauzimaju usluge \"DNSStubListener\" ili \"systemd-resolved\". Molimo pročitajte <0>ove upute</0> o tome kako to riješiti."
 }

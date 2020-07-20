@@ -562,5 +562,6 @@
     "filter_category_regional_desc": "Lijsten die focussen op regionale ads en tracking servers",
     "filter_category_other_desc": "Overige blokkeerlijsten",
     "original_response": "Oorspronkelijke reactie",
-    "click_to_view_queries": "Klik om queries te bekijken"
+    "click_to_view_queries": "Klik om queries te bekijken",
+    "port_53_faq_link": "Poort 53 wordt vaak gebruikt door services als DNSStubListener- of de systeem DNS-resolver. Lees a.u.b. <0>deze instructie</0> hoe dit is op te lossen."
 }

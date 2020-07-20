@@ -562,5 +562,6 @@
     "filter_category_regional_desc": "Listy, które koncentrują się na reklamach regionalnych i serwerach ze skryptami śledzącymi",
     "filter_category_other_desc": "Inne listy zablokowanych",
     "original_response": "Oryginalna odpowiedź",
-    "click_to_view_queries": "Kliknij, aby wyświetlić zapytania"
+    "click_to_view_queries": "Kliknij, aby wyświetlić zapytania",
+    "port_53_faq_link": "Port 53 jest często zajęty przez usługi \"DNSStubListener\" lub \"systemd-resolved\". Przeczytaj <0>tę instrukcję</0> jak to rozwiązać."
 }

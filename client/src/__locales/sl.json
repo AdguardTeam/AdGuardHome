@@ -562,5 +562,6 @@
     "filter_category_regional_desc": "Seznami, ki so osredotočeni na področne oglase in strežnike za sledenje",
     "filter_category_other_desc": "Drugi seznami za zaviranje",
     "original_response": "Izviren odgovor",
-    "click_to_view_queries": "Kliknite za prikaz poizvedb"
+    "click_to_view_queries": "Kliknite za prikaz poizvedb",
+    "port_53_faq_link": "Vrata 53 pogosto zasedajo storitve 'DNSStubListener' ali 'Sistemsko razrešene storitve'. Preberite <0>to navodilo</0> o tem, kako to rešiti."
 }

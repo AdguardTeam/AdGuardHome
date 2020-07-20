@@ -562,5 +562,6 @@
     "filter_category_regional_desc": "Liste focalizate pe reclame regionale și servere de urmărire",
     "filter_category_other_desc": "Alte liste de blocări",
     "original_response": "Răspuns original",
-    "click_to_view_queries": "Clicați pentru a vizualiza interogări"
+    "click_to_view_queries": "Clicați pentru a vizualiza interogări",
+    "port_53_faq_link": "Portul 53 este adesea ocupat de serviciile \"DNSStubListener\" sau \"systemd-resolved\". Vă rugăm să citiți <0>această instrucțiune</0> despre cum să rezolvați aceasta."
 }

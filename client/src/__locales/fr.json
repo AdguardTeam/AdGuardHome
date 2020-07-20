@@ -559,5 +559,6 @@
     "filter_category_security_desc": "Listes spécialisées dans le blocage de logiciels malveillants, d’hameçonnage ou de domaines frauduleux",
     "filter_category_regional_desc": "Listes axées sur les annonces régionales et les serveurs de pistage",
     "filter_category_other_desc": "Autres listes noires",
-    "click_to_view_queries": "Cliquez pour voir les requêtes"
+    "click_to_view_queries": "Cliquez pour voir les requêtes",
+    "port_53_faq_link": "Le port 53 est souvent occupé par les services « DNSStubListener » ou « systemd-resolved ». Veuillez lire <0>cette instruction</0> pour savoir comment résoudre ce problème."
 }

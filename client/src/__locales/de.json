@@ -562,5 +562,6 @@
     "filter_category_regional_desc": "Listen, die sich auf regionale Werbeanzeigen und Tracking-Server konzentrieren",
     "filter_category_other_desc": "Weitere Sperrlisten",
     "original_response": "Ursprüngliche Antwort",
-    "click_to_view_queries": "Anklicken, um Abfragen anzuzeigen"
+    "click_to_view_queries": "Anklicken, um Abfragen anzuzeigen",
+    "port_53_faq_link": "Port 53 wird oft von Diensten wie „DNSStubListener” oder „systemresolved” belegt. Bitte lesen Sie <0>diese Anweisung</0>, wie dies behoben werden kann."
 }
