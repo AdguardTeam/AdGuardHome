@@ -12,7 +12,6 @@ import i18n from 'i18next';
 import uniqBy from 'lodash/uniqBy';
 import ipaddr from 'ipaddr.js';
 import queryString from 'query-string';
-import versionCompare from './versionCompare';
 import { getTrackerData } from './trackers/trackers';
 
 import {
@@ -417,10 +416,6 @@ export const secondsToMilliseconds = (seconds) => {
 
 export const normalizeRulesTextarea = (text) => text?.replace(/^\n/g, '')
     .replace(/\n\s*\n/g, '\n');
-
-export const isVersionGreater = (currentVersion, previousVersion) => (
-    versionCompare(currentVersion, previousVersion) === -1
-);
 
 export const normalizeWhois = (whois) => {
     if (Object.keys(whois).length > 0) {
