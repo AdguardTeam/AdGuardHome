@@ -377,21 +377,10 @@ func targzFileUnpack(tarfile, outdir string) ([]string, error) {
 			continue
 		}
 
-		dir := path.Dir(header.Name)
-		if dir != "" {
-			// Create dir if necessary
-			_ = os.Mkdir(dir, os.FileMode(header.Mode&0777))
-		}
-
 		fn := filepath.Join(outdir, path.Base(header.Name))
 
 		if header.Typeflag == tar.TypeDir {
-			err = os.Mkdir(fn, os.FileMode(header.Mode&0777))
-			if err != nil && !os.IsExist(err) {
-				err2 = fmt.Errorf("os.Mkdir(%s): %s", fn, err)
-				break
-			}
-			log.Tracef("created directory %s", fn)
+			log.Tracef("%s: ignoring directory", fn)
 			continue
 		} else if header.Typeflag != tar.TypeReg {
 			log.Tracef("%s: unknown file type %d, skipping", header.Name, header.Typeflag)
