@@ -377,7 +377,8 @@ func targzFileUnpack(tarfile, outdir string) ([]string, error) {
 			continue
 		}
 
-		fn := filepath.Join(outdir, path.Base(header.Name))
+		filename := path.Base(header.Name)
+		fn := filepath.Join(outdir, filename)
 
 		if header.Typeflag == tar.TypeDir {
 			log.Tracef("%s: ignoring directory", fn)
@@ -401,7 +402,7 @@ func targzFileUnpack(tarfile, outdir string) ([]string, error) {
 		_ = f.Close()
 
 		log.Tracef("created file %s", fn)
-		files = append(files, header.Name)
+		files = append(files, filename)
 	}
 
 	_ = gzReader.Close()
