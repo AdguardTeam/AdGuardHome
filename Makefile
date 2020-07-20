@@ -173,6 +173,7 @@ docker-multi-arch:
 release: dependencies client
 	@echo Starting release build: version $(VERSION), channel $(CHANNEL)
 	CHANNEL=$(CHANNEL) $(GORELEASER_COMMAND)
+	$(call repack_dist)
 	$(call write_version_file,$(VERSION))
 	PATH=$(GOPATH)/bin:$(PATH) packr clean
 
@@ -231,4 +232,38 @@ define write_version_file
 
 	# Finish
 	echo "}" >> $(DIST_DIR)/version.json
+endef
+
+define repack_dist
+	# Repack archive files
+	# A temporary solution for our auto-update code to be able to unpack these archive files
+	# The problem is that goreleaser doesn't add directory AdGuardHome/ to the archive file
+	#  and we can't create it
+	rm -rf $(DIST_DIR)/AdGuardHome
+
+	# Linux
+	cd $(DIST_DIR) && tar xzf AdGuardHome_linux_amd64.tar.gz && tar czf AdGuardHome_linux_amd64.tar.gz AdGuardHome/ && rm -rf AdGuardHome
+	cd $(DIST_DIR) && tar xzf AdGuardHome_linux_386.tar.gz && tar czf AdGuardHome_linux_386.tar.gz AdGuardHome/ && rm -rf AdGuardHome
+
+	# Linux, all kinds of ARM
+	cd $(DIST_DIR) && tar xzf AdGuardHome_linux_armv5.tar.gz && tar czf AdGuardHome_linux_armv5.tar.gz AdGuardHome/ && rm -rf AdGuardHome
+	cd $(DIST_DIR) && tar xzf AdGuardHome_linux_armv6.tar.gz && tar czf AdGuardHome_linux_armv6.tar.gz AdGuardHome/ && rm -rf AdGuardHome
+	cd $(DIST_DIR) && tar xzf AdGuardHome_linux_armv7.tar.gz && tar czf AdGuardHome_linux_armv7.tar.gz AdGuardHome/ && rm -rf AdGuardHome
+	cd $(DIST_DIR) && tar xzf AdGuardHome_linux_arm64.tar.gz && tar czf AdGuardHome_linux_arm64.tar.gz AdGuardHome/ && rm -rf AdGuardHome
+
+	# Linux, MIPS
+	cd $(DIST_DIR) && tar xzf AdGuardHome_linux_mips_softfloat.tar.gz && tar czf AdGuardHome_linux_mips_softfloat.tar.gz AdGuardHome/ && rm -rf AdGuardHome
+	cd $(DIST_DIR) && tar xzf AdGuardHome_linux_mipsle_softfloat.tar.gz && tar czf AdGuardHome_linux_mipsle_softfloat.tar.gz AdGuardHome/ && rm -rf AdGuardHome
+	cd $(DIST_DIR) && tar xzf AdGuardHome_linux_mips64_softfloat.tar.gz && tar czf AdGuardHome_linux_mips64_softfloat.tar.gz AdGuardHome/ && rm -rf AdGuardHome
+	cd $(DIST_DIR) && tar xzf AdGuardHome_linux_mips64le_softfloat.tar.gz && tar czf AdGuardHome_linux_mips64le_softfloat.tar.gz AdGuardHome/ && rm -rf AdGuardHome
+
+	# FreeBSD
+	cd $(DIST_DIR) && tar xzf AdGuardHome_freebsd_386.tar.gz && tar czf AdGuardHome_freebsd_386.tar.gz AdGuardHome/ && rm -rf AdGuardHome
+	cd $(DIST_DIR) && tar xzf AdGuardHome_freebsd_amd64.tar.gz && tar czf AdGuardHome_freebsd_amd64.tar.gz AdGuardHome/ && rm -rf AdGuardHome
+
+	# FreeBSD, all kinds of ARM
+	cd $(DIST_DIR) && tar xzf AdGuardHome_freebsd_armv5.tar.gz && tar czf AdGuardHome_freebsd_armv5.tar.gz AdGuardHome/ && rm -rf AdGuardHome
+	cd $(DIST_DIR) && tar xzf AdGuardHome_freebsd_armv6.tar.gz && tar czf AdGuardHome_freebsd_armv6.tar.gz AdGuardHome/ && rm -rf AdGuardHome
+	cd $(DIST_DIR) && tar xzf AdGuardHome_freebsd_armv7.tar.gz && tar czf AdGuardHome_freebsd_armv7.tar.gz AdGuardHome/ && rm -rf AdGuardHome
+	cd $(DIST_DIR) && tar xzf AdGuardHome_freebsd_arm64.tar.gz && tar czf AdGuardHome_freebsd_arm64.tar.gz AdGuardHome/ && rm -rf AdGuardHome
 endef
