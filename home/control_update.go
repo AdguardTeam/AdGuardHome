@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -245,7 +244,6 @@ func getUpdateInfo(jsonData []byte) (*updateInfo, error) {
 	if runtime.GOOS == "windows" {
 		binName = "AdGuardHome.exe"
 	}
-
 	u.curBinName = filepath.Join(workDir, binName)
 	if !util.FileExists(u.curBinName) {
 		return nil, fmt.Errorf("executable file %s doesn't exist", u.curBinName)
@@ -349,6 +347,7 @@ func zipFileUnpack(zipfile, outdir string) ([]string, error) {
 // Existing files are overwritten
 // Return the list of files (not directories) written
 func targzFileUnpack(tarfile, outdir string) ([]string, error) {
+
 	f, err := os.Open(tarfile)
 	if err != nil {
 		return nil, fmt.Errorf("os.Open(): %s", err)
@@ -377,11 +376,15 @@ func targzFileUnpack(tarfile, outdir string) ([]string, error) {
 			continue
 		}
 
-		filename := path.Base(header.Name)
-		fn := filepath.Join(outdir, filename)
+		fn := filepath.Join(outdir, header.Name)
 
 		if header.Typeflag == tar.TypeDir {
-			log.Tracef("%s: ignoring directory", fn)
+			err = os.Mkdir(fn, os.FileMode(header.Mode&0777))
+			if err != nil && !os.IsExist(err) {
+				err2 = fmt.Errorf("os.Mkdir(%s): %s", fn, err)
+				break
+			}
+			log.Tracef("created directory %s", fn)
 			continue
 		} else if header.Typeflag != tar.TypeReg {
 			log.Tracef("%s: unknown file type %d, skipping", header.Name, header.Typeflag)
@@ -395,17 +398,17 @@ func targzFileUnpack(tarfile, outdir string) ([]string, error) {
 		}
 		_, err = io.Copy(f, tarReader)
 		if err != nil {
-			_ = f.Close()
+			f.Close()
 			err2 = fmt.Errorf("io.Copy(): %s", err)
 			break
 		}
-		_ = f.Close()
+		f.Close()
 
 		log.Tracef("created file %s", fn)
-		files = append(files, filename)
+		files = append(files, header.Name)
 	}
 
-	_ = gzReader.Close()
+	gzReader.Close()
 	return files, err2
 }
 
