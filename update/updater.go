@@ -3,6 +3,7 @@ package update
 import (
 	"os"
 	"path/filepath"
+	"time"
 )
 
 type Updater struct {
@@ -10,13 +11,19 @@ type Updater struct {
 
 	currentBinary string // current binary executable
 	workDir       string // updater work dir (where backup/upd dirs will be created)
+
+	// cached version.json to avoid hammering github.io for each page reload
+	versionCheckJSON     []byte
+	versionCheckLastTime time.Time
 }
 
 // NewUpdater - creates a new instance of the Updater
 func NewUpdater(workDir string) *Updater {
 	return &Updater{
-		currentBinary: filepath.Base(os.Args[0]),
-		workDir:       workDir,
+		currentBinary:        filepath.Base(os.Args[0]),
+		workDir:              workDir,
+		versionCheckJSON:     nil,
+		versionCheckLastTime: time.Time{},
 	}
 }
 
