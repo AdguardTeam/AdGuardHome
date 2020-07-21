@@ -12,7 +12,8 @@ import (
 )
 
 func startHTTPServer(data string) (net.Listener, uint16) {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(data))
 	})
 
@@ -21,7 +22,7 @@ func startHTTPServer(data string) (net.Listener, uint16) {
 		panic(err)
 	}
 
-	go func() { _ = http.Serve(listener, nil) }()
+	go func() { _ = http.Serve(listener, mux) }()
 	return listener, uint16(listener.Addr().(*net.TCPAddr).Port)
 }
 
