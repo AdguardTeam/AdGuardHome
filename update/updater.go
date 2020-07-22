@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/util"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -110,7 +111,17 @@ func (u *Updater) prepare() error {
 
 	u.backupExeName = filepath.Join(u.backupDir, exeName)
 	u.updateExeName = filepath.Join(u.updateDir, exeName)
-	u.currentExeName = os.Args[0]
+
+	log.Info("Updating from %s to %s.  URL:%s",
+		u.VersionString, u.NewVersion, u.PackageURL)
+
+	// If the binary file isn't found in working directory, we won't be able to auto-update
+	// Getting the full path to the current binary file on UNIX and checking write permissions
+	//  is more difficult.
+	u.currentExeName = filepath.Join(u.workDir, exeName)
+	if !util.FileExists(u.currentExeName) {
+		return fmt.Errorf("executable file %s doesn't exist", u.currentExeName)
+	}
 	return nil
 }
 

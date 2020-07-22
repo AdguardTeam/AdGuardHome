@@ -20,6 +20,7 @@ import (
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
+	"github.com/AdguardTeam/AdGuardHome/update"
 	"github.com/AdguardTeam/AdGuardHome/util"
 
 	"github.com/joomcode/errorx"
@@ -47,8 +48,6 @@ var (
 	ARMVersion      = ""
 )
 
-const versionCheckPeriod = time.Hour * 8
-
 // Global context
 type homeContext struct {
 	// Modules
@@ -67,6 +66,7 @@ type homeContext struct {
 	web        *Web                 // Web (HTTP, HTTPS) module
 	tls        *TLSMod              // TLS module
 	autoHosts  util.AutoHosts       // IP-hostname pairs taken from system configuration (e.g. /etc/hosts) files
+	updater    *update.Updater
 
 	// Runtime properties
 	// --
@@ -225,6 +225,16 @@ func run(args options) {
 		os.Exit(1)
 	}
 	Context.autoHosts.Init("")
+
+	Context.updater = update.NewUpdater(Context.workDir)
+	Context.updater.Client = Context.client
+	Context.updater.VersionURL = versionCheckURL
+	Context.updater.VersionString = versionString
+	Context.updater.OS = runtime.GOOS
+	Context.updater.Arch = runtime.GOARCH
+	Context.updater.ARMVersion = ARMVersion
+	Context.updater.ConfigName = config.getConfigFilename()
+
 	Context.clients.Init(config.Clients, Context.dhcpServer, &Context.autoHosts)
 	config.Clients = nil
 

@@ -71,6 +71,9 @@ func (u *Updater) parseVersionResponse(data []byte) (VersionInfo, error) {
 		info.CanAutoUpdate = true
 	}
 
+	u.NewVersion = info.NewVersion
+	u.PackageURL = info.PackageURL
+
 	return info, nil
 }
 
