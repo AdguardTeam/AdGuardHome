@@ -20,18 +20,9 @@ import (
 
 // Updater - Updater
 type Updater struct {
-	Client        *http.Client
-	VersionURL    string // version.json URL
-	VersionString string
-	OS            string // GOOS
-	Arch          string // GOARCH
-	ARMVersion    string // ARM version, e.g. "6"
-	NewVersion    string // VersionInfo.NewVersion
-	PackageURL    string // VersionInfo.PackageURL
-	ConfigName    string // current config file ".../AdGuardHome.yaml"
+	Config // Updater configuration
 
 	currentExeName string // current binary executable
-	workDir        string // updater work dir (where backup/upd dirs will be created)
 	updateDir      string // "work_dir/agh-update-v0.103.0"
 	packageName    string // "work_dir/agh-update-v0.103.0/pkg_name.tar.gz"
 	backupDir      string // "work_dir/agh-backup"
@@ -44,12 +35,26 @@ type Updater struct {
 	versionCheckLastTime time.Time
 }
 
+// Config - updater config
+type Config struct {
+	Client *http.Client
+
+	VersionURL    string // version.json URL
+	VersionString string
+	OS            string // GOOS
+	Arch          string // GOARCH
+	ARMVersion    string // ARM version, e.g. "6"
+	NewVersion    string // VersionInfo.NewVersion
+	PackageURL    string // VersionInfo.PackageURL
+	ConfigName    string // current config file ".../AdGuardHome.yaml"
+	WorkDir       string // updater work dir (where backup/upd dirs will be created)
+}
+
 // NewUpdater - creates a new instance of the Updater
-func NewUpdater(workDir string) *Updater {
-	u := &Updater{
-		workDir: workDir,
+func NewUpdater(cfg Config) *Updater {
+	return &Updater{
+		Config: cfg,
 	}
-	return u
 }
 
 // DoUpdate - conducts the auto-update
@@ -95,14 +100,14 @@ func (u *Updater) DoUpdate() error {
 }
 
 func (u *Updater) prepare() error {
-	u.updateDir = filepath.Join(u.workDir, fmt.Sprintf("agh-update-%s", u.NewVersion))
+	u.updateDir = filepath.Join(u.WorkDir, fmt.Sprintf("agh-update-%s", u.NewVersion))
 
 	_, pkgNameOnly := filepath.Split(u.PackageURL)
 	if len(pkgNameOnly) == 0 {
 		return fmt.Errorf("invalid PackageURL")
 	}
 	u.packageName = filepath.Join(u.updateDir, pkgNameOnly)
-	u.backupDir = filepath.Join(u.workDir, "agh-backup")
+	u.backupDir = filepath.Join(u.WorkDir, "agh-backup")
 
 	exeName := "AdGuardHome"
 	if u.OS == "windows" {
@@ -118,7 +123,7 @@ func (u *Updater) prepare() error {
 	// If the binary file isn't found in working directory, we won't be able to auto-update
 	// Getting the full path to the current binary file on UNIX and checking write permissions
 	//  is more difficult.
-	u.currentExeName = filepath.Join(u.workDir, exeName)
+	u.currentExeName = filepath.Join(u.WorkDir, exeName)
 	if !util.FileExists(u.currentExeName) {
 		return fmt.Errorf("executable file %s doesn't exist", u.currentExeName)
 	}
@@ -172,10 +177,10 @@ func (u *Updater) backup() error {
 	}
 
 	// workdir/README.md -> backup/README.md
-	err = copySupportingFiles(u.unpackedFiles, u.workDir, u.backupDir)
+	err = copySupportingFiles(u.unpackedFiles, u.WorkDir, u.backupDir)
 	if err != nil {
 		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %s",
-			u.workDir, u.backupDir, err)
+			u.WorkDir, u.backupDir, err)
 	}
 
 	return nil
@@ -183,10 +188,10 @@ func (u *Updater) backup() error {
 
 func (u *Updater) replace() error {
 	// update/README.md -> workdir/README.md
-	err := copySupportingFiles(u.unpackedFiles, u.updateDir, u.workDir)
+	err := copySupportingFiles(u.unpackedFiles, u.updateDir, u.WorkDir)
 	if err != nil {
 		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %s",
-			u.updateDir, u.workDir, err)
+			u.updateDir, u.WorkDir, err)
 	}
 
 	log.Debug("updater: renaming: %s -> %s", u.currentExeName, u.backupExeName)

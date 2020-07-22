@@ -64,7 +64,7 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 }
 
 // Perform an update procedure to the latest available version
-func handleUpdate(w http.ResponseWriter, r *http.Request) {
+func handleUpdate(w http.ResponseWriter, _ *http.Request) {
 	if len(Context.updater.NewVersion) == 0 {
 		httpError(w, http.StatusBadRequest, "/update request isn't allowed now")
 		return

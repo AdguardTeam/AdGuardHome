@@ -226,14 +226,16 @@ func run(args options) {
 	}
 	Context.autoHosts.Init("")
 
-	Context.updater = update.NewUpdater(Context.workDir)
-	Context.updater.Client = Context.client
-	Context.updater.VersionURL = versionCheckURL
-	Context.updater.VersionString = versionString
-	Context.updater.OS = runtime.GOOS
-	Context.updater.Arch = runtime.GOARCH
-	Context.updater.ARMVersion = ARMVersion
-	Context.updater.ConfigName = config.getConfigFilename()
+	Context.updater = update.NewUpdater(update.Config{
+		Client:        Context.client,
+		WorkDir:       Context.workDir,
+		VersionURL:    versionCheckURL,
+		VersionString: versionString,
+		OS:            runtime.GOOS,
+		Arch:          runtime.GOARCH,
+		ARMVersion:    ARMVersion,
+		ConfigName:    config.getConfigFilename(),
+	})
 
 	Context.clients.Init(config.Clients, Context.dhcpServer, &Context.autoHosts)
 	config.Clients = nil

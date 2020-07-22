@@ -11,15 +11,14 @@ const versionCheckPeriod = 8 * 60 * 60
 
 // VersionInfo - VersionInfo
 type VersionInfo struct {
-	NewVersion           string
-	Announcement         string
-	AnnouncementURL      string
-	SelfUpdateMinVersion string
-	CanAutoUpdate        bool
-	PackageURL           string
+	NewVersion           string // New version string
+	Announcement         string // Announcement text
+	AnnouncementURL      string // Announcement URL
+	SelfUpdateMinVersion string // Min version starting with which we can auto-update
+	CanAutoUpdate        bool   // If true - we can auto-update
 }
 
-// GetVersionResponse - GetVersionResponse
+// GetVersionResponse - downloads version.json (if needed) and deserializes it
 func (u *Updater) GetVersionResponse(forceRecheck bool) (VersionInfo, error) {
 	if !forceRecheck &&
 		u.versionCheckLastTime.Unix()+versionCheckPeriod > time.Now().Unix() {
@@ -63,8 +62,8 @@ func (u *Updater) parseVersionResponse(data []byte) (VersionInfo, error) {
 		return info, fmt.Errorf("version.json: invalid data")
 	}
 
-	var ok bool
-	info.PackageURL, ok = u.getDownloadURL(versionJSON)
+	packageURL, ok := u.getDownloadURL(versionJSON)
+
 	if ok &&
 		info.NewVersion != u.VersionString &&
 		u.VersionString >= info.SelfUpdateMinVersion {
@@ -72,7 +71,7 @@ func (u *Updater) parseVersionResponse(data []byte) (VersionInfo, error) {
 	}
 
 	u.NewVersion = info.NewVersion
-	u.PackageURL = info.PackageURL
+	u.PackageURL = packageURL
 
 	return info, nil
 }

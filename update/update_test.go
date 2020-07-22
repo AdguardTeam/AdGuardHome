@@ -59,12 +59,13 @@ func TestUpdateGetVersion(t *testing.T) {
 	l, lport := startHTTPServer(jsonData)
 	defer func() { _ = l.Close() }()
 
-	u := NewUpdater("")
-	u.Client = &http.Client{}
-	u.VersionURL = fmt.Sprintf("http://127.0.0.1:%d/", lport)
-	u.OS = "linux"
-	u.Arch = "arm"
-	u.VersionString = "v0.103.0-beta1"
+	u := NewUpdater(Config{
+		Client:        &http.Client{},
+		VersionURL:    fmt.Sprintf("http://127.0.0.1:%d/", lport),
+		OS:            "linux",
+		Arch:          "arm",
+		VersionString: "v0.103.0-beta1",
+	})
 
 	info, err := u.GetVersionResponse(false)
 	assert.Nil(t, err)
@@ -73,7 +74,6 @@ func TestUpdateGetVersion(t *testing.T) {
 	assert.Equal(t, "https://github.com/AdguardTeam/AdGuardHome/releases", info.AnnouncementURL)
 	assert.Equal(t, "v0.0", info.SelfUpdateMinVersion)
 	assert.True(t, info.CanAutoUpdate)
-	assert.Equal(t, "https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv6.tar.gz", info.PackageURL)
 
 	_ = l.Close()
 
@@ -100,12 +100,14 @@ func TestUpdate(t *testing.T) {
 	l, lport := startHTTPServer(string(pkgData))
 	defer func() { _ = l.Close() }()
 
-	u := NewUpdater("aghtest")
-	u.Client = &http.Client{}
-	u.PackageURL = fmt.Sprintf("http://127.0.0.1:%d/AdGuardHome.tar.gz", lport)
-	u.VersionString = "v0.103.0"
-	u.NewVersion = "v0.103.1"
-	u.ConfigName = "aghtest/AdGuardHome.yaml"
+	u := NewUpdater(Config{
+		Client:        &http.Client{},
+		PackageURL:    fmt.Sprintf("http://127.0.0.1:%d/AdGuardHome.tar.gz", lport),
+		VersionString: "v0.103.0",
+		NewVersion:    "v0.103.1",
+		ConfigName:    "aghtest/AdGuardHome.yaml",
+		WorkDir:       "aghtest",
+	})
 
 	assert.Nil(t, u.prepare())
 	u.currentExeName = "aghtest/AdGuardHome"
@@ -161,13 +163,15 @@ func TestUpdateWindows(t *testing.T) {
 	l, lport := startHTTPServer(string(pkgData))
 	defer func() { _ = l.Close() }()
 
-	u := NewUpdater("aghtest")
-	u.Client = &http.Client{}
-	u.PackageURL = fmt.Sprintf("http://127.0.0.1:%d/AdGuardHome.zip", lport)
-	u.OS = "windows"
-	u.VersionString = "v0.103.0"
-	u.NewVersion = "v0.103.1"
-	u.ConfigName = "aghtest/AdGuardHome.yaml"
+	u := NewUpdater(Config{
+		WorkDir:       "aghtest",
+		Client:        &http.Client{},
+		PackageURL:    fmt.Sprintf("http://127.0.0.1:%d/AdGuardHome.zip", lport),
+		OS:            "windows",
+		VersionString: "v0.103.0",
+		NewVersion:    "v0.103.1",
+		ConfigName:    "aghtest/AdGuardHome.yaml",
+	})
 
 	assert.Nil(t, u.prepare())
 	u.currentExeName = "aghtest/AdGuardHome.exe"
