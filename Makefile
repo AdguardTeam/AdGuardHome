@@ -55,7 +55,11 @@ SNAPSHOT_VERSION=$(RELEASE_VERSION)-SNAPSHOT-$(COMMIT)
 # Set proper version
 VERSION=
 ifeq ($(TAG_NAME),$(shell git describe --abbrev=4))
-	VERSION=$(RELEASE_VERSION)
+	ifeq ($(CHANNEL),edge)
+		VERSION=$(SNAPSHOT_VERSION)
+	else
+		VERSION=$(RELEASE_VERSION)
+	endif
 else
 	VERSION=$(SNAPSHOT_VERSION)
 endif
