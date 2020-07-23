@@ -196,7 +196,7 @@ define write_version_file
 	echo "  \"version\": \"$(version)\"," >> $(DIST_DIR)/version.json
 	echo "  \"announcement\": \"AdGuard Home $(version) is now available!\"," >> $(DIST_DIR)/version.json
 	echo "  \"announcement_url\": \"https://github.com/AdguardTeam/AdGuardHome/releases\"," >> $(DIST_DIR)/version.json
-	echo "  \"selfupdate_min_version\": \"v0.0\"," >> $(DIST_DIR)/version.json
+	echo "  \"selfupdate_min_version\": \"0.0\"," >> $(DIST_DIR)/version.json
 
 	# Windows builds
 	echo "  \"download_windows_amd64\": \"$(BASE_URL)/AdGuardHome_windows_amd64.zip\"," >> $(DIST_DIR)/version.json

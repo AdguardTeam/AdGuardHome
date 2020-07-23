@@ -4,6 +4,7 @@ import axios from 'axios';
 
 import { splitByNewLine, sortClients } from '../helpers/helpers';
 import { CHECK_TIMEOUT, SETTINGS_NAMES } from '../helpers/constants';
+import { areEqualVersions } from '../helpers/version';
 import { getTlsStatus } from './encryption';
 import apiClient from '../api/Api';
 import { addErrorToast, addNoticeToast, addSuccessToast } from './toasts';
@@ -121,7 +122,7 @@ export const getVersion = (recheck = false) => async (dispatch, getState) => {
             const { dnsVersion } = getState().dashboard;
             const currentVersion = dnsVersion === 'undefined' ? 0 : dnsVersion;
 
-            if (data && currentVersion !== data.new_version) {
+            if (data && !areEqualVersions(currentVersion, data.new_version)) {
                 dispatch(addSuccessToast('updates_checked'));
             } else {
                 dispatch(addSuccessToast('updates_version_equal'));

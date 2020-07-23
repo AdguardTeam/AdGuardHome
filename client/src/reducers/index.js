@@ -14,6 +14,7 @@ import stats from './stats';
 import queryLogs from './queryLogs';
 import dnsConfig from './dnsConfig';
 import filtering from './filtering';
+import { areEqualVersions } from '../helpers/version';
 
 const settings = handleActions(
     {
@@ -81,7 +82,7 @@ const dashboard = handleActions(
         [actions.getVersionSuccess]: (state, { payload }) => {
             const currentVersion = state.dnsVersion === 'undefined' ? 0 : state.dnsVersion;
 
-            if (!payload.disabled && currentVersion !== payload.new_version) {
+            if (!payload.disabled && !areEqualVersions(currentVersion, payload.new_version)) {
                 const {
                     announcement_url: announcementUrl,
                     new_version: newVersion,
