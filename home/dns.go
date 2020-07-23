@@ -242,7 +242,7 @@ func applyAdditionalFiltering(clientAddr string, setts *dnsfilter.RequestFilteri
 		return
 	}
 
-	log.Debug("Using settings for client with IP %s", clientAddr)
+	log.Debug("Using settings for client %s with IP %s", c.Name, clientAddr)
 
 	if c.UseOwnBlockedServices {
 		Context.dnsFilter.ApplyBlockedServices(setts, c.BlockedServices, false)
