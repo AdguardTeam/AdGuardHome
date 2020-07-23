@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"strings"
 	"time"
 )
 
@@ -66,7 +67,7 @@ func (u *Updater) parseVersionResponse(data []byte) (VersionInfo, error) {
 
 	if ok &&
 		info.NewVersion != u.VersionString &&
-		u.VersionString >= info.SelfUpdateMinVersion {
+		strings.TrimPrefix(u.VersionString, "v") >= strings.TrimPrefix(info.SelfUpdateMinVersion, "v") {
 		info.CanAutoUpdate = true
 	}
 

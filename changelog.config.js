@@ -1,9 +1,9 @@
 module.exports = {
     "disableEmoji": true,
     "list": [
-        "+",
-        "*",
-        "-",
+        "+ ",
+        "* ",
+        "- ",
     ],
     "maxMessageLength": 64,
     "minMessageLength": 3,
@@ -12,7 +12,7 @@ module.exports = {
         "scope",
         "subject",
         "body",
-        "issues"
+        "issues",
     ],
     "scopes": [
         "",
@@ -26,20 +26,20 @@ module.exports = {
         "documentation",
     ],
     "types": {
-        "+": {
+        "+ ": {
             "description": "A new feature",
             "emoji": "",
-            "value": "+"
+            "value": "+ "
         },
-        "*": {
+        "* ": {
             "description": "A code change that neither fixes a bug or adds a feature",
             "emoji": "",
-            "value": "*"
+            "value": "* "
         },
-        "-": {
+        "- ": {
             "description": "A bug fix",
             "emoji": "",
-            "value": "-"
+            "value": "- "
         }
     }
 };
