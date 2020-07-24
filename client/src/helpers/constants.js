@@ -1,7 +1,7 @@
 export const R_URL_REQUIRES_PROTOCOL = /^https?:\/\/[^/\s]+(\/.*)?$/;
 
 // matches hostname or *.wildcard
-export const R_HOST = /^(\*\.)?[\w\.\-]+$/;
+export const R_HOST = /^(\*\.)?[\w.-]+$/;
 
 export const R_IPV4 = /^(?:(?:^|\.)(?:2(?:5[0-5]|[0-4]\d)|1?\d?\d)){4}$/;
 
