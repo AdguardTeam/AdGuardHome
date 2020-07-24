@@ -362,7 +362,7 @@
     display: flex !important;
 }
 
-.-pageInfo {
+.logs__table .-pageInfo {
     --side-size: 2rem;
     font-variant-numeric: tabular-nums !important;
     background-color: transparent !important;
@@ -376,18 +376,18 @@
     align-items: center;
 }
 
-.pagination-bottom {
+.logs__table .pagination-bottom {
     justify-content: center !important;
     display: flex !important;
 }
 
-.-center:before {
+.logs__table .-center:before {
     content: '...';
     transform: translateY(-0.25rem);
     margin: auto;
 }
 
-.-center:after {
+.logs__table .-center:after {
     content: '...';
     transform: translateY(-0.25rem);
     margin: auto;
