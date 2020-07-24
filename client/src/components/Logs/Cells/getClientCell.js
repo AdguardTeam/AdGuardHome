@@ -16,6 +16,7 @@ const getClientCell = ({
 
     const autoClient = autoClients.find((autoClient) => autoClient.name === client);
     const source = autoClient?.source;
+    const whoisAvailable = whois_info && Object.keys(whois_info).length > 0;
 
     const id = nanoid();
 
@@ -33,7 +34,7 @@ const getClientCell = ({
     const isFiltered = checkFiltered(reason);
 
     const nameClass = classNames('w-90 o-hidden d-flex flex-column', {
-        'mt-2': isDetailed && !name && !whois_info,
+        'mt-2': isDetailed && !name && !whoisAvailable,
         'white-space--nowrap': isDetailed,
     });
 
@@ -78,12 +79,19 @@ const getClientCell = ({
                 content: processedData,
                 placement: 'bottom',
             })}
-            <div
-                className={nameClass}>
-                <div data-tip={true} data-for={id}>{formatClientCell(row, isDetailed)}</div>
-                {isDetailed && name
-                && !whois_info && <div className="detailed-info d-none d-sm-block logs__text"
-                        title={name}>{name}</div>}
+            <div className={nameClass}>
+                <div data-tip={true} data-for={id}>
+                    {formatClientCell(row, isDetailed)}
+                </div>
+
+                {isDetailed && name && !whoisAvailable && (
+                    <div
+                        className="detailed-info d-none d-sm-block logs__text"
+                        title={name}
+                    >
+                        {name}
+                    </div>
+                )}
             </div>
             {renderBlockingButton(isFiltered, domain)}
         </div>

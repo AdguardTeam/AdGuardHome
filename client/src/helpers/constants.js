@@ -296,7 +296,7 @@ export const DEFAULT_LOGS_FILTER = {
 
 export const DEFAULT_LANGUAGE = 'en';
 
-export const TABLE_DEFAULT_PAGE_SIZE = 50;
+export const TABLE_DEFAULT_PAGE_SIZE = 25;
 
 export const TABLE_FIRST_PAGE = 0;
 

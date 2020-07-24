@@ -58,8 +58,7 @@
     width: 100%;
 }
 
-.logs__text--wrap,
-.logs__text--whois {
+.logs__text--wrap {
     line-height: 1.4;
     white-space: normal;
 }
@@ -71,6 +70,7 @@
 
 .logs__text--whois {
     line-height: 1.2;
+    color: #9aa0ac;
 }
 
 .logs__row .tooltip-custom {
@@ -362,7 +362,7 @@
     display: flex !important;
 }
 
-.-pageInfo {
+.logs__table .-pageInfo {
     --side-size: 2rem;
     font-variant-numeric: tabular-nums !important;
     background-color: transparent !important;
@@ -376,18 +376,18 @@
     align-items: center;
 }
 
-.pagination-bottom {
+.logs__table .pagination-bottom {
     justify-content: center !important;
     display: flex !important;
 }
 
-.-center:before {
+.logs__table .-center:before {
     content: '...';
     transform: translateY(-0.25rem);
     margin: auto;
 }
 
-.-center:after {
+.logs__table .-center:after {
     content: '...';
     transform: translateY(-0.25rem);
     margin: auto;

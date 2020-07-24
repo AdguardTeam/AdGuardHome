@@ -85,23 +85,13 @@ class AutoClients extends Component {
                     showPagination
                     defaultPageSize={10}
                     minRows={5}
-                    showPageSizeOptions={false}
-                    showPageJump={false}
-                    renderTotalPagesCount={() => false}
-                    previousText={
-                        <svg className="icons icon--24 icon--gray w-100 h-100">
-                            <use xlinkHref="#arrow-left" />
-                        </svg>}
-                    nextText={
-                        <svg className="icons icon--24 icon--gray w-100 h-100">
-                            <use xlinkHref="#arrow-right" />
-                        </svg>}
-                    loadingText={t('loading_table_status')}
-                    pageText=''
-                    ofText=''
+                    ofText="/"
+                    previousText={t('previous_btn')}
+                    nextText={t('next_btn')}
+                    pageText={t('page_table_footer_text')}
                     rowsText={t('rows_table_footer_text')}
+                    loadingText={t('loading_table_status')}
                     noDataText={t('clients_not_found')}
-                    getPaginationProps={() => ({ className: 'custom-pagination' })}
                 />
             </Card>
         );
