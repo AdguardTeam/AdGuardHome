@@ -58,8 +58,7 @@
     width: 100%;
 }
 
-.logs__text--wrap,
-.logs__text--whois {
+.logs__text--wrap {
     line-height: 1.4;
     white-space: normal;
 }
@@ -71,6 +70,7 @@
 
 .logs__text--whois {
     line-height: 1.2;
+    color: #9aa0ac;
 }
 
 .logs__row .tooltip-custom {

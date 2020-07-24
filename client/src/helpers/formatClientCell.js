@@ -31,10 +31,11 @@ export const formatClientCell = (row, isDetailed = false, isLogs = true) => {
 
     if (info) {
         const { name, whois_info } = info;
+        const whoisAvailable = whois_info && Object.keys(whois_info).length > 0;
 
         if (name) {
             if (isLogs) {
-                nameContainer = !whois_info && isDetailed
+                nameContainer = !whoisAvailable && isDetailed
                     ? (
                         <small title={value}>{value}</small>
                     ) : (
@@ -54,7 +55,7 @@ export const formatClientCell = (row, isDetailed = false, isLogs = true) => {
             }
         }
 
-        if (whois_info && isDetailed) {
+        if (whoisAvailable && isDetailed) {
             whoisContainer = (
                 <div className="logs__text logs__text--wrap logs__text--whois">
                     {getFormattedWhois(whois_info)}
