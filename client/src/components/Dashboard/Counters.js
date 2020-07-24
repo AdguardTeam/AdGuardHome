@@ -21,7 +21,7 @@ const Row = ({
             <Trans components={translationComponents}>{label}</Trans>
             <Tooltip content={tooltipTitle} placement="top"
                      className="tooltip-container tooltip-custom--narrow text-center">
-                <svg className="icons icon--20 icon--lightgray ml-1">
+                <svg className="icons icon--20 icon--lightgray ml-2">
                     <use xlinkHref="#question" />
                 </svg>
             </Tooltip>

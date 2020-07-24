@@ -2,7 +2,12 @@ import React from 'react';
 import TooltipTrigger from 'react-popper-tooltip';
 import propTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
-import { HIDE_TOOLTIP_DELAY } from '../../helpers/constants';
+
+import {
+    HIDE_TOOLTIP_DELAY,
+    HIDE_TOOLTIP_CLICK_DELAY,
+    MEDIUM_SCREEN_SIZE,
+} from '../../helpers/constants';
 import 'react-popper-tooltip/dist/styles.css';
 import './Tooltip.css';
 
@@ -16,27 +21,42 @@ const Tooltip = ({
     delayHide = HIDE_TOOLTIP_DELAY,
 }) => {
     const { t } = useTranslation();
+    let triggerValue = trigger;
+    let delayValue = delayHide;
 
-    return <TooltipTrigger
-        placement={placement}
-        trigger={trigger}
-        delayHide={delayHide}
-        tooltip={({
-            tooltipRef,
-            getTooltipProps,
-        }) => <div {...getTooltipProps({
-            ref: tooltipRef,
-            className,
-        })}>
-            {typeof content === 'string' ? t(content) : content}
-        </div>
-        }>{({ getTriggerProps, triggerRef }) => <span
-        {...getTriggerProps({
-            ref: triggerRef,
-            className: triggerClass,
-        })}
-    >{children}</span>}
-    </TooltipTrigger>;
+    if (window.matchMedia(`(max-width: ${MEDIUM_SCREEN_SIZE}px)`).matches) {
+        triggerValue = 'click';
+        delayValue = HIDE_TOOLTIP_CLICK_DELAY;
+    }
+
+    return (
+        <TooltipTrigger
+            placement={placement}
+            trigger={triggerValue}
+            delayHide={delayValue}
+            tooltip={({ tooltipRef, getTooltipProps }) => (
+                <div
+                    {...getTooltipProps({
+                        ref: tooltipRef,
+                        className,
+                    })}
+                >
+                    {typeof content === 'string' ? t(content) : content}
+                </div>
+            )}
+        >
+            {({ getTriggerProps, triggerRef }) => (
+                <span
+                    {...getTriggerProps({
+                        ref: triggerRef,
+                        className: triggerClass,
+                    })}
+                >
+                    {children}
+                </span>
+            )}
+        </TooltipTrigger>
+    );
 };
 
 Tooltip.propTypes = {
