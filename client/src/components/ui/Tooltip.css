@@ -1,5 +1,11 @@
+.tooltip-container {
+    border: 0;
+    padding: 0.7rem;
+    box-shadow: 1px 1px 6px rgba(0, 0, 0, 0.2);
+}
+
 .tooltip-custom--narrow {
-    max-width: 13.75rem;
+    max-width: 14rem;
 }
 
 .tooltip-custom--wide {
