@@ -134,7 +134,9 @@ lint-go:
 	golangci-lint run
 
 test:
-	@echo Running unit-tests
+	@echo Running JS unit-tests
+	npm run test --prefix client
+	@echo Running Go unit-tests
 	go test -race -v -bench=. -coverprofile=coverage.txt -covermode=atomic ./...
 
 ci: dependencies client test
