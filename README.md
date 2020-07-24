@@ -230,7 +230,7 @@ There are three options how you can install an unstable version:
 
 There are three options how you can install an unstable version.
 
-1. You can either install a beta version of AdGuard Home which we update periodically.
+1. You can either install a beta or edge version of AdGuard Home which we update periodically. If you're already using stable version of AdGuard Home, just replace the executable with a new one.
 2. You can use the Docker image from the `edge` tag, which is synced with the repo master branch.
 3. You can install AdGuard Home from `beta` or `edge` channels on the Snap Store.
 
