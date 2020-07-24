@@ -143,10 +143,11 @@ const Form = (props) => {
     const normalizeOnBlur = (data) => data.trim();
 
     return (
-        <form className="d-flex flex-wrap form-control--container"
-              onSubmit={(e) => {
-                  e.preventDefault();
-              }}
+        <form
+            className="d-flex flex-wrap form-control--container"
+            onSubmit={(e) => {
+                e.preventDefault();
+            }}
         >
             <div className="field__search">
                 <Field
@@ -166,13 +167,21 @@ const Form = (props) => {
                 <Field
                     name={FORM_NAMES.response_status}
                     component="select"
-                    className={classNames('form-control custom-select custom-select--logs custom-select__arrow--left ml-small form-control--transparent', responseStatusClass)}
+                    className={classNames('form-control custom-select custom-select--logs custom-select__arrow--left form-control--transparent', responseStatusClass)}
                 >
                     {Object.values(RESPONSE_FILTER)
                         .map(({
                             query, label, disabled,
-                        }) => <option key={label} value={query}
-                                      disabled={disabled}>{t(label)}</option>)}
+                        }) => (
+                            <option
+                                key={label}
+                                value={query}
+                                disabled={disabled}
+                            >
+                                {t(label)}
+                            </option>
+                        ))
+                    }
                 </Field>
             </div>
         </form>

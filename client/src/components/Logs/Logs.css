@@ -437,12 +437,13 @@
 }
 
 .custom-select__arrow--left {
-    background: #fff url('./chevron-down.svg') no-repeat left 0.2rem center;
-    background-size: 1.5rem;
+    background: #fff url('./chevron-down.svg') no-repeat;
+    background-position: 5px 9px;
+    background-size: 22px;
 }
 
 .custom-select--logs {
-    padding: 0.5rem 0.75rem 0.5rem 1.75rem !important;
+    padding: 0.5rem 0.75rem 0.5rem 2rem !important;
 }
 
 .bg--danger {
@@ -511,6 +512,8 @@
 
     .field__select {
         margin-top: 1.5rem;
+        padding-left: 24px;
+        padding-right: 24px;
     }
 }
 
