@@ -878,20 +878,28 @@ func TestIsBlockedIPAllowed(t *testing.T) {
 	a := &accessCtx{}
 	assert.True(t, a.Init([]string{"1.1.1.1", "2.2.0.0/16"}, nil, nil) == nil)
 
-	assert.True(t, !a.IsBlockedIP("1.1.1.1"))
-	assert.True(t, a.IsBlockedIP("1.1.1.2"))
-	assert.True(t, !a.IsBlockedIP("2.2.1.1"))
-	assert.True(t, a.IsBlockedIP("2.3.1.1"))
+	disallowed, _ := a.IsBlockedIP("1.1.1.1")
+	assert.False(t, disallowed)
+	disallowed, _ = a.IsBlockedIP("1.1.1.2")
+	assert.True(t, disallowed)
+	disallowed, _ = a.IsBlockedIP("2.2.1.1")
+	assert.False(t, disallowed)
+	disallowed, _ = a.IsBlockedIP("2.3.1.1")
+	assert.True(t, disallowed)
 }
 
 func TestIsBlockedIPDisallowed(t *testing.T) {
 	a := &accessCtx{}
 	assert.True(t, a.Init(nil, []string{"1.1.1.1", "2.2.0.0/16"}, nil) == nil)
 
-	assert.True(t, a.IsBlockedIP("1.1.1.1"))
-	assert.True(t, !a.IsBlockedIP("1.1.1.2"))
-	assert.True(t, a.IsBlockedIP("2.2.1.1"))
-	assert.True(t, !a.IsBlockedIP("2.3.1.1"))
+	disallowed, _ := a.IsBlockedIP("1.1.1.1")
+	assert.True(t, disallowed)
+	disallowed, _ = a.IsBlockedIP("1.1.1.2")
+	assert.False(t, disallowed)
+	disallowed, _ = a.IsBlockedIP("2.2.1.1")
+	assert.True(t, disallowed)
+	disallowed, _ = a.IsBlockedIP("2.3.1.1")
+	assert.False(t, disallowed)
 }
 
 func TestIsBlockedIPBlockedDomain(t *testing.T) {

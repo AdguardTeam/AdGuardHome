@@ -298,3 +298,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		p.ServeHTTP(w, r)
 	}
 }
+
+// IsBlockedIP - return TRUE if this client should be blocked
+func (s *Server) IsBlockedIP(ip string) (bool, string) {
+	return s.access.IsBlockedIP(ip)
+}

@@ -1757,7 +1757,57 @@ components:
             properties:
                 1.2.3.4:
                     items:
-                        $ref: "#/components/schemas/Client"
+                        $ref: "#/components/schemas/ClientFindSubEntry"
+
+        ClientFindSubEntry:
+            type: object
+            properties:
+                name:
+                    type: string
+                    description: Name
+                    example: localhost
+                ids:
+                    type: array
+                    description: IP, CIDR or MAC address
+                    items:
+                        type: string
+                use_global_settings:
+                    type: boolean
+                filtering_enabled:
+                    type: boolean
+                parental_enabled:
+                    type: boolean
+                safebrowsing_enabled:
+                    type: boolean
+                safesearch_enabled:
+                    type: boolean
+                use_global_blocked_services:
+                    type: boolean
+                blocked_services:
+                    type: array
+                    items:
+                        type: string
+                upstreams:
+                    type: array
+                    items:
+                        type: string
+                whois_info:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/WhoisInfo"
+                disallowed:
+                    description: >
+                        * "": IP is allowed
+                        * not "", e.g. "127.0.0.0/24" - IP is disallowed by "disallowed IP list", and the string contains the matched rule (IP or CIDR)
+                        * "not-in-allowed-list" - IP is disallowed by "allowed IP list"
+                    type: string
+
+        WhoisInfo:
+            type: object
+            properties:
+                key:
+                    type: string
+
         Clients:
             type: object
             properties:

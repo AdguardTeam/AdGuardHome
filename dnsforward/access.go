@@ -80,43 +80,43 @@ func processIPCIDRArray(dst *map[string]bool, dstIPNet *[]net.IPNet, src []strin
 }
 
 // IsBlockedIP - return TRUE if this client should be blocked
-func (a *accessCtx) IsBlockedIP(ip string) bool {
+func (a *accessCtx) IsBlockedIP(ip string) (bool, string) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
 	if len(a.allowedClients) != 0 || len(a.allowedClientsIPNet) != 0 {
 		_, ok := a.allowedClients[ip]
 		if ok {
-			return false
+			return false, ""
 		}
 
 		if len(a.allowedClientsIPNet) != 0 {
 			ipAddr := net.ParseIP(ip)
 			for _, ipnet := range a.allowedClientsIPNet {
 				if ipnet.Contains(ipAddr) {
-					return false
+					return false, ""
 				}
 			}
 		}
 
-		return true
+		return true, "not-in-allowed-list"
 	}
 
 	_, ok := a.disallowedClients[ip]
 	if ok {
-		return true
+		return true, ip
 	}
 
 	if len(a.disallowedClientsIPNet) != 0 {
 		ipAddr := net.ParseIP(ip)
 		for _, ipnet := range a.disallowedClientsIPNet {
 			if ipnet.Contains(ipAddr) {
-				return true
+				return true, ipnet.String()
 			}
 		}
 	}
 
-	return false
+	return false, ""
 }
 
 // IsBlockedDomain - return TRUE if this domain should be blocked
