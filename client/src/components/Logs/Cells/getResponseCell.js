@@ -38,59 +38,31 @@ const getResponseCell = (row, filtering, t, isDetailed, getFilterName) => {
         })}</div>;
     };
 
-    const FILTERED_STATUS_TO_FIELDS_MAP = {
-        [FILTERED_STATUS.NOT_FILTERED_NOT_FOUND]: {
-            encryption_status: boldStatusLabel,
-            install_settings_dns: upstream,
-            elapsed: formattedElapsedMs,
-            response_code: status,
-            response_table_header: renderResponses(response),
-        },
-        [FILTERED_STATUS.FILTERED_BLOCKED_SERVICE]: {
-            encryption_status: boldStatusLabel,
-            install_settings_dns: upstream,
-            elapsed: formattedElapsedMs,
-            filter,
-            rule_label: rule,
-            response_code: status,
-            original_response: renderResponses(originalResponse),
-        },
-        [FILTERED_STATUS.NOT_FILTERED_WHITE_LIST]: {
-            encryption_status: boldStatusLabel,
-            install_settings_dns: upstream,
-            elapsed: formattedElapsedMs,
-            filter,
-            rule_label: rule,
-            response_code: status,
-        },
-        [FILTERED_STATUS.NOT_FILTERED_WHITE_LIST]: {
-            encryption_status: boldStatusLabel,
-            filter,
-            rule_label: rule,
-            response_code: status,
-        },
-        [FILTERED_STATUS.FILTERED_SAFE_SEARCH]: {
-            encryption_status: boldStatusLabel,
-            install_settings_dns: upstream,
-            elapsed: formattedElapsedMs,
-            response_code: status,
-            response_table_header: renderResponses(response),
-        },
-        [FILTERED_STATUS.FILTERED_BLACK_LIST]: {
-            encryption_status: boldStatusLabel,
-            filter,
-            rule_label: rule,
-            install_settings_dns: upstream,
-            elapsed: formattedElapsedMs,
-            response_code: status,
-            original_response: renderResponses(originalResponse),
-        },
+    const COMMON_CONTENT = {
+        encryption_status: boldStatusLabel,
+        install_settings_dns: upstream,
+        elapsed: formattedElapsedMs,
+        response_code: status,
+        filter,
+        rule_label: rule,
+        response_table_header: renderResponses(response),
+        original_response: renderResponses(originalResponse),
     };
 
-    const content = FILTERED_STATUS_TO_FIELDS_MAP[reason]
-        ? Object.entries(FILTERED_STATUS_TO_FIELDS_MAP[reason])
-        : Object.entries(FILTERED_STATUS_TO_FIELDS_MAP.NotFilteredNotFound);
+    const getTooltipContent = (reason) => {
+        switch (reason) {
+            case FILTERED_STATUS.FILTERED_BLOCKED_SERVICE:
+            case FILTERED_STATUS.NOT_FILTERED_WHITE_LIST:
+            case FILTERED_STATUS.FILTERED_BLACK_LIST: {
+                return Object.entries(COMMON_CONTENT);
+            }
+            default: {
+                return Object.entries({ ...COMMON_CONTENT, filter: '' });
+            }
+        }
+    };
 
+    const content = getTooltipContent(reason);
     const detailedInfo = isBlocked ? filter : formattedElapsedMs;
 
     return (
