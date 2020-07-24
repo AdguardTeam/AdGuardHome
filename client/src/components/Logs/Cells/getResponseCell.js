@@ -49,20 +49,9 @@ const getResponseCell = (row, filtering, t, isDetailed, getFilterName) => {
         original_response: renderResponses(originalResponse),
     };
 
-    const getTooltipContent = (reason) => {
-        switch (reason) {
-            case FILTERED_STATUS.FILTERED_BLOCKED_SERVICE:
-            case FILTERED_STATUS.NOT_FILTERED_WHITE_LIST:
-            case FILTERED_STATUS.FILTERED_BLACK_LIST: {
-                return Object.entries(COMMON_CONTENT);
-            }
-            default: {
-                return Object.entries({ ...COMMON_CONTENT, filter: '' });
-            }
-        }
-    };
-
-    const content = getTooltipContent(reason);
+    const content = rule
+        ? Object.entries(COMMON_CONTENT)
+        : Object.entries({ ...COMMON_CONTENT, filter: '' });
     const detailedInfo = isBlocked ? filter : formattedElapsedMs;
 
     return (

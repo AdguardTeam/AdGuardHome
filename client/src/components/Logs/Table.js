@@ -355,7 +355,7 @@ const Table = (props) => {
                             response_details: 'title',
                             install_settings_dns: upstream,
                             elapsed: formattedElapsedMs,
-                            filter: isBlocked ? filter : null,
+                            filter: rule ? filter : null,
                             rule_label: rule,
                             response_table_header: response?.join('\n'),
                             response_code: status,
