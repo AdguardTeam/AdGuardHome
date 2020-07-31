@@ -214,6 +214,8 @@ You may need to prepare before using these builds:
 
 You are welcome to fork this repository, make your changes and submit a pull request — https://github.com/AdguardTeam/AdGuardHome/pulls
 
+Please note, that we don't expect people to contribute to both UI and golang parts of the program simultaneously. Ideally, the golang part is implemented first, i.e. configuration, API, and the functionality itself. The UI part can be implemented later in a different pull request by a different person.
+
 <a id="test-unstable-versions"></a>
 ### Test unstable versions
 
