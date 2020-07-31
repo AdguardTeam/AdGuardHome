@@ -75,7 +75,7 @@
         "the-big-list-of-hacked-malware-web-sites": {
             "name": "The Big List of Hacked Malware Web Sites",
             "categoryId": "security",
-            "homepage": "https://github.com/hoshsadiq/adblock-nocoin-list/",
+            "homepage": "https://github.com/mitchellkrogza/The-Big-List-of-Hacked-Malware-Web-Sites",
             "source": "https://raw.githubusercontent.com/mitchellkrogza/The-Big-List-of-Hacked-Malware-Web-Sites/master/hacked-domains.list"
         },
         "scam-blocklist-by-durable-napkin": {
