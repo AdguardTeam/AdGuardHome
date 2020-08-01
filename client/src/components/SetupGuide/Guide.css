@@ -13,3 +13,17 @@
     margin-bottom: 20px;
     font-size: 15px;
 }
+
+.guide__address {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+@media screen and (min-width: 768px) {
+    .guide__address {
+        display: list-item;
+        font-size: 15px;
+    }
+}
