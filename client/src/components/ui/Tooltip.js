@@ -22,11 +22,13 @@ const Tooltip = ({
     delayHide = HIDE_TOOLTIP_DELAY,
 }) => {
     const { t } = useTranslation();
+    const touchEventsAvailable = 'ontouchstart' in window;
+
     let triggerValue = trigger;
     let delayHideValue = delayHide;
     let delayShowValue = delayShow;
 
-    if (window.matchMedia(`(max-width: ${MEDIUM_SCREEN_SIZE}px)`).matches) {
+    if (window.matchMedia(`(max-width: ${MEDIUM_SCREEN_SIZE}px)`).matches || touchEventsAvailable) {
         triggerValue = 'click';
         delayHideValue = 0;
         delayShowValue = 0;
