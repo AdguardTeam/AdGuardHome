@@ -539,3 +539,16 @@
 .loading__text {
     transform: translateY(3rem);
 }
+
+.logs__refresh {
+    position: relative;
+    top: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    margin-left: 15px;
+    background-color: transparent;
+}

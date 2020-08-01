@@ -53,7 +53,7 @@ const Form = ({
             {INPUTS_FIELDS.map(({
                 name, title, description, placeholder, validate, max,
             }) => <div className="col-12" key={name}>
-                <div className="col-7 p-0">
+                <div className="col-12 col-md-7 p-0">
                     <div className="form__group form__group--settings">
                         <label htmlFor={name}
                                className="form__label form__label--with-desc">{t(title)}</label>
