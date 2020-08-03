@@ -337,11 +337,6 @@ export const RESPONSE_FILTER = {
         query: 'processed',
         label: 'show_processed_responses',
     },
-    SPACE: {
-        query: 'all',
-        label: '',
-        disabled: true,
-    },
     BLOCKED: {
         query: 'blocked',
         label: 'show_blocked_responses',

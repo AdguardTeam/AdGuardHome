@@ -9,7 +9,7 @@ const Filters = ({ filter, refreshLogs, setIsLoading }) => (
                 <Trans>query_log</Trans>
                 <button
                     type="button"
-                    className="btn btn-icon--green ml-3 bg-transparent"
+                    className="btn btn-icon--green logs__refresh"
                     onClick={refreshLogs}
                 >
                     <svg className="icons icon--24">
