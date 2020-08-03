@@ -6,18 +6,24 @@
 .page-header--logs {
     flex-direction: row;
     align-items: flex-end;
-    margin: 2rem 0 3rem;
+    margin: 2rem 0 2.8rem;
+}
+
+.page-header--logs .page-title {
+    display: inline-flex;
+    align-items: center;
 }
 
 @media (max-width: 991px) {
     .page-header--logs {
         flex-direction: column;
         align-items: center;
-        margin-bottom: 1.5rem;
+        margin: 1.1rem 0;
     }
 
     .page-header--logs .page-title {
-        padding-bottom: 2.5rem;;
+        margin-bottom: 1.1rem;
+        font-size: 1.8rem;
     }
 }
 

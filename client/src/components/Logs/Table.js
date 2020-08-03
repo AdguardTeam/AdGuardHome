@@ -12,6 +12,7 @@ import {
     FILTERED_STATUS_TO_META_MAP,
     TABLE_DEFAULT_PAGE_SIZE,
     SCHEME_TO_PROTOCOL_MAP,
+    CUSTOM_FILTERING_RULES_ID, FILTERED_STATUS,
 } from '../../helpers/constants';
 import getDateCell from './Cells/getDateCell';
 import getDomainCell from './Cells/getDomainCell';
@@ -24,7 +25,7 @@ import {
     formatDateTime,
     formatElapsedMs,
     formatTime,
-
+    processContent,
 } from '../../helpers/helpers';
 import Loading from '../ui/Loading';
 import { getSourceData } from '../../helpers/trackers/trackers';
@@ -48,7 +49,7 @@ const Table = (props) => {
         isLoading,
     } = props;
 
-    const [t] = useTranslation();
+    const { t } = useTranslation();
 
     const toggleBlocking = (type, domain) => {
         const {
@@ -84,6 +85,27 @@ const Table = (props) => {
 
         getFilteringStatus();
     };
+
+    const getFilterName = (filters, whitelistFilters, filterId, t) => {
+        if (filterId === CUSTOM_FILTERING_RULES_ID) {
+            return t('custom_filter_rules');
+        }
+
+        const filter = filters.find((filter) => filter.id === filterId)
+            || whitelistFilters.find((filter) => filter.id === filterId);
+        let filterName = '';
+
+        if (filter) {
+            filterName = filter.name;
+        }
+
+        if (!filterName) {
+            filterName = t('unknown_filter', { filterId });
+        }
+
+        return filterName;
+    };
+
 
     const columns = [
         {
@@ -125,33 +147,30 @@ const Table = (props) => {
                 filtering,
                 t,
                 isDetailed,
+                getFilterName,
             ),
             minWidth: 150,
             maxHeight: 60,
             headerClassName: 'logs__text',
         },
         {
-            Header: () => {
-                const plainSelected = classNames('cursor--pointer', {
-                    'icon--selected': !isDetailed,
-                });
-
-                const detailedSelected = classNames('cursor--pointer', {
-                    'icon--selected': isDetailed,
-                });
-
+            Header: function Header() {
                 return <div className="d-flex justify-content-between">
                     {t('client_table_header')}
                     {<span>
                         <svg
-                            className={`icons icon--small icon--active mr-2 cursor--pointer ${plainSelected}`}
+                            className={classNames('icons icon--24 icon--green mr-2 cursor--pointer', {
+                                'icon--selected': !isDetailed,
+                            })}
                             onClick={() => toggleDetailedLogs(false)}
                         >
                             <title><Trans>compact</Trans></title>
                             <use xlinkHref='#list' />
                         </svg>
                     <svg
-                        className={`icons icon--small icon--active cursor--pointer ${detailedSelected}`}
+                        className={classNames('icons icon--24 icon--green cursor--pointer', {
+                            'icon--selected': isDetailed,
+                        })}
                         onClick={() => toggleDetailedLogs(true)}
                     >
                         <title><Trans>default</Trans></title>
@@ -216,7 +235,7 @@ const Table = (props) => {
             sortable={false}
             resizable={false}
             data={logs || []}
-            loading={isLoading}
+            loading={isLoading || processingGetLogs}
             showPageJump={false}
             showPageSizeOptions={false}
             onPageChange={changePage}
@@ -238,12 +257,12 @@ const Table = (props) => {
             getPaginationProps={() => ({ className: 'custom-pagination custom-pagination--padding' })}
             getTbodyProps={() => ({ className: 'd-block' })}
             previousText={
-                <svg className="icons icon--small icon--gray w-100 h-100 cursor--pointer">
+                <svg className="icons icon--24 icon--gray w-100 h-100 cursor--pointer">
                     <title><Trans>previous_btn</Trans></title>
                     <use xlinkHref="#arrow-left" />
                 </svg>}
             nextText={
-                <svg className="icons icon--small icon--gray w-100 h-100 cursor--pointer">
+                <svg className="icons icon--24 icon--gray w-100 h-100 cursor--pointer">
                     <title><Trans>next_btn</Trans></title>
                     <use xlinkHref="#arrow-right" />
                 </svg>}
@@ -276,6 +295,10 @@ const Table = (props) => {
                             upstream,
                             type,
                             client_proto,
+                            filterId,
+                            rule,
+                            originalResponse,
+                            status,
                         } = rowInfo.original;
 
                         const hasTracker = !!tracker;
@@ -293,22 +316,29 @@ const Table = (props) => {
                         const formattedElapsedMs = formatElapsedMs(elapsedMs, t);
                         const isFiltered = checkFiltered(reason);
 
+                        const isBlocked = reason === FILTERED_STATUS.FILTERED_BLACK_LIST
+                            || reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
+
                         const buttonType = isFiltered ? BLOCK_ACTIONS.UNBLOCK : BLOCK_ACTIONS.BLOCK;
                         const onToggleBlock = () => {
                             toggleBlocking(buttonType, domain);
                         };
 
-                        const status = t(FILTERED_STATUS_TO_META_MAP[reason]?.label || reason);
-                        const statusBlocked = <div className="bg--danger">{status}</div>;
+                        const isBlockedByResponse = originalResponse.length > 0 && isBlocked;
+                        const requestStatus = t(isBlockedByResponse ? 'blocked_by_cname_or_ip' : FILTERED_STATUS_TO_META_MAP[reason]?.label || reason);
 
                         const protocol = t(SCHEME_TO_PROTOCOL_MAP[client_proto]) || '';
 
                         const sourceData = getSourceData(tracker);
 
+                        const { filters, whitelistFilters } = filtering;
+                        const filter = getFilterName(filters, whitelistFilters, filterId, t);
+
                         const detailedData = {
                             time_table_header: formatTime(time, LONG_TIME_FORMAT),
                             date: formatDateTime(time, DEFAULT_SHORT_DATE_FORMAT_OPTIONS),
-                            encryption_status: status,
+                            encryption_status: isBlocked
+                                ? <div className="bg--danger">{requestStatus}</div> : requestStatus,
                             domain,
                             type_table_header: type,
                             protocol,
@@ -316,12 +346,19 @@ const Table = (props) => {
                             table_name: tracker?.name,
                             category_label: hasTracker && captitalizeWords(tracker.category),
                             tracker_source: hasTracker && sourceData
-                                && <a href={sourceData.url} target="_blank" rel="noopener noreferrer"
-                                   className="link--green">{sourceData.name}</a>,
+                                && <a
+                                    href={sourceData.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="link--green">{sourceData.name}
+                                </a>,
                             response_details: 'title',
                             install_settings_dns: upstream,
                             elapsed: formattedElapsedMs,
+                            filter: rule ? filter : null,
+                            rule_label: rule,
                             response_table_header: response?.join('\n'),
+                            response_code: status,
                             client_details: 'title',
                             ip_address: client,
                             name: info?.name,
@@ -330,34 +367,14 @@ const Table = (props) => {
                             network,
                             source_label: source,
                             validated_with_dnssec: dnssec_enabled ? Boolean(answer_dnssec) : false,
+                            original_response: originalResponse?.join('\n'),
                             [buttonType]: <div onClick={onToggleBlock}
-                                               className="title--border bg--danger text-center">{t(buttonType)}</div>,
+                                               className={classNames('title--border text-center', {
+                                                   'bg--danger': isBlocked,
+                                               })}>{t(buttonType)}</div>,
                         };
 
-                        const detailedDataBlocked = {
-                            time_table_header: formatTime(time, LONG_TIME_FORMAT),
-                            date: formatDateTime(time, DEFAULT_SHORT_DATE_FORMAT_OPTIONS),
-                            encryption_status: statusBlocked,
-                            domain,
-                            type_table_header: type,
-                            protocol,
-                            known_tracker: 'title',
-                            table_name: tracker?.name,
-                            category_label: hasTracker && captitalizeWords(tracker.category),
-                            source_label: hasTracker && sourceData
-                                && <a href={sourceData.url} target="_blank" rel="noopener noreferrer"
-                                      className="link--green">{sourceData.name}</a>,
-                            response_details: 'title',
-                            install_settings_dns: upstream,
-                            elapsed: formattedElapsedMs,
-                            response_table_header: response?.join('\n'),
-                            [buttonType]: <div onClick={onToggleBlock}
-                                               className="title--border text-center">{t(buttonType)}</div>,
-                        };
-
-                        const detailedDataCurrent = isFiltered ? detailedDataBlocked : detailedData;
-
-                        setDetailedDataCurrent(detailedDataCurrent);
+                        setDetailedDataCurrent(processContent(detailedData));
                         setButtonType(buttonType);
                         setModalOpened(true);
                     }

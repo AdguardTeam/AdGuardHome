@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid';
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import { formatClientCell } from '../../../helpers/formatClientCell';
-import getHintElement from './getHintElement';
+import getIconTooltip from './getIconTooltip';
 import { checkFiltered } from '../../../helpers/helpers';
 import { BLOCK_ACTIONS } from '../../../helpers/constants';
 
@@ -16,6 +16,7 @@ const getClientCell = ({
 
     const autoClient = autoClients.find((autoClient) => autoClient.name === client);
     const source = autoClient?.source;
+    const whoisAvailable = whois_info && Object.keys(whois_info).length > 0;
 
     const id = nanoid();
 
@@ -33,11 +34,11 @@ const getClientCell = ({
     const isFiltered = checkFiltered(reason);
 
     const nameClass = classNames('w-90 o-hidden d-flex flex-column', {
-        'mt-2': isDetailed && !name,
+        'mt-2': isDetailed && !name && !whoisAvailable,
         'white-space--nowrap': isDetailed,
     });
 
-    const hintClass = classNames('icons mr-4 icon--small cursor--pointer icon--light-gray', {
+    const hintClass = classNames('icons mr-4 icon--24 icon--lightgray', {
         'my-3': isDetailed,
     });
 
@@ -68,7 +69,7 @@ const getClientCell = ({
 
     return (
         <div className="logs__row o-hidden h-100">
-            {processedData && getHintElement({
+            {getIconTooltip({
                 className: hintClass,
                 columnClass: 'grid grid--limited',
                 tooltipClass: 'px-5 pb-5 pt-4 mw-75',
@@ -78,12 +79,19 @@ const getClientCell = ({
                 content: processedData,
                 placement: 'bottom',
             })}
-            <div
-                className={nameClass}>
-                <div data-tip={true} data-for={id}>{formatClientCell(row, t, isDetailed)}</div>
-                {isDetailed && name
-                && <div className="detailed-info d-none d-sm-block logs__text"
-                        title={name}>{name}</div>}
+            <div className={nameClass}>
+                <div data-tip={true} data-for={id}>
+                    {formatClientCell(row, isDetailed)}
+                </div>
+
+                {isDetailed && name && !whoisAvailable && (
+                    <div
+                        className="detailed-info d-none d-sm-block logs__text"
+                        title={name}
+                    >
+                        {name}
+                    </div>
+                )}
             </div>
             {renderBlockingButton(isFiltered, domain)}
         </div>

@@ -69,6 +69,16 @@ func (a rewritesArray) Less(i, j int) bool {
 
 // Prepare entry for use
 func (r *RewriteEntry) prepare() {
+	if r.Answer == "AAAA" {
+		r.IP = nil
+		r.Type = dns.TypeAAAA
+		return
+	} else if r.Answer == "A" {
+		r.IP = nil
+		r.Type = dns.TypeA
+		return
+	}
+
 	ip := net.ParseIP(r.Answer)
 	if ip == nil {
 		r.Type = dns.TypeCNAME

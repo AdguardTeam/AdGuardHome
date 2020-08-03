@@ -14,9 +14,6 @@
     <a href="https://twitter.com/AdGuard">Twitter</a> |
     <a href="https://t.me/adguard_en">Telegram</a>
     <br /><br />
-    <a href="https://travis-ci.com/AdguardTeam/AdGuardHome">
-      <img src="https://travis-ci.com/AdguardTeam/AdGuardHome.svg" alt="Build status" />
-    </a>
     <a href="https://codecov.io/github/AdguardTeam/AdGuardHome?branch=master">
       <img src="https://img.shields.io/codecov/c/github/AdguardTeam/AdGuardHome/master.svg" alt="Code Coverage" />
     </a>
@@ -63,6 +60,7 @@ It operates as a DNS server that re-routes tracking domains to a "black hole," t
     * [Test unstable versions](#test-unstable-versions)
     * [Reporting issues](#reporting-issues)
     * [Help with translations](#translate)
+    * [Other](#help-other)
 * [Projects that use AdGuardHome](#uses)
 * [Acknowledgments](#acknowledgments)
 
@@ -152,17 +150,14 @@ Is there a chance to handle this in the future? DNS will never be enough to do t
 
 ### Prerequisites
 
-You will need:
+Run `make init` to prepare the development environment.
+
+You will need this to build AdGuard Home:
 
  * [go](https://golang.org/dl/) v1.14 or later.
  * [node.js](https://nodejs.org/en/download/) v10 or later.
-
-You can either install them via the provided links or use [brew.sh](https://brew.sh/) if you're on Mac:
-
-```bash
-brew install go node
-```
-
+ * [golangci-lint](https://github.com/golangci/golangci-lint)
+ 
 ### Building
 
 Open Terminal and execute these commands:
@@ -173,44 +168,92 @@ cd AdGuardHome
 make
 ```
 
-#### (For devs) Upload translations
+Check the [`Makefile`](https://github.com/AdguardTeam/AdGuardHome/blob/master/Makefile) to learn about other commands.
+
+**Building for a different platform.** You can build AdGuard for any OS/ARCH just like any other Golang project.
+In order to do this, specify `GOOS` and `GOARCH` env variables before running make.
+
+For example:
 ```
-node upload.js
+GOOS=linux GOARCH=arm64 make
 ```
 
-#### (For devs) Download translations
-```
-node download.js
-```
+#### Preparing release
+
+You'll need this to prepare a release build:
+
+* [goreleaser](https://goreleaser.com/)
+* [snapcraft](https://snapcraft.io/)
+
+Commands:
+
+* `make release` - builds a snapshot build (CHANNEL=edge)
+* `CHANNEL=beta make release` - builds beta version, tag is mandatory.
+* `CHANNEL=release make release` - builds release version, tag is mandatory.
+
+#### Docker image
+
+* Run `make docker` to build the Docker image locally.
+* Run `make docker-multi-arch` to build the multi-arch Docker image (the one that we publish to Docker Hub).
+
+Please note, that we're using [Docker Buildx](https://docs.docker.com/buildx/working-with-buildx/) to build our official image.
+
+You may need to prepare before using these builds:
+
+* (Linux-only) Install Qemu: `docker run --rm --privileged multiarch/qemu-user-static --reset -p yes --credential yes`
+* Prepare builder: `docker buildx create --name buildx-builder --driver docker-container --use`
+
+
+### Resources that we update periodically
+
+* `scripts/translations`
+* `scripts/whotracksme`
 
 <a id="contributing"></a>
 ## Contributing
 
 You are welcome to fork this repository, make your changes and submit a pull request — https://github.com/AdguardTeam/AdGuardHome/pulls
 
+Please note, that we don't expect people to contribute to both UI and golang parts of the program simultaneously. Ideally, the golang part is implemented first, i.e. configuration, API, and the functionality itself. The UI part can be implemented later in a different pull request by a different person.
+
 <a id="test-unstable-versions"></a>
 ### Test unstable versions
 
+There are two update channels that you can use:
+
+* `beta` - beta version of AdGuard Home. More or less stable versions.
+* `edge` - the newest version of AdGuard Home. New updates are pushed to this channel daily and it is the closest to the master branch you can get.
+
+There are three options how you can install an unstable version:
+
+1. [Snap Store](https://snapcraft.io/adguard-home) -- look for "beta" and "edge" channels there.
+2. [Docker Hub](https://hub.docker.com/r/adguard/adguardhome) -- look for "beta" and "edge" tags there.
+3. Standalone builds. Look for the available builds below.
+
 There are three options how you can install an unstable version.
 
-1. You can either install a beta version of AdGuard Home which we update periodically.
+1. You can either install a beta or edge version of AdGuard Home which we update periodically. If you're already using stable version of AdGuard Home, just replace the executable with a new one.
 2. You can use the Docker image from the `edge` tag, which is synced with the repo master branch.
 3. You can install AdGuard Home from `beta` or `edge` channels on the Snap Store.
 
-* Beta builds
-    * [Raspberry Pi (32-bit ARMv6)](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_arm.tar.gz)
-    * [MacOS](https://static.adguard.com/adguardhome/beta/AdGuardHome_MacOS.zip)
-    * [Windows 64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_Windows_amd64.zip)
-    * [Windows 32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_Windows_386.zip)
-    * [Linux 64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_amd64.tar.gz)
-    * [Linux 32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_386.tar.gz)
-    * [FreeBSD 64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_amd64.tar.gz)
-    * [Linux 64-bit ARM](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_arm64.tar.gz)
-    * [Linux 32-bit ARMv5](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv5.tar.gz)
-    * [MIPS](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mips.tar.gz)
-    * [MIPSLE](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mipsle.tar.gz)
-* [Docker Hub](https://hub.docker.com/r/adguard/adguardhome)
-* [Snap Store](https://snapcraft.io/adguard-home)
+* Beta channel builds
+    * Linux: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_amd64.tar.gz), [32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_386.tar.gz)
+    * Linux ARM: [32-bit ARMv6](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv6.tar.gz) (recommended for Rapsberry Pi), [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_arm64.tar.gz), [32-bit ARMv5](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv5.tar.gz), [32-bit ARMv7](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv7.tar.gz)
+    * Linux MIPS: [32-bit MIPS](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mips_softfloat.tar.gz), [32-bit MIPSLE](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mipsle_softfloat.tar.gz), [64-bit MIPS](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mips64_softfloat.tar.gz), [64-bit MIPSLE](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mips64le_softfloat.tar.gz)
+    * Windows: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_windows_amd64.zip), [32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_windows_386.zip)
+    * MacOS: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_darwin_amd64.zip), [32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_darwin_386.zip)
+    * FreeBSD: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_amd64.tar.gz), [32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_386.tar.gz)
+    * FreeBSD ARM: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_arm64.tar.gz), [32-bit ARMv5](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_armv5.tar.gz), [32-bit ARMv6](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_armv6.tar.gz), [32-bit ARMv7](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_armv7.tar.gz)
+
+* Edge channel builds
+    * Linux: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_amd64.tar.gz), [32-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_386.tar.gz)
+    * Linux ARM: [32-bit ARMv6](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_armv6.tar.gz) (recommended for Rapsberry Pi), [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_arm64.tar.gz), [32-bit ARMv5](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_armv5.tar.gz), [32-bit ARMv7](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_armv7.tar.gz)
+    * Linux MIPS: [32-bit MIPS](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_mips_softfloat.tar.gz), [32-bit MIPSLE](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_mipsle_softfloat.tar.gz), [64-bit MIPS](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_mips64_softfloat.tar.gz), [64-bit MIPSLE](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_mips64le_softfloat.tar.gz)
+    * Windows: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_windows_amd64.zip), [32-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_windows_386.zip)
+    * MacOS: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_darwin_amd64.zip), [32-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_darwin_386.zip)
+    * FreeBSD: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_amd64.tar.gz), [32-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_386.tar.gz)
+    * FreeBSD ARM: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_arm64.tar.gz), [32-bit ARMv5](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_armv5.tar.gz), [32-bit ARMv6](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_armv6.tar.gz), [32-bit ARMv7](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_armv7.tar.gz)
+
 
 <a id="reporting-issues"></a>
 ### Report issues
@@ -224,6 +267,15 @@ If you want to help with AdGuard Home translations, please learn more about tran
 
 Here is a link to AdGuard Home project: https://crowdin.com/project/adguard-applications/en#/adguard-home
 
+<a id="help-other"></a>
+### Other
+
+Here's what you can also do to contribute:
+
+1. [Look for issues](https://github.com/AdguardTeam/AdGuardHome/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22+) marked as "help wanted".
+2. Actualize the list of *Blocked services*. It it can be found in [dnsfilter/blocked_services.go](https://github.com/AdguardTeam/AdGuardHome/blob/master/dnsfilter/blocked_services.go).
+3. Actualize the list of known *trackers*. It it can be found in [client/src/helpers/trackers/adguard.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/src/helpers/trackers/adguard.json).
+4. Actualize the list of vetted *blocklists*. It it can be found in [client/src/helpers/filters/filters.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/src/helpers/filters/filters.json).
 
 <a id="uses"></a>
 ## Projects that use AdGuardHome
@@ -255,5 +307,3 @@ This software wouldn't have been possible without:
 You might have seen that [CoreDNS](https://coredns.io) was mentioned here before — we've stopped using it in AdGuardHome. While we still use it on our servers for [AdGuard DNS](https://adguard.com/adguard-dns/overview.html) service, it seemed like an overkill for Home as it impeded with Home features that we plan to implement.
 
 For a full list of all node.js packages in use, please take a look at [client/package.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/package.json) file.
-
-For info on which exact domains that are blocked by the *Blocked services* function, it can be found at [dnsfilter/blocked_services.go](https://github.com/AdguardTeam/AdGuardHome/blob/master/dnsfilter/blocked_services.go)

@@ -1,31 +1,85 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { Trans, withTranslation } from 'react-i18next';
+import propTypes from 'prop-types';
+import { Trans, useTranslation } from 'react-i18next';
 import round from 'lodash/round';
-
+import { shallowEqual, useSelector } from 'react-redux';
 import Card from '../ui/Card';
-import Tooltip from '../ui/Tooltip';
 import { formatNumber } from '../../helpers/helpers';
+import LogsSearchLink from '../ui/LogsSearchLink';
+import { RESPONSE_FILTER } from '../../helpers/constants';
+import Tooltip from '../ui/Tooltip';
 
-const tooltipType = 'tooltip-custom--narrow';
+const Row = ({
+    label, count, response_status, tooltipTitle, translationComponents,
+}) => {
+    const content = response_status
+        ? <LogsSearchLink response_status={response_status}>{formatNumber(count)}</LogsSearchLink>
+        : count;
 
-const Counters = (props) => {
+    return <tr key={label}>
+        <td>
+            <Trans components={translationComponents}>{label}</Trans>
+            <Tooltip content={tooltipTitle} placement="top"
+                     className="tooltip-container tooltip-custom--narrow text-center">
+                <svg className="icons icon--20 icon--lightgray ml-2">
+                    <use xlinkHref="#question" />
+                </svg>
+            </Tooltip>
+        </td>
+        <td className="text-right"><strong>{content}</strong></td>
+    </tr>;
+};
+
+const Counters = ({ refreshButton, subtitle }) => {
     const {
-        t,
         interval,
-        refreshButton,
-        subtitle,
-        dnsQueries,
-        blockedFiltering,
-        replacedSafebrowsing,
-        replacedParental,
-        replacedSafesearch,
+        numDnsQueries,
+        numBlockedFiltering,
+        numReplacedSafebrowsing,
+        numReplacedParental,
+        numReplacedSafesearch,
         avgProcessingTime,
-    } = props;
+    } = useSelector((state) => state.stats, shallowEqual);
+    const { t } = useTranslation();
 
-    const tooltipTitle = interval === 1
-        ? t('number_of_dns_query_24_hours')
-        : t('number_of_dns_query_days', { count: interval });
+    const rows = [
+        {
+            label: 'dns_query',
+            count: numDnsQueries,
+            tooltipTitle: interval === 1 ? 'number_of_dns_query_24_hours' : t('number_of_dns_query_days', { count: interval }),
+            response_status: RESPONSE_FILTER.ALL.query,
+        },
+        {
+            label: 'blocked_by',
+            count: numBlockedFiltering,
+            tooltipTitle: 'number_of_dns_query_blocked_24_hours',
+            response_status: RESPONSE_FILTER.BLOCKED.query,
+            translationComponents: [<a href="#filters" key="0">link</a>],
+        },
+        {
+            label: 'stats_malware_phishing',
+            count: numReplacedSafebrowsing,
+            tooltipTitle: 'number_of_dns_query_blocked_24_hours_by_sec',
+            response_status: RESPONSE_FILTER.BLOCKED_THREATS.query,
+        },
+        {
+            label: 'stats_adult',
+            count: numReplacedParental,
+            tooltipTitle: 'number_of_dns_query_blocked_24_hours_adult',
+            response_status: RESPONSE_FILTER.BLOCKED_ADULT_WEBSITES.query,
+        },
+        {
+            label: 'enforced_save_search',
+            count: numReplacedSafesearch,
+            tooltipTitle: 'number_of_dns_query_to_safe_search',
+            response_status: RESPONSE_FILTER.SAFE_SEARCH.query,
+        },
+        {
+            label: 'average_processing_time',
+            count: avgProcessingTime ? `${round(avgProcessingTime)} ms` : 0,
+            tooltipTitle: 'average_processing_time_hint',
+        },
+    ];
 
     return (
         <Card
@@ -35,104 +89,23 @@ const Counters = (props) => {
             refresh={refreshButton}
         >
             <table className="table card-table">
-                <tbody>
-                    <tr>
-                        <td>
-                            <Trans>dns_query</Trans>
-                            <Tooltip text={tooltipTitle} type={tooltipType} />
-                        </td>
-                        <td className="text-right">
-                            <span className="text-muted">
-                                {formatNumber(dnsQueries)}
-                            </span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <Trans components={[<a href="#filters" key="0">link</a>]}>
-                                blocked_by
-                            </Trans>
-                            <Tooltip
-                                text={t('number_of_dns_query_blocked_24_hours')}
-                                type={tooltipType}
-                            />
-                        </td>
-                        <td className="text-right">
-                            <span className="text-muted">
-                                {formatNumber(blockedFiltering)}
-                            </span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <Trans>stats_malware_phishing</Trans>
-                            <Tooltip
-                                text={t('number_of_dns_query_blocked_24_hours_by_sec')}
-                                type={tooltipType}
-                            />
-                        </td>
-                        <td className="text-right">
-                            <span className="text-muted">
-                                {formatNumber(replacedSafebrowsing)}
-                            </span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <Trans>stats_adult</Trans>
-                            <Tooltip
-                                text={t('number_of_dns_query_blocked_24_hours_adult')}
-                                type={tooltipType}
-                            />
-                        </td>
-                        <td className="text-right">
-                            <span className="text-muted">
-                                {formatNumber(replacedParental)}
-                            </span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <Trans>enforced_save_search</Trans>
-                            <Tooltip
-                                text={t('number_of_dns_query_to_safe_search')}
-                                type={tooltipType}
-                            />
-                        </td>
-                        <td className="text-right">
-                            <span className="text-muted">
-                                {formatNumber(replacedSafesearch)}
-                            </span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <Trans>average_processing_time</Trans>
-                            <Tooltip text={t('average_processing_time_hint')} type={tooltipType} />
-                        </td>
-                        <td className="text-right">
-                            <span className="text-muted">
-                                {avgProcessingTime ? `${round(avgProcessingTime)} ms` : 0}
-                            </span>
-                        </td>
-                    </tr>
-                </tbody>
+                <tbody>{rows.map(Row)}</tbody>
             </table>
         </Card>
     );
 };
 
-Counters.propTypes = {
-    dnsQueries: PropTypes.number.isRequired,
-    blockedFiltering: PropTypes.number.isRequired,
-    replacedSafebrowsing: PropTypes.number.isRequired,
-    replacedParental: PropTypes.number.isRequired,
-    replacedSafesearch: PropTypes.number.isRequired,
-    avgProcessingTime: PropTypes.number.isRequired,
-    refreshButton: PropTypes.node.isRequired,
-    subtitle: PropTypes.string.isRequired,
-    interval: PropTypes.number.isRequired,
-    t: PropTypes.func.isRequired,
+Row.propTypes = {
+    label: propTypes.string.isRequired,
+    count: propTypes.string.isRequired,
+    response_status: propTypes.string,
+    tooltipTitle: propTypes.string.isRequired,
+    translationComponents: propTypes.arrayOf(propTypes.element),
 };
 
-export default withTranslation()(Counters);
+Counters.propTypes = {
+    refreshButton: propTypes.node.isRequired,
+    subtitle: propTypes.string.isRequired,
+};
+
+export default Counters;

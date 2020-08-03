@@ -10,10 +10,8 @@ import {
     renderSelectField,
     renderRadioField,
     toNumber,
-    port,
-    portTLS,
-    isSafePort,
 } from '../../../helpers/form';
+import { validateIsSafePort, validatePort, validatePortTLS } from '../../../helpers/validators';
 import i18n from '../../../i18n';
 import KeyStatus from './KeyStatus';
 import CertificateStatus from './CertificateStatus';
@@ -46,7 +44,8 @@ const clearFields = (change, setTlsConfig, t) => {
     };
     // eslint-disable-next-line no-alert
     if (window.confirm(t('encryption_reset'))) {
-        Object.keys(fields).forEach((field) => change(field, fields[field]));
+        Object.keys(fields)
+            .forEach((field) => change(field, fields[field]));
         setTlsConfig(fields);
     }
 };
@@ -158,7 +157,7 @@ let Form = (props) => {
                             type="number"
                             className="form-control"
                             placeholder={t('encryption_https')}
-                            validate={[port, isSafePort]}
+                            validate={[validatePort, validateIsSafePort]}
                             normalize={toNumber}
                             onChange={handleChange}
                             disabled={!isEnabled}
@@ -180,7 +179,7 @@ let Form = (props) => {
                             type="number"
                             className="form-control"
                             placeholder={t('encryption_dot')}
-                            validate={[portTLS]}
+                            validate={[validatePortTLS]}
                             normalize={toNumber}
                             onChange={handleChange}
                             disabled={!isEnabled}

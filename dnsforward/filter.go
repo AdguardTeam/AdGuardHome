@@ -54,8 +54,12 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 		// log.Tracef("Host %s is filtered, reason - '%s', matched rule: '%s'", host, res.Reason, res.Rule)
 		d.Res = s.genDNSFilterMessage(d, &res)
 
-	} else if (res.Reason == dnsfilter.ReasonRewrite || res.Reason == dnsfilter.RewriteEtcHosts) &&
-		len(res.IPList) != 0 {
+	} else if res.Reason == dnsfilter.ReasonRewrite && len(res.CanonName) != 0 && len(res.IPList) == 0 {
+		ctx.origQuestion = d.Req.Question[0]
+		// resolve canonical name, not the original host name
+		d.Req.Question[0].Name = dns.Fqdn(res.CanonName)
+
+	} else if res.Reason == dnsfilter.ReasonRewrite || res.Reason == dnsfilter.RewriteEtcHosts {
 		resp := s.makeResponse(req)
 
 		name := host
@@ -65,12 +69,11 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 		}
 
 		for _, ip := range res.IPList {
-			ip4 := ip.To4()
-			if req.Question[0].Qtype == dns.TypeA && ip4 != nil {
-				a := s.genAAnswer(req, ip4)
+			if req.Question[0].Qtype == dns.TypeA {
+				a := s.genAAnswer(req, ip.To4())
 				a.Hdr.Name = dns.Fqdn(name)
 				resp.Answer = append(resp.Answer, a)
-			} else if req.Question[0].Qtype == dns.TypeAAAA && ip4 == nil {
+			} else if req.Question[0].Qtype == dns.TypeAAAA {
 				a := s.genAAAAAnswer(req, ip)
 				a.Hdr.Name = dns.Fqdn(name)
 				resp.Answer = append(resp.Answer, a)
@@ -78,11 +81,6 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 		}
 
 		d.Res = resp
-
-	} else if res.Reason == dnsfilter.ReasonRewrite && len(res.CanonName) != 0 {
-		ctx.origQuestion = d.Req.Question[0]
-		// resolve canonical name, not the original host name
-		d.Req.Question[0].Name = dns.Fqdn(res.CanonName)
 
 	} else if res.Reason == dnsfilter.RewriteEtcHosts && len(res.ReverseHost) != 0 {
 

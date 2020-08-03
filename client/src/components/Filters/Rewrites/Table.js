@@ -62,23 +62,13 @@ class Table extends Component {
                 showPagination
                 defaultPageSize={10}
                 minRows={5}
-                previousText={
-                    <svg className="icons icon--small icon--gray">
-                        <use xlinkHref="#arrow-left" />
-                    </svg>}
-                nextText={
-                    <svg className="icons icon--small icon--gray">
-                        <use xlinkHref="#arrow-right" />
-                    </svg>}
-                loadingText={t('loading_table_status')}
-                pageText=''
-                ofText=''
+                ofText="/"
+                previousText={t('previous_btn')}
+                nextText={t('next_btn')}
+                pageText={t('page_table_footer_text')}
                 rowsText={t('rows_table_footer_text')}
+                loadingText={t('loading_table_status')}
                 noDataText={t('rewrite_not_found')}
-                showPageSizeOptions={false}
-                showPageJump={false}
-                renderTotalPagesCount={() => false}
-                getPaginationProps={() => ({ className: 'custom-pagination' })}
             />
         );
     }

@@ -6,9 +6,10 @@ import { Trans, useTranslation } from 'react-i18next';
 import classnames from 'classnames';
 
 import Examples from './Examples';
-import { renderRadioField } from '../../../../helpers/form';
+import { renderRadioField, renderTextareaField } from '../../../../helpers/form';
 import { DNS_REQUEST_OPTIONS, FORM_NAME } from '../../../../helpers/constants';
 import { testUpstream } from '../../../../actions';
+import { removeEmptyLines } from '../../../../helpers/helpers';
 
 const getInputFields = () => [{
     // eslint-disable-next-line react/display-name
@@ -17,9 +18,10 @@ const getInputFields = () => [{
     </label>,
     name: 'upstream_dns',
     type: 'text',
-    component: 'textarea',
+    component: renderTextareaField,
     className: 'form-control form-control--textarea font-monospace',
     placeholder: 'upstream_dns',
+    normalizeOnBlur: removeEmptyLines,
 },
 {
     name: 'upstream_mode',
@@ -69,7 +71,8 @@ const Form = ({
     return <form onSubmit={handleSubmit}>
         <div className="row">
             {INPUT_FIELDS.map(({
-                name, component, type, className, placeholder, getTitle, subtitle, disabled, value,
+                name, component, type, className, placeholder,
+                getTitle, subtitle, disabled, value, normalizeOnBlur,
             }) => <div className="col-12 mb-4" key={placeholder}>
                 {typeof getTitle === 'function' && getTitle()}
                 <Field
@@ -82,6 +85,7 @@ const Form = ({
                     placeholder={t(placeholder)}
                     subtitle={t(subtitle)}
                     disabled={processingSetConfig || processingTestUpstream || disabled}
+                    normalizeOnBlur={normalizeOnBlur}
                 />
             </div>)}
             <div className="col-12">
@@ -101,11 +105,12 @@ const Form = ({
                 <Field
                     id="bootstrap_dns"
                     name="bootstrap_dns"
-                    component="textarea"
+                    component={renderTextareaField}
                     type="text"
                     className="form-control form-control--textarea form-control--textarea-small font-monospace"
                     placeholder={t('bootstrap_dns')}
                     disabled={processingSetConfig}
+                    normalizeOnBlur={removeEmptyLines}
                 />
             </div>
         </div>

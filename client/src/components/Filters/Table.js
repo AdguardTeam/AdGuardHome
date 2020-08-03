@@ -92,7 +92,7 @@ class Table extends Component {
                             className="btn btn-icon btn-outline-primary btn-sm mr-2"
                             title={t('edit_table_action')}
                             onClick={() => toggleFilteringModal({
-                                type: MODAL_TYPE.EDIT,
+                                type: MODAL_TYPE.EDIT_FILTERS,
                                 url: value,
                             })
                             }
@@ -128,24 +128,15 @@ class Table extends Component {
                 columns={this.columns}
                 showPagination
                 defaultPageSize={10}
-                showPageSizeOptions={false}
-                showPageJump={false}
-                renderTotalPagesCount={() => false}
                 loading={loading}
                 minRows={6}
-                pageText=''
-                ofText=''
+                ofText="/"
+                previousText={t('previous_btn')}
+                nextText={t('next_btn')}
+                pageText={t('page_table_footer_text')}
+                rowsText={t('rows_table_footer_text')}
                 loadingText={t('loading_table_status')}
                 noDataText={whitelist ? t('no_whitelist_added') : t('no_blocklist_added')}
-                getPaginationProps={() => ({ className: 'custom-pagination' })}
-                previousText={
-                    <svg className="icons icon--small icon--gray w-100 h-100">
-                        <use xlinkHref="#arrow-left" />
-                    </svg>}
-                nextText={
-                    <svg className="icons icon--small icon--gray w-100 h-100">
-                        <use xlinkHref="#arrow-right" />
-                    </svg>}
             />
         );
     }

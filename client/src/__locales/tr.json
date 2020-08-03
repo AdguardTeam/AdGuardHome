@@ -505,5 +505,6 @@
     "blocked_adult_websites": "Yetişkin içerikli site engellendi",
     "blocked_threats": "Engellenen Tehditler",
     "allowed": "İzin verildi",
-    "blocklist": "Engellenen listesi"
+    "blocklist": "Engellenen listesi",
+    "port_53_faq_link": "Port 53 genellikle \"DNSStubListener\" veya \"sistemd-resolved\" hizmetler tarafından kullanılır. Lütfen problemin nasıl çözüleceğine ilişkin <0>bu talimatı</0> okuyun."
 }

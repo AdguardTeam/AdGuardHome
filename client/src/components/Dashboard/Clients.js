@@ -25,7 +25,7 @@ const countCell = (dnsQueries) => function cell(row) {
     const percent = getPercent(dnsQueries, value);
     const percentColor = getClientsPercentColor(percent);
 
-    return <Cell value={value} percent={percent} color={percentColor} />;
+    return <Cell value={value} percent={percent} color={percentColor} search={row.original.ip} />;
 };
 
 const renderBlockingButton = (ipMatchListStatus, ip, handleClick, processing) => {
@@ -62,7 +62,7 @@ const clientCell = (t, toggleClientStatus, processing, disallowedClients) => fun
     return (
         <>
             <div className="logs__row logs__row--overflow logs__row--column">
-                {formatClientCell(row, t)}
+                {formatClientCell(row, true, false)}
             </div>
             {ipMatchListStatus !== IP_MATCH_LIST_STATUS.CIDR
             && renderBlockingButton(ipMatchListStatus, value, toggleClientStatus, processing)}

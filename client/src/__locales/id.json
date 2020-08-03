@@ -447,7 +447,6 @@
     "client_unblocked": "Klien \"{{ip}}\" sukses di unblock",
     "static_ip": "Alamat IP statis",
     "validated_with_dnssec": "Tervalidasi dengan DNSSEC",
-    "show_all_responses": "Semua respon",
     "show_blocked_responses": "Diblokir",
     "show_whitelisted_responses": "Dalam Daftar Putih",
     "show_processed_responses": "Terproses",

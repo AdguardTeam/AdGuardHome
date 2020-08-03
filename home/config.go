@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
@@ -39,10 +38,6 @@ type configuration struct {
 	// Raw file data to avoid re-reading of configuration file
 	// It's reset after config is parsed
 	fileData []byte
-
-	// cached version.json to avoid hammering github.io for each page reload
-	versionCheckJSON     []byte
-	versionCheckLastTime time.Time
 
 	BindHost     string `yaml:"bind_host"`     // BindHost is the IP address of the HTTP server to bind to
 	BindPort     int    `yaml:"bind_port"`     // BindPort is the port the HTTP server

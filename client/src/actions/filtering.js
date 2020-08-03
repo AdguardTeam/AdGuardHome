@@ -45,12 +45,14 @@ export const addFilterRequest = createAction('ADD_FILTER_REQUEST');
 export const addFilterFailure = createAction('ADD_FILTER_FAILURE');
 export const addFilterSuccess = createAction('ADD_FILTER_SUCCESS');
 
-export const addFilter = (url, name, whitelist = false) => async (dispatch) => {
+export const addFilter = (url, name, whitelist = false) => async (dispatch, getState) => {
     dispatch(addFilterRequest());
     try {
         await apiClient.addFilter({ url, name, whitelist });
         dispatch(addFilterSuccess(url));
-        dispatch(toggleFilteringModal());
+        if (getState().filtering.isModalOpen) {
+            dispatch(toggleFilteringModal());
+        }
         dispatch(addSuccessToast('filter_added_successfully'));
         dispatch(getFilteringStatus());
     } catch (error) {
@@ -63,11 +65,15 @@ export const removeFilterRequest = createAction('REMOVE_FILTER_REQUEST');
 export const removeFilterFailure = createAction('REMOVE_FILTER_FAILURE');
 export const removeFilterSuccess = createAction('REMOVE_FILTER_SUCCESS');
 
-export const removeFilter = (url, whitelist = false) => async (dispatch) => {
+export const removeFilter = (url, whitelist = false) => async (dispatch, getState) => {
     dispatch(removeFilterRequest());
     try {
         await apiClient.removeFilter({ url, whitelist });
         dispatch(removeFilterSuccess(url));
+        if (getState().filtering.isModalOpen) {
+            dispatch(toggleFilteringModal());
+        }
+        dispatch(addSuccessToast('filter_removed_successfully'));
         dispatch(getFilteringStatus());
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -95,12 +101,14 @@ export const editFilterRequest = createAction('EDIT_FILTER_REQUEST');
 export const editFilterFailure = createAction('EDIT_FILTER_FAILURE');
 export const editFilterSuccess = createAction('EDIT_FILTER_SUCCESS');
 
-export const editFilter = (url, data, whitelist = false) => async (dispatch) => {
+export const editFilter = (url, data, whitelist = false) => async (dispatch, getState) => {
     dispatch(editFilterRequest());
     try {
         await apiClient.setFilterUrl({ url, data, whitelist });
         dispatch(editFilterSuccess(url));
-        dispatch(toggleFilteringModal());
+        if (getState().filtering.isModalOpen) {
+            dispatch(toggleFilteringModal());
+        }
         dispatch(addSuccessToast('filter_updated'));
         dispatch(getFilteringStatus());
     } catch (error) {

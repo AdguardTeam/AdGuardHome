@@ -5,13 +5,12 @@ import subHours from 'date-fns/sub_hours';
 import addHours from 'date-fns/add_hours';
 import addDays from 'date-fns/add_days';
 import subDays from 'date-fns/sub_days';
-import isSameDay from 'date-fns/is_same_day';
 import round from 'lodash/round';
 import axios from 'axios';
 import i18n from 'i18next';
 import uniqBy from 'lodash/uniqBy';
 import ipaddr from 'ipaddr.js';
-import versionCompare from './versionCompare';
+import queryString from 'query-string';
 import { getTrackerData } from './trackers/trackers';
 
 import {
@@ -20,7 +19,6 @@ import {
     DEFAULT_LANGUAGE,
     DEFAULT_TIME_FORMAT,
     DETAILED_DATE_FORMAT_OPTIONS,
-    DNS_RECORD_TYPES,
     FILTERED,
     FILTERED_STATUS,
     IP_MATCH_LIST_STATUS,
@@ -31,6 +29,7 @@ import {
 
 /**
  * @param time {string} The time to format
+ * @param options {string}
  * @returns {string} Returns the time in the format HH:mm:ss
  */
 export const formatTime = (time, options = DEFAULT_TIME_FORMAT) => {
@@ -60,12 +59,6 @@ export const formatDetailedDateTime = (dateTime) => formatDateTime(
     dateTime, DETAILED_DATE_FORMAT_OPTIONS,
 );
 
-/**
- * @param date {string}
- * @returns {boolean}
- */
-export const isToday = (date) => isSameDay(new Date(date), new Date());
-
 export const normalizeLogs = (logs) => logs.map((log) => {
     const {
         answer,
@@ -86,18 +79,16 @@ export const normalizeLogs = (logs) => logs.map((log) => {
 
     const { host: domain, type } = question;
 
-    const response = answer ? answer.map((response) => {
+    const processResponse = (data) => (data ? data.map((response) => {
         const { value, type, ttl } = response;
         return `${type}: ${value} (ttl=${ttl})`;
-    }) : [];
-
-    const tracker = getTrackerData(domain);
+    }) : []);
 
     return {
         time,
         domain,
         type,
-        response,
+        response: processResponse(answer),
         reason,
         client,
         client_proto,
@@ -106,7 +97,8 @@ export const normalizeLogs = (logs) => logs.map((log) => {
         status,
         serviceName: service_name,
         originalAnswer: original_answer,
-        tracker,
+        originalResponse: processResponse(original_answer),
+        tracker: getTrackerData(domain),
         answer_dnssec,
         elapsedMs,
         upstream,
@@ -306,15 +298,27 @@ export const redirectToCurrentProtocol = (values, httpPort = 80) => {
     }
 };
 
-export const normalizeTextarea = (text) => {
-    if (!text) {
-        return [];
-    }
+/**
+ * @param {string} text
+ * @returns []string
+ */
+export const splitByNewLine = (text) => text.split('\n')
+    .filter((n) => n.trim());
 
-    return text.replace(/[;, ]/g, '\n')
-        .split('\n')
-        .filter((n) => n);
-};
+/**
+ * @param {string} text
+ * @returns {string}
+ */
+export const trimMultilineString = (text) => splitByNewLine(text)
+    .map((line) => line.trim())
+    .join('\n');
+
+/**
+ * @param {string} text
+ * @returns {string}
+ */
+export const removeEmptyLines = (text) => splitByNewLine(text)
+    .join('\n');
 
 /**
  * Normalizes the topClients array
@@ -339,39 +343,6 @@ export const normalizeTopClients = (topClients) => topClients.reduce(
         configured: {},
     },
 );
-
-export const getClientInfo = (clients, ip) => {
-    const client = clients
-        .find((item) => item.ip_addrs?.find((clientIp) => clientIp === ip));
-
-    if (!client) {
-        return '';
-    }
-
-    const { name, whois_info } = client;
-    const whois = Object.keys(whois_info).length > 0 ? whois_info : '';
-
-    return {
-        name,
-        whois,
-    };
-};
-
-export const getAutoClientInfo = (clients, ip) => {
-    const client = clients.find((item) => ip === item.ip);
-
-    if (!client) {
-        return '';
-    }
-
-    const { name, whois_info } = client;
-    const whois = Object.keys(whois_info).length > 0 ? whois_info : '';
-
-    return {
-        name,
-        whois,
-    };
-};
 
 export const sortClients = (clients) => {
     const compare = (a, b) => {
@@ -406,10 +377,6 @@ export const secondsToMilliseconds = (seconds) => {
 export const normalizeRulesTextarea = (text) => text?.replace(/^\n/g, '')
     .replace(/\n\s*\n/g, '\n');
 
-export const isVersionGreater = (currentVersion, previousVersion) => (
-    versionCompare(currentVersion, previousVersion) === -1
-);
-
 export const normalizeWhois = (whois) => {
     if (Object.keys(whois).length > 0) {
         const {
@@ -435,8 +402,6 @@ export const normalizeWhois = (whois) => {
 
     return whois;
 };
-
-export const isValidQuestionType = (type) => type && DNS_RECORD_TYPES.includes(type.toUpperCase());
 
 export const getPathWithQueryString = (path, params) => {
     const searchParams = new URLSearchParams(params);
@@ -501,8 +466,8 @@ export const getCurrentFilter = (url, filters) => {
 };
 
 /**
- * @param initialValues {object}
- * @param values {object}
+ * @param {object} initialValues
+ * @param {object} values
  * @returns {object} Returns different values of objects
  */
 export const getObjDiff = (initialValues, values) => Object.entries(values)
@@ -522,16 +487,23 @@ export const formatNumber = (num) => {
     return num.toLocaleString(currentLanguage);
 };
 
-export const normalizeMultiline = (multiline) => `${normalizeTextarea(multiline)
-    .map((line) => line.trim())
-    .join('\n')}\n`;
+/**
+ * @param arr {array}
+ * @param key {string}
+ * @param value {string}
+ * @returns {object}
+ */
+export const getMap = (arr, key, value) => arr.reduce((acc, curr) => {
+    acc[curr[key]] = curr[value];
+    return acc;
+}, {});
 
 /**
  * @param parsedIp {object} ipaddr.js IPv4 or IPv6 object
- * @param cidr {array} ipaddr.js CIDR array
+ * @param parsedCidr {array} ipaddr.js CIDR array
  * @returns {boolean}
  */
-export const isIpMatchCidr = (parsedIp, parsedCidr) => {
+const isIpMatchCidr = (parsedIp, parsedCidr) => {
     try {
         const cidrIpVersion = parsedCidr[0].kind();
         const ipVersion = parsedIp.kind();
@@ -540,6 +512,75 @@ export const isIpMatchCidr = (parsedIp, parsedCidr) => {
     } catch (e) {
         return false;
     }
+};
+
+/**
+ * The purpose of this method is to quickly check
+ * if this IP can possibly be in the specified CIDR range.
+ *
+ * @param ip {string}
+ * @param listItem {string}
+ * @returns {boolean}
+ */
+const isIpQuickMatchCIDR = (ip, listItem) => {
+    const ipv6 = ip.indexOf(':') !== -1;
+    const cidrIpv6 = listItem.indexOf(':') !== -1;
+    if (ipv6 !== cidrIpv6) {
+        // CIDR is for a different IP type
+        return false;
+    }
+
+    if (cidrIpv6) {
+        // We don't do quick check for IPv6 addresses
+        return true;
+    }
+
+    const idx = listItem.indexOf('/');
+    if (idx === -1) {
+        // Not a CIDR, return false immediately
+        return false;
+    }
+
+    const cidrIp = listItem.substring(0, idx);
+    const cidrRange = parseInt(listItem.substring(idx + 1), 10);
+    if (Number.isNaN(cidrRange)) {
+        // Not a valid CIDR
+        return false;
+    }
+
+    const parts = cidrIp.split('.');
+    if (parts.length !== 4) {
+        // Invalid IP, return immediately
+        return false;
+    }
+
+    // Now depending on the range we check if the IP can possibly be in that range
+    if (cidrRange < 8) {
+        // Use the slow approach
+        return true;
+    }
+
+    if (cidrRange < 16) {
+        // Check the first part
+        // Example: 0.0.0.0/8 matches 0.*.*.*
+        return ip.indexOf(`${parts[0]}.`) === 0;
+    }
+
+    if (cidrRange < 24) {
+        // Check the first two parts
+        // Example: 0.0.0.0/16 matches 0.0.*.*
+        return ip.indexOf(`${parts[0]}.${parts[1]}.`) === 0;
+    }
+
+    if (cidrRange <= 32) {
+        // Check the first two parts
+        // Example: 0.0.0.0/16 matches 0.0.*.*
+        return ip.indexOf(`${parts[0]}.${parts[1]}.${parts[2]}.`) === 0;
+    }
+
+    // range for IPv4 CIDR cannot be more than 32
+    // no need to check further, this CIDR is invalid
+    return false;
 };
 
 /**
@@ -559,20 +600,29 @@ export const getIpMatchListStatus = (ip, list) => {
         for (let i = 0; i < listArr.length; i += 1) {
             const listItem = listArr[i];
 
-            const parsedIp = ipaddr.parse(ip);
-            const isItemAnIp = ipaddr.isValid(listItem);
-            const parsedItem = isItemAnIp ? ipaddr.parse(listItem) : ipaddr.parseCIDR(listItem);
-
-            if (isItemAnIp && parsedIp.toString() === parsedItem.toString()) {
+            if (ip === listItem.trim()) {
                 return IP_MATCH_LIST_STATUS.EXACT;
             }
 
-            if (!isItemAnIp && isIpMatchCidr(parsedIp, parsedItem)) {
-                return IP_MATCH_LIST_STATUS.CIDR;
+            // Using ipaddr.js is quite slow so we first do a quick check
+            // to see if it's possible that this IP may be in the specified CIDR range
+            if (isIpQuickMatchCIDR(ip, listItem)) {
+                const parsedIp = ipaddr.parse(ip);
+                const isItemAnIp = ipaddr.isValid(listItem);
+                const parsedItem = isItemAnIp ? ipaddr.parse(listItem) : ipaddr.parseCIDR(listItem);
+
+                if (isItemAnIp && parsedIp.toString() === parsedItem.toString()) {
+                    return IP_MATCH_LIST_STATUS.EXACT;
+                }
+
+                if (!isItemAnIp && isIpMatchCidr(parsedIp, parsedItem)) {
+                    return IP_MATCH_LIST_STATUS.CIDR;
+                }
             }
         }
         return IP_MATCH_LIST_STATUS.NOT_FOUND;
     } catch (e) {
+        console.error(e);
         return IP_MATCH_LIST_STATUS.NOT_FOUND;
     }
 };
@@ -595,3 +645,30 @@ export const formatElapsedMs = (elapsedMs, t) => {
 export const setHtmlLangAttr = (language) => {
     window.document.documentElement.lang = language;
 };
+
+/**
+ * @param values {object}
+ * @returns {object}
+ */
+export const selectCompletedFields = (values) => Object.entries(values)
+    .reduce((acc, [key, value]) => {
+        if (value || value === 0) {
+            acc[key] = value;
+        }
+        return acc;
+    }, {});
+
+/**
+ * @param {string} search
+ * @param {string} [response_status]
+ * @returns {string}
+ */
+export const getLogsUrlParams = (search, response_status) => `?${queryString.stringify({
+    search,
+    response_status,
+})}`;
+
+export const processContent = (content) => (Array.isArray(content)
+    ? content.filter(([, value]) => value).reduce((acc, val) => acc.concat(val), [])
+    : content
+);

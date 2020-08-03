@@ -2,11 +2,21 @@
 
 ## v0.103: API changes
 
+### API: replace settings in GET /control/dns_info & POST /control/dns_config
+
+* added "upstream_mode"
+
+		"upstream_mode": "" | "parallel" | "fastest_addr"
+
+* removed "fastest_addr", "parallel_requests"
+
+
 ### API: Get querylog: GET /control/querylog
 
 * Added optional "offset" and "limit" parameters
 
 We are still using "older_than" approach in AdGuard Home UI, but we realize that it's easier to use offset/limit so here is this option now.
+
 
 ## v0.102: API changes
 

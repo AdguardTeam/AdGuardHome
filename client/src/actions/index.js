@@ -2,8 +2,9 @@ import { createAction } from 'redux-actions';
 import i18next from 'i18next';
 import axios from 'axios';
 
-import { isVersionGreater, normalizeTextarea, sortClients } from '../helpers/helpers';
+import { splitByNewLine, sortClients } from '../helpers/helpers';
 import { CHECK_TIMEOUT, SETTINGS_NAMES } from '../helpers/constants';
+import { areEqualVersions } from '../helpers/version';
 import { getTlsStatus } from './encryption';
 import apiClient from '../api/Api';
 import { addErrorToast, addNoticeToast, addSuccessToast } from './toasts';
@@ -121,7 +122,7 @@ export const getVersion = (recheck = false) => async (dispatch, getState) => {
             const { dnsVersion } = getState().dashboard;
             const currentVersion = dnsVersion === 'undefined' ? 0 : dnsVersion;
 
-            if (data && isVersionGreater(currentVersion, data.new_version)) {
+            if (data && !areEqualVersions(currentVersion, data.new_version)) {
                 dispatch(addSuccessToast('updates_checked'));
             } else {
                 dispatch(addSuccessToast('updates_version_equal'));
@@ -279,8 +280,8 @@ export const testUpstream = (config) => async (dispatch) => {
     dispatch(testUpstreamRequest());
     try {
         const values = { ...config };
-        values.bootstrap_dns = normalizeTextarea(values.bootstrap_dns);
-        values.upstream_dns = normalizeTextarea(values.upstream_dns);
+        values.bootstrap_dns = splitByNewLine(values.bootstrap_dns);
+        values.upstream_dns = splitByNewLine(values.upstream_dns);
 
         const upstreamResponse = await apiClient.testUpstream(values);
         const testMessages = Object.keys(upstreamResponse)

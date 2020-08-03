@@ -1,0 +1,100 @@
+project_name: AdGuardHome
+
+env:
+  - GO111MODULE=on
+  - GOPROXY=https://goproxy.io
+
+before:
+  hooks:
+    - go mod download
+    - go generate ./...
+
+builds:
+  - main: ./main.go
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.channel={{.Env.CHANNEL}} -X main.goarm={{.Env.GOARM}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+      - freebsd
+      - windows
+    goarch:
+      - 386
+      - amd64
+      - arm
+      - arm64
+      - mips
+      - mipsle
+      - mips64
+      - mips64le
+    goarm:
+      - 5
+      - 6
+      - 7
+    gomips:
+      - softfloat
+    ignore:
+      - goos: freebsd
+        goarch: mips
+      - goos: freebsd
+        goarch: mipsle
+
+archives:
+  - # Archive name template.
+    # Defaults:
+    # - if format is `tar.gz`, `tar.xz`, `gz` or `zip`:
+    #   - `{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}`
+    # - if format is `binary`:
+    #   - `{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}`
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
+    wrap_in_directory: "AdGuardHome"
+    format_overrides:
+      - goos: windows
+        format: zip
+      - goos: darwin
+        format: zip
+    files:
+      - LICENSE.txt
+      - README.md
+
+snapcrafts:
+  - name: adguard-home
+    base: core18
+    name_template: '{{ .ProjectName }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    summary: Network-wide ads & trackers blocking DNS server
+    description: |
+      AdGuard Home is a network-wide software for blocking ads & tracking. After
+      you set it up, it'll cover ALL your home devices, and you don't need any
+      client-side software for that.
+
+      It operates as a DNS server that re-routes tracking domains to a "black hole,"
+      thus preventing your devices from connecting to those servers. It's based
+      on software we use for our public AdGuard DNS servers -- both share a lot
+      of common code.
+    grade: stable
+    confinement: strict
+    publish: false
+    license: GPL-3.0
+    extra_files:
+      - source: scripts/snap/local/adguard-home-web.sh
+        destination: adguard-home-web.sh
+        mode: 0755
+      - source: scripts/snap/gui/adguard-home-web.desktop
+        destination: meta/gui/adguard-home-web.desktop
+        mode: 0644
+      - source: scripts/snap/gui/adguard-home-web.png
+        destination: meta/gui/adguard-home-web.png
+        mode: 0644
+    apps:
+      adguard-home:
+        command: AdGuardHome -w $SNAP_DATA --no-check-update
+        plugs: [ network-bind ]
+        daemon: simple
+      adguard-home-web:
+        command: adguard-home-web.sh
+        plugs: [ desktop ]
+
+checksum:
+  name_template: 'checksums.txt'

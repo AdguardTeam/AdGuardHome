@@ -2,11 +2,15 @@ import React, { Fragment, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Trans } from 'react-i18next';
 import Modal from 'react-modal';
-import { useDispatch } from 'react-redux';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { useHistory } from 'react-router-dom';
+import queryString from 'query-string';
+import classNames from 'classnames';
 import {
-    BLOCK_ACTIONS, smallScreenSize,
+    BLOCK_ACTIONS,
     TABLE_DEFAULT_PAGE_SIZE,
     TABLE_FIRST_PAGE,
+    SMALL_SCREEN_SIZE,
 } from '../../helpers/constants';
 import Loading from '../ui/Loading';
 import Filters from './Filters';
@@ -15,15 +19,21 @@ import Disabled from './Disabled';
 import { getFilteringStatus } from '../../actions/filtering';
 import { getClients } from '../../actions';
 import { getDnsConfig } from '../../actions/dnsConfig';
-import { getLogsConfig } from '../../actions/queryLogs';
+import {
+    getLogsConfig,
+    refreshFilteredLogs,
+    resetFilteredLogs,
+    setFilteredLogs,
+} from '../../actions/queryLogs';
 import { addSuccessToast } from '../../actions/toasts';
 import './Logs.css';
 
-const INITIAL_REQUEST = true;
-const INITIAL_REQUEST_DATA = ['', TABLE_FIRST_PAGE, INITIAL_REQUEST];
-
-export const processContent = (data, buttonType) => Object.entries(data)
+const processContent = (data, buttonType) => Object.entries(data)
     .map(([key, value]) => {
+        if (!value) {
+            return null;
+        }
+
         const isTitle = value === 'title';
         const isButton = key === buttonType;
         const isBoolean = typeof value === 'boolean';
@@ -40,7 +50,9 @@ export const processContent = (data, buttonType) => Object.entries(data)
 
         return isHidden ? null : <Fragment key={key}>
             <div
-                className={`key__${key} ${keyClass} ${(isBoolean && value === true) ? 'font-weight-bold' : ''}`}>
+                className={classNames(`key__${key}`, keyClass, {
+                    'font-weight-bold': isBoolean && value === true,
+                })}>
                 <Trans>{isButton ? value : key}</Trans>
             </div>
             <div className={`value__${key} text-pre text-truncate`}>
@@ -52,22 +64,44 @@ export const processContent = (data, buttonType) => Object.entries(data)
 
 const Logs = (props) => {
     const dispatch = useDispatch();
-    const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < smallScreenSize);
+    const history = useHistory();
+
+    const {
+        response_status: response_status_url_param = '',
+        search: search_url_param = '',
+    } = queryString.parse(history.location.search);
+
+    const { filter } = useSelector((state) => state.queryLogs, shallowEqual);
+
+    const search = filter?.search || search_url_param;
+    const response_status = filter?.response_status || response_status_url_param;
+
+    const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < SMALL_SCREEN_SIZE);
     const [detailedDataCurrent, setDetailedDataCurrent] = useState({});
     const [buttonType, setButtonType] = useState(BLOCK_ACTIONS.BLOCK);
     const [isModalOpened, setModalOpened] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
+
+    useEffect(() => {
+        (async () => {
+            setIsLoading(true);
+            await dispatch(setFilteredLogs({
+                search,
+                response_status,
+            }));
+            setIsLoading(false);
+        })();
+    }, [response_status, search]);
+
     const {
         filtering,
         setLogsPage,
         setLogsPagination,
-        setLogsFilter,
         toggleDetailedLogs,
         dashboard,
         dnsConfig,
         queryLogs: {
-            filter,
             enabled,
             processingGetConfig,
             processingAdditionalLogs,
@@ -80,7 +114,7 @@ const Logs = (props) => {
         },
     } = props;
 
-    const mediaQuery = window.matchMedia(`(max-width: ${smallScreenSize}px)`);
+    const mediaQuery = window.matchMedia(`(max-width: ${SMALL_SCREEN_SIZE}px)`);
     const mediaQueryHandler = (e) => {
         setIsSmallScreen(e.matches);
         if (e.matches) {
@@ -88,16 +122,10 @@ const Logs = (props) => {
         }
     };
 
-    useEffect(() => {
-        mediaQuery.addListener(mediaQueryHandler);
-
-        return () => mediaQuery.removeListener(mediaQueryHandler);
-    }, []);
-
     const closeModal = () => setModalOpened(false);
 
     const getLogs = (older_than, page, initial) => {
-        if (props.queryLogs.enabled) {
+        if (enabled) {
             props.getLogs({
                 older_than,
                 page,
@@ -108,6 +136,17 @@ const Logs = (props) => {
     };
 
     useEffect(() => {
+        try {
+            mediaQuery.addEventListener('change', mediaQueryHandler);
+        } catch (e1) {
+            try {
+                // Safari 13.1 do not support mediaQuery.addEventListener('change', handler)
+                mediaQuery.addListener(mediaQueryHandler);
+            } catch (e2) {
+                console.error(e2);
+            }
+        }
+
         (async () => {
             setIsLoading(true);
             dispatch(setLogsPage(TABLE_FIRST_PAGE));
@@ -115,7 +154,6 @@ const Logs = (props) => {
             dispatch(getClients());
             try {
                 await Promise.all([
-                    getLogs(...INITIAL_REQUEST_DATA),
                     dispatch(getLogsConfig()),
                     dispatch(getDnsConfig()),
                 ]);
@@ -125,13 +163,27 @@ const Logs = (props) => {
                 setIsLoading(false);
             }
         })();
+
+        return () => {
+            try {
+                mediaQuery.removeEventListener('change', mediaQueryHandler);
+            } catch (e1) {
+                try {
+                    mediaQuery.removeListener(mediaQueryHandler);
+                } catch (e2) {
+                    console.error(e2);
+                }
+            }
+
+            dispatch(resetFilteredLogs());
+        };
     }, []);
 
     const refreshLogs = async () => {
         setIsLoading(true);
         await Promise.all([
             dispatch(setLogsPage(TABLE_FIRST_PAGE)),
-            getLogs(...INITIAL_REQUEST_DATA),
+            dispatch(refreshFilteredLogs()),
         ]);
         dispatch(addSuccessToast('query_log_updated'));
         setIsLoading(false);
@@ -141,13 +193,15 @@ const Logs = (props) => {
         <>
             {enabled && processingGetConfig && <Loading />}
             {enabled && !processingGetConfig && (
-                <Fragment>
+                <>
                     <Filters
-                        filter={filter}
+                        filter={{
+                            response_status,
+                            search,
+                        }}
                         setIsLoading={setIsLoading}
                         processingGetLogs={processingGetLogs}
                         processingAdditionalLogs={processingAdditionalLogs}
-                        setLogsFilter={setLogsFilter}
                         refreshLogs={refreshLogs}
                     />
                     <Table
@@ -191,13 +245,13 @@ const Logs = (props) => {
                            }}
                     >
                         <svg
-                            className="icon icon--small icon-cross d-block d-md-none cursor--pointer"
+                            className="icon icon--24 icon-cross d-block d-md-none cursor--pointer"
                             onClick={closeModal}>
                             <use xlinkHref="#cross" />
                         </svg>
                         {processContent(detailedDataCurrent, buttonType)}
                     </Modal>
-                </Fragment>
+                </>
             )}
             {!enabled && !processingGetConfig && (
                 <Disabled />
@@ -215,7 +269,6 @@ Logs.propTypes = {
     setRules: PropTypes.func.isRequired,
     addSuccessToast: PropTypes.func.isRequired,
     setLogsPagination: PropTypes.func.isRequired,
-    setLogsFilter: PropTypes.func.isRequired,
     setLogsPage: PropTypes.func.isRequired,
     toggleDetailedLogs: PropTypes.func.isRequired,
     dnsConfig: PropTypes.object.isRequired,

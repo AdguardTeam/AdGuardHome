@@ -13,13 +13,12 @@ import Tabs from '../../ui/Tabs';
 import Examples from '../Dns/Upstream/Examples';
 import { toggleAllServices } from '../../../helpers/helpers';
 import {
-    required,
-    clientId,
     renderInputField,
     renderGroupField,
     renderSelectField,
     renderServiceField,
 } from '../../../helpers/form';
+import { validateClientId, validateRequiredValue } from '../../../helpers/validators';
 import { FORM_NAME, SERVICES } from '../../../helpers/constants';
 import './Service.css';
 
@@ -48,12 +47,12 @@ const settingsCheckboxes = [
 const validate = (values) => {
     const errors = {};
     const { name, ids } = values;
-    errors.name = required(name);
+    errors.name = validateRequiredValue(name);
 
     if (ids && ids.length) {
         const idArrayErrors = [];
         ids.forEach((id, idx) => {
-            idArrayErrors[idx] = required(id) || clientId(id);
+            idArrayErrors[idx] = validateRequiredValue(id) || validateClientId(id);
         });
 
         if (idArrayErrors.length) {
@@ -89,7 +88,7 @@ const renderFieldsWrapper = (placeholder, buttonTitle) => function cell(row) {
                 onClick={() => fields.push()}
                 title={buttonTitle}
             >
-                <svg className="icon icon--small">
+                <svg className="icon icon--24">
                     <use xlinkHref="#plus" />
                 </svg>
             </button>

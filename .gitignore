@@ -11,7 +11,6 @@
 /client/node_modules/
 /querylog.json
 /querylog.json.1
-/a_main-packr.go
 coverage.txt
 
 # Test output
@@ -26,3 +25,6 @@ snapcraft.yaml.bak
 
 # IntelliJ IDEA project files
 *.iml
+
+# Packr
+*-packr.go

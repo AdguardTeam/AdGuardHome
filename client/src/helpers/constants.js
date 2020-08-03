@@ -1,13 +1,23 @@
 export const R_URL_REQUIRES_PROTOCOL = /^https?:\/\/[^/\s]+(\/.*)?$/;
-export const R_HOST = /^(\*\.)?([\w-]+\.)+[\w-]+$/;
+
+// matches hostname or *.wildcard
+export const R_HOST = /^(\*\.)?[\w.-]+$/;
+
 export const R_IPV4 = /^(?:(?:^|\.)(?:2(?:5[0-5]|[0-4]\d)|1?\d?\d)){4}$/;
+
 export const R_IPV6 = /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
+
 export const R_CIDR = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$/;
+
 export const R_MAC = /^((([a-fA-F0-9][a-fA-F0-9]+[-]){5}|([a-fA-F0-9][a-fA-F0-9]+[:]){5})([a-fA-F0-9][a-fA-F0-9])$)|(^([a-fA-F0-9][a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]+[.]){2}([a-fA-F0-9][a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]))$/;
+
 export const R_CIDR_IPV6 = /^s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:)))(%.+)?s*(\/(12[0-8]|1[0-1][0-9]|[1-9][0-9]|[0-9]))$/;
+
 export const R_PATH_LAST_PART = /\/[^/]*$/;
+
 // eslint-disable-next-line no-control-regex
 export const R_UNIX_ABSOLUTE_PATH = /^(\/[^/\x00]+)+$/;
+
 // eslint-disable-next-line no-control-regex
 export const R_WIN_ABSOLUTE_PATH = /^([a-zA-Z]:)?(\\|\/)(?:[^\\/:*?"<>|\x00]+\\)*[^\\/:*?"<>|\x00]*$/;
 
@@ -35,6 +45,10 @@ export const REPOSITORY = {
 };
 
 export const PRIVACY_POLICY_LINK = 'https://adguard.com/privacy/home.html';
+export const PORT_53_FAQ_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ#bindinuse';
+
+export const ADDRESS_IN_USE_TEXT = 'address already in use';
+export const UBUNTU_SYSTEM_PORT = 53;
 
 export const INSTALL_FIRST_STEP = 1;
 export const INSTALL_TOTAL_STEPS = 5;
@@ -58,6 +72,8 @@ export const CHECK_TIMEOUT = 1000;
 export const SUCCESS_TOAST_TIMEOUT = 5000;
 export const FAILURE_TOAST_TIMEOUT = 30000;
 export const HIDE_TOOLTIP_DELAY = 300;
+export const SHOW_TOOLTIP_DELAY = 200;
+export const MODAL_OPEN_TIMEOUT = 150;
 
 export const UNSAFE_PORTS = [
     1,
@@ -135,8 +151,10 @@ export const DHCP_STATUS_RESPONSE = {
 };
 
 export const MODAL_TYPE = {
-    ADD: 'add',
-    EDIT: 'edit',
+    SELECT_MODAL_TYPE: 'SELECT_MODAL_TYPE',
+    ADD_FILTERS: 'ADD_FILTERS',
+    EDIT_FILTERS: 'EDIT_FILTERS',
+    CHOOSE_FILTERING_LIST: 'CHOOSE_FILTERING_LIST',
 };
 
 export const CLIENT_ID = {
@@ -281,50 +299,6 @@ export const WHOIS_ICONS = {
     descr: '',
 };
 
-export const DNS_RECORD_TYPES = [
-    'A',
-    'AAAA',
-    'AFSDB',
-    'APL',
-    'CAA',
-    'CDNSKEY',
-    'CDS',
-    'CERT',
-    'CNAME',
-    'CSYNC',
-    'DHCID',
-    'DLV',
-    'DNAME',
-    'DNSKEY',
-    'DS',
-    'HIP',
-    'IPSECKEY',
-    'KEY',
-    'KX',
-    'LOC',
-    'MX',
-    'NAPTR',
-    'NS',
-    'NSEC',
-    'NSEC3',
-    'NSEC3PARAM',
-    'OPENPGPKEY',
-    'PTR',
-    'RRSIG',
-    'RP',
-    'SIG',
-    'SMIMEA',
-    'SOA',
-    'SRV',
-    'SSHFP',
-    'TA',
-    'TKEY',
-    'TLSA',
-    'TSIG',
-    'TXT',
-    'URI',
-];
-
 export const DEFAULT_LOGS_FILTER = {
     search: '',
     response_status: '',
@@ -332,7 +306,7 @@ export const DEFAULT_LOGS_FILTER = {
 
 export const DEFAULT_LANGUAGE = 'en';
 
-export const TABLE_DEFAULT_PAGE_SIZE = 50;
+export const TABLE_DEFAULT_PAGE_SIZE = 25;
 
 export const TABLE_FIRST_PAGE = 0;
 
@@ -353,7 +327,7 @@ export const FILTERED_STATUS = {
 export const RESPONSE_FILTER = {
     ALL: {
         query: 'all',
-        label: 'show_all_responses',
+        label: 'all_queries',
     },
     FILTERED: {
         query: 'filtered',
@@ -362,11 +336,6 @@ export const RESPONSE_FILTER = {
     PROCESSED: {
         query: 'processed',
         label: 'show_processed_responses',
-    },
-    SPACE: {
-        query: 'all',
-        label: '',
-        disabled: true,
     },
     BLOCKED: {
         query: 'blocked',
@@ -393,6 +362,11 @@ export const RESPONSE_FILTER = {
         label: 'safe_search',
     },
 };
+
+export const RESPONSE_FILTER_QUERIES = Object.values(RESPONSE_FILTER).reduce((acc, { query }) => {
+    acc[query] = query;
+    return acc;
+}, {});
 
 export const FILTERED_STATUS_TO_META_MAP = {
     [FILTERED_STATUS.NOT_FILTERED_WHITE_LIST]: {
@@ -501,6 +475,10 @@ export const FORM_NAME = {
     STATS_CONFIG: 'statsConfig',
     INSTALL: 'install',
     LOGIN: 'login',
+    CACHE: 'cache',
 };
 
-export const smallScreenSize = 767;
+export const SMALL_SCREEN_SIZE = 767;
+export const MEDIUM_SCREEN_SIZE = 1023;
+
+export const SECONDS_IN_HOUR = 60 * 60;

@@ -25,14 +25,14 @@ const queryLogs = handleActions(
             page: payload,
         }),
 
-        [actions.setLogsFilterRequest]: (state) => ({ ...state, processingGetLogs: true }),
-        [actions.setLogsFilterFailure]: (state) => ({ ...state, processingGetLogs: false }),
+        [actions.setFilteredLogsRequest]: (state) => ({ ...state, processingGetLogs: true }),
+        [actions.setFilteredLogsFailure]: (state) => ({ ...state, processingGetLogs: false }),
         [actions.toggleDetailedLogs]: (state, { payload }) => ({
             ...state,
             isDetailed: payload,
         }),
 
-        [actions.setLogsFilterSuccess]: (state, { payload }) => {
+        [actions.setFilteredLogsSuccess]: (state, { payload }) => {
             const { logs, oldest, filter } = payload;
             const pageSize = TABLE_DEFAULT_PAGE_SIZE;
             const page = 0;
@@ -42,7 +42,7 @@ const queryLogs = handleActions(
             const rowsStart = pageSize * page;
             const rowsEnd = rowsStart + pageSize;
             const logsSlice = logs.slice(rowsStart, rowsEnd);
-            const isFiltered = Object.keys(filter).some((key) => filter[key]);
+            const isFiltered = filter && Object.keys(filter).some((key) => filter[key]);
 
             return {
                 ...state,
@@ -55,6 +55,12 @@ const queryLogs = handleActions(
                 allLogs: logs,
                 processingGetLogs: false,
             };
+        },
+
+        [actions.setLogsFilterRequest]: (state, { payload }) => {
+            const { filter } = payload;
+
+            return { ...state, filter };
         },
 
         [actions.getLogsRequest]: (state) => ({ ...state, processingGetLogs: true }),

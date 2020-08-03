@@ -13,7 +13,8 @@ import { getPercent } from '../../helpers/helpers';
 const getQueriedPercentColor = (percent) => {
     if (percent > 10) {
         return STATUS_COLORS.red;
-    } if (percent > 5) {
+    }
+    if (percent > 5) {
         return STATUS_COLORS.yellow;
     }
     return STATUS_COLORS.green;
@@ -24,7 +25,8 @@ const countCell = (dnsQueries) => function cell(row) {
     const percent = getPercent(dnsQueries, value);
     const percentColor = getQueriedPercentColor(percent);
 
-    return <Cell value={value} percent={percent} color={percentColor} />;
+    return <Cell value={value} percent={percent} color={percentColor}
+                 search={row.original.domain} />;
 };
 
 const QueriedDomains = ({

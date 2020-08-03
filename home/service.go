@@ -272,6 +272,8 @@ func configureService(c *service.Config) {
 	// On OpenWrt we're using a different type of sysvScript
 	if util.IsOpenWrt() {
 		c.Option["SysvScript"] = openWrtScript
+	} else if util.IsFreeBSD() {
+		c.Option["SysvScript"] = freeBSDScript
 	}
 }
 
@@ -492,4 +494,17 @@ status() {
         exit 1
     fi
 }
+`
+const freeBSDScript = `#!/bin/sh
+# PROVIDE: {{.Name}}
+# REQUIRE: networking
+# KEYWORD: shutdown
+. /etc/rc.subr
+name="{{.Name}}"
+{{.Name}}_env="IS_DAEMON=1"
+{{.Name}}_user="root"
+pidfile="/var/run/${name}.pid"
+command="/usr/sbin/daemon"
+command_args="-P ${pidfile} -r -f {{.WorkingDirectory}}/{{.Name}}"
+run_rc_command "$1"
 `

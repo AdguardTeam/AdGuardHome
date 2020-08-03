@@ -395,6 +395,7 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 
 			if glProcessCookie(r) {
 				log.Debug("Auth: authentification was handled by GL-Inet submodule")
+				ok = true
 
 			} else if err == nil {
 				r := Context.auth.CheckSession(cookie.Value)

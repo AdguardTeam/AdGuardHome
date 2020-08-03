@@ -1,0 +1,40 @@
+.DS_Store
+/.git
+/.github
+/.vscode
+.idea
+/AdGuardHome
+/AdGuardHome.exe
+/AdGuardHome.yaml
+/AdGuardHome.log
+/data
+/build
+/dist
+/client/node_modules
+/.gitattributes
+/.gitignore
+/.goreleaser.yml
+/changelog.config.js
+/coverage.txt
+/Dockerfile
+/LICENSE.txt
+/Makefile
+/querylog.json
+/querylog.json.1
+/*.md
+
+# Test output
+dnsfilter/tests/top-1m.csv
+dnsfilter/tests/dnsfilter.TestLotsOfRules*.pprof
+
+# Snapcraft build temporary files
+*.snap
+launchpad_credentials
+snapcraft_login
+snapcraft.yaml.bak
+
+# IntelliJ IDEA project files
+*.iml
+
+# Packr
+*-packr.go

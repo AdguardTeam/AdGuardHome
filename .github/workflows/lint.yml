@@ -1,0 +1,47 @@
+name: golangci-lint
+on:
+  push:
+    tags:
+      - v*
+    branches:
+      - '*'
+  pull_request:
+jobs:
+  golangci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v1
+        with:
+          # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
+          version: v1.27
+
+  eslint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install modules
+        run: npm --prefix client ci
+      - name: Run ESLint
+        run: npm --prefix client run lint
+
+
+  notify:
+    needs: [golangci,eslint]
+    # Secrets are not passed to workflows that are triggered by a pull request from a fork
+    if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Conclusion
+        uses: technote-space/workflow-conclusion-action@v1
+      -
+        name: Send Slack notif
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ env.WORKFLOW_CONCLUSION }}
+          fields: repo,message,commit,author
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

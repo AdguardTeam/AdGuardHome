@@ -670,6 +670,11 @@ func TestRewrite(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, "1.2.3.4", a.A.String())
 
+	req = createTestMessageWithType("test.com.", dns.TypeAAAA)
+	reply, err = dns.Exchange(req, addr.String())
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(reply.Answer))
+
 	req = createTestMessageWithType("alias.test.com.", dns.TypeA)
 	reply, err = dns.Exchange(req, addr.String())
 	assert.Nil(t, err)
