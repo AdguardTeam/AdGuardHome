@@ -98,12 +98,17 @@ all: build
 init:
 	git config core.hooksPath .githooks
 
-build: dependencies client
+build: client_with_deps
+	go mod download
 	PATH=$(GOPATH)/bin:$(PATH) go generate ./...
 	CGO_ENABLED=0 go build -ldflags="-s -w -X main.version=$(VERSION) -X main.channel=$(CHANNEL) -X main.goarm=$(GOARM)"
 	PATH=$(GOPATH)/bin:$(PATH) packr clean
 
 client:
+	npm --prefix client run build-prod
+
+client_with_deps:
+	npm --prefix client ci
 	npm --prefix client run build-prod
 
 client-watch:
@@ -139,7 +144,9 @@ test:
 	@echo Running Go unit-tests
 	go test -race -v -bench=. -coverprofile=coverage.txt -covermode=atomic ./...
 
-ci: dependencies client test
+ci: client_with_deps
+	go mod download
+	$(MAKE) test
 
 dependencies:
 	npm --prefix client ci
@@ -176,7 +183,8 @@ docker-multi-arch:
 	@echo If the image was pushed to the registry, you can now run it:
 	@echo docker run --name "adguard-home" -p 53:53/tcp -p 53:53/udp -p 80:80/tcp -p 443:443/tcp -p 853:853/tcp -p 3000:3000/tcp $(DOCKER_IMAGE_NAME)
 
-release: dependencies client
+release: client_with_deps
+	go mod download
 	@echo Starting release build: version $(VERSION), channel $(CHANNEL)
 	CHANNEL=$(CHANNEL) $(GORELEASER_COMMAND)
 	$(call repack_dist)
