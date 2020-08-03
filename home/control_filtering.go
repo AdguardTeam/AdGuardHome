@@ -17,8 +17,8 @@ import (
 	"github.com/miekg/dns"
 )
 
-// IsValidURL - return TRUE if URL or file path is valid
-func IsValidURL(rawurl string) bool {
+// isValidURL - return TRUE if URL or file path is valid
+func isValidURL(rawurl string) bool {
 	if filepath.IsAbs(rawurl) {
 		// this is a file path
 		return util.FileExists(rawurl)
@@ -48,7 +48,7 @@ func (f *Filtering) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if !IsValidURL(fj.URL) {
+	if !isValidURL(fj.URL) {
 		http.Error(w, "Invalid URL or file path", http.StatusBadRequest)
 		return
 	}
@@ -155,7 +155,7 @@ func (f *Filtering) handleFilteringSetURL(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if !IsValidURL(fj.URL) {
+	if !isValidURL(fj.Data.URL) {
 		http.Error(w, "invalid URL or file path", http.StatusBadRequest)
 		return
 	}
