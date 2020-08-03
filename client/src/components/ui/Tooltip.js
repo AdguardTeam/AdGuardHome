@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next';
 
 import {
     HIDE_TOOLTIP_DELAY,
-    HIDE_TOOLTIP_CLICK_DELAY,
     MEDIUM_SCREEN_SIZE,
+    SHOW_TOOLTIP_DELAY,
 } from '../../helpers/constants';
 import 'react-popper-tooltip/dist/styles.css';
 import './Tooltip.css';
@@ -18,22 +18,28 @@ const Tooltip = ({
     className = 'tooltip-container',
     placement = 'bottom',
     trigger = 'hover',
+    delayShow = SHOW_TOOLTIP_DELAY,
     delayHide = HIDE_TOOLTIP_DELAY,
 }) => {
     const { t } = useTranslation();
-    let triggerValue = trigger;
-    let delayValue = delayHide;
+    const touchEventsAvailable = 'ontouchstart' in window;
 
-    if (window.matchMedia(`(max-width: ${MEDIUM_SCREEN_SIZE}px)`).matches) {
+    let triggerValue = trigger;
+    let delayHideValue = delayHide;
+    let delayShowValue = delayShow;
+
+    if (window.matchMedia(`(max-width: ${MEDIUM_SCREEN_SIZE}px)`).matches || touchEventsAvailable) {
         triggerValue = 'click';
-        delayValue = HIDE_TOOLTIP_CLICK_DELAY;
+        delayHideValue = 0;
+        delayShowValue = 0;
     }
 
     return (
         <TooltipTrigger
             placement={placement}
             trigger={triggerValue}
-            delayHide={delayValue}
+            delayHide={delayHideValue}
+            delayShow={delayShowValue}
             tooltip={({ tooltipRef, getTooltipProps }) => (
                 <div
                     {...getTooltipProps({
@@ -71,6 +77,7 @@ Tooltip.propTypes = {
     placement: propTypes.string,
     trigger: propTypes.string,
     delayHide: propTypes.string,
+    delayShow: propTypes.string,
     className: propTypes.string,
     triggerClass: propTypes.string,
 };
