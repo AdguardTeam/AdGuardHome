@@ -669,5 +669,6 @@ export const getLogsUrlParams = (search, response_status) => `?${queryString.str
 })}`;
 
 export const processContent = (content) => (Array.isArray(content)
-    ? content.filter(([, value]) => value)
-        .flat() : content);
+    ? content.filter(([, value]) => value).reduce((acc, val) => acc.concat(val), [])
+    : content
+);
