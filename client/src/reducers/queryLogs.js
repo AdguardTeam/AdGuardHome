@@ -42,7 +42,7 @@ const queryLogs = handleActions(
             const rowsStart = pageSize * page;
             const rowsEnd = rowsStart + pageSize;
             const logsSlice = logs.slice(rowsStart, rowsEnd);
-            const isFiltered = Object.keys(filter).some((key) => filter[key]);
+            const isFiltered = filter && Object.keys(filter).some((key) => filter[key]);
 
             return {
                 ...state,
