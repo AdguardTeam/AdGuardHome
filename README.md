@@ -55,6 +55,7 @@ It operates as a DNS server that re-routes tracking domains to a "black hole," t
     * [How is this different from public AdGuard DNS servers?](#comparison-adguard-dns)
     * [How does AdGuard Home compare to Pi-Hole](#comparison-pi-hole)
     * [How does AdGuard Home compare to traditional ad blockers](#comparison-adblock)
+* [Getting AdGuard](#getting-adguard)
 * [How to build from source](#how-to-build)
 * [Contributing](#contributing)
     * [Test unstable versions](#test-unstable-versions)
@@ -144,6 +145,11 @@ Here are some examples of what cannot be blocked by a DNS-level blocker:
 Essentially, any advertising that shares a domain with content cannot be blocked by a DNS-level blocker.
 
 Is there a chance to handle this in the future? DNS will never be enough to do this. Our only option is to use a content blocking proxy like what we do in the standalone AdGuard applications. We're [going to bring](https://github.com/AdguardTeam/AdGuardHome/issues/1228) this feature support to AdGuard Home in the future. Unfortunately, even in this case, there still will be cases when this won't be enough or would require quite complicated configuration.
+
+<a id="getting-adguard"></a>
+## Getting AdGuard
+
+AgGuard can be installed from pre-compiled binaries or by compiling from source. For a list of pre-built binary options, see the [Installation](https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#installation) section of the Wiki.
 
 <a id="how-to-build"></a>
 ## How to build from source
