@@ -14,6 +14,13 @@
 # Building releases:
 #
 # * release -- builds AdGuard Home distros. CHANNEL must be specified (edge, release or beta).
+# * release_and_sign -- builds AdGuard Home distros and signs the binary files.
+#   CHANNEL must be specified (edge, release or beta).
+# * sign -- Repacks all release archive files and signs the binary files inside them.
+#   For signing to work, the public+private key pair for $(GPG_KEY) must be imported:
+#     gpg --import public.txt
+#     gpg --import private.txt
+#   GPG_KEY_PASSPHRASE must contain the GPG key passphrase
 # * docker-multi-arch -- builds a multi-arch image. If you want it to be pushed to docker hub,
 # 	you must specify:
 #     * DOCKER_IMAGE_NAME - adguard/adguard-home
@@ -23,6 +30,9 @@ GOPATH := $(shell go env GOPATH)
 PWD := $(shell pwd)
 TARGET=AdGuardHome
 BASE_URL="https://static.adguard.com/adguardhome/$(CHANNEL)"
+GPG_KEY := devteam@adguard.com
+GPG_KEY_PASSPHRASE :=
+GPG_CMD := gpg --detach-sig --default-key $(GPG_KEY) --pinentry-mode loopback --passphrase $(GPG_KEY_PASSPHRASE)
 
 # See release target
 DIST_DIR=dist
@@ -187,9 +197,15 @@ release: client_with_deps
 	go mod download
 	@echo Starting release build: version $(VERSION), channel $(CHANNEL)
 	CHANNEL=$(CHANNEL) $(GORELEASER_COMMAND)
-	$(call repack_dist)
 	$(call write_version_file,$(VERSION))
 	PATH=$(GOPATH)/bin:$(PATH) packr clean
+
+release_and_sign: client_with_deps
+	$(MAKE) release
+	$(call repack_dist)
+
+sign:
+	$(call repack_dist)
 
 define write_version_file
 	$(eval version := $(1))
@@ -255,29 +271,64 @@ define repack_dist
 	#  and we can't create it
 	rm -rf $(DIST_DIR)/AdGuardHome
 
+	# Windows builds
+	$(call zip_repack_windows,AdGuardHome_windows_amd64.zip)
+	$(call zip_repack_windows,AdGuardHome_windows_386.zip)
+
+	# MacOS builds
+	$(call zip_repack,AdGuardHome_darwin_amd64.zip)
+	$(call zip_repack,AdGuardHome_darwin_386.zip)
+
 	# Linux
-	cd $(DIST_DIR) && tar xzf AdGuardHome_linux_amd64.tar.gz && tar czf AdGuardHome_linux_amd64.tar.gz AdGuardHome/ && rm -rf AdGuardHome
-	cd $(DIST_DIR) && tar xzf AdGuardHome_linux_386.tar.gz && tar czf AdGuardHome_linux_386.tar.gz AdGuardHome/ && rm -rf AdGuardHome
+	$(call tar_repack,AdGuardHome_linux_amd64.tar.gz)
+	$(call tar_repack,AdGuardHome_linux_386.tar.gz)
 
 	# Linux, all kinds of ARM
-	cd $(DIST_DIR) && tar xzf AdGuardHome_linux_armv5.tar.gz && tar czf AdGuardHome_linux_armv5.tar.gz AdGuardHome/ && rm -rf AdGuardHome
-	cd $(DIST_DIR) && tar xzf AdGuardHome_linux_armv6.tar.gz && tar czf AdGuardHome_linux_armv6.tar.gz AdGuardHome/ && rm -rf AdGuardHome
-	cd $(DIST_DIR) && tar xzf AdGuardHome_linux_armv7.tar.gz && tar czf AdGuardHome_linux_armv7.tar.gz AdGuardHome/ && rm -rf AdGuardHome
-	cd $(DIST_DIR) && tar xzf AdGuardHome_linux_arm64.tar.gz && tar czf AdGuardHome_linux_arm64.tar.gz AdGuardHome/ && rm -rf AdGuardHome
+	$(call tar_repack,AdGuardHome_linux_armv5.tar.gz)
+	$(call tar_repack,AdGuardHome_linux_armv6.tar.gz)
+	$(call tar_repack,AdGuardHome_linux_armv7.tar.gz)
+	$(call tar_repack,AdGuardHome_linux_arm64.tar.gz)
 
 	# Linux, MIPS
-	cd $(DIST_DIR) && tar xzf AdGuardHome_linux_mips_softfloat.tar.gz && tar czf AdGuardHome_linux_mips_softfloat.tar.gz AdGuardHome/ && rm -rf AdGuardHome
-	cd $(DIST_DIR) && tar xzf AdGuardHome_linux_mipsle_softfloat.tar.gz && tar czf AdGuardHome_linux_mipsle_softfloat.tar.gz AdGuardHome/ && rm -rf AdGuardHome
-	cd $(DIST_DIR) && tar xzf AdGuardHome_linux_mips64_softfloat.tar.gz && tar czf AdGuardHome_linux_mips64_softfloat.tar.gz AdGuardHome/ && rm -rf AdGuardHome
-	cd $(DIST_DIR) && tar xzf AdGuardHome_linux_mips64le_softfloat.tar.gz && tar czf AdGuardHome_linux_mips64le_softfloat.tar.gz AdGuardHome/ && rm -rf AdGuardHome
+	$(call tar_repack,AdGuardHome_linux_mips_softfloat.tar.gz)
+	$(call tar_repack,AdGuardHome_linux_mipsle_softfloat.tar.gz)
+	$(call tar_repack,AdGuardHome_linux_mips64_softfloat.tar.gz)
+	$(call tar_repack,AdGuardHome_linux_mips64le_softfloat.tar.gz)
 
 	# FreeBSD
-	cd $(DIST_DIR) && tar xzf AdGuardHome_freebsd_386.tar.gz && tar czf AdGuardHome_freebsd_386.tar.gz AdGuardHome/ && rm -rf AdGuardHome
-	cd $(DIST_DIR) && tar xzf AdGuardHome_freebsd_amd64.tar.gz && tar czf AdGuardHome_freebsd_amd64.tar.gz AdGuardHome/ && rm -rf AdGuardHome
+	$(call tar_repack,AdGuardHome_freebsd_386.tar.gz)
+	$(call tar_repack,AdGuardHome_freebsd_amd64.tar.gz)
 
 	# FreeBSD, all kinds of ARM
-	cd $(DIST_DIR) && tar xzf AdGuardHome_freebsd_armv5.tar.gz && tar czf AdGuardHome_freebsd_armv5.tar.gz AdGuardHome/ && rm -rf AdGuardHome
-	cd $(DIST_DIR) && tar xzf AdGuardHome_freebsd_armv6.tar.gz && tar czf AdGuardHome_freebsd_armv6.tar.gz AdGuardHome/ && rm -rf AdGuardHome
-	cd $(DIST_DIR) && tar xzf AdGuardHome_freebsd_armv7.tar.gz && tar czf AdGuardHome_freebsd_armv7.tar.gz AdGuardHome/ && rm -rf AdGuardHome
-	cd $(DIST_DIR) && tar xzf AdGuardHome_freebsd_arm64.tar.gz && tar czf AdGuardHome_freebsd_arm64.tar.gz AdGuardHome/ && rm -rf AdGuardHome
+	$(call tar_repack,AdGuardHome_freebsd_armv5.tar.gz)
+	$(call tar_repack,AdGuardHome_freebsd_armv6.tar.gz)
+	$(call tar_repack,AdGuardHome_freebsd_armv7.tar.gz)
+	$(call tar_repack,AdGuardHome_freebsd_arm64.tar.gz)
+endef
+
+define zip_repack_windows
+	$(eval ARC := $(1))
+	cd $(DIST_DIR) && \
+		unzip $(ARC) && \
+		$(GPG_CMD) AdGuardHome/AdGuardHome.exe && \
+		zip -r $(ARC) AdGuardHome/ && \
+		rm -rf AdGuardHome
+endef
+
+define zip_repack
+	$(eval ARC := $(1))
+	cd $(DIST_DIR) && \
+		unzip $(ARC) && \
+		$(GPG_CMD) AdGuardHome/AdGuardHome && \
+		zip -r $(ARC) AdGuardHome/ && \
+		rm -rf AdGuardHome
+endef
+
+define tar_repack
+	$(eval ARC := $(1))
+	cd $(DIST_DIR) && \
+		tar xzf $(ARC) && \
+		$(GPG_CMD) AdGuardHome/AdGuardHome && \
+		tar czf $(ARC) AdGuardHome/ && \
+		rm -rf AdGuardHome
 endef
