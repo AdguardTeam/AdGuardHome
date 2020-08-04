@@ -119,6 +119,11 @@ func Create(config ServerConfig) *Server {
 		return nil
 	}
 
+	if s.conf.Enabled && !v4conf.Enabled && !v6conf.Enabled {
+		log.Error("Can't enable DHCP server because neither DHCPv4 nor DHCPv6 servers are configured")
+		return nil
+	}
+
 	// we can't delay database loading until DHCP server is started,
 	//  because we need static leases functionality available beforehand
 	s.dbLoad()

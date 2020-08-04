@@ -221,6 +221,9 @@ func run(args options) {
 	config.DHCP.ConfigModified = onConfigModified
 	if runtime.GOOS != "windows" {
 		Context.dhcpServer = dhcpd.Create(config.DHCP)
+		if Context.dhcpServer == nil {
+			log.Fatalf("Can't initialize DHCP module")
+		}
 	}
 	Context.autoHosts.Init("")
 
