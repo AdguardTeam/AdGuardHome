@@ -239,7 +239,7 @@
     "rule_label": "Kural",
     "list_label": "Liste",
     "unknown_filter": "Bilinmeyen filtre {{filterId}}",
-    "install_welcome_title": "AdGuard Home'a hoşgeldiniz!",
+    "install_welcome_title": "AdGuard Home'a hoş geldiniz!",
     "install_welcome_desc": "AdGuard Home, ağ genelinde reklam ve izleyicileri engelleyen bir DNS sunucusudur. Tüm ağınızı ve tüm cihazlarınızı kontrol etmenize yarayan bir araçtır, istemci tarafında bir program kullanmanıza gerek duymaz.",
     "install_settings_title": "Yönetici Web Arayüzü",
     "install_settings_listen": "Dinleme arayüzü",

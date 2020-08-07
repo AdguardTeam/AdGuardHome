@@ -562,5 +562,6 @@
     "filter_category_regional_desc": "Zoznamy zamerané na regionálne reklamy a sledovacie servery",
     "filter_category_other_desc": "Iné blokovacie zoznamy",
     "original_response": "Pôvodná odozva",
-    "click_to_view_queries": "Kliknite pre zobrazenie dopytov"
+    "click_to_view_queries": "Kliknite pre zobrazenie dopytov",
+    "port_53_faq_link": "Port 53 je často obsadený službami \"DNSStubListener\" alebo \"systemd-resolved\". Prečítajte si <0>tento návod</0> o tom, ako to vyriešiť."
 }
