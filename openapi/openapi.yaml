@@ -1626,12 +1626,14 @@ components:
                 name:
                     type: string
                     example: eth0
-                ip_addresses:
+                ipv4_addresses:
                     type: array
                     items:
                         type: string
-                    example:
-                        - 127.0.0.1
+                ipv6_addresses:
+                    type: array
+                    items:
+                        type: string
         AddressInfo:
             type: object
             description: Port information

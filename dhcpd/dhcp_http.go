@@ -202,7 +202,8 @@ type netInterfaceJSON struct {
 	Name         string   `json:"name"`
 	MTU          int      `json:"mtu"`
 	HardwareAddr string   `json:"hardware_address"`
-	Addresses    []string `json:"ip_addresses"`
+	Addrs4       []string `json:"ipv4_addresses"`
+	Addrs6       []string `json:"ipv6_addresses"`
 	Flags        string   `json:"flags"`
 }
 
@@ -251,9 +252,13 @@ func (s *Server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 			if ipnet.IP.IsLinkLocalUnicast() {
 				continue
 			}
-			jsonIface.Addresses = append(jsonIface.Addresses, ipnet.IP.String())
+			if ipnet.IP.To4() != nil {
+				jsonIface.Addrs4 = append(jsonIface.Addrs4, ipnet.IP.String())
+			} else {
+				jsonIface.Addrs6 = append(jsonIface.Addrs6, ipnet.IP.String())
+			}
 		}
-		if len(jsonIface.Addresses) != 0 {
+		if len(jsonIface.Addrs4)+len(jsonIface.Addrs6) != 0 {
 			response[iface.Name] = jsonIface
 		}
 

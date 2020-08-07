@@ -444,7 +444,8 @@ Response:
 			"name":"iface_name",
 			"mtu":1500,
 			"hardware_address":"...",
-			"ip_addresses":["ipv4 addr","ipv6 addr", ...],
+			"ipv4_addresses":["ipv4 addr", ...],
+			"ipv6_addresses":["ipv6 addr", ...],
 			"flags":"up|broadcast|multicast"
 		}
 		...
