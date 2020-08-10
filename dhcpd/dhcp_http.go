@@ -200,7 +200,7 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 
 type netInterfaceJSON struct {
 	Name         string   `json:"name"`
-	MTU          int      `json:"mtu"`
+	GatewayIP    string   `json:"gateway_ip"`
 	HardwareAddr string   `json:"hardware_address"`
 	Addrs4       []string `json:"ipv4_addresses"`
 	Addrs6       []string `json:"ipv6_addresses"`
@@ -233,7 +233,6 @@ func (s *Server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 
 		jsonIface := netInterfaceJSON{
 			Name:         iface.Name,
-			MTU:          iface.MTU,
 			HardwareAddr: iface.HardwareAddr.String(),
 		}
 
@@ -259,9 +258,9 @@ func (s *Server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if len(jsonIface.Addrs4)+len(jsonIface.Addrs6) != 0 {
+			jsonIface.GatewayIP = getGatewayIP(iface.Name)
 			response[iface.Name] = jsonIface
 		}
-
 	}
 
 	err = json.NewEncoder(w).Encode(response)

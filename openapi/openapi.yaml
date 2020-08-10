@@ -1619,10 +1619,6 @@ components:
                 hardware_address:
                     type: string
                     example: 52:54:00:11:09:ba
-                mtu:
-                    type: integer
-                    format: int32
-                    example: 1500
                 name:
                     type: string
                     example: eth0
@@ -1634,6 +1630,8 @@ components:
                     type: array
                     items:
                         type: string
+                gateway_ip:
+                    type: string
         AddressInfo:
             type: object
             description: Port information

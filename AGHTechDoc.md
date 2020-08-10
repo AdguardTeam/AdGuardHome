@@ -442,10 +442,10 @@ Response:
 	{
 		"iface_name":{
 			"name":"iface_name",
-			"mtu":1500,
 			"hardware_address":"...",
 			"ipv4_addresses":["ipv4 addr", ...],
 			"ipv6_addresses":["ipv6 addr", ...],
+			"gateway_ip":"...",
 			"flags":"up|broadcast|multicast"
 		}
 		...
