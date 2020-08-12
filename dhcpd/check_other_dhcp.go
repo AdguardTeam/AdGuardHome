@@ -7,12 +7,13 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"runtime"
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/insomniacslk/dhcp/dhcpv4"
+	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
 	"github.com/insomniacslk/dhcp/iana"
-	"golang.org/x/net/ipv4"
 )
 
 // CheckIfOtherDHCPServersPresent sends a DHCP request to the specified network interface,
@@ -27,6 +28,10 @@ func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 	ifaceIPNet := getIfaceIPv4(*iface)
 	if len(ifaceIPNet) == 0 {
 		return false, fmt.Errorf("couldn't find IPv4 address of interface %s %+v", ifaceName, iface)
+	}
+
+	if runtime.GOOS == "darwin" {
+		return false, fmt.Errorf("Can't find DHCP server: not supported on macOS")
 	}
 
 	srcIP := ifaceIPNet[0]
@@ -60,7 +65,7 @@ func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 
 	// bind to 0.0.0.0:68
 	log.Tracef("Listening to udp4 %+v", udpAddr)
-	c, err := newBroadcastPacketConn(net.IPv4(0, 0, 0, 0), 68, ifaceName)
+	c, err := nclient4.NewRawUDPConn(ifaceName, 68)
 	if c != nil {
 		defer c.Close()
 	}
@@ -69,8 +74,7 @@ func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 	}
 
 	// send to 255.255.255.255:67
-	cm := ipv4.ControlMessage{}
-	_, err = c.WriteTo(req.ToBytes(), &cm, dstAddr)
+	_, err = c.WriteTo(req.ToBytes(), dstAddr)
 	if err != nil {
 		return false, wrapErrPrint(err, "Couldn't send a packet to %s", dst)
 	}
@@ -81,9 +85,10 @@ func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 		// TODO: replicate dhclient's behaviour of retrying several times with progressively bigger timeouts
 		b := make([]byte, 1500)
 		_ = c.SetReadDeadline(time.Now().Add(defaultDiscoverTime))
-		n, _, _, err := c.ReadFrom(b)
+		n, _, err := c.ReadFrom(b)
 		if isTimeout(err) {
 			// timed out -- no DHCP servers
+			log.Debug("DHCPv4: didn't receive DHCP response")
 			return false, nil
 		}
 		if err != nil {
