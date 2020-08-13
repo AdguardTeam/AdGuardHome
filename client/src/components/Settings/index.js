@@ -10,53 +10,50 @@ import Checkbox from '../ui/Checkbox';
 import Loading from '../ui/Loading';
 import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
-
+import { getObjectKeysSorted } from '../../helpers/helpers';
 import './Settings.css';
 
-class Settings extends Component {
-    settings = {
-        safebrowsing: {
-            enabled: false,
-            title: 'use_adguard_browsing_sec',
-            subtitle: 'use_adguard_browsing_sec_hint',
-        },
-        parental: {
-            enabled: false,
-            title: 'use_adguard_parental',
-            subtitle: 'use_adguard_parental_hint',
-        },
-        safesearch: {
-            enabled: false,
-            title: 'enforce_safe_search',
-            subtitle: 'enforce_save_search_hint',
-        },
-    };
+const ORDER_KEY = 'order';
 
+const SETTINGS = {
+    safebrowsing: {
+        enabled: false,
+        title: 'use_adguard_browsing_sec',
+        subtitle: 'use_adguard_browsing_sec_hint',
+        [ORDER_KEY]: 0,
+    },
+    parental: {
+        enabled: false,
+        title: 'use_adguard_parental',
+        subtitle: 'use_adguard_parental_hint',
+        [ORDER_KEY]: 1,
+    },
+    safesearch: {
+        enabled: false,
+        title: 'enforce_safe_search',
+        subtitle: 'enforce_save_search_hint',
+        [ORDER_KEY]: 2,
+    },
+};
+
+class Settings extends Component {
     componentDidMount() {
-        this.props.initSettings(this.settings);
+        this.props.initSettings(SETTINGS);
         this.props.getStatsConfig();
         this.props.getLogsConfig();
         this.props.getFilteringStatus();
     }
 
-    renderSettings = (settings) => {
-        const settingsKeys = Object.keys(settings);
-
-        if (settingsKeys.length > 0) {
-            return settingsKeys.map((key) => {
-                const setting = settings[key];
-                const { enabled } = setting;
-                return (
-                    <Checkbox
-                        {...settings[key]}
-                        key={key}
-                        handleChange={() => this.props.toggleSetting(key, enabled)}
-                    />
-                );
-            });
-        }
-        return '';
-    };
+    renderSettings = (settings) => getObjectKeysSorted(settings, ORDER_KEY)
+        .map((key) => {
+            const setting = settings[key];
+            const { enabled } = setting;
+            return <Checkbox
+                {...setting}
+                key={key}
+                handleChange={() => this.props.toggleSetting(key, enabled)}
+            />;
+        });
 
     render() {
         const {
