@@ -13,12 +13,14 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
+	"github.com/insomniacslk/dhcp/dhcpv6"
+	"github.com/insomniacslk/dhcp/dhcpv6/nclient6"
 	"github.com/insomniacslk/dhcp/iana"
 )
 
-// CheckIfOtherDHCPServersPresent sends a DHCP request to the specified network interface,
+// CheckIfOtherDHCPServersPresentV4 sends a DHCP request to the specified network interface,
 // and waits for a response for a period defined by defaultDiscoverTime
-func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
+func CheckIfOtherDHCPServersPresentV4(ifaceName string) (bool, error) {
 	iface, err := net.InterfaceByName(ifaceName)
 	if err != nil {
 		return false, wrapErrPrint(err, "Couldn't find interface by name %s", ifaceName)
@@ -66,11 +68,11 @@ func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 	// bind to 0.0.0.0:68
 	log.Tracef("Listening to udp4 %+v", udpAddr)
 	c, err := nclient4.NewRawUDPConn(ifaceName, 68)
-	if c != nil {
-		defer c.Close()
-	}
 	if err != nil {
 		return false, wrapErrPrint(err, "Couldn't listen on :68")
+	}
+	if c != nil {
+		defer c.Close()
 	}
 
 	// send to 255.255.255.255:67
@@ -117,5 +119,97 @@ func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
 		log.Tracef("The packet is from an active DHCP server")
 		// that's a DHCP server there
 		return true, nil
+	}
+}
+
+// CheckIfOtherDHCPServersPresentV6 sends a DHCP request to the specified network interface,
+// and waits for a response for a period defined by defaultDiscoverTime
+func CheckIfOtherDHCPServersPresentV6(ifaceName string) (bool, error) {
+	iface, err := net.InterfaceByName(ifaceName)
+	if err != nil {
+		return false, fmt.Errorf("DHCPv6: net.InterfaceByName: %s: %s", ifaceName, err)
+	}
+
+	ifaceIPNet := getIfaceIPv6(*iface)
+	if len(ifaceIPNet) == 0 {
+		return false, fmt.Errorf("DHCPv6: couldn't find IPv6 address of interface %s %+v", ifaceName, iface)
+	}
+
+	srcIP := ifaceIPNet[0]
+	src := net.JoinHostPort(srcIP.String(), "546")
+	dst := "[ff02::1:2]:547"
+
+	req, err := dhcpv6.NewSolicit(iface.HardwareAddr)
+	if err != nil {
+		return false, fmt.Errorf("DHCPv6: dhcpv6.NewSolicit: %s", err)
+	}
+
+	udpAddr, err := net.ResolveUDPAddr("udp6", src)
+	if err != nil {
+		return false, wrapErrPrint(err, "DHCPv6: Couldn't resolve UDP address %s", src)
+	}
+
+	if !udpAddr.IP.To16().Equal(srcIP) {
+		return false, wrapErrPrint(err, "DHCPv6: Resolved UDP address is not %s", src)
+	}
+
+	dstAddr, err := net.ResolveUDPAddr("udp6", dst)
+	if err != nil {
+		return false, fmt.Errorf("DHCPv6: Couldn't resolve UDP address %s: %s", dst, err)
+	}
+
+	log.Debug("DHCPv6: Listening to udp6 %+v", udpAddr)
+	c, err := nclient6.NewIPv6UDPConn(ifaceName, dhcpv6.DefaultClientPort)
+	if err != nil {
+		return false, fmt.Errorf("DHCPv6: Couldn't listen on :546: %s", err)
+	}
+	if c != nil {
+		defer c.Close()
+	}
+
+	_, err = c.WriteTo(req.ToBytes(), dstAddr)
+	if err != nil {
+		return false, fmt.Errorf("DHCPv6: Couldn't send a packet to %s: %s", dst, err)
+	}
+
+	for {
+		log.Debug("DHCPv6: Waiting %v for an answer", defaultDiscoverTime)
+		b := make([]byte, 4096)
+		_ = c.SetReadDeadline(time.Now().Add(defaultDiscoverTime))
+		n, _, err := c.ReadFrom(b)
+		if isTimeout(err) {
+			log.Debug("DHCPv6: didn't receive DHCP response")
+			return false, nil
+		}
+		if err != nil {
+			return false, wrapErrPrint(err, "Couldn't receive packet")
+		}
+
+		log.Debug("DHCPv6: Received packet (%v bytes)", n)
+
+		resp, err := dhcpv6.FromBytes(b[:n])
+		if err != nil {
+			log.Debug("DHCPv6: dhcpv6.FromBytes: %s", err)
+			continue
+		}
+
+		log.Debug("DHCPv6: received message from server: %s", resp.Summary())
+
+		cid := req.Options.ClientID()
+		msg, err := resp.GetInnerMessage()
+		if err != nil {
+			log.Debug("DHCPv6: resp.GetInnerMessage: %s", err)
+			continue
+		}
+		rcid := msg.Options.ClientID()
+		if resp.Type() == dhcpv6.MessageTypeAdvertise &&
+			msg.TransactionID == req.TransactionID &&
+			rcid != nil &&
+			cid.Equal(*rcid) {
+			log.Debug("DHCPv6: The packet is from an active DHCP server")
+			return true, nil
+		}
+
+		log.Debug("DHCPv6: received message from server doesn't match our request")
 	}
 }

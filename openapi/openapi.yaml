@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
     title: AdGuard Home
     description: AdGuard Home REST API. Admin web interface is built on top of this REST API.
-    version: "0.102"
+    version: "0.104"
     contact:
         name: "AdGuard Home"
         url: "https://github.com/AdguardTeam/AdGuardHome"
@@ -1356,14 +1356,30 @@ components:
                     type: array
                     items:
                         $ref: "#/components/schemas/DhcpStaticLease"
+
         DhcpSearchResult:
             type: object
             description: Information about a DHCP server discovered in the current network
+            properties:
+                v4:
+                    $ref: "#/components/schemas/DhcpSearchV4"
+                v6:
+                    $ref: "#/components/schemas/DhcpSearchV6"
+
+        DhcpSearchV4:
+            type: object
             properties:
                 other_server:
                     $ref: "#/components/schemas/DhcpSearchResultOtherServer"
                 static_ip:
                     $ref: "#/components/schemas/DhcpSearchResultStaticIP"
+
+        DhcpSearchV6:
+            type: object
+            properties:
+                other_server:
+                    $ref: "#/components/schemas/DhcpSearchResultOtherServer"
+
         DhcpSearchResultOtherServer:
             type: object
             properties:
@@ -1375,6 +1391,7 @@ components:
                     type: string
                     description: Set if found=error
                     example: ""
+
         DhcpSearchResultStaticIP:
             type: object
             properties:
@@ -1386,6 +1403,7 @@ components:
                     type: string
                     description: Set if static=no
                     example: ""
+
         DnsAnswer:
             type: object
             description: DNS answer section

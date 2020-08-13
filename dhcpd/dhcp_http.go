@@ -12,6 +12,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/util"
 
+	"github.com/AdguardTeam/golibs/jsonutil"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -129,58 +130,82 @@ type dhcpServerConfigJSON struct {
 
 func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 	newconfig := dhcpServerConfigJSON{}
-	err := json.NewDecoder(r.Body).Decode(&newconfig)
+	newconfig.Enabled = s.conf.Enabled
+	newconfig.InterfaceName = s.conf.InterfaceName
+
+	js, err := jsonutil.DecodeObject(&newconfig, r.Body)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "Failed to parse new DHCP config json: %s", err)
 		return
 	}
 
-	v4conf := v4JSONToServerConf(newconfig.V4)
-	v4conf.Enabled = newconfig.Enabled
-	if len(v4conf.RangeStart) == 0 {
-		v4conf.Enabled = false
-	}
-	v4conf.InterfaceName = newconfig.InterfaceName
+	var s4 DHCPServer
+	var s6 DHCPServer
+	v4Enabled := false
+	v6Enabled := false
 
-	c4 := V4ServerConf{}
-	s.srv4.WriteDiskConfig4(&c4)
-	v4conf.notify = c4.notify
-	v4conf.ICMPTimeout = c4.ICMPTimeout
+	if js.Exists("v4") {
+		v4conf := v4JSONToServerConf(newconfig.V4)
+		v4conf.Enabled = newconfig.Enabled
+		if len(v4conf.RangeStart) == 0 {
+			v4conf.Enabled = false
+		}
+		v4Enabled = v4conf.Enabled
+		v4conf.InterfaceName = newconfig.InterfaceName
 
-	s4, err := v4Create(v4conf)
-	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "Invalid DHCPv4 configuration: %s", err)
-		return
-	}
+		c4 := V4ServerConf{}
+		s.srv4.WriteDiskConfig4(&c4)
+		v4conf.notify = c4.notify
+		v4conf.ICMPTimeout = c4.ICMPTimeout
 
-	v6conf := v6JSONToServerConf(newconfig.V6)
-	v6conf.Enabled = newconfig.Enabled
-	if len(v6conf.RangeStart) == 0 {
-		v6conf.Enabled = false
-	}
-	v6conf.InterfaceName = newconfig.InterfaceName
-	v6conf.notify = s.onNotify
-	s6, err := v6Create(v6conf)
-	if s6 == nil {
-		httpError(r, w, http.StatusBadRequest, "Invalid DHCPv6 configuration: %s", err)
-		return
+		s4, err = v4Create(v4conf)
+		if err != nil {
+			httpError(r, w, http.StatusBadRequest, "Invalid DHCPv4 configuration: %s", err)
+			return
+		}
 	}
 
-	if newconfig.Enabled && !v4conf.Enabled && !v6conf.Enabled {
+	if js.Exists("v6") {
+		v6conf := v6JSONToServerConf(newconfig.V6)
+		v6conf.Enabled = newconfig.Enabled
+		if len(v6conf.RangeStart) == 0 {
+			v6conf.Enabled = false
+		}
+		v6Enabled = v6conf.Enabled
+		v6conf.InterfaceName = newconfig.InterfaceName
+		v6conf.notify = s.onNotify
+		s6, err = v6Create(v6conf)
+		if s6 == nil {
+			httpError(r, w, http.StatusBadRequest, "Invalid DHCPv6 configuration: %s", err)
+			return
+		}
+	}
+
+	if newconfig.Enabled && !v4Enabled && !v6Enabled {
 		httpError(r, w, http.StatusBadRequest, "DHCPv4 or DHCPv6 configuration must be complete")
 		return
 	}
 
 	s.Stop()
 
-	s.conf.Enabled = newconfig.Enabled
-	s.conf.InterfaceName = newconfig.InterfaceName
-	s.srv4 = s4
-	s.srv6 = s6
+	if js.Exists("enabled") {
+		s.conf.Enabled = newconfig.Enabled
+	}
 
+	if js.Exists("interface_name") {
+		s.conf.InterfaceName = newconfig.InterfaceName
+	}
+
+	if s4 != nil {
+		s.srv4 = s4
+	}
+	if s6 != nil {
+		s.srv6 = s6
+	}
 	s.conf.ConfigModified()
+	s.dbLoad()
 
-	if newconfig.Enabled {
+	if s.conf.Enabled {
 		staticIP, err := HasStaticIP(newconfig.InterfaceName)
 		if !staticIP && err == nil {
 			err = SetStaticIP(newconfig.InterfaceName)
@@ -291,17 +316,7 @@ func (s *Server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	found, err := CheckIfOtherDHCPServersPresent(interfaceName)
-
-	othSrv := map[string]interface{}{}
-	foundVal := "no"
-	if found {
-		foundVal = "yes"
-	} else if err != nil {
-		foundVal = "error"
-		othSrv["error"] = err.Error()
-	}
-	othSrv["found"] = foundVal
+	found4, err4 := CheckIfOtherDHCPServersPresentV4(interfaceName)
 
 	staticIP := map[string]interface{}{}
 	isStaticIP, err := HasStaticIP(interfaceName)
@@ -315,9 +330,36 @@ func (s *Server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 	}
 	staticIP["static"] = staticIPStatus
 
+	v4 := map[string]interface{}{}
+	othSrv := map[string]interface{}{}
+	foundVal := "no"
+	if found4 {
+		foundVal = "yes"
+	} else if err != nil {
+		foundVal = "error"
+		othSrv["error"] = err4.Error()
+	}
+	othSrv["found"] = foundVal
+	v4["other_server"] = othSrv
+	v4["static_ip"] = staticIP
+
+	found6, err6 := CheckIfOtherDHCPServersPresentV6(interfaceName)
+
+	v6 := map[string]interface{}{}
+	othSrv = map[string]interface{}{}
+	foundVal = "no"
+	if found6 {
+		foundVal = "yes"
+	} else if err6 != nil {
+		foundVal = "error"
+		othSrv["error"] = err6.Error()
+	}
+	othSrv["found"] = foundVal
+	v6["other_server"] = othSrv
+
 	result := map[string]interface{}{}
-	result["other_server"] = othSrv
-	result["static_ip"] = staticIP
+	result["v4"] = v4
+	result["v6"] = v6
 
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(result)

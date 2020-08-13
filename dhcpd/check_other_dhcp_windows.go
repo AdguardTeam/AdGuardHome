@@ -2,6 +2,10 @@ package dhcpd
 
 import "fmt"
 
-func CheckIfOtherDHCPServersPresent(ifaceName string) (bool, error) {
+func CheckIfOtherDHCPServersPresentV4(ifaceName string) (bool, error) {
+	return false, fmt.Errorf("not supported")
+}
+
+func CheckIfOtherDHCPServersPresentV6(ifaceName string) (bool, error) {
 	return false, fmt.Errorf("not supported")
 }

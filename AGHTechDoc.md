@@ -500,13 +500,21 @@ Response:
 	200 OK
 
 	{
-		"other_server": {
-			"found": "yes|no|error",
-			"error": "Error message", // set if found=error
-		},
-		"static_ip": {
-			"static": "yes|no|error",
-			"ip": "<Current dynamic IP address>", // set if static=no
+		v4: {
+			"other_server": {
+				"found": "yes|no|error",
+				"error": "Error message", // set if found=error
+			},
+			"static_ip": {
+				"static": "yes|no|error",
+				"ip": "<Current dynamic IP address>", // set if static=no
+			}
+		}
+		v6: {
+			"other_server": {
+				"found": "yes|no|error",
+				"error": "Error message", // set if found=error
+			},
 		}
 	}
 
