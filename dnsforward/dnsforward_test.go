@@ -252,10 +252,6 @@ func TestBlockedRequest(t *testing.T) {
 
 func TestServerCustomClientUpstream(t *testing.T) {
 	s := createTestServer(t)
-	err := s.Start()
-	if err != nil {
-		t.Fatalf("Failed to start server: %s", err)
-	}
 	s.conf.GetCustomUpstreamByClient = func(clientAddr string) *proxy.UpstreamConfig {
 		uc := &proxy.UpstreamConfig{}
 		u := &testUpstream{}
@@ -264,6 +260,9 @@ func TestServerCustomClientUpstream(t *testing.T) {
 		uc.Upstreams = append(uc.Upstreams, u)
 		return uc
 	}
+
+	assert.Nil(t, s.Start())
+
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 
 	// Send test request

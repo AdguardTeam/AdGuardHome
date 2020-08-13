@@ -64,6 +64,7 @@ Contents:
 	* API: Log in
 	* API: Log out
 	* API: Get current user info
+* Safe services
 
 
 ## Relations between subsystems
@@ -1747,3 +1748,40 @@ Response:
 	}
 
 If no client is configured then authentication is disabled and server sends an empty response.
+
+
+### Safe services
+
+Check if host name is blocked by SB/PC service:
+
+* For each host name component, search for the result in cache by the first 2 bytes of SHA-256 hashes of host name components (max. is 4, i.e. sub2.sub1.host.com), excluding TLD:
+
+		hashes[] = cache_search(sha256(host.com)[0..1])
+		...
+
+	If hash prefix is found, search for a full hash sum in the cached data.
+	If found, the host is blocked.
+	If not found, the host is not blocked - don't request data for this prefix from the Family server again.
+	If hash prefix is not found, request data for this prefix from the Family server.
+
+* Prepare query string which is generated from the first 2 bytes (converted to a 4-character string) of SHA-256 hashes of host name components (max. is 4, i.e. sub2.sub1.host.com), excluding TLD:
+
+		qs = ... + string(sha256(sub.host.com)[0..1]) + "." + string(sha256(host.com)[0..1]) + ".sb.dns.adguard.com."
+
+	For PC `.pc.dns.adguard.com` suffix is used.
+
+* Send TXT query to Family server, receive response which contains the array of complete hash sums of the blocked hosts
+
+* Check if one of received hash sums (`hashes[]`) matches hash sums for our host name
+
+		hashes[0] <> sha256(host.com)
+		hashes[0] <> sha256(sub.host.com)
+		hashes[1] <> sha256(host.com)
+		hashes[1] <> sha256(sub.host.com)
+		...
+
+* Store all received hash sums in cache:
+
+		sha256(host.com)[0..1] -> hashes[0],hashes[1],...
+		sha256(sub.host.com)[0..1] -> hashes[2],...
+		...

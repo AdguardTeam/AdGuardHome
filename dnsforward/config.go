@@ -133,8 +133,8 @@ var defaultValues = ServerConfig{
 // createProxyConfig creates and validates configuration for the main proxy
 func (s *Server) createProxyConfig() (proxy.Config, error) {
 	proxyConfig := proxy.Config{
-		UDPListenAddr:          s.conf.UDPListenAddr,
-		TCPListenAddr:          s.conf.TCPListenAddr,
+		UDPListenAddr:          []*net.UDPAddr{s.conf.UDPListenAddr},
+		TCPListenAddr:          []*net.TCPAddr{s.conf.TCPListenAddr},
 		Ratelimit:              int(s.conf.Ratelimit),
 		RatelimitWhitelist:     s.conf.RatelimitWhitelist,
 		RefuseAny:              s.conf.RefuseAny,
@@ -229,7 +229,7 @@ func (s *Server) prepareIntlProxy() {
 // prepareTLS - prepares TLS configuration for the DNS proxy
 func (s *Server) prepareTLS(proxyConfig *proxy.Config) error {
 	if s.conf.TLSListenAddr != nil && len(s.conf.CertificateChainData) != 0 && len(s.conf.PrivateKeyData) != 0 {
-		proxyConfig.TLSListenAddr = s.conf.TLSListenAddr
+		proxyConfig.TLSListenAddr = []*net.TCPAddr{s.conf.TLSListenAddr}
 		var err error
 		s.conf.cert, err = tls.X509KeyPair(s.conf.CertificateChainData, s.conf.PrivateKeyData)
 		if err != nil {
