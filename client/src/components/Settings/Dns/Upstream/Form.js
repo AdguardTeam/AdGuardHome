@@ -52,10 +52,11 @@ const Form = ({
     submitting, invalid, processingSetConfig, processingTestUpstream, handleSubmit,
 }) => {
     const dispatch = useDispatch();
-    const [t] = useTranslation();
+    const { t } = useTranslation();
     const upstream_dns = useSelector((store) => store.form[FORM_NAME.UPSTREAM].values.upstream_dns);
-    const bootstrap_dns = useSelector((store) => store.form[FORM_NAME.UPSTREAM]
-        .values.bootstrap_dns);
+    const bootstrap_dns = useSelector(
+        (store) => store.form[FORM_NAME.UPSTREAM].values.bootstrap_dns,
+    );
 
     const handleUpstreamTest = () => dispatch(testUpstream({
         upstream_dns,
