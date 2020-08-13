@@ -437,7 +437,7 @@
 }
 
 .custom-select__arrow--left {
-    background: #fff url('./chevron-down.svg') no-repeat;
+    background: var(--white) url('../ui/svg/chevron-down.svg') no-repeat;
     background-position: 5px 9px;
     background-size: 22px;
 }

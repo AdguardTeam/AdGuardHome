@@ -5,6 +5,7 @@ const flexBugsFixes = require('postcss-flexbugs-fixes');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const { BUILD_ENVS } = require('./constants');
 
 const RESOURCES_PATH = path.resolve(__dirname);
 const ENTRY_REACT = path.resolve(RESOURCES_PATH, 'src/index.js');
@@ -18,12 +19,9 @@ const ASSETS_PATH = path.resolve(RESOURCES_PATH, 'public/assets');
 const PUBLIC_PATH = path.resolve(__dirname, '../build/static');
 const PUBLIC_ASSETS_PATH = path.resolve(PUBLIC_PATH, 'assets');
 
-const BUILD_ENVS = {
-    dev: 'development',
-    prod: 'production',
-};
-
 const BUILD_ENV = BUILD_ENVS[process.env.BUILD_ENV];
+
+const isDev = BUILD_ENV === BUILD_ENVS.dev;
 
 const config = {
     mode: BUILD_ENV,
@@ -36,22 +34,35 @@ const config = {
     },
     output: {
         path: PUBLIC_PATH,
-        filename: '[name].[chunkhash].js',
+        filename: '[name].[hash].js',
     },
     resolve: {
         modules: ['node_modules'],
         alias: {
             MainRoot: path.resolve(__dirname, '../'),
             ClientRoot: path.resolve(__dirname, './src'),
+            // TODO: change to '@hot-loader/react-dom' when v16.13.1 is released
+            //  https://stackoverflow.com/a/62671689/12942752
+            'react-dom': 'react-dom',
         },
     },
     module: {
         rules: [
             {
+                test: /\.ya?ml$/,
+                type: 'json',
+                use: 'yaml-loader',
+            },
+            {
                 test: /\.css$/i,
                 use: [
                     'style-loader',
-                    MiniCssExtractPlugin.loader,
+                    {
+                        loader: MiniCssExtractPlugin.loader,
+                        options: {
+                            hmr: isDev,
+                        },
+                    },
                     {
                         loader: 'css-loader',
                         options: {
@@ -122,7 +133,8 @@ const config = {
             template: HTML_LOGIN_PATH,
         }),
         new MiniCssExtractPlugin({
-            filename: '[name].[contenthash].css',
+            filename: isDev ? '[name].css' : '[name].[hash].css',
+            chunkFilename: isDev ? '[id].css' : '[id].[hash].css',
         }),
         new CopyPlugin({
             patterns: [

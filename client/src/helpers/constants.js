@@ -363,10 +363,11 @@ export const RESPONSE_FILTER = {
     },
 };
 
-export const RESPONSE_FILTER_QUERIES = Object.values(RESPONSE_FILTER).reduce((acc, { query }) => {
-    acc[query] = query;
-    return acc;
-}, {});
+export const RESPONSE_FILTER_QUERIES = Object.values(RESPONSE_FILTER)
+    .reduce((acc, { query }) => {
+        acc[query] = query;
+        return acc;
+    }, {});
 
 export const FILTERED_STATUS_TO_META_MAP = {
     [FILTERED_STATUS.NOT_FILTERED_WHITE_LIST]: {

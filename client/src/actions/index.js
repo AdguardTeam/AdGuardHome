@@ -148,7 +148,7 @@ const checkStatus = async (handleRequestSuccess, handleRequestError, attempts = 
     const rmTimeout = (t) => t && clearTimeout(t);
 
     try {
-        const response = await axios.get('control/status');
+        const response = await axios.get(`${apiClient.baseUrl}/status`);
         rmTimeout(timeout);
         if (response?.status === 200) {
             handleRequestSuccess(response);

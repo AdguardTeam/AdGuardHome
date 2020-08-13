@@ -1,28 +1,25 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
-import { useDispatch } from 'react-redux';
+import { shallowEqual, useDispatch } from 'react-redux';
 import Form from './Form';
 import Card from '../../../ui/Card';
 import { setDnsConfig } from '../../../../actions/dnsConfig';
 
-const Upstream = (props) => {
-    const [t] = useTranslation();
+const Upstream = () => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
+    const {
+        upstream_dns,
+        bootstrap_dns,
+        upstream_mode,
+        processingSetConfig,
+    } = ((state) => state.dnsConfig, shallowEqual);
+
+    const { processingTestUpstream } = ((state) => state.settings, shallowEqual);
 
     const handleSubmit = (values) => {
         dispatch(setDnsConfig(values));
     };
-
-    const {
-        processingTestUpstream,
-        dnsConfig: {
-            upstream_dns,
-            bootstrap_dns,
-            processingSetConfig,
-            upstream_mode,
-        },
-    } = props;
 
     return (
         <Card
@@ -46,11 +43,6 @@ const Upstream = (props) => {
             </div>
         </Card>
     );
-};
-
-Upstream.propTypes = {
-    processingTestUpstream: PropTypes.bool.isRequired,
-    dnsConfig: PropTypes.object.isRequired,
 };
 
 export default Upstream;

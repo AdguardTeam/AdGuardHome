@@ -1,13 +1,21 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { Trans, withTranslation } from 'react-i18next';
-
+import { Trans, useTranslation } from 'react-i18next';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { getVersion } from '../../actions';
 import './Version.css';
 
-const Version = (props) => {
+const Version = () => {
+    const dispatch = useDispatch();
+    const { t } = useTranslation();
     const {
-        dnsVersion, processingVersion, t, checkUpdateFlag,
-    } = props;
+        dnsVersion,
+        processingVersion,
+        checkUpdateFlag,
+    } = useSelector((state) => state?.dashboard ?? {}, shallowEqual);
+
+    const onClick = () => {
+        dispatch(getVersion(true));
+    };
 
     return (
         <div className="version">
@@ -20,7 +28,7 @@ const Version = (props) => {
                 {checkUpdateFlag && <button
                     type="button"
                     className="btn btn-icon btn-icon-sm btn-outline-primary btn-sm ml-2"
-                    onClick={() => props.getVersion(true)}
+                    onClick={onClick}
                     disabled={processingVersion}
                     title={t('check_updates_now')}
                 >
@@ -33,12 +41,4 @@ const Version = (props) => {
     );
 };
 
-Version.propTypes = {
-    dnsVersion: PropTypes.string,
-    getVersion: PropTypes.func,
-    processingVersion: PropTypes.bool,
-    checkUpdateFlag: PropTypes.bool,
-    t: PropTypes.func.isRequired,
-};
-
-export default withTranslation()(Version);
+export default Version;
