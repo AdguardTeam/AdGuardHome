@@ -6,7 +6,7 @@ import { Trans, withTranslation } from 'react-i18next';
 import Card from '../ui/Card';
 import Cell from '../ui/Cell';
 
-import { getPercent, getIpMatchListStatus } from '../../helpers/helpers';
+import { getPercent, getIpMatchListStatus, sortIp } from '../../helpers/helpers';
 import { IP_MATCH_LIST_STATUS, STATUS_COLORS } from '../../helpers/constants';
 import { formatClientCell } from '../../helpers/formatClientCell';
 
@@ -99,7 +99,7 @@ const Clients = ({
                 {
                     Header: 'IP',
                     accessor: 'ip',
-                    sortMethod: (a, b) => parseInt(a.replace(/\./g, ''), 10) - parseInt(b.replace(/\./g, ''), 10),
+                    sortMethod: sortIp,
                     Cell: clientCell(t, toggleClientStatus, processingAccessSet, disallowedClients),
                 },
                 {

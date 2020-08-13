@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import ReactTable from 'react-table';
 import { Trans, withTranslation } from 'react-i18next';
 import { LEASES_TABLE_DEFAULT_PAGE_SIZE } from '../../../../helpers/constants';
-
+import { sortIp } from '../../../../helpers/helpers';
 import Modal from './Modal';
 
 class StaticLeases extends Component {
@@ -49,6 +49,7 @@ class StaticLeases extends Component {
                         {
                             Header: 'IP',
                             accessor: 'ip',
+                            sortMethod: sortIp,
                             Cell: this.cellWrap,
                         },
                         {
