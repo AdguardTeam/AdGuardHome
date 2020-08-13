@@ -15,7 +15,7 @@ const Upstream = () => {
         processingSetConfig,
     } = useSelector((state) => state.dnsConfig, shallowEqual);
 
-    const { processingTestUpstream } = ((state) => state.settings, shallowEqual);
+    const { processingTestUpstream } = useSelector((state) => state.settings, shallowEqual);
 
     const handleSubmit = (values) => {
         dispatch(setDnsConfig(values));
