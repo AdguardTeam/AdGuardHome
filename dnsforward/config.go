@@ -81,6 +81,7 @@ type FilteringConfig struct {
 	AAAADisabled           bool     `yaml:"aaaa_disabled"`      // Respond with an empty answer to all AAAA requests
 	EnableDNSSEC           bool     `yaml:"enable_dnssec"`      // Set DNSSEC flag in outcoming DNS request
 	EnableEDNSClientSubnet bool     `yaml:"edns_client_subnet"` // Enable EDNS Client Subnet option
+	MaxGoroutines          uint32   `yaml:"max_goroutines"`     // Max. number of parallel goroutines for processing incoming requests
 }
 
 // TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
@@ -144,6 +145,7 @@ func (s *Server) createProxyConfig() (proxy.Config, error) {
 		BeforeRequestHandler:   s.beforeRequestHandler,
 		RequestHandler:         s.handleDNSRequest,
 		EnableEDNSClientSubnet: s.conf.EnableEDNSClientSubnet,
+		MaxGoroutines:          int(s.conf.MaxGoroutines),
 	}
 
 	if s.conf.CacheSize != 0 {
