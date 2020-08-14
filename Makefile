@@ -49,6 +49,12 @@ endif
 endif
 endif
 
+# Version history URL (see
+VERSION_HISTORY_URL="https://github.com/AdguardTeam/AdGuardHome/releases"
+ifeq ($(CHANNEL),edge)
+	VERSION_HISTORY_URL="https://github.com/AdguardTeam/AdGuardHome/commits/master"
+endif
+
 # goreleaser command depends on the $CHANNEL
 GORELEASER_COMMAND=goreleaser release --rm-dist --skip-publish --snapshot
 ifneq ($(CHANNEL),edge)
@@ -221,7 +227,7 @@ define write_version_file
 	echo "{" >> $(DIST_DIR)/version.json
 	echo "  \"version\": \"$(version)\"," >> $(DIST_DIR)/version.json
 	echo "  \"announcement\": \"AdGuard Home $(version) is now available!\"," >> $(DIST_DIR)/version.json
-	echo "  \"announcement_url\": \"https://github.com/AdguardTeam/AdGuardHome/releases\"," >> $(DIST_DIR)/version.json
+	echo "  \"announcement_url\": \"$(VERSION_HISTORY_URL)\"," >> $(DIST_DIR)/version.json
 	echo "  \"selfupdate_min_version\": \"0.0\"," >> $(DIST_DIR)/version.json
 
 	# Windows builds
