@@ -22,7 +22,8 @@ Contents:
 	* Update client
 	* Delete client
 	* API: Find clients by IP
-* Enable DHCP server
+* DHCP server
+	* DHCP server in DNS
 	* "Show DHCP status" command
 	* "Check DHCP" command
 	* "Enable DHCP" command
@@ -375,9 +376,9 @@ Error response:
 UI shows error message "Auto-update has failed"
 
 
-## Enable DHCP server
+## DHCP server
 
-Algorithm:
+Enable DHCP server algorithm:
 
 * UI shows DHCP configuration screen with "Enabled DHCP" button disabled, and "Check DHCP" button enabled
 * User clicks on "Check DHCP"; UI sends request to server
@@ -387,6 +388,21 @@ Algorithm:
 * User clicks on "Enable DHCP"; UI sends request to server
 * Server sets a static IP (if necessary), enables DHCP server, sends the status back to UI
 * UI shows the status
+
+
+### DHCP server in DNS
+
+DHCP leases are used in several ways by DNS module.
+
+* For "A" DNS reqeust we reply with an IP address leased by our DHCP server.
+
+		< A bills-notebook.lan.
+		> A bills-notebook.lan. = 192.168.1.100
+
+* For "PTR" DNS request we reply with a hostname from an active DHCP lease.
+
+		< PTR 100.1.168.192.in-addr.arpa.
+		> PTR 100.1.168.192.in-addr.arpa. = bills-notebook.
 
 
 ### "Show DHCP status" command

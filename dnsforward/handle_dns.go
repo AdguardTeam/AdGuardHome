@@ -94,6 +94,20 @@ func processInitial(ctx *dnsContext) int {
 	return resultDone
 }
 
+// Return TRUE if host names doesn't contain disallowed characters
+func isHostnameOK(hostname string) bool {
+	for _, c := range hostname {
+		if !((c >= 'a' && c <= 'z') ||
+			(c >= 'A' && c <= 'Z') ||
+			(c >= '0' && c <= '9') ||
+			c == '.' || c == '-') {
+			log.Debug("DNS: skipping invalid hostname %s from DHCP", hostname)
+			return false
+		}
+	}
+	return true
+}
+
 func (s *Server) onDHCPLeaseChanged(flags int) {
 	switch flags {
 	case dhcpd.LeaseChangedAdded,
@@ -110,15 +124,17 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 	ll := s.dhcpServer.Leases(dhcpd.LeasesAll)
 
 	for _, l := range ll {
-		if len(l.Hostname) == 0 {
+		if len(l.Hostname) == 0 || !isHostnameOK(l.Hostname) {
 			continue
 		}
 
-		m[l.IP.String()] = l.Hostname
+		lowhost := strings.ToLower(l.Hostname)
+
+		m[l.IP.String()] = lowhost
 
 		ip := make(net.IP, 4)
 		copy(ip, l.IP.To4())
-		hostToIP[l.Hostname] = ip
+		hostToIP[lowhost] = ip
 	}
 
 	log.Debug("DNS: added %d A/PTR entries from DHCP", len(m))
