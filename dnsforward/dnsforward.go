@@ -51,6 +51,9 @@ type Server struct {
 	stats      stats.Stats
 	access     *accessCtx
 
+	tableHostToIP     map[string]net.IP // "hostname -> IP" table for internal addresses (DHCP)
+	tableHostToIPLock sync.Mutex
+
 	tablePTR     map[string]string // "IP -> hostname" table for reverse lookup
 	tablePTRLock sync.Mutex
 

@@ -1,6 +1,7 @@
 package dnsforward
 
 import (
+	"net"
 	"strings"
 	"time"
 
@@ -42,6 +43,7 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 	type modProcessFunc func(ctx *dnsContext) int
 	mods := []modProcessFunc{
 		processInitial,
+		processInternalHosts,
 		processInternalIPAddrs,
 		processFilteringBeforeRequest,
 		processUpstream,
@@ -102,18 +104,79 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 		return
 	}
 
+	hostToIP := make(map[string]net.IP)
 	m := make(map[string]string)
+
 	ll := s.dhcpServer.Leases(dhcpd.LeasesAll)
+
 	for _, l := range ll {
 		if len(l.Hostname) == 0 {
 			continue
 		}
+
 		m[l.IP.String()] = l.Hostname
+
+		ip := make(net.IP, 4)
+		copy(ip, l.IP.To4())
+		hostToIP[l.Hostname] = ip
 	}
-	log.Debug("DNS: added %d PTR entries from DHCP", len(m))
+
+	log.Debug("DNS: added %d A/PTR entries from DHCP", len(m))
+
+	s.tableHostToIPLock.Lock()
+	s.tableHostToIP = hostToIP
+	s.tableHostToIPLock.Unlock()
+
 	s.tablePTRLock.Lock()
 	s.tablePTR = m
 	s.tablePTRLock.Unlock()
+}
+
+// Respond to A requests if the target host name is associated with a lease from our DHCP server
+func processInternalHosts(ctx *dnsContext) int {
+	s := ctx.srv
+	req := ctx.proxyCtx.Req
+	if !(req.Question[0].Qtype == dns.TypeA || req.Question[0].Qtype == dns.TypeAAAA) {
+		return resultDone
+	}
+
+	host := req.Question[0].Name
+	host = strings.ToLower(host)
+	if !strings.HasSuffix(host, ".lan.") {
+		return resultDone
+	}
+	host = strings.TrimSuffix(host, ".lan.")
+
+	s.tableHostToIPLock.Lock()
+	if s.tableHostToIP == nil {
+		s.tableHostToIPLock.Unlock()
+		return resultDone
+	}
+	ip, ok := s.tableHostToIP[host]
+	s.tableHostToIPLock.Unlock()
+	if !ok {
+		return resultDone
+	}
+
+	log.Debug("DNS: internal record: %s -> %s", req.Question[0].Name, ip.String())
+
+	resp := s.makeResponse(req)
+
+	if req.Question[0].Qtype == dns.TypeA {
+		a := &dns.A{}
+		a.Hdr = dns.RR_Header{
+			Name:   req.Question[0].Name,
+			Rrtype: dns.TypeA,
+			Ttl:    s.conf.BlockedResponseTTL,
+			Class:  dns.ClassINET,
+		}
+		a.A = make([]byte, 4)
+		copy(a.A, ip)
+		resp.Answer = append(resp.Answer, a)
+	}
+
+	ctx.proxyCtx.Res = resp
+	return resultDone
 }
 
 // Respond to PTR requests if the target IP address is leased by our DHCP server
