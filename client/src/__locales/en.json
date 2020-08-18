@@ -249,7 +249,7 @@
     "rate_limit_desc": "The number of requests per second that a single client is allowed to make (0: unlimited)",
     "blocking_ipv4_desc": "IP address to be returned for a blocked A request",
     "blocking_ipv6_desc": "IP address to be returned for a blocked AAAA request",
-    "blocking_mode_default": "Default: Respond with NXDOMAIN when blocked by Adblock-style rule; respond with the IP address specified in the rule when blocked by /etc/hosts-style rule",
+    "blocking_mode_default": "Default: Respond with REFUSED when blocked by Adblock-style rule; respond with the IP address specified in the rule when blocked by /etc/hosts-style rule",
     "blocking_mode_nxdomain": "NXDOMAIN: Respond with NXDOMAIN code",
     "blocking_mode_null_ip": "Null IP: Respond with zero IP address (0.0.0.0 for A; :: for AAAA)",
     "blocking_mode_custom_ip": "Custom IP: Respond with a manually set IP address",
