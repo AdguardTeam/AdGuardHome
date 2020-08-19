@@ -64,6 +64,11 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 			// means that we should return NXDOMAIN for any blocked request
 
 			return s.genNXDomain(m)
+
+		} else if s.conf.BlockingMode == "refused" {
+			// means that we should return NXDOMAIN for any blocked request
+
+			return s.makeResponseREFUSED(m)
 		}
 
 		// Default blocking mode
