@@ -19,6 +19,7 @@ import {
     DEFAULT_LANGUAGE,
     DEFAULT_TIME_FORMAT,
     DETAILED_DATE_FORMAT_OPTIONS,
+    DHCP_VALUES_PLACEHOLDERS,
     FILTERED,
     FILTERED_STATUS,
     IP_MATCH_LIST_STATUS,
@@ -190,7 +191,7 @@ export const captitalizeWords = (text) => text.split(/[ -_]/g)
 
 export const getInterfaceIp = (option) => {
     const onlyIPv6 = option.ip_addresses.every((ip) => ip.includes(':'));
-    let interfaceIP = option.ip_addresses[0];
+    let [interfaceIP] = option.ip_addresses;
 
     if (!onlyIPv6) {
         option.ip_addresses.forEach((ip) => {
@@ -203,16 +204,9 @@ export const getInterfaceIp = (option) => {
     return interfaceIP;
 };
 
-export const getIpList = (interfaces) => {
-    let list = [];
-
-    Object.keys(interfaces)
-        .forEach((item) => {
-            list = [...list, ...interfaces[item].ip_addresses];
-        });
-
-    return list.sort();
-};
+export const getIpList = (interfaces) => Object.values(interfaces)
+    .reduce((acc, curr) => acc.concat(curr.ip_addresses), [])
+    .sort();
 
 export const getDnsAddress = (ip, port = '') => {
     const isStandardDnsPort = port === STANDARD_DNS_PORT;
@@ -668,11 +662,12 @@ export const getLogsUrlParams = (search, response_status) => `?${queryString.str
     response_status,
 })}`;
 
-export const processContent = (content) => (Array.isArray(content)
-    ? content.filter(([, value]) => value).reduce((acc, val) => acc.concat(val), [])
-    : content
-);
-
+export const processContent = (
+    content,
+) => (Array.isArray(content)
+    ? content.filter(([, value]) => value)
+        .reduce((acc, val) => acc.concat(val), [])
+    : content);
 /**
  * @param object {object}
  * @param sortKey {string}
@@ -746,3 +741,65 @@ export const sortIp = (a, b) => {
         return 0;
     }
 };
+
+/**
+ * @param ip {string}
+ * @param gateway_ip {string}
+ * @returns {{range_end: string, subnet_mask: string, range_start: string,
+ * lease_duration: string, gateway_ip: string}}
+ */
+export const calculateDhcpPlaceholdersIpv4 = (ip, gateway_ip) => {
+    const LAST_OCTET_IDX = 3;
+    const LAST_OCTET_RANGE_START = 100;
+    const LAST_OCTET_RANGE_END = 200;
+
+    const addr = ipaddr.parse(ip);
+    addr.octets[LAST_OCTET_IDX] = LAST_OCTET_RANGE_START;
+    const range_start = addr.toString();
+
+    addr.octets[LAST_OCTET_IDX] = LAST_OCTET_RANGE_END;
+    const range_end = addr.toString();
+
+    const {
+        subnet_mask,
+        lease_duration,
+    } = DHCP_VALUES_PLACEHOLDERS.ipv4;
+
+    return {
+        gateway_ip: gateway_ip || ip,
+        subnet_mask,
+        range_start,
+        range_end,
+        lease_duration,
+    };
+};
+
+export const calculateDhcpPlaceholdersIpv6 = () => {
+    const {
+        range_start,
+        range_end,
+        lease_duration,
+    } = DHCP_VALUES_PLACEHOLDERS.ipv6;
+
+    return {
+        range_start,
+        range_end,
+        lease_duration,
+    };
+};
+
+/**
+ * Add ip_addresses property - concatenated ipv4_addresses and ipv6_addresses for every interface
+ * @param interfaces
+ * @param interfaces.ipv4_addresses {string[]}
+ * @param interfaces.ipv6_addresses {string[]}
+ * @returns interfaces Interfaces enriched with ip_addresses property
+ */
+export const enrichWithConcatenatedIpAddresses = (interfaces) => Object.entries(interfaces)
+    .reduce((acc, [k, v]) => {
+        const ipv4_addresses = v.ipv4_addresses ?? [];
+        const ipv6_addresses = v.ipv6_addresses ?? [];
+
+        acc[k].ip_addresses = ipv4_addresses.concat(ipv6_addresses);
+        return acc;
+    }, interfaces);

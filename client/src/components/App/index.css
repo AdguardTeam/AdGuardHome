@@ -42,13 +42,6 @@ body {
     background: linear-gradient(45deg, rgba(99, 125, 120, 1) 0%, rgba(88, 177, 101, 1) 100%);
 }
 
-@media (max-width: 575px) {
-    .container {
-        padding-right: 0;
-        padding-left: 0;
-    }
-}
-
 .modal-body--medium {
     max-height: 20rem;
     overflow-y: scroll;
@@ -64,4 +57,12 @@ body {
 
 .mw-75 {
     max-width: 75% !important;
+}
+
+.cursor--not-allowed {
+    cursor: not-allowed;
+}
+
+.select--no-warning {
+    margin-bottom: 1.375rem;
 }

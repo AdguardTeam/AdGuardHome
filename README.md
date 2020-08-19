@@ -217,7 +217,7 @@ You may need to prepare before using these builds:
 
 You are welcome to fork this repository, make your changes and submit a pull request — https://github.com/AdguardTeam/AdGuardHome/pulls
 
-Please note, that we don't expect people to contribute to both UI and golang parts of the program simultaneously. Ideally, the golang part is implemented first, i.e. configuration, API, and the functionality itself. The UI part can be implemented later in a different pull request by a different person.
+Please note that we don't expect people to contribute to both UI and golang parts of the program simultaneously. Ideally, the golang part is implemented first, i.e. configuration, API, and the functionality itself. The UI part can be implemented later in a different pull request by a different person.
 
 <a id="test-unstable-versions"></a>
 ### Test unstable versions
@@ -235,7 +235,7 @@ There are three options how you can install an unstable version:
 
 There are three options how you can install an unstable version.
 
-1. You can either install a beta or edge version of AdGuard Home which we update periodically. If you're already using stable version of AdGuard Home, just replace the executable with a new one.
+1. You can either install AdGuard Home from "beta" or "edge" distribution channel which we update periodically. If you're already using stable version of AdGuard Home, just replace the executable file with a new one.
 2. You can use the Docker image from the `edge` tag, which is synced with the repo master branch.
 3. You can install AdGuard Home from `beta` or `edge` channels on the Snap Store.
 

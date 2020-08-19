@@ -31,13 +31,14 @@ import SetupGuide from '../../containers/SetupGuide';
 import Settings from '../../containers/Settings';
 import Dns from '../../containers/Dns';
 import Encryption from '../../containers/Encryption';
-import Dhcp from '../../containers/Dhcp';
+import Dhcp from '../Settings/Dhcp';
 import Clients from '../../containers/Clients';
 import DnsBlocklist from '../../containers/DnsBlocklist';
 import DnsAllowlist from '../../containers/DnsAllowlist';
 import DnsRewrites from '../../containers/DnsRewrites';
 import CustomRules from '../../containers/CustomRules';
 import Services from '../Filters/Services';
+
 
 const ROUTES = [
     {
@@ -96,10 +97,10 @@ const ROUTES = [
 ];
 
 const renderRoute = ({ path, component, exact }, idx) => <Route
-    key={idx}
-    exact={exact}
-    path={path}
-    component={component}
+        key={idx}
+        exact={exact}
+        path={path}
+        component={component}
 />;
 
 const App = () => {
@@ -142,34 +143,28 @@ const App = () => {
         window.location.reload();
     };
 
-    return (
-        <HashRouter hashType="noslash">
-            <>
-                {updateAvailable && <>
-                    <UpdateTopline />
-                    <UpdateOverlay />
-                </>}
-                {!processingEncryption && <EncryptionTopline />}
-                <LoadingBar className="loading-bar" updateTime={1000} />
-                <Header />
-                <div className="container container--wrap pb-5">
-                    {processing && <Loading />}
-                    {!isCoreRunning && (
-                        <div className="row row-cards">
-                            <div className="col-lg-12">
-                                <Status reloadPage={reloadPage} message="dns_start" />
-                                <Loading />
-                            </div>
-                        </div>
-                    )}
-                    {!processing && isCoreRunning && ROUTES.map(renderRoute)}
+    return <HashRouter hashType="noslash">
+        {updateAvailable && <>
+            <UpdateTopline />
+            <UpdateOverlay />
+        </>}
+        {!processingEncryption && <EncryptionTopline />}
+        <LoadingBar className="loading-bar" updateTime={1000} />
+        <Header />
+        <div className="container container--wrap pb-5">
+            {processing && <Loading />}
+            {!isCoreRunning && <div className="row row-cards">
+                <div className="col-lg-12">
+                    <Status reloadPage={reloadPage} message="dns_start" />
+                    <Loading />
                 </div>
-                <Footer />
-                <Toasts />
-                <Icons />
-            </>
-        </HashRouter>
-    );
+            </div>}
+            {!processing && isCoreRunning && ROUTES.map(renderRoute)}
+        </div>
+        <Footer />
+        <Toasts />
+        <Icons />
+    </HashRouter>;
 };
 
 renderRoute.propTypes = {

@@ -15,7 +15,7 @@ import { toggleAllServices } from '../../../helpers/helpers';
 import {
     renderInputField,
     renderGroupField,
-    renderSelectField,
+    renderCheckboxField,
     renderServiceField,
 } from '../../../helpers/form';
 import { validateClientId, validateRequiredValue } from '../../../helpers/validators';
@@ -151,7 +151,7 @@ let Form = (props) => {
                         <Field
                             name={setting.name}
                             type="checkbox"
-                            component={renderSelectField}
+                            component={renderCheckboxField}
                             placeholder={t(setting.placeholder)}
                             disabled={
                                 setting.name !== 'use_global_settings'
