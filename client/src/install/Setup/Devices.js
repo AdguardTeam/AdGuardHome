@@ -26,7 +26,7 @@ let Devices = (props) => (
                         interfaces={props.interfaces}
                         address={props.dnsIp}
                         port={props.dnsPort}
-                        isDns={true}
+                        isDns
                     />
                 </div>
             </div>

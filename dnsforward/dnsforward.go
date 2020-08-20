@@ -44,10 +44,10 @@ var webRegistered bool
 //
 // The zero Server is empty and ready for use.
 type Server struct {
-	dnsProxy   *proxy.Proxy         // DNS proxy instance
-	dnsFilter  *dnsfilter.Dnsfilter // DNS filter instance
-	dhcpServer *dhcpd.Server        // DHCP server instance (optional)
-	queryLog   querylog.QueryLog    // Query log instance
+	dnsProxy   *proxy.Proxy          // DNS proxy instance
+	dnsFilter  *dnsfilter.Dnsfilter  // DNS filter instance
+	dhcpServer dhcpd.ServerInterface // DHCP server instance (optional)
+	queryLog   querylog.QueryLog     // Query log instance
 	stats      stats.Stats
 	access     *accessCtx
 
@@ -72,7 +72,7 @@ type DNSCreateParams struct {
 	DNSFilter  *dnsfilter.Dnsfilter
 	Stats      stats.Stats
 	QueryLog   querylog.QueryLog
-	DHCPServer *dhcpd.Server
+	DHCPServer dhcpd.ServerInterface
 }
 
 // NewServer creates a new instance of the dnsforward.Server

@@ -6,7 +6,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import {
     renderInputField,
     renderRadioField,
-    renderSelectField,
+    renderCheckboxField,
     toNumber,
 } from '../../../../helpers/form';
 import {
@@ -96,7 +96,7 @@ const Form = ({
                     <Field
                         name={name}
                         type="checkbox"
-                        component={renderSelectField}
+                        component={renderCheckboxField}
                         placeholder={t(placeholder)}
                         disabled={processing}
                         subtitle={t(subtitle)}

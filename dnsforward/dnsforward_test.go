@@ -1018,9 +1018,22 @@ func TestMatchDNSName(t *testing.T) {
 	assert.True(t, !matchDNSName(dnsNames, "*.host2"))
 }
 
+type testDHCP struct {
+}
+
+func (d *testDHCP) Leases(flags int) []dhcpd.Lease {
+	l := dhcpd.Lease{}
+	l.IP = net.ParseIP("127.0.0.1").To4()
+	l.HWAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:aa")
+	l.Hostname = "localhost"
+	return []dhcpd.Lease{l}
+}
+func (d *testDHCP) SetOnLeaseChanged(onLeaseChanged dhcpd.OnLeaseChangedT) {
+	return
+}
+
 func TestPTRResponse(t *testing.T) {
-	dhcp := &dhcpd.Server{}
-	dhcp.IPpool = make(map[[4]byte]net.HardwareAddr)
+	dhcp := &testDHCP{}
 
 	c := dnsfilter.Config{}
 	f := dnsfilter.New(&c, nil)
@@ -1032,12 +1045,6 @@ func TestPTRResponse(t *testing.T) {
 	err := s.Prepare(nil)
 	assert.True(t, err == nil)
 	assert.Nil(t, s.Start())
-
-	l := dhcpd.Lease{}
-	l.IP = net.ParseIP("127.0.0.1").To4()
-	l.HWAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:aa")
-	l.Hostname = "localhost"
-	dhcp.AddStaticLease(l)
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 	req := createTestMessage("1.0.0.127.in-addr.arpa.")

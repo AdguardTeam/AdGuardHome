@@ -54,7 +54,11 @@
 }
 
 .form__message--error {
-    color: #cd201f;
+    color: var(--red);
+}
+
+.form__message--left-pad {
+    padding-left: 0.85rem;
 }
 
 .interface__title {
@@ -68,10 +72,6 @@
 
 .interface__ip:last-child:after {
     content: "";
-}
-
-.dhcp {
-    min-height: 450px;
 }
 
 .form__desc {

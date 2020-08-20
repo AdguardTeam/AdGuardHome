@@ -107,7 +107,7 @@
 }
 
 .form__message--error {
-    color: #cd201f;
+    color: var(--red);
 }
 
 .setup__button {

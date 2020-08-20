@@ -48,7 +48,6 @@ export const PRIVACY_POLICY_LINK = 'https://adguard.com/privacy/home.html';
 export const PORT_53_FAQ_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ#bindinuse';
 
 export const ADDRESS_IN_USE_TEXT = 'address already in use';
-export const UBUNTU_SYSTEM_PORT = 53;
 
 export const INSTALL_FIRST_STEP = 1;
 export const INSTALL_TOTAL_STEPS = 5;
@@ -63,6 +62,8 @@ export const SETTINGS_NAMES = {
 export const STANDARD_DNS_PORT = 53;
 export const STANDARD_WEB_PORT = 80;
 export const STANDARD_HTTPS_PORT = 443;
+export const DNS_OVER_TLS_PORT = 853;
+export const MAX_PORT = 65535;
 
 export const EMPTY_DATE = '0001-01-01T00:00:00Z';
 
@@ -144,7 +145,7 @@ export const UNSAFE_PORTS = [
 
 export const ALL_INTERFACES_IP = '0.0.0.0';
 
-export const DHCP_STATUS_RESPONSE = {
+export const STATUS_RESPONSE = {
     YES: 'yes',
     NO: 'no',
     ERROR: 'error',
@@ -458,6 +459,12 @@ export const IP_MATCH_LIST_STATUS = {
     CIDR: 'CIDR', // the ip is in the specified CIDR range
 };
 
+export const DHCP_FORM_NAMES = {
+    DHCPv4: 'dhcpv4',
+    DHCPv6: 'dhcpv6',
+    DHCP_INTERFACES: 'dhcpInterfaces',
+};
+
 export const FORM_NAME = {
     UPSTREAM: 'upstream',
     DOMAIN_CHECK: 'domainCheck',
@@ -465,7 +472,6 @@ export const FORM_NAME = {
     REWRITES: 'rewrites',
     LOGS_FILTER: 'logsFilter',
     CLIENT: 'client',
-    DHCP: 'dhcp',
     LEASE: 'lease',
     ACCESS: 'access',
     BLOCKING_MODE: 'blockingMode',
@@ -477,9 +483,39 @@ export const FORM_NAME = {
     INSTALL: 'install',
     LOGIN: 'login',
     CACHE: 'cache',
+    ...DHCP_FORM_NAMES,
 };
 
 export const SMALL_SCREEN_SIZE = 767;
 export const MEDIUM_SCREEN_SIZE = 1023;
 
 export const SECONDS_IN_HOUR = 60 * 60;
+
+export const SECONDS_IN_DAY = SECONDS_IN_HOUR * 24;
+
+export const DHCP_VALUES_PLACEHOLDERS = {
+    ipv4: {
+        subnet_mask: '255.255.255.0',
+        lease_duration: SECONDS_IN_DAY.toString(),
+    },
+    ipv6: {
+        range_start: '2001::1',
+        range_end: 'ff',
+        lease_duration: SECONDS_IN_DAY.toString(),
+    },
+};
+
+export const DHCP_DESCRIPTION_PLACEHOLDERS = {
+    ipv4: {
+        gateway_ip: 'dhcp_form_gateway_input',
+        subnet_mask: 'dhcp_form_subnet_input',
+        range_start: 'dhcp_form_range_start',
+        range_end: 'dhcp_form_range_end',
+        lease_duration: 'dhcp_form_lease_input',
+    },
+    ipv6: {
+        range_start: 'dhcp_form_range_start',
+        range_end: 'dhcp_form_range_end',
+        lease_duration: 'dhcp_form_lease_input',
+    },
+};
