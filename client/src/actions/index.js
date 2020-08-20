@@ -383,6 +383,7 @@ export const findActiveDhcp = (name) => async (dispatch, getState) => {
         const v6 = check?.v6 ?? { other_server: {} };
 
         let isError = false;
+        let isStaticIPError = false;
 
         const hasV4Interface = !!interfaces[selectedInterface]?.ipv4_addresses;
         const hasV6Interface = !!interfaces[selectedInterface]?.ipv6_addresses;
@@ -402,12 +403,17 @@ export const findActiveDhcp = (name) => async (dispatch, getState) => {
         }
 
         if (hasV4Interface && v4.static_ip.static === STATUS_RESPONSE.ERROR) {
-            isError = true;
+            isStaticIPError = true;
             dispatch(addErrorToast({ error: 'dhcp_static_ip_error' }));
         }
 
+
         if (isError) {
             dispatch(addErrorToast({ error: 'dhcp_error' }));
+        }
+
+        if (isStaticIPError || isError) {
+            // No need to proceed if there was an error discovering DHCP server
             return;
         }
 
