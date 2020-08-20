@@ -387,13 +387,15 @@ export const findActiveDhcp = (name) => async (dispatch, getState) => {
         const hasV4Interface = !!interfaces[selectedInterface]?.ipv4_addresses;
         const hasV6Interface = !!interfaces[selectedInterface]?.ipv6_addresses;
 
-        if ((hasV4Interface && v4.other_server.found === STATUS_RESPONSE.ERROR)
-                || (hasV6Interface && v6.other_server.found === STATUS_RESPONSE.ERROR)) {
+        if (hasV4Interface && v4.other_server.found === STATUS_RESPONSE.ERROR) {
             isError = true;
-            dispatch(addErrorToast({ error: 'dhcp_error' }));
             if (v4.other_server.error) {
                 dispatch(addErrorToast({ error: v4.other_server.error }));
             }
+        }
+
+        if (hasV6Interface && v6.other_server.found === STATUS_RESPONSE.ERROR) {
+            isError = true;
             if (v6.other_server.error) {
                 dispatch(addErrorToast({ error: v6.other_server.error }));
             }
@@ -405,6 +407,7 @@ export const findActiveDhcp = (name) => async (dispatch, getState) => {
         }
 
         if (isError) {
+            dispatch(addErrorToast({ error: 'dhcp_error' }));
             return;
         }
 
