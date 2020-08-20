@@ -3,7 +3,9 @@ import i18next from 'i18next';
 import axios from 'axios';
 
 import { splitByNewLine, sortClients } from '../helpers/helpers';
-import { CHECK_TIMEOUT, STATUS_RESPONSE, SETTINGS_NAMES } from '../helpers/constants';
+import {
+    CHECK_TIMEOUT, STATUS_RESPONSE, SETTINGS_NAMES, FORM_NAME,
+} from '../helpers/constants';
 import { areEqualVersions } from '../helpers/version';
 import { getTlsStatus } from './encryption';
 import apiClient from '../api/Api';
@@ -375,14 +377,18 @@ export const findActiveDhcp = (name) => async (dispatch, getState) => {
     try {
         const activeDhcp = await apiClient.findActiveDhcp(name);
         dispatch(findActiveDhcpSuccess(activeDhcp));
-        const { check, interface_name } = getState().dhcp;
+        const { check, interface_name, interfaces } = getState().dhcp;
+        const selectedInterface = getState().form[FORM_NAME.DHCP_INTERFACES].values.interface_name;
         const v4 = check?.v4 ?? { static_ip: {}, other_server: {} };
         const v6 = check?.v6 ?? { other_server: {} };
 
         let isError = false;
 
-        if (v4.other_server.found === STATUS_RESPONSE.ERROR
-                || v6.other_server.found === STATUS_RESPONSE.ERROR) {
+        const hasV4Interface = !!interfaces[selectedInterface]?.ipv4_addresses;
+        const hasV6Interface = !!interfaces[selectedInterface]?.ipv6_addresses;
+
+        if ((hasV4Interface && v4.other_server.found === STATUS_RESPONSE.ERROR)
+                || (hasV6Interface && v6.other_server.found === STATUS_RESPONSE.ERROR)) {
             isError = true;
             dispatch(addErrorToast({ error: 'dhcp_error' }));
             if (v4.other_server.error) {
@@ -393,7 +399,7 @@ export const findActiveDhcp = (name) => async (dispatch, getState) => {
             }
         }
 
-        if (v4.static_ip.static === STATUS_RESPONSE.ERROR) {
+        if (hasV4Interface && v4.static_ip.static === STATUS_RESPONSE.ERROR) {
             isError = true;
             dispatch(addErrorToast({ error: 'dhcp_static_ip_error' }));
         }
@@ -402,10 +408,10 @@ export const findActiveDhcp = (name) => async (dispatch, getState) => {
             return;
         }
 
-        if (v4.other_server.found === STATUS_RESPONSE.YES
-                || v6.other_server.found === STATUS_RESPONSE.YES) {
+        if ((hasV4Interface && v4.other_server.found === STATUS_RESPONSE.YES)
+                || (hasV6Interface && v6.other_server.found === STATUS_RESPONSE.YES)) {
             dispatch(addErrorToast({ error: 'dhcp_found' }));
-        } else if (v4.static_ip.static === STATUS_RESPONSE.NO
+        } else if (hasV4Interface && v4.static_ip.static === STATUS_RESPONSE.NO
                 && v4.static_ip.ip
                 && interface_name) {
             const warning = i18next.t('dhcp_dynamic_ip_found', {
