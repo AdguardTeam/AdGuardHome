@@ -374,6 +374,7 @@ func WithHWAddr(hwAddr net.HardwareAddr) ClientOpt {
 	}
 }
 
+// nolint
 func withBufferCap(n int) ClientOpt {
 	return func(c *Client) (err error) {
 		c.bufferCap = n

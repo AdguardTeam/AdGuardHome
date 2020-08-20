@@ -33,7 +33,7 @@ func CheckIfOtherDHCPServersPresentV4(ifaceName string) (bool, error) {
 	}
 
 	if runtime.GOOS == "darwin" {
-		return false, fmt.Errorf("Can't find DHCP server: not supported on macOS")
+		return false, fmt.Errorf("can't find DHCP server: not supported on macOS")
 	}
 
 	srcIP := ifaceIPNet[0]
