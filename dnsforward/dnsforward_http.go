@@ -93,6 +93,18 @@ func checkBlockingMode(req dnsConfigJSON) bool {
 	return true
 }
 
+// Validate bootstrap server address
+func checkBootstrap(addr string) error {
+	if addr == "" { // additional check is required because NewResolver() allows empty address
+		return fmt.Errorf("invalid bootstrap server address: empty")
+	}
+	_, err := upstream.NewResolver(addr, 0)
+	if err != nil {
+		return fmt.Errorf("invalid bootstrap server address: %s", err)
+	}
+	return nil
+}
+
 // nolint(gocyclo) - we need to check each JSON field separately
 func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	req := dnsConfigJSON{}
@@ -113,9 +125,9 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if js.Exists("bootstrap_dns") {
-		for _, host := range req.Bootstraps {
-			if err := checkPlainDNS(host); err != nil {
-				httpError(r, w, http.StatusBadRequest, "%s can not be used as bootstrap dns cause: %s", host, err)
+		for _, boot := range req.Bootstraps {
+			if err := checkBootstrap(boot); err != nil {
+				httpError(r, w, http.StatusBadRequest, "%s can not be used as bootstrap dns cause: %s", boot, err)
 				return
 			}
 		}
