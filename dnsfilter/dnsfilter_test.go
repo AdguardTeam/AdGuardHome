@@ -47,9 +47,9 @@ func NewForTest(c *Config, filters []Filter) *Dnsfilter {
 	setts = RequestFilteringSettings{}
 	setts.FilteringEnabled = true
 	if c != nil {
-		c.SafeBrowsingCacheSize = 1000
+		c.SafeBrowsingCacheSize = 10000
+		c.ParentalCacheSize = 10000
 		c.SafeSearchCacheSize = 1000
-		c.ParentalCacheSize = 1000
 		c.CacheTime = 30
 		setts.SafeSearchEnabled = c.SafeSearchEnabled
 		setts.SafeBrowsingEnabled = c.SafeBrowsingEnabled
@@ -145,12 +145,6 @@ func TestEtcHostsMatching(t *testing.T) {
 }
 
 // SAFE BROWSING
-
-func TestSafeBrowsingHash(t *testing.T) {
-	q, hashes := hostnameToHashParam("1.2.3.4.5.6")
-	assert.Equal(t, "0132d0fa.b5413b4e.5fa067c1.e7f6c011.", q)
-	assert.Equal(t, 4, len(hashes))
-}
 
 func TestSafeBrowsing(t *testing.T) {
 	d := NewForTest(&Config{SafeBrowsingEnabled: true}, nil)

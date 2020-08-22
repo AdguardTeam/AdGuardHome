@@ -8,6 +8,7 @@ import CellWrap from '../../ui/CellWrap';
 
 import whoisCell from './whoisCell';
 import LogsSearchLink from '../../ui/LogsSearchLink';
+import { sortIp } from '../../../helpers/helpers';
 
 const COLUMN_MIN_WIDTH = 200;
 
@@ -18,6 +19,7 @@ class AutoClients extends Component {
             accessor: 'ip',
             minWidth: COLUMN_MIN_WIDTH,
             Cell: CellWrap,
+            sortMethod: sortIp,
         },
         {
             Header: this.props.t('table_name'),

@@ -1,83 +1,75 @@
-import React, { Component } from 'react';
-import { Link } from 'react-router-dom';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { shallowEqual, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import classnames from 'classnames';
-import { Trans, withTranslation } from 'react-i18next';
-
 import Menu from './Menu';
 import logo from '../ui/svg/logo.svg';
 import './Header.css';
 
-class Header extends Component {
-    state = {
-        isMenuOpen: false,
+const Header = () => {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const { t } = useTranslation();
+
+    const {
+        protectionEnabled,
+        processing,
+        isCoreRunning,
+        processingProfile,
+        name,
+    } = useSelector((state) => state.dashboard, shallowEqual);
+
+    const { pathname } = useLocation();
+
+    const toggleMenuOpen = () => {
+        setIsMenuOpen((isMenuOpen) => !isMenuOpen);
     };
 
-    toggleMenuOpen = () => {
-        this.setState((prevState) => ({ isMenuOpen: !prevState.isMenuOpen }));
+    const closeMenu = () => {
+        setIsMenuOpen(false);
     };
 
-    closeMenu = () => {
-        this.setState({ isMenuOpen: false });
-    };
+    const badgeClass = classnames('badge dns-status', {
+        'badge-success': protectionEnabled,
+        'badge-danger': !protectionEnabled,
+    });
 
-    render() {
-        const { dashboard, location } = this.props;
-        const { isMenuOpen } = this.state;
-        const badgeClass = classnames({
-            'badge dns-status': true,
-            'badge-success': dashboard.protectionEnabled,
-            'badge-danger': !dashboard.protectionEnabled,
-        });
-
-        return (
-            <div className="header">
-                <div className="header__container">
-                    <div className="header__row">
-                        <div
-                            className="header-toggler d-lg-none ml-lg-0 collapsed"
-                            onClick={this.toggleMenuOpen}
-                        >
-                            <span className="header-toggler-icon" />
-                        </div>
-                        <div className="header__column">
-                            <div className="d-flex align-items-center">
-                                <Link to="/" className="nav-link pl-0 pr-1">
-                                    <img src={logo} alt="" className="header-brand-img" />
-                                </Link>
-                                {!dashboard.processing && dashboard.isCoreRunning && (
-                                    <span className={badgeClass}>
-                                        <Trans>{dashboard.protectionEnabled ? 'on' : 'off'}</Trans>
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                        <Menu
-                            location={location}
-                            isMenuOpen={isMenuOpen}
-                            closeMenu={this.closeMenu}
-                        />
-                        <div className="header__column">
-                            <div className="header__right">
-                                {!dashboard.processingProfile && dashboard.name
-                                    && <a href="control/logout" className="btn btn-sm btn-outline-secondary">
-                                        <Trans>sign_out</Trans>
-                                    </a>
-                                }
-                            </div>
-                        </div>
+    return <div className="header">
+        <div className="header__container">
+            <div className="header__row">
+                <div
+                    className="header-toggler d-lg-none ml-lg-0 collapsed"
+                    onClick={toggleMenuOpen}
+                >
+                    <span className="header-toggler-icon" />
+                </div>
+                <div className="header__column">
+                    <div className="d-flex align-items-center">
+                        <Link to="/" className="nav-link pl-0 pr-1">
+                            <img src={logo} alt="" className="header-brand-img" />
+                        </Link>
+                        {!processing && isCoreRunning
+                        && <span className={badgeClass}
+                        >{t(protectionEnabled ? 'on' : 'off')}
+                        </span>}
+                    </div>
+                </div>
+                <Menu
+                    pathname={pathname}
+                    isMenuOpen={isMenuOpen}
+                    closeMenu={closeMenu}
+                />
+                <div className="header__column">
+                    <div className="header__right">
+                        {!processingProfile && name
+                        && <a href="control/logout" className="btn btn-sm btn-outline-secondary">
+                            {t('sign_out')}
+                        </a>}
                     </div>
                 </div>
             </div>
-        );
-    }
-}
-
-Header.propTypes = {
-    dashboard: PropTypes.object.isRequired,
-    location: PropTypes.object.isRequired,
-    getVersion: PropTypes.func.isRequired,
-    t: PropTypes.func.isRequired,
+        </div>
+    </div>;
 };
 
-export default withTranslation()(Header);
+export default Header;

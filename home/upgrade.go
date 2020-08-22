@@ -13,7 +13,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-const currentSchemaVersion = 6 // used for upgrading from old configs to new config
+const currentSchemaVersion = 7 // used for upgrading from old configs to new config
 
 // Performs necessary upgrade operations if needed
 func upgradeConfig() error {
@@ -87,6 +87,12 @@ func upgradeConfigSchema(oldVersion int, diskConfig *map[string]interface{}) err
 		fallthrough
 	case 5:
 		err := upgradeSchema5to6(diskConfig)
+		if err != nil {
+			return err
+		}
+		fallthrough
+	case 6:
+		err := upgradeSchema6to7(diskConfig)
 		if err != nil {
 			return err
 		}
@@ -338,6 +344,90 @@ func upgradeSchema5to6(diskConfig *map[string]interface{}) error {
 				continue
 			}
 		}
+
+	default:
+		return nil
+	}
+
+	return nil
+}
+
+// dhcp:
+//   enabled: false
+//   interface_name: vboxnet0
+//   gateway_ip: 192.168.56.1
+//   ...
+//
+// ->
+//
+// dhcp:
+//   enabled: false
+//   interface_name: vboxnet0
+//   dhcpv4:
+//     gateway_ip: 192.168.56.1
+//     ...
+func upgradeSchema6to7(diskConfig *map[string]interface{}) error {
+	log.Printf("Upgrade yaml: 6 to 7")
+
+	(*diskConfig)["schema_version"] = 7
+
+	_dhcp, ok := (*diskConfig)["dhcp"]
+	if !ok {
+		return nil
+	}
+
+	switch dhcp := _dhcp.(type) {
+	case map[interface{}]interface{}:
+		dhcpv4 := map[string]interface{}{}
+		val, ok := dhcp["gateway_ip"].(string)
+		if !ok {
+			log.Fatalf("expecting dhcp.%s to be a string", "gateway_ip")
+			return nil
+		}
+		dhcpv4["gateway_ip"] = val
+		delete(dhcp, "gateway_ip")
+
+		val, ok = dhcp["subnet_mask"].(string)
+		if !ok {
+			log.Fatalf("expecting dhcp.%s to be a string", "subnet_mask")
+			return nil
+		}
+		dhcpv4["subnet_mask"] = val
+		delete(dhcp, "subnet_mask")
+
+		val, ok = dhcp["range_start"].(string)
+		if !ok {
+			log.Fatalf("expecting dhcp.%s to be a string", "range_start")
+			return nil
+		}
+		dhcpv4["range_start"] = val
+		delete(dhcp, "range_start")
+
+		val, ok = dhcp["range_end"].(string)
+		if !ok {
+			log.Fatalf("expecting dhcp.%s to be a string", "range_end")
+			return nil
+		}
+		dhcpv4["range_end"] = val
+		delete(dhcp, "range_end")
+
+		intVal, ok := dhcp["lease_duration"].(int)
+		if !ok {
+			log.Fatalf("expecting dhcp.%s to be an integer", "lease_duration")
+			return nil
+		}
+		dhcpv4["lease_duration"] = intVal
+		delete(dhcp, "lease_duration")
+
+		intVal, ok = dhcp["icmp_timeout_msec"].(int)
+		if !ok {
+			log.Fatalf("expecting dhcp.%s to be an integer", "icmp_timeout_msec")
+			return nil
+		}
+		dhcpv4["icmp_timeout_msec"] = intVal
+		delete(dhcp, "icmp_timeout_msec")
+
+		dhcp["dhcpv4"] = dhcpv4
 
 	default:
 		return nil

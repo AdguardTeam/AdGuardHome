@@ -1,15 +1,13 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { withTranslation } from 'react-i18next';
-
+import { useTranslation } from 'react-i18next';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import Card from '../../../ui/Card';
 import Form from './Form';
+import { setDnsConfig } from '../../../../actions/dnsConfig';
 
-const Config = ({ t, dnsConfig, setDnsConfig }) => {
-    const handleFormSubmit = (values) => {
-        setDnsConfig(values);
-    };
-
+const Config = () => {
+    const { t } = useTranslation();
+    const dispatch = useDispatch();
     const {
         blocking_mode,
         ratelimit,
@@ -19,7 +17,11 @@ const Config = ({ t, dnsConfig, setDnsConfig }) => {
         dnssec_enabled,
         disable_ipv6,
         processingSetConfig,
-    } = dnsConfig;
+    } = useSelector((state) => state.dnsConfig, shallowEqual);
+
+    const handleFormSubmit = (values) => {
+        dispatch(setDnsConfig(values));
+    };
 
     return (
         <Card
@@ -46,10 +48,4 @@ const Config = ({ t, dnsConfig, setDnsConfig }) => {
     );
 };
 
-Config.propTypes = {
-    dnsConfig: PropTypes.object.isRequired,
-    setDnsConfig: PropTypes.func.isRequired,
-    t: PropTypes.func.isRequired,
-};
-
-export default withTranslation()(Config);
+export default Config;

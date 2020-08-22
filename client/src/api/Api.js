@@ -2,9 +2,10 @@ import axios from 'axios';
 
 import { getPathWithQueryString } from '../helpers/helpers';
 import { R_PATH_LAST_PART } from '../helpers/constants';
+import { BASE_URL } from '../../constants';
 
 class Api {
-    baseUrl = 'control';
+    baseUrl = BASE_URL;
 
     async makeRequest(path, method = 'POST', config) {
         try {
@@ -26,12 +27,12 @@ class Api {
 
                 throw new Error(`${errorPath} | ${error.response.data} | ${error.response.status}`);
             }
-            throw new Error(`${errorPath} | ${error.message ? error.message : error}`);
+            throw new Error(`${errorPath} | ${error.message || error}`);
         }
     }
 
     // Global methods
-    GLOBAL_STATUS = { path: 'status', method: 'GET' };
+    GLOBAL_STATUS = { path: 'status', method: 'GET' }
 
     GLOBAL_TEST_UPSTREAM_DNS = { path: 'test_upstream_dns', method: 'POST' };
 

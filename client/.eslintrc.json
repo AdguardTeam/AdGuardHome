@@ -1,18 +1,15 @@
 {
     "parser": "babel-eslint",
-
     "extends": [
         "plugin:react/recommended",
         "airbnb-base"
     ],
-
     "env": {
         "jest": true,
         "node": true,
         "browser": true,
         "commonjs": true
     },
-
     "settings": {
         "react": {
             "pragma": "React",
@@ -24,35 +21,65 @@
             }
         }
     },
-
     "rules": {
-        "indent": ["error", 4, {
-            "SwitchCase": 1,
-            "VariableDeclarator": 1,
-            "outerIIFEBody": 1,
-            "FunctionDeclaration": {
-                "parameters": 1,
-                "body": 1
-            },
-            "FunctionExpression": {
-                "parameters": 1,
-                "body": 1
-            },
-            "CallExpression": {
-                "arguments": 1
-            },
-            "ArrayExpression": 1,
-            "ObjectExpression": 1,
-            "ImportDeclaration": 1,
-            "flatTernaryExpressions": false,
-            "ignoredNodes": ["JSXElement", "JSXElement > *", "JSXAttribute", "JSXIdentifier", "JSXNamespacedName", "JSXMemberExpression", "JSXSpreadAttribute", "JSXExpressionContainer", "JSXOpeningElement", "JSXClosingElement", "JSXText", "JSXEmptyExpression", "JSXSpreadChild"],
-            "ignoreComments": false
-        }],
+        "indent": [
+            "error",
+            4,
+            {
+                "SwitchCase": 1,
+                "VariableDeclarator": 1,
+                "outerIIFEBody": 1,
+                "FunctionDeclaration": {
+                    "parameters": 1,
+                    "body": 1
+                },
+                "FunctionExpression": {
+                    "parameters": 1,
+                    "body": 1
+                },
+                "CallExpression": {
+                    "arguments": 1
+                },
+                "ArrayExpression": 1,
+                "ObjectExpression": 1,
+                "ImportDeclaration": 1,
+                "flatTernaryExpressions": false,
+                "ignoredNodes": [
+                    "JSXElement",
+                    "JSXElement > *",
+                    "JSXAttribute",
+                    "JSXIdentifier",
+                    "JSXNamespacedName",
+                    "JSXMemberExpression",
+                    "JSXSpreadAttribute",
+                    "JSXExpressionContainer",
+                    "JSXOpeningElement",
+                    "JSXClosingElement",
+                    "JSXText",
+                    "JSXEmptyExpression",
+                    "JSXSpreadChild"
+                ],
+                "ignoreComments": false
+            }
+        ],
         "class-methods-use-this": "off",
         "no-shadow": "off",
         "camelcase": "off",
-        "no-console": ["warn", { "allow": ["warn", "error"] }],
-        "import/no-extraneous-dependencies": ["error", { "devDependencies": true }],
+        "no-console": [
+            "warn",
+            {
+                "allow": [
+                    "warn",
+                    "error"
+                ]
+            }
+        ],
+        "import/no-extraneous-dependencies": [
+            "error",
+            {
+                "devDependencies": true
+            }
+        ],
         "import/prefer-default-export": "off",
         "no-alert": "off"
     }

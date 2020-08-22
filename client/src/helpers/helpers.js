@@ -19,6 +19,7 @@ import {
     DEFAULT_LANGUAGE,
     DEFAULT_TIME_FORMAT,
     DETAILED_DATE_FORMAT_OPTIONS,
+    DHCP_VALUES_PLACEHOLDERS,
     FILTERED,
     FILTERED_STATUS,
     IP_MATCH_LIST_STATUS,
@@ -190,7 +191,7 @@ export const captitalizeWords = (text) => text.split(/[ -_]/g)
 
 export const getInterfaceIp = (option) => {
     const onlyIPv6 = option.ip_addresses.every((ip) => ip.includes(':'));
-    let interfaceIP = option.ip_addresses[0];
+    let [interfaceIP] = option.ip_addresses;
 
     if (!onlyIPv6) {
         option.ip_addresses.forEach((ip) => {
@@ -203,16 +204,9 @@ export const getInterfaceIp = (option) => {
     return interfaceIP;
 };
 
-export const getIpList = (interfaces) => {
-    let list = [];
-
-    Object.keys(interfaces)
-        .forEach((item) => {
-            list = [...list, ...interfaces[item].ip_addresses];
-        });
-
-    return list.sort();
-};
+export const getIpList = (interfaces) => Object.values(interfaces)
+    .reduce((acc, curr) => acc.concat(curr.ip_addresses), [])
+    .sort();
 
 export const getDnsAddress = (ip, port = '') => {
     const isStandardDnsPort = port === STANDARD_DNS_PORT;
@@ -668,7 +662,144 @@ export const getLogsUrlParams = (search, response_status) => `?${queryString.str
     response_status,
 })}`;
 
-export const processContent = (content) => (Array.isArray(content)
-    ? content.filter(([, value]) => value).reduce((acc, val) => acc.concat(val), [])
-    : content
-);
+export const processContent = (
+    content,
+) => (Array.isArray(content)
+    ? content.filter(([, value]) => value)
+        .reduce((acc, val) => acc.concat(val), [])
+    : content);
+/**
+ * @param object {object}
+ * @param sortKey {string}
+ * @returns {string[]}
+ */
+export const getObjectKeysSorted = (object, sortKey) => Object.entries(object)
+    .sort(([, { [sortKey]: order1 }], [, { [sortKey]: order2 }]) => order1 - order2)
+    .map(([key]) => key);
+
+/**
+ * @param ip
+ * @returns {[IPv4|IPv6, 33|129]}
+ */
+const getParsedIpWithPrefixLength = (ip) => {
+    const MAX_PREFIX_LENGTH_V4 = 32;
+    const MAX_PREFIX_LENGTH_V6 = 128;
+
+    const parsedIp = ipaddr.parse(ip);
+    const prefixLength = parsedIp.kind() === 'ipv4' ? MAX_PREFIX_LENGTH_V4 : MAX_PREFIX_LENGTH_V6;
+
+    // Increment prefix length to always put IP after CIDR, e.g. 127.0.0.1/32, 127.0.0.1
+    return [parsedIp, prefixLength + 1];
+};
+
+/**
+ * Helper function for IP and CIDR comparison (supports both v4 and v6)
+ * @param item - ip or cidr
+ * @returns {number[]}
+ */
+const getAddressesComparisonBytes = (item) => {
+    // Sort ipv4 before ipv6
+    const IP_V4_COMPARISON_CODE = 0;
+    const IP_V6_COMPARISON_CODE = 1;
+
+    const [parsedIp, cidr] = ipaddr.isValid(item)
+        ? getParsedIpWithPrefixLength(item)
+        : ipaddr.parseCIDR(item);
+
+    const [normalizedBytes, ipVersionComparisonCode] = parsedIp.kind() === 'ipv4'
+        ? [parsedIp.toIPv4MappedAddress().parts, IP_V4_COMPARISON_CODE]
+        : [parsedIp.parts, IP_V6_COMPARISON_CODE];
+
+    return [ipVersionComparisonCode, ...normalizedBytes, cidr];
+};
+
+/**
+ * Compare function for IP and CIDR sort in ascending order (supports both v4 and v6)
+ * @param a
+ * @param b
+ * @returns {number} -1 | 0 | 1
+ */
+export const sortIp = (a, b) => {
+    try {
+        const comparisonBytesA = getAddressesComparisonBytes(a);
+        const comparisonBytesB = getAddressesComparisonBytes(b);
+
+        for (let i = 0; i < comparisonBytesA.length; i += 1) {
+            const byteA = comparisonBytesA[i];
+            const byteB = comparisonBytesB[i];
+
+            if (byteA === byteB) {
+                // eslint-disable-next-line no-continue
+                continue;
+            }
+            return byteA > byteB ? 1 : -1;
+        }
+
+        return 0;
+    } catch (e) {
+        console.error(e);
+        return 0;
+    }
+};
+
+/**
+ * @param ip {string}
+ * @param gateway_ip {string}
+ * @returns {{range_end: string, subnet_mask: string, range_start: string,
+ * lease_duration: string, gateway_ip: string}}
+ */
+export const calculateDhcpPlaceholdersIpv4 = (ip, gateway_ip) => {
+    const LAST_OCTET_IDX = 3;
+    const LAST_OCTET_RANGE_START = 100;
+    const LAST_OCTET_RANGE_END = 200;
+
+    const addr = ipaddr.parse(ip);
+    addr.octets[LAST_OCTET_IDX] = LAST_OCTET_RANGE_START;
+    const range_start = addr.toString();
+
+    addr.octets[LAST_OCTET_IDX] = LAST_OCTET_RANGE_END;
+    const range_end = addr.toString();
+
+    const {
+        subnet_mask,
+        lease_duration,
+    } = DHCP_VALUES_PLACEHOLDERS.ipv4;
+
+    return {
+        gateway_ip: gateway_ip || ip,
+        subnet_mask,
+        range_start,
+        range_end,
+        lease_duration,
+    };
+};
+
+export const calculateDhcpPlaceholdersIpv6 = () => {
+    const {
+        range_start,
+        range_end,
+        lease_duration,
+    } = DHCP_VALUES_PLACEHOLDERS.ipv6;
+
+    return {
+        range_start,
+        range_end,
+        lease_duration,
+    };
+};
+
+/**
+ * Add ip_addresses property - concatenated ipv4_addresses and ipv6_addresses for every interface
+ * @param interfaces
+ * @param interfaces.ipv4_addresses {string[]}
+ * @param interfaces.ipv6_addresses {string[]}
+ * @returns interfaces Interfaces enriched with ip_addresses property
+ */
+export const enrichWithConcatenatedIpAddresses = (interfaces) => Object.entries(interfaces)
+    .reduce((acc, [k, v]) => {
+        const ipv4_addresses = v.ipv4_addresses ?? [];
+        const ipv6_addresses = v.ipv6_addresses ?? [];
+
+        acc[k].ip_addresses = ipv4_addresses.concat(ipv6_addresses);
+        return acc;
+    }, interfaces);

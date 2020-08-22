@@ -562,5 +562,6 @@
     "filter_category_regional_desc": "Lista koja se usredsređuje na regionalne reklame i servere praćenja",
     "filter_category_other_desc": "Ostale liste blokiranja",
     "original_response": "Izvorni odgovor",
-    "click_to_view_queries": "Kliknite da pogledate zahteve"
+    "click_to_view_queries": "Kliknite da pogledate zahteve",
+    "port_53_faq_link": "Port 53 je najčešće zauzet od \"DNSStubListener\" ili \"systemd-resolved\" usluga. Pročitajte <0>ovo uputstvo</0> kako da to rešite."
 }

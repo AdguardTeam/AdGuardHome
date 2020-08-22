@@ -3,7 +3,9 @@ import i18next from 'i18next';
 import axios from 'axios';
 
 import { splitByNewLine, sortClients } from '../helpers/helpers';
-import { CHECK_TIMEOUT, SETTINGS_NAMES } from '../helpers/constants';
+import {
+    CHECK_TIMEOUT, STATUS_RESPONSE, SETTINGS_NAMES, FORM_NAME,
+} from '../helpers/constants';
 import { areEqualVersions } from '../helpers/version';
 import { getTlsStatus } from './encryption';
 import apiClient from '../api/Api';
@@ -148,7 +150,7 @@ const checkStatus = async (handleRequestSuccess, handleRequestError, attempts = 
     const rmTimeout = (t) => t && clearTimeout(t);
 
     try {
-        const response = await axios.get('control/status');
+        const response = await axios.get(`${apiClient.baseUrl}/status`);
         rmTimeout(timeout);
         if (response?.status === 200) {
             handleRequestSuccess(response);
@@ -342,6 +344,8 @@ export const getDhcpStatus = () => async (dispatch) => {
     dispatch(getDhcpStatusRequest());
     try {
         const status = await apiClient.getDhcpStatus();
+        const globalStatus = await apiClient.getGlobalStatus();
+        status.dhcp_available = globalStatus.dhcp_available;
         dispatch(getDhcpStatusSuccess(status));
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -368,11 +372,69 @@ export const findActiveDhcpRequest = createAction('FIND_ACTIVE_DHCP_REQUEST');
 export const findActiveDhcpSuccess = createAction('FIND_ACTIVE_DHCP_SUCCESS');
 export const findActiveDhcpFailure = createAction('FIND_ACTIVE_DHCP_FAILURE');
 
-export const findActiveDhcp = (name) => async (dispatch) => {
+export const findActiveDhcp = (name) => async (dispatch, getState) => {
     dispatch(findActiveDhcpRequest());
     try {
         const activeDhcp = await apiClient.findActiveDhcp(name);
         dispatch(findActiveDhcpSuccess(activeDhcp));
+        const { check, interface_name, interfaces } = getState().dhcp;
+        const selectedInterface = getState().form[FORM_NAME.DHCP_INTERFACES].values.interface_name;
+        const v4 = check?.v4 ?? { static_ip: {}, other_server: {} };
+        const v6 = check?.v6 ?? { other_server: {} };
+
+        let isError = false;
+        let isStaticIPError = false;
+
+        const hasV4Interface = !!interfaces[selectedInterface]?.ipv4_addresses;
+        const hasV6Interface = !!interfaces[selectedInterface]?.ipv6_addresses;
+
+        if (hasV4Interface && v4.other_server.found === STATUS_RESPONSE.ERROR) {
+            isError = true;
+            if (v4.other_server.error) {
+                dispatch(addErrorToast({ error: v4.other_server.error }));
+            }
+        }
+
+        if (hasV6Interface && v6.other_server.found === STATUS_RESPONSE.ERROR) {
+            isError = true;
+            if (v6.other_server.error) {
+                dispatch(addErrorToast({ error: v6.other_server.error }));
+            }
+        }
+
+        if (hasV4Interface && v4.static_ip.static === STATUS_RESPONSE.ERROR) {
+            isStaticIPError = true;
+            dispatch(addErrorToast({ error: 'dhcp_static_ip_error' }));
+        }
+
+
+        if (isError) {
+            dispatch(addErrorToast({ error: 'dhcp_error' }));
+        }
+
+        if (isStaticIPError || isError) {
+            // No need to proceed if there was an error discovering DHCP server
+            return;
+        }
+
+        if ((hasV4Interface && v4.other_server.found === STATUS_RESPONSE.YES)
+                || (hasV6Interface && v6.other_server.found === STATUS_RESPONSE.YES)) {
+            dispatch(addErrorToast({ error: 'dhcp_found' }));
+        } else if (hasV4Interface && v4.static_ip.static === STATUS_RESPONSE.NO
+                && v4.static_ip.ip
+                && interface_name) {
+            const warning = i18next.t('dhcp_dynamic_ip_found', {
+                interfaceName: interface_name,
+                ipAddress: v4.static_ip.ip,
+                interpolation: {
+                    prefix: '<0>{{',
+                    suffix: '}}</0>',
+                },
+            });
+            dispatch(addErrorToast({ error: warning }));
+        } else {
+            dispatch(addSuccessToast('dhcp_not_found'));
+        }
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(findActiveDhcpFailure());
@@ -383,14 +445,11 @@ export const setDhcpConfigRequest = createAction('SET_DHCP_CONFIG_REQUEST');
 export const setDhcpConfigSuccess = createAction('SET_DHCP_CONFIG_SUCCESS');
 export const setDhcpConfigFailure = createAction('SET_DHCP_CONFIG_FAILURE');
 
-export const setDhcpConfig = (values) => async (dispatch, getState) => {
-    const { config } = getState().dhcp;
-    const updatedConfig = { ...config, ...values };
+export const setDhcpConfig = (values) => async (dispatch) => {
     dispatch(setDhcpConfigRequest());
-    dispatch(findActiveDhcp(values.interface_name));
     try {
-        await apiClient.setDhcpConfig(updatedConfig);
-        dispatch(setDhcpConfigSuccess(updatedConfig));
+        await apiClient.setDhcpConfig(values);
+        dispatch(setDhcpConfigSuccess(values));
         dispatch(addSuccessToast('dhcp_config_saved'));
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -416,7 +475,6 @@ export const toggleDhcp = (values) => async (dispatch) => {
             enabled: true,
         };
         successMessage = 'enabled_dhcp';
-        dispatch(findActiveDhcp(values.interface_name));
     }
 
     try {

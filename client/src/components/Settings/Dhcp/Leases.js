@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import ReactTable from 'react-table';
 import { Trans, withTranslation } from 'react-i18next';
 import { LEASES_TABLE_DEFAULT_PAGE_SIZE } from '../../../helpers/constants';
+import { sortIp } from '../../../helpers/helpers';
 
 class Leases extends Component {
     cellWrap = ({ value }) => (
@@ -27,6 +28,7 @@ class Leases extends Component {
                         Header: 'IP',
                         accessor: 'ip',
                         Cell: this.cellWrap,
+                        sortMethod: sortIp,
                     }, {
                         Header: <Trans>dhcp_table_hostname</Trans>,
                         accessor: 'hostname',

@@ -13,6 +13,7 @@
       "hr": "Hrvatski",
       "id": "Indonesian",
       "it": "Italiano",
+      "hu": "Magyar",
       "no": "Norsk",
       "pl": "Polski",
       "pt-br": "Português (BR)",
@@ -32,7 +33,8 @@
       "zh-tw": "正體中文",
       "zh-cn": "简体中文",
       "ko": "한국어",
-      "th": "ภาษาไทย"
+      "th": "ภาษาไทย",
+      "si-lk": "සිංහල"
     }
   }
 ]

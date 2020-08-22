@@ -90,9 +90,8 @@ class Menu extends Component {
     };
 
     getActiveClassForDropdown = (URLS) => {
-        const { pathname } = this.props.location;
         const isActivePage = Object.values(URLS)
-            .some((item) => item === pathname);
+            .some((item) => item === this.props.pathname);
 
         return isActivePage ? 'active' : '';
     };
@@ -180,9 +179,9 @@ class Menu extends Component {
 }
 
 Menu.propTypes = {
-    isMenuOpen: PropTypes.bool,
-    closeMenu: PropTypes.func,
-    location: PropTypes.object,
+    isMenuOpen: PropTypes.bool.isRequired,
+    closeMenu: PropTypes.func.isRequired,
+    pathname: PropTypes.string.isRequired,
     t: PropTypes.func,
 };
 

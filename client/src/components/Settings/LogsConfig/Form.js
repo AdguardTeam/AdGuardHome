@@ -4,7 +4,7 @@ import { Field, reduxForm } from 'redux-form';
 import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 
-import { renderSelectField, renderRadioField, toNumber } from '../../../helpers/form';
+import { renderCheckboxField, renderRadioField, toNumber } from '../../../helpers/form';
 import { FORM_NAME, QUERY_LOG_INTERVALS_DAYS } from '../../../helpers/constants';
 
 const getIntervalFields = (processing, t, toNumber) => QUERY_LOG_INTERVALS_DAYS.map((interval) => {
@@ -35,7 +35,7 @@ const Form = (props) => {
                 <Field
                     name="enabled"
                     type="checkbox"
-                    component={renderSelectField}
+                    component={renderCheckboxField}
                     placeholder={t('query_log_enable')}
                     disabled={processing}
                 />
@@ -44,7 +44,7 @@ const Form = (props) => {
                 <Field
                     name="anonymize_client_ip"
                     type="checkbox"
-                    component={renderSelectField}
+                    component={renderCheckboxField}
                     placeholder={t('anonymize_client_ip')}
                     subtitle={t('anonymize_client_ip_desc')}
                     disabled={processing}

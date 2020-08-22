@@ -1,42 +1,46 @@
-import React, { Fragment } from 'react';
-import PropTypes from 'prop-types';
-import { Trans, withTranslation } from 'react-i18next';
-
+import React from 'react';
+import { Trans } from 'react-i18next';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import Topline from './Topline';
+import { getUpdate } from '../../actions';
 
-const UpdateTopline = (props) => (
-    <Topline type="info">
-        <Fragment>
+const UpdateTopline = () => {
+    const {
+        announcementUrl,
+        newVersion,
+        canAutoUpdate,
+        processingUpdate,
+    } = useSelector((state) => state.dashboard, shallowEqual);
+    const dispatch = useDispatch();
+
+    const handleUpdate = () => {
+        dispatch(getUpdate());
+    };
+
+    return <Topline type="info">
+        <>
             <Trans
-                values={{ version: props.version }}
+                values={{ version: newVersion }}
                 components={[
-                    <a href={props.url} target="_blank" rel="noopener noreferrer" key="0">
+                    <a href={announcementUrl} target="_blank" rel="noopener noreferrer" key="0">
                         Click here
                     </a>,
                 ]}
             >
                 update_announcement
             </Trans>
-            {props.canAutoUpdate
-                && <button
-                    type="button"
-                    className="btn btn-sm btn-primary ml-3"
-                    onClick={props.getUpdate}
-                    disabled={props.processingUpdate}
-                >
-                    <Trans>update_now</Trans>
-                </button>
+            {canAutoUpdate
+            && <button
+                type="button"
+                className="btn btn-sm btn-primary ml-3"
+                onClick={handleUpdate}
+                disabled={processingUpdate}
+            >
+                <Trans>update_now</Trans>
+            </button>
             }
-        </Fragment>
-    </Topline>
-);
-
-UpdateTopline.propTypes = {
-    version: PropTypes.string,
-    url: PropTypes.string.isRequired,
-    canAutoUpdate: PropTypes.bool,
-    getUpdate: PropTypes.func,
-    processingUpdate: PropTypes.bool,
+        </>
+    </Topline>;
 };
 
-export default withTranslation()(UpdateTopline);
+export default UpdateTopline;

@@ -1,14 +1,13 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { Trans, withTranslation } from 'react-i18next';
+import { Trans } from 'react-i18next';
 import classnames from 'classnames';
-
+import { useSelector } from 'react-redux';
 import './Overlay.css';
 
-const UpdateOverlay = (props) => {
-    const overlayClass = classnames({
-        overlay: true,
-        'overlay--visible': props.processingUpdate,
+const UpdateOverlay = () => {
+    const processingUpdate = useSelector((state) => state.dashboard.processingUpdate);
+    const overlayClass = classnames('overlay', {
+        'overlay--visible': processingUpdate,
     });
 
     return (
@@ -19,8 +18,4 @@ const UpdateOverlay = (props) => {
     );
 };
 
-UpdateOverlay.propTypes = {
-    processingUpdate: PropTypes.bool,
-};
-
-export default withTranslation()(UpdateOverlay);
+export default UpdateOverlay;

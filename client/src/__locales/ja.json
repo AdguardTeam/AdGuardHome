@@ -562,5 +562,6 @@
     "filter_category_regional_desc": "それぞれの地域の広告と追跡サーバをターゲットするリストです。",
     "filter_category_other_desc": "その他のブロックリストです。",
     "original_response": "当初の応答",
-    "click_to_view_queries": "クエリを表示するにはクリックしてください"
+    "click_to_view_queries": "クエリを表示するにはクリックしてください",
+    "port_53_faq_link": "多くの場合、ポート53は \"DNSStubListener\" または \"systemd-resolved\" サービスによって利用されています。これを解決する方法については、<0>この手順</0>をお読みください。"
 }

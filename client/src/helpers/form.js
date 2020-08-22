@@ -1,5 +1,7 @@
 import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
+import { Trans } from 'react-i18next';
+import classNames from 'classnames';
 import { createOnBlurHandler } from './helpers';
 import { R_UNIX_ABSOLUTE_PATH, R_WIN_ABSOLUTE_PATH } from './constants';
 
@@ -24,11 +26,12 @@ export const renderField = (props, elementType) => {
         step,
         onBlur,
     });
+
     return (
         <>
             {element}
             {!disabled && touched && error
-            && <span className="form__message form__message--error">{error}</span>}
+            && <span className="form__message form__message--error"><Trans>{error}</Trans></span>}
         </>
     );
 };
@@ -47,7 +50,7 @@ renderField.propTypes = {
     step: PropTypes.number,
     meta: PropTypes.shape({
         touched: PropTypes.bool,
-        error: PropTypes.object,
+        error: PropTypes.string,
     }).isRequired,
 };
 
@@ -71,7 +74,7 @@ export const renderGroupField = ({
     const onBlur = (event) => createOnBlurHandler(event, input, normalizeOnBlur);
 
     return (
-        <Fragment>
+        <>
             <div className="input-group">
                 <input
                     {...input}
@@ -98,8 +101,8 @@ export const renderGroupField = ({
                 }
             </div>
             {!disabled && touched && error
-            && <span className="form__message form__message--error">{error}</span>}
-        </Fragment>
+            && <span className="form__message form__message--error"><Trans>{error}</Trans></span>}
+        </>
     );
 };
 
@@ -115,7 +118,7 @@ renderGroupField.propTypes = {
     removeField: PropTypes.func,
     meta: PropTypes.shape({
         touched: PropTypes.bool,
-        error: PropTypes.object,
+        error: PropTypes.string,
     }).isRequired,
     normalizeOnBlur: PropTypes.func,
 };
@@ -137,7 +140,8 @@ export const renderRadioField = ({
     </label>
     {!disabled
     && touched
-    && (error && <span className="form__message form__message--error">{error}</span>)}
+    && error
+    && <span className="form__message form__message--error"><Trans>{error}</Trans></span>}
 </Fragment>;
 
 renderRadioField.propTypes = {
@@ -147,11 +151,11 @@ renderRadioField.propTypes = {
     disabled: PropTypes.bool,
     meta: PropTypes.shape({
         touched: PropTypes.bool,
-        error: PropTypes.object,
+        error: PropTypes.string,
     }).isRequired,
 };
 
-export const renderSelectField = ({
+export const renderCheckboxField = ({
     input,
     placeholder,
     subtitle,
@@ -163,7 +167,8 @@ export const renderSelectField = ({
 }) => <>
     <label className={`checkbox ${modifier}`} onClick={onClick}>
         <span className="checkbox__marker" />
-        <input {...input} type="checkbox" className="checkbox__input" disabled={disabled} checked={input.checked || checked}/>
+        <input {...input} type="checkbox" className="checkbox__input" disabled={disabled}
+               checked={input.checked || checked} />
         <span className="checkbox__label">
                         <span className="checkbox__label-text checkbox__label-text--long">
                             <span className="checkbox__label-title">{placeholder}</span>
@@ -178,10 +183,11 @@ export const renderSelectField = ({
     </label>
     {!disabled
     && touched
-    && error && <span className="form__message form__message--error">{error}</span>}
+    && error
+    && <span className="form__message form__message--error"><Trans>{error}</Trans></span>}
 </>;
 
-renderSelectField.propTypes = {
+renderCheckboxField.propTypes = {
     input: PropTypes.object.isRequired,
     placeholder: PropTypes.string,
     subtitle: PropTypes.string,
@@ -191,7 +197,37 @@ renderSelectField.propTypes = {
     checked: PropTypes.bool,
     meta: PropTypes.shape({
         touched: PropTypes.bool,
-        error: PropTypes.object,
+        error: PropTypes.string,
+    }).isRequired,
+};
+
+export const renderSelectField = ({
+    input,
+    meta: { touched, error },
+    children,
+    label,
+}) => {
+    const showWarning = touched && error;
+    const selectClass = classNames('form-control custom-select', {
+        'select--no-warning': !showWarning,
+    });
+
+    return <>
+        {label && <label><Trans>{label}</Trans></label>}
+        <select {...input} className={selectClass}>{children}</select>
+        {showWarning
+        && <span className="form__message form__message--error form__message--left-pad"><Trans>{error}</Trans></span>}
+    </>;
+};
+
+renderSelectField.propTypes = {
+    input: PropTypes.object.isRequired,
+    disabled: PropTypes.bool,
+    label: PropTypes.string,
+    children: PropTypes.oneOfType([PropTypes.array, PropTypes.element]).isRequired,
+    meta: PropTypes.shape({
+        touched: PropTypes.bool,
+        error: PropTypes.string,
     }).isRequired,
 };
 
@@ -218,7 +254,7 @@ export const renderServiceField = ({
         </svg>
     </label>
     {!disabled && touched && error
-    && <span className="form__message form__message--error">{error}</span>}
+    && <span className="form__message form__message--error"><Trans>{error}</Trans></span>}
 </Fragment>;
 
 renderServiceField.propTypes = {
@@ -229,9 +265,11 @@ renderServiceField.propTypes = {
     icon: PropTypes.string,
     meta: PropTypes.shape({
         touched: PropTypes.bool,
-        error: PropTypes.object,
+        error: PropTypes.string,
     }).isRequired,
 };
+
+export const getLastIpv4Octet = (ipv4) => parseInt(ipv4.slice(ipv4.lastIndexOf('.') + 1), 10);
 
 /**
  * @param value {string}

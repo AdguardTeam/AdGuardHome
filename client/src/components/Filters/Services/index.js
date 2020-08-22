@@ -59,6 +59,4 @@ const Services = () => {
     );
 };
 
-Services.propTypes = {};
-
 export default Services;

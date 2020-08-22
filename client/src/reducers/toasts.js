@@ -8,9 +8,12 @@ import { removeToast } from '../actions';
 
 const toasts = handleActions({
     [addErrorToast]: (state, { payload }) => {
+        const message = payload.error.toString();
+        console.error(message);
+
         const errorToast = {
             id: nanoid(),
-            message: payload.error.toString(),
+            message,
             type: 'error',
         };
 

@@ -1,19 +1,20 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { Trans, withTranslation } from 'react-i18next';
+import { Trans } from 'react-i18next';
 import isAfter from 'date-fns/is_after';
 import addDays from 'date-fns/add_days';
-
+import { useSelector } from 'react-redux';
 import Topline from './Topline';
 import { EMPTY_DATE } from '../../helpers/constants';
 
-const EncryptionTopline = (props) => {
-    if (props.notAfter === EMPTY_DATE) {
-        return false;
+const EncryptionTopline = () => {
+    const not_after = useSelector((state) => state.encryption.not_after);
+
+    if (not_after === EMPTY_DATE) {
+        return null;
     }
 
-    const isAboutExpire = isAfter(addDays(Date.now(), 30), props.notAfter);
-    const isExpired = isAfter(Date.now(), props.notAfter);
+    const isAboutExpire = isAfter(addDays(Date.now(), 30), not_after);
+    const isExpired = isAfter(Date.now(), not_after);
 
     if (isExpired) {
         return (
@@ -23,7 +24,9 @@ const EncryptionTopline = (props) => {
                 </Trans>
             </Topline>
         );
-    } if (isAboutExpire) {
+    }
+
+    if (isAboutExpire) {
         return (
             <Topline type="warning">
                 <Trans components={[<a href="#encryption" key="0">link</a>]}>
@@ -36,8 +39,4 @@ const EncryptionTopline = (props) => {
     return false;
 };
 
-EncryptionTopline.propTypes = {
-    notAfter: PropTypes.string.isRequired,
-};
-
-export default withTranslation()(EncryptionTopline);
+export default EncryptionTopline;

@@ -44,12 +44,15 @@ var webRegistered bool
 //
 // The zero Server is empty and ready for use.
 type Server struct {
-	dnsProxy   *proxy.Proxy         // DNS proxy instance
-	dnsFilter  *dnsfilter.Dnsfilter // DNS filter instance
-	dhcpServer *dhcpd.Server        // DHCP server instance (optional)
-	queryLog   querylog.QueryLog    // Query log instance
+	dnsProxy   *proxy.Proxy          // DNS proxy instance
+	dnsFilter  *dnsfilter.Dnsfilter  // DNS filter instance
+	dhcpServer dhcpd.ServerInterface // DHCP server instance (optional)
+	queryLog   querylog.QueryLog     // Query log instance
 	stats      stats.Stats
 	access     *accessCtx
+
+	tableHostToIP     map[string]net.IP // "hostname -> IP" table for internal addresses (DHCP)
+	tableHostToIPLock sync.Mutex
 
 	tablePTR     map[string]string // "IP -> hostname" table for reverse lookup
 	tablePTRLock sync.Mutex
@@ -69,7 +72,7 @@ type DNSCreateParams struct {
 	DNSFilter  *dnsfilter.Dnsfilter
 	Stats      stats.Stats
 	QueryLog   querylog.QueryLog
-	DHCPServer *dhcpd.Server
+	DHCPServer dhcpd.ServerInterface
 }
 
 // NewServer creates a new instance of the dnsforward.Server
@@ -175,6 +178,9 @@ func (s *Server) Prepare(config *ServerConfig) error {
 			if s.conf.BlockingIPAddrv4 == nil || s.conf.BlockingIPAddrv6 == nil {
 				return fmt.Errorf("DNS: invalid custom blocking IP address specified")
 			}
+		}
+		if s.conf.MaxGoroutines == 0 {
+			s.conf.MaxGoroutines = 50
 		}
 	}
 
