@@ -24,11 +24,11 @@
             "homepage": "https://github.com/AdguardTeam/AdGuardSDNSFilter",
             "source": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"
         },
-        "adaway-default-blocklist": {
-            "name": "AdAway default blocklist",
+        "adaway": {
+            "name": "AdAway",
             "categoryId": "general",
             "homepage": "https://github.com/AdAway/adaway.github.io/",
-            "source": "https://raw.githubusercontent.com/AdAway/adaway.github.io/master/hosts.txt"
+            "source": "https://adaway.org/hosts.txt"
         },
         "peter-lowe-list": {
             "name": "Peter Lowe's List",
@@ -153,8 +153,8 @@
         "BarbBlock": {
             "name": "BarbBlock",
             "categoryId": "other",
-            "homepage": "https://ssl.bblck.me/",
-            "source": "https://ssl.bblck.me/blacklists/ublock-origin.txt"
+            "homepage": "https://github.com/paulgb/BarbBlock/",
+            "source": "https://paulgb.github.io/BarbBlock/blacklists/hosts-file.txt"
         }
     }
 }
