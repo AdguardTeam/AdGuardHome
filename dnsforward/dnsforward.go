@@ -82,9 +82,9 @@ func NewServer(p DNSCreateParams) *Server {
 	s.dnsFilter = p.DNSFilter
 	s.stats = p.Stats
 	s.queryLog = p.QueryLog
-	s.dhcpServer = p.DHCPServer
 
-	if s.dhcpServer != nil {
+	if p.DHCPServer != nil {
+		s.dhcpServer = p.DHCPServer
 		s.dhcpServer.SetOnLeaseChanged(s.onDHCPLeaseChanged)
 		s.onDHCPLeaseChanged(dhcpd.LeaseChangedAdded)
 	}
