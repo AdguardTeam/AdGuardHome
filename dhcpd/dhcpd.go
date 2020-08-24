@@ -51,7 +51,6 @@ const (
 	LeaseChangedAdded = iota
 	LeaseChangedAddedStatic
 	LeaseChangedRemovedStatic
-	LeaseChangedBlacklisted
 
 	LeaseChangedDBStore
 )
