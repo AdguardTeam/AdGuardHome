@@ -146,6 +146,9 @@ func (s *v4Server) rmDynamicLease(lease Lease) error {
 			}
 
 			s.leaseRemoveSwapByIndex(i)
+			if i == len(s.leases) {
+				break
+			}
 			l = s.leases[i]
 		}
 
