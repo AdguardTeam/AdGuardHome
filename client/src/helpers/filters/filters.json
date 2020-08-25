@@ -25,7 +25,7 @@
             "source": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"
         },
         "adaway": {
-            "name": "AdAway",
+            "name": "AdAway Default Blocklist",
             "categoryId": "general",
             "homepage": "https://github.com/AdAway/adaway.github.io/",
             "source": "https://adaway.org/hosts.txt"
