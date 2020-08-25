@@ -146,6 +146,9 @@ func (s *v4Server) rmDynamicLease(lease Lease) error {
 			}
 
 			s.leaseRemoveSwapByIndex(i)
+			if i == len(s.leases) {
+				break
+			}
 			l = s.leases[i]
 		}
 
@@ -365,8 +368,6 @@ func (s *v4Server) processDiscover(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) *Lea
 
 		s.conf.notify(LeaseChangedDBStore)
 
-		// s.conf.notify(LeaseChangedBlacklisted)
-
 	} else {
 		reqIP := req.Options.Get(dhcpv4.OptionRequestedIPAddress)
 		if len(reqIP) != 0 &&
@@ -375,11 +376,38 @@ func (s *v4Server) processDiscover(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) *Lea
 		}
 	}
 
-	hostname := req.Options.Get(dhcpv4.OptionHostName)
-	lease.Hostname = string(hostname)
-
 	resp.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeOffer))
 	return lease
+}
+
+type optFQDN struct {
+	name string
+}
+
+func (o *optFQDN) String() string {
+	return "optFQDN"
+}
+
+// flags[1]
+// A-RR[1]
+// PTR-RR[1]
+// name[]
+func (o *optFQDN) ToBytes() []byte {
+	b := make([]byte, 3+len(o.name))
+	i := 0
+
+	b[i] = 0x03 // f_server_overrides | f_server
+	i++
+
+	b[i] = 255 // A-RR
+	i++
+
+	b[i] = 255 // PTR-RR
+	i++
+
+	copy(b[i:], []byte(o.name))
+	return b
+
 }
 
 // Process Request request and return lease
@@ -414,12 +442,6 @@ func (s *v4Server) processRequest(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) (*Lea
 				return nil, true
 			}
 
-			if !bytes.Equal([]byte(l.Hostname), hostname) {
-				s.leasesLock.Unlock()
-				log.Debug("DHCPv4: Mismatched OptionHostName in Request message for %s", mac)
-				return nil, true
-			}
-
 			lease = l
 			break
 		}
@@ -432,7 +454,17 @@ func (s *v4Server) processRequest(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) (*Lea
 	}
 
 	if lease.Expiry.Unix() != leaseExpireStatic {
+		lease.Hostname = string(hostname)
 		s.commitLease(lease)
+	} else if len(lease.Hostname) != 0 {
+		o := &optFQDN{
+			name: string(lease.Hostname),
+		}
+		fqdn := dhcpv4.Option{
+			Code:  dhcpv4.OptionFQDN,
+			Value: o,
+		}
+		resp.UpdateOption(fqdn)
 	}
 
 	resp.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeAck))
