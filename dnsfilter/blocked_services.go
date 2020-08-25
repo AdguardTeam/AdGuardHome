@@ -73,7 +73,7 @@ var serviceRulesArray = []svc{
 		"||snap-dev.TLD^",
 		"||snapkit.co",
 		"||snapads.TLD^",
-		"||impala-media-production.s3.amazonaws.TLD^",
+		"||impala-media-production.s3.amazonaws.com^",
 	}},
 	{"discord", []string{"||discordapp.TLD^", "||discord.TLD^"}},
 	{"ok", []string{"||ok.ru^"}},
