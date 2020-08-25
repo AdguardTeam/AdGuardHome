@@ -50,12 +50,23 @@ type V4ServerConf struct {
 	// 0: disable
 	ICMPTimeout uint32 `yaml:"icmp_timeout_msec"`
 
+	// Custom Options.
+	//
+	// Option with arbitrary hexadecimal data:
+	//     DEC_CODE hex HEX_DATA
+	// where DEC_CODE is a decimal DHCPv4 option code in range [1..255]
+	//
+	// Option with IP data (only 1 IP is supported):
+	//     DEC_CODE ip IP_ADDR
+	Options []string `yaml:"options"`
+
 	ipStart    net.IP        // starting IP address for dynamic leases
 	ipEnd      net.IP        // ending IP address for dynamic leases
 	leaseTime  time.Duration // the time during which a dynamic lease is considered valid
 	dnsIPAddrs []net.IP      // IPv4 addresses to return to DHCP clients as DNS server addresses
 	routerIP   net.IP        // value for Option Router
 	subnetMask net.IPMask    // value for Option SubnetMask
+	options    []dhcpOption
 
 	// Server calls this function when leases data changes
 	notify func(uint32)
@@ -78,4 +89,9 @@ type V6ServerConf struct {
 
 	// Server calls this function when leases data changes
 	notify func(uint32)
+}
+
+type dhcpOption struct {
+	code uint8
+	val  []byte
 }

@@ -108,3 +108,25 @@ func TestNormalizeLeases(t *testing.T) {
 	assert.True(t, bytes.Equal(leases[1].HWAddr, []byte{2, 2, 3, 4}))
 	assert.True(t, bytes.Equal(leases[2].HWAddr, []byte{1, 2, 3, 5}))
 }
+
+func TestOptions(t *testing.T) {
+	code, val := parseOptionString(" 12  hex  abcdef ")
+	assert.Equal(t, uint8(12), code)
+	assert.True(t, bytes.Equal([]byte{0xab, 0xcd, 0xef}, val))
+
+	code, _ = parseOptionString(" 12  hex  abcdef1 ")
+	assert.Equal(t, uint8(0), code)
+
+	code, val = parseOptionString("123 ip 1.2.3.4")
+	assert.Equal(t, uint8(123), code)
+	assert.Equal(t, "1.2.3.4", net.IP(string(val)).String())
+
+	code, _ = parseOptionString("256 ip 1.1.1.1")
+	assert.Equal(t, uint8(0), code)
+	code, _ = parseOptionString("-1 ip 1.1.1.1")
+	assert.Equal(t, uint8(0), code)
+	code, _ = parseOptionString("12 ip 1.1.1.1x")
+	assert.Equal(t, uint8(0), code)
+	code, _ = parseOptionString("12 x 1.1.1.1")
+	assert.Equal(t, uint8(0), code)
+}

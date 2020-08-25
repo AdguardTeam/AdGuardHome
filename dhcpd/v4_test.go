@@ -178,6 +178,10 @@ func TestV4DynamicLeaseGet(t *testing.T) {
 		GatewayIP:  "192.168.10.1",
 		SubnetMask: "255.255.255.0",
 		notify:     notify4,
+		Options: []string{
+			"81 hex 303132",
+			"82 ip 1.2.3.4",
+		},
 	}
 	sIface, err := v4Create(conf)
 	s := sIface.(*v4Server)
@@ -198,6 +202,8 @@ func TestV4DynamicLeaseGet(t *testing.T) {
 	assert.Equal(t, "192.168.10.1", resp.ServerIdentifier().String())
 	assert.Equal(t, "255.255.255.0", net.IP(resp.SubnetMask()).String())
 	assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
+	assert.Equal(t, []byte("012"), resp.Options[uint8(dhcpv4.OptionFQDN)])
+	assert.Equal(t, "1.2.3.4", net.IP(resp.Options[uint8(dhcpv4.OptionRelayAgentInformation)]).String())
 
 	// "Request"
 	req, _ = dhcpv4.NewRequestFromOffer(resp)

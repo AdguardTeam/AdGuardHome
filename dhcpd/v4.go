@@ -475,6 +475,10 @@ func (s *v4Server) process(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) int {
 	resp.UpdateOption(dhcpv4.OptRouter(s.conf.routerIP))
 	resp.UpdateOption(dhcpv4.OptSubnetMask(s.conf.subnetMask))
 	resp.UpdateOption(dhcpv4.OptDNS(s.conf.dnsIPAddrs...))
+
+	for _, opt := range s.conf.options {
+		resp.Options[opt.code] = opt.val
+	}
 	return 1
 }
 
@@ -617,6 +621,20 @@ func v4Create(conf V4ServerConf) (DHCPServer, error) {
 		s.conf.LeaseDuration = uint32(s.conf.leaseTime.Seconds())
 	} else {
 		s.conf.leaseTime = time.Second * time.Duration(conf.LeaseDuration)
+	}
+
+	for _, o := range conf.Options {
+		code, val := parseOptionString(o)
+		if code == 0 {
+			log.Debug("DHCPv4: bad option string: %s", o)
+			continue
+		}
+
+		opt := dhcpOption{
+			code: code,
+			val:  val,
+		}
+		s.conf.options = append(s.conf.options, opt)
 	}
 
 	return s, nil

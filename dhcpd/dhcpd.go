@@ -1,11 +1,15 @@
 package dhcpd
 
 import (
+	"encoding/hex"
 	"net"
 	"net/http"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/util"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -213,4 +217,44 @@ func (s *Server) FindMACbyIP(ip net.IP) net.HardwareAddr {
 // AddStaticLease - add static v4 lease
 func (s *Server) AddStaticLease(lease Lease) error {
 	return s.srv4.AddStaticLease(lease)
+}
+
+// Parse option string
+// Format:
+// CODE TYPE VALUE
+func parseOptionString(s string) (uint8, []byte) {
+	s = strings.TrimSpace(s)
+	scode := util.SplitNext(&s, ' ')
+	t := util.SplitNext(&s, ' ')
+	sval := util.SplitNext(&s, ' ')
+
+	code, err := strconv.Atoi(scode)
+	if err != nil || code <= 0 || code > 255 {
+		return 0, nil
+	}
+
+	var val []byte
+
+	switch t {
+	case "hex":
+		val, err = hex.DecodeString(sval)
+		if err != nil {
+			return 0, nil
+		}
+
+	case "ip":
+		ip := net.ParseIP(sval)
+		if ip == nil {
+			return 0, nil
+		}
+		val = ip
+		if ip.To4() != nil {
+			val = ip.To4()
+		}
+
+	default:
+		return 0, nil
+	}
+
+	return uint8(code), val
 }
