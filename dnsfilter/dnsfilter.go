@@ -532,9 +532,6 @@ func createFilteringEngine(filters []Filter) (*filterlist.RuleStorage, *urlfilte
 
 // Initialize urlfilter objects
 func (d *Dnsfilter) initFiltering(allowFilters, blockFilters []Filter) error {
-	d.engineLock.Lock()
-	defer d.engineLock.Unlock()
-	d.reset()
 	rulesStorage, filteringEngine, err := createFilteringEngine(blockFilters)
 	if err != nil {
 		return err
@@ -543,10 +540,14 @@ func (d *Dnsfilter) initFiltering(allowFilters, blockFilters []Filter) error {
 	if err != nil {
 		return err
 	}
+
+	d.engineLock.Lock()
+	d.reset()
 	d.rulesStorage = rulesStorage
 	d.filteringEngine = filteringEngine
 	d.rulesStorageWhite = rulesStorageWhite
 	d.filteringEngineWhite = filteringEngineWhite
+	d.engineLock.Unlock()
 
 	// Make sure that the OS reclaims memory as soon as possible
 	debug.FreeOSMemory()
