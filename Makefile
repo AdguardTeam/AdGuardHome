@@ -161,6 +161,7 @@ test:
 	go test -race -v -bench=. -coverprofile=coverage.txt -covermode=atomic ./...
 
 ci: client_with_deps
+	$(MAKE) lint
 	go mod download
 	$(MAKE) test
 

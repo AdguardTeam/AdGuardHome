@@ -458,7 +458,7 @@ func (s *v4Server) processRequest(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) (*Lea
 		s.commitLease(lease)
 	} else if len(lease.Hostname) != 0 {
 		o := &optFQDN{
-			name: string(lease.Hostname),
+			name: lease.Hostname,
 		}
 		fqdn := dhcpv4.Option{
 			Code:  dhcpv4.OptionFQDN,
