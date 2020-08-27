@@ -20,8 +20,11 @@
     <a href="https://goreportcard.com/report/AdguardTeam/AdGuardHome">
       <img src="https://goreportcard.com/badge/github.com/AdguardTeam/AdGuardHome" alt="Go Report Card" />
     </a>
-    <a href="https://golangci.com/r/github.com/AdguardTeam/AdGuardHome">
-      <img src="https://golangci.com/badges/github.com/AdguardTeam/AdGuardHome.svg" alt="GolangCI" />
+    <a href="https://hub.docker.com/r/adguard/adguardhome">
+        <img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/adguard/adguardhome.svg?maxAge=604800" />
+    </a>
+    <a href="https://hub.docker.com/r/adguard/adguardhome">
+        <img alt="Docker Stars" src="https://img.shields.io/docker/stars/adguard/adguardhome.svg?maxAge=604800" />
     </a>
     <br />
     <a href="https://github.com/AdguardTeam/AdGuardHome/releases">
@@ -29,12 +32,6 @@
     </a>
     <a href="https://snapcraft.io/adguard-home">
         <img alt="adguard-home" src="https://snapcraft.io/adguard-home/badge.svg" />
-    </a>
-    <a href="https://hub.docker.com/r/adguard/adguardhome">
-        <img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/adguard/adguardhome.svg?maxAge=604800" />
-    </a>
-    <a href="https://hub.docker.com/r/adguard/adguardhome">
-        <img alt="Docker Stars" src="https://img.shields.io/docker/stars/adguard/adguardhome.svg?maxAge=604800" />
     </a>
 </p>
 
