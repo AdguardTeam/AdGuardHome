@@ -99,7 +99,9 @@ func getVersionResp(info update.VersionInfo) []byte {
 		Context.tls.WriteDiskConfig(&tlsConf)
 
 		if runtime.GOOS != "windows" &&
-			((tlsConf.Enabled && (tlsConf.PortHTTPS < 1024 || tlsConf.PortDNSOverTLS < 1024)) ||
+			((tlsConf.Enabled && (tlsConf.PortHTTPS < 1024 ||
+				tlsConf.PortDNSOverTLS < 1024 ||
+				tlsConf.PortDNSOverQUIC < 1024)) ||
 				config.BindPort < 1024 ||
 				config.DNS.Port < 1024) {
 			// On UNIX, if we're running under a regular user,
