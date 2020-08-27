@@ -146,7 +146,7 @@ docker:
 
 lint: lint-js lint-go
 
-lint-js:
+lint-js: dependencies
 	@echo Running js linter
 	npm --prefix client run lint
 
