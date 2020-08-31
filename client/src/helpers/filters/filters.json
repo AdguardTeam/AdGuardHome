@@ -70,7 +70,7 @@
             "name": "NoCoin Filter List",
             "categoryId": "security",
             "homepage": "https://github.com/hoshsadiq/adblock-nocoin-list/",
-            "source": "https://raw.githubusercontent.com/hoshsadiq/adblock-nocoin-list/master/nocoin.txt"
+            "source": "https://raw.githubusercontent.com/hoshsadiq/adblock-nocoin-list/master/hosts.txt"
         },
         "the-big-list-of-hacked-malware-web-sites": {
             "name": "The Big List of Hacked Malware Web Sites",
