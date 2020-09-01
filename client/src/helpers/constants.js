@@ -307,9 +307,7 @@ export const DEFAULT_LOGS_FILTER = {
 
 export const DEFAULT_LANGUAGE = 'en';
 
-export const TABLE_DEFAULT_PAGE_SIZE = 25;
-
-export const TABLE_FIRST_PAGE = 0;
+export const QUERY_LOGS_PAGE_LIMIT = 20;
 
 export const LEASES_TABLE_DEFAULT_PAGE_SIZE = 20;
 
@@ -327,85 +325,93 @@ export const FILTERED_STATUS = {
 
 export const RESPONSE_FILTER = {
     ALL: {
-        query: 'all',
-        label: 'all_queries',
+        QUERY: 'all',
+        LABEL: 'all_queries',
     },
     FILTERED: {
-        query: 'filtered',
-        label: 'filtered',
+        QUERY: 'filtered',
+        LABEL: 'filtered',
     },
     PROCESSED: {
-        query: 'processed',
-        label: 'show_processed_responses',
+        QUERY: 'processed',
+        LABEL: 'show_processed_responses',
     },
     BLOCKED: {
-        query: 'blocked',
-        label: 'show_blocked_responses',
+        QUERY: 'blocked',
+        LABEL: 'show_blocked_responses',
     },
     BLOCKED_THREATS: {
-        query: 'blocked_safebrowsing',
-        label: 'blocked_threats',
+        QUERY: 'blocked_safebrowsing',
+        LABEL: 'blocked_threats',
     },
     BLOCKED_ADULT_WEBSITES: {
-        query: 'blocked_parental',
-        label: 'blocked_adult_websites',
+        QUERY: 'blocked_parental',
+        LABEL: 'blocked_adult_websites',
     },
     ALLOWED: {
-        query: 'whitelisted',
-        label: 'allowed',
+        QUERY: 'whitelisted',
+        LABEL: 'allowed',
     },
     REWRITTEN: {
-        query: 'rewritten',
-        label: 'rewritten',
+        QUERY: 'rewritten',
+        LABEL: 'rewritten',
     },
     SAFE_SEARCH: {
-        query: 'safe_search',
-        label: 'safe_search',
+        QUERY: 'safe_search',
+        LABEL: 'safe_search',
     },
 };
 
 export const RESPONSE_FILTER_QUERIES = Object.values(RESPONSE_FILTER)
-    .reduce((acc, { query }) => {
-        acc[query] = query;
+    .reduce((acc, { QUERY }) => {
+        acc[QUERY] = QUERY;
         return acc;
     }, {});
 
+export const QUERY_STATUS_COLORS = {
+    BLUE: 'blue',
+    GREEN: 'green',
+    RED: 'red',
+    WHITE: 'white',
+    YELLOW: 'yellow',
+};
+
 export const FILTERED_STATUS_TO_META_MAP = {
     [FILTERED_STATUS.NOT_FILTERED_WHITE_LIST]: {
-        label: RESPONSE_FILTER.ALLOWED.label,
-        color: 'green',
+        LABEL: RESPONSE_FILTER.ALLOWED.LABEL,
+        COLOR: QUERY_STATUS_COLORS.GREEN,
     },
     [FILTERED_STATUS.NOT_FILTERED_NOT_FOUND]: {
-        label: RESPONSE_FILTER.PROCESSED.label,
-        color: 'white',
+        LABEL: RESPONSE_FILTER.PROCESSED.LABEL,
+        COLOR: QUERY_STATUS_COLORS.WHITE,
     },
     [FILTERED_STATUS.FILTERED_BLOCKED_SERVICE]: {
-        label: RESPONSE_FILTER.BLOCKED.label,
-        color: 'red',
+        LABEL: RESPONSE_FILTER.BLOCKED.LABEL,
+        COLOR: QUERY_STATUS_COLORS.RED,
     },
     [FILTERED_STATUS.FILTERED_SAFE_SEARCH]: {
-        label: RESPONSE_FILTER.SAFE_SEARCH.label,
-        color: 'yellow',
+        LABEL: RESPONSE_FILTER.SAFE_SEARCH.LABEL,
+        COLOR: QUERY_STATUS_COLORS.YELLOW,
     },
     [FILTERED_STATUS.FILTERED_BLACK_LIST]: {
-        label: RESPONSE_FILTER.BLOCKED.label,
-        color: 'red',
+        LABEL: RESPONSE_FILTER.BLOCKED.LABEL,
+        COLOR: QUERY_STATUS_COLORS.RED,
     },
     [FILTERED_STATUS.REWRITE]: {
-        label: RESPONSE_FILTER.REWRITTEN.label,
-        color: 'blue',
+        LABEL: RESPONSE_FILTER.REWRITTEN.LABEL,
+        COLOR: QUERY_STATUS_COLORS.BLUE,
     },
     [FILTERED_STATUS.REWRITE_HOSTS]: {
-        label: RESPONSE_FILTER.REWRITTEN.label,
-        color: 'blue',
+        LABEL: RESPONSE_FILTER.REWRITTEN.LABEL,
+        COLOR: QUERY_STATUS_COLORS.BLUE,
     },
     [FILTERED_STATUS.FILTERED_SAFE_BROWSING]: {
-        label: RESPONSE_FILTER.BLOCKED_THREATS.label,
-        color: 'yellow',
+        LABEL: RESPONSE_FILTER.BLOCKED_THREATS.LABEL,
+        COLOR: QUERY_STATUS_COLORS.YELLOW,
     },
     [FILTERED_STATUS.FILTERED_PARENTAL]: {
-        label: RESPONSE_FILTER.BLOCKED_ADULT_WEBSITES.label,
-        color: 'yellow',
+        LABEL: RESPONSE_FILTER.BLOCKED_ADULT_WEBSITES.LABEL,
+        COLOR: QUERY_STATUS_COLORS.YELLOW,
     },
 };
 
@@ -518,4 +524,18 @@ export const DHCP_DESCRIPTION_PLACEHOLDERS = {
         range_end: 'dhcp_form_range_end',
         lease_duration: 'dhcp_form_lease_input',
     },
+};
+
+export const TOAST_TRANSITION_TIMEOUT = 500;
+
+export const TOAST_TYPES = {
+    SUCCESS: 'success',
+    ERROR: 'error',
+    NOTICE: 'notice',
+};
+
+export const TOAST_TIMEOUTS = {
+    [TOAST_TYPES.SUCCESS]: 5000,
+    [TOAST_TYPES.ERROR]: 30000,
+    [TOAST_TYPES.NOTICE]: 30000,
 };

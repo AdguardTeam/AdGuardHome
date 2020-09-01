@@ -107,7 +107,7 @@ const Form = (props) => {
 
     const {
         response_status, search,
-    } = useSelector((state) => state.form[FORM_NAME.LOGS_FILTER].values, shallowEqual);
+    } = useSelector((state) => state?.form[FORM_NAME.LOGS_FILTER].values, shallowEqual);
 
     const [
         debouncedSearch,
@@ -171,14 +171,14 @@ const Form = (props) => {
                 >
                     {Object.values(RESPONSE_FILTER)
                         .map(({
-                            query, label, disabled,
+                            QUERY, LABEL, disabled,
                         }) => (
                             <option
-                                key={label}
-                                value={query}
+                                key={LABEL}
+                                value={QUERY}
                                 disabled={disabled}
                             >
-                                {t(label)}
+                                {t(LABEL)}
                             </option>
                         ))
                     }
@@ -197,5 +197,4 @@ Form.propTypes = {
 
 export default reduxForm({
     form: FORM_NAME.LOGS_FILTER,
-    enableReinitialize: true,
 })(Form);

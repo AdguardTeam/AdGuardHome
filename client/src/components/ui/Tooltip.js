@@ -34,33 +34,47 @@ const Tooltip = ({
         delayShowValue = 0;
     }
 
+    const renderTooltip = ({ tooltipRef, getTooltipProps }) => (
+            <div
+                    {...getTooltipProps({
+                        ref: tooltipRef,
+                        className,
+                    })}
+            >
+                {typeof content === 'string' ? t(content) : content}
+            </div>
+    );
+
+    const renderTrigger = ({ getTriggerProps, triggerRef }) => (
+            <span
+                    {...getTriggerProps({
+                        ref: triggerRef,
+                        className: triggerClass,
+                    })}
+            >
+                    {children}
+                </span>
+    );
+
+    renderTooltip.propTypes = {
+        tooltipRef: propTypes.object,
+        getTooltipProps: propTypes.func,
+    };
+
+    renderTrigger.propTypes = {
+        triggerRef: propTypes.object,
+        getTriggerProps: propTypes.func,
+    };
+
     return (
         <TooltipTrigger
             placement={placement}
             trigger={triggerValue}
             delayHide={delayHideValue}
             delayShow={delayShowValue}
-            tooltip={({ tooltipRef, getTooltipProps }) => (
-                <div
-                    {...getTooltipProps({
-                        ref: tooltipRef,
-                        className,
-                    })}
-                >
-                    {typeof content === 'string' ? t(content) : content}
-                </div>
-            )}
+            tooltip={renderTooltip}
         >
-            {({ getTriggerProps, triggerRef }) => (
-                <span
-                    {...getTriggerProps({
-                        ref: triggerRef,
-                        className: triggerClass,
-                    })}
-                >
-                    {children}
-                </span>
-            )}
+            {renderTrigger}
         </TooltipTrigger>
     );
 };

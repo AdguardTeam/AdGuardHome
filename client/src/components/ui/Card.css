@@ -118,14 +118,14 @@
     }
 }
 
-.card .red {
+.card .logs__cell--red {
     background-color: #fff4f2;
 }
 
-.card .green {
+.card .logs__cell--green {
     background-color: #f1faf3;
 }
 
-.card .blue {
+.card .logs__row--blue {
     background-color: #ecf7ff;
 }

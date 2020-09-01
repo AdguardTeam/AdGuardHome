@@ -41,9 +41,8 @@ const config = {
         alias: {
             MainRoot: path.resolve(__dirname, '../'),
             ClientRoot: path.resolve(__dirname, './src'),
-            // TODO: change to '@hot-loader/react-dom' when v16.13.1 is released
-            //  https://stackoverflow.com/a/62671689/12942752
-            'react-dom': 'react-dom',
+            // TODO: uncomment when v16.13.1 is released https://stackoverflow.com/a/62671689/12942752
+            // 'react-dom': '@hot-loader/react-dom',
         },
     },
     module: {

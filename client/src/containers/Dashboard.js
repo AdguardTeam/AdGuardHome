@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import { toggleProtection, getClients } from '../actions';
 import { getStats, getStatsConfig, setStatsConfig } from '../actions/stats';
-import { toggleClientBlock, getAccessList } from '../actions/access';
+import { getAccessList } from '../actions/access';
 import Dashboard from '../components/Dashboard';
 
 const mapStateToProps = (state) => {
@@ -16,7 +16,6 @@ const mapDispatchToProps = {
     getStats,
     getStatsConfig,
     setStatsConfig,
-    toggleClientBlock,
     getAccessList,
 };
 

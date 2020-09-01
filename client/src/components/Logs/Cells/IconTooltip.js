@@ -7,7 +7,7 @@ import Tooltip from '../../ui/Tooltip';
 import 'react-popper-tooltip/dist/styles.css';
 import './IconTooltip.css';
 
-const getIconTooltip = ({
+const IconTooltip = ({
     className,
     contentItemClass,
     columnClass,
@@ -43,14 +43,14 @@ const getIconTooltip = ({
     </Tooltip>;
 };
 
-getIconTooltip.propTypes = {
+IconTooltip.propTypes = {
     className: PropTypes.string,
     contentItemClass: PropTypes.string,
     columnClass: PropTypes.string,
     tooltipClass: PropTypes.string,
     title: PropTypes.string,
     placement: PropTypes.string,
-    canShowTooltip: PropTypes.string,
+    canShowTooltip: PropTypes.bool,
     xlinkHref: PropTypes.string,
     content: PropTypes.oneOfType([
         PropTypes.string,
@@ -59,4 +59,4 @@ getIconTooltip.propTypes = {
     renderContent: PropTypes.arrayOf(PropTypes.element),
 };
 
-export default getIconTooltip;
+export default IconTooltip;

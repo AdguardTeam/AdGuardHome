@@ -13,18 +13,18 @@
     overflow: visible;
 }
 
-.rt-tr-group.red {
+.rt-tr-group.logs__row--red {
     background-color: rgba(223, 56, 18, 0.05);
 }
 
-.rt-tr-group.green {
+.rt-tr-group.logs__row--green {
     background-color: rgba(103, 178, 121, 0.1);
 }
 
-.rt-tr-group.blue {
+.rt-tr-group.logs__row--blue {
     background-color: #e5effd;
 }
 
-.rt-tr-group.yellow {
+.rt-tr-group.logs__row--yellow {
     background-color: var(--yellow-pale);
 }

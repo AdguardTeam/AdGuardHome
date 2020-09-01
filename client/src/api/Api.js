@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 import { getPathWithQueryString } from '../helpers/helpers';
-import { R_PATH_LAST_PART } from '../helpers/constants';
+import { QUERY_LOGS_PAGE_LIMIT, R_PATH_LAST_PART } from '../helpers/constants';
 import { BASE_URL } from '../../constants';
 
 class Api {
@@ -530,6 +530,8 @@ class Api {
 
     getQueryLog(params) {
         const { path, method } = this.GET_QUERY_LOG;
+        // eslint-disable-next-line no-param-reassign
+        params.limit = QUERY_LOGS_PAGE_LIMIT;
         const url = getPathWithQueryString(path, params);
         return this.makeRequest(url, method);
     }

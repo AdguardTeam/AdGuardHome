@@ -1,30 +1,10 @@
 import { handleActions } from 'redux-actions';
 
 import * as actions from '../actions/queryLogs';
-import { DEFAULT_LOGS_FILTER, TABLE_DEFAULT_PAGE_SIZE } from '../helpers/constants';
+import { DEFAULT_LOGS_FILTER } from '../helpers/constants';
 
 const queryLogs = handleActions(
     {
-        [actions.setLogsPagination]: (state, { payload }) => {
-            const { page, pageSize } = payload;
-            const { allLogs } = state;
-            const rowsStart = pageSize * page;
-            const rowsEnd = (pageSize * page) + pageSize;
-            const logsSlice = allLogs.slice(rowsStart, rowsEnd);
-            const pages = Math.ceil(allLogs.length / pageSize);
-
-            return {
-                ...state,
-                pages,
-                logs: logsSlice,
-            };
-        },
-
-        [actions.setLogsPage]: (state, { payload }) => ({
-            ...state,
-            page: payload,
-        }),
-
         [actions.setFilteredLogsRequest]: (state) => ({ ...state, processingGetLogs: true }),
         [actions.setFilteredLogsFailure]: (state) => ({ ...state, processingGetLogs: false }),
         [actions.toggleDetailedLogs]: (state, { payload }) => ({
@@ -34,14 +14,7 @@ const queryLogs = handleActions(
 
         [actions.setFilteredLogsSuccess]: (state, { payload }) => {
             const { logs, oldest, filter } = payload;
-            const pageSize = TABLE_DEFAULT_PAGE_SIZE;
-            const page = 0;
 
-            const pages = Math.ceil(logs.length / pageSize);
-            const total = logs.length;
-            const rowsStart = pageSize * page;
-            const rowsEnd = rowsStart + pageSize;
-            const logsSlice = logs.slice(rowsStart, rowsEnd);
             const isFiltered = filter && Object.keys(filter).some((key) => filter[key]);
 
             return {
@@ -49,10 +22,8 @@ const queryLogs = handleActions(
                 oldest,
                 filter,
                 isFiltered,
-                pages,
-                total,
-                logs: logsSlice,
-                allLogs: logs,
+                logs,
+                isEntireLog: logs.length < 1,
                 processingGetLogs: false,
             };
         },
@@ -67,29 +38,13 @@ const queryLogs = handleActions(
         [actions.getLogsFailure]: (state) => ({ ...state, processingGetLogs: false }),
         [actions.getLogsSuccess]: (state, { payload }) => {
             const {
-                logs, oldest, older_than, page, pageSize, initial,
+                logs, oldest, older_than,
             } = payload;
-            let logsWithOffset = state.allLogs.length > 0 && !initial ? state.allLogs : logs;
-            let allLogs = logs;
-
-            if (older_than) {
-                logsWithOffset = [...state.allLogs, ...logs];
-                allLogs = [...state.allLogs, ...logs];
-            }
-
-            const pages = Math.ceil(logsWithOffset.length / pageSize);
-            const total = logsWithOffset.length;
-            const rowsStart = pageSize * page;
-            const rowsEnd = (pageSize * page) + pageSize;
-            const logsSlice = logsWithOffset.slice(rowsStart, rowsEnd);
 
             return {
                 ...state,
                 oldest,
-                pages,
-                total,
-                allLogs,
-                logs: logsSlice,
+                logs: older_than ? [...state.logs, ...logs] : logs,
                 isEntireLog: logs.length < 1,
                 processingGetLogs: false,
             };
@@ -126,7 +81,7 @@ const queryLogs = handleActions(
             ...state, processingAdditionalLogs: false, processingGetLogs: false,
         }),
         [actions.getAdditionalLogsSuccess]: (state) => ({
-            ...state, processingAdditionalLogs: false, processingGetLogs: false,
+            ...state, processingAdditionalLogs: false, processingGetLogs: false, isEntireLog: true,
         }),
     },
     {
@@ -135,18 +90,15 @@ const queryLogs = handleActions(
         processingGetConfig: false,
         processingSetConfig: false,
         processingAdditionalLogs: false,
-        logs: [],
         interval: 1,
-        allLogs: [],
-        page: 0,
-        pages: 0,
-        total: 0,
+        logs: [],
         enabled: true,
         oldest: '',
         filter: DEFAULT_LOGS_FILTER,
         isFiltered: false,
         anonymize_client_ip: false,
         isDetailed: true,
+        isEntireLog: false,
     },
 );
 

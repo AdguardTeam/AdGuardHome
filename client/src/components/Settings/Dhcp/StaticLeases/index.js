@@ -77,12 +77,12 @@ const StaticLeases = ({
                                         title={t('delete_table_action')}
                                         disabled={processingDeleting}
                                         onClick={() => handleDelete(ip, mac, hostname)}
-                                >
-                                    <svg className="icons">
-                                        <use xlinkHref="#delete" />
-                                    </svg>
-                                </button>
-                            </div>;
+                                        >
+                                            <svg className="icons">
+                                                <use xlinkHref="#delete"/>
+                                            </svg>
+                                        </button>
+                                    </div>;
                         },
                     },
                 ]}

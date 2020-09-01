@@ -1,41 +1,25 @@
-import { connect } from 'react-redux';
 import React from 'react';
-import PropTypes from 'prop-types';
+import { useSelector, shallowEqual } from 'react-redux';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
-import * as actionCreators from '../../actions';
+import { TOAST_TRANSITION_TIMEOUT } from '../../helpers/constants';
 import Toast from './Toast';
-
 import './Toast.css';
 
-const Toasts = (props) => (
-        <TransitionGroup className="toasts">
-            {props.toasts.notices?.map((toast) => {
-                const { id } = toast;
-                return (
-                    <CSSTransition
-                        key={id}
-                        timeout={500}
-                        classNames="toast"
-                    >
-                        <Toast removeToast={props.removeToast} {...toast} />
-                    </CSSTransition>
-                );
-            })}
-        </TransitionGroup>
-);
+const Toasts = () => {
+    const toasts = useSelector((state) => state.toasts, shallowEqual);
 
-Toasts.propTypes = {
-    toasts: PropTypes.object,
-    removeToast: PropTypes.func,
+    return <TransitionGroup className="toasts">
+        {toasts.notices?.map((toast) => {
+            const { id } = toast;
+            return <CSSTransition
+                    key={id}
+                    timeout={TOAST_TRANSITION_TIMEOUT}
+                    classNames="toast"
+            >
+                <Toast {...toast} />
+            </CSSTransition>;
+        })}
+    </TransitionGroup>;
 };
 
-const mapStateToProps = (state) => {
-    const { toasts } = state;
-    const props = { toasts };
-    return props;
-};
-
-export default connect(
-    mapStateToProps,
-    actionCreators,
-)(Toasts);
+export default Toasts;

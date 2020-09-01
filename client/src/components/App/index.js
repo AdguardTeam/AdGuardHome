@@ -26,7 +26,6 @@ import Header from '../Header';
 import { changeLanguage, getDnsStatus } from '../../actions';
 
 import Dashboard from '../../containers/Dashboard';
-import Logs from '../../containers/Logs';
 import SetupGuide from '../../containers/SetupGuide';
 import Settings from '../../containers/Settings';
 import Dns from '../../containers/Dns';
@@ -38,6 +37,7 @@ import DnsAllowlist from '../../containers/DnsAllowlist';
 import DnsRewrites from '../../containers/DnsRewrites';
 import CustomRules from '../../containers/CustomRules';
 import Services from '../Filters/Services';
+import Logs from '../Logs';
 
 
 const ROUTES = [

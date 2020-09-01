@@ -48,7 +48,7 @@ class Table extends Component {
             accessor: 'url',
             minWidth: 200,
             Cell: ({ value }) => (
-                <div className="logs__row o-hidden">
+                <div className="logs__row">
                     {isValidAbsolutePath(value) ? value
                         : <a
                             href={value}

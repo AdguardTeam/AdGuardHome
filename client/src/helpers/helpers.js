@@ -15,6 +15,7 @@ import { getTrackerData } from './trackers/trackers';
 
 import {
     CHECK_TIMEOUT,
+    CUSTOM_FILTERING_RULES_ID,
     DEFAULT_DATE_FORMAT_OPTIONS,
     DEFAULT_LANGUAGE,
     DEFAULT_TIME_FORMAT,
@@ -743,6 +744,30 @@ export const sortIp = (a, b) => {
 };
 
 /**
+ * @param {array} filters
+ * @param {array} whitelistFilters
+ * @param {number} filterId
+ * @param {function} t - translate
+ * @returns {string}
+ */
+export const getFilterName = (
+    filters,
+    whitelistFilters,
+    filterId,
+    customFilterTranslationKey = 'custom_filter_rules',
+    resolveFilterName = (filter) => (filter ? filter.name : i18n.t('unknown_filter', { filterId })),
+) => {
+    if (filterId === CUSTOM_FILTERING_RULES_ID) {
+        return i18n.t(customFilterTranslationKey);
+    }
+
+    const matchIdPredicate = (filter) => filter.id === filterId;
+    const filter = filters.find(matchIdPredicate) || whitelistFilters.find(matchIdPredicate);
+
+    return resolveFilterName(filter);
+};
+
+/**
  * @param ip {string}
  * @param gateway_ip {string}
  * @returns {{range_end: string, subnet_mask: string, range_start: string,
@@ -803,3 +828,11 @@ export const enrichWithConcatenatedIpAddresses = (interfaces) => Object.entries(
         acc[k].ip_addresses = ipv4_addresses.concat(ipv6_addresses);
         return acc;
     }, interfaces);
+
+export const isScrolledIntoView = (el) => {
+    const rect = el.getBoundingClientRect();
+    const elemTop = rect.top;
+    const elemBottom = rect.bottom;
+
+    return elemTop < window.innerHeight && elemBottom >= 0;
+};

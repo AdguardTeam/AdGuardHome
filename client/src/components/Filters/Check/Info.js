@@ -11,24 +11,9 @@ import {
     checkWhiteList,
     checkSafeSearch,
     checkSafeBrowsing,
-    checkParental,
+    checkParental, getFilterName,
 } from '../../../helpers/helpers';
 import { FILTERED } from '../../../helpers/constants';
-
-const getFilterName = (id, filters, whitelistFilters, t) => {
-    if (id === 0) {
-        return t('filtered_custom_rules');
-    }
-
-    const filter = filters.find((filter) => filter.id === id)
-        || whitelistFilters.find((filter) => filter.id === id);
-
-    if (filter && filter.name) {
-        return t('query_log_filtered', { filter: filter.name });
-    }
-
-    return '';
-};
 
 const getTitle = (reason, filterName, t, onlyFiltered) => {
     if (checkNotFilteredNotFound(reason)) {
@@ -101,7 +86,12 @@ const Info = ({
     ip_addrs,
     t,
 }) => {
-    const filterName = getFilterName(filter_id, filters, whitelistFilters, t);
+    const filterName = getFilterName(filters,
+        whitelistFilters,
+        filter_id,
+        'filtered_custom_rules',
+        (filter) => (filter?.name ? t('query_log_filtered', { filter: filter.name }) : ''));
+
     const onlyFiltered = checkSafeSearch(reason)
         || checkSafeBrowsing(reason)
         || checkParental(reason);
