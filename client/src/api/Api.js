@@ -1,26 +1,32 @@
 import axios from 'axios';
 
 import { getPathWithQueryString } from '../helpers/helpers';
-import { QUERY_LOGS_PAGE_LIMIT, R_PATH_LAST_PART } from '../helpers/constants';
+import { QUERY_LOGS_PAGE_LIMIT, HTML_PAGES, R_PATH_LAST_PART } from '../helpers/constants';
 import { BASE_URL } from '../../constants';
 
 class Api {
     baseUrl = BASE_URL;
 
     async makeRequest(path, method = 'POST', config) {
+        const url = `${this.baseUrl}/${path}`;
+
         try {
             const response = await axios({
-                url: `${this.baseUrl}/${path}`,
+                url,
                 method,
                 ...config,
             });
             return response.data;
         } catch (error) {
-            console.error(error);
-            const errorPath = `${this.baseUrl}/${path}`;
+            const errorPath = url;
             if (error.response) {
-                if (error.response.status === 403) {
-                    const loginPageUrl = window.location.href.replace(R_PATH_LAST_PART, '/login.html');
+                const { pathname } = document.location;
+                const shouldRedirect = pathname !== HTML_PAGES.LOGIN
+                        && pathname !== HTML_PAGES.INSTALL;
+
+                if (error.response.status === 403 && shouldRedirect) {
+                    const loginPageUrl = window.location.href
+                        .replace(R_PATH_LAST_PART, HTML_PAGES.LOGIN);
                     window.location.replace(loginPageUrl);
                     return false;
                 }
