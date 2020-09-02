@@ -78,7 +78,7 @@ func (l *queryLog) flushToFile(buffer []*logEntry) error {
 		return err
 	}
 
-	log.Debug("ok \"%s\": %v bytes written", filename, n)
+	log.Debug("querylog: ok \"%s\": %v bytes written", filename, n)
 
 	return nil
 }
@@ -94,20 +94,46 @@ func (l *queryLog) rotate() error {
 
 	err := os.Rename(from, to)
 	if err != nil {
-		log.Error("Failed to rename querylog: %s", err)
+		log.Error("querylog: failed to rename file: %s", err)
 		return err
 	}
 
-	log.Debug("Rotated from %s to %s successfully", from, to)
+	log.Debug("querylog: renamed %s -> %s", from, to)
 	return nil
 }
 
+func (l *queryLog) readFileFirstTimeValue() int64 {
+	f, err := os.Open(l.logFile)
+	if err != nil {
+		return -1
+	}
+	defer f.Close()
+
+	buf := make([]byte, 500)
+	r, err := f.Read(buf)
+	if err != nil {
+		return -1
+	}
+	buf = buf[:r]
+
+	val := readJSONValue(string(buf), "T")
+	t, err := time.Parse(time.RFC3339Nano, val)
+	if err != nil {
+		return -1
+	}
+
+	log.Debug("querylog: the oldest log entry: %s", val)
+	return t.Unix()
+}
+
 func (l *queryLog) periodicRotate() {
-	for range time.Tick(time.Duration(l.conf.Interval) * 24 * time.Hour) {
-		err := l.rotate()
-		if err != nil {
-			log.Error("Failed to rotate querylog: %s", err)
-			// do nothing, continue rotating
+	intervalSeconds := uint64(l.conf.Interval) * 24 * 60 * 60
+	for {
+		oldest := l.readFileFirstTimeValue()
+		if uint64(oldest)+intervalSeconds <= uint64(time.Now().Unix()) {
+			_ = l.rotate()
 		}
+
+		time.Sleep(24 * time.Hour)
 	}
 }

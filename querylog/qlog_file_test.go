@@ -266,3 +266,25 @@ func prepareTestFiles(dir string, filesCount, linesCount int) []string {
 
 	return files
 }
+
+func TestQLogSeek(t *testing.T) {
+	testDir := prepareTestDir()
+	defer func() { _ = os.RemoveAll(testDir) }()
+
+	d := `{"T":"2020-08-31T18:44:23.911246629+03:00","QH":"wfqvjymurpwegyv","QT":"A","QC":"IN","CP":"","Answer":"","Result":{},"Elapsed":66286385,"Upstream":"tls://dns-unfiltered.adguard.com:853"}
+{"T":"2020-08-31T18:44:25.376690873+03:00"}
+{"T":"2020-08-31T18:44:25.382540454+03:00"}`
+	f, _ := ioutil.TempFile(testDir, "*.txt")
+	_, _ = f.WriteString(d)
+	defer f.Close()
+
+	q, err := NewQLogFile(f.Name())
+	assert.Nil(t, err)
+	defer q.Close()
+
+	target, _ := time.Parse(time.RFC3339, "2020-08-31T18:44:25.376690873+03:00")
+
+	_, depth, err := q.Seek(target.UnixNano())
+	assert.Nil(t, err)
+	assert.Equal(t, 1, depth)
+}

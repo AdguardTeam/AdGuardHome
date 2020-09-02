@@ -86,8 +86,10 @@ func (q *QLogFile) Seek(timestamp int64) (int64, int, error) {
 	end := fileInfo.Size()     // end of the search interval (position in the file)
 	probe := (end - start) / 2 // probe -- approximate index of the line we'll try to check
 	var line string
-	var lineIdx int64          // index of the probe line in the file
+	var lineIdx int64 // index of the probe line in the file
+	var lineEndIdx int64
 	var lastProbeLineIdx int64 // index of the last probe line
+	lastProbeLineIdx = -1
 
 	// Count seek depth in order to detect mistakes
 	// If depth is too large, we should stop the search
@@ -95,10 +97,20 @@ func (q *QLogFile) Seek(timestamp int64) (int64, int, error) {
 
 	for {
 		// Get the line at the specified position
-		line, lineIdx, err = q.readProbeLine(probe)
+		line, lineIdx, lineEndIdx, err = q.readProbeLine(probe)
 		if err != nil {
 			return 0, depth, err
 		}
+
+		if lineIdx < start || lineEndIdx > end || lineIdx == lastProbeLineIdx {
+			// If we're testing the same line twice then most likely
+			// the scope is too narrow and we won't find anything anymore
+			log.Error("querylog: didn't find timestamp:%v", timestamp)
+			return 0, depth, ErrSeekNotFound
+		}
+
+		// Save the last found idx
+		lastProbeLineIdx = lineIdx
 
 		// Get the timestamp from the query log record
 		ts := readQLogTimestamp(line)
@@ -112,27 +124,17 @@ func (q *QLogFile) Seek(timestamp int64) (int64, int, error) {
 			break
 		}
 
-		if lastProbeLineIdx == lineIdx {
-			// If we're testing the same line twice then most likely
-			// the scope is too narrow and we won't find anything anymore
-			return 0, depth, ErrSeekNotFound
-		}
-
-		// Save the last found idx
-		lastProbeLineIdx = lineIdx
-
 		// Narrow the scope and repeat the search
 		if ts > timestamp {
 			// If the timestamp we're looking for is OLDER than what we found
 			// Then the line is somewhere on the LEFT side from the current probe position
-			end = probe
-			probe = start + (end-start)/2
+			end = lineIdx
 		} else {
 			// If the timestamp we're looking for is NEWER than what we found
 			// Then the line is somewhere on the RIGHT side from the current probe position
-			start = probe
-			probe = start + (end-start)/2
+			start = lineEndIdx
 		}
+		probe = start + (end-start)/2
 
 		depth++
 		if depth >= 100 {
@@ -267,7 +269,7 @@ func (q *QLogFile) initBuffer(position int64) error {
 // readProbeLine reads a line that includes the specified position
 // this method is supposed to be used when we use binary search in the Seek method
 // in the case of consecutive reads, use readNext (it uses a better buffer)
-func (q *QLogFile) readProbeLine(position int64) (string, int64, error) {
+func (q *QLogFile) readProbeLine(position int64) (string, int64, int64, error) {
 	// First of all, we should read a buffer that will include the query log line
 	// In order to do this, we'll define the boundaries
 	seekPosition := int64(0)
@@ -280,14 +282,14 @@ func (q *QLogFile) readProbeLine(position int64) (string, int64, error) {
 	// Seek to this position
 	_, err := q.file.Seek(seekPosition, io.SeekStart)
 	if err != nil {
-		return "", 0, err
+		return "", 0, 0, err
 	}
 
 	// The buffer size is 2*maxEntrySize
 	buffer := make([]byte, maxEntrySize*2)
 	bufferLen, err := q.file.Read(buffer)
 	if err != nil {
-		return "", 0, err
+		return "", 0, 0, err
 	}
 
 	// Now start looking for the new line character starting
@@ -301,16 +303,18 @@ func (q *QLogFile) readProbeLine(position int64) (string, int64, error) {
 	}
 	// Looking for the end of line now
 	var endLine = int64(bufferLen)
+	lineEndIdx := endLine + seekPosition
 	for i := relativePos; i < int64(bufferLen); i++ {
 		if buffer[i] == '\n' {
 			endLine = i
+			lineEndIdx = endLine + seekPosition + 1
 			break
 		}
 	}
 
 	// Finally we can return the string we were looking for
 	lineIdx := startLine + seekPosition
-	return string(buffer[startLine:endLine]), lineIdx, nil
+	return string(buffer[startLine:endLine]), lineIdx, lineEndIdx, nil
 }
 
 // readQLogTimestamp reads the timestamp field from the query log line

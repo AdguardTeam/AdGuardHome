@@ -1439,6 +1439,11 @@ When UI asks for data from query log (see "API: Get query log"), server reads th
 
 We store data for a limited amount of time - the log file is automatically rotated.
 
+* On AGH startup read the first line from query logs and store its time value
+* If there's no log file yet, set the time value of the first log event when the file is created
+* If this time value is older than our time limit, perform file rotate procedure
+* While AGH is running, check the previous condition every 24 hours
+
 
 ### API: Get query log
 
