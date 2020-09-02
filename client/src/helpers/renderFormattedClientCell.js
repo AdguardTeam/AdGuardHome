@@ -12,7 +12,7 @@ const getFormattedWhois = (whois) => {
                     <span className="logs__whois text-muted " key={key} title={whoisInfo[key]}>
                     {icon && (
                         <>
-                            <svg className="logs__whois-icon icons">
+                            <svg className="logs__whois-icon icons icon--18">
                                 <use xlinkHref={`#${icon}`} />
                             </svg>
                             &nbsp;
