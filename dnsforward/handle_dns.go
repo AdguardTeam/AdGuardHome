@@ -49,6 +49,7 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 		processUpstream,
 		processDNSSECAfterResponse,
 		processFilteringAfterResponse,
+		s.ipset.process,
 		processQueryLogsAndStats,
 	}
 	for _, process := range mods {

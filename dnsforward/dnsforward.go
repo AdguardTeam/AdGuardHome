@@ -51,6 +51,8 @@ type Server struct {
 	stats      stats.Stats
 	access     *accessCtx
 
+	ipset ipsetCtx
+
 	tableHostToIP     map[string]net.IP // "hostname -> IP" table for internal addresses (DHCP)
 	tableHostToIPLock sync.Mutex
 
@@ -168,7 +170,7 @@ func (s *Server) startInternal() error {
 
 // Prepare the object
 func (s *Server) Prepare(config *ServerConfig) error {
-	// 1. Initialize the server configuration
+	// Initialize the server configuration
 	// --
 	if config != nil {
 		s.conf = *config
@@ -184,18 +186,22 @@ func (s *Server) Prepare(config *ServerConfig) error {
 		}
 	}
 
-	// 2. Set default values in the case if nothing is configured
+	// Set default values in the case if nothing is configured
 	// --
 	s.initDefaultSettings()
 
-	// 3. Prepare DNS servers settings
+	// Initialize IPSET configuration
+	// --
+	s.ipset.init(s.conf.IPSETList)
+
+	// Prepare DNS servers settings
 	// --
 	err := s.prepareUpstreamSettings()
 	if err != nil {
 		return err
 	}
 
-	// 3. Create DNS proxy configuration
+	// Create DNS proxy configuration
 	// --
 	var proxyConfig proxy.Config
 	proxyConfig, err = s.createProxyConfig()
@@ -203,11 +209,11 @@ func (s *Server) Prepare(config *ServerConfig) error {
 		return err
 	}
 
-	// 4. Prepare a DNS proxy instance that we use for internal DNS queries
+	// Prepare a DNS proxy instance that we use for internal DNS queries
 	// --
 	s.prepareIntlProxy()
 
-	// 5. Initialize DNS access module
+	// Initialize DNS access module
 	// --
 	s.access = &accessCtx{}
 	err = s.access.Init(s.conf.AllowedClients, s.conf.DisallowedClients, s.conf.BlockedHosts)
@@ -215,14 +221,14 @@ func (s *Server) Prepare(config *ServerConfig) error {
 		return err
 	}
 
-	// 6. Register web handlers if necessary
+	// Register web handlers if necessary
 	// --
 	if !webRegistered && s.conf.HTTPRegister != nil {
 		webRegistered = true
 		s.registerHandlers()
 	}
 
-	// 7. Create the main DNS proxy instance
+	// Create the main DNS proxy instance
 	// --
 	s.dnsProxy = &proxy.Proxy{Config: proxyConfig}
 	return nil
