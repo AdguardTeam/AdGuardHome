@@ -134,7 +134,7 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 
 		if err != nil {
 			respData.DNS.Status = fmt.Sprintf("%v", err)
-		} else {
+		} else if reqData.DNS.IP != "0.0.0.0" {
 			respData.StaticIP = handleStaticIP(reqData.DNS.IP, reqData.SetStaticIP)
 		}
 	}
