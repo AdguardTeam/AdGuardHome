@@ -108,6 +108,12 @@ ifndef DOCKER_IMAGE_NAME
 $(error DOCKER_IMAGE_NAME value is not set)
 endif
 
+# OS-specific flags
+TEST_FLAGS := -race
+ifeq ($(OS),Windows_NT)
+	TEST_FLAGS :=
+endif
+
 .PHONY: all build client client-watch docker lint lint-js lint-go test dependencies clean release docker-multi-arch
 all: build
 
@@ -158,7 +164,7 @@ test:
 	@echo Running JS unit-tests
 	npm run test --prefix client
 	@echo Running Go unit-tests
-	go test -race -v -bench=. -coverprofile=coverage.txt -covermode=atomic ./...
+	go test $(TEST_FLAGS) -v -coverprofile=coverage.txt -covermode=atomic ./...
 
 ci: client_with_deps
 	go mod download

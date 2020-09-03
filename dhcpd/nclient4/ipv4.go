@@ -14,6 +14,7 @@
 //
 // This file contains code taken from gVisor.
 
+// +build darwin dragonfly freebsd linux netbsd openbsd solaris
 // +build go1.12
 
 package nclient4
