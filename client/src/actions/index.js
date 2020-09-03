@@ -561,10 +561,10 @@ export const toggleBlocking = (type, domain) => async (dispatch, getState) => {
     const matchPreparedUnblockingRule = userRules.match(preparedUnblockingRule);
 
     if (matchPreparedBlockingRule) {
-        dispatch(setRules(userRules.replace(`${blockingRule}`, '')));
+        await dispatch(setRules(userRules.replace(`${blockingRule}`, '')));
         dispatch(addSuccessToast(i18next.t('rule_removed_from_custom_filtering_toast', { rule: blockingRule })));
     } else if (!matchPreparedUnblockingRule) {
-        dispatch(setRules(`${userRules}${lineEnding}${unblockingRule}\n`));
+        await dispatch(setRules(`${userRules}${lineEnding}${unblockingRule}\n`));
         dispatch(addSuccessToast(i18next.t('rule_added_to_custom_filtering_toast', { rule: unblockingRule })));
     } else if (matchPreparedUnblockingRule) {
         dispatch(addSuccessToast(i18next.t('rule_added_to_custom_filtering_toast', { rule: unblockingRule })));

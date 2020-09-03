@@ -59,7 +59,9 @@ const ClientCell = ({
             'btn-outline-danger': !isFiltered,
         });
 
-        const onClick = () => dispatch(toggleBlocking(buttonType, domain));
+        const onClick = async () => {
+            await dispatch(toggleBlocking(buttonType, domain));
+        };
 
         return <button
                 type="button"
