@@ -47,6 +47,12 @@ type configuration struct {
 	RlimitNoFile uint   `yaml:"rlimit_nofile"` // Maximum number of opened fd's per process (0: default)
 	DebugPProf   bool   `yaml:"debug_pprof"`   // Enable pprof HTTP server on port 6060
 
+	// The value for SetGCPercent.
+	// SetGCPercent sets the garbage collection target percentage:
+	// a collection is triggered when the ratio of freshly allocated data
+	// to live data remaining after the previous collection reaches this percentage.
+	MemGCPercent uint8 `yaml:"mem_gc_percentage"`
+
 	// TTL for a web session (in hours)
 	// An active session is automatically refreshed once a day.
 	WebSessionTTLHours uint32 `yaml:"web_session_ttl"`

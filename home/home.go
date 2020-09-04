@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"strconv"
 	"sync"
 	"syscall"
@@ -208,6 +209,11 @@ func run(args options) {
 		if args.checkConfig {
 			log.Info("Configuration file is OK")
 			os.Exit(0)
+		}
+
+		if config.MemGCPercent != 0 {
+			debug.SetGCPercent(int(config.MemGCPercent))
+			log.Debug("Set SetGCPercent=%d", config.MemGCPercent)
 		}
 	}
 
