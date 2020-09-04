@@ -16,7 +16,11 @@
 
 .card-table-overflow--limited {
     overflow-y: auto;
-    max-height: 280px;
+    max-height: 17.5rem;
+}
+
+.card-table-overflow--limited.clients__table {
+    max-height: 18rem;
 }
 
 .card-actions {
