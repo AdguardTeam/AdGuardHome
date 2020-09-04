@@ -40,7 +40,7 @@ func memoryUsage() {
 	// periodically call "debug.FreeOSMemory" so
 	// that the OS could reclaim the free memory
 	go func() {
-		ticker := time.NewTicker(15 * time.Second)
+		ticker := time.NewTicker(5 * time.Minute)
 		for {
 			select {
 			case t := <-ticker.C:
