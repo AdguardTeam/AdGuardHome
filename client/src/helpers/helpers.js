@@ -97,7 +97,7 @@ export const normalizeLogs = (logs) => logs.map((log) => {
         filterId,
         rule,
         status,
-        serviceName: service_name,
+        service_name,
         originalAnswer: original_answer,
         originalResponse: processResponse(original_answer),
         tracker: getTrackerData(domain),
