@@ -164,6 +164,10 @@
         color: #9aa0ac;
     }
 
+    .nav-icon--white {
+        color: #fff;
+    }
+
     .header-brand-img {
         height: 32px;
     }

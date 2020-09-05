@@ -9,6 +9,7 @@ import {
     formatDateTime,
     formatElapsedMs,
     formatTime,
+    getBlockingClientName,
     getFilterName,
     processContent,
 } from '../../../helpers/helpers';
@@ -22,12 +23,14 @@ import {
     SCHEME_TO_PROTOCOL_MAP,
 } from '../../../helpers/constants';
 import { getSourceData } from '../../../helpers/trackers/trackers';
-import { toggleBlocking } from '../../../actions';
+import { toggleBlocking, toggleBlockingForClient } from '../../../actions';
 import DateCell from './DateCell';
 import DomainCell from './DomainCell';
 import ResponseCell from './ResponseCell';
 import ClientCell from './ClientCell';
 import '../Logs.css';
+import { toggleClientBlock } from '../../../actions/access';
+import { getBlockClientInfo, BUTTON_PREFIX } from './helpers';
 
 const Row = memo(({
     style,
@@ -44,6 +47,13 @@ const Row = memo(({
     const filters = useSelector((state) => state.filtering.filters, shallowEqual);
     const whitelistFilters = useSelector((state) => state.filtering.whitelistFilters, shallowEqual);
     const autoClients = useSelector((state) => state.dashboard.autoClients, shallowEqual);
+
+    const disallowed_clients = useSelector(
+        (state) => state.access.disallowed_clients,
+        shallowEqual,
+    );
+
+    const clients = useSelector((state) => state.dashboard.clients);
 
     const onClick = () => {
         if (!isSmallScreen) { return; }
@@ -98,6 +108,26 @@ const Row = memo(({
 
         const filter = getFilterName(filters, whitelistFilters, filterId);
 
+        const {
+            confirmMessage,
+            buttonKey: blockingClientKey,
+            type: blockType,
+        } = getBlockClientInfo(client, disallowed_clients);
+
+        const blockingForClientKey = isFiltered ? 'unblock_for_this_client_only' : 'block_for_this_client_only';
+        const clientNameBlockingFor = getBlockingClientName(clients, client);
+
+        const onBlockingForClientClick = () => {
+            dispatch(toggleBlockingForClient(buttonType, domain, clientNameBlockingFor));
+        };
+
+        const onBlockingClientClick = () => {
+            const message = `${blockType === BLOCK_ACTIONS.BLOCK ? t('adg_will_drop_dns_queries') : ''} ${t(confirmMessage, { ip: client })}`;
+            if (window.confirm(message)) {
+                dispatch(toggleClientBlock(blockType, client));
+            }
+        };
+
         const detailedData = {
             time_table_header: formatTime(time, LONG_TIME_FORMAT),
             date: formatDateTime(time, DEFAULT_SHORT_DATE_FORMAT_OPTIONS),
@@ -132,10 +162,12 @@ const Row = memo(({
             source_label: source,
             validated_with_dnssec: dnssec_enabled ? Boolean(answer_dnssec) : false,
             original_response: originalResponse?.join('\n'),
-            [buttonType]: <div onClick={onToggleBlock}
-                                   className={classNames('title--border text-center', {
-                                       'bg--danger': isBlocked,
-                                   })}>{t(buttonType)}</div>,
+            [BUTTON_PREFIX + buttonType]: <div onClick={onToggleBlock}
+                                               className={classNames('title--border text-center', {
+                                                   'bg--danger': isBlocked,
+                                               })}>{t(buttonType)}</div>,
+            [BUTTON_PREFIX + blockingForClientKey]: <div onClick={onBlockingForClientClick} className='text-center font-weight-bold py-2'>{t(blockingForClientKey)}</div>,
+            [BUTTON_PREFIX + blockingClientKey]: <div onClick={onBlockingClientClick} className='text-center font-weight-bold py-2'>{t(blockingClientKey)}</div>,
         };
 
         setDetailedDataCurrent(processContent(detailedData));

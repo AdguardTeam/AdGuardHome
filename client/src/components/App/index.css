@@ -66,3 +66,12 @@ body {
 .select--no-warning {
     margin-bottom: 1.375rem;
 }
+
+.button-action {
+    visibility: hidden;
+}
+
+.logs__row:hover .button-action,
+.button-action--active {
+    visibility: visible;
+}
