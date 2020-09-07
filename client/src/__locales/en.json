@@ -577,10 +577,6 @@
     "original_response": "Original response",
     "click_to_view_queries": "Click to view queries",
     "port_53_faq_link": "Port 53 is often occupied by \"DNSStubListener\" or \"systemd-resolved\" services. Please read <0>this instruction</0> on how to resolve this.",
-<<<<<<< Updated upstream
-    "adg_will_drop_dns_queries": "AdGuard Home will be dropping all DNS queries from this client."
-=======
     "adg_will_drop_dns_queries": "AdGuard Home will be dropping all DNS queries from this client.",
     "experimental": "Experimental"
->>>>>>> Stashed changes
 }
