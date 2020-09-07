@@ -526,108 +526,25 @@ func cleanupAlways() {
 	log.Info("Stopped")
 }
 
-// command-line arguments
-type options struct {
-	verbose        bool   // is verbose logging enabled
-	configFilename string // path to the config file
-	workDir        string // path to the working directory where we will store the filters data and the querylog
-	bindHost       string // host address to bind HTTP server on
-	bindPort       int    // port to serve HTTP pages on
-	logFile        string // Path to the log file. If empty, write to stdout. If "syslog", writes to syslog
-	pidFile        string // File name to save PID to
-	checkConfig    bool   // Check configuration and exit
-	disableUpdate  bool   // If set, don't check for updates
-
-	// service control action (see service.ControlAction array + "status" command)
-	serviceControlAction string
-
-	// runningAsService flag is set to true when options are passed from the service runner
-	runningAsService bool
-
-	glinetMode bool // Activate GL-Inet mode
+func exitWithError() {
+	os.Exit(64)
 }
 
 // loadOptions reads command line arguments and initializes configuration
 func loadOptions() options {
-	o := options{}
+	o, f, err := parse(os.Args[0], os.Args[1:])
 
-	var printHelp func()
-	var opts = []struct {
-		longName          string
-		shortName         string
-		description       string
-		callbackWithValue func(value string)
-		callbackNoValue   func()
-	}{
-		{"config", "c", "Path to the config file", func(value string) { o.configFilename = value }, nil},
-		{"work-dir", "w", "Path to the working directory", func(value string) { o.workDir = value }, nil},
-		{"host", "h", "Host address to bind HTTP server on", func(value string) { o.bindHost = value }, nil},
-		{"port", "p", "Port to serve HTTP pages on", func(value string) {
-			v, err := strconv.Atoi(value)
-			if err != nil {
-				panic("Got port that is not a number")
-			}
-			o.bindPort = v
-		}, nil},
-		{"service", "s", "Service control action: status, install, uninstall, start, stop, restart, reload (configuration)", func(value string) {
-			o.serviceControlAction = value
-		}, nil},
-		{"logfile", "l", "Path to log file. If empty: write to stdout; if 'syslog': write to system log", func(value string) {
-			o.logFile = value
-		}, nil},
-		{"pidfile", "", "Path to a file where PID is stored", func(value string) { o.pidFile = value }, nil},
-		{"check-config", "", "Check configuration and exit", nil, func() { o.checkConfig = true }},
-		{"no-check-update", "", "Don't check for updates", nil, func() { o.disableUpdate = true }},
-		{"verbose", "v", "Enable verbose output", nil, func() { o.verbose = true }},
-		{"glinet", "", "Run in GL-Inet compatibility mode", nil, func() { o.glinetMode = true }},
-		{"version", "", "Show the version and exit", nil, func() {
-			fmt.Println(version())
+	if err != nil {
+		log.Error(err.Error())
+		_ = printHelp(os.Args[0])
+		exitWithError()
+	} else if f != nil {
+		err = f()
+		if err != nil {
+			log.Error(err.Error())
+			exitWithError()
+		} else {
 			os.Exit(0)
-		}},
-		{"help", "", "Print this help", nil, func() {
-			printHelp()
-			os.Exit(64)
-		}},
-	}
-	printHelp = func() {
-		fmt.Printf("Usage:\n\n")
-		fmt.Printf("%s [options]\n\n", os.Args[0])
-		fmt.Printf("Options:\n")
-		for _, opt := range opts {
-			val := ""
-			if opt.callbackWithValue != nil {
-				val = " VALUE"
-			}
-			if opt.shortName != "" {
-				fmt.Printf("  -%s, %-30s %s\n", opt.shortName, "--"+opt.longName+val, opt.description)
-			} else {
-				fmt.Printf("  %-34s %s\n", "--"+opt.longName+val, opt.description)
-			}
-		}
-	}
-	for i := 1; i < len(os.Args); i++ {
-		v := os.Args[i]
-		knownParam := false
-		for _, opt := range opts {
-			if v == "--"+opt.longName || (opt.shortName != "" && v == "-"+opt.shortName) {
-				if opt.callbackWithValue != nil {
-					if i+1 >= len(os.Args) {
-						log.Error("Got %s without argument\n", v)
-						os.Exit(64)
-					}
-					i++
-					opt.callbackWithValue(os.Args[i])
-				} else if opt.callbackNoValue != nil {
-					opt.callbackNoValue()
-				}
-				knownParam = true
-				break
-			}
-		}
-		if !knownParam {
-			log.Error("unknown option %v\n", v)
-			printHelp()
-			os.Exit(64)
 		}
 	}
 
