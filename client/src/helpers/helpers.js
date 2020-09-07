@@ -97,7 +97,7 @@ export const normalizeLogs = (logs) => logs.map((log) => {
         filterId,
         rule,
         status,
-        serviceName: service_name,
+        service_name,
         originalAnswer: original_answer,
         originalResponse: processResponse(original_answer),
         tracker: getTrackerData(domain),
@@ -835,4 +835,22 @@ export const isScrolledIntoView = (el) => {
     const elemBottom = rect.bottom;
 
     return elemTop < window.innerHeight && elemBottom >= 0;
+};
+
+/**
+ * If this is a manually created client, return its name.
+ * If this is a "runtime" client, return it's IP address.
+ * @param clients {Array.<object>}
+ * @param ip {string}
+ * @returns {string}
+ */
+export const getBlockingClientName = (clients, ip) => {
+    for (let i = 0; i < clients.length; i += 1) {
+        const client = clients[i];
+
+        if (client.ids.includes(ip)) {
+            return client.name;
+        }
+    }
+    return ip;
 };
