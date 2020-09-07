@@ -11,11 +11,15 @@ import {
     renderRadioField,
     toNumber,
 } from '../../../helpers/form';
-import { validateIsSafePort, validatePort, validatePortTLS } from '../../../helpers/validators';
+import {
+    validateIsSafePort, validatePort, validatePortQuic, validatePortTLS,
+} from '../../../helpers/validators';
 import i18n from '../../../i18n';
 import KeyStatus from './KeyStatus';
 import CertificateStatus from './CertificateStatus';
-import { DNS_OVER_TLS_PORT, FORM_NAME, STANDARD_HTTPS_PORT } from '../../../helpers/constants';
+import {
+    DNS_OVER_QUIC_PORT, DNS_OVER_TLS_PORT, FORM_NAME, STANDARD_HTTPS_PORT,
+} from '../../../helpers/constants';
 
 const validate = (values) => {
     const errors = {};
@@ -38,6 +42,7 @@ const clearFields = (change, setTlsConfig, t) => {
         certificate_path: '',
         port_https: STANDARD_HTTPS_PORT,
         port_dns_over_tls: DNS_OVER_TLS_PORT,
+        port_dns_over_quic: DNS_OVER_QUIC_PORT,
         server_name: '',
         force_https: false,
         enabled: false,
@@ -186,6 +191,30 @@ let Form = (props) => {
                         />
                         <div className="form__desc">
                             <Trans>encryption_dot_desc</Trans>
+                        </div>
+                    </div>
+                </div>
+                <div className="col-lg-6">
+                    <div className="form__group form__group--settings">
+                        <label className="form__label" htmlFor="port_dns_over_quic">
+                            <Trans>encryption_doq</Trans>
+                            &nbsp;
+                            (<Trans>experimental</Trans>)
+                        </label>
+                        <Field
+                                id="port_dns_over_quic"
+                                name="port_dns_over_quic"
+                                component={renderInputField}
+                                type="number"
+                                className="form-control"
+                                placeholder={t('encryption_doq')}
+                                validate={[validatePortQuic]}
+                                normalize={toNumber}
+                                onChange={handleChange}
+                                disabled={!isEnabled}
+                        />
+                        <div className="form__desc">
+                            <Trans>encryption_doq_desc</Trans>
                         </div>
                     </div>
                 </div>
