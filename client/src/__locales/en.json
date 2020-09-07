@@ -194,6 +194,10 @@
     "dns_test_not_ok_toast": "Server \"{{key}}\": could not be used, please check that you've written it correctly",
     "unblock": "Unblock",
     "block": "Block",
+    "disallow_this_client": "Disallow this client",
+    "allow_this_client": "Allow this client",
+    "block_for_this_client_only": "Block for this client only",
+    "unblock_for_this_client_only": "Unblock for this client only",
     "time_table_header": "Time",
     "date": "Date",
     "domain_name_table_header": "Domain name",
@@ -569,5 +573,6 @@
     "setup_config_to_enable_dhcp_server": "Setup config to enable DHCP server",
     "original_response": "Original response",
     "click_to_view_queries": "Click to view queries",
-    "port_53_faq_link": "Port 53 is often occupied by \"DNSStubListener\" or \"systemd-resolved\" services. Please read <0>this instruction</0> on how to resolve this."
+    "port_53_faq_link": "Port 53 is often occupied by \"DNSStubListener\" or \"systemd-resolved\" services. Please read <0>this instruction</0> on how to resolve this.",
+    "adg_will_drop_dns_queries": "AdGuard Home will be dropping all DNS queries from this client."
 }

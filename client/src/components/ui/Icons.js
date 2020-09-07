@@ -344,6 +344,14 @@ const Icons = () => (
                 <path d="M60 54.5h8v40h-8zM60 35.5h8v8h-8z" />
             </svg>
         </symbol>
+
+        <symbol id="chevron-down" viewBox="0 0 24 24">
+            <g fill="none" fillRule="evenodd">
+                <path d="M0 0h24v24H0z" fill="#878787" fillOpacity=".01" />
+                <path stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
+                      d="M8.036 10.93l3.93 4.07 4.068-3.93" />
+            </g>
+        </symbol>
     </svg>
 );
 

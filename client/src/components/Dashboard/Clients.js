@@ -51,15 +51,16 @@ const renderBlockingButton = (ip) => {
     const type = isNotFound ? BLOCK_ACTIONS.BLOCK : BLOCK_ACTIONS.UNBLOCK;
     const text = type;
 
-    const className = classNames('btn btn-sm', {
-        'btn-outline-danger': isNotFound,
-        'btn-outline-secondary': !isNotFound,
+    const buttonClass = classNames('button-action button-action--main', {
+        'button-action--unblock': !isNotFound,
     });
 
     const toggleClientStatus = (type, ip) => {
-        const confirmMessage = type === BLOCK_ACTIONS.BLOCK ? 'client_confirm_block' : 'client_confirm_unblock';
+        const confirmMessage = type === BLOCK_ACTIONS.BLOCK
+            ? `${t('adg_will_drop_dns_queries')} ${t('client_confirm_block', { ip })}`
+            : t('client_confirm_unblock', { ip });
 
-        if (window.confirm(t(confirmMessage, { ip }))) {
+        if (window.confirm(confirmMessage)) {
             dispatch(toggleClientBlock(type, ip));
         }
     };
@@ -69,7 +70,7 @@ const renderBlockingButton = (ip) => {
     return <div className="table__action pl-4">
                 <button
                         type="button"
-                        className={className}
+                        className={buttonClass}
                         onClick={onClick}
                         disabled={processingSet}
                 >
@@ -82,7 +83,7 @@ const ClientCell = (row) => {
     const { value, original: { info } } = row;
 
     return <>
-        <div className="logs__row logs__row--overflow logs__row--column d-flex">
+        <div className="logs__row logs__row--overflow logs__row--column d-flex align-items-center">
             {renderFormattedClientCell(value, info, true)}
             {renderBlockingButton(value)}
         </div>

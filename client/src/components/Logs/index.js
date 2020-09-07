@@ -23,15 +23,16 @@ import {
 } from '../../actions/queryLogs';
 import InfiniteTable from './InfiniteTable';
 import './Logs.css';
+import { BUTTON_PREFIX } from './Cells/helpers';
 
-const processContent = (data, buttonType) => Object.entries(data)
+const processContent = (data) => Object.entries(data)
     .map(([key, value]) => {
         if (!value) {
             return null;
         }
 
         const isTitle = value === 'title';
-        const isButton = key === buttonType;
+        const isButton = key.startsWith(BUTTON_PREFIX);
         const isBoolean = typeof value === 'boolean';
         const isHidden = isBoolean && value === false;
 
