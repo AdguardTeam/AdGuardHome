@@ -169,3 +169,69 @@ func TestParseUnknown(t *testing.T) {
 	testParseErr(t, "unknown plus", "+x")
 	testParseErr(t, "unknown dash", "-")
 }
+
+func testSerialize(t *testing.T, o options, ss ...string) {
+	result := serialize(o)
+	if len(result) != len(ss) {
+		t.Fatalf("expected %s but got %s", ss, result)
+	}
+	for i, r := range result {
+		if r != ss[i] {
+			t.Fatalf("expected %s but got %s", ss, result)
+		}
+	}
+}
+
+func TestSerializeEmpty(t *testing.T) {
+	testSerialize(t, options{})
+}
+
+func TestSerializeConfigFilename(t *testing.T) {
+	testSerialize(t, options{configFilename: "path"}, "-c", "path")
+}
+
+func TestSerializeWorkDir(t *testing.T) {
+	testSerialize(t, options{workDir: "path"}, "-w", "path")
+}
+
+func TestSerializeBindHost(t *testing.T) {
+	testSerialize(t, options{bindHost: "addr"}, "-h", "addr")
+}
+
+func TestSerializeBindPort(t *testing.T) {
+	testSerialize(t, options{bindPort: 666}, "-p", "666")
+}
+
+func TestSerializeLogfile(t *testing.T) {
+	testSerialize(t, options{logFile: "path"}, "-l", "path")
+}
+
+func TestSerializePidfile(t *testing.T) {
+	testSerialize(t, options{pidFile: "path"}, "--pidfile", "path")
+}
+
+func TestSerializeCheckConfig(t *testing.T) {
+	testSerialize(t, options{checkConfig: true}, "--check-config")
+}
+
+func TestSerializeDisableUpdate(t *testing.T) {
+	testSerialize(t, options{disableUpdate: true}, "--no-check-update")
+}
+
+func TestSerializeService(t *testing.T) {
+	testSerialize(t, options{serviceControlAction: "run"}, "-s", "run")
+}
+
+func TestSerializeGLInet(t *testing.T) {
+	testSerialize(t, options{glinetMode: true}, "--glinet")
+}
+
+func TestSerializeMultiple(t *testing.T) {
+	testSerialize(t, options{
+		serviceControlAction: "run",
+		configFilename:       "config",
+		workDir:              "work",
+		pidFile:              "pid",
+		disableUpdate:        true,
+	}, "-c", "config", "-w", "work", "-s", "run", "--pidfile", "pid", "--no-check-update")
+}

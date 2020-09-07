@@ -40,6 +40,33 @@ type arg struct {
 	updateWithValue func(o options, v string) (options, error)         // the mutator for arguments with parameters
 	updateNoValue   func(o options) (options, error)                   // the mutator for arguments without parameters
 	effect          func(o options, exec string) (f effect, err error) // the side-effect closure generator
+
+	serialize func(o options) []string // the re-serialization function back to arguments (return nil for omit)
+}
+
+// {type}SliceOrNil functions check their parameter of type {type}
+// against its zero value and return nil if the parameter value is
+// zero otherwise they return a string slice of the parameter
+
+func stringSliceOrNil(s string) []string {
+	if s == "" {
+		return nil
+	}
+	return []string{s}
+}
+
+func intSliceOrNil(i int) []string {
+	if i == 0 {
+		return nil
+	}
+	return []string{strconv.Itoa(i)}
+}
+
+func boolSliceOrNil(b bool) []string {
+	if b {
+		return []string{}
+	}
+	return nil
 }
 
 var args []arg
@@ -50,18 +77,21 @@ var configArg = arg{
 	func(o options, v string) (options, error) { o.configFilename = v; return o, nil },
 	nil,
 	nil,
+	func(o options) []string { return stringSliceOrNil(o.configFilename) },
 }
 
 var workDirArg = arg{
 	"Path to the working directory",
 	"work-dir", "w",
 	func(o options, v string) (options, error) { o.workDir = v; return o, nil }, nil, nil,
+	func(o options) []string { return stringSliceOrNil(o.workDir) },
 }
 
 var hostArg = arg{
 	"Host address to bind HTTP server on",
 	"host", "h",
 	func(o options, v string) (options, error) { o.bindHost = v; return o, nil }, nil, nil,
+	func(o options) []string { return stringSliceOrNil(o.bindHost) },
 }
 
 var portArg = arg{
@@ -80,6 +110,7 @@ var portArg = arg{
 		}
 		return o, err
 	}, nil, nil,
+	func(o options) []string { return intSliceOrNil(o.bindPort) },
 }
 
 var serviceArg = arg{
@@ -89,42 +120,49 @@ var serviceArg = arg{
 		o.serviceControlAction = v
 		return o, nil
 	}, nil, nil,
+	func(o options) []string { return stringSliceOrNil(o.serviceControlAction) },
 }
 
 var logfileArg = arg{
 	"Path to log file. If empty: write to stdout; if 'syslog': write to system log",
 	"logfile", "l",
 	func(o options, v string) (options, error) { o.logFile = v; return o, nil }, nil, nil,
+	func(o options) []string { return stringSliceOrNil(o.logFile) },
 }
 
 var pidfileArg = arg{
 	"Path to a file where PID is stored",
 	"pidfile", "",
 	func(o options, v string) (options, error) { o.pidFile = v; return o, nil }, nil, nil,
+	func(o options) []string { return stringSliceOrNil(o.pidFile) },
 }
 
 var checkConfigArg = arg{
 	"Check configuration and exit",
 	"check-config", "",
 	nil, func(o options) (options, error) { o.checkConfig = true; return o, nil }, nil,
+	func(o options) []string { return boolSliceOrNil(o.checkConfig) },
 }
 
 var noCheckUpdateArg = arg{
 	"Don't check for updates",
 	"no-check-update", "",
 	nil, func(o options) (options, error) { o.disableUpdate = true; return o, nil }, nil,
+	func(o options) []string { return boolSliceOrNil(o.disableUpdate) },
 }
 
 var verboseArg = arg{
 	"Enable verbose output",
 	"verbose", "v",
 	nil, func(o options) (options, error) { o.verbose = true; return o, nil }, nil,
+	func(o options) []string { return boolSliceOrNil(o.verbose) },
 }
 
 var glinetArg = arg{
 	"Run in GL-Inet compatibility mode",
 	"glinet", "",
 	nil, func(o options) (options, error) { o.glinetMode = true; return o, nil }, nil,
+	func(o options) []string { return boolSliceOrNil(o.glinetMode) },
 }
 
 var versionArg = arg{
@@ -133,6 +171,7 @@ var versionArg = arg{
 	nil, nil, func(o options, exec string) (effect, error) {
 		return func() error { fmt.Println(version()); os.Exit(0); return nil }, nil
 	},
+	func(o options) []string { return nil },
 }
 
 var helpArg = arg{
@@ -141,6 +180,7 @@ var helpArg = arg{
 	nil, nil, func(o options, exec string) (effect, error) {
 		return func() error { _ = printHelp(exec); os.Exit(64); return nil }, nil
 	},
+	func(o options) []string { return nil },
 }
 
 func init() {
@@ -252,4 +292,22 @@ func parse(exec string, ss []string) (o options, f effect, err error) {
 	}
 
 	return
+}
+
+func shortestFlag(a arg) string {
+	if a.shortName != "" {
+		return "-" + a.shortName
+	}
+	return "--" + a.longName
+}
+
+func serialize(o options) []string {
+	ss := []string{}
+	for _, arg := range args {
+		s := arg.serialize(o)
+		if s != nil {
+			ss = append(ss, append([]string{shortestFlag(arg)}, s...)...)
+		}
+	}
+	return ss
 }
