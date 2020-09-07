@@ -126,7 +126,7 @@ func Main(version string, channel string, armVer string) {
 	}()
 
 	if args.serviceControlAction != "" {
-		handleServiceControlAction(args.serviceControlAction)
+		handleServiceControlAction(args)
 		return
 	}
 
