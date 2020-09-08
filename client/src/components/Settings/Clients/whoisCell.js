@@ -14,7 +14,7 @@ const getFormattedWhois = (value, t) => {
                 <div key={key} title={t(key)}>
                     {icon && (
                         <Fragment>
-                            <svg className="logs__whois-icon text-muted-dark icons">
+                            <svg className="logs__whois-icon text-muted-dark icons icon--24">
                                 <use xlinkHref={`#${icon}`} />
                             </svg>
                             &nbsp;

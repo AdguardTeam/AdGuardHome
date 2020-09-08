@@ -4,7 +4,7 @@ import { Trans, withTranslation } from 'react-i18next';
 import ReactTable from 'react-table';
 
 import { MODAL_TYPE } from '../../../helpers/constants';
-import { splitByNewLine } from '../../../helpers/helpers';
+import { splitByNewLine, countClientsStatistics } from '../../../helpers/helpers';
 import Card from '../../ui/Card';
 import Modal from './Modal';
 import CellWrap from '../../ui/CellWrap';
@@ -204,7 +204,10 @@ class ClientsTable extends Component {
         {
             Header: this.props.t('requests_count'),
             id: 'statistics',
-            accessor: (row) => this.props.normalizedTopClients.configured[row.name] || 0,
+            accessor: (row) => countClientsStatistics(
+                row.ids,
+                this.props.normalizedTopClients.auto,
+            ),
             sortMethod: (a, b) => b - a,
             minWidth: 120,
             Cell: (row) => {

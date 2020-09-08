@@ -1,5 +1,7 @@
-import { getIpMatchListStatus, sortIp } from '../helpers/helpers';
-import { IP_MATCH_LIST_STATUS } from '../helpers/constants';
+import {
+    countClientsStatistics, findAddressType, getIpMatchListStatus, sortIp,
+} from '../helpers/helpers';
+import { ADDRESS_TYPES, IP_MATCH_LIST_STATUS } from '../helpers/constants';
 
 describe('getIpMatchListStatus', () => {
     describe('IPv4', () => {
@@ -480,5 +482,58 @@ describe('sortIp', () => {
             ];
             expect(arr.sort(sortIp)).toStrictEqual(sortedArr);
         });
+    });
+});
+
+describe('findAddressType', () => {
+    describe('ip', () => {
+        expect(findAddressType('127.0.0.1')).toStrictEqual(ADDRESS_TYPES.IP);
+    });
+    describe('cidr', () => {
+        expect(findAddressType('127.0.0.1/8')).toStrictEqual(ADDRESS_TYPES.CIDR);
+    });
+    describe('mac', () => {
+        expect(findAddressType('00:1B:44:11:3A:B7')).toStrictEqual(ADDRESS_TYPES.UNKNOWN);
+    });
+});
+
+describe('countClientsStatistics', () => {
+    test('single ip', () => {
+        expect(countClientsStatistics(['127.0.0.1'], {
+            '127.0.0.1': 1,
+        })).toStrictEqual(1);
+    });
+    test('multiple ip', () => {
+        expect(countClientsStatistics(['127.0.0.1', '127.0.0.2'], {
+            '127.0.0.1': 1,
+            '127.0.0.2': 2,
+        })).toStrictEqual(1 + 2);
+    });
+    test('cidr', () => {
+        expect(countClientsStatistics(['127.0.0.0/8'], {
+            '127.0.0.1': 1,
+            '127.0.0.2': 2,
+        })).toStrictEqual(1 + 2);
+    });
+    test('cidr and multiple ip', () => {
+        expect(countClientsStatistics(['1.1.1.1', '2.2.2.2', '3.3.3.0/24'], {
+            '1.1.1.1': 1,
+            '2.2.2.2': 2,
+            '3.3.3.3': 3,
+        })).toStrictEqual(1 + 2 + 3);
+    });
+    test('mac', () => {
+        expect(countClientsStatistics(['00:1B:44:11:3A:B7', '2.2.2.2', '3.3.3.0/24'], {
+            '1.1.1.1': 1,
+            '2.2.2.2': 2,
+            '3.3.3.3': 3,
+        })).toStrictEqual(2 + 3);
+    });
+    test('not found', () => {
+        expect(countClientsStatistics(['4.4.4.4', '5.5.5.5', '6.6.6.6'], {
+            '1.1.1.1': 1,
+            '2.2.2.2': 2,
+            '3.3.3.3': 3,
+        })).toStrictEqual(0);
     });
 });
