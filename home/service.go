@@ -24,12 +24,14 @@ const (
 
 // Represents the program that will be launched by a service or daemon
 type program struct {
+	opts options
 }
 
 // Start should quickly start the program
 func (p *program) Start(s service.Service) error {
 	// Start should not block. Do the actual work async.
-	args := options{runningAsService: true}
+	args := p.opts
+	args.runningAsService = true
 	go run(args)
 	return nil
 }
@@ -125,7 +127,8 @@ func sendSigReload() {
 // run - this is a special command that is not supposed to be used directly
 // it is specified when we register a service, and it indicates to the app
 // that it is being run as a service/daemon.
-func handleServiceControlAction(action string) {
+func handleServiceControlAction(opts options) {
+	action := opts.serviceControlAction
 	log.Printf("Service control action: %s", action)
 
 	if action == "reload" {
@@ -137,15 +140,17 @@ func handleServiceControlAction(action string) {
 	if err != nil {
 		log.Fatal("Unable to find the path to the current directory")
 	}
+	runOpts := opts
+	runOpts.serviceControlAction = "run"
 	svcConfig := &service.Config{
 		Name:             serviceName,
 		DisplayName:      serviceDisplayName,
 		Description:      serviceDescription,
 		WorkingDirectory: pwd,
-		Arguments:        []string{"-s", "run"},
+		Arguments:        serialize(runOpts),
 	}
 	configureService(svcConfig)
-	prg := &program{}
+	prg := &program{runOpts}
 	s, err := service.New(prg, svcConfig)
 	if err != nil {
 		log.Fatal(err)
