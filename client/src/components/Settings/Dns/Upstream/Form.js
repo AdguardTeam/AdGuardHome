@@ -5,51 +5,61 @@ import { Field, reduxForm } from 'redux-form';
 import { Trans, useTranslation } from 'react-i18next';
 import classnames from 'classnames';
 
+import i18next from 'i18next';
 import Examples from './Examples';
 import { renderRadioField, renderTextareaField } from '../../../../helpers/form';
-import { DNS_REQUEST_OPTIONS, FORM_NAME } from '../../../../helpers/constants';
+import { DNS_REQUEST_OPTIONS, FORM_NAME, UPSTREAM_CONFIGURATION_WIKI_LINK } from '../../../../helpers/constants';
 import { testUpstream } from '../../../../actions';
 import { removeEmptyLines } from '../../../../helpers/helpers';
 
-const getInputFields = () => [{
-    // eslint-disable-next-line react/display-name
-    getTitle: () => <label className="form__label" htmlFor="upstream_dns">
-        <Trans>upstream_dns</Trans>
-    </label>,
-    name: 'upstream_dns',
-    type: 'text',
-    component: renderTextareaField,
-    className: 'form-control form-control--textarea font-monospace',
-    placeholder: 'upstream_dns',
-    normalizeOnBlur: removeEmptyLines,
-},
-{
-    name: 'upstream_mode',
-    type: 'radio',
-    value: DNS_REQUEST_OPTIONS.LOAD_BALANCING,
-    component: renderRadioField,
-    subtitle: 'load_balancing_desc',
-    placeholder: 'load_balancing',
-},
-{
-    name: 'upstream_mode',
-    type: 'radio',
-    value: DNS_REQUEST_OPTIONS.PARALLEL,
-    component: renderRadioField,
-    subtitle: 'upstream_parallel',
-    placeholder: 'parallel_requests',
-},
-{
-    name: 'upstream_mode',
-    type: 'radio',
-    value: DNS_REQUEST_OPTIONS.FASTEST_ADDR,
-    component: renderRadioField,
-    subtitle: 'fastest_addr_desc',
-    placeholder: 'fastest_addr',
-}];
+const Title = () => <label className="form__label" htmlFor="upstream_dns">
+    {i18next.t('upstream_dns')}
+    <div>
+        <a href={UPSTREAM_CONFIGURATION_WIKI_LINK} target="_blank"
+           rel="noopener noreferrer">{i18next.t('please_read_wiki')}</a>
+    </div>
+</label>;
+
+const getInputFields = (upstream_dns_file) => [
+    {
+        getTitle: Title,
+        name: 'upstream_dns',
+        type: 'text',
+        value: 'test',
+        component: renderTextareaField,
+        className: 'form-control form-control--textarea font-monospace',
+        placeholder: 'upstream_dns',
+        normalizeOnBlur: removeEmptyLines,
+        disabled: !!upstream_dns_file,
+    },
+    {
+        name: 'upstream_mode',
+        type: 'radio',
+        value: DNS_REQUEST_OPTIONS.LOAD_BALANCING,
+        component: renderRadioField,
+        subtitle: 'load_balancing_desc',
+        placeholder: 'load_balancing',
+    },
+    {
+        name: 'upstream_mode',
+        type: 'radio',
+        value: DNS_REQUEST_OPTIONS.PARALLEL,
+        component: renderRadioField,
+        subtitle: 'upstream_parallel',
+        placeholder: 'parallel_requests',
+    },
+    {
+        name: 'upstream_mode',
+        type: 'radio',
+        value: DNS_REQUEST_OPTIONS.FASTEST_ADDR,
+        component: renderRadioField,
+        subtitle: 'fastest_addr_desc',
+        placeholder: 'fastest_addr',
+    },
+];
 
 const Form = ({
-    submitting, invalid, processingSetConfig, processingTestUpstream, handleSubmit,
+    submitting, invalid, handleSubmit,
 }) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
@@ -57,6 +67,9 @@ const Form = ({
     const bootstrap_dns = useSelector(
         (store) => store.form[FORM_NAME.UPSTREAM].values.bootstrap_dns,
     );
+    const upstream_dns_file = useSelector((state) => state.dnsConfig.upstream_dns_file);
+    const processingTestUpstream = useSelector((state) => state.settings.processingTestUpstream);
+    const processingSetConfig = useSelector((state) => state.dnsConfig.processingSetConfig);
 
     const handleUpstreamTest = () => dispatch(testUpstream({
         upstream_dns,
@@ -67,7 +80,7 @@ const Form = ({
         'btn-loading': processingTestUpstream,
     });
 
-    const INPUT_FIELDS = getInputFields();
+    const INPUT_FIELDS = getInputFields(upstream_dns_file);
 
     return <form onSubmit={handleSubmit}>
         <div className="row">
@@ -146,8 +159,6 @@ Form.propTypes = {
     initialValues: PropTypes.object,
     upstream_dns: PropTypes.string,
     bootstrap_dns: PropTypes.string,
-    processingTestUpstream: PropTypes.bool,
-    processingSetConfig: PropTypes.bool,
 };
 
 export default reduxForm({ form: FORM_NAME.UPSTREAM })(Form);
