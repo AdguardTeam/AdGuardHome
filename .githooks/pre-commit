@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e;
-git diff --cached --name-only | grep -q '.js$' && make lint-js;
+git diff --cached --name-only | grep -q '.js$' && found=1
+if [ $found == 1 ]; then
+    make lint-js || exit 1
+    npm run test --prefix client || exit 1
+fi
 
 found=0
 git diff --cached --name-only | grep -q '.go$' && found=1
