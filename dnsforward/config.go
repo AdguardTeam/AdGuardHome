@@ -154,10 +154,6 @@ func (s *Server) createProxyConfig() (proxy.Config, error) {
 		MaxGoroutines:          int(s.conf.MaxGoroutines),
 	}
 
-	if s.conf.QUICListenAddr != nil {
-		proxyConfig.QUICListenAddr = []*net.UDPAddr{s.conf.QUICListenAddr}
-	}
-
 	if s.conf.CacheSize != 0 {
 		proxyConfig.CacheEnabled = true
 		proxyConfig.CacheSizeBytes = int(s.conf.CacheSize)
@@ -240,34 +236,49 @@ func (s *Server) prepareIntlProxy() {
 
 // prepareTLS - prepares TLS configuration for the DNS proxy
 func (s *Server) prepareTLS(proxyConfig *proxy.Config) error {
-	if s.conf.TLSListenAddr != nil && len(s.conf.CertificateChainData) != 0 && len(s.conf.PrivateKeyData) != 0 {
+	if len(s.conf.CertificateChainData) == 0 || len(s.conf.PrivateKeyData) == 0 {
+		return nil
+	}
+
+	if s.conf.TLSListenAddr == nil &&
+		s.conf.QUICListenAddr == nil {
+		return nil
+	}
+
+	if s.conf.TLSListenAddr != nil {
 		proxyConfig.TLSListenAddr = []*net.TCPAddr{s.conf.TLSListenAddr}
-		var err error
-		s.conf.cert, err = tls.X509KeyPair(s.conf.CertificateChainData, s.conf.PrivateKeyData)
+	}
+
+	if s.conf.QUICListenAddr != nil {
+		proxyConfig.QUICListenAddr = []*net.UDPAddr{s.conf.QUICListenAddr}
+	}
+
+	var err error
+	s.conf.cert, err = tls.X509KeyPair(s.conf.CertificateChainData, s.conf.PrivateKeyData)
+	if err != nil {
+		return errorx.Decorate(err, "Failed to parse TLS keypair")
+	}
+
+	if s.conf.StrictSNICheck {
+		x, err := x509.ParseCertificate(s.conf.cert.Certificate[0])
 		if err != nil {
-			return errorx.Decorate(err, "Failed to parse TLS keypair")
+			return errorx.Decorate(err, "x509.ParseCertificate(): %s", err)
 		}
-
-		if s.conf.StrictSNICheck {
-			x, err := x509.ParseCertificate(s.conf.cert.Certificate[0])
-			if err != nil {
-				return errorx.Decorate(err, "x509.ParseCertificate(): %s", err)
-			}
-			if len(x.DNSNames) != 0 {
-				s.conf.dnsNames = x.DNSNames
-				log.Debug("DNS: using DNS names from certificate's SAN: %v", x.DNSNames)
-				sort.Strings(s.conf.dnsNames)
-			} else {
-				s.conf.dnsNames = append(s.conf.dnsNames, x.Subject.CommonName)
-				log.Debug("DNS: using DNS name from certificate's CN: %s", x.Subject.CommonName)
-			}
-		}
-
-		proxyConfig.TLSConfig = &tls.Config{
-			GetCertificate: s.onGetCertificate,
-			MinVersion:     tls.VersionTLS12,
+		if len(x.DNSNames) != 0 {
+			s.conf.dnsNames = x.DNSNames
+			log.Debug("DNS: using DNS names from certificate's SAN: %v", x.DNSNames)
+			sort.Strings(s.conf.dnsNames)
+		} else {
+			s.conf.dnsNames = append(s.conf.dnsNames, x.Subject.CommonName)
+			log.Debug("DNS: using DNS name from certificate's CN: %s", x.Subject.CommonName)
 		}
 	}
+
+	proxyConfig.TLSConfig = &tls.Config{
+		GetCertificate: s.onGetCertificate,
+		MinVersion:     tls.VersionTLS12,
+	}
+
 	upstream.RootCAs = s.conf.TLSv12Roots
 	upstream.CipherSuites = s.conf.TLSCiphers
 	return nil
