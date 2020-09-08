@@ -4,9 +4,10 @@ import axios from 'axios';
 
 import endsWith from 'lodash/endsWith';
 import escapeRegExp from 'lodash/escapeRegExp';
+import React from 'react';
 import { splitByNewLine, sortClients } from '../helpers/helpers';
 import {
-    BLOCK_ACTIONS, CHECK_TIMEOUT, STATUS_RESPONSE, SETTINGS_NAMES, FORM_NAME,
+    BLOCK_ACTIONS, CHECK_TIMEOUT, STATUS_RESPONSE, SETTINGS_NAMES, FORM_NAME, GETTING_STARTED_LINK,
 } from '../helpers/constants';
 import { areEqualVersions } from '../helpers/version';
 import { getTlsStatus } from './encryption';
@@ -184,7 +185,14 @@ export const getUpdate = () => async (dispatch, getState) => {
 
     dispatch(getUpdateRequest());
     const handleRequestError = () => {
-        dispatch(addNoticeToast({ error: 'update_failed' }));
+        const options = {
+            components: {
+                a: <a href={GETTING_STARTED_LINK} target="_blank"
+                      rel="noopener noreferrer" />,
+            },
+        };
+
+        dispatch(addNoticeToast({ error: 'update_failed', options }));
         dispatch(getUpdateFailure());
     };
 

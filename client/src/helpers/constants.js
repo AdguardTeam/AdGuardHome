@@ -53,6 +53,8 @@ export const REPOSITORY = {
 export const PRIVACY_POLICY_LINK = 'https://adguard.com/privacy/home.html';
 export const PORT_53_FAQ_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ#bindinuse';
 
+export const GETTING_STARTED_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#update';
+
 export const ADDRESS_IN_USE_TEXT = 'address already in use';
 
 export const INSTALL_FIRST_STEP = 1;
@@ -76,8 +78,6 @@ export const EMPTY_DATE = '0001-01-01T00:00:00Z';
 export const DEBOUNCE_TIMEOUT = 300;
 export const DEBOUNCE_FILTER_TIMEOUT = 500;
 export const CHECK_TIMEOUT = 1000;
-export const SUCCESS_TOAST_TIMEOUT = 5000;
-export const FAILURE_TOAST_TIMEOUT = 30000;
 export const HIDE_TOOLTIP_DELAY = 300;
 export const SHOW_TOOLTIP_DELAY = 200;
 export const MODAL_OPEN_TIMEOUT = 150;
@@ -540,8 +540,11 @@ export const TOAST_TYPES = {
     NOTICE: 'notice',
 };
 
+export const SUCCESS_TOAST_TIMEOUT = 5000;
+export const FAILURE_TOAST_TIMEOUT = 30000;
+
 export const TOAST_TIMEOUTS = {
-    [TOAST_TYPES.SUCCESS]: 5000,
-    [TOAST_TYPES.ERROR]: 30000,
-    [TOAST_TYPES.NOTICE]: 30000,
+    [TOAST_TYPES.SUCCESS]: SUCCESS_TOAST_TIMEOUT,
+    [TOAST_TYPES.ERROR]: FAILURE_TOAST_TIMEOUT,
+    [TOAST_TYPES.NOTICE]: FAILURE_TOAST_TIMEOUT,
 };

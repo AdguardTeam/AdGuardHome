@@ -15,6 +15,7 @@ const toasts = handleActions({
         const errorToast = {
             id: nanoid(),
             message,
+            options: payload.options,
             type: TOAST_TYPES.ERROR,
         };
 
@@ -35,6 +36,7 @@ const toasts = handleActions({
         const noticeToast = {
             id: nanoid(),
             message: payload.error.toString(),
+            options: payload.options,
             type: TOAST_TYPES.NOTICE,
         };
 
