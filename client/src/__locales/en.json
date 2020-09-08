@@ -332,7 +332,7 @@
     "encryption_dot": "DNS-over-TLS port",
     "encryption_dot_desc": "If this port is configured, AdGuard Home will run a DNS-over-TLS server on this port.",
     "encryption_doq": "DNS-over-QUIC port",
-    "encryption_doq_desc": "If this port is configured, AdGuard Home will run a DNS-over-QUIC server on this port. It's experimental and may not be reliable at the moment. The only DNS provider that supports it now is AdGuard DNS",
+    "encryption_doq_desc": "If this port is configured, AdGuard Home will run a DNS-over-QUIC server on this port. It's experimental and may not be reliable. Also, there are not too many clients that support it at the moment.",
     "encryption_certificates": "Certificates",
     "encryption_certificates_desc": "In order to use encryption, you need to provide a valid SSL certificates chain for your domain. You can get a free certificate on <0>{{link}}</0> or you can buy it from one of the trusted Certificate Authorities.",
     "encryption_certificates_input": "Copy/paste your PEM-encoded certificates here.",

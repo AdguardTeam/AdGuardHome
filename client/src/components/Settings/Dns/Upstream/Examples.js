@@ -69,7 +69,7 @@ const Examples = (props) => (
                     <Trans
                         components={[
                             <a
-                                href="https://wikipedia.org/wiki/QUIC"
+                                href="https://tools.ietf.org/html/draft-huitema-quic-dnsoquic-07"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 key="0"
@@ -80,6 +80,8 @@ const Examples = (props) => (
                     >
                         example_upstream_doq
                     </Trans>
+                    &nbsp;
+                    <span className="text-lowercase">(<Trans>experimental</Trans>)</span>
                 </span>
             </li>
             <li>

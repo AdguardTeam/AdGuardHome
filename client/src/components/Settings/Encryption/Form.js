@@ -199,7 +199,7 @@ let Form = (props) => {
                         <label className="form__label" htmlFor="port_dns_over_quic">
                             <Trans>encryption_doq</Trans>
                             &nbsp;
-                            (<Trans>experimental</Trans>)
+                            <span className="text-lowercase">(<Trans>experimental</Trans>)</span>
                         </label>
                         <Field
                                 id="port_dns_over_quic"
