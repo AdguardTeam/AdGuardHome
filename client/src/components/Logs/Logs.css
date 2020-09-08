@@ -388,3 +388,28 @@
 .logs__table .loading:before {
     min-height: 100%;
 }
+
+.logs__whois {
+    display: inline;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.logs__whois::after {
+    content: "|";
+    padding: 0 5px;
+    opacity: 0.3;
+}
+
+.logs__whois:last-child::after {
+    content: "";
+}
+
+.logs__whois-icon.icons {
+    position: relative;
+    top: -2px;
+    width: 12px;
+    height: 12px;
+    margin-right: 1px;
+    opacity: 0.5;
+}
