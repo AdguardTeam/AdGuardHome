@@ -489,7 +489,7 @@ func (a *Auth) GetCurrentUser(r *http.Request) User {
 		// there's no Cookie, check Basic authentication
 		user, pass, ok := r.BasicAuth()
 		if ok {
-			u := Context.auth.UserFind(user, pass)
+			u := a.UserFind(user, pass)
 			return u
 		}
 		return User{}

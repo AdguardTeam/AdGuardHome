@@ -182,6 +182,7 @@ func TestHome(t *testing.T) {
 		time.Sleep(1 * time.Second)
 	}
 
-	cleanup()
-	cleanupAlways()
+	ctx := &Context
+	ctx.cleanup()
+	ctx.cleanupAlways()
 }

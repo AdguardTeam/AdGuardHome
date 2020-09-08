@@ -3,7 +3,6 @@ package home
 import (
 	"context"
 	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -14,7 +13,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
-	"sync"
 	"syscall"
 	"time"
 
@@ -29,9 +27,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
-	"github.com/AdguardTeam/AdGuardHome/dnsforward"
-	"github.com/AdguardTeam/AdGuardHome/querylog"
-	"github.com/AdguardTeam/AdGuardHome/stats"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -47,52 +42,6 @@ var (
 	versionCheckURL = ""
 	ARMVersion      = ""
 )
-
-// Global context
-type homeContext struct {
-	// Modules
-	// --
-
-	clients    clientsContainer     // per-client-settings module
-	stats      stats.Stats          // statistics module
-	queryLog   querylog.QueryLog    // query log module
-	dnsServer  *dnsforward.Server   // DNS module
-	rdns       *RDNS                // rDNS module
-	whois      *Whois               // WHOIS module
-	dnsFilter  *dnsfilter.Dnsfilter // DNS filtering module
-	dhcpServer *dhcpd.Server        // DHCP module
-	auth       *Auth                // HTTP authentication module
-	filters    Filtering            // DNS filtering module
-	web        *Web                 // Web (HTTP, HTTPS) module
-	tls        *TLSMod              // TLS module
-	autoHosts  util.AutoHosts       // IP-hostname pairs taken from system configuration (e.g. /etc/hosts) files
-	updater    *update.Updater
-
-	// Runtime properties
-	// --
-
-	configFilename   string // Config filename (can be overridden via the command line arguments)
-	workDir          string // Location of our directory, used to protect against CWD being somewhere else
-	firstRun         bool   // if set to true, don't run any services except HTTP web inteface, and serve only first-run html
-	pidFileName      string // PID file name.  Empty if no PID file was created.
-	disableUpdate    bool   // If set, don't check for updates
-	controlLock      sync.Mutex
-	tlsRoots         *x509.CertPool // list of root CAs for TLSv1.2
-	tlsCiphers       []uint16       // list of TLS ciphers to use
-	transport        *http.Transport
-	client           *http.Client
-	appSignalChannel chan os.Signal // Channel for receiving OS signals by the console app
-	// runningAsService flag is set to true when options are passed from the service runner
-	runningAsService bool
-}
-
-// getDataDir returns path to the directory where we store databases and filters
-func (c *homeContext) getDataDir() string {
-	return filepath.Join(c.workDir, dataDir)
-}
-
-// Context - a global context object
-var Context homeContext
 
 // Main is the entry point
 func Main(version string, channel string, armVer string) {
@@ -118,8 +67,8 @@ func Main(version string, channel string, armVer string) {
 				Context.tls.Reload()
 
 			default:
-				cleanup()
-				cleanupAlways()
+				Context.cleanup()
+				Context.cleanupAlways()
 				os.Exit(0)
 			}
 		}
@@ -304,7 +253,7 @@ func run(args options) {
 	}
 
 	if !Context.firstRun {
-		err := initDNSServer()
+		err := Context.initDNSServer()
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
@@ -312,7 +261,7 @@ func run(args options) {
 		Context.autoHosts.Start()
 
 		go func() {
-			err := startDNSServer()
+			err := Context.startDNSServer()
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -331,16 +280,16 @@ func run(args options) {
 
 // StartMods - initialize and start DNS after installation
 func StartMods() error {
-	err := initDNSServer()
+	err := Context.initDNSServer()
 	if err != nil {
 		return err
 	}
 
 	Context.tls.Start()
 
-	err = startDNSServer()
+	err = Context.startDNSServer()
 	if err != nil {
-		closeDNSServer()
+		Context.closeDNSServer()
 		return err
 	}
 	return nil
@@ -487,43 +436,6 @@ func configureLogger(args options) {
 			MaxAge:     ls.LogMaxAge,  //days
 		})
 	}
-}
-
-func cleanup() {
-	log.Info("Stopping AdGuard Home")
-
-	if Context.web != nil {
-		Context.web.Close()
-		Context.web = nil
-	}
-	if Context.auth != nil {
-		Context.auth.Close()
-		Context.auth = nil
-	}
-
-	err := stopDNSServer()
-	if err != nil {
-		log.Error("Couldn't stop DNS server: %s", err)
-	}
-
-	if Context.dhcpServer != nil {
-		Context.dhcpServer.Stop()
-	}
-
-	Context.autoHosts.Close()
-
-	if Context.tls != nil {
-		Context.tls.Close()
-		Context.tls = nil
-	}
-}
-
-// This function is called before application exits
-func cleanupAlways() {
-	if len(Context.pidFileName) != 0 {
-		_ = os.Remove(Context.pidFileName)
-	}
-	log.Info("Stopped")
 }
 
 // command-line arguments
@@ -734,7 +646,7 @@ func customDialContext(ctx context.Context, network, addr string) (net.Conn, err
 	return nil, errorx.DecorateMany(fmt.Sprintf("couldn't dial to %s", addr), dialErrs...)
 }
 
-func getHTTPProxy(req *http.Request) (*url.URL, error) {
+func getHTTPProxy(*http.Request) (*url.URL, error) {
 	if len(config.ProxyURL) == 0 {
 		return nil, nil
 	}

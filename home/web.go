@@ -144,7 +144,7 @@ func (web *Web) Start() {
 		}
 		err := web.httpServer.ListenAndServe()
 		if err != http.ErrServerClosed {
-			cleanupAlways()
+			Context.cleanupAlways()
 			log.Fatal(err)
 		}
 		// We use ErrServerClosed as a sign that we need to rebind on new address, so go back to the start of the loop
@@ -202,7 +202,7 @@ func (web *Web) tlsServerLoop() {
 		printHTTPAddresses("https")
 		err := web.httpsServer.server.ListenAndServeTLS("", "")
 		if err != http.ErrServerClosed {
-			cleanupAlways()
+			Context.cleanupAlways()
 			log.Fatal(err)
 		}
 	}

@@ -134,7 +134,7 @@ func (t *TLSMod) Reload() {
 
 	t.certLastMod = fi.ModTime().UTC()
 
-	_ = reconfigureDNSServer()
+	_ = Context.reconfigureDNSServer()
 	Context.web.TLSConfigChanged(tlsConf)
 }
 
@@ -277,7 +277,7 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	t.confLock.Unlock()
 	t.setCertFileTime()
 	onConfigModified()
-	err = reconfigureDNSServer()
+	err = Context.reconfigureDNSServer()
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "%s", err)
 		return

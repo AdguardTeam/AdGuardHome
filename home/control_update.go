@@ -119,8 +119,8 @@ func getVersionResp(info update.VersionInfo) []byte {
 // Complete an update procedure
 func finishUpdate() {
 	log.Info("Stopping all tasks")
-	cleanup()
-	cleanupAlways()
+	Context.cleanup()
+	Context.cleanupAlways()
 
 	exeName := "AdGuardHome"
 	if runtime.GOOS == "windows" {

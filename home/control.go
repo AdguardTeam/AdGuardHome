@@ -47,10 +47,10 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		Context.dnsServer.WriteDiskConfig(&c)
 	}
 	data := map[string]interface{}{
-		"dns_addresses": getDNSAddresses(),
+		"dns_addresses": Context.getDNSAddresses(),
 		"http_port":     config.BindPort,
 		"dns_port":      config.DNS.Port,
-		"running":       isRunning(),
+		"running":       Context.isRunning(),
 		"version":       versionString,
 		"language":      config.Language,
 
