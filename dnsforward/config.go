@@ -9,12 +9,11 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/AdguardTeam/golibs/log"
-	"github.com/joomcode/errorx"
-
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/log"
+	"github.com/joomcode/errorx"
 )
 
 // FilteringConfig represents the DNS filtering configuration of AdGuard Home
@@ -216,6 +215,18 @@ func (s *Server) initDefaultSettings() {
 
 // prepareUpstreamSettings - prepares upstream DNS server settings
 func (s *Server) prepareUpstreamSettings() error {
+	// We're setting a customized set of RootCAs
+	// The reason is that Go default mechanism of loading TLS roots
+	// does not always work properly on some routers so we're
+	// loading roots manually and pass it here.
+	// See "util.LoadSystemRootCAs"
+	upstream.RootCAs = s.conf.TLSv12Roots
+
+	// See util.InitTLSCiphers -- removed unsafe ciphers
+	if len(s.conf.TLSCiphers) > 0 {
+		upstream.CipherSuites = s.conf.TLSCiphers
+	}
+
 	upstreamConfig, err := proxy.ParseUpstreamsConfig(s.conf.UpstreamDNS, s.conf.BootstrapDNS, DefaultTimeout)
 	if err != nil {
 		return fmt.Errorf("DNS: proxy.ParseUpstreamsConfig: %s", err)
@@ -279,8 +290,6 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) error {
 		MinVersion:     tls.VersionTLS12,
 	}
 
-	upstream.RootCAs = s.conf.TLSv12Roots
-	upstream.CipherSuites = s.conf.TLSCiphers
 	return nil
 }
 
