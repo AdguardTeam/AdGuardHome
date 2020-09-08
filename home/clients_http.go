@@ -24,10 +24,14 @@ type clientJSON struct {
 
 	WhoisInfo map[string]interface{} `json:"whois_info"`
 
-	// * "": IP is allowed
-	// * not "", e.g. "127.0.0.0/24" - IP is disallowed by "disallowed IP list", and the string contains the matched rule (IP or CIDR)
-	// * "not-in-allowed-list" - IP is disallowed by "allowed IP list"
-	Disallowed string `json:"disallowed"`
+	// Disallowed - if true -- client's IP is not disallowed
+	// Otherwise, it is blocked.
+	Disallowed bool `json:"disallowed"`
+
+	// DisallowedRule - the rule due to which the client is disallowed
+	// If Disallowed is true, and this string is empty - it means that the client IP
+	// is disallowed by the "allowed IP list", i.e. it is not included in allowed.
+	DisallowedRule string `json:"disallowed_rule"`
 }
 
 type clientHostJSON struct {
@@ -45,7 +49,7 @@ type clientListJSON struct {
 }
 
 // respond with information about configured clients
-func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http.Request) {
+func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, _ *http.Request) {
 	data := clientListJSON{}
 
 	clients.lock.Lock()
@@ -257,20 +261,12 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 			}
 			cj := clientHostToJSON(ip, ch)
 
-			disallowed, disallowedRule := clients.DNSServer.IsBlockedIP(ip)
-			if disallowed {
-				cj.Disallowed = disallowedRule
-			}
-
+			cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
 			el[ip] = cj
 		} else {
 			cj := clientToJSON(&c)
 
-			disallowed, disallowedRule := clients.DNSServer.IsBlockedIP(ip)
-			if disallowed {
-				cj.Disallowed = disallowedRule
-			}
-
+			cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
 			el[ip] = cj
 		}
 

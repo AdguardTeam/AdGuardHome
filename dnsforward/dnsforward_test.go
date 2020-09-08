@@ -874,58 +874,6 @@ func publicKey(priv interface{}) interface{} {
 	}
 }
 
-func TestIsBlockedIPAllowed(t *testing.T) {
-	a := &accessCtx{}
-	assert.True(t, a.Init([]string{"1.1.1.1", "2.2.0.0/16"}, nil, nil) == nil)
-
-	disallowed, _ := a.IsBlockedIP("1.1.1.1")
-	assert.False(t, disallowed)
-	disallowed, _ = a.IsBlockedIP("1.1.1.2")
-	assert.True(t, disallowed)
-	disallowed, _ = a.IsBlockedIP("2.2.1.1")
-	assert.False(t, disallowed)
-	disallowed, _ = a.IsBlockedIP("2.3.1.1")
-	assert.True(t, disallowed)
-}
-
-func TestIsBlockedIPDisallowed(t *testing.T) {
-	a := &accessCtx{}
-	assert.True(t, a.Init(nil, []string{"1.1.1.1", "2.2.0.0/16"}, nil) == nil)
-
-	disallowed, _ := a.IsBlockedIP("1.1.1.1")
-	assert.True(t, disallowed)
-	disallowed, _ = a.IsBlockedIP("1.1.1.2")
-	assert.False(t, disallowed)
-	disallowed, _ = a.IsBlockedIP("2.2.1.1")
-	assert.True(t, disallowed)
-	disallowed, _ = a.IsBlockedIP("2.3.1.1")
-	assert.False(t, disallowed)
-}
-
-func TestIsBlockedIPBlockedDomain(t *testing.T) {
-	a := &accessCtx{}
-	assert.True(t, a.Init(nil, nil, []string{"host1",
-		"host2",
-		"*.host.com",
-		"||host3.com^",
-	}) == nil)
-
-	// match by "host2.com"
-	assert.True(t, a.IsBlockedDomain("host1"))
-	assert.True(t, a.IsBlockedDomain("host2"))
-	assert.True(t, !a.IsBlockedDomain("host3"))
-
-	// match by wildcard "*.host.com"
-	assert.True(t, !a.IsBlockedDomain("host.com"))
-	assert.True(t, a.IsBlockedDomain("asdf.host.com"))
-	assert.True(t, a.IsBlockedDomain("qwer.asdf.host.com"))
-	assert.True(t, !a.IsBlockedDomain("asdf.zhost.com"))
-
-	// match by wildcard "||host3.com^"
-	assert.True(t, a.IsBlockedDomain("host3.com"))
-	assert.True(t, a.IsBlockedDomain("asdf.host3.com"))
-}
-
 func TestValidateUpstream(t *testing.T) {
 	invalidUpstreams := []string{"1.2.3.4.5",
 		"123.3.7m",

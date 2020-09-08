@@ -940,7 +940,7 @@ Error response (Client not found):
 ### API: Find clients by IP
 
 This method returns the list of clients (manual and auto-clients) matching the IP list.
-For auto-clients only `name`, `ids`, `whois_info`, `disallowed` fields are set.  Other fields are empty.
+For auto-clients only `name`, `ids`, `whois_info`, `disallowed`, and `disallowed_rule` fields are set.  Other fields are empty.
 
 Request:
 
@@ -967,17 +967,15 @@ Response:
 				...
 			}
 
-			"disallowed": "..."
+			"disallowed": false,
+			"disallowed_rule": "..."
 		}
 	}
 	...
 	]
 
-`disallowed`:
-* "": IP is allowed
-* not "", e.g. "127.0.0.0/24" - IP is disallowed by "disallowed IP list", and the string contains the matched rule (IP or CIDR)
-* "not-in-allowed-list" - IP is disallowed by "allowed IP list"
-
+* `disallowed` - whether the client's IP is blocked or not.
+* `disallowed_rule` - the rule due to which the client is disallowed. If `disallowed` is `true`, and this string is empty - it means that the client IP is disallowed by the "allowed IP list", i.e. it is not included in allowed.
 
 ## DNS general settings
 

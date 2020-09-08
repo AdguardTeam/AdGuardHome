@@ -80,6 +80,9 @@ func processIPCIDRArray(dst *map[string]bool, dstIPNet *[]net.IPNet, src []strin
 }
 
 // IsBlockedIP - return TRUE if this client should be blocked
+// Returns the item from the "disallowedClients" list that lead to blocking IP.
+// If it returns TRUE and an empty string, it means that the "allowedClients" is not empty,
+// but the ip does not belong to it.
 func (a *accessCtx) IsBlockedIP(ip string) (bool, string) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
@@ -99,7 +102,7 @@ func (a *accessCtx) IsBlockedIP(ip string) (bool, string) {
 			}
 		}
 
-		return true, "not-in-allowed-list"
+		return true, ""
 	}
 
 	_, ok := a.disallowedClients[ip]

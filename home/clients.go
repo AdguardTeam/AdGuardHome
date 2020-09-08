@@ -80,7 +80,8 @@ type clientsContainer struct {
 	// dhcpServer is used for looking up clients IP addresses by MAC addresses
 	dhcpServer *dhcpd.Server
 
-	DNSServer *dnsforward.Server
+	// dnsServer is used for checking clients IP status access list status
+	dnsServer *dnsforward.Server
 
 	autoHosts *util.AutoHosts // get entries from system hosts-files
 

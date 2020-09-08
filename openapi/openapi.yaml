@@ -1796,11 +1796,15 @@ components:
                     items:
                         $ref: "#/components/schemas/WhoisInfo"
                 disallowed:
+                    type: boolean
                     description: >
-                        * "": IP is allowed
-                        * not "", e.g. "127.0.0.0/24" - IP is disallowed by "disallowed IP list", and the string contains the matched rule (IP or CIDR)
-                        * "not-in-allowed-list" - IP is disallowed by "allowed IP list"
+                        Whether the client's IP is blocked or not.
+                disallowed_rule:
                     type: string
+                    description: >
+                        The rule due to which the client is disallowed.
+                        If `disallowed` is `true`, and this string is empty - it means that
+                        the client IP is disallowed by the "allowed IP list", i.e. it is not included in allowed list.
 
         WhoisInfo:
             type: object
