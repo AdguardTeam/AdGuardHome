@@ -276,7 +276,11 @@ type loginJSON struct {
 }
 
 func getSession(u *User) []byte {
-	d := []byte(fmt.Sprintf("%d%s%s", rand.Uint32(), u.Name, u.PasswordHash))
+	// the developers don't currently believe that using a
+	// non-cryptographic RNG for the session hash salt is
+	// insecure
+	salt := rand.Uint32() //nolint:gosec
+	d := []byte(fmt.Sprintf("%d%s%s", salt, u.Name, u.PasswordHash))
 	hash := sha256.Sum256(d)
 	return hash[:]
 }
