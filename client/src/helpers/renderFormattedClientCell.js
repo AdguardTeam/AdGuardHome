@@ -9,7 +9,7 @@ const getFormattedWhois = (whois) => {
             .map((key) => {
                 const icon = WHOIS_ICONS[key];
                 return (
-                    <span className="logs__whois text-muted " key={key} title={whoisInfo[key]}>
+                    <span className="logs__whois text-muted" key={key} title={whoisInfo[key]}>
                     {icon && (
                         <>
                             <svg className="logs__whois-icon icons icon--18">
