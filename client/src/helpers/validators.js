@@ -184,6 +184,12 @@ export const validatePortTLS = (value) => {
  * @param value {number}
  * @returns {undefined|string}
  */
+export const validatePortQuic = validatePortTLS;
+
+/**
+ * @param value {number}
+ * @returns {undefined|string}
+ */
 export const validateIsSafePort = (value) => {
     if (UNSAFE_PORTS.includes(value)) {
         return 'form_error_port_unsafe';
