@@ -235,6 +235,7 @@
     "blocking_mode": "Blocking mode",
     "default": "Default",
     "nxdomain": "NXDOMAIN",
+    "refused": "REFUSED",
     "null_ip": "Null IP",
     "custom_ip": "Custom IP",
     "blocking_ipv4": "Blocking IPv4",

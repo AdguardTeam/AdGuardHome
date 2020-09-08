@@ -294,6 +294,7 @@ export const FILTERS_INTERVALS_HOURS = [0, 1, 12, 24, 72, 168];
 
 export const BLOCKING_MODES = {
     default: 'default',
+    refused: 'refused',
     nxdomain: 'nxdomain',
     null_ip: 'null_ip',
     custom_ip: 'custom_ip',
