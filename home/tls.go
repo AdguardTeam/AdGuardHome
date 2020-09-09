@@ -45,6 +45,7 @@ func tlsCreate(conf tlsConfigSettings) *TLSMod {
 				ServerName:          conf.ServerName,
 				PortHTTPS:           conf.PortHTTPS,
 				PortDNSOverTLS:      conf.PortDNSOverTLS,
+				PortDNSOverQUIC:     conf.PortDNSOverQUIC,
 				AllowUnencryptedDOH: conf.AllowUnencryptedDOH,
 			}}
 		}
@@ -267,6 +268,7 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	t.conf.ForceHTTPS = data.ForceHTTPS
 	t.conf.PortHTTPS = data.PortHTTPS
 	t.conf.PortDNSOverTLS = data.PortDNSOverTLS
+	t.conf.PortDNSOverQUIC = data.PortDNSOverQUIC
 	t.conf.CertificateChain = data.CertificateChain
 	t.conf.CertificatePath = data.CertificatePath
 	t.conf.CertificateChainData = data.CertificateChainData

@@ -133,6 +133,7 @@
     "dhcp_settings": "DHCP settings",
     "upstream_dns": "Upstream DNS servers",
     "upstream_dns_hint": "If you keep this field empty, AdGuard Home will use <a href='https://www.quad9.net/' target='_blank'>Quad9</a> as an upstream.",
+    "upstream_dns_configured_in_file": "Configured in {{path}}",
     "test_upstream_btn": "Test upstreams",
     "upstreams": "Upstreams",
     "apply_btn": "Apply",
@@ -186,6 +187,7 @@
     "example_upstream_regular": "regular DNS (over UDP)",
     "example_upstream_dot": "encrypted <0>DNS-over-TLS</0>",
     "example_upstream_doh": "encrypted <0>DNS-over-HTTPS</0>",
+    "example_upstream_doq": "encrypted <0>DNS-over-QUIC</0>",
     "example_upstream_sdns": "you can use <0>DNS Stamps</0> for <1>DNSCrypt</1> or <2>DNS-over-HTTPS</2> resolvers",
     "example_upstream_tcp": "regular DNS (over TCP)",
     "all_lists_up_to_date_toast": "All lists are already up-to-date",
@@ -330,6 +332,8 @@
     "encryption_https_desc": "If HTTPS port is configured, AdGuard Home admin interface will be accessible via HTTPS, and it will also provide DNS-over-HTTPS on '/dns-query' location.",
     "encryption_dot": "DNS-over-TLS port",
     "encryption_dot_desc": "If this port is configured, AdGuard Home will run a DNS-over-TLS server on this port.",
+    "encryption_doq": "DNS-over-QUIC port",
+    "encryption_doq_desc": "If this port is configured, AdGuard Home will run a DNS-over-QUIC server on this port. It's experimental and may not be reliable. Also, there are not too many clients that support it at the moment.",
     "encryption_certificates": "Certificates",
     "encryption_certificates_desc": "In order to use encryption, you need to provide a valid SSL certificates chain for your domain. You can get a free certificate on <0>{{link}}</0> or you can buy it from one of the trusted Certificate Authorities.",
     "encryption_certificates_input": "Copy/paste your PEM-encoded certificates here.",
@@ -363,7 +367,7 @@
     "fix": "Fix",
     "dns_providers": "Here is a <0>list of known DNS providers</0> to choose from.",
     "update_now": "Update now",
-    "update_failed": "Auto-update failed. Please <a href='https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#update'>follow the steps</a> to update manually.",
+    "update_failed": "Auto-update failed. Please <a>follow these steps</a> to update manually.",
     "processing_update": "Please wait, AdGuard Home is being updated",
     "clients_title": "Clients",
     "clients_desc": "Configure devices connected to AdGuard Home",
@@ -575,6 +579,6 @@
     "click_to_view_queries": "Click to view queries",
     "port_53_faq_link": "Port 53 is often occupied by \"DNSStubListener\" or \"systemd-resolved\" services. Please read <0>this instruction</0> on how to resolve this.",
     "adg_will_drop_dns_queries": "AdGuard Home will be dropping all DNS queries from this client.",
-    "configured_in": "Configured in {{path}}",
-    "please_read_wiki": "Please read the wiki"
+    "please_read_wiki": "Please read the wiki",
+    "experimental": "Experimental"
 }

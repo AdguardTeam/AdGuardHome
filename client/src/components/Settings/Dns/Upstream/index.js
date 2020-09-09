@@ -32,7 +32,7 @@ const Upstream = () => {
         dispatch(setDnsConfig(dnsConfig));
     };
 
-    const upstreamDns = upstream_dns_file ? t('configured_in', { path: upstream_dns_file }) : upstream_dns;
+    const upstreamDns = upstream_dns_file ? t('upstream_dns_configured_in_file', { path: upstream_dns_file }) : upstream_dns;
 
     return <Card
         title={t('upstream_dns')}
