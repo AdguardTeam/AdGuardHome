@@ -132,7 +132,6 @@
     "encryption_settings": "Pengaturan enkripsi",
     "dhcp_settings": "Pengaturan DHCP",
     "upstream_dns": "Server DNS hulu",
-    "upstream_dns_hint": "Jika Anda mengosongkan kolom ini, AdGuard Home akan menggunakan  <a href='https://1.1.1.1/' target='_blank'>Cloudflare DNS</a> sebagai hulu. Gunakan tls:// untuk server DNS over TLS.",
     "test_upstream_btn": "Uji hulu",
     "upstreams": "Upstream",
     "apply_btn": "Terapkan",

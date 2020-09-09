@@ -132,7 +132,6 @@
     "encryption_settings": "Krypteringsinnstillinger",
     "dhcp_settings": "DHCP-innstillinger",
     "upstream_dns": "Oppstrøms-DNS-tjenere",
-    "upstream_dns_hint": "Hvis du lar dette feltet stå tomt, vil AdGuard Home will bruke <a href='https://1.1.1.1/' target='_blank'>Cloudflare DNS</a> som en oppstrømstjener.",
     "test_upstream_btn": "Test oppstrømstilkoblinger",
     "upstreams": "Oppstrømstjenere",
     "apply_btn": "Benytt",

@@ -127,7 +127,6 @@
     "encryption_settings": "Paramètres de chiffrement",
     "dhcp_settings": "Paramètres DHCP",
     "upstream_dns": "Serveurs DNS upstream",
-    "upstream_dns_hint": "Si vous laissez ce champ vide, AdGuard Home va utiliser <a href='https://www.quad9.net/' target='_blank'>Quad9</a> comme upstream.",
     "test_upstream_btn": "Tester les upstreams",
     "upstreams": "En amont",
     "apply_btn": "Appliquer",

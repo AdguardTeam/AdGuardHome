@@ -132,7 +132,7 @@
     "encryption_settings": "Encryption settings",
     "dhcp_settings": "DHCP settings",
     "upstream_dns": "Upstream DNS servers",
-    "upstream_dns_help": "Enter servers addresses one per line. <0>Learn more</0> about configuring upstream DNS servers.",
+    "upstream_dns_help": "Enter servers addresses one per line. <a>Learn more</a> about configuring upstream DNS servers.",
     "upstream_dns_configured_in_file": "Configured in {{path}}",
     "test_upstream_btn": "Test upstreams",
     "upstreams": "Upstreams",

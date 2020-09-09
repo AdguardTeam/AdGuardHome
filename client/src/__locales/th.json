@@ -108,7 +108,6 @@
     "encryption_settings": "การตั้งค่าการเข้ารหัส",
     "dhcp_settings": "การตั้งค่า DHCP",
     "upstream_dns": "เซิร์ฟเวอร์ DNS ต้นทาง",
-    "upstream_dns_hint": "The current approved translation is not correct, please review my translation:\n\"หากคุณเว้นช่องนี้ว่างไว้ AdGuard Home จะใช้ <a href='https://www.quad9.net/' target='_blank'>Quad9</a> เป็นต้นทาง\"",
     "test_upstream_btn": "ทดสอบต้นทาง",
     "upstreams": "ต้นทาง",
     "apply_btn": "นำไปใช้",

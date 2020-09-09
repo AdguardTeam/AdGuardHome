@@ -131,7 +131,6 @@
     "encryption_settings": "Verschlüsselungseinstellungen",
     "dhcp_settings": "DHCP-Einstellungen",
     "upstream_dns": "Upstream-DNS-Server",
-    "upstream_dns_hint": "Wenn Sie dieses Feld leer lassen wird AdGuard Home <a href='https://1.1.1.1/' target='_blank'>Cloudflare DNS</a> als Upstream verwenden. Verwenden Sie das Präfix tls:// für DNS über TLS-Server.",
     "test_upstream_btn": "Upstreams testen",
     "upstreams": "Upstreams",
     "apply_btn": "Anwenden",

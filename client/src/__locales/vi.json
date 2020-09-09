@@ -132,7 +132,6 @@
     "encryption_settings": "Cài đặt mã hóa",
     "dhcp_settings": "Cài đặt DHCP",
     "upstream_dns": "Máy chủ DNS tìm kiếm",
-    "upstream_dns_hint": "Nếu bạn để trống mục này, AdGuard Home sẽ sử dụng <a href='https://1.1.1.1/' target='_blank'>Cloudflare DNS</a> để tìm kiếm. Sử dụng tiền tố tls:// cho các máy chủ DNS dựa trên TLS.",
     "test_upstream_btn": "Kiểm tra",
     "upstreams": "Nguồn",
     "apply_btn": "Áp dụng",

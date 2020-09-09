@@ -132,7 +132,6 @@
     "encryption_settings": "Postavke šifriranja",
     "dhcp_settings": "DHCP postavke",
     "upstream_dns": "Upstream DNS poslužitelji",
-    "upstream_dns_hint": "Ako se ovo polje ostavi prazno, AdGuard Home će koristiti <a href='https://www.quad9.net/' target='_blank'>Quad9</a> kao upstream.",
     "test_upstream_btn": "Testiraj upstream-ove",
     "upstreams": "Upstreams",
     "apply_btn": "Primijeni",

@@ -81,7 +81,6 @@
     "no_servers_specified": "Няма избрани услуги",
     "general_settings": "Общи настройки",
     "upstream_dns": "Главен DNS сървър",
-    "upstream_dns_hint": "Ако оставите празно, AdGuard Home ще използва <a href='https://1.1.1.1/' target='_blank'>Cloudflare DNS</a> за главен. Използвай tls:// представка за DNS използващи TLS връзка.",
     "test_upstream_btn": "Тествай главния DNS",
     "apply_btn": "Приложи",
     "disabled_filtering_toast": "Забрани филтрирането",

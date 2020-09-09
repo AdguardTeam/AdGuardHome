@@ -127,7 +127,6 @@
     "encryption_settings": "Ustawienia szyfrowania",
     "dhcp_settings": "Ustawienia DHCP",
     "upstream_dns": "Główne serwery DNS",
-    "upstream_dns_hint": "Jeśli to pole pozostawisz puste, AdGuard Home wykorzysta usługę <a href='https://www.quad9.net/' target='_blank'>Quad9</a> jako główny serwer DNS.",
     "test_upstream_btn": "Test głównych serwerów DNS",
     "upstreams": "Główne serwery DNS",
     "apply_btn": "Zastosuj",

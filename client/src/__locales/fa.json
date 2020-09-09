@@ -124,7 +124,6 @@
     "encryption_settings": "تنظیمات رمزگُذاری",
     "dhcp_settings": "تنظیمات DHCP",
     "upstream_dns": "سرورهای DNS جریان ارسالی",
-    "upstream_dns_hint": "اگر این فیلد را خالی نگه دارید، AdGuard Home از <a href='https://1.1.1.1/' target='_blank'>Cloudflare DNS</a> بعنوان یک جریان ارسالی استفاده می کند. از پیشوند tls:// برای سرورهای DNS over TLS استفاده کنید.",
     "test_upstream_btn": "تست جریان ارسالی",
     "upstreams": "جریان ارسالی",
     "apply_btn": "اِعمال",

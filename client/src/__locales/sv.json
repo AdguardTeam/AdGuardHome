@@ -103,7 +103,6 @@
     "encryption_settings": "Krypteringsinställningar",
     "dhcp_settings": "DHCP-inställningar",
     "upstream_dns": "Upstream DNS-servrar",
-    "upstream_dns_hint": "Om du låter fältet vara tomt kommer AdGuard Home att använda <a href='https://1.1.1.1/' target='_blank'>Cloudflare DNS</a> för uppström.",
     "test_upstream_btn": "Testa uppströmmar",
     "apply_btn": "Tillämpa",
     "disabled_filtering_toast": "Filtrering bortkopplad",

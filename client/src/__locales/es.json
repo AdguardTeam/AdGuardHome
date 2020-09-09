@@ -132,7 +132,6 @@
     "encryption_settings": "Configuración de cifrado",
     "dhcp_settings": "Configuración DHCP",
     "upstream_dns": "Servidores DNS de subida",
-    "upstream_dns_hint": "Si se mantiene este campo vacío, AdGuard Home utilizará <a href='https://www.quad9.net/' target='_blank'>Quad9</a> como DNS de subida.",
     "test_upstream_btn": "Probar DNS de subida",
     "upstreams": "DNS de subida",
     "apply_btn": "Aplicar",
