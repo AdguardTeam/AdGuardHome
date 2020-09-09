@@ -84,7 +84,9 @@ const ClientCell = ({
             },
         };
 
-        const onClick = () => dispatch(toggleBlocking(buttonType, domain));
+        const onClick = async () => {
+            await dispatch(toggleBlocking(buttonType, domain));
+        };
 
         const getOptions = (optionToActionMap) => {
             const options = Object.entries(optionToActionMap);
