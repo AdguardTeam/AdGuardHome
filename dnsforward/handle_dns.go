@@ -88,7 +88,7 @@ func processInitial(ctx *dnsContext) int {
 	// disable Mozilla DoH
 	if (d.Req.Question[0].Qtype == dns.TypeA || d.Req.Question[0].Qtype == dns.TypeAAAA) &&
 		d.Req.Question[0].Name == "use-application-dns.net." {
-		d.Res = s.genNXDomain(d.Req)
+		d.Res = s.makeResponseREFUSED(d.Req)
 		return resultFinish
 	}
 

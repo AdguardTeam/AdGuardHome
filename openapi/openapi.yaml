@@ -1009,6 +1009,7 @@ components:
                     type: string
                     enum:
                         - default
+                        - refused
                         - nxdomain
                         - null_ip
                         - custom_ip
