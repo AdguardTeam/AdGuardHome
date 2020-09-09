@@ -297,7 +297,7 @@
     "fix": "Corrigido",
     "dns_providers": "Aqui está uma <0>lista de provedores de DNS conhecidos</0> para escolher.",
     "update_now": "Actualizar agora",
-    "update_failed": "A atualização automática falhou. Por favor, <a href='https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#update'>siga estes passos</a> para actualizar manualmente.",
+    "update_failed": "A atualização automática falhou. Por favor, <a>siga estes passos</a> para actualizar manualmente.",
     "processing_update": "Por favor espere, o AdGuard Home está a actualizar-se",
     "clients_title": "Clientes",
     "clients_desc": "Configure os dispositivos ligados ao AdGuard",

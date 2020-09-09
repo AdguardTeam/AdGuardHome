@@ -274,7 +274,7 @@
     "fix": "Fixa",
     "dns_providers": "Här är en <0>lista över kända DNS-leverantörer</0> att välja från.",
     "update_now": "Uppdatera nu",
-    "update_failed": "Automatisk uppdatering misslyckad. Var god <a href='https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#update'>följ stegen</a> för att uppdatera manuellt.",
+    "update_failed": "Automatisk uppdatering misslyckad. Var god <a>följ stegen</a> för att uppdatera manuellt.",
     "processing_update": "Vänta, AdGuard Home uppdateras",
     "clients_title": "Klienter",
     "clients_desc": "Konfigurera enheter uppkopplade mot AdGuard Home",
