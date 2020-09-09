@@ -293,8 +293,11 @@ export const QUERY_LOG_INTERVALS_DAYS = [1, 7, 30, 90];
 
 export const FILTERS_INTERVALS_HOURS = [0, 1, 12, 24, 72, 168];
 
+// Note that translation strings contain these modes (blocking_mode_CONSTANT)
+// i.e. blocking_mode_default, blocking_mode_null_ip
 export const BLOCKING_MODES = {
     default: 'default',
+    refused: 'refused',
     nxdomain: 'nxdomain',
     null_ip: 'null_ip',
     custom_ip: 'custom_ip',
