@@ -997,6 +997,8 @@ components:
                     example:
                         - tls://1.1.1.1
                         - tls://1.0.0.1
+                upstream_dns_file:
+                    type: string
                 protection_enabled:
                     type: boolean
                 dhcp_available:

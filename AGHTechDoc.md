@@ -988,6 +988,7 @@ Response:
 
 	{
 		"upstream_dns": ["tls://...", ...],
+		"upstream_dns_file": "",
 		"bootstrap_dns": ["1.2.3.4", ...],
 
 		"protection_enabled": true | false,
@@ -1013,6 +1014,7 @@ Request:
 
 	{
 		"upstream_dns": ["tls://...", ...],
+		"upstream_dns_file": "",
 		"bootstrap_dns": ["1.2.3.4", ...],
 
 		"protection_enabled": true | false,

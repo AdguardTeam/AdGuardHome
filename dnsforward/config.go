@@ -5,11 +5,13 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"sort"
 
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/util"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
@@ -54,10 +56,11 @@ type FilteringConfig struct {
 	// Upstream DNS servers configuration
 	// --
 
-	UpstreamDNS  []string `yaml:"upstream_dns"`
-	BootstrapDNS []string `yaml:"bootstrap_dns"` // a list of bootstrap DNS for DoH and DoT (plain DNS only)
-	AllServers   bool     `yaml:"all_servers"`   // if true, parallel queries to all configured upstream servers are enabled
-	FastestAddr  bool     `yaml:"fastest_addr"`  // use Fastest Address algorithm
+	UpstreamDNS         []string `yaml:"upstream_dns"`
+	UpstreamDNSFileName string   `yaml:"upstream_dns_file"`
+	BootstrapDNS        []string `yaml:"bootstrap_dns"` // a list of bootstrap DNS for DoH and DoT (plain DNS only)
+	AllServers          bool     `yaml:"all_servers"`   // if true, parallel queries to all configured upstream servers are enabled
+	FastestAddr         bool     `yaml:"fastest_addr"`  // use Fastest Address algorithm
 
 	// Access settings
 	// --
@@ -184,7 +187,7 @@ func (s *Server) createProxyConfig() (proxy.Config, error) {
 
 	// Validate proxy config
 	if proxyConfig.UpstreamConfig == nil || len(proxyConfig.UpstreamConfig.Upstreams) == 0 {
-		return proxyConfig, errors.New("no upstream servers configured")
+		return proxyConfig, errors.New("no default upstream servers configured")
 	}
 
 	return proxyConfig, nil
@@ -227,10 +230,36 @@ func (s *Server) prepareUpstreamSettings() error {
 		upstream.CipherSuites = s.conf.TLSCiphers
 	}
 
-	upstreamConfig, err := proxy.ParseUpstreamsConfig(s.conf.UpstreamDNS, s.conf.BootstrapDNS, DefaultTimeout)
+	// Load upstreams either from the file, or from the settings
+	var upstreams []string
+	if s.conf.UpstreamDNSFileName != "" {
+		data, err := ioutil.ReadFile(s.conf.UpstreamDNSFileName)
+		if err != nil {
+			return err
+		}
+		d := string(data)
+		for len(d) != 0 {
+			s := util.SplitNext(&d, '\n')
+			upstreams = append(upstreams, s)
+		}
+		log.Debug("DNS: using %d upstream servers from file %s", len(upstreams), s.conf.UpstreamDNSFileName)
+	} else {
+		upstreams = s.conf.UpstreamDNS
+	}
+	upstreamConfig, err := proxy.ParseUpstreamsConfig(upstreams, s.conf.BootstrapDNS, DefaultTimeout)
 	if err != nil {
 		return fmt.Errorf("DNS: proxy.ParseUpstreamsConfig: %s", err)
 	}
+
+	if len(upstreamConfig.Upstreams) == 0 {
+		log.Info("Warning: no default upstream servers specified, using %v", defaultDNS)
+		uc, err := proxy.ParseUpstreamsConfig(defaultDNS, s.conf.BootstrapDNS, DefaultTimeout)
+		if err != nil {
+			return fmt.Errorf("DNS: failed to parse default upstreams: %v", err)
+		}
+		upstreamConfig.Upstreams = uc.Upstreams
+	}
+
 	s.conf.UpstreamConfig = &upstreamConfig
 	return nil
 }

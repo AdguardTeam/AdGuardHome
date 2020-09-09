@@ -12,31 +12,41 @@ const Upstream = () => {
         upstream_dns,
         bootstrap_dns,
         upstream_mode,
-        processingSetConfig,
     } = useSelector((state) => state.dnsConfig, shallowEqual);
 
-    const { processingTestUpstream } = useSelector((state) => state.settings, shallowEqual);
+    const upstream_dns_file = useSelector((state) => state.dnsConfig.upstream_dns_file);
 
     const handleSubmit = (values) => {
-        dispatch(setDnsConfig(values));
+        const {
+            bootstrap_dns,
+            upstream_dns,
+            upstream_mode,
+        } = values;
+
+        const dnsConfig = {
+            bootstrap_dns,
+            upstream_mode,
+            ...(upstream_dns_file ? null : { upstream_dns }),
+        };
+
+        dispatch(setDnsConfig(dnsConfig));
     };
+
+    const upstreamDns = upstream_dns_file ? t('upstream_dns_configured_in_file', { path: upstream_dns_file }) : upstream_dns;
 
     return <Card
         title={t('upstream_dns')}
-        subtitle={t('upstream_dns_hint')}
         bodyType="card-body box-body--settings"
     >
         <div className="row">
             <div className="col">
                 <Form
                     initialValues={{
-                        upstream_dns,
+                        upstream_dns: upstreamDns,
                         bootstrap_dns,
                         upstream_mode,
                     }}
                     onSubmit={handleSubmit}
-                    processingTestUpstream={processingTestUpstream}
-                    processingSetConfig={processingSetConfig}
                 />
             </div>
         </div>
