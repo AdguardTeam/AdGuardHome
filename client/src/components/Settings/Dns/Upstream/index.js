@@ -36,7 +36,6 @@ const Upstream = () => {
 
     return <Card
         title={t('upstream_dns')}
-        subtitle={t('upstream_dns_hint')}
         bodyType="card-body box-body--settings"
     >
         <div className="row">

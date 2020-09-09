@@ -5,7 +5,6 @@ import { Field, reduxForm } from 'redux-form';
 import { Trans, useTranslation } from 'react-i18next';
 import classnames from 'classnames';
 
-import i18next from 'i18next';
 import Examples from './Examples';
 import { renderRadioField, renderTextareaField } from '../../../../helpers/form';
 import { DNS_REQUEST_OPTIONS, FORM_NAME, UPSTREAM_CONFIGURATION_WIKI_LINK } from '../../../../helpers/constants';
@@ -13,11 +12,9 @@ import { testUpstream } from '../../../../actions';
 import { removeEmptyLines } from '../../../../helpers/helpers';
 
 const Title = () => <label className="form__label" htmlFor="upstream_dns">
-    {i18next.t('upstream_dns')}
-    <div>
-        <a href={UPSTREAM_CONFIGURATION_WIKI_LINK} target="_blank"
-           rel="noopener noreferrer">{i18next.t('please_read_wiki')}</a>
-    </div>
+    <Trans components={[<a href={UPSTREAM_CONFIGURATION_WIKI_LINK} key="0">link</a>]}>
+        upstream_dns_help
+    </Trans>
 </label>;
 
 const getInputFields = (upstream_dns_file) => [
