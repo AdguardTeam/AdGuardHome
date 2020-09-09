@@ -743,6 +743,7 @@ Response:
 	"server_name":"...",
 	"port_https":443,
 	"port_dns_over_tls":853,
+	"port_dns_over_quic":784,
 	"certificate_chain":"...",
 	"private_key":"...",
 	"certificate_path":"...",
@@ -774,6 +775,7 @@ Request:
 	"force_https":false,
 	"port_https":443,
 	"port_dns_over_tls":853,
+	"port_dns_over_quic":784,
 	"certificate_chain":"...",
 	"private_key":"...",
 	"certificate_path":"...", // if set, certificate_chain must be empty

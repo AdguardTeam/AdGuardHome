@@ -34,6 +34,7 @@ export const setTlsConfig = (config) => async (dispatch, getState) => {
         values.private_key = btoa(values.private_key);
         values.port_https = values.port_https || 0;
         values.port_dns_over_tls = values.port_dns_over_tls || 0;
+        values.port_dns_over_quic = values.port_dns_over_quic || 0;
 
         const response = await apiClient.setTlsConfig(values);
         response.certificate_chain = atob(response.certificate_chain);
@@ -59,6 +60,7 @@ export const validateTlsConfig = (config) => async (dispatch) => {
         values.private_key = btoa(values.private_key);
         values.port_https = values.port_https || 0;
         values.port_dns_over_tls = values.port_dns_over_tls || 0;
+        values.port_dns_over_quic = values.port_dns_over_quic || 0;
 
         const response = await apiClient.validateTlsConfig(values);
         response.certificate_chain = atob(response.certificate_chain);

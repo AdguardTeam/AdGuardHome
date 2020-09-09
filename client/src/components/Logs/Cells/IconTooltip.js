@@ -6,17 +6,21 @@ import { processContent } from '../../../helpers/helpers';
 import Tooltip from '../../ui/Tooltip';
 import 'react-popper-tooltip/dist/styles.css';
 import './IconTooltip.css';
+import { SHOW_TOOLTIP_DELAY } from '../../../helpers/constants';
 
 const IconTooltip = ({
     className,
     contentItemClass,
     columnClass,
+    triggerClass,
     canShowTooltip = true,
     xlinkHref,
     title,
     placement,
     tooltipClass,
     content,
+    trigger,
+    onVisibilityChange,
     renderContent = content ? React.Children.map(
         processContent(content),
         (item, idx) => <div key={idx} className={contentItemClass}>
@@ -36,6 +40,10 @@ const IconTooltip = ({
         className={tooltipClassName}
         content={tooltipContent}
         placement={placement}
+        triggerClass={triggerClass}
+        trigger={trigger}
+        onVisibilityChange={onVisibilityChange}
+        delayShow={trigger === 'click' ? 0 : SHOW_TOOLTIP_DELAY}
     >
         {xlinkHref && <svg className={className}>
             <use xlinkHref={`#${xlinkHref}`} />
@@ -45,6 +53,8 @@ const IconTooltip = ({
 
 IconTooltip.propTypes = {
     className: PropTypes.string,
+    trigger: PropTypes.string,
+    triggerClass: PropTypes.string,
     contentItemClass: PropTypes.string,
     columnClass: PropTypes.string,
     tooltipClass: PropTypes.string,
@@ -52,11 +62,9 @@ IconTooltip.propTypes = {
     placement: PropTypes.string,
     canShowTooltip: PropTypes.bool,
     xlinkHref: PropTypes.string,
-    content: PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.array,
-    ]),
+    content: PropTypes.node,
     renderContent: PropTypes.arrayOf(PropTypes.element),
+    onVisibilityChange: PropTypes.func,
 };
 
 export default IconTooltip;

@@ -4,9 +4,10 @@ import axios from 'axios';
 
 import endsWith from 'lodash/endsWith';
 import escapeRegExp from 'lodash/escapeRegExp';
+import React from 'react';
 import { splitByNewLine, sortClients } from '../helpers/helpers';
 import {
-    BLOCK_ACTIONS, CHECK_TIMEOUT, STATUS_RESPONSE, SETTINGS_NAMES, FORM_NAME,
+    BLOCK_ACTIONS, CHECK_TIMEOUT, STATUS_RESPONSE, SETTINGS_NAMES, FORM_NAME, GETTING_STARTED_LINK,
 } from '../helpers/constants';
 import { areEqualVersions } from '../helpers/version';
 import { getTlsStatus } from './encryption';
@@ -184,7 +185,14 @@ export const getUpdate = () => async (dispatch, getState) => {
 
     dispatch(getUpdateRequest());
     const handleRequestError = () => {
-        dispatch(addNoticeToast({ error: 'update_failed' }));
+        const options = {
+            components: {
+                a: <a href={GETTING_STARTED_LINK} target="_blank"
+                      rel="noopener noreferrer" />,
+            },
+        };
+
+        dispatch(addNoticeToast({ error: 'update_failed', options }));
         dispatch(getUpdateFailure());
     };
 
@@ -545,15 +553,17 @@ export const removeStaticLease = (config) => async (dispatch) => {
 
 export const removeToast = createAction('REMOVE_TOAST');
 
-export const toggleBlocking = (type, domain) => async (dispatch, getState) => {
+export const toggleBlocking = (
+    type, domain, baseRule, baseUnblocking,
+) => async (dispatch, getState) => {
+    const baseBlockingRule = baseRule || `||${domain}^$important`;
+    const baseUnblockingRule = baseUnblocking || `@@${baseBlockingRule}`;
     const { userRules } = getState().filtering;
 
     const lineEnding = !endsWith(userRules, '\n') ? '\n' : '';
-    const baseRule = `||${domain}^$important`;
-    const baseUnblocking = `@@${baseRule}`;
 
-    const blockingRule = type === BLOCK_ACTIONS.BLOCK ? baseUnblocking : baseRule;
-    const unblockingRule = type === BLOCK_ACTIONS.BLOCK ? baseRule : baseUnblocking;
+    const blockingRule = type === BLOCK_ACTIONS.BLOCK ? baseUnblockingRule : baseBlockingRule;
+    const unblockingRule = type === BLOCK_ACTIONS.BLOCK ? baseBlockingRule : baseUnblockingRule;
     const preparedBlockingRule = new RegExp(`(^|\n)${escapeRegExp(blockingRule)}($|\n)`);
     const preparedUnblockingRule = new RegExp(`(^|\n)${escapeRegExp(unblockingRule)}($|\n)`);
 
@@ -575,4 +585,11 @@ export const toggleBlocking = (type, domain) => async (dispatch, getState) => {
     }
 
     dispatch(getFilteringStatus());
+};
+
+export const toggleBlockingForClient = (type, domain, client) => {
+    const baseRule = `||${domain}^$client='${client.replace(/'/g, '/\'')}'`;
+    const baseUnblocking = `@@${baseRule}`;
+
+    return toggleBlocking(type, domain, baseRule, baseUnblocking);
 };

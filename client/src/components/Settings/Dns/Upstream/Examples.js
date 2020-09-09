@@ -64,6 +64,27 @@ const Examples = (props) => (
                 </span>
             </li>
             <li>
+                <code>quic://dns-unfiltered.adguard.com:784</code> –&nbsp;
+                <span>
+                    <Trans
+                        components={[
+                            <a
+                                href="https://tools.ietf.org/html/draft-huitema-quic-dnsoquic-07"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                key="0"
+                            >
+                                DNS-over-QUIC
+                            </a>,
+                        ]}
+                    >
+                        example_upstream_doq
+                    </Trans>
+                    &nbsp;
+                    <span className="text-lowercase">(<Trans>experimental</Trans>)</span>
+                </span>
+            </li>
+            <li>
                 <code>tcp://9.9.9.9</code> – <Trans>example_upstream_tcp</Trans>
             </li>
             <li>

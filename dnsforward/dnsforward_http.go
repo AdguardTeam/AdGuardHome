@@ -270,7 +270,7 @@ func ValidateUpstreams(upstreams []string) error {
 	return nil
 }
 
-var protocols = []string{"tls://", "https://", "tcp://", "sdns://"}
+var protocols = []string{"tls://", "https://", "tcp://", "sdns://", "quic://"}
 
 func validateUpstream(u string) (bool, error) {
 	// Check if user tries to specify upstream for domain

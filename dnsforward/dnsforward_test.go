@@ -8,6 +8,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"fmt"
 	"math/big"
 	"net"
 	"sort"
@@ -120,6 +121,41 @@ func TestDotServer(t *testing.T) {
 	}
 
 	sendTestMessages(t, conn)
+
+	// Stop the proxy
+	err = s.Stop()
+	if err != nil {
+		t.Fatalf("DNS server failed to stop: %s", err)
+	}
+}
+
+func TestDoqServer(t *testing.T) {
+	// Prepare the proxy server
+	_, certPem, keyPem := createServerTLSConfig(t)
+	s := createTestServer(t)
+
+	s.conf.TLSConfig = TLSConfig{
+		QUICListenAddr:       &net.UDPAddr{Port: 0},
+		CertificateChainData: certPem,
+		PrivateKeyData:       keyPem,
+	}
+
+	_ = s.Prepare(nil)
+	// Starting the server
+	err := s.Start()
+	assert.Nil(t, err)
+
+	// Create a DNS-over-QUIC upstream
+	addr := s.dnsProxy.Addr(proxy.ProtoQUIC)
+	opts := upstream.Options{InsecureSkipVerify: true}
+	u, err := upstream.AddressToUpstream(fmt.Sprintf("quic://%s", addr), opts)
+	assert.Nil(t, err)
+
+	// Send the test message
+	req := createGoogleATestMessage()
+	res, err := u.Exchange(req)
+	assert.Nil(t, err)
+	assertGoogleAResponse(t, res)
 
 	// Stop the proxy
 	err = s.Stop()
