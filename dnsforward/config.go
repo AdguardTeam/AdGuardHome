@@ -187,7 +187,7 @@ func (s *Server) createProxyConfig() (proxy.Config, error) {
 
 	// Validate proxy config
 	if proxyConfig.UpstreamConfig == nil || len(proxyConfig.UpstreamConfig.Upstreams) == 0 {
-		return proxyConfig, errors.New("no upstream servers configured")
+		return proxyConfig, errors.New("no default upstream servers configured")
 	}
 
 	return proxyConfig, nil
@@ -250,6 +250,16 @@ func (s *Server) prepareUpstreamSettings() error {
 	if err != nil {
 		return fmt.Errorf("DNS: proxy.ParseUpstreamsConfig: %s", err)
 	}
+
+	if len(upstreamConfig.Upstreams) == 0 {
+		log.Info("Warning: no default upstream servers specified, using %v", defaultDNS)
+		uc, err := proxy.ParseUpstreamsConfig(defaultDNS, s.conf.BootstrapDNS, DefaultTimeout)
+		if err != nil {
+			return fmt.Errorf("DNS: failed to parse default upstreams: %v", err)
+		}
+		upstreamConfig.Upstreams = uc.Upstreams
+	}
+
 	s.conf.UpstreamConfig = &upstreamConfig
 	return nil
 }
