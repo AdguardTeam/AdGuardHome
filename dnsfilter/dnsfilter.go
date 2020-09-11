@@ -316,11 +316,14 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 	var result Result
 	var err error
 
+	// first - check rewrites, they have the highest priority
 	result = d.processRewrites(host, qtype)
 	if result.Reason == ReasonRewrite {
 		return result, nil
 	}
 
+	// Now check the hosts file -- do we have any rules for it?
+	// just like DNS rewrites, it has higher priority than filtering rules.
 	if d.Config.AutoHosts != nil {
 		ips := d.Config.AutoHosts.Process(host, qtype)
 		if ips != nil {
@@ -337,7 +340,9 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 		}
 	}
 
-	// try filter lists first
+	// Then check the filter lists.
+	// if request is blocked -- it should be blocked.
+	// if it is whitelisted -- we should do nothing with it anymore.
 	if setts.FilteringEnabled {
 		result, err = d.matchHost(host, qtype, *setts)
 		if err != nil {
@@ -348,6 +353,7 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 		}
 	}
 
+	// are there any blocked services?
 	if len(setts.ServicesRules) != 0 {
 		result = matchBlockedServicesRules(host, setts.ServicesRules)
 		if result.Reason.Matched() {
@@ -355,18 +361,7 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 		}
 	}
 
-	if setts.SafeSearchEnabled {
-		result, err = d.checkSafeSearch(host)
-		if err != nil {
-			log.Info("SafeSearch: failed: %v", err)
-			return Result{}, nil
-		}
-
-		if result.Reason.Matched() {
-			return result, nil
-		}
-	}
-
+	// browsing security web service
 	if setts.SafeBrowsingEnabled {
 		result, err = d.checkSafeBrowsing(host)
 		if err != nil {
@@ -378,12 +373,26 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 		}
 	}
 
+	// parental control web service
 	if setts.ParentalEnabled {
 		result, err = d.checkParental(host)
 		if err != nil {
 			log.Printf("Parental: failed: %v", err)
 			return Result{}, nil
 		}
+		if result.Reason.Matched() {
+			return result, nil
+		}
+	}
+
+	// apply safe search if needed
+	if setts.SafeSearchEnabled {
+		result, err = d.checkSafeSearch(host)
+		if err != nil {
+			log.Info("SafeSearch: failed: %v", err)
+			return Result{}, nil
+		}
+
 		if result.Reason.Matched() {
 			return result, nil
 		}
