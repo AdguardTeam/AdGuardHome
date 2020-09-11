@@ -34,9 +34,6 @@ func TestAutoHostsResolution(t *testing.T) {
 
 	ah.Init(f.Name())
 
-	// Update from the hosts file
-	ah.updateHosts()
-
 	// Existing host
 	ips := ah.Process("localhost", dns.TypeA)
 	assert.NotNil(t, ips)
@@ -79,7 +76,6 @@ func TestAutoHostsFSNotify(t *testing.T) {
 	// Init
 	_, _ = f.WriteString("  127.0.0.1   host  localhost  \n")
 	ah.Init(f.Name())
-	ah.updateHosts()
 
 	// Unknown host
 	ips := ah.Process("newhost", dns.TypeA)
