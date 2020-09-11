@@ -24,7 +24,11 @@ type options struct {
 	// runningAsService flag is set to true when options are passed from the service runner
 	runningAsService bool
 
-	glinetMode bool // Activate GL-Inet mode
+	// disableMemoryOptimization - disables memory optimization hacks
+	// see memoryUsage() function for the details
+	disableMemoryOptimization bool
+
+	glinetMode bool // Activate GL-Inet compatibility mode
 }
 
 // functions used for their side-effects
@@ -151,6 +155,13 @@ var noCheckUpdateArg = arg{
 	func(o options) []string { return boolSliceOrNil(o.disableUpdate) },
 }
 
+var disableMemoryOptimizationArg = arg{
+	"Disable memory optimization",
+	"no-mem-optimization", "",
+	nil, func(o options) (options, error) { o.disableMemoryOptimization = true; return o, nil }, nil,
+	func(o options) []string { return boolSliceOrNil(o.disableMemoryOptimization) },
+}
+
 var verboseArg = arg{
 	"Enable verbose output",
 	"verbose", "v",
@@ -194,6 +205,7 @@ func init() {
 		pidfileArg,
 		checkConfigArg,
 		noCheckUpdateArg,
+		disableMemoryOptimizationArg,
 		verboseArg,
 		glinetArg,
 		versionArg,
