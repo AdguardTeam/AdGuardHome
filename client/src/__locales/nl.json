@@ -132,6 +132,8 @@
     "encryption_settings": "Encryptie Instellingen",
     "dhcp_settings": "DHCP Instellingen",
     "upstream_dns": "Upstream DNS servers",
+    "upstream_dns_help": "Server adressen invoeren, een per regel. <a>Meer weten</a> over het configureren van upstream DNS servers.",
+    "upstream_dns_configured_in_file": "Geconfigureerd in {{path}}",
     "test_upstream_btn": "Test upstream",
     "upstreams": "Upstreams",
     "apply_btn": "Toepassen",
@@ -579,6 +581,6 @@
     "click_to_view_queries": "Klik om queries te bekijken",
     "port_53_faq_link": "Poort 53 wordt vaak gebruikt door services als DNSStubListener- of de systeem DNS-resolver. Lees a.u.b. <0>deze instructie</0> hoe dit is op te lossen.",
     "adg_will_drop_dns_queries": "AdGuard Home zal alle DNS verzoeken van deze toepassing/dit systeem negeren.",
-    "experimental": "Expirimenteel",
+    "experimental": "Experimenteel",
     "client_not_in_allowed_clients": "Dit systeem is niet toegestaan omdat het niet in de \"Toegestane systemen\" lijst voorkomt."
 }

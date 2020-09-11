@@ -132,6 +132,7 @@
     "encryption_settings": "Impostazioni di crittografia",
     "dhcp_settings": "Impostazioni DHCP",
     "upstream_dns": "Server DNS upstream",
+    "upstream_dns_help": "Immetti un indirizzo server per linea. <0>Per saperne di più</0> sulla configurazione dei server DNS upstream.",
     "upstream_dns_configured_in_file": "Configurato su {{path}}",
     "test_upstream_btn": "Testa gli upstream",
     "upstreams": "Upstream",
