@@ -26,3 +26,10 @@
     left: -20px;
     width: calc(100% + 20px);
 }
+
+@media (max-width: 1279.98px) {
+    .table__action {
+        position: absolute;
+        right: 0;
+    }
+}
