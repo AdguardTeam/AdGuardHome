@@ -242,7 +242,7 @@
     "install_devices_macos_list_1": "คลิกโลโก้แอปเปิ้ลแล้วกด System Preferences",
     "install_devices_macos_list_2": "คลิก  Network",
     "install_devices_macos_list_3": "เลือกการเชื่อมต่อแล้วคลิก Advanced",
-    "install_devices_macos_list_4": "ค้นหาแท็บ DNS แล้วกรอกหมาเลย AdGuard Home",
+    "install_devices_macos_list_4": "ค้นหาแท็บ DNS แล้วกรอกหมายเลข AdGuard Home",
     "install_devices_android_list_1": "เข้าหน้าเมนู(บางรุ่นจะมีตรงแท็บการแจ้งเตือน) เลือกการตั้งค่า",
     "install_devices_android_list_2": "เลือกเมนู Wi-Fi แล้วค้นหา Wi-Fi ที่จะเชื่อมต่อ (ไม่สารถตั้งค่ากับเน็ตมือถือได้)",
     "install_devices_android_list_3": "แตะชื่อWi-Fi ที่จะเชื่อมต่อค้างไว้(บางรุ่นให้เลื่อนจอลงไปล่างสุด) เลือกการตั้งค่าเพิ่มเติม",
