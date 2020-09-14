@@ -549,7 +549,7 @@
     "cache_size": "Размер кеша",
     "cache_size_desc": "Размера кеша DNS (в байтах)",
     "cache_ttl_min_override": "Переопределить минимальный TTL (в секундах)",
-    "cache_ttl_max_override": "Переопределить минимальный TTL (в секундах)",
+    "cache_ttl_max_override": "Переопределить максимальный TTL (в секундах)",
     "enter_cache_size": "Введите размер кеша",
     "enter_cache_ttl_min_override": "Введите минимальный TTL",
     "enter_cache_ttl_max_override": "Введите максимальный TTL",
