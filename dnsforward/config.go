@@ -214,6 +214,9 @@ func (s *Server) initDefaultSettings() {
 	if s.conf.TCPListenAddr == nil {
 		s.conf.TCPListenAddr = defaultValues.TCPListenAddr
 	}
+	if len(s.conf.BlockedHosts) == 0 {
+		s.conf.BlockedHosts = defaultBlockedHosts
+	}
 }
 
 // prepareUpstreamSettings - prepares upstream DNS server settings

@@ -161,6 +161,9 @@ func run(args options) {
 	// configure log level and output
 	configureLogger(args)
 
+	// Go memory hacks
+	memoryUsage(args)
+
 	// print the first message after logger is configured
 	log.Println(version())
 	log.Debug("Current working directory is %s", Context.workDir)

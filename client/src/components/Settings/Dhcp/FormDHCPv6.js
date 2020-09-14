@@ -8,12 +8,8 @@ import {
     renderInputField,
     toNumber,
 } from '../../../helpers/form';
-import { FORM_NAME } from '../../../helpers/constants';
-import {
-    validateIpv6,
-    validateIsPositiveValue,
-    validateRequiredValue,
-} from '../../../helpers/validators';
+import { FORM_NAME, UINT32_RANGE } from '../../../helpers/constants';
+import { validateIpv6, validateRequiredValue } from '../../../helpers/validators';
 
 const FormDHCPv6 = ({
     handleSubmit,
@@ -86,9 +82,10 @@ const FormDHCPv6 = ({
                     type="number"
                     className="form-control"
                     placeholder={t(ipv6placeholders.lease_duration)}
-                    validate={[validateIsPositiveValue, validateRequired]}
+                    validate={validateRequired}
                     normalizeOnBlur={toNumber}
-                    min={0}
+                    min={1}
+                    max={UINT32_RANGE.MAX}
                     disabled={!isInterfaceIncludesIpv6}
                 />
             </div>

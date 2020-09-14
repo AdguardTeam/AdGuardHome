@@ -4,32 +4,30 @@ import { Field, reduxForm } from 'redux-form';
 import { Trans, useTranslation } from 'react-i18next';
 import { shallowEqual, useSelector } from 'react-redux';
 import { renderInputField, toNumber } from '../../../../helpers/form';
-import { validateBiggerOrEqualZeroValue, getMaxValueValidator, validateRequiredValue } from '../../../../helpers/validators';
-import { FORM_NAME, SECONDS_IN_HOUR } from '../../../../helpers/constants';
+import { validateRequiredValue } from '../../../../helpers/validators';
+import { CACHE_CONFIG_FIELDS, FORM_NAME, UINT32_RANGE } from '../../../../helpers/constants';
 
-const validateMaxValue3600 = getMaxValueValidator(SECONDS_IN_HOUR);
-
-const getInputFields = ({ validateRequiredValue, validateMaxValue3600 }) => [{
-    name: 'cache_size',
-    title: 'cache_size',
-    description: 'cache_size_desc',
-    placeholder: 'enter_cache_size',
-    validate: validateRequiredValue,
-},
-{
-    name: 'cache_ttl_min',
-    title: 'cache_ttl_min_override',
-    description: 'cache_ttl_min_override_desc',
-    placeholder: 'enter_cache_ttl_min_override',
-    max: SECONDS_IN_HOUR,
-    validate: validateMaxValue3600,
-},
-{
-    name: 'cache_ttl_max',
-    title: 'cache_ttl_max_override',
-    description: 'cache_ttl_max_override_desc',
-    placeholder: 'enter_cache_ttl_max_override',
-}];
+const getInputFields = (validateRequiredValue) => [
+    {
+        name: CACHE_CONFIG_FIELDS.cache_size,
+        title: 'cache_size',
+        description: 'cache_size_desc',
+        placeholder: 'enter_cache_size',
+        validate: validateRequiredValue,
+    },
+    {
+        name: CACHE_CONFIG_FIELDS.cache_ttl_min,
+        title: 'cache_ttl_min_override',
+        description: 'cache_ttl_min_override_desc',
+        placeholder: 'enter_cache_ttl_min_override',
+    },
+    {
+        name: CACHE_CONFIG_FIELDS.cache_ttl_max,
+        title: 'cache_ttl_max_override',
+        description: 'cache_ttl_max_override_desc',
+        placeholder: 'enter_cache_ttl_max_override',
+    },
+];
 
 const Form = ({
     handleSubmit, submitting, invalid,
@@ -41,17 +39,16 @@ const Form = ({
         cache_ttl_max, cache_ttl_min,
     } = useSelector((state) => state.form[FORM_NAME.CACHE].values, shallowEqual);
 
-    const minExceedsMax = cache_ttl_min > cache_ttl_max;
+    const minExceedsMax = typeof cache_ttl_min === 'number'
+            && typeof cache_ttl_max === 'number'
+            && cache_ttl_min > cache_ttl_max;
 
-    const INPUTS_FIELDS = getInputFields({
-        validateRequiredValue,
-        validateMaxValue3600,
-    });
+    const INPUTS_FIELDS = getInputFields(validateRequiredValue);
 
     return <form onSubmit={handleSubmit}>
         <div className="row">
             {INPUTS_FIELDS.map(({
-                name, title, description, placeholder, validate, max,
+                name, title, description, placeholder, validate, min = 0, max = UINT32_RANGE.MAX,
             }) => <div className="col-12" key={name}>
                 <div className="col-12 col-md-7 p-0">
                     <div className="form__group form__group--settings">
@@ -66,15 +63,15 @@ const Form = ({
                             disabled={processingSetConfig}
                             normalize={toNumber}
                             className="form-control"
-                            validate={[validateBiggerOrEqualZeroValue].concat(validate || [])}
-                            min={0}
+                            validate={validate}
+                            min={min}
                             max={max}
                         />
                     </div>
                 </div>
             </div>)}
             {minExceedsMax
-            && <span className="text-danger pl-3 pb-3">{t('min_exceeds_max_value')}</span>}
+            && <span className="text-danger pl-3 pb-3">{t('ttl_cache_validation')}</span>}
         </div>
         <button
             type="submit"

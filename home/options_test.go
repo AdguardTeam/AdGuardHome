@@ -140,6 +140,15 @@ func TestParseDisableUpdate(t *testing.T) {
 	}
 }
 
+func TestParseDisableMemoryOptimization(t *testing.T) {
+	if testParseOk(t).disableMemoryOptimization {
+		t.Fatal("empty is not disable update")
+	}
+	if !testParseOk(t, "--no-mem-optimization").disableMemoryOptimization {
+		t.Fatal("--no-mem-optimization is disable update")
+	}
+}
+
 func TestParseService(t *testing.T) {
 	if testParseOk(t).serviceControlAction != "" {
 		t.Fatal("empty is no service command")
@@ -226,12 +235,17 @@ func TestSerializeGLInet(t *testing.T) {
 	testSerialize(t, options{glinetMode: true}, "--glinet")
 }
 
+func TestSerializeDisableMemoryOptimization(t *testing.T) {
+	testSerialize(t, options{disableMemoryOptimization: true}, "--no-mem-optimization")
+}
+
 func TestSerializeMultiple(t *testing.T) {
 	testSerialize(t, options{
-		serviceControlAction: "run",
-		configFilename:       "config",
-		workDir:              "work",
-		pidFile:              "pid",
-		disableUpdate:        true,
-	}, "-c", "config", "-w", "work", "-s", "run", "--pidfile", "pid", "--no-check-update")
+		serviceControlAction:      "run",
+		configFilename:            "config",
+		workDir:                   "work",
+		pidFile:                   "pid",
+		disableUpdate:             true,
+		disableMemoryOptimization: true,
+	}, "-c", "config", "-w", "work", "-s", "run", "--pidfile", "pid", "--no-check-update", "--no-mem-optimization")
 }
