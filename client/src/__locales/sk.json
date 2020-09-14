@@ -187,6 +187,7 @@
     "example_upstream_regular": "radová DNS (cez UDP)",
     "example_upstream_dot": "šifrované <0>DNS-over-TLS</0>",
     "example_upstream_doh": "šifrované <0>DNS-over-HTTPS</0>",
+    "example_upstream_doq": "šifrované <0>DNS-over-QUIC</0>",
     "example_upstream_sdns": "môžete použiť <0>DNS pečiatky</0> pre <1>DNSCrypt</1> alebo <2>DNS-over-HTTPS</2>",
     "example_upstream_tcp": "radová DNS (cez TCP)",
     "all_lists_up_to_date_toast": "Všetky zoznamy sú už aktuálne",
@@ -333,6 +334,8 @@
     "encryption_https_desc": "Ak je nakonfigurovaný HTTPS port, AdGuard Home administrátorské rozhranie bude prístupné cez HTTPS a bude tiež poskytovať DNS-cez-HTTPS na '/dns-query'.",
     "encryption_dot": "Port DNS-cez-TLS",
     "encryption_dot_desc": "Ak je tento port nakonfigurovaný, AdGuard Home bude na tomto porte spúšťať DNS-cez-TLS server.",
+    "encryption_doq": "Port DNS-cez-QUIC",
+    "encryption_doq_desc": "Ak je tento port nakonfigurovaný, AdGuard Home na tomto porte spustí server DNS-over-QUIC. Je to experimentálne a nemusí to byť spoľahlivé. Momentálne tiež nie je príliš veľa klientov, ktorí by ju podporovali.",
     "encryption_certificates": "Certifikáty",
     "encryption_certificates_desc": "Ak chcete používať šifrovanie, musíte pre svoju doménu poskytnúť platný reťazec certifikátov SSL. Certifikát môžete získať bezplatne na adrese <0>{{link}}</0> alebo si ho môžete kúpiť od jedného z dôveryhodných certifikačných orgánov.",
     "encryption_certificates_input": "Skopírujte alebo prilepte sem certifikáty vo formáte PEM.",
@@ -577,5 +580,7 @@
     "original_response": "Pôvodná odozva",
     "click_to_view_queries": "Kliknite pre zobrazenie dopytov",
     "port_53_faq_link": "Port 53 je často obsadený službami \"DNSStubListener\" alebo \"systemd-resolved\". Prečítajte si <0>tento návod</0> o tom, ako to vyriešiť.",
-    "adg_will_drop_dns_queries": "AdGuard Home zruší všetky DNS dopyty od tohto klienta."
+    "adg_will_drop_dns_queries": "AdGuard Home zruší všetky DNS dopyty od tohto klienta.",
+    "experimental": "Experimentálne",
+    "client_not_in_allowed_clients": "Klient nemá povolenie, pretože sa nenachádza v zozname „Povolení klienti“."
 }
