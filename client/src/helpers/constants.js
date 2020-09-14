@@ -506,9 +506,12 @@ export const FORM_NAME = {
 export const SMALL_SCREEN_SIZE = 767;
 export const MEDIUM_SCREEN_SIZE = 1023;
 
-export const SECONDS_IN_HOUR = 60 * 60;
+export const SECONDS_IN_DAY = 60 * 60 * 24;
 
-export const SECONDS_IN_DAY = SECONDS_IN_HOUR * 24;
+export const UINT32_RANGE = {
+    MIN: 0,
+    MAX: 4294967295,
+};
 
 export const DHCP_VALUES_PLACEHOLDERS = {
     ipv4: {
@@ -558,4 +561,10 @@ export const ADDRESS_TYPES = {
     IP: 'IP',
     CIDR: 'CIDR',
     UNKNOWN: 'UNKNOWN',
+};
+
+export const CACHE_CONFIG_FIELDS = {
+    cache_size: 'cache_size',
+    cache_ttl_min: 'cache_ttl_min',
+    cache_ttl_max: 'cache_ttl_max',
 };
