@@ -252,7 +252,6 @@
     "rate_limit": "Forespørselsfrekvensgrense",
     "edns_enable": "Aktiver EDNS-klientundernett",
     "edns_cs_desc": "Hvis det er skrudd på, vil AdGuard Home sende klientenes undernett til DNS-tjenerne.",
-    "rate_limit_desc": "Antallet forespørsler per sekund som én enkelt klient har lov til å be om (0: ubegrenset)",
     "blocking_ipv4_desc": "IP-adressen som det skal svares med for blokkerte A-forespørsler",
     "blocking_ipv6_desc": "IP-adressen som det skal svares med for blokkerte AAAA-forespørsler",
     "blocking_mode_default": "Standardmodus: Svar med REFUSED når det blokkeres med en adblockoppføring; svar med IP-adressen spesifisert i oppføringen når det blokkeres av en «Hosts»-oppføring",
@@ -562,10 +561,7 @@
     "enter_cache_size": "Skriv inn mellomlagerstørrelse",
     "enter_cache_ttl_min_override": "Skriv inn minimumslevetiden",
     "enter_cache_ttl_max_override": "Skriv inn maksimallevetiden",
-    "cache_ttl_min_override_desc": "Overstyr levetidsverdien (minimum) som mottas fra oppstrømstjeneren. Denne verdien kan ikke være større enn 3600 (1 time)",
     "cache_ttl_max_override_desc": "Overstyr levetidsverdien (maksimal) som mottas fra oppstrømstjeneren",
-    "min_exceeds_max_value": "Minimumsverdien er høyere enn maksimalverdien",
-    "value_not_larger_than": "Verdien kan ikke være større enn {{maximum}}",
     "filter_category_general": "Generelt",
     "filter_category_security": "Sikkerhet",
     "filter_category_regional": "Regional",
@@ -577,6 +573,5 @@
     "setup_config_to_enable_dhcp_server": "Oppsett for å skru på DHCP-tjeneren",
     "original_response": "Opprinnelig svar",
     "click_to_view_queries": "Klikk for å vise forespørsler",
-    "experimental": "Eksperimentell",
-    "client_not_in_allowed_clients": "Klienten er ikke tillatt, fordi den ikke er i «Tillatte klienter»-listen."
+    "experimental": "Eksperimentell"
 }

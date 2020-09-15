@@ -191,7 +191,6 @@
     "rate_limit": "Limite de taxa",
     "edns_enable": "Activar sub-rede do cliente EDNS",
     "edns_cs_desc": "Se activado, o AdGuard Home enviará sub-redes dos clientes para os servidores DNS.",
-    "rate_limit_desc": "O número de solicitações por segundo que um único cliente pode fazer (0: ilimitado)",
     "blocking_ipv4_desc": "Endereço IP a ser devolvido para uma solicitação A bloqueada",
     "blocking_ipv6_desc": "Endereço IP a ser devolvido para uma solicitação AAAA bloqueada",
     "upstream_dns_client_desc": "Se mantiver esse campo vazio, o AdGuard Home usará os servidores configurados nas <0>Definições de DNS</0>.",

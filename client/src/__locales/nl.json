@@ -253,7 +253,7 @@
     "rate_limit": "Ratio limiet",
     "edns_enable": "Zet EDNS client subnet aan",
     "edns_cs_desc": "Indien ingeschakeld stuurt AdGuard Home het subnet van de client naar de DNS-servers.",
-    "rate_limit_desc": "Het aantal verzoeken per seconde die een enkele client mag doen (0: onbeperkt)",
+    "rate_limit_desc": "Het aantal verzoeken per seconde die een enkele client mag doen (0 betekent onbeperkt)",
     "blocking_ipv4_desc": "IP-adres dat moet worden teruggegeven voor een geblokkeerd A-verzoek",
     "blocking_ipv6_desc": "IP-adres dat moet worden teruggegeven voor een geblokkeerd A-verzoek",
     "blocking_mode_default": "Standaard: Reageer met REFUSED wanneer geblokkeerd door een Adblock-type regel; reageer met het IP-adres dat is opgegeven in de regel wanneer het wordt geblokkeerd door een /etc/hosts type regel",
@@ -564,10 +564,9 @@
     "enter_cache_size": "Cache grootte invoeren",
     "enter_cache_ttl_min_override": "Minimale TTL invoeren",
     "enter_cache_ttl_max_override": "Maximale TTL invoeren",
-    "cache_ttl_min_override_desc": "Overschrijft TTL waarde (minimaal) ontvangen van de upstream server. Deze waarde mag niet hoger als 3600 (1 uur) zijn",
+    "cache_ttl_min_override_desc": "Overschrijf de TTL waarde (minimum) ontvangen van de upstream server",
     "cache_ttl_max_override_desc": "Overschrijft TTL waarde (maximaal) ontvangen van de upstream server",
-    "min_exceeds_max_value": "Minimale waarde overschrijdt de maximale waarde",
-    "value_not_larger_than": "Waarde mag niet hoger zijn dan {{maximum}}",
+    "ttl_cache_validation": "Minimale waarde TTL-cache moet kleiner dan of gelijk zijn aan de maximale waarde",
     "filter_category_general": "Algemeen",
     "filter_category_security": "Beveiliging",
     "filter_category_regional": "Regionaal",
@@ -581,6 +580,5 @@
     "click_to_view_queries": "Klik om queries te bekijken",
     "port_53_faq_link": "Poort 53 wordt vaak gebruikt door services als DNSStubListener- of de systeem DNS-resolver. Lees a.u.b. <0>deze instructie</0> hoe dit is op te lossen.",
     "adg_will_drop_dns_queries": "AdGuard Home zal alle DNS verzoeken van deze toepassing/dit systeem negeren.",
-    "experimental": "Experimenteel",
-    "client_not_in_allowed_clients": "Dit systeem is niet toegestaan omdat het niet in de \"Toegestane systemen\" lijst voorkomt."
+    "experimental": "Experimenteel"
 }

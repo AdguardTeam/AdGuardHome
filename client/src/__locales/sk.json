@@ -253,7 +253,6 @@
     "rate_limit": "Rýchlostný limit",
     "edns_enable": "Povoliť klientsku podsiete EDNS",
     "edns_cs_desc": "Ak je zapnuté, program AdGuard Home bude odosielať podsiete klientov na DNS servery.",
-    "rate_limit_desc": "Počet požiadaviek za sekundu, ktoré môže jeden klient vykonať (0: neobmedzene)",
     "blocking_ipv4_desc": "IP adresa, ktorá sa má vrátiť v prípade blokovanej žiadosti A",
     "blocking_ipv6_desc": "IP adresa, ktorá sa má vrátiť v prípade blokovanej žiadosti AAAA",
     "blocking_mode_default": "Predvolená hodnota: Odpovedať pomocou REFUSED, ak je blokovaný pravidlom v štýle Adblock; odpovedať pomocou IP adresy určenej v pravidle, ak je blokovaná pravidlom v štýle /etc/hosts",
@@ -564,10 +563,8 @@
     "enter_cache_size": "Zadať veľkosť cache",
     "enter_cache_ttl_min_override": "Zadať minimálne TTL",
     "enter_cache_ttl_max_override": "Zadať maximálne TTL",
-    "cache_ttl_min_override_desc": "Prepíše hodnotu TTL (minimálnu) prijatú z upstream servera. Táto hodnota nemôže byť väčšia ako 3600 (1 hodina)",
     "cache_ttl_max_override_desc": "Prepíše hodnotu TTL (maximálnu) prijatú z upstream servera",
-    "min_exceeds_max_value": "Minimálna hodnota je väčšia ako maximálna",
-    "value_not_larger_than": "Hodnota nemôže byť väčšia ako {{maximum}}",
+    "ttl_cache_validation": "Minimálna hodnota TTL cache musí byť menšia alebo rovná maximálnej hodnote",
     "filter_category_general": "Všeobecné",
     "filter_category_security": "Bezpečnosť",
     "filter_category_regional": "Regionálne",
@@ -581,6 +578,5 @@
     "click_to_view_queries": "Kliknite pre zobrazenie dopytov",
     "port_53_faq_link": "Port 53 je často obsadený službami \"DNSStubListener\" alebo \"systemd-resolved\". Prečítajte si <0>tento návod</0> o tom, ako to vyriešiť.",
     "adg_will_drop_dns_queries": "AdGuard Home zruší všetky DNS dopyty od tohto klienta.",
-    "experimental": "Experimentálne",
-    "client_not_in_allowed_clients": "Klient nemá povolenie, pretože sa nenachádza v zozname „Povolení klienti“."
+    "experimental": "Experimentálne"
 }

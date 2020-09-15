@@ -253,7 +253,7 @@
     "rate_limit": "Omejitev hitrosti",
     "edns_enable": "Omogoči podmrežje odjemalcev EDNS",
     "edns_cs_desc": "Če je omogočeno, bo AdGuard Home pošiljal podmrežja odjemalca na strežnike DNS.",
-    "rate_limit_desc": "Število zahtev na sekundo, ki jih lahko pošlje posamezni odjemalec (0: neomejeno)",
+    "rate_limit_desc": "Število zahtev na sekundo, ki jih sme narediti posamezen odjemalec (nastavitev na 0 pomeni neomejeno)",
     "blocking_ipv4_desc": "IP naslov, ki mora biti vrnjen za onemogočeno zahtevo A",
     "blocking_ipv6_desc": "IP naslov, ki mora biti vrnjen za onemogočeno zahtevo AAAA",
     "blocking_mode_default": "Privzeto: odziv z REFUSED, kadar je onemogočen s slogom pravila zaviranja oglasov; odziv z navedenim naslovom IP v pravilu, kadar je onemogočen s pravilom /etc/gostitelji",
@@ -564,10 +564,9 @@
     "enter_cache_size": "Vnesite velikost predpomnilnika",
     "enter_cache_ttl_min_override": "Vnesite najmanjši TTL",
     "enter_cache_ttl_max_override": "Vnesite največji TTL",
-    "cache_ttl_min_override_desc": "Vrednost preglasovanja TTL (najmanjša), prejeta od zgornjega strežnika. Ta vrednost ne sme presegati 3600 (1 ura)",
+    "cache_ttl_min_override_desc": "Vrednost preglasovanja TTL (najmanjša), prejeta od zgornjega strežnika",
     "cache_ttl_max_override_desc": "Vrednost preglasovanja TTL (največja), prejeta od zgornjega strežnika",
-    "min_exceeds_max_value": "Najmanjša vrednost presega največjo vrednost",
-    "value_not_larger_than": "Vrednost ne sme biti večja od {{maximum}}",
+    "ttl_cache_validation": "Najmanjša vrednost predpomnilnika TTL mora biti manjša ali enaka največji vrednosti",
     "filter_category_general": "Splošno",
     "filter_category_security": "Varnost",
     "filter_category_regional": "Področno",
@@ -581,6 +580,5 @@
     "click_to_view_queries": "Kliknite za prikaz poizvedb",
     "port_53_faq_link": "Vrata 53 pogosto zasedajo storitve 'DNSStubListener' ali 'Sistemsko razrešene storitve'. Preberite <0>to navodilo</0> o tem, kako to rešiti.",
     "adg_will_drop_dns_queries": "AdGuard Home bo izpustil vse poizvedbe DNS iz tega odjemalca.",
-    "experimental": "Eksperimentalno",
-    "client_not_in_allowed_clients": "Odjemalec ni dovoljen, ker ni na seznamu 'Dovoljeni odjemalci'."
+    "experimental": "Eksperimentalno"
 }

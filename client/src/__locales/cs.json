@@ -564,10 +564,9 @@
     "enter_cache_size": "Zadejte velikost mezipaměti",
     "enter_cache_ttl_min_override": "Zadejte minimální hodnotu TTL",
     "enter_cache_ttl_max_override": "Zadejte maximální hodnotu TTL",
-    "cache_ttl_min_override_desc": "Přepište hodnotu TTL (minimální) obdrženou z odchozího serveru. Tato hodnota nemůže být větší než 3600 (1 hodina)",
+    "cache_ttl_min_override_desc": "Přepište hodnotu TTL (minimální) obdrženou z odchozího serveru",
     "cache_ttl_max_override_desc": "Přepište hodnotu TTL (maximální) obdrženou z odchozího serveru",
-    "min_exceeds_max_value": "Minimální hodnota přesahuje maximální hodnotu",
-    "value_not_larger_than": "Hodnota nesmí být vyšší než {{maximum}}",
+    "ttl_cache_validation": "Minimální hodnota TTL mezipaměti musí být menší nebo rovna maximální hodnotě",
     "filter_category_general": "Obecné",
     "filter_category_security": "Bezpečnost",
     "filter_category_regional": "Regionální",
@@ -581,6 +580,5 @@
     "click_to_view_queries": "Klikněte pro zobrazení dotazů",
     "port_53_faq_link": "Port 53 je často obsazen službami \"DNSStubListener\" nebo \"systemd-resolved\". Přečtěte si <0>tento návod</0> o tom, jak to vyřešit.",
     "adg_will_drop_dns_queries": "AdGuard Home zruší všechny DNS dotazy tohoto klienta.",
-    "experimental": "Experimentální",
-    "client_not_in_allowed_clients": "Tento klient není povolen, protože není na seznamu \"Povolení klienti\"."
+    "experimental": "Experimentální"
 }

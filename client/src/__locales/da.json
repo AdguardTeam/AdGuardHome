@@ -253,7 +253,7 @@
     "rate_limit": "Hyppighedsgrænse",
     "edns_enable": "Aktiver EDNS Client Subnet",
     "edns_cs_desc": "Hvis det er aktiveret, vil AdGuard Home sende klienters subnets til DNS-serverne.",
-    "rate_limit_desc": "Antallet af anmodninger pr. sekund, som en enkelt klient får lov til at fremsætte (0: ubegrænset)",
+    "rate_limit_desc": "Antallet af anmodninger pr. sekund, som en enkelt klient får lov til at fremsætte (indstilles den til 0 betyder det ubegrænset)",
     "blocking_ipv4_desc": "IP-adresse, der skal returneres for en blokeret A-anmodning",
     "blocking_ipv6_desc": "IP-adresse, der skal returneres for en blokeret AAAA-anmodning",
     "blocking_mode_default": "Standard: Svar med REFUSED, når det blokeres af Adblock-stil-reglen; svar med den IP-adresse, der er angivet i reglen, når den blokeres af /etc/hosts-style-reglen",
@@ -564,10 +564,9 @@
     "enter_cache_size": "Indtast cache-størrelse",
     "enter_cache_ttl_min_override": "Indtast minimum TTL",
     "enter_cache_ttl_max_override": "Indtast maksimum TTL",
-    "cache_ttl_min_override_desc": "Overskriv TTL-værdi (minimum) modtaget fra upstream-serveren. Denne værdi kan ikke være større end 3600 (1 time)",
+    "cache_ttl_min_override_desc": "Overskriv TTL-værdi (minimum) modtaget fra upstream-serveren",
     "cache_ttl_max_override_desc": "Overskriv TTL-værdi (maksimum) modtaget fra upstream-serveren",
-    "min_exceeds_max_value": "Minimumsværdien overstiger maksimumværdien",
-    "value_not_larger_than": "Værdien kan ikke være større end {{maximum}}",
+    "ttl_cache_validation": "Minimum cache TTL-værdi skal være mindre end eller lig med den maksimale værdi",
     "filter_category_general": "Generelt",
     "filter_category_security": "Sikkerhed",
     "filter_category_regional": "Regional",
@@ -581,6 +580,5 @@
     "click_to_view_queries": "Klik for at se forespørgsler",
     "port_53_faq_link": "Port 53 optages ofte af \"DNSStubListener\" eller \"systemd-resolved\" tjenester. Læs <0>denne instruktion</0> om, hvordan du løser dette.",
     "adg_will_drop_dns_queries": "AdGuard Home vil afbryde alle DNS-forespørgsler fra denne klient.",
-    "experimental": "Eksperimentel",
-    "client_not_in_allowed_clients": "Klienten er ikke tilladt, fordi den ikke er på listen \"Tilladte klienter\"."
+    "experimental": "Eksperimentel"
 }

@@ -253,7 +253,7 @@
     "rate_limit": "Límite de cantidad",
     "edns_enable": "Habilitar subred de cliente EDNS",
     "edns_cs_desc": "Si está habilitado, AdGuard Home enviará las subredes de los clientes a los servidores DNS.",
-    "rate_limit_desc": "Número de peticiones por segundo que un solo cliente puede hacer (0: ilimitado)",
+    "rate_limit_desc": "Número de peticiones por segundo que un solo cliente puede hacer (establecerlo en 0 significa ilimitado)",
     "blocking_ipv4_desc": "Dirección IP devolverá una petición A bloqueada",
     "blocking_ipv6_desc": "Dirección IP devolverá una petición AAAA bloqueada",
     "blocking_mode_default": "Predeterminado: Responde con REFUSED cuando está bloqueado por la regla de estilo Adblock; responde con la dirección IP especificada en la regla cuando está bloqueado por una regla de estilo /etc/hosts",
@@ -564,10 +564,9 @@
     "enter_cache_size": "Ingresa el tamaño de la caché",
     "enter_cache_ttl_min_override": "Ingresa el TTL mínimo",
     "enter_cache_ttl_max_override": "Ingresa el TTL máximo",
-    "cache_ttl_min_override_desc": "Anula el valor TTL (mínimo) recibido del servidor DNS de subida. Este valor no puede ser superior a 3600 (1 hora)",
+    "cache_ttl_min_override_desc": "Anula el valor TTL (mínimo) recibido del servidor DNS de subida",
     "cache_ttl_max_override_desc": "Anula el valor TTL (máximo) recibido del servidor DNS de subida",
-    "min_exceeds_max_value": "El valor mínimo supera al valor máximo",
-    "value_not_larger_than": "El valor no puede ser mayor que {{maximum}}",
+    "ttl_cache_validation": "El valor TTL mínimo de la caché debe ser menor o igual al valor máximo",
     "filter_category_general": "General",
     "filter_category_security": "Seguridad",
     "filter_category_regional": "Regional",
@@ -581,6 +580,5 @@
     "click_to_view_queries": "Clic para ver las consultas",
     "port_53_faq_link": "El puerto 53 suele estar ocupado por los servicios \"DNSStubListener\" o \"systemd-resolved\". Por favor lee <0>esta instrucción</0> sobre cómo resolver esto.",
     "adg_will_drop_dns_queries": "AdGuard Home descartará todas las consultas DNS de este cliente.",
-    "experimental": "experimental",
-    "client_not_in_allowed_clients": "El cliente no está permitido porque no está en la lista de \"Clientes permitidos\"."
+    "experimental": "experimental"
 }

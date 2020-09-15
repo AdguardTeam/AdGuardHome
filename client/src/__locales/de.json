@@ -253,7 +253,6 @@
     "rate_limit": "Begrenzungswert",
     "edns_enable": "EDNS Client Subnetz aktivieren",
     "edns_cs_desc": "Wenn aktiviert, sendet AdGuard Home die Subnetze der Clients an die DNS-Server.",
-    "rate_limit_desc": "Die Anzahl der Anfragen pro Sekunde, die ein einzelner Client stellen darf (0: unbegrenzt)",
     "blocking_ipv4_desc": "IP-Adresse, die für eine gesperrte A-Anfrage zurückgegeben werden soll",
     "blocking_ipv6_desc": "IP-Adresse, die für eine gesperrte AAAA-Anfrage zurückgegeben werden soll",
     "blocking_mode_default": "Standard: Mit REFUSED antworten, wenn sie durch eine Regel im Adblock-Stil gesperrt sind; mit der in der Regel angegebenen IP-Adresse antworten, wenn sie durch eine Regel im /etc/hosts-Stil gesperrt wurde",
@@ -564,10 +563,7 @@
     "enter_cache_size": "Größe des Zwischenspeichers eingeben",
     "enter_cache_ttl_min_override": "TTL-Minimalwert eingeben",
     "enter_cache_ttl_max_override": "TTL-Höchstwert eingeben",
-    "cache_ttl_min_override_desc": "Überschreibt den TTL-Minimalwert, der vom vorgeschalteten Server empfangen wurde. Dieser Wert darf nicht größer als 3600 (Sek.) (≙ 1 Stunde) betragen.",
     "cache_ttl_max_override_desc": "Überschreibt den TLL-Maximalwert, der vom vorgeschalteten Server empfangenen wurde",
-    "min_exceeds_max_value": "Minimalwert überschreitet Maximalwert",
-    "value_not_larger_than": "Wert darf höchstens {{maximum}} betragen",
     "filter_category_general": "Allgemein",
     "filter_category_security": "Sicherheit",
     "filter_category_regional": "Regional",
@@ -581,6 +577,5 @@
     "click_to_view_queries": "Anklicken, um Abfragen anzuzeigen",
     "port_53_faq_link": "Port 53 wird oft von Diensten wie „DNSStubListener” oder „systemresolved” belegt. Bitte lesen Sie <0>diese Anweisung</0>, wie dies behoben werden kann.",
     "adg_will_drop_dns_queries": "AdGuard Home wird alle DNS-Abfragen von diesem Client verwerfen.",
-    "experimental": "Experimentell",
-    "client_not_in_allowed_clients": "Der Client ist nicht zulässig, da er nicht in der Liste „Erlaubte Clients” aufgeführt ist."
+    "experimental": "Experimentell"
 }
