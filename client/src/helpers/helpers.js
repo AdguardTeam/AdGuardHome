@@ -14,6 +14,7 @@ import queryString from 'query-string';
 import { getTrackerData } from './trackers/trackers';
 
 import {
+    ADDRESS_TYPES,
     CHECK_TIMEOUT,
     CUSTOM_FILTERING_RULES_ID,
     DEFAULT_DATE_FORMAT_OPTIONS,
@@ -509,6 +510,18 @@ const isIpMatchCidr = (parsedIp, parsedCidr) => {
     }
 };
 
+export const isIpInCidr = (ip, cidr) => {
+    try {
+        const parsedIp = ipaddr.parse(ip);
+        const parsedCidr = ipaddr.parseCIDR(cidr);
+
+        return isIpMatchCidr(parsedIp, parsedCidr);
+    } catch (e) {
+        console.error(e);
+        return false;
+    }
+};
+
 /**
  * The purpose of this method is to quickly check
  * if this IP can possibly be in the specified CIDR range.
@@ -579,6 +592,29 @@ const isIpQuickMatchCIDR = (ip, listItem) => {
 };
 
 /**
+ *
+ * @param ipOrCidr
+ * @returns {'IP' | 'CIDR' | 'UNKNOWN'}
+ *
+ */
+export const findAddressType = (address) => {
+    try {
+        const cidrMaybe = address.includes('/');
+
+        if (!cidrMaybe && ipaddr.isValid(address)) {
+            return ADDRESS_TYPES.IP;
+        }
+        if (cidrMaybe && ipaddr.parseCIDR(address)) {
+            return ADDRESS_TYPES.CIDR;
+        }
+
+        return ADDRESS_TYPES.UNKNOWN;
+    } catch (e) {
+        return ADDRESS_TYPES.UNKNOWN;
+    }
+};
+
+/**
  * @param ip {string}
  * @param list {string}
  * @returns {'EXACT' | 'CIDR' | 'NOT_FOND'}
@@ -622,6 +658,42 @@ export const getIpMatchListStatus = (ip, list) => {
     }
 };
 
+/**
+ * @param ids {string[]}
+ * @returns {Object}
+ */
+export const separateIpsAndCidrs = (ids) => ids.reduce((acc, curr) => {
+    const addressType = findAddressType(curr);
+
+    if (addressType === ADDRESS_TYPES.IP) {
+        acc.ips.push(curr);
+    }
+    if (addressType === ADDRESS_TYPES.CIDR) {
+        acc.cidrs.push(curr);
+    }
+    return acc;
+}, { ips: [], cidrs: [] });
+
+export const countClientsStatistics = (ids, autoClients) => {
+    const { ips, cidrs } = separateIpsAndCidrs(ids);
+
+    const ipsCount = ips.reduce((acc, curr) => {
+        const count = autoClients[curr] || 0;
+        return acc + count;
+    }, 0);
+
+    const cidrsCount = Object.entries(autoClients)
+        .reduce((acc, curr) => {
+            const [id, count] = curr;
+            if (cidrs.some((cidr) => isIpInCidr(id, cidr))) {
+            // eslint-disable-next-line no-param-reassign
+                acc += count;
+            }
+            return acc;
+        }, 0);
+
+    return ipsCount + cidrsCount;
+};
 
 /**
  * @param {string} elapsedMs

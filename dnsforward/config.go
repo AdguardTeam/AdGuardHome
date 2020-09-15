@@ -5,16 +5,17 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"sort"
 
-	"github.com/AdguardTeam/golibs/log"
-	"github.com/joomcode/errorx"
-
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/util"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/log"
+	"github.com/joomcode/errorx"
 )
 
 // FilteringConfig represents the DNS filtering configuration of AdGuard Home
@@ -55,10 +56,11 @@ type FilteringConfig struct {
 	// Upstream DNS servers configuration
 	// --
 
-	UpstreamDNS  []string `yaml:"upstream_dns"`
-	BootstrapDNS []string `yaml:"bootstrap_dns"` // a list of bootstrap DNS for DoH and DoT (plain DNS only)
-	AllServers   bool     `yaml:"all_servers"`   // if true, parallel queries to all configured upstream servers are enabled
-	FastestAddr  bool     `yaml:"fastest_addr"`  // use Fastest Address algorithm
+	UpstreamDNS         []string `yaml:"upstream_dns"`
+	UpstreamDNSFileName string   `yaml:"upstream_dns_file"`
+	BootstrapDNS        []string `yaml:"bootstrap_dns"` // a list of bootstrap DNS for DoH and DoT (plain DNS only)
+	AllServers          bool     `yaml:"all_servers"`   // if true, parallel queries to all configured upstream servers are enabled
+	FastestAddr         bool     `yaml:"fastest_addr"`  // use Fastest Address algorithm
 
 	// Access settings
 	// --
@@ -92,6 +94,7 @@ type FilteringConfig struct {
 // TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
 type TLSConfig struct {
 	TLSListenAddr  *net.TCPAddr `yaml:"-" json:"-"`
+	QUICListenAddr *net.UDPAddr `yaml:"-" json:"-"`
 	StrictSNICheck bool         `yaml:"strict_sni_check" json:"-"` // Reject connection if the client uses server name (in SNI) that doesn't match the certificate
 
 	CertificateChain string `yaml:"certificate_chain" json:"certificate_chain"` // PEM-encoded certificates chain
@@ -184,7 +187,7 @@ func (s *Server) createProxyConfig() (proxy.Config, error) {
 
 	// Validate proxy config
 	if proxyConfig.UpstreamConfig == nil || len(proxyConfig.UpstreamConfig.Upstreams) == 0 {
-		return proxyConfig, errors.New("no upstream servers configured")
+		return proxyConfig, errors.New("no default upstream servers configured")
 	}
 
 	return proxyConfig, nil
@@ -211,14 +214,55 @@ func (s *Server) initDefaultSettings() {
 	if s.conf.TCPListenAddr == nil {
 		s.conf.TCPListenAddr = defaultValues.TCPListenAddr
 	}
+	if len(s.conf.BlockedHosts) == 0 {
+		s.conf.BlockedHosts = defaultBlockedHosts
+	}
 }
 
 // prepareUpstreamSettings - prepares upstream DNS server settings
 func (s *Server) prepareUpstreamSettings() error {
-	upstreamConfig, err := proxy.ParseUpstreamsConfig(s.conf.UpstreamDNS, s.conf.BootstrapDNS, DefaultTimeout)
+	// We're setting a customized set of RootCAs
+	// The reason is that Go default mechanism of loading TLS roots
+	// does not always work properly on some routers so we're
+	// loading roots manually and pass it here.
+	// See "util.LoadSystemRootCAs"
+	upstream.RootCAs = s.conf.TLSv12Roots
+
+	// See util.InitTLSCiphers -- removed unsafe ciphers
+	if len(s.conf.TLSCiphers) > 0 {
+		upstream.CipherSuites = s.conf.TLSCiphers
+	}
+
+	// Load upstreams either from the file, or from the settings
+	var upstreams []string
+	if s.conf.UpstreamDNSFileName != "" {
+		data, err := ioutil.ReadFile(s.conf.UpstreamDNSFileName)
+		if err != nil {
+			return err
+		}
+		d := string(data)
+		for len(d) != 0 {
+			s := util.SplitNext(&d, '\n')
+			upstreams = append(upstreams, s)
+		}
+		log.Debug("DNS: using %d upstream servers from file %s", len(upstreams), s.conf.UpstreamDNSFileName)
+	} else {
+		upstreams = s.conf.UpstreamDNS
+	}
+	upstreamConfig, err := proxy.ParseUpstreamsConfig(upstreams, s.conf.BootstrapDNS, DefaultTimeout)
 	if err != nil {
 		return fmt.Errorf("DNS: proxy.ParseUpstreamsConfig: %s", err)
 	}
+
+	if len(upstreamConfig.Upstreams) == 0 {
+		log.Info("Warning: no default upstream servers specified, using %v", defaultDNS)
+		uc, err := proxy.ParseUpstreamsConfig(defaultDNS, s.conf.BootstrapDNS, DefaultTimeout)
+		if err != nil {
+			return fmt.Errorf("DNS: failed to parse default upstreams: %v", err)
+		}
+		upstreamConfig.Upstreams = uc.Upstreams
+	}
+
 	s.conf.UpstreamConfig = &upstreamConfig
 	return nil
 }
@@ -235,36 +279,49 @@ func (s *Server) prepareIntlProxy() {
 
 // prepareTLS - prepares TLS configuration for the DNS proxy
 func (s *Server) prepareTLS(proxyConfig *proxy.Config) error {
-	if s.conf.TLSListenAddr != nil && len(s.conf.CertificateChainData) != 0 && len(s.conf.PrivateKeyData) != 0 {
+	if len(s.conf.CertificateChainData) == 0 || len(s.conf.PrivateKeyData) == 0 {
+		return nil
+	}
+
+	if s.conf.TLSListenAddr == nil &&
+		s.conf.QUICListenAddr == nil {
+		return nil
+	}
+
+	if s.conf.TLSListenAddr != nil {
 		proxyConfig.TLSListenAddr = []*net.TCPAddr{s.conf.TLSListenAddr}
-		var err error
-		s.conf.cert, err = tls.X509KeyPair(s.conf.CertificateChainData, s.conf.PrivateKeyData)
+	}
+
+	if s.conf.QUICListenAddr != nil {
+		proxyConfig.QUICListenAddr = []*net.UDPAddr{s.conf.QUICListenAddr}
+	}
+
+	var err error
+	s.conf.cert, err = tls.X509KeyPair(s.conf.CertificateChainData, s.conf.PrivateKeyData)
+	if err != nil {
+		return errorx.Decorate(err, "Failed to parse TLS keypair")
+	}
+
+	if s.conf.StrictSNICheck {
+		x, err := x509.ParseCertificate(s.conf.cert.Certificate[0])
 		if err != nil {
-			return errorx.Decorate(err, "Failed to parse TLS keypair")
+			return errorx.Decorate(err, "x509.ParseCertificate(): %s", err)
 		}
-
-		if s.conf.StrictSNICheck {
-			x, err := x509.ParseCertificate(s.conf.cert.Certificate[0])
-			if err != nil {
-				return errorx.Decorate(err, "x509.ParseCertificate(): %s", err)
-			}
-			if len(x.DNSNames) != 0 {
-				s.conf.dnsNames = x.DNSNames
-				log.Debug("DNS: using DNS names from certificate's SAN: %v", x.DNSNames)
-				sort.Strings(s.conf.dnsNames)
-			} else {
-				s.conf.dnsNames = append(s.conf.dnsNames, x.Subject.CommonName)
-				log.Debug("DNS: using DNS name from certificate's CN: %s", x.Subject.CommonName)
-			}
-		}
-
-		proxyConfig.TLSConfig = &tls.Config{
-			GetCertificate: s.onGetCertificate,
-			MinVersion:     tls.VersionTLS12,
+		if len(x.DNSNames) != 0 {
+			s.conf.dnsNames = x.DNSNames
+			log.Debug("DNS: using DNS names from certificate's SAN: %v", x.DNSNames)
+			sort.Strings(s.conf.dnsNames)
+		} else {
+			s.conf.dnsNames = append(s.conf.dnsNames, x.Subject.CommonName)
+			log.Debug("DNS: using DNS name from certificate's CN: %s", x.Subject.CommonName)
 		}
 	}
-	upstream.RootCAs = s.conf.TLSv12Roots
-	upstream.CipherSuites = s.conf.TLSCiphers
+
+	proxyConfig.TLSConfig = &tls.Config{
+		GetCertificate: s.onGetCertificate,
+		MinVersion:     tls.VersionTLS12,
+	}
+
 	return nil
 }
 

@@ -52,6 +52,7 @@ export const REPOSITORY = {
 
 export const PRIVACY_POLICY_LINK = 'https://adguard.com/privacy/home.html';
 export const PORT_53_FAQ_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ#bindinuse';
+export const UPSTREAM_CONFIGURATION_WIKI_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#upstreams';
 
 export const GETTING_STARTED_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#update';
 
@@ -71,6 +72,7 @@ export const STANDARD_DNS_PORT = 53;
 export const STANDARD_WEB_PORT = 80;
 export const STANDARD_HTTPS_PORT = 443;
 export const DNS_OVER_TLS_PORT = 853;
+export const DNS_OVER_QUIC_PORT = 784;
 export const MAX_PORT = 65535;
 
 export const EMPTY_DATE = '0001-01-01T00:00:00Z';
@@ -292,8 +294,11 @@ export const QUERY_LOG_INTERVALS_DAYS = [1, 7, 30, 90];
 
 export const FILTERS_INTERVALS_HOURS = [0, 1, 12, 24, 72, 168];
 
+// Note that translation strings contain these modes (blocking_mode_CONSTANT)
+// i.e. blocking_mode_default, blocking_mode_null_ip
 export const BLOCKING_MODES = {
     default: 'default',
+    refused: 'refused',
     nxdomain: 'nxdomain',
     null_ip: 'null_ip',
     custom_ip: 'custom_ip',
@@ -501,9 +506,12 @@ export const FORM_NAME = {
 export const SMALL_SCREEN_SIZE = 767;
 export const MEDIUM_SCREEN_SIZE = 1023;
 
-export const SECONDS_IN_HOUR = 60 * 60;
+export const SECONDS_IN_DAY = 60 * 60 * 24;
 
-export const SECONDS_IN_DAY = SECONDS_IN_HOUR * 24;
+export const UINT32_RANGE = {
+    MIN: 0,
+    MAX: 4294967295,
+};
 
 export const DHCP_VALUES_PLACEHOLDERS = {
     ipv4: {
@@ -547,4 +555,16 @@ export const TOAST_TIMEOUTS = {
     [TOAST_TYPES.SUCCESS]: SUCCESS_TOAST_TIMEOUT,
     [TOAST_TYPES.ERROR]: FAILURE_TOAST_TIMEOUT,
     [TOAST_TYPES.NOTICE]: FAILURE_TOAST_TIMEOUT,
+};
+
+export const ADDRESS_TYPES = {
+    IP: 'IP',
+    CIDR: 'CIDR',
+    UNKNOWN: 'UNKNOWN',
+};
+
+export const CACHE_CONFIG_FIELDS = {
+    cache_size: 'cache_size',
+    cache_ttl_min: 'cache_ttl_min',
+    cache_ttl_max: 'cache_ttl_max',
 };

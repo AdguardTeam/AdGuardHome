@@ -31,6 +31,9 @@ var defaultDNS = []string{
 }
 var defaultBootstrap = []string{"9.9.9.10", "149.112.112.10", "2620:fe::10", "2620:fe::fe:10"}
 
+// Often requested by all kinds of DNS probes
+var defaultBlockedHosts = []string{"version.bind", "id.server", "hostname.bind"}
+
 var webRegistered bool
 
 // Server is the main way to start a DNS server.

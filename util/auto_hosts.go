@@ -10,9 +10,10 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/miekg/dns"
+
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/fsnotify/fsnotify"
-	"github.com/miekg/dns"
 )
 
 type onChangedT func()
@@ -62,6 +63,9 @@ func (a *AutoHosts) Init(hostsFn string) {
 		a.hostsDirs = append(a.hostsDirs, "/tmp/hosts") // OpenWRT: "/tmp/hosts/dhcp.cfg01411c"
 	}
 
+	// Load hosts initially
+	a.updateHosts()
+
 	var err error
 	a.watcher, err = fsnotify.NewWatcher()
 	if err != nil {
@@ -100,6 +104,62 @@ func (a *AutoHosts) Close() {
 	if a.watcher != nil {
 		_ = a.watcher.Close()
 	}
+}
+
+// Process - get the list of IP addresses for the hostname
+// Return nil if not found
+func (a *AutoHosts) Process(host string, qtype uint16) []net.IP {
+	if qtype == dns.TypePTR {
+		return nil
+	}
+
+	var ipsCopy []net.IP
+	a.lock.Lock()
+	ips, _ := a.table[host]
+	if len(ips) != 0 {
+		ipsCopy = make([]net.IP, len(ips))
+		copy(ipsCopy, ips)
+	}
+	a.lock.Unlock()
+
+	log.Debug("AutoHosts: answer: %s -> %v", host, ipsCopy)
+	return ipsCopy
+}
+
+// ProcessReverse - process PTR request
+// Return "" if not found or an error occurred
+func (a *AutoHosts) ProcessReverse(addr string, qtype uint16) string {
+	if qtype != dns.TypePTR {
+		return ""
+	}
+
+	ipReal := DNSUnreverseAddr(addr)
+	if ipReal == nil {
+		return "" // invalid IP in question
+	}
+	ipStr := ipReal.String()
+
+	a.lock.Lock()
+	host := a.tableReverse[ipStr]
+	a.lock.Unlock()
+
+	if len(host) == 0 {
+		return "" // not found
+	}
+
+	log.Debug("AutoHosts: reverse-lookup: %s -> %s", addr, host)
+	return host
+}
+
+// List - get "IP -> hostname" table.  Thread-safe.
+func (a *AutoHosts) List() map[string]string {
+	table := make(map[string]string)
+	a.lock.Lock()
+	for k, v := range a.tableReverse {
+		table[k] = v
+	}
+	a.lock.Unlock()
+	return table
 }
 
 // update table
@@ -274,60 +334,4 @@ func (a *AutoHosts) updateHosts() {
 	a.lock.Unlock()
 
 	a.notify()
-}
-
-// Process - get the list of IP addresses for the hostname
-// Return nil if not found
-func (a *AutoHosts) Process(host string, qtype uint16) []net.IP {
-	if qtype == dns.TypePTR {
-		return nil
-	}
-
-	var ipsCopy []net.IP
-	a.lock.Lock()
-	ips, _ := a.table[host]
-	if len(ips) != 0 {
-		ipsCopy = make([]net.IP, len(ips))
-		copy(ipsCopy, ips)
-	}
-	a.lock.Unlock()
-
-	log.Debug("AutoHosts: answer: %s -> %v", host, ipsCopy)
-	return ipsCopy
-}
-
-// ProcessReverse - process PTR request
-// Return "" if not found or an error occurred
-func (a *AutoHosts) ProcessReverse(addr string, qtype uint16) string {
-	if qtype != dns.TypePTR {
-		return ""
-	}
-
-	ipReal := DNSUnreverseAddr(addr)
-	if ipReal == nil {
-		return "" // invalid IP in question
-	}
-	ipStr := ipReal.String()
-
-	a.lock.Lock()
-	host := a.tableReverse[ipStr]
-	a.lock.Unlock()
-
-	if len(host) == 0 {
-		return "" // not found
-	}
-
-	log.Debug("AutoHosts: reverse-lookup: %s -> %s", addr, host)
-	return host
-}
-
-// List - get "IP -> hostname" table.  Thread-safe.
-func (a *AutoHosts) List() map[string]string {
-	table := make(map[string]string)
-	a.lock.Lock()
-	for k, v := range a.tableReverse {
-		table[k] = v
-	}
-	a.lock.Unlock()
-	return table
 }

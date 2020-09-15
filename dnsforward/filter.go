@@ -52,7 +52,7 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 		return nil, errorx.Decorate(err, "dnsfilter failed to check host '%s'", host)
 
 	} else if res.IsFiltered {
-		// log.Tracef("Host %s is filtered, reason - '%s', matched rule: '%s'", host, res.Reason, res.Rule)
+		log.Tracef("Host %s is filtered, reason - '%s', matched rule: '%s'", host, res.Reason, res.Rule)
 		d.Res = s.genDNSFilterMessage(d, &res)
 
 	} else if res.Reason == dnsfilter.ReasonRewrite && len(res.CanonName) != 0 && len(res.IPList) == 0 {
@@ -60,6 +60,19 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 		// resolve canonical name, not the original host name
 		d.Req.Question[0].Name = dns.Fqdn(res.CanonName)
 
+	} else if res.Reason == dnsfilter.RewriteEtcHosts && len(res.ReverseHost) != 0 {
+
+		resp := s.makeResponse(req)
+		ptr := &dns.PTR{}
+		ptr.Hdr = dns.RR_Header{
+			Name:   req.Question[0].Name,
+			Rrtype: dns.TypePTR,
+			Ttl:    s.conf.BlockedResponseTTL,
+			Class:  dns.ClassINET,
+		}
+		ptr.Ptr = res.ReverseHost
+		resp.Answer = append(resp.Answer, ptr)
+		d.Res = resp
 	} else if res.Reason == dnsfilter.ReasonRewrite || res.Reason == dnsfilter.RewriteEtcHosts {
 		resp := s.makeResponse(req)
 
@@ -81,20 +94,6 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 			}
 		}
 
-		d.Res = resp
-
-	} else if res.Reason == dnsfilter.RewriteEtcHosts && len(res.ReverseHost) != 0 {
-
-		resp := s.makeResponse(req)
-		ptr := &dns.PTR{}
-		ptr.Hdr = dns.RR_Header{
-			Name:   req.Question[0].Name,
-			Rrtype: dns.TypePTR,
-			Ttl:    s.conf.BlockedResponseTTL,
-			Class:  dns.ClassINET,
-		}
-		ptr.Ptr = res.ReverseHost
-		resp.Answer = append(resp.Answer, ptr)
 		d.Res = resp
 	}
 

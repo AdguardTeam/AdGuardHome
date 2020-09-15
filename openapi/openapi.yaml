@@ -997,6 +997,8 @@ components:
                     example:
                         - tls://1.1.1.1
                         - tls://1.0.0.1
+                upstream_dns_file:
+                    type: string
                 protection_enabled:
                     type: boolean
                 dhcp_available:
@@ -1007,6 +1009,7 @@ components:
                     type: string
                     enum:
                         - default
+                        - refused
                         - nxdomain
                         - null_ip
                         - custom_ip
@@ -1563,6 +1566,11 @@ components:
                     format: int32
                     example: 853
                     description: DNS-over-TLS port. If 0, DOT will be disabled.
+                port_dns_over_quic:
+                    type: integer
+                    format: int32
+                    example: 784
+                    description: DNS-over-QUIC port. If 0, DOQ will be disabled.
                 certificate_chain:
                     type: string
                     description: Base64 string with PEM-encoded certificates chain

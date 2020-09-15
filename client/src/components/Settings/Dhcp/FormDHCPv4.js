@@ -8,10 +8,9 @@ import {
     renderInputField,
     toNumber,
 } from '../../../helpers/form';
-import { FORM_NAME } from '../../../helpers/constants';
+import { FORM_NAME, UINT32_RANGE } from '../../../helpers/constants';
 import {
     validateIpv4,
-    validateIsPositiveValue,
     validateRequiredValue,
     validateIpv4RangeEnd,
 } from '../../../helpers/validators';
@@ -110,9 +109,10 @@ const FormDHCPv4 = ({
                         type="number"
                         className="form-control"
                         placeholder={t(ipv4placeholders.lease_duration)}
-                        validate={[validateIsPositiveValue, validateRequired]}
+                        validate={validateRequired}
                         normalize={toNumber}
-                        min={0}
+                        min={1}
+                        max={UINT32_RANGE.MAX}
                         disabled={!isInterfaceIncludesIpv4}
                     />
                 </div>

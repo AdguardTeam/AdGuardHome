@@ -8,12 +8,17 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"fmt"
+	"io/ioutil"
 	"math/big"
 	"net"
+	"os"
 	"sort"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/AdguardTeam/AdGuardHome/util"
 
 	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/dnsfilter"
@@ -128,6 +133,41 @@ func TestDotServer(t *testing.T) {
 	}
 }
 
+func TestDoqServer(t *testing.T) {
+	// Prepare the proxy server
+	_, certPem, keyPem := createServerTLSConfig(t)
+	s := createTestServer(t)
+
+	s.conf.TLSConfig = TLSConfig{
+		QUICListenAddr:       &net.UDPAddr{Port: 0},
+		CertificateChainData: certPem,
+		PrivateKeyData:       keyPem,
+	}
+
+	_ = s.Prepare(nil)
+	// Starting the server
+	err := s.Start()
+	assert.Nil(t, err)
+
+	// Create a DNS-over-QUIC upstream
+	addr := s.dnsProxy.Addr(proxy.ProtoQUIC)
+	opts := upstream.Options{InsecureSkipVerify: true}
+	u, err := upstream.AddressToUpstream(fmt.Sprintf("quic://%s", addr), opts)
+	assert.Nil(t, err)
+
+	// Send the test message
+	req := createGoogleATestMessage()
+	res, err := u.Exchange(req)
+	assert.Nil(t, err)
+	assertGoogleAResponse(t, res)
+
+	// Stop the proxy
+	err = s.Stop()
+	if err != nil {
+		t.Fatalf("DNS server failed to stop: %s", err)
+	}
+}
+
 func TestServerRace(t *testing.T) {
 	s := createTestServer(t)
 	err := s.Start()
@@ -227,7 +267,7 @@ func TestBlockedRequest(t *testing.T) {
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 
 	//
-	// NXDomain blocking
+	// Default blocking - REFUSED
 	//
 	req := dns.Msg{}
 	req.Id = dns.Id()
@@ -240,9 +280,7 @@ func TestBlockedRequest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Couldn't talk to server %s: %s", addr, err)
 	}
-	if reply.Rcode != dns.RcodeNameError {
-		t.Fatalf("Wrong response: %s", reply.String())
-	}
+	assert.Equal(t, dns.RcodeRefused, reply.Rcode)
 
 	err = s.Stop()
 	if err != nil {
@@ -404,7 +442,7 @@ func TestBlockCNAME(t *testing.T) {
 	req := createTestMessage("badhost.")
 	reply, err := dns.Exchange(req, addr.String())
 	assert.Nil(t, err, nil)
-	assert.Equal(t, dns.RcodeNameError, reply.Rcode)
+	assert.Equal(t, dns.RcodeRefused, reply.Rcode)
 
 	// 'whitelist.example.org' has a canonical name 'null.example.org' which is blocked by filters
 	//   but 'whitelist.example.org' is in a whitelist:
@@ -419,7 +457,7 @@ func TestBlockCNAME(t *testing.T) {
 	req = createTestMessage("example.org.")
 	reply, err = dns.Exchange(req, addr.String())
 	assert.Nil(t, err)
-	assert.Equal(t, dns.RcodeNameError, reply.Rcode)
+	assert.Equal(t, dns.RcodeRefused, reply.Rcode)
 
 	_ = s.Stop()
 }
@@ -630,17 +668,17 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 func TestRewrite(t *testing.T) {
 	c := dnsfilter.Config{}
 	c.Rewrites = []dnsfilter.RewriteEntry{
-		dnsfilter.RewriteEntry{
+		{
 			Domain: "test.com",
 			Answer: "1.2.3.4",
 			Type:   dns.TypeA,
 		},
-		dnsfilter.RewriteEntry{
+		{
 			Domain: "alias.test.com",
 			Answer: "test.com",
 			Type:   dns.TypeCNAME,
 		},
-		dnsfilter.RewriteEntry{
+		{
 			Domain: "my.alias.example.org",
 			Answer: "example.org",
 			Type:   dns.TypeCNAME,
@@ -988,7 +1026,7 @@ func (d *testDHCP) SetOnLeaseChanged(onLeaseChanged dhcpd.OnLeaseChangedT) {
 	return
 }
 
-func TestPTRResponse(t *testing.T) {
+func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	dhcp := &testDHCP{}
 
 	c := dnsfilter.Config{}
@@ -1013,6 +1051,48 @@ func TestPTRResponse(t *testing.T) {
 	assert.Equal(t, "1.0.0.127.in-addr.arpa.", resp.Answer[0].Header().Name)
 	ptr := resp.Answer[0].(*dns.PTR)
 	assert.Equal(t, "localhost.", ptr.Ptr)
+
+	s.Close()
+}
+
+func TestPTRResponseFromHosts(t *testing.T) {
+	c := dnsfilter.Config{
+		AutoHosts: &util.AutoHosts{},
+	}
+
+	// Prepare test hosts file
+	hf, _ := ioutil.TempFile("", "")
+	defer func() { _ = os.Remove(hf.Name()) }()
+	defer hf.Close()
+
+	_, _ = hf.WriteString("  127.0.0.1   host # comment \n")
+	_, _ = hf.WriteString("  ::1   localhost#comment  \n")
+
+	// Init auto hosts
+	c.AutoHosts.Init(hf.Name())
+	defer c.AutoHosts.Close()
+
+	f := dnsfilter.New(&c, nil)
+	s := NewServer(DNSCreateParams{DNSFilter: f})
+	s.conf.UDPListenAddr = &net.UDPAddr{Port: 0}
+	s.conf.TCPListenAddr = &net.TCPAddr{Port: 0}
+	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
+	s.conf.FilteringConfig.ProtectionEnabled = true
+	err := s.Prepare(nil)
+	assert.True(t, err == nil)
+	assert.Nil(t, s.Start())
+
+	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
+	req := createTestMessage("1.0.0.127.in-addr.arpa.")
+	req.Question[0].Qtype = dns.TypePTR
+
+	resp, err := dns.Exchange(req, addr.String())
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(resp.Answer))
+	assert.Equal(t, dns.TypePTR, resp.Answer[0].Header().Rrtype)
+	assert.Equal(t, "1.0.0.127.in-addr.arpa.", resp.Answer[0].Header().Name)
+	ptr := resp.Answer[0].(*dns.PTR)
+	assert.Equal(t, "host.", ptr.Ptr)
 
 	s.Close()
 }

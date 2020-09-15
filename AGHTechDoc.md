@@ -743,6 +743,7 @@ Response:
 	"server_name":"...",
 	"port_https":443,
 	"port_dns_over_tls":853,
+	"port_dns_over_quic":784,
 	"certificate_chain":"...",
 	"private_key":"...",
 	"certificate_path":"...",
@@ -774,6 +775,7 @@ Request:
 	"force_https":false,
 	"port_https":443,
 	"port_dns_over_tls":853,
+	"port_dns_over_quic":784,
 	"certificate_chain":"...",
 	"private_key":"...",
 	"certificate_path":"...", // if set, certificate_chain must be empty
@@ -991,11 +993,12 @@ Response:
 
 	{
 		"upstream_dns": ["tls://...", ...],
+		"upstream_dns_file": "",
 		"bootstrap_dns": ["1.2.3.4", ...],
 
 		"protection_enabled": true | false,
 		"ratelimit": 1234,
-		"blocking_mode": "default" | "nxdomain" | "null_ip" | "custom_ip",
+		"blocking_mode": "default" | "refused" | "nxdomain" | "null_ip" | "custom_ip",
 		"blocking_ipv4": "1.2.3.4",
 		"blocking_ipv6": "1:2:3::4",
 		"edns_cs_enabled": true | false,
@@ -1016,11 +1019,12 @@ Request:
 
 	{
 		"upstream_dns": ["tls://...", ...],
+		"upstream_dns_file": "",
 		"bootstrap_dns": ["1.2.3.4", ...],
 
 		"protection_enabled": true | false,
 		"ratelimit": 1234,
-		"blocking_mode": "default" | "nxdomain" | "null_ip" | "custom_ip",
+		"blocking_mode": "default" | "refused" | "nxdomain" | "null_ip" | "custom_ip",
 		"blocking_ipv4": "1.2.3.4",
 		"blocking_ipv6": "1:2:3::4",
 		"edns_cs_enabled": true | false,

@@ -22,8 +22,9 @@ func httpError(r *http.Request, w http.ResponseWriter, code int, format string, 
 }
 
 type dnsConfigJSON struct {
-	Upstreams  []string `json:"upstream_dns"`
-	Bootstraps []string `json:"bootstrap_dns"`
+	Upstreams     []string `json:"upstream_dns"`
+	UpstreamsFile string   `json:"upstream_dns_file"`
+	Bootstraps    []string `json:"bootstrap_dns"`
 
 	ProtectionEnabled bool   `json:"protection_enabled"`
 	RateLimit         uint32 `json:"ratelimit"`
@@ -43,6 +44,7 @@ func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	resp := dnsConfigJSON{}
 	s.RLock()
 	resp.Upstreams = stringArrayDup(s.conf.UpstreamDNS)
+	resp.UpstreamsFile = s.conf.UpstreamDNSFileName
 	resp.Bootstraps = stringArrayDup(s.conf.BootstrapDNS)
 
 	resp.ProtectionEnabled = s.conf.ProtectionEnabled
@@ -74,7 +76,7 @@ func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 
 func checkBlockingMode(req dnsConfigJSON) bool {
 	bm := req.BlockingMode
-	if !(bm == "default" || bm == "nxdomain" || bm == "null_ip" || bm == "custom_ip") {
+	if !(bm == "default" || bm == "refused" || bm == "nxdomain" || bm == "null_ip" || bm == "custom_ip") {
 		return false
 	}
 
@@ -154,6 +156,11 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 
 	if js.Exists("upstream_dns") {
 		s.conf.UpstreamDNS = req.Upstreams
+		restart = true
+	}
+
+	if js.Exists("upstream_dns_file") {
+		s.conf.UpstreamDNSFileName = req.UpstreamsFile
 		restart = true
 	}
 
@@ -270,7 +277,7 @@ func ValidateUpstreams(upstreams []string) error {
 	return nil
 }
 
-var protocols = []string{"tls://", "https://", "tcp://", "sdns://"}
+var protocols = []string{"tls://", "https://", "tcp://", "sdns://", "quic://"}
 
 func validateUpstream(u string) (bool, error) {
 	// Check if user tries to specify upstream for domain
