@@ -23,6 +23,7 @@ const Filters = ({ filter, setIsLoading }) => {
             <button
                     type="button"
                     className="btn btn-icon--green logs__refresh"
+                    title={t('refresh_btn')}
                     onClick={refreshLogs}
             >
                 <svg className="icons icon--24">

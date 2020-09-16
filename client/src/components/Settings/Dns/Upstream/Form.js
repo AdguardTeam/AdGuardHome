@@ -11,16 +11,23 @@ import { DNS_REQUEST_OPTIONS, FORM_NAME, UPSTREAM_CONFIGURATION_WIKI_LINK } from
 import { testUpstream } from '../../../../actions';
 import { removeEmptyLines } from '../../../../helpers/helpers';
 
-const Title = () => <label className="form__label" htmlFor="upstream_dns">
-    <Trans components={[<a href={UPSTREAM_CONFIGURATION_WIKI_LINK} key="0">link</a>]}>
-        upstream_dns_help
-    </Trans>
-</label>;
+const UPSTREAM_DNS_NAME = 'upstream_dns';
+
+const Title = () => {
+    const components = {
+        a: <a href={UPSTREAM_CONFIGURATION_WIKI_LINK} target="_blank"
+              rel="noopener noreferrer" />,
+    };
+
+    return <label className="form__label" htmlFor={UPSTREAM_DNS_NAME}>
+        <Trans components={components}>upstream_dns_help</Trans>
+    </label>;
+};
 
 const getInputFields = (upstream_dns_file) => [
     {
         getTitle: Title,
-        name: 'upstream_dns',
+        name: UPSTREAM_DNS_NAME,
         type: 'text',
         value: 'test',
         component: renderTextareaField,
