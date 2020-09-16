@@ -566,6 +566,7 @@
     "enter_cache_ttl_max_override": "輸入最大的存活時間（TTL）",
     "cache_ttl_min_override_desc": "覆寫從上游的伺服器收到的存活時間（TTL）數值（最小值）",
     "cache_ttl_max_override_desc": "覆寫從上游的伺服器收到的存活時間（TTL）數值（最大值）",
+    "ttl_cache_validation": "最小的快取存活時間（TTL）數值必須小於或等於最大的數值",
     "filter_category_general": "一般的",
     "filter_category_security": "安全性",
     "filter_category_regional": "區域性的",
