@@ -19,7 +19,7 @@
     max-height: 17.5rem;
 }
 
-.card-table-overflow--limited.clients__table {
+.dashboard .card-table-overflow--limited {
     max-height: 18rem;
 }
 
@@ -119,6 +119,12 @@
 @media screen and (min-width: 1280px) {
     .card-title-stats {
         font-size: 14px;
+    }
+}
+
+@media (min-width: 992px) {
+    .dashboard .card:not(.card--full) {
+        height: 22rem;
     }
 }
 
