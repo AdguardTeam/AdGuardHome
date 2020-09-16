@@ -82,7 +82,7 @@ const Dashboard = ({
             </div>
         </PageTitle>
         {statsProcessing && <Loading />}
-        {!statsProcessing && <div className="row row-cards">
+        {!statsProcessing && <div className="row row-cards dashboard">
             <div className="col-lg-12">
                 <Statistics
                         interval={stats.interval}
@@ -100,7 +100,6 @@ const Dashboard = ({
             <div className="col-lg-6">
                 <Counters
                         subtitle={subtitle}
-
                         refreshButton={refreshButton}
                 />
             </div>

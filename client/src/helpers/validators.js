@@ -1,4 +1,3 @@
-import i18next from 'i18next';
 import {
     MAX_PORT,
     R_CIDR,
@@ -26,17 +25,6 @@ export const validateRequiredValue = (value) => {
         return undefined;
     }
     return 'form_error_required';
-};
-
-/**
- * @param maximum {number}
- * @returns {(value:number) => undefined|string}
- */
-export const getMaxValueValidator = (maximum) => (value) => {
-    if (value && value > maximum) {
-        return i18next.t('value_not_larger_than', { maximum });
-    }
-    return undefined;
 };
 
 /**
@@ -118,17 +106,6 @@ export const validateIp = (value) => {
 export const validateMac = (value) => {
     if (value && !R_MAC.test(value)) {
         return 'form_error_mac_format';
-    }
-    return undefined;
-};
-
-/**
- * @param value {number}
- * @returns {undefined|string}
- */
-export const validateIsPositiveValue = (value) => {
-    if ((value || value === 0) && value <= 0) {
-        return 'form_error_positive';
     }
     return undefined;
 };

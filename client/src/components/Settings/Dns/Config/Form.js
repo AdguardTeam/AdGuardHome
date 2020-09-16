@@ -10,12 +10,11 @@ import {
     toNumber,
 } from '../../../../helpers/form';
 import {
-    validateBiggerOrEqualZeroValue,
     validateIpv4,
     validateIpv6,
     validateRequiredValue,
 } from '../../../../helpers/validators';
-import { BLOCKING_MODES, FORM_NAME } from '../../../../helpers/constants';
+import { BLOCKING_MODES, FORM_NAME, UINT32_RANGE } from '../../../../helpers/constants';
 
 const checkboxes = [
     {
@@ -87,7 +86,9 @@ const Form = ({
                         className="form-control"
                         placeholder={t('form_enter_rate_limit')}
                         normalize={toNumber}
-                        validate={[validateRequiredValue, validateBiggerOrEqualZeroValue]}
+                        validate={validateRequiredValue}
+                        min={UINT32_RANGE.MIN}
+                        max={UINT32_RANGE.MAX}
                     />
                 </div>
             </div>
