@@ -4,16 +4,15 @@ import { Field, reduxForm } from 'redux-form';
 import { Trans, useTranslation } from 'react-i18next';
 import { shallowEqual, useSelector } from 'react-redux';
 import { renderInputField, toNumber } from '../../../../helpers/form';
-import { validateRequiredValue } from '../../../../helpers/validators';
 import { CACHE_CONFIG_FIELDS, FORM_NAME, UINT32_RANGE } from '../../../../helpers/constants';
+import { replaceZeroWithEmptyString } from '../../../../helpers/helpers';
 
-const getInputFields = (validateRequiredValue) => [
+const INPUTS_FIELDS = [
     {
         name: CACHE_CONFIG_FIELDS.cache_size,
         title: 'cache_size',
         description: 'cache_size_desc',
         placeholder: 'enter_cache_size',
-        validate: validateRequiredValue,
     },
     {
         name: CACHE_CONFIG_FIELDS.cache_ttl_min,
@@ -39,37 +38,34 @@ const Form = ({
         cache_ttl_max, cache_ttl_min,
     } = useSelector((state) => state.form[FORM_NAME.CACHE].values, shallowEqual);
 
-    const minExceedsMax = typeof cache_ttl_min === 'number'
-            && typeof cache_ttl_max === 'number'
-            && cache_ttl_min > cache_ttl_max;
-
-    const INPUTS_FIELDS = getInputFields(validateRequiredValue);
+    const minExceedsMax = cache_ttl_min > cache_ttl_max;
 
     return <form onSubmit={handleSubmit}>
         <div className="row">
             {INPUTS_FIELDS.map(({
                 name, title, description, placeholder, validate, min = 0, max = UINT32_RANGE.MAX,
             }) => <div className="col-12" key={name}>
-                <div className="col-12 col-md-7 p-0">
-                    <div className="form__group form__group--settings">
-                        <label htmlFor={name}
-                               className="form__label form__label--with-desc">{t(title)}</label>
-                        <div className="form__desc form__desc--top">{t(description)}</div>
-                        <Field
-                            name={name}
-                            type="number"
-                            component={renderInputField}
-                            placeholder={t(placeholder)}
-                            disabled={processingSetConfig}
-                            normalize={toNumber}
-                            className="form-control"
-                            validate={validate}
-                            min={min}
-                            max={max}
-                        />
+                    <div className="col-12 col-md-7 p-0">
+                        <div className="form__group form__group--settings">
+                            <label htmlFor={name}
+                                   className="form__label form__label--with-desc">{t(title)}</label>
+                            <div className="form__desc form__desc--top">{t(description)}</div>
+                            <Field
+                                    name={name}
+                                    type="number"
+                                    component={renderInputField}
+                                    placeholder={t(placeholder)}
+                                    disabled={processingSetConfig}
+                                    className="form-control"
+                                    validate={validate}
+                                    normalizeOnBlur={replaceZeroWithEmptyString}
+                                    normalize={toNumber}
+                                    min={min}
+                                    max={max}
+                            />
+                        </div>
                     </div>
-                </div>
-            </div>)}
+                </div>)}
             {minExceedsMax
             && <span className="text-danger pl-3 pb-3">{t('ttl_cache_validation')}</span>}
         </div>

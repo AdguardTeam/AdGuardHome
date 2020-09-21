@@ -1,12 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
-import { change } from 'redux-form';
 import Card from '../../../ui/Card';
 import Form from './Form';
 import { setDnsConfig } from '../../../../actions/dnsConfig';
-import { selectCompletedFields } from '../../../../helpers/helpers';
-import { CACHE_CONFIG_FIELDS, FORM_NAME } from '../../../../helpers/constants';
+import { replaceEmptyStringsWithZeroes, replaceZeroWithEmptyString } from '../../../../helpers/helpers';
 
 const CacheConfig = () => {
     const { t } = useTranslation();
@@ -16,16 +14,7 @@ const CacheConfig = () => {
     } = useSelector((state) => state.dnsConfig, shallowEqual);
 
     const handleFormSubmit = (values) => {
-        const completedFields = selectCompletedFields(values);
-
-        Object.entries(completedFields).forEach(([k, v]) => {
-            if ((k === CACHE_CONFIG_FIELDS.cache_ttl_min
-                    || k === CACHE_CONFIG_FIELDS.cache_ttl_max)
-                    && v === 0) {
-                dispatch(change(FORM_NAME.CACHE, k, ''));
-            }
-        });
-
+        const completedFields = replaceEmptyStringsWithZeroes(values);
         dispatch(setDnsConfig(completedFields));
     };
 
@@ -39,9 +28,9 @@ const CacheConfig = () => {
             <div className="form">
                 <Form
                     initialValues={{
-                        cache_size,
-                        cache_ttl_max,
-                        cache_ttl_min,
+                        cache_size: replaceZeroWithEmptyString(cache_size),
+                        cache_ttl_max: replaceZeroWithEmptyString(cache_ttl_max),
+                        cache_ttl_min: replaceZeroWithEmptyString(cache_ttl_min),
                     }}
                     onSubmit={handleFormSubmit}
                 />

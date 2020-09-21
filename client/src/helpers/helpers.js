@@ -717,13 +717,17 @@ export const setHtmlLangAttr = (language) => {
  * @param values {object}
  * @returns {object}
  */
-export const selectCompletedFields = (values) => Object.entries(values)
+export const replaceEmptyStringsWithZeroes = (values) => Object.entries(values)
     .reduce((acc, [key, value]) => {
-        if (value || value === 0) {
-            acc[key] = value;
-        }
+        acc[key] = value === '' ? 0 : value;
         return acc;
     }, {});
+
+/**
+ * @param value {number || string}
+ * @returns {string}
+ */
+export const replaceZeroWithEmptyString = (value) => (parseInt(value, 10) === 0 ? '' : value);
 
 /**
  * @param {string} search
