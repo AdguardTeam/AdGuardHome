@@ -568,3 +568,6 @@ export const CACHE_CONFIG_FIELDS = {
     cache_ttl_min: 'cache_ttl_min',
     cache_ttl_max: 'cache_ttl_max',
 };
+
+export const isFirefox = navigator.userAgent.indexOf('Firefox') !== -1;
+export const COMMENT_LINE_DEFAULT_TOKEN = '#';

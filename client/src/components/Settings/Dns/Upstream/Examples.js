@@ -1,25 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Trans, withTranslation } from 'react-i18next';
+import { COMMENT_LINE_DEFAULT_TOKEN } from '../../../../helpers/constants';
 
 const Examples = (props) => (
     <div className="list leading-loose">
-        <p>
-            <Trans
-                components={[
-                    <a
-                        href="https://kb.adguard.com/general/dns-providers"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        key="0"
-                    >
-                        DNS providers
-                    </a>,
-                ]}
-            >
-                dns_providers
-            </Trans>
-        </p>
         <Trans>examples_title</Trans>:
         <ol className="leading-loose">
             <li>
@@ -139,6 +124,12 @@ const Examples = (props) => (
                     >
                         example_upstream_reserved
                     </Trans>
+                </span>
+            </li>
+            <li>
+                <code>{COMMENT_LINE_DEFAULT_TOKEN} comment</code> –&nbsp;
+                <span>
+                    <Trans>example_upstream_comment</Trans>
                 </span>
             </li>
         </ol>

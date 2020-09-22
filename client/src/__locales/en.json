@@ -1,6 +1,7 @@
 {
     "client_settings": "Client settings",
     "example_upstream_reserved": "You can specify DNS upstream <0>for the specific domain(s)</0>",
+    "example_upstream_comment": "You can specify the comment",
     "upstream_parallel": "Use parallel requests to speed up resolving by simultaneously querying all upstream servers",
     "parallel_requests": "Parallel requests",
     "load_balancing": "Load-balancing",

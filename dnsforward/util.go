@@ -85,3 +85,18 @@ func matchDNSName(dnsNames []string, sni string) bool {
 	}
 	return false
 }
+
+// Is not comment
+func isUpstream(line string) bool {
+	return !strings.HasPrefix(line, "#")
+}
+
+func filterOutComments(lines []string) []string {
+	var filtered []string
+	for _, l := range lines {
+		if isUpstream(l) {
+			filtered = append(filtered, l)
+		}
+	}
+	return filtered
+}

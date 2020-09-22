@@ -5,9 +5,15 @@ import axios from 'axios';
 import endsWith from 'lodash/endsWith';
 import escapeRegExp from 'lodash/escapeRegExp';
 import React from 'react';
-import { splitByNewLine, sortClients } from '../helpers/helpers';
+import { compose } from 'redux';
+import { splitByNewLine, sortClients, filterOutComments } from '../helpers/helpers';
 import {
-    BLOCK_ACTIONS, CHECK_TIMEOUT, STATUS_RESPONSE, SETTINGS_NAMES, FORM_NAME, GETTING_STARTED_LINK,
+    BLOCK_ACTIONS,
+    CHECK_TIMEOUT,
+    STATUS_RESPONSE,
+    SETTINGS_NAMES,
+    FORM_NAME,
+    GETTING_STARTED_LINK,
 } from '../helpers/constants';
 import { areEqualVersions } from '../helpers/version';
 import { getTlsStatus } from './encryption';
@@ -289,14 +295,21 @@ export const testUpstreamRequest = createAction('TEST_UPSTREAM_REQUEST');
 export const testUpstreamFailure = createAction('TEST_UPSTREAM_FAILURE');
 export const testUpstreamSuccess = createAction('TEST_UPSTREAM_SUCCESS');
 
-export const testUpstream = (config) => async (dispatch) => {
+export const testUpstream = (
+    { bootstrap_dns, upstream_dns }, upstream_dns_file,
+) => async (dispatch) => {
     dispatch(testUpstreamRequest());
     try {
-        const values = { ...config };
-        values.bootstrap_dns = splitByNewLine(values.bootstrap_dns);
-        values.upstream_dns = splitByNewLine(values.upstream_dns);
+        const removeComments = compose(filterOutComments, splitByNewLine);
 
-        const upstreamResponse = await apiClient.testUpstream(values);
+        const config = {
+            bootstrap_dns: splitByNewLine(bootstrap_dns),
+            ...(upstream_dns_file ? null : {
+                upstream_dns: removeComments(upstream_dns),
+            }),
+        };
+
+        const upstreamResponse = await apiClient.testUpstream(config);
         const testMessages = Object.keys(upstreamResponse)
             .map((key) => {
                 const message = upstreamResponse[key];
@@ -315,6 +328,12 @@ export const testUpstream = (config) => async (dispatch) => {
         dispatch(addErrorToast({ error }));
         dispatch(testUpstreamFailure());
     }
+};
+
+export const testUpstreamWithFormValues = () => async (dispatch, getState) => {
+    const { upstream_dns_file } = getState().dnsConfig;
+    const { bootstrap_dns, upstream_dns } = getState().form[FORM_NAME.UPSTREAM].values;
+    return dispatch(testUpstream({ bootstrap_dns, upstream_dns }, upstream_dns_file));
 };
 
 export const changeLanguageRequest = createAction('CHANGE_LANGUAGE_REQUEST');

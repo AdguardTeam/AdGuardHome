@@ -16,6 +16,7 @@ import { getTrackerData } from './trackers/trackers';
 import {
     ADDRESS_TYPES,
     CHECK_TIMEOUT,
+    COMMENT_LINE_DEFAULT_TOKEN,
     CUSTOM_FILTERING_RULES_ID,
     DEFAULT_DATE_FORMAT_OPTIONS,
     DEFAULT_LANGUAGE,
@@ -315,6 +316,12 @@ export const trimMultilineString = (text) => splitByNewLine(text)
  */
 export const removeEmptyLines = (text) => splitByNewLine(text)
     .join('\n');
+
+/**
+ * @param {string} input
+ * @returns {string}
+ */
+export const trimLinesAndRemoveEmpty = (input) => input.split('\n').map((line) => line.trim()).filter(Boolean).join('\n');
 
 /**
  * Normalizes the topClients array
@@ -930,3 +937,10 @@ export const getBlockingClientName = (clients, ip) => {
     }
     return ip;
 };
+
+/**
+ * @param {string[]} lines
+ * @returns {string[]}
+ */
+export const filterOutComments = (lines) => lines
+    .filter((line) => !line.startsWith(COMMENT_LINE_DEFAULT_TOKEN));

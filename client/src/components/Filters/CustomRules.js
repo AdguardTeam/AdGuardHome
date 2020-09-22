@@ -1,13 +1,18 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Trans, withTranslation } from 'react-i18next';
-
+import classnames from 'classnames';
 import Card from '../ui/Card';
 import PageTitle from '../ui/PageTitle';
 import Examples from './Examples';
 import Check from './Check';
+import { getTextareaCommentsHighlight, syncScroll } from '../../helpers/highlightTextareaComments';
+import { COMMENT_LINE_DEFAULT_TOKEN, isFirefox } from '../../helpers/constants';
+import '../ui/texareaCommentsHighlight.css';
 
 class CustomRules extends Component {
+    ref = React.createRef();
+
     componentDidMount() {
         this.props.getFilteringStatus();
     }
@@ -34,6 +39,8 @@ class CustomRules extends Component {
         this.props.checkHost(values);
     };
 
+    onScroll = (e) => syncScroll(e, this.ref)
+
     render() {
         const {
             t,
@@ -47,17 +54,31 @@ class CustomRules extends Component {
         } = this.props;
 
         return (
-            <Fragment>
+            <>
                 <PageTitle title={t('custom_filtering_rules')} />
                 <Card
                     subtitle={t('custom_filter_rules_hint')}
                 >
                     <form onSubmit={this.handleSubmit}>
+                        <div className={classnames('col-12 text-edit-container form-control--textarea-large', {
+                            'mb-4': !isFirefox,
+                            'mb-6': isFirefox,
+                        })}>
                         <textarea
-                            className="form-control form-control--textarea-large font-monospace"
-                            value={userRules}
-                            onChange={this.handleChange}
+                                className={classnames('form-control font-monospace text-input form-control--textarea-large', {
+                                    'text-input--largest': isFirefox,
+                                })}
+                                value={userRules}
+                                onChange={this.handleChange}
+                                onScroll={this.onScroll}
                         />
+                            {getTextareaCommentsHighlight(
+                                this.ref,
+                                userRules,
+                                classnames({ 'form-control--textarea-large': isFirefox }),
+                                [COMMENT_LINE_DEFAULT_TOKEN, '!'],
+                            )}
+                        </div>
                         <div className="card-actions">
                             <button
                                 className="btn btn-success btn-standard btn-large"
@@ -78,7 +99,7 @@ class CustomRules extends Component {
                     onSubmit={this.handleCheck}
                     processing={processingCheck}
                 />
-            </Fragment>
+            </>
         );
     }
 }

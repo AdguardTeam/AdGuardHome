@@ -1,0 +1,52 @@
+.text-edit-container {
+    position: relative;
+    height: 10rem;
+}
+
+.text-input,
+.text-output {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 1rem;
+    background: transparent;
+    white-space: pre-wrap;
+    line-height: 1.5rem;
+    word-wrap: break-word;
+    font-size: 0.9375rem;
+    margin: 0;
+}
+
+.form--upstream .text-input,
+.form--upstream .text-output {
+    width: 98%;
+    left: 1%;
+}
+
+.text-input {
+    opacity: 1;
+    resize: none;
+    height: 10rem;
+}
+
+.text-input--larger {
+    height: 11rem;
+}
+
+.text-input--largest {
+    height: 16rem;
+}
+
+.text-output {
+    pointer-events: none;
+    z-index: 3;
+    overflow-y: auto;
+    background: transparent;
+    border: 1px solid transparent;
+}
+
+.text-transparent {
+    color: transparent;
+}
