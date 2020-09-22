@@ -1423,6 +1423,7 @@ When a new DNS request is received and processed, we store information about thi
 		"Reason":3,
 		"Rule":"...",
 		"FilterID":1,
+		"ServiceName":"..."
 		},
 	"Elapsed":12345,
 	"Upstream":"...",
