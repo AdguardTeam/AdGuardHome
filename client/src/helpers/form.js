@@ -7,7 +7,7 @@ import { R_UNIX_ABSOLUTE_PATH, R_WIN_ABSOLUTE_PATH } from './constants';
 
 export const renderField = (props, elementType) => {
     const {
-        input, id, className, placeholder, type, disabled, normalizeOnBlur,
+        input, id, className, placeholder, type, disabled, normalizeOnBlur, onScroll,
         autoComplete, meta: { touched, error }, min, max, step,
     } = props;
 
@@ -25,6 +25,7 @@ export const renderField = (props, elementType) => {
         max,
         step,
         onBlur,
+        onScroll,
     });
 
     return (
@@ -48,6 +49,7 @@ renderField.propTypes = {
     min: PropTypes.number,
     max: PropTypes.number,
     step: PropTypes.number,
+    onScroll: PropTypes.func,
     meta: PropTypes.shape({
         touched: PropTypes.bool,
         error: PropTypes.string,

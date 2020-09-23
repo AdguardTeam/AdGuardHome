@@ -1,0 +1,10 @@
+{
+  "name": "querylog",
+  "version": "0.1.0",
+  "scripts": {
+    "anonymize": "node anonymize.js"
+  },
+  "dependencies": {
+    "dns-packet": "^5.2.1"
+  }
+}

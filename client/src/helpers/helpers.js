@@ -16,6 +16,7 @@ import { getTrackerData } from './trackers/trackers';
 import {
     ADDRESS_TYPES,
     CHECK_TIMEOUT,
+    COMMENT_LINE_DEFAULT_TOKEN,
     CUSTOM_FILTERING_RULES_ID,
     DEFAULT_DATE_FORMAT_OPTIONS,
     DEFAULT_LANGUAGE,
@@ -25,6 +26,7 @@ import {
     FILTERED,
     FILTERED_STATUS,
     IP_MATCH_LIST_STATUS,
+    SERVICES_ID_NAME_MAP,
     STANDARD_DNS_PORT,
     STANDARD_HTTPS_PORT,
     STANDARD_WEB_PORT,
@@ -315,6 +317,12 @@ export const trimMultilineString = (text) => splitByNewLine(text)
  */
 export const removeEmptyLines = (text) => splitByNewLine(text)
     .join('\n');
+
+/**
+ * @param {string} input
+ * @returns {string}
+ */
+export const trimLinesAndRemoveEmpty = (input) => input.split('\n').map((line) => line.trim()).filter(Boolean).join('\n');
 
 /**
  * Normalizes the topClients array
@@ -717,13 +725,17 @@ export const setHtmlLangAttr = (language) => {
  * @param values {object}
  * @returns {object}
  */
-export const selectCompletedFields = (values) => Object.entries(values)
+export const replaceEmptyStringsWithZeroes = (values) => Object.entries(values)
     .reduce((acc, [key, value]) => {
-        if (value || value === 0) {
-            acc[key] = value;
-        }
+        acc[key] = value === '' ? 0 : value;
         return acc;
     }, {});
+
+/**
+ * @param value {number || string}
+ * @returns {string}
+ */
+export const replaceZeroWithEmptyString = (value) => (parseInt(value, 10) === 0 ? '' : value);
 
 /**
  * @param {string} search
@@ -926,3 +938,16 @@ export const getBlockingClientName = (clients, ip) => {
     }
     return ip;
 };
+
+/**
+ * @param {string[]} lines
+ * @returns {string[]}
+ */
+export const filterOutComments = (lines) => lines
+    .filter((line) => !line.startsWith(COMMENT_LINE_DEFAULT_TOKEN));
+
+/**
+ * @param {string} serviceId
+ * @returns {string}
+ */
+export const getServiceName = (serviceId) => SERVICES_ID_NAME_MAP[serviceId] || serviceId;

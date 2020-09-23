@@ -314,7 +314,8 @@ class Settings extends Component {
                             {dnsPort === STANDARD_DNS_PORT && !isDnsFixAvailable
                             && dnsStatus.includes(ADDRESS_IN_USE_TEXT)
                             && <Trans
-                                components={[<a href={PORT_53_FAQ_LINK} key="0">link</a>]}>
+                                components={[<a href={PORT_53_FAQ_LINK} key="0" target="_blank"
+                                                rel="noopener noreferrer">link</a>]}>
                                 port_53_faq_link
                             </Trans>}
                             <hr className="divider--small" />

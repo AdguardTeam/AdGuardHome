@@ -117,12 +117,10 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if js.Exists("upstream_dns") {
-		if len(req.Upstreams) != 0 {
-			err = ValidateUpstreams(req.Upstreams)
-			if err != nil {
-				httpError(r, w, http.StatusBadRequest, "wrong upstreams specification: %s", err)
-				return
-			}
+		err = ValidateUpstreams(req.Upstreams)
+		if err != nil {
+			httpError(r, w, http.StatusBadRequest, "wrong upstreams specification: %s", err)
+			return
 		}
 	}
 
@@ -256,6 +254,14 @@ type upstreamJSON struct {
 
 // ValidateUpstreams validates each upstream and returns an error if any upstream is invalid or if there are no default upstreams specified
 func ValidateUpstreams(upstreams []string) error {
+	// No need to validate comments
+	upstreams = filterOutComments(upstreams)
+
+	// Consider this case valid because defaultDNS will be used
+	if len(upstreams) == 0 {
+		return nil
+	}
+
 	var defaultUpstreamFound bool
 	for _, u := range upstreams {
 		d, err := validateUpstream(u)
@@ -397,6 +403,10 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkDNS(input string, bootstrap []string) error {
+	if !isUpstream(input) {
+		return nil
+	}
+
 	// separate upstream from domains list
 	input, defaultUpstream, err := separateUpstream(input)
 	if err != nil {
@@ -404,7 +414,7 @@ func checkDNS(input string, bootstrap []string) error {
 	}
 
 	// No need to check this DNS server
-	if input == "#" || !defaultUpstream {
+	if !defaultUpstream {
 		return nil
 	}
 

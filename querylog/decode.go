@@ -56,6 +56,8 @@ func decodeLogEntry(ent *logEntry, str string) {
 		case "Reason":
 			i, err = strconv.Atoi(v)
 			ent.Result.Reason = dnsfilter.Reason(i)
+		case "ServiceName":
+			ent.Result.ServiceName = v
 
 		case "Upstream":
 			ent.Upstream = v

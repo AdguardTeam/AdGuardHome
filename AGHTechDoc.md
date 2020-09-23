@@ -1107,7 +1107,7 @@ and `value` is either:
 * IPv4 address: use this IP in A response
 * IPv6 address: use this IP in AAAA response
 * canonical name: add CNAME record
-* "<key>": CNAME exception - pass request to upstream
+* "`key`": CNAME exception - pass request to upstream
 * "A": A exception - pass A request to upstream
 * "AAAA": AAAA exception - pass AAAA request to upstream
 
@@ -1428,6 +1428,7 @@ When a new DNS request is received and processed, we store information about thi
 		"Reason":3,
 		"Rule":"...",
 		"FilterID":1,
+		"ServiceName":"..."
 		},
 	"Elapsed":12345,
 	"Upstream":"...",
@@ -1475,7 +1476,8 @@ Strict matching can be enabled by enclosing the value in double quotes: e.g. `"a
 `response_status`:
 * all
 * filtered             - all kinds of filtering
-* blocked              - blocked or blocked service
+* blocked              - blocked or blocked services
+* blocked_services     - blocked services
 * blocked_safebrowsing - blocked by safebrowsing
 * blocked_parental     - blocked by parental control
 * whitelisted          - whitelisted

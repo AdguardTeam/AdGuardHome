@@ -1,36 +1,114 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Field, reduxForm } from 'redux-form';
 import { Trans, useTranslation } from 'react-i18next';
 import classnames from 'classnames';
-
 import Examples from './Examples';
 import { renderRadioField, renderTextareaField } from '../../../../helpers/form';
-import { DNS_REQUEST_OPTIONS, FORM_NAME, UPSTREAM_CONFIGURATION_WIKI_LINK } from '../../../../helpers/constants';
-import { testUpstream } from '../../../../actions';
-import { removeEmptyLines } from '../../../../helpers/helpers';
+import {
+    DNS_REQUEST_OPTIONS,
+    FORM_NAME,
+    isFirefox,
+    UPSTREAM_CONFIGURATION_WIKI_LINK,
+} from '../../../../helpers/constants';
+import { testUpstreamWithFormValues } from '../../../../actions';
+import { removeEmptyLines, trimLinesAndRemoveEmpty } from '../../../../helpers/helpers';
+import { getTextareaCommentsHighlight, syncScroll } from '../../../../helpers/highlightTextareaComments';
+import '../../../ui/texareaCommentsHighlight.css';
 
-const Title = () => <label className="form__label" htmlFor="upstream_dns">
-    <Trans components={[<a href={UPSTREAM_CONFIGURATION_WIKI_LINK} key="0">link</a>]}>
-        upstream_dns_help
-    </Trans>
-</label>;
+const UPSTREAM_DNS_NAME = 'upstream_dns';
+const UPSTREAM_MODE_NAME = 'upstream_mode';
 
-const getInputFields = (upstream_dns_file) => [
+const renderField = ({
+    name, component, type, className, placeholder,
+    subtitle, value, normalizeOnBlur, containerClass, onScroll,
+}) => {
+    const { t } = useTranslation();
+    const processingTestUpstream = useSelector((state) => state.settings.processingTestUpstream);
+    const processingSetConfig = useSelector((state) => state.dnsConfig.processingSetConfig);
+
+    return <div
+            key={placeholder}
+            className={classnames('col-12 mb-4', containerClass)}
+    >
+        <Field
+                id={name}
+                value={value}
+                name={name}
+                component={component}
+                type={type}
+                className={className}
+                placeholder={t(placeholder)}
+                subtitle={t(subtitle)}
+                disabled={processingSetConfig || processingTestUpstream}
+                normalizeOnBlur={normalizeOnBlur}
+                onScroll={onScroll}
+        />
+    </div>;
+};
+
+renderField.propTypes = {
+    name: PropTypes.string.isRequired,
+    component: PropTypes.element.isRequired,
+    type: PropTypes.string.isRequired,
+    className: PropTypes.string,
+    placeholder: PropTypes.string.isRequired,
+    subtitle: PropTypes.string,
+    value: PropTypes.string,
+    normalizeOnBlur: PropTypes.func,
+    containerClass: PropTypes.string,
+    onScroll: PropTypes.func,
+};
+
+const renderTextareaWithHighlightField = (props) => {
+    const upstream_dns = useSelector((store) => store.form[FORM_NAME.UPSTREAM].values.upstream_dns);
+    const upstream_dns_file = useSelector((state) => state.dnsConfig.upstream_dns_file);
+    const ref = useRef(null);
+
+    const onScroll = (e) => syncScroll(e, ref);
+
+    return <>
+        {renderTextareaField({
+            ...props,
+            disabled: !!upstream_dns_file,
+            onScroll,
+            normalizeOnBlur: trimLinesAndRemoveEmpty,
+        })}
+        {getTextareaCommentsHighlight(ref, upstream_dns)}
+    </>;
+};
+
+renderTextareaWithHighlightField.propTypes = {
+    className: PropTypes.string.isRequired,
+    disabled: PropTypes.bool,
+    id: PropTypes.string.isRequired,
+    input: PropTypes.object,
+    meta: PropTypes.object,
+    normalizeOnBlur: PropTypes.func,
+    onScroll: PropTypes.func,
+    placeholder: PropTypes.string.isRequired,
+    subtitle: PropTypes.string.isRequired,
+    type: PropTypes.string.isRequired,
+};
+
+const INPUT_FIELDS = [
     {
-        getTitle: Title,
-        name: 'upstream_dns',
+        name: UPSTREAM_DNS_NAME,
         type: 'text',
-        value: 'test',
-        component: renderTextareaField,
-        className: 'form-control form-control--textarea font-monospace',
+        component: renderTextareaWithHighlightField,
+        className: classnames('form-control form-control--textarea font-monospace text-input', {
+            'text-input--larger': isFirefox,
+        }),
+        containerClass: classnames('text-edit-container', {
+            'mb-4': !isFirefox,
+            'mb-6': isFirefox,
+        }),
         placeholder: 'upstream_dns',
         normalizeOnBlur: removeEmptyLines,
-        disabled: !!upstream_dns_file,
     },
     {
-        name: 'upstream_mode',
+        name: UPSTREAM_MODE_NAME,
         type: 'radio',
         value: DNS_REQUEST_OPTIONS.LOAD_BALANCING,
         component: renderRadioField,
@@ -38,7 +116,7 @@ const getInputFields = (upstream_dns_file) => [
         placeholder: 'load_balancing',
     },
     {
-        name: 'upstream_mode',
+        name: UPSTREAM_MODE_NAME,
         type: 'radio',
         value: DNS_REQUEST_OPTIONS.PARALLEL,
         component: renderRadioField,
@@ -46,7 +124,7 @@ const getInputFields = (upstream_dns_file) => [
         placeholder: 'parallel_requests',
     },
     {
-        name: 'upstream_mode',
+        name: UPSTREAM_MODE_NAME,
         type: 'radio',
         value: DNS_REQUEST_OPTIONS.FASTEST_ADDR,
         component: renderRadioField,
@@ -61,44 +139,39 @@ const Form = ({
     const dispatch = useDispatch();
     const { t } = useTranslation();
     const upstream_dns = useSelector((store) => store.form[FORM_NAME.UPSTREAM].values.upstream_dns);
-    const bootstrap_dns = useSelector(
-        (store) => store.form[FORM_NAME.UPSTREAM].values.bootstrap_dns,
-    );
-    const upstream_dns_file = useSelector((state) => state.dnsConfig.upstream_dns_file);
     const processingTestUpstream = useSelector((state) => state.settings.processingTestUpstream);
     const processingSetConfig = useSelector((state) => state.dnsConfig.processingSetConfig);
 
-    const handleUpstreamTest = () => dispatch(testUpstream({
-        upstream_dns,
-        bootstrap_dns,
-    }));
+    const handleUpstreamTest = () => dispatch(testUpstreamWithFormValues());
 
     const testButtonClass = classnames('btn btn-primary btn-standard mr-2', {
         'btn-loading': processingTestUpstream,
     });
 
-    const INPUT_FIELDS = getInputFields(upstream_dns_file);
+    const components = {
+        a: <a href={UPSTREAM_CONFIGURATION_WIKI_LINK} target="_blank"
+              rel="noopener noreferrer" />,
+    };
 
-    return <form onSubmit={handleSubmit}>
+    return <form onSubmit={handleSubmit} className="form--upstream">
         <div className="row">
-            {INPUT_FIELDS.map(({
-                name, component, type, className, placeholder,
-                getTitle, subtitle, disabled, value, normalizeOnBlur,
-            }) => <div className="col-12 mb-4" key={placeholder}>
-                {typeof getTitle === 'function' && getTitle()}
-                <Field
-                    id={name}
-                    value={value}
-                    name={name}
-                    component={component}
-                    type={type}
-                    className={className}
-                    placeholder={t(placeholder)}
-                    subtitle={t(subtitle)}
-                    disabled={processingSetConfig || processingTestUpstream || disabled}
-                    normalizeOnBlur={normalizeOnBlur}
-                />
-            </div>)}
+            <label className="col form__label" htmlFor={UPSTREAM_DNS_NAME}>
+                <Trans components={components}>upstream_dns_help</Trans>
+                {' '}
+                <Trans components={[
+                    <a
+                            href="https://kb.adguard.com/general/dns-providers"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            key="0"
+                    >
+                        DNS providers
+                    </a>,
+                ]}>
+                    dns_providers
+                </Trans>
+            </label>
+            {INPUT_FIELDS.map(renderField)}
             <div className="col-12">
                 <Examples />
                 <hr />

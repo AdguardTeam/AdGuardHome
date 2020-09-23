@@ -961,31 +961,35 @@ func TestValidateUpstream(t *testing.T) {
 }
 
 func TestValidateUpstreamsSet(t *testing.T) {
+	// Empty upstreams array
+	var upstreamsSet []string
+	err := ValidateUpstreams(upstreamsSet)
+	assert.Nil(t, err, "empty upstreams array should be valid")
+
+	// Comment in upstreams array
+	upstreamsSet = []string{"# comment"}
+	err = ValidateUpstreams(upstreamsSet)
+	assert.Nil(t, err, "comments should not be validated")
+
 	// Set of valid upstreams. There is no default upstream specified
-	upstreamsSet := []string{"[/host.com/]1.1.1.1",
+	upstreamsSet = []string{"[/host.com/]1.1.1.1",
 		"[//]tls://1.1.1.1",
 		"[/www.host.com/]#",
 		"[/host.com/google.com/]8.8.8.8",
 		"[/host/]sdns://AQMAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
 	}
-	err := ValidateUpstreams(upstreamsSet)
-	if err == nil {
-		t.Fatalf("there is no default upstream")
-	}
+	err = ValidateUpstreams(upstreamsSet)
+	assert.NotNil(t, err, "there is no default upstream")
 
 	// Let's add default upstream
 	upstreamsSet = append(upstreamsSet, "8.8.8.8")
 	err = ValidateUpstreams(upstreamsSet)
-	if err != nil {
-		t.Fatalf("upstreams set is valid, but doesn't pass through validation cause: %s", err)
-	}
+	assert.Nilf(t, err, "upstreams set is valid, but doesn't pass through validation cause: %s", err)
 
 	// Let's add invalid upstream
 	upstreamsSet = append(upstreamsSet, "dhcp://fake.dns")
 	err = ValidateUpstreams(upstreamsSet)
-	if err == nil {
-		t.Fatalf("there is an invalid upstream in set, but it pass through validation")
-	}
+	assert.NotNil(t, err, "there is an invalid upstream in set, but it pass through validation")
 }
 
 func TestIpFromAddr(t *testing.T) {

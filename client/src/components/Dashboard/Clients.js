@@ -140,7 +140,7 @@ const Clients = ({
 
                     const { ip } = rowInfo.original;
 
-                    return getIpMatchListStatus(ip, disallowedClients) === IP_MATCH_LIST_STATUS.NOT_FOUND ? {} : { className: 'red' };
+                    return getIpMatchListStatus(ip, disallowedClients) === IP_MATCH_LIST_STATUS.NOT_FOUND ? {} : { className: 'logs__row--red' };
                 }}
         />
     </Card>;

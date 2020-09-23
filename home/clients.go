@@ -407,11 +407,9 @@ func (clients *clientsContainer) check(c *Client) error {
 	}
 	sort.Strings(c.Tags)
 
-	if len(c.Upstreams) != 0 {
-		err := dnsforward.ValidateUpstreams(c.Upstreams)
-		if err != nil {
-			return fmt.Errorf("invalid upstream servers: %s", err)
-		}
+	err := dnsforward.ValidateUpstreams(c.Upstreams)
+	if err != nil {
+		return fmt.Errorf("invalid upstream servers: %s", err)
 	}
 
 	return nil

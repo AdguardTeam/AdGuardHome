@@ -3,7 +3,11 @@ import { shallowEqual, useSelector } from 'react-redux';
 import classNames from 'classnames';
 import React from 'react';
 import propTypes from 'prop-types';
-import { formatElapsedMs, getFilterName } from '../../../helpers/helpers';
+import {
+    formatElapsedMs,
+    getFilterName,
+    getServiceName,
+} from '../../../helpers/helpers';
 import { FILTERED_STATUS, FILTERED_STATUS_TO_META_MAP } from '../../../helpers/constants';
 import IconTooltip from './IconTooltip';
 
@@ -16,6 +20,7 @@ const ResponseCell = ({
     upstream,
     rule,
     filterId,
+    service_name,
 }) => {
     const { t } = useTranslation();
     const filters = useSelector((state) => state.filtering.filters, shallowEqual);
@@ -52,7 +57,7 @@ const ResponseCell = ({
         install_settings_dns: upstream,
         elapsed: formattedElapsedMs,
         response_code: status,
-        filter,
+        ...(service_name ? { service_name: getServiceName(service_name) } : { filter }),
         rule_label: rule,
         response_table_header: renderResponses(response),
         original_response: renderResponses(originalResponse),
@@ -64,8 +69,22 @@ const ResponseCell = ({
             ...COMMON_CONTENT,
             filter: '',
         });
-    const detailedInfo = isBlocked ? filter : formattedElapsedMs;
 
+    const getDetailedInfo = (reason) => {
+        switch (reason) {
+            case FILTERED_STATUS.FILTERED_BLOCKED_SERVICE:
+                if (!service_name) {
+                    return formattedElapsedMs;
+                }
+                return getServiceName(service_name);
+            case FILTERED_STATUS.FILTERED_BLACK_LIST:
+                return filter;
+            default:
+                return formattedElapsedMs;
+        }
+    };
+
+    const detailedInfo = getDetailedInfo(reason);
 
     return <div className="logs__cell logs__cell--response" role="gridcell">
         <IconTooltip
@@ -96,6 +115,7 @@ ResponseCell.propTypes = {
     upstream: propTypes.string.isRequired,
     rule: propTypes.string,
     filterId: propTypes.number,
+    service_name: propTypes.string,
 };
 
 export default ResponseCell;
