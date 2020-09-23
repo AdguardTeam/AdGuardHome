@@ -1102,7 +1102,7 @@ and `value` is either:
 * IPv4 address: use this IP in A response
 * IPv6 address: use this IP in AAAA response
 * canonical name: add CNAME record
-* "<key>": CNAME exception - pass request to upstream
+* "`key`": CNAME exception - pass request to upstream
 * "A": A exception - pass A request to upstream
 * "AAAA": AAAA exception - pass AAAA request to upstream
 
