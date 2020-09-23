@@ -14,7 +14,6 @@ import IconTooltip from './IconTooltip';
 
 const DomainCell = ({
     answer_dnssec,
-    service_name,
     client_proto,
     domain,
     time,
@@ -49,10 +48,6 @@ const DomainCell = ({
         type_table_header: type,
         protocol,
     };
-
-    if (service_name) {
-        requestDetailsObj.check_service = service_name;
-    }
 
     const sourceData = getSourceData(tracker);
 
@@ -103,7 +98,7 @@ const DomainCell = ({
                      xlinkHref='privacy' contentItemClass='key-colon' renderContent={renderContent}
                      place='bottom' />
         <div className={valueClass}>
-            <div className="text-truncate" title={domain}>{service_name || domain}</div>
+            <div className="text-truncate" title={domain}>{domain}</div>
             {details && isDetailed
             && <div className="detailed-info d-none d-sm-block text-truncate"
                     title={details}>{details}</div>}
@@ -117,7 +112,6 @@ DomainCell.propTypes = {
     domain: propTypes.string.isRequired,
     time: propTypes.string.isRequired,
     type: propTypes.string.isRequired,
-    service_name: propTypes.string,
     tracker: propTypes.object,
 };
 

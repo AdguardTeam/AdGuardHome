@@ -11,6 +11,7 @@ import {
     formatTime,
     getBlockingClientName,
     getFilterName,
+    getServiceName,
     processContent,
 } from '../../../helpers/helpers';
 import {
@@ -74,6 +75,7 @@ const Row = memo(({
             rule,
             originalResponse,
             status,
+            service_name,
         } = rowProps;
 
         const hasTracker = !!tracker;
@@ -133,6 +135,8 @@ const Row = memo(({
             date: formatDateTime(time, DEFAULT_SHORT_DATE_FORMAT_OPTIONS),
             encryption_status: isBlocked
                 ? <div className="bg--danger">{requestStatus}</div> : requestStatus,
+            ...(FILTERED_STATUS.FILTERED_BLOCKED_SERVICE && service_name
+                && { service_name: getServiceName(service_name) }),
             domain,
             type_table_header: type,
             protocol,
@@ -219,6 +223,7 @@ Row.propTypes = {
         rule: propTypes.string,
         originalResponse: propTypes.array,
         status: propTypes.string.isRequired,
+        service_name: propTypes.string,
     }).isRequired,
     isSmallScreen: propTypes.bool.isRequired,
     setDetailedDataCurrent: propTypes.func.isRequired,

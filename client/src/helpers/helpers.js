@@ -26,6 +26,7 @@ import {
     FILTERED,
     FILTERED_STATUS,
     IP_MATCH_LIST_STATUS,
+    SERVICES_ID_NAME_MAP,
     STANDARD_DNS_PORT,
     STANDARD_HTTPS_PORT,
     STANDARD_WEB_PORT,
@@ -944,3 +945,9 @@ export const getBlockingClientName = (clients, ip) => {
  */
 export const filterOutComments = (lines) => lines
     .filter((line) => !line.startsWith(COMMENT_LINE_DEFAULT_TOKEN));
+
+/**
+ * @param {string} serviceId
+ * @returns {string}
+ */
+export const getServiceName = (serviceId) => SERVICES_ID_NAME_MAP[serviceId] || serviceId;

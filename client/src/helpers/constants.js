@@ -280,6 +280,11 @@ export const SERVICES = [
     },
 ];
 
+export const SERVICES_ID_NAME_MAP = SERVICES.reduce((acc, { id, name }) => {
+    acc[id] = name;
+    return acc;
+}, {});
+
 export const ENCRYPTION_SOURCE = {
     PATH: 'path',
     CONTENT: 'content',
@@ -351,6 +356,10 @@ export const RESPONSE_FILTER = {
         QUERY: 'blocked',
         LABEL: 'show_blocked_responses',
     },
+    BLOCKED_SERVICES: {
+        QUERY: 'blocked_services',
+        LABEL: 'blocked_services',
+    },
     BLOCKED_THREATS: {
         QUERY: 'blocked_safebrowsing',
         LABEL: 'blocked_threats',
@@ -397,7 +406,7 @@ export const FILTERED_STATUS_TO_META_MAP = {
         COLOR: QUERY_STATUS_COLORS.WHITE,
     },
     [FILTERED_STATUS.FILTERED_BLOCKED_SERVICE]: {
-        LABEL: RESPONSE_FILTER.BLOCKED.LABEL,
+        LABEL: 'blocked_service',
         COLOR: QUERY_STATUS_COLORS.RED,
     },
     [FILTERED_STATUS.FILTERED_SAFE_SEARCH]: {

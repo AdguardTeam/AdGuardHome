@@ -17,7 +17,8 @@ const (
 	filteringStatusAll      = "all"
 	filteringStatusFiltered = "filtered" // all kinds of filtering
 
-	filteringStatusBlocked             = "blocked"              // blocked or blocked service
+	filteringStatusBlocked             = "blocked"              // blocked or blocked services
+	filteringStatusBlockedService      = "blocked_services"     // blocked
 	filteringStatusBlockedSafebrowsing = "blocked_safebrowsing" // blocked by safebrowsing
 	filteringStatusBlockedParental     = "blocked_parental"     // blocked by parental control
 	filteringStatusWhitelisted         = "whitelisted"          // whitelisted
@@ -29,7 +30,7 @@ const (
 // filteringStatusValues -- array with all possible filteringStatus values
 var filteringStatusValues = []string{
 	filteringStatusAll, filteringStatusFiltered, filteringStatusBlocked,
-	filteringStatusBlockedSafebrowsing, filteringStatusBlockedParental,
+	filteringStatusBlockedService, filteringStatusBlockedSafebrowsing, filteringStatusBlockedParental,
 	filteringStatusWhitelisted, filteringStatusRewritten, filteringStatusSafeSearch,
 	filteringStatusProcessed,
 }
@@ -113,6 +114,8 @@ func (c *searchCriteria) match(entry *logEntry) bool {
 			return res.IsFiltered &&
 				(res.Reason == dnsfilter.FilteredBlackList ||
 					res.Reason == dnsfilter.FilteredBlockedService)
+		case filteringStatusBlockedService:
+			return res.IsFiltered && res.Reason == dnsfilter.FilteredBlockedService
 		case filteringStatusBlockedParental:
 			return res.IsFiltered && res.Reason == dnsfilter.FilteredParental
 		case filteringStatusBlockedSafebrowsing:
@@ -120,8 +123,8 @@ func (c *searchCriteria) match(entry *logEntry) bool {
 		case filteringStatusWhitelisted:
 			return res.Reason == dnsfilter.NotFilteredWhiteList
 		case filteringStatusRewritten:
-			return (res.Reason == dnsfilter.ReasonRewrite ||
-				res.Reason == dnsfilter.RewriteEtcHosts)
+			return res.Reason == dnsfilter.ReasonRewrite ||
+				res.Reason == dnsfilter.RewriteEtcHosts
 		case filteringStatusSafeSearch:
 			return res.IsFiltered && res.Reason == dnsfilter.FilteredSafeSearch
 

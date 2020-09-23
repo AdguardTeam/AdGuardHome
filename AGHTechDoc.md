@@ -1471,7 +1471,8 @@ Strict matching can be enabled by enclosing the value in double quotes: e.g. `"a
 `response_status`:
 * all
 * filtered             - all kinds of filtering
-* blocked              - blocked or blocked service
+* blocked              - blocked or blocked services
+* blocked_services     - blocked services
 * blocked_safebrowsing - blocked by safebrowsing
 * blocked_parental     - blocked by parental control
 * whitelisted          - whitelisted
