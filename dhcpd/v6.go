@@ -25,6 +25,8 @@ type v6Server struct {
 	ipAddrs    [256]byte
 	sid        dhcpv6.Duid
 
+	ra raCtx // RA module
+
 	conf V6ServerConf
 }
 
@@ -557,6 +559,27 @@ func getIfaceIPv6(iface net.Interface) []net.IP {
 	return res
 }
 
+// initialize RA module
+func (s *v6Server) initRA(iface *net.Interface) error {
+	// choose the source IP address - should be link-local-unicast
+	s.ra.ipAddr = s.conf.dnsIPAddrs[0]
+	for _, ip := range s.conf.dnsIPAddrs {
+		if ip.IsLinkLocalUnicast() {
+			s.ra.ipAddr = ip
+			break
+		}
+	}
+
+	s.ra.raAllowSlaac = s.conf.RaAllowSlaac
+	s.ra.raSlaacOnly = s.conf.RaSlaacOnly
+	s.ra.dnsIPAddr = s.ra.ipAddr
+	s.ra.prefixIPAddr = s.conf.ipStart
+	s.ra.ifaceName = s.conf.InterfaceName
+	s.ra.iface = iface
+	s.ra.packetSendPeriod = 1 * time.Second
+	return s.ra.Init()
+}
+
 // Start - start server
 func (s *v6Server) Start() error {
 	if !s.conf.Enabled {
@@ -568,12 +591,24 @@ func (s *v6Server) Start() error {
 		return wrapErrPrint(err, "Couldn't find interface by name %s", s.conf.InterfaceName)
 	}
 
-	log.Debug("DHCPv6: starting...")
 	s.conf.dnsIPAddrs = getIfaceIPv6(*iface)
 	if len(s.conf.dnsIPAddrs) == 0 {
 		log.Debug("DHCPv6: no IPv6 address for interface %s", iface.Name)
 		return nil
 	}
+
+	err = s.initRA(iface)
+	if err != nil {
+		return err
+	}
+
+	// don't initialize DHCPv6 server if we must force the clients to use SLAAC
+	if s.conf.RaSlaacOnly {
+		log.Debug("DHCPv6: not starting DHCPv6 server due to ra_slaac_only=true")
+		return nil
+	}
+
+	log.Debug("DHCPv6: starting...")
 
 	if len(iface.HardwareAddr) != 6 {
 		return fmt.Errorf("DHCPv6: invalid MAC %s", iface.HardwareAddr)
@@ -598,11 +633,15 @@ func (s *v6Server) Start() error {
 		err = s.srv.Serve()
 		log.Debug("DHCPv6: srv.Serve: %s", err)
 	}()
+
 	return nil
 }
 
 // Stop - stop server
 func (s *v6Server) Stop() {
+	s.ra.Close()
+
+	// DHCPv6 server may not be initialized if ra_slaac_only=true
 	if s.srv == nil {
 		return
 	}
@@ -626,7 +665,7 @@ func v6Create(conf V6ServerConf) (DHCPServer, error) {
 	}
 
 	s.conf.ipStart = net.ParseIP(conf.RangeStart)
-	if s.conf.ipStart == nil {
+	if s.conf.ipStart == nil || s.conf.ipStart.To16() == nil {
 		return s, fmt.Errorf("DHCPv6: invalid range-start IP: %s", conf.RangeStart)
 	}
 

@@ -33,6 +33,7 @@ Contents:
 	* Static IP check/set
 	* API: Add a static lease
 	* API: Reset DHCP configuration
+	* RA+SLAAC
 * DNS general settings
 	* API: Get DNS general settings
 	* API: Set DNS general settings
@@ -723,6 +724,53 @@ Request:
 Response:
 
 	200 OK
+
+
+### RA+SLAAC
+
+There are 3 options for a client to get IPv6 address:
+
+1. via DHCPv6.
+	Client doesn't receive any `ICMPv6.RouterAdvertisement` packets, so it tries to use DHCPv6.
+2. via SLAAC.
+	Client receives a `ICMPv6.RouterAdvertisement` packet with `Managed=false` flag and IPv6 prefix.
+	Client then assigns to itself an IPv6 address using this prefix and its MAC address.
+	DHCPv6 server won't be started in this case.
+3. via DHCPv6 or SLAAC.
+	Client receives a `ICMPv6.RouterAdvertisement` packet with `Managed=true` flag and IPv6 prefix.
+	Client may choose to use SLAAC or DHCPv6 to obtain an IPv6 address.
+
+Configuration:
+
+	dhcp:
+		...
+		dhcpv6:
+			...
+			ra_slaac_only: false
+			ra_allow_slaac: false
+
+* `ra_slaac_only:false; ra_allow_slaac:false`: use option #1.
+	Don't send any `ICMPv6.RouterAdvertisement` packets.
+* `ra_slaac_only:true; ra_allow_slaac:false`: use option #2.
+	Periodically send `ICMPv6.RouterAdvertisement(Flags=(Managed=false,Other=false))` packets.
+* `ra_slaac_only:false; ra_allow_slaac:true`: use option #3.
+	Periodically send `ICMPv6.RouterAdvertisement(Flags=(Managed=true,Other=true))` packets.
+
+ICMPv6.RouterAdvertisement packet description:
+
+	ICMPv6:
+	Type=RouterAdvertisement(134)
+	Flags
+		Managed=<BOOL>
+		Other=<BOOL>
+	Option=Prefix information(3)
+		<IPv6 address prefix (/64) of the network interface>
+	Option=MTU(5)
+		<...>
+	Option=Source link-layer address(1)
+		<MAC address>
+	Option=Recursive DNS Server(25)
+		<IPv6 address of DNS server>
 
 
 ## TLS

@@ -30,6 +30,10 @@ To set up a test environment for DHCP server you need:
 
 3. Start your VM, install an OS.  Configure your network interface to use DHCP and the OS should ask for a IP address from our DHCP server.
 
+4. To see the current IP address on client OS you can use `ip a` command on Linux or `ipconfig` on Windows.
+
+5. To force the client OS to request an IP from DHCP server again, you can use `dhclient` on Linux or `ipconfig /release` on Windows.
+
 ### Configure server
 
 1. Edit server configuration file 'AdGuardHome.yaml', for example:
@@ -37,12 +41,19 @@ To set up a test environment for DHCP server you need:
         dhcp:
           enabled: true
           interface_name: vboxnet0
-          gateway_ip: 192.168.56.1
-          subnet_mask: 255.255.255.0
-          range_start: 192.168.56.2
-          range_end: 192.168.56.2
-          lease_duration: 86400
-          icmp_timeout_msec: 1000
+          dhcpv4:
+            gateway_ip: 192.168.56.1
+            subnet_mask: 255.255.255.0
+            range_start: 192.168.56.2
+            range_end: 192.168.56.2
+            lease_duration: 86400
+            icmp_timeout_msec: 1000
+            options: []
+          dhcpv6:
+            range_start: 2001::1
+            lease_duration: 86400
+            ra_slaac_only: false
+            ra_allow_slaac: false
 
 2. Start the server
 
