@@ -11,12 +11,16 @@ import IconTooltip from './IconTooltip';
 import { renderFormattedClientCell } from '../../../helpers/renderFormattedClientCell';
 import { toggleClientBlock } from '../../../actions/access';
 import { getBlockClientInfo } from './helpers';
+import { getStats } from '../../../actions/stats';
+import { updateLogs } from '../../../actions/queryLogs';
 
 const ClientCell = ({
     client,
     domain,
     info,
-    info: { name, whois_info },
+    info: {
+        name, whois_info, disallowed, disallowed_rule,
+    },
     reason,
 }) => {
     const { t } = useTranslation();
@@ -25,11 +29,6 @@ const ClientCell = ({
     const processingRules = useSelector((state) => state.filtering.processingRules);
     const isDetailed = useSelector((state) => state.queryLogs.isDetailed);
     const [isOptionsOpened, setOptionsOpened] = useState(false);
-
-    const disallowed_clients = useSelector(
-        (state) => state.access.disallowed_clients,
-        shallowEqual,
-    );
 
     const autoClient = autoClients.find((autoClient) => autoClient.name === client);
     const source = autoClient?.source;
@@ -66,43 +65,50 @@ const ClientCell = ({
         const {
             confirmMessage,
             buttonKey: blockingClientKey,
-            type,
-        } = getBlockClientInfo(client, disallowed_clients);
+            isNotInAllowedList,
+        } = getBlockClientInfo(client, disallowed, disallowed_rule);
 
         const blockingForClientKey = isFiltered ? 'unblock_for_this_client_only' : 'block_for_this_client_only';
         const clientNameBlockingFor = getBlockingClientName(clients, client);
 
-        const BUTTON_OPTIONS_TO_ACTION_MAP = {
-            [blockingForClientKey]: () => {
-                dispatch(toggleBlockingForClient(buttonType, domain, clientNameBlockingFor));
+        const BUTTON_OPTIONS = [
+            {
+                name: blockingForClientKey,
+                onClick: () => {
+                    dispatch(toggleBlockingForClient(buttonType, domain, clientNameBlockingFor));
+                },
             },
-            [blockingClientKey]: () => {
-                const message = `${type === BLOCK_ACTIONS.BLOCK ? t('adg_will_drop_dns_queries') : ''} ${t(confirmMessage, { ip: client })}`;
-                if (window.confirm(message)) {
-                    dispatch(toggleClientBlock(type, client));
-                }
+            {
+                name: blockingClientKey,
+                onClick: async () => {
+                    if (window.confirm(confirmMessage)) {
+                        await dispatch(toggleClientBlock(client, disallowed, disallowed_rule));
+                        await dispatch(updateLogs());
+                    }
+                },
+                disabled: isNotInAllowedList,
             },
-        };
+        ];
 
         const onClick = async () => {
             await dispatch(toggleBlocking(buttonType, domain));
+            await dispatch(getStats());
         };
 
-        const getOptions = (optionToActionMap) => {
-            const options = Object.entries(optionToActionMap);
+        const getOptions = (options) => {
             if (options.length === 0) {
                 return null;
             }
-            return <>{options
-                .map(([name, onClick]) => <div
+            return <>{options.map(({ name, onClick, disabled }) => <button
                     key={name}
                     className="button-action--arrow-option px-4 py-2"
                     onClick={onClick}
+                    disabled={disabled}
             >{t(name)}
-            </div>)}</>;
+            </button>)}</>;
         };
 
-        const content = getOptions(BUTTON_OPTIONS_TO_ACTION_MAP);
+        const content = getOptions(BUTTON_OPTIONS);
 
         const buttonClass = classNames('button-action button-action--main', {
             'button-action--unblock': isFiltered,
@@ -168,6 +174,8 @@ ClientCell.propTypes = {
                 city: propTypes.string,
                 orgname: propTypes.string,
             }),
+            disallowed: propTypes.bool.isRequired,
+            disallowed_rule: propTypes.string.isRequired,
         }),
     ]),
     reason: propTypes.string.isRequired,

@@ -1,19 +1,18 @@
-import { getIpMatchListStatus } from '../../../../helpers/helpers';
-import { BLOCK_ACTIONS, IP_MATCH_LIST_STATUS } from '../../../../helpers/constants';
+import i18next from 'i18next';
 
 export const BUTTON_PREFIX = 'btn_';
 
-export const getBlockClientInfo = (client, disallowed_clients) => {
-    const ipMatchListStatus = getIpMatchListStatus(client, disallowed_clients);
+export const getBlockClientInfo = (ip, disallowed, disallowed_rule) => {
+    const confirmMessage = disallowed
+        ? i18next.t('client_confirm_unblock', { ip: disallowed_rule })
+        : `${i18next.t('adg_will_drop_dns_queries')} ${i18next.t('client_confirm_block', { ip })}`;
 
-    const isNotFound = ipMatchListStatus === IP_MATCH_LIST_STATUS.NOT_FOUND;
-    const type = isNotFound ? BLOCK_ACTIONS.BLOCK : BLOCK_ACTIONS.UNBLOCK;
+    const buttonKey = i18next.t(disallowed ? 'allow_this_client' : 'disallow_this_client');
+    const isNotInAllowedList = disallowed && disallowed_rule === '';
 
-    const confirmMessage = isNotFound ? 'client_confirm_block' : 'client_confirm_unblock';
-    const buttonKey = isNotFound ? 'disallow_this_client' : 'allow_this_client';
     return {
         confirmMessage,
         buttonKey,
-        type,
+        isNotInAllowedList,
     };
 };
