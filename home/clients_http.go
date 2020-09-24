@@ -21,6 +21,17 @@ type clientJSON struct {
 	BlockedServices          []string `json:"blocked_services"`
 
 	Upstreams []string `json:"upstreams"`
+
+	WhoisInfo map[string]interface{} `json:"whois_info"`
+
+	// Disallowed - if true -- client's IP is not disallowed
+	// Otherwise, it is blocked.
+	Disallowed bool `json:"disallowed"`
+
+	// DisallowedRule - the rule due to which the client is disallowed
+	// If Disallowed is true, and this string is empty - it means that the client IP
+	// is disallowed by the "allowed IP list", i.e. it is not included in allowed.
+	DisallowedRule string `json:"disallowed_rule"`
 }
 
 type clientHostJSON struct {
@@ -38,7 +49,7 @@ type clientListJSON struct {
 }
 
 // respond with information about configured clients
-func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http.Request) {
+func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, _ *http.Request) {
 	data := clientListJSON{}
 
 	clients.lock.Lock()
@@ -123,15 +134,9 @@ func clientToJSON(c *Client) clientJSON {
 	return cj
 }
 
-type clientHostJSONWithID struct {
-	IDs       []string               `json:"ids"`
-	Name      string                 `json:"name"`
-	WhoisInfo map[string]interface{} `json:"whois_info"`
-}
-
 // Convert ClientHost object to JSON
-func clientHostToJSON(ip string, ch ClientHost) clientHostJSONWithID {
-	cj := clientHostJSONWithID{
+func clientHostToJSON(ip string, ch ClientHost) clientJSON {
+	cj := clientJSON{
 		Name: ch.Host,
 		IDs:  []string{ip},
 	}
@@ -255,9 +260,13 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 				continue // a client with this IP isn't found
 			}
 			cj := clientHostToJSON(ip, ch)
+
+			cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
 			el[ip] = cj
 		} else {
 			cj := clientToJSON(&c)
+
+			cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
 			el[ip] = cj
 		}
 

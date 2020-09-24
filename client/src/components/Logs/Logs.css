@@ -96,7 +96,7 @@
 }
 
 .bg--danger {
-    color: var(--danger);
+    color: var(--danger) !important;
 }
 
 .form-control--search {
@@ -293,7 +293,20 @@
     background: var(--btn-unblock-disabled);
 }
 
-.button-action--arrow-option:hover {
+.button-action--arrow-option {
+    background: transparent;
+    border: 0;
+    display: block;
+    width: 100%;
+    text-align: left;
+    color: inherit;
+}
+
+.button-action--arrow-option:disabled {
+    display: none;
+}
+
+.tooltip-custom__container .button-action--arrow-option:not(:disabled):hover {
     cursor: pointer;
     background: var(--gray-f3);
     overflow: hidden;
@@ -327,7 +340,7 @@
 }
 
 .logs__row--red {
-    background-color: var(--red);
+    background-color: var(--red) !important;
 }
 
 .logs__row--white {

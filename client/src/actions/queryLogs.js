@@ -7,6 +7,17 @@ import {
 } from '../helpers/constants';
 import { addErrorToast, addSuccessToast } from './toasts';
 
+const enrichWithClientInfo = async (logs) => {
+    const clientsParams = getParamsForClientsSearch(logs, 'client');
+
+    if (Object.keys(clientsParams).length > 0) {
+        const clients = await apiClient.findClients(clientsParams);
+        return addClientInfo(logs, clients, 'client');
+    }
+
+    return logs;
+};
+
 const getLogsWithParams = async (config) => {
     const { older_than, filter, ...values } = config;
     const rawLogs = await apiClient.getQueryLog({
@@ -14,13 +25,8 @@ const getLogsWithParams = async (config) => {
         older_than,
     });
     const { data, oldest } = rawLogs;
-    let logs = normalizeLogs(data);
-    const clientsParams = getParamsForClientsSearch(logs, 'client');
-
-    if (Object.keys(clientsParams).length > 0) {
-        const clients = await apiClient.findClients(clientsParams);
-        logs = addClientInfo(logs, clients, 'client');
-    }
+    const normalizedLogs = normalizeLogs(data);
+    const logs = await enrichWithClientInfo(normalizedLogs);
 
     return {
         logs,
@@ -81,6 +87,23 @@ export const toggleDetailedLogs = createAction('TOGGLE_DETAILED_LOGS');
 export const getLogsRequest = createAction('GET_LOGS_REQUEST');
 export const getLogsFailure = createAction('GET_LOGS_FAILURE');
 export const getLogsSuccess = createAction('GET_LOGS_SUCCESS');
+
+export const updateLogs = () => async (dispatch, getState) => {
+    try {
+        const { logs, oldest, older_than } = getState().queryLogs;
+
+        const enrichedLogs = await enrichWithClientInfo(logs);
+
+        dispatch(getLogsSuccess({
+            logs: enrichedLogs,
+            oldest,
+            older_than,
+        }));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(getLogsFailure(error));
+    }
+};
 
 export const getLogs = () => async (dispatch, getState) => {
     dispatch(getLogsRequest());
