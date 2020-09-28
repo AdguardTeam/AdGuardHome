@@ -164,6 +164,8 @@ func handleServiceControlAction(opts options) {
 			log.Fatalf("Failed to run service: %s", err)
 		}
 	} else if action == "install" {
+		initConfigFilename(opts)
+		initWorkingDir(opts)
 		handleServiceInstallCommand(s)
 	} else if action == "uninstall" {
 		handleServiceUninstallCommand(s)

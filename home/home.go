@@ -147,13 +147,8 @@ func version() string {
 // run is a blocking method!
 // nolint
 func run(args options) {
-	// config file path can be overridden by command-line arguments:
-	if args.configFilename != "" {
-		Context.configFilename = args.configFilename
-	} else {
-		// Default config file name
-		Context.configFilename = "AdGuardHome.yaml"
-	}
+	// configure config filename
+	initConfigFilename(args)
 
 	// configure working dir and config path
 	initWorkingDir(args)
@@ -409,6 +404,16 @@ func writePIDFile(fn string) bool {
 		return false
 	}
 	return true
+}
+
+func initConfigFilename(args options) {
+	// config file path can be overridden by command-line arguments:
+	if args.configFilename != "" {
+		Context.configFilename = args.configFilename
+	} else {
+		// Default config file name
+		Context.configFilename = "AdGuardHome.yaml"
+	}
 }
 
 // initWorkingDir initializes the workDir
