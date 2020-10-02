@@ -86,9 +86,10 @@ func processInitial(ctx *dnsContext) int {
 	}
 
 	// disable Mozilla DoH
+	// https://support.mozilla.org/en-US/kb/canary-domain-use-application-dnsnet
 	if (d.Req.Question[0].Qtype == dns.TypeA || d.Req.Question[0].Qtype == dns.TypeAAAA) &&
 		d.Req.Question[0].Name == "use-application-dns.net." {
-		d.Res = s.makeResponseREFUSED(d.Req)
+		d.Res = s.genNXDomain(d.Req)
 		return resultFinish
 	}
 

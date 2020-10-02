@@ -24,7 +24,10 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 	m := d.Req
 
 	if m.Question[0].Qtype != dns.TypeA && m.Question[0].Qtype != dns.TypeAAAA {
-		return s.makeResponseREFUSED(m)
+		if s.conf.BlockingMode == "null_ip" {
+			return s.makeResponse(m)
+		}
+		return s.genNXDomain(m)
 	}
 
 	switch result.Reason {
@@ -42,13 +45,7 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 
 		if s.conf.BlockingMode == "null_ip" {
 			// it means that we should return 0.0.0.0 or :: for any blocked request
-
-			switch m.Question[0].Qtype {
-			case dns.TypeA:
-				return s.genARecord(m, []byte{0, 0, 0, 0})
-			case dns.TypeAAAA:
-				return s.genAAAARecord(m, net.IPv6zero)
-			}
+			return s.makeResponseNullIP(m)
 
 		} else if s.conf.BlockingMode == "custom_ip" {
 			// means that we should return custom IP for any blocked request
@@ -73,11 +70,12 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 
 		// Default blocking mode
 		// If there's an IP specified in the rule, return it
-		// If there is no IP, return REFUSED
+		// For host-type rules, return null IP
 		if result.IP != nil {
 			return s.genResponseWithIP(m, result.IP)
 		}
-		return s.makeResponseREFUSED(m)
+
+		return s.makeResponseNullIP(m)
 	}
 }
 
@@ -136,6 +134,17 @@ func (s *Server) genResponseWithIP(req *dns.Msg, ip net.IP) *dns.Msg {
 	// empty response
 	resp := s.makeResponse(req)
 	return resp
+}
+
+// Respond with 0.0.0.0 for A, :: for AAAA, empty response for other types
+func (s *Server) makeResponseNullIP(req *dns.Msg) *dns.Msg {
+	if req.Question[0].Qtype == dns.TypeA {
+		return s.genARecord(req, []byte{0, 0, 0, 0})
+	} else if req.Question[0].Qtype == dns.TypeAAAA {
+		return s.genAAAARecord(req, net.IPv6zero)
+	}
+
+	return s.makeResponse(req)
 }
 
 func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, d *proxy.DNSContext) *dns.Msg {
