@@ -56,6 +56,7 @@ const filtering = handleActions(
                 ...state,
                 isModalOpen: !state.isModalOpen,
                 isFilterAdded: false,
+                modalType: '',
             };
             return newState;
         },

@@ -78,6 +78,7 @@ class Modal extends Component {
                 break;
             }
             default:
+                break;
         }
 
         const title = t(getTitle(modalType, whitelist));
@@ -99,7 +100,6 @@ class Modal extends Component {
                     <Form
                         selectedSources={selectedSources}
                         initialValues={initialValues}
-                        filtersCatalog={filtersCatalog}
                         modalType={modalType}
                         onSubmit={handleSubmit}
                         processingAddFilter={processingAddFilter}

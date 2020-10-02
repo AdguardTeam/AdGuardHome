@@ -8,6 +8,8 @@ import { validatePath, validateRequiredValue } from '../../helpers/validators';
 import { renderCheckboxField, renderInputField } from '../../helpers/form';
 import { MODAL_OPEN_TIMEOUT, MODAL_TYPE, FORM_NAME } from '../../helpers/constants';
 
+const filtersCatalog = require('../../helpers/filters/filters.json');
+
 const getIconsData = (homepage, source) => ([
     {
         iconName: 'dashboard',
@@ -82,7 +84,6 @@ const Form = (props) => {
         modalType,
         toggleFilteringModal,
         selectedSources,
-        filtersCatalog,
     } = props;
 
     const openModal = (modalType, timeout = MODAL_OPEN_TIMEOUT) => {
@@ -168,7 +169,6 @@ Form.propTypes = {
     whitelist: PropTypes.bool,
     modalType: PropTypes.string.isRequired,
     toggleFilteringModal: PropTypes.func.isRequired,
-    filtersCatalog: PropTypes.object,
     selectedSources: PropTypes.object,
 };
 

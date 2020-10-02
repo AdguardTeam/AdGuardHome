@@ -23,7 +23,7 @@ class DnsBlocklist extends Component {
     }
 
     handleSubmit = (values, _, { initialValues }) => {
-        const { filtering: { modalFilterUrl, modalType } } = this.props;
+        const { modalFilterUrl, modalType } = this.props.filtering;
 
         switch (modalType) {
             case MODAL_TYPE.EDIT_FILTERS:
