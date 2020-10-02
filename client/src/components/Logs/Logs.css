@@ -238,6 +238,10 @@
     border: 0;
 }
 
+.button-action--small {
+    width: fit-content;
+}
+
 .button-action--unblock {
     background: var(--btn-unblock);
 }

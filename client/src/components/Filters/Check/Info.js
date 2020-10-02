@@ -1,155 +1,124 @@
-import React, { Fragment } from 'react';
-import PropTypes from 'prop-types';
-import { withTranslation } from 'react-i18next';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import classNames from 'classnames';
 
+import i18next from 'i18next';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import {
     checkFiltered,
     checkRewrite,
     checkRewriteHosts,
-    checkBlackList,
-    checkNotFilteredNotFound,
     checkWhiteList,
     checkSafeSearch,
     checkSafeBrowsing,
-    checkParental, getFilterName,
+    checkParental,
+    getFilterName,
 } from '../../../helpers/helpers';
-import { FILTERED } from '../../../helpers/constants';
+import { BLOCK_ACTIONS, FILTERED, FILTERED_STATUS } from '../../../helpers/constants';
+import { toggleBlocking } from '../../../actions';
 
-const getTitle = (reason, filterName, t, onlyFiltered) => {
-    if (checkNotFilteredNotFound(reason)) {
-        return t('check_not_found');
-    }
+const renderBlockingButton = (isFiltered, domain) => {
+    const processingRules = useSelector((state) => state.filtering.processingRules);
+    const dispatch = useDispatch();
+    const { t } = useTranslation();
 
-    if (checkRewrite(reason)) {
-        return t('rewrite_applied');
-    }
+    const buttonType = isFiltered ? BLOCK_ACTIONS.UNBLOCK : BLOCK_ACTIONS.BLOCK;
 
-    if (checkRewriteHosts(reason)) {
-        return t('rewrite_hosts_applied');
-    }
+    const onClick = async () => {
+        await dispatch(toggleBlocking(buttonType, domain));
+    };
 
-    if (checkBlackList(reason)) {
-        return filterName;
-    }
+    const buttonClass = classNames('mt-3 button-action button-action--main button-action--active button-action--small', {
+        'button-action--unblock': isFiltered,
+    });
 
-    if (checkWhiteList(reason)) {
-        return (
-            <div>
-                {filterName}
-            </div>
-        );
-    }
-
-    if (onlyFiltered) {
-        const filterKey = reason.replace(FILTERED, '');
-
-        return (
-            <div>
-                {t('query_log_filtered', { filter: filterKey })}
-            </div>
-        );
-    }
-
-    return (
-        <Fragment>
-            <div>
-                {t('check_reason', { reason })}
-            </div>
-            <div>
-                {filterName}
-            </div>
-        </Fragment>
-    );
+    return <button type="button"
+                className={buttonClass}
+                onClick={onClick}
+                disabled={processingRules}
+        >
+            {t(buttonType)}
+        </button>;
 };
 
-const getColor = (reason) => {
-    if (checkFiltered(reason)) {
-        return 'red';
-    } if (checkRewrite(reason) || checkRewriteHosts(reason)) {
-        return 'blue';
-    } if (checkWhiteList(reason)) {
-        return 'green';
-    }
+const getTitle = (reason) => {
+    const { t } = useTranslation();
 
-    return '';
-};
+    const filters = useSelector((state) => state.filtering.filters, shallowEqual);
+    const whitelistFilters = useSelector((state) => state.filtering.whitelistFilters, shallowEqual);
+    const filter_id = useSelector((state) => state.filtering.check.filter_id);
 
-const Info = ({
-    filters,
-    whitelistFilters,
-    hostname,
-    reason,
-    filter_id,
-    rule,
-    service_name,
-    cname,
-    ip_addrs,
-    t,
-}) => {
-    const filterName = getFilterName(filters,
+    const filterName = getFilterName(
+        filters,
         whitelistFilters,
         filter_id,
         'filtered_custom_rules',
-        (filter) => (filter?.name ? t('query_log_filtered', { filter: filter.name }) : ''));
+        (filter) => (filter?.name ? t('query_log_filtered', { filter: filter.name }) : ''),
+    );
+
+    const getReasonFiltered = (reason) => {
+        const filterKey = reason.replace(FILTERED, '');
+        return i18next.t('query_log_filtered', { filter: filterKey });
+    };
+
+    const REASON_TO_TITLE_MAP = {
+        [FILTERED_STATUS.NOT_FILTERED_NOT_FOUND]: t('check_not_found'),
+        [FILTERED_STATUS.REWRITE]: t('rewrite_applied'),
+        [FILTERED_STATUS.REWRITE_HOSTS]: t('rewrite_hosts_applied'),
+        [FILTERED_STATUS.FILTERED_BLACK_LIST]: filterName,
+        [FILTERED_STATUS.NOT_FILTERED_WHITE_LIST]: filterName,
+        [FILTERED_STATUS.FILTERED_SAFE_SEARCH]: getReasonFiltered(reason),
+        [FILTERED_STATUS.FILTERED_SAFE_BROWSING]: getReasonFiltered(reason),
+        [FILTERED_STATUS.FILTERED_PARENTAL]: getReasonFiltered(reason),
+    };
+
+    if (Object.prototype.hasOwnProperty.call(REASON_TO_TITLE_MAP, reason)) {
+        return REASON_TO_TITLE_MAP[reason];
+    }
+
+    return <>
+        <div>{t('check_reason', { reason })}</div>
+        <div>{filterName}</div>
+    </>;
+};
+
+const Info = () => {
+    const {
+        hostname,
+        reason,
+        rule,
+        service_name,
+        cname,
+        ip_addrs,
+    } = useSelector((state) => state.filtering.check, shallowEqual);
+    const { t } = useTranslation();
+
+    const title = getTitle(reason);
+
+    const className = classNames('card mb-0 p-3', {
+        'logs__row--red': checkFiltered(reason),
+        'logs__row--blue': checkRewrite(reason) || checkRewriteHosts(reason),
+        'logs__row--green': checkWhiteList(reason),
+    });
 
     const onlyFiltered = checkSafeSearch(reason)
         || checkSafeBrowsing(reason)
         || checkParental(reason);
-    const title = getTitle(reason, filterName, t, onlyFiltered);
-    const color = getColor(reason);
 
-    if (onlyFiltered) {
-        return (
-            <div className={`card mb-0 p-3 ${color}`}>
-                <div>
-                    <strong>{hostname}</strong>
-                </div>
+    const isFiltered = checkFiltered(reason);
 
-                <div>{title}</div>
-            </div>
-        );
-    }
-
-    return (
-        <div className={`card mb-0 p-3 ${color}`}>
-            <div>
-                <strong>{hostname}</strong>
-            </div>
-
-            <div>{title}</div>
-
-            {rule && (
-                <div>{t('check_rule', { rule })}</div>
-            )}
-
-            {service_name && (
-                <div>{t('check_service', { service: service_name })}</div>
-            )}
-
-            {cname && (
-                <div>{t('check_cname', { cname })}</div>
-            )}
-
-            {ip_addrs && (
-                <div>
-                    {t('check_ip', { ip: ip_addrs.join(', ') })}
-                </div>
-            )}
-        </div>
-    );
+    return <div className={className}>
+        <div><strong>{hostname}</strong></div>
+        <div>{title}</div>
+        {!onlyFiltered
+        && <>
+            {rule && <div>{t('check_rule', { rule })}</div>}
+            {service_name && <div>{t('check_service', { service: service_name })}</div>}
+            {cname && <div>{t('check_cname', { cname })}</div>}
+            {ip_addrs && <div>{t('check_ip', { ip: ip_addrs.join(', ') })}</div>}
+            {renderBlockingButton(isFiltered, hostname)}
+        </>}
+    </div>;
 };
 
-Info.propTypes = {
-    filters: PropTypes.array.isRequired,
-    whitelistFilters: PropTypes.array.isRequired,
-    hostname: PropTypes.string.isRequired,
-    reason: PropTypes.string.isRequired,
-    filter_id: PropTypes.number,
-    rule: PropTypes.string,
-    service_name: PropTypes.string,
-    cname: PropTypes.string,
-    ip_addrs: PropTypes.array,
-    t: PropTypes.func.isRequired,
-};
-
-export default withTranslation()(Info);
+export default Info;

@@ -45,11 +45,7 @@ class CustomRules extends Component {
         const {
             t,
             filtering: {
-                filters,
-                whitelistFilters,
                 userRules,
-                processingCheck,
-                check,
             },
         } = this.props;
 
@@ -92,13 +88,7 @@ class CustomRules extends Component {
                     <hr />
                     <Examples />
                 </Card>
-                <Check
-                    filters={filters}
-                    whitelistFilters={whitelistFilters}
-                    check={check}
-                    onSubmit={this.handleCheck}
-                    processing={processingCheck}
-                />
+                <Check onSubmit={this.handleCheck} />
             </>
         );
     }
