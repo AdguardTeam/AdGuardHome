@@ -47,12 +47,8 @@ export const formatTime = (time, options = DEFAULT_TIME_FORMAT) => {
  * @returns {string} Returns the date and time in the specified format
  */
 export const formatDateTime = (dateTime, options = DEFAULT_DATE_FORMAT_OPTIONS) => {
-    const { language } = navigator;
-    const currentLanguage = (language.slice(0, 2) === 'en' || !language) ? 'en-GB' : language;
-
     const parsedTime = new Date(dateTime);
-
-    return parsedTime.toLocaleString(currentLanguage, options);
+    return parsedTime.toLocaleString(navigator.language, options);
 };
 
 /**
