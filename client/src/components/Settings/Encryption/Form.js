@@ -7,7 +7,7 @@ import flow from 'lodash/flow';
 
 import {
     renderInputField,
-    renderCheckboxField,
+    CheckboxField,
     renderRadioField,
     toNumber,
 } from '../../../helpers/form';
@@ -101,7 +101,7 @@ let Form = (props) => {
                         <Field
                             name="enabled"
                             type="checkbox"
-                            component={renderCheckboxField}
+                            component={CheckboxField}
                             placeholder={t('encryption_enable')}
                             onChange={handleChange}
                         />
@@ -138,7 +138,7 @@ let Form = (props) => {
                         <Field
                             name="force_https"
                             type="checkbox"
-                            component={renderCheckboxField}
+                            component={CheckboxField}
                             placeholder={t('encryption_redirect')}
                             onChange={handleChange}
                             disabled={!isEnabled}

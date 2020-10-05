@@ -157,31 +157,24 @@ renderRadioField.propTypes = {
     }).isRequired,
 };
 
-export const renderCheckboxField = ({
+export const CheckboxField = ({
     input,
     placeholder,
     subtitle,
     disabled,
     onClick,
     modifier = 'checkbox--form',
-    checked,
     meta: { touched, error },
 }) => <>
     <label className={`checkbox ${modifier}`} onClick={onClick}>
         <span className="checkbox__marker" />
-        <input {...input} type="checkbox" className="checkbox__input" disabled={disabled}
-               checked={input.checked || checked} />
+        <input {...input} type="checkbox" className="checkbox__input" disabled={disabled} />
         <span className="checkbox__label">
-                        <span className="checkbox__label-text checkbox__label-text--long">
-                            <span className="checkbox__label-title">{placeholder}</span>
-                            {subtitle
-                            && <span
-                                className="checkbox__label-subtitle"
-                                dangerouslySetInnerHTML={{ __html: subtitle }}
-
-                            />}
-                        </span>
-                    </span>
+            <span className="checkbox__label-text checkbox__label-text--long">
+                <span className="checkbox__label-title">{placeholder}</span>
+                {subtitle && <span className="checkbox__label-subtitle">{subtitle}</span>}
+            </span>
+        </span>
     </label>
     {!disabled
     && touched
@@ -189,7 +182,7 @@ export const renderCheckboxField = ({
     && <span className="form__message form__message--error"><Trans>{error}</Trans></span>}
 </>;
 
-renderCheckboxField.propTypes = {
+CheckboxField.propTypes = {
     input: PropTypes.object.isRequired,
     placeholder: PropTypes.string,
     subtitle: PropTypes.string,
