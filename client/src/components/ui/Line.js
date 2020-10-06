@@ -8,7 +8,7 @@ const Line = ({ data, color }) => data
     && <ResponsiveLine
         data={data}
         margin={{
-            top: 15,
+            top: data[0].data.every(({ y }) => y === 0) ? 62 : 15,
             right: 0,
             bottom: 1,
             left: 20,
