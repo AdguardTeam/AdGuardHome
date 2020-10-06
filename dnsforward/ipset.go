@@ -122,15 +122,17 @@ func (c *ipsetCtx) processMembers(ctx *dnsContext, addMember func(string, string
 
 	log.Debug("IPSET: found ipsets %v for host %s", ipsetNames, host)
 
-	for _, it := range ctx.proxyCtx.Res.Answer {
-		ip := c.getIP(it)
-		if ip == nil {
-			continue
-		}
+	if ctx.proxyCtx.Res != nil {
+		for _, it := range ctx.proxyCtx.Res.Answer {
+			ip := c.getIP(it)
+			if ip == nil {
+				continue
+			}
 
-		ipStr := ip.String()
-		for _, name := range ipsetNames {
-			addMember(host, name, ipStr)
+			ipStr := ip.String()
+			for _, name := range ipsetNames {
+				addMember(host, name, ipStr)
+			}
 		}
 	}
 
