@@ -27,9 +27,9 @@ const (
 )
 
 var defaultDNS = []string{
-	"https://dns10.quad9.net/dns-query",
+	"https://dns-unfiltered.adguard.com/dns-query",
 }
-var defaultBootstrap = []string{"9.9.9.10", "149.112.112.10", "2620:fe::10", "2620:fe::fe:10"}
+var defaultBootstrap = []string{"94.140.14.140", "94.140.14.141", "2a10:50c0::1:ff", "2a10:50c0::2:ff"}
 
 // Often requested by all kinds of DNS probes
 var defaultBlockedHosts = []string{"version.bind", "id.server", "hostname.bind"}
