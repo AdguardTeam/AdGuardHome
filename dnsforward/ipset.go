@@ -89,8 +89,22 @@ func (c *ipsetCtx) getIP(rr dns.RR) net.IP {
 	}
 }
 
-// Add IP addresses of the specified in configuration domain names to an ipset list
-func (c *ipsetCtx) process(ctx *dnsContext) int {
+func addToIpset(host string, ipsetName string, ipStr string) {
+	code, out, err := util.RunCommand("ipset", "add", ipsetName, ipStr)
+	if err != nil {
+		log.Info("IPSET: %s(%s) -> %s: %s", host, ipStr, ipsetName, err)
+		return
+	}
+	if code != 0 {
+		log.Info("IPSET: ipset add:  code:%d  output:'%s'", code, out)
+		return
+	}
+	log.Debug("IPSET: added %s(%s) -> %s", host, ipStr, ipsetName)
+}
+
+// Compute which addresses to add to which ipsets for a particular DNS query response
+// Call addMember for each (host, ipset, ip) triple
+func (c *ipsetCtx) processMembers(ctx *dnsContext, addMember func(string, string, string)) int {
 	req := ctx.proxyCtx.Req
 	if !(req.Question[0].Qtype == dns.TypeA ||
 		req.Question[0].Qtype == dns.TypeAAAA) ||
@@ -116,18 +130,14 @@ func (c *ipsetCtx) process(ctx *dnsContext) int {
 
 		ipStr := ip.String()
 		for _, name := range ipsetNames {
-			code, out, err := util.RunCommand("ipset", "add", name, ipStr)
-			if err != nil {
-				log.Info("IPSET: %s(%s) -> %s: %s", host, ipStr, name, err)
-				continue
-			}
-			if code != 0 {
-				log.Info("IPSET: ipset add:  code:%d  output:'%s'", code, out)
-				continue
-			}
-			log.Debug("IPSET: added %s(%s) -> %s", host, ipStr, name)
+			addMember(host, name, ipStr)
 		}
 	}
 
 	return resultDone
+}
+
+// Add IP addresses of the specified in configuration domain names to an ipset list
+func (c *ipsetCtx) process(ctx *dnsContext) int {
+	return c.processMembers(ctx, addToIpset)
 }
