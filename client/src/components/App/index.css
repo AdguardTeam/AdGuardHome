@@ -63,10 +63,6 @@ body {
     cursor: not-allowed;
 }
 
-.select--no-warning {
-    margin-bottom: 1.375rem;
-}
-
 .button-action {
     visibility: hidden;
 }
@@ -74,4 +70,10 @@ body {
 .logs__row:hover .button-action,
 .button-action--active {
     visibility: visible;
+}
+
+@media (max-width: 500px) {
+    .dashboard .button-action {
+        visibility: visible;
+    }
 }

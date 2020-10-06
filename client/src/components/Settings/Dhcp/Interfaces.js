@@ -46,7 +46,7 @@ const renderInterfaceValues = ({
     gateway_ip,
     hardware_address,
     ip_addresses,
-}) => <div className='d-flex align-items-end col-6'>
+}) => <div className='d-flex align-items-end col-md'>
     <ul className="list-unstyled m-0">
         {getInterfaceValues({
             gateway_ip,
@@ -78,11 +78,11 @@ const Interfaces = () => {
             && interfaces
             && <>
                 <div className="row align-items-center pb-2">
-                    <div className="col-6">
+                    <div className="col col__dhcp">
                         <Field
                                 name="interface_name"
                                 component={renderSelectField}
-                                className="form-control custom-select"
+                                className="form-control custom-select pl-4 col-md"
                                 validate={[validateRequiredValue]}
                                 label='dhcp_interface_select'
                         >
@@ -91,9 +91,9 @@ const Interfaces = () => {
                             </option>
                             {renderInterfaces(interfaces)}
                         </Field>
+                        {interfaceValue
+                        && renderInterfaceValues(interfaceValue)}
                     </div>
-                    {interfaceValue
-                    && renderInterfaceValues(interfaceValue)}
                 </div>
             </>;
 };

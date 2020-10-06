@@ -6,6 +6,7 @@ import flow from 'lodash/flow';
 
 import { renderRadioField, toNumber } from '../../../helpers/form';
 import { FORM_NAME, STATS_INTERVALS_DAYS } from '../../../helpers/constants';
+import '../FormButton.css';
 
 const getIntervalFields = (processing, t, toNumber) => STATS_INTERVALS_DAYS.map((interval) => {
     const title = interval === 1 ? t('interval_24_hour') : t('interval_days', { count: interval });
@@ -52,7 +53,7 @@ const Form = (props) => {
                 </button>
                 <button
                     type="button"
-                    className="btn btn-outline-secondary btn-standard ml-5"
+                    className="btn btn-outline-secondary btn-standard form__button"
                     onClick={() => handleReset()}
                     disabled={processingReset}
                 >

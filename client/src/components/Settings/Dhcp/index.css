@@ -1,0 +1,31 @@
+.dhcp-form__button {
+    margin: 0 1rem;
+}
+
+.page-title--dhcp {
+    display: flex;
+    align-items: center;
+}
+
+.col__dhcp {
+    flex: 0 0 50%;
+    max-width: 50%;
+}
+
+@media (max-width: 991.98px) {
+    .dhcp-form__button {
+        margin: 0.5rem 0;
+        display: block;
+    }
+
+    .page-title--dhcp {
+        flex-direction: column;
+        align-items: flex-start;
+        padding-bottom: 0.5rem;
+    }
+
+    .col__dhcp {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
