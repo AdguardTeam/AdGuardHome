@@ -12,6 +12,10 @@
     max-width: 50%;
 }
 
+.dhcp__interfaces {
+    padding-bottom: 1rem;
+}
+
 @media (max-width: 991.98px) {
     .dhcp-form__button {
         margin: 0.5rem 0;
@@ -27,5 +31,14 @@
     .col__dhcp {
         flex: 0 0 100%;
         max-width: 100%;
+    }
+
+    .dhcp__interfaces {
+        flex-direction: column;
+        padding-bottom: 0.5rem;
+    }
+
+    .dhcp__interfaces-info {
+        padding-left: 1.5rem;
     }
 }

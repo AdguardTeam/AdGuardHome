@@ -46,7 +46,7 @@ const renderInterfaceValues = ({
     gateway_ip,
     hardware_address,
     ip_addresses,
-}) => <div className='d-flex align-items-end col-md'>
+}) => <div className='d-flex align-items-end dhcp__interfaces-info'>
     <ul className="list-unstyled m-0">
         {getInterfaceValues({
             gateway_ip,
@@ -77,7 +77,7 @@ const Interfaces = () => {
     return !processingInterfaces
             && interfaces
             && <>
-                <div className="row align-items-center pb-2">
+                <div className="row dhcp__interfaces">
                     <div className="col col__dhcp">
                         <Field
                                 name="interface_name"
@@ -91,9 +91,9 @@ const Interfaces = () => {
                             </option>
                             {renderInterfaces(interfaces)}
                         </Field>
-                        {interfaceValue
-                        && renderInterfaceValues(interfaceValue)}
                     </div>
+                    {interfaceValue
+                    && renderInterfaceValues(interfaceValue)}
                 </div>
             </>;
 };
