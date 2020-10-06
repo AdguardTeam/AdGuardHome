@@ -4,7 +4,7 @@ import { Field, reduxForm } from 'redux-form';
 import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 
-import { renderCheckboxField, toNumber } from '../../../helpers/form';
+import { CheckboxField, toNumber } from '../../../helpers/form';
 import { FILTERS_INTERVALS_HOURS, FORM_NAME } from '../../../helpers/constants';
 
 const getTitleForInterval = (interval, t) => {
@@ -49,7 +49,7 @@ const Form = (props) => {
                             name="enabled"
                             type="checkbox"
                             modifier="checkbox--settings"
-                            component={renderCheckboxField}
+                            component={CheckboxField}
                             placeholder={t('block_domain_use_filters_and_hosts')}
                             subtitle={t('filters_block_toggle_hint')}
                             onChange={handleChange}

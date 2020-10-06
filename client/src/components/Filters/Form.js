@@ -5,7 +5,7 @@ import { withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 import classNames from 'classnames';
 import { validatePath, validateRequiredValue } from '../../helpers/validators';
-import { renderCheckboxField, renderInputField } from '../../helpers/form';
+import { CheckboxField, renderInputField } from '../../helpers/form';
 import { MODAL_OPEN_TIMEOUT, MODAL_TYPE, FORM_NAME } from '../../helpers/constants';
 
 const filtersCatalog = require('../../helpers/filters/filters.json');
@@ -34,6 +34,22 @@ const renderIcons = (iconsData) => iconsData.map(({
     </svg>
 </a>);
 
+const renderCheckboxField = (
+    props,
+) => <CheckboxField
+        {...props}
+        input={{
+            ...props.input,
+            checked: props.disabled || props.input.checked,
+        }}
+/>;
+
+renderCheckboxField.propTypes = {
+    // https://redux-form.com/8.3.0/docs/api/field.md/#props
+    input: PropTypes.object.isRequired,
+    disabled: PropTypes.bool.isRequired,
+};
+
 const renderFilters = ({ categories, filters }, selectedSources, t) => Object.keys(categories)
     .map((categoryId) => {
         const category = categories[categoryId];
@@ -60,12 +76,11 @@ const renderFilters = ({ categories, filters }, selectedSources, t) => Object.ke
 
                 return <div key={name} className="d-flex align-items-center pb-1">
                     <Field
-                        name={`${filter.id}`}
+                        name={filter.id}
                         type="checkbox"
                         component={renderCheckboxField}
                         placeholder={t(name)}
                         disabled={isSelected}
-                        checked={isSelected}
                     />
                     {renderIcons(iconsData)}
                 </div>;
