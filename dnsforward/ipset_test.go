@@ -158,6 +158,22 @@ func TestIpsetSubdomainOverride(t *testing.T) {
 	assert.Equal(t, 1, len(b))
 }
 
+func TestIpsetSubdomainWildcard(t *testing.T) {
+	setup()
+
+	ctx.proxyCtx.Req = makeReqA("sub.host.com.")
+	ctx.proxyCtx.Res = &dns.Msg{
+		Answer: []dns.RR{
+			makeA("sub.host.com.", net.IPv4(127, 0, 0, 1)),
+		},
+	}
+
+	doProcess(t)
+
+	assert.Equal(t, 1, b[Binding{"sub.host.com", "name", "127.0.0.1"}])
+	assert.Equal(t, 1, len(b))
+}
+
 func TestIpsetCnameThirdParty(t *testing.T) {
 	setup()
 
