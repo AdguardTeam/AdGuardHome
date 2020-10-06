@@ -89,6 +89,31 @@ func (c *ipsetCtx) getIP(rr dns.RR) net.IP {
 	}
 }
 
+// Find the ipsets for a given host (accounting for subdomain wildcards)
+func (c *ipsetCtx) getIpsetNames(host string) ([]string, bool) {
+	var ipsetNames []string
+	var found bool
+
+	// search for matching ipset hosts starting with most specific subdomain
+	i := 0
+	for i != -1 {
+		host = host[i:]
+
+		ipsetNames, found = c.ipsetList[host]
+		if found {
+			break
+		}
+
+		// move slice up to the parent domain
+		i = strings.Index(host, ".")
+		if i != -1 {
+			i++
+		}
+	}
+
+	return ipsetNames, found
+}
+
 func addToIpset(host string, ipsetName string, ipStr string) {
 	code, out, err := util.RunCommand("ipset", "add", ipsetName, ipStr)
 	if err != nil {
@@ -115,7 +140,7 @@ func (c *ipsetCtx) processMembers(ctx *dnsContext, addMember func(string, string
 	host := req.Question[0].Name
 	host = strings.TrimSuffix(host, ".")
 	host = strings.ToLower(host)
-	ipsetNames, found := c.ipsetList[host]
+	ipsetNames, found := c.getIpsetNames(host)
 	if !found {
 		return resultDone
 	}
