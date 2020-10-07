@@ -10,10 +10,17 @@
 .col__dhcp {
     flex: 0 0 50%;
     max-width: 50%;
+    padding-right: 0;
 }
 
 .dhcp__interfaces {
     padding-bottom: 1rem;
+}
+
+.dhcp__interfaces-info {
+    padding-top: 0.5rem;
+    padding-left: 1.5rem;
+    line-break: anywhere;
 }
 
 @media (max-width: 991.98px) {
@@ -31,14 +38,11 @@
     .col__dhcp {
         flex: 0 0 100%;
         max-width: 100%;
+        padding-right: 0.75rem;
     }
 
     .dhcp__interfaces {
         flex-direction: column;
         padding-bottom: 0.5rem;
-    }
-
-    .dhcp__interfaces-info {
-        padding-left: 1.5rem;
     }
 }
