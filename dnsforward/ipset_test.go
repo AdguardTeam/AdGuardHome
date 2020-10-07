@@ -105,6 +105,13 @@ func TestIpsetParsing(t *testing.T) {
 	assert.False(t, ok)
 }
 
+func TestIpsetNoQuestion(t *testing.T) {
+	setup()
+
+	doProcess(t)
+	assert.Equal(t, 0, len(b))
+}
+
 func TestIpsetNoAnswer(t *testing.T) {
 	setup()
 
