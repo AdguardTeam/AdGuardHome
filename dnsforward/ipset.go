@@ -131,7 +131,7 @@ func addToIpset(host string, ipsetName string, ipStr string) {
 // Call addMember for each (host, ipset, ip) triple
 func (c *ipsetCtx) processMembers(ctx *dnsContext, addMember func(string, string, string)) int {
 	req := ctx.proxyCtx.Req
-	if !(req.Question[0].Qtype == dns.TypeA ||
+	if req == nil || !(req.Question[0].Qtype == dns.TypeA ||
 		req.Question[0].Qtype == dns.TypeAAAA) ||
 		!ctx.responseFromUpstream {
 		return resultDone
