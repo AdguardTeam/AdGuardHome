@@ -56,10 +56,10 @@ ifeq ($(CHANNEL),edge)
 endif
 
 # goreleaser command depends on the $CHANNEL
-GORELEASER_COMMAND=goreleaser release --rm-dist --skip-publish --snapshot
+GORELEASER_COMMAND=goreleaser release --rm-dist --skip-publish --snapshot --parallelism 1
 ifneq ($(CHANNEL),edge)
 	# If this is not an "edge" build, use normal release command
-	GORELEASER_COMMAND=goreleaser release --rm-dist --skip-publish
+	GORELEASER_COMMAND=goreleaser release --rm-dist --skip-publish --parallelism 1
 endif
 
 # Version properties

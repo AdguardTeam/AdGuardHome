@@ -64,14 +64,29 @@ It operates as a DNS server that re-routes tracking domains to a "black hole," t
 <a id="getting-started"></a>
 ## Getting Started
 
-Please read the **[Getting Started](https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started)** article on our Wiki to learn how to install AdGuard Home, and how to configure your devices to use it.
+### Automated install (Linux and Mac)
+Run the following command in your terminal:
+```
+curl -sSL https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sh
+```
+
+### Alternative methods
+
+#### Manual installation
+
+Please read the **[Getting Started](https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started)** article on our Wiki to learn how to install AdGuard Home manually, and how to configure your devices to use it.
+
+#### Docker
+
+You can use our [official Docker image](https://hub.docker.com/r/adguard/adguardhome).
+
+#### Snap Store
 
 If you're running **Linux**, there's a secure and easy way to install AdGuard Home - you can get it from the [Snap Store](https://snapcraft.io/adguard-home).
 
-Alternatively, you can use our [official Docker image](https://hub.docker.com/r/adguard/adguardhome). 
-
 ### Guides
 
+* [FAQ](https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ)
 * [Configuration](https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration)
 * [AdGuard Home as a DNS-over-HTTPS or DNS-over-TLS server](https://github.com/AdguardTeam/AdGuardHome/wiki/Encryption)
 * [How to install and run AdGuard Home on Raspberry Pi](https://github.com/AdguardTeam/AdGuardHome/wiki/Raspberry-Pi)
@@ -228,13 +243,17 @@ There are three options how you can install an unstable version:
 
 1. [Snap Store](https://snapcraft.io/adguard-home) -- look for "beta" and "edge" channels there.
 2. [Docker Hub](https://hub.docker.com/r/adguard/adguardhome) -- look for "beta" and "edge" tags there.
-3. Standalone builds. Look for the available builds below.
+3. Standalone builds. Use the automated installation script or look for the available builds below.
 
-There are three options how you can install an unstable version.
+Beta:
+```
+curl -sSL https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sh -s beta
+```
 
-1. You can either install AdGuard Home from "beta" or "edge" distribution channel which we update periodically. If you're already using stable version of AdGuard Home, just replace the executable file with a new one.
-2. You can use the Docker image from the `edge` tag, which is synced with the repo master branch.
-3. You can install AdGuard Home from `beta` or `edge` channels on the Snap Store.
+Edge:
+```
+curl -sSL https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sh -s edge
+```
 
 * Beta channel builds
     * Linux: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_amd64.tar.gz), [32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_386.tar.gz)
