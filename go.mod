@@ -19,6 +19,7 @@ require (
 	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065
 	github.com/miekg/dns v1.1.31
 	github.com/pkg/errors v0.9.1
+	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.6.0 // indirect
 	github.com/sparrc/go-ping v0.0.0-20190613174326-4e5b6552494c
 	github.com/stretchr/testify v1.5.1
@@ -31,4 +32,5 @@ require (
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/yaml.v2 v2.3.0
+	howett.net/plist v0.0.0-20200419221736-3b63eb3a43b5
 )

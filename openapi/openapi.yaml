@@ -35,6 +35,8 @@ tags:
       description: AdGuard Home statistics
     - name: tls
       description: AdGuard Home HTTPS/DOH/DOT settings
+    - name: mobileconfig
+      description: Apple .mobileconfig
 
 paths:
     /status:
@@ -915,6 +917,27 @@ paths:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/ProfileInfo"
+    /apple/doh.mobileconfig:
+        get:
+            tags:
+                - mobileconfig
+                - global
+            operationId: mobileConfigDoH
+            summary: Get DNS over HTTPS .mobileconfig
+            responses:
+                "200":
+                    description: DNS over HTTPS plist file
+
+    /apple/dot.mobileconfig:
+        get:
+            tags:
+                - mobileconfig
+                - global
+            operationId: mobileConfigDoT
+            summary: Get TLS over TLS .mobileconfig
+            responses:
+                "200":
+                    description: DNS over TLS plist file
 
 components:
     requestBodies:
