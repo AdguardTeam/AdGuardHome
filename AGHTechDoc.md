@@ -833,6 +833,36 @@ Request:
 Response:
 
 	200 OK
+	
+### API: Validate TLS configuration
+
+Request:
+
+	POST /control/tls/validate
+
+    {
+    "enabled":true,
+    "port_https":443,
+    "port_dns_over_tls":853,
+    "port_dns_over_quic":784,
+    "allow_unencrypted_doh":false,
+    "certificate_chain":"...",
+    "private_key":"...",
+    "certificate_path":"...",
+    "private_key_path":"...",
+    "valid_cert":true,
+    "valid_chain":false,
+    "not_before":"2019-03-19T08:23:45Z",
+    "not_after":"2029-03-16T08:23:45Z",
+    "dns_names":null,
+    "valid_key":true,
+    "valid_pair":true
+    }
+
+
+Response:
+
+	200 OK
 
 
 ## Device Names and Per-client Settings
@@ -1948,6 +1978,29 @@ Check if host name is blocked by SB/PC service:
 		sha256(sub.host.com)[0..1] -> hashes[2],...
 		...
 
+## API: Get DNS over HTTPS .mobileconfig
+
+Request:
+
+	GET /apple/doh.mobileconfig
+
+Response:
+
+	200 OK
+	
+    DOH plist file
+
+## API: Get DNS over TLS .mobileconfig
+
+Request:
+
+	GET /apple/dot.mobileconfig
+
+Response:
+
+	200 OK
+
+    DOT plist file
 
 ## ipset
 

@@ -197,6 +197,44 @@ func generateServerConfig() dnsforward.ServerConfig {
 	return newconfig
 }
 
+type DNSEncryption struct {
+	https string
+	tls   string
+	quic  string
+}
+
+func getDNSEncryption() DNSEncryption {
+	dnsEncryption := DNSEncryption{}
+
+	tlsConf := tlsConfigSettings{}
+
+	Context.tls.WriteDiskConfig(&tlsConf)
+
+	if tlsConf.Enabled && len(tlsConf.ServerName) != 0 {
+
+		if tlsConf.PortHTTPS != 0 {
+			addr := tlsConf.ServerName
+			if tlsConf.PortHTTPS != 443 {
+				addr = fmt.Sprintf("%s:%d", addr, tlsConf.PortHTTPS)
+			}
+			addr = fmt.Sprintf("https://%s/dns-query", addr)
+			dnsEncryption.https = addr
+		}
+
+		if tlsConf.PortDNSOverTLS != 0 {
+			addr := fmt.Sprintf("tls://%s:%d", tlsConf.ServerName, tlsConf.PortDNSOverTLS)
+			dnsEncryption.tls = addr
+		}
+
+		if tlsConf.PortDNSOverQUIC != 0 {
+			addr := fmt.Sprintf("quic://%s:%d", tlsConf.ServerName, tlsConf.PortDNSOverQUIC)
+			dnsEncryption.quic = addr
+		}
+	}
+
+	return dnsEncryption
+}
+
 // Get the list of DNS addresses the server is listening on
 func getDNSAddresses() []string {
 	dnsAddresses := []string{}
@@ -217,28 +255,15 @@ func getDNSAddresses() []string {
 		addDNSAddress(&dnsAddresses, config.DNS.BindHost)
 	}
 
-	tlsConf := tlsConfigSettings{}
-	Context.tls.WriteDiskConfig(&tlsConf)
-	if tlsConf.Enabled && len(tlsConf.ServerName) != 0 {
-
-		if tlsConf.PortHTTPS != 0 {
-			addr := tlsConf.ServerName
-			if tlsConf.PortHTTPS != 443 {
-				addr = fmt.Sprintf("%s:%d", addr, tlsConf.PortHTTPS)
-			}
-			addr = fmt.Sprintf("https://%s/dns-query", addr)
-			dnsAddresses = append(dnsAddresses, addr)
-		}
-
-		if tlsConf.PortDNSOverTLS != 0 {
-			addr := fmt.Sprintf("tls://%s:%d", tlsConf.ServerName, tlsConf.PortDNSOverTLS)
-			dnsAddresses = append(dnsAddresses, addr)
-		}
-
-		if tlsConf.PortDNSOverQUIC != 0 {
-			addr := fmt.Sprintf("quic://%s:%d", tlsConf.ServerName, tlsConf.PortDNSOverQUIC)
-			dnsAddresses = append(dnsAddresses, addr)
-		}
+	dnsEncryption := getDNSEncryption()
+	if dnsEncryption.https != "" {
+		dnsAddresses = append(dnsAddresses, dnsEncryption.https)
+	}
+	if dnsEncryption.tls != "" {
+		dnsAddresses = append(dnsAddresses, dnsEncryption.tls)
+	}
+	if dnsEncryption.quic != "" {
+		dnsAddresses = append(dnsAddresses, dnsEncryption.quic)
 	}
 
 	return dnsAddresses
