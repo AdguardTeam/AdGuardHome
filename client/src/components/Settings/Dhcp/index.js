@@ -31,6 +31,7 @@ import {
     calculateDhcpPlaceholdersIpv4,
     calculateDhcpPlaceholdersIpv6,
 } from '../../../helpers/helpers';
+import './index.css';
 
 const Dhcp = () => {
     const { t } = useTranslation();
@@ -114,7 +115,7 @@ const Dhcp = () => {
             .every(Boolean) || Object.values(v6)
             .every(Boolean));
 
-        const className = classNames('btn btn-sm mr-2', {
+        const className = classNames('btn btn-sm', {
             'btn-gray': enabled,
             'btn-outline-success': !enabled,
         });
@@ -141,7 +142,7 @@ const Dhcp = () => {
         </button>;
     };
 
-    const statusButtonClass = classNames('btn btn-sm mx-2', {
+    const statusButtonClass = classNames('btn btn-sm dhcp-form__button', {
         'btn-loading btn-primary': processingStatus,
         'btn-outline-primary': !processingStatus,
     });
@@ -171,28 +172,24 @@ const Dhcp = () => {
     const toggleDhcpButton = getToggleDhcpButton();
 
     return <>
-        <PageTitle title={t('dhcp_settings')} subtitle={t('dhcp_description')}>
-            <div className="page-title__actions">
-                <div className="mb-3">
-                    {toggleDhcpButton}
-                    <button
-                        type="button"
-                        className={statusButtonClass}
-                        onClick={onClick}
-                        disabled={enabled || !interface_name || processingConfig}
-                    >
-                        <Trans>check_dhcp_servers</Trans>
-                    </button>
-                    <button
-                        type="button"
-                        className='btn btn-sm mx-2 btn-outline-secondary'
-                        disabled={!enteredSomeValue || processingConfig}
-                        onClick={clear}
-                    >
-                        <Trans>reset_settings</Trans>
-                    </button>
-                </div>
-            </div>
+        <PageTitle title={t('dhcp_settings')} subtitle={t('dhcp_description')} containerClass="page-title--dhcp">
+            {toggleDhcpButton}
+            <button
+                    type="button"
+                    className={statusButtonClass}
+                    onClick={onClick}
+                    disabled={enabled || !interface_name || processingConfig}
+            >
+                <Trans>check_dhcp_servers</Trans>
+            </button>
+            <button
+                    type="button"
+                    className='btn btn-sm btn-outline-secondary'
+                    disabled={!enteredSomeValue || processingConfig}
+                    onClick={clear}
+            >
+                <Trans>reset_settings</Trans>
+            </button>
         </PageTitle>
         {!processing && !processingInterfaces
         && <>

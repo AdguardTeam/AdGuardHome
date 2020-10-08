@@ -33,3 +33,24 @@
         right: 0;
     }
 }
+
+.page-title--dashboard {
+    display: flex;
+    align-items: center;
+}
+
+.dashboard-title__button{
+    margin: 0 0.5rem;
+}
+
+@media (max-width: 767.98px) {
+    .page-title--dashboard {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .dashboard-title__button{
+        margin: 0.5rem 0;
+        display: block;
+    }
+}

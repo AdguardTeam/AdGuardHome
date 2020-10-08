@@ -36,15 +36,3 @@
     font-size: 36px;
     line-height: 46px;
 }
-
-.page-title__actions {
-    display: block;
-}
-
-@media screen and (min-width: 768px) {
-    .page-title__actions {
-        display: inline-block;
-        vertical-align: baseline;
-        margin-left: 20px;
-    }
-}

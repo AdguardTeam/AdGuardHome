@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Trans, useTranslation } from 'react-i18next';
-
+import classNames from 'classnames';
 import Statistics from './Statistics';
 import Counters from './Counters';
 import Clients from './Clients';
@@ -17,6 +17,7 @@ const Dashboard = ({
     getStats,
     getStatsConfig,
     dashboard,
+    dashboard: { protectionEnabled, processingProtection },
     toggleProtection,
     stats,
     access,
@@ -33,20 +34,12 @@ const Dashboard = ({
         getAllStats();
     }, []);
 
-    const getToggleFilteringButton = () => {
-        const { protectionEnabled, processingProtection } = dashboard;
-        const buttonText = protectionEnabled ? 'disable_protection' : 'enable_protection';
-        const buttonClass = protectionEnabled ? 'btn-gray' : 'btn-success';
+    const buttonText = protectionEnabled ? 'disable_protection' : 'enable_protection';
 
-        return <button
-                type="button"
-                className={`btn btn-sm mr-2 ${buttonClass}`}
-                onClick={() => toggleProtection(protectionEnabled)}
-                disabled={processingProtection}
-        >
-            <Trans>{buttonText}</Trans>
-        </button>;
-    };
+    const buttonClass = classNames('btn btn-sm dashboard-title__button', {
+        'btn-gray': protectionEnabled,
+        'btn-success': !protectionEnabled,
+    });
 
     const refreshButton = <button
             type="button"
@@ -62,24 +55,27 @@ const Dashboard = ({
         ? t('for_last_24_hours')
         : t('for_last_days', { count: stats.interval });
 
-    const refreshFullButton = <button
-            type="button"
-            className="btn btn-outline-primary btn-sm"
-            onClick={() => getAllStats()}
-    >
-        <Trans>refresh_statics</Trans>
-    </button>;
-
     const statsProcessing = stats.processingStats
             || stats.processingGetConfig
             || access.processing;
 
     return <>
-        <PageTitle title={t('dashboard')}>
-            <div className="page-title__actions">
-                {getToggleFilteringButton()}
-                {refreshFullButton}
-            </div>
+        <PageTitle title={t('dashboard')} containerClass="page-title--dashboard">
+            <button
+                    type="button"
+                    className={buttonClass}
+                    onClick={() => toggleProtection(protectionEnabled)}
+                    disabled={processingProtection}
+            >
+                <Trans>{buttonText}</Trans>
+            </button>
+            <button
+                    type="button"
+                    className="btn btn-outline-primary btn-sm"
+                    onClick={getAllStats}
+            >
+                <Trans>refresh_statics</Trans>
+            </button>
         </PageTitle>
         {statsProcessing && <Loading />}
         {!statsProcessing && <div className="row row-cards dashboard">
