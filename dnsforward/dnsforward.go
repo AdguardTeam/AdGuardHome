@@ -195,11 +195,14 @@ func (s *Server) Prepare(config *ServerConfig) error {
 
 	// Initialize IPSET configuration
 	// --
-	s.ipset.init(s.conf.IPSETList)
+	err := s.ipset.init(s.conf.IPSETList, nil)
+	if err != nil {
+		return err
+	}
 
 	// Prepare DNS servers settings
 	// --
-	err := s.prepareUpstreamSettings()
+	err = s.prepareUpstreamSettings()
 	if err != nil {
 		return err
 	}

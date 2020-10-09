@@ -8,6 +8,7 @@ require (
 	github.com/AdguardTeam/urlfilter v0.12.2
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/beefsack/go-rate v0.0.0-20200827232406-6cde80facd47 // indirect
+	github.com/digineo/go-ipset/v2 v2.2.1
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gobuffalo/packr v1.30.1
 	github.com/hugelgupf/socketpair v0.0.0-20190730060125-05d35a94e714
@@ -16,13 +17,16 @@ require (
 	github.com/kardianos/service v1.1.0
 	github.com/marten-seemann/qtls-go1-15 v0.1.1 // indirect
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7
+	github.com/mdlayher/netlink v1.1.0
 	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065
 	github.com/miekg/dns v1.1.31
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.6.0 // indirect
 	github.com/sparrc/go-ping v0.0.0-20190613174326-4e5b6552494c
 	github.com/stretchr/testify v1.5.1
+	github.com/ti-mo/netfilter v0.3.1
 	github.com/u-root/u-root v6.0.0+incompatible
+	github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae
 	go.etcd.io/bbolt v1.3.4
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/net v0.0.0-20200904194848-62affa334b73
