@@ -71,9 +71,3 @@ body {
 .button-action--active {
     visibility: visible;
 }
-
-@media (max-width: 500px) {
-    .dashboard .button-action {
-        visibility: visible;
-    }
-}
