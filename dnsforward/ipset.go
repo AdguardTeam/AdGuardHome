@@ -93,14 +93,15 @@ func parseIpsetConfig(cfgStr string) ([]string, []string) {
 	cfgStr = strings.TrimSpace(cfgStr)
 	hostsAndNames := strings.Split(cfgStr, "/")
 	if len(hostsAndNames) != 2 {
-		log.Info("IPSET: invalid value '%s' (/)", cfgStr)
+		log.Info("IPSET: invalid value '%s' (need exactly one /)", cfgStr)
 		return nil, nil
 	}
 
+	hosts := strings.Split(hostsAndNames[0], ",")
 	ipsetNames := strings.Split(hostsAndNames[1], ",")
+
 	if len(ipsetNames) == 0 {
-		log.Info("IPSET: invalid value '%s' (no ipsets)", cfgStr)
-		return nil, nil
+		log.Info("IPSET: resolutions for %v will not be stored", hosts)
 	}
 
 	for i := range ipsetNames {
@@ -110,8 +111,6 @@ func parseIpsetConfig(cfgStr string) ([]string, []string) {
 			return nil, nil
 		}
 	}
-
-	hosts := strings.Split(hostsAndNames[0], ",")
 
 	for i := range hosts {
 		hosts[i] = strings.TrimSpace(hosts[i])
