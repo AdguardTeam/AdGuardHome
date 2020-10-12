@@ -418,7 +418,7 @@
     "setup_dns_privacy_1": "<0>DNS-over-TLS:</0> Use <1>{{address}}</1> string.",
     "setup_dns_privacy_2": "<0>DNS-over-HTTPS:</0> Use <1>{{address}}</1> string.",
     "setup_dns_privacy_3": "<0>Here's a list of software you can use.</0>",
-    "setup_dns_privacy_4": "On an iOS 14 or MacOS Big Sur device you can download special '.mobileconfig' file that adds <highlight>DNS-over-HTTPS</highlight> or <highlight>DNS-over-TLS</highlight> servers to the DNS settings.",
+    "setup_dns_privacy_4": "On an iOS 14 or macOS Big Sur device you can download special '.mobileconfig' file that adds <highlight>DNS-over-HTTPS</highlight> or <highlight>DNS-over-TLS</highlight> servers to the DNS settings.",
     "setup_dns_privacy_android_1": "Android 9 supports DNS-over-TLS natively. To configure it, go to Settings → Network & internet → Advanced → Private DNS and enter your domain name there.",
     "setup_dns_privacy_android_2": "<0>AdGuard for Android</0> supports <1>DNS-over-HTTPS</1> and <1>DNS-over-TLS</1>.",
     "setup_dns_privacy_android_3": "<0>Intra</0> adds <1>DNS-over-HTTPS</1> support to Android.",
