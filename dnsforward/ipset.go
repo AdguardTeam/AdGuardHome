@@ -3,6 +3,7 @@ package dnsforward
 import (
 	"net"
 	"strings"
+	"sync"
 
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/digineo/go-ipset/v2"
@@ -20,7 +21,9 @@ type ipsetCtx struct {
 	ipsetMap  map[string]ipsetProps   // ipset -> props
 	domainMap map[string][]ipsetProps // domain -> ipsets
 	ipv4Cache map[[4]byte]struct{}
+	ipv4Mutex *sync.RWMutex
 	ipv6Cache map[[16]byte]struct{}
+	ipv6Mutex *sync.RWMutex
 
 	ipv4Conn *ipset.Conn
 	ipv6Conn *ipset.Conn
@@ -129,6 +132,8 @@ func parseIpsetConfig(cfgStr string) ([]string, []string) {
 func (c *ipsetCtx) init(ipsetConfig []string, config *netlink.Config) error {
 	c.ipsetMap = make(map[string]ipsetProps)
 	c.domainMap = make(map[string][]ipsetProps)
+	c.ipv4Mutex = &sync.RWMutex{}
+	c.ipv6Mutex = &sync.RWMutex{}
 	c.clearCache()
 
 	if config == nil {
@@ -170,6 +175,8 @@ func (c *ipsetCtx) getIP(rr dns.RR) net.IP {
 	case *dns.A:
 		var ip4 [4]byte
 		copy(ip4[:], a.A.To4())
+		c.ipv4Mutex.Lock()
+		defer c.ipv4Mutex.Unlock()
 		_, found := c.ipv4Cache[ip4]
 		if found {
 			return nil // this IP was added before
@@ -180,6 +187,8 @@ func (c *ipsetCtx) getIP(rr dns.RR) net.IP {
 	case *dns.AAAA:
 		var ip6 [16]byte
 		copy(ip6[:], a.AAAA.To16())
+		c.ipv6Mutex.Lock()
+		defer c.ipv6Mutex.Unlock()
 		_, found := c.ipv6Cache[ip6]
 		if found {
 			return nil // this IP was added before
