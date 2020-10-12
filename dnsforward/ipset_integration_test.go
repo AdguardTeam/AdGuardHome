@@ -92,16 +92,20 @@ func (s *state) doIpsetFlush() {
 }
 
 var ipsetConfigs = []string{
-		"HOST.com/aghTestHost",
-		"host2.com,host3.com/aghTestHost23",
-		"host4.com/aghTestHost4,aghTestHost4-6",
-		"sub.host4.com/aghTestSubhost4",
+	"HOST.com/aghTestHost",
+	"host2.com,host3.com/aghTestHost23",
+	"host4.com/aghTestHost4,aghTestHost4-6",
+	"sub.host4.com/aghTestSubhost4",
 }
 
-func withSetup(testFn func(*state)) {
+func withSetup(configs []string, testFn func(*state)) {
+	if configs == nil {
+		configs = ipsetConfigs
+	}
+
 	s := &state{}
 	s.activeIpsets = make([]string, 0, 5)
-	s.server.conf.IPSETList = ipsetConfigs
+	s.server.conf.IPSETList = configs
 
 	nlConfig, err := makeNlConfigMaybeInNetns()
 	if err != nil {
@@ -152,6 +156,7 @@ func withSetup(testFn func(*state)) {
 	if err != nil {
 		panic(err)
 	}
+	defer s.c.Uninit()
 
 	s.ctx = &dnsContext{
 		srv: &s.server,
@@ -252,7 +257,7 @@ func ipsetV6(name string) ipsetProps {
 }
 
 func TestIpsetParsing(t *testing.T) {
-	withSetup(func(s *state) {
+	withSetup(nil, func(s *state) {
 		assert.Equal(t, ipsetV4("aghTestHost"), s.c.domainMap["host.com"][0])
 		assert.Equal(t, ipsetV4("aghTestHost23"), s.c.domainMap["host2.com"][0])
 		assert.Equal(t, ipsetV4("aghTestHost23"), s.c.domainMap["host3.com"][0])
@@ -265,7 +270,7 @@ func TestIpsetParsing(t *testing.T) {
 }
 
 func TestIpsetNoQuestion(t *testing.T) {
-	withSetup(func(s *state) {
+	withSetup(nil, func(s *state) {
 		b := map[binding]int{}
 		s.doProcess(t, b)
 		assert.Equal(t, 0, len(b))
@@ -273,7 +278,7 @@ func TestIpsetNoQuestion(t *testing.T) {
 }
 
 func TestIpsetNoAnswer(t *testing.T) {
-	withSetup(func(s *state) {
+	withSetup(nil, func(s *state) {
 		s.ctx.proxyCtx.Req = makeReqA("HOST4.COM.")
 
 		b := map[binding]int{}
@@ -283,7 +288,7 @@ func TestIpsetNoAnswer(t *testing.T) {
 }
 
 func TestIpsetCache(t *testing.T) {
-	withSetup(func(s *state) {
+	withSetup(nil, func(s *state) {
 		s.ctx.proxyCtx.Req = makeReqA("HOST4.COM.")
 		s.ctx.proxyCtx.Res = &dns.Msg{
 			Answer: []dns.RR{
@@ -308,7 +313,7 @@ func TestIpsetCache(t *testing.T) {
 }
 
 func TestIpsetSubdomainOverride(t *testing.T) {
-	withSetup(func(s *state) {
+	withSetup(nil, func(s *state) {
 		s.ctx.proxyCtx.Req = makeReqA("sub.host4.com.")
 		s.ctx.proxyCtx.Res = &dns.Msg{
 			Answer: []dns.RR{
@@ -325,7 +330,7 @@ func TestIpsetSubdomainOverride(t *testing.T) {
 }
 
 func TestIpsetSubdomainWildcard(t *testing.T) {
-	withSetup(func(s *state) {
+	withSetup(nil, func(s *state) {
 		s.ctx.proxyCtx.Req = makeReqA("sub.host.com.")
 		s.ctx.proxyCtx.Res = &dns.Msg{
 			Answer: []dns.RR{
@@ -342,7 +347,7 @@ func TestIpsetSubdomainWildcard(t *testing.T) {
 }
 
 func TestIpsetCnameThirdParty(t *testing.T) {
-	withSetup(func(s *state) {
+	withSetup(nil, func(s *state) {
 		s.ctx.proxyCtx.Req = makeReqA("host.com.")
 		s.ctx.proxyCtx.Res = &dns.Msg{
 			Answer: []dns.RR{
@@ -360,7 +365,7 @@ func TestIpsetCnameThirdParty(t *testing.T) {
 }
 
 func TestIpsetAdd(t *testing.T) {
-	withSetup(func(s *state) {
+	withSetup(nil, func(s *state) {
 		ips := []net.IP{
 			net.IPv4(1, 2, 3, 4),
 			net.IPv4(5, 6, 7, 8),
@@ -406,6 +411,14 @@ func generateIpv4Addrs(n int) []net.IP {
 	return addrs
 }
 
+func generateIpsetConfigStrings(n int) []string {
+	configs := make([]string, n)
+	for i := 0; i < n; i++ {
+		configs[i] = fmt.Sprintf("domain-%d.com/aghTestHost", i)
+	}
+	return configs
+}
+
 func makeDomainWithSubs(root string, subCount int) string {
 	domain := root
 	for i := 0; i < subCount; i++ {
@@ -414,26 +427,41 @@ func makeDomainWithSubs(root string, subCount int) string {
 	return domain
 }
 
-func (s *state) setupCtxForBenchmark(addrCount int, subCount int) {
-	rrs := make([]dns.RR, addrCount)
-	domain := makeDomainWithSubs("host.com.", subCount)
-	for i, ip := range generateIpv4Addrs(addrCount) {
-		rrs[i] = makeA(domain, ip)
-	}
+func makeSetupBasicCtx(domain string, addrCount int, subCount int) func(*state) {
+	return func(s *state) {
+		rrs := make([]dns.RR, addrCount)
+		domain := makeDomainWithSubs(domain, subCount)
+		for i, ip := range generateIpv4Addrs(addrCount) {
+			rrs[i] = makeA(domain, ip)
+		}
 
-	s.ctx.proxyCtx.Req = makeReqA(domain)
-	s.ctx.proxyCtx.Res = &dns.Msg{
-		Answer: rrs,
+		s.ctx.proxyCtx.Req = makeReqA(domain)
+		s.ctx.proxyCtx.Res = &dns.Msg{
+			Answer: rrs,
+		}
 	}
 }
 
-func benchmarkIpset(b *testing.B, addrCount int, subCount int,
+func makeSetupCachedCtx(addrCount int, subCount int) func(*state) {
+	return func(s *state) {
+		makeSetupBasicCtx("host.com.", addrCount, subCount)(s)
+		s.c.processEntries(s.ctx, addToBindings(map[binding]int{}))
+	}
+}
+
+func makeSetupUnboundCtx(addrCount int, subCount int) func(*state) {
+	return func(s *state) {
+		makeSetupBasicCtx("example.net.", addrCount, subCount)(s)
+	}
+}
+
+func benchmarkIpset(b *testing.B, configs []string, setupCtx func(*state),
 	addEntries func(*ipsetCtx, string, ipsetProps, []net.IP), reset func(*state)) {
 	b.StopTimer()
 	b.ResetTimer()
 
-	withSetup(func(s *state) {
-		s.setupCtxForBenchmark(addrCount, subCount)
+	withSetup(configs, func(s *state) {
+		setupCtx(s)
 
 		for i := 0; i < b.N; i++ {
 			reset(s)
@@ -450,24 +478,47 @@ func resetIpsetContent(s *state) {
 }
 
 func benchmarkIpsetCmd(b *testing.B, n int) {
-	benchmarkIpset(b, n, 0, addWithIpsetCmd, resetIpsetContent)
+	benchmarkIpset(b, nil,
+		makeSetupBasicCtx("host.com.", n, 0),
+		addWithIpsetCmd,
+		resetIpsetContent)
 }
 
 func benchmarkIpsetNf(b *testing.B, n int) {
-	benchmarkIpset(b, n, 0, addToIpset, resetIpsetContent)
+	benchmarkIpset(b, nil,
+		makeSetupBasicCtx("host.com.", n, 0),
+		addToIpset,
+		resetIpsetContent)
 }
 
-func benchmarkIpsetCache(b *testing.B, n int) {
-	benchmarkIpset(b, n, 0, addToBindings(map[binding]int{}), func(s *state) {})
+func benchmarkIpsetZero(b *testing.B, n int) {
+	benchmarkIpset(b, []string{}, makeSetupBasicCtx("host.com.", n, 0), addToIpset, func(s *state) {})
 }
 
-func benchmarkIpsetLookup(b *testing.B, n int) {
-	benchmarkIpset(b, n, n, addToBindings(map[binding]int{}), func(s *state) {})
+func benchmarkIpsetCacheHit(b *testing.B, n int) {
+	benchmarkIpset(b, nil, makeSetupCachedCtx(n, 0), addToBindings(map[binding]int{}), func(s *state) {})
 }
 
-func BenchmarkIpsetCmd1(b *testing.B)     { benchmarkIpsetCmd(b, 1) }
-func BenchmarkIpsetCmd10(b *testing.B)    { benchmarkIpsetCmd(b, 10) }
-func BenchmarkIpsetNf1(b *testing.B)      { benchmarkIpsetNf(b, 1) }
-func BenchmarkIpsetNf10(b *testing.B)     { benchmarkIpsetNf(b, 10) }
-func BenchmarkIpsetCache10(b *testing.B)  { benchmarkIpsetCache(b, 10) }
-func BenchmarkIpsetLookup10(b *testing.B) { benchmarkIpsetLookup(b, 10) }
+func benchmarkIpsetUnbound(b *testing.B, n int, depth int) {
+	benchmarkIpset(b, nil, makeSetupUnboundCtx(n, depth), addToBindings(map[binding]int{}), func(s *state) {})
+}
+
+func benchmarkIpsetUnboundBig(b *testing.B, n int, depth int) {
+	benchmarkIpset(b,
+		generateIpsetConfigStrings(1024),
+		makeSetupUnboundCtx(n, depth),
+		addToBindings(map[binding]int{}),
+		func(s *state) {})
+}
+
+func BenchmarkIpsetCmd1(b *testing.B)  { benchmarkIpsetCmd(b, 1) }
+func BenchmarkIpsetCmd10(b *testing.B) { benchmarkIpsetCmd(b, 10) }
+func BenchmarkIpsetNf1(b *testing.B)   { benchmarkIpsetNf(b, 1) }
+func BenchmarkIpsetNf10(b *testing.B)  { benchmarkIpsetNf(b, 10) }
+
+func BenchmarkIpsetZero1(b *testing.B)              { benchmarkIpsetZero(b, 1) }
+func BenchmarkIpsetCacheHit1(b *testing.B)          { benchmarkIpsetCacheHit(b, 1) }
+func BenchmarkIpsetUnboundShallow1(b *testing.B)    { benchmarkIpsetUnbound(b, 1, 0) }
+func BenchmarkIpsetUnboundDeep1(b *testing.B)       { benchmarkIpsetUnbound(b, 1, 10) }
+func BenchmarkIpsetUnboundShallowBig1(b *testing.B) { benchmarkIpsetUnboundBig(b, 1, 0) }
+func BenchmarkIpsetUnboundDeepBig1(b *testing.B)    { benchmarkIpsetUnboundBig(b, 1, 10) }

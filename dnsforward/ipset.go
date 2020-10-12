@@ -153,6 +153,18 @@ func (c *ipsetCtx) init(ipsetConfig []string, config *netlink.Config) error {
 	return nil
 }
 
+func (c *ipsetCtx) Uninit() error {
+	errv4 := c.ipv4Conn.Close()
+	errv6 := c.ipv6Conn.Close()
+	if errv4 != nil {
+		return errv4
+	}
+	if errv6 != nil {
+		return errv6
+	}
+	return nil
+}
+
 func (c *ipsetCtx) getIP(rr dns.RR) net.IP {
 	switch a := rr.(type) {
 	case *dns.A:
@@ -186,8 +198,9 @@ func (c *ipsetCtx) lookupHost(host string) []ipsetProps {
 
 	// Search for matching ipset hosts starting with most specific
 	// subdomain. We could use a trie here but the simple,
-	// inefficient solution isn't _that_ expensive (~15-20% for 10
-	// subdomains, see BenchmarkIpsetLookup).
+	// inefficient solution isn't _that_ expensive (~75% for 10
+	// subdomains vs 0 but still sub-microsecond on a Core i7, see
+	// BenchmarkIpsetUnbound*).
 	i := 0
 	for i != -1 {
 		host = host[i:]
