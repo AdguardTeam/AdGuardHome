@@ -115,7 +115,7 @@
     "average_processing_time": "Average processing time",
     "average_processing_time_hint": "Average time in milliseconds on processing a DNS request",
     "block_domain_use_filters_and_hosts": "Block domains using filters and hosts files",
-    "filters_block_toggle_hint": "You can setup blocking rules in the <a href='#filters'>Filters</a> settings.",
+    "filters_block_toggle_hint": "You can setup blocking rules in the <a>Filters</a> settings.",
     "use_adguard_browsing_sec": "Use AdGuard browsing security web service",
     "use_adguard_browsing_sec_hint": "AdGuard Home will check if domain is blacklisted by the browsing security web service. It will use privacy-friendly lookup API to perform the check: only a short prefix of the domain name SHA256 hash is sent to the server.",
     "use_adguard_parental": "Use AdGuard parental control web service",

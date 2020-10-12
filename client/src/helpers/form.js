@@ -184,7 +184,7 @@ export const CheckboxField = ({
 CheckboxField.propTypes = {
     input: PropTypes.object.isRequired,
     placeholder: PropTypes.string,
-    subtitle: PropTypes.string,
+    subtitle: PropTypes.node,
     disabled: PropTypes.bool,
     onClick: PropTypes.func,
     modifier: PropTypes.string,
