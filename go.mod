@@ -26,7 +26,6 @@ require (
 	github.com/stretchr/testify v1.5.1
 	github.com/ti-mo/netfilter v0.3.1
 	github.com/u-root/u-root v6.0.0+incompatible
-	github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae
 	go.etcd.io/bbolt v1.3.4
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/net v0.0.0-20200904194848-62affa334b73

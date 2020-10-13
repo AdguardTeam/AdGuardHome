@@ -3,7 +3,6 @@
 package dnsforward
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"os/exec"
@@ -15,7 +14,6 @@ import (
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/ti-mo/netfilter"
-	"github.com/vishvananda/netns"
 )
 
 type binding struct {
@@ -32,50 +30,12 @@ type state struct {
 	activeIpsets []string
 }
 
-const useNetns bool = true
-const netnsName string = "aghTest"
-const netnsBindMountPath string = "/run/netns" // should be exported by netns...
-const netnsPath string = netnsBindMountPath + "/" + netnsName
-
-func runCommandNetns(args ...string) error {
-	netnsCmd := make([]string, len(args), len(args)+2)
-	if useNetns {
-		netnsCmd[0] = "nsenter"
-		netnsCmd[1] = "-n" + netnsPath
-		netnsCmd = append(append(netnsCmd, ""), "")
-		copy(netnsCmd[2:], args)
-	} else {
-		copy(netnsCmd, args)
-	}
-	code, _, err := util.RunCommand(netnsCmd[0], netnsCmd[1:]...)
-	if err != nil {
-		return err
-	}
-	if code != 0 {
-		return errors.New(fmt.Sprintf("exit code %d", code))
-	}
-	return nil
-}
-
-func makeNlConfigMaybeInNetns() (*netlink.Config, error) {
-	if useNetns {
-		newns, err := netns.NewNamed(netnsName)
-		if err != nil {
-			return nil, err
-		} else {
-			return &netlink.Config{NetNS: int(newns)}, nil
-		}
-	} else {
-		return &netlink.Config{}, nil
-	}
-}
-
 func (s *state) doIpsetCreate(ipsetName string, ipv6 bool) {
 	family := "inet"
 	if ipv6 {
 		family = "inet6"
 	}
-	err := runCommandNetns("ipset", "create", ipsetName, "hash:ip", "family", family)
+	_, _, err := util.RunCommand("ipset", "create", ipsetName, "hash:ip", "family", family)
 	if err != nil {
 		panic(err)
 	}
@@ -84,7 +44,7 @@ func (s *state) doIpsetCreate(ipsetName string, ipv6 bool) {
 
 func (s *state) doIpsetFlush() {
 	for _, ipsetName := range s.activeIpsets {
-		err := runCommandNetns("ipset", "flush", ipsetName)
+		_, _, err := util.RunCommand("ipset", "flush", ipsetName)
 		if err != nil {
 			panic(err)
 		}
@@ -107,30 +67,15 @@ func withSetup(configs []string, testFn func(*state)) {
 	s.activeIpsets = make([]string, 0, 5)
 	s.server.conf.IPSETList = configs
 
-	nlConfig, err := makeNlConfigMaybeInNetns()
-	if err != nil {
-		panic(err)
-	}
-
-	// make sure we (try to) clean up the netns and/or any ipsets
+	// make sure we (try to) clean up the test ipsets
 	defer func() {
 		errs := []error{}
 		fails := []string{}
 		for _, ipsetName := range s.activeIpsets {
-			err := runCommandNetns("ipset", "destroy", ipsetName)
+			_, _, err := util.RunCommand("ipset", "destroy", ipsetName)
 			if err != nil {
 				errs = append(errs, err)
 				fails = append(fails, ipsetName)
-			}
-		}
-
-		if useNetns {
-			err := netns.DeleteNamed(netnsName)
-			if err != nil {
-				errs = append(errs, err)
-			} else {
-				errs = []error{}
-				fails = []string{}
 			}
 		}
 
@@ -152,7 +97,7 @@ func withSetup(configs []string, testFn func(*state)) {
 	s.doIpsetCreate("aghTestHost4-6", true)
 	s.doIpsetCreate("aghTestSubhost4", false)
 
-	err = s.c.init(s.server.conf.IPSETList, nlConfig)
+	err := s.c.init(s.server.conf.IPSETList, &netlink.Config{})
 	if err != nil {
 		panic(err)
 	}
@@ -220,7 +165,7 @@ func addToBindings(b map[binding]int) func(*ipsetCtx, string, ipsetProps, []net.
 // This is only used for benchmarking as an alternate implementation comparison
 func addWithIpsetCmd(_ *ipsetCtx, host string, set ipsetProps, ips []net.IP) {
 	for _, ip := range ips {
-		err := runCommandNetns("ipset", "add", set.name, ip.String())
+		_, _, err := util.RunCommand("ipset", "add", set.name, ip.String())
 		if err != nil {
 			panic(err)
 		}
@@ -237,13 +182,7 @@ func (s *state) doSystem(t *testing.T) {
 
 func isInIpset(t *testing.T, ipsetName string, ip net.IP) bool {
 	cmdArgs := []string{"ipset", "test", ipsetName, ip.String()}
-	var cmd *exec.Cmd
-	if useNetns {
-		cmdArgs = append([]string{"-n" + netnsPath}, cmdArgs...)
-		cmd = exec.Command("nsenter", cmdArgs...)
-	} else {
-		cmd = exec.Command(cmdArgs[0], cmdArgs[1:]...)
-	}
+	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
 	cmd.Run()
 	return cmd.ProcessState.ExitCode() == 0
 }
