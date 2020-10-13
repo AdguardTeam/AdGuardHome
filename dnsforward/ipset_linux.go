@@ -1,9 +1,11 @@
 package dnsforward
 
 import (
+	"fmt"
 	"net"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/digineo/go-ipset/v2"
@@ -12,18 +14,32 @@ import (
 	"github.com/ti-mo/netfilter"
 )
 
+const TTLSlop time.Duration = time.Duration(1) * time.Second
+
 type ipsetProps struct {
 	name    string
 	family  netfilter.ProtoFamily
 	comment bool
+	timeout bool
+}
+
+type ipsetSetCache map[string]struct{}
+
+type ip struct {
+	addr net.IP
+	ttl  time.Duration
+}
+
+func (i ip) String() string {
+	return fmt.Sprintf("%s(%s)", i.addr, i.ttl)
 }
 
 type ipsetCtx struct {
 	ipsetMap  map[string]ipsetProps   // ipset -> props
 	domainMap map[string][]ipsetProps // domain -> ipsets
-	ipv4Cache map[[4]byte]struct{}
+	ipv4Cache map[[4]byte]ipsetSetCache
 	ipv4Mutex *sync.RWMutex
-	ipv6Cache map[[16]byte]struct{}
+	ipv6Cache map[[16]byte]ipsetSetCache
 	ipv6Mutex *sync.RWMutex
 
 	ipv4Conn *ipset.Conn
@@ -31,8 +47,8 @@ type ipsetCtx struct {
 }
 
 func (c *ipsetCtx) clearCache() {
-	c.ipv4Cache = make(map[[4]byte]struct{})
-	c.ipv6Cache = make(map[[16]byte]struct{})
+	c.ipv4Cache = make(map[[4]byte]ipsetSetCache)
+	c.ipv6Cache = make(map[[16]byte]ipsetSetCache)
 }
 
 func (c *ipsetCtx) dialNetfilterSockets(config *netlink.Config) error {
@@ -62,19 +78,25 @@ func (c *ipsetCtx) queryIpsetProps(name string) (ipsetProps, error) {
 
 	var family netfilter.ProtoFamily
 	if set != nil && set.Family != nil {
-		val := netfilter.ProtoFamily(set.Family.Value)
+		val := netfilter.ProtoFamily(set.Family.Get())
 		if val == netfilter.ProtoIPv4 || val == netfilter.ProtoIPv6 {
 			family = val
 		}
 	}
 
-	var comment bool
-	if set.CreateData != nil && set.CreateData.CadtFlags != nil &&
-		(set.CreateData.CadtFlags.Value&uint32(ipset.WithComment)) != 0 {
-		comment = true
+	var comment, timeout bool
+	if set.CreateData != nil {
+		if set.CreateData.CadtFlags != nil &&
+			(set.CreateData.CadtFlags.Get()&uint32(ipset.WithComment)) != 0 {
+			comment = true
+		}
+
+		if set.CreateData.Timeout != nil {
+			timeout = true
+		}
 	}
 
-	return ipsetProps{name, family, comment}, nil
+	return ipsetProps{name, family, comment, timeout}, nil
 }
 
 func (c *ipsetCtx) getIpsets(names []string) []ipsetProps {
@@ -178,35 +200,57 @@ func (c *ipsetCtx) Uninit() error {
 	return nil
 }
 
-func (c *ipsetCtx) getIP(rr dns.RR) net.IP {
+// updates the ipset set cache with provided ipsets if necessary
+// respects ipset timeout property to ensure TTL is kept fresh
+// returns whether processing should proceed
+func (c ipsetSetCache) update(ipsets []ipsetProps) bool {
+	proceed := false
+	for _, ipset := range ipsets {
+		if ipset.timeout {
+			proceed = true
+		} else {
+			_, found := c[ipset.name]
+			if !found {
+				proceed = true
+				c[ipset.name] = struct{}{}
+			}
+		}
+	}
+	return proceed
+}
+
+func (c *ipsetCtx) getIP(rr dns.RR, ipsets []ipsetProps) *ip {
 	switch a := rr.(type) {
 	case *dns.A:
 		var ip4 [4]byte
 		copy(ip4[:], a.A.To4())
 		c.ipv4Mutex.Lock()
 		defer c.ipv4Mutex.Unlock()
-		_, found := c.ipv4Cache[ip4]
-		if found {
-			return nil // this IP was added before
+		cache, found := c.ipv4Cache[ip4]
+		if !found {
+			cache = ipsetSetCache{}
+			c.ipv4Cache[ip4] = cache
 		}
-		c.ipv4Cache[ip4] = struct{}{}
-		return a.A
+		if cache.update(ipsets) {
+			return &ip{a.A, time.Duration(a.Hdr.Ttl)*time.Second + TTLSlop}
+		}
 
 	case *dns.AAAA:
 		var ip6 [16]byte
 		copy(ip6[:], a.AAAA.To16())
 		c.ipv6Mutex.Lock()
 		defer c.ipv6Mutex.Unlock()
-		_, found := c.ipv6Cache[ip6]
-		if found {
-			return nil // this IP was added before
+		cache, found := c.ipv6Cache[ip6]
+		if !found {
+			cache = ipsetSetCache{}
+			c.ipv6Cache[ip6] = cache
 		}
-		c.ipv6Cache[ip6] = struct{}{}
-		return a.AAAA
-
-	default:
-		return nil
+		if cache.update(ipsets) {
+			return &ip{a.AAAA, time.Duration(a.Hdr.Ttl)*time.Second + TTLSlop}
+		}
 	}
+
+	return nil
 }
 
 // Find the ipsets for a given host (accounting for subdomain wildcards)
@@ -247,16 +291,21 @@ func (c *ipsetCtx) getConn(set ipsetProps) *ipset.Conn {
 }
 
 // IPs must be same family (v4/v6) as set's family
-func (c *ipsetCtx) addIPs(host string, set ipsetProps, addrs []net.IP) {
+func (c *ipsetCtx) addIPs(host string, set ipsetProps, addrs []ip) {
 	entries := make([]*ipset.Entry, 0, len(addrs))
 	for _, ip := range addrs {
-		var entry *ipset.Entry
+		entryOptions := make([]ipset.EntryOption, 0, 3)
+		entryOptions = append(entryOptions, ipset.EntryIP(ip.addr))
+
 		if set.comment {
-			entry = ipset.NewEntry(ipset.EntryIP(ip), ipset.EntryComment(host))
-		} else {
-			entry = ipset.NewEntry(ipset.EntryIP(ip))
+			entryOptions = append(entryOptions, ipset.EntryComment(host))
 		}
-		entries = append(entries, entry)
+
+		if set.timeout {
+			entryOptions = append(entryOptions, ipset.EntryTimeout(ip.ttl))
+		}
+
+		entries = append(entries, ipset.NewEntry(entryOptions...))
 	}
 	err := c.getConn(set).Add(set.name, entries...)
 	if err != nil {
@@ -265,7 +314,7 @@ func (c *ipsetCtx) addIPs(host string, set ipsetProps, addrs []net.IP) {
 	log.Debug("IPSET: added %s%s -> %s", host, addrs, set.name)
 }
 
-func addToIpset(c *ipsetCtx, host string, set ipsetProps, addrs []net.IP) {
+func addToIpset(c *ipsetCtx, host string, set ipsetProps, addrs []ip) {
 	c.addIPs(host, set, addrs)
 }
 
@@ -279,7 +328,7 @@ func ipsetNames(sets []ipsetProps) []string {
 
 // Compute which addresses to add to which ipsets for a particular DNS query response
 // Call addEntry for each (host, ipset, ip) triple
-func (c *ipsetCtx) processEntries(ctx *dnsContext, addEntries func(*ipsetCtx, string, ipsetProps, []net.IP)) int {
+func (c *ipsetCtx) processEntries(ctx *dnsContext, addEntries func(*ipsetCtx, string, ipsetProps, []ip)) int {
 	req := ctx.proxyCtx.Req
 	if req == nil || len(c.domainMap) == 0 || !ctx.responseFromUpstream ||
 		!(req.Question[0].Qtype == dns.TypeA ||
@@ -302,17 +351,17 @@ func (c *ipsetCtx) processEntries(ctx *dnsContext, addEntries func(*ipsetCtx, st
 	}
 
 	if ctx.proxyCtx.Res != nil {
-		v4s := make([]net.IP, 0, len(ctx.proxyCtx.Res.Answer))
-		v6s := make([]net.IP, 0, len(ctx.proxyCtx.Res.Answer))
+		v4s := make([]ip, 0, len(ctx.proxyCtx.Res.Answer))
+		v6s := make([]ip, 0, len(ctx.proxyCtx.Res.Answer))
 		for _, it := range ctx.proxyCtx.Res.Answer {
-			ip := c.getIP(it)
+			ip := c.getIP(it, ipsets)
 			if ip == nil {
 				continue
 			}
-			if ip.To4() == nil {
-				v6s = append(v6s, ip)
+			if ip.addr.To4() == nil {
+				v6s = append(v6s, *ip)
 			} else {
-				v4s = append(v4s, ip)
+				v4s = append(v4s, *ip)
 			}
 		}
 		for _, ipset := range ipsets {

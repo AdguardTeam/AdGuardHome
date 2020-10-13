@@ -8,9 +8,11 @@ import (
 	"net"
 	"os/exec"
 	"testing"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/util"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/digineo/go-ipset/v2"
 	"github.com/mdlayher/netlink"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -21,6 +23,7 @@ type binding struct {
 	host  string
 	ipset string
 	ipStr string
+	ttl   time.Duration
 }
 
 type state struct {
@@ -31,23 +34,30 @@ type state struct {
 	activeIpsets []string
 }
 
-func (s *state) doIpsetCreate(ipsetName string, ipv6 bool, comment bool) {
+const TTL uint32 = 60
+const EXPECTED_TTL time.Duration = time.Duration(TTL)*time.Second + TTLSlop
+
+func (s *state) doIpsetCreate(ipset ipsetProps) {
 	family := "inet"
-	if ipv6 {
+	if ipset.family == netfilter.ProtoIPv6 {
 		family = "inet6"
 	}
 
-	args := []string{"create", ipsetName, "hash:ip", "family", family}
+	args := []string{"create", ipset.name, "hash:ip", "family", family}
 
-	if comment {
+	if ipset.comment {
 		args = append(args, "comment")
+	}
+
+	if ipset.timeout {
+		args = append(args, "timeout", "0")
 	}
 
 	_, _, err := util.RunCommand("ipset", args...)
 	if err != nil {
 		panic(err)
 	}
-	s.activeIpsets = append(s.activeIpsets, ipsetName)
+	s.activeIpsets = append(s.activeIpsets, ipset.name)
 }
 
 func (s *state) doIpsetFlush() {
@@ -59,7 +69,7 @@ func (s *state) doIpsetFlush() {
 	}
 }
 
-func (s *state) doIpsetGetComment(ipsetName string, addr net.IP) string {
+func (s *state) doIpsetGetEntry(ipsetName string, addr net.IP) *ipset.Entry {
 	sets, err := s.c.ipv4Conn.ListAll()
 	if err != nil {
 		panic(err)
@@ -68,12 +78,29 @@ func (s *state) doIpsetGetComment(ipsetName string, addr net.IP) string {
 		if set.Name.Get() == ipsetName {
 			for _, entry := range set.Entries {
 				if entry.IP.Get().Equal(addr) {
-					return entry.Comment.Get()
+					return entry
 				}
 			}
 		}
 	}
-	return ""
+	return nil
+}
+
+func (s *state) doIpsetGetComment(ipsetName string, addr net.IP) string {
+	entry := s.doIpsetGetEntry(ipsetName, addr)
+	if entry == nil {
+		return ""
+	}
+	return entry.Comment.Get()
+}
+
+func (s *state) doIpsetGetTimeout(ipsetName string, addr net.IP) *time.Duration {
+	entry := s.doIpsetGetEntry(ipsetName, addr)
+	if entry == nil {
+		return nil
+	}
+	timeout := entry.Timeout.Get()
+	return &timeout
 }
 
 var ipsetConfigs = []string{
@@ -116,11 +143,11 @@ func withSetup(configs []string, testFn func(*state)) {
 		}
 	}()
 
-	s.doIpsetCreate("aghTestHost", false, true)
-	s.doIpsetCreate("aghTestHost23", false, false)
-	s.doIpsetCreate("aghTestHost4", false, false)
-	s.doIpsetCreate("aghTestHost4-6", true, false)
-	s.doIpsetCreate("aghTestSubhost4", false, false)
+	s.doIpsetCreate(ipsetProps{"aghTestHost", netfilter.ProtoIPv4, true, true})
+	s.doIpsetCreate(ipsetProps{"aghTestHost23", netfilter.ProtoIPv4, false, false})
+	s.doIpsetCreate(ipsetProps{"aghTestHost4", netfilter.ProtoIPv4, false, false})
+	s.doIpsetCreate(ipsetProps{"aghTestHost4-6", netfilter.ProtoIPv6, false, false})
+	s.doIpsetCreate(ipsetProps{"aghTestSubhost4", netfilter.ProtoIPv4, false, false})
 
 	err := s.c.init(s.server.conf.IPSETList, &netlink.Config{})
 	if err != nil {
@@ -158,29 +185,29 @@ func makeReqAAAA(fqdn string) *dns.Msg {
 
 func makeA(fqdn string, ip net.IP) *dns.A {
 	return &dns.A{
-		Hdr: dns.RR_Header{Name: fqdn, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 0},
+		Hdr: dns.RR_Header{Name: fqdn, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: TTL},
 		A:   ip,
 	}
 }
 
 func makeAAAA(fqdn string, ip net.IP) *dns.AAAA {
 	return &dns.AAAA{
-		Hdr:  dns.RR_Header{Name: fqdn, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: 0},
+		Hdr:  dns.RR_Header{Name: fqdn, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: TTL},
 		AAAA: ip,
 	}
 }
 
 func makeCNAME(fqdn string, cnameFqdn string) *dns.CNAME {
 	return &dns.CNAME{
-		Hdr:    dns.RR_Header{Name: fqdn, Rrtype: dns.TypeCNAME, Class: dns.ClassINET, Ttl: 0},
+		Hdr:    dns.RR_Header{Name: fqdn, Rrtype: dns.TypeCNAME, Class: dns.ClassINET, Ttl: TTL},
 		Target: cnameFqdn,
 	}
 }
 
-func addToBindings(b map[binding]int) func(*ipsetCtx, string, ipsetProps, []net.IP) {
-	return func(_ *ipsetCtx, host string, set ipsetProps, ips []net.IP) {
+func addToBindings(b map[binding]int) func(*ipsetCtx, string, ipsetProps, []ip) {
+	return func(_ *ipsetCtx, host string, set ipsetProps, ips []ip) {
 		for _, ip := range ips {
-			bind := binding{host, set.name, ip.String()}
+			bind := binding{host, set.name, ip.addr.String(), ip.ttl}
 			count := b[bind]
 			b[bind] = count + 1
 		}
@@ -188,9 +215,9 @@ func addToBindings(b map[binding]int) func(*ipsetCtx, string, ipsetProps, []net.
 }
 
 // This is only used for benchmarking as an alternate implementation comparison
-func addWithIpsetCmd(_ *ipsetCtx, host string, set ipsetProps, ips []net.IP) {
+func addWithIpsetCmd(_ *ipsetCtx, host string, set ipsetProps, ips []ip) {
 	for _, ip := range ips {
-		_, _, err := util.RunCommand("ipset", "add", set.name, ip.String())
+		_, _, err := util.RunCommand("ipset", "add", set.name, ip.addr.String())
 		if err != nil {
 			panic(err)
 		}
@@ -212,21 +239,21 @@ func isInIpset(t *testing.T, ipsetName string, ip net.IP) bool {
 	return cmd.ProcessState.ExitCode() == 0
 }
 
-func ipsetV4(name string, comment bool) ipsetProps {
-	return ipsetProps{name, netfilter.ProtoIPv4, comment}
+func ipsetV4(name string, comment bool, timeout bool) ipsetProps {
+	return ipsetProps{name, netfilter.ProtoIPv4, comment, timeout}
 }
 
-func ipsetV6(name string, comment bool) ipsetProps {
-	return ipsetProps{name, netfilter.ProtoIPv6, comment}
+func ipsetV6(name string, comment bool, timeout bool) ipsetProps {
+	return ipsetProps{name, netfilter.ProtoIPv6, comment, timeout}
 }
 
 func TestIpsetParsing(t *testing.T) {
 	withSetup(nil, func(s *state) {
-		assert.Equal(t, ipsetV4("aghTestHost", true), s.c.domainMap["host.com"][0])
-		assert.Equal(t, ipsetV4("aghTestHost23", false), s.c.domainMap["host2.com"][0])
-		assert.Equal(t, ipsetV4("aghTestHost23", false), s.c.domainMap["host3.com"][0])
-		assert.Equal(t, ipsetV4("aghTestHost4", false), s.c.domainMap["host4.com"][0])
-		assert.Equal(t, ipsetV6("aghTestHost4-6", false), s.c.domainMap["host4.com"][1])
+		assert.Equal(t, ipsetV4("aghTestHost", true, true), s.c.domainMap["host.com"][0])
+		assert.Equal(t, ipsetV4("aghTestHost23", false, false), s.c.domainMap["host2.com"][0])
+		assert.Equal(t, ipsetV4("aghTestHost23", false, false), s.c.domainMap["host3.com"][0])
+		assert.Equal(t, ipsetV4("aghTestHost4", false, false), s.c.domainMap["host4.com"][0])
+		assert.Equal(t, ipsetV6("aghTestHost4-6", false, false), s.c.domainMap["host4.com"][1])
 
 		_, ok := s.c.domainMap["host0.com"]
 		assert.False(t, ok)
@@ -264,15 +291,28 @@ func TestIpsetCache(t *testing.T) {
 		b := map[binding]int{}
 		s.doProcess(t, b)
 
-		assert.Equal(t, 1, b[binding{"host4.com", "aghTestHost4", "127.0.0.1"}])
-		assert.Equal(t, 1, b[binding{"host4.com", "aghTestHost4-6", net.IPv6loopback.String()}])
+		assert.Equal(t, 1, b[binding{"host4.com", "aghTestHost4", "127.0.0.1", EXPECTED_TTL}])
+		assert.Equal(t, 1, b[binding{"host4.com", "aghTestHost4-6", net.IPv6loopback.String(), EXPECTED_TTL}])
 		assert.Equal(t, 2, len(b))
 
 		s.doProcess(t, b)
 
-		assert.Equal(t, 1, b[binding{"host4.com", "aghTestHost4", "127.0.0.1"}])
-		assert.Equal(t, 1, b[binding{"host4.com", "aghTestHost4-6", net.IPv6loopback.String()}])
+		assert.Equal(t, 1, b[binding{"host4.com", "aghTestHost4", "127.0.0.1", EXPECTED_TTL}])
+		assert.Equal(t, 1, b[binding{"host4.com", "aghTestHost4-6", net.IPv6loopback.String(), EXPECTED_TTL}])
 		assert.Equal(t, 2, len(b))
+
+		s.ctx.proxyCtx.Req = makeReqA("HOST.COM.")
+		s.ctx.proxyCtx.Res = &dns.Msg{
+			Answer: []dns.RR{
+				makeA("HOST.COM.", net.IPv4(127, 0, 0, 1)),
+			},
+		}
+
+		s.doProcess(t, b)
+		s.doProcess(t, b)
+
+		assert.Equal(t, 2, b[binding{"host.com", "aghTestHost", "127.0.0.1", EXPECTED_TTL}])
+		assert.Equal(t, 3, len(b))
 	})
 }
 
@@ -288,7 +328,7 @@ func TestIpsetSubdomainOverride(t *testing.T) {
 		b := map[binding]int{}
 		s.doProcess(t, b)
 
-		assert.Equal(t, 1, b[binding{"sub.host4.com", "aghTestSubhost4", "127.0.0.1"}])
+		assert.Equal(t, 1, b[binding{"sub.host4.com", "aghTestSubhost4", "127.0.0.1", EXPECTED_TTL}])
 		assert.Equal(t, 1, len(b))
 	})
 }
@@ -305,7 +345,7 @@ func TestIpsetSubdomainWildcard(t *testing.T) {
 		b := map[binding]int{}
 		s.doProcess(t, b)
 
-		assert.Equal(t, 1, b[binding{"sub.host.com", "aghTestHost", "127.0.0.1"}])
+		assert.Equal(t, 1, b[binding{"sub.host.com", "aghTestHost", "127.0.0.1", EXPECTED_TTL}])
 		assert.Equal(t, 1, len(b))
 	})
 }
@@ -323,7 +363,7 @@ func TestIpsetCnameThirdParty(t *testing.T) {
 		b := map[binding]int{}
 		s.doProcess(t, b)
 
-		assert.Equal(t, 1, b[binding{"host.com", "aghTestHost", "8.8.8.8"}])
+		assert.Equal(t, 1, b[binding{"host.com", "aghTestHost", "8.8.8.8", EXPECTED_TTL}])
 		assert.Equal(t, 1, len(b))
 	})
 }
@@ -383,6 +423,23 @@ func TestIpsetComment(t *testing.T) {
 	})
 }
 
+func TestIpsetTimeout(t *testing.T) {
+	withSetup(nil, func(s *state) {
+		ip := net.IPv4(8, 13, 21, 34)
+		s.ctx.proxyCtx.Req = makeReqA("host.com.")
+		s.ctx.proxyCtx.Res = &dns.Msg{
+			Answer: []dns.RR{
+				makeA("host.com.", ip),
+			},
+		}
+
+		s.doSystem(t)
+		assert.Equal(t, EXPECTED_TTL, *s.doIpsetGetTimeout("aghTestHost", ip))
+		s.doSystem(t)
+		assert.Equal(t, EXPECTED_TTL, *s.doIpsetGetTimeout("aghTestHost", ip))
+	})
+}
+
 func generateIpv4Addrs(n int) []net.IP {
 	addrs := make([]net.IP, n)
 	for i := 0; i < n; i++ {
@@ -424,7 +481,7 @@ func makeSetupBasicCtx(domain string, addrCount int, subCount int) func(*state) 
 
 func makeSetupCachedCtx(addrCount int, subCount int) func(*state) {
 	return func(s *state) {
-		makeSetupBasicCtx("host.com.", addrCount, subCount)(s)
+		makeSetupBasicCtx("host2.com.", addrCount, subCount)(s)
 		s.c.processEntries(s.ctx, addToBindings(map[binding]int{}))
 	}
 }
@@ -436,7 +493,7 @@ func makeSetupUnboundCtx(addrCount int, subCount int) func(*state) {
 }
 
 func benchmarkIpset(b *testing.B, configs []string, setupCtx func(*state),
-	addEntries func(*ipsetCtx, string, ipsetProps, []net.IP), reset func(*state)) {
+	addEntries func(*ipsetCtx, string, ipsetProps, []ip), reset func(*state)) {
 	b.StopTimer()
 	b.ResetTimer()
 
