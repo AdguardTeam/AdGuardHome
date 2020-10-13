@@ -13,8 +13,9 @@ import (
 )
 
 type ipsetProps struct {
-	name   string
-	family netfilter.ProtoFamily
+	name    string
+	family  netfilter.ProtoFamily
+	comment bool
 }
 
 type ipsetCtx struct {
@@ -54,19 +55,26 @@ func (c *ipsetCtx) dialNetfilterSockets(config *netlink.Config) error {
 
 func (c *ipsetCtx) queryIpsetProps(name string) (ipsetProps, error) {
 	// doesn't matter the family we use for the header query
-	res, err := c.ipv4Conn.Header(name)
+	set, err := c.ipv4Conn.ListHeader(name)
 	if err != nil {
 		return ipsetProps{}, err
 	}
 
 	var family netfilter.ProtoFamily
-	if res != nil && res.Family != nil {
-		val := netfilter.ProtoFamily(res.Family.Value)
+	if set != nil && set.Family != nil {
+		val := netfilter.ProtoFamily(set.Family.Value)
 		if val == netfilter.ProtoIPv4 || val == netfilter.ProtoIPv6 {
 			family = val
 		}
 	}
-	return ipsetProps{name, family}, nil
+
+	var comment bool
+	if set.CreateData != nil && set.CreateData.CadtFlags != nil &&
+		(set.CreateData.CadtFlags.Value&uint32(ipset.WithComment)) != 0 {
+		comment = true
+	}
+
+	return ipsetProps{name, family, comment}, nil
 }
 
 func (c *ipsetCtx) getIpsets(names []string) []ipsetProps {
@@ -242,7 +250,13 @@ func (c *ipsetCtx) getConn(set ipsetProps) *ipset.Conn {
 func (c *ipsetCtx) addIPs(host string, set ipsetProps, addrs []net.IP) {
 	entries := make([]*ipset.Entry, 0, len(addrs))
 	for _, ip := range addrs {
-		entries = append(entries, ipset.NewEntry(ipset.EntryIP(ip)))
+		var entry *ipset.Entry
+		if set.comment {
+			entry = ipset.NewEntry(ipset.EntryIP(ip), ipset.EntryComment(host))
+		} else {
+			entry = ipset.NewEntry(ipset.EntryIP(ip))
+		}
+		entries = append(entries, entry)
 	}
 	err := c.getConn(set).Add(set.name, entries...)
 	if err != nil {

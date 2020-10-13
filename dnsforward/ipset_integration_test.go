@@ -31,12 +31,19 @@ type state struct {
 	activeIpsets []string
 }
 
-func (s *state) doIpsetCreate(ipsetName string, ipv6 bool) {
+func (s *state) doIpsetCreate(ipsetName string, ipv6 bool, comment bool) {
 	family := "inet"
 	if ipv6 {
 		family = "inet6"
 	}
-	_, _, err := util.RunCommand("ipset", "create", ipsetName, "hash:ip", "family", family)
+
+	args := []string{"create", ipsetName, "hash:ip", "family", family}
+
+	if comment {
+		args = append(args, "comment")
+	}
+
+	_, _, err := util.RunCommand("ipset", args...)
 	if err != nil {
 		panic(err)
 	}
@@ -50,6 +57,23 @@ func (s *state) doIpsetFlush() {
 			panic(err)
 		}
 	}
+}
+
+func (s *state) doIpsetGetComment(ipsetName string, addr net.IP) string {
+	sets, err := s.c.ipv4Conn.ListAll()
+	if err != nil {
+		panic(err)
+	}
+	for _, set := range sets {
+		if set.Name.Get() == ipsetName {
+			for _, entry := range set.Entries {
+				if entry.IP.Get().Equal(addr) {
+					return entry.Comment.Get()
+				}
+			}
+		}
+	}
+	return ""
 }
 
 var ipsetConfigs = []string{
@@ -92,11 +116,11 @@ func withSetup(configs []string, testFn func(*state)) {
 		}
 	}()
 
-	s.doIpsetCreate("aghTestHost", false)
-	s.doIpsetCreate("aghTestHost23", false)
-	s.doIpsetCreate("aghTestHost4", false)
-	s.doIpsetCreate("aghTestHost4-6", true)
-	s.doIpsetCreate("aghTestSubhost4", false)
+	s.doIpsetCreate("aghTestHost", false, true)
+	s.doIpsetCreate("aghTestHost23", false, false)
+	s.doIpsetCreate("aghTestHost4", false, false)
+	s.doIpsetCreate("aghTestHost4-6", true, false)
+	s.doIpsetCreate("aghTestSubhost4", false, false)
 
 	err := s.c.init(s.server.conf.IPSETList, &netlink.Config{})
 	if err != nil {
@@ -188,21 +212,21 @@ func isInIpset(t *testing.T, ipsetName string, ip net.IP) bool {
 	return cmd.ProcessState.ExitCode() == 0
 }
 
-func ipsetV4(name string) ipsetProps {
-	return ipsetProps{name, netfilter.ProtoIPv4}
+func ipsetV4(name string, comment bool) ipsetProps {
+	return ipsetProps{name, netfilter.ProtoIPv4, comment}
 }
 
-func ipsetV6(name string) ipsetProps {
-	return ipsetProps{name, netfilter.ProtoIPv6}
+func ipsetV6(name string, comment bool) ipsetProps {
+	return ipsetProps{name, netfilter.ProtoIPv6, comment}
 }
 
 func TestIpsetParsing(t *testing.T) {
 	withSetup(nil, func(s *state) {
-		assert.Equal(t, ipsetV4("aghTestHost"), s.c.domainMap["host.com"][0])
-		assert.Equal(t, ipsetV4("aghTestHost23"), s.c.domainMap["host2.com"][0])
-		assert.Equal(t, ipsetV4("aghTestHost23"), s.c.domainMap["host3.com"][0])
-		assert.Equal(t, ipsetV4("aghTestHost4"), s.c.domainMap["host4.com"][0])
-		assert.Equal(t, ipsetV6("aghTestHost4-6"), s.c.domainMap["host4.com"][1])
+		assert.Equal(t, ipsetV4("aghTestHost", true), s.c.domainMap["host.com"][0])
+		assert.Equal(t, ipsetV4("aghTestHost23", false), s.c.domainMap["host2.com"][0])
+		assert.Equal(t, ipsetV4("aghTestHost23", false), s.c.domainMap["host3.com"][0])
+		assert.Equal(t, ipsetV4("aghTestHost4", false), s.c.domainMap["host4.com"][0])
+		assert.Equal(t, ipsetV6("aghTestHost4-6", false), s.c.domainMap["host4.com"][1])
 
 		_, ok := s.c.domainMap["host0.com"]
 		assert.False(t, ok)
@@ -340,6 +364,22 @@ func TestIpsetAdd(t *testing.T) {
 				assert.True(t, isInIpset(t, "aghTestHost4", ip))
 			}
 		}
+	})
+}
+
+func TestIpsetComment(t *testing.T) {
+	withSetup(nil, func(s *state) {
+		domainName := "requested.subdomain.host.com"
+		ip := net.IPv4(1, 2, 3, 5)
+		s.ctx.proxyCtx.Req = makeReqA(domainName + ".")
+		s.ctx.proxyCtx.Res = &dns.Msg{
+			Answer: []dns.RR{
+				makeA("a.subdomain.not.requested.host.com.", ip),
+			},
+		}
+
+		s.doSystem(t)
+		assert.Equal(t, domainName, s.doIpsetGetComment("aghTestHost", ip))
 	})
 }
 
