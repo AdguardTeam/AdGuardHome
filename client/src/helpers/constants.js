@@ -279,6 +279,10 @@ export const SERVICES = [
         id: 'tiktok',
         name: 'TikTok',
     },
+    {
+        id: 'qq',
+        name: 'QQ',
+    },
 ];
 
 export const SERVICES_ID_NAME_MAP = SERVICES.reduce((acc, { id, name }) => {

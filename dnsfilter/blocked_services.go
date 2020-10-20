@@ -161,6 +161,7 @@ var serviceRulesArray = []svc{
 		"||douyin.com^",
 		"||tiktokv.com^",
 	}},
+	{"qq", []string{"||qq.com^", "||qqzaixian.com^"}},
 }
 
 // convert array to map
