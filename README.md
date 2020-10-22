@@ -60,6 +60,7 @@ It operates as a DNS server that re-routes tracking domains to a "black hole," t
     * [Other](#help-other)
 * [Projects that use AdGuardHome](#uses)
 * [Acknowledgments](#acknowledgments)
+* [Privacy](#privacy)
 
 <a id="getting-started"></a>
 ## Getting Started
@@ -326,3 +327,8 @@ This software wouldn't have been possible without:
 You might have seen that [CoreDNS](https://coredns.io) was mentioned here before — we've stopped using it in AdGuardHome. While we still use it on our servers for [AdGuard DNS](https://adguard.com/adguard-dns/overview.html) service, it seemed like an overkill for Home as it impeded with Home features that we plan to implement.
 
 For a full list of all node.js packages in use, please take a look at [client/package.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/package.json) file.
+
+<a id="privacy"></a>
+## Privacy
+
+Our main idea is that you are the one, who should be in control of your data. So it is only natural, that AdGuard Home does not collect any usage statistics, and does not use any web services unless you configure it to do so. Full policy with every bit that _could in theory be_ sent by AdGuard Home is available [here](https://adguard.com/en/privacy/home.html).
