@@ -371,11 +371,6 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(req.Upstreams) == 0 {
-		httpError(r, w, http.StatusBadRequest, "No servers specified")
-		return
-	}
-
 	result := map[string]string{}
 
 	for _, host := range req.Upstreams {
