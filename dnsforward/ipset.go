@@ -3,6 +3,7 @@ package dnsforward
 import (
 	"net"
 	"strings"
+	"sync"
 
 	"github.com/AdguardTeam/AdGuardHome/util"
 	"github.com/AdguardTeam/golibs/log"
@@ -12,7 +13,9 @@ import (
 type ipsetCtx struct {
 	ipsetList   map[string][]string // domain -> []ipset_name
 	ipsetCache  map[[4]byte]bool    // cache for IP[] to prevent duplicate calls to ipset program
-	ipset6Cache map[[16]byte]bool   // cache for IP[] to prevent duplicate calls to ipset program
+	ipsetMutex  *sync.Mutex
+	ipset6Cache map[[16]byte]bool // cache for IP[] to prevent duplicate calls to ipset program
+	ipset6Mutex *sync.Mutex
 }
 
 // Convert configuration settings to an internal map
@@ -20,7 +23,9 @@ type ipsetCtx struct {
 func (c *ipsetCtx) init(ipsetConfig []string) {
 	c.ipsetList = make(map[string][]string)
 	c.ipsetCache = make(map[[4]byte]bool)
+	c.ipsetMutex = &sync.Mutex{}
 	c.ipset6Cache = make(map[[16]byte]bool)
+	c.ipset6Mutex = &sync.Mutex{}
 
 	for _, it := range ipsetConfig {
 		it = strings.TrimSpace(it)
@@ -67,6 +72,8 @@ func (c *ipsetCtx) getIP(rr dns.RR) net.IP {
 	case *dns.A:
 		var ip4 [4]byte
 		copy(ip4[:], a.A.To4())
+		c.ipsetMutex.Lock()
+		defer c.ipsetMutex.Unlock()
 		_, found := c.ipsetCache[ip4]
 		if found {
 			return nil // this IP was added before
@@ -77,6 +84,8 @@ func (c *ipsetCtx) getIP(rr dns.RR) net.IP {
 	case *dns.AAAA:
 		var ip6 [16]byte
 		copy(ip6[:], a.AAAA)
+		c.ipset6Mutex.Lock()
+		defer c.ipset6Mutex.Unlock()
 		_, found := c.ipset6Cache[ip6]
 		if found {
 			return nil // this IP was added before
