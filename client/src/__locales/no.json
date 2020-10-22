@@ -1,6 +1,7 @@
 {
     "client_settings": "Klientinnstillinger",
     "example_upstream_reserved": "du kan bestemme en oppstrøms-DNS <0>for et spesifikt domene(r)</0>",
+    "example_upstream_comment": "Du kan spesifisere kommentaren",
     "upstream_parallel": "Bruk parallele forespørsler for å få oppfarten på behandlinger, ved å forespørre til alle oppstrømstjenerne samtidig",
     "parallel_requests": "Parallelle forespørsler",
     "load_balancing": "Pågangstrykk-utjevning",
@@ -248,6 +249,8 @@
     "blocking_ipv6": "IPv6-blokkering",
     "dns_over_https": "DNS-over-HTTPS",
     "dns_over_tls": "DNS-over-TLS",
+    "download_mobileconfig_doh": "Last ned .mobileconfig for DNS-over-HTTPS",
+    "download_mobileconfig_dot": "Last ned .mobileconfig for DNS-over-TLS",
     "plain_dns": "Ordinær DNS",
     "form_enter_rate_limit": "Skriv inn forespørselsfrekvensgrense",
     "rate_limit": "Forespørselsfrekvensgrense",
@@ -525,6 +528,7 @@
     "check_reason": "Årsak: {{reason}}",
     "check_rule": "Oppføring: {{rule}}",
     "check_service": "Tjenestenavn: {{service}}",
+    "service_name": "Tjenestenavn",
     "check_not_found": "Ikke funnet i filterlistene dine",
     "client_confirm_block": "Er du sikker på at du vil blokkere klienten «{{ip}}»?",
     "client_confirm_unblock": "Er du sikker på at du vil oppheve blokkeringen av klienten «{{ip}}»?",
@@ -578,5 +582,6 @@
     "click_to_view_queries": "Klikk for å vise forespørsler",
     "port_53_faq_link": "Port 53 er ofte opptatt av «DNSStubListener»- eller «systemd-resolved»-tjenestene. Vennligst les <0>denne instruksjonen</0> om hvordan man løser dette.",
     "adg_will_drop_dns_queries": "AdGuard Home vil droppe alle DNS-forespørsler fra denne klienten.",
+    "client_not_in_allowed_clients": "Klienten er ikke tillatt, fordi den ikke er i «Tillatte klienter»-listen.",
     "experimental": "Eksperimentell"
 }

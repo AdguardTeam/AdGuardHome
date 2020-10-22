@@ -1,7 +1,7 @@
 {
     "client_settings": "Configuración de clientes",
     "example_upstream_reserved": "puedes especificar el DNS de subida <0>para un dominio específico</0>",
-    "example_upstream_comment": "Puedes especificar el comentario",
+    "example_upstream_comment": "puedes especificar el comentario",
     "upstream_parallel": "Usar peticiones paralelas para acelerar la resolución al consultar simultáneamente a todos los servidores de subida",
     "parallel_requests": "Peticiones paralelas",
     "load_balancing": "Balanceo de carga",
