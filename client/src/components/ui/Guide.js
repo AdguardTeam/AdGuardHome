@@ -134,7 +134,7 @@ const dnsPrivacyList = [{
             components: [
                 {
                     key: 0,
-                    href: 'https://github.com/jedisct1/dnscrypt-proxy',
+                    href: 'https://support.mozilla.org/kb/firefox-dns-over-https',
                 },
                     <code key="1">text</code>,
             ],
