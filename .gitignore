@@ -28,3 +28,6 @@ snapcraft.yaml.bak
 
 # Packr
 *-packr.go
+
+#emacs
+*~
