@@ -87,7 +87,7 @@
     "refresh_statics": "İstatistikleri yenile",
     "dns_query": "DNS Sorguları",
     "blocked_by": "<0>Filtreler tarafından engellendi</0>",
-    "stats_malware_phishing": "Zararlı yazılım/kimlik hırsızlığı engellendi",
+    "stats_malware_phishing": "Kötü amaçlı yazılım/kimlik avı engellendi",
     "stats_adult": "Yetişkin içerikli site engellendi",
     "stats_query_domain": "En fazla sorgulanan alan adları",
     "for_last_24_hours": "son 24 saat içindekiler",
