@@ -1,14 +1,13 @@
 package querylog
 
 import (
+	"errors"
 	"io"
 	"os"
 	"sync"
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
-
-	"github.com/pkg/errors"
 )
 
 // ErrSeekNotFound is returned from the Seek method
