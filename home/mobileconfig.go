@@ -2,6 +2,7 @@ package home
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 
 	uuid "github.com/satori/go.uuid"
@@ -14,7 +15,7 @@ type DNSSettings struct {
 	ServerName  string `plist:",omitempty"`
 }
 
-type PayloadContent = struct {
+type PayloadContent struct {
 	Name               string
 	PayloadDescription string
 	PayloadDisplayName string
@@ -25,7 +26,7 @@ type PayloadContent = struct {
 	DNSSettings        DNSSettings
 }
 
-type MobileConfig = struct {
+type MobileConfig struct {
 	PayloadContent           []PayloadContent
 	PayloadDescription       string
 	PayloadDisplayName       string
@@ -40,8 +41,21 @@ func genUUIDv4() string {
 	return uuid.NewV4().String()
 }
 
-func getMobileConfig(r *http.Request, d DNSSettings) ([]byte, error) {
-	name := fmt.Sprintf("%s DNS over %s", r.Host, d.DNSProtocol)
+const (
+	dnsProtoHTTPS = "HTTPS"
+	dnsProtoTLS   = "TLS"
+)
+
+func getMobileConfig(d DNSSettings) ([]byte, error) {
+	var name string
+	switch d.DNSProtocol {
+	case dnsProtoHTTPS:
+		name = fmt.Sprintf("%s DoH", d.ServerName)
+	case dnsProtoTLS:
+		name = fmt.Sprintf("%s DoT", d.ServerName)
+	default:
+		return nil, fmt.Errorf("bad dns protocol %q", d.DNSProtocol)
+	}
 
 	data := MobileConfig{
 		PayloadContent: []PayloadContent{{
@@ -66,9 +80,8 @@ func getMobileConfig(r *http.Request, d DNSSettings) ([]byte, error) {
 	return plist.MarshalIndent(data, plist.XMLFormat, "\t")
 }
 
-func handleMobileConfig(w http.ResponseWriter, r *http.Request, d DNSSettings) {
-	mobileconfig, err := getMobileConfig(r, d)
-
+func handleMobileConfig(w http.ResponseWriter, d DNSSettings) {
+	mobileconfig, err := getMobileConfig(d)
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "plist.MarshalIndent: %s", err)
 	}
@@ -78,15 +91,23 @@ func handleMobileConfig(w http.ResponseWriter, r *http.Request, d DNSSettings) {
 }
 
 func handleMobileConfigDoh(w http.ResponseWriter, r *http.Request) {
-	handleMobileConfig(w, r, DNSSettings{
-		DNSProtocol: "HTTPS",
+	handleMobileConfig(w, DNSSettings{
+		DNSProtocol: dnsProtoHTTPS,
 		ServerURL:   fmt.Sprintf("https://%s/dns-query", r.Host),
 	})
 }
 
 func handleMobileConfigDot(w http.ResponseWriter, r *http.Request) {
-	handleMobileConfig(w, r, DNSSettings{
-		DNSProtocol: "TLS",
-		ServerName:  r.Host,
+	var err error
+
+	var host string
+	host, _, err = net.SplitHostPort(r.Host)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "getting host: %s", err)
+	}
+
+	handleMobileConfig(w, DNSSettings{
+		DNSProtocol: dnsProtoTLS,
+		ServerName:  host,
 	})
 }
