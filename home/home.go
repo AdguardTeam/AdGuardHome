@@ -1,3 +1,4 @@
+// Package home contains AdGuard Home's HTTP API methods.
 package home
 
 import (
