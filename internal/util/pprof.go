@@ -64,6 +64,7 @@ package util
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"html/template"
 	"io"
@@ -94,14 +95,11 @@ func PProfRegisterWebHandlers(mux *http.ServeMux) {
 func Cmdline(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	fmt.Fprintf(w, strings.Join(os.Args, "\x00"))
+	fmt.Fprint(w, strings.Join(os.Args, "\x00"))
 }
 
-func sleep(w http.ResponseWriter, d time.Duration) {
-	var clientGone <-chan bool
-	if cn, ok := w.(http.CloseNotifier); ok {
-		clientGone = cn.CloseNotify()
-	}
+func sleep(ctx context.Context, d time.Duration) {
+	clientGone := ctx.Done()
 	select {
 	case <-time.After(d):
 	case <-clientGone:
@@ -146,7 +144,7 @@ func Profile(w http.ResponseWriter, r *http.Request) {
 			fmt.Sprintf("Could not enable CPU profiling: %s", err))
 		return
 	}
-	sleep(w, time.Duration(sec)*time.Second)
+	sleep(r.Context(), time.Duration(sec)*time.Second)
 	pprof.StopCPUProfile()
 }
 
@@ -175,7 +173,7 @@ func Trace(w http.ResponseWriter, r *http.Request) {
 			fmt.Sprintf("Could not enable tracing: %s", err))
 		return
 	}
-	sleep(w, time.Duration(sec*float64(time.Second)))
+	sleep(r.Context(), time.Duration(sec*float64(time.Second)))
 	trace.Stop()
 }
 

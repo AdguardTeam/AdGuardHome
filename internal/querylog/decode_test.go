@@ -15,7 +15,7 @@ func TestJSON(t *testing.T) {
 	assert.Equal(t, "keystr", k)
 	assert.Equal(t, "val", v)
 
-	k, v, jtype = readJSON(&s)
+	k, _, jtype = readJSON(&s)
 	assert.Equal(t, jtype, int32(jsonTObj))
 	assert.Equal(t, "obj", k)
 
@@ -29,6 +29,6 @@ func TestJSON(t *testing.T) {
 	assert.Equal(t, "keyint", k)
 	assert.Equal(t, "123456", v)
 
-	k, v, jtype = readJSON(&s)
+	_, _, jtype = readJSON(&s)
 	assert.True(t, jtype == jsonTErr)
 }

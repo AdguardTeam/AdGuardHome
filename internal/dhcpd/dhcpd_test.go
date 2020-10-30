@@ -83,7 +83,6 @@ func TestIsValidSubnetMask(t *testing.T) {
 func TestNormalizeLeases(t *testing.T) {
 	dynLeases := []*Lease{}
 	staticLeases := []*Lease{}
-	leases := []*Lease{}
 
 	lease := &Lease{}
 	lease.HWAddr = []byte{1, 2, 3, 4}
@@ -100,7 +99,7 @@ func TestNormalizeLeases(t *testing.T) {
 	lease.HWAddr = []byte{2, 2, 3, 4}
 	staticLeases = append(staticLeases, lease)
 
-	leases = normalizeLeases(staticLeases, dynLeases)
+	leases := normalizeLeases(staticLeases, dynLeases)
 
 	assert.True(t, len(leases) == 3)
 	assert.True(t, bytes.Equal(leases[0].HWAddr, []byte{1, 2, 3, 4}))

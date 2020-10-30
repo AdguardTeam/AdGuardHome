@@ -175,7 +175,7 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		v6conf.InterfaceName = newconfig.InterfaceName
 		v6conf.notify = s.onNotify
 		s6, err = v6Create(v6conf)
-		if s6 == nil {
+		if err != nil {
 			httpError(r, w, http.StatusBadRequest, "Invalid DHCPv6 configuration: %s", err)
 			return
 		}

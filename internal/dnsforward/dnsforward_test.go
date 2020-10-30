@@ -815,12 +815,13 @@ func sendTestMessageAsync(t *testing.T, conn *dns.Conn, g *sync.WaitGroup) {
 	req := createGoogleATestMessage()
 	err := conn.WriteMsg(req)
 	if err != nil {
-		t.Fatalf("cannot write message: %s", err)
+		panic(fmt.Sprintf("cannot write message: %s", err))
+
 	}
 
 	res, err := conn.ReadMsg()
 	if err != nil {
-		t.Fatalf("cannot read response to message: %s", err)
+		panic(fmt.Sprintf("cannot read response to message: %s", err))
 	}
 	assertGoogleAResponse(t, res)
 }
