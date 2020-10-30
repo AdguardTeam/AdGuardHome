@@ -4,7 +4,7 @@
 package main
 
 import (
-	"github.com/AdguardTeam/AdGuardHome/home"
+	"github.com/AdguardTeam/AdGuardHome/internal/home"
 )
 
 // version will be set through ldflags, contains current version
