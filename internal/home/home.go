@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"net/url"
 	"os"
 	"os/signal"
@@ -265,7 +266,11 @@ func run(args options) {
 
 		if config.DebugPProf {
 			mux := http.NewServeMux()
-			util.PProfRegisterWebHandlers(mux)
+			mux.HandleFunc("/debug/pprof/", pprof.Index)
+			mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+			mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+			mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+			mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 			go func() {
 				log.Info("pprof: listening on localhost:6060")
 				err := http.ListenAndServe("localhost:6060", mux)
