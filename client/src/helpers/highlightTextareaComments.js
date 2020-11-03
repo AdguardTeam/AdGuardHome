@@ -17,7 +17,7 @@ export const getTextareaCommentsHighlight = (
 ) => {
     const renderLine = (line, idx) => renderHighlightedLine(line, idx, commentLineTokens);
 
-    return <code className={classnames('text-output', className)} ref={ref}>{lines?.split('\n').map(renderLine)}</code>;
+    return <code className={classnames('text-output font-monospace', className)} ref={ref}>{lines?.split('\n').map(renderLine)}</code>;
 };
 
 export const syncScroll = (e, ref) => {
