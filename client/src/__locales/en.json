@@ -249,6 +249,7 @@
     "blocking_ipv6": "Blocking IPv6",
     "dns_over_https": "DNS-over-HTTPS",
     "dns_over_tls": "DNS-over-TLS",
+    "dns_over_quic": "DNS-over-QUIC",
     "download_mobileconfig_doh": "Download .mobileconfig for DNS-over-HTTPS",
     "download_mobileconfig_dot": "Download .mobileconfig for DNS-over-TLS",
     "plain_dns": "Plain DNS",
