@@ -1,3 +1,4 @@
+// Package dnsforward contains a DNS forwarding server.
 package dnsforward
 
 import (

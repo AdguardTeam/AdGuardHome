@@ -5,12 +5,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
-	"github.com/miekg/dns"
-
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/miekg/dns"
 )
 
 // Write Stats data and logs
@@ -40,10 +39,16 @@ func processQueryLogsAndStats(ctx *dnsContext) int {
 			ClientIP:   getIP(d.Addr),
 		}
 
-		if d.Proto == "https" {
-			p.ClientProto = "doh"
-		} else if d.Proto == "tls" {
-			p.ClientProto = "dot"
+		switch d.Proto {
+		case proxy.ProtoHTTPS:
+			p.ClientProto = querylog.ClientProtoDOH
+		case proxy.ProtoQUIC:
+			p.ClientProto = querylog.ClientProtoDOQ
+		case proxy.ProtoTLS:
+			p.ClientProto = querylog.ClientProtoDOT
+		default:
+			// Consider this a plain DNS-over-UDP or DNS-over-TCL
+			// request.
 		}
 
 		if d.Upstream != nil {

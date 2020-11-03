@@ -816,7 +816,6 @@ func sendTestMessageAsync(t *testing.T, conn *dns.Conn, g *sync.WaitGroup) {
 	err := conn.WriteMsg(req)
 	if err != nil {
 		panic(fmt.Sprintf("cannot write message: %s", err))
-
 	}
 
 	res, err := conn.ReadMsg()
@@ -917,20 +916,23 @@ func publicKey(priv interface{}) interface{} {
 }
 
 func TestValidateUpstream(t *testing.T) {
-	invalidUpstreams := []string{"1.2.3.4.5",
+	invalidUpstreams := []string{
+		"1.2.3.4.5",
 		"123.3.7m",
 		"htttps://google.com/dns-query",
 		"[/host.com]tls://dns.adguard.com",
 		"[host.ru]#",
 	}
 
-	validDefaultUpstreams := []string{"1.1.1.1",
+	validDefaultUpstreams := []string{
+		"1.1.1.1",
 		"tls://1.1.1.1",
 		"https://dns.adguard.com/dns-query",
 		"sdns://AQMAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
 	}
 
-	validUpstreams := []string{"[/host.com/]1.1.1.1",
+	validUpstreams := []string{
+		"[/host.com/]1.1.1.1",
 		"[//]tls://1.1.1.1",
 		"[/www.host.com/]#",
 		"[/host.com/google.com/]8.8.8.8",
@@ -976,7 +978,8 @@ func TestValidateUpstreamsSet(t *testing.T) {
 	assert.Nil(t, err, "comments should not be validated")
 
 	// Set of valid upstreams. There is no default upstream specified
-	upstreamsSet = []string{"[/host.com/]1.1.1.1",
+	upstreamsSet = []string{
+		"[/host.com/]1.1.1.1",
 		"[//]tls://1.1.1.1",
 		"[/www.host.com/]#",
 		"[/host.com/google.com/]8.8.8.8",
@@ -1030,9 +1033,7 @@ func (d *testDHCP) Leases(flags int) []dhcpd.Lease {
 	l.Hostname = "localhost"
 	return []dhcpd.Lease{l}
 }
-func (d *testDHCP) SetOnLeaseChanged(onLeaseChanged dhcpd.OnLeaseChangedT) {
-	return
-}
+func (d *testDHCP) SetOnLeaseChanged(onLeaseChanged dhcpd.OnLeaseChangedT) {}
 
 func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	dhcp := &testDHCP{}

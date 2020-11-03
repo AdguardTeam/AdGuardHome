@@ -1,6 +1,8 @@
+// Package querylog provides query log functions and interfaces.
 package querylog
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -29,6 +31,33 @@ type queryLog struct {
 	fileWriteLock sync.Mutex
 }
 
+// ClientProto values are names of the client protocols.
+type ClientProto string
+
+// Client protocol names.
+const (
+	ClientProtoDOH   ClientProto = "doh"
+	ClientProtoDOQ   ClientProto = "doq"
+	ClientProtoDOT   ClientProto = "dot"
+	ClientProtoPlain ClientProto = ""
+)
+
+// NewClientProto validates that the client protocol name is valid and returns
+// the name as a ClientProto.
+func NewClientProto(s string) (cp ClientProto, err error) {
+	switch cp = ClientProto(s); cp {
+	case
+		ClientProtoDOH,
+		ClientProtoDOQ,
+		ClientProtoDOT,
+		ClientProtoPlain:
+
+		return cp, nil
+	default:
+		return "", fmt.Errorf("invalid client proto: %q", s)
+	}
+}
+
 // logEntry - represents a single log entry
 type logEntry struct {
 	IP   string    `json:"IP"` // Client IP
@@ -38,7 +67,7 @@ type logEntry struct {
 	QType  string `json:"QT"`
 	QClass string `json:"QC"`
 
-	ClientProto string `json:"CP"` // "" or "doh"
+	ClientProto ClientProto `json:"CP"`
 
 	Answer     []byte `json:",omitempty"` // sometimes empty answers happen like binerdunt.top or rev2.globalrootservers.net
 	OrigAnswer []byte `json:",omitempty"`
@@ -158,7 +187,6 @@ func (l *queryLog) Add(params AddParams) {
 			// writing to file is disabled - just remove the oldest entry from array
 			l.buffer = l.buffer[1:]
 		}
-
 	} else if !l.flushPending {
 		needFlush = len(l.buffer) >= int(l.conf.MemSize)
 		if needFlush {

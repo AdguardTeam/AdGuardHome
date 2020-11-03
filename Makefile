@@ -160,10 +160,12 @@ lint-go:
 	@echo Running go linter
 	golangci-lint run
 
-test:
-	@echo Running JS unit-tests
+test: test-js test-go
+
+test-js:
 	npm run test --prefix client
-	@echo Running Go unit-tests
+
+test-go:
 	go test $(TEST_FLAGS) -v -coverprofile=coverage.txt -covermode=atomic ./...
 
 ci: client_with_deps
