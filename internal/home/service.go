@@ -104,7 +104,7 @@ func sendSigReload() {
 		return
 	}
 
-	pid, err := strconv.Atoi(parts[0])
+	pid, err := strconv.Atoi(strings.TrimSpace(parts[0]))
 	if err != nil {
 		log.Error("Can't read PID file %s: %s", pidfile, err)
 		return
