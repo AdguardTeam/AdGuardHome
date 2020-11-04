@@ -120,6 +120,7 @@ var config = configuration{
 			Ratelimit:          20,
 			RefuseAny:          true,
 			AllServers:         false,
+			MaxGoroutines:      100, // maximum concurrent queries
 		},
 		FilteringEnabled:           true, // whether or not use filter lists
 		FiltersUpdateIntervalHours: 24,
