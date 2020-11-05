@@ -120,7 +120,12 @@ var config = configuration{
 			Ratelimit:          20,
 			RefuseAny:          true,
 			AllServers:         false,
-			MaxGoroutines:      100, // maximum concurrent queries
+
+			// set default maximum concurrent queries to 300
+			// we introduced a default limit due to this:
+			// https://github.com/AdguardTeam/AdGuardHome/issues/2015#issuecomment-674041912
+			// was later increased to 300 due to https://github.com/AdguardTeam/AdGuardHome/issues/2257
+			MaxGoroutines: 300,
 		},
 		FilteringEnabled:           true, // whether or not use filter lists
 		FiltersUpdateIntervalHours: 24,
