@@ -184,9 +184,6 @@ func (s *Server) Prepare(config *ServerConfig) error {
 				return fmt.Errorf("dns: invalid custom blocking IP address specified")
 			}
 		}
-		if s.conf.MaxGoroutines == 0 {
-			s.conf.MaxGoroutines = 50
-		}
 	}
 
 	// Set default values in the case if nothing is configured
