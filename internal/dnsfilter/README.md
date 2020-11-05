@@ -22,12 +22,12 @@ func main() {
     res, err := filter.CheckHost(host)
     if err != nil {
         // temporary failure
-        log.Fatalf("Failed to check host '%s': %s", host, err)
+        log.Fatalf("Failed to check host %q: %s", host, err)
     }
     if res.IsFiltered {
-        log.Printf("Host %s is filtered, reason - '%s', matched rule: '%s'", host, res.Reason, res.Rule)
+        log.Printf("Host %s is filtered, reason - %q, matched rule: %q", host, res.Reason, res.Rule)
     } else {
-        log.Printf("Host %s is not filtered, reason - '%s'", host, res.Reason)
+        log.Printf("Host %s is not filtered, reason - %q", host, res.Reason)
     }
 }
 ```
@@ -59,12 +59,12 @@ func main() {
     res, err := filter.CheckHost(host)
     if err != nil {
         // temporary failure
-        log.Fatalf("Failed to check host '%s': %s", host, err)
+        log.Fatalf("Failed to check host %q: %s", host, err)
     }
     if res.IsFiltered {
-        log.Printf("Host %s is filtered, reason - '%s', matched rule: '%s'", host, res.Reason, res.Rule)
+        log.Printf("Host %s is filtered, reason - %q, matched rule: %q", host, res.Reason, res.Rule)
     } else {
-        log.Printf("Host %s is not filtered, reason - '%s'", host, res.Reason)
+        log.Printf("Host %s is not filtered, reason - %q", host, res.Reason)
     }
 }
 ```

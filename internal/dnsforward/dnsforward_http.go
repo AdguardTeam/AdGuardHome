@@ -17,7 +17,7 @@ import (
 
 func httpError(r *http.Request, w http.ResponseWriter, code int, format string, args ...interface{}) {
 	text := fmt.Sprintf(format, args...)
-	log.Info("DNS: %s %s: %s", r.Method, r.URL, text)
+	log.Info("dns: %s %s: %s", r.Method, r.URL, text)
 	http.Error(w, text, code)
 }
 
@@ -102,7 +102,7 @@ func checkBootstrap(addr string) error {
 	}
 	_, err := upstream.NewResolver(addr, 0)
 	if err != nil {
-		return fmt.Errorf("invalid bootstrap server address: %s", err)
+		return fmt.Errorf("invalid bootstrap server address: %w", err)
 	}
 	return nil
 }
@@ -322,7 +322,7 @@ func separateUpstream(upstream string) (string, bool, error) {
 		// split domains and upstream string
 		domainsAndUpstream := strings.Split(strings.TrimPrefix(upstream, "[/"), "/]")
 		if len(domainsAndUpstream) != 2 {
-			return "", defaultUpstream, fmt.Errorf("wrong DNS upstream per domain specification: %s", upstream)
+			return "", defaultUpstream, fmt.Errorf("wrong dns upstream per domain specification: %s", upstream)
 		}
 
 		// split domains list and validate each one
@@ -357,7 +357,7 @@ func checkPlainDNS(upstream string) error {
 
 	_, err = strconv.ParseInt(port, 0, 64)
 	if err != nil {
-		return fmt.Errorf("%s is not a valid port: %s", port, err)
+		return fmt.Errorf("%s is not a valid port: %w", port, err)
 	}
 
 	return nil
@@ -405,7 +405,7 @@ func checkDNS(input string, bootstrap []string) error {
 	// separate upstream from domains list
 	input, defaultUpstream, err := separateUpstream(input)
 	if err != nil {
-		return fmt.Errorf("wrong upstream format: %s", err)
+		return fmt.Errorf("wrong upstream format: %w", err)
 	}
 
 	// No need to check this DNS server
@@ -414,17 +414,17 @@ func checkDNS(input string, bootstrap []string) error {
 	}
 
 	if _, err := validateUpstream(input); err != nil {
-		return fmt.Errorf("wrong upstream format: %s", err)
+		return fmt.Errorf("wrong upstream format: %w", err)
 	}
 
 	if len(bootstrap) == 0 {
 		bootstrap = defaultBootstrap
 	}
 
-	log.Debug("Checking if DNS %s works...", input)
+	log.Debug("checking if dns %s works...", input)
 	u, err := upstream.AddressToUpstream(input, upstream.Options{Bootstrap: bootstrap, Timeout: DefaultTimeout})
 	if err != nil {
-		return fmt.Errorf("failed to choose upstream for %s: %s", input, err)
+		return fmt.Errorf("failed to choose upstream for %s: %w", input, err)
 	}
 
 	req := dns.Msg{}
@@ -435,18 +435,18 @@ func checkDNS(input string, bootstrap []string) error {
 	}
 	reply, err := u.Exchange(&req)
 	if err != nil {
-		return fmt.Errorf("couldn't communicate with DNS server %s: %s", input, err)
+		return fmt.Errorf("couldn't communicate with dns server %s: %w", input, err)
 	}
 	if len(reply.Answer) != 1 {
-		return fmt.Errorf("DNS server %s returned wrong answer", input)
+		return fmt.Errorf("dns server %s returned wrong answer", input)
 	}
 	if t, ok := reply.Answer[0].(*dns.A); ok {
 		if !net.IPv4(8, 8, 8, 8).Equal(t.A) {
-			return fmt.Errorf("DNS server %s returned wrong answer: %v", input, t.A)
+			return fmt.Errorf("dns server %s returned wrong answer: %v", input, t.A)
 		}
 	}
 
-	log.Debug("DNS %s works OK", input)
+	log.Debug("dns %s works OK", input)
 	return nil
 }
 
@@ -462,7 +462,7 @@ func (s *Server) handleDOH(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !s.IsRunning() {
-		httpError(r, w, http.StatusInternalServerError, "DNS server is not running")
+		httpError(r, w, http.StatusInternalServerError, "dns server is not running")
 		return
 	}
 

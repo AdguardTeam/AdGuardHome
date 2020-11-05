@@ -168,7 +168,7 @@ func (w *Whois) queryAll(target string) (string, error) {
 
 		log.Debug("Whois: redirected to %s  IP:%s", redir, target)
 	}
-	return "", fmt.Errorf("Whois: redirect loop")
+	return "", fmt.Errorf("whois: redirect loop")
 }
 
 // Request WHOIS information

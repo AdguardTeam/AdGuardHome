@@ -32,12 +32,12 @@ func (u *Updater) GetVersionResponse(forceRecheck bool) (VersionInfo, error) {
 	}
 
 	if err != nil {
-		return VersionInfo{}, fmt.Errorf("updater: HTTP GET %s: %s", u.VersionURL, err)
+		return VersionInfo{}, fmt.Errorf("updater: HTTP GET %s: %w", u.VersionURL, err)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return VersionInfo{}, fmt.Errorf("updater: HTTP GET %s: %s", u.VersionURL, err)
+		return VersionInfo{}, fmt.Errorf("updater: HTTP GET %s: %w", u.VersionURL, err)
 	}
 
 	u.versionJSON = body
@@ -51,7 +51,7 @@ func (u *Updater) parseVersionResponse(data []byte) (VersionInfo, error) {
 	versionJSON := make(map[string]interface{})
 	err := json.Unmarshal(data, &versionJSON)
 	if err != nil {
-		return info, fmt.Errorf("version.json: %s", err)
+		return info, fmt.Errorf("version.json: %w", err)
 	}
 
 	var ok1, ok2, ok3, ok4 bool

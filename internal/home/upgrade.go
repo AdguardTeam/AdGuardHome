@@ -184,7 +184,7 @@ func upgradeSchema2to3(diskConfig *map[string]interface{}) error {
 			newDNSConfig[fmt.Sprint(k)] = v
 		}
 	default:
-		return fmt.Errorf("DNS configuration is not a map")
+		return fmt.Errorf("dns configuration is not a map")
 	}
 
 	// Replace bootstrap_dns value filed with new array contains old bootstrap_dns inside
@@ -217,7 +217,6 @@ func upgradeSchema3to4(diskConfig *map[string]interface{}) error {
 	case []interface{}:
 
 		for i := range arr {
-
 			switch c := arr[i].(type) {
 
 			case map[interface{}]interface{}:
@@ -309,7 +308,6 @@ func upgradeSchema5to6(diskConfig *map[string]interface{}) error {
 	case []interface{}:
 
 		for i := range arr {
-
 			switch c := arr[i].(type) {
 
 			case map[interface{}]interface{}:

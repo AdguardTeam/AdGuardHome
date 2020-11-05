@@ -46,7 +46,6 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 		if s.conf.BlockingMode == "null_ip" {
 			// it means that we should return 0.0.0.0 or :: for any blocked request
 			return s.makeResponseNullIP(m)
-
 		} else if s.conf.BlockingMode == "custom_ip" {
 			// means that we should return custom IP for any blocked request
 
@@ -56,12 +55,10 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 			case dns.TypeAAAA:
 				return s.genAAAARecord(m, s.conf.BlockingIPAddrv6)
 			}
-
 		} else if s.conf.BlockingMode == "nxdomain" {
 			// means that we should return NXDOMAIN for any blocked request
 
 			return s.genNXDomain(m)
-
 		} else if s.conf.BlockingMode == "refused" {
 			// means that we should return NXDOMAIN for any blocked request
 
@@ -148,7 +145,6 @@ func (s *Server) makeResponseNullIP(req *dns.Msg) *dns.Msg {
 }
 
 func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, d *proxy.DNSContext) *dns.Msg {
-
 	ip := net.ParseIP(newAddr)
 	if ip != nil {
 		return s.genResponseWithIP(request, ip)
@@ -168,7 +164,7 @@ func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, d *proxy.DNSCo
 
 	err := s.dnsProxy.Resolve(newContext)
 	if err != nil {
-		log.Printf("Couldn't look up replacement host '%s': %s", newAddr, err)
+		log.Printf("Couldn't look up replacement host %q: %s", newAddr, err)
 		return s.genServerFailure(request)
 	}
 

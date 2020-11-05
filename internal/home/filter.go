@@ -20,9 +20,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
-var (
-	nextFilterID = time.Now().Unix() // semi-stable way to generate an unique ID
-)
+var nextFilterID = time.Now().Unix() // semi-stable way to generate an unique ID
 
 // Filtering - module object
 type Filtering struct {
@@ -35,7 +33,7 @@ type Filtering struct {
 // Init - initialize the module
 func (f *Filtering) Init() {
 	f.filterTitleRegexp = regexp.MustCompile(`^! Title: +(.*)$`)
-	_ = os.MkdirAll(filepath.Join(Context.getDataDir(), filterDir), 0755)
+	_ = os.MkdirAll(filepath.Join(Context.getDataDir(), filterDir), 0o755)
 	f.loadFilters(config.Filters)
 	f.loadFilters(config.WhitelistFilters)
 	deduplicateFilters()
@@ -466,7 +464,6 @@ func (f *Filtering) parseFilterContents(file io.Reader) (int, uint32, string) {
 		line = strings.TrimSpace(line)
 		if len(line) == 0 {
 			//
-
 		} else if line[0] == '!' {
 			m := f.filterTitleRegexp.FindAllStringSubmatch(line, -1)
 			if len(m) > 0 && len(m[0]) >= 2 && !seenTitle {
@@ -476,7 +473,6 @@ func (f *Filtering) parseFilterContents(file io.Reader) (int, uint32, string) {
 
 		} else if line[0] == '#' {
 			//
-
 		} else {
 			rulesCount++
 		}
@@ -521,7 +517,7 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 	if filepath.IsAbs(filter.URL) {
 		f, err := os.Open(filter.URL)
 		if err != nil {
-			return false, fmt.Errorf("open file: %s", err)
+			return false, fmt.Errorf("open file: %w", err)
 		}
 		defer f.Close()
 		reader = f

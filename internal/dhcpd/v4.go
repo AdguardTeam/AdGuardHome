@@ -55,7 +55,7 @@ func (s *v4Server) ResetLeases(leases []*Lease) {
 		if l.Expiry.Unix() != leaseExpireStatic &&
 			!ip4InRange(s.conf.ipStart, s.conf.ipEnd, l.IP) {
 
-			log.Debug("DHCPv4: skipping a lease with IP %v: not within current IP range", l.IP)
+			log.Debug("dhcpv4: skipping a lease with IP %v: not within current IP range", l.IP)
 			continue
 		}
 
@@ -124,7 +124,7 @@ func (s *v4Server) blacklistLease(lease *Lease) {
 // Remove (swap) lease by index
 func (s *v4Server) leaseRemoveSwapByIndex(i int) {
 	s.ipAddrs[s.leases[i].IP[3]] = 0
-	log.Debug("DHCPv4: removed lease %s", s.leases[i].HWAddr)
+	log.Debug("dhcpv4: removed lease %s", s.leases[i].HWAddr)
 
 	n := len(s.leases)
 	if i != n-1 {
@@ -168,7 +168,7 @@ func (s *v4Server) rmDynamicLease(lease Lease) error {
 func (s *v4Server) addLease(l *Lease) {
 	s.leases = append(s.leases, l)
 	s.ipAddrs[l.IP[3]] = 1
-	log.Debug("DHCPv4: added lease %s <-> %s", l.IP, l.HWAddr)
+	log.Debug("dhcpv4: added lease %s <-> %s", l.IP, l.HWAddr)
 }
 
 // Remove a lease with the same properties
@@ -178,8 +178,7 @@ func (s *v4Server) rmLease(lease Lease) error {
 
 			if !bytes.Equal(l.HWAddr, lease.HWAddr) ||
 				l.Hostname != lease.Hostname {
-
-				return fmt.Errorf("Lease not found")
+				return fmt.Errorf("lease not found")
 			}
 
 			s.leaseRemoveSwapByIndex(i)
@@ -238,7 +237,6 @@ func (s *v4Server) RemoveStaticLease(l Lease) error {
 // Send ICMP to the specified machine
 // Return TRUE if it doesn't reply, which probably means that the IP is available
 func (s *v4Server) addrAvailable(target net.IP) bool {
-
 	if s.conf.ICMPTimeout == 0 {
 		return true
 	}
@@ -256,15 +254,15 @@ func (s *v4Server) addrAvailable(target net.IP) bool {
 	pinger.OnRecv = func(pkt *ping.Packet) {
 		reply = true
 	}
-	log.Debug("DHCPv4: Sending ICMP Echo to %v", target)
+	log.Debug("dhcpv4: Sending ICMP Echo to %v", target)
 	pinger.Run()
 
 	if reply {
-		log.Info("DHCPv4: IP conflict: %v is already used by another device", target)
+		log.Info("dhcpv4: IP conflict: %v is already used by another device", target)
 		return false
 	}
 
-	log.Debug("DHCPv4: ICMP procedure is complete: %v", target)
+	log.Debug("dhcpv4: ICMP procedure is complete: %v", target)
 	return true
 }
 
@@ -349,7 +347,7 @@ func (s *v4Server) processDiscover(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) *Lea
 		for lease == nil {
 			lease = s.reserveLease(mac)
 			if lease == nil {
-				log.Debug("DHCPv4: No more IP addresses")
+				log.Debug("dhcpv4: No more IP addresses")
 				if toStore {
 					s.conf.notify(LeaseChangedDBStore)
 				}
@@ -372,7 +370,7 @@ func (s *v4Server) processDiscover(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) *Lea
 		reqIP := req.Options.Get(dhcpv4.OptionRequestedIPAddress)
 		if len(reqIP) != 0 &&
 			!bytes.Equal(reqIP, lease.IP) {
-			log.Debug("DHCPv4: different RequestedIP: %v != %v", reqIP, lease.IP)
+			log.Debug("dhcpv4: different RequestedIP: %v != %v", reqIP, lease.IP)
 		}
 	}
 
@@ -407,7 +405,6 @@ func (o *optFQDN) ToBytes() []byte {
 
 	copy(b[i:], []byte(o.name))
 	return b
-
 }
 
 // Process Request request and return lease
@@ -424,12 +421,12 @@ func (s *v4Server) processRequest(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) (*Lea
 	sid := req.Options.Get(dhcpv4.OptionServerIdentifier)
 	if len(sid) != 0 &&
 		!bytes.Equal(sid, s.conf.dnsIPAddrs[0]) {
-		log.Debug("DHCPv4: Bad OptionServerIdentifier in Request message for %s", mac)
+		log.Debug("dhcpv4: Bad OptionServerIdentifier in Request message for %s", mac)
 		return nil, false
 	}
 
 	if len(reqIP) != 4 {
-		log.Debug("DHCPv4: Bad OptionRequestedIPAddress in Request message for %s", mac)
+		log.Debug("dhcpv4: Bad OptionRequestedIPAddress in Request message for %s", mac)
 		return nil, false
 	}
 
@@ -438,7 +435,7 @@ func (s *v4Server) processRequest(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) (*Lea
 		if bytes.Equal(l.HWAddr, mac) {
 			if !bytes.Equal(l.IP, reqIP) {
 				s.leasesLock.Unlock()
-				log.Debug("DHCPv4: Mismatched OptionRequestedIPAddress in Request message for %s", mac)
+				log.Debug("dhcpv4: Mismatched OptionRequestedIPAddress in Request message for %s", mac)
 				return nil, true
 			}
 
@@ -449,7 +446,7 @@ func (s *v4Server) processRequest(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) (*Lea
 	s.leasesLock.Unlock()
 
 	if lease == nil {
-		log.Debug("DHCPv4: No lease for %s", mac)
+		log.Debug("dhcpv4: No lease for %s", mac)
 		return nil, true
 	}
 
@@ -476,7 +473,6 @@ func (s *v4Server) processRequest(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) (*Lea
 // Return 0: error; reply with Nak
 // Return -1: error; don't reply
 func (s *v4Server) process(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) int {
-
 	var lease *Lease
 
 	resp.UpdateOption(dhcpv4.OptServerIdentifier(s.conf.dnsIPAddrs[0]))
@@ -519,7 +515,7 @@ func (s *v4Server) process(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) int {
 // client(0.0.0.0:68) -> (Request:ClientMAC,Type=Request,ClientID,ReqIP||ClientIP,HostName,ServerID,ParamReqList) -> server(255.255.255.255:67)
 // client(255.255.255.255:68) <- (Reply:YourIP,ClientMAC,Type=ACK,ServerID,SubnetMask,LeaseTime) <- server(<IP>:67)
 func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4.DHCPv4) {
-	log.Debug("DHCPv4: received message: %s", req.Summary())
+	log.Debug("dhcpv4: received message: %s", req.Summary())
 
 	switch req.MessageType() {
 	case dhcpv4.MessageTypeDiscover,
@@ -527,18 +523,18 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 		//
 
 	default:
-		log.Debug("DHCPv4: unsupported message type %d", req.MessageType())
+		log.Debug("dhcpv4: unsupported message type %d", req.MessageType())
 		return
 	}
 
 	resp, err := dhcpv4.NewReplyFromRequest(req)
 	if err != nil {
-		log.Debug("DHCPv4: dhcpv4.New: %s", err)
+		log.Debug("dhcpv4: dhcpv4.New: %s", err)
 		return
 	}
 
 	if len(req.ClientHWAddr) != 6 {
-		log.Debug("DHCPv4: Invalid ClientHWAddr")
+		log.Debug("dhcpv4: Invalid ClientHWAddr")
 		return
 	}
 
@@ -549,11 +545,11 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 		resp.Options.Update(dhcpv4.OptMessageType(dhcpv4.MessageTypeNak))
 	}
 
-	log.Debug("DHCPv4: sending: %s", resp.Summary())
+	log.Debug("dhcpv4: sending: %s", resp.Summary())
 
 	_, err = conn.WriteTo(resp.ToBytes(), peer)
 	if err != nil {
-		log.Error("DHCPv4: conn.Write to %s failed: %s", peer, err)
+		log.Error("dhcpv4: conn.Write to %s failed: %s", peer, err)
 		return
 	}
 }
@@ -566,13 +562,13 @@ func (s *v4Server) Start() error {
 
 	iface, err := net.InterfaceByName(s.conf.InterfaceName)
 	if err != nil {
-		return fmt.Errorf("DHCPv4: Couldn't find interface by name %s: %s", s.conf.InterfaceName, err)
+		return fmt.Errorf("dhcpv4: Couldn't find interface by name %s: %w", s.conf.InterfaceName, err)
 	}
 
-	log.Debug("DHCPv4: starting...")
+	log.Debug("dhcpv4: starting...")
 	s.conf.dnsIPAddrs = getIfaceIPv4(*iface)
 	if len(s.conf.dnsIPAddrs) == 0 {
-		log.Debug("DHCPv4: no IPv6 address for interface %s", iface.Name)
+		log.Debug("dhcpv4: no IPv6 address for interface %s", iface.Name)
 		return nil
 	}
 
@@ -585,11 +581,11 @@ func (s *v4Server) Start() error {
 		return err
 	}
 
-	log.Info("DHCPv4: listening")
+	log.Info("dhcpv4: listening")
 
 	go func() {
 		err = s.srv.Serve()
-		log.Debug("DHCPv4: srv.Serve: %s", err)
+		log.Debug("dhcpv4: srv.Serve: %s", err)
 	}()
 	return nil
 }
@@ -600,10 +596,10 @@ func (s *v4Server) Stop() {
 		return
 	}
 
-	log.Debug("DHCPv4: stopping")
+	log.Debug("dhcpv4: stopping")
 	err := s.srv.Close()
 	if err != nil {
-		log.Error("DHCPv4: srv.Close: %s", err)
+		log.Error("dhcpv4: srv.Close: %s", err)
 	}
 	// now s.srv.Serve() will return
 	s.srv = nil
@@ -621,31 +617,31 @@ func v4Create(conf V4ServerConf) (DHCPServer, error) {
 	var err error
 	s.conf.routerIP, err = parseIPv4(s.conf.GatewayIP)
 	if err != nil {
-		return s, fmt.Errorf("DHCPv4: %s", err)
+		return s, fmt.Errorf("dhcpv4: %w", err)
 	}
 
 	subnet, err := parseIPv4(s.conf.SubnetMask)
 	if err != nil || !isValidSubnetMask(subnet) {
-		return s, fmt.Errorf("DHCPv4: invalid subnet mask: %s", s.conf.SubnetMask)
+		return s, fmt.Errorf("dhcpv4: invalid subnet mask: %s", s.conf.SubnetMask)
 	}
 	s.conf.subnetMask = make([]byte, 4)
 	copy(s.conf.subnetMask, subnet)
 
 	s.conf.ipStart, err = parseIPv4(conf.RangeStart)
 	if s.conf.ipStart == nil {
-		return s, fmt.Errorf("DHCPv4: %s", err)
+		return s, fmt.Errorf("dhcpv4: %w", err)
 	}
 	if s.conf.ipStart[0] == 0 {
-		return s, fmt.Errorf("DHCPv4: invalid range start IP")
+		return s, fmt.Errorf("dhcpv4: invalid range start IP")
 	}
 
 	s.conf.ipEnd, err = parseIPv4(conf.RangeEnd)
 	if s.conf.ipEnd == nil {
-		return s, fmt.Errorf("DHCPv4: %s", err)
+		return s, fmt.Errorf("dhcpv4: %w", err)
 	}
 	if !net.IP.Equal(s.conf.ipStart[:3], s.conf.ipEnd[:3]) ||
 		s.conf.ipStart[3] > s.conf.ipEnd[3] {
-		return s, fmt.Errorf("DHCPv4: range end IP should match range start IP")
+		return s, fmt.Errorf("dhcpv4: range end IP should match range start IP")
 	}
 
 	if conf.LeaseDuration == 0 {
@@ -658,7 +654,7 @@ func v4Create(conf V4ServerConf) (DHCPServer, error) {
 	for _, o := range conf.Options {
 		code, val := parseOptionString(o)
 		if code == 0 {
-			log.Debug("DHCPv4: bad option string: %s", o)
+			log.Debug("dhcpv4: bad option string: %s", o)
 			continue
 		}
 

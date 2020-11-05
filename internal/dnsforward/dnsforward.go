@@ -15,7 +15,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/joomcode/errorx"
 	"github.com/miekg/dns"
 )
 
@@ -182,7 +181,7 @@ func (s *Server) Prepare(config *ServerConfig) error {
 			s.conf.BlockingIPAddrv4 = net.ParseIP(s.conf.BlockingIPv4)
 			s.conf.BlockingIPAddrv6 = net.ParseIP(s.conf.BlockingIPv6)
 			if s.conf.BlockingIPAddrv4 == nil || s.conf.BlockingIPAddrv6 == nil {
-				return fmt.Errorf("DNS: invalid custom blocking IP address specified")
+				return fmt.Errorf("dns: invalid custom blocking IP address specified")
 			}
 		}
 		if s.conf.MaxGoroutines == 0 {
@@ -250,7 +249,7 @@ func (s *Server) stopInternal() error {
 	if s.dnsProxy != nil {
 		err := s.dnsProxy.Stop()
 		if err != nil {
-			return errorx.Decorate(err, "could not stop the DNS server properly")
+			return fmt.Errorf("could not stop the DNS server properly: %w", err)
 		}
 	}
 
@@ -273,7 +272,7 @@ func (s *Server) Reconfigure(config *ServerConfig) error {
 	log.Print("Start reconfiguring the server")
 	err := s.stopInternal()
 	if err != nil {
-		return errorx.Decorate(err, "could not reconfigure the server")
+		return fmt.Errorf("could not reconfigure the server: %w", err)
 	}
 
 	// It seems that net.Listener.Close() doesn't close file descriptors right away.
@@ -282,12 +281,12 @@ func (s *Server) Reconfigure(config *ServerConfig) error {
 
 	err = s.Prepare(config)
 	if err != nil {
-		return errorx.Decorate(err, "could not reconfigure the server")
+		return fmt.Errorf("could not reconfigure the server: %w", err)
 	}
 
 	err = s.startInternal()
 	if err != nil {
-		return errorx.Decorate(err, "could not reconfigure the server")
+		return fmt.Errorf("could not reconfigure the server: %w", err)
 	}
 
 	return nil

@@ -138,13 +138,13 @@ func (u *Updater) unpack() error {
 	if strings.HasSuffix(pkgNameOnly, ".zip") {
 		u.unpackedFiles, err = zipFileUnpack(u.packageName, u.updateDir)
 		if err != nil {
-			return fmt.Errorf(".zip unpack failed: %s", err)
+			return fmt.Errorf(".zip unpack failed: %w", err)
 		}
 
 	} else if strings.HasSuffix(pkgNameOnly, ".tar.gz") {
 		u.unpackedFiles, err = tarGzFileUnpack(u.packageName, u.updateDir)
 		if err != nil {
-			return fmt.Errorf(".tar.gz unpack failed: %s", err)
+			return fmt.Errorf(".tar.gz unpack failed: %w", err)
 		}
 
 	} else {
@@ -158,7 +158,7 @@ func (u *Updater) check() error {
 	log.Debug("updater: checking configuration")
 	err := copyFile(u.ConfigName, filepath.Join(u.updateDir, "AdGuardHome.yaml"))
 	if err != nil {
-		return fmt.Errorf("copyFile() failed: %s", err)
+		return fmt.Errorf("copyFile() failed: %w", err)
 	}
 	cmd := exec.Command(u.updateExeName, "--check-config")
 	err = cmd.Run()
@@ -170,10 +170,10 @@ func (u *Updater) check() error {
 
 func (u *Updater) backup() error {
 	log.Debug("updater: backing up the current configuration")
-	_ = os.Mkdir(u.backupDir, 0755)
+	_ = os.Mkdir(u.backupDir, 0o755)
 	err := copyFile(u.ConfigName, filepath.Join(u.backupDir, "AdGuardHome.yaml"))
 	if err != nil {
-		return fmt.Errorf("copyFile() failed: %s", err)
+		return fmt.Errorf("copyFile() failed: %w", err)
 	}
 
 	// workdir/README.md -> backup/README.md
@@ -221,7 +221,7 @@ func (u *Updater) clean() {
 func (u *Updater) downloadPackageFile(url string, filename string) error {
 	resp, err := u.Client.Get(url)
 	if err != nil {
-		return fmt.Errorf("HTTP request failed: %s", err)
+		return fmt.Errorf("http request failed: %w", err)
 	}
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()
@@ -230,15 +230,15 @@ func (u *Updater) downloadPackageFile(url string, filename string) error {
 	log.Debug("updater: reading HTTP body")
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("ioutil.ReadAll() failed: %s", err)
+		return fmt.Errorf("ioutil.ReadAll() failed: %w", err)
 	}
 
-	_ = os.Mkdir(u.updateDir, 0755)
+	_ = os.Mkdir(u.updateDir, 0o755)
 
 	log.Debug("updater: saving package to file")
-	err = ioutil.WriteFile(filename, body, 0644)
+	err = ioutil.WriteFile(filename, body, 0o644)
 	if err != nil {
-		return fmt.Errorf("ioutil.WriteFile() failed: %s", err)
+		return fmt.Errorf("ioutil.WriteFile() failed: %w", err)
 	}
 	return nil
 }
@@ -250,7 +250,7 @@ func (u *Updater) downloadPackageFile(url string, filename string) error {
 func tarGzFileUnpack(tarfile, outdir string) ([]string, error) {
 	f, err := os.Open(tarfile)
 	if err != nil {
-		return nil, fmt.Errorf("os.Open(): %s", err)
+		return nil, fmt.Errorf("os.Open(): %w", err)
 	}
 	defer func() {
 		_ = f.Close()
@@ -258,7 +258,7 @@ func tarGzFileUnpack(tarfile, outdir string) ([]string, error) {
 
 	gzReader, err := gzip.NewReader(f)
 	if err != nil {
-		return nil, fmt.Errorf("gzip.NewReader(): %s", err)
+		return nil, fmt.Errorf("gzip.NewReader(): %w", err)
 	}
 
 	var files []string
@@ -271,7 +271,7 @@ func tarGzFileUnpack(tarfile, outdir string) ([]string, error) {
 			break
 		}
 		if err != nil {
-			err2 = fmt.Errorf("tarReader.Next(): %s", err)
+			err2 = fmt.Errorf("tarReader.Next(): %w", err)
 			break
 		}
 
@@ -283,9 +283,9 @@ func tarGzFileUnpack(tarfile, outdir string) ([]string, error) {
 		outputName := filepath.Join(outdir, inputNameOnly)
 
 		if header.Typeflag == tar.TypeDir {
-			err = os.Mkdir(outputName, os.FileMode(header.Mode&0777))
+			err = os.Mkdir(outputName, os.FileMode(header.Mode&0o777))
 			if err != nil && !os.IsExist(err) {
-				err2 = fmt.Errorf("os.Mkdir(%s): %s", outputName, err)
+				err2 = fmt.Errorf("os.Mkdir(%s): %w", outputName, err)
 				break
 			}
 			log.Debug("updater: created directory %s", outputName)
@@ -295,20 +295,20 @@ func tarGzFileUnpack(tarfile, outdir string) ([]string, error) {
 			continue
 		}
 
-		f, err := os.OpenFile(outputName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode&0777))
+		f, err := os.OpenFile(outputName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode&0o777))
 		if err != nil {
-			err2 = fmt.Errorf("os.OpenFile(%s): %s", outputName, err)
+			err2 = fmt.Errorf("os.OpenFile(%s): %w", outputName, err)
 			break
 		}
 		_, err = io.Copy(f, tarReader)
 		if err != nil {
 			_ = f.Close()
-			err2 = fmt.Errorf("io.Copy(): %s", err)
+			err2 = fmt.Errorf("io.Copy(): %w", err)
 			break
 		}
 		err = f.Close()
 		if err != nil {
-			err2 = fmt.Errorf("f.Close(): %s", err)
+			err2 = fmt.Errorf("f.Close(): %w", err)
 			break
 		}
 
@@ -327,7 +327,7 @@ func tarGzFileUnpack(tarfile, outdir string) ([]string, error) {
 func zipFileUnpack(zipfile, outdir string) ([]string, error) {
 	r, err := zip.OpenReader(zipfile)
 	if err != nil {
-		return nil, fmt.Errorf("zip.OpenReader(): %s", err)
+		return nil, fmt.Errorf("zip.OpenReader(): %w", err)
 	}
 	defer r.Close()
 
@@ -337,7 +337,7 @@ func zipFileUnpack(zipfile, outdir string) ([]string, error) {
 	for _, zf := range r.File {
 		zr, err = zf.Open()
 		if err != nil {
-			err2 = fmt.Errorf("zip file Open(): %s", err)
+			err2 = fmt.Errorf("zip file Open(): %w", err)
 			break
 		}
 
@@ -352,7 +352,7 @@ func zipFileUnpack(zipfile, outdir string) ([]string, error) {
 		if fi.IsDir() {
 			err = os.Mkdir(outputName, fi.Mode())
 			if err != nil && !os.IsExist(err) {
-				err2 = fmt.Errorf("os.Mkdir(): %s", err)
+				err2 = fmt.Errorf("os.Mkdir(): %w", err)
 				break
 			}
 			log.Tracef("created directory %s", outputName)
@@ -361,18 +361,18 @@ func zipFileUnpack(zipfile, outdir string) ([]string, error) {
 
 		f, err := os.OpenFile(outputName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, fi.Mode())
 		if err != nil {
-			err2 = fmt.Errorf("os.OpenFile(): %s", err)
+			err2 = fmt.Errorf("os.OpenFile(): %w", err)
 			break
 		}
 		_, err = io.Copy(f, zr)
 		if err != nil {
 			_ = f.Close()
-			err2 = fmt.Errorf("io.Copy(): %s", err)
+			err2 = fmt.Errorf("io.Copy(): %w", err)
 			break
 		}
 		err = f.Close()
 		if err != nil {
-			err2 = fmt.Errorf("f.Close(): %s", err)
+			err2 = fmt.Errorf("f.Close(): %w", err)
 			break
 		}
 
@@ -390,7 +390,7 @@ func copyFile(src, dst string) error {
 	if e != nil {
 		return e
 	}
-	e = ioutil.WriteFile(dst, d, 0644)
+	e = ioutil.WriteFile(dst, d, 0o644)
 	if e != nil {
 		return e
 	}

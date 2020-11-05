@@ -501,19 +501,17 @@ func createFilteringEngine(filters []Filter) (*filterlist.RuleStorage, *urlfilte
 				RulesText:      string(f.Data),
 				IgnoreCosmetic: true,
 			}
-
 		} else if !fileExists(f.FilePath) {
 			list = &filterlist.StringRuleList{
 				ID:             int(f.ID),
 				IgnoreCosmetic: true,
 			}
-
 		} else if runtime.GOOS == "windows" {
 			// On Windows we don't pass a file to urlfilter because
 			//  it's difficult to update this file while it's being used.
 			data, err := ioutil.ReadFile(f.FilePath)
 			if err != nil {
-				return nil, nil, fmt.Errorf("ioutil.ReadFile(): %s: %s", f.FilePath, err)
+				return nil, nil, fmt.Errorf("ioutil.ReadFile(): %s: %w", f.FilePath, err)
 			}
 			list = &filterlist.StringRuleList{
 				ID:             int(f.ID),
@@ -525,7 +523,7 @@ func createFilteringEngine(filters []Filter) (*filterlist.RuleStorage, *urlfilte
 			var err error
 			list, err = filterlist.NewFileRuleList(int(f.ID), f.FilePath, true)
 			if err != nil {
-				return nil, nil, fmt.Errorf("filterlist.NewFileRuleList(): %s: %s", f.FilePath, err)
+				return nil, nil, fmt.Errorf("filterlist.NewFileRuleList(): %s: %w", f.FilePath, err)
 			}
 		}
 		listArray = append(listArray, list)
@@ -533,7 +531,7 @@ func createFilteringEngine(filters []Filter) (*filterlist.RuleStorage, *urlfilte
 
 	rulesStorage, err := filterlist.NewRuleStorage(listArray)
 	if err != nil {
-		return nil, nil, fmt.Errorf("filterlist.NewRuleStorage(): %s", err)
+		return nil, nil, fmt.Errorf("filterlist.NewRuleStorage(): %w", err)
 	}
 	filteringEngine := urlfilter.NewDNSEngine(rulesStorage)
 	return rulesStorage, filteringEngine, nil
@@ -590,7 +588,7 @@ func (d *Dnsfilter) matchHost(host string, qtype uint16, setts RequestFilteringS
 				rule = rr.HostRulesV6[0]
 			}
 
-			log.Debug("Filtering: found whitelist rule for host '%s': '%s'  list_id: %d",
+			log.Debug("Filtering: found whitelist rule for host %q: %q  list_id: %d",
 				host, rule.Text(), rule.GetFilterListID())
 			res := makeResult(rule, NotFilteredWhiteList)
 			return res, nil
@@ -607,7 +605,7 @@ func (d *Dnsfilter) matchHost(host string, qtype uint16, setts RequestFilteringS
 	}
 
 	if rr.NetworkRule != nil {
-		log.Debug("Filtering: found rule for host '%s': '%s'  list_id: %d",
+		log.Debug("Filtering: found rule for host %q: %q  list_id: %d",
 			host, rr.NetworkRule.Text(), rr.NetworkRule.GetFilterListID())
 		reason := FilteredBlackList
 		if rr.NetworkRule.Whitelist {
@@ -619,7 +617,7 @@ func (d *Dnsfilter) matchHost(host string, qtype uint16, setts RequestFilteringS
 
 	if qtype == dns.TypeA && rr.HostRulesV4 != nil {
 		rule := rr.HostRulesV4[0] // note that we process only 1 matched rule
-		log.Debug("Filtering: found rule for host '%s': '%s'  list_id: %d",
+		log.Debug("Filtering: found rule for host %q: %q  list_id: %d",
 			host, rule.Text(), rule.GetFilterListID())
 		res := makeResult(rule, FilteredBlackList)
 		res.IP = rule.IP.To4()
@@ -628,7 +626,7 @@ func (d *Dnsfilter) matchHost(host string, qtype uint16, setts RequestFilteringS
 
 	if qtype == dns.TypeAAAA && rr.HostRulesV6 != nil {
 		rule := rr.HostRulesV6[0] // note that we process only 1 matched rule
-		log.Debug("Filtering: found rule for host '%s': '%s'  list_id: %d",
+		log.Debug("Filtering: found rule for host %q: %q  list_id: %d",
 			host, rule.Text(), rule.GetFilterListID())
 		res := makeResult(rule, FilteredBlackList)
 		res.IP = rule.IP
@@ -644,7 +642,7 @@ func (d *Dnsfilter) matchHost(host string, qtype uint16, setts RequestFilteringS
 		} else if rr.HostRulesV6 != nil {
 			rule = rr.HostRulesV6[0]
 		}
-		log.Debug("Filtering: found rule for host '%s': '%s'  list_id: %d",
+		log.Debug("Filtering: found rule for host %q: %q  list_id: %d",
 			host, rule.Text(), rule.GetFilterListID())
 		res := makeResult(rule, FilteredBlackList)
 		res.IP = net.IP{}
@@ -673,7 +671,6 @@ func InitModule() {
 
 // New creates properly initialized DNS Filter that is ready to be used
 func New(c *Config, blockFilters []Filter) *Dnsfilter {
-
 	if c != nil {
 		cacheConf := cache.Config{
 			EnableLRU: true,
@@ -713,7 +710,7 @@ func New(c *Config, blockFilters []Filter) *Dnsfilter {
 	bsvcs := []string{}
 	for _, s := range d.BlockedServices {
 		if !BlockedSvcKnown(s) {
-			log.Debug("skipping unknown blocked-service '%s'", s)
+			log.Debug("skipping unknown blocked-service %q", s)
 			continue
 		}
 		bsvcs = append(bsvcs, s)

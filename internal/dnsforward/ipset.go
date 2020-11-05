@@ -31,13 +31,13 @@ func (c *ipsetCtx) init(ipsetConfig []string) {
 		it = strings.TrimSpace(it)
 		hostsAndNames := strings.Split(it, "/")
 		if len(hostsAndNames) != 2 {
-			log.Debug("IPSET: invalid value '%s'", it)
+			log.Debug("IPSET: invalid value %q", it)
 			continue
 		}
 
 		ipsetNames := strings.Split(hostsAndNames[1], ",")
 		if len(ipsetNames) == 0 {
-			log.Debug("IPSET: invalid value '%s'", it)
+			log.Debug("IPSET: invalid value %q", it)
 			continue
 		}
 		bad := false
@@ -49,7 +49,7 @@ func (c *ipsetCtx) init(ipsetConfig []string) {
 			}
 		}
 		if bad {
-			log.Debug("IPSET: invalid value '%s'", it)
+			log.Debug("IPSET: invalid value %q", it)
 			continue
 		}
 
@@ -58,7 +58,7 @@ func (c *ipsetCtx) init(ipsetConfig []string) {
 			host = strings.TrimSpace(host)
 			host = strings.ToLower(host)
 			if len(host) == 0 {
-				log.Debug("IPSET: invalid value '%s'", it)
+				log.Debug("IPSET: invalid value %q", it)
 				continue
 			}
 			c.ipsetList[host] = ipsetNames
@@ -131,7 +131,7 @@ func (c *ipsetCtx) process(ctx *dnsContext) int {
 				continue
 			}
 			if code != 0 {
-				log.Info("IPSET: ipset add:  code:%d  output:'%s'", code, out)
+				log.Info("IPSET: ipset add:  code:%d  output:%q", code, out)
 				continue
 			}
 			log.Debug("IPSET: added %s(%s) -> %s", host, ipStr, name)

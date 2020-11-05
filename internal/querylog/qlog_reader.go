@@ -3,7 +3,7 @@ package querylog
 import (
 	"io"
 
-	"github.com/joomcode/errorx"
+	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 )
 
 // QLogReader allows reading from multiple query log files in the reverse order.
@@ -132,7 +132,7 @@ func closeQFiles(qFiles []*QLogFile) error {
 	}
 
 	if len(errs) > 0 {
-		return errorx.DecorateMany("Error while closing QLogReader", errs...)
+		return agherr.Many("Error while closing QLogReader", errs...)
 	}
 
 	return nil

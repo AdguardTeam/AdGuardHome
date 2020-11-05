@@ -163,7 +163,7 @@ func (ra *raCtx) Init() error {
 		return nil
 	}
 
-	log.Debug("DHCPv6 RA: source IP address: %s  DNS IP address: %s",
+	log.Debug("dhcpv6 ra: source IP address: %s  DNS IP address: %s",
 		ra.ipAddr, ra.dnsIPAddr)
 
 	params := icmpv6RA{
@@ -183,7 +183,7 @@ func (ra *raCtx) Init() error {
 	ipAndScope := ra.ipAddr.String() + "%" + ra.ifaceName
 	ra.conn, err = icmp.ListenPacket("ip6:ipv6-icmp", ipAndScope)
 	if err != nil {
-		return fmt.Errorf("DHCPv6 RA: icmp.ListenPacket: %s", err)
+		return fmt.Errorf("dhcpv6 ra: icmp.ListenPacket: %w", err)
 	}
 	success := false
 	defer func() {
@@ -195,11 +195,11 @@ func (ra *raCtx) Init() error {
 	con6 := ra.conn.IPv6PacketConn()
 
 	if err := con6.SetHopLimit(255); err != nil {
-		return fmt.Errorf("DHCPv6 RA: SetHopLimit: %s", err)
+		return fmt.Errorf("dhcpv6 ra: SetHopLimit: %w", err)
 	}
 
 	if err := con6.SetMulticastHopLimit(255); err != nil {
-		return fmt.Errorf("DHCPv6 RA: SetMulticastHopLimit: %s", err)
+		return fmt.Errorf("dhcpv6 ra: SetMulticastHopLimit: %w", err)
 	}
 
 	msg := &ipv6.ControlMessage{
@@ -212,15 +212,15 @@ func (ra *raCtx) Init() error {
 	}
 
 	go func() {
-		log.Debug("DHCPv6 RA: starting to send periodic RouterAdvertisement packets")
+		log.Debug("dhcpv6 ra: starting to send periodic RouterAdvertisement packets")
 		for ra.stop.Load() == 0 {
 			_, err = con6.WriteTo(data, msg, addr)
 			if err != nil {
-				log.Error("DHCPv6 RA: WriteTo: %s", err)
+				log.Error("dhcpv6 ra: WriteTo: %s", err)
 			}
 			time.Sleep(ra.packetSendPeriod)
 		}
-		log.Debug("DHCPv6 RA: loop exit")
+		log.Debug("dhcpv6 ra: loop exit")
 	}()
 
 	success = true
@@ -229,7 +229,7 @@ func (ra *raCtx) Init() error {
 
 // Close - close module
 func (ra *raCtx) Close() {
-	log.Debug("DHCPv6 RA: closing")
+	log.Debug("dhcpv6 ra: closing")
 
 	ra.stop.Store(1)
 

@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
-
-	"github.com/joomcode/errorx"
 )
 
 // NetInterface represents a list of network interfaces
@@ -30,7 +28,7 @@ type NetInterface struct {
 func GetValidNetInterfaces() ([]net.Interface, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
-		return nil, fmt.Errorf("couldn't get list of interfaces: %s", err)
+		return nil, fmt.Errorf("couldn't get list of interfaces: %w", err)
 	}
 
 	netIfaces := []net.Interface{}
@@ -48,7 +46,7 @@ func GetValidNetInterfaces() ([]net.Interface, error) {
 func GetValidNetInterfacesForWeb() ([]NetInterface, error) {
 	ifaces, err := GetValidNetInterfaces()
 	if err != nil {
-		return nil, errorx.Decorate(err, "Couldn't get interfaces")
+		return nil, fmt.Errorf("couldn't get interfaces: %w", err)
 	}
 	if len(ifaces) == 0 {
 		return nil, errors.New("couldn't find any legible interface")
@@ -57,9 +55,9 @@ func GetValidNetInterfacesForWeb() ([]NetInterface, error) {
 	var netInterfaces []NetInterface
 
 	for _, iface := range ifaces {
-		addrs, e := iface.Addrs()
-		if e != nil {
-			return nil, errorx.Decorate(e, "Failed to get addresses for interface %s", iface.Name)
+		addrs, err := iface.Addrs()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get addresses for interface %s: %w", iface.Name, err)
 		}
 
 		netIface := NetInterface{

@@ -106,7 +106,7 @@ var portArg = arg{
 		var p int
 		minPort, maxPort := 0, 1<<16-1
 		if p, err = strconv.Atoi(v); err != nil {
-			err = fmt.Errorf("port '%s' is not a number", v)
+			err = fmt.Errorf("port %q is not a number", v)
 		} else if p < minPort || p > maxPort {
 			err = fmt.Errorf("port %d not in range %d - %d", p, minPort, maxPort)
 		} else {

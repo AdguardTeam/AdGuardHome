@@ -51,7 +51,7 @@ func (a *accessCtx) Init(allowedClients, disallowedClients, blockedHosts []strin
 	listArray = append(listArray, list)
 	rulesStorage, err := filterlist.NewRuleStorage(listArray)
 	if err != nil {
-		return fmt.Errorf("filterlist.NewRuleStorage(): %s", err)
+		return fmt.Errorf("filterlist.NewRuleStorage(): %w", err)
 	}
 	a.blockedHostsEngine = urlfilter.NewDNSEngine(rulesStorage)
 

@@ -73,12 +73,10 @@ func (s *v6Server) GetLeases(flags int) []Lease {
 	var result []Lease
 	s.leasesLock.Lock()
 	for _, lease := range s.leases {
-
 		if lease.Expiry.Unix() == leaseExpireStatic {
 			if (flags & LeasesStatic) != 0 {
 				result = append(result, *lease)
 			}
-
 		} else {
 			if (flags & LeasesDynamic) != 0 {
 				result = append(result, *lease)
@@ -215,8 +213,7 @@ func (s *v6Server) rmLease(lease Lease) error {
 
 			if !bytes.Equal(l.HWAddr, lease.HWAddr) ||
 				l.Hostname != lease.Hostname {
-
-				return fmt.Errorf("Lease not found")
+				return fmt.Errorf("lease not found")
 			}
 
 			s.leaseRemoveSwapByIndex(i)
@@ -303,7 +300,7 @@ func (s *v6Server) commitDynamicLease(l *Lease) {
 // Check Client ID
 func (s *v6Server) checkCID(msg *dhcpv6.Message) error {
 	if msg.Options.ClientID() == nil {
-		return fmt.Errorf("DHCPv6: no ClientID option in request")
+		return fmt.Errorf("dhcpv6: no ClientID option in request")
 	}
 	return nil
 }
@@ -318,7 +315,7 @@ func (s *v6Server) checkSID(msg *dhcpv6.Message) error {
 		dhcpv6.MessageTypeRebind:
 
 		if sid != nil {
-			return fmt.Errorf("DHCPv6: drop packet: ServerID option in message %s", msg.Type().String())
+			return fmt.Errorf("dhcpv6: drop packet: ServerID option in message %s", msg.Type().String())
 		}
 
 	case dhcpv6.MessageTypeRequest,
@@ -327,10 +324,10 @@ func (s *v6Server) checkSID(msg *dhcpv6.Message) error {
 		dhcpv6.MessageTypeDecline:
 
 		if sid == nil {
-			return fmt.Errorf("DHCPv6: drop packet: no ServerID option in message %s", msg.Type().String())
+			return fmt.Errorf("dhcpv6: drop packet: no ServerID option in message %s", msg.Type().String())
 		}
 		if !sid.Equal(s.sid) {
-			return fmt.Errorf("DHCPv6: drop packet: mismatched ServerID option in message %s: %s",
+			return fmt.Errorf("dhcpv6: drop packet: mismatched ServerID option in message %s: %s",
 				msg.Type().String(), sid.String())
 		}
 	}
@@ -589,7 +586,7 @@ func (s *v6Server) Start() error {
 
 	iface, err := net.InterfaceByName(s.conf.InterfaceName)
 	if err != nil {
-		return wrapErrPrint(err, "Couldn't find interface by name %s", s.conf.InterfaceName)
+		return fmt.Errorf("couldn't find interface by name %s: %w", s.conf.InterfaceName, err)
 	}
 
 	s.conf.dnsIPAddrs = getIfaceIPv6(*iface)
@@ -612,7 +609,7 @@ func (s *v6Server) Start() error {
 	log.Debug("DHCPv6: starting...")
 
 	if len(iface.HardwareAddr) != 6 {
-		return fmt.Errorf("DHCPv6: invalid MAC %s", iface.HardwareAddr)
+		return fmt.Errorf("dhcpv6: invalid MAC %s", iface.HardwareAddr)
 	}
 	s.sid = dhcpv6.Duid{
 		Type:          dhcpv6.DUID_LLT,
@@ -667,7 +664,7 @@ func v6Create(conf V6ServerConf) (DHCPServer, error) {
 
 	s.conf.ipStart = net.ParseIP(conf.RangeStart)
 	if s.conf.ipStart == nil || s.conf.ipStart.To16() == nil {
-		return s, fmt.Errorf("DHCPv6: invalid range-start IP: %s", conf.RangeStart)
+		return s, fmt.Errorf("dhcpv6: invalid range-start IP: %s", conf.RangeStart)
 	}
 
 	if conf.LeaseDuration == 0 {

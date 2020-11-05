@@ -12,7 +12,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/joomcode/errorx"
 )
 
 // Called by other modules when configuration is changed
@@ -75,7 +74,7 @@ func initDNSServer() error {
 	err = Context.dnsServer.Prepare(&dnsConfig)
 	if err != nil {
 		closeDNSServer()
-		return fmt.Errorf("dnsServer.Prepare: %s", err)
+		return fmt.Errorf("dnsServer.Prepare: %w", err)
 	}
 
 	Context.rdns = InitRDNS(Context.dnsServer, &Context.clients)
@@ -96,41 +95,41 @@ func isPublicIP(ip net.IP) bool {
 	if ip4 != nil {
 		switch ip4[0] {
 		case 0:
-			return false //software
+			return false // software
 		case 10:
-			return false //private network
+			return false // private network
 		case 127:
-			return false //loopback
+			return false // loopback
 		case 169:
 			if ip4[1] == 254 {
-				return false //link-local
+				return false // link-local
 			}
 		case 172:
 			if ip4[1] >= 16 && ip4[1] <= 31 {
-				return false //private network
+				return false // private network
 			}
 		case 192:
-			if (ip4[1] == 0 && ip4[2] == 0) || //private network
-				(ip4[1] == 0 && ip4[2] == 2) || //documentation
-				(ip4[1] == 88 && ip4[2] == 99) || //reserved
-				(ip4[1] == 168) { //private network
+			if (ip4[1] == 0 && ip4[2] == 0) || // private network
+				(ip4[1] == 0 && ip4[2] == 2) || // documentation
+				(ip4[1] == 88 && ip4[2] == 99) || // reserved
+				(ip4[1] == 168) { // private network
 				return false
 			}
 		case 198:
-			if (ip4[1] == 18 || ip4[2] == 19) || //private network
-				(ip4[1] == 51 || ip4[2] == 100) { //documentation
+			if (ip4[1] == 18 || ip4[2] == 19) || // private network
+				(ip4[1] == 51 || ip4[2] == 100) { // documentation
 				return false
 			}
 		case 203:
-			if ip4[1] == 0 && ip4[2] == 113 { //documentation
+			if ip4[1] == 0 && ip4[2] == 113 { // documentation
 				return false
 			}
 		case 224:
-			if ip4[1] == 0 && ip4[2] == 0 { //multicast
+			if ip4[1] == 0 && ip4[2] == 0 { // multicast
 				return false
 			}
 		case 255:
-			if ip4[1] == 255 && ip4[2] == 255 && ip4[3] == 255 { //subnet
+			if ip4[1] == 255 && ip4[2] == 255 && ip4[3] == 255 { // subnet
 				return false
 			}
 		}
@@ -313,7 +312,7 @@ func startDNSServer() error {
 
 	err := Context.dnsServer.Start()
 	if err != nil {
-		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
+		return fmt.Errorf("couldn't start forwarding DNS server: %w", err)
 	}
 
 	Context.dnsFilter.Start()
@@ -340,7 +339,7 @@ func reconfigureDNSServer() error {
 	newconfig := generateServerConfig()
 	err := Context.dnsServer.Reconfigure(&newconfig)
 	if err != nil {
-		return errorx.Decorate(err, "Couldn't start forwarding DNS server")
+		return fmt.Errorf("couldn't start forwarding DNS server: %w", err)
 	}
 
 	return nil
@@ -353,7 +352,7 @@ func stopDNSServer() error {
 
 	err := Context.dnsServer.Stop()
 	if err != nil {
-		return errorx.Decorate(err, "Couldn't stop forwarding DNS server")
+		return fmt.Errorf("couldn't stop forwarding DNS server: %w", err)
 	}
 
 	closeDNSServer()

@@ -12,7 +12,6 @@ require (
 	github.com/gobuffalo/packr v1.30.1
 	github.com/hugelgupf/socketpair v0.0.0-20190730060125-05d35a94e714
 	github.com/insomniacslk/dhcp v0.0.0-20200621044212-d74cd86ad5b8
-	github.com/joomcode/errorx v1.0.3
 	github.com/kardianos/service v1.1.0
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7
 	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065

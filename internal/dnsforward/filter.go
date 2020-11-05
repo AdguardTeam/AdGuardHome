@@ -1,12 +1,13 @@
 package dnsforward
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/joomcode/errorx"
+
 	"github.com/miekg/dns"
 )
 
@@ -49,10 +50,9 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 	res, err := s.dnsFilter.CheckHost(host, d.Req.Question[0].Qtype, ctx.setts)
 	if err != nil {
 		// Return immediately if there's an error
-		return nil, errorx.Decorate(err, "dnsfilter failed to check host '%s'", host)
-
+		return nil, fmt.Errorf("dnsfilter failed to check host %q: %w", host, err)
 	} else if res.IsFiltered {
-		log.Tracef("Host %s is filtered, reason - '%s', matched rule: '%s'", host, res.Reason, res.Rule)
+		log.Tracef("Host %s is filtered, reason - %q, matched rule: %q", host, res.Reason, res.Rule)
 		d.Res = s.genDNSFilterMessage(d, &res)
 
 	} else if res.Reason == dnsfilter.ReasonRewrite && len(res.CanonName) != 0 && len(res.IPList) == 0 {
@@ -136,7 +136,6 @@ func (s *Server) filterDNSResponse(ctx *dnsContext) (*dnsfilter.Result, error) {
 
 		if err != nil {
 			return nil, err
-
 		} else if res.IsFiltered {
 			d.Res = s.genDNSFilterMessage(d, &res)
 			log.Debug("DNSFwd: Matched %s by response: %s", d.Req.Question[0].Name, host)

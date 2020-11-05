@@ -23,7 +23,7 @@ import (
 func CheckIfOtherDHCPServersPresentV4(ifaceName string) (bool, error) {
 	iface, err := net.InterfaceByName(ifaceName)
 	if err != nil {
-		return false, wrapErrPrint(err, "Couldn't find interface by name %s", ifaceName)
+		return false, fmt.Errorf("couldn't find interface by name %s: %w", ifaceName, err)
 	}
 
 	// get ipv4 address of an interface
@@ -44,7 +44,7 @@ func CheckIfOtherDHCPServersPresentV4(ifaceName string) (bool, error) {
 
 	req, err := dhcpv4.NewDiscovery(iface.HardwareAddr)
 	if err != nil {
-		return false, fmt.Errorf("dhcpv4.NewDiscovery: %s", err)
+		return false, fmt.Errorf("dhcpv4.NewDiscovery: %w", err)
 	}
 	req.Options.Update(dhcpv4.OptClientIdentifier(iface.HardwareAddr))
 	req.Options.Update(dhcpv4.OptHostName(hostname))
@@ -52,24 +52,24 @@ func CheckIfOtherDHCPServersPresentV4(ifaceName string) (bool, error) {
 	// resolve 0.0.0.0:68
 	udpAddr, err := net.ResolveUDPAddr("udp4", src)
 	if err != nil {
-		return false, wrapErrPrint(err, "Couldn't resolve UDP address %s", src)
+		return false, fmt.Errorf("couldn't resolve UDP address %s: %w", src, err)
 	}
 
 	if !udpAddr.IP.To4().Equal(srcIP) {
-		return false, wrapErrPrint(err, "Resolved UDP address is not %s", src)
+		return false, fmt.Errorf("resolved UDP address is not %s: %w", src, err)
 	}
 
 	// resolve 255.255.255.255:67
 	dstAddr, err := net.ResolveUDPAddr("udp4", dst)
 	if err != nil {
-		return false, wrapErrPrint(err, "Couldn't resolve UDP address %s", dst)
+		return false, fmt.Errorf("couldn't resolve UDP address %s: %w", dst, err)
 	}
 
 	// bind to 0.0.0.0:68
 	log.Tracef("Listening to udp4 %+v", udpAddr)
 	c, err := nclient4.NewRawUDPConn(ifaceName, 68)
 	if err != nil {
-		return false, wrapErrPrint(err, "Couldn't listen on :68")
+		return false, fmt.Errorf("couldn't listen on :68: %w", err)
 	}
 	if c != nil {
 		defer c.Close()
@@ -78,7 +78,7 @@ func CheckIfOtherDHCPServersPresentV4(ifaceName string) (bool, error) {
 	// send to 255.255.255.255:67
 	_, err = c.WriteTo(req.ToBytes(), dstAddr)
 	if err != nil {
-		return false, wrapErrPrint(err, "Couldn't send a packet to %s", dst)
+		return false, fmt.Errorf("couldn't send a packet to %s: %w", dst, err)
 	}
 
 	for {
@@ -94,7 +94,7 @@ func CheckIfOtherDHCPServersPresentV4(ifaceName string) (bool, error) {
 			return false, nil
 		}
 		if err != nil {
-			return false, wrapErrPrint(err, "Couldn't receive packet")
+			return false, fmt.Errorf("couldn't receive packet: %w", err)
 		}
 
 		log.Tracef("Received packet (%v bytes)", n)
@@ -127,12 +127,12 @@ func CheckIfOtherDHCPServersPresentV4(ifaceName string) (bool, error) {
 func CheckIfOtherDHCPServersPresentV6(ifaceName string) (bool, error) {
 	iface, err := net.InterfaceByName(ifaceName)
 	if err != nil {
-		return false, fmt.Errorf("DHCPv6: net.InterfaceByName: %s: %s", ifaceName, err)
+		return false, fmt.Errorf("dhcpv6: net.InterfaceByName: %s: %w", ifaceName, err)
 	}
 
 	ifaceIPNet := getIfaceIPv6(*iface)
 	if len(ifaceIPNet) == 0 {
-		return false, fmt.Errorf("DHCPv6: couldn't find IPv6 address of interface %s %+v", ifaceName, iface)
+		return false, fmt.Errorf("dhcpv6: couldn't find IPv6 address of interface %s %+v", ifaceName, iface)
 	}
 
 	srcIP := ifaceIPNet[0]
@@ -141,27 +141,27 @@ func CheckIfOtherDHCPServersPresentV6(ifaceName string) (bool, error) {
 
 	req, err := dhcpv6.NewSolicit(iface.HardwareAddr)
 	if err != nil {
-		return false, fmt.Errorf("DHCPv6: dhcpv6.NewSolicit: %s", err)
+		return false, fmt.Errorf("dhcpv6: dhcpv6.NewSolicit: %w", err)
 	}
 
 	udpAddr, err := net.ResolveUDPAddr("udp6", src)
 	if err != nil {
-		return false, wrapErrPrint(err, "DHCPv6: Couldn't resolve UDP address %s", src)
+		return false, fmt.Errorf("dhcpv6: Couldn't resolve UDP address %s: %w", src, err)
 	}
 
 	if !udpAddr.IP.To16().Equal(srcIP) {
-		return false, wrapErrPrint(err, "DHCPv6: Resolved UDP address is not %s", src)
+		return false, fmt.Errorf("dhcpv6: Resolved UDP address is not %s: %w", src, err)
 	}
 
 	dstAddr, err := net.ResolveUDPAddr("udp6", dst)
 	if err != nil {
-		return false, fmt.Errorf("DHCPv6: Couldn't resolve UDP address %s: %s", dst, err)
+		return false, fmt.Errorf("dhcpv6: Couldn't resolve UDP address %s: %w", dst, err)
 	}
 
 	log.Debug("DHCPv6: Listening to udp6 %+v", udpAddr)
 	c, err := nclient6.NewIPv6UDPConn(ifaceName, dhcpv6.DefaultClientPort)
 	if err != nil {
-		return false, fmt.Errorf("DHCPv6: Couldn't listen on :546: %s", err)
+		return false, fmt.Errorf("dhcpv6: Couldn't listen on :546: %w", err)
 	}
 	if c != nil {
 		defer c.Close()
@@ -169,7 +169,7 @@ func CheckIfOtherDHCPServersPresentV6(ifaceName string) (bool, error) {
 
 	_, err = c.WriteTo(req.ToBytes(), dstAddr)
 	if err != nil {
-		return false, fmt.Errorf("DHCPv6: Couldn't send a packet to %s: %s", dst, err)
+		return false, fmt.Errorf("dhcpv6: Couldn't send a packet to %s: %w", dst, err)
 	}
 
 	for {
@@ -182,7 +182,7 @@ func CheckIfOtherDHCPServersPresentV6(ifaceName string) (bool, error) {
 			return false, nil
 		}
 		if err != nil {
-			return false, wrapErrPrint(err, "Couldn't receive packet")
+			return false, fmt.Errorf("couldn't receive packet: %w", err)
 		}
 
 		log.Debug("DHCPv6: Received packet (%v bytes)", n)

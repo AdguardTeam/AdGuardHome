@@ -71,6 +71,7 @@ type checkConfigReqEnt struct {
 	IP      string `json:"ip"`
 	Autofix bool   `json:"autofix"`
 }
+
 type checkConfigReq struct {
 	Web         checkConfigReqEnt `json:"web"`
 	DNS         checkConfigReqEnt `json:"dns"`
@@ -81,11 +82,13 @@ type checkConfigRespEnt struct {
 	Status     string `json:"status"`
 	CanAutofix bool   `json:"can_autofix"`
 }
+
 type staticIPJSON struct {
 	Static string `json:"static"`
 	IP     string `json:"ip"`
 	Error  string `json:"error"`
 }
+
 type checkConfigResp struct {
 	Web      checkConfigRespEnt `json:"web"`
 	DNS      checkConfigRespEnt `json:"dns"`
@@ -214,31 +217,33 @@ func checkDNSStubListener() bool {
 	return true
 }
 
-const resolvedConfPath = "/etc/systemd/resolved.conf.d/adguardhome.conf"
-const resolvedConfData = `[Resolve]
+const (
+	resolvedConfPath = "/etc/systemd/resolved.conf.d/adguardhome.conf"
+	resolvedConfData = `[Resolve]
 DNS=127.0.0.1
 DNSStubListener=no
 `
+)
 const resolvConfPath = "/etc/resolv.conf"
 
 // Deactivate DNSStubListener
 func disableDNSStubListener() error {
 	dir := filepath.Dir(resolvedConfPath)
-	err := os.MkdirAll(dir, 0755)
+	err := os.MkdirAll(dir, 0o755)
 	if err != nil {
-		return fmt.Errorf("os.MkdirAll: %s: %s", dir, err)
+		return fmt.Errorf("os.MkdirAll: %s: %w", dir, err)
 	}
 
-	err = ioutil.WriteFile(resolvedConfPath, []byte(resolvedConfData), 0644)
+	err = ioutil.WriteFile(resolvedConfPath, []byte(resolvedConfData), 0o644)
 	if err != nil {
-		return fmt.Errorf("ioutil.WriteFile: %s: %s", resolvedConfPath, err)
+		return fmt.Errorf("ioutil.WriteFile: %s: %w", resolvedConfPath, err)
 	}
 
 	_ = os.Rename(resolvConfPath, resolvConfPath+".backup")
 	err = os.Symlink("/run/systemd/resolve/resolv.conf", resolvConfPath)
 	if err != nil {
 		_ = os.Remove(resolvedConfPath) // remove the file we've just created
-		return fmt.Errorf("os.Symlink: %s: %s", resolvConfPath, err)
+		return fmt.Errorf("os.Symlink: %s: %w", resolvConfPath, err)
 	}
 
 	cmd := exec.Command("systemctl", "reload-or-restart", "systemd-resolved")
@@ -259,6 +264,7 @@ type applyConfigReqEnt struct {
 	IP   string `json:"ip"`
 	Port int    `json:"port"`
 }
+
 type applyConfigReq struct {
 	Web      applyConfigReqEnt `json:"web"`
 	DNS      applyConfigReqEnt `json:"dns"`

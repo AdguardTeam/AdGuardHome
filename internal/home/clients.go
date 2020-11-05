@@ -126,7 +126,6 @@ func (clients *clientsContainer) Start() {
 		}
 		go clients.periodicUpdate()
 	}
-
 }
 
 // Reload - reload auto-clients
@@ -173,7 +172,7 @@ func (clients *clientsContainer) addFromConfig(objects []clientObject) {
 
 		for _, s := range cy.BlockedServices {
 			if !dnsfilter.BlockedSvcKnown(s) {
-				log.Debug("Clients: skipping unknown blocked-service '%s'", s)
+				log.Debug("Clients: skipping unknown blocked-service %q", s)
 				continue
 			}
 			cli.BlockedServices = append(cli.BlockedServices, s)
@@ -181,7 +180,7 @@ func (clients *clientsContainer) addFromConfig(objects []clientObject) {
 
 		for _, t := range cy.Tags {
 			if !clients.tagKnown(t) {
-				log.Debug("Clients: skipping unknown tag '%s'", t)
+				log.Debug("Clients: skipping unknown tag %q", t)
 				continue
 			}
 			cli.Tags = append(cli.Tags, t)
@@ -377,7 +376,7 @@ func (clients *clientsContainer) check(c *Client) error {
 	}
 
 	if len(c.IDs) == 0 {
-		return fmt.Errorf("ID required")
+		return fmt.Errorf("id required")
 	}
 
 	for i, id := range c.IDs {
@@ -409,7 +408,7 @@ func (clients *clientsContainer) check(c *Client) error {
 
 	err := dnsforward.ValidateUpstreams(c.Upstreams)
 	if err != nil {
-		return fmt.Errorf("invalid upstream servers: %s", err)
+		return fmt.Errorf("invalid upstream servers: %w", err)
 	}
 
 	return nil
@@ -448,7 +447,7 @@ func (clients *clientsContainer) Add(c Client) (bool, error) {
 		clients.idIndex[id] = &c
 	}
 
-	log.Debug("Clients: added '%s': ID:%v [%d]", c.Name, c.IDs, len(clients.list))
+	log.Debug("Clients: added %q: ID:%v [%d]", c.Name, c.IDs, len(clients.list))
 	return true, nil
 }
 
@@ -590,7 +589,7 @@ func (clients *clientsContainer) addHost(ip, host string, source clientSource) (
 		}
 		clients.ipHost[ip] = ch
 	}
-	log.Debug("Clients: added '%s' -> '%s' [%d]", ip, host, len(clients.ipHost))
+	log.Debug("Clients: added %q -> %q [%d]", ip, host, len(clients.ipHost))
 	return true, nil
 }
 

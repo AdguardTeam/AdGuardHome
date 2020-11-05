@@ -4,9 +4,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
-
-	"github.com/AdguardTeam/golibs/log"
-	"github.com/joomcode/errorx"
 )
 
 func isTimeout(err error) bool {
@@ -35,17 +32,6 @@ func getIfaceIPv4(iface net.Interface) []net.IP {
 		}
 	}
 	return res
-}
-
-func wrapErrPrint(err error, message string, args ...interface{}) error {
-	var errx error
-	if err == nil {
-		errx = fmt.Errorf(message, args...)
-	} else {
-		errx = errorx.Decorate(err, message, args...)
-	}
-	log.Println(errx.Error())
-	return errx
 }
 
 func parseIPv4(text string) (net.IP, error) {

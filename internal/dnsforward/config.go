@@ -15,7 +15,6 @@ import (
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/joomcode/errorx"
 )
 
 // FilteringConfig represents the DNS filtering configuration of AdGuard Home
@@ -252,14 +251,14 @@ func (s *Server) prepareUpstreamSettings() error {
 	upstreams = filterOutComments(upstreams)
 	upstreamConfig, err := proxy.ParseUpstreamsConfig(upstreams, s.conf.BootstrapDNS, DefaultTimeout)
 	if err != nil {
-		return fmt.Errorf("DNS: proxy.ParseUpstreamsConfig: %s", err)
+		return fmt.Errorf("dns: proxy.ParseUpstreamsConfig: %w", err)
 	}
 
 	if len(upstreamConfig.Upstreams) == 0 {
 		log.Info("Warning: no default upstream servers specified, using %v", defaultDNS)
 		uc, err := proxy.ParseUpstreamsConfig(defaultDNS, s.conf.BootstrapDNS, DefaultTimeout)
 		if err != nil {
-			return fmt.Errorf("DNS: failed to parse default upstreams: %v", err)
+			return fmt.Errorf("dns: failed to parse default upstreams: %v", err)
 		}
 		upstreamConfig.Upstreams = uc.Upstreams
 	}
@@ -300,13 +299,13 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) error {
 	var err error
 	s.conf.cert, err = tls.X509KeyPair(s.conf.CertificateChainData, s.conf.PrivateKeyData)
 	if err != nil {
-		return errorx.Decorate(err, "Failed to parse TLS keypair")
+		return fmt.Errorf("failed to parse TLS keypair: %w", err)
 	}
 
 	if s.conf.StrictSNICheck {
 		x, err := x509.ParseCertificate(s.conf.cert.Certificate[0])
 		if err != nil {
-			return errorx.Decorate(err, "x509.ParseCertificate(): %s", err)
+			return fmt.Errorf("x509.ParseCertificate(): %w", err)
 		}
 		if len(x.DNSNames) != 0 {
 			s.conf.dnsNames = x.DNSNames

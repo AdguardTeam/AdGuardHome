@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/joomcode/errorx"
 )
 
 var tlsWebHandlersRegistered = false
@@ -484,13 +483,13 @@ func unmarshalTLS(r *http.Request) (tlsConfigSettings, error) {
 	data := tlsConfigSettings{}
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
-		return data, errorx.Decorate(err, "Failed to parse new TLS config json")
+		return data, fmt.Errorf("failed to parse new TLS config json: %w", err)
 	}
 
 	if data.CertificateChain != "" {
 		certPEM, err := base64.StdEncoding.DecodeString(data.CertificateChain)
 		if err != nil {
-			return data, errorx.Decorate(err, "Failed to base64-decode certificate chain")
+			return data, fmt.Errorf("failed to base64-decode certificate chain: %w", err)
 		}
 		data.CertificateChain = string(certPEM)
 		if data.CertificatePath != "" {
@@ -501,7 +500,7 @@ func unmarshalTLS(r *http.Request) (tlsConfigSettings, error) {
 	if data.PrivateKey != "" {
 		keyPEM, err := base64.StdEncoding.DecodeString(data.PrivateKey)
 		if err != nil {
-			return data, errorx.Decorate(err, "Failed to base64-decode private key")
+			return data, fmt.Errorf("failed to base64-decode private key: %w", err)
 		}
 
 		data.PrivateKey = string(keyPEM)

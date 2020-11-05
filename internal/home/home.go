@@ -22,10 +22,9 @@ import (
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/update"
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
-
-	"github.com/joomcode/errorx"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/isdelve"
 
@@ -113,7 +112,7 @@ func Main(version string, channel string, armVer string) {
 	go func() {
 		for {
 			sig := <-Context.appSignalChannel
-			log.Info("Received signal '%s'", sig)
+			log.Info("Received signal %q", sig)
 			switch sig {
 			case syscall.SIGHUP:
 				Context.clients.Reload()
@@ -279,7 +278,7 @@ func run(args options) {
 		}
 	}
 
-	err := os.MkdirAll(Context.getDataDir(), 0755)
+	err := os.MkdirAll(Context.getDataDir(), 0o755)
 	if err != nil {
 		log.Fatalf("Cannot create DNS data dir at %s: %s", Context.getDataDir(), err)
 	}
@@ -358,7 +357,7 @@ func checkPermissions() {
 		// On Windows we need to have admin rights to run properly
 
 		admin, _ := util.HaveAdminRights()
-		if //noinspection ALL
+		if // noinspection ALL
 		admin || isdelve.Enabled {
 			// Don't forget that for this to work you need to add "delve" tag explicitly
 			// https://stackoverflow.com/questions/47879070/how-can-i-see-if-the-goland-debugger-is-running-in-the-program
@@ -404,7 +403,7 @@ Please note, that this is crucial for a DNS server to be able to use that port.`
 // Write PID to a file
 func writePIDFile(fn string) bool {
 	data := fmt.Sprintf("%d", os.Getpid())
-	err := ioutil.WriteFile(fn, []byte(data), 0644)
+	err := ioutil.WriteFile(fn, []byte(data), 0o644)
 	if err != nil {
 		log.Error("Couldn't write PID to file %s: %v", fn, err)
 		return false
@@ -487,7 +486,7 @@ func configureLogger(args options) {
 			logFilePath = ls.LogFile
 		}
 
-		_, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		_, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
 		if err != nil {
 			log.Fatalf("cannot create a log file: %s", err)
 		}
@@ -498,7 +497,7 @@ func configureLogger(args options) {
 			LocalTime:  ls.LogLocalTime,
 			MaxBackups: ls.LogMaxBackups,
 			MaxSize:    ls.LogMaxSize, // megabytes
-			MaxAge:     ls.LogMaxAge,  //days
+			MaxAge:     ls.LogMaxAge,  // days
 		})
 	}
 }
@@ -662,7 +661,7 @@ func customDialContext(ctx context.Context, network, addr string) (net.Conn, err
 		}
 		return con, err
 	}
-	return nil, errorx.DecorateMany(fmt.Sprintf("couldn't dial to %s", addr), dialErrs...)
+	return nil, agherr.Many(fmt.Sprintf("couldn't dial to %s", addr), dialErrs...)
 }
 
 func getHTTPProxy(req *http.Request) (*url.URL, error) {

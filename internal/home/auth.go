@@ -17,8 +17,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const cookieTTL = 365 * 24 // in hours
-const sessionCookieName = "agh_session"
+const (
+	cookieTTL         = 365 * 24 // in hours
+	sessionCookieName = "agh_session"
+)
 
 type session struct {
 	userName string
@@ -78,7 +80,7 @@ func InitAuth(dbFilename string, users []User, sessionTTL uint32) *Auth {
 	a.sessions = make(map[string]*session)
 	rand.Seed(time.Now().UTC().Unix())
 	var err error
-	a.db, err = bbolt.Open(dbFilename, 0644, nil)
+	a.db, err = bbolt.Open(dbFilename, 0o644, nil)
 	if err != nil {
 		log.Error("Auth: open DB: %s: %s", dbFilename, err)
 		if err.Error() == "invalid argument" {
@@ -318,7 +320,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	cookie := Context.auth.httpCookie(req)
 	if len(cookie) == 0 {
-		log.Info("Auth: invalid user name or password: name='%s'", req.Name)
+		log.Info("Auth: invalid user name or password: name=%q", req.Name)
 		time.Sleep(1 * time.Second)
 		http.Error(w, "invalid user name or password", http.StatusBadRequest)
 		return
@@ -372,7 +374,6 @@ func parseCookie(cookie string) string {
 // nolint(gocyclo)
 func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		if r.URL.Path == "/login.html" {
 			// redirect to dashboard if already authenticated
 			authRequired := Context.auth != nil && Context.auth.AuthRequired()
@@ -424,7 +425,6 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 				if r.URL.Path == "/" || r.URL.Path == "/index.html" {
 					if glProcessRedirect(w, r) {
 						log.Debug("Auth: redirected to login page by GL-Inet submodule")
-
 					} else {
 						w.Header().Set("Location", "/login.html")
 						w.WriteHeader(http.StatusFound)
