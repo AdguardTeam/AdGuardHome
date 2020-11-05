@@ -109,7 +109,7 @@ $(error DOCKER_IMAGE_NAME value is not set)
 endif
 
 # OS-specific flags
-TEST_FLAGS := -race
+TEST_FLAGS := --race -v
 ifeq ($(OS),Windows_NT)
 	TEST_FLAGS :=
 endif
@@ -166,7 +166,7 @@ test-js:
 	npm run test --prefix client
 
 test-go:
-	go test $(TEST_FLAGS) -v -coverprofile=coverage.txt -covermode=atomic ./...
+	go test $(TEST_FLAGS) --coverprofile coverage.txt ./...
 
 ci: client_with_deps
 	go mod download

@@ -1137,9 +1137,18 @@ components:
             type: object
             description: Filtering URL settings
             properties:
+                data:
+                    properties:
+                        enabled:
+                            type: boolean
+                        name:
+                            type: string
+                        url:
+                            type: string
+                    type: object
                 url:
                     type: string
-                enabled:
+                whitelist:
                     type: boolean
         FilterRefreshRequest:
             type: object
@@ -1466,6 +1475,8 @@ components:
                     description: URL or an absolute path to the file containing filtering rules
                     type: string
                     example: https://filters.adtidy.org/windows/filters/15.txt
+                whitelist:
+                    type: boolean
         RemoveUrlRequest:
             type: object
             description: /remove_url request data

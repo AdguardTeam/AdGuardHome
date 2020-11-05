@@ -26,10 +26,10 @@ func isValidURL(rawurl string) bool {
 
 	url, err := url.ParseRequestURI(rawurl)
 	if err != nil {
-		return false //Couldn't even parse the rawurl
+		return false // Couldn't even parse the rawurl
 	}
 	if len(url.Scheme) == 0 {
-		return false //No Scheme found
+		return false // No Scheme found
 	}
 	return true
 }
@@ -95,44 +95,57 @@ func (f *Filtering) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 }
 
 func (f *Filtering) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
-
 	type request struct {
 		URL       string `json:"url"`
 		Whitelist bool   `json:"whitelist"`
 	}
+
 	req := request{}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to parse request body json: %s", err)
+		httpError(w, http.StatusBadRequest, "failed to parse request body json: %s", err)
 		return
 	}
 
-	// go through each element and delete if url matches
 	config.Lock()
-	newFilters := []filter{}
 	filters := &config.Filters
 	if req.Whitelist {
 		filters = &config.WhitelistFilters
 	}
-	for _, filter := range *filters {
-		if filter.URL != req.URL {
-			newFilters = append(newFilters, filter)
-		} else {
-			err := os.Rename(filter.Path(), filter.Path()+".old")
-			if err != nil {
-				log.Error("os.Rename: %s: %s", filter.Path(), err)
-			}
+
+	var deleted filter
+	var newFilters []filter
+	for _, f := range *filters {
+		if f.URL != req.URL {
+			newFilters = append(newFilters, f)
+
+			continue
+		}
+
+		deleted = f
+		path := f.Path()
+		err = os.Rename(path, path+".old")
+		if err != nil {
+			log.Error("deleting filter %q: %s", path, err)
 		}
 	}
-	// Update the configuration after removing filter files
+
 	*filters = newFilters
 	config.Unlock()
 
 	onConfigModified()
 	enableFilters(true)
 
-	// Note: the old files "filter.txt.old" aren't deleted - it's not really necessary,
-	//  but will require the additional code to run after enableFilters() is finished: i.e. complicated
+	// NOTE: The old files "filter.txt.old" aren't deleted.  It's not really
+	// necessary, but will require the additional complicated code to run
+	// after enableFilters is done.
+	//
+	// TODO(a.garipov): Make sure the above comment is true.
+
+	_, err = fmt.Fprintf(w, "OK %d rules\n", deleted.RulesCount)
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "couldn't write body: %s", err)
+	}
 }
 
 type filterURLJSON struct {
