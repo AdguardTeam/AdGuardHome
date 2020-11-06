@@ -73,7 +73,6 @@ func hasStaticIPDhcpcdConf(dhcpConf, ifaceName string) bool {
 				// we found our interface
 				withinInterfaceCtx = true
 			}
-
 		} else {
 			if strings.HasPrefix(line, "interface ") {
 				// we found another interface - reset our state
@@ -240,7 +239,7 @@ func getNetworkSetupHardwareReports() map[string]string {
 		return nil
 	}
 
-	m := make(map[string]string, 0)
+	m := make(map[string]string)
 
 	matches := re.FindAllStringSubmatch(out, -1)
 	for i := range matches {

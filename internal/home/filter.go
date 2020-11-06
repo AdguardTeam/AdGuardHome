@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
-	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -548,8 +547,10 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 		total += n
 
 		if htmlTest {
-			// gather full buffer firstChunk and perform its data tests
-			num := util.MinInt(n, len(firstChunk)-firstChunkLen)
+			num := len(firstChunk) - firstChunkLen
+			if n < num {
+				num = n
+			}
 			copied := copy(firstChunk[firstChunkLen:], buf[:num])
 			firstChunkLen += copied
 
@@ -559,8 +560,7 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 				}
 
 				s := strings.ToLower(string(firstChunk))
-				if strings.Index(s, "<html") >= 0 ||
-					strings.Index(s, "<!doctype") >= 0 {
+				if strings.Contains(s, "<html") || strings.Contains(s, "<!doctype") {
 					return false, fmt.Errorf("data is HTML, not plain text")
 				}
 

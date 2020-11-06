@@ -10,26 +10,23 @@ import (
 	"strings"
 )
 
-// ContainsString checks if "v" is in the array "arr"
-func ContainsString(arr []string, v string) bool {
-	for _, i := range arr {
-		if i == v {
+// ContainsString checks if string is in the slice of strings.
+func ContainsString(strs []string, str string) bool {
+	for _, s := range strs {
+		if s == str {
 			return true
 		}
 	}
 	return false
 }
 
-// fileExists returns TRUE if file exists
+// FileExists returns true if file exists.
 func FileExists(fn string) bool {
 	_, err := os.Stat(fn)
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
-// runCommand runs shell command
+// RunCommand runs shell command.
 func RunCommand(command string, arguments ...string) (int, string, error) {
 	cmd := exec.Command(command, arguments...)
 	out, err := cmd.Output()
@@ -71,16 +68,8 @@ func SplitNext(str *string, splitBy byte) string {
 	return strings.TrimSpace(s)
 }
 
-// MinInt - return the minimum value
-func MinInt(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-// IsOpenWrt checks if OS is OpenWRT
-func IsOpenWrt() bool {
+// IsOpenWRT checks if OS is OpenWRT.
+func IsOpenWRT() bool {
 	if runtime.GOOS != "linux" {
 		return false
 	}
@@ -91,13 +80,4 @@ func IsOpenWrt() bool {
 	}
 
 	return strings.Contains(string(body), "OpenWrt")
-}
-
-// IsFreeBSD checks if OS is FreeBSD
-func IsFreeBSD() bool {
-	if runtime.GOOS == "freebsd" {
-		return true
-	}
-
-	return false
 }

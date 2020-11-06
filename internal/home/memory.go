@@ -32,13 +32,9 @@ func memoryUsage(args options) {
 	// that the OS could reclaim the free memory
 	go func() {
 		ticker := time.NewTicker(5 * time.Minute)
-		for {
-			select {
-			case t := <-ticker.C:
-				t.Second()
-				log.Debug("Free OS memory")
-				debug.FreeOSMemory()
-			}
+		for range ticker.C {
+			log.Debug("free os memory")
+			debug.FreeOSMemory()
 		}
 	}()
 }

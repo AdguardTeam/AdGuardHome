@@ -48,14 +48,12 @@ const (
 	ServerPort = 67
 )
 
-var (
-	// DefaultServers is the address of all link-local DHCP servers and
-	// relay agents.
-	DefaultServers = &net.UDPAddr{
-		IP:   net.IPv4bcast,
-		Port: ServerPort,
-	}
-)
+// DefaultServers is the address of all link-local DHCP servers and
+// relay agents.
+var DefaultServers = &net.UDPAddr{
+	IP:   net.IPv4bcast,
+	Port: ServerPort,
+}
 
 var (
 	// ErrNoResponse is returned when no response packet is received.
@@ -371,14 +369,6 @@ func WithUnicast(srcAddr *net.UDPAddr) ClientOpt {
 func WithHWAddr(hwAddr net.HardwareAddr) ClientOpt {
 	return func(c *Client) (err error) {
 		c.ifaceHWAddr = hwAddr
-		return
-	}
-}
-
-// nolint
-func withBufferCap(n int) ClientOpt {
-	return func(c *Client) (err error) {
-		c.bufferCap = n
 		return
 	}
 }

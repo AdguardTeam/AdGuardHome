@@ -96,7 +96,7 @@ func (c *homeContext) getDataDir() string {
 var Context homeContext
 
 // Main is the entry point
-func Main(version string, channel string, armVer string) {
+func Main(version, channel, armVer string) {
 	// Init update-related global variables
 	versionString = version
 	updateChannel = channel
@@ -616,11 +616,7 @@ func detectFirstRun() bool {
 		configfile = filepath.Join(Context.workDir, Context.configFilename)
 	}
 	_, err := os.Stat(configfile)
-	if !os.IsNotExist(err) {
-		// do nothing, file exists
-		return false
-	}
-	return true
+	return os.IsNotExist(err)
 }
 
 // Connect to a remote server resolving hostname using our own DNS server

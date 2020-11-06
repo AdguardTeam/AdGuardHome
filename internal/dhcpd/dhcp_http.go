@@ -302,17 +302,17 @@ func (s *Server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		errorText := fmt.Sprintf("failed to read request body: %s", err)
-		log.Error(errorText)
-		http.Error(w, errorText, http.StatusBadRequest)
+		msg := fmt.Sprintf("failed to read request body: %s", err)
+		log.Error(msg)
+		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 
 	interfaceName := strings.TrimSpace(string(body))
 	if interfaceName == "" {
-		errorText := fmt.Sprintf("empty interface name specified")
-		log.Error(errorText)
-		http.Error(w, errorText, http.StatusBadRequest)
+		msg := "empty interface name specified"
+		log.Error(msg)
+		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 
@@ -370,7 +370,6 @@ func (s *Server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 }
 
 func (s *Server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request) {
-
 	lj := staticLeaseJSON{}
 	err := json.NewDecoder(r.Body).Decode(&lj)
 	if err != nil {
@@ -424,7 +423,6 @@ func (s *Server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request
 }
 
 func (s *Server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Request) {
-
 	lj := staticLeaseJSON{}
 	err := json.NewDecoder(r.Body).Decode(&lj)
 	if err != nil {

@@ -131,7 +131,7 @@ func checkInterval(days uint32) bool {
 func (s *statsCtx) dbOpen() bool {
 	var err error
 	log.Tracef("db.Open...")
-	s.db, err = bolt.Open(s.conf.Filename, 0644, nil)
+	s.db, err = bolt.Open(s.conf.Filename, 0o644, nil)
 	if err != nil {
 		log.Error("Stats: open DB: %s: %s", s.conf.Filename, err)
 		if err.Error() == "invalid argument" {
@@ -274,10 +274,7 @@ func convertMapToArray(m map[string]uint64, max int) []countPair {
 		a = append(a, pair)
 	}
 	less := func(i, j int) bool {
-		if a[i].Count >= a[j].Count {
-			return true
-		}
-		return false
+		return a[j].Count < a[i].Count
 	}
 	sort.Slice(a, less)
 	if max > len(a) {
@@ -297,15 +294,17 @@ func convertArrayToMap(a []countPair) map[string]uint64 {
 func serialize(u *unit) *unitDB {
 	udb := unitDB{}
 	udb.NTotal = u.nTotal
-	for _, it := range u.nResult {
-		udb.NResult = append(udb.NResult, it)
-	}
+
+	udb.NResult = append(udb.NResult, u.nResult...)
+
 	if u.nTotal != 0 {
 		udb.TimeAvg = uint32(u.timeSum / u.nTotal)
 	}
+
 	udb.Domains = convertMapToArray(u.domains, maxDomains)
 	udb.BlockedDomains = convertMapToArray(u.blockedDomains, maxDomains)
 	udb.Clients = convertMapToArray(u.clients, maxClients)
+
 	return &udb
 }
 
@@ -499,7 +498,8 @@ func (s *statsCtx) loadUnits(limit uint32) ([]*unitDB, uint32) {
 	curID := s.unit.id
 	s.unitLock.Unlock()
 
-	units := []*unitDB{} //per-hour units
+	// Per-hour units.
+	units := []*unitDB{}
 	firstID := curID - limit + 1
 	for i := firstID; i != curID; i++ {
 		u := s.loadUnitFromDB(tx, i)

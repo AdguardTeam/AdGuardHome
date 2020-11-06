@@ -3,9 +3,6 @@ package dnsfilter
 import (
 	"fmt"
 	"net"
-	"os"
-	"path"
-	"runtime"
 	"testing"
 
 	"github.com/AdguardTeam/urlfilter/rules"
@@ -36,13 +33,6 @@ func purgeCaches() {
 	}
 }
 
-func _Func() string {
-	pc := make([]uintptr, 10) // at least 1 entry needed
-	runtime.Callers(2, pc)
-	f := runtime.FuncForPC(pc[0])
-	return path.Base(f.Name())
-}
-
 func NewForTest(c *Config, filters []Filter) *Dnsfilter {
 	setts = RequestFilteringSettings{}
 	setts.FilteringEnabled = true
@@ -71,7 +61,7 @@ func (d *Dnsfilter) checkMatch(t *testing.T, hostname string) {
 	}
 }
 
-func (d *Dnsfilter) checkMatchIP(t *testing.T, hostname string, ip string, qtype uint16) {
+func (d *Dnsfilter) checkMatchIP(t *testing.T, hostname, ip string, qtype uint16) {
 	t.Helper()
 	ret, err := d.CheckHost(hostname, qtype, &setts)
 	if err != nil {
@@ -107,7 +97,7 @@ func TestEtcHostsMatching(t *testing.T) {
 ::1 host2
 `,
 		addr, addr6)
-	filters := []Filter{Filter{
+	filters := []Filter{{
 		ID: 0, Data: []byte(text),
 	}}
 	d := NewForTest(nil, filters)
@@ -351,11 +341,15 @@ func TestParentalControl(t *testing.T) {
 
 // FILTERING
 
-var blockingRules = "||example.org^\n"
-var whitelistRules = "||example.org^\n@@||test.example.org\n"
-var importantRules = "@@||example.org^\n||test.example.org^$important\n"
-var regexRules = "/example\\.org/\n@@||test.example.org^\n"
-var maskRules = "test*.example.org^\nexam*.com\n"
+const nl = "\n"
+
+const (
+	blockingRules  = `||example.org^` + nl
+	whitelistRules = `||example.org^` + nl + `@@||test.example.org` + nl
+	importantRules = `@@||example.org^` + nl + `||test.example.org^$important` + nl
+	regexRules     = `/example\.org/` + nl + `@@||test.example.org^` + nl
+	maskRules      = `test*.example.org^` + nl + `exam*.com` + nl
+)
 
 var tests = []struct {
 	testname   string
@@ -406,7 +400,7 @@ var tests = []struct {
 func TestMatching(t *testing.T) {
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%s-%s", test.testname, test.hostname), func(t *testing.T) {
-			filters := []Filter{Filter{
+			filters := []Filter{{
 				ID: 0, Data: []byte(test.rules),
 			}}
 			d := NewForTest(nil, filters)
@@ -430,14 +424,14 @@ func TestWhitelist(t *testing.T) {
 	rules := `||host1^
 ||host2^
 `
-	filters := []Filter{Filter{
+	filters := []Filter{{
 		ID: 0, Data: []byte(rules),
 	}}
 
 	whiteRules := `||host1^
 ||host3^
 `
-	whiteFilters := []Filter{Filter{
+	whiteFilters := []Filter{{
 		ID: 0, Data: []byte(whiteRules),
 	}}
 	d := NewForTest(nil, filters)
@@ -455,7 +449,6 @@ func TestWhitelist(t *testing.T) {
 	assert.True(t, err == nil)
 	assert.True(t, ret.IsFiltered && ret.Reason == FilteredBlackList)
 	assert.True(t, ret.Rule == "||host2^")
-
 }
 
 // CLIENT SETTINGS
@@ -476,7 +469,7 @@ func applyClientSettings(setts *RequestFilteringSettings) {
 //  then apply per-client settings and check behaviour once again
 func TestClientSettings(t *testing.T) {
 	var r Result
-	filters := []Filter{Filter{
+	filters := []Filter{{
 		ID: 0, Data: []byte("||example.org^\n"),
 	}}
 	d := NewForTest(&Config{ParentalEnabled: true, SafeBrowsingEnabled: false}, filters)
@@ -530,13 +523,6 @@ func TestClientSettings(t *testing.T) {
 	// blocked by additional rules
 	r, _ = d.CheckHost("facebook.com", dns.TypeA, &setts)
 	assert.True(t, r.IsFiltered && r.Reason == FilteredBlockedService)
-}
-
-func prepareTestDir() string {
-	const dir = "./agh-test"
-	_ = os.RemoveAll(dir)
-	_ = os.MkdirAll(dir, 0755)
-	return dir
 }
 
 // BENCHMARKS

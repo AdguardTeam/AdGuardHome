@@ -199,7 +199,7 @@ func (d *Dnsfilter) WriteDiskConfig(c *Config) {
 // SetFilters - set new filters (synchronously or asynchronously)
 // When filters are set asynchronously, the old filters continue working until the new filters are ready.
 //  In this case the caller must ensure that the old filter files are intact.
-func (d *Dnsfilter) SetFilters(blockFilters []Filter, allowFilters []Filter, async bool) error {
+func (d *Dnsfilter) SetFilters(blockFilters, allowFilters []Filter, async bool) error {
 	if async {
 		params := filtersInitializerParams{
 			allowFilters: allowFilters,
@@ -481,13 +481,10 @@ func matchBlockedServicesRules(host string, svcs []ServiceEntry) Result {
 // Adding rule and matching against the rules
 //
 
-// Return TRUE if file exists
+// fileExists returns true if file exists.
 func fileExists(fn string) bool {
 	_, err := os.Stat(fn)
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 func createFilteringEngine(filters []Filter) (*filterlist.RuleStorage, *urlfilter.DNSEngine, error) {
@@ -508,7 +505,8 @@ func createFilteringEngine(filters []Filter) (*filterlist.RuleStorage, *urlfilte
 			}
 		} else if runtime.GOOS == "windows" {
 			// On Windows we don't pass a file to urlfilter because
-			//  it's difficult to update this file while it's being used.
+			// it's difficult to update this file while it's being
+			// used.
 			data, err := ioutil.ReadFile(f.FilePath)
 			if err != nil {
 				return nil, nil, fmt.Errorf("ioutil.ReadFile(): %s: %w", f.FilePath, err)
@@ -537,7 +535,7 @@ func createFilteringEngine(filters []Filter) (*filterlist.RuleStorage, *urlfilte
 	return rulesStorage, filteringEngine, nil
 }
 
-// Initialize urlfilter objects
+// Initialize urlfilter objects.
 func (d *Dnsfilter) initFiltering(allowFilters, blockFilters []Filter) error {
 	rulesStorage, filteringEngine, err := createFilteringEngine(blockFilters)
 	if err != nil {
@@ -563,7 +561,8 @@ func (d *Dnsfilter) initFiltering(allowFilters, blockFilters []Filter) error {
 	return nil
 }
 
-// matchHost is a low-level way to check only if hostname is filtered by rules, skipping expensive safebrowsing and parental lookups
+// matchHost is a low-level way to check only if hostname is filtered by rules,
+// skipping expensive safebrowsing and parental lookups.
 func (d *Dnsfilter) matchHost(host string, qtype uint16, setts RequestFilteringSettings) (Result, error) {
 	d.engineLock.RLock()
 	// Keep in mind that this lock must be held no just when calling Match()
@@ -664,19 +663,17 @@ func makeResult(rule rules.Rule, reason Reason) Result {
 	return res
 }
 
-// InitModule() - manually initialize blocked services map
+// InitModule manually initializes blocked services map.
 func InitModule() {
 	initBlockedServices()
 }
 
-// New creates properly initialized DNS Filter that is ready to be used
+// New creates properly initialized DNS Filter that is ready to be used.
 func New(c *Config, blockFilters []Filter) *Dnsfilter {
 	if c != nil {
 		cacheConf := cache.Config{
 			EnableLRU: true,
 		}
-
-		// initialize objects only once
 
 		if gctx.safebrowsingCache == nil {
 			cacheConf.MaxSize = c.SafeBrowsingCacheSize
@@ -747,7 +744,7 @@ func (d *Dnsfilter) Start() {
 // stats
 //
 
-// GetStats return dns filtering stats since startup
+// GetStats return dns filtering stats since startup.
 func (d *Dnsfilter) GetStats() Stats {
 	return gctx.stats
 }

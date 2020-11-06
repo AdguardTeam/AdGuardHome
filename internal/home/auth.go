@@ -27,14 +27,12 @@ type session struct {
 	expire   uint32 // expiration time (in seconds)
 }
 
-/*
-expire byte[4]
-name_len byte[2]
-name byte[]
-*/
 func (s *session) serialize() []byte {
-	var data []byte
-	data = make([]byte, 4+2+len(s.userName))
+	const (
+		expireLen = 4
+		nameLen   = 2
+	)
+	data := make([]byte, expireLen+nameLen+len(s.userName))
 	binary.BigEndian.PutUint32(data[0:4], s.expire)
 	binary.BigEndian.PutUint16(data[4:6], uint16(len(s.userName)))
 	copy(data[6:], []byte(s.userName))
@@ -474,7 +472,7 @@ func (a *Auth) UserAdd(u *User, password string) {
 }
 
 // UserFind - find a user
-func (a *Auth) UserFind(login string, password string) User {
+func (a *Auth) UserFind(login, password string) User {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 	for _, u := range a.users {

@@ -22,11 +22,13 @@ import (
 	"golang.org/x/net/publicsuffix"
 )
 
-const dnsTimeout = 3 * time.Second
-const defaultSafebrowsingServer = "https://dns-family.adguard.com/dns-query"
-const defaultParentalServer = "https://dns-family.adguard.com/dns-query"
-const sbTXTSuffix = "sb.dns.adguard.com."
-const pcTXTSuffix = "pc.dns.adguard.com."
+const (
+	dnsTimeout                = 3 * time.Second
+	defaultSafebrowsingServer = `https://dns-family.adguard.com/dns-query`
+	defaultParentalServer     = `https://dns-family.adguard.com/dns-query`
+	sbTXTSuffix               = `sb.dns.adguard.com.`
+	pcTXTSuffix               = `pc.dns.adguard.com.`
+)
 
 func (d *Dnsfilter) initSecurityServices() error {
 	var err error
@@ -60,7 +62,7 @@ expire byte[4]
 hash byte[32]
 ...
 */
-func (c *sbCtx) setCache(prefix []byte, hashes []byte) {
+func (c *sbCtx) setCache(prefix, hashes []byte) {
 	d := make([]byte, 4+len(hashes))
 	expire := uint(time.Now().Unix()) + c.cacheTime*60
 	binary.BigEndian.PutUint32(d[:4], uint32(expire))
@@ -158,16 +160,28 @@ func hostnameToHashes(host string) map[[32]byte]string {
 
 // convert hash array to string
 func (c *sbCtx) getQuestion() string {
-	q := ""
+	b := &strings.Builder{}
+	encoder := hex.NewEncoder(b)
+
 	for hash := range c.hashToHost {
-		q += fmt.Sprintf("%s.", hex.EncodeToString(hash[0:2]))
+		// Ignore errors, since strings.(*Buffer).Write never returns
+		// errors.
+		//
+		// TODO(e.burkov, a.garipov): Find out and document why exactly
+		// this slice.
+		_, _ = encoder.Write(hash[0:2])
+		_, _ = b.WriteRune('.')
 	}
+
 	if c.svc == "SafeBrowsing" {
-		q += sbTXTSuffix
-	} else {
-		q += pcTXTSuffix
+		// See comment above.
+		_, _ = b.WriteString(sbTXTSuffix)
+		return b.String()
 	}
-	return q
+
+	// See comment above.
+	_, _ = b.WriteString(pcTXTSuffix)
+	return b.String()
 }
 
 // Find the target hash in TXT response

@@ -305,7 +305,7 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func verifyCertChain(data *tlsConfigStatus, certChain string, serverName string) error {
+func verifyCertChain(data *tlsConfigStatus, certChain, serverName string) error {
 	log.Tracef("TLS: got certificate: %d bytes", len(certChain))
 
 	// now do a more extended validation
@@ -335,7 +335,7 @@ func verifyCertChain(data *tlsConfigStatus, certChain string, serverName string)
 	}
 
 	if len(parsedCerts) == 0 {
-		data.WarningValidation = fmt.Sprintf("You have specified an empty certificate")
+		data.WarningValidation = "You have specified an empty certificate"
 		return errors.New(data.WarningValidation)
 	}
 

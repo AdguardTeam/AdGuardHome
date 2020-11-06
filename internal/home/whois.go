@@ -116,7 +116,7 @@ func whoisParse(data string) map[string]string {
 }
 
 // Send request to a server and receive the response
-func (w *Whois) query(target string, serverAddr string) (string, error) {
+func (w *Whois) query(target, serverAddr string) (string, error) {
 	addr, _, _ := net.SplitHostPort(serverAddr)
 	if addr == "whois.arin.net" {
 		target = "n + " + target
@@ -224,8 +224,7 @@ func (w *Whois) Begin(ip string) {
 // Get IP address from channel; get WHOIS info; associate info with a client
 func (w *Whois) workerLoop() {
 	for {
-		var ip string
-		ip = <-w.ipChan
+		ip := <-w.ipChan
 
 		info := w.process(ip)
 		if len(info) == 0 {

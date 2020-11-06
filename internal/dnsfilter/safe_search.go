@@ -22,8 +22,7 @@ func (d *Dnsfilter) setCacheResult(cache cache.Cache, host string, res Result) i
 	var buf bytes.Buffer
 
 	expire := uint(time.Now().Unix()) + d.Config.CacheTime*60
-	var exp []byte
-	exp = make([]byte, 4)
+	exp := make([]byte, 4)
 	binary.BigEndian.PutUint32(exp, uint32(expire))
 	_, _ = buf.Write(exp)
 

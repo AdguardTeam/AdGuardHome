@@ -122,6 +122,13 @@ func newPacket(op dhcpv4.OpcodeType, xid dhcpv4.TransactionID) *dhcpv4.DHCPv4 {
 	return p
 }
 
+func withBufferCap(n int) ClientOpt {
+	return func(c *Client) (err error) {
+		c.bufferCap = n
+		return
+	}
+}
+
 func TestSendAndRead(t *testing.T) {
 	for _, tt := range []struct {
 		desc   string

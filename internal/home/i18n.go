@@ -58,9 +58,9 @@ func handleI18nCurrentLanguage(w http.ResponseWriter, r *http.Request) {
 	log.Printf("config.Language is %s", config.Language)
 	_, err := fmt.Fprintf(w, "%s\n", config.Language)
 	if err != nil {
-		errorText := fmt.Sprintf("Unable to write response json: %s", err)
-		log.Println(errorText)
-		http.Error(w, errorText, http.StatusInternalServerError)
+		msg := fmt.Sprintf("Unable to write response json: %s", err)
+		log.Println(msg)
+		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
 }
@@ -68,23 +68,23 @@ func handleI18nCurrentLanguage(w http.ResponseWriter, r *http.Request) {
 func handleI18nChangeLanguage(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		errorText := fmt.Sprintf("failed to read request body: %s", err)
-		log.Println(errorText)
-		http.Error(w, errorText, http.StatusBadRequest)
+		msg := fmt.Sprintf("failed to read request body: %s", err)
+		log.Println(msg)
+		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 
 	language := strings.TrimSpace(string(body))
 	if language == "" {
-		errorText := fmt.Sprintf("empty language specified")
-		log.Println(errorText)
-		http.Error(w, errorText, http.StatusBadRequest)
+		msg := "empty language specified"
+		log.Println(msg)
+		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 	if !isLanguageAllowed(language) {
-		errorText := fmt.Sprintf("unknown language specified: %s", language)
-		log.Println(errorText)
-		http.Error(w, errorText, http.StatusBadRequest)
+		msg := fmt.Sprintf("unknown language specified: %s", language)
+		log.Println(msg)
+		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 

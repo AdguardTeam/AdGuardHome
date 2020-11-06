@@ -116,8 +116,7 @@ func (r *RDNS) resolve(ip string) string {
 // Add the hostname:IP pair to "Clients" array
 func (r *RDNS) workerLoop() {
 	for {
-		var ip string
-		ip = <-r.ipChannel
+		ip := <-r.ipChannel
 
 		host := r.resolve(ip)
 		if len(host) == 0 {

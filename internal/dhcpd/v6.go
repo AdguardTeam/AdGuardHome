@@ -41,7 +41,7 @@ func (s *v6Server) WriteDiskConfig6(c *V6ServerConf) {
 
 // Return TRUE if IP address is within range [start..0xff]
 // nolint(staticcheck)
-func ip6InRange(start net.IP, ip net.IP) bool {
+func ip6InRange(start, ip net.IP) bool {
 	if len(start) != 16 {
 		return false
 	}
@@ -369,7 +369,7 @@ func (s *v6Server) commitLease(msg *dhcpv6.Message, lease *Lease) time.Duration 
 		//
 
 	case dhcpv6.MessageTypeConfirm:
-		lifetime = lease.Expiry.Sub(time.Now())
+		lifetime = time.Until(lease.Expiry)
 
 	case dhcpv6.MessageTypeRequest,
 		dhcpv6.MessageTypeRenew,
@@ -383,7 +383,7 @@ func (s *v6Server) commitLease(msg *dhcpv6.Message, lease *Lease) time.Duration 
 }
 
 // Find a lease associated with MAC and prepare response
-func (s *v6Server) process(msg *dhcpv6.Message, req dhcpv6.DHCPv6, resp dhcpv6.DHCPv6) bool {
+func (s *v6Server) process(msg *dhcpv6.Message, req, resp dhcpv6.DHCPv6) bool {
 	switch msg.Type() {
 	case dhcpv6.MessageTypeSolicit,
 		dhcpv6.MessageTypeRequest,

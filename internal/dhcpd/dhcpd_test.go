@@ -12,12 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func check(t *testing.T, result bool, msg string) {
-	if !result {
-		t.Fatal(msg)
-	}
-}
-
 func testNotify(flags uint32) {
 }
 

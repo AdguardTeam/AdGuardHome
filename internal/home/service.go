@@ -203,7 +203,7 @@ func handleServiceInstallCommand(s service.Service) {
 		log.Fatal(err)
 	}
 
-	if util.IsOpenWrt() {
+	if util.IsOpenWRT() {
 		// On OpenWrt it is important to run enable after the service installation
 		// Otherwise, the service won't start on the system startup
 		_, err := runInitdCommand("enable")
@@ -230,7 +230,7 @@ Click on the link below and follow the Installation Wizard steps to finish setup
 
 // handleServiceStatusCommand handles service "uninstall" command
 func handleServiceUninstallCommand(s service.Service) {
-	if util.IsOpenWrt() {
+	if util.IsOpenWRT() {
 		// On OpenWrt it is important to run disable command first
 		// as it will remove the symlink
 		_, err := runInitdCommand("disable")
@@ -272,14 +272,14 @@ func configureService(c *service.Config) {
 	// Redirect StdErr & StdOut to files.
 	c.Option["LogOutput"] = true
 
-	// Use modified service file templates
+	// Use modified service file templates.
 	c.Option["SystemdScript"] = systemdScript
 	c.Option["SysvScript"] = sysvScript
 
-	// On OpenWrt we're using a different type of sysvScript
-	if util.IsOpenWrt() {
+	// On OpenWrt we're using a different type of sysvScript.
+	if util.IsOpenWRT() {
 		c.Option["SysvScript"] = openWrtScript
-	} else if util.IsFreeBSD() {
+	} else if runtime.GOOS == "freebsd" {
 		c.Option["SysvScript"] = freeBSDScript
 	}
 }
@@ -502,6 +502,7 @@ status() {
     fi
 }
 `
+
 const freeBSDScript = `#!/bin/sh
 # PROVIDE: {{.Name}}
 # REQUIRE: networking

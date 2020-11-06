@@ -23,16 +23,16 @@ func TestSafeBrowsingHash(t *testing.T) {
 	assert.False(t, ok)
 
 	c := &sbCtx{
-		svc: "SafeBrowsing",
+		svc:        "SafeBrowsing",
+		hashToHost: hashes,
 	}
 
-	// test getQuestion()
-	c.hashToHost = hashes
 	q := c.getQuestion()
-	assert.True(t, strings.Index(q, "7a1b.") >= 0)
-	assert.True(t, strings.Index(q, "af5a.") >= 0)
-	assert.True(t, strings.Index(q, "eb11.") >= 0)
-	assert.True(t, strings.Index(q, "sb.dns.adguard.com.") > 0)
+
+	assert.True(t, strings.Contains(q, "7a1b."))
+	assert.True(t, strings.Contains(q, "af5a."))
+	assert.True(t, strings.Contains(q, "eb11."))
+	assert.True(t, strings.HasSuffix(q, "sb.dns.adguard.com."))
 }
 
 func TestSafeBrowsingCache(t *testing.T) {

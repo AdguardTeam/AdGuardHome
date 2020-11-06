@@ -59,7 +59,7 @@ func (a *AutoHosts) Init(hostsFn string) {
 		a.hostsFn = hostsFn
 	}
 
-	if IsOpenWrt() {
+	if IsOpenWRT() {
 		a.hostsDirs = append(a.hostsDirs, "/tmp/hosts") // OpenWRT: "/tmp/hosts/dhcp.cfg01411c"
 	}
 
@@ -106,8 +106,8 @@ func (a *AutoHosts) Close() {
 	}
 }
 
-// Process - get the list of IP addresses for the hostname
-// Return nil if not found
+// Process returns the list of IP addresses for the hostname or nil if nothing
+// found.
 func (a *AutoHosts) Process(host string, qtype uint16) []net.IP {
 	if qtype == dns.TypePTR {
 		return nil
@@ -115,11 +115,12 @@ func (a *AutoHosts) Process(host string, qtype uint16) []net.IP {
 
 	var ipsCopy []net.IP
 	a.lock.Lock()
-	ips, _ := a.table[host]
-	if len(ips) != 0 {
+
+	if ips, ok := a.table[host]; ok {
 		ipsCopy = make([]net.IP, len(ips))
 		copy(ipsCopy, ips)
 	}
+
 	a.lock.Unlock()
 
 	log.Debug("AutoHosts: answer: %s -> %v", host, ipsCopy)
@@ -256,18 +257,16 @@ func (a *AutoHosts) load(table map[string][]net.IP, tableRev map[string]string, 
 func (a *AutoHosts) watcherLoop() {
 	for {
 		select {
-
 		case event, ok := <-a.watcher.Events:
 			if !ok {
 				return
 			}
 
-			// skip duplicate events
 			repeat := true
 			for repeat {
 				select {
-				case _ = <-a.watcher.Events:
-					// skip this event
+				case <-a.watcher.Events:
+					// Skip this duplicating event
 				default:
 					repeat = false
 				}
@@ -292,18 +291,15 @@ func (a *AutoHosts) watcherLoop() {
 	}
 }
 
-// updateLoop - read static hosts from system files
+// updateLoop reads static hosts from system files.
 func (a *AutoHosts) updateLoop() {
-	for {
-		select {
-		case ok := <-a.updateChan:
-			if !ok {
-				log.Debug("Finished AutoHosts update loop")
-				return
-			}
-
-			a.updateHosts()
+	for ok := range a.updateChan {
+		if !ok {
+			log.Debug("Finished AutoHosts update loop")
+			return
 		}
+
+		a.updateHosts()
 	}
 }
 

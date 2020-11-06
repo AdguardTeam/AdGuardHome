@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func UIntArrayEquals(a []uint64, b []uint64) bool {
+func UIntArrayEquals(a, b []uint64) bool {
 	if len(a) != len(b) {
 		return false
 	}
@@ -83,8 +83,7 @@ func TestStats(t *testing.T) {
 }
 
 func TestLargeNumbers(t *testing.T) {
-	var hour int32
-	hour = 1
+	var hour int32 = 1
 	newID := func() uint32 {
 		// use "atomic" to make Go race detector happy
 		return uint32(atomic.LoadInt32(&hour))
@@ -144,6 +143,7 @@ func aggregateDataPerDay(firstID uint32) int {
 	}
 	return len(a)
 }
+
 func TestAggregateDataPerTimeUnit(t *testing.T) {
 	for i := 0; i != 25; i++ {
 		alen := aggregateDataPerDay(uint32(i))
