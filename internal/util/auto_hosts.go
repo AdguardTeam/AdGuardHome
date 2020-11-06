@@ -20,9 +20,14 @@ type onChangedT func()
 
 // AutoHosts - automatic DNS records
 type AutoHosts struct {
-	lock         sync.Mutex          // serialize access to table
-	table        map[string][]net.IP // 'hostname -> IP' table
-	tableReverse map[string]string   // "IP -> hostname" table for reverse lookup
+	// lock protects table and tableReverse.
+	lock sync.Mutex
+	// table is the host-to-IPs map.
+	table map[string][]net.IP
+	// tableReverse is the IP-to-hosts map.
+	//
+	// TODO(a.garipov): Make better use of newtypes.  Perhaps a custom map.
+	tableReverse map[string][]string
 
 	hostsFn    string            // path to the main hosts-file
 	hostsDirs  []string          // paths to OS-specific directories with hosts-files
@@ -127,40 +132,44 @@ func (a *AutoHosts) Process(host string, qtype uint16) []net.IP {
 	return ipsCopy
 }
 
-// ProcessReverse - process PTR request
-// Return "" if not found or an error occurred
-func (a *AutoHosts) ProcessReverse(addr string, qtype uint16) string {
+// ProcessReverse processes a PTR request.  It returns nil if nothing is found.
+func (a *AutoHosts) ProcessReverse(addr string, qtype uint16) (hosts []string) {
 	if qtype != dns.TypePTR {
-		return ""
+		return nil
 	}
 
 	ipReal := DNSUnreverseAddr(addr)
 	if ipReal == nil {
-		return "" // invalid IP in question
+		return nil
 	}
+
 	ipStr := ipReal.String()
 
 	a.lock.Lock()
-	host := a.tableReverse[ipStr]
-	a.lock.Unlock()
+	defer a.lock.Unlock()
 
-	if len(host) == 0 {
-		return "" // not found
+	hosts = a.tableReverse[ipStr]
+
+	if len(hosts) == 0 {
+		return nil // not found
 	}
 
-	log.Debug("AutoHosts: reverse-lookup: %s -> %s", addr, host)
-	return host
+	log.Debug("AutoHosts: reverse-lookup: %s -> %s", addr, hosts)
+
+	return hosts
 }
 
-// List - get "IP -> hostname" table.  Thread-safe.
-func (a *AutoHosts) List() map[string]string {
-	table := make(map[string]string)
+// List returns an IP-to-hostnames table.  It is safe for concurrent use.
+func (a *AutoHosts) List() (ipToHosts map[string][]string) {
 	a.lock.Lock()
+	defer a.lock.Unlock()
+
+	ipToHosts = make(map[string][]string, len(a.tableReverse))
 	for k, v := range a.tableReverse {
-		table[k] = v
+		ipToHosts[k] = v
 	}
-	a.lock.Unlock()
-	return table
+
+	return ipToHosts
 }
 
 // update table
@@ -187,19 +196,30 @@ func (a *AutoHosts) updateTable(table map[string][]net.IP, host string, ipAddr n
 	}
 }
 
-// update "reverse" table
-func (a *AutoHosts) updateTableRev(tableRev map[string]string, host string, ipAddr net.IP) {
+// updateTableRev updates the reverse address table.
+func (a *AutoHosts) updateTableRev(tableRev map[string][]string, newHost string, ipAddr net.IP) {
 	ipStr := ipAddr.String()
-	_, ok := tableRev[ipStr]
+	hosts, ok := tableRev[ipStr]
 	if !ok {
-		tableRev[ipStr] = host
-		log.Debug("AutoHosts: added reverse-address %s -> %s", ipStr, host)
+		tableRev[ipStr] = []string{newHost}
+		log.Debug("AutoHosts: added reverse-address %s -> %s", ipStr, newHost)
+
+		return
 	}
+
+	for _, host := range hosts {
+		if host == newHost {
+			return
+		}
+	}
+
+	tableRev[ipStr] = append(tableRev[ipStr], newHost)
+	log.Debug("AutoHosts: added reverse-address %s -> %s", ipStr, newHost)
 }
 
 // Read IP-hostname pairs from file
 // Multiple hostnames per line (per one IP) is supported.
-func (a *AutoHosts) load(table map[string][]net.IP, tableRev map[string]string, fn string) {
+func (a *AutoHosts) load(table map[string][]net.IP, tableRev map[string][]string, fn string) {
 	f, err := os.Open(fn)
 	if err != nil {
 		log.Error("AutoHosts: %s", err)
@@ -306,7 +326,7 @@ func (a *AutoHosts) updateLoop() {
 // updateHosts - loads system hosts
 func (a *AutoHosts) updateHosts() {
 	table := make(map[string][]net.IP)
-	tableRev := make(map[string]string)
+	tableRev := make(map[string][]string)
 
 	a.load(table, tableRev, a.hostsFn)
 

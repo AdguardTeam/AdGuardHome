@@ -606,22 +606,25 @@ func (clients *clientsContainer) rmHosts(source clientSource) int {
 	return n
 }
 
-// Fill clients array from system hosts-file
+// addFromHostsFile fills the clients hosts list from the system's hosts files.
 func (clients *clientsContainer) addFromHostsFile() {
 	hosts := clients.autoHosts.List()
 
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
+
 	_ = clients.rmHosts(ClientSourceHostsFile)
 
 	n := 0
-	for ip, name := range hosts {
-		ok, err := clients.addHost(ip, name, ClientSourceHostsFile)
-		if err != nil {
-			log.Debug("Clients: %s", err)
-		}
-		if ok {
-			n++
+	for ip, names := range hosts {
+		for _, name := range names {
+			ok, err := clients.addHost(ip, name, ClientSourceHostsFile)
+			if err != nil {
+				log.Debug("Clients: %s", err)
+			}
+			if ok {
+				n++
+			}
 		}
 	}
 

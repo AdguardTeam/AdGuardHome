@@ -15,7 +15,7 @@ import (
 func prepareTestDir() string {
 	const dir = "./agh-test"
 	_ = os.RemoveAll(dir)
-	_ = os.MkdirAll(dir, 0755)
+	_ = os.MkdirAll(dir, 0o755)
 	return dir
 }
 
@@ -50,17 +50,24 @@ func TestAutoHostsResolution(t *testing.T) {
 
 	// Test hosts file
 	table := ah.List()
-	name, ok := table["127.0.0.1"]
+	names, ok := table["127.0.0.1"]
 	assert.True(t, ok)
-	assert.Equal(t, "host", name)
+	assert.Equal(t, []string{"host", "localhost"}, names)
 
 	// Test PTR
 	a, _ := dns.ReverseAddr("127.0.0.1")
 	a = strings.TrimSuffix(a, ".")
-	assert.True(t, ah.ProcessReverse(a, dns.TypePTR) == "host")
+	hosts := ah.ProcessReverse(a, dns.TypePTR)
+	if assert.Len(t, hosts, 2) {
+		assert.Equal(t, hosts[0], "host")
+	}
+
 	a, _ = dns.ReverseAddr("::1")
 	a = strings.TrimSuffix(a, ".")
-	assert.True(t, ah.ProcessReverse(a, dns.TypePTR) == "localhost")
+	hosts = ah.ProcessReverse(a, dns.TypePTR)
+	if assert.Len(t, hosts, 1) {
+		assert.Equal(t, hosts[0], "localhost")
+	}
 }
 
 func TestAutoHostsFSNotify(t *testing.T) {
