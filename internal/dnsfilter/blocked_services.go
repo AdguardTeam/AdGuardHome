@@ -162,6 +162,11 @@ var serviceRulesArray = []svc{
 		"||tiktokv.com^",
 	}},
 	{"qq", []string{"||qq.com^", "||qqzaixian.com^"}},
+        {"ms_telemetry", []string{
+                "||settings-win.data.microsoft.com^",
+                "||checkappexec.microsoft.com^",
+                "||activity.microsoft.com^",
+        }},
 }
 
 // convert array to map

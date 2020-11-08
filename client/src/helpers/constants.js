@@ -283,6 +283,10 @@ export const SERVICES = [
         id: 'qq',
         name: 'QQ',
     },
+    {
+        id: 'ms_telemetry',
+        name: 'Microsoft Telemetry',
+    },
 ];
 
 export const SERVICES_ID_NAME_MAP = SERVICES.reduce((acc, { id, name }) => {
