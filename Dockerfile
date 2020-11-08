@@ -59,7 +59,6 @@ RUN apk --update --no-cache add \
     ca-certificates \
     libcap \
     libressl \
-    tzdata \
   && rm -rf /tmp/* /var/cache/apk/*
 
 COPY --from=builder --chown=nobody:nogroup /app/AdGuardHome /opt/adguardhome/AdGuardHome
