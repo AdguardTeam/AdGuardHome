@@ -135,22 +135,20 @@ jobs:
     needs: test
     steps:
       -
-        name: Set up Docker Buildx
-        uses: crazy-max/ghaction-docker-buildx@v1
-      -
         name: Checkout
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
       -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
         name: Docker Buildx (build)
         run: |
           make docker-multi-arch
-      -
-        name: Clear
-        if: always() && startsWith(github.ref, 'refs/tags/v')
-        run: |
-          rm -f ${HOME}/.docker/config.json
 
   notify:
     needs: [app, docker]
