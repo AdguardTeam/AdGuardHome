@@ -3,7 +3,7 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.14
 
 require (
-	github.com/AdguardTeam/dnsproxy v0.33.0
+	github.com/AdguardTeam/dnsproxy v0.33.1
 	github.com/AdguardTeam/golibs v0.4.2
 	github.com/AdguardTeam/urlfilter v0.12.3
 	github.com/NYTimes/gziphandler v1.1.1
@@ -12,6 +12,7 @@ require (
 	github.com/gobuffalo/packr v1.30.1
 	github.com/hugelgupf/socketpair v0.0.0-20190730060125-05d35a94e714
 	github.com/insomniacslk/dhcp v0.0.0-20200621044212-d74cd86ad5b8
+	github.com/joomcode/errorx v1.0.3 // indirect
 	github.com/kardianos/service v1.1.0
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7
 	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065
@@ -26,7 +27,7 @@ require (
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
 	golang.org/x/net v0.0.0-20201031054903-ff519b6c9102
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9 // indirect
-	golang.org/x/sys v0.0.0-20201101102859-da207088b7d1
+	golang.org/x/sys v0.0.0-20201107080550-4d91cf3a1aaf
 	golang.org/x/text v0.3.4 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
