@@ -537,24 +537,25 @@ func (s *v6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 	}
 }
 
-// Get IPv6 address list
-func getIfaceIPv6(iface net.Interface) []net.IP {
+// ifaceIPv6Addrs returns the interface's IPv6 addresses.
+func ifaceIPv6Addrs(iface *net.Interface) (ips []net.IP, err error) {
 	addrs, err := iface.Addrs()
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	var res []net.IP
 	for _, a := range addrs {
 		ipnet, ok := a.(*net.IPNet)
 		if !ok {
 			continue
 		}
-		if ipnet.IP.To4() == nil {
-			res = append(res, ipnet.IP)
+
+		if ip := ipnet.IP.To16(); ip != nil {
+			ips = append(ips, ip)
 		}
 	}
-	return res
+
+	return ips, nil
 }
 
 // initialize RA module
@@ -578,22 +579,39 @@ func (s *v6Server) initRA(iface *net.Interface) error {
 	return s.ra.Init()
 }
 
-// Start - start server
+// Start starts the IPv6 DHCP server.
 func (s *v6Server) Start() error {
 	if !s.conf.Enabled {
 		return nil
 	}
 
-	iface, err := net.InterfaceByName(s.conf.InterfaceName)
+	ifaceName := s.conf.InterfaceName
+	iface, err := net.InterfaceByName(ifaceName)
 	if err != nil {
-		return fmt.Errorf("couldn't find interface by name %s: %w", s.conf.InterfaceName, err)
+		return fmt.Errorf("dhcpv6: finding interface %s by name: %w", ifaceName, err)
 	}
 
-	s.conf.dnsIPAddrs = getIfaceIPv6(*iface)
-	if len(s.conf.dnsIPAddrs) == 0 {
-		log.Debug("DHCPv6: no IPv6 address for interface %s", iface.Name)
-		return nil
+	log.Debug("dhcpv4: starting...")
+
+	dnsIPAddrs, err := ifaceIPv6Addrs(iface)
+	if err != nil {
+		return fmt.Errorf("dhcpv6: getting ipv6 addrs for iface %s: %w", ifaceName, err)
 	}
+
+	switch len(dnsIPAddrs) {
+	case 0:
+		log.Debug("dhcpv6: no ipv6 address for interface %s", iface.Name)
+
+		return nil
+	case 1:
+		// See the comment in (*v4Server).Start.
+		log.Debug("dhcpv6: setting secondary dns ip to iself for interface %s", iface.Name)
+		dnsIPAddrs = append(dnsIPAddrs, dnsIPAddrs[0])
+	default:
+		// Go on.
+	}
+
+	s.conf.dnsIPAddrs = dnsIPAddrs
 
 	err = s.initRA(iface)
 	if err != nil {

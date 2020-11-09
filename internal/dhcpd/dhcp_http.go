@@ -335,7 +335,7 @@ func (s *Server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 	foundVal := "no"
 	if found4 {
 		foundVal = "yes"
-	} else if err != nil {
+	} else if err4 != nil {
 		foundVal = "error"
 		othSrv["error"] = err4.Error()
 	}

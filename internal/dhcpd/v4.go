@@ -36,7 +36,7 @@ func (s *v4Server) WriteDiskConfig6(c *V6ServerConf) {
 }
 
 // Return TRUE if IP address is within range [start..stop]
-func ip4InRange(start net.IP, stop net.IP, ip net.IP) bool {
+func ip4InRange(start, stop, ip net.IP) bool {
 	if len(start) != 4 || len(stop) != 4 {
 		return false
 	}
@@ -335,7 +335,7 @@ func (s *v4Server) commitLease(l *Lease) {
 }
 
 // Process Discover request and return lease
-func (s *v4Server) processDiscover(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) *Lease {
+func (s *v4Server) processDiscover(req, resp *dhcpv4.DHCPv4) *Lease {
 	mac := req.ClientHWAddr
 
 	s.leasesLock.Lock()
@@ -409,7 +409,7 @@ func (o *optFQDN) ToBytes() []byte {
 
 // Process Request request and return lease
 // Return false if we don't need to reply
-func (s *v4Server) processRequest(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) (*Lease, bool) {
+func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (*Lease, bool) {
 	var lease *Lease
 	mac := req.ClientHWAddr
 	hostname := req.Options.Get(dhcpv4.OptionHostName)
@@ -472,7 +472,7 @@ func (s *v4Server) processRequest(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) (*Lea
 // Return 1: OK
 // Return 0: error; reply with Nak
 // Return -1: error; don't reply
-func (s *v4Server) process(req *dhcpv4.DHCPv4, resp *dhcpv4.DHCPv4) int {
+func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
 	var lease *Lease
 
 	resp.UpdateOption(dhcpv4.OptServerIdentifier(s.conf.dnsIPAddrs[0]))
@@ -554,23 +554,64 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 	}
 }
 
-// Start - start server
+// ifaceIPv4Addrs returns the interface's IPv4 addresses.
+func ifaceIPv4Addrs(iface *net.Interface) (ips []net.IP, err error) {
+	addrs, err := iface.Addrs()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, a := range addrs {
+		ipnet, ok := a.(*net.IPNet)
+		if !ok {
+			continue
+		}
+
+		if ip := ipnet.IP.To4(); ip != nil {
+			ips = append(ips, ip)
+		}
+	}
+
+	return ips, nil
+}
+
+// Start starts the IPv4 DHCP server.
 func (s *v4Server) Start() error {
 	if !s.conf.Enabled {
 		return nil
 	}
 
-	iface, err := net.InterfaceByName(s.conf.InterfaceName)
+	ifaceName := s.conf.InterfaceName
+	iface, err := net.InterfaceByName(ifaceName)
 	if err != nil {
-		return fmt.Errorf("dhcpv4: Couldn't find interface by name %s: %w", s.conf.InterfaceName, err)
+		return fmt.Errorf("dhcpv4: finding interface %s by name: %w", ifaceName, err)
 	}
 
 	log.Debug("dhcpv4: starting...")
-	s.conf.dnsIPAddrs = getIfaceIPv4(*iface)
-	if len(s.conf.dnsIPAddrs) == 0 {
-		log.Debug("dhcpv4: no IPv6 address for interface %s", iface.Name)
-		return nil
+
+	dnsIPAddrs, err := ifaceIPv4Addrs(iface)
+	if err != nil {
+		return fmt.Errorf("dhcpv4: getting ipv4 addrs for iface %s: %w", ifaceName, err)
 	}
+
+	switch len(dnsIPAddrs) {
+	case 0:
+		log.Debug("dhcpv4: no ipv4 address for interface %s", iface.Name)
+
+		return nil
+	case 1:
+		// Some Android devices use 8.8.8.8 if there is no secondary DNS
+		// server.  Fix that by setting the secondary DNS address to our
+		// address as well.
+		//
+		// See https://github.com/AdguardTeam/AdGuardHome/issues/1708.
+		log.Debug("dhcpv4: setting secondary dns ip to iself for interface %s", iface.Name)
+		dnsIPAddrs = append(dnsIPAddrs, dnsIPAddrs[0])
+	default:
+		// Go on.
+	}
+
+	s.conf.dnsIPAddrs = dnsIPAddrs
 
 	laddr := &net.UDPAddr{
 		IP:   net.ParseIP("0.0.0.0"),
@@ -587,6 +628,7 @@ func (s *v4Server) Start() error {
 		err = s.srv.Serve()
 		log.Debug("dhcpv4: srv.Serve: %s", err)
 	}()
+
 	return nil
 }
 

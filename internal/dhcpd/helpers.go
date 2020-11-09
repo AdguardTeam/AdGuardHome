@@ -14,26 +14,6 @@ func isTimeout(err error) bool {
 	return operr.Timeout()
 }
 
-// Get IPv4 address list
-func getIfaceIPv4(iface net.Interface) []net.IP {
-	addrs, err := iface.Addrs()
-	if err != nil {
-		return nil
-	}
-
-	var res []net.IP
-	for _, a := range addrs {
-		ipnet, ok := a.(*net.IPNet)
-		if !ok {
-			continue
-		}
-		if ipnet.IP.To4() != nil {
-			res = append(res, ipnet.IP.To4())
-		}
-	}
-	return res
-}
-
 func parseIPv4(text string) (net.IP, error) {
 	result := net.ParseIP(text)
 	if result == nil {

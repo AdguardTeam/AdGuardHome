@@ -26,12 +26,16 @@ func CheckIfOtherDHCPServersPresentV4(ifaceName string) (bool, error) {
 		return false, fmt.Errorf("couldn't find interface by name %s: %w", ifaceName, err)
 	}
 
-	// get ipv4 address of an interface
-	ifaceIPNet := getIfaceIPv4(*iface)
+	ifaceIPNet, err := ifaceIPv4Addrs(iface)
+	if err != nil {
+		return false, fmt.Errorf("getting ipv4 addrs for iface %s: %w", ifaceName, err)
+	}
 	if len(ifaceIPNet) == 0 {
-		return false, fmt.Errorf("couldn't find IPv4 address of interface %s %+v", ifaceName, iface)
+		return false, fmt.Errorf("interface %s has no ipv4 addresses", ifaceName)
 	}
 
+	// TODO(a.garipov): Find out what this is about.  Perhaps this
+	// information is outdated or at least incomplete.
 	if runtime.GOOS == "darwin" {
 		return false, fmt.Errorf("can't find DHCP server: not supported on macOS")
 	}
@@ -82,44 +86,64 @@ func CheckIfOtherDHCPServersPresentV4(ifaceName string) (bool, error) {
 	}
 
 	for {
-		// wait for answer
-		log.Tracef("Waiting %v for an answer", defaultDiscoverTime)
-		// TODO: replicate dhclient's behaviour of retrying several times with progressively bigger timeouts
-		b := make([]byte, 1500)
-		_ = c.SetReadDeadline(time.Now().Add(defaultDiscoverTime))
-		n, _, err := c.ReadFrom(b)
-		if isTimeout(err) {
-			// timed out -- no DHCP servers
-			log.Debug("DHCPv4: didn't receive DHCP response")
-			return false, nil
-		}
-		if err != nil {
-			return false, fmt.Errorf("couldn't receive packet: %w", err)
-		}
-
-		log.Tracef("Received packet (%v bytes)", n)
-
-		response, err := dhcpv4.FromBytes(b[:n])
-		if err != nil {
-			log.Debug("DHCPv4: dhcpv4.FromBytes: %s", err)
+		ok, next, err := tryConn(req, c, iface)
+		if next {
 			continue
 		}
-
-		log.Debug("DHCPv4: received message from server: %s", response.Summary())
-
-		if !(response.OpCode == dhcpv4.OpcodeBootReply &&
-			response.HWType == iana.HWTypeEthernet &&
-			bytes.Equal(response.ClientHWAddr, iface.HardwareAddr) &&
-			bytes.Equal(response.TransactionID[:], req.TransactionID[:]) &&
-			response.Options.Has(dhcpv4.OptionDHCPMessageType)) {
-			log.Debug("DHCPv4: received message from server doesn't match our request")
-			continue
+		if ok {
+			return true, nil
 		}
-
-		log.Tracef("The packet is from an active DHCP server")
-		// that's a DHCP server there
-		return true, nil
+		if err != nil {
+			log.Debug("%s", err)
+		}
 	}
+}
+
+// TODO(a.garipov): Refactor further.  Inspect error handling, remove the next
+// parameter, address the TODO, etc.
+func tryConn(req *dhcpv4.DHCPv4, c net.PacketConn, iface *net.Interface) (ok, next bool, err error) {
+	// TODO: replicate dhclient's behavior of retrying several times with
+	// progressively longer timeouts.
+	log.Tracef("waiting %v for an answer", defaultDiscoverTime)
+
+	b := make([]byte, 1500)
+	_ = c.SetReadDeadline(time.Now().Add(defaultDiscoverTime))
+	n, _, err := c.ReadFrom(b)
+	if err != nil {
+		if isTimeout(err) {
+			log.Debug("dhcpv4: didn't receive dhcp response")
+
+			return false, false, nil
+		}
+
+		return false, false, fmt.Errorf("receiving packet: %w", err)
+	}
+
+	log.Tracef("received packet, %d bytes", n)
+
+	response, err := dhcpv4.FromBytes(b[:n])
+	if err != nil {
+		log.Debug("dhcpv4: encoding: %s", err)
+
+		return false, true, err
+	}
+
+	log.Debug("dhcpv4: received message from server: %s", response.Summary())
+
+	if !(response.OpCode == dhcpv4.OpcodeBootReply &&
+		response.HWType == iana.HWTypeEthernet &&
+		bytes.Equal(response.ClientHWAddr, iface.HardwareAddr) &&
+		bytes.Equal(response.TransactionID[:], req.TransactionID[:]) &&
+		response.Options.Has(dhcpv4.OptionDHCPMessageType)) {
+
+		log.Debug("dhcpv4: received message from server doesn't match our request")
+
+		return false, true, nil
+	}
+
+	log.Tracef("the packet is from an active dhcp server")
+
+	return true, false, nil
 }
 
 // CheckIfOtherDHCPServersPresentV6 sends a DHCP request to the specified network interface,
@@ -130,9 +154,12 @@ func CheckIfOtherDHCPServersPresentV6(ifaceName string) (bool, error) {
 		return false, fmt.Errorf("dhcpv6: net.InterfaceByName: %s: %w", ifaceName, err)
 	}
 
-	ifaceIPNet := getIfaceIPv6(*iface)
+	ifaceIPNet, err := ifaceIPv6Addrs(iface)
+	if err != nil {
+		return false, fmt.Errorf("getting ipv6 addrs for iface %s: %w", ifaceName, err)
+	}
 	if len(ifaceIPNet) == 0 {
-		return false, fmt.Errorf("dhcpv6: couldn't find IPv6 address of interface %s %+v", ifaceName, iface)
+		return false, fmt.Errorf("interface %s has no ipv6 addresses", ifaceName)
 	}
 
 	srcIP := ifaceIPNet[0]
