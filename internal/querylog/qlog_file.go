@@ -1,18 +1,21 @@
 package querylog
 
 import (
-	"errors"
 	"io"
 	"os"
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// ErrSeekNotFound is returned from the Seek method
-// if we failed to find the desired record
-var ErrSeekNotFound = errors.New("Seek not found the record")
+// ErrSeekNotFound is returned from Seek if when it fails to find the requested
+// record.
+const ErrSeekNotFound agherr.Error = "seek: record not found"
+
+// ErrEndOfLog is returned from Seek when the end of the current log is reached.
+const ErrEndOfLog agherr.Error = "seek: end of log"
 
 // TODO: Find a way to grow buffer instead of relying on this value when reading strings
 const maxEntrySize = 16 * 1024
@@ -39,8 +42,7 @@ type QLogFile struct {
 
 // NewQLogFile initializes a new instance of the QLogFile
 func NewQLogFile(path string) (*QLogFile, error) {
-	f, err := os.OpenFile(path, os.O_RDONLY, 0644)
-
+	f, err := os.OpenFile(path, os.O_RDONLY, 0o644)
 	if err != nil {
 		return nil, err
 	}
@@ -106,6 +108,8 @@ func (q *QLogFile) Seek(timestamp int64) (int64, int, error) {
 			// the scope is too narrow and we won't find anything anymore
 			log.Error("querylog: didn't find timestamp:%v", timestamp)
 			return 0, depth, ErrSeekNotFound
+		} else if lineIdx == end && lineEndIdx == end {
+			return 0, depth, ErrEndOfLog
 		}
 
 		// Save the last found idx
@@ -227,7 +231,7 @@ func (q *QLogFile) readNextLine(position int64) (string, int64, error) {
 
 	// Look for the end of the prev line
 	// This is where we'll read from
-	var startLine = int64(0)
+	startLine := int64(0)
 	for i := relativePos - 1; i >= 0; i-- {
 		if q.buffer[i] == '\n' {
 			startLine = i + 1
@@ -293,7 +297,7 @@ func (q *QLogFile) readProbeLine(position int64) (string, int64, int64, error) {
 
 	// Now start looking for the new line character starting
 	// from the relativePos and going left
-	var startLine = int64(0)
+	startLine := int64(0)
 	for i := relativePos - 1; i >= 0; i-- {
 		if buffer[i] == '\n' {
 			startLine = i + 1
@@ -301,7 +305,7 @@ func (q *QLogFile) readProbeLine(position int64) (string, int64, int64, error) {
 		}
 	}
 	// Looking for the end of line now
-	var endLine = int64(bufferLen)
+	endLine := int64(bufferLen)
 	lineEndIdx := endLine + seekPosition
 	for i := relativePos; i < int64(bufferLen); i++ {
 		if buffer[i] == '\n' {

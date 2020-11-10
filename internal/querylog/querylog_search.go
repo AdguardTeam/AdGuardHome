@@ -1,6 +1,7 @@
 package querylog
 
 import (
+	"errors"
 	"io"
 	"time"
 
@@ -45,6 +46,7 @@ func (l *queryLog) search(params *searchParams) ([]*logEntry, time.Time) {
 		// remove extra records
 		entries = entries[:totalLimit]
 	}
+
 	if params.offset > 0 {
 		if len(entries) > params.offset {
 			entries = entries[params.offset:]
@@ -53,11 +55,9 @@ func (l *queryLog) search(params *searchParams) ([]*logEntry, time.Time) {
 			oldest = time.Time{}
 		}
 	}
-	if len(entries) == totalLimit {
-		// change the "oldest" value here.
-		// we cannot use the "oldest" we got from "searchFiles" anymore
-		// because after adding in-memory records and removing extra records
-		// the situation has changed
+
+	if len(entries) > 0 && len(entries) <= totalLimit {
+		// Update oldest after merging in the memory buffer.
 		oldest = entries[len(entries)-1].Time
 	}
 
@@ -95,6 +95,9 @@ func (l *queryLog) searchFiles(params *searchParams) ([]*logEntry, time.Time, in
 			// The one that was specified in the "oldest" param is not needed,
 			// we need only the one next to it
 			_, err = r.ReadNext()
+		} else if errors.Is(err, ErrEndOfLog) {
+			// We've reached the end of the log.
+			return entries, time.Time{}, 0
 		}
 	}
 

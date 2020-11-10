@@ -7,6 +7,14 @@ import (
 	"strings"
 )
 
+// Error is the constant error type.
+type Error string
+
+// Error implements the error interface for Error.
+func (err Error) Error() (msg string) {
+	return string(err)
+}
+
 // manyError is an error containing several wrapped errors.  It is created to be
 // a simpler version of the API provided by github.com/joomcode/errorx.
 type manyError struct {

@@ -1,6 +1,7 @@
 package querylog
 
 import (
+	"errors"
 	"io"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
@@ -52,11 +53,14 @@ func (r *QLogReader) Seek(timestamp int64) error {
 	for i := len(r.qFiles) - 1; i >= 0; i-- {
 		q := r.qFiles[i]
 		_, _, err := q.Seek(timestamp)
-		if err == nil {
-			// Our search is finished, we found the element we were looking for
-			// Update currentFile only, position is already set properly in the QLogFile
+		if err == nil || errors.Is(err, ErrEndOfLog) {
+			// Our search is finished, and we either found the
+			// element we were looking for or reached the end of the
+			// log.  Update currentFile only, position is already
+			// set properly in QLogFile.
 			r.currentFile = i
-			return nil
+
+			return err
 		}
 	}
 
