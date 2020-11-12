@@ -430,7 +430,7 @@
     "setup_dns_privacy_other_3": "<0>dnscrypt-proxy</0> supporte le <1>DNS-over-HTTPS</1>.",
     "setup_dns_privacy_other_4": "<0>Mozilla Firefox</0> supporte le <1>DNS-over-HTTPS</1>.",
     "setup_dns_privacy_other_5": "Vous trouverez plus d'implémentations <0>ici</0> et <1>ici</1>.",
-    "setup_dns_notice": "Pour utiliser le <1>DNS-over-HTTPS</1> ou le <1>DNS-over-TLS</1>, vous devez <0>configurer le Cryptage</0> dans les paramètres de AdGuard Home.",
+    "setup_dns_notice": "Pour utiliser le <1>DNS-over-HTTPS</1> ou le <1>DNS-over-TLS</1>, vous devez <0>configurer le Chiffrement</0> dans les paramètres de AdGuard Home.",
     "rewrite_added": "Réécriture DNS pour \"{{key}}\" ajoutée",
     "rewrite_deleted": "Réécriture DNS pour \"{{key}}\" supprimée",
     "rewrite_add": "Ajouter une réécriture DNS",
