@@ -88,13 +88,17 @@ func CheckIfOtherDHCPServersPresentV4(ifaceName string) (bool, error) {
 	for {
 		ok, next, err := tryConn(req, c, iface)
 		if next {
+			if err != nil {
+				log.Debug("dhcpv4: trying a connection: %s", err)
+			}
+
 			continue
 		}
 		if ok {
 			return true, nil
 		}
 		if err != nil {
-			log.Debug("%s", err)
+			return false, err
 		}
 	}
 }
@@ -107,7 +111,11 @@ func tryConn(req *dhcpv4.DHCPv4, c net.PacketConn, iface *net.Interface) (ok, ne
 	log.Tracef("waiting %v for an answer", defaultDiscoverTime)
 
 	b := make([]byte, 1500)
-	_ = c.SetReadDeadline(time.Now().Add(defaultDiscoverTime))
+	err = c.SetDeadline(time.Now().Add(defaultDiscoverTime))
+	if err != nil {
+		return false, false, fmt.Errorf("setting deadline: %w", err)
+	}
+
 	n, _, err := c.ReadFrom(b)
 	if err != nil {
 		if isTimeout(err) {

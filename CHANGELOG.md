@@ -13,3 +13,7 @@ and this project adheres to
 
 - This changelog :-) (#2294).
 - `HACKING.md`, a guide for developers.
+
+### Fixed
+
+- Infinite loop in `/dhcp/find_active_dhcp` (#2301).
