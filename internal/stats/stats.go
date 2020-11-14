@@ -76,6 +76,25 @@ const (
 	rLast
 )
 
+func (r Result) String() string {
+	switch r {
+	case RNotFiltered:
+		return "not_filtered"
+	case RFiltered:
+		return "filtered"
+	case RSafeBrowsing:
+		return "safe_browsing"
+	case RSafeSearch:
+		return "safe_search"
+	case RParental:
+		return "parental"
+	case rLast:
+		return "last"
+	default:
+		return "unknown"
+	}
+}
+
 // Entry - data to add
 type Entry struct {
 	Domain string
