@@ -100,5 +100,5 @@ type Entry struct {
 	Domain string
 	Client net.IP
 	Result Result
-	Time   uint32 // processing time (msec)
+	Time   uint32 // processing time (usec)
 }
