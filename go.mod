@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/AdguardTeam/dnsproxy v0.33.2
-	github.com/AdguardTeam/golibs v0.4.2
+	github.com/AdguardTeam/golibs v0.4.3
 	github.com/AdguardTeam/urlfilter v0.12.3
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/beefsack/go-rate v0.0.0-20200827232406-6cde80facd47 // indirect

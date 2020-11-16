@@ -34,6 +34,10 @@ find out about how we **want** our code to look like.
  *  Document everything, including unexported top-level identifiers, to build
     a habit of writing documentation.
 
+ *  Don't put variable names into any kind of quotes.
+
+ *  Don't use naked `return`s.
+
  *  Don't use underscores in file and package names, unless they're build tags
     or for tests.  This is to prevent accidental build errors with weird tags.
 

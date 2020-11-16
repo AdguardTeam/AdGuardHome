@@ -756,11 +756,14 @@ func createTestServer(t *testing.T) *Server {
 	c.CacheTime = 30
 
 	f := dnsfilter.New(&c, filters)
+
 	s := NewServer(DNSCreateParams{DNSFilter: f})
 	s.conf.UDPListenAddr = &net.UDPAddr{Port: 0}
 	s.conf.TCPListenAddr = &net.TCPAddr{Port: 0}
 	s.conf.UpstreamDNS = []string{"8.8.8.8:53", "8.8.4.4:53"}
 	s.conf.FilteringConfig.ProtectionEnabled = true
+	s.conf.ConfigModified = func() {}
+
 	err := s.Prepare(nil)
 	assert.True(t, err == nil)
 	return s
