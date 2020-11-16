@@ -65,8 +65,13 @@ const Dhcp = () => {
 
     useEffect(() => {
         dispatch(getDhcpStatus());
-        dispatch(getDhcpInterfaces());
     }, []);
+
+    useEffect(() => {
+        if (dhcp_available) {
+            dispatch(getDhcpInterfaces());
+        }
+    }, [dhcp_available]);
 
     useEffect(() => {
         const [ipv4] = interfaces?.[interface_name]?.ipv4_addresses ?? [];

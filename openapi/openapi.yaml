@@ -339,6 +339,12 @@ paths:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/DhcpStatus"
+                "501":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+                    description: Not implemented (for example, on Windows).
     /dhcp/set_config:
         post:
             tags:
@@ -353,6 +359,12 @@ paths:
             responses:
                 "200":
                     description: OK
+                "501":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+                    description: Not implemented (for example, on Windows).
     /dhcp/find_active_dhcp:
         post:
             tags:
@@ -366,6 +378,12 @@ paths:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/DhcpSearchResult"
+                "501":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+                    description: Not implemented (for example, on Windows).
     /dhcp/add_static_lease:
         post:
             tags:
@@ -377,6 +395,12 @@ paths:
             responses:
                 "200":
                     description: OK
+                "501":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+                    description: Not implemented (for example, on Windows).
     /dhcp/remove_static_lease:
         post:
             tags:
@@ -388,6 +412,12 @@ paths:
             responses:
                 "200":
                     description: OK
+                "501":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+                    description: Not implemented (for example, on Windows).
     /dhcp/reset:
         post:
             tags:
@@ -397,6 +427,12 @@ paths:
             responses:
                 "200":
                     description: OK
+                "501":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+                    description: Not implemented (for example, on Windows).
     /filtering/status:
         get:
             tags:
@@ -1976,3 +2012,10 @@ components:
                 password:
                     type: string
                     description: Password
+        Error:
+            description: A generic JSON error response.
+            properties:
+                message:
+                    type: string
+                    description: The error message, an opaque string.
+            type: object

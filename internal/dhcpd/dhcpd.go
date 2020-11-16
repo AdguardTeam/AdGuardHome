@@ -1,3 +1,4 @@
+// Package dhcpd provides a DHCP server.
 package dhcpd
 
 import (
@@ -5,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -13,8 +15,10 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
-const defaultDiscoverTime = time.Second * 3
-const leaseExpireStatic = 1
+const (
+	defaultDiscoverTime = time.Second * 3
+	leaseExpireStatic   = 1
+)
 
 var webHandlersRegistered = false
 
@@ -82,7 +86,8 @@ func (s *Server) CheckConfig(config ServerConfig) error {
 
 // Create - create object
 func Create(config ServerConfig) *Server {
-	s := Server{}
+	s := &Server{}
+
 	s.conf.Enabled = config.Enabled
 	s.conf.InterfaceName = config.InterfaceName
 	s.conf.HTTPRegister = config.HTTPRegister
@@ -90,8 +95,21 @@ func Create(config ServerConfig) *Server {
 	s.conf.DBFilePath = filepath.Join(config.WorkDir, dbFilename)
 
 	if !webHandlersRegistered && s.conf.HTTPRegister != nil {
+		if runtime.GOOS == "windows" {
+			// Our DHCP server doesn't work on Windows yet, so
+			// signal that to the front with an HTTP 501.
+			//
+			// TODO(a.garipov): This needs refactoring.  We
+			// shouldn't even try and initialize a DHCP server on
+			// Windows, but there are currently too many
+			// interconnected parts--such as HTTP handlers and
+			// frontend--to make that work properly.
+			s.registerNotImplementedHandlers()
+		} else {
+			s.registerHandlers()
+		}
+
 		webHandlersRegistered = true
-		s.registerHandlers()
 	}
 
 	var err4, err6 error
@@ -130,7 +148,7 @@ func Create(config ServerConfig) *Server {
 	// we can't delay database loading until DHCP server is started,
 	//  because we need static leases functionality available beforehand
 	s.dbLoad()
-	return &s
+	return s
 }
 
 // server calls this function after DB is updated

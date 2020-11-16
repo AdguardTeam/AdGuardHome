@@ -20,18 +20,16 @@ import (
 	"syscall"
 	"time"
 
-	"gopkg.in/natefinch/lumberjack.v2"
-
 	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
-	"github.com/AdguardTeam/AdGuardHome/internal/update"
-	"github.com/AdguardTeam/AdGuardHome/internal/util"
-
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
+	"github.com/AdguardTeam/AdGuardHome/internal/update"
+	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/golibs/log"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 const (
@@ -216,12 +214,12 @@ func run(args options) {
 	config.DHCP.WorkDir = Context.workDir
 	config.DHCP.HTTPRegister = httpRegister
 	config.DHCP.ConfigModified = onConfigModified
-	if runtime.GOOS != "windows" {
-		Context.dhcpServer = dhcpd.Create(config.DHCP)
-		if Context.dhcpServer == nil {
-			log.Fatalf("Can't initialize DHCP module")
-		}
+
+	Context.dhcpServer = dhcpd.Create(config.DHCP)
+	if Context.dhcpServer == nil {
+		log.Fatalf("can't initialize dhcp module")
 	}
+
 	Context.autoHosts.Init("")
 
 	Context.updater = update.NewUpdater(update.Config{

@@ -1,3 +1,7 @@
+// Package util contains various utilities.
+//
+// TODO(a.garipov): Such packages are widely considered an antipattern.  Remove
+// this when we refactor our project structure.
 package util
 
 import (

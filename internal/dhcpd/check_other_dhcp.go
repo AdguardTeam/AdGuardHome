@@ -86,7 +86,7 @@ func CheckIfOtherDHCPServersPresentV4(ifaceName string) (bool, error) {
 	}
 
 	for {
-		ok, next, err := tryConn(req, c, iface)
+		ok, next, err := tryConn4(req, c, iface)
 		if next {
 			if err != nil {
 				log.Debug("dhcpv4: trying a connection: %s", err)
@@ -103,12 +103,12 @@ func CheckIfOtherDHCPServersPresentV4(ifaceName string) (bool, error) {
 	}
 }
 
-// TODO(a.garipov): Refactor further.  Inspect error handling, remove the next
-// parameter, address the TODO, etc.
-func tryConn(req *dhcpv4.DHCPv4, c net.PacketConn, iface *net.Interface) (ok, next bool, err error) {
+// TODO(a.garipov): Refactor further.  Inspect error handling, remove parameter
+// next, address the TODO, merge with tryConn6, etc.
+func tryConn4(req *dhcpv4.DHCPv4, c net.PacketConn, iface *net.Interface) (ok, next bool, err error) {
 	// TODO: replicate dhclient's behavior of retrying several times with
 	// progressively longer timeouts.
-	log.Tracef("waiting %v for an answer", defaultDiscoverTime)
+	log.Tracef("dhcpv4: waiting %v for an answer", defaultDiscoverTime)
 
 	b := make([]byte, 1500)
 	err = c.SetDeadline(time.Now().Add(defaultDiscoverTime))
@@ -127,7 +127,7 @@ func tryConn(req *dhcpv4.DHCPv4, c net.PacketConn, iface *net.Interface) (ok, ne
 		return false, false, fmt.Errorf("receiving packet: %w", err)
 	}
 
-	log.Tracef("received packet, %d bytes", n)
+	log.Tracef("dhcpv4: received packet, %d bytes", n)
 
 	response, err := dhcpv4.FromBytes(b[:n])
 	if err != nil {
@@ -149,7 +149,7 @@ func tryConn(req *dhcpv4.DHCPv4, c net.PacketConn, iface *net.Interface) (ok, ne
 		return false, true, nil
 	}
 
-	log.Tracef("the packet is from an active dhcp server")
+	log.Tracef("dhcpv4: the packet is from an active dhcp server")
 
 	return true, false, nil
 }
@@ -208,43 +208,77 @@ func CheckIfOtherDHCPServersPresentV6(ifaceName string) (bool, error) {
 	}
 
 	for {
-		log.Debug("DHCPv6: Waiting %v for an answer", defaultDiscoverTime)
-		b := make([]byte, 4096)
-		_ = c.SetReadDeadline(time.Now().Add(defaultDiscoverTime))
-		n, _, err := c.ReadFrom(b)
-		if isTimeout(err) {
-			log.Debug("DHCPv6: didn't receive DHCP response")
-			return false, nil
-		}
-		if err != nil {
-			return false, fmt.Errorf("couldn't receive packet: %w", err)
-		}
+		ok, next, err := tryConn6(req, c)
+		if next {
+			if err != nil {
+				log.Debug("dhcpv6: trying a connection: %s", err)
+			}
 
-		log.Debug("DHCPv6: Received packet (%v bytes)", n)
-
-		resp, err := dhcpv6.FromBytes(b[:n])
-		if err != nil {
-			log.Debug("DHCPv6: dhcpv6.FromBytes: %s", err)
 			continue
 		}
-
-		log.Debug("DHCPv6: received message from server: %s", resp.Summary())
-
-		cid := req.Options.ClientID()
-		msg, err := resp.GetInnerMessage()
-		if err != nil {
-			log.Debug("DHCPv6: resp.GetInnerMessage: %s", err)
-			continue
-		}
-		rcid := msg.Options.ClientID()
-		if resp.Type() == dhcpv6.MessageTypeAdvertise &&
-			msg.TransactionID == req.TransactionID &&
-			rcid != nil &&
-			cid.Equal(*rcid) {
-			log.Debug("DHCPv6: The packet is from an active DHCP server")
+		if ok {
 			return true, nil
 		}
-
-		log.Debug("DHCPv6: received message from server doesn't match our request")
+		if err != nil {
+			return false, err
+		}
 	}
+}
+
+// TODO(a.garipov): See the comment on tryConn4.  Sigh…
+func tryConn6(req *dhcpv6.Message, c net.PacketConn) (ok, next bool, err error) {
+	// TODO: replicate dhclient's behavior of retrying several times with
+	// progressively longer timeouts.
+	log.Tracef("dhcpv6: waiting %v for an answer", defaultDiscoverTime)
+
+	b := make([]byte, 4096)
+	err = c.SetDeadline(time.Now().Add(defaultDiscoverTime))
+	if err != nil {
+		return false, false, fmt.Errorf("setting deadline: %w", err)
+	}
+
+	n, _, err := c.ReadFrom(b)
+	if err != nil {
+		if isTimeout(err) {
+			log.Debug("dhcpv6: didn't receive dhcp response")
+
+			return false, false, nil
+		}
+
+		return false, false, fmt.Errorf("receiving packet: %w", err)
+	}
+
+	log.Tracef("dhcpv6: received packet, %d bytes", n)
+
+	response, err := dhcpv6.FromBytes(b[:n])
+	if err != nil {
+		log.Debug("dhcpv6: encoding: %s", err)
+
+		return false, true, err
+	}
+
+	log.Debug("dhcpv6: received message from server: %s", response.Summary())
+
+	cid := req.Options.ClientID()
+	msg, err := response.GetInnerMessage()
+	if err != nil {
+		log.Debug("dhcpv6: resp.GetInnerMessage(): %s", err)
+
+		return false, true, err
+	}
+
+	rcid := msg.Options.ClientID()
+	if !(response.Type() == dhcpv6.MessageTypeAdvertise &&
+		msg.TransactionID == req.TransactionID &&
+		rcid != nil &&
+		cid.Equal(*rcid)) {
+
+		log.Debug("dhcpv6: received message from server doesn't match our request")
+
+		return false, true, nil
+	}
+
+	log.Tracef("dhcpv6: the packet is from an active dhcp server")
+
+	return true, false, nil
 }

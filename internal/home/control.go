@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -46,6 +47,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 	if Context.dnsServer != nil {
 		Context.dnsServer.WriteDiskConfig(&c)
 	}
+
 	data := map[string]interface{}{
 		"dns_addresses": getDNSAddresses(),
 		"http_port":     config.BindPort,
@@ -56,7 +58,17 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 
 		"protection_enabled": c.ProtectionEnabled,
 	}
-	data["dhcp_available"] = (Context.dhcpServer != nil)
+
+	if runtime.GOOS == "windows" {
+		// Set the DHCP to false explicitly, because Context.dhcpServer
+		// is probably not nil, despite the fact that there is no
+		// support for DHCP on Windows in AdGuardHome.
+		//
+		// See also the TODO in dhcpd.Create.
+		data["dhcp_available"] = false
+	} else {
+		data["dhcp_available"] = (Context.dhcpServer != nil)
+	}
 
 	jsonVal, err := json.Marshal(data)
 	if err != nil {

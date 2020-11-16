@@ -17,7 +17,8 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// Check if network interface has a static IP configured
+// HasStaticIP check if the network interface has a static IP configured
+//
 // Supports: Raspbian.
 func HasStaticIP(ifaceName string) (bool, error) {
 	if runtime.GOOS == "linux" {
@@ -36,7 +37,7 @@ func HasStaticIP(ifaceName string) (bool, error) {
 	return false, fmt.Errorf("cannot check if IP is static: not supported on %s", runtime.GOOS)
 }
 
-// Set a static IP for the specified network interface
+// SetStaticIP sets a static IP for the network interface.
 func SetStaticIP(ifaceName string) error {
 	if runtime.GOOS == "linux" {
 		return setStaticIPDhcpdConf(ifaceName)

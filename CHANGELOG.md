@@ -20,4 +20,6 @@ and this project adheres to
 
 ### Fixed
 
+- `404 Not Found` errors on the DHCP settings page on *Windows*.  The page now
+  correctly shows that DHCP is not currently available on that OS (#2295).
 - Infinite loop in `/dhcp/find_active_dhcp` (#2301).
