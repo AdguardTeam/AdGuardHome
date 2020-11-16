@@ -8,9 +8,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/testutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestMain(m *testing.M) {
+	testutil.DiscardLogOutput(m)
+}
 
 func prepareTestDir() string {
 	const dir = "./agh-test"

@@ -5,10 +5,15 @@ import (
 	"net"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/testutil"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestMain(m *testing.M) {
+	testutil.DiscardLogOutput(m)
+}
 
 var setts RequestFilteringSettings
 
@@ -290,7 +295,6 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 		t.Fatalf("Failed to lookup for %s", safeDomain)
 	}
 
-	t.Logf("IP addresses: %v", ips)
 	ip := ips[0]
 	for _, i := range ips {
 		if i.To4() != nil {

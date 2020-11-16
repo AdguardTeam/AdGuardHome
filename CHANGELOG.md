@@ -14,6 +14,10 @@ and this project adheres to
 - This changelog :-) (#2294).
 - `HACKING.md`, a guide for developers.
 
+### Changed
+
+- Improved tests output (#2273).
+
 ### Fixed
 
 - Infinite loop in `/dhcp/find_active_dhcp` (#2301).

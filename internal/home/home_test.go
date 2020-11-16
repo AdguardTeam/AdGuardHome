@@ -1,5 +1,7 @@
 // +build !race
 
+// TODO(e.burkov): remove this weird buildtag.
+
 package home
 
 import (

@@ -9,8 +9,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/testutil"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestMain(m *testing.M) {
+	testutil.DiscardLogOutput(m)
+}
 
 func prepareTestDir() string {
 	const dir = "./agh-test"
@@ -85,9 +90,11 @@ type testResponseWriter struct {
 func (w *testResponseWriter) Header() http.Header {
 	return w.hdr
 }
+
 func (w *testResponseWriter) Write([]byte) (int, error) {
 	return 0, nil
 }
+
 func (w *testResponseWriter) WriteHeader(statusCode int) {
 	w.statusCode = statusCode
 }

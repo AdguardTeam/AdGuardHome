@@ -18,6 +18,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/testutil"
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
@@ -27,6 +28,10 @@ import (
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestMain(m *testing.M) {
+	testutil.DiscardLogOutput(m)
+}
 
 const (
 	tlsServerName     = "testdns.adguard.com"

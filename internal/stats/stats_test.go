@@ -7,8 +7,13 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/testutil"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestMain(m *testing.M) {
+	testutil.DiscardLogOutput(m)
+}
 
 func UIntArrayEquals(a, b []uint64) bool {
 	if len(a) != len(b) {

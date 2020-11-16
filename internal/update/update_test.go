@@ -8,8 +8,13 @@ import (
 	"os"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/testutil"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestMain(m *testing.M) {
+	testutil.DiscardLogOutput(m)
+}
 
 func startHTTPServer(data string) (net.Listener, uint16) {
 	mux := http.NewServeMux()
