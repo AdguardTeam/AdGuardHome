@@ -51,9 +51,10 @@ export const toggleClientBlockSuccess = createAction('TOGGLE_CLIENT_BLOCK_SUCCES
 export const toggleClientBlock = (ip, disallowed, disallowed_rule) => async (dispatch) => {
     dispatch(toggleClientBlockRequest());
     try {
-        const {
-            allowed_clients, blocked_hosts, disallowed_clients = [],
-        } = await apiClient.getAccessList();
+        const accessList = await apiClient.getAccessList();
+        const allowed_clients = accessList.allowed_clients ?? [];
+        const blocked_hosts = accessList.blocked_hosts ?? [];
+        const disallowed_clients = accessList.disallowed_clients ?? [];
 
         const updatedDisallowedClients = disallowed
             ? disallowed_clients.filter((client) => client !== disallowed_rule)
