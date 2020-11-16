@@ -80,7 +80,6 @@
 .card-body-stats {
     position: relative;
     flex: 1 1 auto;
-    height: calc(100% - 3rem);
     margin: 0;
     padding: 1rem 1.5rem;
 }

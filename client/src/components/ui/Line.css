@@ -1,9 +1,16 @@
 .line__tooltip {
     padding: 2px 10px 7px;
     line-height: 1.1;
-    color: #fff;
+    color: var(--white);
+    background-color: var(--gray-3);
+    border-radius: 4px;
+    opacity: 90%;
 }
 
 .line__tooltip-text {
     font-size: 0.7rem;
+}
+
+.card-chart-bg path[d^="M0,32"] {
+    transform: translateY(32px);
 }

@@ -1,56 +1,75 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { ResponsiveLine } from '@nivo/line';
-
+import addDays from 'date-fns/add_days';
+import addHours from 'date-fns/add_hours';
+import subDays from 'date-fns/sub_days';
+import subHours from 'date-fns/sub_hours';
+import dateFormat from 'date-fns/format';
+import round from 'lodash/round';
+import { useSelector } from 'react-redux';
+import PropTypes from 'prop-types';
 import './Line.css';
 
-const Line = ({ data, color }) => data
-    && <ResponsiveLine
+const Line = ({
+    data, color = 'black',
+}) => {
+    const interval = useSelector((state) => state.stats.interval);
+
+    return <ResponsiveLine
+        enableArea
+        animate
+        enableSlices="x"
+        curve="linear"
+        colors={[color]}
         data={data}
-        margin={{
-            top: data[0].data.every(({ y }) => y === 0) ? 62 : 15,
-            right: 0,
-            bottom: 1,
-            left: 20,
-        }}
-        minY="auto"
-        stacked={false}
-        curve='linear'
-        axisBottom={null}
-        axisLeft={null}
-        enableGridX={false}
-        enableGridY={false}
-        enableDots={false}
-        enableArea={true}
-        animate={false}
-        colorBy={() => (color)}
-        tooltip={(slice) => (
-            <div>
-                {slice.data.map((d) => (
-                    <div key={d.serie.id} className="line__tooltip">
-                            <span className="line__tooltip-text">
-                                <strong>{d.data.y}</strong>
-                                <br />
-                                <small>{d.data.x}</small>
-                            </span>
-                    </div>
-                ))}
-            </div>
-        )}
         theme={{
-            tooltip: {
-                container: {
-                    padding: '0',
-                    background: '#333',
-                    borderRadius: '4px',
+            crosshair: {
+                line: {
+                    stroke: 'black',
+                    strokeWidth: 1,
+                    strokeOpacity: 0.35,
                 },
             },
         }}
+        xScale={{
+            type: 'linear',
+            min: 0,
+            max: 'auto',
+        }}
+        crosshairType="x"
+        axisLeft={false}
+        axisBottom={false}
+        enableGridX={false}
+        enableGridY={false}
+        enablePoints={false}
+        xFormat={(x) => {
+            if (interval === 1 || interval === 7) {
+                const hoursAgo = subHours(Date.now(), 24 * interval);
+                return dateFormat(addHours(hoursAgo, x), 'D MMM HH:00');
+            }
+
+            const daysAgo = subDays(Date.now(), interval - 1);
+            return dateFormat(addDays(daysAgo, x), 'D MMM YYYY');
+        }}
+        yFormat={(y) => round(y, 2)}
+        sliceTooltip={(slice) => {
+            const { xFormatted, yFormatted } = slice.slice.points[0].data;
+            return <div className="line__tooltip">
+                <span className="line__tooltip-text">
+                    <strong>{yFormatted}</strong>
+                    <br />
+                    <small>{xFormatted}</small>
+                </span>
+            </div>;
+        }}
     />;
+};
 
 Line.propTypes = {
     data: PropTypes.array.isRequired,
-    color: PropTypes.string.isRequired,
+    color: PropTypes.string,
+    width: PropTypes.number,
+    height: PropTypes.number,
 };
 
 export default Line;

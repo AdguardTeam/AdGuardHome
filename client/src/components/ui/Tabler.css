@@ -13452,10 +13452,8 @@ a.icon:hover {
 
 .card-chart-bg {
     height: 4rem;
-    margin-top: -1rem;
     position: relative;
     z-index: 1;
-    overflow: hidden;
 }
 
 .card-options {

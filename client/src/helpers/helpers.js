@@ -1,10 +1,6 @@
 import 'url-polyfill';
 import dateParse from 'date-fns/parse';
 import dateFormat from 'date-fns/format';
-import subHours from 'date-fns/sub_hours';
-import addHours from 'date-fns/add_hours';
-import addDays from 'date-fns/add_days';
-import subDays from 'date-fns/sub_days';
 import round from 'lodash/round';
 import axios from 'axios';
 import i18n from 'i18next';
@@ -105,21 +101,10 @@ export const normalizeLogs = (logs) => logs.map((log) => {
     };
 });
 
-export const normalizeHistory = (history, interval) => {
-    if (interval === 1 || interval === 7) {
-        const hoursAgo = subHours(Date.now(), 24 * interval);
-        return history.map((item, index) => ({
-            x: dateFormat(addHours(hoursAgo, index), 'D MMM HH:00'),
-            y: round(item, 2),
-        }));
-    }
-
-    const daysAgo = subDays(Date.now(), interval - 1);
-    return history.map((item, index) => ({
-        x: dateFormat(addDays(daysAgo, index), 'D MMM YYYY'),
-        y: round(item, 2),
-    }));
-};
+export const normalizeHistory = (history) => history.map((item, idx) => ({
+    x: idx,
+    y: item,
+}));
 
 export const normalizeTopStats = (stats) => (
     stats.map((item) => ({

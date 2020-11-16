@@ -13,7 +13,7 @@
         "test:watch": "jest --watch"
     },
     "dependencies": {
-        "@nivo/line": "^0.49.1",
+        "@nivo/line": "^0.64.0",
         "axios": "^0.19.2",
         "classnames": "^2.2.6",
         "date-fns": "^1.29.0",
