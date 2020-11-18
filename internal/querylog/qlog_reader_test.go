@@ -1,6 +1,7 @@
 package querylog
 
 import (
+	"errors"
 	"io"
 	"os"
 	"testing"
@@ -90,6 +91,116 @@ func TestQLogReaderMultipleFiles(t *testing.T) {
 	assert.Equal(t, io.EOF, err)
 }
 
+func TestQLogReader_Seek(t *testing.T) {
+	count := 10000
+	filesCount := 2
+
+	testDir := prepareTestDir()
+	t.Cleanup(func() {
+		_ = os.RemoveAll(testDir)
+	})
+	testFiles := prepareTestFiles(testDir, filesCount, count)
+
+	r, err := NewQLogReader(testFiles)
+	assert.Nil(t, err)
+	assert.NotNil(t, r)
+	t.Cleanup(func() {
+		_ = r.Close()
+	})
+
+	testCases := []struct {
+		name string
+		time string
+		want error
+	}{{
+		name: "not_too_old",
+		time: "2020-02-19T04:04:56.920973+03:00",
+		want: nil,
+	}, {
+		name: "old",
+		time: "2020-02-19T01:28:16.920973+03:00",
+		want: nil,
+	}, {
+		name: "first",
+		time: "2020-02-19T04:09:55.920973+03:00",
+		want: nil,
+	}, {
+		name: "last",
+		time: "2020-02-19T01:23:16.920973+03:00",
+		want: nil,
+	}, {
+		name: "non-existent_long_ago",
+		time: "2000-02-19T01:23:16.920973+03:00",
+		want: ErrSeekNotFound,
+	}, {
+		name: "non-existent_far_ahead",
+		time: "2100-02-19T01:23:16.920973+03:00",
+		want: ErrEndOfLog,
+	}, {
+		name: "non-existent_but_could",
+		time: "2020-02-19T03:00:00.000000+03:00",
+		want: ErrSeekNotFound,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			timestamp, err := time.Parse(time.RFC3339Nano, tc.time)
+			assert.Nil(t, err)
+
+			err = r.Seek(timestamp.UnixNano())
+			assert.True(t, errors.Is(err, tc.want), err)
+		})
+	}
+}
+
+func TestQLogReader_ReadNext(t *testing.T) {
+	count := 10
+	filesCount := 1
+
+	testDir := prepareTestDir()
+	t.Cleanup(func() {
+		_ = os.RemoveAll(testDir)
+	})
+	testFiles := prepareTestFiles(testDir, filesCount, count)
+
+	r, err := NewQLogReader(testFiles)
+	assert.Nil(t, err)
+	assert.NotNil(t, r)
+	t.Cleanup(func() {
+		_ = r.Close()
+	})
+
+	testCases := []struct {
+		name  string
+		start int
+		want  error
+	}{{
+		name:  "ok",
+		start: 0,
+		want:  nil,
+	}, {
+		name:  "too_big",
+		start: count + 1,
+		want:  io.EOF,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := r.SeekStart()
+			assert.Nil(t, err, err)
+
+			for i := 1; i < tc.start; i++ {
+				_, err := r.ReadNext()
+				assert.Nil(t, err)
+			}
+
+			_, err = r.ReadNext()
+			assert.Equal(t, tc.want, err)
+		})
+	}
+}
+
+// TODO(e.burkov): Remove the tests below.  Make tests above more compelling.
 func TestQLogReaderSeek(t *testing.T) {
 	// more or less big file
 	count := 10000

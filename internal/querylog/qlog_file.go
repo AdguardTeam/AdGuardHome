@@ -1,6 +1,7 @@
 package querylog
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"sync"
@@ -102,13 +103,14 @@ func (q *QLogFile) Seek(timestamp int64) (int64, int, error) {
 		if err != nil {
 			return 0, depth, err
 		}
-
 		if lineIdx < start || lineEndIdx > end || lineIdx == lastProbeLineIdx {
 			// If we're testing the same line twice then most likely
-			// the scope is too narrow and we won't find anything anymore
-			log.Error("querylog: didn't find timestamp:%v", timestamp)
-			return 0, depth, ErrSeekNotFound
+			// the scope is too narrow and we won't find anything
+			// anymore in any other file.
+			return 0, depth, fmt.Errorf("couldn't find timestamp %v: %w", timestamp, ErrSeekNotFound)
 		} else if lineIdx == end && lineEndIdx == end {
+			// If both line beginning and line ending indices point
+			// at the end of the file, we apparently reached it.
 			return 0, depth, ErrEndOfLog
 		}
 
@@ -119,7 +121,7 @@ func (q *QLogFile) Seek(timestamp int64) (int64, int, error) {
 		ts := readQLogTimestamp(line)
 
 		if ts == 0 {
-			return 0, depth, ErrSeekNotFound
+			return 0, depth, fmt.Errorf("couldn't get timestamp: %w", ErrSeekNotFound)
 		}
 
 		if ts == timestamp {
@@ -141,8 +143,7 @@ func (q *QLogFile) Seek(timestamp int64) (int64, int, error) {
 
 		depth++
 		if depth >= 100 {
-			log.Error("Seek depth is too high, aborting. File %s, ts %v", q.file.Name(), timestamp)
-			return 0, depth, ErrSeekNotFound
+			return 0, depth, fmt.Errorf("seek depth is too high, aborting. File %s, timestamp %v: %w", q.file.Name(), timestamp, ErrSeekNotFound)
 		}
 	}
 
