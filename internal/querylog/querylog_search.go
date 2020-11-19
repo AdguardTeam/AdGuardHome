@@ -1,7 +1,6 @@
 package querylog
 
 import (
-	"errors"
 	"io"
 	"time"
 
@@ -95,9 +94,6 @@ func (l *queryLog) searchFiles(params *searchParams) ([]*logEntry, time.Time, in
 			// The one that was specified in the "oldest" param is not needed,
 			// we need only the one next to it
 			_, err = r.ReadNext()
-		} else if errors.Is(err, ErrEndOfLog) {
-			// We've reached the end of the log.
-			return entries, time.Time{}, 0
 		}
 	}
 

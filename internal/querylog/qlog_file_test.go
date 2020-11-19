@@ -243,10 +243,10 @@ func prepareTestFiles(dir string, filesCount, linesCount int) []string {
 	lineTime, _ := time.Parse(time.RFC3339Nano, "2020-02-18T22:36:35.920973+03:00")
 	lineIP := uint32(0)
 
-	files := make([]string, 0)
+	files := make([]string, filesCount)
 	for j := 0; j < filesCount; j++ {
 		f, _ := ioutil.TempFile(dir, "*.txt")
-		files = append(files, f.Name())
+		files[filesCount-j-1] = f.Name()
 
 		for i := 0; i < linesCount; i++ {
 			lineIP += 1
@@ -289,7 +289,7 @@ func TestQLogSeek(t *testing.T) {
 	assert.Equal(t, 1, depth)
 }
 
-func TestQLogSeek_ErrEndOfLog(t *testing.T) {
+func TestQLogSeek_ErrTSTooLate(t *testing.T) {
 	testDir := prepareTestDir()
 	t.Cleanup(func() {
 		_ = os.RemoveAll(testDir)
@@ -314,6 +314,35 @@ func TestQLogSeek_ErrEndOfLog(t *testing.T) {
 	assert.Nil(t, err)
 
 	_, depth, err := q.Seek(target.UnixNano() + int64(time.Second))
-	assert.Equal(t, ErrEndOfLog, err)
+	assert.Equal(t, ErrTSTooLate, err)
 	assert.Equal(t, 2, depth)
+}
+
+func TestQLogSeek_ErrTSTooEarly(t *testing.T) {
+	testDir := prepareTestDir()
+	t.Cleanup(func() {
+		_ = os.RemoveAll(testDir)
+	})
+
+	d := `{"T":"2020-08-31T18:44:23.911246629+03:00","QH":"wfqvjymurpwegyv","QT":"A","QC":"IN","CP":"","Answer":"","Result":{},"Elapsed":66286385,"Upstream":"tls://dns-unfiltered.adguard.com:853"}
+{"T":"2020-08-31T18:44:25.376690873+03:00"}
+{"T":"2020-08-31T18:44:25.382540454+03:00"}
+`
+	f, err := ioutil.TempFile(testDir, "*.txt")
+	assert.Nil(t, err)
+	defer f.Close()
+
+	_, err = f.WriteString(d)
+	assert.Nil(t, err)
+
+	q, err := NewQLogFile(f.Name())
+	assert.Nil(t, err)
+	defer q.Close()
+
+	target, err := time.Parse(time.RFC3339, "2020-08-31T18:44:23.911246629+03:00")
+	assert.Nil(t, err)
+
+	_, depth, err := q.Seek(target.UnixNano() - int64(time.Second))
+	assert.Equal(t, ErrTSTooEarly, err)
+	assert.Equal(t, 1, depth)
 }

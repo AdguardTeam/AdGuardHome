@@ -20,6 +20,8 @@ and this project adheres to
 
 ### Fixed
 
+- Query logs from file not loading after the ones buffered in memory (#2325).
+- Unnecessary errors in query logs when switching between log files (#2324).
 - `404 Not Found` errors on the DHCP settings page on *Windows*.  The page now
   correctly shows that DHCP is not currently available on that OS (#2295).
 - Infinite loop in `/dhcp/find_active_dhcp` (#2301).

@@ -131,15 +131,15 @@ func TestQLogReader_Seek(t *testing.T) {
 	}, {
 		name: "non-existent_long_ago",
 		time: "2000-02-19T01:23:16.920973+03:00",
-		want: ErrSeekNotFound,
+		want: ErrTSTooEarly,
 	}, {
 		name: "non-existent_far_ahead",
 		time: "2100-02-19T01:23:16.920973+03:00",
-		want: ErrEndOfLog,
+		want: nil,
 	}, {
 		name: "non-existent_but_could",
-		time: "2020-02-19T03:00:00.000000+03:00",
-		want: ErrSeekNotFound,
+		time: "2020-02-18T22:36:37.000000+03:00",
+		want: ErrTSNotFound,
 	}}
 
 	for _, tc := range testCases {
