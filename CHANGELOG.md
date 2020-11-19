@@ -9,6 +9,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v0.104.2] - 2020-11-19
+
 ### Added
 
 - This changelog :-) (#2294).
@@ -25,3 +27,6 @@ and this project adheres to
 - `404 Not Found` errors on the DHCP settings page on *Windows*.  The page now
   correctly shows that DHCP is not currently available on that OS (#2295).
 - Infinite loop in `/dhcp/find_active_dhcp` (#2301).
+
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.104.2...HEAD
+[v0.104.2]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.104.1...v0.104.2
