@@ -33,6 +33,7 @@ BASE_URL="https://static.adguard.com/adguardhome/$(CHANNEL)"
 GPG_KEY := devteam@adguard.com
 GPG_KEY_PASSPHRASE :=
 GPG_CMD := gpg --detach-sig --default-key $(GPG_KEY) --pinentry-mode loopback --passphrase $(GPG_KEY_PASSPHRASE)
+VERBOSE := -v
 
 # See release target
 DIST_DIR=dist
@@ -109,7 +110,7 @@ $(error DOCKER_IMAGE_NAME value is not set)
 endif
 
 # OS-specific flags
-TEST_FLAGS := --race -v
+TEST_FLAGS := --race $(VERBOSE)
 ifeq ($(OS),Windows_NT)
 	TEST_FLAGS :=
 endif
@@ -177,20 +178,11 @@ dependencies:
 	go mod download
 
 clean:
-	# make build output
-	rm -f AdGuardHome
-	rm -f AdGuardHome.exe
-	# tests output
-	rm -rf data
-	rm -f coverage.txt
-	# static build output
-	rm -rf build
-	# dist folder
-	rm -rf $(DIST_DIR)
-	# client deps
-	rm -rf client/node_modules
-	# packr-generated files
-	PATH=$(GOPATH)/bin:$(PATH) packr clean || true
+	rm -f ./AdGuardHome ./AdGuardHome.exe ./coverage.txt
+	rm -f -r ./build/ ./client/node_modules/ ./data/ $(DIST_DIR)
+# Set the GOPATH explicitly in case make clean is called from under sudo
+# after a Docker build.
+	env PATH="$(GOPATH)/bin:$$PATH" packr clean
 
 docker-multi-arch:
 	DOCKER_CLI_EXPERIMENTAL=enabled \

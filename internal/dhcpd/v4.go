@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/go-ping/ping"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
-	"github.com/sparrc/go-ping"
 )
 
 // v4Server - DHCPv4 server
@@ -244,6 +244,7 @@ func (s *v4Server) addrAvailable(target net.IP) bool {
 	pinger, err := ping.NewPinger(target.String())
 	if err != nil {
 		log.Error("ping.NewPinger(): %v", err)
+
 		return true
 	}
 
@@ -255,7 +256,12 @@ func (s *v4Server) addrAvailable(target net.IP) bool {
 		reply = true
 	}
 	log.Debug("dhcpv4: Sending ICMP Echo to %v", target)
-	pinger.Run()
+
+	err = pinger.Run()
+	if err != nil {
+		log.Error("pinger.Run(): %v", err)
+		return true
+	}
 
 	if reply {
 		log.Info("dhcpv4: IP conflict: %v is already used by another device", target)
