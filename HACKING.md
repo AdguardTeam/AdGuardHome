@@ -1,8 +1,10 @@
  #  AdGuardHome Developer Guidelines
 
-As of **2020-11-12**, this document is still a work-in-progress.  Some of the
+As of **2020-11-20**, this document is still a work-in-progress.  Some of the
 rules aren't enforced, and others might change.  Still, this is a good place to
 find out about how we **want** our code to look like.
+
+The rules are mostly sorted in the alphabetical order.
 
 ##  Git
 
@@ -13,11 +15,14 @@ find out about how we **want** our code to look like.
     ```
 
     Where `pkg` is the package where most changes took place.  If there are
-    several such packages, just write `all`.
+    several such packages, or the change is top-level only, write `all`.
 
- *  Keep your commit messages to be no wider than eighty (**80**) columns.
+ *  Keep your commit messages, including headers, to eighty (**80**) columns.
 
- *  Only use lowercase letters in your commit message headers.
+ *  Only use lowercase letters in your commit message headers.  The rest of the
+    message should follow the plain text conventions below.
+
+    The only exception are direct mentions of identifiers from the source code.
 
 ##  Go
 
@@ -98,7 +103,19 @@ find out about how we **want** our code to look like.
 [constant errors]: https://dave.cheney.net/2016/04/07/constant-errors
 [Linus said]:      https://www.kernel.org/doc/html/v4.17/process/coding-style.html#indentation
 
+##  Markdown
+
+ *  **TODO(a.garipov):** Define our Markdown conventions.
+
 ##  Text, Including Comments
+
+ *  End sentences with appropriate punctuation.
+
+ *  Headers should be written with all initial letters capitalized, except for
+    references to variable names that start with a lowercase letter.
+
+ *  Start sentences with a capital letter, unless the first word is a reference
+    to a variable name that starts with a lowercase letter.
 
  *  Text should wrap at eighty (**80**) columns to be more readable, to use
     a common standard, and to allow editing or diffing side-by-side without
@@ -126,17 +143,17 @@ find out about how we **want** our code to look like.
     // TODO(usr1, usr2): Fix the frobulation issue.
     ```
 
-##  Markdown
-
- *  **TODO(a.garipov):** Define our Markdown conventions.
-
 ##  YAML
+
+ *  **TODO(a.garipov):** Define naming conventions for schema names in our
+    OpenAPI YAML file.  And just generally OpenAPI conventions.
 
  *  **TODO(a.garipov):** Find a YAML formatter or write our own.
 
  *  All strings, including keys, must be quoted.  Reason: the [NO-rway Law].
 
- *  Indent with two (**2**) spaces.
+ *  Indent with two (**2**) spaces.  YAML documents can get pretty
+    deeply-nested.
 
  *  No extra indentation in multiline arrays:
 
@@ -147,7 +164,10 @@ find out about how we **want** our code to look like.
     - 'value-3'
     ```
 
- *  Prefer single quotes for string to prevent accidental escaping, unless
-    escaping is required.
+ *  Prefer single quotes for strings to prevent accidental escaping, unless
+    escaping is required or there are single quotes inside the string (e.g. for
+    *GitHub Actions*).
+
+ *  Use `>` for multiline strings, unless you need to keep the line breaks.
 
 [NO-rway Law]: https://news.ycombinator.com/item?id=17359376
