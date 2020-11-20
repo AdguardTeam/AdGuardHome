@@ -1,12 +1,14 @@
 package home
 
 import (
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"math/rand"
+	"math"
+	"math/big"
 	"net/http"
 	"strings"
 	"sync"
@@ -76,7 +78,6 @@ func InitAuth(dbFilename string, users []User, sessionTTL uint32) *Auth {
 	a := Auth{}
 	a.sessionTTL = sessionTTL
 	a.sessions = make(map[string]*session)
-	rand.Seed(time.Now().UTC().Unix())
 	var err error
 	a.db, err = bbolt.Open(dbFilename, 0o644, nil)
 	if err != nil {
@@ -275,23 +276,28 @@ type loginJSON struct {
 	Password string `json:"password"`
 }
 
-func getSession(u *User) []byte {
-	// the developers don't currently believe that using a
-	// non-cryptographic RNG for the session hash salt is
-	// insecure
-	salt := rand.Uint32() //nolint:gosec
-	d := []byte(fmt.Sprintf("%d%s%s", salt, u.Name, u.PasswordHash))
-	hash := sha256.Sum256(d)
-	return hash[:]
-}
-
-func (a *Auth) httpCookie(req loginJSON) string {
-	u := a.UserFind(req.Name, req.Password)
-	if len(u.Name) == 0 {
-		return ""
+func getSession(u *User) ([]byte, error) {
+	maxSalt := big.NewInt(math.MaxUint32)
+	salt, err := rand.Int(rand.Reader, maxSalt)
+	if err != nil {
+		return nil, err
 	}
 
-	sess := getSession(&u)
+	d := []byte(fmt.Sprintf("%s%s%s", salt, u.Name, u.PasswordHash))
+	hash := sha256.Sum256(d)
+	return hash[:], nil
+}
+
+func (a *Auth) httpCookie(req loginJSON) (string, error) {
+	u := a.UserFind(req.Name, req.Password)
+	if len(u.Name) == 0 {
+		return "", nil
+	}
+
+	sess, err := getSession(&u)
+	if err != nil {
+		return "", err
+	}
 
 	now := time.Now().UTC()
 	expire := now.Add(cookieTTL * time.Hour)
@@ -305,7 +311,7 @@ func (a *Auth) httpCookie(req loginJSON) string {
 	a.addSession(sess, &s)
 
 	return fmt.Sprintf("%s=%s; Path=/; HttpOnly; Expires=%s",
-		sessionCookieName, hex.EncodeToString(sess), expstr)
+		sessionCookieName, hex.EncodeToString(sess), expstr), nil
 }
 
 func handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -316,7 +322,11 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie := Context.auth.httpCookie(req)
+	cookie, err := Context.auth.httpCookie(req)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "crypto rand reader: %s", err)
+		return
+	}
 	if len(cookie) == 0 {
 		log.Info("Auth: invalid user name or password: name=%q", req.Name)
 		time.Sleep(1 * time.Second)
@@ -369,7 +379,54 @@ func parseCookie(cookie string) string {
 	return ""
 }
 
-// nolint(gocyclo)
+// optionalAuthThird return true if user should authenticate first.
+func optionalAuthThird(w http.ResponseWriter, r *http.Request) (authFirst bool) {
+	authFirst = false
+
+	// redirect to login page if not authenticated
+	ok := false
+	cookie, err := r.Cookie(sessionCookieName)
+
+	if glProcessCookie(r) {
+		log.Debug("Auth: authentification was handled by GL-Inet submodule")
+		ok = true
+
+	} else if err == nil {
+		r := Context.auth.CheckSession(cookie.Value)
+		if r == 0 {
+			ok = true
+		} else if r < 0 {
+			log.Debug("Auth: invalid cookie value: %s", cookie)
+		}
+	} else {
+		// there's no Cookie, check Basic authentication
+		user, pass, ok2 := r.BasicAuth()
+		if ok2 {
+			u := Context.auth.UserFind(user, pass)
+			if len(u.Name) != 0 {
+				ok = true
+			} else {
+				log.Info("Auth: invalid Basic Authorization value")
+			}
+		}
+	}
+	if !ok {
+		if r.URL.Path == "/" || r.URL.Path == "/index.html" {
+			if glProcessRedirect(w, r) {
+				log.Debug("Auth: redirected to login page by GL-Inet submodule")
+			} else {
+				w.Header().Set("Location", "/login.html")
+				w.WriteHeader(http.StatusFound)
+			}
+		} else {
+			w.WriteHeader(http.StatusForbidden)
+			_, _ = w.Write([]byte("Forbidden"))
+		}
+		authFirst = true
+	}
+	return authFirst
+}
+
 func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/login.html" {
@@ -392,45 +449,7 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 			// process as usual
 			// no additional auth requirements
 		} else if Context.auth != nil && Context.auth.AuthRequired() {
-			// redirect to login page if not authenticated
-			ok := false
-			cookie, err := r.Cookie(sessionCookieName)
-
-			if glProcessCookie(r) {
-				log.Debug("Auth: authentification was handled by GL-Inet submodule")
-				ok = true
-
-			} else if err == nil {
-				r := Context.auth.CheckSession(cookie.Value)
-				if r == 0 {
-					ok = true
-				} else if r < 0 {
-					log.Debug("Auth: invalid cookie value: %s", cookie)
-				}
-			} else {
-				// there's no Cookie, check Basic authentication
-				user, pass, ok2 := r.BasicAuth()
-				if ok2 {
-					u := Context.auth.UserFind(user, pass)
-					if len(u.Name) != 0 {
-						ok = true
-					} else {
-						log.Info("Auth: invalid Basic Authorization value")
-					}
-				}
-			}
-			if !ok {
-				if r.URL.Path == "/" || r.URL.Path == "/index.html" {
-					if glProcessRedirect(w, r) {
-						log.Debug("Auth: redirected to login page by GL-Inet submodule")
-					} else {
-						w.Header().Set("Location", "/login.html")
-						w.WriteHeader(http.StatusFound)
-					}
-				} else {
-					w.WriteHeader(http.StatusForbidden)
-					_, _ = w.Write([]byte("Forbidden"))
-				}
+			if optionalAuthThird(w, r) {
 				return
 			}
 		}

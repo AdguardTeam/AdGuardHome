@@ -177,6 +177,16 @@ func (r Reason) String() string {
 	return reasonNames[r]
 }
 
+// In returns true if reasons include r.
+func (r Reason) In(reasons ...Reason) bool {
+	for _, reason := range reasons {
+		if r == reason {
+			return true
+		}
+	}
+	return false
+}
+
 // GetConfig - get configuration
 func (d *Dnsfilter) GetConfig() RequestFilteringSettings {
 	c := RequestFilteringSettings{}

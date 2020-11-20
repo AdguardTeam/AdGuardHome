@@ -41,7 +41,8 @@ func TestAuth(t *testing.T) {
 	assert.True(t, a.CheckSession("notfound") == -1)
 	a.RemoveSession("notfound")
 
-	sess := getSession(&users[0])
+	sess, err := getSession(&users[0])
+	assert.Nil(t, err)
 	sessStr := hex.EncodeToString(sess)
 
 	now := time.Now().UTC().Unix()
@@ -136,7 +137,8 @@ func TestAuthHTTP(t *testing.T) {
 	assert.True(t, handlerCalled)
 
 	// perform login
-	cookie := Context.auth.httpCookie(loginJSON{Name: "name", Password: "password"})
+	cookie, err := Context.auth.httpCookie(loginJSON{Name: "name", Password: "password"})
+	assert.Nil(t, err)
 	assert.True(t, cookie != "")
 
 	// get /

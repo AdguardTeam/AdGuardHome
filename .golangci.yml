@@ -39,7 +39,6 @@ linters:
     - govet
     - ineffassign
     - staticcheck
-    - structcheck
     - unused
     - varcheck
     - bodyclose

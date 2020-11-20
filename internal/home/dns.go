@@ -88,60 +88,6 @@ func isRunning() bool {
 	return Context.dnsServer != nil && Context.dnsServer.IsRunning()
 }
 
-// nolint (gocyclo)
-// Return TRUE if IP is within public Internet IP range
-func isPublicIP(ip net.IP) bool {
-	ip4 := ip.To4()
-	if ip4 != nil {
-		switch ip4[0] {
-		case 0:
-			return false // software
-		case 10:
-			return false // private network
-		case 127:
-			return false // loopback
-		case 169:
-			if ip4[1] == 254 {
-				return false // link-local
-			}
-		case 172:
-			if ip4[1] >= 16 && ip4[1] <= 31 {
-				return false // private network
-			}
-		case 192:
-			if (ip4[1] == 0 && ip4[2] == 0) || // private network
-				(ip4[1] == 0 && ip4[2] == 2) || // documentation
-				(ip4[1] == 88 && ip4[2] == 99) || // reserved
-				(ip4[1] == 168) { // private network
-				return false
-			}
-		case 198:
-			if (ip4[1] == 18 || ip4[2] == 19) || // private network
-				(ip4[1] == 51 || ip4[2] == 100) { // documentation
-				return false
-			}
-		case 203:
-			if ip4[1] == 0 && ip4[2] == 113 { // documentation
-				return false
-			}
-		case 224:
-			if ip4[1] == 0 && ip4[2] == 0 { // multicast
-				return false
-			}
-		case 255:
-			if ip4[1] == 255 && ip4[2] == 255 && ip4[3] == 255 { // subnet
-				return false
-			}
-		}
-	} else {
-		if ip.IsLoopback() || ip.IsLinkLocalMulticast() || ip.IsLinkLocalUnicast() {
-			return false
-		}
-	}
-
-	return true
-}
-
 func onDNSRequest(d *proxy.DNSContext) {
 	ip := dnsforward.GetIPString(d.Addr)
 	if ip == "" {
@@ -153,7 +99,7 @@ func onDNSRequest(d *proxy.DNSContext) {
 	if !ipAddr.IsLoopback() {
 		Context.rdns.Begin(ip)
 	}
-	if isPublicIP(ipAddr) {
+	if !Context.ipDetector.detectSpecialNetwork(ipAddr) {
 		Context.whois.Begin(ip)
 	}
 }
@@ -327,7 +273,7 @@ func startDNSServer() error {
 		if !ipAddr.IsLoopback() {
 			Context.rdns.Begin(ip)
 		}
-		if isPublicIP(ipAddr) {
+		if !Context.ipDetector.detectSpecialNetwork(ipAddr) {
 			Context.whois.Begin(ip)
 		}
 	}

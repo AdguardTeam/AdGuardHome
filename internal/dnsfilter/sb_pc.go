@@ -71,31 +71,35 @@ func (c *sbCtx) setCache(prefix, hashes []byte) {
 	log.Debug("%s: stored in cache: %v", c.svc, prefix)
 }
 
+// findInHash returns 32-byte hash if it's found in hashToHost.
+func (c *sbCtx) findInHash(val []byte) (hash32 [32]byte, found bool) {
+	for i := 4; i < len(val); i += 32 {
+		hash := val[i : i+32]
+
+		copy(hash32[:], hash[0:32])
+
+		_, found = c.hashToHost[hash32]
+		if found {
+			return hash32, found
+		}
+	}
+
+	return [32]byte{}, false
+}
+
 func (c *sbCtx) getCached() int {
 	now := time.Now().Unix()
 	hashesToRequest := map[[32]byte]string{}
 	for k, v := range c.hashToHost {
 		key := k[0:2]
 		val := c.cache.Get(key)
-		if val != nil {
-			expire := binary.BigEndian.Uint32(val)
-			if now >= int64(expire) {
-				val = nil
-			} else {
-				for i := 4; i < len(val); i += 32 {
-					hash := val[i : i+32]
-					var hash32 [32]byte
-					copy(hash32[:], hash[0:32])
-					_, found := c.hashToHost[hash32]
-					if found {
-						log.Debug("%s: found in cache: %s: blocked by %v", c.svc, c.host, hash32)
-						return 1
-					}
-				}
-			}
-		}
-		if val == nil {
+		if val == nil || now >= int64(binary.BigEndian.Uint32(val)) {
 			hashesToRequest[k] = v
+			continue
+		}
+		if hash32, found := c.findInHash(val); found {
+			log.Debug("%s: found in cache: %s: blocked by %v", c.svc, c.host, hash32)
+			return 1
 		}
 	}
 
@@ -254,106 +258,71 @@ func (c *sbCtx) storeCache(hashes [][]byte) {
 	}
 }
 
-// Disabling "dupl": the algorithm of SB/PC is similar, but it uses different data
-// nolint:dupl
+func check(c *sbCtx, r Result, u upstream.Upstream) (Result, error) {
+	c.hashToHost = hostnameToHashes(c.host)
+	switch c.getCached() {
+	case -1:
+		return Result{}, nil
+	case 1:
+		return r, nil
+	}
+
+	question := c.getQuestion()
+
+	log.Tracef("%s: checking %s: %s", c.svc, c.host, question)
+	req := (&dns.Msg{}).SetQuestion(question, dns.TypeTXT)
+
+	resp, err := u.Exchange(req)
+	if err != nil {
+		return Result{}, err
+	}
+
+	matched, receivedHashes := c.processTXT(resp)
+
+	c.storeCache(receivedHashes)
+	if matched {
+		return r, nil
+	}
+
+	return Result{}, nil
+}
+
 func (d *Dnsfilter) checkSafeBrowsing(host string) (Result, error) {
 	if log.GetLevel() >= log.DEBUG {
 		timer := log.StartTimer()
 		defer timer.LogElapsed("SafeBrowsing lookup for %s", host)
 	}
-
-	result := Result{}
-	hashes := hostnameToHashes(host)
-
-	c := &sbCtx{
-		host:       host,
-		svc:        "SafeBrowsing",
-		hashToHost: hashes,
-		cache:      gctx.safebrowsingCache,
-		cacheTime:  d.Config.CacheTime,
+	ctx := &sbCtx{
+		host:      host,
+		svc:       "SafeBrowsing",
+		cache:     gctx.safebrowsingCache,
+		cacheTime: d.Config.CacheTime,
 	}
-
-	// check cache
-	match := c.getCached()
-	if match < 0 {
-		return result, nil
-	} else if match > 0 {
-		result.IsFiltered = true
-		result.Reason = FilteredSafeBrowsing
-		result.Rule = "adguard-malware-shavar"
-		return result, nil
+	res := Result{
+		IsFiltered: true,
+		Reason:     FilteredSafeBrowsing,
+		Rule:       "adguard-malware-shavar",
 	}
-
-	question := c.getQuestion()
-	log.Tracef("SafeBrowsing: checking %s: %s", host, question)
-
-	req := dns.Msg{}
-	req.SetQuestion(question, dns.TypeTXT)
-	resp, err := d.safeBrowsingUpstream.Exchange(&req)
-	if err != nil {
-		return result, err
-	}
-
-	matched, receivedHashes := c.processTXT(resp)
-	if matched {
-		result.IsFiltered = true
-		result.Reason = FilteredSafeBrowsing
-		result.Rule = "adguard-malware-shavar"
-	}
-	c.storeCache(receivedHashes)
-
-	return result, nil
+	return check(ctx, res, d.safeBrowsingUpstream)
 }
 
-// Disabling "dupl": the algorithm of SB/PC is similar, but it uses different data
-// nolint:dupl
 func (d *Dnsfilter) checkParental(host string) (Result, error) {
 	if log.GetLevel() >= log.DEBUG {
 		timer := log.StartTimer()
 		defer timer.LogElapsed("Parental lookup for %s", host)
 	}
-
-	result := Result{}
-	hashes := hostnameToHashes(host)
-
-	c := &sbCtx{
-		host:       host,
-		svc:        "Parental",
-		hashToHost: hashes,
-		cache:      gctx.parentalCache,
-		cacheTime:  d.Config.CacheTime,
+	ctx := &sbCtx{
+		host:      host,
+		svc:       "Parental",
+		cache:     gctx.parentalCache,
+		cacheTime: d.Config.CacheTime,
 	}
-
-	// check cache
-	match := c.getCached()
-	if match < 0 {
-		return result, nil
-	} else if match > 0 {
-		result.IsFiltered = true
-		result.Reason = FilteredParental
-		result.Rule = "parental CATEGORY_BLACKLISTED"
-		return result, nil
+	res := Result{
+		IsFiltered: true,
+		Reason:     FilteredParental,
+		Rule:       "parental CATEGORY_BLACKLISTED",
 	}
-
-	question := c.getQuestion()
-	log.Tracef("Parental: checking %s: %s", host, question)
-
-	req := dns.Msg{}
-	req.SetQuestion(question, dns.TypeTXT)
-	resp, err := d.parentalUpstream.Exchange(&req)
-	if err != nil {
-		return result, err
-	}
-
-	matched, receivedHashes := c.processTXT(resp)
-	if matched {
-		result.IsFiltered = true
-		result.Reason = FilteredParental
-		result.Rule = "parental CATEGORY_BLACKLISTED"
-	}
-	c.storeCache(receivedHashes)
-
-	return result, err
+	return check(ctx, res, d.parentalUpstream)
 }
 
 func httpError(r *http.Request, w http.ResponseWriter, code int, format string, args ...interface{}) {

@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/AdguardTeam/dnsproxy/upstream"
-	"github.com/AdguardTeam/golibs/jsonutil"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/utils"
 	"github.com/miekg/dns"
@@ -21,230 +20,290 @@ func httpError(r *http.Request, w http.ResponseWriter, code int, format string, 
 	http.Error(w, text, code)
 }
 
-type dnsConfigJSON struct {
-	Upstreams     []string `json:"upstream_dns"`
-	UpstreamsFile string   `json:"upstream_dns_file"`
-	Bootstraps    []string `json:"bootstrap_dns"`
+type dnsConfig struct {
+	Upstreams     *[]string `json:"upstream_dns"`
+	UpstreamsFile *string   `json:"upstream_dns_file"`
+	Bootstraps    *[]string `json:"bootstrap_dns"`
 
-	ProtectionEnabled bool   `json:"protection_enabled"`
-	RateLimit         uint32 `json:"ratelimit"`
-	BlockingMode      string `json:"blocking_mode"`
-	BlockingIPv4      string `json:"blocking_ipv4"`
-	BlockingIPv6      string `json:"blocking_ipv6"`
-	EDNSCSEnabled     bool   `json:"edns_cs_enabled"`
-	DNSSECEnabled     bool   `json:"dnssec_enabled"`
-	DisableIPv6       bool   `json:"disable_ipv6"`
-	UpstreamMode      string `json:"upstream_mode"`
-	CacheSize         uint32 `json:"cache_size"`
-	CacheMinTTL       uint32 `json:"cache_ttl_min"`
-	CacheMaxTTL       uint32 `json:"cache_ttl_max"`
+	ProtectionEnabled *bool   `json:"protection_enabled"`
+	RateLimit         *uint32 `json:"ratelimit"`
+	BlockingMode      *string `json:"blocking_mode"`
+	BlockingIPv4      *string `json:"blocking_ipv4"`
+	BlockingIPv6      *string `json:"blocking_ipv6"`
+	EDNSCSEnabled     *bool   `json:"edns_cs_enabled"`
+	DNSSECEnabled     *bool   `json:"dnssec_enabled"`
+	DisableIPv6       *bool   `json:"disable_ipv6"`
+	UpstreamMode      *string `json:"upstream_mode"`
+	CacheSize         *uint32 `json:"cache_size"`
+	CacheMinTTL       *uint32 `json:"cache_ttl_min"`
+	CacheMaxTTL       *uint32 `json:"cache_ttl_max"`
+}
+
+func (s *Server) getDNSConfig() dnsConfig {
+	s.RLock()
+	upstreams := stringArrayDup(s.conf.UpstreamDNS)
+	upstreamFile := s.conf.UpstreamDNSFileName
+	bootstraps := stringArrayDup(s.conf.BootstrapDNS)
+	protectionEnabled := s.conf.ProtectionEnabled
+	blockingMode := s.conf.BlockingMode
+	BlockingIPv4 := s.conf.BlockingIPv4
+	BlockingIPv6 := s.conf.BlockingIPv6
+	Ratelimit := s.conf.Ratelimit
+	EnableEDNSClientSubnet := s.conf.EnableEDNSClientSubnet
+	EnableDNSSEC := s.conf.EnableDNSSEC
+	AAAADisabled := s.conf.AAAADisabled
+	CacheSize := s.conf.CacheSize
+	CacheMinTTL := s.conf.CacheMinTTL
+	CacheMaxTTL := s.conf.CacheMaxTTL
+	var upstreamMode string
+	if s.conf.FastestAddr {
+		upstreamMode = "fastest_addr"
+	} else if s.conf.AllServers {
+		upstreamMode = "parallel"
+	}
+	s.RUnlock()
+	return dnsConfig{
+		Upstreams:         &upstreams,
+		UpstreamsFile:     &upstreamFile,
+		Bootstraps:        &bootstraps,
+		ProtectionEnabled: &protectionEnabled,
+		BlockingMode:      &blockingMode,
+		BlockingIPv4:      &BlockingIPv4,
+		BlockingIPv6:      &BlockingIPv6,
+		RateLimit:         &Ratelimit,
+		EDNSCSEnabled:     &EnableEDNSClientSubnet,
+		DNSSECEnabled:     &EnableDNSSEC,
+		DisableIPv6:       &AAAADisabled,
+		CacheSize:         &CacheSize,
+		CacheMinTTL:       &CacheMinTTL,
+		CacheMaxTTL:       &CacheMaxTTL,
+		UpstreamMode:      &upstreamMode,
+	}
 }
 
 func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
-	resp := dnsConfigJSON{}
-	s.RLock()
-	resp.Upstreams = stringArrayDup(s.conf.UpstreamDNS)
-	resp.UpstreamsFile = s.conf.UpstreamDNSFileName
-	resp.Bootstraps = stringArrayDup(s.conf.BootstrapDNS)
+	resp := s.getDNSConfig()
 
-	resp.ProtectionEnabled = s.conf.ProtectionEnabled
-	resp.BlockingMode = s.conf.BlockingMode
-	resp.BlockingIPv4 = s.conf.BlockingIPv4
-	resp.BlockingIPv6 = s.conf.BlockingIPv6
-	resp.RateLimit = s.conf.Ratelimit
-	resp.EDNSCSEnabled = s.conf.EnableEDNSClientSubnet
-	resp.DNSSECEnabled = s.conf.EnableDNSSEC
-	resp.DisableIPv6 = s.conf.AAAADisabled
-	resp.CacheSize = s.conf.CacheSize
-	resp.CacheMinTTL = s.conf.CacheMinTTL
-	resp.CacheMaxTTL = s.conf.CacheMaxTTL
-	if s.conf.FastestAddr {
-		resp.UpstreamMode = "fastest_addr"
-	} else if s.conf.AllServers {
-		resp.UpstreamMode = "parallel"
-	}
-	s.RUnlock()
-
-	js, err := json.Marshal(resp)
-	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "json.Marshal: %s", err)
-		return
-	}
 	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write(js)
+
+	enc := json.NewEncoder(w)
+	if err := enc.Encode(resp); err != nil {
+		httpError(r, w, http.StatusInternalServerError, "json.Encoder: %s", err)
+		return
+	}
 }
 
-func checkBlockingMode(req dnsConfigJSON) bool {
-	bm := req.BlockingMode
-	if !(bm == "default" || bm == "refused" || bm == "nxdomain" || bm == "null_ip" || bm == "custom_ip") {
-		return false
+func (req *dnsConfig) checkBlockingMode() bool {
+	if req.BlockingMode == nil {
+		return true
 	}
 
+	bm := *req.BlockingMode
 	if bm == "custom_ip" {
-		ip := net.ParseIP(req.BlockingIPv4)
-		if ip == nil || ip.To4() == nil {
+		if req.BlockingIPv4 == nil || req.BlockingIPv6 == nil {
 			return false
 		}
 
-		ip = net.ParseIP(req.BlockingIPv6)
-		if ip == nil {
+		ip4 := net.ParseIP(*req.BlockingIPv4)
+		if ip4 == nil || ip4.To4() == nil {
 			return false
+		}
+
+		ip6 := net.ParseIP(*req.BlockingIPv6)
+		return ip6 != nil
+	}
+
+	for _, valid := range []string{
+		"default",
+		"refused",
+		"nxdomain",
+		"null_ip",
+	} {
+		if bm == valid {
+			return true
 		}
 	}
 
-	return true
+	return false
 }
 
-// Validate bootstrap server address
-func checkBootstrap(addr string) error {
-	if addr == "" { // additional check is required because NewResolver() allows empty address
-		return fmt.Errorf("invalid bootstrap server address: empty")
+func (req *dnsConfig) checkUpstreamsMode() bool {
+	if req.UpstreamMode == nil {
+		return true
 	}
-	_, err := upstream.NewResolver(addr, 0)
-	if err != nil {
-		return fmt.Errorf("invalid bootstrap server address: %w", err)
+
+	for _, valid := range []string{
+		"",
+		"fastest_addr",
+		"parallel",
+	} {
+		if *req.UpstreamMode == valid {
+			return true
+		}
 	}
-	return nil
+
+	return false
 }
 
-// nolint(gocyclo) - we need to check each JSON field separately
+func (req *dnsConfig) checkBootstrap() (string, error) {
+	if req.Bootstraps == nil {
+		return "", nil
+	}
+
+	for _, boot := range *req.Bootstraps {
+		if boot == "" {
+			return boot, fmt.Errorf("invalid bootstrap server address: empty")
+		}
+
+		if _, err := upstream.NewResolver(boot, 0); err != nil {
+			return boot, fmt.Errorf("invalid bootstrap server address: %w", err)
+		}
+	}
+
+	return "", nil
+}
+
+func (req *dnsConfig) checkCacheTTL() bool {
+	if req.CacheMinTTL == nil && req.CacheMaxTTL == nil {
+		return true
+	}
+	var min, max uint32
+	if req.CacheMinTTL != nil {
+		min = *req.CacheMinTTL
+	}
+	if req.CacheMaxTTL == nil {
+		max = *req.CacheMaxTTL
+	}
+
+	return min <= max
+}
+
 func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
-	req := dnsConfigJSON{}
-	js, err := jsonutil.DecodeObject(&req, r.Body)
-	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+	req := dnsConfig{}
+	dec := json.NewDecoder(r.Body)
+	if err := dec.Decode(&req); err != nil {
+		httpError(r, w, http.StatusBadRequest, "json Encode: %s", err)
 		return
 	}
 
-	if js.Exists("upstream_dns") {
-		err = ValidateUpstreams(req.Upstreams)
-		if err != nil {
+	if req.Upstreams != nil {
+		if err := ValidateUpstreams(*req.Upstreams); err != nil {
 			httpError(r, w, http.StatusBadRequest, "wrong upstreams specification: %s", err)
 			return
 		}
 	}
 
-	if js.Exists("bootstrap_dns") {
-		for _, boot := range req.Bootstraps {
-			if err := checkBootstrap(boot); err != nil {
-				httpError(r, w, http.StatusBadRequest, "%s can not be used as bootstrap dns cause: %s", boot, err)
-				return
-			}
-		}
+	if errBoot, err := req.checkBootstrap(); err != nil {
+		httpError(r, w, http.StatusBadRequest, "%s can not be used as bootstrap dns cause: %s", errBoot, err)
+		return
 	}
 
-	if js.Exists("blocking_mode") && !checkBlockingMode(req) {
+	if !req.checkBlockingMode() {
 		httpError(r, w, http.StatusBadRequest, "blocking_mode: incorrect value")
 		return
 	}
 
-	if js.Exists("upstream_mode") &&
-		!(req.UpstreamMode == "" || req.UpstreamMode == "fastest_addr" || req.UpstreamMode == "parallel") {
+	if !req.checkUpstreamsMode() {
 		httpError(r, w, http.StatusBadRequest, "upstream_mode: incorrect value")
 		return
 	}
 
-	if req.CacheMinTTL > req.CacheMaxTTL {
+	if !req.checkCacheTTL() {
 		httpError(r, w, http.StatusBadRequest, "cache_ttl_min must be less or equal than cache_ttl_max")
 		return
 	}
 
-	restart := false
-	s.Lock()
-
-	if js.Exists("upstream_dns") {
-		s.conf.UpstreamDNS = req.Upstreams
-		restart = true
-	}
-
-	if js.Exists("upstream_dns_file") {
-		s.conf.UpstreamDNSFileName = req.UpstreamsFile
-		restart = true
-	}
-
-	if js.Exists("bootstrap_dns") {
-		s.conf.BootstrapDNS = req.Bootstraps
-		restart = true
-	}
-
-	if js.Exists("protection_enabled") {
-		s.conf.ProtectionEnabled = req.ProtectionEnabled
-	}
-
-	if js.Exists("blocking_mode") {
-		s.conf.BlockingMode = req.BlockingMode
-		if req.BlockingMode == "custom_ip" {
-			if js.Exists("blocking_ipv4") {
-				s.conf.BlockingIPv4 = req.BlockingIPv4
-				s.conf.BlockingIPAddrv4 = net.ParseIP(req.BlockingIPv4)
-			}
-			if js.Exists("blocking_ipv6") {
-				s.conf.BlockingIPv6 = req.BlockingIPv6
-				s.conf.BlockingIPAddrv6 = net.ParseIP(req.BlockingIPv6)
-			}
-		}
-	}
-
-	if js.Exists("ratelimit") {
-		if s.conf.Ratelimit != req.RateLimit {
-			restart = true
-		}
-		s.conf.Ratelimit = req.RateLimit
-	}
-
-	if js.Exists("edns_cs_enabled") {
-		s.conf.EnableEDNSClientSubnet = req.EDNSCSEnabled
-		restart = true
-	}
-
-	if js.Exists("dnssec_enabled") {
-		s.conf.EnableDNSSEC = req.DNSSECEnabled
-	}
-
-	if js.Exists("disable_ipv6") {
-		s.conf.AAAADisabled = req.DisableIPv6
-	}
-
-	if js.Exists("cache_size") {
-		s.conf.CacheSize = req.CacheSize
-		restart = true
-	}
-
-	if js.Exists("cache_ttl_min") {
-		s.conf.CacheMinTTL = req.CacheMinTTL
-		restart = true
-	}
-
-	if js.Exists("cache_ttl_max") {
-		s.conf.CacheMaxTTL = req.CacheMaxTTL
-		restart = true
-	}
-
-	if js.Exists("upstream_mode") {
-		s.conf.FastestAddr = false
-		s.conf.AllServers = false
-		switch req.UpstreamMode {
-		case "":
-			//
-
-		case "parallel":
-			s.conf.AllServers = true
-
-		case "fastest_addr":
-			s.conf.FastestAddr = true
-		}
-	}
-
-	s.Unlock()
-	s.conf.ConfigModified()
-
-	if restart {
-		err = s.Reconfigure(nil)
-		if err != nil {
+	if s.setConfig(req) {
+		if err := s.Reconfigure(nil); err != nil {
 			httpError(r, w, http.StatusInternalServerError, "%s", err)
 			return
 		}
 	}
+}
+
+func (s *Server) setConfig(dc dnsConfig) (restart bool) {
+	s.Lock()
+
+	if dc.Upstreams != nil {
+		s.conf.UpstreamDNS = *dc.Upstreams
+		restart = true
+	}
+
+	if dc.UpstreamsFile != nil {
+		s.conf.UpstreamDNSFileName = *dc.UpstreamsFile
+		restart = true
+	}
+
+	if dc.Bootstraps != nil {
+		s.conf.BootstrapDNS = *dc.Bootstraps
+		restart = true
+	}
+
+	if dc.ProtectionEnabled != nil {
+		s.conf.ProtectionEnabled = *dc.ProtectionEnabled
+	}
+
+	if dc.BlockingMode != nil {
+		s.conf.BlockingMode = *dc.BlockingMode
+		if *dc.BlockingMode == "custom_ip" {
+			s.conf.BlockingIPv4 = *dc.BlockingIPv4
+			s.conf.BlockingIPAddrv4 = net.ParseIP(*dc.BlockingIPv4)
+			s.conf.BlockingIPv6 = *dc.BlockingIPv6
+			s.conf.BlockingIPAddrv6 = net.ParseIP(*dc.BlockingIPv6)
+		}
+	}
+
+	if dc.RateLimit != nil {
+		if s.conf.Ratelimit != *dc.RateLimit {
+			restart = true
+		}
+		s.conf.Ratelimit = *dc.RateLimit
+	}
+
+	if dc.EDNSCSEnabled != nil {
+		s.conf.EnableEDNSClientSubnet = *dc.EDNSCSEnabled
+		restart = true
+	}
+
+	if dc.DNSSECEnabled != nil {
+		s.conf.EnableDNSSEC = *dc.DNSSECEnabled
+	}
+
+	if dc.DisableIPv6 != nil {
+		s.conf.AAAADisabled = *dc.DisableIPv6
+	}
+
+	if dc.CacheSize != nil {
+		s.conf.CacheSize = *dc.CacheSize
+		restart = true
+	}
+
+	if dc.CacheMinTTL != nil {
+		s.conf.CacheMinTTL = *dc.CacheMinTTL
+		restart = true
+	}
+
+	if dc.CacheMaxTTL != nil {
+		s.conf.CacheMaxTTL = *dc.CacheMaxTTL
+		restart = true
+	}
+
+	if dc.UpstreamMode != nil {
+		switch *dc.UpstreamMode {
+		case "parallel":
+			s.conf.AllServers = true
+			s.conf.FastestAddr = false
+		case "fastest_addr":
+			s.conf.AllServers = false
+			s.conf.FastestAddr = true
+		default:
+			s.conf.AllServers = false
+			s.conf.FastestAddr = false
+		}
+	}
+	s.Unlock()
+	s.conf.ConfigModified()
+	return restart
 }
 
 type upstreamJSON struct {

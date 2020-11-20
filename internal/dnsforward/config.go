@@ -94,19 +94,24 @@ type FilteringConfig struct {
 type TLSConfig struct {
 	TLSListenAddr  *net.TCPAddr `yaml:"-" json:"-"`
 	QUICListenAddr *net.UDPAddr `yaml:"-" json:"-"`
-	StrictSNICheck bool         `yaml:"strict_sni_check" json:"-"` // Reject connection if the client uses server name (in SNI) that doesn't match the certificate
 
-	CertificateChain string `yaml:"certificate_chain" json:"certificate_chain"` // PEM-encoded certificates chain
-	PrivateKey       string `yaml:"private_key" json:"private_key"`             // PEM-encoded private key
+	// Reject connection if the client uses server name (in SNI) that doesn't match the certificate
+	StrictSNICheck bool `yaml:"strict_sni_check" json:"-"`
 
-	CertificatePath string `yaml:"certificate_path" json:"certificate_path"` // certificate file name
-	PrivateKeyPath  string `yaml:"private_key_path" json:"private_key_path"` // private key file name
+	// PEM-encoded certificates chain
+	CertificateChain string `yaml:"certificate_chain" json:"certificate_chain"`
+	// PEM-encoded private key
+	PrivateKey string `yaml:"private_key" json:"private_key"`
+
+	CertificatePath string `yaml:"certificate_path" json:"certificate_path"`
+	PrivateKeyPath  string `yaml:"private_key_path" json:"private_key_path"`
 
 	CertificateChainData []byte `yaml:"-" json:"-"`
 	PrivateKeyData       []byte `yaml:"-" json:"-"`
 
-	cert     tls.Certificate // nolint(structcheck) - linter thinks that this field is unused, while TLSConfig is directly included into ServerConfig
-	dnsNames []string        // nolint(structcheck) // DNS names from certificate (SAN) or CN value from Subject
+	cert tls.Certificate
+	// DNS names from certificate (SAN) or CN value from Subject
+	dnsNames []string
 }
 
 // ServerConfig represents server configuration.

@@ -77,66 +77,79 @@ func (c *searchCriteria) quickMatchJSONValue(line string, propertyName string) b
 }
 
 // match - checks if the log entry matches this search criteria
-// nolint (gocyclo)
 func (c *searchCriteria) match(entry *logEntry) bool {
 	switch c.criteriaType {
 	case ctDomainOrClient:
-		qhost := strings.ToLower(entry.QHost)
-		searchVal := strings.ToLower(c.value)
-		if c.strict && qhost == searchVal {
-			return true
-		}
-		if !c.strict && strings.Contains(qhost, searchVal) {
-			return true
-		}
-
-		if c.strict && entry.IP == c.value {
-			return true
-		}
-		if !c.strict && strings.Contains(entry.IP, c.value) {
-			return true
-		}
-
-		return false
-
+		return c.ctDomainOrClientCase(entry)
 	case ctFilteringStatus:
-		res := entry.Result
-
-		switch c.value {
-		case filteringStatusAll:
-			return true
-		case filteringStatusFiltered:
-			return res.IsFiltered ||
-				res.Reason == dnsfilter.NotFilteredWhiteList ||
-				res.Reason == dnsfilter.ReasonRewrite ||
-				res.Reason == dnsfilter.RewriteEtcHosts
-		case filteringStatusBlocked:
-			return res.IsFiltered &&
-				(res.Reason == dnsfilter.FilteredBlackList ||
-					res.Reason == dnsfilter.FilteredBlockedService)
-		case filteringStatusBlockedService:
-			return res.IsFiltered && res.Reason == dnsfilter.FilteredBlockedService
-		case filteringStatusBlockedParental:
-			return res.IsFiltered && res.Reason == dnsfilter.FilteredParental
-		case filteringStatusBlockedSafebrowsing:
-			return res.IsFiltered && res.Reason == dnsfilter.FilteredSafeBrowsing
-		case filteringStatusWhitelisted:
-			return res.Reason == dnsfilter.NotFilteredWhiteList
-		case filteringStatusRewritten:
-			return res.Reason == dnsfilter.ReasonRewrite ||
-				res.Reason == dnsfilter.RewriteEtcHosts
-		case filteringStatusSafeSearch:
-			return res.IsFiltered && res.Reason == dnsfilter.FilteredSafeSearch
-
-		case filteringStatusProcessed:
-			return !(res.Reason == dnsfilter.FilteredBlackList ||
-				res.Reason == dnsfilter.FilteredBlockedService ||
-				res.Reason == dnsfilter.NotFilteredWhiteList)
-
-		default:
-			return false
-		}
+		return c.ctFilteringStatusCase(entry.Result)
 	}
 
 	return false
+}
+
+func (c *searchCriteria) ctDomainOrClientCase(entry *logEntry) bool {
+	qhost := strings.ToLower(entry.QHost)
+	searchVal := strings.ToLower(c.value)
+	if c.strict && qhost == searchVal {
+		return true
+	}
+	if !c.strict && strings.Contains(qhost, searchVal) {
+		return true
+	}
+
+	if c.strict && entry.IP == c.value {
+		return true
+	}
+	if !c.strict && strings.Contains(entry.IP, c.value) {
+		return true
+	}
+	return false
+}
+
+func (c *searchCriteria) ctFilteringStatusCase(res dnsfilter.Result) bool {
+	switch c.value {
+	case filteringStatusAll:
+		return true
+
+	case filteringStatusFiltered:
+		return res.IsFiltered ||
+			res.Reason.In(
+				dnsfilter.NotFilteredWhiteList,
+				dnsfilter.ReasonRewrite,
+				dnsfilter.RewriteEtcHosts,
+			)
+
+	case filteringStatusBlocked:
+		return res.IsFiltered &&
+			res.Reason.In(dnsfilter.FilteredBlackList, dnsfilter.FilteredBlockedService)
+
+	case filteringStatusBlockedService:
+		return res.IsFiltered && res.Reason == dnsfilter.FilteredBlockedService
+
+	case filteringStatusBlockedParental:
+		return res.IsFiltered && res.Reason == dnsfilter.FilteredParental
+
+	case filteringStatusBlockedSafebrowsing:
+		return res.IsFiltered && res.Reason == dnsfilter.FilteredSafeBrowsing
+
+	case filteringStatusWhitelisted:
+		return res.Reason == dnsfilter.NotFilteredWhiteList
+
+	case filteringStatusRewritten:
+		return res.Reason.In(dnsfilter.ReasonRewrite, dnsfilter.RewriteEtcHosts)
+
+	case filteringStatusSafeSearch:
+		return res.IsFiltered && res.Reason == dnsfilter.FilteredSafeSearch
+
+	case filteringStatusProcessed:
+		return !res.Reason.In(
+			dnsfilter.FilteredBlackList,
+			dnsfilter.FilteredBlockedService,
+			dnsfilter.NotFilteredWhiteList,
+		)
+
+	default:
+		return false
+	}
 }

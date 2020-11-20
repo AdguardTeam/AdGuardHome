@@ -548,7 +548,6 @@ func (s *statsCtx) loadUnits(limit uint32) ([]*unitDB, uint32) {
   * parental-blocked
   These values are just the sum of data for all units.
 */
-// nolint (gocyclo)
 func (s *statsCtx) getData() map[string]interface{} {
 	limit := s.conf.limit
 
@@ -564,137 +563,63 @@ func (s *statsCtx) getData() map[string]interface{} {
 	}
 
 	// per time unit counters:
-
 	// 720 hours may span 31 days, so we skip data for the first day in this case
 	firstDayID := (firstID + 24 - 1) / 24 * 24 // align_ceil(24)
 
-	a := []uint64{}
-	if timeUnit == Hours {
-		for _, u := range units {
-			a = append(a, u.NTotal)
-		}
-	} else {
-		var sum uint64
-		id := firstDayID
-		nextDayID := firstDayID + 24
-		for i := firstDayID - firstID; int(i) != len(units); i++ {
-			sum += units[i].NTotal
-			if id == nextDayID {
-				a = append(a, sum)
-				sum = 0
-				nextDayID += 24
+	statsCollector := func(numsGetter func(u *unitDB) (num uint64)) (nums []uint64) {
+		if timeUnit == Hours {
+			for _, u := range units {
+				nums = append(nums, numsGetter(u))
 			}
-			id++
-		}
-		if id <= nextDayID {
-			a = append(a, sum)
-		}
-		if len(a) != int(limit/24) {
-			log.Fatalf("len(a) != limit: %d %d", len(a), limit)
-		}
-	}
-	d["dns_queries"] = a
-
-	a = []uint64{}
-	if timeUnit == Hours {
-		for _, u := range units {
-			a = append(a, u.NResult[RFiltered])
-		}
-	} else {
-		var sum uint64
-		id := firstDayID
-		nextDayID := firstDayID + 24
-		for i := firstDayID - firstID; int(i) != len(units); i++ {
-			sum += units[i].NResult[RFiltered]
-			if id == nextDayID {
-				a = append(a, sum)
-				sum = 0
-				nextDayID += 24
+		} else {
+			var sum uint64
+			id := firstDayID
+			nextDayID := firstDayID + 24
+			for i := int(firstDayID - firstID); i != len(units); i++ {
+				sum += numsGetter(units[i])
+				if id == nextDayID {
+					nums = append(nums, sum)
+					sum = 0
+					nextDayID += 24
+				}
+				id++
 			}
-			id++
-		}
-		if id <= nextDayID {
-			a = append(a, sum)
-		}
-	}
-	d["blocked_filtering"] = a
-
-	a = []uint64{}
-	if timeUnit == Hours {
-		for _, u := range units {
-			a = append(a, u.NResult[RSafeBrowsing])
-		}
-	} else {
-		var sum uint64
-		id := firstDayID
-		nextDayID := firstDayID + 24
-		for i := firstDayID - firstID; int(i) != len(units); i++ {
-			sum += units[i].NResult[RSafeBrowsing]
-			if id == nextDayID {
-				a = append(a, sum)
-				sum = 0
-				nextDayID += 24
+			if id <= nextDayID {
+				nums = append(nums, sum)
 			}
-			id++
 		}
-		if id <= nextDayID {
-			a = append(a, sum)
-		}
+		return nums
 	}
-	d["replaced_safebrowsing"] = a
 
-	a = []uint64{}
-	if timeUnit == Hours {
+	topsCollector := func(max int, pairsGetter func(u *unitDB) (pairs []countPair)) []map[string]uint64 {
+		m := map[string]uint64{}
 		for _, u := range units {
-			a = append(a, u.NResult[RParental])
-		}
-	} else {
-		var sum uint64
-		id := firstDayID
-		nextDayID := firstDayID + 24
-		for i := firstDayID - firstID; int(i) != len(units); i++ {
-			sum += units[i].NResult[RParental]
-			if id == nextDayID {
-				a = append(a, sum)
-				sum = 0
-				nextDayID += 24
+			for _, it := range pairsGetter(u) {
+				m[it.Name] += it.Count
 			}
-			id++
 		}
-		if id <= nextDayID {
-			a = append(a, sum)
-		}
+		a2 := convertMapToArray(m, max)
+		return convertTopArray(a2)
 	}
-	d["replaced_parental"] = a
 
-	// top counters:
-
-	m := map[string]uint64{}
-	for _, u := range units {
-		for _, it := range u.Domains {
-			m[it.Name] += it.Count
-		}
+	dnsQueries := statsCollector(func(u *unitDB) (num uint64) { return u.NTotal })
+	if timeUnit != Hours && len(dnsQueries) != int(limit/24) {
+		log.Fatalf("len(dnsQueries) != limit: %d %d", len(dnsQueries), limit)
 	}
-	a2 := convertMapToArray(m, maxDomains)
-	d["top_queried_domains"] = convertTopArray(a2)
 
-	m = map[string]uint64{}
-	for _, u := range units {
-		for _, it := range u.BlockedDomains {
-			m[it.Name] += it.Count
-		}
+	statsData := map[string]interface{}{
+		"dns_queries":           dnsQueries,
+		"blocked_filtering":     statsCollector(func(u *unitDB) (num uint64) { return u.NResult[RFiltered] }),
+		"replaced_safebrowsing": statsCollector(func(u *unitDB) (num uint64) { return u.NResult[RSafeBrowsing] }),
+		"replaced_parental":     statsCollector(func(u *unitDB) (num uint64) { return u.NResult[RParental] }),
+		"top_queried_domains":   topsCollector(maxDomains, func(u *unitDB) (pairs []countPair) { return u.Domains }),
+		"top_blocked_domains":   topsCollector(maxDomains, func(u *unitDB) (pairs []countPair) { return u.BlockedDomains }),
+		"top_clients":           topsCollector(maxClients, func(u *unitDB) (pairs []countPair) { return u.Clients }),
 	}
-	a2 = convertMapToArray(m, maxDomains)
-	d["top_blocked_domains"] = convertTopArray(a2)
 
-	m = map[string]uint64{}
-	for _, u := range units {
-		for _, it := range u.Clients {
-			m[it.Name] += it.Count
-		}
+	for dataKey, dataValue := range statsData {
+		d[dataKey] = dataValue
 	}
-	a2 = convertMapToArray(m, maxClients)
-	d["top_clients"] = convertTopArray(a2)
 
 	// total counters:
 

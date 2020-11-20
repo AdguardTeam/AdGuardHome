@@ -6,6 +6,7 @@ import (
 	"hash/crc32"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -497,46 +498,7 @@ func (f *Filtering) update(filter *filter) (bool, error) {
 	return b, err
 }
 
-// nolint(gocyclo)
-func (f *Filtering) updateIntl(filter *filter) (bool, error) {
-	log.Tracef("Downloading update for filter %d from %s", filter.ID, filter.URL)
-
-	tmpFile, err := ioutil.TempFile(filepath.Join(Context.getDataDir(), filterDir), "")
-	if err != nil {
-		return false, err
-	}
-	defer func() {
-		if tmpFile != nil {
-			_ = tmpFile.Close()
-			_ = os.Remove(tmpFile.Name())
-		}
-	}()
-
-	var reader io.Reader
-	if filepath.IsAbs(filter.URL) {
-		f, err := os.Open(filter.URL)
-		if err != nil {
-			return false, fmt.Errorf("open file: %w", err)
-		}
-		defer f.Close()
-		reader = f
-	} else {
-		resp, err := Context.client.Get(filter.URL)
-		if resp != nil && resp.Body != nil {
-			defer resp.Body.Close()
-		}
-		if err != nil {
-			log.Printf("Couldn't request filter from URL %s, skipping: %s", filter.URL, err)
-			return false, err
-		}
-
-		if resp.StatusCode != 200 {
-			log.Printf("Got status code %d from URL %s, skipping", resp.StatusCode, filter.URL)
-			return false, fmt.Errorf("got status code != 200: %d", resp.StatusCode)
-		}
-		reader = resp.Body
-	}
-
+func (f *Filtering) read(reader io.Reader, tmpFile *os.File, filter *filter) (int, error) {
 	htmlTest := true
 	firstChunk := make([]byte, 4*1024)
 	firstChunkLen := 0
@@ -556,12 +518,12 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 
 			if firstChunkLen == len(firstChunk) || err == io.EOF {
 				if !isPrintableText(firstChunk, firstChunkLen) {
-					return false, fmt.Errorf("data contains non-printable characters")
+					return total, fmt.Errorf("data contains non-printable characters")
 				}
 
 				s := strings.ToLower(string(firstChunk))
 				if strings.Contains(s, "<html") || strings.Contains(s, "<!doctype") {
-					return false, fmt.Errorf("data is HTML, not plain text")
+					return total, fmt.Errorf("data is HTML, not plain text")
 				}
 
 				htmlTest = false
@@ -571,16 +533,69 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 
 		_, err2 := tmpFile.Write(buf[:n])
 		if err2 != nil {
-			return false, err2
+			return total, err2
 		}
 
 		if err == io.EOF {
-			break
+			return total, nil
 		}
 		if err != nil {
 			log.Printf("Couldn't fetch filter contents from URL %s, skipping: %s", filter.URL, err)
-			return false, err
+			return total, err
 		}
+	}
+}
+
+// updateIntl returns true if filter update performed successfully.
+func (f *Filtering) updateIntl(filter *filter) (updated bool, err error) {
+	updated = false
+	log.Tracef("Downloading update for filter %d from %s", filter.ID, filter.URL)
+
+	tmpFile, err := ioutil.TempFile(filepath.Join(Context.getDataDir(), filterDir), "")
+	if err != nil {
+		return updated, err
+	}
+	defer func() {
+		if tmpFile != nil {
+			if err := tmpFile.Close(); err != nil {
+				log.Printf("Couldn't close temporary file: %s", err)
+			}
+			tmpFileName := tmpFile.Name()
+			if err := os.Remove(tmpFileName); err != nil {
+				log.Printf("Couldn't delete temporary file %s: %s", tmpFileName, err)
+			}
+
+		}
+	}()
+
+	var reader io.Reader
+	if filepath.IsAbs(filter.URL) {
+		f, err := os.Open(filter.URL)
+		if err != nil {
+			return updated, fmt.Errorf("open file: %w", err)
+		}
+		defer f.Close()
+		reader = f
+	} else {
+		resp, err := Context.client.Get(filter.URL)
+		if resp != nil && resp.Body != nil {
+			defer resp.Body.Close()
+		}
+		if err != nil {
+			log.Printf("Couldn't request filter from URL %s, skipping: %s", filter.URL, err)
+			return updated, err
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			log.Printf("Got status code %d from URL %s, skipping", resp.StatusCode, filter.URL)
+			return updated, fmt.Errorf("got status code != 200: %d", resp.StatusCode)
+		}
+		reader = resp.Body
+	}
+
+	total, err := f.read(reader, tmpFile, filter)
+	if err != nil {
+		return updated, err
 	}
 
 	// Extract filter name and count number of rules
@@ -589,7 +604,7 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 	// Check if the filter has been really changed
 	if filter.checksum == checksum {
 		log.Tracef("Filter #%d at URL %s hasn't changed, not updating it", filter.ID, filter.URL)
-		return false, nil
+		return updated, nil
 	}
 
 	log.Printf("Filter %d has been updated: %d bytes, %d rules",
@@ -606,11 +621,12 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 	_ = tmpFile.Close()
 	err = os.Rename(tmpFile.Name(), filterFilePath)
 	if err != nil {
-		return false, err
+		return updated, err
 	}
 	tmpFile = nil
+	updated = true
 
-	return true, nil
+	return updated, nil
 }
 
 // loads filter contents from the file in dataDir
