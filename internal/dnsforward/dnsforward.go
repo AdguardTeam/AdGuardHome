@@ -11,6 +11,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/internal/prometheus"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
@@ -51,6 +52,7 @@ type Server struct {
 	dnsFilter  *dnsfilter.Dnsfilter  // DNS filter instance
 	dhcpServer dhcpd.ServerInterface // DHCP server instance (optional)
 	queryLog   querylog.QueryLog     // Query log instance
+	prometheus *prometheus.Server    // Prometheus instance
 	stats      stats.Stats
 	access     *accessCtx
 
@@ -78,6 +80,7 @@ type DNSCreateParams struct {
 	Stats      stats.Stats
 	QueryLog   querylog.QueryLog
 	DHCPServer dhcpd.ServerInterface
+	Prometheus *prometheus.Server
 }
 
 // NewServer creates a new instance of the dnsforward.Server
@@ -87,6 +90,7 @@ func NewServer(p DNSCreateParams) *Server {
 	s.dnsFilter = p.DNSFilter
 	s.stats = p.Stats
 	s.queryLog = p.QueryLog
+	s.prometheus = p.Prometheus
 
 	if p.DHCPServer != nil {
 		s.dhcpServer = p.DHCPServer

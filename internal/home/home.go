@@ -24,6 +24,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
+	"github.com/AdguardTeam/AdGuardHome/internal/prometheus"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/AdGuardHome/internal/update"
@@ -63,6 +64,7 @@ type homeContext struct {
 	web        *Web                 // Web (HTTP, HTTPS) module
 	tls        *TLSMod              // TLS module
 	autoHosts  util.AutoHosts       // IP-hostname pairs taken from system configuration (e.g. /etc/hosts) files
+	prometheus *prometheus.Server   // Prometheus module
 	updater    *update.Updater
 
 	ipDetector *ipDetector
@@ -199,6 +201,8 @@ func setupConfig(args options) {
 		log.Fatalf("can't initialize dhcp module")
 	}
 
+	Context.prometheus = prometheus.Create(config.Prometheus)
+
 	Context.autoHosts.Init("")
 
 	Context.updater = update.NewUpdater(update.Config{
@@ -329,6 +333,10 @@ func run(args options) {
 
 		if Context.dhcpServer != nil {
 			_ = Context.dhcpServer.Start()
+		}
+
+		if Context.prometheus != nil {
+			Context.prometheus.Start()
 		}
 	}
 

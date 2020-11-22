@@ -9,6 +9,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
+	"github.com/AdguardTeam/AdGuardHome/internal/prometheus"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/golibs/file"
@@ -59,6 +60,8 @@ type configuration struct {
 	UserRules        []string `yaml:"user_rules"`
 
 	DHCP dhcpd.ServerConfig `yaml:"dhcp"`
+
+	Prometheus prometheus.Config `yaml:"prometheus"`
 
 	// Note: this array is filled only before file read/write and then it's cleared
 	Clients []clientObject `yaml:"clients"`
@@ -141,6 +144,12 @@ var config = configuration{
 		LogMaxBackups: 0,
 		LogMaxSize:    100,
 		LogMaxAge:     3,
+	},
+	Prometheus: prometheus.Config{
+		Enabled:   false,
+		BindHost:  "0.0.0.0",
+		BindPort:  9153,
+		Namespace: "adguard",
 	},
 	SchemaVersion: currentSchemaVersion,
 }

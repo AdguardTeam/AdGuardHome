@@ -100,4 +100,5 @@ func (s *Server) updateStats(d *proxy.DNSContext, elapsed time.Duration, res dns
 	}
 
 	s.stats.Update(e)
+	s.prometheus.Update(e)
 }
