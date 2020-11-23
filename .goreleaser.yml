@@ -61,7 +61,7 @@
 
 'snapcrafts':
 - 'name': 'adguard-home'
-  'base': 'core18'
+  'base': 'core20'
   'name_template': '{{ .ProjectName }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
   'summary': 'Network-wide ads & trackers blocking DNS server'
   'description': |
