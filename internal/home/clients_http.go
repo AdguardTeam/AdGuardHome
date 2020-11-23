@@ -3,7 +3,6 @@ package home
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -150,16 +149,11 @@ func clientHostToJSON(ip string, ch ClientHost) clientJSON {
 
 // Add a new client
 func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "failed to read request body: %s", err)
-		return
-	}
-
 	cj := clientJSON{}
-	err = json.Unmarshal(body, &cj)
+	err := json.NewDecoder(r.Body).Decode(&cj)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "JSON parse: %s", err)
+		httpError(w, http.StatusBadRequest, "failed to process request body: %s", err)
+
 		return
 	}
 
@@ -183,16 +177,17 @@ func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.
 
 // Remove client
 func (clients *clientsContainer) handleDelClient(w http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
+	cj := clientJSON{}
+	err := json.NewDecoder(r.Body).Decode(&cj)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "failed to read request body: %s", err)
+		httpError(w, http.StatusBadRequest, "failed to process request body: %s", err)
+
 		return
 	}
 
-	cj := clientJSON{}
-	err = json.Unmarshal(body, &cj)
-	if err != nil || len(cj.Name) == 0 {
-		httpError(w, http.StatusBadRequest, "JSON parse: %s", err)
+	if len(cj.Name) == 0 {
+		httpError(w, http.StatusBadRequest, "client's name must be non-empty")
+
 		return
 	}
 
@@ -211,18 +206,14 @@ type updateJSON struct {
 
 // Update client's properties
 func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
+	dj := updateJSON{}
+	err := json.NewDecoder(r.Body).Decode(&dj)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "failed to read request body: %s", err)
+		httpError(w, http.StatusBadRequest, "failed to process request body: %s", err)
+
 		return
 	}
 
-	var dj updateJSON
-	err = json.Unmarshal(body, &dj)
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "JSON parse: %s", err)
-		return
-	}
 	if len(dj.Name) == 0 {
 		httpError(w, http.StatusBadRequest, "Invalid request")
 		return

@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/http"
 	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
@@ -142,7 +141,7 @@ func (web *Web) Start() {
 		web.httpServer = &http.Server{
 			ErrorLog: web.errLogger,
 			Addr:     address,
-			Handler:  filterPPROF(http.DefaultServeMux),
+			Handler:  withMiddlewares(http.DefaultServeMux, filterPProf, limitRequestBody),
 		}
 		err := web.httpServer.ListenAndServe()
 		if err != http.ErrServerClosed {
@@ -151,22 +150,6 @@ func (web *Web) Start() {
 		}
 		// We use ErrServerClosed as a sign that we need to rebind on new address, so go back to the start of the loop
 	}
-}
-
-// TODO(a.garipov): We currently have to use this, because everything registers
-// its HTTP handlers in http.DefaultServeMux.  In the future, refactor our HTTP
-// API initialization process and stop using the gosh darn http.DefaultServeMux
-// for anything at all.  Gosh darn global variables.
-func filterPPROF(h http.Handler) (filtered http.Handler) {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.URL.Path, "/debug/pprof") {
-			http.NotFound(w, r)
-
-			return
-		}
-
-		h.ServeHTTP(w, r)
-	})
 }
 
 // Close - stop HTTP server, possibly waiting for all active connections to be closed

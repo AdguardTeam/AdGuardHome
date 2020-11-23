@@ -10,6 +10,7 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -18,8 +19,10 @@ var GLMode bool
 
 var glFilePrefix = "/tmp/gl_token_"
 
-const glTokenTimeoutSeconds = 3600
-const glCookieName = "Admin-Token"
+const (
+	glTokenTimeoutSeconds = 3600
+	glCookieName          = "Admin-Token"
+)
 
 func glProcessRedirect(w http.ResponseWriter, r *http.Request) bool {
 	if !GLMode {
@@ -71,14 +74,28 @@ func archIsLittleEndian() bool {
 	return (b == 0x04)
 }
 
+// MaxFileSize is a maximum file length in bytes.
+const MaxFileSize = 1024 * 1024
+
 func glGetTokenDate(file string) uint32 {
 	f, err := os.Open(file)
 	if err != nil {
 		log.Error("os.Open: %s", err)
 		return 0
 	}
+	defer f.Close()
+
+	fileReadCloser, err := aghio.LimitReadCloser(f, MaxFileSize)
+	if err != nil {
+		log.Error("LimitReadCloser: %s", err)
+		return 0
+	}
+	defer fileReadCloser.Close()
+
 	var dateToken uint32
-	bs, err := ioutil.ReadAll(f)
+
+	// This use of ReadAll is now safe, because we limited reader.
+	bs, err := ioutil.ReadAll(fileReadCloser)
 	if err != nil {
 		log.Error("ioutil.ReadAll: %s", err)
 		return 0

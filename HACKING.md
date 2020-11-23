@@ -1,4 +1,4 @@
- #  AdGuardHome Developer Guidelines
+ #  *AdGuardHome* Developer Guidelines
 
 As of **2020-11-20**, this document is still a work-in-progress.  Some of the
 rules aren't enforced, and others might change.  Still, this is a good place to
@@ -6,7 +6,11 @@ find out about how we **want** our code to look like.
 
 The rules are mostly sorted in the alphabetical order.
 
-##  Git
+##  *Git*
+
+ *  Call your branches either `NNNN-fix-foo` (where `NNNN` is the ID of the
+    *GitHub* issue you worked on in this branch) or just `fix-foo` if there was
+    no *GitHub* issue.
 
  *  Follow the commit message header format:
 
@@ -22,15 +26,19 @@ The rules are mostly sorted in the alphabetical order.
  *  Only use lowercase letters in your commit message headers.  The rest of the
     message should follow the plain text conventions below.
 
-    The only exception are direct mentions of identifiers from the source code.
+    The only exceptions are direct mentions of identifiers from the source code
+    and filenames like `HACKING.md`.
 
-##  Go
+##  *Go*
 
  *  <https://github.com/golang/go/wiki/CodeReviewComments>.
 
  *  <https://github.com/golang/go/wiki/TestComments>.
 
  *  <https://go-proverbs.github.io/>
+
+ *  Add an empty line before `break`, `continue`, and `return`, unless it's the
+    only statement in that block.
 
  *  Avoid `init` and use explicit initialization functions instead.
 
@@ -52,6 +60,18 @@ The rules are mostly sorted in the alphabetical order.
 
  *  Eschew external dependencies, including transitive, unless
     absolutely necessary.
+
+ *  Name benchmarks and tests using the same convention as examples.  For
+    example:
+
+    ```go
+    func TestFunction(t *testing.T) { /* … */ }
+    func TestFunction_suffix(t *testing.T) { /* … */ }
+    func TestType_Method(t *testing.T) { /* … */ }
+    func TestType_Method_suffix(t *testing.T) { /* … */ }
+    ```
+
+ *  Name the deferred errors (e.g. when closing something) `cerr`.
 
  *  No `goto`.
 
@@ -103,9 +123,9 @@ The rules are mostly sorted in the alphabetical order.
 [constant errors]: https://dave.cheney.net/2016/04/07/constant-errors
 [Linus said]:      https://www.kernel.org/doc/html/v4.17/process/coding-style.html#indentation
 
-##  Markdown
+##  *Markdown*
 
- *  **TODO(a.garipov):** Define our Markdown conventions.
+ *  **TODO(a.garipov):** Define our *Markdown* conventions.
 
 ##  Text, Including Comments
 
@@ -128,7 +148,7 @@ The rules are mostly sorted in the alphabetical order.
 
  *  Use double spacing between sentences to make sentence borders more clear.
 
- *  Use the serial comma (a.k.a. Oxford comma) to improve comprehension,
+ *  Use the serial comma (a.k.a. *Oxford* comma) to improve comprehension,
     decrease ambiguity, and use a common standard.
 
  *  Write todos like this:
@@ -143,16 +163,16 @@ The rules are mostly sorted in the alphabetical order.
     // TODO(usr1, usr2): Fix the frobulation issue.
     ```
 
-##  YAML
+##  *YAML*
 
  *  **TODO(a.garipov):** Define naming conventions for schema names in our
-    OpenAPI YAML file.  And just generally OpenAPI conventions.
+    *OpenAPI* *YAML* file.  And just generally OpenAPI conventions.
 
- *  **TODO(a.garipov):** Find a YAML formatter or write our own.
+ *  **TODO(a.garipov):** Find a *YAML* formatter or write our own.
 
- *  All strings, including keys, must be quoted.  Reason: the [NO-rway Law].
+ *  All strings, including keys, must be quoted.  Reason: the [*NO-rway Law*].
 
- *  Indent with two (**2**) spaces.  YAML documents can get pretty
+ *  Indent with two (**2**) spaces.  *YAML* documents can get pretty
     deeply-nested.
 
  *  No extra indentation in multiline arrays:
@@ -170,4 +190,4 @@ The rules are mostly sorted in the alphabetical order.
 
  *  Use `>` for multiline strings, unless you need to keep the line breaks.
 
-[NO-rway Law]: https://news.ycombinator.com/item?id=17359376
+[*NO-rway Law*]: https://news.ycombinator.com/item?id=17359376

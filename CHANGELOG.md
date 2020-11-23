@@ -9,6 +9,19 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- HTTP API request body size limit [#2305].
+
+[#2305]: https://github.com/AdguardTeam/AdGuardHome/issues/2305
+
+### Changed
+
+- Various internal improvements ([#2271], [#2297]).
+
+[#2271]: https://github.com/AdguardTeam/AdGuardHome/issues/2271
+[#2297]: https://github.com/AdguardTeam/AdGuardHome/issues/2297
+
 
 
 ## [v0.104.3] - 2020-11-19
