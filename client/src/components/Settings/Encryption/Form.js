@@ -232,7 +232,7 @@ let Form = (props) => {
                             <Trans
                                 values={{ link: 'letsencrypt.org' }}
                                 components={[
-                                    <a href="https://letsencrypt.org/" key="0">
+                                    <a target="_blank" rel="noopener noreferrer" href="https://letsencrypt.org/" key="0">
                                         link
                                     </a>,
                                 ]}
