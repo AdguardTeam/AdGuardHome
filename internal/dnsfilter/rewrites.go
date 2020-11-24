@@ -149,7 +149,6 @@ type rewriteEntryJSON struct {
 }
 
 func (d *Dnsfilter) handleRewriteList(w http.ResponseWriter, r *http.Request) {
-
 	arr := []*rewriteEntryJSON{}
 
 	d.confLock.Lock()
@@ -171,7 +170,6 @@ func (d *Dnsfilter) handleRewriteList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (d *Dnsfilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
-
 	jsent := rewriteEntryJSON{}
 	err := json.NewDecoder(r.Body).Decode(&jsent)
 	if err != nil {
@@ -194,7 +192,6 @@ func (d *Dnsfilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 }
 
 func (d *Dnsfilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) {
-
 	jsent := rewriteEntryJSON{}
 	err := json.NewDecoder(r.Body).Decode(&jsent)
 	if err != nil {

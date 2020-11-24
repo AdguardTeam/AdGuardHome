@@ -596,11 +596,13 @@ func (d *Dnsfilter) matchHost(host string, qtype uint16, setts RequestFilteringS
 	//  but also while using the rules returned by it.
 	defer d.engineLock.RUnlock()
 
-	ureq := urlfilter.DNSRequest{}
-	ureq.Hostname = host
-	ureq.ClientIP = setts.ClientIP
-	ureq.ClientName = setts.ClientName
-	ureq.SortedClientTags = setts.ClientTags
+	ureq := urlfilter.DNSRequest{
+		Hostname:         host,
+		SortedClientTags: setts.ClientTags,
+		ClientIP:         setts.ClientIP,
+		ClientName:       setts.ClientName,
+		DNSType:          qtype,
+	}
 
 	if d.filteringEngineWhite != nil {
 		rr, ok := d.filteringEngineWhite.MatchRequest(ureq)

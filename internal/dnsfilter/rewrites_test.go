@@ -12,13 +12,13 @@ func TestRewrites(t *testing.T) {
 	d := Dnsfilter{}
 	// CNAME, A, AAAA
 	d.Rewrites = []RewriteEntry{
-		RewriteEntry{"somecname", "somehost.com", 0, nil},
-		RewriteEntry{"somehost.com", "0.0.0.0", 0, nil},
+		{"somecname", "somehost.com", 0, nil},
+		{"somehost.com", "0.0.0.0", 0, nil},
 
-		RewriteEntry{"host.com", "1.2.3.4", 0, nil},
-		RewriteEntry{"host.com", "1.2.3.5", 0, nil},
-		RewriteEntry{"host.com", "1:2:3::4", 0, nil},
-		RewriteEntry{"www.host.com", "host.com", 0, nil},
+		{"host.com", "1.2.3.4", 0, nil},
+		{"host.com", "1.2.3.5", 0, nil},
+		{"host.com", "1:2:3::4", 0, nil},
+		{"www.host.com", "host.com", 0, nil},
 	}
 	d.prepareRewrites()
 	r := d.processRewrites("host2.com", dns.TypeA)
@@ -39,8 +39,8 @@ func TestRewrites(t *testing.T) {
 
 	// wildcard
 	d.Rewrites = []RewriteEntry{
-		RewriteEntry{"host.com", "1.2.3.4", 0, nil},
-		RewriteEntry{"*.host.com", "1.2.3.5", 0, nil},
+		{"host.com", "1.2.3.4", 0, nil},
+		{"*.host.com", "1.2.3.5", 0, nil},
 	}
 	d.prepareRewrites()
 	r = d.processRewrites("host.com", dns.TypeA)
@@ -56,8 +56,8 @@ func TestRewrites(t *testing.T) {
 
 	// override a wildcard
 	d.Rewrites = []RewriteEntry{
-		RewriteEntry{"a.host.com", "1.2.3.4", 0, nil},
-		RewriteEntry{"*.host.com", "1.2.3.5", 0, nil},
+		{"a.host.com", "1.2.3.4", 0, nil},
+		{"*.host.com", "1.2.3.5", 0, nil},
 	}
 	d.prepareRewrites()
 	r = d.processRewrites("a.host.com", dns.TypeA)
@@ -67,8 +67,8 @@ func TestRewrites(t *testing.T) {
 
 	// wildcard + CNAME
 	d.Rewrites = []RewriteEntry{
-		RewriteEntry{"host.com", "1.2.3.4", 0, nil},
-		RewriteEntry{"*.host.com", "host.com", 0, nil},
+		{"host.com", "1.2.3.4", 0, nil},
+		{"*.host.com", "host.com", 0, nil},
 	}
 	d.prepareRewrites()
 	r = d.processRewrites("www.host.com", dns.TypeA)
@@ -78,9 +78,9 @@ func TestRewrites(t *testing.T) {
 
 	// 2 CNAMEs
 	d.Rewrites = []RewriteEntry{
-		RewriteEntry{"b.host.com", "a.host.com", 0, nil},
-		RewriteEntry{"a.host.com", "host.com", 0, nil},
-		RewriteEntry{"host.com", "1.2.3.4", 0, nil},
+		{"b.host.com", "a.host.com", 0, nil},
+		{"a.host.com", "host.com", 0, nil},
+		{"host.com", "1.2.3.4", 0, nil},
 	}
 	d.prepareRewrites()
 	r = d.processRewrites("b.host.com", dns.TypeA)
@@ -91,9 +91,9 @@ func TestRewrites(t *testing.T) {
 
 	// 2 CNAMEs + wildcard
 	d.Rewrites = []RewriteEntry{
-		RewriteEntry{"b.host.com", "a.host.com", 0, nil},
-		RewriteEntry{"a.host.com", "x.somehost.com", 0, nil},
-		RewriteEntry{"*.somehost.com", "1.2.3.4", 0, nil},
+		{"b.host.com", "a.host.com", 0, nil},
+		{"a.host.com", "x.somehost.com", 0, nil},
+		{"*.somehost.com", "1.2.3.4", 0, nil},
 	}
 	d.prepareRewrites()
 	r = d.processRewrites("b.host.com", dns.TypeA)
@@ -107,9 +107,9 @@ func TestRewritesLevels(t *testing.T) {
 	d := Dnsfilter{}
 	// exact host, wildcard L2, wildcard L3
 	d.Rewrites = []RewriteEntry{
-		RewriteEntry{"host.com", "1.1.1.1", 0, nil},
-		RewriteEntry{"*.host.com", "2.2.2.2", 0, nil},
-		RewriteEntry{"*.sub.host.com", "3.3.3.3", 0, nil},
+		{"host.com", "1.1.1.1", 0, nil},
+		{"*.host.com", "2.2.2.2", 0, nil},
+		{"*.sub.host.com", "3.3.3.3", 0, nil},
 	}
 	d.prepareRewrites()
 
@@ -136,8 +136,8 @@ func TestRewritesExceptionCNAME(t *testing.T) {
 	d := Dnsfilter{}
 	// wildcard; exception for a sub-domain
 	d.Rewrites = []RewriteEntry{
-		RewriteEntry{"*.host.com", "2.2.2.2", 0, nil},
-		RewriteEntry{"sub.host.com", "sub.host.com", 0, nil},
+		{"*.host.com", "2.2.2.2", 0, nil},
+		{"sub.host.com", "sub.host.com", 0, nil},
 	}
 	d.prepareRewrites()
 
@@ -156,8 +156,8 @@ func TestRewritesExceptionWC(t *testing.T) {
 	d := Dnsfilter{}
 	// wildcard; exception for a sub-wildcard
 	d.Rewrites = []RewriteEntry{
-		RewriteEntry{"*.host.com", "2.2.2.2", 0, nil},
-		RewriteEntry{"*.sub.host.com", "*.sub.host.com", 0, nil},
+		{"*.host.com", "2.2.2.2", 0, nil},
+		{"*.sub.host.com", "*.sub.host.com", 0, nil},
 	}
 	d.prepareRewrites()
 
@@ -176,11 +176,11 @@ func TestRewritesExceptionIP(t *testing.T) {
 	d := Dnsfilter{}
 	// exception for AAAA record
 	d.Rewrites = []RewriteEntry{
-		RewriteEntry{"host.com", "1.2.3.4", 0, nil},
-		RewriteEntry{"host.com", "AAAA", 0, nil},
-		RewriteEntry{"host2.com", "::1", 0, nil},
-		RewriteEntry{"host2.com", "A", 0, nil},
-		RewriteEntry{"host3.com", "A", 0, nil},
+		{"host.com", "1.2.3.4", 0, nil},
+		{"host.com", "AAAA", 0, nil},
+		{"host2.com", "::1", 0, nil},
+		{"host2.com", "A", 0, nil},
+		{"host3.com", "A", 0, nil},
 	}
 	d.prepareRewrites()
 
