@@ -537,8 +537,12 @@ func (s *v6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 	}
 }
 
+type netIface interface {
+	Addrs() ([]net.Addr, error)
+}
+
 // ifaceIPv6Addrs returns the interface's IPv6 addresses.
-func ifaceIPv6Addrs(iface *net.Interface) (ips []net.IP, err error) {
+func ifaceIPv6Addrs(iface netIface) (ips []net.IP, err error) {
 	addrs, err := iface.Addrs()
 	if err != nil {
 		return nil, err
@@ -550,8 +554,11 @@ func ifaceIPv6Addrs(iface *net.Interface) (ips []net.IP, err error) {
 			continue
 		}
 
-		if ip := ipnet.IP.To16(); ip != nil {
-			ips = append(ips, ip)
+		if ip := ipnet.IP.To4(); ip == nil {
+			// Assume that net.(*Interface).Addrs can only return
+			// valid IPv4 and IPv6 addresses.  Since this isn't an
+			// IPv4 address, it must be an IPv6 one.
+			ips = append(ips, ipnet.IP)
 		}
 	}
 

@@ -17,17 +17,13 @@ import (
 	"github.com/u-root/u-root/pkg/uio"
 )
 
-var (
-	// BroadcastMac is the broadcast MAC address.
-	//
-	// Any UDP packet sent to this address is broadcast on the subnet.
-	BroadcastMac = net.HardwareAddr([]byte{255, 255, 255, 255, 255, 255})
-)
+// BroadcastMac is the broadcast MAC address.
+//
+// Any UDP packet sent to this address is broadcast on the subnet.
+var BroadcastMac = net.HardwareAddr([]byte{255, 255, 255, 255, 255, 255})
 
-var (
-	// ErrUDPAddrIsRequired is an error used when a passed argument is not of type "*net.UDPAddr".
-	ErrUDPAddrIsRequired = errors.New("must supply UDPAddr")
-)
+// ErrUDPAddrIsRequired is an error used when a passed argument is not of type "*net.UDPAddr".
+var ErrUDPAddrIsRequired = errors.New("must supply UDPAddr")
 
 // NewRawUDPConn returns a UDP connection bound to the interface and port
 // given based on a raw packet socket. All packets are broadcasted.
@@ -68,7 +64,7 @@ func NewBroadcastUDPConn(rawPacketConn net.PacketConn, boundAddr *net.UDPAddr) n
 	}
 }
 
-func udpMatch(addr *net.UDPAddr, bound *net.UDPAddr) bool {
+func udpMatch(addr, bound *net.UDPAddr) bool {
 	if bound == nil {
 		return true
 	}

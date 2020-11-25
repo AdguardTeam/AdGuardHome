@@ -94,12 +94,11 @@ func CheckIfOtherDHCPServersPresentV4(ifaceName string) (bool, error) {
 
 			continue
 		}
-		if ok {
-			return true, nil
-		}
 		if err != nil {
 			return false, err
 		}
+
+		return ok, nil
 	}
 }
 
@@ -216,12 +215,11 @@ func CheckIfOtherDHCPServersPresentV6(ifaceName string) (bool, error) {
 
 			continue
 		}
-		if ok {
-			return true, nil
-		}
 		if err != nil {
 			return false, err
 		}
+
+		return ok, nil
 	}
 }
 

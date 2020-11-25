@@ -30,6 +30,13 @@ and this project adheres to
 [#2297]: https://github.com/AdguardTeam/AdGuardHome/issues/2297
 [#2306]: https://github.com/AdguardTeam/AdGuardHome/issues/2306
 
+### Fixed
+
+- Incorrect detection of the IPv6 address of an interface as well as another
+  infinite loop in the `/dhcp/find_active_dhcp` HTTP API [#2355].
+
+[#2355]: https://github.com/AdguardTeam/AdGuardHome/issues/2355
+
 
 
 ## [v0.104.3] - 2020-11-19

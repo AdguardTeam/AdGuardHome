@@ -281,7 +281,7 @@ func (b UDP) Checksum() uint16 {
 // CalculateChecksum calculates the checksum of the udp packet, given the total
 // length of the packet and the checksum of the network-layer pseudo-header
 // (excluding the total length) and the checksum of the payload.
-func (b UDP) CalculateChecksum(partialChecksum uint16, totalLen uint16) uint16 {
+func (b UDP) CalculateChecksum(partialChecksum, totalLen uint16) uint16 {
 	// Add the length portion of the checksum to the pseudo-checksum.
 	tmp := make([]byte, 2)
 	binary.BigEndian.PutUint16(tmp, totalLen)
@@ -336,13 +336,13 @@ func ChecksumCombine(a, b uint16) uint16 {
 // given destination protocol and network address, ignoring the length
 // field. Pseudo-headers are needed by transport layers when calculating
 // their own checksum.
-func PseudoHeaderChecksum(protocol TransportProtocolNumber, srcAddr net.IP, dstAddr net.IP) uint16 {
+func PseudoHeaderChecksum(protocol TransportProtocolNumber, srcAddr, dstAddr net.IP) uint16 {
 	xsum := Checksum([]byte(srcAddr), 0)
 	xsum = Checksum([]byte(dstAddr), xsum)
 	return Checksum([]byte{0, uint8(protocol)}, xsum)
 }
 
-func udp4pkt(packet []byte, dest *net.UDPAddr, src *net.UDPAddr) []byte {
+func udp4pkt(packet []byte, dest, src *net.UDPAddr) []byte {
 	ipLen := IPv4MinimumSize
 	udpLen := UDPMinimumSize
 
