@@ -23,6 +23,8 @@ and this project adheres to
 
 ### Changed
 
+- Make the mobileconfig HTTP API more robust and predictable, add parameters and
+  improve error response ([#2358]).
 - Improved HTTP requests handling and timeouts. ([#2343]).
 - Our snap package now uses the `core20` image as its base [#2306].
 - Various internal improvements ([#2271], [#2297]).
@@ -31,6 +33,7 @@ and this project adheres to
 [#2297]: https://github.com/AdguardTeam/AdGuardHome/issues/2297
 [#2306]: https://github.com/AdguardTeam/AdGuardHome/issues/2306
 [#2343]: https://github.com/AdguardTeam/AdGuardHome/issues/2343
+[#2358]: https://github.com/AdguardTeam/AdGuardHome/issues/2358
 
 ### Fixed
 

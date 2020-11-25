@@ -1,10 +1,11 @@
 package home
 
 import (
+	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
 
+	"github.com/AdguardTeam/golibs/log"
 	uuid "github.com/satori/go.uuid"
 	"howett.net/plist"
 )
@@ -51,6 +52,7 @@ func getMobileConfig(d DNSSettings) ([]byte, error) {
 	switch d.DNSProtocol {
 	case dnsProtoHTTPS:
 		name = fmt.Sprintf("%s DoH", d.ServerName)
+		d.ServerURL = fmt.Sprintf("https://%s/dns-query", d.ServerName)
 	case dnsProtoTLS:
 		name = fmt.Sprintf("%s DoT", d.ServerName)
 	default:
@@ -80,34 +82,46 @@ func getMobileConfig(d DNSSettings) ([]byte, error) {
 	return plist.MarshalIndent(data, plist.XMLFormat, "\t")
 }
 
-func handleMobileConfig(w http.ResponseWriter, d DNSSettings) {
+func handleMobileConfig(w http.ResponseWriter, r *http.Request, dnsp string) {
+	host := r.URL.Query().Get("host")
+	if host == "" {
+		host = Context.tls.conf.ServerName
+	}
+
+	if host == "" {
+		w.WriteHeader(http.StatusInternalServerError)
+
+		const msg = "no host in query parameters and no server_name"
+		err := json.NewEncoder(w).Encode(&jsonError{
+			Message: msg,
+		})
+		if err != nil {
+			log.Debug("writing 500 json response: %s", err)
+		}
+
+		return
+	}
+
+	d := DNSSettings{
+		DNSProtocol: dnsp,
+		ServerName:  host,
+	}
+
 	mobileconfig, err := getMobileConfig(d)
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "plist.MarshalIndent: %s", err)
+
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/xml")
 	_, _ = w.Write(mobileconfig)
 }
 
-func handleMobileConfigDoh(w http.ResponseWriter, r *http.Request) {
-	handleMobileConfig(w, DNSSettings{
-		DNSProtocol: dnsProtoHTTPS,
-		ServerURL:   fmt.Sprintf("https://%s/dns-query", r.Host),
-	})
+func handleMobileConfigDOH(w http.ResponseWriter, r *http.Request) {
+	handleMobileConfig(w, r, dnsProtoHTTPS)
 }
 
-func handleMobileConfigDot(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	var host string
-	host, _, err = net.SplitHostPort(r.Host)
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "getting host: %s", err)
-	}
-
-	handleMobileConfig(w, DNSSettings{
-		DNSProtocol: dnsProtoTLS,
-		ServerName:  host,
-	})
+func handleMobileConfigDOT(w http.ResponseWriter, r *http.Request) {
+	handleMobileConfig(w, r, dnsProtoTLS)
 }

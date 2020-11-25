@@ -683,3 +683,12 @@ func getHTTPProxy(req *http.Request) (*url.URL, error) {
 	}
 	return url.Parse(config.ProxyURL)
 }
+
+// jsonError is a generic JSON error response.
+//
+// TODO(a.garipov): Merge together with the implementations in .../dhcpd and
+// other packages after refactoring the web handler registering.
+type jsonError struct {
+	// Message is the error message, an opaque string.
+	Message string `json:"message"`
+}
