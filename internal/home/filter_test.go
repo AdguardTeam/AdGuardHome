@@ -12,7 +12,8 @@ import (
 )
 
 func testStartFilterListener() net.Listener {
-	http.HandleFunc("/filters/1.txt", func(w http.ResponseWriter, r *http.Request) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/filters/1.txt", func(w http.ResponseWriter, r *http.Request) {
 		content := `||example.org^$third-party
 # Inline comment example
 ||example.com^$third-party
@@ -26,7 +27,7 @@ func testStartFilterListener() net.Listener {
 		panic(err)
 	}
 
-	go func() { _ = http.Serve(listener, nil) }()
+	go func() { _ = http.Serve(listener, mux) }()
 	return listener
 }
 

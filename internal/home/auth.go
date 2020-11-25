@@ -360,7 +360,7 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 
 // RegisterAuthHandlers - register handlers
 func RegisterAuthHandlers() {
-	http.Handle("/control/login", postInstallHandler(ensureHandler("POST", handleLogin)))
+	Context.mux.Handle("/control/login", postInstallHandler(ensureHandler("POST", handleLogin)))
 	httpRegister("GET", "/control/logout", handleLogout)
 }
 

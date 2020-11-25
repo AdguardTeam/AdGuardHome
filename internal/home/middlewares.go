@@ -2,7 +2,6 @@ package home
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
 
@@ -34,22 +33,6 @@ func limitRequestBody(h http.Handler) (limited http.Handler) {
 		r.Body, err = aghio.LimitReadCloser(r.Body, RequestBodySizeLimit)
 		if err != nil {
 			log.Error("limitRequestBody: %s", err)
-
-			return
-		}
-
-		h.ServeHTTP(w, r)
-	})
-}
-
-// TODO(a.garipov): We currently have to use this, because everything registers
-// its HTTP handlers in http.DefaultServeMux.  In the future, refactor our HTTP
-// API initialization process and stop using the gosh darn http.DefaultServeMux
-// for anything at all.  Gosh darn global variables.
-func filterPProf(h http.Handler) (filtered http.Handler) {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.URL.Path, "/debug/pprof") {
-			http.NotFound(w, r)
 
 			return
 		}

@@ -372,7 +372,7 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 }
 
 func (web *Web) registerInstallHandlers() {
-	http.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(web.handleInstallGetAddresses)))
-	http.HandleFunc("/control/install/check_config", preInstall(ensurePOST(web.handleInstallCheckConfig)))
-	http.HandleFunc("/control/install/configure", preInstall(ensurePOST(web.handleInstallConfigure)))
+	Context.mux.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(web.handleInstallGetAddresses)))
+	Context.mux.HandleFunc("/control/install/check_config", preInstall(ensurePOST(web.handleInstallCheckConfig)))
+	Context.mux.HandleFunc("/control/install/configure", preInstall(ensurePOST(web.handleInstallConfigure)))
 }
