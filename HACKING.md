@@ -47,6 +47,9 @@ The rules are mostly sorted in the alphabetical order.
  *  Document everything, including unexported top-level identifiers, to build
     a habit of writing documentation.
 
+ *  Constructors should validate their arguments and return meaningful errors.
+    As a corollary, avoid lazy initialization.
+
  *  Don't put variable names into any kind of quotes.
 
  *  Don't use naked `return`s.

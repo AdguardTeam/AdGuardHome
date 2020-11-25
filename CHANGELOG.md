@@ -9,18 +9,26 @@ and this project adheres to
 
 ## [Unreleased]
 
+<!--
+## [v0.105.0] - 2020-12-21
+-->
+
 ### Added
 
+- `$dnstype` modifier for filters [#2337].
 - HTTP API request body size limit [#2305].
 
 [#2305]: https://github.com/AdguardTeam/AdGuardHome/issues/2305
+[#2337]: https://github.com/AdguardTeam/AdGuardHome/issues/2337
 
 ### Changed
 
+- Our snap package now uses the `core20` image as its base [#2306].
 - Various internal improvements ([#2271], [#2297]).
 
 [#2271]: https://github.com/AdguardTeam/AdGuardHome/issues/2271
 [#2297]: https://github.com/AdguardTeam/AdGuardHome/issues/2297
+[#2306]: https://github.com/AdguardTeam/AdGuardHome/issues/2306
 
 
 
