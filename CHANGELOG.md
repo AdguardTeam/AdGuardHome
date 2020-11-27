@@ -37,9 +37,11 @@ and this project adheres to
 
 ### Fixed
 
+- A JSON parsing error in query log [#2345].
 - Incorrect detection of the IPv6 address of an interface as well as another
   infinite loop in the `/dhcp/find_active_dhcp` HTTP API [#2355].
 
+[#2345]: https://github.com/AdguardTeam/AdGuardHome/issues/2345
 [#2355]: https://github.com/AdguardTeam/AdGuardHome/issues/2355
 
 

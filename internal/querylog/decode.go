@@ -3,7 +3,7 @@ package querylog
 import (
 	"encoding/base64"
 	"encoding/json"
-	"strconv"
+	"io"
 	"strings"
 	"time"
 
@@ -84,15 +84,11 @@ var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
 		return err
 	},
 	"IsFiltered": func(t json.Token, ent *logEntry) error {
-		v, ok := t.(string)
+		v, ok := t.(bool)
 		if !ok {
 			return nil
 		}
-		b, err := strconv.ParseBool(v)
-		if err != nil {
-			return err
-		}
-		ent.Result.IsFiltered = b
+		ent.Result.IsFiltered = v
 		return nil
 	},
 	"Rule": func(t json.Token, ent *logEntry) error {
@@ -104,23 +100,23 @@ var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
 		return nil
 	},
 	"FilterID": func(t json.Token, ent *logEntry) error {
-		v, ok := t.(string)
+		v, ok := t.(json.Number)
 		if !ok {
 			return nil
 		}
-		i, err := strconv.Atoi(v)
+		i, err := v.Int64()
 		if err != nil {
 			return err
 		}
-		ent.Result.FilterID = int64(i)
+		ent.Result.FilterID = i
 		return nil
 	},
 	"Reason": func(t json.Token, ent *logEntry) error {
-		v, ok := t.(string)
+		v, ok := t.(json.Number)
 		if !ok {
 			return nil
 		}
-		i, err := strconv.Atoi(v)
+		i, err := v.Int64()
 		if err != nil {
 			return err
 		}
@@ -144,15 +140,18 @@ var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
 		return nil
 	},
 	"Elapsed": func(t json.Token, ent *logEntry) error {
-		v, ok := t.(string)
+		v, ok := t.(json.Number)
 		if !ok {
 			return nil
 		}
-		i, err := strconv.Atoi(v)
+		i, err := v.Int64()
 		if err != nil {
 			return err
 		}
 		ent.Elapsed = time.Duration(i)
+		return nil
+	},
+	"Result": func(json.Token, *logEntry) error {
 		return nil
 	},
 	"Question": func(t json.Token, ent *logEntry) error {
@@ -192,10 +191,13 @@ var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
 
 func decodeLogEntry(ent *logEntry, str string) {
 	dec := json.NewDecoder(strings.NewReader(str))
-	for dec.More() {
+	dec.UseNumber()
+	for {
 		keyToken, err := dec.Token()
 		if err != nil {
-			log.Debug("decodeLogEntry err: %s", err)
+			if err != io.EOF {
+				log.Debug("decodeLogEntry err: %s", err)
+			}
 			return
 		}
 		if _, ok := keyToken.(json.Delim); ok {
@@ -203,15 +205,16 @@ func decodeLogEntry(ent *logEntry, str string) {
 		}
 		key := keyToken.(string)
 		handler, ok := logEntryHandlers[key]
-		value, err := dec.Token()
+		if !ok {
+			continue
+		}
+		val, err := dec.Token()
 		if err != nil {
 			return
 		}
-		if ok {
-			if err := handler(value, ent); err != nil {
-				log.Debug("decodeLogEntry err: %s", err)
-				return
-			}
+		if err := handler(val, ent); err != nil {
+			log.Debug("decodeLogEntry err: %s", err)
+			return
 		}
 	}
 }
