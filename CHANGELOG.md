@@ -15,9 +15,12 @@ and this project adheres to
 
 ### Added
 
+- A 5 second wait period until a DHCP server's network interface gets an IP
+  address [#2304].
 - `$dnstype` modifier for filters [#2337].
 - HTTP API request body size limit [#2305].
 
+[#2304]: https://github.com/AdguardTeam/AdGuardHome/issues/2304
 [#2305]: https://github.com/AdguardTeam/AdGuardHome/issues/2305
 [#2337]: https://github.com/AdguardTeam/AdGuardHome/issues/2337
 
