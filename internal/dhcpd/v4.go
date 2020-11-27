@@ -16,7 +16,9 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
 )
 
-// v4Server - DHCPv4 server
+// v4Server is a DHCPv4 server.
+//
+// TODO(a.garipov): Think about unifying this and v6Server.
 type v4Server struct {
 	srv        *server4.Server
 	leasesLock sync.Mutex
@@ -560,27 +562,6 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 	}
 }
 
-// ifaceIPv4Addrs returns the interface's IPv4 addresses.
-func ifaceIPv4Addrs(iface *net.Interface) (ips []net.IP, err error) {
-	addrs, err := iface.Addrs()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, a := range addrs {
-		ipnet, ok := a.(*net.IPNet)
-		if !ok {
-			continue
-		}
-
-		if ip := ipnet.IP.To4(); ip != nil {
-			ips = append(ips, ip)
-		}
-	}
-
-	return ips, nil
-}
-
 // Start starts the IPv4 DHCP server.
 func (s *v4Server) Start() error {
 	if !s.conf.Enabled {
@@ -595,26 +576,9 @@ func (s *v4Server) Start() error {
 
 	log.Debug("dhcpv4: starting...")
 
-	dnsIPAddrs, err := ifaceIPv4Addrs(iface)
+	dnsIPAddrs, err := ifaceDNSIPAddrs(iface, ipVersion4, defaultMaxAttempts, defaultBackoff)
 	if err != nil {
-		return fmt.Errorf("dhcpv4: getting ipv4 addrs for iface %s: %w", ifaceName, err)
-	}
-
-	switch len(dnsIPAddrs) {
-	case 0:
-		log.Debug("dhcpv4: no ipv4 address for interface %s", iface.Name)
-
-		return nil
-	case 1:
-		// Some Android devices use 8.8.8.8 if there is no secondary DNS
-		// server.  Fix that by setting the secondary DNS address to our
-		// address as well.
-		//
-		// See https://github.com/AdguardTeam/AdGuardHome/issues/1708.
-		log.Debug("dhcpv4: setting secondary dns ip to iself for interface %s", iface.Name)
-		dnsIPAddrs = append(dnsIPAddrs, dnsIPAddrs[0])
-	default:
-		// Go on.
+		return fmt.Errorf("dhcpv4: interface %s: %w", ifaceName, err)
 	}
 
 	s.conf.dnsIPAddrs = dnsIPAddrs

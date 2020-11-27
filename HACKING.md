@@ -1,8 +1,9 @@
  #  *AdGuardHome* Developer Guidelines
 
-As of **2020-11-20**, this document is still a work-in-progress.  Some of the
-rules aren't enforced, and others might change.  Still, this is a good place to
-find out about how we **want** our code to look like.
+As of **2020-11-27**, this document is a work-in-progress, but should still be
+followed.  Some of the rules aren't enforced as thoroughly or remain broken in
+old code, but this is still the place to find out about what we **want** our
+code to look like.
 
 The rules are mostly sorted in the alphabetical order.
 
@@ -31,26 +32,16 @@ The rules are mostly sorted in the alphabetical order.
 
 ##  *Go*
 
- *  <https://github.com/golang/go/wiki/CodeReviewComments>.
+ ###  Code And Naming
 
- *  <https://github.com/golang/go/wiki/TestComments>.
-
- *  <https://go-proverbs.github.io/>
-
- *  Add an empty line before `break`, `continue`, and `return`, unless it's the
-    only statement in that block.
+ *  Avoid `goto`.
 
  *  Avoid `init` and use explicit initialization functions instead.
 
  *  Avoid `new`, especially with structs.
 
- *  Document everything, including unexported top-level identifiers, to build
-    a habit of writing documentation.
-
  *  Constructors should validate their arguments and return meaningful errors.
     As a corollary, avoid lazy initialization.
-
- *  Don't put variable names into any kind of quotes.
 
  *  Don't use naked `return`s.
 
@@ -76,24 +67,33 @@ The rules are mostly sorted in the alphabetical order.
 
  *  Name the deferred errors (e.g. when closing something) `cerr`.
 
- *  No `goto`.
-
  *  No shadowing, since it can often lead to subtle bugs, especially with
     errors.
 
  *  Prefer constants to variables where possible.  Reduce global variables.  Use
     [constant errors] instead of `errors.New`.
 
- *  Put comments above the documented entity, **not** to the side, to improve
-    readability.
-
- *  Use `gofumpt --extra -s`.
-
-    **TODO(a.garipov):** Add to the linters.
-
  *  Use linters.
 
  *  Use named returns to improve readability of function signatures.
+
+ *  Write logs and error messages in lowercase only to make it easier to `grep`
+    logs and error messages without using the `-i` flag.
+
+[constant errors]: https://dave.cheney.net/2016/04/07/constant-errors
+[Linus said]:      https://www.kernel.org/doc/html/v4.17/process/coding-style.html#indentation
+
+ ###  Commenting
+
+ *  See also the *Text, Including Comments* section below.
+
+ *  Document everything, including unexported top-level identifiers, to build
+    a habit of writing documentation.
+
+ *  Don't put identifiers into any kind of quotes.
+
+ *  Put comments above the documented entity, **not** to the side, to improve
+    readability.
 
  *  When a method implements an interface, start the doc comment with the
     standard template:
@@ -105,8 +105,14 @@ The rules are mostly sorted in the alphabetical order.
     }
     ```
 
- *  Write logs and error messages in lowercase only to make it easier to `grep`
-    logs and error messages without using the `-i` flag.
+ ###  Formatting
+
+ *  Add an empty line before `break`, `continue`, `fallthrough`, and `return`,
+    unless it's the only statement in that block.
+
+ *  Use `gofumpt --extra -s`.
+
+    **TODO(a.garipov):** Add to the linters.
 
  *  Write slices of struct like this:
 
@@ -123,8 +129,13 @@ The rules are mostly sorted in the alphabetical order.
     }}
     ```
 
-[constant errors]: https://dave.cheney.net/2016/04/07/constant-errors
-[Linus said]:      https://www.kernel.org/doc/html/v4.17/process/coding-style.html#indentation
+ ###  Recommended Reading
+
+ *  <https://github.com/golang/go/wiki/CodeReviewComments>.
+
+ *  <https://github.com/golang/go/wiki/TestComments>.
+
+ *  <https://go-proverbs.github.io/>
 
 ##  *Markdown*
 

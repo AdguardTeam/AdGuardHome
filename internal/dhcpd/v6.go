@@ -17,7 +17,9 @@ import (
 
 const valueIAID = "ADGH" // value for IANA.ID
 
-// v6Server - DHCPv6 server
+// v6Server is a DHCPv6 server.
+//
+// TODO(a.garipov): Think about unifying this and v4Server.
 type v6Server struct {
 	srv        *server6.Server
 	leasesLock sync.Mutex
@@ -537,34 +539,6 @@ func (s *v6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 	}
 }
 
-type netIface interface {
-	Addrs() ([]net.Addr, error)
-}
-
-// ifaceIPv6Addrs returns the interface's IPv6 addresses.
-func ifaceIPv6Addrs(iface netIface) (ips []net.IP, err error) {
-	addrs, err := iface.Addrs()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, a := range addrs {
-		ipnet, ok := a.(*net.IPNet)
-		if !ok {
-			continue
-		}
-
-		if ip := ipnet.IP.To4(); ip == nil {
-			// Assume that net.(*Interface).Addrs can only return
-			// valid IPv4 and IPv6 addresses.  Since this isn't an
-			// IPv4 address, it must be an IPv6 one.
-			ips = append(ips, ipnet.IP)
-		}
-	}
-
-	return ips, nil
-}
-
 // initialize RA module
 func (s *v6Server) initRA(iface *net.Interface) error {
 	// choose the source IP address - should be link-local-unicast
@@ -598,24 +572,11 @@ func (s *v6Server) Start() error {
 		return fmt.Errorf("dhcpv6: finding interface %s by name: %w", ifaceName, err)
 	}
 
-	log.Debug("dhcpv4: starting...")
+	log.Debug("dhcpv6: starting...")
 
-	dnsIPAddrs, err := ifaceIPv6Addrs(iface)
+	dnsIPAddrs, err := ifaceDNSIPAddrs(iface, ipVersion6, defaultMaxAttempts, defaultBackoff)
 	if err != nil {
-		return fmt.Errorf("dhcpv6: getting ipv6 addrs for iface %s: %w", ifaceName, err)
-	}
-
-	switch len(dnsIPAddrs) {
-	case 0:
-		log.Debug("dhcpv6: no ipv6 address for interface %s", iface.Name)
-
-		return nil
-	case 1:
-		// See the comment in (*v4Server).Start.
-		log.Debug("dhcpv6: setting secondary dns ip to iself for interface %s", iface.Name)
-		dnsIPAddrs = append(dnsIPAddrs, dnsIPAddrs[0])
-	default:
-		// Go on.
+		return fmt.Errorf("dhcpv6: interface %s: %w", ifaceName, err)
 	}
 
 	s.conf.dnsIPAddrs = dnsIPAddrs
@@ -631,7 +592,7 @@ func (s *v6Server) Start() error {
 		return nil
 	}
 
-	log.Debug("DHCPv6: starting...")
+	log.Debug("dhcpv6: listening...")
 
 	if len(iface.HardwareAddr) != 6 {
 		return fmt.Errorf("dhcpv6: invalid MAC %s", iface.HardwareAddr)

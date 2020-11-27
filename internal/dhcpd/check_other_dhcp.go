@@ -26,7 +26,7 @@ func CheckIfOtherDHCPServersPresentV4(ifaceName string) (bool, error) {
 		return false, fmt.Errorf("couldn't find interface by name %s: %w", ifaceName, err)
 	}
 
-	ifaceIPNet, err := ifaceIPv4Addrs(iface)
+	ifaceIPNet, err := ifaceIPAddrs(iface, ipVersion4)
 	if err != nil {
 		return false, fmt.Errorf("getting ipv4 addrs for iface %s: %w", ifaceName, err)
 	}
@@ -161,7 +161,7 @@ func CheckIfOtherDHCPServersPresentV6(ifaceName string) (bool, error) {
 		return false, fmt.Errorf("dhcpv6: net.InterfaceByName: %s: %w", ifaceName, err)
 	}
 
-	ifaceIPNet, err := ifaceIPv6Addrs(iface)
+	ifaceIPNet, err := ifaceIPAddrs(iface, ipVersion6)
 	if err != nil {
 		return false, fmt.Errorf("getting ipv6 addrs for iface %s: %w", ifaceName, err)
 	}

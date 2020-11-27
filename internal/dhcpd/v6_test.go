@@ -6,7 +6,6 @@ import (
 	"net"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/insomniacslk/dhcp/dhcpv6"
 	"github.com/insomniacslk/dhcp/iana"
 	"github.com/stretchr/testify/assert"
@@ -223,58 +222,4 @@ func TestV6GetDynamicLease(t *testing.T) {
 	assert.True(t, !ip6InRange(net.ParseIP("2001::2"), net.ParseIP("2002::2")))
 	assert.True(t, ip6InRange(net.ParseIP("2001::2"), net.ParseIP("2001::2")))
 	assert.True(t, ip6InRange(net.ParseIP("2001::2"), net.ParseIP("2001::3")))
-}
-
-type fakeIface struct {
-	addrs []net.Addr
-	err   error
-}
-
-// Addrs implements the netIface interface for *fakeIface.
-func (iface *fakeIface) Addrs() (addrs []net.Addr, err error) {
-	if iface.err != nil {
-		return nil, iface.err
-	}
-
-	return iface.addrs, nil
-}
-
-func TestIfaceIPv6Addrs(t *testing.T) {
-	ip := net.IP{1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6}
-	ip4 := net.IP{1, 2, 3, 4}
-	addr := &net.IPNet{IP: ip}
-	errTest := agherr.Error("test error")
-
-	testCases := []struct {
-		name    string
-		iface   netIface
-		want    []net.IP
-		wantErr error
-	}{{
-		name:    "success",
-		iface:   &fakeIface{addrs: []net.Addr{addr}, err: nil},
-		want:    []net.IP{ip},
-		wantErr: nil,
-	}, {
-		name: "success_with_ipv4",
-		iface: &fakeIface{
-			addrs: []net.Addr{addr, &net.IPNet{IP: ip4}},
-			err:   nil,
-		},
-		want:    []net.IP{ip},
-		wantErr: nil,
-	}, {
-		name:    "error",
-		iface:   &fakeIface{addrs: []net.Addr{addr}, err: errTest},
-		want:    nil,
-		wantErr: errTest,
-	}}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			got, gotErr := ifaceIPv6Addrs(tc.iface)
-			assert.Equal(t, tc.want, got)
-			assert.Equal(t, tc.wantErr, gotErr)
-		})
-	}
 }
