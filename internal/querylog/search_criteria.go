@@ -58,7 +58,7 @@ func (c *searchCriteria) quickMatch(line string) bool {
 }
 
 // quickMatchJSONValue - helper used by quickMatch
-func (c *searchCriteria) quickMatchJSONValue(line string, propertyName string) bool {
+func (c *searchCriteria) quickMatchJSONValue(line, propertyName string) bool {
 	val := readJSONValue(line, propertyName)
 	if len(val) == 0 {
 		return false

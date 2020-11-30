@@ -65,7 +65,7 @@ func (l *queryLog) flushToFile(buffer []*logEntry) error {
 
 	l.fileWriteLock.Lock()
 	defer l.fileWriteLock.Unlock()
-	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
 	if err != nil {
 		log.Error("failed to create file \"%s\": %s", filename, err)
 		return err

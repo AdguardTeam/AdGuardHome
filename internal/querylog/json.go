@@ -32,7 +32,7 @@ func (l *queryLog) getClientIP(clientIP string) string {
 // entriesToJSON - converts log entries to JSON
 func (l *queryLog) entriesToJSON(entries []*logEntry, oldest time.Time) map[string]interface{} {
 	// init the response object
-	var data = []map[string]interface{}{}
+	data := []map[string]interface{}{}
 
 	// the elements order is already reversed (from newer to older)
 	for i := 0; i < len(entries); i++ {
@@ -41,7 +41,7 @@ func (l *queryLog) entriesToJSON(entries []*logEntry, oldest time.Time) map[stri
 		data = append(data, jsonEntry)
 	}
 
-	var result = map[string]interface{}{}
+	result := map[string]interface{}{}
 	result["oldest"] = ""
 	if !oldest.IsZero() {
 		result["oldest"] = oldest.Format(time.RFC3339Nano)
@@ -123,7 +123,7 @@ func answerToMap(a *dns.Msg) []map[string]interface{} {
 		return nil
 	}
 
-	var answers = []map[string]interface{}{}
+	answers := []map[string]interface{}{}
 	for _, k := range a.Answer {
 		header := k.Header()
 		answer := map[string]interface{}{

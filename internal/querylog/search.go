@@ -2,6 +2,7 @@ package querylog
 
 import (
 	"io"
+	"sort"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
@@ -45,6 +46,14 @@ func (l *queryLog) search(params *searchParams) ([]*logEntry, time.Time) {
 		// remove extra records
 		entries = entries[:totalLimit]
 	}
+
+	// Resort entries on start time to partially mitigate query log looking
+	// weird on the frontend.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/2293.
+	sort.SliceStable(entries, func(i, j int) (less bool) {
+		return entries[i].Time.After(entries[j].Time)
+	})
 
 	if params.offset > 0 {
 		if len(entries) > params.offset {

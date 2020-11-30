@@ -47,7 +47,7 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 	entries, oldest := l.search(params)
 
 	// convert log entries to JSON
-	var data = l.entriesToJSON(entries, oldest)
+	data := l.entriesToJSON(entries, oldest)
 
 	jsonVal, err := json.Marshal(data)
 	if err != nil {
