@@ -1,4 +1,6 @@
-package util
+//+build windows
+
+package sysutil
 
 import (
 	"fmt"
@@ -7,11 +9,14 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-// Set user-specified limit of how many fd's we can use
-func SetRlimit(val uint) {
+func canBindPrivilegedPorts() (can bool, err error) {
+	return HaveAdminRights()
 }
 
-func HaveAdminRights() (bool, error) {
+func setRlimit(val uint) {
+}
+
+func haveAdminRights() (bool, error) {
 	var token windows.Token
 	h := windows.CurrentProcess()
 	err := windows.OpenProcessToken(h, windows.TOKEN_QUERY, &token)
@@ -32,6 +37,6 @@ func HaveAdminRights() (bool, error) {
 	return true, nil
 }
 
-func SendProcessSignal(pid int, sig syscall.Signal) error {
+func sendProcessSignal(pid int, sig syscall.Signal) error {
 	return fmt.Errorf("not supported on Windows")
 }

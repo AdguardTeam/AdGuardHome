@@ -26,6 +26,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
+	"github.com/AdguardTeam/AdGuardHome/internal/sysutil"
 	"github.com/AdguardTeam/AdGuardHome/internal/update"
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/golibs/log"
@@ -222,7 +223,7 @@ func setupConfig(args options) {
 
 	if (runtime.GOOS == "linux" || runtime.GOOS == "darwin") &&
 		config.RlimitNoFile != 0 {
-		util.SetRlimit(config.RlimitNoFile)
+		sysutil.SetRlimit(config.RlimitNoFile)
 	}
 
 	// override bind host/port from the console
@@ -376,7 +377,7 @@ func checkPermissions() {
 	if runtime.GOOS == "windows" {
 		// On Windows we need to have admin rights to run properly
 
-		admin, _ := util.HaveAdminRights()
+		admin, _ := sysutil.HaveAdminRights()
 		if admin {
 			return
 		}
@@ -493,7 +494,7 @@ func configureLogger(args options) {
 
 	if ls.LogFile == configSyslog {
 		// Use syslog where it is possible and eventlog on Windows
-		err := util.ConfigureSyslog(serviceName)
+		err := sysutil.ConfigureSyslog(serviceName)
 		if err != nil {
 			log.Fatalf("cannot initialize syslog: %s", err)
 		}

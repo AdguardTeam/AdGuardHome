@@ -1,4 +1,6 @@
-package util
+//+build windows nacl plan9
+
+package sysutil
 
 import (
 	"log"
@@ -12,12 +14,12 @@ type eventLogWriter struct {
 	el *eventlog.Log
 }
 
-// Write sends a log message to the Event Log.
+// Write implements io.Writer interface for eventLogWriter.
 func (w *eventLogWriter) Write(b []byte) (int, error) {
 	return len(b), w.el.Info(1, string(b))
 }
 
-func ConfigureSyslog(serviceName string) error {
+func configureSyslog(serviceName string) error {
 	// Note that the eventlog src is the same as the service name
 	// Otherwise, we will get "the description for event id cannot be found" warning in every log record
 

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/sysutil"
 	"github.com/AdguardTeam/AdGuardHome/internal/update"
-	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -104,12 +104,7 @@ func getVersionResp(info update.VersionInfo) []byte {
 				tlsConf.PortDNSOverQUIC < 1024)) ||
 				config.BindPort < 1024 ||
 				config.DNS.Port < 1024) {
-			// On UNIX, if we're running under a regular user,
-			//  but with CAP_NET_BIND_SERVICE set on a binary file,
-			//  and we're listening on ports <1024,
-			//  we won't be able to restart after we replace the binary file,
-			//  because we'll lose CAP_NET_BIND_SERVICE capability.
-			canUpdate, _ = util.HaveAdminRights()
+			canUpdate, _ = sysutil.CanBindPrivilegedPorts()
 		}
 		ret["can_autoupdate"] = canUpdate
 	}
