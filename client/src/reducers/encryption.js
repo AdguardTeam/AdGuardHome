@@ -9,6 +9,8 @@ const encryption = handleActions({
         const newState = {
             ...state,
             ...payload,
+            /* TODO: handle property delete on api refactor */
+            server_name: payload.server_name || '',
             processing: false,
         };
         return newState;
@@ -20,6 +22,7 @@ const encryption = handleActions({
         const newState = {
             ...state,
             ...payload,
+            server_name: payload.server_name || '',
             processingConfig: false,
         };
         return newState;
@@ -49,6 +52,7 @@ const encryption = handleActions({
             subject,
             warning_validation,
             dns_names,
+            server_name: payload.server_name || '',
             processingValidate: false,
         };
         return newState;
