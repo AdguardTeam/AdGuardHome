@@ -122,6 +122,7 @@ func (s *Server) WriteDiskConfig(c *FilteringConfig) {
 	c.DisallowedClients = stringArrayDup(sc.DisallowedClients)
 	c.BlockedHosts = stringArrayDup(sc.BlockedHosts)
 	c.UpstreamDNS = stringArrayDup(sc.UpstreamDNS)
+	c.RebindingAllowedHosts = stringArrayDup(sc.RebindingAllowedHosts)
 	s.RUnlock()
 }
 

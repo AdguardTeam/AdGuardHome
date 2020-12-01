@@ -123,8 +123,8 @@ func (s *Server) filterDNSResponse(ctx *dnsContext) (*dnsfilter.Result, error) {
 
 		switch v := a.(type) {
 		case *dns.CNAME:
-			log.Debug("DNSFwd: Checking CNAME %s for %s", v.Target, v.Hdr.Name)
 			host = strings.TrimSuffix(v.Target, ".")
+			log.Debug("DNSFwd: Checking CNAME %s for %s", v.Target, v.Hdr.Name)
 
 		case *dns.A:
 			host = v.A.String()

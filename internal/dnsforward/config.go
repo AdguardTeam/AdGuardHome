@@ -76,6 +76,11 @@ type FilteringConfig struct {
 	CacheMinTTL uint32 `yaml:"cache_ttl_min"` // override TTL value (minimum) received from upstream server
 	CacheMaxTTL uint32 `yaml:"cache_ttl_max"` // override TTL value (maximum) received from upstream server
 
+	// DNS rebinding protection settings
+	// --
+	RebindingEnabled      bool     `yaml:"rebinding_enabled"`
+	RebindingAllowedHosts []string `yaml:"rebinding_allowed_hosts"`
+
 	// Other settings
 	// --
 
