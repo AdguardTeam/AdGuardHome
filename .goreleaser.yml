@@ -93,10 +93,10 @@
       'plugs':
       # Add the "netrwork-bind" plug to bind to interfaces.
       - 'network-bind'
-      # Add the "netrwork-control" plug to be able to bind to ports below
-      # 1024 (cap_net_bind_service) and also to bind to a particular
-      # interface using SO_BINDTODEVICE (cap_net_raw).
-      - 'network-control'
+      # Add the "netrwork-observe" plug to be able to bind to ports below 1024
+      # (cap_net_bind_service) and also to bind to a particular interface using
+      # SO_BINDTODEVICE (cap_net_raw).
+      - 'network-observe'
       'daemon': 'simple'
     'adguard-home-web':
       'command': 'adguard-home-web.sh'
