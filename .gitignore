@@ -12,6 +12,7 @@
 /querylog.json
 /querylog.json.1
 coverage.txt
+leases.db
 
 # Test output
 dnsfilter/tests/top-1m.csv

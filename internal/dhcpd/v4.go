@@ -581,6 +581,11 @@ func (s *v4Server) Start() error {
 		return fmt.Errorf("dhcpv4: interface %s: %w", ifaceName, err)
 	}
 
+	if len(dnsIPAddrs) == 0 {
+		// No available IP addresses which may appear later.
+		return nil
+	}
+
 	s.conf.dnsIPAddrs = dnsIPAddrs
 
 	laddr := &net.UDPAddr{

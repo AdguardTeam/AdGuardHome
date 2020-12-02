@@ -579,6 +579,11 @@ func (s *v6Server) Start() error {
 		return fmt.Errorf("dhcpv6: interface %s: %w", ifaceName, err)
 	}
 
+	if len(dnsIPAddrs) == 0 {
+		// No available IP addresses which may appear later.
+		return nil
+	}
+
 	s.conf.dnsIPAddrs = dnsIPAddrs
 
 	err = s.initRA(iface)
