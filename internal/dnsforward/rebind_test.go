@@ -83,12 +83,12 @@ func TestIsResponseRebind(t *testing.T) {
 
 		"localhost",
 	} {
-		s.conf.RebindingEnabled = true
+		s.conf.RebindingProtectionEnabled = true
 		assert.True(t, s.isResponseRebind("example.com", host))
 		assert.False(t, s.isResponseRebind("totally-safe.com", host))
 		assert.False(t, s.isResponseRebind("absolutely.totally-safe.com", host))
 
-		s.conf.RebindingEnabled = false
+		s.conf.RebindingProtectionEnabled = false
 		assert.False(t, s.isResponseRebind("example.com", host))
 		assert.False(t, s.isResponseRebind("totally-safe.com", host))
 		assert.False(t, s.isResponseRebind("absolutely.totally-safe.com", host))
@@ -98,12 +98,12 @@ func TestIsResponseRebind(t *testing.T) {
 		"200.168.2.3",
 		"another-example.com",
 	} {
-		s.conf.RebindingEnabled = true
+		s.conf.RebindingProtectionEnabled = true
 		assert.False(t, s.isResponseRebind("example.com", host))
 		assert.False(t, s.isResponseRebind("totally-safe.com", host))
 		assert.False(t, s.isResponseRebind("absolutely.totally-legit.com", host))
 
-		s.conf.RebindingEnabled = false
+		s.conf.RebindingProtectionEnabled = false
 		assert.False(t, s.isResponseRebind("example.com", host))
 		assert.False(t, s.isResponseRebind("totally-safe.com", host))
 		assert.False(t, s.isResponseRebind("absolutely.totally-legit.com", host))

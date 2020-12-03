@@ -54,6 +54,7 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 		processFilteringBeforeRequest,
 		processUpstream,
 		processDNSSECAfterResponse,
+		processRebindingFilteringAfterResponse,
 		processFilteringAfterResponse,
 		s.ipset.process,
 		processQueryLogsAndStats,
@@ -389,6 +390,9 @@ func processFilteringAfterResponse(ctx *dnsContext) int {
 			answer = append(answer, d.Res.Answer...)
 			d.Res.Answer = answer
 		}
+
+	case dnsfilter.FilteredRebind:
+		// nothing
 
 	case dnsfilter.NotFilteredAllowList:
 		// nothing

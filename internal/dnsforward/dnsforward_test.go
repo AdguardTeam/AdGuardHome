@@ -738,6 +738,91 @@ func TestRewrite(t *testing.T) {
 	_ = s.Stop()
 }
 
+func TestBlockedDNSRebinding(t *testing.T) {
+	s := createTestServer(t)
+
+	err := s.Start()
+	if err != nil {
+		t.Fatalf("Failed to start server: %s", err)
+	}
+	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
+
+	//
+	// DNS rebinding protection
+	//
+	req := dns.Msg{}
+	req.Id = dns.Id()
+	req.RecursionDesired = true
+	req.Question = []dns.Question{
+		{Name: "192-168-1-250.nip.io.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+	}
+
+	s.conf.RebindingProtectionEnabled = true
+	reply, err := dns.Exchange(&req, addr.String())
+	if err != nil {
+		t.Fatalf("Couldn't talk to server %s: %s", addr, err)
+	}
+
+	if len(reply.Answer) != 1 {
+		t.Fatalf("DNS server %s returned reply with wrong number of answers - %d", addr, len(reply.Answer))
+	}
+
+	a, ok := reply.Answer[0].(*dns.A)
+	if !ok {
+		t.Fatalf("DNS server %s returned wrong answer type instead of A: %v", addr, reply.Answer[0])
+	}
+
+	if !net.IPv4zero.Equal(a.A) {
+		t.Fatalf("DNS server %s returned wrong answer instead of 0.0.0.0: %v", addr, a.A)
+	}
+
+	s.conf.RebindingProtectionEnabled = false
+	reply, err = dns.Exchange(&req, addr.String())
+	if err != nil {
+		t.Fatalf("Couldn't talk to server %s: %s", addr, err)
+	}
+
+	if len(reply.Answer) != 1 {
+		t.Fatalf("DNS server %s returned reply with wrong number of answers - %d", addr, len(reply.Answer))
+	}
+
+	a, ok = reply.Answer[0].(*dns.A)
+	if !ok {
+		t.Fatalf("DNS server %s returned wrong answer type instead of A: %v", addr, reply.Answer[0])
+	}
+
+	if !net.IPv4(192, 168, 1, 250).Equal(a.A) {
+		t.Fatalf("DNS server %s returned wrong answer instead of 192.168.1.250: %v", addr, a.A)
+	}
+
+	s.conf.RebindingProtectionEnabled = true
+	s.conf.RebindingAllowedHosts = []string{
+		"nip.io.",
+	}
+	reply, err = dns.Exchange(&req, addr.String())
+	if err != nil {
+		t.Fatalf("Couldn't talk to server %s: %s", addr, err)
+	}
+
+	if len(reply.Answer) != 1 {
+		t.Fatalf("DNS server %s returned reply with wrong number of answers - %d", addr, len(reply.Answer))
+	}
+
+	a, ok = reply.Answer[0].(*dns.A)
+	if !ok {
+		t.Fatalf("DNS server %s returned wrong answer type instead of A: %v", addr, reply.Answer[0])
+	}
+
+	if !net.IPv4(192, 168, 1, 250).Equal(a.A) {
+		t.Fatalf("DNS server %s returned wrong answer instead of 192.168.1.250: %v", addr, a.A)
+	}
+
+	err = s.Stop()
+	if err != nil {
+		t.Fatalf("DNS server failed to stop: %s", err)
+	}
+}
+
 func createTestServer(t *testing.T) *Server {
 	rules := `||nxdomain.example.org
 ||null.example.org^

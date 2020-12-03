@@ -3,10 +3,13 @@
 package dnsforward
 
 import (
+	"fmt"
 	"net"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/miekg/dns"
 )
 
 type dnsRebindChecker struct {
@@ -83,7 +86,7 @@ func (c *dnsRebindChecker) isRebindIP(ip net.IP) bool {
 // Checks DNS rebinding attacks
 // Note both whitelisted and cached hosts will bypass rebinding check (see: processFilteringAfterResponse()).
 func (s *Server) isResponseRebind(domain, host string) bool {
-	if !s.conf.RebindingEnabled {
+	if !s.conf.RebindingProtectionEnabled {
 		return false
 	}
 
@@ -100,4 +103,83 @@ func (s *Server) isResponseRebind(domain, host string) bool {
 
 	c := dnsRebindChecker{}
 	return c.isRebindHost(host)
+}
+
+func processRebindingFilteringAfterResponse(ctx *dnsContext) int {
+	s := ctx.srv
+	d := ctx.proxyCtx
+	res := ctx.result
+	var err error
+
+	// TODO: Should we also block cached responses?
+	if !ctx.responseFromUpstream || res.Reason == dnsfilter.Rewritten {
+		return resultDone
+	}
+
+	originalRes := d.Res
+	ctx.result, err = s.preventRebindResponse(ctx)
+	if err != nil {
+		ctx.err = err
+		return resultError
+	}
+	if ctx.result != nil {
+		ctx.origResp = originalRes // matched by response
+	} else {
+		ctx.result = &dnsfilter.Result{}
+	}
+
+	return resultDone
+}
+
+func (s *Server) preventRebindResponse(ctx *dnsContext) (*dnsfilter.Result, error) {
+	d := ctx.proxyCtx
+
+	for _, a := range d.Res.Answer {
+		m := ""
+		domainName := ""
+		host := ""
+
+		switch v := a.(type) {
+		case *dns.CNAME:
+			host = strings.TrimSuffix(v.Target, ".")
+			domainName = v.Hdr.Name
+			m = fmt.Sprintf("DNSRebind: Checking CNAME %s for %s", v.Target, v.Hdr.Name)
+
+		case *dns.A:
+			host = v.A.String()
+			domainName = v.Hdr.Name
+			m = fmt.Sprintf("DNSRebind: Checking record A (%s) for %s", host, v.Hdr.Name)
+
+		case *dns.AAAA:
+			host = v.AAAA.String()
+			domainName = v.Hdr.Name
+			m = fmt.Sprintf("DNSRebind: Checking record AAAA (%s) for %s", host, v.Hdr.Name)
+
+		default:
+			continue
+		}
+
+		s.RLock()
+		if !s.conf.RebindingProtectionEnabled {
+			s.RUnlock()
+			continue
+		}
+
+		log.Debug(m)
+		blocked := s.isResponseRebind(domainName, host)
+		s.RUnlock()
+
+		if blocked {
+			res := &dnsfilter.Result{
+				IsFiltered: true,
+				Reason:     dnsfilter.FilteredRebind,
+			}
+
+			d.Res = s.genDNSFilterMessage(d, res)
+			log.Debug("DNSRebind: Matched %s by response: %s", d.Req.Question[0].Name, host)
+			return res, nil
+		}
+	}
+
+	return nil, nil
 }

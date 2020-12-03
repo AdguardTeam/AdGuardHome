@@ -78,8 +78,8 @@ type FilteringConfig struct {
 
 	// DNS rebinding protection settings
 	// --
-	RebindingEnabled      bool     `yaml:"rebinding_enabled"`
-	RebindingAllowedHosts []string `yaml:"rebinding_allowed_hosts"`
+	RebindingProtectionEnabled bool     `yaml:"rebinding_protection_enabled"`
+	RebindingAllowedHosts      []string `yaml:"rebinding_allowed_hosts"`
 
 	// Other settings
 	// --
