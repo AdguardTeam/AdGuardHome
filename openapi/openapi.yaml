@@ -12,6 +12,9 @@
 'servers':
 - 'url': '/control'
 
+'security':
+- 'basicAuth': []
+
 'tags':
 - 'name': 'clients'
   'description': 'Clients list operations'
@@ -2084,3 +2087,7 @@
           'description': 'The error message, an opaque string.'
           'type': 'string'
       'type': 'object'
+  'securitySchemes':
+    'basicAuth':
+      'type': 'http'
+      'scheme': 'basic'
