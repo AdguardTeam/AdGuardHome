@@ -10,15 +10,15 @@ and this project adheres to
 ## [Unreleased]
 
 <!--
-## [v0.105.0] - 2020-12-21
+## [v0.105.0] - 2020-12-28
 -->
 
 ### Added
 
 - A 5 second wait period until a DHCP server's network interface gets an IP
-  address [#2304].
-- `$dnstype` modifier for filters [#2337].
-- HTTP API request body size limit [#2305].
+  address ([#2304]).
+- `$dnstype` modifier for filters ([#2337]).
+- HTTP API request body size limit ([#2305]).
 
 [#2304]: https://github.com/AdguardTeam/AdGuardHome/issues/2304
 [#2305]: https://github.com/AdguardTeam/AdGuardHome/issues/2305
@@ -44,10 +44,10 @@ and this project adheres to
 ### Fixed
 
 - A mitigation against records being shown in the wrong order on the query log
-  page [#2293].
-- A JSON parsing error in query log [#2345].
+  page ([#2293]).
+- A JSON parsing error in query log ([#2345]).
 - Incorrect detection of the IPv6 address of an interface as well as another
-  infinite loop in the `/dhcp/find_active_dhcp` HTTP API [#2355].
+  infinite loop in the `/dhcp/find_active_dhcp` HTTP API ([#2355]).
 
 [#2293]: https://github.com/AdguardTeam/AdGuardHome/issues/2293
 [#2345]: https://github.com/AdguardTeam/AdGuardHome/issues/2345
@@ -93,6 +93,10 @@ and this project adheres to
 
 
 
+<!--
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.105.0...HEAD
+[v0.105.0]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.104.3...v0.105.0
+-->
 [Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.104.3...HEAD
 [v0.104.3]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.104.2...v0.104.3
 [v0.104.2]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.104.1...v0.104.2
