@@ -586,5 +586,13 @@
     "port_53_faq_link": "Port 53 is often occupied by \"DNSStubListener\" or \"systemd-resolved\" services. Please read <0>this instruction</0> on how to resolve this.",
     "adg_will_drop_dns_queries": "AdGuard Home will be dropping all DNS queries from this client.",
     "client_not_in_allowed_clients": "The client is not allowed because it is not in the \"Allowed clients\" list.",
-    "experimental": "Experimental"
+    "experimental": "Experimental",
+    "rebinding_title": "DNS Rebinding Protection",
+    "rebinding_desc": "Here you can configure protection against DNS rebinding attacks",
+    "rebinding_protection_enabled": "Enable protection from DNS rebinding attacks",
+    "rebinding_protection_enabled_desc": "If enabled, AdGuard Home will block responses containing host on the local network.",
+    "rebinding_allowed_hosts_title": "Allowed domains",
+    "rebinding_allowed_hosts_desc": "A list of domains. If configured, AdGuard Home will allow responses containing host on the local network from these domains. Here you can specify the exact domain names, wildcards and urlfilter-rules, e.g. 'example.org', '*.example.org' or '||example.org^'.",
+    "rebinding_applied": "DNS rebinding protection applied",
+    "blocked_rebind": "Blocked rebinding"
 }

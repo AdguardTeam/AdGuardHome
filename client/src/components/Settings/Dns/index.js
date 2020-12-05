@@ -8,6 +8,7 @@ import Config from './Config';
 import PageTitle from '../../ui/PageTitle';
 import Loading from '../../ui/Loading';
 import CacheConfig from './Cache';
+import RebindingConfig from './Rebinding';
 import { getDnsConfig } from '../../../actions/dnsConfig';
 import { getAccessList } from '../../../actions/access';
 
@@ -33,6 +34,7 @@ const Dns = () => {
                 <Config />
                 <CacheConfig />
                 <Access />
+                <RebindingConfig />
             </>}
     </>;
 };

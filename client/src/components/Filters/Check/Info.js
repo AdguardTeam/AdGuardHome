@@ -65,6 +65,7 @@ const getTitle = () => {
         [FILTERED_STATUS.FILTERED_SAFE_SEARCH]: getReasonFiltered(reason),
         [FILTERED_STATUS.FILTERED_SAFE_BROWSING]: getReasonFiltered(reason),
         [FILTERED_STATUS.FILTERED_PARENTAL]: getReasonFiltered(reason),
+        [FILTERED_STATUS.FILTERED_BLOCKED_REBIND]: t('rebinding_applied'),
     };
 
     if (Object.prototype.hasOwnProperty.call(REASON_TO_TITLE_MAP, reason)) {

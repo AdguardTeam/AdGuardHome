@@ -450,6 +450,7 @@ export const checkNotFilteredNotFound = (reason) => reason === FILTERED_STATUS.N
 export const checkSafeSearch = (reason) => reason === FILTERED_STATUS.FILTERED_SAFE_SEARCH;
 export const checkSafeBrowsing = (reason) => reason === FILTERED_STATUS.FILTERED_SAFE_BROWSING;
 export const checkParental = (reason) => reason === FILTERED_STATUS.FILTERED_PARENTAL;
+export const checkBlockedRebind = (reason) => reason === FILTERED_STATUS.FILTERED_BLOCKED_REBIND;
 export const checkBlockedService = (reason) => reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
 
 export const getCurrentFilter = (url, filters) => {

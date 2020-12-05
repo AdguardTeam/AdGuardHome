@@ -18,6 +18,7 @@ const (
 	filteringStatusFiltered = "filtered" // all kinds of filtering
 
 	filteringStatusBlocked             = "blocked"              // blocked or blocked services
+	filteringStatusBlockedRebind       = "blocked_rebind"       // blocked due to rebind attempt
 	filteringStatusBlockedService      = "blocked_services"     // blocked
 	filteringStatusBlockedSafebrowsing = "blocked_safebrowsing" // blocked by safebrowsing
 	filteringStatusBlockedParental     = "blocked_parental"     // blocked by parental control
@@ -29,7 +30,7 @@ const (
 
 // filteringStatusValues -- array with all possible filteringStatus values
 var filteringStatusValues = []string{
-	filteringStatusAll, filteringStatusFiltered, filteringStatusBlocked,
+	filteringStatusAll, filteringStatusFiltered, filteringStatusBlocked, filteringStatusBlockedRebind,
 	filteringStatusBlockedService, filteringStatusBlockedSafebrowsing, filteringStatusBlockedParental,
 	filteringStatusWhitelisted, filteringStatusRewritten, filteringStatusSafeSearch,
 	filteringStatusProcessed,
@@ -123,7 +124,10 @@ func (c *searchCriteria) ctFilteringStatusCase(res dnsfilter.Result) bool {
 
 	case filteringStatusBlocked:
 		return res.IsFiltered &&
-			res.Reason.In(dnsfilter.FilteredBlockList, dnsfilter.FilteredBlockedService)
+			res.Reason.In(dnsfilter.FilteredBlockList, dnsfilter.FilteredBlockedService, dnsfilter.FilteredRebind)
+
+	case filteringStatusBlockedRebind:
+		return res.IsFiltered && res.Reason == dnsfilter.FilteredRebind
 
 	case filteringStatusBlockedService:
 		return res.IsFiltered && res.Reason == dnsfilter.FilteredBlockedService
