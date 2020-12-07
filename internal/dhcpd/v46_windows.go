@@ -1,11 +1,12 @@
+// +build windows
+
 package dhcpd
 
 // 'u-root/u-root' package, a dependency of 'insomniacslk/dhcp' package, doesn't build on Windows
 
 import "net"
 
-type winServer struct {
-}
+type winServer struct{}
 
 func (s *winServer) ResetLeases(leases []*Lease)            {}
 func (s *winServer) GetLeases(flags int) []Lease            { return nil }

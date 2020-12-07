@@ -180,15 +180,18 @@ func (ra *raCtx) Init() error {
 	data := createICMPv6RAPacket(params)
 
 	var err error
+	success := false
 	ipAndScope := ra.ipAddr.String() + "%" + ra.ifaceName
 	ra.conn, err = icmp.ListenPacket("ip6:ipv6-icmp", ipAndScope)
 	if err != nil {
 		return fmt.Errorf("dhcpv6 ra: icmp.ListenPacket: %w", err)
 	}
-	success := false
 	defer func() {
 		if !success {
-			ra.Close()
+			cerr := ra.Close()
+			if cerr != nil {
+				log.Error("closing context: %s", cerr)
+			}
 		}
 	}()
 
@@ -227,13 +230,15 @@ func (ra *raCtx) Init() error {
 	return nil
 }
 
-// Close - close module
-func (ra *raCtx) Close() {
+// Close closes the module.
+func (ra *raCtx) Close() (err error) {
 	log.Debug("dhcpv6 ra: closing")
 
 	ra.stop.Store(1)
 
 	if ra.conn != nil {
-		ra.conn.Close()
+		return ra.conn.Close()
 	}
+
+	return nil
 }

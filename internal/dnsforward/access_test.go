@@ -50,7 +50,8 @@ func TestIsBlockedIPDisallowed(t *testing.T) {
 
 func TestIsBlockedIPBlockedDomain(t *testing.T) {
 	a := &accessCtx{}
-	assert.True(t, a.Init(nil, nil, []string{"host1",
+	assert.True(t, a.Init(nil, nil, []string{
+		"host1",
 		"host2",
 		"*.host.com",
 		"||host3.com^",

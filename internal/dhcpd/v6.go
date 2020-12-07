@@ -628,7 +628,10 @@ func (s *v6Server) Start() error {
 
 // Stop - stop server
 func (s *v6Server) Stop() {
-	s.ra.Close()
+	err := s.ra.Close()
+	if err != nil {
+		log.Error("dhcpv6: s.ra.Close: %s", err)
+	}
 
 	// DHCPv6 server may not be initialized if ra_slaac_only=true
 	if s.srv == nil {
@@ -636,10 +639,11 @@ func (s *v6Server) Stop() {
 	}
 
 	log.Debug("DHCPv6: stopping")
-	err := s.srv.Close()
+	err = s.srv.Close()
 	if err != nil {
 		log.Error("DHCPv6: srv.Close: %s", err)
 	}
+
 	// now server.Serve() will return
 	s.srv = nil
 }

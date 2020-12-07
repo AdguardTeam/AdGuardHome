@@ -263,11 +263,20 @@ func (d *Dnsfilter) Close() {
 }
 
 func (d *Dnsfilter) reset() {
+	var err error
+
 	if d.rulesStorage != nil {
-		_ = d.rulesStorage.Close()
+		err = d.rulesStorage.Close()
+		if err != nil {
+			log.Error("dnsfilter: rulesStorage.Close: %s", err)
+		}
 	}
+
 	if d.rulesStorageWhite != nil {
-		d.rulesStorageWhite.Close()
+		err = d.rulesStorageWhite.Close()
+		if err != nil {
+			log.Error("dnsfilter: rulesStorageWhite.Close: %s", err)
+		}
 	}
 }
 
@@ -336,9 +345,9 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 	// Now check the hosts file -- do we have any rules for it?
 	// just like DNS rewrites, it has higher priority than filtering rules.
 	if d.Config.AutoHosts != nil {
-		matched, err := d.checkAutoHosts(host, qtype, &result)
+		matched := d.checkAutoHosts(host, qtype, &result)
 		if matched {
-			return result, err
+			return result, nil
 		}
 	}
 
@@ -403,13 +412,13 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 	return Result{}, nil
 }
 
-func (d *Dnsfilter) checkAutoHosts(host string, qtype uint16, result *Result) (matched bool, err error) {
+func (d *Dnsfilter) checkAutoHosts(host string, qtype uint16, result *Result) (matched bool) {
 	ips := d.Config.AutoHosts.Process(host, qtype)
 	if ips != nil {
 		result.Reason = RewriteEtcHosts
 		result.IPList = ips
 
-		return true, nil
+		return true
 	}
 
 	revHosts := d.Config.AutoHosts.ProcessReverse(host, qtype)
@@ -422,10 +431,10 @@ func (d *Dnsfilter) checkAutoHosts(host string, qtype uint16, result *Result) (m
 			result.ReverseHosts[i] = revHosts[i] + "."
 		}
 
-		return true, nil
+		return true
 	}
 
-	return false, nil
+	return false
 }
 
 // Process rewrites table

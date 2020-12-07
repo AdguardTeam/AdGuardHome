@@ -19,9 +19,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net"
-	"os"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -313,26 +311,6 @@ type ClientOpt func(c *Client) error
 func WithTimeout(d time.Duration) ClientOpt {
 	return func(c *Client) (err error) {
 		c.timeout = d
-		return
-	}
-}
-
-// WithSummaryLogger logs one-line DHCPv4 message summaries when sent & received.
-func WithSummaryLogger() ClientOpt {
-	return func(c *Client) (err error) {
-		c.logger = ShortSummaryLogger{
-			Printfer: log.New(os.Stderr, "[dhcpv4] ", log.LstdFlags),
-		}
-		return
-	}
-}
-
-// WithDebugLogger logs multi-line full DHCPv4 messages when sent & received.
-func WithDebugLogger() ClientOpt {
-	return func(c *Client) (err error) {
-		c.logger = DebugLogger{
-			Printfer: log.New(os.Stderr, "[dhcpv4] ", log.LstdFlags),
-		}
 		return
 	}
 }

@@ -1,12 +1,12 @@
 package dnsforward
 
 import (
-	"log"
 	"net"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
 
