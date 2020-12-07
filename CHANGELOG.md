@@ -15,6 +15,8 @@ and this project adheres to
 
 ### Added
 
+- Detecting of network interface configurated to have static IP address via
+  `/etc/network/interfaces` ([#2302]).
 - DNSCrypt protocol support [#1361].
 - A 5 second wait period until a DHCP server's network interface gets an IP
   address ([#2304]).
@@ -22,6 +24,7 @@ and this project adheres to
 - HTTP API request body size limit ([#2305]).
 
 [#1361]: https://github.com/AdguardTeam/AdGuardHome/issues/1361
+[#2302]: https://github.com/AdguardTeam/AdGuardHome/issues/2302
 [#2304]: https://github.com/AdguardTeam/AdGuardHome/issues/2304
 [#2305]: https://github.com/AdguardTeam/AdGuardHome/issues/2305
 [#2337]: https://github.com/AdguardTeam/AdGuardHome/issues/2337

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/sysutil"
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/golibs/jsonutil"
 	"github.com/AdguardTeam/golibs/log"
@@ -205,9 +206,9 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 	s.dbLoad()
 
 	if s.conf.Enabled {
-		staticIP, err := HasStaticIP(newconfig.InterfaceName)
+		staticIP, err := sysutil.IfaceHasStaticIP(newconfig.InterfaceName)
 		if !staticIP && err == nil {
-			err = SetStaticIP(newconfig.InterfaceName)
+			err = sysutil.IfaceSetStaticIP(newconfig.InterfaceName)
 			if err != nil {
 				httpError(r, w, http.StatusInternalServerError, "Failed to configure static IP: %s", err)
 				return
@@ -282,7 +283,7 @@ func (s *Server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if len(jsonIface.Addrs4)+len(jsonIface.Addrs6) != 0 {
-			jsonIface.GatewayIP = getGatewayIP(iface.Name)
+			jsonIface.GatewayIP = sysutil.GatewayIP(iface.Name)
 			response[iface.Name] = jsonIface
 		}
 	}
@@ -319,7 +320,7 @@ func (s *Server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 	found4, err4 := CheckIfOtherDHCPServersPresentV4(interfaceName)
 
 	staticIP := map[string]interface{}{}
-	isStaticIP, err := HasStaticIP(interfaceName)
+	isStaticIP, err := sysutil.IfaceHasStaticIP(interfaceName)
 	staticIPStatus := "yes"
 	if err != nil {
 		staticIPStatus = "error"

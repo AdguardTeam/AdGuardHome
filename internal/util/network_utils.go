@@ -33,10 +33,7 @@ func GetValidNetInterfaces() ([]net.Interface, error) {
 
 	netIfaces := []net.Interface{}
 
-	for i := range ifaces {
-		iface := ifaces[i]
-		netIfaces = append(netIfaces, iface)
-	}
+	netIfaces = append(netIfaces, ifaces...)
 
 	return netIfaces, nil
 }

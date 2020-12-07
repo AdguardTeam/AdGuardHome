@@ -81,11 +81,6 @@ type ServerInterface interface {
 	SetOnLeaseChanged(onLeaseChanged OnLeaseChangedT)
 }
 
-// CheckConfig checks the configuration
-func (s *Server) CheckConfig(config ServerConfig) error {
-	return nil
-}
-
 // Create - create object
 func Create(config ServerConfig) *Server {
 	s := &Server{}

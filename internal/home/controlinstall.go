@@ -15,7 +15,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
+	"github.com/AdguardTeam/AdGuardHome/internal/sysutil"
 
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -167,7 +167,7 @@ func handleStaticIP(ip string, set bool) staticIPJSON {
 
 	if set {
 		// Try to set static IP for the specified interface
-		err := dhcpd.SetStaticIP(interfaceName)
+		err := sysutil.IfaceSetStaticIP(interfaceName)
 		if err != nil {
 			resp.Static = "error"
 			resp.Error = err.Error()
@@ -177,7 +177,7 @@ func handleStaticIP(ip string, set bool) staticIPJSON {
 
 	// Fallthrough here even if we set static IP
 	// Check if we have a static IP and return the details
-	isStaticIP, err := dhcpd.HasStaticIP(interfaceName)
+	isStaticIP, err := sysutil.IfaceHasStaticIP(interfaceName)
 	if err != nil {
 		resp.Static = "error"
 		resp.Error = err.Error()

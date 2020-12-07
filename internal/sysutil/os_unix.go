@@ -1,4 +1,4 @@
-//+build aix darwin dragonfly netbsd openbsd solaris
+// +build aix darwin dragonfly netbsd openbsd solaris
 
 package sysutil
 

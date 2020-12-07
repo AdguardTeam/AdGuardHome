@@ -1,4 +1,4 @@
-//+build windows
+// +build windows
 
 package sysutil
 
