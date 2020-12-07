@@ -50,7 +50,7 @@ func TestQLogReaderOneFile(t *testing.T) {
 		line, err = r.ReadNext()
 		if err == nil {
 			assert.True(t, len(line) > 0)
-			read += 1
+			read++
 		}
 	}
 
@@ -83,7 +83,7 @@ func TestQLogReaderMultipleFiles(t *testing.T) {
 		line, err = r.ReadNext()
 		if err == nil {
 			assert.True(t, len(line) > 0)
-			read += 1
+			read++
 		}
 	}
 
@@ -147,7 +147,7 @@ func TestQLogReader_Seek(t *testing.T) {
 			timestamp, err := time.Parse(time.RFC3339Nano, tc.time)
 			assert.Nil(t, err)
 
-			err = r.Seek(timestamp.UnixNano())
+			err = r.SeekTS(timestamp.UnixNano())
 			assert.True(t, errors.Is(err, tc.want), err)
 		})
 	}
@@ -228,12 +228,12 @@ func TestQLogReaderSeek(t *testing.T) {
 	testSeekLineQLogReader(t, r, count)
 
 	// CASE 5: Seek non-existent (too low)
-	err = r.Seek(123)
+	err = r.SeekTS(123)
 	assert.NotNil(t, err)
 
 	// CASE 6: Seek non-existent (too high)
 	ts, _ := time.Parse(time.RFC3339, "2100-01-02T15:04:05Z07:00")
-	err = r.Seek(ts.UnixNano())
+	err = r.SeekTS(ts.UnixNano())
 	assert.NotNil(t, err)
 }
 
@@ -244,7 +244,7 @@ func testSeekLineQLogReader(t *testing.T, r *QLogReader, lineNumber int) {
 	assert.NotEqual(t, uint64(0), ts)
 
 	// try seeking to that line now
-	err = r.Seek(ts)
+	err = r.SeekTS(ts)
 	assert.Nil(t, err)
 
 	testLine, err := r.ReadNext()

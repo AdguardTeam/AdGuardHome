@@ -97,7 +97,7 @@ func (l *queryLog) searchFiles(params *searchParams) ([]*logEntry, time.Time, in
 	if params.olderThan.IsZero() {
 		err = r.SeekStart()
 	} else {
-		err = r.Seek(params.olderThan.UnixNano())
+		err = r.SeekTS(params.olderThan.UnixNano())
 		if err == nil {
 			// Read to the next record right away
 			// The one that was specified in the "oldest" param is not needed,
@@ -107,7 +107,7 @@ func (l *queryLog) searchFiles(params *searchParams) ([]*logEntry, time.Time, in
 	}
 
 	if err != nil {
-		log.Debug("Cannot Seek() to %v: %v", params.olderThan, err)
+		log.Debug("Cannot SeekTS() to %v: %v", params.olderThan, err)
 		return entries, oldest, 0
 	}
 

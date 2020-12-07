@@ -88,16 +88,16 @@ func TestUpdateGetVersion(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	_ = os.Mkdir("aghtest", 0755)
+	_ = os.Mkdir("aghtest", 0o755)
 	defer func() {
 		_ = os.RemoveAll("aghtest")
 	}()
 
 	// create "current" files
-	assert.Nil(t, ioutil.WriteFile("aghtest/AdGuardHome", []byte("AdGuardHome"), 0755))
-	assert.Nil(t, ioutil.WriteFile("aghtest/README.md", []byte("README.md"), 0644))
-	assert.Nil(t, ioutil.WriteFile("aghtest/LICENSE.txt", []byte("LICENSE.txt"), 0644))
-	assert.Nil(t, ioutil.WriteFile("aghtest/AdGuardHome.yaml", []byte("AdGuardHome.yaml"), 0644))
+	assert.Nil(t, ioutil.WriteFile("aghtest/AdGuardHome", []byte("AdGuardHome"), 0o755))
+	assert.Nil(t, ioutil.WriteFile("aghtest/README.md", []byte("README.md"), 0o644))
+	assert.Nil(t, ioutil.WriteFile("aghtest/LICENSE.txt", []byte("LICENSE.txt"), 0o644))
+	assert.Nil(t, ioutil.WriteFile("aghtest/AdGuardHome.yaml", []byte("AdGuardHome.yaml"), 0o644))
 
 	// start server for returning package file
 	pkgData, err := ioutil.ReadFile("test/AdGuardHome.tar.gz")
@@ -151,16 +151,16 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestUpdateWindows(t *testing.T) {
-	_ = os.Mkdir("aghtest", 0755)
+	_ = os.Mkdir("aghtest", 0o755)
 	defer func() {
 		_ = os.RemoveAll("aghtest")
 	}()
 
 	// create "current" files
-	assert.Nil(t, ioutil.WriteFile("aghtest/AdGuardHome.exe", []byte("AdGuardHome.exe"), 0755))
-	assert.Nil(t, ioutil.WriteFile("aghtest/README.md", []byte("README.md"), 0644))
-	assert.Nil(t, ioutil.WriteFile("aghtest/LICENSE.txt", []byte("LICENSE.txt"), 0644))
-	assert.Nil(t, ioutil.WriteFile("aghtest/AdGuardHome.yaml", []byte("AdGuardHome.yaml"), 0644))
+	assert.Nil(t, ioutil.WriteFile("aghtest/AdGuardHome.exe", []byte("AdGuardHome.exe"), 0o755))
+	assert.Nil(t, ioutil.WriteFile("aghtest/README.md", []byte("README.md"), 0o644))
+	assert.Nil(t, ioutil.WriteFile("aghtest/LICENSE.txt", []byte("LICENSE.txt"), 0o644))
+	assert.Nil(t, ioutil.WriteFile("aghtest/AdGuardHome.yaml", []byte("AdGuardHome.yaml"), 0o644))
 
 	// start server for returning package file
 	pkgData, err := ioutil.ReadFile("test/AdGuardHome.zip")

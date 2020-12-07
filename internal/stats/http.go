@@ -37,7 +37,13 @@ func (s *statsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(data)
+
+	_, err = w.Write(data)
+	if err != nil {
+		httpError(r, w, http.StatusInternalServerError, "json encode: %s", err)
+
+		return
+	}
 }
 
 type config struct {

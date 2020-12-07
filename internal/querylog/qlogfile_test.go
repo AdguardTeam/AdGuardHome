@@ -61,7 +61,7 @@ func TestQLogFileLarge(t *testing.T) {
 		line, err = q.ReadNext()
 		if err == nil {
 			assert.True(t, len(line) > 0)
-			read += 1
+			read++
 		}
 	}
 
@@ -96,12 +96,12 @@ func TestQLogFileSeekLargeFile(t *testing.T) {
 	testSeekLineQLogFile(t, q, count)
 
 	// CASE 5: Seek non-existent (too low)
-	_, _, err = q.Seek(123)
+	_, _, err = q.SeekTS(123)
 	assert.NotNil(t, err)
 
 	// CASE 6: Seek non-existent (too high)
 	ts, _ := time.Parse(time.RFC3339, "2100-01-02T15:04:05Z07:00")
-	_, _, err = q.Seek(ts.UnixNano())
+	_, _, err = q.SeekTS(ts.UnixNano())
 	assert.NotNil(t, err)
 
 	// CASE 7: "Almost" found
@@ -110,7 +110,7 @@ func TestQLogFileSeekLargeFile(t *testing.T) {
 	// ALMOST the record we need
 	timestamp := readQLogTimestamp(line) - 1
 	assert.NotEqual(t, uint64(0), timestamp)
-	_, depth, err := q.Seek(timestamp)
+	_, depth, err := q.SeekTS(timestamp)
 	assert.NotNil(t, err)
 	assert.True(t, depth <= int(math.Log2(float64(count))+3))
 }
@@ -142,12 +142,12 @@ func TestQLogFileSeekSmallFile(t *testing.T) {
 	testSeekLineQLogFile(t, q, count)
 
 	// CASE 5: Seek non-existent (too low)
-	_, _, err = q.Seek(123)
+	_, _, err = q.SeekTS(123)
 	assert.NotNil(t, err)
 
 	// CASE 6: Seek non-existent (too high)
 	ts, _ := time.Parse(time.RFC3339, "2100-01-02T15:04:05Z07:00")
-	_, _, err = q.Seek(ts.UnixNano())
+	_, _, err = q.SeekTS(ts.UnixNano())
 	assert.NotNil(t, err)
 
 	// CASE 7: "Almost" found
@@ -156,7 +156,7 @@ func TestQLogFileSeekSmallFile(t *testing.T) {
 	// ALMOST the record we need
 	timestamp := readQLogTimestamp(line) - 1
 	assert.NotEqual(t, uint64(0), timestamp)
-	_, depth, err := q.Seek(timestamp)
+	_, depth, err := q.SeekTS(timestamp)
 	assert.NotNil(t, err)
 	assert.True(t, depth <= int(math.Log2(float64(count))+3))
 }
@@ -168,7 +168,7 @@ func testSeekLineQLogFile(t *testing.T, q *QLogFile, lineNumber int) {
 	assert.NotEqual(t, uint64(0), ts)
 
 	// try seeking to that line now
-	pos, _, err := q.Seek(ts)
+	pos, _, err := q.SeekTS(ts)
 	assert.Nil(t, err)
 	assert.NotEqual(t, int64(0), pos)
 
@@ -249,7 +249,7 @@ func prepareTestFiles(dir string, filesCount, linesCount int) []string {
 		files[filesCount-j-1] = f.Name()
 
 		for i := 0; i < linesCount; i++ {
-			lineIP += 1
+			lineIP++
 			lineTime = lineTime.Add(time.Second)
 
 			ip := make(net.IP, 4)
@@ -284,7 +284,7 @@ func TestQLogSeek(t *testing.T) {
 
 	target, _ := time.Parse(time.RFC3339, "2020-08-31T18:44:25.376690873+03:00")
 
-	_, depth, err := q.Seek(target.UnixNano())
+	_, depth, err := q.SeekTS(target.UnixNano())
 	assert.Nil(t, err)
 	assert.Equal(t, 1, depth)
 }
@@ -313,7 +313,7 @@ func TestQLogSeek_ErrTSTooLate(t *testing.T) {
 	target, err := time.Parse(time.RFC3339, "2020-08-31T18:44:25.382540454+03:00")
 	assert.Nil(t, err)
 
-	_, depth, err := q.Seek(target.UnixNano() + int64(time.Second))
+	_, depth, err := q.SeekTS(target.UnixNano() + int64(time.Second))
 	assert.Equal(t, ErrTSTooLate, err)
 	assert.Equal(t, 2, depth)
 }
@@ -342,7 +342,7 @@ func TestQLogSeek_ErrTSTooEarly(t *testing.T) {
 	target, err := time.Parse(time.RFC3339, "2020-08-31T18:44:23.911246629+03:00")
 	assert.Nil(t, err)
 
-	_, depth, err := q.Seek(target.UnixNano() - int64(time.Second))
+	_, depth, err := q.SeekTS(target.UnixNano() - int64(time.Second))
 	assert.Equal(t, ErrTSTooEarly, err)
 	assert.Equal(t, 1, depth)
 }

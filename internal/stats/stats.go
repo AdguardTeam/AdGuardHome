@@ -1,5 +1,5 @@
-// Module for managing statistics for DNS filtering server
-
+// Package stats provides units for managing statistics of the filtering DNS
+// server.
 package stats
 
 import (

@@ -44,16 +44,13 @@ func NewQLogReader(files []string) (*QLogReader, error) {
 	}, nil
 }
 
-// Seek performs binary search of a query log record with the specified timestamp.
-// If the record is found, it sets QLogReader's position to point to that line,
-// so that the next ReadNext call returned this line.
-//
-// Returns nil if the record is successfully found.
-// Returns an error if for some reason we could not find a record with the specified timestamp.
-func (r *QLogReader) Seek(timestamp int64) (err error) {
+// SeekTS performs binary search of a query log record with the specified
+// timestamp.  If the record is found, it sets QLogReader's position to point to
+// that line, so that the next ReadNext call returned this line.
+func (r *QLogReader) SeekTS(timestamp int64) (err error) {
 	for i := len(r.qFiles) - 1; i >= 0; i-- {
 		q := r.qFiles[i]
-		_, _, err = q.Seek(timestamp)
+		_, _, err = q.SeekTS(timestamp)
 		if err == nil {
 			// Search is finished, and the searched element have
 			// been found. Update currentFile only, position is

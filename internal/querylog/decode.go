@@ -12,7 +12,9 @@ import (
 	"github.com/miekg/dns"
 )
 
-var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
+type logEntryHandler (func(t json.Token, ent *logEntry) error)
+
+var logEntryHandlers = map[string]logEntryHandler{
 	"IP": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {
@@ -203,16 +205,24 @@ func decodeLogEntry(ent *logEntry, str string) {
 		if _, ok := keyToken.(json.Delim); ok {
 			continue
 		}
-		key := keyToken.(string)
+
+		key, ok := keyToken.(string)
+		if !ok {
+			log.Debug("decodeLogEntry: keyToken is %T and not string", keyToken)
+			return
+		}
+
 		handler, ok := logEntryHandlers[key]
 		if !ok {
 			continue
 		}
+
 		val, err := dec.Token()
 		if err != nil {
 			return
 		}
-		if err := handler(val, ent); err != nil {
+
+		if err = handler(val, ent); err != nil {
 			log.Debug("decodeLogEntry err: %s", err)
 			return
 		}
