@@ -121,7 +121,16 @@
     - 'docker'
     # Secrets are not passed to workflows that are triggered by a pull request
     # from a fork.
-    'if': "${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}"
+    #
+    # Use always() to signal to the runner that this job must run even if the
+    # previous ones failed.
+    'if':
+      ${{ always() &&
+        (
+          github.event_name == 'push' ||
+          github.event.pull_request.head.repo.full_name == github.repository
+        )
+      }}
     'runs-on': 'ubuntu-latest'
     'steps':
     - 'name': 'Conclusion'
@@ -130,7 +139,7 @@
       'uses': '8398a7/action-slack@v3'
       'with':
         'status': '${{ env.WORKFLOW_CONCLUSION }}'
-        'fields': 'repo, message, commit, author'
+        'fields': 'repo, message, commit, author, job'
       'env':
         'GITHUB_TOKEN': '${{ secrets.GITHUB_TOKEN }}'
         'SLACK_WEBHOOK_URL': '${{ secrets.SLACK_WEBHOOK_URL }}'
