@@ -196,9 +196,9 @@ func (f *Filtering) handleFilteringSetURL(w http.ResponseWriter, r *http.Request
 	}
 	if (status&statusUpdateRequired) != 0 && fj.Data.Enabled {
 		// download new filter and apply its rules
-		flags := FilterRefreshBlocklists
+		flags := filterRefreshBlocklists
 		if fj.Whitelist {
-			flags = FilterRefreshAllowlists
+			flags = filterRefreshAllowlists
 		}
 		nUpdated, _ := f.refreshFilters(flags, true)
 		// if at least 1 filter has been updated, refreshFilters() restarts the filtering automatically
@@ -244,11 +244,11 @@ func (f *Filtering) handleFilteringRefresh(w http.ResponseWriter, r *http.Reques
 	}
 
 	Context.controlLock.Unlock()
-	flags := FilterRefreshBlocklists
+	flags := filterRefreshBlocklists
 	if req.White {
-		flags = FilterRefreshAllowlists
+		flags = filterRefreshAllowlists
 	}
-	resp.Updated, err = f.refreshFilters(flags|FilterRefreshForce, false)
+	resp.Updated, err = f.refreshFilters(flags|filterRefreshForce, false)
 	Context.controlLock.Lock()
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "%s", err)

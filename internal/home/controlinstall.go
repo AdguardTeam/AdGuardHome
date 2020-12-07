@@ -273,7 +273,7 @@ type applyConfigReq struct {
 }
 
 // Copy installation parameters between two configuration objects
-func copyInstallSettings(dst *configuration, src *configuration) {
+func copyInstallSettings(dst, src *configuration) {
 	dst.BindHost = src.BindHost
 	dst.BindPort = src.BindPort
 	dst.DNS.BindHost = src.DNS.BindHost

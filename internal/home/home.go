@@ -44,6 +44,7 @@ var (
 	updateChannel   = "none"
 	versionCheckURL = ""
 	ARMVersion      = ""
+	MIPSVersion     = ""
 )
 
 // Global context
@@ -98,11 +99,12 @@ func (c *homeContext) getDataDir() string {
 var Context homeContext
 
 // Main is the entry point
-func Main(version, channel, armVer string) {
+func Main(version, channel, armVer, mipsVer string) {
 	// Init update-related global variables
 	versionString = version
 	updateChannel = channel
 	ARMVersion = armVer
+	MIPSVersion = mipsVer
 	versionCheckURL = "https://static.adguard.com/adguardhome/" + updateChannel + "/version.json"
 
 	// config can be specified, which reads options from there, but other command line flags have to override config values
@@ -139,10 +141,15 @@ func Main(version, channel, armVer string) {
 
 // version - returns the current version string
 func version() string {
+	// TODO(a.garipov): I'm pretty sure we can extract some of this stuff
+	// from the build info.
 	msg := "AdGuard Home, version %s, channel %s, arch %s %s"
 	if ARMVersion != "" {
 		msg = msg + " v" + ARMVersion
+	} else if MIPSVersion != "" {
+		msg = msg + " " + MIPSVersion
 	}
+
 	return fmt.Sprintf(msg, versionString, updateChannel, runtime.GOOS, runtime.GOARCH)
 }
 
@@ -308,7 +315,7 @@ func run(args options) {
 		log.Fatalf("Can't initialize TLS module")
 	}
 
-	webConf := WebConfig{
+	webConf := webConfig{
 		firstRun: Context.firstRun,
 		BindHost: config.BindHost,
 		BindPort: config.BindPort,

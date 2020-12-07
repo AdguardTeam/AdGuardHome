@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 func prepareTestDir() string {
 	const dir = "./agh-test"
 	_ = os.RemoveAll(dir)
-	_ = os.MkdirAll(dir, 0755)
+	_ = os.MkdirAll(dir, 0o755)
 	return dir
 }
 
@@ -30,7 +30,7 @@ func TestAuth(t *testing.T) {
 	fn := filepath.Join(dir, "sessions.db")
 
 	users := []User{
-		User{Name: "name", PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2"},
+		{Name: "name", PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2"},
 	}
 	a := InitAuth(fn, nil, 60)
 	s := session{}
@@ -106,7 +106,7 @@ func TestAuthHTTP(t *testing.T) {
 	fn := filepath.Join(dir, "sessions.db")
 
 	users := []User{
-		User{Name: "name", PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2"},
+		{Name: "name", PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2"},
 	}
 	Context.auth = InitAuth(fn, users, 60)
 

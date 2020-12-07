@@ -255,7 +255,7 @@ func (f *Filtering) periodicallyRefreshFilters() {
 		isNetworkErr := false
 		if config.DNS.FiltersUpdateIntervalHours != 0 && atomic.CompareAndSwapUint32(&f.refreshStatus, 0, 1) {
 			f.refreshLock.Lock()
-			_, isNetworkErr = f.refreshFiltersIfNecessary(FilterRefreshBlocklists | FilterRefreshAllowlists)
+			_, isNetworkErr = f.refreshFiltersIfNecessary(filterRefreshBlocklists | filterRefreshAllowlists)
 			f.refreshLock.Unlock()
 			f.refreshStatus = 0
 			if !isNetworkErr {
@@ -275,7 +275,7 @@ func (f *Filtering) periodicallyRefreshFilters() {
 }
 
 // Refresh filters
-// flags: FilterRefresh*
+// flags: filterRefresh*
 // important:
 //  TRUE: ignore the fact that we're currently updating the filters
 func (f *Filtering) refreshFilters(flags int, important bool) (int, error) {
@@ -368,14 +368,14 @@ func (f *Filtering) refreshFiltersArray(filters *[]filter, force bool) (int, []f
 }
 
 const (
-	FilterRefreshForce      = 1 // ignore last file modification date
-	FilterRefreshAllowlists = 2 // update allow-lists
-	FilterRefreshBlocklists = 4 // update block-lists
+	filterRefreshForce      = 1 // ignore last file modification date
+	filterRefreshAllowlists = 2 // update allow-lists
+	filterRefreshBlocklists = 4 // update block-lists
 )
 
 // Checks filters updates if necessary
 // If force is true, it ignores the filter.LastUpdated field value
-// flags: FilterRefresh*
+// flags: filterRefresh*
 //
 // Algorithm:
 // . Get the list of filters to be updated
@@ -401,13 +401,13 @@ func (f *Filtering) refreshFiltersIfNecessary(flags int) (int, bool) {
 	netError := false
 	netErrorW := false
 	force := false
-	if (flags & FilterRefreshForce) != 0 {
+	if (flags & filterRefreshForce) != 0 {
 		force = true
 	}
-	if (flags & FilterRefreshBlocklists) != 0 {
+	if (flags & filterRefreshBlocklists) != 0 {
 		updateCount, updateFilters, updateFlags, netError = f.refreshFiltersArray(&config.Filters, force)
 	}
-	if (flags & FilterRefreshAllowlists) != 0 {
+	if (flags & filterRefreshAllowlists) != 0 {
 		updateCountW := 0
 		var updateFiltersW []filter
 		var updateFlagsW []bool

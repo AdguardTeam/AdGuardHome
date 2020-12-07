@@ -12,144 +12,155 @@ import (
 )
 
 func TestClients(t *testing.T) {
-	var c Client
-	var e error
-	var b bool
 	clients := clientsContainer{}
 	clients.testing = true
 
 	clients.Init(nil, nil, nil)
 
-	// add
-	c = Client{
-		IDs:  []string{"1.1.1.1", "1:2:3::4", "aa:aa:aa:aa:aa:aa"},
-		Name: "client1",
-	}
-	b, e = clients.Add(c)
-	if !b || e != nil {
-		t.Fatalf("Add #1")
-	}
+	t.Run("add_success", func(t *testing.T) {
+		c := Client{
+			IDs:  []string{"1.1.1.1", "1:2:3::4", "aa:aa:aa:aa:aa:aa"},
+			Name: "client1",
+		}
 
-	// add #2
-	c = Client{
-		IDs:  []string{"2.2.2.2"},
-		Name: "client2",
-	}
-	b, e = clients.Add(c)
-	if !b || e != nil {
-		t.Fatalf("Add #2")
-	}
+		b, err := clients.Add(c)
+		assert.True(t, b)
+		assert.Nil(t, err)
 
-	c, b = clients.Find("1.1.1.1")
-	assert.True(t, b && c.Name == "client1")
+		c = Client{
+			IDs:  []string{"2.2.2.2"},
+			Name: "client2",
+		}
 
-	c, b = clients.Find("1:2:3::4")
-	assert.True(t, b && c.Name == "client1")
+		b, err = clients.Add(c)
+		assert.True(t, b)
+		assert.Nil(t, err)
 
-	c, b = clients.Find("2.2.2.2")
-	assert.True(t, b && c.Name == "client2")
+		c, b = clients.Find("1.1.1.1")
+		assert.True(t, b && c.Name == "client1")
 
-	// failed add - name in use
-	c = Client{
-		IDs:  []string{"1.2.3.5"},
-		Name: "client1",
-	}
-	b, _ = clients.Add(c)
-	if b {
-		t.Fatalf("Add - name in use")
-	}
+		c, b = clients.Find("1:2:3::4")
+		assert.True(t, b && c.Name == "client1")
 
-	// failed add - ip in use
-	c = Client{
-		IDs:  []string{"2.2.2.2"},
-		Name: "client3",
-	}
-	b, e = clients.Add(c)
-	if b || e == nil {
-		t.Fatalf("Add - ip in use")
-	}
+		c, b = clients.Find("2.2.2.2")
+		assert.True(t, b && c.Name == "client2")
 
-	// get
-	assert.True(t, !clients.Exists("1.2.3.4", ClientSourceHostsFile))
-	assert.True(t, clients.Exists("1.1.1.1", ClientSourceHostsFile))
-	assert.True(t, clients.Exists("2.2.2.2", ClientSourceHostsFile))
+		assert.True(t, !clients.Exists("1.2.3.4", ClientSourceHostsFile))
+		assert.True(t, clients.Exists("1.1.1.1", ClientSourceHostsFile))
+		assert.True(t, clients.Exists("2.2.2.2", ClientSourceHostsFile))
+	})
 
-	// failed update - no such name
-	c.IDs = []string{"1.2.3.0"}
-	c.Name = "client3"
-	if clients.Update("client3", c) == nil {
-		t.Fatalf("Update")
-	}
+	t.Run("add_fail_name", func(t *testing.T) {
+		c := Client{
+			IDs:  []string{"1.2.3.5"},
+			Name: "client1",
+		}
 
-	// failed update - name in use
-	c.IDs = []string{"1.2.3.0"}
-	c.Name = "client2"
-	if clients.Update("client1", c) == nil {
-		t.Fatalf("Update - name in use")
-	}
+		b, err := clients.Add(c)
+		assert.False(t, b)
+		assert.Nil(t, err)
+	})
 
-	// failed update - ip in use
-	c.IDs = []string{"2.2.2.2"}
-	c.Name = "client1"
-	if clients.Update("client1", c) == nil {
-		t.Fatalf("Update - ip in use")
-	}
+	t.Run("add_fail_ip", func(t *testing.T) {
+		c := Client{
+			IDs:  []string{"2.2.2.2"},
+			Name: "client3",
+		}
 
-	// update
-	c.IDs = []string{"1.1.1.2"}
-	c.Name = "client1"
-	if clients.Update("client1", c) != nil {
-		t.Fatalf("Update")
-	}
+		b, err := clients.Add(c)
+		assert.False(t, b)
+		assert.NotNil(t, err)
+	})
 
-	// get after update
-	assert.True(t, !clients.Exists("1.1.1.1", ClientSourceHostsFile))
-	assert.True(t, clients.Exists("1.1.1.2", ClientSourceHostsFile))
+	t.Run("update_fail_name", func(t *testing.T) {
+		c := Client{
+			IDs:  []string{"1.2.3.0"},
+			Name: "client3",
+		}
 
-	// update - rename
-	c.IDs = []string{"1.1.1.2"}
-	c.Name = "client1-renamed"
-	c.UseOwnSettings = true
-	assert.True(t, clients.Update("client1", c) == nil)
-	c = Client{}
-	c, b = clients.Find("1.1.1.2")
-	assert.True(t, b && c.Name == "client1-renamed" && c.IDs[0] == "1.1.1.2" && c.UseOwnSettings)
-	assert.True(t, clients.list["client1"] == nil)
+		err := clients.Update("client3", c)
+		assert.NotNil(t, err)
 
-	// failed remove - no such name
-	if clients.Del("client3") {
-		t.Fatalf("Del - no such name")
-	}
+		c = Client{
+			IDs:  []string{"1.2.3.0"},
+			Name: "client2",
+		}
 
-	// remove
-	assert.True(t, !(!clients.Del("client1-renamed") || clients.Exists("1.1.1.2", ClientSourceHostsFile)))
+		err = clients.Update("client3", c)
+		assert.NotNil(t, err)
+	})
 
-	// add host client
-	b, e = clients.AddHost("1.1.1.1", "host", ClientSourceARP)
-	if !b || e != nil {
-		t.Fatalf("clientAddHost")
-	}
+	t.Run("update_fail_ip", func(t *testing.T) {
+		c := Client{
+			IDs:  []string{"2.2.2.2"},
+			Name: "client1",
+		}
 
-	// failed add - ip exists
-	b, e = clients.AddHost("1.1.1.1", "host1", ClientSourceRDNS)
-	if b || e != nil {
-		t.Fatalf("clientAddHost - ip exists")
-	}
+		err := clients.Update("client1", c)
+		assert.NotNil(t, err)
+	})
 
-	// overwrite with new data
-	b, e = clients.AddHost("1.1.1.1", "host2", ClientSourceARP)
-	if !b || e != nil {
-		t.Fatalf("clientAddHost - overwrite with new data")
-	}
+	t.Run("update_success", func(t *testing.T) {
+		c := Client{
+			IDs:  []string{"1.1.1.2"},
+			Name: "client1",
+		}
 
-	// overwrite with new data (higher priority)
-	b, e = clients.AddHost("1.1.1.1", "host3", ClientSourceHostsFile)
-	if !b || e != nil {
-		t.Fatalf("clientAddHost - overwrite with new data (higher priority)")
-	}
+		err := clients.Update("client1", c)
+		assert.Nil(t, err)
 
-	// get
-	assert.True(t, clients.Exists("1.1.1.1", ClientSourceHostsFile))
+		assert.True(t, !clients.Exists("1.1.1.1", ClientSourceHostsFile))
+		assert.True(t, clients.Exists("1.1.1.2", ClientSourceHostsFile))
+
+		c = Client{
+			IDs:            []string{"1.1.1.2"},
+			Name:           "client1-renamed",
+			UseOwnSettings: true,
+		}
+
+		err = clients.Update("client1", c)
+		assert.Nil(t, err)
+
+		c, b := clients.Find("1.1.1.2")
+		assert.True(t, b)
+		assert.True(t, c.Name == "client1-renamed")
+		assert.True(t, c.IDs[0] == "1.1.1.2")
+		assert.True(t, c.UseOwnSettings)
+		assert.Nil(t, clients.list["client1"])
+	})
+
+	t.Run("del_success", func(t *testing.T) {
+		b := clients.Del("client1-renamed")
+		assert.True(t, b)
+		assert.False(t, clients.Exists("1.1.1.2", ClientSourceHostsFile))
+	})
+
+	t.Run("del_fail", func(t *testing.T) {
+		b := clients.Del("client3")
+		assert.False(t, b)
+	})
+
+	t.Run("addhost_success", func(t *testing.T) {
+		b, err := clients.AddHost("1.1.1.1", "host", ClientSourceARP)
+		assert.True(t, b)
+		assert.Nil(t, err)
+
+		b, err = clients.AddHost("1.1.1.1", "host2", ClientSourceARP)
+		assert.True(t, b)
+		assert.Nil(t, err)
+
+		b, err = clients.AddHost("1.1.1.1", "host3", ClientSourceHostsFile)
+		assert.True(t, b)
+		assert.Nil(t, err)
+
+		assert.True(t, clients.Exists("1.1.1.1", ClientSourceHostsFile))
+	})
+
+	t.Run("addhost_fail", func(t *testing.T) {
+		b, err := clients.AddHost("1.1.1.1", "host1", ClientSourceRDNS)
+		assert.False(t, b)
+		assert.Nil(t, err)
+	})
 }
 
 func TestClientsWhois(t *testing.T) {

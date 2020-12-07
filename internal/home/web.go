@@ -3,7 +3,6 @@ package home
 import (
 	"context"
 	"crypto/tls"
-	golog "log"
 	"net"
 	"net/http"
 	"strconv"
@@ -30,7 +29,7 @@ const (
 	WriteTimeout = 10 * time.Second
 )
 
-type WebConfig struct {
+type webConfig struct {
 	firstRun  bool
 	BindHost  string
 	BindPort  int
@@ -61,33 +60,19 @@ type HTTPSServer struct {
 
 // Web - module object
 type Web struct {
-	conf        *WebConfig
+	conf        *webConfig
 	forceHTTPS  bool
 	portHTTPS   int
 	httpServer  *http.Server // HTTP module
 	httpsServer HTTPSServer  // HTTPS module
-	errLogger   *golog.Logger
-}
-
-// Proxy between Go's "log" and "golibs/log"
-type logWriter struct {
-}
-
-// HTTP server calls this function to log an error
-func (w *logWriter) Write(p []byte) (int, error) {
-	log.Debug("Web: %s", string(p))
-	return 0, nil
 }
 
 // CreateWeb - create module
-func CreateWeb(conf *WebConfig) *Web {
+func CreateWeb(conf *webConfig) *Web {
 	log.Info("Initialize web module")
 
 	w := Web{}
 	w.conf = conf
-
-	lw := logWriter{}
-	w.errLogger = golog.New(&lw, "", 0)
 
 	// Initialize and run the admin Web interface
 	box := packr.NewBox("../../build/static")
@@ -166,13 +151,14 @@ func (web *Web) Start() {
 		// we need to have new instance, because after Shutdown() the Server is not usable
 		address := net.JoinHostPort(web.conf.BindHost, strconv.Itoa(web.conf.BindPort))
 		web.httpServer = &http.Server{
-			ErrorLog:          web.errLogger,
+			ErrorLog:          log.StdLog("web: http", log.DEBUG),
 			Addr:              address,
 			Handler:           withMiddlewares(Context.mux, limitRequestBody),
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
 			WriteTimeout:      web.conf.WriteTimeout,
 		}
+
 		err := web.httpServer.ListenAndServe()
 		if err != http.ErrServerClosed {
 			cleanupAlways()
@@ -220,7 +206,7 @@ func (web *Web) tlsServerLoop() {
 		// prepare HTTPS server
 		address := net.JoinHostPort(web.conf.BindHost, strconv.Itoa(web.conf.PortHTTPS))
 		web.httpsServer.server = &http.Server{
-			ErrorLog: web.errLogger,
+			ErrorLog: log.StdLog("web: https", log.DEBUG),
 			Addr:     address,
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{web.httpsServer.cert},

@@ -10,13 +10,13 @@ import (
 	"howett.net/plist"
 )
 
-type DNSSettings struct {
+type dnsSettings struct {
 	DNSProtocol string
 	ServerURL   string `plist:",omitempty"`
 	ServerName  string `plist:",omitempty"`
 }
 
-type PayloadContent struct {
+type payloadContent struct {
 	Name               string
 	PayloadDescription string
 	PayloadDisplayName string
@@ -24,11 +24,11 @@ type PayloadContent struct {
 	PayloadType        string
 	PayloadUUID        string
 	PayloadVersion     int
-	DNSSettings        DNSSettings
+	DNSSettings        dnsSettings
 }
 
-type MobileConfig struct {
-	PayloadContent           []PayloadContent
+type mobileConfig struct {
+	PayloadContent           []payloadContent
 	PayloadDescription       string
 	PayloadDisplayName       string
 	PayloadIdentifier        string
@@ -47,7 +47,7 @@ const (
 	dnsProtoTLS   = "TLS"
 )
 
-func getMobileConfig(d DNSSettings) ([]byte, error) {
+func getMobileConfig(d dnsSettings) ([]byte, error) {
 	var name string
 	switch d.DNSProtocol {
 	case dnsProtoHTTPS:
@@ -59,8 +59,8 @@ func getMobileConfig(d DNSSettings) ([]byte, error) {
 		return nil, fmt.Errorf("bad dns protocol %q", d.DNSProtocol)
 	}
 
-	data := MobileConfig{
-		PayloadContent: []PayloadContent{{
+	data := mobileConfig{
+		PayloadContent: []payloadContent{{
 			Name:               name,
 			PayloadDescription: "Configures device to use AdGuard Home",
 			PayloadDisplayName: name,
@@ -102,7 +102,7 @@ func handleMobileConfig(w http.ResponseWriter, r *http.Request, dnsp string) {
 		return
 	}
 
-	d := DNSSettings{
+	d := dnsSettings{
 		DNSProtocol: dnsp,
 		ServerName:  host,
 	}

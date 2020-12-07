@@ -3,9 +3,9 @@ package home
 import (
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
-
-	"github.com/AdguardTeam/AdGuardHome/internal/util"
+	"runtime"
 
 	"github.com/AdguardTeam/golibs/file"
 	"github.com/AdguardTeam/golibs/log"
@@ -122,7 +122,7 @@ func upgradeConfigSchema(oldVersion int, diskConfig *map[string]interface{}) err
 // The first schema upgrade:
 // No more "dnsfilter.txt", filters are now kept in data/filters/
 func upgradeSchema0to1(diskConfig *map[string]interface{}) error {
-	log.Printf("%s(): called", util.FuncName())
+	log.Printf("%s(): called", funcName())
 
 	dnsFilterPath := filepath.Join(Context.workDir, "dnsfilter.txt")
 	if _, err := os.Stat(dnsFilterPath); !os.IsNotExist(err) {
@@ -143,7 +143,7 @@ func upgradeSchema0to1(diskConfig *map[string]interface{}) error {
 // coredns is now dns in config
 // delete 'Corefile', since we don't use that anymore
 func upgradeSchema1to2(diskConfig *map[string]interface{}) error {
-	log.Printf("%s(): called", util.FuncName())
+	log.Printf("%s(): called", funcName())
 
 	coreFilePath := filepath.Join(Context.workDir, "Corefile")
 	if _, err := os.Stat(coreFilePath); !os.IsNotExist(err) {
@@ -167,7 +167,7 @@ func upgradeSchema1to2(diskConfig *map[string]interface{}) error {
 // Third schema upgrade:
 // Bootstrap DNS becomes an array
 func upgradeSchema2to3(diskConfig *map[string]interface{}) error {
-	log.Printf("%s(): called", util.FuncName())
+	log.Printf("%s(): called", funcName())
 
 	// Let's read dns configuration from diskConfig
 	dnsConfig, ok := (*diskConfig)["dns"]
@@ -204,7 +204,7 @@ func upgradeSchema2to3(diskConfig *map[string]interface{}) error {
 
 // Add use_global_blocked_services=true setting for existing "clients" array
 func upgradeSchema3to4(diskConfig *map[string]interface{}) error {
-	log.Printf("%s(): called", util.FuncName())
+	log.Printf("%s(): called", funcName())
 
 	(*diskConfig)["schema_version"] = 4
 
@@ -240,7 +240,7 @@ func upgradeSchema3to4(diskConfig *map[string]interface{}) error {
 //   password: "..."
 // ...
 func upgradeSchema4to5(diskConfig *map[string]interface{}) error {
-	log.Printf("%s(): called", util.FuncName())
+	log.Printf("%s(): called", funcName())
 
 	(*diskConfig)["schema_version"] = 5
 
@@ -295,7 +295,7 @@ func upgradeSchema4to5(diskConfig *map[string]interface{}) error {
 //   - 127.0.0.1
 //   - ...
 func upgradeSchema5to6(diskConfig *map[string]interface{}) error {
-	log.Printf("%s(): called", util.FuncName())
+	log.Printf("%s(): called", funcName())
 
 	(*diskConfig)["schema_version"] = 6
 
@@ -432,4 +432,13 @@ func upgradeSchema6to7(diskConfig *map[string]interface{}) error {
 	}
 
 	return nil
+}
+
+// TODO(a.garipov): Replace with log.Output when we port it to our logging
+// package.
+func funcName() string {
+	pc := make([]uintptr, 10) // at least 1 entry needed
+	runtime.Callers(2, pc)
+	f := runtime.FuncForPC(pc[0])
+	return path.Base(f.Name())
 }

@@ -142,14 +142,14 @@ func generateServerConfig() dnsforward.ServerConfig {
 	return newconfig
 }
 
-type DNSEncryption struct {
+type dnsEncryption struct {
 	https string
 	tls   string
 	quic  string
 }
 
-func getDNSEncryption() DNSEncryption {
-	dnsEncryption := DNSEncryption{}
+func getDNSEncryption() dnsEncryption {
+	dnsEncryption := dnsEncryption{}
 
 	tlsConf := tlsConfigSettings{}
 

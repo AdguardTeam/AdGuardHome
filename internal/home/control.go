@@ -117,7 +117,7 @@ func registerControlHandlers() {
 	RegisterAuthHandlers()
 }
 
-func httpRegister(method string, url string, handler func(http.ResponseWriter, *http.Request)) {
+func httpRegister(method, url string, handler func(http.ResponseWriter, *http.Request)) {
 	if len(method) == 0 {
 		// "/dns-query" handler doesn't need auth, gzip and isn't restricted by 1 HTTP method
 		Context.mux.HandleFunc(url, postInstall(handler))

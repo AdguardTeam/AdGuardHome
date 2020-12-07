@@ -25,7 +25,7 @@ func TestAuthGL(t *testing.T) {
 	} else {
 		binary.BigEndian.PutUint32(data, tval)
 	}
-	assert.Nil(t, ioutil.WriteFile(glFilePrefix+"test", data, 0644))
+	assert.Nil(t, ioutil.WriteFile(glFilePrefix+"test", data, 0o644))
 	assert.False(t, glCheckToken("test"))
 
 	tval = uint32(time.Now().UTC().Unix() + 60)
@@ -35,7 +35,7 @@ func TestAuthGL(t *testing.T) {
 	} else {
 		binary.BigEndian.PutUint32(data, tval)
 	}
-	assert.Nil(t, ioutil.WriteFile(glFilePrefix+"test", data, 0644))
+	assert.Nil(t, ioutil.WriteFile(glFilePrefix+"test", data, 0o644))
 	r, _ := http.NewRequest("GET", "http://localhost/", nil)
 	r.AddCookie(&http.Cookie{Name: glCookieName, Value: "test"})
 	assert.True(t, glProcessCookie(r))

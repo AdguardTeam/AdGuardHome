@@ -94,8 +94,8 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, _ *http
 }
 
 // Convert JSON object to Client object
-func jsonToClient(cj clientJSON) (*Client, error) {
-	c := Client{
+func jsonToClient(cj clientJSON) (c *Client) {
+	return &Client{
 		Name:                cj.Name,
 		IDs:                 cj.IDs,
 		Tags:                cj.Tags,
@@ -110,7 +110,6 @@ func jsonToClient(cj clientJSON) (*Client, error) {
 
 		Upstreams: cj.Upstreams,
 	}
-	return &c, nil
 }
 
 // Convert Client object to JSON
@@ -157,11 +156,7 @@ func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.
 		return
 	}
 
-	c, err := jsonToClient(cj)
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "%s", err)
-		return
-	}
+	c := jsonToClient(cj)
 	ok, err := clients.Add(*c)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
@@ -219,12 +214,7 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 		return
 	}
 
-	c, err := jsonToClient(dj.Data)
-	if err != nil {
-		httpError(w, http.StatusBadRequest, "%s", err)
-		return
-	}
-
+	c := jsonToClient(dj.Data)
 	err = clients.Update(dj.Name, *c)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)

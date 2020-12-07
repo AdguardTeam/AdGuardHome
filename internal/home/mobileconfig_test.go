@@ -19,7 +19,7 @@ func TestHandleMobileConfigDOH(t *testing.T) {
 		handleMobileConfigDOH(w, r)
 		assert.Equal(t, http.StatusOK, w.Code)
 
-		var mc MobileConfig
+		var mc mobileConfig
 		_, err = plist.Unmarshal(w.Body.Bytes(), &mc)
 		assert.Nil(t, err)
 
@@ -47,7 +47,7 @@ func TestHandleMobileConfigDOH(t *testing.T) {
 		handleMobileConfigDOH(w, r)
 		assert.Equal(t, http.StatusOK, w.Code)
 
-		var mc MobileConfig
+		var mc mobileConfig
 		_, err = plist.Unmarshal(w.Body.Bytes(), &mc)
 		assert.Nil(t, err)
 
@@ -85,7 +85,7 @@ func TestHandleMobileConfigDOT(t *testing.T) {
 		handleMobileConfigDOT(w, r)
 		assert.Equal(t, http.StatusOK, w.Code)
 
-		var mc MobileConfig
+		var mc mobileConfig
 		_, err = plist.Unmarshal(w.Body.Bytes(), &mc)
 		assert.Nil(t, err)
 
@@ -112,7 +112,7 @@ func TestHandleMobileConfigDOT(t *testing.T) {
 		handleMobileConfigDOT(w, r)
 		assert.Equal(t, http.StatusOK, w.Code)
 
-		var mc MobileConfig
+		var mc mobileConfig
 		_, err = plist.Unmarshal(w.Body.Bytes(), &mc)
 		assert.Nil(t, err)
 

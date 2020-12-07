@@ -7,15 +7,20 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/home"
 )
 
-// version will be set through ldflags, contains current version
+// version is the release version.  It is set by the linker.
 var version = "undefined"
 
-// channel can be set via ldflags
+// channel is the release channel.  It is set by the linker.
 var channel = "release"
 
-// GOARM value - set via ldflags
+// goarm is the GOARM value.  It is set by the linker.
 var goarm = ""
 
+// gomips is the GOMIPS value.  It is set by the linker.
+//
+// TODO(a.garipov): Implement.
+var gomips = ""
+
 func main() {
-	home.Main(version, channel, goarm)
+	home.Main(version, channel, goarm, gomips)
 }

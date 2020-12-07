@@ -119,7 +119,7 @@ func TestHome(t *testing.T) {
 	fn := filepath.Join(dir, "AdGuardHome.yaml")
 
 	// Prepare the test config
-	assert.True(t, ioutil.WriteFile(fn, []byte(yamlConf), 0644) == nil)
+	assert.True(t, ioutil.WriteFile(fn, []byte(yamlConf), 0o644) == nil)
 	fn, _ = filepath.Abs(fn)
 
 	config = configuration{} // the global variable is dirty because of the previous tests run

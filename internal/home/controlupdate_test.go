@@ -81,7 +81,7 @@ func TestTargzFileUnpack(t *testing.T) {
 	fn := "../dist/AdGuardHome_linux_amd64.tar.gz"
 	outdir := "../test-unpack"
 	defer os.RemoveAll(outdir)
-	_ = os.Mkdir(outdir, 0755)
+	_ = os.Mkdir(outdir, 0o755)
 	files, e := targzFileUnpack(fn, outdir)
 	if e != nil {
 		t.Fatalf("FAILED: %s", e)
@@ -92,7 +92,7 @@ func TestTargzFileUnpack(t *testing.T) {
 func TestZipFileUnpack(t *testing.T) {
 	fn := "../dist/AdGuardHome_windows_amd64.zip"
 	outdir := "../test-unpack"
-	_ = os.Mkdir(outdir, 0755)
+	_ = os.Mkdir(outdir, 0o755)
 	files, e := zipFileUnpack(fn, outdir)
 	if e != nil {
 		t.Fatalf("FAILED: %s", e)
