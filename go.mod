@@ -7,6 +7,7 @@ require (
 	github.com/AdguardTeam/golibs v0.4.4
 	github.com/AdguardTeam/urlfilter v0.13.0
 	github.com/NYTimes/gziphandler v1.1.1
+	github.com/ameshkov/dnscrypt/v2 v2.0.0
 	github.com/beefsack/go-rate v0.0.0-20200827232406-6cde80facd47 // indirect
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-ping/ping v0.0.0-20201115131931-3300c582a663

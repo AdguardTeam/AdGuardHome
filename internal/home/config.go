@@ -99,6 +99,16 @@ type tlsConfigSettings struct {
 	PortDNSOverTLS  int    `yaml:"port_dns_over_tls" json:"port_dns_over_tls,omitempty"`   // DNS-over-TLS port. If 0, DOT will be disabled
 	PortDNSOverQUIC uint16 `yaml:"port_dns_over_quic" json:"port_dns_over_quic,omitempty"` // DNS-over-QUIC port. If 0, DoQ will be disabled
 
+	// PortDNSCrypt is the port for DNSCrypt requests.  If it's zero,
+	// DNSCrypt is disabled.
+	PortDNSCrypt int `yaml:"port_dnscrypt" json:"port_dnscrypt"`
+	// DNSCryptConfigFile is the path to the DNSCrypt config file.  Must be
+	// set if PortDNSCrypt is not zero.
+	//
+	// See https://github.com/AdguardTeam/dnsproxy and
+	// https://github.com/ameshkov/dnscrypt.
+	DNSCryptConfigFile string `yaml:"dnscrypt_config_file" json:"dnscrypt_config_file"`
+
 	// Allow DOH queries via unencrypted HTTP (e.g. for reverse proxying)
 	AllowUnencryptedDOH bool `yaml:"allow_unencrypted_doh" json:"allow_unencrypted_doh"`
 

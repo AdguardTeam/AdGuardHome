@@ -15,6 +15,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/ameshkov/dnscrypt/v2"
 )
 
 // FilteringConfig represents the DNS filtering configuration of AdGuard Home
@@ -114,6 +115,15 @@ type TLSConfig struct {
 	dnsNames []string
 }
 
+// DNSCryptConfig is the DNSCrypt server configuration struct.
+type DNSCryptConfig struct {
+	UDPListenAddr *net.UDPAddr
+	TCPListenAddr *net.TCPAddr
+	ProviderName  string
+	ResolverCert  *dnscrypt.Cert
+	Enabled       bool
+}
+
 // ServerConfig represents server configuration.
 // The zero ServerConfig is empty and ready for use.
 type ServerConfig struct {
@@ -124,6 +134,7 @@ type ServerConfig struct {
 
 	FilteringConfig
 	TLSConfig
+	DNSCryptConfig
 	TLSAllowUnencryptedDOH bool
 
 	TLSv12Roots *x509.CertPool // list of root CAs for TLSv1.2
@@ -187,6 +198,13 @@ func (s *Server) createProxyConfig() (proxy.Config, error) {
 	err := s.prepareTLS(&proxyConfig)
 	if err != nil {
 		return proxyConfig, err
+	}
+
+	if s.conf.DNSCryptConfig.Enabled {
+		proxyConfig.DNSCryptUDPListenAddr = []*net.UDPAddr{s.conf.DNSCryptConfig.UDPListenAddr}
+		proxyConfig.DNSCryptTCPListenAddr = []*net.TCPAddr{s.conf.DNSCryptConfig.TCPListenAddr}
+		proxyConfig.DNSCryptProviderName = s.conf.DNSCryptConfig.ProviderName
+		proxyConfig.DNSCryptResolverCert = s.conf.DNSCryptConfig.ResolverCert
 	}
 
 	// Validate proxy config
