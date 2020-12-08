@@ -41,6 +41,8 @@ func TestError_Error(t *testing.T) {
 }
 
 func TestError_Unwrap(t *testing.T) {
+	var _ wrapper = &manyError{}
+
 	const (
 		errSimple = iota
 		errWrapped

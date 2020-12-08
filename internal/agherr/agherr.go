@@ -65,3 +65,9 @@ func (e *manyError) Unwrap() error {
 
 	return e.underlying[0]
 }
+
+// wrapper is a copy of the hidden errors.wrapper interface for tests, linting,
+// etc.
+type wrapper interface {
+	Unwrap() error
+}

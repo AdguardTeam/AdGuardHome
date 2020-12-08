@@ -3,9 +3,9 @@
 package sysutil
 
 import (
-	"log"
 	"strings"
 
+	"github.com/AdguardTeam/golibs/log"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/svc/eventlog"
 )

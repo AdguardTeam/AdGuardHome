@@ -129,8 +129,6 @@ const (
 	NotFilteredNotFound Reason = iota
 	// NotFilteredWhiteList - the host is explicitly whitelisted
 	NotFilteredWhiteList
-	// NotFilteredError - there was a transitive error during check
-	NotFilteredError
 
 	// reasons for filtering
 
@@ -776,13 +774,4 @@ func (d *Dnsfilter) Start() {
 		d.registerRewritesHandlers()
 		d.registerBlockedServicesHandlers()
 	}
-}
-
-//
-// stats
-//
-
-// GetStats return dns filtering stats since startup.
-func (d *Dnsfilter) GetStats() Stats {
-	return gctx.stats
 }

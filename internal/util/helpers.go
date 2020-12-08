@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path"
 	"runtime"
 	"strings"
 )
@@ -39,13 +38,6 @@ func RunCommand(command string, arguments ...string) (int, string, error) {
 	}
 
 	return cmd.ProcessState.ExitCode(), string(out), nil
-}
-
-func FuncName() string {
-	pc := make([]uintptr, 10) // at least 1 entry needed
-	runtime.Callers(2, pc)
-	f := runtime.FuncForPC(pc[0])
-	return path.Base(f.Name())
 }
 
 // SplitNext - split string by a byte and return the first chunk

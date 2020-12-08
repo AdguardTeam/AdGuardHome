@@ -1,7 +1,6 @@
 package util
 
 import (
-	"log"
 	"testing"
 )
 
@@ -19,6 +18,6 @@ func TestGetValidNetInterfacesForWeb(t *testing.T) {
 			t.Fatalf("No addresses found for %s", iface.Name)
 		}
 
-		log.Printf("%v", iface)
+		t.Logf("%v", iface)
 	}
 }

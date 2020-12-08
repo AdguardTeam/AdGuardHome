@@ -3,8 +3,9 @@
 package sysutil
 
 import (
-	"log"
 	"log/syslog"
+
+	"github.com/AdguardTeam/golibs/log"
 )
 
 func configureSyslog(serviceName string) error {
