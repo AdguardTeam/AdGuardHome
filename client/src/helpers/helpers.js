@@ -687,7 +687,7 @@ export const sortIp = (a, b) => {
 
         return 0;
     } catch (e) {
-        console.error(e);
+        console.warn(e);
         return 0;
     }
 };
