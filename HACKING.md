@@ -1,9 +1,9 @@
  #  *AdGuardHome* Developer Guidelines
 
-As of **2020-11-27**, this document is a work-in-progress, but should still be
-followed.  Some of the rules aren't enforced as thoroughly or remain broken in
-old code, but this is still the place to find out about what we **want** our
-code to look like.
+As of **December 2020**, this document is partially a work-in-progress, but
+should still be followed.  Some of the rules aren't enforced as thoroughly or
+remain broken in old code, but this is still the place to find out about what we
+**want** our code to look like.
 
 The rules are mostly sorted in the alphabetical order.
 
@@ -31,6 +31,11 @@ The rules are mostly sorted in the alphabetical order.
     and filenames like `HACKING.md`.
 
 ##  *Go*
+
+> Not Golang, not GO, not GOLANG, not GoLang. It is Go in natural language,
+> golang for others.
+
+— [@rakyll](https://twitter.com/rakyll/status/1229850223184269312)
 
  ###  Code And Naming
 
@@ -140,6 +145,19 @@ The rules are mostly sorted in the alphabetical order.
 ##  *Markdown*
 
  *  **TODO(a.garipov):** Define our *Markdown* conventions.
+
+##  Shell Scripting
+
+ *  Avoid bashisms, prefer *POSIX* features only.
+
+ *  Prefer `'raw strings'` to `"double quoted strings"` whenever possible.
+
+ *  Put spaces within `$( cmd )`, `$(( expr ))`, and `{ cmd; }`.
+
+ *  Use `set -e -f -u` and also `set -x` in verbose mode.
+
+ *  Use the `"$var"` form instead of the `$var` form, unless word splitting is
+    required.
 
 ##  Text, Including Comments
 

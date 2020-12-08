@@ -26,7 +26,8 @@
 #     * DOCKER_IMAGE_NAME - adguard/adguard-home
 #     * DOCKER_OUTPUT - type=image,name=adguard/adguard-home,push=true
 
-GOPATH := $(shell go env GOPATH)
+GO := go
+GOPATH := $(shell $(GO) env GOPATH)
 PWD := $(shell pwd)
 TARGET=AdGuardHome
 BASE_URL="https://static.adguard.com/adguardhome/$(CHANNEL)"
@@ -122,9 +123,9 @@ init:
 	git config core.hooksPath .githooks
 
 build: client_with_deps
-	go mod download
-	PATH=$(GOPATH)/bin:$(PATH) go generate ./...
-	CGO_ENABLED=0 go build -ldflags="-s -w -X main.version=$(VERSION) -X main.channel=$(CHANNEL) -X main.goarm=$(GOARM)"
+	$(GO) mod download
+	PATH=$(GOPATH)/bin:$(PATH) $(GO) generate ./...
+	CGO_ENABLED=0 $(GO) build -ldflags="-s -w -X main.version=$(VERSION) -X main.channel=$(CHANNEL) -X main.goarm=$(GOARM)"
 	PATH=$(GOPATH)/bin:$(PATH) packr clean
 
 client:
@@ -151,38 +152,40 @@ docker:
 	@echo Now you can run the docker image:
 	@echo docker run --name "adguard-home" -p 53:53/tcp -p 53:53/udp -p 80:80/tcp -p 443:443/tcp -p 853:853/tcp -p 3000:3000/tcp $(DOCKER_IMAGE_NAME)
 
-lint: lint-js lint-go
+lint: js-lint go-lint
 
-lint-js: dependencies
-	@echo Running js linter
+js-lint: dependencies
 	npm --prefix client run lint
 
-lint-go:
-	@echo Running go linter
-	golangci-lint run
+go-install-tools:
+	env GO=$(GO) sh ./scripts/go-install-tools.sh
 
-test: test-js test-go
+go-lint:
+	env GO=$(GO) PATH="$$PWD/bin:$$PATH" sh ./scripts/go-lint.sh
 
-test-js:
+test: js-test go-test
+
+js-test:
 	npm run test --prefix client
 
-test-go:
-	go test $(TEST_FLAGS) --coverprofile coverage.txt ./...
+go-test:
+	$(GO) test $(TEST_FLAGS) --coverprofile coverage.txt ./...
 
 ci: client_with_deps
-	go mod download
+	$(GO) mod download
 	$(MAKE) test
 
 dependencies:
 	npm --prefix client ci
-	go mod download
+	$(GO) mod download
 
 clean:
 	rm -f ./AdGuardHome ./AdGuardHome.exe ./coverage.txt
-	rm -f -r ./build/ ./client/node_modules/ ./data/ $(DIST_DIR)
+	rm -f -r ./build/ ./client/node_modules/ ./data/ ./$(DIST_DIR)/
 # Set the GOPATH explicitly in case make clean is called from under sudo
 # after a Docker build.
 	env PATH="$(GOPATH)/bin:$$PATH" packr clean
+	rm -f -r ./bin/
 
 docker-multi-arch:
 	DOCKER_CLI_EXPERIMENTAL=enabled \
@@ -200,7 +203,7 @@ docker-multi-arch:
 	@echo docker run --name "adguard-home" -p 53:53/tcp -p 53:53/udp -p 80:80/tcp -p 443:443/tcp -p 853:853/tcp -p 3000:3000/tcp $(DOCKER_IMAGE_NAME)
 
 release: client_with_deps
-	go mod download
+	$(GO) mod download
 	@echo Starting release build: version $(VERSION), channel $(CHANNEL)
 	CHANNEL=$(CHANNEL) $(GORELEASER_COMMAND)
 	$(call write_version_file,$(VERSION))

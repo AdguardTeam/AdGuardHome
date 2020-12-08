@@ -171,9 +171,6 @@ You will need this to build AdGuard Home:
  * [node.js](https://nodejs.org/en/download/) v10.16.2 or later.
  * [npm](https://www.npmjs.com/) v6.14 or later.
 
-Optionally, for Go devs:
- * [golangci-lint](https://github.com/golangci/golangci-lint)
- 
 ### Building
 
 Open Terminal and execute these commands:
@@ -186,7 +183,7 @@ make
 
 Check the [`Makefile`](https://github.com/AdguardTeam/AdGuardHome/blob/master/Makefile) to learn about other commands.
 
-**Building for a different platform.** You can build AdGuard for any OS/ARCH just like any other Golang project.
+**Building for a different platform.** You can build AdGuard for any OS/ARCH just like any other Go project.
 In order to do this, specify `GOOS` and `GOARCH` env variables before running make.
 
 For example:

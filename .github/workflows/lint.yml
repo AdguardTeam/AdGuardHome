@@ -1,4 +1,4 @@
-'name': 'golangci-lint'
+'name': 'lint'
 'on':
   'push':
     'tags':
@@ -7,16 +7,13 @@
     - '*'
   'pull_request':
 'jobs':
-  'golangci':
+  'go-lint':
     'runs-on': 'ubuntu-latest'
     'steps':
     - 'uses': 'actions/checkout@v2'
-    - 'name': 'golangci-lint'
-      'uses': 'golangci/golangci-lint-action@v2.3.0'
-      'with':
-        # This field is required.  Don't set the patch version to always use
-        # the latest patch version.
-        'version': 'v1.32'
+    - 'name': 'run-lint'
+      'run': >
+        make go-install-tools go-lint
   'eslint':
     'runs-on': 'ubuntu-latest'
     'steps':
@@ -27,7 +24,7 @@
       'run': 'npm --prefix client run lint'
   'notify':
     'needs':
-    - 'golangci'
+    - 'go-lint'
     - 'eslint'
     # Secrets are not passed to workflows that are triggered by a pull request
     # from a fork.

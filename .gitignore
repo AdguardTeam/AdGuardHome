@@ -1,31 +1,22 @@
-.DS_Store
-/.vscode
-.idea
-/AdGuardHome
-/AdGuardHome.exe
-/AdGuardHome.yaml
-/AdGuardHome.log
-/data/
-/build/
-/dist/
-/client/node_modules/
-/querylog.json
-/querylog.json.1
-coverage.txt
-leases.db
-
-# Test output
-dnsfilter/tests/top-1m.csv
-dnsfilter/tests/dnsfilter.TestLotsOfRules*.pprof
-
-# Snapcraft build temporary files
-*.snap
-launchpad_credentials
-snapcraft_login
-snapcraft.yaml.bak
-
-# IntelliJ IDEA project files
-*.iml
-
-# Packr
+# Please, DO NOT put your text editors' temporary files here.  The more are
+# added, the harder it gets to maintain and manage projects' gitignores.  Put
+# them into your global gitignore file instead.
+#
+# See https://stackoverflow.com/a/7335487/1892060.
+#
+# Only build, run, and test outputs here.  Sorted.
 *-packr.go
+*.db
+*.snap
+/bin/
+/build/
+/data/
+/dist/
+/dnsfilter/tests/dnsfilter.TestLotsOfRules*.pprof
+/dnsfilter/tests/top-1m.csv
+/launchpad_credentials
+/querylog.json*
+/snapcraft_login
+AdGuardHome*
+coverage.txt
+node_modules/
