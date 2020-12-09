@@ -31,14 +31,16 @@ and this project adheres to
 
 ### Changed
 
-- Post-updating relaunch possibility is now determined OS-dependently ([#2231], [#2391]).
+- Post-updating relaunch possibility is now determined OS-dependently ([#2231],
+  [#2391]).
 - Made the mobileconfig HTTP API more robust and predictable, add parameters and
   improve error response ([#2358]).
 - Improved HTTP requests handling and timeouts ([#2343]).
 - Our snap package now uses the `core20` image as its base ([#2306]).
-- Various internal improvements ([#2271], [#2297]).
+- Various internal improvements ([#2267], [#2271], [#2297]).
 
 [#2231]: https://github.com/AdguardTeam/AdGuardHome/issues/2231
+[#2267]: https://github.com/AdguardTeam/AdGuardHome/issues/2267
 [#2271]: https://github.com/AdguardTeam/AdGuardHome/issues/2271
 [#2297]: https://github.com/AdguardTeam/AdGuardHome/issues/2297
 [#2306]: https://github.com/AdguardTeam/AdGuardHome/issues/2306

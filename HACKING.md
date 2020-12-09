@@ -117,8 +117,6 @@ The rules are mostly sorted in the alphabetical order.
 
  *  Use `gofumpt --extra -s`.
 
-    **TODO(a.garipov):** Add to the linters.
-
  *  Write slices of struct like this:
 
     ```go
