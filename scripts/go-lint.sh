@@ -13,24 +13,44 @@ test "${EXITONERROR:=1}" = '0' && set +e || set -e
 # variables.
 set -f -u
 
-# blocklistimports is a simple check against unwanted packages.
+not_found_msg='
+looks like a binary not found error.
+make sure you have installed the linter binaries using:
+
+	$ make go-install-tools
+'
+
+not_found() {
+	if [ "$?" = '127' ]
+	then
+		# Code 127 is the exit status a shell uses when
+		# a command or a file is not found, according to the
+		# Bash Hackers wiki.
+		#
+		# See https://wiki.bash-hackers.org/dict/terms/exit_status.
+		echo "$not_found_msg" 1>&2
+	fi
+}
+trap not_found EXIT
+
+# blocklist_imports is a simple check against unwanted packages.
 # Currently it only looks for package log which is replaced by our own
 # package github.com/AdguardTeam/golibs/log.
-blocklistimports () {
+blocklist_imports() {
 	git grep -F -e '"log"' -- '*.go' || exit 0;
 }
 
 # underscores is a simple check against Go filenames with underscores.
-underscores () {
+underscores() {
 	git ls-files '*_*.go' | { grep -F -e '_darwin.go' \
 		-e '_freebsd.go' -e '_linux.go' -e '_others.go' \
 		-e '_test.go' -e '_unix.go' -e '_windows.go' \
 		-v || exit 0; }
 }
 
-# exitonoutput exits with a nonzero exit code if there is anything in
+# exit_on_output exits with a nonzero exit code if there is anything in
 # the command's combined output.
-exitonoutput() {
+exit_on_output() {
 	test "$VERBOSE" -lt '2' && set +x
 
 	cmd="$1"
@@ -57,11 +77,11 @@ exitonoutput() {
 	return "$exitcode"
 }
 
-exitonoutput blocklistimports
+exit_on_output blocklist_imports
 
-exitonoutput underscores
+exit_on_output underscores
 
-exitonoutput gofumpt --extra -l -s .
+exit_on_output gofumpt --extra -l -s .
 
 golint --set_exit_status ./...
 
@@ -87,7 +107,7 @@ nilness ./...
 # TODO(a.garipov): Enable errcheck fully after handling all errors,
 # including the deferred ones, properly.  Also, perhaps, enable --blank.
 # errcheck ./...
-exitonoutput sh -c '
+exit_on_output sh -c '
 	errcheck --asserts ./... |\
 		{ grep -e "defer" -e "_test\.go:" -v || exit 0; }
 '

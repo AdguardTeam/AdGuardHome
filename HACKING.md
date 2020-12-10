@@ -152,6 +152,8 @@ The rules are mostly sorted in the alphabetical order.
 
  *  Put spaces within `$( cmd )`, `$(( expr ))`, and `{ cmd; }`.
 
+ *  `snake_case`, not `camelCase`.
+
  *  Use `set -e -f -u` and also `set -x` in verbose mode.
 
  *  Use the `"$var"` form instead of the `$var` form, unless word splitting is
