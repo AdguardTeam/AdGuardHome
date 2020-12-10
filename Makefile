@@ -66,7 +66,9 @@ endif
 
 # Version properties
 COMMIT=$(shell git rev-parse --short HEAD)
-TAG_NAME=$(shell git describe --abbrev=0)
+# TODO(a.garipov): The cut call is a temporary solution to trim
+# prerelease versions.  See the comment in .goreleaser.yml.
+TAG_NAME=$(shell git describe --abbrev=0 | cut -c 1-8)
 RELEASE_VERSION=$(TAG_NAME)
 SNAPSHOT_VERSION=$(RELEASE_VERSION)-SNAPSHOT-$(COMMIT)
 

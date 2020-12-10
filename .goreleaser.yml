@@ -105,3 +105,11 @@
 
 'checksum':
   'name_template': 'checksums.txt'
+
+'snapshot':
+  # TODO(a.garipov): A temporary solution to trim the prerelease versions.
+  # A real solution would consist of making a better versioning scheme that also
+  # doesn't break SemVer or Snapcraft.
+  #
+  # See https://github.com/AdguardTeam/AdGuardHome/issues/2412.
+  'name_template': '{{ slice .Tag 0 8 }}-SNAPSHOT-{{ .ShortCommit }}'
