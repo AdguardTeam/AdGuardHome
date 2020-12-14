@@ -129,6 +129,9 @@ const (
 	NotFilteredNotFound Reason = iota
 	// NotFilteredWhiteList - the host is explicitly whitelisted
 	NotFilteredWhiteList
+	// NotFilteredError is return where there was an error during
+	// checking.  Reserved, currently unused.
+	NotFilteredError
 
 	// reasons for filtering
 
