@@ -19,7 +19,7 @@ require (
 	github.com/joomcode/errorx v1.0.3 // indirect
 	github.com/kardianos/service v1.2.0
 	github.com/karrick/godirwalk v1.16.1 // indirect
-	github.com/lucas-clemente/quic-go v0.19.1 // indirect
+	github.com/lucas-clemente/quic-go v0.19.3 // indirect
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7
 	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065
 	github.com/miekg/dns v1.1.35
