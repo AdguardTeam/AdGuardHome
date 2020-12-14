@@ -85,6 +85,10 @@ You can use our [official Docker image](https://hub.docker.com/r/adguard/adguard
 
 If you're running **Linux**, there's a secure and easy way to install AdGuard Home - you can get it from the [Snap Store](https://snapcraft.io/adguard-home).
 
+#### Cloudron
+
+AdGuard Home is available as a 1-click install on the [Cloudron Store](https://www.cloudron.io/store/com.adguard.home.cloudronapp.html).
+
 ### Guides
 
 * [FAQ](https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ)
