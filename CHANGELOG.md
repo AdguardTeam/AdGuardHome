@@ -17,7 +17,7 @@ and this project adheres to
 
 - Detecting of network interface configurated to have static IP address via
   `/etc/network/interfaces` ([#2302]).
-- DNSCrypt protocol support [#1361].
+- DNSCrypt protocol support ([#1361]).
 - A 5 second wait period until a DHCP server's network interface gets an IP
   address ([#2304]).
 - `$dnstype` modifier for filters ([#2337]).
@@ -31,6 +31,9 @@ and this project adheres to
 
 ### Changed
 
+- When `dns.bogus_nxdomain` option is used, the server will now transform
+  responses if there is at least one bogus address instead of all of them
+  ([#2394]).  The new behavior is the same as in `dnsmasq`.
 - Post-updating relaunch possibility is now determined OS-dependently ([#2231],
   [#2391]).
 - Made the mobileconfig HTTP API more robust and predictable, add parameters and
@@ -47,6 +50,7 @@ and this project adheres to
 [#2343]: https://github.com/AdguardTeam/AdGuardHome/issues/2343
 [#2358]: https://github.com/AdguardTeam/AdGuardHome/issues/2358
 [#2391]: https://github.com/AdguardTeam/AdGuardHome/issues/2391
+[#2394]: https://github.com/AdguardTeam/AdGuardHome/issues/2394
 
 ### Fixed
 
