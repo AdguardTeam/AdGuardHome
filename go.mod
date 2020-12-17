@@ -3,7 +3,7 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.14
 
 require (
-	github.com/AdguardTeam/dnsproxy v0.33.5
+	github.com/AdguardTeam/dnsproxy v0.33.6
 	github.com/AdguardTeam/golibs v0.4.4
 	github.com/AdguardTeam/urlfilter v0.13.0
 	github.com/NYTimes/gziphandler v1.1.1
@@ -27,7 +27,7 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/u-root/u-root v7.0.0+incompatible
 	go.etcd.io/bbolt v1.3.5
-	golang.org/x/crypto v0.0.0-20201208171446-5f87f3452ae9
+	golang.org/x/crypto v0.0.0-20201217014255-9d1352758620
 	golang.org/x/net v0.0.0-20201216054612-986b41b23924
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9 // indirect
 	golang.org/x/sys v0.0.0-20201214210602-f9fddec55a1e
