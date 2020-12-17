@@ -9,7 +9,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/miekg/dns"
 )
 
 type logEntryHandler (func(t json.Token, ent *logEntry) error)
@@ -85,6 +84,29 @@ var logEntryHandlers = map[string]logEntryHandler{
 		ent.OrigAnswer, err = base64.StdEncoding.DecodeString(v)
 		return err
 	},
+	"Upstream": func(t json.Token, ent *logEntry) error {
+		v, ok := t.(string)
+		if !ok {
+			return nil
+		}
+		ent.Upstream = v
+		return nil
+	},
+	"Elapsed": func(t json.Token, ent *logEntry) error {
+		v, ok := t.(json.Number)
+		if !ok {
+			return nil
+		}
+		i, err := v.Int64()
+		if err != nil {
+			return err
+		}
+		ent.Elapsed = time.Duration(i)
+		return nil
+	},
+}
+
+var resultHandlers = map[string]logEntryHandler{
 	"IsFiltered": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(bool)
 		if !ok {
@@ -94,23 +116,40 @@ var logEntryHandlers = map[string]logEntryHandler{
 		return nil
 	},
 	"Rule": func(t json.Token, ent *logEntry) error {
-		v, ok := t.(string)
+		s, ok := t.(string)
 		if !ok {
 			return nil
 		}
-		ent.Result.Rule = v
+
+		l := len(ent.Result.Rules)
+		if l == 0 {
+			ent.Result.Rules = []*dnsfilter.ResultRule{{}}
+			l++
+		}
+
+		ent.Result.Rules[l-1].Text = s
+
 		return nil
 	},
 	"FilterID": func(t json.Token, ent *logEntry) error {
-		v, ok := t.(json.Number)
+		n, ok := t.(json.Number)
 		if !ok {
 			return nil
 		}
-		i, err := v.Int64()
+
+		i, err := n.Int64()
 		if err != nil {
 			return err
 		}
-		ent.Result.FilterID = i
+
+		l := len(ent.Result.Rules)
+		if l == 0 {
+			ent.Result.Rules = []*dnsfilter.ResultRule{{}}
+			l++
+		}
+
+		ent.Result.Rules[l-1].FilterListID = i
+
 		return nil
 	},
 	"Reason": func(t json.Token, ent *logEntry) error {
@@ -133,62 +172,50 @@ var logEntryHandlers = map[string]logEntryHandler{
 		ent.Result.ServiceName = v
 		return nil
 	},
-	"Upstream": func(t json.Token, ent *logEntry) error {
-		v, ok := t.(string)
-		if !ok {
-			return nil
-		}
-		ent.Upstream = v
-		return nil
-	},
-	"Elapsed": func(t json.Token, ent *logEntry) error {
-		v, ok := t.(json.Number)
-		if !ok {
-			return nil
-		}
-		i, err := v.Int64()
+}
+
+func decodeResult(dec *json.Decoder, ent *logEntry) {
+	for {
+		keyToken, err := dec.Token()
 		if err != nil {
-			return err
+			if err != io.EOF {
+				log.Debug("decodeResult err: %s", err)
+			}
+
+			return
 		}
-		ent.Elapsed = time.Duration(i)
-		return nil
-	},
-	"Result": func(json.Token, *logEntry) error {
-		return nil
-	},
-	"Question": func(t json.Token, ent *logEntry) error {
-		v, ok := t.(string)
+
+		if d, ok := keyToken.(json.Delim); ok {
+			if d == '}' {
+				return
+			}
+
+			continue
+		}
+
+		key, ok := keyToken.(string)
 		if !ok {
-			return nil
+			log.Debug("decodeResult: keyToken is %T (%[1]v) and not string", keyToken)
+
+			return
 		}
-		var qstr []byte
-		qstr, err := base64.StdEncoding.DecodeString(v)
-		if err != nil {
-			return err
-		}
-		q := new(dns.Msg)
-		err = q.Unpack(qstr)
-		if err != nil {
-			return err
-		}
-		ent.QHost = q.Question[0].Name
-		if len(ent.QHost) == 0 {
-			return nil // nil???
-		}
-		ent.QHost = ent.QHost[:len(ent.QHost)-1]
-		ent.QType = dns.TypeToString[q.Question[0].Qtype]
-		ent.QClass = dns.ClassToString[q.Question[0].Qclass]
-		return nil
-	},
-	"Time": func(t json.Token, ent *logEntry) error {
-		v, ok := t.(string)
+
+		handler, ok := resultHandlers[key]
 		if !ok {
-			return nil
+			continue
 		}
-		var err error
-		ent.Time, err = time.Parse(time.RFC3339, v)
-		return err
-	},
+
+		val, err := dec.Token()
+		if err != nil {
+			return
+		}
+
+		if err = handler(val, ent); err != nil {
+			log.Debug("decodeResult handler err: %s", err)
+
+			return
+		}
+	}
 }
 
 func decodeLogEntry(ent *logEntry, str string) {
@@ -200,16 +227,25 @@ func decodeLogEntry(ent *logEntry, str string) {
 			if err != io.EOF {
 				log.Debug("decodeLogEntry err: %s", err)
 			}
+
 			return
 		}
+
 		if _, ok := keyToken.(json.Delim); ok {
 			continue
 		}
 
 		key, ok := keyToken.(string)
 		if !ok {
-			log.Debug("decodeLogEntry: keyToken is %T and not string", keyToken)
+			log.Debug("decodeLogEntry: keyToken is %T (%[1]v) and not string", keyToken)
+
 			return
+		}
+
+		if key == "Result" {
+			decodeResult(dec, ent)
+
+			continue
 		}
 
 		handler, ok := logEntryHandlers[key]
@@ -223,7 +259,8 @@ func decodeLogEntry(ent *logEntry, str string) {
 		}
 
 		if err = handler(val, ent); err != nil {
-			log.Debug("decodeLogEntry err: %s", err)
+			log.Debug("decodeLogEntry handler err: %s", err)
+
 			return
 		}
 	}

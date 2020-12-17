@@ -346,10 +346,22 @@ func (f *Filtering) handleFilteringConfig(w http.ResponseWriter, r *http.Request
 	enableFilters(true)
 }
 
+type checkHostRespRule struct {
+	FilterListID int64  `json:"filter_list_id"`
+	Text         string `json:"text"`
+}
+
 type checkHostResp struct {
-	Reason   string `json:"reason"`
-	FilterID int64  `json:"filter_id"`
-	Rule     string `json:"rule"`
+	Reason string `json:"reason"`
+
+	// FilterID is the ID of the rule's filter list.
+	//
+	// Deprecated: Use Rules[*].FilterListID.
+	FilterID int64 `json:"filter_id"`
+
+	Rule string `json:"rule"`
+
+	Rules []*checkHostRespRule `json:"rules"`
 
 	// for FilteredBlockedService:
 	SvcName string `json:"service_name"`
@@ -374,11 +386,20 @@ func (f *Filtering) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 
 	resp := checkHostResp{}
 	resp.Reason = result.Reason.String()
-	resp.FilterID = result.FilterID
-	resp.Rule = result.Rule
+	resp.FilterID = result.Rules[0].FilterListID
+	resp.Rule = result.Rules[0].Text
 	resp.SvcName = result.ServiceName
 	resp.CanonName = result.CanonName
 	resp.IPList = result.IPList
+
+	resp.Rules = make([]*checkHostRespRule, len(result.Rules))
+	for i, r := range result.Rules {
+		resp.Rules[i] = &checkHostRespRule{
+			FilterListID: r.FilterListID,
+			Text:         r.Text,
+		}
+	}
+
 	js, err := json.Marshal(resp)
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "json encode: %s", err)

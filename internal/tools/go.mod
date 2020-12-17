@@ -18,7 +18,7 @@ require (
 	golang.org/x/mod v0.4.0 // indirect
 	golang.org/x/tools v0.0.0-20201208062317-e652b2f42cc7
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	honnef.co/go/tools v0.0.1-2020.1.6
+	honnef.co/go/tools v0.1.0
 	mvdan.cc/gofumpt v0.0.0-20201129102820-5c11c50e9475
 	mvdan.cc/unparam v0.0.0-20200501210554-b37ab49443f7
 )

@@ -78,6 +78,14 @@ The rules are mostly sorted in the alphabetical order.
  *  Prefer constants to variables where possible.  Reduce global variables.  Use
     [constant errors] instead of `errors.New`.
 
+ *  Unused arguments in anonymous functions must be called `_`:
+
+    ```go
+    v.onSuccess = func(_ int, msg string) {
+            // …
+    }
+    ```
+
  *  Use linters.
 
  *  Use named returns to improve readability of function signatures.
@@ -106,7 +114,16 @@ The rules are mostly sorted in the alphabetical order.
     ```go
     // Foo implements the Fooer interface for *foo.
     func (f *foo) Foo() {
-        // …
+            // …
+    }
+    ```
+
+    When the implemented interface is unexported:
+
+    ```go
+    // Unwrap implements the hidden wrapper interface for *fooError.
+    func (err *fooError) Unwrap() (unwrapped error) {
+            // …
     }
     ```
 

@@ -2,9 +2,9 @@
 'info':
   'title': 'AdGuard Home'
   'description': >
-    AdGuard Home REST API.  Our admin web interface is built on top of this REST
-    API.
-  'version': '0.104'
+    AdGuard Home REST-ish API.  Our admin web interface is built on top of this
+    REST-ish API.
+  'version': '0.105'
   'contact':
     'name': 'AdGuard Home'
     'url': 'https://github.com/AdguardTeam/AdGuardHome'
@@ -1259,11 +1259,26 @@
           - 'FilteredBlockedService'
           - 'ReasonRewrite'
         'filter_id':
+          'deprecated': true
+          'description': >
+            In case if there's a rule applied to this DNS request, this is ID of
+            the filter list that the rule belongs to.
+
+            Deprecated: use `rules[*].filter_list_id` instead.
           'type': 'integer'
         'rule':
+          'deprecated': true
           'type': 'string'
           'example': '||example.org^'
-          'description': 'Filtering rule applied to the request (if any)'
+          'description': >
+            Filtering rule applied to the request (if any).
+
+            Deprecated: use `rules[*].text` instead.
+        'rules':
+          'description': 'Applied rules.'
+          'type': 'array'
+          'items':
+            '$ref': '#/components/schemas/ResultRule'
         'service_name':
           'type': 'string'
           'description': 'Set if reason=FilteredBlockedService'
@@ -1610,15 +1625,27 @@
         'question':
           '$ref': '#/components/schemas/DnsQuestion'
         'filterId':
+          'deprecated': true
           'type': 'integer'
           'example': 123123
           'description': >
             In case if there's a rule applied to this DNS request, this is ID of
-            the filter that rule belongs to.
+            the filter list that the rule belongs to.
+
+            Deprecated: use `rules[*].filter_list_id` instead.
         'rule':
+          'deprecated': true
           'type': 'string'
           'example': '||example.org^'
-          'description': 'Filtering rule applied to the request (if any)'
+          'description': >
+            Filtering rule applied to the request (if any).
+
+            Deprecated: use `rules[*].text` instead.
+        'rules':
+          'description': 'Applied rules.'
+          'type': 'array'
+          'items':
+            '$ref': '#/components/schemas/ResultRule'
         'reason':
           'type': 'string'
           'description': 'DNS filter status'
@@ -1668,6 +1695,22 @@
         'anonymize_client_ip':
           'type': 'boolean'
           'description': "Anonymize clients' IP addresses"
+    'ResultRule':
+      'description': 'Applied rule.'
+      'properties':
+        'filter_list_id':
+          'description': >
+            In case if there's a rule applied to this DNS request, this is ID of
+            the filter list that the rule belongs to.
+          'example': 123123
+          'format': 'int64'
+          'type': 'integer'
+        'text':
+          'description': >
+            The text of the filtering rule applied to the request (if any).
+          'example': '||example.org^'
+          'type': 'string'
+      'type': 'object'
     'TlsConfig':
       'type': 'object'
       'description': 'TLS configuration settings and status'

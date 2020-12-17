@@ -18,7 +18,7 @@ import (
 expire byte[4]
 res Result
 */
-func (d *Dnsfilter) setCacheResult(cache cache.Cache, host string, res Result) int {
+func (d *DNSFilter) setCacheResult(cache cache.Cache, host string, res Result) int {
 	var buf bytes.Buffer
 
 	expire := uint(time.Now().Unix()) + d.Config.CacheTime*60
@@ -63,12 +63,12 @@ func getCachedResult(cache cache.Cache, host string) (Result, bool) {
 }
 
 // SafeSearchDomain returns replacement address for search engine
-func (d *Dnsfilter) SafeSearchDomain(host string) (string, bool) {
+func (d *DNSFilter) SafeSearchDomain(host string) (string, bool) {
 	val, ok := safeSearchDomains[host]
 	return val, ok
 }
 
-func (d *Dnsfilter) checkSafeSearch(host string) (Result, error) {
+func (d *DNSFilter) checkSafeSearch(host string) (Result, error) {
 	if log.GetLevel() >= log.DEBUG {
 		timer := log.StartTimer()
 		defer timer.LogElapsed("SafeSearch: lookup for %s", host)
@@ -87,49 +87,52 @@ func (d *Dnsfilter) checkSafeSearch(host string) (Result, error) {
 		return Result{}, nil
 	}
 
-	res := Result{IsFiltered: true, Reason: FilteredSafeSearch}
+	res := Result{
+		IsFiltered: true,
+		Reason:     FilteredSafeSearch,
+		Rules:      []*ResultRule{{}},
+	}
+
 	if ip := net.ParseIP(safeHost); ip != nil {
-		res.IP = ip
+		res.Rules[0].IP = ip
 		valLen := d.setCacheResult(gctx.safeSearchCache, host, res)
 		log.Debug("SafeSearch: stored in cache: %s (%d bytes)", host, valLen)
+
 		return res, nil
 	}
 
 	// TODO this address should be resolved with upstream that was configured in dnsforward
-	addrs, err := net.LookupIP(safeHost)
+	ips, err := net.LookupIP(safeHost)
 	if err != nil {
 		log.Tracef("SafeSearchDomain for %s was found but failed to lookup for %s cause %s", host, safeHost, err)
 		return Result{}, err
 	}
 
-	for _, i := range addrs {
-		if ipv4 := i.To4(); ipv4 != nil {
-			res.IP = ipv4
-			break
+	for _, ip := range ips {
+		if ipv4 := ip.To4(); ipv4 != nil {
+			res.Rules[0].IP = ipv4
+
+			l := d.setCacheResult(gctx.safeSearchCache, host, res)
+			log.Debug("SafeSearch: stored in cache: %s (%d bytes)", host, l)
+
+			return res, nil
 		}
 	}
 
-	if len(res.IP) == 0 {
-		return Result{}, fmt.Errorf("no ipv4 addresses in safe search response for %s", safeHost)
-	}
-
-	// Cache result
-	valLen := d.setCacheResult(gctx.safeSearchCache, host, res)
-	log.Debug("SafeSearch: stored in cache: %s (%d bytes)", host, valLen)
-	return res, nil
+	return Result{}, fmt.Errorf("no ipv4 addresses in safe search response for %s", safeHost)
 }
 
-func (d *Dnsfilter) handleSafeSearchEnable(w http.ResponseWriter, r *http.Request) {
+func (d *DNSFilter) handleSafeSearchEnable(w http.ResponseWriter, r *http.Request) {
 	d.Config.SafeSearchEnabled = true
 	d.Config.ConfigModified()
 }
 
-func (d *Dnsfilter) handleSafeSearchDisable(w http.ResponseWriter, r *http.Request) {
+func (d *DNSFilter) handleSafeSearchDisable(w http.ResponseWriter, r *http.Request) {
 	d.Config.SafeSearchEnabled = false
 	d.Config.ConfigModified()
 }
 
-func (d *Dnsfilter) handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
+func (d *DNSFilter) handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"enabled": d.Config.SafeSearchEnabled,
 	}

@@ -58,7 +58,7 @@ type homeContext struct {
 	dnsServer  *dnsforward.Server   // DNS module
 	rdns       *RDNS                // rDNS module
 	whois      *Whois               // WHOIS module
-	dnsFilter  *dnsfilter.Dnsfilter // DNS filtering module
+	dnsFilter  *dnsfilter.DNSFilter // DNS filtering module
 	dhcpServer *dhcpd.Server        // DHCP module
 	auth       *Auth                // HTTP authentication module
 	filters    Filtering            // DNS filtering module

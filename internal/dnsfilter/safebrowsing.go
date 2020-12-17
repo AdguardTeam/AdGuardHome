@@ -1,5 +1,3 @@
-// Safe Browsing, Parental Control
-
 package dnsfilter
 
 import (
@@ -22,6 +20,8 @@ import (
 	"golang.org/x/net/publicsuffix"
 )
 
+// Safe browsing and parental control methods.
+
 const (
 	dnsTimeout                = 3 * time.Second
 	defaultSafebrowsingServer = `https://dns-family.adguard.com/dns-query`
@@ -30,7 +30,7 @@ const (
 	pcTXTSuffix               = `pc.dns.adguard.com.`
 )
 
-func (d *Dnsfilter) initSecurityServices() error {
+func (d *DNSFilter) initSecurityServices() error {
 	var err error
 	d.safeBrowsingServer = defaultSafebrowsingServer
 	d.parentalServer = defaultParentalServer
@@ -287,7 +287,7 @@ func check(c *sbCtx, r Result, u upstream.Upstream) (Result, error) {
 	return Result{}, nil
 }
 
-func (d *Dnsfilter) checkSafeBrowsing(host string) (Result, error) {
+func (d *DNSFilter) checkSafeBrowsing(host string) (Result, error) {
 	if log.GetLevel() >= log.DEBUG {
 		timer := log.StartTimer()
 		defer timer.LogElapsed("SafeBrowsing lookup for %s", host)
@@ -301,12 +301,14 @@ func (d *Dnsfilter) checkSafeBrowsing(host string) (Result, error) {
 	res := Result{
 		IsFiltered: true,
 		Reason:     FilteredSafeBrowsing,
-		Rule:       "adguard-malware-shavar",
+		Rules: []*ResultRule{{
+			Text: "adguard-malware-shavar",
+		}},
 	}
 	return check(ctx, res, d.safeBrowsingUpstream)
 }
 
-func (d *Dnsfilter) checkParental(host string) (Result, error) {
+func (d *DNSFilter) checkParental(host string) (Result, error) {
 	if log.GetLevel() >= log.DEBUG {
 		timer := log.StartTimer()
 		defer timer.LogElapsed("Parental lookup for %s", host)
@@ -320,7 +322,9 @@ func (d *Dnsfilter) checkParental(host string) (Result, error) {
 	res := Result{
 		IsFiltered: true,
 		Reason:     FilteredParental,
-		Rule:       "parental CATEGORY_BLACKLISTED",
+		Rules: []*ResultRule{{
+			Text: "parental CATEGORY_BLACKLISTED",
+		}},
 	}
 	return check(ctx, res, d.parentalUpstream)
 }
@@ -331,17 +335,17 @@ func httpError(r *http.Request, w http.ResponseWriter, code int, format string, 
 	http.Error(w, text, code)
 }
 
-func (d *Dnsfilter) handleSafeBrowsingEnable(w http.ResponseWriter, r *http.Request) {
+func (d *DNSFilter) handleSafeBrowsingEnable(w http.ResponseWriter, r *http.Request) {
 	d.Config.SafeBrowsingEnabled = true
 	d.Config.ConfigModified()
 }
 
-func (d *Dnsfilter) handleSafeBrowsingDisable(w http.ResponseWriter, r *http.Request) {
+func (d *DNSFilter) handleSafeBrowsingDisable(w http.ResponseWriter, r *http.Request) {
 	d.Config.SafeBrowsingEnabled = false
 	d.Config.ConfigModified()
 }
 
-func (d *Dnsfilter) handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Request) {
+func (d *DNSFilter) handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"enabled": d.Config.SafeBrowsingEnabled,
 	}
@@ -358,17 +362,17 @@ func (d *Dnsfilter) handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-func (d *Dnsfilter) handleParentalEnable(w http.ResponseWriter, r *http.Request) {
+func (d *DNSFilter) handleParentalEnable(w http.ResponseWriter, r *http.Request) {
 	d.Config.ParentalEnabled = true
 	d.Config.ConfigModified()
 }
 
-func (d *Dnsfilter) handleParentalDisable(w http.ResponseWriter, r *http.Request) {
+func (d *DNSFilter) handleParentalDisable(w http.ResponseWriter, r *http.Request) {
 	d.Config.ParentalEnabled = false
 	d.Config.ConfigModified()
 }
 
-func (d *Dnsfilter) handleParentalStatus(w http.ResponseWriter, r *http.Request) {
+func (d *DNSFilter) handleParentalStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"enabled": d.Config.ParentalEnabled,
 	}
@@ -386,7 +390,7 @@ func (d *Dnsfilter) handleParentalStatus(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-func (d *Dnsfilter) registerSecurityHandlers() {
+func (d *DNSFilter) registerSecurityHandlers() {
 	d.Config.HTTPRegister("POST", "/control/safebrowsing/enable", d.handleSafeBrowsingEnable)
 	d.Config.HTTPRegister("POST", "/control/safebrowsing/disable", d.handleSafeBrowsingDisable)
 	d.Config.HTTPRegister("GET", "/control/safebrowsing/status", d.handleSafeBrowsingStatus)

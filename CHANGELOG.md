@@ -15,7 +15,9 @@ and this project adheres to
 
 ### Added
 
-- Detecting of network interface configurated to have static IP address via
+- The host checking API and the query logs API can now return multiple matched
+  rules ([#2102]).
+- Detecting of network interface configured to have static IP address via
   `/etc/network/interfaces` ([#2302]).
 - DNSCrypt protocol support ([#1361]).
 - A 5 second wait period until a DHCP server's network interface gets an IP
@@ -24,6 +26,7 @@ and this project adheres to
 - HTTP API request body size limit ([#2305]).
 
 [#1361]: https://github.com/AdguardTeam/AdGuardHome/issues/1361
+[#2102]: https://github.com/AdguardTeam/AdGuardHome/issues/2102
 [#2302]: https://github.com/AdguardTeam/AdGuardHome/issues/2302
 [#2304]: https://github.com/AdguardTeam/AdGuardHome/issues/2304
 [#2305]: https://github.com/AdguardTeam/AdGuardHome/issues/2305
@@ -64,7 +67,9 @@ and this project adheres to
 [#2345]: https://github.com/AdguardTeam/AdGuardHome/issues/2345
 [#2355]: https://github.com/AdguardTeam/AdGuardHome/issues/2355
 
+### Removed
 
+- Support for pre-v0.99.3 format of query logs ([#2102]).
 
 ## [v0.104.3] - 2020-11-19
 

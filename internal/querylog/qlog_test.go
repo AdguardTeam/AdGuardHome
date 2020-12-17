@@ -236,10 +236,12 @@ func addEntry(l *queryLog, host, answerStr, client string) {
 	a.Answer = append(a.Answer, answer)
 	res := dnsfilter.Result{
 		IsFiltered:  true,
-		Rule:        "SomeRule",
 		Reason:      dnsfilter.ReasonRewrite,
 		ServiceName: "SomeService",
-		FilterID:    1,
+		Rules: []*dnsfilter.ResultRule{{
+			FilterListID: 1,
+			Text:         "SomeRule",
+		}},
 	}
 	params := AddParams{
 		Question:   &q,

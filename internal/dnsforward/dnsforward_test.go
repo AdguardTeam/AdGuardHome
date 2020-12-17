@@ -296,7 +296,7 @@ func TestBlockedRequest(t *testing.T) {
 
 func TestServerCustomClientUpstream(t *testing.T) {
 	s := createTestServer(t)
-	s.conf.GetCustomUpstreamByClient = func(clientAddr string) *proxy.UpstreamConfig {
+	s.conf.GetCustomUpstreamByClient = func(_ string) *proxy.UpstreamConfig {
 		uc := &proxy.UpstreamConfig{}
 		u := &testUpstream{}
 		u.ipv4 = map[string][]net.IP{}
@@ -473,7 +473,7 @@ func TestBlockCNAME(t *testing.T) {
 func TestClientRulesForCNAMEMatching(t *testing.T) {
 	s := createTestServer(t)
 	testUpstm := &testUpstream{testCNAMEs, testIPv4, nil}
-	s.conf.FilterHandler = func(clientAddr string, settings *dnsfilter.RequestFilteringSettings) {
+	s.conf.FilterHandler = func(_ string, settings *dnsfilter.RequestFilteringSettings) {
 		settings.FilteringEnabled = false
 	}
 	err := s.startWithUpstream(testUpstm)
@@ -863,6 +863,8 @@ func sendTestMessages(t *testing.T, conn *dns.Conn) {
 }
 
 func exchangeAndAssertResponse(t *testing.T, client *dns.Client, addr net.Addr, host, ip string) {
+	t.Helper()
+
 	req := createTestMessage(host)
 	reply, _, err := client.Exchange(req, addr.String())
 	if err != nil {
@@ -900,6 +902,8 @@ func assertGoogleAResponse(t *testing.T, reply *dns.Msg) {
 }
 
 func assertResponse(t *testing.T, reply *dns.Msg, ip string) {
+	t.Helper()
+
 	if len(reply.Answer) != 1 {
 		t.Fatalf("DNS server returned reply with wrong number of answers - %d", len(reply.Answer))
 	}

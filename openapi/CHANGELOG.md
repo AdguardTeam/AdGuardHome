@@ -1,5 +1,37 @@
 # AdGuard Home API Change Log
 
+<!-- TODO(a.garipov): Reformat in accordance with the KeepAChangelog spec. -->
+
+## v0.105: API changes
+
+### Multiple matched rules in `GET /filtering/check_host` and `GET /querylog`
+
+<!-- TODO(a.garipov): Update with better examples once $dnsrewrite rules are
+checked in. -->
+
+* The properties `rule` and `filter_id` are now deprecated.  API users should
+  inspect the newly-added `rules` object array instead.  Currently, it's either
+  empty or contains one object, which contains the same things as the old two
+  properties did, but under more correct names:
+
+  ```js
+  {
+    // …
+
+    // Deprecated.
+    "rule": "||example.com^",
+    // Deprecated.
+    "filter_id": 42,
+    // Newly-added.
+    "rules": [{
+      "text": "||example.com^",
+      "filter_list_id": 42
+    }]
+  }
+  ```
+
+  The old fields will be removed in v0.106.0.
+
 ## v0.103: API changes
 
 ### API: replace settings in GET /control/dns_info & POST /control/dns_config

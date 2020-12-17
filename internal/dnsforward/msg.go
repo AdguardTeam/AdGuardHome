@@ -39,8 +39,11 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 		// If the query was filtered by "Safe search", dnsfilter also must return
 		// the IP address that must be used in response.
 		// In this case regardless of the filtering method, we should return it
-		if result.Reason == dnsfilter.FilteredSafeSearch && result.IP != nil {
-			return s.genResponseWithIP(m, result.IP)
+		if result.Reason == dnsfilter.FilteredSafeSearch &&
+			len(result.Rules) > 0 &&
+			result.Rules[0].IP != nil {
+
+			return s.genResponseWithIP(m, result.Rules[0].IP)
 		}
 
 		if s.conf.BlockingMode == "null_ip" {
@@ -68,8 +71,8 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 		// Default blocking mode
 		// If there's an IP specified in the rule, return it
 		// For host-type rules, return null IP
-		if result.IP != nil {
-			return s.genResponseWithIP(m, result.IP)
+		if len(result.Rules) > 0 && result.Rules[0].IP != nil {
+			return s.genResponseWithIP(m, result.Rules[0].IP)
 		}
 
 		return s.makeResponseNullIP(m)

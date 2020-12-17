@@ -1833,16 +1833,22 @@ Response:
 	200 OK
 
 	{
-	"reason":"FilteredBlackList",
-	"filter_id":1,
-	"rule":"||doubleclick.net^",
-	"service_name": "...", // set if reason=FilteredBlockedService
-
-	// if reason=ReasonRewrite:
-	"cname": "...",
-	"ip_addrs": ["1.2.3.4", ...],
+		"reason":"FilteredBlackList",
+		"rules":{
+			"filter_list_id":42,
+			"text":"||doubleclick.net^",
+		},
+		// If we have "reason":"FilteredBlockedService".
+		"service_name": "...",
+		// If we have "reason":"Rewrite".
+		"cname": "...",
+		"ip_addrs": ["1.2.3.4", ...]
 	}
 
+There are also deprecated properties `filter_id` and `rule` on the top level of
+the response object.  Their usaga should be replaced with
+`rules[*].filter_list_id` and `rules[*].text` correspondingly.  See the
+_OpenAPI_ documentation and the `./openapi/CHANGELOG.md` file.
 
 ## Log-in page
 

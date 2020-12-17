@@ -188,7 +188,7 @@ func BlockedSvcKnown(s string) bool {
 }
 
 // ApplyBlockedServices - set blocked services settings for this DNS request
-func (d *Dnsfilter) ApplyBlockedServices(setts *RequestFilteringSettings, list []string, global bool) {
+func (d *DNSFilter) ApplyBlockedServices(setts *RequestFilteringSettings, list []string, global bool) {
 	setts.ServicesRules = []ServiceEntry{}
 	if global {
 		d.confLock.RLock()
@@ -210,7 +210,7 @@ func (d *Dnsfilter) ApplyBlockedServices(setts *RequestFilteringSettings, list [
 	}
 }
 
-func (d *Dnsfilter) handleBlockedServicesList(w http.ResponseWriter, r *http.Request) {
+func (d *DNSFilter) handleBlockedServicesList(w http.ResponseWriter, r *http.Request) {
 	d.confLock.RLock()
 	list := d.Config.BlockedServices
 	d.confLock.RUnlock()
@@ -223,7 +223,7 @@ func (d *Dnsfilter) handleBlockedServicesList(w http.ResponseWriter, r *http.Req
 	}
 }
 
-func (d *Dnsfilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Request) {
+func (d *DNSFilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Request) {
 	list := []string{}
 	err := json.NewDecoder(r.Body).Decode(&list)
 	if err != nil {
@@ -241,7 +241,7 @@ func (d *Dnsfilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Requ
 }
 
 // registerBlockedServicesHandlers - register HTTP handlers
-func (d *Dnsfilter) registerBlockedServicesHandlers() {
+func (d *DNSFilter) registerBlockedServicesHandlers() {
 	d.Config.HTTPRegister("GET", "/control/blocked_services/list", d.handleBlockedServicesList)
 	d.Config.HTTPRegister("POST", "/control/blocked_services/set", d.handleBlockedServicesSet)
 }
