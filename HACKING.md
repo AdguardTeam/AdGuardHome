@@ -163,11 +163,14 @@ The rules are mostly sorted in the alphabetical order.
 
 ##  Shell Scripting
 
- *  Avoid bashisms, prefer *POSIX* features only.
+ *  Avoid bashisms and GNUisms, prefer *POSIX* features only.
 
  *  Prefer `'raw strings'` to `"double quoted strings"` whenever possible.
 
  *  Put spaces within `$( cmd )`, `$(( expr ))`, and `{ cmd; }`.
+
+ *  Put utility flags in the ASCII order and **don't** group them together.  For
+    example, `ls -1 -A -q`.
 
  *  `snake_case`, not `camelCase`.
 
@@ -175,6 +178,24 @@ The rules are mostly sorted in the alphabetical order.
 
  *  Use the `"$var"` form instead of the `$var` form, unless word splitting is
     required.
+
+ *  When concatenating, always use the form with curly braces to prevent
+    accidental bad variable names.  That is, `"${var}_tmp.txt"` and **not**
+    `"$var_tmp.txt"`.  The latter will try to lookup variable `var_tmp`.
+
+ *  When concatenating, surround the whole string with quotes.  That is, use
+    this:
+
+    ```sh
+    dir="${TOP_DIR}/sub"
+    ```
+
+    And **not** this:
+
+    ```sh
+    # Bad!
+    dir="${TOP_DIR}"/sub
+    ```
 
 ##  Text, Including Comments
 
