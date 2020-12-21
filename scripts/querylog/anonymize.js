@@ -2,11 +2,6 @@ const fs = require('fs');
 const readline = require('readline');
 const dnsPacket = require('dns-packet')
 
-const decodeBase64 = (data) => {
-    let buff = new Buffer(data, 'base64');
-    return buff.toString('ascii');
-}
-
 const processLineByLine = async (source, callback) => {
     const fileStream = fs.createReadStream(source);
 
