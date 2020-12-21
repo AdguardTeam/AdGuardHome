@@ -167,11 +167,12 @@ func (req *dnsConfig) checkCacheTTL() bool {
 	if req.CacheMinTTL == nil && req.CacheMaxTTL == nil {
 		return true
 	}
+
 	var min, max uint32
 	if req.CacheMinTTL != nil {
 		min = *req.CacheMinTTL
 	}
-	if req.CacheMaxTTL == nil {
+	if req.CacheMaxTTL != nil {
 		max = *req.CacheMaxTTL
 	}
 

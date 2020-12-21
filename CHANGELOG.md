@@ -57,6 +57,7 @@ and this project adheres to
 
 ### Fixed
 
+- Inability to set DNS cache TTL limits ([#2459]).
 - Possible freezes on slower machines ([#2225]).
 - A mitigation against records being shown in the wrong order on the query log
   page ([#2293]).
@@ -68,6 +69,7 @@ and this project adheres to
 [#2293]: https://github.com/AdguardTeam/AdGuardHome/issues/2293
 [#2345]: https://github.com/AdguardTeam/AdGuardHome/issues/2345
 [#2355]: https://github.com/AdguardTeam/AdGuardHome/issues/2355
+[#2459]: https://github.com/AdguardTeam/AdGuardHome/issues/2459
 
 ### Removed
 
