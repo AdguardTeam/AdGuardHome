@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import ReactTable from 'react-table';
 import { withTranslation } from 'react-i18next';
+import { sortIp } from '../../../helpers/helpers';
 
 class Table extends Component {
     cellWrap = ({ value }) => (
@@ -21,6 +22,7 @@ class Table extends Component {
         {
             Header: this.props.t('answer'),
             accessor: 'answer',
+            sortMethod: sortIp,
             Cell: this.cellWrap,
         },
         {

@@ -1,22 +1,27 @@
 package dnsforward
 
 import (
-	"log"
 	"net"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
 
 // Create a DNS response by DNS request and set necessary flags
-func (s *Server) makeResponse(req *dns.Msg) *dns.Msg {
-	resp := dns.Msg{}
+func (s *Server) makeResponse(req *dns.Msg) (resp *dns.Msg) {
+	resp = &dns.Msg{
+		MsgHdr: dns.MsgHdr{
+			RecursionAvailable: true,
+		},
+		Compress: true,
+	}
+
 	resp.SetReply(req)
-	resp.RecursionAvailable = true
-	resp.Compress = true
-	return &resp
+
+	return resp
 }
 
 // genDNSFilterMessage generates a DNS message corresponding to the filtering result
@@ -39,8 +44,10 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 		// If the query was filtered by "Safe search", dnsfilter also must return
 		// the IP address that must be used in response.
 		// In this case regardless of the filtering method, we should return it
-		if result.Reason == dnsfilter.FilteredSafeSearch && result.IP != nil {
-			return s.genResponseWithIP(m, result.IP)
+		if result.Reason == dnsfilter.FilteredSafeSearch &&
+			len(result.Rules) > 0 &&
+			result.Rules[0].IP != nil {
+			return s.genResponseWithIP(m, result.Rules[0].IP)
 		}
 
 		if s.conf.BlockingMode == "null_ip" {
@@ -68,8 +75,8 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 		// Default blocking mode
 		// If there's an IP specified in the rule, return it
 		// For host-type rules, return null IP
-		if result.IP != nil {
-			return s.genResponseWithIP(m, result.IP)
+		if len(result.Rules) > 0 && result.Rules[0].IP != nil {
+			return s.genResponseWithIP(m, result.Rules[0].IP)
 		}
 
 		return s.makeResponseNullIP(m)
@@ -117,6 +124,18 @@ func (s *Server) genAAAAAnswer(req *dns.Msg, ip net.IP) *dns.AAAA {
 	}
 	answer.AAAA = ip
 	return answer
+}
+
+func (s *Server) genTXTAnswer(req *dns.Msg, strs []string) (answer *dns.TXT) {
+	return &dns.TXT{
+		Hdr: dns.RR_Header{
+			Name:   req.Question[0].Name,
+			Rrtype: dns.TypeTXT,
+			Ttl:    s.conf.BlockedResponseTTL,
+			Class:  dns.ClassINET,
+		},
+		Txt: strs,
+	}
 }
 
 // generate DNS response message with an IP address

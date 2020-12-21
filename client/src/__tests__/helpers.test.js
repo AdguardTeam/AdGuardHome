@@ -273,15 +273,15 @@ describe('sortIp', () => {
         });
     });
     describe('invalid input', () => {
-        const originalError = console.error;
+        const originalWarn = console.warn;
 
         beforeEach(() => {
-            console.error = jest.fn();
+            console.warn = jest.fn();
         });
 
         afterEach(() => {
-            expect(console.error).toHaveBeenCalled();
-            console.error = originalError;
+            expect(console.warn).toHaveBeenCalled();
+            console.warn = originalWarn;
         });
 
         test('invalid strings', () => {

@@ -12,7 +12,7 @@ const renderItem = ({
 
     return <li key={ip}>{isDns
         ? <strong>{dnsAddress}</strong>
-        : <a href={webAddress}>{webAddress}</a>
+        : <a href={webAddress} target="_blank" rel="noopener noreferrer">{webAddress}</a>
     }
     </li>;
 };

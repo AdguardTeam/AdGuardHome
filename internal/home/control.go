@@ -107,24 +107,24 @@ func registerControlHandlers() {
 	httpRegister(http.MethodGet, "/control/status", handleStatus)
 	httpRegister(http.MethodPost, "/control/i18n/change_language", handleI18nChangeLanguage)
 	httpRegister(http.MethodGet, "/control/i18n/current_language", handleI18nCurrentLanguage)
-	http.HandleFunc("/control/version.json", postInstall(optionalAuth(handleGetVersionJSON)))
+	Context.mux.HandleFunc("/control/version.json", postInstall(optionalAuth(handleGetVersionJSON)))
 	httpRegister(http.MethodPost, "/control/update", handleUpdate)
 	httpRegister(http.MethodGet, "/control/profile", handleGetProfile)
 
 	// No auth is necessary for DOH/DOT configurations
-	http.HandleFunc("/apple/doh.mobileconfig", postInstall(handleMobileConfigDoh))
-	http.HandleFunc("/apple/dot.mobileconfig", postInstall(handleMobileConfigDot))
+	Context.mux.HandleFunc("/apple/doh.mobileconfig", postInstall(handleMobileConfigDOH))
+	Context.mux.HandleFunc("/apple/dot.mobileconfig", postInstall(handleMobileConfigDOT))
 	RegisterAuthHandlers()
 }
 
-func httpRegister(method string, url string, handler func(http.ResponseWriter, *http.Request)) {
+func httpRegister(method, url string, handler func(http.ResponseWriter, *http.Request)) {
 	if len(method) == 0 {
 		// "/dns-query" handler doesn't need auth, gzip and isn't restricted by 1 HTTP method
-		http.HandleFunc(url, postInstall(handler))
+		Context.mux.HandleFunc(url, postInstall(handler))
 		return
 	}
 
-	http.Handle(url, postInstallHandler(optionalAuthHandler(gziphandler.GzipHandler(ensureHandler(method, handler)))))
+	Context.mux.Handle(url, postInstallHandler(optionalAuthHandler(gziphandler.GzipHandler(ensureHandler(method, handler)))))
 }
 
 // ----------------------------------
@@ -201,7 +201,6 @@ func preInstallHandler(handler http.Handler) http.Handler {
 // it also enforces HTTPS if it is enabled and configured
 func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		if Context.firstRun &&
 			!strings.HasPrefix(r.URL.Path, "/install.") &&
 			!strings.HasPrefix(r.URL.Path, "/assets/") {

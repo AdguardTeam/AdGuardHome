@@ -6,9 +6,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
+
+// TODO(a.garipov): Use a proper structured approach here.
 
 // Get Client IP address
 func (l *queryLog) getClientIP(clientIP string) string {
@@ -29,10 +32,12 @@ func (l *queryLog) getClientIP(clientIP string) string {
 	return clientIP
 }
 
-// entriesToJSON - converts log entries to JSON
-func (l *queryLog) entriesToJSON(entries []*logEntry, oldest time.Time) map[string]interface{} {
-	// init the response object
-	var data = []map[string]interface{}{}
+// jobject is a JSON object alias.
+type jobject = map[string]interface{}
+
+// entriesToJSON converts query log entries to JSON.
+func (l *queryLog) entriesToJSON(entries []*logEntry, oldest time.Time) (res jobject) {
+	data := []jobject{}
 
 	// the elements order is already reversed (from newer to older)
 	for i := 0; i < len(entries); i++ {
@@ -41,17 +46,18 @@ func (l *queryLog) entriesToJSON(entries []*logEntry, oldest time.Time) map[stri
 		data = append(data, jsonEntry)
 	}
 
-	var result = map[string]interface{}{}
-	result["oldest"] = ""
-	if !oldest.IsZero() {
-		result["oldest"] = oldest.Format(time.RFC3339Nano)
+	res = jobject{
+		"data":   data,
+		"oldest": "",
 	}
-	result["data"] = data
+	if !oldest.IsZero() {
+		res["oldest"] = oldest.Format(time.RFC3339Nano)
+	}
 
-	return result
+	return res
 }
 
-func (l *queryLog) logEntryToJSONEntry(entry *logEntry) map[string]interface{} {
+func (l *queryLog) logEntryToJSONEntry(entry *logEntry) (jsonEntry jobject) {
 	var msg *dns.Msg
 
 	if len(entry.Answer) > 0 {
@@ -62,17 +68,18 @@ func (l *queryLog) logEntryToJSONEntry(entry *logEntry) map[string]interface{} {
 		}
 	}
 
-	jsonEntry := map[string]interface{}{
+	jsonEntry = jobject{
 		"reason":       entry.Result.Reason.String(),
 		"elapsedMs":    strconv.FormatFloat(entry.Elapsed.Seconds()*1000, 'f', -1, 64),
 		"time":         entry.Time.Format(time.RFC3339Nano),
 		"client":       l.getClientIP(entry.IP),
 		"client_proto": entry.ClientProto,
-	}
-	jsonEntry["question"] = map[string]interface{}{
-		"host":  entry.QHost,
-		"type":  entry.QType,
-		"class": entry.QClass,
+		"upstream":     entry.Upstream,
+		"question": jobject{
+			"host":  entry.QHost,
+			"type":  entry.QType,
+			"class": entry.QClass,
+		},
 	}
 
 	if msg != nil {
@@ -83,12 +90,15 @@ func (l *queryLog) logEntryToJSONEntry(entry *logEntry) map[string]interface{} {
 		if opt != nil {
 			dnssecOk = opt.Do()
 		}
+
 		jsonEntry["answer_dnssec"] = dnssecOk
 	}
 
-	if len(entry.Result.Rule) > 0 {
-		jsonEntry["rule"] = entry.Result.Rule
-		jsonEntry["filterId"] = entry.Result.FilterID
+	jsonEntry["rules"] = resultRulesToJSONRules(entry.Result.Rules)
+
+	if len(entry.Result.Rules) > 0 && len(entry.Result.Rules[0].Text) > 0 {
+		jsonEntry["rule"] = entry.Result.Rules[0].Text
+		jsonEntry["filterId"] = entry.Result.Rules[0].FilterListID
 	}
 
 	if len(entry.Result.ServiceName) != 0 {
@@ -113,20 +123,30 @@ func (l *queryLog) logEntryToJSONEntry(entry *logEntry) map[string]interface{} {
 		}
 	}
 
-	jsonEntry["upstream"] = entry.Upstream
-
 	return jsonEntry
 }
 
-func answerToMap(a *dns.Msg) []map[string]interface{} {
+func resultRulesToJSONRules(rules []*dnsfilter.ResultRule) (jsonRules []jobject) {
+	jsonRules = make([]jobject, len(rules))
+	for i, r := range rules {
+		jsonRules[i] = jobject{
+			"filter_list_id": r.FilterListID,
+			"text":           r.Text,
+		}
+	}
+
+	return jsonRules
+}
+
+func answerToMap(a *dns.Msg) (answers []jobject) {
 	if a == nil || len(a.Answer) == 0 {
 		return nil
 	}
 
-	var answers = []map[string]interface{}{}
+	answers = []jobject{}
 	for _, k := range a.Answer {
 		header := k.Header()
-		answer := map[string]interface{}{
+		answer := jobject{
 			"type": dns.TypeToString[header.Rrtype],
 			"ttl":  header.Ttl,
 		}

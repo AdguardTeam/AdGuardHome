@@ -95,7 +95,7 @@ func (r *RewriteEntry) prepare() {
 	}
 }
 
-func (d *Dnsfilter) prepareRewrites() {
+func (d *DNSFilter) prepareRewrites() {
 	for i := range d.Rewrites {
 		d.Rewrites[i].prepare()
 	}
@@ -148,8 +148,7 @@ type rewriteEntryJSON struct {
 	Answer string `json:"answer"`
 }
 
-func (d *Dnsfilter) handleRewriteList(w http.ResponseWriter, r *http.Request) {
-
+func (d *DNSFilter) handleRewriteList(w http.ResponseWriter, r *http.Request) {
 	arr := []*rewriteEntryJSON{}
 
 	d.confLock.Lock()
@@ -170,8 +169,7 @@ func (d *Dnsfilter) handleRewriteList(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (d *Dnsfilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
-
+func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 	jsent := rewriteEntryJSON{}
 	err := json.NewDecoder(r.Body).Decode(&jsent)
 	if err != nil {
@@ -193,8 +191,7 @@ func (d *Dnsfilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 	d.Config.ConfigModified()
 }
 
-func (d *Dnsfilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) {
-
+func (d *DNSFilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) {
 	jsent := rewriteEntryJSON{}
 	err := json.NewDecoder(r.Body).Decode(&jsent)
 	if err != nil {
@@ -221,7 +218,7 @@ func (d *Dnsfilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) 
 	d.Config.ConfigModified()
 }
 
-func (d *Dnsfilter) registerRewritesHandlers() {
+func (d *DNSFilter) registerRewritesHandlers() {
 	d.Config.HTTPRegister("GET", "/control/rewrite/list", d.handleRewriteList)
 	d.Config.HTTPRegister("POST", "/control/rewrite/add", d.handleRewriteAdd)
 	d.Config.HTTPRegister("POST", "/control/rewrite/delete", d.handleRewriteDelete)

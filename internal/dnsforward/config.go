@@ -15,6 +15,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/ameshkov/dnscrypt/v2"
 )
 
 // FilteringConfig represents the DNS filtering configuration of AdGuard Home
@@ -94,19 +95,33 @@ type FilteringConfig struct {
 type TLSConfig struct {
 	TLSListenAddr  *net.TCPAddr `yaml:"-" json:"-"`
 	QUICListenAddr *net.UDPAddr `yaml:"-" json:"-"`
-	StrictSNICheck bool         `yaml:"strict_sni_check" json:"-"` // Reject connection if the client uses server name (in SNI) that doesn't match the certificate
 
-	CertificateChain string `yaml:"certificate_chain" json:"certificate_chain"` // PEM-encoded certificates chain
-	PrivateKey       string `yaml:"private_key" json:"private_key"`             // PEM-encoded private key
+	// Reject connection if the client uses server name (in SNI) that doesn't match the certificate
+	StrictSNICheck bool `yaml:"strict_sni_check" json:"-"`
 
-	CertificatePath string `yaml:"certificate_path" json:"certificate_path"` // certificate file name
-	PrivateKeyPath  string `yaml:"private_key_path" json:"private_key_path"` // private key file name
+	// PEM-encoded certificates chain
+	CertificateChain string `yaml:"certificate_chain" json:"certificate_chain"`
+	// PEM-encoded private key
+	PrivateKey string `yaml:"private_key" json:"private_key"`
+
+	CertificatePath string `yaml:"certificate_path" json:"certificate_path"`
+	PrivateKeyPath  string `yaml:"private_key_path" json:"private_key_path"`
 
 	CertificateChainData []byte `yaml:"-" json:"-"`
 	PrivateKeyData       []byte `yaml:"-" json:"-"`
 
-	cert     tls.Certificate // nolint(structcheck) - linter thinks that this field is unused, while TLSConfig is directly included into ServerConfig
-	dnsNames []string        // nolint(structcheck) // DNS names from certificate (SAN) or CN value from Subject
+	cert tls.Certificate
+	// DNS names from certificate (SAN) or CN value from Subject
+	dnsNames []string
+}
+
+// DNSCryptConfig is the DNSCrypt server configuration struct.
+type DNSCryptConfig struct {
+	UDPListenAddr *net.UDPAddr
+	TCPListenAddr *net.TCPAddr
+	ProviderName  string
+	ResolverCert  *dnscrypt.Cert
+	Enabled       bool
 }
 
 // ServerConfig represents server configuration.
@@ -119,6 +134,7 @@ type ServerConfig struct {
 
 	FilteringConfig
 	TLSConfig
+	DNSCryptConfig
 	TLSAllowUnencryptedDOH bool
 
 	TLSv12Roots *x509.CertPool // list of root CAs for TLSv1.2
@@ -182,6 +198,13 @@ func (s *Server) createProxyConfig() (proxy.Config, error) {
 	err := s.prepareTLS(&proxyConfig)
 	if err != nil {
 		return proxyConfig, err
+	}
+
+	if s.conf.DNSCryptConfig.Enabled {
+		proxyConfig.DNSCryptUDPListenAddr = []*net.UDPAddr{s.conf.DNSCryptConfig.UDPListenAddr}
+		proxyConfig.DNSCryptTCPListenAddr = []*net.TCPAddr{s.conf.DNSCryptConfig.TCPListenAddr}
+		proxyConfig.DNSCryptProviderName = s.conf.DNSCryptConfig.ProviderName
+		proxyConfig.DNSCryptResolverCert = s.conf.DNSCryptConfig.ResolverCert
 	}
 
 	// Validate proxy config

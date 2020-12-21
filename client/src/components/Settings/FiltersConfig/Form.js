@@ -7,7 +7,7 @@ import flow from 'lodash/flow';
 import { CheckboxField, toNumber } from '../../../helpers/form';
 import {
     FILTERS_INTERVALS_HOURS,
-    FILTERS_LINK,
+    FILTERS_RELATIVE_LINK,
     FORM_NAME,
 } from '../../../helpers/constants';
 
@@ -45,7 +45,7 @@ const Form = (props) => {
     } = props;
 
     const components = {
-        a: <a href={FILTERS_LINK} rel="noopener noreferrer" />,
+        a: <a href={FILTERS_RELATIVE_LINK} rel="noopener noreferrer" />,
     };
 
     return (

@@ -570,31 +570,35 @@ func (clients *clientsContainer) SetWhoisInfo(ip string, info [][]string) {
 //  so we overwrite existing entries with an equal or higher priority
 func (clients *clientsContainer) AddHost(ip, host string, source clientSource) (bool, error) {
 	clients.lock.Lock()
-	b, e := clients.addHost(ip, host, source)
+	b := clients.addHost(ip, host, source)
 	clients.lock.Unlock()
-	return b, e
+	return b, nil
 }
 
-func (clients *clientsContainer) addHost(ip, host string, source clientSource) (bool, error) {
-	// check auto-clients index
+func (clients *clientsContainer) addHost(ip, host string, source clientSource) (addedNew bool) {
 	ch, ok := clients.ipHost[ip]
-	if ok && ch.Source > source {
-		return false, nil
-	} else if ok {
+	if ok {
+		if ch.Source > source {
+			return false
+		}
+
 		ch.Source = source
 	} else {
 		ch = &ClientHost{
 			Host:   host,
 			Source: source,
 		}
+
 		clients.ipHost[ip] = ch
 	}
-	log.Debug("Clients: added %q -> %q [%d]", ip, host, len(clients.ipHost))
-	return true, nil
+
+	log.Debug("clients: added %q -> %q [%d]", ip, host, len(clients.ipHost))
+
+	return true
 }
 
 // Remove all entries that match the specified source
-func (clients *clientsContainer) rmHosts(source clientSource) int {
+func (clients *clientsContainer) rmHosts(source clientSource) {
 	n := 0
 	for k, v := range clients.ipHost {
 		if v.Source == source {
@@ -602,8 +606,8 @@ func (clients *clientsContainer) rmHosts(source clientSource) int {
 			n++
 		}
 	}
-	log.Debug("Clients: removed %d client aliases", n)
-	return n
+
+	log.Debug("clients: removed %d client aliases", n)
 }
 
 // addFromHostsFile fills the clients hosts list from the system's hosts files.
@@ -613,15 +617,12 @@ func (clients *clientsContainer) addFromHostsFile() {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	_ = clients.rmHosts(ClientSourceHostsFile)
+	clients.rmHosts(ClientSourceHostsFile)
 
 	n := 0
 	for ip, names := range hosts {
 		for _, name := range names {
-			ok, err := clients.addHost(ip, name, ClientSourceHostsFile)
-			if err != nil {
-				log.Debug("Clients: %s", err)
-			}
+			ok := clients.addHost(ip, name, ClientSourceHostsFile)
 			if ok {
 				n++
 			}
@@ -650,7 +651,7 @@ func (clients *clientsContainer) addFromSystemARP() {
 
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
-	_ = clients.rmHosts(ClientSourceARP)
+	clients.rmHosts(ClientSourceARP)
 
 	n := 0
 	lines := strings.Split(string(data), "\n")
@@ -668,10 +669,7 @@ func (clients *clientsContainer) addFromSystemARP() {
 			continue
 		}
 
-		ok, e := clients.addHost(ip, host, ClientSourceARP)
-		if e != nil {
-			log.Tracef("%s", e)
-		}
+		ok := clients.addHost(ip, host, ClientSourceARP)
 		if ok {
 			n++
 		}
@@ -689,7 +687,7 @@ func (clients *clientsContainer) addFromDHCP() {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	_ = clients.rmHosts(ClientSourceDHCP)
+	clients.rmHosts(ClientSourceDHCP)
 
 	leases := clients.dhcpServer.Leases(dhcpd.LeasesAll)
 	n := 0
@@ -697,7 +695,7 @@ func (clients *clientsContainer) addFromDHCP() {
 		if len(l.Hostname) == 0 {
 			continue
 		}
-		ok, _ := clients.addHost(l.IP.String(), l.Hostname, ClientSourceDHCP)
+		ok := clients.addHost(l.IP.String(), l.Hostname, ClientSourceDHCP)
 		if ok {
 			n++
 		}

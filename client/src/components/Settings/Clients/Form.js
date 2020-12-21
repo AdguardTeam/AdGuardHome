@@ -259,7 +259,7 @@ let Form = (props) => {
                         </div>
                         <div className="form__desc mt-0 mb-2">
                             <Trans components={[
-                                <a href="https://github.com/AdguardTeam/AdGuardHome/wiki/Hosts-Blocklists#ctag"
+                                <a target="_blank" rel="noopener noreferrer" href="https://github.com/AdguardTeam/AdGuardHome/wiki/Hosts-Blocklists#ctag"
                                    key="0">link</a>,
                             ]}>
                                 tags_desc

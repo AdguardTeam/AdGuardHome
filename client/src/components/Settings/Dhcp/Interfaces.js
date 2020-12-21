@@ -72,11 +72,11 @@ const Interfaces = () => {
         (store) => store.form[FORM_NAME.DHCP_INTERFACES]?.values?.interface_name,
     );
 
-    const interfaceValue = interface_name && interfaces[interface_name];
-
     if (processingInterfaces || !interfaces) {
         return null;
     }
+
+    const interfaceValue = interface_name && interfaces[interface_name];
 
     return <div className="row dhcp__interfaces">
         <div className="col col__dhcp">

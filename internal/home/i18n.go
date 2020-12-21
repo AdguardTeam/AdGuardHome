@@ -66,6 +66,7 @@ func handleI18nCurrentLanguage(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleI18nChangeLanguage(w http.ResponseWriter, r *http.Request) {
+	// This use of ReadAll is safe, because request's body is now limited.
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		msg := fmt.Sprintf("failed to read request body: %s", err)

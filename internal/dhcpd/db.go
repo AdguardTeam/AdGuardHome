@@ -74,7 +74,6 @@ func (s *Server) dbLoad() {
 			} else {
 				v6DynLeases = append(v6DynLeases, &lease)
 			}
-
 		} else {
 			if obj[i].Expiry == leaseExpireStatic {
 				staticLeases = append(staticLeases, &lease)

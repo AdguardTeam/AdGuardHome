@@ -26,6 +26,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
+	"github.com/AdguardTeam/AdGuardHome/internal/sysutil"
 	"github.com/AdguardTeam/AdGuardHome/internal/update"
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/golibs/log"
@@ -43,6 +44,7 @@ var (
 	updateChannel   = "none"
 	versionCheckURL = ""
 	ARMVersion      = ""
+	MIPSVersion     = ""
 )
 
 // Global context
@@ -56,7 +58,7 @@ type homeContext struct {
 	dnsServer  *dnsforward.Server   // DNS module
 	rdns       *RDNS                // rDNS module
 	whois      *Whois               // WHOIS module
-	dnsFilter  *dnsfilter.Dnsfilter // DNS filtering module
+	dnsFilter  *dnsfilter.DNSFilter // DNS filtering module
 	dhcpServer *dhcpd.Server        // DHCP module
 	auth       *Auth                // HTTP authentication module
 	filters    Filtering            // DNS filtering module
@@ -64,6 +66,11 @@ type homeContext struct {
 	tls        *TLSMod              // TLS module
 	autoHosts  util.AutoHosts       // IP-hostname pairs taken from system configuration (e.g. /etc/hosts) files
 	updater    *update.Updater
+
+	ipDetector *ipDetector
+
+	// mux is our custom http.ServeMux.
+	mux *http.ServeMux
 
 	// Runtime properties
 	// --
@@ -92,11 +99,12 @@ func (c *homeContext) getDataDir() string {
 var Context homeContext
 
 // Main is the entry point
-func Main(version, channel, armVer string) {
+func Main(version, channel, armVer, mipsVer string) {
 	// Init update-related global variables
 	versionString = version
 	updateChannel = channel
 	ARMVersion = armVer
+	MIPSVersion = mipsVer
 	versionCheckURL = "https://static.adguard.com/adguardhome/" + updateChannel + "/version.json"
 
 	// config can be specified, which reads options from there, but other command line flags have to override config values
@@ -133,35 +141,19 @@ func Main(version, channel, armVer string) {
 
 // version - returns the current version string
 func version() string {
+	// TODO(a.garipov): I'm pretty sure we can extract some of this stuff
+	// from the build info.
 	msg := "AdGuard Home, version %s, channel %s, arch %s %s"
 	if ARMVersion != "" {
 		msg = msg + " v" + ARMVersion
+	} else if MIPSVersion != "" {
+		msg = msg + " " + MIPSVersion
 	}
+
 	return fmt.Sprintf(msg, versionString, updateChannel, runtime.GOOS, runtime.GOARCH)
 }
 
-// run initializes configuration and runs the AdGuard Home
-// run is a blocking method!
-// nolint
-func run(args options) {
-	// configure config filename
-	initConfigFilename(args)
-
-	// configure working dir and config path
-	initWorkingDir(args)
-
-	// configure log level and output
-	configureLogger(args)
-
-	// Go memory hacks
-	memoryUsage(args)
-
-	// print the first message after logger is configured
-	log.Println(version())
-	log.Debug("Current working directory is %s", Context.workDir)
-	if args.runningAsService {
-		log.Info("AdGuard Home is running as a service")
-	}
+func setupContext(args options) {
 	Context.runningAsService = args.runningAsService
 	Context.disableUpdate = args.disableUpdate
 
@@ -179,7 +171,8 @@ func run(args options) {
 		DialContext: customDialContext,
 		Proxy:       getHTTPProxy,
 		TLSClientConfig: &tls.Config{
-			RootCAs: Context.tlsRoots,
+			RootCAs:    Context.tlsRoots,
+			MinVersion: tls.VersionTLS12,
 		},
 	}
 	Context.client = &http.Client{
@@ -206,11 +199,10 @@ func run(args options) {
 		}
 	}
 
-	// 'clients' module uses 'dnsfilter' module's static data (dnsfilter.BlockedSvcKnown()),
-	//  so we have to initialize dnsfilter's static data first,
-	//  but also avoid relying on automatic Go init() function
-	dnsfilter.InitModule()
+	Context.mux = http.NewServeMux()
+}
 
+func setupConfig(args options) {
 	config.DHCP.WorkDir = Context.workDir
 	config.DHCP.HTTPRegister = httpRegister
 	config.DHCP.ConfigModified = onConfigModified
@@ -238,7 +230,7 @@ func run(args options) {
 
 	if (runtime.GOOS == "linux" || runtime.GOOS == "darwin") &&
 		config.RlimitNoFile != 0 {
-		util.SetRlimit(config.RlimitNoFile)
+		sysutil.SetRlimit(config.RlimitNoFile)
 	}
 
 	// override bind host/port from the console
@@ -251,6 +243,37 @@ func run(args options) {
 	if len(args.pidFile) != 0 && writePIDFile(args.pidFile) {
 		Context.pidFileName = args.pidFile
 	}
+}
+
+// run performs configurating and starts AdGuard Home.
+func run(args options) {
+	// configure config filename
+	initConfigFilename(args)
+
+	// configure working dir and config path
+	initWorkingDir(args)
+
+	// configure log level and output
+	configureLogger(args)
+
+	// Go memory hacks
+	memoryUsage(args)
+
+	// print the first message after logger is configured
+	log.Println(version())
+	log.Debug("Current working directory is %s", Context.workDir)
+	if args.runningAsService {
+		log.Info("AdGuard Home is running as a service")
+	}
+
+	setupContext(args)
+
+	// clients package uses dnsfilter package's static data (dnsfilter.BlockedSvcKnown()),
+	//  so we have to initialize dnsfilter's static data first,
+	//  but also avoid relying on automatic Go init() function
+	dnsfilter.InitModule()
+
+	setupConfig(args)
 
 	if !Context.firstRun {
 		// Save the updated config
@@ -292,10 +315,14 @@ func run(args options) {
 		log.Fatalf("Can't initialize TLS module")
 	}
 
-	webConf := WebConfig{
+	webConf := webConfig{
 		firstRun: Context.firstRun,
 		BindHost: config.BindHost,
 		BindPort: config.BindPort,
+
+		ReadTimeout:       ReadTimeout,
+		ReadHeaderTimeout: ReadHeaderTimeout,
+		WriteTimeout:      WriteTimeout,
 	}
 	Context.web = CreateWeb(&webConf)
 	if Context.web == nil {
@@ -320,6 +347,11 @@ func run(args options) {
 		if Context.dhcpServer != nil {
 			_ = Context.dhcpServer.Start()
 		}
+	}
+
+	Context.ipDetector, err = newIPDetector()
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	Context.web.Start()
@@ -352,7 +384,7 @@ func checkPermissions() {
 	if runtime.GOOS == "windows" {
 		// On Windows we need to have admin rights to run properly
 
-		admin, _ := util.HaveAdminRights()
+		admin, _ := sysutil.HaveAdminRights()
 		if admin {
 			return
 		}
@@ -469,7 +501,7 @@ func configureLogger(args options) {
 
 	if ls.LogFile == configSyslog {
 		// Use syslog where it is possible and eventlog on Windows
-		err := util.ConfigureSyslog(serviceName)
+		err := sysutil.ConfigureSyslog(serviceName)
 		if err != nil {
 			log.Fatalf("cannot initialize syslog: %s", err)
 		}
@@ -658,4 +690,13 @@ func getHTTPProxy(req *http.Request) (*url.URL, error) {
 		return nil, nil
 	}
 	return url.Parse(config.ProxyURL)
+}
+
+// jsonError is a generic JSON error response.
+//
+// TODO(a.garipov): Merge together with the implementations in .../dhcpd and
+// other packages after refactoring the web handler registering.
+type jsonError struct {
+	// Message is the error message, an opaque string.
+	Message string `json:"message"`
 }

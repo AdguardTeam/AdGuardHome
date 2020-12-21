@@ -41,6 +41,8 @@ func TestError_Error(t *testing.T) {
 }
 
 func TestError_Unwrap(t *testing.T) {
+	var _ wrapper = &manyError{}
+
 	const (
 		errSimple = iota
 		errWrapped
@@ -48,7 +50,7 @@ func TestError_Unwrap(t *testing.T) {
 	)
 	errs := []error{
 		errSimple:  errors.New("a"),
-		errWrapped: fmt.Errorf("%w", errors.New("nested")),
+		errWrapped: fmt.Errorf("err: %w", errors.New("nested")),
 		errNil:     nil,
 	}
 	testCases := []struct {

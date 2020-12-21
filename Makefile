@@ -26,13 +26,16 @@
 #     * DOCKER_IMAGE_NAME - adguard/adguard-home
 #     * DOCKER_OUTPUT - type=image,name=adguard/adguard-home,push=true
 
-GOPATH := $(shell go env GOPATH)
+GO := go
+GOPATH := $(shell $(GO) env GOPATH)
 PWD := $(shell pwd)
 TARGET=AdGuardHome
 BASE_URL="https://static.adguard.com/adguardhome/$(CHANNEL)"
 GPG_KEY := devteam@adguard.com
 GPG_KEY_PASSPHRASE :=
 GPG_CMD := gpg --detach-sig --default-key $(GPG_KEY) --pinentry-mode loopback --passphrase $(GPG_KEY_PASSPHRASE)
+VERBOSE := -v
+REBUILD_CLIENT = 1
 
 # See release target
 DIST_DIR=dist
@@ -64,7 +67,9 @@ endif
 
 # Version properties
 COMMIT=$(shell git rev-parse --short HEAD)
-TAG_NAME=$(shell git describe --abbrev=0)
+# TODO(a.garipov): The cut call is a temporary solution to trim
+# prerelease versions.  See the comment in .goreleaser.yml.
+TAG_NAME=$(shell git describe --abbrev=0 | cut -c 1-8)
 RELEASE_VERSION=$(TAG_NAME)
 SNAPSHOT_VERSION=$(RELEASE_VERSION)-SNAPSHOT-$(COMMIT)
 
@@ -109,7 +114,7 @@ $(error DOCKER_IMAGE_NAME value is not set)
 endif
 
 # OS-specific flags
-TEST_FLAGS := --race -v
+TEST_FLAGS := --race $(VERBOSE)
 ifeq ($(OS),Windows_NT)
 	TEST_FLAGS :=
 endif
@@ -120,10 +125,11 @@ all: build
 init:
 	git config core.hooksPath .githooks
 
-build: client_with_deps
-	go mod download
-	PATH=$(GOPATH)/bin:$(PATH) go generate ./...
-	CGO_ENABLED=0 go build -ldflags="-s -w -X main.version=$(VERSION) -X main.channel=$(CHANNEL) -X main.goarm=$(GOARM)"
+build:
+	test '$(REBUILD_CLIENT)' = '1' && $(MAKE) client_with_deps || exit 0
+	$(GO) mod download
+	PATH=$(GOPATH)/bin:$(PATH) $(GO) generate ./...
+	CGO_ENABLED=0 $(GO) build -ldflags="-s -w -X main.version=$(VERSION) -X main.channel=$(CHANNEL) -X main.goarm=$(GOARM)"
 	PATH=$(GOPATH)/bin:$(PATH) packr clean
 
 client:
@@ -150,47 +156,40 @@ docker:
 	@echo Now you can run the docker image:
 	@echo docker run --name "adguard-home" -p 53:53/tcp -p 53:53/udp -p 80:80/tcp -p 443:443/tcp -p 853:853/tcp -p 3000:3000/tcp $(DOCKER_IMAGE_NAME)
 
-lint: lint-js lint-go
+lint: js-lint go-lint
 
-lint-js: dependencies
-	@echo Running js linter
+js-lint: dependencies
 	npm --prefix client run lint
 
-lint-go:
-	@echo Running go linter
-	golangci-lint run
+go-install-tools:
+	env GO=$(GO) sh ./scripts/go-install-tools.sh
 
-test: test-js test-go
+go-lint:
+	env GO=$(GO) PATH="$$PWD/bin:$$PATH" sh ./scripts/go-lint.sh
 
-test-js:
+test: js-test go-test
+
+js-test:
 	npm run test --prefix client
 
-test-go:
-	go test $(TEST_FLAGS) --coverprofile coverage.txt ./...
+go-test:
+	$(GO) test $(TEST_FLAGS) --coverprofile coverage.txt ./...
 
 ci: client_with_deps
-	go mod download
+	$(GO) mod download
 	$(MAKE) test
 
 dependencies:
 	npm --prefix client ci
-	go mod download
+	$(GO) mod download
 
 clean:
-	# make build output
-	rm -f AdGuardHome
-	rm -f AdGuardHome.exe
-	# tests output
-	rm -rf data
-	rm -f coverage.txt
-	# static build output
-	rm -rf build
-	# dist folder
-	rm -rf $(DIST_DIR)
-	# client deps
-	rm -rf client/node_modules
-	# packr-generated files
-	PATH=$(GOPATH)/bin:$(PATH) packr clean || true
+	rm -f ./AdGuardHome ./AdGuardHome.exe ./coverage.txt
+	rm -f -r ./build/ ./client/node_modules/ ./data/ ./$(DIST_DIR)/
+# Set the GOPATH explicitly in case make clean is called from under sudo
+# after a Docker build.
+	env PATH="$(GOPATH)/bin:$$PATH" packr clean
+	rm -f -r ./bin/
 
 docker-multi-arch:
 	DOCKER_CLI_EXPERIMENTAL=enabled \
@@ -208,7 +207,7 @@ docker-multi-arch:
 	@echo docker run --name "adguard-home" -p 53:53/tcp -p 53:53/udp -p 80:80/tcp -p 443:443/tcp -p 853:853/tcp -p 3000:3000/tcp $(DOCKER_IMAGE_NAME)
 
 release: client_with_deps
-	go mod download
+	$(GO) mod download
 	@echo Starting release build: version $(VERSION), channel $(CHANNEL)
 	CHANNEL=$(CHANNEL) $(GORELEASER_COMMAND)
 	$(call write_version_file,$(VERSION))

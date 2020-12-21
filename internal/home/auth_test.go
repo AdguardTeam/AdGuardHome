@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 func prepareTestDir() string {
 	const dir = "./agh-test"
 	_ = os.RemoveAll(dir)
-	_ = os.MkdirAll(dir, 0755)
+	_ = os.MkdirAll(dir, 0o755)
 	return dir
 }
 
@@ -30,7 +30,7 @@ func TestAuth(t *testing.T) {
 	fn := filepath.Join(dir, "sessions.db")
 
 	users := []User{
-		User{Name: "name", PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2"},
+		{Name: "name", PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2"},
 	}
 	a := InitAuth(fn, nil, 60)
 	s := session{}
@@ -41,7 +41,8 @@ func TestAuth(t *testing.T) {
 	assert.True(t, a.CheckSession("notfound") == -1)
 	a.RemoveSession("notfound")
 
-	sess := getSession(&users[0])
+	sess, err := getSession(&users[0])
+	assert.Nil(t, err)
 	sessStr := hex.EncodeToString(sess)
 
 	now := time.Now().UTC().Unix()
@@ -105,7 +106,7 @@ func TestAuthHTTP(t *testing.T) {
 	fn := filepath.Join(dir, "sessions.db")
 
 	users := []User{
-		User{Name: "name", PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2"},
+		{Name: "name", PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2"},
 	}
 	Context.auth = InitAuth(fn, users, 60)
 
@@ -136,7 +137,8 @@ func TestAuthHTTP(t *testing.T) {
 	assert.True(t, handlerCalled)
 
 	// perform login
-	cookie := Context.auth.httpCookie(loginJSON{Name: "name", Password: "password"})
+	cookie, err := Context.auth.httpCookie(loginJSON{Name: "name", Password: "password"})
+	assert.Nil(t, err)
 	assert.True(t, cookie != "")
 
 	// get /

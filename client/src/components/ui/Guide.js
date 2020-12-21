@@ -2,22 +2,25 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Trans, useTranslation } from 'react-i18next';
 import i18next from 'i18next';
+import { useSelector } from 'react-redux';
 import Tabs from './Tabs';
 import Icons from './Icons';
+import { getPathWithQueryString } from '../../helpers/helpers';
 
 const MOBILE_CONFIG_LINKS = {
     DOT: '/apple/dot.mobileconfig',
     DOH: '/apple/doh.mobileconfig',
 };
-
-const renderMobileconfigInfo = ({ label, components }) => <li key={label}>
+const renderMobileconfigInfo = ({ label, components, server_name }) => <li key={label}>
     <Trans components={components}>{label}</Trans>
     <ul>
         <li>
-            <a href={MOBILE_CONFIG_LINKS.DOT} download>{i18next.t('download_mobileconfig_dot')}</a>
+            <a href={getPathWithQueryString(MOBILE_CONFIG_LINKS.DOT, { host: server_name })}
+               download>{i18next.t('download_mobileconfig_dot')}</a>
         </li>
         <li>
-            <a href={MOBILE_CONFIG_LINKS.DOH} download>{i18next.t('download_mobileconfig_doh')}</a>
+            <a href={getPathWithQueryString(MOBILE_CONFIG_LINKS.DOH, { host: server_name })}
+               download>{i18next.t('download_mobileconfig_doh')}</a>
         </li>
     </ul>
 </li>;
@@ -38,37 +41,8 @@ const renderLi = ({ label, components }) => <li key={label}>
     </Trans>
 </li>;
 
-const dnsPrivacyList = [{
-    title: 'Android',
-    list: [
-        {
-            label: 'setup_dns_privacy_android_1',
-        },
-        {
-            label: 'setup_dns_privacy_android_2',
-            components: [
-                {
-                    key: 0,
-                    href: 'https://adguard.com/adguard-android/overview.html',
-                },
-                <code key="1">text</code>,
-            ],
-        },
-        {
-            label: 'setup_dns_privacy_android_3',
-            components: [
-                {
-                    key: 0,
-                    href: 'https://getintra.org/',
-                },
-                <code key="1">text</code>,
-            ],
-        },
-    ],
-},
-{
-    title: 'iOS',
-    list: [
+const getDnsPrivacyList = (server_name) => {
+    const iosList = [
         {
             label: 'setup_dns_privacy_ios_2',
             components: [
@@ -80,81 +54,120 @@ const dnsPrivacyList = [{
             ],
         },
         {
-            label: 'setup_dns_privacy_4',
-            components: {
-                highlight: <code />,
-            },
-            renderComponent: renderMobileconfigInfo,
-        },
-        {
             label: 'setup_dns_privacy_ios_1',
             components: [
                 {
                     key: 0,
                     href: 'https://itunes.apple.com/app/id1452162351',
                 },
-                    <code key="1">text</code>,
-                    {
-                        key: 2,
-                        href: 'https://dnscrypt.info/stamps',
-                    },
+                <code key="1">text</code>,
+                {
+                    key: 2,
+                    href: 'https://dnscrypt.info/stamps',
+                },
 
             ],
-        },
-    ],
-},
-{
-    title: 'setup_dns_privacy_other_title',
-    list: [
-        {
-            label: 'setup_dns_privacy_other_1',
-        },
-        {
-            label: 'setup_dns_privacy_other_2',
-            components: [
-                {
-                    key: 0,
-                    href: 'https://github.com/AdguardTeam/dnsproxy',
-                },
-            ],
-        },
-        {
-            href: 'https://github.com/jedisct1/dnscrypt-proxy',
-            label: 'setup_dns_privacy_other_3',
-            components: [
-                {
-                    key: 0,
-                    href: 'https://github.com/jedisct1/dnscrypt-proxy',
-                },
+        }];
+    /* Insert second element if can generate .mobileconfig links */
+    if (server_name) {
+        iosList.splice(1, 0, {
+            label: 'setup_dns_privacy_4',
+            components: {
+                highlight: <code />,
+            },
+            renderComponent: ({ label, components }) => renderMobileconfigInfo({
+                label,
+                components,
+                server_name,
+            }),
+        });
+    }
+
+    return [{
+        title: 'Android',
+        list: [
+            {
+                label: 'setup_dns_privacy_android_1',
+            },
+            {
+                label: 'setup_dns_privacy_android_2',
+                components: [
+                    {
+                        key: 0,
+                        href: 'https://adguard.com/adguard-android/overview.html',
+                    },
                     <code key="1">text</code>,
-            ],
-        },
-        {
-            label: 'setup_dns_privacy_other_4',
-            components: [
-                {
-                    key: 0,
-                    href: 'https://support.mozilla.org/kb/firefox-dns-over-https',
-                },
+                ],
+            },
+            {
+                label: 'setup_dns_privacy_android_3',
+                components: [
+                    {
+                        key: 0,
+                        href: 'https://getintra.org/',
+                    },
                     <code key="1">text</code>,
-            ],
-        },
-        {
-            label: 'setup_dns_privacy_other_5',
-            components: [
-                {
-                    key: 0,
-                    href: 'https://dnscrypt.info/implementations',
-                },
-                {
-                    key: 1,
-                    href: 'https://dnsprivacy.org/wiki/display/DP/DNS+Privacy+Clients',
-                },
-            ],
-        },
-    ],
-},
-];
+                ],
+            },
+        ],
+    },
+    {
+        title: 'iOS',
+        list: iosList,
+    },
+    {
+        title: 'setup_dns_privacy_other_title',
+        list: [
+            {
+                label: 'setup_dns_privacy_other_1',
+            },
+            {
+                label: 'setup_dns_privacy_other_2',
+                components: [
+                    {
+                        key: 0,
+                        href: 'https://github.com/AdguardTeam/dnsproxy',
+                    },
+                ],
+            },
+            {
+                href: 'https://github.com/jedisct1/dnscrypt-proxy',
+                label: 'setup_dns_privacy_other_3',
+                components: [
+                    {
+                        key: 0,
+                        href: 'https://github.com/jedisct1/dnscrypt-proxy',
+                    },
+                        <code key="1">text</code>,
+                ],
+            },
+            {
+                label: 'setup_dns_privacy_other_4',
+                components: [
+                    {
+                        key: 0,
+                        href: 'https://support.mozilla.org/kb/firefox-dns-over-https',
+                    },
+                        <code key="1">text</code>,
+                ],
+            },
+            {
+                label: 'setup_dns_privacy_other_5',
+                components: [
+                    {
+                        key: 0,
+                        href: 'https://dnscrypt.info/implementations',
+                    },
+                    {
+                        key: 1,
+                        href: 'https://dnsprivacy.org/wiki/display/DP/DNS+Privacy+Clients',
+                    },
+                ],
+            },
+        ],
+    },
+    ];
+};
 
 const renderDnsPrivacyList = ({ title, list }) => <div className="tab__paragraph" key={title}>
     <strong><Trans>{title}</Trans></strong>
@@ -172,6 +185,7 @@ const getTabs = ({
     tlsAddress,
     httpsAddress,
     showDnsPrivacyNotice,
+    server_name,
     t,
 }) => ({
     Router: {
@@ -277,7 +291,7 @@ const getTabs = ({
                                 setup_dns_privacy_3
                             </Trans>
                         </div>
-                        {dnsPrivacyList.map(renderDnsPrivacyList)}
+                        {getDnsPrivacyList(server_name).map(renderDnsPrivacyList)}
                     </>}
             </div>
         </div>;
@@ -299,6 +313,7 @@ const renderContent = ({ title, list, getTitle }) => <div key={title} label={i18
 
 const Guide = ({ dnsAddresses }) => {
     const { t } = useTranslation();
+    const server_name = useSelector((state) => state.encryption.server_name);
     const tlsAddress = dnsAddresses?.filter((item) => item.includes('tls://')) ?? '';
     const httpsAddress = dnsAddresses?.filter((item) => item.includes('https://')) ?? '';
     const showDnsPrivacyNotice = httpsAddress.length < 1 && tlsAddress.length < 1;
@@ -309,6 +324,7 @@ const Guide = ({ dnsAddresses }) => {
         tlsAddress,
         httpsAddress,
         showDnsPrivacyNotice,
+        server_name,
         t,
     });
 

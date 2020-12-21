@@ -41,7 +41,7 @@ func purgeCaches() {
 	}
 }
 
-func NewForTest(c *Config, filters []Filter) *Dnsfilter {
+func NewForTest(c *Config, filters []Filter) *DNSFilter {
 	setts = RequestFilteringSettings{}
 	setts.FilteringEnabled = true
 	if c != nil {
@@ -58,38 +58,48 @@ func NewForTest(c *Config, filters []Filter) *Dnsfilter {
 	return d
 }
 
-func (d *Dnsfilter) checkMatch(t *testing.T, hostname string) {
+func (d *DNSFilter) checkMatch(t *testing.T, hostname string) {
 	t.Helper()
-	ret, err := d.CheckHost(hostname, dns.TypeA, &setts)
+	res, err := d.CheckHost(hostname, dns.TypeA, &setts)
 	if err != nil {
 		t.Errorf("Error while matching host %s: %s", hostname, err)
 	}
-	if !ret.IsFiltered {
+	if !res.IsFiltered {
 		t.Errorf("Expected hostname %s to match", hostname)
 	}
 }
 
-func (d *Dnsfilter) checkMatchIP(t *testing.T, hostname, ip string, qtype uint16) {
+func (d *DNSFilter) checkMatchIP(t *testing.T, hostname, ip string, qtype uint16) {
 	t.Helper()
-	ret, err := d.CheckHost(hostname, qtype, &setts)
+
+	res, err := d.CheckHost(hostname, qtype, &setts)
 	if err != nil {
 		t.Errorf("Error while matching host %s: %s", hostname, err)
 	}
-	if !ret.IsFiltered {
+
+	if !res.IsFiltered {
 		t.Errorf("Expected hostname %s to match", hostname)
 	}
-	if ret.IP == nil || ret.IP.String() != ip {
-		t.Errorf("Expected ip %s to match, actual: %v", ip, ret.IP)
+
+	if len(res.Rules) == 0 {
+		t.Errorf("Expected result to have rules")
+
+		return
+	}
+
+	r := res.Rules[0]
+	if r.IP == nil || r.IP.String() != ip {
+		t.Errorf("Expected ip %s to match, actual: %v", ip, r.IP)
 	}
 }
 
-func (d *Dnsfilter) checkMatchEmpty(t *testing.T, hostname string) {
+func (d *DNSFilter) checkMatchEmpty(t *testing.T, hostname string) {
 	t.Helper()
-	ret, err := d.CheckHost(hostname, dns.TypeA, &setts)
+	res, err := d.CheckHost(hostname, dns.TypeA, &setts)
 	if err != nil {
 		t.Errorf("Error while matching host %s: %s", hostname, err)
 	}
-	if ret.IsFiltered {
+	if res.IsFiltered {
 		t.Errorf("Expected hostname %s to not match", hostname)
 	}
 }
@@ -120,26 +130,43 @@ func TestEtcHostsMatching(t *testing.T) {
 	d.checkMatchIP(t, "block.com", "0.0.0.0", dns.TypeA)
 
 	// ...but empty IPv6
-	ret, err := d.CheckHost("block.com", dns.TypeAAAA, &setts)
-	assert.True(t, err == nil && ret.IsFiltered && ret.IP != nil && len(ret.IP) == 0)
-	assert.True(t, ret.Rule == "0.0.0.0 block.com")
+	res, err := d.CheckHost("block.com", dns.TypeAAAA, &setts)
+	assert.Nil(t, err)
+	assert.True(t, res.IsFiltered)
+	if assert.Len(t, res.Rules, 1) {
+		assert.Equal(t, "0.0.0.0 block.com", res.Rules[0].Text)
+		assert.Len(t, res.Rules[0].IP, 0)
+	}
 
 	// IPv6
 	d.checkMatchIP(t, "ipv6.com", addr6, dns.TypeAAAA)
 
 	// ...but empty IPv4
-	ret, err = d.CheckHost("ipv6.com", dns.TypeA, &setts)
-	assert.True(t, err == nil && ret.IsFiltered && ret.IP != nil && len(ret.IP) == 0)
+	res, err = d.CheckHost("ipv6.com", dns.TypeA, &setts)
+	assert.Nil(t, err)
+	assert.True(t, res.IsFiltered)
+	if assert.Len(t, res.Rules, 1) {
+		assert.Equal(t, "::1  ipv6.com", res.Rules[0].Text)
+		assert.Len(t, res.Rules[0].IP, 0)
+	}
 
 	// 2 IPv4 (return only the first one)
-	ret, err = d.CheckHost("host2", dns.TypeA, &setts)
-	assert.True(t, err == nil && ret.IsFiltered)
-	assert.True(t, ret.IP != nil && ret.IP.Equal(net.ParseIP("0.0.0.1")))
+	res, err = d.CheckHost("host2", dns.TypeA, &setts)
+	assert.Nil(t, err)
+	assert.True(t, res.IsFiltered)
+	if assert.Len(t, res.Rules, 1) {
+		loopback4 := net.IP{0, 0, 0, 1}
+		assert.Equal(t, res.Rules[0].IP, loopback4)
+	}
 
 	// ...and 1 IPv6 address
-	ret, err = d.CheckHost("host2", dns.TypeAAAA, &setts)
-	assert.True(t, err == nil && ret.IsFiltered)
-	assert.True(t, ret.IP != nil && ret.IP.Equal(net.ParseIP("::1")))
+	res, err = d.CheckHost("host2", dns.TypeAAAA, &setts)
+	assert.Nil(t, err)
+	assert.True(t, res.IsFiltered)
+	if assert.Len(t, res.Rules, 1) {
+		loopback6 := net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
+		assert.Equal(t, res.Rules[0].IP, loopback6)
+	}
 }
 
 // SAFE BROWSING
@@ -151,7 +178,6 @@ func TestSafeBrowsing(t *testing.T) {
 
 	d := NewForTest(&Config{SafeBrowsingEnabled: true}, nil)
 	defer d.Close()
-	gctx.stats.Safebrowsing.Requests = 0
 	d.checkMatch(t, "wmconvirus.narod.ru")
 
 	assert.True(t, strings.Contains(logOutput.String(), "SafeBrowsing lookup for wmconvirus.narod.ru"))
@@ -206,13 +232,11 @@ func TestCheckHostSafeSearchYandex(t *testing.T) {
 
 	// Check host for each domain
 	for _, host := range yandex {
-		result, err := d.CheckHost(host, dns.TypeA, &setts)
-		if err != nil {
-			t.Errorf("SafeSearch doesn't work for yandex domain `%s` cause %s", host, err)
-		}
-
-		if result.IP.String() != "213.180.193.56" {
-			t.Errorf("SafeSearch doesn't work for yandex domain `%s`", host)
+		res, err := d.CheckHost(host, dns.TypeA, &setts)
+		assert.Nil(t, err)
+		assert.True(t, res.IsFiltered)
+		if assert.Len(t, res.Rules, 1) {
+			assert.Equal(t, res.Rules[0].IP.String(), "213.180.193.56")
 		}
 	}
 }
@@ -226,13 +250,11 @@ func TestCheckHostSafeSearchGoogle(t *testing.T) {
 
 	// Check host for each domain
 	for _, host := range googleDomains {
-		result, err := d.CheckHost(host, dns.TypeA, &setts)
-		if err != nil {
-			t.Errorf("SafeSearch doesn't work for %s cause %s", host, err)
-		}
-
-		if result.IP == nil {
-			t.Errorf("SafeSearch doesn't work for %s", host)
+		res, err := d.CheckHost(host, dns.TypeA, &setts)
+		assert.Nil(t, err)
+		assert.True(t, res.IsFiltered)
+		if assert.Len(t, res.Rules, 1) {
+			assert.NotEqual(t, res.Rules[0].IP.String(), "0.0.0.0")
 		}
 	}
 }
@@ -242,40 +264,30 @@ func TestSafeSearchCacheYandex(t *testing.T) {
 	defer d.Close()
 	domain := "yandex.ru"
 
-	var result Result
-	var err error
-
-	// Check host with disabled safesearch
-	result, err = d.CheckHost(domain, dns.TypeA, &setts)
-	if err != nil {
-		t.Fatalf("Cannot check host due to %s", err)
-	}
-	if result.IP != nil {
-		t.Fatalf("SafeSearch is not enabled but there is an answer for `%s` !", domain)
-	}
+	// Check host with disabled safesearch.
+	res, err := d.CheckHost(domain, dns.TypeA, &setts)
+	assert.Nil(t, err)
+	assert.False(t, res.IsFiltered)
+	assert.Len(t, res.Rules, 0)
 
 	d = NewForTest(&Config{SafeSearchEnabled: true}, nil)
 	defer d.Close()
 
-	result, err = d.CheckHost(domain, dns.TypeA, &setts)
+	res, err = d.CheckHost(domain, dns.TypeA, &setts)
 	if err != nil {
 		t.Fatalf("CheckHost for safesearh domain %s failed cause %s", domain, err)
 	}
 
-	// Fir yandex we already know valid ip
-	if result.IP.String() != "213.180.193.56" {
-		t.Fatalf("Wrong IP for %s safesearch: %s", domain, result.IP.String())
+	// For yandex we already know valid ip.
+	if assert.Len(t, res.Rules, 1) {
+		assert.Equal(t, res.Rules[0].IP.String(), "213.180.193.56")
 	}
 
-	// Check cache
+	// Check cache.
 	cachedValue, isFound := getCachedResult(gctx.safeSearchCache, domain)
-
-	if !isFound {
-		t.Fatalf("Safesearch cache doesn't work for %s!", domain)
-	}
-
-	if cachedValue.IP.String() != "213.180.193.56" {
-		t.Fatalf("Wrong IP in cache for %s safesearch: %s", domain, cachedValue.IP.String())
+	assert.True(t, isFound)
+	if assert.Len(t, cachedValue.Rules, 1) {
+		assert.Equal(t, cachedValue.Rules[0].IP.String(), "213.180.193.56")
 	}
 }
 
@@ -283,13 +295,10 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 	d := NewForTest(nil, nil)
 	defer d.Close()
 	domain := "www.google.ru"
-	result, err := d.CheckHost(domain, dns.TypeA, &setts)
-	if err != nil {
-		t.Fatalf("Cannot check host due to %s", err)
-	}
-	if result.IP != nil {
-		t.Fatalf("SafeSearch is not enabled but there is an answer!")
-	}
+	res, err := d.CheckHost(domain, dns.TypeA, &setts)
+	assert.Nil(t, err)
+	assert.False(t, res.IsFiltered)
+	assert.Len(t, res.Rules, 0)
 
 	d = NewForTest(&Config{SafeSearchEnabled: true}, nil)
 	defer d.Close()
@@ -313,25 +322,17 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 		}
 	}
 
-	result, err = d.CheckHost(domain, dns.TypeA, &setts)
-	if err != nil {
-		t.Fatalf("CheckHost for safesearh domain %s failed cause %s", domain, err)
+	res, err = d.CheckHost(domain, dns.TypeA, &setts)
+	assert.Nil(t, err)
+	if assert.Len(t, res.Rules, 1) {
+		assert.True(t, res.Rules[0].IP.Equal(ip))
 	}
 
-	if result.IP.String() != ip.String() {
-		t.Fatalf("Wrong IP for %s safesearch: %s.  Should be: %s",
-			domain, result.IP.String(), ip)
-	}
-
-	// Check cache
+	// Check cache.
 	cachedValue, isFound := getCachedResult(gctx.safeSearchCache, domain)
-
-	if !isFound {
-		t.Fatalf("Safesearch cache doesn't work for %s!", domain)
-	}
-
-	if cachedValue.IP.String() != ip.String() {
-		t.Fatalf("Wrong IP in cache for %s safesearch: %s", domain, cachedValue.IP.String())
+	assert.True(t, isFound)
+	if assert.Len(t, cachedValue.Rules, 1) {
+		assert.True(t, cachedValue.Rules[0].IP.Equal(ip))
 	}
 }
 
@@ -364,10 +365,11 @@ const nl = "\n"
 
 const (
 	blockingRules  = `||example.org^` + nl
-	whitelistRules = `||example.org^` + nl + `@@||test.example.org` + nl
+	allowlistRules = `||example.org^` + nl + `@@||test.example.org` + nl
 	importantRules = `@@||example.org^` + nl + `||test.example.org^$important` + nl
 	regexRules     = `/example\.org/` + nl + `@@||test.example.org^` + nl
 	maskRules      = `test*.example.org^` + nl + `exam*.com` + nl
+	dnstypeRules   = `||example.org^$dnstype=AAAA` + nl + `@@||test.example.org^` + nl
 )
 
 var tests = []struct {
@@ -376,44 +378,51 @@ var tests = []struct {
 	hostname   string
 	isFiltered bool
 	reason     Reason
+	dnsType    uint16
 }{
-	{"sanity", "||doubleclick.net^", "www.doubleclick.net", true, FilteredBlackList},
-	{"sanity", "||doubleclick.net^", "nodoubleclick.net", false, NotFilteredNotFound},
-	{"sanity", "||doubleclick.net^", "doubleclick.net.ru", false, NotFilteredNotFound},
-	{"sanity", "||doubleclick.net^", "wmconvirus.narod.ru", false, NotFilteredNotFound},
+	{"sanity", "||doubleclick.net^", "www.doubleclick.net", true, FilteredBlockList, dns.TypeA},
+	{"sanity", "||doubleclick.net^", "nodoubleclick.net", false, NotFilteredNotFound, dns.TypeA},
+	{"sanity", "||doubleclick.net^", "doubleclick.net.ru", false, NotFilteredNotFound, dns.TypeA},
+	{"sanity", "||doubleclick.net^", "wmconvirus.narod.ru", false, NotFilteredNotFound, dns.TypeA},
 
-	{"blocking", blockingRules, "example.org", true, FilteredBlackList},
-	{"blocking", blockingRules, "test.example.org", true, FilteredBlackList},
-	{"blocking", blockingRules, "test.test.example.org", true, FilteredBlackList},
-	{"blocking", blockingRules, "testexample.org", false, NotFilteredNotFound},
-	{"blocking", blockingRules, "onemoreexample.org", false, NotFilteredNotFound},
+	{"blocking", blockingRules, "example.org", true, FilteredBlockList, dns.TypeA},
+	{"blocking", blockingRules, "test.example.org", true, FilteredBlockList, dns.TypeA},
+	{"blocking", blockingRules, "test.test.example.org", true, FilteredBlockList, dns.TypeA},
+	{"blocking", blockingRules, "testexample.org", false, NotFilteredNotFound, dns.TypeA},
+	{"blocking", blockingRules, "onemoreexample.org", false, NotFilteredNotFound, dns.TypeA},
 
-	{"whitelist", whitelistRules, "example.org", true, FilteredBlackList},
-	{"whitelist", whitelistRules, "test.example.org", false, NotFilteredWhiteList},
-	{"whitelist", whitelistRules, "test.test.example.org", false, NotFilteredWhiteList},
-	{"whitelist", whitelistRules, "testexample.org", false, NotFilteredNotFound},
-	{"whitelist", whitelistRules, "onemoreexample.org", false, NotFilteredNotFound},
+	{"allowlist", allowlistRules, "example.org", true, FilteredBlockList, dns.TypeA},
+	{"allowlist", allowlistRules, "test.example.org", false, NotFilteredAllowList, dns.TypeA},
+	{"allowlist", allowlistRules, "test.test.example.org", false, NotFilteredAllowList, dns.TypeA},
+	{"allowlist", allowlistRules, "testexample.org", false, NotFilteredNotFound, dns.TypeA},
+	{"allowlist", allowlistRules, "onemoreexample.org", false, NotFilteredNotFound, dns.TypeA},
 
-	{"important", importantRules, "example.org", false, NotFilteredWhiteList},
-	{"important", importantRules, "test.example.org", true, FilteredBlackList},
-	{"important", importantRules, "test.test.example.org", true, FilteredBlackList},
-	{"important", importantRules, "testexample.org", false, NotFilteredNotFound},
-	{"important", importantRules, "onemoreexample.org", false, NotFilteredNotFound},
+	{"important", importantRules, "example.org", false, NotFilteredAllowList, dns.TypeA},
+	{"important", importantRules, "test.example.org", true, FilteredBlockList, dns.TypeA},
+	{"important", importantRules, "test.test.example.org", true, FilteredBlockList, dns.TypeA},
+	{"important", importantRules, "testexample.org", false, NotFilteredNotFound, dns.TypeA},
+	{"important", importantRules, "onemoreexample.org", false, NotFilteredNotFound, dns.TypeA},
 
-	{"regex", regexRules, "example.org", true, FilteredBlackList},
-	{"regex", regexRules, "test.example.org", false, NotFilteredWhiteList},
-	{"regex", regexRules, "test.test.example.org", false, NotFilteredWhiteList},
-	{"regex", regexRules, "testexample.org", true, FilteredBlackList},
-	{"regex", regexRules, "onemoreexample.org", true, FilteredBlackList},
+	{"regex", regexRules, "example.org", true, FilteredBlockList, dns.TypeA},
+	{"regex", regexRules, "test.example.org", false, NotFilteredAllowList, dns.TypeA},
+	{"regex", regexRules, "test.test.example.org", false, NotFilteredAllowList, dns.TypeA},
+	{"regex", regexRules, "testexample.org", true, FilteredBlockList, dns.TypeA},
+	{"regex", regexRules, "onemoreexample.org", true, FilteredBlockList, dns.TypeA},
 
-	{"mask", maskRules, "test.example.org", true, FilteredBlackList},
-	{"mask", maskRules, "test2.example.org", true, FilteredBlackList},
-	{"mask", maskRules, "example.com", true, FilteredBlackList},
-	{"mask", maskRules, "exampleeee.com", true, FilteredBlackList},
-	{"mask", maskRules, "onemoreexamsite.com", true, FilteredBlackList},
-	{"mask", maskRules, "example.org", false, NotFilteredNotFound},
-	{"mask", maskRules, "testexample.org", false, NotFilteredNotFound},
-	{"mask", maskRules, "example.co.uk", false, NotFilteredNotFound},
+	{"mask", maskRules, "test.example.org", true, FilteredBlockList, dns.TypeA},
+	{"mask", maskRules, "test2.example.org", true, FilteredBlockList, dns.TypeA},
+	{"mask", maskRules, "example.com", true, FilteredBlockList, dns.TypeA},
+	{"mask", maskRules, "exampleeee.com", true, FilteredBlockList, dns.TypeA},
+	{"mask", maskRules, "onemoreexamsite.com", true, FilteredBlockList, dns.TypeA},
+	{"mask", maskRules, "example.org", false, NotFilteredNotFound, dns.TypeA},
+	{"mask", maskRules, "testexample.org", false, NotFilteredNotFound, dns.TypeA},
+	{"mask", maskRules, "example.co.uk", false, NotFilteredNotFound, dns.TypeA},
+
+	{"dnstype", dnstypeRules, "onemoreexample.org", false, NotFilteredNotFound, dns.TypeA},
+	{"dnstype", dnstypeRules, "example.org", false, NotFilteredNotFound, dns.TypeA},
+	{"dnstype", dnstypeRules, "example.org", true, FilteredBlockList, dns.TypeAAAA},
+	{"dnstype", dnstypeRules, "test.example.org", false, NotFilteredAllowList, dns.TypeA},
+	{"dnstype", dnstypeRules, "test.example.org", false, NotFilteredAllowList, dns.TypeAAAA},
 }
 
 func TestMatching(t *testing.T) {
@@ -425,15 +434,15 @@ func TestMatching(t *testing.T) {
 			d := NewForTest(nil, filters)
 			defer d.Close()
 
-			ret, err := d.CheckHost(test.hostname, dns.TypeA, &setts)
+			res, err := d.CheckHost(test.hostname, test.dnsType, &setts)
 			if err != nil {
 				t.Errorf("Error while matching host %s: %s", test.hostname, err)
 			}
-			if ret.IsFiltered != test.isFiltered {
-				t.Errorf("Hostname %s has wrong result (%v must be %v)", test.hostname, ret.IsFiltered, test.isFiltered)
+			if res.IsFiltered != test.isFiltered {
+				t.Errorf("Hostname %s has wrong result (%v must be %v)", test.hostname, res.IsFiltered, test.isFiltered)
 			}
-			if ret.Reason != test.reason {
-				t.Errorf("Hostname %s has wrong reason (%v must be %v)", test.hostname, ret.Reason.String(), test.reason.String())
+			if res.Reason != test.reason {
+				t.Errorf("Hostname %s has wrong reason (%v must be %v)", test.hostname, res.Reason.String(), test.reason.String())
 			}
 		})
 	}
@@ -458,16 +467,20 @@ func TestWhitelist(t *testing.T) {
 	defer d.Close()
 
 	// matched by white filter
-	ret, err := d.CheckHost("host1", dns.TypeA, &setts)
+	res, err := d.CheckHost("host1", dns.TypeA, &setts)
 	assert.True(t, err == nil)
-	assert.True(t, !ret.IsFiltered && ret.Reason == NotFilteredWhiteList)
-	assert.True(t, ret.Rule == "||host1^")
+	assert.True(t, !res.IsFiltered && res.Reason == NotFilteredAllowList)
+	if assert.Len(t, res.Rules, 1) {
+		assert.True(t, res.Rules[0].Text == "||host1^")
+	}
 
 	// not matched by white filter, but matched by block filter
-	ret, err = d.CheckHost("host2", dns.TypeA, &setts)
+	res, err = d.CheckHost("host2", dns.TypeA, &setts)
 	assert.True(t, err == nil)
-	assert.True(t, ret.IsFiltered && ret.Reason == FilteredBlackList)
-	assert.True(t, ret.Rule == "||host2^")
+	assert.True(t, res.IsFiltered && res.Reason == FilteredBlockList)
+	if assert.Len(t, res.Rules, 1) {
+		assert.True(t, res.Rules[0].Text == "||host2^")
+	}
 }
 
 // CLIENT SETTINGS
@@ -498,8 +511,8 @@ func TestClientSettings(t *testing.T) {
 
 	// blocked by filters
 	r, _ = d.CheckHost("example.org", dns.TypeA, &setts)
-	if !r.IsFiltered || r.Reason != FilteredBlackList {
-		t.Fatalf("CheckHost FilteredBlackList")
+	if !r.IsFiltered || r.Reason != FilteredBlockList {
+		t.Fatalf("CheckHost FilteredBlockList")
 	}
 
 	// blocked by parental
@@ -551,11 +564,11 @@ func BenchmarkSafeBrowsing(b *testing.B) {
 	defer d.Close()
 	for n := 0; n < b.N; n++ {
 		hostname := "wmconvirus.narod.ru"
-		ret, err := d.CheckHost(hostname, dns.TypeA, &setts)
+		res, err := d.CheckHost(hostname, dns.TypeA, &setts)
 		if err != nil {
 			b.Errorf("Error while matching host %s: %s", hostname, err)
 		}
-		if !ret.IsFiltered {
+		if !res.IsFiltered {
 			b.Errorf("Expected hostname %s to match", hostname)
 		}
 	}
@@ -567,11 +580,11 @@ func BenchmarkSafeBrowsingParallel(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			hostname := "wmconvirus.narod.ru"
-			ret, err := d.CheckHost(hostname, dns.TypeA, &setts)
+			res, err := d.CheckHost(hostname, dns.TypeA, &setts)
 			if err != nil {
 				b.Errorf("Error while matching host %s: %s", hostname, err)
 			}
-			if !ret.IsFiltered {
+			if !res.IsFiltered {
 				b.Errorf("Expected hostname %s to match", hostname)
 			}
 		}

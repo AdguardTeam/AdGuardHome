@@ -79,7 +79,7 @@ func serveAndClient(ctx context.Context, responses [][]*dhcpv4.DHCPv4, opts ...C
 	return mc, serverConn
 }
 
-func ComparePacket(got *dhcpv4.DHCPv4, want *dhcpv4.DHCPv4) error {
+func ComparePacket(got, want *dhcpv4.DHCPv4) error {
 	if got == nil && got == want {
 		return nil
 	}
@@ -92,7 +92,7 @@ func ComparePacket(got *dhcpv4.DHCPv4, want *dhcpv4.DHCPv4) error {
 	return nil
 }
 
-func pktsExpected(got []*dhcpv4.DHCPv4, want []*dhcpv4.DHCPv4) error {
+func pktsExpected(got, want []*dhcpv4.DHCPv4) error {
 	if len(got) != len(want) {
 		return fmt.Errorf("got %d packets, want %d packets", len(got), len(want))
 	}
@@ -309,10 +309,10 @@ func TestMultipleSendAndRead(t *testing.T) {
 				newPacket(dhcpv4.OpcodeBootRequest, [4]byte{0x44, 0x44, 0x44, 0x44}),
 			},
 			server: [][]*dhcpv4.DHCPv4{
-				[]*dhcpv4.DHCPv4{ // Response for first packet.
+				{ // Response for first packet.
 					newPacket(dhcpv4.OpcodeBootReply, [4]byte{0x33, 0x33, 0x33, 0x33}),
 				},
-				[]*dhcpv4.DHCPv4{ // Response for second packet.
+				{ // Response for second packet.
 					newPacket(dhcpv4.OpcodeBootReply, [4]byte{0x44, 0x44, 0x44, 0x44}),
 				},
 			},

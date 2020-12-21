@@ -113,9 +113,6 @@ const Dhcp = () => {
     const enteredSomeValue = enteredSomeV4Value || enteredSomeV6Value || interfaceName;
 
     const getToggleDhcpButton = () => {
-        const otherDhcpFound = check && (check.v4.other_server.found === STATUS_RESPONSE.YES
-                || check.v6.other_server.found === STATUS_RESPONSE.YES);
-
         const filledConfig = interface_name && (Object.values(v4)
             .every(Boolean) || Object.values(v6)
             .every(Boolean));
@@ -141,7 +138,7 @@ const Dhcp = () => {
             className={className}
             onClick={enabled ? onClickDisable : onClickEnable}
             disabled={processingDhcp || processingConfig
-            || (!enabled && (!filledConfig || !check || otherDhcpFound))}
+            || (!enabled && (!filledConfig || !check))}
         >
             <Trans>{enabled ? 'dhcp_disable' : 'dhcp_enable'}</Trans>
         </button>;

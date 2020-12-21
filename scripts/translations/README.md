@@ -1,4 +1,4 @@
-## Twosky intergration script
+## Twosky integration script
 
 ### Usage
 

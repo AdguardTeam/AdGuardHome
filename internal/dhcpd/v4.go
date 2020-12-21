@@ -11,12 +11,14 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/go-ping/ping"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
-	"github.com/sparrc/go-ping"
 )
 
-// v4Server - DHCPv4 server
+// v4Server is a DHCPv4 server.
+//
+// TODO(a.garipov): Think about unifying this and v6Server.
 type v4Server struct {
 	srv        *server4.Server
 	leasesLock sync.Mutex
@@ -244,6 +246,7 @@ func (s *v4Server) addrAvailable(target net.IP) bool {
 	pinger, err := ping.NewPinger(target.String())
 	if err != nil {
 		log.Error("ping.NewPinger(): %v", err)
+
 		return true
 	}
 
@@ -255,7 +258,12 @@ func (s *v4Server) addrAvailable(target net.IP) bool {
 		reply = true
 	}
 	log.Debug("dhcpv4: Sending ICMP Echo to %v", target)
-	pinger.Run()
+
+	err = pinger.Run()
+	if err != nil {
+		log.Error("pinger.Run(): %v", err)
+		return true
+	}
 
 	if reply {
 		log.Info("dhcpv4: IP conflict: %v is already used by another device", target)
@@ -554,27 +562,6 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 	}
 }
 
-// ifaceIPv4Addrs returns the interface's IPv4 addresses.
-func ifaceIPv4Addrs(iface *net.Interface) (ips []net.IP, err error) {
-	addrs, err := iface.Addrs()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, a := range addrs {
-		ipnet, ok := a.(*net.IPNet)
-		if !ok {
-			continue
-		}
-
-		if ip := ipnet.IP.To4(); ip != nil {
-			ips = append(ips, ip)
-		}
-	}
-
-	return ips, nil
-}
-
 // Start starts the IPv4 DHCP server.
 func (s *v4Server) Start() error {
 	if !s.conf.Enabled {
@@ -589,26 +576,14 @@ func (s *v4Server) Start() error {
 
 	log.Debug("dhcpv4: starting...")
 
-	dnsIPAddrs, err := ifaceIPv4Addrs(iface)
+	dnsIPAddrs, err := ifaceDNSIPAddrs(iface, ipVersion4, defaultMaxAttempts, defaultBackoff)
 	if err != nil {
-		return fmt.Errorf("dhcpv4: getting ipv4 addrs for iface %s: %w", ifaceName, err)
+		return fmt.Errorf("dhcpv4: interface %s: %w", ifaceName, err)
 	}
 
-	switch len(dnsIPAddrs) {
-	case 0:
-		log.Debug("dhcpv4: no ipv4 address for interface %s", iface.Name)
-
+	if len(dnsIPAddrs) == 0 {
+		// No available IP addresses which may appear later.
 		return nil
-	case 1:
-		// Some Android devices use 8.8.8.8 if there is no secondary DNS
-		// server.  Fix that by setting the secondary DNS address to our
-		// address as well.
-		//
-		// See https://github.com/AdguardTeam/AdGuardHome/issues/1708.
-		log.Debug("dhcpv4: setting secondary dns ip to iself for interface %s", iface.Name)
-		dnsIPAddrs = append(dnsIPAddrs, dnsIPAddrs[0])
-	default:
-		// Go on.
 	}
 
 	s.conf.dnsIPAddrs = dnsIPAddrs

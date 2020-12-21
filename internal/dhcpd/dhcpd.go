@@ -52,6 +52,7 @@ type ServerConfig struct {
 	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request)) `yaml:"-"`
 }
 
+// OnLeaseChangedT is a callback for lease changes.
 type OnLeaseChangedT func(flags int)
 
 // flags for onLeaseChanged()
@@ -74,14 +75,10 @@ type Server struct {
 	onLeaseChanged []OnLeaseChangedT
 }
 
+// ServerInterface is an interface for servers.
 type ServerInterface interface {
 	Leases(flags int) []Lease
 	SetOnLeaseChanged(onLeaseChanged OnLeaseChangedT)
-}
-
-// CheckConfig checks the configuration
-func (s *Server) CheckConfig(config ServerConfig) error {
-	return nil
 }
 
 // Create - create object

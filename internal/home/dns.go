@@ -3,8 +3,10 @@ package home
 import (
 	"fmt"
 	"net"
+	"os"
 	"path/filepath"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
@@ -12,6 +14,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/ameshkov/dnscrypt/v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // Called by other modules when configuration is changed
@@ -70,7 +74,12 @@ func initDNSServer() error {
 	}
 	Context.dnsServer = dnsforward.NewServer(p)
 	Context.clients.dnsServer = Context.dnsServer
-	dnsConfig := generateServerConfig()
+	dnsConfig, err := generateServerConfig()
+	if err != nil {
+		closeDNSServer()
+		return fmt.Errorf("generateServerConfig: %w", err)
+	}
+
 	err = Context.dnsServer.Prepare(&dnsConfig)
 	if err != nil {
 		closeDNSServer()
@@ -88,60 +97,6 @@ func isRunning() bool {
 	return Context.dnsServer != nil && Context.dnsServer.IsRunning()
 }
 
-// nolint (gocyclo)
-// Return TRUE if IP is within public Internet IP range
-func isPublicIP(ip net.IP) bool {
-	ip4 := ip.To4()
-	if ip4 != nil {
-		switch ip4[0] {
-		case 0:
-			return false // software
-		case 10:
-			return false // private network
-		case 127:
-			return false // loopback
-		case 169:
-			if ip4[1] == 254 {
-				return false // link-local
-			}
-		case 172:
-			if ip4[1] >= 16 && ip4[1] <= 31 {
-				return false // private network
-			}
-		case 192:
-			if (ip4[1] == 0 && ip4[2] == 0) || // private network
-				(ip4[1] == 0 && ip4[2] == 2) || // documentation
-				(ip4[1] == 88 && ip4[2] == 99) || // reserved
-				(ip4[1] == 168) { // private network
-				return false
-			}
-		case 198:
-			if (ip4[1] == 18 || ip4[2] == 19) || // private network
-				(ip4[1] == 51 || ip4[2] == 100) { // documentation
-				return false
-			}
-		case 203:
-			if ip4[1] == 0 && ip4[2] == 113 { // documentation
-				return false
-			}
-		case 224:
-			if ip4[1] == 0 && ip4[2] == 0 { // multicast
-				return false
-			}
-		case 255:
-			if ip4[1] == 255 && ip4[2] == 255 && ip4[3] == 255 { // subnet
-				return false
-			}
-		}
-	} else {
-		if ip.IsLoopback() || ip.IsLinkLocalMulticast() || ip.IsLinkLocalUnicast() {
-			return false
-		}
-	}
-
-	return true
-}
-
 func onDNSRequest(d *proxy.DNSContext) {
 	ip := dnsforward.GetIPString(d.Addr)
 	if ip == "" {
@@ -153,15 +108,16 @@ func onDNSRequest(d *proxy.DNSContext) {
 	if !ipAddr.IsLoopback() {
 		Context.rdns.Begin(ip)
 	}
-	if isPublicIP(ipAddr) {
+	if !Context.ipDetector.detectSpecialNetwork(ipAddr) {
 		Context.whois.Begin(ip)
 	}
 }
 
-func generateServerConfig() dnsforward.ServerConfig {
-	newconfig := dnsforward.ServerConfig{
-		UDPListenAddr:   &net.UDPAddr{IP: net.ParseIP(config.DNS.BindHost), Port: config.DNS.Port},
-		TCPListenAddr:   &net.TCPAddr{IP: net.ParseIP(config.DNS.BindHost), Port: config.DNS.Port},
+func generateServerConfig() (newconfig dnsforward.ServerConfig, err error) {
+	bindHost := net.ParseIP(config.DNS.BindHost)
+	newconfig = dnsforward.ServerConfig{
+		UDPListenAddr:   &net.UDPAddr{IP: bindHost, Port: config.DNS.Port},
+		TCPListenAddr:   &net.TCPAddr{IP: bindHost, Port: config.DNS.Port},
 		FilteringConfig: config.DNS.FilteringConfig,
 		ConfigModified:  onConfigModified,
 		HTTPRegister:    httpRegister,
@@ -175,35 +131,86 @@ func generateServerConfig() dnsforward.ServerConfig {
 
 		if tlsConf.PortDNSOverTLS != 0 {
 			newconfig.TLSListenAddr = &net.TCPAddr{
-				IP:   net.ParseIP(config.DNS.BindHost),
+				IP:   bindHost,
 				Port: tlsConf.PortDNSOverTLS,
 			}
 		}
 
 		if tlsConf.PortDNSOverQUIC != 0 {
 			newconfig.QUICListenAddr = &net.UDPAddr{
-				IP:   net.ParseIP(config.DNS.BindHost),
+				IP:   bindHost,
 				Port: int(tlsConf.PortDNSOverQUIC),
 			}
 		}
+
+		if tlsConf.PortDNSCrypt != 0 {
+			newconfig.DNSCryptConfig, err = newDNSCrypt(bindHost, tlsConf)
+			if err != nil {
+				// Don't wrap the error, because it's already
+				// wrapped by newDNSCrypt.
+				return dnsforward.ServerConfig{}, err
+			}
+		}
 	}
+
 	newconfig.TLSv12Roots = Context.tlsRoots
 	newconfig.TLSCiphers = Context.tlsCiphers
 	newconfig.TLSAllowUnencryptedDOH = tlsConf.AllowUnencryptedDOH
 
 	newconfig.FilterHandler = applyAdditionalFiltering
 	newconfig.GetCustomUpstreamByClient = Context.clients.FindUpstreams
-	return newconfig
+
+	return newconfig, nil
 }
 
-type DNSEncryption struct {
+func newDNSCrypt(bindHost net.IP, tlsConf tlsConfigSettings) (dnscc dnsforward.DNSCryptConfig, err error) {
+	if tlsConf.DNSCryptConfigFile == "" {
+		return dnscc, agherr.Error("no dnscrypt_config_file")
+	}
+
+	f, err := os.Open(tlsConf.DNSCryptConfigFile)
+	if err != nil {
+		return dnscc, fmt.Errorf("opening dnscrypt config: %w", err)
+	}
+	defer f.Close()
+
+	rc := &dnscrypt.ResolverConfig{}
+	err = yaml.NewDecoder(f).Decode(rc)
+	if err != nil {
+		return dnscc, fmt.Errorf("decoding dnscrypt config: %w", err)
+	}
+
+	cert, err := rc.CreateCert()
+	if err != nil {
+		return dnscc, fmt.Errorf("creating dnscrypt cert: %w", err)
+	}
+
+	udpAddr := &net.UDPAddr{
+		IP:   bindHost,
+		Port: tlsConf.PortDNSCrypt,
+	}
+	tcpAddr := &net.TCPAddr{
+		IP:   bindHost,
+		Port: tlsConf.PortDNSCrypt,
+	}
+
+	return dnsforward.DNSCryptConfig{
+		UDPListenAddr: udpAddr,
+		TCPListenAddr: tcpAddr,
+		ResolverCert:  cert,
+		ProviderName:  rc.ProviderName,
+		Enabled:       true,
+	}, nil
+}
+
+type dnsEncryption struct {
 	https string
 	tls   string
 	quic  string
 }
 
-func getDNSEncryption() DNSEncryption {
-	dnsEncryption := DNSEncryption{}
+func getDNSEncryption() dnsEncryption {
+	dnsEncryption := dnsEncryption{}
 
 	tlsConf := tlsConfigSettings{}
 
@@ -327,7 +334,7 @@ func startDNSServer() error {
 		if !ipAddr.IsLoopback() {
 			Context.rdns.Begin(ip)
 		}
-		if isPublicIP(ipAddr) {
+		if !Context.ipDetector.detectSpecialNetwork(ipAddr) {
 			Context.whois.Begin(ip)
 		}
 	}
@@ -335,11 +342,16 @@ func startDNSServer() error {
 	return nil
 }
 
-func reconfigureDNSServer() error {
-	newconfig := generateServerConfig()
-	err := Context.dnsServer.Reconfigure(&newconfig)
+func reconfigureDNSServer() (err error) {
+	var newconfig dnsforward.ServerConfig
+	newconfig, err = generateServerConfig()
 	if err != nil {
-		return fmt.Errorf("couldn't start forwarding DNS server: %w", err)
+		return fmt.Errorf("generating forwarding dns server config: %w", err)
+	}
+
+	err = Context.dnsServer.Reconfigure(&newconfig)
+	if err != nil {
+		return fmt.Errorf("starting forwarding dns server: %w", err)
 	}
 
 	return nil

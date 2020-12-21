@@ -1,9 +1,12 @@
 package querylog
 
 import (
+	"math/rand"
 	"net"
 	"os"
+	"sort"
 	"testing"
+	"time"
 
 	"github.com/AdguardTeam/dnsproxy/proxyutil"
 
@@ -20,7 +23,7 @@ func TestMain(m *testing.M) {
 func prepareTestDir() string {
 	const dir = "./agh-test"
 	_ = os.RemoveAll(dir)
-	_ = os.MkdirAll(dir, 0755)
+	_ = os.MkdirAll(dir, 0o755)
 	return dir
 }
 
@@ -233,10 +236,12 @@ func addEntry(l *queryLog, host, answerStr, client string) {
 	a.Answer = append(a.Answer, answer)
 	res := dnsfilter.Result{
 		IsFiltered:  true,
-		Rule:        "SomeRule",
 		Reason:      dnsfilter.ReasonRewrite,
 		ServiceName: "SomeService",
-		FilterID:    1,
+		Rules: []*dnsfilter.ResultRule{{
+			FilterListID: 1,
+			Text:         "SomeRule",
+		}},
 	}
 	params := AddParams{
 		Question:   &q,
@@ -262,4 +267,73 @@ func assertLogEntry(t *testing.T, entry *logEntry, host, answer, client string) 
 	assert.NotNil(t, ip)
 	assert.Equal(t, answer, ip.String())
 	return true
+}
+
+func testEntries() (entries []*logEntry) {
+	rsrc := rand.NewSource(time.Now().UnixNano())
+	rgen := rand.New(rsrc)
+
+	entries = make([]*logEntry, 1000)
+	for i := range entries {
+		min := rgen.Intn(60)
+		sec := rgen.Intn(60)
+		entries[i] = &logEntry{
+			Time: time.Date(2020, 1, 1, 0, min, sec, 0, time.UTC),
+		}
+	}
+
+	return entries
+}
+
+// logEntriesByTimeDesc is a wrapper over []*logEntry for sorting.
+//
+// NOTE(a.garipov): Weirdly enough, on my machine this gets consistently
+// outperformed by sort.Slice, see the benchmark below.  I'm leaving this
+// implementation here, in tests, in case we want to make sure it outperforms on
+// most machines, but for now this is unused in the actual code.
+type logEntriesByTimeDesc []*logEntry
+
+// Len implements the sort.Interface interface for logEntriesByTimeDesc.
+func (les logEntriesByTimeDesc) Len() (n int) { return len(les) }
+
+// Less implements the sort.Interface interface for logEntriesByTimeDesc.
+func (les logEntriesByTimeDesc) Less(i, j int) (less bool) {
+	return les[i].Time.After(les[j].Time)
+}
+
+// Swap implements the sort.Interface interface for logEntriesByTimeDesc.
+func (les logEntriesByTimeDesc) Swap(i, j int) { les[i], les[j] = les[j], les[i] }
+
+func BenchmarkLogEntry_sort(b *testing.B) {
+	b.Run("methods", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			b.StopTimer()
+			entries := testEntries()
+			b.StartTimer()
+
+			sort.Stable(logEntriesByTimeDesc(entries))
+		}
+	})
+
+	b.Run("reflect", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			b.StopTimer()
+			entries := testEntries()
+			b.StartTimer()
+
+			sort.SliceStable(entries, func(i, j int) (less bool) {
+				return entries[i].Time.After(entries[j].Time)
+			})
+		}
+	})
+}
+
+func TestLogEntriesByTime_sort(t *testing.T) {
+	entries := testEntries()
+	sort.Sort(logEntriesByTimeDesc(entries))
+
+	for i := 1; i < len(entries); i++ {
+		assert.False(t, entries[i].Time.After(entries[i-1].Time),
+			"%s %s", entries[i].Time, entries[i-1].Time)
+	}
 }

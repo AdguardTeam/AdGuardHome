@@ -190,6 +190,7 @@ main() {
     SCRIPT_URL="https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh"
     URL="https://static.adguard.com/adguardhome/${CHANNEL}/${PKG_NAME}"
     OUT_DIR=/opt
+    AGH_DIR="${OUT_DIR}/AdGuardHome"
 
     # Root check
     if [ "$(id -u)" -eq 0 ]; then
@@ -208,22 +209,22 @@ main() {
         fi
     fi
 
-    log_info "AdGuard Home will be installed to ${OUT_DIR}/AdGuardHome"
+    log_info "AdGuard Home will be installed to ${AGH_DIR}"
 
-    [ -d "${OUT_DIR}/AdGuardHome" ] && error_exit "Directory ${OUT_DIR}/AdGuardHome already exists, abort installation"
+    [ -d "${AGH_DIR}" ] && [ -n "$(ls -1 -A -q ${AGH_DIR})" ] && error_exit "Directory ${AGH_DIR} is not empty, abort installation"
 
     download "${URL}" "${PKG_NAME}" || error_exit "Cannot download the package"
 
     unpack "${PKG_NAME}" "${OUT_DIR}" "${PKG_EXT}" || error_exit "Cannot unpack the package"
 
     # Install AdGuard Home service and run it
-    ${OUT_DIR}/AdGuardHome/AdGuardHome -s install || error_exit "Cannot install AdGuardHome as a service"
+    ${AGH_DIR}/AdGuardHome -s install || error_exit "Cannot install AdGuardHome as a service"
 
     rm "${PKG_NAME}"
 
     log_info "AdGuard Home is now installed and running."
     log_info "You can control the service status with the following commands:"
-    log_info "  sudo ${OUT_DIR}/AdGuardHome/AdGuardHome -s start|stop|restart|status|install|uninstall"
+    log_info "  sudo ${AGH_DIR}/AdGuardHome -s start|stop|restart|status|install|uninstall"
 }
 
 main "$@"

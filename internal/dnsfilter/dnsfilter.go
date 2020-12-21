@@ -1,4 +1,4 @@
-// Package dnsfilter implements a DNS filter.
+// Package dnsfilter implements a DNS request and response filter.
 package dnsfilter
 
 import (
@@ -91,12 +91,12 @@ type filtersInitializerParams struct {
 	blockFilters []Filter
 }
 
-// Dnsfilter holds added rules and performs hostname matches against the rules
-type Dnsfilter struct {
+// DNSFilter matches hostnames and DNS requests against filtering rules.
+type DNSFilter struct {
 	rulesStorage         *filterlist.RuleStorage
 	filteringEngine      *urlfilter.DNSEngine
-	rulesStorageWhite    *filterlist.RuleStorage
-	filteringEngineWhite *urlfilter.DNSEngine
+	rulesStorageAllow    *filterlist.RuleStorage
+	filteringEngineAllow *urlfilter.DNSEngine
 	engineLock           sync.RWMutex
 
 	parentalServer       string // access via methods
@@ -127,15 +127,16 @@ const (
 
 	// NotFilteredNotFound - host was not find in any checks, default value for result
 	NotFilteredNotFound Reason = iota
-	// NotFilteredWhiteList - the host is explicitly whitelisted
-	NotFilteredWhiteList
-	// NotFilteredError - there was a transitive error during check
+	// NotFilteredAllowList - the host is explicitly allowed
+	NotFilteredAllowList
+	// NotFilteredError is returned when there was an error during
+	// checking.  Reserved, currently unused.
 	NotFilteredError
 
 	// reasons for filtering
 
-	// FilteredBlackList - the host was matched to be advertising host
-	FilteredBlackList
+	// FilteredBlockList - the host was matched to be advertising host
+	FilteredBlockList
 	// FilteredSafeBrowsing - the host was matched to be malicious/phishing
 	FilteredSafeBrowsing
 	// FilteredParental - the host was matched to be outside of parental control settings
@@ -147,38 +148,60 @@ const (
 	// FilteredBlockedService - the host is blocked by "blocked services" settings
 	FilteredBlockedService
 
-	// ReasonRewrite - rewrite rule was applied
+	// ReasonRewrite is returned when there was a rewrite by
+	// a legacy DNS Rewrite rule.
 	ReasonRewrite
 
-	// RewriteEtcHosts - rewrite by /etc/hosts rule
-	RewriteEtcHosts
+	// RewriteAutoHosts is returned when there was a rewrite by
+	// autohosts rules (/etc/hosts and so on).
+	RewriteAutoHosts
+
+	// DNSRewriteRule is returned when a $dnsrewrite filter rule was
+	// applied.
+	DNSRewriteRule
 )
 
+// TODO(a.garipov): Resync with actual code names or replace completely
+// in HTTP API v1.
 var reasonNames = []string{
-	"NotFilteredNotFound",
-	"NotFilteredWhiteList",
-	"NotFilteredError",
+	NotFilteredNotFound:  "NotFilteredNotFound",
+	NotFilteredAllowList: "NotFilteredWhiteList",
+	NotFilteredError:     "NotFilteredError",
 
-	"FilteredBlackList",
-	"FilteredSafeBrowsing",
-	"FilteredParental",
-	"FilteredInvalid",
-	"FilteredSafeSearch",
-	"FilteredBlockedService",
+	FilteredBlockList:      "FilteredBlackList",
+	FilteredSafeBrowsing:   "FilteredSafeBrowsing",
+	FilteredParental:       "FilteredParental",
+	FilteredInvalid:        "FilteredInvalid",
+	FilteredSafeSearch:     "FilteredSafeSearch",
+	FilteredBlockedService: "FilteredBlockedService",
 
-	"Rewrite",
-	"RewriteEtcHosts",
+	ReasonRewrite: "Rewrite",
+
+	RewriteAutoHosts: "RewriteEtcHosts",
+
+	DNSRewriteRule: "DNSRewriteRule",
 }
 
 func (r Reason) String() string {
-	if uint(r) >= uint(len(reasonNames)) {
+	if r < 0 || int(r) >= len(reasonNames) {
 		return ""
 	}
+
 	return reasonNames[r]
 }
 
+// In returns true if reasons include r.
+func (r Reason) In(reasons ...Reason) bool {
+	for _, reason := range reasons {
+		if r == reason {
+			return true
+		}
+	}
+	return false
+}
+
 // GetConfig - get configuration
-func (d *Dnsfilter) GetConfig() RequestFilteringSettings {
+func (d *DNSFilter) GetConfig() RequestFilteringSettings {
 	c := RequestFilteringSettings{}
 	// d.confLock.RLock()
 	c.SafeSearchEnabled = d.Config.SafeSearchEnabled
@@ -189,7 +212,7 @@ func (d *Dnsfilter) GetConfig() RequestFilteringSettings {
 }
 
 // WriteDiskConfig - write configuration
-func (d *Dnsfilter) WriteDiskConfig(c *Config) {
+func (d *DNSFilter) WriteDiskConfig(c *Config) {
 	d.confLock.Lock()
 	*c = d.Config
 	c.Rewrites = rewriteArrayDup(d.Config.Rewrites)
@@ -200,7 +223,7 @@ func (d *Dnsfilter) WriteDiskConfig(c *Config) {
 // SetFilters - set new filters (synchronously or asynchronously)
 // When filters are set asynchronously, the old filters continue working until the new filters are ready.
 //  In this case the caller must ensure that the old filter files are intact.
-func (d *Dnsfilter) SetFilters(blockFilters, allowFilters []Filter, async bool) error {
+func (d *DNSFilter) SetFilters(blockFilters, allowFilters []Filter, async bool) error {
 	if async {
 		params := filtersInitializerParams{
 			allowFilters: allowFilters,
@@ -234,7 +257,7 @@ func (d *Dnsfilter) SetFilters(blockFilters, allowFilters []Filter, async bool) 
 }
 
 // Starts initializing new filters by signal from channel
-func (d *Dnsfilter) filtersInitializer() {
+func (d *DNSFilter) filtersInitializer() {
 	for {
 		params := <-d.filtersInitializerChan
 		err := d.initFiltering(params.allowFilters, params.blockFilters)
@@ -246,23 +269,31 @@ func (d *Dnsfilter) filtersInitializer() {
 }
 
 // Close - close the object
-func (d *Dnsfilter) Close() {
+func (d *DNSFilter) Close() {
 	d.engineLock.Lock()
 	defer d.engineLock.Unlock()
 	d.reset()
 }
 
-func (d *Dnsfilter) reset() {
+func (d *DNSFilter) reset() {
+	var err error
+
 	if d.rulesStorage != nil {
-		_ = d.rulesStorage.Close()
+		err = d.rulesStorage.Close()
+		if err != nil {
+			log.Error("dnsfilter: rulesStorage.Close: %s", err)
+		}
 	}
-	if d.rulesStorageWhite != nil {
-		d.rulesStorageWhite.Close()
+
+	if d.rulesStorageAllow != nil {
+		err = d.rulesStorageAllow.Close()
+		if err != nil {
+			log.Error("dnsfilter: rulesStorageAllow.Close: %s", err)
+		}
 	}
 }
 
 type dnsFilterContext struct {
-	stats             Stats
 	safebrowsingCache cache.Cache
 	parentalCache     cache.Cache
 	safeSearchCache   cache.Cache
@@ -270,34 +301,63 @@ type dnsFilterContext struct {
 
 var gctx dnsFilterContext // global dnsfilter context
 
-// Result holds state of hostname check
-type Result struct {
-	IsFiltered bool   `json:",omitempty"` // True if the host name is filtered
-	Reason     Reason `json:",omitempty"` // Reason for blocking / unblocking
-	Rule       string `json:",omitempty"` // Original rule text
-	IP         net.IP `json:",omitempty"` // Not nil only in the case of a hosts file syntax
-	FilterID   int64  `json:",omitempty"` // Filter ID the rule belongs to
-
-	// for ReasonRewrite:
-	CanonName string `json:",omitempty"` // CNAME value
-
-	// for RewriteEtcHosts:
-	ReverseHosts []string `json:",omitempty"`
-
-	// for ReasonRewrite & RewriteEtcHosts:
-	IPList []net.IP `json:",omitempty"` // list of IP addresses
-
-	// for FilteredBlockedService:
-	ServiceName string `json:",omitempty"` // Name of the blocked service
+// ResultRule contains information about applied rules.
+type ResultRule struct {
+	// FilterListID is the ID of the rule's filter list.
+	FilterListID int64 `json:",omitempty"`
+	// Text is the text of the rule.
+	Text string `json:",omitempty"`
+	// IP is the host IP.  It is nil unless the rule uses the
+	// /etc/hosts syntax or the reason is FilteredSafeSearch.
+	IP net.IP `json:",omitempty"`
 }
 
-// Matched can be used to see if any match at all was found, no matter filtered or not
+// Result contains the result of a request check.
+//
+// All fields transitively have omitempty tags so that the query log
+// doesn't become too large.
+//
+// TODO(a.garipov): Clarify relationships between fields.  Perhaps
+// replace with a sum type or an interface?
+type Result struct {
+	// IsFiltered is true if the request is filtered.
+	IsFiltered bool `json:",omitempty"`
+
+	// Reason is the reason for blocking or unblocking the request.
+	Reason Reason `json:",omitempty"`
+
+	// Rules are applied rules.  If Rules are not empty, each rule
+	// is not nil.
+	Rules []*ResultRule `json:",omitempty"`
+
+	// ReverseHosts is the reverse lookup rewrite result.  It is
+	// empty unless Reason is set to RewriteAutoHosts.
+	ReverseHosts []string `json:",omitempty"`
+
+	// IPList is the lookup rewrite result.  It is empty unless
+	// Reason is set to RewriteAutoHosts or ReasonRewrite.
+	IPList []net.IP `json:",omitempty"`
+
+	// CanonName is the CNAME value from the lookup rewrite result.
+	// It is empty unless Reason is set to ReasonRewrite.
+	CanonName string `json:",omitempty"`
+
+	// ServiceName is the name of the blocked service.  It is empty
+	// unless Reason is set to FilteredBlockedService.
+	ServiceName string `json:",omitempty"`
+
+	// DNSRewriteResult is the $dnsrewrite filter rule result.
+	DNSRewriteResult *DNSRewriteResult `json:",omitempty"`
+}
+
+// Matched returns true if any match at all was found regardless of
+// whether it was filtered or not.
 func (r Reason) Matched() bool {
 	return r != NotFilteredNotFound
 }
 
-// CheckHostRules tries to match the host against filtering rules only
-func (d *Dnsfilter) CheckHostRules(host string, qtype uint16, setts *RequestFilteringSettings) (Result, error) {
+// CheckHostRules tries to match the host against filtering rules only.
+func (d *DNSFilter) CheckHostRules(host string, qtype uint16, setts *RequestFilteringSettings) (Result, error) {
 	if !setts.FilteringEnabled {
 		return Result{}, nil
 	}
@@ -305,9 +365,9 @@ func (d *Dnsfilter) CheckHostRules(host string, qtype uint16, setts *RequestFilt
 	return d.matchHost(host, qtype, *setts)
 }
 
-// CheckHost tries to match the host against filtering rules,
-// then safebrowsing and parental if they are enabled
-func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFilteringSettings) (Result, error) {
+// CheckHost tries to match the host against filtering rules, then
+// safebrowsing and parental control rules, if they are enabled.
+func (d *DNSFilter) CheckHost(host string, qtype uint16, setts *RequestFilteringSettings) (Result, error) {
 	// sometimes DNS clients will try to resolve ".", which is a request to get root servers
 	if host == "" {
 		return Result{Reason: NotFilteredNotFound}, nil
@@ -326,15 +386,12 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 	// Now check the hosts file -- do we have any rules for it?
 	// just like DNS rewrites, it has higher priority than filtering rules.
 	if d.Config.AutoHosts != nil {
-		matched, err := d.checkAutoHosts(host, qtype, &result)
+		matched := d.checkAutoHosts(host, qtype, &result)
 		if matched {
-			return result, err
+			return result, nil
 		}
 	}
 
-	// Then check the filter lists.
-	// if request is blocked -- it should be blocked.
-	// if it is whitelisted -- we should do nothing with it anymore.
 	if setts.FilteringEnabled {
 		result, err = d.matchHost(host, qtype, *setts)
 		if err != nil {
@@ -393,18 +450,18 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 	return Result{}, nil
 }
 
-func (d *Dnsfilter) checkAutoHosts(host string, qtype uint16, result *Result) (matched bool, err error) {
+func (d *DNSFilter) checkAutoHosts(host string, qtype uint16, result *Result) (matched bool) {
 	ips := d.Config.AutoHosts.Process(host, qtype)
 	if ips != nil {
-		result.Reason = RewriteEtcHosts
+		result.Reason = RewriteAutoHosts
 		result.IPList = ips
 
-		return true, nil
+		return true
 	}
 
 	revHosts := d.Config.AutoHosts.ProcessReverse(host, qtype)
 	if len(revHosts) != 0 {
-		result.Reason = RewriteEtcHosts
+		result.Reason = RewriteAutoHosts
 
 		// TODO(a.garipov): Optimize this with a buffer.
 		result.ReverseHosts = make([]string, len(revHosts))
@@ -412,10 +469,10 @@ func (d *Dnsfilter) checkAutoHosts(host string, qtype uint16, result *Result) (m
 			result.ReverseHosts[i] = revHosts[i] + "."
 		}
 
-		return true, nil
+		return true
 	}
 
-	return false, nil
+	return false
 }
 
 // Process rewrites table
@@ -425,9 +482,7 @@ func (d *Dnsfilter) checkAutoHosts(host string, qtype uint16, result *Result) (m
 //  . repeat for the new domain name (Note: we return only the last CNAME)
 // . Find A or AAAA record for a domain name (exact match or by wildcard)
 //  . if found, set IP addresses (IPv4 or IPv6 depending on qtype) in Result.IPList array
-func (d *Dnsfilter) processRewrites(host string, qtype uint16) Result {
-	var res Result
-
+func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 	d.confLock.RLock()
 	defer d.confLock.RUnlock()
 
@@ -442,7 +497,8 @@ func (d *Dnsfilter) processRewrites(host string, qtype uint16) Result {
 		log.Debug("Rewrite: CNAME for %s is %s", host, rr[0].Answer)
 
 		if host == rr[0].Answer { // "host == CNAME" is an exception
-			res.Reason = 0
+			res.Reason = NotFilteredNotFound
+
 			return res
 		}
 
@@ -484,9 +540,16 @@ func matchBlockedServicesRules(host string, svcs []ServiceEntry) Result {
 				res.Reason = FilteredBlockedService
 				res.IsFiltered = true
 				res.ServiceName = s.Name
-				res.Rule = rule.Text()
-				log.Debug("Blocked Services: matched rule: %s  host: %s  service: %s",
-					res.Rule, host, s.Name)
+
+				ruleText := rule.Text()
+				res.Rules = []*ResultRule{{
+					FilterListID: int64(rule.GetFilterListID()),
+					Text:         ruleText,
+				}}
+
+				log.Debug("blocked services: matched rule: %s  host: %s  service: %s",
+					ruleText, host, s.Name)
+
 				return res
 			}
 		}
@@ -553,12 +616,12 @@ func createFilteringEngine(filters []Filter) (*filterlist.RuleStorage, *urlfilte
 }
 
 // Initialize urlfilter objects.
-func (d *Dnsfilter) initFiltering(allowFilters, blockFilters []Filter) error {
+func (d *DNSFilter) initFiltering(allowFilters, blockFilters []Filter) error {
 	rulesStorage, filteringEngine, err := createFilteringEngine(blockFilters)
 	if err != nil {
 		return err
 	}
-	rulesStorageWhite, filteringEngineWhite, err := createFilteringEngine(allowFilters)
+	rulesStorageAllow, filteringEngineAllow, err := createFilteringEngine(allowFilters)
 	if err != nil {
 		return err
 	}
@@ -567,8 +630,8 @@ func (d *Dnsfilter) initFiltering(allowFilters, blockFilters []Filter) error {
 	d.reset()
 	d.rulesStorage = rulesStorage
 	d.filteringEngine = filteringEngine
-	d.rulesStorageWhite = rulesStorageWhite
-	d.filteringEngineWhite = filteringEngineWhite
+	d.rulesStorageAllow = rulesStorageAllow
+	d.filteringEngineAllow = filteringEngineAllow
 	d.engineLock.Unlock()
 
 	// Make sure that the OS reclaims memory as soon as possible
@@ -578,36 +641,48 @@ func (d *Dnsfilter) initFiltering(allowFilters, blockFilters []Filter) error {
 	return nil
 }
 
+// matchHostProcessAllowList processes the allowlist logic of host
+// matching.
+func (d *DNSFilter) matchHostProcessAllowList(host string, dnsres urlfilter.DNSResult) (res Result, err error) {
+	var rule rules.Rule
+	if dnsres.NetworkRule != nil {
+		rule = dnsres.NetworkRule
+	} else if len(dnsres.HostRulesV4) > 0 {
+		rule = dnsres.HostRulesV4[0]
+	} else if len(dnsres.HostRulesV6) > 0 {
+		rule = dnsres.HostRulesV6[0]
+	}
+
+	if rule == nil {
+		return Result{}, fmt.Errorf("invalid dns result: rules are empty")
+	}
+
+	log.Debug("Filtering: found allowlist rule for host %q: %q  list_id: %d",
+		host, rule.Text(), rule.GetFilterListID())
+
+	return makeResult(rule, NotFilteredAllowList), nil
+}
+
 // matchHost is a low-level way to check only if hostname is filtered by rules,
 // skipping expensive safebrowsing and parental lookups.
-func (d *Dnsfilter) matchHost(host string, qtype uint16, setts RequestFilteringSettings) (Result, error) {
+func (d *DNSFilter) matchHost(host string, qtype uint16, setts RequestFilteringSettings) (res Result, err error) {
 	d.engineLock.RLock()
 	// Keep in mind that this lock must be held no just when calling Match()
 	//  but also while using the rules returned by it.
 	defer d.engineLock.RUnlock()
 
-	ureq := urlfilter.DNSRequest{}
-	ureq.Hostname = host
-	ureq.ClientIP = setts.ClientIP
-	ureq.ClientName = setts.ClientName
-	ureq.SortedClientTags = setts.ClientTags
+	ureq := urlfilter.DNSRequest{
+		Hostname:         host,
+		SortedClientTags: setts.ClientTags,
+		ClientIP:         setts.ClientIP,
+		ClientName:       setts.ClientName,
+		DNSType:          qtype,
+	}
 
-	if d.filteringEngineWhite != nil {
-		rr, ok := d.filteringEngineWhite.MatchRequest(ureq)
+	if d.filteringEngineAllow != nil {
+		dnsres, ok := d.filteringEngineAllow.MatchRequest(ureq)
 		if ok {
-			var rule rules.Rule
-			if rr.NetworkRule != nil {
-				rule = rr.NetworkRule
-			} else if rr.HostRulesV4 != nil {
-				rule = rr.HostRulesV4[0]
-			} else if rr.HostRulesV6 != nil {
-				rule = rr.HostRulesV6[0]
-			}
-
-			log.Debug("Filtering: found whitelist rule for host %q: %q  list_id: %d",
-				host, rule.Text(), rule.GetFilterListID())
-			res := makeResult(rule, NotFilteredWhiteList)
-			return res, nil
+			return d.matchHostProcessAllowList(host, dnsres)
 		}
 	}
 
@@ -615,68 +690,87 @@ func (d *Dnsfilter) matchHost(host string, qtype uint16, setts RequestFilteringS
 		return Result{}, nil
 	}
 
-	rr, ok := d.filteringEngine.MatchRequest(ureq)
-	if !ok {
+	dnsres, ok := d.filteringEngine.MatchRequest(ureq)
+
+	// Check DNS rewrites first, because the API there is a bit
+	// awkward.
+	if dnsr := dnsres.DNSRewrites(); len(dnsr) > 0 {
+		res = d.processDNSRewrites(dnsr)
+		if res.Reason == DNSRewriteRule && res.CanonName == host {
+			// A rewrite of a host to itself.  Go on and
+			// try matching other things.
+		} else {
+			return res, nil
+		}
+	} else if !ok {
 		return Result{}, nil
 	}
 
-	if rr.NetworkRule != nil {
+	if dnsres.NetworkRule != nil {
 		log.Debug("Filtering: found rule for host %q: %q  list_id: %d",
-			host, rr.NetworkRule.Text(), rr.NetworkRule.GetFilterListID())
-		reason := FilteredBlackList
-		if rr.NetworkRule.Whitelist {
-			reason = NotFilteredWhiteList
+			host, dnsres.NetworkRule.Text(), dnsres.NetworkRule.GetFilterListID())
+		reason := FilteredBlockList
+		if dnsres.NetworkRule.Whitelist {
+			reason = NotFilteredAllowList
 		}
-		res := makeResult(rr.NetworkRule, reason)
-		return res, nil
+
+		return makeResult(dnsres.NetworkRule, reason), nil
 	}
 
-	if qtype == dns.TypeA && rr.HostRulesV4 != nil {
-		rule := rr.HostRulesV4[0] // note that we process only 1 matched rule
+	if qtype == dns.TypeA && dnsres.HostRulesV4 != nil {
+		rule := dnsres.HostRulesV4[0] // note that we process only 1 matched rule
 		log.Debug("Filtering: found rule for host %q: %q  list_id: %d",
 			host, rule.Text(), rule.GetFilterListID())
-		res := makeResult(rule, FilteredBlackList)
-		res.IP = rule.IP.To4()
+		res = makeResult(rule, FilteredBlockList)
+		res.Rules[0].IP = rule.IP.To4()
+
 		return res, nil
 	}
 
-	if qtype == dns.TypeAAAA && rr.HostRulesV6 != nil {
-		rule := rr.HostRulesV6[0] // note that we process only 1 matched rule
+	if qtype == dns.TypeAAAA && dnsres.HostRulesV6 != nil {
+		rule := dnsres.HostRulesV6[0] // note that we process only 1 matched rule
 		log.Debug("Filtering: found rule for host %q: %q  list_id: %d",
 			host, rule.Text(), rule.GetFilterListID())
-		res := makeResult(rule, FilteredBlackList)
-		res.IP = rule.IP
+		res = makeResult(rule, FilteredBlockList)
+		res.Rules[0].IP = rule.IP
+
 		return res, nil
 	}
 
-	if rr.HostRulesV4 != nil || rr.HostRulesV6 != nil {
+	if dnsres.HostRulesV4 != nil || dnsres.HostRulesV6 != nil {
 		// Question Type doesn't match the host rules
 		// Return the first matched host rule, but without an IP address
 		var rule rules.Rule
-		if rr.HostRulesV4 != nil {
-			rule = rr.HostRulesV4[0]
-		} else if rr.HostRulesV6 != nil {
-			rule = rr.HostRulesV6[0]
+		if dnsres.HostRulesV4 != nil {
+			rule = dnsres.HostRulesV4[0]
+		} else if dnsres.HostRulesV6 != nil {
+			rule = dnsres.HostRulesV6[0]
 		}
 		log.Debug("Filtering: found rule for host %q: %q  list_id: %d",
 			host, rule.Text(), rule.GetFilterListID())
-		res := makeResult(rule, FilteredBlackList)
-		res.IP = net.IP{}
+		res = makeResult(rule, FilteredBlockList)
+		res.Rules[0].IP = net.IP{}
+
 		return res, nil
 	}
 
 	return Result{}, nil
 }
 
-// Construct Result object
+// makeResult returns a properly constructed Result.
 func makeResult(rule rules.Rule, reason Reason) Result {
-	res := Result{}
-	res.FilterID = int64(rule.GetFilterListID())
-	res.Rule = rule.Text()
-	res.Reason = reason
-	if reason == FilteredBlackList {
+	res := Result{
+		Reason: reason,
+		Rules: []*ResultRule{{
+			FilterListID: int64(rule.GetFilterListID()),
+			Text:         rule.Text(),
+		}},
+	}
+
+	if reason == FilteredBlockList {
 		res.IsFiltered = true
 	}
+
 	return res
 }
 
@@ -686,7 +780,7 @@ func InitModule() {
 }
 
 // New creates properly initialized DNS Filter that is ready to be used.
-func New(c *Config, blockFilters []Filter) *Dnsfilter {
+func New(c *Config, blockFilters []Filter) *DNSFilter {
 	if c != nil {
 		cacheConf := cache.Config{
 			EnableLRU: true,
@@ -708,7 +802,7 @@ func New(c *Config, blockFilters []Filter) *Dnsfilter {
 		}
 	}
 
-	d := new(Dnsfilter)
+	d := new(DNSFilter)
 
 	err := d.initSecurityServices()
 	if err != nil {
@@ -746,7 +840,7 @@ func New(c *Config, blockFilters []Filter) *Dnsfilter {
 // Start - start the module:
 // . start async filtering initializer goroutine
 // . register web handlers
-func (d *Dnsfilter) Start() {
+func (d *DNSFilter) Start() {
 	d.filtersInitializerChan = make(chan filtersInitializerParams, 1)
 	go d.filtersInitializer()
 
@@ -755,13 +849,4 @@ func (d *Dnsfilter) Start() {
 		d.registerRewritesHandlers()
 		d.registerBlockedServicesHandlers()
 	}
-}
-
-//
-// stats
-//
-
-// GetStats return dns filtering stats since startup.
-func (d *Dnsfilter) GetStats() Stats {
-	return gctx.stats
 }
