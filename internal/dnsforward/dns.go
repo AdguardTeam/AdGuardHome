@@ -366,7 +366,9 @@ func processFilteringAfterResponse(ctx *dnsContext) int {
 	var err error
 
 	switch res.Reason {
-	case dnsfilter.ReasonRewrite:
+	case dnsfilter.ReasonRewrite,
+		dnsfilter.DNSRewriteRule:
+
 		if len(ctx.origQuestion.Name) == 0 {
 			// origQuestion is set in case we get only CNAME without IP from rewrites table
 			break
@@ -378,11 +380,11 @@ func processFilteringAfterResponse(ctx *dnsContext) int {
 		if len(d.Res.Answer) != 0 {
 			answer := []dns.RR{}
 			answer = append(answer, s.genCNAMEAnswer(d.Req, res.CanonName))
-			answer = append(answer, d.Res.Answer...) // host -> IP
+			answer = append(answer, d.Res.Answer...)
 			d.Res.Answer = answer
 		}
 
-	case dnsfilter.NotFilteredWhiteList:
+	case dnsfilter.NotFilteredAllowList:
 		// nothing
 
 	default:

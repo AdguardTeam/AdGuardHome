@@ -91,7 +91,7 @@ func (s *Server) updateStats(d *proxy.DNSContext, elapsed time.Duration, res dns
 	case dnsfilter.FilteredSafeSearch:
 		e.Result = stats.RSafeSearch
 
-	case dnsfilter.FilteredBlackList:
+	case dnsfilter.FilteredBlockList:
 		fallthrough
 	case dnsfilter.FilteredInvalid:
 		fallthrough

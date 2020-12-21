@@ -35,6 +35,7 @@ GPG_KEY := devteam@adguard.com
 GPG_KEY_PASSPHRASE :=
 GPG_CMD := gpg --detach-sig --default-key $(GPG_KEY) --pinentry-mode loopback --passphrase $(GPG_KEY_PASSPHRASE)
 VERBOSE := -v
+REBUILD_CLIENT = 1
 
 # See release target
 DIST_DIR=dist
@@ -124,7 +125,8 @@ all: build
 init:
 	git config core.hooksPath .githooks
 
-build: client_with_deps
+build:
+	test '$(REBUILD_CLIENT)' = '1' && $(MAKE) client_with_deps || exit 0
 	$(GO) mod download
 	PATH=$(GOPATH)/bin:$(PATH) $(GO) generate ./...
 	CGO_ENABLED=0 $(GO) build -ldflags="-s -w -X main.version=$(VERSION) -X main.channel=$(CHANNEL) -X main.goarm=$(GOARM)"

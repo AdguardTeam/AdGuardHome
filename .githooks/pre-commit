@@ -2,12 +2,12 @@
 
 set -e -f -u
 
-if [ "$(git diff --cached --name-only '*.js')" ]
+if [ "$(git diff --cached --name-only -- '*.js')" ]
 then
 	make js-lint js-test
 fi
 
-if [ "$(git diff --cached --name-only '*.go')" ]
+if [ "$(git diff --cached --name-only -- '*.go' 'go.mod')" ]
 then
 	make go-lint go-test
 fi

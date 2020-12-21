@@ -42,7 +42,8 @@ func (s *Server) getClientRequestFilteringSettings(d *proxy.DNSContext) *dnsfilt
 	return &setts
 }
 
-// filterDNSRequest applies the dnsFilter and sets d.Res if the request was filtered
+// filterDNSRequest applies the dnsFilter and sets d.Res if the request
+// was filtered.
 func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 	d := ctx.proxyCtx
 	req := d.Req
@@ -54,9 +55,13 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 	} else if res.IsFiltered {
 		log.Tracef("Host %s is filtered, reason - %q, matched rule: %q", host, res.Reason, res.Rules[0].Text)
 		d.Res = s.genDNSFilterMessage(d, &res)
-	} else if res.Reason == dnsfilter.ReasonRewrite && len(res.CanonName) != 0 && len(res.IPList) == 0 {
+	} else if res.Reason.In(dnsfilter.ReasonRewrite, dnsfilter.DNSRewriteRule) &&
+		res.CanonName != "" &&
+		len(res.IPList) == 0 {
+		// Resolve the new canonical name, not the original host
+		// name.  The original question is readded in
+		// processFilteringAfterResponse.
 		ctx.origQuestion = d.Req.Question[0]
-		// resolve canonical name, not the original host name
 		d.Req.Question[0].Name = dns.Fqdn(res.CanonName)
 	} else if res.Reason == dnsfilter.RewriteAutoHosts && len(res.ReverseHosts) != 0 {
 		resp := s.makeResponse(req)
@@ -99,6 +104,11 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 		}
 
 		d.Res = resp
+	} else if res.Reason == dnsfilter.DNSRewriteRule {
+		err = s.filterDNSRewrite(req, res, d)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &res, err

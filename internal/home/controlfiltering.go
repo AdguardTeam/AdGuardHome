@@ -359,6 +359,9 @@ type checkHostResp struct {
 	// Deprecated: Use Rules[*].FilterListID.
 	FilterID int64 `json:"filter_id"`
 
+	// Rule is the text of the matched rule.
+	//
+	// Deprecated: Use Rules[*].Text.
 	Rule string `json:"rule"`
 
 	Rules []*checkHostRespRule `json:"rules"`
@@ -386,11 +389,14 @@ func (f *Filtering) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 
 	resp := checkHostResp{}
 	resp.Reason = result.Reason.String()
-	resp.FilterID = result.Rules[0].FilterListID
-	resp.Rule = result.Rules[0].Text
 	resp.SvcName = result.ServiceName
 	resp.CanonName = result.CanonName
 	resp.IPList = result.IPList
+
+	if len(result.Rules) > 0 {
+		resp.FilterID = result.Rules[0].FilterListID
+		resp.Rule = result.Rules[0].Text
+	}
 
 	resp.Rules = make([]*checkHostRespRule, len(result.Rules))
 	for i, r := range result.Rules {

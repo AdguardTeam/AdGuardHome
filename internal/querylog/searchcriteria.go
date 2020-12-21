@@ -115,14 +115,14 @@ func (c *searchCriteria) ctFilteringStatusCase(res dnsfilter.Result) bool {
 	case filteringStatusFiltered:
 		return res.IsFiltered ||
 			res.Reason.In(
-				dnsfilter.NotFilteredWhiteList,
+				dnsfilter.NotFilteredAllowList,
 				dnsfilter.ReasonRewrite,
 				dnsfilter.RewriteAutoHosts,
 			)
 
 	case filteringStatusBlocked:
 		return res.IsFiltered &&
-			res.Reason.In(dnsfilter.FilteredBlackList, dnsfilter.FilteredBlockedService)
+			res.Reason.In(dnsfilter.FilteredBlockList, dnsfilter.FilteredBlockedService)
 
 	case filteringStatusBlockedService:
 		return res.IsFiltered && res.Reason == dnsfilter.FilteredBlockedService
@@ -134,7 +134,7 @@ func (c *searchCriteria) ctFilteringStatusCase(res dnsfilter.Result) bool {
 		return res.IsFiltered && res.Reason == dnsfilter.FilteredSafeBrowsing
 
 	case filteringStatusWhitelisted:
-		return res.Reason == dnsfilter.NotFilteredWhiteList
+		return res.Reason == dnsfilter.NotFilteredAllowList
 
 	case filteringStatusRewritten:
 		return res.Reason.In(dnsfilter.ReasonRewrite, dnsfilter.RewriteAutoHosts)
@@ -144,9 +144,9 @@ func (c *searchCriteria) ctFilteringStatusCase(res dnsfilter.Result) bool {
 
 	case filteringStatusProcessed:
 		return !res.Reason.In(
-			dnsfilter.FilteredBlackList,
+			dnsfilter.FilteredBlockList,
 			dnsfilter.FilteredBlockedService,
-			dnsfilter.NotFilteredWhiteList,
+			dnsfilter.NotFilteredAllowList,
 		)
 
 	default:

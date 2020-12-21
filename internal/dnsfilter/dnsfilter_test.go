@@ -178,7 +178,6 @@ func TestSafeBrowsing(t *testing.T) {
 
 	d := NewForTest(&Config{SafeBrowsingEnabled: true}, nil)
 	defer d.Close()
-	gctx.stats.Safebrowsing.Requests = 0
 	d.checkMatch(t, "wmconvirus.narod.ru")
 
 	assert.True(t, strings.Contains(logOutput.String(), "SafeBrowsing lookup for wmconvirus.narod.ru"))
@@ -366,7 +365,7 @@ const nl = "\n"
 
 const (
 	blockingRules  = `||example.org^` + nl
-	whitelistRules = `||example.org^` + nl + `@@||test.example.org` + nl
+	allowlistRules = `||example.org^` + nl + `@@||test.example.org` + nl
 	importantRules = `@@||example.org^` + nl + `||test.example.org^$important` + nl
 	regexRules     = `/example\.org/` + nl + `@@||test.example.org^` + nl
 	maskRules      = `test*.example.org^` + nl + `exam*.com` + nl
@@ -381,49 +380,49 @@ var tests = []struct {
 	reason     Reason
 	dnsType    uint16
 }{
-	{"sanity", "||doubleclick.net^", "www.doubleclick.net", true, FilteredBlackList, dns.TypeA},
+	{"sanity", "||doubleclick.net^", "www.doubleclick.net", true, FilteredBlockList, dns.TypeA},
 	{"sanity", "||doubleclick.net^", "nodoubleclick.net", false, NotFilteredNotFound, dns.TypeA},
 	{"sanity", "||doubleclick.net^", "doubleclick.net.ru", false, NotFilteredNotFound, dns.TypeA},
 	{"sanity", "||doubleclick.net^", "wmconvirus.narod.ru", false, NotFilteredNotFound, dns.TypeA},
 
-	{"blocking", blockingRules, "example.org", true, FilteredBlackList, dns.TypeA},
-	{"blocking", blockingRules, "test.example.org", true, FilteredBlackList, dns.TypeA},
-	{"blocking", blockingRules, "test.test.example.org", true, FilteredBlackList, dns.TypeA},
+	{"blocking", blockingRules, "example.org", true, FilteredBlockList, dns.TypeA},
+	{"blocking", blockingRules, "test.example.org", true, FilteredBlockList, dns.TypeA},
+	{"blocking", blockingRules, "test.test.example.org", true, FilteredBlockList, dns.TypeA},
 	{"blocking", blockingRules, "testexample.org", false, NotFilteredNotFound, dns.TypeA},
 	{"blocking", blockingRules, "onemoreexample.org", false, NotFilteredNotFound, dns.TypeA},
 
-	{"whitelist", whitelistRules, "example.org", true, FilteredBlackList, dns.TypeA},
-	{"whitelist", whitelistRules, "test.example.org", false, NotFilteredWhiteList, dns.TypeA},
-	{"whitelist", whitelistRules, "test.test.example.org", false, NotFilteredWhiteList, dns.TypeA},
-	{"whitelist", whitelistRules, "testexample.org", false, NotFilteredNotFound, dns.TypeA},
-	{"whitelist", whitelistRules, "onemoreexample.org", false, NotFilteredNotFound, dns.TypeA},
+	{"allowlist", allowlistRules, "example.org", true, FilteredBlockList, dns.TypeA},
+	{"allowlist", allowlistRules, "test.example.org", false, NotFilteredAllowList, dns.TypeA},
+	{"allowlist", allowlistRules, "test.test.example.org", false, NotFilteredAllowList, dns.TypeA},
+	{"allowlist", allowlistRules, "testexample.org", false, NotFilteredNotFound, dns.TypeA},
+	{"allowlist", allowlistRules, "onemoreexample.org", false, NotFilteredNotFound, dns.TypeA},
 
-	{"important", importantRules, "example.org", false, NotFilteredWhiteList, dns.TypeA},
-	{"important", importantRules, "test.example.org", true, FilteredBlackList, dns.TypeA},
-	{"important", importantRules, "test.test.example.org", true, FilteredBlackList, dns.TypeA},
+	{"important", importantRules, "example.org", false, NotFilteredAllowList, dns.TypeA},
+	{"important", importantRules, "test.example.org", true, FilteredBlockList, dns.TypeA},
+	{"important", importantRules, "test.test.example.org", true, FilteredBlockList, dns.TypeA},
 	{"important", importantRules, "testexample.org", false, NotFilteredNotFound, dns.TypeA},
 	{"important", importantRules, "onemoreexample.org", false, NotFilteredNotFound, dns.TypeA},
 
-	{"regex", regexRules, "example.org", true, FilteredBlackList, dns.TypeA},
-	{"regex", regexRules, "test.example.org", false, NotFilteredWhiteList, dns.TypeA},
-	{"regex", regexRules, "test.test.example.org", false, NotFilteredWhiteList, dns.TypeA},
-	{"regex", regexRules, "testexample.org", true, FilteredBlackList, dns.TypeA},
-	{"regex", regexRules, "onemoreexample.org", true, FilteredBlackList, dns.TypeA},
+	{"regex", regexRules, "example.org", true, FilteredBlockList, dns.TypeA},
+	{"regex", regexRules, "test.example.org", false, NotFilteredAllowList, dns.TypeA},
+	{"regex", regexRules, "test.test.example.org", false, NotFilteredAllowList, dns.TypeA},
+	{"regex", regexRules, "testexample.org", true, FilteredBlockList, dns.TypeA},
+	{"regex", regexRules, "onemoreexample.org", true, FilteredBlockList, dns.TypeA},
 
-	{"mask", maskRules, "test.example.org", true, FilteredBlackList, dns.TypeA},
-	{"mask", maskRules, "test2.example.org", true, FilteredBlackList, dns.TypeA},
-	{"mask", maskRules, "example.com", true, FilteredBlackList, dns.TypeA},
-	{"mask", maskRules, "exampleeee.com", true, FilteredBlackList, dns.TypeA},
-	{"mask", maskRules, "onemoreexamsite.com", true, FilteredBlackList, dns.TypeA},
+	{"mask", maskRules, "test.example.org", true, FilteredBlockList, dns.TypeA},
+	{"mask", maskRules, "test2.example.org", true, FilteredBlockList, dns.TypeA},
+	{"mask", maskRules, "example.com", true, FilteredBlockList, dns.TypeA},
+	{"mask", maskRules, "exampleeee.com", true, FilteredBlockList, dns.TypeA},
+	{"mask", maskRules, "onemoreexamsite.com", true, FilteredBlockList, dns.TypeA},
 	{"mask", maskRules, "example.org", false, NotFilteredNotFound, dns.TypeA},
 	{"mask", maskRules, "testexample.org", false, NotFilteredNotFound, dns.TypeA},
 	{"mask", maskRules, "example.co.uk", false, NotFilteredNotFound, dns.TypeA},
 
 	{"dnstype", dnstypeRules, "onemoreexample.org", false, NotFilteredNotFound, dns.TypeA},
 	{"dnstype", dnstypeRules, "example.org", false, NotFilteredNotFound, dns.TypeA},
-	{"dnstype", dnstypeRules, "example.org", true, FilteredBlackList, dns.TypeAAAA},
-	{"dnstype", dnstypeRules, "test.example.org", false, NotFilteredWhiteList, dns.TypeA},
-	{"dnstype", dnstypeRules, "test.example.org", false, NotFilteredWhiteList, dns.TypeAAAA},
+	{"dnstype", dnstypeRules, "example.org", true, FilteredBlockList, dns.TypeAAAA},
+	{"dnstype", dnstypeRules, "test.example.org", false, NotFilteredAllowList, dns.TypeA},
+	{"dnstype", dnstypeRules, "test.example.org", false, NotFilteredAllowList, dns.TypeAAAA},
 }
 
 func TestMatching(t *testing.T) {
@@ -470,7 +469,7 @@ func TestWhitelist(t *testing.T) {
 	// matched by white filter
 	res, err := d.CheckHost("host1", dns.TypeA, &setts)
 	assert.True(t, err == nil)
-	assert.True(t, !res.IsFiltered && res.Reason == NotFilteredWhiteList)
+	assert.True(t, !res.IsFiltered && res.Reason == NotFilteredAllowList)
 	if assert.Len(t, res.Rules, 1) {
 		assert.True(t, res.Rules[0].Text == "||host1^")
 	}
@@ -478,7 +477,7 @@ func TestWhitelist(t *testing.T) {
 	// not matched by white filter, but matched by block filter
 	res, err = d.CheckHost("host2", dns.TypeA, &setts)
 	assert.True(t, err == nil)
-	assert.True(t, res.IsFiltered && res.Reason == FilteredBlackList)
+	assert.True(t, res.IsFiltered && res.Reason == FilteredBlockList)
 	if assert.Len(t, res.Rules, 1) {
 		assert.True(t, res.Rules[0].Text == "||host2^")
 	}
@@ -512,8 +511,8 @@ func TestClientSettings(t *testing.T) {
 
 	// blocked by filters
 	r, _ = d.CheckHost("example.org", dns.TypeA, &setts)
-	if !r.IsFiltered || r.Reason != FilteredBlackList {
-		t.Fatalf("CheckHost FilteredBlackList")
+	if !r.IsFiltered || r.Reason != FilteredBlockList {
+		t.Fatalf("CheckHost FilteredBlockList")
 	}
 
 	// blocked by parental

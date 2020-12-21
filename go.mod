@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/AdguardTeam/dnsproxy v0.33.7
 	github.com/AdguardTeam/golibs v0.4.4
-	github.com/AdguardTeam/urlfilter v0.13.0
+	github.com/AdguardTeam/urlfilter v0.14.0
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.0.1
 	github.com/fsnotify/fsnotify v1.4.9

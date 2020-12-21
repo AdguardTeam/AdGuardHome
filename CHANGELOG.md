@@ -15,6 +15,7 @@ and this project adheres to
 
 ### Added
 
+- `$dnsrewrite` modifier for filters ([#2102]).
 - The host checking API and the query logs API can now return multiple matched
   rules ([#2102]).
 - Detecting of network interface configured to have static IP address via

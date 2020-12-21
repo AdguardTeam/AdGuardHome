@@ -523,7 +523,7 @@
         Reload filtering rules from URLs.  This might be needed if new URL was
         just added and you dont want to wait for automatic refresh to kick in.
         This API request is ratelimited, so you can call it freely as often as
-        you like, it wont create unneccessary burden on servers that host the
+        you like, it wont create unnecessary burden on servers that host the
         URL.  This should work as intended, a `force` parameter is offered as
         last-resort attempt to make filter lists fresh.  If you ever find
         yourself using `force` to make something work that otherwise wont, this
@@ -1246,7 +1246,7 @@
       'properties':
         'reason':
           'type': 'string'
-          'description': 'DNS filter status'
+          'description': 'Request filtering status.'
           'enum':
           - 'NotFilteredNotFound'
           - 'NotFilteredWhiteList'
@@ -1257,7 +1257,9 @@
           - 'FilteredInvalid'
           - 'FilteredSafeSearch'
           - 'FilteredBlockedService'
-          - 'ReasonRewrite'
+          - 'Rewrite'
+          - 'RewriteEtcHosts'
+          - 'DNSRewriteRule'
         'filter_id':
           'deprecated': true
           'description': >
@@ -1284,12 +1286,12 @@
           'description': 'Set if reason=FilteredBlockedService'
         'cname':
           'type': 'string'
-          'description': 'Set if reason=ReasonRewrite'
+          'description': 'Set if reason=Rewrite'
         'ip_addrs':
           'type': 'array'
           'items':
             'type': 'string'
-          'description': 'Set if reason=ReasonRewrite'
+          'description': 'Set if reason=Rewrite'
     'FilterRefreshResponse':
       'type': 'object'
       'description': '/filtering/refresh response data'
@@ -1648,7 +1650,7 @@
             '$ref': '#/components/schemas/ResultRule'
         'reason':
           'type': 'string'
-          'description': 'DNS filter status'
+          'description': 'Request filtering status.'
           'enum':
           - 'NotFilteredNotFound'
           - 'NotFilteredWhiteList'
@@ -1659,7 +1661,9 @@
           - 'FilteredInvalid'
           - 'FilteredSafeSearch'
           - 'FilteredBlockedService'
-          - 'ReasonRewrite'
+          - 'Rewrite'
+          - 'RewriteEtcHosts'
+          - 'DNSRewriteRule'
         'service_name':
           'type': 'string'
           'description': 'Set if reason=FilteredBlockedService'

@@ -11,12 +11,17 @@ import (
 )
 
 // Create a DNS response by DNS request and set necessary flags
-func (s *Server) makeResponse(req *dns.Msg) *dns.Msg {
-	resp := dns.Msg{}
+func (s *Server) makeResponse(req *dns.Msg) (resp *dns.Msg) {
+	resp = &dns.Msg{
+		MsgHdr: dns.MsgHdr{
+			RecursionAvailable: true,
+		},
+		Compress: true,
+	}
+
 	resp.SetReply(req)
-	resp.RecursionAvailable = true
-	resp.Compress = true
-	return &resp
+
+	return resp
 }
 
 // genDNSFilterMessage generates a DNS message corresponding to the filtering result
@@ -119,6 +124,18 @@ func (s *Server) genAAAAAnswer(req *dns.Msg, ip net.IP) *dns.AAAA {
 	}
 	answer.AAAA = ip
 	return answer
+}
+
+func (s *Server) genTXTAnswer(req *dns.Msg, strs []string) (answer *dns.TXT) {
+	return &dns.TXT{
+		Hdr: dns.RR_Header{
+			Name:   req.Question[0].Name,
+			Rrtype: dns.TypeTXT,
+			Ttl:    s.conf.BlockedResponseTTL,
+			Class:  dns.ClassINET,
+		},
+		Txt: strs,
+	}
 }
 
 // generate DNS response message with an IP address

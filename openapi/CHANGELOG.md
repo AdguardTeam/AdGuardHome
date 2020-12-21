@@ -4,15 +4,21 @@
 
 ## v0.105: API changes
 
+### New `"reason"` in `GET /filtering/check_host` and `GET /querylog`
+
+* The new `DNSRewriteRule` reason is added to `GET /filtering/check_host` and
+  `GET /querylog`.
+
+* Also, the reason which was incorrectly documented as `"ReasonRewrite"` is now
+  correctly documented as `"Rewrite"`, and the previously undocumented
+  `"RewriteEtcHosts"` is now documented as well.
+
 ### Multiple matched rules in `GET /filtering/check_host` and `GET /querylog`
 
-<!-- TODO(a.garipov): Update with better examples once $dnsrewrite rules are
-checked in. -->
-
 * The properties `rule` and `filter_id` are now deprecated.  API users should
-  inspect the newly-added `rules` object array instead.  Currently, it's either
-  empty or contains one object, which contains the same things as the old two
-  properties did, but under more correct names:
+  inspect the newly-added `rules` object array instead.  For most rules, it's
+  either empty or contains one object, which contains the same things as the old
+  two properties did, but under more correct names:
 
   ```js
   {
@@ -26,6 +32,30 @@ checked in. -->
     "rules": [{
       "text": "||example.com^",
       "filter_list_id": 42
+    }]
+  }
+  ```
+
+  For `$dnsrewrite` rules, they contain all rules that contributed to the
+  result.  For example, if you have the following filtering rules:
+
+  ```
+  ||example.com^$dnsrewrite=127.0.0.1
+  ||example.com^$dnsrewrite=127.0.0.2
+  ```
+
+  The `"rules"` will be something like:
+
+  ```js
+  {
+    // …
+
+    "rules": [{
+      "text": "||example.com^$dnsrewrite=127.0.0.1",
+      "filter_list_id": 0
+    }, {
+      "text": "||example.com^$dnsrewrite=127.0.0.2",
+      "filter_list_id": 0
     }]
   }
   ```
