@@ -64,7 +64,7 @@ export const validateClientId = (value) => {
     if (!value) {
         return undefined;
     }
-    const formattedValue = value ? value.trim() : value;
+    const formattedValue = value.trim();
     if (formattedValue && !(
         R_IPV4.test(formattedValue)
             || R_IPV6.test(formattedValue)
