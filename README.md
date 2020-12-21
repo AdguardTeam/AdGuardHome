@@ -298,12 +298,12 @@ Here's what you can also do to contribute:
 4. Actualize the list of vetted *blocklists*. It it can be found in [client/src/helpers/filters/filters.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/src/helpers/filters/filters.json).
 
 <a id="uses"></a>
-## Projects that use AdGuardHome
+## Projects that use AdGuard Home
 
 * Python library (https://github.com/frenck/python-adguardhome)
 * Hass.io add-on (https://github.com/hassio-addons/addon-adguard-home)
-* OpenWrt LUCI app (https://github.com/rufengsuixing/luci-app-adguardhome)
-
+* OpenWrt LUCI app (https://github.com/kongfl888/luci-app-adguardhome)
+* Prometheus exporter for AdGuard Home (https://github.com/ebrianne/adguard-exporter)
 
 <a id="acknowledgments"></a>
 ## Acknowledgments
