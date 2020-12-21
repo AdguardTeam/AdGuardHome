@@ -230,16 +230,15 @@ func (a *Auth) CheckSession(sess string) int {
 	update := false
 
 	a.lock.Lock()
+	defer a.lock.Unlock()
 	s, ok := a.sessions[sess]
 	if !ok {
-		a.lock.Unlock()
 		return -1
 	}
 	if s.expire <= now {
 		delete(a.sessions, sess)
 		key, _ := hex.DecodeString(sess)
 		a.removeSession(key)
-		a.lock.Unlock()
 		return 1
 	}
 
@@ -249,8 +248,6 @@ func (a *Auth) CheckSession(sess string) int {
 		update = true
 		s.expire = newExpire
 	}
-
-	a.lock.Unlock()
 
 	if update {
 		key, _ := hex.DecodeString(sess)
@@ -517,18 +514,16 @@ func (a *Auth) GetCurrentUser(r *http.Request) User {
 	}
 
 	a.lock.Lock()
+	defer a.lock.Unlock()
 	s, ok := a.sessions[cookie.Value]
 	if !ok {
-		a.lock.Unlock()
 		return User{}
 	}
 	for _, u := range a.users {
 		if u.Name == s.userName {
-			a.lock.Unlock()
 			return u
 		}
 	}
-	a.lock.Unlock()
 	return User{}
 }
 
