@@ -16,7 +16,7 @@ import { getLastIpv4Octet, isValidAbsolutePath } from './form';
 // https://redux-form.com/8.3.0/examples/fieldlevelvalidation/
 // If the value is valid, the validation function should return undefined.
 /**
- * @param value {string}
+ * @param value {string|number}
  * @returns {undefined|string}
  */
 export const validateRequiredValue = (value) => {
