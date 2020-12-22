@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/http"
 	"strings"
-	"sync"
 
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter"
@@ -14,8 +13,6 @@ import (
 )
 
 type accessCtx struct {
-	lock sync.Mutex
-
 	allowedClients    map[string]bool // IP addresses of whitelist clients
 	disallowedClients map[string]bool // IP addresses of clients that should be blocked
 
@@ -84,9 +81,6 @@ func processIPCIDRArray(dst *map[string]bool, dstIPNet *[]net.IPNet, src []strin
 // If it returns TRUE and an empty string, it means that the "allowedClients" is not empty,
 // but the ip does not belong to it.
 func (a *accessCtx) IsBlockedIP(ip string) (bool, string) {
-	a.lock.Lock()
-	defer a.lock.Unlock()
-
 	if len(a.allowedClients) != 0 || len(a.allowedClientsIPNet) != 0 {
 		_, ok := a.allowedClients[ip]
 		if ok {
@@ -124,9 +118,7 @@ func (a *accessCtx) IsBlockedIP(ip string) (bool, string) {
 
 // IsBlockedDomain - return TRUE if this domain should be blocked
 func (a *accessCtx) IsBlockedDomain(host string) bool {
-	a.lock.Lock()
 	_, ok := a.blockedHostsEngine.Match(host)
-	a.lock.Unlock()
 	return ok
 }
 
