@@ -513,30 +513,34 @@ func (a *Auth) UserFind(login, password string) User {
 	return User{}
 }
 
-// GetCurrentUser - get the current user
-func (a *Auth) GetCurrentUser(r *http.Request) User {
+// getCurrentUser returns the current user.  It returns an empty User if the
+// user is not found.
+func (a *Auth) getCurrentUser(r *http.Request) User {
 	cookie, err := r.Cookie(sessionCookieName)
 	if err != nil {
-		// there's no Cookie, check Basic authentication
+		// There's no Cookie, check Basic authentication.
 		user, pass, ok := r.BasicAuth()
 		if ok {
-			u := Context.auth.UserFind(user, pass)
-			return u
+			return Context.auth.UserFind(user, pass)
 		}
+
 		return User{}
 	}
 
 	a.lock.Lock()
 	defer a.lock.Unlock()
+
 	s, ok := a.sessions[cookie.Value]
 	if !ok {
 		return User{}
 	}
+
 	for _, u := range a.users {
 		if u.Name == s.userName {
 			return u
 		}
 	}
+
 	return User{}
 }
 
