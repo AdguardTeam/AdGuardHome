@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/sysutil"
 	"github.com/AdguardTeam/AdGuardHome/internal/update"
@@ -46,7 +47,8 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 		Context.controlLock.Unlock()
 		if err != nil && strings.HasSuffix(err.Error(), "i/o timeout") {
 			// This case may happen while we're restarting DNS server
-			// https://github.com/AdguardTeam/AdGuardHome/internal/issues/934
+			// https://github.com/AdguardTeam/AdGuardHome/issues/934
+			time.Sleep(time.Duration(i) * time.Second)
 			continue
 		}
 		break
