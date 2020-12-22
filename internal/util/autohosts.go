@@ -21,7 +21,7 @@ type onChangedT func()
 // AutoHosts - automatic DNS records
 type AutoHosts struct {
 	// lock protects table and tableReverse.
-	lock sync.Mutex
+	lock sync.RWMutex
 	// table is the host-to-IPs map.
 	table map[string][]net.IP
 	// tableReverse is the IP-to-hosts map.
@@ -119,14 +119,14 @@ func (a *AutoHosts) Process(host string, qtype uint16) []net.IP {
 	}
 
 	var ipsCopy []net.IP
-	a.lock.Lock()
+	a.lock.RLock()
 
 	if ips, ok := a.table[host]; ok {
 		ipsCopy = make([]net.IP, len(ips))
 		copy(ipsCopy, ips)
 	}
 
-	a.lock.Unlock()
+	a.lock.RUnlock()
 
 	log.Debug("AutoHosts: answer: %s -> %v", host, ipsCopy)
 	return ipsCopy
@@ -145,8 +145,8 @@ func (a *AutoHosts) ProcessReverse(addr string, qtype uint16) (hosts []string) {
 
 	ipStr := ipReal.String()
 
-	a.lock.Lock()
-	defer a.lock.Unlock()
+	a.lock.RLock()
+	defer a.lock.RUnlock()
 
 	hosts = a.tableReverse[ipStr]
 
@@ -161,8 +161,8 @@ func (a *AutoHosts) ProcessReverse(addr string, qtype uint16) (hosts []string) {
 
 // List returns an IP-to-hostnames table.  It is safe for concurrent use.
 func (a *AutoHosts) List() (ipToHosts map[string][]string) {
-	a.lock.Lock()
-	defer a.lock.Unlock()
+	a.lock.RLock()
+	defer a.lock.RUnlock()
 
 	ipToHosts = make(map[string][]string, len(a.tableReverse))
 	for k, v := range a.tableReverse {
