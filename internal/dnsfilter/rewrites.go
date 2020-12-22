@@ -122,19 +122,21 @@ func findRewrites(a []RewriteEntry, host string) []RewriteEntry {
 
 	sort.Sort(rr)
 
-	isWC := isWildcard(rr[0].Domain)
-	if !isWC {
-		for i, r := range rr {
-			if isWildcard(r.Domain) {
-				rr = rr[:i]
-				break
-			}
+	for i, r := range rr {
+		if isWildcard(r.Domain) {
+			rr = rr[:max(1, i)]
+			break
 		}
-	} else {
-		rr = rr[:1]
 	}
 
 	return rr
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 func rewriteArrayDup(a []RewriteEntry) []RewriteEntry {
