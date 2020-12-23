@@ -44,7 +44,7 @@ const Dashboard = ({
     const refreshButton = <button
             type="button"
             className="btn btn-icon btn-outline-primary btn-sm"
-            title={t('refresh')}
+            title={t('refresh_btn')}
             onClick={() => getAllStats()}
     >
         <svg className="icons">
