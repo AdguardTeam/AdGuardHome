@@ -38,7 +38,7 @@ func TestAuth(t *testing.T) {
 	user := User{Name: "name"}
 	a.UserAdd(&user, "password")
 
-	assert.True(t, a.CheckSession("notfound") == -1)
+	assert.Equal(t, checkSessionNotFound, a.checkSession("notfound"))
 	a.RemoveSession("notfound")
 
 	sess, err := getSession(&users[0])
@@ -49,13 +49,13 @@ func TestAuth(t *testing.T) {
 	// check expiration
 	s.expire = uint32(now)
 	a.addSession(sess, &s)
-	assert.True(t, a.CheckSession(sessStr) == 1)
+	assert.Equal(t, checkSessionExpired, a.checkSession(sessStr))
 
 	// add session with TTL = 2 sec
 	s = session{}
 	s.expire = uint32(time.Now().UTC().Unix() + 2)
 	a.addSession(sess, &s)
-	assert.True(t, a.CheckSession(sessStr) == 0)
+	assert.Equal(t, checkSessionOK, a.checkSession(sessStr))
 
 	a.Close()
 
@@ -63,8 +63,8 @@ func TestAuth(t *testing.T) {
 	a = InitAuth(fn, users, 60)
 
 	// the session is still alive
-	assert.True(t, a.CheckSession(sessStr) == 0)
-	// reset our expiration time because CheckSession() has just updated it
+	assert.Equal(t, checkSessionOK, a.checkSession(sessStr))
+	// reset our expiration time because checkSession() has just updated it
 	s.expire = uint32(time.Now().UTC().Unix() + 2)
 	a.storeSession(sess, &s)
 	a.Close()
@@ -76,7 +76,7 @@ func TestAuth(t *testing.T) {
 
 	// load and remove expired sessions
 	a = InitAuth(fn, users, 60)
-	assert.True(t, a.CheckSession(sessStr) == -1)
+	assert.Equal(t, checkSessionNotFound, a.checkSession(sessStr))
 
 	a.Close()
 	os.Remove(fn)
@@ -111,7 +111,7 @@ func TestAuthHTTP(t *testing.T) {
 	Context.auth = InitAuth(fn, users, 60)
 
 	handlerCalled := false
-	handler := func(w http.ResponseWriter, r *http.Request) {
+	handler := func(_ http.ResponseWriter, _ *http.Request) {
 		handlerCalled = true
 	}
 	handler2 := optionalAuth(handler)
