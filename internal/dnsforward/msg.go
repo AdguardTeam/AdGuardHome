@@ -7,6 +7,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 )
 
@@ -92,48 +93,64 @@ func (s *Server) genServerFailure(request *dns.Msg) *dns.Msg {
 
 func (s *Server) genARecord(request *dns.Msg, ip net.IP) *dns.Msg {
 	resp := s.makeResponse(request)
-	resp.Answer = append(resp.Answer, s.genAAnswer(request, ip))
+	resp.Answer = append(resp.Answer, s.genAnswerA(request, ip))
 	return resp
 }
 
 func (s *Server) genAAAARecord(request *dns.Msg, ip net.IP) *dns.Msg {
 	resp := s.makeResponse(request)
-	resp.Answer = append(resp.Answer, s.genAAAAAnswer(request, ip))
+	resp.Answer = append(resp.Answer, s.genAnswerAAAA(request, ip))
 	return resp
 }
 
-func (s *Server) genAAnswer(req *dns.Msg, ip net.IP) *dns.A {
-	answer := new(dns.A)
-	answer.Hdr = dns.RR_Header{
+func (s *Server) hdr(req *dns.Msg, rrType rules.RRType) (h dns.RR_Header) {
+	return dns.RR_Header{
 		Name:   req.Question[0].Name,
-		Rrtype: dns.TypeA,
+		Rrtype: rrType,
 		Ttl:    s.conf.BlockedResponseTTL,
 		Class:  dns.ClassINET,
 	}
-	answer.A = ip
-	return answer
 }
 
-func (s *Server) genAAAAAnswer(req *dns.Msg, ip net.IP) *dns.AAAA {
-	answer := new(dns.AAAA)
-	answer.Hdr = dns.RR_Header{
-		Name:   req.Question[0].Name,
-		Rrtype: dns.TypeAAAA,
-		Ttl:    s.conf.BlockedResponseTTL,
-		Class:  dns.ClassINET,
+func (s *Server) genAnswerA(req *dns.Msg, ip net.IP) (ans *dns.A) {
+	return &dns.A{
+		Hdr: s.hdr(req, dns.TypeA),
+		A:   ip,
 	}
-	answer.AAAA = ip
-	return answer
 }
 
-func (s *Server) genTXTAnswer(req *dns.Msg, strs []string) (answer *dns.TXT) {
+func (s *Server) genAnswerAAAA(req *dns.Msg, ip net.IP) (ans *dns.AAAA) {
+	return &dns.AAAA{
+		Hdr:  s.hdr(req, dns.TypeAAAA),
+		AAAA: ip,
+	}
+}
+
+func (s *Server) genAnswerCNAME(req *dns.Msg, cname string) (ans *dns.CNAME) {
+	return &dns.CNAME{
+		Hdr:    s.hdr(req, dns.TypeCNAME),
+		Target: dns.Fqdn(cname),
+	}
+}
+
+func (s *Server) genAnswerMX(req *dns.Msg, mx *rules.DNSMX) (ans *dns.MX) {
+	return &dns.MX{
+		Hdr:        s.hdr(req, dns.TypePTR),
+		Preference: mx.Preference,
+		Mx:         mx.Exchange,
+	}
+}
+
+func (s *Server) genAnswerPTR(req *dns.Msg, ptr string) (ans *dns.PTR) {
+	return &dns.PTR{
+		Hdr: s.hdr(req, dns.TypePTR),
+		Ptr: ptr,
+	}
+}
+
+func (s *Server) genAnswerTXT(req *dns.Msg, strs []string) (ans *dns.TXT) {
 	return &dns.TXT{
-		Hdr: dns.RR_Header{
-			Name:   req.Question[0].Name,
-			Rrtype: dns.TypeTXT,
-			Ttl:    s.conf.BlockedResponseTTL,
-			Class:  dns.ClassINET,
-		},
+		Hdr: s.hdr(req, dns.TypeTXT),
 		Txt: strs,
 	}
 }
@@ -196,19 +213,6 @@ func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, d *proxy.DNSCo
 	}
 
 	return resp
-}
-
-// Make a CNAME response
-func (s *Server) genCNAMEAnswer(req *dns.Msg, cname string) *dns.CNAME {
-	answer := new(dns.CNAME)
-	answer.Hdr = dns.RR_Header{
-		Name:   req.Question[0].Name,
-		Rrtype: dns.TypeCNAME,
-		Ttl:    s.conf.BlockedResponseTTL,
-		Class:  dns.ClassINET,
-	}
-	answer.Target = dns.Fqdn(cname)
-	return answer
 }
 
 // Create REFUSED DNS response
