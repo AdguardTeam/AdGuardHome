@@ -37,7 +37,7 @@
 }
 
 .logs__text--bold {
-    font-weight: bold;
+    font-weight: 600;
 }
 
 .logs__time {
@@ -164,12 +164,13 @@
 }
 
 .logs__refresh {
-    --size: 2.5rem;
     position: relative;
     top: 3px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+
+    --size: 2.5rem;
     width: var(--size);
     height: var(--size);
     padding: 0;
@@ -357,7 +358,7 @@
     color: var(--gray-4d);
     background-color: var(--white80);
     pointer-events: none;
-    font-weight: bold;
+    font-weight: 600;
     text-align: center;
     padding-top: 21rem;
     display: block;

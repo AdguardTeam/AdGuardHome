@@ -35,7 +35,7 @@
 }
 
 .grid--title {
-    font-weight: bold;
+    font-weight: 600;
 }
 
 .grid--title:not(:first-child) {
@@ -65,7 +65,7 @@
     }
 
     .grid .key-colon, .grid .title--border {
-        font-weight: bold;
+        font-weight: 600;
     }
 }
 
