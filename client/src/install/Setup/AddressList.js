@@ -41,16 +41,13 @@ const AddressList = ({
 AddressList.propTypes = {
     interfaces: PropTypes.object.isRequired,
     address: PropTypes.string.isRequired,
-    port: PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.number,
-    ]),
+    port: PropTypes.number.isRequired,
     isDns: PropTypes.bool,
 };
 
 renderItem.propTypes = {
     ip: PropTypes.string.isRequired,
-    port: PropTypes.string.isRequired,
+    port: PropTypes.number.isRequired,
     isDns: PropTypes.bool.isRequired,
 };
 
