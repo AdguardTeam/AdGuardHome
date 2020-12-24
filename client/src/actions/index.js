@@ -287,7 +287,7 @@ export const getDnsStatus = () => async (dispatch) => {
     try {
         checkStatus(handleRequestSuccess, handleRequestError);
     } catch (error) {
-        handleRequestError(error);
+        handleRequestError();
     }
 };
 
