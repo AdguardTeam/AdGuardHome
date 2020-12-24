@@ -190,6 +190,11 @@ export const getIpList = (interfaces) => Object.values(interfaces)
     .reduce((acc, curr) => acc.concat(curr.ip_addresses), [])
     .sort();
 
+/**
+ * @param {string} ip
+ * @param {number} [port]
+ * @returns {string}
+ */
 export const getDnsAddress = (ip, port = 0) => {
     const isStandardDnsPort = port === STANDARD_DNS_PORT;
     let address = ip;
@@ -205,6 +210,11 @@ export const getDnsAddress = (ip, port = 0) => {
     return address;
 };
 
+/**
+ * @param {string} ip
+ * @param {number} [port]
+ * @returns {string}
+ */
 export const getWebAddress = (ip, port = 0) => {
     const isStandardWebPort = port === STANDARD_WEB_PORT;
     let address = `http://${ip}`;
