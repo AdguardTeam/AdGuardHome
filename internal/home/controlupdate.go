@@ -20,9 +20,9 @@ type getVersionJSONRequest struct {
 	RecheckNow bool `json:"recheck_now"`
 }
 
-// temoraryError is the interface for temporary errors from the Go standard
+// temporaryError is the interface for temporary errors from the Go standard
 // library.
-type temoraryError interface {
+type temporaryError interface {
 	error
 	Temporary() (ok bool)
 }
@@ -57,7 +57,7 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 		}()
 
 		if err != nil {
-			var terr temoraryError
+			var terr temporaryError
 			if errors.As(err, &terr) && terr.Temporary() {
 				// Temporary network error.  This case may happen while
 				// we're restarting our DNS server.  Log and sleep for
