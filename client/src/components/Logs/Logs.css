@@ -428,3 +428,13 @@
     margin-right: 1px;
     opacity: 0.5;
 }
+
+.filteringRules__rule {
+    margin-bottom: 0;
+}
+
+.filteringRules__filter {
+    font-style: italic;
+    font-weight: normal;
+    margin-bottom: 1rem;
+}

@@ -6,11 +6,11 @@ import propTypes from 'prop-types';
 import {
     captitalizeWords,
     checkFiltered,
+    getRulesToFilterList,
     formatDateTime,
     formatElapsedMs,
     formatTime,
     getBlockingClientName,
-    getFilterName,
     getServiceName,
     processContent,
 } from '../../../helpers/helpers';
@@ -70,8 +70,7 @@ const Row = memo(({
             upstream,
             type,
             client_proto,
-            filterId,
-            rule,
+            rules,
             originalResponse,
             status,
             service_name,
@@ -106,8 +105,6 @@ const Row = memo(({
         const protocol = t(SCHEME_TO_PROTOCOL_MAP[client_proto]) || '';
 
         const sourceData = getSourceData(tracker);
-
-        const filter = getFilterName(filters, whitelistFilters, filterId);
 
         const {
             confirmMessage,
@@ -172,8 +169,8 @@ const Row = memo(({
             response_details: 'title',
             install_settings_dns: upstream,
             elapsed: formattedElapsedMs,
-            filter: rule ? filter : null,
-            rule_label: rule,
+            rule_label: rules.length > 0
+                    && getRulesToFilterList(rules, filters, whitelistFilters),
             response_table_header: response?.join('\n'),
             response_code: status,
             client_details: 'title',
@@ -235,8 +232,10 @@ Row.propTypes = {
         upstream: propTypes.string.isRequired,
         type: propTypes.string.isRequired,
         client_proto: propTypes.string.isRequired,
-        filterId: propTypes.number,
-        rule: propTypes.string,
+        rules: propTypes.arrayOf(propTypes.shape({
+            text: propTypes.string.isRequired,
+            filter_list_id: propTypes.number.isRequired,
+        })),
         originalResponse: propTypes.array,
         status: propTypes.string.isRequired,
         service_name: propTypes.string,
