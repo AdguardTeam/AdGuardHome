@@ -2,13 +2,14 @@ package home
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"syscall"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/sysutil"
 	"github.com/AdguardTeam/AdGuardHome/internal/update"
@@ -17,6 +18,13 @@ import (
 
 type getVersionJSONRequest struct {
 	RecheckNow bool `json:"recheck_now"`
+}
+
+// temporaryError is the interface for temporary errors from the Go standard
+// library.
+type temporaryError interface {
+	error
+	Temporary() (ok bool)
 }
 
 // Get the latest available version from the Internet
@@ -41,14 +49,29 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 
 	var info update.VersionInfo
 	for i := 0; i != 3; i++ {
-		Context.controlLock.Lock()
-		info, err = Context.updater.GetVersionResponse(req.RecheckNow)
-		Context.controlLock.Unlock()
-		if err != nil && strings.HasSuffix(err.Error(), "i/o timeout") {
-			// This case may happen while we're restarting DNS server
-			// https://github.com/AdguardTeam/AdGuardHome/internal/issues/934
-			continue
+		func() {
+			Context.controlLock.Lock()
+			defer Context.controlLock.Unlock()
+
+			info, err = Context.updater.GetVersionResponse(req.RecheckNow)
+		}()
+
+		if err != nil {
+			var terr temporaryError
+			if errors.As(err, &terr) && terr.Temporary() {
+				// Temporary network error.  This case may happen while
+				// we're restarting our DNS server.  Log and sleep for
+				// some time.
+				//
+				// See https://github.com/AdguardTeam/AdGuardHome/issues/934.
+				d := time.Duration(i) * time.Second
+				log.Info("temp net error: %q; sleeping for %s and retrying", err, d)
+				time.Sleep(d)
+
+				continue
+			}
 		}
+
 		break
 	}
 	if err != nil {
