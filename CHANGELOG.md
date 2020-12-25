@@ -56,6 +56,13 @@ and this project adheres to
 [#2391]: https://github.com/AdguardTeam/AdGuardHome/issues/2391
 [#2394]: https://github.com/AdguardTeam/AdGuardHome/issues/2394
 
+### Deprecated
+
+- _Go_ 1.14 support.  v0.106.0 will require at least _Go_ 1.15 to build.
+- The `darwin/386` port.  It will be removed in v0.106.0.
+- The `"rule"` and `"filter_id"` fields in `GET /filtering/check_host` and
+  `GET /querylog` responses.  They will be removed in v0.106.0 ([#2102]).
+
 ### Fixed
 
 - Inability to set DNS cache TTL limits ([#2459]).
