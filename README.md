@@ -137,8 +137,7 @@ AdGuard Home provides a lot of features out-of-the-box with no need to install a
 | Force Safe search on search engines                                     | ✅                | ❌                                                        |
 | Per-client (device) configuration                                       | ✅                | ✅                                                        |
 | Access settings (choose who can use AGH DNS)                            | ✅                | ❌                                                        |
-| Written in a memory-safe language                                       | ✅                | ❌                                                        |
-| Running without root privileges                                         | ✅                | ❌                                                        |
+| Running [without root privileges](https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#running-without-superuser)                                         | ✅                | ❌                                                        |
 
 <a id="comparison-adblock"></a>
 ### How does AdGuard Home compare to traditional ad blockers
