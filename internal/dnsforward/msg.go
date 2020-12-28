@@ -11,7 +11,8 @@ import (
 	"github.com/miekg/dns"
 )
 
-// Create a DNS response by DNS request and set necessary flags
+// makeResponse creates a DNS response by req and sets necessary flags.  It also
+// guarantees that req.Question will be not empty.
 func (s *Server) makeResponse(req *dns.Msg) (resp *dns.Msg) {
 	resp = &dns.Msg{
 		MsgHdr: dns.MsgHdr{
