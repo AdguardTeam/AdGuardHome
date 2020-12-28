@@ -369,7 +369,7 @@ type checkHostResp struct {
 	// for FilteredBlockedService:
 	SvcName string `json:"service_name"`
 
-	// for ReasonRewrite:
+	// for Rewritten:
 	CanonName string   `json:"cname"`    // CNAME value
 	IPList    []net.IP `json:"ip_addrs"` // list of IP addresses
 }

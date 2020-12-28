@@ -6,7 +6,7 @@
 
 ### New `"reason"` in `GET /filtering/check_host` and `GET /querylog`
 
-* The new `DNSRewriteRule` reason is added to `GET /filtering/check_host` and
+* The new `RewriteRule` reason is added to `GET /filtering/check_host` and
   `GET /querylog`.
 
 * Also, the reason which was incorrectly documented as `"ReasonRewrite"` is now

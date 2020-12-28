@@ -55,7 +55,7 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 	} else if res.IsFiltered {
 		log.Tracef("Host %s is filtered, reason - %q, matched rule: %q", host, res.Reason, res.Rules[0].Text)
 		d.Res = s.genDNSFilterMessage(d, &res)
-	} else if res.Reason.In(dnsfilter.ReasonRewrite, dnsfilter.DNSRewriteRule) &&
+	} else if res.Reason.In(dnsfilter.Rewritten, dnsfilter.RewrittenRule) &&
 		res.CanonName != "" &&
 		len(res.IPList) == 0 {
 		// Resolve the new canonical name, not the original host
@@ -63,7 +63,7 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 		// processFilteringAfterResponse.
 		ctx.origQuestion = d.Req.Question[0]
 		d.Req.Question[0].Name = dns.Fqdn(res.CanonName)
-	} else if res.Reason == dnsfilter.RewriteAutoHosts && len(res.ReverseHosts) != 0 {
+	} else if res.Reason == dnsfilter.RewrittenAutoHosts && len(res.ReverseHosts) != 0 {
 		resp := s.makeResponse(req)
 		for _, h := range res.ReverseHosts {
 			hdr := dns.RR_Header{
@@ -82,7 +82,7 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 		}
 
 		d.Res = resp
-	} else if res.Reason == dnsfilter.ReasonRewrite || res.Reason == dnsfilter.RewriteAutoHosts {
+	} else if res.Reason == dnsfilter.Rewritten || res.Reason == dnsfilter.RewrittenAutoHosts {
 		resp := s.makeResponse(req)
 
 		name := host
@@ -104,7 +104,7 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 		}
 
 		d.Res = resp
-	} else if res.Reason == dnsfilter.DNSRewriteRule {
+	} else if res.Reason == dnsfilter.RewrittenRule {
 		err = s.filterDNSRewrite(req, res, d)
 		if err != nil {
 			return nil, err

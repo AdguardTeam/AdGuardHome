@@ -116,8 +116,9 @@ func (c *searchCriteria) ctFilteringStatusCase(res dnsfilter.Result) bool {
 		return res.IsFiltered ||
 			res.Reason.In(
 				dnsfilter.NotFilteredAllowList,
-				dnsfilter.ReasonRewrite,
-				dnsfilter.RewriteAutoHosts,
+				dnsfilter.Rewritten,
+				dnsfilter.RewrittenAutoHosts,
+				dnsfilter.RewrittenRule,
 			)
 
 	case filteringStatusBlocked:
@@ -137,7 +138,11 @@ func (c *searchCriteria) ctFilteringStatusCase(res dnsfilter.Result) bool {
 		return res.Reason == dnsfilter.NotFilteredAllowList
 
 	case filteringStatusRewritten:
-		return res.Reason.In(dnsfilter.ReasonRewrite, dnsfilter.RewriteAutoHosts)
+		return res.Reason.In(
+			dnsfilter.Rewritten,
+			dnsfilter.RewrittenAutoHosts,
+			dnsfilter.RewrittenRule,
+		)
 
 	case filteringStatusSafeSearch:
 		return res.IsFiltered && res.Reason == dnsfilter.FilteredSafeSearch

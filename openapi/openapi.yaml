@@ -1259,7 +1259,7 @@
           - 'FilteredBlockedService'
           - 'Rewrite'
           - 'RewriteEtcHosts'
-          - 'DNSRewriteRule'
+          - 'RewriteRule'
         'filter_id':
           'deprecated': true
           'description': >
@@ -1663,7 +1663,7 @@
           - 'FilteredBlockedService'
           - 'Rewrite'
           - 'RewriteEtcHosts'
-          - 'DNSRewriteRule'
+          - 'RewriteRule'
         'service_name':
           'type': 'string'
           'description': 'Set if reason=FilteredBlockedService'

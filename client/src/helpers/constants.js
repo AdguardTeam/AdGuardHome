@@ -339,6 +339,7 @@ export const FILTERED_STATUS = {
     FILTERED_BLOCKED_SERVICE: 'FilteredBlockedService',
     REWRITE: 'Rewrite',
     REWRITE_HOSTS: 'RewriteEtcHosts',
+    REWRITE_RULE: 'RewriteRule',
     FILTERED_SAFE_SEARCH: 'FilteredSafeSearch',
     FILTERED_SAFE_BROWSING: 'FilteredSafeBrowsing',
     FILTERED_PARENTAL: 'FilteredParental',
@@ -427,6 +428,10 @@ export const FILTERED_STATUS_TO_META_MAP = {
         COLOR: QUERY_STATUS_COLORS.BLUE,
     },
     [FILTERED_STATUS.REWRITE_HOSTS]: {
+        LABEL: RESPONSE_FILTER.REWRITTEN.LABEL,
+        COLOR: QUERY_STATUS_COLORS.BLUE,
+    },
+    [FILTERED_STATUS.REWRITE_RULE]: {
         LABEL: RESPONSE_FILTER.REWRITTEN.LABEL,
         COLOR: QUERY_STATUS_COLORS.BLUE,
     },

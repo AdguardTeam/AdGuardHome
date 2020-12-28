@@ -366,8 +366,8 @@ func processFilteringAfterResponse(ctx *dnsContext) int {
 	var err error
 
 	switch res.Reason {
-	case dnsfilter.ReasonRewrite,
-		dnsfilter.DNSRewriteRule:
+	case dnsfilter.Rewritten,
+		dnsfilter.RewrittenRule:
 
 		if len(ctx.origQuestion.Name) == 0 {
 			// origQuestion is set in case we get only CNAME without IP from rewrites table

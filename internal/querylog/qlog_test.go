@@ -236,7 +236,7 @@ func addEntry(l *queryLog, host, answerStr, client string) {
 	a.Answer = append(a.Answer, answer)
 	res := dnsfilter.Result{
 		IsFiltered:  true,
-		Reason:      dnsfilter.ReasonRewrite,
+		Reason:      dnsfilter.Rewritten,
 		ServiceName: "SomeService",
 		Rules: []*dnsfilter.ResultRule{{
 			FilterListID: 1,

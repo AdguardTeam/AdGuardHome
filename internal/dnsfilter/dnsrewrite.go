@@ -39,7 +39,7 @@ func (d *DNSFilter) processDNSRewrites(dnsr []*rules.NetworkRule) (res Result) {
 			}}
 
 			return Result{
-				Reason:    DNSRewriteRule,
+				Reason:    RewrittenRule,
 				Rules:     rules,
 				CanonName: dr.NewCNAME,
 			}
@@ -65,7 +65,7 @@ func (d *DNSFilter) processDNSRewrites(dnsr []*rules.NetworkRule) (res Result) {
 			}
 
 			return Result{
-				Reason:           DNSRewriteRule,
+				Reason:           RewrittenRule,
 				Rules:            rules,
 				DNSRewriteResult: dnsrr,
 			}
@@ -73,7 +73,7 @@ func (d *DNSFilter) processDNSRewrites(dnsr []*rules.NetworkRule) (res Result) {
 	}
 
 	return Result{
-		Reason:           DNSRewriteRule,
+		Reason:           RewrittenRule,
 		Rules:            rules,
 		DNSRewriteResult: dnsrr,
 	}
