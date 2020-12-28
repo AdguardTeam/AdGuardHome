@@ -169,8 +169,9 @@ const Row = memo(({
             response_details: 'title',
             install_settings_dns: upstream,
             elapsed: formattedElapsedMs,
-            rule_label: rules.length > 0
-                    && getRulesToFilterList(rules, filters, whitelistFilters),
+            ...(rules.length > 0
+                    && { rule_label: getRulesToFilterList(rules, filters, whitelistFilters) }
+            ),
             response_table_header: response?.join('\n'),
             response_code: status,
             client_details: 'title',
