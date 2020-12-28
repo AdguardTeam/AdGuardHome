@@ -51,18 +51,17 @@ const ResponseCell = ({
         })}</div>;
     };
 
-    const rulesList = getRulesToFilterList(rules, filters, whitelistFilters);
-
     const COMMON_CONTENT = {
         encryption_status: boldStatusLabel,
         install_settings_dns: upstream,
         elapsed: formattedElapsedMs,
         response_code: status,
         ...(service_name
-            ? { service_name: getServiceName(service_name) }
-            : { }
+                && { service_name: getServiceName(service_name) }
         ),
-        rule_label: rulesList,
+        ...(rules.length > 0
+                && { rule_label: getRulesToFilterList(rules, filters, whitelistFilters) }
+        ),
         response_table_header: renderResponses(response),
         original_response: renderResponses(originalResponse),
     };
