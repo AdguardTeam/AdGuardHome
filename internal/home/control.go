@@ -89,7 +89,7 @@ type profileJSON struct {
 
 func handleGetProfile(w http.ResponseWriter, r *http.Request) {
 	pj := profileJSON{}
-	u := Context.auth.GetCurrentUser(r)
+	u := Context.auth.getCurrentUser(r)
 	pj.Name = u.Name
 
 	data, err := json.Marshal(pj)

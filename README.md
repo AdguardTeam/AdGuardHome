@@ -123,20 +123,22 @@ AdGuard Home provides a lot of features out-of-the-box with no need to install a
 
 > Disclaimer: some of the listed features can be added to Pi-Hole by installing additional software or by manually using SSH terminal and reconfiguring one of the utilities Pi-Hole consists of. However, in our opinion, this cannot be legitimately counted as a Pi-Hole's feature.
 
-| Feature                                                                 | AdGuard&nbsp;Home | Pi-Hole                                                |
-|-------------------------------------------------------------------------|--------------|--------------------------------------------------------|
-| Blocking ads and trackers                                               | ✅            | ✅                                                      |
-| Customizing blocklists                                                  | ✅            | ✅                                                      |
-| Built-in DHCP server                                                    | ✅            | ✅                                                      |
-| HTTPS for the Admin interface                                           | ✅            | Kind of, but you'll need to manually configure lighthttpd |
-| Encrypted DNS upstream servers (DNS-over-HTTPS, DNS-over-TLS, DNSCrypt) | ✅            | ❌ (requires additional software)                       |
-| Cross-platform                                                          | ✅            | ❌ (not natively, only via Docker)                      |
-| Running as a DNS-over-HTTPS or DNS-over-TLS server                      | ✅            | ❌ (requires additional software)                       |
-| Blocking phishing and malware domains                                   | ✅            | ❌ (requires non-default blocklists)                    |
-| Parental control (blocking adult domains)                               | ✅            | ❌                                                      |
-| Force Safe search on search engines                                     | ✅            | ❌                                                      |
-| Per-client (device) configuration                                       | ✅            | ✅                                                      |
-| Access settings (choose who can use AGH DNS)                            | ✅            | ❌                                                      |
+| Feature                                                                 | AdGuard&nbsp;Home | Pi-Hole                                                   |
+|-------------------------------------------------------------------------|-------------------|-----------------------------------------------------------|
+| Blocking ads and trackers                                               | ✅                | ✅                                                        |
+| Customizing blocklists                                                  | ✅                | ✅                                                        |
+| Built-in DHCP server                                                    | ✅                | ✅                                                        |
+| HTTPS for the Admin interface                                           | ✅                | Kind of, but you'll need to manually configure lighthttpd |
+| Encrypted DNS upstream servers (DNS-over-HTTPS, DNS-over-TLS, DNSCrypt) | ✅                | ❌ (requires additional software)                         |
+| Cross-platform                                                          | ✅                | ❌ (not natively, only via Docker)                        |
+| Running as a DNS-over-HTTPS or DNS-over-TLS server                      | ✅                | ❌ (requires additional software)                         |
+| Blocking phishing and malware domains                                   | ✅                | ❌ (requires non-default blocklists)                      |
+| Parental control (blocking adult domains)                               | ✅                | ❌                                                        |
+| Force Safe search on search engines                                     | ✅                | ❌                                                        |
+| Per-client (device) configuration                                       | ✅                | ✅                                                        |
+| Access settings (choose who can use AGH DNS)                            | ✅                | ❌                                                        |
+| Written in a memory-safe language                                       | ✅                | ❌                                                        |
+| Running without root privileges                                         | ✅                | ❌                                                        |
 
 <a id="comparison-adblock"></a>
 ### How does AdGuard Home compare to traditional ad blockers

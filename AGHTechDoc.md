@@ -1846,7 +1846,7 @@ Response:
 	}
 
 There are also deprecated properties `filter_id` and `rule` on the top level of
-the response object.  Their usaga should be replaced with
+the response object.  Their usage should be replaced with
 `rules[*].filter_list_id` and `rules[*].text` correspondingly.  See the
 _OpenAPI_ documentation and the `./openapi/CHANGELOG.md` file.
 

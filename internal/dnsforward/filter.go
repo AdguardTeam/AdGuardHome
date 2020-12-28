@@ -87,17 +87,17 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 
 		name := host
 		if len(res.CanonName) != 0 {
-			resp.Answer = append(resp.Answer, s.genCNAMEAnswer(req, res.CanonName))
+			resp.Answer = append(resp.Answer, s.genAnswerCNAME(req, res.CanonName))
 			name = res.CanonName
 		}
 
 		for _, ip := range res.IPList {
 			if req.Question[0].Qtype == dns.TypeA {
-				a := s.genAAnswer(req, ip.To4())
+				a := s.genAnswerA(req, ip.To4())
 				a.Hdr.Name = dns.Fqdn(name)
 				resp.Answer = append(resp.Answer, a)
 			} else if req.Question[0].Qtype == dns.TypeAAAA {
-				a := s.genAAAAAnswer(req, ip)
+				a := s.genAnswerAAAA(req, ip)
 				a.Hdr.Name = dns.Fqdn(name)
 				resp.Answer = append(resp.Answer, a)
 			}

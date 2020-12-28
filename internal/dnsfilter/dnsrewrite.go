@@ -7,8 +7,8 @@ import (
 
 // DNSRewriteResult is the result of application of $dnsrewrite rules.
 type DNSRewriteResult struct {
-	RCode    rules.RCode              `json:",omitempty"`
 	Response DNSRewriteResultResponse `json:",omitempty"`
+	RCode    rules.RCode              `json:",omitempty"`
 }
 
 // DNSRewriteResultResponse is the collection of DNS response records
