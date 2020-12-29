@@ -13,6 +13,12 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
+@media screen and (max-width: 767px) {
+    input, select, textarea {
+        font-size: 16px !important;
+    }
+}
+
 .status {
     margin-top: 30px;
 }
@@ -70,4 +76,8 @@ body {
 .logs__row:hover .button-action,
 .button-action--active {
     visibility: visible;
+}
+
+.ReactModal__Body--open {
+    overflow: hidden;
 }
