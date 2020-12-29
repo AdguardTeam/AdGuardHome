@@ -219,7 +219,7 @@ func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.Res
 			// construct new URL to redirect to
 			newURL := url.URL{
 				Scheme:   "https",
-				Host:     net.JoinHostPort(host, strconv.Itoa(Context.web.portHTTPS)),
+				Host:     net.JoinHostPort(host, strconv.Itoa(Context.web.conf.PortHTTPS)),
 				Path:     r.URL.Path,
 				RawQuery: r.URL.RawQuery,
 			}

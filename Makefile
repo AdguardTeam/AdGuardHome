@@ -137,13 +137,16 @@ build:
 
 client:
 	npm --prefix client run build-prod
+	yarn --cwd client2 build
 
 client_with_deps:
 	npm --prefix client ci
 	npm --prefix client run build-prod
+	yarn --cwd client2 build
 
 client-watch:
 	npm --prefix client run watch
+	yarn --cwd client2 start
 
 docker:
 	DOCKER_CLI_EXPERIMENTAL=enabled \
@@ -163,6 +166,7 @@ lint: js-lint go-lint
 
 js-lint: dependencies
 	npm --prefix client run lint
+	yarn --cwd client2 lint
 
 go-install-tools:
 	env GO=$(GO) sh ./scripts/go-install-tools.sh
@@ -184,6 +188,7 @@ ci: client_with_deps
 
 dependencies:
 	npm --prefix client ci
+	yarn --cwd client2 install
 	$(GO) mod download
 
 clean:

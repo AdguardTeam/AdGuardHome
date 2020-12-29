@@ -316,9 +316,10 @@ func run(args options) {
 	}
 
 	webConf := webConfig{
-		firstRun: Context.firstRun,
-		BindHost: config.BindHost,
-		BindPort: config.BindPort,
+		firstRun:     Context.firstRun,
+		BindHost:     config.BindHost,
+		BindPort:     config.BindPort,
+		BetaBindPort: config.BetaBindPort,
 
 		ReadTimeout:       ReadTimeout,
 		ReadHeaderTimeout: ReadHeaderTimeout,
@@ -592,8 +593,6 @@ func loadOptions() options {
 // prints IP addresses which user can use to open the admin interface
 // proto is either "http" or "https"
 func printHTTPAddresses(proto string) {
-	var address string
-
 	tlsConf := tlsConfigSettings{}
 	if Context.tls != nil {
 		Context.tls.WriteDiskConfig(&tlsConf)
@@ -615,20 +614,26 @@ func printHTTPAddresses(proto string) {
 		ifaces, err := util.GetValidNetInterfacesForWeb()
 		if err != nil {
 			// That's weird, but we'll ignore it
-			address = net.JoinHostPort(config.BindHost, port)
-			log.Printf("Go to %s://%s", proto, address)
+			log.Printf("Go to %s://%s", proto, net.JoinHostPort(config.BindHost, port))
+			if config.BetaBindPort != 0 {
+				log.Printf("Go to %s://%s (BETA)", proto, net.JoinHostPort(config.BindHost, strconv.Itoa(config.BetaBindPort)))
+			}
 			return
 		}
 
 		for _, iface := range ifaces {
 			for _, addr := range iface.Addresses {
-				address = net.JoinHostPort(addr, strconv.Itoa(config.BindPort))
-				log.Printf("Go to %s://%s", proto, address)
+				log.Printf("Go to %s://%s", proto, net.JoinHostPort(addr, strconv.Itoa(config.BindPort)))
+				if config.BetaBindPort != 0 {
+					log.Printf("Go to %s://%s (BETA)", proto, net.JoinHostPort(addr, strconv.Itoa(config.BetaBindPort)))
+				}
 			}
 		}
 	} else {
-		address = net.JoinHostPort(config.BindHost, port)
-		log.Printf("Go to %s://%s", proto, address)
+		log.Printf("Go to %s://%s", proto, net.JoinHostPort(config.BindHost, port))
+		if config.BetaBindPort != 0 {
+			log.Printf("Go to %s://%s (BETA)", proto, net.JoinHostPort(config.BindHost, strconv.Itoa(config.BetaBindPort)))
+		}
 	}
 }
 

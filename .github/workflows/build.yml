@@ -2,7 +2,7 @@
 
 'env':
   'GO_VERSION': '1.14'
-  'NODE_VERSION': '13'
+  'NODE_VERSION': '14'
 
 'on':
   'push':

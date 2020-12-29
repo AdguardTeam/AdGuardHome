@@ -18,6 +18,7 @@ RUN apk --update --no-cache add \
     gcc \
     git \
     npm \
+    yarn \
   && rm -rf /tmp/* /var/cache/apk/*
 
 WORKDIR /app
@@ -26,6 +27,7 @@ COPY . ./
 
 # Prepare the client code
 RUN npm --prefix client ci && npm --prefix client run build-prod
+RUN yarn --cwd client2 build
 
 # Download go dependencies
 RUN go mod download

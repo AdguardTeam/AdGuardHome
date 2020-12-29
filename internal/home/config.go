@@ -39,13 +39,14 @@ type configuration struct {
 	// It's reset after config is parsed
 	fileData []byte
 
-	BindHost     string `yaml:"bind_host"`     // BindHost is the IP address of the HTTP server to bind to
-	BindPort     int    `yaml:"bind_port"`     // BindPort is the port the HTTP server
-	Users        []User `yaml:"users"`         // Users that can access HTTP server
-	ProxyURL     string `yaml:"http_proxy"`    // Proxy address for our HTTP client
-	Language     string `yaml:"language"`      // two-letter ISO 639-1 language code
-	RlimitNoFile uint   `yaml:"rlimit_nofile"` // Maximum number of opened fd's per process (0: default)
-	DebugPProf   bool   `yaml:"debug_pprof"`   // Enable pprof HTTP server on port 6060
+	BindHost     string `yaml:"bind_host"`      // BindHost is the IP address of the HTTP server to bind to
+	BindPort     int    `yaml:"bind_port"`      // BindPort is the port the HTTP server
+	BetaBindPort int    `yaml:"beta_bind_port"` // BetaBindPort is the port for new client
+	Users        []User `yaml:"users"`          // Users that can access HTTP server
+	ProxyURL     string `yaml:"http_proxy"`     // Proxy address for our HTTP client
+	Language     string `yaml:"language"`       // two-letter ISO 639-1 language code
+	RlimitNoFile uint   `yaml:"rlimit_nofile"`  // Maximum number of opened fd's per process (0: default)
+	DebugPProf   bool   `yaml:"debug_pprof"`    // Enable pprof HTTP server on port 6060
 
 	// TTL for a web session (in hours)
 	// An active session is automatically refreshed once a day.
@@ -117,8 +118,9 @@ type tlsConfigSettings struct {
 
 // initialize to default values, will be changed later when reading config or parsing command line
 var config = configuration{
-	BindPort: 3000,
-	BindHost: "0.0.0.0",
+	BindPort:     3000,
+	BetaBindPort: 0,
+	BindHost:     "0.0.0.0",
 	DNS: dnsConfig{
 		BindHost:      "0.0.0.0",
 		Port:          53,
@@ -174,6 +176,10 @@ func initConfig() {
 	config.DHCP.Conf4.LeaseDuration = 86400
 	config.DHCP.Conf4.ICMPTimeout = 1000
 	config.DHCP.Conf6.LeaseDuration = 86400
+
+	if updateChannel == "none" || updateChannel == "edge" {
+		config.BetaBindPort = 3001
+	}
 }
 
 // getConfigFilename returns path to the current config file

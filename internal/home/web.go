@@ -30,10 +30,11 @@ const (
 )
 
 type webConfig struct {
-	firstRun  bool
-	BindHost  string
-	BindPort  int
-	PortHTTPS int
+	firstRun     bool
+	BindHost     string
+	BindPort     int
+	BetaBindPort int
+	PortHTTPS    int
 
 	// ReadTimeout is an option to pass to http.Server for setting an
 	// appropriate field.
@@ -62,9 +63,16 @@ type HTTPSServer struct {
 type Web struct {
 	conf        *webConfig
 	forceHTTPS  bool
-	portHTTPS   int
 	httpServer  *http.Server // HTTP module
 	httpsServer HTTPSServer  // HTTPS module
+
+	// handlerBeta is the handler for new client.
+	handlerBeta http.Handler
+	// installerBeta is the pre-install handler for new client.
+	installerBeta http.Handler
+
+	// httpServerBeta is a server for new client.
+	httpServerBeta *http.Server
 }
 
 // CreateWeb - create module
@@ -76,15 +84,20 @@ func CreateWeb(conf *webConfig) *Web {
 
 	// Initialize and run the admin Web interface
 	box := packr.NewBox("../../build/static")
+	boxBeta := packr.NewBox("../../build2/static")
 
 	// if not configured, redirect / to /install.html, otherwise redirect /install.html to /
-	Context.mux.Handle("/", postInstallHandler(optionalAuthHandler(gziphandler.GzipHandler(http.FileServer(box)))))
+	Context.mux.Handle("/", withMiddlewares(http.FileServer(box), gziphandler.GzipHandler, optionalAuthHandler, postInstallHandler))
+	w.handlerBeta = withMiddlewares(http.FileServer(boxBeta), gziphandler.GzipHandler, optionalAuthHandler, postInstallHandler)
 
 	// add handlers for /install paths, we only need them when we're not configured yet
 	if conf.firstRun {
 		log.Info("This is the first launch of AdGuard Home, redirecting everything to /install.html ")
 		Context.mux.Handle("/install.html", preInstallHandler(http.FileServer(box)))
+		w.installerBeta = preInstallHandler(http.FileServer(boxBeta))
 		w.registerInstallHandlers()
+		// This must be removed in API v1.
+		w.registerBetaInstallHandlers()
 	} else {
 		registerControlHandlers()
 	}
@@ -114,7 +127,6 @@ func (web *Web) TLSConfigChanged(tlsConf tlsConfigSettings) {
 	log.Debug("Web: applying new TLS configuration")
 	web.conf.PortHTTPS = tlsConf.PortHTTPS
 	web.forceHTTPS = (tlsConf.ForceHTTPS && tlsConf.Enabled && tlsConf.PortHTTPS != 0)
-	web.portHTTPS = tlsConf.PortHTTPS
 
 	enabled := tlsConf.Enabled &&
 		tlsConf.PortHTTPS != 0 &&
@@ -147,19 +159,36 @@ func (web *Web) Start() {
 	// this loop is used as an ability to change listening host and/or port
 	for !web.httpsServer.shutdown {
 		printHTTPAddresses("http")
+		errs := make(chan error, 2)
 
 		// we need to have new instance, because after Shutdown() the Server is not usable
-		address := net.JoinHostPort(web.conf.BindHost, strconv.Itoa(web.conf.BindPort))
 		web.httpServer = &http.Server{
 			ErrorLog:          log.StdLog("web: http", log.DEBUG),
-			Addr:              address,
+			Addr:              net.JoinHostPort(web.conf.BindHost, strconv.Itoa(web.conf.BindPort)),
 			Handler:           withMiddlewares(Context.mux, limitRequestBody),
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
 			WriteTimeout:      web.conf.WriteTimeout,
 		}
+		go func() {
+			errs <- web.httpServer.ListenAndServe()
+		}()
 
-		err := web.httpServer.ListenAndServe()
+		if web.conf.BetaBindPort != 0 {
+			web.httpServerBeta = &http.Server{
+				ErrorLog:          log.StdLog("web: http", log.DEBUG),
+				Addr:              net.JoinHostPort(web.conf.BindHost, strconv.Itoa(web.conf.BetaBindPort)),
+				Handler:           withMiddlewares(Context.mux, limitRequestBody, web.wrapIndexBeta),
+				ReadTimeout:       web.conf.ReadTimeout,
+				ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
+				WriteTimeout:      web.conf.WriteTimeout,
+			}
+			go func() {
+				errs <- web.httpServerBeta.ListenAndServe()
+			}()
+		}
+
+		err := <-errs
 		if err != http.ErrServerClosed {
 			cleanupAlways()
 			log.Fatal(err)
@@ -179,6 +208,9 @@ func (web *Web) Close() {
 	}
 	if web.httpServer != nil {
 		_ = web.httpServer.Shutdown(context.TODO())
+	}
+	if web.httpServerBeta != nil {
+		_ = web.httpServerBeta.Shutdown(context.TODO())
 	}
 
 	log.Info("Stopped HTTP server")
