@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# AdGuardHome installation script
+# AdGuard Home Installation Script
 #
 # 1. Download the package
 # 2. Unpack it

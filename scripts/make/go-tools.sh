@@ -1,6 +1,12 @@
 #!/bin/sh
 
-test "$VERBOSE" = '1' && set -x
+verbose="${VERBOSE:-0}"
+
+if [ "$verbose" -gt '0' ]
+then
+	set -x
+fi
+
 set -e -f -u
 
 # TODO(a.garipov): Add goconst?

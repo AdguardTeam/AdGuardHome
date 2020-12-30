@@ -10,7 +10,7 @@ and this project adheres to
 ## [Unreleased]
 
 <!--
-## [v0.105.0] - 2020-12-28
+## [v0.105.0] - 2021-01-18
 -->
 
 ### Added
@@ -44,10 +44,11 @@ and this project adheres to
   improve error response ([#2358]).
 - Improved HTTP requests handling and timeouts ([#2343]).
 - Our snap package now uses the `core20` image as its base ([#2306]).
-- Various internal improvements ([#2267], [#2271], [#2297]).
+- New build system and various internal improvements ([#2276], [#2271],
+  [#2297]).
 
 [#2231]: https://github.com/AdguardTeam/AdGuardHome/issues/2231
-[#2267]: https://github.com/AdguardTeam/AdGuardHome/issues/2267
+[#2276]: https://github.com/AdguardTeam/AdGuardHome/issues/2276
 [#2271]: https://github.com/AdguardTeam/AdGuardHome/issues/2271
 [#2297]: https://github.com/AdguardTeam/AdGuardHome/issues/2297
 [#2306]: https://github.com/AdguardTeam/AdGuardHome/issues/2306
@@ -81,6 +82,8 @@ and this project adheres to
 
 ### Removed
 
+- `Dockerfile` ([#2276]).  Replaced with the script
+  `scripts/make/build-docker.sh` which uses `scripts/make/Dockerfile`.
 - Support for pre-v0.99.3 format of query logs ([#2102]).
 
 ## [v0.104.3] - 2020-11-19

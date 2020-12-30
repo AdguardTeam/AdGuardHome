@@ -1,4 +1,3 @@
-//go:generate go install -v github.com/gobuffalo/packr/packr
 //go:generate packr clean
 //go:generate packr -z
 package main
@@ -17,8 +16,6 @@ var channel = "release"
 var goarm = ""
 
 // gomips is the GOMIPS value.  It is set by the linker.
-//
-// TODO(a.garipov): Implement.
 var gomips = ""
 
 func main() {

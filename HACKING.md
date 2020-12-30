@@ -1,4 +1,4 @@
- #  *AdGuardHome* Developer Guidelines
+ #  AdGuard Home Developer Guidelines
 
 As of **December 2020**, this document is partially a work-in-progress, but
 should still be followed.  Some of the rules aren't enforced as thoroughly or

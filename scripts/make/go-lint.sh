@@ -1,13 +1,23 @@
 #!/bin/sh
 
+verbose="${VERBOSE:-0}"
+
 # Verbosity levels:
 #   0 = Don't print anything except for errors.
 #   1 = Print commands, but not nested commands.
 #   2 = Print everything.
-test "${VERBOSE:=0}" -gt '0' && set -x
+if [ "$verbose" -gt '0' ]
+then
+	set -x
+fi
 
-# Set $EXITONERROR to zero to see all errors.
-test "${EXITONERROR:=1}" = '0' && set +e || set -e
+# Set $EXIT_ON_ERROR to zero to see all errors.
+if [ "${EXIT_ON_ERROR:-1}" = '0' ]
+then
+	set +e
+else
+	set -e
+fi
 
 # We don't need glob expansions and we want to see errors about unset
 # variables.
@@ -17,7 +27,7 @@ not_found_msg='
 looks like a binary not found error.
 make sure you have installed the linter binaries using:
 
-	$ make go-install-tools
+	$ make go-tools
 '
 
 not_found() {
@@ -95,7 +105,8 @@ ineffassign .
 
 unparam ./...
 
-git ls-files -- '*.go' '*.md' '*.yaml' '*.yml' | xargs misspell --error
+git ls-files -- '*.go' '*.md' '*.yaml' '*.yml' 'Makefile'\
+	| xargs misspell --error
 
 looppointer ./...
 
