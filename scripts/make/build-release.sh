@@ -101,6 +101,7 @@ freebsd  amd64     0   0          0
 freebsd  arm       5   0          0
 freebsd  arm       6   0          0
 freebsd  arm       7   0          0
+freebsd  arm64     0   0          0
 linux    386       0   0          i386
 linux    amd64     0   0          amd64
 linux    arm       5   0          0

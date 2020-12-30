@@ -15,6 +15,7 @@ GO = go
 #
 # GOPROXY = https://goproxy.io|https://goproxy.cn|direct
 GOPROXY = https://goproxy.cn,https://goproxy.io,direct
+GPG_KEY = devteam@adguard.com
 GPG_KEY_PASSPHRASE = not-a-real-password
 NPM = npm
 NPM_FLAGS = --prefix $(CLIENT_DIR)
@@ -27,6 +28,7 @@ YARN_FLAGS = --cwd $(CLIENT_BETA_DIR)
 ENV = env\
 	COMMIT='$(COMMIT)'\
 	CHANNEL='$(CHANNEL)'\
+	GPG_KEY='$(GPG_KEY)'\
 	GPG_KEY_PASSPHRASE='$(GPG_KEY_PASSPHRASE)'\
 	DIST_DIR='$(DIST_DIR)'\
 	GO='$(GO)'\
