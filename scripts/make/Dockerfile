@@ -45,5 +45,5 @@ CMD [ \
 	"--no-check-update", \
 	"-c", "/opt/adguardhome/conf/AdGuardHome.yaml", \
 	"-h", "0.0.0.0", \
-	"-w", "/opt/adguardhome/work", \
+	"-w", "/opt/adguardhome/work" \
 ]

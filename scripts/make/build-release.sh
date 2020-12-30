@@ -92,6 +92,9 @@ readonly arms='5
 
 readonly mipses='softfloat'
 
+# TODO(a.garipov): Remove armv6, because it was always overwritten by
+# armv7.  Rename armv7 to armhf.  Rename the 386 snap to i386.
+
 #    os  arch      arm mips       snap
 readonly platforms="\
 darwin   386       0   0          0
@@ -102,11 +105,11 @@ freebsd  arm       5   0          0
 freebsd  arm       6   0          0
 freebsd  arm       7   0          0
 freebsd  arm64     0   0          0
-linux    386       0   0          i386
+linux    386       0   0          386
 linux    amd64     0   0          amd64
 linux    arm       5   0          0
-linux    arm       6   0          0
-linux    arm       7   0          armhf
+linux    arm       6   0          armv6
+linux    arm       7   0          armv7
 linux    arm64     0   0          arm64
 linux    mips      0   softfloat  0
 linux    mips64    0   softfloat  0
@@ -209,9 +212,23 @@ build() {
 	cp -r './scripts/snap/gui'\
 		"${build_snap_dir}/meta/"
 
+	# TODO(a.garipov): Remove this crutch later.
+	case "$build_snap"
+	in
+	('386')
+		build_snap_arch="i386"
+		;;
+	('armv6'|'armv7')
+		build_snap_arch="armhf"
+		;;
+	(*)
+		build_snap_arch="$build_snap"
+		;;
+	esac
+
 	# Create a snap.yaml file, setting the values.
 	sed -e 's/%VERSION%/'"$version"'/'\
-		-e 's/%ARCH%/'"$build_snap"'/'\
+		-e 's/%ARCH%/'"$build_snap_arch"'/'\
 		./scripts/snap/snap.tmpl.yaml\
 		>"${build_snap_dir}/meta/snap.yaml"
 
