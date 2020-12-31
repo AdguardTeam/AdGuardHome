@@ -157,6 +157,7 @@ build() {
 		GOMIPS="${build_mips#0}"\
 		GOOS="$os"\
 		VERBOSE="$(( verbose - 1 ))"\
+		VERSION="$version"\
 		OUT="$build_output"\
 		sh ./scripts/make/go-build.sh\
 		;
@@ -287,7 +288,7 @@ log "calculating checksums"
 	cd "./${dist}"
 
 	# Don't use quotes to get word splitting.
-	sha256sum $(ls *.tar.gz *.zip) > ./checksums.txt
+	sha256sum $(ls -1 -A -q *.tar.gz *.zip) > ./checksums.txt
 )
 
 log "writing versions"
@@ -295,6 +296,9 @@ log "writing versions"
 echo "$version" > "./${dist}/version.txt"
 
 # Create the verison.json file.
+#
+# TODO(a.garipov): Perhaps rewrite this as a go run program.  Dealing
+# with structured documents is really not a Shell's job.
 
 readonly version_download_url="https://static.adguard.com/adguardhome/${channel}"
 readonly version_json="./${dist}/version.json"
@@ -319,8 +323,12 @@ echo "{
 	# Use +f here so that ls works and we don't need to use find.
 	set +f
 
+	readonly ar_files="$(ls -1 -A -q "./${dist}/"*.tar.gz "./${dist}/"*.zip)"
+	readonly ar_files_len="$(echo "$ar_files" | wc -l)"
+
+	i='1'
 	# Don't use quotes to get word splitting.
-	for f in $(ls "./${dist}/"*.tar.gz "./${dist}/"*.zip)
+	for f in $ar_files
 	do
 		platform="$f"
 
@@ -334,7 +342,14 @@ echo "{
 		# Use the filename's base path.
 		filename="${f#./${dist}/}"
 
-		echo "  \"download_${platform}\": \"${version_download_url}/${filename}\"," >> "$version_json"
+		if [ "$i" = "$ar_files_len" ]
+		then
+			echo "  \"download_${platform}\": \"${version_download_url}/${filename}\"" >> "$version_json"
+		else
+			echo "  \"download_${platform}\": \"${version_download_url}/${filename}\"," >> "$version_json"
+		fi
+
+		: "$(( i++ ))"
 	done
 )
 
