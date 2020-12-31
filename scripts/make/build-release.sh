@@ -184,8 +184,8 @@ build() {
 	case "$build_os"
 	in
 	('darwin'|'windows')
-		build_archive="./${dist}/${build_ar}.zip"
-		zip -9 -q "$build_archive" "$build_dir"
+		build_archive="${PWD}/${dist}/${build_ar}.zip"
+		( cd "${dist}/${1}" && zip -9 -q -r "$build_archive" "./AdGuardHome" )
 		;;
 	(*)
 		build_archive="./${dist}/${build_ar}.tar.gz"
