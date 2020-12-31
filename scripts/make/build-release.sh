@@ -349,7 +349,7 @@ echo "{
 			echo "  \"download_${platform}\": \"${version_download_url}/${filename}\"," >> "$version_json"
 		fi
 
-		: "$(( i++ ))"
+		i="$(( i + 1 ))"
 	done
 )
 
