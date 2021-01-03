@@ -114,23 +114,30 @@ func (c *dnsRebindChecker) isRebindIP(ip net.IP) bool {
 	return rebind || c.isPrivate(ip) || ip.IsLoopback()
 }
 
-// Checks DNS rebinding attacks
-// Note both whitelisted and cached hosts will bypass rebinding check (see: processFilteringAfterResponse()).
-func (s *Server) isResponseRebind(domain, host string) bool {
-	if !s.conf.RebindingProtectionEnabled {
-		return false
-	}
-
+func (c *dnsRebindChecker) filter(domain, host string) *dnsfilter.Result {
 	if log.GetLevel() >= log.DEBUG {
 		timer := log.StartTimer()
 		defer timer.LogElapsed("DNS Rebinding check for %s -> %s", domain, host)
 	}
 
-	if s.rebinding.isAllowedDomain(domain) {
-		return false
+	if c.isAllowedDomain(domain) || !c.isRebindHost(host) {
+		return nil
 	}
 
-	return s.rebinding.isRebindHost(host)
+	return &dnsfilter.Result{
+		IsFiltered: true,
+		Reason:     dnsfilter.FilteredRebind,
+	}
+}
+
+// Checks DNS rebinding attacks
+// Note both whitelisted and cached hosts will bypass rebinding check (see: processFilteringAfterResponse()).
+func (s *Server) filterDNSRebinding(domain, host string) *dnsfilter.Result {
+	if !s.conf.RebindingProtectionEnabled {
+		return nil
+	}
+
+	return s.rebinding.filter(domain, host)
 }
 
 func processRebindingFilteringAfterResponse(ctx *dnsContext) int {
@@ -209,17 +216,12 @@ func (s *Server) preventRebindResponse(ctx *dnsContext) (*dnsfilter.Result, erro
 		}
 
 		log.Debug(m)
-		blocked := s.isResponseRebind(strings.TrimSuffix(domainName, "."), host)
+		res := s.filterDNSRebinding(strings.TrimSuffix(domainName, "."), host)
 		s.RUnlock()
 
-		if blocked {
-			res := &dnsfilter.Result{
-				IsFiltered: true,
-				Reason:     dnsfilter.FilteredRebind,
-			}
-
-			d.Res = s.genDNSFilterMessage(d, res)
+		if res != nil {
 			log.Debug("DNSRebind: Matched %s by response: %s", d.Req.Question[0].Name, host)
+			d.Res = s.genDNSFilterMessage(d, res)
 			return res, nil
 		}
 	}

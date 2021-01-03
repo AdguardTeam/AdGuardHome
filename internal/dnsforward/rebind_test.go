@@ -5,6 +5,7 @@ import (
 	"net"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -60,6 +61,11 @@ func TestIsResponseRebind(t *testing.T) {
 		rebinding: c,
 	}
 
+	expectedFiltered := &dnsfilter.Result{
+		IsFiltered: true,
+		Reason:     dnsfilter.FilteredRebind,
+	}
+
 	for _, host := range []string{
 		"0.1.2.3",         /* 0.0.0.0/8 (RFC 5735 section 3. "here" network) */
 		"127.1.2.3",       /* 127.0.0.0/8    (loopback) */
@@ -86,14 +92,14 @@ func TestIsResponseRebind(t *testing.T) {
 		"localhost",
 	} {
 		s.conf.RebindingProtectionEnabled = true
-		assert.Truef(t, s.isResponseRebind("example.com", host), "host: %s", host)
-		assert.Falsef(t, s.isResponseRebind("totally-safe.com", host), "host: %s", host)
-		assert.Falsef(t, s.isResponseRebind("absolutely.totally-safe.com", host), "host: %s", host)
+		assert.Equalf(t, expectedFiltered, s.filterDNSRebinding("example.com", host), "host: %s", host)
+		assert.Nilf(t, s.filterDNSRebinding("totally-safe.com", host), "host: %s", host)
+		assert.Nilf(t, s.filterDNSRebinding("absolutely.totally-safe.com", host), "host: %s", host)
 
 		s.conf.RebindingProtectionEnabled = false
-		assert.Falsef(t, s.isResponseRebind("example.com", host), "host: %s", host)
-		assert.Falsef(t, s.isResponseRebind("totally-safe.com", host), "host: %s", host)
-		assert.Falsef(t, s.isResponseRebind("absolutely.totally-safe.com", host), "host: %s", host)
+		assert.Nilf(t, s.filterDNSRebinding("example.com", host), "host: %s", host)
+		assert.Nilf(t, s.filterDNSRebinding("totally-safe.com", host), "host: %s", host)
+		assert.Nilf(t, s.filterDNSRebinding("absolutely.totally-safe.com", host), "host: %s", host)
 	}
 
 	for _, host := range []string{
@@ -101,13 +107,13 @@ func TestIsResponseRebind(t *testing.T) {
 		"another-example.com",
 	} {
 		s.conf.RebindingProtectionEnabled = true
-		assert.Falsef(t, s.isResponseRebind("example.com", host), "host: %s", host)
-		assert.Falsef(t, s.isResponseRebind("totally-safe.com", host), "host: %s", host)
-		assert.Falsef(t, s.isResponseRebind("absolutely.totally-legit.com", host), "host: %s", host)
+		assert.Nilf(t, s.filterDNSRebinding("example.com", host), "host: %s", host)
+		assert.Nilf(t, s.filterDNSRebinding("totally-safe.com", host), "host: %s", host)
+		assert.Nilf(t, s.filterDNSRebinding("absolutely.totally-legit.com", host), "host: %s", host)
 
 		s.conf.RebindingProtectionEnabled = false
-		assert.Falsef(t, s.isResponseRebind("example.com", host), "host: %s", host)
-		assert.Falsef(t, s.isResponseRebind("totally-safe.com", host), "host: %s", host)
-		assert.Falsef(t, s.isResponseRebind("absolutely.totally-legit.com", host), "host: %s", host)
+		assert.Nilf(t, s.filterDNSRebinding("example.com", host), "host: %s", host)
+		assert.Nilf(t, s.filterDNSRebinding("totally-safe.com", host), "host: %s", host)
+		assert.Nilf(t, s.filterDNSRebinding("absolutely.totally-legit.com", host), "host: %s", host)
 	}
 }
