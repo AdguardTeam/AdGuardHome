@@ -150,6 +150,7 @@ func (c *searchCriteria) ctFilteringStatusCase(res dnsfilter.Result) bool {
 	case filteringStatusProcessed:
 		return !res.Reason.In(
 			dnsfilter.FilteredBlockList,
+			dnsfilter.FilteredRebind,
 			dnsfilter.FilteredBlockedService,
 			dnsfilter.NotFilteredAllowList,
 		)
