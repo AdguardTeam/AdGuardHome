@@ -9,7 +9,7 @@ import (
 )
 
 func TestRebindingPrivateAddresses(t *testing.T) {
-	c := &dnsRebindChecker{}
+	c, _ := newRebindChecker(nil)
 
 	r1 := byte(rand.Int31() & 0xFF)
 	r2 := byte(rand.Int31() & 0xFF)
@@ -53,9 +53,11 @@ func TestRebindLocalhost(t *testing.T) {
 }
 
 func TestIsResponseRebind(t *testing.T) {
-	s := &Server{}
-	s.conf.RebindingAllowedHosts = []string{
-		"totally-safe.com",
+	c, _ := newRebindChecker([]string{
+		"||totally-safe.com^",
+	})
+	s := &Server{
+		rebinding: c,
 	}
 
 	for _, host := range []string{
@@ -84,14 +86,14 @@ func TestIsResponseRebind(t *testing.T) {
 		"localhost",
 	} {
 		s.conf.RebindingProtectionEnabled = true
-		assert.True(t, s.isResponseRebind("example.com", host))
-		assert.False(t, s.isResponseRebind("totally-safe.com", host))
-		assert.False(t, s.isResponseRebind("absolutely.totally-safe.com", host))
+		assert.Truef(t, s.isResponseRebind("example.com", host), "host: %s", host)
+		assert.Falsef(t, s.isResponseRebind("totally-safe.com", host), "host: %s", host)
+		assert.Falsef(t, s.isResponseRebind("absolutely.totally-safe.com", host), "host: %s", host)
 
 		s.conf.RebindingProtectionEnabled = false
-		assert.False(t, s.isResponseRebind("example.com", host))
-		assert.False(t, s.isResponseRebind("totally-safe.com", host))
-		assert.False(t, s.isResponseRebind("absolutely.totally-safe.com", host))
+		assert.Falsef(t, s.isResponseRebind("example.com", host), "host: %s", host)
+		assert.Falsef(t, s.isResponseRebind("totally-safe.com", host), "host: %s", host)
+		assert.Falsef(t, s.isResponseRebind("absolutely.totally-safe.com", host), "host: %s", host)
 	}
 
 	for _, host := range []string{
@@ -99,13 +101,13 @@ func TestIsResponseRebind(t *testing.T) {
 		"another-example.com",
 	} {
 		s.conf.RebindingProtectionEnabled = true
-		assert.False(t, s.isResponseRebind("example.com", host))
-		assert.False(t, s.isResponseRebind("totally-safe.com", host))
-		assert.False(t, s.isResponseRebind("absolutely.totally-legit.com", host))
+		assert.Falsef(t, s.isResponseRebind("example.com", host), "host: %s", host)
+		assert.Falsef(t, s.isResponseRebind("totally-safe.com", host), "host: %s", host)
+		assert.Falsef(t, s.isResponseRebind("absolutely.totally-legit.com", host), "host: %s", host)
 
 		s.conf.RebindingProtectionEnabled = false
-		assert.False(t, s.isResponseRebind("example.com", host))
-		assert.False(t, s.isResponseRebind("totally-safe.com", host))
-		assert.False(t, s.isResponseRebind("absolutely.totally-legit.com", host))
+		assert.Falsef(t, s.isResponseRebind("example.com", host), "host: %s", host)
+		assert.Falsef(t, s.isResponseRebind("totally-safe.com", host), "host: %s", host)
+		assert.Falsef(t, s.isResponseRebind("absolutely.totally-legit.com", host), "host: %s", host)
 	}
 }

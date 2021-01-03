@@ -757,7 +757,10 @@ func TestBlockedDNSRebinding(t *testing.T) {
 		{Name: "192-168-1-250.nip.io.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
 	}
 
+	s.Lock()
 	s.conf.RebindingProtectionEnabled = true
+	s.Unlock()
+
 	reply, err := dns.Exchange(&req, addr.String())
 	if err != nil {
 		t.Fatalf("Couldn't talk to server %s: %s", addr, err)
@@ -776,7 +779,10 @@ func TestBlockedDNSRebinding(t *testing.T) {
 		t.Fatalf("DNS server %s returned wrong answer instead of 0.0.0.0: %v", addr, a.A)
 	}
 
+	s.Lock()
 	s.conf.RebindingProtectionEnabled = false
+	s.Unlock()
+
 	reply, err = dns.Exchange(&req, addr.String())
 	if err != nil {
 		t.Fatalf("Couldn't talk to server %s: %s", addr, err)
@@ -795,10 +801,13 @@ func TestBlockedDNSRebinding(t *testing.T) {
 		t.Fatalf("DNS server %s returned wrong answer instead of 192.168.1.250: %v", addr, a.A)
 	}
 
+	s.Lock()
 	s.conf.RebindingProtectionEnabled = true
-	s.conf.RebindingAllowedHosts = []string{
-		"nip.io.",
-	}
+	s.rebinding, _ = newRebindChecker([]string{
+		"||nip.io^",
+	})
+	s.Unlock()
+
 	reply, err = dns.Exchange(&req, addr.String())
 	if err != nil {
 		t.Fatalf("Couldn't talk to server %s: %s", addr, err)

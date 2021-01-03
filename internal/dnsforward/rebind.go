@@ -9,10 +9,41 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/urlfilter"
+	"github.com/AdguardTeam/urlfilter/filterlist"
 	"github.com/miekg/dns"
 )
 
 type dnsRebindChecker struct {
+	allowDomainEngine *urlfilter.DNSEngine
+}
+
+func newRebindChecker(allowedHosts []string) (*dnsRebindChecker, error) {
+	buf := strings.Builder{}
+	for _, s := range allowedHosts {
+		buf.WriteString(s)
+		buf.WriteString("\n")
+	}
+
+	rulesStorage, err := filterlist.NewRuleStorage([]filterlist.RuleList{
+		&filterlist.StringRuleList{
+			ID:             int(0),
+			RulesText:      buf.String(),
+			IgnoreCosmetic: true,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &dnsRebindChecker{
+		allowDomainEngine: urlfilter.NewDNSEngine(rulesStorage),
+	}, nil
+}
+
+func (c *dnsRebindChecker) isAllowedDomain(domain string) bool {
+	_, ok := c.allowDomainEngine.Match(domain)
+	return ok
 }
 
 // IsPrivate reports whether ip is a private address, according to
@@ -95,14 +126,11 @@ func (s *Server) isResponseRebind(domain, host string) bool {
 		defer timer.LogElapsed("DNS Rebinding check for %s -> %s", domain, host)
 	}
 
-	for _, h := range s.conf.RebindingAllowedHosts {
-		if strings.HasSuffix(domain, h) {
-			return false
-		}
+	if s.rebinding.isAllowedDomain(domain) {
+		return false
 	}
 
-	c := dnsRebindChecker{}
-	return c.isRebindHost(host)
+	return s.rebinding.isRebindHost(host)
 }
 
 func processRebindingFilteringAfterResponse(ctx *dnsContext) int {
@@ -129,6 +157,21 @@ func processRebindingFilteringAfterResponse(ctx *dnsContext) int {
 	}
 
 	return resultDone
+}
+
+func (s *Server) setRebindingConfig(dc dnsConfig) bool {
+	restart := false
+
+	if dc.RebindingProtectionEnabled != nil {
+		s.conf.RebindingProtectionEnabled = *dc.RebindingProtectionEnabled
+	}
+
+	if dc.RebindingAllowedHosts != nil {
+		s.conf.RebindingAllowedHosts = *dc.RebindingAllowedHosts
+		restart = true
+	}
+
+	return restart
 }
 
 func (s *Server) preventRebindResponse(ctx *dnsContext) (*dnsfilter.Result, error) {
@@ -166,7 +209,7 @@ func (s *Server) preventRebindResponse(ctx *dnsContext) (*dnsfilter.Result, erro
 		}
 
 		log.Debug(m)
-		blocked := s.isResponseRebind(domainName, host)
+		blocked := s.isResponseRebind(strings.TrimSuffix(domainName, "."), host)
 		s.RUnlock()
 
 		if blocked {

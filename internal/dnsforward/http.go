@@ -310,13 +310,7 @@ func (s *Server) setConfig(dc dnsConfig) (restart bool) {
 		}
 	}
 
-	if dc.RebindingProtectionEnabled != nil {
-		s.conf.RebindingProtectionEnabled = *dc.RebindingProtectionEnabled
-	}
-
-	if dc.RebindingAllowedHosts != nil {
-		s.conf.RebindingAllowedHosts = *dc.RebindingAllowedHosts
-	}
+	restart = restart || s.setRebindingConfig(dc)
 	s.Unlock()
 	s.conf.ConfigModified()
 	return restart
