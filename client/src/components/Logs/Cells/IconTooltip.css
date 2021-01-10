@@ -1,0 +1,110 @@
+.tooltip-custom__container {
+    padding: 1rem 1.5rem 1.25rem 1.5rem;
+    font-size: 16px !important;
+    box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 4px !important;
+    pointer-events: auto !important;
+    background-color: var(--white);
+    z-index: 102;
+    overflow-y: scroll;
+    max-height: 100%;
+}
+
+.white-space--nowrap {
+    white-space: nowrap !important;
+}
+
+.overflow-break {
+    white-space: normal !important;
+    overflow-wrap: break-word;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, min-content);
+    grid-row-gap: 0.5rem;
+    grid-column-gap: 1rem;
+}
+
+.grid--limited {
+    grid-template-columns: repeat(2, minmax(0, min-content));
+}
+
+.grid--gap-bg {
+    grid-column-gap: 1.5rem;
+}
+
+.grid--title {
+    font-weight: 600;
+}
+
+.grid--title:not(:first-child) {
+    padding-top: 1rem;
+}
+
+@media (max-width: 767.98px) {
+    .grid {
+        grid-template-columns: 35% 55%;
+    }
+
+    .grid * {
+        grid-column: 1 / -1;
+    }
+
+    .grid > :nth-child(even) {
+        margin: -0.5rem 0 0;
+    }
+
+    .grid > .key__time_table_header, .grid > .key__data, .grid > .key__encryption_status, .grid > .key__elapsed {
+        grid-column: 1 / span 1;
+    }
+
+    .grid > .value__time_table_header, .grid > .value__data, .grid > .value__encryption_status, .grid > .value__elapsed {
+        grid-column: 2 / span 1;
+        margin: 0 !important;
+    }
+
+    .grid .key-colon, .grid .title--border {
+        font-weight: 600;
+    }
+}
+
+.grid .key-colon:nth-child(odd)::after {
+    content: ":";
+}
+
+.grid__one-row {
+    grid-template-columns: 15rem;
+}
+
+.grid__flow-column {
+    grid-auto-flow: column;
+}
+
+.grid-content > * {
+    justify-content: space-between !important;
+    width: 100% !important;
+    overflow: hidden;
+    -o-text-overflow: ellipsis;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.title--border {
+    padding-top: 2rem;
+}
+
+.title--border:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    border-top: 0.5px solid var(--gray-d8) !important;
+    width: 100%;
+    margin-top: -1rem;
+}
+
+.icon-cross {
+    position: absolute;
+    right: 0.5rem;
+    top: 0.5rem;
+}

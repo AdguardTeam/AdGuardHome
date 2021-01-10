@@ -19,10 +19,13 @@ Dashboard UI
     --orange: #fd9644;
     --yellow: #f1c40f;
     --green: #5eba00;
+    --green-74: #66b574;
+    --green-86: #66b586;
     --teal: #2bcbba;
     --cyan: #17a2b8;
     --white: #fff;
     --gray: #868e96;
+    --gray-ac: #9aa0ac;
     --gray-dark: #343a40;
     --azure: #45aaf2;
     --lime: #7bd235;
@@ -187,7 +190,7 @@ a {
     color: #467fcf;
     text-decoration: none;
     background-color: transparent;
-    -webkit-text-decoration-skip: objects;
+    -webkittext-decoration-skip-ink: objects
 }
 
 a:hover {
@@ -9863,8 +9866,8 @@ body *:hover::-webkit-scrollbar-thumb {
 }
 
 a {
-    -webkit-text-decoration-skip: ink;
-    text-decoration-skip: ink;
+    -webkit-text-decoration-skip: auto;
+    text-decoration-skip-ink: auto
 }
 
 h1 a,
@@ -13449,10 +13452,8 @@ a.icon:hover {
 
 .card-chart-bg {
     height: 4rem;
-    margin-top: -1rem;
     position: relative;
     z-index: 1;
-    overflow: hidden;
 }
 
 .card-options {

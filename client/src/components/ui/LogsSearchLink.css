@@ -1,0 +1,7 @@
+.stats__link {
+    color: inherit;
+}
+
+.stats__link:hover {
+    cursor: pointer;
+}

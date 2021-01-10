@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import ReactModal from 'react-modal';
 
 import { MODAL_TYPE } from '../../../helpers/constants';
@@ -47,7 +47,7 @@ const Modal = (props) => {
             <div className="modal-content">
                 <div className="modal-header">
                     <h4 className="modal-title">
-                        {modalType === MODAL_TYPE.EDIT ? (
+                        {modalType === MODAL_TYPE.EDIT_FILTERS ? (
                             <Trans>client_edit</Trans>
                         ) : (
                             <Trans>client_new</Trans>
@@ -81,4 +81,4 @@ Modal.propTypes = {
     tagsOptions: PropTypes.array.isRequired,
 };
 
-export default withNamespaces()(Modal);
+export default withTranslation()(Modal);

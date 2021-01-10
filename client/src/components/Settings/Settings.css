@@ -57,6 +57,10 @@
     color: #cd201f;
 }
 
+.form__message--left-pad {
+    padding-left: 0.85rem;
+}
+
 .interface__title {
     font-size: 13px;
     font-weight: 700;
@@ -68,10 +72,6 @@
 
 .interface__ip:last-child:after {
     content: "";
-}
-
-.dhcp {
-    min-height: 450px;
 }
 
 .form__desc {
@@ -112,6 +112,11 @@
     justify-content: center;
     width: 30px;
     height: 30px;
+    background-color: transparent;
+}
+
+.btn-icon--green {
+    color: var(--green);
 }
 
 .btn-icon-sm {

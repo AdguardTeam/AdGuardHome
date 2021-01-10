@@ -1,8 +1,10 @@
 import { createAction } from 'redux-actions';
 
 import apiClient from '../api/Api';
-import { addErrorToast, addSuccessToast } from './index';
-import { normalizeTopStats, secondsToMilliseconds, getParamsForClientsSearch, addClientInfo } from '../helpers/helpers';
+import {
+    normalizeTopStats, secondsToMilliseconds, getParamsForClientsSearch, addClientInfo,
+} from '../helpers/helpers';
+import { addErrorToast, addSuccessToast } from './toasts';
 
 export const getStatsConfigRequest = createAction('GET_STATS_CONFIG_REQUEST');
 export const getStatsConfigFailure = createAction('GET_STATS_CONFIG_FAILURE');
@@ -23,7 +25,7 @@ export const setStatsConfigRequest = createAction('SET_STATS_CONFIG_REQUEST');
 export const setStatsConfigFailure = createAction('SET_STATS_CONFIG_FAILURE');
 export const setStatsConfigSuccess = createAction('SET_STATS_CONFIG_SUCCESS');
 
-export const setStatsConfig = config => async (dispatch) => {
+export const setStatsConfig = (config) => async (dispatch) => {
     dispatch(setStatsConfigRequest());
     try {
         await apiClient.setStatsConfig(config);

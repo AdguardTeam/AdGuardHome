@@ -1,35 +1,96 @@
-GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
-NATIVE_GOOS = $(shell unset GOOS; go env GOOS)
-NATIVE_GOARCH = $(shell unset GOARCH; go env GOARCH)
-GOPATH := $(shell go env GOPATH)
-JSFILES = $(shell find client -path client/node_modules -prune -o -type f -name '*.js')
-STATIC = build/static/index.html
-CHANNEL ?= release
+# Keep the Makefile POSIX-compliant.  We currently allow hyphens in
+# target names, but that may change in the future.
+#
+# See https://pubs.opengroup.org/onlinepubs/9699919799/utilities/make.html.
+.POSIX:
 
-TARGET=AdGuardHome
+CHANNEL = development
+CLIENT_BETA_DIR = client2
+CLIENT_DIR = client
+COMMIT = $$(git rev-parse --short HEAD)
+DIST_DIR = dist
+GO = go
+# TODO(a.garipov): Add more default proxies using pipes after update to
+# Go 1.15.
+#
+# GOPROXY = https://goproxy.io|https://goproxy.cn|direct
+GOPROXY = https://goproxy.cn,https://goproxy.io,direct
+GPG_KEY = devteam@adguard.com
+GPG_KEY_PASSPHRASE = not-a-real-password
+NPM = npm
+NPM_FLAGS = --prefix $(CLIENT_DIR)
+SIGN = 1
+VERBOSE = 0
+VERSION = v0.0.0
+YARN = yarn
+YARN_FLAGS = --cwd $(CLIENT_BETA_DIR)
 
-.PHONY: all build clean
-all: build
+ENV = env\
+	COMMIT='$(COMMIT)'\
+	CHANNEL='$(CHANNEL)'\
+	GPG_KEY='$(GPG_KEY)'\
+	GPG_KEY_PASSPHRASE='$(GPG_KEY_PASSPHRASE)'\
+	DIST_DIR='$(DIST_DIR)'\
+	GO='$(GO)'\
+	GOPROXY='$(GOPROXY)'\
+	PATH="$${PWD}/bin:$$($(GO) env GOPATH)/bin:$${PATH}"\
+	SIGN='$(SIGN)'\
+	VERBOSE='$(VERBOSE)'\
+	VERSION='$(VERSION)'\
 
-build: $(TARGET)
+# Keep the line above blank.
 
-client/node_modules: client/package.json client/package-lock.json
-	npm --prefix client ci
-	touch client/node_modules
+# Keep this target first, so that a naked make invocation triggers
+# a full build.
+build: deps quick-build
 
-$(STATIC): $(JSFILES) client/node_modules
-	npm --prefix client run build-prod
+quick-build: js-build go-build
 
-$(TARGET): $(STATIC) *.go home/*.go dhcpd/*.go dnsfilter/*.go dnsforward/*.go
-	GOOS=$(NATIVE_GOOS) GOARCH=$(NATIVE_GOARCH) GO111MODULE=off go get -v github.com/gobuffalo/packr/...
-	PATH=$(GOPATH)/bin:$(PATH) packr -z
-	CGO_ENABLED=0 go build -ldflags="-s -w -X main.version=$(GIT_VERSION) -X main.channel=$(CHANNEL) -X main.goarm=$(GOARM)" -asmflags="-trimpath=$(PWD)" -gcflags="-trimpath=$(PWD)"
-	PATH=$(GOPATH)/bin:$(PATH) packr clean
+ci: deps test
 
-clean:
-	$(MAKE) cleanfast
-	rm -rf build
-	rm -rf client/node_modules
+deps: js-deps go-deps
+lint: js-lint go-lint
+test: js-test go-test
 
-cleanfast:
-	rm -f $(TARGET)
+# Here and below, keep $(SHELL) in quotes, because on Windows this will
+# expand to something like "C:/Program Files/Git/usr/bin/sh.exe".
+build-docker: ; $(ENV) "$(SHELL)" ./scripts/make/build-docker.sh
+
+build-release: deps js-build
+	$(ENV) "$(SHELL)" ./scripts/make/build-release.sh
+
+clean: ; $(ENV) "$(SHELL)" ./scripts/make/clean.sh
+init:  ; git config core.hooksPath ./scripts/hooks
+
+js-build:
+	$(NPM) $(NPM_FLAGS) run build-prod
+	$(YARN) $(YARN_FLAGS) build
+js-deps:
+	$(NPM) $(NPM_FLAGS) ci
+	$(YARN) $(YARN_FLAGS) install
+js-lint:
+	$(NPM) $(NPM_FLAGS) run lint
+	$(YARN) $(YARN_FLAGS) lint
+js-test:
+	$(NPM) $(NPM_FLAGS) run test
+
+go-build: ; $(ENV) "$(SHELL)" ./scripts/make/go-build.sh
+go-deps:  ; $(ENV) "$(SHELL)" ./scripts/make/go-deps.sh
+go-lint:  ; $(ENV) "$(SHELL)" ./scripts/make/go-lint.sh
+go-test:  ; $(ENV) "$(SHELL)" ./scripts/make/go-test.sh
+go-tools: ; $(ENV) "$(SHELL)" ./scripts/make/go-tools.sh
+
+# TODO(a.garipov): Remove the legacy targets once the build
+# infrastructure stops using them.
+dependencies:
+	@ echo "use make deps instead"
+	@ $(MAKE) deps
+docker-multi-arch:
+	@ echo "use make build-docker instead"
+	@ $(MAKE) build-docker
+go-install-tools:
+	@ echo "use make go-tools instead"
+	@ $(MAKE) go-tools
+release:
+	@ echo "use make build-release instead"
+	@ $(MAKE) build-release

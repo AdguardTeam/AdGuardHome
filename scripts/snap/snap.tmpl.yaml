@@ -1,0 +1,37 @@
+# The %VARIABLES% are be replaced by actual values by the build script.
+
+'name': 'adguard-home'
+'base': 'core20'
+'version': '%VERSION%'
+'summary': Network-wide ads & trackers blocking DNS server
+'description': |
+  AdGuard Home is a network-wide software for blocking ads & tracking. After
+  you set it up, it'll cover ALL your home devices, and you don't need any
+  client-side software for that.
+
+  It operates as a DNS server that re-routes tracking domains to a "black hole,"
+  thus preventing your devices from connecting to those servers. It's based
+  on software we use for our public AdGuard DNS servers -- both share a lot
+  of common code.
+'grade': 'stable'
+'confinement': 'strict'
+
+'architectures':
+- '%ARCH%'
+
+'apps':
+  'adguard-home':
+    'command': 'AdGuardHome --no-check-update -w $SNAP_DATA'
+    'plugs':
+    # Add the "netrwork-bind" plug to bind to interfaces.
+    - 'network-bind'
+    # Add the "netrwork-observe" plug to be able to bind to ports below 1024
+    # (cap_net_bind_service) and also to bind to a particular interface using
+    # SO_BINDTODEVICE (cap_net_raw).
+    - 'network-observe'
+    'daemon': 'simple'
+    'restart-condition': 'always'
+  'adguard-home-web':
+    'command': 'adguard-home-web.sh'
+    'plugs':
+    - 'desktop'

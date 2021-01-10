@@ -1,452 +1,202 @@
-import React, { Component, Fragment } from 'react';
-import PropTypes from 'prop-types';
-import ReactTable from 'react-table';
-import escapeRegExp from 'lodash/escapeRegExp';
-import endsWith from 'lodash/endsWith';
-import { Trans, withNamespaces } from 'react-i18next';
-import { HashLink as Link } from 'react-router-hash-link';
-
+import React, { useEffect, useState } from 'react';
+import { Trans } from 'react-i18next';
+import Modal from 'react-modal';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { useHistory } from 'react-router-dom';
+import queryString from 'query-string';
+import classNames from 'classnames';
 import {
-    formatTime,
-    formatDateTime,
-    isToday,
-    checkFiltered,
-    checkRewrite,
-    checkWhiteList,
-    checkBlackList,
-    checkBlockedService,
-} from '../../helpers/helpers';
-import { SERVICES, TABLE_DEFAULT_PAGE_SIZE, CUSTOM_FILTERING_RULES_ID, FILTERED } from '../../helpers/constants';
-import { getTrackerData } from '../../helpers/trackers/trackers';
-import { formatClientCell } from '../../helpers/formatClientCell';
-
-import Filters from './Filters';
-import PageTitle from '../ui/PageTitle';
-import Card from '../ui/Card';
+    BLOCK_ACTIONS,
+    SMALL_SCREEN_SIZE,
+} from '../../helpers/constants';
 import Loading from '../ui/Loading';
-import PopoverFiltered from '../ui/PopoverFilter';
-import Popover from '../ui/Popover';
+import Filters from './Filters';
+import Disabled from './Disabled';
+import { getFilteringStatus } from '../../actions/filtering';
+import { getClients } from '../../actions';
+import { getDnsConfig } from '../../actions/dnsConfig';
+import {
+    getLogsConfig,
+    resetFilteredLogs,
+    setFilteredLogs,
+    toggleDetailedLogs,
+} from '../../actions/queryLogs';
+import InfiniteTable from './InfiniteTable';
 import './Logs.css';
-import CellWrap from '../ui/CellWrap';
+import { BUTTON_PREFIX } from './Cells/helpers';
 
-const TABLE_FIRST_PAGE = 0;
-const INITIAL_REQUEST = true;
-const INITIAL_REQUEST_DATA = ['', TABLE_FIRST_PAGE, INITIAL_REQUEST];
-
-class Logs extends Component {
-    componentDidMount() {
-        this.props.setLogsPage(TABLE_FIRST_PAGE);
-        this.getLogs(...INITIAL_REQUEST_DATA);
-        this.props.getFilteringStatus();
-        this.props.getLogsConfig();
-    }
-
-    getLogs = (older_than, page, initial) => {
-        if (this.props.queryLogs.enabled) {
-            this.props.getLogs({
-                older_than, page, pageSize: TABLE_DEFAULT_PAGE_SIZE, initial,
-            });
-        }
-    };
-
-    refreshLogs = () => {
-        window.location.reload();
-    };
-
-    renderTooltip = (isFiltered, rule, filter, service) =>
-        isFiltered && <PopoverFiltered rule={rule} filter={filter} service={service} />;
-
-    renderResponseList = (response, status) => {
-        if (response.length > 0) {
-            const listItems = response.map((response, index) => (
-                <li key={index} title={response} className="logs__list-item">
-                    {response}
-                </li>
-            ));
-
-            return <ul className="list-unstyled">{listItems}</ul>;
+const processContent = (data) => Object.entries(data)
+    .map(([key, value]) => {
+        if (!value) {
+            return null;
         }
 
-        return (
-            <div>
-                <Trans values={{ value: status }}>query_log_response_status</Trans>
+        const isTitle = value === 'title';
+        const isButton = key.startsWith(BUTTON_PREFIX);
+        const isBoolean = typeof value === 'boolean';
+        const isHidden = isBoolean && value === false;
+
+        let keyClass = 'key-colon';
+
+        if (isTitle) {
+            keyClass = 'title--border';
+        }
+        if (isButton || isBoolean) {
+            keyClass = '';
+        }
+
+        return isHidden ? null : <div key={key}>
+            <div
+                    className={classNames(`key__${key}`, keyClass, {
+                        'font-weight-bold': isBoolean && value === true,
+                    })}>
+                <Trans>{isButton ? value : key}</Trans>
             </div>
-        );
-    };
-
-    toggleBlocking = (type, domain) => {
-        const { userRules } = this.props.filtering;
-        const { t } = this.props;
-        const lineEnding = !endsWith(userRules, '\n') ? '\n' : '';
-        const baseRule = `||${domain}^$important`;
-        const baseUnblocking = `@@${baseRule}`;
-        const blockingRule = type === 'block' ? baseUnblocking : baseRule;
-        const unblockingRule = type === 'block' ? baseRule : baseUnblocking;
-        const preparedBlockingRule = new RegExp(`(^|\n)${escapeRegExp(blockingRule)}($|\n)`);
-        const preparedUnblockingRule = new RegExp(`(^|\n)${escapeRegExp(unblockingRule)}($|\n)`);
-
-        if (userRules.match(preparedBlockingRule)) {
-            this.props.setRules(userRules.replace(`${blockingRule}`, ''));
-            this.props.addSuccessToast(`${t('rule_removed_from_custom_filtering_toast')}: ${blockingRule}`);
-        } else if (!userRules.match(preparedUnblockingRule)) {
-            this.props.setRules(`${userRules}${lineEnding}${unblockingRule}\n`);
-            this.props.addSuccessToast(`${t('rule_added_to_custom_filtering_toast')}: ${unblockingRule}`);
-        }
-
-        this.props.getFilteringStatus();
-    };
-
-    renderBlockingButton(isFiltered, domain) {
-        const buttonClass = isFiltered ? 'btn-outline-secondary' : 'btn-outline-danger';
-        const buttonText = isFiltered ? 'unblock_btn' : 'block_btn';
-        const buttonType = isFiltered ? 'unblock' : 'block';
-
-        return (
-            <div className="logs__action">
-                <button
-                    type="button"
-                    className={`btn btn-sm ${buttonClass}`}
-                    onClick={() => this.toggleBlocking(buttonType, domain)}
-                    disabled={this.props.filtering.processingRules}
-                >
-                    <Trans>{buttonText}</Trans>
-                </button>
+            <div className={`value__${key} text-pre text-truncate`}>
+                <Trans>{(isTitle || isButton || isBoolean) ? '' : value || '—'}</Trans>
             </div>
-        );
-    }
+        </div>;
+    });
 
-    getDateCell = row => CellWrap(
-        row,
-        (isToday(row.value) ? formatTime : formatDateTime),
-        formatDateTime,
-    );
+const Logs = () => {
+    const dispatch = useDispatch();
+    const history = useHistory();
 
-    getDomainCell = (row) => {
-        const response = row.value;
-        const trackerData = getTrackerData(response);
+    const {
+        response_status: response_status_url_param = '',
+        search: search_url_param = '',
+    } = queryString.parse(history.location.search);
 
-        return (
-            <div className="logs__row" title={response}>
-                <div className="logs__text">{response}</div>
-                {trackerData && <Popover data={trackerData} />}
-            </div>
-        );
-    };
+    const {
+        enabled,
+        processingGetConfig,
+        processingAdditionalLogs,
+        processingGetLogs,
+    } = useSelector((state) => state.queryLogs, shallowEqual);
+    const filter = useSelector((state) => state.queryLogs.filter, shallowEqual);
+    const logs = useSelector((state) => state.queryLogs.logs, shallowEqual);
 
-    normalizeResponse = response => (
-        response.map((response) => {
-            const { value, type, ttl } = response;
-            return `${type}: ${value} (ttl=${ttl})`;
-        })
-    );
+    const search = filter?.search || search_url_param;
+    const response_status = filter?.response_status || response_status_url_param;
 
-    getFilterName = (filters, whitelistFilters, filterId, t) => {
-        if (filterId === CUSTOM_FILTERING_RULES_ID) {
-            return t('custom_filter_rules');
-        }
+    const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < SMALL_SCREEN_SIZE);
+    const [detailedDataCurrent, setDetailedDataCurrent] = useState({});
+    const [buttonType, setButtonType] = useState(BLOCK_ACTIONS.BLOCK);
+    const [isModalOpened, setModalOpened] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
-        const filter = filters.find(filter => filter.id === filterId)
-            || whitelistFilters.find(filter => filter.id === filterId);
-        let filterName = '';
+    const closeModal = () => setModalOpened(false);
 
-        if (filter) {
-            filterName = filter.name;
-        }
+    useEffect(() => {
+        (async () => {
+            setIsLoading(true);
+            await dispatch(setFilteredLogs({
+                search,
+                response_status,
+            }));
+            setIsLoading(false);
+        })();
+    }, [response_status, search]);
 
-        if (!filterName) {
-            filterName = t('unknown_filter', { filterId });
-        }
-
-        return filterName;
-    }
-
-    getResponseCell = ({ value: responses, original }) => {
-        const {
-            reason, filterId, rule, status, originalAnswer,
-        } = original;
-        const { t, filtering } = this.props;
-        const { filters, whitelistFilters } = filtering;
-
-        const isFiltered = checkFiltered(reason);
-        const isBlackList = checkBlackList(reason);
-        const isRewrite = checkRewrite(reason);
-        const isWhiteList = checkWhiteList(reason);
-        const isBlockedService = checkBlockedService(reason);
-        const isBlockedCnameIp = originalAnswer;
-
-        const filterKey = reason.replace(FILTERED, '');
-        const parsedFilteredReason = t('query_log_filtered', { filter: filterKey });
-        const currentService = SERVICES.find(service => service.id === original.serviceName);
-        const serviceName = currentService && currentService.name;
-        const filterName = this.getFilterName(filters, whitelistFilters, filterId, t);
-
-        if (isBlockedCnameIp) {
-            const normalizedAnswer = this.normalizeResponse(originalAnswer);
-
-            return (
-                <div className="logs__row logs__row--column">
-                    <div className="logs__text-wrap">
-                        <span className="logs__text">
-                            <Trans>blocked_by_response</Trans>
-                        </span>
-                        {this.renderTooltip(isFiltered, rule, filterName)}
-                    </div>
-                    <div className="logs__list-wrap">
-                        {this.renderResponseList(normalizedAnswer, status)}
-                    </div>
-                </div>
-            );
-        }
-
-        return (
-            <div className="logs__row logs__row--column">
-                <div className="logs__text-wrap">
-                    {(isFiltered || isBlockedService) && !isBlackList && (
-                        <span className="logs__text" title={parsedFilteredReason}>
-                            {parsedFilteredReason}
-                        </span>
-                    )}
-                    {isBlackList && (
-                        <span className="logs__text">
-                            <Trans values={{ filter: filterName }}>
-                                query_log_filtered
-                            </Trans>
-                        </span>
-                    )}
-                    {isBlockedService
-                        ? this.renderTooltip(isFiltered, '', '', serviceName)
-                        : this.renderTooltip(isFiltered, rule, filterName)}
-                    {isRewrite && (
-                        <strong>
-                            <Trans>rewrite_applied</Trans>
-                        </strong>
-                    )}
-                </div>
-                <div className="logs__list-wrap">
-                    {this.renderResponseList(responses, status)}
-                    {isWhiteList && this.renderTooltip(isWhiteList, rule, filterName)}
-                </div>
-            </div>
-        );
-    };
-
-    getClientCell = (row) => {
-        const { original } = row;
-        const { t } = this.props;
-        const { reason, domain } = original;
-        const isFiltered = checkFiltered(reason);
-        const isRewrite = checkRewrite(reason);
-
-        return (
-            <Fragment>
-                <div className="logs__row logs__row--overflow logs__row--column">
-                    {formatClientCell(row, t)}
-                </div>
-                {isRewrite ? (
-                    <div className="logs__action">
-                        <Link to="/dns_rewrites" className="btn btn-sm btn-outline-primary">
-                            <Trans>configure</Trans>
-                        </Link>
-                    </div>
-                ) : (
-                    this.renderBlockingButton(isFiltered, domain)
-                )}
-            </Fragment>
-        );
-    };
-
-    fetchData = (state) => {
-        const { pages } = state;
-        const { oldest, page } = this.props.queryLogs;
-        const isLastPage = pages && (page + 1 === pages);
-
-        if (isLastPage) {
-            this.getLogs(oldest, page);
+    const mediaQuery = window.matchMedia(`(max-width: ${SMALL_SCREEN_SIZE}px)`);
+    const mediaQueryHandler = (e) => {
+        setIsSmallScreen(e.matches);
+        if (e.matches) {
+            dispatch(toggleDetailedLogs(false));
         }
     };
 
-    changePage = (page) => {
-        this.props.setLogsPage(page);
-        this.props.setLogsPagination({ page, pageSize: TABLE_DEFAULT_PAGE_SIZE });
-    };
+    useEffect(() => {
+        try {
+            mediaQuery.addEventListener('change', mediaQueryHandler);
+        } catch (e1) {
+            try {
+                // Safari 13.1 do not support mediaQuery.addEventListener('change', handler)
+                mediaQuery.addListener(mediaQueryHandler);
+            } catch (e2) {
+                console.error(e2);
+            }
+        }
 
-    renderLogs() {
-        const { queryLogs, t } = this.props;
-        const {
-            processingGetLogs, processingGetConfig, logs, pages, page,
-        } = queryLogs;
-        const isLoading = processingGetLogs || processingGetConfig;
+        (async () => {
+            setIsLoading(true);
+            dispatch(getFilteringStatus());
+            dispatch(getClients());
+            try {
+                await Promise.all([
+                    dispatch(getLogsConfig()),
+                    dispatch(getDnsConfig()),
+                ]);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setIsLoading(false);
+            }
+        })();
 
-        const columns = [
-            {
-                Header: t('time_table_header'),
-                accessor: 'time',
-                minWidth: 105,
-                Cell: this.getDateCell,
-            },
-            {
-                Header: t('domain_name_table_header'),
-                accessor: 'domain',
-                minWidth: 180,
-                Cell: this.getDomainCell,
-            },
-            {
-                Header: t('type_table_header'),
-                accessor: 'type',
-                maxWidth: 60,
-            },
-            {
-                Header: t('response_table_header'),
-                accessor: 'response',
-                minWidth: 250,
-                Cell: this.getResponseCell,
-            },
-            {
-                Header: t('client_table_header'),
-                accessor: 'client',
-                maxWidth: 240,
-                minWidth: 240,
-                Cell: this.getClientCell,
-            },
-        ];
+        return () => {
+            try {
+                mediaQuery.removeEventListener('change', mediaQueryHandler);
+            } catch (e1) {
+                try {
+                    // Safari 13.1 do not support mediaQuery.addEventListener('change', handler)
+                    mediaQuery.removeListener(mediaQueryHandler);
+                } catch (e2) {
+                    console.error(e2);
+                }
+            }
 
-        return (
-            <ReactTable
-                manual
-                minRows={5}
-                page={page}
-                pages={pages}
-                columns={columns}
-                filterable={false}
-                sortable={false}
-                data={logs || []}
-                loading={isLoading}
-                showPagination={true}
-                showPaginationTop={true}
-                showPageJump={false}
-                showPageSizeOptions={false}
-                onFetchData={this.fetchData}
-                onPageChange={this.changePage}
-                className="logs__table"
-                defaultPageSize={TABLE_DEFAULT_PAGE_SIZE}
-                previousText={t('previous_btn')}
-                nextText={t('next_btn')}
-                loadingText={t('loading_table_status')}
-                rowsText={t('rows_table_footer_text')}
-                noDataText={t('no_logs_found')}
-                pageText={''}
-                ofText={''}
-                renderTotalPagesCount={() => false}
-                defaultFilterMethod={(filter, row) => {
-                    const id = filter.pivotId || filter.id;
-                    return row[id] !== undefined
-                        ? String(row[id]).indexOf(filter.value) !== -1
-                        : true;
+            dispatch(resetFilteredLogs());
+        };
+    }, []);
+
+    const renderPage = () => <>
+        <Filters
+                filter={{
+                    response_status,
+                    search,
                 }}
-                defaultSorted={[
-                    {
-                        id: 'time',
-                        desc: true,
-                    },
-                ]}
-                getTrProps={(_state, rowInfo) => {
-                    if (!rowInfo) {
-                        return {};
-                    }
+                setIsLoading={setIsLoading}
+                processingGetLogs={processingGetLogs}
+                processingAdditionalLogs={processingAdditionalLogs}
+        />
+        <InfiniteTable
+                isLoading={isLoading}
+                items={logs}
+                isSmallScreen={isSmallScreen}
+                setDetailedDataCurrent={setDetailedDataCurrent}
+                setButtonType={setButtonType}
+                setModalOpened={setModalOpened}
+        />
+        <Modal portalClassName='grid' isOpen={isSmallScreen && isModalOpened}
+               onRequestClose={closeModal}
+               style={{
+                   content: {
+                       width: '100%',
+                       height: 'fit-content',
+                       left: 0,
+                       top: 47,
+                       padding: '1rem 1.5rem 1rem',
+                   },
+                   overlay: {
+                       backgroundColor: 'rgba(0,0,0,0.5)',
+                   },
+               }}
+        >
+            <svg
+                    className="icon icon--24 icon-cross d-block d-md-none cursor--pointer"
+                    onClick={closeModal}>
+                <use xlinkHref="#cross" />
+            </svg>
+            {processContent(detailedDataCurrent, buttonType)}
+        </Modal>
+    </>;
 
-                    const { reason } = rowInfo.original;
-
-                    if (checkFiltered(reason)) {
-                        return {
-                            className: 'red',
-                        };
-                    } else if (checkWhiteList(reason)) {
-                        return {
-                            className: 'green',
-                        };
-                    } else if (checkRewrite(reason)) {
-                        return {
-                            className: 'blue',
-                        };
-                    }
-
-                    return {
-                        className: '',
-                    };
-                }}
-            />
-        );
-    }
-
-    render() {
-        const { queryLogs, t } = this.props;
-        const {
-            enabled, processingGetConfig, processingAdditionalLogs, processingGetLogs,
-        } = queryLogs;
-
-        const refreshButton = enabled ? (
-            <button
-                type="button"
-                className="btn btn-icon btn-outline-primary btn-sm ml-3"
-                onClick={this.refreshLogs}
-            >
-                <svg className="icons">
-                    <use xlinkHref="#refresh" />
-                </svg>
-            </button>
-        ) : (
-            ''
-        );
-
-        return (
-            <Fragment>
-                <PageTitle title={t('query_log')}>{refreshButton}</PageTitle>
-                {enabled && processingGetConfig && <Loading />}
-                {enabled && !processingGetConfig && (
-                    <Fragment>
-                        <Filters
-                            filter={queryLogs.filter}
-                            processingGetLogs={processingGetLogs}
-                            processingAdditionalLogs={processingAdditionalLogs}
-                            setLogsFilter={this.props.setLogsFilter}
-                        />
-                        <Card>{this.renderLogs()}</Card>
-                    </Fragment>
-                )}
-                {!enabled && !processingGetConfig && (
-                    <Card>
-                        <div className="lead text-center py-6">
-                            <Trans
-                                components={[
-                                    <Link to="/settings#logs-config" key="0">
-                                        link
-                                    </Link>,
-                                ]}
-                            >
-                                query_log_disabled
-                            </Trans>
-                        </div>
-                    </Card>
-                )}
-            </Fragment>
-        );
-    }
-}
-
-Logs.propTypes = {
-    getLogs: PropTypes.func.isRequired,
-    queryLogs: PropTypes.object.isRequired,
-    dashboard: PropTypes.object.isRequired,
-    getFilteringStatus: PropTypes.func.isRequired,
-    filtering: PropTypes.object.isRequired,
-    setRules: PropTypes.func.isRequired,
-    addSuccessToast: PropTypes.func.isRequired,
-    getClients: PropTypes.func.isRequired,
-    getLogsConfig: PropTypes.func.isRequired,
-    setLogsPagination: PropTypes.func.isRequired,
-    setLogsFilter: PropTypes.func.isRequired,
-    setLogsPage: PropTypes.func.isRequired,
-    t: PropTypes.func.isRequired,
+    return <>
+        {enabled && processingGetConfig && <Loading />}
+        {enabled && !processingGetConfig && renderPage()}
+        {!enabled && !processingGetConfig && <Disabled />}
+    </>;
 };
 
-export default withNamespaces()(Logs);
+export default Logs;

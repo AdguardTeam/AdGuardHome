@@ -1,64 +1,56 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { withNamespaces } from 'react-i18next';
-
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import Form from './Form';
 import Card from '../../../ui/Card';
+import { setDnsConfig } from '../../../../actions/dnsConfig';
 
-class Upstream extends Component {
-    handleSubmit = (values) => {
-        this.props.setUpstream(values);
-    };
+const Upstream = () => {
+    const { t } = useTranslation();
+    const dispatch = useDispatch();
+    const {
+        upstream_dns,
+        bootstrap_dns,
+        upstream_mode,
+    } = useSelector((state) => state.dnsConfig, shallowEqual);
 
-    handleTest = (values) => {
-        this.props.testUpstream(values);
-    };
+    const upstream_dns_file = useSelector((state) => state.dnsConfig.upstream_dns_file);
 
-    render() {
+    const handleSubmit = (values) => {
         const {
-            t,
-            upstreamDns: upstream_dns,
-            bootstrapDns: bootstrap_dns,
-            allServers: all_servers,
-            processingSetUpstream,
-            processingTestUpstream,
-        } = this.props;
+            bootstrap_dns,
+            upstream_dns,
+            upstream_mode,
+        } = values;
 
-        return (
-            <Card
-                title={t('upstream_dns')}
-                subtitle={t('upstream_dns_hint')}
-                bodyType="card-body box-body--settings"
-            >
-                <div className="row">
-                    <div className="col">
-                        <Form
-                            initialValues={{
-                                upstream_dns,
-                                bootstrap_dns,
-                                all_servers,
-                            }}
-                            testUpstream={this.handleTest}
-                            onSubmit={this.handleSubmit}
-                            processingTestUpstream={processingTestUpstream}
-                            processingSetUpstream={processingSetUpstream}
-                        />
-                    </div>
-                </div>
-            </Card>
-        );
-    }
-}
+        const dnsConfig = {
+            bootstrap_dns,
+            upstream_mode,
+            ...(upstream_dns_file ? null : { upstream_dns }),
+        };
 
-Upstream.propTypes = {
-    upstreamDns: PropTypes.string,
-    bootstrapDns: PropTypes.string,
-    allServers: PropTypes.bool,
-    setUpstream: PropTypes.func.isRequired,
-    testUpstream: PropTypes.func.isRequired,
-    processingSetUpstream: PropTypes.bool.isRequired,
-    processingTestUpstream: PropTypes.bool.isRequired,
-    t: PropTypes.func.isRequired,
+        dispatch(setDnsConfig(dnsConfig));
+    };
+
+    const upstreamDns = upstream_dns_file ? t('upstream_dns_configured_in_file', { path: upstream_dns_file }) : upstream_dns;
+
+    return <Card
+        title={t('upstream_dns')}
+        bodyType="card-body box-body--settings"
+    >
+        <div className="row">
+            <div className="col">
+                <Form
+                    initialValues={{
+                        upstream_dns: upstreamDns,
+                        bootstrap_dns,
+                        upstream_mode,
+                    }}
+                    onSubmit={handleSubmit}
+                />
+            </div>
+        </div>
+    </Card>;
 };
 
-export default withNamespaces()(Upstream);
+export default Upstream;

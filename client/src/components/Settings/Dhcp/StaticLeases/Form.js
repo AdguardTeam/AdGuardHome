@@ -1,21 +1,27 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Field, reduxForm } from 'redux-form';
-import { Trans, withNamespaces } from 'react-i18next';
-import flow from 'lodash/flow';
+import { Trans, useTranslation } from 'react-i18next';
+import { useDispatch } from 'react-redux';
+import { renderInputField } from '../../../../helpers/form';
+import { validateIpv4, validateMac, validateRequiredValue } from '../../../../helpers/validators';
+import { FORM_NAME } from '../../../../helpers/constants';
+import { toggleLeaseModal } from '../../../../actions';
 
-import { renderInputField, ipv4, mac, required } from '../../../../helpers/form';
+const Form = ({
+    handleSubmit,
+    reset,
+    pristine,
+    submitting,
+    processingAdding,
+}) => {
+    const { t } = useTranslation();
+    const dispatch = useDispatch();
 
-const Form = (props) => {
-    const {
-        t,
-        handleSubmit,
-        reset,
-        pristine,
-        submitting,
-        toggleLeaseModal,
-        processingAdding,
-    } = props;
+    const onClick = () => {
+        reset();
+        dispatch(toggleLeaseModal());
+    };
 
     return (
         <form onSubmit={handleSubmit}>
@@ -28,7 +34,7 @@ const Form = (props) => {
                         type="text"
                         className="form-control"
                         placeholder={t('form_enter_mac')}
-                        validate={[required, mac]}
+                        validate={[validateRequiredValue, validateMac]}
                     />
                 </div>
                 <div className="form__group">
@@ -39,7 +45,7 @@ const Form = (props) => {
                         type="text"
                         className="form-control"
                         placeholder={t('form_enter_ip')}
-                        validate={[required, ipv4]}
+                        validate={[validateRequiredValue, validateIpv4]}
                     />
                 </div>
                 <div className="form__group">
@@ -60,10 +66,7 @@ const Form = (props) => {
                         type="button"
                         className="btn btn-secondary btn-standard"
                         disabled={submitting}
-                        onClick={() => {
-                            reset();
-                            toggleLeaseModal();
-                        }}
+                        onClick={onClick}
                     >
                         <Trans>cancel_btn</Trans>
                     </button>
@@ -85,12 +88,7 @@ Form.propTypes = {
     handleSubmit: PropTypes.func.isRequired,
     reset: PropTypes.func.isRequired,
     submitting: PropTypes.bool.isRequired,
-    toggleLeaseModal: PropTypes.func.isRequired,
     processingAdding: PropTypes.bool.isRequired,
-    t: PropTypes.func.isRequired,
 };
 
-export default flow([
-    withNamespaces(),
-    reduxForm({ form: 'leaseForm' }),
-])(Form);
+export default reduxForm({ form: FORM_NAME.LEASE })(Form);

@@ -1,6 +1,11 @@
 .ReactTable .rt-th,
 .ReactTable .rt-td {
     padding: 10px 15px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-table .ReactTable .rt-td {
     overflow: visible;
 }
 
@@ -8,14 +13,18 @@
     overflow: visible;
 }
 
-.rt-tr-group .red {
-    background-color: #fff4f2;
+.rt-tr-group.logs__row--red {
+    background-color: rgba(223, 56, 18, 0.05);
 }
 
-.rt-tr-group .green {
-    background-color: #f1faf3;
+.rt-tr-group.logs__row--green {
+    background-color: rgba(103, 178, 121, 0.1);
 }
 
-.rt-tr-group .blue {
-    background-color: #ecf7ff;
+.rt-tr-group.logs__row--blue {
+    background-color: #e5effd;
+}
+
+.rt-tr-group.logs__row--yellow {
+    background-color: var(--yellow-pale);
 }

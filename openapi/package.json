@@ -1,12 +1,12 @@
 {
     "name": "adguard-home-api",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "private": true,
     "scripts": {
-        "start": "node index.js"
+        "start": "node_modules/.bin/speccy serve -p 4000 openapi.yaml",
+        "test": "node_modules/.bin/speccy lint openapi.yaml"
     },
     "dependencies": {
-        "express": "^4.16.4",
-        "swagger-ui-dist": "^3.20.1"
+        "speccy": "^0.11.0"
     }
 }

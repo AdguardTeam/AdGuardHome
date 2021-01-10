@@ -1,80 +1,40 @@
-import React, { Component, Fragment } from 'react';
-import PropTypes from 'prop-types';
-import { withNamespaces } from 'react-i18next';
+import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { useDispatch, useSelector } from 'react-redux';
 import Upstream from './Upstream';
 import Access from './Access';
 import Config from './Config';
 import PageTitle from '../../ui/PageTitle';
 import Loading from '../../ui/Loading';
+import CacheConfig from './Cache';
+import { getDnsConfig } from '../../../actions/dnsConfig';
+import { getAccessList } from '../../../actions/access';
 
-class Dns extends Component {
-    componentDidMount() {
-        this.props.getDnsSettings();
-        this.props.getAccessList();
-        this.props.getDnsConfig();
-    }
+const Dns = () => {
+    const { t } = useTranslation();
+    const dispatch = useDispatch();
+    const processing = useSelector((state) => state.access.processing);
+    const processingGetConfig = useSelector((state) => state.dnsConfig.processingGetConfig);
 
-    render() {
-        const {
-            t,
-            dashboard,
-            settings,
-            access,
-            setAccessList,
-            testUpstream,
-            setUpstream,
-            dnsConfig,
-            setDnsConfig,
-        } = this.props;
+    const isDataLoading = processing || processingGetConfig;
 
-        const isDataLoading = dashboard.processingDnsSettings
-            || access.processing
-            || dnsConfig.processingGetConfig;
-        const isDataReady = !dashboard.processingDnsSettings
-            && !access.processing
-            && !dnsConfig.processingGetConfig;
+    useEffect(() => {
+        dispatch(getAccessList());
+        dispatch(getDnsConfig());
+    }, []);
 
-        return (
-            <Fragment>
-                <PageTitle title={t('dns_settings')} />
-                {isDataLoading && <Loading />}
-                {isDataReady && (
-                    <Fragment>
-                        <Config
-                            dnsConfig={dnsConfig}
-                            setDnsConfig={setDnsConfig}
-                        />
-                        <Upstream
-                            upstreamDns={dashboard.upstreamDns}
-                            bootstrapDns={dashboard.bootstrapDns}
-                            allServers={dashboard.allServers}
-                            processingTestUpstream={settings.processingTestUpstream}
-                            processingSetUpstream={settings.processingSetUpstream}
-                            setUpstream={setUpstream}
-                            testUpstream={testUpstream}
-                        />
-                        <Access access={access} setAccessList={setAccessList} />
-                    </Fragment>
-                )}
-            </Fragment>
-        );
-    }
-}
-
-Dns.propTypes = {
-    dashboard: PropTypes.object.isRequired,
-    settings: PropTypes.object.isRequired,
-    setUpstream: PropTypes.func.isRequired,
-    testUpstream: PropTypes.func.isRequired,
-    getAccessList: PropTypes.func.isRequired,
-    setAccessList: PropTypes.func.isRequired,
-    access: PropTypes.object.isRequired,
-    getDnsSettings: PropTypes.func.isRequired,
-    dnsConfig: PropTypes.object.isRequired,
-    setDnsConfig: PropTypes.func.isRequired,
-    getDnsConfig: PropTypes.func.isRequired,
-    t: PropTypes.func.isRequired,
+    return <>
+        <PageTitle title={t('dns_settings')} />
+        {isDataLoading
+            ? <Loading />
+            : <>
+                <Upstream />
+                <Config />
+                <CacheConfig />
+                <Access />
+            </>}
+    </>;
 };
 
-export default withNamespaces()(Dns);
+export default Dns;

@@ -3,23 +3,36 @@
     align-items: flex-start;
 }
 
+.page-header--logs {
+    flex-direction: row;
+    align-items: flex-end;
+    margin: 2rem 0 2.8rem;
+}
+
+.page-header--logs .page-title {
+    display: inline-flex;
+    align-items: center;
+}
+
+@media (max-width: 991px) {
+    .page-header--logs {
+        flex-direction: column;
+        align-items: center;
+        margin: 1.1rem 0;
+    }
+
+    .page-header--logs .page-title {
+        margin-bottom: 1.1rem;
+        font-size: 1.8rem;
+    }
+}
+
 .page-subtitle {
     margin-left: 0;
     font-size: 0.9rem;
 }
 
-.page-title {
-    line-height: 2.2rem;
-}
-
-.page-title__actions {
-    display: block;
-}
-
-@media screen and (min-width: 768px) {
-    .page-title__actions {
-        display: inline-block;
-        vertical-align: baseline;
-        margin-left: 20px;
-    }
+.page-title--large {
+    font-size: 36px;
+    line-height: 46px;
 }

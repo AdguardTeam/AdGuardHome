@@ -1,5 +1,148 @@
 # AdGuard Home API Change Log
 
+<!-- TODO(a.garipov): Reformat in accordance with the KeepAChangelog spec. -->
+
+## v0.105: API changes
+
+### New `"reason"` in `GET /filtering/check_host` and `GET /querylog`
+
+* The new `RewriteRule` reason is added to `GET /filtering/check_host` and
+  `GET /querylog`.
+
+* Also, the reason which was incorrectly documented as `"ReasonRewrite"` is now
+  correctly documented as `"Rewrite"`, and the previously undocumented
+  `"RewriteEtcHosts"` is now documented as well.
+
+### Multiple matched rules in `GET /filtering/check_host` and `GET /querylog`
+
+* The properties `rule` and `filter_id` are now deprecated.  API users should
+  inspect the newly-added `rules` object array instead.  For most rules, it's
+  either empty or contains one object, which contains the same things as the old
+  two properties did, but under more correct names:
+
+  ```js
+  {
+    // …
+
+    // Deprecated.
+    "rule": "||example.com^",
+    // Deprecated.
+    "filter_id": 42,
+    // Newly-added.
+    "rules": [{
+      "text": "||example.com^",
+      "filter_list_id": 42
+    }]
+  }
+  ```
+
+  For `$dnsrewrite` rules, they contain all rules that contributed to the
+  result.  For example, if you have the following filtering rules:
+
+  ```
+  ||example.com^$dnsrewrite=127.0.0.1
+  ||example.com^$dnsrewrite=127.0.0.2
+  ```
+
+  The `"rules"` will be something like:
+
+  ```js
+  {
+    // …
+
+    "rules": [{
+      "text": "||example.com^$dnsrewrite=127.0.0.1",
+      "filter_list_id": 0
+    }, {
+      "text": "||example.com^$dnsrewrite=127.0.0.2",
+      "filter_list_id": 0
+    }]
+  }
+  ```
+
+  The old fields will be removed in v0.106.0.
+
+## v0.103: API changes
+
+### API: replace settings in GET /control/dns_info & POST /control/dns_config
+
+* added "upstream_mode"
+
+		"upstream_mode": "" | "parallel" | "fastest_addr"
+
+* removed "fastest_addr", "parallel_requests"
+
+
+### API: Get querylog: GET /control/querylog
+
+* Added optional "offset" and "limit" parameters
+
+We are still using "older_than" approach in AdGuard Home UI, but we realize that it's easier to use offset/limit so here is this option now.
+
+
+## v0.102: API changes
+
+### API: Get general status: GET /control/status
+
+* Removed "upstream_dns", "bootstrap_dns", "all_servers" parameters
+
+### API: Get DNS general settings: GET /control/dns_info
+
+* Added "parallel_requests", "upstream_dns", "bootstrap_dns" parameters
+
+Request:
+
+	GET /control/dns_info
+
+Response:
+
+	200 OK
+
+	{
+		"upstream_dns": ["tls://...", ...],
+		"bootstrap_dns": ["1.2.3.4", ...],
+
+		"protection_enabled": true | false,
+		"ratelimit": 1234,
+		"blocking_mode": "default" | "nxdomain" | "null_ip" | "custom_ip",
+		"blocking_ipv4": "1.2.3.4",
+		"blocking_ipv6": "1:2:3::4",
+		"edns_cs_enabled": true | false,
+		"dnssec_enabled": true | false
+		"disable_ipv6": true | false,
+		"fastest_addr": true | false, // use Fastest Address algorithm
+		"parallel_requests": true | false, // send DNS requests to all upstream servers at once
+	}
+
+### API: Set DNS general settings: POST /control/dns_config
+
+* Added "parallel_requests", "upstream_dns", "bootstrap_dns" parameters
+* removed /control/set_upstreams_config method
+
+Request:
+
+	POST /control/dns_config
+
+	{
+		"upstream_dns": ["tls://...", ...],
+		"bootstrap_dns": ["1.2.3.4", ...],
+
+		"protection_enabled": true | false,
+		"ratelimit": 1234,
+		"blocking_mode": "default" | "nxdomain" | "null_ip" | "custom_ip",
+		"blocking_ipv4": "1.2.3.4",
+		"blocking_ipv6": "1:2:3::4",
+		"edns_cs_enabled": true | false,
+		"dnssec_enabled": true | false
+		"disable_ipv6": true | false,
+		"fastest_addr": true | false, // use Fastest Address algorithm
+		"parallel_requests": true | false, // send DNS requests to all upstream servers at once
+	}
+
+Response:
+
+	200 OK
+
 
 ## v0.101: API changes
 

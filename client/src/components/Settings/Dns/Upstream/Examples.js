@@ -1,32 +1,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
+import { COMMENT_LINE_DEFAULT_TOKEN } from '../../../../helpers/constants';
 
-const Examples = props => (
+const Examples = (props) => (
     <div className="list leading-loose">
-        <p>
-            <Trans
-                components={[
-                    <a
-                        href="https://kb.adguard.com/general/dns-providers"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        key="0"
-                    >
-                        DNS providers
-                    </a>,
-                ]}
-            >
-                dns_providers
-            </Trans>
-        </p>
         <Trans>examples_title</Trans>:
         <ol className="leading-loose">
             <li>
-                <code>9.9.9.9</code> - {props.t('example_upstream_regular')}
+                <code>94.140.14.140</code> - {props.t('example_upstream_regular')}
             </li>
             <li>
-                <code>tls://dns.quad9.net</code> –&nbsp;
+                <code>tls://dns-unfiltered.adguard.com</code> –&nbsp;
                 <span>
                     <Trans
                         components={[
@@ -45,7 +30,7 @@ const Examples = props => (
                 </span>
             </li>
             <li>
-                <code>https://dns.quad9.net/dns-query</code> –&nbsp;
+                <code>https://dns-unfiltered.adguard.com/dns-query</code> –&nbsp;
                 <span>
                     <Trans
                         components={[
@@ -64,7 +49,28 @@ const Examples = props => (
                 </span>
             </li>
             <li>
-                <code>tcp://9.9.9.9</code> – <Trans>example_upstream_tcp</Trans>
+                <code>quic://dns-unfiltered.adguard.com:784</code> –&nbsp;
+                <span>
+                    <Trans
+                        components={[
+                            <a
+                                href="https://tools.ietf.org/html/draft-huitema-quic-dnsoquic-07"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                key="0"
+                            >
+                                DNS-over-QUIC
+                            </a>,
+                        ]}
+                    >
+                        example_upstream_doq
+                    </Trans>
+                    &nbsp;
+                    <span className="text-lowercase">(<Trans>experimental</Trans>)</span>
+                </span>
+            </li>
+            <li>
+                <code>tcp://94.140.14.140</code> – <Trans>example_upstream_tcp</Trans>
             </li>
             <li>
                 <code>sdns://...</code> –&nbsp;
@@ -102,7 +108,7 @@ const Examples = props => (
                 </span>
             </li>
             <li>
-                <code>[/example.local/]9.9.9.9</code> –&nbsp;
+                <code>[/example.local/]94.140.14.140</code> –&nbsp;
                 <span>
                     <Trans
                         components={[
@@ -120,6 +126,12 @@ const Examples = props => (
                     </Trans>
                 </span>
             </li>
+            <li>
+                <code>{COMMENT_LINE_DEFAULT_TOKEN} comment</code> –&nbsp;
+                <span>
+                    <Trans>example_upstream_comment</Trans>
+                </span>
+            </li>
         </ol>
     </div>
 );
@@ -128,4 +140,4 @@ Examples.propTypes = {
     t: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(Examples);
+export default withTranslation()(Examples);

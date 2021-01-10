@@ -1,151 +1,234 @@
-import React from 'react';
-import { connect } from 'react-redux';
+import React, { useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import PropTypes from 'prop-types';
-import { Field, reduxForm, formValueSelector } from 'redux-form';
-import { Trans, withNamespaces } from 'react-i18next';
-import flow from 'lodash/flow';
+import { Field, reduxForm } from 'redux-form';
+import { Trans, useTranslation } from 'react-i18next';
 import classnames from 'classnames';
-
-import { renderSelectField } from '../../../../helpers/form';
 import Examples from './Examples';
+import { renderRadioField, renderTextareaField } from '../../../../helpers/form';
+import {
+    DNS_REQUEST_OPTIONS,
+    FORM_NAME,
+    isFirefox,
+    UPSTREAM_CONFIGURATION_WIKI_LINK,
+} from '../../../../helpers/constants';
+import { testUpstreamWithFormValues } from '../../../../actions';
+import { removeEmptyLines, trimLinesAndRemoveEmpty } from '../../../../helpers/helpers';
+import { getTextareaCommentsHighlight, syncScroll } from '../../../../helpers/highlightTextareaComments';
+import '../../../ui/texareaCommentsHighlight.css';
 
-let Form = (props) => {
-    const {
-        t,
-        handleSubmit,
-        testUpstream,
-        upstreamDns,
-        bootstrapDns,
-        allServers,
-        submitting,
-        invalid,
-        processingSetUpstream,
-        processingTestUpstream,
-    } = props;
+const UPSTREAM_DNS_NAME = 'upstream_dns';
+const UPSTREAM_MODE_NAME = 'upstream_mode';
 
-    const testButtonClass = classnames({
-        'btn btn-primary btn-standard mr-2': true,
-        'btn btn-primary btn-standard mr-2 btn-loading': processingTestUpstream,
+const renderField = ({
+    name, component, type, className, placeholder,
+    subtitle, value, normalizeOnBlur, containerClass, onScroll,
+}) => {
+    const { t } = useTranslation();
+    const processingTestUpstream = useSelector((state) => state.settings.processingTestUpstream);
+    const processingSetConfig = useSelector((state) => state.dnsConfig.processingSetConfig);
+
+    return <div
+            key={placeholder}
+            className={classnames('col-12 mb-4', containerClass)}
+    >
+        <Field
+                id={name}
+                value={value}
+                name={name}
+                component={component}
+                type={type}
+                className={className}
+                placeholder={t(placeholder)}
+                subtitle={t(subtitle)}
+                disabled={processingSetConfig || processingTestUpstream}
+                normalizeOnBlur={normalizeOnBlur}
+                onScroll={onScroll}
+        />
+    </div>;
+};
+
+renderField.propTypes = {
+    name: PropTypes.string.isRequired,
+    component: PropTypes.element.isRequired,
+    type: PropTypes.string.isRequired,
+    className: PropTypes.string,
+    placeholder: PropTypes.string.isRequired,
+    subtitle: PropTypes.string,
+    value: PropTypes.string,
+    normalizeOnBlur: PropTypes.func,
+    containerClass: PropTypes.string,
+    onScroll: PropTypes.func,
+};
+
+const renderTextareaWithHighlightField = (props) => {
+    const upstream_dns = useSelector((store) => store.form[FORM_NAME.UPSTREAM].values.upstream_dns);
+    const upstream_dns_file = useSelector((state) => state.dnsConfig.upstream_dns_file);
+    const ref = useRef(null);
+
+    const onScroll = (e) => syncScroll(e, ref);
+
+    return <>
+        {renderTextareaField({
+            ...props,
+            disabled: !!upstream_dns_file,
+            onScroll,
+            normalizeOnBlur: trimLinesAndRemoveEmpty,
+        })}
+        {getTextareaCommentsHighlight(ref, upstream_dns)}
+    </>;
+};
+
+renderTextareaWithHighlightField.propTypes = {
+    className: PropTypes.string.isRequired,
+    disabled: PropTypes.bool,
+    id: PropTypes.string.isRequired,
+    input: PropTypes.object,
+    meta: PropTypes.object,
+    normalizeOnBlur: PropTypes.func,
+    onScroll: PropTypes.func,
+    placeholder: PropTypes.string.isRequired,
+    subtitle: PropTypes.string.isRequired,
+    type: PropTypes.string.isRequired,
+};
+
+const INPUT_FIELDS = [
+    {
+        name: UPSTREAM_DNS_NAME,
+        type: 'text',
+        component: renderTextareaWithHighlightField,
+        className: classnames('form-control form-control--textarea font-monospace text-input', {
+            'text-input--larger': isFirefox,
+        }),
+        containerClass: classnames('text-edit-container', {
+            'mb-4': !isFirefox,
+            'mb-6': isFirefox,
+        }),
+        placeholder: 'upstream_dns',
+        normalizeOnBlur: removeEmptyLines,
+    },
+    {
+        name: UPSTREAM_MODE_NAME,
+        type: 'radio',
+        value: DNS_REQUEST_OPTIONS.LOAD_BALANCING,
+        component: renderRadioField,
+        subtitle: 'load_balancing_desc',
+        placeholder: 'load_balancing',
+    },
+    {
+        name: UPSTREAM_MODE_NAME,
+        type: 'radio',
+        value: DNS_REQUEST_OPTIONS.PARALLEL,
+        component: renderRadioField,
+        subtitle: 'upstream_parallel',
+        placeholder: 'parallel_requests',
+    },
+    {
+        name: UPSTREAM_MODE_NAME,
+        type: 'radio',
+        value: DNS_REQUEST_OPTIONS.FASTEST_ADDR,
+        component: renderRadioField,
+        subtitle: 'fastest_addr_desc',
+        placeholder: 'fastest_addr',
+    },
+];
+
+const Form = ({
+    submitting, invalid, handleSubmit,
+}) => {
+    const dispatch = useDispatch();
+    const { t } = useTranslation();
+    const upstream_dns = useSelector((store) => store.form[FORM_NAME.UPSTREAM].values.upstream_dns);
+    const processingTestUpstream = useSelector((state) => state.settings.processingTestUpstream);
+    const processingSetConfig = useSelector((state) => state.dnsConfig.processingSetConfig);
+
+    const handleUpstreamTest = () => dispatch(testUpstreamWithFormValues());
+
+    const testButtonClass = classnames('btn btn-primary btn-standard mr-2', {
+        'btn-loading': processingTestUpstream,
     });
 
-    return (
-        <form onSubmit={handleSubmit}>
-            <div className="row">
-                <div className="col-12">
-                    <div className="form__group form__group--settings">
-                        <label className="form__label" htmlFor="upstream_dns">
-                            <Trans>upstream_dns</Trans>
-                        </label>
-                        <Field
-                            id="upstream_dns"
-                            name="upstream_dns"
-                            component="textarea"
-                            type="text"
-                            className="form-control form-control--textarea"
-                            placeholder={t('upstream_dns')}
-                            disabled={processingSetUpstream || processingTestUpstream}
-                        />
-                    </div>
-                </div>
-                <div className="col-12">
-                    <div className="form__group form__group--settings">
-                        <Field
-                            name="all_servers"
-                            type="checkbox"
-                            component={renderSelectField}
-                            placeholder={t('upstream_parallel')}
-                            disabled={processingSetUpstream}
-                        />
-                    </div>
-                </div>
-                <div className="col-12">
-                    <Examples />
-                    <hr />
-                </div>
-                <div className="col-12">
-                    <div className="form__group">
-                        <label
-                            className="form__label form__label--with-desc"
-                            htmlFor="bootstrap_dns"
-                        >
-                            <Trans>bootstrap_dns</Trans>
-                        </label>
-                        <div className="form__desc form__desc--top">
-                            <Trans>bootstrap_dns_desc</Trans>
-                        </div>
-                        <Field
-                            id="bootstrap_dns"
-                            name="bootstrap_dns"
-                            component="textarea"
-                            type="text"
-                            className="form-control form-control--textarea form-control--textarea-small"
-                            placeholder={t('bootstrap_dns')}
-                            disabled={processingSetUpstream}
-                        />
-                    </div>
-                </div>
-            </div>
-            <div className="card-actions">
-                <div className="btn-list">
-                    <button
-                        type="button"
-                        className={testButtonClass}
-                        onClick={() =>
-                            testUpstream({
-                                upstream_dns: upstreamDns,
-                                bootstrap_dns: bootstrapDns,
-                                all_servers: allServers,
-                            })
-                        }
-                        disabled={!upstreamDns || processingTestUpstream}
+    const components = {
+        a: <a href={UPSTREAM_CONFIGURATION_WIKI_LINK} target="_blank"
+              rel="noopener noreferrer" />,
+    };
+
+    return <form onSubmit={handleSubmit} className="form--upstream">
+        <div className="row">
+            <label className="col form__label" htmlFor={UPSTREAM_DNS_NAME}>
+                <Trans components={components}>upstream_dns_help</Trans>
+                {' '}
+                <Trans components={[
+                    <a
+                            href="https://kb.adguard.com/general/dns-providers"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            key="0"
                     >
-                        <Trans>test_upstream_btn</Trans>
-                    </button>
-                    <button
-                        type="submit"
-                        className="btn btn-success btn-standard"
-                        disabled={
-                            submitting || invalid || processingSetUpstream || processingTestUpstream
-                        }
-                    >
-                        <Trans>apply_btn</Trans>
-                    </button>
-                </div>
+                        DNS providers
+                    </a>,
+                ]}>
+                    dns_providers
+                </Trans>
+            </label>
+            {INPUT_FIELDS.map(renderField)}
+            <div className="col-12">
+                <Examples />
+                <hr />
             </div>
-        </form>
-    );
+            <div className="col-12 mb-4">
+                <label
+                    className="form__label form__label--with-desc"
+                    htmlFor="bootstrap_dns"
+                >
+                    <Trans>bootstrap_dns</Trans>
+                </label>
+                <div className="form__desc form__desc--top">
+                    <Trans>bootstrap_dns_desc</Trans>
+                </div>
+                <Field
+                    id="bootstrap_dns"
+                    name="bootstrap_dns"
+                    component={renderTextareaField}
+                    type="text"
+                    className="form-control form-control--textarea form-control--textarea-small font-monospace"
+                    placeholder={t('bootstrap_dns')}
+                    disabled={processingSetConfig}
+                    normalizeOnBlur={removeEmptyLines}
+                />
+            </div>
+        </div>
+        <div className="card-actions">
+            <div className="btn-list">
+                <button
+                    type="button"
+                    className={testButtonClass}
+                    onClick={handleUpstreamTest}
+                    disabled={!upstream_dns || processingTestUpstream}
+                >
+                    <Trans>test_upstream_btn</Trans>
+                </button>
+                <button
+                    type="submit"
+                    className="btn btn-success btn-standard"
+                    disabled={
+                        submitting || invalid || processingSetConfig || processingTestUpstream
+                    }
+                >
+                    <Trans>apply_btn</Trans>
+                </button>
+            </div>
+        </div>
+    </form>;
 };
 
 Form.propTypes = {
     handleSubmit: PropTypes.func,
-    testUpstream: PropTypes.func,
     submitting: PropTypes.bool,
     invalid: PropTypes.bool,
     initialValues: PropTypes.object,
-    upstreamDns: PropTypes.string,
-    bootstrapDns: PropTypes.string,
-    allServers: PropTypes.bool,
-    processingTestUpstream: PropTypes.bool,
-    processingSetUpstream: PropTypes.bool,
-    t: PropTypes.func,
+    upstream_dns: PropTypes.string,
+    bootstrap_dns: PropTypes.string,
 };
 
-const selector = formValueSelector('upstreamForm');
-
-Form = connect((state) => {
-    const upstreamDns = selector(state, 'upstream_dns');
-    const bootstrapDns = selector(state, 'bootstrap_dns');
-    const allServers = selector(state, 'all_servers');
-    return {
-        upstreamDns,
-        bootstrapDns,
-        allServers,
-    };
-})(Form);
-
-export default flow([
-    withNamespaces(),
-    reduxForm({
-        form: 'upstreamForm',
-    }),
-])(Form);
+export default reduxForm({ form: FORM_NAME.UPSTREAM })(Form);

@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import ReactTable from 'react-table';
-import { withNamespaces } from 'react-i18next';
+import { withTranslation } from 'react-i18next';
+import { sortIp } from '../../../helpers/helpers';
 
 class Table extends Component {
     cellWrap = ({ value }) => (
-        <div className="logs__row logs__row--overflow">
+        <div className="logs__row o-hidden">
             <span className="logs__text" title={value}>
                 {value}
             </span>
@@ -21,22 +22,22 @@ class Table extends Component {
         {
             Header: this.props.t('answer'),
             accessor: 'answer',
+            sortMethod: sortIp,
             Cell: this.cellWrap,
         },
         {
             Header: this.props.t('actions_table_header'),
             accessor: 'actions',
             maxWidth: 100,
-            Cell: value => (
+            Cell: (value) => (
                 <div className="logs__row logs__row--center">
                     <button
                         type="button"
-                        className="btn btn-icon btn-outline-secondary btn-sm"
-                        onClick={() =>
-                            this.props.handleDelete({
-                                answer: value.row.answer,
-                                domain: value.row.domain,
-                            })
+                        className="btn btn-icon btn-icon--green btn-outline-secondary btn-sm"
+                        onClick={() => this.props.handleDelete({
+                            answer: value.row.answer,
+                            domain: value.row.domain,
+                        })
                         }
                         title={this.props.t('delete_table_action')}
                     >
@@ -60,15 +61,15 @@ class Table extends Component {
                 columns={this.columns}
                 loading={processing || processingAdd || processingDelete}
                 className="-striped -highlight card-table-overflow"
-                showPagination={true}
+                showPagination
                 defaultPageSize={10}
                 minRows={5}
+                ofText="/"
                 previousText={t('previous_btn')}
                 nextText={t('next_btn')}
-                loadingText={t('loading_table_status')}
                 pageText={t('page_table_footer_text')}
-                ofText="/"
                 rowsText={t('rows_table_footer_text')}
+                loadingText={t('loading_table_status')}
                 noDataText={t('rewrite_not_found')}
             />
         );
@@ -84,4 +85,4 @@ Table.propTypes = {
     handleDelete: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(Table);
+export default withTranslation()(Table);

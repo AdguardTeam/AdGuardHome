@@ -2,21 +2,24 @@ import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Field, reduxForm, formValueSelector } from 'redux-form';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 
 import {
     renderInputField,
-    renderSelectField,
+    CheckboxField,
     renderRadioField,
     toNumber,
-    port,
-    portTLS,
-    isSafePort,
 } from '../../../helpers/form';
+import {
+    validateIsSafePort, validatePort, validatePortQuic, validatePortTLS,
+} from '../../../helpers/validators';
 import i18n from '../../../i18n';
 import KeyStatus from './KeyStatus';
 import CertificateStatus from './CertificateStatus';
+import {
+    DNS_OVER_QUIC_PORT, DNS_OVER_TLS_PORT, FORM_NAME, STANDARD_HTTPS_PORT,
+} from '../../../helpers/constants';
 
 const validate = (values) => {
     const errors = {};
@@ -37,15 +40,17 @@ const clearFields = (change, setTlsConfig, t) => {
         certificate_chain: '',
         private_key_path: '',
         certificate_path: '',
-        port_https: 443,
-        port_dns_over_tls: 853,
+        port_https: STANDARD_HTTPS_PORT,
+        port_dns_over_tls: DNS_OVER_TLS_PORT,
+        port_dns_over_quic: DNS_OVER_QUIC_PORT,
         server_name: '',
         force_https: false,
         enabled: false,
     };
     // eslint-disable-next-line no-alert
     if (window.confirm(t('encryption_reset'))) {
-        Object.keys(fields).forEach(field => change(field, fields[field]));
+        Object.keys(fields)
+            .forEach((field) => change(field, fields[field]));
         setTlsConfig(fields);
     }
 };
@@ -80,14 +85,13 @@ let Form = (props) => {
         privateKeySource,
     } = props;
 
-    const isSavingDisabled =
-        invalid ||
-        submitting ||
-        processingConfig ||
-        processingValidate ||
-        !valid_key ||
-        !valid_cert ||
-        !valid_pair;
+    const isSavingDisabled = invalid
+        || submitting
+        || processingConfig
+        || processingValidate
+        || !valid_key
+        || !valid_cert
+        || !valid_pair;
 
     return (
         <form onSubmit={handleSubmit}>
@@ -97,7 +101,7 @@ let Form = (props) => {
                         <Field
                             name="enabled"
                             type="checkbox"
-                            component={renderSelectField}
+                            component={CheckboxField}
                             placeholder={t('encryption_enable')}
                             onChange={handleChange}
                         />
@@ -134,7 +138,7 @@ let Form = (props) => {
                         <Field
                             name="force_https"
                             type="checkbox"
-                            component={renderSelectField}
+                            component={CheckboxField}
                             placeholder={t('encryption_redirect')}
                             onChange={handleChange}
                             disabled={!isEnabled}
@@ -158,7 +162,7 @@ let Form = (props) => {
                             type="number"
                             className="form-control"
                             placeholder={t('encryption_https')}
-                            validate={[port, isSafePort]}
+                            validate={[validatePort, validateIsSafePort]}
                             normalize={toNumber}
                             onChange={handleChange}
                             disabled={!isEnabled}
@@ -180,13 +184,37 @@ let Form = (props) => {
                             type="number"
                             className="form-control"
                             placeholder={t('encryption_dot')}
-                            validate={[portTLS]}
+                            validate={[validatePortTLS]}
                             normalize={toNumber}
                             onChange={handleChange}
                             disabled={!isEnabled}
                         />
                         <div className="form__desc">
                             <Trans>encryption_dot_desc</Trans>
+                        </div>
+                    </div>
+                </div>
+                <div className="col-lg-6">
+                    <div className="form__group form__group--settings">
+                        <label className="form__label" htmlFor="port_dns_over_quic">
+                            <Trans>encryption_doq</Trans>
+                            &nbsp;
+                            <span className="text-lowercase">(<Trans>experimental</Trans>)</span>
+                        </label>
+                        <Field
+                                id="port_dns_over_quic"
+                                name="port_dns_over_quic"
+                                component={renderInputField}
+                                type="number"
+                                className="form-control"
+                                placeholder={t('encryption_doq')}
+                                validate={[validatePortQuic]}
+                                normalize={toNumber}
+                                onChange={handleChange}
+                                disabled={!isEnabled}
+                        />
+                        <div className="form__desc">
+                            <Trans>encryption_doq_desc</Trans>
                         </div>
                     </div>
                 </div>
@@ -204,7 +232,7 @@ let Form = (props) => {
                             <Trans
                                 values={{ link: 'letsencrypt.org' }}
                                 components={[
-                                    <a href="https://letsencrypt.org/" key="0">
+                                    <a target="_blank" rel="noopener noreferrer" href="https://letsencrypt.org/" key="0">
                                         link
                                     </a>,
                                 ]}
@@ -395,7 +423,7 @@ Form.propTypes = {
     privateKeySource: PropTypes.string,
 };
 
-const selector = formValueSelector('encryptionForm');
+const selector = formValueSelector(FORM_NAME.ENCRYPTION);
 
 Form = connect((state) => {
     const isEnabled = selector(state, 'enabled');
@@ -417,9 +445,9 @@ Form = connect((state) => {
 })(Form);
 
 export default flow([
-    withNamespaces(),
+    withTranslation(),
     reduxForm({
-        form: 'encryptionForm',
+        form: FORM_NAME.ENCRYPTION,
         validate,
     }),
 ])(Form);

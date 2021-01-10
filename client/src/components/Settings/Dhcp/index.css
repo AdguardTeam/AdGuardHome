@@ -1,0 +1,47 @@
+.dhcp-form__button {
+    margin: 0 1rem;
+}
+
+.page-title--dhcp {
+    display: flex;
+    align-items: center;
+}
+
+.col__dhcp {
+    flex: 0 0 50%;
+    max-width: 50%;
+    padding-right: 0;
+}
+
+.dhcp__interfaces {
+    padding-bottom: 1rem;
+}
+
+.dhcp__interfaces-info {
+    padding: 0.5rem 0.75rem 0;
+    line-break: anywhere;
+}
+
+@media (max-width: 991.98px) {
+    .dhcp-form__button {
+        margin: 0.5rem 0;
+        display: block;
+    }
+
+    .page-title--dhcp {
+        flex-direction: column;
+        align-items: flex-start;
+        padding-bottom: 0.5rem;
+    }
+
+    .col__dhcp {
+        flex: 0 0 100%;
+        max-width: 100%;
+        padding-right: 0.75rem;
+    }
+
+    .dhcp__interfaces {
+        flex-direction: column;
+        padding-bottom: 0.5rem;
+    }
+}

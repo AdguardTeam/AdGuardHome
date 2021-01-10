@@ -1,0 +1,1 @@
+export const DEFAULT_NOTIFICATION_DURATION = 5;

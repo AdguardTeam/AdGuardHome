@@ -1,5 +1,5 @@
 import React, { Component, Fragment } from 'react';
-import { withNamespaces } from 'react-i18next';
+import { withTranslation } from 'react-i18next';
 import PropTypes from 'prop-types';
 
 import ClientsTable from './ClientsTable';
@@ -72,4 +72,4 @@ Clients.propTypes = {
     getStats: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(Clients);
+export default withTranslation()(Clients);

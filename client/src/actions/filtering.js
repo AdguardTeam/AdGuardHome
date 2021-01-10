@@ -1,10 +1,10 @@
 import { createAction } from 'redux-actions';
 import { showLoading, hideLoading } from 'react-redux-loading-bar';
-import { t } from 'i18next';
+import i18next from 'i18next';
 
 import { normalizeFilteringStatus, normalizeRulesTextarea } from '../helpers/helpers';
-import { addErrorToast, addSuccessToast } from './index';
 import apiClient from '../api/Api';
+import { addErrorToast, addSuccessToast } from './toasts';
 
 export const toggleFilteringModal = createAction('FILTERING_MODAL_TOGGLE');
 export const handleRulesChange = createAction('HANDLE_RULES_CHANGE');
@@ -28,7 +28,7 @@ export const setRulesRequest = createAction('SET_RULES_REQUEST');
 export const setRulesFailure = createAction('SET_RULES_FAILURE');
 export const setRulesSuccess = createAction('SET_RULES_SUCCESS');
 
-export const setRules = rules => async (dispatch) => {
+export const setRules = (rules) => async (dispatch) => {
     dispatch(setRulesRequest());
     try {
         const normalizedRules = normalizeRulesTextarea(rules);
@@ -45,12 +45,14 @@ export const addFilterRequest = createAction('ADD_FILTER_REQUEST');
 export const addFilterFailure = createAction('ADD_FILTER_FAILURE');
 export const addFilterSuccess = createAction('ADD_FILTER_SUCCESS');
 
-export const addFilter = (url, name, whitelist = false) => async (dispatch) => {
+export const addFilter = (url, name, whitelist = false) => async (dispatch, getState) => {
     dispatch(addFilterRequest());
     try {
         await apiClient.addFilter({ url, name, whitelist });
         dispatch(addFilterSuccess(url));
-        dispatch(toggleFilteringModal());
+        if (getState().filtering.isModalOpen) {
+            dispatch(toggleFilteringModal());
+        }
         dispatch(addSuccessToast('filter_added_successfully'));
         dispatch(getFilteringStatus());
     } catch (error) {
@@ -63,11 +65,15 @@ export const removeFilterRequest = createAction('REMOVE_FILTER_REQUEST');
 export const removeFilterFailure = createAction('REMOVE_FILTER_FAILURE');
 export const removeFilterSuccess = createAction('REMOVE_FILTER_SUCCESS');
 
-export const removeFilter = (url, whitelist = false) => async (dispatch) => {
+export const removeFilter = (url, whitelist = false) => async (dispatch, getState) => {
     dispatch(removeFilterRequest());
     try {
         await apiClient.removeFilter({ url, whitelist });
         dispatch(removeFilterSuccess(url));
+        if (getState().filtering.isModalOpen) {
+            dispatch(toggleFilteringModal());
+        }
+        dispatch(addSuccessToast('filter_removed_successfully'));
         dispatch(getFilteringStatus());
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -95,12 +101,14 @@ export const editFilterRequest = createAction('EDIT_FILTER_REQUEST');
 export const editFilterFailure = createAction('EDIT_FILTER_FAILURE');
 export const editFilterSuccess = createAction('EDIT_FILTER_SUCCESS');
 
-export const editFilter = (url, data, whitelist = false) => async (dispatch) => {
+export const editFilter = (url, data, whitelist = false) => async (dispatch, getState) => {
     dispatch(editFilterRequest());
     try {
         await apiClient.setFilterUrl({ url, data, whitelist });
         dispatch(editFilterSuccess(url));
-        dispatch(toggleFilteringModal());
+        if (getState().filtering.isModalOpen) {
+            dispatch(toggleFilteringModal());
+        }
         dispatch(addSuccessToast('filter_updated'));
         dispatch(getFilteringStatus());
     } catch (error) {
@@ -113,7 +121,7 @@ export const refreshFiltersRequest = createAction('FILTERING_REFRESH_REQUEST');
 export const refreshFiltersFailure = createAction('FILTERING_REFRESH_FAILURE');
 export const refreshFiltersSuccess = createAction('FILTERING_REFRESH_SUCCESS');
 
-export const refreshFilters = config => async (dispatch) => {
+export const refreshFilters = (config) => async (dispatch) => {
     dispatch(refreshFiltersRequest());
     dispatch(showLoading());
     try {
@@ -122,7 +130,7 @@ export const refreshFilters = config => async (dispatch) => {
         dispatch(refreshFiltersSuccess());
 
         if (updated > 0) {
-            dispatch(addSuccessToast(t('list_updated', { count: updated })));
+            dispatch(addSuccessToast(i18next.t('list_updated', { count: updated })));
         } else {
             dispatch(addSuccessToast('all_lists_up_to_date_toast'));
         }
@@ -140,7 +148,7 @@ export const setFiltersConfigRequest = createAction('SET_FILTERS_CONFIG_REQUEST'
 export const setFiltersConfigFailure = createAction('SET_FILTERS_CONFIG_FAILURE');
 export const setFiltersConfigSuccess = createAction('SET_FILTERS_CONFIG_SUCCESS');
 
-export const setFiltersConfig = config => async (dispatch, getState) => {
+export const setFiltersConfig = (config) => async (dispatch, getState) => {
     dispatch(setFiltersConfigRequest());
     try {
         const { enabled } = config;
@@ -164,11 +172,17 @@ export const checkHostRequest = createAction('CHECK_HOST_REQUEST');
 export const checkHostFailure = createAction('CHECK_HOST_FAILURE');
 export const checkHostSuccess = createAction('CHECK_HOST_SUCCESS');
 
-export const checkHost = host => async (dispatch) => {
+/**
+ *
+ * @param {object} host
+ * @param {string} host.name
+ * @returns {undefined}
+ */
+export const checkHost = (host) => async (dispatch) => {
     dispatch(checkHostRequest());
     try {
         const data = await apiClient.checkHost(host);
-        const [hostname] = Object.values(host);
+        const { name: hostname } = host;
 
         dispatch(checkHostSuccess({
             hostname,

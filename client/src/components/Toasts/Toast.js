@@ -1,52 +1,56 @@
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Trans, withNamespaces } from 'react-i18next';
+import { Trans } from 'react-i18next';
+import { useDispatch } from 'react-redux';
+import { TOAST_TIMEOUTS } from '../../helpers/constants';
+import { removeToast } from '../../actions';
 
-class Toast extends Component {
-    componentDidMount() {
-        const timeout = this.props.type === 'success' ? 5000 : 30000;
+const Toast = ({
+    id,
+    message,
+    type,
+    options,
+}) => {
+    const dispatch = useDispatch();
+    const [timerId, setTimerId] = useState(null);
 
-        setTimeout(() => {
-            this.props.removeToast(this.props.id);
-        }, timeout);
-    }
+    const clearRemoveToastTimeout = () => clearTimeout(timerId);
+    const removeCurrentToast = () => dispatch(removeToast(id));
+    const setRemoveToastTimeout = () => {
+        const timeout = TOAST_TIMEOUTS[type];
+        const timerId = setTimeout(removeCurrentToast, timeout);
 
-    shouldComponentUpdate() {
-        return false;
-    }
+        setTimerId(timerId);
+    };
 
-    showMessage(t, type, message) {
-        if (type === 'notice') {
-            return <span dangerouslySetInnerHTML={{ __html: t(message) }} />;
-        }
+    useEffect(() => {
+        setRemoveToastTimeout();
+    }, []);
 
-        return <Trans>{message}</Trans>;
-    }
-
-    render() {
-        const {
-            type, id, t, message,
-        } = this.props;
-
-        return (
-            <div className={`toast toast--${type}`}>
-                <p className="toast__content">
-                    {this.showMessage(t, type, message)}
-                </p>
-                <button className="toast__dismiss" onClick={() => this.props.removeToast(id)}>
-                    <svg stroke="#fff" fill="none" width="20" height="20" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m18 6-12 12"/><path d="m6 6 12 12"/></svg>
-                </button>
-            </div>
-        );
-    }
-}
+    return <div className={`toast toast--${type}`}
+                onMouseOver={clearRemoveToastTimeout}
+                onMouseOut={setRemoveToastTimeout}>
+        <p className="toast__content">
+            <Trans
+                    i18nKey={message}
+                    {...options}
+            />
+        </p>
+        <button className="toast__dismiss" onClick={removeCurrentToast}>
+            <svg stroke="#fff" fill="none" width="20" height="20" strokeWidth="2"
+                 viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="m18 6-12 12" />
+                <path d="m6 6 12 12" />
+            </svg>
+        </button>
+    </div>;
+};
 
 Toast.propTypes = {
-    t: PropTypes.func.isRequired,
     id: PropTypes.string.isRequired,
     message: PropTypes.string.isRequired,
     type: PropTypes.string.isRequired,
-    removeToast: PropTypes.func.isRequired,
+    options: PropTypes.object,
 };
 
-export default withNamespaces()(Toast);
+export default Toast;

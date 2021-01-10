@@ -12,6 +12,7 @@ Contents:
 * Updating
 	* Get version command
 	* Update command
+* API: Get global status
 * TLS
 	* API: Get TLS configuration
 	* API: Set TLS configuration
@@ -22,13 +23,17 @@ Contents:
 	* Update client
 	* Delete client
 	* API: Find clients by IP
-* Enable DHCP server
-	* "Show DHCP status" command
-	* "Check DHCP" command
-	* "Enable DHCP" command
+* DHCP server
+	* DHCP server in DNS
+	* DHCP Custom Options
+	* API: Show DHCP interfaces
+	* API: Show DHCP status
+	* API: Check DHCP
+	* API: Enable DHCP
 	* Static IP check/set
-	* Add a static lease
+	* API: Add a static lease
 	* API: Reset DHCP configuration
+	* RA+SLAAC
 * DNS general settings
 	* API: Get DNS general settings
 	* API: Set DNS general settings
@@ -64,6 +69,8 @@ Contents:
 	* API: Log in
 	* API: Log out
 	* API: Get current user info
+* Safe services
+* ipset
 
 
 ## Relations between subsystems
@@ -344,9 +351,13 @@ Response:
 
 If `can_autoupdate` is true, then the server can automatically upgrade to a new version.
 
-Response with empty body:
+Response when auto-update is disabled by command-line argument:
 
 	200 OK
+
+	{
+		"disabled":true
+	}
 
 It means that update check is disabled by user.  UI should do nothing.
 
@@ -370,9 +381,31 @@ Error response:
 UI shows error message "Auto-update has failed"
 
 
-## Enable DHCP server
+## API: Get global status
 
-Algorithm:
+Request:
+
+	GET /control/status
+
+Response:
+
+	200 OK
+
+	{
+	"dns_addresses":["..."],
+	"dns_port":53,
+	"http_port":3000,
+	"language":"en",
+	"protection_enabled":true,
+	"running":true,
+	"dhcp_available":true,
+	"version":"undefined"
+	}
+
+
+## DHCP server
+
+Enable DHCP server algorithm:
 
 * UI shows DHCP configuration screen with "Enabled DHCP" button disabled, and "Check DHCP" button enabled
 * User clicks on "Check DHCP"; UI sends request to server
@@ -384,7 +417,58 @@ Algorithm:
 * UI shows the status
 
 
-### "Show DHCP status" command
+### DHCP server in DNS
+
+DHCP leases are used in several ways by DNS module.
+
+* For "A" DNS reqeust we reply with an IP address leased by our DHCP server.
+
+		< A bills-notebook.lan.
+		> A bills-notebook.lan. = 192.168.1.100
+
+* For "PTR" DNS request we reply with a hostname from an active DHCP lease.
+
+		< PTR 100.1.168.192.in-addr.arpa.
+		> PTR 100.1.168.192.in-addr.arpa. = bills-notebook.
+
+
+### DHCP Custom Options
+
+Option with arbitrary hexadecimal data:
+
+	DEC_CODE hex HEX_DATA
+
+where DEC_CODE is a decimal DHCPv4 option code in range [1..255]
+
+Option with IP data (only 1 IP is supported):
+
+	DEC_CODE ip IP_ADDR
+
+
+### API: Show DHCP interfaces
+
+Request:
+
+	GET /control/dhcp/interfaces
+
+Response:
+
+	200 OK
+
+	{
+		"iface_name":{
+			"name":"iface_name",
+			"hardware_address":"...",
+			"ipv4_addresses":["ipv4 addr", ...],
+			"ipv6_addresses":["ipv6 addr", ...],
+			"gateway_ip":"...",
+			"flags":"up|broadcast|multicast"
+		}
+		...
+	}
+
+
+### API: Show DHCP status
 
 Request:
 
@@ -395,16 +479,19 @@ Response:
 	200 OK
 
 	{
-		"config":{
-			"enabled":false,
-			"interface_name":"...",
+		"enabled":false,
+		"interface_name":"...",
+		"v4":{
 			"gateway_ip":"...",
 			"subnet_mask":"...",
-			"range_start":"...",
+			"range_start":"...", // if empty: DHCPv4 won't be enabled
 			"range_end":"...",
 			"lease_duration":60,
-			"icmp_timeout_msec":0
 		},
+		"v6":{
+			"range_start":"...", // if empty: DHCPv6 won't be enabled
+			"lease_duration":60,
+		}
 		"leases":[
 			{"ip":"...","mac":"...","hostname":"...","expires":"..."}
 			...
@@ -416,7 +503,7 @@ Response:
 	}
 
 
-### "Check DHCP" command
+### API: Check DHCP
 
 Request:
 
@@ -429,13 +516,21 @@ Response:
 	200 OK
 
 	{
-		"other_server": {
-			"found": "yes|no|error",
-			"error": "Error message", // set if found=error
-		},
-		"static_ip": {
-			"static": "yes|no|error",
-			"ip": "<Current dynamic IP address>", // set if static=no
+		v4: {
+			"other_server": {
+				"found": "yes|no|error",
+				"error": "Error message", // set if found=error
+			},
+			"static_ip": {
+				"static": "yes|no|error",
+				"ip": "<Current dynamic IP address>", // set if static=no
+			}
+		}
+		v6: {
+			"other_server": {
+				"found": "yes|no|error",
+				"error": "Error message", // set if found=error
+			},
 		}
 	}
 
@@ -456,21 +551,26 @@ If `static_ip.static` is:
 		In order to use DHCP server a static IP address must be set.  We failed to determine if this network interface is configured using static IP address.  Please set a static IP address manually.
 
 
-### "Enable DHCP" command
+### API: Enable DHCP
 
 Request:
 
 	POST /control/dhcp/set_config
 
 	{
-		"enabled":true,
-		"interface_name":"vboxnet0",
+	"enabled":true,
+	"interface_name":"vboxnet0",
+	"v4":{
 		"gateway_ip":"192.169.56.1",
 		"subnet_mask":"255.255.255.0",
-		"range_start":"192.169.56.3",
-		"range_end":"192.169.56.3",
+		"range_start":"192.169.56.100",
+		"range_end":"192.169.56.200", // Note: first 3 octects must match "range_start"
 		"lease_duration":60,
-		"icmp_timeout_msec":0
+	},
+	"v6":{
+		"range_start":"...",
+		"lease_duration":60,
+	}
 	}
 
 Response:
@@ -478,6 +578,10 @@ Response:
 	200 OK
 
 	OK
+
+For v4, if range_start = "1.2.3.4", the range_end must be "1.2.3.X" where X > 4.
+
+For v6, if range_start = "2001::1", the last IP is "2001:ff".
 
 
 ### Static IP check/set
@@ -574,7 +678,7 @@ or:
 	systemctl restart system-networkd
 
 
-### Add a static lease
+### API: Add a static lease
 
 Request:
 
@@ -622,6 +726,53 @@ Response:
 	200 OK
 
 
+### RA+SLAAC
+
+There are 3 options for a client to get IPv6 address:
+
+1. via DHCPv6.
+	Client doesn't receive any `ICMPv6.RouterAdvertisement` packets, so it tries to use DHCPv6.
+2. via SLAAC.
+	Client receives a `ICMPv6.RouterAdvertisement` packet with `Managed=false` flag and IPv6 prefix.
+	Client then assigns to itself an IPv6 address using this prefix and its MAC address.
+	DHCPv6 server won't be started in this case.
+3. via DHCPv6 or SLAAC.
+	Client receives a `ICMPv6.RouterAdvertisement` packet with `Managed=true` flag and IPv6 prefix.
+	Client may choose to use SLAAC or DHCPv6 to obtain an IPv6 address.
+
+Configuration:
+
+	dhcp:
+		...
+		dhcpv6:
+			...
+			ra_slaac_only: false
+			ra_allow_slaac: false
+
+* `ra_slaac_only:false; ra_allow_slaac:false`: use option #1.
+	Don't send any `ICMPv6.RouterAdvertisement` packets.
+* `ra_slaac_only:true; ra_allow_slaac:false`: use option #2.
+	Periodically send `ICMPv6.RouterAdvertisement(Flags=(Managed=false,Other=false))` packets.
+* `ra_slaac_only:false; ra_allow_slaac:true`: use option #3.
+	Periodically send `ICMPv6.RouterAdvertisement(Flags=(Managed=true,Other=true))` packets.
+
+ICMPv6.RouterAdvertisement packet description:
+
+	ICMPv6:
+	Type=RouterAdvertisement(134)
+	Flags
+		Managed=<BOOL>
+		Other=<BOOL>
+	Option=Prefix information(3)
+		<IPv6 address prefix (/64) of the network interface>
+	Option=MTU(5)
+		<...>
+	Option=Source link-layer address(1)
+		<MAC address>
+	Option=Recursive DNS Server(25)
+		<IPv6 address of DNS server>
+
+
 ## TLS
 
 
@@ -640,6 +791,7 @@ Response:
 	"server_name":"...",
 	"port_https":443,
 	"port_dns_over_tls":853,
+	"port_dns_over_quic":784,
 	"certificate_chain":"...",
 	"private_key":"...",
 	"certificate_path":"...",
@@ -671,11 +823,42 @@ Request:
 	"force_https":false,
 	"port_https":443,
 	"port_dns_over_tls":853,
+	"port_dns_over_quic":784,
 	"certificate_chain":"...",
 	"private_key":"...",
 	"certificate_path":"...", // if set, certificate_chain must be empty
 	"private_key_path":"..." // if set, private_key must be empty
 	}
+
+Response:
+
+	200 OK
+	
+### API: Validate TLS configuration
+
+Request:
+
+	POST /control/tls/validate
+
+    {
+    "enabled":true,
+    "port_https":443,
+    "port_dns_over_tls":853,
+    "port_dns_over_quic":784,
+    "allow_unencrypted_doh":false,
+    "certificate_chain":"...",
+    "private_key":"...",
+    "certificate_path":"...",
+    "private_key_path":"...",
+    "valid_cert":true,
+    "valid_chain":false,
+    "not_before":"2019-03-19T08:23:45Z",
+    "not_after":"2029-03-16T08:23:45Z",
+    "dns_names":null,
+    "valid_key":true,
+    "valid_pair":true
+    }
+
 
 Response:
 
@@ -837,7 +1020,7 @@ Error response (Client not found):
 ### API: Find clients by IP
 
 This method returns the list of clients (manual and auto-clients) matching the IP list.
-For auto-clients only `name`, `ids` and `whois_info` fields are set.  Other fields are empty.
+For auto-clients only `name`, `ids`, `whois_info`, `disallowed`, and `disallowed_rule` fields are set.  Other fields are empty.
 
 Request:
 
@@ -863,11 +1046,16 @@ Response:
 				key: "value"
 				...
 			}
+
+			"disallowed": false,
+			"disallowed_rule": "..."
 		}
 	}
 	...
 	]
 
+* `disallowed` - whether the client's IP is blocked or not.
+* `disallowed_rule` - the rule due to which the client is disallowed. If `disallowed` is `true`, and this string is empty - it means that the client IP is disallowed by the "allowed IP list", i.e. it is not included in allowed.
 
 ## DNS general settings
 
@@ -882,14 +1070,22 @@ Response:
 	200 OK
 
 	{
+		"upstream_dns": ["tls://...", ...],
+		"upstream_dns_file": "",
+		"bootstrap_dns": ["1.2.3.4", ...],
+
 		"protection_enabled": true | false,
 		"ratelimit": 1234,
-		"blocking_mode": "default" | "nxdomain" | "null_ip" | "custom_ip",
+		"blocking_mode": "default" | "refused" | "nxdomain" | "null_ip" | "custom_ip",
 		"blocking_ipv4": "1.2.3.4",
 		"blocking_ipv6": "1:2:3::4",
 		"edns_cs_enabled": true | false,
 		"dnssec_enabled": true | false
 		"disable_ipv6": true | false,
+		"upstream_mode": "" | "parallel" | "fastest_addr"
+		"cache_size": 1234, // in bytes
+		"cache_ttl_min": 1234, // in seconds
+		"cache_ttl_max": 1234, // in seconds
 	}
 
 
@@ -900,14 +1096,22 @@ Request:
 	POST /control/dns_config
 
 	{
+		"upstream_dns": ["tls://...", ...],
+		"upstream_dns_file": "",
+		"bootstrap_dns": ["1.2.3.4", ...],
+
 		"protection_enabled": true | false,
 		"ratelimit": 1234,
-		"blocking_mode": "default" | "nxdomain" | "null_ip" | "custom_ip",
+		"blocking_mode": "default" | "refused" | "nxdomain" | "null_ip" | "custom_ip",
 		"blocking_ipv4": "1.2.3.4",
 		"blocking_ipv6": "1:2:3::4",
 		"edns_cs_enabled": true | false,
 		"dnssec_enabled": true | false
 		"disable_ipv6": true | false,
+		"upstream_mode": "" | "parallel" | "fastest_addr"
+		"cache_size": 1234, // in bytes
+		"cache_ttl_min": 1234, // in seconds
+		"cache_ttl_max": 1234, // in seconds
 	}
 
 Response:
@@ -971,6 +1175,110 @@ Response:
 
 This section allows the administrator to easily configure custom DNS response for a specific domain name.
 A, AAAA and CNAME records are supported.
+
+Syntax:
+
+	key -> value
+
+where `key` is a host name or a wild card that matches Question in DNS request
+and `value` is either:
+* IPv4 address: use this IP in A response
+* IPv6 address: use this IP in AAAA response
+* canonical name: add CNAME record
+* "`key`": CNAME exception - pass request to upstream
+* "A": A exception - pass A request to upstream
+* "AAAA": AAAA exception - pass AAAA request to upstream
+
+
+#### Example: A record
+
+	host.com -> 1.2.3.4
+
+Response:
+
+	A:
+		A = 1.2.3.4
+	AAAA:
+		<empty>
+
+#### Example: AAAA record
+
+	host.com -> ::1
+
+Response:
+
+	A:
+		<empty>
+	AAAA:
+		AAAA = ::1
+
+#### Example: CNAME record
+
+	sub.host.com -> host.com
+
+Response:
+
+	A:
+		CNAME = host.com
+		A = <IPv4 address of host.com>
+	AAAA:
+		CNAME = host.com
+		AAAA = <IPv6 address of host.com>
+
+#### Example: CNAME+A records
+
+	sub.host.com -> host.com
+	host.com -> 1.2.3.4
+
+Response:
+
+	A:
+		CNAME = host.com
+		A = 1.2.3.4
+	AAAA:
+		CNAME = host.com
+
+#### Example: Wildcard CNAME+A record with CNAME exception
+
+	*.host.com -> 1.2.3.4
+	pass.host.com -> pass.host.com
+
+Response to `my.host.com`:
+
+	A:
+		A = 1.2.3.4
+	AAAA:
+		<empty>
+
+Response to `pass.host.com`:
+
+	A:
+		A = <IPv4 address of pass.host.com>
+	AAAA:
+		AAAA = <IPv6 address of pass.host.com>
+
+#### Example: A record with AAAA exception
+
+	host.com -> 1.2.3.4
+	host.com -> AAAA
+
+Response:
+
+	A:
+		A = 1.2.3.4
+	AAAA:
+		AAAA = <IPv6 address of host.com>
+
+#### Example: pass A only
+
+	host.com -> A
+
+Response:
+
+	A:
+		A = <IPv4 address of host.com>
+	AAAA:
+		<empty>
 
 
 ### API: List rewrite entries
@@ -1190,13 +1498,15 @@ When a new DNS request is received and processed, we store information about thi
 	"QH":"...", // target host name without the last dot
 	"QT":"...", // question type
 	"QC":"...", // question class
-	"Answer":"...",
-	"OrigAnswer":"...",
+	"CP":"" | "doh", // client connection protocol
+	"Answer":"base64 data",
+	"OrigAnswer":"base64 data",
 	"Result":{
 		"IsFiltered":true,
 		"Reason":3,
 		"Rule":"...",
 		"FilterID":1,
+		"ServiceName":"..."
 		},
 	"Elapsed":12345,
 	"Upstream":"...",
@@ -1217,6 +1527,11 @@ When UI asks for data from query log (see "API: Get query log"), server reads th
 
 We store data for a limited amount of time - the log file is automatically rotated.
 
+* On AGH startup read the first line from query logs and store its time value
+* If there's no log file yet, set the time value of the first log event when the file is created
+* If this time value is older than our time limit, perform file rotate procedure
+* While AGH is running, check the previous condition every 24 hours
+
 
 ### API: Get query log
 
@@ -1224,16 +1539,29 @@ Request:
 
 	GET /control/querylog
 	?older_than=2006-01-02T15:04:05.999999999Z07:00
-	&filter_domain=...
-	&filter_client=...
-	&filter_question_type=A | AAAA
-	&filter_response_status= | filtered
+	&search=...
+	&response_status="..."
 
-`older_than` setting is used for paging.  UI uses an empty value for `older_than` on the first request and gets the latest log entries.  To get the older entries, UI sets `older_than` to the `oldest` value from the server's response.
+`older_than` setting is used for paging.  UI uses an empty value for `older_than` on the first request and gets the latest log entries. To get the older entries, UI sets `older_than` to the `oldest` value from the server's response.
 
-If "filter" settings are set, server returns only entries that match the specified request.
+If search settings are set, server returns only entries that match the specified request.
 
-For `filter.domain` and `filter.client` the server matches substrings by default: `adguard.com` matches `www.adguard.com`.  Strict matching can be enabled by enclosing the value in double quotes: `"adguard.com"` matches `adguard.com` but doesn't match `www.adguard.com`.
+`search`:
+match by domain name or client IP address.
+The server matches substrings by default: e.g. `adguard.com` matches `www.adguard.com`.
+Strict matching can be enabled by enclosing the value in double quotes: e.g. `"adguard.com"` matches `adguard.com` but doesn't match `www.adguard.com`.
+
+`response_status`:
+* all
+* filtered             - all kinds of filtering
+* blocked              - blocked or blocked services
+* blocked_services     - blocked services
+* blocked_safebrowsing - blocked by safebrowsing
+* blocked_parental     - blocked by parental control
+* whitelisted          - whitelisted
+* rewritten            - all kinds of rewrites
+* safe_search          - enforced safe search
+* processed            - not blocked, not white-listed entries
 
 Response:
 
@@ -1256,8 +1584,10 @@ Response:
 			}
 			...
 		],
+		"upstream":"...", // Upstream URL starting with tcp://, tls://, https://, or with an IP address
 		"answer_dnssec": true,
 		"client":"127.0.0.1",
+		"client_proto": "" (plain) | "doh" | "dot" | "doq",
 		"elapsedMs":"0.098403",
 		"filterId":1,
 		"question":{
@@ -1276,6 +1606,8 @@ Response:
 	}
 
 The most recent entries are at the top of list.
+
+If there are no more older entries, `"oldest":""` is returned.
 
 
 ### API: Set querylog parameters
@@ -1329,7 +1661,10 @@ This is how DNS requests and responses are filtered by AGH:
 
 * 'dnsproxy' module receives DNS request from client and passes control to AGH
 * AGH applies filtering logic to the host name in DNS Question:
-	* process Rewrite rules
+	* process Rewrite rules.
+		Can set CNAME and a list of IP addresses.
+	* process /etc/hosts entries.
+		Can set a list of IP addresses or a hostname (for PTR requests).
 	* match host name against filtering lists
 	* match host name against blocked services rules
 	* process SafeSearch rules
@@ -1439,7 +1774,7 @@ Request:
 
 	{
 		"name": "..."
-		"url": "..."
+		"url": "..." // URL or an absolute file path
 		"whitelist": true
 	}
 
@@ -1498,16 +1833,22 @@ Response:
 	200 OK
 
 	{
-	"reason":"FilteredBlackList",
-	"filter_id":1,
-	"rule":"||doubleclick.net^",
-	"service_name": "...", // set if reason=FilteredBlockedService
-
-	// if reason=ReasonRewrite:
-	"cname": "...",
-	"ip_addrs": ["1.2.3.4", ...],
+		"reason":"FilteredBlackList",
+		"rules":{
+			"filter_list_id":42,
+			"text":"||doubleclick.net^",
+		},
+		// If we have "reason":"FilteredBlockedService".
+		"service_name": "...",
+		// If we have "reason":"Rewrite".
+		"cname": "...",
+		"ip_addrs": ["1.2.3.4", ...]
 	}
 
+There are also deprecated properties `filter_id` and `rule` on the top level of
+the response object.  Their usage should be replaced with
+`rules[*].filter_list_id` and `rules[*].text` correspondingly.  See the
+_OpenAPI_ documentation and the `./openapi/CHANGELOG.md` file.
 
 ## Log-in page
 
@@ -1605,3 +1946,85 @@ Response:
 	}
 
 If no client is configured then authentication is disabled and server sends an empty response.
+
+
+### Safe services
+
+Check if host name is blocked by SB/PC service:
+
+* For each host name component, search for the result in cache by the first 2 bytes of SHA-256 hashes of host name components (max. is 4, i.e. sub2.sub1.host.com), excluding TLD:
+
+		hashes[] = cache_search(sha256(host.com)[0..1])
+		...
+
+	If hash prefix is found, search for a full hash sum in the cached data.
+	If found, the host is blocked.
+	If not found, the host is not blocked - don't request data for this prefix from the Family server again.
+	If hash prefix is not found, request data for this prefix from the Family server.
+
+* Prepare query string which is generated from the first 2 bytes (converted to a 4-character string) of SHA-256 hashes of host name components (max. is 4, i.e. sub2.sub1.host.com), excluding TLD:
+
+		qs = ... + string(sha256(sub.host.com)[0..1]) + "." + string(sha256(host.com)[0..1]) + ".sb.dns.adguard.com."
+
+	For PC `.pc.dns.adguard.com` suffix is used.
+
+* Send TXT query to Family server, receive response which contains the array of complete hash sums of the blocked hosts
+
+* Check if one of received hash sums (`hashes[]`) matches hash sums for our host name
+
+		hashes[0] <> sha256(host.com)
+		hashes[0] <> sha256(sub.host.com)
+		hashes[1] <> sha256(host.com)
+		hashes[1] <> sha256(sub.host.com)
+		...
+
+* Store all received hash sums in cache:
+
+		sha256(host.com)[0..1] -> hashes[0],hashes[1],...
+		sha256(sub.host.com)[0..1] -> hashes[2],...
+		...
+
+## API: Get DNS over HTTPS .mobileconfig
+
+Request:
+
+	GET /apple/doh.mobileconfig
+
+Response:
+
+	200 OK
+	
+    DOH plist file
+
+## API: Get DNS over TLS .mobileconfig
+
+Request:
+
+	GET /apple/dot.mobileconfig
+
+Response:
+
+	200 OK
+
+    DOT plist file
+
+## ipset
+
+AGH can add IP addresses of the specified in configuration domain names to an ipset list.
+
+Prepare: user creates an ipset list and configures AGH for using it.
+
+	1. User --( ipset create my_ipset hash:ip ) -> OS
+	2. User --( ipset: host.com,host2.com/my_ipset )-> AGH
+
+		Syntax:
+
+			ipset: "DOMAIN[,DOMAIN].../IPSET1_NAME[,IPSET2_NAME]..."
+
+		IPv4 addresses are added to an ipset list with `ipv4` family, IPv6 addresses - to `ipv6` ipset list.
+
+Run-time: AGH adds IP addresses of a domain name to a corresponding ipset list.
+
+	1. AGH --( resolve host.com )-> upstream
+	2. AGH <-( host.com:[1.1.1.1,2.2.2.2] )-- upstream
+	3. AGH --( ipset.add(my_ipset, [1.1.1.1,2.2.2.2] ))-> OS

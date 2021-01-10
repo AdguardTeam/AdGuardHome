@@ -1,21 +1,23 @@
+//go:generate packr clean
+//go:generate packr -z
 package main
 
 import (
-	"runtime/debug"
-
-	"github.com/AdguardTeam/AdGuardHome/home"
+	"github.com/AdguardTeam/AdGuardHome/internal/home"
 )
 
-// version will be set through ldflags, contains current version
+// version is the release version.  It is set by the linker.
 var version = "undefined"
 
-// channel can be set via ldflags
+// channel is the release channel.  It is set by the linker.
 var channel = "release"
 
-// GOARM value - set via ldflags
+// goarm is the GOARM value.  It is set by the linker.
 var goarm = ""
 
+// gomips is the GOMIPS value.  It is set by the linker.
+var gomips = ""
+
 func main() {
-	debug.SetGCPercent(10)
-	home.Main(version, channel, goarm)
+	home.Main(version, channel, goarm, gomips)
 }

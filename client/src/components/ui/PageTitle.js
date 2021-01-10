@@ -3,24 +3,23 @@ import PropTypes from 'prop-types';
 
 import './PageTitle.css';
 
-const PageTitle = props => (
-    <div className="page-header">
-        <h1 className="page-title">
-            {props.title}
-            {props.children}
-        </h1>
-        {props.subtitle && (
-            <div className="page-subtitle">
-                {props.subtitle}
-            </div>
-        )}
+const PageTitle = ({
+    title, subtitle, children, containerClass,
+}) => <div className="page-header">
+    <div className={containerClass}>
+        <h1 className="page-title pr-2">{title}</h1>
+        {children}
     </div>
-);
+    {subtitle && <div className="page-subtitle">
+        {subtitle}
+    </div>}
+</div>;
 
 PageTitle.propTypes = {
     title: PropTypes.string.isRequired,
     subtitle: PropTypes.string,
     children: PropTypes.node,
+    containerClass: PropTypes.string,
 };
 
 export default PageTitle;

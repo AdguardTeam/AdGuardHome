@@ -1,6 +1,6 @@
 import { createAction } from 'redux-actions';
 import apiClient from '../api/Api';
-import { addErrorToast, addSuccessToast } from './index';
+import { addErrorToast, addSuccessToast } from './toasts';
 
 export const nextStep = createAction('NEXT_STEP');
 export const prevStep = createAction('PREV_STEP');
@@ -24,7 +24,7 @@ export const setAllSettingsRequest = createAction('SET_ALL_SETTINGS_REQUEST');
 export const setAllSettingsFailure = createAction('SET_ALL_SETTINGS_FAILURE');
 export const setAllSettingsSuccess = createAction('SET_ALL_SETTINGS_SUCCESS');
 
-export const setAllSettings = values => async (dispatch) => {
+export const setAllSettings = (values) => async (dispatch) => {
     dispatch(setAllSettingsRequest());
     try {
         const {
@@ -47,7 +47,7 @@ export const checkConfigRequest = createAction('CHECK_CONFIG_REQUEST');
 export const checkConfigFailure = createAction('CHECK_CONFIG_FAILURE');
 export const checkConfigSuccess = createAction('CHECK_CONFIG_SUCCESS');
 
-export const checkConfig = values => async (dispatch) => {
+export const checkConfig = (values) => async (dispatch) => {
     dispatch(checkConfigRequest());
     try {
         const check = await apiClient.checkConfig(values);

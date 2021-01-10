@@ -1,10 +1,9 @@
 import { createAction } from 'redux-actions';
-import { t } from 'i18next';
+import i18next from 'i18next';
 
 import apiClient from '../api/Api';
-import { addErrorToast, addSuccessToast } from './index';
-import { normalizeTextarea } from '../helpers/helpers';
-import { ACTION } from '../helpers/constants';
+import { addErrorToast, addSuccessToast } from './toasts';
+import { splitByNewLine } from '../helpers/helpers';
 
 export const getAccessListRequest = createAction('GET_ACCESS_LIST_REQUEST');
 export const getAccessListFailure = createAction('GET_ACCESS_LIST_FAILURE');
@@ -25,15 +24,15 @@ export const setAccessListRequest = createAction('SET_ACCESS_LIST_REQUEST');
 export const setAccessListFailure = createAction('SET_ACCESS_LIST_FAILURE');
 export const setAccessListSuccess = createAction('SET_ACCESS_LIST_SUCCESS');
 
-export const setAccessList = config => async (dispatch) => {
+export const setAccessList = (config) => async (dispatch) => {
     dispatch(setAccessListRequest());
     try {
         const { allowed_clients, disallowed_clients, blocked_hosts } = config;
 
         const values = {
-            allowed_clients: normalizeTextarea(allowed_clients),
-            disallowed_clients: normalizeTextarea(disallowed_clients),
-            blocked_hosts: normalizeTextarea(blocked_hosts),
+            allowed_clients: splitByNewLine(allowed_clients),
+            disallowed_clients: splitByNewLine(disallowed_clients),
+            blocked_hosts: splitByNewLine(blocked_hosts),
         };
 
         await apiClient.setAccessList(values);
@@ -49,19 +48,17 @@ export const toggleClientBlockRequest = createAction('TOGGLE_CLIENT_BLOCK_REQUES
 export const toggleClientBlockFailure = createAction('TOGGLE_CLIENT_BLOCK_FAILURE');
 export const toggleClientBlockSuccess = createAction('TOGGLE_CLIENT_BLOCK_SUCCESS');
 
-export const toggleClientBlock = (type, ip) => async (dispatch) => {
+export const toggleClientBlock = (ip, disallowed, disallowed_rule) => async (dispatch) => {
     dispatch(toggleClientBlockRequest());
     try {
-        const {
-            allowed_clients, disallowed_clients, blocked_hosts,
-        } = await apiClient.getAccessList();
-        let updatedDisallowedClients = disallowed_clients || [];
+        const accessList = await apiClient.getAccessList();
+        const allowed_clients = accessList.allowed_clients ?? [];
+        const blocked_hosts = accessList.blocked_hosts ?? [];
+        const disallowed_clients = accessList.disallowed_clients ?? [];
 
-        if (type === ACTION.unblock && updatedDisallowedClients.includes(ip)) {
-            updatedDisallowedClients = updatedDisallowedClients.filter(client => client !== ip);
-        } else if (type === ACTION.block && !updatedDisallowedClients.includes(ip)) {
-            updatedDisallowedClients.push(ip);
-        }
+        const updatedDisallowedClients = disallowed
+            ? disallowed_clients.filter((client) => client !== disallowed_rule)
+            : disallowed_clients.concat(ip);
 
         const values = {
             allowed_clients,
@@ -72,10 +69,10 @@ export const toggleClientBlock = (type, ip) => async (dispatch) => {
         await apiClient.setAccessList(values);
         dispatch(toggleClientBlockSuccess(values));
 
-        if (type === ACTION.unblock) {
-            dispatch(addSuccessToast(t('client_unblocked', { ip })));
-        } else if (type === ACTION.block) {
-            dispatch(addSuccessToast(t('client_blocked', { ip })));
+        if (disallowed) {
+            dispatch(addSuccessToast(i18next.t('client_unblocked', { ip: disallowed_rule })));
+        } else {
+            dispatch(addSuccessToast(i18next.t('client_blocked', { ip })));
         }
     } catch (error) {
         dispatch(addErrorToast({ error }));

@@ -11,7 +11,16 @@
 
 .card-table-overflow {
     overflow-y: auto;
-    max-height: 280px;
+    max-height: 100%;
+}
+
+.card-table-overflow--limited {
+    overflow-y: auto;
+    max-height: 17.5rem;
+}
+
+.dashboard .card-table-overflow--limited {
+    max-height: 18rem;
 }
 
 .card-actions {
@@ -71,7 +80,6 @@
 .card-body-stats {
     position: relative;
     flex: 1 1 auto;
-    height: calc(100% - 3rem);
     margin: 0;
     padding: 1rem 1.5rem;
 }
@@ -113,14 +121,20 @@
     }
 }
 
-.card .red {
+@media (min-width: 992px) {
+    .dashboard .card:not(.card--full) {
+        height: 22rem;
+    }
+}
+
+.card .logs__cell--red {
     background-color: #fff4f2;
 }
 
-.card .green {
+.card .logs__cell--green {
     background-color: #f1faf3;
 }
 
-.card .blue {
+.card .logs__row--blue {
     background-color: #ecf7ff;
 }

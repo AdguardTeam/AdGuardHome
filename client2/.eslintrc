@@ -1,0 +1,5 @@
+{
+    "extends": [
+        "./scripts/lint/dev.js"
+    ]
+}

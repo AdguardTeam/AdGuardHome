@@ -1,75 +1,33 @@
-.tooltip-custom {
-    position: relative;
-    top: -1px;
-    display: inline-block;
-    vertical-align: middle;
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-    margin-left: 5px;
-    background-image: url("./svg/help-circle.svg");
-    background-size: 100%;
+.tooltip-container {
+    border: 0;
+    padding: 0.7rem;
+    box-shadow: 1px 1px 6px rgba(0, 0, 0, 0.2);
+}
+
+.tooltip-custom--narrow {
+    max-width: 14rem;
+}
+
+.tooltip-custom--wide {
+    max-width: 18rem;
+}
+
+.tooltip-custom__trigger {
     cursor: pointer;
 }
 
-.tooltip-custom:before {
-    content: attr(data-tooltip);
-    display: block;
-    position: absolute;
-    bottom: calc(100% + 10px);
-    left: 50%;
-    padding: 10px 15px;
-    font-size: 0.85rem;
-    text-align: center;
-    color: #fff;
-    background-color: #585965;
-    border-radius: 3px;
-    transform: translateX(-50%);
-    visibility: hidden;
-    opacity: 0;
+.tooltip-custom__content-title {
+    margin-bottom: 0.1875rem;
 }
 
-.tooltip-custom:after {
-    content: "";
-    position: relative;
-    top: -7px;
-    left: calc(50% - 6px);
-    visibility: hidden;
-    opacity: 0;
-    width: 0;
-    height: 0;
-    border-left: 6px solid transparent;
-    border-right: 6px solid transparent;
-    border-top: 6px solid #585965;
+.tooltip-custom__content-item {
+    margin-bottom: 0.125rem;
 }
 
-.tooltip-custom:hover:before,
-.tooltip-custom:hover:after {
-    visibility: visible;
-    opacity: 1;
+.tooltip-custom__content-item:last-child {
+    margin-bottom: 0;
 }
 
-.tooltip-custom--narrow:before {
-    width: 220px;
-}
-
-.tooltip-custom--logs {
-    border-radius: 50%;
-    background-image: url("./svg/help-circle-gray.svg");
-    background-color: #fff;
-}
-
-.tooltip-custom--logs:before {
-    bottom: initial;
-    top: calc(100% + 10px);
-    right: -10px;
-    left: initial;
-    width: 255px;
-    transform: none;
-}
-
-.tooltip-custom--logs:after {
-    top: 8px;
-    border-top: none;
-    border-bottom: 6px solid #585965;
+.tooltip-custom__content-link {
+    color: var(--green-86);
 }

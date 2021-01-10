@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { withNamespaces } from 'react-i18next';
+import { withTranslation } from 'react-i18next';
 import debounce from 'lodash/debounce';
 
 import { DEBOUNCE_TIMEOUT, ENCRYPTION_SOURCE } from '../../../helpers/constants';
@@ -66,6 +66,7 @@ class Encryption extends Component {
             force_https,
             port_https,
             port_dns_over_tls,
+            port_dns_over_quic,
             certificate_chain,
             private_key,
             certificate_path,
@@ -78,6 +79,7 @@ class Encryption extends Component {
             force_https,
             port_https,
             port_dns_over_tls,
+            port_dns_over_quic,
             certificate_chain,
             private_key,
             certificate_path,
@@ -115,4 +117,4 @@ Encryption.propTypes = {
     t: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(Encryption);
+export default withTranslation()(Encryption);

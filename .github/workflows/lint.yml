@@ -1,0 +1,52 @@
+'name': 'lint'
+'on':
+  'push':
+    'tags':
+    - 'v*'
+    'branches':
+    - '*'
+  'pull_request':
+'jobs':
+  'go-lint':
+    'runs-on': 'ubuntu-latest'
+    'steps':
+    - 'uses': 'actions/checkout@v2'
+    - 'name': 'run-lint'
+      'run': >
+        make go-deps go-tools go-lint
+  'eslint':
+    'runs-on': 'ubuntu-latest'
+    'steps':
+    - 'uses': 'actions/checkout@v2'
+    - 'name': 'Install modules'
+      'run': 'npm --prefix="./client" ci'
+    - 'name': 'Run ESLint'
+      'run': 'npm --prefix="./client" run lint'
+  'notify':
+    'needs':
+    - 'go-lint'
+    - 'eslint'
+    # Secrets are not passed to workflows that are triggered by a pull request
+    # from a fork.
+    #
+    # Use always() to signal to the runner that this job must run even if the
+    # previous ones failed.
+    'if':
+      ${{ always() &&
+        (
+          github.event_name == 'push' ||
+          github.event.pull_request.head.repo.full_name == github.repository
+        )
+      }}
+    'runs-on': 'ubuntu-latest'
+    'steps':
+    - 'name': 'Conclusion'
+      'uses': 'technote-space/workflow-conclusion-action@v1'
+    - 'name': 'Send Slack notif'
+      'uses': '8398a7/action-slack@v3'
+      'with':
+        'status': '${{ env.WORKFLOW_CONCLUSION }}'
+        'fields': 'repo, message, commit, author, workflow'
+      'env':
+        'GITHUB_TOKEN': '${{ secrets.GITHUB_TOKEN }}'
+        'SLACK_WEBHOOK_URL': '${{ secrets.SLACK_WEBHOOK_URL }}'

@@ -4,58 +4,51 @@ import PropTypes from 'prop-types';
 import { getIpList, getDnsAddress, getWebAddress } from '../../helpers/helpers';
 import { ALL_INTERFACES_IP } from '../../helpers/constants';
 
-const AddressList = (props) => {
-    let webAddress = getWebAddress(props.address, props.port);
-    let dnsAddress = getDnsAddress(props.address, props.port);
+const renderItem = ({
+    ip, port, isDns,
+}) => {
+    const webAddress = getWebAddress(ip, port);
+    const dnsAddress = getDnsAddress(ip, port);
 
-    if (props.address === ALL_INTERFACES_IP) {
-        return getIpList(props.interfaces).map((ip) => {
-            webAddress = getWebAddress(ip, props.port);
-            dnsAddress = getDnsAddress(ip, props.port);
-
-            if (props.isDns) {
-                return (
-                    <li key={ip}>
-                        <strong>
-                            {dnsAddress}
-                        </strong>
-                    </li>
-                );
-            }
-
-            return (
-                <li key={ip}>
-                    <a href={webAddress}>
-                        {webAddress}
-                    </a>
-                </li>
-            );
-        });
+    return <li key={ip}>{isDns
+        ? <strong>{dnsAddress}</strong>
+        : <a href={webAddress} target="_blank" rel="noopener noreferrer">{webAddress}</a>
     }
-
-    if (props.isDns) {
-        return (
-            <strong>
-                {dnsAddress}
-            </strong>
-        );
-    }
-
-    return (
-        <a href={webAddress}>
-            {webAddress}
-        </a>
-    );
+    </li>;
 };
+
+const AddressList = ({
+    address,
+    interfaces,
+    port,
+    isDns,
+}) => <ul className="list-group pl-4">{
+    address === ALL_INTERFACES_IP
+        ? getIpList(interfaces)
+            .map((ip) => renderItem({
+                ip,
+                port,
+                isDns,
+            }))
+        : renderItem({
+            ip: address,
+            port,
+            isDns,
+        })
+}
+</ul>;
 
 AddressList.propTypes = {
     interfaces: PropTypes.object.isRequired,
     address: PropTypes.string.isRequired,
-    port: PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.number,
-    ]),
+    port: PropTypes.number.isRequired,
     isDns: PropTypes.bool,
+};
+
+renderItem.propTypes = {
+    ip: PropTypes.string.isRequired,
+    port: PropTypes.number.isRequired,
+    isDns: PropTypes.bool.isRequired,
 };
 
 export default AddressList;

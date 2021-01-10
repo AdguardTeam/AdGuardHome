@@ -1,6 +1,6 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { withNamespaces } from 'react-i18next';
+import { withTranslation } from 'react-i18next';
 
 import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
@@ -21,7 +21,7 @@ class DnsAllowlist extends Component {
         const { filtering } = this.props;
         const whitelist = true;
 
-        if (filtering.modalType === MODAL_TYPE.EDIT) {
+        if (filtering.modalType === MODAL_TYPE.EDIT_FILTERS) {
             this.props.editFilter(filtering.modalFilterUrl, values, whitelist);
         } else {
             this.props.addFilter(url, name, whitelist);
@@ -44,6 +44,10 @@ class DnsAllowlist extends Component {
         this.props.refreshFilters({ whitelist: true });
     };
 
+    openAddFiltersModal = () => {
+        this.props.toggleFilteringModal({ type: MODAL_TYPE.ADD_FILTERS });
+    };
+
     render() {
         const {
             t,
@@ -64,14 +68,15 @@ class DnsAllowlist extends Component {
             },
         } = this.props;
         const currentFilterData = getCurrentFilter(modalFilterUrl, whitelistFilters);
-        const loading = processingFilters
+        const loading = processingConfigFilter
+            || processingFilters
             || processingAddFilter
             || processingRemoveFilter
             || processingRefreshFilters;
         const whitelist = true;
 
         return (
-            <Fragment>
+            <>
                 <PageTitle
                     title={t('dns_allowlists')}
                     subtitle={t('dns_allowlists_desc')}
@@ -91,7 +96,7 @@ class DnsAllowlist extends Component {
                                     whitelist={whitelist}
                                 />
                                 <Actions
-                                    handleAdd={() => toggleFilteringModal({ type: MODAL_TYPE.ADD })}
+                                    handleAdd={this.openAddFiltersModal}
                                     handleRefresh={this.handleRefresh}
                                     processingRefreshFilters={processingRefreshFilters}
                                     whitelist={whitelist}
@@ -101,8 +106,9 @@ class DnsAllowlist extends Component {
                     </div>
                 </div>
                 <Modal
+                    filters={whitelistFilters}
                     isOpen={isModalOpen}
-                    toggleModal={toggleFilteringModal}
+                    toggleFilteringModal={toggleFilteringModal}
                     addFilter={addFilter}
                     isFilterAdded={isFilterAdded}
                     processingAddFilter={processingAddFilter}
@@ -112,7 +118,7 @@ class DnsAllowlist extends Component {
                     currentFilterData={currentFilterData}
                     whitelist={whitelist}
                 />
-            </Fragment>
+            </>
         );
     }
 }
@@ -130,4 +136,4 @@ DnsAllowlist.propTypes = {
     t: PropTypes.func.isRequired,
 };
 
-export default withNamespaces()(DnsAllowlist);
+export default withTranslation()(DnsAllowlist);

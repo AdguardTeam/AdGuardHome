@@ -2,8 +2,16 @@
     display: flex;
     justify-content: space-between;
     margin-bottom: 15px;
-    padding: 15px 0;
+    padding: 10px 0;
     border-bottom: 1px solid #e8e8e8;
+    overflow: auto;
+}
+
+@media screen and (min-width: 768px) {
+    .tabs__controls {
+        padding: 15px 0;
+        overflow: initial;
+    }
 }
 
 .tabs__controls--form {
@@ -26,9 +34,16 @@
     align-items: center;
     min-width: 70px;
     font-size: 13px;
+    white-space: nowrap;
     color: #555555;
     cursor: pointer;
     opacity: 0.6;
+}
+
+@media screen and (min-width: 768px) {
+    .tab__control {
+        white-space: normal;
+    }
 }
 
 .tab__control:hover,
@@ -37,7 +52,6 @@
 }
 
 .tab__control--active {
-    font-weight: 700;
     color: #4a4a4a;
     opacity: 1;
 }
