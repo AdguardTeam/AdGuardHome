@@ -116,10 +116,12 @@ nilness ./...
 # shadow --strict ./...
 
 # TODO(a.garipov): Enable errcheck fully after handling all errors,
-# including the deferred ones, properly.  Also, perhaps, enable --blank.
+# including the deferred and generated ones, properly.  Also, perhaps,
+# enable --blank.
+#
 # errcheck ./...
 exit_on_output sh -c '
-	errcheck --asserts ./... |\
+	errcheck --asserts --ignoregenerated ./... |\
 		{ grep -e "defer" -e "_test\.go:" -v || exit 0; }
 '
 
