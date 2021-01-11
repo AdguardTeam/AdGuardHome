@@ -371,9 +371,11 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		go func() {
 			_ = web.httpServer.Shutdown(context.TODO())
 		}()
-		go func() {
-			_ = web.httpServerBeta.Shutdown(context.TODO())
-		}()
+		if web.httpServerBeta != nil {
+			go func() {
+				_ = web.httpServerBeta.Shutdown(context.TODO())
+			}()
+		}
 	}
 }
 
