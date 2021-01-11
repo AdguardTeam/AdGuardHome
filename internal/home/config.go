@@ -177,7 +177,7 @@ func initConfig() {
 	config.DHCP.Conf4.ICMPTimeout = 1000
 	config.DHCP.Conf6.LeaseDuration = 86400
 
-	if updateChannel == "none" || updateChannel == "edge" {
+	if updateChannel == "none" || updateChannel == "edge" || updateChannel == "development" {
 		config.BetaBindPort = 3001
 	}
 }
