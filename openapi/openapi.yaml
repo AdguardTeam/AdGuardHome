@@ -2324,7 +2324,7 @@
       'type': 'object'
       'description': 'Login request data'
       'properties':
-        'username':
+        'name':
           'type': 'string'
           'description': 'User name'
         'password':
