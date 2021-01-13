@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/sysutil"
-	"github.com/AdguardTeam/AdGuardHome/internal/update"
+	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -47,13 +47,13 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var info update.VersionInfo
+	var info updater.VersionInfo
 	for i := 0; i != 3; i++ {
 		func() {
 			Context.controlLock.Lock()
 			defer Context.controlLock.Unlock()
 
-			info, err = Context.updater.GetVersionResponse(req.RecheckNow)
+			info, err = Context.updater.VersionInfo(req.RecheckNow)
 		}()
 
 		if err != nil {
@@ -75,7 +75,9 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 		break
 	}
 	if err != nil {
-		httpError(w, http.StatusBadGateway, "Couldn't get version check json from %s: %T %s\n", versionCheckURL, err, err)
+		vcu := Context.updater.VersionCheckURL()
+		httpError(w, http.StatusBadGateway, "Couldn't get version check json from %s: %T %s\n", vcu, err, err)
+
 		return
 	}
 
@@ -88,12 +90,12 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 
 // Perform an update procedure to the latest available version
 func handleUpdate(w http.ResponseWriter, _ *http.Request) {
-	if len(Context.updater.NewVersion) == 0 {
+	if Context.updater.NewVersion() == "" {
 		httpError(w, http.StatusBadRequest, "/update request isn't allowed now")
 		return
 	}
 
-	err := Context.updater.DoUpdate()
+	err := Context.updater.Update()
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "%s", err)
 		return
@@ -108,7 +110,7 @@ func handleUpdate(w http.ResponseWriter, _ *http.Request) {
 }
 
 // Convert version.json data to our JSON response
-func getVersionResp(info update.VersionInfo) []byte {
+func getVersionResp(info updater.VersionInfo) []byte {
 	ret := make(map[string]interface{})
 	ret["can_autoupdate"] = false
 	ret["new_version"] = info.NewVersion

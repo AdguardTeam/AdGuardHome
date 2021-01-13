@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
+	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/NYTimes/gziphandler"
 )
@@ -53,7 +54,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		"http_port":     config.BindPort,
 		"dns_port":      config.DNS.Port,
 		"running":       isRunning(),
-		"version":       versionString,
+		"version":       version.Version(),
 		"language":      config.Language,
 
 		"protection_enabled": c.ProtectionEnabled,
@@ -118,7 +119,7 @@ func registerControlHandlers() {
 }
 
 func httpRegister(method, url string, handler func(http.ResponseWriter, *http.Request)) {
-	if len(method) == 0 {
+	if method == "" {
 		// "/dns-query" handler doesn't need auth, gzip and isn't restricted by 1 HTTP method
 		Context.mux.HandleFunc(url, postInstall(handler))
 		return

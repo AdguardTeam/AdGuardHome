@@ -11,6 +11,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
+	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/file"
 	"github.com/AdguardTeam/golibs/log"
 	yaml "gopkg.in/yaml.v2"
@@ -177,7 +178,7 @@ func initConfig() {
 	config.DHCP.Conf4.ICMPTimeout = 1000
 	config.DHCP.Conf6.LeaseDuration = 86400
 
-	if updateChannel == "none" || updateChannel == "edge" || updateChannel == "development" {
+	if ch := version.Channel(); ch == "edge" || ch == "development" {
 		config.BetaBindPort = 3001
 	}
 }

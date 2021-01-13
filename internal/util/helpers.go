@@ -26,7 +26,7 @@ func ContainsString(strs []string, str string) bool {
 // FileExists returns true if file exists.
 func FileExists(fn string) bool {
 	_, err := os.Stat(fn)
-	return err == nil
+	return err == nil || !os.IsNotExist(err)
 }
 
 // RunCommand runs shell command.

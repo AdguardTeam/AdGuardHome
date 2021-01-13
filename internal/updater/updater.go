@@ -1,5 +1,5 @@
-// Package update provides an updater for AdGuardHome.
-package update
+// Package updater provides an updater for AdGuardHome.
+package updater
 
 import (
 	"archive/tar"
@@ -9,62 +9,106 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
+	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// Updater - Updater
+// Updater is the AdGuard Home updater.
 type Updater struct {
-	Config // Updater configuration
+	client *http.Client
 
+	version string
+	channel string
+	goarch  string
+	goos    string
+	goarm   string
+	gomips  string
+
+	workDir         string
+	confName        string
+	versionCheckURL string
+
+	// mu protects all fields below.
+	mu *sync.RWMutex
+
+	// TODO(a.garipov): See if all of these fields actually have to be in
+	// this struct.
 	currentExeName string // current binary executable
-	updateDir      string // "work_dir/agh-update-v0.103.0"
-	packageName    string // "work_dir/agh-update-v0.103.0/pkg_name.tar.gz"
-	backupDir      string // "work_dir/agh-backup"
-	backupExeName  string // "work_dir/agh-backup/AdGuardHome[.exe]"
-	updateExeName  string // "work_dir/agh-update-v0.103.0/AdGuardHome[.exe]"
+	updateDir      string // "workDir/agh-update-v0.103.0"
+	packageName    string // "workDir/agh-update-v0.103.0/pkg_name.tar.gz"
+	backupDir      string // "workDir/agh-backup"
+	backupExeName  string // "workDir/agh-backup/AdGuardHome[.exe]"
+	updateExeName  string // "workDir/agh-update-v0.103.0/AdGuardHome[.exe]"
 	unpackedFiles  []string
 
-	// cached version.json to avoid hammering github.io for each page reload
-	versionJSON          []byte
-	versionCheckLastTime time.Time
+	newVersion string
+	packageURL string
+
+	// Cached fields to prevent too many API requests.
+	prevCheckError  error
+	prevCheckTime   time.Time
+	prevCheckResult VersionInfo
 }
 
-// Config - updater config
+// Config is the AdGuard Home updater configuration.
 type Config struct {
 	Client *http.Client
 
-	VersionURL    string // version.json URL
-	VersionString string
-	OS            string // GOOS
-	Arch          string // GOARCH
-	ARMVersion    string // ARM version, e.g. "6"
-	NewVersion    string // VersionInfo.NewVersion
-	PackageURL    string // VersionInfo.PackageURL
-	ConfigName    string // current config file ".../AdGuardHome.yaml"
-	WorkDir       string // updater work dir (where backup/upd dirs will be created)
+	Version string
+	Channel string
+	GOARCH  string
+	GOOS    string
+	GOARM   string
+	GOMIPS  string
+
+	// ConfName is the name of the current configuration file.  Typically,
+	// "AdGuardHome.yaml".
+	ConfName string
+	// WorkDir is the working directory that is used for temporary files.
+	WorkDir string
 }
 
-// NewUpdater - creates a new instance of the Updater
-func NewUpdater(cfg Config) *Updater {
+// NewUpdater creates a new Updater.
+func NewUpdater(conf *Config) *Updater {
+	u := &url.URL{
+		Scheme: "https",
+		Host:   "static.adguard.com",
+		Path:   path.Join("adguardhome", conf.Channel, "version.json"),
+	}
 	return &Updater{
-		Config: cfg,
+		client: conf.Client,
+
+		version: conf.Version,
+		channel: conf.Channel,
+		goarch:  conf.GOARCH,
+		goos:    conf.GOOS,
+		goarm:   conf.GOARM,
+		gomips:  conf.GOMIPS,
+
+		confName:        conf.ConfName,
+		workDir:         conf.WorkDir,
+		versionCheckURL: u.String(),
+
+		mu: &sync.RWMutex{},
 	}
 }
 
-// DoUpdate - conducts the auto-update
-// 1. Downloads the update file
-// 2. Unpacks it and checks the contents
-// 3. Backups the current version and configuration
-// 4. Replaces the old files
-func (u *Updater) DoUpdate() error {
+// Update performs the auto-update.
+func (u *Updater) Update() error {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+
 	err := u.prepare()
 	if err != nil {
 		return err
@@ -72,7 +116,7 @@ func (u *Updater) DoUpdate() error {
 
 	defer u.clean()
 
-	err = u.downloadPackageFile(u.PackageURL, u.packageName)
+	err = u.downloadPackageFile(u.packageURL, u.packageName)
 	if err != nil {
 		return err
 	}
@@ -84,7 +128,6 @@ func (u *Updater) DoUpdate() error {
 
 	err = u.check()
 	if err != nil {
-		u.clean()
 		return err
 	}
 
@@ -101,40 +144,57 @@ func (u *Updater) DoUpdate() error {
 	return nil
 }
 
-func (u *Updater) prepare() error {
-	u.updateDir = filepath.Join(u.WorkDir, fmt.Sprintf("agh-update-%s", u.NewVersion))
+// NewVersion returns the available new version.
+func (u *Updater) NewVersion() (nv string) {
+	u.mu.RLock()
+	defer u.mu.RUnlock()
 
-	_, pkgNameOnly := filepath.Split(u.PackageURL)
-	if len(pkgNameOnly) == 0 {
+	return u.newVersion
+}
+
+// VersionCheckURL returns the version check URL.
+func (u *Updater) VersionCheckURL() (vcu string) {
+	u.mu.RLock()
+	defer u.mu.RUnlock()
+
+	return u.versionCheckURL
+}
+
+func (u *Updater) prepare() error {
+	u.updateDir = filepath.Join(u.workDir, fmt.Sprintf("agh-update-%s", u.newVersion))
+
+	_, pkgNameOnly := filepath.Split(u.packageURL)
+	if pkgNameOnly == "" {
 		return fmt.Errorf("invalid PackageURL")
 	}
+
 	u.packageName = filepath.Join(u.updateDir, pkgNameOnly)
-	u.backupDir = filepath.Join(u.WorkDir, "agh-backup")
+	u.backupDir = filepath.Join(u.workDir, "agh-backup")
 
 	exeName := "AdGuardHome"
-	if u.OS == "windows" {
+	if u.goos == "windows" {
 		exeName = "AdGuardHome.exe"
 	}
 
 	u.backupExeName = filepath.Join(u.backupDir, exeName)
 	u.updateExeName = filepath.Join(u.updateDir, exeName)
 
-	log.Info("Updating from %s to %s.  URL:%s",
-		u.VersionString, u.NewVersion, u.PackageURL)
+	log.Info("Updating from %s to %s.  URL:%s", version.Version(), u.newVersion, u.packageURL)
 
-	// If the binary file isn't found in working directory, we won't be able to auto-update
-	// Getting the full path to the current binary file on UNIX and checking write permissions
-	//  is more difficult.
-	u.currentExeName = filepath.Join(u.WorkDir, exeName)
+	// If the binary file isn't found in working directory, we won't be able
+	// to auto-update.  Getting the full path to the current binary file on
+	// Unix and checking write permissions is more difficult.
+	u.currentExeName = filepath.Join(u.workDir, exeName)
 	if !util.FileExists(u.currentExeName) {
 		return fmt.Errorf("executable file %s doesn't exist", u.currentExeName)
 	}
+
 	return nil
 }
 
 func (u *Updater) unpack() error {
 	var err error
-	_, pkgNameOnly := filepath.Split(u.PackageURL)
+	_, pkgNameOnly := filepath.Split(u.packageURL)
 
 	log.Debug("updater: unpacking the package")
 	if strings.HasSuffix(pkgNameOnly, ".zip") {
@@ -158,7 +218,7 @@ func (u *Updater) unpack() error {
 
 func (u *Updater) check() error {
 	log.Debug("updater: checking configuration")
-	err := copyFile(u.ConfigName, filepath.Join(u.updateDir, "AdGuardHome.yaml"))
+	err := copyFile(u.confName, filepath.Join(u.updateDir, "AdGuardHome.yaml"))
 	if err != nil {
 		return fmt.Errorf("copyFile() failed: %w", err)
 	}
@@ -173,27 +233,25 @@ func (u *Updater) check() error {
 func (u *Updater) backup() error {
 	log.Debug("updater: backing up the current configuration")
 	_ = os.Mkdir(u.backupDir, 0o755)
-	err := copyFile(u.ConfigName, filepath.Join(u.backupDir, "AdGuardHome.yaml"))
+	err := copyFile(u.confName, filepath.Join(u.backupDir, "AdGuardHome.yaml"))
 	if err != nil {
 		return fmt.Errorf("copyFile() failed: %w", err)
 	}
 
-	// workdir/README.md -> backup/README.md
-	err = copySupportingFiles(u.unpackedFiles, u.WorkDir, u.backupDir)
+	wd := u.workDir
+	err = copySupportingFiles(u.unpackedFiles, wd, u.backupDir)
 	if err != nil {
 		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %s",
-			u.WorkDir, u.backupDir, err)
+			wd, u.backupDir, err)
 	}
 
 	return nil
 }
 
 func (u *Updater) replace() error {
-	// update/README.md -> workdir/README.md
-	err := copySupportingFiles(u.unpackedFiles, u.updateDir, u.WorkDir)
+	err := copySupportingFiles(u.unpackedFiles, u.updateDir, u.workDir)
 	if err != nil {
-		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %s",
-			u.updateDir, u.WorkDir, err)
+		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %s", u.updateDir, u.workDir, err)
 	}
 
 	log.Debug("updater: renaming: %s -> %s", u.currentExeName, u.backupExeName)
@@ -202,7 +260,7 @@ func (u *Updater) replace() error {
 		return err
 	}
 
-	if u.OS == "windows" {
+	if u.goos == "windows" {
 		// rename fails with "File in use" error
 		err = copyFile(u.updateExeName, u.currentExeName)
 	} else {
@@ -211,7 +269,9 @@ func (u *Updater) replace() error {
 	if err != nil {
 		return err
 	}
+
 	log.Debug("updater: renamed: %s -> %s", u.updateExeName, u.currentExeName)
+
 	return nil
 }
 
@@ -226,7 +286,7 @@ const MaxPackageFileSize = 32 * 1024 * 1024
 
 // Download package file and save it to disk
 func (u *Updater) downloadPackageFile(url, filename string) error {
-	resp, err := u.Client.Get(url)
+	resp, err := u.client.Get(url)
 	if err != nil {
 		return fmt.Errorf("http request failed: %w", err)
 	}
@@ -288,7 +348,7 @@ func tarGzFileUnpack(tarfile, outdir string) ([]string, error) {
 		}
 
 		_, inputNameOnly := filepath.Split(header.Name)
-		if len(inputNameOnly) == 0 {
+		if inputNameOnly == "" {
 			continue
 		}
 
@@ -355,7 +415,7 @@ func zipFileUnpack(zipfile, outdir string) ([]string, error) {
 
 		fi := zf.FileInfo()
 		inputNameOnly := fi.Name()
-		if len(inputNameOnly) == 0 {
+		if inputNameOnly == "" {
 			continue
 		}
 

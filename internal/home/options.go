@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+
+	"github.com/AdguardTeam/AdGuardHome/internal/version"
 )
 
 // options passed from command-line arguments
@@ -180,7 +182,7 @@ var versionArg = arg{
 	"Show the version and exit",
 	"version", "",
 	nil, nil, func(o options, exec string) (effect, error) {
-		return func() error { fmt.Println(version()); os.Exit(0); return nil }, nil
+		return func() error { fmt.Println(version.Full()); os.Exit(0); return nil }, nil
 	},
 	func(o options) []string { return nil },
 }

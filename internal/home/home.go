@@ -27,8 +27,9 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/AdGuardHome/internal/sysutil"
-	"github.com/AdguardTeam/AdGuardHome/internal/update"
+	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
+	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/log"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
@@ -36,15 +37,6 @@ import (
 const (
 	// Used in config to indicate that syslog or eventlog (win) should be used for logger output
 	configSyslog = "syslog"
-)
-
-// Update-related variables
-var (
-	versionString   = "dev"
-	updateChannel   = "none"
-	versionCheckURL = ""
-	ARMVersion      = ""
-	MIPSVersion     = ""
 )
 
 // Global context
@@ -65,7 +57,7 @@ type homeContext struct {
 	web        *Web                 // Web (HTTP, HTTPS) module
 	tls        *TLSMod              // TLS module
 	autoHosts  util.AutoHosts       // IP-hostname pairs taken from system configuration (e.g. /etc/hosts) files
-	updater    *update.Updater
+	updater    *updater.Updater
 
 	ipDetector *ipDetector
 
@@ -99,14 +91,7 @@ func (c *homeContext) getDataDir() string {
 var Context homeContext
 
 // Main is the entry point
-func Main(version, channel, armVer, mipsVer string) {
-	// Init update-related global variables
-	versionString = version
-	updateChannel = channel
-	ARMVersion = armVer
-	MIPSVersion = mipsVer
-	versionCheckURL = "https://static.adguard.com/adguardhome/" + updateChannel + "/version.json"
-
+func Main() {
 	// config can be specified, which reads options from there, but other command line flags have to override config values
 	// therefore, we must do it manually instead of using a lib
 	args := loadOptions()
@@ -137,20 +122,6 @@ func Main(version, channel, armVer, mipsVer string) {
 
 	// run the protection
 	run(args)
-}
-
-// version - returns the current version string
-func version() string {
-	// TODO(a.garipov): I'm pretty sure we can extract some of this stuff
-	// from the build info.
-	msg := "AdGuard Home, version %s, channel %s, arch %s %s"
-	if ARMVersion != "" {
-		msg = msg + " v" + ARMVersion
-	} else if MIPSVersion != "" {
-		msg = msg + " " + MIPSVersion
-	}
-
-	return fmt.Sprintf(msg, versionString, updateChannel, runtime.GOOS, runtime.GOARCH)
 }
 
 func setupContext(args options) {
@@ -214,15 +185,16 @@ func setupConfig(args options) {
 
 	Context.autoHosts.Init("")
 
-	Context.updater = update.NewUpdater(update.Config{
-		Client:        Context.client,
-		WorkDir:       Context.workDir,
-		VersionURL:    versionCheckURL,
-		VersionString: versionString,
-		OS:            runtime.GOOS,
-		Arch:          runtime.GOARCH,
-		ARMVersion:    ARMVersion,
-		ConfigName:    config.getConfigFilename(),
+	Context.updater = updater.NewUpdater(&updater.Config{
+		Client:   Context.client,
+		Version:  version.Version(),
+		Channel:  version.Channel(),
+		GOARCH:   runtime.GOARCH,
+		GOOS:     runtime.GOOS,
+		GOARM:    version.GOARM(),
+		GOMIPS:   version.GOMIPS(),
+		WorkDir:  Context.workDir,
+		ConfName: config.getConfigFilename(),
 	})
 
 	Context.clients.Init(config.Clients, Context.dhcpServer, &Context.autoHosts)
@@ -260,7 +232,7 @@ func run(args options) {
 	memoryUsage(args)
 
 	// print the first message after logger is configured
-	log.Println(version())
+	log.Println(version.Full())
 	log.Debug("Current working directory is %s", Context.workDir)
 	if args.runningAsService {
 		log.Info("AdGuard Home is running as a service")
@@ -690,10 +662,11 @@ func customDialContext(ctx context.Context, network, addr string) (net.Conn, err
 	return nil, agherr.Many(fmt.Sprintf("couldn't dial to %s", addr), dialErrs...)
 }
 
-func getHTTPProxy(req *http.Request) (*url.URL, error) {
-	if len(config.ProxyURL) == 0 {
+func getHTTPProxy(_ *http.Request) (*url.URL, error) {
+	if config.ProxyURL == "" {
 		return nil, nil
 	}
+
 	return url.Parse(config.ProxyURL)
 }
 

@@ -46,6 +46,14 @@ The rules are mostly sorted in the alphabetical order.
 
  *  Avoid `new`, especially with structs.
 
+ *  Check against empty strings like this:
+
+    ```go
+    if s == "" {
+            // …
+    }
+    ```
+
  *  Constructors should validate their arguments and return meaningful errors.
     As a corollary, avoid lazy initialization.
 

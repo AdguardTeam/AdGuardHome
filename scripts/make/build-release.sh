@@ -319,6 +319,17 @@ echo "{
   \"selfupdate_min_version\": \"0.0\",
 " >> "$version_json"
 
+# Add the old object keys for compatibility with pre-v0.105.0 MIPS that
+# did not mention the softfloat variant.
+#
+# TODO(a.garipov): Remove this around the time we hit v0.107.0.
+echo "
+  \"download_linux_mips\": \"${version_download_url}/AdGuardHome_linux_mips_softfloat.tar.gz\",
+  \"download_linux_mipsle\": \"${version_download_url}/AdGuardHome_linux_mipsle_softfloat.tar.gz\",
+  \"download_linux_mips64\": \"${version_download_url}/AdGuardHome_linux_mips64_softfloat.tar.gz\",
+  \"download_linux_mips64le\": \"${version_download_url}/AdGuardHome_linux_mips64le_softfloat.tar.gz\",
+" >> "$version_json"
+
 (
 	# Use +f here so that ls works and we don't need to use find.
 	set +f

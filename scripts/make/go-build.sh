@@ -54,17 +54,18 @@ esac
 # TODO(a.garipov): Additional validation?
 version="$VERSION"
 
-# Set the linker flags accordingly: set the channel and the versio as
-# well as goarm and gomips variable values, if the variables are set and
-# are not empty.
-ldflags="-s -w -X main.version=${version}"
-ldflags="${ldflags} -X main.channel=${channel}"
+# Set the linker flags accordingly: set the realease channel and the
+# current version as well as goarm and gomips variable values, if the
+# variables are set and are not empty.
+readonly version_pkg='github.com/AdguardTeam/AdGuardHome/internal/version'
+ldflags="-s -w -X ${version_pkg}.version=${version}"
+ldflags="${ldflags} -X ${version_pkg}.channel=${channel}"
 if [ "${GOARM:-}" != '' ]
 then
-	ldflags="${ldflags} -X main.goarm=${GOARM}"
+	ldflags="${ldflags} -X ${version_pkg}.goarm=${GOARM}"
 elif [ "${GOMIPS:-}" != '' ]
 then
-	ldflags="${ldflags} -X main.gomips=${GOMIPS}"
+	ldflags="${ldflags} -X ${version_pkg}.gomips=${GOMIPS}"
 fi
 
 # Allow users to limit the build's parallelism.
