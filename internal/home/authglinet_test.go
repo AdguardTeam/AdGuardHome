@@ -36,7 +36,7 @@ func TestAuthGL(t *testing.T) {
 		binary.BigEndian.PutUint32(data, tval)
 	}
 	assert.Nil(t, ioutil.WriteFile(glFilePrefix+"test", data, 0o644))
-	r, _ := http.NewRequest("GET", "http://localhost/", nil)
+	r, _ := http.NewRequest(http.MethodGet, "http://localhost/", nil)
 	r.AddCookie(&http.Cookie{Name: glCookieName, Value: "test"})
 	assert.True(t, glProcessCookie(r))
 	GLMode = false

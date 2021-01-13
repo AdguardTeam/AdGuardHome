@@ -369,8 +369,8 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 
 // RegisterAuthHandlers - register handlers
 func RegisterAuthHandlers() {
-	Context.mux.Handle("/control/login", postInstallHandler(ensureHandler("POST", handleLogin)))
-	httpRegister("GET", "/control/logout", handleLogout)
+	Context.mux.Handle("/control/login", postInstallHandler(ensureHandler(http.MethodPost, handleLogin)))
+	httpRegister(http.MethodGet, "/control/logout", handleLogout)
 }
 
 func parseCookie(cookie string) string {

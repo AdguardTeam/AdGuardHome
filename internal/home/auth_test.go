@@ -119,7 +119,7 @@ func TestAuthHTTP(t *testing.T) {
 	w.hdr = make(http.Header)
 	r := http.Request{}
 	r.Header = make(http.Header)
-	r.Method = "GET"
+	r.Method = http.MethodGet
 
 	// get / - we're redirected to login page
 	r.URL = &url.URL{Path: "/"}

@@ -43,7 +43,7 @@ func addDNSAddress(dnsAddresses *[]string, addr string) {
 	*dnsAddresses = append(*dnsAddresses, addr)
 }
 
-func handleStatus(w http.ResponseWriter, r *http.Request) {
+func handleStatus(w http.ResponseWriter, _ *http.Request) {
 	c := dnsforward.FilteringConfig{}
 	if Context.dnsServer != nil {
 		Context.dnsServer.WriteDiskConfig(&c)
@@ -140,7 +140,7 @@ func ensure(method string, handler func(http.ResponseWriter, *http.Request)) fun
 			return
 		}
 
-		if method == "POST" || method == "PUT" || method == "DELETE" {
+		if method == http.MethodPost || method == http.MethodPut || method == http.MethodDelete {
 			Context.controlLock.Lock()
 			defer Context.controlLock.Unlock()
 		}
@@ -150,11 +150,11 @@ func ensure(method string, handler func(http.ResponseWriter, *http.Request)) fun
 }
 
 func ensurePOST(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
-	return ensure("POST", handler)
+	return ensure(http.MethodPost, handler)
 }
 
 func ensureGET(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
-	return ensure("GET", handler)
+	return ensure(http.MethodGet, handler)
 }
 
 // Bridge between http.Handler object and Go function

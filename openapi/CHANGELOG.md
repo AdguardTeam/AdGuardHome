@@ -62,6 +62,8 @@
 
   The old fields will be removed in v0.106.0.
 
+As well as other documentation fixes.
+
 ## v0.103: API changes
 
 ### API: replace settings in GET /control/dns_info & POST /control/dns_config

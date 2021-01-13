@@ -608,7 +608,7 @@
             'application/json':
               'schema':
                 'type': 'object'
-                'parameters':
+                'properties':
                   'enabled':
                     'type': 'boolean'
               'examples':
@@ -664,7 +664,7 @@
             'application/json':
               'schema':
                 'type': 'object'
-                'parameters':
+                'properties':
                   'enable':
                     'type': 'boolean'
                   'sensitivity':
@@ -705,7 +705,7 @@
             'application/json':
               'schema':
                 'type': 'object'
-                'parameters':
+                'properties':
                   'enabled':
                     'type': 'boolean'
               'examples':
@@ -789,6 +789,39 @@
             'application/json':
               'schema':
                 '$ref': '#/components/schemas/ClientsFindResponse'
+  '/access/list':
+    'get':
+      'operationId': 'accessList'
+      'responses':
+        '200':
+          'description': 'OK.'
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/AccessListResponse'
+      'summary': 'List (dis)allowed clients, blocked hosts, etc.'
+      'tags':
+      - 'clients'
+  '/access/set':
+    'post':
+      'operationId': 'accessSet'
+      'requestBody':
+        'content':
+          'application/json':
+            'schema':
+              '$ref': '#/components/schemas/AccessSetRequest'
+        'required': true
+      'responses':
+        '200':
+          'description': 'OK.'
+        '400':
+          'description': >
+            Failed to parse JSON or cannot save the list.
+        '500':
+          'description': 'Internal error.'
+      'summary': 'Set (dis)allowed clients, blocked hosts, etc.'
+      'tags':
+      - 'clients'
   '/blocked_services/list':
     'get':
       'tags':
@@ -1124,30 +1157,34 @@
       'type': 'object'
       'description': 'AdGuard Home server status and configuration'
       'required':
-      - 'dns_address'
+      - 'dns_addresses'
       - 'dns_port'
+      - 'http_port'
       - 'protection_enabled'
-      - 'querylog_enabled'
       - 'running'
-      - 'bootstrap_dns'
-      - 'upstream_dns'
       - 'version'
       - 'language'
       'properties':
-        'dns_address':
-          'type': 'string'
-          'example': '127.0.0.1'
+        'dns_addresses':
+          'example': ['127.0.0.1']
+          'items':
+            'type': 'string'
+          'type': 'array'
         'dns_port':
           'type': 'integer'
           'format': 'uint16'
           'example': 53
           'minimum': 1
           'maximum': 65535
+        'http_port':
+          'type': 'integer'
+          'format': 'uint16'
+          'example': 80
+          'minimum': 1
+          'maximum': 65535
         'protection_enabled':
           'type': 'boolean'
         'dhcp_available':
-          'type': 'boolean'
-        'querylog_enabled':
           'type': 'boolean'
         'running':
           'type': 'boolean'
@@ -2077,6 +2114,29 @@
       'description': 'Response to clients find operation'
       'items':
         '$ref': '#/components/schemas/ClientsFindEntry'
+    'AccessListResponse':
+      '$ref': '#/components/schemas/AccessList'
+    'AccessSetRequest':
+      '$ref': '#/components/schemas/AccessList'
+    'AccessList':
+      'description': 'Client and host access list'
+      'properties':
+        'allowed_clients':
+          'description': 'Allowlist of clients.'
+          'items':
+            'type': 'string'
+          'type': 'array'
+        'disallowed_clients':
+          'description': 'Blocklist of clients.'
+          'items':
+            'type': 'string'
+          'type': 'array'
+        'blocked_hosts':
+          'description': 'Blocklist of hosts.'
+          'items':
+            'type': 'string'
+          'type': 'array'
+      'type': 'object'
     'ClientsFindEntry':
       'type': 'object'
       'additionalProperties':
@@ -2249,7 +2309,6 @@
         'status':
           'type': 'string'
           'default': ''
-          'example': ''
         'can_autofix':
           'type': 'boolean'
           'example': false
@@ -2274,7 +2333,6 @@
         'error':
           'type': 'string'
           'default': ''
-          'example': ''
           'description': 'Error text. Set if static=error'
     'InitialConfigurationBeta':
       'type': 'object'

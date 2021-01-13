@@ -522,12 +522,12 @@ func (s *Server) handleDOH(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) registerHandlers() {
-	s.conf.HTTPRegister("GET", "/control/dns_info", s.handleGetConfig)
-	s.conf.HTTPRegister("POST", "/control/dns_config", s.handleSetConfig)
-	s.conf.HTTPRegister("POST", "/control/test_upstream_dns", s.handleTestUpstreamDNS)
+	s.conf.HTTPRegister(http.MethodGet, "/control/dns_info", s.handleGetConfig)
+	s.conf.HTTPRegister(http.MethodPost, "/control/dns_config", s.handleSetConfig)
+	s.conf.HTTPRegister(http.MethodPost, "/control/test_upstream_dns", s.handleTestUpstreamDNS)
 
-	s.conf.HTTPRegister("GET", "/control/access/list", s.handleAccessList)
-	s.conf.HTTPRegister("POST", "/control/access/set", s.handleAccessSet)
+	s.conf.HTTPRegister(http.MethodGet, "/control/access/list", s.handleAccessList)
+	s.conf.HTTPRegister(http.MethodPost, "/control/access/set", s.handleAccessSet)
 
 	s.conf.HTTPRegister("", "/dns-query", s.handleDOH)
 }
