@@ -129,7 +129,7 @@ func ifaceSetStaticIP(ifaceName string) (err error) {
 		return err
 	}
 	gatewayIP := GatewayIP(ifaceName)
-	add := updateStaticIPdhcpcdConf(ifaceName, ip, gatewayIP, ip4.String())
+	add := updateStaticIPdhcpcdConf(ifaceName, ip, gatewayIP, ip4)
 
 	body, err := ioutil.ReadFile("/etc/dhcpcd.conf")
 	if err != nil {
@@ -147,14 +147,14 @@ func ifaceSetStaticIP(ifaceName string) (err error) {
 
 // updateStaticIPdhcpcdConf sets static IP address for the interface by writing
 // into dhcpd.conf.
-func updateStaticIPdhcpcdConf(ifaceName, ip, gatewayIP, dnsIP string) string {
+func updateStaticIPdhcpcdConf(ifaceName, ip string, gatewayIP, dnsIP net.IP) string {
 	var body []byte
 
 	add := fmt.Sprintf("\ninterface %s\nstatic ip_address=%s\n",
 		ifaceName, ip)
 	body = append(body, []byte(add)...)
 
-	if len(gatewayIP) != 0 {
+	if gatewayIP != nil {
 		add = fmt.Sprintf("static routers=%s\n",
 			gatewayIP)
 		body = append(body, []byte(add)...)

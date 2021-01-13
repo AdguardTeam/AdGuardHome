@@ -23,7 +23,7 @@ func TestHandleMobileConfigDOH(t *testing.T) {
 		_, err = plist.Unmarshal(w.Body.Bytes(), &mc)
 		assert.Nil(t, err)
 
-		if assert.Equal(t, 1, len(mc.PayloadContent)) {
+		if assert.Len(t, mc.PayloadContent, 1) {
 			assert.Equal(t, "example.org DoH", mc.PayloadContent[0].Name)
 			assert.Equal(t, "example.org DoH", mc.PayloadContent[0].PayloadDisplayName)
 			assert.Equal(t, "example.org", mc.PayloadContent[0].DNSSettings.ServerName)
@@ -51,7 +51,7 @@ func TestHandleMobileConfigDOH(t *testing.T) {
 		_, err = plist.Unmarshal(w.Body.Bytes(), &mc)
 		assert.Nil(t, err)
 
-		if assert.Equal(t, 1, len(mc.PayloadContent)) {
+		if assert.Len(t, mc.PayloadContent, 1) {
 			assert.Equal(t, "example.org DoH", mc.PayloadContent[0].Name)
 			assert.Equal(t, "example.org DoH", mc.PayloadContent[0].PayloadDisplayName)
 			assert.Equal(t, "example.org", mc.PayloadContent[0].DNSSettings.ServerName)
@@ -89,7 +89,7 @@ func TestHandleMobileConfigDOT(t *testing.T) {
 		_, err = plist.Unmarshal(w.Body.Bytes(), &mc)
 		assert.Nil(t, err)
 
-		if assert.Equal(t, 1, len(mc.PayloadContent)) {
+		if assert.Len(t, mc.PayloadContent, 1) {
 			assert.Equal(t, "example.org DoT", mc.PayloadContent[0].Name)
 			assert.Equal(t, "example.org DoT", mc.PayloadContent[0].PayloadDisplayName)
 			assert.Equal(t, "example.org", mc.PayloadContent[0].DNSSettings.ServerName)
@@ -116,7 +116,7 @@ func TestHandleMobileConfigDOT(t *testing.T) {
 		_, err = plist.Unmarshal(w.Body.Bytes(), &mc)
 		assert.Nil(t, err)
 
-		if assert.Equal(t, 1, len(mc.PayloadContent)) {
+		if assert.Len(t, mc.PayloadContent, 1) {
 			assert.Equal(t, "example.org DoT", mc.PayloadContent[0].Name)
 			assert.Equal(t, "example.org DoT", mc.PayloadContent[0].PayloadDisplayName)
 			assert.Equal(t, "example.org", mc.PayloadContent[0].DNSSettings.ServerName)

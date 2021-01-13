@@ -56,7 +56,7 @@ func TestQueryLog(t *testing.T) {
 	// get all entries
 	params := newSearchParams()
 	entries, _ := l.search(params)
-	assert.Equal(t, 4, len(entries))
+	assert.Len(t, entries, 4)
 	assertLogEntry(t, entries[0], "example.com", "1.1.1.4", "2.2.2.4")
 	assertLogEntry(t, entries[1], "test.example.org", "1.1.1.3", "2.2.2.3")
 	assertLogEntry(t, entries[2], "example.org", "1.1.1.2", "2.2.2.2")
@@ -70,7 +70,7 @@ func TestQueryLog(t *testing.T) {
 		value:        "TEST.example.org",
 	})
 	entries, _ = l.search(params)
-	assert.Equal(t, 1, len(entries))
+	assert.Len(t, entries, 1)
 	assertLogEntry(t, entries[0], "test.example.org", "1.1.1.3", "2.2.2.3")
 
 	// search by domain (not strict)
@@ -81,7 +81,7 @@ func TestQueryLog(t *testing.T) {
 		value:        "example.ORG",
 	})
 	entries, _ = l.search(params)
-	assert.Equal(t, 3, len(entries))
+	assert.Len(t, entries, 3)
 	assertLogEntry(t, entries[0], "test.example.org", "1.1.1.3", "2.2.2.3")
 	assertLogEntry(t, entries[1], "example.org", "1.1.1.2", "2.2.2.2")
 	assertLogEntry(t, entries[2], "example.org", "1.1.1.1", "2.2.2.1")
@@ -94,7 +94,7 @@ func TestQueryLog(t *testing.T) {
 		value:        "2.2.2.2",
 	})
 	entries, _ = l.search(params)
-	assert.Equal(t, 1, len(entries))
+	assert.Len(t, entries, 1)
 	assertLogEntry(t, entries[0], "example.org", "1.1.1.2", "2.2.2.2")
 
 	// search by client IP (part of)
@@ -105,7 +105,7 @@ func TestQueryLog(t *testing.T) {
 		value:        "2.2.2",
 	})
 	entries, _ = l.search(params)
-	assert.Equal(t, 4, len(entries))
+	assert.Len(t, entries, 4)
 	assertLogEntry(t, entries[0], "example.com", "1.1.1.4", "2.2.2.4")
 	assertLogEntry(t, entries[1], "test.example.org", "1.1.1.3", "2.2.2.3")
 	assertLogEntry(t, entries[2], "example.org", "1.1.1.2", "2.2.2.2")
@@ -138,7 +138,7 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 	params.offset = 0
 	params.limit = 10
 	entries, _ := l.search(params)
-	assert.Equal(t, 10, len(entries))
+	assert.Len(t, entries, 10)
 	assert.Equal(t, entries[0].QHost, "first.example.org")
 	assert.Equal(t, entries[9].QHost, "first.example.org")
 
@@ -146,7 +146,7 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 	params.offset = 10
 	params.limit = 10
 	entries, _ = l.search(params)
-	assert.Equal(t, 10, len(entries))
+	assert.Len(t, entries, 10)
 	assert.Equal(t, entries[0].QHost, "second.example.org")
 	assert.Equal(t, entries[9].QHost, "second.example.org")
 
@@ -154,7 +154,7 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 	params.offset = 15
 	params.limit = 10
 	entries, _ = l.search(params)
-	assert.Equal(t, 5, len(entries))
+	assert.Len(t, entries, 5)
 	assert.Equal(t, entries[0].QHost, "second.example.org")
 	assert.Equal(t, entries[4].QHost, "second.example.org")
 
@@ -162,7 +162,7 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 	params.offset = 20
 	params.limit = 10
 	entries, _ = l.search(params)
-	assert.Equal(t, 0, len(entries))
+	assert.Empty(t, entries)
 }
 
 func TestQueryLogMaxFileScanEntries(t *testing.T) {
@@ -186,11 +186,11 @@ func TestQueryLogMaxFileScanEntries(t *testing.T) {
 	params := newSearchParams()
 	params.maxFileScanEntries = 5 // do not scan more than 5 records
 	entries, _ := l.search(params)
-	assert.Equal(t, 5, len(entries))
+	assert.Len(t, entries, 5)
 
 	params.maxFileScanEntries = 0 // disable the limit
 	entries, _ = l.search(params)
-	assert.Equal(t, 10, len(entries))
+	assert.Len(t, entries, 10)
 }
 
 func TestQueryLogFileDisabled(t *testing.T) {
@@ -211,7 +211,7 @@ func TestQueryLogFileDisabled(t *testing.T) {
 
 	params := newSearchParams()
 	ll, _ := l.search(params)
-	assert.Equal(t, 2, len(ll))
+	assert.Len(t, ll, 2)
 	assert.Equal(t, "example3.org", ll[0].QHost)
 	assert.Equal(t, "example2.org", ll[1].QHost)
 }
@@ -262,7 +262,7 @@ func assertLogEntry(t *testing.T, entry *logEntry, host, answer, client string) 
 
 	msg := new(dns.Msg)
 	assert.Nil(t, msg.Unpack(entry.Answer))
-	assert.Equal(t, 1, len(msg.Answer))
+	assert.Len(t, msg.Answer, 1)
 	ip := proxyutil.GetIPFromDNSRecord(msg.Answer[0])
 	assert.NotNil(t, ip)
 	assert.Equal(t, answer, ip.String())

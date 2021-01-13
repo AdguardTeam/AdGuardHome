@@ -171,7 +171,7 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 
 		res, err := f.CheckHostRules(host, dtyp, setts)
 		assert.Nil(t, err)
-		assert.Equal(t, "", res.CanonName)
+		assert.Empty(t, res.CanonName)
 
 		if dnsrr := res.DNSRewriteResult; assert.NotNil(t, dnsrr) {
 			assert.Equal(t, dns.RcodeSuccess, dnsrr.RCode)
@@ -197,7 +197,7 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 
 		res, err := f.CheckHostRules(host, dtyp, setts)
 		assert.Nil(t, err)
-		assert.Equal(t, "", res.CanonName)
-		assert.Len(t, res.Rules, 0)
+		assert.Empty(t, res.CanonName)
+		assert.Empty(t, res.Rules)
 	})
 }

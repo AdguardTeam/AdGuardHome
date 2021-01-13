@@ -36,7 +36,7 @@ func processQueryLogsAndStats(ctx *dnsContext) int {
 			OrigAnswer: ctx.origResp,
 			Result:     ctx.result,
 			Elapsed:    elapsed,
-			ClientIP:   getIP(d.Addr),
+			ClientIP:   ipFromAddr(d.Addr),
 		}
 
 		switch d.Proto {

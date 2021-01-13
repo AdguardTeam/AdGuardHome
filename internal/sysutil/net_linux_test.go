@@ -4,6 +4,7 @@ package sysutil
 
 import (
 	"bytes"
+	"net"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -96,7 +97,7 @@ func TestSetStaticIPdhcpcdConf(t *testing.T) {
 		`static routers=192.168.0.1` + nl +
 		`static domain_name_servers=192.168.0.2` + nl + nl
 
-	s := updateStaticIPdhcpcdConf("wlan0", "192.168.0.2/24", "192.168.0.1", "192.168.0.2")
+	s := updateStaticIPdhcpcdConf("wlan0", "192.168.0.2/24", net.IP{192, 168, 0, 1}, net.IP{192, 168, 0, 2})
 	assert.Equal(t, dhcpcdConf, s)
 
 	// without gateway
@@ -104,6 +105,6 @@ func TestSetStaticIPdhcpcdConf(t *testing.T) {
 		`static ip_address=192.168.0.2/24` + nl +
 		`static domain_name_servers=192.168.0.2` + nl + nl
 
-	s = updateStaticIPdhcpcdConf("wlan0", "192.168.0.2/24", "", "192.168.0.2")
+	s = updateStaticIPdhcpcdConf("wlan0", "192.168.0.2/24", nil, net.IP{192, 168, 0, 2})
 	assert.Equal(t, dhcpcdConf, s)
 }

@@ -60,9 +60,9 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 
 			switch m.Question[0].Qtype {
 			case dns.TypeA:
-				return s.genARecord(m, s.conf.BlockingIPAddrv4)
+				return s.genARecord(m, s.conf.BlockingIPv4)
 			case dns.TypeAAAA:
-				return s.genAAAARecord(m, s.conf.BlockingIPAddrv6)
+				return s.genAAAARecord(m, s.conf.BlockingIPv6)
 			}
 		} else if s.conf.BlockingMode == "nxdomain" {
 			// means that we should return NXDOMAIN for any blocked request

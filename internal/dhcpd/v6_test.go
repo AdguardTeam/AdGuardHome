@@ -21,40 +21,40 @@ func TestV6StaticLeaseAddRemove(t *testing.T) {
 		notify:     notify6,
 	}
 	s, err := v6Create(conf)
-	assert.True(t, err == nil)
+	assert.Nil(t, err)
 
 	ls := s.GetLeases(LeasesStatic)
-	assert.Equal(t, 0, len(ls))
+	assert.Empty(t, ls)
 
 	// add static lease
 	l := Lease{}
 	l.IP = net.ParseIP("2001::1")
 	l.HWAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:aa")
-	assert.True(t, s.AddStaticLease(l) == nil)
+	assert.Nil(t, s.AddStaticLease(l))
 
 	// try to add static lease - fail
-	assert.True(t, s.AddStaticLease(l) != nil)
+	assert.NotNil(t, s.AddStaticLease(l))
 
 	// check
 	ls = s.GetLeases(LeasesStatic)
-	assert.Equal(t, 1, len(ls))
+	assert.Len(t, ls, 1)
 	assert.Equal(t, "2001::1", ls[0].IP.String())
 	assert.Equal(t, "aa:aa:aa:aa:aa:aa", ls[0].HWAddr.String())
-	assert.True(t, ls[0].Expiry.Unix() == leaseExpireStatic)
+	assert.EqualValues(t, leaseExpireStatic, ls[0].Expiry.Unix())
 
 	// try to remove static lease - fail
 	l.IP = net.ParseIP("2001::2")
 	l.HWAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:aa")
-	assert.True(t, s.RemoveStaticLease(l) != nil)
+	assert.NotNil(t, s.RemoveStaticLease(l))
 
 	// remove static lease
 	l.IP = net.ParseIP("2001::1")
 	l.HWAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:aa")
-	assert.True(t, s.RemoveStaticLease(l) == nil)
+	assert.Nil(t, s.RemoveStaticLease(l))
 
 	// check
 	ls = s.GetLeases(LeasesStatic)
-	assert.Equal(t, 0, len(ls))
+	assert.Empty(t, ls)
 }
 
 func TestV6StaticLeaseAddReplaceDynamic(t *testing.T) {
@@ -65,7 +65,7 @@ func TestV6StaticLeaseAddReplaceDynamic(t *testing.T) {
 	}
 	sIface, err := v6Create(conf)
 	s := sIface.(*v6Server)
-	assert.True(t, err == nil)
+	assert.Nil(t, err)
 
 	// add dynamic lease
 	ld := Lease{}
@@ -85,25 +85,25 @@ func TestV6StaticLeaseAddReplaceDynamic(t *testing.T) {
 	l := Lease{}
 	l.IP = net.ParseIP("2001::1")
 	l.HWAddr, _ = net.ParseMAC("33:aa:aa:aa:aa:aa")
-	assert.True(t, s.AddStaticLease(l) == nil)
+	assert.Nil(t, s.AddStaticLease(l))
 
 	// add static lease with the same MAC
 	l = Lease{}
 	l.IP = net.ParseIP("2001::3")
 	l.HWAddr, _ = net.ParseMAC("22:aa:aa:aa:aa:aa")
-	assert.True(t, s.AddStaticLease(l) == nil)
+	assert.Nil(t, s.AddStaticLease(l))
 
 	// check
 	ls := s.GetLeases(LeasesStatic)
-	assert.Equal(t, 2, len(ls))
+	assert.Len(t, ls, 2)
 
 	assert.Equal(t, "2001::1", ls[0].IP.String())
 	assert.Equal(t, "33:aa:aa:aa:aa:aa", ls[0].HWAddr.String())
-	assert.True(t, ls[0].Expiry.Unix() == leaseExpireStatic)
+	assert.EqualValues(t, leaseExpireStatic, ls[0].Expiry.Unix())
 
 	assert.Equal(t, "2001::3", ls[1].IP.String())
 	assert.Equal(t, "22:aa:aa:aa:aa:aa", ls[1].HWAddr.String())
-	assert.True(t, ls[1].Expiry.Unix() == leaseExpireStatic)
+	assert.EqualValues(t, leaseExpireStatic, ls[1].Expiry.Unix())
 }
 
 func TestV6GetLease(t *testing.T) {
@@ -114,7 +114,7 @@ func TestV6GetLease(t *testing.T) {
 	}
 	sIface, err := v6Create(conf)
 	s := sIface.(*v6Server)
-	assert.True(t, err == nil)
+	assert.Nil(t, err)
 	s.conf.dnsIPAddrs = []net.IP{net.ParseIP("2000::1")}
 	s.sid = dhcpv6.Duid{
 		Type:   dhcpv6.DUID_LLT,
@@ -125,7 +125,7 @@ func TestV6GetLease(t *testing.T) {
 	l := Lease{}
 	l.IP = net.ParseIP("2001::1")
 	l.HWAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:aa")
-	assert.True(t, s.AddStaticLease(l) == nil)
+	assert.Nil(t, s.AddStaticLease(l))
 
 	// "Solicit"
 	mac, _ := net.ParseMAC("aa:aa:aa:aa:aa:aa")
@@ -156,12 +156,12 @@ func TestV6GetLease(t *testing.T) {
 	assert.Equal(t, s.conf.leaseTime.Seconds(), oiaAddr.ValidLifetime.Seconds())
 
 	dnsAddrs := resp.Options.DNS()
-	assert.Equal(t, 1, len(dnsAddrs))
+	assert.Len(t, dnsAddrs, 1)
 	assert.Equal(t, "2000::1", dnsAddrs[0].String())
 
 	// check lease
 	ls := s.GetLeases(LeasesStatic)
-	assert.Equal(t, 1, len(ls))
+	assert.Len(t, ls, 1)
 	assert.Equal(t, "2001::1", ls[0].IP.String())
 	assert.Equal(t, "aa:aa:aa:aa:aa:aa", ls[0].HWAddr.String())
 }
@@ -174,7 +174,7 @@ func TestV6GetDynamicLease(t *testing.T) {
 	}
 	sIface, err := v6Create(conf)
 	s := sIface.(*v6Server)
-	assert.True(t, err == nil)
+	assert.Nil(t, err)
 	s.conf.dnsIPAddrs = []net.IP{net.ParseIP("2000::1")}
 	s.sid = dhcpv6.Duid{
 		Type:   dhcpv6.DUID_LLT,
@@ -209,17 +209,17 @@ func TestV6GetDynamicLease(t *testing.T) {
 	assert.Equal(t, "2001::2", oiaAddr.IPv6Addr.String())
 
 	dnsAddrs := resp.Options.DNS()
-	assert.Equal(t, 1, len(dnsAddrs))
+	assert.Len(t, dnsAddrs, 1)
 	assert.Equal(t, "2000::1", dnsAddrs[0].String())
 
 	// check lease
 	ls := s.GetLeases(LeasesDynamic)
-	assert.Equal(t, 1, len(ls))
+	assert.Len(t, ls, 1)
 	assert.Equal(t, "2001::2", ls[0].IP.String())
 	assert.Equal(t, "aa:aa:aa:aa:aa:aa", ls[0].HWAddr.String())
 
-	assert.True(t, !ip6InRange(net.ParseIP("2001::2"), net.ParseIP("2001::1")))
-	assert.True(t, !ip6InRange(net.ParseIP("2001::2"), net.ParseIP("2002::2")))
+	assert.False(t, ip6InRange(net.ParseIP("2001::2"), net.ParseIP("2001::1")))
+	assert.False(t, ip6InRange(net.ParseIP("2001::2"), net.ParseIP("2002::2")))
 	assert.True(t, ip6InRange(net.ParseIP("2001::2"), net.ParseIP("2001::2")))
 	assert.True(t, ip6InRange(net.ParseIP("2001::2"), net.ParseIP("2001::3")))
 }

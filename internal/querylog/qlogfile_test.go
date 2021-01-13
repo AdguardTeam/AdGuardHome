@@ -28,12 +28,12 @@ func TestQLogFileEmpty(t *testing.T) {
 	// seek to the start
 	pos, err := q.SeekStart()
 	assert.Nil(t, err)
-	assert.Equal(t, int64(0), pos)
+	assert.EqualValues(t, 0, pos)
 
 	// try reading anyway
 	line, err := q.ReadNext()
 	assert.Equal(t, io.EOF, err)
-	assert.Equal(t, "", line)
+	assert.Empty(t, line)
 }
 
 func TestQLogFileLarge(t *testing.T) {
@@ -53,14 +53,14 @@ func TestQLogFileLarge(t *testing.T) {
 	// seek to the start
 	pos, err := q.SeekStart()
 	assert.Nil(t, err)
-	assert.NotEqual(t, int64(0), pos)
+	assert.NotEqualValues(t, 0, pos)
 
 	read := 0
 	var line string
 	for err == nil {
 		line, err = q.ReadNext()
 		if err == nil {
-			assert.True(t, len(line) > 0)
+			assert.NotZero(t, len(line))
 			read++
 		}
 	}
@@ -109,10 +109,10 @@ func TestQLogFileSeekLargeFile(t *testing.T) {
 	assert.Nil(t, err)
 	// ALMOST the record we need
 	timestamp := readQLogTimestamp(line) - 1
-	assert.NotEqual(t, uint64(0), timestamp)
+	assert.NotEqualValues(t, 0, timestamp)
 	_, depth, err := q.SeekTS(timestamp)
 	assert.NotNil(t, err)
-	assert.True(t, depth <= int(math.Log2(float64(count))+3))
+	assert.LessOrEqual(t, depth, int(math.Log2(float64(count))+3))
 }
 
 func TestQLogFileSeekSmallFile(t *testing.T) {
@@ -155,22 +155,22 @@ func TestQLogFileSeekSmallFile(t *testing.T) {
 	assert.Nil(t, err)
 	// ALMOST the record we need
 	timestamp := readQLogTimestamp(line) - 1
-	assert.NotEqual(t, uint64(0), timestamp)
+	assert.NotEqualValues(t, 0, timestamp)
 	_, depth, err := q.SeekTS(timestamp)
 	assert.NotNil(t, err)
-	assert.True(t, depth <= int(math.Log2(float64(count))+3))
+	assert.LessOrEqual(t, depth, int(math.Log2(float64(count))+3))
 }
 
 func testSeekLineQLogFile(t *testing.T, q *QLogFile, lineNumber int) {
 	line, err := getQLogFileLine(q, lineNumber)
 	assert.Nil(t, err)
 	ts := readQLogTimestamp(line)
-	assert.NotEqual(t, uint64(0), ts)
+	assert.NotEqualValues(t, 0, ts)
 
 	// try seeking to that line now
 	pos, _, err := q.SeekTS(ts)
 	assert.Nil(t, err)
-	assert.NotEqual(t, int64(0), pos)
+	assert.NotEqualValues(t, 0, pos)
 
 	testLine, err := q.ReadNext()
 	assert.Nil(t, err)
@@ -207,27 +207,27 @@ func TestQLogFile(t *testing.T) {
 	// seek to the start
 	pos, err := q.SeekStart()
 	assert.Nil(t, err)
-	assert.True(t, pos > 0)
+	assert.Greater(t, pos, int64(0))
 
 	// read first line
 	line, err := q.ReadNext()
 	assert.Nil(t, err)
-	assert.True(t, strings.Contains(line, "0.0.0.2"), line)
+	assert.Contains(t, line, "0.0.0.2")
 	assert.True(t, strings.HasPrefix(line, "{"), line)
 	assert.True(t, strings.HasSuffix(line, "}"), line)
 
 	// read second line
 	line, err = q.ReadNext()
 	assert.Nil(t, err)
-	assert.Equal(t, int64(0), q.position)
-	assert.True(t, strings.Contains(line, "0.0.0.1"), line)
+	assert.EqualValues(t, 0, q.position)
+	assert.Contains(t, line, "0.0.0.1")
 	assert.True(t, strings.HasPrefix(line, "{"), line)
 	assert.True(t, strings.HasSuffix(line, "}"), line)
 
 	// try reading again (there's nothing to read anymore)
 	line, err = q.ReadNext()
 	assert.Equal(t, io.EOF, err)
-	assert.Equal(t, "", line)
+	assert.Empty(t, line)
 }
 
 // prepareTestFile - prepares a test query log file with the specified number of lines

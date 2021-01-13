@@ -286,7 +286,7 @@ func TestBlockedRequest(t *testing.T) {
 		t.Fatalf("Couldn't talk to server %s: %s", addr, err)
 	}
 	assert.Equal(t, dns.RcodeSuccess, reply.Rcode)
-	assert.True(t, reply.Answer[0].(*dns.A).A.Equal(net.ParseIP("0.0.0.0")))
+	assert.True(t, reply.Answer[0].(*dns.A).A.Equal(net.IP{0, 0, 0, 0}))
 
 	err = s.Stop()
 	if err != nil {
@@ -300,7 +300,7 @@ func TestServerCustomClientUpstream(t *testing.T) {
 		uc := &proxy.UpstreamConfig{}
 		u := &testUpstream{}
 		u.ipv4 = map[string][]net.IP{}
-		u.ipv4["host."] = []net.IP{net.ParseIP("192.168.0.1")}
+		u.ipv4["host."] = []net.IP{{192, 168, 0, 1}}
 		uc.Upstreams = append(uc.Upstreams, u)
 		return uc
 	}
@@ -425,7 +425,7 @@ func TestBlockCNAMEProtectionEnabled(t *testing.T) {
 	testUpstm := &testUpstream{testCNAMEs, testIPv4, nil}
 	s.conf.ProtectionEnabled = false
 	err := s.startWithUpstream(testUpstm)
-	assert.True(t, err == nil)
+	assert.Nil(t, err)
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 
 	// 'badhost' has a canonical name 'null.example.org' which is blocked by filters:
@@ -440,16 +440,16 @@ func TestBlockCNAME(t *testing.T) {
 	s := createTestServer(t)
 	testUpstm := &testUpstream{testCNAMEs, testIPv4, nil}
 	err := s.startWithUpstream(testUpstm)
-	assert.True(t, err == nil)
+	assert.Nil(t, err)
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 
 	// 'badhost' has a canonical name 'null.example.org' which is blocked by filters:
 	// response is blocked
 	req := createTestMessage("badhost.")
 	reply, err := dns.Exchange(req, addr.String())
-	assert.Nil(t, err, nil)
+	assert.Nil(t, err)
 	assert.Equal(t, dns.RcodeSuccess, reply.Rcode)
-	assert.True(t, reply.Answer[0].(*dns.A).A.Equal(net.ParseIP("0.0.0.0")))
+	assert.True(t, reply.Answer[0].(*dns.A).A.Equal(net.IP{0, 0, 0, 0}))
 
 	// 'whitelist.example.org' has a canonical name 'null.example.org' which is blocked by filters
 	//   but 'whitelist.example.org' is in a whitelist:
@@ -465,7 +465,7 @@ func TestBlockCNAME(t *testing.T) {
 	reply, err = dns.Exchange(req, addr.String())
 	assert.Nil(t, err)
 	assert.Equal(t, dns.RcodeSuccess, reply.Rcode)
-	assert.True(t, reply.Answer[0].(*dns.A).A.Equal(net.ParseIP("0.0.0.0")))
+	assert.True(t, reply.Answer[0].(*dns.A).A.Equal(net.IP{0, 0, 0, 0}))
 
 	_ = s.Stop()
 }
@@ -548,13 +548,13 @@ func TestBlockedCustomIP(t *testing.T) {
 	conf.TCPListenAddr = &net.TCPAddr{Port: 0}
 	conf.ProtectionEnabled = true
 	conf.BlockingMode = "custom_ip"
-	conf.BlockingIPv4 = "bad IP"
+	conf.BlockingIPv4 = nil
 	conf.UpstreamDNS = []string{"8.8.8.8:53", "8.8.4.4:53"}
 	err := s.Prepare(&conf)
-	assert.True(t, err != nil) // invalid BlockingIPv4
+	assert.NotNil(t, err) // invalid BlockingIPv4
 
-	conf.BlockingIPv4 = "0.0.0.1"
-	conf.BlockingIPv6 = "::1"
+	conf.BlockingIPv4 = net.IP{0, 0, 0, 1}
+	conf.BlockingIPv6 = net.ParseIP("::1")
 	err = s.Prepare(&conf)
 	assert.Nil(t, err)
 	err = s.Start()
@@ -565,7 +565,7 @@ func TestBlockedCustomIP(t *testing.T) {
 	req := createTestMessageWithType("null.example.org.", dns.TypeA)
 	reply, err := dns.Exchange(req, addr.String())
 	assert.Nil(t, err)
-	assert.Equal(t, 1, len(reply.Answer))
+	assert.Len(t, reply.Answer, 1)
 	a, ok := reply.Answer[0].(*dns.A)
 	assert.True(t, ok)
 	assert.Equal(t, "0.0.0.1", a.A.String())
@@ -573,7 +573,7 @@ func TestBlockedCustomIP(t *testing.T) {
 	req = createTestMessageWithType("null.example.org.", dns.TypeAAAA)
 	reply, err = dns.Exchange(req, addr.String())
 	assert.Nil(t, err)
-	assert.Equal(t, 1, len(reply.Answer))
+	assert.Len(t, reply.Answer, 1)
 	a6, ok := reply.Answer[0].(*dns.AAAA)
 	assert.True(t, ok)
 	assert.Equal(t, "::1", a6.AAAA.String())
@@ -710,7 +710,7 @@ func TestRewrite(t *testing.T) {
 	req := createTestMessageWithType("test.com.", dns.TypeA)
 	reply, err := dns.Exchange(req, addr.String())
 	assert.Nil(t, err)
-	assert.Equal(t, 1, len(reply.Answer))
+	assert.Len(t, reply.Answer, 1)
 	a, ok := reply.Answer[0].(*dns.A)
 	assert.True(t, ok)
 	assert.Equal(t, "1.2.3.4", a.A.String())
@@ -718,12 +718,12 @@ func TestRewrite(t *testing.T) {
 	req = createTestMessageWithType("test.com.", dns.TypeAAAA)
 	reply, err = dns.Exchange(req, addr.String())
 	assert.Nil(t, err)
-	assert.Equal(t, 0, len(reply.Answer))
+	assert.Empty(t, reply.Answer)
 
 	req = createTestMessageWithType("alias.test.com.", dns.TypeA)
 	reply, err = dns.Exchange(req, addr.String())
 	assert.Nil(t, err)
-	assert.Equal(t, 2, len(reply.Answer))
+	assert.Len(t, reply.Answer, 2)
 	assert.Equal(t, "test.com.", reply.Answer[0].(*dns.CNAME).Target)
 	assert.Equal(t, "1.2.3.4", reply.Answer[1].(*dns.A).A.String())
 
@@ -731,7 +731,7 @@ func TestRewrite(t *testing.T) {
 	reply, err = dns.Exchange(req, addr.String())
 	assert.Nil(t, err)
 	assert.Equal(t, "my.alias.example.org.", reply.Question[0].Name) // the original question is restored
-	assert.Equal(t, 2, len(reply.Answer))
+	assert.Len(t, reply.Answer, 2)
 	assert.Equal(t, "example.org.", reply.Answer[0].(*dns.CNAME).Target)
 	assert.Equal(t, dns.TypeA, reply.Answer[1].Header().Rrtype)
 
@@ -765,7 +765,7 @@ func createTestServer(t *testing.T) *Server {
 	s.conf.ConfigModified = func() {}
 
 	err := s.Prepare(nil)
-	assert.True(t, err == nil)
+	assert.Nil(t, err)
 	return s
 }
 
@@ -1011,16 +1011,14 @@ func TestValidateUpstreamsSet(t *testing.T) {
 	assert.NotNil(t, err, "there is an invalid upstream in set, but it pass through validation")
 }
 
-func TestIpFromAddr(t *testing.T) {
+func TestIPStringFromAddr(t *testing.T) {
 	addr := net.UDPAddr{}
 	addr.IP = net.ParseIP("1:2:3::4")
 	addr.Port = 12345
 	addr.Zone = "eth0"
-	a := ipFromAddr(&addr)
-	assert.True(t, a == "1:2:3::4")
+	assert.Equal(t, IPStringFromAddr(&addr), net.ParseIP("1:2:3::4").String())
 
-	a = ipFromAddr(nil)
-	assert.True(t, a == "")
+	assert.Empty(t, IPStringFromAddr(nil))
 }
 
 func TestMatchDNSName(t *testing.T) {
@@ -1030,9 +1028,9 @@ func TestMatchDNSName(t *testing.T) {
 	assert.True(t, matchDNSName(dnsNames, "a.host2"))
 	assert.True(t, matchDNSName(dnsNames, "b.a.host2"))
 	assert.True(t, matchDNSName(dnsNames, "1.2.3.4"))
-	assert.True(t, !matchDNSName(dnsNames, "host2"))
-	assert.True(t, !matchDNSName(dnsNames, ""))
-	assert.True(t, !matchDNSName(dnsNames, "*.host2"))
+	assert.False(t, matchDNSName(dnsNames, "host2"))
+	assert.False(t, matchDNSName(dnsNames, ""))
+	assert.False(t, matchDNSName(dnsNames, "*.host2"))
 }
 
 type testDHCP struct {
@@ -1040,7 +1038,7 @@ type testDHCP struct {
 
 func (d *testDHCP) Leases(flags int) []dhcpd.Lease {
 	l := dhcpd.Lease{}
-	l.IP = net.ParseIP("127.0.0.1").To4()
+	l.IP = net.IP{127, 0, 0, 1}
 	l.HWAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:aa")
 	l.Hostname = "localhost"
 	return []dhcpd.Lease{l}
@@ -1058,7 +1056,7 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
 	s.conf.FilteringConfig.ProtectionEnabled = true
 	err := s.Prepare(nil)
-	assert.True(t, err == nil)
+	assert.Nil(t, err)
 	assert.Nil(t, s.Start())
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
@@ -1067,7 +1065,7 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 
 	resp, err := dns.Exchange(req, addr.String())
 	assert.Nil(t, err)
-	assert.Equal(t, 1, len(resp.Answer))
+	assert.Len(t, resp.Answer, 1)
 	assert.Equal(t, dns.TypePTR, resp.Answer[0].Header().Rrtype)
 	assert.Equal(t, "1.0.0.127.in-addr.arpa.", resp.Answer[0].Header().Name)
 	ptr := resp.Answer[0].(*dns.PTR)
@@ -1100,7 +1098,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
 	s.conf.FilteringConfig.ProtectionEnabled = true
 	err := s.Prepare(nil)
-	assert.True(t, err == nil)
+	assert.Nil(t, err)
 	assert.Nil(t, s.Start())
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
@@ -1109,7 +1107,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 
 	resp, err := dns.Exchange(req, addr.String())
 	assert.Nil(t, err)
-	assert.Equal(t, 1, len(resp.Answer))
+	assert.Len(t, resp.Answer, 1)
 	assert.Equal(t, dns.TypePTR, resp.Answer[0].Header().Rrtype)
 	assert.Equal(t, "1.0.0.127.in-addr.arpa.", resp.Answer[0].Header().Name)
 	ptr := resp.Answer[0].(*dns.PTR)

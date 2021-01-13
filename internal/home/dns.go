@@ -98,7 +98,7 @@ func isRunning() bool {
 }
 
 func onDNSRequest(d *proxy.DNSContext) {
-	ip := dnsforward.GetIPString(d.Addr)
+	ip := dnsforward.IPStringFromAddr(d.Addr)
 	if ip == "" {
 		// This would be quite weird if we get here
 		return

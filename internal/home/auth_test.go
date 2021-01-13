@@ -70,7 +70,7 @@ func TestAuth(t *testing.T) {
 	a.Close()
 
 	u := a.UserFind("name", "password")
-	assert.True(t, len(u.Name) != 0)
+	assert.NotEmpty(t, u.Name)
 
 	time.Sleep(3 * time.Second)
 
@@ -125,9 +125,9 @@ func TestAuthHTTP(t *testing.T) {
 	r.URL = &url.URL{Path: "/"}
 	handlerCalled = false
 	handler2(&w, &r)
-	assert.True(t, w.statusCode == http.StatusFound)
-	assert.True(t, w.hdr.Get("Location") != "")
-	assert.True(t, !handlerCalled)
+	assert.Equal(t, http.StatusFound, w.statusCode)
+	assert.NotEmpty(t, w.hdr.Get("Location"))
+	assert.False(t, handlerCalled)
 
 	// go to login page
 	loginURL := w.hdr.Get("Location")
@@ -139,7 +139,7 @@ func TestAuthHTTP(t *testing.T) {
 	// perform login
 	cookie, err := Context.auth.httpCookie(loginJSON{Name: "name", Password: "password"})
 	assert.Nil(t, err)
-	assert.True(t, cookie != "")
+	assert.NotEmpty(t, cookie)
 
 	// get /
 	handler2 = optionalAuth(handler)
@@ -168,8 +168,8 @@ func TestAuthHTTP(t *testing.T) {
 	r.URL = &url.URL{Path: loginURL}
 	handlerCalled = false
 	handler2(&w, &r)
-	assert.True(t, w.hdr.Get("Location") != "")
-	assert.True(t, !handlerCalled)
+	assert.NotEmpty(t, w.hdr.Get("Location"))
+	assert.False(t, handlerCalled)
 	r.Header.Del("Cookie")
 
 	// get login page with an invalid cookie

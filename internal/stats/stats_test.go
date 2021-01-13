@@ -39,13 +39,13 @@ func TestStats(t *testing.T) {
 	e := Entry{}
 
 	e.Domain = "domain"
-	e.Client = net.ParseIP("127.0.0.1")
+	e.Client = net.IP{127, 0, 0, 1}
 	e.Result = RFiltered
 	e.Time = 123456
 	s.Update(e)
 
 	e.Domain = "domain"
-	e.Client = net.ParseIP("127.0.0.1")
+	e.Client = net.IP{127, 0, 0, 1}
 	e.Result = RNotFiltered
 	e.Time = 123456
 	s.Update(e)
@@ -64,23 +64,23 @@ func TestStats(t *testing.T) {
 	assert.True(t, UIntArrayEquals(d["replaced_parental"].([]uint64), a))
 
 	m := d["top_queried_domains"].([]map[string]uint64)
-	assert.True(t, m[0]["domain"] == 1)
+	assert.EqualValues(t, 1, m[0]["domain"])
 
 	m = d["top_blocked_domains"].([]map[string]uint64)
-	assert.True(t, m[0]["domain"] == 1)
+	assert.EqualValues(t, 1, m[0]["domain"])
 
 	m = d["top_clients"].([]map[string]uint64)
-	assert.True(t, m[0]["127.0.0.1"] == 2)
+	assert.EqualValues(t, 2, m[0]["127.0.0.1"])
 
-	assert.True(t, d["num_dns_queries"].(uint64) == 2)
-	assert.True(t, d["num_blocked_filtering"].(uint64) == 1)
-	assert.True(t, d["num_replaced_safebrowsing"].(uint64) == 0)
-	assert.True(t, d["num_replaced_safesearch"].(uint64) == 0)
-	assert.True(t, d["num_replaced_parental"].(uint64) == 0)
-	assert.True(t, d["avg_processing_time"].(float64) == 0.123456)
+	assert.EqualValues(t, 2, d["num_dns_queries"].(uint64))
+	assert.EqualValues(t, 1, d["num_blocked_filtering"].(uint64))
+	assert.EqualValues(t, 0, d["num_replaced_safebrowsing"].(uint64))
+	assert.EqualValues(t, 0, d["num_replaced_safesearch"].(uint64))
+	assert.EqualValues(t, 0, d["num_replaced_parental"].(uint64))
+	assert.EqualValues(t, 0.123456, d["avg_processing_time"].(float64))
 
 	topClients := s.GetTopClientsIP(2)
-	assert.True(t, topClients[0] == "127.0.0.1")
+	assert.Equal(t, "127.0.0.1", topClients[0])
 
 	s.clear()
 	s.Close()
@@ -111,7 +111,7 @@ func TestLargeNumbers(t *testing.T) {
 		}
 		for i := 0; i != n; i++ {
 			e.Domain = fmt.Sprintf("domain%d", i)
-			e.Client = net.ParseIP("127.0.0.1")
+			e.Client = net.IP{127, 0, 0, 1}
 			e.Client[2] = byte((i & 0xff00) >> 8)
 			e.Client[3] = byte(i & 0xff)
 			e.Result = RNotFiltered
@@ -121,7 +121,7 @@ func TestLargeNumbers(t *testing.T) {
 	}
 
 	d := s.getData()
-	assert.True(t, d["num_dns_queries"].(uint64) == uint64(int(hour)*n))
+	assert.EqualValues(t, int(hour)*n, d["num_dns_queries"])
 
 	s.Close()
 	os.Remove(conf.Filename)
@@ -152,6 +152,6 @@ func aggregateDataPerDay(firstID uint32) int {
 func TestAggregateDataPerTimeUnit(t *testing.T) {
 	for i := 0; i != 25; i++ {
 		alen := aggregateDataPerDay(uint32(i))
-		assert.True(t, alen == 30, "i=%d", i)
+		assert.Equalf(t, 30, alen, "i=%d", i)
 	}
 }

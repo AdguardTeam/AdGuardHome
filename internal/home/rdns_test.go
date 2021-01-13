@@ -12,10 +12,10 @@ func TestResolveRDNS(t *testing.T) {
 	conf := &dnsforward.ServerConfig{}
 	conf.UpstreamDNS = []string{"8.8.8.8"}
 	err := dns.Prepare(conf)
-	assert.True(t, err == nil, "%s", err)
+	assert.Nil(t, err)
 
 	clients := &clientsContainer{}
 	rdns := InitRDNS(dns, clients)
 	r := rdns.resolve("1.1.1.1")
-	assert.True(t, r == "one.one.one.one", "%s", r)
+	assert.Equal(t, "one.one.one.one", r, r)
 }

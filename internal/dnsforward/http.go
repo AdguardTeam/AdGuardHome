@@ -28,8 +28,8 @@ type dnsConfig struct {
 	ProtectionEnabled *bool   `json:"protection_enabled"`
 	RateLimit         *uint32 `json:"ratelimit"`
 	BlockingMode      *string `json:"blocking_mode"`
-	BlockingIPv4      *string `json:"blocking_ipv4"`
-	BlockingIPv6      *string `json:"blocking_ipv6"`
+	BlockingIPv4      net.IP  `json:"blocking_ipv4"`
+	BlockingIPv6      net.IP  `json:"blocking_ipv6"`
 	EDNSCSEnabled     *bool   `json:"edns_cs_enabled"`
 	DNSSECEnabled     *bool   `json:"dnssec_enabled"`
 	DisableIPv6       *bool   `json:"disable_ipv6"`
@@ -68,8 +68,8 @@ func (s *Server) getDNSConfig() dnsConfig {
 		Bootstraps:        &bootstraps,
 		ProtectionEnabled: &protectionEnabled,
 		BlockingMode:      &blockingMode,
-		BlockingIPv4:      &BlockingIPv4,
-		BlockingIPv6:      &BlockingIPv6,
+		BlockingIPv4:      BlockingIPv4,
+		BlockingIPv6:      BlockingIPv6,
 		RateLimit:         &Ratelimit,
 		EDNSCSEnabled:     &EnableEDNSClientSubnet,
 		DNSSECEnabled:     &EnableDNSSEC,
@@ -100,17 +100,11 @@ func (req *dnsConfig) checkBlockingMode() bool {
 
 	bm := *req.BlockingMode
 	if bm == "custom_ip" {
-		if req.BlockingIPv4 == nil || req.BlockingIPv6 == nil {
+		if req.BlockingIPv4.To4() == nil {
 			return false
 		}
 
-		ip4 := net.ParseIP(*req.BlockingIPv4)
-		if ip4 == nil || ip4.To4() == nil {
-			return false
-		}
-
-		ip6 := net.ParseIP(*req.BlockingIPv6)
-		return ip6 != nil
+		return req.BlockingIPv6 != nil
 	}
 
 	for _, valid := range []string{
@@ -247,10 +241,8 @@ func (s *Server) setConfig(dc dnsConfig) (restart bool) {
 	if dc.BlockingMode != nil {
 		s.conf.BlockingMode = *dc.BlockingMode
 		if *dc.BlockingMode == "custom_ip" {
-			s.conf.BlockingIPv4 = *dc.BlockingIPv4
-			s.conf.BlockingIPAddrv4 = net.ParseIP(*dc.BlockingIPv4)
-			s.conf.BlockingIPv6 = *dc.BlockingIPv6
-			s.conf.BlockingIPAddrv6 = net.ParseIP(*dc.BlockingIPv6)
+			s.conf.BlockingIPv4 = dc.BlockingIPv4.To4()
+			s.conf.BlockingIPv6 = dc.BlockingIPv6.To16()
 		}
 	}
 

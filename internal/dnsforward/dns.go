@@ -182,7 +182,7 @@ func processInternalHosts(ctx *dnsContext) int {
 		return resultDone
 	}
 
-	log.Debug("DNS: internal record: %s -> %s", req.Question[0].Name, ip.String())
+	log.Debug("DNS: internal record: %s -> %s", req.Question[0].Name, ip)
 
 	resp := s.makeResponse(req)
 
@@ -278,7 +278,7 @@ func processFilteringBeforeRequest(ctx *dnsContext) int {
 	return resultDone
 }
 
-// Pass request to upstream servers;  process the response
+// processUpstream passes request to upstream servers and handles the response.
 func processUpstream(ctx *dnsContext) int {
 	s := ctx.srv
 	d := ctx.proxyCtx
@@ -287,7 +287,7 @@ func processUpstream(ctx *dnsContext) int {
 	}
 
 	if d.Addr != nil && s.conf.GetCustomUpstreamByClient != nil {
-		clientIP := ipFromAddr(d.Addr)
+		clientIP := IPStringFromAddr(d.Addr)
 		upstreamsConf := s.conf.GetCustomUpstreamByClient(clientIP)
 		if upstreamsConf != nil {
 			log.Debug("Using custom upstreams for %s", clientIP)

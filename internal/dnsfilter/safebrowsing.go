@@ -37,8 +37,8 @@ func (d *DNSFilter) initSecurityServices() error {
 	opts := upstream.Options{
 		Timeout: dnsTimeout,
 		ServerIPAddrs: []net.IP{
-			net.ParseIP("94.140.14.15"),
-			net.ParseIP("94.140.15.16"),
+			{94, 140, 14, 15},
+			{94, 140, 15, 16},
 			net.ParseIP("2a10:50c0::bad1:ff"),
 			net.ParseIP("2a10:50c0::bad2:ff"),
 		},

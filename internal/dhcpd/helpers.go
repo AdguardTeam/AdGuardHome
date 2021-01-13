@@ -14,15 +14,17 @@ func isTimeout(err error) bool {
 	return operr.Timeout()
 }
 
-func parseIPv4(text string) (net.IP, error) {
-	result := net.ParseIP(text)
-	if result == nil {
-		return nil, fmt.Errorf("%s is not an IP address", text)
+func tryTo4(ip net.IP) (ip4 net.IP, err error) {
+	if ip == nil {
+		return nil, fmt.Errorf("%v is not an IP address", ip)
 	}
-	if result.To4() == nil {
-		return nil, fmt.Errorf("%s is not an IPv4 address", text)
+
+	ip4 = ip.To4()
+	if ip4 == nil {
+		return nil, fmt.Errorf("%v is not an IPv4 address", ip)
 	}
-	return result.To4(), nil
+
+	return ip4, nil
 }
 
 // Return TRUE if subnet mask is correct (e.g. 255.255.255.0)

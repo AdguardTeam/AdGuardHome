@@ -29,17 +29,16 @@ type FilteringConfig struct {
 
 	// GetCustomUpstreamByClient - a callback function that returns upstreams configuration
 	// based on the client IP address. Returns nil if there are no custom upstreams for the client
+	// TODO(e.burkov): replace argument type with net.IP.
 	GetCustomUpstreamByClient func(clientAddr string) *proxy.UpstreamConfig `yaml:"-"`
 
 	// Protection configuration
 	// --
 
-	ProtectionEnabled  bool   `yaml:"protection_enabled"` // whether or not use any of dnsfilter features
-	BlockingMode       string `yaml:"blocking_mode"`      // mode how to answer filtered requests
-	BlockingIPv4       string `yaml:"blocking_ipv4"`      // IP address to be returned for a blocked A request
-	BlockingIPv6       string `yaml:"blocking_ipv6"`      // IP address to be returned for a blocked AAAA request
-	BlockingIPAddrv4   net.IP `yaml:"-"`
-	BlockingIPAddrv6   net.IP `yaml:"-"`
+	ProtectionEnabled  bool   `yaml:"protection_enabled"`   // whether or not use any of dnsfilter features
+	BlockingMode       string `yaml:"blocking_mode"`        // mode how to answer filtered requests
+	BlockingIPv4       net.IP `yaml:"blocking_ipv4"`        // IP address to be returned for a blocked A request
+	BlockingIPv6       net.IP `yaml:"blocking_ipv6"`        // IP address to be returned for a blocked AAAA request
 	BlockedResponseTTL uint32 `yaml:"blocked_response_ttl"` // if 0, then default is used (3600)
 
 	// IP (or domain name) which is used to respond to DNS requests blocked by parental control or safe-browsing

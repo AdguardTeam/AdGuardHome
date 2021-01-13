@@ -37,15 +37,18 @@ func TestClients(t *testing.T) {
 		assert.Nil(t, err)
 
 		c, b = clients.Find("1.1.1.1")
-		assert.True(t, b && c.Name == "client1")
+		assert.True(t, b)
+		assert.Equal(t, c.Name, "client1")
 
 		c, b = clients.Find("1:2:3::4")
-		assert.True(t, b && c.Name == "client1")
+		assert.True(t, b)
+		assert.Equal(t, c.Name, "client1")
 
 		c, b = clients.Find("2.2.2.2")
-		assert.True(t, b && c.Name == "client2")
+		assert.True(t, b)
+		assert.Equal(t, c.Name, "client2")
 
-		assert.True(t, !clients.Exists("1.2.3.4", ClientSourceHostsFile))
+		assert.False(t, clients.Exists("1.2.3.4", ClientSourceHostsFile))
 		assert.True(t, clients.Exists("1.1.1.1", ClientSourceHostsFile))
 		assert.True(t, clients.Exists("2.2.2.2", ClientSourceHostsFile))
 	})
@@ -109,7 +112,7 @@ func TestClients(t *testing.T) {
 		err := clients.Update("client1", c)
 		assert.Nil(t, err)
 
-		assert.True(t, !clients.Exists("1.1.1.1", ClientSourceHostsFile))
+		assert.False(t, clients.Exists("1.1.1.1", ClientSourceHostsFile))
 		assert.True(t, clients.Exists("1.1.1.2", ClientSourceHostsFile))
 
 		c = Client{
@@ -123,8 +126,8 @@ func TestClients(t *testing.T) {
 
 		c, b := clients.Find("1.1.1.2")
 		assert.True(t, b)
-		assert.True(t, c.Name == "client1-renamed")
-		assert.True(t, c.IDs[0] == "1.1.1.2")
+		assert.Equal(t, "client1-renamed", c.Name)
+		assert.Equal(t, "1.1.1.2", c.IDs[0])
 		assert.True(t, c.UseOwnSettings)
 		assert.Nil(t, clients.list["client1"])
 	})
@@ -172,12 +175,12 @@ func TestClientsWhois(t *testing.T) {
 	whois := [][]string{{"orgname", "orgname-val"}, {"country", "country-val"}}
 	// set whois info on new client
 	clients.SetWhoisInfo("1.1.1.255", whois)
-	assert.True(t, clients.ipHost["1.1.1.255"].WhoisInfo[0][1] == "orgname-val")
+	assert.Equal(t, "orgname-val", clients.ipHost["1.1.1.255"].WhoisInfo[0][1])
 
 	// set whois info on existing auto-client
 	_, _ = clients.AddHost("1.1.1.1", "host", ClientSourceRDNS)
 	clients.SetWhoisInfo("1.1.1.1", whois)
-	assert.True(t, clients.ipHost["1.1.1.1"].WhoisInfo[0][1] == "orgname-val")
+	assert.Equal(t, "orgname-val", clients.ipHost["1.1.1.1"].WhoisInfo[0][1])
 
 	// Check that we cannot set whois info on a manually-added client
 	c = Client{
@@ -186,7 +189,7 @@ func TestClientsWhois(t *testing.T) {
 	}
 	_, _ = clients.Add(c)
 	clients.SetWhoisInfo("1.1.1.2", whois)
-	assert.True(t, clients.ipHost["1.1.1.2"] == nil)
+	assert.Nil(t, clients.ipHost["1.1.1.2"])
 	_ = clients.Del("client1")
 }
 
@@ -272,6 +275,6 @@ func TestClientsCustomUpstream(t *testing.T) {
 
 	config = clients.FindUpstreams("1.1.1.1")
 	assert.NotNil(t, config)
-	assert.Equal(t, 1, len(config.Upstreams))
-	assert.Equal(t, 1, len(config.DomainReservedUpstreams))
+	assert.Len(t, config.Upstreams, 1)
+	assert.Len(t, config.DomainReservedUpstreams, 1)
 }

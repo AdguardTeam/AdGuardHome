@@ -119,7 +119,7 @@ func TestHome(t *testing.T) {
 	fn := filepath.Join(dir, "AdGuardHome.yaml")
 
 	// Prepare the test config
-	assert.True(t, ioutil.WriteFile(fn, []byte(yamlConf), 0o644) == nil)
+	assert.Nil(t, ioutil.WriteFile(fn, []byte(yamlConf), 0o644))
 	fn, _ = filepath.Abs(fn)
 
 	config = configuration{} // the global variable is dirty because of the previous tests run
@@ -138,11 +138,11 @@ func TestHome(t *testing.T) {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-	assert.Truef(t, err == nil, "%s", err)
+	assert.Nilf(t, err, "%s", err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	resp, err = h.Get("http://127.0.0.1:3000/control/status")
-	assert.Truef(t, err == nil, "%s", err)
+	assert.Nilf(t, err, "%s", err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// test DNS over UDP
@@ -159,16 +159,16 @@ func TestHome(t *testing.T) {
 	req.RecursionDesired = true
 	req.Question = []dns.Question{{Name: "static.adguard.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET}}
 	buf, err := req.Pack()
-	assert.True(t, err == nil, "%s", err)
+	assert.Nil(t, err)
 	requestURL := "http://127.0.0.1:3000/dns-query?dns=" + base64.RawURLEncoding.EncodeToString(buf)
 	resp, err = http.DefaultClient.Get(requestURL)
-	assert.True(t, err == nil, "%s", err)
+	assert.Nil(t, err)
 	body, err := ioutil.ReadAll(resp.Body)
-	assert.True(t, err == nil, "%s", err)
-	assert.True(t, resp.StatusCode == http.StatusOK)
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	response := dns.Msg{}
 	err = response.Unpack(body)
-	assert.True(t, err == nil, "%s", err)
+	assert.Nil(t, err)
 	addrs = nil
 	proxyutil.AppendIPAddrs(&addrs, response.Answer)
 	haveIP = len(addrs) != 0

@@ -36,13 +36,13 @@ type V4ServerConf struct {
 	Enabled       bool   `yaml:"-"`
 	InterfaceName string `yaml:"-"`
 
-	GatewayIP  string `yaml:"gateway_ip"`
-	SubnetMask string `yaml:"subnet_mask"`
+	GatewayIP  net.IP `yaml:"gateway_ip"`
+	SubnetMask net.IP `yaml:"subnet_mask"`
 
 	// The first & the last IP address for dynamic leases
 	// Bytes [0..2] of the last allowed IP address must match the first IP
-	RangeStart string `yaml:"range_start"`
-	RangeEnd   string `yaml:"range_end"`
+	RangeStart net.IP `yaml:"range_start"`
+	RangeEnd   net.IP `yaml:"range_end"`
 
 	LeaseDuration uint32 `yaml:"lease_duration"` // in seconds
 

@@ -21,7 +21,7 @@ func TestQLogReaderEmpty(t *testing.T) {
 	assert.Nil(t, err)
 
 	line, err := r.ReadNext()
-	assert.Equal(t, "", line)
+	assert.Empty(t, line)
 	assert.Equal(t, io.EOF, err)
 }
 
@@ -241,7 +241,7 @@ func testSeekLineQLogReader(t *testing.T, r *QLogReader, lineNumber int) {
 	line, err := getQLogReaderLine(r, lineNumber)
 	assert.Nil(t, err)
 	ts := readQLogTimestamp(line)
-	assert.NotEqual(t, uint64(0), ts)
+	assert.NotEqualValues(t, 0, ts)
 
 	// try seeking to that line now
 	err = r.SeekTS(ts)

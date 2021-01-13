@@ -84,7 +84,7 @@ func TestDecodeLogEntry(t *testing.T) {
 		decodeLogEntry(got, data)
 
 		s := logOutput.String()
-		assert.Equal(t, "", s)
+		assert.Empty(t, s)
 
 		// Correct for time zones.
 		got.Time = got.Time.UTC()
@@ -172,7 +172,7 @@ func TestDecodeLogEntry(t *testing.T) {
 
 			s := logOutput.String()
 			if tc.want == "" {
-				assert.Equal(t, "", s)
+				assert.Empty(t, s)
 			} else {
 				assert.True(t, strings.HasSuffix(s, tc.want),
 					"got %q", s)

@@ -178,9 +178,7 @@ func (s *Server) Prepare(config *ServerConfig) error {
 	if config != nil {
 		s.conf = *config
 		if s.conf.BlockingMode == "custom_ip" {
-			s.conf.BlockingIPAddrv4 = net.ParseIP(s.conf.BlockingIPv4)
-			s.conf.BlockingIPAddrv6 = net.ParseIP(s.conf.BlockingIPv6)
-			if s.conf.BlockingIPAddrv4 == nil || s.conf.BlockingIPAddrv6 == nil {
+			if s.conf.BlockingIPv4 == nil || s.conf.BlockingIPv6 == nil {
 				return fmt.Errorf("dns: invalid custom blocking IP address specified")
 			}
 		}

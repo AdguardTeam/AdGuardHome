@@ -14,7 +14,7 @@ import (
 func TestSafeBrowsingHash(t *testing.T) {
 	// test hostnameToHashes()
 	hashes := hostnameToHashes("1.2.3.sub.host.com")
-	assert.Equal(t, 3, len(hashes))
+	assert.Len(t, hashes, 3)
 	_, ok := hashes[sha256.Sum256([]byte("3.sub.host.com"))]
 	assert.True(t, ok)
 	_, ok = hashes[sha256.Sum256([]byte("sub.host.com"))]
@@ -31,9 +31,9 @@ func TestSafeBrowsingHash(t *testing.T) {
 
 	q := c.getQuestion()
 
-	assert.True(t, strings.Contains(q, "7a1b."))
-	assert.True(t, strings.Contains(q, "af5a."))
-	assert.True(t, strings.Contains(q, "eb11."))
+	assert.Contains(t, q, "7a1b.")
+	assert.Contains(t, q, "af5a.")
+	assert.Contains(t, q, "eb11.")
 	assert.True(t, strings.HasSuffix(q, "sb.dns.adguard.com."))
 }
 
@@ -81,7 +81,7 @@ func TestSafeBrowsingCache(t *testing.T) {
 	c.hashToHost[hash] = "sub.host.com"
 	hash = sha256.Sum256([]byte("nonexisting.com"))
 	c.hashToHost[hash] = "nonexisting.com"
-	assert.Equal(t, 0, c.getCached())
+	assert.Empty(t, c.getCached())
 
 	hash = sha256.Sum256([]byte("sub.host.com"))
 	_, ok := c.hashToHost[hash]
@@ -103,7 +103,7 @@ func TestSafeBrowsingCache(t *testing.T) {
 	c.hashToHost[hash] = "sub.host.com"
 
 	c.cache.Set(hash[0:2], make([]byte, 32))
-	assert.Equal(t, 0, c.getCached())
+	assert.Empty(t, c.getCached())
 }
 
 // testErrUpstream implements upstream.Upstream interface for replacing real

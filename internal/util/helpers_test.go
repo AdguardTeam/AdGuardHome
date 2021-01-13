@@ -8,7 +8,8 @@ import (
 
 func TestSplitNext(t *testing.T) {
 	s := " a,b , c "
-	assert.True(t, SplitNext(&s, ',') == "a")
-	assert.True(t, SplitNext(&s, ',') == "b")
-	assert.True(t, SplitNext(&s, ',') == "c" && len(s) == 0)
+	assert.Equal(t, "a", SplitNext(&s, ','))
+	assert.Equal(t, "b", SplitNext(&s, ','))
+	assert.Equal(t, "c", SplitNext(&s, ','))
+	assert.Empty(t, s)
 }

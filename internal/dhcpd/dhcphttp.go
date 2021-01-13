@@ -42,10 +42,10 @@ func convertLeases(inputLeases []Lease, includeExpires bool) []map[string]string
 }
 
 type v4ServerConfJSON struct {
-	GatewayIP     string `json:"gateway_ip"`
-	SubnetMask    string `json:"subnet_mask"`
-	RangeStart    string `json:"range_start"`
-	RangeEnd      string `json:"range_end"`
+	GatewayIP     net.IP `json:"gateway_ip"`
+	SubnetMask    net.IP `json:"subnet_mask"`
+	RangeStart    net.IP `json:"range_start"`
+	RangeEnd      net.IP `json:"range_end"`
 	LeaseDuration uint32 `json:"lease_duration"`
 }
 
@@ -61,10 +61,10 @@ func v4ServerConfToJSON(c V4ServerConf) v4ServerConfJSON {
 
 func v4JSONToServerConf(j v4ServerConfJSON) V4ServerConf {
 	return V4ServerConf{
-		GatewayIP:     j.GatewayIP,
-		SubnetMask:    j.SubnetMask,
-		RangeStart:    j.RangeStart,
-		RangeEnd:      j.RangeEnd,
+		GatewayIP:     j.GatewayIP.To4(),
+		SubnetMask:    j.SubnetMask.To4(),
+		RangeStart:    j.RangeStart.To4(),
+		RangeEnd:      j.RangeEnd.To4(),
 		LeaseDuration: j.LeaseDuration,
 	}
 }
@@ -117,7 +117,7 @@ func (s *Server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 
 type staticLeaseJSON struct {
 	HWAddr   string `json:"mac"`
-	IP       string `json:"ip"`
+	IP       net.IP `json:"ip"`
 	Hostname string `json:"hostname"`
 }
 
@@ -225,10 +225,10 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 
 type netInterfaceJSON struct {
 	Name         string   `json:"name"`
-	GatewayIP    string   `json:"gateway_ip"`
+	GatewayIP    net.IP   `json:"gateway_ip"`
 	HardwareAddr string   `json:"hardware_address"`
-	Addrs4       []string `json:"ipv4_addresses"`
-	Addrs6       []string `json:"ipv6_addresses"`
+	Addrs4       []net.IP `json:"ipv4_addresses"`
+	Addrs6       []net.IP `json:"ipv6_addresses"`
 	Flags        string   `json:"flags"`
 }
 
@@ -277,9 +277,9 @@ func (s *Server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			if ipnet.IP.To4() != nil {
-				jsonIface.Addrs4 = append(jsonIface.Addrs4, ipnet.IP.String())
+				jsonIface.Addrs4 = append(jsonIface.Addrs4, ipnet.IP)
 			} else {
-				jsonIface.Addrs6 = append(jsonIface.Addrs6, ipnet.IP.String())
+				jsonIface.Addrs6 = append(jsonIface.Addrs6, ipnet.IP)
 			}
 		}
 		if len(jsonIface.Addrs4)+len(jsonIface.Addrs6) != 0 {
@@ -375,50 +375,46 @@ func (s *Server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request
 	err := json.NewDecoder(r.Body).Decode(&lj)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+
 		return
 	}
 
-	ip := net.ParseIP(lj.IP)
-	if ip != nil && ip.To4() == nil {
-		mac, err := net.ParseMAC(lj.HWAddr)
+	if lj.IP == nil {
+		httpError(r, w, http.StatusBadRequest, "invalid IP")
+
+		return
+	}
+
+	ip4 := lj.IP.To4()
+
+	mac, err := net.ParseMAC(lj.HWAddr)
+	lease := Lease{
+		HWAddr: mac,
+	}
+
+	if ip4 == nil {
+		lease.IP = lj.IP.To16()
+
 		if err != nil {
 			httpError(r, w, http.StatusBadRequest, "invalid MAC")
-			return
-		}
 
-		lease := Lease{
-			IP:     ip,
-			HWAddr: mac,
+			return
 		}
 
 		err = s.srv6.AddStaticLease(lease)
 		if err != nil {
 			httpError(r, w, http.StatusBadRequest, "%s", err)
-			return
 		}
+
 		return
 	}
 
-	ip, _ = parseIPv4(lj.IP)
-	if ip == nil {
-		httpError(r, w, http.StatusBadRequest, "invalid IP")
-		return
-	}
-
-	mac, err := net.ParseMAC(lj.HWAddr)
-	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "invalid MAC")
-		return
-	}
-
-	lease := Lease{
-		IP:       ip,
-		HWAddr:   mac,
-		Hostname: lj.Hostname,
-	}
+	lease.IP = ip4
+	lease.Hostname = lj.Hostname
 	err = s.srv4.AddStaticLease(lease)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "%s", err)
+
 		return
 	}
 }
@@ -428,46 +424,46 @@ func (s *Server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Requ
 	err := json.NewDecoder(r.Body).Decode(&lj)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+
 		return
 	}
 
-	ip := net.ParseIP(lj.IP)
-	if ip != nil && ip.To4() == nil {
-		mac, err := net.ParseMAC(lj.HWAddr)
+	if lj.IP == nil {
+		httpError(r, w, http.StatusBadRequest, "invalid IP")
+
+		return
+	}
+
+	ip4 := lj.IP.To4()
+
+	mac, err := net.ParseMAC(lj.HWAddr)
+	lease := Lease{
+		HWAddr: mac,
+	}
+
+	if ip4 == nil {
+		lease.IP = lj.IP.To16()
+
 		if err != nil {
 			httpError(r, w, http.StatusBadRequest, "invalid MAC")
-			return
-		}
 
-		lease := Lease{
-			IP:     ip,
-			HWAddr: mac,
+			return
 		}
 
 		err = s.srv6.RemoveStaticLease(lease)
 		if err != nil {
 			httpError(r, w, http.StatusBadRequest, "%s", err)
-			return
 		}
+
 		return
 	}
 
-	ip, _ = parseIPv4(lj.IP)
-	if ip == nil {
-		httpError(r, w, http.StatusBadRequest, "invalid IP")
-		return
-	}
-
-	mac, _ := net.ParseMAC(lj.HWAddr)
-
-	lease := Lease{
-		IP:       ip,
-		HWAddr:   mac,
-		Hostname: lj.Hostname,
-	}
+	lease.IP = ip4
+	lease.Hostname = lj.Hostname
 	err = s.srv4.RemoveStaticLease(lease)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "%s", err)
+
 		return
 	}
 }

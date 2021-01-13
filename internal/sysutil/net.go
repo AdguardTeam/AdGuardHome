@@ -19,12 +19,12 @@ func IfaceSetStaticIP(ifaceName string) (err error) {
 }
 
 // GatewayIP returns IP address of interface's gateway.
-func GatewayIP(ifaceName string) string {
+func GatewayIP(ifaceName string) net.IP {
 	cmd := exec.Command("ip", "route", "show", "dev", ifaceName)
 	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
 	d, err := cmd.Output()
 	if err != nil || cmd.ProcessState.ExitCode() != 0 {
-		return ""
+		return nil
 	}
 
 	fields := strings.Fields(string(d))
@@ -32,13 +32,8 @@ func GatewayIP(ifaceName string) string {
 	// "default" at first field and default gateway IP address at third
 	// field.
 	if len(fields) < 3 || fields[0] != "default" {
-		return ""
+		return nil
 	}
 
-	ip := net.ParseIP(fields[2])
-	if ip == nil {
-		return ""
-	}
-
-	return fields[2]
+	return net.ParseIP(fields[2])
 }

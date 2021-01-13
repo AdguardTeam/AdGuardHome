@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"net"
-	"strings"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/testutil"
@@ -135,7 +134,7 @@ func TestEtcHostsMatching(t *testing.T) {
 	assert.True(t, res.IsFiltered)
 	if assert.Len(t, res.Rules, 1) {
 		assert.Equal(t, "0.0.0.0 block.com", res.Rules[0].Text)
-		assert.Len(t, res.Rules[0].IP, 0)
+		assert.Empty(t, res.Rules[0].IP)
 	}
 
 	// IPv6
@@ -147,7 +146,7 @@ func TestEtcHostsMatching(t *testing.T) {
 	assert.True(t, res.IsFiltered)
 	if assert.Len(t, res.Rules, 1) {
 		assert.Equal(t, "::1  ipv6.com", res.Rules[0].Text)
-		assert.Len(t, res.Rules[0].IP, 0)
+		assert.Empty(t, res.Rules[0].IP)
 	}
 
 	// 2 IPv4 (return only the first one)
@@ -180,7 +179,7 @@ func TestSafeBrowsing(t *testing.T) {
 	defer d.Close()
 	d.checkMatch(t, "wmconvirus.narod.ru")
 
-	assert.True(t, strings.Contains(logOutput.String(), "SafeBrowsing lookup for wmconvirus.narod.ru"))
+	assert.Contains(t, logOutput.String(), "SafeBrowsing lookup for wmconvirus.narod.ru")
 
 	d.checkMatch(t, "test.wmconvirus.narod.ru")
 	d.checkMatchEmpty(t, "yandex.ru")
@@ -268,7 +267,7 @@ func TestSafeSearchCacheYandex(t *testing.T) {
 	res, err := d.CheckHost(domain, dns.TypeA, &setts)
 	assert.Nil(t, err)
 	assert.False(t, res.IsFiltered)
-	assert.Len(t, res.Rules, 0)
+	assert.Empty(t, res.Rules)
 
 	d = NewForTest(&Config{SafeSearchEnabled: true}, nil)
 	defer d.Close()
@@ -298,7 +297,7 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 	res, err := d.CheckHost(domain, dns.TypeA, &setts)
 	assert.Nil(t, err)
 	assert.False(t, res.IsFiltered)
-	assert.Len(t, res.Rules, 0)
+	assert.Empty(t, res.Rules)
 
 	d = NewForTest(&Config{SafeSearchEnabled: true}, nil)
 	defer d.Close()
@@ -346,7 +345,7 @@ func TestParentalControl(t *testing.T) {
 	d := NewForTest(&Config{ParentalEnabled: true}, nil)
 	defer d.Close()
 	d.checkMatch(t, "pornhub.com")
-	assert.True(t, strings.Contains(logOutput.String(), "Parental lookup for pornhub.com"))
+	assert.Contains(t, logOutput.String(), "Parental lookup for pornhub.com")
 	d.checkMatch(t, "www.pornhub.com")
 	d.checkMatchEmpty(t, "www.yandex.ru")
 	d.checkMatchEmpty(t, "yandex.ru")
@@ -468,18 +467,20 @@ func TestWhitelist(t *testing.T) {
 
 	// matched by white filter
 	res, err := d.CheckHost("host1", dns.TypeA, &setts)
-	assert.True(t, err == nil)
-	assert.True(t, !res.IsFiltered && res.Reason == NotFilteredAllowList)
+	assert.Nil(t, err)
+	assert.False(t, res.IsFiltered)
+	assert.Equal(t, res.Reason, NotFilteredAllowList)
 	if assert.Len(t, res.Rules, 1) {
-		assert.True(t, res.Rules[0].Text == "||host1^")
+		assert.Equal(t, "||host1^", res.Rules[0].Text)
 	}
 
 	// not matched by white filter, but matched by block filter
 	res, err = d.CheckHost("host2", dns.TypeA, &setts)
-	assert.True(t, err == nil)
-	assert.True(t, res.IsFiltered && res.Reason == FilteredBlockList)
+	assert.Nil(t, err)
+	assert.True(t, res.IsFiltered)
+	assert.Equal(t, res.Reason, FilteredBlockList)
 	if assert.Len(t, res.Rules, 1) {
-		assert.True(t, res.Rules[0].Text == "||host2^")
+		assert.Equal(t, "||host2^", res.Rules[0].Text)
 	}
 }
 
@@ -529,7 +530,7 @@ func TestClientSettings(t *testing.T) {
 
 	// not blocked
 	r, _ = d.CheckHost("facebook.com", dns.TypeA, &setts)
-	assert.True(t, !r.IsFiltered)
+	assert.False(t, r.IsFiltered)
 
 	// override client settings:
 	applyClientSettings(&setts)
@@ -554,7 +555,8 @@ func TestClientSettings(t *testing.T) {
 
 	// blocked by additional rules
 	r, _ = d.CheckHost("facebook.com", dns.TypeA, &setts)
-	assert.True(t, r.IsFiltered && r.Reason == FilteredBlockedService)
+	assert.True(t, r.IsFiltered)
+	assert.Equal(t, r.Reason, FilteredBlockedService)
 }
 
 // BENCHMARKS
