@@ -37,6 +37,9 @@ type dnsConfig struct {
 	CacheSize         *uint32 `json:"cache_size"`
 	CacheMinTTL       *uint32 `json:"cache_ttl_min"`
 	CacheMaxTTL       *uint32 `json:"cache_ttl_max"`
+
+	RebindingProtectionEnabled *bool     `json:"rebinding_protection_enabled"`
+	RebindingAllowedHosts      *[]string `json:"rebinding_allowed_hosts"`
 }
 
 func (s *Server) getDNSConfig() dnsConfig {
@@ -61,23 +64,27 @@ func (s *Server) getDNSConfig() dnsConfig {
 	} else if s.conf.AllServers {
 		upstreamMode = "parallel"
 	}
+	rebindingEnabled := s.conf.RebindingProtectionEnabled
+	rebindingAllowedHosts := stringArrayDup(s.conf.RebindingAllowedHosts)
 	s.RUnlock()
 	return dnsConfig{
-		Upstreams:         &upstreams,
-		UpstreamsFile:     &upstreamFile,
-		Bootstraps:        &bootstraps,
-		ProtectionEnabled: &protectionEnabled,
-		BlockingMode:      &blockingMode,
-		BlockingIPv4:      &BlockingIPv4,
-		BlockingIPv6:      &BlockingIPv6,
-		RateLimit:         &Ratelimit,
-		EDNSCSEnabled:     &EnableEDNSClientSubnet,
-		DNSSECEnabled:     &EnableDNSSEC,
-		DisableIPv6:       &AAAADisabled,
-		CacheSize:         &CacheSize,
-		CacheMinTTL:       &CacheMinTTL,
-		CacheMaxTTL:       &CacheMaxTTL,
-		UpstreamMode:      &upstreamMode,
+		Upstreams:                  &upstreams,
+		UpstreamsFile:              &upstreamFile,
+		Bootstraps:                 &bootstraps,
+		ProtectionEnabled:          &protectionEnabled,
+		BlockingMode:               &blockingMode,
+		BlockingIPv4:               &BlockingIPv4,
+		BlockingIPv6:               &BlockingIPv6,
+		RateLimit:                  &Ratelimit,
+		EDNSCSEnabled:              &EnableEDNSClientSubnet,
+		DNSSECEnabled:              &EnableDNSSEC,
+		DisableIPv6:                &AAAADisabled,
+		CacheSize:                  &CacheSize,
+		CacheMinTTL:                &CacheMinTTL,
+		CacheMaxTTL:                &CacheMaxTTL,
+		UpstreamMode:               &upstreamMode,
+		RebindingProtectionEnabled: &rebindingEnabled,
+		RebindingAllowedHosts:      &rebindingAllowedHosts,
 	}
 }
 
@@ -302,6 +309,8 @@ func (s *Server) setConfig(dc dnsConfig) (restart bool) {
 			s.conf.FastestAddr = false
 		}
 	}
+
+	restart = restart || s.setRebindingConfig(dc)
 	s.Unlock()
 	s.conf.ConfigModified()
 	return restart

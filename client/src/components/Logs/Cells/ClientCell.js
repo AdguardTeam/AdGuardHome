@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 import propTypes from 'prop-types';
-import { checkFiltered, getBlockingClientName } from '../../../helpers/helpers';
+import { checkFiltered, checkBlockedRebind, getBlockingClientName } from '../../../helpers/helpers';
 import { BLOCK_ACTIONS } from '../../../helpers/constants';
 import { toggleBlocking, toggleBlockingForClient } from '../../../actions';
 import IconTooltip from './IconTooltip';
@@ -48,6 +48,7 @@ const ClientCell = ({
     const processedData = Object.entries(data);
 
     const isFiltered = checkFiltered(reason);
+    const isBlockedRebinding = checkBlockedRebind(reason);
 
     const nameClass = classNames('w-90 o-hidden d-flex flex-column', {
         'mt-2': isDetailed && !name && !whoisAvailable,
@@ -125,7 +126,7 @@ const ClientCell = ({
             'button-action__container--detailed': isDetailed,
         });
 
-        return <div className={containerClass}>
+        return isBlockedRebinding || <div className={containerClass}>
             <button type="button"
                     className={buttonClass}
                     onClick={onClick}

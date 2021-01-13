@@ -80,6 +80,7 @@ const ResponseCell = ({
                     return formattedElapsedMs;
                 }
                 return getServiceName(service_name);
+            // case FILTERED_STATUS.FILTERED_BLOCKED_REBIND: // TODO??
             case FILTERED_STATUS.FILTERED_BLACK_LIST:
             case FILTERED_STATUS.NOT_FILTERED_WHITE_LIST:
                 return getFilterNames(rules, filters, whitelistFilters).join(', ');

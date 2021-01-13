@@ -147,6 +147,8 @@ const (
 	FilteredSafeSearch
 	// FilteredBlockedService - the host is blocked by "blocked services" settings
 	FilteredBlockedService
+	// FilteredRebind - the request was blocked due to DNS rebinding protection
+	FilteredRebind
 
 	// Rewritten is returned when there was a rewrite by a legacy DNS
 	// rewrite rule.
@@ -178,6 +180,7 @@ var reasonNames = []string{
 	FilteredInvalid:        "FilteredInvalid",
 	FilteredSafeSearch:     "FilteredSafeSearch",
 	FilteredBlockedService: "FilteredBlockedService",
+	FilteredRebind:         "FilteredRebind",
 
 	Rewritten:          "Rewrite",
 	RewrittenAutoHosts: "RewriteEtcHosts",

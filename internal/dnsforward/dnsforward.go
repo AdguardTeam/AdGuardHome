@@ -53,6 +53,7 @@ type Server struct {
 	queryLog   querylog.QueryLog     // Query log instance
 	stats      stats.Stats
 	access     *accessCtx
+	rebinding  *dnsRebindChecker
 
 	ipset ipsetCtx
 
@@ -122,6 +123,7 @@ func (s *Server) WriteDiskConfig(c *FilteringConfig) {
 	c.DisallowedClients = stringArrayDup(sc.DisallowedClients)
 	c.BlockedHosts = stringArrayDup(sc.BlockedHosts)
 	c.UpstreamDNS = stringArrayDup(sc.UpstreamDNS)
+	c.RebindingAllowedHosts = stringArrayDup(sc.RebindingAllowedHosts)
 	s.RUnlock()
 }
 
@@ -217,6 +219,13 @@ func (s *Server) Prepare(config *ServerConfig) error {
 	// --
 	s.access = &accessCtx{}
 	err = s.access.Init(s.conf.AllowedClients, s.conf.DisallowedClients, s.conf.BlockedHosts)
+	if err != nil {
+		return err
+	}
+
+	// Initialize DNS rebinding module
+	// --
+	s.rebinding, err = newRebindChecker(s.conf.RebindingAllowedHosts)
 	if err != nil {
 		return err
 	}

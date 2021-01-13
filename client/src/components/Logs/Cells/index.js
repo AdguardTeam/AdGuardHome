@@ -6,6 +6,7 @@ import propTypes from 'prop-types';
 import {
     captitalizeWords,
     checkFiltered,
+    checkBlockedRebind,
     getRulesToFilterList,
     formatDateTime,
     formatElapsedMs,
@@ -90,6 +91,7 @@ const Row = memo(({
 
         const formattedElapsedMs = formatElapsedMs(elapsedMs, t);
         const isFiltered = checkFiltered(reason);
+        const isBlockedRebinding = checkBlockedRebind(reason);
 
         const isBlocked = reason === FILTERED_STATUS.FILTERED_BLACK_LIST
                 || reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
@@ -183,9 +185,11 @@ const Row = memo(({
             source_label: source,
             validated_with_dnssec: dnssec_enabled ? Boolean(answer_dnssec) : false,
             original_response: originalResponse?.join('\n'),
-            [BUTTON_PREFIX + buttonType]: blockButton,
-            [BUTTON_PREFIX + blockingForClientKey]: blockForClientButton,
-            [BUTTON_PREFIX + blockingClientKey]: blockClientButton,
+            ...(isBlockedRebinding || {
+                [BUTTON_PREFIX + buttonType]: blockButton,
+                [BUTTON_PREFIX + blockingForClientKey]: blockForClientButton,
+                [BUTTON_PREFIX + blockingClientKey]: blockClientButton,
+            }),
         };
 
         setDetailedDataCurrent(processContent(detailedData));

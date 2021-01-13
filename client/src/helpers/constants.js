@@ -336,6 +336,7 @@ export const FILTERED_STATUS = {
     FILTERED_BLACK_LIST: 'FilteredBlackList',
     NOT_FILTERED_WHITE_LIST: 'NotFilteredWhiteList',
     NOT_FILTERED_NOT_FOUND: 'NotFilteredNotFound',
+    FILTERED_BLOCKED_REBIND: 'FilteredRebind',
     FILTERED_BLOCKED_SERVICE: 'FilteredBlockedService',
     REWRITE: 'Rewrite',
     REWRITE_HOSTS: 'RewriteEtcHosts',
@@ -361,6 +362,10 @@ export const RESPONSE_FILTER = {
     BLOCKED: {
         QUERY: 'blocked',
         LABEL: 'show_blocked_responses',
+    },
+    BLOCKED_REBIND: {
+        QUERY: 'blocked_rebind',
+        LABEL: 'blocked_rebind',
     },
     BLOCKED_SERVICES: {
         QUERY: 'blocked_services',
@@ -443,6 +448,10 @@ export const FILTERED_STATUS_TO_META_MAP = {
         LABEL: RESPONSE_FILTER.BLOCKED_ADULT_WEBSITES.LABEL,
         COLOR: QUERY_STATUS_COLORS.YELLOW,
     },
+    [FILTERED_STATUS.FILTERED_BLOCKED_REBIND]: {
+        LABEL: RESPONSE_FILTER.BLOCKED_REBIND.LABEL,
+        COLOR: QUERY_STATUS_COLORS.RED,
+    },
 };
 
 export const DEFAULT_TIME_FORMAT = 'HH:mm:ss';
@@ -514,6 +523,7 @@ export const FORM_NAME = {
     INSTALL: 'install',
     LOGIN: 'login',
     CACHE: 'cache',
+    REBINDING: 'rebinding',
     ...DHCP_FORM_NAMES,
 };
 
