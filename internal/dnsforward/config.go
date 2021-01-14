@@ -83,6 +83,7 @@ type FilteringConfig struct {
 	EnableDNSSEC           bool     `yaml:"enable_dnssec"`      // Set DNSSEC flag in outcoming DNS request
 	EnableEDNSClientSubnet bool     `yaml:"edns_client_subnet"` // Enable EDNS Client Subnet option
 	MaxGoroutines          uint32   `yaml:"max_goroutines"`     // Max. number of parallel goroutines for processing incoming requests
+	UDPBufSize             uint32   `yaml:"udp_buf_size"`       // The size of the UDP read buffer
 
 	// IPSET configuration - add IP addresses of the specified domain names to an ipset list
 	// Syntax:
@@ -168,6 +169,7 @@ func (s *Server) createProxyConfig() (proxy.Config, error) {
 		RequestHandler:         s.handleDNSRequest,
 		EnableEDNSClientSubnet: s.conf.EnableEDNSClientSubnet,
 		MaxGoroutines:          int(s.conf.MaxGoroutines),
+		UDPBufferSize:          int(s.conf.UDPBufSize),
 	}
 
 	if s.conf.CacheSize != 0 {
