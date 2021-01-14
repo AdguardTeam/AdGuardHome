@@ -46,12 +46,12 @@ func (d *DNSFilter) initSecurityServices() error {
 
 	d.parentalUpstream, err = upstream.AddressToUpstream(d.parentalServer, opts)
 	if err != nil {
-		return err
+		return fmt.Errorf("converting parental server: %w", err)
 	}
 
 	d.safeBrowsingUpstream, err = upstream.AddressToUpstream(d.safeBrowsingServer, opts)
 	if err != nil {
-		return err
+		return fmt.Errorf("converting safe browsing server: %w", err)
 	}
 
 	return nil

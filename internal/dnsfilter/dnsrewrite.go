@@ -33,7 +33,7 @@ func (d *DNSFilter) processDNSRewrites(dnsr []*rules.NetworkRule) (res Result) {
 		if dr.NewCNAME != "" {
 			// NewCNAME rules have a higher priority than
 			// the other rules.
-			rules := []*ResultRule{{
+			rules = []*ResultRule{{
 				FilterListID: int64(nr.GetFilterListID()),
 				Text:         nr.RuleText,
 			}}
@@ -56,7 +56,7 @@ func (d *DNSFilter) processDNSRewrites(dnsr []*rules.NetworkRule) (res Result) {
 		default:
 			// RcodeRefused and other such codes have higher
 			// priority.  Return immediately.
-			rules := []*ResultRule{{
+			rules = []*ResultRule{{
 				FilterListID: int64(nr.GetFilterListID()),
 				Text:         nr.RuleText,
 			}}
