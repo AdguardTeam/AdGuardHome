@@ -80,6 +80,8 @@ go-lint:  ; $(ENV) "$(SHELL)" ./scripts/make/go-lint.sh
 go-test:  ; $(ENV) "$(SHELL)" ./scripts/make/go-test.sh
 go-tools: ; $(ENV) "$(SHELL)" ./scripts/make/go-tools.sh
 
+openapi-lint: ; cd ./openapi/ && $(YARN) test
+
 # TODO(a.garipov): Remove the legacy targets once the build
 # infrastructure stops using them.
 dependencies:

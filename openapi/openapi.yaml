@@ -1283,7 +1283,7 @@
     'UpstreamsConfigResponse':
       'type': 'object'
       'description': 'Upstreams configuration response'
-      'additionalProperties': 
+      'additionalProperties':
         'type': 'string'
     'Filter':
       'type': 'object'
@@ -1513,6 +1513,8 @@
         Represent the number of hits per key (domain or client IP).
       'properties':
         'domain_or_ip':
+          'type': 'integer'
+      'additionalProperties':
           'type': 'integer'
     'StatsConfig':
       'type': 'object'
@@ -1967,7 +1969,7 @@
     'AddressInfoBeta':
       'type': 'object'
       'description': 'Port information'
-      'required': 
+      'required':
       - 'ip'
       - 'port'
       'properties':
@@ -1985,7 +1987,7 @@
     'AddressInfo':
       'type': 'object'
       'description': 'Port information'
-      'required': 
+      'required':
       - 'ip'
       - 'port'
       'properties':
@@ -1999,7 +2001,7 @@
     'AddressesInfo':
       'type': 'object'
       'description': 'AdGuard Home addresses configuration'
-      'required': 
+      'required':
       - 'dns_port'
       - 'web_port'
       - 'interfaces'
@@ -2021,7 +2023,7 @@
     'AddressesInfoBeta':
       'type': 'object'
       'description': 'AdGuard Home addresses configuration'
-      'required': 
+      'required':
       - 'dns_port'
       - 'web_port'
       - 'interfaces'
@@ -2176,9 +2178,7 @@
           'items':
             'type': 'string'
         'whois_info':
-          'type': 'array'
-          'items':
-            '$ref': '#/components/schemas/WhoisInfo'
+          '$ref': '#/components/schemas/WhoisInfo'
         'disallowed':
           'type': 'boolean'
           'description': >
@@ -2193,9 +2193,8 @@
 
     'WhoisInfo':
       'type': 'object'
-      'properties':
-        'key':
-          'type': 'string'
+      'additionalProperties':
+        'type': 'string'
 
     'Clients':
       'type': 'object'
@@ -2289,7 +2288,7 @@
           'example': false
     'CheckConfigResponse':
       'type': 'object'
-      'required': 
+      'required':
       - 'dns'
       - 'web'
       - 'static_ip'
@@ -2302,7 +2301,7 @@
           '$ref': '#/components/schemas/CheckConfigStaticIpInfo'
     'CheckConfigResponseInfo':
       'type': 'object'
-      'required': 
+      'required':
       - 'status'
       - 'can_autofix'
       'properties':
@@ -2315,7 +2314,7 @@
     'CheckConfigStaticIpInfoStatic':
       'type': 'string'
       'example': 'no'
-      'enum': 
+      'enum':
       - 'yes'
       - 'no'
       - 'error'
@@ -2338,7 +2337,7 @@
       'type': 'object'
       'description': >
         AdGuard Home initial configuration for the first-install wizard.
-      'required': 
+      'required':
       - 'dns'
       - 'web'
       - 'username'
@@ -2360,7 +2359,7 @@
       'type': 'object'
       'description': >
         AdGuard Home initial configuration for the first-install wizard.
-      'required': 
+      'required':
       - 'dns'
       - 'web'
       - 'username'
