@@ -27,5 +27,13 @@ go="${GO:-go}"
 # those aren't set.
 "$go" mod download $x_flags
 
-env GOBIN="${PWD}/bin" "$go" install $v_flags $x_flags\
+# Reset GOARCH and GOOS to make sure we install the tools for the native
+# architecture even when we're cross-compiling the main binary, and also
+# to prevent the "cannot install cross-compiled binaries when GOBIN is
+# set" error.
+env\
+	GOARCH=""\
+	GOOS=""\
+	GOBIN="${PWD}/bin"\
+	"$go" install $v_flags $x_flags\
 	github.com/gobuffalo/packr/packr

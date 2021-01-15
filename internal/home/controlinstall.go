@@ -109,7 +109,7 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 	if reqData.Web.Port != 0 && reqData.Web.Port != config.BindPort && reqData.Web.Port != config.BetaBindPort {
 		err = util.CheckPortAvailable(reqData.Web.IP, reqData.Web.Port)
 		if err != nil {
-			respData.Web.Status = fmt.Sprintf("%v", err)
+			respData.Web.Status = err.Error()
 		}
 	}
 
@@ -137,7 +137,7 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 		}
 
 		if err != nil {
-			respData.DNS.Status = fmt.Sprintf("%v", err)
+			respData.DNS.Status = err.Error()
 		} else if reqData.DNS.IP != "0.0.0.0" {
 			respData.StaticIP = handleStaticIP(reqData.DNS.IP, reqData.SetStaticIP)
 		}
