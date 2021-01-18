@@ -1,13 +1,12 @@
 import React, { FC, useContext } from 'react';
 import { Button } from 'antd';
-import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import { FormikHelpers } from 'formik';
 
 import Store from 'Store/installStore';
+import theme from 'Lib/theme';
 
 import { FormValues } from '../../Install';
-import s from './StepButtons.module.pcss';
 
 interface StepButtonsProps {
     setFieldValue: FormikHelpers<FormValues>['setFieldValue'];
@@ -21,11 +20,11 @@ const StepButtons: FC<StepButtonsProps> = observer(({
 }) => {
     const { ui: { intl } } = useContext(Store);
     return (
-        <div>
+        <div className={theme.install.actions}>
             <Button
                 size="large"
                 type="ghost"
-                className={cn(s.button, s.inGroup)}
+                className={theme.install.button}
                 onClick={() => setFieldValue('step', currentStep - 1)}
             >
                 {intl.getMessage('back')}
@@ -34,7 +33,7 @@ const StepButtons: FC<StepButtonsProps> = observer(({
                 size="large"
                 type="primary"
                 htmlType="submit"
-                className={cn(s.button)}
+                className={theme.install.button}
             >
                 {intl.getMessage('next')}
             </Button>

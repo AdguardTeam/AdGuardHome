@@ -13,6 +13,7 @@ import {
 } from 'Consts/install';
 import { notifyError } from 'Common/ui';
 import InstallStore from 'Store/stores/Install';
+import theme from 'Lib/theme';
 
 import AdminInterface from './components/AdminInterface';
 import Auth from './components/Auth';
@@ -20,8 +21,6 @@ import DnsServer from './components/DnsServer';
 import Stepper from './components/Stepper';
 import Welcome from './components/Welcome';
 import ConfigureDevices from './components/ConfigureDevices';
-
-import s from './Install.module.pcss';
 
 const { Content } = Layout;
 
@@ -85,7 +84,7 @@ const InstallForm: FC = observer(() => {
             onSubmit={onNext}
         >
             {({ values, handleSubmit, setFieldValue }) => (
-                <form noValidate className={s.content} onSubmit={handleSubmit}>
+                <form noValidate onSubmit={handleSubmit}>
                     <Stepper currentStep={values.step} />
                     {values.step === 0 && (
                         <Welcome onNext={() => setFieldValue('step', 1)}/>
@@ -110,8 +109,8 @@ const InstallForm: FC = observer(() => {
 
 const Install: FC = () => {
     return (
-        <Layout className={s.layout}>
-            <Content className={s.container}>
+        <Layout className={theme.install.layout}>
+            <Content className={theme.install.container}>
                 <InstallForm />
             </Content>
             <Icons/>

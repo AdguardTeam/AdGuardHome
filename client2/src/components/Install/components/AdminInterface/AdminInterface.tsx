@@ -9,7 +9,6 @@ import { chechNetworkType, NETWORK_TYPE } from 'Helpers/installHelpers';
 import theme from 'Lib/theme';
 import Store from 'Store/installStore';
 
-import s from './AdminInterface.module.pcss';
 import { FormValues } from '../../Install';
 import StepButtons from '../StepButtons';
 
@@ -39,7 +38,7 @@ const AdminInterface: FC<AdminInterfaceProps> = observer(({
     };
 
     const getManualBlock = () => (
-        <div className={s.manualOptions}>
+        <div className={theme.install.options}>
             {addresses?.interfaces.map((a) => {
                 let name = '';
                 const type = chechNetworkType(a.name);
@@ -56,29 +55,27 @@ const AdminInterface: FC<AdminInterfaceProps> = observer(({
                 }
                 return (
                     <div key={a.name}>
-                        <div>
-                            <div className={s.name}>
-                                {name}
-                            </div>
-                            {a.ipAddresses?.map((addrIp) => (
-                                <div key={addrIp} className={s.manualOption}>
-                                    <div className={theme.typography.subtext}>
-                                        http://{addrIp}
-                                    </div>
-                                    <Switch
-                                        checked={values.web.ip.includes(addrIp)}
-                                        onChange={() => {
-                                            const temp = new Set(ip);
-                                            if (temp.has(addrIp)) {
-                                                temp.delete(addrIp);
-                                            } else {
-                                                temp.add(addrIp);
-                                            }
-                                            setFieldValue('web.ip', Array.from(temp.values()));
-                                        }}/>
-                                </div>
-                            ))}
+                        <div className={theme.install.name}>
+                            {name}
                         </div>
+                        {a.ipAddresses?.map((addrIp) => (
+                            <div key={addrIp} className={theme.install.option}>
+                                <div className={theme.install.address}>
+                                    http://{addrIp}
+                                </div>
+                                <Switch
+                                    checked={values.web.ip.includes(addrIp)}
+                                    onChange={() => {
+                                        const temp = new Set(ip);
+                                        if (temp.has(addrIp)) {
+                                            temp.delete(addrIp);
+                                        } else {
+                                            temp.add(addrIp);
+                                        }
+                                        setFieldValue('web.ip', Array.from(temp.values()));
+                                    }}/>
+                            </div>
+                        ))}
                     </div>
                 );
             })}
@@ -86,17 +83,17 @@ const AdminInterface: FC<AdminInterfaceProps> = observer(({
     );
 
     return (
-        <div className={s.content}>
-            <div className={theme.typography.title}>
+        <>
+            <div className={theme.install.title}>
                 {intl.getMessage('install_admin_interface_title')}
             </div>
-            <div className={cn(theme.typography.text, theme.typography.text_block)}>
+            <div className={cn(theme.install.text, theme.install.text_block)}>
                 {intl.getMessage('install_admin_interface_title_decs')}
             </div>
-            <div className={theme.typography.subTitle}>
+            <div className={theme.install.subtitle}>
                 {intl.getMessage('install_admin_interface_where_interface')}
             </div>
-            <div className={cn(theme.typography.text, theme.typography.text_base)}>
+            <div className={cn(theme.install.text, theme.install.text_base)}>
                 {intl.getMessage('install_admin_interface_where_interface_desc')}
             </div>
             <Radio
@@ -116,10 +113,10 @@ const AdminInterface: FC<AdminInterfaceProps> = observer(({
                 ]}
             />
             { radioValue !== NETWORK_OPTIONS.ALL && getManualBlock()}
-            <div className={theme.typography.subTitle}>
+            <div className={theme.install.subtitle}>
                 {intl.getMessage('install_admin_interface_port')}
             </div>
-            <div className={cn(theme.typography.text, theme.typography.text_base)}>
+            <div className={cn(theme.install.text, theme.install.text_base)}>
                 {intl.getMessage('install_admin_interface_port_desc')}
             </div>
             <Input
@@ -138,7 +135,7 @@ const AdminInterface: FC<AdminInterfaceProps> = observer(({
                 currentStep={1}
                 values={values}
             />
-        </div>
+        </>
     );
 });
 

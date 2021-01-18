@@ -22,11 +22,11 @@ const Auth: FC<AuthProps> = observer(({
     const { ui: { intl } } = useContext(Store);
 
     return (
-        <div>
-            <div className={theme.typography.title}>
+        <>
+            <div className={theme.install.title}>
                 {intl.getMessage('install_auth_title')}
             </div>
-            <div className={cn(theme.typography.text, theme.typography.text_block)}>
+            <div className={cn(theme.install.text, theme.install.text_block)}>
                 {intl.getMessage('install_auth_description')}
             </div>
             <Input
@@ -48,7 +48,7 @@ const Auth: FC<AuthProps> = observer(({
                 currentStep={2}
                 values={values}
             />
-        </div>
+        </>
     );
 });
 

@@ -1,5 +1,5 @@
 import React, { FC, useContext } from 'react';
-import { Tabs } from 'antd';
+import { Tabs, Grid } from 'antd';
 import cn from 'classnames';
 import { FormikHelpers } from 'formik';
 
@@ -10,8 +10,8 @@ import { DEFAULT_DNS_PORT, DEFAULT_IP_ADDRESS, DEFAULT_IP_PORT } from 'Consts/in
 
 import { FormValues } from '../../Install';
 import StepButtons from '../StepButtons';
-import s from './ConfigureDevices.module.pcss';
 
+const { useBreakpoint } = Grid;
 const { TabPane } = Tabs;
 
 interface ConfigureDevicesProps {
@@ -23,10 +23,18 @@ const ConfigureDevices: FC<ConfigureDevicesProps> = ({
     values, setFieldValue,
 }) => {
     const { ui: { intl }, install: { addresses } } = useContext(Store);
+    const screens = useBreakpoint();
+    const tabsPosition = screens.md ? 'left' : 'top';
 
     const dhcp = (e: string) => (
-        // TODO: link to dhcp
-        <a href="http://" target="_blank" rel="noopener noreferrer">{e}</a>
+        <a
+            href="https://github.com/AdguardTeam/AdGuardHome/wiki/DHCP"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={theme.link.link}
+        >
+            {e}
+        </a>
     );
 
     const allIps = addresses?.interfaces.reduce<string[]>((all, data) => {
@@ -44,76 +52,92 @@ const ConfigureDevices: FC<ConfigureDevicesProps> = ({
         ? allIps : dnsIp;
 
     return (
-        <div>
-            <div className={theme.typography.title}>
+        <>
+            <div className={theme.install.title}>
                 {intl.getMessage('install_configure_title')}
             </div>
-            <div className={cn(theme.typography.text, theme.typography.text_block)}>
+            <div className={cn(theme.install.text, theme.install.text_block)}>
                 {intl.getMessage('install_configure_danger_notice', { danger })}
             </div>
-            <div className={theme.typography.subTitle}>
-                {intl.getMessage('install_configure_how_to_title')}
-            </div>
-            <Tabs defaultActiveKey="1" tabPosition="left" className={s.tabs}>
-                <TabPane tab="Router" key="1">
-                    <div className={cn(theme.typography.text, theme.typography.text_base)}>
+
+            <Tabs defaultActiveKey="1" tabPosition={tabsPosition} className={theme.install.tabs}>
+                <TabPane tab={intl.getMessage('router')} key="1">
+                    <div className={theme.install.subtitle}>
+                        {intl.getMessage('install_configure_how_to_title', { value: intl.getMessage('router') })}
+                    </div>
+                    <div className={cn(theme.install.text, theme.install.text_base)}>
                         {intl.getMessage('install_configure_router', { p })}
                     </div>
                 </TabPane>
                 <TabPane tab="Windows" key="2">
-                    <div className={cn(theme.typography.text, theme.typography.text_base)}>
+                    <div className={theme.install.subtitle}>
+                        {intl.getMessage('install_configure_how_to_title', { value: 'Windows' })}
+                    </div>
+                    <div className={cn(theme.install.text, theme.install.text_base)}>
                         {intl.getMessage('install_configure_windows', { p })}
                     </div>
                 </TabPane>
-                <TabPane tab="Macos" key="3">
-                    <div className={cn(theme.typography.text, theme.typography.text_base)}>
+                <TabPane tab="macOS" key="3">
+                    <div className={theme.install.subtitle}>
+                        {intl.getMessage('install_configure_how_to_title', { value: 'macOS' })}
+                    </div>
+                    <div className={cn(theme.install.text, theme.install.text_base)}>
                         {intl.getMessage('install_configure_macos', { p })}
                     </div>
                 </TabPane>
                 <TabPane tab="Linux" key="4">
-                    <div className={cn(theme.typography.text, theme.typography.text_base)}>
+                    <div className={theme.install.subtitle}>
+                        {intl.getMessage('install_configure_how_to_title', { value: 'Linux' })}
+                    </div>
+                    <div className={cn(theme.install.text, theme.install.text_base)}>
                         {/* TODO: add linux setup */}
                         {intl.getMessage('install_configure_router', { p })}
                     </div>
                 </TabPane>
                 <TabPane tab="Android" key="5">
-                    <div className={cn(theme.typography.text, theme.typography.text_base)}>
+                    <div className={theme.install.subtitle}>
+                        {intl.getMessage('install_configure_how_to_title', { value: 'Android' })}
+                    </div>
+                    <div className={cn(theme.install.text, theme.install.text_base)}>
                         {intl.getMessage('install_configure_android', { p })}
                     </div>
                 </TabPane>
-                <TabPane tab="iOs" key="6">
-                    <div className={cn(theme.typography.text, theme.typography.text_base)}>
+                <TabPane tab="iOS" key="6">
+                    <div className={theme.install.subtitle}>
+                        {intl.getMessage('install_configure_how_to_title', { value: 'iOS' })}
+                    </div>
+                    <div className={cn(theme.install.text, theme.install.text_base)}>
                         {intl.getMessage('install_configure_ios', { p })}
                     </div>
                 </TabPane>
             </Tabs>
 
-            <div className={theme.typography.subTitle}>
+            <div className={theme.install.subtitle}>
                 {intl.getMessage('install_configure_adresses')}
             </div>
-            <div className={cn(theme.typography.text, theme.typography.text_base)}>
-                <p>
+            <div className={cn(theme.install.text, theme.install.text_block)}>
+                <div className={cn(theme.install.text, theme.install.text_base)}>
                     {intl.getMessage('install_admin_interface_title')}
-                </p>
-                <p>
+                </div>
+                <div className={cn(theme.install.text, theme.install.text_base)}>
                     {selectedWebIps?.map((ip) => (
-                        <div key={ip}>
+                        <div key={ip} className={theme.install.ip}>
                             {ip}{values.web.port !== DEFAULT_IP_PORT && `:${values.web.port}`}
                         </div>
                     ))}
-                </p>
-                <p>
+                </div>
+                <div className={cn(theme.install.text, theme.install.text_base)}>
                     {intl.getMessage('install_dns_server_title')}
-                </p>
-                <div>
+                </div>
+                <div className={cn(theme.install.text, theme.install.text_base)}>
                     {selectedDnsIps?.map((ip) => (
-                        <div key={ip}>
+                        <div key={ip} className={theme.install.ip}>
                             {ip}{values.dns.port !== DEFAULT_DNS_PORT && `:${values.dns.port}`}
                         </div>
                     ))}
                 </div>
             </div>
-            <div className={cn(theme.typography.text, theme.typography.text_base)}>
+            <div className={cn(theme.install.text, theme.install.text_base)}>
                 {intl.getMessage('install_configure_dhcp', { dhcp })}
             </div>
             <StepButtons
@@ -121,7 +145,7 @@ const ConfigureDevices: FC<ConfigureDevicesProps> = ({
                 currentStep={4}
                 values={values}
             />
-        </div>
+        </>
     );
 };
 

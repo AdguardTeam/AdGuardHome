@@ -2,8 +2,6 @@ import React, { FC } from 'react';
 import { Radio } from 'antd';
 import { observer } from 'mobx-react-lite';
 
-import theme from 'Lib/theme';
-
 import s from './Radio.module.pcss';
 
 const { Group } = Radio;
@@ -43,7 +41,7 @@ const RadioComponent: FC<AdminInterfaceProps> = observer(({
                         {o.label}
                     </div>
                     {o.desc && (
-                        <div className={theme.typography.subtext}>
+                        <div className={s.desc}>
                             {o.desc}
                         </div>
                     )}

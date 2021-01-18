@@ -6,13 +6,13 @@
     "password": "Password",
     "next": "Next",
     "port": "Port",
-
+    "router": "Router",
 
     "install_admin_interface_port_desc": "Now it is working at 3000 port, just in case, but we recomended to use 80 port. Using this ports allow to access to Web interface like to common site",
     "install_admin_interface_port": "Which port will be used",
     "install_admin_interface_title_decs": "Admin web interface is used to control AdGuard Home. You can open it in your browser and it does not require using a client-side program",
     "install_admin_interface_title": "Admin interface settings",
-    "install_admin_interface_where_interface_desc": "Set what kind of networks will be able to access to Admin interface. For example: if you choose a local   interface only, then Admin inteface will be accessed by this local device only",
+    "install_admin_interface_where_interface_desc": "Set what kind of networks will be able to access to Admin interface. For example: if you choose a local interface only, then Admin inteface will be accessed by this local device only",
     "install_admin_interface_where_interface": "Where can I open Admin interface",
 
     "install_all_networks_description": "All available web interfaces",
@@ -37,7 +37,7 @@
 
     "install_configure_title": "Configure your devices",
     "install_configure_danger_notice": "<danger>IMPORTANT!</danger> To start using AdGuard Home, you need to configure your devices manually",
-    "install_configure_how_to_title": "How to configure Router",
+    "install_configure_how_to_title": "How to configure %value%",
     "install_configure_router": "<p>This setup will automatically cover all the devices connected to your home router and you will not need to configure each of them manually.</p> <p>Open the preferences for your router. Usually, you can access it from your browser via a URL (like http://192.168.0.1/ or http://192.168.1.1/). You may be asked to enter the password. If you don't remember it, you can often reset the password by pressing a button on the router itself. Some routers require a specific application, which in that case should be already installed on your computer/phone.</p><p>Find the DHCP/DNS settings. Look for the DNS letters next to a field which allows two or three sets of numbers, each broken into four groups of one to three digits.</p><p>Enter your AdGuard Home server addresses there.</p>",
     "install_configure_windows": "<p>Open Control Panel through Start menu or Windows search.</p><p>Go to Network and Internet category and then to Network and Sharing Center.</p><p>On the left side of the screen find Change adapter settings and click on it.</p><p>Select your active connection, right-click on it and choose Properties.</p><p>Find Internet Protocol Version 4 (TCP/IP) in the list, select it and then click on Properties again.</p><p>Choose Use the following DNS server addresses and enter your AdGuard Home server addresses.</p>",
     "install_configure_macos": "<p>Click on Apple icon and go to System Preferences.</p><p>Click on Network.</p><p>Select the first connection in your list and click Advanced.</p><p>Select the DNS tab and enter your AdGuard Home server addresses.</p>",

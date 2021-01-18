@@ -1,33 +1,24 @@
 :root {
-     /*GRAYSCALE*/
      --white: #ffffff;
      --gray100: #f3f3f3;
      --gray300: #d8d8d8;
      --gray400: #a4a4a4;
      --gray700: #888888;
      --gray900: #4d4d4d;
-     --black: #131313;
-     /*FEEDBACK*/
-     --red400: #c23814;
-     --orange400: #eb9300;
-     /*BRAND*/
+     --black: #000000;
      --green400: #67b279;
      --green700: #4d995f;
-     /*ADDITIONAL*/
-     --purple400: #b267a0;
-     --purple700: #994d87;
-     --slateblue400: #677bb2;
-     --slateblue700: #4d6199;
-     /*VPN*/
-     --vpngreen400: #74a352;
-     --vpngreen700: #568040;
-     --vpnslateblue700: #575770;
-     --vpnslateblue800: #464558;
-     --vpnseagreen: #5eb0b7;
-
+     --red400: #c23814;
+     --transition: 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+     --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+     --font-family-monospace: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
 }
 
 body {
      font-size: 14px;
      color: var(--gray900);
 }
+
+@custom-media --m-viewport (min-width: 768px);
+@custom-media --l-viewport (min-width: 992px);
+@custom-media --xl-viewport (min-width: 1200px);
