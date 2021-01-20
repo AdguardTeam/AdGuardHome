@@ -3,6 +3,8 @@ package dhcpd
 
 import (
 	"encoding/hex"
+	"encoding/json"
+	"fmt"
 	"net"
 	"net/http"
 	"path/filepath"
@@ -31,6 +33,39 @@ type Lease struct {
 	// Lease expiration time
 	// 1: static lease
 	Expiry time.Time `json:"expires"`
+}
+
+// MarshalJSON implements the json.Marshaler interface for *Lease.
+func (l *Lease) MarshalJSON() ([]byte, error) {
+	type lease Lease
+	return json.Marshal(&struct {
+		HWAddr string `json:"mac"`
+		*lease
+	}{
+		HWAddr: l.HWAddr.String(),
+		lease:  (*lease)(l),
+	})
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface for *Lease.
+func (l *Lease) UnmarshalJSON(data []byte) (err error) {
+	type lease Lease
+	aux := struct {
+		HWAddr string `json:"mac"`
+		*lease
+	}{
+		lease: (*lease)(l),
+	}
+	if err = json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	l.HWAddr, err = net.ParseMAC(aux.HWAddr)
+	if err != nil {
+		return fmt.Errorf("couldn't parse MAC address: %w", err)
+	}
+
+	return nil
 }
 
 // ServerConfig - DHCP server configuration

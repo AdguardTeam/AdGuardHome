@@ -72,7 +72,10 @@ func (s *v6Server) ResetLeases(ll []*Lease) {
 
 // GetLeases - get current leases
 func (s *v6Server) GetLeases(flags int) []Lease {
-	var result []Lease
+	// The function shouldn't return nil value because zero-length slice
+	// behaves differently in cases like marshalling.  Our front-end also
+	// requires non-nil value in the response.
+	result := []Lease{}
 	s.leasesLock.Lock()
 	for _, lease := range s.leases {
 		if lease.Expiry.Unix() == leaseExpireStatic {

@@ -33,22 +33,22 @@ type DHCPServer interface {
 
 // V4ServerConf - server configuration
 type V4ServerConf struct {
-	Enabled       bool   `yaml:"-"`
-	InterfaceName string `yaml:"-"`
+	Enabled       bool   `yaml:"-" json:"-"`
+	InterfaceName string `yaml:"-" json:"-"`
 
-	GatewayIP  net.IP `yaml:"gateway_ip"`
-	SubnetMask net.IP `yaml:"subnet_mask"`
+	GatewayIP  net.IP `yaml:"gateway_ip" json:"gateway_ip"`
+	SubnetMask net.IP `yaml:"subnet_mask" json:"subnet_mask"`
 
 	// The first & the last IP address for dynamic leases
 	// Bytes [0..2] of the last allowed IP address must match the first IP
-	RangeStart net.IP `yaml:"range_start"`
-	RangeEnd   net.IP `yaml:"range_end"`
+	RangeStart net.IP `yaml:"range_start" json:"range_start"`
+	RangeEnd   net.IP `yaml:"range_end" json:"range_end"`
 
-	LeaseDuration uint32 `yaml:"lease_duration"` // in seconds
+	LeaseDuration uint32 `yaml:"lease_duration" json:"lease_duration"` // in seconds
 
 	// IP conflict detector: time (ms) to wait for ICMP reply
 	// 0: disable
-	ICMPTimeout uint32 `yaml:"icmp_timeout_msec"`
+	ICMPTimeout uint32 `yaml:"icmp_timeout_msec" json:"-"`
 
 	// Custom Options.
 	//
@@ -58,7 +58,7 @@ type V4ServerConf struct {
 	//
 	// Option with IP data (only 1 IP is supported):
 	//     DEC_CODE ip IP_ADDR
-	Options []string `yaml:"options"`
+	Options []string `yaml:"options" json:"-"`
 
 	ipStart    net.IP        // starting IP address for dynamic leases
 	ipEnd      net.IP        // ending IP address for dynamic leases
@@ -74,17 +74,17 @@ type V4ServerConf struct {
 
 // V6ServerConf - server configuration
 type V6ServerConf struct {
-	Enabled       bool   `yaml:"-"`
-	InterfaceName string `yaml:"-"`
+	Enabled       bool   `yaml:"-" json:"-"`
+	InterfaceName string `yaml:"-" json:"-"`
 
 	// The first IP address for dynamic leases
 	// The last allowed IP address ends with 0xff byte
-	RangeStart string `yaml:"range_start"`
+	RangeStart string `yaml:"range_start" json:"range_start"`
 
-	LeaseDuration uint32 `yaml:"lease_duration"` // in seconds
+	LeaseDuration uint32 `yaml:"lease_duration" json:"lease_duration"` // in seconds
 
-	RaSlaacOnly  bool `yaml:"ra_slaac_only"`  // send ICMPv6.RA packets without MO flags
-	RaAllowSlaac bool `yaml:"ra_allow_slaac"` // send ICMPv6.RA packets with MO flags
+	RaSlaacOnly  bool `yaml:"ra_slaac_only" json:"-"`  // send ICMPv6.RA packets without MO flags
+	RaAllowSlaac bool `yaml:"ra_allow_slaac" json:"-"` // send ICMPv6.RA packets with MO flags
 
 	ipStart    net.IP        // starting IP address for dynamic leases
 	leaseTime  time.Duration // the time during which a dynamic lease is considered valid

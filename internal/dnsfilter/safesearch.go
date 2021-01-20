@@ -133,17 +133,12 @@ func (d *DNSFilter) handleSafeSearchDisable(w http.ResponseWriter, r *http.Reque
 }
 
 func (d *DNSFilter) handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
-	data := map[string]interface{}{
-		"enabled": d.Config.SafeSearchEnabled,
-	}
-	jsonVal, err := json.Marshal(data)
-	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "Unable to marshal status json: %s", err)
-		return
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
+	err := json.NewEncoder(w).Encode(&struct {
+		Enabled bool `json:"enabled"`
+	}{
+		Enabled: d.Config.SafeSearchEnabled,
+	})
 	if err != nil {
 		httpError(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
 		return

@@ -346,16 +346,12 @@ func (d *DNSFilter) handleSafeBrowsingDisable(w http.ResponseWriter, r *http.Req
 }
 
 func (d *DNSFilter) handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Request) {
-	data := map[string]interface{}{
-		"enabled": d.Config.SafeBrowsingEnabled,
-	}
-	jsonVal, err := json.Marshal(data)
-	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "Unable to marshal status json: %s", err)
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
+	err := json.NewEncoder(w).Encode(&struct {
+		Enabled bool `json:"enabled"`
+	}{
+		Enabled: d.Config.SafeBrowsingEnabled,
+	})
 	if err != nil {
 		httpError(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
 		return
@@ -373,17 +369,12 @@ func (d *DNSFilter) handleParentalDisable(w http.ResponseWriter, r *http.Request
 }
 
 func (d *DNSFilter) handleParentalStatus(w http.ResponseWriter, r *http.Request) {
-	data := map[string]interface{}{
-		"enabled": d.Config.ParentalEnabled,
-	}
-	jsonVal, err := json.Marshal(data)
-	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "Unable to marshal status json: %s", err)
-		return
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
+	err := json.NewEncoder(w).Encode(&struct {
+		Enabled bool `json:"enabled"`
+	}{
+		Enabled: d.Config.ParentalEnabled,
+	})
 	if err != nil {
 		httpError(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
 		return

@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/sysutil"
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
@@ -22,25 +21,6 @@ func httpError(r *http.Request, w http.ResponseWriter, code int, format string, 
 	http.Error(w, text, code)
 }
 
-// []Lease -> JSON
-func convertLeases(inputLeases []Lease, includeExpires bool) []map[string]string {
-	leases := []map[string]string{}
-	for _, l := range inputLeases {
-		lease := map[string]string{
-			"mac":      l.HWAddr.String(),
-			"ip":       l.IP.String(),
-			"hostname": l.Hostname,
-		}
-
-		if includeExpires {
-			lease["expires"] = l.Expiry.Format(time.RFC3339)
-		}
-
-		leases = append(leases, lease)
-	}
-	return leases
-}
-
 type v4ServerConfJSON struct {
 	GatewayIP     net.IP `json:"gateway_ip"`
 	SubnetMask    net.IP `json:"subnet_mask"`
@@ -49,22 +29,12 @@ type v4ServerConfJSON struct {
 	LeaseDuration uint32 `json:"lease_duration"`
 }
 
-func v4ServerConfToJSON(c V4ServerConf) v4ServerConfJSON {
-	return v4ServerConfJSON{
-		GatewayIP:     c.GatewayIP,
-		SubnetMask:    c.SubnetMask,
-		RangeStart:    c.RangeStart,
-		RangeEnd:      c.RangeEnd,
-		LeaseDuration: c.LeaseDuration,
-	}
-}
-
 func v4JSONToServerConf(j v4ServerConfJSON) V4ServerConf {
 	return V4ServerConf{
-		GatewayIP:     j.GatewayIP.To4(),
-		SubnetMask:    j.SubnetMask.To4(),
-		RangeStart:    j.RangeStart.To4(),
-		RangeEnd:      j.RangeEnd.To4(),
+		GatewayIP:     j.GatewayIP,
+		SubnetMask:    j.SubnetMask,
+		RangeStart:    j.RangeStart,
+		RangeEnd:      j.RangeEnd,
 		LeaseDuration: j.LeaseDuration,
 	}
 }
@@ -74,13 +44,6 @@ type v6ServerConfJSON struct {
 	LeaseDuration uint32 `json:"lease_duration"`
 }
 
-func v6ServerConfToJSON(c V6ServerConf) v6ServerConfJSON {
-	return v6ServerConfJSON{
-		RangeStart:    c.RangeStart,
-		LeaseDuration: c.LeaseDuration,
-	}
-}
-
 func v6JSONToServerConf(j v6ServerConfJSON) V6ServerConf {
 	return V6ServerConf{
 		RangeStart:    j.RangeStart,
@@ -88,24 +51,29 @@ func v6JSONToServerConf(j v6ServerConfJSON) V6ServerConf {
 	}
 }
 
+// dhcpStatusResponse is the response for /control/dhcp/status endpoint.
+type dhcpStatusResponse struct {
+	Enabled      bool         `json:"enabled"`
+	IfaceName    string       `json:"interface_name"`
+	V4           V4ServerConf `json:"v4"`
+	V6           V6ServerConf `json:"v6"`
+	Leases       []Lease      `json:"leases"`
+	StaticLeases []Lease      `json:"static_leases"`
+}
+
 func (s *Server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
-	leases := convertLeases(s.Leases(LeasesDynamic), true)
-	staticLeases := convertLeases(s.Leases(LeasesStatic), false)
-
-	v4conf := V4ServerConf{}
-	s.srv4.WriteDiskConfig4(&v4conf)
-
-	v6conf := V6ServerConf{}
-	s.srv6.WriteDiskConfig6(&v6conf)
-
-	status := map[string]interface{}{
-		"enabled":        s.conf.Enabled,
-		"interface_name": s.conf.InterfaceName,
-		"v4":             v4ServerConfToJSON(v4conf),
-		"v6":             v6ServerConfToJSON(v6conf),
-		"leases":         leases,
-		"static_leases":  staticLeases,
+	status := &dhcpStatusResponse{
+		Enabled:   s.conf.Enabled,
+		IfaceName: s.conf.InterfaceName,
+		V4:        V4ServerConf{},
+		V6:        V6ServerConf{},
 	}
+
+	s.srv4.WriteDiskConfig4(&status.V4)
+	s.srv6.WriteDiskConfig6(&status.V6)
+
+	status.Leases = s.Leases(LeasesDynamic)
+	status.StaticLeases = s.Leases(LeasesStatic)
 
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(status)
@@ -113,12 +81,6 @@ func (s *Server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 		httpError(r, w, http.StatusInternalServerError, "Unable to marshal DHCP status json: %s", err)
 		return
 	}
-}
-
-type staticLeaseJSON struct {
-	HWAddr   string `json:"mac"`
-	IP       net.IP `json:"ip"`
-	Hostname string `json:"hostname"`
 }
 
 type dhcpServerConfigJSON struct {
@@ -233,7 +195,7 @@ type netInterfaceJSON struct {
 }
 
 func (s *Server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
-	response := map[string]interface{}{}
+	response := map[string]netInterfaceJSON{}
 
 	ifaces, err := util.GetValidNetInterfaces()
 	if err != nil {
@@ -295,6 +257,40 @@ func (s *Server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// dhcpSearchOtherResult contains information about other DHCP server for
+// specific network interface.
+type dhcpSearchOtherResult struct {
+	Found string `json:"found,omitempty"`
+	Error string `json:"error,omitempty"`
+}
+
+// dhcpStaticIPStatus contains information about static IP address for DHCP
+// server.
+type dhcpStaticIPStatus struct {
+	Static string `json:"static"`
+	IP     string `json:"ip,omitempty"`
+	Error  string `json:"error,omitempty"`
+}
+
+// dhcpSearchV4Result contains information about DHCPv4 server for specific
+// network interface.
+type dhcpSearchV4Result struct {
+	OtherServer dhcpSearchOtherResult `json:"other_server"`
+	StaticIP    dhcpStaticIPStatus    `json:"static_ip"`
+}
+
+// dhcpSearchV6Result contains information about DHCPv6 server for specific
+// network interface.
+type dhcpSearchV6Result struct {
+	OtherServer dhcpSearchOtherResult `json:"other_server"`
+}
+
+// dhcpSearchResult is a response for /control/dhcp/find_active_dhcp endpoint.
+type dhcpSearchResult struct {
+	V4 dhcpSearchV4Result `json:"v4"`
+	V6 dhcpSearchV6Result `json:"v6"`
+}
+
 // Perform the following tasks:
 // . Search for another DHCP server running
 // . Check if a static IP is configured for the network interface
@@ -317,50 +313,42 @@ func (s *Server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	result := dhcpSearchResult{
+		V4: dhcpSearchV4Result{
+			OtherServer: dhcpSearchOtherResult{},
+			StaticIP:    dhcpStaticIPStatus{},
+		},
+		V6: dhcpSearchV6Result{
+			OtherServer: dhcpSearchOtherResult{},
+		},
+	}
+
 	found4, err4 := CheckIfOtherDHCPServersPresentV4(interfaceName)
 
-	staticIP := map[string]interface{}{}
 	isStaticIP, err := sysutil.IfaceHasStaticIP(interfaceName)
-	staticIPStatus := "yes"
 	if err != nil {
-		staticIPStatus = "error"
-		staticIP["error"] = err.Error()
+		result.V4.StaticIP.Static = "error"
+		result.V4.StaticIP.Error = err.Error()
 	} else if !isStaticIP {
-		staticIPStatus = "no"
-		staticIP["ip"] = util.GetSubnet(interfaceName)
+		result.V4.StaticIP.Static = "no"
+		result.V4.StaticIP.IP = util.GetSubnet(interfaceName)
 	}
-	staticIP["static"] = staticIPStatus
 
-	v4 := map[string]interface{}{}
-	othSrv := map[string]interface{}{}
-	foundVal := "no"
 	if found4 {
-		foundVal = "yes"
+		result.V4.OtherServer.Found = "yes"
 	} else if err4 != nil {
-		foundVal = "error"
-		othSrv["error"] = err4.Error()
+		result.V4.OtherServer.Found = "error"
+		result.V4.OtherServer.Error = err4.Error()
 	}
-	othSrv["found"] = foundVal
-	v4["other_server"] = othSrv
-	v4["static_ip"] = staticIP
 
 	found6, err6 := CheckIfOtherDHCPServersPresentV6(interfaceName)
 
-	v6 := map[string]interface{}{}
-	othSrv = map[string]interface{}{}
-	foundVal = "no"
 	if found6 {
-		foundVal = "yes"
+		result.V6.OtherServer.Found = "yes"
 	} else if err6 != nil {
-		foundVal = "error"
-		othSrv["error"] = err6.Error()
+		result.V6.OtherServer.Found = "error"
+		result.V6.OtherServer.Error = err6.Error()
 	}
-	othSrv["found"] = foundVal
-	v6["other_server"] = othSrv
-
-	result := map[string]interface{}{}
-	result["v4"] = v4
-	result["v6"] = v6
 
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(result)
@@ -371,7 +359,7 @@ func (s *Server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 }
 
 func (s *Server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request) {
-	lj := staticLeaseJSON{}
+	lj := Lease{}
 	err := json.NewDecoder(r.Body).Decode(&lj)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "json.Decode: %s", err)
@@ -387,21 +375,10 @@ func (s *Server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request
 
 	ip4 := lj.IP.To4()
 
-	mac, err := net.ParseMAC(lj.HWAddr)
-	lease := Lease{
-		HWAddr: mac,
-	}
-
 	if ip4 == nil {
-		lease.IP = lj.IP.To16()
+		lj.IP = lj.IP.To16()
 
-		if err != nil {
-			httpError(r, w, http.StatusBadRequest, "invalid MAC")
-
-			return
-		}
-
-		err = s.srv6.AddStaticLease(lease)
+		err = s.srv6.AddStaticLease(lj)
 		if err != nil {
 			httpError(r, w, http.StatusBadRequest, "%s", err)
 		}
@@ -409,9 +386,8 @@ func (s *Server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	lease.IP = ip4
-	lease.Hostname = lj.Hostname
-	err = s.srv4.AddStaticLease(lease)
+	lj.IP = ip4
+	err = s.srv4.AddStaticLease(lj)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "%s", err)
 
@@ -420,7 +396,7 @@ func (s *Server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request
 }
 
 func (s *Server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Request) {
-	lj := staticLeaseJSON{}
+	lj := Lease{}
 	err := json.NewDecoder(r.Body).Decode(&lj)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "json.Decode: %s", err)
@@ -436,21 +412,10 @@ func (s *Server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Requ
 
 	ip4 := lj.IP.To4()
 
-	mac, err := net.ParseMAC(lj.HWAddr)
-	lease := Lease{
-		HWAddr: mac,
-	}
-
 	if ip4 == nil {
-		lease.IP = lj.IP.To16()
+		lj.IP = lj.IP.To16()
 
-		if err != nil {
-			httpError(r, w, http.StatusBadRequest, "invalid MAC")
-
-			return
-		}
-
-		err = s.srv6.RemoveStaticLease(lease)
+		err = s.srv6.RemoveStaticLease(lj)
 		if err != nil {
 			httpError(r, w, http.StatusBadRequest, "%s", err)
 		}
@@ -458,9 +423,8 @@ func (s *Server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	lease.IP = ip4
-	lease.Hostname = lj.Hostname
-	err = s.srv4.RemoveStaticLease(lease)
+	lj.IP = ip4
+	err = s.srv4.RemoveStaticLease(lj)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "%s", err)
 

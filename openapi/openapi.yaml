@@ -350,7 +350,26 @@
             'application/json':
               'schema':
                 '$ref': '#/components/schemas/DhcpStatus'
-        '501':
+        '500':
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/Error'
+          'description': 'Not implemented (for example, on Windows).'
+  '/dhcp/interfaces':
+    'get':
+      'tags':
+      - 'dhcp'
+      'operationId': 'dhcpInterfaces'
+      'summary': 'Gets the available interfaces'
+      'responses':
+        '200':
+          'description': 'OK.'
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/NetInterfaces'
+        '500':
           'content':
             'application/json':
               'schema':
@@ -1620,6 +1639,12 @@
           'type': 'array'
           'items':
             '$ref': '#/components/schemas/DhcpStaticLease'
+    'NetInterfaces':
+      'type': 'object'
+      'description': >
+        Network interfaces dictionary, keys are interface names.
+      'additionalProperties':
+        '$ref': '#/components/schemas/NetInterface'
 
     'DhcpSearchResult':
       'type': 'object'
@@ -1650,7 +1675,12 @@
       'properties':
         'found':
           'type': 'string'
-          'description': 'yes|no|error'
+          'enum':
+          - 'yes'
+          - 'no'
+          - 'error'
+          'description': >
+            The result of searching the other DHCP server.
           'example': 'no'
         'error':
           'type': 'string'
@@ -1662,7 +1692,12 @@
       'properties':
         'static':
           'type': 'string'
-          'description': 'yes|no|error'
+          'enum':
+          - 'yes'
+          - 'no'
+          - 'error'
+          'description': >
+            The result of determining static IP address.
           'example': 'yes'
         'ip':
           'type': 'string'
@@ -2015,11 +2050,7 @@
           'format': 'uint16'
           'example': 80
         'interfaces':
-          'type': 'object'
-          'description': >
-            Network interfaces dictionary, keys are interface names.
-          'additionalProperties':
-            '$ref': '#/components/schemas/NetInterface'
+          '$ref': '#/components/schemas/NetInterfaces'
     'AddressesInfoBeta':
       'type': 'object'
       'description': 'AdGuard Home addresses configuration'

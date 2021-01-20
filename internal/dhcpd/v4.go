@@ -77,7 +77,10 @@ func (s *v4Server) blacklisted(l *Lease) bool {
 
 // GetLeases returns the list of current DHCP leases (thread-safe)
 func (s *v4Server) GetLeases(flags int) []Lease {
-	var result []Lease
+	// The function shouldn't return nil value because zero-length slice
+	// behaves differently in cases like marshalling.  Our front-end also
+	// requires non-nil value in the response.
+	result := []Lease{}
 	now := time.Now().Unix()
 
 	s.leasesLock.Lock()
