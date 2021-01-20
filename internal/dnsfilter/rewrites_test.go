@@ -117,19 +117,19 @@ func TestRewritesLevels(t *testing.T) {
 	r := d.processRewrites("host.com", dns.TypeA)
 	assert.Equal(t, Rewritten, r.Reason)
 	assert.Len(t, r.IPList, 1)
-	assert.Equal(t, "1.1.1.1", r.IPList[0].String())
+	assert.True(t, net.IP{1, 1, 1, 1}.Equal(r.IPList[0]))
 
 	// match L2
 	r = d.processRewrites("sub.host.com", dns.TypeA)
 	assert.Equal(t, Rewritten, r.Reason)
 	assert.Len(t, r.IPList, 1)
-	assert.Equal(t, "2.2.2.2", r.IPList[0].String())
+	assert.True(t, net.IP{2, 2, 2, 2}.Equal(r.IPList[0]))
 
 	// match L3
 	r = d.processRewrites("my.sub.host.com", dns.TypeA)
 	assert.Equal(t, Rewritten, r.Reason)
 	assert.Len(t, r.IPList, 1)
-	assert.Equal(t, "3.3.3.3", r.IPList[0].String())
+	assert.True(t, net.IP{3, 3, 3, 3}.Equal(r.IPList[0]))
 }
 
 func TestRewritesExceptionCNAME(t *testing.T) {
@@ -145,7 +145,7 @@ func TestRewritesExceptionCNAME(t *testing.T) {
 	r := d.processRewrites("my.host.com", dns.TypeA)
 	assert.Equal(t, Rewritten, r.Reason)
 	assert.Len(t, r.IPList, 1)
-	assert.Equal(t, "2.2.2.2", r.IPList[0].String())
+	assert.True(t, net.IP{2, 2, 2, 2}.Equal(r.IPList[0]))
 
 	// match sub-domain, but handle exception
 	r = d.processRewrites("sub.host.com", dns.TypeA)
@@ -165,7 +165,7 @@ func TestRewritesExceptionWC(t *testing.T) {
 	r := d.processRewrites("my.host.com", dns.TypeA)
 	assert.Equal(t, Rewritten, r.Reason)
 	assert.Len(t, r.IPList, 1)
-	assert.Equal(t, "2.2.2.2", r.IPList[0].String())
+	assert.True(t, net.IP{2, 2, 2, 2}.Equal(r.IPList[0]))
 
 	// match sub-domain, but handle exception
 	r = d.processRewrites("my.sub.host.com", dns.TypeA)
@@ -188,7 +188,7 @@ func TestRewritesExceptionIP(t *testing.T) {
 	r := d.processRewrites("host.com", dns.TypeA)
 	assert.Equal(t, Rewritten, r.Reason)
 	assert.Len(t, r.IPList, 1)
-	assert.Equal(t, "1.2.3.4", r.IPList[0].String())
+	assert.True(t, net.IP{1, 2, 3, 4}.Equal(r.IPList[0]))
 
 	// match exception
 	r = d.processRewrites("host.com", dns.TypeAAAA)

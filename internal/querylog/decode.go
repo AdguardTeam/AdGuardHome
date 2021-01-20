@@ -22,9 +22,11 @@ var logEntryHandlers = map[string]logEntryHandler{
 		if !ok {
 			return nil
 		}
-		if len(ent.IP) == 0 {
-			ent.IP = v
+
+		if ent.IP == nil {
+			ent.IP = net.ParseIP(v)
 		}
+
 		return nil
 	},
 	"T": func(t json.Token, ent *logEntry) error {

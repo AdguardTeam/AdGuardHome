@@ -26,7 +26,7 @@ const (
 // Whois - module context
 type Whois struct {
 	clients     *clientsContainer
-	ipChan      chan string
+	ipChan      chan net.IP
 	timeoutMsec uint
 
 	// Contains IP addresses of clients
@@ -46,7 +46,7 @@ func initWhois(clients *clientsContainer) *Whois {
 	cconf.MaxCount = 10000
 	w.ipAddrs = cache.New(cconf)
 
-	w.ipChan = make(chan string, 255)
+	w.ipChan = make(chan net.IP, 255)
 	go w.workerLoop()
 	return &w
 }
@@ -183,9 +183,9 @@ func (w *Whois) queryAll(target string) (string, error) {
 }
 
 // Request WHOIS information
-func (w *Whois) process(ip string) [][]string {
+func (w *Whois) process(ip net.IP) [][]string {
 	data := [][]string{}
-	resp, err := w.queryAll(ip)
+	resp, err := w.queryAll(ip.String())
 	if err != nil {
 		log.Debug("Whois: error: %s  IP:%s", err, ip)
 		return data
@@ -209,7 +209,7 @@ func (w *Whois) process(ip string) [][]string {
 }
 
 // Begin - begin requesting WHOIS info
-func (w *Whois) Begin(ip string) {
+func (w *Whois) Begin(ip net.IP) {
 	now := uint64(time.Now().Unix())
 	expire := w.ipAddrs.Get([]byte(ip))
 	if len(expire) != 0 {

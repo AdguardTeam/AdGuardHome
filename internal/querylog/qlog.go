@@ -3,6 +3,7 @@ package querylog
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -60,7 +61,7 @@ func NewClientProto(s string) (cp ClientProto, err error) {
 
 // logEntry - represents a single log entry
 type logEntry struct {
-	IP   string    `json:"IP"` // Client IP
+	IP   net.IP    `json:"IP"` // Client IP
 	Time time.Time `json:"T"`
 
 	QHost  string `json:"QH"`
@@ -147,7 +148,7 @@ func (l *queryLog) Add(params AddParams) {
 
 	now := time.Now()
 	entry := logEntry{
-		IP:   l.getClientIP(params.ClientIP.String()),
+		IP:   l.getClientIP(params.ClientIP),
 		Time: now,
 
 		Result:      *params.Result,

@@ -2,6 +2,7 @@ package home
 
 import (
 	"fmt"
+	"net"
 	"testing"
 )
 
@@ -65,14 +66,14 @@ func TestParseWorkDir(t *testing.T) {
 }
 
 func TestParseBindHost(t *testing.T) {
-	if testParseOk(t).bindHost != "" {
+	if testParseOk(t).bindHost != nil {
 		t.Fatal("empty is no host")
 	}
-	if testParseOk(t, "-h", "addr").bindHost != "addr" {
+	if !testParseOk(t, "-h", "1.2.3.4").bindHost.Equal(net.IP{1, 2, 3, 4}) {
 		t.Fatal("-h is host")
 	}
 	testParseParamMissing(t, "-h")
-	if testParseOk(t, "--host", "addr").bindHost != "addr" {
+	if !testParseOk(t, "--host", "1.2.3.4").bindHost.Equal(net.IP{1, 2, 3, 4}) {
 		t.Fatal("--host is host")
 	}
 	testParseParamMissing(t, "--host")
@@ -204,7 +205,7 @@ func TestSerializeWorkDir(t *testing.T) {
 }
 
 func TestSerializeBindHost(t *testing.T) {
-	testSerialize(t, options{bindHost: "addr"}, "-h", "addr")
+	testSerialize(t, options{bindHost: net.IP{1, 2, 3, 4}}, "-h", "1.2.3.4")
 }
 
 func TestSerializeBindPort(t *testing.T) {

@@ -36,7 +36,7 @@ type RequestFilteringSettings struct {
 	ParentalEnabled     bool
 
 	ClientName string
-	ClientIP   string
+	ClientIP   net.IP
 	ClientTags []string
 
 	ServicesRules []ServiceEntry
@@ -676,9 +676,10 @@ func (d *DNSFilter) matchHost(host string, qtype uint16, setts RequestFilteringS
 	ureq := urlfilter.DNSRequest{
 		Hostname:         host,
 		SortedClientTags: setts.ClientTags,
-		ClientIP:         setts.ClientIP,
-		ClientName:       setts.ClientName,
-		DNSType:          qtype,
+		// TODO(e.burkov): Wait for urlfilter update to pass net.IP.
+		ClientIP:   setts.ClientIP.String(),
+		ClientName: setts.ClientName,
+		DNSType:    qtype,
 	}
 
 	if d.filteringEngineAllow != nil {

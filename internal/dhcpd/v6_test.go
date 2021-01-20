@@ -17,7 +17,7 @@ func notify6(flags uint32) {
 func TestV6StaticLeaseAddRemove(t *testing.T) {
 	conf := V6ServerConf{
 		Enabled:    true,
-		RangeStart: "2001::1",
+		RangeStart: net.ParseIP("2001::1"),
 		notify:     notify6,
 	}
 	s, err := v6Create(conf)
@@ -60,7 +60,7 @@ func TestV6StaticLeaseAddRemove(t *testing.T) {
 func TestV6StaticLeaseAddReplaceDynamic(t *testing.T) {
 	conf := V6ServerConf{
 		Enabled:    true,
-		RangeStart: "2001::1",
+		RangeStart: net.ParseIP("2001::1"),
 		notify:     notify6,
 	}
 	sIface, err := v6Create(conf)
@@ -109,7 +109,7 @@ func TestV6StaticLeaseAddReplaceDynamic(t *testing.T) {
 func TestV6GetLease(t *testing.T) {
 	conf := V6ServerConf{
 		Enabled:    true,
-		RangeStart: "2001::1",
+		RangeStart: net.ParseIP("2001::1"),
 		notify:     notify6,
 	}
 	sIface, err := v6Create(conf)
@@ -169,7 +169,7 @@ func TestV6GetLease(t *testing.T) {
 func TestV6GetDynamicLease(t *testing.T) {
 	conf := V6ServerConf{
 		Enabled:    true,
-		RangeStart: "2001::2",
+		RangeStart: net.ParseIP("2001::2"),
 		notify:     notify6,
 	}
 	sIface, err := v6Create(conf)

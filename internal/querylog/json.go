@@ -14,22 +14,19 @@ import (
 // TODO(a.garipov): Use a proper structured approach here.
 
 // Get Client IP address
-func (l *queryLog) getClientIP(clientIP string) string {
-	if l.conf.AnonymizeClientIP {
-		ip := net.ParseIP(clientIP)
-		if ip != nil {
-			ip4 := ip.To4()
-			const AnonymizeClientIP4Mask = 16
-			const AnonymizeClientIP6Mask = 112
-			if ip4 != nil {
-				clientIP = ip4.Mask(net.CIDRMask(AnonymizeClientIP4Mask, 32)).String()
-			} else {
-				clientIP = ip.Mask(net.CIDRMask(AnonymizeClientIP6Mask, 128)).String()
-			}
+func (l *queryLog) getClientIP(ip net.IP) (clientIP net.IP) {
+	if l.conf.AnonymizeClientIP && ip != nil {
+		const AnonymizeClientIPv4Mask = 16
+		const AnonymizeClientIPv6Mask = 112
+
+		if ip.To4() != nil {
+			return ip.Mask(net.CIDRMask(AnonymizeClientIPv4Mask, 32))
 		}
+
+		return ip.Mask(net.CIDRMask(AnonymizeClientIPv6Mask, 128))
 	}
 
-	return clientIP
+	return ip
 }
 
 // jobject is a JSON object alias.
@@ -153,9 +150,9 @@ func answerToMap(a *dns.Msg) (answers []jobject) {
 		// try most common record types
 		switch v := k.(type) {
 		case *dns.A:
-			answer["value"] = v.A.String()
+			answer["value"] = v.A
 		case *dns.AAAA:
-			answer["value"] = v.AAAA.String()
+			answer["value"] = v.AAAA
 		case *dns.MX:
 			answer["value"] = fmt.Sprintf("%v %v", v.Preference, v.Mx)
 		case *dns.CNAME:

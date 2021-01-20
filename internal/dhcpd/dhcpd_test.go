@@ -61,11 +61,11 @@ func TestDB(t *testing.T) {
 	ll := s.srv4.GetLeases(LeasesAll)
 
 	assert.Equal(t, "aa:aa:aa:aa:aa:bb", ll[0].HWAddr.String())
-	assert.Equal(t, "192.168.10.101", ll[0].IP.String())
+	assert.True(t, net.IP{192, 168, 10, 101}.Equal(ll[0].IP))
 	assert.EqualValues(t, leaseExpireStatic, ll[0].Expiry.Unix())
 
 	assert.Equal(t, "aa:aa:aa:aa:aa:aa", ll[1].HWAddr.String())
-	assert.Equal(t, "192.168.10.100", ll[1].IP.String())
+	assert.True(t, net.IP{192, 168, 10, 100}.Equal(ll[1].IP))
 	assert.Equal(t, exp1.Unix(), ll[1].Expiry.Unix())
 
 	_ = os.Remove("leases.db")
@@ -117,7 +117,7 @@ func TestOptions(t *testing.T) {
 
 	code, val = parseOptionString("123 ip 1.2.3.4")
 	assert.EqualValues(t, 123, code)
-	assert.Equal(t, "1.2.3.4", net.IP(string(val)).String())
+	assert.True(t, net.IP{1, 2, 3, 4}.Equal(net.IP(val)))
 
 	code, _ = parseOptionString("256 ip 1.1.1.1")
 	assert.EqualValues(t, 0, code)

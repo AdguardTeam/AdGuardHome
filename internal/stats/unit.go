@@ -443,22 +443,19 @@ func (s *statsCtx) clear() {
 }
 
 // Get Client IP address
-func (s *statsCtx) getClientIP(clientIP string) string {
-	if s.conf.AnonymizeClientIP {
-		ip := net.ParseIP(clientIP)
-		if ip != nil {
-			ip4 := ip.To4()
-			const AnonymizeClientIP4Mask = 16
-			const AnonymizeClientIP6Mask = 112
-			if ip4 != nil {
-				clientIP = ip4.Mask(net.CIDRMask(AnonymizeClientIP4Mask, 32)).String()
-			} else {
-				clientIP = ip.Mask(net.CIDRMask(AnonymizeClientIP6Mask, 128)).String()
-			}
+func (s *statsCtx) getClientIP(ip net.IP) (clientIP net.IP) {
+	if s.conf.AnonymizeClientIP && ip != nil {
+		const AnonymizeClientIP4Mask = 16
+		const AnonymizeClientIP6Mask = 112
+
+		if ip.To4() != nil {
+			return ip.Mask(net.CIDRMask(AnonymizeClientIP4Mask, 32))
 		}
+
+		return ip.Mask(net.CIDRMask(AnonymizeClientIP6Mask, 128))
 	}
 
-	return clientIP
+	return ip
 }
 
 func (s *statsCtx) Update(e Entry) {
@@ -468,7 +465,7 @@ func (s *statsCtx) Update(e Entry) {
 		!(len(e.Client) == 4 || len(e.Client) == 16) {
 		return
 	}
-	client := s.getClientIP(e.Client.String())
+	client := s.getClientIP(e.Client)
 
 	s.unitLock.Lock()
 	u := s.unit
@@ -481,7 +478,7 @@ func (s *statsCtx) Update(e Entry) {
 		u.blockedDomains[e.Domain]++
 	}
 
-	u.clients[client]++
+	u.clients[client.String()]++
 	u.timeSum += uint64(e.Time)
 	u.nTotal++
 	s.unitLock.Unlock()
@@ -658,7 +655,7 @@ func (s *statsCtx) getData() map[string]interface{} {
 	return d
 }
 
-func (s *statsCtx) GetTopClientsIP(maxCount uint) []string {
+func (s *statsCtx) GetTopClientsIP(maxCount uint) []net.IP {
 	units, _ := s.loadUnits(s.conf.limit)
 	if units == nil {
 		return nil
@@ -672,9 +669,9 @@ func (s *statsCtx) GetTopClientsIP(maxCount uint) []string {
 		}
 	}
 	a := convertMapToArray(m, int(maxCount))
-	d := []string{}
+	d := []net.IP{}
 	for _, it := range a {
-		d = append(d, it.Name)
+		d = append(d, net.ParseIP(it.Name))
 	}
 	return d
 }

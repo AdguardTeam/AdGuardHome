@@ -2,6 +2,7 @@ package home
 
 import (
 	"io/ioutil"
+	"net"
 	"os"
 	"path/filepath"
 	"sync"
@@ -40,7 +41,7 @@ type configuration struct {
 	// It's reset after config is parsed
 	fileData []byte
 
-	BindHost     string `yaml:"bind_host"`      // BindHost is the IP address of the HTTP server to bind to
+	BindHost     net.IP `yaml:"bind_host"`      // BindHost is the IP address of the HTTP server to bind to
 	BindPort     int    `yaml:"bind_port"`      // BindPort is the port the HTTP server
 	BetaBindPort int    `yaml:"beta_bind_port"` // BetaBindPort is the port for new client
 	Users        []User `yaml:"users"`          // Users that can access HTTP server
@@ -74,7 +75,7 @@ type configuration struct {
 
 // field ordering is important -- yaml fields will mirror ordering from here
 type dnsConfig struct {
-	BindHost string `yaml:"bind_host"`
+	BindHost net.IP `yaml:"bind_host"`
 	Port     int    `yaml:"port"`
 
 	// time interval for statistics (in days)
@@ -121,9 +122,9 @@ type tlsConfigSettings struct {
 var config = configuration{
 	BindPort:     3000,
 	BetaBindPort: 0,
-	BindHost:     "0.0.0.0",
+	BindHost:     net.IP{0, 0, 0, 0},
 	DNS: dnsConfig{
-		BindHost:      "0.0.0.0",
+		BindHost:      net.IP{0, 0, 0, 0},
 		Port:          53,
 		StatsInterval: 1,
 		FilteringConfig: dnsforward.FilteringConfig{

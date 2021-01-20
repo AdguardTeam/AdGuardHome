@@ -660,7 +660,7 @@ func v6Create(conf V6ServerConf) (DHCPServer, error) {
 		return s, nil
 	}
 
-	s.conf.ipStart = net.ParseIP(conf.RangeStart)
+	s.conf.ipStart = conf.RangeStart
 	if s.conf.ipStart == nil || s.conf.ipStart.To16() == nil {
 		return s, fmt.Errorf("dhcpv6: invalid range-start IP: %s", conf.RangeStart)
 	}

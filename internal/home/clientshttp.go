@@ -3,6 +3,7 @@ package home
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 )
 
@@ -229,8 +230,9 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 	q := r.URL.Query()
 	data := []map[string]interface{}{}
 	for i := 0; ; i++ {
-		ip := q.Get(fmt.Sprintf("ip%d", i))
-		if len(ip) == 0 {
+		ipStr := q.Get(fmt.Sprintf("ip%d", i))
+		ip := net.ParseIP(ipStr)
+		if ip == nil {
 			break
 		}
 
@@ -248,7 +250,7 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 			cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
 		}
 
-		el[ip] = cj
+		el[ipStr] = cj
 		data = append(data, el)
 	}
 
@@ -267,7 +269,8 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 
 // findTemporary looks up the IP in temporary storages, like autohosts or
 // blocklists.
-func (clients *clientsContainer) findTemporary(ip string) (cj clientJSON, found bool) {
+func (clients *clientsContainer) findTemporary(ip net.IP) (cj clientJSON, found bool) {
+	ipStr := ip.String()
 	ch, ok := clients.FindAutoClient(ip)
 	if !ok {
 		// It is still possible that the IP used to be in the runtime
@@ -281,7 +284,7 @@ func (clients *clientsContainer) findTemporary(ip string) (cj clientJSON, found 
 		}
 
 		cj = clientJSON{
-			IDs:            []string{ip},
+			IDs:            []string{ipStr},
 			Disallowed:     disallowed,
 			DisallowedRule: rule,
 		}
@@ -289,7 +292,7 @@ func (clients *clientsContainer) findTemporary(ip string) (cj clientJSON, found 
 		return cj, true
 	}
 
-	cj = clientHostToJSON(ip, ch)
+	cj = clientHostToJSON(ipStr, ch)
 	cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
 
 	return cj, true

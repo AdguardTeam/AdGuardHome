@@ -47,7 +47,7 @@ func TestDecodeLogEntry(t *testing.T) {
 		assert.Nil(t, err)
 
 		want := &logEntry{
-			IP:          "127.0.0.1",
+			IP:          net.IPv4(127, 0, 0, 1),
 			Time:        time.Date(2020, 11, 25, 15, 55, 56, 519796000, time.UTC),
 			QHost:       "an.yandex.ru",
 			QType:       "A",

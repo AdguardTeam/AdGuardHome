@@ -1,6 +1,7 @@
 package home
 
 import (
+	"net"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
@@ -16,6 +17,6 @@ func TestResolveRDNS(t *testing.T) {
 
 	clients := &clientsContainer{}
 	rdns := InitRDNS(dns, clients)
-	r := rdns.resolve("1.1.1.1")
+	r := rdns.resolve(net.IP{1, 1, 1, 1})
 	assert.Equal(t, "one.one.one.one", r, r)
 }

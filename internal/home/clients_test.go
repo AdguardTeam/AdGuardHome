@@ -36,21 +36,21 @@ func TestClients(t *testing.T) {
 		assert.True(t, b)
 		assert.Nil(t, err)
 
-		c, b = clients.Find("1.1.1.1")
+		c, b = clients.Find(net.IPv4(1, 1, 1, 1))
 		assert.True(t, b)
 		assert.Equal(t, c.Name, "client1")
 
-		c, b = clients.Find("1:2:3::4")
+		c, b = clients.Find(net.ParseIP("1:2:3::4"))
 		assert.True(t, b)
 		assert.Equal(t, c.Name, "client1")
 
-		c, b = clients.Find("2.2.2.2")
+		c, b = clients.Find(net.IPv4(2, 2, 2, 2))
 		assert.True(t, b)
 		assert.Equal(t, c.Name, "client2")
 
-		assert.False(t, clients.Exists("1.2.3.4", ClientSourceHostsFile))
-		assert.True(t, clients.Exists("1.1.1.1", ClientSourceHostsFile))
-		assert.True(t, clients.Exists("2.2.2.2", ClientSourceHostsFile))
+		assert.False(t, clients.Exists(net.IPv4(1, 2, 3, 4), ClientSourceHostsFile))
+		assert.True(t, clients.Exists(net.IPv4(1, 1, 1, 1), ClientSourceHostsFile))
+		assert.True(t, clients.Exists(net.IPv4(2, 2, 2, 2), ClientSourceHostsFile))
 	})
 
 	t.Run("add_fail_name", func(t *testing.T) {
@@ -112,8 +112,8 @@ func TestClients(t *testing.T) {
 		err := clients.Update("client1", c)
 		assert.Nil(t, err)
 
-		assert.False(t, clients.Exists("1.1.1.1", ClientSourceHostsFile))
-		assert.True(t, clients.Exists("1.1.1.2", ClientSourceHostsFile))
+		assert.False(t, clients.Exists(net.IPv4(1, 1, 1, 1), ClientSourceHostsFile))
+		assert.True(t, clients.Exists(net.IPv4(1, 1, 1, 2), ClientSourceHostsFile))
 
 		c = Client{
 			IDs:            []string{"1.1.1.2"},
@@ -124,7 +124,7 @@ func TestClients(t *testing.T) {
 		err = clients.Update("client1", c)
 		assert.Nil(t, err)
 
-		c, b := clients.Find("1.1.1.2")
+		c, b := clients.Find(net.IPv4(1, 1, 1, 2))
 		assert.True(t, b)
 		assert.Equal(t, "client1-renamed", c.Name)
 		assert.Equal(t, "1.1.1.2", c.IDs[0])
@@ -135,7 +135,7 @@ func TestClients(t *testing.T) {
 	t.Run("del_success", func(t *testing.T) {
 		b := clients.Del("client1-renamed")
 		assert.True(t, b)
-		assert.False(t, clients.Exists("1.1.1.2", ClientSourceHostsFile))
+		assert.False(t, clients.Exists(net.IPv4(1, 1, 1, 2), ClientSourceHostsFile))
 	})
 
 	t.Run("del_fail", func(t *testing.T) {
@@ -156,7 +156,7 @@ func TestClients(t *testing.T) {
 		assert.True(t, b)
 		assert.Nil(t, err)
 
-		assert.True(t, clients.Exists("1.1.1.1", ClientSourceHostsFile))
+		assert.True(t, clients.Exists(net.IPv4(1, 1, 1, 1), ClientSourceHostsFile))
 	})
 
 	t.Run("addhost_fail", func(t *testing.T) {
@@ -174,12 +174,12 @@ func TestClientsWhois(t *testing.T) {
 
 	whois := [][]string{{"orgname", "orgname-val"}, {"country", "country-val"}}
 	// set whois info on new client
-	clients.SetWhoisInfo("1.1.1.255", whois)
+	clients.SetWhoisInfo(net.IPv4(1, 1, 1, 255), whois)
 	assert.Equal(t, "orgname-val", clients.ipHost["1.1.1.255"].WhoisInfo[0][1])
 
 	// set whois info on existing auto-client
 	_, _ = clients.AddHost("1.1.1.1", "host", ClientSourceRDNS)
-	clients.SetWhoisInfo("1.1.1.1", whois)
+	clients.SetWhoisInfo(net.IPv4(1, 1, 1, 1), whois)
 	assert.Equal(t, "orgname-val", clients.ipHost["1.1.1.1"].WhoisInfo[0][1])
 
 	// Check that we cannot set whois info on a manually-added client
@@ -188,7 +188,7 @@ func TestClientsWhois(t *testing.T) {
 		Name: "client1",
 	}
 	_, _ = clients.Add(c)
-	clients.SetWhoisInfo("1.1.1.2", whois)
+	clients.SetWhoisInfo(net.IPv4(1, 1, 1, 2), whois)
 	assert.Nil(t, clients.ipHost["1.1.1.2"])
 	_ = clients.Del("client1")
 }

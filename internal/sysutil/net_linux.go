@@ -119,17 +119,13 @@ func ifacesStaticConfig(r io.Reader, ifaceName string) (has bool, err error) {
 }
 
 func ifaceSetStaticIP(ifaceName string) (err error) {
-	ip := util.GetSubnet(ifaceName)
-	if len(ip) == 0 {
+	ipNet := util.GetSubnet(ifaceName)
+	if ipNet.IP == nil {
 		return errors.New("can't get IP address")
 	}
 
-	ip4, _, err := net.ParseCIDR(ip)
-	if err != nil {
-		return err
-	}
 	gatewayIP := GatewayIP(ifaceName)
-	add := updateStaticIPdhcpcdConf(ifaceName, ip, gatewayIP, ip4)
+	add := updateStaticIPdhcpcdConf(ifaceName, ipNet.String(), gatewayIP, ipNet.IP)
 
 	body, err := ioutil.ReadFile("/etc/dhcpcd.conf")
 	if err != nil {

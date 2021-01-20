@@ -40,7 +40,7 @@ func v4JSONToServerConf(j v4ServerConfJSON) V4ServerConf {
 }
 
 type v6ServerConfJSON struct {
-	RangeStart    string `json:"range_start"`
+	RangeStart    net.IP `json:"range_start"`
 	LeaseDuration uint32 `json:"lease_duration"`
 }
 
@@ -331,7 +331,7 @@ func (s *Server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 		result.V4.StaticIP.Error = err.Error()
 	} else if !isStaticIP {
 		result.V4.StaticIP.Static = "no"
-		result.V4.StaticIP.IP = util.GetSubnet(interfaceName)
+		result.V4.StaticIP.IP = util.GetSubnet(interfaceName).String()
 	}
 
 	if found4 {

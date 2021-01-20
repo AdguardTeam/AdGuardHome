@@ -25,11 +25,11 @@ type FilteringConfig struct {
 	// --
 
 	// Filtering callback function
-	FilterHandler func(clientAddr string, settings *dnsfilter.RequestFilteringSettings) `yaml:"-"`
+	FilterHandler func(clientAddr net.IP, settings *dnsfilter.RequestFilteringSettings) `yaml:"-"`
 
 	// GetCustomUpstreamByClient - a callback function that returns upstreams configuration
 	// based on the client IP address. Returns nil if there are no custom upstreams for the client
-	// TODO(e.burkov): replace argument type with net.IP.
+	// TODO(e.burkov): Replace argument type with net.IP.
 	GetCustomUpstreamByClient func(clientAddr string) *proxy.UpstreamConfig `yaml:"-"`
 
 	// Protection configuration

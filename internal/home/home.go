@@ -206,7 +206,7 @@ func setupConfig(args options) {
 	}
 
 	// override bind host/port from the console
-	if args.bindHost != "" {
+	if args.bindHost != nil {
 		config.BindHost = args.bindHost
 	}
 	if args.bindPort != 0 {
@@ -575,36 +575,40 @@ func printHTTPAddresses(proto string) {
 		port = strconv.Itoa(tlsConf.PortHTTPS)
 	}
 
+	var hostStr string
 	if proto == "https" && tlsConf.ServerName != "" {
 		if tlsConf.PortHTTPS == 443 {
 			log.Printf("Go to https://%s", tlsConf.ServerName)
 		} else {
 			log.Printf("Go to https://%s:%s", tlsConf.ServerName, port)
 		}
-	} else if config.BindHost == "0.0.0.0" {
+	} else if config.BindHost.IsUnspecified() {
 		log.Println("AdGuard Home is available on the following addresses:")
 		ifaces, err := util.GetValidNetInterfacesForWeb()
 		if err != nil {
 			// That's weird, but we'll ignore it
-			log.Printf("Go to %s://%s", proto, net.JoinHostPort(config.BindHost, port))
+			hostStr = config.BindHost.String()
+			log.Printf("Go to %s://%s", proto, net.JoinHostPort(hostStr, port))
 			if config.BetaBindPort != 0 {
-				log.Printf("Go to %s://%s (BETA)", proto, net.JoinHostPort(config.BindHost, strconv.Itoa(config.BetaBindPort)))
+				log.Printf("Go to %s://%s (BETA)", proto, net.JoinHostPort(hostStr, strconv.Itoa(config.BetaBindPort)))
 			}
 			return
 		}
 
 		for _, iface := range ifaces {
 			for _, addr := range iface.Addresses {
-				log.Printf("Go to %s://%s", proto, net.JoinHostPort(addr, strconv.Itoa(config.BindPort)))
+				hostStr = addr.String()
+				log.Printf("Go to %s://%s", proto, net.JoinHostPort(hostStr, strconv.Itoa(config.BindPort)))
 				if config.BetaBindPort != 0 {
-					log.Printf("Go to %s://%s (BETA)", proto, net.JoinHostPort(addr, strconv.Itoa(config.BetaBindPort)))
+					log.Printf("Go to %s://%s (BETA)", proto, net.JoinHostPort(hostStr, strconv.Itoa(config.BetaBindPort)))
 				}
 			}
 		}
 	} else {
-		log.Printf("Go to %s://%s", proto, net.JoinHostPort(config.BindHost, port))
+		hostStr = config.BindHost.String()
+		log.Printf("Go to %s://%s", proto, net.JoinHostPort(hostStr, port))
 		if config.BetaBindPort != 0 {
-			log.Printf("Go to %s://%s (BETA)", proto, net.JoinHostPort(config.BindHost, strconv.Itoa(config.BetaBindPort)))
+			log.Printf("Go to %s://%s (BETA)", proto, net.JoinHostPort(hostStr, strconv.Itoa(config.BetaBindPort)))
 		}
 	}
 }

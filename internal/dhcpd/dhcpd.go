@@ -297,9 +297,6 @@ func parseOptionString(s string) (uint8, []byte) {
 			return 0, nil
 		}
 		val = ip
-		if ip.To4() != nil {
-			val = ip.To4()
-		}
 
 	default:
 		return 0, nil

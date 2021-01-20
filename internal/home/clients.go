@@ -70,10 +70,12 @@ type ClientHost struct {
 }
 
 type clientsContainer struct {
-	list    map[string]*Client     // name -> client
-	idIndex map[string]*Client     // IP -> client
-	ipHost  map[string]*ClientHost // IP -> Hostname
-	lock    sync.Mutex
+	list    map[string]*Client // name -> client
+	idIndex map[string]*Client // IP -> client
+	// TODO(e.burkov): Think of a way to not require string conversion for
+	// IP addresses.
+	ipHost map[string]*ClientHost // IP -> Hostname
+	lock   sync.Mutex
 
 	allTags map[string]bool
 
@@ -239,7 +241,7 @@ func (clients *clientsContainer) onHostsChanged() {
 }
 
 // Exists checks if client with this IP already exists
-func (clients *clientsContainer) Exists(ip string, source clientSource) bool {
+func (clients *clientsContainer) Exists(ip net.IP, source clientSource) bool {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
@@ -248,7 +250,7 @@ func (clients *clientsContainer) Exists(ip string, source clientSource) bool {
 		return true
 	}
 
-	ch, ok := clients.ipHost[ip]
+	ch, ok := clients.ipHost[ip.String()]
 	if !ok {
 		return false
 	}
@@ -265,7 +267,7 @@ func stringArrayDup(a []string) []string {
 }
 
 // Find searches for a client by IP
-func (clients *clientsContainer) Find(ip string) (Client, bool) {
+func (clients *clientsContainer) Find(ip net.IP) (Client, bool) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
@@ -287,7 +289,7 @@ func (clients *clientsContainer) FindUpstreams(ip string) *proxy.UpstreamConfig 
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	c, ok := clients.findByIP(ip)
+	c, ok := clients.findByIP(net.ParseIP(ip))
 	if !ok {
 		return nil
 	}
@@ -307,13 +309,12 @@ func (clients *clientsContainer) FindUpstreams(ip string) *proxy.UpstreamConfig 
 }
 
 // Find searches for a client by IP (and does not lock anything)
-func (clients *clientsContainer) findByIP(ip string) (Client, bool) {
-	ipAddr := net.ParseIP(ip)
-	if ipAddr == nil {
+func (clients *clientsContainer) findByIP(ip net.IP) (Client, bool) {
+	if ip == nil {
 		return Client{}, false
 	}
 
-	c, ok := clients.idIndex[ip]
+	c, ok := clients.idIndex[ip.String()]
 	if ok {
 		return *c, true
 	}
@@ -324,7 +325,7 @@ func (clients *clientsContainer) findByIP(ip string) (Client, bool) {
 			if err != nil {
 				continue
 			}
-			if ipnet.Contains(ipAddr) {
+			if ipnet.Contains(ip) {
 				return *c, true
 			}
 		}
@@ -333,7 +334,7 @@ func (clients *clientsContainer) findByIP(ip string) (Client, bool) {
 	if clients.dhcpServer == nil {
 		return Client{}, false
 	}
-	macFound := clients.dhcpServer.FindMACbyIP(ipAddr)
+	macFound := clients.dhcpServer.FindMACbyIP(ip)
 	if macFound == nil {
 		return Client{}, false
 	}
@@ -353,16 +354,15 @@ func (clients *clientsContainer) findByIP(ip string) (Client, bool) {
 }
 
 // FindAutoClient - search for an auto-client by IP
-func (clients *clientsContainer) FindAutoClient(ip string) (ClientHost, bool) {
-	ipAddr := net.ParseIP(ip)
-	if ipAddr == nil {
+func (clients *clientsContainer) FindAutoClient(ip net.IP) (ClientHost, bool) {
+	if ip == nil {
 		return ClientHost{}, false
 	}
 
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	ch, ok := clients.ipHost[ip]
+	ch, ok := clients.ipHost[ip.String()]
 	if ok {
 		return *ch, true
 	}
@@ -539,7 +539,7 @@ func (clients *clientsContainer) Update(name string, c Client) error {
 }
 
 // SetWhoisInfo - associate WHOIS information with a client
-func (clients *clientsContainer) SetWhoisInfo(ip string, info [][]string) {
+func (clients *clientsContainer) SetWhoisInfo(ip net.IP, info [][]string) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
@@ -549,7 +549,8 @@ func (clients *clientsContainer) SetWhoisInfo(ip string, info [][]string) {
 		return
 	}
 
-	ch, ok := clients.ipHost[ip]
+	ipStr := ip.String()
+	ch, ok := clients.ipHost[ipStr]
 	if ok {
 		ch.WhoisInfo = info
 		log.Debug("Clients: set WHOIS info for auto-client %s: %v", ch.Host, ch.WhoisInfo)
@@ -561,7 +562,7 @@ func (clients *clientsContainer) SetWhoisInfo(ip string, info [][]string) {
 		Source: ClientSourceWHOIS,
 	}
 	ch.WhoisInfo = info
-	clients.ipHost[ip] = ch
+	clients.ipHost[ipStr] = ch
 	log.Debug("Clients: set WHOIS info for auto-client with IP %s: %v", ip, ch.WhoisInfo)
 }
 

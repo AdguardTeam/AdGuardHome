@@ -322,7 +322,7 @@ func TestServerCustomClientUpstream(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, dns.RcodeSuccess, reply.Rcode)
 	assert.NotNil(t, reply.Answer)
-	assert.Equal(t, "192.168.0.1", reply.Answer[0].(*dns.A).A.String())
+	assert.True(t, net.IP{192, 168, 0, 1}.Equal(reply.Answer[0].(*dns.A).A))
 	assert.Nil(t, s.Stop())
 }
 
@@ -473,7 +473,7 @@ func TestBlockCNAME(t *testing.T) {
 func TestClientRulesForCNAMEMatching(t *testing.T) {
 	s := createTestServer(t)
 	testUpstm := &testUpstream{testCNAMEs, testIPv4, nil}
-	s.conf.FilterHandler = func(_ string, settings *dnsfilter.RequestFilteringSettings) {
+	s.conf.FilterHandler = func(_ net.IP, settings *dnsfilter.RequestFilteringSettings) {
 		settings.FilteringEnabled = false
 	}
 	err := s.startWithUpstream(testUpstm)
@@ -568,7 +568,7 @@ func TestBlockedCustomIP(t *testing.T) {
 	assert.Len(t, reply.Answer, 1)
 	a, ok := reply.Answer[0].(*dns.A)
 	assert.True(t, ok)
-	assert.Equal(t, "0.0.0.1", a.A.String())
+	assert.True(t, net.IP{0, 0, 0, 1}.Equal(a.A))
 
 	req = createTestMessageWithType("null.example.org.", dns.TypeAAAA)
 	reply, err = dns.Exchange(req, addr.String())
@@ -713,7 +713,7 @@ func TestRewrite(t *testing.T) {
 	assert.Len(t, reply.Answer, 1)
 	a, ok := reply.Answer[0].(*dns.A)
 	assert.True(t, ok)
-	assert.Equal(t, "1.2.3.4", a.A.String())
+	assert.True(t, net.IP{1, 2, 3, 4}.Equal(a.A))
 
 	req = createTestMessageWithType("test.com.", dns.TypeAAAA)
 	reply, err = dns.Exchange(req, addr.String())
@@ -725,7 +725,7 @@ func TestRewrite(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Len(t, reply.Answer, 2)
 	assert.Equal(t, "test.com.", reply.Answer[0].(*dns.CNAME).Target)
-	assert.Equal(t, "1.2.3.4", reply.Answer[1].(*dns.A).A.String())
+	assert.True(t, net.IP{1, 2, 3, 4}.Equal(reply.Answer[1].(*dns.A).A))
 
 	req = createTestMessageWithType("my.alias.example.org.", dns.TypeA)
 	reply, err = dns.Exchange(req, addr.String())

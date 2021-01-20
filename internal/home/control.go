@@ -36,11 +36,12 @@ func httpError(w http.ResponseWriter, code int, format string, args ...interface
 // ---------------
 // dns run control
 // ---------------
-func addDNSAddress(dnsAddresses *[]string, addr string) {
+func addDNSAddress(dnsAddresses *[]string, addr net.IP) {
+	hostport := addr.String()
 	if config.DNS.Port != 53 {
-		addr = fmt.Sprintf("%s:%d", addr, config.DNS.Port)
+		hostport = net.JoinHostPort(hostport, strconv.Itoa(config.DNS.Port))
 	}
-	*dnsAddresses = append(*dnsAddresses, addr)
+	*dnsAddresses = append(*dnsAddresses, hostport)
 }
 
 func handleStatus(w http.ResponseWriter, _ *http.Request) {

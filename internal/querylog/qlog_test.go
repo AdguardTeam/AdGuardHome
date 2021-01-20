@@ -40,27 +40,27 @@ func TestQueryLog(t *testing.T) {
 	l := newQueryLog(conf)
 
 	// add disk entries
-	addEntry(l, "example.org", "1.1.1.1", "2.2.2.1")
+	addEntry(l, "example.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 	// write to disk (first file)
 	_ = l.flushLogBuffer(true)
 	// start writing to the second file
 	_ = l.rotate()
 	// add disk entries
-	addEntry(l, "example.org", "1.1.1.2", "2.2.2.2")
+	addEntry(l, "example.org", net.IPv4(1, 1, 1, 2), net.IPv4(2, 2, 2, 2))
 	// write to disk
 	_ = l.flushLogBuffer(true)
 	// add memory entries
-	addEntry(l, "test.example.org", "1.1.1.3", "2.2.2.3")
-	addEntry(l, "example.com", "1.1.1.4", "2.2.2.4")
+	addEntry(l, "test.example.org", net.IPv4(1, 1, 1, 3), net.IPv4(2, 2, 2, 3))
+	addEntry(l, "example.com", net.IPv4(1, 1, 1, 4), net.IPv4(2, 2, 2, 4))
 
 	// get all entries
 	params := newSearchParams()
 	entries, _ := l.search(params)
 	assert.Len(t, entries, 4)
-	assertLogEntry(t, entries[0], "example.com", "1.1.1.4", "2.2.2.4")
-	assertLogEntry(t, entries[1], "test.example.org", "1.1.1.3", "2.2.2.3")
-	assertLogEntry(t, entries[2], "example.org", "1.1.1.2", "2.2.2.2")
-	assertLogEntry(t, entries[3], "example.org", "1.1.1.1", "2.2.2.1")
+	assertLogEntry(t, entries[0], "example.com", net.IPv4(1, 1, 1, 4), net.IPv4(2, 2, 2, 4))
+	assertLogEntry(t, entries[1], "test.example.org", net.IPv4(1, 1, 1, 3), net.IPv4(2, 2, 2, 3))
+	assertLogEntry(t, entries[2], "example.org", net.IPv4(1, 1, 1, 2), net.IPv4(2, 2, 2, 2))
+	assertLogEntry(t, entries[3], "example.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 
 	// search by domain (strict)
 	params = newSearchParams()
@@ -71,7 +71,7 @@ func TestQueryLog(t *testing.T) {
 	})
 	entries, _ = l.search(params)
 	assert.Len(t, entries, 1)
-	assertLogEntry(t, entries[0], "test.example.org", "1.1.1.3", "2.2.2.3")
+	assertLogEntry(t, entries[0], "test.example.org", net.IPv4(1, 1, 1, 3), net.IPv4(2, 2, 2, 3))
 
 	// search by domain (not strict)
 	params = newSearchParams()
@@ -82,9 +82,9 @@ func TestQueryLog(t *testing.T) {
 	})
 	entries, _ = l.search(params)
 	assert.Len(t, entries, 3)
-	assertLogEntry(t, entries[0], "test.example.org", "1.1.1.3", "2.2.2.3")
-	assertLogEntry(t, entries[1], "example.org", "1.1.1.2", "2.2.2.2")
-	assertLogEntry(t, entries[2], "example.org", "1.1.1.1", "2.2.2.1")
+	assertLogEntry(t, entries[0], "test.example.org", net.IPv4(1, 1, 1, 3), net.IPv4(2, 2, 2, 3))
+	assertLogEntry(t, entries[1], "example.org", net.IPv4(1, 1, 1, 2), net.IPv4(2, 2, 2, 2))
+	assertLogEntry(t, entries[2], "example.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 
 	// search by client IP (strict)
 	params = newSearchParams()
@@ -95,7 +95,7 @@ func TestQueryLog(t *testing.T) {
 	})
 	entries, _ = l.search(params)
 	assert.Len(t, entries, 1)
-	assertLogEntry(t, entries[0], "example.org", "1.1.1.2", "2.2.2.2")
+	assertLogEntry(t, entries[0], "example.org", net.IPv4(1, 1, 1, 2), net.IPv4(2, 2, 2, 2))
 
 	// search by client IP (part of)
 	params = newSearchParams()
@@ -106,10 +106,10 @@ func TestQueryLog(t *testing.T) {
 	})
 	entries, _ = l.search(params)
 	assert.Len(t, entries, 4)
-	assertLogEntry(t, entries[0], "example.com", "1.1.1.4", "2.2.2.4")
-	assertLogEntry(t, entries[1], "test.example.org", "1.1.1.3", "2.2.2.3")
-	assertLogEntry(t, entries[2], "example.org", "1.1.1.2", "2.2.2.2")
-	assertLogEntry(t, entries[3], "example.org", "1.1.1.1", "2.2.2.1")
+	assertLogEntry(t, entries[0], "example.com", net.IPv4(1, 1, 1, 4), net.IPv4(2, 2, 2, 4))
+	assertLogEntry(t, entries[1], "test.example.org", net.IPv4(1, 1, 1, 3), net.IPv4(2, 2, 2, 3))
+	assertLogEntry(t, entries[2], "example.org", net.IPv4(1, 1, 1, 2), net.IPv4(2, 2, 2, 2))
+	assertLogEntry(t, entries[3], "example.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 }
 
 func TestQueryLogOffsetLimit(t *testing.T) {
@@ -124,13 +124,13 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 
 	// add 10 entries to the log
 	for i := 0; i < 10; i++ {
-		addEntry(l, "second.example.org", "1.1.1.1", "2.2.2.1")
+		addEntry(l, "second.example.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 	}
 	// write them to disk (first file)
 	_ = l.flushLogBuffer(true)
 	// add 10 more entries to the log (memory)
 	for i := 0; i < 10; i++ {
-		addEntry(l, "first.example.org", "1.1.1.1", "2.2.2.1")
+		addEntry(l, "first.example.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 	}
 
 	// First page
@@ -178,7 +178,7 @@ func TestQueryLogMaxFileScanEntries(t *testing.T) {
 
 	// add 10 entries to the log
 	for i := 0; i < 10; i++ {
-		addEntry(l, "example.org", "1.1.1.1", "2.2.2.1")
+		addEntry(l, "example.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 	}
 	// write them to disk (first file)
 	_ = l.flushLogBuffer(true)
@@ -204,9 +204,9 @@ func TestQueryLogFileDisabled(t *testing.T) {
 	defer func() { _ = os.RemoveAll(conf.BaseDir) }()
 	l := newQueryLog(conf)
 
-	addEntry(l, "example1.org", "1.1.1.1", "2.2.2.1")
-	addEntry(l, "example2.org", "1.1.1.1", "2.2.2.1")
-	addEntry(l, "example3.org", "1.1.1.1", "2.2.2.1")
+	addEntry(l, "example1.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
+	addEntry(l, "example2.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
+	addEntry(l, "example3.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 	// the oldest entry is now removed from mem buffer
 
 	params := newSearchParams()
@@ -216,7 +216,7 @@ func TestQueryLogFileDisabled(t *testing.T) {
 	assert.Equal(t, "example2.org", ll[1].QHost)
 }
 
-func addEntry(l *queryLog, host, answerStr, client string) {
+func addEntry(l *queryLog, host string, answerStr, client net.IP) {
 	q := dns.Msg{}
 	q.Question = append(q.Question, dns.Question{
 		Name:   host + ".",
@@ -232,7 +232,7 @@ func addEntry(l *queryLog, host, answerStr, client string) {
 		Rrtype: dns.TypeA,
 		Class:  dns.ClassINET,
 	}
-	answer.A = net.ParseIP(answerStr)
+	answer.A = answerStr
 	a.Answer = append(a.Answer, answer)
 	res := dnsfilter.Result{
 		IsFiltered:  true,
@@ -248,13 +248,13 @@ func addEntry(l *queryLog, host, answerStr, client string) {
 		Answer:     &a,
 		OrigAnswer: &a,
 		Result:     &res,
-		ClientIP:   net.ParseIP(client),
+		ClientIP:   client,
 		Upstream:   "upstream",
 	}
 	l.Add(params)
 }
 
-func assertLogEntry(t *testing.T, entry *logEntry, host, answer, client string) bool {
+func assertLogEntry(t *testing.T, entry *logEntry, host string, answer, client net.IP) bool {
 	assert.Equal(t, host, entry.QHost)
 	assert.Equal(t, client, entry.IP)
 	assert.Equal(t, "A", entry.QType)
@@ -263,9 +263,9 @@ func assertLogEntry(t *testing.T, entry *logEntry, host, answer, client string) 
 	msg := new(dns.Msg)
 	assert.Nil(t, msg.Unpack(entry.Answer))
 	assert.Len(t, msg.Answer, 1)
-	ip := proxyutil.GetIPFromDNSRecord(msg.Answer[0])
+	ip := proxyutil.GetIPFromDNSRecord(msg.Answer[0]).To16()
 	assert.NotNil(t, ip)
-	assert.Equal(t, answer, ip.String())
+	assert.Equal(t, answer, ip)
 	return true
 }
 

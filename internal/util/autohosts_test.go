@@ -108,11 +108,11 @@ func TestAutoHostsFSNotify(t *testing.T) {
 	ips = ah.Process("newhost", dns.TypeA)
 	assert.NotNil(t, ips)
 	assert.Len(t, ips, 1)
-	assert.Equal(t, "127.0.0.2", ips[0].String())
+	assert.True(t, net.IP{127, 0, 0, 2}.Equal(ips[0]))
 }
 
 func TestIP(t *testing.T) {
-	assert.Equal(t, "127.0.0.1", DNSUnreverseAddr("1.0.0.127.in-addr.arpa").String())
+	assert.True(t, net.IP{127, 0, 0, 1}.Equal(DNSUnreverseAddr("1.0.0.127.in-addr.arpa")))
 	assert.Equal(t, "::abcd:1234", DNSUnreverseAddr("4.3.2.1.d.c.b.a.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa").String())
 	assert.Equal(t, "::abcd:1234", DNSUnreverseAddr("4.3.2.1.d.c.B.A.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa").String())
 

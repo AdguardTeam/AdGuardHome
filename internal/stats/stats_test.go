@@ -80,7 +80,7 @@ func TestStats(t *testing.T) {
 	assert.EqualValues(t, 0.123456, d["avg_processing_time"].(float64))
 
 	topClients := s.GetTopClientsIP(2)
-	assert.Equal(t, "127.0.0.1", topClients[0])
+	assert.True(t, net.IP{127, 0, 0, 1}.Equal(topClients[0]))
 
 	s.clear()
 	s.Close()

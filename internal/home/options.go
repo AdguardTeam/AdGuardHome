@@ -2,6 +2,7 @@ package home
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"strconv"
 
@@ -13,7 +14,7 @@ type options struct {
 	verbose        bool   // is verbose logging enabled
 	configFilename string // path to the config file
 	workDir        string // path to the working directory where we will store the filters data and the querylog
-	bindHost       string // host address to bind HTTP server on
+	bindHost       net.IP // host address to bind HTTP server on
 	bindPort       int    // port to serve HTTP pages on
 	logFile        string // Path to the log file. If empty, write to stdout. If "syslog", writes to syslog
 	pidFile        string // File name to save PID to
@@ -54,10 +55,19 @@ type arg struct {
 // against its zero value and return nil if the parameter value is
 // zero otherwise they return a string slice of the parameter
 
+func ipSliceOrNil(ip net.IP) []string {
+	if ip == nil {
+		return nil
+	}
+
+	return []string{ip.String()}
+}
+
 func stringSliceOrNil(s string) []string {
 	if s == "" {
 		return nil
 	}
+
 	return []string{s}
 }
 
@@ -65,6 +75,7 @@ func intSliceOrNil(i int) []string {
 	if i == 0 {
 		return nil
 	}
+
 	return []string{strconv.Itoa(i)}
 }
 
@@ -72,6 +83,7 @@ func boolSliceOrNil(b bool) []string {
 	if b {
 		return []string{}
 	}
+
 	return nil
 }
 
@@ -96,8 +108,8 @@ var workDirArg = arg{
 var hostArg = arg{
 	"Host address to bind HTTP server on",
 	"host", "h",
-	func(o options, v string) (options, error) { o.bindHost = v; return o, nil }, nil, nil,
-	func(o options) []string { return stringSliceOrNil(o.bindHost) },
+	func(o options, v string) (options, error) { o.bindHost = net.ParseIP(v); return o, nil }, nil, nil,
+	func(o options) []string { return ipSliceOrNil(o.bindHost) },
 }
 
 var portArg = arg{

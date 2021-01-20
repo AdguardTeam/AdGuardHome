@@ -2,6 +2,7 @@ package home
 
 import (
 	"encoding/binary"
+	"net"
 	"strings"
 	"time"
 
@@ -15,7 +16,7 @@ import (
 type RDNS struct {
 	dnsServer *dnsforward.Server
 	clients   *clientsContainer
-	ipChannel chan string // pass data from DNS request handling thread to rDNS thread
+	ipChannel chan net.IP // pass data from DNS request handling thread to rDNS thread
 
 	// Contains IP addresses of clients to be resolved by rDNS
 	// If IP address is resolved, it stays here while it's inside Clients.
@@ -35,15 +36,15 @@ func InitRDNS(dnsServer *dnsforward.Server, clients *clientsContainer) *RDNS {
 	cconf.MaxCount = 10000
 	r.ipAddrs = cache.New(cconf)
 
-	r.ipChannel = make(chan string, 256)
+	r.ipChannel = make(chan net.IP, 256)
 	go r.workerLoop()
 	return &r
 }
 
 // Begin - add IP address to rDNS queue
-func (r *RDNS) Begin(ip string) {
+func (r *RDNS) Begin(ip net.IP) {
 	now := uint64(time.Now().Unix())
-	expire := r.ipAddrs.Get([]byte(ip))
+	expire := r.ipAddrs.Get(ip)
 	if len(expire) != 0 {
 		exp := binary.BigEndian.Uint64(expire)
 		if exp > now {
@@ -54,7 +55,7 @@ func (r *RDNS) Begin(ip string) {
 	expire = make([]byte, 8)
 	const ttl = 1 * 60 * 60
 	binary.BigEndian.PutUint64(expire, now+ttl)
-	_ = r.ipAddrs.Set([]byte(ip), expire)
+	_ = r.ipAddrs.Set(ip, expire)
 
 	if r.clients.Exists(ip, ClientSourceRDNS) {
 		return
@@ -70,7 +71,7 @@ func (r *RDNS) Begin(ip string) {
 }
 
 // Use rDNS to get hostname by IP address
-func (r *RDNS) resolve(ip string) string {
+func (r *RDNS) resolve(ip net.IP) string {
 	log.Tracef("Resolving host for %s", ip)
 
 	req := dns.Msg{}
@@ -83,7 +84,7 @@ func (r *RDNS) resolve(ip string) string {
 		},
 	}
 	var err error
-	req.Question[0].Name, err = dns.ReverseAddr(ip)
+	req.Question[0].Name, err = dns.ReverseAddr(ip.String())
 	if err != nil {
 		log.Debug("Error while calling dns.ReverseAddr(%s): %s", ip, err)
 		return ""
@@ -123,6 +124,6 @@ func (r *RDNS) workerLoop() {
 			continue
 		}
 
-		_, _ = r.clients.AddHost(ip, host, ClientSourceRDNS)
+		_, _ = r.clients.AddHost(ip.String(), host, ClientSourceRDNS)
 	}
 }

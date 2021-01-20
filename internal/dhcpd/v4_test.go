@@ -40,7 +40,7 @@ func TestV4StaticLeaseAddRemove(t *testing.T) {
 	// check
 	ls = s.GetLeases(LeasesStatic)
 	assert.Len(t, ls, 1)
-	assert.Equal(t, "192.168.10.150", ls[0].IP.String())
+	assert.True(t, net.IP{192, 168, 10, 150}.Equal(ls[0].IP))
 	assert.Equal(t, "aa:aa:aa:aa:aa:aa", ls[0].HWAddr.String())
 	assert.EqualValues(t, leaseExpireStatic, ls[0].Expiry.Unix())
 
@@ -102,11 +102,11 @@ func TestV4StaticLeaseAddReplaceDynamic(t *testing.T) {
 	ls := s.GetLeases(LeasesStatic)
 	assert.Len(t, ls, 2)
 
-	assert.Equal(t, "192.168.10.150", ls[0].IP.String())
+	assert.True(t, net.IP{192, 168, 10, 150}.Equal(ls[0].IP))
 	assert.Equal(t, "33:aa:aa:aa:aa:aa", ls[0].HWAddr.String())
 	assert.EqualValues(t, leaseExpireStatic, ls[0].Expiry.Unix())
 
-	assert.Equal(t, "192.168.10.152", ls[1].IP.String())
+	assert.True(t, net.IP{192, 168, 10, 152}.Equal(ls[1].IP))
 	assert.Equal(t, "22:aa:aa:aa:aa:aa", ls[1].HWAddr.String())
 	assert.EqualValues(t, leaseExpireStatic, ls[1].Expiry.Unix())
 }
@@ -139,10 +139,10 @@ func TestV4StaticLeaseGet(t *testing.T) {
 	// check "Offer"
 	assert.Equal(t, dhcpv4.MessageTypeOffer, resp.MessageType())
 	assert.Equal(t, "aa:aa:aa:aa:aa:aa", resp.ClientHWAddr.String())
-	assert.Equal(t, "192.168.10.150", resp.YourIPAddr.String())
-	assert.Equal(t, "192.168.10.1", resp.Router()[0].String())
-	assert.Equal(t, "192.168.10.1", resp.ServerIdentifier().String())
-	assert.Equal(t, "255.255.255.0", net.IP(resp.SubnetMask()).String())
+	assert.True(t, net.IP{192, 168, 10, 150}.Equal(resp.YourIPAddr))
+	assert.True(t, net.IP{192, 168, 10, 1}.Equal(resp.Router()[0]))
+	assert.True(t, net.IP{192, 168, 10, 1}.Equal(resp.ServerIdentifier()))
+	assert.True(t, net.IP{255, 255, 255, 0}.Equal(net.IP(resp.SubnetMask())))
 	assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
 
 	// "Request"
@@ -153,20 +153,20 @@ func TestV4StaticLeaseGet(t *testing.T) {
 	// check "Ack"
 	assert.Equal(t, dhcpv4.MessageTypeAck, resp.MessageType())
 	assert.Equal(t, "aa:aa:aa:aa:aa:aa", resp.ClientHWAddr.String())
-	assert.Equal(t, "192.168.10.150", resp.YourIPAddr.String())
-	assert.Equal(t, "192.168.10.1", resp.Router()[0].String())
-	assert.Equal(t, "192.168.10.1", resp.ServerIdentifier().String())
-	assert.Equal(t, "255.255.255.0", net.IP(resp.SubnetMask()).String())
+	assert.True(t, net.IP{192, 168, 10, 150}.Equal(resp.YourIPAddr))
+	assert.True(t, net.IP{192, 168, 10, 1}.Equal(resp.Router()[0]))
+	assert.True(t, net.IP{192, 168, 10, 1}.Equal(resp.ServerIdentifier()))
+	assert.True(t, net.IP{255, 255, 255, 0}.Equal(net.IP(resp.SubnetMask())))
 	assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
 
 	dnsAddrs := resp.DNS()
 	assert.Len(t, dnsAddrs, 1)
-	assert.Equal(t, "192.168.10.1", dnsAddrs[0].String())
+	assert.True(t, net.IP{192, 168, 10, 1}.Equal(dnsAddrs[0]))
 
 	// check lease
 	ls := s.GetLeases(LeasesStatic)
 	assert.Len(t, ls, 1)
-	assert.Equal(t, "192.168.10.150", ls[0].IP.String())
+	assert.True(t, net.IP{192, 168, 10, 150}.Equal(ls[0].IP))
 	assert.Equal(t, "aa:aa:aa:aa:aa:aa", ls[0].HWAddr.String())
 }
 
@@ -197,13 +197,13 @@ func TestV4DynamicLeaseGet(t *testing.T) {
 	// check "Offer"
 	assert.Equal(t, dhcpv4.MessageTypeOffer, resp.MessageType())
 	assert.Equal(t, "aa:aa:aa:aa:aa:aa", resp.ClientHWAddr.String())
-	assert.Equal(t, "192.168.10.100", resp.YourIPAddr.String())
-	assert.Equal(t, "192.168.10.1", resp.Router()[0].String())
-	assert.Equal(t, "192.168.10.1", resp.ServerIdentifier().String())
-	assert.Equal(t, "255.255.255.0", net.IP(resp.SubnetMask()).String())
+	assert.True(t, net.IP{192, 168, 10, 100}.Equal(resp.YourIPAddr))
+	assert.True(t, net.IP{192, 168, 10, 1}.Equal(resp.Router()[0]))
+	assert.True(t, net.IP{192, 168, 10, 1}.Equal(resp.ServerIdentifier()))
+	assert.True(t, net.IP{255, 255, 255, 0}.Equal(net.IP(resp.SubnetMask())))
 	assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
 	assert.Equal(t, []byte("012"), resp.Options[uint8(dhcpv4.OptionFQDN)])
-	assert.Equal(t, "1.2.3.4", net.IP(resp.Options[uint8(dhcpv4.OptionRelayAgentInformation)]).String())
+	assert.True(t, net.IP{1, 2, 3, 4}.Equal(net.IP(resp.Options[uint8(dhcpv4.OptionRelayAgentInformation)])))
 
 	// "Request"
 	req, _ = dhcpv4.NewRequestFromOffer(resp)
@@ -213,20 +213,20 @@ func TestV4DynamicLeaseGet(t *testing.T) {
 	// check "Ack"
 	assert.Equal(t, dhcpv4.MessageTypeAck, resp.MessageType())
 	assert.Equal(t, "aa:aa:aa:aa:aa:aa", resp.ClientHWAddr.String())
-	assert.Equal(t, "192.168.10.100", resp.YourIPAddr.String())
-	assert.Equal(t, "192.168.10.1", resp.Router()[0].String())
-	assert.Equal(t, "192.168.10.1", resp.ServerIdentifier().String())
-	assert.Equal(t, "255.255.255.0", net.IP(resp.SubnetMask()).String())
+	assert.True(t, net.IP{192, 168, 10, 100}.Equal(resp.YourIPAddr))
+	assert.True(t, net.IP{192, 168, 10, 1}.Equal(resp.Router()[0]))
+	assert.True(t, net.IP{192, 168, 10, 1}.Equal(resp.ServerIdentifier()))
+	assert.True(t, net.IP{255, 255, 255, 0}.Equal(net.IP(resp.SubnetMask())))
 	assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
 
 	dnsAddrs := resp.DNS()
 	assert.Len(t, dnsAddrs, 1)
-	assert.Equal(t, "192.168.10.1", dnsAddrs[0].String())
+	assert.True(t, net.IP{192, 168, 10, 1}.Equal(dnsAddrs[0]))
 
 	// check lease
 	ls := s.GetLeases(LeasesDynamic)
 	assert.Len(t, ls, 1)
-	assert.Equal(t, "192.168.10.100", ls[0].IP.String())
+	assert.True(t, net.IP{192, 168, 10, 100}.Equal(ls[0].IP))
 	assert.Equal(t, "aa:aa:aa:aa:aa:aa", ls[0].HWAddr.String())
 
 	start := net.IP{192, 168, 10, 100}

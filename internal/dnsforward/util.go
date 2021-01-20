@@ -8,8 +8,8 @@ import (
 	"github.com/AdguardTeam/golibs/utils"
 )
 
-// ipFromAddr gets IP address from addr.
-func ipFromAddr(addr net.Addr) (ip net.IP) {
+// IPFromAddr gets IP address from addr.
+func IPFromAddr(addr net.Addr) (ip net.IP) {
 	switch addr := addr.(type) {
 	case *net.UDPAddr:
 		return addr.IP
@@ -22,8 +22,8 @@ func ipFromAddr(addr net.Addr) (ip net.IP) {
 // IPStringFromAddr extracts IP address from net.Addr.
 // Note: we can't use net.SplitHostPort(a.String()) because of IPv6 zone:
 // https://github.com/AdguardTeam/AdGuardHome/internal/issues/1261
-func IPStringFromAddr(addr net.Addr) (ipstr string) {
-	if ip := ipFromAddr(addr); ip != nil {
+func IPStringFromAddr(addr net.Addr) (ipStr string) {
+	if ip := IPFromAddr(addr); ip != nil {
 		return ip.String()
 	}
 

@@ -66,6 +66,7 @@ and this project adheres to
 
 ### Fixed
 
+- Unnecessary conversions from `string` to `net.IP`, and vice versa ([#2508]).
 - Inability to set DNS cache TTL limits ([#2459]).
 - Possible freezes on slower machines ([#2225]).
 - A mitigation against records being shown in the wrong order on the query log
@@ -79,9 +80,13 @@ and this project adheres to
 [#2345]: https://github.com/AdguardTeam/AdGuardHome/issues/2345
 [#2355]: https://github.com/AdguardTeam/AdGuardHome/issues/2355
 [#2459]: https://github.com/AdguardTeam/AdGuardHome/issues/2459
+[#2508]: https://github.com/AdguardTeam/AdGuardHome/issues/2508
 
 ### Removed
 
+- The undocumented ability to use hostnames as any of `bind_host` values in
+  configuration.  Documentation requires them to be valid IP addresses, and now
+  the implementation makes sure that that is the case ([#2508]).
 - `Dockerfile` ([#2276]).  Replaced with the script
   `scripts/make/build-docker.sh` which uses `scripts/make/Dockerfile`.
 - Support for pre-v0.99.3 format of query logs ([#2102]).

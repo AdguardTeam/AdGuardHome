@@ -15,12 +15,12 @@ import (
 
 // NetInterface represents a list of network interfaces
 type NetInterface struct {
-	Name         string   // Network interface name
-	MTU          int      // MTU
-	HardwareAddr string   // Hardware address
-	Addresses    []string // Array with the network interface addresses
-	Subnets      []string // Array with CIDR addresses of this network interface
-	Flags        string   // Network interface flags (up, broadcast, etc)
+	Name         string       // Network interface name
+	MTU          int          // MTU
+	HardwareAddr string       // Hardware address
+	Addresses    []net.IP     // Array with the network interface addresses
+	Subnets      []*net.IPNet // Array with CIDR addresses of this network interface
+	Flags        string       // Network interface flags (up, broadcast, etc)
 }
 
 // GetValidNetInterfaces returns interfaces that are eligible for DNS and/or DHCP
@@ -78,8 +78,8 @@ func GetValidNetInterfacesForWeb() ([]NetInterface, error) {
 			if ipNet.IP.IsLinkLocalUnicast() {
 				continue
 			}
-			netIface.Addresses = append(netIface.Addresses, ipNet.IP.String())
-			netIface.Subnets = append(netIface.Subnets, ipNet.String())
+			netIface.Addresses = append(netIface.Addresses, ipNet.IP)
+			netIface.Subnets = append(netIface.Subnets, ipNet)
 		}
 
 		// Discard interfaces with no addresses
@@ -91,8 +91,8 @@ func GetValidNetInterfacesForWeb() ([]NetInterface, error) {
 	return netInterfaces, nil
 }
 
-// GetInterfaceByIP - Get interface name by its IP address.
-func GetInterfaceByIP(ip string) string {
+// GetInterfaceByIP returns the name of interface containing provided ip.
+func GetInterfaceByIP(ip net.IP) string {
 	ifaces, err := GetValidNetInterfacesForWeb()
 	if err != nil {
 		return ""
@@ -100,7 +100,7 @@ func GetInterfaceByIP(ip string) string {
 
 	for _, iface := range ifaces {
 		for _, addr := range iface.Addresses {
-			if ip == addr {
+			if ip.Equal(addr) {
 				return iface.Name
 			}
 		}
@@ -109,13 +109,13 @@ func GetInterfaceByIP(ip string) string {
 	return ""
 }
 
-// GetSubnet - Get IP address with netmask for the specified interface
-// Returns an empty string if it fails to find it
-func GetSubnet(ifaceName string) string {
+// GetSubnet returns pointer to net.IPNet for the specified interface or nil if
+// the search fails.
+func GetSubnet(ifaceName string) *net.IPNet {
 	netIfaces, err := GetValidNetInterfacesForWeb()
 	if err != nil {
 		log.Error("Could not get network interfaces info: %v", err)
-		return ""
+		return nil
 	}
 
 	for _, netIface := range netIfaces {
@@ -124,12 +124,12 @@ func GetSubnet(ifaceName string) string {
 		}
 	}
 
-	return ""
+	return nil
 }
 
 // CheckPortAvailable - check if TCP port is available
-func CheckPortAvailable(host string, port int) error {
-	ln, err := net.Listen("tcp", net.JoinHostPort(host, strconv.Itoa(port)))
+func CheckPortAvailable(host net.IP, port int) error {
+	ln, err := net.Listen("tcp", net.JoinHostPort(host.String(), strconv.Itoa(port)))
 	if err != nil {
 		return err
 	}
@@ -142,8 +142,8 @@ func CheckPortAvailable(host string, port int) error {
 }
 
 // CheckPacketPortAvailable - check if UDP port is available
-func CheckPacketPortAvailable(host string, port int) error {
-	ln, err := net.ListenPacket("udp", net.JoinHostPort(host, strconv.Itoa(port)))
+func CheckPacketPortAvailable(host net.IP, port int) error {
+	ln, err := net.ListenPacket("udp", net.JoinHostPort(host.String(), strconv.Itoa(port)))
 	if err != nil {
 		return err
 	}
