@@ -1452,7 +1452,13 @@
       'type': 'object'
       'description': >
         Information about the latest available version of AdGuard Home.
+      'required':
+      - 'disabled'
       'properties':
+        'disabled':
+          'type': 'boolean'
+          'description': >
+            If true then other fields doesn't appear.
         'new_version':
           'type': 'string'
           'example': 'v0.9'
@@ -1471,7 +1477,10 @@
       'properties':
         'time_units':
           'type': 'string'
-          'description': 'Time units (hours | days)'
+          'enum':
+          - 'hours'
+          - 'days'
+          'description': 'Time units'
           'example': 'hours'
         'num_dns_queries':
           'type': 'integer'
@@ -1988,6 +1997,10 @@
       'properties':
         'flags':
           'type': 'string'
+          'description': >
+            Flags could be any combination of the following values, divided by
+            the "|" character: "up", "broadcast", "loopback", "pointtopoint" and
+            "multicast".
           'example': 'up|broadcast|multicast'
         'hardware_address':
           'type': 'string'

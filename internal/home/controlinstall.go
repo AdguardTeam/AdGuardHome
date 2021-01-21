@@ -21,23 +21,16 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
-type firstRunData struct {
-	WebPort    int                    `json:"web_port"`
-	DNSPort    int                    `json:"dns_port"`
-	Interfaces map[string]interface{} `json:"interfaces"`
+// getAddrsResponse is the response for /install/get_addresses endpoint.
+type getAddrsResponse struct {
+	WebPort    int                           `json:"web_port"`
+	DNSPort    int                           `json:"dns_port"`
+	Interfaces map[string]*util.NetInterface `json:"interfaces"`
 }
 
-type netInterfaceJSON struct {
-	Name         string   `json:"name"`
-	MTU          int      `json:"mtu"`
-	HardwareAddr string   `json:"hardware_address"`
-	Addresses    []net.IP `json:"ip_addresses"`
-	Flags        string   `json:"flags"`
-}
-
-// Get initial installation settings
+// handleInstallGetAddresses is the handler for /install/get_addresses endpoint.
 func (web *Web) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
-	data := firstRunData{}
+	data := getAddrsResponse{}
 	data.WebPort = 80
 	data.DNSPort = 53
 
@@ -47,16 +40,9 @@ func (web *Web) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	data.Interfaces = make(map[string]interface{})
+	data.Interfaces = make(map[string]*util.NetInterface)
 	for _, iface := range ifaces {
-		ifaceJSON := netInterfaceJSON{
-			Name:         iface.Name,
-			MTU:          iface.MTU,
-			HardwareAddr: iface.HardwareAddr,
-			Addresses:    iface.Addresses,
-			Flags:        iface.Flags,
-		}
-		data.Interfaces[iface.Name] = ifaceJSON
+		data.Interfaces[iface.Name] = iface
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -520,15 +506,15 @@ func (web *Web) handleInstallConfigureBeta(w http.ResponseWriter, r *http.Reques
 	web.handleInstallConfigure(w, r)
 }
 
-// firstRunDataBeta is a struct representing new client's getting addresses
+// getAddrsResponseBeta is a struct representing new client's getting addresses
 // request body.  It uses array of structs instead of map.
 //
 // TODO(e.burkov): This should removed with the API v1 when the appropriate
 // functionality will appear in default firstRunData.
-type firstRunDataBeta struct {
-	WebPort    int                `json:"web_port"`
-	DNSPort    int                `json:"dns_port"`
-	Interfaces []netInterfaceJSON `json:"interfaces"`
+type getAddrsResponseBeta struct {
+	WebPort    int                  `json:"web_port"`
+	DNSPort    int                  `json:"dns_port"`
+	Interfaces []*util.NetInterface `json:"interfaces"`
 }
 
 // handleInstallConfigureBeta is a substitution of /install/get_addresses
@@ -537,7 +523,7 @@ type firstRunDataBeta struct {
 // TODO(e.burkov): This should removed with the API v1 when the appropriate
 // functionality will appear in default handleInstallGetAddresses.
 func (web *Web) handleInstallGetAddressesBeta(w http.ResponseWriter, r *http.Request) {
-	data := firstRunDataBeta{}
+	data := getAddrsResponseBeta{}
 	data.WebPort = 80
 	data.DNSPort = 53
 
@@ -547,17 +533,7 @@ func (web *Web) handleInstallGetAddressesBeta(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	data.Interfaces = make([]netInterfaceJSON, 0, len(ifaces))
-	for _, iface := range ifaces {
-		ifaceJSON := netInterfaceJSON{
-			Name:         iface.Name,
-			MTU:          iface.MTU,
-			HardwareAddr: iface.HardwareAddr,
-			Addresses:    iface.Addresses,
-			Flags:        iface.Flags,
-		}
-		data.Interfaces = append(data.Interfaces, ifaceJSON)
-	}
+	data.Interfaces = ifaces
 
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(data)

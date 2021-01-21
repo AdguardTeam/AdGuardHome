@@ -15,11 +15,11 @@ const versionCheckPeriod = 8 * time.Hour
 
 // VersionInfo contains information about a new version.
 type VersionInfo struct {
-	NewVersion           string
-	Announcement         string
-	AnnouncementURL      string
-	SelfUpdateMinVersion string
-	CanAutoUpdate        bool
+	NewVersion           string `json:"new_version,omitempty"`
+	Announcement         string `json:"announcement,omitempty"`
+	AnnouncementURL      string `json:"announcement_url,omitempty"`
+	SelfUpdateMinVersion string `json:"-"`
+	CanAutoUpdate        *bool  `json:"can_autoupdate,omitempty"`
 }
 
 // MaxResponseSize is responses on server's requests maximum length in bytes.
@@ -64,27 +64,37 @@ func (u *Updater) VersionInfo(forceRecheck bool) (VersionInfo, error) {
 }
 
 func (u *Updater) parseVersionResponse(data []byte) (VersionInfo, error) {
-	info := VersionInfo{}
-	versionJSON := make(map[string]interface{})
+	var canAutoUpdate bool
+	info := VersionInfo{
+		CanAutoUpdate: &canAutoUpdate,
+	}
+	versionJSON := map[string]string{
+		"version":                "",
+		"announcement":           "",
+		"announcement_url":       "",
+		"selfupdate_min_version": "",
+	}
 	err := json.Unmarshal(data, &versionJSON)
 	if err != nil {
 		return info, fmt.Errorf("version.json: %w", err)
 	}
 
-	var ok1, ok2, ok3, ok4 bool
-	info.NewVersion, ok1 = versionJSON["version"].(string)
-	info.Announcement, ok2 = versionJSON["announcement"].(string)
-	info.AnnouncementURL, ok3 = versionJSON["announcement_url"].(string)
-	info.SelfUpdateMinVersion, ok4 = versionJSON["selfupdate_min_version"].(string)
-	if !ok1 || !ok2 || !ok3 || !ok4 {
-		return info, fmt.Errorf("version.json: invalid data")
+	for _, v := range versionJSON {
+		if v == "" {
+			return info, fmt.Errorf("version.json: invalid data")
+		}
 	}
+
+	info.NewVersion = versionJSON["version"]
+	info.Announcement = versionJSON["announcement"]
+	info.AnnouncementURL = versionJSON["announcement_url"]
+	info.SelfUpdateMinVersion = versionJSON["selfupdate_min_version"]
 
 	packageURL, ok := u.downloadURL(versionJSON)
 	if ok &&
 		info.NewVersion != u.version &&
 		strings.TrimPrefix(u.version, "v") >= strings.TrimPrefix(info.SelfUpdateMinVersion, "v") {
-		info.CanAutoUpdate = true
+		canAutoUpdate = true
 	}
 
 	u.newVersion = info.NewVersion
@@ -94,7 +104,7 @@ func (u *Updater) parseVersionResponse(data []byte) (VersionInfo, error) {
 }
 
 // downloadURL returns the download URL for current build.
-func (u *Updater) downloadURL(json map[string]interface{}) (string, bool) {
+func (u *Updater) downloadURL(json map[string]string) (string, bool) {
 	var key string
 
 	if u.goarch == "arm" && u.goarm != "" {
@@ -113,5 +123,5 @@ func (u *Updater) downloadURL(json map[string]interface{}) (string, bool) {
 		return "", false
 	}
 
-	return val.(string), true
+	return val, true
 }

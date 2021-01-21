@@ -545,10 +545,9 @@ func (s *statsCtx) loadUnits(limit uint32) ([]*unitDB, uint32) {
   * parental-blocked
   These values are just the sum of data for all units.
 */
-func (s *statsCtx) getData() map[string]interface{} {
+func (s *statsCtx) getData() (statsResponse, bool) {
 	limit := s.conf.limit
 
-	d := map[string]interface{}{}
 	timeUnit := Hours
 	if limit/24 > 7 {
 		timeUnit = Days
@@ -556,7 +555,7 @@ func (s *statsCtx) getData() map[string]interface{} {
 
 	units, firstID := s.loadUnits(limit)
 	if units == nil {
-		return nil
+		return statsResponse{}, false
 	}
 
 	// per time unit counters:
@@ -604,18 +603,14 @@ func (s *statsCtx) getData() map[string]interface{} {
 		log.Fatalf("len(dnsQueries) != limit: %d %d", len(dnsQueries), limit)
 	}
 
-	statsData := map[string]interface{}{
-		"dns_queries":           dnsQueries,
-		"blocked_filtering":     statsCollector(func(u *unitDB) (num uint64) { return u.NResult[RFiltered] }),
-		"replaced_safebrowsing": statsCollector(func(u *unitDB) (num uint64) { return u.NResult[RSafeBrowsing] }),
-		"replaced_parental":     statsCollector(func(u *unitDB) (num uint64) { return u.NResult[RParental] }),
-		"top_queried_domains":   topsCollector(maxDomains, func(u *unitDB) (pairs []countPair) { return u.Domains }),
-		"top_blocked_domains":   topsCollector(maxDomains, func(u *unitDB) (pairs []countPair) { return u.BlockedDomains }),
-		"top_clients":           topsCollector(maxClients, func(u *unitDB) (pairs []countPair) { return u.Clients }),
-	}
-
-	for dataKey, dataValue := range statsData {
-		d[dataKey] = dataValue
+	data := statsResponse{
+		DNSQueries:           dnsQueries,
+		BlockedFiltering:     statsCollector(func(u *unitDB) (num uint64) { return u.NResult[RFiltered] }),
+		ReplacedSafebrowsing: statsCollector(func(u *unitDB) (num uint64) { return u.NResult[RSafeBrowsing] }),
+		ReplacedParental:     statsCollector(func(u *unitDB) (num uint64) { return u.NResult[RParental] }),
+		TopQueried:           topsCollector(maxDomains, func(u *unitDB) (pairs []countPair) { return u.Domains }),
+		TopBlocked:           topsCollector(maxDomains, func(u *unitDB) (pairs []countPair) { return u.BlockedDomains }),
+		TopClients:           topsCollector(maxClients, func(u *unitDB) (pairs []countPair) { return u.Clients }),
 	}
 
 	// total counters:
@@ -635,24 +630,22 @@ func (s *statsCtx) getData() map[string]interface{} {
 		sum.NResult[RParental] += u.NResult[RParental]
 	}
 
-	d["num_dns_queries"] = sum.NTotal
-	d["num_blocked_filtering"] = sum.NResult[RFiltered]
-	d["num_replaced_safebrowsing"] = sum.NResult[RSafeBrowsing]
-	d["num_replaced_safesearch"] = sum.NResult[RSafeSearch]
-	d["num_replaced_parental"] = sum.NResult[RParental]
+	data.NumDNSQueries = sum.NTotal
+	data.NumBlockedFiltering = sum.NResult[RFiltered]
+	data.NumReplacedSafebrowsing = sum.NResult[RSafeBrowsing]
+	data.NumReplacedSafesearch = sum.NResult[RSafeSearch]
+	data.NumReplacedParental = sum.NResult[RParental]
 
-	avgTime := float64(0)
 	if timeN != 0 {
-		avgTime = float64(sum.TimeAvg/uint32(timeN)) / 1000000
+		data.AvgProcessingTime = float64(sum.TimeAvg/uint32(timeN)) / 1000000
 	}
-	d["avg_processing_time"] = avgTime
 
-	d["time_units"] = "hours"
+	data.TimeUnits = "hours"
 	if timeUnit == Days {
-		d["time_units"] = "days"
+		data.TimeUnits = "days"
 	}
 
-	return d
+	return data, true
 }
 
 func (s *statsCtx) GetTopClientsIP(maxCount uint) []net.IP {

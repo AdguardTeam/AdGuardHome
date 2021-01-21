@@ -50,34 +50,36 @@ func TestStats(t *testing.T) {
 	e.Time = 123456
 	s.Update(e)
 
-	d := s.getData()
+	d, ok := s.getData()
+	assert.True(t, ok)
+
 	a := []uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2}
-	assert.True(t, UIntArrayEquals(d["dns_queries"].([]uint64), a))
+	assert.True(t, UIntArrayEquals(d.DNSQueries, a))
 
 	a = []uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
-	assert.True(t, UIntArrayEquals(d["blocked_filtering"].([]uint64), a))
+	assert.True(t, UIntArrayEquals(d.BlockedFiltering, a))
 
 	a = []uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	assert.True(t, UIntArrayEquals(d["replaced_safebrowsing"].([]uint64), a))
+	assert.True(t, UIntArrayEquals(d.ReplacedSafebrowsing, a))
 
 	a = []uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	assert.True(t, UIntArrayEquals(d["replaced_parental"].([]uint64), a))
+	assert.True(t, UIntArrayEquals(d.ReplacedParental, a))
 
-	m := d["top_queried_domains"].([]map[string]uint64)
+	m := d.TopQueried
 	assert.EqualValues(t, 1, m[0]["domain"])
 
-	m = d["top_blocked_domains"].([]map[string]uint64)
+	m = d.TopBlocked
 	assert.EqualValues(t, 1, m[0]["domain"])
 
-	m = d["top_clients"].([]map[string]uint64)
+	m = d.TopClients
 	assert.EqualValues(t, 2, m[0]["127.0.0.1"])
 
-	assert.EqualValues(t, 2, d["num_dns_queries"].(uint64))
-	assert.EqualValues(t, 1, d["num_blocked_filtering"].(uint64))
-	assert.EqualValues(t, 0, d["num_replaced_safebrowsing"].(uint64))
-	assert.EqualValues(t, 0, d["num_replaced_safesearch"].(uint64))
-	assert.EqualValues(t, 0, d["num_replaced_parental"].(uint64))
-	assert.EqualValues(t, 0.123456, d["avg_processing_time"].(float64))
+	assert.EqualValues(t, 2, d.NumDNSQueries)
+	assert.EqualValues(t, 1, d.NumBlockedFiltering)
+	assert.EqualValues(t, 0, d.NumReplacedSafebrowsing)
+	assert.EqualValues(t, 0, d.NumReplacedSafesearch)
+	assert.EqualValues(t, 0, d.NumReplacedParental)
+	assert.EqualValues(t, 0.123456, d.AvgProcessingTime)
 
 	topClients := s.GetTopClientsIP(2)
 	assert.True(t, net.IP{127, 0, 0, 1}.Equal(topClients[0]))
@@ -120,8 +122,9 @@ func TestLargeNumbers(t *testing.T) {
 		}
 	}
 
-	d := s.getData()
-	assert.EqualValues(t, int(hour)*n, d["num_dns_queries"])
+	d, ok := s.getData()
+	assert.True(t, ok)
+	assert.EqualValues(t, int(hour)*n, d.NumDNSQueries)
 
 	s.Close()
 	os.Remove(conf.Filename)

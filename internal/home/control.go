@@ -44,41 +44,44 @@ func addDNSAddress(dnsAddresses *[]string, addr net.IP) {
 	*dnsAddresses = append(*dnsAddresses, hostport)
 }
 
+// statusResponse is a response for /control/status endpoint.
+type statusResponse struct {
+	DNSAddrs            []string `json:"dns_addresses"`
+	DNSPort             int      `json:"dns_port"`
+	HTTPPort            int      `json:"http_port"`
+	IsProtectionEnabled bool     `json:"protection_enabled"`
+	// TODO(e.burkov): Inspect if front-end doesn't requires this field as
+	// openapi.yaml declares.
+	IsDHCPAvailable bool   `json:"dhcp_available"`
+	IsRunning       bool   `json:"running"`
+	Version         string `json:"version"`
+	Language        string `json:"language"`
+}
+
 func handleStatus(w http.ResponseWriter, _ *http.Request) {
-	c := dnsforward.FilteringConfig{}
+	resp := statusResponse{
+		DNSAddrs:  getDNSAddresses(),
+		DNSPort:   config.DNS.Port,
+		HTTPPort:  config.BindPort,
+		IsRunning: isRunning(),
+		Version:   version.Version(),
+		Language:  config.Language,
+	}
+
+	var c *dnsforward.FilteringConfig
 	if Context.dnsServer != nil {
-		Context.dnsServer.WriteDiskConfig(&c)
+		c = &dnsforward.FilteringConfig{}
+		Context.dnsServer.WriteDiskConfig(c)
+		resp.IsProtectionEnabled = c.ProtectionEnabled
 	}
 
-	data := map[string]interface{}{
-		"dns_addresses": getDNSAddresses(),
-		"http_port":     config.BindPort,
-		"dns_port":      config.DNS.Port,
-		"running":       isRunning(),
-		"version":       version.Version(),
-		"language":      config.Language,
-
-		"protection_enabled": c.ProtectionEnabled,
+	// IsDHCPAvailable field is now false by default for Windows.
+	if runtime.GOOS != "windows" {
+		resp.IsDHCPAvailable = Context.dhcpServer != nil
 	}
 
-	if runtime.GOOS == "windows" {
-		// Set the DHCP to false explicitly, because Context.dhcpServer
-		// is probably not nil, despite the fact that there is no
-		// support for DHCP on Windows in AdGuardHome.
-		//
-		// See also the TODO in dhcpd.Create.
-		data["dhcp_available"] = false
-	} else {
-		data["dhcp_available"] = (Context.dhcpServer != nil)
-	}
-
-	jsonVal, err := json.Marshal(data)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to marshal status json: %s", err)
-		return
-	}
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
+	err := json.NewEncoder(w).Encode(resp)
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Unable to write response json: %s", err)
 		return

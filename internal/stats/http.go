@@ -19,26 +19,43 @@ func httpError(r *http.Request, w http.ResponseWriter, code int, format string, 
 	http.Error(w, text, code)
 }
 
-// Return data
+// statsResponse is a response for getting statistics.
+type statsResponse struct {
+	TimeUnits string `json:"time_units"`
+
+	NumDNSQueries           uint64 `json:"num_dns_queries"`
+	NumBlockedFiltering     uint64 `json:"num_blocked_filtering"`
+	NumReplacedSafebrowsing uint64 `json:"num_replaced_safebrowsing"`
+	NumReplacedSafesearch   uint64 `json:"num_replaced_safesearch"`
+	NumReplacedParental     uint64 `json:"num_replaced_parental"`
+
+	AvgProcessingTime float64 `json:"avg_processing_time"`
+
+	TopQueried []map[string]uint64 `json:"top_queried_domains"`
+	TopClients []map[string]uint64 `json:"top_clients"`
+	TopBlocked []map[string]uint64 `json:"top_blocked_domains"`
+
+	DNSQueries []uint64 `json:"dns_queries"`
+
+	BlockedFiltering     []uint64 `json:"blocked_filtering"`
+	ReplacedSafebrowsing []uint64 `json:"replaced_safebrowsing"`
+	ReplacedParental     []uint64 `json:"replaced_parental"`
+}
+
+// handleStats is a handler for getting statistics.
 func (s *statsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
-	d := s.getData()
+	response, ok := s.getData()
 	log.Debug("Stats: prepared data in %v", time.Since(start))
 
-	if d == nil {
+	if !ok {
 		httpError(r, w, http.StatusInternalServerError, "Couldn't get statistics data")
-		return
-	}
 
-	data, err := json.Marshal(d)
-	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "json encode: %s", err)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-
-	_, err = w.Write(data)
+	err := json.NewEncoder(w).Encode(response)
 	if err != nil {
 		httpError(r, w, http.StatusInternalServerError, "json encode: %s", err)
 

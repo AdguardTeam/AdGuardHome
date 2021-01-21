@@ -90,7 +90,9 @@ func TestUpdateGetVersion(t *testing.T) {
 	assert.Equal(t, "AdGuard Home v0.103.0-beta.2 is now available!", info.Announcement)
 	assert.Equal(t, "https://github.com/AdguardTeam/AdGuardHome/internal/releases", info.AnnouncementURL)
 	assert.Equal(t, "v0.0", info.SelfUpdateMinVersion)
-	assert.True(t, info.CanAutoUpdate)
+	if assert.NotNil(t, info.CanAutoUpdate) {
+		assert.True(t, *info.CanAutoUpdate)
+	}
 
 	// check cached
 	_, err = u.VersionInfo(false)
@@ -275,7 +277,9 @@ func TestUpdater_VersionInto_ARM(t *testing.T) {
 	assert.Equal(t, "AdGuard Home v0.103.0-beta.2 is now available!", info.Announcement)
 	assert.Equal(t, "https://github.com/AdguardTeam/AdGuardHome/internal/releases", info.AnnouncementURL)
 	assert.Equal(t, "v0.0", info.SelfUpdateMinVersion)
-	assert.True(t, info.CanAutoUpdate)
+	if assert.NotNil(t, info.CanAutoUpdate) {
+		assert.True(t, *info.CanAutoUpdate)
+	}
 }
 
 func TestUpdater_VersionInto_MIPS(t *testing.T) {
@@ -312,5 +316,7 @@ func TestUpdater_VersionInto_MIPS(t *testing.T) {
 	assert.Equal(t, "AdGuard Home v0.103.0-beta.2 is now available!", info.Announcement)
 	assert.Equal(t, "https://github.com/AdguardTeam/AdGuardHome/internal/releases", info.AnnouncementURL)
 	assert.Equal(t, "v0.0", info.SelfUpdateMinVersion)
-	assert.True(t, info.CanAutoUpdate)
+	if assert.NotNil(t, info.CanAutoUpdate) {
+		assert.True(t, *info.CanAutoUpdate)
+	}
 }
