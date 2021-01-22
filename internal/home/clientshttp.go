@@ -22,7 +22,7 @@ type clientJSON struct {
 
 	Upstreams []string `json:"upstreams"`
 
-	WhoisInfo map[string]interface{} `json:"whois_info"`
+	WhoisInfo map[string]string `json:"whois_info"`
 
 	// Disallowed - if true -- client's IP is not disallowed
 	// Otherwise, it is blocked.
@@ -39,7 +39,7 @@ type clientHostJSON struct {
 	Name   string `json:"name"`
 	Source string `json:"source"`
 
-	WhoisInfo map[string]interface{} `json:"whois_info"`
+	WhoisInfo map[string]string `json:"whois_info"`
 }
 
 type clientListJSON struct {
@@ -75,7 +75,7 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, _ *http
 			cj.Source = "WHOIS"
 		}
 
-		cj.WhoisInfo = make(map[string]interface{})
+		cj.WhoisInfo = map[string]string{}
 		for _, wi := range ch.WhoisInfo {
 			cj.WhoisInfo[wi[0]] = wi[1]
 		}
@@ -140,7 +140,7 @@ func clientHostToJSON(ip string, ch ClientHost) clientJSON {
 		IDs:  []string{ip},
 	}
 
-	cj.WhoisInfo = make(map[string]interface{})
+	cj.WhoisInfo = map[string]string{}
 	for _, wi := range ch.WhoisInfo {
 		cj.WhoisInfo[wi[0]] = wi[1]
 	}
@@ -228,7 +228,7 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 // Get the list of clients by IP address list
 func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-	data := []map[string]interface{}{}
+	data := []map[string]clientJSON{}
 	for i := 0; ; i++ {
 		ipStr := q.Get(fmt.Sprintf("ip%d", i))
 		ip := net.ParseIP(ipStr)
@@ -236,7 +236,6 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 			break
 		}
 
-		el := map[string]interface{}{}
 		c, ok := clients.Find(ip)
 		var cj clientJSON
 		if !ok {
@@ -250,18 +249,13 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 			cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
 		}
 
-		el[ipStr] = cj
-		data = append(data, el)
-	}
-
-	js, err := json.Marshal(data)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "json.Marshal: %s", err)
-		return
+		data = append(data, map[string]clientJSON{
+			ipStr: cj,
+		})
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(js)
+	err := json.NewEncoder(w).Encode(data)
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Couldn't write response: %s", err)
 	}
