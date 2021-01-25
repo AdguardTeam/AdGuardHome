@@ -13,10 +13,18 @@ import (
 // TODO(a.garipov): Find out if we can get GOARM and GOMIPS values the same way
 // we can GOARCH and GOOS.
 var (
-	channel string
+	channel string = ChannelDevelopment
 	goarm   string
 	gomips  string
 	version string
+)
+
+// Channel constants.
+const (
+	ChannelDevelopment = "development"
+	ChannelEdge        = "edge"
+	ChannelBeta        = "beta"
+	ChannelRelease     = "release"
 )
 
 // Channel returns the current AdGuard Home release channel.

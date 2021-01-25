@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/testutil"
+	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -72,7 +73,7 @@ func TestUpdateGetVersion(t *testing.T) {
 	u := NewUpdater(&Config{
 		Client:  &http.Client{},
 		Version: "v0.103.0-beta.1",
-		Channel: "beta",
+		Channel: version.ChannelBeta,
 		GOARCH:  "arm",
 		GOOS:    "linux",
 	})
@@ -80,7 +81,7 @@ func TestUpdateGetVersion(t *testing.T) {
 	fakeURL := &url.URL{
 		Scheme: "http",
 		Host:   net.JoinHostPort("127.0.0.1", lport),
-		Path:   path.Join("adguardhome", "beta", "version.json"),
+		Path:   path.Join("adguardhome", version.ChannelBeta, "version.json"),
 	}
 	u.versionCheckURL = fakeURL.String()
 
@@ -258,7 +259,7 @@ func TestUpdater_VersionInto_ARM(t *testing.T) {
 	u := NewUpdater(&Config{
 		Client:  &http.Client{},
 		Version: "v0.103.0-beta.1",
-		Channel: "beta",
+		Channel: version.ChannelBeta,
 		GOARCH:  "arm",
 		GOOS:    "linux",
 		GOARM:   "7",
@@ -267,7 +268,7 @@ func TestUpdater_VersionInto_ARM(t *testing.T) {
 	fakeURL := &url.URL{
 		Scheme: "http",
 		Host:   net.JoinHostPort("127.0.0.1", lport),
-		Path:   path.Join("adguardhome", "beta", "version.json"),
+		Path:   path.Join("adguardhome", version.ChannelBeta, "version.json"),
 	}
 	u.versionCheckURL = fakeURL.String()
 
@@ -297,7 +298,7 @@ func TestUpdater_VersionInto_MIPS(t *testing.T) {
 	u := NewUpdater(&Config{
 		Client:  &http.Client{},
 		Version: "v0.103.0-beta.1",
-		Channel: "beta",
+		Channel: version.ChannelBeta,
 		GOARCH:  "mips",
 		GOOS:    "linux",
 		GOMIPS:  "softfloat",
@@ -306,7 +307,7 @@ func TestUpdater_VersionInto_MIPS(t *testing.T) {
 	fakeURL := &url.URL{
 		Scheme: "http",
 		Host:   net.JoinHostPort("127.0.0.1", lport),
-		Path:   path.Join("adguardhome", "beta", "version.json"),
+		Path:   path.Join("adguardhome", version.ChannelBeta, "version.json"),
 	}
 	u.versionCheckURL = fakeURL.String()
 

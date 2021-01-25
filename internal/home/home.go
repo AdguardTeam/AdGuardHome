@@ -126,7 +126,8 @@ func Main() {
 
 func setupContext(args options) {
 	Context.runningAsService = args.runningAsService
-	Context.disableUpdate = args.disableUpdate
+	Context.disableUpdate = args.disableUpdate ||
+		version.Channel() == version.ChannelDevelopment
 
 	Context.firstRun = detectFirstRun()
 	if Context.firstRun {
