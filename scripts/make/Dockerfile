@@ -45,8 +45,6 @@ RUN setcap 'cap_net_bind_service=+eip' /opt/adguardhome/AdGuardHome
 EXPOSE 53/tcp 53/udp 67/udp 68/udp 80/tcp 443/tcp 443/udp 784/udp\
 	853/tcp 3000/tcp 3001/tcp 5443/tcp 5443/udp
 
-VOLUME ["/opt/adguardhome/conf", "/opt/adguardhome/work"]
-
 WORKDIR /opt/adguardhome/work
 
 ENTRYPOINT ["/opt/adguardhome/AdGuardHome"]

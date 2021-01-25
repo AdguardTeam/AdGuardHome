@@ -35,6 +35,8 @@ and this project adheres to
 
 ### Changed
 
+- Stopped mounting together the directories `/opt/adguardhome/conf` and
+  `/opt/adguardhome/work` in our Docker images ([#2589]).
 - When `dns.bogus_nxdomain` option is used, the server will now transform
   responses if there is at least one bogus address instead of all of them
   ([#2394]).  The new behavior is the same as in `dnsmasq`.
@@ -48,8 +50,8 @@ and this project adheres to
   [#2509]).
 
 [#2231]: https://github.com/AdguardTeam/AdGuardHome/issues/2231
-[#2276]: https://github.com/AdguardTeam/AdGuardHome/issues/2276
 [#2271]: https://github.com/AdguardTeam/AdGuardHome/issues/2271
+[#2276]: https://github.com/AdguardTeam/AdGuardHome/issues/2276
 [#2297]: https://github.com/AdguardTeam/AdGuardHome/issues/2297
 [#2306]: https://github.com/AdguardTeam/AdGuardHome/issues/2306
 [#2343]: https://github.com/AdguardTeam/AdGuardHome/issues/2343
@@ -57,6 +59,7 @@ and this project adheres to
 [#2391]: https://github.com/AdguardTeam/AdGuardHome/issues/2391
 [#2394]: https://github.com/AdguardTeam/AdGuardHome/issues/2394
 [#2509]: https://github.com/AdguardTeam/AdGuardHome/issues/2509
+[#2589]: https://github.com/AdguardTeam/AdGuardHome/issues/2589
 
 ### Deprecated
 
