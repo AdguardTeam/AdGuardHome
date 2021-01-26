@@ -1,4 +1,4 @@
-// +build windows nacl plan9
+// +build windows plan9
 
 package sysutil
 
