@@ -1,6 +1,7 @@
 package home
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -90,7 +91,7 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Perform an update procedure to the latest available version
+// handleUpdate performs an update to the latest available version procedure.
 func handleUpdate(w http.ResponseWriter, _ *http.Request) {
 	if Context.updater.NewVersion() == "" {
 		httpError(w, http.StatusBadRequest, "/update request isn't allowed now")
@@ -108,7 +109,13 @@ func handleUpdate(w http.ResponseWriter, _ *http.Request) {
 		f.Flush()
 	}
 
-	go finishUpdate()
+	// The background context is used because the underlying functions wrap
+	// it with timeout and shut down the server, which handles current
+	// request. It also should be done in a separate goroutine due to the
+	// same reason.
+	go func() {
+		finishUpdate(context.Background())
+	}()
 }
 
 // versionResponse is the response for /control/version.json endpoint.
@@ -140,10 +147,10 @@ func (vr *versionResponse) confirmAutoUpdate() {
 	}
 }
 
-// Complete an update procedure
-func finishUpdate() {
+// finishUpdate completes an update procedure.
+func finishUpdate(ctx context.Context) {
 	log.Info("Stopping all tasks")
-	cleanup()
+	cleanup(ctx)
 	cleanupAlways()
 
 	exeName := "AdGuardHome"

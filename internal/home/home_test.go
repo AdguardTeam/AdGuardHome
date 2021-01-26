@@ -186,6 +186,6 @@ func TestHome(t *testing.T) {
 		time.Sleep(1 * time.Second)
 	}
 
-	cleanup()
+	cleanup(context.Background())
 	cleanupAlways()
 }

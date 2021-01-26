@@ -122,8 +122,9 @@ func WebCheckPortAvailable(port int) bool {
 	return true
 }
 
-// TLSConfigChanged - called when TLS configuration has changed
-func (web *Web) TLSConfigChanged(tlsConf tlsConfigSettings) {
+// TLSConfigChanged updates the TLS configuration and restarts the HTTPS server
+// if necessary.
+func (web *Web) TLSConfigChanged(ctx context.Context, tlsConf tlsConfigSettings) {
 	log.Debug("Web: applying new TLS configuration")
 	web.conf.PortHTTPS = tlsConf.PortHTTPS
 	web.forceHTTPS = (tlsConf.ForceHTTPS && tlsConf.Enabled && tlsConf.PortHTTPS != 0)
@@ -143,7 +144,12 @@ func (web *Web) TLSConfigChanged(tlsConf tlsConfigSettings) {
 
 	web.httpsServer.cond.L.Lock()
 	if web.httpsServer.server != nil {
-		_ = web.httpsServer.server.Shutdown(context.TODO())
+		ctx, cancel := context.WithTimeout(ctx, shutdownTimeout)
+		err = web.httpsServer.server.Shutdown(ctx)
+		cancel()
+		if err != nil {
+			log.Debug("error while shutting down HTTP server: %s", err)
+		}
 	}
 	web.httpsServer.enabled = enabled
 	web.httpsServer.cert = cert
@@ -198,21 +204,27 @@ func (web *Web) Start() {
 	}
 }
 
-// Close - stop HTTP server, possibly waiting for all active connections to be closed
-func (web *Web) Close() {
+// Close gracefully shuts down the HTTP servers.
+func (web *Web) Close(ctx context.Context) {
 	log.Info("Stopping HTTP server...")
 	web.httpsServer.cond.L.Lock()
 	web.httpsServer.shutdown = true
 	web.httpsServer.cond.L.Unlock()
-	if web.httpsServer.server != nil {
-		_ = web.httpsServer.server.Shutdown(context.TODO())
+
+	shut := func(srv *http.Server) {
+		if srv == nil {
+			return
+		}
+		ctx, cancel := context.WithTimeout(ctx, shutdownTimeout)
+		defer cancel()
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Debug("error while shutting down HTTP server: %s", err)
+		}
 	}
-	if web.httpServer != nil {
-		_ = web.httpServer.Shutdown(context.TODO())
-	}
-	if web.httpServerBeta != nil {
-		_ = web.httpServerBeta.Shutdown(context.TODO())
-	}
+
+	shut(web.httpsServer.server)
+	shut(web.httpServer)
+	shut(web.httpServerBeta)
 
 	log.Info("Stopped HTTP server")
 }

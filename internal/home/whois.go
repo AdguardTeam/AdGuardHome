@@ -35,19 +35,20 @@ type Whois struct {
 	ipAddrs cache.Cache
 }
 
-// Create module context
+// initWhois creates the Whois module context.
 func initWhois(clients *clientsContainer) *Whois {
-	w := Whois{}
-	w.timeoutMsec = 5000
-	w.clients = clients
+	w := Whois{
+		timeoutMsec: 5000,
+		clients:     clients,
+		ipAddrs: cache.New(cache.Config{
+			EnableLRU: true,
+			MaxCount:  10000,
+		}),
+		ipChan: make(chan net.IP, 255),
+	}
 
-	cconf := cache.Config{}
-	cconf.EnableLRU = true
-	cconf.MaxCount = 10000
-	w.ipAddrs = cache.New(cconf)
-
-	w.ipChan = make(chan net.IP, 255)
 	go w.workerLoop()
+
 	return &w
 }
 
@@ -120,12 +121,12 @@ func whoisParse(data string) map[string]string {
 const MaxConnReadSize = 64 * 1024
 
 // Send request to a server and receive the response
-func (w *Whois) query(target, serverAddr string) (string, error) {
+func (w *Whois) query(ctx context.Context, target, serverAddr string) (string, error) {
 	addr, _, _ := net.SplitHostPort(serverAddr)
 	if addr == "whois.arin.net" {
 		target = "n + " + target
 	}
-	conn, err := customDialContext(context.TODO(), "tcp", serverAddr)
+	conn, err := customDialContext(ctx, "tcp", serverAddr)
 	if err != nil {
 		return "", err
 	}
@@ -153,11 +154,11 @@ func (w *Whois) query(target, serverAddr string) (string, error) {
 }
 
 // Query WHOIS servers (handle redirects)
-func (w *Whois) queryAll(target string) (string, error) {
+func (w *Whois) queryAll(ctx context.Context, target string) (string, error) {
 	server := net.JoinHostPort(defaultServer, defaultPort)
 	const maxRedirects = 5
 	for i := 0; i != maxRedirects; i++ {
-		resp, err := w.query(target, server)
+		resp, err := w.query(ctx, target, server)
 		if err != nil {
 			return "", err
 		}
@@ -183,9 +184,9 @@ func (w *Whois) queryAll(target string) (string, error) {
 }
 
 // Request WHOIS information
-func (w *Whois) process(ip net.IP) [][]string {
+func (w *Whois) process(ctx context.Context, ip net.IP) [][]string {
 	data := [][]string{}
-	resp, err := w.queryAll(ip.String())
+	resp, err := w.queryAll(ctx, ip.String())
 	if err != nil {
 		log.Debug("Whois: error: %s  IP:%s", err, ip)
 		return data
@@ -232,12 +233,13 @@ func (w *Whois) Begin(ip net.IP) {
 	}
 }
 
-// Get IP address from channel; get WHOIS info; associate info with a client
+// workerLoop processes the IP addresses it got from the channel and associates
+// the retrieving WHOIS info with a client.
 func (w *Whois) workerLoop() {
 	for {
 		ip := <-w.ipChan
 
-		info := w.process(ip)
+		info := w.process(context.Background(), ip)
 		if len(info) == 0 {
 			continue
 		}

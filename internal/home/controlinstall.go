@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
 
@@ -268,6 +269,9 @@ func copyInstallSettings(dst, src *configuration) {
 	dst.DNS.Port = src.DNS.Port
 }
 
+// shutdownTimeout is the timeout for shutting HTTP server down operation.
+const shutdownTimeout = 5 * time.Second
+
 // Apply new configuration, start DNS server, restart Web server
 func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	newSettings := applyConfigReq{}
@@ -320,6 +324,10 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	config.DNS.BindHost = newSettings.DNS.IP
 	config.DNS.Port = newSettings.DNS.Port
 
+	// TODO(e.burkov): StartMods() should be put in a separate goroutine at
+	// the moment we'll allow setting up TLS in the initial configuration or
+	// the configuration itself will use HTTPS protocol, because the
+	// underlying functions potentially restart the HTTPS server.
 	err = StartMods()
 	if err != nil {
 		Context.firstRun = true
@@ -351,16 +359,22 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		f.Flush()
 	}
 
-	// this needs to be done in a goroutine because Shutdown() is a blocking call, and it will block
-	// until all requests are finished, and _we_ are inside a request right now, so it will block indefinitely
+	// The Shutdown() method of (*http.Server) needs to be called in a
+	// separate goroutine, because it waits until all requests are handled
+	// and will be blocked by it's own caller.
 	if restartHTTP {
-		go func() {
-			_ = web.httpServer.Shutdown(context.TODO())
-		}()
+		ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+
+		shut := func(srv *http.Server) {
+			defer cancel()
+			err := srv.Shutdown(ctx)
+			if err != nil {
+				log.Debug("error while shutting down HTTP server: %s", err)
+			}
+		}
+		go shut(web.httpServer)
 		if web.httpServerBeta != nil {
-			go func() {
-				_ = web.httpServerBeta.Shutdown(context.TODO())
-			}()
+			go shut(web.httpServerBeta)
 		}
 	}
 }

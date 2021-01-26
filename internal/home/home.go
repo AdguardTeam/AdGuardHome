@@ -108,7 +108,7 @@ func Main() {
 				Context.tls.Reload()
 
 			default:
-				cleanup()
+				cleanup(context.Background())
 				cleanupAlways()
 				os.Exit(0)
 			}
@@ -334,7 +334,7 @@ func run(args options) {
 	select {}
 }
 
-// StartMods - initialize and start DNS after installation
+// StartMods initializes and starts the DNS server after installation.
 func StartMods() error {
 	err := initDNSServer()
 	if err != nil {
@@ -501,11 +501,12 @@ func configureLogger(args options) {
 	}
 }
 
-func cleanup() {
+// cleanup stops and resets all the modules.
+func cleanup(ctx context.Context) {
 	log.Info("Stopping AdGuard Home")
 
 	if Context.web != nil {
-		Context.web.Close()
+		Context.web.Close(ctx)
 		Context.web = nil
 	}
 	if Context.auth != nil {

@@ -1,6 +1,7 @@
 package home
 
 import (
+	"context"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
@@ -19,7 +20,7 @@ func TestWhois(t *testing.T) {
 	assert.Nil(t, prepareTestDNSServer())
 
 	w := Whois{timeoutMsec: 5000}
-	resp, err := w.queryAll("8.8.8.8")
+	resp, err := w.queryAll(context.Background(), "8.8.8.8")
 	assert.Nil(t, err)
 	m := whoisParse(resp)
 	assert.Equal(t, "Google LLC", m["orgname"])
