@@ -200,7 +200,6 @@ func (c *sbCtx) processTXT(resp *dns.Msg) (bool, [][]byte) {
 		log.Debug("%s: received hashes for %s: %v", c.svc, c.host, txt.Txt)
 
 		for _, t := range txt.Txt {
-
 			if len(t) != 32*2 {
 				continue
 			}
