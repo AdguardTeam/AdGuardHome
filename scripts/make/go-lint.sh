@@ -60,14 +60,24 @@ underscores() {
 
 # exit_on_output exits with a nonzero exit code if there is anything in
 # the command's combined output.
-exit_on_output() {
-	test "$VERBOSE" -lt '2' && set +x
+exit_on_output() (
+	set +e
+
+	if [ "$VERBOSE" -lt '2' ]
+	then
+		set +x
+	fi
 
 	cmd="$1"
 	shift
 
-	exitcode='0'
 	output="$("$cmd" "$@" 2>&1)"
+	exitcode="$?"
+	if [ "$exitcode" != '0' ]
+	then
+		echo "'$cmd' failed with code $exitcode"
+	fi
+
 	if [ "$output" != '' ]
 	then
 		if [ "$*" != '' ]
@@ -79,13 +89,14 @@ exit_on_output() {
 
 		echo "$output"
 
-		exitcode='1'
+		if [ "$exitcode" = '0' ]
+		then
+			exitcode='1'
+		fi
 	fi
 
-	test "$VERBOSE" -gt '0' && set -x
-
 	return "$exitcode"
-}
+)
 
 exit_on_output blocklist_imports
 
