@@ -9,8 +9,13 @@ import (
 type criteriaType int
 
 const (
-	ctDomainOrClient  criteriaType = iota // domain name or client IP address
-	ctFilteringStatus                     // filtering status
+	// ctDomainOrClient is for searching by the domain name, the client's IP
+	// address, or the clinet's ID.
+	ctDomainOrClient criteriaType = iota
+	// ctFilteringStatus is for searching by the filtering status.
+	//
+	// See (*searchCriteria).ctFilteringStatusCase for details.
+	ctFilteringStatus
 )
 
 const (
@@ -38,9 +43,9 @@ var filteringStatusValues = []string{
 // searchCriteria - every search request may contain a list of different search criteria
 // we use each of them to match the query
 type searchCriteria struct {
+	value        string       // search criteria value
 	criteriaType criteriaType // type of the criteria
 	strict       bool         // should we strictly match (equality) or not (indexOf)
-	value        string       // search criteria value
 }
 
 // quickMatch - quickly checks if the log entry matches this search criteria
@@ -51,7 +56,8 @@ func (c *searchCriteria) quickMatch(line string) bool {
 	switch c.criteriaType {
 	case ctDomainOrClient:
 		return c.quickMatchJSONValue(line, "QH") ||
-			c.quickMatchJSONValue(line, "IP")
+			c.quickMatchJSONValue(line, "IP") ||
+			c.quickMatchJSONValue(line, "ID")
 	default:
 		return true
 	}
@@ -89,13 +95,14 @@ func (c *searchCriteria) match(entry *logEntry) bool {
 }
 
 func (c *searchCriteria) ctDomainOrClientCase(entry *logEntry) bool {
+	clientID := strings.ToLower(entry.ClientID)
 	qhost := strings.ToLower(entry.QHost)
 	searchVal := strings.ToLower(c.value)
-	if c.strict && qhost == searchVal {
+	if c.strict && (qhost == searchVal || clientID == searchVal) {
 		return true
 	}
 
-	if !c.strict && strings.Contains(qhost, searchVal) {
+	if !c.strict && (strings.Contains(qhost, searchVal) || strings.Contains(clientID, searchVal)) {
 		return true
 	}
 

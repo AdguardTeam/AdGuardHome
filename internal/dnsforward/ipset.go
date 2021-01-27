@@ -99,12 +99,12 @@ func (c *ipsetCtx) getIP(rr dns.RR) net.IP {
 }
 
 // Add IP addresses of the specified in configuration domain names to an ipset list
-func (c *ipsetCtx) process(ctx *dnsContext) int {
+func (c *ipsetCtx) process(ctx *dnsContext) (rc resultCode) {
 	req := ctx.proxyCtx.Req
 	if !(req.Question[0].Qtype == dns.TypeA ||
 		req.Question[0].Qtype == dns.TypeAAAA) ||
 		!ctx.responseFromUpstream {
-		return resultDone
+		return resultCodeSuccess
 	}
 
 	host := req.Question[0].Name
@@ -112,7 +112,7 @@ func (c *ipsetCtx) process(ctx *dnsContext) int {
 	host = strings.ToLower(host)
 	ipsetNames, found := c.ipsetList[host]
 	if !found {
-		return resultDone
+		return resultCodeSuccess
 	}
 
 	log.Debug("IPSET: found ipsets %v for host %s", ipsetNames, host)
@@ -138,5 +138,5 @@ func (c *ipsetCtx) process(ctx *dnsContext) int {
 		}
 	}
 
-	return resultDone
+	return resultCodeSuccess
 }

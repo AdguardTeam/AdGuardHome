@@ -24,11 +24,12 @@ type FilteringConfig struct {
 	// Callbacks for other modules
 	// --
 
-	// Filtering callback function
-	FilterHandler func(clientAddr net.IP, settings *dnsfilter.RequestFilteringSettings) `yaml:"-"`
+	// FilterHandler is an optional additional filtering callback.
+	FilterHandler func(clientAddr net.IP, clientID string, settings *dnsfilter.RequestFilteringSettings) `yaml:"-"`
 
 	// GetCustomUpstreamByClient - a callback function that returns upstreams configuration
 	// based on the client IP address. Returns nil if there are no custom upstreams for the client
+	//
 	// TODO(e.burkov): Replace argument type with net.IP.
 	GetCustomUpstreamByClient func(clientAddr string) *proxy.UpstreamConfig `yaml:"-"`
 
@@ -108,6 +109,10 @@ type TLSConfig struct {
 
 	CertificateChainData []byte `yaml:"-" json:"-"`
 	PrivateKeyData       []byte `yaml:"-" json:"-"`
+
+	// ServerName is the hostname of the server.  Currently, it is only
+	// being used for client ID checking.
+	ServerName string `yaml:"-" json:"-"`
 
 	cert tls.Certificate
 	// DNS names from certificate (SAN) or CN value from Subject

@@ -8,7 +8,7 @@ import {
 import { addErrorToast, addSuccessToast } from './toasts';
 
 const enrichWithClientInfo = async (logs) => {
-    const clientsParams = getParamsForClientsSearch(logs, 'client');
+    const clientsParams = getParamsForClientsSearch(logs, 'client', 'client_id');
 
     if (Object.keys(clientsParams).length > 0) {
         const clients = await apiClient.findClients(clientsParams);

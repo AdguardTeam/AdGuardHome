@@ -16,6 +16,7 @@ import { updateLogs } from '../../../actions/queryLogs';
 
 const ClientCell = ({
     client,
+    client_id,
     domain,
     info,
     info: {
@@ -33,12 +34,14 @@ const ClientCell = ({
     const autoClient = autoClients.find((autoClient) => autoClient.name === client);
     const source = autoClient?.source;
     const whoisAvailable = whois_info && Object.keys(whois_info).length > 0;
+    const clientName = name || client_id;
+    const clientInfo = { ...info, name: clientName };
 
     const id = nanoid();
 
     const data = {
         address: client,
-        name,
+        name: clientName,
         country: whois_info?.country,
         city: whois_info?.city,
         network: whois_info?.orgname,
@@ -99,13 +102,20 @@ const ClientCell = ({
             if (options.length === 0) {
                 return null;
             }
-            return <>{options.map(({ name, onClick, disabled }) => <button
-                    key={name}
-                    className="button-action--arrow-option px-4 py-2"
-                    onClick={onClick}
-                    disabled={disabled}
-            >{t(name)}
-            </button>)}</>;
+            return (
+                <>
+                    {options.map(({ name, onClick, disabled }) => (
+                        <button
+                            key={name}
+                            className="button-action--arrow-option px-4 py-2"
+                            onClick={onClick}
+                            disabled={disabled}
+                        >
+                            {t(name)}
+                        </button>
+                    ))}
+                </>
+            );
         };
 
         const content = getOptions(BUTTON_OPTIONS);
@@ -125,45 +135,70 @@ const ClientCell = ({
             'button-action__container--detailed': isDetailed,
         });
 
-        return <div className={containerClass}>
-            <button type="button"
+        return (
+            <div className={containerClass}>
+                <button
+                    type="button"
                     className={buttonClass}
                     onClick={onClick}
                     disabled={processingRules}
-            >
-                {t(buttonType)}
-            </button>
-            {content && <button className={buttonArrowClass} disabled={processingRules}>
-                <IconTooltip
-                        className='h-100'
-                        tooltipClass='button-action--arrow-option-container'
-                        xlinkHref='chevron-down'
-                        triggerClass='button-action--icon'
-                        content={content} placement="bottom-end" trigger="click"
-                        onVisibilityChange={setOptionsOpened}
-                />
-            </button>}
-        </div>;
+                >
+                    {t(buttonType)}
+                </button>
+                {content && (
+                    <button className={buttonArrowClass} disabled={processingRules}>
+                        <IconTooltip
+                            className="h-100"
+                            tooltipClass="button-action--arrow-option-container"
+                            xlinkHref="chevron-down"
+                            triggerClass="button-action--icon"
+                            content={content}
+                            placement="bottom-end"
+                            trigger="click"
+                            onVisibilityChange={setOptionsOpened}
+                        />
+                    </button>
+                )}
+            </div>
+        );
     };
 
-    return <div className="o-hidden h-100 logs__cell logs__cell--client" role="gridcell">
-        <IconTooltip className={hintClass} columnClass='grid grid--limited' tooltipClass='px-5 pb-5 pt-4 mw-75'
-                     xlinkHref='question' contentItemClass="contentItemClass" title="client_details"
-                     content={processedData} placement="bottom" />
-        <div className={nameClass}>
-            <div data-tip={true} data-for={id}>
-                {renderFormattedClientCell(client, info, isDetailed, true)}
+    return (
+        <div
+            className="o-hidden h-100 logs__cell logs__cell--client"
+            role="gridcell"
+        >
+            <IconTooltip
+                className={hintClass}
+                columnClass="grid grid--limited"
+                tooltipClass="px-5 pb-5 pt-4"
+                xlinkHref="question"
+                contentItemClass="text-truncate key-colon o-hidden"
+                title="client_details"
+                content={processedData}
+                placement="bottom"
+            />
+            <div className={nameClass}>
+                <div data-tip={true} data-for={id}>
+                    {renderFormattedClientCell(client, clientInfo, isDetailed, true)}
+                </div>
+                {isDetailed && clientName && !whoisAvailable && (
+                    <div
+                        className="detailed-info d-none d-sm-block logs__text"
+                        title={clientName}
+                    >
+                        {clientName}
+                    </div>
+                )}
             </div>
-            {isDetailed && name && !whoisAvailable
-            && <div className="detailed-info d-none d-sm-block logs__text"
-                    title={name}>{name}</div>}
+            {renderBlockingButton(isFiltered, domain)}
         </div>
-        {renderBlockingButton(isFiltered, domain)}
-    </div>;
+    );
 };
 
 ClientCell.propTypes = {
     client: propTypes.string.isRequired,
+    client_id: propTypes.string,
     domain: propTypes.string.isRequired,
     info: propTypes.oneOfType([
         propTypes.string,

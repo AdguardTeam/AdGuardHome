@@ -39,13 +39,13 @@ func TestStats(t *testing.T) {
 	e := Entry{}
 
 	e.Domain = "domain"
-	e.Client = net.IP{127, 0, 0, 1}
+	e.Client = "127.0.0.1"
 	e.Result = RFiltered
 	e.Time = 123456
 	s.Update(e)
 
 	e.Domain = "domain"
-	e.Client = net.IP{127, 0, 0, 1}
+	e.Client = "127.0.0.1"
 	e.Result = RNotFiltered
 	e.Time = 123456
 	s.Update(e)
@@ -113,9 +113,10 @@ func TestLargeNumbers(t *testing.T) {
 		}
 		for i := 0; i != n; i++ {
 			e.Domain = fmt.Sprintf("domain%d", i)
-			e.Client = net.IP{127, 0, 0, 1}
-			e.Client[2] = byte((i & 0xff00) >> 8)
-			e.Client[3] = byte(i & 0xff)
+			ip := net.IP{127, 0, 0, 1}
+			ip[2] = byte((i & 0xff00) >> 8)
+			ip[3] = byte(i & 0xff)
+			e.Client = ip.String()
 			e.Result = RNotFiltered
 			e.Time = 123456
 			s.Update(e)

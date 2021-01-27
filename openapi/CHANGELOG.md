@@ -4,6 +4,11 @@
 
 ## v0.105: API changes
 
+### New `"dnscrypt"` `"client_proto"` value in `GET /querylog` response
+
+* The field `"client_proto"` can now have the value `"dnscrypt"` when the
+  request was sent over a DNSCrypt connection.
+
 ### New `"reason"` in `GET /filtering/check_host` and `GET /querylog`
 
 * The new `RewriteRule` reason is added to `GET /filtering/check_host` and

@@ -251,7 +251,7 @@ func (q *QLogFile) readNextLine(position int64) (string, int64, error) {
 // the goal is to read a chunk of file that includes the line with the specified position.
 func (q *QLogFile) initBuffer(position int64) error {
 	q.bufferStart = int64(0)
-	if (position - bufferSize) > 0 {
+	if position > bufferSize {
 		q.bufferStart = position - bufferSize
 	}
 
@@ -264,12 +264,10 @@ func (q *QLogFile) initBuffer(position int64) error {
 	if q.buffer == nil {
 		q.buffer = make([]byte, bufferSize)
 	}
-	q.bufferLen, err = q.file.Read(q.buffer)
-	if err != nil {
-		return err
-	}
 
-	return nil
+	q.bufferLen, err = q.file.Read(q.buffer)
+
+	return err
 }
 
 // readProbeLine reads a line that includes the specified position
@@ -280,7 +278,7 @@ func (q *QLogFile) readProbeLine(position int64) (string, int64, int64, error) {
 	// In order to do this, we'll define the boundaries
 	seekPosition := int64(0)
 	relativePos := position // position relative to the buffer we're going to read
-	if (position - maxEntrySize) > 0 {
+	if position > maxEntrySize {
 		seekPosition = position - maxEntrySize
 		relativePos = maxEntrySize
 	}

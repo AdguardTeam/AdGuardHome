@@ -57,7 +57,8 @@ func (r *RDNS) Begin(ip net.IP) {
 	binary.BigEndian.PutUint64(expire, now+ttl)
 	_ = r.ipAddrs.Set(ip, expire)
 
-	if r.clients.Exists(ip, ClientSourceRDNS) {
+	id := ip.String()
+	if r.clients.Exists(id, ClientSourceRDNS) {
 		return
 	}
 

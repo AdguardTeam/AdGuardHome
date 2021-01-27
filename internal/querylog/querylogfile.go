@@ -3,6 +3,7 @@ package querylog
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"os"
 	"time"
 
@@ -87,18 +88,19 @@ func (l *queryLog) rotate() error {
 	from := l.logFile
 	to := l.logFile + ".1"
 
-	if _, err := os.Stat(from); os.IsNotExist(err) {
-		// do nothing, file doesn't exist
-		return nil
-	}
-
 	err := os.Rename(from, to)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+
 		log.Error("querylog: failed to rename file: %s", err)
+
 		return err
 	}
 
 	log.Debug("querylog: renamed %s -> %s", from, to)
+
 	return nil
 }
 

@@ -9,6 +9,8 @@ import {
     R_URL_REQUIRES_PROTOCOL,
     STANDARD_WEB_PORT,
     UNSAFE_PORTS,
+    R_CLIENT_ID,
+    R_DOMAIN,
 } from './constants';
 import { getLastIpv4Octet, isValidAbsolutePath } from './form';
 
@@ -71,8 +73,24 @@ export const validateClientId = (value) => {
             || R_MAC.test(formattedValue)
             || R_CIDR.test(formattedValue)
             || R_CIDR_IPV6.test(formattedValue)
+            || R_CLIENT_ID.test(formattedValue)
     )) {
         return 'form_error_client_id_format';
+    }
+    return undefined;
+};
+
+/**
+ * @param value {string}
+ * @returns {undefined|string}
+ */
+export const validateServerName = (value) => {
+    if (!value) {
+        return undefined;
+    }
+    const formattedValue = value ? value.trim() : value;
+    if (formattedValue && !R_DOMAIN.test(formattedValue)) {
+        return 'form_error_server_name';
     }
     return undefined;
 };

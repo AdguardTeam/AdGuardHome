@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -434,6 +435,10 @@ func initWorkingDir(args options) {
 	} else {
 		Context.workDir = filepath.Dir(execPath)
 	}
+
+	if workDir, err := filepath.EvalSymlinks(Context.workDir); err == nil {
+		Context.workDir = workDir
+	}
 }
 
 // configureLogger configures logger level and output
@@ -624,7 +629,7 @@ func detectFirstRun() bool {
 		configfile = filepath.Join(Context.workDir, Context.configFilename)
 	}
 	_, err := os.Stat(configfile)
-	return os.IsNotExist(err)
+	return errors.Is(err, os.ErrNotExist)
 }
 
 // Connect to a remote server resolving hostname using our own DNS server

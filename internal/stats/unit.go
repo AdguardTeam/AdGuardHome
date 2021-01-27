@@ -223,6 +223,7 @@ func (s *statsCtx) periodicFlush() {
 		s.unitLock.Lock()
 		ptr := s.unit
 		s.unitLock.Unlock()
+
 		if ptr == nil {
 			break
 		}
@@ -230,6 +231,7 @@ func (s *statsCtx) periodicFlush() {
 		id := s.conf.UnitID()
 		if ptr.id == id {
 			time.Sleep(time.Second)
+
 			continue
 		}
 
@@ -243,6 +245,7 @@ func (s *statsCtx) periodicFlush() {
 		if tx == nil {
 			continue
 		}
+
 		ok1 := s.flushUnitToDB(tx, u.id, udb)
 		ok2 := s.deleteUnit(tx, id-s.conf.limit)
 		if ok1 || ok2 {
@@ -251,6 +254,7 @@ func (s *statsCtx) periodicFlush() {
 			_ = tx.Rollback()
 		}
 	}
+
 	log.Tracef("periodicFlush() exited")
 }
 
@@ -265,7 +269,7 @@ func (s *statsCtx) deleteUnit(tx *bolt.Tx, id uint32) bool {
 	return true
 }
 
-func convertMapToArray(m map[string]uint64, max int) []countPair {
+func convertMapToSlice(m map[string]uint64, max int) []countPair {
 	a := []countPair{}
 	for k, v := range m {
 		pair := countPair{}
@@ -283,7 +287,7 @@ func convertMapToArray(m map[string]uint64, max int) []countPair {
 	return a[:max]
 }
 
-func convertArrayToMap(a []countPair) map[string]uint64 {
+func convertSliceToMap(a []countPair) map[string]uint64 {
 	m := map[string]uint64{}
 	for _, it := range a {
 		m[it.Name] = it.Count
@@ -301,9 +305,9 @@ func serialize(u *unit) *unitDB {
 		udb.TimeAvg = uint32(u.timeSum / u.nTotal)
 	}
 
-	udb.Domains = convertMapToArray(u.domains, maxDomains)
-	udb.BlockedDomains = convertMapToArray(u.blockedDomains, maxDomains)
-	udb.Clients = convertMapToArray(u.clients, maxClients)
+	udb.Domains = convertMapToSlice(u.domains, maxDomains)
+	udb.BlockedDomains = convertMapToSlice(u.blockedDomains, maxDomains)
+	udb.Clients = convertMapToSlice(u.clients, maxClients)
 
 	return &udb
 }
@@ -319,9 +323,9 @@ func deserialize(u *unit, udb *unitDB) {
 		u.nResult[i] = udb.NResult[i]
 	}
 
-	u.domains = convertArrayToMap(udb.Domains)
-	u.blockedDomains = convertArrayToMap(udb.BlockedDomains)
-	u.clients = convertArrayToMap(udb.Clients)
+	u.domains = convertSliceToMap(udb.Domains)
+	u.blockedDomains = convertSliceToMap(udb.BlockedDomains)
+	u.clients = convertSliceToMap(udb.Clients)
 	u.timeSum = uint64(udb.TimeAvg) * u.nTotal
 }
 
@@ -372,7 +376,7 @@ func (s *statsCtx) loadUnitFromDB(tx *bolt.Tx, id uint32) *unitDB {
 	return &udb
 }
 
-func convertTopArray(a []countPair) []map[string]uint64 {
+func convertTopSlice(a []countPair) []map[string]uint64 {
 	m := []map[string]uint64{}
 	for _, it := range a {
 		ent := map[string]uint64{}
@@ -461,13 +465,20 @@ func (s *statsCtx) getClientIP(ip net.IP) (clientIP net.IP) {
 func (s *statsCtx) Update(e Entry) {
 	if e.Result == 0 ||
 		e.Result >= rLast ||
-		len(e.Domain) == 0 ||
-		!(len(e.Client) == 4 || len(e.Client) == 16) {
+		e.Domain == "" ||
+		e.Client == "" {
 		return
 	}
-	client := s.getClientIP(e.Client)
+
+	clientID := e.Client
+	if ip := net.ParseIP(clientID); ip != nil {
+		ip = s.getClientIP(ip)
+		clientID = ip.String()
+	}
 
 	s.unitLock.Lock()
+	defer s.unitLock.Unlock()
+
 	u := s.unit
 
 	u.nResult[e.Result]++
@@ -478,10 +489,9 @@ func (s *statsCtx) Update(e Entry) {
 		u.blockedDomains[e.Domain]++
 	}
 
-	u.clients[client.String()]++
+	u.clients[clientID]++
 	u.timeSum += uint64(e.Time)
 	u.nTotal++
-	s.unitLock.Unlock()
 }
 
 func (s *statsCtx) loadUnits(limit uint32) ([]*unitDB, uint32) {
@@ -594,8 +604,8 @@ func (s *statsCtx) getData() (statsResponse, bool) {
 				m[it.Name] += it.Count
 			}
 		}
-		a2 := convertMapToArray(m, max)
-		return convertTopArray(a2)
+		a2 := convertMapToSlice(m, max)
+		return convertTopSlice(a2)
 	}
 
 	dnsQueries := statsCollector(func(u *unitDB) (num uint64) { return u.NTotal })
@@ -661,7 +671,7 @@ func (s *statsCtx) GetTopClientsIP(maxCount uint) []net.IP {
 			m[it.Name] += it.Count
 		}
 	}
-	a := convertMapToArray(m, int(maxCount))
+	a := convertMapToSlice(m, int(maxCount))
 	d := []net.IP{}
 	for _, it := range a {
 		d = append(d, net.ParseIP(it.Name))

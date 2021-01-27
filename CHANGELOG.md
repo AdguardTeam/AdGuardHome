@@ -10,11 +10,13 @@ and this project adheres to
 ## [Unreleased]
 
 <!--
-## [v0.105.0] - 2021-01-18
+## [v0.105.0] - 2021-01-27
 -->
 
 ### Added
 
+- Client ID support for DNS-over-HTTPS, DNS-over-QUIC, and DNS-over-TLS
+  ([#1383]).
 - `$dnsrewrite` modifier for filters ([#2102]).
 - The host checking API and the query logs API can now return multiple matched
   rules ([#2102]).
@@ -27,6 +29,7 @@ and this project adheres to
 - HTTP API request body size limit ([#2305]).
 
 [#1361]: https://github.com/AdguardTeam/AdGuardHome/issues/1361
+[#1383]: https://github.com/AdguardTeam/AdGuardHome/issues/1383
 [#2102]: https://github.com/AdguardTeam/AdGuardHome/issues/2102
 [#2302]: https://github.com/AdguardTeam/AdGuardHome/issues/2302
 [#2304]: https://github.com/AdguardTeam/AdGuardHome/issues/2304
@@ -35,6 +38,7 @@ and this project adheres to
 
 ### Changed
 
+- `workDir` now supports symlinks.
 - Stopped mounting together the directories `/opt/adguardhome/conf` and
   `/opt/adguardhome/work` in our Docker images ([#2589]).
 - When `dns.bogus_nxdomain` option is used, the server will now transform

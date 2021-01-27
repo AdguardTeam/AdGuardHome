@@ -17,6 +17,16 @@ import (
 type logEntryHandler (func(t json.Token, ent *logEntry) error)
 
 var logEntryHandlers = map[string]logEntryHandler{
+	"CID": func(t json.Token, ent *logEntry) error {
+		v, ok := t.(string)
+		if !ok {
+			return nil
+		}
+
+		ent.ClientID = v
+
+		return nil
+	},
 	"IP": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {

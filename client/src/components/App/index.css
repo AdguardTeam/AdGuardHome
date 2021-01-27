@@ -81,3 +81,7 @@ body {
 .ReactModal__Body--open {
     overflow: hidden;
 }
+
+a.btn-success.disabled {
+    color: #fff;
+}

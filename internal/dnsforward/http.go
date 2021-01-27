@@ -529,5 +529,5 @@ func (s *Server) registerHandlers() {
 	s.conf.HTTPRegister(http.MethodGet, "/control/access/list", s.handleAccessList)
 	s.conf.HTTPRegister(http.MethodPost, "/control/access/set", s.handleAccessSet)
 
-	s.conf.HTTPRegister("", "/dns-query", s.handleDOH)
+	s.conf.HTTPRegister("", "/dns-query/", s.handleDOH)
 }

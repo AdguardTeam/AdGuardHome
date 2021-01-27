@@ -4,7 +4,6 @@ import dateFormat from 'date-fns/format';
 import round from 'lodash/round';
 import axios from 'axios';
 import i18n from 'i18next';
-import uniqBy from 'lodash/uniqBy';
 import ipaddr from 'ipaddr.js';
 import queryString from 'query-string';
 import React from 'react';
@@ -22,6 +21,7 @@ import {
     DHCP_VALUES_PLACEHOLDERS,
     FILTERED,
     FILTERED_STATUS,
+    R_CLIENT_ID,
     SERVICES_ID_NAME_MAP,
     STANDARD_DNS_PORT,
     STANDARD_HTTPS_PORT,
@@ -62,6 +62,7 @@ export const normalizeLogs = (logs) => logs.map((log) => {
         answer_dnssec,
         client,
         client_proto,
+        client_id,
         elapsedMs,
         question,
         reason,
@@ -99,6 +100,7 @@ export const normalizeLogs = (logs) => logs.map((log) => {
         reason,
         client,
         client_proto,
+        client_id,
         /* TODO 'filterId' and 'rule' are deprecated, will be removed in 0.106 */
         filterId,
         rule,
@@ -414,14 +416,21 @@ export const getPathWithQueryString = (path, params) => {
     return `${path}?${searchParams.toString()}`;
 };
 
-export const getParamsForClientsSearch = (data, param) => {
-    const uniqueClients = uniqBy(data, param);
-    return uniqueClients
-        .reduce((acc, item, idx) => {
-            const key = `ip${idx}`;
-            acc[key] = item[param];
-            return acc;
-        }, {});
+export const getParamsForClientsSearch = (data, param, additionalParam) => {
+    const clients = new Set();
+    data.forEach((e) => {
+        clients.add(e[param]);
+        if (e[additionalParam]) {
+            clients.add(e[additionalParam]);
+        }
+    });
+    const params = {};
+    const ids = Array.from(clients.values());
+    ids.forEach((id, i) => {
+        params[`ip${i}`] = id;
+    });
+
+    return params;
 };
 
 /**
@@ -534,7 +543,7 @@ export const isIpInCidr = (ip, cidr) => {
 /**
  *
  * @param ipOrCidr
- * @returns {'IP' | 'CIDR' | 'UNKNOWN'}
+ * @returns {'IP' | 'CIDR' | 'CLIENT_ID' | 'UNKNOWN'}
  *
  */
 export const findAddressType = (address) => {
@@ -546,6 +555,9 @@ export const findAddressType = (address) => {
         }
         if (cidrMaybe && ipaddr.parseCIDR(address)) {
             return ADDRESS_TYPES.CIDR;
+        }
+        if (R_CLIENT_ID.test(address)) {
+            return ADDRESS_TYPES.CLIENT_ID;
         }
 
         return ADDRESS_TYPES.UNKNOWN;
@@ -567,13 +579,21 @@ export const separateIpsAndCidrs = (ids) => ids.reduce((acc, curr) => {
     if (addressType === ADDRESS_TYPES.CIDR) {
         acc.cidrs.push(curr);
     }
+    if (addressType === ADDRESS_TYPES.CLIENT_ID) {
+        acc.clientIds.push(curr);
+    }
     return acc;
-}, { ips: [], cidrs: [] });
+}, { ips: [], cidrs: [], clientIds: [] });
 
 export const countClientsStatistics = (ids, autoClients) => {
-    const { ips, cidrs } = separateIpsAndCidrs(ids);
+    const { ips, cidrs, clientIds } = separateIpsAndCidrs(ids);
 
     const ipsCount = ips.reduce((acc, curr) => {
+        const count = autoClients[curr] || 0;
+        return acc + count;
+    }, 0);
+
+    const clientIdsCount = clientIds.reduce((acc, curr) => {
         const count = autoClients[curr] || 0;
         return acc + count;
     }, 0);
@@ -581,6 +601,9 @@ export const countClientsStatistics = (ids, autoClients) => {
     const cidrsCount = Object.entries(autoClients)
         .reduce((acc, curr) => {
             const [id, count] = curr;
+            if (!ipaddr.isValid(id)) {
+                return false;
+            }
             if (cidrs.some((cidr) => isIpInCidr(id, cidr))) {
             // eslint-disable-next-line no-param-reassign
                 acc += count;
@@ -588,7 +611,7 @@ export const countClientsStatistics = (ids, autoClients) => {
             return acc;
         }, 0);
 
-    return ipsCount + cidrsCount;
+    return ipsCount + cidrsCount + clientIdsCount;
 };
 
 /**

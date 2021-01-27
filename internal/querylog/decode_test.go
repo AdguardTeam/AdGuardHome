@@ -25,6 +25,7 @@ func TestDecodeLogEntry(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		const ansStr = `Qz+BgAABAAEAAAAAAmFuBnlhbmRleAJydQAAAQABwAwAAQABAAAACgAEAAAAAA==`
 		const data = `{"IP":"127.0.0.1",` +
+			`"CID":"cli42",` +
 			`"T":"2020-11-25T18:55:56.519796+03:00",` +
 			`"QH":"an.yandex.ru",` +
 			`"QT":"A",` +
@@ -52,6 +53,7 @@ func TestDecodeLogEntry(t *testing.T) {
 			QHost:       "an.yandex.ru",
 			QType:       "A",
 			QClass:      "IN",
+			ClientID:    "cli42",
 			ClientProto: "",
 			Answer:      ans,
 			Result: dnsfilter.Result{

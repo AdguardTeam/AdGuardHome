@@ -3,7 +3,7 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.14
 
 require (
-	github.com/AdguardTeam/dnsproxy v0.33.7
+	github.com/AdguardTeam/dnsproxy v0.33.9
 	github.com/AdguardTeam/golibs v0.4.4
 	github.com/AdguardTeam/urlfilter v0.14.2
 	github.com/NYTimes/gziphandler v1.1.1
@@ -17,6 +17,7 @@ require (
 	github.com/insomniacslk/dhcp v0.0.0-20201112113307-4de412bc85d8
 	github.com/kardianos/service v1.2.0
 	github.com/karrick/godirwalk v1.16.1 // indirect
+	github.com/lucas-clemente/quic-go v0.19.3
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7
 	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065
 	github.com/miekg/dns v1.1.35

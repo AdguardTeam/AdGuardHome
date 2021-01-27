@@ -79,6 +79,10 @@ func (l *queryLog) logEntryToJSONEntry(entry *logEntry) (jsonEntry jobject) {
 		},
 	}
 
+	if entry.ClientID != "" {
+		jsonEntry["client_id"] = entry.ClientID
+	}
+
 	if msg != nil {
 		jsonEntry["status"] = dns.RcodeToString[msg.Rcode]
 

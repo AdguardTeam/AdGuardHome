@@ -794,11 +794,17 @@
       'tags':
       - 'clients'
       'operationId': 'clientsFind'
-      'summary': 'Get information about selected clients by their IP address'
+      'summary': >
+        Get information about clients by their IP addresses or client IDs.
       'parameters':
       - 'name': 'ip0'
         'in': 'query'
-        'description': 'Filter by IP address'
+        'description': >
+          Filter by IP address or client IDs.  Parameters with names `ip1`,
+          `ip2`, and so on are also accepted and interpreted as "ip0 OR ip1 OR
+          ip2".
+
+          TODO(a.garipov): Replace with a better query API.
         'schema':
           'type': 'string'
       'responses':
@@ -1109,6 +1115,13 @@
         'name': 'host'
         'schema':
           'type': 'string'
+      - 'description': >
+          Client ID.
+        'example': 'client-1'
+        'in': 'query'
+        'name': 'client_id'
+        'schema':
+          'type': 'string'
       'responses':
         '200':
           'description': 'DNS over HTTPS plist file.'
@@ -1134,6 +1147,13 @@
         'example': 'example.org'
         'in': 'query'
         'name': 'host'
+        'schema':
+          'type': 'string'
+      - 'description': >
+          Client ID.
+        'example': 'client-1'
+        'in': 'query'
+        'name': 'client_id'
         'schema':
           'type': 'string'
       'responses':
@@ -1781,13 +1801,21 @@
         'answer_dnssec':
           'type': 'boolean'
         'client':
-          'type': 'string'
+          'description': >
+            The client's IP address.
           'example': '192.168.0.1'
+          'type': 'string'
+        'client_id':
+          'description': >
+            The client ID, if provided in DOH, DOQ, or DOT.
+          'example': 'cli123'
+          'type': 'string'
         'client_proto':
           'enum':
           - 'dot'
           - 'doh'
           - 'doq'
+          - 'dnscrypt'
           - ''
         'elapsedMs':
           'type': 'string'
@@ -2094,7 +2122,7 @@
           'type': 'string'
     'Client':
       'type': 'object'
-      'description': 'Client information'
+      'description': 'Client information.'
       'properties':
         'name':
           'type': 'string'
@@ -2102,7 +2130,7 @@
           'example': 'localhost'
         'ids':
           'type': 'array'
-          'description': 'IP, CIDR or MAC address'
+          'description': 'IP, CIDR, MAC, or client ID.'
           'items':
             'type': 'string'
         'use_global_settings':
@@ -2157,9 +2185,38 @@
           'type': 'string'
     'ClientsFindResponse':
       'type': 'array'
-      'description': 'Response to clients find operation'
+      'description': 'Client search results.'
       'items':
         '$ref': '#/components/schemas/ClientsFindEntry'
+      'example':
+      - 'cli42':
+        'name': 'Client 42'
+        'ids': ['cli42']
+        'use_global_settings': true
+        'filtering_enabled': true
+        'parental_enabled': true
+        'safebrowsing_enabled': true
+        'safesearch_enabled': true
+        'use_global_blocked_services': true
+        'blocked_services': null
+        'upstreams': null
+        'whois_info': null
+        'disallowed': false
+        'disallowed_rule': ''
+      - '1.2.3.4':
+        'name': 'Client 1-2-3-4'
+        'ids': ['1.2.3.4']
+        'use_global_settings': true
+        'filtering_enabled': true
+        'parental_enabled': true
+        'safebrowsing_enabled': true
+        'safesearch_enabled': true
+        'use_global_blocked_services': true
+        'blocked_services': null
+        'upstreams': null
+        'whois_info': null
+        'disallowed': false
+        'disallowed_rule': ''
     'AccessListResponse':
       '$ref': '#/components/schemas/AccessList'
     'AccessSetRequest':
@@ -2187,10 +2244,9 @@
       'type': 'object'
       'additionalProperties':
         '$ref': '#/components/schemas/ClientFindSubEntry'
-      'example':
-        '1.2.3.4': 'test'
     'ClientFindSubEntry':
       'type': 'object'
+      'description': 'Client information.'
       'properties':
         'name':
           'type': 'string'
@@ -2198,7 +2254,7 @@
           'example': 'localhost'
         'ids':
           'type': 'array'
-          'description': 'IP, CIDR or MAC address'
+          'description': 'IP, CIDR, MAC, or client ID.'
           'items':
             'type': 'string'
         'use_global_settings':

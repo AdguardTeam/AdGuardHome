@@ -11,7 +11,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
-
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -25,14 +24,16 @@ const (
 
 // Whois - module context
 type Whois struct {
-	clients     *clientsContainer
-	ipChan      chan net.IP
-	timeoutMsec uint
+	clients *clientsContainer
+	ipChan  chan net.IP
 
 	// Contains IP addresses of clients
 	// An active IP address is resolved once again after it expires.
 	// If IP address couldn't be resolved, it stays here for some time to prevent further attempts to resolve the same IP.
 	ipAddrs cache.Cache
+
+	// TODO(a.garipov): Rewrite to use time.Duration.  Like, seriously, why?
+	timeoutMsec uint
 }
 
 // initWhois creates the Whois module context.
@@ -244,6 +245,7 @@ func (w *Whois) workerLoop() {
 			continue
 		}
 
-		w.clients.SetWhoisInfo(ip, info)
+		id := ip.String()
+		w.clients.SetWhoisInfo(id, info)
 	}
 }

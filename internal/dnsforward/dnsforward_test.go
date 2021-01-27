@@ -473,7 +473,7 @@ func TestBlockCNAME(t *testing.T) {
 func TestClientRulesForCNAMEMatching(t *testing.T) {
 	s := createTestServer(t)
 	testUpstm := &testUpstream{testCNAMEs, testIPv4, nil}
-	s.conf.FilterHandler = func(_ net.IP, settings *dnsfilter.RequestFilteringSettings) {
+	s.conf.FilterHandler = func(_ net.IP, _ string, settings *dnsfilter.RequestFilteringSettings) {
 		settings.FilteringEnabled = false
 	}
 	err := s.startWithUpstream(testUpstm)
@@ -1033,8 +1033,7 @@ func TestMatchDNSName(t *testing.T) {
 	assert.False(t, matchDNSName(dnsNames, "*.host2"))
 }
 
-type testDHCP struct {
-}
+type testDHCP struct{}
 
 func (d *testDHCP) Leases(flags int) []dhcpd.Lease {
 	l := dhcpd.Lease{}

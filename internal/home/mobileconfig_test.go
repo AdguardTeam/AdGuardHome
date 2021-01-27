@@ -73,6 +73,27 @@ func TestHandleMobileConfigDOH(t *testing.T) {
 		handleMobileConfigDOH(w, r)
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
+
+	t.Run("client_id", func(t *testing.T) {
+		r, err := http.NewRequest(http.MethodGet, "https://example.com:12345/apple/doh.mobileconfig?host=example.org&client_id=cli42", nil)
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+
+		handleMobileConfigDOH(w, r)
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		var mc mobileConfig
+		_, err = plist.Unmarshal(w.Body.Bytes(), &mc)
+		assert.Nil(t, err)
+
+		if assert.Len(t, mc.PayloadContent, 1) {
+			assert.Equal(t, "example.org DoH", mc.PayloadContent[0].Name)
+			assert.Equal(t, "example.org DoH", mc.PayloadContent[0].PayloadDisplayName)
+			assert.Equal(t, "example.org", mc.PayloadContent[0].DNSSettings.ServerName)
+			assert.Equal(t, "https://example.org/dns-query/cli42", mc.PayloadContent[0].DNSSettings.ServerURL)
+		}
+	})
 }
 
 func TestHandleMobileConfigDOT(t *testing.T) {
@@ -136,5 +157,25 @@ func TestHandleMobileConfigDOT(t *testing.T) {
 
 		handleMobileConfigDOT(w, r)
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
+	t.Run("client_id", func(t *testing.T) {
+		r, err := http.NewRequest(http.MethodGet, "https://example.com:12345/apple/dot.mobileconfig?host=example.org&client_id=cli42", nil)
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+
+		handleMobileConfigDOT(w, r)
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		var mc mobileConfig
+		_, err = plist.Unmarshal(w.Body.Bytes(), &mc)
+		assert.Nil(t, err)
+
+		if assert.Len(t, mc.PayloadContent, 1) {
+			assert.Equal(t, "example.org DoT", mc.PayloadContent[0].Name)
+			assert.Equal(t, "example.org DoT", mc.PayloadContent[0].PayloadDisplayName)
+			assert.Equal(t, "cli42.example.org", mc.PayloadContent[0].DNSSettings.ServerName)
+		}
 	})
 }

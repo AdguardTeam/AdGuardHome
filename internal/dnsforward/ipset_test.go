@@ -37,5 +37,5 @@ func TestIPSET(t *testing.T) {
 			},
 		},
 	}
-	assert.Equal(t, resultDone, c.process(ctx))
+	assert.Equal(t, resultCodeSuccess, c.process(ctx))
 }

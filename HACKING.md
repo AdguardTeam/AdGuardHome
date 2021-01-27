@@ -62,9 +62,12 @@ The rules are mostly sorted in the alphabetical order.
  *  Don't use underscores in file and package names, unless they're build tags
     or for tests.  This is to prevent accidental build errors with weird tags.
 
- *  Don't write code with more than four (**4**) levels of indentation.  Just
-    like [Linus said], plus an additional level for an occasional error check or
-    struct initialization.
+ *  Don't write non-test code with more than four (**4**) levels of indentation.
+    Just like [Linus said], plus an additional level for an occasional error
+    check or struct initialization.
+
+    The exception proving the rule is the table-driven test code, where an
+    additional level of indentation is allowed.
 
  *  Eschew external dependencies, including transitive, unless
     absolutely necessary.

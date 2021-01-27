@@ -1,7 +1,10 @@
 package dnsforward
 
 import (
+	"crypto/tls"
+	"fmt"
 	"net"
+	"path"
 	"strings"
 	"time"
 
@@ -10,37 +13,64 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/lucas-clemente/quic-go"
 	"github.com/miekg/dns"
 )
 
 // To transfer information between modules
 type dnsContext struct {
-	srv                  *Server
-	proxyCtx             *proxy.DNSContext
-	setts                *dnsfilter.RequestFilteringSettings // filtering settings for this client
-	startTime            time.Time
-	result               *dnsfilter.Result
-	origResp             *dns.Msg     // response received from upstream servers.  Set when response is modified by filtering
-	origQuestion         dns.Question // question received from client.  Set when Rewrites are used.
-	err                  error        // error returned from the module
-	protectionEnabled    bool         // filtering is enabled, dnsfilter object is ready
-	responseFromUpstream bool         // response is received from upstream servers
-	origReqDNSSEC        bool         // DNSSEC flag in the original request from user
+	srv      *Server
+	proxyCtx *proxy.DNSContext
+	// setts are the filtering settings for the client.
+	setts     *dnsfilter.RequestFilteringSettings
+	startTime time.Time
+	result    *dnsfilter.Result
+	// origResp is the response received from upstream.  It is set when the
+	// response is modified by filters.
+	origResp *dns.Msg
+	// err is the error returned from a processing function.
+	err error
+	// clientID is the clientID from DOH, DOQ, or DOT, if provided.
+	clientID string
+	// origQuestion is the question received from the client.  It is set
+	// when the request is modified by rewrites.
+	origQuestion dns.Question
+	// protectionEnabled shows if the filtering is enabled, and if the
+	// server's DNS filter is ready.
+	protectionEnabled bool
+	// responseFromUpstream shows if the response is received from the
+	// upstream servers.
+	responseFromUpstream bool
+	// origReqDNSSEC shows if the DNSSEC flag in the original request from
+	// the client is set.
+	origReqDNSSEC bool
 }
 
+// resultCode is the result of a request processing function.
+type resultCode int
+
 const (
-	resultDone   = iota // module has completed its job, continue
-	resultFinish        // module has completed its job, exit normally
-	resultError         // an error occurred, exit with an error
+	// resultCodeSuccess is returned when a handler performed successfully,
+	// and the next handler must be called.
+	resultCodeSuccess resultCode = iota
+	// resultCodeFinish is returned when a handler performed successfully,
+	// and the processing of the request must be stopped.
+	resultCodeFinish
+	// resultCodeError is returned when a handler failed, and the processing
+	// of the request must be stopped.
+	resultCodeError
 )
 
 // handleDNSRequest filters the incoming DNS requests and writes them to the query log
 func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
-	ctx := &dnsContext{srv: s, proxyCtx: d}
-	ctx.result = &dnsfilter.Result{}
-	ctx.startTime = time.Now()
+	ctx := &dnsContext{
+		srv:       s,
+		proxyCtx:  d,
+		result:    &dnsfilter.Result{},
+		startTime: time.Now(),
+	}
 
-	type modProcessFunc func(ctx *dnsContext) int
+	type modProcessFunc func(ctx *dnsContext) (rc resultCode)
 
 	// Since (*dnsforward.Server).handleDNSRequest(...) is used as
 	// proxy.(Config).RequestHandler, there is no need for additional index
@@ -51,6 +81,7 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 		processInitial,
 		processInternalHosts,
 		processInternalIPAddrs,
+		processClientID,
 		processFilteringBeforeRequest,
 		processUpstream,
 		processDNSSECAfterResponse,
@@ -61,13 +92,13 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 	for _, process := range mods {
 		r := process(ctx)
 		switch r {
-		case resultDone:
+		case resultCodeSuccess:
 			// continue: call the next filter
 
-		case resultFinish:
+		case resultCodeFinish:
 			return nil
 
-		case resultError:
+		case resultCodeError:
 			return ctx.err
 		}
 	}
@@ -79,12 +110,12 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 }
 
 // Perform initial checks;  process WHOIS & rDNS
-func processInitial(ctx *dnsContext) int {
+func processInitial(ctx *dnsContext) (rc resultCode) {
 	s := ctx.srv
 	d := ctx.proxyCtx
 	if s.conf.AAAADisabled && d.Req.Question[0].Qtype == dns.TypeAAAA {
 		_ = proxy.CheckDisabledAAAARequest(d, true)
-		return resultFinish
+		return resultCodeFinish
 	}
 
 	if s.conf.OnDNSRequest != nil {
@@ -96,10 +127,10 @@ func processInitial(ctx *dnsContext) int {
 	if (d.Req.Question[0].Qtype == dns.TypeA || d.Req.Question[0].Qtype == dns.TypeAAAA) &&
 		d.Req.Question[0].Name == "use-application-dns.net." {
 		d.Res = s.genNXDomain(d.Req)
-		return resultFinish
+		return resultCodeFinish
 	}
 
-	return resultDone
+	return resultCodeSuccess
 }
 
 // Return TRUE if host names doesn't contain disallowed characters
@@ -157,29 +188,29 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 }
 
 // Respond to A requests if the target host name is associated with a lease from our DHCP server
-func processInternalHosts(ctx *dnsContext) int {
+func processInternalHosts(ctx *dnsContext) (rc resultCode) {
 	s := ctx.srv
 	req := ctx.proxyCtx.Req
 	if !(req.Question[0].Qtype == dns.TypeA || req.Question[0].Qtype == dns.TypeAAAA) {
-		return resultDone
+		return resultCodeSuccess
 	}
 
 	host := req.Question[0].Name
 	host = strings.ToLower(host)
 	if !strings.HasSuffix(host, ".lan.") {
-		return resultDone
+		return resultCodeSuccess
 	}
 	host = strings.TrimSuffix(host, ".lan.")
 
 	s.tableHostToIPLock.Lock()
 	if s.tableHostToIP == nil {
 		s.tableHostToIPLock.Unlock()
-		return resultDone
+		return resultCodeSuccess
 	}
 	ip, ok := s.tableHostToIP[host]
 	s.tableHostToIPLock.Unlock()
 	if !ok {
-		return resultDone
+		return resultCodeSuccess
 	}
 
 	log.Debug("DNS: internal record: %s -> %s", req.Question[0].Name, ip)
@@ -200,15 +231,163 @@ func processInternalHosts(ctx *dnsContext) int {
 	}
 
 	ctx.proxyCtx.Res = resp
-	return resultDone
+	return resultCodeSuccess
+}
+
+const maxDomainPartLen = 64
+
+// ValidateClientID returns an error if clientID is not a valid client ID.
+func ValidateClientID(clientID string) (err error) {
+	if len(clientID) > maxDomainPartLen {
+		return fmt.Errorf("client id %q is too long, max: %d", clientID, maxDomainPartLen)
+	}
+
+	for i, r := range clientID {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
+			continue
+		}
+
+		return fmt.Errorf("invalid char %q at index %d in client id %q", r, i, clientID)
+	}
+
+	return nil
+}
+
+// clientIDFromClientServerName extracts and validates a client ID.  hostSrvName
+// is the server name of the host.  cliSrvName is the server name as sent by the
+// client.
+func clientIDFromClientServerName(hostSrvName, cliSrvName string) (clientID string, err error) {
+	if hostSrvName == cliSrvName {
+		return "", nil
+	}
+
+	if !strings.HasSuffix(cliSrvName, hostSrvName) {
+		return "", fmt.Errorf("client server name %q doesn't match host server name %q", cliSrvName, hostSrvName)
+	}
+
+	clientID = cliSrvName[:len(cliSrvName)-len(hostSrvName)-1]
+	err = ValidateClientID(clientID)
+	if err != nil {
+		return "", fmt.Errorf("invalid client id: %w", err)
+	}
+
+	return clientID, nil
+}
+
+// processClientIDHTTPS extracts the client's ID from the path of the
+// client's DNS-over-HTTPS request.
+func processClientIDHTTPS(ctx *dnsContext) (rc resultCode) {
+	pctx := ctx.proxyCtx
+	r := pctx.HTTPRequest
+	if r == nil {
+		ctx.err = fmt.Errorf("proxy ctx http request of proto %s is nil", pctx.Proto)
+
+		return resultCodeError
+	}
+
+	origPath := r.URL.Path
+	parts := strings.Split(path.Clean(origPath), "/")
+	if parts[0] == "" {
+		parts = parts[1:]
+	}
+
+	if len(parts) == 0 || parts[0] != "dns-query" {
+		ctx.err = fmt.Errorf("client id check: invalid path %q", origPath)
+
+		return resultCodeError
+	}
+
+	clientID := ""
+	switch len(parts) {
+	case 1:
+		// Just /dns-query, no client ID.
+		return resultCodeSuccess
+	case 2:
+		clientID = parts[1]
+	default:
+		ctx.err = fmt.Errorf("client id check: invalid path %q: extra parts", origPath)
+
+		return resultCodeError
+	}
+
+	err := ValidateClientID(clientID)
+	if err != nil {
+		ctx.err = fmt.Errorf("client id check: invalid client id: %w", err)
+
+		return resultCodeError
+	}
+
+	ctx.clientID = clientID
+
+	return resultCodeSuccess
+}
+
+// tlsConn is a narrow interface for *tls.Conn to simplify testing.
+type tlsConn interface {
+	ConnectionState() (cs tls.ConnectionState)
+}
+
+// quicSession is a narrow interface for quic.Session to simplify testing.
+type quicSession interface {
+	ConnectionState() (cs quic.ConnectionState)
+}
+
+// processClientID extracts the client's ID from the server name of the client's
+// DOT or DOQ request or the path of the client's DOH.
+func processClientID(ctx *dnsContext) (rc resultCode) {
+	pctx := ctx.proxyCtx
+	proto := pctx.Proto
+	if proto == proxy.ProtoHTTPS {
+		return processClientIDHTTPS(ctx)
+	} else if proto != proxy.ProtoTLS && proto != proxy.ProtoQUIC {
+		return resultCodeSuccess
+	}
+
+	hostSrvName := ctx.srv.conf.TLSConfig.ServerName
+	if hostSrvName == "" {
+		return resultCodeSuccess
+	}
+
+	cliSrvName := ""
+	if proto == proxy.ProtoTLS {
+		conn := pctx.Conn
+		tc, ok := conn.(tlsConn)
+		if !ok {
+			ctx.err = fmt.Errorf("proxy ctx conn of proto %s is %T, want *tls.Conn", proto, conn)
+
+			return resultCodeError
+		}
+
+		cliSrvName = tc.ConnectionState().ServerName
+	} else if proto == proxy.ProtoQUIC {
+		qs, ok := pctx.QUICSession.(quicSession)
+		if !ok {
+			ctx.err = fmt.Errorf("proxy ctx quic session of proto %s is %T, want quic.Session", proto, pctx.QUICSession)
+
+			return resultCodeError
+		}
+
+		cliSrvName = qs.ConnectionState().ServerName
+	}
+
+	clientID, err := clientIDFromClientServerName(hostSrvName, cliSrvName)
+	if err != nil {
+		ctx.err = fmt.Errorf("client id check: %w", err)
+
+		return resultCodeError
+	}
+
+	ctx.clientID = clientID
+
+	return resultCodeSuccess
 }
 
 // Respond to PTR requests if the target IP address is leased by our DHCP server
-func processInternalIPAddrs(ctx *dnsContext) int {
+func processInternalIPAddrs(ctx *dnsContext) (rc resultCode) {
 	s := ctx.srv
 	req := ctx.proxyCtx.Req
 	if req.Question[0].Qtype != dns.TypePTR {
-		return resultDone
+		return resultCodeSuccess
 	}
 
 	arpa := req.Question[0].Name
@@ -216,18 +395,18 @@ func processInternalIPAddrs(ctx *dnsContext) int {
 	arpa = strings.ToLower(arpa)
 	ip := util.DNSUnreverseAddr(arpa)
 	if ip == nil {
-		return resultDone
+		return resultCodeSuccess
 	}
 
 	s.tablePTRLock.Lock()
 	if s.tablePTR == nil {
 		s.tablePTRLock.Unlock()
-		return resultDone
+		return resultCodeSuccess
 	}
 	host, ok := s.tablePTR[ip.String()]
 	s.tablePTRLock.Unlock()
 	if !ok {
-		return resultDone
+		return resultCodeSuccess
 	}
 
 	log.Debug("DNS: reverse-lookup: %s -> %s", arpa, host)
@@ -243,16 +422,16 @@ func processInternalIPAddrs(ctx *dnsContext) int {
 	ptr.Ptr = host + "."
 	resp.Answer = append(resp.Answer, ptr)
 	ctx.proxyCtx.Res = resp
-	return resultDone
+	return resultCodeSuccess
 }
 
 // Apply filtering logic
-func processFilteringBeforeRequest(ctx *dnsContext) int {
+func processFilteringBeforeRequest(ctx *dnsContext) (rc resultCode) {
 	s := ctx.srv
 	d := ctx.proxyCtx
 
 	if d.Res != nil {
-		return resultDone // response is already set - nothing to do
+		return resultCodeSuccess // response is already set - nothing to do
 	}
 
 	s.RLock()
@@ -266,24 +445,24 @@ func processFilteringBeforeRequest(ctx *dnsContext) int {
 	var err error
 	ctx.protectionEnabled = s.conf.ProtectionEnabled && s.dnsFilter != nil
 	if ctx.protectionEnabled {
-		ctx.setts = s.getClientRequestFilteringSettings(d)
+		ctx.setts = s.getClientRequestFilteringSettings(ctx)
 		ctx.result, err = s.filterDNSRequest(ctx)
 	}
 	s.RUnlock()
 
 	if err != nil {
 		ctx.err = err
-		return resultError
+		return resultCodeError
 	}
-	return resultDone
+	return resultCodeSuccess
 }
 
 // processUpstream passes request to upstream servers and handles the response.
-func processUpstream(ctx *dnsContext) int {
+func processUpstream(ctx *dnsContext) (rc resultCode) {
 	s := ctx.srv
 	d := ctx.proxyCtx
 	if d.Res != nil {
-		return resultDone // response is already set - nothing to do
+		return resultCodeSuccess // response is already set - nothing to do
 	}
 
 	if d.Addr != nil && s.conf.GetCustomUpstreamByClient != nil {
@@ -311,26 +490,26 @@ func processUpstream(ctx *dnsContext) int {
 	err := s.dnsProxy.Resolve(d)
 	if err != nil {
 		ctx.err = err
-		return resultError
+		return resultCodeError
 	}
 
 	ctx.responseFromUpstream = true
-	return resultDone
+	return resultCodeSuccess
 }
 
 // Process DNSSEC after response from upstream server
-func processDNSSECAfterResponse(ctx *dnsContext) int {
+func processDNSSECAfterResponse(ctx *dnsContext) (rc resultCode) {
 	d := ctx.proxyCtx
 
 	if !ctx.responseFromUpstream || // don't process response if it's not from upstream servers
 		!ctx.srv.conf.EnableDNSSEC {
-		return resultDone
+		return resultCodeSuccess
 	}
 
 	if !ctx.origReqDNSSEC {
 		optResp := d.Res.IsEdns0()
 		if optResp != nil && !optResp.Do() {
-			return resultDone
+			return resultCodeSuccess
 		}
 
 		// Remove RRSIG records from response
@@ -361,11 +540,11 @@ func processDNSSECAfterResponse(ctx *dnsContext) int {
 		d.Res.Ns = answers
 	}
 
-	return resultDone
+	return resultCodeSuccess
 }
 
 // Apply filtering logic after we have received response from upstream servers
-func processFilteringAfterResponse(ctx *dnsContext) int {
+func processFilteringAfterResponse(ctx *dnsContext) (rc resultCode) {
 	s := ctx.srv
 	d := ctx.proxyCtx
 	res := ctx.result
@@ -402,7 +581,7 @@ func processFilteringAfterResponse(ctx *dnsContext) int {
 		ctx.result, err = s.filterDNSResponse(ctx)
 		if err != nil {
 			ctx.err = err
-			return resultError
+			return resultCodeError
 		}
 		if ctx.result != nil {
 			ctx.origResp = origResp2 // matched by response
@@ -411,5 +590,5 @@ func processFilteringAfterResponse(ctx *dnsContext) int {
 		}
 	}
 
-	return resultDone
+	return resultCodeSuccess
 }

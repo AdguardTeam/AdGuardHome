@@ -13,6 +13,8 @@ export const R_MAC = /^((([a-fA-F0-9][a-fA-F0-9]+[-]){5}|([a-fA-F0-9][a-fA-F0-9]
 
 export const R_CIDR_IPV6 = /^s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:)))(%.+)?s*(\/(12[0-8]|1[0-1][0-9]|[1-9][0-9]|[0-9]))$/;
 
+export const R_DOMAIN = /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/;
+
 export const R_PATH_LAST_PART = /\/[^/]*$/;
 
 // eslint-disable-next-line no-control-regex
@@ -20,6 +22,8 @@ export const R_UNIX_ABSOLUTE_PATH = /^(\/[^/\x00]+)+$/;
 
 // eslint-disable-next-line no-control-regex
 export const R_WIN_ABSOLUTE_PATH = /^([a-zA-Z]:)?(\\|\/)(?:[^\\/:*?"<>|\x00]+\\)*[^\\/:*?"<>|\x00]*$/;
+
+export const R_CLIENT_ID = /^[a-z0-9-]{1,64}$/;
 
 export const HTML_PAGES = {
     INSTALL: '/install.html',
@@ -514,6 +518,7 @@ export const FORM_NAME = {
     INSTALL: 'install',
     LOGIN: 'login',
     CACHE: 'cache',
+    MOBILE_CONFIG: 'mobileConfig',
     ...DHCP_FORM_NAMES,
 };
 
@@ -574,6 +579,7 @@ export const TOAST_TIMEOUTS = {
 export const ADDRESS_TYPES = {
     IP: 'IP',
     CIDR: 'CIDR',
+    CLIENT_ID: 'CLIENT_ID',
     UNKNOWN: 'UNKNOWN',
 };
 
@@ -585,3 +591,8 @@ export const CACHE_CONFIG_FIELDS = {
 
 export const isFirefox = navigator.userAgent.indexOf('Firefox') !== -1;
 export const COMMENT_LINE_DEFAULT_TOKEN = '#';
+
+export const MOBILE_CONFIG_LINKS = {
+    DOT: '/apple/dot.mobileconfig',
+    DOH: '/apple/doh.mobileconfig',
+};

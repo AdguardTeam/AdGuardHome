@@ -158,7 +158,7 @@ func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.
 	}
 
 	c := jsonToClient(cj)
-	ok, err := clients.Add(*c)
+	ok, err := clients.Add(c)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
@@ -216,7 +216,7 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 	}
 
 	c := jsonToClient(dj.Data)
-	err = clients.Update(dj.Name, *c)
+	err = clients.Update(dj.Name, c)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
@@ -229,28 +229,28 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	data := []map[string]clientJSON{}
-	for i := 0; ; i++ {
-		ipStr := q.Get(fmt.Sprintf("ip%d", i))
-		ip := net.ParseIP(ipStr)
-		if ip == nil {
+	for i := 0; i < len(q); i++ {
+		idStr := q.Get(fmt.Sprintf("ip%d", i))
+		if idStr == "" {
 			break
 		}
 
-		c, ok := clients.Find(ip)
+		ip := net.ParseIP(idStr)
+		c, ok := clients.Find(idStr)
 		var cj clientJSON
 		if !ok {
 			var found bool
-			cj, found = clients.findTemporary(ip)
+			cj, found = clients.findTemporary(ip, idStr)
 			if !found {
 				continue
 			}
 		} else {
-			cj = clientToJSON(&c)
+			cj = clientToJSON(c)
 			cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
 		}
 
 		data = append(data, map[string]clientJSON{
-			ipStr: cj,
+			idStr: cj,
 		})
 	}
 
@@ -263,10 +263,9 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 
 // findTemporary looks up the IP in temporary storages, like autohosts or
 // blocklists.
-func (clients *clientsContainer) findTemporary(ip net.IP) (cj clientJSON, found bool) {
-	ipStr := ip.String()
-	ch, ok := clients.FindAutoClient(ip)
-	if !ok {
+func (clients *clientsContainer) findTemporary(ip net.IP, idStr string) (cj clientJSON, found bool) {
+	ch, ok := clients.FindAutoClient(idStr)
+	if !ok && ip != nil {
 		// It is still possible that the IP used to be in the runtime
 		// clients list, but then the server was reloaded.  So, check
 		// the DNS server's blocked IP list.
@@ -278,7 +277,7 @@ func (clients *clientsContainer) findTemporary(ip net.IP) (cj clientJSON, found 
 		}
 
 		cj = clientJSON{
-			IDs:            []string{ipStr},
+			IDs:            []string{idStr},
 			Disallowed:     disallowed,
 			DisallowedRule: rule,
 		}
@@ -286,8 +285,10 @@ func (clients *clientsContainer) findTemporary(ip net.IP) (cj clientJSON, found 
 		return cj, true
 	}
 
-	cj = clientHostToJSON(ipStr, ch)
-	cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
+	cj = clientHostToJSON(idStr, ch)
+	if ip != nil {
+		cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
+	}
 
 	return cj, true
 }

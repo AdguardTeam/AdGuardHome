@@ -87,12 +87,21 @@ If you're running **Linux**, there's a secure and easy way to install AdGuard Ho
 
 ### Guides
 
-* [FAQ](https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ)
-* [Configuration](https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration)
-* [AdGuard Home as a DNS-over-HTTPS or DNS-over-TLS server](https://github.com/AdguardTeam/AdGuardHome/wiki/Encryption)
-* [How to install and run AdGuard Home on Raspberry Pi](https://github.com/AdguardTeam/AdGuardHome/wiki/Raspberry-Pi)
-* [How to install and run AdGuard Home on a Virtual Private Server](https://github.com/AdguardTeam/AdGuardHome/wiki/VPS)
-* [How to write your own hosts blocklists properly](https://github.com/AdguardTeam/AdGuardHome/wiki/Hosts-Blocklists)
+* [Getting Started](https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started)
+    * [FAQ](https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ)
+    * [How to Write Hosts Blocklists](https://github.com/AdguardTeam/AdGuardHome/wiki/Hosts-Blocklists)
+    * [Comparing AdGuard Home to Other Solutions](https://github.com/AdguardTeam/AdGuardHome/wiki/Comparison)
+* Configuring AdGuard
+    * [Configuration](https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration)
+    * [Configuring AdGuard Home Clients](https://github.com/AdguardTeam/AdGuardHome/wiki/Clients)
+    * [AdGuard Home as a DoH, DoT, or DoQ Server](https://github.com/AdguardTeam/AdGuardHome/wiki/Encryption)
+    * [AdGuard Home as a DNSCrypt Server](https://github.com/AdguardTeam/AdGuardHome/wiki/DNSCrypt)
+    * [AdGuard Home as a DHCP Server](https://github.com/AdguardTeam/AdGuardHome/wiki/DHCP)
+* Installing AdGuard Home
+    * [Docker](https://github.com/AdguardTeam/AdGuardHome/wiki/Docker)
+    * [How to Install and Run AdGuard Home on a Raspberry Pi](https://github.com/AdguardTeam/AdGuardHome/wiki/Raspberry-Pi)
+    * [How to Install and Run AdGuard Home on a Virtual Private Server](https://github.com/AdguardTeam/AdGuardHome/wiki/VPS)
+* [Verifying Releases](https://github.com/AdguardTeam/AdGuardHome/wiki/Verify-Releases)
 
 ### API
 

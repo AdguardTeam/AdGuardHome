@@ -1,6 +1,7 @@
 package home
 
 import (
+	"errors"
 	"io/ioutil"
 	"net"
 	"os"
@@ -188,7 +189,7 @@ func initConfig() {
 func (c *configuration) getConfigFilename() string {
 	configFile, err := filepath.EvalSymlinks(Context.configFilename)
 	if err != nil {
-		if !os.IsNotExist(err) {
+		if !errors.Is(err, os.ErrNotExist) {
 			log.Error("unexpected error while config file path evaluation: %s", err)
 		}
 		configFile = Context.configFilename
