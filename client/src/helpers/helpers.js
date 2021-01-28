@@ -128,12 +128,21 @@ export const normalizeTopStats = (stats) => (
     }))
 );
 
-export const addClientInfo = (data, clients, param) => data.map((row) => {
-    const clientIp = row[param];
-    const info = clients.find((item) => item[clientIp]) || '';
+export const addClientInfo = (data, clients, ...params) => data.map((row) => {
+    let info = '';
+    params.find((param) => {
+        const id = row[param];
+        if (id) {
+            const client = clients.find((item) => item[id]) || '';
+            info = client?.[id] ?? '';
+        }
+
+        return info;
+    });
+
     return {
         ...row,
-        info: info?.[clientIp] ?? '',
+        info,
     };
 });
 

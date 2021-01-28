@@ -12,7 +12,7 @@ const enrichWithClientInfo = async (logs) => {
 
     if (Object.keys(clientsParams).length > 0) {
         const clients = await apiClient.findClients(clientsParams);
-        return addClientInfo(logs, clients, 'client');
+        return addClientInfo(logs, clients, 'client_id', 'client');
     }
 
     return logs;

@@ -264,8 +264,12 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 // findTemporary looks up the IP in temporary storages, like autohosts or
 // blocklists.
 func (clients *clientsContainer) findTemporary(ip net.IP, idStr string) (cj clientJSON, found bool) {
+	if ip == nil {
+		return cj, false
+	}
+
 	ch, ok := clients.FindAutoClient(idStr)
-	if !ok && ip != nil {
+	if !ok {
 		// It is still possible that the IP used to be in the runtime
 		// clients list, but then the server was reloaded.  So, check
 		// the DNS server's blocked IP list.
@@ -286,9 +290,7 @@ func (clients *clientsContainer) findTemporary(ip net.IP, idStr string) (cj clie
 	}
 
 	cj = clientHostToJSON(idStr, ch)
-	if ip != nil {
-		cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
-	}
+	cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
 
 	return cj, true
 }
