@@ -1738,8 +1738,9 @@
       'description': 'DNS answer section'
       'properties':
         'ttl':
-          'type': 'integer'
           'example': 55
+          'format': 'uint32'
+          'type': 'integer'
         'type':
           'type': 'string'
           'example': 'A'

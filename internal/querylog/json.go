@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
@@ -139,48 +140,60 @@ func resultRulesToJSONRules(rules []*dnsfilter.ResultRule) (jsonRules []jobject)
 	return jsonRules
 }
 
-func answerToMap(a *dns.Msg) (answers []jobject) {
+type dnsAnswer struct {
+	Type  string `json:"type"`
+	Value string `json:"value"`
+	TTL   uint32 `json:"ttl"`
+}
+
+func answerToMap(a *dns.Msg) (answers []*dnsAnswer) {
 	if a == nil || len(a.Answer) == 0 {
 		return nil
 	}
 
-	answers = []jobject{}
+	answers = make([]*dnsAnswer, 0, len(a.Answer))
 	for _, k := range a.Answer {
 		header := k.Header()
-		answer := jobject{
-			"type": dns.TypeToString[header.Rrtype],
-			"ttl":  header.Ttl,
+		answer := &dnsAnswer{
+			Type: dns.TypeToString[header.Rrtype],
+			TTL:  header.Ttl,
 		}
-		// try most common record types
+
+		// Some special treatment for some well-known types.
+		//
+		// TODO(a.garipov): Consider just calling String() for everyone
+		// instead.
 		switch v := k.(type) {
+		case nil:
+			// Probably unlikely, but go on.
 		case *dns.A:
-			answer["value"] = v.A
+			answer.Value = v.A.String()
 		case *dns.AAAA:
-			answer["value"] = v.AAAA
+			answer.Value = v.AAAA.String()
 		case *dns.MX:
-			answer["value"] = fmt.Sprintf("%v %v", v.Preference, v.Mx)
+			answer.Value = fmt.Sprintf("%v %v", v.Preference, v.Mx)
 		case *dns.CNAME:
-			answer["value"] = v.Target
+			answer.Value = v.Target
 		case *dns.NS:
-			answer["value"] = v.Ns
+			answer.Value = v.Ns
 		case *dns.SPF:
-			answer["value"] = v.Txt
+			answer.Value = strings.Join(v.Txt, "\n")
 		case *dns.TXT:
-			answer["value"] = v.Txt
+			answer.Value = strings.Join(v.Txt, "\n")
 		case *dns.PTR:
-			answer["value"] = v.Ptr
+			answer.Value = v.Ptr
 		case *dns.SOA:
-			answer["value"] = fmt.Sprintf("%v %v %v %v %v %v %v", v.Ns, v.Mbox, v.Serial, v.Refresh, v.Retry, v.Expire, v.Minttl)
+			answer.Value = fmt.Sprintf("%v %v %v %v %v %v %v", v.Ns, v.Mbox, v.Serial, v.Refresh, v.Retry, v.Expire, v.Minttl)
 		case *dns.CAA:
-			answer["value"] = fmt.Sprintf("%v %v \"%v\"", v.Flag, v.Tag, v.Value)
+			answer.Value = fmt.Sprintf("%v %v \"%v\"", v.Flag, v.Tag, v.Value)
 		case *dns.HINFO:
-			answer["value"] = fmt.Sprintf("\"%v\" \"%v\"", v.Cpu, v.Os)
+			answer.Value = fmt.Sprintf("\"%v\" \"%v\"", v.Cpu, v.Os)
 		case *dns.RRSIG:
-			answer["value"] = fmt.Sprintf("%v %v %v %v %v %v %v %v %v", dns.TypeToString[v.TypeCovered], v.Algorithm, v.Labels, v.OrigTtl, v.Expiration, v.Inception, v.KeyTag, v.SignerName, v.Signature)
+			answer.Value = fmt.Sprintf("%v %v %v %v %v %v %v %v %v", dns.TypeToString[v.TypeCovered], v.Algorithm, v.Labels, v.OrigTtl, v.Expiration, v.Inception, v.KeyTag, v.SignerName, v.Signature)
 		default:
-			// type unknown, marshall it as-is
-			answer["value"] = v
+			answer.Value = v.String()
 		}
+
 		answers = append(answers, answer)
 	}
 
