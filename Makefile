@@ -68,11 +68,13 @@ js-build:
 js-deps:
 	$(NPM) $(NPM_FLAGS) ci
 	$(YARN) $(YARN_FLAGS) install
-js-lint:
-	$(NPM) $(NPM_FLAGS) run lint
-	$(YARN) $(YARN_FLAGS) lint
-js-test:
-	$(NPM) $(NPM_FLAGS) run test
+
+# TODO(a.garipov): Remove the legacy client tasks support once the new
+# client is done and the old one is removed.
+js-lint: ; $(NPM) $(NPM_FLAGS) run lint
+js-test: ; $(NPM) $(NPM_FLAGS) run test
+js-beta-lint: ; $(YARN) $(YARN_FLAGS) lint
+js-beta-test: ; # TODO(v.abdulmyanov): Add tests for the new client.
 
 go-build: ; $(ENV) "$(SHELL)" ./scripts/make/go-build.sh
 go-deps:  ; $(ENV) "$(SHELL)" ./scripts/make/go-deps.sh
