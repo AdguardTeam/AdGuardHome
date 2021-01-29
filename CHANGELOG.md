@@ -10,11 +10,12 @@ and this project adheres to
 ## [Unreleased]
 
 <!--
-## [v0.105.0] - 2021-01-27
+## [v0.105.0] - 2021-02-03
 -->
 
 ### Added
 
+- `ipset` subdomain matching, just like `dnsmasq` does ([#2179]).
 - Client ID support for DNS-over-HTTPS, DNS-over-QUIC, and DNS-over-TLS
   ([#1383]).
 - `$dnsrewrite` modifier for filters ([#2102]).
@@ -31,6 +32,7 @@ and this project adheres to
 [#1361]: https://github.com/AdguardTeam/AdGuardHome/issues/1361
 [#1383]: https://github.com/AdguardTeam/AdGuardHome/issues/1383
 [#2102]: https://github.com/AdguardTeam/AdGuardHome/issues/2102
+[#2179]: https://github.com/AdguardTeam/AdGuardHome/issues/2179
 [#2302]: https://github.com/AdguardTeam/AdGuardHome/issues/2302
 [#2304]: https://github.com/AdguardTeam/AdGuardHome/issues/2304
 [#2305]: https://github.com/AdguardTeam/AdGuardHome/issues/2305

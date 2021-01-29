@@ -108,6 +108,12 @@ func (s *Server) Close() {
 	s.stats = nil
 	s.queryLog = nil
 	s.dnsProxy = nil
+
+	err := s.ipset.Close()
+	if err != nil {
+		log.Error("closing ipset: %s", err)
+	}
+
 	s.Unlock()
 }
 
@@ -190,11 +196,14 @@ func (s *Server) Prepare(config *ServerConfig) error {
 
 	// Initialize IPSET configuration
 	// --
-	s.ipset.init(s.conf.IPSETList)
+	err := s.ipset.init(s.conf.IPSETList)
+	if err != nil {
+		return err
+	}
 
 	// Prepare DNS servers settings
 	// --
-	err := s.prepareUpstreamSettings()
+	err = s.prepareUpstreamSettings()
 	if err != nil {
 		return err
 	}
