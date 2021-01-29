@@ -98,6 +98,9 @@ The rules are mostly sorted in the alphabetical order.
  *  Prefer constants to variables where possible.  Reduce global variables.  Use
     [constant errors] instead of `errors.New`.
 
+ *  Program code lines should not be longer than one hundred (**100**) columns.
+    For comments, see the text section below.
+
  *  Unused arguments in anonymous functions must be called `_`:
 
     ```go

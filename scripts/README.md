@@ -108,6 +108,8 @@ Optional environment:
  *  `GO`: set an alternarive name for the Go compiler.
  *  `RACE`: set to `0` to not use the Go race detector.  The default value is
     `1`, use the race detector.
+ *  `TIMEOUT_FLAGS`: set timeout flags for tests.  The default value is
+    `--timeout 30s`.
  *  `VERBOSE`: verbosity level.  `1` shows every command that is run and every
     Go package that is processed.  `2` also shows subcommands.  The default
     value is `0`, don't be verbose.

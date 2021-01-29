@@ -32,10 +32,12 @@ else
 	race_flags='--race'
 fi
 
-go="${GO:-go}"
-cover_flags='--coverprofile ./coverage.txt'
-count_flags='--count 1'
+readonly go="${GO:-go}"
+readonly timeout_flags="${TIMEOUT_FLAGS:---timeout 30s}"
+readonly cover_flags='--coverprofile ./coverage.txt'
+readonly count_flags='--count 1'
 
 # Don't use quotes with flag variables because we want an empty space if
 # those aren't set.
-"$go" test $race_flags $count_flags $cover_flags $x_flags $v_flags ./...
+"$go" test $count_flags $cover_flags $race_flags $timeout_flags\
+	$x_flags $v_flags ./...
