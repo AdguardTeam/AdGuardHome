@@ -9,7 +9,8 @@ import (
 )
 
 func TestRewrites(t *testing.T) {
-	d := DNSFilter{}
+	d := newForTest(nil, nil)
+	t.Cleanup(d.Close)
 	// CNAME, A, AAAA
 	d.Rewrites = []RewriteEntry{
 		{"somecname", "somehost.com", 0, nil},
@@ -104,7 +105,8 @@ func TestRewrites(t *testing.T) {
 }
 
 func TestRewritesLevels(t *testing.T) {
-	d := DNSFilter{}
+	d := newForTest(nil, nil)
+	t.Cleanup(d.Close)
 	// exact host, wildcard L2, wildcard L3
 	d.Rewrites = []RewriteEntry{
 		{"host.com", "1.1.1.1", 0, nil},
@@ -133,7 +135,8 @@ func TestRewritesLevels(t *testing.T) {
 }
 
 func TestRewritesExceptionCNAME(t *testing.T) {
-	d := DNSFilter{}
+	d := newForTest(nil, nil)
+	t.Cleanup(d.Close)
 	// wildcard; exception for a sub-domain
 	d.Rewrites = []RewriteEntry{
 		{"*.host.com", "2.2.2.2", 0, nil},
@@ -153,7 +156,8 @@ func TestRewritesExceptionCNAME(t *testing.T) {
 }
 
 func TestRewritesExceptionWC(t *testing.T) {
-	d := DNSFilter{}
+	d := newForTest(nil, nil)
+	t.Cleanup(d.Close)
 	// wildcard; exception for a sub-wildcard
 	d.Rewrites = []RewriteEntry{
 		{"*.host.com", "2.2.2.2", 0, nil},
@@ -173,7 +177,8 @@ func TestRewritesExceptionWC(t *testing.T) {
 }
 
 func TestRewritesExceptionIP(t *testing.T) {
-	d := DNSFilter{}
+	d := newForTest(nil, nil)
+	t.Cleanup(d.Close)
 	// exception for AAAA record
 	d.Rewrites = []RewriteEntry{
 		{"host.com", "1.2.3.4", 0, nil},

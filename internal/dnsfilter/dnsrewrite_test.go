@@ -45,7 +45,7 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 @@||disable-all^$dnsrewrite
 `
 
-	f := NewForTest(nil, []Filter{{ID: 0, Data: []byte(text)}})
+	f := newForTest(nil, []Filter{{ID: 0, Data: []byte(text)}})
 	setts := &RequestFilteringSettings{
 		FilteringEnabled: true,
 	}

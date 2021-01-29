@@ -2,6 +2,7 @@
 package dnsfilter
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -91,6 +92,12 @@ type filtersInitializerParams struct {
 	blockFilters []Filter
 }
 
+// Resolver is the interface for net.Resolver to simplify testing.
+type Resolver interface {
+	// TODO(e.burkov): Replace with LookupIP after upgrading go to v1.15.
+	LookupIPAddr(ctx context.Context, host string) (ips []net.IPAddr, err error)
+}
+
 // DNSFilter matches hostnames and DNS requests against filtering rules.
 type DNSFilter struct {
 	rulesStorage         *filterlist.RuleStorage
@@ -110,6 +117,11 @@ type DNSFilter struct {
 	// Channel for passing data to filters-initializer goroutine
 	filtersInitializerChan chan filtersInitializerParams
 	filtersInitializerLock sync.Mutex
+
+	// resolver only looks up the IP address of the host while safe search.
+	//
+	// TODO(e.burkov): Use upstream that configured in dnsforward instead.
+	resolver Resolver
 }
 
 // Filter represents a filter list
@@ -805,7 +817,9 @@ func New(c *Config, blockFilters []Filter) *DNSFilter {
 		}
 	}
 
-	d := new(DNSFilter)
+	d := &DNSFilter{
+		resolver: net.DefaultResolver,
+	}
 
 	err := d.initSecurityServices()
 	if err != nil {

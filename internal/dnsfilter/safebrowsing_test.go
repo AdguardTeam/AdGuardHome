@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
@@ -121,8 +122,8 @@ func (teu *testErrUpstream) Address() string {
 }
 
 func TestSBPC_checkErrorUpstream(t *testing.T) {
-	d := NewForTest(&Config{SafeBrowsingEnabled: true}, nil)
-	defer d.Close()
+	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
+	t.Cleanup(d.Close)
 
 	ups := &testErrUpstream{}
 
@@ -142,11 +143,14 @@ type testSbUpstream struct {
 	hostname      string
 	block         bool
 	requestsCount int
+	counterLock   sync.RWMutex
 }
 
 // Exchange returns a message depending on the upstream settings (hostname, block)
 func (u *testSbUpstream) Exchange(r *dns.Msg) (*dns.Msg, error) {
+	u.counterLock.Lock()
 	u.requestsCount++
+	u.counterLock.Unlock()
 
 	hash := sha256.Sum256([]byte(u.hostname))
 	prefix := hash[0:2]
@@ -175,8 +179,8 @@ func (u *testSbUpstream) Address() string {
 }
 
 func TestSBPC_sbValidResponse(t *testing.T) {
-	d := NewForTest(&Config{SafeBrowsingEnabled: true}, nil)
-	defer d.Close()
+	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
+	t.Cleanup(d.Close)
 
 	ups := &testSbUpstream{}
 	d.safeBrowsingUpstream = ups
@@ -213,8 +217,8 @@ func TestSBPC_sbValidResponse(t *testing.T) {
 }
 
 func TestSBPC_pcBlockedResponse(t *testing.T) {
-	d := NewForTest(&Config{SafeBrowsingEnabled: true}, nil)
-	defer d.Close()
+	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
+	t.Cleanup(d.Close)
 
 	ups := &testSbUpstream{}
 	d.safeBrowsingUpstream = ups
