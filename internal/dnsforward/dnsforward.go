@@ -198,7 +198,10 @@ func (s *Server) Prepare(config *ServerConfig) error {
 	// --
 	err := s.ipset.init(s.conf.IPSETList)
 	if err != nil {
-		return err
+		// ipset cannot be initialized in a Snap version (and maybe - without root)
+		// this needs to be handled properly
+		// TODO: Handle this properly
+		log.Info("Cannot initialize ipset module due to %v", err)
 	}
 
 	// Prepare DNS servers settings
