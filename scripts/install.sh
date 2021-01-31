@@ -97,7 +97,7 @@ detect_cpu()
 			CPU=armv7
 			;;
 
-		aarch64)
+		aarch64 | arm64)
 			CPU=arm64
 			;;
 
