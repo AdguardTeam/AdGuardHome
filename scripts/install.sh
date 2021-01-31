@@ -189,7 +189,13 @@ main() {
 
     SCRIPT_URL="https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh"
     URL="https://static.adguard.com/adguardhome/${CHANNEL}/${PKG_NAME}"
-    OUT_DIR=/opt
+    OUT_DIR="/opt"
+    if [ "${OS}" = "darwin" ]; then
+        # It may be important to install AdGuard Home to /Applications on MacOS
+        # Otherwise, it may not grant enough privileges to it
+        OUT_DIR="/Applications"
+    fi
+
     AGH_DIR="${OUT_DIR}/AdGuardHome"
 
     # Root check
