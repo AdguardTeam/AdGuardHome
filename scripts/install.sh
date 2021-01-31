@@ -184,6 +184,13 @@ main() {
 
     OS=$(detect_os) || error_exit "Cannot detect your OS"
     CPU=$(detect_cpu) || error_exit "Cannot detect your CPU"
+
+    # TODO: Remove when Mac M1 native support is added
+    if [ "${OS}" = "darwin" ] && [ "${CPU}" = "arm64" ]; then
+        CPU="amd64"
+        log_info "Use ${CPU} build on Mac M1 until the native ARM support is added"
+    fi
+
     PKG_EXT=$(package_extension)
     PKG_NAME=AdGuardHome_${OS}_${CPU}.${PKG_EXT}
 
