@@ -230,8 +230,8 @@ main() {
 
     unpack "${PKG_NAME}" "${OUT_DIR}" "${PKG_EXT}" || error_exit "Cannot unpack the package"
 
-    # Install AdGuard Home service and run it
-    ${AGH_DIR}/AdGuardHome -s install || error_exit "Cannot install AdGuardHome as a service"
+    # Install AdGuard Home service and run it.
+    ( cd "${AGH_DIR}" && ./AdGuardHome -s install || error_exit "Cannot install AdGuardHome as a service" )
 
     rm "${PKG_NAME}"
 

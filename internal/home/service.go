@@ -15,6 +15,9 @@ import (
 	"github.com/kardianos/service"
 )
 
+// TODO(a.garipov): Move shell templates into actual files.  Either during the
+// v0.106.0 cycle using packr or during the following cycle using go:embed.
+
 const (
 	launchdStdoutPath  = "/var/log/AdGuardHome.stdout.log"
 	launchdStderrPath  = "/var/log/AdGuardHome.stderr.log"
@@ -504,6 +507,10 @@ status() {
 }
 `
 
+// TODO(a.garipov): Don't use .WorkingDirectory here.  There are currently no
+// guarantees that it will actually be the required directory.
+//
+// See https://github.com/AdguardTeam/AdGuardHome/issues/2614.
 const freeBSDScript = `#!/bin/sh
 # PROVIDE: {{.Name}}
 # REQUIRE: networking
@@ -514,6 +521,6 @@ name="{{.Name}}"
 {{.Name}}_user="root"
 pidfile="/var/run/${name}.pid"
 command="/usr/sbin/daemon"
-command_args="-P ${pidfile} -r -f {{.WorkingDirectory}}/{{.Name}}"
+command_args="-P ${pidfile} -f -r {{.WorkingDirectory}}/{{.Name}}"
 run_rc_command "$1"
 `
