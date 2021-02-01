@@ -192,14 +192,18 @@ func (c *ipsetCtx) init(ipsetConfig []string) (err error) {
 // Close closes the Linux Netfilter connections.
 func (c *ipsetCtx) Close() (err error) {
 	var errors []error
-	err = c.ipv4Conn.Close()
-	if err != nil {
-		errors = append(errors, err)
+	if c.ipv4Conn != nil {
+		err = c.ipv4Conn.Close()
+		if err != nil {
+			errors = append(errors, err)
+		}
 	}
 
-	err = c.ipv6Conn.Close()
-	if err != nil {
-		errors = append(errors, err)
+	if c.ipv6Conn != nil {
+		err = c.ipv6Conn.Close()
+		if err != nil {
+			errors = append(errors, err)
+		}
 	}
 
 	if len(errors) != 0 {
