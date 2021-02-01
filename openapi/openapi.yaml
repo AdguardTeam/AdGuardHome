@@ -1330,26 +1330,28 @@
       'required':
       - 'enabled'
       - 'id'
-      - 'lastUpdated'
+      - 'last_updated'
       - 'name'
-      - 'rulesCount'
+      - 'rules_count'
       - 'url'
       'properties':
         'enabled':
           'type': 'boolean'
         'id':
-          'type': 'integer'
           'example': 1234
-        'lastUpdated':
-          'type': 'string'
-          'format': 'date-time'
-          'example': '2018-10-30T12:18:57+03:00'
-        'name':
-          'type': 'string'
-          'example': 'AdGuard Simplified Domain Names filter'
-        'rulesCount':
+          'format': 'int64'
           'type': 'integer'
+        'last_updated':
+          'example': '2018-10-30T12:18:57+03:00'
+          'format': 'date-time'
+          'type': 'string'
+        'name':
+          'example': 'AdGuard Simplified Domain Names filter'
+          'type': 'string'
+        'rules_count':
           'example': 5912
+          'format': 'uint32'
+          'type': 'integer'
         'url':
           'type': 'string'
           'example': >
