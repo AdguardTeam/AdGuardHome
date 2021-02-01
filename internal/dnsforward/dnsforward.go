@@ -2,9 +2,11 @@
 package dnsforward
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"runtime"
 	"sync"
 	"time"
@@ -198,10 +200,16 @@ func (s *Server) Prepare(config *ServerConfig) error {
 	// --
 	err := s.ipset.init(s.conf.IPSETList)
 	if err != nil {
-		// ipset cannot be initialized in a Snap version (and maybe - without root)
-		// this needs to be handled properly
-		// TODO: Handle this properly
-		log.Info("Cannot initialize ipset module due to %v", err)
+		if !errors.Is(err, os.ErrPermission) {
+			return fmt.Errorf("cannot initialize ipset: %w", err)
+		}
+
+		// ipset cannot currently be initialized if the server was
+		// installed from Snap or when the user or the binary doesn't
+		// have the required permissions.
+		//
+		// Log and go on.
+		log.Error("cannot initialize ipset: %s", err)
 	}
 
 	// Prepare DNS servers settings
