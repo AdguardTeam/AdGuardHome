@@ -200,15 +200,19 @@ func (s *Server) Prepare(config *ServerConfig) error {
 	// --
 	err := s.ipset.init(s.conf.IPSETList)
 	if err != nil {
-		if !errors.Is(err, os.ErrPermission) {
+		if !errors.Is(err, os.ErrInvalid) && !errors.Is(err, os.ErrPermission) {
 			return fmt.Errorf("cannot initialize ipset: %w", err)
 		}
 
 		// ipset cannot currently be initialized if the server was
 		// installed from Snap or when the user or the binary doesn't
-		// have the required permissions.
+		// have the required permissions, or when the kernel doesn't
+		// support netfilter.
 		//
 		// Log and go on.
+		//
+		// TODO(a.garipov): The Snap problem can probably be solved if
+		// we add the netlink-coinnector interface plug.
 		log.Error("cannot initialize ipset: %s", err)
 	}
 
