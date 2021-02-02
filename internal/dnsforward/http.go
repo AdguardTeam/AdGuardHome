@@ -529,5 +529,13 @@ func (s *Server) registerHandlers() {
 	s.conf.HTTPRegister(http.MethodGet, "/control/access/list", s.handleAccessList)
 	s.conf.HTTPRegister(http.MethodPost, "/control/access/set", s.handleAccessSet)
 
+	// Register both versions, with and without the trailing slash, to
+	// prevent a 301 Moved Permanently redirect when clients request the
+	// path without the trailing slash.  Those redirects break some clients.
+	//
+	// See go doc net/http.ServeMux.
+	//
+	// See also https://github.com/AdguardTeam/AdGuardHome/issues/2628.
+	s.conf.HTTPRegister("", "/dns-query", s.handleDOH)
 	s.conf.HTTPRegister("", "/dns-query/", s.handleDOH)
 }
