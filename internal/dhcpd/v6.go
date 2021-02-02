@@ -42,7 +42,6 @@ func (s *v6Server) WriteDiskConfig6(c *V6ServerConf) {
 }
 
 // Return TRUE if IP address is within range [start..0xff]
-// nolint(staticcheck)
 func ip6InRange(start, ip net.IP) bool {
 	if len(start) != 16 {
 		return false

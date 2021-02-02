@@ -163,15 +163,15 @@ func (s *Server) Exchange(req *dns.Msg) (*dns.Msg, error) {
 	return ctx.Res, nil
 }
 
-// Start starts the DNS server
+// Start starts the DNS server.
 func (s *Server) Start() error {
 	s.Lock()
 	defer s.Unlock()
-	return s.startInternal()
+	return s.startLocked()
 }
 
-// startInternal starts without locking
-func (s *Server) startInternal() error {
+// startLocked starts the DNS server without locking. For internal use only.
+func (s *Server) startLocked() error {
 	err := s.dnsProxy.Start()
 	if err == nil {
 		s.isRunning = true
@@ -256,15 +256,15 @@ func (s *Server) Prepare(config *ServerConfig) error {
 	return nil
 }
 
-// Stop stops the DNS server
+// Stop stops the DNS server.
 func (s *Server) Stop() error {
 	s.Lock()
 	defer s.Unlock()
-	return s.stopInternal()
+	return s.stopLocked()
 }
 
-// stopInternal stops without locking
-func (s *Server) stopInternal() error {
+// stopLocked stops the DNS server without locking. For internal use only.
+func (s *Server) stopLocked() error {
 	if s.dnsProxy != nil {
 		err := s.dnsProxy.Stop()
 		if err != nil {
@@ -289,7 +289,7 @@ func (s *Server) Reconfigure(config *ServerConfig) error {
 	defer s.Unlock()
 
 	log.Print("Start reconfiguring the server")
-	err := s.stopInternal()
+	err := s.stopLocked()
 	if err != nil {
 		return fmt.Errorf("could not reconfigure the server: %w", err)
 	}
@@ -303,7 +303,7 @@ func (s *Server) Reconfigure(config *ServerConfig) error {
 		return fmt.Errorf("could not reconfigure the server: %w", err)
 	}
 
-	err = s.startInternal()
+	err = s.startLocked()
 	if err != nil {
 		return fmt.Errorf("could not reconfigure the server: %w", err)
 	}
