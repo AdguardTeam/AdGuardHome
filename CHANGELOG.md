@@ -70,13 +70,14 @@ and this project adheres to
 
 ### Deprecated
 
-- _Go_ 1.14 support.  v0.106.0 will require at least _Go_ 1.15 to build.
+- Go 1.14 support.  v0.106.0 will require at least Go 1.15 to build.
 - The `darwin/386` port.  It will be removed in v0.106.0.
 - The `"rule"` and `"filter_id"` fields in `GET /filtering/check_host` and
   `GET /querylog` responses.  They will be removed in v0.106.0 ([#2102]).
 
 ### Fixed
 
+- Autoupdate bug in the Darwin (macOS) version ([#2630]).
 - Unnecessary conversions from `string` to `net.IP`, and vice versa ([#2508]).
 - Inability to set DNS cache TTL limits ([#2459]).
 - Possible freezes on slower machines ([#2225]).
@@ -92,6 +93,7 @@ and this project adheres to
 [#2355]: https://github.com/AdguardTeam/AdGuardHome/issues/2355
 [#2459]: https://github.com/AdguardTeam/AdGuardHome/issues/2459
 [#2508]: https://github.com/AdguardTeam/AdGuardHome/issues/2508
+[#2630]: https://github.com/AdguardTeam/AdGuardHome/issues/2630
 
 ### Removed
 
@@ -127,7 +129,7 @@ and this project adheres to
 
 - Query logs from file not loading after the ones buffered in memory ([#2325]).
 - Unnecessary errors in query logs when switching between log files ([#2324]).
-- `404 Not Found` errors on the DHCP settings page on *Windows*.  The page now
+- `404 Not Found` errors on the DHCP settings page on Windows.  The page now
   correctly shows that DHCP is not currently available on that OS ([#2295]).
 - Infinite loop in `/dhcp/find_active_dhcp` ([#2301]).
 

@@ -355,6 +355,16 @@ func tarGzFileUnpack(tarfile, outdir string) ([]string, error) {
 		outputName := filepath.Join(outdir, inputNameOnly)
 
 		if header.Typeflag == tar.TypeDir {
+			if inputNameOnly == "AdGuardHome" {
+				// Top-level AdGuardHome/.  Skip it.
+				//
+				// TODO(a.garipov): This whole package needs to
+				// be rewritten and covered in more integration
+				// tests.  It has weird assumptions and file
+				// mode issues.
+				continue
+			}
+
 			err = os.Mkdir(outputName, os.FileMode(header.Mode&0o777))
 			if err != nil && !os.IsExist(err) {
 				err2 = fmt.Errorf("os.Mkdir(%s): %w", outputName, err)
@@ -422,6 +432,14 @@ func zipFileUnpack(zipfile, outdir string) ([]string, error) {
 		outputName := filepath.Join(outdir, inputNameOnly)
 
 		if fi.IsDir() {
+			if inputNameOnly == "AdGuardHome" {
+				// Top-level AdGuardHome/.  Skip it.
+				//
+				// TODO(a.garipov): See the similar todo in
+				// tarGzFileUnpack.
+				continue
+			}
+
 			err = os.Mkdir(outputName, fi.Mode())
 			if err != nil && !os.IsExist(err) {
 				err2 = fmt.Errorf("os.Mkdir(): %w", err)
