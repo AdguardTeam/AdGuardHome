@@ -293,7 +293,7 @@ log "calculating checksums"
 
 log "writing versions"
 
-echo "$version" > "./${dist}/version.txt"
+echo "version=$version" > "./${dist}/version.txt"
 
 # Create the verison.json file.
 #
