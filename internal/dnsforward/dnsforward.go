@@ -212,7 +212,7 @@ func (s *Server) Prepare(config *ServerConfig) error {
 		// Log and go on.
 		//
 		// TODO(a.garipov): The Snap problem can probably be solved if
-		// we add the netlink-coinnector interface plug.
+		// we add the netlink-connector interface plug.
 		log.Error("cannot initialize ipset: %s", err)
 	}
 

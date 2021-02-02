@@ -242,6 +242,9 @@ func (c *ipsetCtx) lookupHost(host string) (sets []ipsetProps) {
 		}
 
 		i = strings.Index(host, ".")
+		if i == -1 {
+			break
+		}
 	}
 
 	// Check the root catch-all one.
