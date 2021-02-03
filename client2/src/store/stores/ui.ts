@@ -1,25 +1,36 @@
-import { makeAutoObservable, observable } from 'mobx';
+import React from 'react';
+import { makeAutoObservable, observable, action } from 'mobx';
+import { translate } from '@adguard/translate';
 
-import Translator, { DEFAULT_LOCALE, messages, Locale, reactFormater } from 'Localization';
+import { Locale, DEFAULT_LOCALE, i18n } from 'Localization';
 import { Store } from 'Store';
+import { Store as InstallStore } from 'Store/installStore';
 
 export default class UI {
-    rootStore: Store;
+    rootStore: Store | InstallStore;
 
     currentLang = DEFAULT_LOCALE;
 
-    intl = new Translator<Locale>(Locale.en, messages, DEFAULT_LOCALE, reactFormater);
+    intl = translate.createReactTranslator<any>(i18n(this.currentLang), React);
 
-    constructor(rootStore: Store) {
+    sidebarOpen = false;
+
+    constructor(rootStore: Store | InstallStore) {
         this.rootStore = rootStore;
         makeAutoObservable(this, {
             intl: observable.struct,
             rootStore: false,
+            sidebarOpen: observable,
+            toggleSidebar: action,
         });
     }
 
     updateLang = (lang: Locale) => {
         this.currentLang = lang;
-        this.intl = this.intl.updateTranslator(lang);
+        this.intl = translate.createReactTranslator<any>(i18n(this.currentLang), React);
+    };
+
+    toggleSidebar = () => {
+        this.sidebarOpen = !this.sidebarOpen;
     };
 }

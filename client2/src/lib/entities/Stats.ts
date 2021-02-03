@@ -107,7 +107,7 @@ export default class Stats {
     readonly _time_units: string | undefined;
 
     /**
-     * Description: Time units (hours | days)
+     * Description: Time units
      * Example: hours
      */
     get timeUnits(): string | undefined {

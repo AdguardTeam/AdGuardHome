@@ -1,4 +1,3 @@
-import React from 'react';
 import 'dayjs/locale/ru';
 
 import { PickerLocale } from 'antd/es/date-picker/generatePicker';
@@ -22,14 +21,8 @@ export const messages: Record<Locale, Record<string, string>> = {
     [Locale.en]: enLang,
 };
 
+// TODO get languages and default locale from .twosky file
 export const DEFAULT_LOCALE = Locale.en;
-
-export const reactFormater = (data: (JSX.Element | string)[]) => {
-    if (data.every((d) => typeof d === 'string')) {
-        return data.join('');
-    }
-    return React.Children.toArray(data);
-};
 
 export const LANGUAGES: { code: Locale; name: string }[] = [
     {

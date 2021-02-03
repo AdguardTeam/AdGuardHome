@@ -1,6 +1,9 @@
-import T from './Translator';
-import { Locale } from './locales';
+import { Locale, DatePickerLocale, messages, DEFAULT_LOCALE, LANGUAGES } from './locales';
 
-export { messages, DatePickerLocale, Locale, DEFAULT_LOCALE, LANGUAGES, reactFormater } from './locales';
-export type Translator = T<Locale>;
-export default T;
+export { Locale, DatePickerLocale, messages, DEFAULT_LOCALE, LANGUAGES };
+export const i18n = (lang: Locale) => ({
+    getMessage: (key: string) => messages[lang][key],
+    getUILanguage: () => lang,
+    getBaseMessage: (key: string) => messages[DEFAULT_LOCALE][key] || key,
+    getBaseUILanguage: () => DEFAULT_LOCALE,
+});

@@ -6,7 +6,7 @@ import { IInitialConfigurationBeta } from 'Entities/InitialConfigurationBeta';
 import { errorChecker } from 'Helpers/apiErrors';
 import { flow, makeAutoObservable } from 'mobx';
 
-import { Store } from 'Store';
+import { Store } from 'Store/installStore';
 
 export default class Install {
     rootStore: Store;

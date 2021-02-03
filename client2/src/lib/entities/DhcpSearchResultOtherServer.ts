@@ -16,7 +16,8 @@ export default class DhcpSearchResultOtherServer {
     readonly _found: string | undefined;
 
     /**
-     * Description: yes|no|error
+     * Description: The result of searching the other DHCP server.
+     *
      * Example: no
      */
     get found(): string | undefined {

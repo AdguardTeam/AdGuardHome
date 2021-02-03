@@ -6,7 +6,7 @@ import s from './Radio.module.pcss';
 
 const { Group } = Radio;
 
-interface AdminInterfaceProps {
+interface RadioProps {
     options: {
         label: string;
         desc?: string;
@@ -16,7 +16,7 @@ interface AdminInterfaceProps {
     value: string | number;
 }
 
-const RadioComponent: FC<AdminInterfaceProps> = observer(({
+const RadioComponent: FC<RadioProps> = observer(({
     options, onSelect, value,
 }) => {
     if (options.length === 0) {

@@ -24,7 +24,7 @@
       "Helpers/*": ["lib/helpers/*"],
       "Lib/*": ["lib/*"],
       "Localization": ["localization/index"],
-      "Routes": ["lib/routes"],
+      "Paths": ["components/App/Routes/Paths"],
       "Store": ["store/store"],
       "Store/*": ["store/*"]
     },
@@ -32,7 +32,8 @@
       "react",
       "react-dom",
       "node"
-    ]
+    ],
+    "useDefineForClassFields": true
   },
   "include": ["src/**/*", "./declaration.d.ts"],
   "exclude": ["./node_modules/**/*", "./scripts/generator/**/*"]

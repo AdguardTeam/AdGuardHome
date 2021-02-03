@@ -7,10 +7,11 @@ const Webpack = require('webpack');
 const { getDevServerConfig } = require('./helpers');
 const baseConfig = require('./webpack.config.base');
 
+const devHost = process.env.DEV_HOST
 const target = getDevServerConfig();
 
 const options = {
-    target: `http://${target.host}:${target.port}`, // target host
+    target: devHost || `http://${target.host}:${target.port}`, // target host
     changeOrigin: true, // needed for virtual hosted sites
 };
 const apiProxy = proxy.createProxyMiddleware(options);

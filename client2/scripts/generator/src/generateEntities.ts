@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as morph from 'ts-morph';
 
 import { ENT_DIR } from '../../consts';
-import { TYPES, toCamel, schemaParamParser } from './utils';
+import { TYPES, toCamel, schemaParamParser, uncapitalize } from './utils';
 
 const { Project, QuoteKind } = morph;
 
@@ -125,14 +125,37 @@ class EntitiesGenerator {
             '',
         ]);
 
-        const { properties: sProps, required } = this.schemas[sName];
+
+        const { properties: sProps, required, $ref, additionalProperties } = this.schemas[sName];
+        if ($ref) {
+            const temp = $ref.split('/');
+            const importSchemaName = `${temp[temp.length - 1]}`;
+            entityFile.addImportDeclaration({
+                defaultImport: importSchemaName,
+                moduleSpecifier: `./${importSchemaName}`,
+                namedImports: [`I${importSchemaName}`],
+            });
+
+            entityFile.addTypeAlias({
+                name: `I${sName}`,
+                type: `I${importSchemaName}`,
+                isExported: true,
+            })
+
+            entityFile.addStatements(`export default ${importSchemaName};`);
+            this.entities.push(entityFile);
+            return;
+        }
 
         const importEntities: { type: string, isClass: boolean }[] = [];
         const entityInterface = entityFile.addInterface({
             name: `I${sName}`,
             isExported: true,
         });
+        
         const sortedSProps = Object.keys(sProps || {}).sort();
+        const additionalPropsOnly = additionalProperties && sortedSProps.length === 0;
+
         // add server response interface to entityFile
         sortedSProps.forEach((sPropName) => {
             const [
@@ -153,6 +176,23 @@ class EntitiesGenerator {
                 ),
             });
         });
+        if (additionalProperties) {
+            const [
+                pType, isArray, isClass, isImport, isAdditional
+            ] = schemaParamParser(additionalProperties, this.openapi);
+
+            if (isImport) {
+                importEntities.push({ type: pType, isClass });
+            }
+            const type = isAdditional
+                ? `{ [key: string]: ${isClass ? 'I' : ''}${pType}${isArray ? '[]' : ''} }`
+                : `${isClass ? 'I' : ''}${pType}${isArray ? '[]' : ''}`;
+            entityInterface.addIndexSignature({
+                keyName: 'key',
+                keyType: 'string',
+                returnType: additionalPropsOnly ? type : `${type} | undefined`,
+            });
+        }
 
         // add import
         const imports: { type: string, isClass: boolean }[] = [];
@@ -310,7 +350,18 @@ class EntitiesGenerator {
                 }
             }
         });
-
+        if (additionalProperties) {
+            const [
+                pType, isArray, isClass, isImport, isAdditional
+            ] = schemaParamParser(additionalProperties, this.openapi);
+            const type = `Record<string, ${pType}${isArray ? '[]' : ''}>`;
+                
+            entityClass.addProperty({
+                name: additionalPropsOnly ? 'data' : `${uncapitalize(pType)}Data`,
+                isReadonly: true,
+                type: type,
+            });
+        }
         // add constructor;
         const ctor = entityClass.addConstructor({
             parameters: [{
@@ -319,6 +370,20 @@ class EntitiesGenerator {
             }],
         });
         ctor.setBodyText((w) => {
+            if (additionalProperties) {
+                const [
+                    pType, isArray, isClass, isImport, isAdditional
+                ] = schemaParamParser(additionalProperties, this.openapi);
+                w.writeLine(`this.${additionalPropsOnly ? 'data' : `${uncapitalize(pType)}Data`} = Object.entries(props).reduce<Record<string, ${pType}>>((prev, [key, value]) => {`);
+                if (isClass) {
+                    w.writeLine(`    prev[key] = new ${pType}(value!);`);
+                } else {
+                    w.writeLine('    prev[key] = value!;')
+                }
+                w.writeLine('    return prev;');
+                w.writeLine('}, {})');
+                return;
+            }
             sortedSProps.forEach((sPropName) => {
                 const [
                     pType, isArray, isClass, , isAdditional
@@ -369,6 +434,7 @@ class EntitiesGenerator {
                     w.writeLine('}');
                 }
             });
+
         });
 
         // add serialize method;
@@ -378,6 +444,20 @@ class EntitiesGenerator {
             returnType: `I${sName}`,
         });
         serialize.setBodyText((w) => {
+            if (additionalProperties) {
+                const [
+                    pType, isArray, isClass, isImport, isAdditional
+                ] = schemaParamParser(additionalProperties, this.openapi);
+                w.writeLine(`return Object.entries(this.${additionalPropsOnly ? 'data' : `${uncapitalize(pType)}Data`}).reduce<Record<string, ${isClass ? 'I' : ''}${pType}>>((prev, [key, value]) => {`);
+                if (isClass) {
+                    w.writeLine(`    prev[key] = value.serialize();`);
+                } else {
+                    w.writeLine('    prev[key] = value;')
+                }
+                w.writeLine('    return prev;');
+                w.writeLine('}, {})');
+                return;
+            }
             w.writeLine(`const data: I${sName} = {`);
             const unReqFields: string[] = [];
             sortedSProps.forEach((sPropName) => {
@@ -442,6 +522,10 @@ class EntitiesGenerator {
             returnType: `string[]`,
         })
         validate.setBodyText((w) => {
+            if (additionalPropsOnly) {
+                w.writeLine('return []')
+                return;
+            }
             w.writeLine('const validate = {');
             Object.keys(sProps || {}).forEach((sPropName) => {
                 const [pType, isArray, isClass, , isAdditional] = schemaParamParser(sProps[sPropName], this.openapi);
@@ -502,7 +586,7 @@ class EntitiesGenerator {
         });
         update.addParameter({
             name: 'props',
-            type: `Partial<I${sName}>`,
+            type: additionalPropsOnly ? `I${sName}` : `Partial<I${sName}>`,
         });
         update.setBodyText((w) => { w.writeLine(`return new ${sName}({ ...this.serialize(), ...props });`); });
 

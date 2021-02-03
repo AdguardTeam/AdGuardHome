@@ -3,10 +3,11 @@ import { Tabs, Grid } from 'antd';
 import cn from 'classnames';
 import { FormikHelpers } from 'formik';
 
+import { DHCP_LINK } from 'Consts/common';
+import { danger, externalLink, p } from 'Common/formating';
+import { DEFAULT_DNS_PORT, DEFAULT_IP_ADDRESS, DEFAULT_IP_PORT } from 'Consts/install';
 import Store from 'Store/installStore';
 import theme from 'Lib/theme';
-import { danger, p } from 'Common/formating';
-import { DEFAULT_DNS_PORT, DEFAULT_IP_ADDRESS, DEFAULT_IP_PORT } from 'Consts/install';
 
 import { FormValues } from '../../Install';
 import StepButtons from '../StepButtons';
@@ -25,17 +26,6 @@ const ConfigureDevices: FC<ConfigureDevicesProps> = ({
     const { ui: { intl }, install: { addresses } } = useContext(Store);
     const screens = useBreakpoint();
     const tabsPosition = screens.md ? 'left' : 'top';
-
-    const dhcp = (e: string) => (
-        <a
-            href="https://github.com/AdguardTeam/AdGuardHome/wiki/DHCP"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={theme.link.link}
-        >
-            {e}
-        </a>
-    );
 
     const allIps = addresses?.interfaces.reduce<string[]>((all, data) => {
         const { ipAddresses } = data;
@@ -138,7 +128,7 @@ const ConfigureDevices: FC<ConfigureDevicesProps> = ({
                 </div>
             </div>
             <div className={cn(theme.install.text, theme.install.text_base)}>
-                {intl.getMessage('install_configure_dhcp', { dhcp })}
+                {intl.getMessage('install_configure_dhcp', { dhcp: externalLink(DHCP_LINK) })}
             </div>
             <StepButtons
                 setFieldValue={setFieldValue}

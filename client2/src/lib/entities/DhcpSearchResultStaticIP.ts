@@ -16,7 +16,8 @@ export default class DhcpSearchResultStaticIP {
     readonly _static: string | undefined;
 
     /**
-     * Description: yes|no|error
+     * Description: The result of determining static IP address.
+     *
      * Example: yes
      */
     get static(): string | undefined {

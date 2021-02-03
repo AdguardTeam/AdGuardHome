@@ -8,6 +8,9 @@ const toCamel = (s: string) => {
 const capitalize = (s: string) => {
     return s[0].toUpperCase() + s.slice(1);
 };
+const uncapitalize = (s: string) => {
+    return s[0].toLowerCase() + s.slice(1);
+};
 const TYPES = {
     integer: 'number',
     float: 'number',
@@ -37,7 +40,13 @@ const schemaParamParser = (schemaProp: any, openApi: any): [string, boolean, boo
 
         type = `${temp[temp.length - 1]}`;
 
-        const cl = openApi ? openApi.components.schemas[temp[temp.length - 1]] : {};
+        const cl = openApi ? openApi.components.schemas[type] : {};
+
+        if (cl.$ref) {
+            const link = schemaParamParser(cl, openApi);
+            link.shift();
+            return [type, ...link] as any;
+        }
 
         if (cl.type === 'string' && cl.enum) {
             isImport = true;
@@ -71,4 +80,4 @@ const schemaParamParser = (schemaProp: any, openApi: any): [string, boolean, boo
     return [type, isArray, isClass, isImport, isAdditional];
 };
 
-export { TYPES, toCamel, capitalize, schemaParamParser };
+export { TYPES, toCamel, capitalize, uncapitalize, schemaParamParser };

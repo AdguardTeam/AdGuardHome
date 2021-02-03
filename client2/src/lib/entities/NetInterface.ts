@@ -12,7 +12,8 @@ export default class NetInterface {
     readonly _flags: string;
 
     /**
-     * Description: undefined
+     * Description: Flags could be any combination of the following values, divided by the "|" character: "up", "broadcast", "loopback", "pointtopoint" and "multicast".
+     *
      * Example: up|broadcast|multicast
      */
     get flags(): string {

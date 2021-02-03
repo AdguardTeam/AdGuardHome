@@ -15,7 +15,7 @@ export interface IClientFindSubEntry {
     upstreams?: string[];
     use_global_blocked_services?: boolean;
     use_global_settings?: boolean;
-    whois_info?: IWhoisInfo[];
+    whois_info?: IWhoisInfo;
 }
 
 export default class ClientFindSubEntry {
@@ -98,9 +98,9 @@ export default class ClientFindSubEntry {
         return this._use_global_settings;
     }
 
-    readonly _whois_info: WhoisInfo[] | undefined;
+    readonly _whois_info: WhoisInfo | undefined;
 
-    get whoisInfo(): WhoisInfo[] | undefined {
+    get whoisInfo(): WhoisInfo | undefined {
         return this._whois_info;
     }
 
@@ -142,7 +142,7 @@ export default class ClientFindSubEntry {
             this._use_global_settings = props.use_global_settings;
         }
         if (props.whois_info) {
-            this._whois_info = props.whois_info.map((p) => new WhoisInfo(p));
+            this._whois_info = new WhoisInfo(props.whois_info);
         }
     }
 
@@ -186,7 +186,7 @@ export default class ClientFindSubEntry {
             data.use_global_settings = this._use_global_settings;
         }
         if (typeof this._whois_info !== 'undefined') {
-            data.whois_info = this._whois_info.map((p) => p.serialize());
+            data.whois_info = this._whois_info.serialize();
         }
         return data;
     }
@@ -203,7 +203,7 @@ export default class ClientFindSubEntry {
             use_global_blocked_services: !this._use_global_blocked_services ? true : typeof this._use_global_blocked_services === 'boolean',
             blocked_services: !this._blocked_services ? true : this._blocked_services.reduce((result, p) => result && typeof p === 'string', true),
             upstreams: !this._upstreams ? true : this._upstreams.reduce((result, p) => result && typeof p === 'string', true),
-            whois_info: !this._whois_info ? true : this._whois_info.reduce((result, p) => result && p.validate().length === 0, true),
+            whois_info: !this._whois_info ? true : this._whois_info.validate().length === 0,
             disallowed: !this._disallowed ? true : typeof this._disallowed === 'boolean',
             disallowed_rule: !this._disallowed_rule ? true : typeof this._disallowed_rule === 'string' && !this._disallowed_rule ? true : this._disallowed_rule,
         };

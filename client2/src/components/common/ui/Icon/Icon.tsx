@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import cn from 'classnames';
-import { IconType } from 'Lib/theme/Icons';
+import { IconType } from 'Common/ui/Icons';
 
 import s from './Icon.module.pcss';
 
@@ -22,4 +22,4 @@ const Icon: FC<IconProps> = ({ icon, color, className, onClick }) => {
 };
 
 export default Icon;
-export { IconType } from 'Lib/theme/Icons';
+export { IconType } from 'Common/ui/Icons';

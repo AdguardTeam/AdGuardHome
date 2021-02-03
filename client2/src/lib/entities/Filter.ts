@@ -3,9 +3,9 @@
 export interface IFilter {
     enabled: boolean;
     id: number;
-    lastUpdated: string;
+    last_updated: string;
     name: string;
-    rulesCount: number;
+    rules_count: number;
     url: string;
 }
 
@@ -34,14 +34,14 @@ export default class Filter {
         return typeof id === 'number';
     }
 
-    readonly _lastUpdated: string;
+    readonly _last_updated: string;
 
     /**
      * Description: undefined
      * Example: 2018-10-30T12:18:57+03:00
      */
     get lastUpdated(): string {
-        return this._lastUpdated;
+        return this._last_updated;
     }
 
     static lastUpdatedValidate(lastUpdated: string): boolean {
@@ -62,14 +62,14 @@ export default class Filter {
         return typeof name === 'string' && !!name.trim();
     }
 
-    readonly _rulesCount: number;
+    readonly _rules_count: number;
 
     /**
      * Description: undefined
      * Example: 5912
      */
     get rulesCount(): number {
-        return this._rulesCount;
+        return this._rules_count;
     }
 
     static rulesCountValidate(rulesCount: number): boolean {
@@ -94,9 +94,9 @@ export default class Filter {
     constructor(props: IFilter) {
         this._enabled = props.enabled;
         this._id = props.id;
-        this._lastUpdated = props.lastUpdated.trim();
+        this._last_updated = props.last_updated.trim();
         this._name = props.name.trim();
-        this._rulesCount = props.rulesCount;
+        this._rules_count = props.rules_count;
         this._url = props.url.trim();
     }
 
@@ -104,9 +104,9 @@ export default class Filter {
         const data: IFilter = {
             enabled: this._enabled,
             id: this._id,
-            lastUpdated: this._lastUpdated,
+            last_updated: this._last_updated,
             name: this._name,
-            rulesCount: this._rulesCount,
+            rules_count: this._rules_count,
             url: this._url,
         };
         return data;
@@ -116,9 +116,9 @@ export default class Filter {
         const validate = {
             enabled: typeof this._enabled === 'boolean',
             id: typeof this._id === 'number',
-            lastUpdated: typeof this._lastUpdated === 'string' && !this._lastUpdated ? true : this._lastUpdated,
+            last_updated: typeof this._last_updated === 'string' && !this._last_updated ? true : this._last_updated,
             name: typeof this._name === 'string' && !this._name ? true : this._name,
-            rulesCount: typeof this._rulesCount === 'number',
+            rules_count: typeof this._rules_count === 'number',
             url: typeof this._url === 'string' && !this._url ? true : this._url,
         };
         const isError: string[] = [];

@@ -8,6 +8,7 @@ export interface IQueryLogItem {
     answer?: IDnsAnswer[];
     answer_dnssec?: boolean;
     client?: string;
+    client_id?: string;
     client_proto?: any;
     elapsedMs?: string;
     filterId?: number;
@@ -38,11 +39,23 @@ export default class QueryLogItem {
     readonly _client: string | undefined;
 
     /**
-     * Description: undefined
+     * Description: The client's IP address.
+     *
      * Example: 192.168.0.1
      */
     get client(): string | undefined {
         return this._client;
+    }
+
+    readonly _client_id: string | undefined;
+
+    /**
+     * Description: The client ID, if provided in DOH, DOQ, or DOT.
+     *
+     * Example: cli123
+     */
+    get clientId(): string | undefined {
+        return this._client_id;
     }
 
     readonly _client_proto: any | undefined;
@@ -156,6 +169,9 @@ export default class QueryLogItem {
         if (typeof props.client === 'string') {
             this._client = props.client.trim();
         }
+        if (typeof props.client_id === 'string') {
+            this._client_id = props.client_id.trim();
+        }
         if (props.client_proto) {
             this._client_proto = props.client_proto;
         }
@@ -206,6 +222,9 @@ export default class QueryLogItem {
         if (typeof this._client !== 'undefined') {
             data.client = this._client;
         }
+        if (typeof this._client_id !== 'undefined') {
+            data.client_id = this._client_id;
+        }
         if (typeof this._client_proto !== 'undefined') {
             data.client_proto = this._client_proto;
         }
@@ -252,6 +271,7 @@ export default class QueryLogItem {
             upstream: !this._upstream ? true : typeof this._upstream === 'string' && !this._upstream ? true : this._upstream,
             answer_dnssec: !this._answer_dnssec ? true : typeof this._answer_dnssec === 'boolean',
             client: !this._client ? true : typeof this._client === 'string' && !this._client ? true : this._client,
+            client_id: !this._client_id ? true : typeof this._client_id === 'string' && !this._client_id ? true : this._client_id,
             elapsedMs: !this._elapsedMs ? true : typeof this._elapsedMs === 'string' && !this._elapsedMs ? true : this._elapsedMs,
             question: !this._question ? true : this._question.validate().length === 0,
             filterId: !this._filterId ? true : typeof this._filterId === 'number',

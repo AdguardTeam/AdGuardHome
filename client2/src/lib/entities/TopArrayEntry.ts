@@ -2,6 +2,7 @@
 // All changes will be overwrited on commit.
 export interface ITopArrayEntry {
     domain_or_ip?: number;
+    [key: string]: number | undefined;
 }
 
 export default class TopArrayEntry {
@@ -11,19 +12,20 @@ export default class TopArrayEntry {
         return this._domain_or_ip;
     }
 
+    readonly numberData: Record<string, number>;
+
     constructor(props: ITopArrayEntry) {
-        if (typeof props.domain_or_ip === 'number') {
-            this._domain_or_ip = props.domain_or_ip;
-        }
+        this.numberData = Object.entries(props).reduce<Record<string, number>>((prev, [key, value]) => {
+            prev[key] = value!;
+            return prev;
+        }, {})
     }
 
     serialize(): ITopArrayEntry {
-        const data: ITopArrayEntry = {
-        };
-        if (typeof this._domain_or_ip !== 'undefined') {
-            data.domain_or_ip = this._domain_or_ip;
-        }
-        return data;
+        return Object.entries(this.numberData).reduce<Record<string, number>>((prev, [key, value]) => {
+            prev[key] = value;
+            return prev;
+        }, {})
     }
 
     validate(): string[] {

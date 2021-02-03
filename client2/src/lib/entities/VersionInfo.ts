@@ -4,6 +4,7 @@ export interface IVersionInfo {
     announcement?: string;
     announcement_url?: string;
     can_autoupdate?: boolean;
+    disabled: boolean;
     new_version?: string;
 }
 
@@ -35,6 +36,17 @@ export default class VersionInfo {
         return this._can_autoupdate;
     }
 
+    readonly _disabled: boolean;
+
+    /** */
+    get disabled(): boolean {
+        return this._disabled;
+    }
+
+    static disabledValidate(disabled: boolean): boolean {
+        return typeof disabled === 'boolean';
+    }
+
     readonly _new_version: string | undefined;
 
     /**
@@ -55,6 +67,7 @@ export default class VersionInfo {
         if (typeof props.can_autoupdate === 'boolean') {
             this._can_autoupdate = props.can_autoupdate;
         }
+        this._disabled = props.disabled;
         if (typeof props.new_version === 'string') {
             this._new_version = props.new_version.trim();
         }
@@ -62,6 +75,7 @@ export default class VersionInfo {
 
     serialize(): IVersionInfo {
         const data: IVersionInfo = {
+            disabled: this._disabled,
         };
         if (typeof this._announcement !== 'undefined') {
             data.announcement = this._announcement;
@@ -80,6 +94,7 @@ export default class VersionInfo {
 
     validate(): string[] {
         const validate = {
+            disabled: typeof this._disabled === 'boolean',
             new_version: !this._new_version ? true : typeof this._new_version === 'string' && !this._new_version ? true : this._new_version,
             announcement: !this._announcement ? true : typeof this._announcement === 'string' && !this._announcement ? true : this._announcement,
             announcement_url: !this._announcement_url ? true : typeof this._announcement_url === 'string' && !this._announcement_url ? true : this._announcement_url,
