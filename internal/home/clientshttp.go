@@ -297,9 +297,9 @@ func (clients *clientsContainer) findTemporary(ip net.IP, idStr string) (cj clie
 
 // RegisterClientsHandlers registers HTTP handlers
 func (clients *clientsContainer) registerWebHandlers() {
-	httpRegister("GET", "/control/clients", clients.handleGetClients)
-	httpRegister("POST", "/control/clients/add", clients.handleAddClient)
-	httpRegister("POST", "/control/clients/delete", clients.handleDelClient)
-	httpRegister("POST", "/control/clients/update", clients.handleUpdateClient)
-	httpRegister("GET", "/control/clients/find", clients.handleFindClient)
+	httpRegister(http.MethodGet, "/control/clients", clients.handleGetClients)
+	httpRegister(http.MethodPost, "/control/clients/add", clients.handleAddClient)
+	httpRegister(http.MethodPost, "/control/clients/delete", clients.handleDelClient)
+	httpRegister(http.MethodPost, "/control/clients/update", clients.handleUpdateClient)
+	httpRegister(http.MethodGet, "/control/clients/find", clients.handleFindClient)
 }

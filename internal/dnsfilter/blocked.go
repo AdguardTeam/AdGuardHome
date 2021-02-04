@@ -242,6 +242,6 @@ func (d *DNSFilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Requ
 
 // registerBlockedServicesHandlers - register HTTP handlers
 func (d *DNSFilter) registerBlockedServicesHandlers() {
-	d.Config.HTTPRegister("GET", "/control/blocked_services/list", d.handleBlockedServicesList)
-	d.Config.HTTPRegister("POST", "/control/blocked_services/set", d.handleBlockedServicesSet)
+	d.Config.HTTPRegister(http.MethodGet, "/control/blocked_services/list", d.handleBlockedServicesList)
+	d.Config.HTTPRegister(http.MethodPost, "/control/blocked_services/set", d.handleBlockedServicesSet)
 }

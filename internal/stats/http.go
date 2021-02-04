@@ -113,8 +113,8 @@ func (s *statsCtx) initWeb() {
 		return
 	}
 
-	s.conf.HTTPRegister("GET", "/control/stats", s.handleStats)
-	s.conf.HTTPRegister("POST", "/control/stats_reset", s.handleStatsReset)
-	s.conf.HTTPRegister("POST", "/control/stats_config", s.handleStatsConfig)
-	s.conf.HTTPRegister("GET", "/control/stats_info", s.handleStatsInfo)
+	s.conf.HTTPRegister(http.MethodGet, "/control/stats", s.handleStats)
+	s.conf.HTTPRegister(http.MethodPost, "/control/stats_reset", s.handleStatsReset)
+	s.conf.HTTPRegister(http.MethodPost, "/control/stats_config", s.handleStatsConfig)
+	s.conf.HTTPRegister(http.MethodGet, "/control/stats_info", s.handleStatsInfo)
 }

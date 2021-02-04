@@ -544,7 +544,7 @@ func marshalTLS(w http.ResponseWriter, data tlsConfig) {
 
 // registerWebHandlers registers HTTP handlers for TLS configuration
 func (t *TLSMod) registerWebHandlers() {
-	httpRegister("GET", "/control/tls/status", t.handleTLSStatus)
-	httpRegister("POST", "/control/tls/configure", t.handleTLSConfigure)
-	httpRegister("POST", "/control/tls/validate", t.handleTLSValidate)
+	httpRegister(http.MethodGet, "/control/tls/status", t.handleTLSStatus)
+	httpRegister(http.MethodPost, "/control/tls/configure", t.handleTLSConfigure)
+	httpRegister(http.MethodPost, "/control/tls/validate", t.handleTLSValidate)
 }

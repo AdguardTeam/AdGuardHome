@@ -219,7 +219,7 @@ func (d *DNSFilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) 
 }
 
 func (d *DNSFilter) registerRewritesHandlers() {
-	d.Config.HTTPRegister("GET", "/control/rewrite/list", d.handleRewriteList)
-	d.Config.HTTPRegister("POST", "/control/rewrite/add", d.handleRewriteAdd)
-	d.Config.HTTPRegister("POST", "/control/rewrite/delete", d.handleRewriteDelete)
+	d.Config.HTTPRegister(http.MethodGet, "/control/rewrite/list", d.handleRewriteList)
+	d.Config.HTTPRegister(http.MethodPost, "/control/rewrite/add", d.handleRewriteAdd)
+	d.Config.HTTPRegister(http.MethodPost, "/control/rewrite/delete", d.handleRewriteDelete)
 }

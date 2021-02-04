@@ -23,6 +23,10 @@ fi
 # variables.
 set -f -u
 
+
+
+# Deferred Helpers
+
 not_found_msg='
 looks like a binary not found error.
 make sure you have installed the linter binaries using:
@@ -43,11 +47,21 @@ not_found() {
 }
 trap not_found EXIT
 
+
+
+# Simple Analyzers
+
 # blocklist_imports is a simple check against unwanted packages.
 # Currently it only looks for package log which is replaced by our own
 # package github.com/AdguardTeam/golibs/log.
 blocklist_imports() {
 	git grep -F -e '"log"' -- '*.go' || exit 0;
+}
+
+# method_const is a simple check against the usage of some raw strings
+# and numbers where one should use named constants.
+method_const() {
+	git grep -F -e '"GET"' -e '"POST"' -- '*.go' || exit 0;
 }
 
 # underscores is a simple check against Go filenames with underscores.
@@ -57,6 +71,10 @@ underscores() {
 		-e '_test.go' -e '_unix.go' -e '_windows.go' \
 		-v || exit 0; }
 }
+
+
+
+# Helpers
 
 # exit_on_output exits with a nonzero exit code if there is anything in
 # the command's combined output.
@@ -98,7 +116,13 @@ exit_on_output() (
 	return "$exitcode"
 )
 
+
+
+# Checks
+
 exit_on_output blocklist_imports
+
+exit_on_output method_const
 
 exit_on_output underscores
 

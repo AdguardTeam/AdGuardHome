@@ -22,10 +22,10 @@ type qlogConfig struct {
 
 // Register web handlers
 func (l *queryLog) initWeb() {
-	l.conf.HTTPRegister("GET", "/control/querylog", l.handleQueryLog)
-	l.conf.HTTPRegister("GET", "/control/querylog_info", l.handleQueryLogInfo)
-	l.conf.HTTPRegister("POST", "/control/querylog_clear", l.handleQueryLogClear)
-	l.conf.HTTPRegister("POST", "/control/querylog_config", l.handleQueryLogConfig)
+	l.conf.HTTPRegister(http.MethodGet, "/control/querylog", l.handleQueryLog)
+	l.conf.HTTPRegister(http.MethodGet, "/control/querylog_info", l.handleQueryLogInfo)
+	l.conf.HTTPRegister(http.MethodPost, "/control/querylog_clear", l.handleQueryLogClear)
+	l.conf.HTTPRegister(http.MethodPost, "/control/querylog_config", l.handleQueryLogConfig)
 }
 
 func httpError(r *http.Request, w http.ResponseWriter, code int, format string, args ...interface{}) {
