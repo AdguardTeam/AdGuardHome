@@ -85,10 +85,11 @@ type DNSCreateParams struct {
 // NewServer creates a new instance of the dnsforward.Server
 // Note: this function must be called only once
 func NewServer(p DNSCreateParams) *Server {
-	s := &Server{}
-	s.dnsFilter = p.DNSFilter
-	s.stats = p.Stats
-	s.queryLog = p.QueryLog
+	s := &Server{
+		dnsFilter: p.DNSFilter,
+		stats:     p.Stats,
+		queryLog:  p.QueryLog,
+	}
 
 	if p.DHCPServer != nil {
 		s.dhcpServer = p.DHCPServer
@@ -100,6 +101,16 @@ func NewServer(p DNSCreateParams) *Server {
 		// Use plain DNS on MIPS, encryption is too slow
 		defaultDNS = defaultBootstrap
 	}
+	return s
+}
+
+// NewCustomServer creates a new instance of *Server with custom internal proxy.
+func NewCustomServer(internalProxy *proxy.Proxy) *Server {
+	s := &Server{}
+	if internalProxy != nil {
+		s.internalProxy = internalProxy
+	}
+
 	return s
 }
 

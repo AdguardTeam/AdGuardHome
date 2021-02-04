@@ -3,12 +3,11 @@ package dnsfilter
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"fmt"
 	"net"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/testutil"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
@@ -17,7 +16,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	testutil.DiscardLogOutput(m)
+	aghtest.DiscardLogOutput(m)
 }
 
 var setts RequestFilteringSettings
@@ -37,7 +36,9 @@ func purgeCaches() {
 }
 
 func newForTest(c *Config, filters []Filter) *DNSFilter {
-	setts = RequestFilteringSettings{}
+	setts = RequestFilteringSettings{
+		FilteringEnabled: true,
+	}
 	setts.FilteringEnabled = true
 	if c != nil {
 		c.SafeBrowsingCacheSize = 10000
@@ -149,16 +150,16 @@ func TestEtcHostsMatching(t *testing.T) {
 
 func TestSafeBrowsing(t *testing.T) {
 	logOutput := &bytes.Buffer{}
-	testutil.ReplaceLogWriter(t, logOutput)
-	testutil.ReplaceLogLevel(t, log.DEBUG)
+	aghtest.ReplaceLogWriter(t, logOutput)
+	aghtest.ReplaceLogLevel(t, log.DEBUG)
 
 	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
 	t.Cleanup(d.Close)
 	matching := "wmconvirus.narod.ru"
-	d.safeBrowsingUpstream = &testSbUpstream{
-		hostname: matching,
-		block:    true,
-	}
+	d.SetSafeBrowsingUpstream(&aghtest.TestBlockUpstream{
+		Hostname: matching,
+		Block:    true,
+	})
 	d.checkMatch(t, matching)
 
 	assert.Contains(t, logOutput.String(), "SafeBrowsing lookup for "+matching)
@@ -178,10 +179,10 @@ func TestParallelSB(t *testing.T) {
 	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
 	t.Cleanup(d.Close)
 	matching := "wmconvirus.narod.ru"
-	d.safeBrowsingUpstream = &testSbUpstream{
-		hostname: matching,
-		block:    true,
-	}
+	d.SetSafeBrowsingUpstream(&aghtest.TestBlockUpstream{
+		Hostname: matching,
+		Block:    true,
+	})
 
 	t.Run("group", func(t *testing.T) {
 		for i := 0; i < 100; i++ {
@@ -228,26 +229,12 @@ func TestCheckHostSafeSearchYandex(t *testing.T) {
 	}
 }
 
-// testResolver is a Resolver for tests.
-type testResolver struct{}
-
-// LookupIP implements Resolver interface for *testResolver.
-func (r *testResolver) LookupIPAddr(_ context.Context, host string) (ips []net.IPAddr, err error) {
-	hash := sha256.Sum256([]byte(host))
-	addrs := []net.IPAddr{{
-		IP:   net.IP(hash[:4]),
-		Zone: "somezone",
-	}, {
-		IP:   net.IP(hash[4:20]),
-		Zone: "somezone",
-	}}
-	return addrs, nil
-}
-
 func TestCheckHostSafeSearchGoogle(t *testing.T) {
-	d := newForTest(&Config{SafeSearchEnabled: true}, nil)
+	d := newForTest(&Config{
+		SafeSearchEnabled: true,
+		CustomResolver:    &aghtest.TestResolver{},
+	}, nil)
 	t.Cleanup(d.Close)
-	d.resolver = &testResolver{}
 
 	// Check host for each domain.
 	for _, host := range []string{
@@ -299,11 +286,11 @@ func TestSafeSearchCacheYandex(t *testing.T) {
 }
 
 func TestSafeSearchCacheGoogle(t *testing.T) {
-	d := newForTest(nil, nil)
+	resolver := &aghtest.TestResolver{}
+	d := newForTest(&Config{
+		CustomResolver: resolver,
+	}, nil)
 	t.Cleanup(d.Close)
-
-	resolver := &testResolver{}
-	d.resolver = resolver
 
 	domain := "www.google.ru"
 	res, err := d.CheckHost(domain, dns.TypeA, &setts)
@@ -350,16 +337,16 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 
 func TestParentalControl(t *testing.T) {
 	logOutput := &bytes.Buffer{}
-	testutil.ReplaceLogWriter(t, logOutput)
-	testutil.ReplaceLogLevel(t, log.DEBUG)
+	aghtest.ReplaceLogWriter(t, logOutput)
+	aghtest.ReplaceLogLevel(t, log.DEBUG)
 
 	d := newForTest(&Config{ParentalEnabled: true}, nil)
 	t.Cleanup(d.Close)
 	matching := "pornhub.com"
-	d.parentalUpstream = &testSbUpstream{
-		hostname: matching,
-		block:    true,
-	}
+	d.SetParentalUpstream(&aghtest.TestBlockUpstream{
+		Hostname: matching,
+		Block:    true,
+	})
 
 	d.checkMatch(t, matching)
 	assert.Contains(t, logOutput.String(), "Parental lookup for "+matching)
@@ -733,14 +720,14 @@ func TestClientSettings(t *testing.T) {
 		}},
 	)
 	t.Cleanup(d.Close)
-	d.parentalUpstream = &testSbUpstream{
-		hostname: "pornhub.com",
-		block:    true,
-	}
-	d.safeBrowsingUpstream = &testSbUpstream{
-		hostname: "wmconvirus.narod.ru",
-		block:    true,
-	}
+	d.SetParentalUpstream(&aghtest.TestBlockUpstream{
+		Hostname: "pornhub.com",
+		Block:    true,
+	})
+	d.SetSafeBrowsingUpstream(&aghtest.TestBlockUpstream{
+		Hostname: "wmconvirus.narod.ru",
+		Block:    true,
+	})
 
 	type testCase struct {
 		name       string
@@ -801,10 +788,10 @@ func BenchmarkSafeBrowsing(b *testing.B) {
 	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
 	b.Cleanup(d.Close)
 	blocked := "wmconvirus.narod.ru"
-	d.safeBrowsingUpstream = &testSbUpstream{
-		hostname: blocked,
-		block:    true,
-	}
+	d.SetSafeBrowsingUpstream(&aghtest.TestBlockUpstream{
+		Hostname: blocked,
+		Block:    true,
+	})
 	for n := 0; n < b.N; n++ {
 		res, err := d.CheckHost(blocked, dns.TypeA, &setts)
 		assert.Nilf(b, err, "Error while matching host %s: %s", blocked, err)
@@ -816,10 +803,10 @@ func BenchmarkSafeBrowsingParallel(b *testing.B) {
 	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
 	b.Cleanup(d.Close)
 	blocked := "wmconvirus.narod.ru"
-	d.safeBrowsingUpstream = &testSbUpstream{
-		hostname: blocked,
-		block:    true,
-	}
+	d.SetSafeBrowsingUpstream(&aghtest.TestBlockUpstream{
+		Hostname: blocked,
+		Block:    true,
+	})
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			res, err := d.CheckHost(blocked, dns.TypeA, &setts)

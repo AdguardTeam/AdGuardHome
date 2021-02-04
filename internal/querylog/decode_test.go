@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
-	"github.com/AdguardTeam/AdGuardHome/internal/testutil"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
@@ -19,8 +19,8 @@ import (
 func TestDecodeLogEntry(t *testing.T) {
 	logOutput := &bytes.Buffer{}
 
-	testutil.ReplaceLogWriter(t, logOutput)
-	testutil.ReplaceLogLevel(t, log.DEBUG)
+	aghtest.ReplaceLogWriter(t, logOutput)
+	aghtest.ReplaceLogLevel(t, log.DEBUG)
 
 	t.Run("success", func(t *testing.T) {
 		const ansStr = `Qz+BgAABAAEAAAAAAmFuBnlhbmRleAJydQAAAQABwAwAAQABAAAACgAEAAAAAA==`

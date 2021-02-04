@@ -13,9 +13,14 @@ func prepareTestDNSServer() error {
 	Context.dnsServer = dnsforward.NewServer(dnsforward.DNSCreateParams{})
 	conf := &dnsforward.ServerConfig{}
 	conf.UpstreamDNS = []string{"8.8.8.8"}
+
 	return Context.dnsServer.Prepare(conf)
 }
 
+// TODO(e.burkov): It's kind of complicated to get rid of network access in this
+// test.  The thing is that *Whois creates new *net.Dialer each time it requests
+// the server, so it becomes hard to simulate handling of request from test even
+// with substituted upstream.  However, it must be done.
 func TestWhois(t *testing.T) {
 	assert.Nil(t, prepareTestDNSServer())
 

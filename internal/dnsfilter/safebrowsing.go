@@ -30,6 +30,20 @@ const (
 	pcTXTSuffix               = `pc.dns.adguard.com.`
 )
 
+// SetParentalUpstream sets the parental upstream for *DNSFilter.
+//
+// TODO(e.burkov): Remove this in v1 API to forbid the direct access.
+func (d *DNSFilter) SetParentalUpstream(u upstream.Upstream) {
+	d.parentalUpstream = u
+}
+
+// SetSafeBrowsingUpstream sets the safe browsing upstream for *DNSFilter.
+//
+// TODO(e.burkov): Remove this in v1 API to forbid the direct access.
+func (d *DNSFilter) SetSafeBrowsingUpstream(u upstream.Upstream) {
+	d.safeBrowsingUpstream = u
+}
+
 func (d *DNSFilter) initSecurityServices() error {
 	var err error
 	d.safeBrowsingServer = defaultSafebrowsingServer
@@ -44,15 +58,17 @@ func (d *DNSFilter) initSecurityServices() error {
 		},
 	}
 
-	d.parentalUpstream, err = upstream.AddressToUpstream(d.parentalServer, opts)
+	parUps, err := upstream.AddressToUpstream(d.parentalServer, opts)
 	if err != nil {
 		return fmt.Errorf("converting parental server: %w", err)
 	}
+	d.SetParentalUpstream(parUps)
 
-	d.safeBrowsingUpstream, err = upstream.AddressToUpstream(d.safeBrowsingServer, opts)
+	sbUps, err := upstream.AddressToUpstream(d.safeBrowsingServer, opts)
 	if err != nil {
 		return fmt.Errorf("converting safe browsing server: %w", err)
 	}
+	d.SetSafeBrowsingUpstream(sbUps)
 
 	return nil
 }
@@ -227,7 +243,7 @@ func (c *sbCtx) processTXT(resp *dns.Msg) (bool, [][]byte) {
 
 func (c *sbCtx) storeCache(hashes [][]byte) {
 	sort.Slice(hashes, func(a, b int) bool {
-		return bytes.Compare(hashes[a], hashes[b]) < 0
+		return bytes.Compare(hashes[a], hashes[b]) == -1
 	})
 
 	var curData []byte

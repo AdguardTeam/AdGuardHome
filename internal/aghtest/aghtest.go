@@ -1,5 +1,5 @@
-// Package testutil contains utilities for testing.
-package testutil
+// Package aghtest contains utilities for testing.
+package aghtest
 
 import (
 	"io"

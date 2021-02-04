@@ -43,6 +43,12 @@ type RequestFilteringSettings struct {
 	ServicesRules []ServiceEntry
 }
 
+// Resolver is the interface for net.Resolver to simplify testing.
+type Resolver interface {
+	// TODO(e.burkov): Replace with LookupIP after upgrading go to v1.15.
+	LookupIPAddr(ctx context.Context, host string) (ips []net.IPAddr, err error)
+}
+
 // Config allows you to configure DNS filtering with New() or just change variables directly.
 type Config struct {
 	ParentalEnabled     bool   `yaml:"parental_enabled"`
@@ -69,6 +75,9 @@ type Config struct {
 
 	// Register an HTTP handler
 	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request)) `yaml:"-"`
+
+	// CustomResolver is the resolver used by DNSFilter.
+	CustomResolver Resolver
 }
 
 // LookupStats store stats collected during safebrowsing or parental checks
@@ -90,12 +99,6 @@ type Stats struct {
 type filtersInitializerParams struct {
 	allowFilters []Filter
 	blockFilters []Filter
-}
-
-// Resolver is the interface for net.Resolver to simplify testing.
-type Resolver interface {
-	// TODO(e.burkov): Replace with LookupIP after upgrading go to v1.15.
-	LookupIPAddr(ctx context.Context, host string) (ips []net.IPAddr, err error)
 }
 
 // DNSFilter matches hostnames and DNS requests against filtering rules.
@@ -796,6 +799,7 @@ func InitModule() {
 
 // New creates properly initialized DNS Filter that is ready to be used.
 func New(c *Config, blockFilters []Filter) *DNSFilter {
+	var resolver Resolver = net.DefaultResolver
 	if c != nil {
 		cacheConf := cache.Config{
 			EnableLRU: true,
@@ -815,10 +819,14 @@ func New(c *Config, blockFilters []Filter) *DNSFilter {
 			cacheConf.MaxSize = c.ParentalCacheSize
 			gctx.parentalCache = cache.New(cacheConf)
 		}
+
+		if c.CustomResolver != nil {
+			resolver = c.CustomResolver
+		}
 	}
 
 	d := &DNSFilter{
-		resolver: net.DefaultResolver,
+		resolver: resolver,
 	}
 
 	err := d.initSecurityServices()

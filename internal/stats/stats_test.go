@@ -7,12 +7,12 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/testutil"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMain(m *testing.M) {
-	testutil.DiscardLogOutput(m)
+	aghtest.DiscardLogOutput(m)
 }
 
 func UIntArrayEquals(a, b []uint64) bool {

@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/testutil"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/stretchr/testify/assert"
 )
@@ -19,7 +19,7 @@ import (
 // TODO(a.garipov): Rewrite these tests.
 
 func TestMain(m *testing.M) {
-	testutil.DiscardLogOutput(m)
+	aghtest.DiscardLogOutput(m)
 }
 
 func startHTTPServer(data string) (l net.Listener, portStr string) {

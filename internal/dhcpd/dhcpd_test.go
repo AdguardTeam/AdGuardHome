@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/testutil"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMain(m *testing.M) {
-	testutil.DiscardLogOutput(m)
+	aghtest.DiscardLogOutput(m)
 }
 
 func testNotify(flags uint32) {

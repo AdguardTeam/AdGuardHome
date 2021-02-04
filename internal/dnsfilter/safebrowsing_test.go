@@ -2,14 +2,11 @@ package dnsfilter
 
 import (
 	"crypto/sha256"
-	"encoding/hex"
 	"strings"
-	"sync"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/cache"
-	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -108,27 +105,14 @@ func TestSafeBrowsingCache(t *testing.T) {
 	assert.Empty(t, c.getCached())
 }
 
-// testErrUpstream implements upstream.Upstream interface for replacing real
-// upstream in tests.
-type testErrUpstream struct{}
-
-// Exchange always returns nil Msg and non-nil error.
-func (teu *testErrUpstream) Exchange(*dns.Msg) (*dns.Msg, error) {
-	return nil, agherr.Error("bad")
-}
-
-func (teu *testErrUpstream) Address() string {
-	return ""
-}
-
 func TestSBPC_checkErrorUpstream(t *testing.T) {
 	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
 	t.Cleanup(d.Close)
 
-	ups := &testErrUpstream{}
+	ups := &aghtest.TestErrUpstream{}
 
-	d.safeBrowsingUpstream = ups
-	d.parentalUpstream = ups
+	d.SetSafeBrowsingUpstream(ups)
+	d.SetParentalUpstream(ups)
 
 	_, err := d.checkSafeBrowsing("smthng.com")
 	assert.NotNil(t, err)
@@ -137,122 +121,86 @@ func TestSBPC_checkErrorUpstream(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
-// testSbUpstream implements upstream.Upstream interface for replacing real
-// upstream in tests.
-type testSbUpstream struct {
-	hostname      string
-	block         bool
-	requestsCount int
-	counterLock   sync.RWMutex
-}
-
-// Exchange returns a message depending on the upstream settings (hostname, block)
-func (u *testSbUpstream) Exchange(r *dns.Msg) (*dns.Msg, error) {
-	u.counterLock.Lock()
-	u.requestsCount++
-	u.counterLock.Unlock()
-
-	hash := sha256.Sum256([]byte(u.hostname))
-	prefix := hash[0:2]
-	hashToReturn := hex.EncodeToString(prefix) + strings.Repeat("ab", 28)
-	if u.block {
-		hashToReturn = hex.EncodeToString(hash[:])
-	}
-
-	m := &dns.Msg{}
-	m.Answer = []dns.RR{
-		&dns.TXT{
-			Hdr: dns.RR_Header{
-				Name: r.Question[0].Name,
-			},
-			Txt: []string{
-				hashToReturn,
-			},
-		},
-	}
-
-	return m, nil
-}
-
-func (u *testSbUpstream) Address() string {
-	return ""
-}
-
-func TestSBPC_sbValidResponse(t *testing.T) {
+func TestSBPC(t *testing.T) {
 	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
 	t.Cleanup(d.Close)
 
-	ups := &testSbUpstream{}
-	d.safeBrowsingUpstream = ups
-	d.parentalUpstream = ups
+	const hostname = "example.org"
 
-	// Prepare the upstream
-	ups.hostname = "example.org"
-	ups.block = false
-	ups.requestsCount = 0
+	testCases := []struct {
+		name      string
+		block     bool
+		testFunc  func(string) (Result, error)
+		testCache cache.Cache
+	}{{
+		name:      "sb_no_block",
+		block:     false,
+		testFunc:  d.checkSafeBrowsing,
+		testCache: gctx.safebrowsingCache,
+	}, {
+		name:      "sb_block",
+		block:     true,
+		testFunc:  d.checkSafeBrowsing,
+		testCache: gctx.safebrowsingCache,
+	}, {
+		name:      "pc_no_block",
+		block:     false,
+		testFunc:  d.checkParental,
+		testCache: gctx.parentalCache,
+	}, {
+		name:      "pc_block",
+		block:     true,
+		testFunc:  d.checkParental,
+		testCache: gctx.parentalCache,
+	}}
 
-	// First - check that the request is not blocked
-	res, err := d.checkSafeBrowsing("example.org")
-	assert.Nil(t, err)
-	assert.False(t, res.IsFiltered)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Prepare the upstream.
+			ups := &aghtest.TestBlockUpstream{
+				Hostname: hostname,
+				Block:    tc.block,
+			}
+			d.SetSafeBrowsingUpstream(ups)
+			d.SetParentalUpstream(ups)
 
-	// Check the cache state, check that the response is now cached
-	assert.Equal(t, 1, gctx.safebrowsingCache.Stats().Count)
-	assert.Equal(t, 0, gctx.safebrowsingCache.Stats().Hit)
+			// Firstly, check the request blocking.
+			hits := 0
+			res, err := tc.testFunc(hostname)
+			assert.Nil(t, err)
+			if tc.block {
+				assert.True(t, res.IsFiltered)
+				assert.Len(t, res.Rules, 1)
+				hits++
+			} else {
+				assert.False(t, res.IsFiltered)
+			}
 
-	// There was one request to an upstream
-	assert.Equal(t, 1, ups.requestsCount)
+			// Check the cache state, check the response is now cached.
+			assert.Equal(t, 1, tc.testCache.Stats().Count)
+			assert.Equal(t, hits, tc.testCache.Stats().Hit)
 
-	// Now make the same request to check that the cache was used
-	res, err = d.checkSafeBrowsing("example.org")
-	assert.Nil(t, err)
-	assert.False(t, res.IsFiltered)
+			// There was one request to an upstream.
+			assert.Equal(t, 1, ups.RequestsCount())
 
-	// Check the cache state, it should've been used
-	assert.Equal(t, 1, gctx.safebrowsingCache.Stats().Count)
-	assert.Equal(t, 1, gctx.safebrowsingCache.Stats().Hit)
+			// Now make the same request to check the cache was used.
+			res, err = tc.testFunc(hostname)
+			assert.Nil(t, err)
+			if tc.block {
+				assert.True(t, res.IsFiltered)
+				assert.Len(t, res.Rules, 1)
+			} else {
+				assert.False(t, res.IsFiltered)
+			}
 
-	// Check that there were no additional requests
-	assert.Equal(t, 1, ups.requestsCount)
-}
+			// Check the cache state, it should've been used.
+			assert.Equal(t, 1, tc.testCache.Stats().Count)
+			assert.Equal(t, hits+1, tc.testCache.Stats().Hit)
 
-func TestSBPC_pcBlockedResponse(t *testing.T) {
-	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
-	t.Cleanup(d.Close)
+			// Check that there were no additional requests.
+			assert.Equal(t, 1, ups.RequestsCount())
 
-	ups := &testSbUpstream{}
-	d.safeBrowsingUpstream = ups
-	d.parentalUpstream = ups
-
-	// Prepare the upstream
-	// Make sure that the upstream will return a response that matches the queried domain
-	ups.hostname = "example.com"
-	ups.block = true
-	ups.requestsCount = 0
-
-	// Make a lookup
-	res, err := d.checkParental("example.com")
-	assert.Nil(t, err)
-	assert.True(t, res.IsFiltered)
-	assert.Len(t, res.Rules, 1)
-
-	// Check the cache state, check that the response is now cached
-	assert.Equal(t, 1, gctx.parentalCache.Stats().Count)
-	assert.Equal(t, 1, gctx.parentalCache.Stats().Hit)
-
-	// There was one request to an upstream
-	assert.Equal(t, 1, ups.requestsCount)
-
-	// Make a second lookup for the same domain
-	res, err = d.checkParental("example.com")
-	assert.Nil(t, err)
-	assert.True(t, res.IsFiltered)
-	assert.Len(t, res.Rules, 1)
-
-	// Check the cache state, it should've been used
-	assert.Equal(t, 1, gctx.parentalCache.Stats().Count)
-	assert.Equal(t, 2, gctx.parentalCache.Stats().Hit)
-
-	// Check that there were no additional requests
-	assert.Equal(t, 1, ups.requestsCount)
+			purgeCaches()
+		})
+	}
 }

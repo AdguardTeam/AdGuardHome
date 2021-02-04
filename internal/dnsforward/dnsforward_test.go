@@ -1,11 +1,9 @@
 package dnsforward
 
 import (
-	"context"
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -20,7 +18,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/testutil"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
@@ -32,7 +30,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	testutil.DiscardLogOutput(m)
+	aghtest.DiscardLogOutput(m)
 }
 
 const (
@@ -53,10 +51,13 @@ func startDeferStop(t *testing.T, s *Server) {
 }
 
 func TestServer(t *testing.T) {
-	s := createTestServer(t)
+	s := createTestServer(t, &dnsfilter.Config{}, ServerConfig{
+		UDPListenAddr: &net.UDPAddr{},
+		TCPListenAddr: &net.TCPAddr{},
+	})
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		&testUpstream{
-			ipv4: map[string][]net.IP{
+		&aghtest.TestUpstream{
+			IPv4: map[string][]net.IP{
 				"google-public-dns-a.google.com.": {{8, 8, 8, 8}},
 			},
 		},
@@ -88,11 +89,13 @@ func TestServer(t *testing.T) {
 }
 
 func TestServerWithProtectionDisabled(t *testing.T) {
-	s := createTestServer(t)
-	s.conf.ProtectionEnabled = false
+	s := createTestServer(t, &dnsfilter.Config{}, ServerConfig{
+		UDPListenAddr: &net.UDPAddr{},
+		TCPListenAddr: &net.TCPAddr{},
+	})
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		&testUpstream{
-			ipv4: map[string][]net.IP{
+		&aghtest.TestUpstream{
+			IPv4: map[string][]net.IP{
 				"google-public-dns-a.google.com.": {{8, 8, 8, 8}},
 			},
 		},
@@ -113,7 +116,11 @@ func createTestTLS(t *testing.T, tlsConf TLSConfig) (s *Server, certPem []byte) 
 
 	var keyPem []byte
 	_, certPem, keyPem = createServerTLSConfig(t)
-	s = createTestServer(t)
+
+	s = createTestServer(t, &dnsfilter.Config{}, ServerConfig{
+		UDPListenAddr: &net.UDPAddr{},
+		TCPListenAddr: &net.TCPAddr{},
+	})
 
 	tlsConf.CertificateChainData, tlsConf.PrivateKeyData = certPem, keyPem
 	s.conf.TLSConfig = tlsConf
@@ -126,11 +133,11 @@ func createTestTLS(t *testing.T, tlsConf TLSConfig) (s *Server, certPem []byte) 
 
 func TestDoTServer(t *testing.T) {
 	s, certPem := createTestTLS(t, TLSConfig{
-		TLSListenAddr: &net.TCPAddr{Port: 0},
+		TLSListenAddr: &net.TCPAddr{},
 	})
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		&testUpstream{
-			ipv4: map[string][]net.IP{
+		&aghtest.TestUpstream{
+			IPv4: map[string][]net.IP{
 				"google-public-dns-a.google.com.": {{8, 8, 8, 8}},
 			},
 		},
@@ -156,11 +163,11 @@ func TestDoTServer(t *testing.T) {
 
 func TestDoQServer(t *testing.T) {
 	s, _ := createTestTLS(t, TLSConfig{
-		QUICListenAddr: &net.UDPAddr{Port: 0},
+		QUICListenAddr: &net.UDPAddr{},
 	})
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		&testUpstream{
-			ipv4: map[string][]net.IP{
+		&aghtest.TestUpstream{
+			IPv4: map[string][]net.IP{
 				"google-public-dns-a.google.com.": {{8, 8, 8, 8}},
 			},
 		},
@@ -184,10 +191,27 @@ func TestDoQServer(t *testing.T) {
 func TestServerRace(t *testing.T) {
 	t.Skip("TODO(e.burkov): inspect the golibs/cache package for locks")
 
-	s := createTestServer(t)
+	filterConf := &dnsfilter.Config{
+		SafeBrowsingEnabled:   true,
+		SafeBrowsingCacheSize: 1000,
+		SafeSearchEnabled:     true,
+		SafeSearchCacheSize:   1000,
+		ParentalCacheSize:     1000,
+		CacheTime:             30,
+	}
+	forwardConf := ServerConfig{
+		UDPListenAddr: &net.UDPAddr{},
+		TCPListenAddr: &net.TCPAddr{},
+		FilteringConfig: FilteringConfig{
+			ProtectionEnabled: true,
+			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
+		},
+		ConfigModified: func() {},
+	}
+	s := createTestServer(t, filterConf, forwardConf)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		&testUpstream{
-			ipv4: map[string][]net.IP{
+		&aghtest.TestUpstream{
+			IPv4: map[string][]net.IP{
 				"google-public-dns-a.google.com.": {{8, 8, 8, 8}},
 			},
 		},
@@ -202,68 +226,74 @@ func TestServerRace(t *testing.T) {
 	sendTestMessagesAsync(t, conn)
 }
 
-// testResolver is a Resolver for tests.
-//
-//lint:ignore U1000 TODO(e.burkov): move into aghtest package.
-type testResolver struct{}
-
-// LookupIPAddr implements Resolver interface for *testResolver.
-//
-//lint:ignore U1000 TODO(e.burkov): move into aghtest package.
-func (r *testResolver) LookupIPAddr(_ context.Context, host string) (ips []net.IPAddr, err error) {
-	hash := sha256.Sum256([]byte(host))
-	addrs := []net.IPAddr{{
-		IP:   net.IP(hash[:4]),
-		Zone: "somezone",
-	}, {
-		IP:   net.IP(hash[4:20]),
-		Zone: "somezone",
-	}}
-	return addrs, nil
-}
-
-// LookupHost implements Resolver interface for *testResolver.
-//
-//lint:ignore U1000 TODO(e.burkov): move into aghtest package.
-func (r *testResolver) LookupHost(host string) (addrs []string, err error) {
-	hash := sha256.Sum256([]byte(host))
-	addrs = []string{
-		net.IP(hash[:4]).String(),
-		net.IP(hash[4:20]).String(),
-	}
-	return addrs, nil
-}
-
 func TestSafeSearch(t *testing.T) {
-	t.Skip("TODO(e.burkov): substitute the dnsfilter by one with custom resolver from aghtest")
-
-	testUpstreamIP := net.IP{213, 180, 193, 56}
-	testCases := []string{
-		"yandex.com.",
-		"yandex.by.",
-		"yandex.kz.",
-		"yandex.ru.",
-		"www.google.com.",
-		"www.google.com.af.",
-		"www.google.be.",
-		"www.google.by.",
+	resolver := &aghtest.TestResolver{}
+	filterConf := &dnsfilter.Config{
+		SafeSearchEnabled:   true,
+		SafeSearchCacheSize: 1000,
+		CacheTime:           30,
+		CustomResolver:      resolver,
 	}
+	forwardConf := ServerConfig{
+		UDPListenAddr: &net.UDPAddr{},
+		TCPListenAddr: &net.TCPAddr{},
+		FilteringConfig: FilteringConfig{
+			ProtectionEnabled: true,
+		},
+	}
+	s := createTestServer(t, filterConf, forwardConf)
+	startDeferStop(t, s)
+
+	addr := s.dnsProxy.Addr(proxy.ProtoUDP).String()
+	client := dns.Client{Net: proxy.ProtoUDP}
+
+	yandexIP := net.IP{213, 180, 193, 56}
+	googleIP, _ := resolver.HostToIPs("forcesafesearch.google.com")
+
+	testCases := []struct {
+		host string
+		want net.IP
+	}{{
+		host: "yandex.com.",
+		want: yandexIP,
+	}, {
+		host: "yandex.by.",
+		want: yandexIP,
+	}, {
+		host: "yandex.kz.",
+		want: yandexIP,
+	}, {
+		host: "yandex.ru.",
+		want: yandexIP,
+	}, {
+		host: "www.google.com.",
+		want: googleIP,
+	}, {
+		host: "www.google.com.af.",
+		want: googleIP,
+	}, {
+		host: "www.google.be.",
+		want: googleIP,
+	}, {
+		host: "www.google.by.",
+		want: googleIP,
+	}}
 
 	for _, tc := range testCases {
-		t.Run("safe_search_"+tc, func(t *testing.T) {
-			s := createTestServer(t)
-			startDeferStop(t, s)
-
-			addr := s.dnsProxy.Addr(proxy.ProtoUDP)
-			client := dns.Client{Net: proxy.ProtoUDP}
-
-			exchangeAndAssertResponse(t, &client, addr, tc, testUpstreamIP)
+		t.Run(tc.host, func(t *testing.T) {
+			req := createTestMessage(tc.host)
+			reply, _, err := client.Exchange(req, addr)
+			assert.Nilf(t, err, "couldn't talk to server %s: %s", addr, err)
+			assertResponse(t, reply, tc.want)
 		})
 	}
 }
 
 func TestInvalidRequest(t *testing.T) {
-	s := createTestServer(t)
+	s := createTestServer(t, &dnsfilter.Config{}, ServerConfig{
+		UDPListenAddr: &net.UDPAddr{},
+		TCPListenAddr: &net.TCPAddr{},
+	})
 	startDeferStop(t, s)
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP).String()
@@ -284,7 +314,14 @@ func TestInvalidRequest(t *testing.T) {
 }
 
 func TestBlockedRequest(t *testing.T) {
-	s := createTestServer(t)
+	forwardConf := ServerConfig{
+		UDPListenAddr: &net.UDPAddr{},
+		TCPListenAddr: &net.TCPAddr{},
+		FilteringConfig: FilteringConfig{
+			ProtectionEnabled: true,
+		},
+	}
+	s := createTestServer(t, &dnsfilter.Config{}, forwardConf)
 	startDeferStop(t, s)
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
@@ -299,12 +336,19 @@ func TestBlockedRequest(t *testing.T) {
 }
 
 func TestServerCustomClientUpstream(t *testing.T) {
-	s := createTestServer(t)
+	forwardConf := ServerConfig{
+		UDPListenAddr: &net.UDPAddr{},
+		TCPListenAddr: &net.TCPAddr{},
+		FilteringConfig: FilteringConfig{
+			ProtectionEnabled: true,
+		},
+	}
+	s := createTestServer(t, &dnsfilter.Config{}, forwardConf)
 	s.conf.GetCustomUpstreamByClient = func(_ string) *proxy.UpstreamConfig {
 		return &proxy.UpstreamConfig{
 			Upstreams: []upstream.Upstream{
-				&testUpstream{
-					ipv4: map[string][]net.IP{
+				&aghtest.TestUpstream{
+					IPv4: map[string][]net.IP{
 						"host.": {{192, 168, 0, 1}},
 					},
 				},
@@ -327,82 +371,6 @@ func TestServerCustomClientUpstream(t *testing.T) {
 	assert.Equal(t, net.IP{192, 168, 0, 1}, reply.Answer[0].(*dns.A).A)
 }
 
-// testUpstream is a mock of real upstream. specify fields with necessary values
-// to simulate real upstream behaviour.
-//
-// TODO(e.burkov): move into aghtest package.
-type testUpstream struct {
-	// cn is a map of hostname to canonical name.
-	cn map[string]string
-	// ipv4 is a map of hostname to IPv4.
-	ipv4 map[string][]net.IP
-	// ipv6 is a map of hostname to IPv6.
-	ipv6 map[string][]net.IP
-}
-
-// Exchange implements upstream.Upstream interface for *testUpstream.
-func (u *testUpstream) Exchange(m *dns.Msg) (*dns.Msg, error) {
-	resp := &dns.Msg{}
-	resp.SetReply(m)
-	hasRec := false
-
-	name := m.Question[0].Name
-
-	if cname, ok := u.cn[name]; ok {
-		resp.Answer = append(resp.Answer, &dns.CNAME{
-			Hdr: dns.RR_Header{
-				Name:   name,
-				Rrtype: dns.TypeCNAME,
-			},
-			Target: cname,
-		})
-	}
-
-	var rrtype uint16
-	var a []net.IP
-	switch m.Question[0].Qtype {
-	case dns.TypeA:
-		rrtype = dns.TypeA
-		if ipv4addr, ok := u.ipv4[name]; ok {
-			hasRec = true
-			a = ipv4addr
-		}
-	case dns.TypeAAAA:
-		rrtype = dns.TypeAAAA
-		if ipv6addr, ok := u.ipv6[name]; ok {
-			hasRec = true
-			a = ipv6addr
-		}
-	}
-	for _, ip := range a {
-		resp.Answer = append(resp.Answer, &dns.A{
-			Hdr: dns.RR_Header{
-				Name:   name,
-				Rrtype: rrtype,
-			},
-			A: ip,
-		})
-	}
-
-	if len(resp.Answer) == 0 {
-		if hasRec {
-			// Set no error RCode if there are some records for
-			// given Qname but we didn't apply them.
-			resp.SetRcode(m, dns.RcodeSuccess)
-			return resp, nil
-		}
-		// Set NXDomain RCode otherwise.
-		resp.SetRcode(m, dns.RcodeNameError)
-	}
-
-	return resp, nil
-}
-
-// Address implements upstream.Upstream interface for *testUpstream.
-func (u *testUpstream) Address() string {
-	return "test"
-}
-
 func (s *Server) startWithUpstream(u upstream.Upstream) error {
 	s.Lock()
 	defer s.Unlock()
@@ -410,30 +378,35 @@ func (s *Server) startWithUpstream(u upstream.Upstream) error {
 	if err != nil {
 		return err
 	}
+
 	s.dnsProxy.UpstreamConfig = &proxy.UpstreamConfig{
 		Upstreams: []upstream.Upstream{u},
 	}
+
 	return s.dnsProxy.Start()
 }
 
-// testCNAMEs is a simple map of names and CNAMEs necessary for the testUpstream work
+// testCNAMEs is a map of names and CNAMEs necessary for the TestUpstream work.
 var testCNAMEs = map[string]string{
 	"badhost.":               "null.example.org.",
 	"whitelist.example.org.": "null.example.org.",
 }
 
-// testIPv4 is a simple map of names and IPv4s necessary for the testUpstream work
+// testIPv4 is a map of names and IPv4s necessary for the TestUpstream work.
 var testIPv4 = map[string][]net.IP{
 	"null.example.org.": {{1, 2, 3, 4}},
 	"example.org.":      {{127, 0, 0, 255}},
 }
 
 func TestBlockCNAMEProtectionEnabled(t *testing.T) {
-	s := createTestServer(t)
-	testUpstm := &testUpstream{
-		cn:   testCNAMEs,
-		ipv4: testIPv4,
-		ipv6: nil,
+	s := createTestServer(t, &dnsfilter.Config{}, ServerConfig{
+		UDPListenAddr: &net.UDPAddr{},
+		TCPListenAddr: &net.TCPAddr{},
+	})
+	testUpstm := &aghtest.TestUpstream{
+		CName: testCNAMEs,
+		IPv4:  testIPv4,
+		IPv6:  nil,
 	}
 	s.conf.ProtectionEnabled = false
 	err := s.startWithUpstream(testUpstm)
@@ -449,11 +422,18 @@ func TestBlockCNAMEProtectionEnabled(t *testing.T) {
 }
 
 func TestBlockCNAME(t *testing.T) {
-	s := createTestServer(t)
+	forwardConf := ServerConfig{
+		UDPListenAddr: &net.UDPAddr{},
+		TCPListenAddr: &net.TCPAddr{},
+		FilteringConfig: FilteringConfig{
+			ProtectionEnabled: true,
+		},
+	}
+	s := createTestServer(t, &dnsfilter.Config{}, forwardConf)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		&testUpstream{
-			cn:   testCNAMEs,
-			ipv4: testIPv4,
+		&aghtest.TestUpstream{
+			CName: testCNAMEs,
+			IPv4:  testIPv4,
 		},
 	}
 	startDeferStop(t, s)
@@ -496,14 +476,21 @@ func TestBlockCNAME(t *testing.T) {
 }
 
 func TestClientRulesForCNAMEMatching(t *testing.T) {
-	s := createTestServer(t)
-	s.conf.FilterHandler = func(_ net.IP, _ string, settings *dnsfilter.RequestFilteringSettings) {
-		settings.FilteringEnabled = false
+	forwardConf := ServerConfig{
+		UDPListenAddr: &net.UDPAddr{},
+		TCPListenAddr: &net.TCPAddr{},
+		FilteringConfig: FilteringConfig{
+			ProtectionEnabled: true,
+			FilterHandler: func(_ net.IP, _ string, settings *dnsfilter.RequestFilteringSettings) {
+				settings.FilteringEnabled = false
+			},
+		},
 	}
+	s := createTestServer(t, &dnsfilter.Config{}, forwardConf)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		&testUpstream{
-			cn:   testCNAMEs,
-			ipv4: testIPv4,
+		&aghtest.TestUpstream{
+			CName: testCNAMEs,
+			IPv4:  testIPv4,
 		},
 	}
 	startDeferStop(t, s)
@@ -531,8 +518,15 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 }
 
 func TestNullBlockedRequest(t *testing.T) {
-	s := createTestServer(t)
-	s.conf.FilteringConfig.BlockingMode = "null_ip"
+	forwardConf := ServerConfig{
+		UDPListenAddr: &net.UDPAddr{},
+		TCPListenAddr: &net.TCPAddr{},
+		FilteringConfig: FilteringConfig{
+			ProtectionEnabled: true,
+			BlockingMode:      "null_ip",
+		},
+	}
+	s := createTestServer(t, &dnsfilter.Config{}, forwardConf)
 	startDeferStop(t, s)
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 
@@ -568,8 +562,8 @@ func TestBlockedCustomIP(t *testing.T) {
 		DNSFilter: dnsfilter.New(&dnsfilter.Config{}, filters),
 	})
 	conf := ServerConfig{
-		UDPListenAddr: &net.UDPAddr{Port: 0},
-		TCPListenAddr: &net.TCPAddr{Port: 0},
+		UDPListenAddr: &net.UDPAddr{},
+		TCPListenAddr: &net.TCPAddr{},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 			BlockingMode:      "custom_ip",
@@ -606,7 +600,14 @@ func TestBlockedCustomIP(t *testing.T) {
 }
 
 func TestBlockedByHosts(t *testing.T) {
-	s := createTestServer(t)
+	forwardConf := ServerConfig{
+		UDPListenAddr: &net.UDPAddr{},
+		TCPListenAddr: &net.TCPAddr{},
+		FilteringConfig: FilteringConfig{
+			ProtectionEnabled: true,
+		},
+	}
+	s := createTestServer(t, &dnsfilter.Config{}, forwardConf)
 	startDeferStop(t, s)
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 
@@ -623,24 +624,32 @@ func TestBlockedByHosts(t *testing.T) {
 }
 
 func TestBlockedBySafeBrowsing(t *testing.T) {
-	t.Skip("TODO(e.burkov): substitute the dnsfilter by one with custom safeBrowsingUpstream")
-	resolver := &testResolver{}
-	ips, _ := resolver.LookupIPAddr(context.Background(), safeBrowsingBlockHost)
-	addrs, _ := resolver.LookupHost(safeBrowsingBlockHost)
+	const hostname = "wmconvirus.narod.ru"
 
-	s := createTestServer(t)
-	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		&testUpstream{
-			ipv4: map[string][]net.IP{
-				"wmconvirus.narod.ru.": {ips[0].IP},
-			},
+	sbUps := &aghtest.TestBlockUpstream{
+		Hostname: hostname,
+		Block:    true,
+	}
+	ans, _ := (&aghtest.TestResolver{}).HostToIPs(hostname)
+
+	filterConf := &dnsfilter.Config{
+		SafeBrowsingEnabled: true,
+	}
+	forwardConf := ServerConfig{
+		UDPListenAddr: &net.UDPAddr{},
+		TCPListenAddr: &net.TCPAddr{},
+		FilteringConfig: FilteringConfig{
+			SafeBrowsingBlockHost: ans.String(),
+			ProtectionEnabled:     true,
 		},
 	}
+	s := createTestServer(t, filterConf, forwardConf)
+	s.dnsFilter.SetSafeBrowsingUpstream(sbUps)
 	startDeferStop(t, s)
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 
 	// SafeBrowsing blocking.
-	req := createTestMessage("wmconvirus.narod.ru.")
+	req := createTestMessage(hostname + ".")
 
 	reply, err := dns.Exchange(req, addr.String())
 	assert.Nilf(t, err, "couldn't talk to server %s: %s", addr, err)
@@ -648,14 +657,7 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 
 	a, ok := reply.Answer[0].(*dns.A)
 	if assert.Truef(t, ok, "dns server %s returned wrong answer type instead of A: %v", addr, reply.Answer[0]) {
-		found := false
-		for _, blockAddr := range addrs {
-			if blockAddr == a.A.String() {
-				found = true
-				break
-			}
-		}
-		assert.Truef(t, found, "dns server %s returned wrong answer: %v", addr, a.A)
+		assert.Equal(t, ans, a.A, "dns server %s returned wrong answer: %v", addr, a.A)
 	}
 }
 
@@ -679,19 +681,19 @@ func TestRewrite(t *testing.T) {
 
 	s := NewServer(DNSCreateParams{DNSFilter: f})
 	err := s.Prepare(&ServerConfig{
-		UDPListenAddr: &net.UDPAddr{Port: 0},
-		TCPListenAddr: &net.TCPAddr{Port: 0},
+		UDPListenAddr: &net.UDPAddr{},
+		TCPListenAddr: &net.TCPAddr{},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 			UpstreamDNS:       []string{"8.8.8.8:53"},
 		},
 	})
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		&testUpstream{
-			cn: map[string]string{
+		&aghtest.TestUpstream{
+			CName: map[string]string{
 				"example.org": "somename",
 			},
-			ipv4: map[string][]net.IP{
+			IPv4: map[string][]net.IP{
 				"example.org.": {{4, 3, 2, 1}},
 			},
 		},
@@ -724,13 +726,14 @@ func TestRewrite(t *testing.T) {
 	req = createTestMessageWithType("my.alias.example.org.", dns.TypeA)
 	reply, err = dns.Exchange(req, addr.String())
 	assert.Nil(t, err)
-	assert.Equal(t, "my.alias.example.org.", reply.Question[0].Name) // the original question is restored
+	// The original question is restored.
+	assert.Equal(t, "my.alias.example.org.", reply.Question[0].Name)
 	assert.Len(t, reply.Answer, 2)
 	assert.Equal(t, "example.org.", reply.Answer[0].(*dns.CNAME).Target)
 	assert.Equal(t, dns.TypeA, reply.Answer[1].Header().Rrtype)
 }
 
-func createTestServer(t *testing.T) *Server {
+func createTestServer(t *testing.T, filterConf *dnsfilter.Config, forwardConf ServerConfig) *Server {
 	rules := `||nxdomain.example.org
 ||null.example.org^
 127.0.0.1	host.example.org
@@ -739,30 +742,13 @@ func createTestServer(t *testing.T) *Server {
 	filters := []dnsfilter.Filter{{
 		ID: 0, Data: []byte(rules),
 	}}
-	c := dnsfilter.Config{
-		SafeBrowsingEnabled:   true,
-		SafeBrowsingCacheSize: 1000,
-		SafeSearchEnabled:     true,
-		SafeSearchCacheSize:   1000,
-		ParentalCacheSize:     1000,
-		CacheTime:             30,
-	}
 
-	f := dnsfilter.New(&c, filters)
+	f := dnsfilter.New(filterConf, filters)
 
 	s := NewServer(DNSCreateParams{DNSFilter: f})
-	s.conf = ServerConfig{
-		UDPListenAddr: &net.UDPAddr{Port: 0},
-		TCPListenAddr: &net.TCPAddr{Port: 0},
-		FilteringConfig: FilteringConfig{
-			ProtectionEnabled: true,
-			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
-		},
-		ConfigModified: func() {},
-	}
+	s.conf = forwardConf
+	assert.Nil(t, s.Prepare(nil))
 
-	err := s.Prepare(nil)
-	assert.Nil(t, err)
 	return s
 }
 
@@ -849,15 +835,6 @@ func sendTestMessages(t *testing.T, conn *dns.Conn) {
 	}
 }
 
-func exchangeAndAssertResponse(t *testing.T, client *dns.Client, addr net.Addr, host string, ip net.IP) {
-	t.Helper()
-
-	req := createTestMessage(host)
-	reply, _, err := client.Exchange(req, addr.String())
-	assert.Nilf(t, err, "couldn't talk to server %s: %s", addr, err)
-	assertResponse(t, reply, ip)
-}
-
 func createGoogleATestMessage() *dns.Msg {
 	return createTestMessage("google-public-dns-a.google.com.")
 }
@@ -879,6 +856,7 @@ func createTestMessage(host string) *dns.Msg {
 func createTestMessageWithType(host string, qtype uint16) *dns.Msg {
 	req := createTestMessage(host)
 	req.Question[0].Qtype = qtype
+
 	return req
 }
 
@@ -889,7 +867,10 @@ func assertGoogleAResponse(t *testing.T, reply *dns.Msg) {
 func assertResponse(t *testing.T, reply *dns.Msg, ip net.IP) {
 	t.Helper()
 
-	assert.Lenf(t, reply.Answer, 1, "dns server returned reply with wrong number of answers - %d", len(reply.Answer))
+	if !assert.Lenf(t, reply.Answer, 1, "dns server returned reply with wrong number of answers - %d", len(reply.Answer)) {
+		return
+	}
+
 	a, ok := reply.Answer[0].(*dns.A)
 	if assert.Truef(t, ok, "dns server returned wrong answer type instead of A: %v", reply.Answer[0]) {
 		assert.Truef(t, a.A.Equal(ip), "dns server returned wrong answer instead of %s: %s", ip, a.A)
@@ -900,8 +881,10 @@ func publicKey(priv interface{}) interface{} {
 	switch k := priv.(type) {
 	case *rsa.PrivateKey:
 		return &k.PublicKey
+
 	case *ecdsa.PrivateKey:
 		return &k.PublicKey
+
 	default:
 		return nil
 	}
@@ -1082,6 +1065,7 @@ func (d *testDHCP) Leases(flags int) []dhcpd.Lease {
 		HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 		Hostname: "localhost",
 	}
+
 	return []dhcpd.Lease{l}
 }
 func (d *testDHCP) SetOnLeaseChanged(onLeaseChanged dhcpd.OnLeaseChangedT) {}
@@ -1094,8 +1078,8 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 		DHCPServer: dhcp,
 	})
 
-	s.conf.UDPListenAddr = &net.UDPAddr{Port: 0}
-	s.conf.TCPListenAddr = &net.TCPAddr{Port: 0}
+	s.conf.UDPListenAddr = &net.UDPAddr{}
+	s.conf.TCPListenAddr = &net.TCPAddr{}
 	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
 	s.conf.FilteringConfig.ProtectionEnabled = true
 	err := s.Prepare(nil)
@@ -1143,8 +1127,8 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	t.Cleanup(c.AutoHosts.Close)
 
 	s := NewServer(DNSCreateParams{DNSFilter: dnsfilter.New(&c, nil)})
-	s.conf.UDPListenAddr = &net.UDPAddr{Port: 0}
-	s.conf.TCPListenAddr = &net.TCPAddr{Port: 0}
+	s.conf.UDPListenAddr = &net.UDPAddr{}
+	s.conf.TCPListenAddr = &net.TCPAddr{}
 	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
 	s.conf.FilteringConfig.ProtectionEnabled = true
 	assert.Nil(t, s.Prepare(nil))
