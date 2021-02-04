@@ -314,6 +314,8 @@ Here's what you can also do to contribute:
 * Hass.io add-on (https://github.com/hassio-addons/addon-adguard-home)
 * OpenWrt LUCI app (https://github.com/kongfl888/luci-app-adguardhome)
 * Prometheus exporter for AdGuard Home (https://github.com/ebrianne/adguard-exporter)
+* Cloudron app (https://git.cloudron.io/cloudron/adguard-home-app)
+* AdGuard Home on GLInet routers (https://forum.gl-inet.com/t/adguardhome-on-gl-routers/10664)
 
 <a id="acknowledgments"></a>
 ## Acknowledgments
