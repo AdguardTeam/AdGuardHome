@@ -126,12 +126,6 @@
             "homepage": "https://filtri-dns.ga/",
             "source": "https://filtri-dns.ga/filtri.txt"
         },
-        "JPN-280blocker": {
-            "name": "JPN: 280blocker adblock domain lists",
-            "categoryId": "regional",
-            "homepage": "https://280blocker.net/",
-            "source": "https://280blocker.net/files/280blocker_domain.txt"
-        },
         "IRN-unwanted-iranian-domains": {
             "name": "IRN: Unwanted Iranian domains",
             "categoryId": "regional",
