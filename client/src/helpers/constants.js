@@ -200,92 +200,144 @@ export const FILTERS_URLS = {
 
 export const SERVICES = [
     {
-        id: 'facebook',
-        name: 'Facebook',
-    },
-    {
-        id: 'whatsapp',
-        name: 'WhatsApp',
-    },
-    {
-        id: 'instagram',
-        name: 'Instagram',
-    },
-    {
-        id: 'twitter',
-        name: 'Twitter',
-    },
-    {
-        id: 'youtube',
-        name: 'YouTube',
-    },
-    {
-        id: 'netflix',
-        name: 'Netflix',
-    },
-    {
-        id: 'snapchat',
-        name: 'Snapchat',
-    },
-    {
-        id: 'twitch',
-        name: 'Twitch',
-    },
-    {
-        id: 'discord',
-        name: 'Discord',
-    },
-    {
-        id: 'skype',
-        name: 'Skype',
+        id: '9gag',
+        name: '9Gag',
     },
     {
         id: 'amazon',
         name: 'Amazon',
     },
     {
-        id: 'ebay',
-        name: 'eBay',
-    },
-    {
-        id: 'origin',
-        name: 'Origin',
-    },
-    {
         id: 'cloudflare',
-        name: 'Cloudflare',
+        name: 'CloudFlare',
     },
     {
-        id: 'steam',
-        name: 'Steam',
+        id: 'dailymotion',
+        name: 'Dailymotion',
+    },
+    {
+        id: 'discord',
+        name: 'Discord',
+    },
+    {
+        id: 'disneyplus',
+        name: 'Disney+',
+    },
+    {
+        id: 'ebay',
+        name: 'EBay',
     },
     {
         id: 'epic_games',
         name: 'Epic Games',
     },
     {
+        id: 'facebook',
+        name: 'Facebook',
+    },
+    {
+        id: 'hulu',
+        name: 'Hulu',
+    },
+    {
+        id: 'imgur',
+        name: 'Imgur',
+    },
+    {
+        id: 'instagram',
+        name: 'Instagram',
+    },
+    {
+        id: 'mail_ru',
+        name: 'Mail.ru',
+    },
+    {
+        id: 'netflix',
+        name: 'Netflix',
+    },
+    {
+        id: 'ok',
+        name: 'OK.ru',
+    },
+    {
+        id: 'origin',
+        name: 'Origin',
+    },
+    {
+        id: 'pinterest',
+        name: 'Pinterest',
+    },
+    {
+        id: 'qq',
+        name: 'QQ',
+    },
+    {
         id: 'reddit',
         name: 'Reddit',
     },
     {
-        id: 'ok',
-        name: 'OK',
+        id: 'skype',
+        name: 'Skype',
     },
     {
-        id: 'vk',
-        name: 'VK',
+        id: 'snapchat',
+        name: 'Snapchat',
     },
     {
-        id: 'mail_ru',
-        name: 'mail.ru',
+        id: 'spotify',
+        name: 'Spotify',
+    },
+    {
+        id: 'steam',
+        name: 'Steam',
+    },
+    {
+        id: 'telegram',
+        name: 'Telegram',
     },
     {
         id: 'tiktok',
         name: 'TikTok',
     },
     {
-        id: 'qq',
-        name: 'QQ',
+        id: 'tinder',
+        name: 'Tinder',
+    },
+    {
+        id: 'twitch',
+        name: 'Twitch',
+    },
+    {
+        id: 'twitter',
+        name: 'Twitter',
+    },
+    {
+        id: 'viber',
+        name: 'Viber',
+    },
+    {
+        id: 'vimeo',
+        name: 'Vimeo',
+    },
+    {
+        id: 'vk',
+        name: 'VK.com',
+    },
+    {
+        id: 'wechat',
+        name: 'WeChat',
+    },
+    {
+        id: 'weibo',
+        name: 'Weibo',
+    },
+    {
+        id: 'whatsapp',
+        name: 'WhatsApp',
+    },
+    {
+        id: 'youtube',
+        name: 'YouTube',
     },
 ];
 

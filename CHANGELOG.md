@@ -15,6 +15,7 @@ and this project adheres to
 
 ### Added
 
+- Added more services to the "Blocked services" list ([#2224], [#2401]).
 - `ipset` subdomain matching, just like `dnsmasq` does ([#2179]).
 - Client ID support for DNS-over-HTTPS, DNS-over-QUIC, and DNS-over-TLS
   ([#1383]).
@@ -33,10 +34,12 @@ and this project adheres to
 [#1383]: https://github.com/AdguardTeam/AdGuardHome/issues/1383
 [#2102]: https://github.com/AdguardTeam/AdGuardHome/issues/2102
 [#2179]: https://github.com/AdguardTeam/AdGuardHome/issues/2179
+[#2224]: https://github.com/AdguardTeam/AdGuardHome/issues/2224
 [#2302]: https://github.com/AdguardTeam/AdGuardHome/issues/2302
 [#2304]: https://github.com/AdguardTeam/AdGuardHome/issues/2304
 [#2305]: https://github.com/AdguardTeam/AdGuardHome/issues/2305
 [#2337]: https://github.com/AdguardTeam/AdGuardHome/issues/2337
+[#2401]: https://github.com/AdguardTeam/AdGuardHome/issues/2401
 
 ### Changed
 
