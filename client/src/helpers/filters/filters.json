@@ -54,6 +54,12 @@
             "homepage": "https://github.com/Perflyst/PiHoleBlocklist",
             "source": "https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV-AGH.txt"
         },
+        "windows-spy-blocker" : {
+            "name": "WindowsSpyBlocker - Hosts spy rules",
+            "categoryId": "general",
+            "homepage": "https://github.com/crazy-max/WindowsSpyBlocker",
+            "source": "https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/data/hosts/spy.txt"
+        },
         "spam404": {
             "name": "Spam404",
             "categoryId": "security",
@@ -155,12 +161,6 @@
             "categoryId": "other",
             "homepage": "https://github.com/paulgb/BarbBlock/",
             "source": "https://paulgb.github.io/BarbBlock/blacklists/hosts-file.txt"
-        },
-        "windows-spy-blocker" : {
-            "name": "WindowsSpyBlocker - Hosts spy rules",
-            "categoryId": "other",
-            "homepage": "https://github.com/crazy-max/WindowsSpyBlocker",
-            "source": "https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/data/hosts/spy.txt"
         }
     }
 }
