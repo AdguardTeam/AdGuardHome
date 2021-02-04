@@ -57,7 +57,7 @@ func (c *searchCriteria) quickMatch(line string) bool {
 	case ctDomainOrClient:
 		return c.quickMatchJSONValue(line, "QH") ||
 			c.quickMatchJSONValue(line, "IP") ||
-			c.quickMatchJSONValue(line, "ID")
+			c.quickMatchJSONValue(line, "CID")
 	default:
 		return true
 	}
