@@ -42,7 +42,10 @@ func TestLimitRequestBody(t *testing.T) {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var b []byte
 			b, *err = ioutil.ReadAll(r.Body)
-			w.Write(b)
+			_, werr := w.Write(b)
+			if werr != nil {
+				panic(werr)
+			}
 		})
 	}
 

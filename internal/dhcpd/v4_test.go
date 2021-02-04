@@ -69,7 +69,8 @@ func TestV4StaticLeaseAddReplaceDynamic(t *testing.T) {
 		notify:     notify4,
 	}
 	sIface, err := v4Create(conf)
-	s := sIface.(*v4Server)
+	s, ok := sIface.(*v4Server)
+	assert.True(t, ok)
 	assert.Nil(t, err)
 
 	// add dynamic lease
@@ -121,7 +122,8 @@ func TestV4StaticLeaseGet(t *testing.T) {
 		notify:     notify4,
 	}
 	sIface, err := v4Create(conf)
-	s := sIface.(*v4Server)
+	s, ok := sIface.(*v4Server)
+	assert.True(t, ok)
 	assert.Nil(t, err)
 	s.conf.dnsIPAddrs = []net.IP{{192, 168, 10, 1}}
 
@@ -184,7 +186,8 @@ func TestV4DynamicLeaseGet(t *testing.T) {
 		},
 	}
 	sIface, err := v4Create(conf)
-	s := sIface.(*v4Server)
+	s, ok := sIface.(*v4Server)
+	assert.True(t, ok)
 	assert.Nil(t, err)
 	s.conf.dnsIPAddrs = []net.IP{{192, 168, 10, 1}}
 

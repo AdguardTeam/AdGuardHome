@@ -1113,8 +1113,10 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	assert.Equal(t, dns.TypePTR, resp.Answer[0].Header().Rrtype)
 	assert.Equal(t, "1.0.0.127.in-addr.arpa.", resp.Answer[0].Header().Name)
 
-	ptr := resp.Answer[0].(*dns.PTR)
-	assert.Equal(t, "localhost.", ptr.Ptr)
+	ptr, ok := resp.Answer[0].(*dns.PTR)
+	if assert.True(t, ok) {
+		assert.Equal(t, "localhost.", ptr.Ptr)
+	}
 
 	s.Close()
 }
@@ -1158,8 +1160,10 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	assert.Equal(t, dns.TypePTR, resp.Answer[0].Header().Rrtype)
 	assert.Equal(t, "1.0.0.127.in-addr.arpa.", resp.Answer[0].Header().Name)
 
-	ptr := resp.Answer[0].(*dns.PTR)
-	assert.Equal(t, "host.", ptr.Ptr)
+	ptr, ok := resp.Answer[0].(*dns.PTR)
+	if assert.True(t, ok) {
+		assert.Equal(t, "host.", ptr.Ptr)
+	}
 
 	s.Close()
 }

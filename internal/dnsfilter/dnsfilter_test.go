@@ -683,7 +683,10 @@ func TestWhitelist(t *testing.T) {
 		ID: 0, Data: []byte(whiteRules),
 	}}
 	d := newForTest(nil, filters)
-	d.SetFilters(filters, whiteFilters, false)
+
+	err := d.SetFilters(filters, whiteFilters, false)
+	assert.Nil(t, err)
+
 	t.Cleanup(d.Close)
 
 	// Matched by white filter.

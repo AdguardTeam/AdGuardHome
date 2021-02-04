@@ -34,6 +34,10 @@ func TestStats(t *testing.T) {
 		Filename:  "./stats.db",
 		LimitDays: 1,
 	}
+	t.Cleanup(func() {
+		assert.Nil(t, os.Remove(conf.Filename))
+	})
+
 	s, _ := createObject(conf)
 
 	e := Entry{}
@@ -86,7 +90,6 @@ func TestStats(t *testing.T) {
 
 	s.clear()
 	s.Close()
-	os.Remove(conf.Filename)
 }
 
 func TestLargeNumbers(t *testing.T) {
@@ -102,7 +105,10 @@ func TestLargeNumbers(t *testing.T) {
 		LimitDays: 1,
 		UnitID:    newID,
 	}
-	os.Remove(conf.Filename)
+	t.Cleanup(func() {
+		assert.Nil(t, os.Remove(conf.Filename))
+	})
+
 	s, _ := createObject(conf)
 	e := Entry{}
 
@@ -128,7 +134,6 @@ func TestLargeNumbers(t *testing.T) {
 	assert.EqualValues(t, int(hour)*n, d.NumDNSQueries)
 
 	s.Close()
-	os.Remove(conf.Filename)
 }
 
 // this code is a chunk copied from getData() that generates aggregate data per day

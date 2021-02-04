@@ -140,7 +140,8 @@ ineffassign .
 
 unparam ./...
 
-git ls-files -- '*.go' '*.md' '*.yaml' '*.yml' 'Makefile'\
+git ls-files -- '*.go' '*.md' '*.mod' '*.sh' '*.yaml' '*.yml'\
+	'Makefile'\
 	| xargs misspell --error
 
 looppointer ./...
@@ -157,7 +158,7 @@ nilness ./...
 # errcheck ./...
 exit_on_output sh -c '
 	errcheck --asserts --ignoregenerated ./... |\
-		{ grep -e "defer" -e "_test\.go:" -v || exit 0; }
+		{ grep -e "defer" -v || exit 0; }
 '
 
 staticcheck ./...

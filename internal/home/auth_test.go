@@ -79,7 +79,6 @@ func TestAuth(t *testing.T) {
 	assert.Equal(t, checkSessionNotFound, a.checkSession(sessStr))
 
 	a.Close()
-	os.Remove(fn)
 }
 
 // implements http.ResponseWriter

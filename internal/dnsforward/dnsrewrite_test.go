@@ -130,9 +130,11 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
 		if assert.Len(t, d.Res.Answer, 1) {
-			ans := d.Res.Answer[0].(*dns.MX)
-			assert.Equal(t, mx.Exchange, ans.Mx)
-			assert.Equal(t, mx.Preference, ans.Preference)
+			ans, ok := d.Res.Answer[0].(*dns.MX)
+			if assert.True(t, ok) {
+				assert.Equal(t, mx.Exchange, ans.Mx)
+				assert.Equal(t, mx.Preference, ans.Preference)
+			}
 		}
 	})
 
@@ -145,11 +147,13 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
 		if assert.Len(t, d.Res.Answer, 1) {
-			ans := d.Res.Answer[0].(*dns.SVCB)
-			assert.Equal(t, dns.SVCB_ALPN, ans.Value[0].Key())
-			assert.Equal(t, svcb.Params["alpn"], ans.Value[0].String())
-			assert.Equal(t, svcb.Target, ans.Target)
-			assert.Equal(t, svcb.Priority, ans.Priority)
+			ans, ok := d.Res.Answer[0].(*dns.SVCB)
+			if assert.True(t, ok) {
+				assert.Equal(t, dns.SVCB_ALPN, ans.Value[0].Key())
+				assert.Equal(t, svcb.Params["alpn"], ans.Value[0].String())
+				assert.Equal(t, svcb.Target, ans.Target)
+				assert.Equal(t, svcb.Priority, ans.Priority)
+			}
 		}
 	})
 
@@ -162,11 +166,13 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
 		if assert.Len(t, d.Res.Answer, 1) {
-			ans := d.Res.Answer[0].(*dns.HTTPS)
-			assert.Equal(t, dns.SVCB_ALPN, ans.Value[0].Key())
-			assert.Equal(t, svcb.Params["alpn"], ans.Value[0].String())
-			assert.Equal(t, svcb.Target, ans.Target)
-			assert.Equal(t, svcb.Priority, ans.Priority)
+			ans, ok := d.Res.Answer[0].(*dns.HTTPS)
+			if assert.True(t, ok) {
+				assert.Equal(t, dns.SVCB_ALPN, ans.Value[0].Key())
+				assert.Equal(t, svcb.Params["alpn"], ans.Value[0].String())
+				assert.Equal(t, svcb.Target, ans.Target)
+				assert.Equal(t, svcb.Priority, ans.Priority)
+			}
 		}
 	})
 }

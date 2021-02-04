@@ -45,12 +45,17 @@ func TestDB(t *testing.T) {
 	l.HWAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:aa")
 	exp1 := time.Now().Add(time.Hour)
 	l.Expiry = exp1
-	s.srv4.(*v4Server).addLease(&l)
+
+	srv4, ok := s.srv4.(*v4Server)
+	assert.True(t, ok)
+
+	srv4.addLease(&l)
 
 	l2 := Lease{}
 	l2.IP = net.IP{192, 168, 10, 101}
 	l2.HWAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:bb")
-	s.srv4.AddStaticLease(l2)
+	err = s.srv4.AddStaticLease(l2)
+	assert.Nil(t, err)
 
 	_ = os.Remove("leases.db")
 	s.dbStore()

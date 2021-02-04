@@ -64,7 +64,8 @@ func TestV6StaticLeaseAddReplaceDynamic(t *testing.T) {
 		notify:     notify6,
 	}
 	sIface, err := v6Create(conf)
-	s := sIface.(*v6Server)
+	s, ok := sIface.(*v6Server)
+	assert.True(t, ok)
 	assert.Nil(t, err)
 
 	// add dynamic lease
@@ -113,7 +114,8 @@ func TestV6GetLease(t *testing.T) {
 		notify:     notify6,
 	}
 	sIface, err := v6Create(conf)
-	s := sIface.(*v6Server)
+	s, ok := sIface.(*v6Server)
+	assert.True(t, ok)
 	assert.Nil(t, err)
 	s.conf.dnsIPAddrs = []net.IP{net.ParseIP("2000::1")}
 	s.sid = dhcpv6.Duid{
@@ -173,7 +175,8 @@ func TestV6GetDynamicLease(t *testing.T) {
 		notify:     notify6,
 	}
 	sIface, err := v6Create(conf)
-	s := sIface.(*v6Server)
+	s, ok := sIface.(*v6Server)
+	assert.True(t, ok)
 	assert.Nil(t, err)
 	s.conf.dnsIPAddrs = []net.IP{net.ParseIP("2000::1")}
 	s.sid = dhcpv6.Duid{
