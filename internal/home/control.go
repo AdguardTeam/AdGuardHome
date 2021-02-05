@@ -2,6 +2,7 @@ package home
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -202,37 +203,81 @@ func preInstallHandler(handler http.Handler) http.Handler {
 	return &preInstallHandlerStruct{handler}
 }
 
-// postInstall lets the handler run only if firstRun is false, and redirects to /install.html otherwise
-// it also enforces HTTPS if it is enabled and configured
+const defaultHTTPSPort = 443
+
+// handleHTTPSRedirect redirects the request to HTTPS, if needed.  If ok is
+// true, the middleware must continue handling the request.
+func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
+	web := Context.web
+	if web.httpsServer.server == nil {
+		return true
+	}
+
+	host, _, err := net.SplitHostPort(r.Host)
+	if err != nil {
+		// Check for the missing port error.  If it is that error, just
+		// use the host as is.
+		//
+		// See the source code for net.SplitHostPort.
+		const missingPort = "missing port in address"
+
+		addrErr := &net.AddrError{}
+		if !errors.As(err, &addrErr) || addrErr.Err != missingPort {
+			httpError(w, http.StatusBadRequest, "bad host: %s", err)
+
+			return false
+		}
+
+		host = r.Host
+	}
+
+	if r.TLS == nil && web.forceHTTPS {
+		hostPort := host
+		if port := web.conf.PortHTTPS; port != defaultHTTPSPort {
+			portStr := strconv.Itoa(port)
+			hostPort = net.JoinHostPort(host, portStr)
+		}
+
+		httpsURL := &url.URL{
+			Scheme:   "https",
+			Host:     hostPort,
+			Path:     r.URL.Path,
+			RawQuery: r.URL.RawQuery,
+		}
+		http.Redirect(w, r, httpsURL.String(), http.StatusTemporaryRedirect)
+
+		return false
+	}
+
+	// Allow the frontend from the HTTP origin to send requests to the HTTPS
+	// server.  This can happen when the user has just set up HTTPS with
+	// redirects.
+	originURL := &url.URL{
+		Scheme: "http",
+		Host:   r.Host,
+	}
+	w.Header().Set("Access-Control-Allow-Origin", originURL.String())
+
+	return true
+}
+
+// postInstall lets the handler to run only if firstRun is false.  Otherwise, it
+// redirects to /install.html.  It also enforces HTTPS if it is enabled and
+// configured and sets appropriate access control headers.
 func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if Context.firstRun &&
-			!strings.HasPrefix(r.URL.Path, "/install.") &&
-			!strings.HasPrefix(r.URL.Path, "/assets/") {
+		path := r.URL.Path
+		if Context.firstRun && !strings.HasPrefix(path, "/install.") &&
+			!strings.HasPrefix(path, "/assets/") {
 			http.Redirect(w, r, "/install.html", http.StatusFound)
+
 			return
 		}
 
-		// enforce https?
-		if r.TLS == nil && Context.web.forceHTTPS && Context.web.httpsServer.server != nil {
-			// yes, and we want host from host:port
-			host, _, err := net.SplitHostPort(r.Host)
-			if err != nil {
-				// no port in host
-				host = r.Host
-			}
-			// construct new URL to redirect to
-			newURL := url.URL{
-				Scheme:   "https",
-				Host:     net.JoinHostPort(host, strconv.Itoa(Context.web.conf.PortHTTPS)),
-				Path:     r.URL.Path,
-				RawQuery: r.URL.RawQuery,
-			}
-			http.Redirect(w, r, newURL.String(), http.StatusTemporaryRedirect)
+		if !handleHTTPSRedirect(w, r) {
 			return
 		}
 
-		w.Header().Set("Access-Control-Allow-Origin", "*")
 		handler(w, r)
 	}
 }

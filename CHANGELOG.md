@@ -43,6 +43,8 @@ and this project adheres to
 
 ### Changed
 
+- `Access-Control-Allow-Origin` is now only set to the same origin as the
+  domain, but with an HTTP scheme as opposed to `*` ([#2484]).
 - `workDir` now supports symlinks.
 - Stopped mounting together the directories `/opt/adguardhome/conf` and
   `/opt/adguardhome/work` in our Docker images ([#2589]).
@@ -67,6 +69,7 @@ and this project adheres to
 [#2358]: https://github.com/AdguardTeam/AdGuardHome/issues/2358
 [#2391]: https://github.com/AdguardTeam/AdGuardHome/issues/2391
 [#2394]: https://github.com/AdguardTeam/AdGuardHome/issues/2394
+[#2484]: https://github.com/AdguardTeam/AdGuardHome/issues/2484
 [#2509]: https://github.com/AdguardTeam/AdGuardHome/issues/2509
 [#2552]: https://github.com/AdguardTeam/AdGuardHome/issues/2552
 [#2589]: https://github.com/AdguardTeam/AdGuardHome/issues/2589

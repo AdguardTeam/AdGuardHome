@@ -133,7 +133,7 @@ func TestHome(t *testing.T) {
 	h := http.Client{}
 	for i := 0; i != 50; i++ {
 		resp, err = h.Get("http://127.0.0.1:3000/")
-		if err == nil && resp.StatusCode != 404 {
+		if err == nil && resp.StatusCode != http.StatusNotFound {
 			break
 		}
 		time.Sleep(100 * time.Millisecond)
