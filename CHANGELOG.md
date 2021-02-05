@@ -10,7 +10,7 @@ and this project adheres to
 ## [Unreleased]
 
 <!--
-## [v0.105.0] - 2021-02-03
+## [v0.105.0] - 2021-02-08
 -->
 
 ### Added
@@ -29,17 +29,6 @@ and this project adheres to
   address ([#2304]).
 - `$dnstype` modifier for filters ([#2337]).
 - HTTP API request body size limit ([#2305]).
-
-[#1361]: https://github.com/AdguardTeam/AdGuardHome/issues/1361
-[#1383]: https://github.com/AdguardTeam/AdGuardHome/issues/1383
-[#2102]: https://github.com/AdguardTeam/AdGuardHome/issues/2102
-[#2179]: https://github.com/AdguardTeam/AdGuardHome/issues/2179
-[#2224]: https://github.com/AdguardTeam/AdGuardHome/issues/2224
-[#2302]: https://github.com/AdguardTeam/AdGuardHome/issues/2302
-[#2304]: https://github.com/AdguardTeam/AdGuardHome/issues/2304
-[#2305]: https://github.com/AdguardTeam/AdGuardHome/issues/2305
-[#2337]: https://github.com/AdguardTeam/AdGuardHome/issues/2337
-[#2401]: https://github.com/AdguardTeam/AdGuardHome/issues/2401
 
 ### Changed
 
@@ -60,20 +49,6 @@ and this project adheres to
 - New build system and various internal improvements ([#2271], [#2276], [#2297],
   [#2509], [#2552]).
 
-[#2231]: https://github.com/AdguardTeam/AdGuardHome/issues/2231
-[#2271]: https://github.com/AdguardTeam/AdGuardHome/issues/2271
-[#2276]: https://github.com/AdguardTeam/AdGuardHome/issues/2276
-[#2297]: https://github.com/AdguardTeam/AdGuardHome/issues/2297
-[#2306]: https://github.com/AdguardTeam/AdGuardHome/issues/2306
-[#2343]: https://github.com/AdguardTeam/AdGuardHome/issues/2343
-[#2358]: https://github.com/AdguardTeam/AdGuardHome/issues/2358
-[#2391]: https://github.com/AdguardTeam/AdGuardHome/issues/2391
-[#2394]: https://github.com/AdguardTeam/AdGuardHome/issues/2394
-[#2484]: https://github.com/AdguardTeam/AdGuardHome/issues/2484
-[#2509]: https://github.com/AdguardTeam/AdGuardHome/issues/2509
-[#2552]: https://github.com/AdguardTeam/AdGuardHome/issues/2552
-[#2589]: https://github.com/AdguardTeam/AdGuardHome/issues/2589
-
 ### Deprecated
 
 - Go 1.14 support.  v0.106.0 will require at least Go 1.15 to build.
@@ -93,14 +68,6 @@ and this project adheres to
 - Incorrect detection of the IPv6 address of an interface as well as another
   infinite loop in the `/dhcp/find_active_dhcp` HTTP API ([#2355]).
 
-[#2225]: https://github.com/AdguardTeam/AdGuardHome/issues/2225
-[#2293]: https://github.com/AdguardTeam/AdGuardHome/issues/2293
-[#2345]: https://github.com/AdguardTeam/AdGuardHome/issues/2345
-[#2355]: https://github.com/AdguardTeam/AdGuardHome/issues/2355
-[#2459]: https://github.com/AdguardTeam/AdGuardHome/issues/2459
-[#2508]: https://github.com/AdguardTeam/AdGuardHome/issues/2508
-[#2630]: https://github.com/AdguardTeam/AdGuardHome/issues/2630
-
 ### Removed
 
 - The undocumented ability to use hostnames as any of `bind_host` values in
@@ -109,6 +76,37 @@ and this project adheres to
 - `Dockerfile` ([#2276]).  Replaced with the script
   `scripts/make/build-docker.sh` which uses `scripts/make/Dockerfile`.
 - Support for pre-v0.99.3 format of query logs ([#2102]).
+
+[#1361]: https://github.com/AdguardTeam/AdGuardHome/issues/1361
+[#1383]: https://github.com/AdguardTeam/AdGuardHome/issues/1383
+[#2102]: https://github.com/AdguardTeam/AdGuardHome/issues/2102
+[#2179]: https://github.com/AdguardTeam/AdGuardHome/issues/2179
+[#2224]: https://github.com/AdguardTeam/AdGuardHome/issues/2224
+[#2225]: https://github.com/AdguardTeam/AdGuardHome/issues/2225
+[#2231]: https://github.com/AdguardTeam/AdGuardHome/issues/2231
+[#2271]: https://github.com/AdguardTeam/AdGuardHome/issues/2271
+[#2276]: https://github.com/AdguardTeam/AdGuardHome/issues/2276
+[#2293]: https://github.com/AdguardTeam/AdGuardHome/issues/2293
+[#2297]: https://github.com/AdguardTeam/AdGuardHome/issues/2297
+[#2302]: https://github.com/AdguardTeam/AdGuardHome/issues/2302
+[#2304]: https://github.com/AdguardTeam/AdGuardHome/issues/2304
+[#2305]: https://github.com/AdguardTeam/AdGuardHome/issues/2305
+[#2306]: https://github.com/AdguardTeam/AdGuardHome/issues/2306
+[#2337]: https://github.com/AdguardTeam/AdGuardHome/issues/2337
+[#2343]: https://github.com/AdguardTeam/AdGuardHome/issues/2343
+[#2345]: https://github.com/AdguardTeam/AdGuardHome/issues/2345
+[#2355]: https://github.com/AdguardTeam/AdGuardHome/issues/2355
+[#2358]: https://github.com/AdguardTeam/AdGuardHome/issues/2358
+[#2391]: https://github.com/AdguardTeam/AdGuardHome/issues/2391
+[#2394]: https://github.com/AdguardTeam/AdGuardHome/issues/2394
+[#2401]: https://github.com/AdguardTeam/AdGuardHome/issues/2401
+[#2459]: https://github.com/AdguardTeam/AdGuardHome/issues/2459
+[#2484]: https://github.com/AdguardTeam/AdGuardHome/issues/2484
+[#2508]: https://github.com/AdguardTeam/AdGuardHome/issues/2508
+[#2509]: https://github.com/AdguardTeam/AdGuardHome/issues/2509
+[#2552]: https://github.com/AdguardTeam/AdGuardHome/issues/2552
+[#2589]: https://github.com/AdguardTeam/AdGuardHome/issues/2589
+[#2630]: https://github.com/AdguardTeam/AdGuardHome/issues/2630
 
 ## [v0.104.3] - 2020-11-19
 
