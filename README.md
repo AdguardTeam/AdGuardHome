@@ -310,12 +310,13 @@ Here's what you can also do to contribute:
 <a id="uses"></a>
 ## Projects that use AdGuard Home
 
-* Python library (https://github.com/frenck/python-adguardhome)
-* Hass.io add-on (https://github.com/hassio-addons/addon-adguard-home)
-* OpenWrt LUCI app (https://github.com/kongfl888/luci-app-adguardhome)
-* Prometheus exporter for AdGuard Home (https://github.com/ebrianne/adguard-exporter)
-* Cloudron app (https://git.cloudron.io/cloudron/adguard-home-app)
-* AdGuard Home on GLInet routers (https://forum.gl-inet.com/t/adguardhome-on-gl-routers/10664)
+* [AdGuard Home Remote](https://apps.apple.com/app/apple-store/id1543143740) - iOS app by [Joost](https://rocketscience-it.nl/)
+* [Python library](https://github.com/frenck/python-adguardhome) by @frenck
+* [Home Assistant add-on](https://github.com/hassio-addons/addon-adguard-home) by @frenck
+* [OpenWrt LUCI app](https://github.com/kongfl888/luci-app-adguardhome) by @kongfl888 (originally by @rufengsuixing)
+* [Prometheus exporter for AdGuard Home](https://github.com/ebrianne/adguard-exporter) by @ebrianne
+* [AdGuard Home on GLInet routers](https://forum.gl-inet.com/t/adguardhome-on-gl-routers/10664) by [Gl-Inet](https://gl-inet.com/)
+* [Cloudron app](https://git.cloudron.io/cloudron/adguard-home-app) by @gramakri
 
 <a id="acknowledgments"></a>
 ## Acknowledgments
