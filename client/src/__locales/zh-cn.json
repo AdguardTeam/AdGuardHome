@@ -1,6 +1,6 @@
 {
     "client_settings": "客户端设置",
-    "example_upstream_reserved": "您可以将上游DNS 服务器<0>指定为特定域名</0>",
+    "example_upstream_reserved": "您可以<0>为特定域名</0>指定上游 DNS 服务器",
     "example_upstream_comment": "您可以指定注解",
     "upstream_parallel": "通过同时查询所有上游服务器，使用并行请求以加速解析",
     "parallel_requests": "并行请求",

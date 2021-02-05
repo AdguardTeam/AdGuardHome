@@ -1,6 +1,6 @@
 {
     "client_settings": "用戶端設定",
-    "example_upstream_reserved": "您可明確指定<0>用於特定的網域</0>之 DNS 上游",
+    "example_upstream_reserved": "您可以<0>為特定網域</0>指定上游 DNS",
     "example_upstream_comment": "您可明確指定註解",
     "upstream_parallel": "透過同時地查詢所有上游的伺服器，使用並行的查詢以加速解析網域",
     "parallel_requests": "並行的請求",
@@ -74,7 +74,7 @@
     "filter": "過濾器",
     "query_log": "查詢記錄",
     "compact": "精簡的",
-    "nothing_found": "無什麼被找到",
+    "nothing_found": "沒找到什麼",
     "faq": "常見問答集",
     "version": "版本",
     "address": "位址",
@@ -259,7 +259,7 @@
     "rate_limit_desc": "單一的用戶端被允許傳送的每秒請求之數量（設定它為 0 表示無限制的）",
     "blocking_ipv4_desc": "要被返回給已封鎖的 A 請求之 IP 位址",
     "blocking_ipv6_desc": "要被返回給已封鎖的 AAAA 請求之 IP 位址",
-    "blocking_mode_default": "預設：當被廣告封鎖樣式的規則封鎖時，以零值 IP 位址（0.0.0.0 供 A；:: 供 AAAA）回覆；當被 /etc/hosts 樣式的規則封鎖時，以在該規則中之已明確指定的 IP 位址回覆",
+    "blocking_mode_default": "預設：當被 AdBlock 樣式的規則封鎖時，以零值 IP 位址（0.0.0.0 供 A；:: 供 AAAA）回覆；當被 /etc/hosts 樣式的規則封鎖時，以在該規則中之已明確指定的 IP 位址回覆",
     "blocking_mode_refused": "已拒絕（REFUSED）：以 REFUSED 碼回覆",
     "blocking_mode_nxdomain": "不存在的網域（NXDOMAIN）：以 NXDOMAIN 碼回覆",
     "blocking_mode_null_ip": "無效的 IP：以零值 IP 位址（0.0.0.0 供 A；:: 供 AAAA）回覆",
@@ -284,7 +284,7 @@
     "install_settings_dns_desc": "您將需要配置您的裝置或路由器以使用於下列的位址上之 DNS 伺服器：",
     "install_settings_all_interfaces": "所有的介面",
     "install_auth_title": "驗證",
-    "install_auth_desc": "配置屬於您的 AdGuard Home 管理員網路介面之密碼驗證是被非常建議的。即使它僅在您的區域網路中為可存取的，保護它免於不受限制的存取為仍然重要的。",
+    "install_auth_desc": "我們強烈建議您設定 AdGuard Home 管理員網路介面密碼。即使它僅能在您的區域網路中使用，保護它免於不受限制的存取仍然很重要。",
     "install_auth_username": "使用者名稱",
     "install_auth_password": "密碼",
     "install_auth_confirm": "確認密碼",
@@ -585,6 +585,6 @@
     "click_to_view_queries": "點擊以檢視查詢",
     "port_53_faq_link": "連接埠 53 常被 \"DNSStubListener\" 或 \"systemd-resolved\" 服務佔用。請閱讀有關如何解決這個的<0>用法說明</0>。",
     "adg_will_drop_dns_queries": "AdGuard Home 將持續排除來自此用戶端之所有的 DNS 查詢。",
-    "client_not_in_allowed_clients": "因為該用戶端不在\"已允許的用戶端\"清單中，它未被允許。",
+    "client_not_in_allowed_clients": "該用戶端未被允許，因為它不在\"已允許的用戶端\"清單中。",
     "experimental": "實驗性的"
 }

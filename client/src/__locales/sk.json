@@ -50,7 +50,7 @@
     "dhcp_table_expires": "Vyprší",
     "dhcp_warning": "Ak chcete server DHCP napriek tomu povoliť, uistite sa, že v sieti nie je žiadny iný aktívny DHCP server. V opačnom prípade sa môže prerušiť internet pre už pripojené zariadenia!",
     "dhcp_error": "Nebolo možné určiť, či je v sieti iný DHCP server.",
-    "dhcp_static_ip_error": "Aby bolo možné používať DHCP server, musí byť nastavená statická IP adresa. Nepodarilo sa určiť, či je toto sieťové rozhranie nakonfigurované pomocou statickej adresy IP. Nastavte statickú adresu IP manuálne.",
+    "dhcp_static_ip_error": "Aby bolo možné používať DHCP server, musí byť nastavená statická IP adresa. Nepodarilo sa určiť, či je toto sieťové rozhranie nakonfigurované pomocou statickej adresy IP. Nastavte statickú IP adresu manuálne.",
     "dhcp_dynamic_ip_found": "Váš systém používa dynamickú konfiguráciu IP adresy pre rozhranie <0{{interfaceName}}</0>. Aby bolo možné používať DHCP server, musí byť nastavená statická IP adresa. Vaša aktuálna adresa IP je <0>{{ipAddress}}</0>. Automaticky nastavíme túto IP adresu ako statickú, ak stlačíte tlačidlo Povoliť DHCP.",
     "dhcp_lease_added": "Statický  \"{{key}}\" prenájmu bol úspešne pridaný",
     "dhcp_lease_deleted": "Statický \"{{key}}\" prenájmu bol úspešne vymazaný",
