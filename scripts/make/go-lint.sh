@@ -132,7 +132,7 @@ golint --set_exit_status ./...
 
 "$GO" vet ./...
 
-gocyclo --over 20 .
+gocyclo --over 19 .
 
 gosec --quiet .
 

@@ -83,23 +83,16 @@ func whoisParse(data string) map[string]string {
 		switch k {
 		case "org-name":
 			m["orgname"] = trimValue(v)
-		case "orgname":
-			fallthrough
-		case "city":
-			fallthrough
-		case "country":
+		case "city", "country", "orgname":
 			m[k] = trimValue(v)
-
 		case "descr":
 			if len(descr) == 0 {
 				descr = v
 			}
 		case "netname":
 			netname = v
-
 		case "whois": // "whois: whois.arin.net"
 			m["whois"] = v
-
 		case "referralserver": // "ReferralServer:  whois://whois.ripe.net"
 			if strings.HasPrefix(v, "whois://") {
 				m["whois"] = v[len("whois://"):]
@@ -107,12 +100,16 @@ func whoisParse(data string) map[string]string {
 		}
 	}
 
-	// descr or netname -> orgname
 	_, ok := m["orgname"]
-	if !ok && len(descr) != 0 {
-		m["orgname"] = trimValue(descr)
-	} else if !ok && len(netname) != 0 {
-		m["orgname"] = trimValue(netname)
+	if !ok {
+		// Set orgname from either descr or netname for the frontent.
+		//
+		// TODO(a.garipov): Perhaps don't do that in the V1 HTTP API?
+		if descr != "" {
+			m["orgname"] = trimValue(descr)
+		} else if netname != "" {
+			m["orgname"] = trimValue(netname)
+		}
 	}
 
 	return m

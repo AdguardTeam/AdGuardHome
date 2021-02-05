@@ -90,6 +90,28 @@ type dhcpServerConfigJSON struct {
 	V6            v6ServerConfJSON `json:"v6"`
 }
 
+func (s *Server) enableDHCP(ifaceName string) (code int, err error) {
+	var hasStaticIP bool
+	hasStaticIP, err = sysutil.IfaceHasStaticIP(ifaceName)
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("checking static ip: %w", err)
+	}
+
+	if !hasStaticIP {
+		err = sysutil.IfaceSetStaticIP(ifaceName)
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("setting static ip: %w", err)
+		}
+	}
+
+	err = s.Start()
+	if err != nil {
+		return http.StatusBadRequest, fmt.Errorf("starting dhcp server: %w", err)
+	}
+
+	return 0, nil
+}
+
 func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 	newconfig := dhcpServerConfigJSON{}
 	newconfig.Enabled = s.conf.Enabled
@@ -98,6 +120,7 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 	js, err := jsonutil.DecodeObject(&newconfig, r.Body)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "Failed to parse new DHCP config json: %s", err)
+
 		return
 	}
 
@@ -112,6 +135,7 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		if len(v4conf.RangeStart) == 0 {
 			v4conf.Enabled = false
 		}
+
 		v4Enabled = v4conf.Enabled
 		v4conf.InterfaceName = newconfig.InterfaceName
 
@@ -122,7 +146,8 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 
 		s4, err = v4Create(v4conf)
 		if err != nil {
-			httpError(r, w, http.StatusBadRequest, "Invalid DHCPv4 configuration: %s", err)
+			httpError(r, w, http.StatusBadRequest, "invalid dhcpv4 configuration: %s", err)
+
 			return
 		}
 	}
@@ -133,18 +158,22 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		if len(v6conf.RangeStart) == 0 {
 			v6conf.Enabled = false
 		}
+
 		v6Enabled = v6conf.Enabled
 		v6conf.InterfaceName = newconfig.InterfaceName
 		v6conf.notify = s.onNotify
+
 		s6, err = v6Create(v6conf)
 		if err != nil {
-			httpError(r, w, http.StatusBadRequest, "Invalid DHCPv6 configuration: %s", err)
+			httpError(r, w, http.StatusBadRequest, "invalid dhcpv6 configuration: %s", err)
+
 			return
 		}
 	}
 
 	if newconfig.Enabled && !v4Enabled && !v6Enabled {
-		httpError(r, w, http.StatusBadRequest, "DHCPv4 or DHCPv6 configuration must be complete")
+		httpError(r, w, http.StatusBadRequest, "dhcpv4 or dhcpv6 configuration must be complete")
+
 		return
 	}
 
@@ -161,25 +190,20 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 	if s4 != nil {
 		s.srv4 = s4
 	}
+
 	if s6 != nil {
 		s.srv6 = s6
 	}
+
 	s.conf.ConfigModified()
 	s.dbLoad()
 
 	if s.conf.Enabled {
-		staticIP, err := sysutil.IfaceHasStaticIP(newconfig.InterfaceName)
-		if !staticIP && err == nil {
-			err = sysutil.IfaceSetStaticIP(newconfig.InterfaceName)
-			if err != nil {
-				httpError(r, w, http.StatusInternalServerError, "Failed to configure static IP: %s", err)
-				return
-			}
-		}
-
-		err = s.Start()
+		var code int
+		code, err = s.enableDHCP(newconfig.InterfaceName)
 		if err != nil {
-			httpError(r, w, http.StatusBadRequest, "Failed to start DHCP server: %s", err)
+			httpError(r, w, code, "enabling dhcp: %s", err)
+
 			return
 		}
 	}
