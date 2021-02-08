@@ -67,6 +67,10 @@ type configuration struct {
 	// Note: this array is filled only before file read/write and then it's cleared
 	Clients []clientObject `yaml:"clients"`
 
+	// DisableConfigWriting can be used to disable config writeback, for example to run
+	// with a ReadOnly configfile.
+	DisableConfigWriting bool `yaml:"disable_config_writing"`
+
 	logSettings `yaml:",inline"`
 
 	sync.RWMutex `yaml:"-"`
@@ -254,6 +258,11 @@ func readConfigFile() ([]byte, error) {
 
 // Saves configuration to the YAML file and also saves the user filter contents to a file
 func (c *configuration) write() error {
+	if c.DisableConfigWriting {
+		log.Info("Not writing config, because disable_config_writing is set to true")
+		return nil
+	}
+
 	c.Lock()
 	defer c.Unlock()
 
