@@ -26,8 +26,8 @@ github.com/AdguardTeam/golibs v0.4.2/go.mod h1:skKsDKIBB7kkFflLJBpfGX+G8QFTx0WKU
 github.com/AdguardTeam/golibs v0.4.4 h1:cM9UySQiYFW79zo5XRwnaIWVzfW4eNXmZktMrWbthpw=
 github.com/AdguardTeam/golibs v0.4.4/go.mod h1:skKsDKIBB7kkFflLJBpfGX+G8QFTx0WKUzB6TIgtUj4=
 github.com/AdguardTeam/gomitmproxy v0.2.0/go.mod h1:Qdv0Mktnzer5zpdpi5rAwixNJzW2FN91LjKJCkVbYGU=
-github.com/AdguardTeam/urlfilter v0.14.2 h1:k26vEYz0mT/liDGZ0JGIBLYLMHaisIGX1UR0qaVnO4k=
-github.com/AdguardTeam/urlfilter v0.14.2/go.mod h1:klx4JbOfc4EaNb5lWLqOwfg+pVcyRukmoJRvO55lL5U=
+github.com/AdguardTeam/urlfilter v0.14.3 h1:MBaLEXS0LRQNbHtLkDCYhHINDPtkevPrYWGiOUuLJU4=
+github.com/AdguardTeam/urlfilter v0.14.3/go.mod h1:klx4JbOfc4EaNb5lWLqOwfg+pVcyRukmoJRvO55lL5U=
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
