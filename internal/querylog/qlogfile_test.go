@@ -12,14 +12,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // prepareTestFiles prepares several test query log files, each with the
 // specified lines count.
-func prepareTestFiles(t *testing.T, dir string, filesNum, linesNum int) []string {
+func prepareTestFiles(t *testing.T, filesNum, linesNum int) []string {
 	t.Helper()
+
+	if filesNum == 0 {
+		return []string{}
+	}
 
 	const strV = "\"%s\""
 	const nl = "\n"
@@ -30,6 +35,8 @@ func prepareTestFiles(t *testing.T, dir string, filesNum, linesNum int) []string
 
 	lineTime, _ := time.Parse(time.RFC3339Nano, "2020-02-18T22:36:35.920973+03:00")
 	lineIP := uint32(0)
+
+	dir := aghtest.PrepareTestDir(t)
 
 	files := make([]string, filesNum)
 	for j := range files {
@@ -56,10 +63,10 @@ func prepareTestFiles(t *testing.T, dir string, filesNum, linesNum int) []string
 
 // prepareTestFile prepares a test query log file with the specified number of
 // lines.
-func prepareTestFile(t *testing.T, dir string, linesCount int) string {
+func prepareTestFile(t *testing.T, linesCount int) string {
 	t.Helper()
 
-	return prepareTestFiles(t, dir, 1, linesCount)[0]
+	return prepareTestFiles(t, 1, linesCount)[0]
 }
 
 // newTestQLogFile creates new *QLogFile for tests and registers the required
@@ -67,7 +74,7 @@ func prepareTestFile(t *testing.T, dir string, linesCount int) string {
 func newTestQLogFile(t *testing.T, linesNum int) (file *QLogFile) {
 	t.Helper()
 
-	testFile := prepareTestFile(t, prepareTestDir(t), linesNum)
+	testFile := prepareTestFile(t, linesNum)
 
 	// Create the new QLogFile instance.
 	file, err := NewQLogFile(testFile)
@@ -275,7 +282,7 @@ func TestQLogFile(t *testing.T) {
 }
 
 func NewTestQLogFileData(t *testing.T, data string) (file *QLogFile) {
-	f, err := ioutil.TempFile(prepareTestDir(t), "*.txt")
+	f, err := ioutil.TempFile(aghtest.PrepareTestDir(t), "*.txt")
 	require.Nil(t, err)
 	t.Cleanup(func() {
 		assert.Nil(t, f.Close())

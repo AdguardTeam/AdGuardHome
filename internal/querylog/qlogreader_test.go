@@ -15,7 +15,7 @@ import (
 func newTestQLogReader(t *testing.T, filesNum, linesNum int) (reader *QLogReader) {
 	t.Helper()
 
-	testFiles := prepareTestFiles(t, prepareTestDir(t), filesNum, linesNum)
+	testFiles := prepareTestFiles(t, filesNum, linesNum)
 
 	// Create the new QLogReader instance.
 	reader, err := NewQLogReader(testFiles)

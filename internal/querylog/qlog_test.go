@@ -2,11 +2,8 @@ package querylog
 
 import (
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"net"
-	"os"
-	"runtime"
 	"sort"
 	"testing"
 	"time"
@@ -24,38 +21,6 @@ func TestMain(m *testing.M) {
 	aghtest.DiscardLogOutput(m)
 }
 
-func prepareTestDir(t *testing.T) string {
-	t.Helper()
-
-	wd, err := os.Getwd()
-	require.Nil(t, err)
-
-	dir, err := ioutil.TempDir(wd, "agh-tests")
-	require.Nil(t, err)
-	require.NotEmpty(t, dir)
-
-	t.Cleanup(func() {
-		// TODO(e.burkov): Replace with t.TempDir methods after updating
-		// go version to 1.15.
-		start := time.Now()
-		for {
-			err := os.RemoveAll(dir)
-			if err == nil {
-				break
-			}
-
-			if runtime.GOOS != "windows" || time.Since(start) >= 500*time.Millisecond {
-				break
-			}
-			time.Sleep(5 * time.Millisecond)
-		}
-
-		assert.Nil(t, err)
-	})
-
-	return dir
-}
-
 // TestQueryLog tests adding and loading (with filtering) entries from disk and
 // memory.
 func TestQueryLog(t *testing.T) {
@@ -64,7 +29,7 @@ func TestQueryLog(t *testing.T) {
 		FileEnabled: true,
 		Interval:    1,
 		MemSize:     100,
-		BaseDir:     prepareTestDir(t),
+		BaseDir:     aghtest.PrepareTestDir(t),
 	})
 
 	// Add disk entries.
@@ -166,7 +131,7 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 		Enabled:  true,
 		Interval: 1,
 		MemSize:  100,
-		BaseDir:  prepareTestDir(t),
+		BaseDir:  aghtest.PrepareTestDir(t),
 	})
 
 	const (
@@ -240,7 +205,7 @@ func TestQueryLogMaxFileScanEntries(t *testing.T) {
 		FileEnabled: true,
 		Interval:    1,
 		MemSize:     100,
-		BaseDir:     prepareTestDir(t),
+		BaseDir:     aghtest.PrepareTestDir(t),
 	})
 
 	const entNum = 10
@@ -268,7 +233,7 @@ func TestQueryLogFileDisabled(t *testing.T) {
 		FileEnabled: false,
 		Interval:    1,
 		MemSize:     2,
-		BaseDir:     prepareTestDir(t),
+		BaseDir:     aghtest.PrepareTestDir(t),
 	})
 
 	addEntry(l, "example1.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))

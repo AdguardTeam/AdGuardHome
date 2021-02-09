@@ -528,6 +528,57 @@ func (s *statsCtx) loadUnits(limit uint32) ([]*unitDB, uint32) {
 	return units, firstID
 }
 
+// numsGetter is a signature for statsCollector argument.
+type numsGetter func(u *unitDB) (num uint64)
+
+// statsCollector collects statisctics for the given *unitDB slice by specified
+// timeUnit using ng to retrieve data.
+func statsCollector(units []*unitDB, firstID uint32, timeUnit TimeUnit, ng numsGetter) (nums []uint64) {
+	if timeUnit == Hours {
+		for _, u := range units {
+			nums = append(nums, ng(u))
+		}
+	} else {
+		// Per time unit counters: 720 hours may span 31 days, so we
+		// skip data for the first day in this case.
+		// align_ceil(24)
+		firstDayID := (firstID + 24 - 1) / 24 * 24
+
+		var sum uint64
+		id := firstDayID
+		nextDayID := firstDayID + 24
+		for i := int(firstDayID - firstID); i != len(units); i++ {
+			sum += ng(units[i])
+			if id == nextDayID {
+				nums = append(nums, sum)
+				sum = 0
+				nextDayID += 24
+			}
+			id++
+		}
+		if id <= nextDayID {
+			nums = append(nums, sum)
+		}
+	}
+	return nums
+}
+
+// pairsGetter is a signature for topsCollector argument.
+type pairsGetter func(u *unitDB) (pairs []countPair)
+
+// topsCollector collects statistics about highest values fro the given *unitDB
+// slice using pg to retrieve data.
+func topsCollector(units []*unitDB, max int, pg pairsGetter) []map[string]uint64 {
+	m := map[string]uint64{}
+	for _, u := range units {
+		for _, it := range pg(u) {
+			m[it.Name] += it.Count
+		}
+	}
+	a2 := convertMapToSlice(m, max)
+	return convertTopSlice(a2)
+}
+
 /* Algorithm:
 . Prepare array of N units, where N is the value of "limit" configuration setting
  . Load data for the most recent units from file
@@ -568,65 +619,25 @@ func (s *statsCtx) getData() (statsResponse, bool) {
 		return statsResponse{}, false
 	}
 
-	// per time unit counters:
-	// 720 hours may span 31 days, so we skip data for the first day in this case
-	firstDayID := (firstID + 24 - 1) / 24 * 24 // align_ceil(24)
-
-	statsCollector := func(numsGetter func(u *unitDB) (num uint64)) (nums []uint64) {
-		if timeUnit == Hours {
-			for _, u := range units {
-				nums = append(nums, numsGetter(u))
-			}
-		} else {
-			var sum uint64
-			id := firstDayID
-			nextDayID := firstDayID + 24
-			for i := int(firstDayID - firstID); i != len(units); i++ {
-				sum += numsGetter(units[i])
-				if id == nextDayID {
-					nums = append(nums, sum)
-					sum = 0
-					nextDayID += 24
-				}
-				id++
-			}
-			if id <= nextDayID {
-				nums = append(nums, sum)
-			}
-		}
-		return nums
-	}
-
-	topsCollector := func(max int, pairsGetter func(u *unitDB) (pairs []countPair)) []map[string]uint64 {
-		m := map[string]uint64{}
-		for _, u := range units {
-			for _, it := range pairsGetter(u) {
-				m[it.Name] += it.Count
-			}
-		}
-		a2 := convertMapToSlice(m, max)
-		return convertTopSlice(a2)
-	}
-
-	dnsQueries := statsCollector(func(u *unitDB) (num uint64) { return u.NTotal })
+	dnsQueries := statsCollector(units, firstID, timeUnit, func(u *unitDB) (num uint64) { return u.NTotal })
 	if timeUnit != Hours && len(dnsQueries) != int(limit/24) {
 		log.Fatalf("len(dnsQueries) != limit: %d %d", len(dnsQueries), limit)
 	}
 
 	data := statsResponse{
 		DNSQueries:           dnsQueries,
-		BlockedFiltering:     statsCollector(func(u *unitDB) (num uint64) { return u.NResult[RFiltered] }),
-		ReplacedSafebrowsing: statsCollector(func(u *unitDB) (num uint64) { return u.NResult[RSafeBrowsing] }),
-		ReplacedParental:     statsCollector(func(u *unitDB) (num uint64) { return u.NResult[RParental] }),
-		TopQueried:           topsCollector(maxDomains, func(u *unitDB) (pairs []countPair) { return u.Domains }),
-		TopBlocked:           topsCollector(maxDomains, func(u *unitDB) (pairs []countPair) { return u.BlockedDomains }),
-		TopClients:           topsCollector(maxClients, func(u *unitDB) (pairs []countPair) { return u.Clients }),
+		BlockedFiltering:     statsCollector(units, firstID, timeUnit, func(u *unitDB) (num uint64) { return u.NResult[RFiltered] }),
+		ReplacedSafebrowsing: statsCollector(units, firstID, timeUnit, func(u *unitDB) (num uint64) { return u.NResult[RSafeBrowsing] }),
+		ReplacedParental:     statsCollector(units, firstID, timeUnit, func(u *unitDB) (num uint64) { return u.NResult[RParental] }),
+		TopQueried:           topsCollector(units, maxDomains, func(u *unitDB) (pairs []countPair) { return u.Domains }),
+		TopBlocked:           topsCollector(units, maxDomains, func(u *unitDB) (pairs []countPair) { return u.BlockedDomains }),
+		TopClients:           topsCollector(units, maxClients, func(u *unitDB) (pairs []countPair) { return u.Clients }),
 	}
 
-	// total counters:
-
-	sum := unitDB{}
-	sum.NResult = make([]uint64, rLast)
+	// Total counters:
+	sum := unitDB{
+		NResult: make([]uint64, rLast),
+	}
 	timeN := 0
 	for _, u := range units {
 		sum.NTotal += u.NTotal

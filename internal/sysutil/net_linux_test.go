@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const nl = "\n"
@@ -48,7 +49,7 @@ func TestDHCPCDStaticConfig(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			r := bytes.NewReader(tc.data)
 			has, err := dhcpcdStaticConfig(r, "wlan0")
-			assert.Nil(t, err)
+			require.Nil(t, err)
 			assert.Equal(t, tc.want, has)
 		})
 	}
@@ -85,26 +86,36 @@ func TestIfacesStaticConfig(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			r := bytes.NewReader(tc.data)
 			has, err := ifacesStaticConfig(r, "enp0s3")
-			assert.Nil(t, err)
+			require.Nil(t, err)
 			assert.Equal(t, tc.want, has)
 		})
 	}
 }
 
 func TestSetStaticIPdhcpcdConf(t *testing.T) {
-	dhcpcdConf := nl + `interface wlan0` + nl +
-		`static ip_address=192.168.0.2/24` + nl +
-		`static routers=192.168.0.1` + nl +
-		`static domain_name_servers=192.168.0.2` + nl + nl
+	testCases := []struct {
+		name       string
+		dhcpcdConf string
+		routers    net.IP
+	}{{
+		name: "with_gateway",
+		dhcpcdConf: nl + `interface wlan0` + nl +
+			`static ip_address=192.168.0.2/24` + nl +
+			`static routers=192.168.0.1` + nl +
+			`static domain_name_servers=192.168.0.2` + nl + nl,
+		routers: net.IP{192, 168, 0, 1},
+	}, {
+		name: "without_gateway",
+		dhcpcdConf: nl + `interface wlan0` + nl +
+			`static ip_address=192.168.0.2/24` + nl +
+			`static domain_name_servers=192.168.0.2` + nl + nl,
+		routers: nil,
+	}}
 
-	s := updateStaticIPdhcpcdConf("wlan0", "192.168.0.2/24", net.IP{192, 168, 0, 1}, net.IP{192, 168, 0, 2})
-	assert.Equal(t, dhcpcdConf, s)
-
-	// without gateway
-	dhcpcdConf = nl + `interface wlan0` + nl +
-		`static ip_address=192.168.0.2/24` + nl +
-		`static domain_name_servers=192.168.0.2` + nl + nl
-
-	s = updateStaticIPdhcpcdConf("wlan0", "192.168.0.2/24", nil, net.IP{192, 168, 0, 2})
-	assert.Equal(t, dhcpcdConf, s)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := updateStaticIPdhcpcdConf("wlan0", "192.168.0.2/24", tc.routers, net.IP{192, 168, 0, 2})
+			assert.Equal(t, tc.dhcpcdConf, s)
+		})
+	}
 }
