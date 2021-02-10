@@ -13,6 +13,10 @@ and this project adheres to
 ## [v0.106.0] - 2021-04-26
 -->
 
+<!--
+## [v0.105.1] - 2021-02-24
+-->
+
 ## [v0.105.0] - 2021-02-10
 
 ### Added
@@ -151,9 +155,10 @@ and this project adheres to
 
 
 <!--
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.105.1...HEAD
+[v0.105.1]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.105.0...v0.105.1
+-->
 [Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.105.0...HEAD
 [v0.105.0]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.104.3...v0.105.0
--->
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.104.3...HEAD
 [v0.104.3]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.104.2...v0.104.3
 [v0.104.2]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.104.1...v0.104.2
