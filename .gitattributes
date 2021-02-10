@@ -1,4 +1,1 @@
-client/*                      linguist-vendored
-client/src/__locales/*.json   binary
-# Make an exception for the english locale, as it is the base one.
-client/src/__locales/en.json -binary
+client/* linguist-vendored
