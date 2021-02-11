@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -11,9 +12,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/golibs/log"
 	bolt "go.etcd.io/bbolt"
 )
+
+// TODO(a.garipov): Rewrite all of this.  Add proper error handling and
+// inspection.  Improve logging.  Decrease complexity.
 
 const (
 	maxDomains = 100 // max number of top domains to store in file or return via Get()
@@ -61,11 +66,12 @@ type unitDB struct {
 	TimeAvg uint32 // usec
 }
 
-func createObject(conf Config) (*statsCtx, error) {
-	s := statsCtx{}
+func createObject(conf Config) (s *statsCtx, err error) {
+	s = &statsCtx{}
 	if !checkInterval(conf.LimitDays) {
 		conf.LimitDays = 1
 	}
+
 	s.conf = &Config{}
 	*s.conf = conf
 	s.conf.limit = conf.LimitDays * 24
@@ -84,27 +90,43 @@ func createObject(conf Config) (*statsCtx, error) {
 		log.Tracef("Deleting old units...")
 		firstID := id - s.conf.limit - 1
 		unitDel := 0
-		forEachBkt := func(name []byte, b *bolt.Bucket) error {
-			id := uint32(btoi(name))
-			if id < firstID {
-				err := tx.DeleteBucket(name)
-				if err != nil {
-					log.Debug("tx.DeleteBucket: %s", err)
+
+		// TODO(a.garipov): See if this is actually necessary.  Looks
+		// like a rather bizarre solution.
+		errStop := agherr.Error("stop iteration")
+		forEachBkt := func(name []byte, _ *bolt.Bucket) (cberr error) {
+			nameID := uint32(btoi(name))
+			if nameID < firstID {
+				cberr = tx.DeleteBucket(name)
+				if cberr != nil {
+					log.Debug("stats: tx.DeleteBucket: %s", cberr)
+
+					return nil
 				}
-				log.Debug("Stats: deleted unit %d", id)
+
+				log.Debug("stats: deleted unit %d", nameID)
 				unitDel++
+
 				return nil
 			}
-			return fmt.Errorf("")
+
+			return errStop
 		}
-		_ = tx.ForEach(forEachBkt)
+
+		err = tx.ForEach(forEachBkt)
+		if err != nil && !errors.Is(err, errStop) {
+			log.Debug("stats: deleting units: %s", err)
+		}
 
 		udb = s.loadUnitFromDB(tx, id)
 
 		if unitDel != 0 {
 			s.commitTxn(tx)
 		} else {
-			_ = tx.Rollback()
+			err = tx.Rollback()
+			if err != nil {
+				log.Debug("rolling back: %s", err)
+			}
 		}
 	}
 
@@ -115,8 +137,9 @@ func createObject(conf Config) (*statsCtx, error) {
 	}
 	s.unit = &u
 
-	log.Debug("Stats: initialized")
-	return &s, nil
+	log.Debug("stats: initialized")
+
+	return s, nil
 }
 
 func (s *statsCtx) Start() {
@@ -133,7 +156,7 @@ func (s *statsCtx) dbOpen() bool {
 	log.Tracef("db.Open...")
 	s.db, err = bolt.Open(s.conf.Filename, 0o644, nil)
 	if err != nil {
-		log.Error("Stats: open DB: %s: %s", s.conf.Filename, err)
+		log.Error("stats: open DB: %s: %s", s.conf.Filename, err)
 		if err.Error() == "invalid argument" {
 			log.Error("AdGuard Home cannot be initialized due to an incompatible file system.\nPlease read the explanation here: https://github.com/AdguardTeam/AdGuardHome/internal/wiki/Getting-Started#limitations")
 		}
@@ -262,10 +285,13 @@ func (s *statsCtx) periodicFlush() {
 func (s *statsCtx) deleteUnit(tx *bolt.Tx, id uint32) bool {
 	err := tx.DeleteBucket(unitName(id))
 	if err != nil {
-		log.Tracef("bolt DeleteBucket: %s", err)
+		log.Tracef("stats: bolt DeleteBucket: %s", err)
+
 		return false
 	}
-	log.Debug("Stats: deleted unit %d", id)
+
+	log.Debug("stats: deleted unit %d", id)
+
 	return true
 }
 
@@ -390,7 +416,7 @@ func (s *statsCtx) setLimit(limitDays int) {
 	conf := *s.conf
 	conf.limit = uint32(limitDays) * 24
 	s.conf = &conf
-	log.Debug("Stats: set limit: %d", limitDays)
+	log.Debug("stats: set limit: %d", limitDays)
 }
 
 func (s *statsCtx) WriteDiskConfig(dc *DiskConfig) {
@@ -415,7 +441,7 @@ func (s *statsCtx) Close() {
 		log.Tracef("db.Close")
 	}
 
-	log.Debug("Stats: closed")
+	log.Debug("stats: closed")
 }
 
 // Reset counters and clear database
@@ -443,7 +469,7 @@ func (s *statsCtx) clear() {
 
 	_ = s.dbOpen()
 
-	log.Debug("Stats: cleared")
+	log.Debug("stats: cleared")
 }
 
 // Get Client IP address
