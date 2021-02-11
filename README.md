@@ -155,7 +155,7 @@ It depends.
 
 "DNS sinkholing" is capable of blocking a big percentage of ads, but it lacks flexibility and power of traditional ad blockers. You can get a good impression about the difference between these methods by reading [this article](https://adguard.com/en/blog/adguard-vs-adaway-dns66/). It compares AdGuard for Android (a traditional ad blocker) to hosts-level ad blockers (which are almost identical to DNS-based blockers in their capabilities).
 
-However, this level of protection is enough for some users. Additionally, using a DNS-based blocker can help to block ads, tracking and analytics requests on other types of devices, such as SmartTVs, smart speakers or other kinds of IoT devices (on which you can't install tradtional ad blockers).
+However, this level of protection is enough for some users. Additionally, using a DNS-based blocker can help to block ads, tracking and analytics requests on other types of devices, such as SmartTVs, smart speakers or other kinds of IoT devices (on which you can't install traditional ad blockers).
 
 **Known limitations**
 
@@ -191,6 +191,12 @@ git clone https://github.com/AdguardTeam/AdGuardHome
 cd AdGuardHome
 make
 ```
+
+Please note, that the non-standard `-j` flag is currently not supported, so
+building with `make -j 4` or setting your `MAKEFLAGS` to include, for example,
+`-j 4` is likely to break the build.  If you do have your `MAKEFLAGS` set to
+that, and you don't want to change it, you can override it by running
+`make -j 1`.
 
 Check the [`Makefile`](https://github.com/AdguardTeam/AdGuardHome/blob/master/Makefile) to learn about other commands.
 
