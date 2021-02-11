@@ -251,12 +251,15 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 
 	// Allow the frontend from the HTTP origin to send requests to the HTTPS
 	// server.  This can happen when the user has just set up HTTPS with
-	// redirects.
+	// redirects.  Prevent cache-related errors by setting the Vary header.
+	//
+	// See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin.
 	originURL := &url.URL{
 		Scheme: "http",
 		Host:   r.Host,
 	}
 	w.Header().Set("Access-Control-Allow-Origin", originURL.String())
+	w.Header().Set("Vary", "Origin")
 
 	return true
 }

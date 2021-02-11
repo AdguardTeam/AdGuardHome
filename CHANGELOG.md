@@ -26,10 +26,14 @@ and this project adheres to
 
 ### Fixed
 
+- The `Vary` header is now added along with `Access-Control-Allow-Origin` to
+  prevent cache-related and other issues in browsers ([#2658]).
+  domain, but with an HTTP scheme as opposed to `*` ([#2484]).
 - The request body size limit is now set for HTTPS requests as well.
 - Incorrect version tag in the Docker release ([#2663]).
 - DNSCrypt queries weren't marked as such in logs ([#2662]).
 
+[#2658]: https://github.com/AdguardTeam/AdGuardHome/issues/2658
 [#2662]: https://github.com/AdguardTeam/AdGuardHome/issues/2662
 [#2663]: https://github.com/AdguardTeam/AdGuardHome/issues/2663
 [#2664]: https://github.com/AdguardTeam/AdGuardHome/issues/2664
