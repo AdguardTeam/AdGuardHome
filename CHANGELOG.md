@@ -19,17 +19,20 @@ and this project adheres to
 
 ### Changed
 
-- Increase the HTTP API request body size limit for the `/control/access/set`
-  API ([#2666]).
+- The server name sent by clients of TLS APIs is not only checked when
+  `strict_sni_check` is enabled ([#2664]).
+- HTTP API request body size limit for the `/control/access/set` API is
+  increased ([#2666]).
 
 ### Fixed
 
-- Set the request body size limit for HTTPS reqeusts as well.
+- The request body size limit is now set for HTTPS requests as well.
 - Incorrect version tag in the Docker release ([#2663]).
 - DNSCrypt queries weren't marked as such in logs ([#2662]).
 
 [#2662]: https://github.com/AdguardTeam/AdGuardHome/issues/2662
 [#2663]: https://github.com/AdguardTeam/AdGuardHome/issues/2663
+[#2664]: https://github.com/AdguardTeam/AdGuardHome/issues/2664
 [#2666]: https://github.com/AdguardTeam/AdGuardHome/issues/2666
 
 

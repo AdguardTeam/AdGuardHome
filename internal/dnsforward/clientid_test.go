@@ -10,6 +10,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/lucas-clemente/quic-go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // testTLSConn is a tlsConn for tests.
@@ -53,6 +54,7 @@ func TestProcessClientID(t *testing.T) {
 		wantClientID string
 		wantErrMsg   string
 		wantRes      resultCode
+		strictSNI    bool
 	}{{
 		name:         "udp",
 		proto:        proxy.ProtoUDP,
@@ -61,6 +63,7 @@ func TestProcessClientID(t *testing.T) {
 		wantClientID: "",
 		wantErrMsg:   "",
 		wantRes:      resultCodeSuccess,
+		strictSNI:    false,
 	}, {
 		name:         "tls_no_client_id",
 		proto:        proxy.ProtoTLS,
@@ -69,6 +72,26 @@ func TestProcessClientID(t *testing.T) {
 		wantClientID: "",
 		wantErrMsg:   "",
 		wantRes:      resultCodeSuccess,
+		strictSNI:    true,
+	}, {
+		name:         "tls_no_client_server_name",
+		proto:        proxy.ProtoTLS,
+		hostSrvName:  "example.com",
+		cliSrvName:   "",
+		wantClientID: "",
+		wantErrMsg: `client id check: client server name "" ` +
+			`doesn't match host server name "example.com"`,
+		wantRes:   resultCodeError,
+		strictSNI: true,
+	}, {
+		name:         "tls_no_client_server_name_no_strict",
+		proto:        proxy.ProtoTLS,
+		hostSrvName:  "example.com",
+		cliSrvName:   "",
+		wantClientID: "",
+		wantErrMsg:   "",
+		wantRes:      resultCodeSuccess,
+		strictSNI:    false,
 	}, {
 		name:         "tls_client_id",
 		proto:        proxy.ProtoTLS,
@@ -77,30 +100,39 @@ func TestProcessClientID(t *testing.T) {
 		wantClientID: "cli",
 		wantErrMsg:   "",
 		wantRes:      resultCodeSuccess,
+		strictSNI:    true,
 	}, {
 		name:         "tls_client_id_hostname_error",
 		proto:        proxy.ProtoTLS,
 		hostSrvName:  "example.com",
 		cliSrvName:   "cli.example.net",
 		wantClientID: "",
-		wantErrMsg:   `client id check: client server name "cli.example.net" doesn't match host server name "example.com"`,
-		wantRes:      resultCodeError,
+		wantErrMsg: `client id check: client server name "cli.example.net" ` +
+			`doesn't match host server name "example.com"`,
+		wantRes:   resultCodeError,
+		strictSNI: true,
 	}, {
 		name:         "tls_invalid_client_id",
 		proto:        proxy.ProtoTLS,
 		hostSrvName:  "example.com",
 		cliSrvName:   "!!!.example.com",
 		wantClientID: "",
-		wantErrMsg:   `client id check: invalid client id: invalid char '!' at index 0 in client id "!!!"`,
-		wantRes:      resultCodeError,
+		wantErrMsg: `client id check: invalid client id: invalid char '!' ` +
+			`at index 0 in client id "!!!"`,
+		wantRes:   resultCodeError,
+		strictSNI: true,
 	}, {
-		name:         "tls_client_id_too_long",
-		proto:        proxy.ProtoTLS,
-		hostSrvName:  "example.com",
-		cliSrvName:   "abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789.example.com",
+		name:        "tls_client_id_too_long",
+		proto:       proxy.ProtoTLS,
+		hostSrvName: "example.com",
+		cliSrvName: `abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmno` +
+			`pqrstuvwxyz0123456789.example.com`,
 		wantClientID: "",
-		wantErrMsg:   `client id check: invalid client id: client id "abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789" is too long, max: 64`,
-		wantRes:      resultCodeError,
+		wantErrMsg: `client id check: invalid client id: client id "abcdefghijklmno` +
+			`pqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789" ` +
+			`is too long, max: 64`,
+		wantRes:   resultCodeError,
+		strictSNI: true,
 	}, {
 		name:         "quic_client_id",
 		proto:        proxy.ProtoQUIC,
@@ -109,14 +141,17 @@ func TestProcessClientID(t *testing.T) {
 		wantClientID: "cli",
 		wantErrMsg:   "",
 		wantRes:      resultCodeSuccess,
+		strictSNI:    true,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			tlsConf := TLSConfig{
+				ServerName:     tc.hostSrvName,
+				StrictSNICheck: tc.strictSNI,
+			}
 			srv := &Server{
-				conf: ServerConfig{
-					TLSConfig: TLSConfig{ServerName: tc.hostSrvName},
-				},
+				conf: ServerConfig{TLSConfig: tlsConf},
 			}
 
 			var conn net.Conn
@@ -146,10 +181,11 @@ func TestProcessClientID(t *testing.T) {
 			assert.Equal(t, tc.wantRes, res)
 			assert.Equal(t, tc.wantClientID, dctx.clientID)
 
-			if tc.wantErrMsg != "" && assert.NotNil(t, dctx.err) {
-				assert.Equal(t, tc.wantErrMsg, dctx.err.Error())
-			} else {
+			if tc.wantErrMsg == "" {
 				assert.Nil(t, dctx.err)
+			} else {
+				require.NotNil(t, dctx.err)
+				assert.Equal(t, tc.wantErrMsg, dctx.err.Error())
 			}
 		})
 	}
@@ -202,8 +238,9 @@ func TestProcessClientID_https(t *testing.T) {
 		name:         "invalid_client_id",
 		path:         "/dns-query/!!!",
 		wantClientID: "",
-		wantErrMsg:   `client id check: invalid client id: invalid char '!' at index 0 in client id "!!!"`,
-		wantRes:      resultCodeError,
+		wantErrMsg: `client id check: invalid client id: invalid char '!'` +
+			` at index 0 in client id "!!!"`,
+		wantRes: resultCodeError,
 	}}
 
 	for _, tc := range testCases {
@@ -225,10 +262,11 @@ func TestProcessClientID_https(t *testing.T) {
 			assert.Equal(t, tc.wantRes, res)
 			assert.Equal(t, tc.wantClientID, dctx.clientID)
 
-			if tc.wantErrMsg != "" && assert.NotNil(t, dctx.err) {
-				assert.Equal(t, tc.wantErrMsg, dctx.err.Error())
-			} else {
+			if tc.wantErrMsg == "" {
 				assert.Nil(t, dctx.err)
+			} else {
+				require.NotNil(t, dctx.err)
+				assert.Equal(t, tc.wantErrMsg, dctx.err.Error())
 			}
 		})
 	}

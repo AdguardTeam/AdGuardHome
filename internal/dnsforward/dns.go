@@ -1,10 +1,7 @@
 package dnsforward
 
 import (
-	"crypto/tls"
-	"fmt"
 	"net"
-	"path"
 	"strings"
 	"time"
 
@@ -13,7 +10,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/lucas-clemente/quic-go"
 	"github.com/miekg/dns"
 )
 
@@ -231,154 +227,6 @@ func processInternalHosts(ctx *dnsContext) (rc resultCode) {
 	}
 
 	ctx.proxyCtx.Res = resp
-	return resultCodeSuccess
-}
-
-const maxDomainPartLen = 64
-
-// ValidateClientID returns an error if clientID is not a valid client ID.
-func ValidateClientID(clientID string) (err error) {
-	if len(clientID) > maxDomainPartLen {
-		return fmt.Errorf("client id %q is too long, max: %d", clientID, maxDomainPartLen)
-	}
-
-	for i, r := range clientID {
-		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
-			continue
-		}
-
-		return fmt.Errorf("invalid char %q at index %d in client id %q", r, i, clientID)
-	}
-
-	return nil
-}
-
-// clientIDFromClientServerName extracts and validates a client ID.  hostSrvName
-// is the server name of the host.  cliSrvName is the server name as sent by the
-// client.
-func clientIDFromClientServerName(hostSrvName, cliSrvName string) (clientID string, err error) {
-	if hostSrvName == cliSrvName {
-		return "", nil
-	}
-
-	if !strings.HasSuffix(cliSrvName, hostSrvName) {
-		return "", fmt.Errorf("client server name %q doesn't match host server name %q", cliSrvName, hostSrvName)
-	}
-
-	clientID = cliSrvName[:len(cliSrvName)-len(hostSrvName)-1]
-	err = ValidateClientID(clientID)
-	if err != nil {
-		return "", fmt.Errorf("invalid client id: %w", err)
-	}
-
-	return clientID, nil
-}
-
-// processClientIDHTTPS extracts the client's ID from the path of the
-// client's DNS-over-HTTPS request.
-func processClientIDHTTPS(ctx *dnsContext) (rc resultCode) {
-	pctx := ctx.proxyCtx
-	r := pctx.HTTPRequest
-	if r == nil {
-		ctx.err = fmt.Errorf("proxy ctx http request of proto %s is nil", pctx.Proto)
-
-		return resultCodeError
-	}
-
-	origPath := r.URL.Path
-	parts := strings.Split(path.Clean(origPath), "/")
-	if parts[0] == "" {
-		parts = parts[1:]
-	}
-
-	if len(parts) == 0 || parts[0] != "dns-query" {
-		ctx.err = fmt.Errorf("client id check: invalid path %q", origPath)
-
-		return resultCodeError
-	}
-
-	clientID := ""
-	switch len(parts) {
-	case 1:
-		// Just /dns-query, no client ID.
-		return resultCodeSuccess
-	case 2:
-		clientID = parts[1]
-	default:
-		ctx.err = fmt.Errorf("client id check: invalid path %q: extra parts", origPath)
-
-		return resultCodeError
-	}
-
-	err := ValidateClientID(clientID)
-	if err != nil {
-		ctx.err = fmt.Errorf("client id check: invalid client id: %w", err)
-
-		return resultCodeError
-	}
-
-	ctx.clientID = clientID
-
-	return resultCodeSuccess
-}
-
-// tlsConn is a narrow interface for *tls.Conn to simplify testing.
-type tlsConn interface {
-	ConnectionState() (cs tls.ConnectionState)
-}
-
-// quicSession is a narrow interface for quic.Session to simplify testing.
-type quicSession interface {
-	ConnectionState() (cs quic.ConnectionState)
-}
-
-// processClientID extracts the client's ID from the server name of the client's
-// DOT or DOQ request or the path of the client's DOH.
-func processClientID(ctx *dnsContext) (rc resultCode) {
-	pctx := ctx.proxyCtx
-	proto := pctx.Proto
-	if proto == proxy.ProtoHTTPS {
-		return processClientIDHTTPS(ctx)
-	} else if proto != proxy.ProtoTLS && proto != proxy.ProtoQUIC {
-		return resultCodeSuccess
-	}
-
-	hostSrvName := ctx.srv.conf.TLSConfig.ServerName
-	if hostSrvName == "" {
-		return resultCodeSuccess
-	}
-
-	cliSrvName := ""
-	if proto == proxy.ProtoTLS {
-		conn := pctx.Conn
-		tc, ok := conn.(tlsConn)
-		if !ok {
-			ctx.err = fmt.Errorf("proxy ctx conn of proto %s is %T, want *tls.Conn", proto, conn)
-
-			return resultCodeError
-		}
-
-		cliSrvName = tc.ConnectionState().ServerName
-	} else if proto == proxy.ProtoQUIC {
-		qs, ok := pctx.QUICSession.(quicSession)
-		if !ok {
-			ctx.err = fmt.Errorf("proxy ctx quic session of proto %s is %T, want quic.Session", proto, pctx.QUICSession)
-
-			return resultCodeError
-		}
-
-		cliSrvName = qs.ConnectionState().ServerName
-	}
-
-	clientID, err := clientIDFromClientServerName(hostSrvName, cliSrvName)
-	if err != nil {
-		ctx.err = fmt.Errorf("client id check: %w", err)
-
-		return resultCodeError
-	}
-
-	ctx.clientID = clientID
-
 	return resultCodeSuccess
 }
 
