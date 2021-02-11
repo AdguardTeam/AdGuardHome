@@ -259,7 +259,7 @@ func (web *Web) tlsServerLoop() {
 				RootCAs:      Context.tlsRoots,
 				CipherSuites: Context.tlsCiphers,
 			},
-			Handler:           Context.mux,
+			Handler:           withMiddlewares(Context.mux, limitRequestBody),
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
 			WriteTimeout:      web.conf.WriteTimeout,
