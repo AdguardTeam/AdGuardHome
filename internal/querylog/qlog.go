@@ -53,6 +53,7 @@ func NewClientProto(s string) (cp ClientProto, err error) {
 		ClientProtoDOH,
 		ClientProtoDOQ,
 		ClientProtoDOT,
+		ClientProtoDNSCrypt,
 		ClientProtoPlain:
 
 		return cp, nil

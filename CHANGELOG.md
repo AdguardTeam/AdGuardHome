@@ -20,8 +20,12 @@ and this project adheres to
 ### Fixed
 
 - Incorrect version tag in the Docker release ([#2663]).
+- DNSCrypt queries weren't marked as such in logs ([#2662]).
 
+[#2662]: https://github.com/AdguardTeam/AdGuardHome/issues/2662
 [#2663]: https://github.com/AdguardTeam/AdGuardHome/issues/2663
+
+
 
 ## [v0.105.0] - 2021-02-10
 

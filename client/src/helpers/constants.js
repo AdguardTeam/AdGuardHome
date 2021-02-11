@@ -534,6 +534,7 @@ export const BLOCK_ACTIONS = {
 };
 
 export const SCHEME_TO_PROTOCOL_MAP = {
+    dnscrypt: 'dnscrypt',
     doh: 'dns_over_https',
     dot: 'dns_over_tls',
     doq: 'dns_over_quic',
