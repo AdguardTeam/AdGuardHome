@@ -228,7 +228,13 @@ main() {
 
     download "${URL}" "${PKG_NAME}" || error_exit "Cannot download the package"
 
-    unpack "${PKG_NAME}" "${OUT_DIR}" "${PKG_EXT}" || error_exit "Cannot unpack the package"
+    if [ "${OS}" = "darwin" ]; then
+      # TODO: remove this after v0.106.0 release
+      mkdir "${AGH_DIR}"
+      unpack "${PKG_NAME}" "${AGH_DIR}" "${PKG_EXT}" || error_exit "Cannot unpack the package"
+    else
+      unpack "${PKG_NAME}" "${OUT_DIR}" "${PKG_EXT}" || error_exit "Cannot unpack the package"
+    fi
 
     # Install AdGuard Home service and run it.
     ( cd "${AGH_DIR}" && ./AdGuardHome -s install || error_exit "Cannot install AdGuardHome as a service" )
