@@ -117,14 +117,14 @@ type ServerInterface interface {
 }
 
 // Create - create object
-func Create(config ServerConfig) *Server {
+func Create(conf ServerConfig) *Server {
 	s := &Server{}
 
-	s.conf.Enabled = config.Enabled
-	s.conf.InterfaceName = config.InterfaceName
-	s.conf.HTTPRegister = config.HTTPRegister
-	s.conf.ConfigModified = config.ConfigModified
-	s.conf.DBFilePath = filepath.Join(config.WorkDir, dbFilename)
+	s.conf.Enabled = conf.Enabled
+	s.conf.InterfaceName = conf.InterfaceName
+	s.conf.HTTPRegister = conf.HTTPRegister
+	s.conf.ConfigModified = conf.ConfigModified
+	s.conf.DBFilePath = filepath.Join(conf.WorkDir, dbFilename)
 
 	if !webHandlersRegistered && s.conf.HTTPRegister != nil {
 		if runtime.GOOS == "windows" {
@@ -145,7 +145,7 @@ func Create(config ServerConfig) *Server {
 	}
 
 	var err4, err6 error
-	v4conf := config.Conf4
+	v4conf := conf.Conf4
 	v4conf.Enabled = s.conf.Enabled
 	if len(v4conf.RangeStart) == 0 {
 		v4conf.Enabled = false
@@ -154,7 +154,7 @@ func Create(config ServerConfig) *Server {
 	v4conf.notify = s.onNotify
 	s.srv4, err4 = v4Create(v4conf)
 
-	v6conf := config.Conf6
+	v6conf := conf.Conf6
 	v6conf.Enabled = s.conf.Enabled
 	if len(v6conf.RangeStart) == 0 {
 		v6conf.Enabled = false
@@ -171,6 +171,9 @@ func Create(config ServerConfig) *Server {
 		log.Error("%s", err6)
 		return nil
 	}
+
+	s.conf.Conf4 = conf.Conf4
+	s.conf.Conf6 = conf.Conf6
 
 	if s.conf.Enabled && !v4conf.Enabled && !v6conf.Enabled {
 		log.Error("Can't enable DHCP server because neither DHCPv4 nor DHCPv6 servers are configured")

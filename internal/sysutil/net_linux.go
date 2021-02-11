@@ -33,15 +33,19 @@ func ifaceHasStaticIP(ifaceName string) (has bool, err error) {
 		filePath: "/etc/network/interfaces",
 	}} {
 		f, err = os.Open(check.filePath)
-		if errors.Is(err, os.ErrNotExist) {
-			continue
-		}
 		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				err = nil
+
+				continue
+			}
+
 			return false, err
 		}
 		defer f.Close()
 
-		fileReadCloser, err := aghio.LimitReadCloser(f, maxConfigFileSize)
+		var fileReadCloser io.ReadCloser
+		fileReadCloser, err = aghio.LimitReadCloser(f, maxConfigFileSize)
 		if err != nil {
 			return false, err
 		}

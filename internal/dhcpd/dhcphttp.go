@@ -11,7 +11,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/sysutil"
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
-	"github.com/AdguardTeam/golibs/jsonutil"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -29,7 +28,11 @@ type v4ServerConfJSON struct {
 	LeaseDuration uint32 `json:"lease_duration"`
 }
 
-func v4JSONToServerConf(j v4ServerConfJSON) V4ServerConf {
+func v4JSONToServerConf(j *v4ServerConfJSON) V4ServerConf {
+	if j == nil {
+		return V4ServerConf{}
+	}
+
 	return V4ServerConf{
 		GatewayIP:     j.GatewayIP,
 		SubnetMask:    j.SubnetMask,
@@ -44,7 +47,11 @@ type v6ServerConfJSON struct {
 	LeaseDuration uint32 `json:"lease_duration"`
 }
 
-func v6JSONToServerConf(j v6ServerConfJSON) V6ServerConf {
+func v6JSONToServerConf(j *v6ServerConfJSON) V6ServerConf {
+	if j == nil {
+		return V6ServerConf{}
+	}
+
 	return V6ServerConf{
 		RangeStart:    j.RangeStart,
 		LeaseDuration: j.LeaseDuration,
@@ -83,13 +90,6 @@ func (s *Server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type dhcpServerConfigJSON struct {
-	Enabled       bool             `json:"enabled"`
-	InterfaceName string           `json:"interface_name"`
-	V4            v4ServerConfJSON `json:"v4"`
-	V6            v6ServerConfJSON `json:"v6"`
-}
-
 func (s *Server) enableDHCP(ifaceName string) (code int, err error) {
 	var hasStaticIP bool
 	hasStaticIP, err = sysutil.IfaceHasStaticIP(ifaceName)
@@ -112,14 +112,22 @@ func (s *Server) enableDHCP(ifaceName string) (code int, err error) {
 	return 0, nil
 }
 
-func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
-	newconfig := dhcpServerConfigJSON{}
-	newconfig.Enabled = s.conf.Enabled
-	newconfig.InterfaceName = s.conf.InterfaceName
+type dhcpServerConfigJSON struct {
+	V4            *v4ServerConfJSON `json:"v4"`
+	V6            *v6ServerConfJSON `json:"v6"`
+	InterfaceName string            `json:"interface_name"`
+	Enabled       nullBool          `json:"enabled"`
+}
 
-	js, err := jsonutil.DecodeObject(&newconfig, r.Body)
+func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
+	conf := dhcpServerConfigJSON{}
+	conf.Enabled = boolToNullBool(s.conf.Enabled)
+	conf.InterfaceName = s.conf.InterfaceName
+
+	err := json.NewDecoder(r.Body).Decode(&conf)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "Failed to parse new DHCP config json: %s", err)
+		httpError(r, w, http.StatusBadRequest,
+			"failed to parse new dhcp config json: %s", err)
 
 		return
 	}
@@ -129,62 +137,72 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 	v4Enabled := false
 	v6Enabled := false
 
-	if js.Exists("v4") {
-		v4conf := v4JSONToServerConf(newconfig.V4)
-		v4conf.Enabled = newconfig.Enabled
-		if len(v4conf.RangeStart) == 0 {
-			v4conf.Enabled = false
+	if conf.V4 != nil {
+		v4Conf := v4JSONToServerConf(conf.V4)
+		v4Conf.Enabled = conf.Enabled == nbTrue
+		if len(v4Conf.RangeStart) == 0 {
+			v4Conf.Enabled = false
 		}
 
-		v4Enabled = v4conf.Enabled
-		v4conf.InterfaceName = newconfig.InterfaceName
+		v4Enabled = v4Conf.Enabled
+		v4Conf.InterfaceName = conf.InterfaceName
 
 		c4 := V4ServerConf{}
 		s.srv4.WriteDiskConfig4(&c4)
-		v4conf.notify = c4.notify
-		v4conf.ICMPTimeout = c4.ICMPTimeout
+		v4Conf.notify = c4.notify
+		v4Conf.ICMPTimeout = c4.ICMPTimeout
 
-		s4, err = v4Create(v4conf)
+		s4, err = v4Create(v4Conf)
 		if err != nil {
-			httpError(r, w, http.StatusBadRequest, "invalid dhcpv4 configuration: %s", err)
+			httpError(r, w, http.StatusBadRequest,
+				"invalid dhcpv4 configuration: %s", err)
 
 			return
 		}
 	}
 
-	if js.Exists("v6") {
-		v6conf := v6JSONToServerConf(newconfig.V6)
-		v6conf.Enabled = newconfig.Enabled
-		if len(v6conf.RangeStart) == 0 {
-			v6conf.Enabled = false
+	if conf.V6 != nil {
+		v6Conf := v6JSONToServerConf(conf.V6)
+		v6Conf.Enabled = conf.Enabled == nbTrue
+		if len(v6Conf.RangeStart) == 0 {
+			v6Conf.Enabled = false
 		}
 
-		v6Enabled = v6conf.Enabled
-		v6conf.InterfaceName = newconfig.InterfaceName
-		v6conf.notify = s.onNotify
+		// Don't overwrite the RA/SLAAC settings from the config file.
+		//
+		// TODO(a.garipov): Perhaps include them into the request to
+		// allow changing them from the HTTP API?
+		v6Conf.RASLAACOnly = s.conf.Conf6.RASLAACOnly
+		v6Conf.RAAllowSLAAC = s.conf.Conf6.RAAllowSLAAC
 
-		s6, err = v6Create(v6conf)
+		v6Enabled = v6Conf.Enabled
+		v6Conf.InterfaceName = conf.InterfaceName
+		v6Conf.notify = s.onNotify
+
+		s6, err = v6Create(v6Conf)
 		if err != nil {
-			httpError(r, w, http.StatusBadRequest, "invalid dhcpv6 configuration: %s", err)
+			httpError(r, w, http.StatusBadRequest,
+				"invalid dhcpv6 configuration: %s", err)
 
 			return
 		}
 	}
 
-	if newconfig.Enabled && !v4Enabled && !v6Enabled {
-		httpError(r, w, http.StatusBadRequest, "dhcpv4 or dhcpv6 configuration must be complete")
+	if conf.Enabled == nbTrue && !v4Enabled && !v6Enabled {
+		httpError(r, w, http.StatusBadRequest,
+			"dhcpv4 or dhcpv6 configuration must be complete")
 
 		return
 	}
 
 	s.Stop()
 
-	if js.Exists("enabled") {
-		s.conf.Enabled = newconfig.Enabled
+	if conf.Enabled != nbNull {
+		s.conf.Enabled = conf.Enabled == nbTrue
 	}
 
-	if js.Exists("interface_name") {
-		s.conf.InterfaceName = newconfig.InterfaceName
+	if conf.InterfaceName != "" {
+		s.conf.InterfaceName = conf.InterfaceName
 	}
 
 	if s4 != nil {
@@ -200,7 +218,7 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 
 	if s.conf.Enabled {
 		var code int
-		code, err = s.enableDHCP(newconfig.InterfaceName)
+		code, err = s.enableDHCP(conf.InterfaceName)
 		if err != nil {
 			httpError(r, w, code, "enabling dhcp: %s", err)
 

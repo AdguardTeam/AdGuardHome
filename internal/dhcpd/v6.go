@@ -552,8 +552,8 @@ func (s *v6Server) initRA(iface *net.Interface) error {
 		}
 	}
 
-	s.ra.raAllowSlaac = s.conf.RaAllowSlaac
-	s.ra.raSlaacOnly = s.conf.RaSlaacOnly
+	s.ra.raAllowSLAAC = s.conf.RAAllowSLAAC
+	s.ra.raSLAACOnly = s.conf.RASLAACOnly
 	s.ra.dnsIPAddr = s.ra.ipAddr
 	s.ra.prefixIPAddr = s.conf.ipStart
 	s.ra.ifaceName = s.conf.InterfaceName
@@ -594,7 +594,7 @@ func (s *v6Server) Start() error {
 	}
 
 	// don't initialize DHCPv6 server if we must force the clients to use SLAAC
-	if s.conf.RaSlaacOnly {
+	if s.conf.RASLAACOnly {
 		log.Debug("DHCPv6: not starting DHCPv6 server due to ra_slaac_only=true")
 		return nil
 	}
