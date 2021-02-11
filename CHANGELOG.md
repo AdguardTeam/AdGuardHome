@@ -17,6 +17,12 @@ and this project adheres to
 ## [v0.105.1] - 2021-02-24
 -->
 
+### Fixed
+
+- Incorrect version tag in the Docker release ([#2663]).
+
+[#2663]: https://github.com/AdguardTeam/AdGuardHome/issues/2663
+
 ## [v0.105.0] - 2021-02-10
 
 ### Added

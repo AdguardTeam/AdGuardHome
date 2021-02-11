@@ -17,7 +17,16 @@ set -e -f -u
 readonly channel="$CHANNEL"
 readonly commit="$COMMIT"
 readonly dist_dir="$DIST_DIR"
-readonly version="$VERSION"
+
+if [ "${VERSION:-}" = 'v0.0.0' -o "${VERSION:-}" = '' ]
+then
+	readonly version="$(sh ./scripts/make/version.sh)"
+else
+	readonly version="$VERSION"
+fi
+
+echo $version
+exit 0
 
 # Allow users to use sudo.
 readonly sudo_cmd="${SUDO:-}"
