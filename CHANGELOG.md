@@ -19,6 +19,8 @@ and this project adheres to
 
 ### Changed
 
+- "Permission denied" errors when checking if the machine has a static IP no
+  longer prevent the DHCP server from starting ([#2667]).
 - The server name sent by clients of TLS APIs is not only checked when
   `strict_sni_check` is enabled ([#2664]).
 - HTTP API request body size limit for the `/control/access/set` API is
@@ -40,6 +42,7 @@ and this project adheres to
 [#2663]: https://github.com/AdguardTeam/AdGuardHome/issues/2663
 [#2664]: https://github.com/AdguardTeam/AdGuardHome/issues/2664
 [#2666]: https://github.com/AdguardTeam/AdGuardHome/issues/2666
+[#2667]: https://github.com/AdguardTeam/AdGuardHome/issues/2667
 
 
 

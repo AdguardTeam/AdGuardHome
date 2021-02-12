@@ -2,6 +2,7 @@ package dhcpd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -94,7 +95,20 @@ func (s *Server) enableDHCP(ifaceName string) (code int, err error) {
 	var hasStaticIP bool
 	hasStaticIP, err = sysutil.IfaceHasStaticIP(ifaceName)
 	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf("checking static ip: %w", err)
+		// ErrPermission may happen here on Linux systems where AdGuard
+		// Home is installed using Snap.  That doesn't necessarily mean
+		// that the machine doesn't have a static IP, so we can assume
+		// that it has and go on.  If the machine doesn't, we'll get an
+		// error later.
+		//
+		// See https://github.com/AdguardTeam/AdGuardHome/issues/2667.
+		if errors.Is(err, os.ErrPermission) {
+			log.Info("error while checking static ip: %s; "+
+				"assuming machine has static ip and going on", err)
+			hasStaticIP = true
+		} else {
+			return http.StatusInternalServerError, fmt.Errorf("checking static ip: %w", err)
+		}
 	}
 
 	if !hasStaticIP {
