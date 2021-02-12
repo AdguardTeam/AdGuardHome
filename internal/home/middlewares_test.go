@@ -9,6 +9,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLimitRequestBody(t *testing.T) {
@@ -60,8 +61,8 @@ func TestLimitRequestBody(t *testing.T) {
 
 			lim.ServeHTTP(res, req)
 
+			require.Equal(t, tc.wantErr, err)
 			assert.Equal(t, tc.want, res.Body.Bytes())
-			assert.Equal(t, tc.wantErr, err)
 		})
 	}
 }

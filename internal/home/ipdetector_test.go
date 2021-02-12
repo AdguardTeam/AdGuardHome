@@ -5,16 +5,15 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIPDetector_detectSpecialNetwork(t *testing.T) {
 	var ipd *ipDetector
+	var err error
 
-	t.Run("newIPDetector", func(t *testing.T) {
-		var err error
-		ipd, err = newIPDetector()
-		assert.Nil(t, err)
-	})
+	ipd, err = newIPDetector()
+	require.Nil(t, err)
 
 	testCases := []struct {
 		name string

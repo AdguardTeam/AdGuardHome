@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestServer_notImplemented(t *testing.T) {
@@ -14,7 +15,7 @@ func TestServer_notImplemented(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r, err := http.NewRequest(http.MethodGet, "/unsupported", nil)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	h(w, r)
 	assert.Equal(t, http.StatusNotImplemented, w.Code)

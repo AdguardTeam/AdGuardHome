@@ -23,7 +23,8 @@ type v4Server struct {
 	srv        *server4.Server
 	leasesLock sync.Mutex
 	leases     []*Lease
-	ipAddrs    [256]byte
+	// TODO(e.burkov): This field type should be a normal bitmap.
+	ipAddrs [256]byte
 
 	conf V4ServerConf
 }

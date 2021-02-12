@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLimitReadCloser(t *testing.T) {
@@ -78,11 +79,11 @@ func TestLimitedReadCloser_Read(t *testing.T) {
 			buf := make([]byte, tc.limit+1)
 
 			lreader, err := LimitReadCloser(readCloser, tc.limit)
-			assert.Nil(t, err)
+			require.Nil(t, err)
 
 			n, err := lreader.Read(buf)
-			assert.Equal(t, n, tc.want)
-			assert.Equal(t, tc.err, err)
+			require.Equal(t, tc.err, err)
+			assert.Equal(t, tc.want, n)
 		})
 	}
 }
