@@ -1,11 +1,9 @@
 ---
 name: Bug report
 about: Create a bug report to help us improve AdGuard Home
-
 ---
 
-<!--  As an open-source project with a dedicated but small maintainer team, it can sometimes take a long time for issues to be addressed so please be patient and we will get back to you as soon as we can.
--->
+<!-- As an open-source project with a dedicated but small maintainer team, it can sometimes take a long time for issues to be addressed so please be patient and we will get back to you as soon as we can. -->
 
 ### Prerequisites
 
@@ -17,16 +15,18 @@ Please answer the following questions for yourself before submitting an issue. *
 
 ### Issue Details
 
-<!--- Please include all relevant details about the environment you experienced the bug in -->
+<!-- Please include all relevant details about the environment you experienced the bug in. -->
 
 * **Version of AdGuard Home server:**
-  * <!-- (e.g. v1.0) -->
+  * <!-- (e.g. v0.123.4) -->
 * **How did you install AdGuard Home:**
-  * <!-- (e.g. Snapcraft, Docker, Github releases) -->
+  * <!-- (e.g. Built from source, Snapcraft, Docker, Github releases, etc.) -->
 * **How did you setup DNS configuration:**
   * <!-- (System/Router/IoT) -->
 * **If it's a router or IoT, please write device model:**
   * <!-- (e.g. Raspberry Pi 3 Model B) -->
+* **CPU architecture:**
+  * <!-- (e.g. AMD64, MIPS, etc.) -->
 * **Operating system and version:**
   * <!-- (e.g. Ubuntu 18.04.1) -->
 
