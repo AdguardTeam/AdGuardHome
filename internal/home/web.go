@@ -191,7 +191,10 @@ func (web *Web) Start() {
 				WriteTimeout:      web.conf.WriteTimeout,
 			}
 			go func() {
-				errs <- web.httpServerBeta.ListenAndServe()
+				betaErr := web.httpServerBeta.ListenAndServe()
+				if betaErr != nil {
+					log.Error("starting beta http server: %s", betaErr)
+				}
 			}()
 		}
 
