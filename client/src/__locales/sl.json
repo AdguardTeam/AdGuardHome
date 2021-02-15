@@ -248,6 +248,7 @@
     "custom_ip": "IP po meri",
     "blocking_ipv4": "Onemogočanje IPv4",
     "blocking_ipv6": "Onemogočanje IPv6",
+    "dnscrypt": "DNSCrypt",
     "dns_over_https": "DNS-prek-HTTPS",
     "dns_over_tls": "DNS-prek-TLS",
     "dns_over_quic": "DNS-prek-QIUC",

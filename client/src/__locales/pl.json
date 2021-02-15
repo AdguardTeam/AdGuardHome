@@ -248,6 +248,7 @@
     "custom_ip": "Niestandardowy adres IP",
     "blocking_ipv4": "Blokowanie IPv4",
     "blocking_ipv6": "Blokowanie IPv6",
+    "dnscrypt": "DNSCrypt",
     "dns_over_https": "DNS-over-HTTPS",
     "dns_over_tls": "DNS-over-TLS",
     "dns_over_quic": "DNS-over-QUIC",

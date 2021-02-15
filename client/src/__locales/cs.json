@@ -248,6 +248,7 @@
     "custom_ip": "Vlastní IP",
     "blocking_ipv4": "Blokování IPv4",
     "blocking_ipv6": "Blokování IPv6",
+    "dnscrypt": "DNSCrypt",
     "dns_over_https": "DNS přes HTTPS",
     "dns_over_tls": "DNS přes TLS",
     "dns_over_quic": "DNS skrze QUIC",

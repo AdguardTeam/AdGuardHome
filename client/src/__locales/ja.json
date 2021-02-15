@@ -248,6 +248,7 @@
     "custom_ip": "カスタムIP",
     "blocking_ipv4": "ブロック中のIPv4",
     "blocking_ipv6": "ブロック中のIPv6",
+    "dnscrypt": "DNSCrypt",
     "dns_over_https": "DNS-over-HTTPS",
     "dns_over_tls": "DNS-over-TLS",
     "dns_over_quic": "DNS-over-QUIC",

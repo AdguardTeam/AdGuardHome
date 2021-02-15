@@ -248,6 +248,7 @@
     "custom_ip": "Aangepast IP",
     "blocking_ipv4": "Blokkeren IP4",
     "blocking_ipv6": "Blokkeren IP6",
+    "dnscrypt": "DNSCrypt",
     "dns_over_https": "DNS-via-HTTPS",
     "dns_over_tls": "DNS-via-TLS",
     "dns_over_quic": "DNS-via-QUIC",

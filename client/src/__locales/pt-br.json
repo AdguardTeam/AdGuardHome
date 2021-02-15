@@ -248,6 +248,7 @@
     "custom_ip": "IP personalizado",
     "blocking_ipv4": "Bloqueando IPv4",
     "blocking_ipv6": "Bloqueando IPv6",
+    "dnscrypt": "DNSCrypt",
     "dns_over_https": "DNS-sobre-HTTPS",
     "dns_over_tls": "DNS-sobre-TLS",
     "dns_over_quic": "DNS-sobre-QUIC",

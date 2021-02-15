@@ -248,6 +248,7 @@
     "custom_ip": "自定义 IP",
     "blocking_ipv4": "拦截 IPv4",
     "blocking_ipv6": "拦截 IPv6",
+    "dnscrypt": "DNSCrypt",
     "dns_over_https": "DNS-over-HTTPS",
     "dns_over_tls": "DNS-over-TLS",
     "dns_over_quic": "DNS-over-QUIC",

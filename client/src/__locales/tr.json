@@ -248,6 +248,7 @@
     "custom_ip": "Özel IP",
     "blocking_ipv4": "IPv4 engelleme",
     "blocking_ipv6": "IPv6 engelleme",
+    "dnscrypt": "DNSCrypt",
     "dns_over_https": "DNS-over-HTTPS",
     "dns_over_tls": "DNS-over-TLS",
     "dns_over_quic": "DNS-over-QUIC",

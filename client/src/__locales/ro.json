@@ -248,6 +248,7 @@
     "custom_ip": "IP personalizat",
     "blocking_ipv4": "Blocarea IPv4",
     "blocking_ipv6": "Blocarea IPv6",
+    "dnscrypt": "DNSCrypt",
     "dns_over_https": "DNS-over-HTTPS",
     "dns_over_tls": "DNS-over-TLS",
     "dns_over_quic": "DNS-over-QUIC",

@@ -248,6 +248,7 @@
     "custom_ip": "Свой IP",
     "blocking_ipv4": "Блокировка IPv4",
     "blocking_ipv6": "Блокировка IPv6",
+    "dnscrypt": "DNSCrypt",
     "dns_over_https": "DNS-over-HTTPS",
     "dns_over_tls": "DNS-over-TLS",
     "dns_over_quic": "DNS-over-QUIC",
