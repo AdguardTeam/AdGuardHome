@@ -304,6 +304,11 @@ func run(args options) {
 		log.Fatalf("Can't initialize Web module")
 	}
 
+	Context.ipDetector, err = newIPDetector()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	if !Context.firstRun {
 		err := initDNSServer()
 		if err != nil {
@@ -322,11 +327,6 @@ func run(args options) {
 		if Context.dhcpServer != nil {
 			_ = Context.dhcpServer.Start()
 		}
-	}
-
-	Context.ipDetector, err = newIPDetector()
-	if err != nil {
-		log.Fatal(err)
 	}
 
 	Context.web.Start()

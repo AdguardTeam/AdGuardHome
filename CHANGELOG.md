@@ -28,6 +28,7 @@ and this project adheres to
 
 ### Fixed
 
+- Occasional crashes during startup.
 - The field `"range_start"` in the `GET /control/dhcp/status` HTTP API response
   is now correctly named again ([#2678]).
 - DHCPv6 server's `ra_slaac_only` and `ra_allow_slaac` settings aren't reset to
