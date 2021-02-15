@@ -15,7 +15,7 @@
     white-space: pre-wrap;
     line-height: 1.5rem;
     word-wrap: break-word;
-    font-size: 0.9375rem;
+    font-size: var(--font-size-disable-autozoom);
     margin: 0;
 }
 

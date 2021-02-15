@@ -31,6 +31,7 @@ and this project adheres to
 
 ### Fixed
 
+- Optical issue on custom rules ([#2641]).
 - Occasional crashes during startup.
 - The field `"range_start"` in the `GET /control/dhcp/status` HTTP API response
   is now correctly named again ([#2678]).
@@ -42,6 +43,7 @@ and this project adheres to
 - Incorrect version tag in the Docker release ([#2663]).
 - DNSCrypt queries weren't marked as such in logs ([#2662]).
 
+[#2641]: https://github.com/AdguardTeam/AdGuardHome/issues/2641
 [#2653]: https://github.com/AdguardTeam/AdGuardHome/issues/2653
 [#2658]: https://github.com/AdguardTeam/AdGuardHome/issues/2658
 [#2662]: https://github.com/AdguardTeam/AdGuardHome/issues/2662

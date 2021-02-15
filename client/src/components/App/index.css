@@ -5,6 +5,7 @@
     --gray-d8: #d8d8d8;
     --gray-f3: #f3f3f3;
     --font-family-monospace: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+    --font-size-disable-autozoom: 1rem;
 }
 
 body {
@@ -13,9 +14,10 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
+/* Disable Auto Zoom in Input - Safari on iPhone https://stackoverflow.com/a/6394497 */
 @media screen and (max-width: 767px) {
     input, select, textarea {
-        font-size: 16px !important;
+        font-size: var(--font-size-disable-autozoom);
     }
 }
 
