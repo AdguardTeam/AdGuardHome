@@ -5,10 +5,17 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/golibs/log"
 )
 
+// ErrNoStaticIPInfo is returned by IfaceHasStaticIP when no information about
+// the IP being static is available.
+const ErrNoStaticIPInfo agherr.Error = "no information about static ip"
+
 // IfaceHasStaticIP checks if interface is configured to have static IP address.
+// If it can't give a definitive answer, it returns false and an error for which
+// errors.Is(err, ErrNoStaticIPInfo) is true.
 func IfaceHasStaticIP(ifaceName string) (has bool, err error) {
 	return ifaceHasStaticIP(ifaceName)
 }

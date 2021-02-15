@@ -31,6 +31,8 @@ and this project adheres to
 
 ### Fixed
 
+- Error when enabling the DHCP server when AdGuard Home couldn't determine if
+  the machine has a static IP.
 - Optical issue on custom rules ([#2641]).
 - Occasional crashes during startup.
 - The field `"range_start"` in the `GET /control/dhcp/status` HTTP API response

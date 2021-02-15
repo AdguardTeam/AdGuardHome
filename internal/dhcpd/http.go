@@ -95,26 +95,40 @@ func (s *Server) enableDHCP(ifaceName string) (code int, err error) {
 	var hasStaticIP bool
 	hasStaticIP, err = sysutil.IfaceHasStaticIP(ifaceName)
 	if err != nil {
-		// ErrPermission may happen here on Linux systems where AdGuard
-		// Home is installed using Snap.  That doesn't necessarily mean
-		// that the machine doesn't have a static IP, so we can assume
-		// that it has and go on.  If the machine doesn't, we'll get an
-		// error later.
-		//
-		// See https://github.com/AdguardTeam/AdGuardHome/issues/2667.
 		if errors.Is(err, os.ErrPermission) {
+			// ErrPermission may happen here on Linux systems where
+			// AdGuard Home is installed using Snap.  That doesn't
+			// necessarily mean that the machine doesn't have
+			// a static IP, so we can assume that it has and go on.
+			// If the machine doesn't, we'll get an error later.
+			//
+			// See https://github.com/AdguardTeam/AdGuardHome/issues/2667.
+			//
+			// TODO(a.garipov): I was thinking about moving this
+			// into IfaceHasStaticIP, but then we wouldn't be able
+			// to log it.  Think about it more.
 			log.Info("error while checking static ip: %s; "+
 				"assuming machine has static ip and going on", err)
 			hasStaticIP = true
+		} else if errors.Is(err, sysutil.ErrNoStaticIPInfo) {
+			// Couldn't obtain a definitive answer.  Assume static
+			// IP an go on.
+			log.Info("can't check for static ip; " +
+				"assuming machine has static ip and going on")
+			hasStaticIP = true
 		} else {
-			return http.StatusInternalServerError, fmt.Errorf("checking static ip: %w", err)
+			err = fmt.Errorf("checking static ip: %w", err)
+
+			return http.StatusInternalServerError, err
 		}
 	}
 
 	if !hasStaticIP {
 		err = sysutil.IfaceSetStaticIP(ifaceName)
 		if err != nil {
-			return http.StatusInternalServerError, fmt.Errorf("setting static ip: %w", err)
+			err = fmt.Errorf("setting static ip: %w", err)
+
+			return http.StatusInternalServerError, err
 		}
 	}
 
