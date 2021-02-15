@@ -23,8 +23,8 @@ and this project adheres to
   longer prevent the DHCP server from starting ([#2667]).
 - The server name sent by clients of TLS APIs is not only checked when
   `strict_sni_check` is enabled ([#2664]).
-- HTTP API request body size limit for the `POST /control/access/set` HTTP API
-  is increased ([#2666]).
+- HTTP API request body size limit for the `POST /control/access/set` and `POST
+  /control/filtering/set_rules` HTTP APIs is increased ([#2666], [#2675]).
 
 ### Fixed
 
@@ -45,6 +45,7 @@ and this project adheres to
 [#2664]: https://github.com/AdguardTeam/AdGuardHome/issues/2664
 [#2666]: https://github.com/AdguardTeam/AdGuardHome/issues/2666
 [#2667]: https://github.com/AdguardTeam/AdGuardHome/issues/2667
+[#2675]: https://github.com/AdguardTeam/AdGuardHome/issues/2675
 [#2678]: https://github.com/AdguardTeam/AdGuardHome/issues/2678
 
 

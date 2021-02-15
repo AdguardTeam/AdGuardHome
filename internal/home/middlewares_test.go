@@ -14,7 +14,7 @@ import (
 
 func TestLimitRequestBody(t *testing.T) {
 	errReqLimitReached := &aghio.LimitReachedError{
-		Limit: RequestBodySizeLimit,
+		Limit: defaultReqBodySzLim,
 	}
 
 	testCases := []struct {
@@ -29,8 +29,8 @@ func TestLimitRequestBody(t *testing.T) {
 		wantErr: nil,
 	}, {
 		name:    "so_big",
-		body:    string(make([]byte, RequestBodySizeLimit+1)),
-		want:    make([]byte, RequestBodySizeLimit),
+		body:    string(make([]byte, defaultReqBodySzLim+1)),
+		want:    make([]byte, defaultReqBodySzLim),
 		wantErr: errReqLimitReached,
 	}, {
 		name:    "empty",
