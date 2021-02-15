@@ -79,7 +79,7 @@ type V6ServerConf struct {
 
 	// The first IP address for dynamic leases
 	// The last allowed IP address ends with 0xff byte
-	RangeStart net.IP `yaml:"range_start"`
+	RangeStart net.IP `yaml:"range_start" json:"range_start"`
 
 	LeaseDuration uint32 `yaml:"lease_duration" json:"lease_duration"` // in seconds
 
