@@ -19,6 +19,7 @@ and this project adheres to
 
 ### Changed
 
+- Increased HTTP API timeouts ([#2671], [#2682]).
 - "Permission denied" errors when checking if the machine has a static IP no
   longer prevent the DHCP server from starting ([#2667]).
 - The server name sent by clients of TLS APIs is not only checked when
@@ -46,8 +47,10 @@ and this project adheres to
 [#2664]: https://github.com/AdguardTeam/AdGuardHome/issues/2664
 [#2666]: https://github.com/AdguardTeam/AdGuardHome/issues/2666
 [#2667]: https://github.com/AdguardTeam/AdGuardHome/issues/2667
+[#2671]: https://github.com/AdguardTeam/AdGuardHome/issues/2671
 [#2675]: https://github.com/AdguardTeam/AdGuardHome/issues/2675
 [#2678]: https://github.com/AdguardTeam/AdGuardHome/issues/2678
+[#2682]: https://github.com/AdguardTeam/AdGuardHome/issues/2682
 
 
 

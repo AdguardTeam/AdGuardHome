@@ -295,9 +295,9 @@ func run(args options) {
 		BindPort:     config.BindPort,
 		BetaBindPort: config.BetaBindPort,
 
-		ReadTimeout:       ReadTimeout,
-		ReadHeaderTimeout: ReadHeaderTimeout,
-		WriteTimeout:      WriteTimeout,
+		ReadTimeout:       readTimeout,
+		ReadHeaderTimeout: readHdrTimeout,
+		WriteTimeout:      writeTimeout,
 	}
 	Context.web = CreateWeb(&webConf)
 	if Context.web == nil {

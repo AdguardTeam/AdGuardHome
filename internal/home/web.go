@@ -16,17 +16,14 @@ import (
 )
 
 const (
-	// ReadTimeout is the maximum duration for reading the entire request,
+	// readTimeout is the maximum duration for reading the entire request,
 	// including the body.
-	ReadTimeout = 10 * time.Second
-
-	// ReadHeaderTimeout is the amount of time allowed to read request
-	// headers.
-	ReadHeaderTimeout = 10 * time.Second
-
-	// WriteTimeout is the maximum duration before timing out writes of the
+	readTimeout = 30 * time.Second
+	// readHdrTimeout is the amount of time allowed to read request headers.
+	readHdrTimeout = 30 * time.Second
+	// writeTimeout is the maximum duration before timing out writes of the
 	// response.
-	WriteTimeout = 10 * time.Second
+	writeTimeout = 30 * time.Second
 )
 
 type webConfig struct {
