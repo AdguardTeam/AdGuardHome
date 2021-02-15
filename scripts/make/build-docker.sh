@@ -26,7 +26,6 @@ else
 fi
 
 echo $version
-exit 0
 
 # Allow users to use sudo.
 readonly sudo_cmd="${SUDO:-}"
