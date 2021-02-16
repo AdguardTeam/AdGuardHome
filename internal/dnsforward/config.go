@@ -282,7 +282,7 @@ func (s *Server) prepareUpstreamSettings() error {
 	}
 
 	if len(upstreamConfig.Upstreams) == 0 {
-		log.Info("Warning: no default upstream servers specified, using %v", defaultDNS)
+		log.Info("warning: no default upstream servers specified, using %v", defaultDNS)
 		uc, err := proxy.ParseUpstreamsConfig(defaultDNS, s.conf.BootstrapDNS, DefaultTimeout)
 		if err != nil {
 			return fmt.Errorf("dns: failed to parse default upstreams: %v", err)

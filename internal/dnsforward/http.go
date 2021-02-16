@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/utils"
@@ -312,6 +313,11 @@ func ValidateUpstreams(upstreams []string) error {
 	// Consider this case valid because defaultDNS will be used
 	if len(upstreams) == 0 {
 		return nil
+	}
+
+	_, err := proxy.ParseUpstreamsConfig(upstreams, []string{}, DefaultTimeout)
+	if err != nil {
+		return err
 	}
 
 	var defaultUpstreamFound bool

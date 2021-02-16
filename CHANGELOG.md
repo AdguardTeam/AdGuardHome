@@ -19,8 +19,10 @@ and this project adheres to
 
 ### Fixed
 
+- Incomplete DNS upstreams validation ([#2674]).
 - Wrong parsing of DHCP options of the `ip` type ([#2688]).
 
+[#2674]: https://github.com/AdguardTeam/AdGuardHome/issues/2674
 [#2688]: https://github.com/AdguardTeam/AdGuardHome/issues/2688
 
 

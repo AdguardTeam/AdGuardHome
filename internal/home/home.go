@@ -320,6 +320,7 @@ func run(args options) {
 		go func() {
 			err := startDNSServer()
 			if err != nil {
+				closeDNSServer()
 				log.Fatal(err)
 			}
 		}()
