@@ -293,14 +293,22 @@ func parseOptionString(s string) (uint8, []byte) {
 		if err != nil {
 			return 0, nil
 		}
-
 	case "ip":
 		ip := net.ParseIP(sval)
 		if ip == nil {
 			return 0, nil
 		}
-		val = ip
 
+		// Most DHCP options require IPv4, so do not put the 16-byte
+		// version if we can.  Otherwise, the clients will receive weird
+		// data that looks like four IPv4 addresses.
+		//
+		// See https://github.com/AdguardTeam/AdGuardHome/issues/2688.
+		if ip4 := ip.To4(); ip4 != nil {
+			val = ip4
+		} else {
+			val = ip
+		}
 	default:
 		return 0, nil
 	}

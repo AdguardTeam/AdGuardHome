@@ -3,7 +3,6 @@
 package dhcpd
 
 import (
-	"bytes"
 	"net"
 	"os"
 	"testing"
@@ -130,36 +129,51 @@ func TestOptions(t *testing.T) {
 	testCases := []struct {
 		name     string
 		optStr   string
-		wantCode uint8
 		wantVal  []byte
+		wantCode uint8
 	}{{
-		name:     "all_right_hex",
-		optStr:   " 12  hex  abcdef ",
-		wantCode: 12,
+		name:     "success_hex",
+		optStr:   "12 hex abcdef",
 		wantVal:  []byte{0xab, 0xcd, 0xef},
+		wantCode: 12,
 	}, {
 		name:     "bad_hex",
-		optStr:   " 12  hex  abcdef1 ",
+		optStr:   "12 hex abcdefx",
+		wantVal:  nil,
 		wantCode: 0,
 	}, {
-		name:     "all_right_ip",
+		name:     "success_ip",
 		optStr:   "123 ip 1.2.3.4",
+		wantVal:  net.IP{1, 2, 3, 4},
 		wantCode: 123,
-		wantVal:  net.IPv4(1, 2, 3, 4),
+	}, {
+		name:   "success_ipv6",
+		optStr: "123 ip ::1234",
+		wantVal: net.IP{
+			0, 0, 0, 0,
+			0, 0, 0, 0,
+			0, 0, 0, 0,
+			0, 0, 0x12, 0x34,
+		},
+		wantCode: 123,
 	}, {
 		name:     "bad_code",
 		optStr:   "256 ip 1.1.1.1",
+		wantVal:  nil,
 		wantCode: 0,
 	}, {
 		name:     "negative_code",
 		optStr:   "-1 ip 1.1.1.1",
+		wantVal:  nil,
 		wantCode: 0,
 	}, {
 		name:     "bad_ip",
 		optStr:   "12 ip 1.1.1.1x",
+		wantVal:  nil,
 		wantCode: 0,
 	}, {
 		name:     "bad_mode",
+		wantVal:  nil,
 		optStr:   "12 x 1.1.1.1",
 		wantCode: 0,
 	}}
@@ -167,9 +181,9 @@ func TestOptions(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			code, val := parseOptionString(tc.optStr)
-			require.EqualValues(t, tc.wantCode, code)
+			require.Equal(t, tc.wantCode, code)
 			if tc.wantVal != nil {
-				assert.True(t, bytes.Equal(tc.wantVal, val))
+				assert.Equal(t, tc.wantVal, val)
 			}
 		})
 	}

@@ -17,6 +17,14 @@ and this project adheres to
 ## [v0.105.2] - 2021-02-24
 -->
 
+### Fixed
+
+- Wrong parsing of DHCP options of the `ip` type ([#2688]).
+
+[#2688]: https://github.com/AdguardTeam/AdGuardHome/issues/2688
+
+
+
 ## [v0.105.1] - 2021-02-15
 
 ### Changed
