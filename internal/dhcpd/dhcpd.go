@@ -19,7 +19,12 @@ import (
 
 const (
 	defaultDiscoverTime = time.Second * 3
-	leaseExpireStatic   = 1
+	// leaseExpireStatic is used to define the Expiry field for static
+	// leases.
+	//
+	// TODO(e.burkov): Remove it when static leases determining mechanism
+	// will be improved.
+	leaseExpireStatic = 1
 )
 
 var webHandlersRegistered = false
@@ -37,12 +42,24 @@ type Lease struct {
 
 // MarshalJSON implements the json.Marshaler interface for *Lease.
 func (l *Lease) MarshalJSON() ([]byte, error) {
+	var expiryStr string
+	if expiry := l.Expiry; expiry.Unix() != leaseExpireStatic {
+		// The front-end is waiting for RFC 3999 format of the time
+		// value.  It also shouldn't got an Expiry field for static
+		// leases.
+		//
+		// See https://github.com/AdguardTeam/AdGuardHome/issues/2692.
+		expiryStr = expiry.Format(time.RFC3339)
+	}
+
 	type lease Lease
 	return json.Marshal(&struct {
 		HWAddr string `json:"mac"`
+		Expiry string `json:"expires,omitempty"`
 		*lease
 	}{
 		HWAddr: l.HWAddr.String(),
+		Expiry: expiryStr,
 		lease:  (*lease)(l),
 	})
 }
@@ -248,14 +265,10 @@ const (
 	LeasesAll     = LeasesDynamic | LeasesStatic
 )
 
-// Leases returns the list of current DHCP leases (thread-safe)
-func (s *Server) Leases(flags int) []Lease {
-	result := s.srv4.GetLeases(flags)
-
-	v6leases := s.srv6.GetLeases(flags)
-	result = append(result, v6leases...)
-
-	return result
+// Leases returns the list of active IPv4 and IPv6 DHCP leases.  It's safe for
+// concurrent use.
+func (s *Server) Leases(flags int) (leases []Lease) {
+	return append(s.srv4.GetLeases(flags), s.srv6.GetLeases(flags)...)
 }
 
 // FindMACbyIP - find a MAC address by IP address in the currently active DHCP leases
