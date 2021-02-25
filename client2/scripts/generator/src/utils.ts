@@ -19,20 +19,106 @@ const TYPES = {
     boolean: 'boolean',
 };
 
+export enum SchemaType {
+    STRING = 'string',
+    OBJECT = 'object',
+    ARRAY = 'array',
+    BOOLEAN = 'boolean',
+    NUMBER = 'number',
+    INTEGER = 'integer',
+}
+
+export interface Schema {
+    allOf?: any[];
+    example?: string;
+    properties?: Record<string, Schema>;
+    required?: string[];
+    description?: string;
+    enum?: string[];
+    type: SchemaType;
+    pattern?: string;
+    oneOf?: any
+    items?: Schema;
+    additionalProperties?: Schema;
+    $ref?: string;
+    minItems?: number;
+    maxItems?: number;
+    maxLength?: number;
+    minLength?: number;
+    maximum?: number;
+    minimum?: number;
+}
+
+export interface Parametr {
+    description?: string;
+    example?: string;
+    in?: 'query' | 'body' | 'headers';
+    name?: string;
+    schema?: Schema;
+    required?: boolean;
+}
+
+export interface RequestBody {
+    content: {
+        'application/json'?: {
+            schema: Schema;
+            example?: string;
+        };
+        'text/palin'?: {
+            example?: string;
+        }
+    }
+    required?: boolean;
+}
+export interface Response {
+    content: {
+        'application/json'?: {
+            schema: Schema;
+            example?: string;
+        };
+        'text/palin'?: {
+            example?: string;
+        }
+    }
+    description?: string;
+}
+
+export interface Schemas {
+    parameters: Record<string, Parametr>;
+    requestBodies: Record<string, RequestBody>;
+    responses: Record<string, Response>;
+    schemas: Record<string, Schema>;
+}
+
+export interface OpenApi {
+    components: Schemas;
+    paths: any;
+}
+
 /**
  * @param schemaProp: valueof shema.properties[key]
  * @param openApi: openapi object
  * @returns [propType - basicType or import one, isArray, isClass, isImport]
  */
-const schemaParamParser = (schemaProp: any, openApi: any): [string, boolean, boolean, boolean, boolean] => {
+interface SchemaParamParserReturn {
+    type: string;
+    isArray: boolean;
+    isClass: boolean;
+    isImport: boolean;
+    isAdditional: boolean;
+    isEnum: boolean;
+}
+
+const schemaParamParser = (schemaProp: Schema, openApi: OpenApi): SchemaParamParserReturn => {
     let type = '';
     let isImport = false;
     let isClass = false;
     let isArray = false;
     let isAdditional = false;
+    let isEnum = false;
 
     if (schemaProp.$ref || schemaProp.additionalProperties?.$ref) {
-        const temp = (schemaProp.$ref || schemaProp.additionalProperties?.$ref).split('/');
+        const temp = (schemaProp.$ref || schemaProp.additionalProperties?.$ref)!.split('/');
 
         if (schemaProp.additionalProperties) {
             isAdditional = true;
@@ -40,44 +126,41 @@ const schemaParamParser = (schemaProp: any, openApi: any): [string, boolean, boo
 
         type = `${temp[temp.length - 1]}`;
 
-        const cl = openApi ? openApi.components.schemas[type] : {};
+        const cl = openApi.components.schemas[type];
 
         if (cl.$ref) {
             const link = schemaParamParser(cl, openApi);
-            link.shift();
-            return [type, ...link] as any;
+            return {...link, type};
         }
 
         if (cl.type === 'string' && cl.enum) {
             isImport = true;
+            isEnum = true;
         }
 
         if (cl.type === 'object' && !cl.oneOf) {
             isClass = true;
             isImport = true;
         } else if (cl.type === 'array') {
-            const temp: any = schemaParamParser(cl.items, openApi);
-            type = `${temp[0]}`;
+            const temp = schemaParamParser(cl.items!, openApi);
+            type = temp.type;
             isArray = true;
-            isClass = isClass || temp[2];
-            isImport = isImport || temp[3];
+            isClass = isClass || temp.isClass;
+            isImport = isImport || temp.isImport;
+            isEnum = isEnum || temp.isEnum;
         }
     } else if (schemaProp.type === 'array') {
-        const temp: any = schemaParamParser(schemaProp.items, openApi);
-        type = `${temp[0]}`;
+        const temp = schemaParamParser(schemaProp.items!, openApi);
+        type = temp.type
         isArray = true;
-        isClass = isClass || temp[2];
-        isImport = isImport || temp[3];
+        isClass = isClass || temp.isClass;
+        isImport = isImport || temp.isImport;
+        isEnum = isEnum || temp.isEnum;
     } else {
         type = (TYPES as Record<any, string>)[schemaProp.type];
     }
-    if (!type) {
-        // TODO: Fix bug with Error fields.
-        type = 'any';
-        // throw new Error('Failed to find entity type');
-    }
 
-    return [type, isArray, isClass, isImport, isAdditional];
+    return { type, isArray, isClass, isImport, isAdditional, isEnum };
 };
 
 export { TYPES, toCamel, capitalize, uncapitalize, schemaParamParser };
