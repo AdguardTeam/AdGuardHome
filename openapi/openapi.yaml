@@ -1279,6 +1279,8 @@
           'type': 'string'
         'edns_cs_enabled':
           'type': 'boolean'
+        'disable_ipv6':
+          'type': 'boolean'
         'dnssec_enabled':
           'type': 'boolean'
         'cache_size':
