@@ -2,15 +2,16 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import * as fs from 'fs';
 import * as path from 'path';
-import { stringify } from 'qs';
+import { number } from 'prop-types';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import * as morph from 'ts-morph';
 
 import {
     API_DIR as API_DIR_CONST,
+    BAD_REQUES_HELPER,
     GENERATOR_ENTITY_ALLIAS,
 } from '../../consts';
-import { toCamel, capitalize, schemaParamParser } from './utils';
+import { toCamel, capitalize, schemaParamParser, OpenApi, uncapitalize, RequestBody } from './utils';
 
 
 const API_DIR = path.resolve(API_DIR_CONST);
@@ -20,11 +21,15 @@ if (!fs.existsSync(API_DIR)) {
 
 const { Project, QuoteKind } = morph;
 
+enum PROCESS_AS {
+    JSON = 'JSON',
+    TEXT = 'TEXT',
+    EMPTY = 'EMPTY',
+}
 
 class ApiGenerator {
     project = new Project({
         tsConfigFilePath: './tsconfig.json',
-        addFilesFromTsConfig: false,
         manipulationSettings: {
             quoteKind: QuoteKind.Single,
             usePrefixAndSuffixTextForRename: false,
@@ -32,7 +37,7 @@ class ApiGenerator {
         },
     });
 
-    openapi: Record<string, any>;
+    openapi: OpenApi;
 
     serverUrl: string;
 
@@ -47,7 +52,7 @@ class ApiGenerator {
 
     apis: morph.SourceFile[] = [];
 
-    constructor(openapi: Record<string, any>) {
+    constructor(openapi: OpenApi) {
         this.openapi = openapi;
         this.paths = openapi.paths;
         this.serverUrl = openapi.servers[0].url;
@@ -55,12 +60,14 @@ class ApiGenerator {
         Object.keys(this.paths).forEach((pathKey) => {
             Object.keys(this.paths[pathKey]).forEach((method) => {
                 const {
-                    tags, operationId, parameters, responses, requestBody, security,
+                    tags, operationId, parameters, responses, requestBody, security, "x-skip-web-api": skip
                 } = this.paths[pathKey][method];
-                const controller = toCamel((tags ? tags[0] : pathKey.split('/')[1]).replace('-controller', ''));
-
+                const controller = toCamel((tags ? tags[0] : pathKey.split('/')[1]));
+                if (skip) {
+                    return;
+                }
                 if (this.controllers[controller]) {
-                    this.controllers[controller][operationId] = {
+                    this.controllers[controller][uncapitalize(operationId)] = {
                         parameters,
                         responses,
                         method,
@@ -69,7 +76,7 @@ class ApiGenerator {
                         pathKey: pathKey.replace(/{/g, '${'),
                     };
                 } else {
-                    this.controllers[controller] = { [operationId]: {
+                    this.controllers[controller] = { [uncapitalize(operationId)]: {
                         parameters,
                         responses,
                         method,
@@ -97,7 +104,7 @@ class ApiGenerator {
         ]);
 
         // const schemaProperties = schemas[schemaName].properties;
-        const importEntities: any[] = [];
+        const importEntities: { type: string, isClass: boolean }[] = [];
 
         // add api class to file
         const apiClass = apiFile.addClass({
@@ -111,29 +118,34 @@ class ApiGenerator {
         // for each operation add fetcher
         operationList.forEach((operation) => {
             const {
-                requestBody, responses, parameters, method, pathKey, security,
+                requestBody, responses, parameters, method, pathKey,
             } = controllerOperations[operation];
 
-            const queryParams: any[] = []; // { name, type }
-            const bodyParam: any[] = []; // { name, type }
+            const queryParams:  { name: string, type: string, hasQuestionToken: boolean }[] = [];
+            const bodyParam: { name: string, countedType: string, type?: string, isClass?: boolean, hasQuestionToken: boolean }[] = [];
 
-            let hasResponseBodyType: /* boolean | ReturnType<schemaParamParser> */ false | [string, boolean, boolean, boolean, boolean] = false;
-            let contentType = '';
+            
+            let contentType: string = '';
+
             if (parameters) {
-                parameters.forEach((p: any) => {
-                    const [
-                        pType, isArray, isClass, isImport,
-                    ] = schemaParamParser(p.schema, this.openapi);
+                parameters.forEach((link: {$ref: string}) => {
+                    const temp = link.$ref.split('/').pop()
+                    const parameter = this.openapi.components.parameters[temp!];
+
+                    const {
+                        type, isArray, isClass, isImport,
+                    } = schemaParamParser(parameter.schema, this.openapi);
 
                     if (isImport) {
-                        importEntities.push({ type: pType, isClass });
+                        importEntities.push({ type, isClass });
                     }
-                    if (p.in === 'query') {
+                    if (parameter.in === 'query') {
                         queryParams.push({
-                            name: p.name, type: `${pType}${isArray ? '[]' : ''}`, hasQuestionToken: !p.required });
+                            name: parameter.name, type: `${type}${isArray ? '[]' : ''}`, hasQuestionToken: !parameter.required });
                     }
                 });
             }
+
             if (queryParams.length > 0) {
                 const imp = apiFile.getImportDeclaration((i) => {
                     return i.getModuleSpecifierValue() === 'qs';
@@ -144,62 +156,120 @@ class ApiGenerator {
                     });
                 }
             }
+
             if (requestBody) {
-                let content = requestBody.content;
                 const { $ref }: { $ref: string } = requestBody;
 
-                if (!content && $ref) {
-                    const name = $ref.split('/').pop() as string;
-                    content = this.openapi.components.requestBodies[name].content;
-                }
+                const name = $ref.split('/').pop();
+                const { content, required } = this.openapi.components.requestBodies[name!];
+                
                 
                 [contentType] = Object.keys(content);
-                const data = content[contentType];
+                const data = content[contentType as keyof RequestBody['content']]!;
 
-                const [
-                    pType, isArray, isClass, isImport,
-                ] = schemaParamParser(data.schema, this.openapi);
+                const {
+                    type, isArray, isClass, isImport,
+                 } = schemaParamParser(data.schema, this.openapi);
 
                 if (isImport) {
-                    importEntities.push({ type: pType, isClass });
-                    bodyParam.push({ name: pType.toLowerCase(), type: `${isClass ? 'I' : ''}${pType}${isArray ? '[]' : ''}`, isClass, pType });
+                    importEntities.push({ type: type, isClass });
+                    bodyParam.push({
+                        name: type.toLowerCase(),
+                        countedType: `${isClass ? 'I' : ''}${type}${isArray ? '[]' : ''}`,
+                        isClass,
+                        type,
+                        hasQuestionToken: !required
+                    });
                 } else {
-                    bodyParam.push({ name: 'data', type: `${pType}${isArray ? '[]' : ''}` });
+                    bodyParam.push({
+                        name: 'data',
+                        countedType: `${type}${isArray ? '[]' : ''}`,
+                        hasQuestionToken: !required });
                     
                 }
             }
-            if (responses['200']) {
-                const { content, headers } = responses['200'];
-                if (content && (content['*/*'] || content['application/json'])) {
-                    const { schema, examples } = content['*/*'] || content['application/json'];
 
-                    if (!schema) {
-                        process.exit(0);
+            const responsesCodes = Object.keys(responses);
+            const responsesSchema = responsesCodes.map((code) => {
+                const refLink = responses[code].$ref.split('/').pop();
+                const ref = this.openapi.components.responses[refLink];
+                
+                interface ResponseSchema {
+                    code: number,
+                    [PROCESS_AS.JSON]?: ReturnType<typeof schemaParamParser>;
+                    [PROCESS_AS.TEXT]?: {
+                        schema?: ReturnType<typeof schemaParamParser>;
+                        xErrorCode?: string;
+                        onlyText: boolean;
                     }
-
-                    const propType = schemaParamParser(schema, this.openapi);
-                    const [pType, , isClass, isImport] = propType;
-
-                    if (isImport) {
-                        importEntities.push({ type: pType, isClass });
-                    }
-                    hasResponseBodyType = propType;
+                    [PROCESS_AS.EMPTY]?: boolean;
                 }
-            }
-            let returnType = '';
-            if (hasResponseBodyType) {
-                const [pType, isArray, isClass] = hasResponseBodyType as any;
-                let data = `Promise<${isClass ? 'I' : ''}${pType}${isArray ? '[]' : ''}`;
-                returnType = data;
-            } else {
-                returnType = 'Promise<number';
-            } 
-            const shouldValidate = bodyParam.filter(b => b.isClass);
-            if (shouldValidate.length > 0) {
-                returnType += ' | string[]';
-            }
-            // append Error to default type return;
-            returnType += ' | Error>';
+                const responseSchema: ResponseSchema = { code: Number(code) };
+
+                if (!ref.content) {
+                    responseSchema[PROCESS_AS.EMPTY] = true;
+                    return responseSchema;
+                }
+                if (ref.content?.['application/json']) {
+                    const { schema } = ref.content['application/json'];
+                    responseSchema[PROCESS_AS.JSON] = schemaParamParser(schema, this.openapi);
+                } 
+                if (ref.content?.['text/palin']) {
+                    const {
+                        "x-error-class": xErrorClass,
+                        "x-error-code": xErrorCode,
+                    } = ref.content['text/palin'];
+                    if (xErrorClass) {
+                        const schemaLink = xErrorClass.split('/').pop();
+                        const schema = this.openapi.components.schemas[schemaLink!];
+                        responseSchema[PROCESS_AS.TEXT] = {
+                            schema: schemaParamParser(schema, this.openapi),
+                            xErrorCode,
+                            onlyText: false,
+                        }
+                    } else {
+                        responseSchema[PROCESS_AS.TEXT] = { onlyText: true };
+                    }
+                }
+                return responseSchema;
+            });
+
+            
+            let returnTypes = new Set();
+
+            bodyParam.forEach((param) => {
+                if (param.isClass) {
+                    returnTypes.add(BAD_REQUES_HELPER);
+                    importEntities.push({ type: BAD_REQUES_HELPER, isClass: true });
+                }
+            })
+
+            responsesSchema.forEach((responseSchema) => {
+                if (responseSchema[PROCESS_AS.JSON]) {
+                    const { type, isClass, isImport } = responseSchema[PROCESS_AS.JSON]!;
+                    returnTypes.add(type);
+                    if (isImport) {
+                        importEntities.push({ type: type, isClass });
+                    }
+                }
+                if (responseSchema[PROCESS_AS.TEXT]) {
+                    const { onlyText, schema } = responseSchema[PROCESS_AS.TEXT]!;
+                    if (onlyText) {
+                        returnTypes.add('string');
+                    } else {
+                        const { type, isClass, isImport } = schema!;
+                        returnTypes.add(type);
+                        if (isImport) {
+                            importEntities.push({ type, isClass });
+                        }
+                    }
+                }
+                if (responseSchema[PROCESS_AS.EMPTY]) {
+                    returnTypes.add('number');
+                }
+            });
+            returnTypes.add('undefined');
+            const returnType = `Promise<${Array.from(returnTypes).join(' | ')}>`;
 
             const fetcher = apiClass.addMethod({
                 isAsync: true,
@@ -211,23 +281,19 @@ class ApiGenerator {
             fetcher.addParameters(params);
 
             fetcher.setBodyText((w) => {
-                // Add data to URLSearchParams
-                if (contentType === 'text/plain') {
-                    bodyParam.forEach((b) => {
-                        w.writeLine(`const params =  String(${b.name});`);
-                    });
-                } else {
+                if (contentType === 'application/json') {
+                    const shouldValidate = bodyParam.filter(b => b.isClass);
                     if (shouldValidate.length > 0) {
                         w.writeLine(`const haveError: string[] = [];`);
                         shouldValidate.forEach((b) => {
-                            w.writeLine(`const ${b.name}Valid = new ${b.pType}(${b.name});`);
-                            w.writeLine(`haveError.push(...${b.name}Valid.validate());`);
+                            w.writeLine(`haveError.push(...${b.name}.validate());`);
                         });
                         w.writeLine(`if (haveError.length > 0) {`);
-                        w.writeLine(`    return Promise.resolve(haveError);`)
+                        w.writeLine(`    return Promise.resolve(new ${BAD_REQUES_HELPER}(haveError));`)
                         w.writeLine(`}`);
                     }
                 }
+
                 // Switch return of fetch in case on queryParams
                 if (queryParams.length > 0) {
                     w.writeLine('const queryParams = {');
@@ -243,37 +309,36 @@ class ApiGenerator {
                 w.writeLine(`    method: '${method.toUpperCase()}',`);
 
                 // add Fetch options
-                if (contentType && contentType !== 'multipart/form-data') {
-                    w.writeLine('    headers: {');
-                    w.writeLine(`        'Content-Type': '${contentType}',`);
-                    w.writeLine('    },');
-                }
                 if (contentType) {
-                    switch (contentType) {
-                        case 'text/plain':
-                            w.writeLine('    body: params,');
-                            break;
-                        default:
-                            w.writeLine(`    body: JSON.stringify(${bodyParam.map((b) => b.isClass ? `${b.name}Valid.serialize()` : b.name).join(', ')}),`);
-                            break;
+                    w.writeLine(`    body: JSON.stringify(${bodyParam.map((b) => b.isClass ? `${b.name}.serialize()` : b.name).join(', ')}),`);
+                }
+
+                w.writeLine('}).then(async (res) => {');
+                responsesSchema.forEach((responseSchema) => {
+                    const { code } = responseSchema;
+                    w.writeLine(`    if (res.status === ${code}) {`);
+                    if (responseSchema[PROCESS_AS.EMPTY]) {
+                        w.writeLine('        return res.status;');
                     }
-                }
-
-                // Handle response
-                if (hasResponseBodyType) {
-                    w.writeLine('}).then(async (res) => {');
-                    w.writeLine('    if (res.status === 200) {');
-                    w.writeLine('        return res.json();');
-                } else {
-                    w.writeLine('}).then(async (res) => {');
-                    w.writeLine('    if (res.status === 200) {');
-                    w.writeLine('        return res.status;');
-                }
-
-                // Handle Error
-                w.writeLine('    } else {');
-                w.writeLine('        return new Error(String(res.status));');
-                w.writeLine('    }');
+                    if (responseSchema[PROCESS_AS.TEXT]?.onlyText) {
+                        w.writeLine('        return res.text();')
+                    }
+                    if (responseSchema[PROCESS_AS.JSON] && responseSchema[PROCESS_AS.TEXT]) {
+                        const { type } = responseSchema[PROCESS_AS.JSON]!;
+                        const { schema, xErrorCode } = responseSchema[PROCESS_AS.TEXT]!;
+                        const { type: errType } = schema!;
+                        w.writeLine('        try {');
+                        w.writeLine(`            return new ${type}(await res.json());`);
+                        w.writeLine('        } catch {');
+                        w.writeLine(`            return new ${errType}({ msg: await res.text() code: ${xErrorCode}} as any);`);
+                        w.writeLine('        }');
+                    }
+                    if (responseSchema[PROCESS_AS.JSON]) {
+                        const { type } = responseSchema[PROCESS_AS.JSON]!;
+                        w.writeLine(`        return new ${type}(await res.json());`);
+                    }
+                    w.writeLine(`    }`);
+                })
                 w.writeLine('})');
             });
         });
@@ -288,17 +353,16 @@ class ApiGenerator {
             }
         });
         imports.sort((a,b) => a.type > b.type ? 1 : -1).forEach((ie) => {
-            const { type: pType, isClass } = ie;
+            const { type: type, isClass } = ie;
             if (isClass) {
                 apiFile.addImportDeclaration({
-                    moduleSpecifier: `${GENERATOR_ENTITY_ALLIAS}${pType}`,
-                    defaultImport: pType,
-                    namedImports: [`I${pType}`],
+                    moduleSpecifier: `${GENERATOR_ENTITY_ALLIAS}${type}`,
+                    defaultImport: type,
                 });
             } else {
                 apiFile.addImportDeclaration({
-                    moduleSpecifier: `${GENERATOR_ENTITY_ALLIAS}${pType}`,
-                    namedImports: [pType],
+                    moduleSpecifier: `${GENERATOR_ENTITY_ALLIAS}${type}`,
+                    namedImports: [type],
                 });
             }
         });

@@ -11,8 +11,8 @@ const generateApi = (openApi: OpenApi) => {
     const ent = new EntitiesGenerator(openApi);
     ent.save();
 
-    // const api = new ApisGenerator(openApi);
-    // api.save();
+    const api = new ApisGenerator(openApi);
+    api.save();
 }
 
 const openApiFile = fs.readFileSync('./scripts/generator/v1.yaml', 'utf8');

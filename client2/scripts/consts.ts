@@ -10,3 +10,4 @@ export const trimQuotes = (str: string) => {
 };
 
 export const GENERATOR_ENTITY_ALLIAS = 'Entities/';
+export const BAD_REQUES_HELPER = 'BadRequesHelper';

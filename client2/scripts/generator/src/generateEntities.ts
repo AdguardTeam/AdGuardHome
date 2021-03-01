@@ -3,7 +3,7 @@ import * as path from 'path';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import * as morph from 'ts-morph';
 
-import { ENT_DIR } from '../../consts';
+import { ENT_DIR, BAD_REQUES_HELPER } from '../../consts';
 import { TYPES, toCamel, schemaParamParser, capitalize, OpenApi, Schema } from './utils';
 
 const { Project, QuoteKind } = morph;
@@ -37,6 +37,40 @@ class EntitiesGenerator {
         this.schemas = openapi.components.schemas;
         this.schemaNames = Object.keys(this.schemas);
         this.generateEntities();
+        this.generateUtils();
+    }
+
+
+    generateUtils = () => {
+        const helperFile = this.project.createSourceFile(`${EntDir}/${BAD_REQUES_HELPER}.ts`);
+        helperFile.addImportDeclaration({
+            moduleSpecifier: `./BadRequestResp`,
+            defaultImport: 'BadRequestResp',
+        });
+        helperFile.addImportDeclaration({
+            moduleSpecifier: `./ErrorCode`,
+            namedImports: ['ErrorCode'],
+        });
+        const helperClass = helperFile.addClass({
+            name: 'BadRequestHelper',
+            isDefaultExport: true,
+            extends: 'BadRequestResp',
+            properties: [{
+                type: 'string[]',
+                name: 'fields'
+            }]
+        });
+        const helperConstructor = helperClass.addConstructor({
+            parameters: [{
+                type: 'string[]',
+                name: 'fields'
+            }],
+        });
+        helperConstructor.setBodyText((w) => {
+            w.writeLine('super({ code: ErrorCode.JSN001, msg: \'Wrong fields value\' });');
+            w.writeLine('this.fields = fields;')
+        });
+        this.entities.push(helperFile);
     }
 
     generateEntities = () => {
@@ -199,7 +233,7 @@ class EntitiesGenerator {
             '',
         ]);
 
-        let { properties, required, allOf } = this.schemas[schemaName];
+        let { properties, required, allOf, $ref } = this.schemas[schemaName];
 
         if (allOf) {
             const refLink: string = allOf.find((obj: Record<string, any>) => obj.$ref).$ref;
@@ -211,6 +245,38 @@ class EntitiesGenerator {
 
             properties = newSchema.properties;
             required = newSchema.required;
+        }
+
+        if ($ref) {
+            const refLink = $ref.split('/').pop()!;
+            entityFile.addImportDeclaration({
+                defaultImport: refLink,
+                moduleSpecifier: `./${refLink}`,
+                namedImports: [`I${refLink}`],
+            });
+
+            entityFile.addTypeAlias({
+                name: `I${schemaName}`,
+                type: `I${refLink}`,
+                isExported: true,
+            })
+
+            const entityClass = entityFile.addClass({
+                name: schemaName,
+                isDefaultExport: true,
+                extends: refLink,
+            })
+            const ctor = entityClass.addConstructor({
+                parameters: [{
+                    name: 'props',
+                    type: `I${schemaName}`,
+                }],
+            })
+            ctor.setBodyText((w) => {
+                w.writeLine('super(props);')
+            });
+            this.entities.push(entityFile);
+            return;
         }
         
 

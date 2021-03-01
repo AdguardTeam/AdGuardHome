@@ -49,12 +49,12 @@ export interface Schema {
     minimum?: number;
 }
 
-export interface Parametr {
+export interface Parameter {
     description?: string;
     example?: string;
     in?: 'query' | 'body' | 'headers';
-    name?: string;
-    schema?: Schema;
+    name: string;
+    schema: Schema;
     required?: boolean;
 }
 
@@ -64,9 +64,6 @@ export interface RequestBody {
             schema: Schema;
             example?: string;
         };
-        'text/palin'?: {
-            example?: string;
-        }
     }
     required?: boolean;
 }
@@ -78,13 +75,15 @@ export interface Response {
         };
         'text/palin'?: {
             example?: string;
+            'x-error-class'?: string;
+            'x-error-code'?: string;
         }
     }
     description?: string;
 }
 
 export interface Schemas {
-    parameters: Record<string, Parametr>;
+    parameters: Record<string, Parameter>;
     requestBodies: Record<string, RequestBody>;
     responses: Record<string, Response>;
     schemas: Record<string, Schema>;
@@ -93,6 +92,10 @@ export interface Schemas {
 export interface OpenApi {
     components: Schemas;
     paths: any;
+    servers: {
+        description: string;
+        url: string;
+    }[]
 }
 
 /**
@@ -118,15 +121,18 @@ const schemaParamParser = (schemaProp: Schema, openApi: OpenApi): SchemaParamPar
     let isEnum = false;
 
     if (schemaProp.$ref || schemaProp.additionalProperties?.$ref) {
-        const temp = (schemaProp.$ref || schemaProp.additionalProperties?.$ref)!.split('/');
+        type = (schemaProp.$ref || schemaProp.additionalProperties?.$ref)!.split('/').pop()!;
 
         if (schemaProp.additionalProperties) {
             isAdditional = true;
         }
-
-        type = `${temp[temp.length - 1]}`;
-
         const cl = openApi.components.schemas[type];
+        
+        if (cl.allOf) {
+            const ref = cl.allOf.find((e) => !!e.$ref);
+            const link = schemaParamParser(ref, openApi);
+            return {...link, type};
+        }
 
         if (cl.$ref) {
             const link = schemaParamParser(cl, openApi);
