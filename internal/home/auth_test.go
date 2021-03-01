@@ -1,6 +1,8 @@
 package home
 
 import (
+	"bytes"
+	"crypto/rand"
 	"encoding/hex"
 	"net/http"
 	"net/url"
@@ -11,6 +13,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
@@ -24,14 +27,34 @@ func prepareTestDir() string {
 	return dir
 }
 
+func TestNewSessionToken(t *testing.T) {
+	// Successful case.
+	token, err := newSessionToken()
+	require.Nil(t, err)
+	assert.Len(t, token, sessionTokenSize)
+
+	// Break the rand.Reader.
+	prevReader := rand.Reader
+	t.Cleanup(func() {
+		rand.Reader = prevReader
+	})
+	rand.Reader = &bytes.Buffer{}
+
+	// Unsuccessful case.
+	token, err = newSessionToken()
+	require.NotNil(t, err)
+	assert.Empty(t, token)
+}
+
 func TestAuth(t *testing.T) {
 	dir := prepareTestDir()
-	defer func() { _ = os.RemoveAll(dir) }()
+	t.Cleanup(func() { _ = os.RemoveAll(dir) })
 	fn := filepath.Join(dir, "sessions.db")
 
-	users := []User{
-		{Name: "name", PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2"},
-	}
+	users := []User{{
+		Name:         "name",
+		PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2",
+	}}
 	a := InitAuth(fn, nil, 60)
 	s := session{}
 
@@ -41,7 +64,7 @@ func TestAuth(t *testing.T) {
 	assert.Equal(t, checkSessionNotFound, a.checkSession("notfound"))
 	a.RemoveSession("notfound")
 
-	sess, err := getSession(&users[0])
+	sess, err := newSessionToken()
 	assert.Nil(t, err)
 	sessStr := hex.EncodeToString(sess)
 

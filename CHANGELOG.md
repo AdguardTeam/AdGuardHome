@@ -29,6 +29,12 @@ and this project adheres to
 [#2692]: https://github.com/AdguardTeam/AdGuardHome/issues/2692
 [#2757]: https://github.com/AdguardTeam/AdGuardHome/issues/2757
 
+### Security
+
+- Session token doesn't contain user's information anymore ([#2470]).
+
+[#2470]: https://github.com/AdguardTeam/AdGuardHome/issues/2470
+
 
 
 ## [v0.105.1] - 2021-02-15

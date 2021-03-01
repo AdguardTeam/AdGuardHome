@@ -2,13 +2,10 @@ package home
 
 import (
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"math"
-	"math/big"
 	"net/http"
 	"strings"
 	"sync"
@@ -20,8 +17,12 @@ import (
 )
 
 const (
-	cookieTTL         = 365 * 24 // in hours
+	// cookieTTL is given in hours.
+	cookieTTL         = 365 * 24
 	sessionCookieName = "agh_session"
+
+	// sessionTokenSize is the length of session token in bytes.
+	sessionTokenSize = 16
 )
 
 type session struct {
@@ -285,16 +286,29 @@ type loginJSON struct {
 	Password string `json:"password"`
 }
 
-func getSession(u *User) ([]byte, error) {
-	maxSalt := big.NewInt(math.MaxUint32)
-	salt, err := rand.Int(rand.Reader, maxSalt)
+// newSessionToken returns cryptographically secure randomly generated slice of
+// bytes of sessionTokenSize length.
+//
+// TODO(e.burkov): Think about using byte array instead of byte slice.
+func newSessionToken() (data []byte, err error) {
+	randData := make([]byte, sessionTokenSize)
+
+	_, err = rand.Read(randData)
 	if err != nil {
 		return nil, err
 	}
 
-	d := []byte(fmt.Sprintf("%s%s%s", salt, u.Name, u.PasswordHash))
-	hash := sha256.Sum256(d)
-	return hash[:], nil
+	return randData, nil
+}
+
+// cookieTimeFormat is the format to be used in (time.Time).Format for cookie's
+// expiry field.
+const cookieTimeFormat = "Mon, 02 Jan 2006 15:04:05 GMT"
+
+// cookieExpiryFormat returns the formatted exp to be used in cookie string.
+// It's quite simple for now, but probably will be expanded in the future.
+func cookieExpiryFormat(exp time.Time) (formatted string) {
+	return exp.Format(cookieTimeFormat)
 }
 
 func (a *Auth) httpCookie(req loginJSON) (string, error) {
@@ -303,24 +317,23 @@ func (a *Auth) httpCookie(req loginJSON) (string, error) {
 		return "", nil
 	}
 
-	sess, err := getSession(&u)
+	sess, err := newSessionToken()
 	if err != nil {
 		return "", err
 	}
 
 	now := time.Now().UTC()
-	expire := now.Add(cookieTTL * time.Hour)
-	expstr := expire.Format(time.RFC1123)
-	expstr = expstr[:len(expstr)-len("UTC")] // "UTC" -> "GMT"
-	expstr += "GMT"
 
-	s := session{}
-	s.userName = u.Name
-	s.expire = uint32(now.Unix()) + a.sessionTTL
-	a.addSession(sess, &s)
+	a.addSession(sess, &session{
+		userName: u.Name,
+		expire:   uint32(now.Unix()) + a.sessionTTL,
+	})
 
-	return fmt.Sprintf("%s=%s; Path=/; HttpOnly; Expires=%s",
-		sessionCookieName, hex.EncodeToString(sess), expstr), nil
+	return fmt.Sprintf(
+		"%s=%s; Path=/; HttpOnly; Expires=%s",
+		sessionCookieName, hex.EncodeToString(sess),
+		cookieExpiryFormat(now.Add(cookieTTL*time.Hour)),
+	), nil
 }
 
 func handleLogin(w http.ResponseWriter, r *http.Request) {
