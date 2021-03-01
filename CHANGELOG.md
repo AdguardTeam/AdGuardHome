@@ -14,11 +14,12 @@ and this project adheres to
 -->
 
 <!--
-## [v0.105.2] - 2021-02-24
+## [v0.105.2] - 2021-03-04
 -->
 
 ### Fixed
 
+- Incomplete OpenWRT detection ([#2757]).
 - DHCP lease's `expired` field incorrect time format ([#2692]).
 - Incomplete DNS upstreams validation ([#2674]).
 - Wrong parsing of DHCP options of the `ip` type ([#2688]).
@@ -26,6 +27,7 @@ and this project adheres to
 [#2674]: https://github.com/AdguardTeam/AdGuardHome/issues/2674
 [#2688]: https://github.com/AdguardTeam/AdGuardHome/issues/2688
 [#2692]: https://github.com/AdguardTeam/AdGuardHome/issues/2692
+[#2757]: https://github.com/AdguardTeam/AdGuardHome/issues/2757
 
 
 
