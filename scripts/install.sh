@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# AdGuardHome installation script
+# AdGuard Home Installation Script
 #
 # 1. Download the package
 # 2. Unpack it
@@ -97,7 +97,7 @@ detect_cpu()
 			CPU=armv7
 			;;
 
-		aarch64)
+		aarch64 | arm64)
 			CPU=arm64
 			;;
 
@@ -184,12 +184,25 @@ main() {
 
     OS=$(detect_os) || error_exit "Cannot detect your OS"
     CPU=$(detect_cpu) || error_exit "Cannot detect your CPU"
+
+    # TODO: Remove when Mac M1 native support is added
+    if [ "${OS}" = "darwin" ] && [ "${CPU}" = "arm64" ]; then
+        CPU="amd64"
+        log_info "Use ${CPU} build on Mac M1 until the native ARM support is added"
+    fi
+
     PKG_EXT=$(package_extension)
     PKG_NAME=AdGuardHome_${OS}_${CPU}.${PKG_EXT}
 
     SCRIPT_URL="https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh"
     URL="https://static.adguard.com/adguardhome/${CHANNEL}/${PKG_NAME}"
-    OUT_DIR=/opt
+    OUT_DIR="/opt"
+    if [ "${OS}" = "darwin" ]; then
+        # It may be important to install AdGuard Home to /Applications on MacOS
+        # Otherwise, it may not grant enough privileges to it
+        OUT_DIR="/Applications"
+    fi
+
     AGH_DIR="${OUT_DIR}/AdGuardHome"
 
     # Root check
@@ -215,10 +228,16 @@ main() {
 
     download "${URL}" "${PKG_NAME}" || error_exit "Cannot download the package"
 
-    unpack "${PKG_NAME}" "${OUT_DIR}" "${PKG_EXT}" || error_exit "Cannot unpack the package"
+    if [ "${OS}" = "darwin" ]; then
+      # TODO: remove this after v0.106.0 release
+      mkdir "${AGH_DIR}"
+      unpack "${PKG_NAME}" "${AGH_DIR}" "${PKG_EXT}" || error_exit "Cannot unpack the package"
+    else
+      unpack "${PKG_NAME}" "${OUT_DIR}" "${PKG_EXT}" || error_exit "Cannot unpack the package"
+    fi
 
-    # Install AdGuard Home service and run it
-    ${AGH_DIR}/AdGuardHome -s install || error_exit "Cannot install AdGuardHome as a service"
+    # Install AdGuard Home service and run it.
+    ( cd "${AGH_DIR}" && ./AdGuardHome -s install || error_exit "Cannot install AdGuardHome as a service" )
 
     rm "${PKG_NAME}"
 

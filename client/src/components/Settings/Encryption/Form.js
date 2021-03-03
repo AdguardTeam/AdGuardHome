@@ -12,7 +12,7 @@ import {
     toNumber,
 } from '../../../helpers/form';
 import {
-    validateIsSafePort, validatePort, validatePortQuic, validatePortTLS,
+    validateServerName, validateIsSafePort, validatePort, validatePortQuic, validatePortTLS,
 } from '../../../helpers/validators';
 import i18n from '../../../i18n';
 import KeyStatus from './KeyStatus';
@@ -127,6 +127,7 @@ let Form = (props) => {
                             placeholder={t('encryption_server_enter')}
                             onChange={handleChange}
                             disabled={!isEnabled}
+                            validate={validateServerName}
                         />
                         <div className="form__desc">
                             <Trans>encryption_server_desc</Trans>
@@ -413,7 +414,7 @@ Form.propTypes = {
     valid_key: PropTypes.bool,
     valid_cert: PropTypes.bool,
     valid_pair: PropTypes.bool,
-    dns_names: PropTypes.string,
+    dns_names: PropTypes.arrayOf(PropTypes.string),
     key_type: PropTypes.string,
     issuer: PropTypes.string,
     subject: PropTypes.string,

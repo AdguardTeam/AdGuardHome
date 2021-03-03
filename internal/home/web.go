@@ -16,24 +16,22 @@ import (
 )
 
 const (
-	// ReadTimeout is the maximum duration for reading the entire request,
+	// readTimeout is the maximum duration for reading the entire request,
 	// including the body.
-	ReadTimeout = 10 * time.Second
-
-	// ReadHeaderTimeout is the amount of time allowed to read request
-	// headers.
-	ReadHeaderTimeout = 10 * time.Second
-
-	// WriteTimeout is the maximum duration before timing out writes of the
+	readTimeout = 60 * time.Second
+	// readHdrTimeout is the amount of time allowed to read request headers.
+	readHdrTimeout = 60 * time.Second
+	// writeTimeout is the maximum duration before timing out writes of the
 	// response.
-	WriteTimeout = 10 * time.Second
+	writeTimeout = 60 * time.Second
 )
 
 type webConfig struct {
-	firstRun  bool
-	BindHost  string
-	BindPort  int
-	PortHTTPS int
+	firstRun     bool
+	BindHost     net.IP
+	BindPort     int
+	BetaBindPort int
+	PortHTTPS    int
 
 	// ReadTimeout is an option to pass to http.Server for setting an
 	// appropriate field.
@@ -62,9 +60,16 @@ type HTTPSServer struct {
 type Web struct {
 	conf        *webConfig
 	forceHTTPS  bool
-	portHTTPS   int
 	httpServer  *http.Server // HTTP module
 	httpsServer HTTPSServer  // HTTPS module
+
+	// handlerBeta is the handler for new client.
+	handlerBeta http.Handler
+	// installerBeta is the pre-install handler for new client.
+	installerBeta http.Handler
+
+	// httpServerBeta is a server for new client.
+	httpServerBeta *http.Server
 }
 
 // CreateWeb - create module
@@ -76,15 +81,20 @@ func CreateWeb(conf *webConfig) *Web {
 
 	// Initialize and run the admin Web interface
 	box := packr.NewBox("../../build/static")
+	boxBeta := packr.NewBox("../../build2/static")
 
 	// if not configured, redirect / to /install.html, otherwise redirect /install.html to /
-	Context.mux.Handle("/", postInstallHandler(optionalAuthHandler(gziphandler.GzipHandler(http.FileServer(box)))))
+	Context.mux.Handle("/", withMiddlewares(http.FileServer(box), gziphandler.GzipHandler, optionalAuthHandler, postInstallHandler))
+	w.handlerBeta = withMiddlewares(http.FileServer(boxBeta), gziphandler.GzipHandler, optionalAuthHandler, postInstallHandler)
 
 	// add handlers for /install paths, we only need them when we're not configured yet
 	if conf.firstRun {
 		log.Info("This is the first launch of AdGuard Home, redirecting everything to /install.html ")
 		Context.mux.Handle("/install.html", preInstallHandler(http.FileServer(box)))
+		w.installerBeta = preInstallHandler(http.FileServer(boxBeta))
 		w.registerInstallHandlers()
+		// This must be removed in API v1.
+		w.registerBetaInstallHandlers()
 	} else {
 		registerControlHandlers()
 	}
@@ -109,12 +119,12 @@ func WebCheckPortAvailable(port int) bool {
 	return true
 }
 
-// TLSConfigChanged - called when TLS configuration has changed
-func (web *Web) TLSConfigChanged(tlsConf tlsConfigSettings) {
+// TLSConfigChanged updates the TLS configuration and restarts the HTTPS server
+// if necessary.
+func (web *Web) TLSConfigChanged(ctx context.Context, tlsConf tlsConfigSettings) {
 	log.Debug("Web: applying new TLS configuration")
 	web.conf.PortHTTPS = tlsConf.PortHTTPS
 	web.forceHTTPS = (tlsConf.ForceHTTPS && tlsConf.Enabled && tlsConf.PortHTTPS != 0)
-	web.portHTTPS = tlsConf.PortHTTPS
 
 	enabled := tlsConf.Enabled &&
 		tlsConf.PortHTTPS != 0 &&
@@ -131,7 +141,12 @@ func (web *Web) TLSConfigChanged(tlsConf tlsConfigSettings) {
 
 	web.httpsServer.cond.L.Lock()
 	if web.httpsServer.server != nil {
-		_ = web.httpsServer.server.Shutdown(context.TODO())
+		ctx, cancel := context.WithTimeout(ctx, shutdownTimeout)
+		err = web.httpsServer.server.Shutdown(ctx)
+		cancel()
+		if err != nil {
+			log.Debug("error while shutting down HTTP server: %s", err)
+		}
 	}
 	web.httpsServer.enabled = enabled
 	web.httpsServer.cert = cert
@@ -147,19 +162,40 @@ func (web *Web) Start() {
 	// this loop is used as an ability to change listening host and/or port
 	for !web.httpsServer.shutdown {
 		printHTTPAddresses("http")
+		errs := make(chan error, 2)
 
+		hostStr := web.conf.BindHost.String()
 		// we need to have new instance, because after Shutdown() the Server is not usable
-		address := net.JoinHostPort(web.conf.BindHost, strconv.Itoa(web.conf.BindPort))
 		web.httpServer = &http.Server{
 			ErrorLog:          log.StdLog("web: http", log.DEBUG),
-			Addr:              address,
+			Addr:              net.JoinHostPort(hostStr, strconv.Itoa(web.conf.BindPort)),
 			Handler:           withMiddlewares(Context.mux, limitRequestBody),
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
 			WriteTimeout:      web.conf.WriteTimeout,
 		}
+		go func() {
+			errs <- web.httpServer.ListenAndServe()
+		}()
 
-		err := web.httpServer.ListenAndServe()
+		if web.conf.BetaBindPort != 0 {
+			web.httpServerBeta = &http.Server{
+				ErrorLog:          log.StdLog("web: http", log.DEBUG),
+				Addr:              net.JoinHostPort(hostStr, strconv.Itoa(web.conf.BetaBindPort)),
+				Handler:           withMiddlewares(Context.mux, limitRequestBody, web.wrapIndexBeta),
+				ReadTimeout:       web.conf.ReadTimeout,
+				ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
+				WriteTimeout:      web.conf.WriteTimeout,
+			}
+			go func() {
+				betaErr := web.httpServerBeta.ListenAndServe()
+				if betaErr != nil {
+					log.Error("starting beta http server: %s", betaErr)
+				}
+			}()
+		}
+
+		err := <-errs
 		if err != http.ErrServerClosed {
 			cleanupAlways()
 			log.Fatal(err)
@@ -168,18 +204,27 @@ func (web *Web) Start() {
 	}
 }
 
-// Close - stop HTTP server, possibly waiting for all active connections to be closed
-func (web *Web) Close() {
+// Close gracefully shuts down the HTTP servers.
+func (web *Web) Close(ctx context.Context) {
 	log.Info("Stopping HTTP server...")
 	web.httpsServer.cond.L.Lock()
 	web.httpsServer.shutdown = true
 	web.httpsServer.cond.L.Unlock()
-	if web.httpsServer.server != nil {
-		_ = web.httpsServer.server.Shutdown(context.TODO())
+
+	shut := func(srv *http.Server) {
+		if srv == nil {
+			return
+		}
+		ctx, cancel := context.WithTimeout(ctx, shutdownTimeout)
+		defer cancel()
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Debug("error while shutting down HTTP server: %s", err)
+		}
 	}
-	if web.httpServer != nil {
-		_ = web.httpServer.Shutdown(context.TODO())
-	}
+
+	shut(web.httpsServer.server)
+	shut(web.httpServer)
+	shut(web.httpServerBeta)
 
 	log.Info("Stopped HTTP server")
 }
@@ -204,7 +249,7 @@ func (web *Web) tlsServerLoop() {
 		web.httpsServer.cond.L.Unlock()
 
 		// prepare HTTPS server
-		address := net.JoinHostPort(web.conf.BindHost, strconv.Itoa(web.conf.PortHTTPS))
+		address := net.JoinHostPort(web.conf.BindHost.String(), strconv.Itoa(web.conf.PortHTTPS))
 		web.httpsServer.server = &http.Server{
 			ErrorLog: log.StdLog("web: https", log.DEBUG),
 			Addr:     address,
@@ -214,7 +259,7 @@ func (web *Web) tlsServerLoop() {
 				RootCAs:      Context.tlsRoots,
 				CipherSuites: Context.tlsCiphers,
 			},
-			Handler:           Context.mux,
+			Handler:           withMiddlewares(Context.mux, limitRequestBody),
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
 			WriteTimeout:      web.conf.WriteTimeout,

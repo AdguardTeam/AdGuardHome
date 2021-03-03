@@ -8,38 +8,8 @@ import (
 	"github.com/AdguardTeam/golibs/utils"
 )
 
-// GetIPString is a helper function that extracts IP address from net.Addr
-func GetIPString(addr net.Addr) string {
-	switch addr := addr.(type) {
-	case *net.UDPAddr:
-		return addr.IP.String()
-	case *net.TCPAddr:
-		return addr.IP.String()
-	}
-	return ""
-}
-
-func stringArrayDup(a []string) []string {
-	a2 := make([]string, len(a))
-	copy(a2, a)
-	return a2
-}
-
-// Get IP address from net.Addr object
-// Note: we can't use net.SplitHostPort(a.String()) because of IPv6 zone:
-// https://github.com/AdguardTeam/AdGuardHome/internal/issues/1261
-func ipFromAddr(a net.Addr) string {
-	switch addr := a.(type) {
-	case *net.UDPAddr:
-		return addr.IP.String()
-	case *net.TCPAddr:
-		return addr.IP.String()
-	}
-	return ""
-}
-
-// Get IP address from net.Addr
-func getIP(addr net.Addr) net.IP {
+// IPFromAddr gets IP address from addr.
+func IPFromAddr(addr net.Addr) (ip net.IP) {
 	switch addr := addr.(type) {
 	case *net.UDPAddr:
 		return addr.IP
@@ -47,6 +17,23 @@ func getIP(addr net.Addr) net.IP {
 		return addr.IP
 	}
 	return nil
+}
+
+// IPStringFromAddr extracts IP address from net.Addr.
+// Note: we can't use net.SplitHostPort(a.String()) because of IPv6 zone:
+// https://github.com/AdguardTeam/AdGuardHome/internal/issues/1261
+func IPStringFromAddr(addr net.Addr) (ipStr string) {
+	if ip := IPFromAddr(addr); ip != nil {
+		return ip.String()
+	}
+
+	return ""
+}
+
+func stringArrayDup(a []string) []string {
+	a2 := make([]string, len(a))
+	copy(a2, a)
+	return a2
 }
 
 // Find value in a sorted array

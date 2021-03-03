@@ -24,13 +24,7 @@ const access = handleActions(
 
         [actions.setAccessListRequest]: (state) => ({ ...state, processingSet: true }),
         [actions.setAccessListFailure]: (state) => ({ ...state, processingSet: false }),
-        [actions.setAccessListSuccess]: (state) => {
-            const newState = {
-                ...state,
-                processingSet: false,
-            };
-            return newState;
-        },
+        [actions.setAccessListSuccess]: (state) => ({ ...state, processingSet: false }),
 
         [actions.toggleClientBlockRequest]: (state) => ({ ...state, processingSet: true }),
         [actions.toggleClientBlockFailure]: (state) => ({ ...state, processingSet: false }),

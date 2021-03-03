@@ -3,11 +3,12 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.14
 
 require (
-	github.com/AdguardTeam/dnsproxy v0.33.7
+	github.com/AdguardTeam/dnsproxy v0.33.9
 	github.com/AdguardTeam/golibs v0.4.4
-	github.com/AdguardTeam/urlfilter v0.14.0
+	github.com/AdguardTeam/urlfilter v0.14.3
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.0.1
+	github.com/digineo/go-ipset/v2 v2.2.1
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-ping/ping v0.0.0-20201115131931-3300c582a663
 	github.com/gobuffalo/envy v1.9.0 // indirect
@@ -17,7 +18,9 @@ require (
 	github.com/insomniacslk/dhcp v0.0.0-20201112113307-4de412bc85d8
 	github.com/kardianos/service v1.2.0
 	github.com/karrick/godirwalk v1.16.1 // indirect
+	github.com/lucas-clemente/quic-go v0.19.3
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7
+	github.com/mdlayher/netlink v1.1.2-0.20201013204415-ded538f7f4be
 	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065
 	github.com/miekg/dns v1.1.35
 	github.com/rogpeppe/go-internal v1.6.2 // indirect
@@ -25,6 +28,7 @@ require (
 	github.com/sirupsen/logrus v1.7.0 // indirect
 	github.com/spf13/cobra v1.1.1 // indirect
 	github.com/stretchr/testify v1.6.1
+	github.com/ti-mo/netfilter v0.4.0
 	github.com/u-root/u-root v7.0.0+incompatible
 	go.etcd.io/bbolt v1.3.5
 	golang.org/x/crypto v0.0.0-20201217014255-9d1352758620

@@ -5,10 +5,12 @@
 package util
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 )
@@ -26,7 +28,7 @@ func ContainsString(strs []string, str string) bool {
 // FileExists returns true if file exists.
 func FileExists(fn string) bool {
 	_, err := os.Stat(fn)
-	return err == nil
+	return err == nil || !os.IsNotExist(err)
 }
 
 // RunCommand runs shell command.
@@ -64,16 +66,43 @@ func SplitNext(str *string, splitBy byte) string {
 	return strings.TrimSpace(s)
 }
 
-// IsOpenWRT checks if OS is OpenWRT.
+// IsOpenWRT returns true if host OS is OpenWRT.
 func IsOpenWRT() bool {
 	if runtime.GOOS != "linux" {
 		return false
 	}
 
-	body, err := ioutil.ReadFile("/etc/os-release")
+	const etcDir = "/etc"
+
+	// TODO(e.burkov): Take care of dealing with fs package after updating
+	// Go version to 1.16.
+	fileInfos, err := ioutil.ReadDir(etcDir)
 	if err != nil {
 		return false
 	}
 
-	return strings.Contains(string(body), "OpenWrt")
+	// fNameSubstr is a part of a name of the desired file.
+	const fNameSubstr = "release"
+	osNameData := []byte("OpenWrt")
+
+	for _, fileInfo := range fileInfos {
+		if fileInfo.IsDir() {
+			continue
+		}
+
+		if !strings.Contains(fileInfo.Name(), fNameSubstr) {
+			continue
+		}
+
+		body, err := ioutil.ReadFile(filepath.Join(etcDir, fileInfo.Name()))
+		if err != nil {
+			continue
+		}
+
+		if bytes.Contains(body, osNameData) {
+			return true
+		}
+	}
+
+	return false
 }

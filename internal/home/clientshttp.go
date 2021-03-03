@@ -3,6 +3,7 @@ package home
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 )
 
@@ -21,7 +22,7 @@ type clientJSON struct {
 
 	Upstreams []string `json:"upstreams"`
 
-	WhoisInfo map[string]interface{} `json:"whois_info"`
+	WhoisInfo map[string]string `json:"whois_info"`
 
 	// Disallowed - if true -- client's IP is not disallowed
 	// Otherwise, it is blocked.
@@ -38,7 +39,7 @@ type clientHostJSON struct {
 	Name   string `json:"name"`
 	Source string `json:"source"`
 
-	WhoisInfo map[string]interface{} `json:"whois_info"`
+	WhoisInfo map[string]string `json:"whois_info"`
 }
 
 type clientListJSON struct {
@@ -74,7 +75,7 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, _ *http
 			cj.Source = "WHOIS"
 		}
 
-		cj.WhoisInfo = make(map[string]interface{})
+		cj.WhoisInfo = map[string]string{}
 		for _, wi := range ch.WhoisInfo {
 			cj.WhoisInfo[wi[0]] = wi[1]
 		}
@@ -139,7 +140,7 @@ func clientHostToJSON(ip string, ch ClientHost) clientJSON {
 		IDs:  []string{ip},
 	}
 
-	cj.WhoisInfo = make(map[string]interface{})
+	cj.WhoisInfo = map[string]string{}
 	for _, wi := range ch.WhoisInfo {
 		cj.WhoisInfo[wi[0]] = wi[1]
 	}
@@ -157,7 +158,7 @@ func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.
 	}
 
 	c := jsonToClient(cj)
-	ok, err := clients.Add(*c)
+	ok, err := clients.Add(c)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
@@ -215,7 +216,7 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 	}
 
 	c := jsonToClient(dj.Data)
-	err = clients.Update(dj.Name, *c)
+	err = clients.Update(dj.Name, c)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
@@ -227,51 +228,78 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 // Get the list of clients by IP address list
 func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-	data := []map[string]interface{}{}
-	for i := 0; ; i++ {
-		ip := q.Get(fmt.Sprintf("ip%d", i))
-		if len(ip) == 0 {
+	data := []map[string]clientJSON{}
+	for i := 0; i < len(q); i++ {
+		idStr := q.Get(fmt.Sprintf("ip%d", i))
+		if idStr == "" {
 			break
 		}
-		el := map[string]interface{}{}
-		c, ok := clients.Find(ip)
+
+		ip := net.ParseIP(idStr)
+		c, ok := clients.Find(idStr)
+		var cj clientJSON
 		if !ok {
-			ch, ok := clients.FindAutoClient(ip)
-			if !ok {
-				continue // a client with this IP isn't found
+			var found bool
+			cj, found = clients.findTemporary(ip, idStr)
+			if !found {
+				continue
 			}
-			cj := clientHostToJSON(ip, ch)
-
-			cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
-			el[ip] = cj
 		} else {
-			cj := clientToJSON(&c)
-
+			cj = clientToJSON(c)
 			cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
-			el[ip] = cj
 		}
 
-		data = append(data, el)
-	}
-
-	js, err := json.Marshal(data)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "json.Marshal: %s", err)
-		return
+		data = append(data, map[string]clientJSON{
+			idStr: cj,
+		})
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(js)
+	err := json.NewEncoder(w).Encode(data)
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Couldn't write response: %s", err)
 	}
 }
 
+// findTemporary looks up the IP in temporary storages, like autohosts or
+// blocklists.
+func (clients *clientsContainer) findTemporary(ip net.IP, idStr string) (cj clientJSON, found bool) {
+	if ip == nil {
+		return cj, false
+	}
+
+	ch, ok := clients.FindAutoClient(idStr)
+	if !ok {
+		// It is still possible that the IP used to be in the runtime
+		// clients list, but then the server was reloaded.  So, check
+		// the DNS server's blocked IP list.
+		//
+		// See https://github.com/AdguardTeam/AdGuardHome/issues/2428.
+		disallowed, rule := clients.dnsServer.IsBlockedIP(ip)
+		if rule == "" {
+			return clientJSON{}, false
+		}
+
+		cj = clientJSON{
+			IDs:            []string{idStr},
+			Disallowed:     disallowed,
+			DisallowedRule: rule,
+		}
+
+		return cj, true
+	}
+
+	cj = clientHostToJSON(idStr, ch)
+	cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
+
+	return cj, true
+}
+
 // RegisterClientsHandlers registers HTTP handlers
 func (clients *clientsContainer) registerWebHandlers() {
-	httpRegister("GET", "/control/clients", clients.handleGetClients)
-	httpRegister("POST", "/control/clients/add", clients.handleAddClient)
-	httpRegister("POST", "/control/clients/delete", clients.handleDelClient)
-	httpRegister("POST", "/control/clients/update", clients.handleUpdateClient)
-	httpRegister("GET", "/control/clients/find", clients.handleFindClient)
+	httpRegister(http.MethodGet, "/control/clients", clients.handleGetClients)
+	httpRegister(http.MethodPost, "/control/clients/add", clients.handleAddClient)
+	httpRegister(http.MethodPost, "/control/clients/delete", clients.handleDelClient)
+	httpRegister(http.MethodPost, "/control/clients/update", clients.handleUpdateClient)
+	httpRegister(http.MethodGet, "/control/clients/find", clients.handleFindClient)
 }

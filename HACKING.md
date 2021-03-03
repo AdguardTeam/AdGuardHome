@@ -1,17 +1,33 @@
- #  *AdGuardHome* Developer Guidelines
+ #  AdGuard Home Developer Guidelines
 
-As of **December 2020**, this document is partially a work-in-progress, but
+As of **February 2021**, this document is partially a work-in-progress, but
 should still be followed.  Some of the rules aren't enforced as thoroughly or
 remain broken in old code, but this is still the place to find out about what we
 **want** our code to look like.
 
 The rules are mostly sorted in the alphabetical order.
 
-##  *Git*
+## Contents
+
+ *  [Git](#git)
+ *  [Go](#go)
+     *  [Code And Naming](#code-and-naming)
+     *  [Commenting](#commenting)
+     *  [Formatting](#formatting)
+     *  [Recommended Reading](#recommended-reading)
+ *  [Markdown](#markdown)
+ *  [Shell Scripting](#shell-scripting)
+ *  [Text, Including Comments](#text-including-comments)
+ *  [YAML](#yaml)
+
+<!-- NOTE: Use the IDs that GitHub would generate in order for this to work both
+on GitHub and most other Markdown renderers. -->
+
+##  <a id="git" href="#git">Git</a>
 
  *  Call your branches either `NNNN-fix-foo` (where `NNNN` is the ID of the
-    *GitHub* issue you worked on in this branch) or just `fix-foo` if there was
-    no *GitHub* issue.
+    GitHub issue you worked on in this branch) or just `fix-foo` if there was no
+    GitHub issue.
 
  *  Follow the commit message header format:
 
@@ -19,8 +35,9 @@ The rules are mostly sorted in the alphabetical order.
     pkg: fix the network error logging issue
     ```
 
-    Where `pkg` is the package where most changes took place.  If there are
-    several such packages, or the change is top-level only, write `all`.
+    Where `pkg` is the directory or Go package (without the `internal/` part)
+    where most changes took place.  If there are several such packages, or the
+    change is top-level only, write `all`.
 
  *  Keep your commit messages, including headers, to eighty (**80**) columns.
 
@@ -30,20 +47,28 @@ The rules are mostly sorted in the alphabetical order.
     The only exceptions are direct mentions of identifiers from the source code
     and filenames like `HACKING.md`.
 
-##  *Go*
+##  <a id="go" href="#go">Go</a>
 
 > Not Golang, not GO, not GOLANG, not GoLang. It is Go in natural language,
 > golang for others.
 
 — [@rakyll](https://twitter.com/rakyll/status/1229850223184269312)
 
- ###  Code And Naming
+ ###  <a id="code-and-naming" href="#code-and-naming">Code And Naming</a>
 
  *  Avoid `goto`.
 
  *  Avoid `init` and use explicit initialization functions instead.
 
  *  Avoid `new`, especially with structs.
+
+ *  Check against empty strings like this:
+
+    ```go
+    if s == "" {
+            // …
+    }
+    ```
 
  *  Constructors should validate their arguments and return meaningful errors.
     As a corollary, avoid lazy initialization.
@@ -53,9 +78,12 @@ The rules are mostly sorted in the alphabetical order.
  *  Don't use underscores in file and package names, unless they're build tags
     or for tests.  This is to prevent accidental build errors with weird tags.
 
- *  Don't write code with more than four (**4**) levels of indentation.  Just
-    like [Linus said], plus an additional level for an occasional error check or
-    struct initialization.
+ *  Don't write non-test code with more than four (**4**) levels of indentation.
+    Just like [Linus said], plus an additional level for an occasional error
+    check or struct initialization.
+
+    The exception proving the rule is the table-driven test code, where an
+    additional level of indentation is allowed.
 
  *  Eschew external dependencies, including transitive, unless
     absolutely necessary.
@@ -70,6 +98,14 @@ The rules are mostly sorted in the alphabetical order.
     func TestType_Method_suffix(t *testing.T) { /* … */ }
     ```
 
+ *  Name parameters in interface definitions:
+
+   ```go
+   type Frobulator interface {
+           Frobulate(f Foo, b Bar) (r Result, err error)
+   }
+   ```
+
  *  Name the deferred errors (e.g. when closing something) `cerr`.
 
  *  No shadowing, since it can often lead to subtle bugs, especially with
@@ -77,6 +113,9 @@ The rules are mostly sorted in the alphabetical order.
 
  *  Prefer constants to variables where possible.  Reduce global variables.  Use
     [constant errors] instead of `errors.New`.
+
+ *  Program code lines should not be longer than one hundred (**100**) columns.
+    For comments, see the text section below.
 
  *  Unused arguments in anonymous functions must be called `_`:
 
@@ -93,12 +132,9 @@ The rules are mostly sorted in the alphabetical order.
  *  Write logs and error messages in lowercase only to make it easier to `grep`
     logs and error messages without using the `-i` flag.
 
-[constant errors]: https://dave.cheney.net/2016/04/07/constant-errors
-[Linus said]:      https://www.kernel.org/doc/html/v4.17/process/coding-style.html#indentation
+ ###  <a id="commenting" href="#commenting">Commenting</a>
 
- ###  Commenting
-
- *  See also the *Text, Including Comments* section below.
+ *  See also the “[Text, Including Comments]” section below.
 
  *  Document everything, including unexported top-level identifiers, to build
     a habit of writing documentation.
@@ -127,7 +163,7 @@ The rules are mostly sorted in the alphabetical order.
     }
     ```
 
- ###  Formatting
+ ###  <a id="formatting" href="#formatting">Formatting</a>
 
  *  Add an empty line before `break`, `continue`, `fallthrough`, and `return`,
     unless it's the only statement in that block.
@@ -149,7 +185,7 @@ The rules are mostly sorted in the alphabetical order.
     }}
     ```
 
- ###  Recommended Reading
+ ###  <a id="recommended-reading" href="#recommended-reading">Recommended Reading</a>
 
  *  <https://github.com/golang/go/wiki/CodeReviewComments>.
 
@@ -157,13 +193,24 @@ The rules are mostly sorted in the alphabetical order.
 
  *  <https://go-proverbs.github.io/>
 
-##  *Markdown*
+[constant errors]:          https://dave.cheney.net/2016/04/07/constant-errors
+[Linus said]:               https://www.kernel.org/doc/html/v4.17/process/coding-style.html#indentation
+[Text, Including Comments]: #text-including-comments
 
- *  **TODO(a.garipov):** Define our *Markdown* conventions.
+##  <a id="markdown" href="#markdown">Markdown</a>
 
-##  Shell Scripting
+ *  **TODO(a.garipov):** Define more Markdown conventions.
 
- *  Avoid bashisms and GNUisms, prefer *POSIX* features only.
+ *  Prefer triple-backtick preformatted code blocks to indented code blocks.
+
+ *  Use asterisks and not underscores for bold and italic.
+
+ *  Use either link references or link destinations only.  Put all link
+    reference definitions at the end of the second-level block.
+
+##  <a id="shell-scripting" href="#shell-scripting">Shell Scripting</a>
+
+ *  Avoid bashisms and GNUisms, prefer POSIX features only.
 
  *  Prefer `'raw strings'` to `"double quoted strings"` whenever possible.
 
@@ -172,9 +219,14 @@ The rules are mostly sorted in the alphabetical order.
  *  Put utility flags in the ASCII order and **don't** group them together.  For
     example, `ls -1 -A -q`.
 
- *  `snake_case`, not `camelCase`.
+ *  `snake_case`, not `camelCase` for variables.  `kebab-case` for filenames.
+
+ *  UPPERCASE names for external exported variables, lowercase for local,
+    unexported ones.
 
  *  Use `set -e -f -u` and also `set -x` in verbose mode.
+
+ *  Use `readonly` liberally.
 
  *  Use the `"$var"` form instead of the `$var` form, unless word splitting is
     required.
@@ -197,7 +249,7 @@ The rules are mostly sorted in the alphabetical order.
     dir="${TOP_DIR}"/sub
     ```
 
-##  Text, Including Comments
+##  <a id="text-including-comments" href="#text-including-comments">Text, Including Comments</a>
 
  *  End sentences with appropriate punctuation.
 
@@ -218,7 +270,7 @@ The rules are mostly sorted in the alphabetical order.
 
  *  Use double spacing between sentences to make sentence borders more clear.
 
- *  Use the serial comma (a.k.a. *Oxford* comma) to improve comprehension,
+ *  Use the serial comma (a.k.a. Oxford comma) to improve comprehension,
     decrease ambiguity, and use a common standard.
 
  *  Write todos like this:
@@ -233,16 +285,16 @@ The rules are mostly sorted in the alphabetical order.
     // TODO(usr1, usr2): Fix the frobulation issue.
     ```
 
-##  *YAML*
+##  <a id="yaml" href="#yaml">YAML</a>
 
  *  **TODO(a.garipov):** Define naming conventions for schema names in our
-    *OpenAPI* *YAML* file.  And just generally OpenAPI conventions.
+    OpenAPI YAML file.  And just generally OpenAPI conventions.
 
- *  **TODO(a.garipov):** Find a *YAML* formatter or write our own.
+ *  **TODO(a.garipov):** Find a YAML formatter or write our own.
 
- *  All strings, including keys, must be quoted.  Reason: the [*NO-rway Law*].
+ *  All strings, including keys, must be quoted.  Reason: the “[NO-rway Law]”.
 
- *  Indent with two (**2**) spaces.  *YAML* documents can get pretty
+ *  Indent with two (**2**) spaces.  YAML documents can get pretty
     deeply-nested.
 
  *  No extra indentation in multiline arrays:
@@ -256,8 +308,8 @@ The rules are mostly sorted in the alphabetical order.
 
  *  Prefer single quotes for strings to prevent accidental escaping, unless
     escaping is required or there are single quotes inside the string (e.g. for
-    *GitHub Actions*).
+    GitHub Actions).
 
  *  Use `>` for multiline strings, unless you need to keep the line breaks.
 
-[*NO-rway Law*]: https://news.ycombinator.com/item?id=17359376
+[NO-rway Law]: https://news.ycombinator.com/item?id=17359376

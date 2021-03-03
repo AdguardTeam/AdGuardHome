@@ -50,7 +50,7 @@ const CertificateStatus = ({
                     {dnsNames && (
                         <li>
                             <Trans>encryption_hostnames</Trans>:&nbsp;
-                            {dnsNames}
+                            {dnsNames.join(', ')}
                         </li>
                     )}
                 </Fragment>
@@ -65,7 +65,7 @@ CertificateStatus.propTypes = {
     subject: PropTypes.string,
     issuer: PropTypes.string,
     notAfter: PropTypes.string,
-    dnsNames: PropTypes.string,
+    dnsNames: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default withTranslation()(CertificateStatus);

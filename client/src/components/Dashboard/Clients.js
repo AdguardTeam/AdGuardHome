@@ -9,7 +9,7 @@ import Card from '../ui/Card';
 import Cell from '../ui/Cell';
 
 import { getPercent, sortIp } from '../../helpers/helpers';
-import { BLOCK_ACTIONS, STATUS_COLORS } from '../../helpers/constants';
+import { BLOCK_ACTIONS, R_CLIENT_ID, STATUS_COLORS } from '../../helpers/constants';
 import { toggleClientBlock } from '../../actions/access';
 import { renderFormattedClientCell } from '../../helpers/renderFormattedClientCell';
 import { getStats } from '../../actions/stats';
@@ -35,6 +35,10 @@ const CountCell = (row) => {
 };
 
 const renderBlockingButton = (ip, disallowed, disallowed_rule) => {
+    if (R_CLIENT_ID.test(ip)) {
+        return null;
+    }
+
     const dispatch = useDispatch();
     const { t } = useTranslation();
     const processingSet = useSelector((state) => state.access.processingSet);
@@ -59,17 +63,19 @@ const renderBlockingButton = (ip, disallowed, disallowed_rule) => {
     const text = disallowed ? BLOCK_ACTIONS.UNBLOCK : BLOCK_ACTIONS.BLOCK;
 
     const isNotInAllowedList = disallowed && disallowed_rule === '';
-    return <div className="table__action pl-4">
-        <button
+    return (
+        <div className="table__action pl-4">
+            <button
                 type="button"
                 className={buttonClass}
                 onClick={isNotInAllowedList ? undefined : onClick}
                 disabled={isNotInAllowedList || processingSet}
                 title={t(isNotInAllowedList ? 'client_not_in_allowed_clients' : text)}
-        >
-            <Trans>{text}</Trans>
-        </button>
-    </div>;
+            >
+                <Trans>{text}</Trans>
+            </button>
+        </div>
+    );
 };
 
 const ClientCell = (row) => {
@@ -90,13 +96,14 @@ const Clients = ({
     const { t } = useTranslation();
     const topClients = useSelector((state) => state.stats.topClients, shallowEqual);
 
-    return <Card
+    return (
+        <Card
             title={t('top_clients')}
             subtitle={subtitle}
             bodyType="card-table"
             refresh={refreshButton}
-    >
-        <ReactTable
+        >
+            <ReactTable
                 data={topClients.map(({
                     name: ip, count, info, blocked,
                 }) => ({
@@ -107,7 +114,7 @@ const Clients = ({
                 }))}
                 columns={[
                     {
-                        Header: 'IP',
+                        Header: <Trans>client_table_header</Trans>,
                         accessor: 'ip',
                         sortMethod: sortIp,
                         Cell: ClientCell,
@@ -134,8 +141,9 @@ const Clients = ({
 
                     return disallowed ? { className: 'logs__row--red' } : {};
                 }}
-        />
-    </Card>;
+            />
+        </Card>
+    );
 };
 
 Clients.propTypes = {

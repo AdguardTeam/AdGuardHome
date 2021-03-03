@@ -7,8 +7,8 @@ import (
 
 // DNSRewriteResult is the result of application of $dnsrewrite rules.
 type DNSRewriteResult struct {
-	RCode    rules.RCode              `json:",omitempty"`
 	Response DNSRewriteResultResponse `json:",omitempty"`
+	RCode    rules.RCode              `json:",omitempty"`
 }
 
 // DNSRewriteResultResponse is the collection of DNS response records
@@ -33,13 +33,13 @@ func (d *DNSFilter) processDNSRewrites(dnsr []*rules.NetworkRule) (res Result) {
 		if dr.NewCNAME != "" {
 			// NewCNAME rules have a higher priority than
 			// the other rules.
-			rules := []*ResultRule{{
+			rules = []*ResultRule{{
 				FilterListID: int64(nr.GetFilterListID()),
 				Text:         nr.RuleText,
 			}}
 
 			return Result{
-				Reason:    DNSRewriteRule,
+				Reason:    RewrittenRule,
 				Rules:     rules,
 				CanonName: dr.NewCNAME,
 			}
@@ -56,7 +56,7 @@ func (d *DNSFilter) processDNSRewrites(dnsr []*rules.NetworkRule) (res Result) {
 		default:
 			// RcodeRefused and other such codes have higher
 			// priority.  Return immediately.
-			rules := []*ResultRule{{
+			rules = []*ResultRule{{
 				FilterListID: int64(nr.GetFilterListID()),
 				Text:         nr.RuleText,
 			}}
@@ -65,7 +65,7 @@ func (d *DNSFilter) processDNSRewrites(dnsr []*rules.NetworkRule) (res Result) {
 			}
 
 			return Result{
-				Reason:           DNSRewriteRule,
+				Reason:           RewrittenRule,
 				Rules:            rules,
 				DNSRewriteResult: dnsrr,
 			}
@@ -73,7 +73,7 @@ func (d *DNSFilter) processDNSRewrites(dnsr []*rules.NetworkRule) (res Result) {
 	}
 
 	return Result{
-		Reason:           DNSRewriteRule,
+		Reason:           RewrittenRule,
 		Rules:            rules,
 		DNSRewriteResult: dnsrr,
 	}

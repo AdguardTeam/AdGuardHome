@@ -4,9 +4,20 @@
 
 ## v0.105: API changes
 
+### New `"client_id"` field in `GET /querylog` response
+
+* The new field `"client_id"` of `QueryLogItem` objects is the ID sent by the
+  client for encrypted requests, if there was any.  See the
+  "[Identifying clients]" section of our wiki.
+
+### New `"dnscrypt"` `"client_proto"` value in `GET /querylog` response
+
+* The field `"client_proto"` can now have the value `"dnscrypt"` when the
+  request was sent over a DNSCrypt connection.
+
 ### New `"reason"` in `GET /filtering/check_host` and `GET /querylog`
 
-* The new `DNSRewriteRule` reason is added to `GET /filtering/check_host` and
+* The new `RewriteRule` reason is added to `GET /filtering/check_host` and
   `GET /querylog`.
 
 * Also, the reason which was incorrectly documented as `"ReasonRewrite"` is now
@@ -61,6 +72,10 @@
   ```
 
   The old fields will be removed in v0.106.0.
+
+As well as other documentation fixes.
+
+[Identifying clients]: https://github.com/AdguardTeam/AdGuardHome/wiki/Clients#idclient
 
 ## v0.103: API changes
 

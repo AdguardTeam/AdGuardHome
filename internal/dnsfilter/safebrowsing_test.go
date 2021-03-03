@@ -5,16 +5,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/cache"
-	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSafeBrowsingHash(t *testing.T) {
 	// test hostnameToHashes()
 	hashes := hostnameToHashes("1.2.3.sub.host.com")
-	assert.Equal(t, 3, len(hashes))
+	assert.Len(t, hashes, 3)
 	_, ok := hashes[sha256.Sum256([]byte("3.sub.host.com"))]
 	assert.True(t, ok)
 	_, ok = hashes[sha256.Sum256([]byte("sub.host.com"))]
@@ -31,9 +30,9 @@ func TestSafeBrowsingHash(t *testing.T) {
 
 	q := c.getQuestion()
 
-	assert.True(t, strings.Contains(q, "7a1b."))
-	assert.True(t, strings.Contains(q, "af5a."))
-	assert.True(t, strings.Contains(q, "eb11."))
+	assert.Contains(t, q, "7a1b.")
+	assert.Contains(t, q, "af5a.")
+	assert.Contains(t, q, "eb11.")
 	assert.True(t, strings.HasSuffix(q, "sb.dns.adguard.com."))
 }
 
@@ -81,7 +80,7 @@ func TestSafeBrowsingCache(t *testing.T) {
 	c.hashToHost[hash] = "sub.host.com"
 	hash = sha256.Sum256([]byte("nonexisting.com"))
 	c.hashToHost[hash] = "nonexisting.com"
-	assert.Equal(t, 0, c.getCached())
+	assert.Empty(t, c.getCached())
 
 	hash = sha256.Sum256([]byte("sub.host.com"))
 	_, ok := c.hashToHost[hash]
@@ -103,34 +102,105 @@ func TestSafeBrowsingCache(t *testing.T) {
 	c.hashToHost[hash] = "sub.host.com"
 
 	c.cache.Set(hash[0:2], make([]byte, 32))
-	assert.Equal(t, 0, c.getCached())
-}
-
-// testErrUpstream implements upstream.Upstream interface for replacing real
-// upstream in tests.
-type testErrUpstream struct{}
-
-// Exchange always returns nil Msg and non-nil error.
-func (teu *testErrUpstream) Exchange(*dns.Msg) (*dns.Msg, error) {
-	return nil, agherr.Error("bad")
-}
-
-func (teu *testErrUpstream) Address() string {
-	return ""
+	assert.Empty(t, c.getCached())
 }
 
 func TestSBPC_checkErrorUpstream(t *testing.T) {
-	d := NewForTest(&Config{SafeBrowsingEnabled: true}, nil)
-	defer d.Close()
+	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
+	t.Cleanup(d.Close)
 
-	ups := &testErrUpstream{}
+	ups := &aghtest.TestErrUpstream{}
 
-	d.safeBrowsingUpstream = ups
-	d.parentalUpstream = ups
+	d.SetSafeBrowsingUpstream(ups)
+	d.SetParentalUpstream(ups)
 
 	_, err := d.checkSafeBrowsing("smthng.com")
 	assert.NotNil(t, err)
 
 	_, err = d.checkParental("smthng.com")
 	assert.NotNil(t, err)
+}
+
+func TestSBPC(t *testing.T) {
+	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
+	t.Cleanup(d.Close)
+
+	const hostname = "example.org"
+
+	testCases := []struct {
+		name      string
+		block     bool
+		testFunc  func(string) (Result, error)
+		testCache cache.Cache
+	}{{
+		name:      "sb_no_block",
+		block:     false,
+		testFunc:  d.checkSafeBrowsing,
+		testCache: gctx.safebrowsingCache,
+	}, {
+		name:      "sb_block",
+		block:     true,
+		testFunc:  d.checkSafeBrowsing,
+		testCache: gctx.safebrowsingCache,
+	}, {
+		name:      "pc_no_block",
+		block:     false,
+		testFunc:  d.checkParental,
+		testCache: gctx.parentalCache,
+	}, {
+		name:      "pc_block",
+		block:     true,
+		testFunc:  d.checkParental,
+		testCache: gctx.parentalCache,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Prepare the upstream.
+			ups := &aghtest.TestBlockUpstream{
+				Hostname: hostname,
+				Block:    tc.block,
+			}
+			d.SetSafeBrowsingUpstream(ups)
+			d.SetParentalUpstream(ups)
+
+			// Firstly, check the request blocking.
+			hits := 0
+			res, err := tc.testFunc(hostname)
+			assert.Nil(t, err)
+			if tc.block {
+				assert.True(t, res.IsFiltered)
+				assert.Len(t, res.Rules, 1)
+				hits++
+			} else {
+				assert.False(t, res.IsFiltered)
+			}
+
+			// Check the cache state, check the response is now cached.
+			assert.Equal(t, 1, tc.testCache.Stats().Count)
+			assert.Equal(t, hits, tc.testCache.Stats().Hit)
+
+			// There was one request to an upstream.
+			assert.Equal(t, 1, ups.RequestsCount())
+
+			// Now make the same request to check the cache was used.
+			res, err = tc.testFunc(hostname)
+			assert.Nil(t, err)
+			if tc.block {
+				assert.True(t, res.IsFiltered)
+				assert.Len(t, res.Rules, 1)
+			} else {
+				assert.False(t, res.IsFiltered)
+			}
+
+			// Check the cache state, it should've been used.
+			assert.Equal(t, 1, tc.testCache.Stats().Count)
+			assert.Equal(t, hits+1, tc.testCache.Stats().Hit)
+
+			// Check that there were no additional requests.
+			assert.Equal(t, 1, ups.RequestsCount())
+
+			purgeCaches()
+		})
+	}
 }

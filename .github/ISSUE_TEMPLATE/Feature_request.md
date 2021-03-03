@@ -1,11 +1,9 @@
 ---
 name: Feature request
-about: Suggest an idea for AdGuard Home
-
+about: Suggest a feature request for AdGuard Home
 ---
 
-<!--  As an open-source project with a dedicated but small maintainer team, it can sometimes take a long time for issues to be addressed so please be patient and we will get back to you as soon as we can.
--->
+Have a question or an idea? Please search it [on our forum](https://github.com/AdguardTeam/AdGuardHome/discussions) to make sure it was not yet asked. If you cannot find what you had in mind, please [submit it here](https://github.com/AdguardTeam/AdGuardHome/discussions/new).
 
 ### Prerequisites
 

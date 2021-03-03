@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/utils"
@@ -28,8 +29,8 @@ type dnsConfig struct {
 	ProtectionEnabled *bool   `json:"protection_enabled"`
 	RateLimit         *uint32 `json:"ratelimit"`
 	BlockingMode      *string `json:"blocking_mode"`
-	BlockingIPv4      *string `json:"blocking_ipv4"`
-	BlockingIPv6      *string `json:"blocking_ipv6"`
+	BlockingIPv4      net.IP  `json:"blocking_ipv4"`
+	BlockingIPv6      net.IP  `json:"blocking_ipv6"`
 	EDNSCSEnabled     *bool   `json:"edns_cs_enabled"`
 	DNSSECEnabled     *bool   `json:"dnssec_enabled"`
 	DisableIPv6       *bool   `json:"disable_ipv6"`
@@ -68,8 +69,8 @@ func (s *Server) getDNSConfig() dnsConfig {
 		Bootstraps:        &bootstraps,
 		ProtectionEnabled: &protectionEnabled,
 		BlockingMode:      &blockingMode,
-		BlockingIPv4:      &BlockingIPv4,
-		BlockingIPv6:      &BlockingIPv6,
+		BlockingIPv4:      BlockingIPv4,
+		BlockingIPv6:      BlockingIPv6,
 		RateLimit:         &Ratelimit,
 		EDNSCSEnabled:     &EnableEDNSClientSubnet,
 		DNSSECEnabled:     &EnableDNSSEC,
@@ -100,17 +101,11 @@ func (req *dnsConfig) checkBlockingMode() bool {
 
 	bm := *req.BlockingMode
 	if bm == "custom_ip" {
-		if req.BlockingIPv4 == nil || req.BlockingIPv6 == nil {
+		if req.BlockingIPv4.To4() == nil {
 			return false
 		}
 
-		ip4 := net.ParseIP(*req.BlockingIPv4)
-		if ip4 == nil || ip4.To4() == nil {
-			return false
-		}
-
-		ip6 := net.ParseIP(*req.BlockingIPv6)
-		return ip6 != nil
+		return req.BlockingIPv6 != nil
 	}
 
 	for _, valid := range []string{
@@ -247,10 +242,8 @@ func (s *Server) setConfig(dc dnsConfig) (restart bool) {
 	if dc.BlockingMode != nil {
 		s.conf.BlockingMode = *dc.BlockingMode
 		if *dc.BlockingMode == "custom_ip" {
-			s.conf.BlockingIPv4 = *dc.BlockingIPv4
-			s.conf.BlockingIPAddrv4 = net.ParseIP(*dc.BlockingIPv4)
-			s.conf.BlockingIPv6 = *dc.BlockingIPv6
-			s.conf.BlockingIPAddrv6 = net.ParseIP(*dc.BlockingIPv6)
+			s.conf.BlockingIPv4 = dc.BlockingIPv4.To4()
+			s.conf.BlockingIPv6 = dc.BlockingIPv6.To16()
 		}
 	}
 
@@ -320,6 +313,11 @@ func ValidateUpstreams(upstreams []string) error {
 	// Consider this case valid because defaultDNS will be used
 	if len(upstreams) == 0 {
 		return nil
+	}
+
+	_, err := proxy.ParseUpstreamsConfig(upstreams, []string{}, DefaultTimeout)
+	if err != nil {
+		return err
 	}
 
 	var defaultUpstreamFound bool
@@ -530,12 +528,20 @@ func (s *Server) handleDOH(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) registerHandlers() {
-	s.conf.HTTPRegister("GET", "/control/dns_info", s.handleGetConfig)
-	s.conf.HTTPRegister("POST", "/control/dns_config", s.handleSetConfig)
-	s.conf.HTTPRegister("POST", "/control/test_upstream_dns", s.handleTestUpstreamDNS)
+	s.conf.HTTPRegister(http.MethodGet, "/control/dns_info", s.handleGetConfig)
+	s.conf.HTTPRegister(http.MethodPost, "/control/dns_config", s.handleSetConfig)
+	s.conf.HTTPRegister(http.MethodPost, "/control/test_upstream_dns", s.handleTestUpstreamDNS)
 
-	s.conf.HTTPRegister("GET", "/control/access/list", s.handleAccessList)
-	s.conf.HTTPRegister("POST", "/control/access/set", s.handleAccessSet)
+	s.conf.HTTPRegister(http.MethodGet, "/control/access/list", s.handleAccessList)
+	s.conf.HTTPRegister(http.MethodPost, "/control/access/set", s.handleAccessSet)
 
+	// Register both versions, with and without the trailing slash, to
+	// prevent a 301 Moved Permanently redirect when clients request the
+	// path without the trailing slash.  Those redirects break some clients.
+	//
+	// See go doc net/http.ServeMux.
+	//
+	// See also https://github.com/AdguardTeam/AdGuardHome/issues/2628.
 	s.conf.HTTPRegister("", "/dns-query", s.handleDOH)
+	s.conf.HTTPRegister("", "/dns-query/", s.handleDOH)
 }

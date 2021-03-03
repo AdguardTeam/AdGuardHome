@@ -2,9 +2,11 @@
 package dnsforward
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"runtime"
 	"sync"
 	"time"
@@ -83,10 +85,11 @@ type DNSCreateParams struct {
 // NewServer creates a new instance of the dnsforward.Server
 // Note: this function must be called only once
 func NewServer(p DNSCreateParams) *Server {
-	s := &Server{}
-	s.dnsFilter = p.DNSFilter
-	s.stats = p.Stats
-	s.queryLog = p.QueryLog
+	s := &Server{
+		dnsFilter: p.DNSFilter,
+		stats:     p.Stats,
+		queryLog:  p.QueryLog,
+	}
 
 	if p.DHCPServer != nil {
 		s.dhcpServer = p.DHCPServer
@@ -101,6 +104,16 @@ func NewServer(p DNSCreateParams) *Server {
 	return s
 }
 
+// NewCustomServer creates a new instance of *Server with custom internal proxy.
+func NewCustomServer(internalProxy *proxy.Proxy) *Server {
+	s := &Server{}
+	if internalProxy != nil {
+		s.internalProxy = internalProxy
+	}
+
+	return s
+}
+
 // Close - close object
 func (s *Server) Close() {
 	s.Lock()
@@ -108,6 +121,12 @@ func (s *Server) Close() {
 	s.stats = nil
 	s.queryLog = nil
 	s.dnsProxy = nil
+
+	err := s.ipset.Close()
+	if err != nil {
+		log.Error("closing ipset: %s", err)
+	}
+
 	s.Unlock()
 }
 
@@ -155,15 +174,15 @@ func (s *Server) Exchange(req *dns.Msg) (*dns.Msg, error) {
 	return ctx.Res, nil
 }
 
-// Start starts the DNS server
+// Start starts the DNS server.
 func (s *Server) Start() error {
 	s.Lock()
 	defer s.Unlock()
-	return s.startInternal()
+	return s.startLocked()
 }
 
-// startInternal starts without locking
-func (s *Server) startInternal() error {
+// startLocked starts the DNS server without locking. For internal use only.
+func (s *Server) startLocked() error {
 	err := s.dnsProxy.Start()
 	if err == nil {
 		s.isRunning = true
@@ -178,9 +197,7 @@ func (s *Server) Prepare(config *ServerConfig) error {
 	if config != nil {
 		s.conf = *config
 		if s.conf.BlockingMode == "custom_ip" {
-			s.conf.BlockingIPAddrv4 = net.ParseIP(s.conf.BlockingIPv4)
-			s.conf.BlockingIPAddrv6 = net.ParseIP(s.conf.BlockingIPv6)
-			if s.conf.BlockingIPAddrv4 == nil || s.conf.BlockingIPAddrv6 == nil {
+			if s.conf.BlockingIPv4 == nil || s.conf.BlockingIPv6 == nil {
 				return fmt.Errorf("dns: invalid custom blocking IP address specified")
 			}
 		}
@@ -192,11 +209,27 @@ func (s *Server) Prepare(config *ServerConfig) error {
 
 	// Initialize IPSET configuration
 	// --
-	s.ipset.init(s.conf.IPSETList)
+	err := s.ipset.init(s.conf.IPSETList)
+	if err != nil {
+		if !errors.Is(err, os.ErrInvalid) && !errors.Is(err, os.ErrPermission) {
+			return fmt.Errorf("cannot initialize ipset: %w", err)
+		}
+
+		// ipset cannot currently be initialized if the server was
+		// installed from Snap or when the user or the binary doesn't
+		// have the required permissions, or when the kernel doesn't
+		// support netfilter.
+		//
+		// Log and go on.
+		//
+		// TODO(a.garipov): The Snap problem can probably be solved if
+		// we add the netlink-connector interface plug.
+		log.Error("cannot initialize ipset: %s", err)
+	}
 
 	// Prepare DNS servers settings
 	// --
-	err := s.prepareUpstreamSettings()
+	err = s.prepareUpstreamSettings()
 	if err != nil {
 		return err
 	}
@@ -234,15 +267,15 @@ func (s *Server) Prepare(config *ServerConfig) error {
 	return nil
 }
 
-// Stop stops the DNS server
+// Stop stops the DNS server.
 func (s *Server) Stop() error {
 	s.Lock()
 	defer s.Unlock()
-	return s.stopInternal()
+	return s.stopLocked()
 }
 
-// stopInternal stops without locking
-func (s *Server) stopInternal() error {
+// stopLocked stops the DNS server without locking. For internal use only.
+func (s *Server) stopLocked() error {
 	if s.dnsProxy != nil {
 		err := s.dnsProxy.Stop()
 		if err != nil {
@@ -267,7 +300,7 @@ func (s *Server) Reconfigure(config *ServerConfig) error {
 	defer s.Unlock()
 
 	log.Print("Start reconfiguring the server")
-	err := s.stopInternal()
+	err := s.stopLocked()
 	if err != nil {
 		return fmt.Errorf("could not reconfigure the server: %w", err)
 	}
@@ -281,7 +314,7 @@ func (s *Server) Reconfigure(config *ServerConfig) error {
 		return fmt.Errorf("could not reconfigure the server: %w", err)
 	}
 
-	err = s.startInternal()
+	err = s.startLocked()
 	if err != nil {
 		return fmt.Errorf("could not reconfigure the server: %w", err)
 	}
@@ -300,6 +333,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // IsBlockedIP - return TRUE if this client should be blocked
-func (s *Server) IsBlockedIP(ip string) (bool, string) {
+func (s *Server) IsBlockedIP(ip net.IP) (bool, string) {
 	return s.access.IsBlockedIP(ip)
 }

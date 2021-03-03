@@ -46,6 +46,7 @@ type AddParams struct {
 	OrigAnswer  *dns.Msg          // The response from an upstream server (optional)
 	Result      *dnsfilter.Result // Filtering result (optional)
 	Elapsed     time.Duration     // Time spent for processing the request
+	ClientID    string
 	ClientIP    net.IP
 	Upstream    string // Upstream server URL
 	ClientProto ClientProto

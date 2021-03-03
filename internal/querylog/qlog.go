@@ -2,7 +2,9 @@
 package querylog
 
 import (
+	"errors"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -36,10 +38,11 @@ type ClientProto string
 
 // Client protocol names.
 const (
-	ClientProtoDOH   ClientProto = "doh"
-	ClientProtoDOQ   ClientProto = "doq"
-	ClientProtoDOT   ClientProto = "dot"
-	ClientProtoPlain ClientProto = ""
+	ClientProtoDOH      ClientProto = "doh"
+	ClientProtoDOQ      ClientProto = "doq"
+	ClientProtoDOT      ClientProto = "dot"
+	ClientProtoDNSCrypt ClientProto = "dnscrypt"
+	ClientProtoPlain    ClientProto = ""
 )
 
 // NewClientProto validates that the client protocol name is valid and returns
@@ -50,6 +53,7 @@ func NewClientProto(s string) (cp ClientProto, err error) {
 		ClientProtoDOH,
 		ClientProtoDOQ,
 		ClientProtoDOT,
+		ClientProtoDNSCrypt,
 		ClientProtoPlain:
 
 		return cp, nil
@@ -60,13 +64,14 @@ func NewClientProto(s string) (cp ClientProto, err error) {
 
 // logEntry - represents a single log entry
 type logEntry struct {
-	IP   string    `json:"IP"` // Client IP
+	IP   net.IP    `json:"IP"` // Client IP
 	Time time.Time `json:"T"`
 
 	QHost  string `json:"QH"`
 	QType  string `json:"QT"`
 	QClass string `json:"QC"`
 
+	ClientID    string      `json:"CID,omitempty"`
 	ClientProto ClientProto `json:"CP"`
 
 	Answer     []byte `json:",omitempty"` // sometimes empty answers happen like binerdunt.top or rev2.globalrootservers.net
@@ -118,14 +123,15 @@ func (l *queryLog) clear() {
 	l.flushPending = false
 	l.bufferLock.Unlock()
 
-	err := os.Remove(l.logFile + ".1")
-	if err != nil && !os.IsNotExist(err) {
-		log.Error("file remove: %s: %s", l.logFile+".1", err)
+	oldLogFile := l.logFile + ".1"
+	err := os.Remove(oldLogFile)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		log.Error("removing old log file %q: %s", oldLogFile, err)
 	}
 
 	err = os.Remove(l.logFile)
-	if err != nil && !os.IsNotExist(err) {
-		log.Error("file remove: %s: %s", l.logFile, err)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		log.Error("removing log file %q: %s", l.logFile, err)
 	}
 
 	log.Debug("Query log: cleared")
@@ -147,12 +153,13 @@ func (l *queryLog) Add(params AddParams) {
 
 	now := time.Now()
 	entry := logEntry{
-		IP:   l.getClientIP(params.ClientIP.String()),
+		IP:   l.getClientIP(params.ClientIP),
 		Time: now,
 
 		Result:      *params.Result,
 		Elapsed:     params.Elapsed,
 		Upstream:    params.Upstream,
+		ClientID:    params.ClientID,
 		ClientProto: params.ClientProto,
 	}
 	q := params.Question.Question[0]

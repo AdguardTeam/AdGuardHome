@@ -3,6 +3,8 @@ package dhcpd
 
 import (
 	"encoding/hex"
+	"encoding/json"
+	"fmt"
 	"net"
 	"net/http"
 	"path/filepath"
@@ -17,7 +19,12 @@ import (
 
 const (
 	defaultDiscoverTime = time.Second * 3
-	leaseExpireStatic   = 1
+	// leaseExpireStatic is used to define the Expiry field for static
+	// leases.
+	//
+	// TODO(e.burkov): Remove it when static leases determining mechanism
+	// will be improved.
+	leaseExpireStatic = 1
 )
 
 var webHandlersRegistered = false
@@ -31,6 +38,51 @@ type Lease struct {
 	// Lease expiration time
 	// 1: static lease
 	Expiry time.Time `json:"expires"`
+}
+
+// MarshalJSON implements the json.Marshaler interface for *Lease.
+func (l *Lease) MarshalJSON() ([]byte, error) {
+	var expiryStr string
+	if expiry := l.Expiry; expiry.Unix() != leaseExpireStatic {
+		// The front-end is waiting for RFC 3999 format of the time
+		// value.  It also shouldn't got an Expiry field for static
+		// leases.
+		//
+		// See https://github.com/AdguardTeam/AdGuardHome/issues/2692.
+		expiryStr = expiry.Format(time.RFC3339)
+	}
+
+	type lease Lease
+	return json.Marshal(&struct {
+		HWAddr string `json:"mac"`
+		Expiry string `json:"expires,omitempty"`
+		*lease
+	}{
+		HWAddr: l.HWAddr.String(),
+		Expiry: expiryStr,
+		lease:  (*lease)(l),
+	})
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface for *Lease.
+func (l *Lease) UnmarshalJSON(data []byte) (err error) {
+	type lease Lease
+	aux := struct {
+		HWAddr string `json:"mac"`
+		*lease
+	}{
+		lease: (*lease)(l),
+	}
+	if err = json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	l.HWAddr, err = net.ParseMAC(aux.HWAddr)
+	if err != nil {
+		return fmt.Errorf("couldn't parse MAC address: %w", err)
+	}
+
+	return nil
 }
 
 // ServerConfig - DHCP server configuration
@@ -82,14 +134,14 @@ type ServerInterface interface {
 }
 
 // Create - create object
-func Create(config ServerConfig) *Server {
+func Create(conf ServerConfig) *Server {
 	s := &Server{}
 
-	s.conf.Enabled = config.Enabled
-	s.conf.InterfaceName = config.InterfaceName
-	s.conf.HTTPRegister = config.HTTPRegister
-	s.conf.ConfigModified = config.ConfigModified
-	s.conf.DBFilePath = filepath.Join(config.WorkDir, dbFilename)
+	s.conf.Enabled = conf.Enabled
+	s.conf.InterfaceName = conf.InterfaceName
+	s.conf.HTTPRegister = conf.HTTPRegister
+	s.conf.ConfigModified = conf.ConfigModified
+	s.conf.DBFilePath = filepath.Join(conf.WorkDir, dbFilename)
 
 	if !webHandlersRegistered && s.conf.HTTPRegister != nil {
 		if runtime.GOOS == "windows" {
@@ -110,7 +162,7 @@ func Create(config ServerConfig) *Server {
 	}
 
 	var err4, err6 error
-	v4conf := config.Conf4
+	v4conf := conf.Conf4
 	v4conf.Enabled = s.conf.Enabled
 	if len(v4conf.RangeStart) == 0 {
 		v4conf.Enabled = false
@@ -119,7 +171,7 @@ func Create(config ServerConfig) *Server {
 	v4conf.notify = s.onNotify
 	s.srv4, err4 = v4Create(v4conf)
 
-	v6conf := config.Conf6
+	v6conf := conf.Conf6
 	v6conf.Enabled = s.conf.Enabled
 	if len(v6conf.RangeStart) == 0 {
 		v6conf.Enabled = false
@@ -136,6 +188,9 @@ func Create(config ServerConfig) *Server {
 		log.Error("%s", err6)
 		return nil
 	}
+
+	s.conf.Conf4 = conf.Conf4
+	s.conf.Conf6 = conf.Conf6
 
 	if s.conf.Enabled && !v4conf.Enabled && !v6conf.Enabled {
 		log.Error("Can't enable DHCP server because neither DHCPv4 nor DHCPv6 servers are configured")
@@ -210,14 +265,10 @@ const (
 	LeasesAll     = LeasesDynamic | LeasesStatic
 )
 
-// Leases returns the list of current DHCP leases (thread-safe)
-func (s *Server) Leases(flags int) []Lease {
-	result := s.srv4.GetLeases(flags)
-
-	v6leases := s.srv6.GetLeases(flags)
-	result = append(result, v6leases...)
-
-	return result
+// Leases returns the list of active IPv4 and IPv6 DHCP leases.  It's safe for
+// concurrent use.
+func (s *Server) Leases(flags int) (leases []Lease) {
+	return append(s.srv4.GetLeases(flags), s.srv6.GetLeases(flags)...)
 }
 
 // FindMACbyIP - find a MAC address by IP address in the currently active DHCP leases
@@ -255,17 +306,22 @@ func parseOptionString(s string) (uint8, []byte) {
 		if err != nil {
 			return 0, nil
 		}
-
 	case "ip":
 		ip := net.ParseIP(sval)
 		if ip == nil {
 			return 0, nil
 		}
-		val = ip
-		if ip.To4() != nil {
-			val = ip.To4()
-		}
 
+		// Most DHCP options require IPv4, so do not put the 16-byte
+		// version if we can.  Otherwise, the clients will receive weird
+		// data that looks like four IPv4 addresses.
+		//
+		// See https://github.com/AdguardTeam/AdGuardHome/issues/2688.
+		if ip4 := ip.To4(); ip4 != nil {
+			val = ip4
+		} else {
+			val = ip
+		}
 	default:
 		return 0, nil
 	}

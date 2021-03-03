@@ -13,6 +13,8 @@ export const R_MAC = /^((([a-fA-F0-9][a-fA-F0-9]+[-]){5}|([a-fA-F0-9][a-fA-F0-9]
 
 export const R_CIDR_IPV6 = /^s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:)))(%.+)?s*(\/(12[0-8]|1[0-1][0-9]|[1-9][0-9]|[0-9]))$/;
 
+export const R_DOMAIN = /^([a-zA-Z0-9][a-zA-Z0-9-_]*\.)*[a-zA-Z0-9]*[a-zA-Z0-9-_]*[[a-zA-Z0-9]+$/;
+
 export const R_PATH_LAST_PART = /\/[^/]*$/;
 
 // eslint-disable-next-line no-control-regex
@@ -20,6 +22,8 @@ export const R_UNIX_ABSOLUTE_PATH = /^(\/[^/\x00]+)+$/;
 
 // eslint-disable-next-line no-control-regex
 export const R_WIN_ABSOLUTE_PATH = /^([a-zA-Z]:)?(\\|\/)(?:[^\\/:*?"<>|\x00]+\\)*[^\\/:*?"<>|\x00]*$/;
+
+export const R_CLIENT_ID = /^[a-z0-9-]{1,64}$/;
 
 export const HTML_PAGES = {
     INSTALL: '/install.html',
@@ -196,92 +200,144 @@ export const FILTERS_URLS = {
 
 export const SERVICES = [
     {
-        id: 'facebook',
-        name: 'Facebook',
-    },
-    {
-        id: 'whatsapp',
-        name: 'WhatsApp',
-    },
-    {
-        id: 'instagram',
-        name: 'Instagram',
-    },
-    {
-        id: 'twitter',
-        name: 'Twitter',
-    },
-    {
-        id: 'youtube',
-        name: 'YouTube',
-    },
-    {
-        id: 'netflix',
-        name: 'Netflix',
-    },
-    {
-        id: 'snapchat',
-        name: 'Snapchat',
-    },
-    {
-        id: 'twitch',
-        name: 'Twitch',
-    },
-    {
-        id: 'discord',
-        name: 'Discord',
-    },
-    {
-        id: 'skype',
-        name: 'Skype',
+        id: '9gag',
+        name: '9Gag',
     },
     {
         id: 'amazon',
         name: 'Amazon',
     },
     {
-        id: 'ebay',
-        name: 'eBay',
-    },
-    {
-        id: 'origin',
-        name: 'Origin',
-    },
-    {
         id: 'cloudflare',
-        name: 'Cloudflare',
+        name: 'CloudFlare',
     },
     {
-        id: 'steam',
-        name: 'Steam',
+        id: 'dailymotion',
+        name: 'Dailymotion',
+    },
+    {
+        id: 'discord',
+        name: 'Discord',
+    },
+    {
+        id: 'disneyplus',
+        name: 'Disney+',
+    },
+    {
+        id: 'ebay',
+        name: 'EBay',
     },
     {
         id: 'epic_games',
         name: 'Epic Games',
     },
     {
+        id: 'facebook',
+        name: 'Facebook',
+    },
+    {
+        id: 'hulu',
+        name: 'Hulu',
+    },
+    {
+        id: 'imgur',
+        name: 'Imgur',
+    },
+    {
+        id: 'instagram',
+        name: 'Instagram',
+    },
+    {
+        id: 'mail_ru',
+        name: 'Mail.ru',
+    },
+    {
+        id: 'netflix',
+        name: 'Netflix',
+    },
+    {
+        id: 'ok',
+        name: 'OK.ru',
+    },
+    {
+        id: 'origin',
+        name: 'Origin',
+    },
+    {
+        id: 'pinterest',
+        name: 'Pinterest',
+    },
+    {
+        id: 'qq',
+        name: 'QQ',
+    },
+    {
         id: 'reddit',
         name: 'Reddit',
     },
     {
-        id: 'ok',
-        name: 'OK',
+        id: 'skype',
+        name: 'Skype',
     },
     {
-        id: 'vk',
-        name: 'VK',
+        id: 'snapchat',
+        name: 'Snapchat',
     },
     {
-        id: 'mail_ru',
-        name: 'mail.ru',
+        id: 'spotify',
+        name: 'Spotify',
+    },
+    {
+        id: 'steam',
+        name: 'Steam',
+    },
+    {
+        id: 'telegram',
+        name: 'Telegram',
     },
     {
         id: 'tiktok',
         name: 'TikTok',
     },
     {
-        id: 'qq',
-        name: 'QQ',
+        id: 'tinder',
+        name: 'Tinder',
+    },
+    {
+        id: 'twitch',
+        name: 'Twitch',
+    },
+    {
+        id: 'twitter',
+        name: 'Twitter',
+    },
+    {
+        id: 'viber',
+        name: 'Viber',
+    },
+    {
+        id: 'vimeo',
+        name: 'Vimeo',
+    },
+    {
+        id: 'vk',
+        name: 'VK.com',
+    },
+    {
+        id: 'wechat',
+        name: 'WeChat',
+    },
+    {
+        id: 'weibo',
+        name: 'Weibo',
+    },
+    {
+        id: 'whatsapp',
+        name: 'WhatsApp',
+    },
+    {
+        id: 'youtube',
+        name: 'YouTube',
     },
 ];
 
@@ -339,6 +395,7 @@ export const FILTERED_STATUS = {
     FILTERED_BLOCKED_SERVICE: 'FilteredBlockedService',
     REWRITE: 'Rewrite',
     REWRITE_HOSTS: 'RewriteEtcHosts',
+    REWRITE_RULE: 'RewriteRule',
     FILTERED_SAFE_SEARCH: 'FilteredSafeSearch',
     FILTERED_SAFE_BROWSING: 'FilteredSafeBrowsing',
     FILTERED_PARENTAL: 'FilteredParental',
@@ -430,6 +487,10 @@ export const FILTERED_STATUS_TO_META_MAP = {
         LABEL: RESPONSE_FILTER.REWRITTEN.LABEL,
         COLOR: QUERY_STATUS_COLORS.BLUE,
     },
+    [FILTERED_STATUS.REWRITE_RULE]: {
+        LABEL: RESPONSE_FILTER.REWRITTEN.LABEL,
+        COLOR: QUERY_STATUS_COLORS.BLUE,
+    },
     [FILTERED_STATUS.FILTERED_SAFE_BROWSING]: {
         LABEL: RESPONSE_FILTER.BLOCKED_THREATS.LABEL,
         COLOR: QUERY_STATUS_COLORS.YELLOW,
@@ -473,6 +534,7 @@ export const BLOCK_ACTIONS = {
 };
 
 export const SCHEME_TO_PROTOCOL_MAP = {
+    dnscrypt: 'dnscrypt',
     doh: 'dns_over_https',
     dot: 'dns_over_tls',
     doq: 'dns_over_quic',
@@ -509,6 +571,7 @@ export const FORM_NAME = {
     INSTALL: 'install',
     LOGIN: 'login',
     CACHE: 'cache',
+    MOBILE_CONFIG: 'mobileConfig',
     ...DHCP_FORM_NAMES,
 };
 
@@ -569,6 +632,7 @@ export const TOAST_TIMEOUTS = {
 export const ADDRESS_TYPES = {
     IP: 'IP',
     CIDR: 'CIDR',
+    CLIENT_ID: 'CLIENT_ID',
     UNKNOWN: 'UNKNOWN',
 };
 
@@ -580,3 +644,8 @@ export const CACHE_CONFIG_FIELDS = {
 
 export const isFirefox = navigator.userAgent.indexOf('Firefox') !== -1;
 export const COMMENT_LINE_DEFAULT_TOKEN = '#';
+
+export const MOBILE_CONFIG_LINKS = {
+    DOT: '/apple/dot.mobileconfig',
+    DOH: '/apple/doh.mobileconfig',
+};

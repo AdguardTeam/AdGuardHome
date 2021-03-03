@@ -1,6 +1,7 @@
 package home
 
 import (
+	"context"
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/rsa"
@@ -92,7 +93,7 @@ func (t *TLSMod) setCertFileTime() {
 	t.certLastMod = fi.ModTime().UTC()
 }
 
-// Start - start the module
+// Start updates the configuration of TLSMod and starts it.
 func (t *TLSMod) Start() {
 	if !tlsWebHandlersRegistered {
 		tlsWebHandlersRegistered = true
@@ -102,10 +103,14 @@ func (t *TLSMod) Start() {
 	t.confLock.Lock()
 	tlsConf := t.conf
 	t.confLock.Unlock()
-	Context.web.TLSConfigChanged(tlsConf)
+
+	// The background context is used because the TLSConfigChanged wraps
+	// context with timeout on its own and shuts down the server, which
+	// handles current request.
+	Context.web.TLSConfigChanged(context.Background(), tlsConf)
 }
 
-// Reload - reload certificate file
+// Reload updates the configuration of TLSMod and restarts it.
 func (t *TLSMod) Reload() {
 	t.confLock.Lock()
 	tlsConf := t.conf
@@ -139,7 +144,10 @@ func (t *TLSMod) Reload() {
 	t.confLock.Lock()
 	tlsConf = t.conf
 	t.confLock.Unlock()
-	Context.web.TLSConfigChanged(tlsConf)
+	// The background context is used because the TLSConfigChanged wraps
+	// context with timeout on its own and shuts down the server, which
+	// handles current request.
+	Context.web.TLSConfigChanged(context.Background(), tlsConf)
 }
 
 // Set certificate and private key data
@@ -296,11 +304,13 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		f.Flush()
 	}
 
-	// this needs to be done in a goroutine because Shutdown() is a blocking call, and it will block
-	// until all requests are finished, and _we_ are inside a request right now, so it will block indefinitely
+	// The background context is used because the TLSConfigChanged wraps
+	// context with timeout on its own and shuts down the server, which
+	// handles current request. It is also should be done in a separate
+	// goroutine due to the same reason.
 	if restartHTTPS {
 		go func() {
-			Context.web.TLSConfigChanged(data)
+			Context.web.TLSConfigChanged(context.Background(), data)
 		}()
 	}
 }
@@ -534,7 +544,7 @@ func marshalTLS(w http.ResponseWriter, data tlsConfig) {
 
 // registerWebHandlers registers HTTP handlers for TLS configuration
 func (t *TLSMod) registerWebHandlers() {
-	httpRegister("GET", "/control/tls/status", t.handleTLSStatus)
-	httpRegister("POST", "/control/tls/configure", t.handleTLSConfigure)
-	httpRegister("POST", "/control/tls/validate", t.handleTLSValidate)
+	httpRegister(http.MethodGet, "/control/tls/status", t.handleTLSStatus)
+	httpRegister(http.MethodPost, "/control/tls/configure", t.handleTLSConfigure)
+	httpRegister(http.MethodPost, "/control/tls/validate", t.handleTLSValidate)
 }

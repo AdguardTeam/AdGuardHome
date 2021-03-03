@@ -9,11 +9,12 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLimitRequestBody(t *testing.T) {
 	errReqLimitReached := &aghio.LimitReachedError{
-		Limit: RequestBodySizeLimit,
+		Limit: defaultReqBodySzLim,
 	}
 
 	testCases := []struct {
@@ -28,8 +29,8 @@ func TestLimitRequestBody(t *testing.T) {
 		wantErr: nil,
 	}, {
 		name:    "so_big",
-		body:    string(make([]byte, RequestBodySizeLimit+1)),
-		want:    make([]byte, RequestBodySizeLimit),
+		body:    string(make([]byte, defaultReqBodySzLim+1)),
+		want:    make([]byte, defaultReqBodySzLim),
 		wantErr: errReqLimitReached,
 	}, {
 		name:    "empty",
@@ -42,7 +43,10 @@ func TestLimitRequestBody(t *testing.T) {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var b []byte
 			b, *err = ioutil.ReadAll(r.Body)
-			w.Write(b)
+			_, werr := w.Write(b)
+			if werr != nil {
+				panic(werr)
+			}
 		})
 	}
 
@@ -57,8 +61,8 @@ func TestLimitRequestBody(t *testing.T) {
 
 			lim.ServeHTTP(res, req)
 
+			require.Equal(t, tc.wantErr, err)
 			assert.Equal(t, tc.want, res.Body.Bytes())
-			assert.Equal(t, tc.wantErr, err)
 		})
 	}
 }

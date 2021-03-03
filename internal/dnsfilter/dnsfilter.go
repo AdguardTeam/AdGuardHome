@@ -2,6 +2,7 @@
 package dnsfilter
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -36,10 +37,16 @@ type RequestFilteringSettings struct {
 	ParentalEnabled     bool
 
 	ClientName string
-	ClientIP   string
+	ClientIP   net.IP
 	ClientTags []string
 
 	ServicesRules []ServiceEntry
+}
+
+// Resolver is the interface for net.Resolver to simplify testing.
+type Resolver interface {
+	// TODO(e.burkov): Replace with LookupIP after upgrading go to v1.15.
+	LookupIPAddr(ctx context.Context, host string) (ips []net.IPAddr, err error)
 }
 
 // Config allows you to configure DNS filtering with New() or just change variables directly.
@@ -68,6 +75,9 @@ type Config struct {
 
 	// Register an HTTP handler
 	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request)) `yaml:"-"`
+
+	// CustomResolver is the resolver used by DNSFilter.
+	CustomResolver Resolver
 }
 
 // LookupStats store stats collected during safebrowsing or parental checks
@@ -110,6 +120,11 @@ type DNSFilter struct {
 	// Channel for passing data to filters-initializer goroutine
 	filtersInitializerChan chan filtersInitializerParams
 	filtersInitializerLock sync.Mutex
+
+	// resolver only looks up the IP address of the host while safe search.
+	//
+	// TODO(e.burkov): Use upstream that configured in dnsforward instead.
+	resolver Resolver
 }
 
 // Filter represents a filter list
@@ -148,17 +163,21 @@ const (
 	// FilteredBlockedService - the host is blocked by "blocked services" settings
 	FilteredBlockedService
 
-	// ReasonRewrite is returned when there was a rewrite by
-	// a legacy DNS Rewrite rule.
-	ReasonRewrite
+	// Rewritten is returned when there was a rewrite by a legacy DNS
+	// rewrite rule.
+	Rewritten
 
-	// RewriteAutoHosts is returned when there was a rewrite by
-	// autohosts rules (/etc/hosts and so on).
-	RewriteAutoHosts
+	// RewrittenAutoHosts is returned when there was a rewrite by autohosts
+	// rules (/etc/hosts and so on).
+	RewrittenAutoHosts
 
-	// DNSRewriteRule is returned when a $dnsrewrite filter rule was
-	// applied.
-	DNSRewriteRule
+	// RewrittenRule is returned when a $dnsrewrite filter rule was applied.
+	//
+	// TODO(a.garipov): Remove Rewritten and RewrittenAutoHosts by merging
+	// their functionality into RewrittenRule.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/2499.
+	RewrittenRule
 )
 
 // TODO(a.garipov): Resync with actual code names or replace completely
@@ -175,11 +194,9 @@ var reasonNames = []string{
 	FilteredSafeSearch:     "FilteredSafeSearch",
 	FilteredBlockedService: "FilteredBlockedService",
 
-	ReasonRewrite: "Rewrite",
-
-	RewriteAutoHosts: "RewriteEtcHosts",
-
-	DNSRewriteRule: "DNSRewriteRule",
+	Rewritten:          "Rewrite",
+	RewrittenAutoHosts: "RewriteEtcHosts",
+	RewrittenRule:      "RewriteRule",
 }
 
 func (r Reason) String() string {
@@ -331,15 +348,15 @@ type Result struct {
 	Rules []*ResultRule `json:",omitempty"`
 
 	// ReverseHosts is the reverse lookup rewrite result.  It is
-	// empty unless Reason is set to RewriteAutoHosts.
+	// empty unless Reason is set to RewrittenAutoHosts.
 	ReverseHosts []string `json:",omitempty"`
 
 	// IPList is the lookup rewrite result.  It is empty unless
-	// Reason is set to RewriteAutoHosts or ReasonRewrite.
+	// Reason is set to RewrittenAutoHosts or Rewritten.
 	IPList []net.IP `json:",omitempty"`
 
 	// CanonName is the CNAME value from the lookup rewrite result.
-	// It is empty unless Reason is set to ReasonRewrite.
+	// It is empty unless Reason is set to Rewritten or RewrittenRule.
 	CanonName string `json:",omitempty"`
 
 	// ServiceName is the name of the blocked service.  It is empty
@@ -379,7 +396,7 @@ func (d *DNSFilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 
 	// first - check rewrites, they have the highest priority
 	result = d.processRewrites(host, qtype)
-	if result.Reason == ReasonRewrite {
+	if result.Reason == Rewritten {
 		return result, nil
 	}
 
@@ -453,7 +470,7 @@ func (d *DNSFilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 func (d *DNSFilter) checkAutoHosts(host string, qtype uint16, result *Result) (matched bool) {
 	ips := d.Config.AutoHosts.Process(host, qtype)
 	if ips != nil {
-		result.Reason = RewriteAutoHosts
+		result.Reason = RewrittenAutoHosts
 		result.IPList = ips
 
 		return true
@@ -461,7 +478,7 @@ func (d *DNSFilter) checkAutoHosts(host string, qtype uint16, result *Result) (m
 
 	revHosts := d.Config.AutoHosts.ProcessReverse(host, qtype)
 	if len(revHosts) != 0 {
-		result.Reason = RewriteAutoHosts
+		result.Reason = RewrittenAutoHosts
 
 		// TODO(a.garipov): Optimize this with a buffer.
 		result.ReverseHosts = make([]string, len(revHosts))
@@ -488,7 +505,7 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 
 	rr := findRewrites(d.Rewrites, host)
 	if len(rr) != 0 {
-		res.Reason = ReasonRewrite
+		res.Reason = Rewritten
 	}
 
 	cnames := map[string]bool{}
@@ -674,9 +691,10 @@ func (d *DNSFilter) matchHost(host string, qtype uint16, setts RequestFilteringS
 	ureq := urlfilter.DNSRequest{
 		Hostname:         host,
 		SortedClientTags: setts.ClientTags,
-		ClientIP:         setts.ClientIP,
-		ClientName:       setts.ClientName,
-		DNSType:          qtype,
+		// TODO(e.burkov): Wait for urlfilter update to pass net.IP.
+		ClientIP:   setts.ClientIP.String(),
+		ClientName: setts.ClientName,
+		DNSType:    qtype,
 	}
 
 	if d.filteringEngineAllow != nil {
@@ -696,7 +714,7 @@ func (d *DNSFilter) matchHost(host string, qtype uint16, setts RequestFilteringS
 	// awkward.
 	if dnsr := dnsres.DNSRewrites(); len(dnsr) > 0 {
 		res = d.processDNSRewrites(dnsr)
-		if res.Reason == DNSRewriteRule && res.CanonName == host {
+		if res.Reason == RewrittenRule && res.CanonName == host {
 			// A rewrite of a host to itself.  Go on and
 			// try matching other things.
 		} else {
@@ -781,6 +799,7 @@ func InitModule() {
 
 // New creates properly initialized DNS Filter that is ready to be used.
 func New(c *Config, blockFilters []Filter) *DNSFilter {
+	var resolver Resolver = net.DefaultResolver
 	if c != nil {
 		cacheConf := cache.Config{
 			EnableLRU: true,
@@ -800,9 +819,15 @@ func New(c *Config, blockFilters []Filter) *DNSFilter {
 			cacheConf.MaxSize = c.ParentalCacheSize
 			gctx.parentalCache = cache.New(cacheConf)
 		}
+
+		if c.CustomResolver != nil {
+			resolver = c.CustomResolver
+		}
 	}
 
-	d := new(DNSFilter)
+	d := &DNSFilter{
+		resolver: resolver,
+	}
 
 	err := d.initSecurityServices()
 	if err != nil {

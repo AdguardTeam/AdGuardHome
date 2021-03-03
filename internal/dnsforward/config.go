@@ -24,22 +24,22 @@ type FilteringConfig struct {
 	// Callbacks for other modules
 	// --
 
-	// Filtering callback function
-	FilterHandler func(clientAddr string, settings *dnsfilter.RequestFilteringSettings) `yaml:"-"`
+	// FilterHandler is an optional additional filtering callback.
+	FilterHandler func(clientAddr net.IP, clientID string, settings *dnsfilter.RequestFilteringSettings) `yaml:"-"`
 
 	// GetCustomUpstreamByClient - a callback function that returns upstreams configuration
 	// based on the client IP address. Returns nil if there are no custom upstreams for the client
+	//
+	// TODO(e.burkov): Replace argument type with net.IP.
 	GetCustomUpstreamByClient func(clientAddr string) *proxy.UpstreamConfig `yaml:"-"`
 
 	// Protection configuration
 	// --
 
-	ProtectionEnabled  bool   `yaml:"protection_enabled"` // whether or not use any of dnsfilter features
-	BlockingMode       string `yaml:"blocking_mode"`      // mode how to answer filtered requests
-	BlockingIPv4       string `yaml:"blocking_ipv4"`      // IP address to be returned for a blocked A request
-	BlockingIPv6       string `yaml:"blocking_ipv6"`      // IP address to be returned for a blocked AAAA request
-	BlockingIPAddrv4   net.IP `yaml:"-"`
-	BlockingIPAddrv6   net.IP `yaml:"-"`
+	ProtectionEnabled  bool   `yaml:"protection_enabled"`   // whether or not use any of dnsfilter features
+	BlockingMode       string `yaml:"blocking_mode"`        // mode how to answer filtered requests
+	BlockingIPv4       net.IP `yaml:"blocking_ipv4"`        // IP address to be returned for a blocked A request
+	BlockingIPv6       net.IP `yaml:"blocking_ipv6"`        // IP address to be returned for a blocked AAAA request
 	BlockedResponseTTL uint32 `yaml:"blocked_response_ttl"` // if 0, then default is used (3600)
 
 	// IP (or domain name) which is used to respond to DNS requests blocked by parental control or safe-browsing
@@ -109,6 +109,10 @@ type TLSConfig struct {
 
 	CertificateChainData []byte `yaml:"-" json:"-"`
 	PrivateKeyData       []byte `yaml:"-" json:"-"`
+
+	// ServerName is the hostname of the server.  Currently, it is only
+	// being used for client ID checking.
+	ServerName string `yaml:"-" json:"-"`
 
 	cert tls.Certificate
 	// DNS names from certificate (SAN) or CN value from Subject
@@ -278,7 +282,7 @@ func (s *Server) prepareUpstreamSettings() error {
 	}
 
 	if len(upstreamConfig.Upstreams) == 0 {
-		log.Info("Warning: no default upstream servers specified, using %v", defaultDNS)
+		log.Info("warning: no default upstream servers specified, using %v", defaultDNS)
 		uc, err := proxy.ParseUpstreamsConfig(defaultDNS, s.conf.BootstrapDNS, DefaultTimeout)
 		if err != nil {
 			return fmt.Errorf("dns: failed to parse default upstreams: %v", err)
@@ -292,12 +296,13 @@ func (s *Server) prepareUpstreamSettings() error {
 
 // prepareIntlProxy - initializes DNS proxy that we use for internal DNS queries
 func (s *Server) prepareIntlProxy() {
-	intlProxyConfig := proxy.Config{
-		CacheEnabled:   true,
-		CacheSizeBytes: 4096,
-		UpstreamConfig: s.conf.UpstreamConfig,
+	s.internalProxy = &proxy.Proxy{
+		Config: proxy.Config{
+			CacheEnabled:   true,
+			CacheSizeBytes: 4096,
+			UpstreamConfig: s.conf.UpstreamConfig,
+		},
 	}
-	s.internalProxy = &proxy.Proxy{Config: intlProxyConfig}
 }
 
 // prepareTLS - prepares TLS configuration for the DNS proxy

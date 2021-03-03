@@ -29,10 +29,12 @@ type AutoHosts struct {
 	// TODO(a.garipov): Make better use of newtypes.  Perhaps a custom map.
 	tableReverse map[string][]string
 
-	hostsFn    string            // path to the main hosts-file
-	hostsDirs  []string          // paths to OS-specific directories with hosts-files
-	watcher    *fsnotify.Watcher // file and directory watcher object
-	updateChan chan bool         // signal for 'updateLoop' goroutine
+	hostsFn   string            // path to the main hosts-file
+	hostsDirs []string          // paths to OS-specific directories with hosts-files
+	watcher   *fsnotify.Watcher // file and directory watcher object
+
+	// onlyWritesChan used to contain only writing events from watcher.
+	onlyWritesChan chan fsnotify.Event
 
 	onChanged onChangedT // notification to other modules
 }
@@ -54,7 +56,7 @@ func (a *AutoHosts) notify() {
 // hostsFn: Override default name for the hosts-file (optional)
 func (a *AutoHosts) Init(hostsFn string) {
 	a.table = make(map[string][]net.IP)
-	a.updateChan = make(chan bool, 2)
+	a.onlyWritesChan = make(chan fsnotify.Event, 2)
 
 	a.hostsFn = "/etc/hosts"
 	if runtime.GOOS == "windows" {
@@ -82,8 +84,7 @@ func (a *AutoHosts) Init(hostsFn string) {
 func (a *AutoHosts) Start() {
 	log.Debug("Start AutoHosts module")
 
-	go a.updateLoop()
-	a.updateChan <- true
+	a.updateHosts()
 
 	if a.watcher != nil {
 		go a.watcherLoop()
@@ -104,11 +105,10 @@ func (a *AutoHosts) Start() {
 
 // Close - close module
 func (a *AutoHosts) Close() {
-	a.updateChan <- false
-	close(a.updateChan)
 	if a.watcher != nil {
 		_ = a.watcher.Close()
 	}
+	close(a.onlyWritesChan)
 }
 
 // Process returns the list of IP addresses for the hostname or nil if nothing
@@ -273,20 +273,32 @@ func (a *AutoHosts) load(table map[string][]net.IP, tableRev map[string][]string
 	}
 }
 
+// onlyWrites is a filter for (*fsnotify.Watcher).Events.
+func (a *AutoHosts) onlyWrites() {
+	for event := range a.watcher.Events {
+		if event.Op&fsnotify.Write == fsnotify.Write {
+			a.onlyWritesChan <- event
+		}
+	}
+}
+
 // Receive notifications from fsnotify package
 func (a *AutoHosts) watcherLoop() {
+	go a.onlyWrites()
 	for {
 		select {
-		case event, ok := <-a.watcher.Events:
+		case event, ok := <-a.onlyWritesChan:
 			if !ok {
 				return
 			}
 
+			// Assume that we sometimes have the same event occurred
+			// several times.
 			repeat := true
 			for repeat {
 				select {
-				case <-a.watcher.Events:
-					// Skip this duplicating event
+				case _, ok = <-a.onlyWritesChan:
+					repeat = ok
 				default:
 					repeat = false
 				}
@@ -294,12 +306,7 @@ func (a *AutoHosts) watcherLoop() {
 
 			if event.Op&fsnotify.Write == fsnotify.Write {
 				log.Debug("AutoHosts: modified: %s", event.Name)
-				select {
-				case a.updateChan <- true:
-					// sent a signal to 'updateLoop' goroutine
-				default:
-					// queue is full
-				}
+				a.updateHosts()
 			}
 
 		case err, ok := <-a.watcher.Errors:
@@ -308,18 +315,6 @@ func (a *AutoHosts) watcherLoop() {
 			}
 			log.Error("AutoHosts: %s", err)
 		}
-	}
-}
-
-// updateLoop reads static hosts from system files.
-func (a *AutoHosts) updateLoop() {
-	for ok := range a.updateChan {
-		if !ok {
-			log.Debug("Finished AutoHosts update loop")
-			return
-		}
-
-		a.updateHosts()
 	}
 }
 

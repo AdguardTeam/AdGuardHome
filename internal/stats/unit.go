@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -11,9 +12,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/golibs/log"
 	bolt "go.etcd.io/bbolt"
 )
+
+// TODO(a.garipov): Rewrite all of this.  Add proper error handling and
+// inspection.  Improve logging.  Decrease complexity.
 
 const (
 	maxDomains = 100 // max number of top domains to store in file or return via Get()
@@ -61,11 +66,12 @@ type unitDB struct {
 	TimeAvg uint32 // usec
 }
 
-func createObject(conf Config) (*statsCtx, error) {
-	s := statsCtx{}
+func createObject(conf Config) (s *statsCtx, err error) {
+	s = &statsCtx{}
 	if !checkInterval(conf.LimitDays) {
 		conf.LimitDays = 1
 	}
+
 	s.conf = &Config{}
 	*s.conf = conf
 	s.conf.limit = conf.LimitDays * 24
@@ -84,27 +90,43 @@ func createObject(conf Config) (*statsCtx, error) {
 		log.Tracef("Deleting old units...")
 		firstID := id - s.conf.limit - 1
 		unitDel := 0
-		forEachBkt := func(name []byte, b *bolt.Bucket) error {
-			id := uint32(btoi(name))
-			if id < firstID {
-				err := tx.DeleteBucket(name)
-				if err != nil {
-					log.Debug("tx.DeleteBucket: %s", err)
+
+		// TODO(a.garipov): See if this is actually necessary.  Looks
+		// like a rather bizarre solution.
+		errStop := agherr.Error("stop iteration")
+		forEachBkt := func(name []byte, _ *bolt.Bucket) (cberr error) {
+			nameID := uint32(btoi(name))
+			if nameID < firstID {
+				cberr = tx.DeleteBucket(name)
+				if cberr != nil {
+					log.Debug("stats: tx.DeleteBucket: %s", cberr)
+
+					return nil
 				}
-				log.Debug("Stats: deleted unit %d", id)
+
+				log.Debug("stats: deleted unit %d", nameID)
 				unitDel++
+
 				return nil
 			}
-			return fmt.Errorf("")
+
+			return errStop
 		}
-		_ = tx.ForEach(forEachBkt)
+
+		err = tx.ForEach(forEachBkt)
+		if err != nil && !errors.Is(err, errStop) {
+			log.Debug("stats: deleting units: %s", err)
+		}
 
 		udb = s.loadUnitFromDB(tx, id)
 
 		if unitDel != 0 {
 			s.commitTxn(tx)
 		} else {
-			_ = tx.Rollback()
+			err = tx.Rollback()
+			if err != nil {
+				log.Debug("rolling back: %s", err)
+			}
 		}
 	}
 
@@ -115,8 +137,9 @@ func createObject(conf Config) (*statsCtx, error) {
 	}
 	s.unit = &u
 
-	log.Debug("Stats: initialized")
-	return &s, nil
+	log.Debug("stats: initialized")
+
+	return s, nil
 }
 
 func (s *statsCtx) Start() {
@@ -133,7 +156,7 @@ func (s *statsCtx) dbOpen() bool {
 	log.Tracef("db.Open...")
 	s.db, err = bolt.Open(s.conf.Filename, 0o644, nil)
 	if err != nil {
-		log.Error("Stats: open DB: %s: %s", s.conf.Filename, err)
+		log.Error("stats: open DB: %s: %s", s.conf.Filename, err)
 		if err.Error() == "invalid argument" {
 			log.Error("AdGuard Home cannot be initialized due to an incompatible file system.\nPlease read the explanation here: https://github.com/AdguardTeam/AdGuardHome/internal/wiki/Getting-Started#limitations")
 		}
@@ -223,6 +246,7 @@ func (s *statsCtx) periodicFlush() {
 		s.unitLock.Lock()
 		ptr := s.unit
 		s.unitLock.Unlock()
+
 		if ptr == nil {
 			break
 		}
@@ -230,6 +254,7 @@ func (s *statsCtx) periodicFlush() {
 		id := s.conf.UnitID()
 		if ptr.id == id {
 			time.Sleep(time.Second)
+
 			continue
 		}
 
@@ -243,6 +268,7 @@ func (s *statsCtx) periodicFlush() {
 		if tx == nil {
 			continue
 		}
+
 		ok1 := s.flushUnitToDB(tx, u.id, udb)
 		ok2 := s.deleteUnit(tx, id-s.conf.limit)
 		if ok1 || ok2 {
@@ -251,6 +277,7 @@ func (s *statsCtx) periodicFlush() {
 			_ = tx.Rollback()
 		}
 	}
+
 	log.Tracef("periodicFlush() exited")
 }
 
@@ -258,14 +285,17 @@ func (s *statsCtx) periodicFlush() {
 func (s *statsCtx) deleteUnit(tx *bolt.Tx, id uint32) bool {
 	err := tx.DeleteBucket(unitName(id))
 	if err != nil {
-		log.Tracef("bolt DeleteBucket: %s", err)
+		log.Tracef("stats: bolt DeleteBucket: %s", err)
+
 		return false
 	}
-	log.Debug("Stats: deleted unit %d", id)
+
+	log.Debug("stats: deleted unit %d", id)
+
 	return true
 }
 
-func convertMapToArray(m map[string]uint64, max int) []countPair {
+func convertMapToSlice(m map[string]uint64, max int) []countPair {
 	a := []countPair{}
 	for k, v := range m {
 		pair := countPair{}
@@ -283,7 +313,7 @@ func convertMapToArray(m map[string]uint64, max int) []countPair {
 	return a[:max]
 }
 
-func convertArrayToMap(a []countPair) map[string]uint64 {
+func convertSliceToMap(a []countPair) map[string]uint64 {
 	m := map[string]uint64{}
 	for _, it := range a {
 		m[it.Name] = it.Count
@@ -301,9 +331,9 @@ func serialize(u *unit) *unitDB {
 		udb.TimeAvg = uint32(u.timeSum / u.nTotal)
 	}
 
-	udb.Domains = convertMapToArray(u.domains, maxDomains)
-	udb.BlockedDomains = convertMapToArray(u.blockedDomains, maxDomains)
-	udb.Clients = convertMapToArray(u.clients, maxClients)
+	udb.Domains = convertMapToSlice(u.domains, maxDomains)
+	udb.BlockedDomains = convertMapToSlice(u.blockedDomains, maxDomains)
+	udb.Clients = convertMapToSlice(u.clients, maxClients)
 
 	return &udb
 }
@@ -319,9 +349,9 @@ func deserialize(u *unit, udb *unitDB) {
 		u.nResult[i] = udb.NResult[i]
 	}
 
-	u.domains = convertArrayToMap(udb.Domains)
-	u.blockedDomains = convertArrayToMap(udb.BlockedDomains)
-	u.clients = convertArrayToMap(udb.Clients)
+	u.domains = convertSliceToMap(udb.Domains)
+	u.blockedDomains = convertSliceToMap(udb.BlockedDomains)
+	u.clients = convertSliceToMap(udb.Clients)
 	u.timeSum = uint64(udb.TimeAvg) * u.nTotal
 }
 
@@ -372,7 +402,7 @@ func (s *statsCtx) loadUnitFromDB(tx *bolt.Tx, id uint32) *unitDB {
 	return &udb
 }
 
-func convertTopArray(a []countPair) []map[string]uint64 {
+func convertTopSlice(a []countPair) []map[string]uint64 {
 	m := []map[string]uint64{}
 	for _, it := range a {
 		ent := map[string]uint64{}
@@ -386,7 +416,7 @@ func (s *statsCtx) setLimit(limitDays int) {
 	conf := *s.conf
 	conf.limit = uint32(limitDays) * 24
 	s.conf = &conf
-	log.Debug("Stats: set limit: %d", limitDays)
+	log.Debug("stats: set limit: %d", limitDays)
 }
 
 func (s *statsCtx) WriteDiskConfig(dc *DiskConfig) {
@@ -411,7 +441,7 @@ func (s *statsCtx) Close() {
 		log.Tracef("db.Close")
 	}
 
-	log.Debug("Stats: closed")
+	log.Debug("stats: closed")
 }
 
 // Reset counters and clear database
@@ -439,38 +469,42 @@ func (s *statsCtx) clear() {
 
 	_ = s.dbOpen()
 
-	log.Debug("Stats: cleared")
+	log.Debug("stats: cleared")
 }
 
 // Get Client IP address
-func (s *statsCtx) getClientIP(clientIP string) string {
-	if s.conf.AnonymizeClientIP {
-		ip := net.ParseIP(clientIP)
-		if ip != nil {
-			ip4 := ip.To4()
-			const AnonymizeClientIP4Mask = 16
-			const AnonymizeClientIP6Mask = 112
-			if ip4 != nil {
-				clientIP = ip4.Mask(net.CIDRMask(AnonymizeClientIP4Mask, 32)).String()
-			} else {
-				clientIP = ip.Mask(net.CIDRMask(AnonymizeClientIP6Mask, 128)).String()
-			}
+func (s *statsCtx) getClientIP(ip net.IP) (clientIP net.IP) {
+	if s.conf.AnonymizeClientIP && ip != nil {
+		const AnonymizeClientIP4Mask = 16
+		const AnonymizeClientIP6Mask = 112
+
+		if ip.To4() != nil {
+			return ip.Mask(net.CIDRMask(AnonymizeClientIP4Mask, 32))
 		}
+
+		return ip.Mask(net.CIDRMask(AnonymizeClientIP6Mask, 128))
 	}
 
-	return clientIP
+	return ip
 }
 
 func (s *statsCtx) Update(e Entry) {
 	if e.Result == 0 ||
 		e.Result >= rLast ||
-		len(e.Domain) == 0 ||
-		!(len(e.Client) == 4 || len(e.Client) == 16) {
+		e.Domain == "" ||
+		e.Client == "" {
 		return
 	}
-	client := s.getClientIP(e.Client.String())
+
+	clientID := e.Client
+	if ip := net.ParseIP(clientID); ip != nil {
+		ip = s.getClientIP(ip)
+		clientID = ip.String()
+	}
 
 	s.unitLock.Lock()
+	defer s.unitLock.Unlock()
+
 	u := s.unit
 
 	u.nResult[e.Result]++
@@ -481,10 +515,9 @@ func (s *statsCtx) Update(e Entry) {
 		u.blockedDomains[e.Domain]++
 	}
 
-	u.clients[client]++
+	u.clients[clientID]++
 	u.timeSum += uint64(e.Time)
 	u.nTotal++
-	s.unitLock.Unlock()
 }
 
 func (s *statsCtx) loadUnits(limit uint32) ([]*unitDB, uint32) {
@@ -521,6 +554,57 @@ func (s *statsCtx) loadUnits(limit uint32) ([]*unitDB, uint32) {
 	return units, firstID
 }
 
+// numsGetter is a signature for statsCollector argument.
+type numsGetter func(u *unitDB) (num uint64)
+
+// statsCollector collects statisctics for the given *unitDB slice by specified
+// timeUnit using ng to retrieve data.
+func statsCollector(units []*unitDB, firstID uint32, timeUnit TimeUnit, ng numsGetter) (nums []uint64) {
+	if timeUnit == Hours {
+		for _, u := range units {
+			nums = append(nums, ng(u))
+		}
+	} else {
+		// Per time unit counters: 720 hours may span 31 days, so we
+		// skip data for the first day in this case.
+		// align_ceil(24)
+		firstDayID := (firstID + 24 - 1) / 24 * 24
+
+		var sum uint64
+		id := firstDayID
+		nextDayID := firstDayID + 24
+		for i := int(firstDayID - firstID); i != len(units); i++ {
+			sum += ng(units[i])
+			if id == nextDayID {
+				nums = append(nums, sum)
+				sum = 0
+				nextDayID += 24
+			}
+			id++
+		}
+		if id <= nextDayID {
+			nums = append(nums, sum)
+		}
+	}
+	return nums
+}
+
+// pairsGetter is a signature for topsCollector argument.
+type pairsGetter func(u *unitDB) (pairs []countPair)
+
+// topsCollector collects statistics about highest values fro the given *unitDB
+// slice using pg to retrieve data.
+func topsCollector(units []*unitDB, max int, pg pairsGetter) []map[string]uint64 {
+	m := map[string]uint64{}
+	for _, u := range units {
+		for _, it := range pg(u) {
+			m[it.Name] += it.Count
+		}
+	}
+	a2 := convertMapToSlice(m, max)
+	return convertTopSlice(a2)
+}
+
 /* Algorithm:
 . Prepare array of N units, where N is the value of "limit" configuration setting
  . Load data for the most recent units from file
@@ -548,10 +632,9 @@ func (s *statsCtx) loadUnits(limit uint32) ([]*unitDB, uint32) {
   * parental-blocked
   These values are just the sum of data for all units.
 */
-func (s *statsCtx) getData() map[string]interface{} {
+func (s *statsCtx) getData() (statsResponse, bool) {
 	limit := s.conf.limit
 
-	d := map[string]interface{}{}
 	timeUnit := Hours
 	if limit/24 > 7 {
 		timeUnit = Days
@@ -559,72 +642,28 @@ func (s *statsCtx) getData() map[string]interface{} {
 
 	units, firstID := s.loadUnits(limit)
 	if units == nil {
-		return nil
+		return statsResponse{}, false
 	}
 
-	// per time unit counters:
-	// 720 hours may span 31 days, so we skip data for the first day in this case
-	firstDayID := (firstID + 24 - 1) / 24 * 24 // align_ceil(24)
-
-	statsCollector := func(numsGetter func(u *unitDB) (num uint64)) (nums []uint64) {
-		if timeUnit == Hours {
-			for _, u := range units {
-				nums = append(nums, numsGetter(u))
-			}
-		} else {
-			var sum uint64
-			id := firstDayID
-			nextDayID := firstDayID + 24
-			for i := int(firstDayID - firstID); i != len(units); i++ {
-				sum += numsGetter(units[i])
-				if id == nextDayID {
-					nums = append(nums, sum)
-					sum = 0
-					nextDayID += 24
-				}
-				id++
-			}
-			if id <= nextDayID {
-				nums = append(nums, sum)
-			}
-		}
-		return nums
-	}
-
-	topsCollector := func(max int, pairsGetter func(u *unitDB) (pairs []countPair)) []map[string]uint64 {
-		m := map[string]uint64{}
-		for _, u := range units {
-			for _, it := range pairsGetter(u) {
-				m[it.Name] += it.Count
-			}
-		}
-		a2 := convertMapToArray(m, max)
-		return convertTopArray(a2)
-	}
-
-	dnsQueries := statsCollector(func(u *unitDB) (num uint64) { return u.NTotal })
+	dnsQueries := statsCollector(units, firstID, timeUnit, func(u *unitDB) (num uint64) { return u.NTotal })
 	if timeUnit != Hours && len(dnsQueries) != int(limit/24) {
 		log.Fatalf("len(dnsQueries) != limit: %d %d", len(dnsQueries), limit)
 	}
 
-	statsData := map[string]interface{}{
-		"dns_queries":           dnsQueries,
-		"blocked_filtering":     statsCollector(func(u *unitDB) (num uint64) { return u.NResult[RFiltered] }),
-		"replaced_safebrowsing": statsCollector(func(u *unitDB) (num uint64) { return u.NResult[RSafeBrowsing] }),
-		"replaced_parental":     statsCollector(func(u *unitDB) (num uint64) { return u.NResult[RParental] }),
-		"top_queried_domains":   topsCollector(maxDomains, func(u *unitDB) (pairs []countPair) { return u.Domains }),
-		"top_blocked_domains":   topsCollector(maxDomains, func(u *unitDB) (pairs []countPair) { return u.BlockedDomains }),
-		"top_clients":           topsCollector(maxClients, func(u *unitDB) (pairs []countPair) { return u.Clients }),
+	data := statsResponse{
+		DNSQueries:           dnsQueries,
+		BlockedFiltering:     statsCollector(units, firstID, timeUnit, func(u *unitDB) (num uint64) { return u.NResult[RFiltered] }),
+		ReplacedSafebrowsing: statsCollector(units, firstID, timeUnit, func(u *unitDB) (num uint64) { return u.NResult[RSafeBrowsing] }),
+		ReplacedParental:     statsCollector(units, firstID, timeUnit, func(u *unitDB) (num uint64) { return u.NResult[RParental] }),
+		TopQueried:           topsCollector(units, maxDomains, func(u *unitDB) (pairs []countPair) { return u.Domains }),
+		TopBlocked:           topsCollector(units, maxDomains, func(u *unitDB) (pairs []countPair) { return u.BlockedDomains }),
+		TopClients:           topsCollector(units, maxClients, func(u *unitDB) (pairs []countPair) { return u.Clients }),
 	}
 
-	for dataKey, dataValue := range statsData {
-		d[dataKey] = dataValue
+	// Total counters:
+	sum := unitDB{
+		NResult: make([]uint64, rLast),
 	}
-
-	// total counters:
-
-	sum := unitDB{}
-	sum.NResult = make([]uint64, rLast)
 	timeN := 0
 	for _, u := range units {
 		sum.NTotal += u.NTotal
@@ -638,27 +677,25 @@ func (s *statsCtx) getData() map[string]interface{} {
 		sum.NResult[RParental] += u.NResult[RParental]
 	}
 
-	d["num_dns_queries"] = sum.NTotal
-	d["num_blocked_filtering"] = sum.NResult[RFiltered]
-	d["num_replaced_safebrowsing"] = sum.NResult[RSafeBrowsing]
-	d["num_replaced_safesearch"] = sum.NResult[RSafeSearch]
-	d["num_replaced_parental"] = sum.NResult[RParental]
+	data.NumDNSQueries = sum.NTotal
+	data.NumBlockedFiltering = sum.NResult[RFiltered]
+	data.NumReplacedSafebrowsing = sum.NResult[RSafeBrowsing]
+	data.NumReplacedSafesearch = sum.NResult[RSafeSearch]
+	data.NumReplacedParental = sum.NResult[RParental]
 
-	avgTime := float64(0)
 	if timeN != 0 {
-		avgTime = float64(sum.TimeAvg/uint32(timeN)) / 1000000
+		data.AvgProcessingTime = float64(sum.TimeAvg/uint32(timeN)) / 1000000
 	}
-	d["avg_processing_time"] = avgTime
 
-	d["time_units"] = "hours"
+	data.TimeUnits = "hours"
 	if timeUnit == Days {
-		d["time_units"] = "days"
+		data.TimeUnits = "days"
 	}
 
-	return d
+	return data, true
 }
 
-func (s *statsCtx) GetTopClientsIP(maxCount uint) []string {
+func (s *statsCtx) GetTopClientsIP(maxCount uint) []net.IP {
 	units, _ := s.loadUnits(s.conf.limit)
 	if units == nil {
 		return nil
@@ -671,10 +708,10 @@ func (s *statsCtx) GetTopClientsIP(maxCount uint) []string {
 			m[it.Name] += it.Count
 		}
 	}
-	a := convertMapToArray(m, int(maxCount))
-	d := []string{}
+	a := convertMapToSlice(m, int(maxCount))
+	d := []net.IP{}
 	for _, it := range a {
-		d = append(d, it.Name)
+		d = append(d, net.ParseIP(it.Name))
 	}
 	return d
 }

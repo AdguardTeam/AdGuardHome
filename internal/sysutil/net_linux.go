@@ -21,7 +21,11 @@ import (
 const maxConfigFileSize = 1024 * 1024
 
 func ifaceHasStaticIP(ifaceName string) (has bool, err error) {
-	var f *os.File
+	// TODO(a.garipov): Currently, this function returns the first
+	// definitive result.  So if /etc/dhcpcd.conf has a static IP while
+	// /etc/network/interfaces doesn't, it will return true.  Perhaps this
+	// is not the most desirable behavior.
+
 	for _, check := range []struct {
 		checker  func(io.Reader, string) (bool, error)
 		filePath string
@@ -32,28 +36,37 @@ func ifaceHasStaticIP(ifaceName string) (has bool, err error) {
 		checker:  ifacesStaticConfig,
 		filePath: "/etc/network/interfaces",
 	}} {
+		var f *os.File
 		f, err = os.Open(check.filePath)
-		if errors.Is(err, os.ErrNotExist) {
-			continue
-		}
 		if err != nil {
+			// ErrNotExist can happen here if there is no such file.
+			// This is normal, as not every system uses those files.
+			if errors.Is(err, os.ErrNotExist) {
+				err = nil
+
+				continue
+			}
+
 			return false, err
 		}
 		defer f.Close()
 
-		fileReadCloser, err := aghio.LimitReadCloser(f, maxConfigFileSize)
+		var fileReadCloser io.ReadCloser
+		fileReadCloser, err = aghio.LimitReadCloser(f, maxConfigFileSize)
 		if err != nil {
 			return false, err
 		}
 		defer fileReadCloser.Close()
 
 		has, err = check.checker(fileReadCloser, ifaceName)
-		if has || err != nil {
-			break
+		if err != nil {
+			return false, err
 		}
+
+		return has, nil
 	}
 
-	return has, err
+	return false, ErrNoStaticIPInfo
 }
 
 // dhcpcdStaticConfig checks if interface is configured by /etc/dhcpcd.conf to
@@ -119,17 +132,13 @@ func ifacesStaticConfig(r io.Reader, ifaceName string) (has bool, err error) {
 }
 
 func ifaceSetStaticIP(ifaceName string) (err error) {
-	ip := util.GetSubnet(ifaceName)
-	if len(ip) == 0 {
+	ipNet := util.GetSubnet(ifaceName)
+	if ipNet.IP == nil {
 		return errors.New("can't get IP address")
 	}
 
-	ip4, _, err := net.ParseCIDR(ip)
-	if err != nil {
-		return err
-	}
 	gatewayIP := GatewayIP(ifaceName)
-	add := updateStaticIPdhcpcdConf(ifaceName, ip, gatewayIP, ip4.String())
+	add := updateStaticIPdhcpcdConf(ifaceName, ipNet.String(), gatewayIP, ipNet.IP)
 
 	body, err := ioutil.ReadFile("/etc/dhcpcd.conf")
 	if err != nil {
@@ -147,14 +156,14 @@ func ifaceSetStaticIP(ifaceName string) (err error) {
 
 // updateStaticIPdhcpcdConf sets static IP address for the interface by writing
 // into dhcpd.conf.
-func updateStaticIPdhcpcdConf(ifaceName, ip, gatewayIP, dnsIP string) string {
+func updateStaticIPdhcpcdConf(ifaceName, ip string, gatewayIP, dnsIP net.IP) string {
 	var body []byte
 
 	add := fmt.Sprintf("\ninterface %s\nstatic ip_address=%s\n",
 		ifaceName, ip)
 	body = append(body, []byte(add)...)
 
-	if len(gatewayIP) != 0 {
+	if gatewayIP != nil {
 		add = fmt.Sprintf("static routers=%s\n",
 			gatewayIP)
 		body = append(body, []byte(add)...)

@@ -11,40 +11,41 @@ import (
 
 func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 	const text = `
-|cname^$dnsrewrite=new_cname
+|cname^$dnsrewrite=new-cname
 
-|a_record^$dnsrewrite=127.0.0.1
+|a-record^$dnsrewrite=127.0.0.1
 
-|aaaa_record^$dnsrewrite=::1
+|aaaa-record^$dnsrewrite=::1
 
-|txt_record^$dnsrewrite=NOERROR;TXT;hello_world
+|txt-record^$dnsrewrite=NOERROR;TXT;hello-world
 
 |refused^$dnsrewrite=REFUSED
 
-|a_records^$dnsrewrite=127.0.0.1
-|a_records^$dnsrewrite=127.0.0.2
+|a-records^$dnsrewrite=127.0.0.1
+|a-records^$dnsrewrite=127.0.0.2
 
-|aaaa_records^$dnsrewrite=::1
-|aaaa_records^$dnsrewrite=::2
+|aaaa-records^$dnsrewrite=::1
+|aaaa-records^$dnsrewrite=::2
 
-|disable_one^$dnsrewrite=127.0.0.1
-|disable_one^$dnsrewrite=127.0.0.2
-@@||disable_one^$dnsrewrite=127.0.0.1
+|disable-one^$dnsrewrite=127.0.0.1
+|disable-one^$dnsrewrite=127.0.0.2
+@@||disable-one^$dnsrewrite=127.0.0.1
 
-|disable_cname^$dnsrewrite=127.0.0.1
-|disable_cname^$dnsrewrite=new_cname
-@@||disable_cname^$dnsrewrite=new_cname
+|disable-cname^$dnsrewrite=127.0.0.1
+|disable-cname^$dnsrewrite=new-cname
+@@||disable-cname^$dnsrewrite=new-cname
 
-|disable_cname_many^$dnsrewrite=127.0.0.1
-|disable_cname_many^$dnsrewrite=new_cname_1
-|disable_cname_many^$dnsrewrite=new_cname_2
-@@||disable_cname_many^$dnsrewrite=new_cname_1
+|disable-cname-many^$dnsrewrite=127.0.0.1
+|disable-cname-many^$dnsrewrite=new-cname-1
+|disable-cname-many^$dnsrewrite=new-cname-2
+@@||disable-cname-many^$dnsrewrite=new-cname-1
 
-|disable_all^$dnsrewrite=127.0.0.1
-|disable_all^$dnsrewrite=127.0.0.2
-@@||disable_all^$dnsrewrite
+|disable-all^$dnsrewrite=127.0.0.1
+|disable-all^$dnsrewrite=127.0.0.2
+@@||disable-all^$dnsrewrite
 `
-	f := NewForTest(nil, []Filter{{ID: 0, Data: []byte(text)}})
+
+	f := newForTest(nil, []Filter{{ID: 0, Data: []byte(text)}})
 	setts := &RequestFilteringSettings{
 		FilteringEnabled: true,
 	}
@@ -60,10 +61,10 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 
 		res, err := f.CheckHostRules(host, dtyp, setts)
 		assert.Nil(t, err)
-		assert.Equal(t, "new_cname", res.CanonName)
+		assert.Equal(t, "new-cname", res.CanonName)
 	})
 
-	t.Run("a_record", func(t *testing.T) {
+	t.Run("a-record", func(t *testing.T) {
 		dtyp := dns.TypeA
 		host := path.Base(t.Name())
 
@@ -78,7 +79,7 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 		}
 	})
 
-	t.Run("aaaa_record", func(t *testing.T) {
+	t.Run("aaaa-record", func(t *testing.T) {
 		dtyp := dns.TypeAAAA
 		host := path.Base(t.Name())
 
@@ -93,7 +94,7 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 		}
 	})
 
-	t.Run("txt_record", func(t *testing.T) {
+	t.Run("txt-record", func(t *testing.T) {
 		dtyp := dns.TypeTXT
 		host := path.Base(t.Name())
 		res, err := f.CheckHostRules(host, dtyp, setts)
@@ -102,7 +103,7 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 		if dnsrr := res.DNSRewriteResult; assert.NotNil(t, dnsrr) {
 			assert.Equal(t, dns.RcodeSuccess, dnsrr.RCode)
 			if strVals := dnsrr.Response[dtyp]; assert.Len(t, strVals, 1) {
-				assert.Equal(t, "hello_world", strVals[0])
+				assert.Equal(t, "hello-world", strVals[0])
 			}
 		}
 	})
@@ -117,7 +118,7 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 		}
 	})
 
-	t.Run("a_records", func(t *testing.T) {
+	t.Run("a-records", func(t *testing.T) {
 		dtyp := dns.TypeA
 		host := path.Base(t.Name())
 
@@ -133,7 +134,7 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 		}
 	})
 
-	t.Run("aaaa_records", func(t *testing.T) {
+	t.Run("aaaa-records", func(t *testing.T) {
 		dtyp := dns.TypeAAAA
 		host := path.Base(t.Name())
 
@@ -149,7 +150,7 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 		}
 	})
 
-	t.Run("disable_one", func(t *testing.T) {
+	t.Run("disable-one", func(t *testing.T) {
 		dtyp := dns.TypeA
 		host := path.Base(t.Name())
 
@@ -164,13 +165,13 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 		}
 	})
 
-	t.Run("disable_cname", func(t *testing.T) {
+	t.Run("disable-cname", func(t *testing.T) {
 		dtyp := dns.TypeA
 		host := path.Base(t.Name())
 
 		res, err := f.CheckHostRules(host, dtyp, setts)
 		assert.Nil(t, err)
-		assert.Equal(t, "", res.CanonName)
+		assert.Empty(t, res.CanonName)
 
 		if dnsrr := res.DNSRewriteResult; assert.NotNil(t, dnsrr) {
 			assert.Equal(t, dns.RcodeSuccess, dnsrr.RCode)
@@ -180,23 +181,23 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 		}
 	})
 
-	t.Run("disable_cname_many", func(t *testing.T) {
+	t.Run("disable-cname-many", func(t *testing.T) {
 		dtyp := dns.TypeA
 		host := path.Base(t.Name())
 
 		res, err := f.CheckHostRules(host, dtyp, setts)
 		assert.Nil(t, err)
-		assert.Equal(t, "new_cname_2", res.CanonName)
+		assert.Equal(t, "new-cname-2", res.CanonName)
 		assert.Nil(t, res.DNSRewriteResult)
 	})
 
-	t.Run("disable_all", func(t *testing.T) {
+	t.Run("disable-all", func(t *testing.T) {
 		dtyp := dns.TypeA
 		host := path.Base(t.Name())
 
 		res, err := f.CheckHostRules(host, dtyp, setts)
 		assert.Nil(t, err)
-		assert.Equal(t, "", res.CanonName)
-		assert.Len(t, res.Rules, 0)
+		assert.Empty(t, res.CanonName)
+		assert.Empty(t, res.Rules)
 	})
 }

@@ -4,8 +4,9 @@ import classNames from 'classnames';
 import React from 'react';
 import propTypes from 'prop-types';
 import {
+    getRulesToFilterList,
     formatElapsedMs,
-    getFilterName,
+    getFilterNames,
     getServiceName,
 } from '../../../helpers/helpers';
 import { FILTERED_STATUS, FILTERED_STATUS_TO_META_MAP } from '../../../helpers/constants';
@@ -18,8 +19,7 @@ const ResponseCell = ({
     response,
     status,
     upstream,
-    rule,
-    filterId,
+    rules,
     service_name,
 }) => {
     const { t } = useTranslation();
@@ -36,7 +36,6 @@ const ResponseCell = ({
 
     const statusLabel = t(isBlockedByResponse ? 'blocked_by_cname_or_ip' : FILTERED_STATUS_TO_META_MAP[reason]?.LABEL || reason);
     const boldStatusLabel = <span className="font-weight-bold">{statusLabel}</span>;
-    const filter = getFilterName(filters, whitelistFilters, filterId);
 
     const renderResponses = (responseArr) => {
         if (!responseArr || responseArr.length === 0) {
@@ -57,13 +56,17 @@ const ResponseCell = ({
         install_settings_dns: upstream,
         elapsed: formattedElapsedMs,
         response_code: status,
-        ...(service_name ? { service_name: getServiceName(service_name) } : { filter }),
-        rule_label: rule,
+        ...(service_name
+                && { service_name: getServiceName(service_name) }
+        ),
+        ...(rules.length > 0
+                && { rule_label: getRulesToFilterList(rules, filters, whitelistFilters) }
+        ),
         response_table_header: renderResponses(response),
         original_response: renderResponses(originalResponse),
     };
 
-    const content = rule
+    const content = rules.length > 0
         ? Object.entries(COMMON_CONTENT)
         : Object.entries({
             ...COMMON_CONTENT,
@@ -78,7 +81,8 @@ const ResponseCell = ({
                 }
                 return getServiceName(service_name);
             case FILTERED_STATUS.FILTERED_BLACK_LIST:
-                return filter;
+            case FILTERED_STATUS.NOT_FILTERED_WHITE_LIST:
+                return getFilterNames(rules, filters, whitelistFilters).join(', ');
             default:
                 return formattedElapsedMs;
         }
@@ -113,8 +117,10 @@ ResponseCell.propTypes = {
     response: propTypes.array.isRequired,
     status: propTypes.string.isRequired,
     upstream: propTypes.string.isRequired,
-    rule: propTypes.string,
-    filterId: propTypes.number,
+    rules: propTypes.arrayOf(propTypes.shape({
+        text: propTypes.string.isRequired,
+        filter_list_id: propTypes.number.isRequired,
+    })),
     service_name: propTypes.string,
 };
 

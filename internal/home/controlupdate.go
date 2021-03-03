@@ -1,76 +1,104 @@
 package home
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"syscall"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/sysutil"
-	"github.com/AdguardTeam/AdGuardHome/internal/update"
+	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/log"
 )
 
-type getVersionJSONRequest struct {
-	RecheckNow bool `json:"recheck_now"`
+// temporaryError is the interface for temporary errors from the Go standard
+// library.
+type temporaryError interface {
+	error
+	Temporary() (ok bool)
 }
 
 // Get the latest available version from the Internet
 func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
+	resp := &versionResponse{}
 	if Context.disableUpdate {
-		resp := make(map[string]interface{})
-		resp["disabled"] = true
-		d, _ := json.Marshal(resp)
-		_, _ = w.Write(d)
+		// w.Header().Set("Content-Type", "application/json")
+		resp.Disabled = true
+		_ = json.NewEncoder(w).Encode(resp)
+		// TODO(e.burkov): Add error handling and deal with headers.
 		return
 	}
 
-	req := getVersionJSONRequest{}
+	req := &struct {
+		Recheck bool `json:"recheck_now"`
+	}{}
+
 	var err error
 	if r.ContentLength != 0 {
-		err = json.NewDecoder(r.Body).Decode(&req)
+		err = json.NewDecoder(r.Body).Decode(req)
 		if err != nil {
 			httpError(w, http.StatusBadRequest, "JSON parse: %s", err)
 			return
 		}
 	}
 
-	var info update.VersionInfo
 	for i := 0; i != 3; i++ {
-		Context.controlLock.Lock()
-		info, err = Context.updater.GetVersionResponse(req.RecheckNow)
-		Context.controlLock.Unlock()
-		if err != nil && strings.HasSuffix(err.Error(), "i/o timeout") {
-			// This case may happen while we're restarting DNS server
-			// https://github.com/AdguardTeam/AdGuardHome/internal/issues/934
-			continue
+		func() {
+			Context.controlLock.Lock()
+			defer Context.controlLock.Unlock()
+
+			resp.VersionInfo, err = Context.updater.VersionInfo(req.Recheck)
+		}()
+
+		if err != nil {
+			var terr temporaryError
+			if errors.As(err, &terr) && terr.Temporary() {
+				// Temporary network error.  This case may happen while
+				// we're restarting our DNS server.  Log and sleep for
+				// some time.
+				//
+				// See https://github.com/AdguardTeam/AdGuardHome/issues/934.
+				d := time.Duration(i) * time.Second
+				log.Info("temp net error: %q; sleeping for %s and retrying", err, d)
+				time.Sleep(d)
+
+				continue
+			}
 		}
+
 		break
 	}
 	if err != nil {
-		httpError(w, http.StatusBadGateway, "Couldn't get version check json from %s: %T %s\n", versionCheckURL, err, err)
+		vcu := Context.updater.VersionCheckURL()
+		// TODO(a.garipov): Figure out the purpose of %T verb.
+		httpError(w, http.StatusBadGateway, "Couldn't get version check json from %s: %T %s\n", vcu, err, err)
+
 		return
 	}
 
+	resp.confirmAutoUpdate()
+
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(getVersionResp(info))
+	err = json.NewEncoder(w).Encode(resp)
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Couldn't write body: %s", err)
 	}
 }
 
-// Perform an update procedure to the latest available version
+// handleUpdate performs an update to the latest available version procedure.
 func handleUpdate(w http.ResponseWriter, _ *http.Request) {
-	if len(Context.updater.NewVersion) == 0 {
+	if Context.updater.NewVersion() == "" {
 		httpError(w, http.StatusBadRequest, "/update request isn't allowed now")
 		return
 	}
 
-	err := Context.updater.DoUpdate()
+	err := Context.updater.Update()
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "%s", err)
 		return
@@ -81,24 +109,33 @@ func handleUpdate(w http.ResponseWriter, _ *http.Request) {
 		f.Flush()
 	}
 
-	go finishUpdate()
+	// The background context is used because the underlying functions wrap
+	// it with timeout and shut down the server, which handles current
+	// request. It also should be done in a separate goroutine due to the
+	// same reason.
+	go func() {
+		finishUpdate(context.Background())
+	}()
 }
 
-// Convert version.json data to our JSON response
-func getVersionResp(info update.VersionInfo) []byte {
-	ret := make(map[string]interface{})
-	ret["can_autoupdate"] = false
-	ret["new_version"] = info.NewVersion
-	ret["announcement"] = info.Announcement
-	ret["announcement_url"] = info.AnnouncementURL
+// versionResponse is the response for /control/version.json endpoint.
+type versionResponse struct {
+	Disabled bool `json:"disabled"`
+	updater.VersionInfo
+}
 
-	if info.CanAutoUpdate {
+// confirmAutoUpdate checks the real possibility of auto update.
+func (vr *versionResponse) confirmAutoUpdate() {
+	if vr.CanAutoUpdate != nil && *vr.CanAutoUpdate {
 		canUpdate := true
 
-		tlsConf := tlsConfigSettings{}
-		Context.tls.WriteDiskConfig(&tlsConf)
+		var tlsConf *tlsConfigSettings
+		if runtime.GOOS != "windows" {
+			tlsConf = &tlsConfigSettings{}
+			Context.tls.WriteDiskConfig(tlsConf)
+		}
 
-		if runtime.GOOS != "windows" &&
+		if tlsConf != nil &&
 			((tlsConf.Enabled && (tlsConf.PortHTTPS < 1024 ||
 				tlsConf.PortDNSOverTLS < 1024 ||
 				tlsConf.PortDNSOverQUIC < 1024)) ||
@@ -106,17 +143,14 @@ func getVersionResp(info update.VersionInfo) []byte {
 				config.DNS.Port < 1024) {
 			canUpdate, _ = sysutil.CanBindPrivilegedPorts()
 		}
-		ret["can_autoupdate"] = canUpdate
+		vr.CanAutoUpdate = &canUpdate
 	}
-
-	d, _ := json.Marshal(ret)
-	return d
 }
 
-// Complete an update procedure
-func finishUpdate() {
+// finishUpdate completes an update procedure.
+func finishUpdate(ctx context.Context) {
 	log.Info("Stopping all tasks")
-	cleanup()
+	cleanup(ctx)
 	cleanupAlways()
 
 	exeName := "AdGuardHome"

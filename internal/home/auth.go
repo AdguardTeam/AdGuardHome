@@ -2,13 +2,10 @@ package home
 
 import (
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"math"
-	"math/big"
 	"net/http"
 	"strings"
 	"sync"
@@ -20,8 +17,12 @@ import (
 )
 
 const (
-	cookieTTL         = 365 * 24 // in hours
+	// cookieTTL is given in hours.
+	cookieTTL         = 365 * 24
 	sessionCookieName = "agh_session"
+
+	// sessionTokenSize is the length of session token in bytes.
+	sessionTokenSize = 16
 )
 
 type session struct {
@@ -59,10 +60,10 @@ func (s *session) deserialize(data []byte) bool {
 // Auth - global object
 type Auth struct {
 	db         *bbolt.DB
-	sessions   map[string]*session // session name -> session data
-	lock       sync.Mutex
+	sessions   map[string]*session
 	users      []User
-	sessionTTL uint32 // in seconds
+	lock       sync.Mutex
+	sessionTTL uint32
 }
 
 // User object
@@ -223,24 +224,35 @@ func (a *Auth) removeSession(sess []byte) {
 	log.Debug("Auth: removed session from DB")
 }
 
-// CheckSession - check if session is valid
-// Return 0 if OK;  -1 if session doesn't exist;  1 if session has expired
-func (a *Auth) CheckSession(sess string) int {
+// checkSessionResult is the result of checking a session.
+type checkSessionResult int
+
+// checkSessionResult constants.
+const (
+	checkSessionOK       checkSessionResult = 0
+	checkSessionNotFound checkSessionResult = -1
+	checkSessionExpired  checkSessionResult = 1
+)
+
+// checkSession checks if the session is valid.
+func (a *Auth) checkSession(sess string) (res checkSessionResult) {
 	now := uint32(time.Now().UTC().Unix())
 	update := false
 
 	a.lock.Lock()
+	defer a.lock.Unlock()
+
 	s, ok := a.sessions[sess]
 	if !ok {
-		a.lock.Unlock()
-		return -1
+		return checkSessionNotFound
 	}
+
 	if s.expire <= now {
 		delete(a.sessions, sess)
 		key, _ := hex.DecodeString(sess)
 		a.removeSession(key)
-		a.lock.Unlock()
-		return 1
+
+		return checkSessionExpired
 	}
 
 	newExpire := now + a.sessionTTL
@@ -250,8 +262,6 @@ func (a *Auth) CheckSession(sess string) int {
 		s.expire = newExpire
 	}
 
-	a.lock.Unlock()
-
 	if update {
 		key, _ := hex.DecodeString(sess)
 		if a.storeSession(key, s) {
@@ -259,7 +269,7 @@ func (a *Auth) CheckSession(sess string) int {
 		}
 	}
 
-	return 0
+	return checkSessionOK
 }
 
 // RemoveSession - remove session
@@ -276,16 +286,29 @@ type loginJSON struct {
 	Password string `json:"password"`
 }
 
-func getSession(u *User) ([]byte, error) {
-	maxSalt := big.NewInt(math.MaxUint32)
-	salt, err := rand.Int(rand.Reader, maxSalt)
+// newSessionToken returns cryptographically secure randomly generated slice of
+// bytes of sessionTokenSize length.
+//
+// TODO(e.burkov): Think about using byte array instead of byte slice.
+func newSessionToken() (data []byte, err error) {
+	randData := make([]byte, sessionTokenSize)
+
+	_, err = rand.Read(randData)
 	if err != nil {
 		return nil, err
 	}
 
-	d := []byte(fmt.Sprintf("%s%s%s", salt, u.Name, u.PasswordHash))
-	hash := sha256.Sum256(d)
-	return hash[:], nil
+	return randData, nil
+}
+
+// cookieTimeFormat is the format to be used in (time.Time).Format for cookie's
+// expiry field.
+const cookieTimeFormat = "Mon, 02 Jan 2006 15:04:05 GMT"
+
+// cookieExpiryFormat returns the formatted exp to be used in cookie string.
+// It's quite simple for now, but probably will be expanded in the future.
+func cookieExpiryFormat(exp time.Time) (formatted string) {
+	return exp.Format(cookieTimeFormat)
 }
 
 func (a *Auth) httpCookie(req loginJSON) (string, error) {
@@ -294,24 +317,23 @@ func (a *Auth) httpCookie(req loginJSON) (string, error) {
 		return "", nil
 	}
 
-	sess, err := getSession(&u)
+	sess, err := newSessionToken()
 	if err != nil {
 		return "", err
 	}
 
 	now := time.Now().UTC()
-	expire := now.Add(cookieTTL * time.Hour)
-	expstr := expire.Format(time.RFC1123)
-	expstr = expstr[:len(expstr)-len("UTC")] // "UTC" -> "GMT"
-	expstr += "GMT"
 
-	s := session{}
-	s.userName = u.Name
-	s.expire = uint32(now.Unix()) + a.sessionTTL
-	a.addSession(sess, &s)
+	a.addSession(sess, &session{
+		userName: u.Name,
+		expire:   uint32(now.Unix()) + a.sessionTTL,
+	})
 
-	return fmt.Sprintf("%s=%s; Path=/; HttpOnly; Expires=%s",
-		sessionCookieName, hex.EncodeToString(sess), expstr), nil
+	return fmt.Sprintf(
+		"%s=%s; Path=/; HttpOnly; Expires=%s",
+		sessionCookieName, hex.EncodeToString(sess),
+		cookieExpiryFormat(now.Add(cookieTTL*time.Hour)),
+	), nil
 }
 
 func handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -360,8 +382,8 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 
 // RegisterAuthHandlers - register handlers
 func RegisterAuthHandlers() {
-	Context.mux.Handle("/control/login", postInstallHandler(ensureHandler("POST", handleLogin)))
-	httpRegister("GET", "/control/logout", handleLogout)
+	Context.mux.Handle("/control/login", postInstallHandler(ensureHandler(http.MethodPost, handleLogin)))
+	httpRegister(http.MethodGet, "/control/logout", handleLogout)
 }
 
 func parseCookie(cookie string) string {
@@ -392,8 +414,8 @@ func optionalAuthThird(w http.ResponseWriter, r *http.Request) (authFirst bool) 
 		ok = true
 
 	} else if err == nil {
-		r := Context.auth.CheckSession(cookie.Value)
-		if r == 0 {
+		r := Context.auth.checkSession(cookie.Value)
+		if r == checkSessionOK {
 			ok = true
 		} else if r < 0 {
 			log.Debug("Auth: invalid cookie value: %s", cookie)
@@ -434,12 +456,13 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 			authRequired := Context.auth != nil && Context.auth.AuthRequired()
 			cookie, err := r.Cookie(sessionCookieName)
 			if authRequired && err == nil {
-				r := Context.auth.CheckSession(cookie.Value)
-				if r == 0 {
+				r := Context.auth.checkSession(cookie.Value)
+				if r == checkSessionOK {
 					w.Header().Set("Location", "/")
 					w.WriteHeader(http.StatusFound)
+
 					return
-				} else if r < 0 {
+				} else if r == checkSessionNotFound {
 					log.Debug("Auth: invalid cookie value: %s", cookie)
 				}
 			}
@@ -503,32 +526,34 @@ func (a *Auth) UserFind(login, password string) User {
 	return User{}
 }
 
-// GetCurrentUser - get the current user
-func (a *Auth) GetCurrentUser(r *http.Request) User {
+// getCurrentUser returns the current user.  It returns an empty User if the
+// user is not found.
+func (a *Auth) getCurrentUser(r *http.Request) User {
 	cookie, err := r.Cookie(sessionCookieName)
 	if err != nil {
-		// there's no Cookie, check Basic authentication
+		// There's no Cookie, check Basic authentication.
 		user, pass, ok := r.BasicAuth()
 		if ok {
-			u := Context.auth.UserFind(user, pass)
-			return u
+			return Context.auth.UserFind(user, pass)
 		}
+
 		return User{}
 	}
 
 	a.lock.Lock()
+	defer a.lock.Unlock()
+
 	s, ok := a.sessions[cookie.Value]
 	if !ok {
-		a.lock.Unlock()
 		return User{}
 	}
+
 	for _, u := range a.users {
 		if u.Name == s.userName {
-			a.lock.Unlock()
 			return u
 		}
 	}
-	a.lock.Unlock()
+
 	return User{}
 }
 

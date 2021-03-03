@@ -1,0 +1,23 @@
+#!/bin/sh
+
+set -e -f -u
+
+if [ "$(git diff --cached --name-only -- 'client/*.js')" ]
+then
+	make js-lint js-test
+fi
+
+if [ "$(git diff --cached --name-only -- 'client2/*.js' 'client2/*.ts' 'client2/*.tsx')" ]
+then
+	make js-beta-lint js-beta-test
+fi
+
+if [ "$(git diff --cached --name-only -- '*.go' 'go.mod')" ]
+then
+	make go-lint go-test
+fi
+
+if [ "$(git diff --cached --name-only -- './openapi/openapi.yaml')" ]
+then
+	make openapi-lint
+fi

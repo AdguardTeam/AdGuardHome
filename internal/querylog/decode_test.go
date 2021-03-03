@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
-	"github.com/AdguardTeam/AdGuardHome/internal/testutil"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
@@ -19,12 +19,13 @@ import (
 func TestDecodeLogEntry(t *testing.T) {
 	logOutput := &bytes.Buffer{}
 
-	testutil.ReplaceLogWriter(t, logOutput)
-	testutil.ReplaceLogLevel(t, log.DEBUG)
+	aghtest.ReplaceLogWriter(t, logOutput)
+	aghtest.ReplaceLogLevel(t, log.DEBUG)
 
 	t.Run("success", func(t *testing.T) {
 		const ansStr = `Qz+BgAABAAEAAAAAAmFuBnlhbmRleAJydQAAAQABwAwAAQABAAAACgAEAAAAAA==`
 		const data = `{"IP":"127.0.0.1",` +
+			`"CID":"cli42",` +
 			`"T":"2020-11-25T18:55:56.519796+03:00",` +
 			`"QH":"an.yandex.ru",` +
 			`"QT":"A",` +
@@ -47,11 +48,12 @@ func TestDecodeLogEntry(t *testing.T) {
 		assert.Nil(t, err)
 
 		want := &logEntry{
-			IP:          "127.0.0.1",
+			IP:          net.IPv4(127, 0, 0, 1),
 			Time:        time.Date(2020, 11, 25, 15, 55, 56, 519796000, time.UTC),
 			QHost:       "an.yandex.ru",
 			QType:       "A",
 			QClass:      "IN",
+			ClientID:    "cli42",
 			ClientProto: "",
 			Answer:      ans,
 			Result: dnsfilter.Result{
@@ -84,7 +86,7 @@ func TestDecodeLogEntry(t *testing.T) {
 		decodeLogEntry(got, data)
 
 		s := logOutput.String()
-		assert.Equal(t, "", s)
+		assert.Empty(t, s)
 
 		// Correct for time zones.
 		got.Time = got.Time.UTC()
@@ -172,7 +174,7 @@ func TestDecodeLogEntry(t *testing.T) {
 
 			s := logOutput.String()
 			if tc.want == "" {
-				assert.Equal(t, "", s)
+				assert.Empty(t, s)
 			} else {
 				assert.True(t, strings.HasSuffix(s, tc.want),
 					"got %q", s)

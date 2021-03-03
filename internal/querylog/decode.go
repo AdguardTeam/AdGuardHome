@@ -17,14 +17,26 @@ import (
 type logEntryHandler (func(t json.Token, ent *logEntry) error)
 
 var logEntryHandlers = map[string]logEntryHandler{
+	"CID": func(t json.Token, ent *logEntry) error {
+		v, ok := t.(string)
+		if !ok {
+			return nil
+		}
+
+		ent.ClientID = v
+
+		return nil
+	},
 	"IP": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {
 			return nil
 		}
-		if len(ent.IP) == 0 {
-			ent.IP = v
+
+		if ent.IP == nil {
+			ent.IP = net.ParseIP(v)
 		}
+
 		return nil
 	},
 	"T": func(t json.Token, ent *logEntry) error {

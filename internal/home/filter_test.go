@@ -50,16 +50,17 @@ func TestFilters(t *testing.T) {
 
 	// download
 	ok, err := Context.filters.update(&f)
-	assert.Equal(t, nil, err)
+	assert.Nil(t, err)
 	assert.True(t, ok)
 	assert.Equal(t, 3, f.RulesCount)
 
 	// refresh
 	ok, err = Context.filters.update(&f)
-	assert.True(t, !ok && err == nil)
+	assert.False(t, ok)
+	assert.Nil(t, err)
 
 	err = Context.filters.load(&f)
-	assert.True(t, err == nil)
+	assert.Nil(t, err)
 
 	f.unload()
 	_ = os.Remove(f.Path())

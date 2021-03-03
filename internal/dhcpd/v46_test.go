@@ -7,6 +7,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type fakeIface struct {
@@ -79,8 +80,8 @@ func TestIfaceIPAddrs(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			got, gotErr := ifaceIPAddrs(tc.iface, tc.ipv)
+			require.True(t, errors.Is(gotErr, tc.wantErr))
 			assert.Equal(t, tc.want, got)
-			assert.True(t, errors.Is(gotErr, tc.wantErr))
 		})
 	}
 }
@@ -140,12 +141,8 @@ func TestIfaceDNSIPAddrs(t *testing.T) {
 		want:    nil,
 		wantErr: errTest,
 	}, {
-		name: "ipv4_wait",
-		iface: &waitingFakeIface{
-			addrs: []net.Addr{addr4},
-			err:   nil,
-			n:     1,
-		},
+		name:    "ipv4_wait",
+		iface:   &waitingFakeIface{addrs: []net.Addr{addr4}, err: nil, n: 1},
 		ipv:     ipVersion4,
 		want:    []net.IP{ip4, ip4},
 		wantErr: nil,
@@ -168,12 +165,8 @@ func TestIfaceDNSIPAddrs(t *testing.T) {
 		want:    nil,
 		wantErr: errTest,
 	}, {
-		name: "ipv6_wait",
-		iface: &waitingFakeIface{
-			addrs: []net.Addr{addr6},
-			err:   nil,
-			n:     1,
-		},
+		name:    "ipv6_wait",
+		iface:   &waitingFakeIface{addrs: []net.Addr{addr6}, err: nil, n: 1},
 		ipv:     ipVersion6,
 		want:    []net.IP{ip6, ip6},
 		wantErr: nil,
@@ -182,8 +175,8 @@ func TestIfaceDNSIPAddrs(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			got, gotErr := ifaceDNSIPAddrs(tc.iface, tc.ipv, 2, 0)
+			require.True(t, errors.Is(gotErr, tc.wantErr))
 			assert.Equal(t, tc.want, got)
-			assert.True(t, errors.Is(gotErr, tc.wantErr))
 		})
 	}
 }

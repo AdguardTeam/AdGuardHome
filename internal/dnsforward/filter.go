@@ -12,7 +12,7 @@ import (
 )
 
 func (s *Server) beforeRequestHandler(_ *proxy.Proxy, d *proxy.DNSContext) (bool, error) {
-	ip := ipFromAddr(d.Addr)
+	ip := IPFromAddr(d.Addr)
 	disallowed, _ := s.access.IsBlockedIP(ip)
 	if disallowed {
 		log.Tracef("Client IP %s is blocked by settings", ip)
@@ -30,15 +30,15 @@ func (s *Server) beforeRequestHandler(_ *proxy.Proxy, d *proxy.DNSContext) (bool
 	return true, nil
 }
 
-// getClientRequestFilteringSettings lookups client filtering settings
-// using the client's IP address from the DNSContext
-func (s *Server) getClientRequestFilteringSettings(d *proxy.DNSContext) *dnsfilter.RequestFilteringSettings {
+// getClientRequestFilteringSettings looks up client filtering settings using
+// the client's IP address and ID, if any, from ctx.
+func (s *Server) getClientRequestFilteringSettings(ctx *dnsContext) *dnsfilter.RequestFilteringSettings {
 	setts := s.dnsFilter.GetConfig()
 	setts.FilteringEnabled = true
 	if s.conf.FilterHandler != nil {
-		clientAddr := ipFromAddr(d.Addr)
-		s.conf.FilterHandler(clientAddr, &setts)
+		s.conf.FilterHandler(IPFromAddr(ctx.proxyCtx.Addr), ctx.clientID, &setts)
 	}
+
 	return &setts
 }
 
@@ -55,7 +55,7 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 	} else if res.IsFiltered {
 		log.Tracef("Host %s is filtered, reason - %q, matched rule: %q", host, res.Reason, res.Rules[0].Text)
 		d.Res = s.genDNSFilterMessage(d, &res)
-	} else if res.Reason.In(dnsfilter.ReasonRewrite, dnsfilter.DNSRewriteRule) &&
+	} else if res.Reason.In(dnsfilter.Rewritten, dnsfilter.RewrittenRule) &&
 		res.CanonName != "" &&
 		len(res.IPList) == 0 {
 		// Resolve the new canonical name, not the original host
@@ -63,7 +63,7 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 		// processFilteringAfterResponse.
 		ctx.origQuestion = d.Req.Question[0]
 		d.Req.Question[0].Name = dns.Fqdn(res.CanonName)
-	} else if res.Reason == dnsfilter.RewriteAutoHosts && len(res.ReverseHosts) != 0 {
+	} else if res.Reason == dnsfilter.RewrittenAutoHosts && len(res.ReverseHosts) != 0 {
 		resp := s.makeResponse(req)
 		for _, h := range res.ReverseHosts {
 			hdr := dns.RR_Header{
@@ -82,29 +82,29 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 		}
 
 		d.Res = resp
-	} else if res.Reason == dnsfilter.ReasonRewrite || res.Reason == dnsfilter.RewriteAutoHosts {
+	} else if res.Reason == dnsfilter.Rewritten || res.Reason == dnsfilter.RewrittenAutoHosts {
 		resp := s.makeResponse(req)
 
 		name := host
 		if len(res.CanonName) != 0 {
-			resp.Answer = append(resp.Answer, s.genCNAMEAnswer(req, res.CanonName))
+			resp.Answer = append(resp.Answer, s.genAnswerCNAME(req, res.CanonName))
 			name = res.CanonName
 		}
 
 		for _, ip := range res.IPList {
 			if req.Question[0].Qtype == dns.TypeA {
-				a := s.genAAnswer(req, ip.To4())
+				a := s.genAnswerA(req, ip.To4())
 				a.Hdr.Name = dns.Fqdn(name)
 				resp.Answer = append(resp.Answer, a)
 			} else if req.Question[0].Qtype == dns.TypeAAAA {
-				a := s.genAAAAAnswer(req, ip)
+				a := s.genAnswerAAAA(req, ip)
 				a.Hdr.Name = dns.Fqdn(name)
 				resp.Answer = append(resp.Answer, a)
 			}
 		}
 
 		d.Res = resp
-	} else if res.Reason == dnsfilter.DNSRewriteRule {
+	} else if res.Reason == dnsfilter.RewrittenRule {
 		err = s.filterDNSRewrite(req, res, d)
 		if err != nil {
 			return nil, err

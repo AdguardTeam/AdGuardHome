@@ -2,22 +2,15 @@ package util
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetValidNetInterfacesForWeb(t *testing.T) {
 	ifaces, err := GetValidNetInterfacesForWeb()
-	if err != nil {
-		t.Fatalf("Cannot get net interfaces: %s", err)
-	}
-	if len(ifaces) == 0 {
-		t.Fatalf("No net interfaces found")
-	}
-
+	require.Nilf(t, err, "Cannot get net interfaces: %s", err)
+	require.NotEmpty(t, ifaces, "No net interfaces found")
 	for _, iface := range ifaces {
-		if len(iface.Addresses) == 0 {
-			t.Fatalf("No addresses found for %s", iface.Name)
-		}
-
-		t.Logf("%v", iface)
+		require.NotEmptyf(t, iface.Addresses, "No addresses found for %s", iface.Name)
 	}
 }

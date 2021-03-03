@@ -2,6 +2,7 @@ package home
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
+	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/NYTimes/gziphandler"
 )
@@ -35,48 +37,52 @@ func httpError(w http.ResponseWriter, code int, format string, args ...interface
 // ---------------
 // dns run control
 // ---------------
-func addDNSAddress(dnsAddresses *[]string, addr string) {
+func addDNSAddress(dnsAddresses *[]string, addr net.IP) {
+	hostport := addr.String()
 	if config.DNS.Port != 53 {
-		addr = fmt.Sprintf("%s:%d", addr, config.DNS.Port)
+		hostport = net.JoinHostPort(hostport, strconv.Itoa(config.DNS.Port))
 	}
-	*dnsAddresses = append(*dnsAddresses, addr)
+	*dnsAddresses = append(*dnsAddresses, hostport)
 }
 
-func handleStatus(w http.ResponseWriter, r *http.Request) {
-	c := dnsforward.FilteringConfig{}
+// statusResponse is a response for /control/status endpoint.
+type statusResponse struct {
+	DNSAddrs            []string `json:"dns_addresses"`
+	DNSPort             int      `json:"dns_port"`
+	HTTPPort            int      `json:"http_port"`
+	IsProtectionEnabled bool     `json:"protection_enabled"`
+	// TODO(e.burkov): Inspect if front-end doesn't requires this field as
+	// openapi.yaml declares.
+	IsDHCPAvailable bool   `json:"dhcp_available"`
+	IsRunning       bool   `json:"running"`
+	Version         string `json:"version"`
+	Language        string `json:"language"`
+}
+
+func handleStatus(w http.ResponseWriter, _ *http.Request) {
+	resp := statusResponse{
+		DNSAddrs:  getDNSAddresses(),
+		DNSPort:   config.DNS.Port,
+		HTTPPort:  config.BindPort,
+		IsRunning: isRunning(),
+		Version:   version.Version(),
+		Language:  config.Language,
+	}
+
+	var c *dnsforward.FilteringConfig
 	if Context.dnsServer != nil {
-		Context.dnsServer.WriteDiskConfig(&c)
+		c = &dnsforward.FilteringConfig{}
+		Context.dnsServer.WriteDiskConfig(c)
+		resp.IsProtectionEnabled = c.ProtectionEnabled
 	}
 
-	data := map[string]interface{}{
-		"dns_addresses": getDNSAddresses(),
-		"http_port":     config.BindPort,
-		"dns_port":      config.DNS.Port,
-		"running":       isRunning(),
-		"version":       versionString,
-		"language":      config.Language,
-
-		"protection_enabled": c.ProtectionEnabled,
+	// IsDHCPAvailable field is now false by default for Windows.
+	if runtime.GOOS != "windows" {
+		resp.IsDHCPAvailable = Context.dhcpServer != nil
 	}
 
-	if runtime.GOOS == "windows" {
-		// Set the DHCP to false explicitly, because Context.dhcpServer
-		// is probably not nil, despite the fact that there is no
-		// support for DHCP on Windows in AdGuardHome.
-		//
-		// See also the TODO in dhcpd.Create.
-		data["dhcp_available"] = false
-	} else {
-		data["dhcp_available"] = (Context.dhcpServer != nil)
-	}
-
-	jsonVal, err := json.Marshal(data)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to marshal status json: %s", err)
-		return
-	}
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
+	err := json.NewEncoder(w).Encode(resp)
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Unable to write response json: %s", err)
 		return
@@ -89,7 +95,7 @@ type profileJSON struct {
 
 func handleGetProfile(w http.ResponseWriter, r *http.Request) {
 	pj := profileJSON{}
-	u := Context.auth.GetCurrentUser(r)
+	u := Context.auth.getCurrentUser(r)
 	pj.Name = u.Name
 
 	data, err := json.Marshal(pj)
@@ -118,7 +124,7 @@ func registerControlHandlers() {
 }
 
 func httpRegister(method, url string, handler func(http.ResponseWriter, *http.Request)) {
-	if len(method) == 0 {
+	if method == "" {
 		// "/dns-query" handler doesn't need auth, gzip and isn't restricted by 1 HTTP method
 		Context.mux.HandleFunc(url, postInstall(handler))
 		return
@@ -139,7 +145,7 @@ func ensure(method string, handler func(http.ResponseWriter, *http.Request)) fun
 			return
 		}
 
-		if method == "POST" || method == "PUT" || method == "DELETE" {
+		if method == http.MethodPost || method == http.MethodPut || method == http.MethodDelete {
 			Context.controlLock.Lock()
 			defer Context.controlLock.Unlock()
 		}
@@ -149,11 +155,11 @@ func ensure(method string, handler func(http.ResponseWriter, *http.Request)) fun
 }
 
 func ensurePOST(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
-	return ensure("POST", handler)
+	return ensure(http.MethodPost, handler)
 }
 
 func ensureGET(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
-	return ensure("GET", handler)
+	return ensure(http.MethodGet, handler)
 }
 
 // Bridge between http.Handler object and Go function
@@ -197,37 +203,84 @@ func preInstallHandler(handler http.Handler) http.Handler {
 	return &preInstallHandlerStruct{handler}
 }
 
-// postInstall lets the handler run only if firstRun is false, and redirects to /install.html otherwise
-// it also enforces HTTPS if it is enabled and configured
+const defaultHTTPSPort = 443
+
+// handleHTTPSRedirect redirects the request to HTTPS, if needed.  If ok is
+// true, the middleware must continue handling the request.
+func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
+	web := Context.web
+	if web.httpsServer.server == nil {
+		return true
+	}
+
+	host, _, err := net.SplitHostPort(r.Host)
+	if err != nil {
+		// Check for the missing port error.  If it is that error, just
+		// use the host as is.
+		//
+		// See the source code for net.SplitHostPort.
+		const missingPort = "missing port in address"
+
+		addrErr := &net.AddrError{}
+		if !errors.As(err, &addrErr) || addrErr.Err != missingPort {
+			httpError(w, http.StatusBadRequest, "bad host: %s", err)
+
+			return false
+		}
+
+		host = r.Host
+	}
+
+	if r.TLS == nil && web.forceHTTPS {
+		hostPort := host
+		if port := web.conf.PortHTTPS; port != defaultHTTPSPort {
+			portStr := strconv.Itoa(port)
+			hostPort = net.JoinHostPort(host, portStr)
+		}
+
+		httpsURL := &url.URL{
+			Scheme:   "https",
+			Host:     hostPort,
+			Path:     r.URL.Path,
+			RawQuery: r.URL.RawQuery,
+		}
+		http.Redirect(w, r, httpsURL.String(), http.StatusTemporaryRedirect)
+
+		return false
+	}
+
+	// Allow the frontend from the HTTP origin to send requests to the HTTPS
+	// server.  This can happen when the user has just set up HTTPS with
+	// redirects.  Prevent cache-related errors by setting the Vary header.
+	//
+	// See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin.
+	originURL := &url.URL{
+		Scheme: "http",
+		Host:   r.Host,
+	}
+	w.Header().Set("Access-Control-Allow-Origin", originURL.String())
+	w.Header().Set("Vary", "Origin")
+
+	return true
+}
+
+// postInstall lets the handler to run only if firstRun is false.  Otherwise, it
+// redirects to /install.html.  It also enforces HTTPS if it is enabled and
+// configured and sets appropriate access control headers.
 func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if Context.firstRun &&
-			!strings.HasPrefix(r.URL.Path, "/install.") &&
-			!strings.HasPrefix(r.URL.Path, "/assets/") {
+		path := r.URL.Path
+		if Context.firstRun && !strings.HasPrefix(path, "/install.") &&
+			!strings.HasPrefix(path, "/assets/") {
 			http.Redirect(w, r, "/install.html", http.StatusFound)
+
 			return
 		}
 
-		// enforce https?
-		if r.TLS == nil && Context.web.forceHTTPS && Context.web.httpsServer.server != nil {
-			// yes, and we want host from host:port
-			host, _, err := net.SplitHostPort(r.Host)
-			if err != nil {
-				// no port in host
-				host = r.Host
-			}
-			// construct new URL to redirect to
-			newURL := url.URL{
-				Scheme:   "https",
-				Host:     net.JoinHostPort(host, strconv.Itoa(Context.web.portHTTPS)),
-				Path:     r.URL.Path,
-				RawQuery: r.URL.RawQuery,
-			}
-			http.Redirect(w, r, newURL.String(), http.StatusTemporaryRedirect)
+		if !handleHTTPSRedirect(w, r) {
 			return
 		}
 
-		w.Header().Set("Access-Control-Allow-Origin", "*")
 		handler(w, r)
 	}
 }

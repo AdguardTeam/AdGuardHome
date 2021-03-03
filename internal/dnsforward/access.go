@@ -83,20 +83,21 @@ func processIPCIDRArray(dst *map[string]bool, dstIPNet *[]net.IPNet, src []strin
 // Returns the item from the "disallowedClients" list that lead to blocking IP.
 // If it returns TRUE and an empty string, it means that the "allowedClients" is not empty,
 // but the ip does not belong to it.
-func (a *accessCtx) IsBlockedIP(ip string) (bool, string) {
+func (a *accessCtx) IsBlockedIP(ip net.IP) (bool, string) {
+	ipStr := ip.String()
+
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
 	if len(a.allowedClients) != 0 || len(a.allowedClientsIPNet) != 0 {
-		_, ok := a.allowedClients[ip]
+		_, ok := a.allowedClients[ipStr]
 		if ok {
 			return false, ""
 		}
 
 		if len(a.allowedClientsIPNet) != 0 {
-			ipAddr := net.ParseIP(ip)
 			for _, ipnet := range a.allowedClientsIPNet {
-				if ipnet.Contains(ipAddr) {
+				if ipnet.Contains(ip) {
 					return false, ""
 				}
 			}
@@ -105,15 +106,14 @@ func (a *accessCtx) IsBlockedIP(ip string) (bool, string) {
 		return true, ""
 	}
 
-	_, ok := a.disallowedClients[ip]
+	_, ok := a.disallowedClients[ipStr]
 	if ok {
-		return true, ip
+		return true, ipStr
 	}
 
 	if len(a.disallowedClientsIPNet) != 0 {
-		ipAddr := net.ParseIP(ip)
 		for _, ipnet := range a.disallowedClientsIPNet {
-			if ipnet.Contains(ipAddr) {
+			if ipnet.Contains(ip) {
 				return true, ipnet.String()
 			}
 		}

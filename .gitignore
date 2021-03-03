@@ -7,9 +7,11 @@
 # Only build, run, and test outputs here.  Sorted.
 *-packr.go
 *.db
+*.log
 *.snap
 /bin/
 /build/
+/build2/
 /data/
 /dist/
 /dnsfilter/tests/dnsfilter.TestLotsOfRules*.pprof
@@ -19,4 +21,5 @@
 /snapcraft_login
 AdGuardHome*
 coverage.txt
+leases.db
 node_modules/

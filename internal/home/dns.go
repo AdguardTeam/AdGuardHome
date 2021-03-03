@@ -3,8 +3,10 @@ package home
 import (
 	"fmt"
 	"net"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
@@ -55,10 +57,10 @@ func initDNSServer() error {
 
 	filterConf := config.DNS.DnsfilterConf
 	bindhost := config.DNS.BindHost
-	if config.DNS.BindHost == "0.0.0.0" {
-		bindhost = "127.0.0.1"
+	if config.DNS.BindHost.IsUnspecified() {
+		bindhost = net.IPv4(127, 0, 0, 1)
 	}
-	filterConf.ResolverAddress = fmt.Sprintf("%s:%d", bindhost, config.DNS.Port)
+	filterConf.ResolverAddress = net.JoinHostPort(bindhost.String(), strconv.Itoa(config.DNS.Port))
 	filterConf.AutoHosts = &Context.autoHosts
 	filterConf.ConfigModified = onConfigModified
 	filterConf.HTTPRegister = httpRegister
@@ -98,26 +100,24 @@ func isRunning() bool {
 }
 
 func onDNSRequest(d *proxy.DNSContext) {
-	ip := dnsforward.GetIPString(d.Addr)
-	if ip == "" {
+	ip := dnsforward.IPFromAddr(d.Addr)
+	if ip == nil {
 		// This would be quite weird if we get here
 		return
 	}
 
-	ipAddr := net.ParseIP(ip)
-	if !ipAddr.IsLoopback() {
+	if !ip.IsLoopback() {
 		Context.rdns.Begin(ip)
 	}
-	if !Context.ipDetector.detectSpecialNetwork(ipAddr) {
+	if !Context.ipDetector.detectSpecialNetwork(ip) {
 		Context.whois.Begin(ip)
 	}
 }
 
 func generateServerConfig() (newconfig dnsforward.ServerConfig, err error) {
-	bindHost := net.ParseIP(config.DNS.BindHost)
 	newconfig = dnsforward.ServerConfig{
-		UDPListenAddr:   &net.UDPAddr{IP: bindHost, Port: config.DNS.Port},
-		TCPListenAddr:   &net.TCPAddr{IP: bindHost, Port: config.DNS.Port},
+		UDPListenAddr:   &net.UDPAddr{IP: config.DNS.BindHost, Port: config.DNS.Port},
+		TCPListenAddr:   &net.TCPAddr{IP: config.DNS.BindHost, Port: config.DNS.Port},
 		FilteringConfig: config.DNS.FilteringConfig,
 		ConfigModified:  onConfigModified,
 		HTTPRegister:    httpRegister,
@@ -128,23 +128,24 @@ func generateServerConfig() (newconfig dnsforward.ServerConfig, err error) {
 	Context.tls.WriteDiskConfig(&tlsConf)
 	if tlsConf.Enabled {
 		newconfig.TLSConfig = tlsConf.TLSConfig
+		newconfig.TLSConfig.ServerName = tlsConf.ServerName
 
 		if tlsConf.PortDNSOverTLS != 0 {
 			newconfig.TLSListenAddr = &net.TCPAddr{
-				IP:   bindHost,
+				IP:   config.DNS.BindHost,
 				Port: tlsConf.PortDNSOverTLS,
 			}
 		}
 
 		if tlsConf.PortDNSOverQUIC != 0 {
 			newconfig.QUICListenAddr = &net.UDPAddr{
-				IP:   bindHost,
+				IP:   config.DNS.BindHost,
 				Port: int(tlsConf.PortDNSOverQUIC),
 			}
 		}
 
 		if tlsConf.PortDNSCrypt != 0 {
-			newconfig.DNSCryptConfig, err = newDNSCrypt(bindHost, tlsConf)
+			newconfig.DNSCryptConfig, err = newDNSCrypt(config.DNS.BindHost, tlsConf)
 			if err != nil {
 				// Don't wrap the error, because it's already
 				// wrapped by newDNSCrypt.
@@ -209,43 +210,49 @@ type dnsEncryption struct {
 	quic  string
 }
 
-func getDNSEncryption() dnsEncryption {
-	dnsEncryption := dnsEncryption{}
-
+func getDNSEncryption() (de dnsEncryption) {
 	tlsConf := tlsConfigSettings{}
 
 	Context.tls.WriteDiskConfig(&tlsConf)
 
 	if tlsConf.Enabled && len(tlsConf.ServerName) != 0 {
-
+		hostname := tlsConf.ServerName
 		if tlsConf.PortHTTPS != 0 {
-			addr := tlsConf.ServerName
+			addr := hostname
 			if tlsConf.PortHTTPS != 443 {
-				addr = fmt.Sprintf("%s:%d", addr, tlsConf.PortHTTPS)
+				addr = net.JoinHostPort(addr, strconv.Itoa(tlsConf.PortHTTPS))
 			}
-			addr = fmt.Sprintf("https://%s/dns-query", addr)
-			dnsEncryption.https = addr
+
+			de.https = (&url.URL{
+				Scheme: "https",
+				Host:   addr,
+				Path:   "/dns-query",
+			}).String()
 		}
 
 		if tlsConf.PortDNSOverTLS != 0 {
-			addr := fmt.Sprintf("tls://%s:%d", tlsConf.ServerName, tlsConf.PortDNSOverTLS)
-			dnsEncryption.tls = addr
+			de.tls = (&url.URL{
+				Scheme: "tls",
+				Host:   net.JoinHostPort(hostname, strconv.Itoa(tlsConf.PortDNSOverTLS)),
+			}).String()
 		}
 
 		if tlsConf.PortDNSOverQUIC != 0 {
-			addr := fmt.Sprintf("quic://%s:%d", tlsConf.ServerName, tlsConf.PortDNSOverQUIC)
-			dnsEncryption.quic = addr
+			de.quic = (&url.URL{
+				Scheme: "quic",
+				Host:   net.JoinHostPort(hostname, strconv.Itoa(int(tlsConf.PortDNSOverQUIC))),
+			}).String()
 		}
 	}
 
-	return dnsEncryption
+	return de
 }
 
 // Get the list of DNS addresses the server is listening on
 func getDNSAddresses() []string {
 	dnsAddresses := []string{}
 
-	if config.DNS.BindHost == "0.0.0.0" {
+	if config.DNS.BindHost.IsUnspecified() {
 		ifaces, e := util.GetValidNetInterfacesForWeb()
 		if e != nil {
 			log.Error("Couldn't get network interfaces: %v", e)
@@ -275,21 +282,26 @@ func getDNSAddresses() []string {
 	return dnsAddresses
 }
 
-// If a client has his own settings, apply them
-func applyAdditionalFiltering(clientAddr string, setts *dnsfilter.RequestFilteringSettings) {
+// applyAdditionalFiltering adds additional client information and settings if
+// the client has them.
+func applyAdditionalFiltering(clientAddr net.IP, clientID string, setts *dnsfilter.RequestFilteringSettings) {
 	Context.dnsFilter.ApplyBlockedServices(setts, nil, true)
 
-	if len(clientAddr) == 0 {
+	if clientAddr == nil {
 		return
 	}
+
 	setts.ClientIP = clientAddr
 
-	c, ok := Context.clients.Find(clientAddr)
+	c, ok := Context.clients.Find(clientID)
 	if !ok {
-		return
+		c, ok = Context.clients.Find(clientAddr.String())
+		if !ok {
+			return
+		}
 	}
 
-	log.Debug("Using settings for client %s with IP %s", c.Name, clientAddr)
+	log.Debug("using settings for client %s with ip %s and id %q", c.Name, clientAddr, clientID)
 
 	if c.UseOwnBlockedServices {
 		Context.dnsFilter.ApplyBlockedServices(setts, c.BlockedServices, false)
@@ -328,13 +340,11 @@ func startDNSServer() error {
 	Context.queryLog.Start()
 
 	const topClientsNumber = 100 // the number of clients to get
-	topClients := Context.stats.GetTopClientsIP(topClientsNumber)
-	for _, ip := range topClients {
-		ipAddr := net.ParseIP(ip)
-		if !ipAddr.IsLoopback() {
+	for _, ip := range Context.stats.GetTopClientsIP(topClientsNumber) {
+		if !ip.IsLoopback() {
 			Context.rdns.Begin(ip)
 		}
-		if !Context.ipDetector.detectSpecialNetwork(ipAddr) {
+		if !Context.ipDetector.detectSpecialNetwork(ip) {
 			Context.whois.Begin(ip)
 		}
 	}

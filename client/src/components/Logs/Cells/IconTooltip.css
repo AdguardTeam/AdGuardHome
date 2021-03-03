@@ -35,7 +35,7 @@
 }
 
 .grid--title {
-    font-weight: bold;
+    font-weight: 600;
 }
 
 .grid--title:not(:first-child) {
@@ -65,12 +65,12 @@
     }
 
     .grid .key-colon, .grid .title--border {
-        font-weight: bold;
+        font-weight: 600;
     }
 }
 
 .grid .key-colon:nth-child(odd)::after {
-    content: ':';
+    content: ":";
 }
 
 .grid__one-row {
@@ -95,7 +95,7 @@
 }
 
 .title--border:before {
-    content: '';
+    content: "";
     position: absolute;
     left: 0;
     border-top: 0.5px solid var(--gray-d8) !important;

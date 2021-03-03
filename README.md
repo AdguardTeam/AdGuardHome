@@ -45,7 +45,7 @@
 
 AdGuard Home is a network-wide software for blocking ads & tracking. After you set it up, it'll cover ALL your home devices, and you don't need any client-side software for that.
 
-It operates as a DNS server that re-routes tracking domains to a "black hole," thus preventing your devices from connecting to those servers. It's based on software we use for our public [AdGuard DNS](https://adguard.com/en/adguard-dns/overview.html) servers -- both share a lot of common code.
+It operates as a DNS server that re-routes tracking domains to a "black hole", thus preventing your devices from connecting to those servers. It's based on software we use for our public [AdGuard DNS](https://adguard.com/en/adguard-dns/overview.html) servers -- both share a lot of common code.
 
 * [Getting Started](#getting-started)
 * [Comparing AdGuard Home to other solutions](#comparison)
@@ -58,7 +58,7 @@ It operates as a DNS server that re-routes tracking domains to a "black hole," t
     * [Reporting issues](#reporting-issues)
     * [Help with translations](#translate)
     * [Other](#help-other)
-* [Projects that use AdGuardHome](#uses)
+* [Projects that use AdGuard Home](#uses)
 * [Acknowledgments](#acknowledgments)
 * [Privacy](#privacy)
 
@@ -87,12 +87,21 @@ If you're running **Linux**, there's a secure and easy way to install AdGuard Ho
 
 ### Guides
 
-* [FAQ](https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ)
-* [Configuration](https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration)
-* [AdGuard Home as a DNS-over-HTTPS or DNS-over-TLS server](https://github.com/AdguardTeam/AdGuardHome/wiki/Encryption)
-* [How to install and run AdGuard Home on Raspberry Pi](https://github.com/AdguardTeam/AdGuardHome/wiki/Raspberry-Pi)
-* [How to install and run AdGuard Home on a Virtual Private Server](https://github.com/AdguardTeam/AdGuardHome/wiki/VPS)
-* [How to write your own hosts blocklists properly](https://github.com/AdguardTeam/AdGuardHome/wiki/Hosts-Blocklists)
+* [Getting Started](https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started)
+    * [FAQ](https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ)
+    * [How to Write Hosts Blocklists](https://github.com/AdguardTeam/AdGuardHome/wiki/Hosts-Blocklists)
+    * [Comparing AdGuard Home to Other Solutions](https://github.com/AdguardTeam/AdGuardHome/wiki/Comparison)
+* Configuring AdGuard
+    * [Configuration](https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration)
+    * [Configuring AdGuard Home Clients](https://github.com/AdguardTeam/AdGuardHome/wiki/Clients)
+    * [AdGuard Home as a DoH, DoT, or DoQ Server](https://github.com/AdguardTeam/AdGuardHome/wiki/Encryption)
+    * [AdGuard Home as a DNSCrypt Server](https://github.com/AdguardTeam/AdGuardHome/wiki/DNSCrypt)
+    * [AdGuard Home as a DHCP Server](https://github.com/AdguardTeam/AdGuardHome/wiki/DHCP)
+* Installing AdGuard Home
+    * [Docker](https://github.com/AdguardTeam/AdGuardHome/wiki/Docker)
+    * [How to Install and Run AdGuard Home on a Raspberry Pi](https://github.com/AdguardTeam/AdGuardHome/wiki/Raspberry-Pi)
+    * [How to Install and Run AdGuard Home on a Virtual Private Server](https://github.com/AdguardTeam/AdGuardHome/wiki/VPS)
+* [Verifying Releases](https://github.com/AdguardTeam/AdGuardHome/wiki/Verify-Releases)
 
 ### API
 
@@ -123,20 +132,21 @@ AdGuard Home provides a lot of features out-of-the-box with no need to install a
 
 > Disclaimer: some of the listed features can be added to Pi-Hole by installing additional software or by manually using SSH terminal and reconfiguring one of the utilities Pi-Hole consists of. However, in our opinion, this cannot be legitimately counted as a Pi-Hole's feature.
 
-| Feature                                                                 | AdGuard&nbsp;Home | Pi-Hole                                                |
-|-------------------------------------------------------------------------|--------------|--------------------------------------------------------|
-| Blocking ads and trackers                                               | ✅            | ✅                                                      |
-| Customizing blocklists                                                  | ✅            | ✅                                                      |
-| Built-in DHCP server                                                    | ✅            | ✅                                                      |
-| HTTPS for the Admin interface                                           | ✅            | Kind of, but you'll need to manually configure lighthttpd |
-| Encrypted DNS upstream servers (DNS-over-HTTPS, DNS-over-TLS, DNSCrypt) | ✅            | ❌ (requires additional software)                       |
-| Cross-platform                                                          | ✅            | ❌ (not natively, only via Docker)                      |
-| Running as a DNS-over-HTTPS or DNS-over-TLS server                      | ✅            | ❌ (requires additional software)                       |
-| Blocking phishing and malware domains                                   | ✅            | ❌ (requires non-default blocklists)                    |
-| Parental control (blocking adult domains)                               | ✅            | ❌                                                      |
-| Force Safe search on search engines                                     | ✅            | ❌                                                      |
-| Per-client (device) configuration                                       | ✅            | ✅                                                      |
-| Access settings (choose who can use AGH DNS)                            | ✅            | ❌                                                      |
+| Feature                                                                 | AdGuard&nbsp;Home | Pi-Hole                                                   |
+|-------------------------------------------------------------------------|-------------------|-----------------------------------------------------------|
+| Blocking ads and trackers                                               | ✅                | ✅                                                        |
+| Customizing blocklists                                                  | ✅                | ✅                                                        |
+| Built-in DHCP server                                                    | ✅                | ✅                                                        |
+| HTTPS for the Admin interface                                           | ✅                | Kind of, but you'll need to manually configure lighthttpd |
+| Encrypted DNS upstream servers (DNS-over-HTTPS, DNS-over-TLS, DNSCrypt) | ✅                | ❌ (requires additional software)                         |
+| Cross-platform                                                          | ✅                | ❌ (not natively, only via Docker)                        |
+| Running as a DNS-over-HTTPS or DNS-over-TLS server                      | ✅                | ❌ (requires additional software)                         |
+| Blocking phishing and malware domains                                   | ✅                | ❌ (requires non-default blocklists)                      |
+| Parental control (blocking adult domains)                               | ✅                | ❌                                                        |
+| Force Safe search on search engines                                     | ✅                | ❌                                                        |
+| Per-client (device) configuration                                       | ✅                | ✅                                                        |
+| Access settings (choose who can use AGH DNS)                            | ✅                | ❌                                                        |
+| Running [without root privileges](https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#running-without-superuser)                                         | ✅                | ❌                                                        |
 
 <a id="comparison-adblock"></a>
 ### How does AdGuard Home compare to traditional ad blockers
@@ -145,7 +155,7 @@ It depends.
 
 "DNS sinkholing" is capable of blocking a big percentage of ads, but it lacks flexibility and power of traditional ad blockers. You can get a good impression about the difference between these methods by reading [this article](https://adguard.com/en/blog/adguard-vs-adaway-dns66/). It compares AdGuard for Android (a traditional ad blocker) to hosts-level ad blockers (which are almost identical to DNS-based blockers in their capabilities).
 
-However, this level of protection is enough for some users. Additionally, using a DNS-based blocker can help to block ads, tracking and analytics requests on other types of devices, such as SmartTVs, smart speakers or other kinds of IoT devices (on which you can't install tradtional ad blockers).
+However, this level of protection is enough for some users. Additionally, using a DNS-based blocker can help to block ads, tracking and analytics requests on other types of devices, such as SmartTVs, smart speakers or other kinds of IoT devices (on which you can't install traditional ad blockers).
 
 **Known limitations**
 
@@ -169,7 +179,8 @@ You will need this to build AdGuard Home:
 
  * [go](https://golang.org/dl/) v1.14 or later.
  * [node.js](https://nodejs.org/en/download/) v10.16.2 or later.
- * [npm](https://www.npmjs.com/) v6.14 or later.
+ * [npm](https://www.npmjs.com/) v6.14 or later (temporary requirement, TODO: remove when redesign is finished).
+ * [yarn](https://yarnpkg.com/) v1.22.5 or later.
 
 ### Building
 
@@ -181,6 +192,12 @@ cd AdGuardHome
 make
 ```
 
+Please note, that the non-standard `-j` flag is currently not supported, so
+building with `make -j 4` or setting your `MAKEFLAGS` to include, for example,
+`-j 4` is likely to break the build.  If you do have your `MAKEFLAGS` set to
+that, and you don't want to change it, you can override it by running
+`make -j 1`.
+
 Check the [`Makefile`](https://github.com/AdguardTeam/AdGuardHome/blob/master/Makefile) to learn about other commands.
 
 **Building for a different platform.** You can build AdGuard for any OS/ARCH just like any other Go project.
@@ -188,26 +205,28 @@ In order to do this, specify `GOOS` and `GOARCH` env variables before running ma
 
 For example:
 ```
-GOOS=linux GOARCH=arm64 make
+env GOOS='linux' GOARCH='arm64' make
+```
+Or:
+```
+make GOOS='linux' GOARCH='arm64'
 ```
 
 #### Preparing release
 
 You'll need this to prepare a release build:
 
-* [goreleaser](https://goreleaser.com/)
 * [snapcraft](https://snapcraft.io/)
 
 Commands:
 
-* `make release` - builds a snapshot build (CHANNEL=edge)
-* `CHANNEL=beta make release` - builds beta version, tag is mandatory.
-* `CHANNEL=release make release` - builds release version, tag is mandatory.
+```
+make build-release CHANNEL='...' VERSION='...'
+```
 
 #### Docker image
 
-* Run `make docker` to build the Docker image locally.
-* Run `make docker-multi-arch` to build the multi-arch Docker image (the one that we publish to Docker Hub).
+* Run `make build-docker` to build the Docker image locally (the one that we publish to DockerHub).
 
 Please note, that we're using [Docker Buildx](https://docs.docker.com/buildx/working-with-buildx/) to build our official image.
 
@@ -290,17 +309,20 @@ Here is a link to AdGuard Home project: https://crowdin.com/project/adguard-appl
 Here's what you can also do to contribute:
 
 1. [Look for issues](https://github.com/AdguardTeam/AdGuardHome/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22+) marked as "help wanted".
-2. Actualize the list of *Blocked services*. It it can be found in [dnsfilter/blocked_services.go](https://github.com/AdguardTeam/AdGuardHome/blob/master/internal/dnsfilter/blocked_services.go).
+2. Actualize the list of *Blocked services*. It it can be found in [dnsfilter/blocked.go](https://github.com/AdguardTeam/AdGuardHome/blob/master/internal/dnsfilter/blocked.go).
 3. Actualize the list of known *trackers*. It it can be found in [client/src/helpers/trackers/adguard.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/src/helpers/trackers/adguard.json).
 4. Actualize the list of vetted *blocklists*. It it can be found in [client/src/helpers/filters/filters.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/src/helpers/filters/filters.json).
 
 <a id="uses"></a>
-## Projects that use AdGuardHome
+## Projects that use AdGuard Home
 
-* Python library (https://github.com/frenck/python-adguardhome)
-* Hass.io add-on (https://github.com/hassio-addons/addon-adguard-home)
-* OpenWrt LUCI app (https://github.com/rufengsuixing/luci-app-adguardhome)
-
+* [AdGuard Home Remote](https://apps.apple.com/app/apple-store/id1543143740) - iOS app by [Joost](https://rocketscience-it.nl/)
+* [Python library](https://github.com/frenck/python-adguardhome) by [@frenck](https://github.com/frenck)
+* [Home Assistant add-on](https://github.com/hassio-addons/addon-adguard-home) by [@frenck](https://github.com/frenck)
+* [OpenWrt LUCI app](https://github.com/kongfl888/luci-app-adguardhome) by [@kongfl888](https://github.com/kongfl888) (originally by [@rufengsuixing](https://github.com/rufengsuixing))
+* [Prometheus exporter for AdGuard Home](https://github.com/ebrianne/adguard-exporter) by [@ebrianne](https://github.com/ebrianne)
+* [AdGuard Home on GLInet routers](https://forum.gl-inet.com/t/adguardhome-on-gl-routers/10664) by [Gl-Inet](https://gl-inet.com/)
+* [Cloudron app](https://git.cloudron.io/cloudron/adguard-home-app) by [@gramakri](https://github.com/gramakri)
 
 <a id="acknowledgments"></a>
 ## Acknowledgments
@@ -321,7 +343,7 @@ This software wouldn't have been possible without:
    * And many more node.js packages.
  * [whotracks.me data](https://github.com/cliqz-oss/whotracks.me)
 
-You might have seen that [CoreDNS](https://coredns.io) was mentioned here before — we've stopped using it in AdGuardHome. While we still use it on our servers for [AdGuard DNS](https://adguard.com/adguard-dns/overview.html) service, it seemed like an overkill for Home as it impeded with Home features that we plan to implement.
+You might have seen that [CoreDNS](https://coredns.io) was mentioned here before — we've stopped using it in AdGuard Home. While we still use it on our servers for [AdGuard DNS](https://adguard.com/adguard-dns/overview.html) service, it seemed like an overkill for Home as it impeded with Home features that we plan to implement.
 
 For a full list of all node.js packages in use, please take a look at [client/package.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/package.json) file.
 

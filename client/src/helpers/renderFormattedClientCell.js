@@ -31,7 +31,7 @@ const getFormattedWhois = (whois) => {
  * @param {object} info.whois_info
  * @param {boolean} [isDetailed]
  * @param {boolean} [isLogs]
- * @returns {JSX.Element}
+ * @returns {JSXElement}
  */
 export const renderFormattedClientCell = (value, info, isDetailed = false, isLogs = false) => {
     let whoisContainer = null;

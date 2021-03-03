@@ -11,23 +11,21 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/dnsproxy/proxy"
-
+	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
+	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/utils"
 )
 
-const (
-	clientsUpdatePeriod = 10 * time.Minute
-)
+const clientsUpdatePeriod = 10 * time.Minute
 
 var webHandlersRegistered = false
 
-// Client information
+// Client contains information about persistent clients.
 type Client struct {
 	IDs                 []string
 	Tags                []string
@@ -52,14 +50,13 @@ type Client struct {
 
 type clientSource uint
 
-// Client sources
+// Client sources.  The order determines the priority.
 const (
-	// Priority: etc/hosts > DHCP > ARP > rDNS > WHOIS
-	ClientSourceWHOIS     clientSource = iota // from WHOIS
-	ClientSourceRDNS                          // from rDNS
-	ClientSourceDHCP                          // from DHCP
-	ClientSourceARP                           // from 'arp -a'
-	ClientSourceHostsFile                     // from /etc/hosts
+	ClientSourceWHOIS clientSource = iota
+	ClientSourceRDNS
+	ClientSourceDHCP
+	ClientSourceARP
+	ClientSourceHostsFile
 )
 
 // ClientHost information
@@ -70,8 +67,10 @@ type ClientHost struct {
 }
 
 type clientsContainer struct {
+	// TODO(a.garipov): Perhaps use a number of separate indices for
+	// different types (string, net.IP, and so on).
 	list    map[string]*Client     // name -> client
-	idIndex map[string]*Client     // IP -> client
+	idIndex map[string]*Client     // ID -> client
 	ipHost  map[string]*ClientHost // IP -> Hostname
 	lock    sync.Mutex
 
@@ -156,7 +155,7 @@ func (clients *clientsContainer) tagKnown(tag string) bool {
 
 func (clients *clientsContainer) addFromConfig(objects []clientObject) {
 	for _, cy := range objects {
-		cli := Client{
+		cli := &Client{
 			Name:                cy.Name,
 			IDs:                 cy.IDs,
 			UseOwnSettings:      !cy.UseGlobalSettings,
@@ -172,7 +171,7 @@ func (clients *clientsContainer) addFromConfig(objects []clientObject) {
 
 		for _, s := range cy.BlockedServices {
 			if !dnsfilter.BlockedSvcKnown(s) {
-				log.Debug("Clients: skipping unknown blocked-service %q", s)
+				log.Debug("clients: skipping unknown blocked-service %q", s)
 				continue
 			}
 			cli.BlockedServices = append(cli.BlockedServices, s)
@@ -180,7 +179,7 @@ func (clients *clientsContainer) addFromConfig(objects []clientObject) {
 
 		for _, t := range cy.Tags {
 			if !clients.tagKnown(t) {
-				log.Debug("Clients: skipping unknown tag %q", t)
+				log.Debug("clients: skipping unknown tag %q", t)
 				continue
 			}
 			cli.Tags = append(cli.Tags, t)
@@ -208,10 +207,10 @@ func (clients *clientsContainer) WriteDiskConfig(objects *[]clientObject) {
 			UseGlobalBlockedServices: !cli.UseOwnBlockedServices,
 		}
 
-		cy.Tags = stringArrayDup(cli.Tags)
-		cy.IDs = stringArrayDup(cli.IDs)
-		cy.BlockedServices = stringArrayDup(cli.BlockedServices)
-		cy.Upstreams = stringArrayDup(cli.Upstreams)
+		cy.Tags = copyStrings(cli.Tags)
+		cy.IDs = copyStrings(cli.IDs)
+		cy.BlockedServices = copyStrings(cli.BlockedServices)
+		cy.Upstreams = copyStrings(cli.Upstreams)
 
 		*objects = append(*objects, cy)
 	}
@@ -238,45 +237,44 @@ func (clients *clientsContainer) onHostsChanged() {
 	clients.addFromHostsFile()
 }
 
-// Exists checks if client with this IP already exists
-func (clients *clientsContainer) Exists(ip string, source clientSource) bool {
+// Exists checks if client with this ID already exists.
+func (clients *clientsContainer) Exists(id string, source clientSource) (ok bool) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	_, ok := clients.findByIP(ip)
+	_, ok = clients.findLocked(id)
 	if ok {
 		return true
 	}
 
-	ch, ok := clients.ipHost[ip]
+	var ch *ClientHost
+	ch, ok = clients.ipHost[id]
 	if !ok {
 		return false
 	}
-	if source > ch.Source {
-		return false // we're going to overwrite this client's info with a stronger source
-	}
-	return true
+
+	// Return false if the new source has higher priority.
+	return source <= ch.Source
 }
 
-func stringArrayDup(a []string) []string {
-	a2 := make([]string, len(a))
-	copy(a2, a)
-	return a2
+func copyStrings(a []string) (b []string) {
+	return append(b, a...)
 }
 
-// Find searches for a client by IP
-func (clients *clientsContainer) Find(ip string) (Client, bool) {
+// Find searches for a client by its ID.
+func (clients *clientsContainer) Find(id string) (c *Client, ok bool) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	c, ok := clients.findByIP(ip)
+	c, ok = clients.findLocked(id)
 	if !ok {
-		return Client{}, false
+		return nil, false
 	}
-	c.IDs = stringArrayDup(c.IDs)
-	c.Tags = stringArrayDup(c.Tags)
-	c.BlockedServices = stringArrayDup(c.BlockedServices)
-	c.Upstreams = stringArrayDup(c.Upstreams)
+
+	c.IDs = copyStrings(c.IDs)
+	c.Tags = copyStrings(c.Tags)
+	c.BlockedServices = copyStrings(c.BlockedServices)
+	c.Upstreams = copyStrings(c.Upstreams)
 	return c, true
 }
 
@@ -287,7 +285,7 @@ func (clients *clientsContainer) FindUpstreams(ip string) *proxy.UpstreamConfig 
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	c, ok := clients.findByIP(ip)
+	c, ok := clients.findLocked(ip)
 	if !ok {
 		return nil
 	}
@@ -306,16 +304,16 @@ func (clients *clientsContainer) FindUpstreams(ip string) *proxy.UpstreamConfig 
 	return c.upstreamConfig
 }
 
-// Find searches for a client by IP (and does not lock anything)
-func (clients *clientsContainer) findByIP(ip string) (Client, bool) {
-	ipAddr := net.ParseIP(ip)
-	if ipAddr == nil {
-		return Client{}, false
+// findLocked searches for a client by its ID.  For internal use only.
+func (clients *clientsContainer) findLocked(id string) (c *Client, ok bool) {
+	c, ok = clients.idIndex[id]
+	if ok {
+		return c, true
 	}
 
-	c, ok := clients.idIndex[ip]
-	if ok {
-		return *c, true
+	ip := net.ParseIP(id)
+	if ip == nil {
+		return nil, false
 	}
 
 	for _, c = range clients.list {
@@ -324,32 +322,36 @@ func (clients *clientsContainer) findByIP(ip string) (Client, bool) {
 			if err != nil {
 				continue
 			}
-			if ipnet.Contains(ipAddr) {
-				return *c, true
+
+			if ipnet.Contains(ip) {
+				return c, true
 			}
 		}
 	}
 
 	if clients.dhcpServer == nil {
-		return Client{}, false
+		return nil, false
 	}
-	macFound := clients.dhcpServer.FindMACbyIP(ipAddr)
+
+	macFound := clients.dhcpServer.FindMACbyIP(ip)
 	if macFound == nil {
-		return Client{}, false
+		return nil, false
 	}
+
 	for _, c = range clients.list {
 		for _, id := range c.IDs {
 			hwAddr, err := net.ParseMAC(id)
 			if err != nil {
 				continue
 			}
+
 			if bytes.Equal(hwAddr, macFound) {
-				return *c, true
+				return c, true
 			}
 		}
 	}
 
-	return Client{}, false
+	return nil, false
 }
 
 // FindAutoClient - search for an auto-client by IP
@@ -369,44 +371,47 @@ func (clients *clientsContainer) FindAutoClient(ip string) (ClientHost, bool) {
 	return ClientHost{}, false
 }
 
-// Check if Client object's fields are correct
-func (clients *clientsContainer) check(c *Client) error {
-	if len(c.Name) == 0 {
-		return fmt.Errorf("invalid Name")
-	}
-
-	if len(c.IDs) == 0 {
-		return fmt.Errorf("id required")
+// check validates the client.
+func (clients *clientsContainer) check(c *Client) (err error) {
+	switch {
+	case c == nil:
+		return agherr.Error("client is nil")
+	case c.Name == "":
+		return agherr.Error("invalid name")
+	case len(c.IDs) == 0:
+		return agherr.Error("id required")
+	default:
+		// Go on.
 	}
 
 	for i, id := range c.IDs {
-		ip := net.ParseIP(id)
-		if ip != nil {
-			c.IDs[i] = ip.String() // normalize IP address
-			continue
+		// Normalize structured data.
+		var ip net.IP
+		var ipnet *net.IPNet
+		var mac net.HardwareAddr
+		if ip = net.ParseIP(id); ip != nil {
+			c.IDs[i] = ip.String()
+		} else if ip, ipnet, err = net.ParseCIDR(id); err == nil {
+			ipnet.IP = ip
+			c.IDs[i] = ipnet.String()
+		} else if mac, err = net.ParseMAC(id); err == nil {
+			c.IDs[i] = mac.String()
+		} else if err = dnsforward.ValidateClientID(id); err == nil {
+			c.IDs[i] = id
+		} else {
+			return fmt.Errorf("invalid client id at index %d: %q", i, id)
 		}
-
-		_, _, err := net.ParseCIDR(id)
-		if err == nil {
-			continue
-		}
-
-		_, err = net.ParseMAC(id)
-		if err == nil {
-			continue
-		}
-
-		return fmt.Errorf("invalid ID: %s", id)
 	}
 
 	for _, t := range c.Tags {
 		if !clients.tagKnown(t) {
-			return fmt.Errorf("invalid tag: %s", t)
+			return fmt.Errorf("invalid tag: %q", t)
 		}
 	}
+
 	sort.Strings(c.Tags)
 
-	err := dnsforward.ValidateUpstreams(c.Upstreams)
+	err = dnsforward.ValidateUpstreams(c.Upstreams)
 	if err != nil {
 		return fmt.Errorf("invalid upstream servers: %w", err)
 	}
@@ -414,49 +419,52 @@ func (clients *clientsContainer) check(c *Client) error {
 	return nil
 }
 
-// Add a new client object
-// Return true: success;  false: client exists.
-func (clients *clientsContainer) Add(c Client) (bool, error) {
-	e := clients.check(&c)
-	if e != nil {
-		return false, e
+// Add adds a new client object.  ok is false if such client already exists or
+// if an error occurred.
+func (clients *clientsContainer) Add(c *Client) (ok bool, err error) {
+	err = clients.check(c)
+	if err != nil {
+		return false, err
 	}
 
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
 	// check Name index
-	_, ok := clients.list[c.Name]
+	_, ok = clients.list[c.Name]
 	if ok {
 		return false, nil
 	}
 
 	// check ID index
 	for _, id := range c.IDs {
-		c2, ok := clients.idIndex[id]
+		var c2 *Client
+		c2, ok = clients.idIndex[id]
 		if ok {
-			return false, fmt.Errorf("another client uses the same ID (%s): %s", id, c2.Name)
+			return false, fmt.Errorf("another client uses the same ID (%q): %q", id, c2.Name)
 		}
 	}
 
 	// update Name index
-	clients.list[c.Name] = &c
+	clients.list[c.Name] = c
 
 	// update ID index
 	for _, id := range c.IDs {
-		clients.idIndex[id] = &c
+		clients.idIndex[id] = c
 	}
 
-	log.Debug("Clients: added %q: ID:%v [%d]", c.Name, c.IDs, len(clients.list))
+	log.Debug("clients: added %q: ID:%q [%d]", c.Name, c.IDs, len(clients.list))
+
 	return true, nil
 }
 
-// Del removes a client
-func (clients *clientsContainer) Del(name string) bool {
+// Del removes a client.  ok is false if there is no such client.
+func (clients *clientsContainer) Del(name string) (ok bool) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	c, ok := clients.list[name]
+	var c *Client
+	c, ok = clients.list[name]
 	if !ok {
 		return false
 	}
@@ -468,25 +476,28 @@ func (clients *clientsContainer) Del(name string) bool {
 	for _, id := range c.IDs {
 		delete(clients.idIndex, id)
 	}
+
 	return true
 }
 
-// Return TRUE if arrays are equal
-func arraysEqual(a, b []string) bool {
+// equalStringSlices returns true if the slices are equal.
+func equalStringSlices(a, b []string) (ok bool) {
 	if len(a) != len(b) {
 		return false
 	}
-	for i := 0; i != len(a); i++ {
+
+	for i := range a {
 		if a[i] != b[i] {
 			return false
 		}
 	}
+
 	return true
 }
 
-// Update a client
-func (clients *clientsContainer) Update(name string, c Client) error {
-	err := clients.check(&c)
+// Update updates a client by its name.
+func (clients *clientsContainer) Update(name string, c *Client) (err error) {
+	err = clients.check(c)
 	if err != nil {
 		return err
 	}
@@ -494,65 +505,69 @@ func (clients *clientsContainer) Update(name string, c Client) error {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	old, ok := clients.list[name]
+	prev, ok := clients.list[name]
 	if !ok {
-		return fmt.Errorf("client not found")
+		return agherr.Error("client not found")
 	}
 
 	// check Name index
-	if old.Name != c.Name {
+	if prev.Name != c.Name {
 		_, ok = clients.list[c.Name]
 		if ok {
-			return fmt.Errorf("client already exists")
+			return agherr.Error("client already exists")
 		}
 	}
 
 	// check IP index
-	if !arraysEqual(old.IDs, c.IDs) {
+	if !equalStringSlices(prev.IDs, c.IDs) {
 		for _, id := range c.IDs {
 			c2, ok := clients.idIndex[id]
-			if ok && c2 != old {
-				return fmt.Errorf("another client uses the same ID (%s): %s", id, c2.Name)
+			if ok && c2 != prev {
+				return fmt.Errorf("another client uses the same ID (%q): %q", id, c2.Name)
 			}
 		}
 
 		// update ID index
-		for _, id := range old.IDs {
+		for _, id := range prev.IDs {
 			delete(clients.idIndex, id)
 		}
 		for _, id := range c.IDs {
-			clients.idIndex[id] = old
+			clients.idIndex[id] = prev
 		}
 	}
 
 	// update Name index
-	if old.Name != c.Name {
-		delete(clients.list, old.Name)
-		clients.list[c.Name] = old
+	if prev.Name != c.Name {
+		delete(clients.list, prev.Name)
+		clients.list[c.Name] = prev
 	}
 
 	// update upstreams cache
 	c.upstreamConfig = nil
 
-	*old = c
+	*prev = *c
+
 	return nil
 }
 
-// SetWhoisInfo - associate WHOIS information with a client
+// SetWhoisInfo sets the WHOIS information for a client.
+//
+// TODO(a.garipov): Perhaps replace [][]string with map[string]string.
 func (clients *clientsContainer) SetWhoisInfo(ip string, info [][]string) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	_, ok := clients.findByIP(ip)
+	_, ok := clients.findLocked(ip)
 	if ok {
-		log.Debug("Clients: client for %s is already created, ignore WHOIS info", ip)
+		log.Debug("clients: client for %s is already created, ignore whois info", ip)
 		return
 	}
 
 	ch, ok := clients.ipHost[ip]
 	if ok {
 		ch.WhoisInfo = info
-		log.Debug("Clients: set WHOIS info for auto-client %s: %v", ch.Host, ch.WhoisInfo)
+		log.Debug("clients: set whois info for auto-client %s: %q", ch.Host, info)
+
 		return
 	}
 
@@ -562,31 +577,33 @@ func (clients *clientsContainer) SetWhoisInfo(ip string, info [][]string) {
 	}
 	ch.WhoisInfo = info
 	clients.ipHost[ip] = ch
-	log.Debug("Clients: set WHOIS info for auto-client with IP %s: %v", ip, ch.WhoisInfo)
+	log.Debug("clients: set whois info for auto-client with IP %s: %q", ip, info)
 }
 
-// AddHost adds new IP -> Host pair
-// Use priority of the source (etc/hosts > ARP > rDNS)
-//  so we overwrite existing entries with an equal or higher priority
-func (clients *clientsContainer) AddHost(ip, host string, source clientSource) (bool, error) {
+// AddHost adds a new IP-hostname pairing.  The priorities of the sources is
+// taken into account.  ok is true if the pairing was added.
+func (clients *clientsContainer) AddHost(ip, host string, src clientSource) (ok bool, err error) {
 	clients.lock.Lock()
-	b := clients.addHost(ip, host, source)
+	ok = clients.addHostLocked(ip, host, src)
 	clients.lock.Unlock()
-	return b, nil
+
+	return ok, nil
 }
 
-func (clients *clientsContainer) addHost(ip, host string, source clientSource) (addedNew bool) {
-	ch, ok := clients.ipHost[ip]
+// addHostLocked adds a new IP-hostname pairing.  For internal use only.
+func (clients *clientsContainer) addHostLocked(ip, host string, src clientSource) (ok bool) {
+	var ch *ClientHost
+	ch, ok = clients.ipHost[ip]
 	if ok {
-		if ch.Source > source {
+		if ch.Source > src {
 			return false
 		}
 
-		ch.Source = source
+		ch.Source = src
 	} else {
 		ch = &ClientHost{
 			Host:   host,
-			Source: source,
+			Source: src,
 		}
 
 		clients.ipHost[ip] = ch
@@ -597,11 +614,11 @@ func (clients *clientsContainer) addHost(ip, host string, source clientSource) (
 	return true
 }
 
-// Remove all entries that match the specified source
-func (clients *clientsContainer) rmHosts(source clientSource) {
+// rmHostsBySrc removes all entries that match the specified source.
+func (clients *clientsContainer) rmHostsBySrc(src clientSource) {
 	n := 0
 	for k, v := range clients.ipHost {
-		if v.Source == source {
+		if v.Source == src {
 			delete(clients.ipHost, k)
 			n++
 		}
@@ -610,19 +627,20 @@ func (clients *clientsContainer) rmHosts(source clientSource) {
 	log.Debug("clients: removed %d client aliases", n)
 }
 
-// addFromHostsFile fills the clients hosts list from the system's hosts files.
+// addFromHostsFile fills the client-hostname pairing index from the system's
+// hosts files.
 func (clients *clientsContainer) addFromHostsFile() {
 	hosts := clients.autoHosts.List()
 
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	clients.rmHosts(ClientSourceHostsFile)
+	clients.rmHostsBySrc(ClientSourceHostsFile)
 
 	n := 0
 	for ip, names := range hosts {
 		for _, name := range names {
-			ok := clients.addHost(ip, name, ClientSourceHostsFile)
+			ok := clients.addHostLocked(ip, name, ClientSourceHostsFile)
 			if ok {
 				n++
 			}
@@ -632,31 +650,31 @@ func (clients *clientsContainer) addFromHostsFile() {
 	log.Debug("Clients: added %d client aliases from system hosts-file", n)
 }
 
-// Add IP -> Host pairs from the system's `arp -a` command output
-// The command's output is:
-// HOST (IP) at MAC on IFACE
+// addFromSystemARP adds the IP-hostname pairings from the output of the arp -a
+// command.
 func (clients *clientsContainer) addFromSystemARP() {
 	if runtime.GOOS == "windows" {
 		return
 	}
 
 	cmd := exec.Command("arp", "-a")
-	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
+	log.Tracef("executing %q %q", cmd.Path, cmd.Args)
 	data, err := cmd.Output()
 	if err != nil || cmd.ProcessState.ExitCode() != 0 {
-		log.Debug("command %s has failed: %v code:%d",
+		log.Debug("command %q has failed: %q code:%d",
 			cmd.Path, err, cmd.ProcessState.ExitCode())
 		return
 	}
 
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
-	clients.rmHosts(ClientSourceARP)
+
+	clients.rmHostsBySrc(ClientSourceARP)
 
 	n := 0
+	// TODO(a.garipov): Rewrite to use bufio.Scanner.
 	lines := strings.Split(string(data), "\n")
 	for _, ln := range lines {
-
 		open := strings.Index(ln, " (")
 		close := strings.Index(ln, ") ")
 		if open == -1 || close == -1 || open >= close {
@@ -669,16 +687,17 @@ func (clients *clientsContainer) addFromSystemARP() {
 			continue
 		}
 
-		ok := clients.addHost(ip, host, ClientSourceARP)
+		ok := clients.addHostLocked(ip, host, ClientSourceARP)
 		if ok {
 			n++
 		}
 	}
 
-	log.Debug("Clients: added %d client aliases from 'arp -a' command output", n)
+	log.Debug("clients: added %d client aliases from 'arp -a' command output", n)
 }
 
-// Add clients from DHCP that have non-empty Hostname property
+// addFromDHCP adds the clients that have a non-empty hostname from the DHCP
+// server.
 func (clients *clientsContainer) addFromDHCP() {
 	if clients.dhcpServer == nil {
 		return
@@ -687,18 +706,20 @@ func (clients *clientsContainer) addFromDHCP() {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	clients.rmHosts(ClientSourceDHCP)
+	clients.rmHostsBySrc(ClientSourceDHCP)
 
 	leases := clients.dhcpServer.Leases(dhcpd.LeasesAll)
 	n := 0
 	for _, l := range leases {
-		if len(l.Hostname) == 0 {
+		if l.Hostname == "" {
 			continue
 		}
-		ok := clients.addHost(l.IP.String(), l.Hostname, ClientSourceDHCP)
+
+		ok := clients.addHostLocked(l.IP.String(), l.Hostname, ClientSourceDHCP)
 		if ok {
 			n++
 		}
 	}
-	log.Debug("Clients: added %d client aliases from DHCP", n)
+
+	log.Debug("clients: added %d client aliases from dhcp", n)
 }

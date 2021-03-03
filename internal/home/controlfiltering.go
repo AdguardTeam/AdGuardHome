@@ -369,7 +369,7 @@ type checkHostResp struct {
 	// for FilteredBlockedService:
 	SvcName string `json:"service_name"`
 
-	// for ReasonRewrite:
+	// for Rewrite:
 	CanonName string   `json:"cname"`    // CNAME value
 	IPList    []net.IP `json:"ip_addrs"` // list of IP addresses
 }
@@ -417,14 +417,14 @@ func (f *Filtering) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 
 // RegisterFilteringHandlers - register handlers
 func (f *Filtering) RegisterFilteringHandlers() {
-	httpRegister("GET", "/control/filtering/status", f.handleFilteringStatus)
-	httpRegister("POST", "/control/filtering/config", f.handleFilteringConfig)
-	httpRegister("POST", "/control/filtering/add_url", f.handleFilteringAddURL)
-	httpRegister("POST", "/control/filtering/remove_url", f.handleFilteringRemoveURL)
-	httpRegister("POST", "/control/filtering/set_url", f.handleFilteringSetURL)
-	httpRegister("POST", "/control/filtering/refresh", f.handleFilteringRefresh)
-	httpRegister("POST", "/control/filtering/set_rules", f.handleFilteringSetRules)
-	httpRegister("GET", "/control/filtering/check_host", f.handleCheckHost)
+	httpRegister(http.MethodGet, "/control/filtering/status", f.handleFilteringStatus)
+	httpRegister(http.MethodPost, "/control/filtering/config", f.handleFilteringConfig)
+	httpRegister(http.MethodPost, "/control/filtering/add_url", f.handleFilteringAddURL)
+	httpRegister(http.MethodPost, "/control/filtering/remove_url", f.handleFilteringRemoveURL)
+	httpRegister(http.MethodPost, "/control/filtering/set_url", f.handleFilteringSetURL)
+	httpRegister(http.MethodPost, "/control/filtering/refresh", f.handleFilteringRefresh)
+	httpRegister(http.MethodPost, "/control/filtering/set_rules", f.handleFilteringSetRules)
+	httpRegister(http.MethodGet, "/control/filtering/check_host", f.handleCheckHost)
 }
 
 func checkFiltersUpdateIntervalHours(i uint32) bool {

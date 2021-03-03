@@ -13,15 +13,15 @@
     - 'uses': 'actions/checkout@v2'
     - 'name': 'run-lint'
       'run': >
-        make go-install-tools go-lint
+        make go-deps go-tools go-lint
   'eslint':
     'runs-on': 'ubuntu-latest'
     'steps':
     - 'uses': 'actions/checkout@v2'
     - 'name': 'Install modules'
-      'run': 'npm --prefix client ci'
+      'run': 'npm --prefix="./client" ci'
     - 'name': 'Run ESLint'
-      'run': 'npm --prefix client run lint'
+      'run': 'npm --prefix="./client" run lint'
   'notify':
     'needs':
     - 'go-lint'
@@ -46,7 +46,7 @@
       'uses': '8398a7/action-slack@v3'
       'with':
         'status': '${{ env.WORKFLOW_CONCLUSION }}'
-        'fields': 'repo, message, commit, author, job'
+        'fields': 'repo, message, commit, author, workflow'
       'env':
         'GITHUB_TOKEN': '${{ secrets.GITHUB_TOKEN }}'
         'SLACK_WEBHOOK_URL': '${{ secrets.SLACK_WEBHOOK_URL }}'

@@ -30,6 +30,20 @@ const (
 	pcTXTSuffix               = `pc.dns.adguard.com.`
 )
 
+// SetParentalUpstream sets the parental upstream for *DNSFilter.
+//
+// TODO(e.burkov): Remove this in v1 API to forbid the direct access.
+func (d *DNSFilter) SetParentalUpstream(u upstream.Upstream) {
+	d.parentalUpstream = u
+}
+
+// SetSafeBrowsingUpstream sets the safe browsing upstream for *DNSFilter.
+//
+// TODO(e.burkov): Remove this in v1 API to forbid the direct access.
+func (d *DNSFilter) SetSafeBrowsingUpstream(u upstream.Upstream) {
+	d.safeBrowsingUpstream = u
+}
+
 func (d *DNSFilter) initSecurityServices() error {
 	var err error
 	d.safeBrowsingServer = defaultSafebrowsingServer
@@ -37,22 +51,24 @@ func (d *DNSFilter) initSecurityServices() error {
 	opts := upstream.Options{
 		Timeout: dnsTimeout,
 		ServerIPAddrs: []net.IP{
-			net.ParseIP("94.140.14.15"),
-			net.ParseIP("94.140.15.16"),
+			{94, 140, 14, 15},
+			{94, 140, 15, 16},
 			net.ParseIP("2a10:50c0::bad1:ff"),
 			net.ParseIP("2a10:50c0::bad2:ff"),
 		},
 	}
 
-	d.parentalUpstream, err = upstream.AddressToUpstream(d.parentalServer, opts)
+	parUps, err := upstream.AddressToUpstream(d.parentalServer, opts)
 	if err != nil {
-		return err
+		return fmt.Errorf("converting parental server: %w", err)
 	}
+	d.SetParentalUpstream(parUps)
 
-	d.safeBrowsingUpstream, err = upstream.AddressToUpstream(d.safeBrowsingServer, opts)
+	sbUps, err := upstream.AddressToUpstream(d.safeBrowsingServer, opts)
 	if err != nil {
-		return err
+		return fmt.Errorf("converting safe browsing server: %w", err)
 	}
+	d.SetSafeBrowsingUpstream(sbUps)
 
 	return nil
 }
@@ -200,7 +216,6 @@ func (c *sbCtx) processTXT(resp *dns.Msg) (bool, [][]byte) {
 		log.Debug("%s: received hashes for %s: %v", c.svc, c.host, txt.Txt)
 
 		for _, t := range txt.Txt {
-
 			if len(t) != 32*2 {
 				continue
 			}
@@ -228,7 +243,7 @@ func (c *sbCtx) processTXT(resp *dns.Msg) (bool, [][]byte) {
 
 func (c *sbCtx) storeCache(hashes [][]byte) {
 	sort.Slice(hashes, func(a, b int) bool {
-		return bytes.Compare(hashes[a], hashes[b]) < 0
+		return bytes.Compare(hashes[a], hashes[b]) == -1
 	})
 
 	var curData []byte
@@ -346,16 +361,12 @@ func (d *DNSFilter) handleSafeBrowsingDisable(w http.ResponseWriter, r *http.Req
 }
 
 func (d *DNSFilter) handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Request) {
-	data := map[string]interface{}{
-		"enabled": d.Config.SafeBrowsingEnabled,
-	}
-	jsonVal, err := json.Marshal(data)
-	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "Unable to marshal status json: %s", err)
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
+	err := json.NewEncoder(w).Encode(&struct {
+		Enabled bool `json:"enabled"`
+	}{
+		Enabled: d.Config.SafeBrowsingEnabled,
+	})
 	if err != nil {
 		httpError(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
 		return
@@ -373,17 +384,12 @@ func (d *DNSFilter) handleParentalDisable(w http.ResponseWriter, r *http.Request
 }
 
 func (d *DNSFilter) handleParentalStatus(w http.ResponseWriter, r *http.Request) {
-	data := map[string]interface{}{
-		"enabled": d.Config.ParentalEnabled,
-	}
-	jsonVal, err := json.Marshal(data)
-	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "Unable to marshal status json: %s", err)
-		return
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
+	err := json.NewEncoder(w).Encode(&struct {
+		Enabled bool `json:"enabled"`
+	}{
+		Enabled: d.Config.ParentalEnabled,
+	})
 	if err != nil {
 		httpError(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
 		return
@@ -391,15 +397,15 @@ func (d *DNSFilter) handleParentalStatus(w http.ResponseWriter, r *http.Request)
 }
 
 func (d *DNSFilter) registerSecurityHandlers() {
-	d.Config.HTTPRegister("POST", "/control/safebrowsing/enable", d.handleSafeBrowsingEnable)
-	d.Config.HTTPRegister("POST", "/control/safebrowsing/disable", d.handleSafeBrowsingDisable)
-	d.Config.HTTPRegister("GET", "/control/safebrowsing/status", d.handleSafeBrowsingStatus)
+	d.Config.HTTPRegister(http.MethodPost, "/control/safebrowsing/enable", d.handleSafeBrowsingEnable)
+	d.Config.HTTPRegister(http.MethodPost, "/control/safebrowsing/disable", d.handleSafeBrowsingDisable)
+	d.Config.HTTPRegister(http.MethodGet, "/control/safebrowsing/status", d.handleSafeBrowsingStatus)
 
-	d.Config.HTTPRegister("POST", "/control/parental/enable", d.handleParentalEnable)
-	d.Config.HTTPRegister("POST", "/control/parental/disable", d.handleParentalDisable)
-	d.Config.HTTPRegister("GET", "/control/parental/status", d.handleParentalStatus)
+	d.Config.HTTPRegister(http.MethodPost, "/control/parental/enable", d.handleParentalEnable)
+	d.Config.HTTPRegister(http.MethodPost, "/control/parental/disable", d.handleParentalDisable)
+	d.Config.HTTPRegister(http.MethodGet, "/control/parental/status", d.handleParentalStatus)
 
-	d.Config.HTTPRegister("POST", "/control/safesearch/enable", d.handleSafeSearchEnable)
-	d.Config.HTTPRegister("POST", "/control/safesearch/disable", d.handleSafeSearchDisable)
-	d.Config.HTTPRegister("GET", "/control/safesearch/status", d.handleSafeSearchStatus)
+	d.Config.HTTPRegister(http.MethodPost, "/control/safesearch/enable", d.handleSafeSearchEnable)
+	d.Config.HTTPRegister(http.MethodPost, "/control/safesearch/disable", d.handleSafeSearchDisable)
+	d.Config.HTTPRegister(http.MethodGet, "/control/safesearch/status", d.handleSafeSearchStatus)
 }

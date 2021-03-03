@@ -68,8 +68,8 @@ kXS9jgARhhiWXJrk
 		data.KeyType == "RSA" &&
 		data.Subject == "CN=AdGuard Home,O=AdGuard Ltd" &&
 		data.Issuer == "CN=AdGuard Home,O=AdGuard Ltd" &&
-		data.NotBefore == notBefore &&
-		data.NotAfter == notAfter &&
+		data.NotBefore.Equal(notBefore) &&
+		data.NotAfter.Equal(notAfter) &&
 		// data.DNSNames[0] ==  &&
 		data.ValidPair) {
 		t.Fatalf("valid cert & priv key: validateCertificates(): %v", data)

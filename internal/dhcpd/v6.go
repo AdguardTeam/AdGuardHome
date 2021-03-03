@@ -42,7 +42,6 @@ func (s *v6Server) WriteDiskConfig6(c *V6ServerConf) {
 }
 
 // Return TRUE if IP address is within range [start..0xff]
-// nolint(staticcheck)
 func ip6InRange(start, ip net.IP) bool {
 	if len(start) != 16 {
 		return false
@@ -72,7 +71,10 @@ func (s *v6Server) ResetLeases(ll []*Lease) {
 
 // GetLeases - get current leases
 func (s *v6Server) GetLeases(flags int) []Lease {
-	var result []Lease
+	// The function shouldn't return nil value because zero-length slice
+	// behaves differently in cases like marshalling.  Our front-end also
+	// requires non-nil value in the response.
+	result := []Lease{}
 	s.leasesLock.Lock()
 	for _, lease := range s.leases {
 		if lease.Expiry.Unix() == leaseExpireStatic {
@@ -550,8 +552,8 @@ func (s *v6Server) initRA(iface *net.Interface) error {
 		}
 	}
 
-	s.ra.raAllowSlaac = s.conf.RaAllowSlaac
-	s.ra.raSlaacOnly = s.conf.RaSlaacOnly
+	s.ra.raAllowSLAAC = s.conf.RAAllowSLAAC
+	s.ra.raSLAACOnly = s.conf.RASLAACOnly
 	s.ra.dnsIPAddr = s.ra.ipAddr
 	s.ra.prefixIPAddr = s.conf.ipStart
 	s.ra.ifaceName = s.conf.InterfaceName
@@ -592,7 +594,7 @@ func (s *v6Server) Start() error {
 	}
 
 	// don't initialize DHCPv6 server if we must force the clients to use SLAAC
-	if s.conf.RaSlaacOnly {
+	if s.conf.RASLAACOnly {
 		log.Debug("DHCPv6: not starting DHCPv6 server due to ra_slaac_only=true")
 		return nil
 	}
@@ -657,7 +659,7 @@ func v6Create(conf V6ServerConf) (DHCPServer, error) {
 		return s, nil
 	}
 
-	s.conf.ipStart = net.ParseIP(conf.RangeStart)
+	s.conf.ipStart = conf.RangeStart
 	if s.conf.ipStart == nil || s.conf.ipStart.To16() == nil {
 		return s, fmt.Errorf("dhcpv6: invalid range-start IP: %s", conf.RangeStart)
 	}

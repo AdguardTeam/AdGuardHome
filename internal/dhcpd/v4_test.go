@@ -8,231 +8,283 @@ import (
 
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func notify4(flags uint32) {
 }
 
-func TestV4StaticLeaseAddRemove(t *testing.T) {
-	conf := V4ServerConf{
+func TestV4_AddRemove_static(t *testing.T) {
+	s, err := v4Create(V4ServerConf{
 		Enabled:    true,
-		RangeStart: "192.168.10.100",
-		RangeEnd:   "192.168.10.200",
-		GatewayIP:  "192.168.10.1",
-		SubnetMask: "255.255.255.0",
+		RangeStart: net.IP{192, 168, 10, 100},
+		RangeEnd:   net.IP{192, 168, 10, 200},
+		GatewayIP:  net.IP{192, 168, 10, 1},
+		SubnetMask: net.IP{255, 255, 255, 0},
 		notify:     notify4,
-	}
-	s, err := v4Create(conf)
-	assert.True(t, err == nil)
+	})
+	require.Nil(t, err)
 
 	ls := s.GetLeases(LeasesStatic)
-	assert.Equal(t, 0, len(ls))
+	assert.Empty(t, ls)
 
-	// add static lease
-	l := Lease{}
-	l.IP = net.ParseIP("192.168.10.150").To4()
-	l.HWAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:aa")
-	assert.True(t, s.AddStaticLease(l) == nil)
+	// Add static lease.
+	l := Lease{
+		IP:     net.IP{192, 168, 10, 150},
+		HWAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
+	}
+	require.Nil(t, s.AddStaticLease(l))
+	assert.NotNil(t, s.AddStaticLease(l))
 
-	// try to add the same static lease - fail
-	assert.True(t, s.AddStaticLease(l) != nil)
-
-	// check
 	ls = s.GetLeases(LeasesStatic)
-	assert.Equal(t, 1, len(ls))
-	assert.Equal(t, "192.168.10.150", ls[0].IP.String())
-	assert.Equal(t, "aa:aa:aa:aa:aa:aa", ls[0].HWAddr.String())
-	assert.True(t, ls[0].Expiry.Unix() == leaseExpireStatic)
+	require.Len(t, ls, 1)
+	assert.True(t, l.IP.Equal(ls[0].IP))
+	assert.Equal(t, l.HWAddr, ls[0].HWAddr)
+	assert.EqualValues(t, leaseExpireStatic, ls[0].Expiry.Unix())
 
-	// try to remove static lease - fail
-	l.IP = net.ParseIP("192.168.10.110").To4()
-	l.HWAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:aa")
-	assert.True(t, s.RemoveStaticLease(l) != nil)
+	// Try to remove static lease.
+	assert.NotNil(t, s.RemoveStaticLease(Lease{
+		IP:     net.IP{192, 168, 10, 110},
+		HWAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
+	}))
 
-	// remove static lease
-	l.IP = net.ParseIP("192.168.10.150").To4()
-	l.HWAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:aa")
-	assert.True(t, s.RemoveStaticLease(l) == nil)
-
-	// check
+	// Remove static lease.
+	require.Nil(t, s.RemoveStaticLease(l))
 	ls = s.GetLeases(LeasesStatic)
-	assert.Equal(t, 0, len(ls))
+	assert.Empty(t, ls)
 }
 
-func TestV4StaticLeaseAddReplaceDynamic(t *testing.T) {
-	conf := V4ServerConf{
+func TestV4_AddReplace(t *testing.T) {
+	sIface, err := v4Create(V4ServerConf{
 		Enabled:    true,
-		RangeStart: "192.168.10.100",
-		RangeEnd:   "192.168.10.200",
-		GatewayIP:  "192.168.10.1",
-		SubnetMask: "255.255.255.0",
+		RangeStart: net.IP{192, 168, 10, 100},
+		RangeEnd:   net.IP{192, 168, 10, 200},
+		GatewayIP:  net.IP{192, 168, 10, 1},
+		SubnetMask: net.IP{255, 255, 255, 0},
 		notify:     notify4,
+	})
+	require.Nil(t, err)
+
+	s, ok := sIface.(*v4Server)
+	require.True(t, ok)
+
+	dynLeases := []Lease{{
+		IP:     net.IP{192, 168, 10, 150},
+		HWAddr: net.HardwareAddr{0x11, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
+	}, {
+		IP:     net.IP{192, 168, 10, 151},
+		HWAddr: net.HardwareAddr{0x22, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
+	}}
+
+	for i := range dynLeases {
+		s.addLease(&dynLeases[i])
 	}
-	sIface, err := v4Create(conf)
-	s := sIface.(*v4Server)
-	assert.True(t, err == nil)
 
-	// add dynamic lease
-	ld := Lease{}
-	ld.IP = net.ParseIP("192.168.10.150").To4()
-	ld.HWAddr, _ = net.ParseMAC("11:aa:aa:aa:aa:aa")
-	s.addLease(&ld)
+	stLeases := []Lease{{
+		IP:     net.IP{192, 168, 10, 150},
+		HWAddr: net.HardwareAddr{0x33, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
+	}, {
+		IP:     net.IP{192, 168, 10, 152},
+		HWAddr: net.HardwareAddr{0x22, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
+	}}
 
-	// add dynamic lease
-	{
-		ld := Lease{}
-		ld.IP = net.ParseIP("192.168.10.151").To4()
-		ld.HWAddr, _ = net.ParseMAC("22:aa:aa:aa:aa:aa")
-		s.addLease(&ld)
+	for _, l := range stLeases {
+		require.Nil(t, s.AddStaticLease(l))
 	}
 
-	// add static lease with the same IP
-	l := Lease{}
-	l.IP = net.ParseIP("192.168.10.150").To4()
-	l.HWAddr, _ = net.ParseMAC("33:aa:aa:aa:aa:aa")
-	assert.True(t, s.AddStaticLease(l) == nil)
-
-	// add static lease with the same MAC
-	l = Lease{}
-	l.IP = net.ParseIP("192.168.10.152").To4()
-	l.HWAddr, _ = net.ParseMAC("22:aa:aa:aa:aa:aa")
-	assert.True(t, s.AddStaticLease(l) == nil)
-
-	// check
 	ls := s.GetLeases(LeasesStatic)
-	assert.Equal(t, 2, len(ls))
+	require.Len(t, ls, 2)
 
-	assert.Equal(t, "192.168.10.150", ls[0].IP.String())
-	assert.Equal(t, "33:aa:aa:aa:aa:aa", ls[0].HWAddr.String())
-	assert.True(t, ls[0].Expiry.Unix() == leaseExpireStatic)
-
-	assert.Equal(t, "192.168.10.152", ls[1].IP.String())
-	assert.Equal(t, "22:aa:aa:aa:aa:aa", ls[1].HWAddr.String())
-	assert.True(t, ls[1].Expiry.Unix() == leaseExpireStatic)
+	for i, l := range ls {
+		assert.True(t, stLeases[i].IP.Equal(l.IP))
+		assert.Equal(t, stLeases[i].HWAddr, l.HWAddr)
+		assert.EqualValues(t, leaseExpireStatic, l.Expiry.Unix())
+	}
 }
 
-func TestV4StaticLeaseGet(t *testing.T) {
-	conf := V4ServerConf{
+func TestV4StaticLease_Get(t *testing.T) {
+	var err error
+	sIface, err := v4Create(V4ServerConf{
 		Enabled:    true,
-		RangeStart: "192.168.10.100",
-		RangeEnd:   "192.168.10.200",
-		GatewayIP:  "192.168.10.1",
-		SubnetMask: "255.255.255.0",
+		RangeStart: net.IP{192, 168, 10, 100},
+		RangeEnd:   net.IP{192, 168, 10, 200},
+		GatewayIP:  net.IP{192, 168, 10, 1},
+		SubnetMask: net.IP{255, 255, 255, 0},
 		notify:     notify4,
+	})
+	require.Nil(t, err)
+
+	s, ok := sIface.(*v4Server)
+	require.True(t, ok)
+	s.conf.dnsIPAddrs = []net.IP{{192, 168, 10, 1}}
+
+	l := Lease{
+		IP:     net.IP{192, 168, 10, 150},
+		HWAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 	}
-	sIface, err := v4Create(conf)
-	s := sIface.(*v4Server)
-	assert.True(t, err == nil)
-	s.conf.dnsIPAddrs = []net.IP{net.ParseIP("192.168.10.1").To4()}
+	require.Nil(t, s.AddStaticLease(l))
 
-	l := Lease{}
-	l.IP = net.ParseIP("192.168.10.150").To4()
-	l.HWAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:aa")
-	assert.True(t, s.AddStaticLease(l) == nil)
+	var req, resp *dhcpv4.DHCPv4
+	mac := net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}
 
-	// "Discover"
-	mac, _ := net.ParseMAC("aa:aa:aa:aa:aa:aa")
-	req, _ := dhcpv4.NewDiscovery(mac)
-	resp, _ := dhcpv4.NewReplyFromRequest(req)
-	assert.Equal(t, 1, s.process(req, resp))
+	t.Run("discover", func(t *testing.T) {
+		var err error
 
-	// check "Offer"
-	assert.Equal(t, dhcpv4.MessageTypeOffer, resp.MessageType())
-	assert.Equal(t, "aa:aa:aa:aa:aa:aa", resp.ClientHWAddr.String())
-	assert.Equal(t, "192.168.10.150", resp.YourIPAddr.String())
-	assert.Equal(t, "192.168.10.1", resp.Router()[0].String())
-	assert.Equal(t, "192.168.10.1", resp.ServerIdentifier().String())
-	assert.Equal(t, "255.255.255.0", net.IP(resp.SubnetMask()).String())
-	assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
+		req, err = dhcpv4.NewDiscovery(mac)
+		require.Nil(t, err)
 
-	// "Request"
-	req, _ = dhcpv4.NewRequestFromOffer(resp)
-	resp, _ = dhcpv4.NewReplyFromRequest(req)
-	assert.Equal(t, 1, s.process(req, resp))
+		resp, err = dhcpv4.NewReplyFromRequest(req)
+		require.Nil(t, err)
+		assert.Equal(t, 1, s.process(req, resp))
+	})
+	require.Nil(t, err)
 
-	// check "Ack"
-	assert.Equal(t, dhcpv4.MessageTypeAck, resp.MessageType())
-	assert.Equal(t, "aa:aa:aa:aa:aa:aa", resp.ClientHWAddr.String())
-	assert.Equal(t, "192.168.10.150", resp.YourIPAddr.String())
-	assert.Equal(t, "192.168.10.1", resp.Router()[0].String())
-	assert.Equal(t, "192.168.10.1", resp.ServerIdentifier().String())
-	assert.Equal(t, "255.255.255.0", net.IP(resp.SubnetMask()).String())
-	assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
+	t.Run("offer", func(t *testing.T) {
+		assert.Equal(t, dhcpv4.MessageTypeOffer, resp.MessageType())
+		assert.Equal(t, mac, resp.ClientHWAddr)
+		assert.True(t, l.IP.Equal(resp.YourIPAddr))
+		assert.True(t, s.conf.GatewayIP.Equal(resp.Router()[0]))
+		assert.True(t, s.conf.GatewayIP.Equal(resp.ServerIdentifier()))
+		assert.Equal(t, s.conf.subnetMask, resp.SubnetMask())
+		assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
+	})
+
+	t.Run("request", func(t *testing.T) {
+		req, err = dhcpv4.NewRequestFromOffer(resp)
+		require.Nil(t, err)
+
+		resp, err = dhcpv4.NewReplyFromRequest(req)
+		require.Nil(t, err)
+		assert.Equal(t, 1, s.process(req, resp))
+	})
+	require.Nil(t, err)
+
+	t.Run("ack", func(t *testing.T) {
+		assert.Equal(t, dhcpv4.MessageTypeAck, resp.MessageType())
+		assert.Equal(t, mac, resp.ClientHWAddr)
+		assert.True(t, l.IP.Equal(resp.YourIPAddr))
+		assert.True(t, s.conf.GatewayIP.Equal(resp.Router()[0]))
+		assert.True(t, s.conf.GatewayIP.Equal(resp.ServerIdentifier()))
+		assert.Equal(t, s.conf.subnetMask, resp.SubnetMask())
+		assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
+	})
 
 	dnsAddrs := resp.DNS()
-	assert.Equal(t, 1, len(dnsAddrs))
-	assert.Equal(t, "192.168.10.1", dnsAddrs[0].String())
+	require.Len(t, dnsAddrs, 1)
+	assert.True(t, s.conf.GatewayIP.Equal(dnsAddrs[0]))
 
-	// check lease
-	ls := s.GetLeases(LeasesStatic)
-	assert.Equal(t, 1, len(ls))
-	assert.Equal(t, "192.168.10.150", ls[0].IP.String())
-	assert.Equal(t, "aa:aa:aa:aa:aa:aa", ls[0].HWAddr.String())
+	t.Run("check_lease", func(t *testing.T) {
+		ls := s.GetLeases(LeasesStatic)
+		require.Len(t, ls, 1)
+		assert.True(t, l.IP.Equal(ls[0].IP))
+		assert.Equal(t, mac, ls[0].HWAddr)
+	})
 }
 
-func TestV4DynamicLeaseGet(t *testing.T) {
-	conf := V4ServerConf{
+func TestV4DynamicLease_Get(t *testing.T) {
+	var err error
+	sIface, err := v4Create(V4ServerConf{
 		Enabled:    true,
-		RangeStart: "192.168.10.100",
-		RangeEnd:   "192.168.10.200",
-		GatewayIP:  "192.168.10.1",
-		SubnetMask: "255.255.255.0",
+		RangeStart: net.IP{192, 168, 10, 100},
+		RangeEnd:   net.IP{192, 168, 10, 200},
+		GatewayIP:  net.IP{192, 168, 10, 1},
+		SubnetMask: net.IP{255, 255, 255, 0},
 		notify:     notify4,
 		Options: []string{
 			"81 hex 303132",
 			"82 ip 1.2.3.4",
 		},
-	}
-	sIface, err := v4Create(conf)
-	s := sIface.(*v4Server)
-	assert.True(t, err == nil)
-	s.conf.dnsIPAddrs = []net.IP{net.ParseIP("192.168.10.1").To4()}
+	})
+	require.Nil(t, err)
 
-	// "Discover"
-	mac, _ := net.ParseMAC("aa:aa:aa:aa:aa:aa")
-	req, _ := dhcpv4.NewDiscovery(mac)
-	resp, _ := dhcpv4.NewReplyFromRequest(req)
-	assert.Equal(t, 1, s.process(req, resp))
+	s, ok := sIface.(*v4Server)
+	require.True(t, ok)
+	s.conf.dnsIPAddrs = []net.IP{{192, 168, 10, 1}}
 
-	// check "Offer"
-	assert.Equal(t, dhcpv4.MessageTypeOffer, resp.MessageType())
-	assert.Equal(t, "aa:aa:aa:aa:aa:aa", resp.ClientHWAddr.String())
-	assert.Equal(t, "192.168.10.100", resp.YourIPAddr.String())
-	assert.Equal(t, "192.168.10.1", resp.Router()[0].String())
-	assert.Equal(t, "192.168.10.1", resp.ServerIdentifier().String())
-	assert.Equal(t, "255.255.255.0", net.IP(resp.SubnetMask()).String())
-	assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
-	assert.Equal(t, []byte("012"), resp.Options[uint8(dhcpv4.OptionFQDN)])
-	assert.Equal(t, "1.2.3.4", net.IP(resp.Options[uint8(dhcpv4.OptionRelayAgentInformation)]).String())
+	var req, resp *dhcpv4.DHCPv4
+	mac := net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}
 
-	// "Request"
-	req, _ = dhcpv4.NewRequestFromOffer(resp)
-	resp, _ = dhcpv4.NewReplyFromRequest(req)
-	assert.Equal(t, 1, s.process(req, resp))
+	t.Run("discover", func(t *testing.T) {
+		req, err = dhcpv4.NewDiscovery(mac)
+		require.Nil(t, err)
 
-	// check "Ack"
-	assert.Equal(t, dhcpv4.MessageTypeAck, resp.MessageType())
-	assert.Equal(t, "aa:aa:aa:aa:aa:aa", resp.ClientHWAddr.String())
-	assert.Equal(t, "192.168.10.100", resp.YourIPAddr.String())
-	assert.Equal(t, "192.168.10.1", resp.Router()[0].String())
-	assert.Equal(t, "192.168.10.1", resp.ServerIdentifier().String())
-	assert.Equal(t, "255.255.255.0", net.IP(resp.SubnetMask()).String())
-	assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
+		resp, err = dhcpv4.NewReplyFromRequest(req)
+		require.Nil(t, err)
+		assert.Equal(t, 1, s.process(req, resp))
+	})
+	require.Nil(t, err)
+
+	t.Run("offer", func(t *testing.T) {
+		assert.Equal(t, dhcpv4.MessageTypeOffer, resp.MessageType())
+		assert.Equal(t, mac, resp.ClientHWAddr)
+		assert.True(t, s.conf.RangeStart.Equal(resp.YourIPAddr))
+		assert.True(t, s.conf.GatewayIP.Equal(resp.Router()[0]))
+		assert.True(t, s.conf.GatewayIP.Equal(resp.ServerIdentifier()))
+		assert.Equal(t, s.conf.subnetMask, resp.SubnetMask())
+		assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
+		assert.Equal(t, []byte("012"), resp.Options[uint8(dhcpv4.OptionFQDN)])
+		assert.True(t, net.IP{1, 2, 3, 4}.Equal(net.IP(resp.Options[uint8(dhcpv4.OptionRelayAgentInformation)])))
+	})
+
+	t.Run("request", func(t *testing.T) {
+		var err error
+
+		req, err = dhcpv4.NewRequestFromOffer(resp)
+		require.Nil(t, err)
+
+		resp, err = dhcpv4.NewReplyFromRequest(req)
+		require.Nil(t, err)
+		assert.Equal(t, 1, s.process(req, resp))
+	})
+	require.Nil(t, err)
+
+	t.Run("ack", func(t *testing.T) {
+		assert.Equal(t, dhcpv4.MessageTypeAck, resp.MessageType())
+		assert.Equal(t, mac, resp.ClientHWAddr)
+		assert.True(t, s.conf.RangeStart.Equal(resp.YourIPAddr))
+		assert.True(t, s.conf.GatewayIP.Equal(resp.Router()[0]))
+		assert.True(t, s.conf.GatewayIP.Equal(resp.ServerIdentifier()))
+		assert.Equal(t, s.conf.subnetMask, resp.SubnetMask())
+		assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
+	})
 
 	dnsAddrs := resp.DNS()
-	assert.Equal(t, 1, len(dnsAddrs))
-	assert.Equal(t, "192.168.10.1", dnsAddrs[0].String())
+	require.Len(t, dnsAddrs, 1)
+	assert.True(t, net.IP{192, 168, 10, 1}.Equal(dnsAddrs[0]))
 
 	// check lease
-	ls := s.GetLeases(LeasesDynamic)
-	assert.Equal(t, 1, len(ls))
-	assert.Equal(t, "192.168.10.100", ls[0].IP.String())
-	assert.Equal(t, "aa:aa:aa:aa:aa:aa", ls[0].HWAddr.String())
+	t.Run("check_lease", func(t *testing.T) {
+		ls := s.GetLeases(LeasesDynamic)
+		assert.Len(t, ls, 1)
+		assert.True(t, net.IP{192, 168, 10, 100}.Equal(ls[0].IP))
+		assert.Equal(t, mac, ls[0].HWAddr)
+	})
+}
 
-	start := net.ParseIP("192.168.10.100").To4()
-	stop := net.ParseIP("192.168.10.200").To4()
-	assert.True(t, !ip4InRange(start, stop, net.ParseIP("192.168.10.99").To4()))
-	assert.True(t, !ip4InRange(start, stop, net.ParseIP("192.168.11.100").To4()))
-	assert.True(t, !ip4InRange(start, stop, net.ParseIP("192.168.11.201").To4()))
-	assert.True(t, ip4InRange(start, stop, net.ParseIP("192.168.10.100").To4()))
+func TestIP4InRange(t *testing.T) {
+	start := net.IP{192, 168, 10, 100}
+	stop := net.IP{192, 168, 10, 200}
+
+	testCases := []struct {
+		ip   net.IP
+		want bool
+	}{{
+		ip:   net.IP{192, 168, 10, 99},
+		want: false,
+	}, {
+		ip:   net.IP{192, 168, 11, 100},
+		want: false,
+	}, {
+		ip:   net.IP{192, 168, 11, 201},
+		want: false,
+	}, {
+		ip:   start,
+		want: true,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.ip.String(), func(t *testing.T) {
+			assert.Equal(t, tc.want, ip4InRange(start, stop, tc.ip))
+		})
+	}
 }

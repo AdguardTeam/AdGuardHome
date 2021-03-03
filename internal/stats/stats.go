@@ -48,7 +48,7 @@ type Stats interface {
 	Update(e Entry)
 
 	// Get IP addresses of the clients with the most number of requests
-	GetTopClientsIP(limit uint) []string
+	GetTopClientsIP(limit uint) []net.IP
 
 	// WriteDiskConfig - write configuration
 	WriteDiskConfig(dc *DiskConfig)
@@ -76,10 +76,14 @@ const (
 	rLast
 )
 
-// Entry - data to add
+// Entry is a statistics data entry.
 type Entry struct {
+	// Clients is the client's primary ID.
+	//
+	// TODO(a.garipov): Make this a {net.IP, string} enum?
+	Client string
+
 	Domain string
-	Client net.IP
 	Result Result
 	Time   uint32 // processing time (msec)
 }

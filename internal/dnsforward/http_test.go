@@ -2,16 +2,35 @@ package dnsforward
 
 import (
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDNSForwardHTTTP_handleGetConfig(t *testing.T) {
-	s := createTestServer(t)
+	filterConf := &dnsfilter.Config{
+		SafeBrowsingEnabled:   true,
+		SafeBrowsingCacheSize: 1000,
+		SafeSearchEnabled:     true,
+		SafeSearchCacheSize:   1000,
+		ParentalCacheSize:     1000,
+		CacheTime:             30,
+	}
+	forwardConf := ServerConfig{
+		UDPListenAddr: &net.UDPAddr{},
+		TCPListenAddr: &net.TCPAddr{},
+		FilteringConfig: FilteringConfig{
+			ProtectionEnabled: true,
+			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
+		},
+		ConfigModified: func() {},
+	}
+	s := createTestServer(t, filterConf, forwardConf)
 	err := s.Start()
 	assert.Nil(t, err)
 	defer assert.Nil(t, s.Stop())
@@ -35,6 +54,7 @@ func TestDNSForwardHTTTP_handleGetConfig(t *testing.T) {
 		conf: func() ServerConfig {
 			conf := defaultConf
 			conf.FastestAddr = true
+
 			return conf
 		},
 		want: "{\"upstream_dns\":[\"8.8.8.8:53\",\"8.8.4.4:53\"],\"upstream_dns_file\":\"\",\"bootstrap_dns\":[\"9.9.9.10\",\"149.112.112.10\",\"2620:fe::10\",\"2620:fe::fe:10\"],\"protection_enabled\":true,\"ratelimit\":0,\"blocking_mode\":\"\",\"blocking_ipv4\":\"\",\"blocking_ipv6\":\"\",\"edns_cs_enabled\":false,\"dnssec_enabled\":false,\"disable_ipv6\":false,\"upstream_mode\":\"fastest_addr\",\"cache_size\":0,\"cache_ttl_min\":0,\"cache_ttl_max\":0}\n",
@@ -43,6 +63,7 @@ func TestDNSForwardHTTTP_handleGetConfig(t *testing.T) {
 		conf: func() ServerConfig {
 			conf := defaultConf
 			conf.AllServers = true
+
 			return conf
 		},
 		want: "{\"upstream_dns\":[\"8.8.8.8:53\",\"8.8.4.4:53\"],\"upstream_dns_file\":\"\",\"bootstrap_dns\":[\"9.9.9.10\",\"149.112.112.10\",\"2620:fe::10\",\"2620:fe::fe:10\"],\"protection_enabled\":true,\"ratelimit\":0,\"blocking_mode\":\"\",\"blocking_ipv4\":\"\",\"blocking_ipv6\":\"\",\"edns_cs_enabled\":false,\"dnssec_enabled\":false,\"disable_ipv6\":false,\"upstream_mode\":\"parallel\",\"cache_size\":0,\"cache_ttl_min\":0,\"cache_ttl_max\":0}\n",
@@ -61,7 +82,24 @@ func TestDNSForwardHTTTP_handleGetConfig(t *testing.T) {
 }
 
 func TestDNSForwardHTTTP_handleSetConfig(t *testing.T) {
-	s := createTestServer(t)
+	filterConf := &dnsfilter.Config{
+		SafeBrowsingEnabled:   true,
+		SafeBrowsingCacheSize: 1000,
+		SafeSearchEnabled:     true,
+		SafeSearchCacheSize:   1000,
+		ParentalCacheSize:     1000,
+		CacheTime:             30,
+	}
+	forwardConf := ServerConfig{
+		UDPListenAddr: &net.UDPAddr{},
+		TCPListenAddr: &net.TCPAddr{},
+		FilteringConfig: FilteringConfig{
+			ProtectionEnabled: true,
+			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
+		},
+		ConfigModified: func() {},
+	}
+	s := createTestServer(t, filterConf, forwardConf)
 
 	defaultConf := s.conf
 

@@ -161,7 +161,73 @@ var serviceRulesArray = []svc{
 		"||douyin.com^",
 		"||tiktokv.com^",
 	}},
-	{"qq", []string{"||qq.com^", "||qqzaixian.com^"}},
+	{"vimeo", []string{
+		"||vimeo.com^",
+		"||vimeocdn.com^",
+		"*vod-adaptive.akamaized.net^",
+	}},
+	{"pinterest", []string{
+		"||pinterest.*^",
+		"||pinimg.com^",
+	}},
+	{"imgur", []string{
+		"||imgur.com^",
+	}},
+	{"dailymotion", []string{
+		"||dailymotion.com^",
+		"||dm-event.net^",
+		"||dmcdn.net^",
+	}},
+	{"qq", []string{
+		// block qq.com and subdomains excluding WeChat domains
+		"^(?!weixin|wx)([^.]+\\.)?qq\\.com$",
+		"||qqzaixian.com^",
+	}},
+	{"wechat", []string{
+		"||wechat.com^",
+		"||weixin.qq.com^",
+		"||wx.qq.com^",
+	}},
+	{"viber", []string{
+		"||viber.com^",
+	}},
+	{"weibo", []string{
+		"||weibo.com^",
+	}},
+	{"9gag", []string{
+		"||9cache.com^",
+		"||gag.com^",
+	}},
+	{"telegram", []string{
+		"||t.me^",
+		"||telegram.me^",
+		"||telegram.org^",
+	}},
+	{"disneyplus", []string{
+		"||disney-plus.net^",
+		"||disneyplus.com^",
+	}},
+	{"hulu", []string{
+		"||hulu.com^",
+	}},
+	{"spotify", []string{
+		"/_spotify-connect._tcp.local/",
+		"||spotify.com^",
+		"||scdn.co^",
+		"||spotify.com.edgesuite.net^",
+		"||spotify.map.fastly.net^",
+		"||spotify.map.fastlylb.net^",
+		"||spotifycdn.net^",
+		"||audio-ak-spotify-com.akamaized.net^",
+		"||audio4-ak-spotify-com.akamaized.net^",
+		"||heads-ak-spotify-com.akamaized.net^",
+		"||heads4-ak-spotify-com.akamaized.net^",
+	}},
+	{"tinder", []string{
+		"||gotinder.com^",
+		"||tinder.com^",
+		"||tindersparks.com^",
+	}},
 }
 
 // convert array to map
@@ -242,6 +308,6 @@ func (d *DNSFilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Requ
 
 // registerBlockedServicesHandlers - register HTTP handlers
 func (d *DNSFilter) registerBlockedServicesHandlers() {
-	d.Config.HTTPRegister("GET", "/control/blocked_services/list", d.handleBlockedServicesList)
-	d.Config.HTTPRegister("POST", "/control/blocked_services/set", d.handleBlockedServicesSet)
+	d.Config.HTTPRegister(http.MethodGet, "/control/blocked_services/list", d.handleBlockedServicesList)
+	d.Config.HTTPRegister(http.MethodPost, "/control/blocked_services/set", d.handleBlockedServicesSet)
 }

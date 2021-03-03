@@ -23,7 +23,8 @@ type v4Server struct {
 	srv        *server4.Server
 	leasesLock sync.Mutex
 	leases     []*Lease
-	ipAddrs    [256]byte
+	// TODO(e.burkov): This field type should be a normal bitmap.
+	ipAddrs [256]byte
 
 	conf V4ServerConf
 }
@@ -77,7 +78,10 @@ func (s *v4Server) blacklisted(l *Lease) bool {
 
 // GetLeases returns the list of current DHCP leases (thread-safe)
 func (s *v4Server) GetLeases(flags int) []Lease {
-	var result []Lease
+	// The function shouldn't return nil value because zero-length slice
+	// behaves differently in cases like marshalling.  Our front-end also
+	// requires non-nil value in the response.
+	result := []Lease{}
 	now := time.Now().Unix()
 
 	s.leasesLock.Lock()
@@ -589,7 +593,7 @@ func (s *v4Server) Start() error {
 	s.conf.dnsIPAddrs = dnsIPAddrs
 
 	laddr := &net.UDPAddr{
-		IP:   net.ParseIP("0.0.0.0"),
+		IP:   net.IP{0, 0, 0, 0},
 		Port: dhcpv4.ServerPort,
 	}
 	s.srv, err = server4.NewServer(iface.Name, laddr, s.packetHandler, server4.WithDebugLogger())
@@ -632,19 +636,18 @@ func v4Create(conf V4ServerConf) (DHCPServer, error) {
 	}
 
 	var err error
-	s.conf.routerIP, err = parseIPv4(s.conf.GatewayIP)
+	s.conf.routerIP, err = tryTo4(s.conf.GatewayIP)
 	if err != nil {
 		return s, fmt.Errorf("dhcpv4: %w", err)
 	}
 
-	subnet, err := parseIPv4(s.conf.SubnetMask)
-	if err != nil || !isValidSubnetMask(subnet) {
-		return s, fmt.Errorf("dhcpv4: invalid subnet mask: %s", s.conf.SubnetMask)
+	if s.conf.SubnetMask == nil {
+		return s, fmt.Errorf("dhcpv4: invalid subnet mask: %v", s.conf.SubnetMask)
 	}
 	s.conf.subnetMask = make([]byte, 4)
-	copy(s.conf.subnetMask, subnet)
+	copy(s.conf.subnetMask, s.conf.SubnetMask.To4())
 
-	s.conf.ipStart, err = parseIPv4(conf.RangeStart)
+	s.conf.ipStart, err = tryTo4(conf.RangeStart)
 	if s.conf.ipStart == nil {
 		return s, fmt.Errorf("dhcpv4: %w", err)
 	}
@@ -652,7 +655,7 @@ func v4Create(conf V4ServerConf) (DHCPServer, error) {
 		return s, fmt.Errorf("dhcpv4: invalid range start IP")
 	}
 
-	s.conf.ipEnd, err = parseIPv4(conf.RangeEnd)
+	s.conf.ipEnd, err = tryTo4(conf.RangeEnd)
 	if s.conf.ipEnd == nil {
 		return s, fmt.Errorf("dhcpv4: %w", err)
 	}

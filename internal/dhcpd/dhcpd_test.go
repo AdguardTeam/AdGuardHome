@@ -3,128 +3,188 @@
 package dhcpd
 
 import (
-	"bytes"
 	"net"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/testutil"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
-	testutil.DiscardLogOutput(m)
+	aghtest.DiscardLogOutput(m)
 }
 
 func testNotify(flags uint32) {
 }
 
-// Leases database store/load
+// Leases database store/load.
 func TestDB(t *testing.T) {
 	var err error
-	s := Server{}
-	s.conf.DBFilePath = dbFilename
-
-	conf := V4ServerConf{
-		Enabled:    true,
-		RangeStart: "192.168.10.100",
-		RangeEnd:   "192.168.10.200",
-		GatewayIP:  "192.168.10.1",
-		SubnetMask: "255.255.255.0",
-		notify:     testNotify,
+	s := Server{
+		conf: ServerConfig{
+			DBFilePath: dbFilename,
+		},
 	}
-	s.srv4, err = v4Create(conf)
-	assert.True(t, err == nil)
+
+	s.srv4, err = v4Create(V4ServerConf{
+		Enabled:    true,
+		RangeStart: net.IP{192, 168, 10, 100},
+		RangeEnd:   net.IP{192, 168, 10, 200},
+		GatewayIP:  net.IP{192, 168, 10, 1},
+		SubnetMask: net.IP{255, 255, 255, 0},
+		notify:     testNotify,
+	})
+	require.Nil(t, err)
 
 	s.srv6, err = v6Create(V6ServerConf{})
-	assert.True(t, err == nil)
+	require.Nil(t, err)
 
-	l := Lease{}
-	l.IP = net.ParseIP("192.168.10.100").To4()
-	l.HWAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:aa")
-	exp1 := time.Now().Add(time.Hour)
-	l.Expiry = exp1
-	s.srv4.(*v4Server).addLease(&l)
+	leases := []Lease{{
+		IP:     net.IP{192, 168, 10, 100},
+		HWAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
+		Expiry: time.Now().Add(time.Hour),
+	}, {
+		IP:     net.IP{192, 168, 10, 101},
+		HWAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xBB},
+	}}
 
-	l2 := Lease{}
-	l2.IP = net.ParseIP("192.168.10.101").To4()
-	l2.HWAddr, _ = net.ParseMAC("aa:aa:aa:aa:aa:bb")
-	s.srv4.AddStaticLease(l2)
+	srv4, ok := s.srv4.(*v4Server)
+	require.True(t, ok)
 
-	_ = os.Remove("leases.db")
+	srv4.addLease(&leases[0])
+	require.Nil(t, s.srv4.AddStaticLease(leases[1]))
+
 	s.dbStore()
+	t.Cleanup(func() {
+		assert.Nil(t, os.Remove(dbFilename))
+	})
 	s.srv4.ResetLeases(nil)
-
 	s.dbLoad()
 
 	ll := s.srv4.GetLeases(LeasesAll)
+	require.Len(t, ll, len(leases))
 
-	assert.Equal(t, "aa:aa:aa:aa:aa:bb", ll[0].HWAddr.String())
-	assert.Equal(t, "192.168.10.101", ll[0].IP.String())
-	assert.Equal(t, int64(leaseExpireStatic), ll[0].Expiry.Unix())
+	assert.Equal(t, leases[1].HWAddr, ll[0].HWAddr)
+	assert.Equal(t, leases[1].IP, ll[0].IP)
+	assert.EqualValues(t, leaseExpireStatic, ll[0].Expiry.Unix())
 
-	assert.Equal(t, "aa:aa:aa:aa:aa:aa", ll[1].HWAddr.String())
-	assert.Equal(t, "192.168.10.100", ll[1].IP.String())
-	assert.Equal(t, exp1.Unix(), ll[1].Expiry.Unix())
-
-	_ = os.Remove("leases.db")
+	assert.Equal(t, leases[0].HWAddr, ll[1].HWAddr)
+	assert.Equal(t, leases[0].IP, ll[1].IP)
+	assert.Equal(t, leases[0].Expiry.Unix(), ll[1].Expiry.Unix())
 }
 
 func TestIsValidSubnetMask(t *testing.T) {
-	assert.True(t, isValidSubnetMask([]byte{255, 255, 255, 0}))
-	assert.True(t, isValidSubnetMask([]byte{255, 255, 254, 0}))
-	assert.True(t, isValidSubnetMask([]byte{255, 255, 252, 0}))
-	assert.True(t, !isValidSubnetMask([]byte{255, 255, 253, 0}))
-	assert.True(t, !isValidSubnetMask([]byte{255, 255, 255, 1}))
+	testCases := []struct {
+		mask net.IP
+		want bool
+	}{{
+		mask: net.IP{255, 255, 255, 0},
+		want: true,
+	}, {
+		mask: net.IP{255, 255, 254, 0},
+		want: true,
+	}, {
+		mask: net.IP{255, 255, 252, 0},
+		want: true,
+	}, {
+		mask: net.IP{255, 255, 253, 0},
+	}, {
+		mask: net.IP{255, 255, 255, 1},
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.mask.String(), func(t *testing.T) {
+			assert.Equal(t, tc.want, isValidSubnetMask(tc.mask))
+		})
+	}
 }
 
 func TestNormalizeLeases(t *testing.T) {
-	dynLeases := []*Lease{}
-	staticLeases := []*Lease{}
+	dynLeases := []*Lease{{
+		HWAddr: net.HardwareAddr{1, 2, 3, 4},
+	}, {
+		HWAddr: net.HardwareAddr{1, 2, 3, 5},
+	}}
 
-	lease := &Lease{}
-	lease.HWAddr = []byte{1, 2, 3, 4}
-	dynLeases = append(dynLeases, lease)
-	lease = new(Lease)
-	lease.HWAddr = []byte{1, 2, 3, 5}
-	dynLeases = append(dynLeases, lease)
-
-	lease = new(Lease)
-	lease.HWAddr = []byte{1, 2, 3, 4}
-	lease.IP = []byte{0, 2, 3, 4}
-	staticLeases = append(staticLeases, lease)
-	lease = new(Lease)
-	lease.HWAddr = []byte{2, 2, 3, 4}
-	staticLeases = append(staticLeases, lease)
+	staticLeases := []*Lease{{
+		HWAddr: net.HardwareAddr{1, 2, 3, 4},
+		IP:     net.IP{0, 2, 3, 4},
+	}, {
+		HWAddr: net.HardwareAddr{2, 2, 3, 4},
+	}}
 
 	leases := normalizeLeases(staticLeases, dynLeases)
+	require.Len(t, leases, 3)
 
-	assert.True(t, len(leases) == 3)
-	assert.True(t, bytes.Equal(leases[0].HWAddr, []byte{1, 2, 3, 4}))
-	assert.True(t, bytes.Equal(leases[0].IP, []byte{0, 2, 3, 4}))
-	assert.True(t, bytes.Equal(leases[1].HWAddr, []byte{2, 2, 3, 4}))
-	assert.True(t, bytes.Equal(leases[2].HWAddr, []byte{1, 2, 3, 5}))
+	assert.Equal(t, leases[0].HWAddr, dynLeases[0].HWAddr)
+	assert.Equal(t, leases[0].IP, staticLeases[0].IP)
+	assert.Equal(t, leases[1].HWAddr, staticLeases[1].HWAddr)
+	assert.Equal(t, leases[2].HWAddr, dynLeases[1].HWAddr)
 }
 
 func TestOptions(t *testing.T) {
-	code, val := parseOptionString(" 12  hex  abcdef ")
-	assert.Equal(t, uint8(12), code)
-	assert.True(t, bytes.Equal([]byte{0xab, 0xcd, 0xef}, val))
+	testCases := []struct {
+		name     string
+		optStr   string
+		wantVal  []byte
+		wantCode uint8
+	}{{
+		name:     "success_hex",
+		optStr:   "12 hex abcdef",
+		wantVal:  []byte{0xab, 0xcd, 0xef},
+		wantCode: 12,
+	}, {
+		name:     "bad_hex",
+		optStr:   "12 hex abcdefx",
+		wantVal:  nil,
+		wantCode: 0,
+	}, {
+		name:     "success_ip",
+		optStr:   "123 ip 1.2.3.4",
+		wantVal:  net.IP{1, 2, 3, 4},
+		wantCode: 123,
+	}, {
+		name:   "success_ipv6",
+		optStr: "123 ip ::1234",
+		wantVal: net.IP{
+			0, 0, 0, 0,
+			0, 0, 0, 0,
+			0, 0, 0, 0,
+			0, 0, 0x12, 0x34,
+		},
+		wantCode: 123,
+	}, {
+		name:     "bad_code",
+		optStr:   "256 ip 1.1.1.1",
+		wantVal:  nil,
+		wantCode: 0,
+	}, {
+		name:     "negative_code",
+		optStr:   "-1 ip 1.1.1.1",
+		wantVal:  nil,
+		wantCode: 0,
+	}, {
+		name:     "bad_ip",
+		optStr:   "12 ip 1.1.1.1x",
+		wantVal:  nil,
+		wantCode: 0,
+	}, {
+		name:     "bad_mode",
+		wantVal:  nil,
+		optStr:   "12 x 1.1.1.1",
+		wantCode: 0,
+	}}
 
-	code, _ = parseOptionString(" 12  hex  abcdef1 ")
-	assert.Equal(t, uint8(0), code)
-
-	code, val = parseOptionString("123 ip 1.2.3.4")
-	assert.Equal(t, uint8(123), code)
-	assert.Equal(t, "1.2.3.4", net.IP(string(val)).String())
-
-	code, _ = parseOptionString("256 ip 1.1.1.1")
-	assert.Equal(t, uint8(0), code)
-	code, _ = parseOptionString("-1 ip 1.1.1.1")
-	assert.Equal(t, uint8(0), code)
-	code, _ = parseOptionString("12 ip 1.1.1.1x")
-	assert.Equal(t, uint8(0), code)
-	code, _ = parseOptionString("12 x 1.1.1.1")
-	assert.Equal(t, uint8(0), code)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			code, val := parseOptionString(tc.optStr)
+			require.Equal(t, tc.wantCode, code)
+			if tc.wantVal != nil {
+				assert.Equal(t, tc.wantVal, val)
+			}
+		})
+	}
 }

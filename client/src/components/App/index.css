@@ -1,16 +1,24 @@
 :root {
     --yellow-pale: rgba(247, 181, 0, 0.1);
-    --green79: #67B279;
+    --green79: #67b279;
     --gray-a5: #a5a5a5;
     --gray-d8: #d8d8d8;
-    --gray-f3: #F3F3F3;
+    --gray-f3: #f3f3f3;
     --font-family-monospace: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+    --font-size-disable-autozoom: 1rem;
 }
 
 body {
     margin: 0;
     padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Disable Auto Zoom in Input - Safari on iPhone https://stackoverflow.com/a/6394497 */
+@media screen and (max-width: 767px) {
+    input, select, textarea {
+        font-size: var(--font-size-disable-autozoom);
+    }
 }
 
 .status {
@@ -70,4 +78,12 @@ body {
 .logs__row:hover .button-action,
 .button-action--active {
     visibility: visible;
+}
+
+.ReactModal__Body--open {
+    overflow: hidden;
+}
+
+a.btn-success.disabled {
+    color: #fff;
 }

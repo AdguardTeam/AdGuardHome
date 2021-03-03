@@ -282,7 +282,7 @@ let Form = (props) => {
                         <div className="form__desc mt-0">
                             <Trans
                                 components={[
-                                    <a href="#dhcp" key="0">
+                                    <a href="https://github.com/AdguardTeam/AdGuardHome/wiki/Clients#idclient" key="0" target="_blank" rel="noopener noreferrer">
                                         link
                                     </a>,
                                 ]}

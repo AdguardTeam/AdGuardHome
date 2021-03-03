@@ -13,8 +13,8 @@ import (
 )
 
 type raCtx struct {
-	raAllowSlaac     bool   // send RA packets without MO flags
-	raSlaacOnly      bool   // send RA packets with MO flags
+	raAllowSLAAC     bool   // send RA packets without MO flags
+	raSLAACOnly      bool   // send RA packets with MO flags
 	ipAddr           net.IP // source IP address (link-local-unicast)
 	dnsIPAddr        net.IP // IP address for DNS Server option
 	prefixIPAddr     net.IP // IP address for Prefix option
@@ -159,7 +159,7 @@ func createICMPv6RAPacket(params icmpv6RA) []byte {
 func (ra *raCtx) Init() error {
 	ra.stop.Store(0)
 	ra.conn = nil
-	if !(ra.raAllowSlaac || ra.raSlaacOnly) {
+	if !(ra.raAllowSLAAC || ra.raSLAACOnly) {
 		return nil
 	}
 
@@ -167,8 +167,8 @@ func (ra *raCtx) Init() error {
 		ra.ipAddr, ra.dnsIPAddr)
 
 	params := icmpv6RA{
-		managedAddressConfiguration: !ra.raSlaacOnly,
-		otherConfiguration:          !ra.raSlaacOnly,
+		managedAddressConfiguration: !ra.raSLAACOnly,
+		otherConfiguration:          !ra.raSLAACOnly,
 		mtu:                         uint32(ra.iface.MTU),
 		prefixLen:                   64,
 		recursiveDNSServer:          ra.dnsIPAddr,

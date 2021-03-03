@@ -1,6 +1,8 @@
 package home
 
 import (
+	"bytes"
+	"crypto/rand"
 	"encoding/hex"
 	"net/http"
 	"net/url"
@@ -9,12 +11,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/testutil"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
-	testutil.DiscardLogOutput(m)
+	aghtest.DiscardLogOutput(m)
 }
 
 func prepareTestDir() string {
@@ -24,24 +27,44 @@ func prepareTestDir() string {
 	return dir
 }
 
+func TestNewSessionToken(t *testing.T) {
+	// Successful case.
+	token, err := newSessionToken()
+	require.Nil(t, err)
+	assert.Len(t, token, sessionTokenSize)
+
+	// Break the rand.Reader.
+	prevReader := rand.Reader
+	t.Cleanup(func() {
+		rand.Reader = prevReader
+	})
+	rand.Reader = &bytes.Buffer{}
+
+	// Unsuccessful case.
+	token, err = newSessionToken()
+	require.NotNil(t, err)
+	assert.Empty(t, token)
+}
+
 func TestAuth(t *testing.T) {
 	dir := prepareTestDir()
-	defer func() { _ = os.RemoveAll(dir) }()
+	t.Cleanup(func() { _ = os.RemoveAll(dir) })
 	fn := filepath.Join(dir, "sessions.db")
 
-	users := []User{
-		{Name: "name", PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2"},
-	}
+	users := []User{{
+		Name:         "name",
+		PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2",
+	}}
 	a := InitAuth(fn, nil, 60)
 	s := session{}
 
 	user := User{Name: "name"}
 	a.UserAdd(&user, "password")
 
-	assert.True(t, a.CheckSession("notfound") == -1)
+	assert.Equal(t, checkSessionNotFound, a.checkSession("notfound"))
 	a.RemoveSession("notfound")
 
-	sess, err := getSession(&users[0])
+	sess, err := newSessionToken()
 	assert.Nil(t, err)
 	sessStr := hex.EncodeToString(sess)
 
@@ -49,13 +72,13 @@ func TestAuth(t *testing.T) {
 	// check expiration
 	s.expire = uint32(now)
 	a.addSession(sess, &s)
-	assert.True(t, a.CheckSession(sessStr) == 1)
+	assert.Equal(t, checkSessionExpired, a.checkSession(sessStr))
 
 	// add session with TTL = 2 sec
 	s = session{}
 	s.expire = uint32(time.Now().UTC().Unix() + 2)
 	a.addSession(sess, &s)
-	assert.True(t, a.CheckSession(sessStr) == 0)
+	assert.Equal(t, checkSessionOK, a.checkSession(sessStr))
 
 	a.Close()
 
@@ -63,23 +86,22 @@ func TestAuth(t *testing.T) {
 	a = InitAuth(fn, users, 60)
 
 	// the session is still alive
-	assert.True(t, a.CheckSession(sessStr) == 0)
-	// reset our expiration time because CheckSession() has just updated it
+	assert.Equal(t, checkSessionOK, a.checkSession(sessStr))
+	// reset our expiration time because checkSession() has just updated it
 	s.expire = uint32(time.Now().UTC().Unix() + 2)
 	a.storeSession(sess, &s)
 	a.Close()
 
 	u := a.UserFind("name", "password")
-	assert.True(t, len(u.Name) != 0)
+	assert.NotEmpty(t, u.Name)
 
 	time.Sleep(3 * time.Second)
 
 	// load and remove expired sessions
 	a = InitAuth(fn, users, 60)
-	assert.True(t, a.CheckSession(sessStr) == -1)
+	assert.Equal(t, checkSessionNotFound, a.checkSession(sessStr))
 
 	a.Close()
-	os.Remove(fn)
 }
 
 // implements http.ResponseWriter
@@ -111,7 +133,7 @@ func TestAuthHTTP(t *testing.T) {
 	Context.auth = InitAuth(fn, users, 60)
 
 	handlerCalled := false
-	handler := func(w http.ResponseWriter, r *http.Request) {
+	handler := func(_ http.ResponseWriter, _ *http.Request) {
 		handlerCalled = true
 	}
 	handler2 := optionalAuth(handler)
@@ -119,15 +141,15 @@ func TestAuthHTTP(t *testing.T) {
 	w.hdr = make(http.Header)
 	r := http.Request{}
 	r.Header = make(http.Header)
-	r.Method = "GET"
+	r.Method = http.MethodGet
 
 	// get / - we're redirected to login page
 	r.URL = &url.URL{Path: "/"}
 	handlerCalled = false
 	handler2(&w, &r)
-	assert.True(t, w.statusCode == http.StatusFound)
-	assert.True(t, w.hdr.Get("Location") != "")
-	assert.True(t, !handlerCalled)
+	assert.Equal(t, http.StatusFound, w.statusCode)
+	assert.NotEmpty(t, w.hdr.Get("Location"))
+	assert.False(t, handlerCalled)
 
 	// go to login page
 	loginURL := w.hdr.Get("Location")
@@ -139,7 +161,7 @@ func TestAuthHTTP(t *testing.T) {
 	// perform login
 	cookie, err := Context.auth.httpCookie(loginJSON{Name: "name", Password: "password"})
 	assert.Nil(t, err)
-	assert.True(t, cookie != "")
+	assert.NotEmpty(t, cookie)
 
 	// get /
 	handler2 = optionalAuth(handler)
@@ -168,8 +190,8 @@ func TestAuthHTTP(t *testing.T) {
 	r.URL = &url.URL{Path: loginURL}
 	handlerCalled = false
 	handler2(&w, &r)
-	assert.True(t, w.hdr.Get("Location") != "")
-	assert.True(t, !handlerCalled)
+	assert.NotEmpty(t, w.hdr.Get("Location"))
+	assert.False(t, handlerCalled)
 	r.Header.Del("Cookie")
 
 	// get login page with an invalid cookie

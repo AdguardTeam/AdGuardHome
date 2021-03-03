@@ -11,7 +11,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
-
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -25,29 +24,32 @@ const (
 
 // Whois - module context
 type Whois struct {
-	clients     *clientsContainer
-	ipChan      chan string
-	timeoutMsec uint
+	clients *clientsContainer
+	ipChan  chan net.IP
 
 	// Contains IP addresses of clients
 	// An active IP address is resolved once again after it expires.
 	// If IP address couldn't be resolved, it stays here for some time to prevent further attempts to resolve the same IP.
 	ipAddrs cache.Cache
+
+	// TODO(a.garipov): Rewrite to use time.Duration.  Like, seriously, why?
+	timeoutMsec uint
 }
 
-// Create module context
+// initWhois creates the Whois module context.
 func initWhois(clients *clientsContainer) *Whois {
-	w := Whois{}
-	w.timeoutMsec = 5000
-	w.clients = clients
+	w := Whois{
+		timeoutMsec: 5000,
+		clients:     clients,
+		ipAddrs: cache.New(cache.Config{
+			EnableLRU: true,
+			MaxCount:  10000,
+		}),
+		ipChan: make(chan net.IP, 255),
+	}
 
-	cconf := cache.Config{}
-	cconf.EnableLRU = true
-	cconf.MaxCount = 10000
-	w.ipAddrs = cache.New(cconf)
-
-	w.ipChan = make(chan string, 255)
 	go w.workerLoop()
+
 	return &w
 }
 
@@ -81,23 +83,16 @@ func whoisParse(data string) map[string]string {
 		switch k {
 		case "org-name":
 			m["orgname"] = trimValue(v)
-		case "orgname":
-			fallthrough
-		case "city":
-			fallthrough
-		case "country":
+		case "city", "country", "orgname":
 			m[k] = trimValue(v)
-
 		case "descr":
 			if len(descr) == 0 {
 				descr = v
 			}
 		case "netname":
 			netname = v
-
 		case "whois": // "whois: whois.arin.net"
 			m["whois"] = v
-
 		case "referralserver": // "ReferralServer:  whois://whois.ripe.net"
 			if strings.HasPrefix(v, "whois://") {
 				m["whois"] = v[len("whois://"):]
@@ -105,12 +100,16 @@ func whoisParse(data string) map[string]string {
 		}
 	}
 
-	// descr or netname -> orgname
 	_, ok := m["orgname"]
-	if !ok && len(descr) != 0 {
-		m["orgname"] = trimValue(descr)
-	} else if !ok && len(netname) != 0 {
-		m["orgname"] = trimValue(netname)
+	if !ok {
+		// Set orgname from either descr or netname for the frontent.
+		//
+		// TODO(a.garipov): Perhaps don't do that in the V1 HTTP API?
+		if descr != "" {
+			m["orgname"] = trimValue(descr)
+		} else if netname != "" {
+			m["orgname"] = trimValue(netname)
+		}
 	}
 
 	return m
@@ -120,12 +119,12 @@ func whoisParse(data string) map[string]string {
 const MaxConnReadSize = 64 * 1024
 
 // Send request to a server and receive the response
-func (w *Whois) query(target, serverAddr string) (string, error) {
+func (w *Whois) query(ctx context.Context, target, serverAddr string) (string, error) {
 	addr, _, _ := net.SplitHostPort(serverAddr)
 	if addr == "whois.arin.net" {
 		target = "n + " + target
 	}
-	conn, err := customDialContext(context.TODO(), "tcp", serverAddr)
+	conn, err := customDialContext(ctx, "tcp", serverAddr)
 	if err != nil {
 		return "", err
 	}
@@ -153,11 +152,11 @@ func (w *Whois) query(target, serverAddr string) (string, error) {
 }
 
 // Query WHOIS servers (handle redirects)
-func (w *Whois) queryAll(target string) (string, error) {
+func (w *Whois) queryAll(ctx context.Context, target string) (string, error) {
 	server := net.JoinHostPort(defaultServer, defaultPort)
 	const maxRedirects = 5
 	for i := 0; i != maxRedirects; i++ {
-		resp, err := w.query(target, server)
+		resp, err := w.query(ctx, target, server)
 		if err != nil {
 			return "", err
 		}
@@ -183,9 +182,9 @@ func (w *Whois) queryAll(target string) (string, error) {
 }
 
 // Request WHOIS information
-func (w *Whois) process(ip string) [][]string {
+func (w *Whois) process(ctx context.Context, ip net.IP) [][]string {
 	data := [][]string{}
-	resp, err := w.queryAll(ip)
+	resp, err := w.queryAll(ctx, ip.String())
 	if err != nil {
 		log.Debug("Whois: error: %s  IP:%s", err, ip)
 		return data
@@ -209,7 +208,7 @@ func (w *Whois) process(ip string) [][]string {
 }
 
 // Begin - begin requesting WHOIS info
-func (w *Whois) Begin(ip string) {
+func (w *Whois) Begin(ip net.IP) {
 	now := uint64(time.Now().Unix())
 	expire := w.ipAddrs.Get([]byte(ip))
 	if len(expire) != 0 {
@@ -232,16 +231,18 @@ func (w *Whois) Begin(ip string) {
 	}
 }
 
-// Get IP address from channel; get WHOIS info; associate info with a client
+// workerLoop processes the IP addresses it got from the channel and associates
+// the retrieving WHOIS info with a client.
 func (w *Whois) workerLoop() {
 	for {
 		ip := <-w.ipChan
 
-		info := w.process(ip)
+		info := w.process(context.Background(), ip)
 		if len(info) == 0 {
 			continue
 		}
 
-		w.clients.SetWhoisInfo(ip, info)
+		id := ip.String()
+		w.clients.SetWhoisInfo(id, info)
 	}
 }

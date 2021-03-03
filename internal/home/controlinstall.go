@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
 
@@ -20,23 +22,16 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
-type firstRunData struct {
-	WebPort    int                    `json:"web_port"`
-	DNSPort    int                    `json:"dns_port"`
-	Interfaces map[string]interface{} `json:"interfaces"`
+// getAddrsResponse is the response for /install/get_addresses endpoint.
+type getAddrsResponse struct {
+	WebPort    int                           `json:"web_port"`
+	DNSPort    int                           `json:"dns_port"`
+	Interfaces map[string]*util.NetInterface `json:"interfaces"`
 }
 
-type netInterfaceJSON struct {
-	Name         string   `json:"name"`
-	MTU          int      `json:"mtu"`
-	HardwareAddr string   `json:"hardware_address"`
-	Addresses    []string `json:"ip_addresses"`
-	Flags        string   `json:"flags"`
-}
-
-// Get initial installation settings
+// handleInstallGetAddresses is the handler for /install/get_addresses endpoint.
 func (web *Web) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
-	data := firstRunData{}
+	data := getAddrsResponse{}
 	data.WebPort = 80
 	data.DNSPort = 53
 
@@ -46,16 +41,9 @@ func (web *Web) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	data.Interfaces = make(map[string]interface{})
+	data.Interfaces = make(map[string]*util.NetInterface)
 	for _, iface := range ifaces {
-		ifaceJSON := netInterfaceJSON{
-			Name:         iface.Name,
-			MTU:          iface.MTU,
-			HardwareAddr: iface.HardwareAddr,
-			Addresses:    iface.Addresses,
-			Flags:        iface.Flags,
-		}
-		data.Interfaces[iface.Name] = ifaceJSON
+		data.Interfaces[iface.Name] = iface
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -68,7 +56,7 @@ func (web *Web) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request
 
 type checkConfigReqEnt struct {
 	Port    int    `json:"port"`
-	IP      string `json:"ip"`
+	IP      net.IP `json:"ip"`
 	Autofix bool   `json:"autofix"`
 }
 
@@ -105,10 +93,10 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if reqData.Web.Port != 0 && reqData.Web.Port != config.BindPort {
+	if reqData.Web.Port != 0 && reqData.Web.Port != config.BindPort && reqData.Web.Port != config.BetaBindPort {
 		err = util.CheckPortAvailable(reqData.Web.IP, reqData.Web.Port)
 		if err != nil {
-			respData.Web.Status = fmt.Sprintf("%v", err)
+			respData.Web.Status = err.Error()
 		}
 	}
 
@@ -136,8 +124,8 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 		}
 
 		if err != nil {
-			respData.DNS.Status = fmt.Sprintf("%v", err)
-		} else if reqData.DNS.IP != "0.0.0.0" {
+			respData.DNS.Status = err.Error()
+		} else if !reqData.DNS.IP.IsUnspecified() {
 			respData.StaticIP = handleStaticIP(reqData.DNS.IP, reqData.SetStaticIP)
 		}
 	}
@@ -153,7 +141,7 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 // handleStaticIP - handles static IP request
 // It either checks if we have a static IP
 // Or if set=true, it tries to set it
-func handleStaticIP(ip string, set bool) staticIPJSON {
+func handleStaticIP(ip net.IP, set bool) staticIPJSON {
 	resp := staticIPJSON{}
 
 	interfaceName := util.GetInterfaceByIP(ip)
@@ -185,7 +173,7 @@ func handleStaticIP(ip string, set bool) staticIPJSON {
 		if isStaticIP {
 			resp.Static = "yes"
 		}
-		resp.IP = util.GetSubnet(interfaceName)
+		resp.IP = util.GetSubnet(interfaceName).String()
 	}
 	return resp
 }
@@ -261,7 +249,7 @@ func disableDNSStubListener() error {
 }
 
 type applyConfigReqEnt struct {
-	IP   string `json:"ip"`
+	IP   net.IP `json:"ip"`
 	Port int    `json:"port"`
 }
 
@@ -276,9 +264,13 @@ type applyConfigReq struct {
 func copyInstallSettings(dst, src *configuration) {
 	dst.BindHost = src.BindHost
 	dst.BindPort = src.BindPort
+	dst.BetaBindPort = src.BetaBindPort
 	dst.DNS.BindHost = src.DNS.BindHost
 	dst.DNS.Port = src.DNS.Port
 }
+
+// shutdownTimeout is the timeout for shutting HTTP server down operation.
+const shutdownTimeout = 5 * time.Second
 
 // Apply new configuration, start DNS server, restart Web server
 func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
@@ -295,7 +287,7 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 
 	restartHTTP := true
-	if config.BindHost == newSettings.Web.IP && config.BindPort == newSettings.Web.Port {
+	if config.BindHost.Equal(newSettings.Web.IP) && config.BindPort == newSettings.Web.Port {
 		// no need to rebind
 		restartHTTP = false
 	}
@@ -305,9 +297,10 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		err = util.CheckPortAvailable(newSettings.Web.IP, newSettings.Web.Port)
 		if err != nil {
 			httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s",
-				net.JoinHostPort(newSettings.Web.IP, strconv.Itoa(newSettings.Web.Port)), err)
+				net.JoinHostPort(newSettings.Web.IP.String(), strconv.Itoa(newSettings.Web.Port)), err)
 			return
 		}
+
 	}
 
 	err = util.CheckPacketPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
@@ -331,6 +324,10 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	config.DNS.BindHost = newSettings.DNS.IP
 	config.DNS.Port = newSettings.DNS.Port
 
+	// TODO(e.burkov): StartMods() should be put in a separate goroutine at
+	// the moment we'll allow setting up TLS in the initial configuration or
+	// the configuration itself will use HTTPS protocol, because the
+	// underlying functions potentially restart the HTTPS server.
 	err = StartMods()
 	if err != nil {
 		Context.firstRun = true
@@ -362,12 +359,23 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		f.Flush()
 	}
 
-	// this needs to be done in a goroutine because Shutdown() is a blocking call, and it will block
-	// until all requests are finished, and _we_ are inside a request right now, so it will block indefinitely
+	// The Shutdown() method of (*http.Server) needs to be called in a
+	// separate goroutine, because it waits until all requests are handled
+	// and will be blocked by it's own caller.
 	if restartHTTP {
-		go func() {
-			_ = Context.web.httpServer.Shutdown(context.TODO())
-		}()
+		ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+
+		shut := func(srv *http.Server) {
+			defer cancel()
+			err := srv.Shutdown(ctx)
+			if err != nil {
+				log.Debug("error while shutting down HTTP server: %s", err)
+			}
+		}
+		go shut(web.httpServer)
+		if web.httpServerBeta != nil {
+			go shut(web.httpServerBeta)
+		}
 	}
 }
 
@@ -375,4 +383,187 @@ func (web *Web) registerInstallHandlers() {
 	Context.mux.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(web.handleInstallGetAddresses)))
 	Context.mux.HandleFunc("/control/install/check_config", preInstall(ensurePOST(web.handleInstallCheckConfig)))
 	Context.mux.HandleFunc("/control/install/configure", preInstall(ensurePOST(web.handleInstallConfigure)))
+}
+
+// checkConfigReqEntBeta is a struct representing new client's config check
+// request entry.  It supports multiple IP values unlike the checkConfigReqEnt.
+//
+// TODO(e.burkov): This should removed with the API v1 when the appropriate
+// functionality will appear in default checkConfigReqEnt.
+type checkConfigReqEntBeta struct {
+	Port    int      `json:"port"`
+	IP      []net.IP `json:"ip"`
+	Autofix bool     `json:"autofix"`
+}
+
+// checkConfigReqBeta is a struct representing new client's config check request
+// body.  It uses checkConfigReqEntBeta instead of checkConfigReqEnt.
+//
+// TODO(e.burkov): This should removed with the API v1 when the appropriate
+// functionality will appear in default checkConfigReq.
+type checkConfigReqBeta struct {
+	Web         checkConfigReqEntBeta `json:"web"`
+	DNS         checkConfigReqEntBeta `json:"dns"`
+	SetStaticIP bool                  `json:"set_static_ip"`
+}
+
+// handleInstallCheckConfigBeta is a substitution of /install/check_config
+// handler for new client.
+//
+// TODO(e.burkov): This should removed with the API v1 when the appropriate
+// functionality will appear in default handleInstallCheckConfig.
+func (web *Web) handleInstallCheckConfigBeta(w http.ResponseWriter, r *http.Request) {
+	reqData := checkConfigReqBeta{}
+	err := json.NewDecoder(r.Body).Decode(&reqData)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Failed to parse 'check_config' JSON data: %s", err)
+		return
+	}
+
+	if len(reqData.DNS.IP) == 0 || len(reqData.Web.IP) == 0 {
+		httpError(w, http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
+		return
+	}
+
+	nonBetaReqData := checkConfigReq{
+		Web: checkConfigReqEnt{
+			Port:    reqData.Web.Port,
+			IP:      reqData.Web.IP[0],
+			Autofix: reqData.Web.Autofix,
+		},
+		DNS: checkConfigReqEnt{
+			Port:    reqData.DNS.Port,
+			IP:      reqData.DNS.IP[0],
+			Autofix: reqData.DNS.Autofix,
+		},
+		SetStaticIP: reqData.SetStaticIP,
+	}
+
+	nonBetaReqBody := &strings.Builder{}
+
+	err = json.NewEncoder(nonBetaReqBody).Encode(nonBetaReqData)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Failed to encode 'check_config' JSON data: %s", err)
+		return
+	}
+	body := nonBetaReqBody.String()
+	r.Body = ioutil.NopCloser(strings.NewReader(body))
+	r.ContentLength = int64(len(body))
+
+	web.handleInstallCheckConfig(w, r)
+}
+
+// applyConfigReqEntBeta is a struct representing new client's config setting
+// request entry.  It supports multiple IP values unlike the applyConfigReqEnt.
+//
+// TODO(e.burkov): This should removed with the API v1 when the appropriate
+// functionality will appear in default applyConfigReqEnt.
+type applyConfigReqEntBeta struct {
+	IP   []net.IP `json:"ip"`
+	Port int      `json:"port"`
+}
+
+// applyConfigReqBeta is a struct representing new client's config setting
+// request body.  It uses applyConfigReqEntBeta instead of applyConfigReqEnt.
+//
+// TODO(e.burkov): This should removed with the API v1 when the appropriate
+// functionality will appear in default applyConfigReq.
+type applyConfigReqBeta struct {
+	Web      applyConfigReqEntBeta `json:"web"`
+	DNS      applyConfigReqEntBeta `json:"dns"`
+	Username string                `json:"username"`
+	Password string                `json:"password"`
+}
+
+// handleInstallConfigureBeta is a substitution of /install/configure handler
+// for new client.
+//
+// TODO(e.burkov): This should removed with the API v1 when the appropriate
+// functionality will appear in default handleInstallConfigure.
+func (web *Web) handleInstallConfigureBeta(w http.ResponseWriter, r *http.Request) {
+	reqData := applyConfigReqBeta{}
+	err := json.NewDecoder(r.Body).Decode(&reqData)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Failed to parse 'check_config' JSON data: %s", err)
+		return
+	}
+
+	if len(reqData.DNS.IP) == 0 || len(reqData.Web.IP) == 0 {
+		httpError(w, http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
+		return
+	}
+
+	nonBetaReqData := applyConfigReq{
+		Web: applyConfigReqEnt{
+			IP:   reqData.Web.IP[0],
+			Port: reqData.Web.Port,
+		},
+		DNS: applyConfigReqEnt{
+			IP:   reqData.DNS.IP[0],
+			Port: reqData.DNS.Port,
+		},
+		Username: reqData.Username,
+		Password: reqData.Password,
+	}
+
+	nonBetaReqBody := &strings.Builder{}
+
+	err = json.NewEncoder(nonBetaReqBody).Encode(nonBetaReqData)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "Failed to encode 'check_config' JSON data: %s", err)
+		return
+	}
+	body := nonBetaReqBody.String()
+	r.Body = ioutil.NopCloser(strings.NewReader(body))
+	r.ContentLength = int64(len(body))
+
+	web.handleInstallConfigure(w, r)
+}
+
+// getAddrsResponseBeta is a struct representing new client's getting addresses
+// request body.  It uses array of structs instead of map.
+//
+// TODO(e.burkov): This should removed with the API v1 when the appropriate
+// functionality will appear in default firstRunData.
+type getAddrsResponseBeta struct {
+	WebPort    int                  `json:"web_port"`
+	DNSPort    int                  `json:"dns_port"`
+	Interfaces []*util.NetInterface `json:"interfaces"`
+}
+
+// handleInstallConfigureBeta is a substitution of /install/get_addresses
+// handler for new client.
+//
+// TODO(e.burkov): This should removed with the API v1 when the appropriate
+// functionality will appear in default handleInstallGetAddresses.
+func (web *Web) handleInstallGetAddressesBeta(w http.ResponseWriter, r *http.Request) {
+	data := getAddrsResponseBeta{}
+	data.WebPort = 80
+	data.DNSPort = 53
+
+	ifaces, err := util.GetValidNetInterfacesForWeb()
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
+		return
+	}
+
+	data.Interfaces = ifaces
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(data)
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, "Unable to marshal default addresses to json: %s", err)
+		return
+	}
+}
+
+// registerBetaInstallHandlers registers the install handlers for new client
+// with the structures it supports.
+//
+// TODO(e.burkov): This should removed with the API v1 when the appropriate
+// functionality will appear in default handlers.
+func (web *Web) registerBetaInstallHandlers() {
+	Context.mux.HandleFunc("/control/install/get_addresses_beta", preInstall(ensureGET(web.handleInstallGetAddressesBeta)))
+	Context.mux.HandleFunc("/control/install/check_config_beta", preInstall(ensurePOST(web.handleInstallCheckConfigBeta)))
+	Context.mux.HandleFunc("/control/install/configure_beta", preInstall(ensurePOST(web.handleInstallConfigureBeta)))
 }

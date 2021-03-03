@@ -7,12 +7,13 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/testutil"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
-	testutil.DiscardLogOutput(m)
+	aghtest.DiscardLogOutput(m)
 }
 
 func UIntArrayEquals(a, b []uint64) bool {
@@ -34,124 +35,126 @@ func TestStats(t *testing.T) {
 		Filename:  "./stats.db",
 		LimitDays: 1,
 	}
-	s, _ := createObject(conf)
 
-	e := Entry{}
+	s, err := createObject(conf)
+	require.Nil(t, err)
+	t.Cleanup(func() {
+		s.clear()
+		s.Close()
+		assert.Nil(t, os.Remove(conf.Filename))
+	})
 
-	e.Domain = "domain"
-	e.Client = net.ParseIP("127.0.0.1")
-	e.Result = RFiltered
-	e.Time = 123456
-	s.Update(e)
+	s.Update(Entry{
+		Domain: "domain",
+		Client: "127.0.0.1",
+		Result: RFiltered,
+		Time:   123456,
+	})
+	s.Update(Entry{
+		Domain: "domain",
+		Client: "127.0.0.1",
+		Result: RNotFiltered,
+		Time:   123456,
+	})
 
-	e.Domain = "domain"
-	e.Client = net.ParseIP("127.0.0.1")
-	e.Result = RNotFiltered
-	e.Time = 123456
-	s.Update(e)
+	d, ok := s.getData()
+	require.True(t, ok)
 
-	d := s.getData()
 	a := []uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2}
-	assert.True(t, UIntArrayEquals(d["dns_queries"].([]uint64), a))
+	assert.True(t, UIntArrayEquals(d.DNSQueries, a))
 
 	a = []uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
-	assert.True(t, UIntArrayEquals(d["blocked_filtering"].([]uint64), a))
+	assert.True(t, UIntArrayEquals(d.BlockedFiltering, a))
 
 	a = []uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	assert.True(t, UIntArrayEquals(d["replaced_safebrowsing"].([]uint64), a))
+	assert.True(t, UIntArrayEquals(d.ReplacedSafebrowsing, a))
 
 	a = []uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	assert.True(t, UIntArrayEquals(d["replaced_parental"].([]uint64), a))
+	assert.True(t, UIntArrayEquals(d.ReplacedParental, a))
 
-	m := d["top_queried_domains"].([]map[string]uint64)
-	assert.True(t, m[0]["domain"] == 1)
+	m := d.TopQueried
+	require.NotEmpty(t, m)
+	assert.EqualValues(t, 1, m[0]["domain"])
 
-	m = d["top_blocked_domains"].([]map[string]uint64)
-	assert.True(t, m[0]["domain"] == 1)
+	m = d.TopBlocked
+	require.NotEmpty(t, m)
+	assert.EqualValues(t, 1, m[0]["domain"])
 
-	m = d["top_clients"].([]map[string]uint64)
-	assert.True(t, m[0]["127.0.0.1"] == 2)
+	m = d.TopClients
+	require.NotEmpty(t, m)
+	assert.EqualValues(t, 2, m[0]["127.0.0.1"])
 
-	assert.True(t, d["num_dns_queries"].(uint64) == 2)
-	assert.True(t, d["num_blocked_filtering"].(uint64) == 1)
-	assert.True(t, d["num_replaced_safebrowsing"].(uint64) == 0)
-	assert.True(t, d["num_replaced_safesearch"].(uint64) == 0)
-	assert.True(t, d["num_replaced_parental"].(uint64) == 0)
-	assert.True(t, d["avg_processing_time"].(float64) == 0.123456)
+	assert.EqualValues(t, 2, d.NumDNSQueries)
+	assert.EqualValues(t, 1, d.NumBlockedFiltering)
+	assert.EqualValues(t, 0, d.NumReplacedSafebrowsing)
+	assert.EqualValues(t, 0, d.NumReplacedSafesearch)
+	assert.EqualValues(t, 0, d.NumReplacedParental)
+	assert.EqualValues(t, 0.123456, d.AvgProcessingTime)
 
 	topClients := s.GetTopClientsIP(2)
-	assert.True(t, topClients[0] == "127.0.0.1")
-
-	s.clear()
-	s.Close()
-	os.Remove(conf.Filename)
+	require.NotEmpty(t, topClients)
+	assert.True(t, net.IP{127, 0, 0, 1}.Equal(topClients[0]))
 }
 
 func TestLargeNumbers(t *testing.T) {
-	var hour int32 = 1
+	var hour int32 = 0
 	newID := func() uint32 {
-		// use "atomic" to make Go race detector happy
+		// Use "atomic" to make go race detector happy.
 		return uint32(atomic.LoadInt32(&hour))
 	}
 
-	// log.SetLevel(log.DEBUG)
 	conf := Config{
 		Filename:  "./stats.db",
 		LimitDays: 1,
 		UnitID:    newID,
 	}
-	os.Remove(conf.Filename)
-	s, _ := createObject(conf)
-	e := Entry{}
+	s, err := createObject(conf)
+	require.Nil(t, err)
+	t.Cleanup(func() {
+		s.Close()
+		assert.Nil(t, os.Remove(conf.Filename))
+	})
 
-	n := 1000 // number of distinct clients and domains every hour
-	for h := 0; h != 12; h++ {
-		if h != 0 {
-			atomic.AddInt32(&hour, 1)
-		}
-		for i := 0; i != n; i++ {
-			e.Domain = fmt.Sprintf("domain%d", i)
-			e.Client = net.ParseIP("127.0.0.1")
-			e.Client[2] = byte((i & 0xff00) >> 8)
-			e.Client[3] = byte(i & 0xff)
-			e.Result = RNotFiltered
-			e.Time = 123456
-			s.Update(e)
+	// Number of distinct clients and domains every hour.
+	const n = 1000
+
+	for h := 0; h < 12; h++ {
+		atomic.AddInt32(&hour, 1)
+		for i := 0; i < n; i++ {
+			s.Update(Entry{
+				Domain: fmt.Sprintf("domain%d", i),
+				Client: net.IP{
+					127,
+					0,
+					byte((i & 0xff00) >> 8),
+					byte(i & 0xff),
+				}.String(),
+				Result: RNotFiltered,
+				Time:   123456,
+			})
 		}
 	}
 
-	d := s.getData()
-	assert.True(t, d["num_dns_queries"].(uint64) == uint64(int(hour)*n))
-
-	s.Close()
-	os.Remove(conf.Filename)
+	d, ok := s.getData()
+	require.True(t, ok)
+	assert.EqualValues(t, hour*n, d.NumDNSQueries)
 }
 
-// this code is a chunk copied from getData() that generates aggregate data per day
-func aggregateDataPerDay(firstID uint32) int {
-	firstDayID := (firstID + 24 - 1) / 24 * 24 // align_ceil(24)
-	a := []uint64{}
-	var sum uint64
-	id := firstDayID
-	nextDayID := firstDayID + 24
-	for i := firstDayID - firstID; int(i) != 720; i++ {
-		sum++
-		if id == nextDayID {
-			a = append(a, sum)
-			sum = 0
-			nextDayID += 24
-		}
-		id++
+func TestStatsCollector(t *testing.T) {
+	ng := func(_ *unitDB) uint64 {
+		return 0
 	}
-	if id <= nextDayID {
-		a = append(a, sum)
-	}
-	return len(a)
-}
+	units := make([]*unitDB, 720)
 
-func TestAggregateDataPerTimeUnit(t *testing.T) {
-	for i := 0; i != 25; i++ {
-		alen := aggregateDataPerDay(uint32(i))
-		assert.True(t, alen == 30, "i=%d", i)
-	}
+	t.Run("hours", func(t *testing.T) {
+		statsData := statsCollector(units, 0, Hours, ng)
+		assert.Len(t, statsData, 720)
+	})
+
+	t.Run("days", func(t *testing.T) {
+		for i := 0; i != 25; i++ {
+			statsData := statsCollector(units, uint32(i), Days, ng)
+			require.Lenf(t, statsData, 30, "i=%d", i)
+		}
+	})
 }

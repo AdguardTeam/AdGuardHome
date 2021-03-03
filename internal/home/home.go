@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -27,8 +28,9 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/AdGuardHome/internal/sysutil"
-	"github.com/AdguardTeam/AdGuardHome/internal/update"
+	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
+	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/log"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
@@ -36,15 +38,6 @@ import (
 const (
 	// Used in config to indicate that syslog or eventlog (win) should be used for logger output
 	configSyslog = "syslog"
-)
-
-// Update-related variables
-var (
-	versionString   = "dev"
-	updateChannel   = "none"
-	versionCheckURL = ""
-	ARMVersion      = ""
-	MIPSVersion     = ""
 )
 
 // Global context
@@ -65,7 +58,7 @@ type homeContext struct {
 	web        *Web                 // Web (HTTP, HTTPS) module
 	tls        *TLSMod              // TLS module
 	autoHosts  util.AutoHosts       // IP-hostname pairs taken from system configuration (e.g. /etc/hosts) files
-	updater    *update.Updater
+	updater    *updater.Updater
 
 	ipDetector *ipDetector
 
@@ -99,14 +92,7 @@ func (c *homeContext) getDataDir() string {
 var Context homeContext
 
 // Main is the entry point
-func Main(version, channel, armVer, mipsVer string) {
-	// Init update-related global variables
-	versionString = version
-	updateChannel = channel
-	ARMVersion = armVer
-	MIPSVersion = mipsVer
-	versionCheckURL = "https://static.adguard.com/adguardhome/" + updateChannel + "/version.json"
-
+func Main() {
 	// config can be specified, which reads options from there, but other command line flags have to override config values
 	// therefore, we must do it manually instead of using a lib
 	args := loadOptions()
@@ -123,7 +109,7 @@ func Main(version, channel, armVer, mipsVer string) {
 				Context.tls.Reload()
 
 			default:
-				cleanup()
+				cleanup(context.Background())
 				cleanupAlways()
 				os.Exit(0)
 			}
@@ -139,23 +125,10 @@ func Main(version, channel, armVer, mipsVer string) {
 	run(args)
 }
 
-// version - returns the current version string
-func version() string {
-	// TODO(a.garipov): I'm pretty sure we can extract some of this stuff
-	// from the build info.
-	msg := "AdGuard Home, version %s, channel %s, arch %s %s"
-	if ARMVersion != "" {
-		msg = msg + " v" + ARMVersion
-	} else if MIPSVersion != "" {
-		msg = msg + " " + MIPSVersion
-	}
-
-	return fmt.Sprintf(msg, versionString, updateChannel, runtime.GOOS, runtime.GOARCH)
-}
-
 func setupContext(args options) {
 	Context.runningAsService = args.runningAsService
-	Context.disableUpdate = args.disableUpdate
+	Context.disableUpdate = args.disableUpdate ||
+		version.Channel() == version.ChannelDevelopment
 
 	Context.firstRun = detectFirstRun()
 	if Context.firstRun {
@@ -214,15 +187,16 @@ func setupConfig(args options) {
 
 	Context.autoHosts.Init("")
 
-	Context.updater = update.NewUpdater(update.Config{
-		Client:        Context.client,
-		WorkDir:       Context.workDir,
-		VersionURL:    versionCheckURL,
-		VersionString: versionString,
-		OS:            runtime.GOOS,
-		Arch:          runtime.GOARCH,
-		ARMVersion:    ARMVersion,
-		ConfigName:    config.getConfigFilename(),
+	Context.updater = updater.NewUpdater(&updater.Config{
+		Client:   Context.client,
+		Version:  version.Version(),
+		Channel:  version.Channel(),
+		GOARCH:   runtime.GOARCH,
+		GOOS:     runtime.GOOS,
+		GOARM:    version.GOARM(),
+		GOMIPS:   version.GOMIPS(),
+		WorkDir:  Context.workDir,
+		ConfName: config.getConfigFilename(),
 	})
 
 	Context.clients.Init(config.Clients, Context.dhcpServer, &Context.autoHosts)
@@ -234,7 +208,7 @@ func setupConfig(args options) {
 	}
 
 	// override bind host/port from the console
-	if args.bindHost != "" {
+	if args.bindHost != nil {
 		config.BindHost = args.bindHost
 	}
 	if args.bindPort != 0 {
@@ -260,7 +234,7 @@ func run(args options) {
 	memoryUsage(args)
 
 	// print the first message after logger is configured
-	log.Println(version())
+	log.Println(version.Full())
 	log.Debug("Current working directory is %s", Context.workDir)
 	if args.runningAsService {
 		log.Info("AdGuard Home is running as a service")
@@ -316,17 +290,23 @@ func run(args options) {
 	}
 
 	webConf := webConfig{
-		firstRun: Context.firstRun,
-		BindHost: config.BindHost,
-		BindPort: config.BindPort,
+		firstRun:     Context.firstRun,
+		BindHost:     config.BindHost,
+		BindPort:     config.BindPort,
+		BetaBindPort: config.BetaBindPort,
 
-		ReadTimeout:       ReadTimeout,
-		ReadHeaderTimeout: ReadHeaderTimeout,
-		WriteTimeout:      WriteTimeout,
+		ReadTimeout:       readTimeout,
+		ReadHeaderTimeout: readHdrTimeout,
+		WriteTimeout:      writeTimeout,
 	}
 	Context.web = CreateWeb(&webConf)
 	if Context.web == nil {
 		log.Fatalf("Can't initialize Web module")
+	}
+
+	Context.ipDetector, err = newIPDetector()
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	if !Context.firstRun {
@@ -340,6 +320,7 @@ func run(args options) {
 		go func() {
 			err := startDNSServer()
 			if err != nil {
+				closeDNSServer()
 				log.Fatal(err)
 			}
 		}()
@@ -349,18 +330,13 @@ func run(args options) {
 		}
 	}
 
-	Context.ipDetector, err = newIPDetector()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	Context.web.Start()
 
 	// wait indefinitely for other go-routines to complete their job
 	select {}
 }
 
-// StartMods - initialize and start DNS after installation
+// StartMods initializes and starts the DNS server after installation.
 func StartMods() error {
 	err := initDNSServer()
 	if err != nil {
@@ -460,6 +436,10 @@ func initWorkingDir(args options) {
 	} else {
 		Context.workDir = filepath.Dir(execPath)
 	}
+
+	if workDir, err := filepath.EvalSymlinks(Context.workDir); err == nil {
+		Context.workDir = workDir
+	}
 }
 
 // configureLogger configures logger level and output
@@ -527,11 +507,12 @@ func configureLogger(args options) {
 	}
 }
 
-func cleanup() {
+// cleanup stops and resets all the modules.
+func cleanup(ctx context.Context) {
 	log.Info("Stopping AdGuard Home")
 
 	if Context.web != nil {
-		Context.web.Close()
+		Context.web.Close(ctx)
 		Context.web = nil
 	}
 	if Context.auth != nil {
@@ -592,8 +573,6 @@ func loadOptions() options {
 // prints IP addresses which user can use to open the admin interface
 // proto is either "http" or "https"
 func printHTTPAddresses(proto string) {
-	var address string
-
 	tlsConf := tlsConfigSettings{}
 	if Context.tls != nil {
 		Context.tls.WriteDiskConfig(&tlsConf)
@@ -604,31 +583,41 @@ func printHTTPAddresses(proto string) {
 		port = strconv.Itoa(tlsConf.PortHTTPS)
 	}
 
+	var hostStr string
 	if proto == "https" && tlsConf.ServerName != "" {
 		if tlsConf.PortHTTPS == 443 {
 			log.Printf("Go to https://%s", tlsConf.ServerName)
 		} else {
 			log.Printf("Go to https://%s:%s", tlsConf.ServerName, port)
 		}
-	} else if config.BindHost == "0.0.0.0" {
+	} else if config.BindHost.IsUnspecified() {
 		log.Println("AdGuard Home is available on the following addresses:")
 		ifaces, err := util.GetValidNetInterfacesForWeb()
 		if err != nil {
 			// That's weird, but we'll ignore it
-			address = net.JoinHostPort(config.BindHost, port)
-			log.Printf("Go to %s://%s", proto, address)
+			hostStr = config.BindHost.String()
+			log.Printf("Go to %s://%s", proto, net.JoinHostPort(hostStr, port))
+			if config.BetaBindPort != 0 {
+				log.Printf("Go to %s://%s (BETA)", proto, net.JoinHostPort(hostStr, strconv.Itoa(config.BetaBindPort)))
+			}
 			return
 		}
 
 		for _, iface := range ifaces {
 			for _, addr := range iface.Addresses {
-				address = net.JoinHostPort(addr, strconv.Itoa(config.BindPort))
-				log.Printf("Go to %s://%s", proto, address)
+				hostStr = addr.String()
+				log.Printf("Go to %s://%s", proto, net.JoinHostPort(hostStr, strconv.Itoa(config.BindPort)))
+				if config.BetaBindPort != 0 {
+					log.Printf("Go to %s://%s (BETA)", proto, net.JoinHostPort(hostStr, strconv.Itoa(config.BetaBindPort)))
+				}
 			}
 		}
 	} else {
-		address = net.JoinHostPort(config.BindHost, port)
-		log.Printf("Go to %s://%s", proto, address)
+		hostStr = config.BindHost.String()
+		log.Printf("Go to %s://%s", proto, net.JoinHostPort(hostStr, port))
+		if config.BetaBindPort != 0 {
+			log.Printf("Go to %s://%s (BETA)", proto, net.JoinHostPort(hostStr, strconv.Itoa(config.BetaBindPort)))
+		}
 	}
 }
 
@@ -641,7 +630,7 @@ func detectFirstRun() bool {
 		configfile = filepath.Join(Context.workDir, Context.configFilename)
 	}
 	_, err := os.Stat(configfile)
-	return os.IsNotExist(err)
+	return errors.Is(err, os.ErrNotExist)
 }
 
 // Connect to a remote server resolving hostname using our own DNS server
@@ -685,10 +674,11 @@ func customDialContext(ctx context.Context, network, addr string) (net.Conn, err
 	return nil, agherr.Many(fmt.Sprintf("couldn't dial to %s", addr), dialErrs...)
 }
 
-func getHTTPProxy(req *http.Request) (*url.URL, error) {
-	if len(config.ProxyURL) == 0 {
+func getHTTPProxy(_ *http.Request) (*url.URL, error) {
+	if config.ProxyURL == "" {
 		return nil, nil
 	}
+
 	return url.Parse(config.ProxyURL)
 }
 

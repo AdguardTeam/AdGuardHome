@@ -1,6 +1,7 @@
 package util
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -13,14 +14,30 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// NetInterface represents a list of network interfaces
+// NetInterface represents an entry of network interfaces map.
 type NetInterface struct {
-	Name         string   // Network interface name
-	MTU          int      // MTU
-	HardwareAddr string   // Hardware address
-	Addresses    []string // Array with the network interface addresses
-	Subnets      []string // Array with CIDR addresses of this network interface
-	Flags        string   // Network interface flags (up, broadcast, etc)
+	MTU          int              `json:"mtu"`
+	Name         string           `json:"name"`
+	HardwareAddr net.HardwareAddr `json:"hardware_address"`
+	Flags        net.Flags        `json:"flags"`
+	// Array with the network interface addresses.
+	Addresses []net.IP `json:"ip_addresses,omitempty"`
+	// Array with IP networks for this network interface.
+	Subnets []*net.IPNet `json:"-"`
+}
+
+// MarshalJSON implements the json.Marshaler interface for *NetInterface.
+func (iface *NetInterface) MarshalJSON() ([]byte, error) {
+	type netInterface NetInterface
+	return json.Marshal(&struct {
+		HardwareAddr string `json:"hardware_address"`
+		Flags        string `json:"flags"`
+		*netInterface
+	}{
+		HardwareAddr: iface.HardwareAddr.String(),
+		Flags:        iface.Flags.String(),
+		netInterface: (*netInterface)(iface),
+	})
 }
 
 // GetValidNetInterfaces returns interfaces that are eligible for DNS and/or DHCP
@@ -40,7 +57,7 @@ func GetValidNetInterfaces() ([]net.Interface, error) {
 
 // GetValidNetInterfacesForWeb returns interfaces that are eligible for DNS and WEB only
 // we do not return link-local addresses here
-func GetValidNetInterfacesForWeb() ([]NetInterface, error) {
+func GetValidNetInterfacesForWeb() ([]*NetInterface, error) {
 	ifaces, err := GetValidNetInterfaces()
 	if err != nil {
 		return nil, fmt.Errorf("couldn't get interfaces: %w", err)
@@ -49,7 +66,7 @@ func GetValidNetInterfacesForWeb() ([]NetInterface, error) {
 		return nil, errors.New("couldn't find any legible interface")
 	}
 
-	var netInterfaces []NetInterface
+	var netInterfaces []*NetInterface
 
 	for _, iface := range ifaces {
 		addrs, err := iface.Addrs()
@@ -57,32 +74,29 @@ func GetValidNetInterfacesForWeb() ([]NetInterface, error) {
 			return nil, fmt.Errorf("failed to get addresses for interface %s: %w", iface.Name, err)
 		}
 
-		netIface := NetInterface{
-			Name:         iface.Name,
+		netIface := &NetInterface{
 			MTU:          iface.MTU,
-			HardwareAddr: iface.HardwareAddr.String(),
+			Name:         iface.Name,
+			HardwareAddr: iface.HardwareAddr,
+			Flags:        iface.Flags,
 		}
 
-		if iface.Flags != 0 {
-			netIface.Flags = iface.Flags.String()
-		}
-
-		// Collect network interface addresses
+		// Collect network interface addresses.
 		for _, addr := range addrs {
 			ipNet, ok := addr.(*net.IPNet)
 			if !ok {
-				// not an IPNet, should not happen
+				// Should be net.IPNet, this is weird.
 				return nil, fmt.Errorf("got iface.Addrs() element %s that is not net.IPNet, it is %T", addr, addr)
 			}
-			// ignore link-local
+			// Ignore link-local.
 			if ipNet.IP.IsLinkLocalUnicast() {
 				continue
 			}
-			netIface.Addresses = append(netIface.Addresses, ipNet.IP.String())
-			netIface.Subnets = append(netIface.Subnets, ipNet.String())
+			netIface.Addresses = append(netIface.Addresses, ipNet.IP)
+			netIface.Subnets = append(netIface.Subnets, ipNet)
 		}
 
-		// Discard interfaces with no addresses
+		// Discard interfaces with no addresses.
 		if len(netIface.Addresses) != 0 {
 			netInterfaces = append(netInterfaces, netIface)
 		}
@@ -91,8 +105,8 @@ func GetValidNetInterfacesForWeb() ([]NetInterface, error) {
 	return netInterfaces, nil
 }
 
-// GetInterfaceByIP - Get interface name by its IP address.
-func GetInterfaceByIP(ip string) string {
+// GetInterfaceByIP returns the name of interface containing provided ip.
+func GetInterfaceByIP(ip net.IP) string {
 	ifaces, err := GetValidNetInterfacesForWeb()
 	if err != nil {
 		return ""
@@ -100,7 +114,7 @@ func GetInterfaceByIP(ip string) string {
 
 	for _, iface := range ifaces {
 		for _, addr := range iface.Addresses {
-			if ip == addr {
+			if ip.Equal(addr) {
 				return iface.Name
 			}
 		}
@@ -109,13 +123,13 @@ func GetInterfaceByIP(ip string) string {
 	return ""
 }
 
-// GetSubnet - Get IP address with netmask for the specified interface
-// Returns an empty string if it fails to find it
-func GetSubnet(ifaceName string) string {
+// GetSubnet returns pointer to net.IPNet for the specified interface or nil if
+// the search fails.
+func GetSubnet(ifaceName string) *net.IPNet {
 	netIfaces, err := GetValidNetInterfacesForWeb()
 	if err != nil {
 		log.Error("Could not get network interfaces info: %v", err)
-		return ""
+		return nil
 	}
 
 	for _, netIface := range netIfaces {
@@ -124,12 +138,12 @@ func GetSubnet(ifaceName string) string {
 		}
 	}
 
-	return ""
+	return nil
 }
 
 // CheckPortAvailable - check if TCP port is available
-func CheckPortAvailable(host string, port int) error {
-	ln, err := net.Listen("tcp", net.JoinHostPort(host, strconv.Itoa(port)))
+func CheckPortAvailable(host net.IP, port int) error {
+	ln, err := net.Listen("tcp", net.JoinHostPort(host.String(), strconv.Itoa(port)))
 	if err != nil {
 		return err
 	}
@@ -142,8 +156,8 @@ func CheckPortAvailable(host string, port int) error {
 }
 
 // CheckPacketPortAvailable - check if UDP port is available
-func CheckPacketPortAvailable(host string, port int) error {
-	ln, err := net.ListenPacket("udp", net.JoinHostPort(host, strconv.Itoa(port)))
+func CheckPacketPortAvailable(host net.IP, port int) error {
+	ln, err := net.ListenPacket("udp", net.JoinHostPort(host.String(), strconv.Itoa(port)))
 	if err != nil {
 		return err
 	}

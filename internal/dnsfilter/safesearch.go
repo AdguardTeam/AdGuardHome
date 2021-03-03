@@ -2,6 +2,7 @@ package dnsfilter
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"encoding/gob"
 	"encoding/json"
@@ -101,15 +102,14 @@ func (d *DNSFilter) checkSafeSearch(host string) (Result, error) {
 		return res, nil
 	}
 
-	// TODO this address should be resolved with upstream that was configured in dnsforward
-	ips, err := net.LookupIP(safeHost)
+	ipAddrs, err := d.resolver.LookupIPAddr(context.Background(), safeHost)
 	if err != nil {
 		log.Tracef("SafeSearchDomain for %s was found but failed to lookup for %s cause %s", host, safeHost, err)
 		return Result{}, err
 	}
 
-	for _, ip := range ips {
-		if ipv4 := ip.To4(); ipv4 != nil {
+	for _, ipAddr := range ipAddrs {
+		if ipv4 := ipAddr.IP.To4(); ipv4 != nil {
 			res.Rules[0].IP = ipv4
 
 			l := d.setCacheResult(gctx.safeSearchCache, host, res)
@@ -133,17 +133,12 @@ func (d *DNSFilter) handleSafeSearchDisable(w http.ResponseWriter, r *http.Reque
 }
 
 func (d *DNSFilter) handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
-	data := map[string]interface{}{
-		"enabled": d.Config.SafeSearchEnabled,
-	}
-	jsonVal, err := json.Marshal(data)
-	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "Unable to marshal status json: %s", err)
-		return
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
+	err := json.NewEncoder(w).Encode(&struct {
+		Enabled bool `json:"enabled"`
+	}{
+		Enabled: d.Config.SafeSearchEnabled,
+	})
 	if err != nil {
 		httpError(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
 		return
