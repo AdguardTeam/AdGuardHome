@@ -19,6 +19,7 @@ and this project adheres to
 
 ### Fixed
 
+- Wrong DNS-over-TLS ALPN configuration ([#2681]).
 - Inconsistent responses for messages with EDNS0 and AD when DNS caching is
   enabled ([#2600]).
 - Incomplete OpenWRT detection ([#2757]).
@@ -28,6 +29,7 @@ and this project adheres to
 
 [#2600]: https://github.com/AdguardTeam/AdGuardHome/issues/2600
 [#2674]: https://github.com/AdguardTeam/AdGuardHome/issues/2674
+[#2681]: https://github.com/AdguardTeam/AdGuardHome/issues/2681
 [#2688]: https://github.com/AdguardTeam/AdGuardHome/issues/2688
 [#2692]: https://github.com/AdguardTeam/AdGuardHome/issues/2692
 [#2757]: https://github.com/AdguardTeam/AdGuardHome/issues/2757
