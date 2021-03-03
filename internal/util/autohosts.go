@@ -120,13 +120,12 @@ func (a *AutoHosts) Process(host string, qtype uint16) []net.IP {
 
 	var ipsCopy []net.IP
 	a.lock.RLock()
+	defer a.lock.RUnlock()
 
 	if ips, ok := a.table[host]; ok {
 		ipsCopy = make([]net.IP, len(ips))
 		copy(ipsCopy, ips)
 	}
-
-	a.lock.RUnlock()
 
 	log.Debug("AutoHosts: answer: %s -> %v", host, ipsCopy)
 	return ipsCopy
@@ -339,10 +338,13 @@ func (a *AutoHosts) updateHosts() {
 		}
 	}
 
-	a.lock.Lock()
-	a.table = table
-	a.tableReverse = tableRev
-	a.lock.Unlock()
+	func() {
+		a.lock.Lock()
+		defer a.lock.Unlock()
+
+		a.table = table
+		a.tableReverse = tableRev
+	}()
 
 	a.notify()
 }
