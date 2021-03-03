@@ -17,6 +17,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/utils"
 )
@@ -295,7 +296,12 @@ func (clients *clientsContainer) FindUpstreams(ip string) *proxy.UpstreamConfig 
 	}
 
 	if c.upstreamConfig == nil {
-		config, err := proxy.ParseUpstreamsConfig(c.Upstreams, config.DNS.BootstrapDNS, dnsforward.DefaultTimeout)
+		config, err := proxy.ParseUpstreamsConfig(c.Upstreams,
+			upstream.Options{
+				Bootstrap: config.DNS.BootstrapDNS,
+				Timeout:   dnsforward.DefaultTimeout,
+			},
+		)
 		if err == nil {
 			c.upstreamConfig = &config
 		}

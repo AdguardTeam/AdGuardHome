@@ -146,7 +146,7 @@ func TestHome(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// test DNS over UDP
-	r, err := upstream.NewResolver("127.0.0.1:5354", 3*time.Second)
+	r, err := upstream.NewResolver("127.0.0.1:5354", upstream.Options{Timeout: 3 * time.Second})
 	assert.Nil(t, err)
 	addrs, err := r.LookupIPAddr(context.TODO(), "static.adguard.com")
 	assert.Nil(t, err)

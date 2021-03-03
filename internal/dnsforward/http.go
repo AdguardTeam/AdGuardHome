@@ -150,7 +150,7 @@ func (req *dnsConfig) checkBootstrap() (string, error) {
 			return boot, fmt.Errorf("invalid bootstrap server address: empty")
 		}
 
-		if _, err := upstream.NewResolver(boot, 0); err != nil {
+		if _, err := upstream.NewResolver(boot, upstream.Options{Timeout: 0}); err != nil {
 			return boot, fmt.Errorf("invalid bootstrap server address: %w", err)
 		}
 	}
@@ -315,7 +315,12 @@ func ValidateUpstreams(upstreams []string) error {
 		return nil
 	}
 
-	_, err := proxy.ParseUpstreamsConfig(upstreams, []string{}, DefaultTimeout)
+	_, err := proxy.ParseUpstreamsConfig(upstreams,
+		upstream.Options{
+			Bootstrap: []string{},
+			Timeout:   DefaultTimeout,
+		},
+	)
 	if err != nil {
 		return err
 	}
