@@ -19,6 +19,7 @@ and this project adheres to
 
 ### Fixed
 
+- Incomplete hostnames with trailing zero-bytes handling ([#2582]).
 - Wrong DNS-over-TLS ALPN configuration ([#2681]).
 - Inconsistent responses for messages with EDNS0 and AD when DNS caching is
   enabled ([#2600]).
@@ -27,6 +28,7 @@ and this project adheres to
 - Incomplete DNS upstreams validation ([#2674]).
 - Wrong parsing of DHCP options of the `ip` type ([#2688]).
 
+[#2582]: https://github.com/AdguardTeam/AdGuardHome/issues/2582
 [#2600]: https://github.com/AdguardTeam/AdGuardHome/issues/2600
 [#2674]: https://github.com/AdguardTeam/AdGuardHome/issues/2674
 [#2681]: https://github.com/AdguardTeam/AdGuardHome/issues/2681

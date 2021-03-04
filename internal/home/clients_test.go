@@ -290,3 +290,29 @@ func TestClientsCustomUpstream(t *testing.T) {
 	assert.Equal(t, 1, len(config.Upstreams))
 	assert.Equal(t, 1, len(config.DomainReservedUpstreams))
 }
+
+func TestProcessHost(t *testing.T) {
+	const (
+		name int = iota
+		host
+		want
+
+		fieldsNum
+	)
+
+	testCases := [][fieldsNum]string{{
+		name: "valid",
+		host: "abc",
+		want: "abc",
+	}, {
+		name: "with_trailing_zero_byte",
+		host: "abc\x00",
+		want: "abc",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc[name], func(t *testing.T) {
+			assert.Equal(t, tc[want], sanitizeHost(tc[host]))
+		})
+	}
+}

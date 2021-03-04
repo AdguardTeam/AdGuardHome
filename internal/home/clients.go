@@ -586,9 +586,22 @@ func (clients *clientsContainer) SetWhoisInfo(ip string, info [][]string) {
 	log.Debug("clients: set whois info for auto-client with IP %s: %q", ip, info)
 }
 
+// sanitizeHost proccesses a host to remove some special symbols causing errors.
+// Logic may be expanded in the future.
+func sanitizeHost(host string) (processed string) {
+	// cutset brings together all the deprecated sets.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/2582.
+	const cutset = "\x00"
+
+	return strings.TrimRight(host, cutset)
+}
+
 // AddHost adds a new IP-hostname pairing.  The priorities of the sources is
 // taken into account.  ok is true if the pairing was added.
 func (clients *clientsContainer) AddHost(ip, host string, src clientSource) (ok bool, err error) {
+	host = sanitizeHost(host)
+
 	clients.lock.Lock()
 	ok = clients.addHostLocked(ip, host, src)
 	clients.lock.Unlock()
