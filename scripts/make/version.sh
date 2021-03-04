@@ -11,8 +11,10 @@ set -e -f -u
 readonly awk_program='/^v[0-9]+\.[0-9]+\.[0-9]+.*$/ {
 	if (!$4) {
 		# The last tag is a full release version, so bump the
-		# minor one to get the next one.
+		# minor release number and zero the patch release number
+		# to get the next release.
 		$2++;
+		$3 = 0;
 	}
 
 	print($1 "." $2 "." $3);
