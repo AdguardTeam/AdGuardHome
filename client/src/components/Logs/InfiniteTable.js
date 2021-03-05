@@ -3,7 +3,7 @@ import React, {
     useEffect,
     useRef,
 } from 'react';
-import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import propTypes from 'prop-types';
 import throttle from 'lodash/throttle';
@@ -25,19 +25,21 @@ const InfiniteTable = ({
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const loader = useRef(null);
+    const loadingRef = useRef(null);
 
-    const {
-        isEntireLog,
-        processingGetLogs,
-    } = useSelector((state) => state.queryLogs, shallowEqual);
-
+    const isEntireLog = useSelector((state) => state.queryLogs.isEntireLog);
+    const processingGetLogs = useSelector((state) => state.queryLogs.processingGetLogs);
     const loading = isLoading || processingGetLogs;
 
     const listener = useCallback(() => {
-        if (loader.current && isScrolledIntoView(loader.current)) {
+        if (!loadingRef.current && loader.current && isScrolledIntoView(loader.current)) {
             dispatch(getLogs());
         }
-    }, [loader.current, isScrolledIntoView, getLogs]);
+    }, []);
+
+    useEffect(() => {
+        loadingRef.current = processingGetLogs;
+    }, [processingGetLogs]);
 
     useEffect(() => {
         listener();
