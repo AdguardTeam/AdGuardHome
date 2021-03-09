@@ -52,19 +52,25 @@ class ApiGenerator {
 
     apis: morph.SourceFile[] = [];
 
+    methods = ['patch', 'delete', 'post', 'get', 'put', 'head', 'options', 'trace'];
+
     constructor(openapi: OpenApi) {
         this.openapi = openapi;
         this.paths = openapi.paths;
         this.serverUrl = openapi.servers[0].url;
 
         Object.keys(this.paths).forEach((pathKey) => {
-            Object.keys(this.paths[pathKey]).forEach((method) => {
+            Object.keys(this.paths[pathKey]).filter((method) => this.methods.includes(method)).forEach((method) => {
                 const {
-                    tags, operationId, parameters, responses, requestBody, security, "x-skip-web-api": skip
+                    tags, operationId, responses, requestBody, security, "x-skip-web-api": skip
                 } = this.paths[pathKey][method];
+                const parameters =  this.paths[pathKey][method].parameters || this.paths[pathKey].parameters;
                 const controller = toCamel((tags ? tags[0] : pathKey.split('/')[1]));
                 if (skip) {
                     return;
+                }
+                if (!operationId) {
+                    console.log(pathKey);
                 }
                 if (this.controllers[controller]) {
                     this.controllers[controller][uncapitalize(operationId)] = {
