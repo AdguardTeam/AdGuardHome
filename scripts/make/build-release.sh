@@ -6,19 +6,19 @@
 # reader only has superficial knowledge of the POSIX shell language and
 # alike.  Experienced readers may find it overly verbose.
 
-# The default verbosity level is 0.  Show every command that is run if
-# the caller requested verbosity level greater than 0.  Show the
-# environment if the callre requested verbosity level greater than 1.
-# Otherwise, print nothing.
+# The default verbosity level is 0.  Show log messages if the caller
+# requested verbosity level greather than 0.  Show every command that is
+# run if the verbosity level is greater than 1.  Show the environment if
+# the verbosity level is greater than 2.  Otherwise, print nothing.
 #
 # The level of verbosity for the build script is the same minus one
 # level.  See below in build().
 readonly verbose="${VERBOSE:-0}"
-if [ "$verbose" -gt '1' ]
+if [ "$verbose" -gt '2' ]
 then
 	env
 	set -x
-elif [ "$verbose" -gt '0' ]
+elif [ "$verbose" -gt '1' ]
 then
 	set -x
 fi
@@ -57,6 +57,30 @@ fi
 
 log "channel '$channel'"
 log "version '$version'"
+
+# Check architecture and OS limiters.  Add spaces to the local versions
+# for better pattern matching.
+if [ "${ARCH:-}" != '' ]
+then
+	log "arches: '$ARCH'"
+	readonly arches=" $ARCH "
+else
+	readonly arches=''
+fi
+
+if [ "${OS:-}" != '' ]
+then
+	log "oses: '$OS'"
+	readonly oses=" $OS "
+else
+	readonly oses=''
+fi
+
+readonly snap_enabled="${SNAP:-1}"
+if [ "$snap_enabled" = '0' ]
+then
+	log 'snap: disabled'
+fi
 
 # Require the gpg key and passphrase to be set if the signing is
 # required.
@@ -196,7 +220,7 @@ build() {
 
 	log "$build_archive"
 
-	if [ "$build_snap" = '0' ]
+	if [ "$build_snap" = '0' -o "$snap_enabled" = '0' ]
 	then
 		return
 	fi
@@ -259,6 +283,30 @@ log "starting builds"
 # tweak the values where necessary, and feed to build.
 echo "$platforms" | while read -r os arch arm mips snap
 do
+	# See if the architecture or the OS is in the allowlist.  To do
+	# so, try removing everything that matches the pattern (well,
+	# a prefix, but that doesn't matter here) containing the arch or
+	# the OS.
+	#
+	# For example, when $arches is " amd64 arm64 " and $arch is
+	# "amd64", then the pattern to remove is "* amd64 *", so the
+	# whole string becomes empty.  On the other hand, if $arch is
+	# "windows", then the pattern is "* windows *", which doesn't
+	# match, so nothing is removed.
+	#
+	# See https://stackoverflow.com/a/43912605/1892060.
+	if [ "${arches##* $arch *}" != '' ]
+	then
+		log "$arch excluded, continuing"
+
+		continue
+	elif [ "${oses##* $os *}" != '' ]
+	then
+		log "$os excluded, continuing"
+
+		continue
+	fi
+
 	case "$arch"
 	in
 	(arm)
@@ -280,15 +328,20 @@ done
 
 log "calculating checksums"
 
-# Calculate the checksums of the files in a subshell with file expansion
-# enabled (+f) so that we don't need to use find or basename.
+# Calculate the checksums of the files in a subshell with a different
+# working directory.  Don't use ls, because files matching one of the
+# patterns may be absent, which will make ls return with a non-zero
+# status code.
 (
-	set +f
-
 	cd "./${dist}"
 
+	files="$( \
+		find . ! -name . -prune\
+			\( -name '*.tar.gz' -o -name '*.zip' \)
+	)"
+
 	# Don't use quotes to get word splitting.
-	sha256sum $(ls -1 -A -q *.tar.gz *.zip) > ./checksums.txt
+	sha256sum $files > ./checksums.txt
 )
 
 log "writing versions"
@@ -330,39 +383,39 @@ echo "
   \"download_linux_mips64le\": \"${version_download_url}/AdGuardHome_linux_mips64le_softfloat.tar.gz\",
 " >> "$version_json"
 
-(
-	# Use +f here so that ls works and we don't need to use find.
-	set +f
+# Same as with checksums above, don't use ls, because files matching one
+# of the patterns may be absent.
+readonly ar_files="$( \
+	find "./${dist}/" ! -name "${dist}" -prune\
+		\( -name '*.tar.gz' -o -name '*.zip' \)
+)"
+readonly ar_files_len="$(echo "$ar_files" | wc -l)"
 
-	readonly ar_files="$(ls -1 -A -q "./${dist}/"*.tar.gz "./${dist}/"*.zip)"
-	readonly ar_files_len="$(echo "$ar_files" | wc -l)"
+i='1'
+# Don't use quotes to get word splitting.
+for f in $ar_files
+do
+	platform="$f"
 
-	i='1'
-	# Don't use quotes to get word splitting.
-	for f in $ar_files
-	do
-		platform="$f"
+	# Remove the prefix.
+	platform="${platform#./${dist}/AdGuardHome_}"
 
-		# Remove the prefix.
-		platform="${platform#./${dist}/AdGuardHome_}"
+	# Remove the filename extensions.
+	platform="${platform%.zip}"
+	platform="${platform%.tar.gz}"
 
-		# Remove the filename extensions.
-		platform="${platform%.zip}"
-		platform="${platform%.tar.gz}"
+	# Use the filename's base path.
+	filename="${f#./${dist}/}"
 
-		# Use the filename's base path.
-		filename="${f#./${dist}/}"
+	if [ "$i" = "$ar_files_len" ]
+	then
+		echo "  \"download_${platform}\": \"${version_download_url}/${filename}\"" >> "$version_json"
+	else
+		echo "  \"download_${platform}\": \"${version_download_url}/${filename}\"," >> "$version_json"
+	fi
 
-		if [ "$i" = "$ar_files_len" ]
-		then
-			echo "  \"download_${platform}\": \"${version_download_url}/${filename}\"" >> "$version_json"
-		else
-			echo "  \"download_${platform}\": \"${version_download_url}/${filename}\"," >> "$version_json"
-		fi
-
-		i="$(( i + 1 ))"
-	done
-)
+	i="$(( i + 1 ))"
+done
 
 echo '}' >> "$version_json"
 

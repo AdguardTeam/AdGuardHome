@@ -46,10 +46,19 @@ Required environment:
     is `1`.
 
 Optional environment:
+ *  `ARCH` and `OS`: space-separated list of architectures and operating systems
+    for which to build a release.  For example, to build only for 64-bit ARM and
+    AMD on Linux and Darwin:
+    ```sh
+    make ARCH='amd64 arm64' OS='darwin linux' … build-release
+    ```
+    The default value is `''`, which means build everything.
  *  `DIST_DIR`: the directory to build a release into.  The default value is
     `dist`.
  *  `GO`: set an alternarive name for the Go compiler.
  *  `SIGN`: `0` to not sign the resulting packages, `1` to sign.  The default
+    value is `1`.
+ *  `SNAP`: `0` to not build Snapcraft packages, `1` to build`.  The default
     value is `1`.
  *  `VERBOSE`: `1` to be verbose, `2` to also print environment.  This script
     calls `go-build.sh` with the verbosity level one level lower, so to get
