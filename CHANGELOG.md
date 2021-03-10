@@ -10,8 +10,16 @@ and this project adheres to
 ## [Unreleased]
 
 <!--
-## [v0.106.0] - 2021-04-26
+## [v0.106.0] - 2021-05-01
 -->
+
+### Changed
+
+- New, more correct versioning scheme ([#2412]).
+
+[#2412]: https://github.com/AdguardTeam/AdGuardHome/issues/2412
+
+
 
 ## [v0.105.2] - 2021-03-10
 

@@ -123,7 +123,7 @@ directly, or use the commands through `make` (for example, `make go-lint`).
 Optional environment:
  *  `GO`: set an alternarive name for the Go compiler.
 
- ###  `version.sh`: Print The Current Version
+ ###  `version.sh`: Generate And Print The Current Version
 
 Required environment:
  *  `CHANNEL`: release channel, see above.
