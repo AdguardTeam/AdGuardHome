@@ -58,7 +58,7 @@ Optional environment:
  *  `GO`: set an alternarive name for the Go compiler.
  *  `SIGN`: `0` to not sign the resulting packages, `1` to sign.  The default
     value is `1`.
- *  `SNAP`: `0` to not build Snapcraft packages, `1` to build`.  The default
+ *  `SNAP`: `0` to not build Snapcraft packages, `1` to build.  The default
     value is `1`.
  *  `VERBOSE`: `1` to be verbose, `2` to also print environment.  This script
     calls `go-build.sh` with the verbosity level one level lower, so to get
