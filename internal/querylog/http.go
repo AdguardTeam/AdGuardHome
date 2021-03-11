@@ -150,10 +150,9 @@ func (l *queryLog) parseSearchCriteria(q url.Values, name string, ct criteriaTyp
 }
 
 // parseSearchParams - parses "searchParams" from the HTTP request's query string
-func (l *queryLog) parseSearchParams(r *http.Request) (*searchParams, error) {
-	p := newSearchParams()
+func (l *queryLog) parseSearchParams(r *http.Request) (p *searchParams, err error) {
+	p = newSearchParams()
 
-	var err error
 	q := r.URL.Query()
 	olderThan := q.Get("older_than")
 	if len(olderThan) != 0 {
@@ -163,11 +162,14 @@ func (l *queryLog) parseSearchParams(r *http.Request) (*searchParams, error) {
 		}
 	}
 
-	if limit, err := strconv.ParseInt(q.Get("limit"), 10, 64); err == nil {
-		p.limit = int(limit)
+	var limit64 int64
+	if limit64, err = strconv.ParseInt(q.Get("limit"), 10, 64); err == nil {
+		p.limit = int(limit64)
 	}
-	if offset, err := strconv.ParseInt(q.Get("offset"), 10, 64); err == nil {
-		p.offset = int(offset)
+
+	var offset64 int64
+	if offset64, err = strconv.ParseInt(q.Get("offset"), 10, 64); err == nil {
+		p.offset = int(offset64)
 
 		// If we don't use "olderThan" and use offset/limit instead, we should change the default behavior
 		// and scan all log records until we found enough log entries
@@ -180,7 +182,9 @@ func (l *queryLog) parseSearchParams(r *http.Request) (*searchParams, error) {
 	}
 
 	for k, v := range paramNames {
-		ok, c, err := l.parseSearchCriteria(q, k, v)
+		var ok bool
+		var c searchCriteria
+		ok, c, err = l.parseSearchCriteria(q, k, v)
 		if err != nil {
 			return nil, err
 		}

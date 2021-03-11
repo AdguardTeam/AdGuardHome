@@ -850,7 +850,7 @@ func New(c *Config, blockFilters []Filter) *DNSFilter {
 	d.BlockedServices = bsvcs
 
 	if blockFilters != nil {
-		err := d.initFiltering(nil, blockFilters)
+		err = d.initFiltering(nil, blockFilters)
 		if err != nil {
 			log.Error("Can't initialize filtering subsystem: %s", err)
 			d.Close()

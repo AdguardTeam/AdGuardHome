@@ -118,8 +118,9 @@ func (l *queryLog) searchFiles(params *searchParams) ([]*logEntry, time.Time, in
 	// The idea is to make search calls faster so that the UI could handle it and show something
 	// This behavior can be overridden if "maxFileScanEntries" is set to 0
 	for total < params.maxFileScanEntries || params.maxFileScanEntries <= 0 {
-		entry, ts, err := l.readNextEntry(r, params)
-
+		var entry *logEntry
+		var ts int64
+		entry, ts, err = l.readNextEntry(r, params)
 		if err == io.EOF {
 			// there's nothing to read anymore
 			break

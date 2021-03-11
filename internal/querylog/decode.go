@@ -280,7 +280,8 @@ func decodeResultRules(dec *json.Decoder, ent *logEntry) {
 
 		i := 0
 		for {
-			keyToken, err := dec.Token()
+			var keyToken json.Token
+			keyToken, err = dec.Token()
 			if err != nil {
 				if err != io.EOF {
 					log.Debug("decodeResultRules err: %s", err)
@@ -405,7 +406,8 @@ func decodeResultDNSRewriteResult(dec *json.Decoder, ent *logEntry) {
 		// code for a longer time than planned.
 		switch key {
 		case "RCode":
-			vToken, err := dec.Token()
+			var vToken json.Token
+			vToken, err = dec.Token()
 			if err != nil {
 				if err != io.EOF {
 					log.Debug("decodeResultDNSRewriteResult err: %s", err)
@@ -418,7 +420,8 @@ func decodeResultDNSRewriteResult(dec *json.Decoder, ent *logEntry) {
 				ent.Result.DNSRewriteResult = &dnsfilter.DNSRewriteResult{}
 			}
 
-			if n, ok := vToken.(json.Number); ok {
+			var n json.Number
+			if n, ok = vToken.(json.Number); ok {
 				rcode64, _ := n.Int64()
 				ent.Result.DNSRewriteResult.RCode = rules.RCode(rcode64)
 			}

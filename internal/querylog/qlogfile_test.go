@@ -225,7 +225,8 @@ func TestQLogFile_SeekTS_bad(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				assert.NotEqualValues(t, 0, tc.ts)
 
-				_, depth, err := q.SeekTS(tc.ts)
+				var depth int
+				_, depth, err = q.SeekTS(tc.ts)
 				assert.NotEmpty(t, l.num)
 				require.NotNil(t, err)
 				if tc.leq {

@@ -112,11 +112,11 @@ func TestQLogReader_Seek(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			timestamp, err := time.Parse(time.RFC3339Nano, tc.time)
+			ts, err := time.Parse(time.RFC3339Nano, tc.time)
 			require.Nil(t, err)
 
-			err = r.SeekTS(timestamp.UnixNano())
-			assert.True(t, errors.Is(err, tc.want))
+			err = r.SeekTS(ts.UnixNano())
+			assert.True(t, errors.Is(err, tc.want), err)
 		})
 	}
 }
@@ -146,7 +146,7 @@ func TestQLogReader_ReadNext(t *testing.T) {
 			require.Nil(t, err)
 
 			for i := 1; i < tc.start; i++ {
-				_, err := r.ReadNext()
+				_, err = r.ReadNext()
 				require.Nil(t, err)
 			}
 

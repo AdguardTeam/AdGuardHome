@@ -229,7 +229,9 @@ func (c *sbCtx) processTXT(resp *dns.Msg) (bool, [][]byte) {
 			if !matched {
 				var hash32 [32]byte
 				copy(hash32[:], hash)
-				hashHost, ok := c.hashToHost[hash32]
+
+				var hashHost string
+				hashHost, ok = c.hashToHost[hash32]
 				if ok {
 					log.Debug("%s: matched %s by %s/%s", c.svc, c.host, hashHost, t)
 					matched = true
