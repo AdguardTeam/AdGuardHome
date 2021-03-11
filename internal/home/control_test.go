@@ -3,32 +3,12 @@ package home
 import (
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
-/* Tests performed:
-. Bad certificate
-. Bad private key
-. Valid certificate & private key */
-func TestValidateCertificates(t *testing.T) {
-	var data tlsConfigStatus
-
-	// bad cert
-	data = validateCertificates("bad cert", "", "")
-	if !(data.WarningValidation != "" &&
-		!data.ValidCert &&
-		!data.ValidChain) {
-		t.Fatalf("bad cert: validateCertificates(): %v", data)
-	}
-
-	// bad priv key
-	data = validateCertificates("", "bad priv key", "")
-	if !(data.WarningValidation != "" &&
-		!data.ValidKey) {
-		t.Fatalf("bad priv key: validateCertificates(): %v", data)
-	}
-
-	// valid cert & priv key
-	CertificateChain := `-----BEGIN CERTIFICATE-----
+const (
+	CertificateChain = `-----BEGIN CERTIFICATE-----
 MIICKzCCAZSgAwIBAgIJAMT9kPVJdM7LMA0GCSqGSIb3DQEBCwUAMC0xFDASBgNV
 BAoMC0FkR3VhcmQgTHRkMRUwEwYDVQQDDAxBZEd1YXJkIEhvbWUwHhcNMTkwMjI3
 MDkyNDIzWhcNNDYwNzE0MDkyNDIzWjAtMRQwEgYDVQQKDAtBZEd1YXJkIEx0ZDEV
@@ -42,7 +22,7 @@ LwlXfbakf7qkVTlCNXgoY7RaJ8rJdPgOZPoCTVToEhT6u/cb1c2qp8QB0dNExDna
 b0Z+dnODTZqQOJo6z/wIXlcUrnR4cQVvytXt8lFn+26l6Y6EMI26twC/xWr+1swq
 Muj4FeWHVDerquH4yMr1jsYLD3ci+kc5sbIX6TfVxQ==
 -----END CERTIFICATE-----`
-	PrivateKey := `-----BEGIN PRIVATE KEY-----
+	PrivateKey = `-----BEGIN PRIVATE KEY-----
 MIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBALC/BSc8mI68tw5p
 aYa7pjrySwWvXeetcFywOWHGVfLw9qiFWLdfESa3Y6tWMpZAXD9t1Xh9n211YUBV
 FGSB4ZshnM/tgEPU6t787lJD4NsIIRp++MkJxdAitN4oUTqL0bdpIwezQ/CrYuBX
@@ -58,20 +38,35 @@ O5EX70gpeGQMPDK0QSWpaazg956njJSDbNCFM4BccrdQbJu1cW4qOsfBAkAMgZuG
 O88slmgTRHX4JGFmy3rrLiHNI2BbJSuJ++Yllz8beVzh6NfvuY+HKRCmPqoBPATU
 kXS9jgARhhiWXJrk
 -----END PRIVATE KEY-----`
-	data = validateCertificates(CertificateChain, PrivateKey, "")
-	notBefore, _ := time.Parse(time.RFC3339, "2019-02-27T09:24:23Z")
-	notAfter, _ := time.Parse(time.RFC3339, "2046-07-14T09:24:23Z")
-	if !(data.WarningValidation != "" /* self signed */ &&
-		data.ValidCert &&
-		!data.ValidChain &&
-		data.ValidKey &&
-		data.KeyType == "RSA" &&
-		data.Subject == "CN=AdGuard Home,O=AdGuard Ltd" &&
-		data.Issuer == "CN=AdGuard Home,O=AdGuard Ltd" &&
-		data.NotBefore.Equal(notBefore) &&
-		data.NotAfter.Equal(notAfter) &&
-		// data.DNSNames[0] ==  &&
-		data.ValidPair) {
-		t.Fatalf("valid cert & priv key: validateCertificates(): %v", data)
-	}
+)
+
+func TestValidateCertificates(t *testing.T) {
+	t.Run("bad_certificate", func(t *testing.T) {
+		data := validateCertificates("bad cert", "", "")
+		assert.NotEmpty(t, data.WarningValidation)
+		assert.False(t, data.ValidCert)
+		assert.False(t, data.ValidChain)
+	})
+
+	t.Run("bad_private_key", func(t *testing.T) {
+		data := validateCertificates("", "bad priv key", "")
+		assert.NotEmpty(t, data.WarningValidation)
+		assert.False(t, data.ValidKey)
+	})
+
+	t.Run("valid", func(t *testing.T) {
+		data := validateCertificates(CertificateChain, PrivateKey, "")
+		notBefore, _ := time.Parse(time.RFC3339, "2019-02-27T09:24:23Z")
+		notAfter, _ := time.Parse(time.RFC3339, "2046-07-14T09:24:23Z")
+		assert.NotEmpty(t, data.WarningValidation)
+		assert.True(t, data.ValidCert)
+		assert.False(t, data.ValidChain)
+		assert.True(t, data.ValidKey)
+		assert.Equal(t, "RSA", data.KeyType)
+		assert.Equal(t, "CN=AdGuard Home,O=AdGuard Ltd", data.Subject)
+		assert.Equal(t, "CN=AdGuard Home,O=AdGuard Ltd", data.Issuer)
+		assert.Equal(t, notBefore, data.NotBefore)
+		assert.Equal(t, notAfter, data.NotAfter)
+		assert.True(t, data.ValidPair)
+	})
 }

@@ -39,21 +39,21 @@ func TestLimitRequestBody(t *testing.T) {
 		wantErr: nil,
 	}}
 
-	makeHandler := func(err *error) http.HandlerFunc {
+	makeHandler := func(t *testing.T, err *error) http.HandlerFunc {
+		t.Helper()
+
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var b []byte
 			b, *err = ioutil.ReadAll(r.Body)
 			_, werr := w.Write(b)
-			if werr != nil {
-				panic(werr)
-			}
+			require.Nil(t, werr)
 		})
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			var err error
-			handler := makeHandler(&err)
+			handler := makeHandler(t, &err)
 			lim := limitRequestBody(handler)
 
 			req := httptest.NewRequest(http.MethodPost, "https://www.example.com", strings.NewReader(tc.body))
@@ -61,7 +61,7 @@ func TestLimitRequestBody(t *testing.T) {
 
 			lim.ServeHTTP(res, req)
 
-			require.Equal(t, tc.wantErr, err)
+			assert.Equal(t, tc.wantErr, err)
 			assert.Equal(t, tc.want, res.Body.Bytes())
 		})
 	}

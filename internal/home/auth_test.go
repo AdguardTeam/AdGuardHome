@@ -20,10 +20,18 @@ func TestMain(m *testing.M) {
 	aghtest.DiscardLogOutput(m)
 }
 
-func prepareTestDir() string {
+func prepareTestDir(t *testing.T) string {
+	t.Helper()
+
 	const dir = "./agh-test"
-	_ = os.RemoveAll(dir)
-	_ = os.MkdirAll(dir, 0o755)
+
+	require.Nil(t, os.RemoveAll(dir))
+	// TODO(e.burkov): Replace with testing.TempDir after updating Go
+	// version to 1.16.
+	require.Nil(t, os.MkdirAll(dir, 0o755))
+
+	t.Cleanup(func() { require.Nil(t, os.RemoveAll(dir)) })
+
 	return dir
 }
 
@@ -47,8 +55,7 @@ func TestNewSessionToken(t *testing.T) {
 }
 
 func TestAuth(t *testing.T) {
-	dir := prepareTestDir()
-	t.Cleanup(func() { _ = os.RemoveAll(dir) })
+	dir := prepareTestDir(t)
 	fn := filepath.Join(dir, "sessions.db")
 
 	users := []User{{
@@ -123,8 +130,7 @@ func (w *testResponseWriter) WriteHeader(statusCode int) {
 }
 
 func TestAuthHTTP(t *testing.T) {
-	dir := prepareTestDir()
-	defer func() { _ = os.RemoveAll(dir) }()
+	dir := prepareTestDir(t)
 	fn := filepath.Join(dir, "sessions.db")
 
 	users := []User{

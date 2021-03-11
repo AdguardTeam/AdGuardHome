@@ -8,6 +8,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSafeBrowsingHash(t *testing.T) {
@@ -155,25 +156,25 @@ func TestSBPC(t *testing.T) {
 	}}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			// Prepare the upstream.
-			ups := &aghtest.TestBlockUpstream{
-				Hostname: hostname,
-				Block:    tc.block,
-			}
-			d.SetSafeBrowsingUpstream(ups)
-			d.SetParentalUpstream(ups)
+		// Prepare the upstream.
+		ups := &aghtest.TestBlockUpstream{
+			Hostname: hostname,
+			Block:    tc.block,
+		}
+		d.SetSafeBrowsingUpstream(ups)
+		d.SetParentalUpstream(ups)
 
+		t.Run(tc.name, func(t *testing.T) {
 			// Firstly, check the request blocking.
 			hits := 0
 			res, err := tc.testFunc(hostname)
-			assert.Nil(t, err)
+			require.Nil(t, err)
 			if tc.block {
 				assert.True(t, res.IsFiltered)
-				assert.Len(t, res.Rules, 1)
+				require.Len(t, res.Rules, 1)
 				hits++
 			} else {
-				assert.False(t, res.IsFiltered)
+				require.False(t, res.IsFiltered)
 			}
 
 			// Check the cache state, check the response is now cached.
@@ -185,12 +186,12 @@ func TestSBPC(t *testing.T) {
 
 			// Now make the same request to check the cache was used.
 			res, err = tc.testFunc(hostname)
-			assert.Nil(t, err)
+			require.Nil(t, err)
 			if tc.block {
 				assert.True(t, res.IsFiltered)
-				assert.Len(t, res.Rules, 1)
+				require.Len(t, res.Rules, 1)
 			} else {
-				assert.False(t, res.IsFiltered)
+				require.False(t, res.IsFiltered)
 			}
 
 			// Check the cache state, it should've been used.
@@ -199,8 +200,8 @@ func TestSBPC(t *testing.T) {
 
 			// Check that there were no additional requests.
 			assert.Equal(t, 1, ups.RequestsCount())
-
-			purgeCaches()
 		})
+
+		purgeCaches()
 	}
 }

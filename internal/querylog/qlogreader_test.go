@@ -20,6 +20,7 @@ func newTestQLogReader(t *testing.T, filesNum, linesNum int) (reader *QLogReader
 	// Create the new QLogReader instance.
 	reader, err := NewQLogReader(testFiles)
 	require.Nil(t, err)
+
 	assert.NotNil(t, reader)
 	t.Cleanup(func() {
 		assert.Nil(t, reader.Close())
@@ -112,11 +113,7 @@ func TestQLogReader_Seek(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			timestamp, err := time.Parse(time.RFC3339Nano, tc.time)
-			assert.Nil(t, err)
-
-			if tc.name == "first" {
-				assert.True(t, true)
-			}
+			require.Nil(t, err)
 
 			err = r.SeekTS(timestamp.UnixNano())
 			assert.True(t, errors.Is(err, tc.want))
@@ -146,11 +143,11 @@ func TestQLogReader_ReadNext(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := r.SeekStart()
-			assert.Nil(t, err, err)
+			require.Nil(t, err)
 
 			for i := 1; i < tc.start; i++ {
 				_, err := r.ReadNext()
-				assert.Nil(t, err)
+				require.Nil(t, err)
 			}
 
 			_, err = r.ReadNext()

@@ -6,215 +6,297 @@ import (
 
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+// TODO(e.burkov): All the tests in this file may and should me merged together.
 
 func TestRewrites(t *testing.T) {
 	d := newForTest(nil, nil)
 	t.Cleanup(d.Close)
-	// CNAME, A, AAAA
-	d.Rewrites = []RewriteEntry{
-		{"somecname", "somehost.com", 0, nil},
-		{"somehost.com", "0.0.0.0", 0, nil},
 
-		{"host.com", "1.2.3.4", 0, nil},
-		{"host.com", "1.2.3.5", 0, nil},
-		{"host.com", "1:2:3::4", 0, nil},
-		{"www.host.com", "host.com", 0, nil},
-	}
+	d.Rewrites = []RewriteEntry{{
+		// This one and below are about CNAME, A and AAAA.
+		Domain: "somecname",
+		Answer: "somehost.com",
+	}, {
+		Domain: "somehost.com",
+		Answer: "0.0.0.0",
+	}, {
+		Domain: "host.com",
+		Answer: "1.2.3.4",
+	}, {
+		Domain: "host.com",
+		Answer: "1.2.3.5",
+	}, {
+		Domain: "host.com",
+		Answer: "1:2:3::4",
+	}, {
+		Domain: "www.host.com",
+		Answer: "host.com",
+	}, {
+		// This one is a wildcard.
+		Domain: "*.host.com",
+		Answer: "1.2.3.5",
+	}, {
+		// This one and below are about wildcard overriding.
+		Domain: "a.host.com",
+		Answer: "1.2.3.4",
+	}, {
+		// This one is about CNAME and wildcard interacting.
+		Domain: "*.host2.com",
+		Answer: "host.com",
+	}, {
+		// This one and below are about 2 level CNAME.
+		Domain: "b.host.com",
+		Answer: "somecname",
+	}, {
+		// This one and below are about 2 level CNAME and wildcard.
+		Domain: "b.host3.com",
+		Answer: "a.host3.com",
+	}, {
+		Domain: "a.host3.com",
+		Answer: "x.host.com",
+	}}
 	d.prepareRewrites()
-	r := d.processRewrites("host2.com", dns.TypeA)
-	assert.Equal(t, NotFilteredNotFound, r.Reason)
 
-	r = d.processRewrites("www.host.com", dns.TypeA)
-	assert.Equal(t, Rewritten, r.Reason)
-	assert.Equal(t, "host.com", r.CanonName)
-	assert.Len(t, r.IPList, 2)
-	assert.True(t, r.IPList[0].Equal(net.IP{1, 2, 3, 4}))
-	assert.True(t, r.IPList[1].Equal(net.IP{1, 2, 3, 5}))
+	testCases := []struct {
+		name      string
+		host      string
+		dtyp      uint16
+		wantCName string
+		wantVals  []net.IP
+	}{{
+		name: "not_filtered_not_found",
+		host: "hoost.com",
+		dtyp: dns.TypeA,
+	}, {
+		name:      "rewritten_a",
+		host:      "www.host.com",
+		dtyp:      dns.TypeA,
+		wantCName: "host.com",
+		wantVals:  []net.IP{{1, 2, 3, 4}, {1, 2, 3, 5}},
+	}, {
+		name:      "rewritten_aaaa",
+		host:      "www.host.com",
+		dtyp:      dns.TypeAAAA,
+		wantCName: "host.com",
+		wantVals:  []net.IP{net.ParseIP("1:2:3::4")},
+	}, {
+		name:     "wildcard_match",
+		host:     "abc.host.com",
+		dtyp:     dns.TypeA,
+		wantVals: []net.IP{{1, 2, 3, 5}},
+	}, {
+		name:     "wildcard_override",
+		host:     "a.host.com",
+		dtyp:     dns.TypeA,
+		wantVals: []net.IP{{1, 2, 3, 4}},
+	}, {
+		name:      "wildcard_cname_interaction",
+		host:      "www.host2.com",
+		dtyp:      dns.TypeA,
+		wantCName: "host.com",
+		wantVals:  []net.IP{{1, 2, 3, 4}, {1, 2, 3, 5}},
+	}, {
+		name:      "two_cnames",
+		host:      "b.host.com",
+		dtyp:      dns.TypeA,
+		wantCName: "somehost.com",
+		wantVals:  []net.IP{{0, 0, 0, 0}},
+	}, {
+		name:      "two_cnames_and_wildcard",
+		host:      "b.host3.com",
+		dtyp:      dns.TypeA,
+		wantCName: "x.host.com",
+		wantVals:  []net.IP{{1, 2, 3, 5}},
+	}}
 
-	r = d.processRewrites("www.host.com", dns.TypeAAAA)
-	assert.Equal(t, Rewritten, r.Reason)
-	assert.Equal(t, "host.com", r.CanonName)
-	assert.Len(t, r.IPList, 1)
-	assert.True(t, r.IPList[0].Equal(net.ParseIP("1:2:3::4")))
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			valsNum := len(tc.wantVals)
 
-	// wildcard
-	d.Rewrites = []RewriteEntry{
-		{"host.com", "1.2.3.4", 0, nil},
-		{"*.host.com", "1.2.3.5", 0, nil},
+			r := d.processRewrites(tc.host, tc.dtyp)
+			if valsNum == 0 {
+				assert.Equal(t, NotFilteredNotFound, r.Reason)
+
+				return
+			}
+
+			require.Equal(t, Rewritten, r.Reason)
+			if tc.wantCName != "" {
+				assert.Equal(t, tc.wantCName, r.CanonName)
+			}
+
+			require.Len(t, r.IPList, valsNum)
+			for i, ip := range tc.wantVals {
+				assert.Equal(t, ip, r.IPList[i])
+			}
+		})
 	}
-	d.prepareRewrites()
-	r = d.processRewrites("host.com", dns.TypeA)
-	assert.Equal(t, Rewritten, r.Reason)
-	assert.True(t, r.IPList[0].Equal(net.IP{1, 2, 3, 4}))
-
-	r = d.processRewrites("www.host.com", dns.TypeA)
-	assert.Equal(t, Rewritten, r.Reason)
-	assert.True(t, r.IPList[0].Equal(net.IP{1, 2, 3, 5}))
-
-	r = d.processRewrites("www.host2.com", dns.TypeA)
-	assert.Equal(t, NotFilteredNotFound, r.Reason)
-
-	// override a wildcard
-	d.Rewrites = []RewriteEntry{
-		{"a.host.com", "1.2.3.4", 0, nil},
-		{"*.host.com", "1.2.3.5", 0, nil},
-	}
-	d.prepareRewrites()
-	r = d.processRewrites("a.host.com", dns.TypeA)
-	assert.Equal(t, Rewritten, r.Reason)
-	assert.Len(t, r.IPList, 1)
-	assert.True(t, r.IPList[0].Equal(net.IP{1, 2, 3, 4}))
-
-	// wildcard + CNAME
-	d.Rewrites = []RewriteEntry{
-		{"host.com", "1.2.3.4", 0, nil},
-		{"*.host.com", "host.com", 0, nil},
-	}
-	d.prepareRewrites()
-	r = d.processRewrites("www.host.com", dns.TypeA)
-	assert.Equal(t, Rewritten, r.Reason)
-	assert.Equal(t, "host.com", r.CanonName)
-	assert.True(t, r.IPList[0].Equal(net.IP{1, 2, 3, 4}))
-
-	// 2 CNAMEs
-	d.Rewrites = []RewriteEntry{
-		{"b.host.com", "a.host.com", 0, nil},
-		{"a.host.com", "host.com", 0, nil},
-		{"host.com", "1.2.3.4", 0, nil},
-	}
-	d.prepareRewrites()
-	r = d.processRewrites("b.host.com", dns.TypeA)
-	assert.Equal(t, Rewritten, r.Reason)
-	assert.Equal(t, "host.com", r.CanonName)
-	assert.Len(t, r.IPList, 1)
-	assert.True(t, r.IPList[0].Equal(net.IP{1, 2, 3, 4}))
-
-	// 2 CNAMEs + wildcard
-	d.Rewrites = []RewriteEntry{
-		{"b.host.com", "a.host.com", 0, nil},
-		{"a.host.com", "x.somehost.com", 0, nil},
-		{"*.somehost.com", "1.2.3.4", 0, nil},
-	}
-	d.prepareRewrites()
-	r = d.processRewrites("b.host.com", dns.TypeA)
-	assert.Equal(t, Rewritten, r.Reason)
-	assert.Equal(t, "x.somehost.com", r.CanonName)
-	assert.Len(t, r.IPList, 1)
-	assert.True(t, r.IPList[0].Equal(net.IP{1, 2, 3, 4}))
 }
 
 func TestRewritesLevels(t *testing.T) {
 	d := newForTest(nil, nil)
 	t.Cleanup(d.Close)
-	// exact host, wildcard L2, wildcard L3
-	d.Rewrites = []RewriteEntry{
-		{"host.com", "1.1.1.1", 0, nil},
-		{"*.host.com", "2.2.2.2", 0, nil},
-		{"*.sub.host.com", "3.3.3.3", 0, nil},
-	}
+	// Exact host, wildcard L2, wildcard L3.
+	d.Rewrites = []RewriteEntry{{
+		Domain: "host.com",
+		Answer: "1.1.1.1",
+	}, {
+		Domain: "*.host.com",
+		Answer: "2.2.2.2",
+	}, {
+		Domain: "*.sub.host.com",
+		Answer: "3.3.3.3",
+	}}
 	d.prepareRewrites()
 
-	// match exact
-	r := d.processRewrites("host.com", dns.TypeA)
-	assert.Equal(t, Rewritten, r.Reason)
-	assert.Len(t, r.IPList, 1)
-	assert.True(t, net.IP{1, 1, 1, 1}.Equal(r.IPList[0]))
+	testCases := []struct {
+		name string
+		host string
+		want net.IP
+	}{{
+		name: "exact_match",
+		host: "host.com",
+		want: net.IP{1, 1, 1, 1},
+	}, {
+		name: "l2_match",
+		host: "sub.host.com",
+		want: net.IP{2, 2, 2, 2},
+	}, {
+		name: "l3_match",
+		host: "my.sub.host.com",
+		want: net.IP{3, 3, 3, 3},
+	}}
 
-	// match L2
-	r = d.processRewrites("sub.host.com", dns.TypeA)
-	assert.Equal(t, Rewritten, r.Reason)
-	assert.Len(t, r.IPList, 1)
-	assert.True(t, net.IP{2, 2, 2, 2}.Equal(r.IPList[0]))
-
-	// match L3
-	r = d.processRewrites("my.sub.host.com", dns.TypeA)
-	assert.Equal(t, Rewritten, r.Reason)
-	assert.Len(t, r.IPList, 1)
-	assert.True(t, net.IP{3, 3, 3, 3}.Equal(r.IPList[0]))
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			r := d.processRewrites(tc.host, dns.TypeA)
+			assert.Equal(t, Rewritten, r.Reason)
+			require.Len(t, r.IPList, 1)
+		})
+	}
 }
 
 func TestRewritesExceptionCNAME(t *testing.T) {
 	d := newForTest(nil, nil)
 	t.Cleanup(d.Close)
-	// wildcard; exception for a sub-domain
-	d.Rewrites = []RewriteEntry{
-		{"*.host.com", "2.2.2.2", 0, nil},
-		{"sub.host.com", "sub.host.com", 0, nil},
-	}
+	// Wildcard and exception for a sub-domain.
+	d.Rewrites = []RewriteEntry{{
+		Domain: "*.host.com",
+		Answer: "2.2.2.2",
+	}, {
+		Domain: "sub.host.com",
+		Answer: "sub.host.com",
+	}, {
+		Domain: "*.sub.host.com",
+		Answer: "*.sub.host.com",
+	}}
 	d.prepareRewrites()
 
-	// match sub-domain
-	r := d.processRewrites("my.host.com", dns.TypeA)
-	assert.Equal(t, Rewritten, r.Reason)
-	assert.Len(t, r.IPList, 1)
-	assert.True(t, net.IP{2, 2, 2, 2}.Equal(r.IPList[0]))
+	testCases := []struct {
+		name string
+		host string
+		want net.IP
+	}{{
+		name: "match_sub-domain",
+		host: "my.host.com",
+		want: net.IP{2, 2, 2, 2},
+	}, {
+		name: "exception_cname",
+		host: "sub.host.com",
+	}, {
+		name: "exception_wildcard",
+		host: "my.sub.host.com",
+	}}
 
-	// match sub-domain, but handle exception
-	r = d.processRewrites("sub.host.com", dns.TypeA)
-	assert.Equal(t, NotFilteredNotFound, r.Reason)
-}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			r := d.processRewrites(tc.host, dns.TypeA)
+			if tc.want == nil {
+				assert.Equal(t, NotFilteredNotFound, r.Reason)
 
-func TestRewritesExceptionWC(t *testing.T) {
-	d := newForTest(nil, nil)
-	t.Cleanup(d.Close)
-	// wildcard; exception for a sub-wildcard
-	d.Rewrites = []RewriteEntry{
-		{"*.host.com", "2.2.2.2", 0, nil},
-		{"*.sub.host.com", "*.sub.host.com", 0, nil},
+				return
+			}
+
+			assert.Equal(t, Rewritten, r.Reason)
+			require.Len(t, r.IPList, 1)
+			assert.True(t, tc.want.Equal(r.IPList[0]))
+		})
 	}
-	d.prepareRewrites()
-
-	// match sub-domain
-	r := d.processRewrites("my.host.com", dns.TypeA)
-	assert.Equal(t, Rewritten, r.Reason)
-	assert.Len(t, r.IPList, 1)
-	assert.True(t, net.IP{2, 2, 2, 2}.Equal(r.IPList[0]))
-
-	// match sub-domain, but handle exception
-	r = d.processRewrites("my.sub.host.com", dns.TypeA)
-	assert.Equal(t, NotFilteredNotFound, r.Reason)
 }
 
 func TestRewritesExceptionIP(t *testing.T) {
 	d := newForTest(nil, nil)
 	t.Cleanup(d.Close)
-	// exception for AAAA record
-	d.Rewrites = []RewriteEntry{
-		{"host.com", "1.2.3.4", 0, nil},
-		{"host.com", "AAAA", 0, nil},
-		{"host2.com", "::1", 0, nil},
-		{"host2.com", "A", 0, nil},
-		{"host3.com", "A", 0, nil},
-	}
+	// Exception for AAAA record.
+	d.Rewrites = []RewriteEntry{{
+		Domain: "host.com",
+		Answer: "1.2.3.4",
+	}, {
+		Domain: "host.com",
+		Answer: "AAAA",
+	}, {
+		Domain: "host2.com",
+		Answer: "::1",
+	}, {
+		Domain: "host2.com",
+		Answer: "A",
+	}, {
+		Domain: "host3.com",
+		Answer: "A",
+	}}
 	d.prepareRewrites()
 
-	// match domain
-	r := d.processRewrites("host.com", dns.TypeA)
-	assert.Equal(t, Rewritten, r.Reason)
-	assert.Len(t, r.IPList, 1)
-	assert.True(t, net.IP{1, 2, 3, 4}.Equal(r.IPList[0]))
+	testCases := []struct {
+		name string
+		host string
+		dtyp uint16
+		want []net.IP
+	}{{
+		name: "match_A",
+		host: "host.com",
+		dtyp: dns.TypeA,
+		want: []net.IP{{1, 2, 3, 4}},
+	}, {
+		name: "exception_AAAA_host.com",
+		host: "host.com",
+		dtyp: dns.TypeAAAA,
+	}, {
+		name: "exception_A_host2.com",
+		host: "host2.com",
+		dtyp: dns.TypeA,
+	}, {
+		name: "match_AAAA_host2.com",
+		host: "host2.com",
+		dtyp: dns.TypeAAAA,
+		want: []net.IP{net.ParseIP("::1")},
+	}, {
+		name: "exception_A_host3.com",
+		host: "host3.com",
+		dtyp: dns.TypeA,
+	}, {
+		name: "match_AAAA_host3.com",
+		host: "host3.com",
+		dtyp: dns.TypeAAAA,
+		want: []net.IP{},
+	}}
 
-	// match exception
-	r = d.processRewrites("host.com", dns.TypeAAAA)
-	assert.Equal(t, NotFilteredNotFound, r.Reason)
+	for _, tc := range testCases {
+		t.Run(tc.name+"_"+tc.host, func(t *testing.T) {
+			r := d.processRewrites(tc.host, tc.dtyp)
+			if tc.want == nil {
+				assert.Equal(t, NotFilteredNotFound, r.Reason)
 
-	// match exception
-	r = d.processRewrites("host2.com", dns.TypeA)
-	assert.Equal(t, NotFilteredNotFound, r.Reason)
+				return
+			}
 
-	// match domain
-	r = d.processRewrites("host2.com", dns.TypeAAAA)
-	assert.Equal(t, Rewritten, r.Reason)
-	assert.Len(t, r.IPList, 1)
-	assert.Equal(t, "::1", r.IPList[0].String())
-
-	// match exception
-	r = d.processRewrites("host3.com", dns.TypeA)
-	assert.Equal(t, NotFilteredNotFound, r.Reason)
-
-	// match domain
-	r = d.processRewrites("host3.com", dns.TypeAAAA)
-	assert.Equal(t, Rewritten, r.Reason)
-	assert.Empty(t, r.IPList)
+			assert.Equal(t, Rewritten, r.Reason)
+			require.Len(t, r.IPList, len(tc.want))
+			for _, ip := range tc.want {
+				assert.True(t, ip.Equal(r.IPList[0]))
+			}
+		})
+	}
 }

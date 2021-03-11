@@ -114,8 +114,7 @@ func TestHome(t *testing.T) {
 	// Init new context
 	Context = homeContext{}
 
-	dir := prepareTestDir()
-	defer func() { _ = os.RemoveAll(dir) }()
+	dir := prepareTestDir(t)
 	fn := filepath.Join(dir, "AdGuardHome.yaml")
 
 	// Prepare the test config

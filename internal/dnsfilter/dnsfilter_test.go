@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
@@ -13,6 +14,7 @@ import (
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
@@ -58,7 +60,7 @@ func (d *DNSFilter) checkMatch(t *testing.T, hostname string) {
 	t.Helper()
 
 	res, err := d.CheckHost(hostname, dns.TypeA, &setts)
-	assert.Nilf(t, err, "Error while matching host %s: %s", hostname, err)
+	require.Nilf(t, err, "Error while matching host %s: %s", hostname, err)
 	assert.Truef(t, res.IsFiltered, "Expected hostname %s to match", hostname)
 }
 
@@ -66,20 +68,20 @@ func (d *DNSFilter) checkMatchIP(t *testing.T, hostname, ip string, qtype uint16
 	t.Helper()
 
 	res, err := d.CheckHost(hostname, qtype, &setts)
-	assert.Nilf(t, err, "Error while matching host %s: %s", hostname, err)
+	require.Nilf(t, err, "Error while matching host %s: %s", hostname, err)
 	assert.Truef(t, res.IsFiltered, "Expected hostname %s to match", hostname)
-	if assert.NotEmpty(t, res.Rules, "Expected result to have rules") {
-		r := res.Rules[0]
-		assert.NotNilf(t, r.IP, "Expected ip %s to match, actual: %v", ip, r.IP)
-		assert.Equalf(t, ip, r.IP.String(), "Expected ip %s to match, actual: %v", ip, r.IP)
-	}
+
+	require.NotEmpty(t, res.Rules, "Expected result to have rules")
+	r := res.Rules[0]
+	require.NotNilf(t, r.IP, "Expected ip %s to match, actual: %v", ip, r.IP)
+	assert.Equalf(t, ip, r.IP.String(), "Expected ip %s to match, actual: %v", ip, r.IP)
 }
 
 func (d *DNSFilter) checkMatchEmpty(t *testing.T, hostname string) {
 	t.Helper()
 
 	res, err := d.CheckHost(hostname, dns.TypeA, &setts)
-	assert.Nilf(t, err, "Error while matching host %s: %s", hostname, err)
+	require.Nilf(t, err, "Error while matching host %s: %s", hostname, err)
 	assert.Falsef(t, res.IsFiltered, "Expected hostname %s to not match", hostname)
 }
 
@@ -110,40 +112,40 @@ func TestEtcHostsMatching(t *testing.T) {
 
 	// Empty IPv6.
 	res, err := d.CheckHost("block.com", dns.TypeAAAA, &setts)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.True(t, res.IsFiltered)
-	if assert.Len(t, res.Rules, 1) {
-		assert.Equal(t, "0.0.0.0 block.com", res.Rules[0].Text)
-		assert.Empty(t, res.Rules[0].IP)
-	}
+
+	require.Len(t, res.Rules, 1)
+	assert.Equal(t, "0.0.0.0 block.com", res.Rules[0].Text)
+	assert.Empty(t, res.Rules[0].IP)
 
 	// IPv6 match.
 	d.checkMatchIP(t, "ipv6.com", addr6, dns.TypeAAAA)
 
 	// Empty IPv4.
 	res, err = d.CheckHost("ipv6.com", dns.TypeA, &setts)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.True(t, res.IsFiltered)
-	if assert.Len(t, res.Rules, 1) {
-		assert.Equal(t, "::1  ipv6.com", res.Rules[0].Text)
-		assert.Empty(t, res.Rules[0].IP)
-	}
+
+	require.Len(t, res.Rules, 1)
+	assert.Equal(t, "::1  ipv6.com", res.Rules[0].Text)
+	assert.Empty(t, res.Rules[0].IP)
 
 	// Two IPv4, the first one returned.
 	res, err = d.CheckHost("host2", dns.TypeA, &setts)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.True(t, res.IsFiltered)
-	if assert.Len(t, res.Rules, 1) {
-		assert.Equal(t, res.Rules[0].IP, net.IP{0, 0, 0, 1})
-	}
+
+	require.Len(t, res.Rules, 1)
+	assert.Equal(t, res.Rules[0].IP, net.IP{0, 0, 0, 1})
 
 	// One IPv6 address.
 	res, err = d.CheckHost("host2", dns.TypeAAAA, &setts)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.True(t, res.IsFiltered)
-	if assert.Len(t, res.Rules, 1) {
-		assert.Equal(t, res.Rules[0].IP, net.IPv6loopback)
-	}
+
+	require.Len(t, res.Rules, 1)
+	assert.Equal(t, res.Rules[0].IP, net.IPv6loopback)
 }
 
 // Safe Browsing.
@@ -155,14 +157,14 @@ func TestSafeBrowsing(t *testing.T) {
 
 	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
 	t.Cleanup(d.Close)
-	matching := "wmconvirus.narod.ru"
+	const matching = "wmconvirus.narod.ru"
 	d.SetSafeBrowsingUpstream(&aghtest.TestBlockUpstream{
 		Hostname: matching,
 		Block:    true,
 	})
 	d.checkMatch(t, matching)
 
-	assert.Contains(t, logOutput.String(), "SafeBrowsing lookup for "+matching)
+	require.Contains(t, logOutput.String(), "SafeBrowsing lookup for "+matching)
 
 	d.checkMatch(t, "test."+matching)
 	d.checkMatchEmpty(t, "yandex.ru")
@@ -178,7 +180,7 @@ func TestSafeBrowsing(t *testing.T) {
 func TestParallelSB(t *testing.T) {
 	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
 	t.Cleanup(d.Close)
-	matching := "wmconvirus.narod.ru"
+	const matching = "wmconvirus.narod.ru"
 	d.SetSafeBrowsingUpstream(&aghtest.TestBlockUpstream{
 		Hostname: matching,
 		Block:    true,
@@ -203,13 +205,15 @@ func TestSafeSearch(t *testing.T) {
 	d := newForTest(&Config{SafeSearchEnabled: true}, nil)
 	t.Cleanup(d.Close)
 	val, ok := d.SafeSearchDomain("www.google.com")
-	assert.True(t, ok, "Expected safesearch to find result for www.google.com")
+	require.True(t, ok, "Expected safesearch to find result for www.google.com")
 	assert.Equal(t, "forcesafesearch.google.com", val, "Expected safesearch for google.com to be forcesafesearch.google.com")
 }
 
 func TestCheckHostSafeSearchYandex(t *testing.T) {
 	d := newForTest(&Config{SafeSearchEnabled: true}, nil)
 	t.Cleanup(d.Close)
+
+	yandexIP := net.IPv4(213, 180, 193, 56)
 
 	// Check host for each domain.
 	for _, host := range []string{
@@ -220,21 +224,26 @@ func TestCheckHostSafeSearchYandex(t *testing.T) {
 		"yandex.kz",
 		"www.yandex.com",
 	} {
-		res, err := d.CheckHost(host, dns.TypeA, &setts)
-		assert.Nil(t, err)
-		assert.True(t, res.IsFiltered)
-		if assert.Len(t, res.Rules, 1) {
-			assert.Equal(t, res.Rules[0].IP, net.IPv4(213, 180, 193, 56))
-		}
+		t.Run(strings.ToLower(host), func(t *testing.T) {
+			res, err := d.CheckHost(host, dns.TypeA, &setts)
+			require.Nil(t, err)
+			assert.True(t, res.IsFiltered)
+
+			require.Len(t, res.Rules, 1)
+			assert.Equal(t, yandexIP, res.Rules[0].IP)
+		})
 	}
 }
 
 func TestCheckHostSafeSearchGoogle(t *testing.T) {
+	resolver := &aghtest.TestResolver{}
 	d := newForTest(&Config{
 		SafeSearchEnabled: true,
-		CustomResolver:    &aghtest.TestResolver{},
+		CustomResolver:    resolver,
 	}, nil)
 	t.Cleanup(d.Close)
+
+	ip, _ := resolver.HostToIPs("forcesafesearch.google.com")
 
 	// Check host for each domain.
 	for _, host := range []string{
@@ -248,11 +257,10 @@ func TestCheckHostSafeSearchGoogle(t *testing.T) {
 	} {
 		t.Run(host, func(t *testing.T) {
 			res, err := d.CheckHost(host, dns.TypeA, &setts)
-			assert.Nil(t, err)
+			require.Nil(t, err)
 			assert.True(t, res.IsFiltered)
-			if assert.Len(t, res.Rules, 1) {
-				assert.NotEqual(t, res.Rules[0].IP.String(), "0.0.0.0")
-			}
+			require.Len(t, res.Rules, 1)
+			assert.Equal(t, ip, res.Rules[0].IP)
 		})
 	}
 }
@@ -260,31 +268,31 @@ func TestCheckHostSafeSearchGoogle(t *testing.T) {
 func TestSafeSearchCacheYandex(t *testing.T) {
 	d := newForTest(nil, nil)
 	t.Cleanup(d.Close)
-	domain := "yandex.ru"
+	const domain = "yandex.ru"
 
 	// Check host with disabled safesearch.
 	res, err := d.CheckHost(domain, dns.TypeA, &setts)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.False(t, res.IsFiltered)
-	assert.Empty(t, res.Rules)
+	require.Empty(t, res.Rules)
+
+	yandexIP := net.IPv4(213, 180, 193, 56)
 
 	d = newForTest(&Config{SafeSearchEnabled: true}, nil)
 	t.Cleanup(d.Close)
 
 	res, err = d.CheckHost(domain, dns.TypeA, &setts)
-	assert.Nilf(t, err, "CheckHost for safesearh domain %s failed cause %s", domain, err)
+	require.Nilf(t, err, "CheckHost for safesearh domain %s failed cause %s", domain, err)
 
 	// For yandex we already know valid IP.
-	if assert.Len(t, res.Rules, 1) {
-		assert.Equal(t, res.Rules[0].IP, net.IPv4(213, 180, 193, 56))
-	}
+	require.Len(t, res.Rules, 1)
+	assert.Equal(t, res.Rules[0].IP, yandexIP)
 
 	// Check cache.
 	cachedValue, isFound := getCachedResult(gctx.safeSearchCache, domain)
-	assert.True(t, isFound)
-	if assert.Len(t, cachedValue.Rules, 1) {
-		assert.Equal(t, cachedValue.Rules[0].IP, net.IPv4(213, 180, 193, 56))
-	}
+	require.True(t, isFound)
+	require.Len(t, cachedValue.Rules, 1)
+	assert.Equal(t, cachedValue.Rules[0].IP, yandexIP)
 }
 
 func TestSafeSearchCacheGoogle(t *testing.T) {
@@ -294,11 +302,11 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 	}, nil)
 	t.Cleanup(d.Close)
 
-	domain := "www.google.ru"
+	const domain = "www.google.ru"
 	res, err := d.CheckHost(domain, dns.TypeA, &setts)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.False(t, res.IsFiltered)
-	assert.Empty(t, res.Rules)
+	require.Empty(t, res.Rules)
 
 	d = newForTest(&Config{SafeSearchEnabled: true}, nil)
 	t.Cleanup(d.Close)
@@ -306,12 +314,10 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 
 	// Lookup for safesearch domain.
 	safeDomain, ok := d.SafeSearchDomain(domain)
-	assert.Truef(t, ok, "Failed to get safesearch domain for %s", domain)
+	require.Truef(t, ok, "Failed to get safesearch domain for %s", domain)
 
 	ips, err := resolver.LookupIP(context.Background(), "ip", safeDomain)
-	if err != nil {
-		t.Fatalf("Failed to lookup for %s", safeDomain)
-	}
+	require.Nilf(t, err, "Failed to lookup for %s", safeDomain)
 
 	var ip net.IP
 	for _, foundIP := range ips {
@@ -323,17 +329,15 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 	}
 
 	res, err = d.CheckHost(domain, dns.TypeA, &setts)
-	assert.Nil(t, err)
-	if assert.Len(t, res.Rules, 1) {
-		assert.True(t, res.Rules[0].IP.Equal(ip))
-	}
+	require.Nil(t, err)
+	require.Len(t, res.Rules, 1)
+	assert.True(t, res.Rules[0].IP.Equal(ip))
 
 	// Check cache.
 	cachedValue, isFound := getCachedResult(gctx.safeSearchCache, domain)
-	assert.True(t, isFound)
-	if assert.Len(t, cachedValue.Rules, 1) {
-		assert.True(t, cachedValue.Rules[0].IP.Equal(ip))
-	}
+	require.True(t, isFound)
+	require.Len(t, cachedValue.Rules, 1)
+	assert.True(t, cachedValue.Rules[0].IP.Equal(ip))
 }
 
 // Parental.
@@ -345,24 +349,23 @@ func TestParentalControl(t *testing.T) {
 
 	d := newForTest(&Config{ParentalEnabled: true}, nil)
 	t.Cleanup(d.Close)
-	matching := "pornhub.com"
+	const matching = "pornhub.com"
 	d.SetParentalUpstream(&aghtest.TestBlockUpstream{
 		Hostname: matching,
 		Block:    true,
 	})
 
 	d.checkMatch(t, matching)
-	assert.Contains(t, logOutput.String(), "Parental lookup for "+matching)
+	require.Contains(t, logOutput.String(), "Parental lookup for "+matching)
 	d.checkMatch(t, "www."+matching)
 	d.checkMatchEmpty(t, "www.yandex.ru")
 	d.checkMatchEmpty(t, "yandex.ru")
 	d.checkMatchEmpty(t, "api.jquery.com")
 
-	// test cached result
+	// Test cached result.
 	d.parentalServer = "127.0.0.1"
 	d.checkMatch(t, matching)
 	d.checkMatchEmpty(t, "yandex.ru")
-	d.parentalServer = defaultParentalServer
 }
 
 // Filtering.
@@ -651,7 +654,7 @@ func TestMatching(t *testing.T) {
 			t.Cleanup(d.Close)
 
 			res, err := d.CheckHost(tc.host, tc.wantDNSType, &setts)
-			assert.Nilf(t, err, "Error while matching host %s: %s", tc.host, err)
+			require.Nilf(t, err, "Error while matching host %s: %s", tc.host, err)
 			assert.Equalf(t, tc.wantIsFiltered, res.IsFiltered, "Hostname %s has wrong result (%v must be %v)", tc.host, res.IsFiltered, tc.wantIsFiltered)
 			assert.Equalf(t, tc.wantReason, res.Reason, "Hostname %s has wrong reason (%v must be %v)", tc.host, res.Reason, tc.wantReason)
 		})
@@ -674,28 +677,24 @@ func TestWhitelist(t *testing.T) {
 	}}
 	d := newForTest(nil, filters)
 
-	err := d.SetFilters(filters, whiteFilters, false)
-	assert.Nil(t, err)
-
+	require.Nil(t, d.SetFilters(filters, whiteFilters, false))
 	t.Cleanup(d.Close)
 
 	// Matched by white filter.
 	res, err := d.CheckHost("host1", dns.TypeA, &setts)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.False(t, res.IsFiltered)
 	assert.Equal(t, res.Reason, NotFilteredAllowList)
-	if assert.Len(t, res.Rules, 1) {
-		assert.Equal(t, "||host1^", res.Rules[0].Text)
-	}
+	require.Len(t, res.Rules, 1)
+	assert.Equal(t, "||host1^", res.Rules[0].Text)
 
 	// Not matched by white filter, but matched by block filter.
 	res, err = d.CheckHost("host2", dns.TypeA, &setts)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.True(t, res.IsFiltered)
 	assert.Equal(t, res.Reason, FilteredBlockList)
-	if assert.Len(t, res.Rules, 1) {
-		assert.Equal(t, "||host2^", res.Rules[0].Text)
-	}
+	require.Len(t, res.Rules, 1)
+	assert.Equal(t, "||host2^", res.Rules[0].Text)
 }
 
 // Client Settings.
@@ -797,7 +796,7 @@ func BenchmarkSafeBrowsing(b *testing.B) {
 	})
 	for n := 0; n < b.N; n++ {
 		res, err := d.CheckHost(blocked, dns.TypeA, &setts)
-		assert.Nilf(b, err, "Error while matching host %s: %s", blocked, err)
+		require.Nilf(b, err, "Error while matching host %s: %s", blocked, err)
 		assert.True(b, res.IsFiltered, "Expected hostname %s to match", blocked)
 	}
 }
@@ -813,7 +812,7 @@ func BenchmarkSafeBrowsingParallel(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			res, err := d.CheckHost(blocked, dns.TypeA, &setts)
-			assert.Nilf(b, err, "Error while matching host %s: %s", blocked, err)
+			require.Nilf(b, err, "Error while matching host %s: %s", blocked, err)
 			assert.True(b, res.IsFiltered, "Expected hostname %s to match", blocked)
 		}
 	})
@@ -824,7 +823,7 @@ func BenchmarkSafeSearch(b *testing.B) {
 	b.Cleanup(d.Close)
 	for n := 0; n < b.N; n++ {
 		val, ok := d.SafeSearchDomain("www.google.com")
-		assert.True(b, ok, "Expected safesearch to find result for www.google.com")
+		require.True(b, ok, "Expected safesearch to find result for www.google.com")
 		assert.Equal(b, "forcesafesearch.google.com", val, "Expected safesearch for google.com to be forcesafesearch.google.com")
 	}
 }
@@ -835,7 +834,7 @@ func BenchmarkSafeSearchParallel(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			val, ok := d.SafeSearchDomain("www.google.com")
-			assert.True(b, ok, "Expected safesearch to find result for www.google.com")
+			require.True(b, ok, "Expected safesearch to find result for www.google.com")
 			assert.Equal(b, "forcesafesearch.google.com", val, "Expected safesearch for google.com to be forcesafesearch.google.com")
 		}
 	})

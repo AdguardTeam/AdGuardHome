@@ -12,6 +12,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // testQueryLog is a simple querylog.QueryLog implementation for tests.
@@ -156,7 +157,7 @@ func TestProcessQueryLogsAndStats(t *testing.T) {
 	}}
 
 	ups, err := upstream.AddressToUpstream("1.1.1.1", upstream.Options{})
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

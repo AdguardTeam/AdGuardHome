@@ -9,38 +9,47 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func testStartFilterListener() net.Listener {
+func testStartFilterListener(t *testing.T) net.Listener {
+	t.Helper()
+
+	const content = `||example.org^$third-party
+	# Inline comment example
+	||example.com^$third-party
+	0.0.0.0 example.com
+	`
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/filters/1.txt", func(w http.ResponseWriter, r *http.Request) {
-		content := `||example.org^$third-party
-# Inline comment example
-||example.com^$third-party
-0.0.0.0 example.com
-`
-		_, _ = w.Write([]byte(content))
+		_, werr := w.Write([]byte(content))
+		assert.Nil(t, werr)
 	})
 
 	listener, err := net.Listen("tcp", ":0")
-	if err != nil {
-		panic(err)
-	}
+	require.Nil(t, err)
 
-	go func() { _ = http.Serve(listener, mux) }()
+	go func() {
+		_ = http.Serve(listener, mux)
+	}()
+
+	t.Cleanup(func() {
+		assert.Nil(t, listener.Close())
+	})
+
 	return listener
 }
 
 func TestFilters(t *testing.T) {
-	l := testStartFilterListener()
-	defer func() { _ = l.Close() }()
+	l := testStartFilterListener(t)
+	dir := prepareTestDir(t)
 
-	dir := prepareTestDir()
-	defer func() { _ = os.RemoveAll(dir) }()
-	Context = homeContext{}
-	Context.workDir = dir
-	Context.client = &http.Client{
-		Timeout: 5 * time.Second,
+	Context = homeContext{
+		workDir: dir,
+		client: &http.Client{
+			Timeout: 5 * time.Second,
+		},
 	}
 	Context.filters.Init()
 
@@ -48,20 +57,20 @@ func TestFilters(t *testing.T) {
 		URL: fmt.Sprintf("http://127.0.0.1:%d/filters/1.txt", l.Addr().(*net.TCPAddr).Port),
 	}
 
-	// download
+	// Download.
 	ok, err := Context.filters.update(&f)
-	assert.Nil(t, err)
-	assert.True(t, ok)
+	require.Nil(t, err)
+	require.True(t, ok)
 	assert.Equal(t, 3, f.RulesCount)
 
-	// refresh
+	// Refresh.
 	ok, err = Context.filters.update(&f)
-	assert.False(t, ok)
-	assert.Nil(t, err)
+	require.Nil(t, err)
+	require.False(t, ok)
 
 	err = Context.filters.load(&f)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	f.unload()
-	_ = os.Remove(f.Path())
+	require.Nil(t, os.Remove(f.Path()))
 }

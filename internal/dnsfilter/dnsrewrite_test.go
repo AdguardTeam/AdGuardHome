@@ -7,6 +7,7 @@ import (
 
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
@@ -55,130 +56,81 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 	ipv6p1 := net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
 	ipv6p2 := net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2}
 
+	testCasesA := []struct {
+		name  string
+		dtyp  uint16
+		rcode int
+		want  []interface{}
+	}{{
+		name:  "a-record",
+		dtyp:  dns.TypeA,
+		rcode: dns.RcodeSuccess,
+		want:  []interface{}{ipv4p1},
+	}, {
+		name:  "aaaa-record",
+		dtyp:  dns.TypeAAAA,
+		rcode: dns.RcodeSuccess,
+		want:  []interface{}{ipv6p1},
+	}, {
+		name:  "txt-record",
+		dtyp:  dns.TypeTXT,
+		rcode: dns.RcodeSuccess,
+		want:  []interface{}{"hello-world"},
+	}, {
+		name:  "refused",
+		rcode: dns.RcodeRefused,
+	}, {
+		name:  "a-records",
+		dtyp:  dns.TypeA,
+		rcode: dns.RcodeSuccess,
+		want:  []interface{}{ipv4p1, ipv4p2},
+	}, {
+		name:  "aaaa-records",
+		dtyp:  dns.TypeAAAA,
+		rcode: dns.RcodeSuccess,
+		want:  []interface{}{ipv6p1, ipv6p2},
+	}, {
+		name:  "disable-one",
+		dtyp:  dns.TypeA,
+		rcode: dns.RcodeSuccess,
+		want:  []interface{}{ipv4p2},
+	}, {
+		name:  "disable-cname",
+		dtyp:  dns.TypeA,
+		rcode: dns.RcodeSuccess,
+		want:  []interface{}{ipv4p1},
+	}}
+
+	for _, tc := range testCasesA {
+		t.Run(tc.name, func(t *testing.T) {
+			host := path.Base(tc.name)
+
+			res, err := f.CheckHostRules(host, tc.dtyp, setts)
+			require.Nil(t, err)
+
+			dnsrr := res.DNSRewriteResult
+			require.NotNil(t, dnsrr)
+			assert.Equal(t, tc.rcode, dnsrr.RCode)
+
+			if tc.rcode == dns.RcodeRefused {
+				return
+			}
+
+			ipVals := dnsrr.Response[tc.dtyp]
+			require.Len(t, ipVals, len(tc.want))
+			for i, val := range tc.want {
+				require.Equal(t, val, ipVals[i])
+			}
+		})
+	}
+
 	t.Run("cname", func(t *testing.T) {
 		dtyp := dns.TypeA
 		host := path.Base(t.Name())
 
 		res, err := f.CheckHostRules(host, dtyp, setts)
-		assert.Nil(t, err)
+		require.Nil(t, err)
 		assert.Equal(t, "new-cname", res.CanonName)
-	})
-
-	t.Run("a-record", func(t *testing.T) {
-		dtyp := dns.TypeA
-		host := path.Base(t.Name())
-
-		res, err := f.CheckHostRules(host, dtyp, setts)
-		assert.Nil(t, err)
-
-		if dnsrr := res.DNSRewriteResult; assert.NotNil(t, dnsrr) {
-			assert.Equal(t, dns.RcodeSuccess, dnsrr.RCode)
-			if ipVals := dnsrr.Response[dtyp]; assert.Len(t, ipVals, 1) {
-				assert.Equal(t, ipv4p1, ipVals[0])
-			}
-		}
-	})
-
-	t.Run("aaaa-record", func(t *testing.T) {
-		dtyp := dns.TypeAAAA
-		host := path.Base(t.Name())
-
-		res, err := f.CheckHostRules(host, dtyp, setts)
-		assert.Nil(t, err)
-
-		if dnsrr := res.DNSRewriteResult; assert.NotNil(t, dnsrr) {
-			assert.Equal(t, dns.RcodeSuccess, dnsrr.RCode)
-			if ipVals := dnsrr.Response[dtyp]; assert.Len(t, ipVals, 1) {
-				assert.Equal(t, ipv6p1, ipVals[0])
-			}
-		}
-	})
-
-	t.Run("txt-record", func(t *testing.T) {
-		dtyp := dns.TypeTXT
-		host := path.Base(t.Name())
-		res, err := f.CheckHostRules(host, dtyp, setts)
-		assert.Nil(t, err)
-
-		if dnsrr := res.DNSRewriteResult; assert.NotNil(t, dnsrr) {
-			assert.Equal(t, dns.RcodeSuccess, dnsrr.RCode)
-			if strVals := dnsrr.Response[dtyp]; assert.Len(t, strVals, 1) {
-				assert.Equal(t, "hello-world", strVals[0])
-			}
-		}
-	})
-
-	t.Run("refused", func(t *testing.T) {
-		host := path.Base(t.Name())
-		res, err := f.CheckHostRules(host, dns.TypeA, setts)
-		assert.Nil(t, err)
-
-		if dnsrr := res.DNSRewriteResult; assert.NotNil(t, dnsrr) {
-			assert.Equal(t, dns.RcodeRefused, dnsrr.RCode)
-		}
-	})
-
-	t.Run("a-records", func(t *testing.T) {
-		dtyp := dns.TypeA
-		host := path.Base(t.Name())
-
-		res, err := f.CheckHostRules(host, dtyp, setts)
-		assert.Nil(t, err)
-
-		if dnsrr := res.DNSRewriteResult; assert.NotNil(t, dnsrr) {
-			assert.Equal(t, dns.RcodeSuccess, dnsrr.RCode)
-			if ipVals := dnsrr.Response[dtyp]; assert.Len(t, ipVals, 2) {
-				assert.Equal(t, ipv4p1, ipVals[0])
-				assert.Equal(t, ipv4p2, ipVals[1])
-			}
-		}
-	})
-
-	t.Run("aaaa-records", func(t *testing.T) {
-		dtyp := dns.TypeAAAA
-		host := path.Base(t.Name())
-
-		res, err := f.CheckHostRules(host, dtyp, setts)
-		assert.Nil(t, err)
-
-		if dnsrr := res.DNSRewriteResult; assert.NotNil(t, dnsrr) {
-			assert.Equal(t, dns.RcodeSuccess, dnsrr.RCode)
-			if ipVals := dnsrr.Response[dtyp]; assert.Len(t, ipVals, 2) {
-				assert.Equal(t, ipv6p1, ipVals[0])
-				assert.Equal(t, ipv6p2, ipVals[1])
-			}
-		}
-	})
-
-	t.Run("disable-one", func(t *testing.T) {
-		dtyp := dns.TypeA
-		host := path.Base(t.Name())
-
-		res, err := f.CheckHostRules(host, dtyp, setts)
-		assert.Nil(t, err)
-
-		if dnsrr := res.DNSRewriteResult; assert.NotNil(t, dnsrr) {
-			assert.Equal(t, dns.RcodeSuccess, dnsrr.RCode)
-			if ipVals := dnsrr.Response[dtyp]; assert.Len(t, ipVals, 1) {
-				assert.Equal(t, ipv4p2, ipVals[0])
-			}
-		}
-	})
-
-	t.Run("disable-cname", func(t *testing.T) {
-		dtyp := dns.TypeA
-		host := path.Base(t.Name())
-
-		res, err := f.CheckHostRules(host, dtyp, setts)
-		assert.Nil(t, err)
-		assert.Empty(t, res.CanonName)
-
-		if dnsrr := res.DNSRewriteResult; assert.NotNil(t, dnsrr) {
-			assert.Equal(t, dns.RcodeSuccess, dnsrr.RCode)
-			if ipVals := dnsrr.Response[dtyp]; assert.Len(t, ipVals, 1) {
-				assert.Equal(t, ipv4p1, ipVals[0])
-			}
-		}
 	})
 
 	t.Run("disable-cname-many", func(t *testing.T) {
@@ -186,7 +138,7 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 		host := path.Base(t.Name())
 
 		res, err := f.CheckHostRules(host, dtyp, setts)
-		assert.Nil(t, err)
+		require.Nil(t, err)
 		assert.Equal(t, "new-cname-2", res.CanonName)
 		assert.Nil(t, res.DNSRewriteResult)
 	})
@@ -196,7 +148,7 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 		host := path.Base(t.Name())
 
 		res, err := f.CheckHostRules(host, dtyp, setts)
-		assert.Nil(t, err)
+		require.Nil(t, err)
 		assert.Empty(t, res.CanonName)
 		assert.Empty(t, res.Rules)
 	})

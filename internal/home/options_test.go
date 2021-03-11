@@ -4,96 +4,74 @@ import (
 	"fmt"
 	"net"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func testParseOk(t *testing.T, ss ...string) options {
+func testParseOK(t *testing.T, ss ...string) options {
+	t.Helper()
+
 	o, _, err := parse("", ss)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	require.Nil(t, err)
+
 	return o
 }
 
 func testParseErr(t *testing.T, descr string, ss ...string) {
+	t.Helper()
+
 	_, _, err := parse("", ss)
-	if err == nil {
-		t.Fatalf("expected an error because %s but no error returned", descr)
-	}
+	require.NotNilf(t, err, "expected an error because %s but no error returned", descr)
 }
 
 func testParseParamMissing(t *testing.T, param string) {
+	t.Helper()
+
 	testParseErr(t, fmt.Sprintf("%s parameter missing", param), param)
 }
 
 func TestParseVerbose(t *testing.T) {
-	if testParseOk(t).verbose {
-		t.Fatal("empty is not verbose")
-	}
-	if !testParseOk(t, "-v").verbose {
-		t.Fatal("-v is verbose")
-	}
-	if !testParseOk(t, "--verbose").verbose {
-		t.Fatal("--verbose is verbose")
-	}
+	assert.False(t, testParseOK(t).verbose, "empty is not verbose")
+	assert.True(t, testParseOK(t, "-v").verbose, "-v is verbose")
+	assert.True(t, testParseOK(t, "--verbose").verbose, "--verbose is verbose")
 }
 
 func TestParseConfigFilename(t *testing.T) {
-	if testParseOk(t).configFilename != "" {
-		t.Fatal("empty is no config filename")
-	}
-	if testParseOk(t, "-c", "path").configFilename != "path" {
-		t.Fatal("-c is config filename")
-	}
+	assert.Equal(t, "", testParseOK(t).configFilename, "empty is no config filename")
+	assert.Equal(t, "path", testParseOK(t, "-c", "path").configFilename, "-c is config filename")
 	testParseParamMissing(t, "-c")
-	if testParseOk(t, "--config", "path").configFilename != "path" {
-		t.Fatal("--configFilename is config filename")
-	}
+
+	assert.Equal(t, "path", testParseOK(t, "--config", "path").configFilename, "--config is config filename")
 	testParseParamMissing(t, "--config")
 }
 
 func TestParseWorkDir(t *testing.T) {
-	if testParseOk(t).workDir != "" {
-		t.Fatal("empty is no work dir")
-	}
-	if testParseOk(t, "-w", "path").workDir != "path" {
-		t.Fatal("-w is work dir")
-	}
+	assert.Equal(t, "", testParseOK(t).workDir, "empty is no work dir")
+	assert.Equal(t, "path", testParseOK(t, "-w", "path").workDir, "-w is work dir")
 	testParseParamMissing(t, "-w")
-	if testParseOk(t, "--work-dir", "path").workDir != "path" {
-		t.Fatal("--work-dir is work dir")
-	}
+
+	assert.Equal(t, "path", testParseOK(t, "--work-dir", "path").workDir, "--work-dir is work dir")
 	testParseParamMissing(t, "--work-dir")
 }
 
 func TestParseBindHost(t *testing.T) {
-	if testParseOk(t).bindHost != nil {
-		t.Fatal("empty is no host")
-	}
-	if !testParseOk(t, "-h", "1.2.3.4").bindHost.Equal(net.IP{1, 2, 3, 4}) {
-		t.Fatal("-h is host")
-	}
+	assert.Nil(t, testParseOK(t).bindHost, "empty is not host")
+	assert.Equal(t, net.IPv4(1, 2, 3, 4), testParseOK(t, "-h", "1.2.3.4").bindHost, "-h is host")
 	testParseParamMissing(t, "-h")
-	if !testParseOk(t, "--host", "1.2.3.4").bindHost.Equal(net.IP{1, 2, 3, 4}) {
-		t.Fatal("--host is host")
-	}
+
+	assert.Equal(t, net.IPv4(1, 2, 3, 4), testParseOK(t, "--host", "1.2.3.4").bindHost, "--host is host")
 	testParseParamMissing(t, "--host")
 }
 
 func TestParseBindPort(t *testing.T) {
-	if testParseOk(t).bindPort != 0 {
-		t.Fatal("empty is port 0")
-	}
-	if testParseOk(t, "-p", "65535").bindPort != 65535 {
-		t.Fatal("-p is port")
-	}
+	assert.Equal(t, 0, testParseOK(t).bindPort, "empty is port 0")
+	assert.Equal(t, 65535, testParseOK(t, "-p", "65535").bindPort, "-p is port")
 	testParseParamMissing(t, "-p")
-	if testParseOk(t, "--port", "65535").bindPort != 65535 {
-		t.Fatal("--port is port")
-	}
-	testParseParamMissing(t, "--port")
-}
 
-func TestParseBindPortBad(t *testing.T) {
+	assert.Equal(t, 65535, testParseOK(t, "--port", "65535").bindPort, "--port is port")
+	testParseParamMissing(t, "--port")
+
 	testParseErr(t, "not an int", "-p", "x")
 	testParseErr(t, "hex not supported", "-p", "0x100")
 	testParseErr(t, "port negative", "-p", "-1")
@@ -103,72 +81,40 @@ func TestParseBindPortBad(t *testing.T) {
 }
 
 func TestParseLogfile(t *testing.T) {
-	if testParseOk(t).logFile != "" {
-		t.Fatal("empty is no log file")
-	}
-	if testParseOk(t, "-l", "path").logFile != "path" {
-		t.Fatal("-l is log file")
-	}
-	if testParseOk(t, "--logfile", "path").logFile != "path" {
-		t.Fatal("--logfile is log file")
-	}
+	assert.Equal(t, "", testParseOK(t).logFile, "empty is no log file")
+	assert.Equal(t, "path", testParseOK(t, "-l", "path").logFile, "-l is log file")
+	assert.Equal(t, "path", testParseOK(t, "--logfile", "path").logFile, "--logfile is log file")
 }
 
 func TestParsePidfile(t *testing.T) {
-	if testParseOk(t).pidFile != "" {
-		t.Fatal("empty is no pid file")
-	}
-	if testParseOk(t, "--pidfile", "path").pidFile != "path" {
-		t.Fatal("--pidfile is pid file")
-	}
+	assert.Equal(t, "", testParseOK(t).pidFile, "empty is no pid file")
+	assert.Equal(t, "path", testParseOK(t, "--pidfile", "path").pidFile, "--pidfile is pid file")
 }
 
 func TestParseCheckConfig(t *testing.T) {
-	if testParseOk(t).checkConfig {
-		t.Fatal("empty is not check config")
-	}
-	if !testParseOk(t, "--check-config").checkConfig {
-		t.Fatal("--check-config is check config")
-	}
+	assert.False(t, testParseOK(t).checkConfig, "empty is not check config")
+	assert.True(t, testParseOK(t, "--check-config").checkConfig, "--check-config is check config")
 }
 
 func TestParseDisableUpdate(t *testing.T) {
-	if testParseOk(t).disableUpdate {
-		t.Fatal("empty is not disable update")
-	}
-	if !testParseOk(t, "--no-check-update").disableUpdate {
-		t.Fatal("--no-check-update is disable update")
-	}
+	assert.False(t, testParseOK(t).disableUpdate, "empty is not disable update")
+	assert.True(t, testParseOK(t, "--no-check-update").disableUpdate, "--no-check-update is disable update")
 }
 
 func TestParseDisableMemoryOptimization(t *testing.T) {
-	if testParseOk(t).disableMemoryOptimization {
-		t.Fatal("empty is not disable update")
-	}
-	if !testParseOk(t, "--no-mem-optimization").disableMemoryOptimization {
-		t.Fatal("--no-mem-optimization is disable update")
-	}
+	assert.False(t, testParseOK(t).disableMemoryOptimization, "empty is not disable update")
+	assert.True(t, testParseOK(t, "--no-mem-optimization").disableMemoryOptimization, "--no-mem-optimization is disable update")
 }
 
 func TestParseService(t *testing.T) {
-	if testParseOk(t).serviceControlAction != "" {
-		t.Fatal("empty is no service command")
-	}
-	if testParseOk(t, "-s", "command").serviceControlAction != "command" {
-		t.Fatal("-s is service command")
-	}
-	if testParseOk(t, "--service", "command").serviceControlAction != "command" {
-		t.Fatal("--service is service command")
-	}
+	assert.Equal(t, "", testParseOK(t).serviceControlAction, "empty is not service cmd")
+	assert.Equal(t, "cmd", testParseOK(t, "-s", "cmd").serviceControlAction, "-s is service cmd")
+	assert.Equal(t, "cmd", testParseOK(t, "--service", "cmd").serviceControlAction, "--service is service cmd")
 }
 
 func TestParseGLInet(t *testing.T) {
-	if testParseOk(t).glinetMode {
-		t.Fatal("empty is not GL-Inet mode")
-	}
-	if !testParseOk(t, "--glinet").glinetMode {
-		t.Fatal("--glinet is GL-Inet mode")
-	}
+	assert.False(t, testParseOK(t).glinetMode, "empty is not GL-Inet mode")
+	assert.True(t, testParseOK(t, "--glinet").glinetMode, "--glinet is GL-Inet mode")
 }
 
 func TestParseUnknown(t *testing.T) {
@@ -180,73 +126,85 @@ func TestParseUnknown(t *testing.T) {
 	testParseErr(t, "unknown dash", "-")
 }
 
-func testSerialize(t *testing.T, o options, ss ...string) {
-	result := serialize(o)
-	if len(result) != len(ss) {
-		t.Fatalf("expected %s but got %s", ss, result)
+func TestSerialize(t *testing.T) {
+	const reportFmt = "expected %s but got %s"
+
+	testCases := []struct {
+		name string
+		opts options
+		ss   []string
+	}{{
+		name: "empty",
+		opts: options{},
+		ss:   []string{},
+	}, {
+		name: "config_filename",
+		opts: options{configFilename: "path"},
+		ss:   []string{"-c", "path"},
+	}, {
+		name: "work_dir",
+		opts: options{workDir: "path"},
+		ss:   []string{"-w", "path"},
+	}, {
+		name: "bind_host",
+		opts: options{bindHost: net.IP{1, 2, 3, 4}},
+		ss:   []string{"-h", "1.2.3.4"},
+	}, {
+		name: "bind_port",
+		opts: options{bindPort: 666},
+		ss:   []string{"-p", "666"},
+	}, {
+		name: "log_file",
+		opts: options{logFile: "path"},
+		ss:   []string{"-l", "path"},
+	}, {
+		name: "pid_file",
+		opts: options{pidFile: "path"},
+		ss:   []string{"--pidfile", "path"},
+	}, {
+		name: "disable_update",
+		opts: options{disableUpdate: true},
+		ss:   []string{"--no-check-update"},
+	}, {
+		name: "control_action",
+		opts: options{serviceControlAction: "run"},
+		ss:   []string{"-s", "run"},
+	}, {
+		name: "glinet_mode",
+		opts: options{glinetMode: true},
+		ss:   []string{"--glinet"},
+	}, {
+		name: "disable_mem_opt",
+		opts: options{disableMemoryOptimization: true},
+		ss:   []string{"--no-mem-optimization"},
+	}, {
+		name: "multiple",
+		opts: options{
+			serviceControlAction:      "run",
+			configFilename:            "config",
+			workDir:                   "work",
+			pidFile:                   "pid",
+			disableUpdate:             true,
+			disableMemoryOptimization: true,
+		},
+		ss: []string{
+			"-c", "config",
+			"-w", "work",
+			"-s", "run",
+			"--pidfile", "pid",
+			"--no-check-update",
+			"--no-mem-optimization",
+		},
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := serialize(tc.opts)
+			require.Lenf(t, result, len(tc.ss), reportFmt, tc.ss, result)
+
+			for i, r := range result {
+				assert.Equalf(t, tc.ss[i], r, reportFmt, tc.ss, result)
+			}
+		})
 	}
-	for i, r := range result {
-		if r != ss[i] {
-			t.Fatalf("expected %s but got %s", ss, result)
-		}
-	}
-}
-
-func TestSerializeEmpty(t *testing.T) {
-	testSerialize(t, options{})
-}
-
-func TestSerializeConfigFilename(t *testing.T) {
-	testSerialize(t, options{configFilename: "path"}, "-c", "path")
-}
-
-func TestSerializeWorkDir(t *testing.T) {
-	testSerialize(t, options{workDir: "path"}, "-w", "path")
-}
-
-func TestSerializeBindHost(t *testing.T) {
-	testSerialize(t, options{bindHost: net.IP{1, 2, 3, 4}}, "-h", "1.2.3.4")
-}
-
-func TestSerializeBindPort(t *testing.T) {
-	testSerialize(t, options{bindPort: 666}, "-p", "666")
-}
-
-func TestSerializeLogfile(t *testing.T) {
-	testSerialize(t, options{logFile: "path"}, "-l", "path")
-}
-
-func TestSerializePidfile(t *testing.T) {
-	testSerialize(t, options{pidFile: "path"}, "--pidfile", "path")
-}
-
-func TestSerializeCheckConfig(t *testing.T) {
-	testSerialize(t, options{checkConfig: true}, "--check-config")
-}
-
-func TestSerializeDisableUpdate(t *testing.T) {
-	testSerialize(t, options{disableUpdate: true}, "--no-check-update")
-}
-
-func TestSerializeService(t *testing.T) {
-	testSerialize(t, options{serviceControlAction: "run"}, "-s", "run")
-}
-
-func TestSerializeGLInet(t *testing.T) {
-	testSerialize(t, options{glinetMode: true}, "--glinet")
-}
-
-func TestSerializeDisableMemoryOptimization(t *testing.T) {
-	testSerialize(t, options{disableMemoryOptimization: true}, "--no-mem-optimization")
-}
-
-func TestSerializeMultiple(t *testing.T) {
-	testSerialize(t, options{
-		serviceControlAction:      "run",
-		configFilename:            "config",
-		workDir:                   "work",
-		pidFile:                   "pid",
-		disableUpdate:             true,
-		disableMemoryOptimization: true,
-	}, "-c", "config", "-w", "work", "-s", "run", "--pidfile", "pid", "--no-check-update", "--no-mem-optimization")
 }
