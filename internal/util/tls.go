@@ -32,19 +32,24 @@ func LoadSystemRootCAs() *x509.CertPool {
 			if !os.IsNotExist(err) {
 				log.Error("Opening directory: %s: %s", dir, err)
 			}
+
 			continue
 		}
+
 		rootsAdded := false
 		for _, fi := range fis {
-			data, err := ioutil.ReadFile(dir + "/" + fi.Name())
-			if err == nil && roots.AppendCertsFromPEM(data) {
+			var certData []byte
+			certData, err = ioutil.ReadFile(dir + "/" + fi.Name())
+			if err == nil && roots.AppendCertsFromPEM(certData) {
 				rootsAdded = true
 			}
 		}
+
 		if rootsAdded {
 			return roots
 		}
 	}
+
 	return nil
 }
 

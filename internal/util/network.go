@@ -69,7 +69,8 @@ func GetValidNetInterfacesForWeb() ([]*NetInterface, error) {
 	var netInterfaces []*NetInterface
 
 	for _, iface := range ifaces {
-		addrs, err := iface.Addrs()
+		var addrs []net.Addr
+		addrs, err = iface.Addrs()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get addresses for interface %s: %w", iface.Name, err)
 		}

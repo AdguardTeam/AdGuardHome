@@ -10,10 +10,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/miekg/dns"
-
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/fsnotify/fsnotify"
+	"github.com/miekg/dns"
 )
 
 type onChangedT func()
@@ -228,15 +227,17 @@ func (a *AutoHosts) load(table map[string][]net.IP, tableRev map[string][]string
 	r := bufio.NewReader(f)
 	log.Debug("AutoHosts: loading hosts from file %s", fn)
 
-	finish := false
-	for !finish {
-		line, err := r.ReadString('\n')
+	for done := false; !done; {
+		var line string
+		line, err = r.ReadString('\n')
 		if err == io.EOF {
-			finish = true
+			done = true
 		} else if err != nil {
 			log.Error("AutoHosts: %s", err)
+
 			return
 		}
+
 		line = strings.TrimSpace(line)
 		if len(line) == 0 || line[0] == '#' {
 			continue
@@ -247,26 +248,30 @@ func (a *AutoHosts) load(table map[string][]net.IP, tableRev map[string][]string
 			continue
 		}
 
-		ipAddr := net.ParseIP(fields[0])
-		if ipAddr == nil {
+		ip := net.ParseIP(fields[0])
+		if ip == nil {
 			continue
 		}
+
 		for i := 1; i != len(fields); i++ {
 			host := fields[i]
 			if len(host) == 0 {
 				break
 			}
+
 			sharp := strings.IndexByte(host, '#')
 			if sharp == 0 {
-				break // skip the rest of the line after #
+				// Skip the comments.
+				break
 			} else if sharp > 0 {
 				host = host[:sharp]
 			}
 
-			a.updateTable(table, host, ipAddr)
-			a.updateTableRev(tableRev, host, ipAddr)
+			a.updateTable(table, host, ip)
+			a.updateTableRev(tableRev, host, ip)
 			if sharp >= 0 {
-				break // skip the rest of the line after #
+				// Skip the comments again.
+				break
 			}
 		}
 	}

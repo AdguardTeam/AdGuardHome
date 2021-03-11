@@ -44,7 +44,7 @@ func prepareTestDir(t *testing.T) (dir string) {
 	t.Cleanup(func() {
 		start := time.Now()
 		for {
-			err := os.RemoveAll(dir)
+			err = os.RemoveAll(dir)
 			if err == nil {
 				break
 			}

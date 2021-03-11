@@ -94,7 +94,8 @@ func IsOpenWRT() bool {
 			continue
 		}
 
-		body, err := ioutil.ReadFile(filepath.Join(etcDir, fileInfo.Name()))
+		var body []byte
+		body, err = ioutil.ReadFile(filepath.Join(etcDir, fileInfo.Name()))
 		if err != nil {
 			continue
 		}

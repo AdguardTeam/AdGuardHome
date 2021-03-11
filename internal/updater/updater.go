@@ -337,7 +337,8 @@ func tarGzFileUnpack(tarfile, outdir string) ([]string, error) {
 	var err2 error
 	tarReader := tar.NewReader(gzReader)
 	for {
-		header, err := tarReader.Next()
+		var header *tar.Header
+		header, err = tarReader.Next()
 		if err == io.EOF {
 			err2 = nil
 			break
@@ -377,7 +378,8 @@ func tarGzFileUnpack(tarfile, outdir string) ([]string, error) {
 			continue
 		}
 
-		f, err := os.OpenFile(outputName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode&0o777))
+		var f io.WriteCloser
+		f, err = os.OpenFile(outputName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode&0o777))
 		if err != nil {
 			err2 = fmt.Errorf("os.OpenFile(%s): %w", outputName, err)
 			break
@@ -449,7 +451,8 @@ func zipFileUnpack(zipfile, outdir string) ([]string, error) {
 			continue
 		}
 
-		f, err := os.OpenFile(outputName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, fi.Mode())
+		var f io.WriteCloser
+		f, err = os.OpenFile(outputName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, fi.Mode())
 		if err != nil {
 			err2 = fmt.Errorf("os.OpenFile(): %w", err)
 			break
