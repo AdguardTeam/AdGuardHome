@@ -7,7 +7,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
-	"strings"
 	"sync"
 	"time"
 
@@ -464,16 +463,7 @@ func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (*Lease, bool) {
 	}
 
 	if lease.Expiry.Unix() != leaseExpireStatic {
-		// The trimming is required since some devices include trailing
-		// zero-byte in DHCP option length calculation.
-		//
-		// See https://github.com/AdguardTeam/AdGuardHome/issues/2582.
-		//
-		// TODO(e.burkov): Remove after the trimming for hostname option
-		// will be added into github.com/insomniacslk/dhcp module.
-		hostnameStr := strings.TrimRight(string(hostname), "\x00")
-
-		lease.Hostname = hostnameStr
+		lease.Hostname = string(hostname)
 		s.commitLease(lease)
 	} else if len(lease.Hostname) != 0 {
 		o := &optFQDN{

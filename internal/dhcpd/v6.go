@@ -46,7 +46,8 @@ func ip6InRange(start, ip net.IP) bool {
 	if len(start) != 16 {
 		return false
 	}
-	//lint:ignore SA1021 TODO(e.burkov): Ignore this for now, think about using masks.
+	//lint:ignore SA1021 TODO(e.burkov): Ignore this for now, think about
+	// using masks.
 	if !bytes.Equal(start[:15], ip[:15]) {
 		return false
 	}

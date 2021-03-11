@@ -16,7 +16,7 @@ require (
 	github.com/gobuffalo/packr/v2 v2.8.1 // indirect
 	github.com/google/go-cmp v0.5.5 // indirect
 	github.com/hugelgupf/socketpair v0.0.0-20190730060125-05d35a94e714
-	github.com/insomniacslk/dhcp v0.0.0-20210306224058-018caddcb1eb
+	github.com/insomniacslk/dhcp v0.0.0-20210310193751-cfd4d47082c2
 	github.com/kardianos/service v1.2.0
 	github.com/karrick/godirwalk v1.16.1 // indirect
 	github.com/lucas-clemente/quic-go v0.19.3
