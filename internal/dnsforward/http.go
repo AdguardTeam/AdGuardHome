@@ -328,18 +328,17 @@ func ValidateUpstreams(upstreams []string) error {
 
 	var defaultUpstreamFound bool
 	for _, u := range upstreams {
-		d, err := validateUpstream(u)
+		var ok bool
+		ok, err = validateUpstream(u)
 		if err != nil {
 			return err
 		}
 
-		// Check this flag until default upstream will not be found
 		if !defaultUpstreamFound {
-			defaultUpstreamFound = d
+			defaultUpstreamFound = ok
 		}
 	}
 
-	// Return error if there are no default upstreams
 	if !defaultUpstreamFound {
 		return fmt.Errorf("no default upstreams specified")
 	}
@@ -477,7 +476,7 @@ func checkDNS(input string, bootstrap []string) error {
 		return nil
 	}
 
-	if _, err := validateUpstream(input); err != nil {
+	if _, err = validateUpstream(input); err != nil {
 		return fmt.Errorf("wrong upstream format: %w", err)
 	}
 

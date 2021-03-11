@@ -74,7 +74,8 @@ func (c *ipsetCtx) ipsetProps(name string) (set ipsetProps, err error) {
 	// query only the IPv4 one.
 	//
 	// TODO(a.garipov): Find out if this is a bug or a feature.
-	res, err := c.ipv4Conn.Header(name)
+	var res *ipset.HeaderPolicy
+	res, err = c.ipv4Conn.Header(name)
 	if err != nil {
 		return set, err
 	}
@@ -104,7 +105,6 @@ func (c *ipsetCtx) ipsets(names []string) (sets []ipsetProps, err error) {
 			continue
 		}
 
-		var err error
 		set, err = c.ipsetProps(name)
 		if err != nil {
 			return nil, fmt.Errorf("querying ipset %q: %w", name, err)

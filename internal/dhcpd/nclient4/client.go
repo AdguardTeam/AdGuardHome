@@ -476,7 +476,7 @@ func (c *Client) send(dest *net.UDPAddr, msg *dhcpv4.DHCPv4) (resp <-chan *dhcpv
 		c.pendingMu.Unlock()
 	}
 
-	if _, err := c.conn.WriteTo(msg.ToBytes(), dest); err != nil {
+	if _, err = c.conn.WriteTo(msg.ToBytes(), dest); err != nil {
 		cancel()
 		return nil, nil, fmt.Errorf("error writing packet to connection: %w", err)
 	}

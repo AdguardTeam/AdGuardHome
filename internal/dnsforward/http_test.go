@@ -199,7 +199,8 @@ func TestDNSForwardHTTTP_handleSetConfig(t *testing.T) {
 			})
 
 			rBody := ioutil.NopCloser(strings.NewReader(tc.req))
-			r, err := http.NewRequest(http.MethodPost, "http://example.com", rBody)
+			var r *http.Request
+			r, err = http.NewRequest(http.MethodPost, "http://example.com", rBody)
 			require.Nil(t, err)
 
 			s.handleSetConfig(w, r)

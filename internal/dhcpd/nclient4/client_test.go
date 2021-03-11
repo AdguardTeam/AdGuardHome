@@ -206,7 +206,7 @@ func TestSendAndRead(t *testing.T) {
 				t.Error(err)
 			}
 
-			if err := ComparePacket(rcvd, tt.want); err != nil {
+			if err = ComparePacket(rcvd, tt.want); err != nil {
 				t.Errorf("got unexpected packets: %v", err)
 			}
 		})
@@ -290,7 +290,7 @@ func TestSimpleSendAndReadDiscardGarbage(t *testing.T) {
 		t.Errorf("SendAndRead(%v) = %v, want nil", pkt, err)
 	}
 
-	if err := ComparePacket(rcvd, responses); err != nil {
+	if err = ComparePacket(rcvd, responses); err != nil {
 		t.Errorf("got unexpected packets: %v", err)
 	}
 }
@@ -337,7 +337,7 @@ func TestMultipleSendAndRead(t *testing.T) {
 			if wantErr := tt.wantErr[i]; err != wantErr {
 				t.Errorf("SendAndReadOne(%v): got %v, want %v", send, err, wantErr)
 			}
-			if err := pktsExpected([]*dhcpv4.DHCPv4{rcvd}, tt.server[i]); err != nil {
+			if err = pktsExpected([]*dhcpv4.DHCPv4{rcvd}, tt.server[i]); err != nil {
 				t.Errorf("got unexpected packets: %v", err)
 			}
 		}

@@ -46,8 +46,8 @@ func startDeferStop(t *testing.T, s *Server) {
 	require.Nilf(t, err, "failed to start server: %s", err)
 
 	t.Cleanup(func() {
-		err := s.Stop()
-		require.Nilf(t, err, "dns server failed to stop: %s", err)
+		serr := s.Stop()
+		require.Nilf(t, serr, "dns server failed to stop: %s", serr)
 	})
 }
 

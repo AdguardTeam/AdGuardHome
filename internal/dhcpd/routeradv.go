@@ -188,20 +188,20 @@ func (ra *raCtx) Init() error {
 	}
 	defer func() {
 		if !success {
-			cerr := ra.Close()
-			if cerr != nil {
-				log.Error("closing context: %s", cerr)
+			derr := ra.Close()
+			if derr != nil {
+				log.Error("closing context: %s", derr)
 			}
 		}
 	}()
 
 	con6 := ra.conn.IPv6PacketConn()
 
-	if err := con6.SetHopLimit(255); err != nil {
+	if err = con6.SetHopLimit(255); err != nil {
 		return fmt.Errorf("dhcpv6 ra: SetHopLimit: %w", err)
 	}
 
-	if err := con6.SetMulticastHopLimit(255); err != nil {
+	if err = con6.SetMulticastHopLimit(255); err != nil {
 		return fmt.Errorf("dhcpv6 ra: SetMulticastHopLimit: %w", err)
 	}
 

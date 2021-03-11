@@ -290,7 +290,8 @@ func (s *Server) prepareUpstreamSettings() error {
 
 	if len(upstreamConfig.Upstreams) == 0 {
 		log.Info("warning: no default upstream servers specified, using %v", defaultDNS)
-		uc, err := proxy.ParseUpstreamsConfig(
+		var uc proxy.UpstreamConfig
+		uc, err = proxy.ParseUpstreamsConfig(
 			defaultDNS,
 			upstream.Options{
 				Bootstrap: s.conf.BootstrapDNS,
@@ -344,7 +345,8 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) error {
 	}
 
 	if s.conf.StrictSNICheck {
-		x, err := x509.ParseCertificate(s.conf.cert.Certificate[0])
+		var x *x509.Certificate
+		x, err = x509.ParseCertificate(s.conf.cert.Certificate[0])
 		if err != nil {
 			return fmt.Errorf("x509.ParseCertificate(): %w", err)
 		}

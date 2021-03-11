@@ -132,7 +132,7 @@ on GitHub and most other Markdown renderers. -->
    }
    ```
 
- *  Name the deferred errors (e.g. when closing something) `cerr`.
+ *  Name the deferred errors (e.g. when closing something) `derr`.
 
  *  No shadowing, since it can often lead to subtle bugs, especially with
     errors.

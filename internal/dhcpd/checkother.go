@@ -20,7 +20,7 @@ import (
 
 // CheckIfOtherDHCPServersPresentV4 sends a DHCP request to the specified network interface,
 // and waits for a response for a period defined by defaultDiscoverTime
-func CheckIfOtherDHCPServersPresentV4(ifaceName string) (bool, error) {
+func CheckIfOtherDHCPServersPresentV4(ifaceName string) (ok bool, err error) {
 	iface, err := net.InterfaceByName(ifaceName)
 	if err != nil {
 		return false, fmt.Errorf("couldn't find interface by name %s: %w", ifaceName, err)
@@ -86,7 +86,8 @@ func CheckIfOtherDHCPServersPresentV4(ifaceName string) (bool, error) {
 	}
 
 	for {
-		ok, next, err := tryConn4(req, c, iface)
+		var next bool
+		ok, next, err = tryConn4(req, c, iface)
 		if next {
 			if err != nil {
 				log.Debug("dhcpv4: trying a connection: %s", err)
@@ -94,6 +95,7 @@ func CheckIfOtherDHCPServersPresentV4(ifaceName string) (bool, error) {
 
 			continue
 		}
+
 		if err != nil {
 			return false, err
 		}
@@ -155,7 +157,7 @@ func tryConn4(req *dhcpv4.DHCPv4, c net.PacketConn, iface *net.Interface) (ok, n
 
 // CheckIfOtherDHCPServersPresentV6 sends a DHCP request to the specified network interface,
 // and waits for a response for a period defined by defaultDiscoverTime
-func CheckIfOtherDHCPServersPresentV6(ifaceName string) (bool, error) {
+func CheckIfOtherDHCPServersPresentV6(ifaceName string) (ok bool, err error) {
 	iface, err := net.InterfaceByName(ifaceName)
 	if err != nil {
 		return false, fmt.Errorf("dhcpv6: net.InterfaceByName: %s: %w", ifaceName, err)
@@ -207,7 +209,8 @@ func CheckIfOtherDHCPServersPresentV6(ifaceName string) (bool, error) {
 	}
 
 	for {
-		ok, next, err := tryConn6(req, c)
+		var next bool
+		ok, next, err = tryConn6(req, c)
 		if next {
 			if err != nil {
 				log.Debug("dhcpv6: trying a connection: %s", err)
@@ -215,6 +218,7 @@ func CheckIfOtherDHCPServersPresentV6(ifaceName string) (bool, error) {
 
 			continue
 		}
+
 		if err != nil {
 			return false, err
 		}

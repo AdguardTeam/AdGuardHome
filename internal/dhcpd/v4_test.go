@@ -128,13 +128,13 @@ func TestV4StaticLease_Get(t *testing.T) {
 	mac := net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}
 
 	t.Run("discover", func(t *testing.T) {
-		var err error
+		var terr error
 
-		req, err = dhcpv4.NewDiscovery(mac)
-		require.Nil(t, err)
+		req, terr = dhcpv4.NewDiscovery(mac)
+		require.Nil(t, terr)
 
-		resp, err = dhcpv4.NewReplyFromRequest(req)
-		require.Nil(t, err)
+		resp, terr = dhcpv4.NewReplyFromRequest(req)
+		require.Nil(t, terr)
 		assert.Equal(t, 1, s.process(req, resp))
 	})
 	require.Nil(t, err)
@@ -227,13 +227,13 @@ func TestV4DynamicLease_Get(t *testing.T) {
 	})
 
 	t.Run("request", func(t *testing.T) {
-		var err error
+		var terr error
 
-		req, err = dhcpv4.NewRequestFromOffer(resp)
-		require.Nil(t, err)
+		req, terr = dhcpv4.NewRequestFromOffer(resp)
+		require.Nil(t, terr)
 
-		resp, err = dhcpv4.NewReplyFromRequest(req)
-		require.Nil(t, err)
+		resp, terr = dhcpv4.NewReplyFromRequest(req)
+		require.Nil(t, terr)
 		assert.Equal(t, 1, s.process(req, resp))
 	})
 	require.Nil(t, err)

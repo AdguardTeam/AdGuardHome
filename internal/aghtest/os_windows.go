@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	maxRetryDur = 500 * time.Millisecond
+	maxRetryDur = 1000 * time.Millisecond
 	retryDur    = 5 * time.Millisecond
 )
 
@@ -56,7 +56,7 @@ func prepareTestDir(t *testing.T) (dir string) {
 			time.Sleep(retryDur)
 		}
 
-		assert.Nil(t, err)
+		assert.Nil(t, err, "after %s", time.Since(start))
 	})
 
 	return dir
