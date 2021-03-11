@@ -45,8 +45,7 @@ type RequestFilteringSettings struct {
 
 // Resolver is the interface for net.Resolver to simplify testing.
 type Resolver interface {
-	// TODO(e.burkov): Replace with LookupIP after upgrading go to v1.15.
-	LookupIPAddr(ctx context.Context, host string) (ips []net.IPAddr, err error)
+	LookupIP(ctx context.Context, network, host string) (ips []net.IP, err error)
 }
 
 // Config allows you to configure DNS filtering with New() or just change variables directly.

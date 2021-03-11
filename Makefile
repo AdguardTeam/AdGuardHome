@@ -10,11 +10,7 @@ CLIENT_DIR = client
 COMMIT = $$(git rev-parse --short HEAD)
 DIST_DIR = dist
 GO = go
-# TODO(a.garipov): Add more default proxies using pipes after update to
-# Go 1.15.
-#
-# GOPROXY = https://goproxy.io|https://goproxy.cn|direct
-GOPROXY = https://goproxy.cn,https://goproxy.io,direct
+GOPROXY = https://goproxy.io|https://goproxy.cn|direct
 GPG_KEY = devteam@adguard.com
 GPG_KEY_PASSPHRASE = not-a-real-password
 NPM = npm

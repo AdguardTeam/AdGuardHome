@@ -5,7 +5,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -101,12 +100,7 @@ func TestUpdateGetVersion(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	// TODO(a.garipov): Uncomment and remove the code below in Go 1.15.
-	//
-	//   wd := t.TempDir()
-	wd, err := ioutil.TempDir("", "aghtest")
-	assert.Nil(t, err)
-	t.Cleanup(func() { assert.Nil(t, os.RemoveAll(wd)) })
+	wd := aghtest.PrepareTestDir(t)
 
 	assert.Nil(t, ioutil.WriteFile(filepath.Join(wd, "AdGuardHome"), []byte("AdGuardHome"), 0o755))
 	assert.Nil(t, ioutil.WriteFile(filepath.Join(wd, "README.md"), []byte("README.md"), 0o644))
@@ -172,12 +166,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestUpdateWindows(t *testing.T) {
-	// TODO(a.garipov): Uncomment and remove the code below in Go 1.15.
-	//
-	//   wd := t.TempDir()
-	wd, err := ioutil.TempDir("", "aghtest")
-	assert.Nil(t, err)
-	t.Cleanup(func() { assert.Nil(t, os.RemoveAll(wd)) })
+	wd := aghtest.PrepareTestDir(t)
 
 	assert.Nil(t, ioutil.WriteFile(filepath.Join(wd, "AdGuardHome.exe"), []byte("AdGuardHome.exe"), 0o755))
 	assert.Nil(t, ioutil.WriteFile(filepath.Join(wd, "README.md"), []byte("README.md"), 0o644))

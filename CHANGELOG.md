@@ -19,6 +19,14 @@ and this project adheres to
 
 [#2412]: https://github.com/AdguardTeam/AdGuardHome/issues/2412
 
+### Deprecated
+
+- Go 1.15 support.  v0.107.0 will require at least Go 1.16 to build.
+
+### Removed
+
+- Go 1.14 support.
+
 
 
 ## [v0.105.2] - 2021-03-10

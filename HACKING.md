@@ -1,6 +1,6 @@
  #  AdGuard Home Developer Guidelines
 
-As of **February 2021**, this document is partially a work-in-progress, but
+As of **March 2021**, this document is partially a work-in-progress, but
 should still be followed.  Some of the rules aren't enforced as thoroughly or
 remain broken in old code, but this is still the place to find out about what we
 **want** our code to look like.
@@ -72,6 +72,32 @@ on GitHub and most other Markdown renderers. -->
 
  *  Constructors should validate their arguments and return meaningful errors.
     As a corollary, avoid lazy initialization.
+
+ *  Don't mix horizontal and vertical placement of arguments in function and
+    method calls.  That is, either this:
+
+    ```go
+    err := f(a, b, c)
+    ```
+
+    Or, when the arguments are too long, this:
+
+    ```go
+    err := functionWithALongName(
+            firstArgumentWithALongName,
+            secondArgumentWithALongName,
+            thirdArgumentWithALongName,
+    )
+    ```
+
+    But **never** this:
+
+    ```go
+    err := functionWithALongName(firstArgumentWithALongName,
+            secondArgumentWithALongName,
+            thirdArgumentWithALongName,
+    )
+    ```
 
  *  Don't use naked `return`s.
 

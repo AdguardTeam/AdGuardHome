@@ -275,8 +275,10 @@ func (s *Server) prepareUpstreamSettings() error {
 	} else {
 		upstreams = s.conf.UpstreamDNS
 	}
+
 	upstreams = filterOutComments(upstreams)
-	upstreamConfig, err := proxy.ParseUpstreamsConfig(upstreams,
+	upstreamConfig, err := proxy.ParseUpstreamsConfig(
+		upstreams,
 		upstream.Options{
 			Bootstrap: s.conf.BootstrapDNS,
 			Timeout:   DefaultTimeout,
@@ -288,7 +290,8 @@ func (s *Server) prepareUpstreamSettings() error {
 
 	if len(upstreamConfig.Upstreams) == 0 {
 		log.Info("warning: no default upstream servers specified, using %v", defaultDNS)
-		uc, err := proxy.ParseUpstreamsConfig(defaultDNS,
+		uc, err := proxy.ParseUpstreamsConfig(
+			defaultDNS,
 			upstream.Options{
 				Bootstrap: s.conf.BootstrapDNS,
 				Timeout:   DefaultTimeout,

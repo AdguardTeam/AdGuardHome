@@ -296,14 +296,15 @@ func (clients *clientsContainer) FindUpstreams(ip string) *proxy.UpstreamConfig 
 	}
 
 	if c.upstreamConfig == nil {
-		config, err := proxy.ParseUpstreamsConfig(c.Upstreams,
+		conf, err := proxy.ParseUpstreamsConfig(
+			c.Upstreams,
 			upstream.Options{
 				Bootstrap: config.DNS.BootstrapDNS,
 				Timeout:   dnsforward.DefaultTimeout,
 			},
 		)
 		if err == nil {
-			c.upstreamConfig = &config
+			c.upstreamConfig = &conf
 		}
 	}
 

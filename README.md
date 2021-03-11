@@ -177,7 +177,7 @@ Run `make init` to prepare the development environment.
 
 You will need this to build AdGuard Home:
 
- * [go](https://golang.org/dl/) v1.14 or later.
+ * [go](https://golang.org/dl/) v1.15 or later.
  * [node.js](https://nodejs.org/en/download/) v10.16.2 or later.
  * [npm](https://www.npmjs.com/) v6.14 or later (temporary requirement, TODO: remove when redesign is finished).
  * [yarn](https://yarnpkg.com/) v1.22.5 or later.

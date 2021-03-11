@@ -315,7 +315,8 @@ func ValidateUpstreams(upstreams []string) error {
 		return nil
 	}
 
-	_, err := proxy.ParseUpstreamsConfig(upstreams,
+	_, err := proxy.ParseUpstreamsConfig(
+		upstreams,
 		upstream.Options{
 			Bootstrap: []string{},
 			Timeout:   DefaultTimeout,

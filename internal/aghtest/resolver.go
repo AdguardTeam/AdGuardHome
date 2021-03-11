@@ -14,23 +14,17 @@ type TestResolver struct {
 }
 
 // HostToIPs generates IPv4 and IPv6 from host.
-//
-// TODO(e.burkov): Replace with LookupIP after upgrading go to v1.15.
 func (r *TestResolver) HostToIPs(host string) (ipv4, ipv6 net.IP) {
 	hash := sha256.Sum256([]byte(host))
 
 	return net.IP(hash[:4]), net.IP(hash[4:20])
 }
 
-// LookupIPAddr implements Resolver interface for *testResolver. It returns the
-// slice of net.IPAddr with IPv4 and IPv6 instances.
-func (r *TestResolver) LookupIPAddr(_ context.Context, host string) (ips []net.IPAddr, err error) {
+// LookupIP implements Resolver interface for *testResolver. It returns the
+// slice of net.IP with IPv4 and IPv6 instances.
+func (r *TestResolver) LookupIP(_ context.Context, _, host string) (ips []net.IP, err error) {
 	ipv4, ipv6 := r.HostToIPs(host)
-	addrs := []net.IPAddr{{
-		IP: ipv4,
-	}, {
-		IP: ipv6,
-	}}
+	addrs := []net.IP{ipv4, ipv6}
 
 	r.counterLock.Lock()
 	defer r.counterLock.Unlock()

@@ -250,7 +250,9 @@ func TestCheckHostSafeSearchGoogle(t *testing.T) {
 			res, err := d.CheckHost(host, dns.TypeA, &setts)
 			assert.Nil(t, err)
 			assert.True(t, res.IsFiltered)
-			assert.Len(t, res.Rules, 1)
+			if assert.Len(t, res.Rules, 1) {
+				assert.NotEqual(t, res.Rules[0].IP.String(), "0.0.0.0")
+			}
 		})
 	}
 }
@@ -306,15 +308,16 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 	safeDomain, ok := d.SafeSearchDomain(domain)
 	assert.Truef(t, ok, "Failed to get safesearch domain for %s", domain)
 
-	ipAddrs, err := resolver.LookupIPAddr(context.Background(), safeDomain)
+	ips, err := resolver.LookupIP(context.Background(), "ip", safeDomain)
 	if err != nil {
 		t.Fatalf("Failed to lookup for %s", safeDomain)
 	}
 
-	ip := ipAddrs[0].IP
-	for _, ipAddr := range ipAddrs {
-		if ipAddr.IP.To4() != nil {
-			ip = ipAddr.IP
+	var ip net.IP
+	for _, foundIP := range ips {
+		if foundIP.To4() != nil {
+			ip = foundIP
+
 			break
 		}
 	}
@@ -378,8 +381,8 @@ func TestMatching(t *testing.T) {
 		name           string
 		rules          string
 		host           string
-		wantIsFiltered bool
 		wantReason     Reason
+		wantIsFiltered bool
 		wantDNSType    uint16
 	}{{
 		name:           "sanity",
