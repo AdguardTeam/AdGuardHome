@@ -379,9 +379,8 @@ func (s *v4Server) processDiscover(req, resp *dhcpv4.DHCPv4) *Lease {
 		s.conf.notify(LeaseChangedDBStore)
 
 	} else {
-		reqIP := req.Options.Get(dhcpv4.OptionRequestedIPAddress)
-		if len(reqIP) != 0 &&
-			!bytes.Equal(reqIP, lease.IP) {
+		reqIP := req.RequestedIPAddress()
+		if len(reqIP) != 0 && !reqIP.Equal(lease.IP) {
 			log.Debug("dhcpv4: different RequestedIP: %v != %v", reqIP, lease.IP)
 		}
 	}
@@ -424,46 +423,49 @@ func (o *optFQDN) ToBytes() []byte {
 func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (*Lease, bool) {
 	var lease *Lease
 	mac := req.ClientHWAddr
-	hostname := req.Options.Get(dhcpv4.OptionHostName)
-	reqIP := req.Options.Get(dhcpv4.OptionRequestedIPAddress)
+	reqIP := req.RequestedIPAddress()
 	if reqIP == nil {
 		reqIP = req.ClientIPAddr
 	}
 
-	sid := req.Options.Get(dhcpv4.OptionServerIdentifier)
-	if len(sid) != 0 &&
-		!bytes.Equal(sid, s.conf.dnsIPAddrs[0]) {
-		log.Debug("dhcpv4: Bad OptionServerIdentifier in Request message for %s", mac)
+	sid := req.ServerIdentifier()
+	if len(sid) != 0 && !sid.Equal(s.conf.dnsIPAddrs[0]) {
+		log.Debug("dhcpv4: bad OptionServerIdentifier in request message for %s", mac)
+
 		return nil, false
 	}
 
-	if len(reqIP) != 4 {
-		log.Debug("dhcpv4: Bad OptionRequestedIPAddress in Request message for %s", mac)
+	if ip4 := reqIP.To4(); ip4 == nil {
+		log.Debug("dhcpv4: bad OptionRequestedIPAddress in request message for %s", mac)
+
 		return nil, false
 	}
 
 	s.leasesLock.Lock()
 	for _, l := range s.leases {
 		if bytes.Equal(l.HWAddr, mac) {
-			if !bytes.Equal(l.IP, reqIP) {
+			if !l.IP.Equal(reqIP) {
 				s.leasesLock.Unlock()
-				log.Debug("dhcpv4: Mismatched OptionRequestedIPAddress in Request message for %s", mac)
+				log.Debug("dhcpv4: mismatched OptionRequestedIPAddress in request message for %s", mac)
+
 				return nil, true
 			}
 
 			lease = l
+
 			break
 		}
 	}
 	s.leasesLock.Unlock()
 
 	if lease == nil {
-		log.Debug("dhcpv4: No lease for %s", mac)
+		log.Debug("dhcpv4: no lease for %s", mac)
+
 		return nil, true
 	}
 
 	if lease.Expiry.Unix() != leaseExpireStatic {
-		lease.Hostname = string(hostname)
+		lease.Hostname = req.HostName()
 		s.commitLease(lease)
 	} else if len(lease.Hostname) != 0 {
 		o := &optFQDN{
@@ -473,10 +475,12 @@ func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (*Lease, bool) {
 			Code:  dhcpv4.OptionFQDN,
 			Value: o,
 		}
+
 		resp.UpdateOption(fqdn)
 	}
 
 	resp.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeAck))
+
 	return lease, true
 }
 
