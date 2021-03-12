@@ -66,8 +66,8 @@ func SplitNext(str *string, splitBy byte) string {
 	return strings.TrimSpace(s)
 }
 
-// IsOpenWRT returns true if host OS is OpenWRT.
-func IsOpenWRT() bool {
+// IsOpenWrt returns true if host OS is OpenWrt.
+func IsOpenWrt() bool {
 	if runtime.GOOS != "linux" {
 		return false
 	}

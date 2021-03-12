@@ -296,15 +296,14 @@ func parse(exec string, ss []string) (o options, f effect, err error) {
 					}
 					if eff != nil {
 						prevf := f
-						f = func() error {
-							var err error
+						f = func() (ferr error) {
 							if prevf != nil {
-								err = prevf()
+								ferr = prevf()
 							}
-							if err == nil {
-								err = eff()
+							if ferr == nil {
+								ferr = eff()
 							}
-							return err
+							return ferr
 						}
 					}
 				}

@@ -47,7 +47,8 @@ func newIPDetector() (ipd *ipDetector, err error) {
 		nets: make([]*net.IPNet, len(specialNetworks)),
 	}
 	for i, ipnetStr := range specialNetworks {
-		_, ipnet, err := net.ParseCIDR(ipnetStr)
+		var ipnet *net.IPNet
+		_, ipnet, err = net.ParseCIDR(ipnetStr)
 		if err != nil {
 			return nil, err
 		}

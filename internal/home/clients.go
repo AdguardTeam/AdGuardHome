@@ -517,7 +517,7 @@ func (clients *clientsContainer) Update(name string, c *Client) (err error) {
 		return agherr.Error("client not found")
 	}
 
-	// check Name index
+	// First, check the name index.
 	if prev.Name != c.Name {
 		_, ok = clients.list[c.Name]
 		if ok {
@@ -525,12 +525,12 @@ func (clients *clientsContainer) Update(name string, c *Client) (err error) {
 		}
 	}
 
-	// check IP index
+	// Second, check the IP index.
 	if !equalStringSlices(prev.IDs, c.IDs) {
 		for _, id := range c.IDs {
-			c2, ok := clients.idIndex[id]
-			if ok && c2 != prev {
-				return fmt.Errorf("another client uses the same ID (%q): %q", id, c2.Name)
+			c2, ok2 := clients.idIndex[id]
+			if ok2 && c2 != prev {
+				return fmt.Errorf("another client uses the same id (%q): %q", id, c2.Name)
 			}
 		}
 

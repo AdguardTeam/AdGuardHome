@@ -188,13 +188,14 @@ func upgradeSchema2to3(diskConfig *map[string]interface{}) error {
 	}
 
 	// Replace bootstrap_dns value filed with new array contains old bootstrap_dns inside
-	if bootstrapDNS, ok := (newDNSConfig)["bootstrap_dns"]; ok {
-		newBootstrapConfig := []string{fmt.Sprint(bootstrapDNS)}
-		(newDNSConfig)["bootstrap_dns"] = newBootstrapConfig
-		(*diskConfig)["dns"] = newDNSConfig
-	} else {
+	bootstrapDNS, ok := newDNSConfig["bootstrap_dns"]
+	if !ok {
 		return fmt.Errorf("no bootstrap DNS in DNS config")
 	}
+
+	newBootstrapConfig := []string{fmt.Sprint(bootstrapDNS)}
+	newDNSConfig["bootstrap_dns"] = newBootstrapConfig
+	(*diskConfig)["dns"] = newDNSConfig
 
 	// Bump schema version
 	(*diskConfig)["schema_version"] = 3
@@ -306,17 +307,17 @@ func upgradeSchema5to6(diskConfig *map[string]interface{}) error {
 
 	switch arr := clients.(type) {
 	case []interface{}:
-
 		for i := range arr {
 			switch c := arr[i].(type) {
-
 			case map[interface{}]interface{}:
-				_ip, ok := c["ip"]
+				var ipVal interface{}
+				ipVal, ok = c["ip"]
 				ids := []string{}
 				if ok {
-					ip, ok := _ip.(string)
+					var ip string
+					ip, ok = ipVal.(string)
 					if !ok {
-						log.Fatalf("client.ip is not a string: %v", _ip)
+						log.Fatalf("client.ip is not a string: %v", ipVal)
 						return nil
 					}
 					if len(ip) != 0 {
@@ -324,11 +325,13 @@ func upgradeSchema5to6(diskConfig *map[string]interface{}) error {
 					}
 				}
 
-				_mac, ok := c["mac"]
+				var macVal interface{}
+				macVal, ok = c["mac"]
 				if ok {
-					mac, ok := _mac.(string)
+					var mac string
+					mac, ok = macVal.(string)
 					if !ok {
-						log.Fatalf("client.mac is not a string: %v", _mac)
+						log.Fatalf("client.mac is not a string: %v", macVal)
 						return nil
 					}
 					if len(mac) != 0 {
@@ -337,12 +340,10 @@ func upgradeSchema5to6(diskConfig *map[string]interface{}) error {
 				}
 
 				c["ids"] = ids
-
 			default:
 				continue
 			}
 		}
-
 	default:
 		return nil
 	}
@@ -369,64 +370,67 @@ func upgradeSchema6to7(diskConfig *map[string]interface{}) error {
 
 	(*diskConfig)["schema_version"] = 7
 
-	_dhcp, ok := (*diskConfig)["dhcp"]
+	dhcpVal, ok := (*diskConfig)["dhcp"]
 	if !ok {
 		return nil
 	}
 
-	switch dhcp := _dhcp.(type) {
+	switch dhcp := dhcpVal.(type) {
 	case map[interface{}]interface{}:
-		dhcpv4 := map[string]interface{}{}
-		val, ok := dhcp["gateway_ip"].(string)
+		var str string
+		str, ok = dhcp["gateway_ip"].(string)
 		if !ok {
 			log.Fatalf("expecting dhcp.%s to be a string", "gateway_ip")
 			return nil
 		}
-		dhcpv4["gateway_ip"] = val
+
+		dhcpv4 := map[string]interface{}{
+			"gateway_ip": str,
+		}
 		delete(dhcp, "gateway_ip")
 
-		val, ok = dhcp["subnet_mask"].(string)
+		str, ok = dhcp["subnet_mask"].(string)
 		if !ok {
 			log.Fatalf("expecting dhcp.%s to be a string", "subnet_mask")
 			return nil
 		}
-		dhcpv4["subnet_mask"] = val
+		dhcpv4["subnet_mask"] = str
 		delete(dhcp, "subnet_mask")
 
-		val, ok = dhcp["range_start"].(string)
+		str, ok = dhcp["range_start"].(string)
 		if !ok {
 			log.Fatalf("expecting dhcp.%s to be a string", "range_start")
 			return nil
 		}
-		dhcpv4["range_start"] = val
+		dhcpv4["range_start"] = str
 		delete(dhcp, "range_start")
 
-		val, ok = dhcp["range_end"].(string)
+		str, ok = dhcp["range_end"].(string)
 		if !ok {
 			log.Fatalf("expecting dhcp.%s to be a string", "range_end")
 			return nil
 		}
-		dhcpv4["range_end"] = val
+		dhcpv4["range_end"] = str
 		delete(dhcp, "range_end")
 
-		intVal, ok := dhcp["lease_duration"].(int)
+		var n int
+		n, ok = dhcp["lease_duration"].(int)
 		if !ok {
 			log.Fatalf("expecting dhcp.%s to be an integer", "lease_duration")
 			return nil
 		}
-		dhcpv4["lease_duration"] = intVal
+		dhcpv4["lease_duration"] = n
 		delete(dhcp, "lease_duration")
 
-		intVal, ok = dhcp["icmp_timeout_msec"].(int)
+		n, ok = dhcp["icmp_timeout_msec"].(int)
 		if !ok {
 			log.Fatalf("expecting dhcp.%s to be an integer", "icmp_timeout_msec")
 			return nil
 		}
-		dhcpv4["icmp_timeout_msec"] = intVal
+		dhcpv4["icmp_timeout_msec"] = n
 		delete(dhcp, "icmp_timeout_msec")
 
 		dhcp["dhcpv4"] = dhcpv4
-
 	default:
 		return nil
 	}

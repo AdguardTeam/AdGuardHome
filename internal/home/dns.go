@@ -268,15 +268,15 @@ func getDNSAddresses() []string {
 		addDNSAddress(&dnsAddresses, config.DNS.BindHost)
 	}
 
-	dnsEncryption := getDNSEncryption()
-	if dnsEncryption.https != "" {
-		dnsAddresses = append(dnsAddresses, dnsEncryption.https)
+	de := getDNSEncryption()
+	if de.https != "" {
+		dnsAddresses = append(dnsAddresses, de.https)
 	}
-	if dnsEncryption.tls != "" {
-		dnsAddresses = append(dnsAddresses, dnsEncryption.tls)
+	if de.tls != "" {
+		dnsAddresses = append(dnsAddresses, de.tls)
 	}
-	if dnsEncryption.quic != "" {
-		dnsAddresses = append(dnsAddresses, dnsEncryption.quic)
+	if de.quic != "" {
+		dnsAddresses = append(dnsAddresses, de.quic)
 	}
 
 	return dnsAddresses

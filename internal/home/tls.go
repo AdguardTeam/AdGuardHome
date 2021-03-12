@@ -497,23 +497,26 @@ func unmarshalTLS(r *http.Request) (tlsConfigSettings, error) {
 	}
 
 	if data.CertificateChain != "" {
-		certPEM, err := base64.StdEncoding.DecodeString(data.CertificateChain)
+		var cert []byte
+		cert, err = base64.StdEncoding.DecodeString(data.CertificateChain)
 		if err != nil {
 			return data, fmt.Errorf("failed to base64-decode certificate chain: %w", err)
 		}
-		data.CertificateChain = string(certPEM)
+
+		data.CertificateChain = string(cert)
 		if data.CertificatePath != "" {
 			return data, fmt.Errorf("certificate data and file can't be set together")
 		}
 	}
 
 	if data.PrivateKey != "" {
-		keyPEM, err := base64.StdEncoding.DecodeString(data.PrivateKey)
+		var key []byte
+		key, err = base64.StdEncoding.DecodeString(data.PrivateKey)
 		if err != nil {
 			return data, fmt.Errorf("failed to base64-decode private key: %w", err)
 		}
 
-		data.PrivateKey = string(keyPEM)
+		data.PrivateKey = string(key)
 		if data.PrivateKeyPath != "" {
 			return data, fmt.Errorf("private key data and file can't be set together")
 		}

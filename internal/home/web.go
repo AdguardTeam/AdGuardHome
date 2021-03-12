@@ -141,13 +141,11 @@ func (web *Web) TLSConfigChanged(ctx context.Context, tlsConf tlsConfigSettings)
 
 	web.httpsServer.cond.L.Lock()
 	if web.httpsServer.server != nil {
-		ctx, cancel := context.WithTimeout(ctx, shutdownTimeout)
-		err = web.httpsServer.server.Shutdown(ctx)
-		cancel()
-		if err != nil {
-			log.Debug("error while shutting down HTTP server: %s", err)
-		}
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, shutdownTimeout)
+		shutdownSrv(ctx, cancel, web.httpsServer.server)
 	}
+
 	web.httpsServer.enabled = enabled
 	web.httpsServer.cert = cert
 	web.httpsServer.cond.Broadcast()
@@ -206,27 +204,20 @@ func (web *Web) Start() {
 
 // Close gracefully shuts down the HTTP servers.
 func (web *Web) Close(ctx context.Context) {
-	log.Info("Stopping HTTP server...")
+	log.Info("stopping http server...")
+
 	web.httpsServer.cond.L.Lock()
 	web.httpsServer.shutdown = true
 	web.httpsServer.cond.L.Unlock()
 
-	shut := func(srv *http.Server) {
-		if srv == nil {
-			return
-		}
-		ctx, cancel := context.WithTimeout(ctx, shutdownTimeout)
-		defer cancel()
-		if err := srv.Shutdown(ctx); err != nil {
-			log.Debug("error while shutting down HTTP server: %s", err)
-		}
-	}
+	var cancel context.CancelFunc
+	ctx, cancel = context.WithTimeout(ctx, shutdownTimeout)
 
-	shut(web.httpsServer.server)
-	shut(web.httpServer)
-	shut(web.httpServerBeta)
+	shutdownSrv(ctx, cancel, web.httpsServer.server)
+	shutdownSrv(ctx, cancel, web.httpServer)
+	shutdownSrv(ctx, cancel, web.httpServerBeta)
 
-	log.Info("Stopped HTTP server")
+	log.Info("stopped http server")
 }
 
 func (web *Web) tlsServerLoop() {

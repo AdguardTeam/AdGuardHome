@@ -272,6 +272,27 @@ func copyInstallSettings(dst, src *configuration) {
 // shutdownTimeout is the timeout for shutting HTTP server down operation.
 const shutdownTimeout = 5 * time.Second
 
+func logPanic() {
+	if v := recover(); v != nil {
+		log.Error("recovered from panic: %v", v)
+	}
+}
+
+func shutdownSrv(ctx context.Context, cancel context.CancelFunc, srv *http.Server) {
+	defer logPanic()
+
+	if srv == nil {
+		return
+	}
+
+	defer cancel()
+
+	err := srv.Shutdown(ctx)
+	if err != nil {
+		log.Error("error while shutting down http server %q: %s", srv.Addr, err)
+	}
+}
+
 // Apply new configuration, start DNS server, restart Web server
 func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	newSettings := applyConfigReq{}
@@ -359,23 +380,13 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		f.Flush()
 	}
 
-	// The Shutdown() method of (*http.Server) needs to be called in a
-	// separate goroutine, because it waits until all requests are handled
-	// and will be blocked by it's own caller.
+	// Method http.(*Server).Shutdown needs to be called in a separate
+	// goroutine and with its own context, because it waits until all
+	// requests are handled and will be blocked by it's own caller.
 	if restartHTTP {
 		ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
-
-		shut := func(srv *http.Server) {
-			defer cancel()
-			err := srv.Shutdown(ctx)
-			if err != nil {
-				log.Debug("error while shutting down HTTP server: %s", err)
-			}
-		}
-		go shut(web.httpServer)
-		if web.httpServerBeta != nil {
-			go shut(web.httpServerBeta)
-		}
+		go shutdownSrv(ctx, cancel, web.httpServer)
+		go shutdownSrv(ctx, cancel, web.httpServerBeta)
 	}
 }
 

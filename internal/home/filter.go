@@ -556,35 +556,37 @@ func (f *Filtering) updateIntl(filter *filter) (updated bool, err error) {
 		return updated, err
 	}
 	defer func() {
+		var derr error
 		if tmpFile != nil {
-			if err := tmpFile.Close(); err != nil {
-				log.Printf("Couldn't close temporary file: %s", err)
-			}
-			tmpFileName := tmpFile.Name()
-			if err := os.Remove(tmpFileName); err != nil {
-				log.Printf("Couldn't delete temporary file %s: %s", tmpFileName, err)
+			if derr = tmpFile.Close(); derr != nil {
+				log.Printf("Couldn't close temporary file: %s", derr)
 			}
 
+			tmpFileName := tmpFile.Name()
+			if derr = os.Remove(tmpFileName); derr != nil {
+				log.Printf("Couldn't delete temporary file %s: %s", tmpFileName, derr)
+			}
 		}
 	}()
 
 	var reader io.Reader
 	if filepath.IsAbs(filter.URL) {
-		f, err := os.Open(filter.URL)
+		var f io.ReadCloser
+		f, err = os.Open(filter.URL)
 		if err != nil {
 			return updated, fmt.Errorf("open file: %w", err)
 		}
+
 		defer f.Close()
 		reader = f
 	} else {
-		resp, err := Context.client.Get(filter.URL)
-		if resp != nil && resp.Body != nil {
-			defer resp.Body.Close()
-		}
+		var resp *http.Response
+		resp, err = Context.client.Get(filter.URL)
 		if err != nil {
 			log.Printf("Couldn't request filter from URL %s, skipping: %s", filter.URL, err)
 			return updated, err
 		}
+		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
 			log.Printf("Got status code %d from URL %s, skipping", resp.StatusCode, filter.URL)
@@ -703,7 +705,8 @@ func enableFilters(async bool) {
 			if !filter.Enabled {
 				continue
 			}
-			f := dnsfilter.Filter{
+
+			f = dnsfilter.Filter{
 				ID:       filter.ID,
 				FilePath: filter.Path(),
 			}
@@ -713,7 +716,8 @@ func enableFilters(async bool) {
 			if !filter.Enabled {
 				continue
 			}
-			f := dnsfilter.Filter{
+
+			f = dnsfilter.Filter{
 				ID:       filter.ID,
 				FilePath: filter.Path(),
 			}

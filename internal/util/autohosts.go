@@ -65,8 +65,9 @@ func (a *AutoHosts) Init(hostsFn string) {
 		a.hostsFn = hostsFn
 	}
 
-	if IsOpenWRT() {
-		a.hostsDirs = append(a.hostsDirs, "/tmp/hosts") // OpenWRT: "/tmp/hosts/dhcp.cfg01411c"
+	if IsOpenWrt() {
+		// OpenWrt: "/tmp/hosts/dhcp.cfg01411c".
+		a.hostsDirs = append(a.hostsDirs, "/tmp/hosts")
 	}
 
 	// Load hosts initially

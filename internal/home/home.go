@@ -265,8 +265,8 @@ func run(args options) {
 			mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 			go func() {
 				log.Info("pprof: listening on localhost:6060")
-				err := http.ListenAndServe("localhost:6060", mux)
-				log.Error("Error while running the pprof server: %s", err)
+				lerr := http.ListenAndServe("localhost:6060", mux)
+				log.Error("Error while running the pprof server: %s", lerr)
 			}()
 		}
 	}
@@ -310,18 +310,19 @@ func run(args options) {
 	}
 
 	if !Context.firstRun {
-		err := initDNSServer()
+		err = initDNSServer()
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
+
 		Context.tls.Start()
 		Context.autoHosts.Start()
 
 		go func() {
-			err := startDNSServer()
-			if err != nil {
+			serr := startDNSServer()
+			if serr != nil {
 				closeDNSServer()
-				log.Fatal(err)
+				log.Fatal(serr)
 			}
 		}()
 
@@ -376,10 +377,8 @@ func checkPermissions() {
 		return
 	}
 
-	if opErr, ok := err.(*net.OpError); ok {
-		if sysErr, ok := opErr.Err.(*os.SyscallError); ok {
-			if errno, ok := sysErr.Err.(syscall.Errno); ok && errno == syscall.EACCES {
-				msg := `Permission check failed.
+	if errors.Is(err, os.ErrPermission) {
+		msg := `Permission check failed.
 
 AdGuard Home is not allowed to bind to privileged ports (for instance, port 53).
 Please note, that this is crucial for a server to be able to use privileged ports.
@@ -389,9 +388,7 @@ You have two options:
 2. On Linux you can grant the CAP_NET_BIND_SERVICE capability:
 https://github.com/AdguardTeam/AdGuardHome/internal/wiki/Getting-Started#running-without-superuser`
 
-				log.Fatal(msg)
-			}
-		}
+		log.Fatal(msg)
 	}
 
 	msg := fmt.Sprintf(`AdGuard failed to bind to port 53 due to %v
@@ -437,9 +434,12 @@ func initWorkingDir(args options) {
 		Context.workDir = filepath.Dir(execPath)
 	}
 
-	if workDir, err := filepath.EvalSymlinks(Context.workDir); err == nil {
-		Context.workDir = workDir
+	workDir, err := filepath.EvalSymlinks(Context.workDir)
+	if err != nil {
+		panic(err)
 	}
+
+	Context.workDir = workDir
 }
 
 // configureLogger configures logger level and output
@@ -634,7 +634,7 @@ func detectFirstRun() bool {
 }
 
 // Connect to a remote server resolving hostname using our own DNS server
-func customDialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+func customDialContext(ctx context.Context, network, addr string) (conn net.Conn, err error) {
 	log.Tracef("network:%v  addr:%v", network, addr)
 
 	host, port, err := net.SplitHostPort(addr)
@@ -647,14 +647,13 @@ func customDialContext(ctx context.Context, network, addr string) (net.Conn, err
 	}
 
 	if net.ParseIP(host) != nil || config.DNS.Port == 0 {
-		con, err := dialer.DialContext(ctx, network, addr)
-		return con, err
+		return dialer.DialContext(ctx, network, addr)
 	}
 
-	addrs, e := Context.dnsServer.Resolve(host)
+	addrs, err := Context.dnsServer.Resolve(host)
 	log.Debug("dnsServer.Resolve: %s: %v", host, addrs)
-	if e != nil {
-		return nil, e
+	if err != nil {
+		return nil, err
 	}
 
 	if len(addrs) == 0 {
@@ -664,13 +663,16 @@ func customDialContext(ctx context.Context, network, addr string) (net.Conn, err
 	var dialErrs []error
 	for _, a := range addrs {
 		addr = net.JoinHostPort(a.String(), port)
-		con, err := dialer.DialContext(ctx, network, addr)
+		conn, err = dialer.DialContext(ctx, network, addr)
 		if err != nil {
 			dialErrs = append(dialErrs, err)
+
 			continue
 		}
-		return con, err
+
+		return conn, err
 	}
+
 	return nil, agherr.Many(fmt.Sprintf("couldn't dial to %s", addr), dialErrs...)
 }
 

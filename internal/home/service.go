@@ -50,32 +50,38 @@ func (p *program) Stop(s service.Service) error {
 	return nil
 }
 
-// Check the service's status
-// Note: on OpenWrt 'service' utility may not exist - we use our service script directly in this case.
-func svcStatus(s service.Service) (service.Status, error) {
-	status, err := s.Status()
+// svcStatus check the service's status.
+//
+// On OpenWrt, the service utility may not exist.  We use our service script
+// directly in this case.
+func svcStatus(s service.Service) (status service.Status, err error) {
+	status, err = s.Status()
 	if err != nil && service.Platform() == "unix-systemv" {
-		code, err := runInitdCommand("status")
-		if err != nil {
+		var code int
+		code, err = runInitdCommand("status")
+		if err != nil || code != 0 {
 			return service.StatusStopped, nil
 		}
-		if code != 0 {
-			return service.StatusStopped, nil
-		}
+
 		return service.StatusRunning, nil
 	}
+
 	return status, err
 }
 
-// Perform an action on the service
-// Note: on OpenWrt 'service' utility may not exist - we use our service script directly in this case.
-func svcAction(s service.Service, action string) error {
-	err := service.Control(s, action)
+// svcAction performs the action on the service.
+//
+// On OpenWrt, the service utility may not exist.  We use our service script
+// directly in this case.
+func svcAction(s service.Service, action string) (err error) {
+	err = service.Control(s, action)
 	if err != nil && service.Platform() == "unix-systemv" &&
 		(action == "start" || action == "stop" || action == "restart") {
-		_, err := runInitdCommand(action)
+		_, err = runInitdCommand(action)
+
 		return err
 	}
+
 	return err
 }
 
@@ -90,7 +96,9 @@ func sendSigReload() {
 	pidfile := fmt.Sprintf("/var/run/%s.pid", serviceName)
 	data, err := ioutil.ReadFile(pidfile)
 	if os.IsNotExist(err) {
-		code, psdata, err := util.RunCommand("ps", "-C", serviceName, "-o", "pid=")
+		var code int
+		var psdata string
+		code, psdata, err = util.RunCommand("ps", "-C", serviceName, "-o", "pid=")
 		if err != nil || code != 0 {
 			log.Error("Can't find AdGuardHome process: %s  code:%d", err, code)
 			return
@@ -207,10 +215,10 @@ func handleServiceInstallCommand(s service.Service) {
 		log.Fatal(err)
 	}
 
-	if util.IsOpenWRT() {
+	if util.IsOpenWrt() {
 		// On OpenWrt it is important to run enable after the service installation
 		// Otherwise, the service won't start on the system startup
-		_, err := runInitdCommand("enable")
+		_, err = runInitdCommand("enable")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -234,7 +242,7 @@ Click on the link below and follow the Installation Wizard steps to finish setup
 
 // handleServiceStatusCommand handles service "uninstall" command
 func handleServiceUninstallCommand(s service.Service) {
-	if util.IsOpenWRT() {
+	if util.IsOpenWrt() {
 		// On OpenWrt it is important to run disable command first
 		// as it will remove the symlink
 		_, err := runInitdCommand("disable")
@@ -249,14 +257,15 @@ func handleServiceUninstallCommand(s service.Service) {
 	}
 
 	if runtime.GOOS == "darwin" {
-		// Removing log files on cleanup and ignore errors
-		err := os.Remove(launchdStdoutPath)
+		// Remove log files on cleanup and log errors.
+		err = os.Remove(launchdStdoutPath)
 		if err != nil && !os.IsNotExist(err) {
-			log.Printf("cannot remove %s", launchdStdoutPath)
+			log.Printf("removing stdout file: %s", err)
 		}
+
 		err = os.Remove(launchdStderrPath)
 		if err != nil && !os.IsNotExist(err) {
-			log.Printf("cannot remove %s", launchdStderrPath)
+			log.Printf("removing stderr file: %s", err)
 		}
 	}
 }
@@ -281,7 +290,7 @@ func configureService(c *service.Config) {
 	c.Option["SysvScript"] = sysvScript
 
 	// On OpenWrt we're using a different type of sysvScript.
-	if util.IsOpenWRT() {
+	if util.IsOpenWrt() {
 		c.Option["SysvScript"] = openWrtScript
 	} else if runtime.GOOS == "freebsd" {
 		c.Option["SysvScript"] = freeBSDScript

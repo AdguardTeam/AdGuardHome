@@ -66,6 +66,8 @@ func glCheckToken(sess string) bool {
 	return now <= (tokenDate + glTokenTimeoutSeconds)
 }
 
+// TODO(a.garipov): Replace with a smaller version of
+// https://github.com/josharian/native.
 func archIsLittleEndian() bool {
 	var i int32 = 0x01020304
 	u := unsafe.Pointer(&i)
@@ -102,18 +104,17 @@ func glGetTokenDate(file string) uint32 {
 	}
 	buf := bytes.NewBuffer(bs)
 
+	var order binary.ByteOrder = binary.BigEndian
 	if archIsLittleEndian() {
-		err := binary.Read(buf, binary.LittleEndian, &dateToken)
-		if err != nil {
-			log.Error("binary.Read: %s", err)
-			return 0
-		}
-	} else {
-		err := binary.Read(buf, binary.BigEndian, &dateToken)
-		if err != nil {
-			log.Error("binary.Read: %s", err)
-			return 0
-		}
+		order = binary.LittleEndian
 	}
+
+	err = binary.Read(buf, order, &dateToken)
+	if err != nil {
+		log.Error("binary.Read: %s", err)
+
+		return 0
+	}
+
 	return dateToken
 }

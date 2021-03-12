@@ -37,7 +37,7 @@ and this project adheres to
 - Wrong DNS-over-TLS ALPN configuration ([#2681]).
 - Inconsistent responses for messages with EDNS0 and AD when DNS caching is
   enabled ([#2600]).
-- Incomplete OpenWRT detection ([#2757]).
+- Incomplete OpenWrt detection ([#2757]).
 - DHCP lease's `expired` field incorrect time format ([#2692]).
 - Incomplete DNS upstreams validation ([#2674]).
 - Wrong parsing of DHCP options of the `ip` type ([#2688]).
