@@ -17,7 +17,7 @@
     'runs-on': '${{ matrix.os }}'
     'env':
       'GO111MODULE': 'on'
-      'GOPROXY': 'https://goproxy.io'
+      'GOPROXY': 'https://goproxy.cn'
     'strategy':
       'fail-fast': false
       'matrix':
