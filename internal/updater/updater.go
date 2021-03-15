@@ -5,6 +5,7 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -19,7 +20,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
-	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -160,7 +160,7 @@ func (u *Updater) VersionCheckURL() (vcu string) {
 	return u.versionCheckURL
 }
 
-func (u *Updater) prepare() error {
+func (u *Updater) prepare() (err error) {
 	u.updateDir = filepath.Join(u.workDir, fmt.Sprintf("agh-update-%s", u.newVersion))
 
 	_, pkgNameOnly := filepath.Split(u.packageURL)
@@ -181,12 +181,11 @@ func (u *Updater) prepare() error {
 
 	log.Info("Updating from %s to %s.  URL:%s", version.Version(), u.newVersion, u.packageURL)
 
-	// If the binary file isn't found in working directory, we won't be able
-	// to auto-update.  Getting the full path to the current binary file on
-	// Unix and checking write permissions is more difficult.
+	// TODO(a.garipov): Use os.Args[0] instead?
 	u.currentExeName = filepath.Join(u.workDir, exeName)
-	if !util.FileExists(u.currentExeName) {
-		return fmt.Errorf("executable file %s doesn't exist", u.currentExeName)
+	_, err = os.Stat(u.currentExeName)
+	if err != nil {
+		return fmt.Errorf("checking %q: %w", u.currentExeName, err)
 	}
 
 	return nil
@@ -367,11 +366,14 @@ func tarGzFileUnpack(tarfile, outdir string) ([]string, error) {
 			}
 
 			err = os.Mkdir(outputName, os.FileMode(header.Mode&0o777))
-			if err != nil && !os.IsExist(err) {
-				err2 = fmt.Errorf("os.Mkdir(%s): %w", outputName, err)
+			if err != nil && !errors.Is(err, os.ErrExist) {
+				err2 = fmt.Errorf("os.Mkdir(%q): %w", outputName, err)
+
 				break
 			}
-			log.Debug("updater: created directory %s", outputName)
+
+			log.Debug("updater: created directory %q", outputName)
+
 			continue
 		} else if header.Typeflag != tar.TypeReg {
 			log.Debug("updater: %s: unknown file type %d, skipping", inputNameOnly, header.Typeflag)
@@ -443,11 +445,14 @@ func zipFileUnpack(zipfile, outdir string) ([]string, error) {
 			}
 
 			err = os.Mkdir(outputName, fi.Mode())
-			if err != nil && !os.IsExist(err) {
-				err2 = fmt.Errorf("os.Mkdir(): %w", err)
+			if err != nil && !errors.Is(err, os.ErrExist) {
+				err2 = fmt.Errorf("os.Mkdir(%q): %w", outputName, err)
+
 				break
 			}
-			log.Tracef("created directory %s", outputName)
+
+			log.Tracef("created directory %q", outputName)
+
 			continue
 		}
 
@@ -501,11 +506,12 @@ func copySupportingFiles(files []string, srcdir, dstdir string) error {
 		dst := filepath.Join(dstdir, name)
 
 		err := copyFile(src, dst)
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
 
-		log.Debug("updater: copied: %s -> %s", src, dst)
+		log.Debug("updater: copied: %q -> %q", src, dst)
 	}
+
 	return nil
 }

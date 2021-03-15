@@ -570,8 +570,8 @@ func loadOptions() options {
 	return o
 }
 
-// prints IP addresses which user can use to open the admin interface
-// proto is either "http" or "https"
+// printHTTPAddresses prints the IP addresses which user can use to open the
+// admin interface.  proto is either schemeHTTP or schemeHTTPS.
 func printHTTPAddresses(proto string) {
 	tlsConf := tlsConfigSettings{}
 	if Context.tls != nil {
@@ -579,12 +579,12 @@ func printHTTPAddresses(proto string) {
 	}
 
 	port := strconv.Itoa(config.BindPort)
-	if proto == "https" {
+	if proto == schemeHTTPS {
 		port = strconv.Itoa(tlsConf.PortHTTPS)
 	}
 
 	var hostStr string
-	if proto == "https" && tlsConf.ServerName != "" {
+	if proto == schemeHTTPS && tlsConf.ServerName != "" {
 		if tlsConf.PortHTTPS == 443 {
 			log.Printf("Go to https://%s", tlsConf.ServerName)
 		} else {

@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
+	"github.com/AdguardTeam/golibs/log"
 )
 
 // QLogReader allows reading from multiple query log files in the reverse order.
@@ -30,8 +32,16 @@ func NewQLogReader(files []string) (*QLogReader, error) {
 	for _, f := range files {
 		q, err := NewQLogFile(f)
 		if err != nil {
-			// Close what we've already opened
-			_ = closeQFiles(qFiles)
+			if errors.Is(err, os.ErrNotExist) {
+				continue
+			}
+
+			// Close what we've already opened.
+			cerr := closeQFiles(qFiles)
+			if cerr != nil {
+				log.Debug("querylog: closing files: %s", cerr)
+			}
+
 			return nil, err
 		}
 

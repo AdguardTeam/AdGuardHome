@@ -8,28 +8,11 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 )
-
-// ContainsString checks if string is in the slice of strings.
-func ContainsString(strs []string, str string) bool {
-	for _, s := range strs {
-		if s == str {
-			return true
-		}
-	}
-	return false
-}
-
-// FileExists returns true if file exists.
-func FileExists(fn string) bool {
-	_, err := os.Stat(fn)
-	return err == nil || !os.IsNotExist(err)
-}
 
 // RunCommand runs shell command.
 func RunCommand(command string, arguments ...string) (int, string, error) {

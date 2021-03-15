@@ -5,7 +5,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -87,9 +86,15 @@ func (l *queryLog) searchFiles(params *searchParams) ([]*logEntry, time.Time, in
 	entries := make([]*logEntry, 0)
 	oldest := time.Time{}
 
-	r, err := l.openReader()
+	files := []string{
+		l.logFile + ".1",
+		l.logFile,
+	}
+
+	r, err := NewQLogReader(files)
 	if err != nil {
-		log.Error("Failed to open qlog reader: %v", err)
+		log.Error("querylog: failed to open qlog reader: %s", err)
+
 		return entries, oldest, 0
 	}
 	defer r.Close()
@@ -173,18 +178,4 @@ func (l *queryLog) readNextEntry(r *QLogReader, params *searchParams) (*logEntry
 	}
 
 	return &entry, timestamp, nil
-}
-
-// openReader - opens QLogReader instance
-func (l *queryLog) openReader() (*QLogReader, error) {
-	files := make([]string, 0)
-
-	if util.FileExists(l.logFile + ".1") {
-		files = append(files, l.logFile+".1")
-	}
-	if util.FileExists(l.logFile) {
-		files = append(files, l.logFile)
-	}
-
-	return NewQLogReader(files)
 }

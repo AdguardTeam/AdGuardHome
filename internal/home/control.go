@@ -239,7 +239,7 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 		}
 
 		httpsURL := &url.URL{
-			Scheme:   "https",
+			Scheme:   schemeHTTPS,
 			Host:     hostPort,
 			Path:     r.URL.Path,
 			RawQuery: r.URL.RawQuery,
@@ -255,7 +255,7 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 	//
 	// See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin.
 	originURL := &url.URL{
-		Scheme: "http",
+		Scheme: schemeHTTP,
 		Host:   r.Host,
 	}
 	w.Header().Set("Access-Control-Allow-Origin", originURL.String())

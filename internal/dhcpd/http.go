@@ -508,8 +508,8 @@ func (s *Server) handleReset(w http.ResponseWriter, r *http.Request) {
 	s.Stop()
 
 	err := os.Remove(s.conf.DBFilePath)
-	if err != nil && !os.IsNotExist(err) {
-		log.Error("DHCP: os.Remove: %s: %s", s.conf.DBFilePath, err)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		log.Error("dhcp: removing %q: %s", s.conf.DBFilePath, err)
 	}
 
 	oldconf := s.conf

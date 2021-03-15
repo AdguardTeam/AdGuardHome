@@ -12,26 +12,31 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
 
-// isValidURL - return TRUE if URL or file path is valid
-func isValidURL(rawurl string) bool {
-	if filepath.IsAbs(rawurl) {
-		// this is a file path
-		return util.FileExists(rawurl)
+// validateFilterURL validates the filter list URL or file name.
+func validateFilterURL(urlStr string) (err error) {
+	if filepath.IsAbs(urlStr) {
+		_, err = os.Stat(urlStr)
+		if err != nil {
+			return fmt.Errorf("checking filter file: %w", err)
+		}
+
+		return nil
 	}
 
-	url, err := url.ParseRequestURI(rawurl)
+	url, err := url.ParseRequestURI(urlStr)
 	if err != nil {
-		return false // Couldn't even parse the rawurl
+		return fmt.Errorf("checking filter url: %w", err)
 	}
-	if len(url.Scheme) == 0 {
-		return false // No Scheme found
+
+	if s := url.Scheme; s != schemeHTTP && s != schemeHTTPS {
+		return fmt.Errorf("checking filter url: invalid scheme %q", s)
 	}
-	return true
+
+	return nil
 }
 
 type filterAddJSON struct {
@@ -48,8 +53,11 @@ func (f *Filtering) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if !isValidURL(fj.URL) {
-		http.Error(w, "Invalid URL or file path", http.StatusBadRequest)
+	err = validateFilterURL(fj.URL)
+	if err != nil {
+		msg := fmt.Sprintf("invalid url: %s", err)
+		http.Error(w, msg, http.StatusBadRequest)
+
 		return
 	}
 
@@ -168,8 +176,11 @@ func (f *Filtering) handleFilteringSetURL(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if !isValidURL(fj.Data.URL) {
-		http.Error(w, "invalid URL or file path", http.StatusBadRequest)
+	err = validateFilterURL(fj.Data.URL)
+	if err != nil {
+		msg := fmt.Sprintf("invalid url: %s", err)
+		http.Error(w, msg, http.StatusBadRequest)
+
 		return
 	}
 

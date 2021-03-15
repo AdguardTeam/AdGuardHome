@@ -58,7 +58,7 @@ func getMobileConfig(d dnsSettings) ([]byte, error) {
 		dspName = fmt.Sprintf("%s DoH", d.ServerName)
 
 		u := &url.URL{
-			Scheme: "https",
+			Scheme: schemeHTTPS,
 			Host:   d.ServerName,
 			Path:   "/dns-query",
 		}

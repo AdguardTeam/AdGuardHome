@@ -4,6 +4,7 @@ package dhcpd
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net"
 	"os"
@@ -39,9 +40,10 @@ func (s *Server) dbLoad() {
 
 	data, err := ioutil.ReadFile(s.conf.DBFilePath)
 	if err != nil {
-		if !os.IsNotExist(err) {
-			log.Error("DHCP: can't read file %s: %v", s.conf.DBFilePath, err)
+		if !errors.Is(err, os.ErrNotExist) {
+			log.Error("dhcp: can't read file %q: %v", s.conf.DBFilePath, err)
 		}
+
 		return
 	}
 

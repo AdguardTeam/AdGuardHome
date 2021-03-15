@@ -15,6 +15,12 @@ import (
 	"github.com/gobuffalo/packr"
 )
 
+// HTTP scheme constants.
+const (
+	schemeHTTP  = "http"
+	schemeHTTPS = "https"
+)
+
 const (
 	// readTimeout is the maximum duration for reading the entire request,
 	// including the body.
@@ -159,7 +165,7 @@ func (web *Web) Start() {
 
 	// this loop is used as an ability to change listening host and/or port
 	for !web.httpsServer.shutdown {
-		printHTTPAddresses("http")
+		printHTTPAddresses(schemeHTTP)
 		errs := make(chan error, 2)
 
 		hostStr := web.conf.BindHost.String()
@@ -256,7 +262,7 @@ func (web *Web) tlsServerLoop() {
 			WriteTimeout:      web.conf.WriteTimeout,
 		}
 
-		printHTTPAddresses("https")
+		printHTTPAddresses(schemeHTTPS)
 		err := web.httpsServer.server.ListenAndServeTLS("", "")
 		if err != http.ErrServerClosed {
 			cleanupAlways()
