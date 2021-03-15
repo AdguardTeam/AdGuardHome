@@ -57,7 +57,7 @@ func TestGenAnswerHTTPS_andSVCB(t *testing.T) {
 		want = &dns.SVCB{
 			Hdr:      s.hdr(req, dns.TypeSVCB),
 			Priority: prio,
-			Target:   host,
+			Target:   dns.Fqdn(host),
 		}
 
 		if kv == nil {
@@ -122,7 +122,7 @@ func TestGenAnswerHTTPS_andSVCB(t *testing.T) {
 	}, {
 		svcb: dnssvcb("no-default-alpn", ""),
 		want: wantsvcb(&dns.SVCBNoDefaultAlpn{}),
-		name: "no-default-alpn",
+		name: "no_default_alpn",
 	}, {
 		svcb: dnssvcb("port", "8080"),
 		want: wantsvcb(&dns.SVCBPort{Port: 8080}),
@@ -130,7 +130,7 @@ func TestGenAnswerHTTPS_andSVCB(t *testing.T) {
 	}, {
 		svcb: dnssvcb("port", "1005008080"),
 		want: wantsvcb(nil),
-		name: "port",
+		name: "bad_port",
 	}}
 
 	for _, tc := range testCases {

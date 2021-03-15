@@ -23,14 +23,14 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 	}
 	svcbVal := &rules.DNSSVCB{
 		Params:   map[string]string{"alpn": "h3"},
-		Target:   domain,
+		Target:   dns.Fqdn(domain),
 		Priority: 32,
 	}
 	srvVal := &rules.DNSSRV{
 		Priority: 32,
 		Weight:   60,
 		Port:     8080,
-		Target:   domain,
+		Target:   dns.Fqdn(domain),
 	}
 
 	// Helper functions and entities.
@@ -113,7 +113,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
 
 		require.Len(t, d.Res.Answer, 1)
-		assert.Equal(t, domain, d.Res.Answer[0].(*dns.PTR).Ptr)
+		assert.Equal(t, dns.Fqdn(domain), d.Res.Answer[0].(*dns.PTR).Ptr)
 	})
 
 	t.Run("noerror_txt", func(t *testing.T) {
@@ -142,7 +142,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		ans, ok := d.Res.Answer[0].(*dns.MX)
 
 		require.True(t, ok)
-		assert.Equal(t, mxVal.Exchange, ans.Mx)
+		assert.Equal(t, dns.Fqdn(mxVal.Exchange), ans.Mx)
 		assert.Equal(t, mxVal.Preference, ans.Preference)
 	})
 

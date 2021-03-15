@@ -137,7 +137,7 @@ func (s *Server) genAnswerSVCB(req *dns.Msg, svcb *rules.DNSSVCB) (ans *dns.SVCB
 	ans = &dns.SVCB{
 		Hdr:      s.hdr(req, dns.TypeSVCB),
 		Priority: svcb.Priority,
-		Target:   svcb.Target,
+		Target:   dns.Fqdn(svcb.Target),
 	}
 	if len(svcb.Params) == 0 {
 		return ans
