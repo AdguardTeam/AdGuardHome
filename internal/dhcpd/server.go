@@ -96,5 +96,5 @@ type V6ServerConf struct {
 
 type dhcpOption struct {
 	code uint8
-	val  []byte
+	data []byte
 }

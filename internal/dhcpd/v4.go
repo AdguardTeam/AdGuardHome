@@ -521,7 +521,7 @@ func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
 	resp.UpdateOption(dhcpv4.OptDNS(s.conf.dnsIPAddrs...))
 
 	for _, opt := range s.conf.options {
-		resp.Options[opt.code] = opt.val
+		resp.Options[opt.code] = opt.data
 	}
 	return 1
 }
@@ -631,7 +631,7 @@ func (s *v4Server) Stop() {
 }
 
 // Create DHCPv4 server
-func v4Create(conf V4ServerConf) (DHCPServer, error) {
+func v4Create(conf V4ServerConf) (srv DHCPServer, err error) {
 	s := &v4Server{}
 	s.conf = conf
 
@@ -639,7 +639,6 @@ func v4Create(conf V4ServerConf) (DHCPServer, error) {
 		return s, nil
 	}
 
-	var err error
 	s.conf.routerIP, err = tryTo4(s.conf.GatewayIP)
 	if err != nil {
 		return s, fmt.Errorf("dhcpv4: %w", err)
@@ -675,17 +674,23 @@ func v4Create(conf V4ServerConf) (DHCPServer, error) {
 		s.conf.leaseTime = time.Second * time.Duration(conf.LeaseDuration)
 	}
 
-	for _, o := range conf.Options {
-		code, val := parseOptionString(o)
-		if code == 0 {
-			log.Debug("dhcpv4: bad option string: %s", o)
+	p := newDHCPOptionParser()
+
+	for i, o := range conf.Options {
+		var code uint8
+		var data []byte
+		code, data, err = p.parse(o)
+		if err != nil {
+			log.Error("dhcpv4: bad option string at index %d: %s", i, err)
+
 			continue
 		}
 
 		opt := dhcpOption{
 			code: code,
-			val:  val,
+			data: data,
 		}
+
 		s.conf.options = append(s.conf.options, opt)
 	}
 

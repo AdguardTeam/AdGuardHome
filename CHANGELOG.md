@@ -15,6 +15,7 @@ and this project adheres to
 
 ### Added
 
+- `ips` and `text` DHCP server options ([#2385]).
 - `SRV` records support in `$dnsrewrite` filters ([#2533]).
 
 ### Changed
@@ -30,6 +31,7 @@ and this project adheres to
 
 - Go 1.14 support.
 
+[#2385]: https://github.com/AdguardTeam/AdGuardHome/issues/2385
 [#2412]: https://github.com/AdguardTeam/AdGuardHome/issues/2412
 [#2498]: https://github.com/AdguardTeam/AdGuardHome/issues/2498
 [#2533]: https://github.com/AdguardTeam/AdGuardHome/issues/2533
