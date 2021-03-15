@@ -13,11 +13,14 @@ and this project adheres to
 ## [v0.106.0] - 2021-05-01
 -->
 
+### Added
+
+- `SRV` records support in `$dnsrewrite` filters ([#2533]).
+
 ### Changed
 
+- Stricter validation of `$dnsrewrite` filter modifier parameters ([#2498]).
 - New, more correct versioning scheme ([#2412]).
-
-[#2412]: https://github.com/AdguardTeam/AdGuardHome/issues/2412
 
 ### Deprecated
 
@@ -26,6 +29,10 @@ and this project adheres to
 ### Removed
 
 - Go 1.14 support.
+
+[#2412]: https://github.com/AdguardTeam/AdGuardHome/issues/2412
+[#2498]: https://github.com/AdguardTeam/AdGuardHome/issues/2498
+[#2533]: https://github.com/AdguardTeam/AdGuardHome/issues/2533
 
 
 

@@ -136,7 +136,7 @@ func (s *Server) genAnswerCNAME(req *dns.Msg, cname string) (ans *dns.CNAME) {
 
 func (s *Server) genAnswerMX(req *dns.Msg, mx *rules.DNSMX) (ans *dns.MX) {
 	return &dns.MX{
-		Hdr:        s.hdr(req, dns.TypePTR),
+		Hdr:        s.hdr(req, dns.TypeMX),
 		Preference: mx.Preference,
 		Mx:         mx.Exchange,
 	}
@@ -146,6 +146,16 @@ func (s *Server) genAnswerPTR(req *dns.Msg, ptr string) (ans *dns.PTR) {
 	return &dns.PTR{
 		Hdr: s.hdr(req, dns.TypePTR),
 		Ptr: ptr,
+	}
+}
+
+func (s *Server) genAnswerSRV(req *dns.Msg, srv *rules.DNSSRV) (ans *dns.SRV) {
+	return &dns.SRV{
+		Hdr:      s.hdr(req, dns.TypeSRV),
+		Priority: srv.Priority,
+		Weight:   srv.Weight,
+		Port:     srv.Port,
+		Target:   srv.Target,
 	}
 }
 

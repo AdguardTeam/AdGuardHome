@@ -20,7 +20,8 @@ func (s *Server) filterDNSRewriteResponse(req *dns.Msg, rr rules.RRType, v rules
 	// the answer generation logic from the Server.
 
 	switch rr {
-	case dns.TypeA, dns.TypeAAAA:
+	case dns.TypeA,
+		dns.TypeAAAA:
 		ip, ok := v.(net.IP)
 		if !ok {
 			return nil, fmt.Errorf("value for rr type %d has type %T, not net.IP", rr, v)
@@ -62,6 +63,13 @@ func (s *Server) filterDNSRewriteResponse(req *dns.Msg, rr rules.RRType, v rules
 		}
 
 		return s.genAnswerSVCB(req, svcb), nil
+	case dns.TypeSRV:
+		srv, ok := v.(*rules.DNSSRV)
+		if !ok {
+			return nil, fmt.Errorf("value for rr type %d has type %T, not *rules.DNSSRV", rr, v)
+		}
+
+		return s.genAnswerSRV(req, srv), nil
 	default:
 		log.Debug("don't know how to handle dns rr type %d, skipping", rr)
 
