@@ -1,6 +1,6 @@
 // +build linux
 
-package sysutil
+package aghnet
 
 import (
 	"bytes"

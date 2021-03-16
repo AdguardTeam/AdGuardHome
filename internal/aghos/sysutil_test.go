@@ -1,4 +1,4 @@
-package sysutil
+package aghos
 
 import (
 	"testing"

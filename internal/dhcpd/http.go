@@ -10,8 +10,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/sysutil"
-	"github.com/AdguardTeam/AdGuardHome/internal/util"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -93,7 +92,7 @@ func (s *Server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) enableDHCP(ifaceName string) (code int, err error) {
 	var hasStaticIP bool
-	hasStaticIP, err = sysutil.IfaceHasStaticIP(ifaceName)
+	hasStaticIP, err = aghnet.IfaceHasStaticIP(ifaceName)
 	if err != nil {
 		if errors.Is(err, os.ErrPermission) {
 			// ErrPermission may happen here on Linux systems where
@@ -110,7 +109,7 @@ func (s *Server) enableDHCP(ifaceName string) (code int, err error) {
 			log.Info("error while checking static ip: %s; "+
 				"assuming machine has static ip and going on", err)
 			hasStaticIP = true
-		} else if errors.Is(err, sysutil.ErrNoStaticIPInfo) {
+		} else if errors.Is(err, aghnet.ErrNoStaticIPInfo) {
 			// Couldn't obtain a definitive answer.  Assume static
 			// IP an go on.
 			log.Info("can't check for static ip; " +
@@ -124,7 +123,7 @@ func (s *Server) enableDHCP(ifaceName string) (code int, err error) {
 	}
 
 	if !hasStaticIP {
-		err = sysutil.IfaceSetStaticIP(ifaceName)
+		err = aghnet.IfaceSetStaticIP(ifaceName)
 		if err != nil {
 			err = fmt.Errorf("setting static ip: %w", err)
 
@@ -267,7 +266,7 @@ type netInterfaceJSON struct {
 func (s *Server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 	response := map[string]netInterfaceJSON{}
 
-	ifaces, err := util.GetValidNetInterfaces()
+	ifaces, err := aghnet.GetValidNetInterfaces()
 	if err != nil {
 		httpError(r, w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
 		return
@@ -317,7 +316,7 @@ func (s *Server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if len(jsonIface.Addrs4)+len(jsonIface.Addrs6) != 0 {
-			jsonIface.GatewayIP = sysutil.GatewayIP(iface.Name)
+			jsonIface.GatewayIP = aghnet.GatewayIP(iface.Name)
 			response[iface.Name] = jsonIface
 		}
 	}
@@ -397,13 +396,13 @@ func (s *Server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 
 	found4, err4 := CheckIfOtherDHCPServersPresentV4(interfaceName)
 
-	isStaticIP, err := sysutil.IfaceHasStaticIP(interfaceName)
+	isStaticIP, err := aghnet.IfaceHasStaticIP(interfaceName)
 	if err != nil {
 		result.V4.StaticIP.Static = "error"
 		result.V4.StaticIP.Error = err.Error()
 	} else if !isStaticIP {
 		result.V4.StaticIP.Static = "no"
-		result.V4.StaticIP.IP = util.GetSubnet(interfaceName).String()
+		result.V4.StaticIP.IP = aghnet.GetSubnet(interfaceName).String()
 	}
 
 	if found4 {

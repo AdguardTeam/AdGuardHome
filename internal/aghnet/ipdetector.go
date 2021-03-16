@@ -1,14 +1,14 @@
-package home
+package aghnet
 
 import "net"
 
-// ipDetector describes IP address properties.
-type ipDetector struct {
+// IPDetector describes IP address properties.
+type IPDetector struct {
 	nets []*net.IPNet
 }
 
-// newIPDetector returns a new IP detector.
-func newIPDetector() (ipd *ipDetector, err error) {
+// NewIPDetector returns a new IP detector.
+func NewIPDetector() (ipd *IPDetector, err error) {
 	specialNetworks := []string{
 		"0.0.0.0/8",
 		"10.0.0.0/8",
@@ -43,7 +43,7 @@ func newIPDetector() (ipd *ipDetector, err error) {
 		"fe80::/10",
 	}
 
-	ipd = &ipDetector{
+	ipd = &IPDetector{
 		nets: make([]*net.IPNet, len(specialNetworks)),
 	}
 	for i, ipnetStr := range specialNetworks {
@@ -59,10 +59,10 @@ func newIPDetector() (ipd *ipDetector, err error) {
 	return ipd, nil
 }
 
-// detectSpecialNetwork returns true if IP address is contained by any of
+// DetectSpecialNetwork returns true if IP address is contained by any of
 // special-purpose IP address registries according to RFC-6890
 // (https://tools.ietf.org/html/rfc6890).
-func (ipd *ipDetector) detectSpecialNetwork(ip net.IP) bool {
+func (ipd *IPDetector) DetectSpecialNetwork(ip net.IP) bool {
 	for _, ipnet := range ipd.nets {
 		if ipnet.Contains(ip) {
 			return true

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/sysutil"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/kardianos/service"
@@ -121,7 +121,7 @@ func sendSigReload() {
 		log.Error("Can't read PID file %s: %s", pidfile, err)
 		return
 	}
-	err = sysutil.SendProcessSignal(pid, syscall.SIGHUP)
+	err = aghos.SendProcessSignal(pid, syscall.SIGHUP)
 	if err != nil {
 		log.Error("Can't send signal to PID %d: %s", pid, err)
 		return

@@ -1,6 +1,6 @@
 // +build !windows,!plan9
 
-package sysutil
+package aghos
 
 import (
 	"log/syslog"

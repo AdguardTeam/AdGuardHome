@@ -1,4 +1,4 @@
-package home
+package aghnet
 
 import (
 	"net"
@@ -9,10 +9,10 @@ import (
 )
 
 func TestIPDetector_detectSpecialNetwork(t *testing.T) {
-	var ipd *ipDetector
+	var ipd *IPDetector
 	var err error
 
-	ipd, err = newIPDetector()
+	ipd, err = NewIPDetector()
 	require.Nil(t, err)
 
 	testCases := []struct {
@@ -139,7 +139,7 @@ func TestIPDetector_detectSpecialNetwork(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.want, ipd.detectSpecialNetwork(tc.ip))
+			assert.Equal(t, tc.want, ipd.DetectSpecialNetwork(tc.ip))
 		})
 	}
 }

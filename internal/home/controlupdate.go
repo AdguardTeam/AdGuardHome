@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/sysutil"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -141,7 +141,7 @@ func (vr *versionResponse) confirmAutoUpdate() {
 				tlsConf.PortDNSOverQUIC < 1024)) ||
 				config.BindPort < 1024 ||
 				config.DNS.Port < 1024) {
-			canUpdate, _ = sysutil.CanBindPrivilegedPorts()
+			canUpdate, _ = aghos.CanBindPrivilegedPorts()
 		}
 		vr.CanAutoUpdate = &canUpdate
 	}

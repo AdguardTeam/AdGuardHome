@@ -1,6 +1,6 @@
 // +build linux
 
-package sysutil
+package aghnet
 
 import (
 	"bufio"
@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
-	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/golibs/file"
 )
 
@@ -132,7 +131,7 @@ func ifacesStaticConfig(r io.Reader, ifaceName string) (has bool, err error) {
 }
 
 func ifaceSetStaticIP(ifaceName string) (err error) {
-	ipNet := util.GetSubnet(ifaceName)
+	ipNet := GetSubnet(ifaceName)
 	if ipNet.IP == nil {
 		return errors.New("can't get IP address")
 	}

@@ -1,6 +1,6 @@
 // +build windows
 
-package sysutil
+package aghos
 
 import (
 	"fmt"

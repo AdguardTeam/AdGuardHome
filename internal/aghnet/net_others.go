@@ -1,6 +1,6 @@
 // +build !linux,!darwin
 
-package sysutil
+package aghnet
 
 import (
 	"fmt"

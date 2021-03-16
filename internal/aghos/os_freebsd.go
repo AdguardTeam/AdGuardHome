@@ -1,6 +1,6 @@
 // +build freebsd
 
-package sysutil
+package aghos
 
 import (
 	"os"

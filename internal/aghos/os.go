@@ -1,5 +1,5 @@
-// Package sysutil contains utilities for functions requiring system calls.
-package sysutil
+// Package aghos contains utilities for functions requiring system calls.
+package aghos
 
 import "syscall"
 

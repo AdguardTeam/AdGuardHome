@@ -15,18 +15,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/util"
-
-	"github.com/AdguardTeam/AdGuardHome/internal/sysutil"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 
 	"github.com/AdguardTeam/golibs/log"
 )
 
 // getAddrsResponse is the response for /install/get_addresses endpoint.
 type getAddrsResponse struct {
-	WebPort    int                           `json:"web_port"`
-	DNSPort    int                           `json:"dns_port"`
-	Interfaces map[string]*util.NetInterface `json:"interfaces"`
+	WebPort    int                             `json:"web_port"`
+	DNSPort    int                             `json:"dns_port"`
+	Interfaces map[string]*aghnet.NetInterface `json:"interfaces"`
 }
 
 // handleInstallGetAddresses is the handler for /install/get_addresses endpoint.
@@ -35,13 +33,13 @@ func (web *Web) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request
 	data.WebPort = 80
 	data.DNSPort = 53
 
-	ifaces, err := util.GetValidNetInterfacesForWeb()
+	ifaces, err := aghnet.GetValidNetInterfacesForWeb()
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
 		return
 	}
 
-	data.Interfaces = make(map[string]*util.NetInterface)
+	data.Interfaces = make(map[string]*aghnet.NetInterface)
 	for _, iface := range ifaces {
 		data.Interfaces[iface.Name] = iface
 	}
@@ -94,16 +92,16 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 	}
 
 	if reqData.Web.Port != 0 && reqData.Web.Port != config.BindPort && reqData.Web.Port != config.BetaBindPort {
-		err = util.CheckPortAvailable(reqData.Web.IP, reqData.Web.Port)
+		err = aghnet.CheckPortAvailable(reqData.Web.IP, reqData.Web.Port)
 		if err != nil {
 			respData.Web.Status = err.Error()
 		}
 	}
 
 	if reqData.DNS.Port != 0 {
-		err = util.CheckPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+		err = aghnet.CheckPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
 
-		if util.ErrorIsAddrInUse(err) {
+		if aghnet.ErrorIsAddrInUse(err) {
 			canAutofix := checkDNSStubListener()
 			if canAutofix && reqData.DNS.Autofix {
 
@@ -112,7 +110,7 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 					log.Error("Couldn't disable DNSStubListener: %s", err)
 				}
 
-				err = util.CheckPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+				err = aghnet.CheckPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
 				canAutofix = false
 			}
 
@@ -120,7 +118,7 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 		}
 
 		if err == nil {
-			err = util.CheckPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+			err = aghnet.CheckPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
 		}
 
 		if err != nil {
@@ -144,7 +142,7 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 func handleStaticIP(ip net.IP, set bool) staticIPJSON {
 	resp := staticIPJSON{}
 
-	interfaceName := util.GetInterfaceByIP(ip)
+	interfaceName := aghnet.GetInterfaceByIP(ip)
 	resp.Static = "no"
 
 	if len(interfaceName) == 0 {
@@ -155,7 +153,7 @@ func handleStaticIP(ip net.IP, set bool) staticIPJSON {
 
 	if set {
 		// Try to set static IP for the specified interface
-		err := sysutil.IfaceSetStaticIP(interfaceName)
+		err := aghnet.IfaceSetStaticIP(interfaceName)
 		if err != nil {
 			resp.Static = "error"
 			resp.Error = err.Error()
@@ -165,7 +163,7 @@ func handleStaticIP(ip net.IP, set bool) staticIPJSON {
 
 	// Fallthrough here even if we set static IP
 	// Check if we have a static IP and return the details
-	isStaticIP, err := sysutil.IfaceHasStaticIP(interfaceName)
+	isStaticIP, err := aghnet.IfaceHasStaticIP(interfaceName)
 	if err != nil {
 		resp.Static = "error"
 		resp.Error = err.Error()
@@ -173,7 +171,7 @@ func handleStaticIP(ip net.IP, set bool) staticIPJSON {
 		if isStaticIP {
 			resp.Static = "yes"
 		}
-		resp.IP = util.GetSubnet(interfaceName).String()
+		resp.IP = aghnet.GetSubnet(interfaceName).String()
 	}
 	return resp
 }
@@ -315,7 +313,7 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 
 	// validate that hosts and ports are bindable
 	if restartHTTP {
-		err = util.CheckPortAvailable(newSettings.Web.IP, newSettings.Web.Port)
+		err = aghnet.CheckPortAvailable(newSettings.Web.IP, newSettings.Web.Port)
 		if err != nil {
 			httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s",
 				net.JoinHostPort(newSettings.Web.IP.String(), strconv.Itoa(newSettings.Web.Port)), err)
@@ -324,13 +322,13 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	err = util.CheckPacketPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
+	err = aghnet.CheckPacketPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
 	}
 
-	err = util.CheckPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
+	err = aghnet.CheckPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
@@ -537,9 +535,9 @@ func (web *Web) handleInstallConfigureBeta(w http.ResponseWriter, r *http.Reques
 // TODO(e.burkov): This should removed with the API v1 when the appropriate
 // functionality will appear in default firstRunData.
 type getAddrsResponseBeta struct {
-	WebPort    int                  `json:"web_port"`
-	DNSPort    int                  `json:"dns_port"`
-	Interfaces []*util.NetInterface `json:"interfaces"`
+	WebPort    int                    `json:"web_port"`
+	DNSPort    int                    `json:"dns_port"`
+	Interfaces []*aghnet.NetInterface `json:"interfaces"`
 }
 
 // handleInstallConfigureBeta is a substitution of /install/get_addresses
@@ -552,7 +550,7 @@ func (web *Web) handleInstallGetAddressesBeta(w http.ResponseWriter, r *http.Req
 	data.WebPort = 80
 	data.DNSPort = 53
 
-	ifaces, err := util.GetValidNetInterfacesForWeb()
+	ifaces, err := aghnet.GetValidNetInterfacesForWeb()
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
 		return

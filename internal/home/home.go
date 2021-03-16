@@ -22,12 +22,13 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
-	"github.com/AdguardTeam/AdGuardHome/internal/sysutil"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
@@ -60,7 +61,7 @@ type homeContext struct {
 	autoHosts  util.AutoHosts       // IP-hostname pairs taken from system configuration (e.g. /etc/hosts) files
 	updater    *updater.Updater
 
-	ipDetector *ipDetector
+	ipDetector *aghnet.IPDetector
 
 	// mux is our custom http.ServeMux.
 	mux *http.ServeMux
@@ -204,7 +205,7 @@ func setupConfig(args options) {
 
 	if (runtime.GOOS == "linux" || runtime.GOOS == "darwin") &&
 		config.RlimitNoFile != 0 {
-		sysutil.SetRlimit(config.RlimitNoFile)
+		aghos.SetRlimit(config.RlimitNoFile)
 	}
 
 	// override bind host/port from the console
@@ -304,7 +305,7 @@ func run(args options) {
 		log.Fatalf("Can't initialize Web module")
 	}
 
-	Context.ipDetector, err = newIPDetector()
+	Context.ipDetector, err = aghnet.NewIPDetector()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -361,7 +362,7 @@ func checkPermissions() {
 	if runtime.GOOS == "windows" {
 		// On Windows we need to have admin rights to run properly
 
-		admin, _ := sysutil.HaveAdminRights()
+		admin, _ := aghos.HaveAdminRights()
 		if admin {
 			return
 		}
@@ -370,7 +371,7 @@ func checkPermissions() {
 	}
 
 	// We should check if AdGuard Home is able to bind to port 53
-	ok, err := util.CanBindPort(53)
+	ok, err := aghnet.CanBindPort(53)
 
 	if ok {
 		log.Info("AdGuard Home can bind to port 53")
@@ -481,7 +482,7 @@ func configureLogger(args options) {
 
 	if ls.LogFile == configSyslog {
 		// Use syslog where it is possible and eventlog on Windows
-		err := sysutil.ConfigureSyslog(serviceName)
+		err := aghos.ConfigureSyslog(serviceName)
 		if err != nil {
 			log.Fatalf("cannot initialize syslog: %s", err)
 		}
@@ -592,7 +593,7 @@ func printHTTPAddresses(proto string) {
 		}
 	} else if config.BindHost.IsUnspecified() {
 		log.Println("AdGuard Home is available on the following addresses:")
-		ifaces, err := util.GetValidNetInterfacesForWeb()
+		ifaces, err := aghnet.GetValidNetInterfacesForWeb()
 		if err != nil {
 			// That's weird, but we'll ignore it
 			hostStr = config.BindHost.String()

@@ -1,16 +1,21 @@
-// +build aix darwin dragonfly netbsd openbsd solaris
+// +build linux
 
-package sysutil
+package aghos
 
 import (
 	"os"
 	"syscall"
 
 	"github.com/AdguardTeam/golibs/log"
+	"golang.org/x/sys/unix"
 )
 
 func canBindPrivilegedPorts() (can bool, err error) {
-	return HaveAdminRights()
+	cnbs, err := unix.PrctlRetInt(unix.PR_CAP_AMBIENT, unix.PR_CAP_AMBIENT_IS_SET, unix.CAP_NET_BIND_SERVICE, 0, 0)
+	// Don't check the error because it's always nil on Linux.
+	adm, _ := haveAdminRights()
+
+	return cnbs == 1 || adm, err
 }
 
 func setRlimit(val uint) {
@@ -24,6 +29,8 @@ func setRlimit(val uint) {
 }
 
 func haveAdminRights() (bool, error) {
+	// The error is nil because the platform-independent function signature
+	// requires returning an error.
 	return os.Getuid() == 0, nil
 }
 

@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/util"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/NYTimes/gziphandler"
 	"github.com/gobuffalo/packr"
@@ -117,7 +117,7 @@ func WebCheckPortAvailable(port int) bool {
 		alreadyRunning = true
 	}
 	if !alreadyRunning {
-		err := util.CheckPortAvailable(config.BindHost, port)
+		err := aghnet.CheckPortAvailable(config.BindHost, port)
 		if err != nil {
 			return false
 		}

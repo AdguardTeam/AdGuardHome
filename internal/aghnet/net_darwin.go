@@ -1,6 +1,6 @@
 // +build darwin
 
-package sysutil
+package aghnet
 
 import (
 	"errors"

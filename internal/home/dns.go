@@ -9,11 +9,11 @@ import (
 	"strconv"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
-	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/ameshkov/dnscrypt/v2"
@@ -109,7 +109,7 @@ func onDNSRequest(d *proxy.DNSContext) {
 	if !ip.IsLoopback() {
 		Context.rdns.Begin(ip)
 	}
-	if !Context.ipDetector.detectSpecialNetwork(ip) {
+	if !Context.ipDetector.DetectSpecialNetwork(ip) {
 		Context.whois.Begin(ip)
 	}
 }
@@ -253,7 +253,7 @@ func getDNSAddresses() []string {
 	dnsAddresses := []string{}
 
 	if config.DNS.BindHost.IsUnspecified() {
-		ifaces, e := util.GetValidNetInterfacesForWeb()
+		ifaces, e := aghnet.GetValidNetInterfacesForWeb()
 		if e != nil {
 			log.Error("Couldn't get network interfaces: %v", e)
 			return []string{}
@@ -344,7 +344,7 @@ func startDNSServer() error {
 		if !ip.IsLoopback() {
 			Context.rdns.Begin(ip)
 		}
-		if !Context.ipDetector.detectSpecialNetwork(ip) {
+		if !Context.ipDetector.DetectSpecialNetwork(ip) {
 			Context.whois.Begin(ip)
 		}
 	}
