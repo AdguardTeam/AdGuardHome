@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"os"
 	"time"
-	"unsafe"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -66,16 +66,6 @@ func glCheckToken(sess string) bool {
 	return now <= (tokenDate + glTokenTimeoutSeconds)
 }
 
-// TODO(a.garipov): Replace with a smaller version of
-// https://github.com/josharian/native.
-func archIsLittleEndian() bool {
-	var i int32 = 0x01020304
-	u := unsafe.Pointer(&i)
-	pb := (*byte)(u)
-	b := *pb
-	return (b == 0x04)
-}
-
 // MaxFileSize is a maximum file length in bytes.
 const MaxFileSize = 1024 * 1024
 
@@ -104,12 +94,7 @@ func glGetTokenDate(file string) uint32 {
 	}
 	buf := bytes.NewBuffer(bs)
 
-	var order binary.ByteOrder = binary.BigEndian
-	if archIsLittleEndian() {
-		order = binary.LittleEndian
-	}
-
-	err = binary.Read(buf, order, &dateToken)
+	err = binary.Read(buf, aghos.NativeEndian, &dateToken)
 	if err != nil {
 		log.Error("binary.Read: %s", err)
 

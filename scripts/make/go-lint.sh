@@ -66,10 +66,20 @@ method_const() {
 
 # underscores is a simple check against Go filenames with underscores.
 underscores() {
-	git ls-files '*_*.go' | { grep -F -e '_darwin.go' \
-		-e '_freebsd.go' -e '_linux.go' -e '_others.go' \
-		-e '_test.go' -e '_unix.go' -e '_windows.go' \
-		-v || exit 0; }
+	git ls-files '*_*.go' | {
+		grep -F\
+		-e '_big.go'\
+		-e '_darwin.go'\
+		-e '_freebsd.go'\
+		-e '_linux.go'\
+		-e '_little.go'\
+		-e '_others.go'\
+		-e '_test.go'\
+		-e '_unix.go'\
+		-e '_windows.go' \
+		-v\
+		|| exit 0
+	}
 }
 
 

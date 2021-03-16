@@ -82,18 +82,3 @@ go-check: go-tools go-lint go-test
 
 openapi-lint: ; cd ./openapi/ && $(YARN) test
 openapi-show: ; cd ./openapi/ && $(YARN) start
-
-# TODO(a.garipov): Remove the legacy targets once the build
-# infrastructure stops using them.
-dependencies:
-	@ echo "use make deps instead"
-	@ $(MAKE) deps
-docker-multi-arch:
-	@ echo "use make build-docker instead"
-	@ $(MAKE) build-docker
-go-install-tools:
-	@ echo "use make go-tools instead"
-	@ $(MAKE) go-tools
-release:
-	@ echo "use make build-release instead"
-	@ $(MAKE) build-release
