@@ -32,6 +32,7 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/ti-mo/netfilter v0.4.0
 	github.com/u-root/u-root v7.0.0+incompatible
+	github.com/willf/bitset v1.1.11
 	go.etcd.io/bbolt v1.3.5
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
 	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110

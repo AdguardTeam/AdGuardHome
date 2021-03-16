@@ -100,11 +100,7 @@ func newDHCPOptionParser() (p *dhcpOptionParser) {
 
 // parse parses an option.  See the handlers' documentation for more info.
 func (p *dhcpOptionParser) parse(s string) (code uint8, data []byte, err error) {
-	defer func() {
-		if err != nil {
-			err = fmt.Errorf("invalid option string %q: %w", s, err)
-		}
-	}()
+	defer agherr.Annotate("invalid option string %q: %w", &err, s)
 
 	s = strings.TrimSpace(s)
 	parts := strings.SplitN(s, " ", 3)

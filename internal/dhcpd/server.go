@@ -60,8 +60,8 @@ type V4ServerConf struct {
 	//     DEC_CODE ip IP_ADDR
 	Options []string `yaml:"options" json:"-"`
 
-	ipStart    net.IP        // starting IP address for dynamic leases
-	ipEnd      net.IP        // ending IP address for dynamic leases
+	ipRange *ipRange
+
 	leaseTime  time.Duration // the time during which a dynamic lease is considered valid
 	dnsIPAddrs []net.IP      // IPv4 addresses to return to DHCP clients as DNS server addresses
 	routerIP   net.IP        // value for Option Router

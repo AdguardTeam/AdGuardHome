@@ -231,8 +231,17 @@ func TestClientsAddExisting(t *testing.T) {
 
 		// First, init a DHCP server with a single static lease.
 		config := dhcpd.ServerConfig{
+			Enabled:    true,
 			DBFilePath: "leases.db",
+			Conf4: dhcpd.V4ServerConf{
+				Enabled:    true,
+				GatewayIP:  net.IP{1, 2, 3, 1},
+				SubnetMask: net.IP{255, 255, 255, 0},
+				RangeStart: net.IP{1, 2, 3, 2},
+				RangeEnd:   net.IP{1, 2, 3, 10},
+			},
 		}
+
 		clients.dhcpServer = dhcpd.Create(config)
 		t.Cleanup(func() { _ = os.Remove("leases.db") })
 

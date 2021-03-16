@@ -8,7 +8,7 @@ import (
 )
 
 func TestDHCPOptionParser(t *testing.T) {
-	testCasesA := []struct {
+	testCases := []struct {
 		name       string
 		in         string
 		wantErrMsg string
@@ -92,7 +92,7 @@ func TestDHCPOptionParser(t *testing.T) {
 
 	p := newDHCPOptionParser()
 
-	for _, tc := range testCasesA {
+	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			code, data, err := p.parse(tc.in)
 			if tc.wantErrMsg == "" {

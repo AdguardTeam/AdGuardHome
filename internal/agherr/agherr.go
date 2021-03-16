@@ -1,5 +1,4 @@
-// Package agherr contains the extended error type, and the function for
-// wrapping several errors.
+// Package agherr contains AdGuard Home's error handling helpers.
 package agherr
 
 import (
@@ -23,8 +22,10 @@ type manyError struct {
 }
 
 // Many wraps several errors and returns a single error.
-func Many(message string, underlying ...error) error {
-	err := &manyError{
+//
+// TODO(a.garipov): Add formatting to message.
+func Many(message string, underlying ...error) (err error) {
+	err = &manyError{
 		message:    message,
 		underlying: underlying,
 	}
@@ -33,7 +34,7 @@ func Many(message string, underlying ...error) error {
 }
 
 // Error implements the error interface for *manyError.
-func (e *manyError) Error() string {
+func (e *manyError) Error() (msg string) {
 	switch len(e.underlying) {
 	case 0:
 		return e.message
@@ -58,7 +59,7 @@ func (e *manyError) Error() string {
 }
 
 // Unwrap implements the hidden errors.wrapper interface for *manyError.
-func (e *manyError) Unwrap() error {
+func (e *manyError) Unwrap() (err error) {
 	if len(e.underlying) == 0 {
 		return nil
 	}
@@ -70,4 +71,39 @@ func (e *manyError) Unwrap() error {
 // etc.
 type wrapper interface {
 	Unwrap() error
+}
+
+// Annotate annotates the error with the message, unless the error is nil.  This
+// is a helper function to simplify code like this:
+//
+//   func (f *foo) doStuff(s string) (err error) {
+//           defer func() {
+//                   if err != nil {
+//                           err = fmt.Errorf("bad foo string %q: %w", s, err)
+//                   }
+//           }()
+//
+//           // …
+//   }
+//
+// Instead, write:
+//
+//   func (f *foo) doStuff(s string) (err error) {
+//           defer agherr.Annotate("bad foo string %q: %w", &err, s)
+//
+//           // …
+//   }
+//
+// msg must contain the final ": %w" verb.
+func Annotate(msg string, errPtr *error, args ...interface{}) {
+	if errPtr == nil {
+		return
+	}
+
+	err := *errPtr
+	if err != nil {
+		args = append(args, err)
+
+		*errPtr = fmt.Errorf(msg, args...)
+	}
 }
