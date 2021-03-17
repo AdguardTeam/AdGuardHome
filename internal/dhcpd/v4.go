@@ -111,18 +111,33 @@ func (s *v4Server) FindMACbyIP(ip net.IP) net.HardwareAddr {
 	return nil
 }
 
+// defaultHwAddrLen is the default length of a hardware (MAC) address.
+const defaultHwAddrLen = 6
+
 // Add the specified IP to the black list for a time period
-func (s *v4Server) blacklistLease(lease *Lease) {
-	hw := make(net.HardwareAddr, 6)
-	lease.HWAddr = hw
-	lease.Hostname = ""
-	lease.Expiry = time.Now().Add(s.conf.leaseTime)
+func (s *v4Server) blocklistLease(l *Lease) {
+	l.HWAddr = make(net.HardwareAddr, defaultHwAddrLen)
+	l.Hostname = ""
+	l.Expiry = time.Now().Add(s.conf.leaseTime)
 }
 
 // rmLeaseByIndex removes a lease by its index in the leases slice.
 func (s *v4Server) rmLeaseByIndex(i int) {
+	n := len(s.leases)
+	if i >= n {
+		// TODO(a.garipov): Better error handling.
+		log.Debug("dhcpv4: can't remove lease at index %d: no such lease", i)
+
+		return
+	}
+
 	l := s.leases[i]
 	s.leases = append(s.leases[:i], s.leases[i+1:]...)
+
+	n = len(s.leases)
+	if n > 0 {
+		s.leases = s.leases[:n-1]
+	}
 
 	r := s.conf.ipRange
 	offset, ok := r.offset(l.IP)
@@ -175,7 +190,7 @@ func (s *v4Server) addLease(l *Lease) {
 	}
 
 	s.leases = append(s.leases, l)
-	s.leasedOffsets.Set(uint(offset))
+	s.leasedOffsets.Set(offset)
 
 	log.Debug("dhcpv4: added lease %s (%s)", l.IP, l.HWAddr)
 }
@@ -303,7 +318,7 @@ func (s *v4Server) nextIP() (ip net.IP) {
 			return false
 		}
 
-		return !s.leasedOffsets.Test(uint(offset))
+		return !s.leasedOffsets.Test(offset)
 	})
 
 	return ip.To4()
@@ -325,7 +340,7 @@ func (s *v4Server) findExpiredLease() int {
 // nil if it couldn't allocate a new lease.
 func (s *v4Server) reserveLease(mac net.HardwareAddr) (l *Lease) {
 	l = &Lease{
-		HWAddr: make([]byte, 6),
+		HWAddr: make([]byte, len(mac)),
 	}
 
 	copy(l.HWAddr, mac)
@@ -380,7 +395,7 @@ func (s *v4Server) processDiscover(req, resp *dhcpv4.DHCPv4) *Lease {
 			toStore = true
 
 			if !s.addrAvailable(lease.IP) {
-				s.blacklistLease(lease)
+				s.blocklistLease(lease)
 				lease = nil
 				continue
 			}
@@ -646,6 +661,8 @@ func v4Create(conf V4ServerConf) (srv DHCPServer, err error) {
 	s := &v4Server{}
 	s.conf = conf
 
+	// TODO(a.garipov): Don't use a disabled server in other places or just
+	// use an interface.
 	if !conf.Enabled {
 		return s, nil
 	}

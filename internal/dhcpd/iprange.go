@@ -9,7 +9,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 )
 
-// ipRange is an inclusive range of IP addresses.
+// ipRange is an inclusive range of IP addresses.  A nil range is a range that
+// doesn't contain any IP addresses.
 //
 // It is safe for concurrent use.
 //
@@ -53,12 +54,16 @@ func newIPRange(start, end net.IP) (r *ipRange, err error) {
 
 // contains returns true if r contains ip.
 func (r *ipRange) contains(ip net.IP) (ok bool) {
+	if r == nil {
+		return false
+	}
+
 	ipInt := (&big.Int{}).SetBytes(ip.To16())
 
 	return r.containsInt(ipInt)
 }
 
-// containsInt returns true if r contains ipInt.
+// containsInt returns true if r contains ipInt.  For internal use only.
 func (r *ipRange) containsInt(ipInt *big.Int) (ok bool) {
 	return ipInt.Cmp(r.start) >= 0 && ipInt.Cmp(r.end) <= 0
 }
@@ -70,6 +75,10 @@ type ipPredicate func(ip net.IP) (ok bool)
 // find finds the first IP address in r for which p returns true.  ip is in the
 // 16-byte form.
 func (r *ipRange) find(p ipPredicate) (ip net.IP) {
+	if r == nil {
+		return nil
+	}
+
 	ip = make(net.IP, net.IPv6len)
 	_1 := big.NewInt(1)
 	for i := (&big.Int{}).Set(r.start); i.Cmp(r.end) <= 0; i.Add(i, _1) {
@@ -85,6 +94,10 @@ func (r *ipRange) find(p ipPredicate) (ip net.IP) {
 // offset returns the offset of ip from the beginning of r.  It returns 0 and
 // false if ip is not in r.
 func (r *ipRange) offset(ip net.IP) (offset uint, ok bool) {
+	if r == nil {
+		return 0, false
+	}
+
 	ip = ip.To16()
 	ipInt := (&big.Int{}).SetBytes(ip)
 	if !r.containsInt(ipInt) {

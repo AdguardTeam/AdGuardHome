@@ -27,18 +27,20 @@ and this project adheres to
 
 - Go 1.15 support.  v0.107.0 will require at least Go 1.16 to build.
 
+### Fixed
+
+- Support for more than one `/24` subnet in DHCP ([#2541]).
+- Invalid filenames in the `mobileconfig` API responses ([#2835]).
+
 ### Removed
 
 - Go 1.14 support.
-
-### Fixed
-
-- Invalid filenames in the `mobileconfig` API responses ([#2835]).
 
 [#2385]: https://github.com/AdguardTeam/AdGuardHome/issues/2385
 [#2412]: https://github.com/AdguardTeam/AdGuardHome/issues/2412
 [#2498]: https://github.com/AdguardTeam/AdGuardHome/issues/2498
 [#2533]: https://github.com/AdguardTeam/AdGuardHome/issues/2533
+[#2541]: https://github.com/AdguardTeam/AdGuardHome/issues/2541
 [#2835]: https://github.com/AdguardTeam/AdGuardHome/issues/2835
 
 
