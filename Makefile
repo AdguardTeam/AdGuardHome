@@ -19,7 +19,7 @@ SIGN = 1
 VERBOSE = 0
 VERSION = v0.0.0
 YARN = yarn
-YARN_FLAGS = --cwd $(CLIENT_BETA_DIR)
+YARN_FLAGS = --cwd $(CLIENT_BETA_DIR) --network-timeout 120000
 
 ENV = env\
 	COMMIT='$(COMMIT)'\
