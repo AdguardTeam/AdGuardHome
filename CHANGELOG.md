@@ -31,10 +31,15 @@ and this project adheres to
 
 - Go 1.14 support.
 
+### Fixed
+
+- Invalid filenames in the `mobileconfig` API responses ([#2835]).
+
 [#2385]: https://github.com/AdguardTeam/AdGuardHome/issues/2385
 [#2412]: https://github.com/AdguardTeam/AdGuardHome/issues/2412
 [#2498]: https://github.com/AdguardTeam/AdGuardHome/issues/2498
 [#2533]: https://github.com/AdguardTeam/AdGuardHome/issues/2533
+[#2835]: https://github.com/AdguardTeam/AdGuardHome/issues/2835
 
 
 

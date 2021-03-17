@@ -152,6 +152,18 @@ func handleMobileConfig(w http.ResponseWriter, r *http.Request, dnsp string) {
 
 	w.Header().Set("Content-Type", "application/xml")
 
+	const (
+		dohContDisp = `attachment; filename=doh.mobileconfig`
+		dotContDisp = `attachment; filename=dot.mobileconfig`
+	)
+
+	contDisp := dohContDisp
+	if dnsp == dnsProtoTLS {
+		contDisp = dotContDisp
+	}
+
+	w.Header().Set("Content-Disposition", contDisp)
+
 	_, _ = w.Write(mobileconfig)
 }
 
