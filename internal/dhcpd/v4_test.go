@@ -40,7 +40,7 @@ func TestV4_AddRemove_static(t *testing.T) {
 	require.Len(t, ls, 1)
 	assert.True(t, l.IP.Equal(ls[0].IP))
 	assert.Equal(t, l.HWAddr, ls[0].HWAddr)
-	assert.EqualValues(t, leaseExpireStatic, ls[0].Expiry.Unix())
+	assert.True(t, ls[0].IsStatic())
 
 	// Try to remove static lease.
 	assert.NotNil(t, s.RemoveStaticLease(Lease{
@@ -77,7 +77,8 @@ func TestV4_AddReplace(t *testing.T) {
 	}}
 
 	for i := range dynLeases {
-		s.addLease(&dynLeases[i])
+		err = s.addLease(&dynLeases[i])
+		require.Nil(t, err)
 	}
 
 	stLeases := []Lease{{
@@ -98,7 +99,7 @@ func TestV4_AddReplace(t *testing.T) {
 	for i, l := range ls {
 		assert.True(t, stLeases[i].IP.Equal(l.IP))
 		assert.Equal(t, stLeases[i].HWAddr, l.HWAddr)
-		assert.EqualValues(t, leaseExpireStatic, l.Expiry.Unix())
+		assert.True(t, l.IsStatic())
 	}
 }
 

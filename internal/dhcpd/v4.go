@@ -9,11 +9,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/go-ping/ping"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
-	"github.com/willf/bitset"
 )
 
 // v4Server is a DHCPv4 server.
@@ -25,7 +25,7 @@ type v4Server struct {
 
 	// leasedOffsets contains offsets from conf.ipRange.start that have been
 	// leased.
-	leasedOffsets *bitset.BitSet
+	leasedOffsets *bitSet
 
 	// leases contains all dynamic and static leases.
 	leases []*Lease
@@ -47,50 +47,88 @@ func (s *v4Server) WriteDiskConfig6(c *V6ServerConf) {
 func (s *v4Server) ResetLeases(leases []*Lease) {
 	s.leases = nil
 
+	r := s.conf.ipRange
 	for _, l := range leases {
-		if l.Expiry.Unix() != leaseExpireStatic && !s.conf.ipRange.contains(l.IP) {
-			log.Debug("dhcpv4: skipping a lease with ip %v: not within current ip range", l.IP)
+		if !l.IsStatic() && !r.contains(l.IP) {
+			log.Debug(
+				"dhcpv4: skipping lease %s (%s): not within current ip range",
+				l.IP,
+				l.HWAddr,
+			)
 
 			continue
 		}
 
-		s.addLease(l)
+		err := s.addLease(l)
+		if err != nil {
+			// TODO(a.garipov): Better error handling.
+			log.Error("dhcpv4: adding a lease for %s (%s): %s", l.IP, l.HWAddr, err)
+
+			continue
+		}
 	}
 }
 
-// GetLeasesRef - get leases
-func (s *v4Server) GetLeasesRef() []*Lease {
+// getLeasesRef returns the actual leases slice.  For internal use only.
+func (s *v4Server) getLeasesRef() []*Lease {
 	return s.leases
 }
 
-// Return TRUE if this lease holds a blacklisted IP
-func (s *v4Server) blacklisted(l *Lease) bool {
-	return l.HWAddr.String() == "00:00:00:00:00:00"
-}
+// isBlocklisted returns true if this lease holds a blocklisted IP.
+//
+// TODO(a.garipov): Make a method of *Lease?
+func (s *v4Server) isBlocklisted(l *Lease) (ok bool) {
+	if len(l.HWAddr) == 0 {
+		return false
+	}
 
-// GetLeases returns the list of current DHCP leases (thread-safe)
-func (s *v4Server) GetLeases(flags int) []Lease {
-	// The function shouldn't return nil value because zero-length slice
-	// behaves differently in cases like marshalling.  Our front-end also
-	// requires non-nil value in the response.
-	result := []Lease{}
-	now := time.Now().Unix()
+	ok = true
+	for _, b := range l.HWAddr {
+		if b != 0 {
+			ok = false
 
-	s.leasesLock.Lock()
-	for _, lease := range s.leases {
-		if ((flags&LeasesDynamic) != 0 && lease.Expiry.Unix() > now && !s.blacklisted(lease)) ||
-			((flags&LeasesStatic) != 0 && lease.Expiry.Unix() == leaseExpireStatic) {
-			result = append(result, *lease)
+			break
 		}
 	}
-	s.leasesLock.Unlock()
 
-	return result
+	return ok
+}
+
+// GetLeases returns the list of current DHCP leases.  It is safe for concurrent
+// use.
+func (s *v4Server) GetLeases(flags int) (res []Lease) {
+	// The function shouldn't return nil, because zero-length slice behaves
+	// differently in cases like marshalling.  Our front-end also requires
+	// a non-nil value in the response.
+	res = []Lease{}
+
+	// TODO(a.garipov): Remove the silly bit twiddling and make GetLeases
+	// accept booleans.  Seriously, this doesn't even save stack space.
+	getDynamic := flags&LeasesDynamic != 0
+	getStatic := flags&LeasesStatic != 0
+
+	s.leasesLock.Lock()
+	defer s.leasesLock.Unlock()
+
+	now := time.Now()
+	for _, l := range s.leases {
+		if getDynamic && l.Expiry.After(now) && !s.isBlocklisted(l) {
+			res = append(res, *l)
+
+			continue
+		}
+
+		if getStatic && l.IsStatic() {
+			res = append(res, *l)
+		}
+	}
+
+	return res
 }
 
 // FindMACbyIP - find a MAC address by IP address in the currently active DHCP leases
 func (s *v4Server) FindMACbyIP(ip net.IP) net.HardwareAddr {
-	now := time.Now().Unix()
+	now := time.Now()
 
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
@@ -102,12 +140,12 @@ func (s *v4Server) FindMACbyIP(ip net.IP) net.HardwareAddr {
 
 	for _, l := range s.leases {
 		if l.IP.Equal(ip4) {
-			unix := l.Expiry.Unix()
-			if unix > now || unix == leaseExpireStatic {
+			if l.Expiry.After(now) || l.IsStatic() {
 				return l.HWAddr
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -142,7 +180,7 @@ func (s *v4Server) rmLeaseByIndex(i int) {
 	r := s.conf.ipRange
 	offset, ok := r.offset(l.IP)
 	if ok {
-		s.leasedOffsets.Clear(offset)
+		s.leasedOffsets.set(offset, false)
 	}
 
 	log.Debug("dhcpv4: removed lease %s (%s)", l.IP, l.HWAddr)
@@ -150,12 +188,12 @@ func (s *v4Server) rmLeaseByIndex(i int) {
 
 // Remove a dynamic lease with the same properties
 // Return error if a static lease is found
-func (s *v4Server) rmDynamicLease(lease Lease) error {
+func (s *v4Server) rmDynamicLease(lease *Lease) (err error) {
 	for i := 0; i < len(s.leases); i++ {
 		l := s.leases[i]
 
 		if bytes.Equal(l.HWAddr, lease.HWAddr) {
-			if l.Expiry.Unix() == leaseExpireStatic {
+			if l.IsStatic() {
 				return fmt.Errorf("static lease already exists")
 			}
 
@@ -168,40 +206,70 @@ func (s *v4Server) rmDynamicLease(lease Lease) error {
 		}
 
 		if net.IP.Equal(l.IP, lease.IP) {
-			if l.Expiry.Unix() == leaseExpireStatic {
+			if l.IsStatic() {
 				return fmt.Errorf("static lease already exists")
 			}
 
 			s.rmLeaseByIndex(i)
 		}
 	}
+
 	return nil
 }
 
-// addLease adds a lease.
-func (s *v4Server) addLease(l *Lease) {
-	r := s.conf.ipRange
-	offset, ok := r.offset(l.IP)
-	if !ok {
-		// TODO(a.garipov): Better error handling.
-		log.Debug("dhcpv4: lease %s (%s) out of range, not adding", l.IP, l.HWAddr)
+func (s *v4Server) addStaticLease(l *Lease) (err error) {
+	subnet := &net.IPNet{
+		IP:   s.conf.routerIP,
+		Mask: s.conf.subnetMask,
+	}
 
-		return
+	if !subnet.Contains(l.IP) {
+		return fmt.Errorf("subnet %s does not contain the ip %q", subnet, l.IP)
 	}
 
 	s.leases = append(s.leases, l)
-	s.leasedOffsets.Set(offset)
 
-	log.Debug("dhcpv4: added lease %s (%s)", l.IP, l.HWAddr)
+	r := s.conf.ipRange
+	offset, ok := r.offset(l.IP)
+	if ok {
+		s.leasedOffsets.set(offset, true)
+	}
+
+	return nil
+}
+
+func (s *v4Server) addDynamicLease(l *Lease) (err error) {
+	r := s.conf.ipRange
+	offset, ok := r.offset(l.IP)
+	if !ok {
+		return fmt.Errorf("lease %s (%s) out of range, not adding", l.IP, l.HWAddr)
+	}
+
+	s.leases = append(s.leases, l)
+	s.leasedOffsets.set(offset, true)
+
+	return nil
+}
+
+// addLease adds a dynamic or static lease.
+func (s *v4Server) addLease(l *Lease) (err error) {
+	if l.IsStatic() {
+		return s.addStaticLease(l)
+	}
+
+	return s.addDynamicLease(l)
 }
 
 // Remove a lease with the same properties
 func (s *v4Server) rmLease(lease Lease) error {
+	if len(s.leases) == 0 {
+		return nil
+	}
+
 	for i, l := range s.leases {
 		if l.IP.Equal(lease.IP) {
-			if !bytes.Equal(l.HWAddr, lease.HWAddr) ||
-				l.Hostname != lease.Hostname {
-				return fmt.Errorf("lease not found")
+			if !bytes.Equal(l.HWAddr, lease.HWAddr) || l.Hostname != lease.Hostname {
+				return fmt.Errorf("lease for ip %s is different: %+v", lease.IP, l)
 			}
 
 			s.rmLeaseByIndex(i)
@@ -210,30 +278,55 @@ func (s *v4Server) rmLease(lease Lease) error {
 		}
 	}
 
-	return fmt.Errorf("lease not found")
+	return agherr.Error("lease not found")
 }
 
-// AddStaticLease adds a static lease (thread-safe)
-func (s *v4Server) AddStaticLease(lease Lease) error {
-	if len(lease.IP) != 4 {
-		return fmt.Errorf("invalid IP")
-	}
-	if len(lease.HWAddr) != 6 {
-		return fmt.Errorf("invalid MAC")
-	}
-	lease.Expiry = time.Unix(leaseExpireStatic, 0)
+// AddStaticLease adds a static lease.  It is safe for concurrent use.
+func (s *v4Server) AddStaticLease(l Lease) (err error) {
+	defer agherr.Annotate("dhcpv4: %w", &err)
 
-	s.leasesLock.Lock()
-	err := s.rmDynamicLease(lease)
+	if ip4 := l.IP.To4(); ip4 == nil {
+		return fmt.Errorf("invalid ip %q, only ipv4 is supported", l.IP)
+	}
+
+	if len(l.HWAddr) != 6 {
+		return fmt.Errorf("invalid mac %q, only EUI-48 is supported", l.HWAddr)
+	}
+
+	l.Expiry = time.Unix(leaseExpireStatic, 0)
+
+	// Perform the following actions in an anonymous function to make sure
+	// that the lock gets unlocked before the notification step.
+	func() {
+		s.leasesLock.Lock()
+		defer s.leasesLock.Unlock()
+
+		err = s.rmDynamicLease(&l)
+		if err != nil {
+			err = fmt.Errorf(
+				"removing dynamic leases for %s (%s): %w",
+				l.IP,
+				l.HWAddr,
+				err,
+			)
+
+			return
+		}
+
+		err = s.addLease(&l)
+		if err != nil {
+			err = fmt.Errorf("adding static lease for %s (%s): %w", l.IP, l.HWAddr, err)
+
+			return
+		}
+	}()
 	if err != nil {
-		s.leasesLock.Unlock()
 		return err
 	}
-	s.addLease(&lease)
-	s.conf.notify(LeaseChangedDBStore)
-	s.leasesLock.Unlock()
 
+	s.conf.notify(LeaseChangedDBStore)
 	s.conf.notify(LeaseChangedAddedStatic)
+
 	return nil
 }
 
@@ -250,12 +343,14 @@ func (s *v4Server) RemoveStaticLease(l Lease) error {
 	err := s.rmLease(l)
 	if err != nil {
 		s.leasesLock.Unlock()
+
 		return err
 	}
-	s.conf.notify(LeaseChangedDBStore)
 	s.leasesLock.Unlock()
 
+	s.conf.notify(LeaseChangedDBStore)
 	s.conf.notify(LeaseChangedRemovedStatic)
+
 	return nil
 }
 
@@ -318,7 +413,7 @@ func (s *v4Server) nextIP() (ip net.IP) {
 			return false
 		}
 
-		return !s.leasedOffsets.Test(offset)
+		return !s.leasedOffsets.isSet(offset)
 	})
 
 	return ip.To4()
@@ -326,19 +421,19 @@ func (s *v4Server) nextIP() (ip net.IP) {
 
 // Find an expired lease and return its index or -1
 func (s *v4Server) findExpiredLease() int {
-	now := time.Now().Unix()
+	now := time.Now()
 	for i, lease := range s.leases {
-		if lease.Expiry.Unix() != leaseExpireStatic &&
-			lease.Expiry.Unix() <= now {
+		if !lease.IsStatic() && lease.Expiry.Before(now) {
 			return i
 		}
 	}
+
 	return -1
 }
 
 // reserveLease reserves a lease for a client by its MAC-address.  It returns
 // nil if it couldn't allocate a new lease.
-func (s *v4Server) reserveLease(mac net.HardwareAddr) (l *Lease) {
+func (s *v4Server) reserveLease(mac net.HardwareAddr) (l *Lease, err error) {
 	l = &Lease{
 		HWAddr: make([]byte, len(mac)),
 	}
@@ -349,17 +444,20 @@ func (s *v4Server) reserveLease(mac net.HardwareAddr) (l *Lease) {
 	if l.IP == nil {
 		i := s.findExpiredLease()
 		if i < 0 {
-			return nil
+			return nil, nil
 		}
 
 		copy(s.leases[i].HWAddr, mac)
 
-		return s.leases[i]
+		return s.leases[i], nil
 	}
 
-	s.addLease(l)
+	err = s.addLease(l)
+	if err != nil {
+		return nil, err
+	}
 
-	return l
+	return l, nil
 }
 
 func (s *v4Server) commitLease(l *Lease) {
@@ -373,46 +471,55 @@ func (s *v4Server) commitLease(l *Lease) {
 }
 
 // Process Discover request and return lease
-func (s *v4Server) processDiscover(req, resp *dhcpv4.DHCPv4) *Lease {
+func (s *v4Server) processDiscover(req, resp *dhcpv4.DHCPv4) (l *Lease, err error) {
 	mac := req.ClientHWAddr
 
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
 
-	lease := s.findLease(mac)
-	if lease == nil {
+	// TODO(a.garipov): Refactor this mess.
+	l = s.findLease(mac)
+	if l == nil {
 		toStore := false
-		for lease == nil {
-			lease = s.reserveLease(mac)
-			if lease == nil {
-				log.Debug("dhcpv4: No more IP addresses")
+		for l == nil {
+			l, err = s.reserveLease(mac)
+			if err != nil {
+				return nil, fmt.Errorf("reserving a lease: %w", err)
+			}
+
+			if l == nil {
+				log.Debug("dhcpv4: no more ip addresses")
 				if toStore {
 					s.conf.notify(LeaseChangedDBStore)
 				}
-				return nil
+
+				// TODO(a.garipov): Return a special error?
+				return nil, nil
 			}
 
 			toStore = true
 
-			if !s.addrAvailable(lease.IP) {
-				s.blocklistLease(lease)
-				lease = nil
+			if !s.addrAvailable(l.IP) {
+				s.blocklistLease(l)
+				l = nil
+
 				continue
 			}
+
 			break
 		}
 
 		s.conf.notify(LeaseChangedDBStore)
-
 	} else {
 		reqIP := req.RequestedIPAddress()
-		if len(reqIP) != 0 && !reqIP.Equal(lease.IP) {
-			log.Debug("dhcpv4: different RequestedIP: %v != %v", reqIP, lease.IP)
+		if len(reqIP) != 0 && !reqIP.Equal(l.IP) {
+			log.Debug("dhcpv4: different RequestedIP: %s != %s", reqIP, l.IP)
 		}
 	}
 
 	resp.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeOffer))
-	return lease
+
+	return l, nil
 }
 
 type optFQDN struct {
@@ -490,7 +597,7 @@ func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (*Lease, bool) {
 		return nil, true
 	}
 
-	if lease.Expiry.Unix() != leaseExpireStatic {
+	if !lease.IsStatic() {
 		lease.Hostname = req.HostName()
 		s.commitLease(lease)
 	} else if len(lease.Hostname) != 0 {
@@ -515,22 +622,27 @@ func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (*Lease, bool) {
 // Return 0: error; reply with Nak
 // Return -1: error; don't reply
 func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
-	var lease *Lease
+	var err error
 
 	resp.UpdateOption(dhcpv4.OptServerIdentifier(s.conf.dnsIPAddrs[0]))
 
+	var l *Lease
 	switch req.MessageType() {
-
 	case dhcpv4.MessageTypeDiscover:
-		lease = s.processDiscover(req, resp)
-		if lease == nil {
+		l, err = s.processDiscover(req, resp)
+		if err != nil {
+			log.Error("dhcpv4: processing discover: %s", err)
+
 			return 0
 		}
 
+		if l == nil {
+			return 0
+		}
 	case dhcpv4.MessageTypeRequest:
 		var toReply bool
-		lease, toReply = s.processRequest(req, resp)
-		if lease == nil {
+		l, toReply = s.processRequest(req, resp)
+		if l == nil {
 			if toReply {
 				return 0
 			}
@@ -539,7 +651,7 @@ func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
 	}
 
 	resp.YourIPAddr = make([]byte, 4)
-	copy(resp.YourIPAddr, lease.IP)
+	copy(resp.YourIPAddr, l.IP)
 
 	resp.UpdateOption(dhcpv4.OptIPAddressLeaseTime(s.conf.leaseTime))
 	resp.UpdateOption(dhcpv4.OptRouter(s.conf.routerIP))
@@ -549,6 +661,7 @@ func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
 	for _, opt := range s.conf.options {
 		resp.Options[opt.code] = opt.data
 	}
+
 	return 1
 }
 
@@ -683,7 +796,7 @@ func v4Create(conf V4ServerConf) (srv DHCPServer, err error) {
 		return s, fmt.Errorf("dhcpv4: %w", err)
 	}
 
-	s.leasedOffsets = &bitset.BitSet{}
+	s.leasedOffsets = newBitSet()
 
 	if conf.LeaseDuration == 0 {
 		s.conf.leaseTime = time.Hour * 24

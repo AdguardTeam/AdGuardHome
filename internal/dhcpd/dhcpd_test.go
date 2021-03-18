@@ -54,7 +54,8 @@ func TestDB(t *testing.T) {
 	srv4, ok := s.srv4.(*v4Server)
 	require.True(t, ok)
 
-	srv4.addLease(&leases[0])
+	err = srv4.addLease(&leases[0])
+	require.Nil(t, err)
 	require.Nil(t, s.srv4.AddStaticLease(leases[1]))
 
 	s.dbStore()
@@ -69,7 +70,7 @@ func TestDB(t *testing.T) {
 
 	assert.Equal(t, leases[1].HWAddr, ll[0].HWAddr)
 	assert.Equal(t, leases[1].IP, ll[0].IP)
-	assert.EqualValues(t, leaseExpireStatic, ll[0].Expiry.Unix())
+	assert.True(t, ll[0].IsStatic())
 
 	assert.Equal(t, leases[0].HWAddr, ll[1].HWAddr)
 	assert.Equal(t, leases[0].IP, ll[1].IP)

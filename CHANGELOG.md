@@ -20,6 +20,8 @@ and this project adheres to
 
 ### Changed
 
+- Stricter validation of the IP addresses of static leases in the DHCP server
+  with regards to the netmask ([#2838]).
 - Stricter validation of `$dnsrewrite` filter modifier parameters ([#2498]).
 - New, more correct versioning scheme ([#2412]).
 
@@ -42,6 +44,7 @@ and this project adheres to
 [#2533]: https://github.com/AdguardTeam/AdGuardHome/issues/2533
 [#2541]: https://github.com/AdguardTeam/AdGuardHome/issues/2541
 [#2835]: https://github.com/AdguardTeam/AdGuardHome/issues/2835
+[#2838]: https://github.com/AdguardTeam/AdGuardHome/issues/2838
 
 
 

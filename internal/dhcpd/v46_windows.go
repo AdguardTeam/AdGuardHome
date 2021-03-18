@@ -10,7 +10,7 @@ type winServer struct{}
 
 func (s *winServer) ResetLeases(leases []*Lease)            {}
 func (s *winServer) GetLeases(flags int) []Lease            { return nil }
-func (s *winServer) GetLeasesRef() []*Lease                 { return nil }
+func (s *winServer) getLeasesRef() []*Lease                 { return nil }
 func (s *winServer) AddStaticLease(lease Lease) error       { return nil }
 func (s *winServer) RemoveStaticLease(l Lease) error        { return nil }
 func (s *winServer) FindMACbyIP(ip net.IP) net.HardwareAddr { return nil }

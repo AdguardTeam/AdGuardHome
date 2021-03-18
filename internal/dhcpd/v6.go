@@ -92,8 +92,8 @@ func (s *v6Server) GetLeases(flags int) []Lease {
 	return result
 }
 
-// GetLeasesRef - get leases
-func (s *v6Server) GetLeasesRef() []*Lease {
+// getLeasesRef returns the actual leases slice.  For internal use only.
+func (s *v6Server) getLeasesRef() []*Lease {
 	return s.leases
 }
 

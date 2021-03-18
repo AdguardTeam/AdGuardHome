@@ -93,7 +93,7 @@ func (r *ipRange) find(p ipPredicate) (ip net.IP) {
 
 // offset returns the offset of ip from the beginning of r.  It returns 0 and
 // false if ip is not in r.
-func (r *ipRange) offset(ip net.IP) (offset uint, ok bool) {
+func (r *ipRange) offset(ip net.IP) (offset uint64, ok bool) {
 	if r == nil {
 		return 0, false
 	}
@@ -108,5 +108,5 @@ func (r *ipRange) offset(ip net.IP) (offset uint, ok bool) {
 
 	// Assume that the range was checked against maxRangeLen during
 	// construction.
-	return uint(offsetInt.Uint64()), true
+	return offsetInt.Uint64(), true
 }

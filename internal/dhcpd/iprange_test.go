@@ -66,10 +66,10 @@ func TestNewIPRange(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			r, err := newIPRange(tc.start, tc.end)
 			if tc.wantErrMsg == "" {
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 				assert.NotNil(t, r)
 			} else {
-				require.NotNil(t, err)
+				require.Error(t, err)
 				assert.Equal(t, tc.wantErrMsg, err.Error())
 			}
 		})
@@ -79,7 +79,7 @@ func TestNewIPRange(t *testing.T) {
 func TestIPRange_Contains(t *testing.T) {
 	start, end := net.IP{0, 0, 0, 1}, net.IP{0, 0, 0, 3}
 	r, err := newIPRange(start, end)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	assert.True(t, r.contains(start))
 	assert.True(t, r.contains(net.IP{0, 0, 0, 2}))
@@ -92,7 +92,7 @@ func TestIPRange_Contains(t *testing.T) {
 func TestIPRange_Find(t *testing.T) {
 	start, end := net.IP{0, 0, 0, 1}, net.IP{0, 0, 0, 5}
 	r, err := newIPRange(start, end)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	want := net.IPv4(0, 0, 0, 2)
 	got := r.find(func(ip net.IP) (ok bool) {
@@ -110,12 +110,12 @@ func TestIPRange_Find(t *testing.T) {
 func TestIPRange_Offset(t *testing.T) {
 	start, end := net.IP{0, 0, 0, 1}, net.IP{0, 0, 0, 5}
 	r, err := newIPRange(start, end)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	testCases := []struct {
 		name       string
 		in         net.IP
-		wantOffset uint
+		wantOffset uint64
 		wantOK     bool
 	}{{
 		name:       "in",
