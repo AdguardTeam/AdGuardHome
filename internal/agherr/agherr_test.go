@@ -1,10 +1,12 @@
 package agherr
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -118,5 +120,41 @@ func TestAnnotate(t *testing.T) {
 		require.NotNil(t, err)
 
 		assert.Equal(t, wantMsg, err.Error())
+	})
+}
+
+func TestLogPanic(t *testing.T) {
+	buf := &bytes.Buffer{}
+	aghtest.ReplaceLogWriter(t, buf)
+
+	t.Run("prefix", func(t *testing.T) {
+		const (
+			panicMsg        = "spooky!"
+			prefix          = "packagename"
+			errWithNoPrefix = "[error] recovered from panic: spooky!"
+			errWithPrefix   = "[error] packagename: recovered from panic: spooky!"
+		)
+
+		panicFunc := func(prefix string) {
+			defer LogPanic(prefix)
+
+			panic(panicMsg)
+		}
+
+		panicFunc("")
+		assert.Contains(t, buf.String(), errWithNoPrefix)
+		buf.Reset()
+
+		panicFunc(prefix)
+		assert.Contains(t, buf.String(), errWithPrefix)
+		buf.Reset()
+	})
+
+	t.Run("don't_panic", func(t *testing.T) {
+		require.NotPanics(t, func() {
+			defer LogPanic("")
+		})
+
+		assert.Empty(t, buf.String())
 	})
 }

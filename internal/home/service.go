@@ -98,7 +98,7 @@ func sendSigReload() {
 	if os.IsNotExist(err) {
 		var code int
 		var psdata string
-		code, psdata, err = util.RunCommand("ps", "-C", serviceName, "-o", "pid=")
+		code, psdata, err = aghos.RunCommand("ps", "-C", serviceName, "-o", "pid=")
 		if err != nil || code != 0 {
 			log.Error("Can't find AdGuardHome process: %s  code:%d", err, code)
 			return
@@ -301,7 +301,7 @@ func configureService(c *service.Config) {
 // returns command code or error if any
 func runInitdCommand(action string) (int, error) {
 	confPath := "/etc/init.d/" + serviceName
-	code, _, err := util.RunCommand("sh", "-c", confPath+" "+action)
+	code, _, err := aghos.RunCommand("sh", "-c", confPath+" "+action)
 	return code, err
 }
 

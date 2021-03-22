@@ -2,7 +2,6 @@ package home
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -11,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/log"
@@ -213,22 +213,11 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 		return true
 	}
 
-	host, _, err := net.SplitHostPort(r.Host)
+	host, err := aghnet.SplitHost(r.Host)
 	if err != nil {
-		// Check for the missing port error.  If it is that error, just
-		// use the host as is.
-		//
-		// See the source code for net.SplitHostPort.
-		const missingPort = "missing port in address"
+		httpError(w, http.StatusBadRequest, "bad host: %s", err)
 
-		addrErr := &net.AddrError{}
-		if !errors.As(err, &addrErr) || addrErr.Err != missingPort {
-			httpError(w, http.StatusBadRequest, "bad host: %s", err)
-
-			return false
-		}
-
-		host = r.Host
+		return false
 	}
 
 	if r.TLS == nil && web.forceHTTPS {

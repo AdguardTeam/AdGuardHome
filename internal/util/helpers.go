@@ -6,24 +6,11 @@ package util
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 )
-
-// RunCommand runs shell command.
-func RunCommand(command string, arguments ...string) (int, string, error) {
-	cmd := exec.Command(command, arguments...)
-	out, err := cmd.Output()
-	if err != nil {
-		return 1, "", fmt.Errorf("exec.Command(%s) failed: %v: %s", command, err, string(out))
-	}
-
-	return cmd.ProcessState.ExitCode(), string(out), nil
-}
 
 // SplitNext - split string by a byte and return the first chunk
 // Skip empty chunks

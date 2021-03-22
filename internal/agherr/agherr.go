@@ -4,6 +4,8 @@ package agherr
 import (
 	"fmt"
 	"strings"
+
+	"github.com/AdguardTeam/golibs/log"
 )
 
 // Error is the constant error type.
@@ -95,6 +97,8 @@ type wrapper interface {
 //   }
 //
 // msg must contain the final ": %w" verb.
+//
+// TODO(a.garipov): Clearify the function usage.
 func Annotate(msg string, errPtr *error, args ...interface{}) {
 	if errPtr == nil {
 		return
@@ -105,5 +109,19 @@ func Annotate(msg string, errPtr *error, args ...interface{}) {
 		args = append(args, err)
 
 		*errPtr = fmt.Errorf(msg, args...)
+	}
+}
+
+// LogPanic is a convinient helper function to log a panic in a goroutine.  It
+// should not be used where proper error handling is required.
+func LogPanic(prefix string) {
+	if v := recover(); v != nil {
+		if prefix != "" {
+			log.Error("%s: recovered from panic: %v", prefix, v)
+
+			return
+		}
+
+		log.Error("recovered from panic: %v", v)
 	}
 }

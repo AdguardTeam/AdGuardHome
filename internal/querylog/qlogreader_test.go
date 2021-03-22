@@ -1,7 +1,6 @@
 package querylog
 
 import (
-	"errors"
 	"io"
 	"testing"
 	"time"
@@ -116,7 +115,7 @@ func TestQLogReader_Seek(t *testing.T) {
 			require.Nil(t, err)
 
 			err = r.SeekTS(ts.UnixNano())
-			assert.True(t, errors.Is(err, tc.want), err)
+			assert.ErrorIs(t, err, tc.want)
 		})
 	}
 }

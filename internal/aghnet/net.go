@@ -251,3 +251,25 @@ func ErrorIsAddrInUse(err error) bool {
 
 	return errErrno == syscall.EADDRINUSE
 }
+
+// SplitHost is a wrapper for net.SplitHostPort for the cases when the hostport
+// does not necessarily contain a port.
+func SplitHost(hostport string) (host string, err error) {
+	host, _, err = net.SplitHostPort(hostport)
+	if err != nil {
+		// Check for the missing port error.  If it is that error, just
+		// use the host as is.
+		//
+		// See the source code for net.SplitHostPort.
+		const missingPort = "missing port in address"
+
+		addrErr := &net.AddrError{}
+		if !errors.As(err, &addrErr) || addrErr.Err != missingPort {
+			return "", err
+		}
+
+		host = hostport
+	}
+
+	return host, nil
+}

@@ -3,12 +3,12 @@ package aghtest
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
 	"sync"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/miekg/dns"
 )
 
@@ -166,7 +166,10 @@ type TestErrUpstream struct{}
 
 // Exchange always returns nil Msg and non-nil error.
 func (u *TestErrUpstream) Exchange(*dns.Msg) (*dns.Msg, error) {
-	return nil, agherr.Error("bad")
+	// We don't use an agherr.Error to avoid the import cycle since aghtests
+	// used to provide the utilities for testing which agherr (and any other
+	// testable package) should be able to use.
+	return nil, errors.New("bad")
 }
 
 // Address always returns an empty string.
