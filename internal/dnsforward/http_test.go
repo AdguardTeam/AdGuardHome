@@ -23,8 +23,8 @@ func TestDNSForwardHTTTP_handleGetConfig(t *testing.T) {
 		CacheTime:             30,
 	}
 	forwardConf := ServerConfig{
-		UDPListenAddr: &net.UDPAddr{},
-		TCPListenAddr: &net.TCPAddr{},
+		UDPListenAddrs: []*net.UDPAddr{},
+		TCPListenAddrs: []*net.TCPAddr{},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
@@ -94,8 +94,8 @@ func TestDNSForwardHTTTP_handleSetConfig(t *testing.T) {
 		CacheTime:             30,
 	}
 	forwardConf := ServerConfig{
-		UDPListenAddr: &net.UDPAddr{},
-		TCPListenAddr: &net.TCPAddr{},
+		UDPListenAddrs: []*net.UDPAddr{},
+		TCPListenAddrs: []*net.TCPAddr{},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},

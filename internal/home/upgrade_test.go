@@ -1,18 +1,13 @@
 package home
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// any is a convenient alias for interface{}.
-type any = interface{}
-
-// object is a convenient alias for map[string]interface{}.
-type object = map[string]any
+// TODO(a.garipov): Cover all migrations, use a testdata/ dir.
 
 func TestUpgradeSchema1to2(t *testing.T) {
 	diskConf := testDiskConf(1)
@@ -25,11 +20,10 @@ func TestUpgradeSchema1to2(t *testing.T) {
 	_, ok := diskConf["coredns"]
 	require.False(t, ok)
 
-	dnsMap, ok := diskConf["dns"]
+	newDNSConf, ok := diskConf["dns"]
 	require.True(t, ok)
 
-	oldDNSConf := convertToObject(t, testDNSConf(1))
-	newDNSConf := convertToObject(t, dnsMap)
+	oldDNSConf := testDNSConf(1)
 	assert.Equal(t, oldDNSConf, newDNSConf)
 
 	oldExcludedEntries := []string{"coredns", "schema_version"}
@@ -49,7 +43,9 @@ func TestUpgradeSchema2to3(t *testing.T) {
 	dnsMap, ok := diskConf["dns"]
 	require.True(t, ok)
 
-	newDNSConf := convertToObject(t, dnsMap)
+	newDNSConf, ok := dnsMap.(yobj)
+	require.True(t, ok)
+
 	bootstrapDNS := newDNSConf["bootstrap_dns"]
 	switch v := bootstrapDNS.(type) {
 	case []string:
@@ -60,7 +56,7 @@ func TestUpgradeSchema2to3(t *testing.T) {
 	}
 
 	excludedEntries := []string{"bootstrap_dns"}
-	oldDNSConf := convertToObject(t, testDNSConf(2))
+	oldDNSConf := testDNSConf(2)
 	assertEqualExcept(t, oldDNSConf, newDNSConf, excludedEntries, excludedEntries)
 
 	excludedEntries = []string{"dns", "schema_version"}
@@ -68,29 +64,34 @@ func TestUpgradeSchema2to3(t *testing.T) {
 	assertEqualExcept(t, oldDiskConf, diskConf, excludedEntries, excludedEntries)
 }
 
-func convertToObject(t *testing.T, oldConf any) (newConf object) {
-	t.Helper()
-
-	switch v := oldConf.(type) {
-	case map[any]any:
-		newConf = make(object, len(v))
-		for key, value := range v {
-			newConf[fmt.Sprint(key)] = value
-		}
-	case object:
-		newConf = make(object, len(v))
-		for key, value := range v {
-			newConf[key] = value
-		}
-	default:
-		t.Fatalf("dns configuration is not a map, got %T", oldConf)
+func TestUpgradeSchema7to8(t *testing.T) {
+	const host = "1.2.3.4"
+	oldConf := yobj{
+		"dns": yobj{
+			"bind_host": host,
+		},
+		"schema_version": 7,
 	}
 
-	return newConf
+	err := upgradeSchema7to8(&oldConf)
+	require.Nil(t, err)
+
+	require.Equal(t, oldConf["schema_version"], 8)
+
+	dnsVal, ok := oldConf["dns"]
+	require.True(t, ok)
+
+	newDNSConf, ok := dnsVal.(yobj)
+	require.True(t, ok)
+
+	newBindHosts, ok := newDNSConf["bind_hosts"].(yarr)
+	require.True(t, ok)
+	require.Len(t, newBindHosts, 1)
+	assert.Equal(t, host, newBindHosts[0])
 }
 
 // assertEqualExcept removes entries from configs and compares them.
-func assertEqualExcept(t *testing.T, oldConf, newConf object, oldKeys, newKeys []string) {
+func assertEqualExcept(t *testing.T, oldConf, newConf yobj, oldKeys, newKeys []string) {
 	t.Helper()
 
 	for _, k := range oldKeys {
@@ -103,20 +104,17 @@ func assertEqualExcept(t *testing.T, oldConf, newConf object, oldKeys, newKeys [
 	assert.Equal(t, oldConf, newConf)
 }
 
-func testDiskConf(schemaVersion int) (diskConf object) {
-	filters := []filter{
-		{
-			URL:        "https://filters.adtidy.org/android/filters/111_optimized.txt",
-			Name:       "Latvian filter",
-			RulesCount: 100,
-		},
-		{
-			URL:        "https://easylist.to/easylistgermany/easylistgermany.txt",
-			Name:       "Germany filter",
-			RulesCount: 200,
-		},
-	}
-	diskConf = object{
+func testDiskConf(schemaVersion int) (diskConf yobj) {
+	filters := []filter{{
+		URL:        "https://filters.adtidy.org/android/filters/111_optimized.txt",
+		Name:       "Latvian filter",
+		RulesCount: 100,
+	}, {
+		URL:        "https://easylist.to/easylistgermany/easylistgermany.txt",
+		Name:       "Germany filter",
+		RulesCount: 200,
+	}}
+	diskConf = yobj{
 		"language":       "en",
 		"filters":        filters,
 		"user_rules":     []string{},
@@ -139,8 +137,8 @@ func testDiskConf(schemaVersion int) (diskConf object) {
 
 // testDNSConf creates a DNS config for test the way gopkg.in/yaml.v2 would
 // unmarshal it.  In YAML, keys aren't guaranteed to always only be strings.
-func testDNSConf(schemaVersion int) (dnsConf map[any]any) {
-	dnsConf = map[any]any{
+func testDNSConf(schemaVersion int) (dnsConf yobj) {
+	dnsConf = yobj{
 		"port":                 53,
 		"blocked_response_ttl": 10,
 		"querylog_enabled":     true,

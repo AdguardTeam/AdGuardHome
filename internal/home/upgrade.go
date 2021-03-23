@@ -13,12 +13,20 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-const currentSchemaVersion = 7 // used for upgrading from old configs to new config
+// currentSchemaVersion is the current schema version.
+const currentSchemaVersion = 8
+
+// These aliases are provided for convenience.
+type (
+	any  = interface{}
+	yarr = []any
+	yobj = map[any]any
+)
 
 // Performs necessary upgrade operations if needed
 func upgradeConfig() error {
 	// read a config file into an interface map, so we can manipulate values without losing any
-	diskConfig := map[string]interface{}{}
+	diskConfig := yobj{}
 	body, err := readConfigFile()
 	if err != nil {
 		return err
@@ -53,7 +61,7 @@ func upgradeConfig() error {
 }
 
 // Upgrade from oldVersion to newVersion
-func upgradeConfigSchema(oldVersion int, diskConfig *map[string]interface{}) error {
+func upgradeConfigSchema(oldVersion int, diskConfig *yobj) error {
 	switch oldVersion {
 	case 0:
 		err := upgradeSchema0to1(diskConfig)
@@ -96,6 +104,11 @@ func upgradeConfigSchema(oldVersion int, diskConfig *map[string]interface{}) err
 		if err != nil {
 			return err
 		}
+	case 7:
+		err := upgradeSchema7to8(diskConfig)
+		if err != nil {
+			return err
+		}
 	default:
 		err := fmt.Errorf("configuration file contains unknown schema_version, abort")
 		log.Println(err)
@@ -121,7 +134,7 @@ func upgradeConfigSchema(oldVersion int, diskConfig *map[string]interface{}) err
 
 // The first schema upgrade:
 // No more "dnsfilter.txt", filters are now kept in data/filters/
-func upgradeSchema0to1(diskConfig *map[string]interface{}) error {
+func upgradeSchema0to1(diskConfig *yobj) error {
 	log.Printf("%s(): called", funcName())
 
 	dnsFilterPath := filepath.Join(Context.workDir, "dnsfilter.txt")
@@ -142,7 +155,7 @@ func upgradeSchema0to1(diskConfig *map[string]interface{}) error {
 // Second schema upgrade:
 // coredns is now dns in config
 // delete 'Corefile', since we don't use that anymore
-func upgradeSchema1to2(diskConfig *map[string]interface{}) error {
+func upgradeSchema1to2(diskConfig *yobj) error {
 	log.Printf("%s(): called", funcName())
 
 	coreFilePath := filepath.Join(Context.workDir, "Corefile")
@@ -166,7 +179,7 @@ func upgradeSchema1to2(diskConfig *map[string]interface{}) error {
 
 // Third schema upgrade:
 // Bootstrap DNS becomes an array
-func upgradeSchema2to3(diskConfig *map[string]interface{}) error {
+func upgradeSchema2to3(diskConfig *yobj) error {
 	log.Printf("%s(): called", funcName())
 
 	// Let's read dns configuration from diskConfig
@@ -175,8 +188,8 @@ func upgradeSchema2to3(diskConfig *map[string]interface{}) error {
 		return fmt.Errorf("no DNS configuration in config file")
 	}
 
-	// Convert interface{} to map[string]interface{}
-	newDNSConfig := make(map[string]interface{})
+	// Convert interface{} to yobj
+	newDNSConfig := make(yobj)
 
 	switch v := dnsConfig.(type) {
 	case map[interface{}]interface{}:
@@ -204,7 +217,7 @@ func upgradeSchema2to3(diskConfig *map[string]interface{}) error {
 }
 
 // Add use_global_blocked_services=true setting for existing "clients" array
-func upgradeSchema3to4(diskConfig *map[string]interface{}) error {
+func upgradeSchema3to4(diskConfig *yobj) error {
 	log.Printf("%s(): called", funcName())
 
 	(*diskConfig)["schema_version"] = 4
@@ -240,7 +253,7 @@ func upgradeSchema3to4(diskConfig *map[string]interface{}) error {
 // - name: "..."
 //   password: "..."
 // ...
-func upgradeSchema4to5(diskConfig *map[string]interface{}) error {
+func upgradeSchema4to5(diskConfig *yobj) error {
 	log.Printf("%s(): called", funcName())
 
 	(*diskConfig)["schema_version"] = 5
@@ -295,7 +308,7 @@ func upgradeSchema4to5(diskConfig *map[string]interface{}) error {
 //   ids:
 //   - 127.0.0.1
 //   - ...
-func upgradeSchema5to6(diskConfig *map[string]interface{}) error {
+func upgradeSchema5to6(diskConfig *yobj) error {
 	log.Printf("%s(): called", funcName())
 
 	(*diskConfig)["schema_version"] = 6
@@ -365,7 +378,7 @@ func upgradeSchema5to6(diskConfig *map[string]interface{}) error {
 //   dhcpv4:
 //     gateway_ip: 192.168.56.1
 //     ...
-func upgradeSchema6to7(diskConfig *map[string]interface{}) error {
+func upgradeSchema6to7(diskConfig *yobj) error {
 	log.Printf("Upgrade yaml: 6 to 7")
 
 	(*diskConfig)["schema_version"] = 7
@@ -384,7 +397,7 @@ func upgradeSchema6to7(diskConfig *map[string]interface{}) error {
 			return nil
 		}
 
-		dhcpv4 := map[string]interface{}{
+		dhcpv4 := yobj{
 			"gateway_ip": str,
 		}
 		delete(dhcp, "gateway_ip")
@@ -434,6 +447,44 @@ func upgradeSchema6to7(diskConfig *map[string]interface{}) error {
 	default:
 		return nil
 	}
+
+	return nil
+}
+
+// upgradeSchema7to8 performs the following changes:
+//
+//   # BEFORE:
+//   'dns':
+//     'bind_host': '127.0.0.1'
+//
+//   # AFTER:
+//   'dns':
+//     'bind_hosts':
+//     - '127.0.0.1'
+//
+func upgradeSchema7to8(diskConfig *yobj) (err error) {
+	log.Printf("Upgrade yaml: 7 to 8")
+
+	(*diskConfig)["schema_version"] = 8
+
+	dnsVal, ok := (*diskConfig)["dns"]
+	if !ok {
+		return nil
+	}
+
+	dns, ok := dnsVal.(yobj)
+	if !ok {
+		return fmt.Errorf("unexpected type of dns: %T", dnsVal)
+	}
+
+	bindHostVal := dns["bind_host"]
+	bindHost, ok := bindHostVal.(string)
+	if !ok {
+		return fmt.Errorf("undexpected type of dns.bind_host: %T", bindHostVal)
+	}
+
+	delete(dns, "bind_host")
+	dns["bind_hosts"] = yarr{bindHost}
 
 	return nil
 }

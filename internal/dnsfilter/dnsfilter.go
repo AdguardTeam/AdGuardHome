@@ -50,10 +50,9 @@ type Resolver interface {
 
 // Config allows you to configure DNS filtering with New() or just change variables directly.
 type Config struct {
-	ParentalEnabled     bool   `yaml:"parental_enabled"`
-	SafeSearchEnabled   bool   `yaml:"safesearch_enabled"`
-	SafeBrowsingEnabled bool   `yaml:"safebrowsing_enabled"`
-	ResolverAddress     string `yaml:"-"` // DNS server address
+	ParentalEnabled     bool `yaml:"parental_enabled"`
+	SafeSearchEnabled   bool `yaml:"safesearch_enabled"`
+	SafeBrowsingEnabled bool `yaml:"safebrowsing_enabled"`
 
 	SafeBrowsingCacheSize uint `yaml:"safebrowsing_cache_size"` // (in bytes)
 	SafeSearchCacheSize   uint `yaml:"safesearch_cache_size"`   // (in bytes)

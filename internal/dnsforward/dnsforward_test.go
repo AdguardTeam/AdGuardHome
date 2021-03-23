@@ -123,8 +123,8 @@ func createTestTLS(t *testing.T, tlsConf TLSConfig) (s *Server, certPem []byte) 
 	_, certPem, keyPem = createServerTLSConfig(t)
 
 	s = createTestServer(t, &dnsfilter.Config{}, ServerConfig{
-		UDPListenAddr: &net.UDPAddr{},
-		TCPListenAddr: &net.TCPAddr{},
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
 	})
 
 	tlsConf.CertificateChainData, tlsConf.PrivateKeyData = certPem, keyPem
@@ -219,8 +219,8 @@ func sendTestMessages(t *testing.T, conn *dns.Conn) {
 
 func TestServer(t *testing.T) {
 	s := createTestServer(t, &dnsfilter.Config{}, ServerConfig{
-		UDPListenAddr: &net.UDPAddr{},
-		TCPListenAddr: &net.TCPAddr{},
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
 	})
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
 		&aghtest.TestUpstream{
@@ -257,8 +257,8 @@ func TestServer(t *testing.T) {
 
 func TestServerWithProtectionDisabled(t *testing.T) {
 	s := createTestServer(t, &dnsfilter.Config{}, ServerConfig{
-		UDPListenAddr: &net.UDPAddr{},
-		TCPListenAddr: &net.TCPAddr{},
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
 	})
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
 		&aghtest.TestUpstream{
@@ -281,7 +281,7 @@ func TestServerWithProtectionDisabled(t *testing.T) {
 
 func TestDoTServer(t *testing.T) {
 	s, certPem := createTestTLS(t, TLSConfig{
-		TLSListenAddr: &net.TCPAddr{},
+		TLSListenAddrs: []*net.TCPAddr{{}},
 	})
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
 		&aghtest.TestUpstream{
@@ -311,7 +311,7 @@ func TestDoTServer(t *testing.T) {
 
 func TestDoQServer(t *testing.T) {
 	s, _ := createTestTLS(t, TLSConfig{
-		QUICListenAddr: &net.UDPAddr{},
+		QUICListenAddrs: []*net.UDPAddr{{}},
 	})
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
 		&aghtest.TestUpstream{
@@ -348,8 +348,8 @@ func TestServerRace(t *testing.T) {
 		CacheTime:             30,
 	}
 	forwardConf := ServerConfig{
-		UDPListenAddr: &net.UDPAddr{},
-		TCPListenAddr: &net.TCPAddr{},
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
@@ -383,8 +383,8 @@ func TestSafeSearch(t *testing.T) {
 		CustomResolver:      resolver,
 	}
 	forwardConf := ServerConfig{
-		UDPListenAddr: &net.UDPAddr{},
-		TCPListenAddr: &net.TCPAddr{},
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 		},
@@ -440,8 +440,8 @@ func TestSafeSearch(t *testing.T) {
 
 func TestInvalidRequest(t *testing.T) {
 	s := createTestServer(t, &dnsfilter.Config{}, ServerConfig{
-		UDPListenAddr: &net.UDPAddr{},
-		TCPListenAddr: &net.TCPAddr{},
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
 	})
 	startDeferStop(t, s)
 
@@ -464,8 +464,8 @@ func TestInvalidRequest(t *testing.T) {
 
 func TestBlockedRequest(t *testing.T) {
 	forwardConf := ServerConfig{
-		UDPListenAddr: &net.UDPAddr{},
-		TCPListenAddr: &net.TCPAddr{},
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 		},
@@ -488,8 +488,8 @@ func TestBlockedRequest(t *testing.T) {
 
 func TestServerCustomClientUpstream(t *testing.T) {
 	forwardConf := ServerConfig{
-		UDPListenAddr: &net.UDPAddr{},
-		TCPListenAddr: &net.TCPAddr{},
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 		},
@@ -537,8 +537,8 @@ var testIPv4 = map[string][]net.IP{
 
 func TestBlockCNAMEProtectionEnabled(t *testing.T) {
 	s := createTestServer(t, &dnsfilter.Config{}, ServerConfig{
-		UDPListenAddr: &net.UDPAddr{},
-		TCPListenAddr: &net.TCPAddr{},
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
 	})
 	testUpstm := &aghtest.TestUpstream{
 		CName: testCNAMEs,
@@ -564,8 +564,8 @@ func TestBlockCNAMEProtectionEnabled(t *testing.T) {
 
 func TestBlockCNAME(t *testing.T) {
 	forwardConf := ServerConfig{
-		UDPListenAddr: &net.UDPAddr{},
-		TCPListenAddr: &net.TCPAddr{},
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 		},
@@ -622,8 +622,8 @@ func TestBlockCNAME(t *testing.T) {
 
 func TestClientRulesForCNAMEMatching(t *testing.T) {
 	forwardConf := ServerConfig{
-		UDPListenAddr: &net.UDPAddr{},
-		TCPListenAddr: &net.TCPAddr{},
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 			FilterHandler: func(_ net.IP, _ string, settings *dnsfilter.RequestFilteringSettings) {
@@ -664,8 +664,8 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 
 func TestNullBlockedRequest(t *testing.T) {
 	forwardConf := ServerConfig{
-		UDPListenAddr: &net.UDPAddr{},
-		TCPListenAddr: &net.TCPAddr{},
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 			BlockingMode:      "null_ip",
@@ -707,8 +707,8 @@ func TestBlockedCustomIP(t *testing.T) {
 		DNSFilter: dnsfilter.New(&dnsfilter.Config{}, filters),
 	})
 	conf := &ServerConfig{
-		UDPListenAddr: &net.UDPAddr{},
-		TCPListenAddr: &net.TCPAddr{},
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 			BlockingMode:      "custom_ip",
@@ -746,8 +746,8 @@ func TestBlockedCustomIP(t *testing.T) {
 
 func TestBlockedByHosts(t *testing.T) {
 	forwardConf := ServerConfig{
-		UDPListenAddr: &net.UDPAddr{},
-		TCPListenAddr: &net.TCPAddr{},
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 		},
@@ -780,8 +780,8 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 		SafeBrowsingEnabled: true,
 	}
 	forwardConf := ServerConfig{
-		UDPListenAddr: &net.UDPAddr{},
-		TCPListenAddr: &net.TCPAddr{},
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			SafeBrowsingBlockHost: ans4.String(),
 			ProtectionEnabled:     true,
@@ -824,8 +824,8 @@ func TestRewrite(t *testing.T) {
 
 	s := NewServer(DNSCreateParams{DNSFilter: f})
 	assert.Nil(t, s.Prepare(&ServerConfig{
-		UDPListenAddr: &net.UDPAddr{},
-		TCPListenAddr: &net.TCPAddr{},
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 			UpstreamDNS:       []string{"8.8.8.8:53"},
@@ -1109,8 +1109,8 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 		DHCPServer: &testDHCP{},
 	})
 
-	s.conf.UDPListenAddr = &net.UDPAddr{}
-	s.conf.TCPListenAddr = &net.TCPAddr{}
+	s.conf.UDPListenAddrs = []*net.UDPAddr{{}}
+	s.conf.TCPListenAddrs = []*net.TCPAddr{{}}
 	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
 	s.conf.FilteringConfig.ProtectionEnabled = true
 	require.Nil(t, s.Prepare(nil))
@@ -1154,8 +1154,8 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	t.Cleanup(c.AutoHosts.Close)
 
 	s := NewServer(DNSCreateParams{DNSFilter: dnsfilter.New(&c, nil)})
-	s.conf.UDPListenAddr = &net.UDPAddr{}
-	s.conf.TCPListenAddr = &net.TCPAddr{}
+	s.conf.UDPListenAddrs = []*net.UDPAddr{{}}
+	s.conf.TCPListenAddrs = []*net.TCPAddr{{}}
 	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
 	s.conf.FilteringConfig.ProtectionEnabled = true
 	require.Nil(t, s.Prepare(nil))

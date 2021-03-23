@@ -93,7 +93,7 @@ readonly build_flags="${BUILD_FLAGS:-$out_flags $par_flags\
 	$v_flags $x_flags}"
 
 # Don't use quotes with flag variables to get word splitting.
-"$go" generate $v_flags $x_flags ./...
+"$go" generate $v_flags $x_flags ./main.go
 
 # Don't use quotes with flag variables to get word splitting.
 "$go" build --ldflags "$ldflags" $build_flags

@@ -17,7 +17,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -264,7 +263,7 @@ func copyInstallSettings(dst, src *configuration) {
 	dst.BindHost = src.BindHost
 	dst.BindPort = src.BindPort
 	dst.BetaBindPort = src.BetaBindPort
-	dst.DNS.BindHost = src.DNS.BindHost
+	dst.DNS.BindHosts = src.DNS.BindHosts
 	dst.DNS.Port = src.DNS.Port
 }
 
@@ -335,7 +334,7 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	Context.firstRun = false
 	config.BindHost = newSettings.Web.IP
 	config.BindPort = newSettings.Web.Port
-	config.DNS.BindHost = newSettings.DNS.IP
+	config.DNS.BindHosts = []net.IP{newSettings.DNS.IP}
 	config.DNS.Port = newSettings.DNS.Port
 
 	// TODO(e.burkov): StartMods() should be put in a separate goroutine at

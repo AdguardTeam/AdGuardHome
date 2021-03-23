@@ -93,8 +93,8 @@ type FilteringConfig struct {
 
 // TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
 type TLSConfig struct {
-	TLSListenAddr  *net.TCPAddr `yaml:"-" json:"-"`
-	QUICListenAddr *net.UDPAddr `yaml:"-" json:"-"`
+	TLSListenAddrs  []*net.TCPAddr `yaml:"-" json:"-"`
+	QUICListenAddrs []*net.UDPAddr `yaml:"-" json:"-"`
 
 	// Reject connection if the client uses server name (in SNI) that doesn't match the certificate
 	StrictSNICheck bool `yaml:"strict_sni_check" json:"-"`
@@ -121,18 +121,18 @@ type TLSConfig struct {
 
 // DNSCryptConfig is the DNSCrypt server configuration struct.
 type DNSCryptConfig struct {
-	UDPListenAddr *net.UDPAddr
-	TCPListenAddr *net.TCPAddr
-	ProviderName  string
-	ResolverCert  *dnscrypt.Cert
-	Enabled       bool
+	UDPListenAddrs []*net.UDPAddr
+	TCPListenAddrs []*net.TCPAddr
+	ProviderName   string
+	ResolverCert   *dnscrypt.Cert
+	Enabled        bool
 }
 
 // ServerConfig represents server configuration.
 // The zero ServerConfig is empty and ready for use.
 type ServerConfig struct {
-	UDPListenAddr  *net.UDPAddr          // UDP listen address
-	TCPListenAddr  *net.TCPAddr          // TCP listen address
+	UDPListenAddrs []*net.UDPAddr        // UDP listen address
+	TCPListenAddrs []*net.TCPAddr        // TCP listen address
 	UpstreamConfig *proxy.UpstreamConfig // Upstream DNS servers config
 	OnDNSRequest   func(d *proxy.DNSContext)
 
@@ -153,16 +153,16 @@ type ServerConfig struct {
 
 // if any of ServerConfig values are zero, then default values from below are used
 var defaultValues = ServerConfig{
-	UDPListenAddr:   &net.UDPAddr{Port: 53},
-	TCPListenAddr:   &net.TCPAddr{Port: 53},
+	UDPListenAddrs:  []*net.UDPAddr{{Port: 53}},
+	TCPListenAddrs:  []*net.TCPAddr{{Port: 53}},
 	FilteringConfig: FilteringConfig{BlockedResponseTTL: 3600},
 }
 
 // createProxyConfig creates and validates configuration for the main proxy
 func (s *Server) createProxyConfig() (proxy.Config, error) {
 	proxyConfig := proxy.Config{
-		UDPListenAddr:          []*net.UDPAddr{s.conf.UDPListenAddr},
-		TCPListenAddr:          []*net.TCPAddr{s.conf.TCPListenAddr},
+		UDPListenAddr:          s.conf.UDPListenAddrs,
+		TCPListenAddr:          s.conf.TCPListenAddrs,
 		Ratelimit:              int(s.conf.Ratelimit),
 		RatelimitWhitelist:     s.conf.RatelimitWhitelist,
 		RefuseAny:              s.conf.RefuseAny,
@@ -205,8 +205,8 @@ func (s *Server) createProxyConfig() (proxy.Config, error) {
 	}
 
 	if s.conf.DNSCryptConfig.Enabled {
-		proxyConfig.DNSCryptUDPListenAddr = []*net.UDPAddr{s.conf.DNSCryptConfig.UDPListenAddr}
-		proxyConfig.DNSCryptTCPListenAddr = []*net.TCPAddr{s.conf.DNSCryptConfig.TCPListenAddr}
+		proxyConfig.DNSCryptUDPListenAddr = s.conf.DNSCryptConfig.UDPListenAddrs
+		proxyConfig.DNSCryptTCPListenAddr = s.conf.DNSCryptConfig.TCPListenAddrs
 		proxyConfig.DNSCryptProviderName = s.conf.DNSCryptConfig.ProviderName
 		proxyConfig.DNSCryptResolverCert = s.conf.DNSCryptConfig.ResolverCert
 	}
@@ -225,21 +225,27 @@ func (s *Server) initDefaultSettings() {
 	if len(s.conf.UpstreamDNS) == 0 {
 		s.conf.UpstreamDNS = defaultDNS
 	}
+
 	if len(s.conf.BootstrapDNS) == 0 {
 		s.conf.BootstrapDNS = defaultBootstrap
 	}
+
 	if len(s.conf.ParentalBlockHost) == 0 {
 		s.conf.ParentalBlockHost = parentalBlockHost
 	}
+
 	if len(s.conf.SafeBrowsingBlockHost) == 0 {
 		s.conf.SafeBrowsingBlockHost = safeBrowsingBlockHost
 	}
-	if s.conf.UDPListenAddr == nil {
-		s.conf.UDPListenAddr = defaultValues.UDPListenAddr
+
+	if s.conf.UDPListenAddrs == nil {
+		s.conf.UDPListenAddrs = defaultValues.UDPListenAddrs
 	}
-	if s.conf.TCPListenAddr == nil {
-		s.conf.TCPListenAddr = defaultValues.TCPListenAddr
+
+	if s.conf.TCPListenAddrs == nil {
+		s.conf.TCPListenAddrs = defaultValues.TCPListenAddrs
 	}
+
 	if len(s.conf.BlockedHosts) == 0 {
 		s.conf.BlockedHosts = defaultBlockedHosts
 	}
@@ -325,17 +331,16 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) error {
 		return nil
 	}
 
-	if s.conf.TLSListenAddr == nil &&
-		s.conf.QUICListenAddr == nil {
+	if s.conf.TLSListenAddrs == nil && s.conf.QUICListenAddrs == nil {
 		return nil
 	}
 
-	if s.conf.TLSListenAddr != nil {
-		proxyConfig.TLSListenAddr = []*net.TCPAddr{s.conf.TLSListenAddr}
+	if s.conf.TLSListenAddrs != nil {
+		proxyConfig.TLSListenAddr = s.conf.TLSListenAddrs
 	}
 
-	if s.conf.QUICListenAddr != nil {
-		proxyConfig.QUICListenAddr = []*net.UDPAddr{s.conf.QUICListenAddr}
+	if s.conf.QUICListenAddrs != nil {
+		proxyConfig.QUICListenAddr = s.conf.QUICListenAddrs
 	}
 
 	var err error
