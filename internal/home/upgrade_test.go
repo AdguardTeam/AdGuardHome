@@ -12,7 +12,7 @@ import (
 func TestUpgradeSchema1to2(t *testing.T) {
 	diskConf := testDiskConf(1)
 
-	err := upgradeSchema1to2(&diskConf)
+	err := upgradeSchema1to2(diskConf)
 	require.Nil(t, err)
 
 	require.Equal(t, diskConf["schema_version"], 2)
@@ -35,7 +35,7 @@ func TestUpgradeSchema1to2(t *testing.T) {
 func TestUpgradeSchema2to3(t *testing.T) {
 	diskConf := testDiskConf(2)
 
-	err := upgradeSchema2to3(&diskConf)
+	err := upgradeSchema2to3(diskConf)
 	require.Nil(t, err)
 
 	require.Equal(t, diskConf["schema_version"], 3)
@@ -73,7 +73,7 @@ func TestUpgradeSchema7to8(t *testing.T) {
 		"schema_version": 7,
 	}
 
-	err := upgradeSchema7to8(&oldConf)
+	err := upgradeSchema7to8(oldConf)
 	require.Nil(t, err)
 
 	require.Equal(t, oldConf["schema_version"], 8)
