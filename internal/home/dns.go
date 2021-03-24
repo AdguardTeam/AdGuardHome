@@ -9,7 +9,6 @@ import (
 	"strconv"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
@@ -144,10 +143,8 @@ func ipsToUDPAddrs(ips []net.IP, port int) (udpAddrs []*net.UDPAddr) {
 func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 	dnsConf := config.DNS
 	hosts := dnsConf.BindHosts
-	for i, h := range hosts {
-		if h.IsUnspecified() {
-			hosts[i] = net.IP{127, 0, 0, 1}
-		}
+	if len(hosts) == 0 {
+		hosts = []net.IP{{127, 0, 0, 1}}
 	}
 
 	newConf = dnsforward.ServerConfig{
@@ -266,42 +263,6 @@ func getDNSEncryption() (de dnsEncryption) {
 	}
 
 	return de
-}
-
-// Get the list of DNS addresses the server is listening on
-func getDNSAddresses() (dnsAddrs []string) {
-	if hosts := config.DNS.BindHosts; len(hosts) == 0 || hosts[0].IsUnspecified() {
-		ifaces, e := aghnet.GetValidNetInterfacesForWeb()
-		if e != nil {
-			log.Error("Couldn't get network interfaces: %v", e)
-			return []string{}
-		}
-
-		for _, iface := range ifaces {
-			for _, addr := range iface.Addresses {
-				addDNSAddress(&dnsAddrs, addr)
-			}
-		}
-	} else {
-		for _, h := range hosts {
-			addDNSAddress(&dnsAddrs, h)
-		}
-	}
-
-	de := getDNSEncryption()
-	if de.https != "" {
-		dnsAddrs = append(dnsAddrs, de.https)
-	}
-
-	if de.tls != "" {
-		dnsAddrs = append(dnsAddrs, de.tls)
-	}
-
-	if de.quic != "" {
-		dnsAddrs = append(dnsAddrs, de.quic)
-	}
-
-	return dnsAddrs
 }
 
 // applyAdditionalFiltering adds additional client information and settings if
