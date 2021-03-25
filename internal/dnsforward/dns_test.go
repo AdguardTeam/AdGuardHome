@@ -52,6 +52,14 @@ func TestServer_ProcessInternalHosts(t *testing.T) {
 		wantIP:     nil,
 		qtyp:       dns.TypeA,
 		wantRes:    resultCodeSuccess,
+	}, {
+		name:       "success_internal_aaaa",
+		host:       "example.lan",
+		suffix:     defaultAutohostSuffix,
+		wantErrMsg: "",
+		wantIP:     nil,
+		qtyp:       dns.TypeAAAA,
+		wantRes:    resultCodeSuccess,
 	}}
 
 	for _, tc := range testCases {
@@ -92,7 +100,14 @@ func TestServer_ProcessInternalHosts(t *testing.T) {
 			}
 
 			pctx := dctx.proxyCtx
-			if tc.wantIP == nil {
+			if tc.qtyp == dns.TypeAAAA {
+				// TODO(a.garipov): Remove this special handling
+				// when we fully support AAAA.
+				require.NotNil(t, pctx.Res)
+
+				ans := pctx.Res.Answer
+				require.Len(t, ans, 0)
+			} else if tc.wantIP == nil {
 				assert.Nil(t, pctx.Res)
 			} else {
 				require.NotNil(t, pctx.Res)

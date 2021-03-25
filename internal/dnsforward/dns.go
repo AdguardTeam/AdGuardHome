@@ -192,7 +192,11 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 func (s *Server) processInternalHosts(dctx *dnsContext) (rc resultCode) {
 	req := dctx.proxyCtx.Req
 	q := req.Question[0]
-	if q.Qtype != dns.TypeA {
+
+	// Go on processing the AAAA request despite the fact that we don't
+	// support it yet.  The expected behavior here is to respond with an
+	// empty asnwer and not NXDOMAIN.
+	if q.Qtype != dns.TypeA && q.Qtype != dns.TypeAAAA {
 		return resultCodeSuccess
 	}
 
