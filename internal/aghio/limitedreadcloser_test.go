@@ -13,21 +13,21 @@ import (
 
 func TestLimitReadCloser(t *testing.T) {
 	testCases := []struct {
+		want error
 		name string
 		n    int64
-		want error
 	}{{
+		want: nil,
 		name: "positive",
 		n:    1,
-		want: nil,
 	}, {
+		want: nil,
 		name: "zero",
 		n:    0,
-		want: nil,
 	}, {
+		want: fmt.Errorf("aghio: invalid n in LimitReadCloser: -1"),
 		name: "negative",
 		n:    -1,
-		want: fmt.Errorf("aghio: invalid n in LimitReadCloser: -1"),
 	}}
 
 	for _, tc := range testCases {
@@ -40,37 +40,37 @@ func TestLimitReadCloser(t *testing.T) {
 
 func TestLimitedReadCloser_Read(t *testing.T) {
 	testCases := []struct {
-		name  string
-		limit int64
-		rStr  string
-		want  int
 		err   error
+		name  string
+		rStr  string
+		limit int64
+		want  int
 	}{{
-		name:  "perfectly_match",
-		limit: 3,
-		rStr:  "abc",
-		want:  3,
 		err:   nil,
-	}, {
-		name:  "eof",
-		limit: 3,
-		rStr:  "",
-		want:  0,
-		err:   io.EOF,
-	}, {
-		name:  "limit_reached",
-		limit: 0,
+		name:  "perfectly_match",
 		rStr:  "abc",
+		limit: 3,
+		want:  3,
+	}, {
+		err:   io.EOF,
+		name:  "eof",
+		rStr:  "",
+		limit: 3,
 		want:  0,
+	}, {
 		err: &LimitReachedError{
 			Limit: 0,
 		},
-	}, {
-		name:  "truncated",
-		limit: 2,
+		name:  "limit_reached",
 		rStr:  "abc",
-		want:  2,
+		limit: 0,
+		want:  0,
+	}, {
 		err:   nil,
+		name:  "truncated",
+		rStr:  "abc",
+		limit: 2,
+		want:  2,
 	}}
 
 	for _, tc := range testCases {
@@ -79,7 +79,7 @@ func TestLimitedReadCloser_Read(t *testing.T) {
 			buf := make([]byte, tc.limit+1)
 
 			lreader, err := LimitReadCloser(readCloser, tc.limit)
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			n, err := lreader.Read(buf)
 			require.Equal(t, tc.err, err)
@@ -90,15 +90,15 @@ func TestLimitedReadCloser_Read(t *testing.T) {
 
 func TestLimitedReadCloser_LimitReachedError(t *testing.T) {
 	testCases := []struct {
+		err  error
 		name string
 		want string
-		err  error
 	}{{
-		name: "simplest",
-		want: "attempted to read more than 0 bytes",
 		err: &LimitReachedError{
 			Limit: 0,
 		},
+		name: "simplest",
+		want: "attempted to read more than 0 bytes",
 	}}
 
 	for _, tc := range testCases {

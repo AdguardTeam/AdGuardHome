@@ -13,7 +13,7 @@ func TestIPDetector_detectSpecialNetwork(t *testing.T) {
 	var err error
 
 	ipd, err = NewIPDetector()
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	testCases := []struct {
 		name string

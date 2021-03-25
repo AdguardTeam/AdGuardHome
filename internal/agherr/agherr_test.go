@@ -104,7 +104,7 @@ func TestAnnotate(t *testing.T) {
 		require.NotNil(t, errPtr)
 
 		err := *errPtr
-		require.NotNil(t, err)
+		require.Error(t, err)
 
 		assert.Equal(t, wantMsg, err.Error())
 	})
@@ -117,7 +117,7 @@ func TestAnnotate(t *testing.T) {
 		}
 
 		err := f()
-		require.NotNil(t, err)
+		require.Error(t, err)
 
 		assert.Equal(t, wantMsg, err.Error())
 	})

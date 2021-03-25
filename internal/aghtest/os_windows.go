@@ -35,10 +35,10 @@ func prepareTestDir(t *testing.T) (dir string) {
 	t.Helper()
 
 	wd, err := os.Getwd()
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	dir, err = ioutil.TempDir(wd, "agh-test")
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotEmpty(t, dir)
 
 	t.Cleanup(func() {
@@ -56,7 +56,7 @@ func prepareTestDir(t *testing.T) (dir string) {
 			time.Sleep(retryDur)
 		}
 
-		assert.Nil(t, err, "after %s", time.Since(start))
+		assert.NoError(t, err, "after %s", time.Since(start))
 	})
 
 	return dir

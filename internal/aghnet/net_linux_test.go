@@ -49,7 +49,8 @@ func TestDHCPCDStaticConfig(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			r := bytes.NewReader(tc.data)
 			has, err := dhcpcdStaticConfig(r, "wlan0")
-			require.Nil(t, err)
+			require.NoError(t, err)
+
 			assert.Equal(t, tc.want, has)
 		})
 	}
@@ -86,7 +87,8 @@ func TestIfacesStaticConfig(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			r := bytes.NewReader(tc.data)
 			has, err := ifacesStaticConfig(r, "enp0s3")
-			require.Nil(t, err)
+			require.NoError(t, err)
+
 			assert.Equal(t, tc.want, has)
 		})
 	}
