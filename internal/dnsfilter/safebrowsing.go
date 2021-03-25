@@ -304,46 +304,70 @@ func check(c *sbCtx, r Result, u upstream.Upstream) (Result, error) {
 	return Result{}, nil
 }
 
-func (d *DNSFilter) checkSafeBrowsing(host string) (Result, error) {
+// TODO(a.garipov): Unify with checkParental.
+func (d *DNSFilter) checkSafeBrowsing(
+	host string,
+	_ uint16,
+	setts *FilteringSettings,
+) (res Result, err error) {
+	if !setts.SafeBrowsingEnabled {
+		return Result{}, nil
+	}
+
 	if log.GetLevel() >= log.DEBUG {
 		timer := log.StartTimer()
 		defer timer.LogElapsed("SafeBrowsing lookup for %s", host)
 	}
-	ctx := &sbCtx{
+
+	sctx := &sbCtx{
 		host:      host,
 		svc:       "SafeBrowsing",
 		cache:     gctx.safebrowsingCache,
 		cacheTime: d.Config.CacheTime,
 	}
-	res := Result{
+
+	res = Result{
 		IsFiltered: true,
 		Reason:     FilteredSafeBrowsing,
 		Rules: []*ResultRule{{
 			Text: "adguard-malware-shavar",
 		}},
 	}
-	return check(ctx, res, d.safeBrowsingUpstream)
+
+	return check(sctx, res, d.safeBrowsingUpstream)
 }
 
-func (d *DNSFilter) checkParental(host string) (Result, error) {
+// TODO(a.garipov): Unify with checkSafeBrowsing.
+func (d *DNSFilter) checkParental(
+	host string,
+	_ uint16,
+	setts *FilteringSettings,
+) (res Result, err error) {
+	if !setts.ParentalEnabled {
+		return Result{}, nil
+	}
+
 	if log.GetLevel() >= log.DEBUG {
 		timer := log.StartTimer()
 		defer timer.LogElapsed("Parental lookup for %s", host)
 	}
-	ctx := &sbCtx{
+
+	sctx := &sbCtx{
 		host:      host,
 		svc:       "Parental",
 		cache:     gctx.parentalCache,
 		cacheTime: d.Config.CacheTime,
 	}
-	res := Result{
+
+	res = Result{
 		IsFiltered: true,
 		Reason:     FilteredParental,
 		Rules: []*ResultRule{{
 			Text: "parental CATEGORY_BLACKLISTED",
 		}},
 	}
-	return check(ctx, res, d.parentalUpstream)
+
+	return check(sctx, res, d.parentalUpstream)
 }
 
 func httpError(r *http.Request, w http.ResponseWriter, code int, format string, args ...interface{}) {

@@ -375,6 +375,64 @@ func decodeResultIPList(dec *json.Decoder, ent *logEntry) {
 	}
 }
 
+func decodeResultDNSRewriteResultKey(key string, dec *json.Decoder, ent *logEntry) {
+	var err error
+
+	switch key {
+	case "RCode":
+		var vToken json.Token
+		vToken, err = dec.Token()
+		if err != nil {
+			if err != io.EOF {
+				log.Debug("decodeResultDNSRewriteResultKey err: %s", err)
+			}
+
+			return
+		}
+
+		if ent.Result.DNSRewriteResult == nil {
+			ent.Result.DNSRewriteResult = &dnsfilter.DNSRewriteResult{}
+		}
+
+		if n, ok := vToken.(json.Number); ok {
+			rcode64, _ := n.Int64()
+			ent.Result.DNSRewriteResult.RCode = rules.RCode(rcode64)
+		}
+	case "Response":
+		if ent.Result.DNSRewriteResult == nil {
+			ent.Result.DNSRewriteResult = &dnsfilter.DNSRewriteResult{}
+		}
+
+		if ent.Result.DNSRewriteResult.Response == nil {
+			ent.Result.DNSRewriteResult.Response = dnsfilter.DNSRewriteResultResponse{}
+		}
+
+		// TODO(a.garipov): I give up.  This whole file is a mess.
+		// Luckily, we can assume that this field is relatively rare and
+		// just use the normal decoding and correct the values.
+		err = dec.Decode(&ent.Result.DNSRewriteResult.Response)
+		if err != nil {
+			log.Debug("decodeResultDNSRewriteResultKey response err: %s", err)
+		}
+
+		for rrType, rrValues := range ent.Result.DNSRewriteResult.Response {
+			switch rrType {
+			case
+				dns.TypeA,
+				dns.TypeAAAA:
+				for i, v := range rrValues {
+					s, _ := v.(string)
+					rrValues[i] = net.ParseIP(s)
+				}
+			default:
+				// Go on.
+			}
+		}
+	default:
+		// Go on.
+	}
+}
+
 func decodeResultDNSRewriteResult(dec *json.Decoder, ent *logEntry) {
 	for {
 		keyToken, err := dec.Token()
@@ -401,66 +459,7 @@ func decodeResultDNSRewriteResult(dec *json.Decoder, ent *logEntry) {
 			return
 		}
 
-		// TODO(a.garipov): Refactor this into a separate
-		// function à la decodeResultRuleKey if we keep this
-		// code for a longer time than planned.
-		switch key {
-		case "RCode":
-			var vToken json.Token
-			vToken, err = dec.Token()
-			if err != nil {
-				if err != io.EOF {
-					log.Debug("decodeResultDNSRewriteResult err: %s", err)
-				}
-
-				return
-			}
-
-			if ent.Result.DNSRewriteResult == nil {
-				ent.Result.DNSRewriteResult = &dnsfilter.DNSRewriteResult{}
-			}
-
-			var n json.Number
-			if n, ok = vToken.(json.Number); ok {
-				rcode64, _ := n.Int64()
-				ent.Result.DNSRewriteResult.RCode = rules.RCode(rcode64)
-			}
-
-			continue
-		case "Response":
-			if ent.Result.DNSRewriteResult == nil {
-				ent.Result.DNSRewriteResult = &dnsfilter.DNSRewriteResult{}
-			}
-
-			if ent.Result.DNSRewriteResult.Response == nil {
-				ent.Result.DNSRewriteResult.Response = dnsfilter.DNSRewriteResultResponse{}
-			}
-
-			// TODO(a.garipov): I give up.  This whole file
-			// is a mess.  Luckily, we can assume that this
-			// field is relatively rare and just use the
-			// normal decoding and correct the values.
-			err = dec.Decode(&ent.Result.DNSRewriteResult.Response)
-			if err != nil {
-				log.Debug("decodeResultDNSRewriteResult response err: %s", err)
-			}
-
-			for rrType, rrValues := range ent.Result.DNSRewriteResult.Response {
-				switch rrType {
-				case dns.TypeA, dns.TypeAAAA:
-					for i, v := range rrValues {
-						s, _ := v.(string)
-						rrValues[i] = net.ParseIP(s)
-					}
-				default:
-					// Go on.
-				}
-			}
-
-			continue
-		default:
-			// Go on.
-		}
+		decodeResultDNSRewriteResultKey(key, dec, ent)
 	}
 }
 

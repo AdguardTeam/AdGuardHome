@@ -7,6 +7,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/cache"
+	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -115,11 +116,16 @@ func TestSBPC_checkErrorUpstream(t *testing.T) {
 	d.SetSafeBrowsingUpstream(ups)
 	d.SetParentalUpstream(ups)
 
-	_, err := d.checkSafeBrowsing("smthng.com")
-	assert.NotNil(t, err)
+	setts := &FilteringSettings{
+		SafeBrowsingEnabled: true,
+		ParentalEnabled:     true,
+	}
 
-	_, err = d.checkParental("smthng.com")
-	assert.NotNil(t, err)
+	_, err := d.checkSafeBrowsing("smthng.com", dns.TypeA, setts)
+	assert.Error(t, err)
+
+	_, err = d.checkParental("smthng.com", dns.TypeA, setts)
+	assert.Error(t, err)
 }
 
 func TestSBPC(t *testing.T) {
@@ -128,10 +134,15 @@ func TestSBPC(t *testing.T) {
 
 	const hostname = "example.org"
 
+	setts := &FilteringSettings{
+		SafeBrowsingEnabled: true,
+		ParentalEnabled:     true,
+	}
+
 	testCases := []struct {
 		name      string
 		block     bool
-		testFunc  func(string) (Result, error)
+		testFunc  func(host string, _ uint16, _ *FilteringSettings) (res Result, err error)
 		testCache cache.Cache
 	}{{
 		name:      "sb_no_block",
@@ -167,8 +178,9 @@ func TestSBPC(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Firstly, check the request blocking.
 			hits := 0
-			res, err := tc.testFunc(hostname)
-			require.Nil(t, err)
+			res, err := tc.testFunc(hostname, dns.TypeA, setts)
+			require.NoError(t, err)
+
 			if tc.block {
 				assert.True(t, res.IsFiltered)
 				require.Len(t, res.Rules, 1)
@@ -185,8 +197,9 @@ func TestSBPC(t *testing.T) {
 			assert.Equal(t, 1, ups.RequestsCount())
 
 			// Now make the same request to check the cache was used.
-			res, err = tc.testFunc(hostname)
-			require.Nil(t, err)
+			res, err = tc.testFunc(hostname, dns.TypeA, setts)
+			require.NoError(t, err)
+
 			if tc.block {
 				assert.True(t, res.IsFiltered)
 				require.Len(t, res.Rules, 1)

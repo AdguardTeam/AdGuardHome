@@ -632,7 +632,7 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
-			FilterHandler: func(_ net.IP, _ string, settings *dnsfilter.RequestFilteringSettings) {
+			FilterHandler: func(_ net.IP, _ string, settings *dnsfilter.FilteringSettings) {
 				settings.FilteringEnabled = false
 			},
 		},

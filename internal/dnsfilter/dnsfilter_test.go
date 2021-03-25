@@ -21,7 +21,7 @@ func TestMain(m *testing.M) {
 	aghtest.DiscardLogOutput(m)
 }
 
-var setts RequestFilteringSettings
+var setts FilteringSettings
 
 // Helpers.
 
@@ -38,7 +38,7 @@ func purgeCaches() {
 }
 
 func newForTest(c *Config, filters []Filter) *DNSFilter {
-	setts = RequestFilteringSettings{
+	setts = FilteringSettings{
 		FilteringEnabled: true,
 	}
 	setts.FilteringEnabled = true
@@ -699,7 +699,7 @@ func TestWhitelist(t *testing.T) {
 
 // Client Settings.
 
-func applyClientSettings(setts *RequestFilteringSettings) {
+func applyClientSettings(setts *FilteringSettings) {
 	setts.FilteringEnabled = false
 	setts.ParentalEnabled = false
 	setts.SafeBrowsingEnabled = true

@@ -25,7 +25,7 @@ type FilteringConfig struct {
 	// --
 
 	// FilterHandler is an optional additional filtering callback.
-	FilterHandler func(clientAddr net.IP, clientID string, settings *dnsfilter.RequestFilteringSettings) `yaml:"-"`
+	FilterHandler func(clientAddr net.IP, clientID string, settings *dnsfilter.FilteringSettings) `yaml:"-"`
 
 	// GetCustomUpstreamByClient - a callback function that returns upstreams configuration
 	// based on the client IP address. Returns nil if there are no custom upstreams for the client

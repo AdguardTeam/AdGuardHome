@@ -29,18 +29,18 @@ type ServiceEntry struct {
 	Rules []*rules.NetworkRule
 }
 
-// RequestFilteringSettings is custom filtering settings
-type RequestFilteringSettings struct {
-	FilteringEnabled    bool
-	SafeSearchEnabled   bool
-	SafeBrowsingEnabled bool
-	ParentalEnabled     bool
-
+// FilteringSettings are custom filtering settings for a client.
+type FilteringSettings struct {
 	ClientName string
 	ClientIP   net.IP
 	ClientTags []string
 
 	ServicesRules []ServiceEntry
+
+	FilteringEnabled    bool
+	SafeSearchEnabled   bool
+	SafeBrowsingEnabled bool
+	ParentalEnabled     bool
 }
 
 // Resolver is the interface for net.Resolver to simplify testing.
@@ -99,6 +99,11 @@ type filtersInitializerParams struct {
 	blockFilters []Filter
 }
 
+type hostChecker struct {
+	check func(host string, qtype uint16, setts *FilteringSettings) (res Result, err error)
+	name  string
+}
+
 // DNSFilter matches hostnames and DNS requests against filtering rules.
 type DNSFilter struct {
 	rulesStorage         *filterlist.RuleStorage
@@ -123,6 +128,8 @@ type DNSFilter struct {
 	//
 	// TODO(e.burkov): Use upstream that configured in dnsforward instead.
 	resolver Resolver
+
+	hostCheckers []hostChecker
 }
 
 // Filter represents a filter list
@@ -216,8 +223,8 @@ func (r Reason) In(reasons ...Reason) bool {
 }
 
 // GetConfig - get configuration
-func (d *DNSFilter) GetConfig() RequestFilteringSettings {
-	c := RequestFilteringSettings{}
+func (d *DNSFilter) GetConfig() FilteringSettings {
+	c := FilteringSettings{}
 	// d.confLock.RLock()
 	c.SafeSearchEnabled = d.Config.SafeSearchEnabled
 	c.SafeBrowsingEnabled = d.Config.SafeBrowsingEnabled
@@ -372,122 +379,85 @@ func (r Reason) Matched() bool {
 }
 
 // CheckHostRules tries to match the host against filtering rules only.
-func (d *DNSFilter) CheckHostRules(host string, qtype uint16, setts *RequestFilteringSettings) (Result, error) {
+func (d *DNSFilter) CheckHostRules(host string, qtype uint16, setts *FilteringSettings) (Result, error) {
 	if !setts.FilteringEnabled {
 		return Result{}, nil
 	}
 
-	return d.matchHost(host, qtype, *setts)
+	return d.matchHost(host, qtype, setts)
 }
 
-// CheckHost tries to match the host against filtering rules, then
-// safebrowsing and parental control rules, if they are enabled.
-func (d *DNSFilter) CheckHost(host string, qtype uint16, setts *RequestFilteringSettings) (Result, error) {
-	// sometimes DNS clients will try to resolve ".", which is a request to get root servers
+// CheckHost tries to match the host against filtering rules, then safebrowsing
+// and parental control rules, if they are enabled.
+func (d *DNSFilter) CheckHost(
+	host string,
+	qtype uint16,
+	setts *FilteringSettings,
+) (res Result, err error) {
+	// Sometimes clients try to resolve ".", which is a request to get root
+	// servers.
 	if host == "" {
 		return Result{Reason: NotFilteredNotFound}, nil
 	}
+
 	host = strings.ToLower(host)
 
-	var result Result
-	var err error
-
-	// first - check rewrites, they have the highest priority
-	result = d.processRewrites(host, qtype)
-	if result.Reason == Rewritten {
-		return result, nil
+	res = d.processRewrites(host, qtype)
+	if res.Reason == Rewritten {
+		return res, nil
 	}
 
-	// Now check the hosts file -- do we have any rules for it?
-	// just like DNS rewrites, it has higher priority than filtering rules.
-	if d.Config.AutoHosts != nil {
-		matched := d.checkAutoHosts(host, qtype, &result)
-		if matched {
-			return result, nil
-		}
-	}
-
-	if setts.FilteringEnabled {
-		result, err = d.matchHost(host, qtype, *setts)
+	for _, hc := range d.hostCheckers {
+		res, err = hc.check(host, qtype, setts)
 		if err != nil {
-			return result, err
-		}
-		if result.Reason.Matched() {
-			return result, nil
-		}
-	}
-
-	// are there any blocked services?
-	if len(setts.ServicesRules) != 0 {
-		result = matchBlockedServicesRules(host, setts.ServicesRules)
-		if result.Reason.Matched() {
-			return result, nil
-		}
-	}
-
-	// browsing security web service
-	if setts.SafeBrowsingEnabled {
-		result, err = d.checkSafeBrowsing(host)
-		if err != nil {
-			log.Info("SafeBrowsing: failed: %v", err)
-			return Result{}, nil
-		}
-		if result.Reason.Matched() {
-			return result, nil
-		}
-	}
-
-	// parental control web service
-	if setts.ParentalEnabled {
-		result, err = d.checkParental(host)
-		if err != nil {
-			log.Printf("Parental: failed: %v", err)
-			return Result{}, nil
-		}
-		if result.Reason.Matched() {
-			return result, nil
-		}
-	}
-
-	// apply safe search if needed
-	if setts.SafeSearchEnabled {
-		result, err = d.checkSafeSearch(host)
-		if err != nil {
-			log.Info("SafeSearch: failed: %v", err)
-			return Result{}, nil
+			return Result{}, fmt.Errorf("%s: %w", hc.name, err)
 		}
 
-		if result.Reason.Matched() {
-			return result, nil
+		if res.Reason.Matched() {
+			return res, nil
 		}
 	}
 
 	return Result{}, nil
 }
 
-func (d *DNSFilter) checkAutoHosts(host string, qtype uint16, result *Result) (matched bool) {
+// checkAutoHosts compares the host against our autohosts table.  The err is
+// always nil, it is only there to make this a valid hostChecker function.
+func (d *DNSFilter) checkAutoHosts(
+	host string,
+	qtype uint16,
+	_ *FilteringSettings,
+) (res Result, err error) {
+	if d.Config.AutoHosts == nil {
+		return Result{}, nil
+	}
+
 	ips := d.Config.AutoHosts.Process(host, qtype)
 	if ips != nil {
-		result.Reason = RewrittenAutoHosts
-		result.IPList = ips
+		res = Result{
+			Reason: RewrittenAutoHosts,
+			IPList: ips,
+		}
 
-		return true
+		return res, nil
 	}
 
 	revHosts := d.Config.AutoHosts.ProcessReverse(host, qtype)
 	if len(revHosts) != 0 {
-		result.Reason = RewrittenAutoHosts
-
-		// TODO(a.garipov): Optimize this with a buffer.
-		result.ReverseHosts = make([]string, len(revHosts))
-		for i := range revHosts {
-			result.ReverseHosts[i] = revHosts[i] + "."
+		res = Result{
+			Reason: RewrittenAutoHosts,
 		}
 
-		return true
+		// TODO(a.garipov): Optimize this with a buffer.
+		res.ReverseHosts = make([]string, len(revHosts))
+		for i := range revHosts {
+			res.ReverseHosts[i] = revHosts[i] + "."
+		}
+
+		return res, nil
 	}
 
-	return false
+	return Result{}, nil
 }
 
 // Process rewrites table
@@ -545,10 +515,20 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 	return res
 }
 
-func matchBlockedServicesRules(host string, svcs []ServiceEntry) Result {
-	req := rules.NewRequestForHostname(host)
-	res := Result{}
+// matchBlockedServicesRules checks the host against the blocked services rules
+// in settings, if any.  The err is always nil, it is only there to make this
+// a valid hostChecker function.
+func matchBlockedServicesRules(
+	host string,
+	_ uint16,
+	setts *FilteringSettings,
+) (res Result, err error) {
+	svcs := setts.ServicesRules
+	if len(svcs) == 0 {
+		return Result{}, nil
+	}
 
+	req := rules.NewRequestForHostname(host)
 	for _, s := range svcs {
 		for _, rule := range s.Rules {
 			if rule.Match(req) {
@@ -565,11 +545,12 @@ func matchBlockedServicesRules(host string, svcs []ServiceEntry) Result {
 				log.Debug("blocked services: matched rule: %s  host: %s  service: %s",
 					ruleText, host, s.Name)
 
-				return res
+				return res, nil
 			}
 		}
 	}
-	return res
+
+	return res, nil
 }
 
 //
@@ -680,7 +661,15 @@ func (d *DNSFilter) matchHostProcessAllowList(host string, dnsres urlfilter.DNSR
 
 // matchHost is a low-level way to check only if hostname is filtered by rules,
 // skipping expensive safebrowsing and parental lookups.
-func (d *DNSFilter) matchHost(host string, qtype uint16, setts RequestFilteringSettings) (res Result, err error) {
+func (d *DNSFilter) matchHost(
+	host string,
+	qtype uint16,
+	setts *FilteringSettings,
+) (res Result, err error) {
+	if !setts.FilteringEnabled {
+		return Result{}, nil
+	}
+
 	d.engineLock.RLock()
 	// Keep in mind that this lock must be held no just when calling Match()
 	//  but also while using the rules returned by it.
@@ -826,6 +815,26 @@ func New(c *Config, blockFilters []Filter) *DNSFilter {
 	d := &DNSFilter{
 		resolver: resolver,
 	}
+
+	d.hostCheckers = []hostChecker{{
+		check: d.checkAutoHosts,
+		name:  "autohosts",
+	}, {
+		check: d.matchHost,
+		name:  "filtering",
+	}, {
+		check: matchBlockedServicesRules,
+		name:  "blocked services",
+	}, {
+		check: d.checkSafeBrowsing,
+		name:  "safe browsing",
+	}, {
+		check: d.checkParental,
+		name:  "parental",
+	}, {
+		check: d.checkSafeSearch,
+		name:  "safe search",
+	}}
 
 	err := d.initSecurityServices()
 	if err != nil {

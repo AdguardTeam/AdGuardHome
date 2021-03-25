@@ -69,7 +69,15 @@ func (d *DNSFilter) SafeSearchDomain(host string) (string, bool) {
 	return val, ok
 }
 
-func (d *DNSFilter) checkSafeSearch(host string) (Result, error) {
+func (d *DNSFilter) checkSafeSearch(
+	host string,
+	_ uint16,
+	setts *FilteringSettings,
+) (res Result, err error) {
+	if !setts.SafeSearchEnabled {
+		return Result{}, nil
+	}
+
 	if log.GetLevel() >= log.DEBUG {
 		timer := log.StartTimer()
 		defer timer.LogElapsed("SafeSearch: lookup for %s", host)
@@ -88,7 +96,7 @@ func (d *DNSFilter) checkSafeSearch(host string) (Result, error) {
 		return Result{}, nil
 	}
 
-	res := Result{
+	res = Result{
 		IsFiltered: true,
 		Reason:     FilteredSafeSearch,
 		Rules:      []*ResultRule{{}},

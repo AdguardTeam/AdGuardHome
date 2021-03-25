@@ -254,7 +254,7 @@ func BlockedSvcKnown(s string) bool {
 }
 
 // ApplyBlockedServices - set blocked services settings for this DNS request
-func (d *DNSFilter) ApplyBlockedServices(setts *RequestFilteringSettings, list []string, global bool) {
+func (d *DNSFilter) ApplyBlockedServices(setts *FilteringSettings, list []string, global bool) {
 	setts.ServicesRules = []ServiceEntry{}
 	if global {
 		d.confLock.RLock()

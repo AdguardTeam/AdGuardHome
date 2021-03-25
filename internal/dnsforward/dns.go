@@ -20,7 +20,7 @@ type dnsContext struct {
 	srv      *Server
 	proxyCtx *proxy.DNSContext
 	// setts are the filtering settings for the client.
-	setts     *dnsfilter.RequestFilteringSettings
+	setts     *dnsfilter.FilteringSettings
 	startTime time.Time
 	result    *dnsfilter.Result
 	// origResp is the response received from upstream.  It is set when the
