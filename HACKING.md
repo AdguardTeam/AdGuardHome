@@ -1,19 +1,23 @@
  #  AdGuard Home Developer Guidelines
 
-As of **March 2021**, this document is partially a work-in-progress, but
-should still be followed.  Some of the rules aren't enforced as thoroughly or
-remain broken in old code, but this is still the place to find out about what we
-**want** our code to look like.
+As of **March 2021**, following this document is obligatory for all new code.
+Some of the rules aren't enforced as thoroughly or remain broken in old code,
+but this is still the place to find out about what we **want** our code to look
+like and how to improve it.
 
 The rules are mostly sorted in the alphabetical order.
+
+
 
 ## Contents
 
  *  [Git](#git)
  *  [Go](#go)
-     *  [Code And Naming](#code-and-naming)
+     *  [Code](#code)
      *  [Commenting](#commenting)
      *  [Formatting](#formatting)
+     *  [Naming](#naming)
+     *  [Testing](#testing)
      *  [Recommended Reading](#recommended-reading)
  *  [Markdown](#markdown)
  *  [Shell Scripting](#shell-scripting)
@@ -22,6 +26,8 @@ The rules are mostly sorted in the alphabetical order.
 
 <!-- NOTE: Use the IDs that GitHub would generate in order for this to work both
 on GitHub and most other Markdown renderers. -->
+
+
 
 ##  <a id="git" href="#git">Git</a>
 
@@ -47,6 +53,8 @@ on GitHub and most other Markdown renderers. -->
     The only exceptions are direct mentions of identifiers from the source code
     and filenames like `HACKING.md`.
 
+
+
 ##  <a id="go" href="#go">Go</a>
 
 > Not Golang, not GO, not GOLANG, not GoLang. It is Go in natural language,
@@ -54,7 +62,13 @@ on GitHub and most other Markdown renderers. -->
 
 — [@rakyll](https://twitter.com/rakyll/status/1229850223184269312)
 
- ###  <a id="code-and-naming" href="#code-and-naming">Code And Naming</a>
+ ###  <a id="code" href="#code">Code</a>
+
+ *  Always `recover` from panics in new goroutines.  Preferably in the very
+    first statement.  If all you want there is a log message, use
+    `agherr.LogPanic`.
+
+ *  Avoid `errors.New`, use `aghnet.Error` instead.
 
  *  Avoid `goto`.
 
@@ -67,6 +81,14 @@ on GitHub and most other Markdown renderers. -->
     ```go
     if s == "" {
             // …
+    }
+    ```
+
+    Except when the check is done to then use the first character:
+
+    ```go
+    if len(s) > 0 {
+            c := s[0]
     }
     ```
 
@@ -99,10 +121,11 @@ on GitHub and most other Markdown renderers. -->
     )
     ```
 
- *  Don't use naked `return`s.
+ *  Don't use `fmt.Sprintf` where a more structured approach to string
+    conversion could be used.  For example, `net.JoinHostPort` or
+    `url.(*URL).String`.
 
- *  Don't use underscores in file and package names, unless they're build tags
-    or for tests.  This is to prevent accidental build errors with weird tags.
+ *  Don't use naked `return`s.
 
  *  Don't write non-test code with more than four (**4**) levels of indentation.
     Just like [Linus said], plus an additional level for an occasional error
@@ -114,25 +137,7 @@ on GitHub and most other Markdown renderers. -->
  *  Eschew external dependencies, including transitive, unless
     absolutely necessary.
 
- *  Name benchmarks and tests using the same convention as examples.  For
-    example:
-
-    ```go
-    func TestFunction(t *testing.T) { /* … */ }
-    func TestFunction_suffix(t *testing.T) { /* … */ }
-    func TestType_Method(t *testing.T) { /* … */ }
-    func TestType_Method_suffix(t *testing.T) { /* … */ }
-    ```
-
- *  Name parameters in interface definitions:
-
-   ```go
-   type Frobulator interface {
-           Frobulate(f Foo, b Bar) (r Result, err error)
-   }
-   ```
-
- *  Name the deferred errors (e.g. when closing something) `derr`.
+ *  Minimize scope of variables as much as possible.
 
  *  No shadowing, since it can often lead to subtle bugs, especially with
     errors.
@@ -140,20 +145,12 @@ on GitHub and most other Markdown renderers. -->
  *  Prefer constants to variables where possible.  Reduce global variables.  Use
     [constant errors] instead of `errors.New`.
 
+ *  Prefer to use named functions for goroutines.
+
  *  Program code lines should not be longer than one hundred (**100**) columns.
     For comments, see the text section below.
 
- *  Unused arguments in anonymous functions must be called `_`:
-
-    ```go
-    v.onSuccess = func(_ int, msg string) {
-            // …
-    }
-    ```
-
- *  Use linters.
-
- *  Use named returns to improve readability of function signatures.
+ *  Use linters.  `make go-lint`.
 
  *  Write logs and error messages in lowercase only to make it easier to `grep`
     logs and error messages without using the `-i` flag.
@@ -211,6 +208,49 @@ on GitHub and most other Markdown renderers. -->
     }}
     ```
 
+ ###  <a id="naming" href="#naming">Naming</a>
+
+ *  Don't use underscores in file and package names, unless they're build tags
+    or for tests.  This is to prevent accidental build errors with weird tags.
+
+ *  Name benchmarks and tests using the same convention as examples.  For
+    example:
+
+    ```go
+    func TestFunction(t *testing.T) { /* … */ }
+    func TestFunction_suffix(t *testing.T) { /* … */ }
+    func TestType_Method(t *testing.T) { /* … */ }
+    func TestType_Method_suffix(t *testing.T) { /* … */ }
+    ```
+
+ *  Name parameters in interface definitions:
+
+    ```go
+    type Frobulator interface {
+            Frobulate(f Foo, b Bar) (r Result, err error)
+    }
+    ```
+
+ *  Name the deferred errors (e.g. when closing something) `derr`.
+
+ *  Unused arguments in anonymous functions must be called `_`:
+
+    ```go
+    v.onSuccess = func(_ int, msg string) {
+            // …
+    }
+    ```
+
+ *  Use named returns to improve readability of function signatures.
+
+ ###  <a id="testing" href="#testing">Testing</a>
+
+ *  Use `assert.NoError` and `require.NoError` instead of `assert.Nil` and
+    `require.Nil` on errors.
+
+ *  Use functions like `require.Foo` instead of `assert.Foo` when the test
+    cannot continue if the condition is false.
+
  ###  <a id="recommended-reading" href="#recommended-reading">Recommended Reading</a>
 
  *  <https://github.com/golang/go/wiki/CodeReviewComments>.
@@ -223,6 +263,8 @@ on GitHub and most other Markdown renderers. -->
 [Linus said]:               https://www.kernel.org/doc/html/v4.17/process/coding-style.html#indentation
 [Text, Including Comments]: #text-including-comments
 
+
+
 ##  <a id="markdown" href="#markdown">Markdown</a>
 
  *  **TODO(a.garipov):** Define more Markdown conventions.
@@ -233,6 +275,8 @@ on GitHub and most other Markdown renderers. -->
 
  *  Use either link references or link destinations only.  Put all link
     reference definitions at the end of the second-level block.
+
+
 
 ##  <a id="shell-scripting" href="#shell-scripting">Shell Scripting</a>
 
@@ -336,6 +380,7 @@ on GitHub and most other Markdown renderers. -->
     escaping is required or there are single quotes inside the string (e.g. for
     GitHub Actions).
 
- *  Use `>` for multiline strings, unless you need to keep the line breaks.
+ *  Use `>` for multiline strings, unless you need to keep the line breaks.  Use
+    `|` for multiline strings when you do.
 
 [NO-rway Law]: https://news.ycombinator.com/item?id=17359376
