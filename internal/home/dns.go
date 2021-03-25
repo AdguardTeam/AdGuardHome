@@ -61,18 +61,27 @@ func initDNSServer() error {
 	Context.dnsFilter = dnsfilter.New(&filterConf, nil)
 
 	p := dnsforward.DNSCreateParams{
-		DNSFilter: Context.dnsFilter,
-		Stats:     Context.stats,
-		QueryLog:  Context.queryLog,
+		DNSFilter:   Context.dnsFilter,
+		Stats:       Context.stats,
+		QueryLog:    Context.queryLog,
+		AutohostTLD: config.DNS.AutohostTLD,
 	}
 	if Context.dhcpServer != nil {
 		p.DHCPServer = Context.dhcpServer
 	}
-	Context.dnsServer = dnsforward.NewServer(p)
+
+	Context.dnsServer, err = dnsforward.NewServer(p)
+	if err != nil {
+		closeDNSServer()
+
+		return fmt.Errorf("dnsforward.NewServer: %w", err)
+	}
+
 	Context.clients.dnsServer = Context.dnsServer
 	dnsConfig, err := generateServerConfig()
 	if err != nil {
 		closeDNSServer()
+
 		return fmt.Errorf("generateServerConfig: %w", err)
 	}
 

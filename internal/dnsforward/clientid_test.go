@@ -118,7 +118,7 @@ func TestProcessClientID(t *testing.T) {
 		cliSrvName:   "!!!.example.com",
 		wantClientID: "",
 		wantErrMsg: `client id check: invalid client id: invalid char '!' ` +
-			`at index 0 in client id "!!!"`,
+			`at index 0 in "!!!"`,
 		wantRes:   resultCodeError,
 		strictSNI: true,
 	}, {
@@ -128,9 +128,9 @@ func TestProcessClientID(t *testing.T) {
 		cliSrvName: `abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmno` +
 			`pqrstuvwxyz0123456789.example.com`,
 		wantClientID: "",
-		wantErrMsg: `client id check: invalid client id: client id "abcdefghijklmno` +
+		wantErrMsg: `client id check: invalid client id: "abcdefghijklmno` +
 			`pqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789" ` +
-			`is too long, max: 64`,
+			`is too long, max: 63`,
 		wantRes:   resultCodeError,
 		strictSNI: true,
 	}, {
@@ -182,9 +182,9 @@ func TestProcessClientID(t *testing.T) {
 			assert.Equal(t, tc.wantClientID, dctx.clientID)
 
 			if tc.wantErrMsg == "" {
-				assert.Nil(t, dctx.err)
+				assert.NoError(t, dctx.err)
 			} else {
-				require.NotNil(t, dctx.err)
+				require.Error(t, dctx.err)
 				assert.Equal(t, tc.wantErrMsg, dctx.err.Error())
 			}
 		})
@@ -239,7 +239,7 @@ func TestProcessClientID_https(t *testing.T) {
 		path:         "/dns-query/!!!",
 		wantClientID: "",
 		wantErrMsg: `client id check: invalid client id: invalid char '!'` +
-			` at index 0 in client id "!!!"`,
+			` at index 0 in "!!!"`,
 		wantRes: resultCodeError,
 	}}
 
@@ -263,9 +263,10 @@ func TestProcessClientID_https(t *testing.T) {
 			assert.Equal(t, tc.wantClientID, dctx.clientID)
 
 			if tc.wantErrMsg == "" {
-				assert.Nil(t, dctx.err)
+				assert.NoError(t, dctx.err)
 			} else {
-				require.NotNil(t, dctx.err)
+				require.Error(t, dctx.err)
+
 				assert.Equal(t, tc.wantErrMsg, dctx.err.Error())
 			}
 		})

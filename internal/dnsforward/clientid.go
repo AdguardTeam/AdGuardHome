@@ -10,20 +10,31 @@ import (
 	"github.com/lucas-clemente/quic-go"
 )
 
-const maxDomainPartLen = 64
+// maxDomainLabelLen is the maximum allowed length of a domain name label
+// according to RFC 1035.
+const maxDomainLabelLen = 63
+
+// validateDomainNameLabel returns an error if label is not a valid label of
+// a domain name.
+func validateDomainNameLabel(label string) (err error) {
+	if len(label) > maxDomainLabelLen {
+		return fmt.Errorf("%q is too long, max: %d", label, maxDomainLabelLen)
+	}
+
+	for i, r := range label {
+		if (r < 'a' || r > 'z') && (r < '0' || r > '9') && r != '-' {
+			return fmt.Errorf("invalid char %q at index %d in %q", r, i, label)
+		}
+	}
+
+	return nil
+}
 
 // ValidateClientID returns an error if clientID is not a valid client ID.
 func ValidateClientID(clientID string) (err error) {
-	if len(clientID) > maxDomainPartLen {
-		return fmt.Errorf("client id %q is too long, max: %d", clientID, maxDomainPartLen)
-	}
-
-	for i, r := range clientID {
-		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
-			continue
-		}
-
-		return fmt.Errorf("invalid char %q at index %d in client id %q", r, i, clientID)
+	err = validateDomainNameLabel(clientID)
+	if err != nil {
+		return fmt.Errorf("invalid client id: %w", err)
 	}
 
 	return nil
@@ -49,7 +60,8 @@ func clientIDFromClientServerName(hostSrvName, cliSrvName string, strict bool) (
 	clientID = cliSrvName[:len(cliSrvName)-len(hostSrvName)-1]
 	err = ValidateClientID(clientID)
 	if err != nil {
-		return "", fmt.Errorf("invalid client id: %w", err)
+		// Don't wrap the error, because it's informative enough as is.
+		return "", err
 	}
 
 	return clientID, nil
@@ -93,7 +105,7 @@ func processClientIDHTTPS(ctx *dnsContext) (rc resultCode) {
 
 	err := ValidateClientID(clientID)
 	if err != nil {
-		ctx.err = fmt.Errorf("client id check: invalid client id: %w", err)
+		ctx.err = fmt.Errorf("client id check: %w", err)
 
 		return resultCodeError
 	}

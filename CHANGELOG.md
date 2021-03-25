@@ -15,6 +15,7 @@ and this project adheres to
 
 ### Added
 
+- The ability to set a custom TLD for known local-network hosts ([#2393]).
 - The ability to serve DNS queries on multiple hosts and interfaces ([#1401]).
 - `ips` and `text` DHCP server options ([#2385]).
 - `SRV` records support in `$dnsrewrite` filters ([#2533]).
@@ -41,6 +42,7 @@ and this project adheres to
 
 [#1401]: https://github.com/AdguardTeam/AdGuardHome/issues/1401
 [#2385]: https://github.com/AdguardTeam/AdGuardHome/issues/2385
+[#2393]: https://github.com/AdguardTeam/AdGuardHome/issues/2393
 [#2412]: https://github.com/AdguardTeam/AdGuardHome/issues/2412
 [#2498]: https://github.com/AdguardTeam/AdGuardHome/issues/2498
 [#2533]: https://github.com/AdguardTeam/AdGuardHome/issues/2533

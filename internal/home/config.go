@@ -93,6 +93,11 @@ type dnsConfig struct {
 	FilteringEnabled           bool             `yaml:"filtering_enabled"`       // whether or not use filter lists
 	FiltersUpdateIntervalHours uint32           `yaml:"filters_update_interval"` // time period to update filters (in hours)
 	DnsfilterConf              dnsfilter.Config `yaml:",inline"`
+
+	// AutohostTLD is the top-level domain used for known internal hosts.
+	// For example, a machine called "myhost" can be addressed as
+	// "myhost.lan" when AutohostTLD is "lan".
+	AutohostTLD string `yaml:"autohost_tld"`
 }
 
 type tlsConfigSettings struct {
@@ -144,6 +149,7 @@ var config = configuration{
 		},
 		FilteringEnabled:           true, // whether or not use filter lists
 		FiltersUpdateIntervalHours: 24,
+		AutohostTLD:                "lan",
 	},
 	TLS: tlsConfigSettings{
 		PortHTTPS:       443,

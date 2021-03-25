@@ -19,10 +19,9 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
-	"github.com/AdguardTeam/AdGuardHome/internal/util"
-
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/miekg/dns"
@@ -43,11 +42,11 @@ func startDeferStop(t *testing.T, s *Server) {
 	t.Helper()
 
 	err := s.Start()
-	require.Nilf(t, err, "failed to start server: %s", err)
+	require.NoErrorf(t, err, "failed to start server: %s", err)
 
 	t.Cleanup(func() {
 		serr := s.Stop()
-		require.Nilf(t, serr, "dns server failed to stop: %s", serr)
+		require.NoErrorf(t, serr, "dns server failed to stop: %s", serr)
 	})
 }
 
@@ -65,9 +64,13 @@ func createTestServer(t *testing.T, filterConf *dnsfilter.Config, forwardConf Se
 
 	f := dnsfilter.New(filterConf, filters)
 
-	s := NewServer(DNSCreateParams{DNSFilter: f})
+	s, err := NewServer(DNSCreateParams{DNSFilter: f})
+	require.NoError(t, err)
+
 	s.conf = forwardConf
-	require.Nil(t, s.Prepare(nil))
+
+	err = s.Prepare(nil)
+	require.NoError(t, err)
 
 	return s
 }
@@ -76,11 +79,11 @@ func createServerTLSConfig(t *testing.T) (*tls.Config, []byte, []byte) {
 	t.Helper()
 
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	require.Nilf(t, err, "cannot generate RSA key: %s", err)
+	require.NoErrorf(t, err, "cannot generate RSA key: %s", err)
 
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
-	require.Nilf(t, err, "failed to generate serial number: %s", err)
+	require.NoErrorf(t, err, "failed to generate serial number: %s", err)
 
 	notBefore := time.Now()
 	notAfter := notBefore.Add(5 * 365 * time.Hour * 24)
@@ -101,13 +104,13 @@ func createServerTLSConfig(t *testing.T) (*tls.Config, []byte, []byte) {
 	template.DNSNames = append(template.DNSNames, tlsServerName)
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, publicKey(privateKey), privateKey)
-	require.Nilf(t, err, "failed to create certificate: %s", err)
+	require.NoErrorf(t, err, "failed to create certificate: %s", err)
 
 	certPem := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 	keyPem := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)})
 
 	cert, err := tls.X509KeyPair(certPem, keyPem)
-	require.Nilf(t, err, "failed to create certificate: %s", err)
+	require.NoErrorf(t, err, "failed to create certificate: %s", err)
 
 	return &tls.Config{
 		Certificates: []tls.Certificate{cert},
@@ -131,7 +134,7 @@ func createTestTLS(t *testing.T, tlsConf TLSConfig) (s *Server, certPem []byte) 
 	s.conf.TLSConfig = tlsConf
 
 	err := s.Prepare(nil)
-	require.Nilf(t, err, "failed to prepare server: %s", err)
+	require.NoErrorf(t, err, "failed to prepare server: %s", err)
 
 	return s, certPem
 }
@@ -191,10 +194,10 @@ func sendTestMessagesAsync(t *testing.T, conn *dns.Conn) {
 			defer wg.Done()
 
 			err := conn.WriteMsg(msg)
-			require.Nilf(t, err, "cannot write message: %s", err)
+			require.NoErrorf(t, err, "cannot write message: %s", err)
 
 			res, err := conn.ReadMsg()
-			require.Nilf(t, err, "cannot read response to message: %s", err)
+			require.NoErrorf(t, err, "cannot read response to message: %s", err)
 
 			assertGoogleAResponse(t, res)
 		}()
@@ -248,7 +251,7 @@ func TestServer(t *testing.T) {
 			client := dns.Client{Net: tc.proto}
 
 			reply, _, err := client.Exchange(createGoogleATestMessage(), addr.String())
-			require.Nilf(t, err, "сouldn't talk to server %s: %s", addr, err)
+			require.NoErrorf(t, err, "сouldn't talk to server %s: %s", addr, err)
 
 			assertGoogleAResponse(t, reply)
 		})
@@ -275,7 +278,7 @@ func TestServerWithProtectionDisabled(t *testing.T) {
 	client := dns.Client{Net: proxy.ProtoUDP}
 
 	reply, _, err := client.Exchange(req, addr.String())
-	require.Nilf(t, err, "сouldn't talk to server %s: %s", addr, err)
+	require.NoErrorf(t, err, "сouldn't talk to server %s: %s", addr, err)
 	assertGoogleAResponse(t, reply)
 }
 
@@ -304,7 +307,7 @@ func TestDoTServer(t *testing.T) {
 	// Create a DNS-over-TLS client connection.
 	addr := s.dnsProxy.Addr(proxy.ProtoTLS)
 	conn, err := dns.DialWithTLS("tcp-tls", addr.String(), tlsConfig)
-	require.Nilf(t, err, "cannot connect to the proxy: %s", err)
+	require.NoErrorf(t, err, "cannot connect to the proxy: %s", err)
 
 	sendTestMessages(t, conn)
 }
@@ -326,12 +329,12 @@ func TestDoQServer(t *testing.T) {
 	addr := s.dnsProxy.Addr(proxy.ProtoQUIC)
 	opts := upstream.Options{InsecureSkipVerify: true}
 	u, err := upstream.AddressToUpstream(fmt.Sprintf("%s://%s", proxy.ProtoQUIC, addr), opts)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	// Send the test message.
 	req := createGoogleATestMessage()
 	res, err := u.Exchange(req)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	assertGoogleAResponse(t, res)
 }
@@ -369,7 +372,7 @@ func TestServerRace(t *testing.T) {
 	// Message over UDP.
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 	conn, err := dns.Dial(proxy.ProtoUDP, addr.String())
-	require.Nilf(t, err, "cannot connect to the proxy: %s", err)
+	require.NoErrorf(t, err, "cannot connect to the proxy: %s", err)
 
 	sendTestMessagesAsync(t, conn)
 }
@@ -432,7 +435,7 @@ func TestSafeSearch(t *testing.T) {
 			req := createTestMessage(tc.host)
 
 			reply, _, err := client.Exchange(req, addr)
-			require.Nilf(t, err, "couldn't talk to server %s: %s", addr, err)
+			require.NoErrorf(t, err, "couldn't talk to server %s: %s", addr, err)
 			assertResponse(t, reply, tc.want)
 		})
 	}
@@ -459,7 +462,7 @@ func TestInvalidRequest(t *testing.T) {
 		Timeout: 500 * time.Millisecond,
 	}).Exchange(&req, addr)
 
-	assert.Nil(t, err, "got a response to an invalid query")
+	assert.NoErrorf(t, err, "got a response to an invalid query")
 }
 
 func TestBlockedRequest(t *testing.T) {
@@ -479,7 +482,8 @@ func TestBlockedRequest(t *testing.T) {
 	req := createTestMessage("nxdomain.example.org.")
 
 	reply, err := dns.Exchange(req, addr.String())
-	require.Nilf(t, err, "couldn't talk to server %s: %s", addr, err)
+	require.NoErrorf(t, err, "couldn't talk to server %s: %s", addr, err)
+
 	assert.Equal(t, dns.RcodeSuccess, reply.Rcode)
 
 	require.Len(t, reply.Answer, 1)
@@ -514,8 +518,8 @@ func TestServerCustomClientUpstream(t *testing.T) {
 	req := createTestMessage("host.")
 
 	reply, err := dns.Exchange(req, addr.String())
+	require.NoError(t, err)
 
-	require.Nil(t, err)
 	assert.Equal(t, dns.RcodeSuccess, reply.Rcode)
 	require.NotEmpty(t, reply.Answer)
 
@@ -558,7 +562,8 @@ func TestBlockCNAMEProtectionEnabled(t *testing.T) {
 	req := createTestMessage("badhost.")
 
 	reply, err := dns.Exchange(req, addr.String())
-	require.Nil(t, err)
+	require.NoError(t, err)
+
 	assert.Equal(t, dns.RcodeSuccess, reply.Rcode)
 }
 
@@ -608,7 +613,8 @@ func TestBlockCNAME(t *testing.T) {
 			req := createTestMessage(tc.host)
 
 			reply, err := dns.Exchange(req, addr)
-			require.Nil(t, err)
+			require.NoError(t, err)
+
 			assert.Equal(t, dns.RcodeSuccess, reply.Rcode)
 			if tc.want {
 				require.Len(t, reply.Answer, 1)
@@ -658,7 +664,8 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 	// However, in our case it should not be blocked as filtering is
 	// disabled on the client level.
 	reply, err := dns.Exchange(&req, addr.String())
-	require.Nil(t, err)
+	require.NoError(t, err)
+
 	assert.Equal(t, dns.RcodeSuccess, reply.Rcode)
 }
 
@@ -689,7 +696,7 @@ func TestNullBlockedRequest(t *testing.T) {
 	}
 
 	reply, err := dns.Exchange(&req, addr.String())
-	require.Nilf(t, err, "couldn't talk to server %s: %s", addr, err)
+	require.NoErrorf(t, err, "couldn't talk to server %s: %s", addr, err)
 	require.Lenf(t, reply.Answer, 1, "dns server %s returned reply with wrong number of answers - %d", addr, len(reply.Answer))
 	a, ok := reply.Answer[0].(*dns.A)
 	require.Truef(t, ok, "dns server %s returned wrong answer type instead of A: %v", addr, reply.Answer[0])
@@ -703,9 +710,11 @@ func TestBlockedCustomIP(t *testing.T) {
 		Data: []byte(rules),
 	}}
 
-	s := NewServer(DNSCreateParams{
+	s, err := NewServer(DNSCreateParams{
 		DNSFilter: dnsfilter.New(&dnsfilter.Config{}, filters),
 	})
+	require.NoError(t, err)
+
 	conf := &ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
@@ -716,12 +725,16 @@ func TestBlockedCustomIP(t *testing.T) {
 			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
 		},
 	}
+
 	// Invalid BlockingIPv4.
-	assert.NotNil(t, s.Prepare(conf))
+	err = s.Prepare(conf)
+	assert.Error(t, err)
 
 	conf.BlockingIPv4 = net.IP{0, 0, 0, 1}
 	conf.BlockingIPv6 = net.ParseIP("::1")
-	require.Nil(t, s.Prepare(conf))
+
+	err = s.Prepare(conf)
+	require.NoError(t, err)
 
 	startDeferStop(t, s)
 
@@ -729,18 +742,24 @@ func TestBlockedCustomIP(t *testing.T) {
 
 	req := createTestMessageWithType("null.example.org.", dns.TypeA)
 	reply, err := dns.Exchange(req, addr.String())
-	require.Nil(t, err)
+	require.NoError(t, err)
+
 	require.Len(t, reply.Answer, 1)
+
 	a, ok := reply.Answer[0].(*dns.A)
 	require.True(t, ok)
+
 	assert.True(t, net.IP{0, 0, 0, 1}.Equal(a.A))
 
 	req = createTestMessageWithType("null.example.org.", dns.TypeAAAA)
 	reply, err = dns.Exchange(req, addr.String())
-	require.Nil(t, err)
+	require.NoError(t, err)
+
 	require.Len(t, reply.Answer, 1)
+
 	a6, ok := reply.Answer[0].(*dns.AAAA)
 	require.True(t, ok)
+
 	assert.Equal(t, "::1", a6.AAAA.String())
 }
 
@@ -760,7 +779,7 @@ func TestBlockedByHosts(t *testing.T) {
 	req := createTestMessage("host.example.org.")
 
 	reply, err := dns.Exchange(req, addr.String())
-	require.Nilf(t, err, "couldn't talk to server %s: %s", addr, err)
+	require.NoErrorf(t, err, "couldn't talk to server %s: %s", addr, err)
 	require.Lenf(t, reply.Answer, 1, "dns server %s returned reply with wrong number of answers - %d", addr, len(reply.Answer))
 	a, ok := reply.Answer[0].(*dns.A)
 	require.Truef(t, ok, "dns server %s returned wrong answer type instead of A: %v", addr, reply.Answer[0])
@@ -796,7 +815,7 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 	req := createTestMessage(hostname + ".")
 
 	reply, err := dns.Exchange(req, addr.String())
-	require.Nilf(t, err, "couldn't talk to server %s: %s", addr, err)
+	require.NoErrorf(t, err, "couldn't talk to server %s: %s", addr, err)
 	require.Lenf(t, reply.Answer, 1, "dns server %s returned reply with wrong number of answers - %d", addr, len(reply.Answer))
 
 	a, ok := reply.Answer[0].(*dns.A)
@@ -822,15 +841,19 @@ func TestRewrite(t *testing.T) {
 	}
 	f := dnsfilter.New(c, nil)
 
-	s := NewServer(DNSCreateParams{DNSFilter: f})
-	assert.Nil(t, s.Prepare(&ServerConfig{
+	s, err := NewServer(DNSCreateParams{DNSFilter: f})
+	require.NoError(t, err)
+
+	err = s.Prepare(&ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 			UpstreamDNS:       []string{"8.8.8.8:53"},
 		},
-	}))
+	})
+	assert.NoError(t, err)
+
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
 		&aghtest.TestUpstream{
 			CName: map[string]string{
@@ -847,34 +870,41 @@ func TestRewrite(t *testing.T) {
 
 	req := createTestMessageWithType("test.com.", dns.TypeA)
 	reply, err := dns.Exchange(req, addr.String())
-	require.Nil(t, err)
+	require.NoError(t, err)
+
 	require.Len(t, reply.Answer, 1)
+
 	a, ok := reply.Answer[0].(*dns.A)
 	require.True(t, ok)
+
 	assert.True(t, net.IP{1, 2, 3, 4}.Equal(a.A))
 
 	req = createTestMessageWithType("test.com.", dns.TypeAAAA)
 	reply, err = dns.Exchange(req, addr.String())
-	require.Nil(t, err)
+	require.NoError(t, err)
+
 	assert.Empty(t, reply.Answer)
 
 	req = createTestMessageWithType("alias.test.com.", dns.TypeA)
 	reply, err = dns.Exchange(req, addr.String())
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.Len(t, reply.Answer, 2)
+
 	assert.Equal(t, "test.com.", reply.Answer[0].(*dns.CNAME).Target)
 	assert.True(t, net.IP{1, 2, 3, 4}.Equal(reply.Answer[1].(*dns.A).A))
 
 	req = createTestMessageWithType("my.alias.example.org.", dns.TypeA)
 	reply, err = dns.Exchange(req, addr.String())
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	// The original question is restored.
 	require.Len(t, reply.Question, 1)
+
 	assert.Equal(t, "my.alias.example.org.", reply.Question[0].Name)
 
 	require.Len(t, reply.Answer, 2)
+
 	assert.Equal(t, "example.org.", reply.Answer[0].(*dns.CNAME).Target)
 	assert.Equal(t, dns.TypeA, reply.Answer[1].Header().Rrtype)
 }
@@ -1104,17 +1134,23 @@ func (d *testDHCP) Leases(flags int) []dhcpd.Lease {
 func (d *testDHCP) SetOnLeaseChanged(onLeaseChanged dhcpd.OnLeaseChangedT) {}
 
 func TestPTRResponseFromDHCPLeases(t *testing.T) {
-	s := NewServer(DNSCreateParams{
+	s, err := NewServer(DNSCreateParams{
 		DNSFilter:  dnsfilter.New(&dnsfilter.Config{}, nil),
 		DHCPServer: &testDHCP{},
 	})
+	require.NoError(t, err)
 
 	s.conf.UDPListenAddrs = []*net.UDPAddr{{}}
 	s.conf.TCPListenAddrs = []*net.TCPAddr{{}}
 	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
 	s.conf.FilteringConfig.ProtectionEnabled = true
-	require.Nil(t, s.Prepare(nil))
-	require.Nil(t, s.Start())
+
+	err = s.Prepare(nil)
+	require.NoError(t, err)
+
+	err = s.Start()
+	require.NoError(t, err)
+
 	t.Cleanup(func() {
 		s.Close()
 	})
@@ -1123,8 +1159,10 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	req := createTestMessageWithType("1.0.0.127.in-addr.arpa.", dns.TypePTR)
 
 	resp, err := dns.Exchange(req, addr.String())
-	require.Nil(t, err)
+	require.NoError(t, err)
+
 	require.Len(t, resp.Answer, 1)
+
 	assert.Equal(t, dns.TypePTR, resp.Answer[0].Header().Rrtype)
 	assert.Equal(t, "1.0.0.127.in-addr.arpa.", resp.Answer[0].Header().Name)
 
@@ -1140,10 +1178,11 @@ func TestPTRResponseFromHosts(t *testing.T) {
 
 	// Prepare test hosts file.
 	hf, err := ioutil.TempFile("", "")
-	require.Nil(t, err)
+	require.NoError(t, err)
+
 	t.Cleanup(func() {
-		assert.Nil(t, hf.Close())
-		assert.Nil(t, os.Remove(hf.Name()))
+		assert.NoError(t, hf.Close())
+		assert.NoError(t, os.Remove(hf.Name()))
 	})
 
 	_, _ = hf.WriteString("  127.0.0.1   host # comment \n")
@@ -1153,14 +1192,20 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	c.AutoHosts.Init(hf.Name())
 	t.Cleanup(c.AutoHosts.Close)
 
-	s := NewServer(DNSCreateParams{DNSFilter: dnsfilter.New(&c, nil)})
+	s, err := NewServer(DNSCreateParams{DNSFilter: dnsfilter.New(&c, nil)})
+	require.NoError(t, err)
+
 	s.conf.UDPListenAddrs = []*net.UDPAddr{{}}
 	s.conf.TCPListenAddrs = []*net.TCPAddr{{}}
 	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
 	s.conf.FilteringConfig.ProtectionEnabled = true
-	require.Nil(t, s.Prepare(nil))
 
-	require.Nil(t, s.Start())
+	err = s.Prepare(nil)
+	require.NoError(t, err)
+
+	err = s.Start()
+	require.NoError(t, err)
+
 	t.Cleanup(func() {
 		s.Close()
 	})
@@ -1169,12 +1214,50 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	req := createTestMessageWithType("1.0.0.127.in-addr.arpa.", dns.TypePTR)
 
 	resp, err := dns.Exchange(req, addr.String())
-	require.Nil(t, err)
+	require.NoError(t, err)
+
 	require.Len(t, resp.Answer, 1)
+
 	assert.Equal(t, dns.TypePTR, resp.Answer[0].Header().Rrtype)
 	assert.Equal(t, "1.0.0.127.in-addr.arpa.", resp.Answer[0].Header().Name)
 
 	ptr, ok := resp.Answer[0].(*dns.PTR)
 	require.True(t, ok)
 	assert.Equal(t, "host.", ptr.Ptr)
+}
+
+func TestNewServer(t *testing.T) {
+	testCases := []struct {
+		name       string
+		in         DNSCreateParams
+		wantErrMsg string
+	}{{
+		name:       "success",
+		in:         DNSCreateParams{},
+		wantErrMsg: "",
+	}, {
+		name: "success_autohost_tld",
+		in: DNSCreateParams{
+			AutohostTLD: "mynet",
+		},
+		wantErrMsg: "",
+	}, {
+		name: "bad_autohost_tld",
+		in: DNSCreateParams{
+			AutohostTLD: "!!!",
+		},
+		wantErrMsg: `autohost tld: invalid char '!' at index 0 in "!!!"`,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := NewServer(tc.in)
+			if tc.wantErrMsg == "" {
+				assert.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				assert.Equal(t, tc.wantErrMsg, err.Error())
+			}
+		})
+	}
 }

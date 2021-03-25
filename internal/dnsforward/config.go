@@ -277,7 +277,7 @@ func (s *Server) prepareUpstreamSettings() error {
 			s := util.SplitNext(&d, '\n')
 			upstreams = append(upstreams, s)
 		}
-		log.Debug("DNS: using %d upstream servers from file %s", len(upstreams), s.conf.UpstreamDNSFileName)
+		log.Debug("dns: using %d upstream servers from file %s", len(upstreams), s.conf.UpstreamDNSFileName)
 	} else {
 		upstreams = s.conf.UpstreamDNS
 	}
@@ -357,11 +357,11 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) error {
 		}
 		if len(x.DNSNames) != 0 {
 			s.conf.dnsNames = x.DNSNames
-			log.Debug("DNS: using DNS names from certificate's SAN: %v", x.DNSNames)
+			log.Debug("dns: using DNS names from certificate's SAN: %v", x.DNSNames)
 			sort.Strings(s.conf.dnsNames)
 		} else {
 			s.conf.dnsNames = append(s.conf.dnsNames, x.Subject.CommonName)
-			log.Debug("DNS: using DNS name from certificate's CN: %s", x.Subject.CommonName)
+			log.Debug("dns: using DNS name from certificate's CN: %s", x.Subject.CommonName)
 		}
 	}
 
@@ -377,7 +377,7 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) error {
 // If the server name (from SNI) supplied by client is incorrect - we terminate the ongoing TLS handshake.
 func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	if s.conf.StrictSNICheck && !matchDNSName(s.conf.dnsNames, ch.ServerName) {
-		log.Info("DNS: TLS: unknown SNI in Client Hello: %s", ch.ServerName)
+		log.Info("dns: tls: unknown SNI in Client Hello: %s", ch.ServerName)
 		return nil, fmt.Errorf("invalid SNI")
 	}
 	return &s.conf.cert, nil
