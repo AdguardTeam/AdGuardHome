@@ -659,6 +659,55 @@ func (d *DNSFilter) matchHostProcessAllowList(host string, dnsres urlfilter.DNSR
 	return makeResult(rule, NotFilteredAllowList), nil
 }
 
+// matchHostProcessDNSResult processes the matched DNS filtering result.
+func (d *DNSFilter) matchHostProcessDNSResult(
+	qtype uint16,
+	dnsres urlfilter.DNSResult,
+) (res Result) {
+	if dnsres.NetworkRule != nil {
+		reason := FilteredBlockList
+		if dnsres.NetworkRule.Whitelist {
+			reason = NotFilteredAllowList
+		}
+
+		return makeResult(dnsres.NetworkRule, reason)
+	}
+
+	if qtype == dns.TypeA && dnsres.HostRulesV4 != nil {
+		rule := dnsres.HostRulesV4[0]
+		res = makeResult(rule, FilteredBlockList)
+		res.Rules[0].IP = rule.IP.To4()
+
+		return res
+	}
+
+	if qtype == dns.TypeAAAA && dnsres.HostRulesV6 != nil {
+		rule := dnsres.HostRulesV6[0]
+		res = makeResult(rule, FilteredBlockList)
+		res.Rules[0].IP = rule.IP.To16()
+
+		return res
+	}
+
+	if dnsres.HostRulesV4 != nil || dnsres.HostRulesV6 != nil {
+		// Question type doesn't match the host rules.  Return the first
+		// matched host rule, but without an IP address.
+		var rule rules.Rule
+		if dnsres.HostRulesV4 != nil {
+			rule = dnsres.HostRulesV4[0]
+		} else if dnsres.HostRulesV6 != nil {
+			rule = dnsres.HostRulesV6[0]
+		}
+
+		res = makeResult(rule, FilteredBlockList)
+		res.Rules[0].IP = net.IP{}
+
+		return res
+	}
+
+	return Result{}
+}
+
 // matchHost is a low-level way to check only if hostname is filtered by rules,
 // skipping expensive safebrowsing and parental lookups.
 func (d *DNSFilter) matchHost(
@@ -697,13 +746,12 @@ func (d *DNSFilter) matchHost(
 
 	dnsres, ok := d.filteringEngine.MatchRequest(ureq)
 
-	// Check DNS rewrites first, because the API there is a bit
-	// awkward.
+	// Check DNS rewrites first, because the API there is a bit awkward.
 	if dnsr := dnsres.DNSRewrites(); len(dnsr) > 0 {
 		res = d.processDNSRewrites(dnsr)
 		if res.Reason == RewrittenRule && res.CanonName == host {
-			// A rewrite of a host to itself.  Go on and
-			// try matching other things.
+			// A rewrite of a host to itself.  Go on and try
+			// matching other things.
 		} else {
 			return res, nil
 		}
@@ -711,55 +759,18 @@ func (d *DNSFilter) matchHost(
 		return Result{}, nil
 	}
 
-	if dnsres.NetworkRule != nil {
-		log.Debug("Filtering: found rule for host %q: %q  list_id: %d",
-			host, dnsres.NetworkRule.Text(), dnsres.NetworkRule.GetFilterListID())
-		reason := FilteredBlockList
-		if dnsres.NetworkRule.Whitelist {
-			reason = NotFilteredAllowList
-		}
-
-		return makeResult(dnsres.NetworkRule, reason), nil
+	res = d.matchHostProcessDNSResult(qtype, dnsres)
+	if len(res.Rules) > 0 {
+		r := res.Rules[0]
+		log.Debug(
+			"filtering: found rule %q for host %q, filter list id: %d",
+			r.Text,
+			host,
+			r.FilterListID,
+		)
 	}
 
-	if qtype == dns.TypeA && dnsres.HostRulesV4 != nil {
-		rule := dnsres.HostRulesV4[0] // note that we process only 1 matched rule
-		log.Debug("Filtering: found rule for host %q: %q  list_id: %d",
-			host, rule.Text(), rule.GetFilterListID())
-		res = makeResult(rule, FilteredBlockList)
-		res.Rules[0].IP = rule.IP.To4()
-
-		return res, nil
-	}
-
-	if qtype == dns.TypeAAAA && dnsres.HostRulesV6 != nil {
-		rule := dnsres.HostRulesV6[0] // note that we process only 1 matched rule
-		log.Debug("Filtering: found rule for host %q: %q  list_id: %d",
-			host, rule.Text(), rule.GetFilterListID())
-		res = makeResult(rule, FilteredBlockList)
-		res.Rules[0].IP = rule.IP
-
-		return res, nil
-	}
-
-	if dnsres.HostRulesV4 != nil || dnsres.HostRulesV6 != nil {
-		// Question Type doesn't match the host rules
-		// Return the first matched host rule, but without an IP address
-		var rule rules.Rule
-		if dnsres.HostRulesV4 != nil {
-			rule = dnsres.HostRulesV4[0]
-		} else if dnsres.HostRulesV6 != nil {
-			rule = dnsres.HostRulesV6[0]
-		}
-		log.Debug("Filtering: found rule for host %q: %q  list_id: %d",
-			host, rule.Text(), rule.GetFilterListID())
-		res = makeResult(rule, FilteredBlockList)
-		res.Rules[0].IP = net.IP{}
-
-		return res, nil
-	}
-
-	return Result{}, nil
+	return res, nil
 }
 
 // makeResult returns a properly constructed Result.

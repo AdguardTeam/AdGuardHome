@@ -128,6 +128,12 @@ exit_on_output() (
 
 
 
+# Constants
+
+readonly go_files='./main.go ./tools.go ./internal/'
+
+
+
 # Checks
 
 exit_on_output blocklist_imports
@@ -142,11 +148,12 @@ golint --set_exit_status ./...
 
 "$GO" vet ./...
 
-gocyclo --over 19 .
+# Here and below, don't use quotes to get word splitting.
+gocyclo --over 18 $go_files
 
-gosec --quiet .
+gosec --quiet $go_files
 
-ineffassign .
+ineffassign ./...
 
 unparam ./...
 
