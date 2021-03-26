@@ -149,7 +149,7 @@ golint --set_exit_status ./...
 "$GO" vet ./...
 
 # Here and below, don't use quotes to get word splitting.
-gocyclo --over 18 $go_files
+gocyclo --over 17 $go_files
 
 gosec --quiet $go_files
 
