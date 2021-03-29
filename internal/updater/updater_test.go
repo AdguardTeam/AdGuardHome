@@ -100,7 +100,7 @@ func TestUpdateGetVersion(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	wd := aghtest.PrepareTestDir(t)
+	wd := t.TempDir()
 
 	assert.Nil(t, ioutil.WriteFile(filepath.Join(wd, "AdGuardHome"), []byte("AdGuardHome"), 0o755))
 	assert.Nil(t, ioutil.WriteFile(filepath.Join(wd, "README.md"), []byte("README.md"), 0o644))
@@ -166,7 +166,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestUpdateWindows(t *testing.T) {
-	wd := aghtest.PrepareTestDir(t)
+	wd := t.TempDir()
 
 	assert.Nil(t, ioutil.WriteFile(filepath.Join(wd, "AdGuardHome.exe"), []byte("AdGuardHome.exe"), 0o755))
 	assert.Nil(t, ioutil.WriteFile(filepath.Join(wd, "README.md"), []byte("README.md"), 0o644))

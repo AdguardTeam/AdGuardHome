@@ -12,10 +12,45 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// prepareTestFile prepares one test query log file with the specified lines
+// count.
+func prepareTestFile(t *testing.T, dir string, linesNum int) (name string) {
+	t.Helper()
+
+	f, err := ioutil.TempFile(dir, "*.txt")
+	require.NoError(t, err)
+	// Use defer and not t.Cleanup to make sure that the file is closed
+	// after this function is done.
+	defer func() {
+		derr := f.Close()
+		require.NoError(t, derr)
+	}()
+
+	const ans = `"AAAAAAABAAEAAAAAB2V4YW1wbGUDb3JnAAABAAEHZXhhbXBsZQNvcmcAAAEAAQAAAAAABAECAwQ="`
+	const format = `{"IP":%q,"T":%q,"QH":"example.org","QT":"A","QC":"IN",` +
+		`"Answer":` + ans + `,"Result":{},"Elapsed":0,"Upstream":"upstream"}` + "\n"
+
+	var lineIP uint32
+	lineTime := time.Date(2020, 2, 18, 19, 36, 35, 920973000, time.UTC)
+	for i := 0; i < linesNum; i++ {
+		lineIP++
+		lineTime = lineTime.Add(time.Second)
+
+		ip := make(net.IP, 4)
+		binary.BigEndian.PutUint32(ip, lineIP)
+
+		line := fmt.Sprintf(format, ip, lineTime.Format(time.RFC3339Nano))
+
+		_, err = f.WriteString(line)
+		require.NoError(t, err)
+	}
+
+	return f.Name()
+}
 
 // prepareTestFiles prepares several test query log files, each with the
 // specified lines count.
@@ -26,47 +61,14 @@ func prepareTestFiles(t *testing.T, filesNum, linesNum int) []string {
 		return []string{}
 	}
 
-	const strV = "\"%s\""
-	const nl = "\n"
-	const format = `{"IP":` + strV + `,"T":` + strV + `,` +
-		`"QH":"example.org","QT":"A","QC":"IN",` +
-		`"Answer":"AAAAAAABAAEAAAAAB2V4YW1wbGUDb3JnAAABAAEHZXhhbXBsZQNvcmcAAAEAAQAAAAAABAECAwQ=",` +
-		`"Result":{},"Elapsed":0,"Upstream":"upstream"}` + nl
-
-	lineTime, _ := time.Parse(time.RFC3339Nano, "2020-02-18T22:36:35.920973+03:00")
-	lineIP := uint32(0)
-
-	dir := aghtest.PrepareTestDir(t)
+	dir := t.TempDir()
 
 	files := make([]string, filesNum)
-	for j := range files {
-		f, err := ioutil.TempFile(dir, "*.txt")
-		require.Nil(t, err)
-		files[filesNum-j-1] = f.Name()
-
-		for i := 0; i < linesNum; i++ {
-			lineIP++
-			lineTime = lineTime.Add(time.Second)
-
-			ip := make(net.IP, 4)
-			binary.BigEndian.PutUint32(ip, lineIP)
-
-			line := fmt.Sprintf(format, ip, lineTime.Format(time.RFC3339Nano))
-
-			_, err = f.WriteString(line)
-			require.Nil(t, err)
-		}
+	for i := range files {
+		files[filesNum-i-1] = prepareTestFile(t, dir, linesNum)
 	}
 
 	return files
-}
-
-// prepareTestFile prepares a test query log file with the specified number of
-// lines.
-func prepareTestFile(t *testing.T, linesCount int) string {
-	t.Helper()
-
-	return prepareTestFiles(t, 1, linesCount)[0]
 }
 
 // newTestQLogFile creates new *QLogFile for tests and registers the required
@@ -74,7 +76,7 @@ func prepareTestFile(t *testing.T, linesCount int) string {
 func newTestQLogFile(t *testing.T, linesNum int) (file *QLogFile) {
 	t.Helper()
 
-	testFile := prepareTestFile(t, linesNum)
+	testFile := prepareTestFiles(t, 1, linesNum)[0]
 
 	// Create the new QLogFile instance.
 	file, err := NewQLogFile(testFile)
@@ -283,7 +285,7 @@ func TestQLogFile(t *testing.T) {
 }
 
 func NewTestQLogFileData(t *testing.T, data string) (file *QLogFile) {
-	f, err := ioutil.TempFile(aghtest.PrepareTestDir(t), "*.txt")
+	f, err := ioutil.TempFile(t.TempDir(), "*.txt")
 	require.Nil(t, err)
 	t.Cleanup(func() {
 		assert.Nil(t, f.Close())

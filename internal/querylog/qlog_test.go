@@ -28,7 +28,7 @@ func TestQueryLog(t *testing.T) {
 		FileEnabled: true,
 		Interval:    1,
 		MemSize:     100,
-		BaseDir:     aghtest.PrepareTestDir(t),
+		BaseDir:     t.TempDir(),
 	})
 
 	// Add disk entries.
@@ -130,7 +130,7 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 		Enabled:  true,
 		Interval: 1,
 		MemSize:  100,
-		BaseDir:  aghtest.PrepareTestDir(t),
+		BaseDir:  t.TempDir(),
 	})
 
 	const (
@@ -204,7 +204,7 @@ func TestQueryLogMaxFileScanEntries(t *testing.T) {
 		FileEnabled: true,
 		Interval:    1,
 		MemSize:     100,
-		BaseDir:     aghtest.PrepareTestDir(t),
+		BaseDir:     t.TempDir(),
 	})
 
 	const entNum = 10
@@ -232,7 +232,7 @@ func TestQueryLogFileDisabled(t *testing.T) {
 		FileEnabled: false,
 		Interval:    1,
 		MemSize:     2,
-		BaseDir:     aghtest.PrepareTestDir(t),
+		BaseDir:     t.TempDir(),
 	})
 
 	addEntry(l, "example1.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))

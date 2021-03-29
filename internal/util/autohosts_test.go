@@ -21,7 +21,7 @@ func TestMain(m *testing.M) {
 func prepareTestFile(t *testing.T) (f *os.File) {
 	t.Helper()
 
-	dir := aghtest.PrepareTestDir(t)
+	dir := t.TempDir()
 
 	f, err := ioutil.TempFile(dir, "")
 	require.Nil(t, err)
