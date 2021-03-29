@@ -1,7 +1,7 @@
 {
     "client_settings": "Setări client",
     "example_upstream_reserved": "Puteți preciza un DNS în amonte <0>de domeniu(ii) specific(e)</0>",
-    "example_upstream_comment": "Puteți specifica comentariul",
+    "example_upstream_comment": "Puteți menționa comentariul",
     "upstream_parallel": "Folosiți interogări paralele pentru rezolvări rapide interogând simultan toate serverele în amonte",
     "parallel_requests": "Solicitări paralele",
     "load_balancing": "Echilibrare-sarcini",
@@ -122,7 +122,7 @@
     "use_adguard_parental": "Utilizați Controlul Parental AdGuard",
     "use_adguard_parental_hint": "AdGuard Home va verifica pentru conținut adult pe domeniu. Utilizează același API discret ca cel utilizat de serviciul de securitate de navigare.",
     "enforce_safe_search": "Căutare protejată întărită",
-    "enforce_save_search_hint": "AdGuard Home poate impune căutarea protejată în următoarele motoare de căutare: Google, Youtube, Bing, DuckDuckGo, Yandex, Pixabay.",
+    "enforce_save_search_hint": "AdGuard Home poate impune căutarea protejată în următoarele motoare de căutare: Google, YouTube, Bing, DuckDuckGo, Yandex, Pixabay.",
     "no_servers_specified": "Nu sunt specificate servere",
     "general_settings": "Setări Generale",
     "dns_settings": "Setări DNS",

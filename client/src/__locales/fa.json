@@ -112,7 +112,6 @@
     "use_adguard_parental": "از سرویس وب نظارت والدین AdGuard استفاده کن",
     "use_adguard_parental_hint": "AdGuard Home بررسی می کند اگر دامنه حاوی موارد غیر اخلاقی است.آن از همان اِی پی آی دارای حریم خصوصی سرویس وب امنیت وب گردی استفاده می کند.",
     "enforce_safe_search": "اجبار جستجوی اَمن",
-    "enforce_save_search_hint": "AdGuard Home میتواند جستجوی اَمن را در موتور جستجوهای زیر اعمال کند:گوگل،یوتوب،بینگ و یاندکس",
     "no_servers_specified": "سروری تعیین نشده است",
     "general_settings": "تنظیمات عمومی",
     "dns_settings": "تنظیمات DNS",

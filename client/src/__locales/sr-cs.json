@@ -121,7 +121,6 @@
     "use_adguard_parental": "Koristi AdGuard-ovu uslugu roditeljske kontrole",
     "use_adguard_parental_hint": "AdGuard Home će proveriti da li domen sadrži sadržaj za odrasle. Koristi se isti privatni prijateljski API kao i kod usluge bezbednog pregledanja.",
     "enforce_safe_search": "Nametni sigurno pretraživanje",
-    "enforce_save_search_hint": "AdGuard Home može nametnuti sigurno pretraživanje u sledećim pretraživačima: Google, Youtube, Bing, DuckDuckGo i Yandex.",
     "no_servers_specified": "Serveri nisu određeni",
     "general_settings": "Opšte postavke",
     "dns_settings": "DNS postavke",

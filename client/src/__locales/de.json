@@ -122,7 +122,7 @@
     "use_adguard_parental": "AdGuard Webservice für Kindersicherung verwenden",
     "use_adguard_parental_hint": "AdGuard Home wird prüfen, ob die Domain jugendgefährdende Inhalte enthält. Zum Schutz Ihrer Privatsphäre wird die selbe API wie für den Webservice für Internetsicherheit verwendet.",
     "enforce_safe_search": "SafeSearch erzwingen",
-    "enforce_save_search_hint": "AdGuard kann SafeSearch für folgende Suchmaschinen erzwingen: Google, Youtube, Bing und Yandex.",
+    "enforce_save_search_hint": "AdGuard kann SafeSearch für folgende Suchmaschinen erzwingen: Google, YouTube, Bing und Yandex.",
     "no_servers_specified": "Keine Server festgelegt",
     "general_settings": "Allgemeine Einstellungen",
     "dns_settings": "DNS-Einstellungen",

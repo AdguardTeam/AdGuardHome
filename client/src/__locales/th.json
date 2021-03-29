@@ -101,7 +101,6 @@
     "use_adguard_parental": "ใช้บริการเว็บการควบคุมโดยผู้ปกครองของ AdGuard",
     "use_adguard_parental_hint": "AdGuard Home จะตรวจสอบว่าโดเมนมีเนื้อหาสำหรับผู้ใหญ่หรือไม่ มันใช้ API ความเป็นส่วนตัวเช่นเดียวกับบริการเว็บการรักษาความปลอดภัยการท่องเว็บ",
     "enforce_safe_search": "บังคับใช้การค้นหาที่ปลอดภัย",
-    "enforce_save_search_hint": "AdGuard Home สามารถบังคับใช้การค้นหาที่ปลอดภัยในเครื่องมือค้นหาต่อไปนี้: Google, Youtube, Bing, DuckDuckGo, Yandex, Pixabay",
     "no_servers_specified": "ไม่ได้ระบุเซิร์ฟเวอร์",
     "general_settings": "การตั้งค่าทั่วไป",
     "dns_settings": "การตั้งค่า DNS",

@@ -122,7 +122,6 @@
     "use_adguard_parental": "Benytt AdGuard sin foreldrekontroll-nettjeneste",
     "use_adguard_parental_hint": "AdGuard Home vil sjekke om domenet inneholder erotisk materiale. Den benytter den samme privatlivsvennlige API-en som nettlesersikkerhetstjenesten.",
     "enforce_safe_search": "Påtving barnevennlige søk",
-    "enforce_save_search_hint": "AdGuard Home kan fremtvinge \"Safe Search\" i de følgende søkemotorene: Google, YouTube, Bing, DuckDuckGo, og Yandex.",
     "no_servers_specified": "Ingen tjenere er spesifisert",
     "general_settings": "Generelle innstillinger",
     "dns_settings": "DNS-innstillinger",

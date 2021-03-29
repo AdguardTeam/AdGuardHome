@@ -122,7 +122,6 @@
     "use_adguard_parental": "Ужывайце модуль Бацькоўскага кантролю AdGuard ",
     "use_adguard_parental_hint": "AdGuard Home праверыць, ці ўтрымвае дамен матэрыялы 18+. Ён выкарыстоўвае той жа API для забеспячэння прыватнасці, што і ўэб-служба бяспекі браўзара.",
     "enforce_safe_search": "Узмацніць бяспечны пошук",
-    "enforce_save_search_hint": "AdGuard Home можа забяспечыць бяспечны пошук у наступных пошукавых сістэмах: Google, Youtube, Bing, DuckDuckGo, Yandex і Pixabay.",
     "no_servers_specified": "Не паказаных сервераў",
     "general_settings": "Асноўныя налады",
     "dns_settings": "Налады DNS",

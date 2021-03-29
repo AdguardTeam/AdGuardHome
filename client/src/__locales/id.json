@@ -121,7 +121,6 @@
     "use_adguard_parental": "Gunakan layanan web kontrol orang tua AdGuard",
     "use_adguard_parental_hint": "AdGuard Home akan mengecek jika domain mengandung materi dewasa. Akan menggunakan API yang ramah privasi yang sama sebagai layanan web keamanan penjelajahan.",
     "enforce_safe_search": "Paksa penelusuran aman",
-    "enforce_save_search_hint": "AdGuard Home dapat memaksa penelusuran aman pada mesin pencari berikut: Google, Youtube, Bing, dan Yandex.",
     "no_servers_specified": "Sever tidak disebutkan",
     "general_settings": "Pengaturan umum",
     "dns_settings": "Pengaturan DNS",

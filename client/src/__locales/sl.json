@@ -122,7 +122,7 @@
     "use_adguard_parental": "Uporabi AdGuardovo spletno storitev 'Starševski nadzor'",
     "use_adguard_parental_hint": "AdGuard Home bo preveril, če domena vsebuje  vsebine za odrasle. Uporablja enako, za zasebnost prijazen API, kot spletno storitev za varnost brskanja.",
     "enforce_safe_search": "Vsili varno iskanje",
-    "enforce_save_search_hint": "AdGuard Home lahko uveljavi varno iskanje v naslednjih iskalnikih: Google, Youtube, Bing, DuckDuckGo, Yandex, Pixabay.",
+    "enforce_save_search_hint": "AdGuard Home lahko prisili varno iskanje v naslednjih iskalnikih: Google, YouTube, Bing, DuckDuckGo, Yandex, Pixabay.",
     "no_servers_specified": "Ni določenih strežnikov",
     "general_settings": "Splošne nastavitve",
     "dns_settings": "Nastavitve DNS",

@@ -77,7 +77,6 @@
     "use_adguard_parental": "Включи AdGuard Родителски Надзор",
     "use_adguard_parental_hint": "Модул XXX в AdGuard Home ще провери дали страницата има материали за възвъстни. Използва се същия API за анонимност като при модула за Сигурност.",
     "enforce_safe_search": "Включи Безопасно Търсене",
-    "enforce_save_search_hint": "AdGuard Home прилага Безопасно Търсене в следните търсачки и сайтове: Google, Youtube, Bing, и Yandex.",
     "no_servers_specified": "Няма избрани услуги",
     "general_settings": "Общи настройки",
     "upstream_dns": "Главен DNS сървър",
