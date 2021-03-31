@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/insomniacslk/dhcp/dhcpv6"
 	"github.com/insomniacslk/dhcp/dhcpv6/server6"
@@ -158,19 +160,23 @@ func (s *v6Server) rmDynamicLease(lease Lease) error {
 	return nil
 }
 
-// AddStaticLease - add a static lease
-func (s *v6Server) AddStaticLease(l Lease) error {
+// AddStaticLease adds a static lease.  It is safe for concurrent use.
+func (s *v6Server) AddStaticLease(l Lease) (err error) {
+	defer agherr.Annotate("dhcpv6: %w", &err)
+
 	if len(l.IP) != 16 {
 		return fmt.Errorf("invalid IP")
 	}
-	if len(l.HWAddr) != 6 {
-		return fmt.Errorf("invalid MAC")
+
+	err = aghnet.ValidateHardwareAddress(l.HWAddr)
+	if err != nil {
+		return fmt.Errorf("validating lease: %w", err)
 	}
 
 	l.Expiry = time.Unix(leaseExpireStatic, 0)
 
 	s.leasesLock.Lock()
-	err := s.rmDynamicLease(l)
+	err = s.rmDynamicLease(l)
 	if err != nil {
 		s.leasesLock.Unlock()
 		return err
@@ -183,17 +189,21 @@ func (s *v6Server) AddStaticLease(l Lease) error {
 	return nil
 }
 
-// RemoveStaticLease - remove a static lease
-func (s *v6Server) RemoveStaticLease(l Lease) error {
+// RemoveStaticLease removes a static lease.  It is safe for concurrent use.
+func (s *v6Server) RemoveStaticLease(l Lease) (err error) {
+	defer agherr.Annotate("dhcpv6: %w", &err)
+
 	if len(l.IP) != 16 {
 		return fmt.Errorf("invalid IP")
 	}
-	if len(l.HWAddr) != 6 {
-		return fmt.Errorf("invalid MAC")
+
+	err = aghnet.ValidateHardwareAddress(l.HWAddr)
+	if err != nil {
+		return fmt.Errorf("validating lease: %w", err)
 	}
 
 	s.leasesLock.Lock()
-	err := s.rmLease(l)
+	err = s.rmLease(l)
 	if err != nil {
 		s.leasesLock.Unlock()
 		return err
@@ -271,8 +281,10 @@ func (s *v6Server) findFreeIP() net.IP {
 
 // Reserve lease for MAC
 func (s *v6Server) reserveLease(mac net.HardwareAddr) *Lease {
-	l := Lease{}
-	l.HWAddr = make([]byte, 6)
+	l := Lease{
+		HWAddr: make([]byte, len(mac)),
+	}
+
 	copy(l.HWAddr, mac)
 
 	s.leasesLock.Lock()
@@ -564,7 +576,9 @@ func (s *v6Server) initRA(iface *net.Interface) error {
 }
 
 // Start starts the IPv6 DHCP server.
-func (s *v6Server) Start() error {
+func (s *v6Server) Start() (err error) {
+	defer agherr.Annotate("dhcpv6: %w", &err)
+
 	if !s.conf.Enabled {
 		return nil
 	}
@@ -572,14 +586,14 @@ func (s *v6Server) Start() error {
 	ifaceName := s.conf.InterfaceName
 	iface, err := net.InterfaceByName(ifaceName)
 	if err != nil {
-		return fmt.Errorf("dhcpv6: finding interface %s by name: %w", ifaceName, err)
+		return fmt.Errorf("finding interface %s by name: %w", ifaceName, err)
 	}
 
 	log.Debug("dhcpv6: starting...")
 
 	dnsIPAddrs, err := ifaceDNSIPAddrs(iface, ipVersion6, defaultMaxAttempts, defaultBackoff)
 	if err != nil {
-		return fmt.Errorf("dhcpv6: interface %s: %w", ifaceName, err)
+		return fmt.Errorf("interface %s: %w", ifaceName, err)
 	}
 
 	if len(dnsIPAddrs) == 0 {
@@ -596,15 +610,18 @@ func (s *v6Server) Start() error {
 
 	// don't initialize DHCPv6 server if we must force the clients to use SLAAC
 	if s.conf.RASLAACOnly {
-		log.Debug("DHCPv6: not starting DHCPv6 server due to ra_slaac_only=true")
+		log.Debug("not starting dhcpv6 server due to ra_slaac_only=true")
+
 		return nil
 	}
 
 	log.Debug("dhcpv6: listening...")
 
-	if len(iface.HardwareAddr) != 6 {
-		return fmt.Errorf("dhcpv6: invalid MAC %s", iface.HardwareAddr)
+	err = aghnet.ValidateHardwareAddress(iface.HardwareAddr)
+	if err != nil {
+		return fmt.Errorf("validating interface %s: %w", iface.Name, err)
 	}
+
 	s.sid = dhcpv6.Duid{
 		Type:          dhcpv6.DUID_LLT,
 		HwType:        iana.HWTypeEthernet,
@@ -623,7 +640,7 @@ func (s *v6Server) Start() error {
 
 	go func() {
 		err = s.srv.Serve()
-		log.Debug("DHCPv6: srv.Serve: %s", err)
+		log.Error("dhcpv6: srv.Serve: %s", err)
 	}()
 
 	return nil

@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/log"
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv6"
@@ -36,6 +37,33 @@ type icmpv6RA struct {
 	mtu                         uint32
 }
 
+// hwAddrToLinkLayerAddr converts a hardware address into a form required by
+// RFC4861.  That is, a byte slice of length divisible by 8.
+//
+// See https://tools.ietf.org/html/rfc4861#section-4.6.1.
+func hwAddrToLinkLayerAddr(hwa net.HardwareAddr) (lla []byte, err error) {
+	err = aghnet.ValidateHardwareAddress(hwa)
+	if err != nil {
+		// Don't wrap the error, because it already contains enough
+		// context.
+		return nil, err
+	}
+
+	if len(hwa) == 6 || len(hwa) == 8 {
+		lla = make([]byte, 8)
+		copy(lla, hwa)
+
+		return lla, nil
+	}
+
+	// Assume that aghnet.ValidateHardwareAddress prevents lengths other
+	// than 20 by now.
+	lla = make([]byte, 24)
+	copy(lla, hwa)
+
+	return lla, nil
+}
+
 // Create an ICMPv6.RouterAdvertisement packet with all necessary options.
 //
 // ICMPv6:
@@ -63,15 +91,23 @@ type icmpv6RA struct {
 //     Reserved[2]
 //     MTU[4]
 //   Option=Source link-layer address(1):
-//     Link-Layer Address[6]
+//     Link-Layer Address[8/24]
 //   Option=Recursive DNS Server(25):
 //     Type[1]
 //     Length * 8bytes[1]
 //     Reserved[2]
 //     Lifetime[4]
 //     Addresses of IPv6 Recursive DNS Servers[16]
-func createICMPv6RAPacket(params icmpv6RA) []byte {
-	data := make([]byte, 88)
+func createICMPv6RAPacket(params icmpv6RA) (data []byte, err error) {
+	var lla []byte
+	lla, err = hwAddrToLinkLayerAddr(params.sourceLinkLayerAddress)
+	if err != nil {
+		return nil, fmt.Errorf("converting source link layer address: %w", err)
+	}
+
+	// TODO(a.garipov): Don't use a magic constant here.  Refactor the code
+	// and make all constants named instead of all those comments..
+	data = make([]byte, 82+len(lla))
 	i := 0
 
 	// ICMPv6:
@@ -138,8 +174,9 @@ func createICMPv6RAPacket(params icmpv6RA) []byte {
 	data[i] = 1   // Type
 	data[i+1] = 1 // Length
 	i += 2
-	copy(data[i:], params.sourceLinkLayerAddress) // Link-Layer Address[6]
-	i += 6
+
+	copy(data[i:], lla) // Link-Layer Address[8/24]
+	i += len(lla)
 
 	// Option=Recursive DNS Server:
 
@@ -152,11 +189,11 @@ func createICMPv6RAPacket(params icmpv6RA) []byte {
 	i += 4
 	copy(data[i:], params.recursiveDNSServer) // Addresses of IPv6 Recursive DNS Servers[16]
 
-	return data
+	return data, nil
 }
 
 // Init - initialize RA module
-func (ra *raCtx) Init() error {
+func (ra *raCtx) Init() (err error) {
 	ra.stop.Store(0)
 	ra.conn = nil
 	if !(ra.raAllowSLAAC || ra.raSLAACOnly) {
@@ -177,9 +214,12 @@ func (ra *raCtx) Init() error {
 	params.prefix = make([]byte, 16)
 	copy(params.prefix, ra.prefixIPAddr[:8]) // /64
 
-	data := createICMPv6RAPacket(params)
+	var data []byte
+	data, err = createICMPv6RAPacket(params)
+	if err != nil {
+		return fmt.Errorf("creating packet: %w", err)
+	}
 
-	var err error
 	success := false
 	ipAndScope := ra.ipAddr.String() + "%" + ra.ifaceName
 	ra.conn, err = icmp.ListenPacket("ip6:ipv6-icmp", ipAndScope)

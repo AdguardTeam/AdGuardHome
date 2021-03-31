@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/go-ping/ping"
 	"github.com/insomniacslk/dhcp/dhcpv4"
@@ -289,8 +290,9 @@ func (s *v4Server) AddStaticLease(l Lease) (err error) {
 		return fmt.Errorf("invalid ip %q, only ipv4 is supported", l.IP)
 	}
 
-	if len(l.HWAddr) != 6 {
-		return fmt.Errorf("invalid mac %q, only EUI-48 is supported", l.HWAddr)
+	err = aghnet.ValidateHardwareAddress(l.HWAddr)
+	if err != nil {
+		return fmt.Errorf("validating lease: %w", err)
 	}
 
 	l.Expiry = time.Unix(leaseExpireStatic, 0)
@@ -330,17 +332,21 @@ func (s *v4Server) AddStaticLease(l Lease) (err error) {
 	return nil
 }
 
-// RemoveStaticLease removes a static lease (thread-safe)
-func (s *v4Server) RemoveStaticLease(l Lease) error {
+// RemoveStaticLease removes a static lease.  It is safe for concurrent use.
+func (s *v4Server) RemoveStaticLease(l Lease) (err error) {
+	defer agherr.Annotate("dhcpv4: %w", &err)
+
 	if len(l.IP) != 4 {
 		return fmt.Errorf("invalid IP")
 	}
-	if len(l.HWAddr) != 6 {
-		return fmt.Errorf("invalid MAC")
+
+	err = aghnet.ValidateHardwareAddress(l.HWAddr)
+	if err != nil {
+		return fmt.Errorf("validating lease: %w", err)
 	}
 
 	s.leasesLock.Lock()
-	err := s.rmLease(l)
+	err = s.rmLease(l)
 	if err != nil {
 		s.leasesLock.Unlock()
 
@@ -688,8 +694,10 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 		return
 	}
 
-	if len(req.ClientHWAddr) != 6 {
-		log.Debug("dhcpv4: Invalid ClientHWAddr")
+	err = aghnet.ValidateHardwareAddress(req.ClientHWAddr)
+	if err != nil {
+		log.Error("dhcpv4: invalid ClientHWAddr: %s", err)
+
 		return
 	}
 

@@ -33,6 +33,7 @@ and this project adheres to
 
 ### Fixed
 
+- Assumption that MAC addresses always have the length of 6 octets ([#2828]).
 - Support for more than one `/24` subnet in DHCP ([#2541]).
 - Invalid filenames in the `mobileconfig` API responses ([#2835]).
 
@@ -47,6 +48,7 @@ and this project adheres to
 [#2498]: https://github.com/AdguardTeam/AdGuardHome/issues/2498
 [#2533]: https://github.com/AdguardTeam/AdGuardHome/issues/2533
 [#2541]: https://github.com/AdguardTeam/AdGuardHome/issues/2541
+[#2828]: https://github.com/AdguardTeam/AdGuardHome/issues/2828
 [#2835]: https://github.com/AdguardTeam/AdGuardHome/issues/2835
 [#2838]: https://github.com/AdguardTeam/AdGuardHome/issues/2838
 
