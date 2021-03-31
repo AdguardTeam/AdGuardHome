@@ -15,7 +15,7 @@ Please answer the following questions for yourself before submitting an issue. *
 
 ### Issue Details
 
-<!-- Please include all relevant details about the environment you experienced the bug in. -->
+<!-- Please include all relevant details about the environment you experienced the bug in.  If possible, include the result of running `./AdGuardHome -v --version` from the installation directory. -->
 
 * **Version of AdGuard Home server:**
   * <!-- (e.g. v0.123.4) -->

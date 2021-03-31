@@ -15,6 +15,7 @@ and this project adheres to
 
 ### Added
 
+- Verbose version output with `-v --version` ([#2416]).
 - The ability to set a custom TLD for known local-network hosts ([#2393]).
 - The ability to serve DNS queries on multiple hosts and interfaces ([#1401]).
 - `ips` and `text` DHCP server options ([#2385]).
@@ -45,6 +46,7 @@ and this project adheres to
 [#2385]: https://github.com/AdguardTeam/AdGuardHome/issues/2385
 [#2393]: https://github.com/AdguardTeam/AdGuardHome/issues/2393
 [#2412]: https://github.com/AdguardTeam/AdGuardHome/issues/2412
+[#2416]: https://github.com/AdguardTeam/AdGuardHome/issues/2416
 [#2498]: https://github.com/AdguardTeam/AdGuardHome/issues/2498
 [#2533]: https://github.com/AdguardTeam/AdGuardHome/issues/2533
 [#2541]: https://github.com/AdguardTeam/AdGuardHome/issues/2541
