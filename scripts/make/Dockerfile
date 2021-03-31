@@ -17,7 +17,7 @@ LABEL maintainer="AdGuard Team <devteam@adguard.com>" \
   org.opencontainers.image.licenses="GPL-3.0"
 
 # Update certificates.
-RUN apk --no-cache --update add ca-certificates libcap && \
+RUN apk --no-cache --update add ca-certificates libcap tzdata && \
     rm -rf /var/cache/apk/* && \
     mkdir -p /opt/adguardhome/conf /opt/adguardhome/work && \
     chown -R nobody: /opt/adguardhome
