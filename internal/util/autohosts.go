@@ -12,6 +12,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/fsnotify/fsnotify"
 	"github.com/miekg/dns"
@@ -139,7 +140,7 @@ func (a *AutoHosts) ProcessReverse(addr string, qtype uint16) (hosts []string) {
 		return nil
 	}
 
-	ipReal := DNSUnreverseAddr(addr)
+	ipReal := aghnet.UnreverseAddr(addr)
 	if ipReal == nil {
 		return nil
 	}

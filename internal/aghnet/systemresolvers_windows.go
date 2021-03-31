@@ -138,7 +138,7 @@ func (sr *systemResolvers) getAddrs() (addrs []string, err error) {
 	return addrs, nil
 }
 
-func (sr *systemResolvers) Refresh() (err error) {
+func (sr *systemResolvers) refresh() (err error) {
 	defer agherr.Annotate("systemResolvers: %w", &err)
 
 	got, err := sr.getAddrs()

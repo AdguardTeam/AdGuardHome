@@ -18,6 +18,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
@@ -64,7 +65,16 @@ func createTestServer(t *testing.T, filterConf *dnsfilter.Config, forwardConf Se
 
 	f := dnsfilter.New(filterConf, filters)
 
-	s, err := NewServer(DNSCreateParams{DNSFilter: f})
+	snd, err := aghnet.NewSubnetDetector()
+	require.NoError(t, err)
+	require.NotNil(t, snd)
+
+	var s *Server
+	s, err = NewServer(DNSCreateParams{
+		DNSFilter:      f,
+		SubnetDetector: snd,
+		LocalResolvers: &aghtest.Exchanger{},
+	})
 	require.NoError(t, err)
 
 	s.conf = forwardConf
@@ -710,8 +720,15 @@ func TestBlockedCustomIP(t *testing.T) {
 		Data: []byte(rules),
 	}}
 
-	s, err := NewServer(DNSCreateParams{
-		DNSFilter: dnsfilter.New(&dnsfilter.Config{}, filters),
+	snd, err := aghnet.NewSubnetDetector()
+	require.NoError(t, err)
+	require.NotNil(t, snd)
+
+	var s *Server
+	s, err = NewServer(DNSCreateParams{
+		DNSFilter:      dnsfilter.New(&dnsfilter.Config{}, filters),
+		SubnetDetector: snd,
+		LocalResolvers: &aghtest.Exchanger{},
 	})
 	require.NoError(t, err)
 
@@ -841,18 +858,26 @@ func TestRewrite(t *testing.T) {
 	}
 	f := dnsfilter.New(c, nil)
 
-	s, err := NewServer(DNSCreateParams{DNSFilter: f})
+	snd, err := aghnet.NewSubnetDetector()
+	require.NoError(t, err)
+	require.NotNil(t, snd)
+
+	var s *Server
+	s, err = NewServer(DNSCreateParams{
+		DNSFilter:      f,
+		SubnetDetector: snd,
+		LocalResolvers: &aghtest.Exchanger{},
+	})
 	require.NoError(t, err)
 
-	err = s.Prepare(&ServerConfig{
+	assert.NoError(t, s.Prepare(&ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 			UpstreamDNS:       []string{"8.8.8.8:53"},
 		},
-	})
-	assert.NoError(t, err)
+	}))
 
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
 		&aghtest.TestUpstream{
@@ -1134,9 +1159,16 @@ func (d *testDHCP) Leases(flags int) []dhcpd.Lease {
 func (d *testDHCP) SetOnLeaseChanged(onLeaseChanged dhcpd.OnLeaseChangedT) {}
 
 func TestPTRResponseFromDHCPLeases(t *testing.T) {
-	s, err := NewServer(DNSCreateParams{
-		DNSFilter:  dnsfilter.New(&dnsfilter.Config{}, nil),
-		DHCPServer: &testDHCP{},
+	snd, err := aghnet.NewSubnetDetector()
+	require.NoError(t, err)
+	require.NotNil(t, snd)
+
+	var s *Server
+	s, err = NewServer(DNSCreateParams{
+		DNSFilter:      dnsfilter.New(&dnsfilter.Config{}, nil),
+		DHCPServer:     &testDHCP{},
+		SubnetDetector: snd,
+		LocalResolvers: &aghtest.Exchanger{},
 	})
 	require.NoError(t, err)
 
@@ -1192,7 +1224,17 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	c.AutoHosts.Init(hf.Name())
 	t.Cleanup(c.AutoHosts.Close)
 
-	s, err := NewServer(DNSCreateParams{DNSFilter: dnsfilter.New(&c, nil)})
+	var snd *aghnet.SubnetDetector
+	snd, err = aghnet.NewSubnetDetector()
+	require.NoError(t, err)
+	require.NotNil(t, snd)
+
+	var s *Server
+	s, err = NewServer(DNSCreateParams{
+		DNSFilter:      dnsfilter.New(&c, nil),
+		SubnetDetector: snd,
+		LocalResolvers: &aghtest.Exchanger{},
+	})
 	require.NoError(t, err)
 
 	s.conf.UDPListenAddrs = []*net.UDPAddr{{}}

@@ -31,7 +31,7 @@ func ifaceHasStaticIP(ifaceName string) (bool, error) {
 	return portInfo.static, nil
 }
 
-// getCurrentHardwarePortInfo gets information the specified network interface.
+// getCurrentHardwarePortInfo gets information for the specified network interface.
 func getCurrentHardwarePortInfo(ifaceName string) (hardwarePortInfo, error) {
 	// First of all we should find hardware port name
 	m := getNetworkSetupHardwareReports()

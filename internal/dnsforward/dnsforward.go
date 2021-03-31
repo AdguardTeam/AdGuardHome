@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
@@ -60,7 +61,9 @@ type Server struct {
 	// be a valid top-level domain plus dots on each side.
 	autohostSuffix string
 
-	ipset ipsetCtx
+	ipset          ipsetCtx
+	subnetDetector *aghnet.SubnetDetector
+	localResolvers aghnet.Exchanger
 
 	tableHostToIP     map[string]net.IP // "hostname -> IP" table for internal addresses (DHCP)
 	tableHostToIPLock sync.Mutex
@@ -84,11 +87,13 @@ const defaultAutohostSuffix = ".lan."
 
 // DNSCreateParams are parameters to create a new server.
 type DNSCreateParams struct {
-	DNSFilter   *dnsfilter.DNSFilter
-	Stats       stats.Stats
-	QueryLog    querylog.QueryLog
-	DHCPServer  dhcpd.ServerInterface
-	AutohostTLD string
+	DNSFilter      *dnsfilter.DNSFilter
+	Stats          stats.Stats
+	QueryLog       querylog.QueryLog
+	DHCPServer     dhcpd.ServerInterface
+	SubnetDetector *aghnet.SubnetDetector
+	LocalResolvers aghnet.Exchanger
+	AutohostTLD    string
 }
 
 // tldToSuffix converts a top-level domain into an autohost suffix.
@@ -121,6 +126,8 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		dnsFilter:      p.DNSFilter,
 		stats:          p.Stats,
 		queryLog:       p.QueryLog,
+		subnetDetector: p.SubnetDetector,
+		localResolvers: p.LocalResolvers,
 		autohostSuffix: autohostSuffix,
 	}
 

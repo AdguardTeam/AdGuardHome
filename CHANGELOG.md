@@ -23,6 +23,8 @@ and this project adheres to
 
 ### Changed
 
+- The reverse lookup for local addresses is now performed via local resolvers
+  ([#2704]).
 - Stricter validation of the IP addresses of static leases in the DHCP server
   with regards to the netmask ([#2838]).
 - Stricter validation of `$dnsrewrite` filter modifier parameters ([#2498]).
@@ -50,6 +52,7 @@ and this project adheres to
 [#2498]: https://github.com/AdguardTeam/AdGuardHome/issues/2498
 [#2533]: https://github.com/AdguardTeam/AdGuardHome/issues/2533
 [#2541]: https://github.com/AdguardTeam/AdGuardHome/issues/2541
+[#2704]: https://github.com/AdguardTeam/AdGuardHome/issues/2704
 [#2828]: https://github.com/AdguardTeam/AdGuardHome/issues/2828
 [#2835]: https://github.com/AdguardTeam/AdGuardHome/issues/2835
 [#2838]: https://github.com/AdguardTeam/AdGuardHome/issues/2838

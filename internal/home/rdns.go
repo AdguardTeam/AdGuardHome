@@ -2,129 +2,163 @@ package home
 
 import (
 	"encoding/binary"
+	"fmt"
 	"net"
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
 
-// RDNS - module context
+// RDNS resolves clients' addresses to enrich their metadata.
 type RDNS struct {
-	dnsServer *dnsforward.Server
-	clients   *clientsContainer
-	ipChannel chan net.IP // pass data from DNS request handling thread to rDNS thread
+	dnsServer      *dnsforward.Server
+	clients        *clientsContainer
+	subnetDetector *aghnet.SubnetDetector
+	localResolvers aghnet.Exchanger
 
-	// Contains IP addresses of clients to be resolved by rDNS
-	// If IP address is resolved, it stays here while it's inside Clients.
-	//  If it's removed from Clients, this IP address will be resolved once again.
-	// If IP address couldn't be resolved, it stays here for some time to prevent further attempts to resolve the same IP.
-	ipAddrs cache.Cache
+	// ipCh used to pass client's IP to rDNS workerLoop.
+	ipCh chan net.IP
+
+	// ipCache caches the IP addresses to be resolved by rDNS.  The resolved
+	// address stays here while it's inside clients.  After leaving clients
+	// the address will be resolved once again.  If the address couldn't be
+	// resolved, cache prevents further attempts to resolve it for some
+	// time.
+	ipCache cache.Cache
 }
 
-// InitRDNS - create module context
-func InitRDNS(dnsServer *dnsforward.Server, clients *clientsContainer) *RDNS {
-	r := &RDNS{
-		dnsServer: dnsServer,
-		clients:   clients,
-		ipAddrs: cache.New(cache.Config{
+// Default rDNS values.
+const (
+	defaultRDNSCacheSize = 10000
+	defaultRDNSCacheTTL  = 1 * 60 * 60
+	defaultRDNSIPChSize  = 256
+)
+
+// NewRDNS creates and returns initialized RDNS.
+func NewRDNS(
+	dnsServer *dnsforward.Server,
+	clients *clientsContainer,
+	snd *aghnet.SubnetDetector,
+	lr aghnet.Exchanger,
+) (rDNS *RDNS) {
+	rDNS = &RDNS{
+		dnsServer:      dnsServer,
+		clients:        clients,
+		subnetDetector: snd,
+		localResolvers: lr,
+		ipCache: cache.New(cache.Config{
 			EnableLRU: true,
-			MaxCount:  10000,
+			MaxCount:  defaultRDNSCacheSize,
 		}),
-		ipChannel: make(chan net.IP, 256),
+		ipCh: make(chan net.IP, defaultRDNSIPChSize),
 	}
 
-	go r.workerLoop()
-	return r
+	go rDNS.workerLoop()
+
+	return rDNS
 }
 
-// Begin - add IP address to rDNS queue
+// Begin adds the ip to the resolving queue if it is not cached or already
+// resolved.
 func (r *RDNS) Begin(ip net.IP) {
 	now := uint64(time.Now().Unix())
-	expire := r.ipAddrs.Get(ip)
-	if len(expire) != 0 {
-		exp := binary.BigEndian.Uint64(expire)
-		if exp > now {
+	if expire := r.ipCache.Get(ip); len(expire) != 0 {
+		if binary.BigEndian.Uint64(expire) > now {
 			return
 		}
-		// TTL expired
 	}
-	expire = make([]byte, 8)
-	const ttl = 1 * 60 * 60
-	binary.BigEndian.PutUint64(expire, now+ttl)
-	_ = r.ipAddrs.Set(ip, expire)
+
+	// The cache entry either expired or doesn't exist.
+	ttl := make([]byte, 8)
+	binary.BigEndian.PutUint64(ttl, now+defaultRDNSCacheTTL)
+	r.ipCache.Set(ip, ttl)
 
 	id := ip.String()
 	if r.clients.Exists(id, ClientSourceRDNS) {
 		return
 	}
 
-	log.Tracef("rDNS: adding %s", ip)
 	select {
-	case r.ipChannel <- ip:
-		//
+	case r.ipCh <- ip:
+		log.Tracef("rdns: %q added to queue", ip)
 	default:
-		log.Tracef("rDNS: queue is full")
+		log.Tracef("rdns: queue is full")
 	}
 }
 
-// Use rDNS to get hostname by IP address
-func (r *RDNS) resolve(ip net.IP) string {
-	log.Tracef("Resolving host for %s", ip)
+const (
+	// rDNSEmptyAnswerErr is returned by RDNS resolve method when the answer
+	// section of respond is empty.
+	rDNSEmptyAnswerErr agherr.Error = "the answer section is empty"
 
-	name, err := dns.ReverseAddr(ip.String())
-	if err != nil {
-		log.Debug("Error while calling dns.ReverseAddr(%s): %s", ip, err)
-		return ""
-	}
+	// rDNSNotPTRErr is returned by RDNS resolve method when the response is
+	// not of PTR type.
+	rDNSNotPTRErr agherr.Error = "the response is not a ptr"
+)
 
-	resp, err := r.dnsServer.Exchange(&dns.Msg{
+// resolve tries to resolve the ip in a suitable way.
+func (r *RDNS) resolve(ip net.IP) (host string, err error) {
+	log.Tracef("rdns: resolving host for %q", ip)
+
+	arpa := dns.Fqdn(aghnet.ReverseAddr(ip))
+	msg := &dns.Msg{
 		MsgHdr: dns.MsgHdr{
 			Id:               dns.Id(),
 			RecursionDesired: true,
 		},
+		Compress: true,
 		Question: []dns.Question{{
-			Name:   name,
+			Name:   arpa,
 			Qtype:  dns.TypePTR,
 			Qclass: dns.ClassINET,
 		}},
-	})
+	}
+
+	var resp *dns.Msg
+	if r.subnetDetector.IsLocallyServedNetwork(ip) {
+		resp, err = r.localResolvers.Exchange(msg)
+	} else {
+		resp, err = r.dnsServer.Exchange(msg)
+	}
 	if err != nil {
-		log.Debug("Error while making an rDNS lookup for %s: %s", ip, err)
-		return ""
+		return "", fmt.Errorf("performing lookup for %q: %w", arpa, err)
 	}
+
 	if len(resp.Answer) == 0 {
-		log.Debug("No answer for rDNS lookup of %s", ip)
-		return ""
+		return "", fmt.Errorf("lookup for %q: %w", arpa, rDNSEmptyAnswerErr)
 	}
+
 	ptr, ok := resp.Answer[0].(*dns.PTR)
 	if !ok {
-		log.Debug("not a PTR response for %s", ip)
-		return ""
+		return "", fmt.Errorf("type checking: %w", rDNSNotPTRErr)
 	}
 
-	log.Tracef("PTR response for %s: %s", ip, ptr.String())
-	if strings.HasSuffix(ptr.Ptr, ".") {
-		ptr.Ptr = ptr.Ptr[:len(ptr.Ptr)-1]
-	}
+	log.Tracef("rdns: ptr response for %q: %s", ip, ptr.String())
 
-	return ptr.Ptr
+	return strings.TrimSuffix(ptr.Ptr, "."), nil
 }
 
-// Wait for a signal and then synchronously resolve hostname by IP address
-// Add the hostname:IP pair to "Clients" array
+// workerLoop handles incoming IP addresses from ipChan and adds it into
+// clients.
 func (r *RDNS) workerLoop() {
-	for {
-		ip := <-r.ipChannel
+	defer agherr.LogPanic("rdns")
 
-		host := r.resolve(ip)
-		if len(host) == 0 {
+	for ip := range r.ipCh {
+		host, err := r.resolve(ip)
+		if err != nil {
+			log.Error("rdns: resolving %q: %s", ip, err)
+
 			continue
 		}
 
+		// Don't handle any errors since AddHost doesn't return non-nil
+		// errors for now.
 		_, _ = r.clients.AddHost(ip.String(), host, ClientSourceRDNS)
 	}
 }

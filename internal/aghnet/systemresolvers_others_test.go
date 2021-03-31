@@ -31,7 +31,7 @@ func TestSystemResolvers_Refresh(t *testing.T) {
 	t.Run("expected_error", func(t *testing.T) {
 		sr := createTestSystemResolvers(t, 0, nil)
 
-		assert.NoError(t, sr.Refresh())
+		assert.NoError(t, sr.refresh())
 	})
 
 	t.Run("unexpected_error", func(t *testing.T) {

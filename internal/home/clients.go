@@ -591,8 +591,9 @@ func (clients *clientsContainer) SetWhoisInfo(ip string, info [][]string) {
 // taken into account.  ok is true if the pairing was added.
 func (clients *clientsContainer) AddHost(ip, host string, src clientSource) (ok bool, err error) {
 	clients.lock.Lock()
+	defer clients.lock.Unlock()
+
 	ok = clients.addHostLocked(ip, host, src)
-	clients.lock.Unlock()
 
 	return ok, nil
 }

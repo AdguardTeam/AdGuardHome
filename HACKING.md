@@ -188,8 +188,8 @@ on GitHub and most other Markdown renderers. -->
 
  ###  <a id="formatting" href="#formatting">Formatting</a>
 
- *  Add an empty line before `break`, `continue`, `fallthrough`, and `return`,
-    unless it's the only statement in that block.
+ *  Decorate `break`, `continue`, `fallthrough`, `return`, and other function
+    exit points with empty lines unless it's the only statement in that block.
 
  *  Use `gofumpt --extra -s`.
 

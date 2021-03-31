@@ -29,7 +29,7 @@ type systemResolvers struct {
 	addrsLock sync.RWMutex
 }
 
-func (sr *systemResolvers) Refresh() (err error) {
+func (sr *systemResolvers) refresh() (err error) {
 	defer agherr.Annotate("systemResolvers: %w", &err)
 
 	_, err = sr.resolver.LookupHost(context.Background(), sr.hostGenFunc())
@@ -75,7 +75,7 @@ func (sr *systemResolvers) dialFunc(_ context.Context, _, address string) (_ net
 	sr.addrsLock.Lock()
 	defer sr.addrsLock.Unlock()
 
-	sr.addrs[address] = unit{}
+	sr.addrs[host] = unit{}
 
 	return nil, fakeDialErr
 }

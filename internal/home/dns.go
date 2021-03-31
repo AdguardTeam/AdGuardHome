@@ -61,10 +61,12 @@ func initDNSServer() error {
 	Context.dnsFilter = dnsfilter.New(&filterConf, nil)
 
 	p := dnsforward.DNSCreateParams{
-		DNSFilter:   Context.dnsFilter,
-		Stats:       Context.stats,
-		QueryLog:    Context.queryLog,
-		AutohostTLD: config.DNS.AutohostTLD,
+		DNSFilter:      Context.dnsFilter,
+		Stats:          Context.stats,
+		QueryLog:       Context.queryLog,
+		SubnetDetector: Context.subnetDetector,
+		LocalResolvers: Context.localResolvers,
+		AutohostTLD:    config.DNS.AutohostTLD,
 	}
 	if Context.dhcpServer != nil {
 		p.DHCPServer = Context.dhcpServer
@@ -91,7 +93,7 @@ func initDNSServer() error {
 		return fmt.Errorf("dnsServer.Prepare: %w", err)
 	}
 
-	Context.rdns = InitRDNS(Context.dnsServer, &Context.clients)
+	Context.rdns = NewRDNS(Context.dnsServer, &Context.clients, Context.subnetDetector, Context.localResolvers)
 	Context.whois = initWhois(&Context.clients)
 
 	Context.filters.Init()
@@ -105,14 +107,14 @@ func isRunning() bool {
 func onDNSRequest(d *proxy.DNSContext) {
 	ip := dnsforward.IPFromAddr(d.Addr)
 	if ip == nil {
-		// This would be quite weird if we get here
+		// This would be quite weird if we get here.
 		return
 	}
 
 	if !ip.IsLoopback() {
 		Context.rdns.Begin(ip)
 	}
-	if !Context.ipDetector.DetectSpecialNetwork(ip) {
+	if !Context.subnetDetector.IsSpecialNetwork(ip) {
 		Context.whois.Begin(ip)
 	}
 }
@@ -333,10 +335,10 @@ func startDNSServer() error {
 
 	const topClientsNumber = 100 // the number of clients to get
 	for _, ip := range Context.stats.GetTopClientsIP(topClientsNumber) {
-		if !ip.IsLoopback() {
+		if !Context.subnetDetector.IsLocallyServedNetwork(ip) {
 			Context.rdns.Begin(ip)
 		}
-		if !Context.ipDetector.DetectSpecialNetwork(ip) {
+		if !Context.subnetDetector.IsSpecialNetwork(ip) {
 			Context.whois.Begin(ip)
 		}
 	}

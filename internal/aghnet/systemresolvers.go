@@ -23,9 +23,9 @@ type SystemResolvers interface {
 	// Get returns the slice of local resolvers' addresses.
 	// It should be safe for concurrent use.
 	Get() (rs []string)
-	// Refresh refreshes the local resolvers' addresses cache.  It should be
+	// refresh refreshes the local resolvers' addresses cache.  It should be
 	// safe for concurrent use.
-	Refresh() (err error)
+	refresh() (err error)
 }
 
 const (
@@ -42,7 +42,7 @@ func refreshWithTicker(sr SystemResolvers, tickCh <-chan time.Time) {
 
 	// TODO(e.burkov): Implement a functionality to stop ticker.
 	for range tickCh {
-		err := sr.Refresh()
+		err := sr.refresh()
 		if err != nil {
 			log.Error("systemResolvers: error in refreshing goroutine: %s", err)
 
@@ -63,7 +63,7 @@ func NewSystemResolvers(
 	sr = newSystemResolvers(refreshIvl, hostGenFunc)
 
 	// Fill cache.
-	err = sr.Refresh()
+	err = sr.refresh()
 	if err != nil {
 		return nil, err
 	}

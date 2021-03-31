@@ -266,7 +266,7 @@ type netInterfaceJSON struct {
 func (s *Server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 	response := map[string]netInterfaceJSON{}
 
-	ifaces, err := aghnet.GetValidNetInterfaces()
+	ifaces, err := net.Interfaces()
 	if err != nil {
 		httpError(r, w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
 		return
