@@ -1,5 +1,5 @@
-//go:generate packr clean
-//go:generate packr -z
+//go:generate rm -f ./internal/home/a_home-packr.go
+//go:generate packr -i ./internal/home -z
 package main
 
 import (
