@@ -71,6 +71,7 @@ func (l *queryLog) logEntryToJSONEntry(entry *logEntry) (jsonEntry jobject) {
 		"elapsedMs":    strconv.FormatFloat(entry.Elapsed.Seconds()*1000, 'f', -1, 64),
 		"time":         entry.Time.Format(time.RFC3339Nano),
 		"client":       l.getClientIP(entry.IP),
+		"client_info":  entry.client,
 		"client_proto": entry.ClientProto,
 		"upstream":     entry.Upstream,
 		"question": jobject{

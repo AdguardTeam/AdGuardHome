@@ -1815,6 +1815,8 @@
             The client ID, if provided in DOH, DOQ, or DOT.
           'example': 'cli123'
           'type': 'string'
+        'client_info':
+          '$ref': '#/components/schemas/QueryLogItemClient'
         'client_proto':
           'enum':
           - 'dot'
@@ -1876,6 +1878,58 @@
           'type': 'string'
           'description': 'DNS request processing start time'
           'example': '2018-11-26T00:02:41+03:00'
+    'QueryLogItemClient':
+      'description': >
+        Client information for a query log item.
+      'properties':
+        'disallowed':
+          'type': 'boolean'
+          'description': >
+            Whether the client's IP is blocked or not.
+        'disallowed_rule':
+          'type': 'string'
+          'description': >
+            The rule due to which the client is disallowed.  If disallowed is
+            set to true, and this string is empty, then the client IP is
+            disallowed by the "allowed IP list", that is it is not included in
+            the allowed list.
+        'ids':
+          'description': >
+            IP, CIDR, MAC, or client ID.
+          'items':
+            'type': 'string'
+          'type': 'array'
+        'name':
+          'description': >
+            Persistent client's name or an empty string if this is a runtime
+            client.
+          'type': 'string'
+        'whois':
+          '$ref': '#/components/schemas/QueryLogItemClientWhois'
+      'required':
+      - 'disallowed'
+      - 'disallowed_rule'
+      - 'ids'
+      - 'name'
+      - 'whois'
+      'type': 'object'
+    'QueryLogItemClientWhois':
+      'description': >
+        Client WHOIS information, if any.
+      'properties':
+        'city':
+          'description': >
+            City, if any.
+          'type': 'string'
+        'country':
+          'description': >
+            Country, if any.
+          'type': 'string'
+        'orgname':
+          'description': >
+            Organization name, if any.
+          'type': 'string'
+      'type': 'object'
     'QueryLog':
       'type': 'object'
       'description': 'Query log'
@@ -2205,7 +2259,7 @@
         'use_global_blocked_services': true
         'blocked_services': null
         'upstreams': null
-        'whois_info': null
+        'whois_info': {}
         'disallowed': false
         'disallowed_rule': ''
       - '1.2.3.4':
@@ -2219,7 +2273,7 @@
         'use_global_blocked_services': true
         'blocked_services': null
         'upstreams': null
-        'whois_info': null
+        'whois_info': {}
         'disallowed': false
         'disallowed_rule': ''
     'AccessListResponse':

@@ -285,7 +285,7 @@ func (c *configuration) write() error {
 		Context.queryLog.WriteDiskConfig(&dc)
 		config.DNS.QueryLogEnabled = dc.Enabled
 		config.DNS.QueryLogFileEnabled = dc.FileEnabled
-		config.DNS.QueryLogInterval = dc.Interval
+		config.DNS.QueryLogInterval = dc.RotationIvl
 		config.DNS.QueryLogMemSize = dc.MemSize
 		config.DNS.AnonymizeClientIP = dc.AnonymizeClientIP
 	}

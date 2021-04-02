@@ -84,7 +84,7 @@ func TestRDNS_Begin(t *testing.T) {
 			clients: &clientsContainer{
 				list:    map[string]*Client{},
 				idIndex: tc.cliIDIndex,
-				ipHost:  map[string]*ClientHost{},
+				ipToRC:  map[string]*RuntimeClient{},
 				allTags: map[string]bool{},
 			},
 		}
@@ -229,7 +229,7 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 		cc := &clientsContainer{
 			list:    map[string]*Client{},
 			idIndex: map[string]*Client{},
-			ipHost:  map[string]*ClientHost{},
+			ipToRC:  map[string]*RuntimeClient{},
 			allTags: map[string]bool{},
 		}
 		ch := make(chan net.IP)

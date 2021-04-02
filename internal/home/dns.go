@@ -42,15 +42,17 @@ func initDNSServer() error {
 	if err != nil {
 		return fmt.Errorf("couldn't initialize statistics module")
 	}
+
 	conf := querylog.Config{
-		Enabled:           config.DNS.QueryLogEnabled,
-		FileEnabled:       config.DNS.QueryLogFileEnabled,
-		BaseDir:           baseDir,
-		Interval:          config.DNS.QueryLogInterval,
-		MemSize:           config.DNS.QueryLogMemSize,
-		AnonymizeClientIP: config.DNS.AnonymizeClientIP,
 		ConfigModified:    onConfigModified,
 		HTTPRegister:      httpRegister,
+		FindClient:        Context.clients.findMultiple,
+		BaseDir:           baseDir,
+		RotationIvl:       config.DNS.QueryLogInterval,
+		MemSize:           config.DNS.QueryLogMemSize,
+		Enabled:           config.DNS.QueryLogEnabled,
+		FileEnabled:       config.DNS.QueryLogFileEnabled,
+		AnonymizeClientIP: config.DNS.AnonymizeClientIP,
 	}
 	Context.queryLog = querylog.New(conf)
 

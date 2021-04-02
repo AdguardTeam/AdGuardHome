@@ -15,6 +15,7 @@ and this project adheres to
 
 ### Added
 
+- Search by clients' names in the query log ([#1273]).
 - Verbose version output with `-v --version` ([#2416]).
 - The ability to set a custom TLD for known local-network hosts ([#2393]).
 - The ability to serve DNS queries on multiple hosts and interfaces ([#1401]).
@@ -44,6 +45,7 @@ and this project adheres to
 
 - Go 1.14 support.
 
+[#1273]: https://github.com/AdguardTeam/AdGuardHome/issues/1273
 [#1401]: https://github.com/AdguardTeam/AdGuardHome/issues/1401
 [#2385]: https://github.com/AdguardTeam/AdGuardHome/issues/2385
 [#2393]: https://github.com/AdguardTeam/AdGuardHome/issues/2393

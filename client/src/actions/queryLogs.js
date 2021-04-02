@@ -1,22 +1,11 @@
 import { createAction } from 'redux-actions';
 
 import apiClient from '../api/Api';
-import { normalizeLogs, getParamsForClientsSearch, addClientInfo } from '../helpers/helpers';
+import { normalizeLogs } from '../helpers/helpers';
 import {
     DEFAULT_LOGS_FILTER, FORM_NAME, QUERY_LOGS_PAGE_LIMIT,
 } from '../helpers/constants';
 import { addErrorToast, addSuccessToast } from './toasts';
-
-const enrichWithClientInfo = async (logs) => {
-    const clientsParams = getParamsForClientsSearch(logs, 'client', 'client_id');
-
-    if (Object.keys(clientsParams).length > 0) {
-        const clients = await apiClient.findClients(clientsParams);
-        return addClientInfo(logs, clients, 'client_id', 'client');
-    }
-
-    return logs;
-};
 
 const getLogsWithParams = async (config) => {
     const { older_than, filter, ...values } = config;
@@ -25,11 +14,9 @@ const getLogsWithParams = async (config) => {
         older_than,
     });
     const { data, oldest } = rawLogs;
-    const normalizedLogs = normalizeLogs(data);
-    const logs = await enrichWithClientInfo(normalizedLogs);
 
     return {
-        logs,
+        logs: normalizeLogs(data),
         oldest,
         older_than,
         filter,
@@ -92,10 +79,8 @@ export const updateLogs = () => async (dispatch, getState) => {
     try {
         const { logs, oldest, older_than } = getState().queryLogs;
 
-        const enrichedLogs = await enrichWithClientInfo(logs);
-
         dispatch(getLogsSuccess({
-            logs: enrichedLogs,
+            logs,
             oldest,
             older_than,
         }));

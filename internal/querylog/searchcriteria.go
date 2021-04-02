@@ -48,40 +48,6 @@ type searchCriteria struct {
 	strict       bool         // should we strictly match (equality) or not (indexOf)
 }
 
-// quickMatch - quickly checks if the log entry matches this search criteria
-// the reason is to do it as quickly as possible without de-serializing the entry
-func (c *searchCriteria) quickMatch(line string) bool {
-	// note that we do this only for a limited set of criteria
-
-	switch c.criteriaType {
-	case ctDomainOrClient:
-		return c.quickMatchJSONValue(line, "QH") ||
-			c.quickMatchJSONValue(line, "IP") ||
-			c.quickMatchJSONValue(line, "CID")
-	default:
-		return true
-	}
-}
-
-// quickMatchJSONValue - helper used by quickMatch
-func (c *searchCriteria) quickMatchJSONValue(line, propertyName string) bool {
-	val := readJSONValue(line, propertyName)
-	if len(val) == 0 {
-		return false
-	}
-	val = strings.ToLower(val)
-	searchVal := strings.ToLower(c.value)
-
-	if c.strict && searchVal == val {
-		return true
-	}
-	if !c.strict && strings.Contains(val, searchVal) {
-		return true
-	}
-
-	return false
-}
-
 // match - checks if the log entry matches this search criteria
 func (c *searchCriteria) match(entry *logEntry) bool {
 	switch c.criteriaType {
@@ -94,28 +60,41 @@ func (c *searchCriteria) match(entry *logEntry) bool {
 	return false
 }
 
-func (c *searchCriteria) ctDomainOrClientCase(entry *logEntry) bool {
-	clientID := strings.ToLower(entry.ClientID)
-	qhost := strings.ToLower(entry.QHost)
-	searchVal := strings.ToLower(c.value)
-	if c.strict && (qhost == searchVal || clientID == searchVal) {
-		return true
+func (c *searchCriteria) ctDomainOrClientCaseStrict(term, clientID, name, host, ip string) bool {
+	return strings.EqualFold(host, term) ||
+		strings.EqualFold(clientID, term) ||
+		strings.EqualFold(ip, term) ||
+		strings.EqualFold(name, term)
+}
+
+func (c *searchCriteria) ctDomainOrClientCase(e *logEntry) bool {
+	clientID := e.ClientID
+	host := e.QHost
+
+	var name string
+	if e.client != nil {
+		name = e.client.Name
 	}
 
-	if !c.strict && (strings.Contains(qhost, searchVal) || strings.Contains(clientID, searchVal)) {
-		return true
+	ip := e.IP.String()
+	term := strings.ToLower(c.value)
+	if c.strict {
+		return c.ctDomainOrClientCaseStrict(term, clientID, name, host, ip)
 	}
 
-	ipStr := entry.IP.String()
-	if c.strict && ipStr == c.value {
-		return true
-	}
+	// TODO(a.garipov): Write a case-insensitive version of strings.Contains
+	// instead of generating garbage.  Or, perhaps in the future, use
+	// a locale-appropriate matcher from golang.org/x/text.
+	clientID = strings.ToLower(clientID)
+	host = strings.ToLower(host)
+	ip = strings.ToLower(ip)
+	name = strings.ToLower(name)
+	term = strings.ToLower(term)
 
-	if !c.strict && strings.Contains(ipStr, c.value) {
-		return true
-	}
-
-	return false
+	return strings.Contains(clientID, term) ||
+		strings.Contains(host, term) ||
+		strings.Contains(ip, term) ||
+		strings.Contains(name, term)
 }
 
 func (c *searchCriteria) ctFilteringStatusCase(res dnsfilter.Result) bool {

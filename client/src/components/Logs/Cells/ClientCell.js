@@ -17,11 +17,8 @@ import { updateLogs } from '../../../actions/queryLogs';
 const ClientCell = ({
     client,
     client_id,
+    client_info,
     domain,
-    info,
-    info: {
-        name, whois_info, disallowed, disallowed_rule,
-    },
     reason,
 }) => {
     const { t } = useTranslation();
@@ -33,18 +30,22 @@ const ClientCell = ({
 
     const autoClient = autoClients.find((autoClient) => autoClient.name === client);
     const source = autoClient?.source;
-    const whoisAvailable = whois_info && Object.keys(whois_info).length > 0;
-    const clientName = name || client_id;
-    const clientInfo = { ...info, name: clientName };
+    const whoisAvailable = client_info && Object.keys(client_info.whois).length > 0;
+    const clientName = client_info?.name || client_id;
+    const clientInfo = client_info && {
+        ...client_info,
+        whois_info: client_info?.whois,
+        name: clientName,
+    };
 
     const id = nanoid();
 
     const data = {
         address: client,
         name: clientName,
-        country: whois_info?.country,
-        city: whois_info?.city,
-        network: whois_info?.orgname,
+        country: client_info?.whois?.country,
+        city: client_info?.whois?.city,
+        network: client_info?.whois?.orgname,
         source_label: source,
     };
 
@@ -53,7 +54,7 @@ const ClientCell = ({
     const isFiltered = checkFiltered(reason);
 
     const nameClass = classNames('w-90 o-hidden d-flex flex-column', {
-        'mt-2': isDetailed && !name && !whoisAvailable,
+        'mt-2': isDetailed && !client_info?.name && !whoisAvailable,
         'white-space--nowrap': isDetailed,
     });
 
@@ -69,7 +70,11 @@ const ClientCell = ({
             confirmMessage,
             buttonKey: blockingClientKey,
             isNotInAllowedList,
-        } = getBlockClientInfo(client, disallowed, disallowed_rule);
+        } = getBlockClientInfo(
+            client,
+            client_info?.disallowed || false,
+            client_info?.disallowed_rule || '',
+        );
 
         const blockingForClientKey = isFiltered ? 'unblock_for_this_client_only' : 'block_for_this_client_only';
         const clientNameBlockingFor = getBlockingClientName(clients, client);
@@ -85,7 +90,11 @@ const ClientCell = ({
                 name: blockingClientKey,
                 onClick: async () => {
                     if (window.confirm(confirmMessage)) {
-                        await dispatch(toggleClientBlock(client, disallowed, disallowed_rule));
+                        await dispatch(toggleClientBlock(
+                            client,
+                            client_info?.disallowed || false,
+                            client_info?.disallowed_rule || '',
+                        ));
                         await dispatch(updateLogs());
                     }
                 },
@@ -199,20 +208,18 @@ const ClientCell = ({
 ClientCell.propTypes = {
     client: propTypes.string.isRequired,
     client_id: propTypes.string,
+    client_info: propTypes.shape({
+        ids: propTypes.arrayOf(propTypes.string).isRequired,
+        name: propTypes.string.isRequired,
+        whois: propTypes.shape({
+            country: propTypes.string,
+            city: propTypes.string,
+            orgname: propTypes.string,
+        }).isRequired,
+        disallowed: propTypes.bool.isRequired,
+        disallowed_rule: propTypes.string.isRequired,
+    }),
     domain: propTypes.string.isRequired,
-    info: propTypes.oneOfType([
-        propTypes.string,
-        propTypes.shape({
-            name: propTypes.string.isRequired,
-            whois_info: propTypes.shape({
-                country: propTypes.string,
-                city: propTypes.string,
-                orgname: propTypes.string,
-            }),
-            disallowed: propTypes.bool.isRequired,
-            disallowed_rule: propTypes.string.isRequired,
-        }),
-    ]),
     reason: propTypes.string.isRequired,
 };
 

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -22,12 +21,17 @@ const (
 
 // queryLog is a structure that writes and reads the DNS query log
 type queryLog struct {
+	findClient func(ids []string) (c *Client, err error)
+
 	conf    *Config
 	lock    sync.Mutex
 	logFile string // path to the log file
 
-	bufferLock    sync.RWMutex
-	buffer        []*logEntry
+	// bufferLock protects buffer.
+	bufferLock sync.RWMutex
+	// buffer contains recent log entries.
+	buffer []*logEntry
+
 	fileFlushLock sync.Mutex // synchronize a file-flushing goroutine and main thread
 	flushPending  bool       // don't start another goroutine while the previous one is still running
 	fileWriteLock sync.Mutex
@@ -64,6 +68,9 @@ func NewClientProto(s string) (cp ClientProto, err error) {
 
 // logEntry - represents a single log entry
 type logEntry struct {
+	// client is the found client information, if any.
+	client *Client
+
 	IP   net.IP    `json:"IP"` // Client IP
 	Time time.Time `json:"T"`
 
@@ -80,18 +87,6 @@ type logEntry struct {
 	Result   dnsfilter.Result
 	Elapsed  time.Duration
 	Upstream string `json:",omitempty"` // if empty, means it was cached
-}
-
-// create a new instance of the query log
-func newQueryLog(conf Config) *queryLog {
-	l := queryLog{}
-	l.logFile = filepath.Join(conf.BaseDir, queryLogFileName)
-	l.conf = &Config{}
-	*l.conf = conf
-	if !checkInterval(l.conf.Interval) {
-		l.conf.Interval = 1
-	}
-	return &l
 }
 
 func (l *queryLog) Start() {
@@ -138,12 +133,16 @@ func (l *queryLog) clear() {
 }
 
 func (l *queryLog) Add(params AddParams) {
+	var err error
+
 	if !l.conf.Enabled {
 		return
 	}
 
-	if params.Question == nil || len(params.Question.Question) != 1 || len(params.Question.Question[0].Name) == 0 ||
-		params.ClientIP == nil {
+	err = params.validate()
+	if err != nil {
+		log.Error("querylog: adding record: %s, skipping", err)
+
 		return
 	}
 
@@ -168,20 +167,26 @@ func (l *queryLog) Add(params AddParams) {
 	entry.QClass = dns.Class(q.Qclass).String()
 
 	if params.Answer != nil {
-		a, err := params.Answer.Pack()
+		var a []byte
+		a, err = params.Answer.Pack()
 		if err != nil {
-			log.Info("Querylog: Answer.Pack(): %s", err)
+			log.Error("querylog: Answer.Pack(): %s", err)
+
 			return
 		}
+
 		entry.Answer = a
 	}
 
 	if params.OrigAnswer != nil {
-		a, err := params.OrigAnswer.Pack()
+		var a []byte
+		a, err = params.OrigAnswer.Pack()
 		if err != nil {
-			log.Info("Querylog: OrigAnswer.Pack(): %s", err)
+			log.Error("querylog: OrigAnswer.Pack(): %s", err)
+
 			return
 		}
+
 		entry.OrigAnswer = a
 	}
 

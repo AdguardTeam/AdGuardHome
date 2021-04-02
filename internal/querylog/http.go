@@ -68,7 +68,7 @@ func (l *queryLog) handleQueryLogClear(_ http.ResponseWriter, _ *http.Request) {
 func (l *queryLog) handleQueryLogInfo(w http.ResponseWriter, r *http.Request) {
 	resp := qlogConfig{}
 	resp.Enabled = l.conf.Enabled
-	resp.Interval = l.conf.Interval
+	resp.Interval = l.conf.RotationIvl
 	resp.AnonymizeClientIP = l.conf.AnonymizeClientIP
 
 	jsonVal, err := json.Marshal(resp)
@@ -104,7 +104,7 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 		conf.Enabled = d.Enabled
 	}
 	if req.Exists("interval") {
-		conf.Interval = d.Interval
+		conf.RotationIvl = d.Interval
 	}
 	if req.Exists("anonymize_client_ip") {
 		conf.AnonymizeClientIP = d.AnonymizeClientIP

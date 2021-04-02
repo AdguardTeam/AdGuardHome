@@ -8,6 +8,67 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
+// client finds the client info, if any, by its client ID and IP address,
+// optionally checking the provided cache.  It will use the IP address
+// regardless of if the IP anonymization is enabled now, because the
+// anonymization could have been disabled in the past, and client will try to
+// find those records as well.
+func (l *queryLog) client(clientID, ip string, cache clientCache) (c *Client, err error) {
+	cck := clientCacheKey{clientID: clientID, ip: ip}
+	if c = cache[cck]; c != nil {
+		return c, nil
+	}
+
+	var ids []string
+	if clientID != "" {
+		ids = append(ids, clientID)
+	}
+
+	if ip != "" {
+		ids = append(ids, ip)
+	}
+
+	c, err = l.findClient(ids)
+	if err != nil {
+		return nil, err
+	}
+
+	if cache != nil {
+		cache[cck] = c
+	}
+
+	return c, nil
+}
+
+// searchMemory looks up log records which are currently in the in-memory
+// buffer.  It optionally uses the client cache, if provided.  It also returns
+// the total amount of records in the buffer at the moment of searching.
+func (l *queryLog) searchMemory(params *searchParams, cache clientCache) (entries []*logEntry, total int) {
+	l.bufferLock.Lock()
+	defer l.bufferLock.Unlock()
+
+	// Go through the buffer in the reverse order, from newer to older.
+	var err error
+	for i := len(l.buffer) - 1; i >= 0; i-- {
+		e := l.buffer[i]
+
+		e.client, err = l.client(e.ClientID, e.IP.String(), cache)
+		if err != nil {
+			msg := "querylog: enriching memory record at time %s" +
+				" for client %q (client id %q): %s"
+			log.Error(msg, e.Time, e.IP, e.ClientID, err)
+
+			// Go on and try to match anyway.
+		}
+
+		if params.match(e) {
+			entries = append(entries, e)
+		}
+	}
+
+	return entries, len(l.buffer)
+}
+
 // search - searches log entries in the query log using specified parameters
 // returns the list of entries found + time of the oldest entry
 func (l *queryLog) search(params *searchParams) ([]*logEntry, time.Time) {
@@ -17,26 +78,11 @@ func (l *queryLog) search(params *searchParams) ([]*logEntry, time.Time) {
 		return []*logEntry{}, time.Time{}
 	}
 
-	// add from file
-	fileEntries, oldest, total := l.searchFiles(params)
+	cache := clientCache{}
+	fileEntries, oldest, total := l.searchFiles(params, cache)
+	memoryEntries, bufLen := l.searchMemory(params, cache)
+	total += bufLen
 
-	// add from memory buffer
-	l.bufferLock.Lock()
-	total += len(l.buffer)
-	memoryEntries := make([]*logEntry, 0)
-
-	// go through the buffer in the reverse order
-	// from NEWER to OLDER
-	for i := len(l.buffer) - 1; i >= 0; i-- {
-		entry := l.buffer[i]
-		if !params.match(entry) {
-			continue
-		}
-		memoryEntries = append(memoryEntries, entry)
-	}
-	l.bufferLock.Unlock()
-
-	// limits
 	totalLimit := params.offset + params.limit
 
 	// now let's get a unified collection
@@ -74,18 +120,15 @@ func (l *queryLog) search(params *searchParams) ([]*logEntry, time.Time) {
 	return entries, oldest
 }
 
-// searchFiles reads log entries from all log files and applies the specified search criteria.
-// IMPORTANT: this method does not scan more than "maxSearchEntries" so you
-// may need to call it many times.
-//
-// it returns:
-// * an array of log entries that we have read
-// * time of the oldest processed entry (even if it was discarded)
-// * total number of processed entries (including discarded).
-func (l *queryLog) searchFiles(params *searchParams) ([]*logEntry, time.Time, int) {
-	entries := make([]*logEntry, 0)
-	oldest := time.Time{}
-
+// searchFiles looks up log records from all log files.  It optionally uses the
+// client cache, if provided.  searchFiles does not scan more than
+// maxFileScanEntries so callers may need to call it several times to get all
+// results.  oldset and total are the time of the oldest processed entry and the
+// total number of processed entries, including discarded ones, correspondingly.
+func (l *queryLog) searchFiles(
+	params *searchParams,
+	cache clientCache,
+) (entries []*logEntry, oldest time.Time, total int) {
 	files := []string{
 		l.logFile + ".1",
 		l.logFile,
@@ -104,40 +147,43 @@ func (l *queryLog) searchFiles(params *searchParams) ([]*logEntry, time.Time, in
 	} else {
 		err = r.SeekTS(params.olderThan.UnixNano())
 		if err == nil {
-			// Read to the next record right away
-			// The one that was specified in the "oldest" param is not needed,
-			// we need only the one next to it
+			// Read to the next record, because we only need the one
+			// that goes after it.
 			_, err = r.ReadNext()
 		}
 	}
 
 	if err != nil {
-		log.Debug("Cannot SeekTS() to %v: %v", params.olderThan, err)
+		log.Debug("querylog: cannot seek to %s: %s", params.olderThan, err)
+
 		return entries, oldest, 0
 	}
 
 	totalLimit := params.offset + params.limit
-	total := 0
 	oldestNano := int64(0)
-	// By default, we do not scan more than "maxFileScanEntries" at once
-	// The idea is to make search calls faster so that the UI could handle it and show something
-	// This behavior can be overridden if "maxFileScanEntries" is set to 0
+
+	// By default, we do not scan more than maxFileScanEntries at once.
+	// The idea is to make search calls faster so that the UI could handle
+	// it and show something quicker.  This behavior can be overridden if
+	// maxFileScanEntries is set to 0.
 	for total < params.maxFileScanEntries || params.maxFileScanEntries <= 0 {
-		var entry *logEntry
+		var e *logEntry
 		var ts int64
-		entry, ts, err = l.readNextEntry(r, params)
-		if err == io.EOF {
-			// there's nothing to read anymore
-			break
+		e, ts, err = l.readNextEntry(r, params, cache)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			log.Error("querylog: reading next entry: %s", err)
 		}
 
 		oldestNano = ts
 		total++
 
-		if entry != nil {
-			entries = append(entries, entry)
+		if e != nil {
+			entries = append(entries, e)
 			if len(entries) == totalLimit {
-				// Do not read more than "totalLimit" records at once
 				break
 			}
 		}
@@ -146,36 +192,46 @@ func (l *queryLog) searchFiles(params *searchParams) ([]*logEntry, time.Time, in
 	if oldestNano != 0 {
 		oldest = time.Unix(0, oldestNano)
 	}
+
 	return entries, oldest, total
 }
 
-// readNextEntry - reads the next log entry and checks if it matches the search criteria (getDataParams)
-//
-// returns:
-// * log entry that matches search criteria or null if it was discarded (or if there's nothing to read)
-// * timestamp of the processed log entry
-// * error if we can't read anymore
-func (l *queryLog) readNextEntry(r *QLogReader, params *searchParams) (*logEntry, int64, error) {
-	line, err := r.ReadNext()
+// readNextEntry reads the next log entry and checks if it matches the search
+// criteria.  It optionally uses the client cache, if provided.  e is nil if the
+// entry doesn't match the search criteria.  ts is the timestamp of the
+// processed entry.
+func (l *queryLog) readNextEntry(
+	r *QLogReader,
+	params *searchParams,
+	cache clientCache,
+) (e *logEntry, ts int64, err error) {
+	var line string
+	line, err = r.ReadNext()
 	if err != nil {
 		return nil, 0, err
 	}
 
-	// Read the log record timestamp right away
-	timestamp := readQLogTimestamp(line)
+	e = &logEntry{}
+	decodeLogEntry(e, line)
 
-	// Quick check without deserializing log entry
-	if !params.quickMatch(line) {
-		return nil, timestamp, nil
+	e.client, err = l.client(e.ClientID, e.IP.String(), cache)
+	if err != nil {
+		log.Error(
+			"querylog: enriching file record at time %s"+
+				" for client %q (client id %q): %s",
+			e.Time,
+			e.IP,
+			e.ClientID,
+			err,
+		)
+
+		// Go on and try to match anyway.
 	}
 
-	entry := logEntry{}
-	decodeLogEntry(&entry, line)
-
-	// Full check of the deserialized log entry
-	if !params.match(&entry) {
-		return nil, timestamp, nil
+	ts = e.Time.UnixNano()
+	if !params.match(e) {
+		return nil, ts, nil
 	}
 
-	return &entry, timestamp, nil
+	return e, ts, nil
 }

@@ -13,6 +13,6 @@ import (
 	_ "golang.org/x/tools/go/analysis/passes/nilness/cmd/nilness"
 	_ "golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow"
 	_ "honnef.co/go/tools/cmd/staticcheck"
-	_ "mvdan.cc/gofumpt/gofumports"
+	_ "mvdan.cc/gofumpt"
 	_ "mvdan.cc/unparam"
 )

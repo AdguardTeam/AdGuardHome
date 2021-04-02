@@ -26,7 +26,7 @@ func TestQueryLog(t *testing.T) {
 	l := newQueryLog(Config{
 		Enabled:     true,
 		FileEnabled: true,
-		Interval:    1,
+		RotationIvl: 1,
 		MemSize:     100,
 		BaseDir:     t.TempDir(),
 	})
@@ -127,10 +127,10 @@ func TestQueryLog(t *testing.T) {
 
 func TestQueryLogOffsetLimit(t *testing.T) {
 	l := newQueryLog(Config{
-		Enabled:  true,
-		Interval: 1,
-		MemSize:  100,
-		BaseDir:  t.TempDir(),
+		Enabled:     true,
+		RotationIvl: 1,
+		MemSize:     100,
+		BaseDir:     t.TempDir(),
 	})
 
 	const (
@@ -202,7 +202,7 @@ func TestQueryLogMaxFileScanEntries(t *testing.T) {
 	l := newQueryLog(Config{
 		Enabled:     true,
 		FileEnabled: true,
-		Interval:    1,
+		RotationIvl: 1,
 		MemSize:     100,
 		BaseDir:     t.TempDir(),
 	})
@@ -230,7 +230,7 @@ func TestQueryLogFileDisabled(t *testing.T) {
 	l := newQueryLog(Config{
 		Enabled:     true,
 		FileEnabled: false,
-		Interval:    1,
+		RotationIvl: 1,
 		MemSize:     2,
 		BaseDir:     t.TempDir(),
 	})

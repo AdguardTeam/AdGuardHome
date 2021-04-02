@@ -56,13 +56,13 @@ const InfiniteTable = ({
     }, []);
 
     const renderRow = (row, idx) => <Row
-                    key={idx}
-                    rowProps={row}
-                    isSmallScreen={isSmallScreen}
-                    setDetailedDataCurrent={setDetailedDataCurrent}
-                    setButtonType={setButtonType}
-                    setModalOpened={setModalOpened}
-            />;
+        key={idx}
+        rowProps={row}
+        isSmallScreen={isSmallScreen}
+        setDetailedDataCurrent={setDetailedDataCurrent}
+        setButtonType={setButtonType}
+        setModalOpened={setModalOpened}
+    />;
 
     const isNothingFound = items.length === 0 && !processingGetLogs;
 

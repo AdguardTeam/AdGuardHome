@@ -375,5 +375,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // IsBlockedIP - return TRUE if this client should be blocked
 func (s *Server) IsBlockedIP(ip net.IP) (bool, string) {
+	if ip == nil {
+		return false, ""
+	}
+
 	return s.access.IsBlockedIP(ip)
 }

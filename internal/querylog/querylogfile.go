@@ -129,7 +129,7 @@ func (l *queryLog) readFileFirstTimeValue() int64 {
 }
 
 func (l *queryLog) periodicRotate() {
-	intervalSeconds := uint64(l.conf.Interval) * 24 * 60 * 60
+	intervalSeconds := uint64(l.conf.RotationIvl) * 24 * 60 * 60
 	for {
 		oldest := l.readFileFirstTimeValue()
 		if uint64(oldest)+intervalSeconds <= uint64(time.Now().Unix()) {

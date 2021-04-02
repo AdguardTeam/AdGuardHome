@@ -29,10 +29,11 @@ import DateCell from './DateCell';
 import DomainCell from './DomainCell';
 import ResponseCell from './ResponseCell';
 import ClientCell from './ClientCell';
-import '../Logs.css';
 import { toggleClientBlock } from '../../../actions/access';
 import { getBlockClientInfo, BUTTON_PREFIX } from './helpers';
 import { updateLogs } from '../../../actions/queryLogs';
+
+import '../Logs.css';
 
 const Row = memo(({
     style,
@@ -61,9 +62,7 @@ const Row = memo(({
             client,
             domain,
             elapsedMs,
-            info,
-            info: { disallowed, disallowed_rule },
-            reason,
+            client_info,
             response,
             time,
             tracker,
@@ -81,11 +80,6 @@ const Row = memo(({
 
         const autoClient = autoClients
             .find((autoClient) => autoClient.name === client);
-
-        const { whois_info } = info;
-        const country = whois_info?.country;
-        const city = whois_info?.city;
-        const network = whois_info?.orgname;
 
         const source = autoClient?.source;
 
@@ -111,7 +105,11 @@ const Row = memo(({
             confirmMessage,
             buttonKey: blockingClientKey,
             isNotInAllowedList,
-        } = getBlockClientInfo(client, disallowed, disallowed_rule);
+        } = getBlockClientInfo(
+            client,
+            client_info?.disallowed || false,
+            client_info?.disallowed_rule || '',
+        );
 
         const blockingForClientKey = isFiltered ? 'unblock_for_this_client_only' : 'block_for_this_client_only';
         const clientNameBlockingFor = getBlockingClientName(clients, client);
@@ -122,7 +120,13 @@ const Row = memo(({
 
         const onBlockingClientClick = async () => {
             if (window.confirm(confirmMessage)) {
-                await dispatch(toggleClientBlock(client, disallowed, disallowed_rule));
+                await dispatch(
+                    toggleClientBlock(
+                        client,
+                        client_info?.disallowed || false,
+                        client_info?.disallowed_rule || '',
+                    ),
+                );
                 await dispatch(updateLogs());
                 setModalOpened(false);
             }
@@ -177,10 +181,10 @@ const Row = memo(({
             response_code: status,
             client_details: 'title',
             ip_address: client,
-            name: info?.name || client_id,
-            country,
-            city,
-            network,
+            name: client_info?.name || client_id,
+            country: client_info?.whois?.country,
+            city: client_info?.whois?.city,
+            network: client_info?.whois?.orgname,
             source_label: source,
             validated_with_dnssec: dnssec_enabled ? Boolean(answer_dnssec) : false,
             original_response: originalResponse?.join('\n'),
@@ -219,15 +223,6 @@ Row.propTypes = {
         client: propTypes.string.isRequired,
         domain: propTypes.string.isRequired,
         elapsedMs: propTypes.string.isRequired,
-        info: propTypes.oneOfType([
-            propTypes.string,
-            propTypes.shape({
-                whois_info: propTypes.shape({
-                    country: propTypes.string,
-                    city: propTypes.string,
-                    orgname: propTypes.string,
-                }),
-            })]),
         response: propTypes.array.isRequired,
         time: propTypes.string.isRequired,
         tracker: propTypes.object,
@@ -235,6 +230,17 @@ Row.propTypes = {
         type: propTypes.string.isRequired,
         client_proto: propTypes.string.isRequired,
         client_id: propTypes.string,
+        client_info: propTypes.shape({
+            ids: propTypes.arrayOf(propTypes.string).isRequired,
+            name: propTypes.string.isRequired,
+            whois: propTypes.shape({
+                country: propTypes.string,
+                city: propTypes.string,
+                orgname: propTypes.string,
+            }).isRequired,
+            disallowed: propTypes.bool.isRequired,
+            disallowed_rule: propTypes.string.isRequired,
+        }),
         rules: propTypes.arrayOf(propTypes.shape({
             text: propTypes.string.isRequired,
             filter_list_id: propTypes.number.isRequired,

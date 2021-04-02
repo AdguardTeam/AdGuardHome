@@ -27,19 +27,6 @@ func newSearchParams() *searchParams {
 	}
 }
 
-// quickMatchesGetDataParams - quickly checks if the line matches the searchParams
-// this method does not guarantee anything and the reason is to do a quick check
-// without deserializing anything
-func (s *searchParams) quickMatch(line string) bool {
-	for _, c := range s.searchCriteria {
-		if !c.quickMatch(line) {
-			return false
-		}
-	}
-
-	return true
-}
-
 // match - checks if the logEntry matches the searchParams
 func (s *searchParams) match(entry *logEntry) bool {
 	if !s.olderThan.IsZero() && entry.Time.UnixNano() >= s.olderThan.UnixNano() {

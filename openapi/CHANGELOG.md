@@ -2,6 +2,13 @@
 
 <!-- TODO(a.garipov): Reformat in accordance with the KeepAChangelog spec. -->
 
+## v0.106: API changes
+
+### New `"client_info"` field in `GET /querylog` response
+
+* The new optional field `"client_info"` of `QueryLogItem` objects contains
+  a more full information about the client.
+
 ## v0.105: API changes
 
 ### New `"client_id"` field in `GET /querylog` response

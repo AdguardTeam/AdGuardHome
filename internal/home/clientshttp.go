@@ -22,7 +22,7 @@ type clientJSON struct {
 
 	Upstreams []string `json:"upstreams"`
 
-	WhoisInfo map[string]string `json:"whois_info"`
+	WhoisInfo *RuntimeClientWhoisInfo `json:"whois_info"`
 
 	// Disallowed - if true -- client's IP is not disallowed
 	// Otherwise, it is blocked.
@@ -34,18 +34,18 @@ type clientJSON struct {
 	DisallowedRule string `json:"disallowed_rule"`
 }
 
-type clientHostJSON struct {
+type runtimeClientJSON struct {
+	WhoisInfo *RuntimeClientWhoisInfo `json:"whois_info"`
+
 	IP     string `json:"ip"`
 	Name   string `json:"name"`
 	Source string `json:"source"`
-
-	WhoisInfo map[string]string `json:"whois_info"`
 }
 
 type clientListJSON struct {
-	Clients     []clientJSON     `json:"clients"`
-	AutoClients []clientHostJSON `json:"auto_clients"`
-	Tags        []string         `json:"supported_tags"`
+	Clients        []clientJSON        `json:"clients"`
+	RuntimeClients []runtimeClientJSON `json:"auto_clients"`
+	Tags           []string            `json:"supported_tags"`
 }
 
 // respond with information about configured clients
@@ -53,18 +53,21 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, _ *http
 	data := clientListJSON{}
 
 	clients.lock.Lock()
+	defer clients.lock.Unlock()
+
 	for _, c := range clients.list {
 		cj := clientToJSON(c)
 		data.Clients = append(data.Clients, cj)
 	}
-	for ip, ch := range clients.ipHost {
-		cj := clientHostJSON{
-			IP:   ip,
-			Name: ch.Host,
+	for ip, rc := range clients.ipToRC {
+		cj := runtimeClientJSON{
+			IP:        ip,
+			Name:      rc.Host,
+			WhoisInfo: rc.WhoisInfo,
 		}
 
 		cj.Source = "etc/hosts"
-		switch ch.Source {
+		switch rc.Source {
 		case ClientSourceDHCP:
 			cj.Source = "DHCP"
 		case ClientSourceRDNS:
@@ -75,14 +78,8 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, _ *http
 			cj.Source = "WHOIS"
 		}
 
-		cj.WhoisInfo = map[string]string{}
-		for _, wi := range ch.WhoisInfo {
-			cj.WhoisInfo[wi[0]] = wi[1]
-		}
-
-		data.AutoClients = append(data.AutoClients, cj)
+		data.RuntimeClients = append(data.RuntimeClients, cj)
 	}
-	clients.lock.Unlock()
 
 	data.Tags = clientTags
 
@@ -129,21 +126,21 @@ func clientToJSON(c *Client) clientJSON {
 		BlockedServices:          c.BlockedServices,
 
 		Upstreams: c.Upstreams,
+
+		WhoisInfo: &RuntimeClientWhoisInfo{},
 	}
+
 	return cj
 }
 
-// Convert ClientHost object to JSON
-func clientHostToJSON(ip string, ch ClientHost) clientJSON {
-	cj := clientJSON{
-		Name: ch.Host,
-		IDs:  []string{ip},
+// runtimeClientToJSON converts a RuntimeClient into a JSON struct.
+func runtimeClientToJSON(ip string, rc RuntimeClient) (cj clientJSON) {
+	cj = clientJSON{
+		Name:      rc.Host,
+		IDs:       []string{ip},
+		WhoisInfo: rc.WhoisInfo,
 	}
 
-	cj.WhoisInfo = map[string]string{}
-	for _, wi := range ch.WhoisInfo {
-		cj.WhoisInfo[wi[0]] = wi[1]
-	}
 	return cj
 }
 
@@ -268,7 +265,7 @@ func (clients *clientsContainer) findTemporary(ip net.IP, idStr string) (cj clie
 		return cj, false
 	}
 
-	ch, ok := clients.FindAutoClient(idStr)
+	rc, ok := clients.FindRuntimeClient(idStr)
 	if !ok {
 		// It is still possible that the IP used to be in the runtime
 		// clients list, but then the server was reloaded.  So, check
@@ -284,12 +281,13 @@ func (clients *clientsContainer) findTemporary(ip net.IP, idStr string) (cj clie
 			IDs:            []string{idStr},
 			Disallowed:     disallowed,
 			DisallowedRule: rule,
+			WhoisInfo:      &RuntimeClientWhoisInfo{},
 		}
 
 		return cj, true
 	}
 
-	cj = clientHostToJSON(idStr, ch)
+	cj = runtimeClientToJSON(idStr, rc)
 	cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
 
 	return cj, true

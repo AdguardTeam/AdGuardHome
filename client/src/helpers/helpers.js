@@ -63,6 +63,7 @@ export const normalizeLogs = (logs) => logs.map((log) => {
         client,
         client_proto,
         client_id,
+        client_info,
         elapsedMs,
         question,
         reason,
@@ -101,6 +102,7 @@ export const normalizeLogs = (logs) => logs.map((log) => {
         client,
         client_proto,
         client_id,
+        client_info,
         /* TODO 'filterId' and 'rule' are deprecated, will be removed in 0.106 */
         filterId,
         rule,

@@ -15,6 +15,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
+	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -60,19 +61,26 @@ const (
 	ClientSourceHostsFile
 )
 
-// ClientHost information
-type ClientHost struct {
+// RuntimeClient information
+type RuntimeClient struct {
 	Host      string
 	Source    clientSource
-	WhoisInfo [][]string // [[key,value], ...]
+	WhoisInfo *RuntimeClientWhoisInfo
+}
+
+// RuntimeClientWhoisInfo is the filtered WHOIS data for a runtime client.
+type RuntimeClientWhoisInfo struct {
+	City    string `json:"city,omitempty"`
+	Country string `json:"country,omitempty"`
+	Orgname string `json:"orgname,omitempty"`
 }
 
 type clientsContainer struct {
 	// TODO(a.garipov): Perhaps use a number of separate indices for
 	// different types (string, net.IP, and so on).
-	list    map[string]*Client     // name -> client
-	idIndex map[string]*Client     // ID -> client
-	ipHost  map[string]*ClientHost // IP -> Hostname
+	list    map[string]*Client        // name -> client
+	idIndex map[string]*Client        // ID -> client
+	ipToRC  map[string]*RuntimeClient // IP -> runtime client
 	lock    sync.Mutex
 
 	allTags map[string]bool
@@ -97,7 +105,7 @@ func (clients *clientsContainer) Init(objects []clientObject, dhcpServer *dhcpd.
 	}
 	clients.list = make(map[string]*Client)
 	clients.idIndex = make(map[string]*Client)
-	clients.ipHost = make(map[string]*ClientHost)
+	clients.ipToRC = make(map[string]*RuntimeClient)
 
 	clients.allTags = make(map[string]bool)
 	for _, t := range clientTags {
@@ -128,7 +136,7 @@ func (clients *clientsContainer) Start() {
 	}
 }
 
-// Reload - reload auto-clients
+// Reload reloads runtime clients.
 func (clients *clientsContainer) Reload() {
 	clients.addFromSystemARP()
 }
@@ -248,21 +256,70 @@ func (clients *clientsContainer) Exists(id string, source clientSource) (ok bool
 		return true
 	}
 
-	var ch *ClientHost
-	ch, ok = clients.ipHost[id]
+	var rc *RuntimeClient
+	rc, ok = clients.ipToRC[id]
 	if !ok {
 		return false
 	}
 
 	// Return false if the new source has higher priority.
-	return source <= ch.Source
+	return source <= rc.Source
 }
 
 func copyStrings(a []string) (b []string) {
 	return append(b, a...)
 }
 
-// Find searches for a client by its ID.
+func toQueryLogWhois(wi *RuntimeClientWhoisInfo) (cw *querylog.ClientWhois) {
+	if wi == nil {
+		return &querylog.ClientWhois{}
+	}
+
+	return &querylog.ClientWhois{
+		City:    wi.City,
+		Country: wi.Country,
+		Orgname: wi.Orgname,
+	}
+}
+
+// findMultiple is a wrapper around Find to make it a valid client finder for
+// the query log.  err is always nil.
+func (clients *clientsContainer) findMultiple(ids []string) (c *querylog.Client, err error) {
+	for _, id := range ids {
+		var name string
+		var foundIDs []string
+		whois := &querylog.ClientWhois{}
+
+		c, ok := clients.Find(id)
+		if ok {
+			name = c.Name
+			foundIDs = c.IDs
+		} else {
+			var rc RuntimeClient
+			rc, ok = clients.FindRuntimeClient(id)
+			if !ok {
+				continue
+			}
+
+			foundIDs = []string{rc.Host}
+			whois = toQueryLogWhois(rc.WhoisInfo)
+		}
+
+		ip := net.ParseIP(id)
+		disallowed, disallowedRule := clients.dnsServer.IsBlockedIP(ip)
+
+		return &querylog.Client{
+			Name:           name,
+			DisallowedRule: disallowedRule,
+			Whois:          whois,
+			IDs:            foundIDs,
+			Disallowed:     disallowed,
+		}, nil
+	}
+
+	return nil, nil
+}
+
 func (clients *clientsContainer) Find(id string) (c *Client, ok bool) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
@@ -361,21 +418,22 @@ func (clients *clientsContainer) findLocked(id string) (c *Client, ok bool) {
 	return nil, false
 }
 
-// FindAutoClient - search for an auto-client by IP
-func (clients *clientsContainer) FindAutoClient(ip string) (ClientHost, bool) {
+// FindRuntimeClient finds a runtime client by their IP.
+func (clients *clientsContainer) FindRuntimeClient(ip string) (RuntimeClient, bool) {
 	ipAddr := net.ParseIP(ip)
 	if ipAddr == nil {
-		return ClientHost{}, false
+		return RuntimeClient{}, false
 	}
 
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	ch, ok := clients.ipHost[ip]
+	rc, ok := clients.ipToRC[ip]
 	if ok {
-		return *ch, true
+		return *rc, true
 	}
-	return ClientHost{}, false
+
+	return RuntimeClient{}, false
 }
 
 // check validates the client.
@@ -558,9 +616,7 @@ func (clients *clientsContainer) Update(name string, c *Client) (err error) {
 }
 
 // SetWhoisInfo sets the WHOIS information for a client.
-//
-// TODO(a.garipov): Perhaps replace [][]string with map[string]string.
-func (clients *clientsContainer) SetWhoisInfo(ip string, info [][]string) {
+func (clients *clientsContainer) SetWhoisInfo(ip string, wi *RuntimeClientWhoisInfo) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
@@ -570,21 +626,24 @@ func (clients *clientsContainer) SetWhoisInfo(ip string, info [][]string) {
 		return
 	}
 
-	ch, ok := clients.ipHost[ip]
+	rc, ok := clients.ipToRC[ip]
 	if ok {
-		ch.WhoisInfo = info
-		log.Debug("clients: set whois info for auto-client %s: %q", ch.Host, info)
+		rc.WhoisInfo = wi
+		log.Debug("clients: set whois info for runtime client %s: %+v", rc.Host, wi)
 
 		return
 	}
 
-	// Create a ClientHost implicitly so that we don't do this check again
-	ch = &ClientHost{
+	// Create a RuntimeClient implicitly so that we don't do this check
+	// again.
+	rc = &RuntimeClient{
 		Source: ClientSourceWHOIS,
 	}
-	ch.WhoisInfo = info
-	clients.ipHost[ip] = ch
-	log.Debug("clients: set whois info for auto-client with IP %s: %q", ip, info)
+
+	rc.WhoisInfo = wi
+	clients.ipToRC[ip] = rc
+
+	log.Debug("clients: set whois info for runtime client with ip %s: %+v", ip, wi)
 }
 
 // AddHost adds a new IP-hostname pairing.  The priorities of the sources is
@@ -600,24 +659,25 @@ func (clients *clientsContainer) AddHost(ip, host string, src clientSource) (ok 
 
 // addHostLocked adds a new IP-hostname pairing.  For internal use only.
 func (clients *clientsContainer) addHostLocked(ip, host string, src clientSource) (ok bool) {
-	var ch *ClientHost
-	ch, ok = clients.ipHost[ip]
+	var rc *RuntimeClient
+	rc, ok = clients.ipToRC[ip]
 	if ok {
-		if ch.Source > src {
+		if rc.Source > src {
 			return false
 		}
 
-		ch.Source = src
+		rc.Source = src
 	} else {
-		ch = &ClientHost{
-			Host:   host,
-			Source: src,
+		rc = &RuntimeClient{
+			Host:      host,
+			Source:    src,
+			WhoisInfo: &RuntimeClientWhoisInfo{},
 		}
 
-		clients.ipHost[ip] = ch
+		clients.ipToRC[ip] = rc
 	}
 
-	log.Debug("clients: added %q -> %q [%d]", ip, host, len(clients.ipHost))
+	log.Debug("clients: added %q -> %q [%d]", ip, host, len(clients.ipToRC))
 
 	return true
 }
@@ -625,9 +685,9 @@ func (clients *clientsContainer) addHostLocked(ip, host string, src clientSource
 // rmHostsBySrc removes all entries that match the specified source.
 func (clients *clientsContainer) rmHostsBySrc(src clientSource) {
 	n := 0
-	for k, v := range clients.ipHost {
+	for k, v := range clients.ipToRC {
 		if v.Source == src {
-			delete(clients.ipHost, k)
+			delete(clients.ipToRC, k)
 			n++
 		}
 	}

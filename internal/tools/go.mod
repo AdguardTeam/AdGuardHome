@@ -15,6 +15,6 @@ require (
 	golang.org/x/sys v0.0.0-20210309074719-68d13333faf2 // indirect
 	golang.org/x/tools v0.1.0
 	honnef.co/go/tools v0.1.3
-	mvdan.cc/gofumpt v0.1.0
+	mvdan.cc/gofumpt v0.1.1
 	mvdan.cc/unparam v0.0.0-20210104141923-aac4ce9116a7
 )
