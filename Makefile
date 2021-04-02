@@ -15,6 +15,7 @@ GPG_KEY = devteam@adguard.com
 GPG_KEY_PASSPHRASE = not-a-real-password
 NPM = npm
 NPM_FLAGS = --prefix $(CLIENT_DIR)
+RACE = 0
 SIGN = 1
 VERBOSE = 0
 VERSION = v0.0.0
@@ -30,6 +31,7 @@ ENV = env\
 	GO='$(GO)'\
 	GOPROXY='$(GOPROXY)'\
 	PATH="$${PWD}/bin:$$($(GO) env GOPATH)/bin:$${PATH}"\
+	RACE='$(RACE)'\
 	SIGN='$(SIGN)'\
 	VERBOSE='$(VERBOSE)'\
 	VERSION='$(VERSION)'\
@@ -75,8 +77,11 @@ js-beta-test: ; # TODO(v.abdulmyanov): Add tests for the new client.
 go-build: ; $(ENV) "$(SHELL)" ./scripts/make/go-build.sh
 go-deps:  ; $(ENV) "$(SHELL)" ./scripts/make/go-deps.sh
 go-lint:  ; $(ENV) "$(SHELL)" ./scripts/make/go-lint.sh
-go-test:  ; $(ENV) "$(SHELL)" ./scripts/make/go-test.sh
 go-tools: ; $(ENV) "$(SHELL)" ./scripts/make/go-tools.sh
+
+# TODO(a.garipov): Think about making RACE='1' the default for all
+# targets.
+go-test:  ; $(ENV) RACE='1' "$(SHELL)" ./scripts/make/go-test.sh
 
 go-check: go-tools go-lint go-test
 

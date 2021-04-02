@@ -91,10 +91,22 @@ else
 	readonly out_flags=''
 fi
 
-# Don't use cgo.  Use modules.
-export CGO_ENABLED='0' GO111MODULE='on'
+# Allow users to enable the race detector.  Unfortunately, that means
+# that CGo must be enabled.
+readonly race="${RACE:-0}"
+if [ "$race" = '0' ]
+then
+	readonly cgo_enabled='0'
+	readonly race_flags=''
+else
+	readonly cgo_enabled='1'
+	readonly race_flags='--race'
+fi
 
-readonly build_flags="${BUILD_FLAGS:-$out_flags $par_flags\
+export CGO_ENABLED="$cgo_enabled"
+export GO111MODULE='on'
+
+readonly build_flags="${BUILD_FLAGS:-$race_flags $out_flags $par_flags\
 	$v_flags $x_flags}"
 
 # Don't use quotes with flag variables to get word splitting.
