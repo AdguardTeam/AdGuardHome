@@ -646,6 +646,6 @@ export const isFirefox = navigator.userAgent.indexOf('Firefox') !== -1;
 export const COMMENT_LINE_DEFAULT_TOKEN = '#';
 
 export const MOBILE_CONFIG_LINKS = {
-    DOT: '/apple/dot.mobileconfig',
-    DOH: '/apple/doh.mobileconfig',
+    DOT: 'apple/dot.mobileconfig',
+    DOH: 'apple/doh.mobileconfig',
 };
