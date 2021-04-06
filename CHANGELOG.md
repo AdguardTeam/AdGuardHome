@@ -15,6 +15,7 @@ and this project adheres to
 
 ### Added
 
+- Logging of the client's IP address after failed login attempts ([#2824]).
 - Search by clients' names in the query log ([#1273]).
 - Verbose version output with `-v --version` ([#2416]).
 - The ability to set a custom TLD for known local-network hosts ([#2393]).
@@ -55,6 +56,7 @@ and this project adheres to
 [#2533]: https://github.com/AdguardTeam/AdGuardHome/issues/2533
 [#2541]: https://github.com/AdguardTeam/AdGuardHome/issues/2541
 [#2704]: https://github.com/AdguardTeam/AdGuardHome/issues/2704
+[#2824]: https://github.com/AdguardTeam/AdGuardHome/issues/2824
 [#2828]: https://github.com/AdguardTeam/AdGuardHome/issues/2828
 [#2835]: https://github.com/AdguardTeam/AdGuardHome/issues/2835
 [#2838]: https://github.com/AdguardTeam/AdGuardHome/issues/2838

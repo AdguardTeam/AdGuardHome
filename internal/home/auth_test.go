@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/hex"
+	"net"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -211,4 +213,66 @@ func TestAuthHTTP(t *testing.T) {
 	r.Header.Del("Cookie")
 
 	Context.auth.Close()
+}
+
+func TestRealIP(t *testing.T) {
+	const remoteAddr = "1.2.3.4:5678"
+
+	testCases := []struct {
+		name       string
+		header     http.Header
+		remoteAddr string
+		wantErrMsg string
+		wantIP     net.IP
+	}{{
+		name:       "success_no_proxy",
+		header:     nil,
+		remoteAddr: remoteAddr,
+		wantErrMsg: "",
+		wantIP:     net.IPv4(1, 2, 3, 4),
+	}, {
+		name: "success_proxy",
+		header: http.Header{
+			textproto.CanonicalMIMEHeaderKey("X-Real-IP"): []string{"1.2.3.5"},
+		},
+		remoteAddr: remoteAddr,
+		wantErrMsg: "",
+		wantIP:     net.IPv4(1, 2, 3, 5),
+	}, {
+		name: "success_proxy_multiple",
+		header: http.Header{
+			textproto.CanonicalMIMEHeaderKey("X-Forwarded-For"): []string{
+				"1.2.3.6, 1.2.3.5",
+			},
+		},
+		remoteAddr: remoteAddr,
+		wantErrMsg: "",
+		wantIP:     net.IPv4(1, 2, 3, 6),
+	}, {
+		name:       "error_no_proxy",
+		header:     nil,
+		remoteAddr: "1:::2",
+		wantErrMsg: `getting ip from client addr: address 1:::2: ` +
+			`too many colons in address`,
+		wantIP: nil,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			r := &http.Request{
+				Header:     tc.header,
+				RemoteAddr: tc.remoteAddr,
+			}
+
+			ip, err := realIP(r)
+			assert.Equal(t, tc.wantIP, ip)
+
+			if tc.wantErrMsg == "" {
+				assert.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				assert.Equal(t, tc.wantErrMsg, err.Error())
+			}
+		})
+	}
 }

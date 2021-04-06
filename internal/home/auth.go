@@ -6,24 +6,26 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/log"
 	"go.etcd.io/bbolt"
 	"golang.org/x/crypto/bcrypt"
 )
 
-const (
-	// cookieTTL is given in hours.
-	cookieTTL         = 365 * 24
-	sessionCookieName = "agh_session"
+// cookieTTL is the time-to-live of the session cookie.
+const cookieTTL = 365 * 24 * time.Hour
 
-	// sessionTokenSize is the length of session token in bytes.
-	sessionTokenSize = 16
-)
+// sessionCookieName is the name of the session cookie.
+const sessionCookieName = "agh_session"
+
+// sessionTokenSize is the length of session token in bytes.
+const sessionTokenSize = 16
 
 type session struct {
 	userName string
@@ -82,15 +84,17 @@ func InitAuth(dbFilename string, users []User, sessionTTL uint32) *Auth {
 	var err error
 	a.db, err = bbolt.Open(dbFilename, 0o644, nil)
 	if err != nil {
-		log.Error("Auth: open DB: %s: %s", dbFilename, err)
+		log.Error("auth: open DB: %s: %s", dbFilename, err)
 		if err.Error() == "invalid argument" {
 			log.Error("AdGuard Home cannot be initialized due to an incompatible file system.\nPlease read the explanation here: https://github.com/AdguardTeam/AdGuardHome/internal/wiki/Getting-Started#limitations")
 		}
+
 		return nil
 	}
 	a.loadSessions()
 	a.users = users
-	log.Info("Auth: initialized.  users:%d  sessions:%d", len(a.users), len(a.sessions))
+	log.Info("auth: initialized.  users:%d  sessions:%d", len(a.users), len(a.sessions))
+
 	return &a
 }
 
@@ -107,7 +111,8 @@ func bucketName() []byte {
 func (a *Auth) loadSessions() {
 	tx, err := a.db.Begin(true)
 	if err != nil {
-		log.Error("Auth: bbolt.Begin: %s", err)
+		log.Error("auth: bbolt.Begin: %s", err)
+
 		return
 	}
 	defer func() {
@@ -132,10 +137,11 @@ func (a *Auth) loadSessions() {
 		if !s.deserialize(v) || s.expire <= now {
 			err = bkt.Delete(k)
 			if err != nil {
-				log.Error("Auth: bbolt.Delete: %s", err)
+				log.Error("auth: bbolt.Delete: %s", err)
 			} else {
 				removed++
 			}
+
 			return nil
 		}
 
@@ -149,7 +155,8 @@ func (a *Auth) loadSessions() {
 			log.Error("bolt.Commit(): %s", err)
 		}
 	}
-	log.Debug("Auth: loaded %d sessions from DB (removed %d expired)", len(a.sessions), removed)
+
+	log.Debug("auth: loaded %d sessions from DB (removed %d expired)", len(a.sessions), removed)
 }
 
 // store session data in file
@@ -159,7 +166,7 @@ func (a *Auth) addSession(data []byte, s *session) {
 	a.sessions[name] = s
 	a.lock.Unlock()
 	if a.storeSession(data, s) {
-		log.Debug("Auth: created session %s: expire=%d", name, s.expire)
+		log.Debug("auth: created session %s: expire=%d", name, s.expire)
 	}
 }
 
@@ -167,7 +174,8 @@ func (a *Auth) addSession(data []byte, s *session) {
 func (a *Auth) storeSession(data []byte, s *session) bool {
 	tx, err := a.db.Begin(true)
 	if err != nil {
-		log.Error("Auth: bbolt.Begin: %s", err)
+		log.Error("auth: bbolt.Begin: %s", err)
+
 		return false
 	}
 	defer func() {
@@ -176,20 +184,25 @@ func (a *Auth) storeSession(data []byte, s *session) bool {
 
 	bkt, err := tx.CreateBucketIfNotExists(bucketName())
 	if err != nil {
-		log.Error("Auth: bbolt.CreateBucketIfNotExists: %s", err)
+		log.Error("auth: bbolt.CreateBucketIfNotExists: %s", err)
+
 		return false
 	}
+
 	err = bkt.Put(data, s.serialize())
 	if err != nil {
-		log.Error("Auth: bbolt.Put: %s", err)
+		log.Error("auth: bbolt.Put: %s", err)
+
 		return false
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Error("Auth: bbolt.Commit: %s", err)
+		log.Error("auth: bbolt.Commit: %s", err)
+
 		return false
 	}
+
 	return true
 }
 
@@ -197,31 +210,37 @@ func (a *Auth) storeSession(data []byte, s *session) bool {
 func (a *Auth) removeSession(sess []byte) {
 	tx, err := a.db.Begin(true)
 	if err != nil {
-		log.Error("Auth: bbolt.Begin: %s", err)
+		log.Error("auth: bbolt.Begin: %s", err)
+
 		return
 	}
+
 	defer func() {
 		_ = tx.Rollback()
 	}()
 
 	bkt := tx.Bucket(bucketName())
 	if bkt == nil {
-		log.Error("Auth: bbolt.Bucket")
+		log.Error("auth: bbolt.Bucket")
+
 		return
 	}
+
 	err = bkt.Delete(sess)
 	if err != nil {
-		log.Error("Auth: bbolt.Put: %s", err)
+		log.Error("auth: bbolt.Put: %s", err)
+
 		return
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		log.Error("Auth: bbolt.Commit: %s", err)
+		log.Error("auth: bbolt.Commit: %s", err)
+
 		return
 	}
 
-	log.Debug("Auth: removed session from DB")
+	log.Debug("auth: removed session from DB")
 }
 
 // checkSessionResult is the result of checking a session.
@@ -265,7 +284,7 @@ func (a *Auth) checkSession(sess string) (res checkSessionResult) {
 	if update {
 		key, _ := hex.DecodeString(sess)
 		if a.storeSession(key, s) {
-			log.Debug("Auth: updated session %s: expire=%d", sess, s.expire)
+			log.Debug("auth: updated session %s: expire=%d", sess, s.expire)
 		}
 	}
 
@@ -332,8 +351,52 @@ func (a *Auth) httpCookie(req loginJSON) (string, error) {
 	return fmt.Sprintf(
 		"%s=%s; Path=/; HttpOnly; Expires=%s",
 		sessionCookieName, hex.EncodeToString(sess),
-		cookieExpiryFormat(now.Add(cookieTTL*time.Hour)),
+		cookieExpiryFormat(now.Add(cookieTTL)),
 	), nil
+}
+
+// realIP extracts the real IP address of the client from an HTTP request using
+// the known HTTP headers.
+//
+// TODO(a.garipov): Currently, this is basically a copy of a similar function in
+// module dnsproxy.  This should really become a part of module golibs and be
+// replaced both here and there.  Or be replaced in both places by
+// a well-maintained third-party module.
+//
+// TODO(a.garipov): Support header Forwarded from RFC 7329.
+func realIP(r *http.Request) (ip net.IP, err error) {
+	proxyHeaders := []string{
+		"CF-Connecting-IP",
+		"True-Client-IP",
+		"X-Real-IP",
+	}
+
+	for _, h := range proxyHeaders {
+		v := r.Header.Get(h)
+		ip = net.ParseIP(v)
+		if ip != nil {
+			return ip, nil
+		}
+	}
+
+	// If none of the above yielded any results, get the leftmost IP address
+	// from the X-Forwarded-For header.
+	s := r.Header.Get("X-Forwarded-For")
+	ipStrs := strings.SplitN(s, ", ", 2)
+	ip = net.ParseIP(ipStrs[0])
+	if ip != nil {
+		return ip, nil
+	}
+
+	// When everything else fails, just return the remote address as
+	// understood by the stdlib.
+	var ipStr string
+	ipStr, err = aghnet.SplitHost(r.RemoteAddr)
+	if err != nil {
+		return nil, fmt.Errorf("getting ip from client addr: %w", err)
+	}
+
+	return net.ParseIP(ipStr), nil
 }
 
 func handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -347,12 +410,26 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	cookie, err := Context.auth.httpCookie(req)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "crypto rand reader: %s", err)
+
 		return
 	}
+
 	if len(cookie) == 0 {
-		log.Info("Auth: invalid user name or password: name=%q", req.Name)
+		var ip net.IP
+		ip, err = realIP(r)
+		if err != nil {
+			log.Info("auth: getting real ip from request: %s", err)
+		} else if ip == nil {
+			// Technically shouldn't happen.
+			log.Info("auth: failed to login user %q from unknown ip", req.Name)
+		} else {
+			log.Info("auth: failed to login user %q from ip %q", req.Name, ip)
+		}
+
 		time.Sleep(1 * time.Second)
-		http.Error(w, "invalid user name or password", http.StatusBadRequest)
+
+		http.Error(w, "invalid username or password", http.StatusBadRequest)
+
 		return
 	}
 
@@ -410,15 +487,14 @@ func optionalAuthThird(w http.ResponseWriter, r *http.Request) (authFirst bool) 
 	cookie, err := r.Cookie(sessionCookieName)
 
 	if glProcessCookie(r) {
-		log.Debug("Auth: authentification was handled by GL-Inet submodule")
+		log.Debug("auth: authentification was handled by GL-Inet submodule")
 		ok = true
-
 	} else if err == nil {
 		r := Context.auth.checkSession(cookie.Value)
 		if r == checkSessionOK {
 			ok = true
 		} else if r < 0 {
-			log.Debug("Auth: invalid cookie value: %s", cookie)
+			log.Debug("auth: invalid cookie value: %s", cookie)
 		}
 	} else {
 		// there's no Cookie, check Basic authentication
@@ -428,14 +504,14 @@ func optionalAuthThird(w http.ResponseWriter, r *http.Request) (authFirst bool) 
 			if len(u.Name) != 0 {
 				ok = true
 			} else {
-				log.Info("Auth: invalid Basic Authorization value")
+				log.Info("auth: invalid Basic Authorization value")
 			}
 		}
 	}
 	if !ok {
 		if r.URL.Path == "/" || r.URL.Path == "/index.html" {
 			if glProcessRedirect(w, r) {
-				log.Debug("Auth: redirected to login page by GL-Inet submodule")
+				log.Debug("auth: redirected to login page by GL-Inet submodule")
 			} else {
 				w.Header().Set("Location", "/login.html")
 				w.WriteHeader(http.StatusFound)
@@ -446,6 +522,7 @@ func optionalAuthThird(w http.ResponseWriter, r *http.Request) (authFirst bool) 
 		}
 		authFirst = true
 	}
+
 	return authFirst
 }
 
@@ -463,7 +540,7 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 
 					return
 				} else if r == checkSessionNotFound {
-					log.Debug("Auth: invalid cookie value: %s", cookie)
+					log.Debug("auth: invalid cookie value: %s", cookie)
 				}
 			}
 
@@ -510,7 +587,7 @@ func (a *Auth) UserAdd(u *User, password string) {
 	a.users = append(a.users, *u)
 	a.lock.Unlock()
 
-	log.Debug("Auth: added user: %s", u.Name)
+	log.Debug("auth: added user: %s", u.Name)
 }
 
 // UserFind - find a user
