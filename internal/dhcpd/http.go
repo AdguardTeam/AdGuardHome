@@ -178,6 +178,7 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		s.srv4.WriteDiskConfig4(&c4)
 		v4Conf.notify = c4.notify
 		v4Conf.ICMPTimeout = c4.ICMPTimeout
+		v4Conf.Options = c4.Options
 
 		s4, err = v4Create(v4Conf)
 		if err != nil {

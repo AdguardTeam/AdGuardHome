@@ -38,6 +38,7 @@ and this project adheres to
 
 ### Fixed
 
+- Overwriting of DHCPv4 options when using the HTTP API ([#2927]).
 - Assumption that MAC addresses always have the length of 6 octets ([#2828]).
 - Support for more than one `/24` subnet in DHCP ([#2541]).
 - Invalid filenames in the `mobileconfig` API responses ([#2835]).
@@ -60,6 +61,7 @@ and this project adheres to
 [#2828]: https://github.com/AdguardTeam/AdGuardHome/issues/2828
 [#2835]: https://github.com/AdguardTeam/AdGuardHome/issues/2835
 [#2838]: https://github.com/AdguardTeam/AdGuardHome/issues/2838
+[#2927]: https://github.com/AdguardTeam/AdGuardHome/issues/2927
 
 
 
