@@ -14,8 +14,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
-	"github.com/AdguardTeam/golibs/file"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/google/renameio/maybe"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -314,11 +314,14 @@ func (c *configuration) write() error {
 	config.Clients = nil
 	if err != nil {
 		log.Error("Couldn't generate YAML file: %s", err)
+
 		return err
 	}
-	err = file.SafeWrite(configFile, yamlText)
+
+	err = maybe.WriteFile(configFile, yamlText, 0o644)
 	if err != nil {
 		log.Error("Couldn't save YAML config: %s", err)
+
 		return err
 	}
 

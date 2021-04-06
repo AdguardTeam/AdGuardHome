@@ -10,8 +10,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/AdguardTeam/golibs/file"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/google/renameio/maybe"
 )
 
 const dbFilename = "leases.db"
@@ -50,7 +50,7 @@ func (s *Server) dbLoad() {
 	obj := []leaseJSON{}
 	err = json.Unmarshal(data, &obj)
 	if err != nil {
-		log.Error("DHCP: invalid DB: %v", err)
+		log.Error("dhcp: invalid DB: %v", err)
 		return
 	}
 
@@ -59,7 +59,7 @@ func (s *Server) dbLoad() {
 		obj[i].IP = normalizeIP(obj[i].IP)
 
 		if !(len(obj[i].IP) == 4 || len(obj[i].IP) == 16) {
-			log.Info("DHCP: invalid IP: %s", obj[i].IP)
+			log.Info("dhcp: invalid IP: %s", obj[i].IP)
 			continue
 		}
 
@@ -93,7 +93,7 @@ func (s *Server) dbLoad() {
 		s.srv6.ResetLeases(leases6)
 	}
 
-	log.Info("DHCP: loaded leases v4:%d  v6:%d  total-read:%d from DB",
+	log.Info("dhcp: loaded leases v4:%d  v6:%d  total-read:%d from DB",
 		len(leases4), len(leases6), numLeases)
 }
 
@@ -164,11 +164,13 @@ func (s *Server) dbStore() {
 		return
 	}
 
-	err = file.SafeWrite(s.conf.DBFilePath, data)
+	err = maybe.WriteFile(s.conf.DBFilePath, data, 0o644)
 	if err != nil {
-		log.Error("DHCP: can't store lease table on disk: %v  filename: %s",
+		log.Error("dhcp: can't store lease table on disk: %v  filename: %s",
 			err, s.conf.DBFilePath)
+
 		return
 	}
-	log.Info("DHCP: stored %d leases in DB", len(leases))
+
+	log.Info("dhcp: stored %d leases in DB", len(leases))
 }

@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
-	"github.com/AdguardTeam/golibs/file"
+	"github.com/google/renameio/maybe"
 )
 
 // maxConfigFileSize is the maximum length of interfaces configuration file.
@@ -145,9 +145,9 @@ func ifaceSetStaticIP(ifaceName string) (err error) {
 	}
 
 	body = append(body, []byte(add)...)
-	err = file.SafeWrite("/etc/dhcpcd.conf", body)
+	err = maybe.WriteFile("/etc/dhcpcd.conf", body, 0o644)
 	if err != nil {
-		return err
+		return fmt.Errorf("writing conf: %w", err)
 	}
 
 	return nil

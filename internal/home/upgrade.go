@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/AdguardTeam/golibs/file"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/google/renameio/maybe"
 	"golang.org/x/crypto/bcrypt"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -99,7 +99,7 @@ func upgradeConfigSchema(oldVersion int, diskConf yobj) (err error) {
 
 	config.fileData = body
 	confFile := config.getConfigFilename()
-	err = file.SafeWrite(confFile, body)
+	err = maybe.WriteFile(confFile, body, 0o644)
 	if err != nil {
 		return fmt.Errorf("saving new config: %w", err)
 	}
