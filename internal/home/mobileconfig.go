@@ -123,18 +123,20 @@ func handleMobileConfig(w http.ResponseWriter, r *http.Request, dnsp string) {
 	}
 
 	clientID := q.Get("client_id")
-	err = dnsforward.ValidateClientID(clientID)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-
-		err = json.NewEncoder(w).Encode(&jsonError{
-			Message: err.Error(),
-		})
+	if clientID != "" {
+		err = dnsforward.ValidateClientID(clientID)
 		if err != nil {
-			log.Debug("writing 400 json response: %s", err)
-		}
+			w.WriteHeader(http.StatusBadRequest)
 
-		return
+			err = json.NewEncoder(w).Encode(&jsonError{
+				Message: err.Error(),
+			})
+			if err != nil {
+				log.Debug("writing 400 json response: %s", err)
+			}
+
+			return
+		}
 	}
 
 	d := dnsSettings{

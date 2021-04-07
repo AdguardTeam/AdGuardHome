@@ -238,8 +238,8 @@ func TestProcessClientID_https(t *testing.T) {
 		name:         "invalid_client_id",
 		path:         "/dns-query/!!!",
 		wantClientID: "",
-		wantErrMsg: `client id check: invalid client id: invalid char '!'` +
-			` at index 0 in "!!!"`,
+		wantErrMsg: `client id check: invalid client id: invalid char '!' ` +
+			`at index 0 in "!!!"`,
 		wantRes: resultCodeError,
 	}}
 

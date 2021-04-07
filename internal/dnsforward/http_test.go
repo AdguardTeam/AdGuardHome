@@ -213,3 +213,158 @@ func TestDNSForwardHTTTP_handleSetConfig(t *testing.T) {
 		})
 	}
 }
+
+// TODO(a.garipov): Rewrite to check the actual error messages.
+func TestValidateUpstream(t *testing.T) {
+	testCases := []struct {
+		name     string
+		upstream string
+		valid    bool
+		wantDef  bool
+	}{{
+		name:     "invalid",
+		upstream: "1.2.3.4.5",
+		valid:    false,
+		wantDef:  false,
+	}, {
+		name:     "invalid",
+		upstream: "123.3.7m",
+		valid:    false,
+		wantDef:  false,
+	}, {
+		name:     "invalid",
+		upstream: "htttps://google.com/dns-query",
+		valid:    false,
+		wantDef:  false,
+	}, {
+		name:     "invalid",
+		upstream: "[/host.com]tls://dns.adguard.com",
+		valid:    false,
+		wantDef:  false,
+	}, {
+		name:     "invalid",
+		upstream: "[host.ru]#",
+		valid:    false,
+		wantDef:  false,
+	}, {
+		name:     "valid_default",
+		upstream: "1.1.1.1",
+		valid:    true,
+		wantDef:  true,
+	}, {
+		name:     "valid_default",
+		upstream: "tls://1.1.1.1",
+		valid:    true,
+		wantDef:  true,
+	}, {
+		name:     "valid_default",
+		upstream: "https://dns.adguard.com/dns-query",
+		valid:    true,
+		wantDef:  true,
+	}, {
+		name:     "valid_default",
+		upstream: "sdns://AQMAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
+		valid:    true,
+		wantDef:  true,
+	}, {
+		name:     "valid",
+		upstream: "[/host.com/]1.1.1.1",
+		valid:    true,
+		wantDef:  false,
+	}, {
+		name:     "valid",
+		upstream: "[//]tls://1.1.1.1",
+		valid:    true,
+		wantDef:  false,
+	}, {
+		name:     "valid",
+		upstream: "[/www.host.com/]#",
+		valid:    true,
+		wantDef:  false,
+	}, {
+		name:     "valid",
+		upstream: "[/host.com/google.com/]8.8.8.8",
+		valid:    true,
+		wantDef:  false,
+	}, {
+		name:     "valid",
+		upstream: "[/host/]sdns://AQMAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
+		valid:    true,
+		wantDef:  false,
+	}, {
+		name:     "idna",
+		upstream: "[/пример.рф/]8.8.8.8",
+		valid:    true,
+		wantDef:  false,
+	}, {
+		name:     "bad_domain",
+		upstream: "[/!/]8.8.8.8",
+		valid:    false,
+		wantDef:  false,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			defaultUpstream, err := validateUpstream(tc.upstream)
+			require.Equal(t, tc.valid, err == nil)
+			if tc.valid {
+				assert.Equal(t, tc.wantDef, defaultUpstream)
+			}
+		})
+	}
+}
+
+func TestValidateUpstreamsSet(t *testing.T) {
+	testCases := []struct {
+		name    string
+		msg     string
+		set     []string
+		wantNil bool
+	}{{
+		name:    "empty",
+		msg:     "empty upstreams array should be valid",
+		set:     nil,
+		wantNil: true,
+	}, {
+		name:    "comment",
+		msg:     "comments should not be validated",
+		set:     []string{"# comment"},
+		wantNil: true,
+	}, {
+		name: "valid_no_default",
+		msg:  "there is no default upstream",
+		set: []string{
+			"[/host.com/]1.1.1.1",
+			"[//]tls://1.1.1.1",
+			"[/www.host.com/]#",
+			"[/host.com/google.com/]8.8.8.8",
+			"[/host/]sdns://AQMAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
+		},
+		wantNil: false,
+	}, {
+		name: "valid_with_default",
+		msg:  "upstreams set is valid, but doesn't pass through validation cause: %s",
+		set: []string{
+			"[/host.com/]1.1.1.1",
+			"[//]tls://1.1.1.1",
+			"[/www.host.com/]#",
+			"[/host.com/google.com/]8.8.8.8",
+			"[/host/]sdns://AQMAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
+			"8.8.8.8",
+		},
+		wantNil: true,
+	}, {
+		name:    "invalid",
+		msg:     "there is an invalid upstream in set, but it pass through validation",
+		set:     []string{"dhcp://fake.dns"},
+		wantNil: false,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateUpstreams(tc.set)
+
+			assert.Equalf(t, tc.wantNil, err == nil, tc.msg, err)
+		})
+	}
+}

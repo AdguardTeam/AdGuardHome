@@ -6,33 +6,14 @@ import (
 	"path"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/lucas-clemente/quic-go"
 )
 
-// maxDomainLabelLen is the maximum allowed length of a domain name label
-// according to RFC 1035.
-const maxDomainLabelLen = 63
-
-// validateDomainNameLabel returns an error if label is not a valid label of
-// a domain name.
-func validateDomainNameLabel(label string) (err error) {
-	if len(label) > maxDomainLabelLen {
-		return fmt.Errorf("%q is too long, max: %d", label, maxDomainLabelLen)
-	}
-
-	for i, r := range label {
-		if (r < 'a' || r > 'z') && (r < '0' || r > '9') && r != '-' {
-			return fmt.Errorf("invalid char %q at index %d in %q", r, i, label)
-		}
-	}
-
-	return nil
-}
-
 // ValidateClientID returns an error if clientID is not a valid client ID.
 func ValidateClientID(clientID string) (err error) {
-	err = validateDomainNameLabel(clientID)
+	err = aghnet.ValidateDomainNameLabel(clientID)
 	if err != nil {
 		return fmt.Errorf("invalid client id: %w", err)
 	}

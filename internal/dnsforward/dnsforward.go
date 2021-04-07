@@ -114,7 +114,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 	if p.AutohostTLD == "" {
 		autohostSuffix = defaultAutohostSuffix
 	} else {
-		err = validateDomainNameLabel(p.AutohostTLD)
+		err = aghnet.ValidateDomainNameLabel(p.AutohostTLD)
 		if err != nil {
 			return nil, fmt.Errorf("autohost tld: %w", err)
 		}

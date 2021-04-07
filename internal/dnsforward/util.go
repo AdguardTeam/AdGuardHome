@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/AdguardTeam/golibs/utils"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 )
 
 // IPFromAddr gets IP address from addr.
@@ -58,9 +58,10 @@ func matchDomainWildcard(host, wildcard string) bool {
 
 // Return TRUE if client's SNI value matches DNS names from certificate
 func matchDNSName(dnsNames []string, sni string) bool {
-	if utils.IsValidHostname(sni) != nil {
+	if aghnet.ValidateDomainName(sni) != nil {
 		return false
 	}
+
 	if findSorted(dnsNames, sni) != -1 {
 		return true
 	}

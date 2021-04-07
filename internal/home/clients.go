@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
@@ -20,7 +21,6 @@ import (
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/utils"
 )
 
 const clientsUpdatePeriod = 10 * time.Minute
@@ -751,7 +751,7 @@ func (clients *clientsContainer) addFromSystemARP() {
 
 		host := ln[:open]
 		ip := ln[open+2 : close]
-		if utils.IsValidHostname(host) != nil || net.ParseIP(ip) == nil {
+		if aghnet.ValidateDomainName(host) != nil || net.ParseIP(ip) == nil {
 			continue
 		}
 
