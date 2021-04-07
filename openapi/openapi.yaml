@@ -1893,12 +1893,6 @@
             set to true, and this string is empty, then the client IP is
             disallowed by the "allowed IP list", that is it is not included in
             the allowed list.
-        'ids':
-          'description': >
-            IP, CIDR, MAC, or client ID.
-          'items':
-            'type': 'string'
-          'type': 'array'
         'name':
           'description': >
             Persistent client's name or an empty string if this is a runtime

@@ -287,13 +287,11 @@ func toQueryLogWhois(wi *RuntimeClientWhoisInfo) (cw *querylog.ClientWhois) {
 func (clients *clientsContainer) findMultiple(ids []string) (c *querylog.Client, err error) {
 	for _, id := range ids {
 		var name string
-		var foundIDs []string
 		whois := &querylog.ClientWhois{}
 
 		c, ok := clients.Find(id)
 		if ok {
 			name = c.Name
-			foundIDs = c.IDs
 		} else {
 			var rc RuntimeClient
 			rc, ok = clients.FindRuntimeClient(id)
@@ -301,7 +299,7 @@ func (clients *clientsContainer) findMultiple(ids []string) (c *querylog.Client,
 				continue
 			}
 
-			foundIDs = []string{rc.Host}
+			name = rc.Host
 			whois = toQueryLogWhois(rc.WhoisInfo)
 		}
 
@@ -312,7 +310,6 @@ func (clients *clientsContainer) findMultiple(ids []string) (c *querylog.Client,
 			Name:           name,
 			DisallowedRule: disallowedRule,
 			Whois:          whois,
-			IDs:            foundIDs,
 			Disallowed:     disallowed,
 		}, nil
 	}

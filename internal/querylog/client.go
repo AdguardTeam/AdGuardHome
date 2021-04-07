@@ -3,10 +3,9 @@ package querylog
 // Client is the information required by the query log to match against clients
 // during searches.
 type Client struct {
+	Whois          *ClientWhois `json:"whois,omitempty"`
 	Name           string       `json:"name"`
 	DisallowedRule string       `json:"disallowed_rule"`
-	Whois          *ClientWhois `json:"whois,omitempty"`
-	IDs            []string     `json:"ids"`
 	Disallowed     bool         `json:"disallowed"`
 }
 

@@ -16,7 +16,6 @@ func TestQueryLog_Search_findClient(t *testing.T) {
 	const unknownClientID = "client-2"
 
 	knownClient := &Client{
-		IDs:  []string{knownClientID},
 		Name: knownClientName,
 	}
 
@@ -91,5 +90,4 @@ func TestQueryLog_Search_findClient(t *testing.T) {
 	require.NotNil(t, gotClient)
 
 	assert.Equal(t, knownClientName, gotClient.Name)
-	assert.Equal(t, []string{knownClientID}, gotClient.IDs)
 }
