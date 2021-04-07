@@ -5,7 +5,7 @@ import { Field, reduxForm } from 'redux-form';
 import { Trans, useTranslation } from 'react-i18next';
 import classnames from 'classnames';
 import Examples from './Examples';
-import { renderRadioField, renderTextareaField } from '../../../../helpers/form';
+import { renderRadioField, renderTextareaField, CheckboxField } from '../../../../helpers/form';
 import {
     DNS_REQUEST_OPTIONS,
     FORM_NAME,
@@ -28,11 +28,12 @@ const renderField = ({
     const processingTestUpstream = useSelector((state) => state.settings.processingTestUpstream);
     const processingSetConfig = useSelector((state) => state.dnsConfig.processingSetConfig);
 
-    return <div
+    return (
+        <div
             key={placeholder}
             className={classnames('col-12 mb-4', containerClass)}
-    >
-        <Field
+        >
+            <Field
                 id={name}
                 value={value}
                 name={name}
@@ -44,8 +45,9 @@ const renderField = ({
                 disabled={processingSetConfig || processingTestUpstream}
                 normalizeOnBlur={normalizeOnBlur}
                 onScroll={onScroll}
-        />
-    </div>;
+            />
+        </div>
+    );
 };
 
 renderField.propTypes = {
@@ -160,10 +162,10 @@ const Form = ({
                 {' '}
                 <Trans components={[
                     <a
-                            href="https://kb.adguard.com/general/dns-providers"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            key="0"
+                        href="https://kb.adguard.com/general/dns-providers"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        key="0"
                     >
                         DNS providers
                     </a>,
@@ -195,6 +197,40 @@ const Form = ({
                     placeholder={t('bootstrap_dns')}
                     disabled={processingSetConfig}
                     normalizeOnBlur={removeEmptyLines}
+                />
+            </div>
+            <div className="col-12">
+                <hr />
+            </div>
+            <div className="col-12 mb-4">
+                <label
+                    className="form__label form__label--with-desc"
+                    htmlFor="local_ptr"
+                >
+                    <Trans>local_ptr_title</Trans>
+                </label>
+                <div className="form__desc form__desc--top">
+                    <Trans>local_ptr_desc</Trans>
+                </div>
+                <Field
+                    id="local_ptr_upstreams"
+                    name="local_ptr_upstreams"
+                    component={renderTextareaField}
+                    type="text"
+                    className="form-control form-control--textarea form-control--textarea-small font-monospace"
+                    placeholder={t('local_ptr_placeholder')}
+                    disabled={processingSetConfig}
+                    normalizeOnBlur={removeEmptyLines}
+                />
+            </div>
+            <div className="col-12 mb-4">
+                <Field
+                    name="resolve_clients"
+                    type="checkbox"
+                    component={CheckboxField}
+                    placeholder={t('resolve_clients_title')}
+                    subtitle={t('resolve_clients_desc')}
+                    disabled={processingSetConfig}
                 />
             </div>
         </div>

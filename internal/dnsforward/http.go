@@ -10,6 +10,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
@@ -27,59 +28,67 @@ type dnsConfig struct {
 	UpstreamsFile *string   `json:"upstream_dns_file"`
 	Bootstraps    *[]string `json:"bootstrap_dns"`
 
-	ProtectionEnabled *bool   `json:"protection_enabled"`
-	RateLimit         *uint32 `json:"ratelimit"`
-	BlockingMode      *string `json:"blocking_mode"`
-	BlockingIPv4      net.IP  `json:"blocking_ipv4"`
-	BlockingIPv6      net.IP  `json:"blocking_ipv6"`
-	EDNSCSEnabled     *bool   `json:"edns_cs_enabled"`
-	DNSSECEnabled     *bool   `json:"dnssec_enabled"`
-	DisableIPv6       *bool   `json:"disable_ipv6"`
-	UpstreamMode      *string `json:"upstream_mode"`
-	CacheSize         *uint32 `json:"cache_size"`
-	CacheMinTTL       *uint32 `json:"cache_ttl_min"`
-	CacheMaxTTL       *uint32 `json:"cache_ttl_max"`
+	ProtectionEnabled *bool     `json:"protection_enabled"`
+	RateLimit         *uint32   `json:"ratelimit"`
+	BlockingMode      *string   `json:"blocking_mode"`
+	BlockingIPv4      net.IP    `json:"blocking_ipv4"`
+	BlockingIPv6      net.IP    `json:"blocking_ipv6"`
+	EDNSCSEnabled     *bool     `json:"edns_cs_enabled"`
+	DNSSECEnabled     *bool     `json:"dnssec_enabled"`
+	DisableIPv6       *bool     `json:"disable_ipv6"`
+	UpstreamMode      *string   `json:"upstream_mode"`
+	CacheSize         *uint32   `json:"cache_size"`
+	CacheMinTTL       *uint32   `json:"cache_ttl_min"`
+	CacheMaxTTL       *uint32   `json:"cache_ttl_max"`
+	ResolveClients    *bool     `json:"resolve_clients"`
+	LocalPTRUpstreams *[]string `json:"local_ptr_upstreams"`
 }
 
 func (s *Server) getDNSConfig() dnsConfig {
 	s.RLock()
-	upstreams := stringArrayDup(s.conf.UpstreamDNS)
+	defer s.RUnlock()
+
+	upstreams := aghstrings.CloneSliceOrEmpty(s.conf.UpstreamDNS)
 	upstreamFile := s.conf.UpstreamDNSFileName
-	bootstraps := stringArrayDup(s.conf.BootstrapDNS)
+	bootstraps := aghstrings.CloneSliceOrEmpty(s.conf.BootstrapDNS)
 	protectionEnabled := s.conf.ProtectionEnabled
 	blockingMode := s.conf.BlockingMode
-	BlockingIPv4 := s.conf.BlockingIPv4
-	BlockingIPv6 := s.conf.BlockingIPv6
-	Ratelimit := s.conf.Ratelimit
-	EnableEDNSClientSubnet := s.conf.EnableEDNSClientSubnet
-	EnableDNSSEC := s.conf.EnableDNSSEC
-	AAAADisabled := s.conf.AAAADisabled
-	CacheSize := s.conf.CacheSize
-	CacheMinTTL := s.conf.CacheMinTTL
-	CacheMaxTTL := s.conf.CacheMaxTTL
+	blockingIPv4 := s.conf.BlockingIPv4
+	blockingIPv6 := s.conf.BlockingIPv6
+	ratelimit := s.conf.Ratelimit
+	enableEDNSClientSubnet := s.conf.EnableEDNSClientSubnet
+	enableDNSSEC := s.conf.EnableDNSSEC
+	aaaaDisabled := s.conf.AAAADisabled
+	cacheSize := s.conf.CacheSize
+	cacheMinTTL := s.conf.CacheMinTTL
+	cacheMaxTTL := s.conf.CacheMaxTTL
+	resolveClients := s.conf.ResolveClients
+	localPTRUpstreams := aghstrings.CloneSliceOrEmpty(s.conf.LocalPTRResolvers)
 	var upstreamMode string
 	if s.conf.FastestAddr {
 		upstreamMode = "fastest_addr"
 	} else if s.conf.AllServers {
 		upstreamMode = "parallel"
 	}
-	s.RUnlock()
+
 	return dnsConfig{
 		Upstreams:         &upstreams,
 		UpstreamsFile:     &upstreamFile,
 		Bootstraps:        &bootstraps,
 		ProtectionEnabled: &protectionEnabled,
 		BlockingMode:      &blockingMode,
-		BlockingIPv4:      BlockingIPv4,
-		BlockingIPv6:      BlockingIPv6,
-		RateLimit:         &Ratelimit,
-		EDNSCSEnabled:     &EnableEDNSClientSubnet,
-		DNSSECEnabled:     &EnableDNSSEC,
-		DisableIPv6:       &AAAADisabled,
-		CacheSize:         &CacheSize,
-		CacheMinTTL:       &CacheMinTTL,
-		CacheMaxTTL:       &CacheMaxTTL,
+		BlockingIPv4:      blockingIPv4,
+		BlockingIPv6:      blockingIPv6,
+		RateLimit:         &ratelimit,
+		EDNSCSEnabled:     &enableEDNSClientSubnet,
+		DNSSECEnabled:     &enableDNSSEC,
+		DisableIPv6:       &aaaaDisabled,
+		CacheSize:         &cacheSize,
+		CacheMinTTL:       &cacheMinTTL,
+		CacheMaxTTL:       &cacheMaxTTL,
 		UpstreamMode:      &upstreamMode,
+		ResolveClients:    &resolveClients,
+		LocalPTRUpstreams: &localPTRUpstreams,
 	}
 }
 
@@ -227,6 +236,11 @@ func (s *Server) setConfigRestartable(dc dnsConfig) (restart bool) {
 		restart = true
 	}
 
+	if dc.LocalPTRUpstreams != nil {
+		s.conf.LocalPTRResolvers = *dc.LocalPTRUpstreams
+		restart = true
+	}
+
 	if dc.UpstreamsFile != nil {
 		s.conf.UpstreamDNSFileName = *dc.UpstreamsFile
 		restart = true
@@ -294,15 +308,24 @@ func (s *Server) setConfig(dc dnsConfig) (restart bool) {
 		s.conf.FastestAddr = *dc.UpstreamMode == "fastest_addr"
 	}
 
+	if dc.ResolveClients != nil {
+		s.conf.ResolveClients = *dc.ResolveClients
+	}
+
 	return s.setConfigRestartable(dc)
 }
 
+// upstreamJSON is a request body for handleTestUpstreamDNS endpoint.
 type upstreamJSON struct {
-	Upstreams    []string `json:"upstream_dns"`  // Upstreams
-	BootstrapDNS []string `json:"bootstrap_dns"` // Bootstrap DNS
+	Upstreams        []string `json:"upstream_dns"`
+	BootstrapDNS     []string `json:"bootstrap_dns"`
+	PrivateUpstreams []string `json:"private_upstream"`
 }
 
-// ValidateUpstreams validates each upstream and returns an error if any upstream is invalid or if there are no default upstreams specified
+// ValidateUpstreams validates each upstream and returns an error if any
+// upstream is invalid or if there are no default upstreams specified.
+//
+// TODO(e.burkov): Move into aghnet or even into dnsproxy.
 func ValidateUpstreams(upstreams []string) (err error) {
 	// No need to validate comments
 	upstreams = filterOutComments(upstreams)
@@ -428,52 +451,76 @@ func checkPlainDNS(upstream string) error {
 	return nil
 }
 
-func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
-	req := upstreamJSON{}
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "Failed to read request body: %s", err)
-		return
+// excFunc is a signature of function to check if upstream exchanges correctly.
+type excFunc func(u upstream.Upstream) (err error)
+
+// checkDNSUpstreamExc checks if the DNS upstream exchanges correctly.
+func checkDNSUpstreamExc(u upstream.Upstream) (err error) {
+	req := &dns.Msg{
+		MsgHdr: dns.MsgHdr{
+			Id:               dns.Id(),
+			RecursionDesired: true,
+		},
+		Question: []dns.Question{{
+			Name:   "google-public-dns-a.google.com.",
+			Qtype:  dns.TypeA,
+			Qclass: dns.ClassINET,
+		}},
 	}
 
-	result := map[string]string{}
+	var reply *dns.Msg
+	reply, err = u.Exchange(req)
+	if err != nil {
+		return fmt.Errorf("couldn't communicate with upstream: %w", err)
+	}
 
-	for _, host := range req.Upstreams {
-		err = checkDNS(host, req.BootstrapDNS)
-		if err != nil {
-			log.Info("%v", err)
-			result[host] = err.Error()
-		} else {
-			result[host] = "OK"
+	if len(reply.Answer) != 1 {
+		return fmt.Errorf("wrong response")
+	}
+
+	if t, ok := reply.Answer[0].(*dns.A); ok {
+		if !net.IPv4(8, 8, 8, 8).Equal(t.A) {
+			return fmt.Errorf("wrong response")
 		}
 	}
 
-	jsonVal, err := json.Marshal(result)
-	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "Unable to marshal status json: %s", err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
-	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "Couldn't write body: %s", err)
-		return
-	}
+	return nil
 }
 
-func checkDNS(input string, bootstrap []string) error {
+// checkPrivateUpstreamExc checks if the upstream for resolving private
+// addresses exchanges correctly.
+func checkPrivateUpstreamExc(u upstream.Upstream) (err error) {
+	req := &dns.Msg{
+		MsgHdr: dns.MsgHdr{
+			Id:               dns.Id(),
+			RecursionDesired: true,
+		},
+		Question: []dns.Question{{
+			Name:   "1.0.0.127.in-addr.arpa.",
+			Qtype:  dns.TypePTR,
+			Qclass: dns.ClassINET,
+		}},
+	}
+
+	if _, err = u.Exchange(req); err != nil {
+		return fmt.Errorf("couldn't communicate with upstream: %w", err)
+	}
+
+	return nil
+}
+
+func checkDNS(input string, bootstrap []string, ef excFunc) (err error) {
 	if !isUpstream(input) {
 		return nil
 	}
 
-	// separate upstream from domains list
-	input, useDefault, err := separateUpstream(input)
-	if err != nil {
+	// Separate upstream from domains list.
+	var useDefault bool
+	if input, useDefault, err = separateUpstream(input); err != nil {
 		return fmt.Errorf("wrong upstream format: %w", err)
 	}
 
-	// No need to check this DNS server
+	// No need to check this DNS server.
 	if !useDefault {
 		return nil
 	}
@@ -486,33 +533,78 @@ func checkDNS(input string, bootstrap []string) error {
 		bootstrap = defaultBootstrap
 	}
 
-	log.Debug("checking if dns %s works...", input)
-	u, err := upstream.AddressToUpstream(input, upstream.Options{Bootstrap: bootstrap, Timeout: DefaultTimeout})
+	log.Debug("checking if dns server %q works...", input)
+	var u upstream.Upstream
+	u, err = upstream.AddressToUpstream(input, upstream.Options{
+		Bootstrap: bootstrap,
+		Timeout:   DefaultTimeout,
+	})
 	if err != nil {
-		return fmt.Errorf("failed to choose upstream for %s: %w", input, err)
+		return fmt.Errorf("failed to choose upstream for %q: %w", input, err)
 	}
 
-	req := dns.Msg{}
-	req.Id = dns.Id()
-	req.RecursionDesired = true
-	req.Question = []dns.Question{
-		{Name: "google-public-dns-a.google.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
-	}
-	reply, err := u.Exchange(&req)
-	if err != nil {
-		return fmt.Errorf("couldn't communicate with dns server %s: %w", input, err)
-	}
-	if len(reply.Answer) != 1 {
-		return fmt.Errorf("dns server %s returned wrong answer", input)
-	}
-	if t, ok := reply.Answer[0].(*dns.A); ok {
-		if !net.IPv4(8, 8, 8, 8).Equal(t.A) {
-			return fmt.Errorf("dns server %s returned wrong answer: %v", input, t.A)
-		}
+	if err = ef(u); err != nil {
+		return fmt.Errorf("upstream %q fails to exchange: %w", input, err)
 	}
 
 	log.Debug("dns %s works OK", input)
+
 	return nil
+}
+
+func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
+	req := &upstreamJSON{}
+	err := json.NewDecoder(r.Body).Decode(req)
+	if err != nil {
+		httpError(r, w, http.StatusBadRequest, "Failed to read request body: %s", err)
+
+		return
+	}
+
+	result := map[string]string{}
+	bootstraps := req.BootstrapDNS
+
+	for _, host := range req.Upstreams {
+		err = checkDNS(host, bootstraps, checkDNSUpstreamExc)
+		if err != nil {
+			log.Info("%v", err)
+			result[host] = err.Error()
+
+			continue
+		}
+
+		result[host] = "OK"
+	}
+
+	for _, host := range req.PrivateUpstreams {
+		err = checkDNS(host, bootstraps, checkPrivateUpstreamExc)
+		if err != nil {
+			log.Info("%v", err)
+			// TODO(e.burkov): If passed upstream have already
+			// written an error above, we rewriting the error for
+			// it.  These cases should be handled properly instead.
+			result[host] = err.Error()
+
+			continue
+		}
+
+		result[host] = "OK"
+	}
+
+	jsonVal, err := json.Marshal(result)
+	if err != nil {
+		httpError(r, w, http.StatusInternalServerError, "Unable to marshal status json: %s", err)
+
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(jsonVal)
+	if err != nil {
+		httpError(r, w, http.StatusInternalServerError, "Couldn't write body: %s", err)
+
+		return
+	}
 }
 
 // Control flow:

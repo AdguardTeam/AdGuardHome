@@ -9,15 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
-	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestRDNS_Begin(t *testing.T) {
@@ -105,90 +102,30 @@ func TestRDNS_Begin(t *testing.T) {
 	}
 }
 
-func TestRDNS_Resolve(t *testing.T) {
-	extUpstream := &aghtest.TestUpstream{
-		Reverse: map[string][]string{
-			"1.1.1.1.in-addr.arpa.": {"one.one.one.one"},
-		},
-	}
-	locUpstream := &aghtest.TestUpstream{
-		Reverse: map[string][]string{
-			"1.1.168.192.in-addr.arpa.": {"local.domain"},
-			"2.1.168.192.in-addr.arpa.": {},
-		},
-	}
-	upstreamErr := errors.New("upstream error")
-	errUpstream := &aghtest.TestErrUpstream{
-		Err: upstreamErr,
-	}
-	nonPtrUpstream := &aghtest.TestBlockUpstream{
-		Hostname: "some-host",
-		Block:    true,
+// rDNSExchanger is a mock dnsforward.RDNSExchanger implementation for tests.
+type rDNSExchanger struct {
+	aghtest.Exchanger
+}
+
+// Exchange implements dnsforward.RDNSExchanger interface for *RDNSExchanger.
+func (e *rDNSExchanger) Exchange(ip net.IP) (host string, err error) {
+	req := &dns.Msg{
+		Question: []dns.Question{{
+			Name:  ip.String(),
+			Qtype: dns.TypePTR,
+		}},
 	}
 
-	dns := dnsforward.NewCustomServer(&proxy.Proxy{
-		Config: proxy.Config{
-			UpstreamConfig: &proxy.UpstreamConfig{
-				Upstreams: []upstream.Upstream{extUpstream},
-			},
-		},
-	})
-
-	cc := &clientsContainer{}
-
-	snd, err := aghnet.NewSubnetDetector()
-	require.NoError(t, err)
-
-	localIP := net.IP{192, 168, 1, 1}
-	testCases := []struct {
-		name        string
-		want        string
-		wantErr     error
-		locUpstream upstream.Upstream
-		req         net.IP
-	}{{
-		name:        "external_good",
-		want:        "one.one.one.one",
-		wantErr:     nil,
-		locUpstream: nil,
-		req:         net.IP{1, 1, 1, 1},
-	}, {
-		name:        "local_good",
-		want:        "local.domain",
-		wantErr:     nil,
-		locUpstream: locUpstream,
-		req:         localIP,
-	}, {
-		name:        "upstream_error",
-		want:        "",
-		wantErr:     upstreamErr,
-		locUpstream: errUpstream,
-		req:         localIP,
-	}, {
-		name:        "empty_answer_error",
-		want:        "",
-		wantErr:     rDNSEmptyAnswerErr,
-		locUpstream: locUpstream,
-		req:         net.IP{192, 168, 1, 2},
-	}, {
-		name:        "not_ptr_error",
-		want:        "",
-		wantErr:     rDNSNotPTRErr,
-		locUpstream: nonPtrUpstream,
-		req:         localIP,
-	}}
-
-	for _, tc := range testCases {
-		rdns := NewRDNS(dns, cc, snd, &aghtest.Exchanger{
-			Ups: tc.locUpstream,
-		})
-
-		t.Run(tc.name, func(t *testing.T) {
-			r, rerr := rdns.resolve(tc.req)
-			require.ErrorIs(t, rerr, tc.wantErr)
-			assert.Equal(t, tc.want, r)
-		})
+	resp, err := e.Exchanger.Exchange(req)
+	if err != nil {
+		return "", err
 	}
+
+	if len(resp.Answer) == 0 {
+		return "", nil
+	}
+
+	return resp.Answer[0].Header().Name, nil
 }
 
 func TestRDNS_WorkerLoop(t *testing.T) {
@@ -198,34 +135,33 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 
 	locUpstream := &aghtest.TestUpstream{
 		Reverse: map[string][]string{
-			"1.1.168.192.in-addr.arpa.": {"local.domain"},
+			"192.168.1.1": {"local.domain"},
 		},
 	}
-
-	snd, err := aghnet.NewSubnetDetector()
-	require.NoError(t, err)
+	errUpstream := &aghtest.TestErrUpstream{
+		Err: errors.New("1234"),
+	}
 
 	testCases := []struct {
+		ups     upstream.Upstream
 		wantLog string
 		name    string
 		cliIP   net.IP
 	}{{
+		ups:     locUpstream,
 		wantLog: "",
 		name:    "all_good",
 		cliIP:   net.IP{192, 168, 1, 1},
 	}, {
-		wantLog: `rdns: resolving "192.168.1.2": lookup for "2.1.168.192.in-addr.arpa.": ` +
-			string(rDNSEmptyAnswerErr),
-		name:  "resolve_error",
-		cliIP: net.IP{192, 168, 1, 2},
+		ups:     errUpstream,
+		wantLog: `rdns: resolving "192.168.1.2": errupstream: 1234`,
+		name:    "resolve_error",
+		cliIP:   net.IP{192, 168, 1, 2},
 	}}
 
 	for _, tc := range testCases {
 		w.Reset()
 
-		lr := &aghtest.Exchanger{
-			Ups: locUpstream,
-		}
 		cc := &clientsContainer{
 			list:    map[string]*Client{},
 			idIndex: map[string]*Client{},
@@ -234,11 +170,13 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 		}
 		ch := make(chan net.IP)
 		rdns := &RDNS{
-			dnsServer:      nil,
-			clients:        cc,
-			subnetDetector: snd,
-			localResolvers: lr,
-			ipCh:           ch,
+			exchanger: &rDNSExchanger{
+				Exchanger: aghtest.Exchanger{
+					Ups: tc.ups,
+				},
+			},
+			clients: cc,
+			ipCh:    ch,
 		}
 
 		t.Run(tc.name, func(t *testing.T) {

@@ -7,6 +7,8 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+
+	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 )
 
 // Channel constants.
@@ -68,14 +70,6 @@ const (
 	nltb = nl + tb
 )
 
-// writeStrings is a convenient wrapper for strings.(*Builder).WriteString that
-// deals with multiple strings and ignores errors that are guaranteed to be nil.
-func writeStrings(b *strings.Builder, strs ...string) {
-	for _, s := range strs {
-		_, _ = b.WriteString(s)
-	}
-}
-
 // Constants defining the format of module information string.
 const (
 	modInfoAtSep    = "@"
@@ -99,16 +93,16 @@ func fmtModule(m *debug.Module) (formatted string) {
 
 	b := &strings.Builder{}
 
-	writeStrings(b, m.Path)
+	aghstrings.WriteToBuilder(b, m.Path)
 	if ver := m.Version; ver != "" {
 		sep := modInfoAtSep
 		if ver == "(devel)" {
 			sep = modInfoDevSep
 		}
-		writeStrings(b, sep, ver)
+		aghstrings.WriteToBuilder(b, sep, ver)
 	}
 	if sum := m.Sum; sum != "" {
-		writeStrings(b, modInfoSumLeft, sum, modInfoSumRight)
+		aghstrings.WriteToBuilder(b, modInfoSumLeft, sum, modInfoSumRight)
 	}
 
 	return b.String()
@@ -149,7 +143,7 @@ const (
 func Verbose() (v string) {
 	b := &strings.Builder{}
 
-	writeStrings(
+	aghstrings.WriteToBuilder(
 		b,
 		vFmtAGHHdr,
 		nl,
@@ -163,31 +157,31 @@ func Verbose() (v string) {
 		runtime.Version(),
 	)
 	if buildtime != "" {
-		writeStrings(b, nl, vFmtTimeHdr, buildtime)
+		aghstrings.WriteToBuilder(b, nl, vFmtTimeHdr, buildtime)
 	}
-	writeStrings(b, nl, vFmtGOOSHdr, nl, vFmtGOARCHHdr)
+	aghstrings.WriteToBuilder(b, nl, vFmtGOOSHdr, nl, vFmtGOARCHHdr)
 	if goarm != "" {
-		writeStrings(b, nl, vFmtGOARMHdr, "v", goarm)
+		aghstrings.WriteToBuilder(b, nl, vFmtGOARMHdr, "v", goarm)
 	} else if gomips != "" {
-		writeStrings(b, nl, vFmtGOMIPSHdr, gomips)
+		aghstrings.WriteToBuilder(b, nl, vFmtGOMIPSHdr, gomips)
 	}
-	writeStrings(b, nl, vFmtRaceHdr, strconv.FormatBool(isRace))
+	aghstrings.WriteToBuilder(b, nl, vFmtRaceHdr, strconv.FormatBool(isRace))
 
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
 		return b.String()
 	}
 
-	writeStrings(b, nl, vFmtMainHdr, nltb, fmtModule(&info.Main))
+	aghstrings.WriteToBuilder(b, nl, vFmtMainHdr, nltb, fmtModule(&info.Main))
 
 	if len(info.Deps) == 0 {
 		return b.String()
 	}
 
-	writeStrings(b, nl, vFmtDepsHdr)
+	aghstrings.WriteToBuilder(b, nl, vFmtDepsHdr)
 	for _, dep := range info.Deps {
 		if depStr := fmtModule(dep); depStr != "" {
-			writeStrings(b, nltb, depStr)
+			aghstrings.WriteToBuilder(b, nltb, depStr)
 		}
 	}
 

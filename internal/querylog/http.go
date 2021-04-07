@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/golibs/jsonutil"
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -125,17 +126,6 @@ func getDoubleQuotesEnclosedValue(s *string) bool {
 	return false
 }
 
-// inStr checks if string is in the slice of strings.
-func inStr(strs []string, str string) (ok bool) {
-	for _, s := range strs {
-		if s == str {
-			return true
-		}
-	}
-
-	return false
-}
-
 // parseSearchCriteria - parses "searchCriteria" from the specified query parameter
 func (l *queryLog) parseSearchCriteria(q url.Values, name string, ct criteriaType) (bool, searchCriteria, error) {
 	val := q.Get(name)
@@ -151,7 +141,7 @@ func (l *queryLog) parseSearchCriteria(q url.Values, name string, ct criteriaTyp
 		c.strict = true
 	}
 
-	if ct == ctFilteringStatus && !inStr(filteringStatusValues, c.value) {
+	if ct == ctFilteringStatus && !aghstrings.InSlice(filteringStatusValues, c.value) {
 		return false, c, fmt.Errorf("invalid value %s", c.value)
 	}
 

@@ -98,6 +98,13 @@ type dnsConfig struct {
 	// For example, a machine called "myhost" can be addressed as
 	// "myhost.lan" when AutohostTLD is "lan".
 	AutohostTLD string `yaml:"autohost_tld"`
+
+	// ResolveClients enables and disables resolving clients with RDNS.
+	ResolveClients bool `yaml:"resolve_clients"`
+
+	// LocalPTRResolvers is the slice of addresses to be used as upstreams
+	// for PTR queries for locally-served networks.
+	LocalPTRResolvers []string `yaml:"local_ptr_upstreams"`
 }
 
 type tlsConfigSettings struct {
@@ -150,6 +157,7 @@ var config = configuration{
 		FilteringEnabled:           true, // whether or not use filter lists
 		FiltersUpdateIntervalHours: 24,
 		AutohostTLD:                "lan",
+		ResolveClients:             true,
 	},
 	TLS: tlsConfigSettings{
 		PortHTTPS:       443,
@@ -296,10 +304,12 @@ func (c *configuration) write() error {
 		config.DNS.DnsfilterConf = c
 	}
 
-	if Context.dnsServer != nil {
+	if s := Context.dnsServer; s != nil {
 		c := dnsforward.FilteringConfig{}
-		Context.dnsServer.WriteDiskConfig(&c)
+		s.WriteDiskConfig(&c)
 		config.DNS.FilteringConfig = c
+
+		config.DNS.LocalPTRResolvers, config.DNS.ResolveClients = s.RDNSSettings()
 	}
 
 	if Context.dhcpServer != nil {

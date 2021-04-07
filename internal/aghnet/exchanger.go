@@ -31,7 +31,11 @@ type multiAddrExchanger struct {
 
 // NewMultiAddrExchanger creates an Exchanger instance from passed addresses.
 // It returns an error if any of addrs failed to become an upstream.
-func NewMultiAddrExchanger(addrs []string, timeout time.Duration) (e Exchanger, err error) {
+func NewMultiAddrExchanger(
+	addrs []string,
+	bootstraps []string,
+	timeout time.Duration,
+) (e Exchanger, err error) {
 	defer agherr.Annotate("exchanger: %w", &err)
 
 	if len(addrs) == 0 {
@@ -41,7 +45,10 @@ func NewMultiAddrExchanger(addrs []string, timeout time.Duration) (e Exchanger, 
 	var ups []upstream.Upstream = make([]upstream.Upstream, 0, len(addrs))
 	for _, addr := range addrs {
 		var u upstream.Upstream
-		u, err = upstream.AddressToUpstream(addr, upstream.Options{Timeout: timeout})
+		u, err = upstream.AddressToUpstream(addr, upstream.Options{
+			Bootstrap: bootstraps,
+			Timeout:   timeout,
+		})
 		if err != nil {
 			return nil, err
 		}

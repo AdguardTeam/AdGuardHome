@@ -75,7 +75,7 @@ type Config struct {
 	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request)) `yaml:"-"`
 
 	// CustomResolver is the resolver used by DNSFilter.
-	CustomResolver Resolver
+	CustomResolver Resolver `yaml:"-"`
 }
 
 // LookupStats store stats collected during safebrowsing or parental checks

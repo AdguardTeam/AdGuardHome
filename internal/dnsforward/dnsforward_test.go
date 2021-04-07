@@ -18,6 +18,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
@@ -73,7 +74,6 @@ func createTestServer(t *testing.T, filterConf *dnsfilter.Config, forwardConf Se
 	s, err = NewServer(DNSCreateParams{
 		DNSFilter:      f,
 		SubnetDetector: snd,
-		LocalResolvers: &aghtest.Exchanger{},
 	})
 	require.NoError(t, err)
 
@@ -81,6 +81,11 @@ func createTestServer(t *testing.T, filterConf *dnsfilter.Config, forwardConf Se
 
 	err = s.Prepare(nil)
 	require.NoError(t, err)
+
+	s.Lock()
+	defer s.Unlock()
+
+	s.localResolvers = &aghtest.Exchanger{}
 
 	return s
 }
@@ -728,7 +733,6 @@ func TestBlockedCustomIP(t *testing.T) {
 	s, err = NewServer(DNSCreateParams{
 		DNSFilter:      dnsfilter.New(&dnsfilter.Config{}, filters),
 		SubnetDetector: snd,
-		LocalResolvers: &aghtest.Exchanger{},
 	})
 	require.NoError(t, err)
 
@@ -866,7 +870,6 @@ func TestRewrite(t *testing.T) {
 	s, err = NewServer(DNSCreateParams{
 		DNSFilter:      f,
 		SubnetDetector: snd,
-		LocalResolvers: &aghtest.Exchanger{},
 	})
 	require.NoError(t, err)
 
@@ -1029,7 +1032,6 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 		DNSFilter:      dnsfilter.New(&dnsfilter.Config{}, nil),
 		DHCPServer:     &testDHCP{},
 		SubnetDetector: snd,
-		LocalResolvers: &aghtest.Exchanger{},
 	})
 	require.NoError(t, err)
 
@@ -1094,7 +1096,6 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	s, err = NewServer(DNSCreateParams{
 		DNSFilter:      dnsfilter.New(&c, nil),
 		SubnetDetector: snd,
-		LocalResolvers: &aghtest.Exchanger{},
 	})
 	require.NoError(t, err)
 
@@ -1163,4 +1164,101 @@ func TestNewServer(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestServer_Exchange(t *testing.T) {
+	extUpstream := &aghtest.TestUpstream{
+		Reverse: map[string][]string{
+			"1.1.1.1.in-addr.arpa.": {"one.one.one.one"},
+		},
+	}
+	locUpstream := &aghtest.TestUpstream{
+		Reverse: map[string][]string{
+			"1.1.168.192.in-addr.arpa.": {"local.domain"},
+			"2.1.168.192.in-addr.arpa.": {},
+		},
+	}
+	upstreamErr := agherr.Error("upstream error")
+	errUpstream := &aghtest.TestErrUpstream{
+		Err: upstreamErr,
+	}
+	nonPtrUpstream := &aghtest.TestBlockUpstream{
+		Hostname: "some-host",
+		Block:    true,
+	}
+
+	dns := NewCustomServer(&proxy.Proxy{
+		Config: proxy.Config{
+			UpstreamConfig: &proxy.UpstreamConfig{
+				Upstreams: []upstream.Upstream{extUpstream},
+			},
+		},
+	})
+	dns.conf.ResolveClients = true
+
+	var err error
+	dns.subnetDetector, err = aghnet.NewSubnetDetector()
+	require.NoError(t, err)
+
+	localIP := net.IP{192, 168, 1, 1}
+	testCases := []struct {
+		name        string
+		want        string
+		wantErr     error
+		locUpstream upstream.Upstream
+		req         net.IP
+	}{{
+		name:        "external_good",
+		want:        "one.one.one.one",
+		wantErr:     nil,
+		locUpstream: nil,
+		req:         net.IP{1, 1, 1, 1},
+	}, {
+		name:        "local_good",
+		want:        "local.domain",
+		wantErr:     nil,
+		locUpstream: locUpstream,
+		req:         localIP,
+	}, {
+		name:        "upstream_error",
+		want:        "",
+		wantErr:     upstreamErr,
+		locUpstream: errUpstream,
+		req:         localIP,
+	}, {
+		name:        "empty_answer_error",
+		want:        "",
+		wantErr:     rDNSEmptyAnswerErr,
+		locUpstream: locUpstream,
+		req:         net.IP{192, 168, 1, 2},
+	}, {
+		name:        "not_ptr_error",
+		want:        "",
+		wantErr:     rDNSNotPTRErr,
+		locUpstream: nonPtrUpstream,
+		req:         localIP,
+	}}
+
+	for _, tc := range testCases {
+		dns.localResolvers = &aghtest.Exchanger{
+			Ups: tc.locUpstream,
+		}
+
+		t.Run(tc.name, func(t *testing.T) {
+			host, eerr := dns.Exchange(tc.req)
+
+			require.ErrorIs(t, eerr, tc.wantErr)
+			assert.Equal(t, tc.want, host)
+		})
+	}
+
+	t.Run("resolving_disabled", func(t *testing.T) {
+		dns.conf.ResolveClients = false
+		for _, tc := range testCases {
+			host, eerr := dns.Exchange(tc.req)
+
+			require.NoError(t, eerr)
+			assert.Empty(t, host)
+		}
+	})
 }

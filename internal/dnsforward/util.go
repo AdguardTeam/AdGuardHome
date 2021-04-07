@@ -30,12 +30,6 @@ func IPStringFromAddr(addr net.Addr) (ipStr string) {
 	return ""
 }
 
-func stringArrayDup(a []string) []string {
-	a2 := make([]string, len(a))
-	copy(a2, a)
-	return a2
-}
-
 // Find value in a sorted array
 func findSorted(ar []string, val string) int {
 	i := sort.SearchStrings(ar, val)

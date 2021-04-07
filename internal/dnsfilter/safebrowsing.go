@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
@@ -181,26 +182,21 @@ func hostnameToHashes(host string) map[[32]byte]string {
 // convert hash array to string
 func (c *sbCtx) getQuestion() string {
 	b := &strings.Builder{}
-	encoder := hex.NewEncoder(b)
 
 	for hash := range c.hashToHost {
-		// Ignore errors, since strings.(*Buffer).Write never returns
-		// errors.
-		//
 		// TODO(e.burkov, a.garipov): Find out and document why exactly
 		// this slice.
-		_, _ = encoder.Write(hash[0:2])
-		_, _ = b.WriteRune('.')
+		aghstrings.WriteToBuilder(b, hex.EncodeToString(hash[0:2]), ".")
 	}
 
 	if c.svc == "SafeBrowsing" {
-		// See comment above.
-		_, _ = b.WriteString(sbTXTSuffix)
+		aghstrings.WriteToBuilder(b, sbTXTSuffix)
+
 		return b.String()
 	}
 
-	// See comment above.
-	_, _ = b.WriteString(pcTXTSuffix)
+	aghstrings.WriteToBuilder(b, pcTXTSuffix)
+
 	return b.String()
 }
 

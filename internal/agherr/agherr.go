@@ -46,7 +46,8 @@ func (e *manyError) Error() (msg string) {
 		b := &strings.Builder{}
 
 		// Ignore errors, since strings.(*Buffer).Write never returns
-		// errors.
+		// errors.  We don't use aghstrings.WriteToBuilder here since
+		// this package should be importable for any other.
 		_, _ = fmt.Fprintf(b, "%s: %s (hidden: %s", e.message, e.underlying[0], e.underlying[1])
 		for _, u := range e.underlying[2:] {
 			// See comment above.

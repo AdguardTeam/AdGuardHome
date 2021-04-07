@@ -13,6 +13,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
@@ -216,10 +217,10 @@ func (clients *clientsContainer) WriteDiskConfig(objects *[]clientObject) {
 			UseGlobalBlockedServices: !cli.UseOwnBlockedServices,
 		}
 
-		cy.Tags = copyStrings(cli.Tags)
-		cy.IDs = copyStrings(cli.IDs)
-		cy.BlockedServices = copyStrings(cli.BlockedServices)
-		cy.Upstreams = copyStrings(cli.Upstreams)
+		cy.Tags = aghstrings.CloneSlice(cli.Tags)
+		cy.IDs = aghstrings.CloneSlice(cli.IDs)
+		cy.BlockedServices = aghstrings.CloneSlice(cli.BlockedServices)
+		cy.Upstreams = aghstrings.CloneSlice(cli.Upstreams)
 
 		*objects = append(*objects, cy)
 	}
@@ -264,10 +265,6 @@ func (clients *clientsContainer) Exists(id string, source clientSource) (ok bool
 
 	// Return false if the new source has higher priority.
 	return source <= rc.Source
-}
-
-func copyStrings(a []string) (b []string) {
-	return append(b, a...)
 }
 
 func toQueryLogWhois(wi *RuntimeClientWhoisInfo) (cw *querylog.ClientWhois) {
@@ -326,10 +323,10 @@ func (clients *clientsContainer) Find(id string) (c *Client, ok bool) {
 		return nil, false
 	}
 
-	c.IDs = copyStrings(c.IDs)
-	c.Tags = copyStrings(c.Tags)
-	c.BlockedServices = copyStrings(c.BlockedServices)
-	c.Upstreams = copyStrings(c.Upstreams)
+	c.IDs = aghstrings.CloneSlice(c.IDs)
+	c.Tags = aghstrings.CloneSlice(c.Tags)
+	c.BlockedServices = aghstrings.CloneSlice(c.BlockedServices)
+	c.Upstreams = aghstrings.CloneSlice(c.Upstreams)
 	return c, true
 }
 

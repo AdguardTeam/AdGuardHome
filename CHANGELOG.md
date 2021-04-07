@@ -15,6 +15,9 @@ and this project adheres to
 
 ### Added
 
+- The ability to set up custom upstreams to resolve PTR queries for local
+  addresses and to disable the automatic resolving of clients' addresses
+  ([#2704]).
 - Logging of the client's IP address after failed login attempts ([#2824]).
 - Search by clients' names in the query log ([#1273]).
 - Verbose version output with `-v --version` ([#2416]).

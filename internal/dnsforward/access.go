@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
@@ -36,16 +37,15 @@ func (a *accessCtx) Init(allowedClients, disallowedClients, blockedHosts []strin
 		return err
 	}
 
-	buf := strings.Builder{}
+	b := &strings.Builder{}
 	for _, s := range blockedHosts {
-		buf.WriteString(s)
-		buf.WriteString("\n")
+		aghstrings.WriteToBuilder(b, s, "\n")
 	}
 
 	listArray := []filterlist.RuleList{}
 	list := &filterlist.StringRuleList{
 		ID:             int(0),
-		RulesText:      buf.String(),
+		RulesText:      b.String(),
 		IgnoreCosmetic: true,
 	}
 	listArray = append(listArray, list)

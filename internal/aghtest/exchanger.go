@@ -11,10 +11,10 @@ type Exchanger struct {
 }
 
 // Exchange implements aghnet.Exchanger interface for *Exchanger.
-func (lr *Exchanger) Exchange(req *dns.Msg) (resp *dns.Msg, err error) {
-	if lr.Ups == nil {
-		lr.Ups = &TestErrUpstream{}
+func (e *Exchanger) Exchange(req *dns.Msg) (resp *dns.Msg, err error) {
+	if e.Ups == nil {
+		e.Ups = &TestErrUpstream{}
 	}
 
-	return lr.Ups.Exchange(req)
+	return e.Ups.Exchange(req)
 }

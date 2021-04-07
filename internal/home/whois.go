@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
-	"github.com/AdguardTeam/AdGuardHome/internal/util"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -67,7 +67,7 @@ func whoisParse(data string) map[string]string {
 	descr := ""
 	netname := ""
 	for len(data) != 0 {
-		ln := util.SplitNext(&data, '\n')
+		ln := aghstrings.SplitNext(&data, '\n')
 		if len(ln) == 0 || ln[0] == '#' || ln[0] == '%' {
 			continue
 		}

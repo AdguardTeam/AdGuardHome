@@ -1,0 +1,525 @@
+{
+  "upstream_dns": {
+    "req": {
+      "upstream_dns": [
+        "8.8.8.8:77",
+        "8.8.4.4:77"
+      ]
+    },
+    "want": {
+      "upstream_dns": [
+        "8.8.8.8:77",
+        "8.8.4.4:77"
+      ],
+      "upstream_dns_file": "",
+      "bootstrap_dns": [
+        "9.9.9.10",
+        "149.112.112.10",
+        "2620:fe::10",
+        "2620:fe::fe:10"
+      ],
+      "protection_enabled": true,
+      "ratelimit": 0,
+      "blocking_mode": "",
+      "blocking_ipv4": "",
+      "blocking_ipv6": "",
+      "edns_cs_enabled": false,
+      "dnssec_enabled": false,
+      "disable_ipv6": false,
+      "upstream_mode": "",
+      "cache_size": 0,
+      "cache_ttl_min": 0,
+      "cache_ttl_max": 0,
+      "resolve_clients": false,
+      "local_ptr_upstreams": []
+    }
+  },
+  "bootstraps": {
+    "req": {
+      "bootstrap_dns": [
+        "9.9.9.10"
+      ]
+    },
+    "want": {
+      "upstream_dns": [
+        "8.8.8.8:53",
+        "8.8.4.4:53"
+      ],
+      "upstream_dns_file": "",
+      "bootstrap_dns": [
+        "9.9.9.10"
+      ],
+      "protection_enabled": true,
+      "ratelimit": 0,
+      "blocking_mode": "",
+      "blocking_ipv4": "",
+      "blocking_ipv6": "",
+      "edns_cs_enabled": false,
+      "dnssec_enabled": false,
+      "disable_ipv6": false,
+      "upstream_mode": "",
+      "cache_size": 0,
+      "cache_ttl_min": 0,
+      "cache_ttl_max": 0,
+      "resolve_clients": false,
+      "local_ptr_upstreams": []
+    }
+  },
+  "blocking_mode_good": {
+    "req": {
+      "blocking_mode": "refused"
+    },
+    "want": {
+      "upstream_dns": [
+        "8.8.8.8:53",
+        "8.8.4.4:53"
+      ],
+      "upstream_dns_file": "",
+      "bootstrap_dns": [
+        "9.9.9.10",
+        "149.112.112.10",
+        "2620:fe::10",
+        "2620:fe::fe:10"
+      ],
+      "protection_enabled": true,
+      "ratelimit": 0,
+      "blocking_mode": "refused",
+      "blocking_ipv4": "",
+      "blocking_ipv6": "",
+      "edns_cs_enabled": false,
+      "dnssec_enabled": false,
+      "disable_ipv6": false,
+      "upstream_mode": "",
+      "cache_size": 0,
+      "cache_ttl_min": 0,
+      "cache_ttl_max": 0,
+      "resolve_clients": false,
+      "local_ptr_upstreams": []
+    }
+  },
+  "blocking_mode_bad": {
+    "req": {
+      "blocking_mode": "custom_ip"
+    },
+    "want": {
+      "upstream_dns": [
+        "8.8.8.8:53",
+        "8.8.4.4:53"
+      ],
+      "upstream_dns_file": "",
+      "bootstrap_dns": [
+        "9.9.9.10",
+        "149.112.112.10",
+        "2620:fe::10",
+        "2620:fe::fe:10"
+      ],
+      "protection_enabled": true,
+      "ratelimit": 0,
+      "blocking_mode": "",
+      "blocking_ipv4": "",
+      "blocking_ipv6": "",
+      "edns_cs_enabled": false,
+      "dnssec_enabled": false,
+      "disable_ipv6": false,
+      "upstream_mode": "",
+      "cache_size": 0,
+      "cache_ttl_min": 0,
+      "cache_ttl_max": 0,
+      "resolve_clients": false,
+      "local_ptr_upstreams": []
+    }
+  },
+  "ratelimit": {
+    "req": {
+      "ratelimit": 6
+    },
+    "want": {
+      "upstream_dns": [
+        "8.8.8.8:53",
+        "8.8.4.4:53"
+      ],
+      "upstream_dns_file": "",
+      "bootstrap_dns": [
+        "9.9.9.10",
+        "149.112.112.10",
+        "2620:fe::10",
+        "2620:fe::fe:10"
+      ],
+      "protection_enabled": true,
+      "ratelimit": 6,
+      "blocking_mode": "",
+      "blocking_ipv4": "",
+      "blocking_ipv6": "",
+      "edns_cs_enabled": false,
+      "dnssec_enabled": false,
+      "disable_ipv6": false,
+      "upstream_mode": "",
+      "cache_size": 0,
+      "cache_ttl_min": 0,
+      "cache_ttl_max": 0,
+      "resolve_clients": false,
+      "local_ptr_upstreams": []
+    }
+  },
+  "edns_cs_enabled": {
+    "req": {
+      "edns_cs_enabled": true
+    },
+    "want": {
+      "upstream_dns": [
+        "8.8.8.8:53",
+        "8.8.4.4:53"
+      ],
+      "upstream_dns_file": "",
+      "bootstrap_dns": [
+        "9.9.9.10",
+        "149.112.112.10",
+        "2620:fe::10",
+        "2620:fe::fe:10"
+      ],
+      "protection_enabled": true,
+      "ratelimit": 0,
+      "blocking_mode": "",
+      "blocking_ipv4": "",
+      "blocking_ipv6": "",
+      "edns_cs_enabled": true,
+      "dnssec_enabled": false,
+      "disable_ipv6": false,
+      "upstream_mode": "",
+      "cache_size": 0,
+      "cache_ttl_min": 0,
+      "cache_ttl_max": 0,
+      "resolve_clients": false,
+      "local_ptr_upstreams": []
+    }
+  },
+  "dnssec_enabled": {
+    "req": {
+      "dnssec_enabled": true
+    },
+    "want": {
+      "upstream_dns": [
+        "8.8.8.8:53",
+        "8.8.4.4:53"
+      ],
+      "upstream_dns_file": "",
+      "bootstrap_dns": [
+        "9.9.9.10",
+        "149.112.112.10",
+        "2620:fe::10",
+        "2620:fe::fe:10"
+      ],
+      "protection_enabled": true,
+      "ratelimit": 0,
+      "blocking_mode": "",
+      "blocking_ipv4": "",
+      "blocking_ipv6": "",
+      "edns_cs_enabled": false,
+      "dnssec_enabled": true,
+      "disable_ipv6": false,
+      "upstream_mode": "",
+      "cache_size": 0,
+      "cache_ttl_min": 0,
+      "cache_ttl_max": 0,
+      "resolve_clients": false,
+      "local_ptr_upstreams": []
+    }
+  },
+  "cache_size": {
+    "req": {
+      "cache_size": 1024
+    },
+    "want": {
+      "upstream_dns": [
+        "8.8.8.8:53",
+        "8.8.4.4:53"
+      ],
+      "upstream_dns_file": "",
+      "bootstrap_dns": [
+        "9.9.9.10",
+        "149.112.112.10",
+        "2620:fe::10",
+        "2620:fe::fe:10"
+      ],
+      "protection_enabled": true,
+      "ratelimit": 0,
+      "blocking_mode": "",
+      "blocking_ipv4": "",
+      "blocking_ipv6": "",
+      "edns_cs_enabled": false,
+      "dnssec_enabled": false,
+      "disable_ipv6": false,
+      "upstream_mode": "",
+      "cache_size": 1024,
+      "cache_ttl_min": 0,
+      "cache_ttl_max": 0,
+      "resolve_clients": false,
+      "local_ptr_upstreams": []
+    }
+  },
+  "upstream_mode_parallel": {
+    "req": {
+      "upstream_mode": "parallel"
+    },
+    "want": {
+      "upstream_dns": [
+        "8.8.8.8:53",
+        "8.8.4.4:53"
+      ],
+      "upstream_dns_file": "",
+      "bootstrap_dns": [
+        "9.9.9.10",
+        "149.112.112.10",
+        "2620:fe::10",
+        "2620:fe::fe:10"
+      ],
+      "protection_enabled": true,
+      "ratelimit": 0,
+      "blocking_mode": "",
+      "blocking_ipv4": "",
+      "blocking_ipv6": "",
+      "edns_cs_enabled": false,
+      "dnssec_enabled": false,
+      "disable_ipv6": false,
+      "upstream_mode": "parallel",
+      "cache_size": 0,
+      "cache_ttl_min": 0,
+      "cache_ttl_max": 0,
+      "resolve_clients": false,
+      "local_ptr_upstreams": []
+    }
+  },
+  "upstream_mode_fastest_addr": {
+    "req": {
+      "upstream_mode": "fastest_addr"
+    },
+    "want": {
+      "upstream_dns": [
+        "8.8.8.8:53",
+        "8.8.4.4:53"
+      ],
+      "upstream_dns_file": "",
+      "bootstrap_dns": [
+        "9.9.9.10",
+        "149.112.112.10",
+        "2620:fe::10",
+        "2620:fe::fe:10"
+      ],
+      "protection_enabled": true,
+      "ratelimit": 0,
+      "blocking_mode": "",
+      "blocking_ipv4": "",
+      "blocking_ipv6": "",
+      "edns_cs_enabled": false,
+      "dnssec_enabled": false,
+      "disable_ipv6": false,
+      "upstream_mode": "fastest_addr",
+      "cache_size": 0,
+      "cache_ttl_min": 0,
+      "cache_ttl_max": 0,
+      "resolve_clients": false,
+      "local_ptr_upstreams": []
+    }
+  },
+  "upstream_dns_bad": {
+    "req": {
+      "upstream_dns": [
+        ""
+      ]
+    },
+    "want": {
+      "upstream_dns": [
+        "8.8.8.8:53",
+        "8.8.4.4:53"
+      ],
+      "upstream_dns_file": "",
+      "bootstrap_dns": [
+        "9.9.9.10",
+        "149.112.112.10",
+        "2620:fe::10",
+        "2620:fe::fe:10"
+      ],
+      "protection_enabled": true,
+      "ratelimit": 0,
+      "blocking_mode": "",
+      "blocking_ipv4": "",
+      "blocking_ipv6": "",
+      "edns_cs_enabled": false,
+      "dnssec_enabled": false,
+      "disable_ipv6": false,
+      "upstream_mode": "",
+      "cache_size": 0,
+      "cache_ttl_min": 0,
+      "cache_ttl_max": 0,
+      "resolve_clients": false,
+      "local_ptr_upstreams": []
+    }
+  },
+  "bootstraps_bad": {
+    "req": {
+      "bootstrap_dns": [
+        "a"
+      ]
+    },
+    "want": {
+      "upstream_dns": [
+        "8.8.8.8:53",
+        "8.8.4.4:53"
+      ],
+      "upstream_dns_file": "",
+      "bootstrap_dns": [
+        "9.9.9.10",
+        "149.112.112.10",
+        "2620:fe::10",
+        "2620:fe::fe:10"
+      ],
+      "protection_enabled": true,
+      "ratelimit": 0,
+      "blocking_mode": "",
+      "blocking_ipv4": "",
+      "blocking_ipv6": "",
+      "edns_cs_enabled": false,
+      "dnssec_enabled": false,
+      "disable_ipv6": false,
+      "upstream_mode": "",
+      "cache_size": 0,
+      "cache_ttl_min": 0,
+      "cache_ttl_max": 0,
+      "resolve_clients": false,
+      "local_ptr_upstreams": []
+    }
+  },
+  "cache_bad_ttl": {
+    "req": {
+      "cache_ttl_min": 1024,
+      "cache_ttl_max": 512
+    },
+    "want": {
+      "upstream_dns": [
+        "8.8.8.8:53",
+        "8.8.4.4:53"
+      ],
+      "upstream_dns_file": "",
+      "bootstrap_dns": [
+        "9.9.9.10",
+        "149.112.112.10",
+        "2620:fe::10",
+        "2620:fe::fe:10"
+      ],
+      "protection_enabled": true,
+      "ratelimit": 0,
+      "blocking_mode": "",
+      "blocking_ipv4": "",
+      "blocking_ipv6": "",
+      "edns_cs_enabled": false,
+      "dnssec_enabled": false,
+      "disable_ipv6": false,
+      "upstream_mode": "",
+      "cache_size": 0,
+      "cache_ttl_min": 0,
+      "cache_ttl_max": 0,
+      "resolve_clients": false,
+      "local_ptr_upstreams": []
+    }
+  },
+  "upstream_mode_bad": {
+    "req": {
+      "upstream_mode": "somethingelse"
+    },
+    "want": {
+      "upstream_dns": [
+        "8.8.8.8:53",
+        "8.8.4.4:53"
+      ],
+      "upstream_dns_file": "",
+      "bootstrap_dns": [
+        "9.9.9.10",
+        "149.112.112.10",
+        "2620:fe::10",
+        "2620:fe::fe:10"
+      ],
+      "protection_enabled": true,
+      "ratelimit": 0,
+      "blocking_mode": "",
+      "blocking_ipv4": "",
+      "blocking_ipv6": "",
+      "edns_cs_enabled": false,
+      "dnssec_enabled": false,
+      "disable_ipv6": false,
+      "upstream_mode": "",
+      "cache_size": 0,
+      "cache_ttl_min": 0,
+      "cache_ttl_max": 0,
+      "resolve_clients": false,
+      "local_ptr_upstreams": []
+    }
+  },
+  "local_ptr_upstreams_good": {
+    "req": {
+      "local_ptr_upstreams": [
+        "123.123.123.123"
+      ]
+    },
+    "want": {
+      "upstream_dns": [
+        "8.8.8.8:53",
+        "8.8.4.4:53"
+      ],
+      "upstream_dns_file": "",
+      "bootstrap_dns": [
+        "9.9.9.10",
+        "149.112.112.10",
+        "2620:fe::10",
+        "2620:fe::fe:10"
+      ],
+      "protection_enabled": true,
+      "ratelimit": 0,
+      "blocking_mode": "",
+      "blocking_ipv4": "",
+      "blocking_ipv6": "",
+      "edns_cs_enabled": false,
+      "dnssec_enabled": false,
+      "disable_ipv6": false,
+      "upstream_mode": "",
+      "cache_size": 0,
+      "cache_ttl_min": 0,
+      "cache_ttl_max": 0,
+      "resolve_clients": false,
+      "local_ptr_upstreams": [
+        "123.123.123.123"
+      ]
+    }
+  },
+  "local_ptr_upstreams_null": {
+    "req": {
+      "local_ptr_upstreams": null
+    },
+    "want": {
+      "upstream_dns": [
+        "8.8.8.8:53",
+        "8.8.4.4:53"
+      ],
+      "upstream_dns_file": "",
+      "bootstrap_dns": [
+        "9.9.9.10",
+        "149.112.112.10",
+        "2620:fe::10",
+        "2620:fe::fe:10"
+      ],
+      "protection_enabled": true,
+      "ratelimit": 0,
+      "blocking_mode": "",
+      "blocking_ipv4": "",
+      "blocking_ipv6": "",
+      "edns_cs_enabled": false,
+      "dnssec_enabled": false,
+      "disable_ipv6": false,
+      "upstream_mode": "",
+      "cache_size": 0,
+      "cache_ttl_min": 0,
+      "cache_ttl_max": 0,
+      "resolve_clients": false,
+      "local_ptr_upstreams": []
+    }
+  }
+}

@@ -61,9 +61,7 @@ type homeContext struct {
 	autoHosts  util.AutoHosts       // IP-hostname pairs taken from system configuration (e.g. /etc/hosts) files
 	updater    *updater.Updater
 
-	subnetDetector  *aghnet.SubnetDetector
-	systemResolvers aghnet.SystemResolvers
-	localResolvers  aghnet.Exchanger
+	subnetDetector *aghnet.SubnetDetector
 
 	// mux is our custom http.ServeMux.
 	mux *http.ServeMux
@@ -222,110 +220,6 @@ func setupConfig(args options) {
 	}
 }
 
-const defaultLocalTimeout = 5 * time.Second
-
-// stringsSetSubtract subtracts b from a interpreted as sets.
-//
-// TODO(e.burkov): Move into our internal package for working with strings.
-func stringsSetSubtract(a, b []string) (c []string) {
-	// unit is an object to be used as value in set.
-	type unit = struct{}
-
-	cSet := make(map[string]unit)
-	for _, k := range a {
-		cSet[k] = unit{}
-	}
-
-	for _, k := range b {
-		delete(cSet, k)
-	}
-
-	c = make([]string, len(cSet))
-	i := 0
-	for k := range cSet {
-		c[i] = k
-		i++
-	}
-
-	return c
-}
-
-// collectAllIfacesAddrs returns the slice of all network interfaces IP
-// addresses without port number.
-func collectAllIfacesAddrs() (addrs []string, err error) {
-	var ifaces []net.Interface
-	ifaces, err = net.Interfaces()
-	if err != nil {
-		return nil, fmt.Errorf("getting network interfaces: %w", err)
-	}
-
-	for _, iface := range ifaces {
-		var ifaceAddrs []net.Addr
-		ifaceAddrs, err = iface.Addrs()
-		if err != nil {
-			return nil, fmt.Errorf("getting addresses for %q: %w", iface.Name, err)
-		}
-
-		for _, addr := range ifaceAddrs {
-			cidr := addr.String()
-			var ip net.IP
-			ip, _, err = net.ParseCIDR(cidr)
-			if err != nil {
-				return nil, fmt.Errorf("parsing %q as cidr: %w", cidr, err)
-			}
-
-			addrs = append(addrs, ip.String())
-		}
-	}
-
-	return addrs, nil
-}
-
-// collectDNSIPAddrs returns the slice of IP addresses without port number which
-// we are listening on.
-func collectDNSIPaddrs() (addrs []string, err error) {
-	addrs = make([]string, len(config.DNS.BindHosts))
-
-	for i, bh := range config.DNS.BindHosts {
-		if bh.IsUnspecified() {
-			return collectAllIfacesAddrs()
-		}
-
-		addrs[i] = bh.String()
-	}
-
-	return addrs, nil
-}
-
-func setupResolvers() {
-	// TODO(e.burkov): Enhance when the config will contain local resolvers
-	// addresses.
-
-	sysRes, err := aghnet.NewSystemResolvers(0, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	Context.systemResolvers = sysRes
-
-	var ourAddrs []string
-	ourAddrs, err = collectDNSIPaddrs()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// TODO(e.burkov): The approach of subtracting sets of strings is not
-	// really applicable here since in case of listening on all network
-	// interfaces we should check the whole interface's network to cut off
-	// all the loopback addresses as well.
-	addrs := stringsSetSubtract(sysRes.Get(), ourAddrs)
-
-	Context.localResolvers, err = aghnet.NewMultiAddrExchanger(addrs, defaultLocalTimeout)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 // run performs configurating and starts AdGuard Home.
 func run(args options) {
 	// configure config filename
@@ -415,8 +309,6 @@ func run(args options) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	setupResolvers()
 
 	if !Context.firstRun {
 		err = initDNSServer()

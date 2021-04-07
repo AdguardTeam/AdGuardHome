@@ -15,19 +15,19 @@ func TestNewMultiAddrExchanger(t *testing.T) {
 	var err error
 
 	t.Run("empty", func(t *testing.T) {
-		e, err = NewMultiAddrExchanger([]string{}, 0)
+		e, err = NewMultiAddrExchanger([]string{}, nil, 0)
 		require.NoError(t, err)
 		assert.NotNil(t, e)
 	})
 
 	t.Run("successful", func(t *testing.T) {
-		e, err = NewMultiAddrExchanger([]string{"www.example.com"}, 0)
+		e, err = NewMultiAddrExchanger([]string{"www.example.com"}, nil, 0)
 		require.NoError(t, err)
 		assert.NotNil(t, e)
 	})
 
 	t.Run("unsuccessful", func(t *testing.T) {
-		e, err = NewMultiAddrExchanger([]string{"invalid-proto://www.example.com"}, 0)
+		e, err = NewMultiAddrExchanger([]string{"invalid-proto://www.example.com"}, nil, 0)
 		require.Error(t, err)
 		assert.Nil(t, e)
 	})

@@ -1294,6 +1294,18 @@
           - ''
           - 'parallel'
           - 'fastest_addr'
+        'resolve_clients':
+          'type': 'boolean'
+        'local_ptr_upstreams':
+          'type': 'array'
+          'description': >
+            Upstream servers, port is optional after colon.  Empty value will
+            reset it to default values.
+          'items':
+            'type': 'string'
+          'example':
+          - 'tls://1.1.1.1'
+          - 'tls://1.0.0.1'
     'UpstreamsConfig':
       'type': 'object'
       'description': 'Upstreams configuration'
@@ -1315,6 +1327,16 @@
           'type': 'array'
           'description': >
             Upstream servers, port is optional after colon.  Empty value will
+            reset it to default values.
+          'items':
+            'type': 'string'
+          'example':
+          - 'tls://1.1.1.1'
+          - 'tls://1.0.0.1'
+        'private_upstream':
+          'type': 'array'
+          'description': >
+            Local PTR resolvers, port is optional after colon.  Empty value will
             reset it to default values.
           'items':
             'type': 'string'

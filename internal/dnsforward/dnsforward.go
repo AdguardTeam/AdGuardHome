@@ -8,10 +8,13 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
@@ -92,7 +95,6 @@ type DNSCreateParams struct {
 	QueryLog       querylog.QueryLog
 	DHCPServer     dhcpd.ServerInterface
 	SubnetDetector *aghnet.SubnetDetector
-	LocalResolvers aghnet.Exchanger
 	AutohostTLD    string
 }
 
@@ -127,7 +129,6 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		stats:          p.Stats,
 		queryLog:       p.QueryLog,
 		subnetDetector: p.SubnetDetector,
-		localResolvers: p.LocalResolvers,
 		autohostSuffix: autohostSuffix,
 	}
 
@@ -176,13 +177,21 @@ func (s *Server) WriteDiskConfig(c *FilteringConfig) {
 	s.RLock()
 	sc := s.conf.FilteringConfig
 	*c = sc
-	c.RatelimitWhitelist = stringArrayDup(sc.RatelimitWhitelist)
-	c.BootstrapDNS = stringArrayDup(sc.BootstrapDNS)
-	c.AllowedClients = stringArrayDup(sc.AllowedClients)
-	c.DisallowedClients = stringArrayDup(sc.DisallowedClients)
-	c.BlockedHosts = stringArrayDup(sc.BlockedHosts)
-	c.UpstreamDNS = stringArrayDup(sc.UpstreamDNS)
+	c.RatelimitWhitelist = aghstrings.CloneSlice(sc.RatelimitWhitelist)
+	c.BootstrapDNS = aghstrings.CloneSlice(sc.BootstrapDNS)
+	c.AllowedClients = aghstrings.CloneSlice(sc.AllowedClients)
+	c.DisallowedClients = aghstrings.CloneSlice(sc.DisallowedClients)
+	c.BlockedHosts = aghstrings.CloneSlice(sc.BlockedHosts)
+	c.UpstreamDNS = aghstrings.CloneSlice(sc.UpstreamDNS)
 	s.RUnlock()
+}
+
+// RDNSSettings returns the copy of actual RDNS configuration.
+func (s *Server) RDNSSettings() (localPTRResolvers []string, resolveClients bool) {
+	s.RLock()
+	defer s.RUnlock()
+
+	return aghstrings.CloneSlice(s.conf.LocalPTRResolvers), s.conf.ResolveClients
 }
 
 // Resolve - get IP addresses by host name from an upstream server.
@@ -195,24 +204,73 @@ func (s *Server) Resolve(host string) ([]net.IPAddr, error) {
 	return s.internalProxy.LookupIPAddr(host)
 }
 
-// Exchange - send DNS request to an upstream server and receive response
-// No request/response filtering is performed.
-// Query log and Stats are not updated.
-// This method may be called before Start().
-func (s *Server) Exchange(req *dns.Msg) (*dns.Msg, error) {
+// RDNSExchanger is a resolver for clients' addresses.
+type RDNSExchanger interface {
+	// Exchange tries to resolve the ip in a suitable way, e.g. either as
+	// local or as external.
+	Exchange(ip net.IP) (host string, err error)
+}
+
+const (
+	// rDNSEmptyAnswerErr is returned by Exchange method when the answer
+	// section of respond is empty.
+	rDNSEmptyAnswerErr agherr.Error = "the answer section is empty"
+
+	// rDNSNotPTRErr is returned by Exchange method when the response is not
+	// of PTR type.
+	rDNSNotPTRErr agherr.Error = "the response is not a ptr"
+)
+
+// Exchange implements the RDNSExchanger interface for *Server.
+func (s *Server) Exchange(ip net.IP) (host string, err error) {
 	s.RLock()
 	defer s.RUnlock()
 
-	ctx := &proxy.DNSContext{
-		Proto:     "udp",
-		Req:       req,
-		StartTime: time.Now(),
+	if !s.conf.ResolveClients {
+		return "", nil
 	}
-	err := s.internalProxy.Resolve(ctx)
+
+	arpa := dns.Fqdn(aghnet.ReverseAddr(ip))
+	req := &dns.Msg{
+		MsgHdr: dns.MsgHdr{
+			Id:               dns.Id(),
+			RecursionDesired: true,
+		},
+		Compress: true,
+		Question: []dns.Question{{
+			Name:   arpa,
+			Qtype:  dns.TypePTR,
+			Qclass: dns.ClassINET,
+		}},
+	}
+
+	var resp *dns.Msg
+	if s.subnetDetector.IsLocallyServedNetwork(ip) {
+		resp, err = s.localResolvers.Exchange(req)
+	} else {
+		ctx := &proxy.DNSContext{
+			Proto:     "udp",
+			Req:       req,
+			StartTime: time.Now(),
+		}
+		err = s.internalProxy.Resolve(ctx)
+
+		resp = ctx.Res
+	}
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return ctx.Res, nil
+
+	if len(resp.Answer) == 0 {
+		return "", fmt.Errorf("lookup for %q: %w", arpa, rDNSEmptyAnswerErr)
+	}
+
+	ptr, ok := resp.Answer[0].(*dns.PTR)
+	if !ok {
+		return "", fmt.Errorf("type checking: %w", rDNSNotPTRErr)
+	}
+
+	return strings.TrimSuffix(ptr.Ptr, "."), nil
 }
 
 // Start starts the DNS server.
@@ -229,6 +287,110 @@ func (s *Server) startLocked() error {
 		s.isRunning = true
 	}
 	return err
+}
+
+// defaultLocalTimeout is the default timeout for resolving addresses from
+// locally-served networks.  It is assumed that local resolvers should work much
+// faster than ordinary upstreams.
+const defaultLocalTimeout = 1 * time.Second
+
+// collectDNSIPAddrs returns the slice of IP addresses without port number which
+// we are listening on.  For internal use only.
+func (s *Server) collectDNSIPAddrs() (addrs []string, err error) {
+	addrs = make([]string, len(s.conf.TCPListenAddrs)+len(s.conf.UDPListenAddrs))
+	var i int
+	var ip net.IP
+	for _, addr := range s.conf.TCPListenAddrs {
+		if addr == nil {
+			continue
+		}
+
+		if ip = addr.IP; ip.IsUnspecified() {
+			return aghnet.CollectAllIfacesAddrs()
+		}
+
+		addrs[i] = ip.String()
+		i++
+	}
+	for _, addr := range s.conf.UDPListenAddrs {
+		if addr == nil {
+			continue
+		}
+
+		if ip = addr.IP; ip.IsUnspecified() {
+			return aghnet.CollectAllIfacesAddrs()
+		}
+
+		addrs[i] = ip.String()
+		i++
+	}
+
+	return addrs[:i], nil
+}
+
+// stringSetSubtract subtracts b from a interpreted as sets.
+func stringSetSubtract(a, b []string) (c []string) {
+	// unit is an object to be used as value in set.
+	type unit = struct{}
+
+	cSet := make(map[string]unit)
+	for _, k := range a {
+		cSet[k] = unit{}
+	}
+
+	for _, k := range b {
+		delete(cSet, k)
+	}
+
+	c = make([]string, len(cSet))
+	i := 0
+	for k := range cSet {
+		c[i] = k
+		i++
+	}
+
+	return c
+}
+
+// setupResolvers initializes the resolvers for local addresses.  For internal
+// use only.
+func (s *Server) setupResolvers(localAddrs []string) (err error) {
+	bootstraps := s.conf.BootstrapDNS
+	if len(localAddrs) == 0 {
+		var sysRes aghnet.SystemResolvers
+		// TODO(e.burkov): Enable the refresher after the actual
+		// implementation passes the public testing.
+		sysRes, err = aghnet.NewSystemResolvers(0, nil)
+		if err != nil {
+			return err
+		}
+
+		localAddrs = sysRes.Get()
+		bootstraps = nil
+	}
+	log.Debug("upstreams to resolve PTR for local addresses: %v", localAddrs)
+
+	var ourAddrs []string
+	ourAddrs, err = s.collectDNSIPAddrs()
+	if err != nil {
+		return err
+	}
+
+	// TODO(e.burkov): The approach of subtracting sets of strings
+	// is not really applicable here since in case of listening on
+	// all network interfaces we should check the whole interface's
+	// network to cut off all the loopback addresses as well.
+	localAddrs = stringSetSubtract(localAddrs, ourAddrs)
+
+	if s.localResolvers, err = aghnet.NewMultiAddrExchanger(
+		localAddrs,
+		bootstraps,
+		defaultLocalTimeout,
+	); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Prepare the object
@@ -305,6 +467,12 @@ func (s *Server) Prepare(config *ServerConfig) error {
 	// Create the main DNS proxy instance
 	// --
 	s.dnsProxy = &proxy.Proxy{Config: proxyConfig}
+
+	err = s.setupResolvers(s.conf.LocalPTRResolvers)
+	if err != nil {
+		return fmt.Errorf("setting up resolvers: %w", err)
+	}
+
 	return nil
 }
 

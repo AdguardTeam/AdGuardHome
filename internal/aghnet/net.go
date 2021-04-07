@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -355,30 +356,30 @@ const (
 // (PTR) record lookups.  This is the modified version of ReverseAddr from
 // github.com/miekg/dns package with no error among returned values.
 func ReverseAddr(ip net.IP) (arpa string) {
+	const dot = "."
+
 	var strLen int
 	var suffix string
-	// Don't handle errors in implementations since strings.WriteString
-	// never returns non-nil errors.
 	var writeByte func(val byte)
 	b := &strings.Builder{}
 	if ip4 := ip.To4(); ip4 != nil {
 		strLen, suffix = arpaV4MaxLen, arpaV4Suffix[1:]
 		ip = ip4
 		writeByte = func(val byte) {
-			_, _ = b.WriteString(strconv.Itoa(int(val)))
-			_, _ = b.WriteRune('.')
+			aghstrings.WriteToBuilder(b, strconv.Itoa(int(val)), dot)
 		}
 
 	} else if ip6 := ip.To16(); ip6 != nil {
 		strLen, suffix = arpaV6MaxLen, arpaV6Suffix[1:]
 		ip = ip6
 		writeByte = func(val byte) {
-			lByte, rByte := val&0xF, val>>4
-
-			_, _ = b.WriteString(strconv.FormatUint(uint64(lByte), 16))
-			_, _ = b.WriteRune('.')
-			_, _ = b.WriteString(strconv.FormatUint(uint64(rByte), 16))
-			_, _ = b.WriteRune('.')
+			aghstrings.WriteToBuilder(
+				b,
+				strconv.FormatUint(uint64(val&0xF), 16),
+				dot,
+				strconv.FormatUint(uint64(val>>4), 16),
+				dot,
+			)
 		}
 
 	} else {
@@ -389,7 +390,38 @@ func ReverseAddr(ip net.IP) (arpa string) {
 	for i := len(ip) - 1; i >= 0; i-- {
 		writeByte(ip[i])
 	}
-	_, _ = b.WriteString(suffix)
+	aghstrings.WriteToBuilder(b, suffix)
 
 	return b.String()
+}
+
+// CollectAllIfacesAddrs returns the slice of all network interfaces IP
+// addresses without port number.
+func CollectAllIfacesAddrs() (addrs []string, err error) {
+	var ifaces []net.Interface
+	ifaces, err = net.Interfaces()
+	if err != nil {
+		return nil, fmt.Errorf("getting network interfaces: %w", err)
+	}
+
+	for _, iface := range ifaces {
+		var ifaceAddrs []net.Addr
+		ifaceAddrs, err = iface.Addrs()
+		if err != nil {
+			return nil, fmt.Errorf("getting addresses for %q: %w", iface.Name, err)
+		}
+
+		for _, addr := range ifaceAddrs {
+			cidr := addr.String()
+			var ip net.IP
+			ip, _, err = net.ParseCIDR(cidr)
+			if err != nil {
+				return nil, fmt.Errorf("parsing cidr: %w", err)
+			}
+
+			addrs = append(addrs, ip.String())
+		}
+	}
+
+	return addrs, nil
 }

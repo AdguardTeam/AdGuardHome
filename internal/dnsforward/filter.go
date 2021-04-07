@@ -42,15 +42,15 @@ func (s *Server) getClientRequestFilteringSettings(ctx *dnsContext) *dnsfilter.F
 	return &setts
 }
 
-// filterDNSRequest applies the dnsFilter and sets d.Res if the request
-// was filtered.
+// filterDNSRequest applies the dnsFilter and sets d.Res if the request was
+// filtered.
 func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 	d := ctx.proxyCtx
 	// TODO(e.burkov): Consistently use req instead of d.Req since it is
 	// declared.
 	req := d.Req
 	host := strings.TrimSuffix(req.Question[0].Name, ".")
-	res, err := s.dnsFilter.CheckHost(host, d.Req.Question[0].Qtype, ctx.setts)
+	res, err := s.dnsFilter.CheckHost(host, req.Question[0].Qtype, ctx.setts)
 	if err != nil {
 		// Return immediately if there's an error
 		return nil, fmt.Errorf("dnsfilter failed to check host %q: %w", host, err)
@@ -63,8 +63,8 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 		// Resolve the new canonical name, not the original host
 		// name.  The original question is readded in
 		// processFilteringAfterResponse.
-		ctx.origQuestion = d.Req.Question[0]
-		d.Req.Question[0].Name = dns.Fqdn(res.CanonName)
+		ctx.origQuestion = req.Question[0]
+		req.Question[0].Name = dns.Fqdn(res.CanonName)
 	} else if res.Reason == dnsfilter.RewrittenAutoHosts && len(res.ReverseHosts) != 0 {
 		resp := s.makeResponse(req)
 		for _, h := range res.ReverseHosts {
@@ -84,7 +84,7 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 		}
 
 		d.Res = resp
-	} else if res.Reason == dnsfilter.Rewritten || res.Reason == dnsfilter.RewrittenAutoHosts {
+	} else if res.Reason.In(dnsfilter.Rewritten, dnsfilter.RewrittenAutoHosts) {
 		resp := s.makeResponse(req)
 
 		name := host

@@ -4,6 +4,21 @@
 
 ## v0.106: API changes
 
+## New `"private_upstream"` field in `POST /test_upstream_dns`
+
+* The new optional field `"private_upstream"` of `UpstreamConfig` contains the
+  upstream servers for resolving locally-served ip addresses to be checked.
+
+### New fields `"resolve_clients"` and `"local_ptr_upstreams"` in DNS configuration
+
+* The new optional field `"resolve_clients"` of `DNSConfig` is used to turn
+  resolving clients' addresses on and off.
+
+* The new optional field `"local_ptr_upstreams"` of `"DNSConfig"` contains the
+  upstream servers for resolving addresses from locally-served networks.  The
+  empty `"local_ptr_resolvers"` states that AGH should use resolvers provided by
+  the operating system.
+
 ### New `"client_info"` field in `GET /querylog` response
 
 * The new optional field `"client_info"` of `QueryLogItem` objects contains

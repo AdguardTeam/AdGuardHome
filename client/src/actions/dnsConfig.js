@@ -33,6 +33,10 @@ export const setDnsConfig = (config) => async (dispatch) => {
             data.bootstrap_dns = splitByNewLine(config.bootstrap_dns);
             hasDnsSettings = true;
         }
+        if (Object.prototype.hasOwnProperty.call(data, 'local_ptr_upstreams')) {
+            data.local_ptr_upstreams = splitByNewLine(config.local_ptr_upstreams);
+            hasDnsSettings = true;
+        }
         if (Object.prototype.hasOwnProperty.call(data, 'upstream_dns')) {
             data.upstream_dns = splitByNewLine(config.upstream_dns);
             hasDnsSettings = true;
