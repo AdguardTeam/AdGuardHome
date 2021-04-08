@@ -10,6 +10,10 @@ const CopyPlugin = require('copy-webpack-plugin');
 module.exports = merge(baseConfig, {
     mode: 'production',
     devtool: 'source-map',
+    stats: 'minimal',
+    performance : {
+        hints : false
+    },
     output: {
         path: path.resolve(__dirname, '../../../build2/static'),
         filename: '[name].bundle.[hash:5].js',

@@ -15,12 +15,17 @@ GPG_KEY = devteam@adguard.com
 GPG_KEY_PASSPHRASE = not-a-real-password
 NPM = npm
 NPM_FLAGS = --prefix $(CLIENT_DIR)
+NPM_INSTALL_FLAGS = $(NPM_FLAGS) --quiet --no-progress --ignore-engines\
+	--ignore-optional --ignore-platform --ignore-scripts
 RACE = 0
 SIGN = 1
 VERBOSE = 0
 VERSION = v0.0.0
 YARN = yarn
-YARN_FLAGS = --cwd $(CLIENT_BETA_DIR) --network-timeout 120000
+YARN_FLAGS = --cwd $(CLIENT_BETA_DIR)
+YARN_INSTALL_FLAGS = $(YARN_FLAGS) --network-timeout 120000 --silent\
+	--ignore-engines --ignore-optional --ignore-platform\
+	--ignore-scripts
 
 ENV = env\
 	COMMIT='$(COMMIT)'\
@@ -64,8 +69,8 @@ js-build:
 	$(NPM) $(NPM_FLAGS) run build-prod
 	$(YARN) $(YARN_FLAGS) build
 js-deps:
-	$(NPM) $(NPM_FLAGS) ci
-	$(YARN) $(YARN_FLAGS) install
+	$(NPM) $(NPM_INSTALL_FLAGS) ci
+	$(YARN) $(YARN_INSTALL_FLAGS) install
 
 # TODO(a.garipov): Remove the legacy client tasks support once the new
 # client is done and the old one is removed.

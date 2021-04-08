@@ -4,7 +4,7 @@
     "name": "adguard-home",
     "version": "0.1.0",
     "scripts": {
-        "build": "rm -rf ../build2 && yarn install --network-timeout 120000 && webpack --config ./scripts/webpack/webpack.config.prod.js",
+        "build": "webpack --config ./scripts/webpack/webpack.config.prod.js",
         "start": "webpack serve --config ./scripts/webpack/webpack.config.dev.js",
         "generate": "rm -rf ./src/lib/entities ./src/lib/apis && ts-node --compiler-options  '{ \"module\": \"CommonJS\" }' ./scripts/generator/index.ts",
         "translations:check": "ts-node  --compiler-options  '{ \"module\": \"CommonJS\" }' ./scripts/plugins/checkTranslations.ts",

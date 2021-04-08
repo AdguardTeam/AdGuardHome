@@ -1,0 +1,236 @@
+---
+'version': 2
+'plan':
+  'project-key': 'AGH'
+  'key': 'AGHBSNAPSPECS'
+  'name': 'AdGuard Home - Build and publish release'
+'variables':
+  'channel': 'edge'
+  'dockerGo': 'adguard/golang-ubuntu:2.0'
+  'outputPush': 'false'
+
+'stages':
+- 'Make snapshot':
+    'manual': false
+    'final': false
+    'jobs':
+    - 'Make release'
+
+- 'Make and publish docker':
+    'manual': false
+    'final': false
+    'jobs':
+    - 'Make and publish docker'
+
+- 'Publish to static.adguard.com':
+    'manual': false
+    'final': false
+    'jobs':
+    - 'Publish to static.adguard.com'
+
+- 'Publish to Snapstore':
+    'manual': false
+    'final': false
+    'jobs':
+    - 'Publish to Snapstore'
+
+- 'Publish to Github Releases':
+    'manual': false
+    'final': false
+    'jobs':
+    - 'Publish to Github Releases'
+
+'Make release':
+  'docker':
+    'image': '${bamboo.dockerGo}'
+    'volumes':
+      '${system.YARN_DIR}': '${bamboo.cacheYarn}'
+      '${system.GO_CACHE_DIR}': '${bamboo.cacheGo}'
+      '${system.GO_PKG_CACHE_DIR}': '${bamboo.cacheGoPkg}'
+  'key': 'MR'
+  'tasks':
+  - 'checkout':
+      'force-clean-build': true
+  - 'script':
+      'interpreter': 'SHELL'
+      'scripts':
+      - |
+        #!/bin/sh
+
+        set -e -f -u -x
+
+        # Explicitly checkout the revision that we need.
+        git checkout "${bamboo.repository.revision.number}"
+
+        # Run the build with the specified channel.
+        echo "${bamboo.gpgSecretKey}"\
+                | awk '{ gsub(/\\n/, "\n"); print; }'\
+                | gpg --import --batch --yes
+
+        make\
+                CHANNEL=${bamboo.channel}\
+                GPG_KEY_PASSPHRASE=${bamboo.gpgPassword}\
+                VERBOSE=1\
+                build-release
+  # TODO(a.garipov): Use more fine-grained artifact rules.
+  'artifacts':
+  - 'name': 'AdGuardHome dists'
+    'pattern': 'dist/**'
+    'shared': true
+    'required': true
+  'requirements':
+  - 'adg-docker': 'true'
+
+'Make and publish docker':
+  'key': 'MPD'
+  'tasks':
+  - 'checkout':
+      'force-clean-build': true
+  - 'script':
+      'interpreter': 'SHELL'
+      'scripts':
+      - |
+        #!/bin/sh
+
+        set -e -f -u -x
+
+        # Explicitly checkout the revision that we need.
+        git checkout "${bamboo.repository.revision.number}"
+
+        # Install Qemu, create builder.
+        docker version -f '{{ .Server.Experimental }}'
+        docker buildx rm buildx-builder || :
+        docker buildx create --name buildx-builder --driver docker-container\
+                --use
+        docker buildx inspect --bootstrap
+
+        # Login to DockerHub.
+        docker login -u="${bamboo.dockerHubUsername}"\
+                -p="${bamboo.dockerHubPassword}"
+
+        # Boot the builder.
+        docker buildx inspect --bootstrap
+
+        # Print Docker info.
+        docker info
+
+        # If true, push to docker hub.  Otherwise, keep in the build cache.
+        OUTPUT_PUSH="${bamboo.outputPush}"
+
+        # Prepare and push the build.
+        make\
+                CHANNEL="${bamboo.channel}"\
+                DOCKER_IMAGE_NAME='adguard/adguardhome'\
+                DOCKER_OUTPUT="type=image,name=adguard/adguardhome,push=$OUTPUT_PUSH"\
+                VERBOSE='1'\
+                build-docker
+      'environment':
+        DOCKER_CLI_EXPERIMENTAL=enabled
+  'final-tasks':
+  - 'clean'
+  'requirements':
+  - 'adg-docker': 'true'
+
+'Publish to static.adguard.com':
+  'key': 'PUB'
+  'tasks':
+  - 'clean'
+  - 'checkout':
+      'repository': 'bamboo-deploy-publisher'
+      'path': 'bamboo-deploy-publisher'
+      'force-clean-build': true
+  - 'script':
+      'interpreter': 'SHELL'
+      'scripts':
+      - |
+        #!/bin/sh
+
+        set -e -f -u -x
+        export CHANNEL="${bamboo.channel}"
+        ./bamboo-deploy-publisher/deploy.sh adguard-home-"$CHANNEL"
+  'final-tasks':
+  - 'clean'
+  'requirements':
+  - 'adg-docker': 'true'
+
+'Publish to Snapstore':
+  'key': 'PTS'
+  'tasks':
+  - 'clean'
+  - 'checkout':
+      'repository': 'bamboo-deploy-publisher'
+      'path': 'bamboo-deploy-publisher'
+      'force-clean-build': true
+  - 'script':
+      'interpreter': 'SHELL'
+      'scripts':
+      - |
+        #!/bin/sh
+
+        set -e -f -u -x
+        env\
+                SNAPCRAFT_CHANNEL=edge\
+                SNAPCRAFT_EMAIL="${bamboo.snapcraftEmail}"\
+                SNAPCRAFT_MACAROON="${bamboo.snapcraftMacaroonPassword}"\
+                SNAPCRAFT_UBUNTU_DISCHARGE="${bamboo.snapcraftUbuntuDischargePassword}"\
+                ./bamboo-deploy-publisher/deploy.sh adguard-home-snap
+  'final-tasks':
+  - 'clean'
+  'requirements':
+  - 'adg-docker': 'true'
+
+'Publish to Github Releases':
+  'key': 'PTGR'
+  'tasks':
+  - 'clean'
+  - 'checkout':
+      'repository': 'bamboo-deploy-publisher'
+      'path': 'bamboo-deploy-publisher'
+      'force-clean-build': true
+  - 'script':
+      'interpreter': 'SHELL'
+      'scripts':
+      - |
+        #!/bin/sh
+
+        set -e -f -u -x
+
+        export CHANNEL="${bamboo.channel}"
+        if [ "$CHANNEL" != 'release' -a "${CHANNEL}" != 'beta' ]
+        then
+              echo "don't publish to Github Releases for this channel"
+
+              exit 0
+        fi
+
+        env\
+                GITHUB_TOKEN="${bamboo.githubPublicRepoPassword}"\
+                ./bamboo-deploy-publisher/deploy.sh adguard-home-github
+  'final-tasks':
+  - 'clean'
+  'requirements':
+  - 'adg-docker': 'true'
+
+'triggers':
+- 'cron': '0 30 14 * * ?'
+'branches':
+  'create': 'manually'
+  'delete':
+    'after-deleted-days': 1
+    'after-inactive-days': 30
+  'integration':
+    'push-on-success': false
+    'merge-from': 'AdGuard Home - Build and publish release'
+  'link-to-jira': true
+
+'notifications':
+- 'events':
+  - 'plan-completed'
+  'recipients':
+  - 'webhook':
+      'name': 'Build webhook'
+      'url': 'http://prod.jirahub.service.eu.consul/v1/webhook/bamboo'
+
+'labels': []
+'other':
+  'concurrent-build-plugin': 'system-default'

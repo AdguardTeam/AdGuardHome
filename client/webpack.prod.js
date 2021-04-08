@@ -3,6 +3,10 @@ const merge = require('webpack-merge');
 const common = require('./webpack.common.js');
 
 module.exports = merge(common, {
+    stats: 'minimal',
+    performance : {
+        hints : false
+    },
     module: {
         rules: [
             {
