@@ -10,7 +10,7 @@
   'outputPush': 'false'
 
 'stages':
-- 'Make snapshot':
+- 'Make release':
     'manual': false
     'final': false
     'jobs':
@@ -157,6 +157,8 @@
   - 'adg-docker': 'true'
 
 'Publish to Snapstore':
+  'docker':
+    'image': '${bamboo.dockerGo}'
   'key': 'PTS'
   'tasks':
   - 'clean'
