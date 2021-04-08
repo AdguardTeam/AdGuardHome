@@ -46,6 +46,9 @@ type dnsContext struct {
 	// origReqDNSSEC shows if the DNSSEC flag in the original request from
 	// the client is set.
 	origReqDNSSEC bool
+	// isLocalClient shows if client's IP address is from locally-served
+	// network.
+	isLocalClient bool
 }
 
 // resultCode is the result of a request processing function.
@@ -81,6 +84,7 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 	// appropriate handler.
 	mods := []modProcessFunc{
 		processInitial,
+		s.processDetermineLocal,
 		s.processInternalHosts,
 		s.processRestrictLocal,
 		s.processInternalIPAddrs,
@@ -191,6 +195,21 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 	s.tablePTRLock.Unlock()
 }
 
+// processDetermineLocal determines if the client's IP address is from
+// locally-served network and saves the result into the context.
+func (s *Server) processDetermineLocal(dctx *dnsContext) (rc resultCode) {
+	rc = resultCodeSuccess
+
+	var ip net.IP
+	if ip = IPFromAddr(dctx.proxyCtx.Addr); ip == nil {
+		return rc
+	}
+
+	dctx.isLocalClient = s.subnetDetector.IsLocallyServedNetwork(ip)
+
+	return rc
+}
+
 // hostToIP tries to get an IP leased by DHCP and returns the copy of address
 // since the data inside the internal table may be changed while request
 // processing.  It's safe for concurrent use.
@@ -235,11 +254,22 @@ func (s *Server) processInternalHosts(dctx *dnsContext) (rc resultCode) {
 		return resultCodeSuccess
 	}
 
-	// TODO(e.burkov): Restrict the access for external clients.
+	d := dctx.proxyCtx
+	if !dctx.isLocalClient {
+		log.Debug("dns: %q requests for internal host", d.Addr)
+		d.Res = s.genNXDomain(req)
+
+		// Do not even put into query log.
+		return resultCodeFinish
+	}
 
 	ip, ok := s.hostToIP(host)
 	if !ok {
-		return resultCodeSuccess
+		// TODO(e.burkov): Inspect special cases when user want to apply
+		// some rules handled by other processors to the hosts with TLD.
+		d.Res = s.genNXDomain(req)
+
+		return resultCodeFinish
 	}
 
 	log.Debug("dns: internal record: %s -> %s", q.Name, ip)
@@ -257,8 +287,8 @@ func (s *Server) processInternalHosts(dctx *dnsContext) (rc resultCode) {
 	return resultCodeSuccess
 }
 
-// processRestrictLocal responds with empty answers to PTR requests for IP
-// addresses in locally-served network from external clients.
+// processRestrictLocal responds with NXDOMAIN to PTR requests for IP addresses
+// in locally-served network from external clients.
 func (s *Server) processRestrictLocal(ctx *dnsContext) (rc resultCode) {
 	d := ctx.proxyCtx
 	req := d.Req
@@ -280,10 +310,9 @@ func (s *Server) processRestrictLocal(ctx *dnsContext) (rc resultCode) {
 	// assume that all the DHCP leases we give are locally-served or at
 	// least don't need to be unaccessable externally.
 	if s.subnetDetector.IsLocallyServedNetwork(ip) {
-		clientIP := IPFromAddr(d.Addr)
-		if !s.subnetDetector.IsLocallyServedNetwork(clientIP) {
-			log.Debug("dns: %q requests for internal ip", clientIP)
-			d.Res = s.makeResponse(req)
+		if !ctx.isLocalClient {
+			log.Debug("dns: %q requests for internal ip", d.Addr)
+			d.Res = s.genNXDomain(req)
 
 			// Do not even put into query log.
 			return resultCodeFinish

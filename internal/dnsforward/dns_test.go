@@ -4,6 +4,7 @@ import (
 	"net"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/dnsproxy/proxy"
@@ -13,56 +14,188 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestServer_ProcessInternalHosts(t *testing.T) {
+func TestServer_ProcessDetermineLocal(t *testing.T) {
+	snd, err := aghnet.NewSubnetDetector()
+	require.NoError(t, err)
+	s := &Server{
+		subnetDetector: snd,
+	}
+
+	testCases := []struct {
+		name  string
+		cliIP net.IP
+		want  bool
+	}{{
+		name:  "local",
+		cliIP: net.IP{192, 168, 0, 1},
+		want:  true,
+	}, {
+		name:  "external",
+		cliIP: net.IP{250, 249, 0, 1},
+		want:  false,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			proxyCtx := &proxy.DNSContext{
+				Addr: &net.TCPAddr{
+					IP: tc.cliIP,
+				},
+			}
+			dctx := &dnsContext{
+				proxyCtx: proxyCtx,
+			}
+			s.processDetermineLocal(dctx)
+
+			assert.Equal(t, tc.want, dctx.isLocalClient)
+		})
+	}
+}
+
+func TestServer_ProcessInternalHosts_localRestriction(t *testing.T) {
 	knownIP := net.IP{1, 2, 3, 4}
+
 	testCases := []struct {
 		name       string
 		host       string
-		suffix     string
-		wantErrMsg string
 		wantIP     net.IP
-		qtyp       uint16
 		wantRes    resultCode
+		isLocalCli bool
 	}{{
-		name:       "success_external",
-		host:       "example.com",
-		suffix:     defaultAutohostSuffix,
-		wantErrMsg: "",
-		wantIP:     nil,
-		qtyp:       dns.TypeA,
-		wantRes:    resultCodeSuccess,
-	}, {
-		name:       "success_external_non_a",
-		host:       "example.com",
-		suffix:     defaultAutohostSuffix,
-		wantErrMsg: "",
-		wantIP:     nil,
-		qtyp:       dns.TypeCNAME,
-		wantRes:    resultCodeSuccess,
-	}, {
-		name:       "success_internal",
+		name:       "local_client_success",
 		host:       "example.lan",
-		suffix:     defaultAutohostSuffix,
-		wantErrMsg: "",
 		wantIP:     knownIP,
-		qtyp:       dns.TypeA,
 		wantRes:    resultCodeSuccess,
+		isLocalCli: true,
 	}, {
-		name:       "success_internal_unknown",
-		host:       "example-new.lan",
-		suffix:     defaultAutohostSuffix,
-		wantErrMsg: "",
+		name:       "local_client_unknown_host",
+		host:       "wronghost.lan",
 		wantIP:     nil,
-		qtyp:       dns.TypeA,
-		wantRes:    resultCodeSuccess,
+		wantRes:    resultCodeFinish,
+		isLocalCli: true,
 	}, {
-		name:       "success_internal_aaaa",
+		name:       "external_client_known_host",
 		host:       "example.lan",
-		suffix:     defaultAutohostSuffix,
-		wantErrMsg: "",
 		wantIP:     nil,
-		qtyp:       dns.TypeAAAA,
-		wantRes:    resultCodeSuccess,
+		wantRes:    resultCodeFinish,
+		isLocalCli: false,
+	}, {
+		name:       "external_client_unknown_host",
+		host:       "wronghost.lan",
+		wantIP:     nil,
+		wantRes:    resultCodeFinish,
+		isLocalCli: false,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := &Server{
+				autohostSuffix: defaultAutohostSuffix,
+				tableHostToIP: map[string]net.IP{
+					"example": knownIP,
+				},
+			}
+
+			req := &dns.Msg{
+				MsgHdr: dns.MsgHdr{
+					Id: dns.Id(),
+				},
+				Question: []dns.Question{{
+					Name:   dns.Fqdn(tc.host),
+					Qtype:  dns.TypeA,
+					Qclass: dns.ClassINET,
+				}},
+			}
+
+			dctx := &dnsContext{
+				proxyCtx: &proxy.DNSContext{
+					Req: req,
+				},
+				isLocalClient: tc.isLocalCli,
+			}
+
+			res := s.processInternalHosts(dctx)
+			require.Equal(t, tc.wantRes, res)
+			pctx := dctx.proxyCtx
+			if tc.wantRes == resultCodeFinish {
+				require.NotNil(t, pctx.Res)
+
+				assert.Equal(t, dns.RcodeNameError, pctx.Res.Rcode)
+				assert.Len(t, pctx.Res.Answer, 0)
+
+				return
+			}
+
+			if tc.wantIP == nil {
+				assert.Nil(t, pctx.Res)
+			} else {
+				require.NotNil(t, pctx.Res)
+
+				ans := pctx.Res.Answer
+				require.Len(t, ans, 1)
+
+				assert.Equal(t, tc.wantIP, ans[0].(*dns.A).A)
+			}
+		})
+	}
+}
+
+func TestServer_ProcessInternalHosts(t *testing.T) {
+	const (
+		examplecom = "example.com"
+		examplelan = "example.lan"
+	)
+
+	knownIP := net.IP{1, 2, 3, 4}
+	testCases := []struct {
+		name    string
+		host    string
+		suffix  string
+		wantIP  net.IP
+		wantRes resultCode
+		qtyp    uint16
+	}{{
+		name:    "success_external",
+		host:    examplecom,
+		suffix:  defaultAutohostSuffix,
+		wantIP:  nil,
+		wantRes: resultCodeSuccess,
+		qtyp:    dns.TypeA,
+	}, {
+		name:    "success_external_non_a",
+		host:    examplecom,
+		suffix:  defaultAutohostSuffix,
+		wantIP:  nil,
+		wantRes: resultCodeSuccess,
+		qtyp:    dns.TypeCNAME,
+	}, {
+		name:    "success_internal",
+		host:    examplelan,
+		suffix:  defaultAutohostSuffix,
+		wantIP:  knownIP,
+		wantRes: resultCodeSuccess,
+		qtyp:    dns.TypeA,
+	}, {
+		name:    "success_internal_unknown",
+		host:    "example-new.lan",
+		suffix:  defaultAutohostSuffix,
+		wantIP:  nil,
+		wantRes: resultCodeFinish,
+		qtyp:    dns.TypeA,
+	}, {
+		name:    "success_internal_aaaa",
+		host:    examplelan,
+		suffix:  defaultAutohostSuffix,
+		wantIP:  nil,
+		wantRes: resultCodeSuccess,
+		qtyp:    dns.TypeAAAA,
+	}, {
+		name:    "success_custom_suffix",
+		host:    "example.custom",
+		suffix:  ".custom.",
+		wantIP:  knownIP,
+		wantRes: resultCodeSuccess,
+		qtyp:    dns.TypeA,
 	}}
 
 	for _, tc := range testCases {
@@ -89,20 +222,21 @@ func TestServer_ProcessInternalHosts(t *testing.T) {
 				proxyCtx: &proxy.DNSContext{
 					Req: req,
 				},
+				isLocalClient: true,
 			}
 
 			res := s.processInternalHosts(dctx)
+			pctx := dctx.proxyCtx
 			assert.Equal(t, tc.wantRes, res)
+			if tc.wantRes == resultCodeFinish {
+				require.NotNil(t, pctx.Res)
+				assert.Equal(t, dns.RcodeNameError, pctx.Res.Rcode)
 
-			if tc.wantErrMsg == "" {
-				assert.NoError(t, dctx.err)
-			} else {
-				require.Error(t, dctx.err)
-
-				assert.Equal(t, tc.wantErrMsg, dctx.err.Error())
+				return
 			}
 
-			pctx := dctx.proxyCtx
+			require.NoError(t, dctx.err)
+
 			if tc.qtyp == dns.TypeAAAA {
 				// TODO(a.garipov): Remove this special handling
 				// when we fully support AAAA.

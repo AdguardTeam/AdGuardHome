@@ -28,6 +28,8 @@ and this project adheres to
 
 ### Changed
 
+- The access to the private hosts is now forbidden for users from external
+  networks ([#2889]).
 - The reverse lookup for local addresses is now performed via local resolvers
   ([#2704]).
 - Stricter validation of the IP addresses of static leases in the DHCP server
@@ -64,6 +66,7 @@ and this project adheres to
 [#2828]: https://github.com/AdguardTeam/AdGuardHome/issues/2828
 [#2835]: https://github.com/AdguardTeam/AdGuardHome/issues/2835
 [#2838]: https://github.com/AdguardTeam/AdGuardHome/issues/2838
+[#2889]: https://github.com/AdguardTeam/AdGuardHome/issues/2889
 [#2927]: https://github.com/AdguardTeam/AdGuardHome/issues/2927
 
 
