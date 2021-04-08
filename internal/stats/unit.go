@@ -158,7 +158,7 @@ func (s *statsCtx) dbOpen() bool {
 	if err != nil {
 		log.Error("stats: open DB: %s: %s", s.conf.Filename, err)
 		if err.Error() == "invalid argument" {
-			log.Error("AdGuard Home cannot be initialized due to an incompatible file system.\nPlease read the explanation here: https://github.com/AdguardTeam/AdGuardHome/internal/wiki/Getting-Started#limitations")
+			log.Error("AdGuard Home cannot be initialized due to an incompatible file system.\nPlease read the explanation here: https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#limitations")
 		}
 		return false
 	}

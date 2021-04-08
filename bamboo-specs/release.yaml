@@ -150,7 +150,7 @@
         cd ./dist/
 
         export CHANNEL="${bamboo.channel}"
-        ./bamboo-deploy-publisher/deploy.sh adguard-home-"$CHANNEL"
+        ../bamboo-deploy-publisher/deploy.sh adguard-home-"$CHANNEL"
   'final-tasks':
   - 'clean'
   'requirements':
@@ -179,7 +179,7 @@
                 SNAPCRAFT_EMAIL="${bamboo.snapcraftEmail}"\
                 SNAPCRAFT_MACAROON="${bamboo.snapcraftMacaroonPassword}"\
                 SNAPCRAFT_UBUNTU_DISCHARGE="${bamboo.snapcraftUbuntuDischargePassword}"\
-                ./bamboo-deploy-publisher/deploy.sh adguard-home-snap
+                ../bamboo-deploy-publisher/deploy.sh adguard-home-snap
   'final-tasks':
   - 'clean'
   'requirements':
@@ -201,8 +201,6 @@
 
         set -e -f -u -x
 
-        cd ./dist/
-
         export CHANNEL="${bamboo.channel}"
         if [ "$CHANNEL" != 'release' -a "${CHANNEL}" != 'beta' ]
         then
@@ -211,9 +209,11 @@
               exit 0
         fi
 
+        cd ./dist/
+
         env\
                 GITHUB_TOKEN="${bamboo.githubPublicRepoPassword}"\
-                ./bamboo-deploy-publisher/deploy.sh adguard-home-github
+                ../bamboo-deploy-publisher/deploy.sh adguard-home-github
   'final-tasks':
   - 'clean'
   'requirements':
