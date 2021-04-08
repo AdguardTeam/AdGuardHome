@@ -1,3 +1,7 @@
+// Package util contains various utilities.
+//
+// TODO(a.garipov): Such packages are widely considered an antipattern.  Remove
+// this when we refactor our project structure.
 package util
 
 import (
@@ -13,6 +17,7 @@ import (
 	"sync"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/fsnotify/fsnotify"
 	"github.com/miekg/dns"
@@ -68,7 +73,7 @@ func (a *AutoHosts) Init(hostsFn string) {
 		a.hostsFn = hostsFn
 	}
 
-	if IsOpenWrt() {
+	if aghos.IsOpenWrt() {
 		// OpenWrt: "/tmp/hosts/dhcp.cfg01411c".
 		a.hostsDirs = append(a.hostsDirs, "/tmp/hosts")
 	}

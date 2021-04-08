@@ -1,4 +1,4 @@
-// +build aix darwin dragonfly netbsd openbsd solaris
+// +build darwin
 
 package aghos
 
@@ -29,4 +29,8 @@ func haveAdminRights() (bool, error) {
 
 func sendProcessSignal(pid int, sig syscall.Signal) error {
 	return syscall.Kill(pid, sig)
+}
+
+func isOpenWrt() (ok bool) {
+	return false
 }

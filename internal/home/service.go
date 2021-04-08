@@ -10,7 +10,6 @@ import (
 	"syscall"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
-	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/kardianos/service"
 )
@@ -215,7 +214,7 @@ func handleServiceInstallCommand(s service.Service) {
 		log.Fatal(err)
 	}
 
-	if util.IsOpenWrt() {
+	if aghos.IsOpenWrt() {
 		// On OpenWrt it is important to run enable after the service installation
 		// Otherwise, the service won't start on the system startup
 		_, err = runInitdCommand("enable")
@@ -242,7 +241,7 @@ Click on the link below and follow the Installation Wizard steps to finish setup
 
 // handleServiceStatusCommand handles service "uninstall" command
 func handleServiceUninstallCommand(s service.Service) {
-	if util.IsOpenWrt() {
+	if aghos.IsOpenWrt() {
 		// On OpenWrt it is important to run disable command first
 		// as it will remove the symlink
 		_, err := runInitdCommand("disable")
@@ -290,7 +289,7 @@ func configureService(c *service.Config) {
 	c.Option["SysvScript"] = sysvScript
 
 	// On OpenWrt we're using a different type of sysvScript.
-	if util.IsOpenWrt() {
+	if aghos.IsOpenWrt() {
 		c.Option["SysvScript"] = openWrtScript
 	} else if runtime.GOOS == "freebsd" {
 		c.Option["SysvScript"] = freeBSDScript

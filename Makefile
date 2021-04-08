@@ -90,5 +90,13 @@ go-test:  ; $(ENV) RACE='1' "$(SHELL)" ./scripts/make/go-test.sh
 
 go-check: go-tools go-lint go-test
 
+# A quick check to make sure that all supported operating systems can be
+# typechecked and built successfully.
+go-os-check:
+	env GOOS='darwin'  go vet ./internal/...
+	env GOOS='freebsd' go vet ./internal/...
+	env GOOS='linux'   go vet ./internal/...
+	env GOOS='windows' go vet ./internal/...
+
 openapi-lint: ; cd ./openapi/ && $(YARN) test
 openapi-show: ; cd ./openapi/ && $(YARN) start

@@ -14,7 +14,7 @@ fi
 
 if [ "$(git diff --cached --name-only -- '*.go' 'go.mod')" ]
 then
-	make go-lint go-test
+	make go-os-check go-lint go-test
 fi
 
 if [ "$(git diff --cached --name-only -- './openapi/openapi.yaml')" ]

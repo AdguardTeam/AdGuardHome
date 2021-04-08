@@ -3,7 +3,11 @@
 package aghos
 
 import (
+	"bytes"
+	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/AdguardTeam/golibs/log"
@@ -36,4 +40,42 @@ func haveAdminRights() (bool, error) {
 
 func sendProcessSignal(pid int, sig syscall.Signal) error {
 	return syscall.Kill(pid, sig)
+}
+
+func isOpenWrt() (ok bool) {
+	const etcDir = "/etc"
+
+	// TODO(e.burkov): Take care of dealing with fs package after updating
+	// Go version to 1.16.
+	fileInfos, err := ioutil.ReadDir(etcDir)
+	if err != nil {
+		return false
+	}
+
+	// fNameSubstr is a part of a name of the desired file.
+	const fNameSubstr = "release"
+	osNameData := []byte("OpenWrt")
+
+	for _, fileInfo := range fileInfos {
+		if fileInfo.IsDir() {
+			continue
+		}
+
+		fn := fileInfo.Name()
+		if !strings.Contains(fn, fNameSubstr) {
+			continue
+		}
+
+		var body []byte
+		body, err = ioutil.ReadFile(filepath.Join(etcDir, fn))
+		if err != nil {
+			continue
+		}
+
+		if bytes.Contains(body, osNameData) {
+			return true
+		}
+	}
+
+	return false
 }

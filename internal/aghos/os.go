@@ -45,3 +45,8 @@ func RunCommand(command string, arguments ...string) (int, string, error) {
 
 	return cmd.ProcessState.ExitCode(), string(out), nil
 }
+
+// IsOpenWrt returns true if host OS is OpenWrt.
+func IsOpenWrt() (ok bool) {
+	return isOpenWrt()
+}

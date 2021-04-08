@@ -40,3 +40,7 @@ func haveAdminRights() (bool, error) {
 func sendProcessSignal(pid int, sig syscall.Signal) error {
 	return fmt.Errorf("not supported on Windows")
 }
+
+func isOpenWrt() (ok bool) {
+	return false
+}
