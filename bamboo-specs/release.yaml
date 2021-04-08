@@ -146,6 +146,9 @@
         #!/bin/sh
 
         set -e -f -u -x
+
+        cd ./dist/
+
         export CHANNEL="${bamboo.channel}"
         ./bamboo-deploy-publisher/deploy.sh adguard-home-"$CHANNEL"
   'final-tasks':
@@ -168,6 +171,9 @@
         #!/bin/sh
 
         set -e -f -u -x
+
+        cd ./dist/
+
         env\
                 SNAPCRAFT_CHANNEL=edge\
                 SNAPCRAFT_EMAIL="${bamboo.snapcraftEmail}"\
@@ -194,6 +200,8 @@
         #!/bin/sh
 
         set -e -f -u -x
+
+        cd ./dist/
 
         export CHANNEL="${bamboo.channel}"
         if [ "$CHANNEL" != 'release' -a "${CHANNEL}" != 'beta' ]
