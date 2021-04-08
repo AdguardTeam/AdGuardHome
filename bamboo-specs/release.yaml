@@ -7,7 +7,6 @@
 'variables':
   'channel': 'edge'
   'dockerGo': 'adguard/golang-ubuntu:2.0'
-  'outputPush': 'false'
 
 'stages':
 - 'Make release':
@@ -114,14 +113,11 @@
         # Print Docker info.
         docker info
 
-        # If true, push to docker hub.  Otherwise, keep in the build cache.
-        OUTPUT_PUSH="${bamboo.outputPush}"
-
         # Prepare and push the build.
         make\
                 CHANNEL="${bamboo.channel}"\
                 DOCKER_IMAGE_NAME='adguard/adguardhome'\
-                DOCKER_OUTPUT="type=image,name=adguard/adguardhome,push=$OUTPUT_PUSH"\
+                DOCKER_OUTPUT="type=image,name=adguard/adguardhome,push=true"\
                 VERBOSE='1'\
                 build-docker
       'environment':
