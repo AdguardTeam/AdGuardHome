@@ -48,7 +48,7 @@ readonly channel="$CHANNEL"
 
 # Check VERSION against the default value from the Makefile.  If it is
 # that, use the version calculation script.
-if [ "${VERSION:-}" = 'v0.0.0' -o "${VERSION:-}" = '' ]
+if [ "${VERSION:-}" = 'v0.0.0' ] || [ "${VERSION:-}" = '' ]
 then
 	readonly version="$(sh ./scripts/make/version.sh)"
 else
@@ -103,8 +103,8 @@ log "checking tools"
 # Make sure we fail gracefully if one of the tools we need is missing.
 for tool in gpg gzip sed sha256sum snapcraft tar zip
 do
-	which "$tool" >/dev/null ||\
-		{ log "pieces don't fit, '$tool' not found"; exit 1; }
+	which "$tool" >/dev/null\
+		|| { log "pieces don't fit, '$tool' not found"; exit 1; }
 done
 
 # Data section.  Arrange data into space-separated tables for read -r to
@@ -219,7 +219,7 @@ build() {
 
 	log "$build_archive"
 
-	if [ "$build_snap" = '0' -o "$snap_enabled" = '0' ]
+	if [ "$build_snap" = '0' ] || [ "$snap_enabled" = '0' ]
 	then
 		return
 	fi
@@ -262,8 +262,7 @@ build() {
 	# output, but only show it when snapcraft actually fails.
 	set +e
 	build_snapcraft_output="$(
-		snapcraft pack "$build_snap_dir"\
-			--output "$build_snap_output" 2>&1
+		snapcraft pack "$build_snap_dir" --output "$build_snap_output" 2>&1
 	)"
 	build_snapcraft_exit_code="$?"
 	set -e
@@ -334,10 +333,7 @@ log "calculating checksums"
 (
 	cd "./${dist}"
 
-	files="$( \
-		find . ! -name . -prune\
-			\( -name '*.tar.gz' -o -name '*.zip' \)
-	)"
+	files="$( find . ! -name . -prune \( -name '*.tar.gz' -o -name '*.zip' \) )"
 
 	# Don't use quotes to get word splitting.
 	sha256sum $files > ./checksums.txt
@@ -385,8 +381,7 @@ echo "
 # Same as with checksums above, don't use ls, because files matching one
 # of the patterns may be absent.
 readonly ar_files="$( \
-	find "./${dist}/" ! -name "${dist}" -prune\
-		\( -name '*.tar.gz' -o -name '*.zip' \)
+	find "./${dist}/" ! -name "${dist}" -prune \( -name '*.tar.gz' -o -name '*.zip' \)
 )"
 readonly ar_files_len="$(echo "$ar_files" | wc -l)"
 

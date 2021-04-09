@@ -289,6 +289,9 @@ on GitHub and most other Markdown renderers. -->
  *  Put utility flags in the ASCII order and **don't** group them together.  For
     example, `ls -1 -A -q`.
 
+ *  Script code lines should not be longer than one hundred (**100**) columns.
+    For comments, see the text section below.
+
  *  `snake_case`, not `camelCase` for variables.  `kebab-case` for filenames.
 
  *  UPPERCASE names for external exported variables, lowercase for local,
@@ -318,6 +321,14 @@ on GitHub and most other Markdown renderers. -->
     # Bad!
     dir="${TOP_DIR}"/sub
     ```
+
+ *  When using `test` (aka `[`), spell compound conditions with `&&`, `||`, and
+    `!` **outside** of `test` instead of `-a`, `-o`, and `!` inside of `test`
+    correspondingly.  The latter ones are pretty much deprecated in POSIX.
+
+    See also: “[Problems With the `test` Builtin: What Does `-a` Mean?]”.
+
+    [Problems With the `test` Builtin: What Does `-a` Mean?]: https://www.oilshell.org/blog/2017/08/31.html
 
 ##  <a id="text-including-comments" href="#text-including-comments">Text, Including Comments</a>
 

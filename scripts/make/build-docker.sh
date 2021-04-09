@@ -18,7 +18,7 @@ readonly channel="$CHANNEL"
 readonly commit="$COMMIT"
 readonly dist_dir="$DIST_DIR"
 
-if [ "${VERSION:-}" = 'v0.0.0' -o "${VERSION:-}" = '' ]
+if [ "${VERSION:-}" = 'v0.0.0' ] || [ "${VERSION:-}" = '' ]
 then
 	readonly version="$(sh ./scripts/make/version.sh)"
 else

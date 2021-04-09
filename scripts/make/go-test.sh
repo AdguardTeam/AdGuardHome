@@ -39,5 +39,4 @@ readonly count_flags='--count 1'
 
 # Don't use quotes with flag variables because we want an empty space if
 # those aren't set.
-"$go" test $count_flags $cover_flags $race_flags $timeout_flags\
-	$x_flags $v_flags ./...
+"$go" test $count_flags $cover_flags $race_flags $timeout_flags $x_flags $v_flags ./...

@@ -200,7 +200,7 @@
         set -e -f -u -x
 
         export CHANNEL="${bamboo.channel}"
-        if [ "$CHANNEL" != 'release' -a "${CHANNEL}" != 'beta' ]
+        if [ "$CHANNEL" != 'release' ] && [ "${CHANNEL}" != 'beta' ]
         then
               echo "don't publish to Github Releases for this channel"
 
