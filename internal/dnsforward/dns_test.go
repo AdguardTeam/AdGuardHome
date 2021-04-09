@@ -259,17 +259,16 @@ func TestServer_ProcessInternalHosts(t *testing.T) {
 }
 
 func TestLocalRestriction(t *testing.T) {
-	s := createTestServer(t, &dnsfilter.Config{}, ServerConfig{
-		UDPListenAddrs: []*net.UDPAddr{{}},
-		TCPListenAddrs: []*net.TCPAddr{{}},
-	})
 	ups := &aghtest.TestUpstream{
 		Reverse: map[string][]string{
 			"251.252.253.254.in-addr.arpa.": {"host1.example.net."},
 			"1.1.168.192.in-addr.arpa.":     {"some.local-client."},
 		},
 	}
-	s.localResolvers = &aghtest.Exchanger{Ups: ups}
+	s := createTestServer(t, &dnsfilter.Config{}, ServerConfig{
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
+	}, ups)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{ups}
 	startDeferStop(t, s)
 

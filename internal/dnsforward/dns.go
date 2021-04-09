@@ -1,7 +1,6 @@
 package dnsforward
 
 import (
-	"errors"
 	"net"
 	"strings"
 	"time"
@@ -403,21 +402,18 @@ func (s *Server) processLocalPTR(ctx *dnsContext) (rc resultCode) {
 		return resultCodeSuccess
 	}
 
-	req := d.Req
-	resp, err := s.localResolvers.Exchange(req)
+	err := s.localResolvers.Resolve(d)
 	if err != nil {
-		if errors.Is(err, aghnet.NoUpstreamsErr) {
-			d.Res = s.genNXDomain(req)
-
-			return resultCodeFinish
-		}
-
 		ctx.err = err
 
 		return resultCodeError
 	}
 
-	d.Res = resp
+	if d.Res == nil {
+		d.Res = s.genNXDomain(d.Req)
+
+		return resultCodeFinish
+	}
 
 	return resultCodeSuccess
 }

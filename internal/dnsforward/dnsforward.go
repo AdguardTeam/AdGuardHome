@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
@@ -66,7 +67,7 @@ type Server struct {
 
 	ipset          ipsetCtx
 	subnetDetector *aghnet.SubnetDetector
-	localResolvers aghnet.Exchanger
+	localResolvers *proxy.Proxy
 
 	tableHostToIP     map[string]net.IP // "hostname -> IP" table for internal addresses (DHCP)
 	tableHostToIPLock sync.Mutex
@@ -243,23 +244,23 @@ func (s *Server) Exchange(ip net.IP) (host string, err error) {
 			Qclass: dns.ClassINET,
 		}},
 	}
+	ctx := &proxy.DNSContext{
+		Proto:     "udp",
+		Req:       req,
+		StartTime: time.Now(),
+	}
 
 	var resp *dns.Msg
 	if s.subnetDetector.IsLocallyServedNetwork(ip) {
-		resp, err = s.localResolvers.Exchange(req)
+		err = s.localResolvers.Resolve(ctx)
 	} else {
-		ctx := &proxy.DNSContext{
-			Proto:     "udp",
-			Req:       req,
-			StartTime: time.Now(),
-		}
 		err = s.internalProxy.Resolve(ctx)
-
-		resp = ctx.Res
 	}
 	if err != nil {
 		return "", err
 	}
+
+	resp = ctx.Res
 
 	if len(resp.Answer) == 0 {
 		return "", fmt.Errorf("lookup for %q: %w", arpa, rDNSEmptyAnswerErr)
@@ -376,18 +377,26 @@ func (s *Server) setupResolvers(localAddrs []string) (err error) {
 		return err
 	}
 
-	// TODO(e.burkov): The approach of subtracting sets of strings
-	// is not really applicable here since in case of listening on
-	// all network interfaces we should check the whole interface's
-	// network to cut off all the loopback addresses as well.
+	// TODO(e.burkov): The approach of subtracting sets of strings is not
+	// really applicable here since in case of listening on all network
+	// interfaces we should check the whole interface's network to cut off
+	// all the loopback addresses as well.
 	localAddrs = stringSetSubtract(localAddrs, ourAddrs)
 
-	if s.localResolvers, err = aghnet.NewMultiAddrExchanger(
-		localAddrs,
-		bootstraps,
-		defaultLocalTimeout,
-	); err != nil {
-		return err
+	var upsConfig proxy.UpstreamConfig
+	upsConfig, err = proxy.ParseUpstreamsConfig(localAddrs, upstream.Options{
+		Bootstrap: bootstraps,
+		Timeout:   defaultLocalTimeout,
+		// TODO(e.burkov): Should we verify server's ceritificates?
+	})
+	if err != nil {
+		return fmt.Errorf("parsing upstreams: %w", err)
+	}
+
+	s.localResolvers = &proxy.Proxy{
+		Config: proxy.Config{
+			UpstreamConfig: &upsConfig,
+		},
 	}
 
 	return nil

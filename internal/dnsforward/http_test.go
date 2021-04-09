@@ -50,7 +50,7 @@ func TestDNSForwardHTTTP_handleGetConfig(t *testing.T) {
 		},
 		ConfigModified: func() {},
 	}
-	s := createTestServer(t, filterConf, forwardConf)
+	s := createTestServer(t, filterConf, forwardConf, nil)
 	require.Nil(t, s.Start())
 	t.Cleanup(func() {
 		require.Nil(t, s.Stop())
@@ -123,7 +123,7 @@ func TestDNSForwardHTTTP_handleSetConfig(t *testing.T) {
 		},
 		ConfigModified: func() {},
 	}
-	s := createTestServer(t, filterConf, forwardConf)
+	s := createTestServer(t, filterConf, forwardConf, nil)
 
 	defaultConf := s.conf
 
