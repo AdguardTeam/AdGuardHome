@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -321,11 +322,29 @@ func (q *QLogFile) readProbeLine(position int64) (string, int64, int64, error) {
 	return string(buffer[startLine:endLine]), lineIdx, lineEndIdx, nil
 }
 
+// readJSONvalue reads a JSON string in form of '"key":"value"'.  prefix must be
+// of the form '"key":"' to generate less garbage.
+func readJSONValue(s, prefix string) string {
+	i := strings.Index(s, prefix)
+	if i == -1 {
+		return ""
+	}
+
+	start := i + len(prefix)
+	i = strings.IndexByte(s[start:], '"')
+	if i == -1 {
+		return ""
+	}
+
+	end := start + i
+	return s[start:end]
+}
+
 // readQLogTimestamp reads the timestamp field from the query log line
 func readQLogTimestamp(str string) int64 {
-	val := readJSONValue(str, "T")
+	val := readJSONValue(str, `"T":"`)
 	if len(val) == 0 {
-		val = readJSONValue(str, "Time")
+		val = readJSONValue(str, `"Time":"`)
 	}
 
 	if len(val) == 0 {

@@ -243,6 +243,33 @@ on GitHub and most other Markdown renderers. -->
 
  *  Use named returns to improve readability of function signatures.
 
+ *  When naming a file which defines an enitity, use singular nouns, unless the
+    entity is some form of a container for other entities:
+
+    ```go
+    // File: client.go
+
+    package foo
+
+    type Client struct {
+            // …
+    }
+    ```
+
+    ```go
+    // File: clients.go
+
+    package foo
+
+    type Clients []*Client
+
+    // …
+
+    type ClientsWithCache struct {
+            // …
+    }
+    ```
+
  ###  <a id="testing" href="#testing">Testing</a>
 
  *  Use `assert.NoError` and `require.NoError` instead of `assert.Nil` and

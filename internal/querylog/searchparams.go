@@ -5,7 +5,7 @@ import "time"
 // searchParams represent the search query sent by the client
 type searchParams struct {
 	// searchCriteria - list of search criteria that we use to get filter results
-	searchCriteria []searchCriteria
+	searchCriteria []searchCriterion
 
 	// olderThen - return entries that are older than this value
 	// if not set - disregard it and return any value
@@ -25,6 +25,22 @@ func newSearchParams() *searchParams {
 		// by default, we scan up to 50k entries at once
 		maxFileScanEntries: 50000,
 	}
+}
+
+// quickMatchClientFunc is a simplified client finder for quick matches.
+type quickMatchClientFunc = func(clientID, ip string) (c *Client)
+
+// quickMatch quickly checks if the line matches the given search parameters.
+// It returns false if the line doesn't match.  This method is only here for
+// optimisation purposes.
+func (s *searchParams) quickMatch(line string, findClient quickMatchClientFunc) (ok bool) {
+	for _, c := range s.searchCriteria {
+		if !c.quickMatch(line, findClient) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // match - checks if the logEntry matches the searchParams

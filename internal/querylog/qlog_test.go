@@ -53,11 +53,11 @@ func TestQueryLog(t *testing.T) {
 
 	testCases := []struct {
 		name string
-		sCr  []searchCriteria
+		sCr  []searchCriterion
 		want []tcAssertion
 	}{{
 		name: "all",
-		sCr:  []searchCriteria{},
+		sCr:  []searchCriterion{},
 		want: []tcAssertion{
 			{num: 0, host: "example.com", answer: net.IPv4(1, 1, 1, 4), client: net.IPv4(2, 2, 2, 4)},
 			{num: 1, host: "test.example.org", answer: net.IPv4(1, 1, 1, 3), client: net.IPv4(2, 2, 2, 3)},
@@ -66,20 +66,20 @@ func TestQueryLog(t *testing.T) {
 		},
 	}, {
 		name: "by_domain_strict",
-		sCr: []searchCriteria{{
-			criteriaType: ctDomainOrClient,
-			strict:       true,
-			value:        "TEST.example.org",
+		sCr: []searchCriterion{{
+			criterionType: ctDomainOrClient,
+			strict:        true,
+			value:         "TEST.example.org",
 		}},
 		want: []tcAssertion{{
 			num: 0, host: "test.example.org", answer: net.IPv4(1, 1, 1, 3), client: net.IPv4(2, 2, 2, 3),
 		}},
 	}, {
 		name: "by_domain_non-strict",
-		sCr: []searchCriteria{{
-			criteriaType: ctDomainOrClient,
-			strict:       false,
-			value:        "example.ORG",
+		sCr: []searchCriterion{{
+			criterionType: ctDomainOrClient,
+			strict:        false,
+			value:         "example.ORG",
 		}},
 		want: []tcAssertion{
 			{num: 0, host: "test.example.org", answer: net.IPv4(1, 1, 1, 3), client: net.IPv4(2, 2, 2, 3)},
@@ -88,20 +88,20 @@ func TestQueryLog(t *testing.T) {
 		},
 	}, {
 		name: "by_client_ip_strict",
-		sCr: []searchCriteria{{
-			criteriaType: ctDomainOrClient,
-			strict:       true,
-			value:        "2.2.2.2",
+		sCr: []searchCriterion{{
+			criterionType: ctDomainOrClient,
+			strict:        true,
+			value:         "2.2.2.2",
 		}},
 		want: []tcAssertion{{
 			num: 0, host: "example.org", answer: net.IPv4(1, 1, 1, 2), client: net.IPv4(2, 2, 2, 2),
 		}},
 	}, {
 		name: "by_client_ip_non-strict",
-		sCr: []searchCriteria{{
-			criteriaType: ctDomainOrClient,
-			strict:       false,
-			value:        "2.2.2",
+		sCr: []searchCriterion{{
+			criterionType: ctDomainOrClient,
+			strict:        false,
+			value:         "2.2.2",
 		}},
 		want: []tcAssertion{
 			{num: 0, host: "example.com", answer: net.IPv4(1, 1, 1, 4), client: net.IPv4(2, 2, 2, 4)},

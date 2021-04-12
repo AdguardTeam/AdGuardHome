@@ -171,6 +171,7 @@ func (l *queryLog) searchFiles(
 	for total < params.maxFileScanEntries || params.maxFileScanEntries <= 0 {
 		var e *logEntry
 		var ts int64
+
 		e, ts, err = l.readNextEntry(r, params, cache)
 		if err != nil {
 			if err == io.EOF {
@@ -198,6 +199,29 @@ func (l *queryLog) searchFiles(
 	return entries, oldest, total
 }
 
+// quickMatchClientFinder is a wrapper around the usual client finding function
+// to make it easier to use with quick matches.
+type quickMatchClientFinder struct {
+	client func(clientID, ip string, cache clientCache) (c *Client, err error)
+	cache  clientCache
+}
+
+// findClient is a method that can be used as a quickMatchClientFinder.
+func (f quickMatchClientFinder) findClient(clientID, ip string) (c *Client) {
+	var err error
+	c, err = f.client(clientID, ip, f.cache)
+	if err != nil {
+		log.Error("querylog: enriching file record for quick search:"+
+			" for client %q (client id %q): %s",
+			ip,
+			clientID,
+			err,
+		)
+	}
+
+	return c
+}
+
 // readNextEntry reads the next log entry and checks if it matches the search
 // criteria.  It optionally uses the client cache, if provided.  e is nil if the
 // entry doesn't match the search criteria.  ts is the timestamp of the
@@ -211,6 +235,17 @@ func (l *queryLog) readNextEntry(
 	line, err = r.ReadNext()
 	if err != nil {
 		return nil, 0, err
+	}
+
+	clientFinder := quickMatchClientFinder{
+		client: l.client,
+		cache:  cache,
+	}
+
+	if !params.quickMatch(line, clientFinder.findClient) {
+		ts = readQLogTimestamp(line)
+
+		return nil, ts, nil
 	}
 
 	e = &logEntry{}

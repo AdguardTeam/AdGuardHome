@@ -6,15 +6,15 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 )
 
-type criteriaType int
+type criterionType int
 
 const (
 	// ctDomainOrClient is for searching by the domain name, the client's IP
 	// address, or the clinet's ID.
-	ctDomainOrClient criteriaType = iota
+	ctDomainOrClient criterionType = iota
 	// ctFilteringStatus is for searching by the filtering status.
 	//
-	// See (*searchCriteria).ctFilteringStatusCase for details.
+	// See (*searchCriterion).ctFilteringStatusCase for details.
 	ctFilteringStatus
 )
 
@@ -40,17 +40,83 @@ var filteringStatusValues = []string{
 	filteringStatusProcessed,
 }
 
-// searchCriteria - every search request may contain a list of different search criteria
-// we use each of them to match the query
-type searchCriteria struct {
-	value        string       // search criteria value
-	criteriaType criteriaType // type of the criteria
-	strict       bool         // should we strictly match (equality) or not (indexOf)
+// searchCriterion is a search criterion that is used to match a record.
+type searchCriterion struct {
+	value         string
+	criterionType criterionType
+	// strict, if true, means that the criterion must be applied to the
+	// whole value rather than the part of it.  That is, equality and not
+	// containment.
+	strict bool
 }
 
-// match - checks if the log entry matches this search criteria
-func (c *searchCriteria) match(entry *logEntry) bool {
-	switch c.criteriaType {
+func (c *searchCriterion) ctDomainOrClientCaseStrict(
+	term string,
+	clientID string,
+	name string,
+	host string,
+	ip string,
+) (ok bool) {
+	return strings.EqualFold(host, term) ||
+		strings.EqualFold(clientID, term) ||
+		strings.EqualFold(ip, term) ||
+		strings.EqualFold(name, term)
+}
+
+func (c *searchCriterion) ctDomainOrClientCaseNonStrict(
+	term string,
+	clientID string,
+	name string,
+	host string,
+	ip string,
+) (ok bool) {
+	// TODO(a.garipov): Write a performant, case-insensitive version of
+	// strings.Contains instead of generating garbage.  Or, perhaps in the
+	// future, use a locale-appropriate matcher from golang.org/x/text.
+	clientID = strings.ToLower(clientID)
+	host = strings.ToLower(host)
+	ip = strings.ToLower(ip)
+	name = strings.ToLower(name)
+	term = strings.ToLower(term)
+
+	return strings.Contains(clientID, term) ||
+		strings.Contains(host, term) ||
+		strings.Contains(ip, term) ||
+		strings.Contains(name, term)
+}
+
+// quickMatch quickly checks if the line matches the given search criterion.
+// It returns false if the like doesn't match.  This method is only here for
+// optimisation purposes.
+func (c *searchCriterion) quickMatch(line string, findClient quickMatchClientFunc) (ok bool) {
+	switch c.criterionType {
+	case ctDomainOrClient:
+		host := readJSONValue(line, `"QH":"`)
+		ip := readJSONValue(line, `"IP":"`)
+		clientID := readJSONValue(line, `"CID":"`)
+
+		var name string
+		if cli := findClient(clientID, ip); cli != nil {
+			name = cli.Name
+		}
+
+		if c.strict {
+			return c.ctDomainOrClientCaseStrict(c.value, clientID, name, host, ip)
+		}
+
+		return c.ctDomainOrClientCaseNonStrict(c.value, clientID, name, host, ip)
+	case ctFilteringStatus:
+		// Go on, as we currently don't do quick matches against
+		// filtering statuses.
+		return true
+	default:
+		return true
+	}
+}
+
+// match checks if the log entry matches this search criterion.
+func (c *searchCriterion) match(entry *logEntry) bool {
+	switch c.criterionType {
 	case ctDomainOrClient:
 		return c.ctDomainOrClientCase(entry)
 	case ctFilteringStatus:
@@ -60,14 +126,7 @@ func (c *searchCriteria) match(entry *logEntry) bool {
 	return false
 }
 
-func (c *searchCriteria) ctDomainOrClientCaseStrict(term, clientID, name, host, ip string) bool {
-	return strings.EqualFold(host, term) ||
-		strings.EqualFold(clientID, term) ||
-		strings.EqualFold(ip, term) ||
-		strings.EqualFold(name, term)
-}
-
-func (c *searchCriteria) ctDomainOrClientCase(e *logEntry) bool {
+func (c *searchCriterion) ctDomainOrClientCase(e *logEntry) bool {
 	clientID := e.ClientID
 	host := e.QHost
 
@@ -82,22 +141,10 @@ func (c *searchCriteria) ctDomainOrClientCase(e *logEntry) bool {
 		return c.ctDomainOrClientCaseStrict(term, clientID, name, host, ip)
 	}
 
-	// TODO(a.garipov): Write a case-insensitive version of strings.Contains
-	// instead of generating garbage.  Or, perhaps in the future, use
-	// a locale-appropriate matcher from golang.org/x/text.
-	clientID = strings.ToLower(clientID)
-	host = strings.ToLower(host)
-	ip = strings.ToLower(ip)
-	name = strings.ToLower(name)
-	term = strings.ToLower(term)
-
-	return strings.Contains(clientID, term) ||
-		strings.Contains(host, term) ||
-		strings.Contains(ip, term) ||
-		strings.Contains(name, term)
+	return c.ctDomainOrClientCaseNonStrict(term, clientID, name, host, ip)
 }
 
-func (c *searchCriteria) ctFilteringStatusCase(res dnsfilter.Result) bool {
+func (c *searchCriterion) ctFilteringStatusCase(res dnsfilter.Result) bool {
 	switch c.value {
 	case filteringStatusAll:
 		return true

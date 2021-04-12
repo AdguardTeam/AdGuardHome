@@ -118,7 +118,7 @@ func (l *queryLog) readFileFirstTimeValue() int64 {
 	}
 	buf = buf[:r]
 
-	val := readJSONValue(string(buf), "T")
+	val := readJSONValue(string(buf), `"T":"`)
 	t, err := time.Parse(time.RFC3339Nano, val)
 	if err != nil {
 		return -1

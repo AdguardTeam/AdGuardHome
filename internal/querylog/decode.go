@@ -575,18 +575,3 @@ func decodeLogEntry(ent *logEntry, str string) {
 		}
 	}
 }
-
-// Get value from "key":"value"
-func readJSONValue(s, name string) string {
-	i := strings.Index(s, "\""+name+"\":\"")
-	if i == -1 {
-		return ""
-	}
-	start := i + 1 + len(name) + 3
-	i = strings.IndexByte(s[start:], '"')
-	if i == -1 {
-		return ""
-	}
-	end := start + i
-	return s[start:end]
-}
