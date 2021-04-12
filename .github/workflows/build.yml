@@ -39,9 +39,7 @@
       'with':
         'node-version': '${{ env.NODE_VERSION }}'
     - 'name': 'Set up Go modules cache'
-      # TODO(a.garipov): Update when they fix the macOS issue.  The issue is
-      # most probably https://github.com/actions/cache/issues/527.
-      'uses': 'actions/cache@v2.1.3'
+      'uses': 'actions/cache@v2'
       'with':
         'path': '~/go/pkg/mod'
         'key': "${{ runner.os }}-go-${{ hashFiles('go.sum') }}"
@@ -50,9 +48,7 @@
       'id': 'npm-cache'
       'run': 'echo "::set-output name=dir::$(npm config get cache)"'
     - 'name': 'Set up npm cache'
-      # TODO(a.garipov): Update when they fix the macOS issue.  The issue is
-      # most probably https://github.com/actions/cache/issues/527.
-      'uses': 'actions/cache@v2.1.3'
+      'uses': 'actions/cache@v2'
       'with':
         'path': '${{ steps.npm-cache.outputs.dir }}'
         'key': "${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}"
@@ -83,9 +79,7 @@
       'with':
         'node-version': '${{ env.NODE_VERSION }}'
     - 'name': 'Set up Go modules cache'
-      # TODO(a.garipov): Update when they fix the macOS issue.  The issue is
-      # most probably https://github.com/actions/cache/issues/527.
-      'uses': 'actions/cache@v2.1.3'
+      'uses': 'actions/cache@v2'
       'with':
         'path': '~/go/pkg/mod'
         'key': "${{ runner.os }}-go-${{ hashFiles('go.sum') }}"
@@ -94,9 +88,7 @@
       'id': 'npm-cache'
       'run': 'echo "::set-output name=dir::$(npm config get cache)"'
     - 'name': 'Set up npm cache'
-      # TODO(a.garipov): Update when they fix the macOS issue.  The issue is
-      # most probably https://github.com/actions/cache/issues/527.
-      'uses': 'actions/cache@v2.1.3'
+      'uses': 'actions/cache@v2'
       'with':
         'path': '${{ steps.npm-cache.outputs.dir }}'
         'key': "${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}"
