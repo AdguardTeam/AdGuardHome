@@ -15,7 +15,9 @@ import (
 // find those records as well.
 func (l *queryLog) client(clientID, ip string, cache clientCache) (c *Client, err error) {
 	cck := clientCacheKey{clientID: clientID, ip: ip}
-	if c = cache[cck]; c != nil {
+
+	var ok bool
+	if c, ok = cache[cck]; ok {
 		return c, nil
 	}
 
@@ -33,9 +35,9 @@ func (l *queryLog) client(clientID, ip string, cache clientCache) (c *Client, er
 		return nil, err
 	}
 
-	if cache != nil {
-		cache[cck] = c
-	}
+	// Cache all results, including negative ones, to prevent excessive and
+	// expensive client searching.
+	cache[cck] = c
 
 	return c, nil
 }
