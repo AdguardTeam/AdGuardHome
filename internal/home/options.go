@@ -32,6 +32,10 @@ type options struct {
 	disableMemoryOptimization bool
 
 	glinetMode bool // Activate GL-Inet compatibility mode
+
+	// noEtcHosts flag should be provided when /etc/hosts file shouldn't be
+	// used.
+	noEtcHosts bool
 }
 
 // functions used for their side-effects
@@ -191,7 +195,7 @@ var glinetArg = arg{
 }
 
 var versionArg = arg{
-	description:     "Show the version and exit",
+	description:     "Show the version and exit. Show more detailed version description with -v",
 	longName:        "version",
 	shortName:       "",
 	updateWithValue: nil,
@@ -212,12 +216,22 @@ var versionArg = arg{
 }
 
 var helpArg = arg{
-	"Print this help. Show more detailed version description with -v",
+	"Print this help",
 	"help", "",
 	nil, nil, func(o options, exec string) (effect, error) {
 		return func() error { _ = printHelp(exec); os.Exit(64); return nil }, nil
 	},
 	func(o options) []string { return nil },
+}
+
+var noEtcHostsArg = arg{
+	description:     "Do not use the OS-provided hosts.",
+	longName:        "no-etc-hosts",
+	shortName:       "",
+	updateWithValue: nil,
+	updateNoValue:   func(o options) (options, error) { o.noEtcHosts = true; return o, nil },
+	effect:          nil,
+	serialize:       func(o options) []string { return boolSliceOrNil(o.noEtcHosts) },
 }
 
 func init() {
@@ -232,6 +246,7 @@ func init() {
 		checkConfigArg,
 		noCheckUpdateArg,
 		disableMemoryOptimizationArg,
+		noEtcHostsArg,
 		verboseArg,
 		glinetArg,
 		versionArg,

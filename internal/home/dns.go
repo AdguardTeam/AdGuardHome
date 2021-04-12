@@ -57,7 +57,7 @@ func initDNSServer() error {
 	Context.queryLog = querylog.New(conf)
 
 	filterConf := config.DNS.DnsfilterConf
-	filterConf.AutoHosts = &Context.autoHosts
+	filterConf.EtcHosts = Context.etcHosts
 	filterConf.ConfigModified = onConfigModified
 	filterConf.HTTPRegister = httpRegister
 	Context.dnsFilter = dnsfilter.New(&filterConf, nil)

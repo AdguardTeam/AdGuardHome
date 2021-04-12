@@ -46,19 +46,19 @@ type homeContext struct {
 	// Modules
 	// --
 
-	clients    clientsContainer     // per-client-settings module
-	stats      stats.Stats          // statistics module
-	queryLog   querylog.QueryLog    // query log module
-	dnsServer  *dnsforward.Server   // DNS module
-	rdns       *RDNS                // rDNS module
-	whois      *Whois               // WHOIS module
-	dnsFilter  *dnsfilter.DNSFilter // DNS filtering module
-	dhcpServer *dhcpd.Server        // DHCP module
-	auth       *Auth                // HTTP authentication module
-	filters    Filtering            // DNS filtering module
-	web        *Web                 // Web (HTTP, HTTPS) module
-	tls        *TLSMod              // TLS module
-	autoHosts  util.AutoHosts       // IP-hostname pairs taken from system configuration (e.g. /etc/hosts) files
+	clients    clientsContainer          // per-client-settings module
+	stats      stats.Stats               // statistics module
+	queryLog   querylog.QueryLog         // query log module
+	dnsServer  *dnsforward.Server        // DNS module
+	rdns       *RDNS                     // rDNS module
+	whois      *Whois                    // WHOIS module
+	dnsFilter  *dnsfilter.DNSFilter      // DNS filtering module
+	dhcpServer *dhcpd.Server             // DHCP module
+	auth       *Auth                     // HTTP authentication module
+	filters    Filtering                 // DNS filtering module
+	web        *Web                      // Web (HTTP, HTTPS) module
+	tls        *TLSMod                   // TLS module
+	etcHosts   *aghnet.EtcHostsContainer // IP-hostname pairs taken from system configuration (e.g. /etc/hosts) files
 	updater    *updater.Updater
 
 	subnetDetector *aghnet.SubnetDetector
@@ -186,8 +186,6 @@ func setupConfig(args options) {
 		log.Fatalf("can't initialize dhcp module")
 	}
 
-	Context.autoHosts.Init("")
-
 	Context.updater = updater.NewUpdater(&updater.Config{
 		Client:   Context.client,
 		Version:  version.Version(),
@@ -200,7 +198,11 @@ func setupConfig(args options) {
 		ConfName: config.getConfigFilename(),
 	})
 
-	Context.clients.Init(config.Clients, Context.dhcpServer, &Context.autoHosts)
+	if !args.noEtcHosts {
+		Context.etcHosts = &aghnet.EtcHostsContainer{}
+		Context.etcHosts.Init("")
+		Context.clients.Init(config.Clients, Context.dhcpServer, Context.etcHosts)
+	}
 	config.Clients = nil
 
 	if (runtime.GOOS == "linux" || runtime.GOOS == "darwin") &&
@@ -317,7 +319,7 @@ func run(args options) {
 		}
 
 		Context.tls.Start()
-		Context.autoHosts.Start()
+		Context.etcHosts.Start()
 
 		go func() {
 			serr := startDNSServer()
@@ -530,7 +532,7 @@ func cleanup(ctx context.Context) {
 		Context.dhcpServer.Stop()
 	}
 
-	Context.autoHosts.Close()
+	Context.etcHosts.Close()
 
 	if Context.tls != nil {
 		Context.tls.Close()

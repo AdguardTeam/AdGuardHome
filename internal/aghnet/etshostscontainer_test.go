@@ -1,4 +1,4 @@
-package util
+package aghnet
 
 import (
 	"io/ioutil"
@@ -43,8 +43,8 @@ func assertWriting(t *testing.T, f *os.File, strs ...string) {
 	}
 }
 
-func TestAutoHostsResolution(t *testing.T) {
-	ah := &AutoHosts{}
+func TestEtcHostsContainerResolution(t *testing.T) {
+	ehc := &EtcHostsContainer{}
 
 	f := prepareTestFile(t)
 
@@ -52,25 +52,25 @@ func TestAutoHostsResolution(t *testing.T) {
 		"  127.0.0.1   host  localhost # comment \n",
 		"  ::1   localhost#comment  \n",
 	)
-	ah.Init(f.Name())
+	ehc.Init(f.Name())
 
 	t.Run("existing_host", func(t *testing.T) {
-		ips := ah.Process("localhost", dns.TypeA)
+		ips := ehc.Process("localhost", dns.TypeA)
 		require.Len(t, ips, 1)
 		assert.Equal(t, net.IPv4(127, 0, 0, 1), ips[0])
 	})
 
 	t.Run("unknown_host", func(t *testing.T) {
-		ips := ah.Process("newhost", dns.TypeA)
+		ips := ehc.Process("newhost", dns.TypeA)
 		assert.Nil(t, ips)
 
 		// Comment.
-		ips = ah.Process("comment", dns.TypeA)
+		ips = ehc.Process("comment", dns.TypeA)
 		assert.Nil(t, ips)
 	})
 
 	t.Run("hosts_file", func(t *testing.T) {
-		names, ok := ah.List()["127.0.0.1"]
+		names, ok := ehc.List()["127.0.0.1"]
 		require.True(t, ok)
 		assert.Equal(t, []string{"host", "localhost"}, names)
 	})
@@ -90,29 +90,29 @@ func TestAutoHostsResolution(t *testing.T) {
 			require.Nil(t, err)
 
 			a = strings.TrimSuffix(a, ".")
-			hosts := ah.ProcessReverse(a, dns.TypePTR)
+			hosts := ehc.ProcessReverse(a, dns.TypePTR)
 			require.Len(t, hosts, tc.wantLen)
 			assert.Equal(t, tc.wantHost, hosts[0])
 		}
 	})
 }
 
-func TestAutoHostsFSNotify(t *testing.T) {
-	ah := &AutoHosts{}
+func TestEtcHostsContainerFSNotify(t *testing.T) {
+	ehc := &EtcHostsContainer{}
 
 	f := prepareTestFile(t)
 
 	assertWriting(t, f, "  127.0.0.1   host  localhost  \n")
-	ah.Init(f.Name())
+	ehc.Init(f.Name())
 
 	t.Run("unknown_host", func(t *testing.T) {
-		ips := ah.Process("newhost", dns.TypeA)
+		ips := ehc.Process("newhost", dns.TypeA)
 		assert.Nil(t, ips)
 	})
 
 	// Start monitoring for changes.
-	ah.Start()
-	t.Cleanup(ah.Close)
+	ehc.Start()
+	t.Cleanup(ehc.Close)
 
 	assertWriting(t, f, "127.0.0.2   newhost\n")
 	require.Nil(t, f.Sync())
@@ -122,7 +122,7 @@ func TestAutoHostsFSNotify(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	t.Run("notified", func(t *testing.T) {
-		ips := ah.Process("newhost", dns.TypeA)
+		ips := ehc.Process("newhost", dns.TypeA)
 		assert.NotNil(t, ips)
 		require.Len(t, ips, 1)
 		assert.True(t, net.IP{127, 0, 0, 2}.Equal(ips[0]))

@@ -13,7 +13,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/util"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
@@ -65,8 +65,9 @@ type Config struct {
 	// Per-client settings can override this configuration.
 	BlockedServices []string `yaml:"blocked_services"`
 
-	// IP-hostname pairs taken from system configuration (e.g. /etc/hosts) files
-	AutoHosts *util.AutoHosts `yaml:"-"`
+	// EtcHosts is a container of IP-hostname pairs taken from the operating
+	// system configuration files (e.g. /etc/hosts).
+	EtcHosts *aghnet.EtcHostsContainer `yaml:"-"`
 
 	// Called when the configuration is changed by HTTP request
 	ConfigModified func() `yaml:"-"`
@@ -428,11 +429,11 @@ func (d *DNSFilter) checkAutoHosts(
 	qtype uint16,
 	_ *FilteringSettings,
 ) (res Result, err error) {
-	if d.Config.AutoHosts == nil {
+	if d.Config.EtcHosts == nil {
 		return Result{}, nil
 	}
 
-	ips := d.Config.AutoHosts.Process(host, qtype)
+	ips := d.Config.EtcHosts.Process(host, qtype)
 	if ips != nil {
 		res = Result{
 			Reason: RewrittenAutoHosts,
@@ -442,7 +443,7 @@ func (d *DNSFilter) checkAutoHosts(
 		return res, nil
 	}
 
-	revHosts := d.Config.AutoHosts.ProcessReverse(host, qtype)
+	revHosts := d.Config.EtcHosts.ProcessReverse(host, qtype)
 	if len(revHosts) != 0 {
 		res = Result{
 			Reason: RewrittenAutoHosts,

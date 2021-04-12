@@ -18,7 +18,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
-	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
@@ -92,7 +91,7 @@ type clientsContainer struct {
 	// dnsServer is used for checking clients IP status access list status
 	dnsServer *dnsforward.Server
 
-	autoHosts *util.AutoHosts // get entries from system hosts-files
+	etcHosts *aghnet.EtcHostsContainer // get entries from system hosts-files
 
 	testing bool // if TRUE, this object is used for internal tests
 }
@@ -100,7 +99,11 @@ type clientsContainer struct {
 // Init initializes clients container
 // dhcpServer: optional
 // Note: this function must be called only once
-func (clients *clientsContainer) Init(objects []clientObject, dhcpServer *dhcpd.Server, autoHosts *util.AutoHosts) {
+func (clients *clientsContainer) Init(
+	objects []clientObject,
+	dhcpServer *dhcpd.Server,
+	etcHosts *aghnet.EtcHostsContainer,
+) {
 	if clients.list != nil {
 		log.Fatal("clients.list != nil")
 	}
@@ -114,7 +117,9 @@ func (clients *clientsContainer) Init(objects []clientObject, dhcpServer *dhcpd.
 	}
 
 	clients.dhcpServer = dhcpServer
-	clients.autoHosts = autoHosts
+	if etcHosts != nil {
+		clients.etcHosts = etcHosts
+	}
 	clients.addFromConfig(objects)
 
 	if !clients.testing {
@@ -122,7 +127,9 @@ func (clients *clientsContainer) Init(objects []clientObject, dhcpServer *dhcpd.
 		if clients.dhcpServer != nil {
 			clients.dhcpServer.SetOnLeaseChanged(clients.onDHCPLeaseChanged)
 		}
-		clients.autoHosts.SetOnChanged(clients.onHostsChanged)
+		if clients.etcHosts != nil {
+			clients.etcHosts.SetOnChanged(clients.onHostsChanged)
+		}
 	}
 }
 
@@ -692,7 +699,11 @@ func (clients *clientsContainer) rmHostsBySrc(src clientSource) {
 // addFromHostsFile fills the client-hostname pairing index from the system's
 // hosts files.
 func (clients *clientsContainer) addFromHostsFile() {
-	hosts := clients.autoHosts.List()
+	if clients.etcHosts == nil {
+		return
+	}
+
+	hosts := clients.etcHosts.List()
 
 	clients.lock.Lock()
 	defer clients.lock.Unlock()

@@ -15,6 +15,8 @@ and this project adheres to
 
 ### Added
 
+- New flag `--no-etc-hosts` to disable client domain name lookups in the
+  operating system's /etc/hosts files ([#1947]).
 - The ability to set up custom upstreams to resolve PTR queries for local
   addresses and to disable the automatic resolving of clients' addresses
   ([#2704]).
@@ -54,6 +56,7 @@ and this project adheres to
 
 [#1273]: https://github.com/AdguardTeam/AdGuardHome/issues/1273
 [#1401]: https://github.com/AdguardTeam/AdGuardHome/issues/1401
+[#1947]: https://github.com/AdguardTeam/AdGuardHome/issues/1947
 [#2385]: https://github.com/AdguardTeam/AdGuardHome/issues/2385
 [#2393]: https://github.com/AdguardTeam/AdGuardHome/issues/2393
 [#2412]: https://github.com/AdguardTeam/AdGuardHome/issues/2412

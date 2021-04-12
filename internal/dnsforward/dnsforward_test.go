@@ -23,7 +23,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
-	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/miekg/dns"
@@ -1074,7 +1073,7 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 
 func TestPTRResponseFromHosts(t *testing.T) {
 	c := dnsfilter.Config{
-		AutoHosts: &util.AutoHosts{},
+		EtcHosts: &aghnet.EtcHostsContainer{},
 	}
 
 	// Prepare test hosts file.
@@ -1090,8 +1089,8 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	_, _ = hf.WriteString("  ::1   localhost#comment  \n")
 
 	// Init auto hosts.
-	c.AutoHosts.Init(hf.Name())
-	t.Cleanup(c.AutoHosts.Close)
+	c.EtcHosts.Init(hf.Name())
+	t.Cleanup(c.EtcHosts.Close)
 
 	var snd *aghnet.SubnetDetector
 	snd, err = aghnet.NewSubnetDetector()
