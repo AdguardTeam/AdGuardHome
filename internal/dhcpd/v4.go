@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 	"time"
 
@@ -557,10 +558,39 @@ func (o *optFQDN) ToBytes() []byte {
 	return b
 }
 
+// normalizeHostname normalizes and validates a hostname sent by the client.
+//
+// TODO(a.garipov): Add client hostname uniqueness validations and rename the
+// method to validateHostname.
+func (s *v4Server) normalizeHostname(name string) (norm string, err error) {
+	if name == "" {
+		return "", nil
+	}
+
+	// Some devices send hostnames with spaces, but we still want to accept
+	// them, so replace them with dashes and issue a warning.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/2946.
+	norm = strings.ReplaceAll(name, " ", "-")
+	state := "non-normalized"
+	if name != norm {
+		log.Debug("dhcpv4: normalized hostname %q into %q", name, norm)
+		state = "normalized"
+	}
+
+	err = aghnet.ValidateDomainName(norm)
+	if err != nil {
+		return "", fmt.Errorf("validating %s hostname: %w", state, err)
+	}
+
+	return norm, nil
+}
+
 // Process Request request and return lease
 // Return false if we don't need to reply
-func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (*Lease, bool) {
-	var lease *Lease
+func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, ok bool) {
+	var err error
+
 	mac := req.ClientHWAddr
 	reqIP := req.RequestedIPAddress()
 	if reqIP == nil {
@@ -604,7 +634,13 @@ func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (*Lease, bool) {
 	}
 
 	if !lease.IsStatic() {
-		lease.Hostname = req.HostName()
+		lease.Hostname, err = s.normalizeHostname(req.HostName())
+		if err != nil {
+			log.Error("dhcpv4: cannot normalize hostname for %s: %s", mac, err)
+
+			return nil, false
+		}
+
 		s.commitLease(lease)
 	} else if len(lease.Hostname) != 0 {
 		o := &optFQDN{

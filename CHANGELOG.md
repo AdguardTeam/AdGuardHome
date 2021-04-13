@@ -30,6 +30,7 @@ and this project adheres to
 
 ### Changed
 
+- Normalization of hostnames with spaces sent by DHCP clients ([#2945]).
 - The access to the private hosts is now forbidden for users from external
   networks ([#2889]).
 - The reverse lookup for local addresses is now performed via local resolvers
@@ -72,6 +73,7 @@ and this project adheres to
 [#2838]: https://github.com/AdguardTeam/AdGuardHome/issues/2838
 [#2889]: https://github.com/AdguardTeam/AdGuardHome/issues/2889
 [#2927]: https://github.com/AdguardTeam/AdGuardHome/issues/2927
+[#2945]: https://github.com/AdguardTeam/AdGuardHome/issues/2945
 [#2947]: https://github.com/AdguardTeam/AdGuardHome/issues/2947
 
 

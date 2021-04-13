@@ -46,9 +46,10 @@ func TestNullBool_UnmarshalText(t *testing.T) {
 			var got nullBool
 			err := got.UnmarshalJSON(tc.data)
 			if tc.wantErrMsg == "" {
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 			} else {
-				require.NotNil(t, err)
+				require.Error(t, err)
+
 				assert.Equal(t, tc.wantErrMsg, err.Error())
 			}
 
@@ -63,7 +64,8 @@ func TestNullBool_UnmarshalText(t *testing.T) {
 		}
 
 		err := json.Unmarshal([]byte(`{"A":true}`), &got)
-		require.Nil(t, err)
+		require.NoError(t, err)
+
 		assert.Equal(t, want, got.A)
 	})
 }

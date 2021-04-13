@@ -269,3 +269,56 @@ func TestV4DynamicLease_Get(t *testing.T) {
 		assert.Equal(t, mac, ls[0].HWAddr)
 	})
 }
+
+func TestV4Server_normalizeHostname(t *testing.T) {
+	testCases := []struct {
+		name       string
+		hostname   string
+		wantErrMsg string
+		want       string
+	}{{
+		name:       "success",
+		hostname:   "example.com",
+		wantErrMsg: "",
+		want:       "example.com",
+	}, {
+		name:       "success_empty",
+		hostname:   "",
+		wantErrMsg: "",
+		want:       "",
+	}, {
+		name:       "success_spaces",
+		hostname:   "my device 01",
+		wantErrMsg: "",
+		want:       "my-device-01",
+	}, {
+		name:     "error",
+		hostname: "!!!",
+		wantErrMsg: `validating non-normalized hostname: ` +
+			`invalid domain name label at index 0: ` +
+			`invalid char '!' at index 0 in "!!!"`,
+		want: "",
+	}, {
+		name:     "error_spaces",
+		hostname: "! ! !",
+		wantErrMsg: `validating normalized hostname: ` +
+			`invalid domain name label at index 0: ` +
+			`invalid char '!' at index 0 in "!-!-!"`,
+		want: "",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := (&v4Server{}).normalizeHostname(tc.hostname)
+			if tc.wantErrMsg == "" {
+				assert.NoError(t, err)
+			} else {
+				require.Error(t, err)
+
+				assert.Equal(t, tc.wantErrMsg, err.Error())
+			}
+
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
