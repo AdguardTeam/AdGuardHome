@@ -30,6 +30,7 @@ import Interfaces from './Interfaces';
 import {
     calculateDhcpPlaceholdersIpv4,
     calculateDhcpPlaceholdersIpv6,
+    subnetMaskToBitMask,
 } from '../../../helpers/helpers';
 import './index.css';
 
@@ -59,6 +60,10 @@ const Dhcp = () => {
     const interface_name = useSelector(
         (state) => state.form[FORM_NAME.DHCP_INTERFACES]?.values?.interface_name,
     );
+    const isInterfaceIncludesIpv4 = useSelector(
+        (state) => !!state.dhcp?.interfaces?.[interface_name]?.ipv4_addresses,
+    );
+    const dhcp = useSelector((state) => state.form[FORM_NAME.DHCPv4], shallowEqual);
 
     const [ipv4placeholders, setIpv4Placeholders] = useState(DHCP_DESCRIPTION_PLACEHOLDERS.ipv4);
     const [ipv6placeholders, setIpv6Placeholders] = useState(DHCP_DESCRIPTION_PLACEHOLDERS.ipv6);
@@ -173,6 +178,12 @@ const Dhcp = () => {
 
     const toggleDhcpButton = getToggleDhcpButton();
 
+    const inputtedIPv4values = dhcp?.values?.v4?.gateway_ip && dhcp?.values?.v4?.subnet_mask;
+    const isEmptyConfig = !Object.values(dhcp?.values?.v4 ?? {}).some(Boolean);
+    const disabledLeasesButton = dhcp?.syncErrors || interfaces?.syncErrors
+        || !isInterfaceIncludesIpv4 || isEmptyConfig || processingConfig || !inputtedIPv4values;
+    const cidr = inputtedIPv4values ? `${dhcp?.values?.v4?.gateway_ip}/${subnetMaskToBitMask(dhcp?.values?.v4?.subnet_mask)}` : '';
+
     return <>
         <PageTitle title={t('dhcp_settings')} subtitle={t('dhcp_description')} containerClass="page-title--dhcp">
             {toggleDhcpButton}
@@ -256,6 +267,7 @@ const Dhcp = () => {
                             isModalOpen={isModalOpen}
                             processingAdding={processingAdding}
                             processingDeleting={processingDeleting}
+                            cidr={cidr}
                         />
                     </div>
                     <div className="col-12">
@@ -263,6 +275,7 @@ const Dhcp = () => {
                             type="button"
                             className="btn btn-success btn-standard mt-3"
                             onClick={toggleModal}
+                            disabled={disabledLeasesButton}
                         >
                             <Trans>dhcp_add_static_lease</Trans>
                         </button>

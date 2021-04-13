@@ -10,6 +10,7 @@ const Modal = ({
     isModalOpen,
     handleSubmit,
     processingAdding,
+    cidr,
 }) => {
     const dispatch = useDispatch();
 
@@ -32,8 +33,15 @@ const Modal = ({
                     </button>
                 </div>
                 <Form
+                    initialValues={{
+                        mac: '',
+                        ip: '',
+                        hostname: '',
+                        cidr,
+                    }}
                     onSubmit={handleSubmit}
                     processingAdding={processingAdding}
+                    cidr={cidr}
                 />
             </div>
         </ReactModal>
@@ -44,6 +52,7 @@ Modal.propTypes = {
     isModalOpen: PropTypes.bool.isRequired,
     handleSubmit: PropTypes.func.isRequired,
     processingAdding: PropTypes.bool.isRequired,
+    cidr: PropTypes.string.isRequired,
 };
 
 export default withTranslation()(Modal);

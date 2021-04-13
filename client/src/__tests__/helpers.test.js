@@ -1,4 +1,9 @@
-import { sortIp, countClientsStatistics, findAddressType } from '../helpers/helpers';
+import {
+    sortIp,
+    countClientsStatistics,
+    findAddressType,
+    subnetMaskToBitMask,
+} from '../helpers/helpers';
 import { ADDRESS_TYPES } from '../helpers/constants';
 
 describe('sortIp', () => {
@@ -404,5 +409,52 @@ describe('countClientsStatistics', () => {
             '2.2.2.2': 2,
             '3.3.3.3': 3,
         })).toStrictEqual(0);
+    });
+});
+
+describe('subnetMaskToBitMask', () => {
+    const subnetMasks = [
+        '0.0.0.0',
+        '128.0.0.0',
+        '192.0.0.0',
+        '224.0.0.0',
+        '240.0.0.0',
+        '248.0.0.0',
+        '252.0.0.0',
+        '254.0.0.0',
+        '255.0.0.0',
+        '255.128.0.0',
+        '255.192.0.0',
+        '255.224.0.0',
+        '255.240.0.0',
+        '255.248.0.0',
+        '255.252.0.0',
+        '255.254.0.0',
+        '255.255.0.0',
+        '255.255.128.0',
+        '255.255.192.0',
+        '255.255.224.0',
+        '255.255.240.0',
+        '255.255.248.0',
+        '255.255.252.0',
+        '255.255.254.0',
+        '255.255.255.0',
+        '255.255.255.128',
+        '255.255.255.192',
+        '255.255.255.224',
+        '255.255.255.240',
+        '255.255.255.248',
+        '255.255.255.252',
+        '255.255.255.254',
+        '255.255.255.255',
+    ];
+
+    test('correct for all subnetMasks', () => {
+        expect(
+            subnetMasks.map((subnetMask) => {
+                const bitmask = subnetMaskToBitMask(subnetMask);
+                return subnetMasks[bitmask] === subnetMask;
+            }).every((res) => res === true),
+        ).toEqual(true);
     });
 });

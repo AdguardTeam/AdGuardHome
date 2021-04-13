@@ -21,12 +21,14 @@ const StaticLeases = ({
     processingAdding,
     processingDeleting,
     staticLeases,
+    cidr,
 }) => {
     const [t] = useTranslation();
     const dispatch = useDispatch();
 
     const handleSubmit = (data) => {
-        dispatch(addStaticLease(data));
+        const { mac, ip, hostname } = data;
+        dispatch(addStaticLease({ mac, ip, hostname }));
     };
 
     const handleDelete = (ip, mac, hostname = '') => {
@@ -97,6 +99,7 @@ const StaticLeases = ({
                 isModalOpen={isModalOpen}
                 handleSubmit={handleSubmit}
                 processingAdding={processingAdding}
+                cidr={cidr}
             />
         </>
     );
@@ -107,6 +110,7 @@ StaticLeases.propTypes = {
     isModalOpen: PropTypes.bool.isRequired,
     processingAdding: PropTypes.bool.isRequired,
     processingDeleting: PropTypes.bool.isRequired,
+    cidr: PropTypes.string.isRequired,
 };
 
 cellWrap.propTypes = {

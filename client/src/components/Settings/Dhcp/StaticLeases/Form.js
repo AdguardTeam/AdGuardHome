@@ -3,8 +3,14 @@ import PropTypes from 'prop-types';
 import { Field, reduxForm } from 'redux-form';
 import { Trans, useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
-import { renderInputField } from '../../../../helpers/form';
-import { validateIpv4, validateMac, validateRequiredValue } from '../../../../helpers/validators';
+
+import { renderInputField, normalizeMac } from '../../../../helpers/form';
+import {
+    validateIpv4,
+    validateMac,
+    validateRequiredValue,
+    validateIpv4InCidr,
+} from '../../../../helpers/validators';
 import { FORM_NAME } from '../../../../helpers/constants';
 import { toggleLeaseModal } from '../../../../actions';
 
@@ -14,6 +20,7 @@ const Form = ({
     pristine,
     submitting,
     processingAdding,
+    cidr,
 }) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
@@ -34,6 +41,7 @@ const Form = ({
                         type="text"
                         className="form-control"
                         placeholder={t('form_enter_mac')}
+                        normalize={normalizeMac}
                         validate={[validateRequiredValue, validateMac]}
                     />
                 </div>
@@ -44,8 +52,8 @@ const Form = ({
                         component={renderInputField}
                         type="text"
                         className="form-control"
-                        placeholder={t('form_enter_ip')}
-                        validate={[validateRequiredValue, validateIpv4]}
+                        placeholder={t('form_enter_subnet_ip', { cidr })}
+                        validate={[validateRequiredValue, validateIpv4, validateIpv4InCidr]}
                     />
                 </div>
                 <div className="form__group">
@@ -84,11 +92,18 @@ const Form = ({
 };
 
 Form.propTypes = {
+    initialValues: PropTypes.shape({
+        mac: PropTypes.string.isRequired,
+        ip: PropTypes.string.isRequired,
+        hostname: PropTypes.string.isRequired,
+        cidr: PropTypes.string.isRequired,
+    }),
     pristine: PropTypes.bool.isRequired,
     handleSubmit: PropTypes.func.isRequired,
     reset: PropTypes.func.isRequired,
     submitting: PropTypes.bool.isRequired,
     processingAdding: PropTypes.bool.isRequired,
+    cidr: PropTypes.string.isRequired,
 };
 
 export default reduxForm({ form: FORM_NAME.LEASE })(Form);

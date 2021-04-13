@@ -2,7 +2,7 @@ import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { Trans } from 'react-i18next';
 import { createOnBlurHandler } from './helpers';
-import { R_UNIX_ABSOLUTE_PATH, R_WIN_ABSOLUTE_PATH } from './constants';
+import { R_MAC_WITHOUT_COLON, R_UNIX_ABSOLUTE_PATH, R_WIN_ABSOLUTE_PATH } from './constants';
 
 export const renderField = (props, elementType) => {
     const {
@@ -260,7 +260,15 @@ renderServiceField.propTypes = {
     }).isRequired,
 };
 
-export const getLastIpv4Octet = (ipv4) => parseInt(ipv4.slice(ipv4.lastIndexOf('.') + 1), 10);
+/**
+ *
+ * @param {string} ip
+ * @returns {*}
+ */
+export const ip4ToInt = (ip) => {
+    const intIp = ip.split('.').reduce((int, oct) => (int * 256) + parseInt(oct, 10), 0);
+    return Number.isNaN(intIp) ? 0 : intIp;
+};
 
 /**
  * @param value {string}
@@ -274,3 +282,15 @@ export const toNumber = (value) => value && parseInt(value, 10);
  */
 export const isValidAbsolutePath = (value) => R_WIN_ABSOLUTE_PATH.test(value)
     || R_UNIX_ABSOLUTE_PATH.test(value);
+
+/**
+ * @param value {string}
+ * @returns {*|string}
+ */
+export const normalizeMac = (value) => {
+    if (value && R_MAC_WITHOUT_COLON.test(value)) {
+        return value.match(/.{2}/g).join(':');
+    }
+
+    return value;
+};

@@ -553,6 +553,15 @@ export const isIpInCidr = (ip, cidr) => {
 
 /**
  *
+ * @param {string} subnetMask
+ * @returns {*}
+ */
+export const subnetMaskToBitMask = (subnetMask) => subnetMask
+    .split('.')
+    .reduce((acc, cur) => acc - Math.log2(256 - Number(cur)), 32);
+
+/**
+ *
  * @param ipOrCidr
  * @returns {'IP' | 'CIDR' | 'CLIENT_ID' | 'UNKNOWN'}
  *
