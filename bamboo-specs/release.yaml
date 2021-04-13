@@ -235,7 +235,7 @@
   'recipients':
   - 'webhook':
       'name': 'Build webhook'
-      'url': 'http://prod.jirahub.service.eu.consul/v1/webhook/bamboo'
+      'url': 'http://prod.jirahub.service.eu.consul/v1/webhook/bamboo?channel=adguard-qa'
 
 'labels': []
 'other':
