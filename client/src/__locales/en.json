@@ -376,7 +376,7 @@
     "form_error_password": "Password mismatched",
     "reset_settings": "Reset settings",
     "update_announcement": "AdGuard Home {{version}} is now available! <0>Click here</0> for more info.",
-    "setup_guide": "Setup guide",
+    "setup_guide": "Setup Guide",
     "dns_addresses": "DNS addresses",
     "dns_start": "DNS server is starting up",
     "dns_status_error": "Error checking the DNS server status",
