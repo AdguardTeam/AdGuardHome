@@ -289,7 +289,7 @@ func (s *Server) prepareUpstreamSettings() error {
 		upstreams = s.conf.UpstreamDNS
 	}
 
-	upstreams = filterOutComments(upstreams)
+	upstreams = aghstrings.FilterOut(upstreams, aghstrings.IsCommentOrEmpty)
 	upstreamConfig, err := proxy.ParseUpstreamsConfig(
 		upstreams,
 		upstream.Options{

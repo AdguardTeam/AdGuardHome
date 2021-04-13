@@ -295,8 +295,8 @@ func (s *Server) startLocked() error {
 // faster than ordinary upstreams.
 const defaultLocalTimeout = 1 * time.Second
 
-// collectDNSIPAddrs returns the slice of IP addresses without port number which
-// we are listening on.  For internal use only.
+// collectDNSIPAddrs returns IP addresses the server is listening on without
+// port numbers as a map.  For internal use only.
 func (s *Server) collectDNSIPAddrs() (addrs []string, err error) {
 	addrs = make([]string, len(s.conf.TCPListenAddrs)+len(s.conf.UDPListenAddrs))
 	var i int
@@ -329,28 +329,17 @@ func (s *Server) collectDNSIPAddrs() (addrs []string, err error) {
 	return addrs[:i], nil
 }
 
-// stringSetSubtract subtracts b from a interpreted as sets.
-func stringSetSubtract(a, b []string) (c []string) {
-	// unit is an object to be used as value in set.
-	type unit = struct{}
+// unit is used to show the presence of a value in a set.
+type unit = struct{}
 
-	cSet := make(map[string]unit)
-	for _, k := range a {
-		cSet[k] = unit{}
+// sliceToSet converts a slice of strings into a string set.
+func sliceToSet(strs []string) (set map[string]unit) {
+	set = make(map[string]unit, len(strs))
+	for _, s := range strs {
+		set[s] = unit{}
 	}
 
-	for _, k := range b {
-		delete(cSet, k)
-	}
-
-	c = make([]string, len(cSet))
-	i := 0
-	for k := range cSet {
-		c[i] = k
-		i++
-	}
-
-	return c
+	return set
 }
 
 // setupResolvers initializes the resolvers for local addresses.  For internal
@@ -377,11 +366,17 @@ func (s *Server) setupResolvers(localAddrs []string) (err error) {
 		return err
 	}
 
+	ourAddrsSet := sliceToSet(ourAddrs)
+
 	// TODO(e.burkov): The approach of subtracting sets of strings is not
 	// really applicable here since in case of listening on all network
 	// interfaces we should check the whole interface's network to cut off
 	// all the loopback addresses as well.
-	localAddrs = stringSetSubtract(localAddrs, ourAddrs)
+	localAddrs = aghstrings.FilterOut(localAddrs, func(s string) (ok bool) {
+		_, ok = ourAddrsSet[s]
+
+		return ok
+	})
 
 	var upsConfig proxy.UpstreamConfig
 	upsConfig, err = proxy.ParseUpstreamsConfig(localAddrs, upstream.Options{

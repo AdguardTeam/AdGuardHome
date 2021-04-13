@@ -19,6 +19,18 @@ func CloneSlice(a []string) (b []string) {
 	return CloneSliceOrEmpty(a)
 }
 
+// FilterOut returns a copy of strs with all strings for which f returned true
+// removed.
+func FilterOut(strs []string, f func(s string) (ok bool)) (filtered []string) {
+	for _, s := range strs {
+		if !f(s) {
+			filtered = append(filtered, s)
+		}
+	}
+
+	return filtered
+}
+
 // InSlice checks if string is in the slice of strings.
 func InSlice(strs []string, str string) (ok bool) {
 	for _, s := range strs {
@@ -28,6 +40,12 @@ func InSlice(strs []string, str string) (ok bool) {
 	}
 
 	return false
+}
+
+// IsCommentOrEmpty returns true of the string starts with a "#" character or is
+// an empty string.
+func IsCommentOrEmpty(s string) (ok bool) {
+	return len(s) == 0 || s[0] == '#'
 }
 
 // SplitNext splits string by a byte and returns the first chunk skipping empty

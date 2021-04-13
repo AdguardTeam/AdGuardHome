@@ -349,13 +349,14 @@ func (clients *clientsContainer) FindUpstreams(ip string) *proxy.UpstreamConfig 
 		return nil
 	}
 
-	if len(c.Upstreams) == 0 {
+	upstreams := aghstrings.FilterOut(c.Upstreams, aghstrings.IsCommentOrEmpty)
+	if len(upstreams) == 0 {
 		return nil
 	}
 
 	if c.upstreamConfig == nil {
 		conf, err := proxy.ParseUpstreamsConfig(
-			c.Upstreams,
+			upstreams,
 			upstream.Options{
 				Bootstrap: config.DNS.BootstrapDNS,
 				Timeout:   dnsforward.DefaultTimeout,

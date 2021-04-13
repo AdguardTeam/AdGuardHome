@@ -36,6 +36,21 @@ func TestCloneSlice_family(t *testing.T) {
 	})
 }
 
+func TestFilterOut(t *testing.T) {
+	strs := []string{
+		"1.2.3.4",
+		"",
+		"# 5.6.7.8",
+	}
+
+	want := []string{
+		"1.2.3.4",
+	}
+
+	got := FilterOut(strs, IsCommentOrEmpty)
+	assert.Equal(t, want, got)
+}
+
 func TestInSlice(t *testing.T) {
 	simpleStrs := []string{"1", "2", "3"}
 

@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
@@ -149,7 +150,7 @@ func TestDNSForwardHTTTP_handleSetConfig(t *testing.T) {
 		wantSet: "",
 	}, {
 		name:    "blocking_mode_bad",
-		wantSet: "blocking_mode: incorrect value\n",
+		wantSet: "blocking_mode: incorrect value",
 	}, {
 		name:    "ratelimit",
 		wantSet: "",
@@ -169,17 +170,20 @@ func TestDNSForwardHTTTP_handleSetConfig(t *testing.T) {
 		name:    "upstream_mode_fastest_addr",
 		wantSet: "",
 	}, {
-		name:    "upstream_dns_bad",
-		wantSet: "wrong upstreams specification: missing port in address\n",
+		name: "upstream_dns_bad",
+		wantSet: `wrong upstreams specification: address !!!: ` +
+			`missing port in address`,
 	}, {
-		name:    "bootstraps_bad",
-		wantSet: "a can not be used as bootstrap dns cause: invalid bootstrap server address: Resolver a is not eligible to be a bootstrap DNS server\n",
+		name: "bootstraps_bad",
+		wantSet: `a can not be used as bootstrap dns cause: ` +
+			`invalid bootstrap server address: ` +
+			`Resolver a is not eligible to be a bootstrap DNS server`,
 	}, {
 		name:    "cache_bad_ttl",
-		wantSet: "cache_ttl_min must be less or equal than cache_ttl_max\n",
+		wantSet: `cache_ttl_min must be less or equal than cache_ttl_max`,
 	}, {
 		name:    "upstream_mode_bad",
-		wantSet: "upstream_mode: incorrect value\n",
+		wantSet: `upstream_mode: incorrect value`,
 	}, {
 		name:    "local_ptr_upstreams_good",
 		wantSet: "",
@@ -209,7 +213,7 @@ func TestDNSForwardHTTTP_handleSetConfig(t *testing.T) {
 			require.Nil(t, err)
 
 			s.handleSetConfig(w, r)
-			assert.Equal(t, tc.wantSet, w.Body.String())
+			assert.Equal(t, tc.wantSet, strings.TrimSuffix(w.Body.String(), "\n"))
 			w.Body.Reset()
 
 			s.handleGetConfig(w, nil)

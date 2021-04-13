@@ -328,7 +328,7 @@ type upstreamJSON struct {
 // TODO(e.burkov): Move into aghnet or even into dnsproxy.
 func ValidateUpstreams(upstreams []string) (err error) {
 	// No need to validate comments
-	upstreams = filterOutComments(upstreams)
+	upstreams = aghstrings.FilterOut(upstreams, aghstrings.IsCommentOrEmpty)
 
 	// Consider this case valid because defaultDNS will be used
 	if len(upstreams) == 0 {
@@ -510,7 +510,7 @@ func checkPrivateUpstreamExc(u upstream.Upstream) (err error) {
 }
 
 func checkDNS(input string, bootstrap []string, ef excFunc) (err error) {
-	if !isUpstream(input) {
+	if aghstrings.IsCommentOrEmpty(input) {
 		return nil
 	}
 

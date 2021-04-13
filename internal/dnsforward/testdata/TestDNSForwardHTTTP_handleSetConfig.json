@@ -324,7 +324,7 @@
   "upstream_dns_bad": {
     "req": {
       "upstream_dns": [
-        ""
+        "!!!"
       ]
     },
     "want": {
