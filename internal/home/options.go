@@ -94,7 +94,7 @@ func boolSliceOrNil(b bool) []string {
 var args []arg
 
 var configArg = arg{
-	"Path to the config file",
+	"Path to the config file.",
 	"config", "c",
 	func(o options, v string) (options, error) { o.configFilename = v; return o, nil },
 	nil,
@@ -103,21 +103,21 @@ var configArg = arg{
 }
 
 var workDirArg = arg{
-	"Path to the working directory",
+	"Path to the working directory.",
 	"work-dir", "w",
 	func(o options, v string) (options, error) { o.workDir = v; return o, nil }, nil, nil,
 	func(o options) []string { return stringSliceOrNil(o.workDir) },
 }
 
 var hostArg = arg{
-	"Host address to bind HTTP server on",
+	"Host address to bind HTTP server on.",
 	"host", "h",
 	func(o options, v string) (options, error) { o.bindHost = net.ParseIP(v); return o, nil }, nil, nil,
 	func(o options) []string { return ipSliceOrNil(o.bindHost) },
 }
 
 var portArg = arg{
-	"Port to serve HTTP pages on",
+	"Port to serve HTTP pages on.",
 	"port", "p",
 	func(o options, v string) (options, error) {
 		var err error
@@ -136,7 +136,7 @@ var portArg = arg{
 }
 
 var serviceArg = arg{
-	"Service control action: status, install, uninstall, start, stop, restart, reload (configuration)",
+	"Service control action: status, install, uninstall, start, stop, restart, reload (configuration).",
 	"service", "s",
 	func(o options, v string) (options, error) {
 		o.serviceControlAction = v
@@ -146,56 +146,56 @@ var serviceArg = arg{
 }
 
 var logfileArg = arg{
-	"Path to log file. If empty: write to stdout; if 'syslog': write to system log",
+	"Path to log file.  If empty: write to stdout; if 'syslog': write to system log.",
 	"logfile", "l",
 	func(o options, v string) (options, error) { o.logFile = v; return o, nil }, nil, nil,
 	func(o options) []string { return stringSliceOrNil(o.logFile) },
 }
 
 var pidfileArg = arg{
-	"Path to a file where PID is stored",
+	"Path to a file where PID is stored.",
 	"pidfile", "",
 	func(o options, v string) (options, error) { o.pidFile = v; return o, nil }, nil, nil,
 	func(o options) []string { return stringSliceOrNil(o.pidFile) },
 }
 
 var checkConfigArg = arg{
-	"Check configuration and exit",
+	"Check configuration and exit.",
 	"check-config", "",
 	nil, func(o options) (options, error) { o.checkConfig = true; return o, nil }, nil,
 	func(o options) []string { return boolSliceOrNil(o.checkConfig) },
 }
 
 var noCheckUpdateArg = arg{
-	"Don't check for updates",
+	"Don't check for updates.",
 	"no-check-update", "",
 	nil, func(o options) (options, error) { o.disableUpdate = true; return o, nil }, nil,
 	func(o options) []string { return boolSliceOrNil(o.disableUpdate) },
 }
 
 var disableMemoryOptimizationArg = arg{
-	"Disable memory optimization",
+	"Disable memory optimization.",
 	"no-mem-optimization", "",
 	nil, func(o options) (options, error) { o.disableMemoryOptimization = true; return o, nil }, nil,
 	func(o options) []string { return boolSliceOrNil(o.disableMemoryOptimization) },
 }
 
 var verboseArg = arg{
-	"Enable verbose output",
+	"Enable verbose output.",
 	"verbose", "v",
 	nil, func(o options) (options, error) { o.verbose = true; return o, nil }, nil,
 	func(o options) []string { return boolSliceOrNil(o.verbose) },
 }
 
 var glinetArg = arg{
-	"Run in GL-Inet compatibility mode",
+	"Run in GL-Inet compatibility mode.",
 	"glinet", "",
 	nil, func(o options) (options, error) { o.glinetMode = true; return o, nil }, nil,
 	func(o options) []string { return boolSliceOrNil(o.glinetMode) },
 }
 
 var versionArg = arg{
-	description:     "Show the version and exit. Show more detailed version description with -v",
+	description:     "Show the version and exit.  Show more detailed version description with -v.",
 	longName:        "version",
 	shortName:       "",
 	updateWithValue: nil,
@@ -216,7 +216,7 @@ var versionArg = arg{
 }
 
 var helpArg = arg{
-	"Print this help",
+	"Print this help.",
 	"help", "",
 	nil, nil, func(o options, exec string) (effect, error) {
 		return func() error { _ = printHelp(exec); os.Exit(64); return nil }, nil
