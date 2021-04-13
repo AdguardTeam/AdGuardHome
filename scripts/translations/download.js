@@ -29,7 +29,7 @@ function writeInFile(filename, body) {
     return new Promise((resolve, reject) => {
         if (typeof normalizedBody !== 'string') {
             try {
-                normalizedBody = JSON.stringify(normalizedBody, null, 4); // eslint-disable-line
+                normalizedBody = JSON.stringify(normalizedBody, null, 4) + '\n'; // eslint-disable-line
             } catch (err) {
                 reject(err);
             }
