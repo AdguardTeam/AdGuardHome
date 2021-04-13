@@ -95,10 +95,12 @@ func (r *RDNS) workerLoop() {
 			continue
 		}
 
-		if host != "" {
-			// Don't handle any errors since AddHost doesn't return non-nil
-			// errors for now.
-			_, _ = r.clients.AddHost(ip.String(), host, ClientSourceRDNS)
+		if host == "" {
+			continue
 		}
+
+		// Don't handle any errors since AddHost doesn't return non-nil
+		// errors for now.
+		_, _ = r.clients.AddHost(ip.String(), host, ClientSourceRDNS)
 	}
 }

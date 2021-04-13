@@ -100,6 +100,7 @@ func NewSubnetDetector() (snd *SubnetDetector, err error) {
 		"::1/128",
 		"fe80::/10",
 		"2001:db8::/32",
+		"fd00::/8",
 	}
 
 	snd = &SubnetDetector{

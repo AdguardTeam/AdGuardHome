@@ -135,7 +135,8 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 
 	locUpstream := &aghtest.TestUpstream{
 		Reverse: map[string][]string{
-			"192.168.1.1": {"local.domain"},
+			"192.168.1.1":            {"local.domain"},
+			"2a00:1450:400c:c06::93": {"ipv6.domain"},
 		},
 	}
 	errUpstream := &aghtest.TestErrUpstream{
@@ -157,6 +158,11 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 		wantLog: `rdns: resolving "192.168.1.2": errupstream: 1234`,
 		name:    "resolve_error",
 		cliIP:   net.IP{192, 168, 1, 2},
+	}, {
+		ups:     locUpstream,
+		wantLog: "",
+		name:    "ipv6_good",
+		cliIP:   net.ParseIP("2a00:1450:400c:c06::93"),
 	}}
 
 	for _, tc := range testCases {

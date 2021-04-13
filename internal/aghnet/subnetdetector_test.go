@@ -205,6 +205,14 @@ func TestSubnetDetector_DetectLocallyServedNetwork(t *testing.T) {
 		name: "linked-scoped_unicast",
 		ip:   net.ParseIP("fe80::"),
 		want: true,
+	}, {
+		name: "locally_assigned",
+		ip:   net.ParseIP("fd00::1"),
+		want: true,
+	}, {
+		name: "not_locally_assigned",
+		ip:   net.ParseIP("fc00::1"),
+		want: false,
 	}}
 
 	for _, tc := range testCases {

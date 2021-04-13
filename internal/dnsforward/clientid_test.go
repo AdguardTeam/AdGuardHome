@@ -16,7 +16,7 @@ import (
 // testTLSConn is a tlsConn for tests.
 type testTLSConn struct {
 	// Conn is embedded here simply to make testTLSConn a net.Conn without
-	// acctually implementing all methods.
+	// actually implementing all methods.
 	net.Conn
 
 	serverName string

@@ -18,7 +18,7 @@ import (
 // testQueryLog is a simple querylog.QueryLog implementation for tests.
 type testQueryLog struct {
 	// QueryLog is embedded here simply to make testQueryLog
-	// a querylog.QueryLog without acctually implementing all methods.
+	// a querylog.QueryLog without actually implementing all methods.
 	querylog.QueryLog
 
 	lastParams querylog.AddParams
@@ -32,7 +32,7 @@ func (l *testQueryLog) Add(p querylog.AddParams) {
 // testStats is a simple stats.Stats implementation for tests.
 type testStats struct {
 	// Stats is embedded here simply to make testStats a stats.Stats without
-	// acctually implementing all methods.
+	// actually implementing all methods.
 	stats.Stats
 
 	lastEntry stats.Entry
