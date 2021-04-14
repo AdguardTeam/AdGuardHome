@@ -22,6 +22,8 @@
       '${system.GO_CACHE_DIR}': '${bamboo.cacheGo}'
       '${system.GO_PKG_CACHE_DIR}': '${bamboo.cacheGoPkg}'
   'key': 'TEST'
+  'other':
+    'clean-working-dir': true
   'tasks':
   - 'checkout':
       'force-clean-build': true
