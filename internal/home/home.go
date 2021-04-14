@@ -201,8 +201,8 @@ func setupConfig(args options) {
 	if !args.noEtcHosts {
 		Context.etcHosts = &aghnet.EtcHostsContainer{}
 		Context.etcHosts.Init("")
-		Context.clients.Init(config.Clients, Context.dhcpServer, Context.etcHosts)
 	}
+	Context.clients.Init(config.Clients, Context.dhcpServer, Context.etcHosts)
 	config.Clients = nil
 
 	if (runtime.GOOS == "linux" || runtime.GOOS == "darwin") &&

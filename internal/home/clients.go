@@ -117,9 +117,7 @@ func (clients *clientsContainer) Init(
 	}
 
 	clients.dhcpServer = dhcpServer
-	if etcHosts != nil {
-		clients.etcHosts = etcHosts
-	}
+	clients.etcHosts = etcHosts
 	clients.addFromConfig(objects)
 
 	if !clients.testing {
