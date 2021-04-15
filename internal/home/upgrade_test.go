@@ -13,7 +13,7 @@ func TestUpgradeSchema1to2(t *testing.T) {
 	diskConf := testDiskConf(1)
 
 	err := upgradeSchema1to2(diskConf)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.Equal(t, diskConf["schema_version"], 2)
 
@@ -36,7 +36,7 @@ func TestUpgradeSchema2to3(t *testing.T) {
 	diskConf := testDiskConf(2)
 
 	err := upgradeSchema2to3(diskConf)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.Equal(t, diskConf["schema_version"], 3)
 
@@ -74,7 +74,7 @@ func TestUpgradeSchema7to8(t *testing.T) {
 	}
 
 	err := upgradeSchema7to8(oldConf)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.Equal(t, oldConf["schema_version"], 8)
 
@@ -88,6 +88,32 @@ func TestUpgradeSchema7to8(t *testing.T) {
 	require.True(t, ok)
 	require.Len(t, newBindHosts, 1)
 	assert.Equal(t, host, newBindHosts[0])
+}
+
+func TestUpgradeSchema8to9(t *testing.T) {
+	const tld = "foo"
+	oldConf := yobj{
+		"dns": yobj{
+			"autohost_tld": tld,
+		},
+		"schema_version": 8,
+	}
+
+	err := upgradeSchema8to9(oldConf)
+	require.NoError(t, err)
+
+	require.Equal(t, oldConf["schema_version"], 9)
+
+	dnsVal, ok := oldConf["dns"]
+	require.True(t, ok)
+
+	newDNSConf, ok := dnsVal.(yobj)
+	require.True(t, ok)
+
+	localDomainName, ok := newDNSConf["local_domain_name"].(string)
+	require.True(t, ok)
+
+	assert.Equal(t, tld, localDomainName)
 }
 
 // assertEqualExcept removes entries from configs and compares them.

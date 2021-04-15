@@ -264,7 +264,7 @@ func (s *Server) processInternalHosts(dctx *dnsContext) (rc resultCode) {
 	}
 
 	reqHost := strings.ToLower(q.Name)
-	host := strings.TrimSuffix(reqHost, s.autohostSuffix)
+	host := strings.TrimSuffix(reqHost, s.localDomainSuffix)
 	if host == reqHost {
 		return resultCodeSuccess
 	}

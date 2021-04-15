@@ -70,9 +70,9 @@ type Server struct {
 	stats      stats.Stats
 	access     *accessCtx
 
-	// autohostSuffix is the suffix used to detect internal hosts.  It must
-	// be a valid top-level domain plus dots on each side.
-	autohostSuffix string
+	// localDomainSuffix is the suffix used to detect internal hosts.  It
+	// must be a valid domain name plus dots on each side.
+	localDomainSuffix string
 
 	ipset          ipsetCtx
 	subnetDetector *aghnet.SubnetDetector
@@ -94,9 +94,11 @@ type Server struct {
 	conf ServerConfig
 }
 
-// defaultAutohostSuffix is the default suffix used to detect internal hosts
-// when no suffix is provided.  See the documentation for Server.autohostSuffix.
-const defaultAutohostSuffix = ".lan."
+// defaultLocalDomainSuffix is the default suffix used to detect internal hosts
+// when no suffix is provided.
+//
+// See the documentation for Server.localDomainSuffix.
+const defaultLocalDomainSuffix = ".lan."
 
 // DNSCreateParams are parameters to create a new server.
 type DNSCreateParams struct {
@@ -105,11 +107,11 @@ type DNSCreateParams struct {
 	QueryLog       querylog.QueryLog
 	DHCPServer     dhcpd.ServerInterface
 	SubnetDetector *aghnet.SubnetDetector
-	AutohostTLD    string
+	LocalDomain    string
 }
 
-// tldToSuffix converts a top-level domain into an autohost suffix.
-func tldToSuffix(tld string) (suffix string) {
+// domainNameToSuffix converts a domain name into a local domain suffix.
+func domainNameToSuffix(tld string) (suffix string) {
 	l := len(tld) + 2
 	b := make([]byte, l)
 	b[0] = '.'
@@ -122,24 +124,24 @@ func tldToSuffix(tld string) (suffix string) {
 // NewServer creates a new instance of the dnsforward.Server
 // Note: this function must be called only once
 func NewServer(p DNSCreateParams) (s *Server, err error) {
-	var autohostSuffix string
-	if p.AutohostTLD == "" {
-		autohostSuffix = defaultAutohostSuffix
+	var localDomainSuffix string
+	if p.LocalDomain == "" {
+		localDomainSuffix = defaultLocalDomainSuffix
 	} else {
-		err = aghnet.ValidateDomainNameLabel(p.AutohostTLD)
+		err = aghnet.ValidateDomainName(p.LocalDomain)
 		if err != nil {
-			return nil, fmt.Errorf("autohost tld: %w", err)
+			return nil, fmt.Errorf("local domain: %w", err)
 		}
 
-		autohostSuffix = tldToSuffix(p.AutohostTLD)
+		localDomainSuffix = domainNameToSuffix(p.LocalDomain)
 	}
 
 	s = &Server{
-		dnsFilter:      p.DNSFilter,
-		stats:          p.Stats,
-		queryLog:       p.QueryLog,
-		subnetDetector: p.SubnetDetector,
-		autohostSuffix: autohostSuffix,
+		dnsFilter:         p.DNSFilter,
+		stats:             p.Stats,
+		queryLog:          p.QueryLog,
+		subnetDetector:    p.SubnetDetector,
+		localDomainSuffix: localDomainSuffix,
 	}
 
 	if p.DHCPServer != nil {

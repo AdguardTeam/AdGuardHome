@@ -14,7 +14,7 @@ import (
 )
 
 // currentSchemaVersion is the current schema version.
-const currentSchemaVersion = 8
+const currentSchemaVersion = 9
 
 // These aliases are provided for convenience.
 type (
@@ -74,6 +74,7 @@ func upgradeConfigSchema(oldVersion int, diskConf yobj) (err error) {
 		upgradeSchema5to6,
 		upgradeSchema6to7,
 		upgradeSchema7to8,
+		upgradeSchema8to9,
 	}
 
 	n := 0
@@ -460,6 +461,43 @@ func upgradeSchema7to8(diskConf yobj) (err error) {
 
 	delete(dns, "bind_host")
 	dns["bind_hosts"] = yarr{bindHost}
+
+	return nil
+}
+
+// upgradeSchema8to9 performs the following changes:
+//
+//   # BEFORE:
+//   'dns':
+//     'autohost_tld': 'lan'
+//
+//   # AFTER:
+//   'dns':
+//     'local_domain_name': 'lan'
+//
+func upgradeSchema8to9(diskConf yobj) (err error) {
+	log.Printf("Upgrade yaml: 8 to 9")
+
+	diskConf["schema_version"] = 9
+
+	dnsVal, ok := diskConf["dns"]
+	if !ok {
+		return nil
+	}
+
+	dns, ok := dnsVal.(yobj)
+	if !ok {
+		return fmt.Errorf("unexpected type of dns: %T", dnsVal)
+	}
+
+	autohostTLDVal := dns["autohost_tld"]
+	autohostTLD, ok := autohostTLDVal.(string)
+	if !ok {
+		return fmt.Errorf("undexpected type of dns.autohost_tld: %T", autohostTLDVal)
+	}
+
+	delete(dns, "autohost_tld")
+	dns["local_domain_name"] = autohostTLD
 
 	return nil
 }

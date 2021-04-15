@@ -90,7 +90,7 @@ func TestServer_ProcessInternalHosts_localRestriction(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := &Server{
-				autohostSuffix: defaultAutohostSuffix,
+				localDomainSuffix: defaultLocalDomainSuffix,
 				tableHostToIP: hostToIPTable{
 					"example": knownIP,
 				},
@@ -157,35 +157,35 @@ func TestServer_ProcessInternalHosts(t *testing.T) {
 	}{{
 		name:    "success_external",
 		host:    examplecom,
-		suffix:  defaultAutohostSuffix,
+		suffix:  defaultLocalDomainSuffix,
 		wantIP:  nil,
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeA,
 	}, {
 		name:    "success_external_non_a",
 		host:    examplecom,
-		suffix:  defaultAutohostSuffix,
+		suffix:  defaultLocalDomainSuffix,
 		wantIP:  nil,
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeCNAME,
 	}, {
 		name:    "success_internal",
 		host:    examplelan,
-		suffix:  defaultAutohostSuffix,
+		suffix:  defaultLocalDomainSuffix,
 		wantIP:  knownIP,
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeA,
 	}, {
 		name:    "success_internal_unknown",
 		host:    "example-new.lan",
-		suffix:  defaultAutohostSuffix,
+		suffix:  defaultLocalDomainSuffix,
 		wantIP:  nil,
 		wantRes: resultCodeFinish,
 		qtyp:    dns.TypeA,
 	}, {
 		name:    "success_internal_aaaa",
 		host:    examplelan,
-		suffix:  defaultAutohostSuffix,
+		suffix:  defaultLocalDomainSuffix,
 		wantIP:  nil,
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeAAAA,
@@ -201,7 +201,7 @@ func TestServer_ProcessInternalHosts(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := &Server{
-				autohostSuffix: tc.suffix,
+				localDomainSuffix: tc.suffix,
 				tableHostToIP: hostToIPTable{
 					"example": knownIP,
 				},

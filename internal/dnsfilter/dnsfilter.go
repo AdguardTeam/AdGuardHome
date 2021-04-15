@@ -422,9 +422,9 @@ func (d *DNSFilter) CheckHost(
 	return Result{}, nil
 }
 
-// checkAutoHosts compares the host against our autohosts table.  The err is
+// checkEtcHosts compares the host against our /etc/hosts table.  The err is
 // always nil, it is only there to make this a valid hostChecker function.
-func (d *DNSFilter) checkAutoHosts(
+func (d *DNSFilter) checkEtcHosts(
 	host string,
 	qtype uint16,
 	_ *FilteringSettings,
@@ -829,8 +829,8 @@ func New(c *Config, blockFilters []Filter) *DNSFilter {
 	}
 
 	d.hostCheckers = []hostChecker{{
-		check: d.checkAutoHosts,
-		name:  "autohosts",
+		check: d.checkEtcHosts,
+		name:  "etchosts",
 	}, {
 		check: d.matchHost,
 		name:  "filtering",

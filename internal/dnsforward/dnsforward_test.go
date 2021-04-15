@@ -232,10 +232,10 @@ func sendTestMessages(t *testing.T, conn *dns.Conn) {
 	for i := 0; i < testMessagesCount; i++ {
 		req := createGoogleATestMessage()
 		err := conn.WriteMsg(req)
-		assert.Nilf(t, err, "cannot write message #%d: %s", i, err)
+		assert.NoErrorf(t, err, "cannot write message #%d: %s", i, err)
 
 		res, err := conn.ReadMsg()
-		assert.Nilf(t, err, "cannot read response to message #%d: %s", i, err)
+		assert.NoErrorf(t, err, "cannot read response to message #%d: %s", i, err)
 		assertGoogleAResponse(t, res)
 	}
 }
@@ -1088,7 +1088,6 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	_, _ = hf.WriteString("  127.0.0.1   host # comment \n")
 	_, _ = hf.WriteString("  ::1   localhost#comment  \n")
 
-	// Init auto hosts.
 	c.EtcHosts.Init(hf.Name())
 	t.Cleanup(c.EtcHosts.Close)
 
@@ -1145,17 +1144,24 @@ func TestNewServer(t *testing.T) {
 		in:         DNSCreateParams{},
 		wantErrMsg: "",
 	}, {
-		name: "success_autohost_tld",
+		name: "success_local_tld",
 		in: DNSCreateParams{
-			AutohostTLD: "mynet",
+			LocalDomain: "mynet",
 		},
 		wantErrMsg: "",
 	}, {
-		name: "bad_autohost_tld",
+		name: "success_local_domain",
 		in: DNSCreateParams{
-			AutohostTLD: "!!!",
+			LocalDomain: "my.local.net",
 		},
-		wantErrMsg: `autohost tld: invalid char '!' at index 0 in "!!!"`,
+		wantErrMsg: "",
+	}, {
+		name: "bad_local_domain",
+		in: DNSCreateParams{
+			LocalDomain: "!!!",
+		},
+		wantErrMsg: `local domain: invalid domain name label at index 0: ` +
+			`invalid char '!' at index 0 in "!!!"`,
 	}}
 
 	for _, tc := range testCases {

@@ -24,7 +24,8 @@ and this project adheres to
 - Logging of the client's IP address after failed login attempts ([#2824]).
 - Search by clients' names in the query log ([#1273]).
 - Verbose version output with `-v --version` ([#2416]).
-- The ability to set a custom TLD for known local-network hosts ([#2393]).
+- The ability to set a custom TLD or domain name for known hosts in the local
+  network ([#2393], [#2961]).
 - The ability to serve DNS queries on multiple hosts and interfaces ([#1401]).
 - `ips` and `text` DHCP server options ([#2385]).
 - `SRV` records support in `$dnsrewrite` filters ([#2533]).
@@ -80,6 +81,7 @@ and this project adheres to
 [#2934]: https://github.com/AdguardTeam/AdGuardHome/issues/2934
 [#2945]: https://github.com/AdguardTeam/AdGuardHome/issues/2945
 [#2947]: https://github.com/AdguardTeam/AdGuardHome/issues/2947
+[#2961]: https://github.com/AdguardTeam/AdGuardHome/issues/2961
 
 
 

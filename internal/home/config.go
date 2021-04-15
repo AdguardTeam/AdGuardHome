@@ -94,10 +94,10 @@ type dnsConfig struct {
 	FiltersUpdateIntervalHours uint32           `yaml:"filters_update_interval"` // time period to update filters (in hours)
 	DnsfilterConf              dnsfilter.Config `yaml:",inline"`
 
-	// AutohostTLD is the top-level domain used for known internal hosts.
+	// LocalDomainName is the domain name used for known internal hosts.
 	// For example, a machine called "myhost" can be addressed as
-	// "myhost.lan" when AutohostTLD is "lan".
-	AutohostTLD string `yaml:"autohost_tld"`
+	// "myhost.lan" when LocalDomainName is "lan".
+	LocalDomainName string `yaml:"local_domain_name"`
 
 	// ResolveClients enables and disables resolving clients with RDNS.
 	ResolveClients bool `yaml:"resolve_clients"`
@@ -156,7 +156,7 @@ var config = configuration{
 		},
 		FilteringEnabled:           true, // whether or not use filter lists
 		FiltersUpdateIntervalHours: 24,
-		AutohostTLD:                "lan",
+		LocalDomainName:            "lan",
 		ResolveClients:             true,
 	},
 	TLS: tlsConfigSettings{

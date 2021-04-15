@@ -67,7 +67,7 @@ func initDNSServer() error {
 		Stats:          Context.stats,
 		QueryLog:       Context.queryLog,
 		SubnetDetector: Context.subnetDetector,
-		AutohostTLD:    config.DNS.AutohostTLD,
+		LocalDomain:    config.DNS.LocalDomainName,
 	}
 	if Context.dhcpServer != nil {
 		p.DHCPServer = Context.dhcpServer

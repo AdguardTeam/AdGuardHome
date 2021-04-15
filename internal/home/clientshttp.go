@@ -237,7 +237,7 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 		var cj clientJSON
 		if !ok {
 			var found bool
-			cj, found = clients.findTemporary(ip, idStr)
+			cj, found = clients.findRuntime(ip, idStr)
 			if !found {
 				continue
 			}
@@ -258,9 +258,9 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 	}
 }
 
-// findTemporary looks up the IP in temporary storages, like autohosts or
-// blocklists.
-func (clients *clientsContainer) findTemporary(ip net.IP, idStr string) (cj clientJSON, found bool) {
+// findRuntime looks up the IP in runtime and temporary storages, like
+// /etc/hosts tables, DHCP leases, or blocklists.
+func (clients *clientsContainer) findRuntime(ip net.IP, idStr string) (cj clientJSON, found bool) {
 	if ip == nil {
 		return cj, false
 	}
