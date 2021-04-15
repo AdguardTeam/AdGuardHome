@@ -115,6 +115,7 @@ const (
 	LeaseChangedAdded = iota
 	LeaseChangedAddedStatic
 	LeaseChangedRemovedStatic
+	LeaseChangedRemovedAll
 
 	LeaseChangedDBStore
 )

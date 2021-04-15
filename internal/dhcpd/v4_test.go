@@ -23,7 +23,7 @@ func TestV4_AddRemove_static(t *testing.T) {
 		SubnetMask: net.IP{255, 255, 255, 0},
 		notify:     notify4,
 	})
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	ls := s.GetLeases(LeasesStatic)
 	assert.Empty(t, ls)
@@ -33,23 +33,30 @@ func TestV4_AddRemove_static(t *testing.T) {
 		IP:     net.IP{192, 168, 10, 150},
 		HWAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 	}
-	require.Nil(t, s.AddStaticLease(l))
-	assert.NotNil(t, s.AddStaticLease(l))
+
+	err = s.AddStaticLease(l)
+	require.NoError(t, err)
+
+	err = s.AddStaticLease(l)
+	assert.Error(t, err)
 
 	ls = s.GetLeases(LeasesStatic)
 	require.Len(t, ls, 1)
+
 	assert.True(t, l.IP.Equal(ls[0].IP))
 	assert.Equal(t, l.HWAddr, ls[0].HWAddr)
 	assert.True(t, ls[0].IsStatic())
 
 	// Try to remove static lease.
-	assert.NotNil(t, s.RemoveStaticLease(Lease{
+	err = s.RemoveStaticLease(Lease{
 		IP:     net.IP{192, 168, 10, 110},
 		HWAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
-	}))
+	})
+	assert.Error(t, err)
 
 	// Remove static lease.
-	require.Nil(t, s.RemoveStaticLease(l))
+	err = s.RemoveStaticLease(l)
+	require.NoError(t, err)
 	ls = s.GetLeases(LeasesStatic)
 	assert.Empty(t, ls)
 }
@@ -63,7 +70,7 @@ func TestV4_AddReplace(t *testing.T) {
 		SubnetMask: net.IP{255, 255, 255, 0},
 		notify:     notify4,
 	})
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	s, ok := sIface.(*v4Server)
 	require.True(t, ok)
@@ -78,7 +85,7 @@ func TestV4_AddReplace(t *testing.T) {
 
 	for i := range dynLeases {
 		err = s.addLease(&dynLeases[i])
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	stLeases := []Lease{{
@@ -90,7 +97,8 @@ func TestV4_AddReplace(t *testing.T) {
 	}}
 
 	for _, l := range stLeases {
-		require.Nil(t, s.AddStaticLease(l))
+		err = s.AddStaticLease(l)
+		require.NoError(t, err)
 	}
 
 	ls := s.GetLeases(LeasesStatic)
@@ -113,32 +121,35 @@ func TestV4StaticLease_Get(t *testing.T) {
 		SubnetMask: net.IP{255, 255, 255, 0},
 		notify:     notify4,
 	})
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	s, ok := sIface.(*v4Server)
 	require.True(t, ok)
+
 	s.conf.dnsIPAddrs = []net.IP{{192, 168, 10, 1}}
 
 	l := Lease{
 		IP:     net.IP{192, 168, 10, 150},
 		HWAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 	}
-	require.Nil(t, s.AddStaticLease(l))
+	err = s.AddStaticLease(l)
+	require.NoError(t, err)
 
 	var req, resp *dhcpv4.DHCPv4
 	mac := net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}
 
 	t.Run("discover", func(t *testing.T) {
-		var terr error
+		req, err = dhcpv4.NewDiscovery(mac)
+		require.NoError(t, err)
 
-		req, terr = dhcpv4.NewDiscovery(mac)
-		require.Nil(t, terr)
+		resp, err = dhcpv4.NewReplyFromRequest(req)
+		require.NoError(t, err)
 
-		resp, terr = dhcpv4.NewReplyFromRequest(req)
-		require.Nil(t, terr)
 		assert.Equal(t, 1, s.process(req, resp))
 	})
-	require.Nil(t, err)
+
+	// Don't continue if we got any errors in the previous subtest.
+	require.NoError(t, err)
 
 	t.Run("offer", func(t *testing.T) {
 		assert.Equal(t, dhcpv4.MessageTypeOffer, resp.MessageType())
@@ -152,13 +163,15 @@ func TestV4StaticLease_Get(t *testing.T) {
 
 	t.Run("request", func(t *testing.T) {
 		req, err = dhcpv4.NewRequestFromOffer(resp)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		resp, err = dhcpv4.NewReplyFromRequest(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
+
 		assert.Equal(t, 1, s.process(req, resp))
 	})
-	require.Nil(t, err)
+
+	require.NoError(t, err)
 
 	t.Run("ack", func(t *testing.T) {
 		assert.Equal(t, dhcpv4.MessageTypeAck, resp.MessageType())
@@ -172,11 +185,13 @@ func TestV4StaticLease_Get(t *testing.T) {
 
 	dnsAddrs := resp.DNS()
 	require.Len(t, dnsAddrs, 1)
+
 	assert.True(t, s.conf.GatewayIP.Equal(dnsAddrs[0]))
 
 	t.Run("check_lease", func(t *testing.T) {
 		ls := s.GetLeases(LeasesStatic)
 		require.Len(t, ls, 1)
+
 		assert.True(t, l.IP.Equal(ls[0].IP))
 		assert.Equal(t, mac, ls[0].HWAddr)
 	})
@@ -196,10 +211,11 @@ func TestV4DynamicLease_Get(t *testing.T) {
 			"82 ip 1.2.3.4",
 		},
 	})
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	s, ok := sIface.(*v4Server)
 	require.True(t, ok)
+
 	s.conf.dnsIPAddrs = []net.IP{{192, 168, 10, 1}}
 
 	var req, resp *dhcpv4.DHCPv4
@@ -207,15 +223,16 @@ func TestV4DynamicLease_Get(t *testing.T) {
 
 	t.Run("discover", func(t *testing.T) {
 		req, err = dhcpv4.NewDiscovery(mac)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		resp, err = dhcpv4.NewReplyFromRequest(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
+
 		assert.Equal(t, 1, s.process(req, resp))
 	})
 
 	// Don't continue if we got any errors in the previous subtest.
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	t.Run("offer", func(t *testing.T) {
 		assert.Equal(t, dhcpv4.MessageTypeOffer, resp.MessageType())
@@ -226,6 +243,7 @@ func TestV4DynamicLease_Get(t *testing.T) {
 
 		router := resp.Router()
 		require.Len(t, router, 1)
+
 		assert.Equal(t, s.conf.GatewayIP, router[0])
 
 		assert.Equal(t, s.conf.subnetMask, resp.SubnetMask())
@@ -236,16 +254,16 @@ func TestV4DynamicLease_Get(t *testing.T) {
 	})
 
 	t.Run("request", func(t *testing.T) {
-		var terr error
+		req, err = dhcpv4.NewRequestFromOffer(resp)
+		require.NoError(t, err)
 
-		req, terr = dhcpv4.NewRequestFromOffer(resp)
-		require.Nil(t, terr)
+		resp, err = dhcpv4.NewReplyFromRequest(req)
+		require.NoError(t, err)
 
-		resp, terr = dhcpv4.NewReplyFromRequest(req)
-		require.Nil(t, terr)
 		assert.Equal(t, 1, s.process(req, resp))
 	})
-	require.Nil(t, err)
+
+	require.NoError(t, err)
 
 	t.Run("ack", func(t *testing.T) {
 		assert.Equal(t, dhcpv4.MessageTypeAck, resp.MessageType())
@@ -259,12 +277,14 @@ func TestV4DynamicLease_Get(t *testing.T) {
 
 	dnsAddrs := resp.DNS()
 	require.Len(t, dnsAddrs, 1)
+
 	assert.True(t, net.IP{192, 168, 10, 1}.Equal(dnsAddrs[0]))
 
 	// check lease
 	t.Run("check_lease", func(t *testing.T) {
 		ls := s.GetLeases(LeasesDynamic)
-		assert.Len(t, ls, 1)
+		require.Len(t, ls, 1)
+
 		assert.True(t, net.IP{192, 168, 10, 100}.Equal(ls[0].IP))
 		assert.Equal(t, mac, ls[0].HWAddr)
 	})

@@ -47,6 +47,8 @@ and this project adheres to
 
 ### Fixed
 
+- Inconsistent resolving of DHCP clients when the DHCP server is disabled
+  ([#2934]).
 - Comment handling in clients' custom upstreams ([#2947]).
 - Overwriting of DHCPv4 options when using the HTTP API ([#2927]).
 - Assumption that MAC addresses always have the length of 6 octets ([#2828]).
@@ -75,6 +77,7 @@ and this project adheres to
 [#2838]: https://github.com/AdguardTeam/AdGuardHome/issues/2838
 [#2889]: https://github.com/AdguardTeam/AdGuardHome/issues/2889
 [#2927]: https://github.com/AdguardTeam/AdGuardHome/issues/2927
+[#2934]: https://github.com/AdguardTeam/AdGuardHome/issues/2934
 [#2945]: https://github.com/AdguardTeam/AdGuardHome/issues/2945
 [#2947]: https://github.com/AdguardTeam/AdGuardHome/issues/2947
 

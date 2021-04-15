@@ -121,7 +121,7 @@ func (clients *clientsContainer) Init(
 	clients.addFromConfig(objects)
 
 	if !clients.testing {
-		clients.addFromDHCP()
+		clients.updateFromDHCP(true)
 		if clients.dhcpServer != nil {
 			clients.dhcpServer.SetOnLeaseChanged(clients.onDHCPLeaseChanged)
 		}
@@ -244,7 +244,9 @@ func (clients *clientsContainer) onDHCPLeaseChanged(flags int) {
 	case dhcpd.LeaseChangedAdded,
 		dhcpd.LeaseChangedAddedStatic,
 		dhcpd.LeaseChangedRemovedStatic:
-		clients.addFromDHCP()
+		clients.updateFromDHCP(true)
+	case dhcpd.LeaseChangedRemovedAll:
+		clients.updateFromDHCP(false)
 	}
 }
 
@@ -768,9 +770,9 @@ func (clients *clientsContainer) addFromSystemARP() {
 	log.Debug("clients: added %d client aliases from 'arp -a' command output", n)
 }
 
-// addFromDHCP adds the clients that have a non-empty hostname from the DHCP
+// updateFromDHCP adds the clients that have a non-empty hostname from the DHCP
 // server.
-func (clients *clientsContainer) addFromDHCP() {
+func (clients *clientsContainer) updateFromDHCP(add bool) {
 	if clients.dhcpServer == nil {
 		return
 	}
@@ -779,6 +781,10 @@ func (clients *clientsContainer) addFromDHCP() {
 	defer clients.lock.Unlock()
 
 	clients.rmHostsBySrc(ClientSourceDHCP)
+
+	if !add {
+		return
+	}
 
 	leases := clients.dhcpServer.Leases(dhcpd.LeasesAll)
 	n := 0

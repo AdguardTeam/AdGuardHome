@@ -91,7 +91,7 @@ func TestServer_ProcessInternalHosts_localRestriction(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := &Server{
 				autohostSuffix: defaultAutohostSuffix,
-				tableHostToIP: map[string]net.IP{
+				tableHostToIP: hostToIPTable{
 					"example": knownIP,
 				},
 			}
@@ -202,7 +202,7 @@ func TestServer_ProcessInternalHosts(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := &Server{
 				autohostSuffix: tc.suffix,
-				tableHostToIP: map[string]net.IP{
+				tableHostToIP: hostToIPTable{
 					"example": knownIP,
 				},
 			}

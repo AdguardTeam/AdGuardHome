@@ -154,44 +154,60 @@ func isHostnameOK(hostname string) bool {
 	return true
 }
 
+func (s *Server) setTableHostToIP(t hostToIPTable) {
+	s.tableHostToIPLock.Lock()
+	defer s.tableHostToIPLock.Unlock()
+
+	s.tableHostToIP = t
+}
+
+func (s *Server) setTableIPToHost(t ipToHostTable) {
+	s.tableIPToHostLock.Lock()
+	defer s.tableIPToHostLock.Unlock()
+
+	s.tableIPToHost = t
+}
+
 func (s *Server) onDHCPLeaseChanged(flags int) {
+	add := true
 	switch flags {
 	case dhcpd.LeaseChangedAdded,
 		dhcpd.LeaseChangedAddedStatic,
 		dhcpd.LeaseChangedRemovedStatic:
-		//
+		// Go on.
+	case dhcpd.LeaseChangedRemovedAll:
+		add = false
 	default:
 		return
 	}
 
-	hostToIP := make(map[string]net.IP)
-	m := make(map[string]string)
+	var hostToIP hostToIPTable
+	var ipToHost ipToHostTable
+	if add {
+		hostToIP = make(hostToIPTable)
+		ipToHost = make(ipToHostTable)
 
-	ll := s.dhcpServer.Leases(dhcpd.LeasesAll)
+		ll := s.dhcpServer.Leases(dhcpd.LeasesAll)
 
-	for _, l := range ll {
-		if len(l.Hostname) == 0 || !isHostnameOK(l.Hostname) {
-			continue
+		for _, l := range ll {
+			if len(l.Hostname) == 0 || !isHostnameOK(l.Hostname) {
+				continue
+			}
+
+			lowhost := strings.ToLower(l.Hostname)
+
+			ipToHost[l.IP.String()] = lowhost
+
+			ip := make(net.IP, 4)
+			copy(ip, l.IP.To4())
+			hostToIP[lowhost] = ip
 		}
 
-		lowhost := strings.ToLower(l.Hostname)
-
-		m[l.IP.String()] = lowhost
-
-		ip := make(net.IP, 4)
-		copy(ip, l.IP.To4())
-		hostToIP[lowhost] = ip
+		log.Debug("dns: added %d A/PTR entries from DHCP", len(ipToHost))
 	}
 
-	log.Debug("dns: added %d A/PTR entries from DHCP", len(m))
-
-	s.tableHostToIPLock.Lock()
-	s.tableHostToIP = hostToIP
-	s.tableHostToIPLock.Unlock()
-
-	s.tablePTRLock.Lock()
-	s.tablePTR = m
-	s.tablePTRLock.Unlock()
+	s.setTableHostToIP(hostToIP)
+	s.setTableIPToHost(ipToHost)
 }
 
 // processDetermineLocal determines if the client's IP address is from
@@ -336,14 +352,14 @@ func (s *Server) processRestrictLocal(ctx *dnsContext) (rc resultCode) {
 // ipToHost tries to get a hostname leased by DHCP.  It's safe for concurrent
 // use.
 func (s *Server) ipToHost(ip net.IP) (host string, ok bool) {
-	s.tablePTRLock.Lock()
-	defer s.tablePTRLock.Unlock()
+	s.tableIPToHostLock.Lock()
+	defer s.tableIPToHostLock.Unlock()
 
-	if s.tablePTR == nil {
+	if s.tableIPToHost == nil {
 		return "", false
 	}
 
-	host, ok = s.tablePTR[ip.String()]
+	host, ok = s.tableIPToHost[ip.String()]
 
 	return host, ok
 }

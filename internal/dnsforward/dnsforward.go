@@ -43,6 +43,15 @@ var defaultBlockedHosts = []string{"version.bind", "id.server", "hostname.bind"}
 
 var webRegistered bool
 
+// hostToIPTable is an alias for the type of Server.tableHostToIP.
+type hostToIPTable = map[string]net.IP
+
+// ipToHostTable is an alias for the type of Server.tableIPToHost.
+//
+// TODO(a.garipov): Define an IPMap type in aghnet and use here and in other
+// places?
+type ipToHostTable = map[string]string
+
 // Server is the main way to start a DNS server.
 //
 // Example:
@@ -69,11 +78,11 @@ type Server struct {
 	subnetDetector *aghnet.SubnetDetector
 	localResolvers *proxy.Proxy
 
-	tableHostToIP     map[string]net.IP // "hostname -> IP" table for internal addresses (DHCP)
+	tableHostToIP     hostToIPTable
 	tableHostToIPLock sync.Mutex
 
-	tablePTR     map[string]string // "IP -> hostname" table for reverse lookup
-	tablePTRLock sync.Mutex
+	tableIPToHost     ipToHostTable
+	tableIPToHostLock sync.Mutex
 
 	// DNS proxy instance for internal usage
 	// We don't Start() it and so no listen port is required.

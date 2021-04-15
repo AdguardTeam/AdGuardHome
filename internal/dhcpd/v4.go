@@ -801,6 +801,10 @@ func (s *v4Server) Start() error {
 		log.Debug("dhcpv4: srv.Serve: %s", err)
 	}()
 
+	// Signal to the clients containers in packages home and dnsforward that
+	// it should reload the DHCP clients.
+	s.conf.notify(LeaseChangedAdded)
+
 	return nil
 }
 
@@ -815,7 +819,11 @@ func (s *v4Server) Stop() {
 	if err != nil {
 		log.Error("dhcpv4: srv.Close: %s", err)
 	}
-	// now s.srv.Serve() will return
+
+	// Signal to the clients containers in packages home and dnsforward that
+	// it should remove all DHCP clients.
+	s.conf.notify(LeaseChangedRemovedAll)
+
 	s.srv = nil
 }
 
