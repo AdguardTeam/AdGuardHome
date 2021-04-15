@@ -634,13 +634,19 @@ func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, ok bo
 	}
 
 	if !lease.IsStatic() {
-		lease.Hostname, err = s.normalizeHostname(req.HostName())
+		var hostname string
+		hostname, err = s.normalizeHostname(req.HostName())
 		if err != nil {
 			log.Error("dhcpv4: cannot normalize hostname for %s: %s", mac, err)
 
 			return nil, false
 		}
 
+		if hostname == "" {
+			hostname = aghnet.GenerateHostName(reqIP)
+		}
+
+		lease.Hostname = hostname
 		s.commitLease(lease)
 	} else if len(lease.Hostname) != 0 {
 		o := &optFQDN{

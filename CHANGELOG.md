@@ -15,6 +15,7 @@ and this project adheres to
 
 ### Added
 
+- Hostname generating for DHCP clients which don't provide their own ([#2723]).
 - New flag `--no-etc-hosts` to disable client domain name lookups in the
   operating system's /etc/hosts files ([#1947]).
 - The ability to set up custom upstreams to resolve PTR queries for local
@@ -67,6 +68,7 @@ and this project adheres to
 [#2533]: https://github.com/AdguardTeam/AdGuardHome/issues/2533
 [#2541]: https://github.com/AdguardTeam/AdGuardHome/issues/2541
 [#2704]: https://github.com/AdguardTeam/AdGuardHome/issues/2704
+[#2723]: https://github.com/AdguardTeam/AdGuardHome/issues/2723
 [#2824]: https://github.com/AdguardTeam/AdGuardHome/issues/2824
 [#2828]: https://github.com/AdguardTeam/AdGuardHome/issues/2828
 [#2835]: https://github.com/AdguardTeam/AdGuardHome/issues/2835
