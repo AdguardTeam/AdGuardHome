@@ -171,7 +171,7 @@ func (web *Web) Start() {
 		hostStr := web.conf.BindHost.String()
 		// we need to have new instance, because after Shutdown() the Server is not usable
 		web.httpServer = &http.Server{
-			ErrorLog:          log.StdLog("web: http", log.DEBUG),
+			ErrorLog:          log.StdLog("web: plain", log.DEBUG),
 			Addr:              net.JoinHostPort(hostStr, strconv.Itoa(web.conf.BindPort)),
 			Handler:           withMiddlewares(Context.mux, limitRequestBody),
 			ReadTimeout:       web.conf.ReadTimeout,
@@ -184,7 +184,7 @@ func (web *Web) Start() {
 
 		if web.conf.BetaBindPort != 0 {
 			web.httpServerBeta = &http.Server{
-				ErrorLog:          log.StdLog("web: http", log.DEBUG),
+				ErrorLog:          log.StdLog("web: plain", log.DEBUG),
 				Addr:              net.JoinHostPort(hostStr, strconv.Itoa(web.conf.BetaBindPort)),
 				Handler:           withMiddlewares(Context.mux, limitRequestBody, web.wrapIndexBeta),
 				ReadTimeout:       web.conf.ReadTimeout,

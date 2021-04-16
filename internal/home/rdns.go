@@ -90,7 +90,7 @@ func (r *RDNS) workerLoop() {
 	for ip := range r.ipCh {
 		host, err := r.exchanger.Exchange(ip)
 		if err != nil {
-			log.Error("rdns: resolving %q: %s", ip, err)
+			log.Debug("rdns: resolving %q: %s", ip, err)
 
 			continue
 		}

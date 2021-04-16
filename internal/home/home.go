@@ -163,12 +163,14 @@ func setupContext(args options) {
 
 		err = parseConfig()
 		if err != nil {
-			log.Error("Failed to parse configuration, exiting")
+			log.Error("parsing configuration file: %s", err)
+
 			os.Exit(1)
 		}
 
 		if args.checkConfig {
-			log.Info("Configuration file is OK")
+			log.Info("configuration file is ok")
+
 			os.Exit(0)
 		}
 	}

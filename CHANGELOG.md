@@ -32,6 +32,7 @@ and this project adheres to
 
 ### Changed
 
+- Quality of logging ([#2954]).
 - Normalization of hostnames with spaces sent by DHCP clients ([#2945]).
 - The access to the private hosts is now forbidden for users from external
   networks ([#2889]).
@@ -81,6 +82,7 @@ and this project adheres to
 [#2934]: https://github.com/AdguardTeam/AdGuardHome/issues/2934
 [#2945]: https://github.com/AdguardTeam/AdGuardHome/issues/2945
 [#2947]: https://github.com/AdguardTeam/AdGuardHome/issues/2947
+[#2954]: https://github.com/AdguardTeam/AdGuardHome/issues/2954
 [#2961]: https://github.com/AdguardTeam/AdGuardHome/issues/2961
 
 
