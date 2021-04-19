@@ -290,7 +290,7 @@ func TestV4DynamicLease_Get(t *testing.T) {
 	})
 }
 
-func TestV4Server_normalizeHostname(t *testing.T) {
+func TestNormalizeHostname(t *testing.T) {
 	testCases := []struct {
 		name       string
 		hostname   string
@@ -312,24 +312,35 @@ func TestV4Server_normalizeHostname(t *testing.T) {
 		wantErrMsg: "",
 		want:       "my-device-01",
 	}, {
-		name:     "error",
-		hostname: "!!!",
-		wantErrMsg: `validating non-normalized hostname: ` +
-			`invalid domain name label at index 0: ` +
-			`invalid char '!' at index 0 in "!!!"`,
-		want: "",
+		name:       "success_underscores",
+		hostname:   "my_device_01",
+		wantErrMsg: "",
+		want:       "my-device-01",
 	}, {
-		name:     "error_spaces",
-		hostname: "! ! !",
-		wantErrMsg: `validating normalized hostname: ` +
-			`invalid domain name label at index 0: ` +
-			`invalid char '!' at index 0 in "!-!-!"`,
-		want: "",
+		name:       "error_part",
+		hostname:   "device !!!",
+		wantErrMsg: "",
+		want:       "device",
+	}, {
+		name:       "error_part_spaces",
+		hostname:   "device ! ! !",
+		wantErrMsg: "",
+		want:       "device",
+	}, {
+		name:       "error",
+		hostname:   "!!!",
+		wantErrMsg: `normalizing hostname "!!!": no valid parts`,
+		want:       "",
+	}, {
+		name:       "error_spaces",
+		hostname:   "! ! !",
+		wantErrMsg: `normalizing hostname "! ! !": no valid parts`,
+		want:       "",
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := (&v4Server{}).normalizeHostname(tc.hostname)
+			got, err := normalizeHostname(tc.hostname)
 			if tc.wantErrMsg == "" {
 				assert.NoError(t, err)
 			} else {

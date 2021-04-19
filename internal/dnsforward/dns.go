@@ -140,20 +140,6 @@ func processInitial(ctx *dnsContext) (rc resultCode) {
 	return resultCodeSuccess
 }
 
-// Return TRUE if host names doesn't contain disallowed characters
-func isHostnameOK(hostname string) bool {
-	for _, c := range hostname {
-		if !((c >= 'a' && c <= 'z') ||
-			(c >= 'A' && c <= 'Z') ||
-			(c >= '0' && c <= '9') ||
-			c == '.' || c == '-') {
-			log.Debug("dns: skipping invalid hostname %s from DHCP", hostname)
-			return false
-		}
-	}
-	return true
-}
-
 func (s *Server) setTableHostToIP(t hostToIPTable) {
 	s.tableHostToIPLock.Lock()
 	defer s.tableHostToIPLock.Unlock()
@@ -169,6 +155,8 @@ func (s *Server) setTableIPToHost(t ipToHostTable) {
 }
 
 func (s *Server) onDHCPLeaseChanged(flags int) {
+	var err error
+
 	add := true
 	switch flags {
 	case dhcpd.LeaseChangedAdded,
@@ -190,8 +178,16 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 		ll := s.dhcpServer.Leases(dhcpd.LeasesAll)
 
 		for _, l := range ll {
-			if len(l.Hostname) == 0 || !isHostnameOK(l.Hostname) {
-				continue
+			// TODO(a.garipov): Remove this after we're finished
+			// with the client hostname validations in the DHCP
+			// server code.
+			err = aghnet.ValidateDomainName(l.Hostname)
+			if err != nil {
+				log.Debug(
+					"dns: skipping invalid hostname %q from dhcp: %s",
+					l.Hostname,
+					err,
+				)
 			}
 
 			lowhost := strings.ToLower(l.Hostname)

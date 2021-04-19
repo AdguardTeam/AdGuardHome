@@ -89,6 +89,14 @@ func TestValidateDomainName(t *testing.T) {
 		in:         "пример.рф",
 		wantErrMsg: "",
 	}, {
+		name:       "success_one",
+		in:         "e",
+		wantErrMsg: "",
+	}, {
+		name:       "empty",
+		in:         "",
+		wantErrMsg: `domain name is empty`,
+	}, {
 		name: "bad_symbol",
 		in:   "!!!",
 		wantErrMsg: `invalid domain name label at index 0: ` +
@@ -111,6 +119,11 @@ func TestValidateDomainName(t *testing.T) {
 		in:   "example.-aa.com",
 		wantErrMsg: `invalid domain name label at index 1:` +
 			` invalid char '-' at index 0 in "-aa"`,
+	}, {
+		name: "bad_label_last_symbol",
+		in:   "example-.aa.com",
+		wantErrMsg: `invalid domain name label at index 0:` +
+			` invalid char '-' at index 7 in "example-"`,
 	}, {
 		name: "bad_label_symbol",
 		in:   "example.a!!!.com",
@@ -166,7 +179,7 @@ func TestGenerateHostName(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			hostname := GenerateHostName(tc.ip)
+			hostname := GenerateHostname(tc.ip)
 			assert.Equal(t, tc.want, hostname)
 		})
 	}

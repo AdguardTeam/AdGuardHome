@@ -558,32 +558,43 @@ func (o *optFQDN) ToBytes() []byte {
 	return b
 }
 
-// normalizeHostname normalizes and validates a hostname sent by the client.
-//
-// TODO(a.garipov): Add client hostname uniqueness validations and rename the
-// method to validateHostname.
-func (s *v4Server) normalizeHostname(name string) (norm string, err error) {
+// normalizeHostname normalizes a hostname sent by the client.
+func normalizeHostname(name string) (norm string, err error) {
 	if name == "" {
 		return "", nil
 	}
 
-	// Some devices send hostnames with spaces, but we still want to accept
-	// them, so replace them with dashes and issue a warning.
-	//
-	// See https://github.com/AdguardTeam/AdGuardHome/issues/2946.
-	norm = strings.ReplaceAll(name, " ", "-")
-	state := "non-normalized"
-	if name != norm {
-		log.Debug("dhcpv4: normalized hostname %q into %q", name, norm)
-		state = "normalized"
+	parts := strings.FieldsFunc(name, func(c rune) (ok bool) {
+		return c != '.' && !aghnet.IsValidHostOuterRune(c)
+	})
+
+	if len(parts) == 0 {
+		return "", fmt.Errorf("normalizing hostname %q: no valid parts", name)
 	}
 
-	err = aghnet.ValidateDomainName(norm)
-	if err != nil {
-		return "", fmt.Errorf("validating %s hostname: %w", state, err)
-	}
+	norm = strings.Join(parts, "-")
+	norm = strings.TrimSuffix(norm, "-")
 
 	return norm, nil
+}
+
+// validateHostname validates a hostname sent by the client.
+func (s *v4Server) validateHostname(name string) (err error) {
+	if name == "" {
+		return nil
+	}
+
+	err = aghnet.ValidateDomainName(name)
+	if err != nil {
+		return fmt.Errorf("validating hostname: %w", err)
+	}
+
+	// TODO(a.garipov): Add client hostname uniqueness validation either
+	// here or into method processRequest.  This is not as easy as it might
+	// look like, because the process of adding and releasing a lease is
+	// currently non-straightforward.
+
+	return nil
 }
 
 // Process Request request and return lease
@@ -634,16 +645,29 @@ func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, ok bo
 	}
 
 	if !lease.IsStatic() {
+		cliHostname := req.HostName()
+
 		var hostname string
-		hostname, err = s.normalizeHostname(req.HostName())
+		hostname, err = normalizeHostname(cliHostname)
 		if err != nil {
 			log.Error("dhcpv4: cannot normalize hostname for %s: %s", mac, err)
 
-			return nil, false
+			// Go on and assign a hostname made from the IP.
+		}
+
+		if hostname != "" && cliHostname != hostname {
+			log.Debug("dhcpv4: normalized hostname %q into %q", cliHostname, hostname)
+		}
+
+		err = s.validateHostname(hostname)
+		if err != nil {
+			log.Error("dhcpv4: validating hostname for %s: %s", mac, err)
+
+			// Go on and assign a hostname made from the IP.
 		}
 
 		if hostname == "" {
-			hostname = aghnet.GenerateHostName(reqIP)
+			hostname = aghnet.GenerateHostname(reqIP)
 		}
 
 		lease.Hostname = hostname

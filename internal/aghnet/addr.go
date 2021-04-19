@@ -10,6 +10,19 @@ import (
 	"golang.org/x/net/idna"
 )
 
+// IsValidHostOuterRune returns true if r is a valid initial or final rune for
+// a hostname label.
+func IsValidHostOuterRune(r rune) (ok bool) {
+	return (r >= 'a' && r <= 'z') ||
+		(r >= 'A' && r <= 'Z') ||
+		(r >= '0' && r <= '9')
+}
+
+// isValidHostRune returns true if r is a valid rune for a hostname label.
+func isValidHostRune(r rune) (ok bool) {
+	return r == '-' || IsValidHostOuterRune(r)
+}
+
 // ValidateHardwareAddress returns an error if hwa is not a valid EUI-48,
 // EUI-64, or 20-octet InfiniBand link-layer address.
 func ValidateHardwareAddress(hwa net.HardwareAddr) (err error) {
@@ -37,36 +50,30 @@ const maxDomainNameLen = 253
 
 const invalidCharMsg = "invalid char %q at index %d in %q"
 
-// isValidHostFirstRune returns true if r is a valid first rune for a hostname
-// label.
-func isValidHostFirstRune(r rune) (ok bool) {
-	return (r >= 'a' && r <= 'z') ||
-		(r >= 'A' && r <= 'Z') ||
-		(r >= '0' && r <= '9')
-}
-
-// isValidHostRune returns true if r is a valid rune for a hostname label.
-func isValidHostRune(r rune) (ok bool) {
-	return r == '-' || isValidHostFirstRune(r)
-}
-
 // ValidateDomainNameLabel returns an error if label is not a valid label of
 // a domain name.
 func ValidateDomainNameLabel(label string) (err error) {
-	if len(label) > maxDomainLabelLen {
+	l := len(label)
+	if l > maxDomainLabelLen {
 		return fmt.Errorf("%q is too long, max: %d", label, maxDomainLabelLen)
-	} else if len(label) == 0 {
+	} else if l == 0 {
 		return agherr.Error("label is empty")
 	}
 
-	if r := label[0]; !isValidHostFirstRune(rune(r)) {
+	if r := label[0]; !IsValidHostOuterRune(rune(r)) {
 		return fmt.Errorf(invalidCharMsg, r, 0, label)
+	} else if l == 1 {
+		return nil
 	}
 
-	for i, r := range label[1:] {
+	for i, r := range label[1 : l-1] {
 		if !isValidHostRune(r) {
 			return fmt.Errorf(invalidCharMsg, r, i+1, label)
 		}
+	}
+
+	if r := label[l-1]; !IsValidHostOuterRune(rune(r)) {
+		return fmt.Errorf(invalidCharMsg, r, l-1, label)
 	}
 
 	return nil
@@ -86,7 +93,9 @@ func ValidateDomainName(name string) (err error) {
 	}
 
 	l := len(name)
-	if l == 0 || l > maxDomainNameLen {
+	if l == 0 {
+		return agherr.Error("domain name is empty")
+	} else if l > maxDomainNameLen {
 		return fmt.Errorf("%q is too long, max: %d", name, maxDomainNameLen)
 	}
 
@@ -138,7 +147,7 @@ func generateIPv6Hostname(ipv6 net.IP) (hostname string) {
 	return string(hnData)
 }
 
-// GenerateHostName generates the hostname from ip.  In case of using IPv4 the
+// GenerateHostname generates the hostname from ip.  In case of using IPv4 the
 // result should be like:
 //
 //   192-168-10-1
@@ -147,7 +156,7 @@ func generateIPv6Hostname(ipv6 net.IP) (hostname string) {
 //
 //   ff80-f076-0000-0000-0000-0000-0000-0010
 //
-func GenerateHostName(ip net.IP) (hostname string) {
+func GenerateHostname(ip net.IP) (hostname string) {
 	if ipv4 := ip.To4(); ipv4 != nil {
 		return generateIPv4Hostname(ipv4)
 	} else if ipv6 := ip.To16(); ipv6 != nil {
