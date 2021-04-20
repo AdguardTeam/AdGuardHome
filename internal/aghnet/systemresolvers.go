@@ -15,9 +15,6 @@ import (
 // implementation must be safe for concurrent use.
 type HostGenFunc func() (host string)
 
-// unit is an alias for an existing map value.
-type unit = struct{}
-
 // SystemResolvers helps to work with local resolvers' addresses provided by OS.
 type SystemResolvers interface {
 	// Get returns the slice of local resolvers' addresses.

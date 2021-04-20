@@ -6,52 +6,46 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// --------------------
-// internationalization
-// --------------------
-var allowedLanguages = map[string]bool{
-	"be":    true,
-	"bg":    true,
-	"cs":    true,
-	"da":    true,
-	"de":    true,
-	"en":    true,
-	"es":    true,
-	"fa":    true,
-	"fr":    true,
-	"hr":    true,
-	"hu":    true,
-	"id":    true,
-	"it":    true,
-	"ja":    true,
-	"ko":    true,
-	"nl":    true,
-	"no":    true,
-	"pl":    true,
-	"pt-br": true,
-	"pt-pt": true,
-	"ro":    true,
-	"ru":    true,
-	"si-lk": true,
-	"sk":    true,
-	"sl":    true,
-	"sr-cs": true,
-	"sv":    true,
-	"th":    true,
-	"tr":    true,
-	"vi":    true,
-	"zh-cn": true,
-	"zh-hk": true,
-	"zh-tw": true,
-}
-
-func isLanguageAllowed(language string) bool {
-	l := strings.ToLower(language)
-	return allowedLanguages[l]
-}
+// TODO(a.garipov): Get rid of a global variable?
+var allowedLanguages = aghstrings.NewSet(
+	"be",
+	"bg",
+	"cs",
+	"da",
+	"de",
+	"en",
+	"es",
+	"fa",
+	"fr",
+	"hr",
+	"hu",
+	"id",
+	"it",
+	"ja",
+	"ko",
+	"nl",
+	"no",
+	"pl",
+	"pt-br",
+	"pt-pt",
+	"ro",
+	"ru",
+	"si-lk",
+	"sk",
+	"sl",
+	"sr-cs",
+	"sv",
+	"th",
+	"tr",
+	"vi",
+	"zh-cn",
+	"zh-hk",
+	"zh-tw",
+)
 
 func handleI18nCurrentLanguage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
@@ -80,12 +74,15 @@ func handleI18nChangeLanguage(w http.ResponseWriter, r *http.Request) {
 		msg := "empty language specified"
 		log.Println(msg)
 		http.Error(w, msg, http.StatusBadRequest)
+
 		return
 	}
-	if !isLanguageAllowed(language) {
+
+	if !allowedLanguages.Has(language) {
 		msg := fmt.Sprintf("unknown language specified: %s", language)
 		log.Println(msg)
 		http.Error(w, msg, http.StatusBadRequest)
+
 		return
 	}
 

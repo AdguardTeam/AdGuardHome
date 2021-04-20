@@ -82,7 +82,6 @@ func TestIsBlockedIP(t *testing.T) {
 		}
 
 		t.Run(prefix+tc.name, func(t *testing.T) {
-			aCtx := &accessCtx{}
 			allowedRules := rules
 			var disallowedRules []string
 
@@ -90,7 +89,8 @@ func TestIsBlockedIP(t *testing.T) {
 				allowedRules, disallowedRules = disallowedRules, allowedRules
 			}
 
-			require.Nil(t, aCtx.Init(allowedRules, disallowedRules, nil))
+			aCtx, err := newAccessCtx(allowedRules, disallowedRules, nil)
+			require.NoError(t, err)
 
 			disallowed, rule := aCtx.IsBlockedIP(tc.ip)
 			assert.Equal(t, tc.wantDis, disallowed)
@@ -100,12 +100,12 @@ func TestIsBlockedIP(t *testing.T) {
 }
 
 func TestIsBlockedDomain(t *testing.T) {
-	aCtx := &accessCtx{}
-	require.Nil(t, aCtx.Init(nil, nil, []string{
+	aCtx, err := newAccessCtx(nil, nil, []string{
 		"host1",
 		"*.host.com",
 		"||host3.com^",
-	}))
+	})
+	require.NoError(t, err)
 
 	testCases := []struct {
 		name   string

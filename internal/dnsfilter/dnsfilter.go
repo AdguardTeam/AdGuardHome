@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
@@ -477,10 +478,10 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 		res.Reason = Rewritten
 	}
 
-	cnames := map[string]bool{}
+	cnames := aghstrings.NewSet()
 	origHost := host
 	for len(rr) != 0 && rr[0].Type == dns.TypeCNAME {
-		log.Debug("Rewrite: CNAME for %s is %s", host, rr[0].Answer)
+		log.Debug("rewrite: CNAME for %s is %s", host, rr[0].Answer)
 
 		if host == rr[0].Answer { // "host == CNAME" is an exception
 			res.Reason = NotFilteredNotFound
@@ -489,12 +490,13 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 		}
 
 		host = rr[0].Answer
-		_, ok := cnames[host]
-		if ok {
-			log.Info("Rewrite: breaking CNAME redirection loop: %s.  Question: %s", host, origHost)
+		if cnames.Has(host) {
+			log.Info("rewrite: breaking CNAME redirection loop: %s.  Question: %s", host, origHost)
+
 			return res
 		}
-		cnames[host] = false
+
+		cnames.Add(host)
 		res.CanonName = rr[0].Answer
 		rr = findRewrites(d.Rewrites, host)
 	}
@@ -509,7 +511,7 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 			}
 
 			res.IPList = append(res.IPList, r.IP)
-			log.Debug("Rewrite: A/AAAA for %s is %s", host, r.IP)
+			log.Debug("rewrite: A/AAAA for %s is %s", host, r.IP)
 		}
 	}
 

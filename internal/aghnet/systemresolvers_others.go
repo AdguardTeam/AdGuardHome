@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 )
 
 // defaultHostGen is the default method of generating host for Refresh.
@@ -24,8 +25,8 @@ type systemResolvers struct {
 	resolver    *net.Resolver
 	hostGenFunc HostGenFunc
 
-	// addrs is the map that contains cached local resolvers' addresses.
-	addrs     map[string]unit
+	// addrs is the set that contains cached local resolvers' addresses.
+	addrs     *aghstrings.Set
 	addrsLock sync.RWMutex
 }
 
@@ -50,7 +51,7 @@ func newSystemResolvers(refreshIvl time.Duration, hostGenFunc HostGenFunc) (sr S
 			PreferGo: true,
 		},
 		hostGenFunc: hostGenFunc,
-		addrs:       make(map[string]unit),
+		addrs:       aghstrings.NewSet(),
 	}
 	s.resolver.Dial = s.dialFunc
 
@@ -75,7 +76,7 @@ func (sr *systemResolvers) dialFunc(_ context.Context, _, address string) (_ net
 	sr.addrsLock.Lock()
 	defer sr.addrsLock.Unlock()
 
-	sr.addrs[host] = unit{}
+	sr.addrs.Add(host)
 
 	return nil, fakeDialErr
 }
@@ -84,13 +85,5 @@ func (sr *systemResolvers) Get() (rs []string) {
 	sr.addrsLock.RLock()
 	defer sr.addrsLock.RUnlock()
 
-	addrs := sr.addrs
-	rs = make([]string, len(addrs))
-	var i int
-	for addr := range addrs {
-		rs[i] = addr
-		i++
-	}
-
-	return rs
+	return sr.addrs.Values()
 }

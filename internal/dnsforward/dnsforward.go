@@ -340,19 +340,6 @@ func (s *Server) collectDNSIPAddrs() (addrs []string, err error) {
 	return addrs[:i], nil
 }
 
-// unit is used to show the presence of a value in a set.
-type unit = struct{}
-
-// sliceToSet converts a slice of strings into a string set.
-func sliceToSet(strs []string) (set map[string]unit) {
-	set = make(map[string]unit, len(strs))
-	for _, s := range strs {
-		set[s] = unit{}
-	}
-
-	return set
-}
-
 // setupResolvers initializes the resolvers for local addresses.  For internal
 // use only.
 func (s *Server) setupResolvers(localAddrs []string) (err error) {
@@ -377,16 +364,14 @@ func (s *Server) setupResolvers(localAddrs []string) (err error) {
 		return err
 	}
 
-	ourAddrsSet := sliceToSet(ourAddrs)
+	ourAddrsSet := aghstrings.NewSet(ourAddrs...)
 
 	// TODO(e.burkov): The approach of subtracting sets of strings is not
 	// really applicable here since in case of listening on all network
 	// interfaces we should check the whole interface's network to cut off
 	// all the loopback addresses as well.
 	localAddrs = aghstrings.FilterOut(localAddrs, func(s string) (ok bool) {
-		_, ok = ourAddrsSet[s]
-
-		return ok
+		return ourAddrsSet.Has(s)
 	})
 
 	var upsConfig proxy.UpstreamConfig
@@ -464,10 +449,7 @@ func (s *Server) Prepare(config *ServerConfig) error {
 	// --
 	s.prepareIntlProxy()
 
-	// Initialize DNS access module
-	// --
-	s.access = &accessCtx{}
-	err = s.access.Init(s.conf.AllowedClients, s.conf.DisallowedClients, s.conf.BlockedHosts)
+	s.access, err = newAccessCtx(s.conf.AllowedClients, s.conf.DisallowedClients, s.conf.BlockedHosts)
 	if err != nil {
 		return err
 	}

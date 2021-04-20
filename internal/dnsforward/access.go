@@ -17,8 +17,11 @@ import (
 type accessCtx struct {
 	lock sync.Mutex
 
-	allowedClients    map[string]bool // IP addresses of whitelist clients
-	disallowedClients map[string]bool // IP addresses of clients that should be blocked
+	// allowedClients are the IP addresses of clients in the allowlist.
+	allowedClients *aghstrings.Set
+
+	// disallowedClients are the IP addresses of clients in the blocklist.
+	disallowedClients *aghstrings.Set
 
 	allowedClientsIPNet    []net.IPNet // CIDRs of whitelist clients
 	disallowedClientsIPNet []net.IPNet // CIDRs of clients that should be blocked
@@ -26,15 +29,20 @@ type accessCtx struct {
 	blockedHostsEngine *urlfilter.DNSEngine // finds hosts that should be blocked
 }
 
-func (a *accessCtx) Init(allowedClients, disallowedClients, blockedHosts []string) error {
-	err := processIPCIDRArray(&a.allowedClients, &a.allowedClientsIPNet, allowedClients)
-	if err != nil {
-		return err
+func newAccessCtx(allowedClients, disallowedClients, blockedHosts []string) (a *accessCtx, err error) {
+	a = &accessCtx{
+		allowedClients:    aghstrings.NewSet(),
+		disallowedClients: aghstrings.NewSet(),
 	}
 
-	err = processIPCIDRArray(&a.disallowedClients, &a.disallowedClientsIPNet, disallowedClients)
+	err = processIPCIDRArray(a.allowedClients, &a.allowedClientsIPNet, allowedClients)
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("processing allowed clients: %w", err)
+	}
+
+	err = processIPCIDRArray(a.disallowedClients, &a.disallowedClientsIPNet, disallowedClients)
+	if err != nil {
+		return nil, fmt.Errorf("processing disallowed clients: %w", err)
 	}
 
 	b := &strings.Builder{}
@@ -51,21 +59,20 @@ func (a *accessCtx) Init(allowedClients, disallowedClients, blockedHosts []strin
 	listArray = append(listArray, list)
 	rulesStorage, err := filterlist.NewRuleStorage(listArray)
 	if err != nil {
-		return fmt.Errorf("filterlist.NewRuleStorage(): %w", err)
+		return nil, fmt.Errorf("filterlist.NewRuleStorage(): %w", err)
 	}
 	a.blockedHostsEngine = urlfilter.NewDNSEngine(rulesStorage)
 
-	return nil
+	return a, nil
 }
 
 // Split array of IP or CIDR into 2 containers for fast search
-func processIPCIDRArray(dst *map[string]bool, dstIPNet *[]net.IPNet, src []string) error {
-	*dst = make(map[string]bool)
-
+func processIPCIDRArray(dst *aghstrings.Set, dstIPNet *[]net.IPNet, src []string) error {
 	for _, s := range src {
 		ip := net.ParseIP(s)
 		if ip != nil {
-			(*dst)[s] = true
+			dst.Add(s)
+
 			continue
 		}
 
@@ -73,6 +80,7 @@ func processIPCIDRArray(dst *map[string]bool, dstIPNet *[]net.IPNet, src []strin
 		if err != nil {
 			return err
 		}
+
 		*dstIPNet = append(*dstIPNet, *ipnet)
 	}
 
@@ -89,9 +97,8 @@ func (a *accessCtx) IsBlockedIP(ip net.IP) (bool, string) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	if len(a.allowedClients) != 0 || len(a.allowedClientsIPNet) != 0 {
-		_, ok := a.allowedClients[ipStr]
-		if ok {
+	if a.allowedClients.Len() != 0 || len(a.allowedClientsIPNet) != 0 {
+		if a.allowedClients.Has(ipStr) {
 			return false, ""
 		}
 
@@ -106,8 +113,7 @@ func (a *accessCtx) IsBlockedIP(ip net.IP) (bool, string) {
 		return true, ""
 	}
 
-	_, ok := a.disallowedClients[ipStr]
-	if ok {
+	if a.disallowedClients.Has(ipStr) {
 		return true, ipStr
 	}
 
@@ -186,10 +192,11 @@ func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	a := &accessCtx{}
-	err = a.Init(j.AllowedClients, j.DisallowedClients, j.BlockedHosts)
+	var a *accessCtx
+	a, err = newAccessCtx(j.AllowedClients, j.DisallowedClients, j.BlockedHosts)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "access.Init: %s", err)
+		httpError(r, w, http.StatusBadRequest, "creating access ctx: %s", err)
+
 		return
 	}
 

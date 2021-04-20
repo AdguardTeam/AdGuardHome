@@ -83,7 +83,7 @@ type clientsContainer struct {
 	ipToRC  map[string]*RuntimeClient // IP -> runtime client
 	lock    sync.Mutex
 
-	allTags map[string]bool
+	allTags *aghstrings.Set
 
 	// dhcpServer is used for looking up clients IP addresses by MAC addresses
 	dhcpServer *dhcpd.Server
@@ -111,10 +111,7 @@ func (clients *clientsContainer) Init(
 	clients.idIndex = make(map[string]*Client)
 	clients.ipToRC = make(map[string]*RuntimeClient)
 
-	clients.allTags = make(map[string]bool)
-	for _, t := range clientTags {
-		clients.allTags[t] = false
-	}
+	clients.allTags = aghstrings.NewSet(clientTags...)
 
 	clients.dhcpServer = dhcpServer
 	clients.etcHosts = etcHosts
@@ -163,9 +160,8 @@ type clientObject struct {
 	Upstreams []string `yaml:"upstreams"`
 }
 
-func (clients *clientsContainer) tagKnown(tag string) bool {
-	_, ok := clients.allTags[tag]
-	return ok
+func (clients *clientsContainer) tagKnown(tag string) (ok bool) {
+	return clients.allTags.Has(tag)
 }
 
 func (clients *clientsContainer) addFromConfig(objects []clientObject) {
