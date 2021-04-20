@@ -92,28 +92,54 @@ func TestUpgradeSchema7to8(t *testing.T) {
 
 func TestUpgradeSchema8to9(t *testing.T) {
 	const tld = "foo"
-	oldConf := yobj{
-		"dns": yobj{
-			"autohost_tld": tld,
-		},
-		"schema_version": 8,
-	}
 
-	err := upgradeSchema8to9(oldConf)
-	require.NoError(t, err)
+	t.Run("with_autohost_tld", func(t *testing.T) {
+		oldConf := yobj{
+			"dns": yobj{
+				"autohost_tld": tld,
+			},
+			"schema_version": 8,
+		}
 
-	require.Equal(t, oldConf["schema_version"], 9)
+		err := upgradeSchema8to9(oldConf)
+		require.NoError(t, err)
 
-	dnsVal, ok := oldConf["dns"]
-	require.True(t, ok)
+		require.Equal(t, oldConf["schema_version"], 9)
 
-	newDNSConf, ok := dnsVal.(yobj)
-	require.True(t, ok)
+		dnsVal, ok := oldConf["dns"]
+		require.True(t, ok)
 
-	localDomainName, ok := newDNSConf["local_domain_name"].(string)
-	require.True(t, ok)
+		newDNSConf, ok := dnsVal.(yobj)
+		require.True(t, ok)
 
-	assert.Equal(t, tld, localDomainName)
+		localDomainName, ok := newDNSConf["local_domain_name"].(string)
+		require.True(t, ok)
+
+		assert.Equal(t, tld, localDomainName)
+	})
+
+	t.Run("without_autohost_tld", func(t *testing.T) {
+		oldConf := yobj{
+			"dns":            yobj{},
+			"schema_version": 8,
+		}
+
+		err := upgradeSchema8to9(oldConf)
+		require.NoError(t, err)
+
+		require.Equal(t, oldConf["schema_version"], 9)
+
+		dnsVal, ok := oldConf["dns"]
+		require.True(t, ok)
+
+		newDNSConf, ok := dnsVal.(yobj)
+		require.True(t, ok)
+
+		// Should be nil in order to be set to the default value by the
+		// following config rewrite.
+		_, ok = newDNSConf["local_domain_name"]
+		require.False(t, ok)
+	})
 }
 
 // assertEqualExcept removes entries from configs and compares them.

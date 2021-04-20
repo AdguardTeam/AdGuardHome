@@ -490,7 +490,16 @@ func upgradeSchema8to9(diskConf yobj) (err error) {
 		return fmt.Errorf("unexpected type of dns: %T", dnsVal)
 	}
 
-	autohostTLDVal := dns["autohost_tld"]
+	autohostTLDVal, ok := dns["autohost_tld"]
+	if !ok {
+		// This happens when upgrading directly from v0.105.2, because
+		// dns.autohost_tld was never set to any value.  Go on and leave
+		// it that way.
+		//
+		// See https://github.com/AdguardTeam/AdGuardHome/issues/2988.
+		return nil
+	}
+
 	autohostTLD, ok := autohostTLDVal.(string)
 	if !ok {
 		return fmt.Errorf("undexpected type of dns.autohost_tld: %T", autohostTLDVal)
