@@ -15,6 +15,7 @@ and this project adheres to
 
 ### Added
 
+- Hostname uniqueness validation in the DHCP server ([#2952]).
 - Hostname generating for DHCP clients which don't provide their own ([#2723]).
 - New flag `--no-etc-hosts` to disable client domain name lookups in the
   operating system's /etc/hosts files ([#1947]).

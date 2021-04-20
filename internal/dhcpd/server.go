@@ -64,9 +64,12 @@ type V4ServerConf struct {
 
 	leaseTime  time.Duration // the time during which a dynamic lease is considered valid
 	dnsIPAddrs []net.IP      // IPv4 addresses to return to DHCP clients as DNS server addresses
-	routerIP   net.IP        // value for Option Router
-	subnetMask net.IPMask    // value for Option SubnetMask
-	options    []dhcpOption
+
+	// subnet contains the DHCP server's subnet.  The IP is the IP of the
+	// gateway.
+	subnet *net.IPNet
+
+	options []dhcpOption
 
 	// notify is a way to signal to other components that leases have
 	// change.  notify must be called outside of locked sections, since the

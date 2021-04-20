@@ -110,3 +110,8 @@ func (r *ipRange) offset(ip net.IP) (offset uint64, ok bool) {
 	// construction.
 	return offsetInt.Uint64(), true
 }
+
+// String implements the fmt.Stringer interface for *ipRange.
+func (r *ipRange) String() (s string) {
+	return fmt.Sprintf("%s-%s", r.start, r.end)
+}

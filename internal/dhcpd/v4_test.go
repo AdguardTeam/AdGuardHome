@@ -157,7 +157,7 @@ func TestV4StaticLease_Get(t *testing.T) {
 		assert.True(t, l.IP.Equal(resp.YourIPAddr))
 		assert.True(t, s.conf.GatewayIP.Equal(resp.Router()[0]))
 		assert.True(t, s.conf.GatewayIP.Equal(resp.ServerIdentifier()))
-		assert.Equal(t, s.conf.subnetMask, resp.SubnetMask())
+		assert.Equal(t, s.conf.subnet.Mask, resp.SubnetMask())
 		assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
 	})
 
@@ -179,7 +179,7 @@ func TestV4StaticLease_Get(t *testing.T) {
 		assert.True(t, l.IP.Equal(resp.YourIPAddr))
 		assert.True(t, s.conf.GatewayIP.Equal(resp.Router()[0]))
 		assert.True(t, s.conf.GatewayIP.Equal(resp.ServerIdentifier()))
-		assert.Equal(t, s.conf.subnetMask, resp.SubnetMask())
+		assert.Equal(t, s.conf.subnet.Mask, resp.SubnetMask())
 		assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
 	})
 
@@ -246,7 +246,7 @@ func TestV4DynamicLease_Get(t *testing.T) {
 
 		assert.Equal(t, s.conf.GatewayIP, router[0])
 
-		assert.Equal(t, s.conf.subnetMask, resp.SubnetMask())
+		assert.Equal(t, s.conf.subnet.Mask, resp.SubnetMask())
 		assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
 		assert.Equal(t, []byte("012"), resp.Options[uint8(dhcpv4.OptionFQDN)])
 
@@ -271,7 +271,7 @@ func TestV4DynamicLease_Get(t *testing.T) {
 		assert.True(t, s.conf.RangeStart.Equal(resp.YourIPAddr))
 		assert.True(t, s.conf.GatewayIP.Equal(resp.Router()[0]))
 		assert.True(t, s.conf.GatewayIP.Equal(resp.ServerIdentifier()))
-		assert.Equal(t, s.conf.subnetMask, resp.SubnetMask())
+		assert.Equal(t, s.conf.subnet.Mask, resp.SubnetMask())
 		assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
 	})
 
