@@ -15,12 +15,15 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
+	"golang.org/x/sys/cpu"
 )
 
 var tlsWebHandlersRegistered = false
@@ -550,4 +553,97 @@ func (t *TLSMod) registerWebHandlers() {
 	httpRegister(http.MethodGet, "/control/tls/status", t.handleTLSStatus)
 	httpRegister(http.MethodPost, "/control/tls/configure", t.handleTLSConfigure)
 	httpRegister(http.MethodPost, "/control/tls/validate", t.handleTLSValidate)
+}
+
+// LoadSystemRootCAs tries to load root certificates from the operating system.
+// It returns nil in case nothing is found so that that Go.crypto will use it's
+// default algorithm to find system root CA list.
+//
+// See https://github.com/AdguardTeam/AdGuardHome/internal/issues/1311.
+func LoadSystemRootCAs() (roots *x509.CertPool) {
+	// TODO(e.burkov): Use build tags instead.
+	if runtime.GOOS != "linux" {
+		return nil
+	}
+
+	// Directories with the system root certificates, which aren't supported
+	// by Go.crypto.
+	dirs := []string{
+		// Entware.
+		"/opt/etc/ssl/certs",
+	}
+	roots = x509.NewCertPool()
+	for _, dir := range dirs {
+		fis, err := ioutil.ReadDir(dir)
+		if errors.Is(err, os.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			log.Error("opening directory: %q: %s", dir, err)
+		}
+
+		var rootsAdded bool
+		for _, fi := range fis {
+			var certData []byte
+			certData, err = ioutil.ReadFile(filepath.Join(dir, fi.Name()))
+			if err == nil && roots.AppendCertsFromPEM(certData) {
+				rootsAdded = true
+			}
+		}
+
+		if rootsAdded {
+			return roots
+		}
+	}
+
+	return nil
+}
+
+// InitTLSCiphers performs the same work as initDefaultCipherSuites() from
+// crypto/tls/common.go but don't uses lots of other default ciphers.
+func InitTLSCiphers() (ciphers []uint16) {
+	// Check the cpu flags for each platform that has optimized GCM
+	// implementations.  The worst case is when all these variables are
+	// false.
+	var (
+		hasGCMAsmAMD64 = cpu.X86.HasAES && cpu.X86.HasPCLMULQDQ
+		hasGCMAsmARM64 = cpu.ARM64.HasAES && cpu.ARM64.HasPMULL
+		// Keep in sync with crypto/aes/cipher_s390x.go.
+		hasGCMAsmS390X = cpu.S390X.HasAES &&
+			cpu.S390X.HasAESCBC &&
+			cpu.S390X.HasAESCTR &&
+			(cpu.S390X.HasGHASH || cpu.S390X.HasAESGCM)
+
+		hasGCMAsm = hasGCMAsmAMD64 || hasGCMAsmARM64 || hasGCMAsmS390X
+	)
+
+	if hasGCMAsm {
+		// If AES-GCM hardware is provided then prioritize AES-GCM
+		// cipher suites.
+		ciphers = []uint16{
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+		}
+	} else {
+		// Without AES-GCM hardware, we put the ChaCha20-Poly1305 cipher
+		// suites first.
+		ciphers = []uint16{
+			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+		}
+	}
+
+	return append(
+		ciphers,
+		tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
+	)
 }

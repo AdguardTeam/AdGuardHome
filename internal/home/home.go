@@ -30,7 +30,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
-	"github.com/AdguardTeam/AdGuardHome/internal/util"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/log"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -139,8 +138,8 @@ func setupContext(args options) {
 
 	initConfig()
 
-	Context.tlsRoots = util.LoadSystemRootCAs()
-	Context.tlsCiphers = util.InitTLSCiphers()
+	Context.tlsRoots = LoadSystemRootCAs()
+	Context.tlsCiphers = InitTLSCiphers()
 	Context.transport = &http.Transport{
 		DialContext: customDialContext,
 		Proxy:       getHTTPProxy,
