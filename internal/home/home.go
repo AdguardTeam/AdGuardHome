@@ -332,7 +332,10 @@ func run(args options) {
 		}()
 
 		if Context.dhcpServer != nil {
-			_ = Context.dhcpServer.Start()
+			err = Context.dhcpServer.Start()
+			if err != nil {
+				log.Error("starting dhcp server: %s", err)
+			}
 		}
 	}
 

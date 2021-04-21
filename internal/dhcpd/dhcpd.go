@@ -242,16 +242,14 @@ func (s *Server) WriteDiskConfig(c *ServerConfig) {
 }
 
 // Start will listen on port 67 and serve DHCP requests.
-func (s *Server) Start() error {
-	err := s.srv4.Start()
+func (s *Server) Start() (err error) {
+	err = s.srv4.Start()
 	if err != nil {
-		log.Error("DHCPv4: start: %s", err)
 		return err
 	}
 
 	err = s.srv6.Start()
 	if err != nil {
-		log.Error("DHCPv6: start: %s", err)
 		return err
 	}
 

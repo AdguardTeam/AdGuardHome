@@ -51,6 +51,12 @@ func (s *v4Server) WriteDiskConfig6(c *V6ServerConf) {
 
 // ResetLeases - reset leases
 func (s *v4Server) ResetLeases(leases []*Lease) {
+	if !s.conf.Enabled {
+		return
+	}
+
+	s.leasedOffsets = newBitSet()
+	s.leaseHosts = aghstrings.NewSet()
 	s.leases = nil
 
 	for _, l := range leases {
@@ -826,7 +832,9 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 }
 
 // Start starts the IPv4 DHCP server.
-func (s *v4Server) Start() error {
+func (s *v4Server) Start() (err error) {
+	defer agherr.Annotate("dhcpv4: %w", &err)
+
 	if !s.conf.Enabled {
 		return nil
 	}
@@ -834,14 +842,14 @@ func (s *v4Server) Start() error {
 	ifaceName := s.conf.InterfaceName
 	iface, err := net.InterfaceByName(ifaceName)
 	if err != nil {
-		return fmt.Errorf("dhcpv4: finding interface %s by name: %w", ifaceName, err)
+		return fmt.Errorf("finding interface %s by name: %w", ifaceName, err)
 	}
 
 	log.Debug("dhcpv4: starting...")
 
 	dnsIPAddrs, err := ifaceDNSIPAddrs(iface, ipVersion4, defaultMaxAttempts, defaultBackoff)
 	if err != nil {
-		return fmt.Errorf("dhcpv4: interface %s: %w", ifaceName, err)
+		return fmt.Errorf("interface %s: %w", ifaceName, err)
 	}
 
 	if len(dnsIPAddrs) == 0 {
@@ -863,8 +871,18 @@ func (s *v4Server) Start() error {
 	log.Info("dhcpv4: listening")
 
 	go func() {
-		err = s.srv.Serve()
-		log.Debug("dhcpv4: srv.Serve: %s", err)
+		serr := s.srv.Serve()
+		// TODO(a.garipov): Uncomment in Go 1.16.
+		//
+		//   if errors.Is(serr, net.ErrClosed) {
+		//           log.Info("dhcpv4: server is closed")
+		//
+		//           return
+		//   }
+
+		if serr != nil {
+			log.Error("dhcpv4: srv.Serve: %s", serr)
+		}
 	}()
 
 	// Signal to the clients containers in packages home and dnsforward that
