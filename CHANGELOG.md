@@ -33,6 +33,8 @@ and this project adheres to
 
 ### Changed
 
+- Our DoQ implementation is now updated to conform to the latest standard
+  [draft][doq-draft-02] ([#2843]).
 - Quality of logging ([#2954]).
 - Normalization of hostnames sent by DHCP clients ([#2945], [#2952]).
 - The access to the private hosts is now forbidden for users from external
@@ -78,6 +80,7 @@ and this project adheres to
 [#2828]: https://github.com/AdguardTeam/AdGuardHome/issues/2828
 [#2835]: https://github.com/AdguardTeam/AdGuardHome/issues/2835
 [#2838]: https://github.com/AdguardTeam/AdGuardHome/issues/2838
+[#2843]: https://github.com/AdguardTeam/AdGuardHome/issues/2843
 [#2889]: https://github.com/AdguardTeam/AdGuardHome/issues/2889
 [#2927]: https://github.com/AdguardTeam/AdGuardHome/issues/2927
 [#2934]: https://github.com/AdguardTeam/AdGuardHome/issues/2934
@@ -86,6 +89,8 @@ and this project adheres to
 [#2952]: https://github.com/AdguardTeam/AdGuardHome/issues/2952
 [#2954]: https://github.com/AdguardTeam/AdGuardHome/issues/2954
 [#2961]: https://github.com/AdguardTeam/AdGuardHome/issues/2961
+
+[doq-draft-02]: https://tools.ietf.org/html/draft-ietf-dprive-dnsoquic-02
 
 
 

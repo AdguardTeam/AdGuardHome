@@ -3,11 +3,11 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.15
 
 require (
-	github.com/AdguardTeam/dnsproxy v0.35.5
+	github.com/AdguardTeam/dnsproxy v0.37.1
 	github.com/AdguardTeam/golibs v0.4.5
 	github.com/AdguardTeam/urlfilter v0.14.4
 	github.com/NYTimes/gziphandler v1.1.1
-	github.com/ameshkov/dnscrypt/v2 v2.0.3
+	github.com/ameshkov/dnscrypt/v2 v2.1.3
 	github.com/digineo/go-ipset/v2 v2.2.1
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-ping/ping v0.0.0-20210216210419-25d1413fb7bb
@@ -20,8 +20,7 @@ require (
 	github.com/insomniacslk/dhcp v0.0.0-20210310193751-cfd4d47082c2
 	github.com/kardianos/service v1.2.0
 	github.com/karrick/godirwalk v1.16.1 // indirect
-	github.com/lucas-clemente/quic-go v0.19.3
-	github.com/marten-seemann/qtls-go1-15 v0.1.4 // indirect
+	github.com/lucas-clemente/quic-go v0.20.1
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7
 	github.com/mdlayher/netlink v1.4.0
 	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065

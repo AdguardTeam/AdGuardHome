@@ -142,7 +142,7 @@ func processClientID(dctx *dnsContext) (rc resultCode) {
 			return resultCodeError
 		}
 
-		cliSrvName = qs.ConnectionState().ServerName
+		cliSrvName = qs.ConnectionState().TLS.ServerName
 	}
 
 	clientID, err := clientIDFromClientServerName(hostSrvName, cliSrvName, srvConf.StrictSNICheck)

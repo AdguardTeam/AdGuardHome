@@ -214,3 +214,157 @@ func testDNSConf(schemaVersion int) (dnsConf yobj) {
 
 	return dnsConf
 }
+
+func TestAddQUICPort(t *testing.T) {
+	testCases := []struct {
+		name string
+		ups  string
+		want string
+	}{{
+		name: "simple_ip",
+		ups:  "8.8.8.8",
+		want: "8.8.8.8",
+	}, {
+		name: "url_ipv4",
+		ups:  "quic://8.8.8.8",
+		want: "quic://8.8.8.8:784",
+	}, {
+		name: "url_ipv4_with_port",
+		ups:  "quic://8.8.8.8:25565",
+		want: "quic://8.8.8.8:25565",
+	}, {
+		name: "url_ipv6",
+		ups:  "quic://[::1]",
+		want: "quic://[::1]:784",
+	}, {
+		name: "url_ipv6_invalid",
+		ups:  "quic://::1",
+		want: "quic://::1",
+	}, {
+		name: "url_ipv6_with_port",
+		ups:  "quic://[::1]:25565",
+		want: "quic://[::1]:25565",
+	}, {
+		name: "url_hostname",
+		ups:  "quic://example.com",
+		want: "quic://example.com:784",
+	}, {
+		name: "url_hostname_with_port",
+		ups:  "quic://example.com:25565",
+		want: "quic://example.com:25565",
+	}, {
+		name: "url_hostname_with_endpoint",
+		ups:  "quic://example.com/some-endpoint",
+		want: "quic://example.com:784/some-endpoint",
+	}, {
+		name: "url_hostname_with_port_endpoint",
+		ups:  "quic://example.com:25565/some-endpoint",
+		want: "quic://example.com:25565/some-endpoint",
+	}, {
+		name: "non-quic_proto",
+		ups:  "tls://example.com",
+		want: "tls://example.com",
+	}, {
+		name: "comment",
+		ups:  "# comment",
+		want: "# comment",
+	}, {
+		name: "blank",
+		ups:  "",
+		want: "",
+	}, {
+		name: "with_domain_ip",
+		ups:  "[/example.domain/]8.8.8.8",
+		want: "[/example.domain/]8.8.8.8",
+	}, {
+		name: "with_domain_url",
+		ups:  "[/example.domain/]quic://example.com",
+		want: "[/example.domain/]quic://example.com:784",
+	}, {
+		name: "invalid_domain",
+		ups:  "[/exmaple.domain]quic://example.com",
+		want: "[/exmaple.domain]quic://example.com",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			withPort := addQUICPort(tc.ups, 784)
+
+			assert.Equal(t, tc.want, withPort)
+		})
+	}
+}
+
+func TestUpgradeSchema9to10(t *testing.T) {
+	const ultimateAns = 42
+
+	testCases := []struct {
+		ups     any
+		want    any
+		wantErr string
+		name    string
+	}{{
+		ups:     yarr{"quic://8.8.8.8"},
+		want:    yarr{"quic://8.8.8.8:784"},
+		wantErr: "",
+		name:    "success",
+	}, {
+		ups:     ultimateAns,
+		want:    nil,
+		wantErr: "unexpected type of dns.upstream_dns: int",
+		name:    "bad_yarr_type",
+	}, {
+		ups:     yarr{ultimateAns},
+		want:    nil,
+		wantErr: "unexpected type of upstream field: int",
+		name:    "bad_upstream_type",
+	}}
+
+	for _, tc := range testCases {
+		conf := yobj{
+			"dns": yobj{
+				"upstream_dns": tc.ups,
+			},
+			"schema_version": 9,
+		}
+		t.Run(tc.name, func(t *testing.T) {
+			err := upgradeSchema9to10(conf)
+
+			if tc.wantErr != "" {
+				require.Error(t, err)
+				assert.Equal(t, tc.wantErr, err.Error())
+
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, conf["schema_version"], 10)
+
+			dnsVal, ok := conf["dns"]
+			require.True(t, ok)
+
+			newDNSConf, ok := dnsVal.(yobj)
+			require.True(t, ok)
+
+			fixedUps, ok := newDNSConf["upstream_dns"].(yarr)
+			require.True(t, ok)
+
+			assert.Equal(t, tc.want, fixedUps)
+		})
+	}
+
+	t.Run("no_dns", func(t *testing.T) {
+		err := upgradeSchema9to10(yobj{})
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("bad_dns", func(t *testing.T) {
+		err := upgradeSchema9to10(yobj{
+			"dns": ultimateAns,
+		})
+
+		require.Error(t, err)
+		assert.Equal(t, "unexpected type of dns: int", err.Error())
+	})
+}

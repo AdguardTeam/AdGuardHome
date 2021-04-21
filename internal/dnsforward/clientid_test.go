@@ -40,7 +40,7 @@ type testQUICSession struct {
 
 // ConnectionState implements the quicSession interface for testQUICSession.
 func (c testQUICSession) ConnectionState() (cs quic.ConnectionState) {
-	cs.ServerName = c.serverName
+	cs.TLS.ServerName = c.serverName
 
 	return cs
 }

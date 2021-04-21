@@ -2,11 +2,15 @@ package home
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
 	"runtime"
+	"strconv"
+	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/google/renameio/maybe"
 	"golang.org/x/crypto/bcrypt"
@@ -14,7 +18,7 @@ import (
 )
 
 // currentSchemaVersion is the current schema version.
-const currentSchemaVersion = 9
+const currentSchemaVersion = 10
 
 // These aliases are provided for convenience.
 type (
@@ -75,6 +79,7 @@ func upgradeConfigSchema(oldVersion int, diskConf yobj) (err error) {
 		upgradeSchema6to7,
 		upgradeSchema7to8,
 		upgradeSchema8to9,
+		upgradeSchema9to10,
 	}
 
 	n := 0
@@ -456,7 +461,7 @@ func upgradeSchema7to8(diskConf yobj) (err error) {
 	bindHostVal := dns["bind_host"]
 	bindHost, ok := bindHostVal.(string)
 	if !ok {
-		return fmt.Errorf("undexpected type of dns.bind_host: %T", bindHostVal)
+		return fmt.Errorf("unexpected type of dns.bind_host: %T", bindHostVal)
 	}
 
 	delete(dns, "bind_host")
@@ -502,11 +507,107 @@ func upgradeSchema8to9(diskConf yobj) (err error) {
 
 	autohostTLD, ok := autohostTLDVal.(string)
 	if !ok {
-		return fmt.Errorf("undexpected type of dns.autohost_tld: %T", autohostTLDVal)
+		return fmt.Errorf("unexpected type of dns.autohost_tld: %T", autohostTLDVal)
 	}
 
 	delete(dns, "autohost_tld")
 	dns["local_domain_name"] = autohostTLD
+
+	return nil
+}
+
+// addQUICPort inserts a port into QUIC upstream's hostname if it is missing.
+func addQUICPort(ups string, port int) (withPort string) {
+	if ups == "" || ups[0] == '#' {
+		return ups
+	}
+
+	var doms string
+	withPort = ups
+	if strings.HasPrefix(ups, "[/") {
+		domsAndUps := strings.Split(strings.TrimPrefix(ups, "[/"), "/]")
+		if len(domsAndUps) != 2 {
+			return ups
+		}
+
+		doms, withPort = "[/"+domsAndUps[0]+"/]", domsAndUps[1]
+	}
+
+	if !strings.Contains(withPort, "://") {
+		return ups
+	}
+
+	upsURL, err := url.Parse(withPort)
+	if err != nil || upsURL.Scheme != "quic" {
+		return ups
+	}
+
+	var host string
+	host, err = aghnet.SplitHost(upsURL.Host)
+	if err != nil || host != upsURL.Host {
+		return ups
+	}
+
+	upsURL.Host = strings.Join([]string{host, strconv.Itoa(port)}, ":")
+
+	return doms + upsURL.String()
+}
+
+// upgradeSchema9to10 performs the following changes:
+//
+//   # BEFORE:
+//   'dns':
+//     'upstream_dns':
+//      - 'quic://some-upstream.com'
+//
+//   # AFTER:
+//   'dns':
+//     'upstream_dns':
+//      - 'quic://some-upstream.com:784'
+//
+func upgradeSchema9to10(diskConf yobj) (err error) {
+	log.Printf("Upgrade yaml: 9 to 10")
+
+	diskConf["schema_version"] = 10
+
+	dnsVal, ok := diskConf["dns"]
+	if !ok {
+		return nil
+	}
+
+	var dns yobj
+	dns, ok = dnsVal.(yobj)
+	if !ok {
+		return fmt.Errorf("unexpected type of dns: %T", dnsVal)
+	}
+
+	const quicPort = 784
+	for _, upsField := range []string{
+		"upstream_dns",
+		"local_ptr_upstreams",
+	} {
+		var upsVal any
+		upsVal, ok = dns[upsField]
+		if !ok {
+			continue
+		}
+		var ups yarr
+		ups, ok = upsVal.(yarr)
+		if !ok {
+			return fmt.Errorf("unexpected type of dns.%s: %T", upsField, upsVal)
+		}
+
+		var u string
+		for i, uVal := range ups {
+			u, ok = uVal.(string)
+			if !ok {
+				return fmt.Errorf("unexpected type of upstream field: %T", uVal)
+			}
+
+			ups[i] = addQUICPort(u, quicPort)
+		}
+		dns[upsField] = ups
+	}
 
 	return nil
 }

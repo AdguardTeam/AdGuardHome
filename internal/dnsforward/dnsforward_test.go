@@ -334,7 +334,7 @@ func TestDoTServer(t *testing.T) {
 
 func TestDoQServer(t *testing.T) {
 	s, _ := createTestTLS(t, TLSConfig{
-		QUICListenAddrs: []*net.UDPAddr{{}},
+		QUICListenAddrs: []*net.UDPAddr{{IP: net.IP{127, 0, 0, 1}}},
 	})
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
 		&aghtest.TestUpstream{
