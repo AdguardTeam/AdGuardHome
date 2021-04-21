@@ -8,6 +8,8 @@
     "load_balancing_desc": "Egyszerre csak egy szerverről történjen lekérdezés. Az AdGuard Home egy súlyozott, véletlenszerű algoritmust fog használni a megfelelő szerver kiválasztására, így a leggyorsabb szervert gyakrabban fogja használni.",
     "bootstrap_dns": "Bootstrap DNS kiszolgálók",
     "bootstrap_dns_desc": "A Bootstrap DNS szerverek a DoH/DoT feloldók IP-címeinek feloldására szolgálnak.",
+    "local_ptr_title": "Privát DNS szerverek",
+    "local_ptr_placeholder": "Adjon meg soronként egy kiszolgáló címet",
     "check_dhcp_servers": "DHCP szerverek keresése",
     "save_config": "Konfiguráció mentése",
     "enabled_dhcp": "DHCP szerver engedélyezve",
