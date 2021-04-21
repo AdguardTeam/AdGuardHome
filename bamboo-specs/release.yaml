@@ -228,7 +228,7 @@
   - 'adg-docker': 'true'
 
 'triggers':
-- 'cron': '0 30 14 * * MON-FRI *'
+- 'cron': '0 30 14 ? * MON-FRI *'
 'branches':
   'create': 'manually'
   'delete':
