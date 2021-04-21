@@ -16,14 +16,11 @@ require (
 	github.com/gobuffalo/packr/v2 v2.8.1 // indirect
 	github.com/google/go-cmp v0.5.5 // indirect
 	github.com/google/renameio v1.0.1-0.20210406141108-81588dbe0453
-	github.com/hugelgupf/socketpair v0.0.0-20190730060125-05d35a94e714
 	github.com/insomniacslk/dhcp v0.0.0-20210310193751-cfd4d47082c2
 	github.com/kardianos/service v1.2.0
 	github.com/karrick/godirwalk v1.16.1 // indirect
 	github.com/lucas-clemente/quic-go v0.20.1
-	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7
 	github.com/mdlayher/netlink v1.4.0
-	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065
 	github.com/miekg/dns v1.1.40
 	github.com/rogpeppe/go-internal v1.7.0 // indirect
 	github.com/satori/go.uuid v1.2.0
@@ -31,7 +28,6 @@ require (
 	github.com/spf13/cobra v1.1.3 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/ti-mo/netfilter v0.4.0
-	github.com/u-root/u-root v7.0.0+incompatible
 	go.etcd.io/bbolt v1.3.5
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
@@ -43,3 +39,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	howett.net/plist v0.0.0-20201203080718-1454fab16a06
 )
+
+replace github.com/insomniacslk/dhcp => github.com/AdguardTeam/dhcp v0.0.0-20210420175708-50b0efd52063
