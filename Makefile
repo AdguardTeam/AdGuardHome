@@ -7,13 +7,15 @@
 CHANNEL = development
 CLIENT_BETA_DIR = client2
 CLIENT_DIR = client
-COMMIT = $$(git rev-parse --short HEAD)
+COMMIT = $$( git rev-parse --short HEAD )
 DIST_DIR = dist
-# TODO(a.garipov): Find out a way to make this work in GNU Make.
+# Don't name this macro "GO", because GNU Make apparenly makes it an
+# exported environment variable with the literal value of "${GO:-go}",
+# which is not what we need.  Use a dot in the name to make sure that
+# users don't have an environment variable with the same name.
 #
-#  GO = $${GO:-go}
-#
-GO = go
+# See https://unix.stackexchange.com/q/646255/105635.
+GO.MACRO = $${GO:-go}
 GOPROXY = https://goproxy.cn|https://proxy.golang.org|direct
 GPG_KEY = devteam@adguard.com
 GPG_KEY_PASSPHRASE = not-a-real-password
@@ -37,9 +39,9 @@ ENV = env\
 	GPG_KEY='$(GPG_KEY)'\
 	GPG_KEY_PASSPHRASE='$(GPG_KEY_PASSPHRASE)'\
 	DIST_DIR='$(DIST_DIR)'\
-	GO='$(GO)'\
+	GO="$(GO.MACRO)"\
 	GOPROXY='$(GOPROXY)'\
-	PATH="$${PWD}/bin:$$($(GO) env GOPATH)/bin:$${PATH}"\
+	PATH="$${PWD}/bin:$$( "$(GO.MACRO)" env GOPATH )/bin:$${PATH}"\
 	RACE='$(RACE)'\
 	SIGN='$(SIGN)'\
 	VERBOSE='$(VERBOSE)'\
@@ -97,10 +99,10 @@ go-check: go-tools go-lint go-test
 # A quick check to make sure that all supported operating systems can be
 # typechecked and built successfully.
 go-os-check:
-	env GOOS='darwin'  $(GO) vet ./internal/...
-	env GOOS='freebsd' $(GO) vet ./internal/...
-	env GOOS='linux'   $(GO) vet ./internal/...
-	env GOOS='windows' $(GO) vet ./internal/...
+	env GOOS='darwin'  "$(GO.MACRO)" vet ./internal/...
+	env GOOS='freebsd' "$(GO.MACRO)" vet ./internal/...
+	env GOOS='linux'   "$(GO.MACRO)" vet ./internal/...
+	env GOOS='windows' "$(GO.MACRO)" vet ./internal/...
 
 openapi-lint: ; cd ./openapi/ && $(YARN) test
 openapi-show: ; cd ./openapi/ && $(YARN) start

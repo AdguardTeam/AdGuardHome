@@ -27,7 +27,7 @@ set -f -u
 
 # Deferred Helpers
 
-not_found_msg='
+readonly not_found_msg='
 looks like a binary not found error.
 make sure you have installed the linter binaries using:
 
@@ -46,6 +46,29 @@ not_found() {
 	fi
 }
 trap not_found EXIT
+
+
+
+# Warnings
+
+readonly go_min_version='go1.15'
+readonly go_min_version_prefix="go version ${go_min_version}"
+readonly go_version_msg="
+warning: your go version different from the recommended minimal one (${go_min_version}).
+if you have the version installed, please set the GO environment variable.
+for example:
+
+	export GO='${go_min_version}'
+"
+case "$( "$GO" version )"
+in
+("$go_min_version_prefix"*)
+	# Go on.
+	;;
+(*)
+	echo "$go_version_msg" 1>&2
+	;;
+esac
 
 
 
@@ -99,7 +122,7 @@ exit_on_output() (
 	cmd="$1"
 	shift
 
-	output="$("$cmd" "$@" 2>&1)"
+	output="$( "$cmd" "$@" 2>&1 )"
 	exitcode="$?"
 	if [ "$exitcode" != '0' ]
 	then
