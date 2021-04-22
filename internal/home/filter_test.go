@@ -43,7 +43,7 @@ func testStartFilterListener(t *testing.T) net.Listener {
 
 func TestFilters(t *testing.T) {
 	l := testStartFilterListener(t)
-	dir := prepareTestDir(t)
+	dir := t.TempDir()
 
 	Context = homeContext{
 		workDir: dir,

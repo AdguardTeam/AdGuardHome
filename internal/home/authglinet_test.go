@@ -12,7 +12,7 @@ import (
 )
 
 func TestAuthGL(t *testing.T) {
-	dir := prepareTestDir(t)
+	dir := t.TempDir()
 
 	GLMode = true
 	t.Cleanup(func() {
