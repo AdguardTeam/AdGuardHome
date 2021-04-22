@@ -27,6 +27,10 @@ type Whois struct {
 	clients *clientsContainer
 	ipChan  chan net.IP
 
+	// dialContext specifies the dial function for creating unencrypted TCP
+	// connections.
+	dialContext func(ctx context.Context, network, addr string) (conn net.Conn, err error)
+
 	// Contains IP addresses of clients
 	// An active IP address is resolved once again after it expires.
 	// If IP address couldn't be resolved, it stays here for some time to prevent further attempts to resolve the same IP.
@@ -45,7 +49,8 @@ func initWhois(clients *clientsContainer) *Whois {
 			EnableLRU: true,
 			MaxCount:  10000,
 		}),
-		ipChan: make(chan net.IP, 255),
+		dialContext: customDialContext,
+		ipChan:      make(chan net.IP, 255),
 	}
 
 	go w.workerLoop()
@@ -124,7 +129,7 @@ func (w *Whois) query(ctx context.Context, target, serverAddr string) (string, e
 	if addr == "whois.arin.net" {
 		target = "n + " + target
 	}
-	conn, err := customDialContext(ctx, "tcp", serverAddr)
+	conn, err := w.dialContext(ctx, "tcp", serverAddr)
 	if err != nil {
 		return "", err
 	}

@@ -640,7 +640,9 @@ func detectFirstRun() bool {
 	return errors.Is(err, os.ErrNotExist)
 }
 
-// Connect to a remote server resolving hostname using our own DNS server
+// Connect to a remote server resolving hostname using our own DNS server.
+//
+// TODO(e.burkov): This messy logic should be decomposed and clarified.
 func customDialContext(ctx context.Context, network, addr string) (conn net.Conn, err error) {
 	log.Tracef("network:%v  addr:%v", network, addr)
 

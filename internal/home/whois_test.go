@@ -2,44 +2,77 @@ package home
 
 import (
 	"context"
+	"io"
+	"net"
 	"testing"
+	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func prepareTestDNSServer(t *testing.T) {
-	t.Helper()
-
-	config.DNS.Port = 1234
-
-	var err error
-	Context.dnsServer, err = dnsforward.NewServer(dnsforward.DNSCreateParams{})
-	require.NoError(t, err)
-
-	conf := &dnsforward.ServerConfig{}
-	conf.UpstreamDNS = []string{"8.8.8.8"}
-
-	err = Context.dnsServer.Prepare(conf)
-	require.NoError(t, err)
+// fakeConn is a mock implementation of net.Conn to simplify testing.
+//
+// TODO(e.burkov): Search for other places in code where it may be used. Move
+// into aghtest then.
+type fakeConn struct {
+	// Conn is embedded here simply to make *fakeConn a net.Conn without
+	// actually implementing all methods.
+	net.Conn
+	data []byte
 }
 
-// TODO(e.burkov): It's kind of complicated to get rid of network access in this
-// test.  The thing is that *Whois creates new *net.Dialer each time it requests
-// the server, so it becomes hard to simulate handling of request from test even
-// with substituted upstream.  However, it must be done.
-func TestWhois(t *testing.T) {
-	prepareTestDNSServer(t)
+// Write implements net.Conn interface for *fakeConn.  It always returns 0 and a
+// nil error without mutating the slice.
+func (c *fakeConn) Write(_ []byte) (n int, err error) {
+	return 0, nil
+}
 
-	w := Whois{timeoutMsec: 5000}
-	resp, err := w.queryAll(context.Background(), "8.8.8.8")
+// Read implements net.Conn interface for *fakeConn.  It puts the content of
+// c.data field into b up to the b's capacity.
+func (c *fakeConn) Read(b []byte) (n int, err error) {
+	return copy(b, c.data), io.EOF
+}
+
+// Close implements net.Conn interface for *fakeConn.  It always returns nil.
+func (c *fakeConn) Close() (err error) {
+	return nil
+}
+
+// SetReadDeadline implements net.Conn interface for *fakeConn.  It always
+// returns nil.
+func (c *fakeConn) SetReadDeadline(_ time.Time) (err error) {
+	return nil
+}
+
+// fakeDial is a mock implementation of customDialContext to simplify testing.
+func (c *fakeConn) fakeDial(ctx context.Context, network, addr string) (conn net.Conn, err error) {
+	return c, nil
+}
+
+func TestWhois(t *testing.T) {
+	const (
+		nl   = "\n"
+		data = `OrgName:        FakeOrg LLC` + nl +
+			`City:           Nonreal` + nl +
+			`Country:        Imagiland` + nl
+	)
+
+	fc := &fakeConn{
+		data: []byte(data),
+	}
+
+	w := Whois{
+		timeoutMsec: 5000,
+		dialContext: fc.fakeDial,
+	}
+	resp, err := w.queryAll(context.Background(), "1.2.3.4")
 	assert.NoError(t, err)
 
 	m := whoisParse(resp)
 	require.NotEmpty(t, m)
 
-	assert.Equal(t, "Google LLC", m["orgname"])
-	assert.Equal(t, "US", m["country"])
-	assert.Equal(t, "Mountain View", m["city"])
+	assert.Equal(t, "FakeOrg LLC", m["orgname"])
+	assert.Equal(t, "Imagiland", m["country"])
+	assert.Equal(t, "Nonreal", m["city"])
 }
