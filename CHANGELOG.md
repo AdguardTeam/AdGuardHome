@@ -52,6 +52,7 @@ and this project adheres to
 
 ### Fixed
 
+- Root server resolving when custom upstreams for hosts are specified ([#2994]).
 - Inconsistent resolving of DHCP clients when the DHCP server is disabled
   ([#2934]).
 - Comment handling in clients' custom upstreams ([#2947]).
@@ -89,6 +90,7 @@ and this project adheres to
 [#2952]: https://github.com/AdguardTeam/AdGuardHome/issues/2952
 [#2954]: https://github.com/AdguardTeam/AdGuardHome/issues/2954
 [#2961]: https://github.com/AdguardTeam/AdGuardHome/issues/2961
+[#2994]: https://github.com/AdguardTeam/AdGuardHome/issues/2994
 
 [doq-draft-02]: https://tools.ietf.org/html/draft-ietf-dprive-dnsoquic-02
 
