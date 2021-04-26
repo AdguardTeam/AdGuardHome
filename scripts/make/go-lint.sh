@@ -54,7 +54,7 @@ trap not_found EXIT
 readonly go_min_version='go1.15'
 readonly go_min_version_prefix="go version ${go_min_version}"
 readonly go_version_msg="
-warning: your go version different from the recommended minimal one (${go_min_version}).
+warning: your go version is different from the recommended minimal one (${go_min_version}).
 if you have the version installed, please set the GO environment variable.
 for example:
 
