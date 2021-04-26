@@ -15,6 +15,7 @@ and this project adheres to
 
 ### Added
 
+- `$denyallow` modifier for filters ([#2923]).
 - Hostname uniqueness validation in the DHCP server ([#2952]).
 - Hostname generating for DHCP clients which don't provide their own ([#2723]).
 - New flag `--no-etc-hosts` to disable client domain name lookups in the
@@ -52,6 +53,8 @@ and this project adheres to
 
 ### Fixed
 
+- Multiple answers for `$dnsrewrite` rule matching requests with repeating
+  patterns in it ([#2981]).
 - Root server resolving when custom upstreams for hosts are specified ([#2994]).
 - Inconsistent resolving of DHCP clients when the DHCP server is disabled
   ([#2934]).
@@ -83,6 +86,7 @@ and this project adheres to
 [#2838]: https://github.com/AdguardTeam/AdGuardHome/issues/2838
 [#2843]: https://github.com/AdguardTeam/AdGuardHome/issues/2843
 [#2889]: https://github.com/AdguardTeam/AdGuardHome/issues/2889
+[#2923]: https://github.com/AdguardTeam/AdGuardHome/issues/2923
 [#2927]: https://github.com/AdguardTeam/AdGuardHome/issues/2927
 [#2934]: https://github.com/AdguardTeam/AdGuardHome/issues/2934
 [#2945]: https://github.com/AdguardTeam/AdGuardHome/issues/2945
@@ -90,6 +94,7 @@ and this project adheres to
 [#2952]: https://github.com/AdguardTeam/AdGuardHome/issues/2952
 [#2954]: https://github.com/AdguardTeam/AdGuardHome/issues/2954
 [#2961]: https://github.com/AdguardTeam/AdGuardHome/issues/2961
+[#2981]: https://github.com/AdguardTeam/AdGuardHome/issues/2981
 [#2994]: https://github.com/AdguardTeam/AdGuardHome/issues/2994
 
 [doq-draft-02]: https://tools.ietf.org/html/draft-ietf-dprive-dnsoquic-02
