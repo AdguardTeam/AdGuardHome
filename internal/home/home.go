@@ -282,7 +282,21 @@ func run(args options) {
 
 	sessFilename := filepath.Join(Context.getDataDir(), "sessions.db")
 	GLMode = args.glinetMode
-	Context.auth = InitAuth(sessFilename, config.Users, config.WebSessionTTLHours*60*60)
+	var arl *authRateLimiter
+	if config.AuthAttempts > 0 && config.AuthBlockMin > 0 {
+		arl = newAuthRateLimiter(
+			time.Duration(config.AuthBlockMin)*time.Minute,
+			config.AuthAttempts,
+		)
+	} else {
+		log.Info("authratelimiter is disabled")
+	}
+	Context.auth = InitAuth(
+		sessFilename,
+		config.Users,
+		config.WebSessionTTLHours*60*60,
+		arl,
+	)
 	if Context.auth == nil {
 		log.Fatalf("Couldn't initialize Auth module")
 	}

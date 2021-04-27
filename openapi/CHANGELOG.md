@@ -4,7 +4,12 @@
 
 ## v0.106: API changes
 
-## New `"private_upstream"` field in `POST /test_upstream_dns`
+### New response code in `POST /control/login`
+
+* `429` is returned when user is out of login attempts.  It adds the
+  `Retry-After` header with the number of seconds of block left in it.
+
+### New `"private_upstream"` field in `POST /test_upstream_dns`
 
 * The new optional field `"private_upstream"` of `UpstreamConfig` contains the
   upstream servers for resolving locally-served ip addresses to be checked.

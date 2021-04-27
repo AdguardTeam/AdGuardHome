@@ -15,6 +15,8 @@ and this project adheres to
 
 ### Added
 
+- The ability to block user for login after configurable number of unsuccessful
+  attempts for configurable time ([#2826]).
 - `$denyallow` modifier for filters ([#2923]).
 - Hostname uniqueness validation in the DHCP server ([#2952]).
 - Hostname generating for DHCP clients which don't provide their own ([#2723]).
@@ -81,6 +83,7 @@ and this project adheres to
 [#2704]: https://github.com/AdguardTeam/AdGuardHome/issues/2704
 [#2723]: https://github.com/AdguardTeam/AdGuardHome/issues/2723
 [#2824]: https://github.com/AdguardTeam/AdGuardHome/issues/2824
+[#2826]: https://github.com/AdguardTeam/AdGuardHome/issues/2826
 [#2828]: https://github.com/AdguardTeam/AdGuardHome/issues/2828
 [#2835]: https://github.com/AdguardTeam/AdGuardHome/issues/2835
 [#2838]: https://github.com/AdguardTeam/AdGuardHome/issues/2838

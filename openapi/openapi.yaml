@@ -1078,6 +1078,12 @@
       'responses':
         '200':
           'description': 'OK.'
+        '400':
+          'description': >
+            Invalid username or password.
+        '429':
+          'description': >
+            Out of login attempts.
   '/logout':
     'get':
       'tags':

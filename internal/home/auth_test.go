@@ -48,7 +48,7 @@ func TestAuth(t *testing.T) {
 		Name:         "name",
 		PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2",
 	}}
-	a := InitAuth(fn, nil, 60)
+	a := InitAuth(fn, nil, 60, nil)
 	s := session{}
 
 	user := User{Name: "name"}
@@ -76,7 +76,7 @@ func TestAuth(t *testing.T) {
 	a.Close()
 
 	// load saved session
-	a = InitAuth(fn, users, 60)
+	a = InitAuth(fn, users, 60, nil)
 
 	// the session is still alive
 	assert.Equal(t, checkSessionOK, a.checkSession(sessStr))
@@ -91,7 +91,7 @@ func TestAuth(t *testing.T) {
 	time.Sleep(3 * time.Second)
 
 	// load and remove expired sessions
-	a = InitAuth(fn, users, 60)
+	a = InitAuth(fn, users, 60, nil)
 	assert.Equal(t, checkSessionNotFound, a.checkSession(sessStr))
 
 	a.Close()
@@ -122,7 +122,7 @@ func TestAuthHTTP(t *testing.T) {
 	users := []User{
 		{Name: "name", PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2"},
 	}
-	Context.auth = InitAuth(fn, users, 60)
+	Context.auth = InitAuth(fn, users, 60, nil)
 
 	handlerCalled := false
 	handler := func(_ http.ResponseWriter, _ *http.Request) {
@@ -151,7 +151,7 @@ func TestAuthHTTP(t *testing.T) {
 	assert.True(t, handlerCalled)
 
 	// perform login
-	cookie, err := Context.auth.httpCookie(loginJSON{Name: "name", Password: "password"})
+	cookie, err := Context.auth.httpCookie(loginJSON{Name: "name", Password: "password"}, "")
 	assert.Nil(t, err)
 	assert.NotEmpty(t, cookie)
 

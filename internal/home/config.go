@@ -47,10 +47,16 @@ type configuration struct {
 	BindPort     int    `yaml:"bind_port"`      // BindPort is the port the HTTP server
 	BetaBindPort int    `yaml:"beta_bind_port"` // BetaBindPort is the port for new client
 	Users        []User `yaml:"users"`          // Users that can access HTTP server
-	ProxyURL     string `yaml:"http_proxy"`     // Proxy address for our HTTP client
-	Language     string `yaml:"language"`       // two-letter ISO 639-1 language code
-	RlimitNoFile uint   `yaml:"rlimit_nofile"`  // Maximum number of opened fd's per process (0: default)
-	DebugPProf   bool   `yaml:"debug_pprof"`    // Enable pprof HTTP server on port 6060
+	// AuthAttempts is the maximum number of failed login attempts a user
+	// can do before being blocked.
+	AuthAttempts uint `yaml:"auth_attempts"`
+	// AuthBlockMin is the duration, in minutes, of the block of new login
+	// attempts after AuthAttempts unsuccessful login attempts.
+	AuthBlockMin uint   `yaml:"block_auth_min"`
+	ProxyURL     string `yaml:"http_proxy"`    // Proxy address for our HTTP client
+	Language     string `yaml:"language"`      // two-letter ISO 639-1 language code
+	RlimitNoFile uint   `yaml:"rlimit_nofile"` // Maximum number of opened fd's per process (0: default)
+	DebugPProf   bool   `yaml:"debug_pprof"`   // Enable pprof HTTP server on port 6060
 
 	// TTL for a web session (in hours)
 	// An active session is automatically refreshed once a day.
@@ -137,6 +143,8 @@ var config = configuration{
 	BindPort:     3000,
 	BetaBindPort: 0,
 	BindHost:     net.IP{0, 0, 0, 0},
+	AuthAttempts: 5,
+	AuthBlockMin: 15,
 	DNS: dnsConfig{
 		BindHosts:     []net.IP{{0, 0, 0, 0}},
 		Port:          53,

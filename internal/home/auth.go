@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -62,6 +63,7 @@ func (s *session) deserialize(data []byte) bool {
 // Auth - global object
 type Auth struct {
 	db         *bbolt.DB
+	blocker    *authRateLimiter
 	sessions   map[string]*session
 	users      []User
 	lock       sync.Mutex
@@ -75,12 +77,15 @@ type User struct {
 }
 
 // InitAuth - create a global object
-func InitAuth(dbFilename string, users []User, sessionTTL uint32) *Auth {
+func InitAuth(dbFilename string, users []User, sessionTTL uint32, blocker *authRateLimiter) *Auth {
 	log.Info("Initializing auth module: %s", dbFilename)
 
-	a := Auth{}
-	a.sessionTTL = sessionTTL
-	a.sessions = make(map[string]*session)
+	a := &Auth{
+		sessionTTL: sessionTTL,
+		blocker:    blocker,
+		sessions:   make(map[string]*session),
+		users:      users,
+	}
 	var err error
 	a.db, err = bbolt.Open(dbFilename, 0o644, nil)
 	if err != nil {
@@ -92,10 +97,9 @@ func InitAuth(dbFilename string, users []User, sessionTTL uint32) *Auth {
 		return nil
 	}
 	a.loadSessions()
-	a.users = users
 	log.Info("auth: initialized.  users:%d  sessions:%d", len(a.users), len(a.sessions))
 
-	return &a
+	return a
 }
 
 // Close - close module
@@ -330,13 +334,23 @@ func cookieExpiryFormat(exp time.Time) (formatted string) {
 	return exp.Format(cookieTimeFormat)
 }
 
-func (a *Auth) httpCookie(req loginJSON) (string, error) {
+func (a *Auth) httpCookie(req loginJSON, addr string) (cookie string, err error) {
+	blocker := a.blocker
 	u := a.UserFind(req.Name, req.Password)
 	if len(u.Name) == 0 {
-		return "", nil
+		if blocker != nil {
+			blocker.inc(addr)
+		}
+
+		return "", err
 	}
 
-	sess, err := newSessionToken()
+	if blocker != nil {
+		blocker.remove(addr)
+	}
+
+	var sess []byte
+	sess, err = newSessionToken()
 	if err != nil {
 		return "", err
 	}
@@ -404,10 +418,38 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "json decode: %s", err)
+
 		return
 	}
 
-	cookie, err := Context.auth.httpCookie(req)
+	var remoteAddr string
+	// The realIP couldn't be used here due to security issues.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/2799.
+	//
+	// TODO(e.burkov): Use realIP when the issue will be fixed.
+	if remoteAddr, err = aghnet.SplitHost(r.RemoteAddr); err != nil {
+		httpError(w, http.StatusBadRequest, "auth: getting remote address: %s", err)
+
+		return
+	}
+
+	if blocker := Context.auth.blocker; blocker != nil {
+		if left := blocker.check(remoteAddr); left > 0 {
+			w.Header().Set("Retry-After", strconv.Itoa(int(left.Seconds())))
+			httpError(
+				w,
+				http.StatusTooManyRequests,
+				"auth: blocked for %s",
+				left,
+			)
+
+			return
+		}
+	}
+
+	var cookie string
+	cookie, err = Context.auth.httpCookie(req, remoteAddr)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "crypto rand reader: %s", err)
 
@@ -425,7 +467,6 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		} else {
 			log.Info("auth: failed to login user %q from ip %q", req.Name, ip)
 		}
-
 		time.Sleep(1 * time.Second)
 
 		http.Error(w, "invalid username or password", http.StatusBadRequest)
