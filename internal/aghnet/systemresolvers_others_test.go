@@ -46,21 +46,33 @@ func TestSystemResolvers_DialFunc(t *testing.T) {
 	imp := createTestSystemResolversImp(t, 0, nil)
 
 	testCases := []struct {
+		want    error
 		name    string
 		address string
-		want    error
 	}{{
+		want:    errFakeDial,
 		name:    "valid",
 		address: "127.0.0.1",
-		want:    fakeDialErr,
 	}, {
+		want:    errFakeDial,
+		name:    "valid_ipv6_port",
+		address: "[::1]:53",
+	}, {
+		want:    errFakeDial,
+		name:    "valid_ipv6_zone_port",
+		address: "[::1%lo0]:53",
+	}, {
+		want:    errBadAddrPassed,
 		name:    "invalid_split_host",
 		address: "127.0.0.1::123",
-		want:    badAddrPassedErr,
 	}, {
+		want:    errUnexpectedHostFormat,
+		name:    "invalid_ipv6_zone_port",
+		address: "[::1%%lo0]:53",
+	}, {
+		want:    errBadAddrPassed,
 		name:    "invalid_parse_ip",
 		address: "not-ip",
-		want:    badAddrPassedErr,
 	}}
 
 	for _, tc := range testCases {
