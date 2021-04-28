@@ -26,11 +26,15 @@ type SystemResolvers interface {
 }
 
 const (
-	// fakeDialErr is an error which dialFunc is expected to return.
-	fakeDialErr agherr.Error = "this error signals the successful dialFunc work"
+	// errBadAddrPassed is returned when dialFunc can't parse an IP address.
+	errBadAddrPassed agherr.Error = "the passed string is not a valid IP address"
 
-	// badAddrPassedErr is returned when dialFunc can't parse an IP address.
-	badAddrPassedErr agherr.Error = "the passed string is not a valid IP address"
+	// errFakeDial is an error which dialFunc is expected to return.
+	errFakeDial agherr.Error = "this error signals the successful dialFunc work"
+
+	// errUnexpectedHostFormat is returned by validateDialedHost when the host has
+	// more than one percent sign.
+	errUnexpectedHostFormat agherr.Error = "unexpected host format"
 )
 
 // refreshWithTicker refreshes the cache of sr after each tick form tickCh.

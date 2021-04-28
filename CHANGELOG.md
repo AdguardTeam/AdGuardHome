@@ -17,6 +17,14 @@ and this project adheres to
 ## [v0.106.1] - 2021-05-17 (APPROX.)
 -->
 
+### Fixed
+
+- Validation of IPv6 addresses with zones in system resolvers ([#3022]).
+
+[#3022]: https://github.com/AdguardTeam/AdGuardHome/issues/3022
+
+
+
 ## [v0.106.0] - 2021-04-28
 
 ### Added
