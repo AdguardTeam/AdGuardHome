@@ -250,3 +250,8 @@
 'labels': []
 'other':
   'concurrent-build-plugin': 'system-default'
+
+'branch-overrides':
+- 'release-v0.*':
+    # Build release branches manually.
+    'triggers': []
