@@ -184,6 +184,10 @@ func setupConfig(args options) {
 
 	Context.dhcpServer = dhcpd.Create(config.DHCP)
 	if Context.dhcpServer == nil {
+		// TODO(a.garipov): There are a lot of places in the code right
+		// now which assume that the DHCP server can be nil despite this
+		// condition.  Inspect them and perhaps rewrite them to use
+		// Enabled() instead.
 		log.Fatalf("can't initialize dhcp module")
 	}
 

@@ -133,6 +133,7 @@ type Server struct {
 
 // ServerInterface is an interface for servers.
 type ServerInterface interface {
+	Enabled() (ok bool)
 	Leases(flags int) []Lease
 	SetOnLeaseChanged(onLeaseChanged OnLeaseChangedT)
 }
@@ -205,6 +206,11 @@ func Create(conf ServerConfig) *Server {
 	//  because we need static leases functionality available beforehand
 	s.dbLoad()
 	return s
+}
+
+// Enabled returns true when the server is enabled.
+func (s *Server) Enabled() (ok bool) {
+	return s.conf.Enabled
 }
 
 // server calls this function after DB is updated

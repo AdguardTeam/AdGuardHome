@@ -75,6 +75,7 @@ func createTestServer(
 	require.NotNil(t, snd)
 
 	s, err = NewServer(DNSCreateParams{
+		DHCPServer:     &testDHCP{},
 		DNSFilter:      f,
 		SubnetDetector: snd,
 	})
@@ -736,6 +737,7 @@ func TestBlockedCustomIP(t *testing.T) {
 
 	var s *Server
 	s, err = NewServer(DNSCreateParams{
+		DHCPServer:     &testDHCP{},
 		DNSFilter:      dnsfilter.New(&dnsfilter.Config{}, filters),
 		SubnetDetector: snd,
 	})
@@ -873,6 +875,7 @@ func TestRewrite(t *testing.T) {
 
 	var s *Server
 	s, err = NewServer(DNSCreateParams{
+		DHCPServer:     &testDHCP{},
 		DNSFilter:      f,
 		SubnetDetector: snd,
 	})
@@ -1016,11 +1019,13 @@ func TestMatchDNSName(t *testing.T) {
 
 type testDHCP struct{}
 
+func (d *testDHCP) Enabled() (ok bool) { return true }
+
 func (d *testDHCP) Leases(flags int) []dhcpd.Lease {
 	l := dhcpd.Lease{
-		IP:       net.IP{127, 0, 0, 1},
+		IP:       net.IP{192, 168, 12, 34},
 		HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
-		Hostname: "localhost",
+		Hostname: "myhost",
 	}
 
 	return []dhcpd.Lease{l}
@@ -1056,7 +1061,7 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	})
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
-	req := createTestMessageWithType("1.0.0.127.in-addr.arpa.", dns.TypePTR)
+	req := createTestMessageWithType("34.12.168.192.in-addr.arpa.", dns.TypePTR)
 
 	resp, err := dns.Exchange(req, addr.String())
 	require.NoError(t, err)
@@ -1064,11 +1069,11 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	require.Len(t, resp.Answer, 1)
 
 	assert.Equal(t, dns.TypePTR, resp.Answer[0].Header().Rrtype)
-	assert.Equal(t, "1.0.0.127.in-addr.arpa.", resp.Answer[0].Header().Name)
+	assert.Equal(t, "34.12.168.192.in-addr.arpa.", resp.Answer[0].Header().Name)
 
 	ptr, ok := resp.Answer[0].(*dns.PTR)
 	require.True(t, ok)
-	assert.Equal(t, "localhost.", ptr.Ptr)
+	assert.Equal(t, "myhost.", ptr.Ptr)
 }
 
 func TestPTRResponseFromHosts(t *testing.T) {
@@ -1098,6 +1103,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 
 	var s *Server
 	s, err = NewServer(DNSCreateParams{
+		DHCPServer:     &testDHCP{},
 		DNSFilter:      dnsfilter.New(&c, nil),
 		SubnetDetector: snd,
 	})
