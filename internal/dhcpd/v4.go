@@ -51,6 +51,8 @@ func (s *v4Server) WriteDiskConfig6(c *V6ServerConf) {
 
 // ResetLeases - reset leases
 func (s *v4Server) ResetLeases(leases []*Lease) {
+	var err error
+
 	if !s.conf.Enabled {
 		return
 	}
@@ -60,9 +62,14 @@ func (s *v4Server) ResetLeases(leases []*Lease) {
 	s.leases = nil
 
 	for _, l := range leases {
-		err := s.addLease(l)
+		l.Hostname, err = s.validHostnameForClient(l.Hostname, l.IP)
 		if err != nil {
-			// TODO(a.garipov): Better error handling.
+			log.Info("dhcpv4: warning: previous hostname %q is invalid: %s", l.Hostname, err)
+		}
+
+		err = s.addLease(l)
+		if err != nil {
+			// TODO(a.garipov): Wrap and bubble up the error.
 			log.Error(
 				"dhcpv4: reset: re-adding a lease for %s (%s): %s",
 				l.IP,
@@ -562,7 +569,8 @@ func (o *optFQDN) ToBytes() []byte {
 	return b
 }
 
-// normalizeHostname normalizes a hostname sent by the client.
+// normalizeHostname normalizes a hostname sent by the client.  If err is not
+// nil, norm is an empty string.
 func normalizeHostname(name string) (norm string, err error) {
 	if name == "" {
 		return "", nil
@@ -601,6 +609,37 @@ func (s *v4Server) validateHostname(name string) (err error) {
 	}
 
 	return nil
+}
+
+// validHostnameForClient accepts the hostname sent by the client and returns
+// either a normalized version of that hostname or a new hostname generated from
+// the client's IP address.
+//
+// hostname is always a non-empty valid hostname.  If err is not nil, it
+// describes the issues encountered when normalizing cliHostname.
+func (s *v4Server) validHostnameForClient(
+	cliHostname string,
+	ip net.IP,
+) (hostname string, err error) {
+	hostname, err = normalizeHostname(cliHostname)
+	if err == nil {
+		err = s.validateHostname(hostname)
+		if err != nil {
+			// Go on and assign a hostname made from the IP below,
+			// returning the error that we've got.
+			hostname = ""
+		}
+	}
+
+	if hostname == "" {
+		hostname = aghnet.GenerateHostname(ip)
+	}
+
+	if hostname != cliHostname {
+		log.Info("dhcpv4: normalized hostname %q into %q", cliHostname, hostname)
+	}
+
+	return hostname, err
 }
 
 // validateLease returns an error if the lease is invalid.
@@ -682,43 +721,11 @@ func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, ok bo
 
 	if !lease.IsStatic() {
 		cliHostname := req.HostName()
-
-		var hostname string
-		hostname, err = normalizeHostname(cliHostname)
+		lease.Hostname, err = s.validHostnameForClient(cliHostname, reqIP)
 		if err != nil {
-			log.Error("dhcpv4: cannot normalize hostname for %s: %s", mac, err)
-
-			// Go on and assign a hostname made from the IP.
+			log.Info("dhcpv4: warning: client hostname %q is invalid: %s", cliHostname, err)
 		}
 
-		if hostname != "" {
-			if cliHostname != hostname {
-				log.Debug(
-					"dhcpv4: normalized hostname %q into %q",
-					cliHostname,
-					hostname,
-				)
-			}
-
-			if lease.Hostname != hostname {
-				// Either a new lease or an old lease with a new
-				// hostname, so validate.
-				err = s.validateHostname(hostname)
-				if err != nil {
-					log.Error("dhcpv4: validating %s: %s", mac, err)
-
-					// Go on and assign a hostname made from
-					// the IP below.
-					hostname = ""
-				}
-			}
-		}
-
-		if hostname == "" {
-			hostname = aghnet.GenerateHostname(reqIP)
-		}
-
-		lease.Hostname = hostname
 		s.commitLease(lease)
 	} else if len(lease.Hostname) != 0 {
 		o := &optFQDN{
