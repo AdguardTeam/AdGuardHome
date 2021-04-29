@@ -19,11 +19,13 @@ and this project adheres to
 
 ### Fixed
 
+- Local domain name handling when the DHCP server is disabled ([#3028]).
 - Normalization of perviously-saved invalid static DHCP leases ([#3027]).
 - Validation of IPv6 addresses with zones in system resolvers ([#3022]).
 
 [#3022]: https://github.com/AdguardTeam/AdGuardHome/issues/3022
 [#3027]: https://github.com/AdguardTeam/AdGuardHome/issues/3027
+[#3028]: https://github.com/AdguardTeam/AdGuardHome/issues/3028
 
 
 

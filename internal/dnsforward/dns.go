@@ -249,6 +249,10 @@ func (s *Server) hostToIP(host string) (ip net.IP, ok bool) {
 //
 // TODO(a.garipov): Adapt to AAAA as well.
 func (s *Server) processInternalHosts(dctx *dnsContext) (rc resultCode) {
+	if !s.dhcpServer.Enabled() {
+		return resultCodeSuccess
+	}
+
 	req := dctx.proxyCtx.Req
 	q := req.Question[0]
 

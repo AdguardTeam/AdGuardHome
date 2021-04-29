@@ -90,6 +90,7 @@ func TestServer_ProcessInternalHosts_localRestriction(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := &Server{
+				dhcpServer:        &testDHCP{},
 				localDomainSuffix: defaultLocalDomainSuffix,
 				tableHostToIP: hostToIPTable{
 					"example": knownIP,
@@ -201,6 +202,7 @@ func TestServer_ProcessInternalHosts(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := &Server{
+				dhcpServer:        &testDHCP{},
 				localDomainSuffix: tc.suffix,
 				tableHostToIP: hostToIPTable{
 					"example": knownIP,
@@ -318,7 +320,7 @@ func TestLocalRestriction(t *testing.T) {
 		}
 		t.Run(tc.name, func(t *testing.T) {
 			err = s.handleDNSRequest(nil, pctx)
-			require.Nil(t, err)
+			require.NoError(t, err)
 			require.NotNil(t, pctx.Res)
 			require.Len(t, pctx.Res.Answer, tc.wantLen)
 			if tc.wantLen > 0 {
