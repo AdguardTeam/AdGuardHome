@@ -9,7 +9,7 @@
     "bootstrap_dns": "Serwery DNS Bootstrap",
     "bootstrap_dns_desc": "Serwery DNS Bootstrap są używane do ustalenia adresu IP serwerów DoH/DoT, które oznaczysz jako główne serwery DNS.",
     "local_ptr_title": "Prywatne serwery DNS",
-    "local_ptr_desc": "Serwery DNS, z których AdGuard Home będzie korzystał przy zapytaniach o lokalnie obsługiwane zasoby. Na przykład, ten serwer będzie używany do rozwiązywania nazw hostów klientów z prywatnymi adresami IP. Jeśli nie jest ustawiony, AdGuard Home będzie automatycznie korzystał z domyślnego resolvera DNS.",
+    "local_ptr_desc": "Serwery DNS, których AdGuard Home używa do lokalnych zapytań PTR. Serwery te są używane do rozwiązywania nazw hostów klientów z prywatnymi adresami IP, na przykład \"192.168.12.34\", przy użyciu rDNS. Jeśli nie jest ustawiony, AdGuard Home używa domyślnych resolwerów DNS systemu operacyjnego.",
     "local_ptr_placeholder": "Wprowadź po jednym adresie serwera w każdym wierszu",
     "resolve_clients_title": "Włącz odwrotne rozpoznawanie adresów IP klientów",
     "resolve_clients_desc": "Jeśli jest włączona, AdGuard Home spróbuje odwrócić adresy IP klientów do ich nazw hostów, wysyłając zapytania PTR do odpowiednich resolverów (prywatne serwery DNS dla klientów lokalnych, serwer nadrzędny dla klientów z publicznymi adresami IP).",

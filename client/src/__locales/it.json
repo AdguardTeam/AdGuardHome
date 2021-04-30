@@ -9,7 +9,7 @@
     "bootstrap_dns": "Server DNS bootstrap",
     "bootstrap_dns_desc": "I server DNS di bootstrap sono utilizzati per risolvere gli indirizzi IP dei risolutori DoH/DoT specificati come upstream.",
     "local_ptr_title": "Server DNS privati",
-    "local_ptr_desc": "I server DNS che AdGuard Home utilizzerà per richiedere le risorse disponibili localmente. Ad esempio, questo server verrà utilizzato per risolvere i nomi host dei client con indirizzi IP privati. Se non impostato, AdGuard Home utilizzerà automaticamente il risolutore DNS predefinito.",
+    "local_ptr_desc": "I server DNS che AdGuard Home utilizzerà per richiedere le risorse PTR disponibili localmente. Ad esempio, questo server verrà utilizzato per risolvere i nomi host dei client con indirizzi IP privati, comò \"192.168.12.34\", utilizzando rDNS. Se non impostato, AdGuard Home utilizzerà automaticamente il risolutore DNS predefinito del tuo sistema operativo.",
     "local_ptr_placeholder": "Inserisci un indirizzo server per riga",
     "resolve_clients_title": "Attiva la risoluzione inversa degli indirizzi IP dei client",
     "resolve_clients_desc": "Se attivo, AdGuard Home tenterà di risolvere inversamente gli indirizzi IP dei client nei relativi nomi host inviando una richiesta PTR a un risolutore corrispondente (server DNS privato per client locali, server upstream per client con IP pubblico).",
