@@ -10,7 +10,7 @@
 # every package that is processed if the caller requested verbosity
 # level greater than 0.  Also show subcommands if the requested
 # verbosity level is greater than 1.  Otherwise, do nothing.
-verbose="${VERBOSE:-0}"
+readonly verbose="${VERBOSE:-0}"
 if [ "$verbose" -gt '1' ]
 then
 	env
@@ -33,10 +33,10 @@ fi
 set -e -f -u
 
 # Allow users to set the Go version.
-go="${GO:-go}"
+readonly go="${GO:-go}"
 
 # Require the channel to be set and validate the value.
-channel="$CHANNEL"
+readonly channel="$CHANNEL"
 case "$channel"
 in
 ('development'|'edge'|'beta'|'release')
@@ -52,10 +52,10 @@ esac
 # Require the version to be set.
 #
 # TODO(a.garipov): Additional validation?
-version="$VERSION"
+readonly version="$VERSION"
 
-# Set date and time of the current build.
-buildtime="$(date -u +%FT%TZ%z)"
+# Set date and time of the current build unless already set.
+readonly buildtime="${BUILD_TIME:-$( date -u +%FT%TZ%z )}"
 
 # Set the linker flags accordingly: set the release channel and the
 # current version as well as goarm and gomips variable values, if the
@@ -106,7 +106,7 @@ fi
 export CGO_ENABLED="$cgo_enabled"
 export GO111MODULE='on'
 
-readonly build_flags="${BUILD_FLAGS:-$race_flags $out_flags $par_flags $v_flags $x_flags}"
+readonly build_flags="${BUILD_FLAGS:-$race_flags --trimpath $out_flags $par_flags $v_flags $x_flags}"
 
 # Don't use quotes with flag variables to get word splitting.
 "$go" generate $v_flags $x_flags ./main.go

@@ -65,7 +65,7 @@ Optional environment:
     verbosity level `2` in `go-build.sh`, set this to `3` when calling
     `build-release.sh`.
  *  `VERSION`: release version.  Will be set by `version.sh` if it is unset or
-    it has the default `Makefile` value of `v0.0.0`.
+    if it has the default `Makefile` value of `v0.0.0`.
 
  ###  `clean.sh`: Cleanup
 
@@ -78,6 +78,8 @@ Required environment:
  ###  `go-build.sh`: Build The Backend
 
 Optional environment:
+ *  `BUILD_TIME`: If set, overrides the build time information.  Useful for
+    reproducible builds.
  *  `GOARM`: ARM processor options for the Go compiler.
  *  `GOMIPS`: ARM processor options for the Go compiler.
  *  `GO`: set an alternarive name for the Go compiler.
