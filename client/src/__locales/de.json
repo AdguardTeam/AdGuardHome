@@ -9,7 +9,7 @@
     "bootstrap_dns": "Bootstrap DNS-Server starten",
     "bootstrap_dns_desc": "Bootstrap-DNS-Server werden verwendet, um IP-Adressen der DoH/DoT-Resolver aufzulösen, die Sie als Upstreams angeben.",
     "local_ptr_title": "Eigene DNS-Server",
-    "local_ptr_desc": "DNS-Server, die AdGuard Home für Abfragen nach lokal bereitgestellten Ressourcen verwenden wird. Diese Server werden z. B. für die Auflösung der Hostnamen der Clients für die Clients mit privaten IP-Adressen verwendet. Wenn nicht festgelegt, verwendet AdGuard Home automatisch Ihre Standard-DNS-Auflösung.",
+    "local_ptr_desc": "Die DNS-Server, die AdGuard Home für lokale PTR-Abfragen verwendet. Diese Server werden verwendet, um die Hostnamen von Clients mit privaten IP-Adressen, z. B. „192.168.12.34“, mithilfe von rDNS aufzulösen. Wenn nicht festgelegt, verwendet AdGuard Home die Standard-DNS-Resolver Ihres Betriebssystems.",
     "local_ptr_placeholder": "Eine Serveradresse pro Zeile eingeben",
     "resolve_clients_title": "Hostnamenauflösung der Clients aktivieren",
     "resolve_clients_desc": "Wenn aktiviert, versucht AdGuard Home, die Hostnamen der Clients automatisch aus deren IP-Adressen aufzulösen, indem er eine PTR-Abfrage an einen entsprechenden Auflösungsdienst (privater DNS-Server für lokale Clients, Upstream-Server für Clients mit öffentlicher IP) sendet.",

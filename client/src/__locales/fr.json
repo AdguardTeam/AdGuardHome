@@ -9,7 +9,7 @@
     "bootstrap_dns": "Serveurs DNS d'amorçage",
     "bootstrap_dns_desc": "Les serveurs DNS d'amorçage sont utilisés pour résoudre les adresses IP des résolveurs DoH/DoT que vous spécifiez comme upstream.",
     "local_ptr_title": "Serveurs DNS privés",
-    "local_ptr_desc": "Le serveur ou serveurs DNS qui seront utilisés par AdGuard Home pour les requêtes de ressources servies localement. Ce serveur pourra être utilisé, par exemple, pour résoudre les noms d'hôtes des clients pour les clients avec des adresses IP privées. S'il n'est pas défini, AdGuard Home utilisera votre résolveur DNS par défaut automatiquement.",
+    "local_ptr_desc": "Les serveurs DNS utilisés par AdGuard Home pour les requêtes PTR servies localement. Ces serveurs sont utilisés pour résoudre les noms d'hôtes des clients pour les clients avec des adresses IP privées, par exemple \"192.168.12.34\", en utilisant rDNS. S'il n'est pas défini, AdGuard Home utilisera le résolveur DNS de votre OS par défaut automatiquement.",
     "local_ptr_placeholder": "Saisissez une adresse de serveur par ligne",
     "resolve_clients_title": "Activer la résolution inverse des adresses IP des clients",
     "resolve_clients_desc": "Lorsque activé, AdGuard Home tentera de résoudre de manière inverse les adresses IP des clients en leurs noms d'hôtes en envoyant des requêtes PTR aux résolveurs correspondants (serveurs DNS privés pour les clients locaux, serveur en amont pour les clients ayant des adresses IP publiques).",
