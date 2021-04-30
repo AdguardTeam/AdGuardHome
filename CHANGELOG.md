@@ -14,8 +14,10 @@ and this project adheres to
 -->
 
 <!--
-## [v0.106.1] - 2021-05-17 (APPROX.)
+## [v0.106.2] - 2021-05-17 (APPROX.)
 -->
+
+## [v0.106.1] - 2021-04-30
 
 ### Fixed
 
@@ -332,12 +334,13 @@ and this project adheres to
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.1...HEAD
-[v0.107.0]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.1...v0.107.0
-[v0.106.1]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.0...v0.106.1
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.2...HEAD
+[v0.107.0]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.2...v0.107.0
+[v0.106.2]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.1...v0.106.2
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.0...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.1...HEAD
+[v0.106.1]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.0...v0.106.1
 [v0.106.0]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.105.2...v0.106.0
 [v0.105.2]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.105.1...v0.105.2
 [v0.105.1]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.105.0...v0.105.1
