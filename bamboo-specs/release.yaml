@@ -252,6 +252,21 @@
   'concurrent-build-plugin': 'system-default'
 
 'branch-overrides':
-- 'release-v0.*':
-    # Build release branches manually.
+# beta-vX.Y branches are the branches into which the commits that are needed to
+# release a new patch version are initially cherry-picked.
+- '^beta-v[0-9]+\.[0-9]+':
+    # Build betas on release branches manually.
     'triggers': []
+    # Set the default release channel on the release branch to beta, as we may
+    # need to build a few of these.
+    'variables':
+      'channel': 'beta'
+# release-vX.Y.Z branches are the branches from which the actual final release
+# is built.
+- '^release-v[0-9]+\.[0-9]+\.[0-9]+':
+    # Build final releases on release branches manually.
+    'triggers': []
+    # Set the default release channel on the final branch to release, as these
+    # are the ones that actually get released.
+    'variables':
+      'channel': 'release'
