@@ -50,7 +50,7 @@ readonly channel="$CHANNEL"
 # that, use the version calculation script.
 if [ "${VERSION:-}" = 'v0.0.0' ] || [ "${VERSION:-}" = '' ]
 then
-	readonly version="$(sh ./scripts/make/version.sh)"
+	readonly version="$( sh ./scripts/make/version.sh )"
 else
 	readonly version="$VERSION"
 fi
@@ -207,13 +207,14 @@ build() {
 	case "$build_os"
 	in
 	('darwin'|'windows')
-		build_archive="${PWD}/${dist}/${build_ar}.zip"
-		( cd "${dist}/${1}" && zip -9 -q -r "$build_archive" "./AdGuardHome" )
+		build_archive="./${dist}/${build_ar}.zip"
+		# TODO(a.garipov): Find an option similar to the -C option of
+		# tar for zip.
+		( cd "${dist}/${1}" && zip -9 -q -r "../../${build_archive}" "./AdGuardHome" )
 		;;
 	(*)
 		build_archive="./${dist}/${build_ar}.tar.gz"
-		tar -C "./${dist}/${1}" -c -f - "./AdGuardHome"\
-			| gzip -9 - >"$build_archive"
+		tar -C "./${dist}/${1}" -c -f - "./AdGuardHome" | gzip -9 - > "$build_archive"
 		;;
 	esac
 
@@ -324,6 +325,12 @@ do
 	build "$dir" "$ar" "$os" "$arch" "$arm" "$mips" "$snap"
 done
 
+log "packing frontend"
+
+build_archive="./${dist}/AdGuardHome_frontend.tar.gz"
+tar -c -f - ./build ./build2 | gzip -9 - > "$build_archive"
+log "$build_archive"
+
 log "calculating checksums"
 
 # Calculate the checksums of the files in a subshell with a different
@@ -383,7 +390,7 @@ echo "
 readonly ar_files="$( \
 	find "./${dist}/" ! -name "${dist}" -prune \( -name '*.tar.gz' -o -name '*.zip' \)
 )"
-readonly ar_files_len="$(echo "$ar_files" | wc -l)"
+readonly ar_files_len="$( echo "$ar_files" | wc -l )"
 
 i='1'
 # Don't use quotes to get word splitting.
