@@ -27,6 +27,7 @@ const Form = (props) => {
                         component={renderInputField}
                         placeholder={t('username_placeholder')}
                         autoComplete="username"
+                        autocapitalize="none"
                         disabled={processing}
                         validate={[validateRequiredValue]}
                     />
