@@ -1166,8 +1166,9 @@ func TestNewServer(t *testing.T) {
 		in: DNSCreateParams{
 			LocalDomain: "!!!",
 		},
-		wantErrMsg: `local domain: invalid domain name label at index 0: ` +
-			`invalid char '!' at index 0 in "!!!"`,
+		wantErrMsg: `local domain: validating domain name "!!!": ` +
+			`invalid domain name label at index 0: ` +
+			`validating label "!!!": invalid char '!' at index 0`,
 	}}
 
 	for _, tc := range testCases {

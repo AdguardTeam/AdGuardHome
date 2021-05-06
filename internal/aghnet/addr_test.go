@@ -95,40 +95,46 @@ func TestValidateDomainName(t *testing.T) {
 	}, {
 		name:       "empty",
 		in:         "",
-		wantErrMsg: `domain name is empty`,
+		wantErrMsg: `validating domain name "": domain name is empty`,
 	}, {
 		name: "bad_symbol",
 		in:   "!!!",
-		wantErrMsg: `invalid domain name label at index 0: ` +
-			`invalid char '!' at index 0 in "!!!"`,
+		wantErrMsg: `validating domain name "!!!": invalid domain name label at index 0: ` +
+			`validating label "!!!": invalid char '!' at index 0`,
 	}, {
 		name:       "bad_length",
 		in:         longDomainName,
-		wantErrMsg: `"` + longDomainName + `" is too long, max: 253`,
+		wantErrMsg: `validating domain name "` + longDomainName + `": too long, max: 253`,
 	}, {
 		name: "bad_label_length",
 		in:   longLabelDomainName,
-		wantErrMsg: `invalid domain name label at index 0: "` + longLabel +
-			`" is too long, max: 63`,
+		wantErrMsg: `validating domain name "` + longLabelDomainName + `": ` +
+			`invalid domain name label at index 0: validating label "` + longLabel +
+			`": label is too long, max: 63`,
 	}, {
-		name:       "bad_label_empty",
-		in:         "example..com",
-		wantErrMsg: `invalid domain name label at index 1: label is empty`,
+		name: "bad_label_empty",
+		in:   "example..com",
+		wantErrMsg: `validating domain name "example..com": ` +
+			`invalid domain name label at index 1: ` +
+			`validating label "": label is empty`,
 	}, {
 		name: "bad_label_first_symbol",
 		in:   "example.-aa.com",
-		wantErrMsg: `invalid domain name label at index 1:` +
-			` invalid char '-' at index 0 in "-aa"`,
+		wantErrMsg: `validating domain name "example.-aa.com": ` +
+			`invalid domain name label at index 1: ` +
+			`validating label "-aa": invalid char '-' at index 0`,
 	}, {
 		name: "bad_label_last_symbol",
 		in:   "example-.aa.com",
-		wantErrMsg: `invalid domain name label at index 0:` +
-			` invalid char '-' at index 7 in "example-"`,
+		wantErrMsg: `validating domain name "example-.aa.com": ` +
+			`invalid domain name label at index 0: ` +
+			`validating label "example-": invalid char '-' at index 7`,
 	}, {
 		name: "bad_label_symbol",
 		in:   "example.a!!!.com",
-		wantErrMsg: `invalid domain name label at index 1:` +
-			` invalid char '!' at index 1 in "a!!!"`,
+		wantErrMsg: `validating domain name "example.a!!!.com": ` +
+			`invalid domain name label at index 1: ` +
+			`validating label "a!!!": invalid char '!' at index 1`,
 	}}
 
 	for _, tc := range testCases {

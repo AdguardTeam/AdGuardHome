@@ -37,30 +37,34 @@ func TestDB(t *testing.T) {
 		SubnetMask: net.IP{255, 255, 255, 0},
 		notify:     testNotify,
 	})
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	s.srv6, err = v6Create(V6ServerConf{})
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	leases := []Lease{{
-		IP:     net.IP{192, 168, 10, 100},
-		HWAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
-		Expiry: time.Now().Add(time.Hour),
+		Expiry:   time.Now().Add(time.Hour),
+		Hostname: "static-1.local",
+		HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
+		IP:       net.IP{192, 168, 10, 100},
 	}, {
-		IP:     net.IP{192, 168, 10, 101},
-		HWAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xBB},
+		Hostname: "static-2.local",
+		HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xBB},
+		IP:       net.IP{192, 168, 10, 101},
 	}}
 
 	srv4, ok := s.srv4.(*v4Server)
 	require.True(t, ok)
 
 	err = srv4.addLease(&leases[0])
-	require.Nil(t, err)
-	require.Nil(t, s.srv4.AddStaticLease(leases[1]))
+	require.NoError(t, err)
+
+	err = s.srv4.AddStaticLease(leases[1])
+	require.NoError(t, err)
 
 	s.dbStore()
 	t.Cleanup(func() {
-		assert.Nil(t, os.Remove(dbFilename))
+		assert.NoError(t, os.Remove(dbFilename))
 	})
 	s.srv4.ResetLeases(nil)
 	s.dbLoad()

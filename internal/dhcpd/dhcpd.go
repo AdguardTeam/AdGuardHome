@@ -27,13 +27,13 @@ var webHandlersRegistered = false
 
 // Lease contains the necessary information about a DHCP lease
 type Lease struct {
+	// Expiry is the expiration time of the lease.  The unix timestamp value
+	// of 1 means that this is a static lease.
+	Expiry time.Time `json:"expires"`
+
+	Hostname string           `json:"hostname"`
 	HWAddr   net.HardwareAddr `json:"mac"`
 	IP       net.IP           `json:"ip"`
-	Hostname string           `json:"hostname"`
-
-	// Lease expiration time
-	// 1: static lease
-	Expiry time.Time `json:"expires"`
 }
 
 // IsStatic returns true if the lease is static.

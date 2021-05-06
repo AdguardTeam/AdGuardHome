@@ -2,6 +2,7 @@ package dnsforward
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"path"
 	"strings"
@@ -15,7 +16,8 @@ import (
 func ValidateClientID(clientID string) (err error) {
 	err = aghnet.ValidateDomainNameLabel(clientID)
 	if err != nil {
-		return fmt.Errorf("invalid client id: %w", err)
+		// Replace the domain name label wrapper with our own.
+		return fmt.Errorf("invalid client id %q: %w", clientID, errors.Unwrap(err))
 	}
 
 	return nil

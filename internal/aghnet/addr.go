@@ -48,32 +48,32 @@ const maxDomainLabelLen = 63
 // See https://stackoverflow.com/a/32294443/1892060.
 const maxDomainNameLen = 253
 
-const invalidCharMsg = "invalid char %q at index %d in %q"
-
 // ValidateDomainNameLabel returns an error if label is not a valid label of
 // a domain name.
 func ValidateDomainNameLabel(label string) (err error) {
+	defer agherr.Annotate("validating label %q: %w", &err, label)
+
 	l := len(label)
 	if l > maxDomainLabelLen {
-		return fmt.Errorf("%q is too long, max: %d", label, maxDomainLabelLen)
+		return fmt.Errorf("label is too long, max: %d", maxDomainLabelLen)
 	} else if l == 0 {
 		return agherr.Error("label is empty")
 	}
 
 	if r := label[0]; !IsValidHostOuterRune(rune(r)) {
-		return fmt.Errorf(invalidCharMsg, r, 0, label)
+		return fmt.Errorf("invalid char %q at index %d", r, 0)
 	} else if l == 1 {
 		return nil
 	}
 
 	for i, r := range label[1 : l-1] {
 		if !isValidHostRune(r) {
-			return fmt.Errorf(invalidCharMsg, r, i+1, label)
+			return fmt.Errorf("invalid char %q at index %d", r, i+1)
 		}
 	}
 
 	if r := label[l-1]; !IsValidHostOuterRune(rune(r)) {
-		return fmt.Errorf(invalidCharMsg, r, l-1, label)
+		return fmt.Errorf("invalid char %q at index %d", r, l-1)
 	}
 
 	return nil
@@ -87,6 +87,8 @@ func ValidateDomainNameLabel(label string) (err error) {
 // TODO(a.garipov): After making sure that this works correctly, port this into
 // module golibs.
 func ValidateDomainName(name string) (err error) {
+	defer agherr.Annotate("validating domain name %q: %w", &err, name)
+
 	name, err = idna.ToASCII(name)
 	if err != nil {
 		return err
@@ -96,7 +98,7 @@ func ValidateDomainName(name string) (err error) {
 	if l == 0 {
 		return agherr.Error("domain name is empty")
 	} else if l > maxDomainNameLen {
-		return fmt.Errorf("%q is too long, max: %d", name, maxDomainNameLen)
+		return fmt.Errorf("too long, max: %d", maxDomainNameLen)
 	}
 
 	labels := strings.Split(name, ".")

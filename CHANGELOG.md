@@ -17,6 +17,14 @@ and this project adheres to
 ## [v0.106.2] - 2021-05-17 (APPROX.)
 -->
 
+### Fixed
+
+- Uniqueness validation for dynamic DHCP leases ([#3056]).
+
+[#3056]: https://github.com/AdguardTeam/AdGuardHome/issues/3056
+
+
+
 ## [v0.106.1] - 2021-04-30
 
 ### Fixed

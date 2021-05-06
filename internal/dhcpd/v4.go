@@ -36,7 +36,7 @@ type v4Server struct {
 	// leases contains all dynamic and static leases.
 	leases []*Lease
 
-	// leasesLock protects leases and leasedOffsets.
+	// leasesLock protects leases, leaseHosts, and leasedOffsets.
 	leasesLock sync.Mutex
 }
 
@@ -47,6 +47,68 @@ func (s *v4Server) WriteDiskConfig4(c *V4ServerConf) {
 
 // WriteDiskConfig6 - write configuration
 func (s *v4Server) WriteDiskConfig6(c *V6ServerConf) {
+}
+
+// normalizeHostname normalizes a hostname sent by the client.  If err is not
+// nil, norm is an empty string.
+func normalizeHostname(hostname string) (norm string, err error) {
+	defer agherr.Annotate("normalizing %q: %w", &err, hostname)
+
+	if hostname == "" {
+		return "", nil
+	}
+
+	norm = strings.ToLower(hostname)
+	parts := strings.FieldsFunc(norm, func(c rune) (ok bool) {
+		return c != '.' && !aghnet.IsValidHostOuterRune(c)
+	})
+
+	if len(parts) == 0 {
+		return "", fmt.Errorf("no valid parts")
+	}
+
+	norm = strings.Join(parts, "-")
+	norm = strings.TrimSuffix(norm, "-")
+
+	return norm, nil
+}
+
+// validHostnameForClient accepts the hostname sent by the client and returns
+// either a normalized version of that hostname or a new hostname generated from
+// the client's IP address.  If this new hostname is different from the provided
+// previous hostname, additional uniqueness check is performed.
+//
+// hostname is always a non-empty valid hostname.  If err is not nil, it
+// describes the issues encountered when normalizing cliHostname.
+func (s *v4Server) validHostnameForClient(
+	cliHostname string,
+	prevHostname string,
+	ip net.IP,
+) (hostname string, err error) {
+	hostname, err = normalizeHostname(cliHostname)
+	if err == nil && hostname != "" {
+		err = aghnet.ValidateDomainName(hostname)
+		if err != nil {
+			// Go on and assign a hostname made from the IP below,
+			// returning the error that we've got.
+			hostname = ""
+		} else if hostname != prevHostname && s.leaseHosts.Has(hostname) {
+			// Go on and assign a unique hostname made from the IP
+			// below, returning the error about uniqueness.
+			err = agherr.Error("hostname exists")
+			hostname = ""
+		}
+	}
+
+	if hostname == "" {
+		hostname = aghnet.GenerateHostname(ip)
+	}
+
+	if hostname != cliHostname {
+		log.Info("dhcpv4: normalized hostname %q into %q", cliHostname, hostname)
+	}
+
+	return hostname, err
 }
 
 // ResetLeases - reset leases
@@ -62,9 +124,13 @@ func (s *v4Server) ResetLeases(leases []*Lease) {
 	s.leases = nil
 
 	for _, l := range leases {
-		l.Hostname, err = s.validHostnameForClient(l.Hostname, l.IP)
+		l.Hostname, err = s.validHostnameForClient(l.Hostname, l.Hostname, l.IP)
 		if err != nil {
-			log.Info("dhcpv4: warning: previous hostname %q is invalid: %s", l.Hostname, err)
+			log.Info(
+				"dhcpv4: warning: previous hostname %q is invalid: %s",
+				l.Hostname,
+				err,
+			)
 		}
 
 		err = s.addLease(l)
@@ -204,7 +270,7 @@ func (s *v4Server) rmDynamicLease(lease *Lease) (err error) {
 
 		if bytes.Equal(l.HWAddr, lease.HWAddr) {
 			if l.IsStatic() {
-				return fmt.Errorf("static lease already exists")
+				return agherr.Error("static lease already exists")
 			}
 
 			s.rmLeaseByIndex(i)
@@ -215,9 +281,9 @@ func (s *v4Server) rmDynamicLease(lease *Lease) (err error) {
 			l = s.leases[i]
 		}
 
-		if net.IP.Equal(l.IP, lease.IP) {
+		if l.IP.Equal(lease.IP) {
 			if l.IsStatic() {
-				return fmt.Errorf("static lease already exists")
+				return agherr.Error("static lease already exists")
 			}
 
 			s.rmLeaseByIndex(i)
@@ -227,54 +293,31 @@ func (s *v4Server) rmDynamicLease(lease *Lease) (err error) {
 	return nil
 }
 
-func (s *v4Server) addStaticLease(l *Lease) (err error) {
-	if sn := s.conf.subnet; !sn.Contains(l.IP) {
-		return fmt.Errorf("subnet %s does not contain the ip %q", sn, l.IP)
-	}
-
-	s.leases = append(s.leases, l)
-
+// addLease adds a dynamic or static lease.
+func (s *v4Server) addLease(l *Lease) (err error) {
 	r := s.conf.ipRange
-	offset, ok := r.offset(l.IP)
-	if ok {
-		s.leasedOffsets.set(offset, true)
-	}
+	offset, inOffset := r.offset(l.IP)
 
-	s.leaseHosts.Add(l.Hostname)
-
-	return nil
-}
-
-func (s *v4Server) addDynamicLease(l *Lease) (err error) {
-	r := s.conf.ipRange
-	offset, ok := r.offset(l.IP)
-	if !ok {
+	if l.IsStatic() {
+		if sn := s.conf.subnet; !sn.Contains(l.IP) {
+			return fmt.Errorf("subnet %s does not contain the ip %q", sn, l.IP)
+		}
+	} else if !inOffset {
 		return fmt.Errorf("lease %s (%s) out of range, not adding", l.IP, l.HWAddr)
 	}
 
 	s.leases = append(s.leases, l)
-	s.leaseHosts.Add(l.Hostname)
 	s.leasedOffsets.set(offset, true)
+
+	if l.Hostname != "" {
+		s.leaseHosts.Add(l.Hostname)
+	}
 
 	return nil
 }
 
-// addLease adds a dynamic or static lease.
-func (s *v4Server) addLease(l *Lease) (err error) {
-	err = s.validateLease(l)
-	if err != nil {
-		return err
-	}
-
-	if l.IsStatic() {
-		return s.addStaticLease(l)
-	}
-
-	return s.addDynamicLease(l)
-}
-
-// Remove a lease with the same properties
-func (s *v4Server) rmLease(lease Lease) error {
+// rmLease removes a lease with the same properties.
+func (s *v4Server) rmLease(lease Lease) (err error) {
 	if len(s.leases) == 0 {
 		return nil
 	}
@@ -296,7 +339,7 @@ func (s *v4Server) rmLease(lease Lease) error {
 
 // AddStaticLease adds a static lease.  It is safe for concurrent use.
 func (s *v4Server) AddStaticLease(l Lease) (err error) {
-	defer agherr.Annotate("dhcpv4: %w", &err)
+	defer agherr.Annotate("dhcpv4: adding static lease: %w", &err)
 
 	if ip4 := l.IP.To4(); ip4 == nil {
 		return fmt.Errorf("invalid ip %q, only ipv4 is supported", l.IP)
@@ -304,10 +347,27 @@ func (s *v4Server) AddStaticLease(l Lease) (err error) {
 
 	l.Expiry = time.Unix(leaseExpireStatic, 0)
 
-	l.Hostname, err = normalizeHostname(l.Hostname)
+	err = aghnet.ValidateHardwareAddress(l.HWAddr)
 	if err != nil {
 		return err
 	}
+
+	var hostname string
+	hostname, err = normalizeHostname(l.Hostname)
+	if err != nil {
+		return err
+	}
+
+	err = aghnet.ValidateDomainName(hostname)
+	if err != nil {
+		return fmt.Errorf("validating hostname: %w", err)
+	}
+
+	if s.leaseHosts.Has(hostname) {
+		return agherr.Error("hostname exists")
+	}
+
+	l.Hostname = hostname
 
 	// Perform the following actions in an anonymous function to make sure
 	// that the lock gets unlocked before the notification step.
@@ -372,16 +432,19 @@ func (s *v4Server) RemoveStaticLease(l Lease) (err error) {
 	return nil
 }
 
-// Send ICMP to the specified machine
-// Return TRUE if it doesn't reply, which probably means that the IP is available
-func (s *v4Server) addrAvailable(target net.IP) bool {
+// addrAvailable sends an ICP request to the specified IP address.  It returns
+// true if the remote host doesn't reply, which probably means that the IP
+// address is available.
+//
+// TODO(a.garipov): I'm not sure that this is the best way to do this.
+func (s *v4Server) addrAvailable(target net.IP) (avail bool) {
 	if s.conf.ICMPTimeout == 0 {
 		return true
 	}
 
 	pinger, err := ping.NewPinger(target.String())
 	if err != nil {
-		log.Error("ping.NewPinger(): %v", err)
+		log.Error("dhcpv4: ping.NewPinger(): %s", err)
 
 		return true
 	}
@@ -393,20 +456,24 @@ func (s *v4Server) addrAvailable(target net.IP) bool {
 	pinger.OnRecv = func(_ *ping.Packet) {
 		reply = true
 	}
-	log.Debug("dhcpv4: Sending ICMP Echo to %v", target)
+
+	log.Debug("dhcpv4: sending icmp echo to %s", target)
 
 	err = pinger.Run()
 	if err != nil {
-		log.Error("pinger.Run(): %v", err)
+		log.Error("dhcpv4: pinger.Run(): %s", err)
+
 		return true
 	}
 
 	if reply {
-		log.Info("dhcpv4: IP conflict: %v is already used by another device", target)
+		log.Info("dhcpv4: ip conflict: %s is already used by another device", target)
+
 		return false
 	}
 
-	log.Debug("dhcpv4: ICMP procedure is complete: %v", target)
+	log.Debug("dhcpv4: icmp procedure is complete: %q", target)
+
 	return true
 }
 
@@ -481,57 +548,68 @@ func (s *v4Server) reserveLease(mac net.HardwareAddr) (l *Lease, err error) {
 func (s *v4Server) commitLease(l *Lease) {
 	l.Expiry = time.Now().Add(s.conf.leaseTime)
 
-	s.leasesLock.Lock()
-	s.conf.notify(LeaseChangedDBStore)
-	s.leasesLock.Unlock()
+	func() {
+		s.leasesLock.Lock()
+		defer s.leasesLock.Unlock()
+
+		s.conf.notify(LeaseChangedDBStore)
+		s.leaseHosts.Add(l.Hostname)
+	}()
 
 	s.conf.notify(LeaseChangedAdded)
 }
 
-// Process Discover request and return lease
+// processDiscover is the handler for the DHCP Discover request.
 func (s *v4Server) processDiscover(req, resp *dhcpv4.DHCPv4) (l *Lease, err error) {
 	mac := req.ClientHWAddr
+
+	err = aghnet.ValidateHardwareAddress(mac)
+	if err != nil {
+		return nil, err
+	}
 
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
 
-	// TODO(a.garipov): Refactor this mess.
 	l = s.findLease(mac)
-	if l == nil {
-		toStore := false
-		for l == nil {
-			l, err = s.reserveLease(mac)
-			if err != nil {
-				return nil, fmt.Errorf("reserving a lease: %w", err)
-			}
-
-			if l == nil {
-				log.Debug("dhcpv4: no more ip addresses")
-				if toStore {
-					s.conf.notify(LeaseChangedDBStore)
-				}
-
-				// TODO(a.garipov): Return a special error?
-				return nil, nil
-			}
-
-			toStore = true
-
-			if !s.addrAvailable(l.IP) {
-				s.blocklistLease(l)
-				l = nil
-
-				continue
-			}
-
-			break
-		}
-
-		s.conf.notify(LeaseChangedDBStore)
-	} else {
+	if l != nil {
 		reqIP := req.RequestedIPAddress()
 		if len(reqIP) != 0 && !reqIP.Equal(l.IP) {
 			log.Debug("dhcpv4: different RequestedIP: %s != %s", reqIP, l.IP)
+		}
+
+		resp.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeOffer))
+
+		return l, nil
+	}
+
+	needsUpdate := false
+	defer func() {
+		if needsUpdate {
+			s.conf.notify(LeaseChangedDBStore)
+		}
+	}()
+
+	leaseReady := false
+	for !leaseReady {
+		l, err = s.reserveLease(mac)
+		if err != nil {
+			return nil, fmt.Errorf("reserving a lease: %w", err)
+		}
+
+		if l == nil {
+			log.Debug("dhcpv4: no more ip addresses")
+
+			return nil, nil
+		}
+
+		needsUpdate = true
+
+		if s.addrAvailable(l.IP) {
+			leaseReady = true
+		} else {
+			s.blocklistLease(l)
+			l = nil
 		}
 	}
 
@@ -569,115 +647,14 @@ func (o *optFQDN) ToBytes() []byte {
 	return b
 }
 
-// normalizeHostname normalizes a hostname sent by the client.  If err is not
-// nil, norm is an empty string.
-func normalizeHostname(name string) (norm string, err error) {
-	if name == "" {
-		return "", nil
-	}
-
-	norm = strings.ToLower(name)
-	parts := strings.FieldsFunc(norm, func(c rune) (ok bool) {
-		return c != '.' && !aghnet.IsValidHostOuterRune(c)
-	})
-
-	if len(parts) == 0 {
-		return "", fmt.Errorf("normalizing hostname %q: no valid parts", name)
-	}
-
-	norm = strings.Join(parts, "-")
-	norm = strings.TrimSuffix(norm, "-")
-
-	return norm, nil
-}
-
-// validateHostname validates a hostname sent by the client.
-func (s *v4Server) validateHostname(name string) (err error) {
-	defer agherr.Annotate("validating hostname: %s", &err)
-
-	if name == "" {
-		return nil
-	}
-
-	err = aghnet.ValidateDomainName(name)
-	if err != nil {
-		return err
-	}
-
-	if s.leaseHosts.Has(name) {
-		return agherr.Error("hostname exists")
-	}
-
-	return nil
-}
-
-// validHostnameForClient accepts the hostname sent by the client and returns
-// either a normalized version of that hostname or a new hostname generated from
-// the client's IP address.
-//
-// hostname is always a non-empty valid hostname.  If err is not nil, it
-// describes the issues encountered when normalizing cliHostname.
-func (s *v4Server) validHostnameForClient(
-	cliHostname string,
-	ip net.IP,
-) (hostname string, err error) {
-	hostname, err = normalizeHostname(cliHostname)
-	if err == nil {
-		err = s.validateHostname(hostname)
-		if err != nil {
-			// Go on and assign a hostname made from the IP below,
-			// returning the error that we've got.
-			hostname = ""
-		}
-	}
-
-	if hostname == "" {
-		hostname = aghnet.GenerateHostname(ip)
-	}
-
-	if hostname != cliHostname {
-		log.Info("dhcpv4: normalized hostname %q into %q", cliHostname, hostname)
-	}
-
-	return hostname, err
-}
-
-// validateLease returns an error if the lease is invalid.
-func (s *v4Server) validateLease(l *Lease) (err error) {
-	defer agherr.Annotate("validating lease: %s", &err)
-
-	if l == nil {
-		return agherr.Error("lease is nil")
-	}
-
-	err = aghnet.ValidateHardwareAddress(l.HWAddr)
-	if err != nil {
-		return err
-	}
-
-	err = s.validateHostname(l.Hostname)
-	if err != nil {
-		return err
-	}
-
-	if sn := s.conf.subnet; !sn.Contains(l.IP) {
-		return fmt.Errorf("subnet %s does not contain the ip %q", sn, l.IP)
-	}
-
-	r := s.conf.ipRange
-	if !l.IsStatic() && !r.contains(l.IP) {
-		return fmt.Errorf("dynamic lease range %s does not contain the ip %q", r, l.IP)
-	}
-
-	return nil
-}
-
-// Process Request request and return lease
-// Return false if we don't need to reply
-func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, ok bool) {
-	var err error
-
+// processDiscover is the handler for the DHCP Request request.
+func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, needsReply bool) {
 	mac := req.ClientHWAddr
+	err := aghnet.ValidateHardwareAddress(mac)
+	if err != nil {
+		return nil, false
+	}
+
 	reqIP := req.RequestedIPAddress()
 	if reqIP == nil {
 		reqIP = req.ClientIPAddr
@@ -696,34 +673,49 @@ func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, ok bo
 		return nil, false
 	}
 
-	s.leasesLock.Lock()
-	for _, l := range s.leases {
-		if bytes.Equal(l.HWAddr, mac) {
-			if !l.IP.Equal(reqIP) {
-				s.leasesLock.Unlock()
-				log.Debug("dhcpv4: mismatched OptionRequestedIPAddress in request message for %s", mac)
+	mismatch := false
+	func() {
+		s.leasesLock.Lock()
+		defer s.leasesLock.Unlock()
 
-				return nil, true
+		for _, l := range s.leases {
+			if !bytes.Equal(l.HWAddr, mac) {
+				continue
 			}
 
-			lease = l
+			if l.IP.Equal(reqIP) {
+				lease = l
+			} else {
+				log.Debug(
+					`dhcpv4: mismatched OptionRequestedIPAddress `+
+						`in request message for %s`,
+					mac,
+				)
+				mismatch = true
+			}
 
-			break
+			return
 		}
+	}()
+	if mismatch {
+		return nil, true
 	}
-	s.leasesLock.Unlock()
 
 	if lease == nil {
-		log.Debug("dhcpv4: no lease for %s", mac)
+		log.Debug("dhcpv4: no reserved lease for %s", mac)
 
 		return nil, true
 	}
 
 	if !lease.IsStatic() {
 		cliHostname := req.HostName()
-		lease.Hostname, err = s.validHostnameForClient(cliHostname, reqIP)
+		lease.Hostname, err = s.validHostnameForClient(cliHostname, lease.Hostname, reqIP)
 		if err != nil {
-			log.Info("dhcpv4: warning: client hostname %q is invalid: %s", cliHostname, err)
+			log.Info(
+				"dhcpv4: warning: client hostname %q is invalid: %s",
+				cliHostname,
+				err,
+			)
 		}
 
 		s.commitLease(lease)
