@@ -29,25 +29,25 @@ var webHandlersRegistered = false
 
 // Client contains information about persistent clients.
 type Client struct {
-	IDs                 []string
-	Tags                []string
-	Name                string
-	UseOwnSettings      bool // false: use global settings
-	FilteringEnabled    bool
-	SafeSearchEnabled   bool
-	SafeBrowsingEnabled bool
-	ParentalEnabled     bool
-
-	UseOwnBlockedServices bool // false: use global settings
-	BlockedServices       []string
-
-	Upstreams []string // list of upstream servers to be used for the client's requests
-
-	// Custom upstream config for this client
-	// nil: not yet initialized
-	// not nil, but empty: initialized, no good upstreams
-	// not nil, not empty: Upstreams ready to be used
+	// upstreamConfig is the custom upstream config for this client.  If
+	// it's nil, it has not been initialized yet.  If it's non-nil and
+	// empty, there are no valid upstreams.  If it's non-nil and non-empty,
+	// these upstream must be used.
 	upstreamConfig *proxy.UpstreamConfig
+
+	Name string
+
+	IDs             []string
+	Tags            []string
+	BlockedServices []string
+	Upstreams       []string
+
+	UseOwnSettings        bool
+	FilteringEnabled      bool
+	SafeSearchEnabled     bool
+	SafeBrowsingEnabled   bool
+	ParentalEnabled       bool
+	UseOwnBlockedServices bool
 }
 
 type clientSource uint
@@ -63,9 +63,9 @@ const (
 
 // RuntimeClient information
 type RuntimeClient struct {
+	WhoisInfo *RuntimeClientWhoisInfo
 	Host      string
 	Source    clientSource
-	WhoisInfo *RuntimeClientWhoisInfo
 }
 
 // RuntimeClientWhoisInfo is the filtered WHOIS data for a runtime client.

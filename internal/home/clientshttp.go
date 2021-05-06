@@ -7,31 +7,38 @@ import (
 	"net/http"
 )
 
+// clientJSON is a common structure used by several handlers to deal with
+// clients.  Some of the fields are only necessary in one or two handlers and
+// are thus made pointers with an omitempty tag.
+//
+// TODO(a.garipov): Consider using nullbool and an optional string here?  Or
+// split into several structs?
 type clientJSON struct {
-	IDs                 []string `json:"ids"`
-	Tags                []string `json:"tags"`
-	Name                string   `json:"name"`
-	UseGlobalSettings   bool     `json:"use_global_settings"`
-	FilteringEnabled    bool     `json:"filtering_enabled"`
-	ParentalEnabled     bool     `json:"parental_enabled"`
-	SafeSearchEnabled   bool     `json:"safesearch_enabled"`
-	SafeBrowsingEnabled bool     `json:"safebrowsing_enabled"`
+	// Disallowed, if non-nil and false, means that the client's IP is
+	// allowed.  Otherwise, the IP is blocked.
+	Disallowed *bool `json:"disallowed,omitempty"`
 
-	UseGlobalBlockedServices bool     `json:"use_global_blocked_services"`
-	BlockedServices          []string `json:"blocked_services"`
+	// DisallowedRule is the rule due to which the client is disallowed.
+	// If Disallowed is true and this string is empty, the client IP is
+	// disallowed by the "allowed IP list", that is it is not included in
+	// the allowlist.
+	DisallowedRule *string `json:"disallowed_rule,omitempty"`
 
-	Upstreams []string `json:"upstreams"`
+	WhoisInfo *RuntimeClientWhoisInfo `json:"whois_info,omitempty"`
 
-	WhoisInfo *RuntimeClientWhoisInfo `json:"whois_info"`
+	Name string `json:"name"`
 
-	// Disallowed - if true -- client's IP is not disallowed
-	// Otherwise, it is blocked.
-	Disallowed bool `json:"disallowed"`
+	BlockedServices []string `json:"blocked_services"`
+	IDs             []string `json:"ids"`
+	Tags            []string `json:"tags"`
+	Upstreams       []string `json:"upstreams"`
 
-	// DisallowedRule - the rule due to which the client is disallowed
-	// If Disallowed is true, and this string is empty - it means that the client IP
-	// is disallowed by the "allowed IP list", i.e. it is not included in allowed.
-	DisallowedRule string `json:"disallowed_rule"`
+	FilteringEnabled         bool `json:"filtering_enabled"`
+	ParentalEnabled          bool `json:"parental_enabled"`
+	SafeBrowsingEnabled      bool `json:"safebrowsing_enabled"`
+	SafeSearchEnabled        bool `json:"safesearch_enabled"`
+	UseGlobalBlockedServices bool `json:"use_global_blocked_services"`
+	UseGlobalSettings        bool `json:"use_global_settings"`
 }
 
 type runtimeClientJSON struct {
@@ -126,8 +133,6 @@ func clientToJSON(c *Client) clientJSON {
 		BlockedServices:          c.BlockedServices,
 
 		Upstreams: c.Upstreams,
-
-		WhoisInfo: &RuntimeClientWhoisInfo{},
 	}
 
 	return cj
@@ -243,7 +248,8 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 			}
 		} else {
 			cj = clientToJSON(c)
-			cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
+			disallowed, rule := clients.dnsServer.IsBlockedIP(ip)
+			cj.Disallowed, cj.DisallowedRule = &disallowed, &rule
 		}
 
 		data = append(data, map[string]clientJSON{
@@ -279,8 +285,8 @@ func (clients *clientsContainer) findRuntime(ip net.IP, idStr string) (cj client
 
 		cj = clientJSON{
 			IDs:            []string{idStr},
-			Disallowed:     disallowed,
-			DisallowedRule: rule,
+			Disallowed:     &disallowed,
+			DisallowedRule: &rule,
 			WhoisInfo:      &RuntimeClientWhoisInfo{},
 		}
 
@@ -288,7 +294,8 @@ func (clients *clientsContainer) findRuntime(ip net.IP, idStr string) (cj client
 	}
 
 	cj = runtimeClientToJSON(idStr, rc)
-	cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
+	disallowed, rule := clients.dnsServer.IsBlockedIP(ip)
+	cj.Disallowed, cj.DisallowedRule = &disallowed, &rule
 
 	return cj, true
 }

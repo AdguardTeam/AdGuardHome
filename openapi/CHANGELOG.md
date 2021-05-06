@@ -4,6 +4,15 @@
 
 ## v0.106: API changes
 
+### The field `"supported_tags"` in `GET /control/clients`
+
+* Prefiously undocumented field `"supported_tags"` in the response is now
+  documented.
+
+### The field `"whois_info"` in `GET /control/clients`
+
+* Objects in the `"auto_clients"` array now have the `"whois_info"` field.
+
 ### New response code in `POST /control/login`
 
 * `429` is returned when user is out of login attempts.  It adds the
