@@ -9,7 +9,7 @@
     "bootstrap_dns": "Bootstrap DNS-servere",
     "bootstrap_dns_desc": "Bootstrap DNS-servere bruges til at fortolke IP-adresser for de DoH-/DoT-resolvere, du angiver som upstream.",
     "local_ptr_title": "Private DNS-servere",
-    "local_ptr_desc": "De DNS-servere som AdGuard Home vil bruge til forespørgsler efter lokalt leverede ressourcer. For eksempel vil denne server blive brugt til at løse klienters værtsnavne for klienter med private IP-adresser. Hvis ikke indstillet, bruger AdGuard Home automatisk din standard DNS-resolver.",
+    "local_ptr_desc": "De DNS-servere, som AdGuard Home bruger til lokale PTR-forespørgsler. Disse servere bruges til at opløse klientværtsnavne med private IP-adresser, f.eks. \"192.168.12.34\", vha. rDNS. Hvis ikke indstillet, bruger AdGuard Home dit operativsystems standard DNS-opløsere.",
     "local_ptr_placeholder": "Indtast en serveradresse pr. Linje",
     "resolve_clients_title": "Aktivér omvendt løsning af klienters IP-adresser",
     "resolve_clients_desc": "Hvis aktiveret, forsøger AdGuard Home automatisk at løse klienters værtsnavne fra deres IP-adresser ved at sende en PTR-forespørgsel til en tilsvarende resolver (privat DNS-server til lokale klienter, upstream-server til klienter med offentlig IP-adresse).",

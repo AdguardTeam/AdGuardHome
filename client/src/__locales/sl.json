@@ -9,7 +9,7 @@
     "bootstrap_dns": "Zagonski DNS strežniki",
     "bootstrap_dns_desc": "Zagonski DNS strežniki se uporabljajo za razreševanje IP naslovov DoH/DoT reševalcev, ki jih določite kot navzgornje.",
     "local_ptr_title": "Zasebni strežniki DNS",
-    "local_ptr_desc": "Strežniki DNS, ki jih bo AdGuard Home uporabil za poizvedbe o lokalno oskrbovanih virih. Ta strežnik bo na primer uporabljen za razreševanje imen gostiteljev odjemalcev z zasebnimi naslovi IP. Če ni nastavljen, bo AdGuard Home samodejno uporabil vaš privzeti razreševalnik DNS.",
+    "local_ptr_desc": "Strežniki DNS, ki jih AdGuard Home uporablja za lokalne poizvedbe PTR. Ti strežniki se uporabljajo za razreševanje imen gostiteljev z zasebnimi naslovi IP, na primer \"192.168.12.34\" uporablja rDNS. Če ni nastavljen, AdGuard Home uporablja privzete rešitve DNS vašega OS.",
     "local_ptr_placeholder": "V vrstico vnesite en naslov strežnika",
     "resolve_clients_title": "Omogoči obratno reševanje naslovov IP gostiteljev",
     "resolve_clients_desc": "Če je omogočeno, bo AdGuard Home poskušal samodejno razrešiti gostiteljska imena odjemalcev iz njihovih naslovov IP tako, da pošlje poizvedbo PTR ustreznemu razreševalniku (zasebni strežniki DNS za lokalne odjemalce, gorvodni strežnik za odjemalce z javnimi naslovi IP).",
