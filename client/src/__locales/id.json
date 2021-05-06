@@ -9,7 +9,7 @@
     "bootstrap_dns": "Server DNS bootstrap",
     "bootstrap_dns_desc": "Server Bootstrap DNS dapat digunakan untuk meresolve alamat IP pada DoH/DoT resolvers yang Anda tentukan sebagai upstreams.",
     "local_ptr_title": "Server DNS pribadi",
-    "local_ptr_desc": "Server atau server DNS yang akan digunakan AdGuard Home untuk kueri sumber daya disajikan secara lokal. Misalnya, server ini akan digunakan untuk menyelesaikan hostname klien untuk klien dengan alamat IP pribadi. Jika tidak disetel, AdGuard Home akan secara otomatis menggunakan resolver DNS default Anda.",
+    "local_ptr_desc": "Server DNS yang digunakan AdGuard Home untuk kueri PTR lokal. Server ini digunakan untuk menetapkan nama host klien bersama alamat IP pribadi, sebagai contoh \"192.168.12.34\", menggunakan rDNS. Jika tidka diatur, AdGuard Home akan menggunakan resolver DNS bawaan/default OS Anda.",
     "local_ptr_placeholder": "Masukkan satu alamat server per baris",
     "resolve_clients_title": "Aktifkan resolusi hostname klien",
     "resolve_clients_desc": "Jika diaktifkan, AdGuard Home akan mencoba menyelesaikan hostname klien secara otomatis dari alamat IP mereka dengan mengirimkan kueri PTR ke penyelesai yang sesuai (server DNS pribadi untuk klien lokal, server upstream untuk klien dengan IP publik).",

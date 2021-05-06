@@ -9,7 +9,7 @@
     "bootstrap_dns": "Servidores DNS de arranque",
     "bootstrap_dns_desc": "Los servidores DNS de arranque se utilizan para resolver las direcciones IP de los resolutores DoH/DoT que especifiques como DNS de subida.",
     "local_ptr_title": "Servidores DNS privados",
-    "local_ptr_desc": "Los servidores DNS que AdGuard Home utilizará para las consultas de recursos servidos localmente. Por ejemplo, este servidor se utilizará para resolver los nombres de hosts de los clientes con direcciones IP privadas. Si no está establecido, AdGuard Home utilizará automáticamente tu resolutor DNS predeterminado.",
+    "local_ptr_desc": "Los servidores DNS que AdGuard Home utiliza para las consultas PTR locales. Estos servidores se utilizan para resolver los nombres de hosts de los clientes a direcciones IP privadas, por ejemplo \"192.168.12.34\", utilizando rDNS. Si no está establecido, AdGuard Home utilizará los resolutores DNS predeterminados de tu sistema operativo.",
     "local_ptr_placeholder": "Ingresa una dirección de servidor por línea",
     "resolve_clients_title": "Habilitar la resolución inversa de las direcciones IP de clientes",
     "resolve_clients_desc": "Si está habilitado, AdGuard Home intentará resolver de manera inversa las direcciones IP de los clientes a sus nombres de hosts enviando consultas PTR a los resolutores correspondientes (servidores DNS privados para clientes locales, servidor DNS de subida para clientes con direcciones IP públicas).",
