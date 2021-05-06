@@ -117,8 +117,8 @@ func TestProcessClientID(t *testing.T) {
 		hostSrvName:  "example.com",
 		cliSrvName:   "!!!.example.com",
 		wantClientID: "",
-		wantErrMsg: `client id check: invalid client id: invalid char '!' ` +
-			`at index 0 in "!!!"`,
+		wantErrMsg: `client id check: invalid client id "!!!": ` +
+			`invalid char '!' at index 0`,
 		wantRes:   resultCodeError,
 		strictSNI: true,
 	}, {
@@ -128,9 +128,9 @@ func TestProcessClientID(t *testing.T) {
 		cliSrvName: `abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmno` +
 			`pqrstuvwxyz0123456789.example.com`,
 		wantClientID: "",
-		wantErrMsg: `client id check: invalid client id: "abcdefghijklmno` +
-			`pqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789" ` +
-			`is too long, max: 63`,
+		wantErrMsg: `client id check: invalid client id "abcdefghijklmno` +
+			`pqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789": ` +
+			`label is too long, max: 63`,
 		wantRes:   resultCodeError,
 		strictSNI: true,
 	}, {
@@ -238,8 +238,8 @@ func TestProcessClientID_https(t *testing.T) {
 		name:         "invalid_client_id",
 		path:         "/dns-query/!!!",
 		wantClientID: "",
-		wantErrMsg: `client id check: invalid client id: invalid char '!' ` +
-			`at index 0 in "!!!"`,
+		wantErrMsg: `client id check: invalid client id "!!!": ` +
+			`invalid char '!' at index 0`,
 		wantRes: resultCodeError,
 	}}
 
