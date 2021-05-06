@@ -2234,6 +2234,10 @@
           'type': 'array'
           'items':
             'type': 'string'
+        'tags':
+          'items':
+            'type': 'string'
+          'type': 'array'
     'ClientAuto':
       'type': 'object'
       'description': 'Auto-Client information'
@@ -2250,6 +2254,8 @@
           'type': 'string'
           'description': 'The source of this information'
           'example': 'etc/hosts'
+        'whois_info':
+          '$ref': '#/components/schemas/WhoisInfo'
     'ClientUpdate':
       'type': 'object'
       'description': 'Client update request'
@@ -2384,6 +2390,10 @@
           '$ref': '#/components/schemas/ClientsArray'
         'auto_clients':
           '$ref': '#/components/schemas/ClientsAutoArray'
+        'supported_tags':
+          'items':
+            'type': 'string'
+          'type': 'array'
     'ClientsArray':
       'type': 'array'
       'items':
