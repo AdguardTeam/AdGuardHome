@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/webembed"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/NYTimes/gziphandler"
-	"github.com/gobuffalo/packr"
 )
 
 // HTTP scheme constants.
@@ -86,18 +86,18 @@ func CreateWeb(conf *webConfig) *Web {
 	w.conf = conf
 
 	// Initialize and run the admin Web interface
-	box := packr.NewBox("../../build/static")
-	boxBeta := packr.NewBox("../../build2/static")
+	webStatic := webembed.MakeFS("build/static")
+	webStaticBeta := webembed.MakeFS("build2/static")
 
 	// if not configured, redirect / to /install.html, otherwise redirect /install.html to /
-	Context.mux.Handle("/", withMiddlewares(http.FileServer(box), gziphandler.GzipHandler, optionalAuthHandler, postInstallHandler))
-	w.handlerBeta = withMiddlewares(http.FileServer(boxBeta), gziphandler.GzipHandler, optionalAuthHandler, postInstallHandler)
+	Context.mux.Handle("/", withMiddlewares(http.FileServer(webStatic), gziphandler.GzipHandler, optionalAuthHandler, postInstallHandler))
+	w.handlerBeta = withMiddlewares(http.FileServer(webStaticBeta), gziphandler.GzipHandler, optionalAuthHandler, postInstallHandler)
 
 	// add handlers for /install paths, we only need them when we're not configured yet
 	if conf.firstRun {
 		log.Info("This is the first launch of AdGuard Home, redirecting everything to /install.html ")
-		Context.mux.Handle("/install.html", preInstallHandler(http.FileServer(box)))
-		w.installerBeta = preInstallHandler(http.FileServer(boxBeta))
+		Context.mux.Handle("/install.html", preInstallHandler(http.FileServer(webStatic)))
+		w.installerBeta = preInstallHandler(http.FileServer(webStaticBeta))
 		w.registerInstallHandlers()
 		// This must be removed in API v1.
 		w.registerBetaInstallHandlers()
