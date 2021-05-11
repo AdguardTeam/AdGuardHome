@@ -47,7 +47,7 @@ func newAccessCtx(allowedClients, disallowedClients, blockedHosts []string) (a *
 
 	b := &strings.Builder{}
 	for _, s := range blockedHosts {
-		aghstrings.WriteToBuilder(b, s, "\n")
+		aghstrings.WriteToBuilder(b, strings.ToLower(s), "\n")
 	}
 
 	listArray := []filterlist.RuleList{}

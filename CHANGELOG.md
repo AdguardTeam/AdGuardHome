@@ -17,6 +17,12 @@ and this project adheres to
 ## [v0.106.3] - 2021-05-17 (APPROX.)
 -->
 
+### Fixed
+
+- Disallowed domains are now case-insensitive ([#3115]).
+
+[#3115]: https://github.com/AdguardTeam/AdGuardHome/issues/3115
+
 
 
 ## [v0.106.2] - 2021-05-06
