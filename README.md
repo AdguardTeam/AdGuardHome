@@ -137,7 +137,7 @@ AdGuard Home provides a lot of features out-of-the-box with no need to install a
 | Blocking ads and trackers                                               | ✅                | ✅                                                        |
 | Customizing blocklists                                                  | ✅                | ✅                                                        |
 | Built-in DHCP server                                                    | ✅                | ✅                                                        |
-| HTTPS for the Admin interface                                           | ✅                | Kind of, but you'll need to manually configure lighthttpd |
+| HTTPS for the Admin interface                                           | ✅                | Kind of, but you'll need to manually configure lighttpd   |
 | Encrypted DNS upstream servers (DNS-over-HTTPS, DNS-over-TLS, DNSCrypt) | ✅                | ❌ (requires additional software)                         |
 | Cross-platform                                                          | ✅                | ❌ (not natively, only via Docker)                        |
 | Running as a DNS-over-HTTPS or DNS-over-TLS server                      | ✅                | ❌ (requires additional software)                         |
