@@ -76,16 +76,6 @@ type filter struct {
 	dnsfilter.Filter `yaml:",inline"`
 }
 
-// Creates a helper object for working with the user rules
-func userFilter() filter {
-	f := filter{
-		// User filter always has constant ID=0
-		Enabled: true,
-	}
-	f.Filter.Data = []byte(strings.Join(config.UserRules, "\n"))
-	return f
-}
-
 const (
 	statusFound          = 1
 	statusEnabledChanged = 2
@@ -689,41 +679,33 @@ func (filter *filter) LastTimeUpdated() time.Time {
 }
 
 func enableFilters(async bool) {
-	var filters []dnsfilter.Filter
 	var whiteFilters []dnsfilter.Filter
-	if config.DNS.FilteringEnabled {
-		// convert array of filters
+	filters := []dnsfilter.Filter{{
+		Data: []byte(strings.Join(config.UserRules, "\n")),
+	}}
 
-		userFilter := userFilter()
-		f := dnsfilter.Filter{
-			ID:   userFilter.ID,
-			Data: userFilter.Data,
+	for _, filter := range config.Filters {
+		if !filter.Enabled {
+			continue
 		}
-		filters = append(filters, f)
 
-		for _, filter := range config.Filters {
-			if !filter.Enabled {
-				continue
-			}
-
-			f = dnsfilter.Filter{
-				ID:       filter.ID,
-				FilePath: filter.Path(),
-			}
-			filters = append(filters, f)
+		filters = append(filters, dnsfilter.Filter{
+			ID:       filter.ID,
+			FilePath: filter.Path(),
+		})
+	}
+	for _, filter := range config.WhitelistFilters {
+		if !filter.Enabled {
+			continue
 		}
-		for _, filter := range config.WhitelistFilters {
-			if !filter.Enabled {
-				continue
-			}
 
-			f = dnsfilter.Filter{
-				ID:       filter.ID,
-				FilePath: filter.Path(),
-			}
-			whiteFilters = append(whiteFilters, f)
-		}
+		whiteFilters = append(whiteFilters, dnsfilter.Filter{
+			ID:       filter.ID,
+			FilePath: filter.Path(),
+		})
 	}
 
-	_ = Context.dnsFilter.SetFilters(filters, whiteFilters, async)
+	if err := Context.dnsFilter.SetFilters(filters, whiteFilters, async); err != nil {
+		log.Debug("enabling filters: %s", err)
+	}
 }

@@ -19,8 +19,11 @@ and this project adheres to
 
 ### Fixed
 
+- Ignoring client-specific filtering settings when filtering is disabled in
+  general settings ([#2875]).
 - Disallowed domains are now case-insensitive ([#3115]).
 
+[#2875]: https://github.com/AdguardTeam/AdGuardHome/issues/2875
 [#3115]: https://github.com/AdguardTeam/AdGuardHome/issues/3115
 
 
