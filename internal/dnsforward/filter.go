@@ -50,8 +50,6 @@ func (s *Server) getClientRequestFilteringSettings(ctx *dnsContext) *dnsfilter.F
 // filtered.
 func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 	d := ctx.proxyCtx
-	// TODO(e.burkov): Consistently use req instead of d.Req since it is
-	// declared.
 	req := d.Req
 	host := strings.TrimSuffix(req.Question[0].Name, ".")
 	res, err := s.dnsFilter.CheckHost(host, req.Question[0].Qtype, ctx.setts)

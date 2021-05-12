@@ -370,9 +370,7 @@ func (s *Server) setupResolvers(localAddrs []string) (err error) {
 	// really applicable here since in case of listening on all network
 	// interfaces we should check the whole interface's network to cut off
 	// all the loopback addresses as well.
-	localAddrs = aghstrings.FilterOut(localAddrs, func(s string) (ok bool) {
-		return ourAddrsSet.Has(s)
-	})
+	localAddrs = aghstrings.FilterOut(localAddrs, ourAddrsSet.Has)
 
 	var upsConfig proxy.UpstreamConfig
 	upsConfig, err = proxy.ParseUpstreamsConfig(localAddrs, upstream.Options{
