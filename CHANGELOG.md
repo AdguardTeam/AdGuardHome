@@ -19,6 +19,7 @@ and this project adheres to
 
 ### Fixed
 
+- DHCP leases validation ([#3107], [#3127]).
 - Local PTR request recursion in Docker containers ([#3064]).
 - Ignoring client-specific filtering settings when filtering is disabled in
   general settings ([#2875]).
@@ -26,7 +27,9 @@ and this project adheres to
 
 [#2875]: https://github.com/AdguardTeam/AdGuardHome/issues/2875
 [#3064]: https://github.com/AdguardTeam/AdGuardHome/issues/3064
+[#3107]: https://github.com/AdguardTeam/AdGuardHome/issues/3107
 [#3115]: https://github.com/AdguardTeam/AdGuardHome/issues/3115
+[#3127]: https://github.com/AdguardTeam/AdGuardHome/issues/3127
 
 
 
