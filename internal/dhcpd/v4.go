@@ -73,42 +73,26 @@ func normalizeHostname(hostname string) (norm string, err error) {
 	return norm, nil
 }
 
-// validHostnameForClient accepts the hostname sent by the client and returns
-// either a normalized version of that hostname or a new hostname generated from
-// the client's IP address.  If this new hostname is different from the provided
-// previous hostname, additional uniqueness check is performed.
-//
-// hostname is always a non-empty valid hostname.  If err is not nil, it
-// describes the issues encountered when normalizing cliHostname.
-func (s *v4Server) validHostnameForClient(
-	cliHostname string,
-	prevHostname string,
-	ip net.IP,
-) (hostname string, err error) {
-	hostname, err = normalizeHostname(cliHostname)
-	if err == nil && hostname != "" {
-		err = aghnet.ValidateDomainName(hostname)
-		if err != nil {
-			// Go on and assign a hostname made from the IP below,
-			// returning the error that we've got.
-			hostname = ""
-		} else if hostname != prevHostname && s.leaseHosts.Has(hostname) {
-			// Go on and assign a unique hostname made from the IP
-			// below, returning the error about uniqueness.
-			err = agherr.Error("hostname exists")
-			hostname = ""
-		}
+// validHostnameForClient accepts the hostname sent by the client and its IP and
+// returns either a normalized version of that hostname, or a new hostname
+// generated from the IP address, or an empty string.
+func (s *v4Server) validHostnameForClient(cliHostname string, ip net.IP) (hostname string) {
+	hostname, err := normalizeHostname(cliHostname)
+	if err != nil {
+		log.Info("dhcpv4: %s", err)
 	}
 
 	if hostname == "" {
 		hostname = aghnet.GenerateHostname(ip)
 	}
 
-	if hostname != cliHostname {
-		log.Info("dhcpv4: normalized hostname %q into %q", cliHostname, hostname)
+	err = aghnet.ValidateDomainName(hostname)
+	if err != nil {
+		log.Info("dhcpv4: %s", err)
+		hostname = ""
 	}
 
-	return hostname, err
+	return hostname
 }
 
 // ResetLeases - reset leases
@@ -124,15 +108,7 @@ func (s *v4Server) ResetLeases(leases []*Lease) {
 	s.leases = nil
 
 	for _, l := range leases {
-		l.Hostname, err = s.validHostnameForClient(l.Hostname, l.Hostname, l.IP)
-		if err != nil {
-			log.Info(
-				"dhcpv4: warning: previous hostname %q is invalid: %s",
-				l.Hostname,
-				err,
-			)
-		}
-
+		l.Hostname = s.validHostnameForClient(l.Hostname, l.IP)
 		err = s.addLease(l)
 		if err != nil {
 			// TODO(a.garipov): Wrap and bubble up the error.
@@ -287,6 +263,15 @@ func (s *v4Server) rmDynamicLease(lease *Lease) (err error) {
 			}
 
 			s.rmLeaseByIndex(i)
+			if i == len(s.leases) {
+				break
+			}
+
+			l = s.leases[i]
+		}
+
+		if l.Hostname == lease.Hostname {
+			l.Hostname = ""
 		}
 	}
 
@@ -352,22 +337,25 @@ func (s *v4Server) AddStaticLease(l Lease) (err error) {
 		return err
 	}
 
-	var hostname string
-	hostname, err = normalizeHostname(l.Hostname)
-	if err != nil {
-		return err
-	}
+	if l.Hostname != "" {
+		var hostname string
+		hostname, err = normalizeHostname(l.Hostname)
+		if err != nil {
+			return err
+		}
 
-	err = aghnet.ValidateDomainName(hostname)
-	if err != nil {
-		return fmt.Errorf("validating hostname: %w", err)
-	}
+		err = aghnet.ValidateDomainName(hostname)
+		if err != nil {
+			return fmt.Errorf("validating hostname: %w", err)
+		}
 
-	if s.leaseHosts.Has(hostname) {
-		return agherr.Error("hostname exists")
-	}
+		// Don't check for hostname uniqueness, since we try to emulate
+		// dnsmasq here, which means that rmDynamicLease below will
+		// simply empty the hostname of the dynamic lease if there even
+		// is one.
 
-	l.Hostname = hostname
+		l.Hostname = hostname
+	}
 
 	// Perform the following actions in an anonymous function to make sure
 	// that the lock gets unlocked before the notification step.
@@ -553,7 +541,10 @@ func (s *v4Server) commitLease(l *Lease) {
 		defer s.leasesLock.Unlock()
 
 		s.conf.notify(LeaseChangedDBStore)
-		s.leaseHosts.Add(l.Hostname)
+
+		if l.Hostname != "" {
+			s.leaseHosts.Add(l.Hostname)
+		}
 	}()
 
 	s.conf.notify(LeaseChangedAdded)
@@ -647,7 +638,7 @@ func (o *optFQDN) ToBytes() []byte {
 	return b
 }
 
-// processDiscover is the handler for the DHCP Request request.
+// processRequest is the handler for the DHCP Request request.
 func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, needsReply bool) {
 	mac := req.ClientHWAddr
 	err := aghnet.ValidateHardwareAddress(mac)
@@ -662,13 +653,13 @@ func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, needs
 
 	sid := req.ServerIdentifier()
 	if len(sid) != 0 && !sid.Equal(s.conf.dnsIPAddrs[0]) {
-		log.Debug("dhcpv4: bad OptionServerIdentifier in request message for %s", mac)
+		log.Debug("dhcpv4: bad OptionServerIdentifier in req msg for %s", mac)
 
 		return nil, false
 	}
 
 	if ip4 := reqIP.To4(); ip4 == nil {
-		log.Debug("dhcpv4: bad OptionRequestedIPAddress in request message for %s", mac)
+		log.Debug("dhcpv4: bad OptionRequestedIPAddress in req msg for %s", mac)
 
 		return nil, false
 	}
@@ -685,14 +676,16 @@ func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, needs
 
 			if l.IP.Equal(reqIP) {
 				lease = l
-			} else {
-				log.Debug(
-					`dhcpv4: mismatched OptionRequestedIPAddress `+
-						`in request message for %s`,
-					mac,
-				)
-				mismatch = true
+
+				return
 			}
+
+			log.Debug(
+				`dhcpv4: mismatched OptionRequestedIPAddress in req msg for %s`,
+				mac,
+			)
+
+			mismatch = true
 
 			return
 		}
@@ -709,13 +702,12 @@ func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, needs
 
 	if !lease.IsStatic() {
 		cliHostname := req.HostName()
-		lease.Hostname, err = s.validHostnameForClient(cliHostname, lease.Hostname, reqIP)
-		if err != nil {
-			log.Info(
-				"dhcpv4: warning: client hostname %q is invalid: %s",
-				cliHostname,
-				err,
-			)
+		hostname := s.validHostnameForClient(cliHostname, reqIP)
+		if hostname != lease.Hostname && s.leaseHosts.Has(hostname) {
+			log.Info("dhcpv4: hostname %q already exists", hostname)
+			lease.Hostname = ""
+		} else {
+			lease.Hostname = hostname
 		}
 
 		s.commitLease(lease)
