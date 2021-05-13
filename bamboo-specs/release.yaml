@@ -229,7 +229,9 @@
   - 'adg-docker': 'true'
 
 'triggers':
-- 'cron': '0 30 14 ? * MON-FRI *'
+# Don't use minute values that end with a zero or a five as these are often used
+# in CI and so resources during these minutes can be quite busy.
+- 'cron': '0 42 13 ? * MON-FRI *'
 'branches':
   'create': 'manually'
   'delete':
