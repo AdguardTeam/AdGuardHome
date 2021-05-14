@@ -95,6 +95,9 @@ on GitHub and most other Markdown renderers. -->
  *  Constructors should validate their arguments and return meaningful errors.
     As a corollary, avoid lazy initialization.
 
+ *  Define `MarshalFoo` methods on non-pointer receivers, as pointer receivers
+    [can have surprising results][staticcheck-911].
+
  *  Don't mix horizontal and vertical placement of arguments in function and
     method calls.  That is, either this:
 
@@ -286,9 +289,10 @@ on GitHub and most other Markdown renderers. -->
 
  *  <https://go-proverbs.github.io/>
 
-[constant errors]:          https://dave.cheney.net/2016/04/07/constant-errors
 [Linus said]:               https://www.kernel.org/doc/html/v4.17/process/coding-style.html#indentation
 [Text, Including Comments]: #text-including-comments
+[constant errors]:          https://dave.cheney.net/2016/04/07/constant-errors
+[staticcheck-911]:          https://github.com/dominikh/go-tools/issues/911
 
 
 

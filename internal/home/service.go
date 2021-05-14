@@ -1,6 +1,7 @@
 package home
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -88,24 +89,27 @@ func svcAction(s service.Service, action string) (err error) {
 // If pid-file doesn't exist, find our PID using 'ps' command
 func sendSigReload() {
 	if runtime.GOOS == "windows" {
-		log.Error("Not implemented on Windows")
+		log.Error("not implemented on windows")
+
 		return
 	}
 
 	pidfile := fmt.Sprintf("/var/run/%s.pid", serviceName)
 	data, err := ioutil.ReadFile(pidfile)
-	if os.IsNotExist(err) {
+	if errors.Is(err, os.ErrNotExist) {
 		var code int
 		var psdata string
 		code, psdata, err = aghos.RunCommand("ps", "-C", serviceName, "-o", "pid=")
 		if err != nil || code != 0 {
-			log.Error("Can't find AdGuardHome process: %s  code:%d", err, code)
+			log.Error("finding AdGuardHome process: code: %d, error: %s", code, err)
+
 			return
 		}
-		data = []byte(psdata)
 
+		data = []byte(psdata)
 	} else if err != nil {
-		log.Error("Can't read PID file %s: %s", pidfile, err)
+		log.Error("reading pid file %s: %s", pidfile, err)
+
 		return
 	}
 
@@ -258,12 +262,12 @@ func handleServiceUninstallCommand(s service.Service) {
 	if runtime.GOOS == "darwin" {
 		// Remove log files on cleanup and log errors.
 		err = os.Remove(launchdStdoutPath)
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			log.Printf("removing stdout file: %s", err)
 		}
 
 		err = os.Remove(launchdStderrPath)
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			log.Printf("removing stderr file: %s", err)
 		}
 	}

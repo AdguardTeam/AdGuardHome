@@ -84,17 +84,17 @@ type NetInterface struct {
 	Subnets []*net.IPNet `json:"-"`
 }
 
-// MarshalJSON implements the json.Marshaler interface for *NetInterface.
-func (iface *NetInterface) MarshalJSON() ([]byte, error) {
+// MarshalJSON implements the json.Marshaler interface for NetInterface.
+func (iface NetInterface) MarshalJSON() ([]byte, error) {
 	type netInterface NetInterface
 	return json.Marshal(&struct {
 		HardwareAddr string `json:"hardware_address"`
 		Flags        string `json:"flags"`
-		*netInterface
+		netInterface
 	}{
 		HardwareAddr: iface.HardwareAddr.String(),
 		Flags:        iface.Flags.String(),
-		netInterface: (*netInterface)(iface),
+		netInterface: netInterface(iface),
 	})
 }
 

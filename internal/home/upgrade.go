@@ -1,6 +1,7 @@
 package home
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -115,17 +116,16 @@ func upgradeConfigSchema(oldVersion int, diskConf yobj) (err error) {
 
 // The first schema upgrade:
 // No more "dnsfilter.txt", filters are now kept in data/filters/
-func upgradeSchema0to1(diskConf yobj) error {
+func upgradeSchema0to1(diskConf yobj) (err error) {
 	log.Printf("%s(): called", funcName())
 
 	dnsFilterPath := filepath.Join(Context.workDir, "dnsfilter.txt")
-	if _, err := os.Stat(dnsFilterPath); !os.IsNotExist(err) {
-		log.Printf("Deleting %s as we don't need it anymore", dnsFilterPath)
-		err = os.Remove(dnsFilterPath)
-		if err != nil {
-			log.Printf("Cannot remove %s due to %s", dnsFilterPath, err)
-			// not fatal, move on
-		}
+	log.Printf("deleting %s as we don't need it anymore", dnsFilterPath)
+	err = os.Remove(dnsFilterPath)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		log.Info("warning: %s", err)
+
+		// Go on.
 	}
 
 	diskConf["schema_version"] = 1
@@ -136,17 +136,16 @@ func upgradeSchema0to1(diskConf yobj) error {
 // Second schema upgrade:
 // coredns is now dns in config
 // delete 'Corefile', since we don't use that anymore
-func upgradeSchema1to2(diskConf yobj) error {
+func upgradeSchema1to2(diskConf yobj) (err error) {
 	log.Printf("%s(): called", funcName())
 
 	coreFilePath := filepath.Join(Context.workDir, "Corefile")
-	if _, err := os.Stat(coreFilePath); !os.IsNotExist(err) {
-		log.Printf("Deleting %s as we don't need it anymore", coreFilePath)
-		err = os.Remove(coreFilePath)
-		if err != nil {
-			log.Printf("Cannot remove %s due to %s", coreFilePath, err)
-			// not fatal, move on
-		}
+	log.Printf("deleting %s as we don't need it anymore", coreFilePath)
+	err = os.Remove(coreFilePath)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		log.Info("warning: %s", err)
+
+		// Go on.
 	}
 
 	if _, ok := diskConf["dns"]; !ok {

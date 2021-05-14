@@ -43,8 +43,8 @@ func (l *Lease) IsStatic() (ok bool) {
 	return l != nil && l.Expiry.Unix() == leaseExpireStatic
 }
 
-// MarshalJSON implements the json.Marshaler interface for *Lease.
-func (l *Lease) MarshalJSON() ([]byte, error) {
+// MarshalJSON implements the json.Marshaler interface for Lease.
+func (l Lease) MarshalJSON() ([]byte, error) {
 	var expiryStr string
 	if !l.IsStatic() {
 		// The front-end is waiting for RFC 3999 format of the time
@@ -59,11 +59,11 @@ func (l *Lease) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
 		HWAddr string `json:"mac"`
 		Expiry string `json:"expires,omitempty"`
-		*lease
+		lease
 	}{
 		HWAddr: l.HWAddr.String(),
 		Expiry: expiryStr,
-		lease:  (*lease)(l),
+		lease:  lease(l),
 	})
 }
 
@@ -71,8 +71,8 @@ func (l *Lease) MarshalJSON() ([]byte, error) {
 func (l *Lease) UnmarshalJSON(data []byte) (err error) {
 	type lease Lease
 	aux := struct {
-		HWAddr string `json:"mac"`
 		*lease
+		HWAddr string `json:"mac"`
 	}{
 		lease: (*lease)(l),
 	}

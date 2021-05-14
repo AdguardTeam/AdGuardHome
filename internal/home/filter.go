@@ -2,6 +2,7 @@ package home
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"hash/crc32"
 	"io"
@@ -622,29 +623,32 @@ func (f *Filtering) updateIntl(filter *filter) (updated bool, err error) {
 }
 
 // loads filter contents from the file in dataDir
-func (f *Filtering) load(filter *filter) error {
+func (f *Filtering) load(filter *filter) (err error) {
 	filterFilePath := filter.Path()
-	log.Tracef("Loading filter %d contents to: %s", filter.ID, filterFilePath)
 
-	if _, err := os.Stat(filterFilePath); os.IsNotExist(err) {
-		// do nothing, file doesn't exist
-		return err
-	}
+	log.Tracef("filtering: loading filter %d contents to: %s", filter.ID, filterFilePath)
 
 	file, err := os.Open(filterFilePath)
-	if err != nil {
-		return err
+	if errors.Is(err, os.ErrNotExist) {
+		// Do nothing, file doesn't exist.
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("opening filter file: %w", err)
 	}
 	defer file.Close()
-	st, _ := file.Stat()
 
-	log.Tracef("File %s, id %d, length %d",
-		filterFilePath, filter.ID, st.Size())
+	st, err := file.Stat()
+	if err != nil {
+		return fmt.Errorf("getting filter file stat: %w", err)
+	}
+
+	log.Tracef("filtering: File %s, id %d, length %d", filterFilePath, filter.ID, st.Size())
+
 	rulesCount, checksum, _ := f.parseFilterContents(file)
 
 	filter.RulesCount = rulesCount
 	filter.checksum = checksum
-	filter.LastUpdated = filter.LastTimeUpdated()
+	filter.LastUpdated = st.ModTime()
 
 	return nil
 }
@@ -658,24 +662,6 @@ func (filter *filter) unload() {
 // Path to the filter contents
 func (filter *filter) Path() string {
 	return filepath.Join(Context.getDataDir(), filterDir, strconv.FormatInt(filter.ID, 10)+".txt")
-}
-
-// LastTimeUpdated returns the time when the filter was last time updated
-func (filter *filter) LastTimeUpdated() time.Time {
-	filterFilePath := filter.Path()
-	s, err := os.Stat(filterFilePath)
-	if os.IsNotExist(err) {
-		// if the filter file does not exist, return 0001-01-01
-		return time.Time{}
-	}
-
-	if err != nil {
-		// if the filter file does not exist, return 0001-01-01
-		return time.Time{}
-	}
-
-	// filter file modified time
-	return s.ModTime()
 }
 
 func enableFilters(async bool) {
