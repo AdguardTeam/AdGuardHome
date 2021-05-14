@@ -17,6 +17,10 @@ and this project adheres to
 ## [v0.106.3] - 2021-05-17 (APPROX.)
 -->
 
+### Added
+
+- Support for DHCP `DECLINE` and `RELEASE` message types ([#3053]).
+
 ### Fixed
 
 - DHCP leases validation ([#3107], [#3127]).
@@ -26,6 +30,7 @@ and this project adheres to
 - Disallowed domains are now case-insensitive ([#3115]).
 
 [#2875]: https://github.com/AdguardTeam/AdGuardHome/issues/2875
+[#3053]: https://github.com/AdguardTeam/AdGuardHome/issues/3053
 [#3064]: https://github.com/AdguardTeam/AdGuardHome/issues/3064
 [#3107]: https://github.com/AdguardTeam/AdGuardHome/issues/3107
 [#3115]: https://github.com/AdguardTeam/AdGuardHome/issues/3115
