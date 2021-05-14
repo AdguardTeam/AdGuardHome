@@ -550,14 +550,30 @@ func (s *v4Server) commitLease(l *Lease) {
 	s.conf.notify(LeaseChangedAdded)
 }
 
+// allocateLease allocates a new lease for the MAC address.  If there are no IP
+// addresses left, both l and err are nil.
+func (s *v4Server) allocateLease(mac net.HardwareAddr) (l *Lease, err error) {
+	for {
+		l, err = s.reserveLease(mac)
+		if err != nil {
+			return nil, fmt.Errorf("reserving a lease: %w", err)
+		} else if l == nil {
+			return nil, nil
+		}
+
+		if s.addrAvailable(l.IP) {
+			return l, nil
+		}
+
+		s.blocklistLease(l)
+	}
+}
+
 // processDiscover is the handler for the DHCP Discover request.
 func (s *v4Server) processDiscover(req, resp *dhcpv4.DHCPv4) (l *Lease, err error) {
 	mac := req.ClientHWAddr
 
-	err = aghnet.ValidateHardwareAddress(mac)
-	if err != nil {
-		return nil, err
-	}
+	defer s.conf.notify(LeaseChangedDBStore)
 
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
@@ -574,34 +590,13 @@ func (s *v4Server) processDiscover(req, resp *dhcpv4.DHCPv4) (l *Lease, err erro
 		return l, nil
 	}
 
-	needsUpdate := false
-	defer func() {
-		if needsUpdate {
-			s.conf.notify(LeaseChangedDBStore)
-		}
-	}()
+	l, err = s.allocateLease(mac)
+	if err != nil {
+		return nil, err
+	} else if l == nil {
+		log.Debug("dhcpv4: no more ip addresses")
 
-	leaseReady := false
-	for !leaseReady {
-		l, err = s.reserveLease(mac)
-		if err != nil {
-			return nil, fmt.Errorf("reserving a lease: %w", err)
-		}
-
-		if l == nil {
-			log.Debug("dhcpv4: no more ip addresses")
-
-			return nil, nil
-		}
-
-		needsUpdate = true
-
-		if s.addrAvailable(l.IP) {
-			leaseReady = true
-		} else {
-			s.blocklistLease(l)
-			l = nil
-		}
+		return nil, nil
 	}
 
 	resp.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeOffer))
@@ -641,11 +636,6 @@ func (o *optFQDN) ToBytes() []byte {
 // processRequest is the handler for the DHCP Request request.
 func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, needsReply bool) {
 	mac := req.ClientHWAddr
-	err := aghnet.ValidateHardwareAddress(mac)
-	if err != nil {
-		return nil, false
-	}
-
 	reqIP := req.RequestedIPAddress()
 	if reqIP == nil {
 		reqIP = req.ClientIPAddr
@@ -711,7 +701,7 @@ func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, needs
 		}
 
 		s.commitLease(lease)
-	} else if len(lease.Hostname) != 0 {
+	} else if lease.Hostname != "" {
 		o := &optFQDN{
 			name: lease.Hostname,
 		}
@@ -728,6 +718,107 @@ func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, needs
 	return lease, true
 }
 
+// processRequest is the handler for the DHCP Decline request.
+func (s *v4Server) processDecline(req, resp *dhcpv4.DHCPv4) (err error) {
+	s.conf.notify(LeaseChangedDBStore)
+
+	s.leasesLock.Lock()
+	defer s.leasesLock.Unlock()
+
+	mac := req.ClientHWAddr
+	reqIP := req.RequestedIPAddress()
+	if reqIP == nil {
+		reqIP = req.ClientIPAddr
+	}
+
+	var oldLease *Lease
+	for _, l := range s.leases {
+		if bytes.Equal(l.HWAddr, mac) && l.IP.Equal(reqIP) {
+			oldLease = l
+
+			break
+		}
+	}
+
+	if oldLease == nil {
+		log.Info("dhcpv4: lease with ip %s for %s not found", reqIP, mac)
+
+		return nil
+	}
+
+	err = s.rmDynamicLease(oldLease)
+	if err != nil {
+		return fmt.Errorf("removing old lease for %s: %w", mac, err)
+	}
+
+	newLease, err := s.allocateLease(mac)
+	if err != nil {
+		return fmt.Errorf("allocating new lease for %s: %w", mac, err)
+	} else if newLease == nil {
+		log.Info("dhcpv4: allocating new lease for %s: no more ip addresses", mac)
+
+		resp.YourIPAddr = make([]byte, 4)
+		resp.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeAck))
+
+		return nil
+	}
+
+	newLease.Hostname = oldLease.Hostname
+	newLease.Expiry = time.Now().Add(s.conf.leaseTime)
+
+	err = s.addLease(newLease)
+	if err != nil {
+		return fmt.Errorf("adding new lease for %s: %w", mac, err)
+	}
+
+	log.Info("dhcpv4: changed ip from %s to %s for %s", reqIP, newLease.IP, mac)
+
+	resp.YourIPAddr = make([]byte, 4)
+	copy(resp.YourIPAddr, newLease.IP)
+
+	resp.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeAck))
+
+	return nil
+}
+
+// processRelease is the handler for the DHCP Release request.
+func (s *v4Server) processRelease(req, resp *dhcpv4.DHCPv4) (err error) {
+	mac := req.ClientHWAddr
+	reqIP := req.RequestedIPAddress()
+	if reqIP == nil {
+		reqIP = req.ClientIPAddr
+	}
+
+	// TODO(a.garipov): Add a separate notification type for dynamic lease
+	// removal?
+	defer s.conf.notify(LeaseChangedDBStore)
+
+	n := 0
+	s.leasesLock.Lock()
+	defer s.leasesLock.Unlock()
+
+	for _, l := range s.leases {
+		if !bytes.Equal(l.HWAddr, mac) || !l.IP.Equal(reqIP) {
+			continue
+		}
+
+		err = s.rmDynamicLease(l)
+		if err != nil {
+			err = fmt.Errorf("removing dynamic lease for %s: %w", mac, err)
+
+			return
+		}
+
+		n++
+	}
+
+	log.Info("dhcpv4: released %d dynamic leases for %s", n, mac)
+
+	resp.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeAck))
+
+	return nil
+}
+
 // Find a lease associated with MAC and prepare response
 // Return 1: OK
 // Return 0: error; reply with Nak
@@ -737,6 +828,7 @@ func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
 
 	resp.UpdateOption(dhcpv4.OptServerIdentifier(s.conf.dnsIPAddrs[0]))
 
+	// TODO(a.garipov): Refactor this into handlers.
 	var l *Lease
 	switch req.MessageType() {
 	case dhcpv4.MessageTypeDiscover:
@@ -759,10 +851,26 @@ func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
 			}
 			return -1 // drop packet
 		}
+	case dhcpv4.MessageTypeDecline:
+		err = s.processDecline(req, resp)
+		if err != nil {
+			log.Error("dhcpv4: processing decline: %s", err)
+
+			return 0
+		}
+	case dhcpv4.MessageTypeRelease:
+		err = s.processRelease(req, resp)
+		if err != nil {
+			log.Error("dhcpv4: processing release: %s", err)
+
+			return 0
+		}
 	}
 
-	resp.YourIPAddr = make([]byte, 4)
-	copy(resp.YourIPAddr, l.IP)
+	if l != nil {
+		resp.YourIPAddr = make([]byte, 4)
+		copy(resp.YourIPAddr, l.IP)
+	}
 
 	resp.UpdateOption(dhcpv4.OptIPAddressLeaseTime(s.conf.leaseTime))
 	resp.UpdateOption(dhcpv4.OptRouter(s.conf.subnet.IP))
@@ -785,11 +893,13 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 
 	switch req.MessageType() {
 	case dhcpv4.MessageTypeDiscover,
-		dhcpv4.MessageTypeRequest:
-		//
-
+		dhcpv4.MessageTypeRequest,
+		dhcpv4.MessageTypeDecline,
+		dhcpv4.MessageTypeRelease:
+		// Go on.
 	default:
 		log.Debug("dhcpv4: unsupported message type %d", req.MessageType())
+
 		return
 	}
 
