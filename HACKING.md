@@ -309,6 +309,8 @@ on GitHub and most other Markdown renderers. -->
 
  *  Avoid bashisms and GNUisms, prefer POSIX features only.
 
+ *  Avoid spaces between patterns of the same `case` condition.
+
  *  Prefer `'raw strings'` to `"double quoted strings"` whenever possible.
 
  *  Put spaces within `$( cmd )`, `$(( expr ))`, and `{ cmd; }`.
@@ -324,9 +326,9 @@ on GitHub and most other Markdown renderers. -->
  *  UPPERCASE names for external exported variables, lowercase for local,
     unexported ones.
 
- *  Use `set -e -f -u` and also `set -x` in verbose mode.
-
  *  Use `readonly` liberally.
+
+ *  Use `set -e -f -u` and also `set -x` in verbose mode.
 
  *  Use the `"$var"` form instead of the `$var` form, unless word splitting is
     required.
@@ -352,6 +354,7 @@ on GitHub and most other Markdown renderers. -->
  *  When using `test` (aka `[`), spell compound conditions with `&&`, `||`, and
     `!` **outside** of `test` instead of `-a`, `-o`, and `!` inside of `test`
     correspondingly.  The latter ones are pretty much deprecated in POSIX.
+    Also, prefer `!= ''` form instead of `-n` to check if string is empty.
 
     See also: “[Problems With the `test` Builtin: What Does `-a` Mean?]”.
 
