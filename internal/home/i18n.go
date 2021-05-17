@@ -86,7 +86,13 @@ func handleI18nChangeLanguage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	config.Language = language
+	func() {
+		config.Lock()
+		defer config.Unlock()
+
+		config.Language = language
+	}()
+
 	onConfigModified()
 	returnOK(w)
 }

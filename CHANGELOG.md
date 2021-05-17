@@ -14,7 +14,7 @@ and this project adheres to
 -->
 
 <!--
-## [v0.106.3] - 2021-05-17 (APPROX.)
+## [v0.106.3] - 2021-05-18 (APPROX.)
 -->
 
 ### Added
@@ -25,6 +25,7 @@ and this project adheres to
 
 ### Fixed
 
+- Intermittent "Warning: ID mismatch" errors ([#3087]).
 - Error when using installation script on some ARMv7 devices ([#2542]).
 - DHCP leases validation ([#3107], [#3127]).
 - Local PTR request recursion in Docker containers ([#3064]).

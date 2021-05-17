@@ -133,14 +133,21 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
-	resp := statusResponse{
-		DNSAddrs:  dnsAddrs,
-		DNSPort:   config.DNS.Port,
-		HTTPPort:  config.BindPort,
-		IsRunning: isRunning(),
-		Version:   version.Version(),
-		Language:  config.Language,
-	}
+	var resp statusResponse
+
+	func() {
+		config.RLock()
+		defer config.RUnlock()
+
+		resp = statusResponse{
+			DNSAddrs:  dnsAddrs,
+			DNSPort:   config.DNS.Port,
+			HTTPPort:  config.BindPort,
+			IsRunning: isRunning(),
+			Version:   version.Version(),
+			Language:  config.Language,
+		}
+	}()
 
 	var c *dnsforward.FilteringConfig
 	if Context.dnsServer != nil {
