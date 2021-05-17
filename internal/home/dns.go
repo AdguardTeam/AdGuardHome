@@ -319,6 +319,9 @@ func applyAdditionalFiltering(clientAddr net.IP, clientID string, setts *dnsfilt
 }
 
 func startDNSServer() error {
+	config.Lock()
+	defer config.Unlock()
+
 	if isRunning() {
 		return fmt.Errorf("unable to start forwarding DNS server: Already running")
 	}
