@@ -45,7 +45,7 @@ func (s *searchParams) quickMatch(line string, findClient quickMatchClientFunc) 
 
 // match - checks if the logEntry matches the searchParams
 func (s *searchParams) match(entry *logEntry) bool {
-	if !s.olderThan.IsZero() && entry.Time.UnixNano() >= s.olderThan.UnixNano() {
+	if !s.olderThan.IsZero() && !entry.Time.Before(s.olderThan) {
 		// Ignore entries newer than what was requested
 		return false
 	}
