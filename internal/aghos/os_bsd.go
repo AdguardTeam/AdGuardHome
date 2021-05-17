@@ -1,4 +1,4 @@
-// +build darwin
+// +build darwin netbsd openbsd
 
 package aghos
 
