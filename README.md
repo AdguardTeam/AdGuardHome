@@ -68,8 +68,16 @@ It operates as a DNS server that re-routes tracking domains to a "black hole", t
 ### Automated install (Linux and Mac)
 Run the following command in your terminal:
 ```
-curl -sSL https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sh
+curl -s -S -L https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sh -s -- -v
 ```
+
+The script also accepts some options:
+* `-c <channel>` to use specified channel.
+* `-r` to reinstall AdGuard Home;
+* `-u` to uninstall AdGuard Home;
+* `-v` for verbose output;
+
+Note that options `-r` and `-u` are mutually exclusive.
 
 ### Alternative methods
 

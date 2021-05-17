@@ -19,16 +19,21 @@ and this project adheres to
 
 ### Added
 
+- Support for reinstall (`-r`) and uninstall (`-u`) flags in the installation
+  script ([#2462]).
 - Support for DHCP `DECLINE` and `RELEASE` message types ([#3053]).
 
 ### Fixed
 
+- Error when using installation script on some ARMv7 devices ([#2542]).
 - DHCP leases validation ([#3107], [#3127]).
 - Local PTR request recursion in Docker containers ([#3064]).
 - Ignoring client-specific filtering settings when filtering is disabled in
   general settings ([#2875]).
 - Disallowed domains are now case-insensitive ([#3115]).
 
+[#2462]: https://github.com/AdguardTeam/AdGuardHome/issues/2462
+[#2542]: https://github.com/AdguardTeam/AdGuardHome/issues/2542
 [#2875]: https://github.com/AdguardTeam/AdGuardHome/issues/2875
 [#3053]: https://github.com/AdguardTeam/AdGuardHome/issues/3053
 [#3064]: https://github.com/AdguardTeam/AdGuardHome/issues/3064
