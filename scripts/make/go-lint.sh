@@ -92,6 +92,7 @@ underscores() {
 	git ls-files '*_*.go' | {
 		grep -F\
 		-e '_big.go'\
+		-e '_bsd.go'\
 		-e '_darwin.go'\
 		-e '_freebsd.go'\
 		-e '_linux.go'\

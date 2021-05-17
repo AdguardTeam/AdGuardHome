@@ -40,4 +40,4 @@ require (
 	howett.net/plist v0.0.0-20201203080718-1454fab16a06
 )
 
-replace github.com/insomniacslk/dhcp => github.com/AdguardTeam/dhcp v0.0.0-20210420175708-50b0efd52063
+replace github.com/insomniacslk/dhcp => github.com/AdguardTeam/dhcp v0.0.0-20210517101438-550ef4cd8c6e
