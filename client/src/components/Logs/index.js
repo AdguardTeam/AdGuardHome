@@ -63,8 +63,8 @@ const Logs = () => {
     const history = useHistory();
 
     const {
-        response_status: response_status_url_param = '',
-        search: search_url_param = '',
+        response_status: response_status_url_param,
+        search: search_url_param,
     } = queryString.parse(history.location.search);
 
     const {
@@ -76,8 +76,8 @@ const Logs = () => {
     const filter = useSelector((state) => state.queryLogs.filter, shallowEqual);
     const logs = useSelector((state) => state.queryLogs.logs, shallowEqual);
 
-    const search = filter?.search || search_url_param;
-    const response_status = filter?.response_status || response_status_url_param;
+    const search = filter?.search || search_url_param || '';
+    const response_status = filter?.response_status || response_status_url_param || '';
 
     const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < SMALL_SCREEN_SIZE);
     const [detailedDataCurrent, setDetailedDataCurrent] = useState({});
