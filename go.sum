@@ -25,8 +25,8 @@ github.com/AdguardTeam/dnsproxy v0.37.4/go.mod h1:xkJWEuTr550gPDmB9azsciKZzSXjf9
 github.com/AdguardTeam/golibs v0.4.0/go.mod h1:skKsDKIBB7kkFflLJBpfGX+G8QFTx0WKUzB6TIgtUj4=
 github.com/AdguardTeam/golibs v0.4.2/go.mod h1:skKsDKIBB7kkFflLJBpfGX+G8QFTx0WKUzB6TIgtUj4=
 github.com/AdguardTeam/golibs v0.4.4/go.mod h1:skKsDKIBB7kkFflLJBpfGX+G8QFTx0WKUzB6TIgtUj4=
-github.com/AdguardTeam/golibs v0.4.5 h1:RRA9ZsmbJEN4OllAx0BcfvSbRBxxpWluJijBYmtp13U=
-github.com/AdguardTeam/golibs v0.4.5/go.mod h1:skKsDKIBB7kkFflLJBpfGX+G8QFTx0WKUzB6TIgtUj4=
+github.com/AdguardTeam/golibs v0.5.0 h1:qwhEKjDrT0UcwDnHrNU2Yg/DLR9b/GsUncnXYW6VzAU=
+github.com/AdguardTeam/golibs v0.5.0/go.mod h1:skKsDKIBB7kkFflLJBpfGX+G8QFTx0WKUzB6TIgtUj4=
 github.com/AdguardTeam/gomitmproxy v0.2.0/go.mod h1:Qdv0Mktnzer5zpdpi5rAwixNJzW2FN91LjKJCkVbYGU=
 github.com/AdguardTeam/urlfilter v0.14.5 h1:WyF0hg0MwKevsqNPkoaZFH8f5WRi/yuy/7qePtYt5Ts=
 github.com/AdguardTeam/urlfilter v0.14.5/go.mod h1:klx4JbOfc4EaNb5lWLqOwfg+pVcyRukmoJRvO55lL5U=

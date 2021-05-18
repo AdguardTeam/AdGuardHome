@@ -493,6 +493,10 @@ func configureLogger(args options) {
 		log.SetLevel(log.DEBUG)
 	}
 
+	// Make sure that we see the microseconds in logs, as networking stuff
+	// can happen pretty quickly.
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+
 	if args.runningAsService && ls.LogFile == "" && runtime.GOOS == "windows" {
 		// When running as a Windows service, use eventlog by default if nothing else is configured
 		// Otherwise, we'll simply loose the log output
