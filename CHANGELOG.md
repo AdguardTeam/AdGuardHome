@@ -23,6 +23,10 @@ and this project adheres to
   script ([#2462]).
 - Support for DHCP `DECLINE` and `RELEASE` message types ([#3053]).
 
+### Changed
+
+- Add microseconds to log output.
+
 ### Fixed
 
 - Intermittent "Warning: ID mismatch" errors ([#3087]).
