@@ -231,7 +231,6 @@ Row.propTypes = {
         client_proto: propTypes.string.isRequired,
         client_id: propTypes.string,
         client_info: propTypes.shape({
-            ids: propTypes.arrayOf(propTypes.string).isRequired,
             name: propTypes.string.isRequired,
             whois: propTypes.shape({
                 country: propTypes.string,
