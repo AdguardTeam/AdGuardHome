@@ -12,9 +12,9 @@ set -e -f -u
 dist_dir="$DIST_DIR"
 go="${GO:-go}"
 
-# Set the GOPATH explicitly in case make clean is called from under sudo
-# after a Docker build.
-env PATH="$("$go" env GOPATH)/bin":"$PATH" packr clean
+# Set the GOPATH explicitly in case make clean is called from under sudo after
+# a Docker build.
+env PATH="$( "$go" env GOPATH )/bin":"$PATH" packr clean
 
 rm -f\
 	./AdGuardHome\

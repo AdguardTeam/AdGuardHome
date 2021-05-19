@@ -152,7 +152,9 @@
 
         cd ./dist/
 
-        export CHANNEL="${bamboo.channel}"
+        CHANNEL="${bamboo.channel}"
+        export CHANNEL
+
         ../bamboo-deploy-publisher/deploy.sh adguard-home-"$CHANNEL"
   'final-tasks':
   - 'clean'

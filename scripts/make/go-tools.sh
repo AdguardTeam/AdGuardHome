@@ -1,33 +1,35 @@
 #!/bin/sh
 
 verbose="${VERBOSE:-0}"
+readonly verbose
 
 if [ "$verbose" -gt '1' ]
 then
 	set -x
-	readonly v_flags='-v'
-	readonly x_flags='-x'
+	v_flags='-v'
+	x_flags='-x'
 elif [ "$verbose" -gt '0' ]
 then
 	set -x
-	readonly v_flags='-v'
-	readonly x_flags=''
+	v_flags='-v'
+	x_flags=''
 else
 	set +x
-	readonly v_flags=''
-	readonly x_flags=''
+	v_flags=''
+	x_flags=''
 fi
+readonly v_flags x_flags
 
 set -e -f -u
 
 go="${GO:-go}"
+readonly go
 
 # TODO(a.garipov): Add goconst?
 
 # Reset GOARCH and GOOS to make sure we install the tools for the native
-# architecture even when we're cross-compiling the main binary, and also
-# to prevent the "cannot install cross-compiled binaries when GOBIN is
-# set" error.
+# architecture even when we're cross-compiling the main binary, and also to
+# prevent the "cannot install cross-compiled binaries when GOBIN is set" error.
 env\
 	GOARCH=""\
 	GOOS=""\

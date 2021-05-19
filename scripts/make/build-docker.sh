@@ -14,58 +14,65 @@ fi
 set -e -f -u
 
 # Require these to be set.  The channel value is validated later.
-readonly channel="$CHANNEL"
-readonly commit="$COMMIT"
-readonly dist_dir="$DIST_DIR"
+channel="$CHANNEL"
+commit="$COMMIT"
+dist_dir="$DIST_DIR"
+readonly channel commit dist_dir
 
 if [ "${VERSION:-}" = 'v0.0.0' ] || [ "${VERSION:-}" = '' ]
 then
-	readonly version="$(sh ./scripts/make/version.sh)"
+	version="$( sh ./scripts/make/version.sh )"
 else
-	readonly version="$VERSION"
+	version="$VERSION"
 fi
+readonly version
 
 echo $version
 
 # Allow users to use sudo.
-readonly sudo_cmd="${SUDO:-}"
+sudo_cmd="${SUDO:-}"
+readonly sudo_cmd
 
-readonly docker_platforms="\
+docker_platforms="\
 linux/386,\
 linux/amd64,\
 linux/arm/v6,\
 linux/arm/v7,\
 linux/arm64,\
 linux/ppc64le"
+readonly docker_platforms
 
-readonly build_date="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+build_date="$( date -u +'%Y-%m-%dT%H:%M:%SZ' )"
+readonly build_date
 
-# Set DOCKER_IMAGE_NAME to 'adguard/adguard-home' if you want (and are
-# allowed) to push to DockerHub.
-readonly docker_image_name="${DOCKER_IMAGE_NAME:-adguardhome-dev}"
+# Set DOCKER_IMAGE_NAME to 'adguard/adguard-home' if you want (and are allowed)
+# to push to DockerHub.
+docker_image_name="${DOCKER_IMAGE_NAME:-adguardhome-dev}"
+readonly docker_image_name
 
-# Set DOCKER_OUTPUT to 'type=image,name=adguard/adguard-home,push=true'
-# if you want (and are allowed) to push to DockerHub.
-readonly docker_output="${DOCKER_OUTPUT:-type=image,name=${docker_image_name},push=false}"
+# Set DOCKER_OUTPUT to 'type=image,name=adguard/adguard-home,push=true' if you
+# want (and are allowed) to push to DockerHub.
+docker_output="${DOCKER_OUTPUT:-type=image,name=${docker_image_name},push=false}"
+readonly docker_output
 
 case "$channel"
 in
 ('release')
-	readonly docker_image_full_name="${docker_image_name}:${version}"
-	readonly docker_tags="--tag ${docker_image_name}:latest"
+	docker_image_full_name="${docker_image_name}:${version}"
+	docker_tags="--tag ${docker_image_name}:latest"
 	;;
 ('beta')
-	readonly docker_image_full_name="${docker_image_name}:${version}"
-	readonly docker_tags="--tag ${docker_image_name}:beta"
+	docker_image_full_name="${docker_image_name}:${version}"
+	docker_tags="--tag ${docker_image_name}:beta"
 	;;
 ('edge')
 	# Don't set the version tag when pushing to the edge channel.
-	readonly docker_image_full_name="${docker_image_name}:edge"
-	readonly docker_tags=''
+	docker_image_full_name="${docker_image_name}:edge"
+	docker_tags=''
 	;;
 ('development')
-	readonly docker_image_full_name="${docker_image_name}"
-	readonly docker_tags=''
+	docker_image_full_name="${docker_image_name}"
+	docker_tags=''
 	;;
 (*)
 	echo "invalid channel '$channel', supported values are\
@@ -73,11 +80,14 @@ in
 	exit 1
 	;;
 esac
+readonly docker_image_full_name docker_tags
 
-# Copy the binaries into a new directory under new names, so that it's
-# eaiser to COPY them later.  DO NOT remove the trailing underscores.
-# See scripts/make/Dockerfile.
-readonly dist_docker="${dist_dir}/docker"
+# Copy the binaries into a new directory under new names, so that it's eaiser to
+# COPY them later.  DO NOT remove the trailing underscores.  See file
+# scripts/make/Dockerfile.
+dist_docker="${dist_dir}/docker"
+readonly dist_docker
+
 mkdir -p "$dist_docker"
 cp "${dist_dir}/AdGuardHome_linux_386/AdGuardHome/AdGuardHome"\
 	"${dist_docker}/AdGuardHome_linux_386_"
@@ -92,8 +102,8 @@ cp "${dist_dir}/AdGuardHome_linux_arm_7/AdGuardHome/AdGuardHome"\
 cp "${dist_dir}/AdGuardHome_linux_ppc64le/AdGuardHome/AdGuardHome"\
 	"${dist_docker}/AdGuardHome_linux_ppc64le_"
 
-# Don't use quotes with $docker_tags and $debug_flags because we want
-# word splitting and or an empty space if tags are empty.
+# Don't use quotes with $docker_tags and $debug_flags because we want word
+# splitting and or an empty space if tags are empty.
 $sudo_cmd docker\
 	$debug_flags\
 	buildx build\

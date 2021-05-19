@@ -106,3 +106,5 @@ go-os-check:
 
 openapi-lint: ; cd ./openapi/ && $(YARN) test
 openapi-show: ; cd ./openapi/ && $(YARN) start
+
+txt-lint:  ; $(ENV) "$(SHELL)" ./scripts/make/txt-lint.sh

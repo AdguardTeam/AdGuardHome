@@ -1,9 +1,9 @@
  #  AdGuard Home Developer Guidelines
 
-As of **March 2021**, following this document is obligatory for all new code.
-Some of the rules aren't enforced as thoroughly or remain broken in old code,
-but this is still the place to find out about what we **want** our code to look
-like and how to improve it.
+Following this document is obligatory for all new code.  Some of the rules
+aren't enforced as thoroughly or remain broken in old code, but this is still
+the place to find out about what we **want** our code to look like and how to
+improve it.
 
 The rules are mostly sorted in the alphabetical order.
 
@@ -21,6 +21,7 @@ The rules are mostly sorted in the alphabetical order.
      *  [Recommended Reading](#recommended-reading)
  *  [Markdown](#markdown)
  *  [Shell Scripting](#shell-scripting)
+     *  [Shell Conditionals](#shell-cond)
  *  [Text, Including Comments](#text-including-comments)
  *  [YAML](#yaml)
 
@@ -315,6 +316,26 @@ on GitHub and most other Markdown renderers. -->
 
  *  Avoid spaces between patterns of the same `case` condition.
 
+ *  `export` and `readonly` should be used separately from variable assignment,
+    because otherwise failures in command substitutions won't stop the script.
+    That is, do this:
+
+    ```sh
+    X="$( echo 42 )"
+    export X
+    ```
+
+    And **not** this:
+
+    ```sh
+    # Bad!
+    export X="$( echo 42 )"
+    ```
+
+ *  If a binary value is needed, use `0` for `false`, and `1` for `true`.
+
+ *  Mark every variable that shouldn't change later as `readonly`.
+
  *  Prefer `'raw strings'` to `"double quoted strings"` whenever possible.
 
  *  Put spaces within `$( cmd )`, `$(( expr ))`, and `{ cmd; }`.
@@ -329,8 +350,6 @@ on GitHub and most other Markdown renderers. -->
 
  *  UPPERCASE names for external exported variables, lowercase for local,
     unexported ones.
-
- *  Use `readonly` liberally.
 
  *  Use `set -e -f -u` and also `set -x` in verbose mode.
 
@@ -355,14 +374,23 @@ on GitHub and most other Markdown renderers. -->
     dir="${TOP_DIR}"/sub
     ```
 
- *  When using `test` (aka `[`), spell compound conditions with `&&`, `||`, and
-    `!` **outside** of `test` instead of `-a`, `-o`, and `!` inside of `test`
-    correspondingly.  The latter ones are pretty much deprecated in POSIX.
-    Also, prefer `!= ''` form instead of `-n` to check if string is empty.
+ ###  <a id="shell-cond" href="#shell-cond">Shell Conditionals</a>
 
-    See also: “[Problems With the `test` Builtin: What Does `-a` Mean?]”.
+Guidelines and agreements for using command `test`, also known as `[`:
 
-    [Problems With the `test` Builtin: What Does `-a` Mean?]: https://www.oilshell.org/blog/2017/08/31.html
+ *  Prefer the `!= ''` form instead of using `-n` to check if string is empty.
+
+ *  Spell compound conditions with `&&`, `||`, and `!` **outside** of `test`
+    instead of `-a`, `-o`, and `!` **inside** of `test` correspondingly.  The
+    latter ones are pretty much deprecated in POSIX.
+
+    See also: “[Problems With the `test` Builtin: What Does `-a` Mean?][test]”.
+
+ *  Use `=` for strings and `-eq` for numbers to catch typing errors.
+
+[test]: https://www.oilshell.org/blog/2017/08/31.html
+
+
 
 ##  <a id="text-including-comments" href="#text-including-comments">Text, Including Comments</a>
 
@@ -399,6 +427,8 @@ on GitHub and most other Markdown renderers. -->
     ```go
     // TODO(usr1, usr2): Fix the frobulation issue.
     ```
+
+
 
 ##  <a id="yaml" href="#yaml">YAML</a>
 

@@ -46,8 +46,9 @@ is_little_endian() {
 #   unzip (macOS) / tar (other unices)
 #
 check_required() {
-	readonly required_darwin="unzip"
-	readonly required_unix="tar"
+	required_darwin="unzip"
+	required_unix="tar"
+	readonly required_darwin required_unix
 
 	# Split with space.
 	required="curl"
@@ -132,7 +133,7 @@ parse_opts() {
 		esac
 	done
 
-	if [ "$uninstall" = '1' ] && [ "$reinstall" = '1' ]
+	if [ "$uninstall" -eq '1' ] && [ "$reinstall" -eq '1' ]
 	then
 		error_exit 'the -r and -u options are mutually exclusive'
 	fi
@@ -277,7 +278,9 @@ fix_freebsd() {
 		return 0
 	fi
 
-	readonly rcd='/usr/local/etc/rc.d'
+	rcd='/usr/local/etc/rc.d'
+	readonly rcd
+
 	if ! [ -d "$rcd" ]
 	then
 		mkdir "$rcd"
@@ -292,16 +295,17 @@ configure() {
 	fix_darwin
 	check_out_dir
 
-	readonly pkg_name="AdGuardHome_${os}_${cpu}.${pkg_ext}"
-	readonly url="https://static.adguard.com/adguardhome/${channel}/${pkg_name}"
-	readonly agh_dir="${out_dir}/AdGuardHome"
+	pkg_name="AdGuardHome_${os}_${cpu}.${pkg_ext}"
+	url="https://static.adguard.com/adguardhome/${channel}/${pkg_name}"
+	agh_dir="${out_dir}/AdGuardHome"
+	readonly pkg_name url agh_dir
 
 	log "AdGuard Home will be installed into $agh_dir"
 }
 
 # Function is_root checks for root privileges to be granted.
 is_root() {
-	if [ "$( id -u )" = '0' ]
+	if [ "$( id -u )" -eq '0' ]
 	then
 		log 'script is executed with root privileges'
 
@@ -325,24 +329,26 @@ please, restart it with root privileges'
 #
 # TODO(e.burkov): Try to avoid restarting.
 rerun_with_root() {
-	readonly script_url=\
+	script_url=\
 'https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh'
+	readonly script_url
 
 	flags=''
-	if [ "$reinstall" = '1' ]
+	if [ "$reinstall" -eq '1' ]
 	then
 		flags="${flags} -r"
 	fi
-	if [ "$uninstall" = '1' ]
+	if [ "$uninstall" -eq '1' ]
 	then
 		flags="${flags} -u"
 	fi
-	if [ "$verbose" = '1' ]
+	if [ "$verbose" -eq '1' ]
 	then
 		flags="${flags} -v"
 	fi
 
-	readonly opts="-c $channel -C $cpu -O $os -o $out_dir $flags"
+	opts="-c $channel -C $cpu -O $os -o $out_dir $flags"
+	readonly opts
 
 	log 'restarting with root privileges'
 	
@@ -397,7 +403,7 @@ handle_existing() {
 	then
 		log 'no need to uninstall'
 
-		if [ "$uninstall" = '1' ]
+		if [ "$uninstall" -eq '1' ]
 		then
 			exit 0
 		fi
@@ -428,7 +434,7 @@ handle_existing() {
 		log 'AdGuard Home was successfully uninstalled'
 	fi
 
-	if [ "$uninstall" = '1' ]
+	if [ "$uninstall" -eq '1' ]
 	then
 		exit 0
 	fi
