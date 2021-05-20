@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -66,55 +65,71 @@ func trimValue(s string) string {
 	return s[:maxValueLength-3] + "..."
 }
 
-// Parse plain-text data from the response
-func whoisParse(data string) map[string]string {
-	m := map[string]string{}
-	descr := ""
-	netname := ""
-	for len(data) != 0 {
-		ln := aghstrings.SplitNext(&data, '\n')
-		if len(ln) == 0 || ln[0] == '#' || ln[0] == '%' {
-			continue
-		}
-
-		kv := strings.SplitN(ln, ":", 2)
-		if len(kv) != 2 {
-			continue
-		}
-		k := strings.TrimSpace(kv[0])
-		k = strings.ToLower(k)
-		v := strings.TrimSpace(kv[1])
-
-		switch k {
-		case "org-name":
-			m["orgname"] = trimValue(v)
-		case "city", "country", "orgname":
-			m[k] = trimValue(v)
-		case "descr":
-			if len(descr) == 0 {
-				descr = v
-			}
-		case "netname":
-			netname = v
-		case "whois": // "whois: whois.arin.net"
-			m["whois"] = v
-		case "referralserver": // "ReferralServer:  whois://whois.ripe.net"
-			if strings.HasPrefix(v, "whois://") {
-				m["whois"] = v[len("whois://"):]
-			}
+// coalesceStr returns the first non-empty string.
+//
+// TODO(a.garipov): Move to aghstrings?
+func coalesceStr(strs ...string) (res string) {
+	for _, s := range strs {
+		if s != "" {
+			return s
 		}
 	}
 
-	_, ok := m["orgname"]
-	if !ok {
-		// Set orgname from either descr or netname for the frontent.
-		//
-		// TODO(a.garipov): Perhaps don't do that in the V1 HTTP API?
-		if descr != "" {
-			m["orgname"] = trimValue(descr)
-		} else if netname != "" {
-			m["orgname"] = trimValue(netname)
+	return ""
+}
+
+// isWhoisComment returns true if the string is empty or is a WHOIS comment.
+func isWhoisComment(s string) (ok bool) {
+	return len(s) == 0 || s[0] == '#' || s[0] == '%'
+}
+
+// strmap is an alias for convenience.
+type strmap = map[string]string
+
+// whoisParse parses a subset of plain-text data from the WHOIS response into
+// a string map.
+func whoisParse(data string) (m strmap) {
+	m = strmap{}
+
+	var orgname string
+	lines := strings.Split(data, "\n")
+	for _, l := range lines {
+		if isWhoisComment(l) {
+			continue
 		}
+
+		kv := strings.SplitN(l, ":", 2)
+		if len(kv) != 2 {
+			continue
+		}
+
+		k := strings.ToLower(strings.TrimSpace(kv[0]))
+		v := strings.TrimSpace(kv[1])
+		if v == "" {
+			continue
+		}
+
+		switch k {
+		case "orgname", "org-name":
+			k = "orgname"
+			v = trimValue(v)
+			orgname = v
+		case "city", "country":
+			v = trimValue(v)
+		case "descr", "netname":
+			k = "orgname"
+			v = coalesceStr(orgname, v)
+			orgname = v
+		case "whois":
+			k = "whois"
+		case "referralserver":
+			k = "whois"
+			v = strings.TrimPrefix(v, "whois://")
+		default:
+			continue
+		}
+
+		m[k] = v
 	}
 
 	return m

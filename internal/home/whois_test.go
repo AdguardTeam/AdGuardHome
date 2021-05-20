@@ -76,3 +76,77 @@ func TestWhois(t *testing.T) {
 	assert.Equal(t, "Imagiland", m["country"])
 	assert.Equal(t, "Nonreal", m["city"])
 }
+
+func TestWhoisParse(t *testing.T) {
+	const (
+		city    = "Nonreal"
+		country = "Imagiland"
+		orgname = "FakeOrgLLC"
+		whois   = "whois.example.net"
+	)
+
+	testCases := []struct {
+		want strmap
+		name string
+		in   string
+	}{{
+		want: strmap{},
+		name: "empty",
+		in:   ``,
+	}, {
+		want: strmap{},
+		name: "comments",
+		in:   "%\n#",
+	}, {
+		want: strmap{},
+		name: "no_colon",
+		in:   "city",
+	}, {
+		want: strmap{},
+		name: "no_value",
+		in:   "city:",
+	}, {
+		want: strmap{"city": city},
+		name: "city",
+		in:   `city: ` + city,
+	}, {
+		want: strmap{"country": country},
+		name: "country",
+		in:   `country: ` + country,
+	}, {
+		want: strmap{"orgname": orgname},
+		name: "orgname",
+		in:   `orgname: ` + orgname,
+	}, {
+		want: strmap{"orgname": orgname},
+		name: "orgname_hyphen",
+		in:   `org-name: ` + orgname,
+	}, {
+		want: strmap{"orgname": orgname},
+		name: "orgname_descr",
+		in:   `descr: ` + orgname,
+	}, {
+		want: strmap{"orgname": orgname},
+		name: "orgname_netname",
+		in:   `netname: ` + orgname,
+	}, {
+		want: strmap{"whois": whois},
+		name: "whois",
+		in:   `whois: ` + whois,
+	}, {
+		want: strmap{"whois": whois},
+		name: "referralserver",
+		in:   `referralserver: whois://` + whois,
+	}, {
+		want: strmap{},
+		name: "other",
+		in:   `other: value`,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := whoisParse(tc.in)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
