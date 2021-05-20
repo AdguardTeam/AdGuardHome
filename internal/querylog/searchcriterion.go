@@ -2,6 +2,8 @@ package querylog
 
 import (
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 )
@@ -63,6 +65,37 @@ func (c *searchCriterion) ctDomainOrClientCaseStrict(
 		strings.EqualFold(name, term)
 }
 
+// containsFold reports whehter s contains, ignoring letter case, substr.
+//
+// TODO(a.garipov): Move to aghstrings if needed elsewhere.
+func containsFold(s, substr string) (ok bool) {
+	sLen, substrLen := len(s), len(substr)
+	if sLen < substrLen {
+		return false
+	}
+
+	if sLen == substrLen {
+		return strings.EqualFold(s, substr)
+	}
+
+	first, _ := utf8.DecodeRuneInString(substr)
+	firstFolded := unicode.SimpleFold(first)
+
+	for i := 0; i != -1 && len(s) >= len(substr); {
+		if strings.EqualFold(s[:substrLen], substr) {
+			return true
+		}
+
+		i = strings.IndexFunc(s[1:], func(r rune) (eq bool) {
+			return r == first || r == firstFolded
+		})
+
+		s = s[1+i:]
+	}
+
+	return false
+}
+
 func (c *searchCriterion) ctDomainOrClientCaseNonStrict(
 	term string,
 	clientID string,
@@ -70,19 +103,10 @@ func (c *searchCriterion) ctDomainOrClientCaseNonStrict(
 	host string,
 	ip string,
 ) (ok bool) {
-	// TODO(a.garipov): Write a performant, case-insensitive version of
-	// strings.Contains instead of generating garbage.  Or, perhaps in the
-	// future, use a locale-appropriate matcher from golang.org/x/text.
-	clientID = strings.ToLower(clientID)
-	host = strings.ToLower(host)
-	ip = strings.ToLower(ip)
-	name = strings.ToLower(name)
-	term = strings.ToLower(term)
-
-	return strings.Contains(clientID, term) ||
-		strings.Contains(host, term) ||
-		strings.Contains(ip, term) ||
-		strings.Contains(name, term)
+	return containsFold(clientID, term) ||
+		containsFold(host, term) ||
+		containsFold(ip, term) ||
+		containsFold(name, term)
 }
 
 // quickMatch quickly checks if the line matches the given search criterion.
