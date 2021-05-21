@@ -11,9 +11,8 @@ fi
 set -e -f -u
 
 dist_dir="$DIST_DIR"
-go="${GO:-go}"
 sudo_cmd="${SUDO:-}"
-readonly dist_dir go sudo_cmd
+readonly dist_dir sudo_cmd
 
 $sudo_cmd rm -f\
 	./AdGuardHome\

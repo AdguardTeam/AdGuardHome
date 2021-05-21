@@ -121,7 +121,9 @@ func (ehc *EtcHostsContainer) Close() {
 	if ehc.watcher != nil {
 		_ = ehc.watcher.Close()
 	}
-	close(ehc.onlyWritesChan)
+
+	// Don't close onlyWritesChan here and let onlyWrites close it after
+	// watcher.Events is closed to prevent close races.
 }
 
 // Process returns the list of IP addresses for the hostname or nil if nothing
@@ -298,6 +300,8 @@ func (ehc *EtcHostsContainer) onlyWrites() {
 			ehc.onlyWritesChan <- event
 		}
 	}
+
+	close(ehc.onlyWritesChan)
 }
 
 // Receive notifications from fsnotify package

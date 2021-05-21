@@ -136,7 +136,7 @@ exit_on_output() (
 	then
 		if [ "$*" != '' ]
 		then
-			echo "combined output of '$cmd $@':"
+			echo "combined output of '$cmd $*':"
 		else
 			echo "combined output of '$cmd':"
 		fi
