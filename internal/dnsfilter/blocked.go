@@ -33,6 +33,8 @@ var serviceRulesArray = []svc{
 		"||fbcdn.com^",
 	}},
 	{"twitter", []string{"||twitter.com^", "||twttr.com^", "||t.co^", "||twimg.com^"}},
+	{"roblox", []string{"||roblox.com^"}},
+	{"minecraft", []string{"||minecraft.net^"}},
 	{"youtube", []string{
 		"||youtube.com^",
 		"||ytimg.com^",

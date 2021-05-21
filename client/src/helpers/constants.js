@@ -253,6 +253,10 @@ export const SERVICES = [
         name: 'Mail.ru',
     },
     {
+        id: 'minecraft',
+        name: 'Minecraft',
+    },
+    {
         id: 'netflix',
         name: 'Netflix',
     },
@@ -275,6 +279,10 @@ export const SERVICES = [
     {
         id: 'reddit',
         name: 'Reddit',
+    },
+    {
+        id: 'roblox',
+        name: 'Roblox',
     },
     {
         id: 'skype',
