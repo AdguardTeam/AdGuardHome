@@ -35,7 +35,8 @@ readonly x_flags v_flags
 # expansion (-f), and consider undefined variables as errors (-u).
 set -e -f -u
 
-# Allow users to set the Go version.
+# Allow users to override the go command from environment.  For example, to
+# build two releases with two different Go versions and test the difference.
 go="${GO:-go}"
 readonly go
 

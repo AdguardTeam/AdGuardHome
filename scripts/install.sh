@@ -255,7 +255,10 @@ fix_darwin() {
 		return 0
 	fi
 
-	# TODO: Remove when Mac M1 native support is added.
+	# TODO(e.burkov): Remove after we release at least one stable release
+	# with Apple Silicon support.
+	#
+	# See https://github.com/AdguardTeam/AdGuardHome/issues/2443.
 	if [ "$cpu" = 'arm64' ]
 	then
 		cpu='amd64'

@@ -39,7 +39,7 @@ log() {
 	if [ "$verbose" -gt '0' ]
 	then
 		# Don't use quotes to get word splitting.
-		echo $@ 1>&2
+		echo "$1" 1>&2
 	fi
 }
 
@@ -83,7 +83,7 @@ else
 fi
 readonly oses
 
-snap_enabled="${SNAP:-1}"
+snap_enabled="${BUILD_SNAP:-1}"
 readonly snap_enabled
 
 if [ "$snap_enabled" -eq '0' ]
@@ -106,12 +106,6 @@ readonly gpg_key_passphrase gpg_key
 dist="${DIST_DIR:-dist}"
 readonly dist
 
-# Give users the ability to override the go command from environment.  For
-# example, to build two releases with two different Go versions and test the
-# difference.
-go="${GO:-go}"
-readonly go
-
 log "checking tools"
 
 # Make sure we fail gracefully if one of the tools we need is missing.  Use
@@ -119,9 +113,9 @@ log "checking tools"
 sha256sum_cmd='sha256sum'
 for tool in gpg gzip sed "$sha256sum_cmd" snapcraft tar zip
 do
-	if ! which "$tool" > /dev/null
+	if ! command -v "$tool" > /dev/null
 	then
-		if [ "$tool" = "$sha256sum_cmd" ] && which 'shasum' > /dev/null
+		if [ "$tool" = "$sha256sum_cmd" ] && command -v 'shasum' > /dev/null
 		then
 			# macOS doesn't have sha256sum installed by default, but
 			# it does have shasum.
@@ -138,15 +132,7 @@ readonly sha256sum_cmd
 
 # Data section.  Arrange data into space-separated tables for read -r to read.
 # Use 0 for missing values.
-
-arms='5
-6
-7'
-readonly arms
-
-mipses='softfloat'
-readonly mipses
-
+#
 # TODO(a.garipov): Remove armv6, because it was always overwritten by armv7.
 # Rename armv7 to armhf.  Rename the 386 snap to i386.
 
