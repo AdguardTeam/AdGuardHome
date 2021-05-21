@@ -1,4 +1,4 @@
-package dnsfilter
+package filtering
 
 import (
 	"net"
@@ -47,7 +47,7 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 `
 
 	f := newForTest(nil, []Filter{{ID: 0, Data: []byte(text)}})
-	setts := &FilteringSettings{
+	setts := &Settings{
 		FilteringEnabled: true,
 	}
 

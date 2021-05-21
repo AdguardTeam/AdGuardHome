@@ -4,7 +4,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
@@ -27,7 +27,7 @@ func (s *Server) makeResponse(req *dns.Msg) (resp *dns.Msg) {
 }
 
 // genDNSFilterMessage generates a DNS message corresponding to the filtering result
-func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Result) *dns.Msg {
+func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *filtering.Result) *dns.Msg {
 	m := d.Req
 
 	if m.Question[0].Qtype != dns.TypeA && m.Question[0].Qtype != dns.TypeAAAA {
@@ -38,15 +38,15 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *dnsfilter.Resu
 	}
 
 	switch result.Reason {
-	case dnsfilter.FilteredSafeBrowsing:
+	case filtering.FilteredSafeBrowsing:
 		return s.genBlockedHost(m, s.conf.SafeBrowsingBlockHost, d)
-	case dnsfilter.FilteredParental:
+	case filtering.FilteredParental:
 		return s.genBlockedHost(m, s.conf.ParentalBlockHost, d)
 	default:
-		// If the query was filtered by "Safe search", dnsfilter also must return
+		// If the query was filtered by "Safe search", filtering also must return
 		// the IP address that must be used in response.
 		// In this case regardless of the filtering method, we should return it
-		if result.Reason == dnsfilter.FilteredSafeSearch &&
+		if result.Reason == filtering.FilteredSafeSearch &&
 			len(result.Rules) > 0 &&
 			result.Rules[0].IP != nil {
 			return s.genResponseWithIP(m, result.Rules[0].IP)

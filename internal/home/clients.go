@@ -15,8 +15,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -181,7 +181,7 @@ func (clients *clientsContainer) addFromConfig(objects []clientObject) {
 		}
 
 		for _, s := range cy.BlockedServices {
-			if !dnsfilter.BlockedSvcKnown(s) {
+			if !filtering.BlockedSvcKnown(s) {
 				log.Debug("clients: skipping unknown blocked-service %q", s)
 				continue
 			}

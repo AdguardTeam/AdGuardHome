@@ -14,8 +14,8 @@
 /build2/*
 /data/
 /dist/
-/dnsfilter/tests/dnsfilter.TestLotsOfRules*.pprof
-/dnsfilter/tests/top-1m.csv
+/filtering/tests/filtering.TestLotsOfRules*.pprof
+/filtering/tests/top-1m.csv
 /launchpad_credentials
 /querylog.json*
 /snapcraft_login

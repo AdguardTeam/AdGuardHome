@@ -1,6 +1,6 @@
 // DNS Rewrites
 
-package dnsfilter
+package filtering
 
 import (
 	"encoding/json"

@@ -1,4 +1,4 @@
-package dnsfilter
+package filtering
 
 import (
 	"bytes"
@@ -72,7 +72,7 @@ func (d *DNSFilter) SafeSearchDomain(host string) (string, bool) {
 func (d *DNSFilter) checkSafeSearch(
 	host string,
 	_ uint16,
-	setts *FilteringSettings,
+	setts *Settings,
 ) (res Result, err error) {
 	if !setts.SafeSearchEnabled {
 		return Result{}, nil

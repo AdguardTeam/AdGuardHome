@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
@@ -56,12 +56,12 @@ func TestDecodeLogEntry(t *testing.T) {
 			ClientID:    "cli42",
 			ClientProto: "",
 			Answer:      ans,
-			Result: dnsfilter.Result{
+			Result: filtering.Result{
 				IsFiltered:   true,
-				Reason:       dnsfilter.FilteredBlockList,
+				Reason:       filtering.FilteredBlockList,
 				ReverseHosts: []string{"example.net"},
 				IPList:       []net.IP{net.IPv4(127, 0, 0, 2)},
-				Rules: []*dnsfilter.ResultRule{{
+				Rules: []*filtering.ResultRule{{
 					FilterListID: 42,
 					Text:         "||an.yandex.ru",
 					IP:           net.IPv4(127, 0, 0, 2),
@@ -72,9 +72,9 @@ func TestDecodeLogEntry(t *testing.T) {
 				}},
 				CanonName:   "example.com",
 				ServiceName: "example.org",
-				DNSRewriteResult: &dnsfilter.DNSRewriteResult{
+				DNSRewriteResult: &filtering.DNSRewriteResult{
 					RCode: dns.RcodeSuccess,
-					Response: dnsfilter.DNSRewriteResultResponse{
+					Response: filtering.DNSRewriteResultResponse{
 						dns.TypeA: []rules.RRValue{net.IPv4(127, 0, 0, 2)},
 					},
 				},

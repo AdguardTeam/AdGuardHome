@@ -7,7 +7,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
@@ -20,9 +20,9 @@ type dnsContext struct {
 	srv      *Server
 	proxyCtx *proxy.DNSContext
 	// setts are the filtering settings for the client.
-	setts     *dnsfilter.FilteringSettings
+	setts     *filtering.Settings
 	startTime time.Time
-	result    *dnsfilter.Result
+	result    *filtering.Result
 	// origResp is the response received from upstream.  It is set when the
 	// response is modified by filters.
 	origResp *dns.Msg
@@ -70,7 +70,7 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 	ctx := &dnsContext{
 		srv:       s,
 		proxyCtx:  d,
-		result:    &dnsfilter.Result{},
+		result:    &filtering.Result{},
 		startTime: time.Now(),
 	}
 
@@ -564,8 +564,8 @@ func processFilteringAfterResponse(ctx *dnsContext) (rc resultCode) {
 	var err error
 
 	switch res.Reason {
-	case dnsfilter.Rewritten,
-		dnsfilter.RewrittenRule:
+	case filtering.Rewritten,
+		filtering.RewrittenRule:
 
 		if len(ctx.origQuestion.Name) == 0 {
 			// origQuestion is set in case we get only CNAME without IP from rewrites table
@@ -582,7 +582,7 @@ func processFilteringAfterResponse(ctx *dnsContext) (rc resultCode) {
 			d.Res.Answer = answer
 		}
 
-	case dnsfilter.NotFilteredAllowList:
+	case filtering.NotFilteredAllowList:
 		// nothing
 
 	default:
@@ -599,7 +599,7 @@ func processFilteringAfterResponse(ctx *dnsContext) (rc resultCode) {
 		if ctx.result != nil {
 			ctx.origResp = origResp2 // matched by response
 		} else {
-			ctx.result = &dnsfilter.Result{}
+			ctx.result = &filtering.Result{}
 		}
 	}
 

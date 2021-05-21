@@ -4,7 +4,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
@@ -42,12 +42,12 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 			}},
 		}
 	}
-	makeRes := func(rcode rules.RCode, rr rules.RRType, v rules.RRValue) (res dnsfilter.Result) {
-		resp := dnsfilter.DNSRewriteResultResponse{
+	makeRes := func(rcode rules.RCode, rr rules.RRType, v rules.RRValue) (res filtering.Result) {
+		resp := filtering.DNSRewriteResultResponse{
 			rr: []rules.RRValue{v},
 		}
-		return dnsfilter.Result{
-			DNSRewriteResult: &dnsfilter.DNSRewriteResult{
+		return filtering.Result{
+			DNSRewriteResult: &filtering.DNSRewriteResult{
 				RCode:    rcode,
 				Response: resp,
 			},

@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
@@ -84,7 +84,7 @@ type logEntry struct {
 	Answer     []byte `json:",omitempty"` // sometimes empty answers happen like binerdunt.top or rev2.globalrootservers.net
 	OrigAnswer []byte `json:",omitempty"`
 
-	Result   dnsfilter.Result
+	Result   filtering.Result
 	Elapsed  time.Duration
 	Upstream string `json:",omitempty"` // if empty, means it was cached
 }
@@ -147,7 +147,7 @@ func (l *queryLog) Add(params AddParams) {
 	}
 
 	if params.Result == nil {
-		params.Result = &dnsfilter.Result{}
+		params.Result = &filtering.Result{}
 	}
 
 	now := time.Now()

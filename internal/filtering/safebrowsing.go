@@ -1,4 +1,4 @@
-package dnsfilter
+package filtering
 
 import (
 	"bytes"
@@ -304,7 +304,7 @@ func check(c *sbCtx, r Result, u upstream.Upstream) (Result, error) {
 func (d *DNSFilter) checkSafeBrowsing(
 	host string,
 	_ uint16,
-	setts *FilteringSettings,
+	setts *Settings,
 ) (res Result, err error) {
 	if !setts.SafeBrowsingEnabled {
 		return Result{}, nil
@@ -337,7 +337,7 @@ func (d *DNSFilter) checkSafeBrowsing(
 func (d *DNSFilter) checkParental(
 	host string,
 	_ uint16,
-	setts *FilteringSettings,
+	setts *Settings,
 ) (res Result, err error) {
 	if !setts.ParentalEnabled {
 		return Result{}, nil

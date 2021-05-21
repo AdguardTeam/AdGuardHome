@@ -2,7 +2,7 @@
 
 //go:build ignore
 
-package dnsfilter
+package filtering
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ import (
 // client/src/components/ui/Icons.js
 //
 // Usage:
-// 1. go run ./internal/dnsfilter/blocked_test.go
+// 1. go run ./internal/filtering/blocked_test.go
 // 2. Use the output to replace `SERVICES` array in "client/src/helpers/constants.js".
 // 3. You'll need to enter services names manually.
 // 4. Don't forget to add missing icons to "client/src/components/ui/Icons.js".

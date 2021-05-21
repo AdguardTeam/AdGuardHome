@@ -1,4 +1,4 @@
-package dnsfilter
+package filtering
 
 import (
 	"crypto/sha256"
@@ -116,7 +116,7 @@ func TestSBPC_checkErrorUpstream(t *testing.T) {
 	d.SetSafeBrowsingUpstream(ups)
 	d.SetParentalUpstream(ups)
 
-	setts := &FilteringSettings{
+	setts := &Settings{
 		SafeBrowsingEnabled: true,
 		ParentalEnabled:     true,
 	}
@@ -134,7 +134,7 @@ func TestSBPC(t *testing.T) {
 
 	const hostname = "example.org"
 
-	setts := &FilteringSettings{
+	setts := &Settings{
 		SafeBrowsingEnabled: true,
 		ParentalEnabled:     true,
 	}
@@ -142,7 +142,7 @@ func TestSBPC(t *testing.T) {
 	testCases := []struct {
 		name      string
 		block     bool
-		testFunc  func(host string, _ uint16, _ *FilteringSettings) (res Result, err error)
+		testFunc  func(host string, _ uint16, _ *Settings) (res Result, err error)
 		testCache cache.Cache
 	}{{
 		name:      "sb_no_block",

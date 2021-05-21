@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
@@ -66,7 +66,7 @@ type AddParams struct {
 	Question    *dns.Msg
 	Answer      *dns.Msg          // The response we sent to the client (optional)
 	OrigAnswer  *dns.Msg          // The response from an upstream server (optional)
-	Result      *dnsfilter.Result // Filtering result (optional)
+	Result      *filtering.Result // Filtering result (optional)
 	Elapsed     time.Duration     // Time spent for processing the request
 	ClientID    string
 	ClientIP    net.IP

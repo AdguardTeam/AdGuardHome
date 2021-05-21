@@ -5,7 +5,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 )
 
 type criterionType int
@@ -168,7 +168,7 @@ func (c *searchCriterion) ctDomainOrClientCase(e *logEntry) bool {
 	return c.ctDomainOrClientCaseNonStrict(term, clientID, name, host, ip)
 }
 
-func (c *searchCriterion) ctFilteringStatusCase(res dnsfilter.Result) bool {
+func (c *searchCriterion) ctFilteringStatusCase(res filtering.Result) bool {
 	switch c.value {
 	case filteringStatusAll:
 		return true
@@ -176,43 +176,43 @@ func (c *searchCriterion) ctFilteringStatusCase(res dnsfilter.Result) bool {
 	case filteringStatusFiltered:
 		return res.IsFiltered ||
 			res.Reason.In(
-				dnsfilter.NotFilteredAllowList,
-				dnsfilter.Rewritten,
-				dnsfilter.RewrittenAutoHosts,
-				dnsfilter.RewrittenRule,
+				filtering.NotFilteredAllowList,
+				filtering.Rewritten,
+				filtering.RewrittenAutoHosts,
+				filtering.RewrittenRule,
 			)
 
 	case filteringStatusBlocked:
 		return res.IsFiltered &&
-			res.Reason.In(dnsfilter.FilteredBlockList, dnsfilter.FilteredBlockedService)
+			res.Reason.In(filtering.FilteredBlockList, filtering.FilteredBlockedService)
 
 	case filteringStatusBlockedService:
-		return res.IsFiltered && res.Reason == dnsfilter.FilteredBlockedService
+		return res.IsFiltered && res.Reason == filtering.FilteredBlockedService
 
 	case filteringStatusBlockedParental:
-		return res.IsFiltered && res.Reason == dnsfilter.FilteredParental
+		return res.IsFiltered && res.Reason == filtering.FilteredParental
 
 	case filteringStatusBlockedSafebrowsing:
-		return res.IsFiltered && res.Reason == dnsfilter.FilteredSafeBrowsing
+		return res.IsFiltered && res.Reason == filtering.FilteredSafeBrowsing
 
 	case filteringStatusWhitelisted:
-		return res.Reason == dnsfilter.NotFilteredAllowList
+		return res.Reason == filtering.NotFilteredAllowList
 
 	case filteringStatusRewritten:
 		return res.Reason.In(
-			dnsfilter.Rewritten,
-			dnsfilter.RewrittenAutoHosts,
-			dnsfilter.RewrittenRule,
+			filtering.Rewritten,
+			filtering.RewrittenAutoHosts,
+			filtering.RewrittenRule,
 		)
 
 	case filteringStatusSafeSearch:
-		return res.IsFiltered && res.Reason == dnsfilter.FilteredSafeSearch
+		return res.IsFiltered && res.Reason == filtering.FilteredSafeSearch
 
 	case filteringStatusProcessed:
 		return !res.Reason.In(
-			dnsfilter.FilteredBlockList,
-			dnsfilter.FilteredBlockedService,
-			dnsfilter.NotFilteredAllowList,
+			filtering.FilteredBlockList,
+			filtering.FilteredBlockedService,
+			filtering.NotFilteredAllowList,
 		)
 
 	default:

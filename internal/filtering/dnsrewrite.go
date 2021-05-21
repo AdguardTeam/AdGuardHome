@@ -1,4 +1,4 @@
-package dnsfilter
+package filtering
 
 import (
 	"github.com/AdguardTeam/urlfilter/rules"

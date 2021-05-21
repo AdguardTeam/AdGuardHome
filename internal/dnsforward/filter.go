@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
 
@@ -36,7 +36,7 @@ func (s *Server) beforeRequestHandler(_ *proxy.Proxy, d *proxy.DNSContext) (bool
 
 // getClientRequestFilteringSettings looks up client filtering settings using
 // the client's IP address and ID, if any, from ctx.
-func (s *Server) getClientRequestFilteringSettings(ctx *dnsContext) *dnsfilter.FilteringSettings {
+func (s *Server) getClientRequestFilteringSettings(ctx *dnsContext) *filtering.Settings {
 	setts := s.dnsFilter.GetConfig()
 	setts.FilteringEnabled = true
 	if s.conf.FilterHandler != nil {
@@ -48,18 +48,18 @@ func (s *Server) getClientRequestFilteringSettings(ctx *dnsContext) *dnsfilter.F
 
 // filterDNSRequest applies the dnsFilter and sets d.Res if the request was
 // filtered.
-func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
+func (s *Server) filterDNSRequest(ctx *dnsContext) (*filtering.Result, error) {
 	d := ctx.proxyCtx
 	req := d.Req
 	host := strings.TrimSuffix(req.Question[0].Name, ".")
 	res, err := s.dnsFilter.CheckHost(host, req.Question[0].Qtype, ctx.setts)
 	if err != nil {
 		// Return immediately if there's an error
-		return nil, fmt.Errorf("dnsfilter failed to check host %q: %w", host, err)
+		return nil, fmt.Errorf("filtering failed to check host %q: %w", host, err)
 	} else if res.IsFiltered {
 		log.Tracef("Host %s is filtered, reason - %q, matched rule: %q", host, res.Reason, res.Rules[0].Text)
 		d.Res = s.genDNSFilterMessage(d, &res)
-	} else if res.Reason.In(dnsfilter.Rewritten, dnsfilter.RewrittenRule) &&
+	} else if res.Reason.In(filtering.Rewritten, filtering.RewrittenRule) &&
 		res.CanonName != "" &&
 		len(res.IPList) == 0 {
 		// Resolve the new canonical name, not the original host
@@ -67,7 +67,7 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 		// processFilteringAfterResponse.
 		ctx.origQuestion = req.Question[0]
 		req.Question[0].Name = dns.Fqdn(res.CanonName)
-	} else if res.Reason == dnsfilter.RewrittenAutoHosts && len(res.ReverseHosts) != 0 {
+	} else if res.Reason == filtering.RewrittenAutoHosts && len(res.ReverseHosts) != 0 {
 		resp := s.makeResponse(req)
 		for _, h := range res.ReverseHosts {
 			hdr := dns.RR_Header{
@@ -86,7 +86,7 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 		}
 
 		d.Res = resp
-	} else if res.Reason.In(dnsfilter.Rewritten, dnsfilter.RewrittenAutoHosts) {
+	} else if res.Reason.In(filtering.Rewritten, filtering.RewrittenAutoHosts) {
 		resp := s.makeResponse(req)
 
 		name := host
@@ -108,7 +108,7 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 		}
 
 		d.Res = resp
-	} else if res.Reason == dnsfilter.RewrittenRule {
+	} else if res.Reason == filtering.RewrittenRule {
 		err = s.filterDNSRewrite(req, res, d)
 		if err != nil {
 			return nil, err
@@ -120,7 +120,7 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*dnsfilter.Result, error) {
 
 // If response contains CNAME, A or AAAA records, we apply filtering to each canonical host name or IP address.
 // If this is a match, we set a new response in d.Res and return.
-func (s *Server) filterDNSResponse(ctx *dnsContext) (*dnsfilter.Result, error) {
+func (s *Server) filterDNSResponse(ctx *dnsContext) (*filtering.Result, error) {
 	d := ctx.proxyCtx
 	for _, a := range d.Res.Answer {
 		host := ""

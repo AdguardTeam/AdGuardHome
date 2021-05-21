@@ -1,5 +1,5 @@
-// Package dnsfilter implements a DNS request and response filter.
-package dnsfilter
+// Package filtering implements a DNS request and response filter.
+package filtering
 
 import (
 	"context"
@@ -29,8 +29,8 @@ type ServiceEntry struct {
 	Rules []*rules.NetworkRule
 }
 
-// FilteringSettings are custom filtering settings for a client.
-type FilteringSettings struct {
+// Settings are custom filtering settings for a client.
+type Settings struct {
 	ClientName string
 	ClientIP   net.IP
 	ClientTags []string
@@ -101,7 +101,7 @@ type filtersInitializerParams struct {
 }
 
 type hostChecker struct {
-	check func(host string, qtype uint16, setts *FilteringSettings) (res Result, err error)
+	check func(host string, qtype uint16, setts *Settings) (res Result, err error)
 	name  string
 }
 
@@ -224,8 +224,8 @@ func (r Reason) In(reasons ...Reason) bool {
 }
 
 // GetConfig - get configuration
-func (d *DNSFilter) GetConfig() FilteringSettings {
-	c := FilteringSettings{}
+func (d *DNSFilter) GetConfig() Settings {
+	c := Settings{}
 	// d.confLock.RLock()
 	c.SafeSearchEnabled = d.Config.SafeSearchEnabled
 	c.SafeBrowsingEnabled = d.Config.SafeBrowsingEnabled
@@ -304,14 +304,14 @@ func (d *DNSFilter) reset() {
 	if d.rulesStorage != nil {
 		err = d.rulesStorage.Close()
 		if err != nil {
-			log.Error("dnsfilter: rulesStorage.Close: %s", err)
+			log.Error("filtering: rulesStorage.Close: %s", err)
 		}
 	}
 
 	if d.rulesStorageAllow != nil {
 		err = d.rulesStorageAllow.Close()
 		if err != nil {
-			log.Error("dnsfilter: rulesStorageAllow.Close: %s", err)
+			log.Error("filtering: rulesStorageAllow.Close: %s", err)
 		}
 	}
 }
@@ -322,7 +322,7 @@ type dnsFilterContext struct {
 	safeSearchCache   cache.Cache
 }
 
-var gctx dnsFilterContext // global dnsfilter context
+var gctx dnsFilterContext
 
 // ResultRule contains information about applied rules.
 type ResultRule struct {
@@ -380,7 +380,7 @@ func (r Reason) Matched() bool {
 }
 
 // CheckHostRules tries to match the host against filtering rules only.
-func (d *DNSFilter) CheckHostRules(host string, qtype uint16, setts *FilteringSettings) (Result, error) {
+func (d *DNSFilter) CheckHostRules(host string, qtype uint16, setts *Settings) (Result, error) {
 	if !setts.FilteringEnabled {
 		return Result{}, nil
 	}
@@ -393,7 +393,7 @@ func (d *DNSFilter) CheckHostRules(host string, qtype uint16, setts *FilteringSe
 func (d *DNSFilter) CheckHost(
 	host string,
 	qtype uint16,
-	setts *FilteringSettings,
+	setts *Settings,
 ) (res Result, err error) {
 	// Sometimes clients try to resolve ".", which is a request to get root
 	// servers.
@@ -427,7 +427,7 @@ func (d *DNSFilter) CheckHost(
 func (d *DNSFilter) checkEtcHosts(
 	host string,
 	qtype uint16,
-	_ *FilteringSettings,
+	_ *Settings,
 ) (res Result, err error) {
 	if d.Config.EtcHosts == nil {
 		return Result{}, nil
@@ -523,7 +523,7 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 func matchBlockedServicesRules(
 	host string,
 	_ uint16,
-	setts *FilteringSettings,
+	setts *Settings,
 ) (res Result, err error) {
 	svcs := setts.ServicesRules
 	if len(svcs) == 0 {
@@ -715,7 +715,7 @@ func (d *DNSFilter) matchHostProcessDNSResult(
 func (d *DNSFilter) matchHost(
 	host string,
 	qtype uint16,
-	setts *FilteringSettings,
+	setts *Settings,
 ) (res Result, err error) {
 	if !setts.FilteringEnabled {
 		return Result{}, nil
@@ -851,7 +851,7 @@ func New(c *Config, blockFilters []Filter) *DNSFilter {
 
 	err := d.initSecurityServices()
 	if err != nil {
-		log.Error("dnsfilter: initialize services: %s", err)
+		log.Error("filtering: initialize services: %s", err)
 		return nil
 	}
 

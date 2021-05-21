@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
@@ -66,7 +66,7 @@ func processQueryLogsAndStats(ctx *dnsContext) (rc resultCode) {
 	return resultCodeSuccess
 }
 
-func (s *Server) updateStats(ctx *dnsContext, elapsed time.Duration, res dnsfilter.Result) {
+func (s *Server) updateStats(ctx *dnsContext, elapsed time.Duration, res filtering.Result) {
 	if s.stats == nil {
 		return
 	}
@@ -86,17 +86,17 @@ func (s *Server) updateStats(ctx *dnsContext, elapsed time.Duration, res dnsfilt
 	e.Result = stats.RNotFiltered
 
 	switch res.Reason {
-	case dnsfilter.FilteredSafeBrowsing:
+	case filtering.FilteredSafeBrowsing:
 		e.Result = stats.RSafeBrowsing
-	case dnsfilter.FilteredParental:
+	case filtering.FilteredParental:
 		e.Result = stats.RParental
-	case dnsfilter.FilteredSafeSearch:
+	case filtering.FilteredSafeSearch:
 		e.Result = stats.RSafeSearch
-	case dnsfilter.FilteredBlockList:
+	case filtering.FilteredBlockList:
 		fallthrough
-	case dnsfilter.FilteredInvalid:
+	case filtering.FilteredInvalid:
 		fallthrough
-	case dnsfilter.FilteredBlockedService:
+	case filtering.FilteredBlockedService:
 		e.Result = stats.RFiltered
 	}
 

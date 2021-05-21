@@ -18,7 +18,7 @@ module.exports = {
         "",
         "ui",
         "global",
-        "dnsfilter",
+        "filtering",
         "home",
         "dnsforward",
         "dhcpd",

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
@@ -129,7 +129,7 @@ func (l *queryLog) logEntryToJSONEntry(entry *logEntry) (jsonEntry jobject) {
 	return jsonEntry
 }
 
-func resultRulesToJSONRules(rules []*dnsfilter.ResultRule) (jsonRules []jobject) {
+func resultRulesToJSONRules(rules []*filtering.ResultRule) (jsonRules []jobject) {
 	jsonRules = make([]jobject, len(rules))
 	for i, r := range rules {
 		jsonRules[i] = jobject{

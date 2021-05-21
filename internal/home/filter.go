@@ -16,7 +16,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -57,9 +57,9 @@ func (f *Filtering) Close() {
 
 func defaultFilters() []filter {
 	return []filter{
-		{Filter: dnsfilter.Filter{ID: 1}, Enabled: true, URL: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt", Name: "AdGuard DNS filter"},
-		{Filter: dnsfilter.Filter{ID: 2}, Enabled: false, URL: "https://adaway.org/hosts.txt", Name: "AdAway Default Blocklist"},
-		{Filter: dnsfilter.Filter{ID: 4}, Enabled: false, URL: "https://www.malwaredomainlist.com/hostslist/hosts.txt", Name: "MalwareDomainList.com Hosts List"},
+		{Filter: filtering.Filter{ID: 1}, Enabled: true, URL: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt", Name: "AdGuard DNS filter"},
+		{Filter: filtering.Filter{ID: 2}, Enabled: false, URL: "https://adaway.org/hosts.txt", Name: "AdAway Default Blocklist"},
+		{Filter: filtering.Filter{ID: 4}, Enabled: false, URL: "https://www.malwaredomainlist.com/hostslist/hosts.txt", Name: "MalwareDomainList.com Hosts List"},
 	}
 }
 
@@ -73,7 +73,7 @@ type filter struct {
 	checksum    uint32    // checksum of the file data
 	white       bool
 
-	dnsfilter.Filter `yaml:",inline"`
+	filtering.Filter `yaml:",inline"`
 }
 
 const (
@@ -376,9 +376,9 @@ const (
 //  . If filter data has changed:
 //    . rename the temporary file (<temp> -> 1.txt)
 //      Note that this method works only on UNIX.
-//      On Windows we don't pass files to dnsfilter - we pass the whole data.
-//  . Pass new filters to dnsfilter object - it analyzes new data while the old filters are still active
-//  . dnsfilter activates new filters
+//      On Windows we don't pass files to filtering - we pass the whole data.
+//  . Pass new filters to filtering object - it analyzes new data while the old filters are still active
+//  . filtering activates new filters
 //
 // Return the number of updated filters
 // Return TRUE - there was a network error and nothing could be updated
@@ -664,8 +664,8 @@ func (filter *filter) Path() string {
 }
 
 func enableFilters(async bool) {
-	var whiteFilters []dnsfilter.Filter
-	filters := []dnsfilter.Filter{{
+	var whiteFilters []filtering.Filter
+	filters := []filtering.Filter{{
 		Data: []byte(strings.Join(config.UserRules, "\n")),
 	}}
 
@@ -674,7 +674,7 @@ func enableFilters(async bool) {
 			continue
 		}
 
-		filters = append(filters, dnsfilter.Filter{
+		filters = append(filters, filtering.Filter{
 			ID:       filter.ID,
 			FilePath: filter.Path(),
 		})
@@ -684,7 +684,7 @@ func enableFilters(async bool) {
 			continue
 		}
 
-		whiteFilters = append(whiteFilters, dnsfilter.Filter{
+		whiteFilters = append(whiteFilters, filtering.Filter{
 			ID:       filter.ID,
 			FilePath: filter.Path(),
 		})

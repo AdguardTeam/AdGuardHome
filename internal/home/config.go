@@ -9,8 +9,8 @@ import (
 	"sync"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
@@ -98,7 +98,7 @@ type dnsConfig struct {
 
 	FilteringEnabled           bool             `yaml:"filtering_enabled"`       // whether or not use filter lists
 	FiltersUpdateIntervalHours uint32           `yaml:"filters_update_interval"` // time period to update filters (in hours)
-	DnsfilterConf              dnsfilter.Config `yaml:",inline"`
+	DnsfilterConf              filtering.Config `yaml:",inline"`
 
 	// LocalDomainName is the domain name used for known internal hosts.
 	// For example, a machine called "myhost" can be addressed as
@@ -149,7 +149,7 @@ var config = configuration{
 		Port:          53,
 		StatsInterval: 1,
 		FilteringConfig: dnsforward.FilteringConfig{
-			ProtectionEnabled:  true,      // whether or not use any of dnsfilter features
+			ProtectionEnabled:  true,      // whether or not use any of filtering features
 			BlockingMode:       "default", // mode how to answer filtered requests
 			BlockedResponseTTL: 10,        // in seconds
 			Ratelimit:          20,
@@ -306,7 +306,7 @@ func (c *configuration) write() error {
 	}
 
 	if Context.dnsFilter != nil {
-		c := dnsfilter.Config{}
+		c := filtering.Config{}
 		Context.dnsFilter.WriteDiskConfig(&c)
 		config.DNS.DnsfilterConf = c
 	}

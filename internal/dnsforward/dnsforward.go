@@ -16,7 +16,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
@@ -64,7 +64,7 @@ type ipToHostTable = map[string]string
 // The zero Server is empty and ready for use.
 type Server struct {
 	dnsProxy   *proxy.Proxy          // DNS proxy instance
-	dnsFilter  *dnsfilter.DNSFilter  // DNS filter instance
+	dnsFilter  *filtering.DNSFilter  // DNS filter instance
 	dhcpServer dhcpd.ServerInterface // DHCP server instance (optional)
 	queryLog   querylog.QueryLog     // Query log instance
 	stats      stats.Stats
@@ -102,7 +102,7 @@ const defaultLocalDomainSuffix = ".lan."
 
 // DNSCreateParams are parameters to create a new server.
 type DNSCreateParams struct {
-	DNSFilter      *dnsfilter.DNSFilter
+	DNSFilter      *filtering.DNSFilter
 	Stats          stats.Stats
 	QueryLog       querylog.QueryLog
 	DHCPServer     dhcpd.ServerInterface

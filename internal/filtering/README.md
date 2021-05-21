@@ -3,7 +3,7 @@
 Example use:
 ```bash
 [ -z "$GOPATH" ] && export GOPATH=$HOME/go
-go get -d github.com/AdguardTeam/AdGuardHome/dnsfilter
+go get -d github.com/AdguardTeam/AdGuardHome/filtering
 ```
 
 Create file filter.go
@@ -11,12 +11,12 @@ Create file filter.go
 package main
 
 import (
-    "github.com/AdguardTeam/AdGuardHome/dnsfilter"
+    "github.com/AdguardTeam/AdGuardHome/filtering"
     "log"
 )
 
 func main() {
-    filter := dnsfilter.New()
+    filter := filtering.New()
     filter.AddRule("||dou*ck.net^")
     host := "www.doubleclick.net"
     res, err := filter.CheckHost(host)
@@ -48,12 +48,12 @@ You can also enable checking against AdGuard's SafeBrowsing:
 package main
 
 import (
-    "github.com/AdguardTeam/AdGuardHome/dnsfilter"
+    "github.com/AdguardTeam/AdGuardHome/filtering"
     "log"
 )
 
 func main() {
-    filter := dnsfilter.New()
+    filter := filtering.New()
     filter.EnableSafeBrowsing()
     host := "wmconvirus.narod.ru" // hostname for testing safebrowsing
     res, err := filter.CheckHost(host)

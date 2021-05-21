@@ -6,7 +6,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/miekg/dns"
@@ -267,7 +267,7 @@ func TestLocalRestriction(t *testing.T) {
 			"1.1.168.192.in-addr.arpa.":     {"some.local-client."},
 		},
 	}
-	s := createTestServer(t, &dnsfilter.Config{}, ServerConfig{
+	s := createTestServer(t, &filtering.Config{}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 	}, ups)

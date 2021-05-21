@@ -9,8 +9,8 @@ import (
 	"strconv"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
@@ -60,7 +60,7 @@ func initDNSServer() error {
 	filterConf.EtcHosts = Context.etcHosts
 	filterConf.ConfigModified = onConfigModified
 	filterConf.HTTPRegister = httpRegister
-	Context.dnsFilter = dnsfilter.New(&filterConf, nil)
+	Context.dnsFilter = filtering.New(&filterConf, nil)
 
 	p := dnsforward.DNSCreateParams{
 		DNSFilter:      Context.dnsFilter,
@@ -282,7 +282,7 @@ func getDNSEncryption() (de dnsEncryption) {
 
 // applyAdditionalFiltering adds additional client information and settings if
 // the client has them.
-func applyAdditionalFiltering(clientAddr net.IP, clientID string, setts *dnsfilter.FilteringSettings) {
+func applyAdditionalFiltering(clientAddr net.IP, clientID string, setts *filtering.Settings) {
 	Context.dnsFilter.ApplyBlockedServices(setts, nil, true)
 
 	if clientAddr == nil {

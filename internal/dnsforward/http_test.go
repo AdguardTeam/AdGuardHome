@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,7 +34,7 @@ func loadTestData(t *testing.T, casesFileName string, cases interface{}) {
 const jsonExt = ".json"
 
 func TestDNSForwardHTTTP_handleGetConfig(t *testing.T) {
-	filterConf := &dnsfilter.Config{
+	filterConf := &filtering.Config{
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,
 		SafeSearchEnabled:     true,
@@ -107,7 +107,7 @@ func TestDNSForwardHTTTP_handleGetConfig(t *testing.T) {
 }
 
 func TestDNSForwardHTTTP_handleSetConfig(t *testing.T) {
-	filterConf := &dnsfilter.Config{
+	filterConf := &filtering.Config{
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,
 		SafeSearchEnabled:     true,

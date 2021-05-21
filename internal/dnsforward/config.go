@@ -11,7 +11,7 @@ import (
 	"sort"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/log"
@@ -25,7 +25,7 @@ type FilteringConfig struct {
 	// --
 
 	// FilterHandler is an optional additional filtering callback.
-	FilterHandler func(clientAddr net.IP, clientID string, settings *dnsfilter.FilteringSettings) `yaml:"-"`
+	FilterHandler func(clientAddr net.IP, clientID string, settings *filtering.Settings) `yaml:"-"`
 
 	// GetCustomUpstreamByClient - a callback function that returns upstreams configuration
 	// based on the client IP address. Returns nil if there are no custom upstreams for the client
@@ -36,7 +36,7 @@ type FilteringConfig struct {
 	// Protection configuration
 	// --
 
-	ProtectionEnabled  bool   `yaml:"protection_enabled"`   // whether or not use any of dnsfilter features
+	ProtectionEnabled  bool   `yaml:"protection_enabled"`   // whether or not use any of filtering features
 	BlockingMode       string `yaml:"blocking_mode"`        // mode how to answer filtered requests
 	BlockingIPv4       net.IP `yaml:"blocking_ipv4"`        // IP address to be returned for a blocked A request
 	BlockingIPv6       net.IP `yaml:"blocking_ipv6"`        // IP address to be returned for a blocked AAAA request

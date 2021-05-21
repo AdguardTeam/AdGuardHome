@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxyutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -267,11 +267,11 @@ func addEntry(l *queryLog, host string, answerStr, client net.IP) {
 			A: answerStr,
 		}},
 	}
-	res := dnsfilter.Result{
+	res := filtering.Result{
 		IsFiltered:  true,
-		Reason:      dnsfilter.Rewritten,
+		Reason:      filtering.Rewritten,
 		ServiceName: "SomeService",
-		Rules: []*dnsfilter.ResultRule{{
+		Rules: []*filtering.ResultRule{{
 			FilterListID: 1,
 			Text:         "SomeRule",
 		}},

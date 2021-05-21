@@ -25,8 +25,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
@@ -51,7 +51,7 @@ type homeContext struct {
 	dnsServer  *dnsforward.Server        // DNS module
 	rdns       *RDNS                     // rDNS module
 	whois      *Whois                    // WHOIS module
-	dnsFilter  *dnsfilter.DNSFilter      // DNS filtering module
+	dnsFilter  *filtering.DNSFilter      // DNS filtering module
 	dhcpServer *dhcpd.Server             // DHCP module
 	auth       *Auth                     // HTTP authentication module
 	filters    Filtering                 // DNS filtering module
@@ -291,10 +291,10 @@ func run(args options, clientBuildFS fs.FS) {
 
 	setupContext(args)
 
-	// clients package uses dnsfilter package's static data (dnsfilter.BlockedSvcKnown()),
-	//  so we have to initialize dnsfilter's static data first,
+	// clients package uses filtering package's static data (filtering.BlockedSvcKnown()),
+	//  so we have to initialize filtering's static data first,
 	//  but also avoid relying on automatic Go init() function
-	dnsfilter.InitModule()
+	filtering.InitModule()
 
 	setupConfig(args)
 

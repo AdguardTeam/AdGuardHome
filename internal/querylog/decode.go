@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
@@ -138,7 +138,7 @@ var resultHandlers = map[string]logEntryHandler{
 
 		l := len(ent.Result.Rules)
 		if l == 0 {
-			ent.Result.Rules = []*dnsfilter.ResultRule{{}}
+			ent.Result.Rules = []*filtering.ResultRule{{}}
 			l++
 		}
 
@@ -159,7 +159,7 @@ var resultHandlers = map[string]logEntryHandler{
 
 		l := len(ent.Result.Rules)
 		if l == 0 {
-			ent.Result.Rules = []*dnsfilter.ResultRule{{}}
+			ent.Result.Rules = []*filtering.ResultRule{{}}
 			l++
 		}
 
@@ -176,7 +176,7 @@ var resultHandlers = map[string]logEntryHandler{
 		if err != nil {
 			return err
 		}
-		ent.Result.Reason = dnsfilter.Reason(i)
+		ent.Result.Reason = filtering.Reason(i)
 		return nil
 	},
 	"ServiceName": func(t json.Token, ent *logEntry) error {
@@ -214,7 +214,7 @@ func decodeResultRuleKey(key string, i int, dec *json.Decoder, ent *logEntry) {
 		}
 
 		if len(ent.Result.Rules) < i+1 {
-			ent.Result.Rules = append(ent.Result.Rules, &dnsfilter.ResultRule{})
+			ent.Result.Rules = append(ent.Result.Rules, &filtering.ResultRule{})
 		}
 
 		if n, ok := vToken.(json.Number); ok {
@@ -231,7 +231,7 @@ func decodeResultRuleKey(key string, i int, dec *json.Decoder, ent *logEntry) {
 		}
 
 		if len(ent.Result.Rules) < i+1 {
-			ent.Result.Rules = append(ent.Result.Rules, &dnsfilter.ResultRule{})
+			ent.Result.Rules = append(ent.Result.Rules, &filtering.ResultRule{})
 		}
 
 		if ipStr, ok := vToken.(string); ok {
@@ -248,7 +248,7 @@ func decodeResultRuleKey(key string, i int, dec *json.Decoder, ent *logEntry) {
 		}
 
 		if len(ent.Result.Rules) < i+1 {
-			ent.Result.Rules = append(ent.Result.Rules, &dnsfilter.ResultRule{})
+			ent.Result.Rules = append(ent.Result.Rules, &filtering.ResultRule{})
 		}
 
 		if s, ok := vToken.(string); ok {
@@ -391,7 +391,7 @@ func decodeResultDNSRewriteResultKey(key string, dec *json.Decoder, ent *logEntr
 		}
 
 		if ent.Result.DNSRewriteResult == nil {
-			ent.Result.DNSRewriteResult = &dnsfilter.DNSRewriteResult{}
+			ent.Result.DNSRewriteResult = &filtering.DNSRewriteResult{}
 		}
 
 		if n, ok := vToken.(json.Number); ok {
@@ -400,11 +400,11 @@ func decodeResultDNSRewriteResultKey(key string, dec *json.Decoder, ent *logEntr
 		}
 	case "Response":
 		if ent.Result.DNSRewriteResult == nil {
-			ent.Result.DNSRewriteResult = &dnsfilter.DNSRewriteResult{}
+			ent.Result.DNSRewriteResult = &filtering.DNSRewriteResult{}
 		}
 
 		if ent.Result.DNSRewriteResult.Response == nil {
-			ent.Result.DNSRewriteResult.Response = dnsfilter.DNSRewriteResultResponse{}
+			ent.Result.DNSRewriteResult.Response = filtering.DNSRewriteResultResponse{}
 		}
 
 		// TODO(a.garipov): I give up.  This whole file is a mess.
