@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -542,7 +541,7 @@ func (f *Filtering) updateIntl(filter *filter) (updated bool, err error) {
 	updated = false
 	log.Tracef("Downloading update for filter %d from %s", filter.ID, filter.URL)
 
-	tmpFile, err := ioutil.TempFile(filepath.Join(Context.getDataDir(), filterDir), "")
+	tmpFile, err := os.CreateTemp(filepath.Join(Context.getDataDir(), filterDir), "")
 	if err != nil {
 		return updated, err
 	}

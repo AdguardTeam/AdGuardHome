@@ -3,7 +3,7 @@ package dnsforward
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -207,7 +207,7 @@ func TestDNSForwardHTTTP_handleSetConfig(t *testing.T) {
 				s.conf = defaultConf
 			})
 
-			rBody := ioutil.NopCloser(bytes.NewReader(caseData.Req))
+			rBody := io.NopCloser(bytes.NewReader(caseData.Req))
 			var r *http.Request
 			r, err = http.NewRequest(http.MethodPost, "http://example.com", rBody)
 			require.Nil(t, err)

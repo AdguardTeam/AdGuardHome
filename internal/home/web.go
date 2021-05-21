@@ -3,6 +3,7 @@ package home
 import (
 	"context"
 	"crypto/tls"
+	"io/fs"
 	"net"
 	"net/http"
 	"strconv"
@@ -12,7 +13,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/NYTimes/gziphandler"
-	"github.com/gobuffalo/packr"
 )
 
 // HTTP scheme constants.
@@ -33,11 +33,14 @@ const (
 )
 
 type webConfig struct {
-	firstRun     bool
 	BindHost     net.IP
 	BindPort     int
 	BetaBindPort int
 	PortHTTPS    int
+	firstRun     bool
+
+	clientFS     fs.FS
+	clientBetaFS fs.FS
 
 	// ReadTimeout is an option to pass to http.Server for setting an
 	// appropriate field.
@@ -85,19 +88,18 @@ func CreateWeb(conf *webConfig) *Web {
 	w := Web{}
 	w.conf = conf
 
-	// Initialize and run the admin Web interface
-	box := packr.NewBox("../../build/static")
-	boxBeta := packr.NewBox("../../build2/static")
+	clientFS := http.FileServer(http.FS(conf.clientFS))
+	betaClientFS := http.FileServer(http.FS(conf.clientBetaFS))
 
 	// if not configured, redirect / to /install.html, otherwise redirect /install.html to /
-	Context.mux.Handle("/", withMiddlewares(http.FileServer(box), gziphandler.GzipHandler, optionalAuthHandler, postInstallHandler))
-	w.handlerBeta = withMiddlewares(http.FileServer(boxBeta), gziphandler.GzipHandler, optionalAuthHandler, postInstallHandler)
+	Context.mux.Handle("/", withMiddlewares(clientFS, gziphandler.GzipHandler, optionalAuthHandler, postInstallHandler))
+	w.handlerBeta = withMiddlewares(betaClientFS, gziphandler.GzipHandler, optionalAuthHandler, postInstallHandler)
 
 	// add handlers for /install paths, we only need them when we're not configured yet
 	if conf.firstRun {
 		log.Info("This is the first launch of AdGuard Home, redirecting everything to /install.html ")
-		Context.mux.Handle("/install.html", preInstallHandler(http.FileServer(box)))
-		w.installerBeta = preInstallHandler(http.FileServer(boxBeta))
+		Context.mux.Handle("/install.html", preInstallHandler(clientFS))
+		w.installerBeta = preInstallHandler(betaClientFS)
 		w.registerInstallHandlers()
 		// This must be removed in API v1.
 		w.registerBetaInstallHandlers()

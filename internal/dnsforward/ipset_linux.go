@@ -1,5 +1,7 @@
 // +build linux
 
+//go:build linux
+
 package dnsforward
 
 import (

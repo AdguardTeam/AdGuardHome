@@ -1,5 +1,7 @@
 // +build darwin netbsd openbsd
 
+//go:build darwin || netbsd || openbsd
+
 package aghos
 
 import (

@@ -1,11 +1,13 @@
 // +build darwin
 
+//go:build darwin
+
 package aghnet
 
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"regexp"
 	"strings"
 
@@ -140,7 +142,7 @@ func ifaceSetStaticIP(ifaceName string) (err error) {
 // getEtcResolvConfServers returns a list of nameservers configured in
 // /etc/resolv.conf.
 func getEtcResolvConfServers() ([]string, error) {
-	body, err := ioutil.ReadFile("/etc/resolv.conf")
+	body, err := os.ReadFile("/etc/resolv.conf")
 	if err != nil {
 		return nil, err
 	}

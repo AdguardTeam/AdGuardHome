@@ -33,6 +33,21 @@ YARN_INSTALL_FLAGS = $(YARN_FLAGS) --network-timeout 120000 --silent\
 	--ignore-engines --ignore-optional --ignore-platform\
 	--ignore-scripts
 
+# Macros for the build-release target.  If FRONTEND_PREBUILT is 0, the
+# default, the macro $(BUILD_RELEASE_DEPS_$(FRONTEND_PREBUILT)) expands
+# into BUILD_RELEASE_DEPS_0, and so both frontend and backend
+# dependencies are fetched and the frontend is built.  Otherwise, if
+# FRONTEND_PREBUILT is 1, only backend dependencies are fetched and the
+# frontend isn't reuilt.
+#
+# TODO(a.garipov): We could probably do that from .../build-release.sh,
+# but that would mean either calling make from inside make or
+# duplicating commands in two places, both of which don't seem to me
+# like nice solutions.
+FRONTEND_PREBUILT = 0
+BUILD_RELEASE_DEPS_0 = deps js-build
+BUILD_RELEASE_DEPS_1 = go-deps
+
 ENV = env\
 	COMMIT='$(COMMIT)'\
 	CHANNEL='$(CHANNEL)'\
@@ -65,7 +80,7 @@ test: js-test go-test
 # expand to something like "C:/Program Files/Git/usr/bin/sh.exe".
 build-docker: ; $(ENV) "$(SHELL)" ./scripts/make/build-docker.sh
 
-build-release: deps js-build
+build-release: $(BUILD_RELEASE_DEPS_$(FRONTEND_PREBUILT))
 	$(ENV) "$(SHELL)" ./scripts/make/build-release.sh
 
 clean: ; $(ENV) "$(SHELL)" ./scripts/make/clean.sh

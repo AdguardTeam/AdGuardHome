@@ -153,6 +153,7 @@ readonly mipses
 #    os  arch      arm mips       snap
 platforms="\
 darwin   amd64     0   0          0
+darwin   arm64     0   0          0
 freebsd  386       0   0          0
 freebsd  amd64     0   0          0
 freebsd  arm       5   0          0

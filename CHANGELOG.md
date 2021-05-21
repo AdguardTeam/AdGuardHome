@@ -13,6 +13,26 @@ and this project adheres to
 ## [v0.107.0] - 2021-06-28 (APPROX.)
 -->
 
+### Added
+
+- New flag `--local-frontend` to serve dinamically changeable frontend files
+  from disk as opposed to the ones that were compiled into the binary.
+
+### Deprecated
+
+<!--
+TODO(a.garipov): Remove the Go 1.16 deprecation message if Go 1.17 is not
+released by then.
+-->
+
+- Go 1.16 support.  v0.108.0 will require at least Go 1.17 to build.
+
+### Removed
+
+- Go 1.15 support.
+
+
+
 ## [v0.106.3] - 2021-05-19
 
 ### Added

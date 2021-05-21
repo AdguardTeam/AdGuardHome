@@ -3,7 +3,7 @@ package home
 import (
 	"bytes"
 	"encoding/binary"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -79,7 +79,8 @@ func glGetTokenDate(file string) uint32 {
 
 	fileReadCloser, err := aghio.LimitReadCloser(f, MaxFileSize)
 	if err != nil {
-		log.Error("LimitReadCloser: %s", err)
+		log.Error("creating limited reader: %s", err)
+
 		return 0
 	}
 	defer fileReadCloser.Close()
@@ -87,16 +88,18 @@ func glGetTokenDate(file string) uint32 {
 	var dateToken uint32
 
 	// This use of ReadAll is now safe, because we limited reader.
-	bs, err := ioutil.ReadAll(fileReadCloser)
+	bs, err := io.ReadAll(fileReadCloser)
 	if err != nil {
-		log.Error("ioutil.ReadAll: %s", err)
+		log.Error("reading token: %s", err)
+
 		return 0
 	}
+
 	buf := bytes.NewBuffer(bs)
 
 	err = binary.Read(buf, aghos.NativeEndian, &dateToken)
 	if err != nil {
-		log.Error("binary.Read: %s", err)
+		log.Error("decoding token: %s", err)
 
 		return 0
 	}

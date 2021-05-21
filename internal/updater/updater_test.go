@@ -1,10 +1,10 @@
 package updater
 
 import (
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -102,13 +102,13 @@ func TestUpdateGetVersion(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	wd := t.TempDir()
 
-	assert.Nil(t, ioutil.WriteFile(filepath.Join(wd, "AdGuardHome"), []byte("AdGuardHome"), 0o755))
-	assert.Nil(t, ioutil.WriteFile(filepath.Join(wd, "README.md"), []byte("README.md"), 0o644))
-	assert.Nil(t, ioutil.WriteFile(filepath.Join(wd, "LICENSE.txt"), []byte("LICENSE.txt"), 0o644))
-	assert.Nil(t, ioutil.WriteFile(filepath.Join(wd, "AdGuardHome.yaml"), []byte("AdGuardHome.yaml"), 0o644))
+	assert.Nil(t, os.WriteFile(filepath.Join(wd, "AdGuardHome"), []byte("AdGuardHome"), 0o755))
+	assert.Nil(t, os.WriteFile(filepath.Join(wd, "README.md"), []byte("README.md"), 0o644))
+	assert.Nil(t, os.WriteFile(filepath.Join(wd, "LICENSE.txt"), []byte("LICENSE.txt"), 0o644))
+	assert.Nil(t, os.WriteFile(filepath.Join(wd, "AdGuardHome.yaml"), []byte("AdGuardHome.yaml"), 0o644))
 
 	// start server for returning package file
-	pkgData, err := ioutil.ReadFile("testdata/AdGuardHome.tar.gz")
+	pkgData, err := os.ReadFile("testdata/AdGuardHome.tar.gz")
 	assert.Nil(t, err)
 	l, lport := startHTTPServer(string(pkgData))
 	t.Cleanup(func() { assert.Nil(t, l.Close()) })
@@ -139,28 +139,28 @@ func TestUpdate(t *testing.T) {
 	u.clean()
 
 	// check backup files
-	d, err := ioutil.ReadFile(filepath.Join(wd, "agh-backup", "AdGuardHome.yaml"))
+	d, err := os.ReadFile(filepath.Join(wd, "agh-backup", "AdGuardHome.yaml"))
 	assert.Nil(t, err)
 	assert.Equal(t, "AdGuardHome.yaml", string(d))
 
-	d, err = ioutil.ReadFile(filepath.Join(wd, "agh-backup", "AdGuardHome"))
+	d, err = os.ReadFile(filepath.Join(wd, "agh-backup", "AdGuardHome"))
 	assert.Nil(t, err)
 	assert.Equal(t, "AdGuardHome", string(d))
 
 	// check updated files
-	d, err = ioutil.ReadFile(filepath.Join(wd, "AdGuardHome"))
+	d, err = os.ReadFile(filepath.Join(wd, "AdGuardHome"))
 	assert.Nil(t, err)
 	assert.Equal(t, "1", string(d))
 
-	d, err = ioutil.ReadFile(filepath.Join(wd, "README.md"))
+	d, err = os.ReadFile(filepath.Join(wd, "README.md"))
 	assert.Nil(t, err)
 	assert.Equal(t, "2", string(d))
 
-	d, err = ioutil.ReadFile(filepath.Join(wd, "LICENSE.txt"))
+	d, err = os.ReadFile(filepath.Join(wd, "LICENSE.txt"))
 	assert.Nil(t, err)
 	assert.Equal(t, "3", string(d))
 
-	d, err = ioutil.ReadFile(filepath.Join(wd, "AdGuardHome.yaml"))
+	d, err = os.ReadFile(filepath.Join(wd, "AdGuardHome.yaml"))
 	assert.Nil(t, err)
 	assert.Equal(t, "AdGuardHome.yaml", string(d))
 }
@@ -168,13 +168,13 @@ func TestUpdate(t *testing.T) {
 func TestUpdateWindows(t *testing.T) {
 	wd := t.TempDir()
 
-	assert.Nil(t, ioutil.WriteFile(filepath.Join(wd, "AdGuardHome.exe"), []byte("AdGuardHome.exe"), 0o755))
-	assert.Nil(t, ioutil.WriteFile(filepath.Join(wd, "README.md"), []byte("README.md"), 0o644))
-	assert.Nil(t, ioutil.WriteFile(filepath.Join(wd, "LICENSE.txt"), []byte("LICENSE.txt"), 0o644))
-	assert.Nil(t, ioutil.WriteFile(filepath.Join(wd, "AdGuardHome.yaml"), []byte("AdGuardHome.yaml"), 0o644))
+	assert.Nil(t, os.WriteFile(filepath.Join(wd, "AdGuardHome.exe"), []byte("AdGuardHome.exe"), 0o755))
+	assert.Nil(t, os.WriteFile(filepath.Join(wd, "README.md"), []byte("README.md"), 0o644))
+	assert.Nil(t, os.WriteFile(filepath.Join(wd, "LICENSE.txt"), []byte("LICENSE.txt"), 0o644))
+	assert.Nil(t, os.WriteFile(filepath.Join(wd, "AdGuardHome.yaml"), []byte("AdGuardHome.yaml"), 0o644))
 
 	// start server for returning package file
-	pkgData, err := ioutil.ReadFile("testdata/AdGuardHome.zip")
+	pkgData, err := os.ReadFile("testdata/AdGuardHome.zip")
 	assert.Nil(t, err)
 
 	l, lport := startHTTPServer(string(pkgData))
@@ -207,28 +207,28 @@ func TestUpdateWindows(t *testing.T) {
 	u.clean()
 
 	// check backup files
-	d, err := ioutil.ReadFile(filepath.Join(wd, "agh-backup", "AdGuardHome.yaml"))
+	d, err := os.ReadFile(filepath.Join(wd, "agh-backup", "AdGuardHome.yaml"))
 	assert.Nil(t, err)
 	assert.Equal(t, "AdGuardHome.yaml", string(d))
 
-	d, err = ioutil.ReadFile(filepath.Join(wd, "agh-backup", "AdGuardHome.exe"))
+	d, err = os.ReadFile(filepath.Join(wd, "agh-backup", "AdGuardHome.exe"))
 	assert.Nil(t, err)
 	assert.Equal(t, "AdGuardHome.exe", string(d))
 
 	// check updated files
-	d, err = ioutil.ReadFile(filepath.Join(wd, "AdGuardHome.exe"))
+	d, err = os.ReadFile(filepath.Join(wd, "AdGuardHome.exe"))
 	assert.Nil(t, err)
 	assert.Equal(t, "1", string(d))
 
-	d, err = ioutil.ReadFile(filepath.Join(wd, "README.md"))
+	d, err = os.ReadFile(filepath.Join(wd, "README.md"))
 	assert.Nil(t, err)
 	assert.Equal(t, "2", string(d))
 
-	d, err = ioutil.ReadFile(filepath.Join(wd, "LICENSE.txt"))
+	d, err = os.ReadFile(filepath.Join(wd, "LICENSE.txt"))
 	assert.Nil(t, err)
 	assert.Equal(t, "3", string(d))
 
-	d, err = ioutil.ReadFile(filepath.Join(wd, "AdGuardHome.yaml"))
+	d, err = os.ReadFile(filepath.Join(wd, "AdGuardHome.yaml"))
 	assert.Nil(t, err)
 	assert.Equal(t, "AdGuardHome.yaml", string(d))
 }

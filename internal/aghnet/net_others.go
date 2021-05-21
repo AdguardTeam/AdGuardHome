@@ -1,5 +1,7 @@
 // +build !linux,!darwin
 
+//go:build !(linux || darwin)
+
 package aghnet
 
 import (

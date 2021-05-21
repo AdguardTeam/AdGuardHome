@@ -3,7 +3,6 @@ package aghtest
 
 import (
 	"io"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -14,7 +13,7 @@ import (
 func DiscardLogOutput(m *testing.M) {
 	// TODO(e.burkov): Refactor code and tests to not use the global mutable
 	// logger.
-	log.SetOutput(ioutil.Discard)
+	log.SetOutput(io.Discard)
 
 	os.Exit(m.Run())
 }

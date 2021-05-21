@@ -36,6 +36,10 @@ type options struct {
 	// noEtcHosts flag should be provided when /etc/hosts file shouldn't be
 	// used.
 	noEtcHosts bool
+
+	// localFrontend forces AdGuard Home to use the frontend files from disk
+	// rather than the ones that have been compiled into the binary.
+	localFrontend bool
 }
 
 // functions used for their side-effects
@@ -234,6 +238,16 @@ var noEtcHostsArg = arg{
 	serialize:       func(o options) []string { return boolSliceOrNil(o.noEtcHosts) },
 }
 
+var localFrontendArg = arg{
+	description:     "Use local frontend directories.",
+	longName:        "local-frontend",
+	shortName:       "",
+	updateWithValue: nil,
+	updateNoValue:   func(o options) (options, error) { o.localFrontend = true; return o, nil },
+	effect:          nil,
+	serialize:       func(o options) []string { return boolSliceOrNil(o.localFrontend) },
+}
+
 func init() {
 	args = []arg{
 		configArg,
@@ -247,6 +261,7 @@ func init() {
 		noCheckUpdateArg,
 		disableMemoryOptimizationArg,
 		noEtcHostsArg,
+		localFrontendArg,
 		verboseArg,
 		glinetArg,
 		versionArg,

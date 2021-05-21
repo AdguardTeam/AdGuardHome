@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -299,17 +298,17 @@ func (u *Updater) downloadPackageFile(url, filename string) error {
 
 	log.Debug("updater: reading HTTP body")
 	// This use of ReadAll is now safe, because we limited body's Reader.
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("ioutil.ReadAll() failed: %w", err)
+		return fmt.Errorf("io.ReadAll() failed: %w", err)
 	}
 
 	_ = os.Mkdir(u.updateDir, 0o755)
 
 	log.Debug("updater: saving package to file")
-	err = ioutil.WriteFile(filename, body, 0o644)
+	err = os.WriteFile(filename, body, 0o644)
 	if err != nil {
-		return fmt.Errorf("ioutil.WriteFile() failed: %w", err)
+		return fmt.Errorf("os.WriteFile() failed: %w", err)
 	}
 	return nil
 }
@@ -484,11 +483,11 @@ func zipFileUnpack(zipfile, outdir string) ([]string, error) {
 
 // Copy file on disk
 func copyFile(src, dst string) error {
-	d, e := ioutil.ReadFile(src)
+	d, e := os.ReadFile(src)
 	if e != nil {
 		return e
 	}
-	e = ioutil.WriteFile(dst, d, 0o644)
+	e = os.WriteFile(dst, d, 0o644)
 	if e != nil {
 		return e
 	}

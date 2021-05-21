@@ -1,10 +1,11 @@
 // +build linux
 
+//go:build linux
+
 package aghos
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -45,9 +46,7 @@ func sendProcessSignal(pid int, sig syscall.Signal) error {
 func isOpenWrt() (ok bool) {
 	const etcDir = "/etc"
 
-	// TODO(e.burkov): Take care of dealing with fs package after updating
-	// Go version to 1.16.
-	fileInfos, err := ioutil.ReadDir(etcDir)
+	dirEnts, err := os.ReadDir(etcDir)
 	if err != nil {
 		return false
 	}
@@ -56,18 +55,18 @@ func isOpenWrt() (ok bool) {
 	const fNameSubstr = "release"
 	osNameData := []byte("OpenWrt")
 
-	for _, fileInfo := range fileInfos {
-		if fileInfo.IsDir() {
+	for _, dirEnt := range dirEnts {
+		if dirEnt.IsDir() {
 			continue
 		}
 
-		fn := fileInfo.Name()
+		fn := dirEnt.Name()
 		if !strings.Contains(fn, fNameSubstr) {
 			continue
 		}
 
 		var body []byte
-		body, err = ioutil.ReadFile(filepath.Join(etcDir, fn))
+		body, err = os.ReadFile(filepath.Join(etcDir, fn))
 		if err != nil {
 			continue
 		}

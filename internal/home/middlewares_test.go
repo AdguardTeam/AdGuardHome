@@ -1,7 +1,7 @@
 package home
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -44,7 +44,7 @@ func TestLimitRequestBody(t *testing.T) {
 
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var b []byte
-			b, *err = ioutil.ReadAll(r.Body)
+			b, *err = io.ReadAll(r.Body)
 			_, werr := w.Write(b)
 			require.Nil(t, werr)
 		})

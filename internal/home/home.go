@@ -7,7 +7,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"net"
 	"net/http"
 	"net/http/pprof"
@@ -92,7 +92,7 @@ func (c *homeContext) getDataDir() string {
 var Context homeContext
 
 // Main is the entry point
-func Main() {
+func Main(clientBuildFS fs.FS) {
 	// config can be specified, which reads options from there, but other command line flags have to override config values
 	// therefore, we must do it manually instead of using a lib
 	args := loadOptions()
@@ -117,12 +117,12 @@ func Main() {
 	}()
 
 	if args.serviceControlAction != "" {
-		handleServiceControlAction(args)
+		handleServiceControlAction(args, clientBuildFS)
 		return
 	}
 
 	// run the protection
-	run(args)
+	run(args, clientBuildFS)
 }
 
 func setupContext(args options) {
@@ -227,8 +227,49 @@ func setupConfig(args options) {
 	}
 }
 
+func initWeb(args options, clientBuildFS fs.FS) (web *Web, err error) {
+	var clientFS, clientBetaFS fs.FS
+	if args.localFrontend {
+		log.Info("warning: using local frontend files")
+
+		clientFS = os.DirFS("build/static")
+		clientBetaFS = os.DirFS("build2/static")
+	} else {
+		clientFS, err = fs.Sub(clientBuildFS, "build/static")
+		if err != nil {
+			return nil, fmt.Errorf("getting embedded client subdir: %w", err)
+		}
+
+		clientBetaFS, err = fs.Sub(clientBuildFS, "build2/static")
+		if err != nil {
+			return nil, fmt.Errorf("getting embedded beta client subdir: %w", err)
+		}
+	}
+
+	webConf := webConfig{
+		firstRun:     Context.firstRun,
+		BindHost:     config.BindHost,
+		BindPort:     config.BindPort,
+		BetaBindPort: config.BetaBindPort,
+
+		ReadTimeout:       readTimeout,
+		ReadHeaderTimeout: readHdrTimeout,
+		WriteTimeout:      writeTimeout,
+
+		clientFS:     clientFS,
+		clientBetaFS: clientBetaFS,
+	}
+
+	web = CreateWeb(&webConf)
+	if web == nil {
+		return nil, fmt.Errorf("initializing web: %w", err)
+	}
+
+	return web, nil
+}
+
 // run performs configurating and starts AdGuard Home.
-func run(args options) {
+func run(args options, clientBuildFS fs.FS) {
 	// configure config filename
 	initConfigFilename(args)
 
@@ -295,6 +336,7 @@ func run(args options) {
 	} else {
 		log.Info("authratelimiter is disabled")
 	}
+
 	Context.auth = InitAuth(
 		sessFilename,
 		config.Users,
@@ -311,19 +353,9 @@ func run(args options) {
 		log.Fatalf("Can't initialize TLS module")
 	}
 
-	webConf := webConfig{
-		firstRun:     Context.firstRun,
-		BindHost:     config.BindHost,
-		BindPort:     config.BindPort,
-		BetaBindPort: config.BetaBindPort,
-
-		ReadTimeout:       readTimeout,
-		ReadHeaderTimeout: readHdrTimeout,
-		WriteTimeout:      writeTimeout,
-	}
-	Context.web = CreateWeb(&webConf)
-	if Context.web == nil {
-		log.Fatalf("Can't initialize Web module")
+	Context.web, err = initWeb(args, clientBuildFS)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	Context.subnetDetector, err = aghnet.NewSubnetDetector()
@@ -426,7 +458,7 @@ Please note, that this is crucial for a DNS server to be able to use that port.`
 // Write PID to a file
 func writePIDFile(fn string) bool {
 	data := fmt.Sprintf("%d", os.Getpid())
-	err := ioutil.WriteFile(fn, []byte(data), 0o644)
+	err := os.WriteFile(fn, []byte(data), 0o644)
 	if err != nil {
 		log.Error("Couldn't write PID to file %s: %v", fn, err)
 		return false

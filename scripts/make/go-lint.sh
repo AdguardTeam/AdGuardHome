@@ -49,7 +49,7 @@ trap not_found EXIT
 
 # Warnings
 
-go_min_version='go1.15'
+go_min_version='go1.16'
 go_min_version_prefix="go version ${go_min_version}"
 go_version_msg="
 warning: your go version is different from the recommended minimal one (${go_min_version}).
@@ -74,11 +74,11 @@ esac
 
 # Simple Analyzers
 
-# blocklist_imports is a simple check against unwanted packages.  Currently it
-# only looks for package log which is replaced by our own package
+# blocklist_imports is a simple check against unwanted packages.  Package
+# io/ioutil is soft-deprecated.  Package log is replaced by our own package
 # github.com/AdguardTeam/golibs/log.
 blocklist_imports() {
-	git grep -F -e '"log"' -- '*.go' || exit 0;
+	git grep -F -e '"io/ioutil"' -e '"log"' -- '*.go' || exit 0;
 }
 
 # method_const is a simple check against the usage of some raw strings and
@@ -154,7 +154,7 @@ exit_on_output() (
 
 # Constants
 
-go_files='./main.go ./tools.go ./internal/'
+go_files='./main.go ./internal/'
 readonly go_files
 
 

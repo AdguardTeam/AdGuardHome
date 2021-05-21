@@ -3,7 +3,6 @@ package aghio
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -75,7 +74,7 @@ func TestLimitedReadCloser_Read(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			readCloser := ioutil.NopCloser(strings.NewReader(tc.rStr))
+			readCloser := io.NopCloser(strings.NewReader(tc.rStr))
 			buf := make([]byte, tc.limit+1)
 
 			lreader, err := LimitReadCloser(readCloser, tc.limit)

@@ -1,9 +1,12 @@
 // +build aix darwin dragonfly freebsd linux netbsd openbsd solaris
 
+//go:build aix || darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris
+
 package dhcpd
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -972,16 +975,11 @@ func (s *v4Server) Start() (err error) {
 	log.Info("dhcpv4: listening")
 
 	go func() {
-		serr := s.srv.Serve()
-		// TODO(a.garipov): Uncomment in Go 1.16.
-		//
-		//   if errors.Is(serr, net.ErrClosed) {
-		//           log.Info("dhcpv4: server is closed")
-		//
-		//           return
-		//   }
+		if serr := s.srv.Serve(); errors.Is(serr, net.ErrClosed) {
+			log.Info("dhcpv4: server is closed")
 
-		if serr != nil {
+			return
+		} else if serr != nil {
 			log.Error("dhcpv4: srv.Serve: %s", serr)
 		}
 	}()

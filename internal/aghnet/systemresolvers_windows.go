@@ -1,5 +1,7 @@
 // +build windows
 
+//go:build windows
+
 package aghnet
 
 import (

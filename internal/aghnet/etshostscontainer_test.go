@@ -1,7 +1,6 @@
 package aghnet
 
 import (
-	"io/ioutil"
 	"net"
 	"os"
 	"strings"
@@ -23,7 +22,7 @@ func prepareTestFile(t *testing.T) (f *os.File) {
 
 	dir := t.TempDir()
 
-	f, err := ioutil.TempFile(dir, "")
+	f, err := os.CreateTemp(dir, "")
 	require.Nil(t, err)
 	require.NotNil(t, f)
 	t.Cleanup(func() {

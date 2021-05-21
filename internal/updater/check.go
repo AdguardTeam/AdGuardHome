@@ -3,7 +3,7 @@ package updater
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"strings"
 	"time"
 
@@ -52,7 +52,7 @@ func (u *Updater) VersionInfo(forceRecheck bool) (VersionInfo, error) {
 
 	// This use of ReadAll is safe, because we just limited the appropriate
 	// ReadCloser.
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return VersionInfo{}, fmt.Errorf("updater: HTTP GET %s: %w", vcu, err)
 	}

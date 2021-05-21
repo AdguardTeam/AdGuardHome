@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"strings"
 	"time"
@@ -163,7 +163,7 @@ func (w *Whois) query(ctx context.Context, target, serverAddr string) (string, e
 	}
 
 	// This use of ReadAll is now safe, because we limited the conn Reader.
-	data, err := ioutil.ReadAll(connReadCloser)
+	data, err := io.ReadAll(connReadCloser)
 	if err != nil {
 		return "", err
 	}

@@ -4,14 +4,14 @@
 #
 # See https://stackoverflow.com/a/7335487/1892060.
 #
-# Only build, run, and test outputs here.  Sorted.
-*-packr.go
+# Only build, run, and test outputs here.  Sorted.  With negations at the
+# bottom to make sure they take effect.
 *.db
 *.log
 *.snap
 /bin/
-/build/
-/build2/
+/build/*
+/build2/*
 /data/
 /dist/
 /dnsfilter/tests/dnsfilter.TestLotsOfRules*.pprof
@@ -23,3 +23,6 @@ AdGuardHome*
 coverage.txt
 leases.db
 node_modules/
+
+!/build/gitkeep
+!/build2/gitkeep

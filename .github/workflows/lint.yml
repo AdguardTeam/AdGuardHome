@@ -1,4 +1,8 @@
 'name': 'lint'
+
+'env':
+  'GO_VERSION': '1.16'
+
 'on':
   'push':
     'tags':
@@ -6,14 +10,20 @@
     'branches':
     - '*'
   'pull_request':
+
 'jobs':
   'go-lint':
     'runs-on': 'ubuntu-latest'
     'steps':
     - 'uses': 'actions/checkout@v2'
+    - 'name': 'Set up Go'
+      'uses': 'actions/setup-go@v2'
+      'with':
+        'go-version': '${{ env.GO_VERSION }}'
     - 'name': 'run-lint'
       'run': >
         make go-deps go-tools go-lint
+
   'eslint':
     'runs-on': 'ubuntu-latest'
     'steps':
@@ -22,6 +32,7 @@
       'run': 'npm --prefix="./client" ci'
     - 'name': 'Run ESLint'
       'run': 'npm --prefix="./client" run lint'
+
   'notify':
     'needs':
     - 'go-lint'

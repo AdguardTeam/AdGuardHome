@@ -1,5 +1,7 @@
 // +build windows
 
+//go:build windows
+
 package dhcpd
 
 // 'u-root/u-root' package, a dependency of 'insomniacslk/dhcp' package, doesn't build on Windows

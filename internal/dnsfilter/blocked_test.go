@@ -1,5 +1,7 @@
 // +build ignore
 
+//go:build ignore
+
 package dnsfilter
 
 import (

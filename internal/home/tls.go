@@ -12,7 +12,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -164,7 +163,7 @@ func tlsLoadConfig(tls *tlsConfigSettings, status *tlsConfigStatus) bool {
 			status.WarningValidation = "certificate data and file can't be set together"
 			return false
 		}
-		tls.CertificateChainData, err = ioutil.ReadFile(tls.CertificatePath)
+		tls.CertificateChainData, err = os.ReadFile(tls.CertificatePath)
 		if err != nil {
 			status.WarningValidation = err.Error()
 			return false
@@ -177,7 +176,7 @@ func tlsLoadConfig(tls *tlsConfigSettings, status *tlsConfigStatus) bool {
 			status.WarningValidation = "private key data and file can't be set together"
 			return false
 		}
-		tls.PrivateKeyData, err = ioutil.ReadFile(tls.PrivateKeyPath)
+		tls.PrivateKeyData, err = os.ReadFile(tls.PrivateKeyPath)
 		if err != nil {
 			status.WarningValidation = err.Error()
 			return false
@@ -574,18 +573,17 @@ func LoadSystemRootCAs() (roots *x509.CertPool) {
 	}
 	roots = x509.NewCertPool()
 	for _, dir := range dirs {
-		fis, err := ioutil.ReadDir(dir)
+		dirEnts, err := os.ReadDir(dir)
 		if errors.Is(err, os.ErrNotExist) {
 			continue
-		}
-		if err != nil {
+		} else if err != nil {
 			log.Error("opening directory: %q: %s", dir, err)
 		}
 
 		var rootsAdded bool
-		for _, fi := range fis {
+		for _, de := range dirEnts {
 			var certData []byte
-			certData, err = ioutil.ReadFile(filepath.Join(dir, fi.Name()))
+			certData, err = os.ReadFile(filepath.Join(dir, de.Name()))
 			if err == nil && roots.AppendCertsFromPEM(certData) {
 				rootsAdded = true
 			}

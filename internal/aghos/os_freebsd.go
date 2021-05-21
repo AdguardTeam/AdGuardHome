@@ -1,5 +1,7 @@
 // +build freebsd
 
+//go:build freebsd
+
 package aghos
 
 import (

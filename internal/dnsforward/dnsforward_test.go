@@ -9,7 +9,6 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"net"
 	"os"
@@ -1082,9 +1081,8 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	}
 
 	// Prepare test hosts file.
-	hf, err := ioutil.TempFile("", "")
+	hf, err := os.CreateTemp("", "")
 	require.NoError(t, err)
-
 	t.Cleanup(func() {
 		assert.NoError(t, hf.Close())
 		assert.NoError(t, os.Remove(hf.Name()))

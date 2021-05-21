@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
 	"net"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -21,7 +21,7 @@ import (
 func prepareTestFile(t *testing.T, dir string, linesNum int) (name string) {
 	t.Helper()
 
-	f, err := ioutil.TempFile(dir, "*.txt")
+	f, err := os.CreateTemp(dir, "*.txt")
 	require.NoError(t, err)
 	// Use defer and not t.Cleanup to make sure that the file is closed
 	// after this function is done.
@@ -285,7 +285,7 @@ func TestQLogFile(t *testing.T) {
 }
 
 func NewTestQLogFileData(t *testing.T, data string) (file *QLogFile) {
-	f, err := ioutil.TempFile(t.TempDir(), "*.txt")
+	f, err := os.CreateTemp(t.TempDir(), "*.txt")
 	require.Nil(t, err)
 	t.Cleanup(func() {
 		assert.Nil(t, f.Close())

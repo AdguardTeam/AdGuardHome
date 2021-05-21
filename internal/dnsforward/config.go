@@ -5,9 +5,9 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"sort"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
@@ -275,7 +275,7 @@ func (s *Server) prepareUpstreamSettings() error {
 	// Load upstreams either from the file, or from the settings
 	var upstreams []string
 	if s.conf.UpstreamDNSFileName != "" {
-		data, err := ioutil.ReadFile(s.conf.UpstreamDNSFileName)
+		data, err := os.ReadFile(s.conf.UpstreamDNSFileName)
 		if err != nil {
 			return err
 		}

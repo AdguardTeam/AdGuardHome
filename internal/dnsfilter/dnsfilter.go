@@ -4,7 +4,6 @@ package dnsfilter
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -586,16 +585,16 @@ func createFilteringEngine(filters []Filter) (*filterlist.RuleStorage, *urlfilte
 			// On Windows we don't pass a file to urlfilter because
 			// it's difficult to update this file while it's being
 			// used.
-			data, err := ioutil.ReadFile(f.FilePath)
+			data, err := os.ReadFile(f.FilePath)
 			if err != nil {
-				return nil, nil, fmt.Errorf("ioutil.ReadFile(): %s: %w", f.FilePath, err)
+				return nil, nil, fmt.Errorf("reading filter content: %w", err)
 			}
+
 			list = &filterlist.StringRuleList{
 				ID:             int(f.ID),
 				RulesText:      string(data),
 				IgnoreCosmetic: true,
 			}
-
 		} else {
 			var err error
 			list, err = filterlist.NewFileRuleList(int(f.ID), f.FilePath, true)

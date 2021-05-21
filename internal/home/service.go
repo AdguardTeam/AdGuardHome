@@ -3,7 +3,7 @@ package home
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"runtime"
 	"strconv"
@@ -28,7 +28,8 @@ const (
 
 // Represents the program that will be launched by a service or daemon
 type program struct {
-	opts options
+	clientBuildFS fs.FS
+	opts          options
 }
 
 // Start should quickly start the program
@@ -36,7 +37,8 @@ func (p *program) Start(s service.Service) error {
 	// Start should not block. Do the actual work async.
 	args := p.opts
 	args.runningAsService = true
-	go run(args)
+	go run(args, p.clientBuildFS)
+
 	return nil
 }
 
@@ -95,7 +97,7 @@ func sendSigReload() {
 	}
 
 	pidfile := fmt.Sprintf("/var/run/%s.pid", serviceName)
-	data, err := ioutil.ReadFile(pidfile)
+	data, err := os.ReadFile(pidfile)
 	if errors.Is(err, os.ErrNotExist) {
 		var code int
 		var psdata string
@@ -142,7 +144,7 @@ func sendSigReload() {
 // run - this is a special command that is not supposed to be used directly
 // it is specified when we register a service, and it indicates to the app
 // that it is being run as a service/daemon.
-func handleServiceControlAction(opts options) {
+func handleServiceControlAction(opts options, clientBuildFS fs.FS) {
 	action := opts.serviceControlAction
 	log.Printf("Service control action: %s", action)
 
@@ -165,7 +167,10 @@ func handleServiceControlAction(opts options) {
 		Arguments:        serialize(runOpts),
 	}
 	configureService(svcConfig)
-	prg := &program{runOpts}
+	prg := &program{
+		clientBuildFS: clientBuildFS,
+		opts:          runOpts,
+	}
 	s, err := service.New(prg, svcConfig)
 	if err != nil {
 		log.Fatal(err)

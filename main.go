@@ -1,11 +1,14 @@
-//go:generate rm -f ./internal/home/a_home-packr.go
-//go:generate packr -i ./internal/home -z
 package main
 
 import (
+	"embed"
+
 	"github.com/AdguardTeam/AdGuardHome/internal/home"
 )
 
+//go:embed build build2
+var clientBuildFS embed.FS
+
 func main() {
-	home.Main()
+	home.Main(clientBuildFS)
 }

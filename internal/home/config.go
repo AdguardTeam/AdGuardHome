@@ -3,7 +3,6 @@ package home
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
@@ -267,7 +266,7 @@ func readConfigFile() ([]byte, error) {
 	}
 
 	configFile := config.getConfigFilename()
-	d, err := ioutil.ReadFile(configFile)
+	d, err := os.ReadFile(configFile)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't read config file %s: %w", configFile, err)
 	}

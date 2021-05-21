@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -220,9 +220,9 @@ func disableDNSStubListener() error {
 		return fmt.Errorf("os.MkdirAll: %s: %w", dir, err)
 	}
 
-	err = ioutil.WriteFile(resolvedConfPath, []byte(resolvedConfData), 0o644)
+	err = os.WriteFile(resolvedConfPath, []byte(resolvedConfData), 0o644)
 	if err != nil {
-		return fmt.Errorf("ioutil.WriteFile: %s: %w", resolvedConfPath, err)
+		return fmt.Errorf("os.WriteFile: %s: %w", resolvedConfPath, err)
 	}
 
 	_ = os.Rename(resolvConfPath, resolvConfPath+".backup")
@@ -450,7 +450,7 @@ func (web *Web) handleInstallCheckConfigBeta(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	body := nonBetaReqBody.String()
-	r.Body = ioutil.NopCloser(strings.NewReader(body))
+	r.Body = io.NopCloser(strings.NewReader(body))
 	r.ContentLength = int64(len(body))
 
 	web.handleInstallCheckConfig(w, r)
@@ -517,7 +517,7 @@ func (web *Web) handleInstallConfigureBeta(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	body := nonBetaReqBody.String()
-	r.Body = ioutil.NopCloser(strings.NewReader(body))
+	r.Body = io.NopCloser(strings.NewReader(body))
 	r.ContentLength = int64(len(body))
 
 	web.handleInstallConfigure(w, r)

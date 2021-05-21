@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
@@ -345,7 +344,7 @@ func (ehc *EtcHostsContainer) updateHosts() {
 	ehc.load(table, tableRev, ehc.hostsFn)
 
 	for _, dir := range ehc.hostsDirs {
-		fis, err := ioutil.ReadDir(dir)
+		des, err := os.ReadDir(dir)
 		if err != nil {
 			if !errors.Is(err, os.ErrNotExist) {
 				log.Error("etchostscontainer: Opening directory: %q: %s", dir, err)
@@ -354,8 +353,8 @@ func (ehc *EtcHostsContainer) updateHosts() {
 			continue
 		}
 
-		for _, fi := range fis {
-			ehc.load(table, tableRev, filepath.Join(dir, fi.Name()))
+		for _, de := range des {
+			ehc.load(table, tableRev, filepath.Join(dir, de.Name()))
 		}
 	}
 

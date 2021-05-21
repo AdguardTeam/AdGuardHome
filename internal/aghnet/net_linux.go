@@ -1,5 +1,7 @@
 // +build linux
 
+//go:build linux
+
 package aghnet
 
 import (
@@ -7,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"strings"
@@ -139,7 +140,7 @@ func ifaceSetStaticIP(ifaceName string) (err error) {
 	gatewayIP := GatewayIP(ifaceName)
 	add := updateStaticIPdhcpcdConf(ifaceName, ipNet.String(), gatewayIP, ipNet.IP)
 
-	body, err := ioutil.ReadFile("/etc/dhcpcd.conf")
+	body, err := os.ReadFile("/etc/dhcpcd.conf")
 	if err != nil {
 		return err
 	}
