@@ -84,40 +84,42 @@ func ifaceDNSIPAddrs(
 	backoff time.Duration,
 ) (addrs []net.IP, err error) {
 	var n int
-waitForIP:
 	for n = 1; n <= maxAttempts; n++ {
 		addrs, err = ifaceIPAddrs(iface, ipv)
 		if err != nil {
 			return nil, fmt.Errorf("getting ip addrs: %w", err)
 		}
 
-		switch len(addrs) {
-		case 0:
-			log.Debug("dhcpv%d: attempt %d: no ip addresses", ipv, n)
-
-			time.Sleep(backoff)
-		case 1:
-			// Some Android devices use 8.8.8.8 if there is not
-			// a secondary DNS server.  Fix that by setting the
-			// secondary DNS address to the same address.
-			//
-			// See https://github.com/AdguardTeam/AdGuardHome/issues/1708.
-			log.Debug("dhcpv%d: setting secondary dns ip to itself", ipv)
-			addrs = append(addrs, addrs[0])
-
-			fallthrough
-		default:
-			break waitForIP
+		if len(addrs) > 0 {
+			break
 		}
+
+		log.Debug("dhcpv%d: attempt %d: no ip addresses", ipv, n)
+
+		time.Sleep(backoff)
 	}
 
-	if len(addrs) == 0 {
+	switch len(addrs) {
+	case 0:
 		// Don't return errors in case the users want to try and enable
 		// the DHCP server later.
-		log.Error("dhcpv%d: no ip address for interface after %d attempts and %s", ipv, n, time.Duration(n)*backoff)
-	} else {
-		log.Debug("dhcpv%d: got addresses %s after %d attempts", ipv, addrs, n)
+		t := time.Duration(n) * backoff
+		log.Error("dhcpv%d: no ip for iface after %d attempts and %s", ipv, n, t)
+
+		return nil, nil
+	case 1:
+		// Some Android devices use 8.8.8.8 if there is not a secondary
+		// DNS server.  Fix that by setting the secondary DNS address to
+		// the same address.
+		//
+		// See https://github.com/AdguardTeam/AdGuardHome/issues/1708.
+		log.Debug("dhcpv%d: setting secondary dns ip to itself", ipv)
+		addrs = append(addrs, addrs[0])
+	default:
+		// Go on.
 	}
+
+	log.Debug("dhcpv%d: got addresses %s after %d attempts", ipv, addrs, n)
 
 	return addrs, nil
 }

@@ -106,6 +106,8 @@ underscores() {
 	}
 }
 
+# TODO(a.garipov): Add an analyser to look for `fallthrough`, `goto`, and `new`?
+
 
 
 # Helpers

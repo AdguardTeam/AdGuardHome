@@ -69,7 +69,9 @@ on GitHub and most other Markdown renderers. -->
     first statement.  If all you want there is a log message, use
     `agherr.LogPanic`.
 
- *  Avoid `errors.New`, use `aghnet.Error` instead.
+ *  Avoid `fallthrough`.  It makes it harder to rearrange `case`s, to reason
+    about the code, and also to switch the code to a handler approach, if that
+    becomes necessary later.
 
  *  Avoid `goto`.
 

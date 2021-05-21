@@ -66,7 +66,8 @@ func (s *v6Server) ResetLeases(ll []*Lease) {
 		if l.Expiry.Unix() != leaseExpireStatic &&
 			!ip6InRange(s.conf.ipStart, l.IP) {
 
-			log.Debug("DHCPv6: skipping a lease with IP %v: not within current IP range", l.IP)
+			log.Debug("dhcpv6: skipping a lease with IP %v: not within current IP range", l.IP)
+
 			continue
 		}
 
@@ -122,7 +123,7 @@ func (s *v6Server) FindMACbyIP(ip net.IP) net.HardwareAddr {
 // Remove (swap) lease by index
 func (s *v6Server) leaseRemoveSwapByIndex(i int) {
 	s.ipAddrs[s.leases[i].IP[15]] = 0
-	log.Debug("DHCPv6: removed lease %s", s.leases[i].HWAddr)
+	log.Debug("dhcpv6: removed lease %s", s.leases[i].HWAddr)
 
 	n := len(s.leases)
 	if i != n-1 {
@@ -220,7 +221,7 @@ func (s *v6Server) RemoveStaticLease(l Lease) (err error) {
 func (s *v6Server) addLease(l *Lease) {
 	s.leases = append(s.leases, l)
 	s.ipAddrs[l.IP[15]] = 1
-	log.Debug("DHCPv6: added lease %s <-> %s", l.IP, l.HWAddr)
+	log.Debug("dhcpv6: added lease %s <-> %s", l.IP, l.HWAddr)
 }
 
 // Remove a lease with the same properties
@@ -321,6 +322,7 @@ func (s *v6Server) checkCID(msg *dhcpv6.Message) error {
 	if msg.Options.ClientID() == nil {
 		return fmt.Errorf("dhcpv6: no ClientID option in request")
 	}
+
 	return nil
 }
 
@@ -336,15 +338,14 @@ func (s *v6Server) checkSID(msg *dhcpv6.Message) error {
 		if sid != nil {
 			return fmt.Errorf("dhcpv6: drop packet: ServerID option in message %s", msg.Type().String())
 		}
-
 	case dhcpv6.MessageTypeRequest,
 		dhcpv6.MessageTypeRenew,
 		dhcpv6.MessageTypeRelease,
 		dhcpv6.MessageTypeDecline:
-
 		if sid == nil {
 			return fmt.Errorf("dhcpv6: drop packet: no ServerID option in message %s", msg.Type().String())
 		}
+
 		if !sid.Equal(s.sid) {
 			return fmt.Errorf("dhcpv6: drop packet: mismatched ServerID option in message %s: %s",
 				msg.Type().String(), sid.String())
@@ -417,13 +418,14 @@ func (s *v6Server) process(msg *dhcpv6.Message, req, resp dhcpv6.DHCPv6) bool {
 
 	mac, err := dhcpv6.ExtractMAC(req)
 	if err != nil {
-		log.Debug("DHCPv6: dhcpv6.ExtractMAC: %s", err)
+		log.Debug("dhcpv6: dhcpv6.ExtractMAC: %s", err)
+
 		return false
 	}
 
 	lease := s.findLease(mac)
 	if lease == nil {
-		log.Debug("DHCPv6: no lease for: %s", mac)
+		log.Debug("dhcpv6: no lease for: %s", mac)
 
 		switch msg.Type() {
 
@@ -440,7 +442,8 @@ func (s *v6Server) process(msg *dhcpv6.Message, req, resp dhcpv6.DHCPv6) bool {
 
 	err = s.checkIA(msg, lease)
 	if err != nil {
-		log.Debug("DHCPv6: %s", err)
+		log.Debug("dhcpv6: %s", err)
+
 		return false
 	}
 
@@ -497,11 +500,12 @@ func (s *v6Server) process(msg *dhcpv6.Message, req, resp dhcpv6.DHCPv6) bool {
 func (s *v6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.DHCPv6) {
 	msg, err := req.GetInnerMessage()
 	if err != nil {
-		log.Error("DHCPv6: %s", err)
+		log.Error("dhcpv6: %s", err)
+
 		return
 	}
 
-	log.Debug("DHCPv6: received: %s", req.Summary())
+	log.Debug("dhcpv6: received: %s", req.Summary())
 
 	err = s.checkCID(msg)
 	if err != nil {
@@ -521,10 +525,11 @@ func (s *v6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 	case dhcpv6.MessageTypeSolicit:
 		if msg.GetOneOption(dhcpv6.OptionRapidCommit) == nil {
 			resp, err = dhcpv6.NewAdvertiseFromSolicit(msg)
+
 			break
 		}
-		fallthrough
 
+		resp, err = dhcpv6.NewReplyFromMessage(msg)
 	case dhcpv6.MessageTypeRequest,
 		dhcpv6.MessageTypeConfirm,
 		dhcpv6.MessageTypeRenew,
@@ -532,14 +537,14 @@ func (s *v6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 		dhcpv6.MessageTypeRelease,
 		dhcpv6.MessageTypeInformationRequest:
 		resp, err = dhcpv6.NewReplyFromMessage(msg)
-
 	default:
-		log.Error("DHCPv6: message type %d not supported", msg.Type())
+		log.Error("dhcpv6: message type %d not supported", msg.Type())
+
 		return
 	}
-
 	if err != nil {
-		log.Error("DHCPv6: %s", err)
+		log.Error("dhcpv6: %s", err)
+
 		return
 	}
 
@@ -547,11 +552,12 @@ func (s *v6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 
 	_ = s.process(msg, req, resp)
 
-	log.Debug("DHCPv6: sending: %s", resp.Summary())
+	log.Debug("dhcpv6: sending: %s", resp.Summary())
 
 	_, err = conn.WriteTo(resp.ToBytes(), peer)
 	if err != nil {
-		log.Error("DHCPv6: conn.Write to %s failed: %s", peer, err)
+		log.Error("dhcpv6: conn.Write to %s failed: %s", peer, err)
+
 		return
 	}
 }
@@ -660,10 +666,10 @@ func (s *v6Server) Stop() {
 		return
 	}
 
-	log.Debug("DHCPv6: stopping")
+	log.Debug("dhcpv6: stopping")
 	err = s.srv.Close()
 	if err != nil {
-		log.Error("DHCPv6: srv.Close: %s", err)
+		log.Error("dhcpv6: srv.Close: %s", err)
 	}
 
 	// now server.Serve() will return

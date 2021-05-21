@@ -92,11 +92,9 @@ func (s *Server) updateStats(ctx *dnsContext, elapsed time.Duration, res filteri
 		e.Result = stats.RParental
 	case filtering.FilteredSafeSearch:
 		e.Result = stats.RSafeSearch
-	case filtering.FilteredBlockList:
-		fallthrough
-	case filtering.FilteredInvalid:
-		fallthrough
-	case filtering.FilteredBlockedService:
+	case filtering.FilteredBlockList,
+		filtering.FilteredInvalid,
+		filtering.FilteredBlockedService:
 		e.Result = stats.RFiltered
 	}
 
