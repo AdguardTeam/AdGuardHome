@@ -56,10 +56,13 @@ in
 	;;
 esac
 
-# Require the version to be set.
-#
-# TODO(a.garipov): Additional validation?
-version="$VERSION"
+# Check VERSION against the default value from the Makefile.  If it is that, use
+# the version calculation script.
+version="${VERSION:-}"
+if [ "$version" = 'v0.0.0' ] || [ "$version" = '' ]
+then
+	version="$( sh ./scripts/make/version.sh )"
+fi
 readonly version
 
 # Set date and time of the current build unless already set.

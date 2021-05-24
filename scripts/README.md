@@ -89,10 +89,11 @@ Optional environment:
  *  `VERBOSE`: verbosity level.  `1` shows every command that is run and every
     Go package that is processed.  `2` also shows subcommands and environment.
     The default value is `0`, don't be verbose.
+ *  `VERSION`: release version.  Will be set by `version.sh` if it is unset or
+    if it has the default `Makefile` value of `v0.0.0`.
 
 Required environment:
  *  `CHANNEL`: release channel, see above.
- *  `VERSION`: release version.
 
  ###  `go-deps.sh`: Install Backend Dependencies
 

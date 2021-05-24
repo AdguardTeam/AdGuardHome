@@ -120,7 +120,6 @@ const (
 	vFmtGOARCHHdr = "GOARCH: " + runtime.GOARCH
 	vFmtGOARMHdr  = "GOARM: "
 	vFmtGOMIPSHdr = "GOMIPS: "
-	vFmtMainHdr   = "Main module:"
 	vFmtDepsHdr   = "Dependencies:"
 )
 
@@ -171,8 +170,6 @@ func Verbose() (v string) {
 	if !ok {
 		return b.String()
 	}
-
-	aghstrings.WriteToBuilder(b, nl, vFmtMainHdr, nltb, fmtModule(&info.Main))
 
 	if len(info.Deps) == 0 {
 		return b.String()

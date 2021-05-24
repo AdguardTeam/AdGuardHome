@@ -52,11 +52,10 @@ readonly channel
 
 # Check VERSION against the default value from the Makefile.  If it is that, use
 # the version calculation script.
-if [ "${VERSION:-}" = 'v0.0.0' ] || [ "${VERSION:-}" = '' ]
+version="${VERSION:-}"
+if [ "$version" = 'v0.0.0' ] || [ "$version" = '' ]
 then
 	version="$( sh ./scripts/make/version.sh )"
-else
-	version="$VERSION"
 fi
 readonly version
 
