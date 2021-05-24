@@ -27,6 +27,10 @@ released by then.
 
 - Go 1.16 support.  v0.108.0 will require at least Go 1.17 to build.
 
+### Fixed
+
+- Incorrect client-based filtering applying logic ([#2875]).
+
 ### Removed
 
 - Go 1.15 support.

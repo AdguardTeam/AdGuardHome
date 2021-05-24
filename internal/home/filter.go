@@ -664,6 +664,13 @@ func (filter *filter) Path() string {
 }
 
 func enableFilters(async bool) {
+	config.RLock()
+	defer config.RUnlock()
+
+	enableFiltersLocked(async)
+}
+
+func enableFiltersLocked(async bool) {
 	var whiteFilters []filtering.Filter
 	filters := []filtering.Filter{{
 		Data: []byte(strings.Join(config.UserRules, "\n")),
@@ -693,4 +700,6 @@ func enableFilters(async bool) {
 	if err := Context.dnsFilter.SetFilters(filters, whiteFilters, async); err != nil {
 		log.Debug("enabling filters: %s", err)
 	}
+
+	Context.dnsFilter.SetEnabled(config.DNS.FilteringEnabled)
 }

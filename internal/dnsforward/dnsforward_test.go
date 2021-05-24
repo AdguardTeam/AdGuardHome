@@ -68,6 +68,7 @@ func createTestServer(
 	}}
 
 	f := filtering.New(filterConf, filters)
+	f.SetEnabled(true)
 
 	snd, err := aghnet.NewSubnetDetector()
 	require.NoError(t, err)
@@ -734,10 +735,11 @@ func TestBlockedCustomIP(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, snd)
 
+	f := filtering.New(&filtering.Config{}, filters)
 	var s *Server
 	s, err = NewServer(DNSCreateParams{
 		DHCPServer:     &testDHCP{},
-		DNSFilter:      filtering.New(&filtering.Config{}, filters),
+		DNSFilter:      f,
 		SubnetDetector: snd,
 	})
 	require.NoError(t, err)
@@ -763,6 +765,7 @@ func TestBlockedCustomIP(t *testing.T) {
 	err = s.Prepare(conf)
 	require.NoError(t, err)
 
+	f.SetEnabled(true)
 	startDeferStop(t, s)
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
@@ -798,6 +801,7 @@ func TestBlockedByHosts(t *testing.T) {
 			ProtectionEnabled: true,
 		},
 	}
+
 	s := createTestServer(t, &filtering.Config{}, forwardConf, nil)
 	startDeferStop(t, s)
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)

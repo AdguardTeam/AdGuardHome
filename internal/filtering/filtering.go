@@ -11,6 +11,7 @@ import (
 	"runtime/debug"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
@@ -50,6 +51,11 @@ type Resolver interface {
 
 // Config allows you to configure DNS filtering with New() or just change variables directly.
 type Config struct {
+	// enabled is used to be returned within Settings.
+	//
+	// It is of type uint32 to be accessed by atomic.
+	enabled uint32
+
 	ParentalEnabled     bool `yaml:"parental_enabled"`
 	SafeSearchEnabled   bool `yaml:"safesearch_enabled"`
 	SafeBrowsingEnabled bool `yaml:"safebrowsing_enabled"`
@@ -118,7 +124,8 @@ type DNSFilter struct {
 	parentalUpstream     upstream.Upstream
 	safeBrowsingUpstream upstream.Upstream
 
-	Config   // for direct access by library users, even a = assignment
+	Config // for direct access by library users, even a = assignment
+	// confLock protects Config.
 	confLock sync.RWMutex
 
 	// Channel for passing data to filters-initializer goroutine
@@ -223,15 +230,26 @@ func (r Reason) In(reasons ...Reason) bool {
 	return false
 }
 
+// SetEnabled sets the status of the *DNSFilter.
+func (d *DNSFilter) SetEnabled(enabled bool) {
+	var i int32
+	if enabled {
+		i = 1
+	}
+	atomic.StoreUint32(&d.enabled, uint32(i))
+}
+
 // GetConfig - get configuration
-func (d *DNSFilter) GetConfig() Settings {
-	c := Settings{}
-	// d.confLock.RLock()
-	c.SafeSearchEnabled = d.Config.SafeSearchEnabled
-	c.SafeBrowsingEnabled = d.Config.SafeBrowsingEnabled
-	c.ParentalEnabled = d.Config.ParentalEnabled
-	// d.confLock.RUnlock()
-	return c
+func (d *DNSFilter) GetConfig() (s Settings) {
+	d.confLock.RLock()
+	defer d.confLock.RUnlock()
+
+	return Settings{
+		FilteringEnabled:    atomic.LoadUint32(&d.Config.enabled) == 1,
+		SafeSearchEnabled:   d.Config.SafeSearchEnabled,
+		SafeBrowsingEnabled: d.Config.SafeBrowsingEnabled,
+		ParentalEnabled:     d.Config.ParentalEnabled,
+	}
 }
 
 // WriteDiskConfig - write configuration

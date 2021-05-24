@@ -134,7 +134,6 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 	}
 
 	var resp statusResponse
-
 	func() {
 		config.RLock()
 		defer config.RUnlock()

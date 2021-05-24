@@ -307,7 +307,6 @@ func applyAdditionalFiltering(clientAddr net.IP, clientID string, setts *filteri
 
 	setts.ClientName = c.Name
 	setts.ClientTags = c.Tags
-
 	if !c.UseOwnSettings {
 		return
 	}
@@ -319,14 +318,14 @@ func applyAdditionalFiltering(clientAddr net.IP, clientID string, setts *filteri
 }
 
 func startDNSServer() error {
-	config.Lock()
-	defer config.Unlock()
+	config.RLock()
+	defer config.RUnlock()
 
 	if isRunning() {
 		return fmt.Errorf("unable to start forwarding DNS server: Already running")
 	}
 
-	enableFilters(false)
+	enableFiltersLocked(false)
 
 	Context.clients.Start()
 

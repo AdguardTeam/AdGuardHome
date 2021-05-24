@@ -38,7 +38,6 @@ func (s *Server) beforeRequestHandler(_ *proxy.Proxy, d *proxy.DNSContext) (bool
 // the client's IP address and ID, if any, from ctx.
 func (s *Server) getClientRequestFilteringSettings(ctx *dnsContext) *filtering.Settings {
 	setts := s.dnsFilter.GetConfig()
-	setts.FilteringEnabled = true
 	if s.conf.FilterHandler != nil {
 		s.conf.FilterHandler(IPFromAddr(ctx.proxyCtx.Addr), ctx.clientID, &setts)
 	}
