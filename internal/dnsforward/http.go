@@ -8,11 +8,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
@@ -399,7 +399,7 @@ func validateUpstream(u string) (bool, error) {
 // separateUpstream returns the upstream without the specified domains.
 // useDefault is true when a default upstream must be used.
 func separateUpstream(upstreamStr string) (upstream string, useDefault bool, err error) {
-	defer agherr.Annotate("bad upstream for domain spec %q: %w", &err, upstreamStr)
+	defer func() { err = errors.Annotate(err, "bad upstream for domain spec %q: %w", upstreamStr) }()
 
 	if !strings.HasPrefix(upstreamStr, "[/") {
 		return upstreamStr, true, nil
@@ -407,7 +407,7 @@ func separateUpstream(upstreamStr string) (upstream string, useDefault bool, err
 
 	parts := strings.Split(upstreamStr[2:], "/]")
 	if len(parts) != 2 {
-		return "", false, agherr.Error("duplicated separator")
+		return "", false, errors.Error("duplicated separator")
 	}
 
 	domains := parts[0]

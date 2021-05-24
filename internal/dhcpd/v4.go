@@ -6,16 +6,15 @@ package dhcpd
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"net"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/go-ping/ping"
 	"github.com/insomniacslk/dhcp/dhcpv4"
@@ -55,7 +54,7 @@ func (s *v4Server) WriteDiskConfig6(c *V6ServerConf) {
 // normalizeHostname normalizes a hostname sent by the client.  If err is not
 // nil, norm is an empty string.
 func normalizeHostname(hostname string) (norm string, err error) {
-	defer agherr.Annotate("normalizing %q: %w", &err, hostname)
+	defer func() { err = errors.Annotate(err, "normalizing %q: %w", hostname) }()
 
 	if hostname == "" {
 		return "", nil
@@ -249,7 +248,7 @@ func (s *v4Server) rmDynamicLease(lease *Lease) (err error) {
 
 		if bytes.Equal(l.HWAddr, lease.HWAddr) {
 			if l.IsStatic() {
-				return agherr.Error("static lease already exists")
+				return errors.Error("static lease already exists")
 			}
 
 			s.rmLeaseByIndex(i)
@@ -262,7 +261,7 @@ func (s *v4Server) rmDynamicLease(lease *Lease) (err error) {
 
 		if l.IP.Equal(lease.IP) {
 			if l.IsStatic() {
-				return agherr.Error("static lease already exists")
+				return errors.Error("static lease already exists")
 			}
 
 			s.rmLeaseByIndex(i)
@@ -322,12 +321,12 @@ func (s *v4Server) rmLease(lease Lease) (err error) {
 		}
 	}
 
-	return agherr.Error("lease not found")
+	return errors.Error("lease not found")
 }
 
 // AddStaticLease adds a static lease.  It is safe for concurrent use.
 func (s *v4Server) AddStaticLease(l Lease) (err error) {
-	defer agherr.Annotate("dhcpv4: adding static lease: %w", &err)
+	defer func() { err = errors.Annotate(err, "dhcpv4: adding static lease: %w") }()
 
 	if ip4 := l.IP.To4(); ip4 == nil {
 		return fmt.Errorf("invalid ip %q, only ipv4 is supported", l.IP)
@@ -397,7 +396,7 @@ func (s *v4Server) AddStaticLease(l Lease) (err error) {
 
 // RemoveStaticLease removes a static lease.  It is safe for concurrent use.
 func (s *v4Server) RemoveStaticLease(l Lease) (err error) {
-	defer agherr.Annotate("dhcpv4: %w", &err)
+	defer func() { err = errors.Annotate(err, "dhcpv4: %w") }()
 
 	if len(l.IP) != 4 {
 		return fmt.Errorf("invalid IP")
@@ -937,7 +936,7 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 
 // Start starts the IPv4 DHCP server.
 func (s *v4Server) Start() (err error) {
-	defer agherr.Annotate("dhcpv4: %w", &err)
+	defer func() { err = errors.Annotate(err, "dhcpv4: %w") }()
 
 	if !s.conf.Enabled {
 		return nil

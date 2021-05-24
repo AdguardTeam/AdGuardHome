@@ -3,7 +3,6 @@ package home
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"net"
 	"sync"
 	"testing"
@@ -13,6 +12,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/cache"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -141,7 +141,7 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 		},
 	}
 	errUpstream := &aghtest.TestErrUpstream{
-		Err: errors.New("1234"),
+		Err: errors.Error("1234"),
 	}
 
 	testCases := []struct {

@@ -2,7 +2,6 @@ package aghnet
 
 import (
 	"bufio"
-	"errors"
 	"io"
 	"net"
 	"os"
@@ -12,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/fsnotify/fsnotify"
 	"github.com/miekg/dns"
@@ -239,7 +239,13 @@ func (ehc *EtcHostsContainer) load(table map[string][]net.IP, tableRev map[strin
 		log.Error("etchostscontainer: %s", err)
 		return
 	}
-	defer f.Close()
+	defer func() {
+		derr := f.Close()
+		if derr != nil {
+			log.Error("etchostscontainer: closing file: %s", err)
+		}
+	}()
+
 	r := bufio.NewReader(f)
 	log.Debug("etchostscontainer: loading hosts from file %s", fn)
 

@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"net"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
+	"github.com/AdguardTeam/golibs/errors"
 )
 
 // ipRange is an inclusive range of IP addresses.  A nil range is a range that
@@ -28,7 +28,7 @@ const maxRangeLen = math.MaxUint32
 // newIPRange creates a new IP address range.  start must be less than end.  The
 // resulting range must not be greater than maxRangeLen.
 func newIPRange(start, end net.IP) (r *ipRange, err error) {
-	defer agherr.Annotate("invalid ip range: %w", &err)
+	defer func() { err = errors.Annotate(err, "invalid ip range: %w") }()
 
 	// Make sure that both are 16 bytes long to simplify handling in
 	// methods.

@@ -66,8 +66,7 @@ on GitHub and most other Markdown renderers. -->
  ###  <a id="code" href="#code">Code</a>
 
  *  Always `recover` from panics in new goroutines.  Preferably in the very
-    first statement.  If all you want there is a log message, use
-    `agherr.LogPanic`.
+    first statement.  If all you want there is a log message, use `log.OnPanic`.
 
  *  Avoid `fallthrough`.  It makes it harder to rearrange `case`s, to reason
     about the code, and also to switch the code to a handler approach, if that

@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestLimitReadCloser(t *testing.T) {
+func TestLimitReader(t *testing.T) {
 	testCases := []struct {
 		want error
 		name string
@@ -24,20 +24,20 @@ func TestLimitReadCloser(t *testing.T) {
 		name: "zero",
 		n:    0,
 	}, {
-		want: fmt.Errorf("aghio: invalid n in LimitReadCloser: -1"),
+		want: fmt.Errorf("aghio: invalid n in LimitReader: -1"),
 		name: "negative",
 		n:    -1,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := LimitReadCloser(nil, tc.n)
+			_, err := LimitReader(nil, tc.n)
 			assert.Equal(t, tc.want, err)
 		})
 	}
 }
 
-func TestLimitedReadCloser_Read(t *testing.T) {
+func TestLimitedReader_Read(t *testing.T) {
 	testCases := []struct {
 		err   error
 		name  string
@@ -77,7 +77,7 @@ func TestLimitedReadCloser_Read(t *testing.T) {
 			readCloser := io.NopCloser(strings.NewReader(tc.rStr))
 			buf := make([]byte, tc.limit+1)
 
-			lreader, err := LimitReadCloser(readCloser, tc.limit)
+			lreader, err := LimitReader(readCloser, tc.limit)
 			require.NoError(t, err)
 
 			n, err := lreader.Read(buf)
@@ -87,7 +87,7 @@ func TestLimitedReadCloser_Read(t *testing.T) {
 	}
 }
 
-func TestLimitedReadCloser_LimitReachedError(t *testing.T) {
+func TestLimitedReader_LimitReachedError(t *testing.T) {
 	testCases := []struct {
 		err  error
 		name string

@@ -3,10 +3,10 @@ package querylog
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"os"
 	"time"
 
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -39,7 +39,7 @@ func (l *queryLog) flushLogBuffer(fullFlush bool) error {
 }
 
 // flushToFile saves the specified log entries to the query log file
-func (l *queryLog) flushToFile(buffer []*logEntry) error {
+func (l *queryLog) flushToFile(buffer []*logEntry) (err error) {
 	if len(buffer) == 0 {
 		log.Debug("querylog: there's nothing to write to a file")
 		return nil
@@ -49,9 +49,10 @@ func (l *queryLog) flushToFile(buffer []*logEntry) error {
 	var b bytes.Buffer
 	e := json.NewEncoder(&b)
 	for _, entry := range buffer {
-		err := e.Encode(entry)
+		err = e.Encode(entry)
 		if err != nil {
 			log.Error("Failed to marshal entry: %s", err)
+
 			return err
 		}
 	}
@@ -59,7 +60,6 @@ func (l *queryLog) flushToFile(buffer []*logEntry) error {
 	elapsed := time.Since(start)
 	log.Debug("%d elements serialized via json in %v: %d kB, %v/entry, %v/entry", len(buffer), elapsed, b.Len()/1024, float64(b.Len())/float64(len(buffer)), elapsed/time.Duration(len(buffer)))
 
-	var err error
 	var zb bytes.Buffer
 	filename := l.logFile
 	zb = b
@@ -71,7 +71,7 @@ func (l *queryLog) flushToFile(buffer []*logEntry) error {
 		log.Error("failed to create file \"%s\": %s", filename, err)
 		return err
 	}
-	defer f.Close()
+	defer func() { err = errors.WithDeferred(err, f.Close()) }()
 
 	n, err := f.Write(zb.Bytes())
 	if err != nil {
@@ -109,7 +109,12 @@ func (l *queryLog) readFileFirstTimeValue() int64 {
 	if err != nil {
 		return -1
 	}
-	defer f.Close()
+	defer func() {
+		derr := f.Close()
+		if derr != nil {
+			log.Error("querylog: closing file: %s", derr)
+		}
+	}()
 
 	buf := make([]byte, 500)
 	r, err := f.Read(buf)

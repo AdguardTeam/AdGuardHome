@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/gob"
-	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -12,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	bolt "go.etcd.io/bbolt"
 )
@@ -93,7 +92,7 @@ func createObject(conf Config) (s *statsCtx, err error) {
 
 		// TODO(a.garipov): See if this is actually necessary.  Looks
 		// like a rather bizarre solution.
-		errStop := agherr.Error("stop iteration")
+		errStop := errors.Error("stop iteration")
 		forEachBkt := func(name []byte, _ *bolt.Bucket) (cberr error) {
 			nameID := uint32(btoi(name))
 			if nameID < firstID {

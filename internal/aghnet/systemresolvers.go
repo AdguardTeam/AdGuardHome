@@ -3,7 +3,7 @@ package aghnet
 import (
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -27,19 +27,19 @@ type SystemResolvers interface {
 
 const (
 	// errBadAddrPassed is returned when dialFunc can't parse an IP address.
-	errBadAddrPassed agherr.Error = "the passed string is not a valid IP address"
+	errBadAddrPassed errors.Error = "the passed string is not a valid IP address"
 
 	// errFakeDial is an error which dialFunc is expected to return.
-	errFakeDial agherr.Error = "this error signals the successful dialFunc work"
+	errFakeDial errors.Error = "this error signals the successful dialFunc work"
 
 	// errUnexpectedHostFormat is returned by validateDialedHost when the host has
 	// more than one percent sign.
-	errUnexpectedHostFormat agherr.Error = "unexpected host format"
+	errUnexpectedHostFormat errors.Error = "unexpected host format"
 )
 
 // refreshWithTicker refreshes the cache of sr after each tick form tickCh.
 func refreshWithTicker(sr SystemResolvers, tickCh <-chan time.Time) {
-	defer agherr.LogPanic("systemResolvers")
+	defer log.OnPanic("systemResolvers")
 
 	// TODO(e.burkov): Implement a functionality to stop ticker.
 	for range tickCh {

@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
@@ -20,6 +19,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -438,11 +438,11 @@ func (clients *clientsContainer) FindRuntimeClient(ip string) (RuntimeClient, bo
 func (clients *clientsContainer) check(c *Client) (err error) {
 	switch {
 	case c == nil:
-		return agherr.Error("client is nil")
+		return errors.Error("client is nil")
 	case c.Name == "":
-		return agherr.Error("invalid name")
+		return errors.Error("invalid name")
 	case len(c.IDs) == 0:
-		return agherr.Error("id required")
+		return errors.Error("id required")
 	default:
 		// Go on.
 	}
@@ -570,14 +570,14 @@ func (clients *clientsContainer) Update(name string, c *Client) (err error) {
 
 	prev, ok := clients.list[name]
 	if !ok {
-		return agherr.Error("client not found")
+		return errors.Error("client not found")
 	}
 
 	// First, check the name index.
 	if prev.Name != c.Name {
 		_, ok = clients.list[c.Name]
 		if ok {
-			return agherr.Error("client already exists")
+			return errors.Error("client already exists")
 		}
 	}
 

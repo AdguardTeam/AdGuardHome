@@ -1,12 +1,11 @@
 package querylog
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -154,7 +153,7 @@ func closeQFiles(qFiles []*QLogFile) error {
 	}
 
 	if len(errs) > 0 {
-		return agherr.Many("Error while closing QLogReader", errs...)
+		return errors.List("error while closing QLogReader", errs...)
 	}
 
 	return nil

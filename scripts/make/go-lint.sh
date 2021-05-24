@@ -75,10 +75,10 @@ esac
 # Simple Analyzers
 
 # blocklist_imports is a simple check against unwanted packages.  Package
-# io/ioutil is soft-deprecated.  Package log is replaced by our own package
-# github.com/AdguardTeam/golibs/log.
+# io/ioutil is soft-deprecated.  Packages errors and log are replaced by our own
+# packages in the github.com/AdguardTeam/golibs module.
 blocklist_imports() {
-	git grep -F -e '"io/ioutil"' -e '"log"' -- '*.go' || exit 0;
+	git grep -F -e '"errors"' -e '"io/ioutil"' -e '"log"' -- '*.go' || exit 0;
 }
 
 # method_const is a simple check against the usage of some raw strings and
@@ -192,13 +192,7 @@ nilness ./...
 
 exit_on_output shadow --strict ./...
 
-# TODO(a.garipov): Enable errcheck fully after handling all errors, including
-# the deferred and generated ones, properly.  Also, perhaps, enable --blank.
-#
-# errcheck ./...
-exit_on_output sh -c '
-	errcheck --asserts --ignoregenerated ./... |\
-		{ grep -e "defer" -v || exit 0; }
-'
+# TODO(a.garipov): Enable --blank?
+errcheck --asserts ./...
 
 staticcheck ./...

@@ -1,11 +1,10 @@
 package dhcpd
 
 import (
-	"errors"
 	"net"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +24,7 @@ func (iface *fakeIface) Addrs() (addrs []net.Addr, err error) {
 }
 
 func TestIfaceIPAddrs(t *testing.T) {
-	const errTest agherr.Error = "test error"
+	const errTest errors.Error = "test error"
 
 	ip4 := net.IP{1, 2, 3, 4}
 	addr4 := &net.IPNet{IP: ip4}
@@ -108,7 +107,7 @@ func (iface *waitingFakeIface) Addrs() (addrs []net.Addr, err error) {
 }
 
 func TestIfaceDNSIPAddrs(t *testing.T) {
-	const errTest agherr.Error = "test error"
+	const errTest errors.Error = "test error"
 
 	ip4 := net.IP{1, 2, 3, 4}
 	addr4 := &net.IPNet{IP: ip4}

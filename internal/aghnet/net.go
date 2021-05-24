@@ -3,7 +3,6 @@ package aghnet
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -14,14 +13,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 )
 
 // ErrNoStaticIPInfo is returned by IfaceHasStaticIP when no information about
 // the IP being static is available.
-const ErrNoStaticIPInfo agherr.Error = "no information about static ip"
+const ErrNoStaticIPInfo errors.Error = "no information about static ip"
 
 // IfaceHasStaticIP checks if interface is configured to have static IP address.
 // If it can't give a definitive answer, it returns false and an error for which
@@ -106,7 +105,7 @@ func GetValidNetInterfacesForWeb() ([]*NetInterface, error) {
 		return nil, fmt.Errorf("couldn't get interfaces: %w", err)
 	}
 	if len(ifaces) == 0 {
-		return nil, errors.New("couldn't find any legible interface")
+		return nil, errors.Error("couldn't find any legible interface")
 	}
 
 	var netInterfaces []*NetInterface

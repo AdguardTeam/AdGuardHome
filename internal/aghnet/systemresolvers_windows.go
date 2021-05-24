@@ -14,9 +14,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -65,14 +65,15 @@ func (sr *systemResolvers) getAddrs() (addrs []string, err error) {
 		return nil, fmt.Errorf("getting the command's stdout pipe: %w", err)
 	}
 
-	var stdoutLimited io.ReadCloser
-	stdoutLimited, err = aghio.LimitReadCloser(stdout, aghos.MaxCmdOutputSize)
+	var stdoutLimited io.Reader
+	stdoutLimited, err = aghio.LimitReader(stdout, aghos.MaxCmdOutputSize)
 	if err != nil {
 		return nil, fmt.Errorf("limiting stdout reader: %w", err)
 	}
 
 	go func() {
-		defer agherr.LogPanic("systemResolvers")
+		defer log.OnPanic("systemResolvers")
+
 		defer func() {
 			derr := stdin.Close()
 			if derr != nil {
@@ -141,7 +142,7 @@ func (sr *systemResolvers) getAddrs() (addrs []string, err error) {
 }
 
 func (sr *systemResolvers) refresh() (err error) {
-	defer agherr.Annotate("systemResolvers: %w", &err)
+	defer func() { err = errors.Annotate(err, "systemResolvers: %w") }()
 
 	got, err := sr.getAddrs()
 	if err != nil {

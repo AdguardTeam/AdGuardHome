@@ -5,7 +5,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
@@ -85,7 +84,7 @@ func (r *RDNS) Begin(ip net.IP) {
 // workerLoop handles incoming IP addresses from ipChan and adds it into
 // clients.
 func (r *RDNS) workerLoop() {
-	defer agherr.LogPanic("rdns")
+	defer log.OnPanic("rdns")
 
 	for ip := range r.ipCh {
 		host, err := r.exchanger.Exchange(ip)

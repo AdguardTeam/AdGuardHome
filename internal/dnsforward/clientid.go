@@ -2,13 +2,13 @@ package dnsforward
 
 import (
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"path"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/lucas-clemente/quic-go"
 )
 

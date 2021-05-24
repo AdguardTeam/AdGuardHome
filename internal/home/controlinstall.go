@@ -15,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -271,7 +270,7 @@ func copyInstallSettings(dst, src *configuration) {
 const shutdownTimeout = 5 * time.Second
 
 func shutdownSrv(ctx context.Context, cancel context.CancelFunc, srv *http.Server) {
-	defer agherr.LogPanic("")
+	defer log.OnPanic("")
 
 	if srv == nil {
 		return

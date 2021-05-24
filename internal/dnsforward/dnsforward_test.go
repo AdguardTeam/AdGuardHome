@@ -17,13 +17,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1198,7 +1198,7 @@ func TestServer_Exchange(t *testing.T) {
 			"2.1.168.192.in-addr.arpa.": {},
 		},
 	}
-	upstreamErr := agherr.Error("upstream error")
+	upstreamErr := errors.Error("upstream error")
 	errUpstream := &aghtest.TestErrUpstream{
 		Err: upstreamErr,
 	}

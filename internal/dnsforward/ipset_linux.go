@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/digineo/go-ipset/v2"
 	"github.com/mdlayher/netlink"
@@ -83,7 +83,7 @@ func (c *ipsetCtx) ipsetProps(name string) (set ipsetProps, err error) {
 	}
 
 	if res == nil || res.Family == nil {
-		return set, agherr.Error("empty response or no family data")
+		return set, errors.Error("empty response or no family data")
 	}
 
 	family := netfilter.ProtoFamily(res.Family.Value)
@@ -193,23 +193,23 @@ func (c *ipsetCtx) init(ipsetConfig []string) (err error) {
 
 // Close closes the Linux Netfilter connections.
 func (c *ipsetCtx) Close() (err error) {
-	var errors []error
+	var errs []error
 	if c.ipv4Conn != nil {
 		err = c.ipv4Conn.Close()
 		if err != nil {
-			errors = append(errors, err)
+			errs = append(errs, err)
 		}
 	}
 
 	if c.ipv6Conn != nil {
 		err = c.ipv6Conn.Close()
 		if err != nil {
-			errors = append(errors, err)
+			errs = append(errs, err)
 		}
 	}
 
-	if len(errors) != 0 {
-		return agherr.Many("closing ipsets", errors...)
+	if len(errs) != 0 {
+		return errors.List("closing ipsets", errs...)
 	}
 
 	return nil

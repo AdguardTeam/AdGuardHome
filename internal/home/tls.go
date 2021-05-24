@@ -10,7 +10,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -21,6 +20,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"golang.org/x/sys/cpu"
 )
@@ -341,14 +341,14 @@ func verifyCertChain(data *tlsConfigStatus, certChain, serverName string) error 
 		parsed, err := x509.ParseCertificate(cert.Bytes)
 		if err != nil {
 			data.WarningValidation = fmt.Sprintf("Failed to parse certificate: %s", err)
-			return errors.New(data.WarningValidation)
+			return errors.Error(data.WarningValidation)
 		}
 		parsedCerts = append(parsedCerts, parsed)
 	}
 
 	if len(parsedCerts) == 0 {
 		data.WarningValidation = "You have specified an empty certificate"
-		return errors.New(data.WarningValidation)
+		return errors.Error(data.WarningValidation)
 	}
 
 	data.ValidCert = true
@@ -415,14 +415,14 @@ func validatePkey(data *tlsConfigStatus, pkey string) error {
 
 	if key == nil {
 		data.WarningValidation = "No valid keys were found"
-		return errors.New(data.WarningValidation)
+		return errors.Error(data.WarningValidation)
 	}
 
 	// parse the decoded key
 	_, keytype, err := parsePrivateKey(key.Bytes)
 	if err != nil {
 		data.WarningValidation = fmt.Sprintf("Failed to parse private key: %s", err)
-		return errors.New(data.WarningValidation)
+		return errors.Error(data.WarningValidation)
 	}
 
 	data.ValidKey = true
@@ -479,7 +479,7 @@ func parsePrivateKey(der []byte) (crypto.PrivateKey, string, error) {
 		case *ecdsa.PrivateKey:
 			return key, "ECDSA", nil
 		default:
-			return nil, "", errors.New("tls: found unknown private key type in PKCS#8 wrapping")
+			return nil, "", errors.Error("tls: found unknown private key type in PKCS#8 wrapping")
 		}
 	}
 
@@ -487,7 +487,7 @@ func parsePrivateKey(der []byte) (crypto.PrivateKey, string, error) {
 		return key, "ECDSA", nil
 	}
 
-	return nil, "", errors.New("tls: failed to parse private key")
+	return nil, "", errors.Error("tls: failed to parse private key")
 }
 
 // unmarshalTLS handles base64-encoded certificates transparently

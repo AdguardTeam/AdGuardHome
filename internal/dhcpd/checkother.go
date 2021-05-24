@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
@@ -78,7 +79,7 @@ func CheckIfOtherDHCPServersPresentV4(ifaceName string) (ok bool, err error) {
 		return false, fmt.Errorf("couldn't listen on :68: %w", err)
 	}
 	if c != nil {
-		defer c.Close()
+		defer func() { err = errors.WithDeferred(err, c.Close()) }()
 	}
 
 	// send to 255.255.255.255:67
@@ -202,7 +203,7 @@ func CheckIfOtherDHCPServersPresentV6(ifaceName string) (ok bool, err error) {
 		return false, fmt.Errorf("dhcpv6: Couldn't listen on :546: %w", err)
 	}
 	if c != nil {
-		defer c.Close()
+		defer func() { err = errors.WithDeferred(err, c.Close()) }()
 	}
 
 	_, err = c.WriteTo(req.ToBytes(), dstAddr)

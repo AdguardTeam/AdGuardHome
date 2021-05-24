@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"fmt"
 	"io/fs"
 	"net"
@@ -21,7 +20,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
@@ -31,6 +29,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
@@ -736,7 +735,7 @@ func customDialContext(ctx context.Context, network, addr string) (conn net.Conn
 		return conn, err
 	}
 
-	return nil, agherr.Many(fmt.Sprintf("couldn't dial to %s", addr), dialErrs...)
+	return nil, errors.List(fmt.Sprintf("couldn't dial to %s", addr), dialErrs...)
 }
 
 func getHTTPProxy(_ *http.Request) (*url.URL, error) {

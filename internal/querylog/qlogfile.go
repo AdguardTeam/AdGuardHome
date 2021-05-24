@@ -8,15 +8,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 )
 
 // Timestamp not found errors.
 const (
-	ErrTSNotFound agherr.Error = "ts not found"
-	ErrTSTooLate  agherr.Error = "ts too late"
-	ErrTSTooEarly agherr.Error = "ts too early"
+	ErrTSNotFound errors.Error = "ts not found"
+	ErrTSTooLate  errors.Error = "ts too late"
+	ErrTSTooEarly errors.Error = "ts too early"
 )
 
 // TODO: Find a way to grow buffer instead of relying on this value when reading strings

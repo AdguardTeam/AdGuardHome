@@ -2,7 +2,6 @@ package home
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"hash/crc32"
 	"io"
@@ -17,6 +16,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -566,17 +566,18 @@ func (f *Filtering) updateIntl(filter *filter) (updated bool, err error) {
 		if err != nil {
 			return updated, fmt.Errorf("open file: %w", err)
 		}
+		defer func() { err = errors.WithDeferred(err, f.Close()) }()
 
-		defer f.Close()
 		reader = f
 	} else {
 		var resp *http.Response
 		resp, err = Context.client.Get(filter.URL)
 		if err != nil {
 			log.Printf("Couldn't request filter from URL %s, skipping: %s", filter.URL, err)
+
 			return updated, err
 		}
-		defer resp.Body.Close()
+		defer func() { err = errors.WithDeferred(err, resp.Body.Close()) }()
 
 		if resp.StatusCode != http.StatusOK {
 			log.Printf("Got status code %d from URL %s, skipping", resp.StatusCode, filter.URL)
@@ -634,7 +635,7 @@ func (f *Filtering) load(filter *filter) (err error) {
 	} else if err != nil {
 		return fmt.Errorf("opening filter file: %w", err)
 	}
-	defer file.Close()
+	defer func() { err = errors.WithDeferred(err, file.Close()) }()
 
 	st, err := file.Stat()
 	if err != nil {

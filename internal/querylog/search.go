@@ -142,7 +142,12 @@ func (l *queryLog) searchFiles(
 
 		return entries, oldest, 0
 	}
-	defer r.Close()
+	defer func() {
+		derr := r.Close()
+		if derr != nil {
+			log.Error("querylog: closing file: %s", err)
+		}
+	}()
 
 	if params.olderThan.IsZero() {
 		err = r.SeekStart()

@@ -1,6 +1,7 @@
 package home
 
 import (
+	"io"
 	"net/http"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
@@ -58,14 +59,20 @@ func limitRequestBody(h http.Handler) (limited http.Handler) {
 			szLim = largerReqBodySzLim
 		}
 
-		r.Body, err = aghio.LimitReadCloser(r.Body, szLim)
+		var reader io.Reader
+		reader, err = aghio.LimitReader(r.Body, szLim)
 		if err != nil {
 			log.Error("limitRequestBody: %s", err)
 
 			return
 		}
 
-		h.ServeHTTP(w, r)
+		// HTTP handlers aren't supposed to call r.Body.Close(), so just
+		// replace the body in a clone.
+		rr := r.Clone(r.Context())
+		rr.Body = io.NopCloser(reader)
+
+		h.ServeHTTP(w, rr)
 	})
 }
 

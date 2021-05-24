@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/insomniacslk/dhcp/dhcpv6"
 	"github.com/insomniacslk/dhcp/dhcpv6/server6"
@@ -165,7 +165,7 @@ func (s *v6Server) rmDynamicLease(lease Lease) error {
 
 // AddStaticLease adds a static lease.  It is safe for concurrent use.
 func (s *v6Server) AddStaticLease(l Lease) (err error) {
-	defer agherr.Annotate("dhcpv6: %w", &err)
+	defer func() { err = errors.Annotate(err, "dhcpv6: %w") }()
 
 	if len(l.IP) != 16 {
 		return fmt.Errorf("invalid IP")
@@ -194,7 +194,7 @@ func (s *v6Server) AddStaticLease(l Lease) (err error) {
 
 // RemoveStaticLease removes a static lease.  It is safe for concurrent use.
 func (s *v6Server) RemoveStaticLease(l Lease) (err error) {
-	defer agherr.Annotate("dhcpv6: %w", &err)
+	defer func() { err = errors.Annotate(err, "dhcpv6: %w") }()
 
 	if len(l.IP) != 16 {
 		return fmt.Errorf("invalid IP")
@@ -585,7 +585,7 @@ func (s *v6Server) initRA(iface *net.Interface) error {
 
 // Start starts the IPv6 DHCP server.
 func (s *v6Server) Start() (err error) {
-	defer agherr.Annotate("dhcpv6: %w", &err)
+	defer func() { err = errors.Annotate(err, "dhcpv6: %w") }()
 
 	if !s.conf.Enabled {
 		return nil

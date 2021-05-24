@@ -3,7 +3,6 @@ package dnsforward
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -14,6 +13,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/ameshkov/dnscrypt/v2"
 )
@@ -220,7 +220,7 @@ func (s *Server) createProxyConfig() (proxy.Config, error) {
 
 	// Validate proxy config
 	if proxyConfig.UpstreamConfig == nil || len(proxyConfig.UpstreamConfig.Upstreams) == 0 {
-		return proxyConfig, errors.New("no default upstream servers configured")
+		return proxyConfig, errors.Error("no default upstream servers configured")
 	}
 
 	return proxyConfig, nil

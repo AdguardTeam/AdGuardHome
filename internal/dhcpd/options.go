@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
+	"github.com/AdguardTeam/golibs/errors"
 )
 
 // hexDHCPOptionParserHandler parses a DHCP option as a hex-encoded string.
@@ -32,7 +32,7 @@ func hexDHCPOptionParserHandler(s string) (data []byte, err error) {
 func ipDHCPOptionParserHandler(s string) (data []byte, err error) {
 	ip := net.ParseIP(s)
 	if ip == nil {
-		return nil, agherr.Error("invalid ip")
+		return nil, errors.Error("invalid ip")
 	}
 
 	// Most DHCP options require IPv4, so do not put the 16-byte
@@ -100,12 +100,12 @@ func newDHCPOptionParser() (p *dhcpOptionParser) {
 
 // parse parses an option.  See the handlers' documentation for more info.
 func (p *dhcpOptionParser) parse(s string) (code uint8, data []byte, err error) {
-	defer agherr.Annotate("invalid option string %q: %w", &err, s)
+	defer func() { err = errors.Annotate(err, "invalid option string %q: %w", s) }()
 
 	s = strings.TrimSpace(s)
 	parts := strings.SplitN(s, " ", 3)
 	if len(parts) < 3 {
-		return 0, nil, agherr.Error("need at least three fields")
+		return 0, nil, errors.Error("need at least three fields")
 	}
 
 	codeStr := parts[0]

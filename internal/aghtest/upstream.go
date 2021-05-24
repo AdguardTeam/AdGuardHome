@@ -168,9 +168,6 @@ type TestErrUpstream struct {
 
 // Exchange always returns nil Msg and non-nil error.
 func (u *TestErrUpstream) Exchange(*dns.Msg) (*dns.Msg, error) {
-	// We don't use an agherr.Error to avoid the import cycle since aghtests
-	// used to provide the utilities for testing which agherr (and any other
-	// testable package) should be able to use.
 	return nil, fmt.Errorf("errupstream: %w", u.Err)
 }
 

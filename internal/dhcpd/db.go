@@ -4,11 +4,11 @@ package dhcpd
 
 import (
 	"encoding/json"
-	"errors"
 	"net"
 	"os"
 	"time"
 
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/google/renameio/maybe"
 )

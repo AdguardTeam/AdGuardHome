@@ -6,15 +6,14 @@ package aghnet
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
+	"github.com/AdguardTeam/golibs/errors"
 )
 
 // defaultHostGen is the default method of generating host for Refresh.
@@ -34,7 +33,7 @@ type systemResolvers struct {
 }
 
 func (sr *systemResolvers) refresh() (err error) {
-	defer agherr.Annotate("systemResolvers: %w", &err)
+	defer func() { err = errors.Annotate(err, "systemResolvers: %w") }()
 
 	_, err = sr.resolver.LookupHost(context.Background(), sr.hostGenFunc())
 	dnserr := &net.DNSError{}
@@ -63,7 +62,7 @@ func newSystemResolvers(refreshIvl time.Duration, hostGenFunc HostGenFunc) (sr S
 
 // validateDialedHost validated the host used by resolvers in dialFunc.
 func validateDialedHost(host string) (err error) {
-	defer agherr.Annotate("parsing %q: %w", &err, host)
+	defer func() { err = errors.Annotate(err, "parsing %q: %w", host) }()
 
 	var ipStr string
 	parts := strings.Split(host, "%")

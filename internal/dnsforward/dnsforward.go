@@ -2,7 +2,6 @@
 package dnsforward
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -12,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
@@ -21,6 +19,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
@@ -226,11 +225,11 @@ type RDNSExchanger interface {
 const (
 	// rDNSEmptyAnswerErr is returned by Exchange method when the answer
 	// section of respond is empty.
-	rDNSEmptyAnswerErr agherr.Error = "the answer section is empty"
+	rDNSEmptyAnswerErr errors.Error = "the answer section is empty"
 
 	// rDNSNotPTRErr is returned by Exchange method when the response is not
 	// of PTR type.
-	rDNSNotPTRErr agherr.Error = "the response is not a ptr"
+	rDNSNotPTRErr errors.Error = "the response is not a ptr"
 )
 
 // Exchange implements the RDNSExchanger interface for *Server.

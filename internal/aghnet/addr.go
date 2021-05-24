@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
+	"github.com/AdguardTeam/golibs/errors"
 	"golang.org/x/net/idna"
 )
 
@@ -26,11 +26,11 @@ func isValidHostRune(r rune) (ok bool) {
 // ValidateHardwareAddress returns an error if hwa is not a valid EUI-48,
 // EUI-64, or 20-octet InfiniBand link-layer address.
 func ValidateHardwareAddress(hwa net.HardwareAddr) (err error) {
-	defer agherr.Annotate("validating hardware address %q: %w", &err, hwa)
+	defer func() { err = errors.Annotate(err, "validating hardware address %q: %w", hwa) }()
 
 	switch l := len(hwa); l {
 	case 0:
-		return agherr.Error("address is empty")
+		return errors.Error("address is empty")
 	case 6, 8, 20:
 		return nil
 	default:
@@ -51,13 +51,13 @@ const maxDomainNameLen = 253
 // ValidateDomainNameLabel returns an error if label is not a valid label of
 // a domain name.
 func ValidateDomainNameLabel(label string) (err error) {
-	defer agherr.Annotate("validating label %q: %w", &err, label)
+	defer func() { err = errors.Annotate(err, "validating label %q: %w", label) }()
 
 	l := len(label)
 	if l > maxDomainLabelLen {
 		return fmt.Errorf("label is too long, max: %d", maxDomainLabelLen)
 	} else if l == 0 {
-		return agherr.Error("label is empty")
+		return errors.Error("label is empty")
 	}
 
 	if r := label[0]; !IsValidHostOuterRune(rune(r)) {
@@ -87,7 +87,7 @@ func ValidateDomainNameLabel(label string) (err error) {
 // TODO(a.garipov): After making sure that this works correctly, port this into
 // module golibs.
 func ValidateDomainName(name string) (err error) {
-	defer agherr.Annotate("validating domain name %q: %w", &err, name)
+	defer func() { err = errors.Annotate(err, "validating domain name %q: %w", name) }()
 
 	name, err = idna.ToASCII(name)
 	if err != nil {
@@ -96,7 +96,7 @@ func ValidateDomainName(name string) (err error) {
 
 	l := len(name)
 	if l == 0 {
-		return agherr.Error("domain name is empty")
+		return errors.Error("domain name is empty")
 	} else if l > maxDomainNameLen {
 		return fmt.Errorf("too long, max: %d", maxDomainNameLen)
 	}

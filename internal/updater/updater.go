@@ -5,7 +5,6 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"compress/gzip"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -20,6 +19,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -283,22 +283,23 @@ func (u *Updater) clean() {
 const MaxPackageFileSize = 32 * 1024 * 1024
 
 // Download package file and save it to disk
-func (u *Updater) downloadPackageFile(url, filename string) error {
-	resp, err := u.client.Get(url)
+func (u *Updater) downloadPackageFile(url, filename string) (err error) {
+	var resp *http.Response
+	resp, err = u.client.Get(url)
 	if err != nil {
 		return fmt.Errorf("http request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { err = errors.WithDeferred(err, resp.Body.Close()) }()
 
-	resp.Body, err = aghio.LimitReadCloser(resp.Body, MaxPackageFileSize)
+	var r io.Reader
+	r, err = aghio.LimitReader(resp.Body, MaxPackageFileSize)
 	if err != nil {
 		return fmt.Errorf("http request failed: %w", err)
 	}
-	defer resp.Body.Close()
 
 	log.Debug("updater: reading HTTP body")
 	// This use of ReadAll is now safe, because we limited body's Reader.
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(r)
 	if err != nil {
 		return fmt.Errorf("io.ReadAll() failed: %w", err)
 	}
@@ -313,172 +314,178 @@ func (u *Updater) downloadPackageFile(url, filename string) error {
 	return nil
 }
 
+func tarGzFileUnpackOne(outDir string, tr *tar.Reader, hdr *tar.Header) (name string, err error) {
+	name = filepath.Base(hdr.Name)
+	if name == "" {
+		return "", nil
+	}
+
+	outputName := filepath.Join(outDir, name)
+
+	if hdr.Typeflag == tar.TypeDir {
+		if name == "AdGuardHome" {
+			// Top-level AdGuardHome/.  Skip it.
+			//
+			// TODO(a.garipov): This whole package needs to be
+			// rewritten and covered in more integration tests.  It
+			// has weird assumptions and file mode issues.
+			return "", nil
+		}
+
+		err = os.Mkdir(outputName, os.FileMode(hdr.Mode&0o777))
+		if err != nil && !errors.Is(err, os.ErrExist) {
+			return "", fmt.Errorf("os.Mkdir(%q): %w", outputName, err)
+		}
+
+		log.Debug("updater: created directory %q", outputName)
+
+		return "", nil
+	}
+
+	if hdr.Typeflag != tar.TypeReg {
+		log.Debug("updater: %s: unknown file type %d, skipping", name, hdr.Typeflag)
+
+		return "", nil
+	}
+
+	var wc io.WriteCloser
+	wc, err = os.OpenFile(
+		outputName,
+		os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
+		os.FileMode(hdr.Mode&0o777),
+	)
+	if err != nil {
+		return "", fmt.Errorf("os.OpenFile(%s): %w", outputName, err)
+	}
+	defer func() { err = errors.WithDeferred(err, wc.Close()) }()
+
+	_, err = io.Copy(wc, tr)
+	if err != nil {
+		return "", fmt.Errorf("io.Copy(): %w", err)
+	}
+
+	log.Tracef("updater: created file %s", outputName)
+
+	return name, nil
+}
+
 // Unpack all files from .tar.gz file to the specified directory
 // Existing files are overwritten
-// All files are created inside 'outdir', subdirectories are not created
+// All files are created inside outDir, subdirectories are not created
 // Return the list of files (not directories) written
-func tarGzFileUnpack(tarfile, outdir string) ([]string, error) {
+func tarGzFileUnpack(tarfile, outDir string) (files []string, err error) {
 	f, err := os.Open(tarfile)
 	if err != nil {
 		return nil, fmt.Errorf("os.Open(): %w", err)
 	}
-	defer func() {
-		_ = f.Close()
-	}()
+	defer func() { err = errors.WithDeferred(err, f.Close()) }()
 
 	gzReader, err := gzip.NewReader(f)
 	if err != nil {
 		return nil, fmt.Errorf("gzip.NewReader(): %w", err)
 	}
+	defer func() { err = errors.WithDeferred(err, gzReader.Close()) }()
 
-	var files []string
-	var err2 error
 	tarReader := tar.NewReader(gzReader)
 	for {
-		var header *tar.Header
-		header, err = tarReader.Next()
-		if err == io.EOF {
-			err2 = nil
+		var hdr *tar.Header
+		hdr, err = tarReader.Next()
+		if errors.Is(err, io.EOF) {
+			err = nil
+
 			break
-		}
-		if err != nil {
-			err2 = fmt.Errorf("tarReader.Next(): %w", err)
-			break
-		}
+		} else if err != nil {
+			err = fmt.Errorf("tarReader.Next(): %w", err)
 
-		_, inputNameOnly := filepath.Split(header.Name)
-		if inputNameOnly == "" {
-			continue
-		}
-
-		outputName := filepath.Join(outdir, inputNameOnly)
-
-		if header.Typeflag == tar.TypeDir {
-			if inputNameOnly == "AdGuardHome" {
-				// Top-level AdGuardHome/.  Skip it.
-				//
-				// TODO(a.garipov): This whole package needs to
-				// be rewritten and covered in more integration
-				// tests.  It has weird assumptions and file
-				// mode issues.
-				continue
-			}
-
-			err = os.Mkdir(outputName, os.FileMode(header.Mode&0o777))
-			if err != nil && !errors.Is(err, os.ErrExist) {
-				err2 = fmt.Errorf("os.Mkdir(%q): %w", outputName, err)
-
-				break
-			}
-
-			log.Debug("updater: created directory %q", outputName)
-
-			continue
-		} else if header.Typeflag != tar.TypeReg {
-			log.Debug("updater: %s: unknown file type %d, skipping", inputNameOnly, header.Typeflag)
-			continue
-		}
-
-		var f io.WriteCloser
-		f, err = os.OpenFile(outputName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode&0o777))
-		if err != nil {
-			err2 = fmt.Errorf("os.OpenFile(%s): %w", outputName, err)
-			break
-		}
-		_, err = io.Copy(f, tarReader)
-		if err != nil {
-			_ = f.Close()
-			err2 = fmt.Errorf("io.Copy(): %w", err)
-			break
-		}
-		err = f.Close()
-		if err != nil {
-			err2 = fmt.Errorf("f.Close(): %w", err)
 			break
 		}
 
-		log.Debug("updater: created file %s", outputName)
-		files = append(files, header.Name)
+		var name string
+		name, err = tarGzFileUnpackOne(outDir, tarReader, hdr)
+
+		if name != "" {
+			files = append(files, name)
+		}
 	}
 
-	_ = gzReader.Close()
-	return files, err2
+	return files, err
+}
+
+func zipFileUnpackOne(outDir string, zf *zip.File) (name string, err error) {
+	var rc io.ReadCloser
+	rc, err = zf.Open()
+	if err != nil {
+		return "", fmt.Errorf("zip file Open(): %w", err)
+	}
+	defer func() { err = errors.WithDeferred(err, rc.Close()) }()
+
+	fi := zf.FileInfo()
+	name = fi.Name()
+	if name == "" {
+		return "", nil
+	}
+
+	outputName := filepath.Join(outDir, name)
+	if fi.IsDir() {
+		if name == "AdGuardHome" {
+			// Top-level AdGuardHome/.  Skip it.
+			//
+			// TODO(a.garipov): See the similar todo in
+			// tarGzFileUnpack.
+			return "", nil
+		}
+
+		err = os.Mkdir(outputName, fi.Mode())
+		if err != nil && !errors.Is(err, os.ErrExist) {
+			return "", fmt.Errorf("os.Mkdir(%q): %w", outputName, err)
+		}
+
+		log.Tracef("created directory %q", outputName)
+
+		return "", nil
+	}
+
+	var wc io.WriteCloser
+	wc, err = os.OpenFile(outputName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, fi.Mode())
+	if err != nil {
+		return "", fmt.Errorf("os.OpenFile(): %w", err)
+	}
+	defer func() { err = errors.WithDeferred(err, wc.Close()) }()
+
+	_, err = io.Copy(wc, rc)
+	if err != nil {
+		return "", fmt.Errorf("io.Copy(): %w", err)
+	}
+
+	log.Tracef("created file %s", outputName)
+
+	return name, nil
 }
 
 // Unpack all files from .zip file to the specified directory
 // Existing files are overwritten
-// All files are created inside 'outdir', subdirectories are not created
+// All files are created inside 'outDir', subdirectories are not created
 // Return the list of files (not directories) written
-func zipFileUnpack(zipfile, outdir string) ([]string, error) {
-	r, err := zip.OpenReader(zipfile)
+func zipFileUnpack(zipfile, outDir string) (files []string, err error) {
+	zrc, err := zip.OpenReader(zipfile)
 	if err != nil {
 		return nil, fmt.Errorf("zip.OpenReader(): %w", err)
 	}
-	defer r.Close()
+	defer func() { err = errors.WithDeferred(err, zrc.Close()) }()
 
-	var files []string
-	var err2 error
-	var zr io.ReadCloser
-	for _, zf := range r.File {
-		zr, err = zf.Open()
+	for _, zf := range zrc.File {
+		var name string
+		name, err = zipFileUnpackOne(outDir, zf)
 		if err != nil {
-			err2 = fmt.Errorf("zip file Open(): %w", err)
 			break
 		}
 
-		fi := zf.FileInfo()
-		inputNameOnly := fi.Name()
-		if inputNameOnly == "" {
-			continue
+		if name != "" {
+			files = append(files, name)
 		}
-
-		outputName := filepath.Join(outdir, inputNameOnly)
-
-		if fi.IsDir() {
-			if inputNameOnly == "AdGuardHome" {
-				// Top-level AdGuardHome/.  Skip it.
-				//
-				// TODO(a.garipov): See the similar todo in
-				// tarGzFileUnpack.
-				continue
-			}
-
-			err = os.Mkdir(outputName, fi.Mode())
-			if err != nil && !errors.Is(err, os.ErrExist) {
-				err2 = fmt.Errorf("os.Mkdir(%q): %w", outputName, err)
-
-				break
-			}
-
-			log.Tracef("created directory %q", outputName)
-
-			continue
-		}
-
-		var f io.WriteCloser
-		f, err = os.OpenFile(outputName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, fi.Mode())
-		if err != nil {
-			err2 = fmt.Errorf("os.OpenFile(): %w", err)
-			break
-		}
-		_, err = io.Copy(f, zr)
-		if err != nil {
-			_ = f.Close()
-			err2 = fmt.Errorf("io.Copy(): %w", err)
-			break
-		}
-		err = f.Close()
-		if err != nil {
-			err2 = fmt.Errorf("f.Close(): %w", err)
-			break
-		}
-
-		log.Tracef("created file %s", outputName)
-		files = append(files, inputNameOnly)
 	}
 
-	_ = zr.Close()
-	return files, err2
+	return files, err
 }
 
 // Copy file on disk

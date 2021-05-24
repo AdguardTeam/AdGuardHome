@@ -6,7 +6,6 @@ package aghnet
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -14,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/google/renameio/maybe"
 )
 
@@ -49,16 +49,15 @@ func ifaceHasStaticIP(ifaceName string) (has bool, err error) {
 
 			return false, err
 		}
-		defer f.Close()
+		defer func() { err = errors.WithDeferred(err, f.Close()) }()
 
-		var fileReadCloser io.ReadCloser
-		fileReadCloser, err = aghio.LimitReadCloser(f, maxConfigFileSize)
+		var fileReader io.Reader
+		fileReader, err = aghio.LimitReader(f, maxConfigFileSize)
 		if err != nil {
 			return false, err
 		}
-		defer fileReadCloser.Close()
 
-		has, err = check.checker(fileReadCloser, ifaceName)
+		has, err = check.checker(fileReader, ifaceName)
 		if err != nil {
 			return false, err
 		}
@@ -134,7 +133,7 @@ func ifacesStaticConfig(r io.Reader, ifaceName string) (has bool, err error) {
 func ifaceSetStaticIP(ifaceName string) (err error) {
 	ipNet := GetSubnet(ifaceName)
 	if ipNet.IP == nil {
-		return errors.New("can't get IP address")
+		return errors.Error("can't get IP address")
 	}
 
 	gatewayIP := GatewayIP(ifaceName)

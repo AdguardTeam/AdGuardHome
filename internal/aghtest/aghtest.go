@@ -30,7 +30,7 @@ func ReplaceLogWriter(t *testing.T, w io.Writer) {
 
 // ReplaceLogLevel sets logging level to l and uses Cleanup method of t to
 // revert changes.
-func ReplaceLogLevel(t *testing.T, l int) {
+func ReplaceLogLevel(t *testing.T, l log.Level) {
 	switch l {
 	case log.INFO, log.DEBUG, log.ERROR:
 		// Go on.

@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
+	"github.com/AdguardTeam/golibs/errors"
 )
 
 // TODO(a.garipov): Make configurable.
@@ -27,7 +29,7 @@ const MaxResponseSize = 64 * 1024
 
 // VersionInfo downloads the latest version information.  If forceRecheck is
 // false and there are cached results, those results are returned.
-func (u *Updater) VersionInfo(forceRecheck bool) (VersionInfo, error) {
+func (u *Updater) VersionInfo(forceRecheck bool) (vi VersionInfo, err error) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 
@@ -37,22 +39,23 @@ func (u *Updater) VersionInfo(forceRecheck bool) (VersionInfo, error) {
 		return u.prevCheckResult, u.prevCheckError
 	}
 
+	var resp *http.Response
 	vcu := u.versionCheckURL
-	resp, err := u.client.Get(vcu)
+	resp, err = u.client.Get(vcu)
 	if err != nil {
 		return VersionInfo{}, fmt.Errorf("updater: HTTP GET %s: %w", vcu, err)
 	}
-	defer resp.Body.Close()
+	defer func() { err = errors.WithDeferred(err, resp.Body.Close()) }()
 
-	resp.Body, err = aghio.LimitReadCloser(resp.Body, MaxResponseSize)
+	var r io.Reader
+	r, err = aghio.LimitReader(resp.Body, MaxResponseSize)
 	if err != nil {
 		return VersionInfo{}, fmt.Errorf("updater: LimitReadCloser: %w", err)
 	}
-	defer resp.Body.Close()
 
 	// This use of ReadAll is safe, because we just limited the appropriate
 	// ReadCloser.
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(r)
 	if err != nil {
 		return VersionInfo{}, fmt.Errorf("updater: HTTP GET %s: %w", vcu, err)
 	}

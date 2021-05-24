@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/agherr"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
@@ -78,13 +78,13 @@ type AddParams struct {
 func (p *AddParams) validate() (err error) {
 	switch {
 	case p.Question == nil:
-		return agherr.Error("question is nil")
+		return errors.Error("question is nil")
 	case len(p.Question.Question) != 1:
-		return agherr.Error("more than one question")
+		return errors.Error("more than one question")
 	case len(p.Question.Question[0].Name) == 0:
-		return agherr.Error("no host in question")
+		return errors.Error("no host in question")
 	case p.ClientIP == nil:
-		return agherr.Error("no client ip")
+		return errors.Error("no client ip")
 	default:
 		return nil
 	}
