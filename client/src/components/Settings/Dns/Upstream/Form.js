@@ -178,7 +178,7 @@ const Form = ({
                 <Examples />
                 <hr />
             </div>
-            <div className="col-12 mb-4">
+            <div className="col-12 mb-2">
                 <label
                     className="form__label form__label--with-desc"
                     htmlFor="bootstrap_dns"
@@ -202,7 +202,7 @@ const Form = ({
             <div className="col-12">
                 <hr />
             </div>
-            <div className="col-12 mb-4">
+            <div className="col-12">
                 <label
                     className="form__label form__label--with-desc"
                     htmlFor="local_ptr"
@@ -222,6 +222,19 @@ const Form = ({
                     disabled={processingSetConfig}
                     normalizeOnBlur={removeEmptyLines}
                 />
+                <div className="mt-4">
+                    <Field
+                        name="use_private_ptr_resolvers"
+                        type="checkbox"
+                        component={CheckboxField}
+                        placeholder={t('use_private_ptr_resolvers_title')}
+                        subtitle={t('use_private_ptr_resolvers_desc')}
+                        disabled={processingSetConfig}
+                    />
+                </div>
+            </div>
+            <div className="col-12">
+                <hr />
             </div>
             <div className="col-12 mb-4">
                 <Field

@@ -86,11 +86,12 @@ func createTestServer(
 	err = s.Prepare(nil)
 	require.NoError(t, err)
 
-	s.Lock()
-	defer s.Unlock()
+	s.serverLock.Lock()
+	defer s.serverLock.Unlock()
 
 	if localUps != nil {
 		s.localResolvers.Config.UpstreamConfig.Upstreams = []upstream.Upstream{localUps}
+		s.conf.UsePrivateRDNS = true
 	}
 
 	return s
@@ -1207,17 +1208,18 @@ func TestServer_Exchange(t *testing.T) {
 		Block:    true,
 	}
 
-	dns := NewCustomServer(&proxy.Proxy{
+	srv := NewCustomServer(&proxy.Proxy{
 		Config: proxy.Config{
 			UpstreamConfig: &proxy.UpstreamConfig{
 				Upstreams: []upstream.Upstream{extUpstream},
 			},
 		},
 	})
-	dns.conf.ResolveClients = true
+	srv.conf.ResolveClients = true
+	srv.conf.UsePrivateRDNS = true
 
 	var err error
-	dns.subnetDetector, err = aghnet.NewSubnetDetector()
+	srv.subnetDetector, err = aghnet.NewSubnetDetector()
 	require.NoError(t, err)
 
 	localIP := net.IP{192, 168, 1, 1}
@@ -1265,12 +1267,12 @@ func TestServer_Exchange(t *testing.T) {
 				Upstreams: []upstream.Upstream{tc.locUpstream},
 			},
 		}
-		dns.localResolvers = &proxy.Proxy{
+		srv.localResolvers = &proxy.Proxy{
 			Config: pcfg,
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			host, eerr := dns.Exchange(tc.req)
+			host, eerr := srv.Exchange(tc.req)
 
 			require.ErrorIs(t, eerr, tc.wantErr)
 			assert.Equal(t, tc.want, host)
@@ -1278,12 +1280,11 @@ func TestServer_Exchange(t *testing.T) {
 	}
 
 	t.Run("resolving_disabled", func(t *testing.T) {
-		dns.conf.ResolveClients = false
-		for _, tc := range testCases {
-			host, eerr := dns.Exchange(tc.req)
+		srv.conf.UsePrivateRDNS = false
 
-			require.NoError(t, eerr)
-			assert.Empty(t, host)
-		}
+		host, eerr := srv.Exchange(localIP)
+
+		require.NoError(t, eerr)
+		assert.Empty(t, host)
 	})
 }

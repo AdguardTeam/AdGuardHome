@@ -94,7 +94,7 @@ func initDNSServer() error {
 		return fmt.Errorf("dnsServer.Prepare: %w", err)
 	}
 
-	Context.rdns = NewRDNS(Context.dnsServer, &Context.clients)
+	Context.rdns = NewRDNS(Context.dnsServer, &Context.clients, config.DNS.UsePrivateRDNS)
 	Context.whois = initWhois(&Context.clients)
 
 	Context.filters.Init()
@@ -200,6 +200,7 @@ func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 	newConf.GetCustomUpstreamByClient = Context.clients.FindUpstreams
 
 	newConf.ResolveClients = dnsConf.ResolveClients
+	newConf.UsePrivateRDNS = dnsConf.UsePrivateRDNS
 	newConf.LocalPTRResolvers = dnsConf.LocalPTRResolvers
 
 	return newConf, nil

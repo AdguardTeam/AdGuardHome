@@ -14,6 +14,7 @@ const Upstream = () => {
         upstream_mode,
         resolve_clients,
         local_ptr_upstreams,
+        use_private_ptr_resolvers,
     } = useSelector((state) => state.dnsConfig, shallowEqual);
 
     const upstream_dns_file = useSelector((state) => state.dnsConfig.upstream_dns_file);
@@ -25,6 +26,7 @@ const Upstream = () => {
             upstream_mode,
             resolve_clients,
             local_ptr_upstreams,
+            use_private_ptr_resolvers,
         } = values;
 
         const dnsConfig = {
@@ -32,6 +34,7 @@ const Upstream = () => {
             upstream_mode,
             resolve_clients,
             local_ptr_upstreams,
+            use_private_ptr_resolvers,
             ...(upstream_dns_file ? null : { upstream_dns }),
         };
 
@@ -53,6 +56,7 @@ const Upstream = () => {
                         upstream_mode,
                         resolve_clients,
                         local_ptr_upstreams,
+                        use_private_ptr_resolvers,
                     }}
                     onSubmit={handleSubmit}
                 />

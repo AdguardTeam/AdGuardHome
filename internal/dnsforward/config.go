@@ -153,6 +153,10 @@ type ServerConfig struct {
 	// ResolveClients signals if the RDNS should resolve clients' addresses.
 	ResolveClients bool
 
+	// UsePrivateRDNS defines if the PTR requests for unknown addresses from
+	// locally-served networks should be resolved via private PTR resolvers.
+	UsePrivateRDNS bool
+
 	// LocalPTRResolvers is a slice of addresses to be used as upstreams for
 	// resolving PTR queries for local addresses.
 	LocalPTRResolvers []string

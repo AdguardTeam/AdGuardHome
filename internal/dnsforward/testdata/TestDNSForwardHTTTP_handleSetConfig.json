@@ -31,6 +31,7 @@
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
       "resolve_clients": false,
+      "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": []
     }
   },
@@ -62,6 +63,7 @@
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
       "resolve_clients": false,
+      "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": []
     }
   },
@@ -94,6 +96,7 @@
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
       "resolve_clients": false,
+      "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": []
     }
   },
@@ -126,6 +129,7 @@
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
       "resolve_clients": false,
+      "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": []
     }
   },
@@ -158,6 +162,7 @@
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
       "resolve_clients": false,
+      "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": []
     }
   },
@@ -190,6 +195,7 @@
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
       "resolve_clients": false,
+      "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": []
     }
   },
@@ -222,6 +228,7 @@
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
       "resolve_clients": false,
+      "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": []
     }
   },
@@ -254,6 +261,7 @@
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
       "resolve_clients": false,
+      "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": []
     }
   },
@@ -286,6 +294,7 @@
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
       "resolve_clients": false,
+      "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": []
     }
   },
@@ -318,6 +327,7 @@
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
       "resolve_clients": false,
+      "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": []
     }
   },
@@ -352,6 +362,7 @@
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
       "resolve_clients": false,
+      "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": []
     }
   },
@@ -386,6 +397,7 @@
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
       "resolve_clients": false,
+      "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": []
     }
   },
@@ -419,6 +431,7 @@
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
       "resolve_clients": false,
+      "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": []
     }
   },
@@ -451,6 +464,7 @@
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
       "resolve_clients": false,
+      "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": []
     }
   },
@@ -485,6 +499,7 @@
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
       "resolve_clients": false,
+      "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [
         "123.123.123.123"
       ]
@@ -519,6 +534,7 @@
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
       "resolve_clients": false,
+      "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": []
     }
   }

@@ -414,20 +414,25 @@ func (s *Server) processLocalPTR(ctx *dnsContext) (rc resultCode) {
 		return resultCodeSuccess
 	}
 
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
 	if !s.subnetDetector.IsLocallyServedNetwork(ip) {
 		return resultCodeSuccess
 	}
 
-	err := s.localResolvers.Resolve(d)
-	if err != nil {
-		ctx.err = err
+	if s.conf.UsePrivateRDNS {
+		if err := s.localResolvers.Resolve(d); err != nil {
+			ctx.err = err
 
-		return resultCodeError
+			return resultCodeError
+		}
 	}
 
 	if d.Res == nil {
 		d.Res = s.genNXDomain(d.Req)
 
+		// Do not even put into query log.
 		return resultCodeFinish
 	}
 
@@ -443,24 +448,20 @@ func processFilteringBeforeRequest(ctx *dnsContext) (rc resultCode) {
 		return resultCodeSuccess // response is already set - nothing to do
 	}
 
-	s.RLock()
-	// Synchronize access to s.dnsFilter so it won't be suddenly uninitialized while in use.
-	// This could happen after proxy server has been stopped, but its workers are not yet exited.
-	//
-	// A better approach is for proxy.Stop() to wait until all its workers exit,
-	//  but this would require the Upstream interface to have Close() function
-	//  (to prevent from hanging while waiting for unresponsive DNS server to respond).
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
+	ctx.protectionEnabled = s.conf.ProtectionEnabled && s.dnsFilter != nil
+	if !ctx.protectionEnabled {
+		return resultCodeSuccess
+	}
+
+	if ctx.setts == nil {
+		ctx.setts = s.getClientRequestFilteringSettings(ctx)
+	}
 
 	var err error
-	ctx.protectionEnabled = s.conf.ProtectionEnabled && s.dnsFilter != nil
-	if ctx.protectionEnabled {
-		if ctx.setts == nil {
-			ctx.setts = s.getClientRequestFilteringSettings(ctx)
-		}
-		ctx.result, err = s.filterDNSRequest(ctx)
-	}
-	s.RUnlock()
-
+	ctx.result, err = s.filterDNSRequest(ctx)
 	if err != nil {
 		ctx.err = err
 

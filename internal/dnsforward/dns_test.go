@@ -260,7 +260,7 @@ func TestServer_ProcessInternalHosts(t *testing.T) {
 	}
 }
 
-func TestLocalRestriction(t *testing.T) {
+func TestServer_ProcessRestrictLocal(t *testing.T) {
 	ups := &aghtest.TestUpstream{
 		Reverse: map[string][]string{
 			"251.252.253.254.in-addr.arpa.": {"host1.example.net."},
@@ -318,14 +318,64 @@ func TestLocalRestriction(t *testing.T) {
 				IP: tc.cliIP,
 			},
 		}
+
 		t.Run(tc.name, func(t *testing.T) {
 			err = s.handleDNSRequest(nil, pctx)
 			require.NoError(t, err)
 			require.NotNil(t, pctx.Res)
 			require.Len(t, pctx.Res.Answer, tc.wantLen)
+
 			if tc.wantLen > 0 {
 				assert.Equal(t, tc.want, pctx.Res.Answer[0].Header().Name)
 			}
 		})
 	}
+}
+
+func TestServer_ProcessLocalPTR_usingResolvers(t *testing.T) {
+	const locDomain = "some.local."
+	const reqAddr = "1.1.168.192.in-addr.arpa."
+
+	s := createTestServer(t, &filtering.Config{}, ServerConfig{
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
+	}, &aghtest.TestUpstream{
+		Reverse: map[string][]string{
+			reqAddr: {locDomain},
+		},
+	})
+
+	var proxyCtx *proxy.DNSContext
+	var dnsCtx *dnsContext
+	setup := func(use bool) {
+		proxyCtx = &proxy.DNSContext{
+			Addr: &net.TCPAddr{
+				IP: net.IP{127, 0, 0, 1},
+			},
+			Req: createTestMessageWithType(reqAddr, dns.TypePTR),
+		}
+		dnsCtx = &dnsContext{
+			proxyCtx:        proxyCtx,
+			unreversedReqIP: net.IP{192, 168, 1, 1},
+		}
+		s.conf.UsePrivateRDNS = use
+	}
+
+	t.Run("enabled", func(t *testing.T) {
+		setup(true)
+
+		rc := s.processLocalPTR(dnsCtx)
+		require.Equal(t, resultCodeSuccess, rc)
+		require.NotEmpty(t, proxyCtx.Res.Answer)
+
+		assert.Equal(t, locDomain, proxyCtx.Res.Answer[0].Header().Name)
+	})
+
+	t.Run("disabled", func(t *testing.T) {
+		setup(false)
+
+		rc := s.processLocalPTR(dnsCtx)
+		require.Equal(t, resultCodeFinish, rc)
+		require.Empty(t, proxyCtx.Res.Answer)
+	})
 }

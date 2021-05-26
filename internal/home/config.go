@@ -108,6 +108,10 @@ type dnsConfig struct {
 	// ResolveClients enables and disables resolving clients with RDNS.
 	ResolveClients bool `yaml:"resolve_clients"`
 
+	// UsePrivateRDNS defines if the PTR requests for unknown addresses from
+	// locally-served networks should be resolved via private PTR resolvers.
+	UsePrivateRDNS bool `yaml:"use_private_ptr_resolvers"`
+
 	// LocalPTRResolvers is the slice of addresses to be used as upstreams
 	// for PTR queries for locally-served networks.
 	LocalPTRResolvers []string `yaml:"local_ptr_upstreams"`
@@ -166,6 +170,7 @@ var config = configuration{
 		FiltersUpdateIntervalHours: 24,
 		LocalDomainName:            "lan",
 		ResolveClients:             true,
+		UsePrivateRDNS:             true,
 	},
 	TLS: tlsConfigSettings{
 		PortHTTPS:       443,
@@ -314,9 +319,11 @@ func (c *configuration) write() error {
 	if s := Context.dnsServer; s != nil {
 		c := dnsforward.FilteringConfig{}
 		s.WriteDiskConfig(&c)
-		config.DNS.FilteringConfig = c
-
-		config.DNS.LocalPTRResolvers, config.DNS.ResolveClients = s.RDNSSettings()
+		dns := &config.DNS
+		dns.FilteringConfig = c
+		dns.LocalPTRResolvers,
+			dns.ResolveClients,
+			dns.UsePrivateRDNS = s.RDNSSettings()
 	}
 
 	if Context.dhcpServer != nil {

@@ -25,7 +25,9 @@ func processQueryLogsAndStats(ctx *dnsContext) (rc resultCode) {
 		shouldLog = false
 	}
 
-	s.RLock()
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
 	// Synchronize access to s.queryLog and s.stats so they won't be suddenly uninitialized while in use.
 	// This can happen after proxy server has been stopped, but its workers haven't yet exited.
 	if shouldLog && s.queryLog != nil {
@@ -61,7 +63,6 @@ func processQueryLogsAndStats(ctx *dnsContext) (rc resultCode) {
 	}
 
 	s.updateStats(ctx, elapsed, *ctx.result)
-	s.RUnlock()
 
 	return resultCodeSuccess
 }

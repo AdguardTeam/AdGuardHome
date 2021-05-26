@@ -142,14 +142,19 @@ type accessListJSON struct {
 	BlockedHosts      []string `json:"blocked_hosts"`
 }
 
-func (s *Server) handleAccessList(w http.ResponseWriter, r *http.Request) {
-	s.RLock()
-	j := accessListJSON{
-		AllowedClients:    s.conf.AllowedClients,
-		DisallowedClients: s.conf.DisallowedClients,
-		BlockedHosts:      s.conf.BlockedHosts,
+func (s *Server) accessListJSON() (j accessListJSON) {
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
+	return accessListJSON{
+		AllowedClients:    aghstrings.CloneSlice(s.conf.AllowedClients),
+		DisallowedClients: aghstrings.CloneSlice(s.conf.DisallowedClients),
+		BlockedHosts:      aghstrings.CloneSlice(s.conf.BlockedHosts),
 	}
-	s.RUnlock()
+}
+
+func (s *Server) handleAccessList(w http.ResponseWriter, r *http.Request) {
+	j := s.accessListJSON()
 
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(j)
@@ -200,14 +205,16 @@ func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.Lock()
+	defer log.Debug("Access: updated lists: %d, %d, %d",
+		len(j.AllowedClients), len(j.DisallowedClients), len(j.BlockedHosts))
+
+	defer s.conf.ConfigModified()
+
+	s.serverLock.Lock()
+	defer s.serverLock.Unlock()
+
 	s.conf.AllowedClients = j.AllowedClients
 	s.conf.DisallowedClients = j.DisallowedClients
 	s.conf.BlockedHosts = j.BlockedHosts
 	s.access = a
-	s.Unlock()
-	s.conf.ConfigModified()
-
-	log.Debug("Access: updated lists: %d, %d, %d",
-		len(j.AllowedClients), len(j.DisallowedClients), len(j.BlockedHosts))
 }

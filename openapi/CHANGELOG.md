@@ -2,11 +2,18 @@
 
 <!-- TODO(a.garipov): Reformat in accordance with the KeepAChangelog spec. -->
 
+## v0.107: API changes
+
+### The field `"use_private_ptr_resolvers"` in DNS configuration
+
+* The new optional field  `"use_private_ptr_resolvers"` of `"DNSConfig"`
+  specifies if the DNS server should use `"local_ptr_upstreams"` at all.
+
 ## v0.106: API changes
 
 ### The field `"supported_tags"` in `GET /control/clients`
 
-* Prefiously undocumented field `"supported_tags"` in the response is now
+* Previously undocumented field `"supported_tags"` in the response is now
   documented.
 
 ### The field `"whois_info"` in `GET /control/clients`

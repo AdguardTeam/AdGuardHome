@@ -1300,6 +1300,8 @@
           - ''
           - 'parallel'
           - 'fastest_addr'
+        'use_private_ptr_resolvers':
+          'type': 'boolean'
         'resolve_clients':
           'type': 'boolean'
         'local_ptr_upstreams':

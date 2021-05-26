@@ -16,6 +16,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRDNS_Begin(t *testing.T) {
@@ -78,7 +79,8 @@ func TestRDNS_Begin(t *testing.T) {
 		binary.BigEndian.PutUint64(ttl, uint64(time.Now().Add(100*time.Hour).Unix()))
 
 		rdns := &RDNS{
-			ipCache: ipCache,
+			ipCache:   ipCache,
+			exchanger: &rDNSExchanger{},
 			clients: &clientsContainer{
 				list:    map[string]*Client{},
 				idIndex: tc.cliIDIndex,
@@ -105,7 +107,8 @@ func TestRDNS_Begin(t *testing.T) {
 
 // rDNSExchanger is a mock dnsforward.RDNSExchanger implementation for tests.
 type rDNSExchanger struct {
-	aghtest.Exchanger
+	ex         aghtest.Exchanger
+	usePrivate bool
 }
 
 // Exchange implements dnsforward.RDNSExchanger interface for *RDNSExchanger.
@@ -117,7 +120,7 @@ func (e *rDNSExchanger) Exchange(ip net.IP) (host string, err error) {
 		}},
 	}
 
-	resp, err := e.Exchanger.Exchange(req)
+	resp, err := e.ex.Exchange(req)
 	if err != nil {
 		return "", err
 	}
@@ -127,6 +130,35 @@ func (e *rDNSExchanger) Exchange(ip net.IP) (host string, err error) {
 	}
 
 	return resp.Answer[0].Header().Name, nil
+}
+
+// Exchange implements dnsforward.RDNSExchanger interface for *RDNSExchanger.
+func (e *rDNSExchanger) ResolvesPrivatePTR() (ok bool) {
+	return e.usePrivate
+}
+
+func TestRDNS_ensurePrivateCache(t *testing.T) {
+	data := []byte{1, 2, 3, 4}
+
+	ipCache := cache.New(cache.Config{
+		EnableLRU: true,
+		MaxCount:  defaultRDNSCacheSize,
+	})
+
+	ex := &rDNSExchanger{}
+
+	rdns := &RDNS{
+		ipCache:   ipCache,
+		exchanger: ex,
+	}
+
+	rdns.ipCache.Set(data, data)
+	require.NotZero(t, rdns.ipCache.Stats().Count)
+
+	ex.usePrivate = !ex.usePrivate
+
+	rdns.ensurePrivateCache()
+	require.Zero(t, rdns.ipCache.Stats().Count)
 }
 
 func TestRDNS_WorkerLoop(t *testing.T) {
@@ -178,7 +210,7 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 		ch := make(chan net.IP)
 		rdns := &RDNS{
 			exchanger: &rDNSExchanger{
-				Exchanger: aghtest.Exchanger{
+				ex: aghtest.Exchanger{
 					Ups: tc.ups,
 				},
 			},

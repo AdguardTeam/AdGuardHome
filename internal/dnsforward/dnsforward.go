@@ -89,8 +89,9 @@ type Server struct {
 
 	isRunning bool
 
-	sync.RWMutex
 	conf ServerConfig
+	// serverLock protects Server.
+	serverLock sync.RWMutex
 }
 
 // defaultLocalDomainSuffix is the default suffix used to detect internal hosts
@@ -167,25 +168,31 @@ func NewCustomServer(internalProxy *proxy.Proxy) *Server {
 	return s
 }
 
-// Close - close object
+// Close gracefully closes the server.  It is safe for concurrent use.
+//
+// TODO(e.burkov): A better approach would be making Stop method waiting for all
+// its workers finished.  But it would require the upstream.Upstream to have the
+// Close method to prevent from hanging while waiting for unresponsive server to
+// respond.
 func (s *Server) Close() {
-	s.Lock()
+	s.serverLock.Lock()
+	defer s.serverLock.Unlock()
+
 	s.dnsFilter = nil
 	s.stats = nil
 	s.queryLog = nil
 	s.dnsProxy = nil
 
-	err := s.ipset.Close()
-	if err != nil {
+	if err := s.ipset.Close(); err != nil {
 		log.Error("closing ipset: %s", err)
 	}
-
-	s.Unlock()
 }
 
 // WriteDiskConfig - write configuration
 func (s *Server) WriteDiskConfig(c *FilteringConfig) {
-	s.RLock()
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
 	sc := s.conf.FilteringConfig
 	*c = sc
 	c.RatelimitWhitelist = aghstrings.CloneSlice(sc.RatelimitWhitelist)
@@ -194,15 +201,16 @@ func (s *Server) WriteDiskConfig(c *FilteringConfig) {
 	c.DisallowedClients = aghstrings.CloneSlice(sc.DisallowedClients)
 	c.BlockedHosts = aghstrings.CloneSlice(sc.BlockedHosts)
 	c.UpstreamDNS = aghstrings.CloneSlice(sc.UpstreamDNS)
-	s.RUnlock()
 }
 
 // RDNSSettings returns the copy of actual RDNS configuration.
-func (s *Server) RDNSSettings() (localPTRResolvers []string, resolveClients bool) {
-	s.RLock()
-	defer s.RUnlock()
+func (s *Server) RDNSSettings() (localPTRResolvers []string, resolveClients, resolvePTR bool) {
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
 
-	return aghstrings.CloneSlice(s.conf.LocalPTRResolvers), s.conf.ResolveClients
+	return aghstrings.CloneSlice(s.conf.LocalPTRResolvers),
+		s.conf.ResolveClients,
+		s.conf.UsePrivateRDNS
 }
 
 // Resolve - get IP addresses by host name from an upstream server.
@@ -210,8 +218,9 @@ func (s *Server) RDNSSettings() (localPTRResolvers []string, resolveClients bool
 // Query log and Stats are not updated.
 // This method may be called before Start().
 func (s *Server) Resolve(host string) ([]net.IPAddr, error) {
-	s.RLock()
-	defer s.RUnlock()
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
 	return s.internalProxy.LookupIPAddr(host)
 }
 
@@ -220,6 +229,9 @@ type RDNSExchanger interface {
 	// Exchange tries to resolve the ip in a suitable way, e.g. either as
 	// local or as external.
 	Exchange(ip net.IP) (host string, err error)
+	// ResolvesPrivatePTR returns true if the RDNSExchanger is able to
+	// resolve PTR requests for locally-served addresses.
+	ResolvesPrivatePTR() (ok bool)
 }
 
 const (
@@ -234,10 +246,17 @@ const (
 
 // Exchange implements the RDNSExchanger interface for *Server.
 func (s *Server) Exchange(ip net.IP) (host string, err error) {
-	s.RLock()
-	defer s.RUnlock()
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
 
 	if !s.conf.ResolveClients {
+		return "", nil
+	}
+
+	var resolver *proxy.Proxy = s.localResolvers
+	if !s.subnetDetector.IsLocallyServedNetwork(ip) {
+		resolver = s.internalProxy
+	} else if !s.conf.UsePrivateRDNS {
 		return "", nil
 	}
 
@@ -259,13 +278,8 @@ func (s *Server) Exchange(ip net.IP) (host string, err error) {
 		Req:       req,
 		StartTime: time.Now(),
 	}
-
 	var resp *dns.Msg
-	if s.subnetDetector.IsLocallyServedNetwork(ip) {
-		err = s.localResolvers.Resolve(ctx)
-	} else {
-		err = s.internalProxy.Resolve(ctx)
-	}
+	err = resolver.Resolve(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -284,10 +298,19 @@ func (s *Server) Exchange(ip net.IP) (host string, err error) {
 	return strings.TrimSuffix(ptr.Ptr, "."), nil
 }
 
+// ResolvesPrivatePTR implements the RDNSExchanger interface for *Server.
+func (s *Server) ResolvesPrivatePTR() (ok bool) {
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
+	return s.conf.UsePrivateRDNS
+}
+
 // Start starts the DNS server.
 func (s *Server) Start() error {
-	s.Lock()
-	defer s.Unlock()
+	s.serverLock.Lock()
+	defer s.serverLock.Unlock()
+
 	return s.startLocked()
 }
 
@@ -306,7 +329,7 @@ func (s *Server) startLocked() error {
 const defaultLocalTimeout = 1 * time.Second
 
 // collectDNSIPAddrs returns IP addresses the server is listening on without
-// port numbers as a map.  For internal use only.
+// port numbersю  For internal use only.
 func (s *Server) collectDNSIPAddrs() (addrs []string, err error) {
 	addrs = make([]string, len(s.conf.TCPListenAddrs)+len(s.conf.UDPListenAddrs))
 	var i int
@@ -472,8 +495,9 @@ func (s *Server) Prepare(config *ServerConfig) error {
 
 // Stop stops the DNS server.
 func (s *Server) Stop() error {
-	s.Lock()
-	defer s.Unlock()
+	s.serverLock.Lock()
+	defer s.serverLock.Unlock()
+
 	return s.stopLocked()
 }
 
@@ -490,17 +514,18 @@ func (s *Server) stopLocked() error {
 	return nil
 }
 
-// IsRunning returns true if the DNS server is running
+// IsRunning returns true if the DNS server is running.
 func (s *Server) IsRunning() bool {
-	s.RLock()
-	defer s.RUnlock()
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
 	return s.isRunning
 }
 
-// Reconfigure applies the new configuration to the DNS server
+// Reconfigure applies the new configuration to the DNS server.
 func (s *Server) Reconfigure(config *ServerConfig) error {
-	s.Lock()
-	defer s.Unlock()
+	s.serverLock.Lock()
+	defer s.serverLock.Unlock()
 
 	log.Print("Start reconfiguring the server")
 	err := s.stopLocked()
@@ -525,12 +550,18 @@ func (s *Server) Reconfigure(config *ServerConfig) error {
 	return nil
 }
 
-// ServeHTTP is a HTTP handler method we use to provide DNS-over-HTTPS
+// ServeHTTP is a HTTP handler method we use to provide DNS-over-HTTPS.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.RLock()
-	p := s.dnsProxy
-	s.RUnlock()
-	if p != nil { // an attempt to protect against race in case we're here after Close() was called
+	var p *proxy.Proxy
+
+	func() {
+		s.serverLock.RLock()
+		defer s.serverLock.RUnlock()
+
+		p = s.dnsProxy
+	}()
+
+	if p != nil {
 		p.ServeHTTP(w, r)
 	}
 }

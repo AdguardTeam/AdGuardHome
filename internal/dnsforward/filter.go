@@ -117,8 +117,31 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*filtering.Result, error) {
 	return &res, err
 }
 
-// If response contains CNAME, A or AAAA records, we apply filtering to each canonical host name or IP address.
-// If this is a match, we set a new response in d.Res and return.
+// checkHostRules checks the host against filters.  It is safe for concurrent
+// use.
+func (s *Server) checkHostRules(host string, qtype uint16, setts *filtering.Settings) (
+	r *filtering.Result,
+	err error,
+) {
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
+	if s.dnsFilter == nil {
+		return nil, nil
+	}
+
+	var res filtering.Result
+	res, err = s.dnsFilter.CheckHostRules(host, qtype, setts)
+	if err != nil {
+		return nil, err
+	}
+
+	return &res, err
+}
+
+// If response contains CNAME, A or AAAA records, we apply filtering to each
+// canonical host name or IP address.  If this is a match, we set a new response
+// in d.Res and return.
 func (s *Server) filterDNSResponse(ctx *dnsContext) (*filtering.Result, error) {
 	d := ctx.proxyCtx
 	for _, a := range d.Res.Answer {
@@ -141,22 +164,16 @@ func (s *Server) filterDNSResponse(ctx *dnsContext) (*filtering.Result, error) {
 			continue
 		}
 
-		s.RLock()
-		// Synchronize access to s.dnsFilter so it won't be suddenly uninitialized while in use.
-		// This could happen after proxy server has been stopped, but its workers are not yet exited.
-		if !s.conf.ProtectionEnabled || s.dnsFilter == nil {
-			s.RUnlock()
-			continue
-		}
-		res, err := s.dnsFilter.CheckHostRules(host, d.Req.Question[0].Qtype, ctx.setts)
-		s.RUnlock()
-
+		res, err := s.checkHostRules(host, d.Req.Question[0].Qtype, ctx.setts)
 		if err != nil {
 			return nil, err
+		} else if res == nil {
+			continue
 		} else if res.IsFiltered {
-			d.Res = s.genDNSFilterMessage(d, &res)
+			d.Res = s.genDNSFilterMessage(d, res)
 			log.Debug("DNSFwd: Matched %s by response: %s", d.Req.Question[0].Name, host)
-			return &res, nil
+
+			return res, nil
 		}
 	}
 

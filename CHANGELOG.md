@@ -15,6 +15,8 @@ and this project adheres to
 
 ### Added
 
+- The ability to completely disable reverse DNS resolving of IPs from
+  locally-served networks ([#3184]).
 - New flag `--local-frontend` to serve dinamically changeable frontend files
   from disk as opposed to the ones that were compiled into the binary.
 
@@ -34,6 +36,8 @@ released by then.
 ### Removed
 
 - Go 1.15 support.
+
+[#3184]: https://github.com/AdguardTeam/AdGuardHome/issues/3184
 
 
 

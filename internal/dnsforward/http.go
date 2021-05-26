@@ -41,12 +41,13 @@ type dnsConfig struct {
 	CacheMinTTL       *uint32   `json:"cache_ttl_min"`
 	CacheMaxTTL       *uint32   `json:"cache_ttl_max"`
 	ResolveClients    *bool     `json:"resolve_clients"`
+	UsePrivateRDNS    *bool     `json:"use_private_ptr_resolvers"`
 	LocalPTRUpstreams *[]string `json:"local_ptr_upstreams"`
 }
 
 func (s *Server) getDNSConfig() dnsConfig {
-	s.RLock()
-	defer s.RUnlock()
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
 
 	upstreams := aghstrings.CloneSliceOrEmpty(s.conf.UpstreamDNS)
 	upstreamFile := s.conf.UpstreamDNSFileName
@@ -63,6 +64,7 @@ func (s *Server) getDNSConfig() dnsConfig {
 	cacheMinTTL := s.conf.CacheMinTTL
 	cacheMaxTTL := s.conf.CacheMaxTTL
 	resolveClients := s.conf.ResolveClients
+	usePrivateRDNS := s.conf.UsePrivateRDNS
 	localPTRUpstreams := aghstrings.CloneSliceOrEmpty(s.conf.LocalPTRResolvers)
 	var upstreamMode string
 	if s.conf.FastestAddr {
@@ -88,6 +90,7 @@ func (s *Server) getDNSConfig() dnsConfig {
 		CacheMaxTTL:       &cacheMaxTTL,
 		UpstreamMode:      &upstreamMode,
 		ResolveClients:    &resolveClients,
+		UsePrivateRDNS:    &usePrivateRDNS,
 		LocalPTRUpstreams: &localPTRUpstreams,
 	}
 }
@@ -280,8 +283,8 @@ func (s *Server) setConfigRestartable(dc dnsConfig) (restart bool) {
 }
 
 func (s *Server) setConfig(dc dnsConfig) (restart bool) {
-	s.Lock()
-	defer s.Unlock()
+	s.serverLock.Lock()
+	defer s.serverLock.Unlock()
 
 	if dc.ProtectionEnabled != nil {
 		s.conf.ProtectionEnabled = *dc.ProtectionEnabled
@@ -310,6 +313,10 @@ func (s *Server) setConfig(dc dnsConfig) (restart bool) {
 
 	if dc.ResolveClients != nil {
 		s.conf.ResolveClients = *dc.ResolveClients
+	}
+
+	if dc.UsePrivateRDNS != nil {
+		s.conf.UsePrivateRDNS = *dc.UsePrivateRDNS
 	}
 
 	return s.setConfigRestartable(dc)

@@ -3,6 +3,7 @@ package home
 import (
 	"encoding/binary"
 	"net"
+	"sync/atomic"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
@@ -14,6 +15,10 @@ import (
 type RDNS struct {
 	exchanger dnsforward.RDNSExchanger
 	clients   *clientsContainer
+
+	// usePrivate is used to store the state of current private RDNS
+	// resolving settings and to react to it's changes.
+	usePrivate uint32
 
 	// ipCh used to pass client's IP to rDNS workerLoop.
 	ipCh chan net.IP
@@ -37,6 +42,7 @@ const (
 func NewRDNS(
 	exchanger dnsforward.RDNSExchanger,
 	clients *clientsContainer,
+	usePrivate bool,
 ) (rDNS *RDNS) {
 	rDNS = &RDNS{
 		exchanger: exchanger,
@@ -47,19 +53,39 @@ func NewRDNS(
 		}),
 		ipCh: make(chan net.IP, defaultRDNSIPChSize),
 	}
+	if usePrivate {
+		rDNS.usePrivate = 1
+	}
 
 	go rDNS.workerLoop()
 
 	return rDNS
 }
 
-// Begin adds the ip to the resolving queue if it is not cached or already
-// resolved.
-func (r *RDNS) Begin(ip net.IP) {
+// ensurePrivateCache ensures that the state of the RDNS cache is consistent
+// with the current private client RDNS resolving settings.
+//
+// TODO(e.burkov): Clearing cache each time this value changed is not a perfect
+// approach since only unresolved locally-served addresses should be removed.
+// Implement when improving the cache.
+func (r *RDNS) ensurePrivateCache() {
+	var usePrivate uint32
+	if r.exchanger.ResolvesPrivatePTR() {
+		usePrivate = 1
+	}
+
+	if atomic.CompareAndSwapUint32(&r.usePrivate, 1-usePrivate, usePrivate) {
+		r.ipCache.Clear()
+	}
+}
+
+// isCached returns true if ip is already cached and not expired yet.  It also
+// caches it otherwise.
+func (r *RDNS) isCached(ip net.IP) (ok bool) {
 	now := uint64(time.Now().Unix())
 	if expire := r.ipCache.Get(ip); len(expire) != 0 {
 		if binary.BigEndian.Uint64(expire) > now {
-			return
+			return true
 		}
 	}
 
@@ -67,6 +93,18 @@ func (r *RDNS) Begin(ip net.IP) {
 	ttl := make([]byte, 8)
 	binary.BigEndian.PutUint64(ttl, now+defaultRDNSCacheTTL)
 	r.ipCache.Set(ip, ttl)
+
+	return false
+}
+
+// Begin adds the ip to the resolving queue if it is not cached or already
+// resolved.
+func (r *RDNS) Begin(ip net.IP) {
+	r.ensurePrivateCache()
+
+	if r.isCached(ip) {
+		return
+	}
 
 	id := ip.String()
 	if r.clients.Exists(id, ClientSourceRDNS) {
