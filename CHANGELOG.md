@@ -15,6 +15,7 @@ and this project adheres to
 
 ### Added
 
+- Detection and handling of recurrent requests ([#3185]).
 - The ability to completely disable reverse DNS resolving of IPs from
   locally-served networks ([#3184]).
 - New flag `--local-frontend` to serve dinamically changeable frontend files
@@ -38,6 +39,7 @@ released by then.
 - Go 1.15 support.
 
 [#3184]: https://github.com/AdguardTeam/AdGuardHome/issues/3184
+[#3185]: https://github.com/AdguardTeam/AdGuardHome/issues/3185
 
 
 

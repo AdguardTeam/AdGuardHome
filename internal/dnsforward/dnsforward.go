@@ -76,6 +76,7 @@ type Server struct {
 	ipset          ipsetCtx
 	subnetDetector *aghnet.SubnetDetector
 	localResolvers *proxy.Proxy
+	recDetector    *recursionDetector
 
 	tableHostToIP     hostToIPTable
 	tableHostToIPLock sync.Mutex
@@ -121,6 +122,14 @@ func domainNameToSuffix(tld string) (suffix string) {
 	return string(b)
 }
 
+const (
+	// recursionTTL is the time recursive request is cached for.
+	recursionTTL = 5 * time.Second
+	// cachedRecurrentReqNum is the maximum number of cached recurrent
+	// requests.
+	cachedRecurrentReqNum = 1000
+)
+
 // NewServer creates a new instance of the dnsforward.Server
 // Note: this function must be called only once
 func NewServer(p DNSCreateParams) (s *Server, err error) {
@@ -142,6 +151,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		queryLog:          p.QueryLog,
 		subnetDetector:    p.SubnetDetector,
 		localDomainSuffix: localDomainSuffix,
+		recDetector:       newRecursionDetector(recursionTTL, cachedRecurrentReqNum),
 	}
 
 	if p.DHCPServer != nil {
@@ -160,7 +170,9 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 
 // NewCustomServer creates a new instance of *Server with custom internal proxy.
 func NewCustomServer(internalProxy *proxy.Proxy) *Server {
-	s := &Server{}
+	s := &Server{
+		recDetector: newRecursionDetector(0, 1),
+	}
 	if internalProxy != nil {
 		s.internalProxy = internalProxy
 	}
@@ -278,14 +290,13 @@ func (s *Server) Exchange(ip net.IP) (host string, err error) {
 		Req:       req,
 		StartTime: time.Now(),
 	}
-	var resp *dns.Msg
-	err = resolver.Resolve(ctx)
-	if err != nil {
+
+	s.recDetector.add(*req)
+	if err = resolver.Resolve(ctx); err != nil {
 		return "", err
 	}
 
-	resp = ctx.Res
-
+	resp := ctx.Res
 	if len(resp.Answer) == 0 {
 		return "", fmt.Errorf("lookup for %q: %w", arpa, rDNSEmptyAnswerErr)
 	}
@@ -489,6 +500,8 @@ func (s *Server) Prepare(config *ServerConfig) error {
 	if err != nil {
 		return fmt.Errorf("setting up resolvers: %w", err)
 	}
+
+	s.recDetector.clear()
 
 	return nil
 }

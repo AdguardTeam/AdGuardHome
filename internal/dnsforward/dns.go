@@ -82,6 +82,7 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 	// (*proxy.Proxy).handleDNSRequest method performs it before calling the
 	// appropriate handler.
 	mods := []modProcessFunc{
+		s.processRecursion,
 		processInitial,
 		s.processDetermineLocal,
 		s.processInternalHosts,
@@ -90,7 +91,7 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 		processClientID,
 		processFilteringBeforeRequest,
 		s.processLocalPTR,
-		processUpstream,
+		s.processUpstream,
 		processDNSSECAfterResponse,
 		processFilteringAfterResponse,
 		s.ipset.process,
@@ -114,6 +115,22 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 		d.Res.Compress = true // some devices require DNS message compression
 	}
 	return nil
+}
+
+// processRecursion checks the incoming request and halts it's handling if s
+// have tried to resolve it recently.
+func (s *Server) processRecursion(dctx *dnsContext) (rc resultCode) {
+	pctx := dctx.proxyCtx
+
+	if msg := pctx.Req; msg != nil && s.recDetector.check(*msg) {
+		log.Debug("recursion detected resolving %q", msg.Question[0].Name)
+		pctx.Res = s.genNXDomain(pctx.Req)
+
+		return resultCodeFinish
+
+	}
+
+	return resultCodeSuccess
 }
 
 // Perform initial checks;  process WHOIS & rDNS
@@ -422,6 +439,7 @@ func (s *Server) processLocalPTR(ctx *dnsContext) (rc resultCode) {
 	}
 
 	if s.conf.UsePrivateRDNS {
+		s.recDetector.add(*d.Req)
 		if err := s.localResolvers.Resolve(d); err != nil {
 			ctx.err = err
 
@@ -472,8 +490,7 @@ func processFilteringBeforeRequest(ctx *dnsContext) (rc resultCode) {
 }
 
 // processUpstream passes request to upstream servers and handles the response.
-func processUpstream(ctx *dnsContext) (rc resultCode) {
-	s := ctx.srv
+func (s *Server) processUpstream(ctx *dnsContext) (rc resultCode) {
 	d := ctx.proxyCtx
 	if d.Res != nil {
 		return resultCodeSuccess // response is already set - nothing to do
@@ -481,18 +498,18 @@ func processUpstream(ctx *dnsContext) (rc resultCode) {
 
 	if d.Addr != nil && s.conf.GetCustomUpstreamByClient != nil {
 		clientIP := IPStringFromAddr(d.Addr)
-		upstreamsConf := s.conf.GetCustomUpstreamByClient(clientIP)
-		if upstreamsConf != nil {
-			log.Debug("Using custom upstreams for %s", clientIP)
-			d.CustomUpstreamConfig = upstreamsConf
+		if upsConf := s.conf.GetCustomUpstreamByClient(clientIP); upsConf != nil {
+			log.Debug("dns: using custom upstreams for client %s", clientIP)
+			d.CustomUpstreamConfig = upsConf
 		}
 	}
 
+	req := d.Req
 	if s.conf.EnableDNSSEC {
-		opt := d.Req.IsEdns0()
+		opt := req.IsEdns0()
 		if opt == nil {
-			log.Debug("dns: Adding OPT record with DNSSEC flag")
-			d.Req.SetEdns0(4096, true)
+			log.Debug("dns: adding OPT record with DNSSEC flag")
+			req.SetEdns0(4096, true)
 		} else if !opt.Do() {
 			opt.SetDo(true)
 		} else {
@@ -501,13 +518,13 @@ func processUpstream(ctx *dnsContext) (rc resultCode) {
 	}
 
 	// request was not filtered so let it be processed further
-	err := s.dnsProxy.Resolve(d)
-	if err != nil {
-		ctx.err = err
+	s.recDetector.add(*req)
+	if ctx.err = s.dnsProxy.Resolve(d); ctx.err != nil {
 		return resultCodeError
 	}
 
 	ctx.responseFromUpstream = true
+
 	return resultCodeSuccess
 }
 

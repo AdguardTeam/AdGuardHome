@@ -42,11 +42,11 @@ func ValidateHardwareAddress(hwa net.HardwareAddr) (err error) {
 // according to RFC 1035.
 const maxDomainLabelLen = 63
 
-// maxDomainNameLen is the maximum allowed length of a full domain name
+// MaxDomainNameLen is the maximum allowed length of a full domain name
 // according to RFC 1035.
 //
 // See https://stackoverflow.com/a/32294443/1892060.
-const maxDomainNameLen = 253
+const MaxDomainNameLen = 253
 
 // ValidateDomainNameLabel returns an error if label is not a valid label of
 // a domain name.
@@ -97,8 +97,8 @@ func ValidateDomainName(name string) (err error) {
 	l := len(name)
 	if l == 0 {
 		return errors.Error("domain name is empty")
-	} else if l > maxDomainNameLen {
-		return fmt.Errorf("too long, max: %d", maxDomainNameLen)
+	} else if l > MaxDomainNameLen {
+		return fmt.Errorf("too long, max: %d", MaxDomainNameLen)
 	}
 
 	labels := strings.Split(name, ".")
